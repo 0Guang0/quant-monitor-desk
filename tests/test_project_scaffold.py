@@ -17,7 +17,6 @@ REQUIRED_DIRS = [
     "frontend/src",
     "scripts",
     "tests",
-    "data/duckdb",
     "configs",
     "docs/architecture",
     "specs/schema",
@@ -34,3 +33,13 @@ def test_migrationMap_exists_shouldGuideNavigation() -> None:
     content = (PROJECT_ROOT / "MIGRATION_MAP.md").read_text(encoding="utf-8")
     assert "Five-layer model" in content
     assert "docs/implementation_tasks/" in content
+
+
+def test_initDb_createsDuckDbDirectory(tmp_path, monkeypatch) -> None:
+    import scripts.init_db as init_db_mod
+
+    data_root = tmp_path / "data"
+    monkeypatch.setattr(init_db_mod, "DATA_ROOT", data_root)
+    init_db_mod.main()
+    assert (data_root / "duckdb").is_dir()
+    assert (data_root / "duckdb" / "quant_monitor.duckdb").is_file()

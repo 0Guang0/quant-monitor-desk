@@ -28,6 +28,10 @@ class ResourceSnapshot:
     disk_free_gb: float
     process_rss_mb: float
     project_size_gb: float
+    duckdb_temp_size_gb: float = 0.0
+    cache_size_gb: float = 0.0
+    system_memory_usage_pct: float = 0.0
+    system_disk_usage_pct: float = 0.0
 
     def __post_init__(self) -> None:
         for name in (
@@ -35,6 +39,10 @@ class ResourceSnapshot:
             "disk_free_gb",
             "process_rss_mb",
             "project_size_gb",
+            "duckdb_temp_size_gb",
+            "cache_size_gb",
+            "system_memory_usage_pct",
+            "system_disk_usage_pct",
         ):
             value = getattr(self, name)
             if value < 0:
@@ -124,6 +132,55 @@ def evaluate(
                 "process rss above threshold",
             )
         )
+        temp_max = float(profile_limits["duckdb_temp_max_gb"])
+        signals.append(
+            (
+                _signal_decision(
+                    snapshot.duckdb_temp_size_gb,
+                    temp_max * 0.7,
+                    temp_max * 0.85,
+                    temp_max,
+                    higher_is_worse=True,
+                ),
+                "duckdb temp directory above threshold",
+            )
+        )
+
+    cache_t = proj_t
+    signals.extend(
+        [
+            (
+                _signal_decision(
+                    snapshot.cache_size_gb,
+                    cache_t["cache_warn_gb"],
+                    cache_t["cache_pause_gb"],
+                    cache_t["cache_hard_stop_gb"],
+                    higher_is_worse=True,
+                ),
+                "cache directory above threshold",
+            ),
+            (
+                _signal_decision(
+                    snapshot.system_memory_usage_pct,
+                    sys_t["system_memory_usage_warn_pct"],
+                    sys_t["system_memory_usage_pause_pct"],
+                    sys_t["system_memory_usage_hard_stop_pct"],
+                    higher_is_worse=True,
+                ),
+                "system memory usage above threshold",
+            ),
+            (
+                _signal_decision(
+                    snapshot.system_disk_usage_pct,
+                    sys_t["system_disk_usage_warn_pct"],
+                    sys_t["system_disk_usage_pause_pct"],
+                    sys_t["system_disk_usage_hard_stop_pct"],
+                    higher_is_worse=True,
+                ),
+                "system disk usage above threshold",
+            ),
+        ]
+    )
 
     worst = Decision.OK
     reasons: list[str] = []
@@ -190,14 +247,20 @@ class ResourceGuard:
 
     def snapshot(self) -> ResourceSnapshot:
         mem = psutil.virtual_memory()
-        disk = psutil.disk_usage(str(DATA_ROOT.parent if DATA_ROOT.exists() else PROJECT_ROOT))
+        data_root = DATA_ROOT if DATA_ROOT.exists() else PROJECT_ROOT / "data"
+        disk_root = data_root.parent if data_root.exists() else PROJECT_ROOT
+        disk = psutil.disk_usage(str(disk_root))
         rss = psutil.Process().memory_info().rss
-        project_size = _dir_size_gb(DATA_ROOT)
+        cache_dir = data_root / "cache"
         return ResourceSnapshot(
             available_memory_gb=mem.available / (1024**3),
             disk_free_gb=disk.free / (1024**3),
             process_rss_mb=rss / (1024**2),
-            project_size_gb=project_size,
+            project_size_gb=_dir_size_gb(data_root),
+            duckdb_temp_size_gb=_dir_size_gb(cache_dir / "duckdb_tmp"),
+            cache_size_gb=_dir_size_gb(cache_dir),
+            system_memory_usage_pct=float(mem.percent),
+            system_disk_usage_pct=float(disk.percent),
         )
 
     def check(self) -> tuple[Decision, str]:

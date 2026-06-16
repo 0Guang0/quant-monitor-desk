@@ -36,3 +36,23 @@ profiles:
     duckdb_memory_max_mb: 6144
     duckdb_temp_max_gb: 10
     max_parallel_non_core_jobs: 1
+system_thresholds:
+  available_memory_warn_gb: 4
+  available_memory_pause_gb: 2
+  available_memory_hard_stop_gb: 1
+  system_memory_usage_warn_pct: 70
+  system_memory_usage_pause_pct: 80
+  system_memory_usage_hard_stop_pct: 90
+  disk_free_warn_gb: 30
+  disk_free_pause_gb: 20
+  disk_free_hard_stop_gb: 10
+  system_disk_usage_warn_pct: 75
+  system_disk_usage_pause_pct: 85
+  system_disk_usage_hard_stop_pct: 92
+project_size_thresholds:
+  project_warn_gb: 15
+  project_pause_gb: 25
+  project_hard_stop_gb: 40
+  cache_warn_gb: 1
+  cache_pause_gb: 2
+  cache_hard_stop_gb: 4

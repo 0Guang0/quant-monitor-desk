@@ -11,6 +11,13 @@ from backend.app.storage.raw_store import SavedFile
 STG_FILE_REGISTRY = "stg_file_registry"
 
 
+def _safe_rollback(con: duckdb.DuckDBPyConnection) -> None:
+    try:
+        con.execute("ROLLBACK")
+    except duckdb.Error:
+        pass
+
+
 def _parse_as_of_timestamp(as_of: str) -> datetime:
     """Parse YYYY-MM-DD as-of date into UTC midnight timestamp."""
     return datetime.fromisoformat(as_of).replace(tzinfo=UTC)
@@ -88,12 +95,20 @@ class FileRegistry:
                 )
                 result = self.write_manager.write(req, con=con, own_transaction=False)
                 if result.status != "SUCCESS":
+                    err = result.error_message or ""
+                    if "onstraint" in err:
+                        _safe_rollback(con)
+                        con.execute("BEGIN")
+                        existing = self._lookup_by_content_hash(saved.content_hash, con=con)
+                        if existing:
+                            con.execute("COMMIT")
+                            return existing
                     raise RuntimeError(f"file_registry write failed: {result.error_message}")
                 con.execute("COMMIT")
             except RuntimeError:
                 raise
             except Exception:
-                con.execute("ROLLBACK")
+                _safe_rollback(con)
                 raise
 
         return saved.file_id

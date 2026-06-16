@@ -54,12 +54,22 @@
 
 ## ROUND_2_DATA_INGESTION_VALIDATION
 
-- `ROUND_2_DATA_INGESTION_VALIDATION/011_implement_source_registry.md` — 实现 source_registry
-- `ROUND_2_DATA_INGESTION_VALIDATION/012_implement_data_adapter_contract.md` — 实现 Data Adapter Contract
-- `ROUND_2_DATA_INGESTION_VALIDATION/013_implement_core_adapter_skeletons.md` — 实现核心数据源 adapter skeleton
-- `ROUND_2_DATA_INGESTION_VALIDATION/014_implement_data_sync_orchestrator.md` — 实现 DataSyncOrchestrator
-- `ROUND_2_DATA_INGESTION_VALIDATION/015_implement_data_quality_validator.md` — 实现 DataQualityValidator
-- `ROUND_2_DATA_INGESTION_VALIDATION/016_implement_source_conflict_validator.md` — 实现 SourceConflictValidator
+执行前先读 `ROUND_2_DATA_INGESTION_VALIDATION/DECISIONS.md` 与 `README.md`（四批次、Checkpoint）。**Execute 按批次进行**；Batch A Plan 见 `.trellis/tasks/06-17-round2-batch-a-sources/`。
+
+| Batch | 任务 | 深度计划 |
+|-------|------|----------|
+| A | 011+012 | MASTER §8（`.trellis/tasks/06-17-round2-batch-a-sources/`） |
+| B | 013 | （待 Plan） |
+| C | 015+016 | （待 Plan） |
+| D | 014 | （待 Plan） |
+
+- `ROUND_2_DATA_INGESTION_VALIDATION/DECISIONS.md` — 本轮已确认决策（先读）
+- `ROUND_2_DATA_INGESTION_VALIDATION/011_implement_source_registry.md` — 实现 source_registry（Batch A）
+- `ROUND_2_DATA_INGESTION_VALIDATION/012_implement_data_adapter_contract.md` — 实现 Data Adapter Contract（Batch A）
+- `ROUND_2_DATA_INGESTION_VALIDATION/013_implement_core_adapter_skeletons.md` — 实现核心数据源 adapter skeleton（Batch B）
+- `ROUND_2_DATA_INGESTION_VALIDATION/014_implement_data_sync_orchestrator.md` — 实现 DataSyncOrchestrator（Batch D）
+- `ROUND_2_DATA_INGESTION_VALIDATION/015_implement_data_quality_validator.md` — 实现 DataQualityValidator（Batch C）
+- `ROUND_2_DATA_INGESTION_VALIDATION/016_implement_source_conflict_validator.md` — 实现 SourceConflictValidator（Batch C）
 
 ## ROUND_3_MODELING_LAYERS
 

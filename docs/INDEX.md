@@ -7,12 +7,12 @@ Navigation hub for **Quant Monitor Desk**. For a compact project map see [`MIGRA
 | File | Topic |
 |------|-------|
 | [00_project_overview.md](architecture/00_project_overview.md) | Goals, v1.6 scope, layer definitions |
-| [01_context_and_problem.md](architecture/01_context_and_problem.md) | Problem framing |
+| [01_context_and_scope.md](architecture/01_context_and_scope.md) | Problem framing |
 | [02_solution_strategy.md](architecture/02_solution_strategy.md) | Solution approach |
 | [03_runtime_flows.md](architecture/03_runtime_flows.md) | Runtime orchestration |
 | [04_data_architecture.md](architecture/04_data_architecture.md) | Data layers, stores |
 | [05_module_map.md](architecture/05_module_map.md) | Five-layer framework + modules |
-| [06_phase_plan.md](architecture/06_phase_plan.md) | Phased delivery |
+| [09_phase_plan.md](architecture/09_phase_plan.md) | Phased delivery |
 | [07_project_directory_structure.md](architecture/07_project_directory_structure.md) | Directory layout |
 | [08_decision_log_index.md](architecture/08_decision_log_index.md) | ADR index |
 
@@ -20,16 +20,19 @@ Navigation hub for **Quant Monitor Desk**. For a compact project map see [`MIGRA
 
 See [`docs/modules/`](modules/) — one file per implementation module (data sync, layers, API, agent, ops, etc.).
 
+**Canonical pointers:** Some topics were split from merged docs; see [`modules/README.md`](modules/README.md) for authoritative vs compatibility-only files (FastAPI/frontend, validation/write concurrency).
+
 ## Operations
 
 | File | Topic |
 |------|-------|
 | [backup_and_recovery.md](ops/backup_and_recovery.md) | Backup policy |
 | [performance_limits.md](ops/performance_limits.md) | ResourceGuard authority |
-| [ops_and_performance_v1_2.md](ops/ops_and_performance_v1_2.md) | Ops handbook |
+| [ops_and_performance_v1_2.md](ops/ops_and_performance_v1_2.md) | Ops handbook *(legacy filename; content is current)* |
 | [logs_health_audit.md](ops/logs_health_audit.md) | Logging and audit |
 | [layer3_config_health_check.md](ops/layer3_config_health_check.md) | Layer 3 config checks |
 | [daily_weekly_monthly_checklist.md](ops/daily_weekly_monthly_checklist.md) | Routine checklists |
+| [agent_workflow_boundaries.md](ops/agent_workflow_boundaries.md) | `.cursor`/`.trellis` trust boundaries |
 
 ## ADRs
 

@@ -242,6 +242,10 @@ def test_write_ownTransactionFalse_stubFail_doesNotRollbackOuterTxn(tmp_path: Pa
         w.execute("INSERT INTO stg_foundation_smoke VALUES ('MSFT','2026-06-16',120.0,'qmt','b2')")
         res = WriteManager(cm).write(_req(report="stub-fail-1"), con=w, own_transaction=False)
         assert res.status == "FAILED"
+        audit_cnt = w.execute(
+            "SELECT COUNT(*) FROM write_audit_log WHERE status='FAILED'"
+        ).fetchone()[0]
+        assert audit_cnt == 1
         # Outer transaction still active: staging insert from above remains visible.
         cnt = w.execute("SELECT COUNT(*) FROM stg_foundation_smoke").fetchone()[0]
         assert cnt == 2

@@ -58,6 +58,8 @@ Round 1 migration `001_foundation.sql` 仅包含：
 - `backend/app/db/migrations/` — 按 Round 增量执行的 SQL
 - `scripts/init_db.py` — 本地初始化 CLI
 
+**Schema 契约测试：** `tests/test_schema_contract.py` 断言 `001_foundation.sql` / `002_registry_hardening.sql` 中 foundation 表的列名集合为 `specs/schema/schema.sql` 同表的子集（migrations = runtime truth；schema.sql = 目标契约）。
+
 ## 4. 文档补充深度
 
 **决策：方案 B — 每个正式任务配独立 `plans/*.plan.md`。**
@@ -86,8 +88,14 @@ Round 1 migration `001_foundation.sql` 仅包含：
 
 ## 7. ResourceGuard Round 1 范围
 
-- `evaluate()` 使用 available_memory / disk_free / project_size / process_rss 四类信号。
-- contract 中 `system_memory_usage_*pct`、`cache_*gb` 阈值留 Round 2+ 按需接入。
+- `evaluate()` / `snapshot()` 已接入全部 contract 阈值信号：
+  - available_memory / disk_free / project_size / process_rss（Round 1 原有）
+  - `duckdb_temp_max_gb`（扫描 `DATA_ROOT/cache/duckdb_tmp` 目录体量）
+  - `cache_warn_gb` / `cache_pause_gb` / `cache_hard_stop_gb`（扫描 `DATA_ROOT/cache`）
+  - `system_memory_usage_*_pct`（`psutil.virtual_memory().percent`）
+  - `system_disk_usage_*_pct`（`psutil.disk_usage(DATA_ROOT 父目录).percent`）
+- 运行时阈值来源：`configs/resource_limits.yaml` profiles + `specs/contracts/resource_limits.yaml` system/project 段（`load_thresholds()` 合并）。
+- 自动化：`tests/test_resource_guard.py` 覆盖 cache/temp/system pct 信号；`tests/test_schema_contract.py` 校验 migration 列 ⊆ `schema.sql`。
 
 ## 8. RawStore 元数据（三次审计确认）
 

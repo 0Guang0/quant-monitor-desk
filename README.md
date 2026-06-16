@@ -37,10 +37,16 @@ quant-monitor-desk/
 
 1. Read `MIGRATION_MAP.md` and `docs/INDEX.md`.
 2. Read global rules under `docs/implementation_tasks/GLOBAL_*.md`.
-3. Copy `.env.example` to `.env` and adjust paths if needed.
+3. Copy `.env.example` to `.env` and adjust paths if needed (empty `QMD_DATA_ROOT` uses `<repo>/data`).
 4. Install backend: `pip install -e ".[dev]"`
-5. Install frontend: `cd frontend && npm install`
-6. Run checks: `pytest -q && ruff check . && python -m compileall backend scripts`
+5. Initialize runtime data dirs: `python scripts/init_db.py` (required on clean checkout before pytest).
+6. Install frontend: `cd frontend && npm ci`
+7. Run checks: `pytest -q && ruff check . && python -m compileall backend scripts tests`
+8. Verify docs links: `python scripts/check_doc_links.py`
+
+### Agent / Trellis workflow
+
+This repo intentionally tracks `.cursor/` (IDE hooks) and `.trellis/` (task specs and workflow scripts) for AI-assisted development. Trust boundaries and clean-checkout steps are documented in [`docs/ops/agent_workflow_boundaries.md`](docs/ops/agent_workflow_boundaries.md).
 
 ## Implementation rounds
 

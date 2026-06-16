@@ -173,6 +173,7 @@ class ConnectionManager:
         """Read-only connection; multiple readers allowed."""
         con = duckdb.connect(str(self.db_path), read_only=True)
         try:
+            self._apply_pragmas(con)
             yield con
         finally:
             con.close()

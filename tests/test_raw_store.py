@@ -161,6 +161,56 @@ def test_register_duplicateHash_returnsSameFileId(tmp_path: Path) -> None:
     assert cnt == 1
 
 
+def test_register_duplicateHashViaConstraint_returnsSameFileId(tmp_path: Path) -> None:
+    """Simulate race: pre-check misses duplicate but UNIQUE index catches insert."""
+    cm = _cm(tmp_path)
+    store = RawStore(tmp_path)
+    reg = FileRegistry(cm, WriteManager(cm))
+    saved = store.save(
+        b"x", source="qmt", data_domain="daily_bar", file_type="json", as_of="2026-06-15"
+    )
+
+    with cm.writer() as con:
+        con.execute("BEGIN")
+        con.execute(
+            """
+            INSERT INTO file_registry (
+                file_id, file_type, source, local_path, content_hash,
+                fetch_time, as_of_timestamp, parse_status, quality_flag
+            ) VALUES (
+                ?, 'json', 'qmt', '/p', ?,
+                CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'parsed', 'ok'
+            )
+            """,
+            [saved.file_id, saved.content_hash],
+        )
+        con.execute("COMMIT")
+
+    import backend.app.storage.file_registry as fr_mod
+
+    original_lookup = FileRegistry._lookup_by_content_hash
+
+    def _miss_once(self, content_hash, con=None):
+        if not hasattr(_miss_once, "called"):
+            _miss_once.called = True
+            return None
+        return original_lookup(self, content_hash, con=con)
+
+    fr_mod.FileRegistry._lookup_by_content_hash = _miss_once  # type: ignore[method-assign]
+    try:
+        fid = reg.register(saved)
+        assert fid == saved.file_id
+    finally:
+        fr_mod.FileRegistry._lookup_by_content_hash = original_lookup  # type: ignore[method-assign]
+
+    with cm.reader() as r:
+        cnt = r.execute(
+            "SELECT COUNT(*) FROM file_registry WHERE content_hash=?",
+            [saved.content_hash],
+        ).fetchone()[0]
+    assert cnt == 1
+
+
 def test_register_whenWriteFails_raisesRuntimeError(tmp_path: Path) -> None:
     cm = _cm(tmp_path)
     store = RawStore(tmp_path)

@@ -6,8 +6,17 @@ import os
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-DATA_ROOT = Path(os.getenv("QMD_DATA_ROOT", PROJECT_ROOT / "data"))
-CONFIGS_ROOT = Path(os.getenv("QMD_CONFIGS_ROOT", PROJECT_ROOT / "configs"))
+
+
+def _path_env(name: str, default: Path) -> Path:
+    raw = os.getenv(name)
+    if raw is None or raw.strip() == "":
+        return default
+    return Path(raw)
+
+
+DATA_ROOT = _path_env("QMD_DATA_ROOT", PROJECT_ROOT / "data")
+CONFIGS_ROOT = _path_env("QMD_CONFIGS_ROOT", PROJECT_ROOT / "configs")
 
 VALID_RESOURCE_PROFILES = frozenset({"eco", "normal", "batch"})
 

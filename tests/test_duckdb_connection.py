@@ -38,6 +38,21 @@ def test_writer_whenLockHeld_raisesWriteLockError(tmp_path: Path) -> None:
                 pass
 
 
+def test_applyPragmas_readerProfile_setsThreadsAndMemory(tmp_path: Path) -> None:
+    db = tmp_path / "t.duckdb"
+    _init(db)
+    cm = ConnectionManager(
+        db,
+        profile="eco",
+        limits={"eco": {"duckdb_memory_max_mb": 1536, "max_threads": 2}},
+    )
+    with cm.reader() as r:
+        threads = r.execute("SELECT current_setting('threads')").fetchone()[0]
+        mem = r.execute("SELECT current_setting('memory_limit')").fetchone()[0]
+    assert int(threads) == 2
+    assert "1536" in mem or "1.5" in mem.lower() or "1.4" in mem.lower()
+
+
 def test_applyPragmas_ecoProfile_setsThreadsAndMemory(tmp_path: Path) -> None:
     db = tmp_path / "t.duckdb"
     _init(db)

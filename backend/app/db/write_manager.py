@@ -139,15 +139,28 @@ class WriteManager:
         own_transaction: bool = True,
     ) -> WriteResult:
         """Persist FAILED audit after rolling back the data write."""
-        audit_con = con
-        close_audit = False
-        if not own_transaction:
+        if own_transaction:
             audit_con = duckdb.connect(str(self.conn_manager.db_path))
-            close_audit = True
-        try:
-            audit_con.execute("BEGIN")
+            try:
+                audit_con.execute("BEGIN")
+                self._write_audit(
+                    audit_con,
+                    write_id=write_id,
+                    req=req,
+                    started_at=started_at,
+                    status="FAILED",
+                    rows_in_staging=rows_in_staging,
+                    rows_inserted=0,
+                    rows_updated=0,
+                    validation_status=validation_status,
+                    error_message=error_message,
+                )
+                audit_con.execute("COMMIT")
+            finally:
+                audit_con.close()
+        else:
             self._write_audit(
-                audit_con,
+                con,
                 write_id=write_id,
                 req=req,
                 started_at=started_at,
@@ -158,10 +171,6 @@ class WriteManager:
                 validation_status=validation_status,
                 error_message=error_message,
             )
-            audit_con.execute("COMMIT")
-        finally:
-            if close_audit:
-                audit_con.close()
         return WriteResult(
             write_id=write_id,
             status="FAILED",
@@ -233,15 +242,21 @@ class WriteManager:
         except duckdb.Error as exc:
             if own_transaction:
                 con.execute("ROLLBACK")
-            return self._commit_audit_after_rollback(
-                con,
-                write_id,
-                req,
-                started_at,
-                rows_in_staging,
-                "ERROR",
-                str(exc),
-                own_transaction=own_transaction,
+                return self._commit_audit_after_rollback(
+                    con,
+                    write_id,
+                    req,
+                    started_at,
+                    rows_in_staging,
+                    "ERROR",
+                    str(exc),
+                    own_transaction=own_transaction,
+                )
+            con.execute("ROLLBACK")
+            return WriteResult(
+                write_id=write_id,
+                status="FAILED",
+                error_message=str(exc),
             )
         except Exception:
             if own_transaction:
