@@ -4,12 +4,13 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from unittest.mock import MagicMock
 
 import duckdb
 import pytest
 from backend.app.db.connection import ConnectionManager
 from backend.app.db.migrate import apply_migrations
-from backend.app.db.write_manager import WriteManager
+from backend.app.db.write_manager import WriteManager, WriteResult
 from backend.app.storage.file_registry import FileRegistry
 from backend.app.storage.raw_store import RawStore, sha256_hex
 
@@ -27,6 +28,7 @@ def test_save_writesFileAndComputesHash(tmp_path: Path) -> None:
     )
     assert Path(saved.local_path).read_bytes() == b"hello"
     assert saved.content_hash == sha256_hex(b"hello")
+    assert saved.as_of == "2026-06-15"
 
 
 def test_save_pathLayout_matchesConvention(tmp_path: Path) -> None:
@@ -90,13 +92,12 @@ def test_register_newFile_insertsRegistryRow(tmp_path: Path) -> None:
         b"x", source="qmt", data_domain="daily_bar", file_type="json", as_of="2026-06-15"
     )
     fid = reg.register(saved)
-    r = cm.reader()
-    got = r.execute(
-        "SELECT source, content_hash FROM file_registry WHERE file_id=?",
-        [fid],
-    ).fetchone()
+    with cm.reader() as r:
+        got = r.execute(
+            "SELECT source, content_hash FROM file_registry WHERE file_id=?",
+            [fid],
+        ).fetchone()
     assert got == ("qmt", saved.content_hash)
-    r.close()
 
 
 def test_register_writesAuditLog(tmp_path: Path) -> None:
@@ -107,12 +108,27 @@ def test_register_writesAuditLog(tmp_path: Path) -> None:
         b"x", source="qmt", data_domain="daily_bar", file_type="json", as_of="2026-06-15"
     )
     reg.register(saved)
-    r = cm.reader()
-    audit = r.execute(
-        "SELECT status, target_table FROM write_audit_log WHERE target_table='file_registry'"
-    ).fetchone()
+    with cm.reader() as r:
+        audit = r.execute(
+            "SELECT status, target_table FROM write_audit_log WHERE target_table='file_registry'"
+        ).fetchone()
     assert audit == ("SUCCESS", "file_registry")
-    r.close()
+
+
+def test_register_asOfTimestamp_matchesAsOfArgument(tmp_path: Path) -> None:
+    cm = _cm(tmp_path)
+    store = RawStore(tmp_path)
+    reg = FileRegistry(cm, WriteManager(cm))
+    saved = store.save(
+        b"x", source="qmt", data_domain="daily_bar", file_type="json", as_of="2026-06-15"
+    )
+    reg.register(saved)
+    with cm.reader() as r:
+        as_of_ts = r.execute(
+            "SELECT CAST(as_of_timestamp AS DATE) FROM file_registry WHERE file_id=?",
+            [saved.file_id],
+        ).fetchone()[0]
+    assert str(as_of_ts) == "2026-06-15"
 
 
 def test_exists_whenHashPresent_returnsTrue(tmp_path: Path) -> None:
@@ -137,8 +153,25 @@ def test_register_duplicateHash_returnsSameFileId(tmp_path: Path) -> None:
     fid1 = reg.register(saved)
     fid2 = reg.register(saved)
     assert fid1 == fid2
-    cnt = cm.reader().execute(
-        "SELECT COUNT(*) FROM file_registry WHERE content_hash=?",
-        [saved.content_hash],
-    ).fetchone()[0]
+    with cm.reader() as r:
+        cnt = r.execute(
+            "SELECT COUNT(*) FROM file_registry WHERE content_hash=?",
+            [saved.content_hash],
+        ).fetchone()[0]
     assert cnt == 1
+
+
+def test_register_whenWriteFails_raisesRuntimeError(tmp_path: Path) -> None:
+    cm = _cm(tmp_path)
+    store = RawStore(tmp_path)
+    wm = MagicMock()
+    wm.write.return_value = WriteResult(write_id="x", status="FAILED", error_message="db error")
+    reg = FileRegistry(cm, wm)
+    saved = store.save(
+        b"x", source="qmt", data_domain="daily_bar", file_type="json", as_of="2026-06-15"
+    )
+    with pytest.raises(RuntimeError, match="file_registry write failed"):
+        reg.register(saved)
+    with cm.reader() as r:
+        cnt = r.execute("SELECT COUNT(*) FROM file_registry").fetchone()[0]
+    assert cnt == 0

@@ -61,12 +61,11 @@ def test_foundation_endToEnd_writesCleanAndAudits(tmp_path: Path, monkeypatch) -
         b"raw-bytes", source="qmt", data_domain="daily_bar", file_type="json", as_of="2026-06-15"
     )
     fid = reg.register(saved)
-    r_reg = cm.reader()
-    assert (
-        r_reg.execute("SELECT COUNT(*) FROM file_registry WHERE file_id=?", [fid]).fetchone()[0]
-        == 1
-    )
-    r_reg.close()
+    with cm.reader() as r_reg:
+        assert (
+            r_reg.execute("SELECT COUNT(*) FROM file_registry WHERE file_id=?", [fid]).fetchone()[0]
+            == 1
+        )
 
     with cm.writer() as w:
         w.execute(
@@ -90,19 +89,18 @@ def test_foundation_endToEnd_writesCleanAndAudits(tmp_path: Path, monkeypatch) -
     )
     assert ok.status == "SUCCESS" and ok.rows_inserted == 1
 
-    r = cm.reader()
-    close_val = r.execute(
-        "SELECT close FROM security_bar_smoke_clean WHERE instrument_id='AAPL'"
-    ).fetchone()[0]
-    assert close_val == 195.0
-    assert (
-        r.execute(
-            "SELECT status FROM write_audit_log WHERE write_id=?",
-            [ok.write_id],
+    with cm.reader() as r:
+        close_val = r.execute(
+            "SELECT close FROM security_bar_smoke_clean WHERE instrument_id='AAPL'"
         ).fetchone()[0]
-        == "SUCCESS"
-    )
-    r.close()
+        assert close_val == 195.0
+        assert (
+            r.execute(
+                "SELECT status FROM write_audit_log WHERE write_id=?",
+                [ok.write_id],
+            ).fetchone()[0]
+            == "SUCCESS"
+        )
 
     bad = WriteManager(cm).write(
         WriteRequest(
@@ -117,10 +115,9 @@ def test_foundation_endToEnd_writesCleanAndAudits(tmp_path: Path, monkeypatch) -
         )
     )
     assert bad.status == "FAILED"
-    r = cm.reader()
-    assert r.execute("SELECT COUNT(*) FROM security_bar_smoke_clean").fetchone()[0] == 1
-    failed_audits = r.execute(
-        "SELECT COUNT(*) FROM write_audit_log WHERE status='FAILED'"
-    ).fetchone()[0]
-    assert failed_audits == 1
-    r.close()
+    with cm.reader() as r:
+        assert r.execute("SELECT COUNT(*) FROM security_bar_smoke_clean").fetchone()[0] == 1
+        failed_audits = r.execute(
+            "SELECT COUNT(*) FROM write_audit_log WHERE status='FAILED'"
+        ).fetchone()[0]
+        assert failed_audits == 1

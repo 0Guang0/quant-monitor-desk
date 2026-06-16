@@ -66,3 +66,28 @@ def test_applyMigrations_modifiedFile_raisesChecksumError(tmp_path: Path) -> Non
     with pytest.raises(MigrationChecksumError, match="checksum mismatch"):
         apply_migrations(con, migrations_dir=migrations_dir)
 
+
+def test_applyMigrations_missingAppliedFile_raisesChecksumError(tmp_path: Path) -> None:
+    migrations_dir = tmp_path / "migrations"
+    shutil.copytree(MIGRATIONS_DIR, migrations_dir)
+    db = tmp_path / "t.duckdb"
+    con = duckdb.connect(str(db))
+    apply_migrations(con, migrations_dir=migrations_dir)
+    (migrations_dir / "001_foundation.sql").unlink()
+    with pytest.raises(MigrationChecksumError, match="migration file missing"):
+        apply_migrations(con, migrations_dir=migrations_dir)
+
+
+def test_applyMigrations_badSqlInFile_raisesAndLeavesNoVersionRow(tmp_path: Path) -> None:
+    migrations_dir = tmp_path / "migrations"
+    migrations_dir.mkdir()
+    (migrations_dir / "001_bad.sql").write_text(
+        "CREATE TABLE ok(id INT); THIS IS NOT VALID SQL;",
+        encoding="utf-8",
+    )
+    con = duckdb.connect(":memory:")
+    with pytest.raises(duckdb.Error):
+        apply_migrations(con, migrations_dir=migrations_dir)
+    assert applied_versions(con) == set()
+    tables = {row[0] for row in con.execute("SHOW TABLES").fetchall()}
+    assert "ok" not in tables

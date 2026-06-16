@@ -11,6 +11,13 @@ from backend.app.storage.raw_store import SavedFile
 STG_FILE_REGISTRY = "stg_file_registry"
 
 
+def _parse_as_of_timestamp(as_of: str) -> datetime:
+    """Parse YYYY-MM-DD or ISO-8601 as-of into UTC timestamp."""
+    if "T" in as_of:
+        return datetime.fromisoformat(as_of.replace("Z", "+00:00"))
+    return datetime.fromisoformat(as_of).replace(tzinfo=UTC)
+
+
 class FileRegistry:
     def __init__(self, conn_manager, write_manager: WriteManager) -> None:
         self.conn_manager = conn_manager
@@ -25,14 +32,11 @@ class FileRegistry:
                 [content_hash],
             ).fetchone()
             return row[0] if row else None
-        reader = self.conn_manager.reader()
-        try:
+        with self.conn_manager.reader() as reader:
             row = reader.execute(
                 "SELECT file_id FROM file_registry WHERE content_hash = ? LIMIT 1",
                 [content_hash],
             ).fetchone()
-        finally:
-            reader.close()
         return row[0] if row else None
 
     def exists(self, content_hash: str) -> bool:
@@ -40,6 +44,7 @@ class FileRegistry:
 
     def register(self, saved: SavedFile) -> str:
         now = datetime.now(UTC)
+        as_of_ts = _parse_as_of_timestamp(saved.as_of)
         req = WriteRequest(
             run_id="raw_store",
             job_id="register",
@@ -77,16 +82,17 @@ class FileRegistry:
                         saved.content_hash,
                         None,
                         now,
-                        now,
+                        as_of_ts,
                         "parsed",
                         "ok",
                     ],
                 )
                 result = self.write_manager.write(req, con=con, own_transaction=False)
                 if result.status != "SUCCESS":
-                    con.execute("ROLLBACK")
                     raise RuntimeError(f"file_registry write failed: {result.error_message}")
                 con.execute("COMMIT")
+            except RuntimeError:
+                raise
             except Exception:
                 con.execute("ROLLBACK")
                 raise

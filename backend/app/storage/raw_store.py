@@ -30,6 +30,7 @@ class SavedFile:
     local_path: str
     content_hash: str
     file_type: str
+    as_of: str
 
 
 class RawStore:
@@ -73,4 +74,5 @@ class RawStore:
             local_path=str(dest_path),
             content_hash=content_hash,
             file_type=file_type,
+            as_of=safe_as_of,
         )

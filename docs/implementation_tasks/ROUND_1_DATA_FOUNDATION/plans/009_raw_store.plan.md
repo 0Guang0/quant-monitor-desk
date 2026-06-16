@@ -35,6 +35,7 @@ class SavedFile:
     local_path: str
     content_hash: str     # sha256 全量
     file_type: str
+    as_of: str            # 数据 as-of（YYYY-MM-DD），写入 file_registry.as_of_timestamp
 
 class RawStore:
     def __init__(self, data_root: Path): ...
@@ -186,3 +187,18 @@ Commit: `feat(storage): add RawStore and file_registry via WriteManager (task 00
 |--------|------|
 | `exists()` 半死代码 | 抽取 `_lookup_by_content_hash()`；`exists()` 与 `register()` 共用 |
 | staging 与 merge 跨 autocommit | `register()` 外层显式 `BEGIN`；`WriteManager.write(..., own_transaction=False)` 与 staging 同事务后 `COMMIT` |
+
+---
+
+## 评估报告跟进（三次修复）
+
+| 评估项 | 修复 |
+|--------|------|
+| **P0** FAILED write 路径 double ROLLBACK | 移除内联 ROLLBACK；`except RuntimeError: raise` 与 `except Exception: ROLLBACK` 分离 |
+| **P1** `as_of_timestamp` 误用 `now` | `SavedFile` 增加 `as_of`；`_parse_as_of_timestamp()` 写入 DB |
+| register 失败 / as_of 语义无测试 | `test_register_whenWriteFails_raisesRuntimeError`、`test_register_asOfTimestamp_matchesAsOfArgument` |
+| `reader()` 泄漏 | 随 007 context manager 一并修复 |
+
+### 当前测试规模（三次修复后）
+
+- 本 task：**13** 个

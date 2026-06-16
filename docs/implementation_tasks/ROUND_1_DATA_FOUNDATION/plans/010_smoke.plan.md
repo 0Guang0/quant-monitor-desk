@@ -157,3 +157,12 @@ pytest -q && ruff check . && python -m compileall backend scripts
 
 - 依赖 008 upsert 审计修复与 006 guard_log 显式提交；smoke 仍全绿。
 - Round 1 单测/smoke 分布见各 task plan 的「当前测试规模」
+
+---
+
+## 评估报告跟进（三次修复）
+
+| 评估项 | 修复 |
+|--------|------|
+| smoke 使用 `with cm.reader()` | 随 007 reader context manager 更新 |
+| 全量测试 | **80/80** 通过（Round 0：26 + Round 1：54） |

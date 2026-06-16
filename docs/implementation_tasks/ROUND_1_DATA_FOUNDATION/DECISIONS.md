@@ -66,7 +66,7 @@ Round 1 migration `001_foundation.sql` 仅包含：
 
 ## 5. 依赖库
 
-**决策：Round 1 允许新增以下运行时依赖（实现阶段写入 `pyproject.toml`）：**
+**决策：Round 1 允许新增以下运行时依赖（实现阶段写入 `pyproject.toml`）；Round 0 已引入 fastapi / uvicorn / pydantic / pyyaml，本节为 Round 1 增量：**
 
 | 包 | 用途 |
 |----|------|
@@ -84,7 +84,17 @@ Round 1 migration `001_foundation.sql` 仅包含：
 3. 遵守 `/testing-guidelines`：业务语义断言，不只测「不抛异常」
 4. 集成/smoke 测试使用临时 DuckDB 文件或 `:memory:`，不污染 `data/duckdb/quant_monitor.duckdb`
 
-## 7. ValidationGate stub 契约（Round 1 固定口径）
+## 7. ResourceGuard Round 1 范围
+
+- `evaluate()` 使用 available_memory / disk_free / project_size / process_rss 四类信号。
+- contract 中 `system_memory_usage_*pct`、`cache_*gb` 阈值留 Round 2+ 按需接入。
+
+## 8. RawStore 元数据（三次审计确认）
+
+- `SavedFile` 必须携带 `as_of`（与落盘路径段一致）。
+- `file_registry.as_of_timestamp` 写入数据 as-of 日期；`fetch_time` 为注册时刻。
+
+## 9. ValidationGate stub 契约（Round 1 固定口径）
 
 stub 仅用于 Round 1；Round 2 替换为真实校验器，接口保持不变。
 

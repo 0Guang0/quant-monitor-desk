@@ -249,3 +249,20 @@ Commit: `feat(db): add WriteManager with stub validation gate and audit (task 00
 
 - `test_write_upsertByPk_pureNewRow_reportsZeroUpdated` — staging 全新 PK、target 无匹配 → `updated=0, inserted=1`
 - upsert 覆盖路径补 audit 断言 `(1, 0)`
+
+---
+
+## 评估报告跟进（三次修复）
+
+| 评估项 | 修复 |
+|--------|------|
+| **P3** `WriteRequest` 可变 | 改为 `@dataclass(frozen=True)` |
+| **P3** `_validated_tables()` 在 `write()` 重复调用 | 拆出 `_validate_request()` 供 `write()` 早失败 |
+| **P3** 重复测试 | 删除 `test_assertCanWrite_stubFail_raisesRejected` |
+| gateError/sqlError 未断言 rollback / error_message | 补断言 |
+| mixed upsert 计数无测试 | `test_write_upsertByPk_mixedNewAndExisting_reportsCorrectCounts` |
+| `rows_in_staging` 无断言 | append 测试补 audit 列断言 |
+
+### 当前测试规模（三次修复后）
+
+- 本 task：**12** 个

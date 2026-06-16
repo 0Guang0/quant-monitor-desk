@@ -23,10 +23,9 @@ def test_writer_writesRow_readerSeesIt(tmp_path: Path) -> None:
     cm = ConnectionManager(db)
     with cm.writer() as w:
         w.execute("INSERT INTO file_registry(file_id, source) VALUES ('f1','qmt')")
-    r = cm.reader()
-    got = r.execute("SELECT source FROM file_registry WHERE file_id='f1'").fetchone()
+    with cm.reader() as r:
+        got = r.execute("SELECT source FROM file_registry WHERE file_id='f1'").fetchone()
     assert got[0] == "qmt"
-    r.close()
 
 
 def test_writer_whenLockHeld_raisesWriteLockError(tmp_path: Path) -> None:
@@ -52,6 +51,19 @@ def test_applyPragmas_ecoProfile_setsThreadsAndMemory(tmp_path: Path) -> None:
     assert int(threads) == 2
 
 
+def test_applyPragmas_batchProfile_usesConfiguredMaxThreads(tmp_path: Path) -> None:
+    db = tmp_path / "t.duckdb"
+    _init(db)
+    cm = ConnectionManager(
+        db,
+        profile="batch",
+        limits={"batch": {"duckdb_memory_max_mb": 6144, "max_threads": 4}},
+    )
+    with cm.writer() as w:
+        threads = w.execute("SELECT current_setting('threads')").fetchone()[0]
+    assert int(threads) == 4
+
+
 def test_writer_afterExit_releasesLock(tmp_path: Path) -> None:
     db = tmp_path / "t.duckdb"
     _init(db)
@@ -60,9 +72,8 @@ def test_writer_afterExit_releasesLock(tmp_path: Path) -> None:
         pass
     with cm.writer() as w:
         w.execute("INSERT INTO file_registry(file_id, source) VALUES ('f2','qmt')")
-    r = cm.reader()
-    assert r.execute("SELECT COUNT(*) FROM file_registry WHERE file_id='f2'").fetchone()[0] == 1
-    r.close()
+    with cm.reader() as r:
+        assert r.execute("SELECT COUNT(*) FROM file_registry WHERE file_id='f2'").fetchone()[0] == 1
 
 
 def test_writer_staleLockFromDeadPid_allowsNewWriter(tmp_path: Path) -> None:
@@ -76,9 +87,8 @@ def test_writer_staleLockFromDeadPid_allowsNewWriter(tmp_path: Path) -> None:
     cm = ConnectionManager(db)
     with cm.writer() as w:
         w.execute("INSERT INTO file_registry(file_id, source) VALUES ('f3','qmt')")
-    r = cm.reader()
-    assert r.execute("SELECT COUNT(*) FROM file_registry WHERE file_id='f3'").fetchone()[0] == 1
-    r.close()
+    with cm.reader() as r:
+        assert r.execute("SELECT COUNT(*) FROM file_registry WHERE file_id='f3'").fetchone()[0] == 1
 
 
 def test_writer_corruptLockFile_raisesWriteLockError(tmp_path: Path) -> None:
@@ -90,3 +100,16 @@ def test_writer_corruptLockFile_raisesWriteLockError(tmp_path: Path) -> None:
     with pytest.raises(WriteLockError, match="corrupt write lock"):
         with cm.writer():
             pass
+
+
+def test_writer_exceptionInsideContext_releasesLock(tmp_path: Path) -> None:
+    db = tmp_path / "t.duckdb"
+    _init(db)
+    cm = ConnectionManager(db)
+    with pytest.raises(ValueError, match="simulated error"):
+        with cm.writer() as w:
+            raise ValueError("simulated error inside write")
+    with cm.writer() as w:
+        w.execute("INSERT INTO file_registry(file_id, source) VALUES ('x','test')")
+    with cm.reader() as r:
+        assert r.execute("SELECT COUNT(*) FROM file_registry WHERE file_id='x'").fetchone()[0] == 1

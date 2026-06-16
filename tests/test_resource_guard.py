@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import duckdb
-from backend.app.core.resource_guard import Decision, ResourceSnapshot, evaluate
+from backend.app.core.resource_guard import Decision, ResourceSnapshot, evaluate, format_pause_event
 
 THRESH = {
     "profiles": {
@@ -80,7 +80,7 @@ def test_evaluate_largeProject_returnsPause() -> None:
     assert "project" in reason.lower()
 
 
-def test_evaluate_highRss_returnsPause() -> None:
+def test_evaluate_rssAboveWarnNotPause_returnsWarn() -> None:
     eco = THRESH["profiles"]["eco"]
     snap = ResourceSnapshot(
         available_memory_gb=8,
@@ -93,7 +93,31 @@ def test_evaluate_highRss_returnsPause() -> None:
     assert "rss" in reason.lower()
 
 
-def test_check_okDecision_doesNotWriteGuardLog(monkeypatch) -> None:
+def test_evaluate_memoryExactlyAtHardStopThreshold_isPause() -> None:
+    snap = ResourceSnapshot(
+        available_memory_gb=1.0, disk_free_gb=100, process_rss_mb=300, project_size_gb=1
+    )
+    decision, _ = evaluate(snap, THRESH)
+    assert decision == Decision.PAUSE
+
+
+def test_evaluate_diskFreeExactlyAtWarnThreshold_isOk() -> None:
+    snap = ResourceSnapshot(
+        available_memory_gb=8, disk_free_gb=30.0, process_rss_mb=300, project_size_gb=1
+    )
+    decision, _ = evaluate(snap, THRESH)
+    assert decision == Decision.OK
+
+
+def test_formatPauseEvent_includesSentinelAndMetrics() -> None:
+    snap = ResourceSnapshot(1.5, 15.0, 900.0, 2.0)
+    msg = format_pause_event(Decision.PAUSE, "available memory below threshold", snap, "eco")
+    assert msg.startswith("RESOURCE_GUARD_PAUSED")
+    assert "available_memory_gb=1.50" in msg
+    assert "profile=eco" in msg
+
+
+def test_check_okDecision_doesNotWriteGuardLog(monkeypatch, capsys) -> None:
     from backend.app.core.resource_guard import ResourceGuard
     from backend.app.db.migrate import apply_migrations
 
@@ -109,9 +133,10 @@ def test_check_okDecision_doesNotWriteGuardLog(monkeypatch) -> None:
     assert decision == Decision.OK
     rows = con.execute("SELECT COUNT(*) FROM resource_guard_log").fetchone()[0]
     assert rows == 0
+    assert "RESOURCE_GUARD_PAUSED" not in capsys.readouterr().err
 
 
-def test_check_lowMemorySnapshot_writesGuardLog(monkeypatch) -> None:
+def test_check_lowMemorySnapshot_writesGuardLog(monkeypatch, capsys) -> None:
     from backend.app.core.resource_guard import ResourceGuard
     from backend.app.db.migrate import apply_migrations
 
@@ -127,3 +152,23 @@ def test_check_lowMemorySnapshot_writesGuardLog(monkeypatch) -> None:
     assert decision == Decision.PAUSE
     rows = con.execute("SELECT COUNT(*) FROM resource_guard_log").fetchone()[0]
     assert rows == 1
+    assert "RESOURCE_GUARD_PAUSED" in capsys.readouterr().err
+
+
+def test_check_hardStopDecision_writesGuardLog(monkeypatch, capsys) -> None:
+    from backend.app.core.resource_guard import ResourceGuard
+    from backend.app.db.migrate import apply_migrations
+
+    con = duckdb.connect(":memory:")
+    apply_migrations(con)
+    guard = ResourceGuard(profile="eco", con=con)
+    monkeypatch.setattr(
+        guard,
+        "snapshot",
+        lambda: ResourceSnapshot(0.5, 100, 300, 1),
+    )
+    decision, _ = guard.check()
+    assert decision == Decision.HARD_STOP
+    row = con.execute("SELECT decision FROM resource_guard_log").fetchone()
+    assert row[0] == "HARD_STOP"
+    assert "RESOURCE_GUARD_PAUSED" in capsys.readouterr().err

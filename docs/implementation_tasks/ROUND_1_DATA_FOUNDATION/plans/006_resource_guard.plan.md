@@ -197,3 +197,22 @@ Commit: `feat(core): add ResourceGuard with eco/normal/batch thresholds (task 00
 | 评估项 | 修复 |
 |--------|------|
 | guard_log 靠 autocommit 巧合 | `check()` 非 OK 落库改为显式 `BEGIN` → `INSERT` → `COMMIT` |
+
+---
+
+## 评估报告跟进（三次修复）
+
+| 评估项 | 修复 |
+|--------|------|
+| **P1** 缺 `RESOURCE_GUARD_PAUSED` 输出 | `format_pause_event()` + PAUSE/HARD_STOP 时 `print(..., file=sys.stderr)` |
+| **P0** guard_log INSERT 失败事务悬挂 | `check()` 落库包裹 try/except + ROLLBACK |
+| 测试命名 `test_evaluate_highRss_returnsPause` 误导 | 重命名为 `test_evaluate_rssAboveWarnNotPause_returnsWarn` |
+| HARD_STOP / 边界值 / sentinel 无测试 | 新增 4 个测试 |
+
+### Round 1 范围说明（非 bug）
+
+- contract 中 `system_memory_usage_*pct`、`cache_*gb` 阈值 Round 1 未接入 `evaluate()`，留 Round 2+ 按需实现。
+
+### 当前测试规模（三次修复后）
+
+- 本 task：**13** 个

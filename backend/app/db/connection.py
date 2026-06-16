@@ -109,11 +109,12 @@ class ConnectionManager:
             "started_at": datetime.now(UTC).isoformat(),
             "target": str(self.db_path),
         }
-        os.write(fd, json.dumps(payload).encode("utf-8"))
+        payload_bytes = json.dumps(payload).encode("utf-8")
+        os.write(fd, payload_bytes)
         if os.name == "nt":
             import msvcrt
 
-            msvcrt.locking(fd, msvcrt.LK_NBLCK, 1)
+            msvcrt.locking(fd, msvcrt.LK_NBLCK, len(payload_bytes))
         else:
             import fcntl
 
@@ -125,7 +126,8 @@ class ConnectionManager:
             if os.name == "nt":
                 import msvcrt
 
-                msvcrt.locking(self._lock_fd, msvcrt.LK_UNLCK, 1)
+                lock_size = os.fstat(self._lock_fd).st_size or 1
+                msvcrt.locking(self._lock_fd, msvcrt.LK_UNLCK, lock_size)
             else:
                 import fcntl
 
@@ -136,8 +138,8 @@ class ConnectionManager:
 
     def _apply_pragmas(self, con: duckdb.DuckDBPyConnection) -> None:
         profile_limits = _load_profile_limits(self.profile, self._limits)
-        memory_mb = profile_limits.get("duckdb_memory_max_mb", 1536)
-        threads = profile_limits.get("max_threads", 2)
+        memory_mb = int(profile_limits.get("duckdb_memory_max_mb", 1536))
+        threads = int(profile_limits.get("max_threads", 2))
         temp_dir = DATA_ROOT / "cache" / "duckdb_tmp"
         temp_dir.mkdir(parents=True, exist_ok=True)
         temp_path = _escape_sql_string(temp_dir.as_posix())
@@ -157,6 +159,11 @@ class ConnectionManager:
             con.close()
             self._release_lock()
 
-    def reader(self) -> duckdb.DuckDBPyConnection:
+    @contextmanager
+    def reader(self) -> Iterator[duckdb.DuckDBPyConnection]:
         """Read-only connection; multiple readers allowed."""
-        return duckdb.connect(str(self.db_path), read_only=True)
+        con = duckdb.connect(str(self.db_path), read_only=True)
+        try:
+            yield con
+        finally:
+            con.close()

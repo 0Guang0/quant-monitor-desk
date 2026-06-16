@@ -244,3 +244,16 @@ Commit: `feat(db): add foundation schema migration runner (task 005)`
 ### 当前测试规模（二次修复后）
 
 - 本 task：**5** 个（不变，checksum 测试语义修正）
+
+---
+
+## 评估报告跟进（三次修复）
+
+| 评估项 | 修复 |
+|--------|------|
+| migration 坏 SQL 失败路径无测试 | `test_applyMigrations_badSqlInFile_raisesAndLeavesNoVersionRow` |
+| 已应用 migration 文件被删无测试 | `test_applyMigrations_missingAppliedFile_raisesChecksumError` |
+
+### 当前测试规模（三次修复后）
+
+- 本 task：**7** 个

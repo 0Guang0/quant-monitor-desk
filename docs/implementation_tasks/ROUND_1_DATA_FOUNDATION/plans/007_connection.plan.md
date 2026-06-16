@@ -166,3 +166,20 @@ Commit: `feat(db): add single-writer ConnectionManager with file lock (task 007)
 | 评估项 | 状态 |
 |--------|------|
 | `reader()` 无自动关闭 | 已知 P3；调用方须 `close()`（`exists()` / 测试已用 try/finally）。Round 2 可考虑 context manager |
+
+---
+
+## 评估报告跟进（三次修复）
+
+| 评估项 | 修复 |
+|--------|------|
+| **P3** `reader()` 连接泄漏 | 改为 `@contextmanager`，调用方 `with cm.reader() as r:` |
+| **P2** `batch` profile 无 `max_threads` 静默用 2 | `configs/resource_limits.yaml` 增加 `max_threads: 4` |
+| **P2** Windows `msvcrt.locking(..., 1)` 语义错误 | 按 lock payload 字节数锁定/解锁 |
+| **P2** `writer()` 异常时锁释放无测试 | `test_writer_exceptionInsideContext_releasesLock` |
+| **P2** batch 线程 PRAGMA 无测试 | `test_applyPragmas_batchProfile_usesConfiguredMaxThreads` |
+| `_apply_pragmas` threads/memory 未强制 int | `int()` 转换 |
+
+### 当前测试规模（三次修复后）
+
+- 本 task：**8** 个

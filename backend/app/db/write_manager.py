@@ -15,7 +15,7 @@ from backend.app.db.validation_gate import (
 )
 
 
-@dataclass
+@dataclass(frozen=True)
 class WriteRequest:
     run_id: str
     job_id: str
@@ -42,6 +42,12 @@ class WriteManager:
     def __init__(self, conn_manager, gate=None) -> None:
         self.conn_manager = conn_manager
         self.gate = gate or StubValidationGate()
+
+    def _validate_request(self, req: WriteRequest) -> None:
+        quote_ident(req.target_table)
+        quote_ident(req.staging_table)
+        for col in req.primary_keys:
+            quote_ident(col)
 
     def _validated_tables(self, req: WriteRequest) -> tuple[str, str, list[str]]:
         target = quote_ident(req.target_table)
@@ -223,7 +229,7 @@ class WriteManager:
     ) -> WriteResult:
         if req.write_mode not in self.SUPPORTED_MODES:
             raise ValueError(f"unsupported write_mode: {req.write_mode}")
-        self._validated_tables(req)
+        self._validate_request(req)
 
         if con is not None:
             return self._execute_write(con, req, own_transaction=own_transaction)

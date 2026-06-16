@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sys
 import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -149,6 +150,23 @@ def _dir_size_gb(path: Path) -> float:
     return total / (1024**3)
 
 
+def format_pause_event(
+    decision: Decision, reason: str, snap: ResourceSnapshot, profile: str
+) -> str:
+    """Build the RESOURCE_GUARD_PAUSED operator message (GLOBAL_RESOURCE_LIMITS §4)."""
+    return (
+        "RESOURCE_GUARD_PAUSED\n"
+        f"decision={decision.value}\n"
+        f"reason={reason}\n"
+        f"available_memory_gb={snap.available_memory_gb:.2f}\n"
+        f"disk_free_gb={snap.disk_free_gb:.2f}\n"
+        f"project_size_gb={snap.project_size_gb:.2f}\n"
+        f"process_rss_mb={snap.process_rss_mb:.1f}\n"
+        f"profile={profile}\n"
+        "suggestion=retry later or switch to normal/batch profile\n"
+    )
+
+
 class ResourceGuard:
     def __init__(self, profile: str | None = None, con=None) -> None:
         self.profile = profile or get_resource_profile()
@@ -171,27 +189,33 @@ class ResourceGuard:
         snap = self.snapshot()
         profile_limits = self._thresholds["profiles"][self.profile]
         decision, reason = evaluate(snap, self._thresholds, profile_limits)
+        if decision in (Decision.PAUSE, Decision.HARD_STOP):
+            print(format_pause_event(decision, reason, snap, self.profile), file=sys.stderr, end="")
         if decision != Decision.OK and self.con is not None:
-            self.con.execute("BEGIN")
-            self.con.execute(
-                """
-                INSERT INTO resource_guard_log (
-                    event_id, decision, reason, profile,
-                    available_memory_gb, disk_free_gb, process_rss_mb,
-                    project_size_gb, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                [
-                    str(uuid.uuid4()),
-                    decision.value,
-                    reason,
-                    self.profile,
-                    snap.available_memory_gb,
-                    snap.disk_free_gb,
-                    snap.process_rss_mb,
-                    snap.project_size_gb,
-                    datetime.now(UTC),
-                ],
-            )
-            self.con.execute("COMMIT")
+            try:
+                self.con.execute("BEGIN")
+                self.con.execute(
+                    """
+                    INSERT INTO resource_guard_log (
+                        event_id, decision, reason, profile,
+                        available_memory_gb, disk_free_gb, process_rss_mb,
+                        project_size_gb, created_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    [
+                        str(uuid.uuid4()),
+                        decision.value,
+                        reason,
+                        self.profile,
+                        snap.available_memory_gb,
+                        snap.disk_free_gb,
+                        snap.process_rss_mb,
+                        snap.project_size_gb,
+                        datetime.now(UTC),
+                    ],
+                )
+                self.con.execute("COMMIT")
+            except Exception:
+                self.con.execute("ROLLBACK")
+                raise
         return decision, reason
