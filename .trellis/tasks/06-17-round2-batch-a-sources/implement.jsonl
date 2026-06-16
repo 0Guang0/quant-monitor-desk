@@ -1,0 +1,14 @@
+{"file": ".trellis/tasks/06-17-round2-batch-a-sources/MASTER.plan.md", "reason": "【必读·第1条】Execute 唯一全文：§6 契约 + §8 TDD 步骤 + §9/§10 验收 + §12 Skill"}
+{"file": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/DECISIONS.md", "reason": "Batch A 范围、路径、003 表清单"}
+{"file": "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md", "reason": "全局执行规则"}
+{"file": "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md", "reason": "测试政策"}
+{"file": "specs/datasource_registry/source_registry.yaml", "reason": "源配置 seed"}
+{"file": "specs/contracts/data_adapter_contract.md", "reason": "FetchRequest/FetchResult 契约"}
+{"file": "specs/schema/schema.sql", "reason": "source_registry 列定义（裁剪参考）"}
+{"file": "docs/modules/data_sources.md", "reason": "fetch_log 列、角色口径 §5.3–§5.6"}
+{"file": "backend/app/db/migrate.py", "reason": "migration runner 触点"}
+{"file": "backend/app/db/migrations/", "type": "directory", "reason": "003 SQL 目录"}
+{"file": "backend/app/db/connection.py", "reason": "writer/reader 连接模式"}
+{"file": "backend/app/datasources/", "type": "directory", "reason": "本批实现包"}
+{"file": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/011_implement_source_registry.md", "reason": "011 正式任务边界"}
+{"file": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/012_implement_data_adapter_contract.md", "reason": "012 正式任务边界"}
