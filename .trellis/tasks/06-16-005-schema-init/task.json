@@ -1,0 +1,36 @@
+{
+  "id": "06-16-005-schema-init",
+  "name": "06-16-005-schema-init",
+  "title": "005 Schema 初始化（协议示范任务）",
+  "description": "冻结合并后的 complex-task-planning-protocol 示范目录；对应 ROUND_1 005，代码已实现，供 Execute 门禁与 jsonl 注入实验。",
+  "status": "planning",
+  "dev_type": "feature",
+  "scope": "db",
+  "package": null,
+  "priority": "P1",
+  "creator": "Guang",
+  "assignee": "Guang",
+  "createdAt": "2026-06-16",
+  "completedAt": null,
+  "branch": null,
+  "base_branch": null,
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [
+    "backend/app/db/migrate.py",
+    "backend/app/db/migrations/",
+    "scripts/init_db.py",
+    "tests/test_schema_migration.py"
+  ],
+  "notes": "demo=protocol-reference; implementation_already_in_repo=true; linked ROUND plan 005_schema.plan.md",
+  "meta": {
+    "demo": true,
+    "protocol_version": "complex-task-planning-protocol",
+    "linked_round_task": "005_create_schema_sql",
+    "work_already_completed": true
+  }
+}

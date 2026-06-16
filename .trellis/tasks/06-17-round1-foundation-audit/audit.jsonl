@@ -1,0 +1,11 @@
+{"file": ".trellis/tasks/06-17-round1-foundation-audit/AUDIT.plan.md", "reason": "【必读·第1条】Audit §1 Skill + §2 维度验证矩阵"}
+{"file": ".trellis/tasks/06-17-round1-foundation-audit/MASTER.plan.md", "reason": "A5 读 §2 AC；§10 Execute 证据只读"}
+{"file": "docs/implementation_tasks/ROUND_1_DATA_FOUNDATION/DECISIONS.md", "reason": "A1 范围决策对照"}
+{"file": "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md", "reason": "A8 测试规范"}
+{"file": "backend/app/db/migrate.py", "reason": "A1/A3/A7 审查"}
+{"file": "backend/app/db/write_manager.py", "reason": "A2/A4/A5 核心写入路径"}
+{"file": "backend/app/db/validation_gate.py", "reason": "A5 stub 契约"}
+{"file": "backend/app/core/resource_guard.py", "reason": "A4/A5 ResourceGuard"}
+{"file": "backend/app/storage/raw_store.py", "reason": "A3 路径穿越审查"}
+{"file": "scripts/init_db.py", "reason": "A7 幂等 walkthrough"}
+{"file": "tests/smoke/test_foundation_smoke.py", "reason": "A5/A8 E2E"}
