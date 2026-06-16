@@ -5,6 +5,7 @@ from __future__ import annotations
 import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from typing import Literal
 
 import duckdb
 from backend.app.db.sql_identifiers import quote_ident
@@ -14,6 +15,8 @@ from backend.app.db.validation_gate import (
     ValidationRejected,
 )
 
+WriteStatus = Literal["SUCCESS", "FAILED"]
+
 
 @dataclass(frozen=True)
 class WriteRequest:
@@ -22,15 +25,15 @@ class WriteRequest:
     target_table: str
     staging_table: str
     write_mode: str
-    primary_keys: list[str]
+    primary_keys: tuple[str, ...]
     validation_report_id: str
     source_used: str
 
 
-@dataclass
+@dataclass(frozen=True)
 class WriteResult:
     write_id: str
-    status: str
+    status: WriteStatus
     rows_inserted: int = 0
     rows_updated: int = 0
     error_message: str | None = None
@@ -132,22 +135,33 @@ class WriteManager:
         rows_in_staging: int,
         validation_status: str,
         error_message: str,
+        *,
+        own_transaction: bool = True,
     ) -> WriteResult:
-        """Persist FAILED audit in its own transaction after rolling back the data write."""
-        con.execute("BEGIN")
-        self._write_audit(
-            con,
-            write_id=write_id,
-            req=req,
-            started_at=started_at,
-            status="FAILED",
-            rows_in_staging=rows_in_staging,
-            rows_inserted=0,
-            rows_updated=0,
-            validation_status=validation_status,
-            error_message=error_message,
-        )
-        con.execute("COMMIT")
+        """Persist FAILED audit after rolling back the data write."""
+        audit_con = con
+        close_audit = False
+        if not own_transaction:
+            audit_con = duckdb.connect(str(self.conn_manager.db_path))
+            close_audit = True
+        try:
+            audit_con.execute("BEGIN")
+            self._write_audit(
+                audit_con,
+                write_id=write_id,
+                req=req,
+                started_at=started_at,
+                status="FAILED",
+                rows_in_staging=rows_in_staging,
+                rows_inserted=0,
+                rows_updated=0,
+                validation_status=validation_status,
+                error_message=error_message,
+            )
+            audit_con.execute("COMMIT")
+        finally:
+            if close_audit:
+                audit_con.close()
         return WriteResult(
             write_id=write_id,
             status="FAILED",
@@ -203,22 +217,36 @@ class WriteManager:
                 rows_inserted=rows_inserted,
                 rows_updated=rows_updated,
             )
-        except (ValidationRejected, ValidationGateError, duckdb.Error) as exc:
-            con.execute("ROLLBACK")
-            validation_status = (
-                "FAILED"
-                if isinstance(exc, (ValidationRejected, ValidationGateError))
-                else "ERROR"
-            )
+        except (ValidationRejected, ValidationGateError) as exc:
+            if own_transaction:
+                con.execute("ROLLBACK")
             return self._commit_audit_after_rollback(
                 con,
                 write_id,
                 req,
                 started_at,
                 rows_in_staging,
-                validation_status,
+                "FAILED",
                 str(exc),
+                own_transaction=own_transaction,
             )
+        except duckdb.Error as exc:
+            if own_transaction:
+                con.execute("ROLLBACK")
+            return self._commit_audit_after_rollback(
+                con,
+                write_id,
+                req,
+                started_at,
+                rows_in_staging,
+                "ERROR",
+                str(exc),
+                own_transaction=own_transaction,
+            )
+        except Exception:
+            if own_transaction:
+                con.execute("ROLLBACK")
+            raise
 
     def write(
         self,

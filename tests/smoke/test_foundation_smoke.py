@@ -82,7 +82,7 @@ def test_foundation_endToEnd_writesCleanAndAudits(tmp_path: Path, monkeypatch) -
             target_table="security_bar_smoke_clean",
             staging_table="stg_foundation_smoke",
             write_mode="append_only",
-            primary_keys=["instrument_id", "trade_date"],
+            primary_keys=("instrument_id", "trade_date"),
             validation_report_id="stub-pass-1",
             source_used="qmt",
         )
@@ -109,7 +109,7 @@ def test_foundation_endToEnd_writesCleanAndAudits(tmp_path: Path, monkeypatch) -
             target_table="security_bar_smoke_clean",
             staging_table="stg_foundation_smoke",
             write_mode="append_only",
-            primary_keys=["instrument_id", "trade_date"],
+            primary_keys=("instrument_id", "trade_date"),
             validation_report_id="stub-fail-1",
             source_used="qmt",
         )

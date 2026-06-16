@@ -202,3 +202,13 @@ Commit: `feat(storage): add RawStore and file_registry via WriteManager (task 00
 ### 当前测试规模（三次修复后）
 
 - 本 task：**13** 个
+
+---
+
+## 评估报告跟进（PR #1 review / 四次修复）
+
+| # | 级别 | 问题 | 状态 |
+|---|------|------|------|
+| 1 | **P0** | 与 008 联动：`own_transaction=False` 事务边界 | ✅ |
+| 2 | P1 | `_parse_as_of_timestamp` ISO 分支不一致 | ✅ 简化为 YYYY-MM-DD |
+| 3 | P3 | stub validation id 缺 Round 1 注释 | ✅ |

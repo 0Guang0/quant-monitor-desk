@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import duckdb
+import pytest
 from backend.app.core.resource_guard import Decision, ResourceSnapshot, evaluate, format_pause_event
 
 THRESH = {
@@ -172,3 +173,39 @@ def test_check_hardStopDecision_writesGuardLog(monkeypatch, capsys) -> None:
     row = con.execute("SELECT decision FROM resource_guard_log").fetchone()
     assert row[0] == "HARD_STOP"
     assert "RESOURCE_GUARD_PAUSED" in capsys.readouterr().err
+
+
+def test_check_warnDecision_writesGuardLog(monkeypatch, capsys) -> None:
+    from backend.app.core.resource_guard import ResourceGuard
+    from backend.app.db.migrate import apply_migrations
+
+    con = duckdb.connect(":memory:")
+    apply_migrations(con)
+    guard = ResourceGuard(profile="eco", con=con)
+    monkeypatch.setattr(
+        guard,
+        "snapshot",
+        lambda: ResourceSnapshot(3.5, 100, 300, 1),
+    )
+    decision, _ = guard.check()
+    assert decision == Decision.WARN
+    rows = con.execute("SELECT COUNT(*) FROM resource_guard_log").fetchone()[0]
+    assert rows == 1
+    row = con.execute("SELECT decision FROM resource_guard_log").fetchone()
+    assert row[0] == "WARN"
+    assert "RESOURCE_GUARD_PAUSED" not in capsys.readouterr().err
+
+
+def test_snapshot_realCall_doesNotRaise() -> None:
+    from backend.app.core.resource_guard import ResourceGuard
+
+    snap = ResourceGuard().snapshot()
+    assert snap.available_memory_gb >= 0
+    assert snap.disk_free_gb >= 0
+    assert snap.process_rss_mb >= 0
+    assert snap.project_size_gb >= 0
+
+
+def test_resourceSnapshot_negativeValue_raises() -> None:
+    with pytest.raises(ValueError, match="available_memory_gb"):
+        ResourceSnapshot(-1, 1, 1, 1)

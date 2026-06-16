@@ -1,4 +1,8 @@
-"""Validate and quote DuckDB SQL identifiers."""
+"""Validate and quote DuckDB SQL identifiers.
+
+Round 1 allowlist: identifiers must be lowercase snake_case
+(``^[a-z][a-z0-9_]{0,62}$``).
+"""
 
 from __future__ import annotations
 

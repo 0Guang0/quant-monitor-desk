@@ -183,3 +183,18 @@ Commit: `feat(db): add single-writer ConnectionManager with file lock (task 007)
 ### 当前测试规模（三次修复后）
 
 - 本 task：**8** 个
+
+---
+
+## 评估报告跟进（PR #1 review / 四次修复）
+
+| # | 级别 | 问题 | 状态 |
+|---|------|------|------|
+| 1 | **P0** | `duckdb.connect()` 失败时写锁泄漏 | ✅ |
+| 2 | P1 | `_apply_pragmas` temp_directory 字符串拼接 | ✅ escape + 测试 |
+| 3 | P1 | `_acquire_lock` 无重试上限 | ✅ `_MAX_LOCK_RETRIES=5` |
+| 4 | P3 | 双 writer 持锁竞争测试 | ✅ |
+
+### 当前测试规模（四次修复后）
+
+- 本 task：**11** 个

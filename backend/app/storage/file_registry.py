@@ -12,9 +12,7 @@ STG_FILE_REGISTRY = "stg_file_registry"
 
 
 def _parse_as_of_timestamp(as_of: str) -> datetime:
-    """Parse YYYY-MM-DD or ISO-8601 as-of into UTC timestamp."""
-    if "T" in as_of:
-        return datetime.fromisoformat(as_of.replace("Z", "+00:00"))
+    """Parse YYYY-MM-DD as-of date into UTC midnight timestamp."""
     return datetime.fromisoformat(as_of).replace(tzinfo=UTC)
 
 
@@ -51,7 +49,8 @@ class FileRegistry:
             target_table="file_registry",
             staging_table=STG_FILE_REGISTRY,
             write_mode="append_only",
-            primary_keys=["file_id"],
+            primary_keys=("file_id",),
+            # Round 1 stub: always stub-pass-registry until Round 2 ValidationGate
             validation_report_id="stub-pass-registry",
             source_used=saved.source,
         )

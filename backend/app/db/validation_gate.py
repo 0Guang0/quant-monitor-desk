@@ -6,9 +6,17 @@ from __future__ import annotations
 class ValidationGateError(RuntimeError):
     """Unknown or invalid validation_report_id."""
 
+    def __init__(self, message: str, *, validation_report_id: str) -> None:
+        super().__init__(message)
+        self.validation_report_id = validation_report_id
+
 
 class ValidationRejected(RuntimeError):
     """Validation report indicates write must not proceed."""
+
+    def __init__(self, message: str, *, validation_report_id: str) -> None:
+        super().__init__(message)
+        self.validation_report_id = validation_report_id
 
 
 class StubValidationGate:
@@ -16,5 +24,11 @@ class StubValidationGate:
         if validation_report_id.startswith("stub-pass-"):
             return
         if validation_report_id.startswith("stub-fail-"):
-            raise ValidationRejected(f"validation rejected: {validation_report_id}")
-        raise ValidationGateError(f"unknown validation_report_id: {validation_report_id}")
+            raise ValidationRejected(
+                f"validation rejected: {validation_report_id}",
+                validation_report_id=validation_report_id,
+            )
+        raise ValidationGateError(
+            f"unknown validation_report_id: {validation_report_id}",
+            validation_report_id=validation_report_id,
+        )

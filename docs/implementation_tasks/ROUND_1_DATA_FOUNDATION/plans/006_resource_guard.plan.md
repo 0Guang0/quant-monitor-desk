@@ -216,3 +216,18 @@ Commit: `feat(core): add ResourceGuard with eco/normal/batch thresholds (task 00
 ### 当前测试规模（三次修复后）
 
 - 本 task：**13** 个
+
+---
+
+## 评估报告跟进（PR #1 review / 四次修复）
+
+| # | 级别 | 问题 | 状态 |
+|---|------|------|------|
+| 1 | **P0** | `rglob(follow_symlinks=False)` 在 py>=3.11 崩溃 | ✅ `os.walk` |
+| 2 | P1 | WARN 写 guard_log 无测试 | ✅ |
+| 3 | P3 | `ResourceSnapshot` 非负性未断言 | ✅ |
+| 4 | — | 真实 `snapshot()` 集成测试 | ✅ |
+
+### 当前测试规模（四次修复后）
+
+- 本 task：**16** 个

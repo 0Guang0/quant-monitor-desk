@@ -107,6 +107,20 @@ Checkpoint 未全绿不得进入 010。（**已完成**：010 smoke 已通过。
 | 7 | P3 | 测试命名/重复/弱断言、WriteRequest frozen、reader CM | ✅ |
 | 8 | P3 | `scripts/__init__.py` 删除、conftest 清理 | ✅ |
 
+## 评估报告跟进（PR #1 review / 四次修复）
+
+> 来源：`/review-pr` 多 agent 审查。已全部修复，全库 **93** tests passed + 真实生产路径验证通过。
+
+| # | 级别 | 问题 | Task | 状态 |
+|---|------|------|------|------|
+| 1 | **P0** | `_dir_size_gb` `rglob(follow_symlinks=)` 崩溃 | 006 | ✅ `os.walk` |
+| 2 | **P0** | connect 失败锁泄漏 | 007 | ✅ `writer()` finally |
+| 3 | **P0** | `own_transaction=False` 无条件 ROLLBACK | 008/009 | ✅ 条件 ROLLBACK + 独立 audit 连接 |
+| 4 | **P0** | `own_transaction=False` 无测试 | 008 | ✅ |
+| 5–11 | P1 | pragma / quote_ident / WARN / as_of / 异常 / duckdb.Error / lock 重试 | 006–009 | ✅ |
+| 12–18 | P3 | tuple PK / stub 注释 / Literal / 异常字段 / 非负 snapshot 等 | 006–009 | ✅ |
+| 19 | — | 真实 `snapshot()` 集成测试 | 006 | ✅ |
+
 ## 备注
 
 本目录文件不是临时文件，最终交付包应保留 `DECISIONS.md`、`plans/` 与 6 个任务文件。

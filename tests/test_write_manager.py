@@ -34,7 +34,7 @@ def _req(mode: str = "append_only", report: str = "stub-pass-1") -> WriteRequest
         target_table="security_bar_smoke_clean",
         staging_table="stg_foundation_smoke",
         write_mode=mode,
-        primary_keys=["instrument_id", "trade_date"],
+        primary_keys=("instrument_id", "trade_date"),
         validation_report_id=report,
         source_used="qmt",
     )
@@ -60,7 +60,7 @@ def test_write_invalidIdentifier_raisesBeforeWrite(tmp_path: Path) -> None:
         target_table="file_registry; DROP TABLE write_audit_log; --",
         staging_table="stg_foundation_smoke",
         write_mode="append_only",
-        primary_keys=["instrument_id", "trade_date"],
+        primary_keys=("instrument_id", "trade_date"),
         validation_report_id="stub-pass-1",
         source_used="qmt",
     )
@@ -229,3 +229,32 @@ def test_write_upsertByPk_mixedNewAndExisting_reportsCorrectCounts(tmp_path: Pat
             "SELECT close FROM security_bar_smoke_clean WHERE instrument_id='AAPL'"
         ).fetchone()[0]
         assert aapl_close == 200.0
+
+
+def test_write_ownTransactionFalse_stubFail_doesNotRollbackOuterTxn(tmp_path: Path) -> None:
+    cm = _setup(tmp_path)
+    with cm.writer() as w:
+        w.execute(
+            "CREATE TABLE security_bar_smoke_clean AS "
+            "SELECT * FROM stg_foundation_smoke WHERE 1=0"
+        )
+        w.execute("BEGIN")
+        w.execute("INSERT INTO stg_foundation_smoke VALUES ('MSFT','2026-06-16',120.0,'qmt','b2')")
+        res = WriteManager(cm).write(_req(report="stub-fail-1"), con=w, own_transaction=False)
+        assert res.status == "FAILED"
+        # Outer transaction still active: staging insert from above remains visible.
+        cnt = w.execute("SELECT COUNT(*) FROM stg_foundation_smoke").fetchone()[0]
+        assert cnt == 2
+        w.execute("ROLLBACK")
+
+
+def test_assertCanWrite_unknownId_exposesReportId() -> None:
+    with pytest.raises(ValidationGateError) as exc_info:
+        StubValidationGate().assert_can_write("real-123", "append_only")
+    assert exc_info.value.validation_report_id == "real-123"
+
+
+def test_assertCanWrite_stubFail_exposesReportId() -> None:
+    with pytest.raises(ValidationRejected) as exc_info:
+        StubValidationGate().assert_can_write("stub-fail-001", "append_only")
+    assert exc_info.value.validation_report_id == "stub-fail-001"

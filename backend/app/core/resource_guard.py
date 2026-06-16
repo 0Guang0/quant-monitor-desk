@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import sys
 import uuid
 from dataclasses import dataclass
@@ -27,6 +28,17 @@ class ResourceSnapshot:
     disk_free_gb: float
     process_rss_mb: float
     project_size_gb: float
+
+    def __post_init__(self) -> None:
+        for name in (
+            "available_memory_gb",
+            "disk_free_gb",
+            "process_rss_mb",
+            "project_size_gb",
+        ):
+            value = getattr(self, name)
+            if value < 0:
+                raise ValueError(f"{name} must be non-negative, got {value}")
 
 
 _SEVERITY = {
@@ -144,9 +156,12 @@ def _dir_size_gb(path: Path) -> float:
     total = 0
     if not path.exists():
         return 0.0
-    for item in path.rglob("*", follow_symlinks=False):
-        if item.is_file():
-            total += item.stat().st_size
+    for root, _dirs, files in os.walk(path, followlinks=False):
+        for name in files:
+            fp = Path(root) / name
+            if fp.is_symlink():
+                continue
+            total += fp.stat().st_size
     return total / (1024**3)
 
 

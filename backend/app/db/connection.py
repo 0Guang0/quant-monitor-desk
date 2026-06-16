@@ -17,6 +17,9 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
 
 
+_MAX_LOCK_RETRIES = 5
+
+
 class WriteLockError(RuntimeError):
     """Raised when another process holds the write lock."""
 
@@ -97,12 +100,16 @@ class ConnectionManager:
 
     def _acquire_lock(self) -> None:
         flags = os.O_CREAT | os.O_EXCL | os.O_WRONLY
-        while True:
+        for _ in range(_MAX_LOCK_RETRIES):
             try:
                 fd = os.open(str(self._lock_path), flags, 0o644)
                 break
             except FileExistsError:
                 self._try_remove_stale_lock()
+        else:
+            raise WriteLockError(
+                f"could not acquire write lock after {_MAX_LOCK_RETRIES} attempts"
+            )
 
         payload = {
             "pid": os.getpid(),
@@ -151,12 +158,14 @@ class ConnectionManager:
     def writer(self) -> Iterator[duckdb.DuckDBPyConnection]:
         """Exclusive writable connection with file lock."""
         self._acquire_lock()
-        con = duckdb.connect(str(self.db_path))
+        con: duckdb.DuckDBPyConnection | None = None
         try:
+            con = duckdb.connect(str(self.db_path))
             self._apply_pragmas(con)
             yield con
         finally:
-            con.close()
+            if con is not None:
+                con.close()
             self._release_lock()
 
     @contextmanager

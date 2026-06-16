@@ -266,3 +266,23 @@ Commit: `feat(db): add WriteManager with stub validation gate and audit (task 00
 ### 当前测试规模（三次修复后）
 
 - 本 task：**12** 个
+
+---
+
+## 评估报告跟进（PR #1 review / 四次修复）
+
+| # | 级别 | 问题 | 状态 |
+|---|------|------|------|
+| 1 | **P0** | `own_transaction=False` 失败时无条件 ROLLBACK | ✅ |
+| 2 | **P0** | `own_transaction=False` 失败路径无测试 | ✅ |
+| 3 | P1 | 非 duckdb/validation 异常未 ROLLBACK | ✅ |
+| 4 | P1 | `duckdb.Error` 静默吞掉 | ✅ FileRegistry raise |
+| 5 | P1 | `quote_ident` 无独立单元测试 | ✅ |
+| 6 | P3 | `primary_keys: list` 改 `tuple` | ✅ |
+| 7 | P3 | `WriteResult` 不变量 / Literal status | ✅ |
+| 8 | P3 | 异常类缺结构化字段 | ✅ |
+| 9 | P3 | `quote_ident` 小写约束文档化 | ✅ |
+
+### 当前测试规模（四次修复后）
+
+- 本 task：**17** 个（含 `tests/test_sql_identifiers.py` 5 个）

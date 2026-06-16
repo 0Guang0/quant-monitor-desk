@@ -113,3 +113,48 @@ def test_writer_exceptionInsideContext_releasesLock(tmp_path: Path) -> None:
         w.execute("INSERT INTO file_registry(file_id, source) VALUES ('x','test')")
     with cm.reader() as r:
         assert r.execute("SELECT COUNT(*) FROM file_registry WHERE file_id='x'").fetchone()[0] == 1
+
+
+def test_writer_connectFailure_releasesLock(tmp_path: Path, monkeypatch) -> None:
+    db = tmp_path / "t.duckdb"
+    db.parent.mkdir(parents=True, exist_ok=True)
+    cm = ConnectionManager(db)
+    import backend.app.db.connection as conn_mod
+
+    real_connect = conn_mod.duckdb.connect
+    calls = {"n": 0}
+
+    def _connect_once_fail(path, *args, **kwargs):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise duckdb.Error("simulated connect failure")
+        return real_connect(path, *args, **kwargs)
+
+    monkeypatch.setattr(conn_mod.duckdb, "connect", _connect_once_fail)
+    with pytest.raises(duckdb.Error, match="simulated connect"):
+        with cm.writer():
+            pass
+    _init(db)
+    with cm.writer() as w:
+        w.execute("INSERT INTO file_registry(file_id, source) VALUES ('lock_ok','qmt')")
+    with cm.reader() as r:
+        cnt = r.execute(
+            "SELECT COUNT(*) FROM file_registry WHERE file_id='lock_ok'"
+        ).fetchone()[0]
+        assert cnt == 1
+
+
+def test_applyPragmas_tempDirectoryWithQuote_doesNotBreakPragma(
+    tmp_path: Path, monkeypatch
+) -> None:
+    db = tmp_path / "t.duckdb"
+    _init(db)
+    import backend.app.db.connection as conn_mod
+
+    quoted_root = tmp_path / "data'quote"
+    monkeypatch.setattr(conn_mod, "DATA_ROOT", quoted_root)
+    limits = {"eco": {"duckdb_memory_max_mb": 512, "max_threads": 1}}
+    cm = ConnectionManager(db, profile="eco", limits=limits)
+    with cm.writer() as w:
+        temp = w.execute("SELECT current_setting('temp_directory')").fetchone()[0]
+    assert "duckdb_tmp" in temp

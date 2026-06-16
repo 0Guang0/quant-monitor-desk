@@ -149,7 +149,7 @@ Commit: `test(smoke): add foundation end-to-end smoke test (task 010)`
 pytest -q && ruff check . && python -m compileall backend scripts
 ```
 
-- **70/70** 测试通过（Round 0：26 + Round 1：44）
+- **93/93** 测试通过（Round 0：26 + Round 1：67）
 
 ---
 
@@ -165,4 +165,4 @@ pytest -q && ruff check . && python -m compileall backend scripts
 | 评估项 | 修复 |
 |--------|------|
 | smoke 使用 `with cm.reader()` | 随 007 reader context manager 更新 |
-| 全量测试 | **80/80** 通过（Round 0：26 + Round 1：54） |
+| 全量测试 | **93/93** 通过（Round 0：26 + Round 1：67） |
