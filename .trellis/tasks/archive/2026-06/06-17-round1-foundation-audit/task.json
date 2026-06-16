@@ -3,7 +3,7 @@
   "name": "06-17-round1-foundation-audit",
   "title": "Round 1 数据底座 retrospective Audit",
   "description": "Round 1（005–010）实现已完成（93/93 tests）；补建复杂任务协议 Phase 5b 冻结物与 Phase 7 Audit 前置，待派发 A1–A8。",
-  "status": "in_progress",
+  "status": "completed",
   "dev_type": "audit",
   "scope": "db",
   "package": null,
@@ -11,7 +11,7 @@
   "creator": "Guang",
   "assignee": "Guang",
   "createdAt": "2026-06-17",
-  "completedAt": null,
+  "completedAt": "2026-06-17",
   "branch": null,
   "base_branch": null,
   "worktree_path": null,
@@ -31,7 +31,14 @@
   "notes": "retroactive_audit=true; implementation_completed=2026-06; linked_round=ROUND_1",
   "meta": {
     "protocol_version": "complex-task-planning-protocol",
-    "linked_round_tasks": ["005", "006", "007", "008", "009", "010"],
+    "linked_round_tasks": [
+      "005",
+      "006",
+      "007",
+      "008",
+      "009",
+      "010"
+    ],
     "audit_phase": "7.pre_ready",
     "work_already_completed": true
   }
