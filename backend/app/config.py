@@ -12,7 +12,7 @@ def _path_env(name: str, default: Path) -> Path:
     raw = os.getenv(name)
     if raw is None or raw.strip() == "":
         return default
-    return Path(raw)
+    return Path(raw).expanduser()
 
 
 DATA_ROOT = _path_env("QMD_DATA_ROOT", PROJECT_ROOT / "data")

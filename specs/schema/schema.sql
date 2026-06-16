@@ -32,6 +32,30 @@ CREATE TABLE IF NOT EXISTS source_registry (
     updated_at             TIMESTAMP
 );
 
+-- Batch A ingestion audit (aligned with docs/modules/data_sources.md §5.6)
+CREATE TABLE IF NOT EXISTS fetch_log (
+    fetch_id            VARCHAR PRIMARY KEY,
+    run_id              VARCHAR,
+    job_id              VARCHAR,
+    source_id           VARCHAR,
+    data_domain         VARCHAR,
+    market_id           VARCHAR,
+    instrument_id       VARCHAR,
+    request_params_hash VARCHAR,
+    status              VARCHAR,
+    row_count           INTEGER,
+    raw_file_paths      VARCHAR,
+    content_hash        VARCHAR,
+    schema_hash         VARCHAR,
+    as_of_timestamp     TIMESTAMP,
+    publish_timestamp   TIMESTAMP,
+    fetch_time          TIMESTAMP,
+    latency_ms          INTEGER,
+    retry_count         INTEGER,
+    error_type          VARCHAR,
+    error_message       TEXT
+);
+
 CREATE TABLE IF NOT EXISTS file_registry (
     file_id             VARCHAR PRIMARY KEY,
     file_type           VARCHAR,
@@ -185,6 +209,10 @@ CREATE TABLE IF NOT EXISTS resource_guard_log (
     disk_free_gb        DOUBLE,
     process_rss_mb      DOUBLE,
     project_size_gb     DOUBLE,
+    system_memory_usage_pct DOUBLE,
+    system_disk_usage_pct   DOUBLE,
+    cache_size_gb           DOUBLE,
+    duckdb_temp_size_gb     DOUBLE,
     created_at          TIMESTAMP
 );
 

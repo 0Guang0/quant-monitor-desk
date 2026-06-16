@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib
+from pathlib import Path
 
 
 def test_dataRoot_emptyEnv_fallsBackToProjectData(monkeypatch) -> None:
@@ -19,3 +20,11 @@ def test_configsRoot_emptyEnv_fallsBackToProjectConfigs(monkeypatch) -> None:
 
     importlib.reload(cfg)
     assert cfg.CONFIGS_ROOT == cfg.PROJECT_ROOT / "configs"
+
+
+def test_dataRoot_tildePath_expandsUserHome(monkeypatch) -> None:
+    monkeypatch.setenv("QMD_DATA_ROOT", "~")
+    import backend.app.config as cfg
+
+    importlib.reload(cfg)
+    assert cfg.DATA_ROOT == Path("~").expanduser()

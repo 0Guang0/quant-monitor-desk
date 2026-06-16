@@ -277,8 +277,10 @@ class ResourceGuard:
                     INSERT INTO resource_guard_log (
                         event_id, decision, reason, profile,
                         available_memory_gb, disk_free_gb, process_rss_mb,
-                        project_size_gb, created_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        project_size_gb, system_memory_usage_pct,
+                        system_disk_usage_pct, cache_size_gb,
+                        duckdb_temp_size_gb, created_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     [
                         str(uuid.uuid4()),
@@ -289,6 +291,10 @@ class ResourceGuard:
                         snap.disk_free_gb,
                         snap.process_rss_mb,
                         snap.project_size_gb,
+                        snap.system_memory_usage_pct,
+                        snap.system_disk_usage_pct,
+                        snap.cache_size_gb,
+                        snap.duckdb_temp_size_gb,
                         datetime.now(UTC),
                     ],
                 )

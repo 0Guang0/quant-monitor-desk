@@ -35,14 +35,24 @@ def _table_columns(sql_text: str, table: str) -> set[str] | None:
     return columns
 
 
+def _alter_add_columns(sql_text: str, table: str) -> set[str]:
+    pattern = rf"ALTER TABLE {re.escape(table)} ADD COLUMN IF NOT EXISTS (\w+)"
+    return {match.group(1) for match in re.finditer(pattern, sql_text, re.IGNORECASE)}
+
+
 def test_foundationMigrationColumns_existInSchemaContract() -> None:
     schema_text = SCHEMA_SQL.read_text(encoding="utf-8")
+    migration_names = (
+        "001_foundation.sql",
+        "002_registry_hardening.sql",
+        "003_resource_guard_metrics.sql",
+    )
     migration_text = "\n".join(
-        (MIGRATIONS / name).read_text(encoding="utf-8")
-        for name in ("001_foundation.sql", "002_registry_hardening.sql")
+        (MIGRATIONS / name).read_text(encoding="utf-8") for name in migration_names
     )
     for table in FOUNDATION_TABLES:
-        mig_cols = _table_columns(migration_text, table)
+        mig_cols = _table_columns(migration_text, table) or set()
+        mig_cols |= _alter_add_columns(migration_text, table)
         assert mig_cols, f"{table} missing from migrations"
         contract_cols = _table_columns(schema_text, table)
         assert contract_cols, f"{table} missing from schema.sql contract"

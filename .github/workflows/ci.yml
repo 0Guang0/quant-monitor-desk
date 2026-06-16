@@ -16,6 +16,13 @@ jobs:
       - run: pip install -e ".[dev]"
       - run: pytest -q --cov=backend --cov-fail-under=75
       - run: ruff check .
+      - run: python -m compileall backend scripts
+      - name: Block WriteManager imports in datasources
+        run: |
+          if grep -riE 'WriteManager|write_manager' backend/app/datasources/ 2>/dev/null; then
+            echo "WriteManager import forbidden under backend/app/datasources/"
+            exit 1
+          fi
 
   frontend:
     runs-on: ubuntu-latest

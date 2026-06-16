@@ -121,6 +121,15 @@ def test_evaluate_cacheAbovePause_returnsPause() -> None:
     assert "cache" in reason.lower()
 
 
+def test_evaluate_duckdbTempAboveHardStop_returnsHardStop() -> None:
+    eco = THRESH["profiles"]["eco"]
+    temp_max = eco["duckdb_temp_max_gb"]
+    snap = _snap(duckdb_temp_size_gb=temp_max * 1.05)
+    decision, reason = evaluate(snap, THRESH, eco)
+    assert decision == Decision.HARD_STOP
+    assert "temp" in reason.lower()
+
+
 def test_evaluate_duckdbTempAboveMax_returnsPause() -> None:
     eco = THRESH["profiles"]["eco"]
     temp_max = eco["duckdb_temp_max_gb"]
@@ -130,18 +139,26 @@ def test_evaluate_duckdbTempAboveMax_returnsPause() -> None:
     assert "temp" in reason.lower()
 
 
-def test_evaluate_systemMemoryUsageHigh_returnsPause() -> None:
+def test_evaluate_systemMemoryUsageAbovePause_returnsPause() -> None:
     snap = _snap(system_memory_usage_pct=85.0)
     decision, reason = evaluate(snap, THRESH)
     assert decision == Decision.PAUSE
     assert "memory usage" in reason.lower()
 
 
-def test_evaluate_systemDiskUsageCritical_returnsHardStop() -> None:
+def test_evaluate_systemMemoryUsageHigh_returnsPause() -> None:
+    test_evaluate_systemMemoryUsageAbovePause_returnsPause()
+
+
+def test_evaluate_systemDiskUsageAboveHardStop_returnsHardStop() -> None:
     snap = _snap(system_disk_usage_pct=95.0)
     decision, reason = evaluate(snap, THRESH)
     assert decision == Decision.HARD_STOP
     assert "disk usage" in reason.lower()
+
+
+def test_evaluate_systemDiskUsageCritical_returnsHardStop() -> None:
+    test_evaluate_systemDiskUsageAboveHardStop_returnsHardStop()
 
 
 def test_formatPauseEvent_includesSentinelAndMetrics() -> None:
@@ -174,6 +191,38 @@ def test_check_okDecision_doesNotWriteGuardLog(monkeypatch, capsys) -> None:
     rows = con.execute("SELECT COUNT(*) FROM resource_guard_log").fetchone()[0]
     assert rows == 0
     assert "RESOURCE_GUARD_PAUSED" not in capsys.readouterr().err
+
+
+def test_check_lowMemorySnapshot_writesExtendedGuardLogColumns(monkeypatch) -> None:
+    from backend.app.core.resource_guard import ResourceGuard
+    from backend.app.db.migrate import apply_migrations
+
+    con = duckdb.connect(":memory:")
+    apply_migrations(con)
+    guard = ResourceGuard(profile="eco", con=con)
+    monkeypatch.setattr(
+        guard,
+        "snapshot",
+        lambda: _snap(
+            available_memory_gb=1.5,
+            system_memory_usage_pct=88.0,
+            system_disk_usage_pct=80.0,
+            cache_size_gb=2.5,
+            duckdb_temp_size_gb=1.8,
+        ),
+    )
+    guard.check()
+    row = con.execute(
+        """
+        SELECT system_memory_usage_pct, system_disk_usage_pct,
+               cache_size_gb, duckdb_temp_size_gb
+        FROM resource_guard_log
+        """
+    ).fetchone()
+    assert row[0] == 88.0
+    assert row[1] == 80.0
+    assert row[2] == 2.5
+    assert row[3] == 1.8
 
 
 def test_check_lowMemorySnapshot_writesGuardLog(monkeypatch, capsys) -> None:

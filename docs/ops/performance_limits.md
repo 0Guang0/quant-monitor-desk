@@ -5,6 +5,17 @@
 
 ---
 
+## 配置文件权威（Round 1 repair · GPT）
+
+| 文件 | 角色 |
+|------|------|
+| `specs/contracts/resource_limits.yaml` | **权威契约**：`system_thresholds`、`project_size_thresholds`（含 cache / system pct / duckdb temp 上限） |
+| `configs/resource_limits.yaml` | **本地 override**：仅 `profiles`（eco/normal/batch 进程与 DuckDB 限制） |
+
+运行时 `load_thresholds()` 将 contract 中的 thresholds **合并**进 config。`configs/` 中缺少的阈值字段**并非未生效**——它们来自 `specs/contracts/`。修改阈值时请优先改 contract，再在 README/本文件记录 rationale。
+
+---
+
 # 1. 总原则
 
 本项目不是服务器集群系统，而是本地优先、少数人使用的量化监控系统。因此所有默认参数都采用 **Conservative Desktop Mode**。

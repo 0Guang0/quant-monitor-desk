@@ -39,6 +39,7 @@ def test_writer_whenLockHeld_raisesWriteLockError(tmp_path: Path) -> None:
 
 
 def test_applyPragmas_readerProfile_setsThreadsAndMemory(tmp_path: Path) -> None:
+    """Alias: GPT P0-3 test_reader_appliesThreadsAndMemoryLimit."""
     db = tmp_path / "t.duckdb"
     _init(db)
     cm = ConnectionManager(
@@ -51,6 +52,28 @@ def test_applyPragmas_readerProfile_setsThreadsAndMemory(tmp_path: Path) -> None
         mem = r.execute("SELECT current_setting('memory_limit')").fetchone()[0]
     assert int(threads) == 2
     assert "1536" in mem or "1.5" in mem.lower() or "1.4" in mem.lower()
+
+
+def test_reader_appliesThreadsAndMemoryLimit(tmp_path: Path) -> None:
+    test_applyPragmas_readerProfile_setsThreadsAndMemory(tmp_path)
+
+
+def test_reader_appliesTempDirectory(tmp_path: Path, monkeypatch) -> None:
+    db = tmp_path / "t.duckdb"
+    _init(db)
+    import backend.app.db.connection as conn_mod
+
+    data_root = tmp_path / "data"
+    monkeypatch.setattr(conn_mod, "DATA_ROOT", data_root)
+    cm = ConnectionManager(
+        db,
+        profile="eco",
+        limits={"eco": {"duckdb_memory_max_mb": 512, "max_threads": 1}},
+    )
+    with cm.reader() as r:
+        temp = r.execute("SELECT current_setting('temp_directory')").fetchone()[0]
+    assert "duckdb_tmp" in temp
+    assert data_root.joinpath("cache", "duckdb_tmp").exists()
 
 
 def test_applyPragmas_ecoProfile_setsThreadsAndMemory(tmp_path: Path) -> None:

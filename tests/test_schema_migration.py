@@ -28,6 +28,7 @@ def test_applyMigrations_freshDb_createsFoundationTables() -> None:
     applied = apply_migrations(con)
     assert "001_foundation" in applied
     assert "002_registry_hardening" in applied
+    assert "003_resource_guard_metrics" in applied
     tables = {row[0] for row in con.execute("SHOW TABLES").fetchall()}
     assert FOUNDATION_TABLES.issubset(tables)
     assert "stg_file_registry" in tables
@@ -52,7 +53,11 @@ def test_appliedVersions_emptyDb_returnsEmptySet() -> None:
 def test_appliedVersions_afterMigration_containsFoundation() -> None:
     con = duckdb.connect(":memory:")
     apply_migrations(con)
-    assert applied_versions(con) == {"001_foundation", "002_registry_hardening"}
+    assert applied_versions(con) == {
+        "001_foundation",
+        "002_registry_hardening",
+        "003_resource_guard_metrics",
+    }
 
 
 def test_applyMigrations_modifiedFile_raisesChecksumError(tmp_path: Path) -> None:

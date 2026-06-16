@@ -250,9 +250,9 @@ class WriteManager:
                     rows_in_staging,
                     "ERROR",
                     str(exc),
-                    own_transaction=own_transaction,
+                    own_transaction=True,
                 )
-            con.execute("ROLLBACK")
+            # own_transaction=False: aborted txn; caller ROLLBACKs. No extra audit con.
             return WriteResult(
                 write_id=write_id,
                 status="FAILED",

@@ -1,12 +1,58 @@
 # ROUND 2 DATA INGESTION VALIDATION
 
-本目录包含 6 个正式 implementation task 文件。必须按文件编号顺序执行。
+本目录包含 6 个正式 implementation task 文件（011–016）。**Execute 按四批次进行**（每批独立 Trellis 复杂任务 Plan → Execute → Audit → Finish）。
 
-执行前读取：
+## Round 2 目标
+
+建立数据源接入与校验底座：
+
+1. **能注册、能契约化抓取**：source_registry + Adapter contract + fetch_log
+2. **能挂接多源 skeleton**（Batch B）
+3. **能质量检查与冲突治理**（Batch C），替换 stub ValidationGate
+4. **能编排同步任务**（Batch D）
+
+## 四批次 Execute 顺序
+
+| 批次 | 任务 | Trellis slug（Plan） | 深度计划 |
+|------|------|----------------------|----------|
+| **A** | 011+012 | `06-17-round2-batch-a-sources` | MASTER §8（`plans/` 仅索引） |
+| B | 013 | （Plan 待建） | `plans/013_*.plan.md` |
+| C | 015+016 | （Plan 待建） | `plans/015_016_*.plan.md` |
+| D | 014 | （Plan 待建） | `plans/014_*.plan.md` |
+
+## 执行前必读
 
 - `../GLOBAL_EXECUTION_RULES.md`
 - `../GLOBAL_TESTING_POLICY.md`
 - `../GLOBAL_RESOURCE_LIMITS.md`
 - `../GLOBAL_TASK_TEMPLATE.md`
+- `./DECISIONS.md` — 本轮已确认决策（**先读**）
 
-本目录文件不是临时文件，最终交付包应保留。
+## 任务清单
+
+| 编号 | 任务 | Batch |
+|------|------|-------|
+| 011 | source_registry | A |
+| 012 | data adapter contract | A |
+| 013 | core adapter skeletons | B |
+| 014 | data sync orchestrator | D |
+| 015 | data quality validator | C |
+| 016 | source conflict validator | C |
+
+## Batch A Checkpoint（011+012 完成后）
+
+- [ ] `pytest -q` 全绿（Round 1 基线 93 + 增量）
+- [ ] migration 003 已应用
+- [ ] YAML 加载 + legacy 角色拒绝
+- [ ] fetch 失败仍写 fetch_log
+
+未全绿不得进入 Batch B。
+
+## Plan / Execute 状态
+
+| 批次 | Plan | Execute |
+|------|------|---------|
+| A | ✅ 已冻结（待用户 `task.py start`） | 未开始 |
+| B–D | 未开始 | 未开始 |
+
+Trellis 任务目录：`.trellis/tasks/06-17-round2-batch-a-sources/`

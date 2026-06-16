@@ -252,6 +252,42 @@ def test_write_ownTransactionFalse_stubFail_doesNotRollbackOuterTxn(tmp_path: Pa
         w.execute("ROLLBACK")
 
 
+def test_write_ownTransactionFalse_duckdbError_doesNotOpenSecondAuditConnection(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """GPT P1: own_transaction=False + SQL error → FAILED result, no audit_con spawn."""
+    cm = _setup(tmp_path)
+    with cm.writer() as w:
+        w.execute(
+            "CREATE TABLE security_bar_smoke_clean AS "
+            "SELECT * FROM stg_foundation_smoke WHERE 1=0"
+        )
+        w.execute("BEGIN")
+        import backend.app.db.write_manager as wm_mod
+
+        original_connect = duckdb.connect
+        connect_calls: list[bool] = []
+
+        def _tracking_connect(path, *args, **kwargs):
+            connect_calls.append(True)
+            return original_connect(path, *args, **kwargs)
+
+        monkeypatch.setattr(wm_mod.duckdb, "connect", _tracking_connect)
+
+        original_execute = duckdb.DuckDBPyConnection.execute
+
+        def _fail_merge(self, sql, *args, **kwargs):
+            if "INSERT INTO" in sql and "security_bar_smoke_clean" in sql:
+                raise duckdb.Error("simulated merge failure")
+            return original_execute(self, sql, *args, **kwargs)
+
+        monkeypatch.setattr(duckdb.DuckDBPyConnection, "execute", _fail_merge)
+        res = WriteManager(cm).write(_req(), con=w, own_transaction=False)
+        assert res.status == "FAILED"
+        assert connect_calls == []
+        w.execute("ROLLBACK")
+
+
 def test_assertCanWrite_unknownId_exposesReportId() -> None:
     with pytest.raises(ValidationGateError) as exc_info:
         StubValidationGate().assert_can_write("real-123", "append_only")

@@ -280,6 +280,8 @@ layer5_security_evidence 个股/合约证据
 
 ## 5.5 Adapter 接口协议
 
+> **实现口径（Batch A）：** 运行时契约以 `specs/contracts/data_adapter_contract.md` 与 MASTER §6 为准，使用 **Pydantic v2**。本节 dataclass 示例仅供阅读，Execute 不得照抄。
+
 ### 5.5.1 Python 抽象接口
 
 ```python
