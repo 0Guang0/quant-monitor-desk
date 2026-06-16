@@ -1,0 +1,10 @@
+{"file": ".trellis/tasks/06-16-005-schema-init/MASTER.plan.md", "reason": "【必读·第1条】执行唯一全文：目标、步骤、Red Flags、§10 验收命令、DoD"}
+{"file": "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md", "reason": "全局执行规则"}
+{"file": "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md", "reason": "测试政策"}
+{"file": "docs/DECISIONS.md", "reason": "§3 foundation 表范围决策"}
+{"file": "specs/schema/schema.sql", "reason": "列定义来源（裁剪用，不整库执行）"}
+{"file": "docs/modules/duckdb_and_parquet.md", "reason": "DuckDB 模块约定"}
+{"file": "backend/app/db/migrate.py", "reason": "实现触点：migration runner"}
+{"file": "backend/app/db/migrations/", "type": "directory", "reason": "SQL migration 文件目录"}
+{"file": "scripts/init_db.py", "reason": "CLI 入口"}
+{"file": "tests/test_schema_migration.py", "reason": "本任务测试套件"}

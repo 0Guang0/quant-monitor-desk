@@ -27,6 +27,7 @@ profiles:
     max_parallel_non_core_jobs: 1
   batch:
     requires_user_confirm: true
+    max_threads: 4
     max_threads_formula: min(physical_cores // 2, 8)
     process_rss_warn_mb: 3000
     process_rss_pause_mb: 4000

@@ -1,0 +1,12 @@
+{"file": ".trellis/tasks/06-17-round0-scaffold-audit/MASTER.plan.md", "reason": "【必读·第1条】Execute 全文；§10 验收"}
+{"file": "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md", "reason": "全局执行规则"}
+{"file": "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md", "reason": "测试政策"}
+{"file": "docs/implementation_tasks/ROUND_0_PROJECT_SCAFFOLD/", "type": "directory", "reason": "000–004 任务源"}
+{"file": "backend/app/main.py", "reason": "FastAPI 占位"}
+{"file": "backend/app/config.py", "reason": "配置加载"}
+{"file": "docs/INDEX.md", "reason": "004 文档索引"}
+{"file": "tests/test_global_execution_rules.py", "reason": "000 测试"}
+{"file": "tests/test_project_scaffold.py", "reason": "001 测试"}
+{"file": "tests/test_config_templates.py", "reason": "002 测试"}
+{"file": "tests/test_documentation_index.py", "reason": "004 测试"}
+{"file": "tests/test_backend_smoke.py", "reason": "backend smoke"}

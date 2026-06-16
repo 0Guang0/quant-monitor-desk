@@ -5,7 +5,9 @@ description = "Local-first quantitative monitoring console"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "duckdb>=1.1.0",
     "fastapi>=0.115.0",
+    "psutil>=6.0.0",
     "uvicorn[standard]>=0.32.0",
     "pydantic>=2.10.0",
     "pyyaml>=6.0.2",
@@ -35,6 +37,7 @@ addopts = "-q"
 target-version = "py311"
 line-length = 100
 src = ["backend", "scripts", "tests"]
+exclude = [".trellis", ".cursor"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP"]

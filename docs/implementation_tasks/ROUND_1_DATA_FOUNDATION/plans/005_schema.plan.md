@@ -196,3 +196,64 @@ Commit: `feat(db): add foundation schema migration runner (task 005)`
 - [ ] migration 幂等（重复执行不重复写 version 行）
 - [ ] 测试含业务断言（表存在、幂等行数），非仅「不抛异常」
 - [ ] 路径全部在 `backend/app/db/`
+
+---
+
+## 实现记录（含审计修复与缺口补充）
+
+> 首版实现完成后，经 code-review / security / test-engineer 审计，在本 task 范围内做了以下修复与测试补齐（TDD：先写失败测试 → 最小实现 → 验收）。后续会话以此为准，勿重复当作未做项。
+
+### 首版交付（task 005）
+
+- `backend/app/db/migrate.py`：`apply_migrations` / `applied_versions`
+- `backend/app/db/migrations/001_foundation.sql`：5 张 foundation 表
+- `scripts/init_db.py`：本地建库 CLI
+- `tests/test_schema_migration.py`：3 个测试
+
+### 审计修复（P0 / P1）
+
+| 项 | 问题 | 修复 |
+|----|------|------|
+| P1 | migration 只记 checksum、不校验，SQL 被改后静默漂移 | `verify_applied_checksums()` + `MigrationChecksumError` |
+| P1 | 单条 migration 非事务，崩溃可能漏记 version | 每条 migration `BEGIN` → DDL + INSERT version → `COMMIT` |
+| P1 | `init_db.py` 直连 DuckDB，绕过写锁 | 改走 `ConnectionManager.writer()`（与 007 联动） |
+| P1 | `file_registry` 无 DB 级去重 | 新增 `002_registry_hardening.sql`：`UNIQUE INDEX(content_hash)` + `stg_file_registry` 表 |
+
+### 测试缺口补充
+
+| 测试 | 证明什么 |
+|------|----------|
+| `test_appliedVersions_afterMigration_containsFoundation` | 迁移后 version 集合含 `001_foundation`、`002_registry_hardening` |
+| `test_applyMigrations_modifiedFile_raisesChecksumError` | 库内 checksum 与文件不一致时 fail-fast |
+
+### 当前测试规模
+
+- 本 task 相关：`tests/test_schema_migration.py` **5** 个（原 3 + 2）
+- 全库验收：`pytest -q && ruff check . && python -m compileall backend scripts` 通过
+
+---
+
+## 评估报告跟进（二次修复）
+
+> 来源：Round 0/1 多维度评估报告（review 双轴 + subagent）。本节记录评估发现的问题及修复，避免后续会话重复处理。
+
+| 评估项 | 修复 |
+|--------|------|
+| checksum 测试假阳性 | `test_applyMigrations_modifiedFile_raisesChecksumError` 改为 copy 真实 migrations 目录后篡改 SQL 文件，runner 真正读到变更 |
+
+### 当前测试规模（二次修复后）
+
+- 本 task：**5** 个（不变，checksum 测试语义修正）
+
+---
+
+## 评估报告跟进（三次修复）
+
+| 评估项 | 修复 |
+|--------|------|
+| migration 坏 SQL 失败路径无测试 | `test_applyMigrations_badSqlInFile_raisesAndLeavesNoVersionRow` |
+| 已应用 migration 文件被删无测试 | `test_applyMigrations_missingAppliedFile_raisesChecksumError` |
+
+### 当前测试规模（三次修复后）
+
+- 本 task：**7** 个

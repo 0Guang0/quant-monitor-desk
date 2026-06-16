@@ -1,0 +1,8 @@
+{"file": ".trellis/tasks/06-17-round0-scaffold-audit/AUDIT.plan.md", "reason": "【必读·第1条】Audit §1 Skill + §2 维度验证矩阵"}
+{"file": ".trellis/tasks/06-17-round0-scaffold-audit/MASTER.plan.md", "reason": "A5 读 §2 AC；§10 Execute 证据只读索引"}
+{"file": "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md", "reason": "A8 测试规范"}
+{"file": "docs/quality/final_package_rules.md", "reason": "A1 spec 合规"}
+{"file": "docs/implementation_tasks/ROUND_0_PROJECT_SCAFFOLD/", "type": "directory", "reason": "Round 0 任务源"}
+{"file": "backend/app/main.py", "reason": "A1/A4 审查触点"}
+{"file": "backend/app/config.py", "reason": "A3/A4 配置加载"}
+{"file": "tests/test_project_scaffold.py", "reason": "A5 追溯 + A8"}

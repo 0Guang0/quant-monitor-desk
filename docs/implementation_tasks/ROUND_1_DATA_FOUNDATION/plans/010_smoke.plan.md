@@ -123,3 +123,46 @@ Commit: `test(smoke): add foundation end-to-end smoke test (task 010)`
 - [ ] 成功与失败两条路径都断言（业务语义）
 - [ ] 使用临时库，未污染主 DuckDB
 - [ ] 仅 mock psutil，未 mock 业务逻辑
+
+---
+
+## 实现记录（含审计修复与缺口补充）
+
+> task 010 在 005~009 hardening 完成后跑通；本节记录 smoke 相对原计划的增强。
+
+### 首版交付（task 010）
+
+- `tests/smoke/test_foundation_smoke.py`：1 个端到端测试（migrate → guard → raw → register → write SUCCESS/FAILED）
+
+### hardening 后 smoke 增强
+
+| 增强 | 说明 |
+|------|------|
+| 断言 `002_registry_hardening` | 确认 hardening migration 已应用 |
+| ResourceGuard WARN 路径 | mock 低内存 WARN snapshot + `con` 连接，断言写 1 条 `resource_guard_log` |
+| reader 生命周期 | 注册/count 查询后显式 `close()`，避免与 writer 配置冲突 |
+| 失败路径 | 仍断言 stub-fail rollback + 1 条 FAILED 审计（原 plan 已有，保持） |
+
+### 全量验收状态（hardening 后）
+
+```bash
+pytest -q && ruff check . && python -m compileall backend scripts
+```
+
+- **93/93** 测试通过（Round 0：26 + Round 1：67）
+
+---
+
+## 评估报告跟进（二次修复）
+
+- 依赖 008 upsert 审计修复与 006 guard_log 显式提交；smoke 仍全绿。
+- Round 1 单测/smoke 分布见各 task plan 的「当前测试规模」
+
+---
+
+## 评估报告跟进（三次修复）
+
+| 评估项 | 修复 |
+|--------|------|
+| smoke 使用 `with cm.reader()` | 随 007 reader context manager 更新 |
+| 全量测试 | **93/93** 通过（Round 0：26 + Round 1：67） |

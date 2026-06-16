@@ -23,6 +23,13 @@ data/audit/
 data/reports/
 data/cache/
 
+# Audit sandbox (complex-task-protocol §2.10; ≠ Execute DATA_ROOT)
+.audit-sandbox/
+
+# Code intelligence indexes (local-only; refresh with analyze --index-only / codegraph sync)
+.gitnexus/
+.codegraph/
+
 # Node
 frontend/node_modules/
 frontend/dist/
