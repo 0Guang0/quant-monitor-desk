@@ -42,12 +42,15 @@
 
 ## ROUND_1_DATA_FOUNDATION
 
-- `ROUND_1_DATA_FOUNDATION/005_create_schema_sql.md` — 创建 DuckDB schema 初始化
-- `ROUND_1_DATA_FOUNDATION/006_implement_resource_guard.md` — 实现 ResourceGuard
-- `ROUND_1_DATA_FOUNDATION/007_implement_duckdb_connection_manager.md` — 实现 DuckDB 连接管理
-- `ROUND_1_DATA_FOUNDATION/008_implement_write_manager.md` — 实现 WriteManager
-- `ROUND_1_DATA_FOUNDATION/009_implement_file_registry_and_raw_store.md` — 实现 file_registry 与 Raw Store
-- `ROUND_1_DATA_FOUNDATION/010_foundation_smoke_tests.md` — 数据底座 smoke test
+执行前先读 `ROUND_1_DATA_FOUNDATION/DECISIONS.md`（已确认的路径/范围/依赖决策）与本轮 `README.md`（依赖图、Checkpoint）。每个任务的可执行细节（TDD 步骤、API 签名、命令与预期输出）见 `ROUND_1_DATA_FOUNDATION/plans/`。
+
+- `ROUND_1_DATA_FOUNDATION/DECISIONS.md` — 本轮已确认决策（先读）
+- `ROUND_1_DATA_FOUNDATION/005_create_schema_sql.md` — 创建 DuckDB schema 初始化（→ `plans/005_schema.plan.md`）
+- `ROUND_1_DATA_FOUNDATION/006_implement_resource_guard.md` — 实现 ResourceGuard（→ `plans/006_resource_guard.plan.md`）
+- `ROUND_1_DATA_FOUNDATION/007_implement_duckdb_connection_manager.md` — 实现 DuckDB 连接管理（→ `plans/007_connection.plan.md`）
+- `ROUND_1_DATA_FOUNDATION/008_implement_write_manager.md` — 实现 WriteManager（→ `plans/008_write_manager.plan.md`）
+- `ROUND_1_DATA_FOUNDATION/009_implement_file_registry_and_raw_store.md` — 实现 file_registry 与 Raw Store（→ `plans/009_raw_store.plan.md`）
+- `ROUND_1_DATA_FOUNDATION/010_foundation_smoke_tests.md` — 数据底座 smoke test（→ `plans/010_smoke.plan.md`）
 
 ## ROUND_2_DATA_INGESTION_VALIDATION
 

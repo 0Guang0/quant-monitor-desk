@@ -20,6 +20,9 @@
 
 - `tests/smoke/test_foundation_smoke.py`
 
+> 详细端到端步骤与断言清单见 `plans/010_smoke.plan.md`。
+> 执行前确认 Checkpoint：Foundation（见本目录 README）已全绿。
+
 ## 5. 现有模式 / 参考
 
 - 遵循 `docs/architecture/03_runtime_flows.md` 中的运行链路。
@@ -53,10 +56,11 @@
 
 ## 9. 实现步骤
 
-- 初始化测试库
-- 写入测试 staging
-- 验证 clean 与 audit
-- 先写或补充最小测试 / smoke test，再实现。
+- 在临时 DuckDB 文件上跑 `init_db`，确认 5 张 foundation 表建出。
+- 经 ResourceGuard 检查（mock 为 OK）后，用 Raw Store 注册一个原始文件 → `file_registry`。
+- 经 WriteManager 用 stub-pass 报告写一次 staging→clean，断言 clean 行数与字段值。
+- 断言 `write_audit_log` 出现一条 `status=SUCCESS` 行，且 rows_inserted 正确。
+- 追加一条 stub-fail 写入，断言 rollback 且出现 `status=FAILED` 审计行。
 - 运行本任务验收命令。
 - 汇报改动文件、测试结果、未完成项、资源保护状态。
 

@@ -18,9 +18,12 @@
 
 ## 4. 相关代码 / 输出文件
 
-- `backend/db/schema.sql`
-- `backend/db/migrations/`
+- `backend/app/db/migrations/001_foundation.sql`
+- `backend/app/db/migrate.py`（migration runner）
 - `scripts/init_db.py`
+
+> 详细 TDD 步骤、表清单、API 签名见 `plans/005_schema.plan.md`。
+> 路径与范围以 `DECISIONS.md` 为准（统一 `backend/app/*`）。
 
 ## 5. 现有模式 / 参考
 
@@ -55,9 +58,10 @@
 
 ## 9. 实现步骤
 
-- 实现 schema 初始化
-- 写 schema_version
-- smoke test 查询基础表
+- 只建 foundation 表（`schema_version`、`file_registry`、`write_audit_log`、`resource_guard_log`、`stg_foundation_smoke`），不整库执行 `specs/schema/schema.sql`。
+- 实现幂等 migration runner（`schema_version` 记录已应用文件，重复执行不报错）。
+- 写 `schema_version` 行（version_id、checksum、applied_at）。
+- smoke test 查询基础表确认存在与可写。
 - 先写或补充最小测试 / smoke test，再实现。
 - 运行本任务验收命令。
 - 汇报改动文件、测试结果、未完成项、资源保护状态。

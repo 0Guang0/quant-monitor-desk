@@ -18,9 +18,12 @@
 
 ## 4. 相关代码 / 输出文件
 
-- `backend/storage/raw_store.py`
-- `backend/storage/file_registry.py`
+- `backend/app/storage/raw_store.py`
+- `backend/app/storage/file_registry.py`
 - `tests/test_raw_store.py`
+
+> 详细 TDD 步骤、API 签名、hash 与目录布局见 `plans/009_raw_store.plan.md`。
+> 路径与范围以 `DECISIONS.md` 为准（统一 `backend/app/*`，hash 用 sha256）。
 
 ## 5. 现有模式 / 参考
 
@@ -55,10 +58,10 @@
 
 ## 9. 实现步骤
 
-- 保存 raw 文件
-- 计算 hash
-- 写 file_registry
-- 先写或补充最小测试 / smoke test，再实现。
+- 保存 raw 文件到 `data/raw/<source>/<data_domain>/<date>/`（路径来自 config）。
+- 计算 sha256 content_hash，作为去重与可追溯依据。
+- 通过 WriteManager（append_only）写 `file_registry`，不得直接 INSERT。
+- 先写或补充最小测试 / smoke test，再实现（文件 I/O mock，hash 与去重用真实值）。
 - 运行本任务验收命令。
 - 汇报改动文件、测试结果、未完成项、资源保护状态。
 

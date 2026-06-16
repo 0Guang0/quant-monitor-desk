@@ -18,8 +18,11 @@
 
 ## 4. 相关代码 / 输出文件
 
-- `backend/db/connection.py`
+- `backend/app/db/connection.py`
 - `tests/test_duckdb_connection.py`
+
+> 详细 TDD 步骤、API 签名、单写多读锁策略见 `plans/007_connection.plan.md`。
+> 路径与范围以 `DECISIONS.md` 为准（统一 `backend/app/*`，允许 `duckdb`）。
 
 ## 5. 现有模式 / 参考
 
@@ -54,9 +57,10 @@
 
 ## 9. 实现步骤
 
-- 设置 DuckDB memory_limit
-- 设置 threads
-- 禁止多进程写入
+- 提供唯一可写连接工厂 + 多个只读连接工厂（read_only=True）。
+- 按 `resource_limits.yaml` 当前 profile 设置 `memory_limit`、`threads`、`temp_directory`。
+- 用本地文件锁 `quant_monitor.write.lock` 保证单写边界，禁止多进程同时持写连接。
+- 锁超时不自动删除，必须先检查 pid 是否存活（见 `DECISIONS.md` / write_manager.md）。
 - 先写或补充最小测试 / smoke test，再实现。
 - 运行本任务验收命令。
 - 汇报改动文件、测试结果、未完成项、资源保护状态。
