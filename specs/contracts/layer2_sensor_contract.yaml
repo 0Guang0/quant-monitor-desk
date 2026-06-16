@@ -1,0 +1,36 @@
+version: layer2_sensor_contract_v1
+authority: docs/modules/layer2_cross_asset_sensor.md
+asset_groups:
+  - USD
+  - Rates
+  - Metals
+  - Energy
+  - CreditETF
+  - EquityETF
+  - Volatility
+  - Shipping
+  - Futures
+required_registry_fields:
+  - asset_id
+  - display_name_cn
+  - asset_group
+  - asset_type
+  - market
+  - primary_source
+  - validation_source
+  - fallback_policy
+  - is_axis_input
+  - display_only
+  - eligible_for_model
+  - double_count_guard
+snapshot_fields:
+  - asset_id
+  - trade_date
+  - close
+  - pct_change
+  - volume
+  - amount
+  - open_interest
+  - quality_flags
+  - source_used
+  - as_of_timestamp

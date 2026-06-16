@@ -1,0 +1,45 @@
+version: v1
+name: runtime_flow_contract
+flows:
+  daily_after_close:
+    resource_profile: eco
+    steps:
+      - resource_guard_check
+      - incremental_update
+      - data_quality_validation
+      - source_conflict_validation
+      - write_manager_merge
+      - snapshot_build
+      - data_health_summary
+      - daily_report
+      - lightweight_duckdb_backup
+    forbidden:
+      - full_history_audit
+      - large_backfill
+      - full_parquet_copy
+  intraday_light:
+    resource_profile: eco
+    scope:
+      - p0_watchlist
+      - major_indices
+      - core_futures
+      - layer3_p0_anchors
+    forbidden:
+      - full_load
+      - large_backfill
+      - full_market_minute_scan
+  backfill:
+    requires_user_confirm: true
+    max_trading_days_default: 5
+    pause_if_disk_free_lt_gb: 20
+    pause_if_available_memory_lt_gb: 2
+  report_generation:
+    requires_no_action_semantics_guard: true
+    agent_writes_only_staging: true
+resource_guard_checkpoints:
+  - before_job_start
+  - before_each_batch
+  - before_clean_merge
+  - before_large_snapshot
+  - before_report_generation
+  - before_backup

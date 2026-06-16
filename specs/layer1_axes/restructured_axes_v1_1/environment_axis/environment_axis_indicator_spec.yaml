@@ -1,0 +1,216 @@
+axis_id: ENVIRONMENT
+axis_name_cn: 环境轴
+plain_language_summary: 宏观水位、无风险利率、通胀和实体经济底板。
+source_model: Primary + Validation + FallbackPolicy
+fallback_policy_default:
+- retry
+- last_good_cache
+- NaN_with_stale_reason
+- manual_review_if_schema_drift
+modules:
+  E0_money_quantity:
+    purpose: 广义流动性水位与水阀归因。
+    indicators:
+    - indicator_id: ENV-E0-RESERVE_BALANCES_WRESBAL
+      display_name_cn: 准备金余额
+      plain_language_summary: 银行体系里的水池存量。
+      layer: Layer1_Projected
+      dest_tag: B
+      role: STATE_ANCHOR
+      gate_scoring: true
+      frequency: weekly
+      primary_source: FRED:WRESBAL
+      validation_source: none_optional_same_source_audit
+      fallback_policy: last_good_cache + stale_reason
+      raw_inputs:
+      - WRESBAL
+      outputs:
+      - raw_value
+      - z_score
+      - percentile_rank
+      - state_bucket
+      - data_lag_days
+      boundary: 只能说明结果量，不能单独归因谁在抽水或放水。
+    - indicator_id: ENV-E0-NET_LIQ_PROXY_BN_MIXFREQ
+      display_name_cn: 广义美元水位诊断线
+      plain_language_summary: 用四条腿拆解谁在抽水或放水。
+      layer: Layer1_Projected
+      dest_tag: B
+      role: DIAGNOSTIC_ONLY
+      gate_scoring: false
+      diagnostic_only: true
+      excluded_from_gate: true
+      frequency: mixed_weekly_daily
+      primary_source: FRED:WALCL,WDTGAL,WCICL,RRPONTSYD
+      validation_source: FRED:WLRRAFOIAL,WLRRAL overlap audit only
+      fallback_policy: last_good_cache + stale_reason
+      formula: NET_LIQ_PROXY_BN=(WALCL-WDTGAL-WCICL)/1000-RRPONTSYD
+      required_metadata:
+      - projection_method
+      - source_frequency_map
+      - data_lag_days
+      boundary: 混频投影，不是真实日频准备金，不参与计分。
+    - indicator_id: ENV-E0-M2_MONEY_STOCK_SA_MONTHLY
+      display_name_cn: M2 货币存量
+      plain_language_summary: 银行体系内生货币慢变量底色。
+      layer: Layer2_Background
+      dest_tag: C
+      gate_scoring: false
+      frequency: monthly
+      primary_source: FRED:M2SL
+      validation_source: none
+      fallback_policy: last_good_cache + stale_reason
+      boundary: 慢变量，不用于日内判断。
+  E1_nominal_term_structure:
+    purpose: 短端政策、长端名义利率和曲线形态。
+    indicators:
+    - indicator_id: ENV-E1-EFFR
+      display_name_cn: 有效联邦基金利率
+      plain_language_summary: 美国短端政策坐标。
+      layer: Layer1_State
+      dest_tag: A
+      frequency: daily_prior_business_day
+      primary_source: NYFed:EFFR
+      validation_source: FRED:EFFR
+      fallback_policy: last_good_cache + stale_reason
+      boundary: prior business day 值，必须诚实滞后。
+    - indicator_id: ENV-E1-DGS10
+      display_name_cn: 10 年期名义美债收益率
+      plain_language_summary: 长端名义无风险利率水位。
+      layer: Layer1_State
+      dest_tag: A
+      frequency: daily
+      primary_source: FRED:DGS10
+      validation_source: none_optional
+      fallback_policy: last_good_cache + stale_reason
+    - indicator_id: ENV-E1-T10Y3M
+      display_name_cn: 10Y-3M 曲线斜率
+      plain_language_summary: 收益率曲线形态，观察倒挂或变陡。
+      layer: Layer1_State
+      dest_tag: A
+      frequency: daily
+      primary_source: FRED:T10Y3M
+      validation_source: FRED:DGS10 + FRED:DTB3 derived check
+      fallback_policy: last_good_cache + stale_reason
+      boundary: 只描述形态，不解释倒挂原因。
+  E2_real_rates_term_premia:
+    purpose: 真实利率和期限溢价。
+    indicators:
+    - indicator_id: ENV-E2-DFII10
+      display_name_cn: 10 年期 TIPS 真实收益率
+      plain_language_summary: 实际紧缩程度的市场读数。
+      layer: Layer1_State
+      dest_tag: A
+      frequency: daily
+      primary_source: FRED:DFII10
+      validation_source: none_optional
+      fallback_policy: last_good_cache + stale_reason
+    - indicator_id: ENV-E2-ACMTP10
+      display_name_cn: ACM 10 年期限溢价
+      plain_language_summary: 长端利率里财政和期限风险补偿的模型估计。
+      layer: Layer1_Projected
+      dest_tag: B
+      frequency: weekly_model_update
+      primary_source: NYFed:ACMTermPremium
+      validation_source: FRBSF_TP10 shadow only
+      fallback_policy: last_good_cache + stale_reason; downgrade_to_C_if_lag_excess
+      boundary: 模型输出且滞后，不能伪装成实时日频。
+  E3_inflation_system:
+    purpose: 通胀锚与已实现通胀。
+    indicators:
+    - indicator_id: ENV-E3-T5YIFR
+      display_name_cn: 5Y5Y 远期通胀预期
+      plain_language_summary: 长期通胀锚。
+      layer: Layer1_State
+      dest_tag: A
+      frequency: daily
+      primary_source: FRED:T5YIFR
+      fallback_policy: last_good_cache + stale_reason
+    - indicator_id: ENV-E3-T10YIE
+      display_name_cn: 10 年盈亏平衡通胀率
+      plain_language_summary: 市场定价中的中长期通胀预期。
+      layer: Layer1_State
+      dest_tag: A
+      frequency: daily
+      primary_source: FRED:T10YIE
+      validation_source: FRED:DGS10 + FRED:DFII10 derived check
+      fallback_policy: last_good_cache + stale_reason
+    - indicator_id: ENV-E3-CPIAUCSL
+      display_name_cn: CPI 已实现通胀
+      plain_language_summary: 已经发生的通胀温度。
+      layer: Layer1_State_with_lag
+      dest_tag: A
+      frequency: monthly
+      primary_source: FRED:CPIAUCSL
+      fallback_policy: last_good_cache + stale_reason
+      derived_outputs:
+      - mom
+      - yoy
+      boundary: 月频滞后数据，不做日内判断。
+  E4_real_economy:
+    purpose: 实体经济底板和衰退体征。
+    indicators:
+    - indicator_id: ENV-E4-IC4WSA
+      display_name_cn: 初请失业金四周均值
+      plain_language_summary: 劳动力市场是否开始失血。
+      layer: Layer1_State_with_lag
+      dest_tag: A
+      frequency: weekly
+      primary_source: FRED:IC4WSA
+      validation_source: FRED:ICSA shadow shock lamp
+      fallback_policy: last_good_cache + stale_reason
+    - indicator_id: ENV-E4-CC4WSA
+      display_name_cn: 续请失业金四周均值
+      plain_language_summary: 失业后再就业是否变难。
+      layer: Layer1_State_with_lag
+      dest_tag: A
+      frequency: weekly
+      primary_source: FRED:CC4WSA
+      validation_source: FRED:CCSA shadow shock lamp
+      fallback_policy: last_good_cache + stale_reason
+    - indicator_id: ENV-E4-UNRATE
+      display_name_cn: 失业率
+      plain_language_summary: 实体经济底板的月频读数。
+      layer: Layer1_State_with_lag
+      dest_tag: A
+      frequency: monthly
+      primary_source: FRED:UNRATE
+      fallback_policy: last_good_cache + stale_reason
+    - indicator_id: ENV-E4-SAHMREALTIME
+      display_name_cn: 实时萨姆规则
+      plain_language_summary: 衰退体征确认标签。
+      layer: Layer1_State_with_lag
+      dest_tag: A
+      frequency: monthly
+      primary_source: FRED:SAHMREALTIME
+      fallback_policy: last_good_cache + stale_reason
+  layer2_overlay_blindspot:
+    indicators:
+    - indicator_id: ENV-C-GDPNOW_ATLANTA
+      display_name_cn: GDPNow
+      layer: Layer2_Warning
+      dest_tag: C
+      primary_source: AtlantaFed:GDPNow
+      boundary: 模型 nowcast，只解释，不计分。
+      plain_language_summary: Atlanta Fed GDPNow 背景指标，用于观察经济增长预期变化。
+    - indicator_id: ENV-C-SURPRISE_IMPULSE
+      display_name_cn: 经济数据预期差冲击
+      layer: Layer2_Warning
+      dest_tag: C
+      status: disabled_unless_consensus_source_auditable
+      plain_language_summary: 经济数据意外冲击候选项，只有在有可审计共识源时才启用。
+    - indicator_id: ENV-D-DTS_OPERATING_CASH_BALANCE
+      display_name_cn: 财政日频现金候选
+      layer: BlindSpot
+      dest_tag: D
+      primary_source: FiscalData API candidate
+      promotion_rule: continuous_7_days_success_rate_ge_99pct_before_use
+      plain_language_summary: 美国财政现金余额候选/盲区项，需先验收数据稳定性。
+    - indicator_id: ENV-FORBIDDEN-WM2NS
+      display_name_cn: 未季调周频 M2
+      status: forbidden
+      reason: 禁止进入系统。
+      plain_language_summary: 未季调周频 M2 禁止项，不进入系统，防止口径污染。
+      layer: Forbidden
+      dest_tag: FORBIDDEN
+schema_note: 'v1.1: A/B/C 主展示指标、SHADOW、BlindSpot、Forbidden 均保留最小解释字段，便于统一 schema 校验。'

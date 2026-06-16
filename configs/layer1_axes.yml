@@ -1,0 +1,8 @@
+# Layer 1 five-axis configuration (Round 3)
+spec_root: specs/layer1_axes/restructured_axes_v1_1
+enabled_axes:
+  - environment
+  - credit_stress
+  - risk_appetite
+  - liquidity
+  - sentiment

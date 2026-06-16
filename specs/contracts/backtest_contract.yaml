@@ -1,0 +1,56 @@
+version: 1
+module: backtest_and_review
+authoritative_doc: docs/modules/backtest_and_review.md
+backtest_types:
+  - event_study
+  - alert_rule_review
+  - layer1_state_review
+  - layer3_chain_review
+  - layer4_market_structure_review
+  - evidence_chain_review
+  - agent_explanation_review
+required_tables:
+  - backtest_scenario_registry
+  - backtest_run_log
+  - backtest_event_set
+  - backtest_metric_snapshot
+  - backtest_report
+default_horizons:
+  - T+1
+  - T+3
+  - T+5
+  - T+10
+  - T+20
+metrics:
+  - forward_return
+  - max_drawdown
+  - realized_volatility
+  - hit_rate
+  - false_positive_rate
+  - average_adverse_move
+  - average_favorable_move
+  - chain_diffusion_count
+  - cross_layer_confirmation_count
+  - data_quality_failure_rate
+resource_limits:
+  default_resource_mode: normal
+  require_user_trigger: true
+  max_default_years: 3
+  max_default_universe_size: 500
+  max_default_event_count: 5000
+  require_confirmation_if_scan_gb_gt: 5
+  pause_if_available_memory_gb_lt: 2
+  pause_if_free_disk_gb_lt: 20
+guardrails:
+  no_action_semantics: true
+  no_auto_trade: true
+  no_intraday_auto_backtest: true
+  must_include_limitations: true
+  agent_cannot_modify_metrics: true
+api:
+  - GET /api/backtest/scenarios
+  - POST /api/backtest/runs
+  - GET /api/backtest/runs/{run_id}
+  - GET /api/backtest/runs/{run_id}/events
+  - GET /api/backtest/runs/{run_id}/metrics
+  - GET /api/backtest/reports/{backtest_report_id}

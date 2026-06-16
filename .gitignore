@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+dist/
+build/
+
+# Environment
+.env
+.env.local
+
+# Runtime data (local-first store)
+data/duckdb/
+data/raw/
+data/files/
+data/parquet/
+data/audit/
+data/reports/
+data/cache/
+
+# Node
+frontend/node_modules/
+frontend/dist/
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Temporary agent artifacts (must not ship)
+task_plan.md
+findings.md
+progress.md
+scratch/
+tmp/

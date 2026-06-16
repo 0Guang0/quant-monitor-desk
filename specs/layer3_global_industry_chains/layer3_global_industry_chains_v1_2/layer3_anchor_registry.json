@@ -1,0 +1,2993 @@
+[
+  {
+    "anchor_id": "MSFT",
+    "display_name_cn": "微软",
+    "display_name_en": "Microsoft",
+    "instrument_type": "public_equity",
+    "ticker": "MSFT",
+    "exchange": "NASDAQ",
+    "anchor_tier": "A_CAPEX_SETTER",
+    "anchor_roles": [
+      "demand_setter",
+      "platform_distribution",
+      "enterprise_ai_anchor"
+    ],
+    "frontend_group": "核心Capex买方",
+    "status_explanation_cn": "全球AI云、企业AI与OpenAI商业化的重要公开市场锚。",
+    "impact_explanation_cn": "AI收入运行率、Azure容量约束、Capex和OpenAI相关动作会影响GPU、服务器、网络、电力和软件链资金预期。",
+    "monitor_events": [
+      "AI revenue run-rate",
+      "Azure/cloud revenue",
+      "capex guidance",
+      "OpenAI partnership changes"
+    ],
+    "layer5_mapping_hint": "MSFT",
+    "event_only": false,
+    "source_keys": [
+      "microsoft_fy26_q3"
+    ],
+    "anchor_priority": "P0_CORE",
+    "node_id": "L3_AI_CAPEX_COMMAND_CENTER_HYPERSCALER_CAPEX",
+    "source_validation_status": "verified",
+    "chain_id": "L3_AI_CAPEX_COMMAND_CENTER",
+    "chain_name_cn": "AI资本开支总开关",
+    "chain_priority": "P0_CORE",
+    "chain_type": "demand_side_capex"
+  },
+  {
+    "anchor_id": "AMZN",
+    "display_name_cn": "亚马逊/AWS",
+    "display_name_en": "Amazon / AWS",
+    "instrument_type": "public_equity",
+    "ticker": "AMZN",
+    "exchange": "NASDAQ",
+    "anchor_tier": "A_CAPEX_SETTER",
+    "anchor_roles": [
+      "demand_setter",
+      "cloud_compute_buyer"
+    ],
+    "frontend_group": "核心Capex买方",
+    "status_explanation_cn": "AWS是全球最重要的AI云和算力需求源之一。",
+    "impact_explanation_cn": "AWS收入、营业利润、AI基础设施融资和数据中心投资会传导到AI芯片、服务器、电力和网络链。",
+    "monitor_events": [
+      "AWS operating income",
+      "AWS capex commentary",
+      "AI infrastructure financing"
+    ],
+    "layer5_mapping_hint": "AMZN",
+    "event_only": false,
+    "source_keys": [
+      "amazon_q1_2026"
+    ],
+    "anchor_priority": "P0_CORE",
+    "node_id": "L3_AI_CAPEX_COMMAND_CENTER_HYPERSCALER_CAPEX",
+    "source_validation_status": "verified",
+    "chain_id": "L3_AI_CAPEX_COMMAND_CENTER",
+    "chain_name_cn": "AI资本开支总开关",
+    "chain_priority": "P0_CORE",
+    "chain_type": "demand_side_capex"
+  },
+  {
+    "anchor_id": "GOOGL",
+    "display_name_cn": "Alphabet/Google",
+    "display_name_en": "Alphabet / Google",
+    "instrument_type": "public_equity",
+    "ticker": "GOOGL",
+    "exchange": "NASDAQ",
+    "anchor_tier": "A_CAPEX_SETTER",
+    "anchor_roles": [
+      "demand_setter",
+      "ai_model_platform",
+      "custom_silicon_buyer"
+    ],
+    "frontend_group": "核心Capex买方",
+    "status_explanation_cn": "Google Cloud、Gemini和TPU共同构成AI需求侧与自研芯片锚。",
+    "impact_explanation_cn": "云收入、AI基础设施融资、TPU采购与Capex指引会影响AI硬件和数据中心供应链。",
+    "monitor_events": [
+      "Google Cloud revenue",
+      "capex guidance",
+      "equity/debt financing",
+      "TPU deployment"
+    ],
+    "layer5_mapping_hint": "GOOGL",
+    "event_only": false,
+    "source_keys": [
+      "alphabet_q1_2026",
+      "alphabet_equity_raise"
+    ],
+    "anchor_priority": "P0_CORE",
+    "node_id": "L3_AI_CAPEX_COMMAND_CENTER_HYPERSCALER_CAPEX",
+    "source_validation_status": "verified",
+    "chain_id": "L3_AI_CAPEX_COMMAND_CENTER",
+    "chain_name_cn": "AI资本开支总开关",
+    "chain_priority": "P0_CORE",
+    "chain_type": "demand_side_capex"
+  },
+  {
+    "anchor_id": "META",
+    "display_name_cn": "Meta",
+    "display_name_en": "Meta Platforms",
+    "instrument_type": "public_equity",
+    "ticker": "META",
+    "exchange": "NASDAQ",
+    "anchor_tier": "A_CAPEX_SETTER",
+    "anchor_roles": [
+      "demand_setter",
+      "open_model_anchor",
+      "social_ai_distribution"
+    ],
+    "frontend_group": "核心Capex买方",
+    "status_explanation_cn": "AI基础设施Capex大户，也是开源/闭源模型和AI社交入口的重要锚。",
+    "impact_explanation_cn": "Capex区间变化、模型路线和基础设施承诺会直接影响GPU、网络、服务器、电力和液冷链。",
+    "monitor_events": [
+      "capex guidance",
+      "AI infrastructure commitments",
+      "model strategy"
+    ],
+    "layer5_mapping_hint": "META",
+    "event_only": false,
+    "source_keys": [
+      "meta_q1_2026"
+    ],
+    "anchor_priority": "P0_CORE",
+    "node_id": "L3_AI_CAPEX_COMMAND_CENTER_HYPERSCALER_CAPEX",
+    "source_validation_status": "verified",
+    "chain_id": "L3_AI_CAPEX_COMMAND_CENTER",
+    "chain_name_cn": "AI资本开支总开关",
+    "chain_priority": "P0_CORE",
+    "chain_type": "demand_side_capex"
+  },
+  {
+    "anchor_id": "ORCL",
+    "display_name_cn": "甲骨文",
+    "display_name_en": "Oracle",
+    "instrument_type": "public_equity",
+    "ticker": "ORCL",
+    "exchange": "NYSE",
+    "anchor_tier": "B_OLIGOPOLY_ANCHOR",
+    "anchor_roles": [
+      "ai_infrastructure_financing",
+      "cloud_capacity_provider"
+    ],
+    "frontend_group": "扩散Capex买方",
+    "status_explanation_cn": "AI云基础设施后起但高弹性的Capex锚，受大客户合同驱动。",
+    "impact_explanation_cn": "大型AI云合同、债务/股权融资和Capex上调会影响数据中心建设链，但财务杠杆与自由现金流需要单独监控。",
+    "monitor_events": [
+      "capex plan",
+      "cloud RPO",
+      "debt/equity financing",
+      "OpenAI/Meta contracts"
+    ],
+    "layer5_mapping_hint": "ORCL",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_AI_CAPEX_COMMAND_CENTER_AI_CLOUD_OPERATOR",
+    "source_validation_status": "needs_source",
+    "chain_id": "L3_AI_CAPEX_COMMAND_CENTER",
+    "chain_name_cn": "AI资本开支总开关",
+    "chain_priority": "P0_CORE",
+    "chain_type": "demand_side_capex"
+  },
+  {
+    "anchor_id": "CRWV",
+    "display_name_cn": "CoreWeave",
+    "display_name_en": "CoreWeave",
+    "instrument_type": "public_equity",
+    "ticker": "CRWV",
+    "exchange": "NASDAQ",
+    "anchor_tier": "B_SUPPLY_CHAIN_BETA",
+    "anchor_roles": [
+      "gpu_cloud_operator",
+      "ai_cloud_beta"
+    ],
+    "frontend_group": "GPU云锚",
+    "status_explanation_cn": "GPU云/AI云高弹性公开市场锚。",
+    "impact_explanation_cn": "融资、GPU租赁需求、客户集中度和数据中心扩建会放大AI算力周期情绪。",
+    "monitor_events": [
+      "GPU capacity expansion",
+      "customer contracts",
+      "debt/equity financing"
+    ],
+    "layer5_mapping_hint": "CRWV",
+    "event_only": false,
+    "source_keys": [
+      "coreweave_ipo"
+    ],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_AI_CAPEX_COMMAND_CENTER_AI_CLOUD_OPERATOR",
+    "source_validation_status": "verified",
+    "chain_id": "L3_AI_CAPEX_COMMAND_CENTER",
+    "chain_name_cn": "AI资本开支总开关",
+    "chain_priority": "P0_CORE",
+    "chain_type": "demand_side_capex"
+  },
+  {
+    "anchor_id": "OPENAI",
+    "display_name_cn": "OpenAI",
+    "display_name_en": "OpenAI",
+    "instrument_type": "private_company",
+    "ticker": "",
+    "exchange": "",
+    "anchor_tier": "C_PRIVATE_EVENT_ANCHOR",
+    "anchor_roles": [
+      "model_demand_source",
+      "event_source"
+    ],
+    "frontend_group": "私有模型事件锚",
+    "status_explanation_cn": "私有模型公司，不能作为日度行情标的，但融资、产品、算力采购会震动AI链。",
+    "impact_explanation_cn": "融资估值、模型发布和算力需求变化会影响云厂商、GPU、服务器和电力链预期。",
+    "monitor_events": [
+      "funding valuation",
+      "model release",
+      "compute deal"
+    ],
+    "layer5_mapping_hint": "",
+    "event_only": true,
+    "source_keys": [
+      "openai_2026_funding"
+    ],
+    "anchor_priority": "P0_EVENT",
+    "node_id": "L3_AI_CAPEX_COMMAND_CENTER_PRIVATE_MODEL_EVENTS",
+    "source_validation_status": "event_only_verified",
+    "chain_id": "L3_AI_CAPEX_COMMAND_CENTER",
+    "chain_name_cn": "AI资本开支总开关",
+    "chain_priority": "P0_CORE",
+    "chain_type": "demand_side_capex"
+  },
+  {
+    "anchor_id": "ANTHROPIC",
+    "display_name_cn": "Anthropic",
+    "display_name_en": "Anthropic",
+    "instrument_type": "private_company",
+    "ticker": "",
+    "exchange": "",
+    "anchor_tier": "C_PRIVATE_EVENT_ANCHOR",
+    "anchor_roles": [
+      "model_demand_source",
+      "event_source"
+    ],
+    "frontend_group": "私有模型事件锚",
+    "status_explanation_cn": "私有模型公司，企业AI与代码模型重要锚。",
+    "impact_explanation_cn": "融资、模型能力、云合作和算力扩张会影响AI云、ASIC、GPU与数据中心融资链。",
+    "monitor_events": [
+      "funding valuation",
+      "cloud partnership",
+      "compute expansion"
+    ],
+    "layer5_mapping_hint": "",
+    "event_only": true,
+    "source_keys": [
+      "anthropic_series_h"
+    ],
+    "anchor_priority": "P0_EVENT",
+    "node_id": "L3_AI_CAPEX_COMMAND_CENTER_PRIVATE_MODEL_EVENTS",
+    "source_validation_status": "event_only_verified",
+    "chain_id": "L3_AI_CAPEX_COMMAND_CENTER",
+    "chain_name_cn": "AI资本开支总开关",
+    "chain_priority": "P0_CORE",
+    "chain_type": "demand_side_capex"
+  },
+  {
+    "anchor_id": "NVDA",
+    "display_name_cn": "英伟达",
+    "display_name_en": "NVIDIA",
+    "instrument_type": "public_equity",
+    "ticker": "NVDA",
+    "exchange": "NASDAQ",
+    "anchor_tier": "A_GLOBAL_DOMINANT",
+    "anchor_roles": [
+      "supply_bottleneck",
+      "sentiment_leader",
+      "platform_ecosystem"
+    ],
+    "frontend_group": "绝对算力锚",
+    "status_explanation_cn": "全球AI GPU/加速器与CUDA生态绝对资金锚。",
+    "impact_explanation_cn": "财报、数据中心收入、Blackwell/Rubin路线、供货和毛利会同步影响HBM、CoWoS、服务器、光模块、电力和液冷。",
+    "monitor_events": [
+      "data center revenue",
+      "GPU roadmap",
+      "supply allocation",
+      "export restrictions"
+    ],
+    "layer5_mapping_hint": "NVDA",
+    "event_only": false,
+    "source_keys": [
+      "nvidia_fy26",
+      "nvidia_q1_fy27"
+    ],
+    "anchor_priority": "P0_CORE",
+    "node_id": "L3_AI_COMPUTE_ASIC_GPU_ACCELERATOR",
+    "source_validation_status": "verified",
+    "chain_id": "L3_AI_COMPUTE_ASIC",
+    "chain_name_cn": "AI芯片/加速器/ASIC",
+    "chain_priority": "P0_CORE",
+    "chain_type": "compute_supply"
+  },
+  {
+    "anchor_id": "AMD",
+    "display_name_cn": "超威半导体",
+    "display_name_en": "AMD",
+    "instrument_type": "public_equity",
+    "ticker": "AMD",
+    "exchange": "NASDAQ",
+    "anchor_tier": "B_OLIGOPOLY_ANCHOR",
+    "anchor_roles": [
+      "alternative_compute",
+      "sentiment_beta"
+    ],
+    "frontend_group": "替代算力锚",
+    "status_explanation_cn": "AI GPU最重要公开替代变量。",
+    "impact_explanation_cn": "Instinct GPU进展和数据中心收入会影响“英伟达替代”交易和AI加速器竞争预期。",
+    "monitor_events": [
+      "data center revenue",
+      "Instinct roadmap",
+      "large customer wins"
+    ],
+    "layer5_mapping_hint": "AMD",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_AI_COMPUTE_ASIC_GPU_ACCELERATOR",
+    "source_validation_status": "needs_source",
+    "chain_id": "L3_AI_COMPUTE_ASIC",
+    "chain_name_cn": "AI芯片/加速器/ASIC",
+    "chain_priority": "P0_CORE",
+    "chain_type": "compute_supply"
+  },
+  {
+    "anchor_id": "AVGO",
+    "display_name_cn": "博通",
+    "display_name_en": "Broadcom",
+    "instrument_type": "public_equity",
+    "ticker": "AVGO",
+    "exchange": "NASDAQ",
+    "anchor_tier": "B_OLIGOPOLY_ANCHOR",
+    "anchor_roles": [
+      "custom_asic",
+      "ai_networking",
+      "supply_chain_beta"
+    ],
+    "frontend_group": "ASIC/网络锚",
+    "status_explanation_cn": "云厂商定制ASIC和AI以太网网络核心龙头之一。",
+    "impact_explanation_cn": "ASIC设计赢单、Jericho/Tomahawk/CPO网络方案会影响定制AI芯片、以太网交换和光互联链。",
+    "monitor_events": [
+      "ASIC design wins",
+      "AI networking product launch",
+      "large cloud deals"
+    ],
+    "layer5_mapping_hint": "AVGO",
+    "event_only": false,
+    "source_keys": [
+      "broadcom_jericho4"
+    ],
+    "anchor_priority": "P0_CORE",
+    "node_id": "L3_AI_COMPUTE_ASIC_CUSTOM_ASIC",
+    "source_validation_status": "verified",
+    "chain_id": "L3_AI_COMPUTE_ASIC",
+    "chain_name_cn": "AI芯片/加速器/ASIC",
+    "chain_priority": "P0_CORE",
+    "chain_type": "compute_supply"
+  },
+  {
+    "anchor_id": "MRVL",
+    "display_name_cn": "美满电子",
+    "display_name_en": "Marvell",
+    "instrument_type": "public_equity",
+    "ticker": "MRVL",
+    "exchange": "NASDAQ",
+    "anchor_tier": "B_SUPPLY_CHAIN_BETA",
+    "anchor_roles": [
+      "custom_asic",
+      "data_center_interconnect",
+      "high_beta"
+    ],
+    "frontend_group": "ASIC/互联弹性锚",
+    "status_explanation_cn": "AI定制芯片与数据中心互联高弹性标的。",
+    "impact_explanation_cn": "客户设计进展和数据中心互联需求会影响AI ASIC和光电互联板块风险偏好。",
+    "monitor_events": [
+      "custom silicon wins",
+      "data center revenue",
+      "interconnect roadmap"
+    ],
+    "layer5_mapping_hint": "MRVL",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_AI_COMPUTE_ASIC_CUSTOM_ASIC",
+    "source_validation_status": "needs_source",
+    "chain_id": "L3_AI_COMPUTE_ASIC",
+    "chain_name_cn": "AI芯片/加速器/ASIC",
+    "chain_priority": "P0_CORE",
+    "chain_type": "compute_supply"
+  },
+  {
+    "anchor_id": "000660.KS",
+    "display_name_cn": "SK海力士",
+    "display_name_en": "SK hynix",
+    "instrument_type": "public_equity",
+    "ticker": "000660.KS",
+    "exchange": "KRX",
+    "anchor_tier": "A_GLOBAL_DOMINANT",
+    "anchor_roles": [
+      "capacity_signal",
+      "supply_bottleneck",
+      "nvidia_memory_partner"
+    ],
+    "frontend_group": "HBM当前主锚",
+    "status_explanation_cn": "当前HBM供给最强资金锚之一。",
+    "impact_explanation_cn": "HBM份额、NVIDIA合作、产能扩张和价格协议会影响全球存储、AI服务器和韩国科技股资金流。",
+    "monitor_events": [
+      "HBM share",
+      "NVIDIA qualification",
+      "wafer capacity expansion",
+      "contract pricing"
+    ],
+    "layer5_mapping_hint": "000660.KS",
+    "event_only": false,
+    "source_keys": [
+      "counterpoint_hbm_q1_2026"
+    ],
+    "anchor_priority": "P0_CORE",
+    "node_id": "L3_AI_MEMORY_BOTTLENECK_HBM_SUPPLY",
+    "source_validation_status": "verified",
+    "chain_id": "L3_AI_MEMORY_BOTTLENECK",
+    "chain_name_cn": "AI存储瓶颈：HBM/DRAM/NAND",
+    "chain_priority": "P0_CORE",
+    "chain_type": "memory_supply_bottleneck"
+  },
+  {
+    "anchor_id": "MU",
+    "display_name_cn": "美光科技",
+    "display_name_en": "Micron",
+    "instrument_type": "public_equity",
+    "ticker": "MU",
+    "exchange": "NASDAQ",
+    "anchor_tier": "B_OLIGOPOLY_ANCHOR",
+    "anchor_roles": [
+      "us_memory_anchor",
+      "capacity_signal"
+    ],
+    "frontend_group": "存储寡头",
+    "status_explanation_cn": "美国存储周期和HBM公开市场锚。",
+    "impact_explanation_cn": "HBM产能、DRAM/NAND价格和数据中心收入会影响美股存储与AI硬件链预期。",
+    "monitor_events": [
+      "HBM supply agreements",
+      "DRAM/NAND pricing",
+      "data center revenue"
+    ],
+    "layer5_mapping_hint": "MU",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_AI_MEMORY_BOTTLENECK_DRAM_NAND_CYCLE",
+    "source_validation_status": "needs_source",
+    "chain_id": "L3_AI_MEMORY_BOTTLENECK",
+    "chain_name_cn": "AI存储瓶颈：HBM/DRAM/NAND",
+    "chain_priority": "P0_CORE",
+    "chain_type": "memory_supply_bottleneck"
+  },
+  {
+    "anchor_id": "005930.KS",
+    "display_name_cn": "三星电子",
+    "display_name_en": "Samsung Electronics",
+    "instrument_type": "public_equity",
+    "ticker": "005930.KS",
+    "exchange": "KRX",
+    "anchor_tier": "B_OLIGOPOLY_ANCHOR",
+    "anchor_roles": [
+      "memory_oligopoly",
+      "foundry_challenger"
+    ],
+    "frontend_group": "存储寡头",
+    "status_explanation_cn": "DRAM/NAND/HBM全球寡头，同时也是晶圆代工挑战者。",
+    "impact_explanation_cn": "HBM良率与客户认证、DRAM/NAND价格周期会影响亚洲半导体资金。",
+    "monitor_events": [
+      "HBM qualification",
+      "memory pricing",
+      "foundry roadmap"
+    ],
+    "layer5_mapping_hint": "005930.KS",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_AI_MEMORY_BOTTLENECK_DRAM_NAND_CYCLE",
+    "source_validation_status": "needs_source",
+    "chain_id": "L3_AI_MEMORY_BOTTLENECK",
+    "chain_name_cn": "AI存储瓶颈：HBM/DRAM/NAND",
+    "chain_priority": "P0_CORE",
+    "chain_type": "memory_supply_bottleneck"
+  },
+  {
+    "anchor_id": "TSM",
+    "display_name_cn": "台积电",
+    "display_name_en": "TSMC",
+    "instrument_type": "public_equity",
+    "ticker": "TSM/2330.TW",
+    "exchange": "NYSE/TWSE",
+    "anchor_tier": "A_GLOBAL_DOMINANT",
+    "anchor_roles": [
+      "advanced_foundry",
+      "supply_bottleneck",
+      "advanced_packaging"
+    ],
+    "frontend_group": "先进制造绝对锚",
+    "status_explanation_cn": "先进制程和AI芯片制造绝对资金锚。",
+    "impact_explanation_cn": "先进制程、CoWoS/先进封装产能、涨价和客户排产会直接影响NVIDIA、AMD、Broadcom、Marvell和Apple等链条。",
+    "monitor_events": [
+      "AI demand commentary",
+      "capacity expansion",
+      "pricing",
+      "CoWoS capacity"
+    ],
+    "layer5_mapping_hint": "TSM/2330.TW",
+    "event_only": false,
+    "source_keys": [
+      "tsmc_reuters_2026"
+    ],
+    "anchor_priority": "P0_CORE",
+    "node_id": "L3_SEMICONDUCTOR_MANUFACTURING_BOTTLENECK_ADVANCED_FOUNDRY_PACKAGING",
+    "source_validation_status": "verified",
+    "chain_id": "L3_SEMICONDUCTOR_MANUFACTURING_BOTTLENECK",
+    "chain_name_cn": "半导体制造瓶颈：先进制程/封装/设备/EDA/IP",
+    "chain_priority": "P0_CORE",
+    "chain_type": "manufacturing_bottleneck"
+  },
+  {
+    "anchor_id": "ASML",
+    "display_name_cn": "阿斯麦",
+    "display_name_en": "ASML",
+    "instrument_type": "public_equity",
+    "ticker": "ASML",
+    "exchange": "NASDAQ/Euronext",
+    "anchor_tier": "A_GLOBAL_DOMINANT",
+    "anchor_roles": [
+      "EUV_bottleneck",
+      "semiconductor_equipment"
+    ],
+    "frontend_group": "光刻绝对锚",
+    "status_explanation_cn": "EUV光刻设备关键供应商，先进制程扩产绕不开。",
+    "impact_explanation_cn": "EUV订单、交付、出口限制和先进逻辑/DRAM需求会影响全球半导体设备链。",
+    "monitor_events": [
+      "EUV orders",
+      "export controls",
+      "guidance",
+      "customer capex"
+    ],
+    "layer5_mapping_hint": "ASML",
+    "event_only": false,
+    "source_keys": [
+      "asml_official"
+    ],
+    "anchor_priority": "P0_CORE",
+    "node_id": "L3_SEMICONDUCTOR_MANUFACTURING_BOTTLENECK_EUV_LITHOGRAPHY",
+    "source_validation_status": "verified",
+    "chain_id": "L3_SEMICONDUCTOR_MANUFACTURING_BOTTLENECK",
+    "chain_name_cn": "半导体制造瓶颈：先进制程/封装/设备/EDA/IP",
+    "chain_priority": "P0_CORE",
+    "chain_type": "manufacturing_bottleneck"
+  },
+  {
+    "anchor_id": "AMAT",
+    "display_name_cn": "应用材料",
+    "display_name_en": "Applied Materials",
+    "instrument_type": "public_equity",
+    "ticker": "AMAT",
+    "exchange": "NASDAQ",
+    "anchor_tier": "B_OLIGOPOLY_ANCHOR",
+    "anchor_roles": [
+      "WFE_equipment",
+      "deposition_etch_process"
+    ],
+    "frontend_group": "制造设备寡头",
+    "status_explanation_cn": "综合半导体设备核心厂商。",
+    "impact_explanation_cn": "客户Capex、先进封装/DRAM/逻辑设备需求会影响WFE设备板块。",
+    "monitor_events": [
+      "WFE demand",
+      "guidance",
+      "China restrictions"
+    ],
+    "layer5_mapping_hint": "AMAT",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_SEMICONDUCTOR_MANUFACTURING_BOTTLENECK_WFE_EQUIPMENT",
+    "source_validation_status": "needs_source",
+    "chain_id": "L3_SEMICONDUCTOR_MANUFACTURING_BOTTLENECK",
+    "chain_name_cn": "半导体制造瓶颈：先进制程/封装/设备/EDA/IP",
+    "chain_priority": "P0_CORE",
+    "chain_type": "manufacturing_bottleneck"
+  },
+  {
+    "anchor_id": "LRCX",
+    "display_name_cn": "泛林集团",
+    "display_name_en": "Lam Research",
+    "instrument_type": "public_equity",
+    "ticker": "LRCX",
+    "exchange": "NASDAQ",
+    "anchor_tier": "B_OLIGOPOLY_ANCHOR",
+    "anchor_roles": [
+      "etch_deposition_equipment",
+      "memory_capex_beta"
+    ],
+    "frontend_group": "制造设备寡头",
+    "status_explanation_cn": "刻蚀/沉积设备寡头，存储Capex敏感。",
+    "impact_explanation_cn": "HBM/DRAM/NAND扩产和先进制程工艺变化会传导到设备订单。",
+    "monitor_events": [
+      "memory WFE",
+      "guidance",
+      "export restrictions"
+    ],
+    "layer5_mapping_hint": "LRCX",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_SEMICONDUCTOR_MANUFACTURING_BOTTLENECK_WFE_EQUIPMENT",
+    "source_validation_status": "needs_source",
+    "chain_id": "L3_SEMICONDUCTOR_MANUFACTURING_BOTTLENECK",
+    "chain_name_cn": "半导体制造瓶颈：先进制程/封装/设备/EDA/IP",
+    "chain_priority": "P0_CORE",
+    "chain_type": "manufacturing_bottleneck"
+  },
+  {
+    "anchor_id": "8035.T",
+    "display_name_cn": "东京电子",
+    "display_name_en": "Tokyo Electron",
+    "instrument_type": "public_equity",
+    "ticker": "8035.T",
+    "exchange": "TSE",
+    "anchor_tier": "B_OLIGOPOLY_ANCHOR",
+    "anchor_roles": [
+      "coater_developer_etch_equipment"
+    ],
+    "frontend_group": "制造设备寡头",
+    "status_explanation_cn": "日本半导体设备核心锚。",
+    "impact_explanation_cn": "先进逻辑、存储和地缘出口政策会影响日本设备链。",
+    "monitor_events": [
+      "guidance",
+      "equipment demand",
+      "export policy"
+    ],
+    "layer5_mapping_hint": "8035.T",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_SEMICONDUCTOR_MANUFACTURING_BOTTLENECK_WFE_EQUIPMENT",
+    "source_validation_status": "needs_source",
+    "chain_id": "L3_SEMICONDUCTOR_MANUFACTURING_BOTTLENECK",
+    "chain_name_cn": "半导体制造瓶颈：先进制程/封装/设备/EDA/IP",
+    "chain_priority": "P0_CORE",
+    "chain_type": "manufacturing_bottleneck"
+  },
+  {
+    "anchor_id": "KLAC",
+    "display_name_cn": "科磊",
+    "display_name_en": "KLA",
+    "instrument_type": "public_equity",
+    "ticker": "KLAC",
+    "exchange": "NASDAQ",
+    "anchor_tier": "B_OLIGOPOLY_ANCHOR",
+    "anchor_roles": [
+      "metrology_inspection"
+    ],
+    "frontend_group": "检测量测寡头",
+    "status_explanation_cn": "半导体检测/量测核心锚。",
+    "impact_explanation_cn": "先进制程良率和复杂度提高会强化检测/量测需求。",
+    "monitor_events": [
+      "process control demand",
+      "advanced node commentary"
+    ],
+    "layer5_mapping_hint": "KLAC",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_SEMICONDUCTOR_MANUFACTURING_BOTTLENECK_WFE_EQUIPMENT",
+    "source_validation_status": "needs_source",
+    "chain_id": "L3_SEMICONDUCTOR_MANUFACTURING_BOTTLENECK",
+    "chain_name_cn": "半导体制造瓶颈：先进制程/封装/设备/EDA/IP",
+    "chain_priority": "P0_CORE",
+    "chain_type": "manufacturing_bottleneck"
+  },
+  {
+    "anchor_id": "SNPS",
+    "display_name_cn": "新思科技",
+    "display_name_en": "Synopsys",
+    "instrument_type": "public_equity",
+    "ticker": "SNPS",
+    "exchange": "NASDAQ",
+    "anchor_tier": "B_OLIGOPOLY_ANCHOR",
+    "anchor_roles": [
+      "EDA",
+      "design_infrastructure"
+    ],
+    "frontend_group": "EDA/IP",
+    "status_explanation_cn": "EDA公开市场双龙头之一。",
+    "impact_explanation_cn": "出口限制、AI芯片设计需求和并购会影响EDA板块。",
+    "monitor_events": [
+      "EDA export controls",
+      "AI design demand",
+      "M&A"
+    ],
+    "layer5_mapping_hint": "SNPS",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_SEMICONDUCTOR_MANUFACTURING_BOTTLENECK_EDA_IP",
+    "source_validation_status": "needs_source",
+    "chain_id": "L3_SEMICONDUCTOR_MANUFACTURING_BOTTLENECK",
+    "chain_name_cn": "半导体制造瓶颈：先进制程/封装/设备/EDA/IP",
+    "chain_priority": "P0_CORE",
+    "chain_type": "manufacturing_bottleneck"
+  },
+  {
+    "anchor_id": "CDNS",
+    "display_name_cn": "楷登电子",
+    "display_name_en": "Cadence",
+    "instrument_type": "public_equity",
+    "ticker": "CDNS",
+    "exchange": "NASDAQ",
+    "anchor_tier": "B_OLIGOPOLY_ANCHOR",
+    "anchor_roles": [
+      "EDA",
+      "design_infrastructure"
+    ],
+    "frontend_group": "EDA/IP",
+    "status_explanation_cn": "EDA公开市场双龙头之一。",
+    "impact_explanation_cn": "芯片设计活动、EDA授权和出口政策影响半导体软件链。",
+    "monitor_events": [
+      "EDA demand",
+      "export controls",
+      "guidance"
+    ],
+    "layer5_mapping_hint": "CDNS",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_SEMICONDUCTOR_MANUFACTURING_BOTTLENECK_EDA_IP",
+    "source_validation_status": "needs_source",
+    "chain_id": "L3_SEMICONDUCTOR_MANUFACTURING_BOTTLENECK",
+    "chain_name_cn": "半导体制造瓶颈：先进制程/封装/设备/EDA/IP",
+    "chain_priority": "P0_CORE",
+    "chain_type": "manufacturing_bottleneck"
+  },
+  {
+    "anchor_id": "ARM",
+    "display_name_cn": "Arm",
+    "display_name_en": "Arm Holdings",
+    "instrument_type": "public_equity",
+    "ticker": "ARM",
+    "exchange": "NASDAQ",
+    "anchor_tier": "A_GLOBAL_DOMINANT",
+    "anchor_roles": [
+      "chip_IP",
+      "edge_ai",
+      "server_cpu_ip"
+    ],
+    "frontend_group": "EDA/IP",
+    "status_explanation_cn": "CPU/IP架构核心资金锚。",
+    "impact_explanation_cn": "端侧AI、服务器CPU和授权模式变化会影响芯片IP生态。",
+    "monitor_events": [
+      "royalty growth",
+      "server/edge AI design wins",
+      "license model"
+    ],
+    "layer5_mapping_hint": "ARM",
+    "event_only": false,
+    "source_keys": [
+      "arm_fy2026"
+    ],
+    "anchor_priority": "P0_CORE",
+    "node_id": "L3_SEMICONDUCTOR_MANUFACTURING_BOTTLENECK_EDA_IP",
+    "source_validation_status": "verified",
+    "chain_id": "L3_SEMICONDUCTOR_MANUFACTURING_BOTTLENECK",
+    "chain_name_cn": "半导体制造瓶颈：先进制程/封装/设备/EDA/IP",
+    "chain_priority": "P0_CORE",
+    "chain_type": "manufacturing_bottleneck"
+  },
+  {
+    "anchor_id": "DELL",
+    "display_name_cn": "戴尔科技",
+    "display_name_en": "Dell Technologies",
+    "instrument_type": "public_equity",
+    "ticker": "DELL",
+    "exchange": "NYSE",
+    "anchor_tier": "B_OLIGOPOLY_ANCHOR",
+    "anchor_roles": [
+      "ai_server",
+      "order_backlog_signal"
+    ],
+    "frontend_group": "AI服务器",
+    "status_explanation_cn": "AI服务器公开市场核心锚之一。",
+    "impact_explanation_cn": "AI服务器收入、订单和backlog变化会影响服务器、GPU采购、网络和机柜链。",
+    "monitor_events": [
+      "AI-optimized server revenue",
+      "orders/backlog",
+      "margin commentary"
+    ],
+    "layer5_mapping_hint": "DELL",
+    "event_only": false,
+    "source_keys": [
+      "dell_fy26_q4"
+    ],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_AI_INFRASTRUCTURE_EXPANSION_AI_SERVER_ODM",
+    "source_validation_status": "verified",
+    "chain_id": "L3_AI_INFRASTRUCTURE_EXPANSION",
+    "chain_name_cn": "AI基础设施扩散：服务器/网络/光模块",
+    "chain_priority": "P0_CORE",
+    "chain_type": "infrastructure_supply_chain"
+  },
+  {
+    "anchor_id": "HPE",
+    "display_name_cn": "惠普企业",
+    "display_name_en": "HPE",
+    "instrument_type": "public_equity",
+    "ticker": "HPE",
+    "exchange": "NYSE",
+    "anchor_tier": "B_OLIGOPOLY_ANCHOR",
+    "anchor_roles": [
+      "enterprise_ai_server",
+      "networking"
+    ],
+    "frontend_group": "AI服务器",
+    "status_explanation_cn": "企业AI服务器与网络基础设施锚。",
+    "impact_explanation_cn": "AI backlog和企业AI服务器订单会影响服务器链与网络设备资金。",
+    "monitor_events": [
+      "AI backlog",
+      "server revenue",
+      "networking integration"
+    ],
+    "layer5_mapping_hint": "HPE",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_AI_INFRASTRUCTURE_EXPANSION_AI_SERVER_ODM",
+    "source_validation_status": "needs_source",
+    "chain_id": "L3_AI_INFRASTRUCTURE_EXPANSION",
+    "chain_name_cn": "AI基础设施扩散：服务器/网络/光模块",
+    "chain_priority": "P0_CORE",
+    "chain_type": "infrastructure_supply_chain"
+  },
+  {
+    "anchor_id": "SMCI",
+    "display_name_cn": "超微电脑",
+    "display_name_en": "Super Micro Computer",
+    "instrument_type": "public_equity",
+    "ticker": "SMCI",
+    "exchange": "NASDAQ",
+    "anchor_tier": "B_SUPPLY_CHAIN_BETA",
+    "anchor_roles": [
+      "ai_server_high_beta",
+      "execution_risk"
+    ],
+    "frontend_group": "AI服务器",
+    "status_explanation_cn": "AI服务器高弹性标的，但交付和会计/治理风险需额外标记。",
+    "impact_explanation_cn": "收入指引、交付延迟和订单波动会放大AI服务器链情绪。",
+    "monitor_events": [
+      "revenue guidance",
+      "shipment delays",
+      "customer concentration"
+    ],
+    "layer5_mapping_hint": "SMCI",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_AI_INFRASTRUCTURE_EXPANSION_AI_SERVER_ODM",
+    "source_validation_status": "needs_source",
+    "chain_id": "L3_AI_INFRASTRUCTURE_EXPANSION",
+    "chain_name_cn": "AI基础设施扩散：服务器/网络/光模块",
+    "chain_priority": "P0_CORE",
+    "chain_type": "infrastructure_supply_chain"
+  },
+  {
+    "anchor_id": "2317.TW",
+    "display_name_cn": "鸿海/富士康",
+    "display_name_en": "Foxconn",
+    "instrument_type": "public_equity",
+    "ticker": "2317.TW",
+    "exchange": "TWSE",
+    "anchor_tier": "B_OLIGOPOLY_ANCHOR",
+    "anchor_roles": [
+      "ODM",
+      "rack_integration"
+    ],
+    "frontend_group": "ODM/机柜",
+    "status_explanation_cn": "AI服务器ODM与机柜制造重要锚。",
+    "impact_explanation_cn": "云厂商服务器订单会传导到台系ODM链。",
+    "monitor_events": [
+      "AI server shipments",
+      "ODM orders",
+      "customer capex"
+    ],
+    "layer5_mapping_hint": "2317.TW",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_AI_INFRASTRUCTURE_EXPANSION_AI_SERVER_ODM",
+    "source_validation_status": "needs_source",
+    "chain_id": "L3_AI_INFRASTRUCTURE_EXPANSION",
+    "chain_name_cn": "AI基础设施扩散：服务器/网络/光模块",
+    "chain_priority": "P0_CORE",
+    "chain_type": "infrastructure_supply_chain"
+  },
+  {
+    "anchor_id": "2382.TW",
+    "display_name_cn": "广达",
+    "display_name_en": "Quanta Computer",
+    "instrument_type": "public_equity",
+    "ticker": "2382.TW",
+    "exchange": "TWSE",
+    "anchor_tier": "B_OLIGOPOLY_ANCHOR",
+    "anchor_roles": [
+      "ODM",
+      "rack_server"
+    ],
+    "frontend_group": "ODM/机柜",
+    "status_explanation_cn": "AI服务器ODM重要锚。",
+    "impact_explanation_cn": "AI服务器整机和机柜订单会影响台股AI硬件链。",
+    "monitor_events": [
+      "AI server orders",
+      "shipments",
+      "customer mix"
+    ],
+    "layer5_mapping_hint": "2382.TW",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_AI_INFRASTRUCTURE_EXPANSION_AI_SERVER_ODM",
+    "source_validation_status": "needs_source",
+    "chain_id": "L3_AI_INFRASTRUCTURE_EXPANSION",
+    "chain_name_cn": "AI基础设施扩散：服务器/网络/光模块",
+    "chain_priority": "P0_CORE",
+    "chain_type": "infrastructure_supply_chain"
+  },
+  {
+    "anchor_id": "ANET",
+    "display_name_cn": "Arista Networks",
+    "display_name_en": "Arista Networks",
+    "instrument_type": "public_equity",
+    "ticker": "ANET",
+    "exchange": "NYSE",
+    "anchor_tier": "B_OLIGOPOLY_ANCHOR",
+    "anchor_roles": [
+      "ai_ethernet_networking",
+      "cloud_network_switching"
+    ],
+    "frontend_group": "AI网络",
+    "status_explanation_cn": "AI以太网交换机代表性龙头。",
+    "impact_explanation_cn": "AI网络收入、超大云客户需求和新互联方案会影响以太网替代InfiniBand交易。",
+    "monitor_events": [
+      "AI networking revenue target",
+      "cloud customer demand",
+      "new product launch"
+    ],
+    "layer5_mapping_hint": "ANET",
+    "event_only": false,
+    "source_keys": [
+      "arista_q1_2026"
+    ],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_AI_INFRASTRUCTURE_EXPANSION_AI_NETWORKING",
+    "source_validation_status": "verified",
+    "chain_id": "L3_AI_INFRASTRUCTURE_EXPANSION",
+    "chain_name_cn": "AI基础设施扩散：服务器/网络/光模块",
+    "chain_priority": "P0_CORE",
+    "chain_type": "infrastructure_supply_chain"
+  },
+  {
+    "anchor_id": "300308.SZ",
+    "display_name_cn": "中际旭创",
+    "display_name_en": "Zhongji Innolight",
+    "instrument_type": "public_equity",
+    "ticker": "300308.SZ",
+    "exchange": "SZSE",
+    "anchor_tier": "B_SUPPLY_CHAIN_BETA",
+    "anchor_roles": [
+      "optical_module",
+      "regional_beta",
+      "global_supplier"
+    ],
+    "frontend_group": "光模块",
+    "status_explanation_cn": "全球高速光模块核心供应商之一，也是A股光模块资金锚。",
+    "impact_explanation_cn": "800G/1.6T出货、AI客户订单和毛利变化会影响A股光模块和全球光互联链。",
+    "monitor_events": [
+      "800G/1.6T shipments",
+      "customer orders",
+      "gross margin"
+    ],
+    "layer5_mapping_hint": "300308.SZ",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_AI_INFRASTRUCTURE_EXPANSION_OPTICAL_MODULE",
+    "source_validation_status": "needs_source",
+    "chain_id": "L3_AI_INFRASTRUCTURE_EXPANSION",
+    "chain_name_cn": "AI基础设施扩散：服务器/网络/光模块",
+    "chain_priority": "P0_CORE",
+    "chain_type": "infrastructure_supply_chain"
+  },
+  {
+    "anchor_id": "300502.SZ",
+    "display_name_cn": "新易盛",
+    "display_name_en": "Eoptolink",
+    "instrument_type": "public_equity",
+    "ticker": "300502.SZ",
+    "exchange": "SZSE",
+    "anchor_tier": "B_SUPPLY_CHAIN_BETA",
+    "anchor_roles": [
+      "optical_module_high_beta",
+      "regional_beta"
+    ],
+    "frontend_group": "光模块",
+    "status_explanation_cn": "高速光模块高弹性锚。",
+    "impact_explanation_cn": "高速光模块量产和客户认证会放大A股光模块主题弹性。",
+    "monitor_events": [
+      "1.6T product shipment",
+      "customer certification",
+      "revenue growth"
+    ],
+    "layer5_mapping_hint": "300502.SZ",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_AI_INFRASTRUCTURE_EXPANSION_OPTICAL_MODULE",
+    "source_validation_status": "needs_source",
+    "chain_id": "L3_AI_INFRASTRUCTURE_EXPANSION",
+    "chain_name_cn": "AI基础设施扩散：服务器/网络/光模块",
+    "chain_priority": "P0_CORE",
+    "chain_type": "infrastructure_supply_chain"
+  },
+  {
+    "anchor_id": "COHR",
+    "display_name_cn": "Coherent",
+    "display_name_en": "Coherent",
+    "instrument_type": "public_equity",
+    "ticker": "COHR",
+    "exchange": "NYSE",
+    "anchor_tier": "B_OLIGOPOLY_ANCHOR",
+    "anchor_roles": [
+      "optical_components",
+      "optical_module"
+    ],
+    "frontend_group": "光模块/光器件",
+    "status_explanation_cn": "全球光器件与光模块重要锚。",
+    "impact_explanation_cn": "光器件供需、AI数据中心订单和产能变化会影响美股光通信链。",
+    "monitor_events": [
+      "datacom revenue",
+      "AI optical demand",
+      "capacity expansion"
+    ],
+    "layer5_mapping_hint": "COHR",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_AI_INFRASTRUCTURE_EXPANSION_OPTICAL_MODULE",
+    "source_validation_status": "needs_source",
+    "chain_id": "L3_AI_INFRASTRUCTURE_EXPANSION",
+    "chain_name_cn": "AI基础设施扩散：服务器/网络/光模块",
+    "chain_priority": "P0_CORE",
+    "chain_type": "infrastructure_supply_chain"
+  },
+  {
+    "anchor_id": "300394.SZ",
+    "display_name_cn": "天孚通信",
+    "display_name_en": "TFC Communication",
+    "instrument_type": "public_equity",
+    "ticker": "300394.SZ",
+    "exchange": "SZSE",
+    "anchor_tier": "B_SUPPLY_CHAIN_BETA",
+    "anchor_roles": [
+      "optical_components",
+      "regional_beta"
+    ],
+    "frontend_group": "光模块/光器件",
+    "status_explanation_cn": "A股光器件环节资金锚。",
+    "impact_explanation_cn": "高速光器件需求和客户扩产会影响A股光通信产业链。",
+    "monitor_events": [
+      "optical component orders",
+      "AI customer demand"
+    ],
+    "layer5_mapping_hint": "300394.SZ",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_AI_INFRASTRUCTURE_EXPANSION_OPTICAL_MODULE",
+    "source_validation_status": "needs_source",
+    "chain_id": "L3_AI_INFRASTRUCTURE_EXPANSION",
+    "chain_name_cn": "AI基础设施扩散：服务器/网络/光模块",
+    "chain_priority": "P0_CORE",
+    "chain_type": "infrastructure_supply_chain"
+  },
+  {
+    "anchor_id": "VRT",
+    "display_name_cn": "维谛技术",
+    "display_name_en": "Vertiv",
+    "instrument_type": "public_equity",
+    "ticker": "VRT",
+    "exchange": "NYSE",
+    "anchor_tier": "B_SUPPLY_CHAIN_BETA",
+    "anchor_roles": [
+      "power_cooling",
+      "ai_datacenter_beta"
+    ],
+    "frontend_group": "电力/冷却核心",
+    "status_explanation_cn": "AI数据中心电力、机柜和热管理最敏感公开市场标的之一。",
+    "impact_explanation_cn": "电源、冷却、机柜和液冷订单变化会直接反映AI数据中心建设强度。",
+    "monitor_events": [
+      "order backlog",
+      "AI thermal management demand",
+      "liquid cooling portfolio"
+    ],
+    "layer5_mapping_hint": "VRT",
+    "event_only": false,
+    "source_keys": [
+      "vertiv_2025_ar"
+    ],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_AI_POWER_COOLING_THERMAL_MANAGEMENT",
+    "source_validation_status": "verified",
+    "chain_id": "L3_AI_POWER_COOLING",
+    "chain_name_cn": "AI电力与冷却链",
+    "chain_priority": "P0_CORE",
+    "chain_type": "power_cooling_constraint"
+  },
+  {
+    "anchor_id": "ETN",
+    "display_name_cn": "伊顿",
+    "display_name_en": "Eaton",
+    "instrument_type": "public_equity",
+    "ticker": "ETN",
+    "exchange": "NYSE",
+    "anchor_tier": "B_OLIGOPOLY_ANCHOR",
+    "anchor_roles": [
+      "electrical_distribution",
+      "datacenter_power"
+    ],
+    "frontend_group": "电气设备",
+    "status_explanation_cn": "配电和数据中心电气设备稳健锚。",
+    "impact_explanation_cn": "数据中心电气订单和配电设备短缺会影响电力设备链。",
+    "monitor_events": [
+      "electrical segment orders",
+      "data center demand",
+      "capacity expansion"
+    ],
+    "layer5_mapping_hint": "ETN",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_AI_POWER_COOLING_POWER_DISTRIBUTION",
+    "source_validation_status": "needs_source",
+    "chain_id": "L3_AI_POWER_COOLING",
+    "chain_name_cn": "AI电力与冷却链",
+    "chain_priority": "P0_CORE",
+    "chain_type": "power_cooling_constraint"
+  },
+  {
+    "anchor_id": "SU.PA",
+    "display_name_cn": "施耐德电气",
+    "display_name_en": "Schneider Electric",
+    "instrument_type": "public_equity",
+    "ticker": "SU.PA",
+    "exchange": "Euronext Paris",
+    "anchor_tier": "B_OLIGOPOLY_ANCHOR",
+    "anchor_roles": [
+      "energy_management",
+      "datacenter_power_cooling"
+    ],
+    "frontend_group": "电气/能效",
+    "status_explanation_cn": "全球电气与能效管理强龙头。",
+    "impact_explanation_cn": "数据中心能源管理、配电和冷却解决方案需求会影响欧洲电气设备链。",
+    "monitor_events": [
+      "data center orders",
+      "energy management demand"
+    ],
+    "layer5_mapping_hint": "SU.PA",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_AI_POWER_COOLING_POWER_DISTRIBUTION",
+    "source_validation_status": "needs_source",
+    "chain_id": "L3_AI_POWER_COOLING",
+    "chain_name_cn": "AI电力与冷却链",
+    "chain_priority": "P0_CORE",
+    "chain_type": "power_cooling_constraint"
+  },
+  {
+    "anchor_id": "GEV",
+    "display_name_cn": "GE Vernova",
+    "display_name_en": "GE Vernova",
+    "instrument_type": "public_equity",
+    "ticker": "GEV",
+    "exchange": "NYSE",
+    "anchor_tier": "B_OLIGOPOLY_ANCHOR",
+    "anchor_roles": [
+      "power_generation",
+      "grid_equipment"
+    ],
+    "frontend_group": "电力设备",
+    "status_explanation_cn": "电网、燃机和电力设备方向重要锚。",
+    "impact_explanation_cn": "AI用电和电网扩容需求会传导到电力设备、燃机和输配电投资。",
+    "monitor_events": [
+      "grid orders",
+      "gas turbine demand",
+      "power demand outlook"
+    ],
+    "layer5_mapping_hint": "GEV",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_AI_POWER_COOLING_POWER_DISTRIBUTION",
+    "source_validation_status": "needs_source",
+    "chain_id": "L3_AI_POWER_COOLING",
+    "chain_name_cn": "AI电力与冷却链",
+    "chain_priority": "P0_CORE",
+    "chain_type": "power_cooling_constraint"
+  },
+  {
+    "anchor_id": "ENR.DE",
+    "display_name_cn": "西门子能源",
+    "display_name_en": "Siemens Energy",
+    "instrument_type": "public_equity",
+    "ticker": "ENR.DE",
+    "exchange": "XETRA",
+    "anchor_tier": "B_OLIGOPOLY_ANCHOR",
+    "anchor_roles": [
+      "grid_equipment",
+      "power_generation"
+    ],
+    "frontend_group": "电力设备",
+    "status_explanation_cn": "欧洲电网与能源设备重要锚。",
+    "impact_explanation_cn": "输配电订单、电网瓶颈和电力设备需求影响AI电力基础设施链。",
+    "monitor_events": [
+      "grid backlog",
+      "transformer demand",
+      "power equipment margin"
+    ],
+    "layer5_mapping_hint": "ENR.DE",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_AI_POWER_COOLING_POWER_DISTRIBUTION",
+    "source_validation_status": "needs_source",
+    "chain_id": "L3_AI_POWER_COOLING",
+    "chain_name_cn": "AI电力与冷却链",
+    "chain_priority": "P0_CORE",
+    "chain_type": "power_cooling_constraint"
+  },
+  {
+    "anchor_id": "COPPER_FUTURE",
+    "display_name_cn": "铜",
+    "display_name_en": "Copper",
+    "instrument_type": "future_or_commodity",
+    "ticker": "HG/CA/LME_COPPER",
+    "exchange": "COMEX/SHFE/LME",
+    "anchor_tier": "D_COMMODITY_PROXY",
+    "anchor_roles": [
+      "price_proxy",
+      "grid_input_cost"
+    ],
+    "frontend_group": "商品约束",
+    "status_explanation_cn": "AI电力、电网、新能源和工业周期共同价格代理。",
+    "impact_explanation_cn": "铜价上升会反映电网、电气设备、数据中心和新能源需求/供给约束。",
+    "monitor_events": [
+      "price breakout",
+      "inventory drawdown",
+      "China demand",
+      "mine supply disruption"
+    ],
+    "layer5_mapping_hint": "HG/CA/LME_COPPER",
+    "event_only": false,
+    "source_keys": [
+      "iea_critical_minerals"
+    ],
+    "anchor_priority": "P1_PRICE",
+    "node_id": "L3_AI_POWER_COOLING_ENERGY_INPUT_PRICE",
+    "source_validation_status": "verified",
+    "chain_id": "L3_AI_POWER_COOLING",
+    "chain_name_cn": "AI电力与冷却链",
+    "chain_priority": "P0_CORE",
+    "chain_type": "power_cooling_constraint"
+  },
+  {
+    "anchor_id": "NATGAS_FUTURE",
+    "display_name_cn": "天然气",
+    "display_name_en": "Natural Gas",
+    "instrument_type": "future_or_commodity",
+    "ticker": "NG/HH",
+    "exchange": "NYMEX",
+    "anchor_tier": "D_COMMODITY_PROXY",
+    "anchor_roles": [
+      "power_generation_input",
+      "energy_cost_proxy"
+    ],
+    "frontend_group": "能源约束",
+    "status_explanation_cn": "数据中心用电增长可能加强天然气发电和电价敏感度。",
+    "impact_explanation_cn": "天然气价格影响边际发电成本和数据中心电力成本预期。",
+    "monitor_events": [
+      "gas price",
+      "power burn",
+      "storage",
+      "weather"
+    ],
+    "layer5_mapping_hint": "NG/HH",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P1_PRICE",
+    "node_id": "L3_AI_POWER_COOLING_ENERGY_INPUT_PRICE",
+    "source_validation_status": "price_proxy_needs_feed",
+    "chain_id": "L3_AI_POWER_COOLING",
+    "chain_name_cn": "AI电力与冷却链",
+    "chain_priority": "P0_CORE",
+    "chain_type": "power_cooling_constraint"
+  },
+  {
+    "anchor_id": "OPENAI_MODEL",
+    "display_name_cn": "OpenAI",
+    "display_name_en": "OpenAI",
+    "instrument_type": "private_company",
+    "ticker": "",
+    "exchange": "",
+    "anchor_tier": "C_PRIVATE_EVENT_ANCHOR",
+    "anchor_roles": [
+      "frontier_model",
+      "event_source"
+    ],
+    "frontend_group": "基础模型事件锚",
+    "status_explanation_cn": "模型层最强事件源之一，非上市，不做日度行情锚。",
+    "impact_explanation_cn": "融资、模型发布、算力采购和企业合作会影响AI应用和算力需求预期。",
+    "monitor_events": [
+      "model launch",
+      "funding valuation",
+      "enterprise adoption",
+      "compute deal"
+    ],
+    "layer5_mapping_hint": "",
+    "event_only": true,
+    "source_keys": [
+      "openai_2026_funding"
+    ],
+    "anchor_priority": "P1_EVENT",
+    "node_id": "L3_MODEL_ENTERPRISE_AI_PLATFORM_FRONTIER_MODELS",
+    "source_validation_status": "event_only_verified",
+    "chain_id": "L3_MODEL_ENTERPRISE_AI_PLATFORM",
+    "chain_name_cn": "模型层与企业AI平台",
+    "chain_priority": "P1_THEME",
+    "chain_type": "ai_commercialization"
+  },
+  {
+    "anchor_id": "ANTHROPIC_MODEL",
+    "display_name_cn": "Anthropic",
+    "display_name_en": "Anthropic",
+    "instrument_type": "private_company",
+    "ticker": "",
+    "exchange": "",
+    "anchor_tier": "C_PRIVATE_EVENT_ANCHOR",
+    "anchor_roles": [
+      "frontier_model",
+      "enterprise_ai",
+      "event_source"
+    ],
+    "frontend_group": "基础模型事件锚",
+    "status_explanation_cn": "企业AI和代码模型重要事件锚。",
+    "impact_explanation_cn": "融资、模型能力和企业采用会影响云厂商、数据平台和Agent软件预期。",
+    "monitor_events": [
+      "funding valuation",
+      "model release",
+      "cloud partnership"
+    ],
+    "layer5_mapping_hint": "",
+    "event_only": true,
+    "source_keys": [
+      "anthropic_series_h"
+    ],
+    "anchor_priority": "P1_EVENT",
+    "node_id": "L3_MODEL_ENTERPRISE_AI_PLATFORM_FRONTIER_MODELS",
+    "source_validation_status": "event_only_verified",
+    "chain_id": "L3_MODEL_ENTERPRISE_AI_PLATFORM",
+    "chain_name_cn": "模型层与企业AI平台",
+    "chain_priority": "P1_THEME",
+    "chain_type": "ai_commercialization"
+  },
+  {
+    "anchor_id": "GOOGLE_DEEPMIND",
+    "display_name_cn": "Google DeepMind",
+    "display_name_en": "Google DeepMind",
+    "instrument_type": "public_equity",
+    "ticker": "GOOGL",
+    "exchange": "NASDAQ",
+    "anchor_tier": "B_OLIGOPOLY_ANCHOR",
+    "anchor_roles": [
+      "frontier_model",
+      "platform_distribution"
+    ],
+    "frontend_group": "基础模型/平台",
+    "status_explanation_cn": "依托Alphabet全栈能力的模型和平台锚。",
+    "impact_explanation_cn": "Gemini、TPU和Google Cloud进展会影响模型竞争和AI基础设施需求。",
+    "monitor_events": [
+      "Gemini release",
+      "Google Cloud revenue",
+      "TPU deployment"
+    ],
+    "layer5_mapping_hint": "GOOGL",
+    "event_only": false,
+    "source_keys": [
+      "alphabet_q1_2026"
+    ],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_MODEL_ENTERPRISE_AI_PLATFORM_FRONTIER_MODELS",
+    "source_validation_status": "verified",
+    "chain_id": "L3_MODEL_ENTERPRISE_AI_PLATFORM",
+    "chain_name_cn": "模型层与企业AI平台",
+    "chain_priority": "P1_THEME",
+    "chain_type": "ai_commercialization"
+  },
+  {
+    "anchor_id": "PLTR",
+    "display_name_cn": "Palantir",
+    "display_name_en": "Palantir",
+    "instrument_type": "public_equity",
+    "ticker": "PLTR",
+    "exchange": "NYSE",
+    "anchor_tier": "B_SUPPLY_CHAIN_BETA",
+    "anchor_roles": [
+      "enterprise_ai_application",
+      "government_ai"
+    ],
+    "frontend_group": "企业AI应用",
+    "status_explanation_cn": "AIP和政府/企业AI落地资金敏感锚。",
+    "impact_explanation_cn": "企业AI订单、政府合同和AIP采用会影响AI应用软件板块情绪。",
+    "monitor_events": [
+      "AIP adoption",
+      "government contracts",
+      "commercial revenue"
+    ],
+    "layer5_mapping_hint": "PLTR",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_MODEL_ENTERPRISE_AI_PLATFORM_ENTERPRISE_AI_APPS",
+    "source_validation_status": "needs_source",
+    "chain_id": "L3_MODEL_ENTERPRISE_AI_PLATFORM",
+    "chain_name_cn": "模型层与企业AI平台",
+    "chain_priority": "P1_THEME",
+    "chain_type": "ai_commercialization"
+  },
+  {
+    "anchor_id": "SNOW",
+    "display_name_cn": "Snowflake",
+    "display_name_en": "Snowflake",
+    "instrument_type": "public_equity",
+    "ticker": "SNOW",
+    "exchange": "NYSE",
+    "anchor_tier": "B_OLIGOPOLY_ANCHOR",
+    "anchor_roles": [
+      "data_platform",
+      "enterprise_ai_data_cloud"
+    ],
+    "frontend_group": "企业数据平台",
+    "status_explanation_cn": "AI Data Cloud和企业数据治理锚。",
+    "impact_explanation_cn": "产品收入、净留存率和AI产品采用会影响数据平台与企业AI软件链。",
+    "monitor_events": [
+      "product revenue",
+      "net revenue retention",
+      "AI product adoption"
+    ],
+    "layer5_mapping_hint": "SNOW",
+    "event_only": false,
+    "source_keys": [
+      "snowflake_q1_2026"
+    ],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_MODEL_ENTERPRISE_AI_PLATFORM_DATA_PLATFORM",
+    "source_validation_status": "verified",
+    "chain_id": "L3_MODEL_ENTERPRISE_AI_PLATFORM",
+    "chain_name_cn": "模型层与企业AI平台",
+    "chain_priority": "P1_THEME",
+    "chain_type": "ai_commercialization"
+  },
+  {
+    "anchor_id": "DATABRICKS",
+    "display_name_cn": "Databricks",
+    "display_name_en": "Databricks",
+    "instrument_type": "private_company",
+    "ticker": "",
+    "exchange": "",
+    "anchor_tier": "C_PRIVATE_EVENT_ANCHOR",
+    "anchor_roles": [
+      "lakehouse",
+      "data_ai_platform",
+      "event_source"
+    ],
+    "frontend_group": "企业数据平台",
+    "status_explanation_cn": "私有Lakehouse/数据+AI平台核心事件锚。",
+    "impact_explanation_cn": "融资、收入运行率、产品发布和IPO预期会影响企业AI数据平台估值。",
+    "monitor_events": [
+      "funding valuation",
+      "ARR",
+      "IPO news",
+      "AI data product launch"
+    ],
+    "layer5_mapping_hint": "",
+    "event_only": true,
+    "source_keys": [],
+    "anchor_priority": "P1_EVENT",
+    "node_id": "L3_MODEL_ENTERPRISE_AI_PLATFORM_DATA_PLATFORM",
+    "source_validation_status": "event_only_needs_source",
+    "chain_id": "L3_MODEL_ENTERPRISE_AI_PLATFORM",
+    "chain_name_cn": "模型层与企业AI平台",
+    "chain_priority": "P1_THEME",
+    "chain_type": "ai_commercialization"
+  },
+  {
+    "anchor_id": "NOW",
+    "display_name_cn": "ServiceNow",
+    "display_name_en": "ServiceNow",
+    "instrument_type": "public_equity",
+    "ticker": "NOW",
+    "exchange": "NYSE",
+    "anchor_tier": "B_OLIGOPOLY_ANCHOR",
+    "anchor_roles": [
+      "enterprise_workflow_ai"
+    ],
+    "frontend_group": "企业AI应用",
+    "status_explanation_cn": "企业流程和Agent化工作流平台锚。",
+    "impact_explanation_cn": "AI工作流产品和订阅收入影响企业AI应用商业化预期。",
+    "monitor_events": [
+      "subscription revenue",
+      "AI workflow adoption",
+      "guidance"
+    ],
+    "layer5_mapping_hint": "NOW",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_MODEL_ENTERPRISE_AI_PLATFORM_ENTERPRISE_AI_APPS",
+    "source_validation_status": "needs_source",
+    "chain_id": "L3_MODEL_ENTERPRISE_AI_PLATFORM",
+    "chain_name_cn": "模型层与企业AI平台",
+    "chain_priority": "P1_THEME",
+    "chain_type": "ai_commercialization"
+  },
+  {
+    "anchor_id": "CRM",
+    "display_name_cn": "Salesforce",
+    "display_name_en": "Salesforce",
+    "instrument_type": "public_equity",
+    "ticker": "CRM",
+    "exchange": "NYSE",
+    "anchor_tier": "B_OLIGOPOLY_ANCHOR",
+    "anchor_roles": [
+      "enterprise_application_ai"
+    ],
+    "frontend_group": "企业AI应用",
+    "status_explanation_cn": "CRM和企业AI应用平台锚。",
+    "impact_explanation_cn": "Agent/AI产品采用、订阅增长和客户预算影响企业AI软件链。",
+    "monitor_events": [
+      "AI product adoption",
+      "subscription revenue",
+      "guidance"
+    ],
+    "layer5_mapping_hint": "CRM",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_MODEL_ENTERPRISE_AI_PLATFORM_ENTERPRISE_AI_APPS",
+    "source_validation_status": "needs_source",
+    "chain_id": "L3_MODEL_ENTERPRISE_AI_PLATFORM",
+    "chain_name_cn": "模型层与企业AI平台",
+    "chain_priority": "P1_THEME",
+    "chain_type": "ai_commercialization"
+  },
+  {
+    "anchor_id": "TSLA",
+    "display_name_cn": "特斯拉",
+    "display_name_en": "Tesla",
+    "instrument_type": "public_equity",
+    "ticker": "TSLA",
+    "exchange": "NASDAQ",
+    "anchor_tier": "B_SUPPLY_CHAIN_BETA",
+    "anchor_roles": [
+      "sentiment_leader",
+      "humanoid_robot",
+      "autonomous_driving"
+    ],
+    "frontend_group": "具身智能情绪锚",
+    "status_explanation_cn": "机器人、自动驾驶和Robotaxi资金情绪锚，但商业化仍有争议。",
+    "impact_explanation_cn": "Optimus、Robotaxi和FSD进展会影响人形机器人、传感器、执行器和自动驾驶链情绪。",
+    "monitor_events": [
+      "Optimus update",
+      "Robotaxi milestone",
+      "FSD data",
+      "production guidance"
+    ],
+    "layer5_mapping_hint": "TSLA",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_ROBOTICS_EMBODIED_AI_HUMANOID_AUTONOMY",
+    "source_validation_status": "needs_source",
+    "chain_id": "L3_ROBOTICS_EMBODIED_AI",
+    "chain_name_cn": "机器人/具身智能/自动驾驶",
+    "chain_priority": "P1_THEME",
+    "chain_type": "early_theme_chain"
+  },
+  {
+    "anchor_id": "NVDA_ROBOTICS",
+    "display_name_cn": "英伟达机器人平台",
+    "display_name_en": "NVIDIA Robotics Platform",
+    "instrument_type": "public_equity",
+    "ticker": "NVDA",
+    "exchange": "NASDAQ",
+    "anchor_tier": "B_OLIGOPOLY_ANCHOR",
+    "anchor_roles": [
+      "robotics_compute_platform",
+      "simulation_platform"
+    ],
+    "frontend_group": "卖铲人",
+    "status_explanation_cn": "机器人/自动驾驶算力与仿真平台核心卖铲人。",
+    "impact_explanation_cn": "机器人平台、仿真和边缘AI芯片路线会影响具身智能生态预期。",
+    "monitor_events": [
+      "robotics platform launch",
+      "automotive revenue",
+      "edge AI roadmap"
+    ],
+    "layer5_mapping_hint": "NVDA",
+    "event_only": false,
+    "source_keys": [
+      "nvidia_fy26"
+    ],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_ROBOTICS_EMBODIED_AI_ROBOTICS_COMPUTE",
+    "source_validation_status": "verified",
+    "chain_id": "L3_ROBOTICS_EMBODIED_AI",
+    "chain_name_cn": "机器人/具身智能/自动驾驶",
+    "chain_priority": "P1_THEME",
+    "chain_type": "early_theme_chain"
+  },
+  {
+    "anchor_id": "UNITREE",
+    "display_name_cn": "宇树科技",
+    "display_name_en": "Unitree",
+    "instrument_type": "private_company",
+    "ticker": "",
+    "exchange": "",
+    "anchor_tier": "C_PRIVATE_EVENT_ANCHOR",
+    "anchor_roles": [
+      "humanoid_robot_event_source",
+      "china_robotics_anchor"
+    ],
+    "frontend_group": "私有事件锚",
+    "status_explanation_cn": "中国人形机器人和四足机器人事件锚，非上市。",
+    "impact_explanation_cn": "新品、融资、订单和成本突破会影响A股机器人链情绪。",
+    "monitor_events": [
+      "product launch",
+      "funding",
+      "customer orders"
+    ],
+    "layer5_mapping_hint": "",
+    "event_only": true,
+    "source_keys": [],
+    "anchor_priority": "P1_EVENT",
+    "node_id": "L3_ROBOTICS_EMBODIED_AI_HUMANOID_AUTONOMY",
+    "source_validation_status": "event_only_needs_source",
+    "chain_id": "L3_ROBOTICS_EMBODIED_AI",
+    "chain_name_cn": "机器人/具身智能/自动驾驶",
+    "chain_priority": "P1_THEME",
+    "chain_type": "early_theme_chain"
+  },
+  {
+    "anchor_id": "FIGURE_AI",
+    "display_name_cn": "Figure AI",
+    "display_name_en": "Figure AI",
+    "instrument_type": "private_company",
+    "ticker": "",
+    "exchange": "",
+    "anchor_tier": "C_PRIVATE_EVENT_ANCHOR",
+    "anchor_roles": [
+      "humanoid_robot_event_source"
+    ],
+    "frontend_group": "私有事件锚",
+    "status_explanation_cn": "人形机器人私有公司事件锚。",
+    "impact_explanation_cn": "融资、合作和量产进展会影响全球具身智能主题预期。",
+    "monitor_events": [
+      "funding",
+      "commercial deployment",
+      "partnership"
+    ],
+    "layer5_mapping_hint": "",
+    "event_only": true,
+    "source_keys": [],
+    "anchor_priority": "P1_EVENT",
+    "node_id": "L3_ROBOTICS_EMBODIED_AI_HUMANOID_AUTONOMY",
+    "source_validation_status": "event_only_needs_source",
+    "chain_id": "L3_ROBOTICS_EMBODIED_AI",
+    "chain_name_cn": "机器人/具身智能/自动驾驶",
+    "chain_priority": "P1_THEME",
+    "chain_type": "early_theme_chain"
+  },
+  {
+    "anchor_id": "ABBN.SW",
+    "display_name_cn": "ABB机器人",
+    "display_name_en": "ABB Robotics",
+    "instrument_type": "public_equity",
+    "ticker": "ABBN.SW",
+    "exchange": "SIX",
+    "anchor_tier": "B_OLIGOPOLY_ANCHOR",
+    "anchor_roles": [
+      "industrial_robotics"
+    ],
+    "frontend_group": "工业机器人",
+    "status_explanation_cn": "工业机器人传统龙头之一。",
+    "impact_explanation_cn": "工业自动化订单反映制造业资本开支和机器人需求。",
+    "monitor_events": [
+      "robotics orders",
+      "automation demand"
+    ],
+    "layer5_mapping_hint": "ABBN.SW",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_ROBOTICS_EMBODIED_AI_INDUSTRIAL_ROBOTICS",
+    "source_validation_status": "needs_source",
+    "chain_id": "L3_ROBOTICS_EMBODIED_AI",
+    "chain_name_cn": "机器人/具身智能/自动驾驶",
+    "chain_priority": "P1_THEME",
+    "chain_type": "early_theme_chain"
+  },
+  {
+    "anchor_id": "6954.T",
+    "display_name_cn": "发那科",
+    "display_name_en": "FANUC",
+    "instrument_type": "public_equity",
+    "ticker": "6954.T",
+    "exchange": "TSE",
+    "anchor_tier": "B_OLIGOPOLY_ANCHOR",
+    "anchor_roles": [
+      "industrial_robotics",
+      "factory_automation"
+    ],
+    "frontend_group": "工业机器人",
+    "status_explanation_cn": "工业机器人与数控系统传统资金锚。",
+    "impact_explanation_cn": "中国/全球工厂自动化需求会影响工业机器人链。",
+    "monitor_events": [
+      "robot orders",
+      "factory automation demand"
+    ],
+    "layer5_mapping_hint": "6954.T",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_ROBOTICS_EMBODIED_AI_INDUSTRIAL_ROBOTICS",
+    "source_validation_status": "needs_source",
+    "chain_id": "L3_ROBOTICS_EMBODIED_AI",
+    "chain_name_cn": "机器人/具身智能/自动驾驶",
+    "chain_priority": "P1_THEME",
+    "chain_type": "early_theme_chain"
+  },
+  {
+    "anchor_id": "6506.T",
+    "display_name_cn": "安川电机",
+    "display_name_en": "Yaskawa Electric",
+    "instrument_type": "public_equity",
+    "ticker": "6506.T",
+    "exchange": "TSE",
+    "anchor_tier": "B_OLIGOPOLY_ANCHOR",
+    "anchor_roles": [
+      "industrial_robotics",
+      "motion_control"
+    ],
+    "frontend_group": "工业机器人/运动控制",
+    "status_explanation_cn": "工业机器人和运动控制核心锚。",
+    "impact_explanation_cn": "机器人、伺服和自动化订单影响工业机器人链。",
+    "monitor_events": [
+      "robotics orders",
+      "servo demand"
+    ],
+    "layer5_mapping_hint": "6506.T",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_ROBOTICS_EMBODIED_AI_INDUSTRIAL_ROBOTICS",
+    "source_validation_status": "needs_source",
+    "chain_id": "L3_ROBOTICS_EMBODIED_AI",
+    "chain_name_cn": "机器人/具身智能/自动驾驶",
+    "chain_priority": "P1_THEME",
+    "chain_type": "early_theme_chain"
+  },
+  {
+    "anchor_id": "WTI_FUTURE",
+    "display_name_cn": "WTI原油",
+    "display_name_en": "WTI Crude Oil",
+    "instrument_type": "future_or_commodity",
+    "ticker": "CL",
+    "exchange": "NYMEX",
+    "anchor_tier": "D_COMMODITY_PROXY",
+    "anchor_roles": [
+      "price_proxy",
+      "inflation_input",
+      "energy_cost"
+    ],
+    "frontend_group": "商品/期货",
+    "status_explanation_cn": "全球原油价格核心代理之一。",
+    "impact_explanation_cn": "油价变化影响能源股、通胀预期、航运、化工和宏观风险偏好。",
+    "monitor_events": [
+      "price move",
+      "inventory",
+      "OPEC decision",
+      "geopolitical supply shock"
+    ],
+    "layer5_mapping_hint": "CL",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P1_PRICE",
+    "node_id": "L3_ENERGY_LNG_OIL_BENCHMARKS",
+    "source_validation_status": "price_proxy_needs_feed",
+    "chain_id": "L3_ENERGY_LNG",
+    "chain_name_cn": "油气/LNG/传统能源",
+    "chain_priority": "P1_GLOBAL_MACRO",
+    "chain_type": "commodity_energy"
+  },
+  {
+    "anchor_id": "BRENT_FUTURE",
+    "display_name_cn": "布伦特原油",
+    "display_name_en": "Brent Crude Oil",
+    "instrument_type": "future_or_commodity",
+    "ticker": "BZ/BRN",
+    "exchange": "ICE",
+    "anchor_tier": "D_COMMODITY_PROXY",
+    "anchor_roles": [
+      "global_oil_benchmark",
+      "price_proxy"
+    ],
+    "frontend_group": "商品/期货",
+    "status_explanation_cn": "全球海运原油定价基准。",
+    "impact_explanation_cn": "布伦特变化直接影响全球能源链和通胀预期。",
+    "monitor_events": [
+      "price move",
+      "OPEC decision",
+      "geopolitical risk"
+    ],
+    "layer5_mapping_hint": "BZ/BRN",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P1_PRICE",
+    "node_id": "L3_ENERGY_LNG_OIL_BENCHMARKS",
+    "source_validation_status": "price_proxy_needs_feed",
+    "chain_id": "L3_ENERGY_LNG",
+    "chain_name_cn": "油气/LNG/传统能源",
+    "chain_priority": "P1_GLOBAL_MACRO",
+    "chain_type": "commodity_energy"
+  },
+  {
+    "anchor_id": "XOM",
+    "display_name_cn": "埃克森美孚",
+    "display_name_en": "Exxon Mobil",
+    "instrument_type": "public_equity",
+    "ticker": "XOM",
+    "exchange": "NYSE",
+    "anchor_tier": "B_OLIGOPOLY_ANCHOR",
+    "anchor_roles": [
+      "integrated_oil_major"
+    ],
+    "frontend_group": "油气巨头",
+    "status_explanation_cn": "全球综合油气巨头公开市场锚。",
+    "impact_explanation_cn": "资本开支、回购、上游产量和油价敏感度影响能源板块。",
+    "monitor_events": [
+      "capex",
+      "production",
+      "buyback",
+      "oil price sensitivity"
+    ],
+    "layer5_mapping_hint": "XOM",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_ENERGY_LNG_OIL_MAJORS",
+    "source_validation_status": "needs_source",
+    "chain_id": "L3_ENERGY_LNG",
+    "chain_name_cn": "油气/LNG/传统能源",
+    "chain_priority": "P1_GLOBAL_MACRO",
+    "chain_type": "commodity_energy"
+  },
+  {
+    "anchor_id": "CVX",
+    "display_name_cn": "雪佛龙",
+    "display_name_en": "Chevron",
+    "instrument_type": "public_equity",
+    "ticker": "CVX",
+    "exchange": "NYSE",
+    "anchor_tier": "B_OLIGOPOLY_ANCHOR",
+    "anchor_roles": [
+      "integrated_oil_major"
+    ],
+    "frontend_group": "油气巨头",
+    "status_explanation_cn": "美国综合油气巨头。",
+    "impact_explanation_cn": "油气价格、产量和资本纪律影响能源股资金流。",
+    "monitor_events": [
+      "production",
+      "capex",
+      "LNG projects"
+    ],
+    "layer5_mapping_hint": "CVX",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_ENERGY_LNG_OIL_MAJORS",
+    "source_validation_status": "needs_source",
+    "chain_id": "L3_ENERGY_LNG",
+    "chain_name_cn": "油气/LNG/传统能源",
+    "chain_priority": "P1_GLOBAL_MACRO",
+    "chain_type": "commodity_energy"
+  },
+  {
+    "anchor_id": "SHEL",
+    "display_name_cn": "壳牌",
+    "display_name_en": "Shell",
+    "instrument_type": "public_equity",
+    "ticker": "SHEL",
+    "exchange": "LSE/NYSE",
+    "anchor_tier": "B_OLIGOPOLY_ANCHOR",
+    "anchor_roles": [
+      "integrated_oil_major",
+      "LNG"
+    ],
+    "frontend_group": "油气/LNG",
+    "status_explanation_cn": "LNG与综合油气核心锚。",
+    "impact_explanation_cn": "LNG交易、天然气价格和能源转型策略影响欧洲能源链。",
+    "monitor_events": [
+      "LNG trading",
+      "gas prices",
+      "capex"
+    ],
+    "layer5_mapping_hint": "SHEL",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_ENERGY_LNG_GAS_LNG",
+    "source_validation_status": "needs_source",
+    "chain_id": "L3_ENERGY_LNG",
+    "chain_name_cn": "油气/LNG/传统能源",
+    "chain_priority": "P1_GLOBAL_MACRO",
+    "chain_type": "commodity_energy"
+  },
+  {
+    "anchor_id": "LNG",
+    "display_name_cn": "Cheniere Energy",
+    "display_name_en": "Cheniere Energy",
+    "instrument_type": "public_equity",
+    "ticker": "LNG",
+    "exchange": "NYSE",
+    "anchor_tier": "B_SUPPLY_CHAIN_BETA",
+    "anchor_roles": [
+      "US_LNG_exporter"
+    ],
+    "frontend_group": "LNG",
+    "status_explanation_cn": "美国LNG出口公开市场锚。",
+    "impact_explanation_cn": "LNG出口合同、液化项目和天然气价差影响LNG链条。",
+    "monitor_events": [
+      "LNG export capacity",
+      "long-term contracts",
+      "Henry Hub vs global gas spreads"
+    ],
+    "layer5_mapping_hint": "LNG",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_ENERGY_LNG_GAS_LNG",
+    "source_validation_status": "needs_source",
+    "chain_id": "L3_ENERGY_LNG",
+    "chain_name_cn": "油气/LNG/传统能源",
+    "chain_priority": "P1_GLOBAL_MACRO",
+    "chain_type": "commodity_energy"
+  },
+  {
+    "anchor_id": "COPPER_FUTURE_CM",
+    "display_name_cn": "铜",
+    "display_name_en": "Copper",
+    "instrument_type": "future_or_commodity",
+    "ticker": "HG/CA/LME_COPPER",
+    "exchange": "COMEX/SHFE/LME",
+    "anchor_tier": "D_COMMODITY_PROXY",
+    "anchor_roles": [
+      "price_proxy",
+      "grid_ev_ai_input"
+    ],
+    "frontend_group": "基础金属",
+    "status_explanation_cn": "电网、AI数据中心、新能源车和工业周期共同价格锚。",
+    "impact_explanation_cn": "铜价变化反映电气化、AI电力、地产/制造和矿山供给约束。",
+    "monitor_events": [
+      "price trend",
+      "LME/COMEX inventory",
+      "mine disruption",
+      "China demand"
+    ],
+    "layer5_mapping_hint": "HG/CA/LME_COPPER",
+    "event_only": false,
+    "source_keys": [
+      "iea_critical_minerals"
+    ],
+    "anchor_priority": "P1_PRICE",
+    "node_id": "L3_CRITICAL_MINERALS_URANIUM_COPPER_GRID_AI",
+    "source_validation_status": "verified",
+    "chain_id": "L3_CRITICAL_MINERALS_URANIUM",
+    "chain_name_cn": "关键矿产与铀",
+    "chain_priority": "P1_GLOBAL_MACRO",
+    "chain_type": "commodity_supply_chain"
+  },
+  {
+    "anchor_id": "FCX",
+    "display_name_cn": "自由港麦克莫兰",
+    "display_name_en": "Freeport-McMoRan",
+    "instrument_type": "public_equity",
+    "ticker": "FCX",
+    "exchange": "NYSE",
+    "anchor_tier": "B_OLIGOPOLY_ANCHOR",
+    "anchor_roles": [
+      "copper_miner",
+      "commodity_equity_proxy"
+    ],
+    "frontend_group": "铜矿股",
+    "status_explanation_cn": "全球铜矿公开市场核心锚之一。",
+    "impact_explanation_cn": "铜价和矿山供给会直接影响其盈利与铜矿股资金流。",
+    "monitor_events": [
+      "copper production",
+      "mine disruption",
+      "capex"
+    ],
+    "layer5_mapping_hint": "FCX",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_CRITICAL_MINERALS_URANIUM_COPPER_GRID_AI",
+    "source_validation_status": "needs_source",
+    "chain_id": "L3_CRITICAL_MINERALS_URANIUM",
+    "chain_name_cn": "关键矿产与铀",
+    "chain_priority": "P1_GLOBAL_MACRO",
+    "chain_type": "commodity_supply_chain"
+  },
+  {
+    "anchor_id": "BHP",
+    "display_name_cn": "必和必拓",
+    "display_name_en": "BHP",
+    "instrument_type": "public_equity",
+    "ticker": "BHP",
+    "exchange": "NYSE/ASX",
+    "anchor_tier": "B_OLIGOPOLY_ANCHOR",
+    "anchor_roles": [
+      "diversified_miner",
+      "copper_iron_ore"
+    ],
+    "frontend_group": "综合矿业",
+    "status_explanation_cn": "全球综合矿业巨头。",
+    "impact_explanation_cn": "铜、铁矿石和矿业Capex影响大宗商品链。",
+    "monitor_events": [
+      "commodity prices",
+      "production guidance",
+      "capex"
+    ],
+    "layer5_mapping_hint": "BHP",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_CRITICAL_MINERALS_URANIUM_DIVERSIFIED_MINERS",
+    "source_validation_status": "needs_source",
+    "chain_id": "L3_CRITICAL_MINERALS_URANIUM",
+    "chain_name_cn": "关键矿产与铀",
+    "chain_priority": "P1_GLOBAL_MACRO",
+    "chain_type": "commodity_supply_chain"
+  },
+  {
+    "anchor_id": "RIO",
+    "display_name_cn": "力拓",
+    "display_name_en": "Rio Tinto",
+    "instrument_type": "public_equity",
+    "ticker": "RIO",
+    "exchange": "NYSE/LSE/ASX",
+    "anchor_tier": "B_OLIGOPOLY_ANCHOR",
+    "anchor_roles": [
+      "diversified_miner"
+    ],
+    "frontend_group": "综合矿业",
+    "status_explanation_cn": "全球综合矿业巨头。",
+    "impact_explanation_cn": "铁矿石、铜、铝等价格与项目进展影响矿业链。",
+    "monitor_events": [
+      "production",
+      "capex",
+      "commodity prices"
+    ],
+    "layer5_mapping_hint": "RIO",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_CRITICAL_MINERALS_URANIUM_DIVERSIFIED_MINERS",
+    "source_validation_status": "needs_source",
+    "chain_id": "L3_CRITICAL_MINERALS_URANIUM",
+    "chain_name_cn": "关键矿产与铀",
+    "chain_priority": "P1_GLOBAL_MACRO",
+    "chain_type": "commodity_supply_chain"
+  },
+  {
+    "anchor_id": "LITHIUM_INDEX",
+    "display_name_cn": "锂价",
+    "display_name_en": "Lithium Price",
+    "instrument_type": "commodity_index",
+    "ticker": "",
+    "exchange": "",
+    "anchor_tier": "D_COMMODITY_PROXY",
+    "anchor_roles": [
+      "battery_cost_proxy",
+      "price_proxy"
+    ],
+    "frontend_group": "电池金属",
+    "status_explanation_cn": "动力电池和储能成本价格锚。",
+    "impact_explanation_cn": "锂价变化影响电池、储能、新能源车和锂矿股。",
+    "monitor_events": [
+      "price trend",
+      "inventory",
+      "supply projects"
+    ],
+    "layer5_mapping_hint": "",
+    "event_only": false,
+    "source_keys": [
+      "iea_critical_minerals"
+    ],
+    "anchor_priority": "P1_PRICE",
+    "node_id": "L3_CRITICAL_MINERALS_URANIUM_BATTERY_METALS",
+    "source_validation_status": "verified",
+    "chain_id": "L3_CRITICAL_MINERALS_URANIUM",
+    "chain_name_cn": "关键矿产与铀",
+    "chain_priority": "P1_GLOBAL_MACRO",
+    "chain_type": "commodity_supply_chain"
+  },
+  {
+    "anchor_id": "ALB",
+    "display_name_cn": "雅保",
+    "display_name_en": "Albemarle",
+    "instrument_type": "public_equity",
+    "ticker": "ALB",
+    "exchange": "NYSE",
+    "anchor_tier": "B_SUPPLY_CHAIN_BETA",
+    "anchor_roles": [
+      "lithium_producer"
+    ],
+    "frontend_group": "锂矿股",
+    "status_explanation_cn": "全球锂资源公开市场锚之一。",
+    "impact_explanation_cn": "锂价、产能扩张和电池需求影响锂矿链资金。",
+    "monitor_events": [
+      "lithium pricing",
+      "production",
+      "capex"
+    ],
+    "layer5_mapping_hint": "ALB",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_CRITICAL_MINERALS_URANIUM_BATTERY_METALS",
+    "source_validation_status": "needs_source",
+    "chain_id": "L3_CRITICAL_MINERALS_URANIUM",
+    "chain_name_cn": "关键矿产与铀",
+    "chain_priority": "P1_GLOBAL_MACRO",
+    "chain_type": "commodity_supply_chain"
+  },
+  {
+    "anchor_id": "U3O8_PRICE",
+    "display_name_cn": "铀现货价格",
+    "display_name_en": "U3O8 Spot Price",
+    "instrument_type": "commodity_index",
+    "ticker": "",
+    "exchange": "",
+    "anchor_tier": "D_COMMODITY_PROXY",
+    "anchor_roles": [
+      "nuclear_fuel_price_proxy"
+    ],
+    "frontend_group": "铀/核电",
+    "status_explanation_cn": "核电燃料价格代理。",
+    "impact_explanation_cn": "铀价变化影响铀矿、核电、长期供货合同和能源安全主题。",
+    "monitor_events": [
+      "spot price",
+      "term contract price",
+      "supply disruption"
+    ],
+    "layer5_mapping_hint": "",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P1_PRICE",
+    "node_id": "L3_CRITICAL_MINERALS_URANIUM_URANIUM_NUCLEAR",
+    "source_validation_status": "price_proxy_needs_feed",
+    "chain_id": "L3_CRITICAL_MINERALS_URANIUM",
+    "chain_name_cn": "关键矿产与铀",
+    "chain_priority": "P1_GLOBAL_MACRO",
+    "chain_type": "commodity_supply_chain"
+  },
+  {
+    "anchor_id": "CCJ",
+    "display_name_cn": "Cameco",
+    "display_name_en": "Cameco",
+    "instrument_type": "public_equity",
+    "ticker": "CCJ",
+    "exchange": "NYSE/TSX",
+    "anchor_tier": "B_OLIGOPOLY_ANCHOR",
+    "anchor_roles": [
+      "uranium_miner"
+    ],
+    "frontend_group": "铀矿股",
+    "status_explanation_cn": "全球铀矿公开市场核心锚之一。",
+    "impact_explanation_cn": "铀价、矿山复产和长期合同影响核电燃料链。",
+    "monitor_events": [
+      "uranium price",
+      "production",
+      "contracting"
+    ],
+    "layer5_mapping_hint": "CCJ",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_CRITICAL_MINERALS_URANIUM_URANIUM_NUCLEAR",
+    "source_validation_status": "needs_source",
+    "chain_id": "L3_CRITICAL_MINERALS_URANIUM",
+    "chain_name_cn": "关键矿产与铀",
+    "chain_priority": "P1_GLOBAL_MACRO",
+    "chain_type": "commodity_supply_chain"
+  },
+  {
+    "anchor_id": "LMT",
+    "display_name_cn": "洛克希德马丁",
+    "display_name_en": "Lockheed Martin",
+    "instrument_type": "public_equity",
+    "ticker": "LMT",
+    "exchange": "NYSE",
+    "anchor_tier": "B_OLIGOPOLY_ANCHOR",
+    "anchor_roles": [
+      "defense_prime",
+      "missile_aircraft"
+    ],
+    "frontend_group": "军工主承包",
+    "status_explanation_cn": "全球军工主承包商核心锚。",
+    "impact_explanation_cn": "军费、F-35、导弹和地缘冲突订单会影响全球军工链。",
+    "monitor_events": [
+      "defense orders",
+      "budget changes",
+      "missile demand"
+    ],
+    "layer5_mapping_hint": "LMT",
+    "event_only": false,
+    "source_keys": [
+      "sipri_top100"
+    ],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_AEROSPACE_DEFENSE_SPACE_DEFENSE_PRIMES",
+    "source_validation_status": "verified",
+    "chain_id": "L3_AEROSPACE_DEFENSE_SPACE",
+    "chain_name_cn": "航空航天/国防/商业航天",
+    "chain_priority": "P1_GLOBAL_MACRO",
+    "chain_type": "defense_space"
+  },
+  {
+    "anchor_id": "RTX",
+    "display_name_cn": "RTX",
+    "display_name_en": "RTX",
+    "instrument_type": "public_equity",
+    "ticker": "RTX",
+    "exchange": "NYSE",
+    "anchor_tier": "B_OLIGOPOLY_ANCHOR",
+    "anchor_roles": [
+      "defense_prime",
+      "missile_engine"
+    ],
+    "frontend_group": "军工主承包",
+    "status_explanation_cn": "导弹、防空、航空发动机重要锚。",
+    "impact_explanation_cn": "防空导弹、航发供应和国防预算影响军工链。",
+    "monitor_events": [
+      "missile orders",
+      "engine supply",
+      "defense budget"
+    ],
+    "layer5_mapping_hint": "RTX",
+    "event_only": false,
+    "source_keys": [
+      "sipri_top100"
+    ],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_AEROSPACE_DEFENSE_SPACE_DEFENSE_PRIMES",
+    "source_validation_status": "verified",
+    "chain_id": "L3_AEROSPACE_DEFENSE_SPACE",
+    "chain_name_cn": "航空航天/国防/商业航天",
+    "chain_priority": "P1_GLOBAL_MACRO",
+    "chain_type": "defense_space"
+  },
+  {
+    "anchor_id": "NOC",
+    "display_name_cn": "诺斯洛普格鲁曼",
+    "display_name_en": "Northrop Grumman",
+    "instrument_type": "public_equity",
+    "ticker": "NOC",
+    "exchange": "NYSE",
+    "anchor_tier": "B_OLIGOPOLY_ANCHOR",
+    "anchor_roles": [
+      "defense_prime",
+      "aerospace_space"
+    ],
+    "frontend_group": "军工/航天",
+    "status_explanation_cn": "军工和航天系统重要锚。",
+    "impact_explanation_cn": "战略武器、航天系统和国防订单影响军工链。",
+    "monitor_events": [
+      "defense orders",
+      "space systems",
+      "budget"
+    ],
+    "layer5_mapping_hint": "NOC",
+    "event_only": false,
+    "source_keys": [
+      "sipri_top100"
+    ],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_AEROSPACE_DEFENSE_SPACE_DEFENSE_PRIMES",
+    "source_validation_status": "verified",
+    "chain_id": "L3_AEROSPACE_DEFENSE_SPACE",
+    "chain_name_cn": "航空航天/国防/商业航天",
+    "chain_priority": "P1_GLOBAL_MACRO",
+    "chain_type": "defense_space"
+  },
+  {
+    "anchor_id": "BA.L",
+    "display_name_cn": "BAE系统",
+    "display_name_en": "BAE Systems",
+    "instrument_type": "public_equity",
+    "ticker": "BA.L",
+    "exchange": "LSE",
+    "anchor_tier": "B_OLIGOPOLY_ANCHOR",
+    "anchor_roles": [
+      "defense_prime",
+      "europe_defense"
+    ],
+    "frontend_group": "军工主承包",
+    "status_explanation_cn": "欧洲防务核心锚。",
+    "impact_explanation_cn": "欧洲军费上升和地缘冲突会影响BAE及欧洲军工链。",
+    "monitor_events": [
+      "European defense budget",
+      "orders",
+      "geopolitical risk"
+    ],
+    "layer5_mapping_hint": "BA.L",
+    "event_only": false,
+    "source_keys": [
+      "sipri_top100"
+    ],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_AEROSPACE_DEFENSE_SPACE_DEFENSE_PRIMES",
+    "source_validation_status": "verified",
+    "chain_id": "L3_AEROSPACE_DEFENSE_SPACE",
+    "chain_name_cn": "航空航天/国防/商业航天",
+    "chain_priority": "P1_GLOBAL_MACRO",
+    "chain_type": "defense_space"
+  },
+  {
+    "anchor_id": "GD",
+    "display_name_cn": "通用动力",
+    "display_name_en": "General Dynamics",
+    "instrument_type": "public_equity",
+    "ticker": "GD",
+    "exchange": "NYSE",
+    "anchor_tier": "B_OLIGOPOLY_ANCHOR",
+    "anchor_roles": [
+      "defense_prime",
+      "ship_land_systems"
+    ],
+    "frontend_group": "军工主承包",
+    "status_explanation_cn": "舰船、地面系统和防务IT重要锚。",
+    "impact_explanation_cn": "军费、舰船订单和地面装备需求影响军工链。",
+    "monitor_events": [
+      "ship orders",
+      "defense budget",
+      "IT contracts"
+    ],
+    "layer5_mapping_hint": "GD",
+    "event_only": false,
+    "source_keys": [
+      "sipri_top100"
+    ],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_AEROSPACE_DEFENSE_SPACE_DEFENSE_PRIMES",
+    "source_validation_status": "verified",
+    "chain_id": "L3_AEROSPACE_DEFENSE_SPACE",
+    "chain_name_cn": "航空航天/国防/商业航天",
+    "chain_priority": "P1_GLOBAL_MACRO",
+    "chain_type": "defense_space"
+  },
+  {
+    "anchor_id": "SPACEX",
+    "display_name_cn": "SpaceX",
+    "display_name_en": "SpaceX",
+    "instrument_type": "private_company",
+    "ticker": "",
+    "exchange": "",
+    "anchor_tier": "C_PRIVATE_EVENT_ANCHOR",
+    "anchor_roles": [
+      "commercial_space",
+      "launch_market",
+      "event_source"
+    ],
+    "frontend_group": "商业航天事件锚",
+    "status_explanation_cn": "商业航天最强私有事件锚之一。",
+    "impact_explanation_cn": "发射节奏、星链、融资和政府合同会影响商业航天、卫星、通信和A股/美股映射。",
+    "monitor_events": [
+      "launch cadence",
+      "Starlink growth",
+      "funding valuation",
+      "government contracts"
+    ],
+    "layer5_mapping_hint": "",
+    "event_only": true,
+    "source_keys": [],
+    "anchor_priority": "P1_EVENT",
+    "node_id": "L3_AEROSPACE_DEFENSE_SPACE_COMMERCIAL_SPACE",
+    "source_validation_status": "event_only_needs_source",
+    "chain_id": "L3_AEROSPACE_DEFENSE_SPACE",
+    "chain_name_cn": "航空航天/国防/商业航天",
+    "chain_priority": "P1_GLOBAL_MACRO",
+    "chain_type": "defense_space"
+  },
+  {
+    "anchor_id": "RKLB",
+    "display_name_cn": "Rocket Lab",
+    "display_name_en": "Rocket Lab",
+    "instrument_type": "public_equity",
+    "ticker": "RKLB",
+    "exchange": "NASDAQ",
+    "anchor_tier": "B_SUPPLY_CHAIN_BETA",
+    "anchor_roles": [
+      "commercial_space_public_proxy"
+    ],
+    "frontend_group": "商业航天公开映射",
+    "status_explanation_cn": "少数上市商业航天映射标的。",
+    "impact_explanation_cn": "发射合同、卫星制造和商业航天情绪会影响其估值。",
+    "monitor_events": [
+      "launch cadence",
+      "contract wins",
+      "satellite manufacturing"
+    ],
+    "layer5_mapping_hint": "RKLB",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_AEROSPACE_DEFENSE_SPACE_COMMERCIAL_SPACE",
+    "source_validation_status": "needs_source",
+    "chain_id": "L3_AEROSPACE_DEFENSE_SPACE",
+    "chain_name_cn": "航空航天/国防/商业航天",
+    "chain_priority": "P1_GLOBAL_MACRO",
+    "chain_type": "defense_space"
+  },
+  {
+    "anchor_id": "BDI",
+    "display_name_cn": "波罗的海干散货指数",
+    "display_name_en": "Baltic Dry Index",
+    "instrument_type": "index",
+    "ticker": "BDI",
+    "exchange": "Baltic Exchange",
+    "anchor_tier": "D_COMMODITY_PROXY",
+    "anchor_roles": [
+      "shipping_rate_index",
+      "global_trade_proxy"
+    ],
+    "frontend_group": "航运指数",
+    "status_explanation_cn": "干散货运价核心指数锚。",
+    "impact_explanation_cn": "BDI变化反映铁矿石、煤炭、粮食等大宗运输需求和船舶供需。",
+    "monitor_events": [
+      "BDI trend",
+      "capesize/panamax/supramax rates",
+      "port congestion"
+    ],
+    "layer5_mapping_hint": "BDI",
+    "event_only": false,
+    "source_keys": [
+      "baltic_exchange_indices"
+    ],
+    "anchor_priority": "P1_PRICE",
+    "node_id": "L3_SHIPPING_GLOBAL_TRADE_DRY_BULK_RATES",
+    "source_validation_status": "verified",
+    "chain_id": "L3_SHIPPING_GLOBAL_TRADE",
+    "chain_name_cn": "航运/全球贸易",
+    "chain_priority": "P1_GLOBAL_MACRO",
+    "chain_type": "shipping_trade"
+  },
+  {
+    "anchor_id": "SCFI",
+    "display_name_cn": "上海出口集装箱运价指数",
+    "display_name_en": "Shanghai Containerized Freight Index",
+    "instrument_type": "index",
+    "ticker": "SCFI",
+    "exchange": "SSE/Exchange source",
+    "anchor_tier": "D_COMMODITY_PROXY",
+    "anchor_roles": [
+      "container_rate_index"
+    ],
+    "frontend_group": "航运指数",
+    "status_explanation_cn": "集装箱运价重要代理。",
+    "impact_explanation_cn": "SCFI变化影响集运公司利润和全球贸易成本。",
+    "monitor_events": [
+      "container rate trend",
+      "route disruption",
+      "port congestion"
+    ],
+    "layer5_mapping_hint": "SCFI",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P1_PRICE",
+    "node_id": "L3_SHIPPING_GLOBAL_TRADE_CONTAINER_RATES",
+    "source_validation_status": "price_proxy_needs_feed",
+    "chain_id": "L3_SHIPPING_GLOBAL_TRADE",
+    "chain_name_cn": "航运/全球贸易",
+    "chain_priority": "P1_GLOBAL_MACRO",
+    "chain_type": "shipping_trade"
+  },
+  {
+    "anchor_id": "MAERSK-B.CO",
+    "display_name_cn": "马士基",
+    "display_name_en": "Maersk",
+    "instrument_type": "public_equity",
+    "ticker": "MAERSK-B.CO",
+    "exchange": "Copenhagen",
+    "anchor_tier": "B_OLIGOPOLY_ANCHOR",
+    "anchor_roles": [
+      "container_shipping"
+    ],
+    "frontend_group": "集运公司",
+    "status_explanation_cn": "全球集装箱航运核心公开市场锚。",
+    "impact_explanation_cn": "运价、箱量和红海/港口扰动会影响集运链资金。",
+    "monitor_events": [
+      "freight rates",
+      "volume",
+      "guidance",
+      "geopolitical routes"
+    ],
+    "layer5_mapping_hint": "MAERSK-B.CO",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_SHIPPING_GLOBAL_TRADE_CONTAINER_RATES",
+    "source_validation_status": "needs_source",
+    "chain_id": "L3_SHIPPING_GLOBAL_TRADE",
+    "chain_name_cn": "航运/全球贸易",
+    "chain_priority": "P1_GLOBAL_MACRO",
+    "chain_type": "shipping_trade"
+  },
+  {
+    "anchor_id": "601919.SH",
+    "display_name_cn": "中远海控",
+    "display_name_en": "COSCO Shipping Holdings",
+    "instrument_type": "public_equity",
+    "ticker": "601919.SH/1919.HK",
+    "exchange": "SSE/HKEX",
+    "anchor_tier": "B_SUPPLY_CHAIN_BETA",
+    "anchor_roles": [
+      "container_shipping",
+      "china_proxy"
+    ],
+    "frontend_group": "集运公司",
+    "status_explanation_cn": "中国集运公开市场锚。",
+    "impact_explanation_cn": "SCFI、箱量和全球贸易扰动会影响A/H股航运资金。",
+    "monitor_events": [
+      "freight rates",
+      "earnings",
+      "route disruption"
+    ],
+    "layer5_mapping_hint": "601919.SH/1919.HK",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_SHIPPING_GLOBAL_TRADE_CONTAINER_RATES",
+    "source_validation_status": "needs_source",
+    "chain_id": "L3_SHIPPING_GLOBAL_TRADE",
+    "chain_name_cn": "航运/全球贸易",
+    "chain_priority": "P1_GLOBAL_MACRO",
+    "chain_type": "shipping_trade"
+  },
+  {
+    "anchor_id": "HLAG.DE",
+    "display_name_cn": "赫伯罗特",
+    "display_name_en": "Hapag-Lloyd",
+    "instrument_type": "public_equity",
+    "ticker": "HLAG.DE",
+    "exchange": "XETRA",
+    "anchor_tier": "B_OLIGOPOLY_ANCHOR",
+    "anchor_roles": [
+      "container_shipping"
+    ],
+    "frontend_group": "集运公司",
+    "status_explanation_cn": "欧洲集装箱航运核心锚。",
+    "impact_explanation_cn": "集运运价和全球贸易链变化影响其利润预期。",
+    "monitor_events": [
+      "freight rates",
+      "volume",
+      "guidance"
+    ],
+    "layer5_mapping_hint": "HLAG.DE",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_SHIPPING_GLOBAL_TRADE_CONTAINER_RATES",
+    "source_validation_status": "needs_source",
+    "chain_id": "L3_SHIPPING_GLOBAL_TRADE",
+    "chain_name_cn": "航运/全球贸易",
+    "chain_priority": "P1_GLOBAL_MACRO",
+    "chain_type": "shipping_trade"
+  },
+  {
+    "anchor_id": "FRO",
+    "display_name_cn": "Frontline",
+    "display_name_en": "Frontline",
+    "instrument_type": "public_equity",
+    "ticker": "FRO",
+    "exchange": "NYSE",
+    "anchor_tier": "B_SUPPLY_CHAIN_BETA",
+    "anchor_roles": [
+      "tanker_shipping"
+    ],
+    "frontend_group": "油运公司",
+    "status_explanation_cn": "油运公开市场高弹性锚。",
+    "impact_explanation_cn": "油轮运价、地缘和原油贸易流变化会影响油运股。",
+    "monitor_events": [
+      "tanker rates",
+      "oil trade flows",
+      "geopolitical routes"
+    ],
+    "layer5_mapping_hint": "FRO",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_SHIPPING_GLOBAL_TRADE_TANKER_RATES",
+    "source_validation_status": "needs_source",
+    "chain_id": "L3_SHIPPING_GLOBAL_TRADE",
+    "chain_name_cn": "航运/全球贸易",
+    "chain_priority": "P1_GLOBAL_MACRO",
+    "chain_type": "shipping_trade"
+  },
+  {
+    "anchor_id": "STNG",
+    "display_name_cn": "Scorpio Tankers",
+    "display_name_en": "Scorpio Tankers",
+    "instrument_type": "public_equity",
+    "ticker": "STNG",
+    "exchange": "NYSE",
+    "anchor_tier": "B_SUPPLY_CHAIN_BETA",
+    "anchor_roles": [
+      "product_tanker_shipping"
+    ],
+    "frontend_group": "油运公司",
+    "status_explanation_cn": "成品油轮高弹性锚。",
+    "impact_explanation_cn": "成品油贸易、运价和船队供给影响油运链。",
+    "monitor_events": [
+      "product tanker rates",
+      "fleet supply",
+      "refinery trade flows"
+    ],
+    "layer5_mapping_hint": "STNG",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_SHIPPING_GLOBAL_TRADE_TANKER_RATES",
+    "source_validation_status": "needs_source",
+    "chain_id": "L3_SHIPPING_GLOBAL_TRADE",
+    "chain_name_cn": "航运/全球贸易",
+    "chain_priority": "P1_GLOBAL_MACRO",
+    "chain_type": "shipping_trade"
+  },
+  {
+    "anchor_id": "LLY",
+    "display_name_cn": "礼来",
+    "display_name_en": "Eli Lilly",
+    "instrument_type": "public_equity",
+    "ticker": "LLY",
+    "exchange": "NYSE",
+    "anchor_tier": "A_GLOBAL_DOMINANT",
+    "anchor_roles": [
+      "GLP1_leader",
+      "pipeline_leader",
+      "sentiment_leader"
+    ],
+    "frontend_group": "GLP-1核心药企",
+    "status_explanation_cn": "GLP-1/肥胖药全球最强公开市场锚之一。",
+    "impact_explanation_cn": "Zepbound/Mounjaro销售、retatrutide等下一代数据、产能和医保覆盖会影响全球肥胖药和制药股估值。",
+    "monitor_events": [
+      "trial data",
+      "sales",
+      "capacity expansion",
+      "payer coverage"
+    ],
+    "layer5_mapping_hint": "LLY",
+    "event_only": false,
+    "source_keys": [
+      "lilly_reuters_2026"
+    ],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_GLP1_METABOLIC_DRUGS_GLP1_LEADERS",
+    "source_validation_status": "verified",
+    "chain_id": "L3_GLP1_METABOLIC_DRUGS",
+    "chain_name_cn": "GLP-1/肥胖药/代谢药",
+    "chain_priority": "P1_GLOBAL_MACRO",
+    "chain_type": "healthcare_global_theme"
+  },
+  {
+    "anchor_id": "NVO",
+    "display_name_cn": "诺和诺德",
+    "display_name_en": "Novo Nordisk",
+    "instrument_type": "public_equity",
+    "ticker": "NVO/NOVO-B.CO",
+    "exchange": "NYSE/Copenhagen",
+    "anchor_tier": "A_GLOBAL_DOMINANT",
+    "anchor_roles": [
+      "GLP1_leader",
+      "diabetes_obesity"
+    ],
+    "frontend_group": "GLP-1核心药企",
+    "status_explanation_cn": "GLP-1糖尿病/肥胖药全球核心锚。",
+    "impact_explanation_cn": "Ozempic/Wegovy销售、口服GLP-1进展、产能和竞争格局会影响全球代谢药链。",
+    "monitor_events": [
+      "sales",
+      "oral GLP-1 launch",
+      "capacity",
+      "competition"
+    ],
+    "layer5_mapping_hint": "NVO/NOVO-B.CO",
+    "event_only": false,
+    "source_keys": [
+      "novo_reuters_2026"
+    ],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_GLP1_METABOLIC_DRUGS_GLP1_LEADERS",
+    "source_validation_status": "verified",
+    "chain_id": "L3_GLP1_METABOLIC_DRUGS",
+    "chain_name_cn": "GLP-1/肥胖药/代谢药",
+    "chain_priority": "P1_GLOBAL_MACRO",
+    "chain_type": "healthcare_global_theme"
+  },
+  {
+    "anchor_id": "AMGN",
+    "display_name_cn": "安进",
+    "display_name_en": "Amgen",
+    "instrument_type": "public_equity",
+    "ticker": "AMGN",
+    "exchange": "NASDAQ",
+    "anchor_tier": "B_SUPPLY_CHAIN_BETA",
+    "anchor_roles": [
+      "GLP1_competitor_pipeline"
+    ],
+    "frontend_group": "潜在竞争者",
+    "status_explanation_cn": "肥胖药管线竞争者。",
+    "impact_explanation_cn": "临床数据若显著，会影响Lilly/Novo估值和GLP-1竞争格局。",
+    "monitor_events": [
+      "clinical trial data",
+      "partnership",
+      "regulatory updates"
+    ],
+    "layer5_mapping_hint": "AMGN",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_GLP1_METABOLIC_DRUGS_PIPELINE_COMPETITORS",
+    "source_validation_status": "needs_source",
+    "chain_id": "L3_GLP1_METABOLIC_DRUGS",
+    "chain_name_cn": "GLP-1/肥胖药/代谢药",
+    "chain_priority": "P1_GLOBAL_MACRO",
+    "chain_type": "healthcare_global_theme"
+  },
+  {
+    "anchor_id": "VKTX",
+    "display_name_cn": "Viking Therapeutics",
+    "display_name_en": "Viking Therapeutics",
+    "instrument_type": "public_equity",
+    "ticker": "VKTX",
+    "exchange": "NASDAQ",
+    "anchor_tier": "B_SUPPLY_CHAIN_BETA",
+    "anchor_roles": [
+      "GLP1_high_beta_pipeline"
+    ],
+    "frontend_group": "高弹性管线",
+    "status_explanation_cn": "肥胖药临床管线高弹性标的。",
+    "impact_explanation_cn": "临床数据会放大GLP-1主题资金波动。",
+    "monitor_events": [
+      "trial data",
+      "regulatory path",
+      "financing"
+    ],
+    "layer5_mapping_hint": "VKTX",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P1_ACTIVE",
+    "node_id": "L3_GLP1_METABOLIC_DRUGS_PIPELINE_COMPETITORS",
+    "source_validation_status": "needs_source",
+    "chain_id": "L3_GLP1_METABOLIC_DRUGS",
+    "chain_name_cn": "GLP-1/肥胖药/代谢药",
+    "chain_priority": "P1_GLOBAL_MACRO",
+    "chain_type": "healthcare_global_theme"
+  },
+  {
+    "anchor_id": "TSLA_EV",
+    "display_name_cn": "特斯拉",
+    "display_name_en": "Tesla",
+    "instrument_type": "public_equity",
+    "ticker": "TSLA",
+    "exchange": "NASDAQ",
+    "anchor_tier": "B_OLIGOPOLY_ANCHOR",
+    "anchor_roles": [
+      "EV_leader",
+      "battery_storage",
+      "sentiment_leader"
+    ],
+    "frontend_group": "整车/储能",
+    "status_explanation_cn": "新能源车和储能资金情绪锚，但同时也是机器人/自动驾驶锚。",
+    "impact_explanation_cn": "交付量、毛利、储能收入和Robotaxi预期影响EV与电池链。",
+    "monitor_events": [
+      "deliveries",
+      "gross margin",
+      "energy storage revenue",
+      "pricing"
+    ],
+    "layer5_mapping_hint": "TSLA",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P2_WATCH",
+    "node_id": "L3_EV_BATTERY_STORAGE_EV_OEMS",
+    "source_validation_status": "needs_source",
+    "chain_id": "L3_EV_BATTERY_STORAGE",
+    "chain_name_cn": "新能源车/动力电池/储能",
+    "chain_priority": "P2_OPTIONAL",
+    "chain_type": "clean_energy_supply_chain"
+  },
+  {
+    "anchor_id": "002594.SZ",
+    "display_name_cn": "比亚迪",
+    "display_name_en": "BYD",
+    "instrument_type": "public_equity",
+    "ticker": "002594.SZ/1211.HK",
+    "exchange": "SZSE/HKEX",
+    "anchor_tier": "B_OLIGOPOLY_ANCHOR",
+    "anchor_roles": [
+      "EV_battery_integrated",
+      "china_proxy"
+    ],
+    "frontend_group": "整车/电池",
+    "status_explanation_cn": "中国新能源车和电池一体化核心锚。",
+    "impact_explanation_cn": "销量、价格战和电池技术会影响中国EV链。",
+    "monitor_events": [
+      "EV sales",
+      "battery technology",
+      "margin",
+      "pricing"
+    ],
+    "layer5_mapping_hint": "002594.SZ/1211.HK",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P2_WATCH",
+    "node_id": "L3_EV_BATTERY_STORAGE_EV_OEMS",
+    "source_validation_status": "needs_source",
+    "chain_id": "L3_EV_BATTERY_STORAGE",
+    "chain_name_cn": "新能源车/动力电池/储能",
+    "chain_priority": "P2_OPTIONAL",
+    "chain_type": "clean_energy_supply_chain"
+  },
+  {
+    "anchor_id": "300750.SZ",
+    "display_name_cn": "宁德时代",
+    "display_name_en": "CATL",
+    "instrument_type": "public_equity",
+    "ticker": "300750.SZ",
+    "exchange": "SZSE",
+    "anchor_tier": "A_GLOBAL_DOMINANT",
+    "anchor_roles": [
+      "battery_leader",
+      "storage_battery"
+    ],
+    "frontend_group": "动力/储能电池",
+    "status_explanation_cn": "全球动力电池和储能电池核心锚。",
+    "impact_explanation_cn": "动力电池份额、储能订单、技术路线和锂价传导会影响全球电池链。",
+    "monitor_events": [
+      "battery shipments",
+      "storage orders",
+      "technology roadmap",
+      "margin"
+    ],
+    "layer5_mapping_hint": "300750.SZ",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P2_WATCH",
+    "node_id": "L3_EV_BATTERY_STORAGE_BATTERY_STORAGE",
+    "source_validation_status": "needs_source",
+    "chain_id": "L3_EV_BATTERY_STORAGE",
+    "chain_name_cn": "新能源车/动力电池/储能",
+    "chain_priority": "P2_OPTIONAL",
+    "chain_type": "clean_energy_supply_chain"
+  },
+  {
+    "anchor_id": "LITHIUM_PRICE_EV",
+    "display_name_cn": "锂价",
+    "display_name_en": "Lithium Price",
+    "instrument_type": "commodity_index",
+    "ticker": "",
+    "exchange": "",
+    "anchor_tier": "D_COMMODITY_PROXY",
+    "anchor_roles": [
+      "battery_cost_proxy"
+    ],
+    "frontend_group": "材料价格",
+    "status_explanation_cn": "电池成本核心价格代理。",
+    "impact_explanation_cn": "锂价影响电池厂利润、矿企盈利和新能源车成本。",
+    "monitor_events": [
+      "price trend",
+      "inventory",
+      "supply projects"
+    ],
+    "layer5_mapping_hint": "",
+    "event_only": false,
+    "source_keys": [
+      "iea_critical_minerals"
+    ],
+    "anchor_priority": "P2_WATCH",
+    "node_id": "L3_EV_BATTERY_STORAGE_MATERIAL_PRICE",
+    "source_validation_status": "verified",
+    "chain_id": "L3_EV_BATTERY_STORAGE",
+    "chain_name_cn": "新能源车/动力电池/储能",
+    "chain_priority": "P2_OPTIONAL",
+    "chain_type": "clean_energy_supply_chain"
+  },
+  {
+    "anchor_id": "FSLR",
+    "display_name_cn": "第一太阳能",
+    "display_name_en": "First Solar",
+    "instrument_type": "public_equity",
+    "ticker": "FSLR",
+    "exchange": "NASDAQ",
+    "anchor_tier": "B_SUPPLY_CHAIN_BETA",
+    "anchor_roles": [
+      "solar_module_us_proxy"
+    ],
+    "frontend_group": "光伏/清洁能源",
+    "status_explanation_cn": "美国光伏组件公开市场锚。",
+    "impact_explanation_cn": "政策、组件价格和订单影响光伏链。",
+    "monitor_events": [
+      "policy",
+      "orders",
+      "module pricing"
+    ],
+    "layer5_mapping_hint": "FSLR",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P2_WATCH",
+    "node_id": "L3_EV_BATTERY_STORAGE_SOLAR_INVERTER",
+    "source_validation_status": "needs_source",
+    "chain_id": "L3_EV_BATTERY_STORAGE",
+    "chain_name_cn": "新能源车/动力电池/储能",
+    "chain_priority": "P2_OPTIONAL",
+    "chain_type": "clean_energy_supply_chain"
+  },
+  {
+    "anchor_id": "ENPH",
+    "display_name_cn": "Enphase Energy",
+    "display_name_en": "Enphase Energy",
+    "instrument_type": "public_equity",
+    "ticker": "ENPH",
+    "exchange": "NASDAQ",
+    "anchor_tier": "B_SUPPLY_CHAIN_BETA",
+    "anchor_roles": [
+      "inverter_storage_beta"
+    ],
+    "frontend_group": "逆变器/储能",
+    "status_explanation_cn": "户用逆变器和储能高弹性锚。",
+    "impact_explanation_cn": "欧美需求、渠道库存和利率影响逆变器资金。",
+    "monitor_events": [
+      "channel inventory",
+      "orders",
+      "margin"
+    ],
+    "layer5_mapping_hint": "ENPH",
+    "event_only": false,
+    "source_keys": [],
+    "anchor_priority": "P2_WATCH",
+    "node_id": "L3_EV_BATTERY_STORAGE_SOLAR_INVERTER",
+    "source_validation_status": "needs_source",
+    "chain_id": "L3_EV_BATTERY_STORAGE",
+    "chain_name_cn": "新能源车/动力电池/储能",
+    "chain_priority": "P2_OPTIONAL",
+    "chain_type": "clean_energy_supply_chain"
+  }
+]

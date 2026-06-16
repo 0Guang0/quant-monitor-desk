@@ -1,0 +1,37 @@
+# Runtime resource limits — mirrors specs/contracts/resource_limits.yaml
+# Authoritative contract: specs/contracts/resource_limits.yaml
+
+version: v1
+name: resource_limits
+default_profile: eco
+profiles:
+  eco:
+    max_threads: 2
+    preferred_threads: 1
+    process_rss_warn_mb: 800
+    process_rss_pause_mb: 1200
+    process_rss_hard_stop_mb: 1800
+    duckdb_memory_min_mb: 512
+    duckdb_memory_max_mb: 1536
+    duckdb_temp_max_gb: 2
+    max_parallel_non_core_jobs: 1
+  normal:
+    max_threads: 4
+    preferred_threads: 2
+    process_rss_warn_mb: 1200
+    process_rss_pause_mb: 2000
+    process_rss_hard_stop_mb: 3000
+    duckdb_memory_min_mb: 1536
+    duckdb_memory_max_mb: 3072
+    duckdb_temp_max_gb: 5
+    max_parallel_non_core_jobs: 1
+  batch:
+    requires_user_confirm: true
+    max_threads_formula: min(physical_cores // 2, 8)
+    process_rss_warn_mb: 3000
+    process_rss_pause_mb: 4000
+    process_rss_hard_stop_mb: 6000
+    duckdb_memory_min_mb: 3072
+    duckdb_memory_max_mb: 6144
+    duckdb_temp_max_gb: 10
+    max_parallel_non_core_jobs: 1

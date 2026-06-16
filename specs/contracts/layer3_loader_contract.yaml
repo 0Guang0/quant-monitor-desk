@@ -1,0 +1,21 @@
+version: layer3_loader_contract_v1
+authority: docs/modules/layer3_industry_shock_anchor.md
+input_files:
+  - layer3_global_industry_chain_registry.yaml
+  - layer3_anchor_registry.json
+  - layer3_node_registry.json
+  - layer3_edge_registry.json
+  - layer3_cross_chain_edge_registry.json
+hard_validation_rules:
+  - chain_id must be unique
+  - node_id must be unique
+  - edge from_node_id and to_node_id must exist
+  - anchor_id must be unique
+  - anchor.node_id must exist
+  - event_only private companies must not be treated as ordinary daily price anchors
+  - P0_CORE and P0_EVENT anchors must have source_keys
+source_validation_status:
+  - verified
+  - needs_source
+  - event_only_verified
+  - price_proxy_needs_feed

@@ -1,0 +1,37 @@
+version: p0_round_1
+contract_name: source_conflict_rules
+comparable_fields:
+  objective_fact:
+    - open
+    - high
+    - low
+    - close
+    - pre_close
+    - volume
+    - amount
+    - settlement_price
+    - open_interest
+    - index_level
+  separate_by_source:
+    - main_inflow
+    - large_order_inflow
+    - theme_concept
+    - news_sentiment
+    - platform_heat
+thresholds:
+  market_bar_1d:
+    close:
+      relative_warning: 0.0005
+      relative_severe: 0.002
+    volume:
+      relative_warning: 0.005
+      relative_severe: 0.02
+  futures_bar:
+    settlement_price:
+      relative_warning: 0.0005
+      relative_severe: 0.002
+resolution_policy:
+  small_diff: write_primary_and_record_pass
+  medium_diff: write_primary_with_warning
+  severe_diff: block_write_and_create_reconcile_job
+  unresolved_after_reconcile: manual_review_required

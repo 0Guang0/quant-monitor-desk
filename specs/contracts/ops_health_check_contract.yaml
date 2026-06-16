@@ -1,0 +1,25 @@
+version: 1
+module: ops_and_performance
+authoritative_doc: docs/modules/ops_and_performance.md
+health_check_status_enum: [ok, warning, critical]
+checks:
+  - duckdb_exists
+  - latest_incremental_job_success
+  - latest_data_quality_job_success
+  - unresolved_source_conflicts
+  - manual_review_queue
+  - layer1_stale_missing_insufficient_history
+  - layer3_config_health
+  - api_health
+  - report_generated
+  - disk_usage_threshold
+thresholds:
+  disk_warning_pct: 70
+  disk_critical_pct: 85
+  disk_stop_non_core_pct: 95
+  default_frontend_page_size: 500
+  default_agent_query_limit: 200
+backup:
+  daily_duckdb_backup: true
+  backup_before_schema_change: true
+  weekly_full_backup: true

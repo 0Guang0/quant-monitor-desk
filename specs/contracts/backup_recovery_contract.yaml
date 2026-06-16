@@ -1,0 +1,46 @@
+version: v1
+name: backup_recovery_contract
+required_backup_items:
+  - data/duckdb/quant_monitor.duckdb
+  - specs/
+  - docs/
+  - config/
+  - data/audit/recent
+excluded_by_default:
+  - data/cache/
+  - data/cache/duckdb_tmp/
+  - frontend_build_artifacts
+retention:
+  daily_keep_default: 3
+  daily_keep_max: 7
+  weekly_keep_default: 2
+  weekly_keep_max: 4
+  before_schema_change_keep_default: 3
+  before_schema_change_keep_max: 5
+size_limits:
+  backups_warn_gb: 10
+  backups_pause_gb: 15
+workflow:
+  backup:
+    - wait_write_manager_idle
+    - checkpoint_duckdb
+    - copy_database
+    - hash_files
+    - write_backup_manifest
+    - prune_by_policy
+  restore:
+    - stop_scheduler
+    - stop_write_requests
+    - backup_current_state
+    - verify_manifest
+    - restore_files
+    - run_smoke_test
+    - start_readonly_api
+    - require_human_confirmation_before_scheduler
+errors:
+  - BACKUP_LOCK_BUSY
+  - BACKUP_DISK_LOW
+  - BACKUP_HASH_MISMATCH
+  - BACKUP_MANIFEST_MISSING
+  - RESTORE_HASH_MISMATCH
+  - RESTORE_SMOKE_TEST_FAILED

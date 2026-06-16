@@ -1,0 +1,43 @@
+version: layer1_axis_contract_v1
+authority: docs/modules/layer1_global_regime_panel.md
+required_indicator_fields:
+  - indicator_id
+  - axis_id
+  - display_name_cn
+  - plain_language_summary
+  - layer
+  - module
+  - frequency
+  - unit
+  - primary_source
+  - validation_source
+  - fallback_policy
+  - allow_score
+  - diagnostic_only
+quality_flags:
+  - MISSING_VALUE
+  - STALE_DATA
+  - SOURCE_SWITCHED
+  - SCHEMA_DRIFT
+  - INSUFFICIENT_HISTORY
+  - OUTLIER_REVIEW_REQUIRED
+  - NO_ACCEPTED_CHANNEL
+  - FORBIDDEN_SUBSTITUTE_USED
+  - BLINDSPOT_NOT_OBSERVABLE
+forbidden_output_terms:
+  - 买入
+  - 卖出
+  - 加仓
+  - 减仓
+  - 入场
+  - 出场
+  - 信号
+state_bucket:
+  - normal
+  - elevated
+  - depressed
+  - extreme_high
+  - extreme_low
+  - stale
+  - insufficient_history
+  - invalid

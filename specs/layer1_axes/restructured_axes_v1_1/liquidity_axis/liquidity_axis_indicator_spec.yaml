@@ -1,0 +1,144 @@
+axis_id: LIQUIDITY
+axis_name_cn: 流动性轴
+plain_language_summary: 狭义市场微观结构交易摩擦，包括交易成本、冲击度和可交易性干涸代理。
+source_model: Primary + Validation + FallbackPolicy
+asset_probe_universe:
+  core:
+  - SPY
+  - IWM
+  - TLT_or_IEF
+  - HYG
+  optional_extension:
+  - QQQ
+  - LQD
+modules:
+  L1_tightness:
+    purpose: 交易成本/隐含价差代理。
+    indicators:
+    - indicator_id: LIQ.B-T1.CS_SPREAD
+      display_name_cn: 隐含交易成本代理
+      plain_language_summary: 用日线 high/low 估计交易成本是否变宽。
+      layer: Layer1_Projected
+      dest_tag: B
+      frequency: daily
+      primary_source: tiingo_eod_composite_or_fmp_eod_after_validation
+      validation_source: yfinance_or_alpaca_free_iex_price_fields_only
+      fallback_policy: last_good_cache + stale_reason; source_switched_flagged
+      raw_inputs:
+      - high
+      - low
+      - optional_high_prev
+      - optional_low_prev
+      outputs:
+      - CS_spread_raw
+      - CS_spread_clipped
+      - CS_spread_smoothed
+      - CS_formula_variant
+      boundary: 低频 proxy，不是真实 bid-ask spread。
+  L5_impact:
+    purpose: 单位成交额引起的价格冲击。
+    indicators:
+    - indicator_id: LIQ.B-I1.AMIHUD_ILLIQ
+      display_name_cn: Amihud 冲击度代理
+      plain_language_summary: 单位成交额推动价格变化的强弱。
+      layer: Layer1_Projected
+      dest_tag: B
+      frequency: daily
+      primary_source: tiingo_eod_composite_or_fmp_eod_with_volume_gate
+      validation_source: yfinance_or_alpaca_price_check_only
+      fallback_policy: NaN + stale_reason if volume_not_consolidated
+      raw_inputs:
+      - close
+      - close_prev
+      - volume
+      - high
+      - low
+      formula: abs(log(close_t/close_t_minus_1)) / (volume * typical_price)
+      required_metadata:
+      - return_mode
+      - dollar_volume_mode
+      - scale_constant
+      boundary: 如果 volume 口径不合格，必须 NaN，不能硬算。
+  Lx_dryup_tradability:
+    purpose: 可交易性干涸 proxy。
+    indicators:
+    - indicator_id: LIQ.B-A1.DRYUP_TRADABILITY
+      display_name_cn: 可交易性干涸代理
+      plain_language_summary: 在没有订单簿深度时，判断交易是否可能突然变难。
+      layer: Layer1_Projected
+      dest_tag: B
+      frequency: daily
+      primary_source: tiingo_eod_composite_or_fmp_eod_with_volume_gate
+      validation_source: yfinance_or_alpaca_price_check_only
+      fallback_policy: NaN + stale_reason if volume_not_consolidated
+      boundary: 不是 L2/L3 depth，不是真实韧性指标。
+  shadow_diagnostics:
+    indicators:
+    - indicator_id: LIQ.SHADOW.VOLUME_SPIKE
+      display_name_cn: 右尾放量拥堵解释灯
+      layer: Shadow
+      dest_tag: SHADOW
+      role: no_main_score_input; no_veto_trigger; no_takeover
+      plain_language_summary: 成交量尖刺旁证，仅用于诊断，不回写主分值。
+    - indicator_id: LIQ.SHADOW.ROLL_SPREAD
+      display_name_cn: Roll 隐含点差旁证
+      layer: Shadow
+      dest_tag: SHADOW
+      status: research_or_validation_only
+      role: no_takeover
+      plain_language_summary: Roll spread 旁证，噪声较高，仅用于研究和对账。
+    - indicator_id: LIQ.SHADOW.ZERO_RETURN_LOT
+      display_name_cn: 零收益/陈旧报价数据卫生
+      layer: Shadow
+      dest_tag: SHADOW
+      plain_language_summary: 零收益批次诊断，用于识别价格/成交数据质量问题。
+    - indicator_id: LIQ.SHADOW.CROSS_SOURCE_DIV
+      display_name_cn: 源间 OHLCV 发散统计
+      layer: Shadow
+      dest_tag: SHADOW
+      outputs:
+      - price_diff_bps
+      - hl_diff_bps
+      - volume_diff_pct
+      role: divergence_alert_only
+      plain_language_summary: 跨源分歧诊断，用于发现行情源之间的口径或质量问题。
+  layer2_background:
+    indicators:
+    - indicator_id: LIQ.C-AGG1.PASTOR_STAMBAUGH
+      display_name_cn: Pastor-Stambaugh 市场流动性背景
+      plain_language_summary: 市场级流动性的月频背景锚。
+      layer: Layer2_Background
+      dest_tag: C
+      implementation_priority: optional_background
+      frequency: monthly
+      fallback_policy: last_good_cache + stale_reason
+      boundary: 不进入 09:30 主分值，不回写 Layer1。
+  blindspots:
+    indicators:
+    - indicator_id: LIQ.D.BLINDSPOT.L2_L3_DEPTH
+      display_name_cn: 真实订单簿深度
+      dest_tag: D
+      plain_language_summary: 真实盘口深度盲区，免费稳定数据不足，只登记不伪造。
+      layer: BlindSpot
+    - indicator_id: LIQ.D.BLINDSPOT.IMMEDIACY_RESILIENCE_TICK
+      display_name_cn: 逐笔韧性/即时性
+      dest_tag: D
+      plain_language_summary: 逐笔韧性和即时性盲区，需要 tick/订单簿数据。
+      layer: BlindSpot
+    - indicator_id: LIQ.D.BLINDSPOT.OFF_EXCHANGE_INTERNALIZATION
+      display_name_cn: 场外/内部化扭曲
+      dest_tag: D
+      plain_language_summary: 场外和内部化交易盲区，需要更细交易场所数据。
+      layer: BlindSpot
+    - indicator_id: LIQ.D.BLINDSPOT.TRUE_MARKET_IMPACT_FUNCTION
+      display_name_cn: 真实市场冲击函数
+      dest_tag: D
+      plain_language_summary: 真实市场冲击函数盲区，需要逐笔成交与订单簿数据。
+      layer: BlindSpot
+forbidden:
+- Shadow_takeover
+- volume_spike_writeback_to_dryup
+- implied_volatility_as_spread
+- credit_spread_as_liquidity
+- macro_liquidity_as_microstructure
+schema_note: 'v1.1: A/B/C 主展示指标、SHADOW、BlindSpot、Forbidden 均保留最小解释字段，便于统一 schema 校验。'

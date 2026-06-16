@@ -1,0 +1,165 @@
+axis_id: CREDIT_STRESS
+axis_name_cn: 信用压力轴
+plain_language_summary: 企业和金融系统借钱时，市场要求的额外补偿和融资摩擦。
+source_model: Primary + Validation + FallbackPolicy
+fallback_policy_default:
+- retry
+- last_good_cache
+- NaN_with_stale_reason
+- manual_review_if_persistent_conflict
+output_scores:
+- score_id: Corporate_Solvency_Score
+  inputs:
+  - CRD.CS1.BAA10Y
+  - CRD.CS1.HY_OAS
+  fusion_rule: max_gate_not_linear_sum
+- score_id: Systemic_Funding_Friction_Score
+  inputs:
+  - CRD.CS2.CP_AA_FIN_90D_MINUS_TBILL_3M
+  - CRD.CS3.CP_TERM_SPREAD_OF_SPREADS
+  - CRD.CS4.REPO_TRI_AR_OO_P
+  - CRD.CS4.REPO_TRI_TV_T_P
+  - CRD.CS4.REPO_DVP_AR_OO_P
+  - CRD.CS4.REPO_DVP_OV_OO_P
+  fusion_rule: max_gate_not_linear_sum
+modules:
+  CS1_corporate_solvency:
+    purpose: 企业偿付能力压力。
+    indicators:
+    - indicator_id: CRD.CS1.BAA10Y
+      display_name_cn: Baa 企业债-10Y 国债利差
+      plain_language_summary: 企业信用风险相对无风险利率的补偿。
+      layer: Layer1_State
+      dest_tag: A
+      frequency: daily
+      primary_source: FRED:BAA10Y
+      validation_source: FRED_table_data; ALFRED_vintage_optional
+      fallback_policy: last_good_cache + stale_reason
+      outputs:
+      - spread
+      - z_score
+      - percentile_rank
+      - state_bucket
+      - data_lag_days
+      forbidden_substitutes:
+      - FRED:BAA absolute yield
+    - indicator_id: CRD.CS1.HY_OAS
+      display_name_cn: 高收益债 OAS
+      plain_language_summary: 低评级企业债相对无风险曲线的额外补偿。
+      layer: Layer1_State
+      dest_tag: A
+      frequency: daily
+      primary_source: FRED:BAMLH0A0HYM2
+      validation_source: FRED_table_data; ALFRED_vintage_optional
+      fallback_policy: last_good_cache + stale_reason
+  CS2_short_term_unsecured_credit_funding:
+    purpose: 短端无担保信用融资压力。原“无担保同业互信楔子”改名为更准确的短端无担保信用融资楔子。
+    indicators:
+    - indicator_id: CRD.CS2.CP_AA_FIN_90D_MINUS_TBILL_3M
+      display_name_cn: 90D 金融商业票据-TBill 楔子
+      plain_language_summary: 金融商业票据相对短期国库券的短端信用/融资 proxy。
+      layer: Layer1_State
+      dest_tag: A
+      frequency: daily
+      primary_source: FRED:DCPF3M + FRED:DTB3
+      validation_source: FRB_CP_release_page; FRED:SOFR90DAYAVG diagnostic; FRED:DGS3MO diagnostic
+      fallback_policy: last_good_cache + stale_reason; no_silent_switch
+      formula: CS2=DCPF3M-DTB3
+      required_outputs:
+      - cs2_spread
+      - tbill_specialness_gap
+      - tbill_default_scare_gap
+      - as_of_timestamp
+      - data_lag_trading_days
+      quality_flags:
+      - TBILL_DISTORTED
+      - TBILL_SECONDARY_MARKET_DYSFUNCTION
+      - calendar_mismatch
+      boundary: 这不是严格同业拆借市场本体；T-Bill 失真只能告警，不能自动换基准。
+  CS3_term_rollover_wedge:
+    purpose: 展期/期限融资压力。
+    indicators:
+    - indicator_id: CRD.CS3.CP_TERM_SPREAD_OF_SPREADS
+      display_name_cn: 商业票据期限楔子
+      plain_language_summary: 90D 融资信用楔子相对 30D 融资信用楔子的额外压力。
+      layer: Layer1_State
+      dest_tag: A
+      frequency: daily
+      primary_source: FRED:DCPF3M,DCPF1M,DTB3,DTB4WK
+      validation_source: deprecated_v1_replay_only
+      fallback_policy: last_good_cache + stale_reason
+      formula: (DCPF3M-DTB3)-(DCPF1M-DTB4WK)
+      forbidden_substitutes:
+      - DCPF3M-DCPF1M_as_primary
+  CS4_secured_repo_constraint:
+    purpose: 担保融资市场价格与数量约束。
+    indicators:
+    - indicator_id: CRD.CS4.REPO_TRI_AR_OO_P
+      display_name_cn: Tri-party repo 利率压力
+      layer: Layer1_State
+      dest_tag: A
+      primary_source: OFR_STFM_API
+      validation_source: OFR_same_dataset_schema_check
+      fallback_policy: NaN + stale_reason; no_rate_fallback
+      plain_language_summary: 三方回购价格约束，用于观察担保融资市场是否变紧。
+    - indicator_id: CRD.CS4.REPO_TRI_TV_T_P
+      display_name_cn: Tri-party repo 交易量压力
+      layer: Layer1_State
+      dest_tag: A
+      primary_source: OFR_STFM_API
+      validation_source: OFR_same_dataset_schema_check
+      fallback_policy: NaN + stale_reason; no_volume_fallback
+      plain_language_summary: 三方回购成交量约束，用于观察担保融资市场是否出现数量收缩。
+    - indicator_id: CRD.CS4.REPO_DVP_AR_OO_P
+      display_name_cn: DVP repo 利率压力
+      layer: Layer1_State
+      dest_tag: A
+      primary_source: OFR_STFM_API
+      fallback_policy: NaN + stale_reason; no_rate_fallback
+      plain_language_summary: DVP 回购价格约束，用于观察更机构化的担保融资压力。
+    - indicator_id: CRD.CS4.REPO_DVP_OV_OO_P
+      display_name_cn: DVP repo 余额/规模压力
+      layer: Layer1_State
+      dest_tag: A
+      primary_source: OFR_STFM_API
+      fallback_policy: NaN + stale_reason; no_volume_fallback
+      plain_language_summary: DVP 隔夜回购价格约束，用于观察短端担保融资摩擦。
+  CS5_and_offshore_layer2:
+    indicators:
+    - indicator_id: CRD.CS5.SLOOS_CI_TIGHTEN_LARGE_MID
+      display_name_cn: SLOOS 大中型企业贷款标准收紧
+      plain_language_summary: 银行是否在收紧贷款标准。
+      layer: Layer2_Warning
+      dest_tag: C
+      frequency: quarterly
+      primary_source: FRED:DRTSCILM
+      fallback_policy: last_good_cache + stale_reason
+      boundary: 季频慢变量，只做预警，不回写日频分值。
+    - indicator_id: CRD.C.SWPT_LIQUIDITY_SWAPS
+      display_name_cn: 美联储流动性互换
+      plain_language_summary: 离岸美元压力的官方侧面观察。
+      layer: Layer2_Warning
+      dest_tag: C
+      primary_source: FRED:SWPT
+      fallback_policy: last_good_cache + stale_reason
+  blindspots:
+    indicators:
+    - indicator_id: CRD.D.CS4.HAIRCUT_BY_COLLATERAL
+      display_name_cn: 抵押品 haircut
+      dest_tag: D
+      reason: 不可稳定免费获得。
+      plain_language_summary: 抵押品折扣率盲区，免费稳定数据不足，只登记不伪造。
+      layer: BlindSpot
+    - indicator_id: CRD.D.CS4.BILATERAL_REPO_PRIVATE_TERMS
+      display_name_cn: 双边 repo 私有条款
+      dest_tag: D
+      reason: 不可审计或付费墙。
+      plain_language_summary: 双边回购私下条款盲区，缺少公开稳定数据，只登记不伪造。
+      layer: BlindSpot
+    - indicator_id: CRD.D.OFFSHORE_DOLLAR_BASIS_HIGH_FREQ
+      display_name_cn: 高频离岸美元 basis
+      dest_tag: D
+      reason: 高频稳定数据多在付费墙后。
+      plain_language_summary: 高频离岸美元基差盲区，常在付费墙后，只登记不伪造。
+      layer: BlindSpot
+schema_note: 'v1.1: A/B/C 主展示指标、SHADOW、BlindSpot、Forbidden 均保留最小解释字段，便于统一 schema 校验。'

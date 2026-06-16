@@ -1,0 +1,45 @@
+version: 1
+module: agent_module
+authoritative_doc: docs/modules/agent_module.md
+allowed_agents:
+  - daily_report_agent
+  - news_event_agent
+  - announcement_agent
+  - layer1_interpretation_agent
+  - cross_layer_explain_agent
+  - data_quality_explain_agent
+  - strategy_review_agent
+allowed_tools:
+  - get_layer1_snapshot
+  - get_layer2_snapshot
+  - get_layer3_chain_snapshot
+  - get_layer4_market_snapshot
+  - get_layer5_security_evidence
+  - get_data_quality_summary
+  - get_source_conflict_summary
+  - get_report_context
+forbidden_tools:
+  - execute_arbitrary_sql
+  - write_duckdb_directly
+  - fetch_web_directly
+  - modify_source_registry_directly
+  - modify_clean_table_directly
+output_requirements:
+  schema_version_required: true
+  facts_used_required: true
+  no_action_semantics_guard_required: true
+  missing_evidence_required_when_context_incomplete: true
+forbidden_action_terms:
+  - 买入
+  - 卖出
+  - 加仓
+  - 减仓
+  - 满仓
+  - 清仓
+  - 入场
+  - 出场
+  - 抄底
+  - 逃顶
+write_boundary:
+  direct_clean_table_write: false
+  staging_then_validator_then_writemanager: true

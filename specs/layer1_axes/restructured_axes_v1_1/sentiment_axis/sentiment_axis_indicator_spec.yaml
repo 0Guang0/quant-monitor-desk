@@ -1,0 +1,138 @@
+axis_id: SENTIMENT
+axis_name_cn: 情绪轴
+plain_language_summary: 仓位、成交行为、参与集中度、主观信念和杠杆燃料。
+source_model: Primary + Validation + FallbackPolicy
+fallback_policy_default:
+- retry
+- last_available_with_honest_lag
+- NaN_with_stale_reason
+modules:
+  S1_institutional_position_crowding:
+    purpose: 机构或投机群体真实仓位拥挤度。
+    indicators:
+    - indicator_id: SEN-S1-COT_LF_NET
+      display_name_cn: COT 杠杆基金净头寸
+      plain_language_summary: 监管口径下投机/杠杆资金是否拥挤。
+      layer: Layer1_Projected
+      dest_tag: B
+      frequency: weekly
+      primary_source: CFTC:COT_historical_compressed
+      validation_source: CFTC_viewable_or_CME_COT_tool_diagnostic
+      fallback_policy: last_available + stale_reason
+      boundary: 周频滞后，不是日内情绪；不得解释为期权风险补偿。
+    - indicator_id: SEN-S1-NAAIM_EXPOSURE
+      display_name_cn: NAAIM 主动管理人敞口
+      plain_language_summary: 主动风险管理人对股票的平均敞口。
+      layer: Layer1_Projected
+      dest_tag: B
+      frequency: weekly
+      primary_source: NAAIM:Exposure_Index
+      validation_source: third_party_aggregator_validation_only
+      fallback_policy: last_available + stale_reason
+      boundary: 自报敞口，有样本限制，不等同于全市场仓位。
+  S2_options_activity_tilt:
+    purpose: 期权成交行为方向倾斜。
+    indicators:
+    - indicator_id: SEN-S2-PCR_EQ
+      display_name_cn: Cboe Equity Put/Call Ratio
+      plain_language_summary: 股票期权成交行为偏向 put 还是 call。
+      layer: Layer1_State
+      dest_tag: A
+      frequency: daily
+      primary_source: Cboe:equity_put_call_ratio_archive
+      validation_source: Cboe_daily_market_statistics_or_same_source_archive_check
+      fallback_policy: NaN + stale_reason if invalid denominator or inactive market
+      raw_inputs:
+      - PutVolume
+      - CallVolume
+      formula: PCR_raw=PutVolume/CallVolume
+      outputs:
+      - PCR_raw
+      - PCR_filtered
+      quality_notes: preliminary_volume_possible; hygiene_required
+      boundary: 成交行为统计，不是隐含波动率、SKEW 或 VRP。
+  S3_participation_concentration:
+    purpose: 市场是否更依赖少数权重资产。
+    indicators:
+    - indicator_id: SEN-S3-PROJ_EQW_CAPW_SPREAD
+      display_name_cn: 等权-市值权重相对表现差
+      plain_language_summary: 市场是否越来越靠少数大股票支撑。
+      layer: Layer1_Projected
+      dest_tag: B
+      frequency: daily
+      primary_source: public_adjusted_OHLCV_for_RSP_and_SPY
+      validation_source: backup_OHLCV_source_diagnostic_only
+      fallback_policy: NaN + unadjusted_price_unavailable if adjusted price unavailable
+      formula: ret_spread=return_adj(RSP)-return_adj(SPY)
+      required_metadata:
+      - projection_method
+      - index_rebalancing_noise
+      - rebalance_window_id
+      boundary: 集中度投影，不是真实广度。
+    - indicator_id: SEN-S3-TRUE_BREADTH_CONST
+      display_name_cn: 真实全成分广度
+      layer: BlindSpot
+      dest_tag: D
+      reason: 需要完整成分、历史 OHLC 和成分变更，可审计免费稳定链路未确认。
+      plain_language_summary: 真实广度盲区项，需要全成分历史和成分变更链路。
+  S4_stated_beliefs:
+    purpose: 问卷主观信念。
+    indicators:
+    - indicator_id: SEN-S4-AAII_BNB
+      display_name_cn: AAII 牛/中/熊三分量
+      plain_language_summary: 散户对未来 6 个月市场方向的口头信念分布。
+      layer: Layer1_Projected
+      dest_tag: B
+      frequency: weekly
+      primary_source: AAII:sentiment_survey_history
+      validation_source: AAII_page_table_diagnostic_only
+      fallback_policy: last_available + stale_reason
+      raw_outputs:
+      - bullish
+      - neutral
+      - bearish
+      derived_outputs:
+      - bull_bear_spread
+      boundary: belief 不等于 behavior，不得压成单一 FearIndex。
+  S5_leverage_participation:
+    purpose: 杠杆情绪燃料。
+    indicators:
+    - indicator_id: SEN-S5-FINRA_MARGIN
+      display_name_cn: FINRA 融资余额统计
+      plain_language_summary: 融资杠杆参与度，作为情绪燃料慢变量。
+      layer: Layer2_Warning
+      dest_tag: C
+      frequency: monthly
+      primary_source: FINRA:margin_statistics_xlsx
+      validation_source: none_optional
+      fallback_policy: last_available + stale_reason
+      outputs:
+      - official_fields_raw
+      - optional_mom_yoy_derived
+      boundary: 无数据 feed，只能做 Layer2 解释灯，不得进 Layer1。
+  blindspots:
+    indicators:
+    - indicator_id: SEN-D-TRUE_INTRADAY_POSITIONING
+      display_name_cn: 真实日内仓位
+      dest_tag: D
+      plain_language_summary: 真实日内仓位盲区，缺少可审计公开数据。
+      layer: BlindSpot
+    - indicator_id: SEN-D-RETAIL_BROKER_FLOW_FULL
+      display_name_cn: 完整散户券商流
+      dest_tag: D
+      plain_language_summary: 完整零售券商流向盲区，公开可得性和许可不足。
+      layer: BlindSpot
+    - indicator_id: SEN-D-SOCIAL_MEDIA_SENTIMENT_RELIABLE
+      display_name_cn: 可审计社交媒体情绪
+      dest_tag: D
+      reason: 噪音、许可、口径稳定性问题，第一版不进入主面板。
+      plain_language_summary: 可靠社交媒体情绪盲区，噪声、许可和可复现性不足。
+      layer: BlindSpot
+forbidden:
+- sentiment_total_score
+- fear_index_action_signal
+- implied_volatility_in_sentiment
+- microstructure_friction_in_sentiment
+- credit_spread_in_sentiment
+- macro_liquidity_in_sentiment
+schema_note: 'v1.1: A/B/C 主展示指标、SHADOW、BlindSpot、Forbidden 均保留最小解释字段，便于统一 schema 校验。'

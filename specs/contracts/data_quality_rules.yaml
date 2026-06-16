@@ -1,0 +1,43 @@
+version: p0_round_1
+contract_name: data_quality_rules
+common_rules:
+  - id: MISSING_PRIMARY_KEY
+    severity: failed
+  - id: DUPLICATE_PRIMARY_KEY
+    severity: failed
+  - id: MISSING_REQUIRED_FIELD
+    severity: failed_or_warning
+  - id: MISSING_TIMESTAMP
+    severity: failed
+  - id: INVALID_ENUM
+    severity: failed
+  - id: SCHEMA_DRIFT
+    severity: failed
+  - id: STALE_DATA
+    severity: warning
+  - id: INSUFFICIENT_HISTORY
+    severity: warning
+market_bar_rules:
+  - id: INVALID_PRICE_RANGE
+    condition: high < low
+    severity: failed
+  - id: NEGATIVE_PRICE
+    condition: any price field < 0
+    severity: failed
+  - id: INVALID_VOLUME
+    condition: volume < 0
+    severity: failed
+layer1_rules:
+  - id: MISSING_SOURCE_USED
+    severity: failed
+  - id: FALLBACK_WITHOUT_REASON
+    severity: failed
+  - id: BLINDSPOT_SHOULD_NOT_HAVE_VALUE
+    severity: failed
+layer3_rules:
+  - id: DUPLICATE_ANCHOR_ID
+    severity: failed
+  - id: MISSING_NODE_REFERENCE
+    severity: failed
+  - id: P0_MISSING_SOURCE_KEYS
+    severity: failed

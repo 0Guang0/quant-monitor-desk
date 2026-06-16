@@ -1,0 +1,48 @@
+version: v1
+name: log_audit_contract
+common_fields:
+  - event_id
+  - event_time
+  - event_type
+  - severity
+  - module
+  - run_id
+  - job_id
+  - task_id
+  - message
+  - detail
+  - quality_flags
+severity:
+  allowed: [DEBUG, INFO, WARN, ERROR, CRITICAL]
+  default_runtime_minimum: INFO
+required_logs:
+  - fetch_log.ndjson
+  - data_quality_log.ndjson
+  - source_conflict_log.ndjson
+  - revision_log.ndjson
+  - write_audit_log.ndjson
+  - resource_guard_log.ndjson
+  - agent_run_log.ndjson
+  - notification_log.ndjson
+  - ops_health_log.ndjson
+must_audit:
+  - clean_table_write
+  - schema_migration
+  - source_switch
+  - fallback_takeover
+  - severe_source_conflict
+  - manual_review
+  - agent_output_staging
+  - notification_send
+  - backup_restore
+retention:
+  compress_audit_when_gb_gt: 1
+  fetch_log_hot_days: 30
+  data_quality_log_hot_days: 90
+  conflict_log_default_delete: false
+  revision_log_default_delete: false
+failure_policy:
+  audit_write_failure:
+    - try_emergency_log
+    - stop_non_core_jobs_if_emergency_log_fails
+    - do_not_write_clean_table_without_audit

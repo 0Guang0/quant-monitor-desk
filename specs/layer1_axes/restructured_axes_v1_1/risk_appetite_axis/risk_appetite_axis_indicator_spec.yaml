@@ -1,0 +1,124 @@
+axis_id: RISK_APPETITE
+axis_name_cn: 风险偏好轴
+plain_language_summary: 期权保险费、尾部保护费、方差风险补偿和股债对冲状态。
+source_model: Primary + Validation + FallbackPolicy
+fallback_policy_default:
+- retry
+- last_good_cache
+- NaN_with_stale_reason
+modules:
+  R1_implied_variance_level_term_structure:
+    purpose: 短期与中期波动保险费。
+    indicators:
+    - indicator_id: RA.R1.VIXCLS_30D_IMPLIED_VOL
+      display_name_cn: 30 天波动保险费
+      plain_language_summary: 市场对未来 30 天波动愿意支付的保险费。
+      layer: Layer1_State
+      dest_tag: A
+      frequency: daily
+      primary_source: FRED:VIXCLS
+      validation_source: FRED_table_data
+      fallback_policy: last_good_cache + stale_reason
+      outputs:
+      - vix_level
+      - z_score
+      - percentile_rank
+      - state_bucket
+      - data_lag_days
+      boundary: 只描述期权隐含波动水位，不替代实际波动或情绪。
+    - indicator_id: RA.R1.VXVCLS_3M_IMPLIED_VOL
+      display_name_cn: 3 个月中期波动保险费
+      plain_language_summary: 市场对未来 3 个月波动愿意支付的保险费。
+      layer: Layer1_State
+      dest_tag: A
+      frequency: daily
+      primary_source: FRED:VXVCLS
+      validation_source: FRED_table_data
+      fallback_policy: last_good_cache + stale_reason
+      derived_outputs:
+      - term_slope
+      - term_ratio
+  R2_tail_shape_skewness_premium:
+    purpose: 尾部形状和左尾保护费。
+    indicators:
+    - indicator_id: RA.R2.CBOE_SKEW_INDEX
+      display_name_cn: SKEW 尾部保护费
+      plain_language_summary: 市场为左尾极端风险支付的额外保护费。
+      layer: Layer1_Projected
+      dest_tag: B
+      implementation_priority: P1_optional_due_to_source_gate
+      primary_source: none_accepted_channel_yet
+      validation_source: Cboe_SKEW_dashboard_manual_or_vendor_if_licensed
+      fallback_policy: NaN + stale_reason=NO_ACCEPTED_CHANNEL; no_scraping_without_license
+      boundary: 只允许期权价格推导的尾部形状，不允许 PCR 混入。
+    - indicator_id: RA.SHADOW.VVIX_CONVEXITY
+      display_name_cn: VVIX 波动的波动旁证灯
+      layer: Shadow
+      dest_tag: SHADOW
+      primary_source: Cboe:VVIX_history_csv
+      role: no_main_score_input; no_takeover
+      plain_language_summary: VVIX 旁证灯，用于观察波动率的波动，不替代 SKEW。
+  R3_variance_risk_premium:
+    purpose: 隐含方差和实现方差之间的风险补偿楔子。
+    indicators:
+    - indicator_id: RA.R3.SPX_VRP_30D_VARIANCE
+      display_name_cn: SPX 30D 方差风险溢价
+      plain_language_summary: 市场买波动保险的价格，相比实际波动是否偏贵。
+      layer: Layer1_Projected
+      dest_tag: B
+      frequency: daily_window_estimate
+      primary_source: FRED:VIXCLS + FRED:SP500
+      validation_source: none_optional_recompute_check
+      fallback_policy: last_good_cache + stale_reason
+      formula_requirement: variance_scale_only; reject_VIX_minus_RV
+      outputs:
+      - vrp_var_pts_annualized
+      - implied_var_30d
+      - realized_var_30d
+      - vrp_var_30d
+      required_metadata:
+      - window_trading_days
+      - horizon_calendar_days
+      - annualization_factor
+  R4_diversification_anchor_breakdown:
+    purpose: 股债对冲锚是否失灵。
+    indicators:
+    - indicator_id: RA.R4.EQ_BOND_CORR_60D
+      display_name_cn: 股债 60 日相关
+      plain_language_summary: 债券还像不像股票下跌时的对冲器。
+      layer: Layer1_State
+      dest_tag: A
+      frequency: daily_window
+      primary_source: FRED:SP500 + FRED:NASDAQNCPXN
+      validation_source: IEF_shadow_stitching_diagnostic_only
+      fallback_policy: NaN + INSUFFICIENT_HISTORY if data too short
+      formula: corr(log_returns_equity, log_returns_bond, window=60)
+    - indicator_id: RA.R4.EQ_BOND_CO_DRAWDOWN_RATE_60D
+      display_name_cn: 股债同跌频率
+      plain_language_summary: 股票跌时债券也跌的比例。
+      layer: Layer1_State
+      dest_tag: A
+      frequency: daily_window
+      primary_source: FRED:SP500 + FRED:NASDAQNCPXN
+      fallback_policy: NaN + INSUFFICIENT_HISTORY if history insufficient
+      formula: mean(r_eq<0 and r_bond<0, window=60)
+  R5_long_term_excess_return_requirement:
+    purpose: 长期折现风险补偿背景。
+    indicators:
+    - indicator_id: RA.R5.ECY
+      display_name_cn: 长期超额要求回报背景
+      plain_language_summary: 长期估值和真实利率背景下，股票相对安全资产的长期补偿底色。
+      layer: Layer2_Warning
+      dest_tag: C
+      frequency: monthly_or_periodic
+      primary_source: Yale:ie_data.xls + FRED:DFII10
+      validation_source: local_mirror_required
+      fallback_policy: NaN + SHILLER_XLS_UNREACHABLE or last_good_cache
+      boundary: 慢变量，不回写日频 Layer1。
+forbidden:
+- VIX_minus_realized_volatility_as_VRP
+- PCR_or_COT_as_risk_appetite
+- credit_spread_as_risk_appetite
+- single_fear_index_total_score
+- action_semantics
+schema_note: 'v1.1: A/B/C 主展示指标、SHADOW、BlindSpot、Forbidden 均保留最小解释字段，便于统一 schema 校验。'

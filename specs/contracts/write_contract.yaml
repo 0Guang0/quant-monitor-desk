@@ -1,0 +1,35 @@
+version: p0_round_1
+contract_name: write_contract
+write_request:
+  required:
+    - run_id
+    - job_id
+    - target_table
+    - staging_table
+    - write_mode
+    - data_domain
+    - primary_keys
+    - validation_report_id
+    - source_used
+    - source_role
+  fields:
+    run_id: string
+    job_id: string
+    target_table: string
+    staging_table: string
+    write_mode: [append_only, upsert_by_pk, replace_partition, manual_patch, schema_migration]
+    data_domain: string
+    primary_keys: list[string]
+    partition_keys: list[string]
+    validation_report_id: string
+    conflict_report_id: string|null
+    source_used: string
+    source_role: [primary, validation, fallback, derived]
+    allow_partial_write: boolean
+    requested_by: [sync_job, backfill_job, revision_audit_job, human, snapshot_job]
+validation_gate:
+  reject_if:
+    - validation_status == FAILED
+    - source_conflict_severity == severe
+    - manual_review_required == true and write_mode != manual_patch
+    - schema_hash_changed == true and schema_change_approved != true

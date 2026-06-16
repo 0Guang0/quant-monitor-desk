@@ -1,0 +1,4 @@
+# Data source registry (Round 2)
+# Roles: primary | validation | fallback_policy
+
+sources: {}

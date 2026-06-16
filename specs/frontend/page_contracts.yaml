@@ -1,0 +1,105 @@
+version: frontend_page_contracts_v2
+authority: docs/modules/frontend_dashboard.md
+status: reference_not_final_design
+implementation_guardrail:
+  page_layout_is_not_fixed: true
+  routes_are_reference_only: true
+  visual_design_requires_user_confirmation_before_implementation: true
+  components_represent_required_information_capability_not_final_layout: true
+  current_feature_set_is_not_exhaustive: true
+pages:
+  - route: /
+    name: MarketOverviewPage
+    design_status: reference_only
+    api_dependencies:
+      - GET /api/market/summary
+      - GET /api/layer1/state-snapshot
+      - GET /api/data-health
+      - GET /api/notifications
+  - route: /layer1
+    name: Layer1AxesPage
+    design_status: reference_only
+    api_dependencies:
+      - GET /api/layer1/axes
+      - GET /api/layer1/state-snapshot
+  - route: /layer2
+    name: Layer2SensorsPage
+    design_status: reference_only
+    api_dependencies:
+      - GET /api/layer2/assets
+      - GET /api/layer2/sensors
+  - route: /layer3
+    name: Layer3ChainsPage
+    design_status: reference_only
+    api_dependencies:
+      - GET /api/layer3/chains
+      - GET /api/layer3/graph
+  - route: /layer4
+    name: Layer4MarketsPage
+    design_status: reference_only
+    api_dependencies:
+      - GET /api/layer4/markets
+      - GET /api/market/{market_id}/breadth
+  - route: /layer5/:instrumentId
+    name: Layer5SecurityPage
+    design_status: reference_only
+    api_dependencies:
+      - GET /api/layer5/securities/{instrument_id}
+      - GET /api/evidence/{target_id}
+  - route: /reports
+    name: ReportsPage
+    design_status: reference_only
+    api_dependencies:
+      - GET /api/reports/daily
+      - GET /api/reports/{report_id}
+  - route: /notifications
+    name: NotificationsPage
+    design_status: reference_only
+    api_dependencies:
+      - GET /api/notifications
+      - POST /api/notifications/{notification_id}/ack
+  - route: /backtest
+    name: BacktestReviewPage
+    design_status: reference_only
+    api_dependencies:
+      - GET /api/backtest/scenarios
+      - POST /api/backtest/runs
+      - GET /api/backtest/runs/{run_id}
+  - route: /data-health
+    name: DataHealthPage
+    design_status: reference_only
+    api_dependencies:
+      - GET /api/data-health
+      - GET /api/data-health/source-conflicts
+required_components:
+  - QualityBadge
+  - FreshnessLabel
+  - SourceLabel
+  - BoundaryReminder
+  - NoActionSemanticGuard
+  - ResourceStatusBadge
+  - EvidenceDrawer
+  - AlertSeverityBadge
+  - NotificationCenter
+  - BacktestMetricTable
+configuration_driven_sources:
+  - axis_registry
+  - axis_indicator_registry
+  - axis_indicator_profile
+  - layer3_chain_registry
+  - layer3_anchor_registry
+  - layer3_node_registry
+  - layer3_edge_registry
+  - market_registry
+  - instrument_registry
+  - report_registry
+  - notification_rule_registry
+  - backtest_scenario_registry
+must_not_hardcode:
+  - indicator_count
+  - chain_count
+  - anchor_list
+  - market_list
+  - report_section_count
+  - alert_type_count
+  - backtest_scenario_count

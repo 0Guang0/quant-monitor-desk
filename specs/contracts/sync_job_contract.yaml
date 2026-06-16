@@ -1,0 +1,38 @@
+version: p0_round_1
+contract_name: sync_job_contract
+job_types:
+  - full_load
+  - incremental
+  - backfill
+  - revision_audit
+  - reconcile
+  - data_quality
+statuses:
+  normal:
+    - CREATED
+    - PLANNED
+    - FETCHING
+    - STAGED
+    - VALIDATING
+    - WAITING_RECONCILE
+    - RECONCILING
+    - READY_TO_WRITE
+    - WRITING
+    - COMPLETED
+  terminal:
+    - FAILED_FINAL
+    - SKIPPED
+    - CANCELLED
+    - MANUAL_REVIEW_REQUIRED
+  retryable:
+    - FAILED_RETRYABLE
+id_policy:
+  run_id: one full orchestration run
+  job_id: one data-domain job
+  task_id: one partition/shard task
+retry_policy:
+  network_timeout: retry
+  rate_limited: delayed_retry
+  auth_failed: no_retry
+  schema_drift: no_retry
+  severe_conflict: reconcile
