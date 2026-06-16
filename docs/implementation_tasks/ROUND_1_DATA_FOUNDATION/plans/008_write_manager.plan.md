@@ -199,3 +199,53 @@ Commit: `feat(db): add WriteManager with stub validation gate and audit (task 00
 - [ ] FAILED 审计行未被事务回滚（独立提交）
 - [ ] upsert 覆盖而非重复插入（业务语义断言）
 - [ ] 未实现任何真实校验逻辑（留 Round 2）
+
+---
+
+## 实现记录（含审计修复与缺口补充）
+
+> 首版实现后的 hardening 轮次在本 task 范围内的变更记录。
+
+### 首版交付（task 008）
+
+- `backend/app/db/validation_gate.py`：`StubValidationGate`（`stub-pass-*` / `stub-fail-*`）
+- `backend/app/db/write_manager.py`：`WriteRequest` / `WriteResult` / `write()`
+- `tests/test_write_manager.py`：7 个测试
+
+### 审计修复（P0 / P1）
+
+| 项 | 问题 | 修复 |
+|----|------|------|
+| P0 | 表名/列名 f-string 拼接，存在 SQL 标识符注入 | 新增 `backend/app/db/sql_identifiers.py` 的 `quote_ident()`；写入前 allowlist 校验 |
+| P1 | `except Exception` 吞掉编程错误 | 仅捕获 `ValidationRejected`、`ValidationGateError`、`duckdb.Error`；其余向上抛 |
+| P0 | `FileRegistry` 需与 staging 同事务 | `write(req, con=...)` 支持在外部已持锁连接上执行（供 009 单会话写入） |
+| 缺口 | FAILED 路径 rollback 后误 `COMMIT` | rollback 后 audit 独立 autocommit，不再 `COMMIT` 空事务 |
+
+### 测试缺口补充
+
+| 测试 | 证明什么 |
+|------|----------|
+| `test_write_invalidIdentifier_raisesBeforeWrite` | 非法表名在写前 `ValueError` |
+| `test_write_gateError_rollsBackAndAuditsFailed` | 未知 validation id → FAILED 审计 |
+| `test_write_sqlError_rollsBackAndAuditsError` | 目标表不存在 → `validation_status=ERROR`、数据 rollback |
+| `test_write_emptyStaging_insertsZeroRows` | 空 staging → SUCCESS 且 0 行 |
+
+### 当前测试规模
+
+- 本 task 相关：`tests/test_write_manager.py` **12** 个（原 11 + 1）
+
+---
+
+## 评估报告跟进（二次修复）
+
+| 评估项 | 修复 |
+|--------|------|
+| **P1 Bug** `rows_updated` 误报 | DELETE 前用 PK join 计真实匹配数 `_count_pk_matches()`；`rows_inserted = after - before` |
+| FAILED 审计靠 autocommit | `_commit_audit_after_rollback()`：ROLLBACK 后显式 `BEGIN` → audit → `COMMIT` |
+| `stub-pass` 测试仅断言不抛异常 | 改为 `test_assertCanWrite_stubPass_allowsWhileStubFailRejects`，对比 pass/fail 行为 |
+| 审计列无断言 | upsert 测试断言 `write_audit_log.rows_updated/rows_inserted` |
+
+### 新增测试
+
+- `test_write_upsertByPk_pureNewRow_reportsZeroUpdated` — staging 全新 PK、target 无匹配 → `updated=0, inserted=1`
+- upsert 覆盖路径补 audit 断言 `(1, 0)`

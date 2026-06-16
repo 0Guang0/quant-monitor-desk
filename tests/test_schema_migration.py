@@ -1,0 +1,68 @@
+"""Foundation schema migration tests (Round 1 task 005)."""
+
+from __future__ import annotations
+
+import shutil
+from pathlib import Path
+
+import duckdb
+import pytest
+from backend.app.db.migrate import (
+    MIGRATIONS_DIR,
+    MigrationChecksumError,
+    applied_versions,
+    apply_migrations,
+)
+
+FOUNDATION_TABLES = {
+    "schema_version",
+    "file_registry",
+    "write_audit_log",
+    "resource_guard_log",
+    "stg_foundation_smoke",
+}
+
+
+def test_applyMigrations_freshDb_createsFoundationTables() -> None:
+    con = duckdb.connect(":memory:")
+    applied = apply_migrations(con)
+    assert "001_foundation" in applied
+    assert "002_registry_hardening" in applied
+    tables = {row[0] for row in con.execute("SHOW TABLES").fetchall()}
+    assert FOUNDATION_TABLES.issubset(tables)
+    assert "stg_file_registry" in tables
+
+
+def test_applyMigrations_runTwice_isIdempotent() -> None:
+    con = duckdb.connect(":memory:")
+    apply_migrations(con)
+    second = apply_migrations(con)
+    assert second == []
+    count = con.execute(
+        "SELECT COUNT(*) FROM schema_version WHERE version_id='001_foundation'"
+    ).fetchone()[0]
+    assert count == 1
+
+
+def test_appliedVersions_emptyDb_returnsEmptySet() -> None:
+    con = duckdb.connect(":memory:")
+    assert applied_versions(con) == set()
+
+
+def test_appliedVersions_afterMigration_containsFoundation() -> None:
+    con = duckdb.connect(":memory:")
+    apply_migrations(con)
+    assert applied_versions(con) == {"001_foundation", "002_registry_hardening"}
+
+
+def test_applyMigrations_modifiedFile_raisesChecksumError(tmp_path: Path) -> None:
+    migrations_dir = tmp_path / "migrations"
+    shutil.copytree(MIGRATIONS_DIR, migrations_dir)
+    db = tmp_path / "t.duckdb"
+    con = duckdb.connect(str(db))
+    apply_migrations(con, migrations_dir=migrations_dir)
+    sql_path = migrations_dir / "001_foundation.sql"
+    sql_path.write_text(sql_path.read_text(encoding="utf-8") + "\n-- tampered\n", encoding="utf-8")
+    with pytest.raises(MigrationChecksumError, match="checksum mismatch"):
+        apply_migrations(con, migrations_dir=migrations_dir)
+

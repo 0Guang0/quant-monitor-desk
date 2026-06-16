@@ -156,3 +156,44 @@ Commit: `feat(core): add ResourceGuard with eco/normal/batch thresholds (task 00
 - [ ] 仅 psutil I/O 被 mock
 - [ ] HARD_STOP/PAUSE/WARN 优先级正确
 - [ ] 非 OK 落 `resource_guard_log`
+
+---
+
+## 实现记录（含审计修复与缺口补充）
+
+> 首版实现后的 hardening 轮次在本 task 范围内的变更记录。
+
+### 首版交付（task 006）
+
+- `backend/app/core/resource_guard.py`：`Decision`、`ResourceSnapshot`、`evaluate()`、`ResourceGuard`
+- `tests/test_resource_guard.py`：5 个测试（OK / PAUSE / HARD_STOP / 多信号 / check 落库）
+
+### 审计修复与实现缺口
+
+| 项 | 问题 | 修复 |
+|----|------|------|
+| 缺口 | `process_rss_mb` 采集但未参与判定 | `evaluate(..., profile_limits=)` 增加 RSS 信号；`check()` 传入当前 profile 阈值 |
+| 缺口 | `_dir_size_gb` 跟随 symlink 可能误判或慢 | `rglob(..., follow_symlinks=False)` |
+| 测试 | `Decision.WARN` 未覆盖 | 新增 WARN / project_size / RSS 边界测试 |
+| 测试 | OK 路径是否误写 guard log 未验证 | 新增 `test_check_okDecision_doesNotWriteGuardLog`（mock 健康 snapshot） |
+
+### 测试缺口补充
+
+| 测试 | 证明什么 |
+|------|----------|
+| `test_evaluate_warnMemory_returnsWarn` | 内存 3.5GB → `WARN` |
+| `test_evaluate_largeProject_returnsPause` | 项目目录 30GB → `PAUSE` |
+| `test_evaluate_highRss_returnsPause` | RSS 超 warn 阈值 → `WARN` |
+| `test_check_okDecision_doesNotWriteGuardLog` | OK 时不写 `resource_guard_log` |
+
+### 当前测试规模
+
+- 本 task 相关：`tests/test_resource_guard.py` **9** 个（原 5 + 4）
+
+---
+
+## 评估报告跟进（二次修复）
+
+| 评估项 | 修复 |
+|--------|------|
+| guard_log 靠 autocommit 巧合 | `check()` 非 OK 落库改为显式 `BEGIN` → `INSERT` → `COMMIT` |
