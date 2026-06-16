@@ -13,11 +13,10 @@ FOUNDATION_TABLES = (
     "schema_version",
     "file_registry",
     "write_audit_log",
+    "resource_guard_log",
     "stg_foundation_smoke",
+    "stg_file_registry",
 )
-
-# Round 1 foundation tables applied via migration but not yet mirrored in schema.sql.
-MIGRATION_ONLY_TABLES = ("resource_guard_log", "stg_file_registry")
 
 
 def _table_columns(sql_text: str, table: str) -> set[str] | None:
@@ -50,6 +49,3 @@ def test_foundationMigrationColumns_existInSchemaContract() -> None:
         assert mig_cols.issubset(contract_cols), (
             f"{table}: migration columns missing from schema.sql: {mig_cols - contract_cols}"
         )
-
-    for table in MIGRATION_ONLY_TABLES:
-        assert _table_columns(migration_text, table), f"{table} must exist in migrations"
