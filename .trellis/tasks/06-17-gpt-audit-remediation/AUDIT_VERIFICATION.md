@@ -80,6 +80,16 @@
 
 ---
 
+## 7. 严格口径补收口（Batch C-C0，2026-06-17）
+
+| ID | 项 | 处理 |
+|----|-----|------|
+| **C-C0-1** | `validation: "null"` 字符串被当作无 validation | **FIXED** — 仅 YAML `null`；字符串 → `InvalidRegistryError` |
+| **C-C0-2** | `sync_to_db()` 默认 atomic 语义易误判 | **文档化** — caller-owned transaction；见 `BATCH_C_LEDGER.md` C-C1 |
+| **C-C0-3** | `_parse_timestamp()` 抛底层 `ValueError` | **FIXED** — `FetchLogValidationError`；DB CHECK 仍 **DEFERRED → Batch C** |
+
+---
+
 ## 5. 本次验收命令
 
 ```bash

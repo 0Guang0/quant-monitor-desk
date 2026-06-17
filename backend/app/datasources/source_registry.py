@@ -251,7 +251,15 @@ class SourceRegistry:
                 raise InvalidRegistryError(f"domain_roles.{data_domain}.primary is required")
             primary_id = str(primary)
             validation_raw = roles.get("validation")
-            validation_id = None if validation_raw in (None, "null") else str(validation_raw)
+            if validation_raw is None:
+                validation_id = None
+            elif validation_raw == "null":
+                raise InvalidRegistryError(
+                    f"domain_roles.{data_domain}.validation: string 'null' is not "
+                    "allowed; use YAML null for no validation source"
+                )
+            else:
+                validation_id = str(validation_raw)
             fallback_policy = str(roles.get("fallback_policy", ""))
             if fallback_policy not in VALID_FALLBACK_POLICIES:
                 raise InvalidRegistryError(
@@ -333,8 +341,13 @@ class SourceRegistry:
         """Upsert all YAML sources into source_registry.
 
         When ``tombstone_missing`` is True, sources absent from YAML are marked
-        ``is_enabled=false``. Caller may wrap in an explicit transaction when
-        atomic full sync is required.
+        ``is_enabled=false``.
+
+        **Transaction policy (caller-owned, intentional):** This method does
+        *not* open ``BEGIN``/``COMMIT``. Batch C Orchestrator and CLI entry
+        points must wrap a full sync in an explicit transaction when atomic
+        all-or-nothing semantics are required. See
+        ``.trellis/tasks/06-17-gpt-audit-remediation/BATCH_C_LEDGER.md``.
         """
         count = 0
         for rec in self._sources.values():

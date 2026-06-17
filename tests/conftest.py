@@ -60,6 +60,11 @@ def bad_validation_domain_mismatch_yaml() -> Path:
 
 
 @pytest.fixture
+def bad_validation_string_null_yaml() -> Path:
+    return FIXTURES / "bad_validation_string_null.yaml"
+
+
+@pytest.fixture
 def bad_unknown_primary_yaml() -> Path:
     return FIXTURES / "bad_unknown_primary.yaml"
 
