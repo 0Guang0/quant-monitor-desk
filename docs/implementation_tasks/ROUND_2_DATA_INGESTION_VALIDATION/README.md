@@ -41,18 +41,18 @@
 
 ## Batch A Checkpoint（011+012 完成后）
 
-- [ ] `pytest -q` 全绿（Round 1 基线 93 + 增量）
-- [ ] migration 003 已应用
-- [ ] YAML 加载 + legacy 角色拒绝
-- [ ] fetch 失败仍写 fetch_log
+- [x] `pytest -q` 全绿（**173** passed @ `9adef12`）
+- [x] migration **004** 已应用（003 resource_guard 保留）
+- [x] YAML 加载 + legacy 角色拒绝（含顶层 banned key）
+- [x] fetch 失败仍写 fetch_log
 
-未全绿不得进入 Batch B。
+**Batch A 已完成** — 可进入 Batch B Plan。
 
 ## Plan / Execute 状态
 
-| 批次 | Plan | Execute |
-|------|------|---------|
-| A | ✅ 已冻结（待用户 `task.py start`） | 未开始 |
-| B–D | 未开始 | 未开始 |
+| 批次 | Plan | Execute | Audit |
+|------|------|---------|-------|
+| A | ✅ 已冻结 | ✅ 完成 (`ee48187`) | ✅ PASS + §4.3 Repair (`9adef12`) |
+| B–D | 未开始 | 未开始 | — |
 
-Trellis 任务目录：`.trellis/tasks/06-17-round2-batch-a-sources/`
+Trellis 任务目录：`.trellis/tasks/archive/2026-06/06-17-round2-batch-a-sources/`
