@@ -18,6 +18,7 @@ from pydantic import ValidationError
 CONTRACT_STATUSES = [
     "SUCCESS",
     "EMPTY_RESPONSE",
+    "NOT_PUBLISHED_YET",
     "AUTH_FAILED",
     "RATE_LIMITED",
     "NETWORK_ERROR",
@@ -27,6 +28,7 @@ CONTRACT_STATUSES = [
 ERROR_TYPE_BY_STATUS = {
     "SUCCESS": None,
     "EMPTY_RESPONSE": "empty",
+    "NOT_PUBLISHED_YET": "not_published",
     "AUTH_FAILED": "auth",
     "RATE_LIMITED": "rate_limit",
     "NETWORK_ERROR": "network",
@@ -46,6 +48,13 @@ def _valid_result_for_status(status: str) -> FetchResult:
         return FetchResult(**base, status=status, row_count=1, staging_table="stg_x")
     if status == "EMPTY_RESPONSE":
         return FetchResult(**base, status=status, row_count=0)
+    if status == "NOT_PUBLISHED_YET":
+        return FetchResult(
+            **base,
+            status=status,
+            row_count=0,
+            error_message="announcement not published yet",
+        )
     return FetchResult(**base, status=status, row_count=0, error_message="err")
 
 

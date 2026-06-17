@@ -13,6 +13,7 @@ PortErrorStatus = Literal[
     "NETWORK_ERROR",
     "SCHEMA_DRIFT",
     "EMPTY_RESPONSE",
+    "NOT_PUBLISHED_YET",
     "FAILED",
 ]
 
@@ -31,6 +32,10 @@ class PortError(Exception):
 class FetchPayload:
     content: bytes
     file_type: str = "json"
+    row_count: int | None = None
+    schema_hash: str | None = None
+    latency_ms: int | None = None
+    retry_count: int = 0
 
 
 class FetchPort(Protocol):
@@ -38,12 +43,32 @@ class FetchPort(Protocol):
 
 
 class StubFetchPort:
-    def __init__(self, payload: bytes, *, file_type: str = "json") -> None:
+    def __init__(
+        self,
+        payload: bytes,
+        *,
+        file_type: str = "json",
+        row_count: int | None = None,
+        schema_hash: str | None = None,
+        latency_ms: int | None = None,
+        retry_count: int = 0,
+    ) -> None:
         self._payload = payload
         self._file_type = file_type
+        self._row_count = row_count
+        self._schema_hash = schema_hash
+        self._latency_ms = latency_ms
+        self._retry_count = retry_count
 
     def fetch_payload(self, req: FetchRequest) -> FetchPayload:
-        return FetchPayload(content=self._payload, file_type=self._file_type)
+        return FetchPayload(
+            content=self._payload,
+            file_type=self._file_type,
+            row_count=self._row_count,
+            schema_hash=self._schema_hash,
+            latency_ms=self._latency_ms,
+            retry_count=self._retry_count,
+        )
 
 
 class FailingPort:
@@ -57,4 +82,4 @@ class FailingPort:
 
 class UnpublishedPort:
     def fetch_payload(self, req: FetchRequest) -> FetchPayload:
-        raise PortError("EMPTY_RESPONSE", "announcement not published yet")
+        raise PortError("NOT_PUBLISHED_YET", "announcement not published yet")

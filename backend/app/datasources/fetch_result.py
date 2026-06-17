@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 FetchStatus = Literal[
     "SUCCESS",
     "EMPTY_RESPONSE",
+    "NOT_PUBLISHED_YET",
     "AUTH_FAILED",
     "RATE_LIMITED",
     "NETWORK_ERROR",
@@ -23,6 +24,8 @@ _FAILURE_STATUSES = frozenset({
     "SCHEMA_DRIFT",
     "FAILED",
 })
+
+_NO_EVIDENCE_STATUSES = frozenset({"EMPTY_RESPONSE", "NOT_PUBLISHED_YET"})
 
 
 class FetchRequest(BaseModel):
@@ -65,11 +68,11 @@ class FetchResult(BaseModel):
                 raise ValueError("SUCCESS requires row_count > 0")
             if not self.raw_file_paths and not self.staging_table:
                 raise ValueError("SUCCESS requires raw_file_paths or staging_table")
-        elif self.status == "EMPTY_RESPONSE":
+        elif self.status in _NO_EVIDENCE_STATUSES:
             if self.row_count != 0:
-                raise ValueError("EMPTY_RESPONSE requires row_count == 0")
+                raise ValueError(f"{self.status} requires row_count == 0")
             if self.raw_file_paths or self.staging_table:
-                raise ValueError("EMPTY_RESPONSE must not carry raw/staging evidence")
+                raise ValueError(f"{self.status} must not carry raw/staging evidence")
         elif self.status in _FAILURE_STATUSES:
             if not self.error_message:
                 raise ValueError(f"{self.status} requires error_message")
