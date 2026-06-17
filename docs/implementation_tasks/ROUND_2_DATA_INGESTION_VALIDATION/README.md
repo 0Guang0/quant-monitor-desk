@@ -41,7 +41,7 @@
 
 ## Batch A Checkpoint（011+012 完成后）
 
-- [x] `pytest -q` 全绿（**173** passed @ `9adef12`）
+- [x] `pytest -q` 全绿（**182** passed @ `ab8d1eb` · cov 93%）
 - [x] migration **004** 已应用（003 resource_guard 保留）
 - [x] YAML 加载 + legacy 角色拒绝（含顶层 banned key）
 - [x] fetch 失败仍写 fetch_log
