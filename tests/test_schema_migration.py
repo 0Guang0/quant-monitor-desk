@@ -57,7 +57,30 @@ def test_appliedVersions_afterMigration_containsFoundation() -> None:
         "001_foundation",
         "002_registry_hardening",
         "003_resource_guard_metrics",
+        "004_ingestion_sources",
     }
+
+
+INGESTION_TABLES = frozenset({"source_registry", "fetch_log"})
+
+
+def test_applyMigrations_freshDb_includesIngestionTables() -> None:
+    con = duckdb.connect(":memory:")
+    applied = apply_migrations(con)
+    assert "004_ingestion_sources" in applied
+    tables = {row[0] for row in con.execute("SHOW TABLES").fetchall()}
+    assert INGESTION_TABLES.issubset(tables)
+
+
+def test_appliedVersions_afterMigration_containsIngestion() -> None:
+    con = duckdb.connect(":memory:")
+    apply_migrations(con)
+    assert applied_versions(con) == frozenset({
+        "001_foundation",
+        "002_registry_hardening",
+        "003_resource_guard_metrics",
+        "004_ingestion_sources",
+    })
 
 
 def test_applyMigrations_modifiedFile_raisesChecksumError(tmp_path: Path) -> None:

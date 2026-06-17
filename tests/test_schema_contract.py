@@ -59,3 +59,19 @@ def test_foundationMigrationColumns_existInSchemaContract() -> None:
         assert mig_cols.issubset(contract_cols), (
             f"{table}: migration columns missing from schema.sql: {mig_cols - contract_cols}"
         )
+
+
+INGESTION_CONTRACT_TABLES = ("source_registry", "fetch_log")
+
+
+def test_ingestionMigrationColumns_existInSchemaContract() -> None:
+    schema_text = SCHEMA_SQL.read_text(encoding="utf-8")
+    migration_text = (MIGRATIONS / "004_ingestion_sources.sql").read_text(encoding="utf-8")
+    for table in INGESTION_CONTRACT_TABLES:
+        mig_cols = _table_columns(migration_text, table)
+        assert mig_cols, f"{table} missing from 004 migration"
+        contract_cols = _table_columns(schema_text, table)
+        assert contract_cols, f"{table} missing from schema.sql"
+        assert mig_cols.issubset(contract_cols), (
+            f"{table}: migration columns missing from schema.sql: {mig_cols - contract_cols}"
+        )
