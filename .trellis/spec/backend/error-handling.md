@@ -26,10 +26,17 @@ Questions to answer:
 
 - Primary source must exist, be enabled, and not have `license_type: unknown`
 - Primary `allowed_domains` must include the bound `data_domain`
+- Validation source (if set): enabled, license known, domain allowed
 - Top-level YAML keys `shadow_source` / `emergency_source` → `LegacyRoleError`
 - Role fields `Shadow` / `Emergency` → `LegacyRoleError`
+- YAML booleans must be native YAML boolean (not `"false"` strings)
 
-**Tests:** `tests/test_source_registry.py` + `tests/fixtures/bad_*.yaml`
+### BaseDataAdapter fetch guards
+
+- `req.source_id != adapter.source_id` → `SourceMismatchError` (pre-impl, 0 fetch_log rows)
+- `FetchResult` Pydantic validators enforce status/evidence contract before persist
+
+**Tests:** `tests/test_source_registry.py` + `tests/test_data_adapter_contract.py`
 
 ---
 

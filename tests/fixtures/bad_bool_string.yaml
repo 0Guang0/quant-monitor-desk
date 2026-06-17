@@ -1,0 +1,29 @@
+version: "1"
+updated_at: "2026-06-17T00:00:00Z"
+
+sources:
+  baostock:
+    source_name: "baostock"
+    source_type: official_api
+    allowed_domains:
+      - market_bar_1d
+    trust_level: 2
+    license_type: official_free
+    official_api: true
+    is_enabled: "false"
+    default_priority: 20
+    rate_limit_policy: conservative
+    auth_required: false
+    requires_local_client: false
+    expected_frequency: daily
+    expected_lag: days
+    timezone: Asia/Shanghai
+    fallback_allowed: true
+    validation_only: false
+    notes: ""
+
+domain_roles:
+  market_bar_1d:
+    primary: baostock
+    validation: null
+    fallback_policy: retry_same_source

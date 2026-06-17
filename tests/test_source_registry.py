@@ -70,6 +70,28 @@ def test_load_primaryDomainNotInAllowedDomains_raises(
         reg.load()
 
 
+def test_load_boolStringRejected_raisesInvalidRegistryError(bad_bool_string_yaml):
+    reg = SourceRegistry(bad_bool_string_yaml)
+    with pytest.raises(InvalidRegistryError, match="YAML boolean"):
+        reg.load()
+
+
+def test_load_validationSourceDisabled_raisesInvalidRegistryError(
+    bad_validation_disabled_yaml,
+):
+    reg = SourceRegistry(bad_validation_disabled_yaml)
+    with pytest.raises(InvalidRegistryError, match="validation.*disabled"):
+        reg.load()
+
+
+def test_load_validationSourceDomainMismatch_raisesInvalidRegistryError(
+    bad_validation_domain_mismatch_yaml,
+):
+    reg = SourceRegistry(bad_validation_domain_mismatch_yaml)
+    with pytest.raises(InvalidRegistryError, match="validation.*does not allow domain"):
+        reg.load()
+
+
 def test_load_primaryUnknownLicense_raises(bad_unknown_license_primary_yaml):
     reg = SourceRegistry(bad_unknown_license_primary_yaml)
     with pytest.raises(InvalidRegistryError):
@@ -193,3 +215,18 @@ def test_syncToDb_secondCall_updatesUpdatedAt(tmp_path, migrated_con, registry_y
         "SELECT updated_at FROM source_registry WHERE source_id='baostock'"
     ).fetchone()[0]
     assert t2 >= t1
+
+
+def test_syncToDb_withinExplicitTransaction_rollsBackOnRollback(
+    tmp_path, migrated_con, registry_yaml_fixture,
+):
+    """Caller-owned transaction (P1-4): ROLLBACK undoes sync_to_db writes."""
+    reg = SourceRegistry(registry_yaml_fixture)
+    reg.load()
+    con = migrated_con(tmp_path)
+    con.execute("BEGIN")
+    n = reg.sync_to_db(con)
+    assert n >= 1
+    con.execute("ROLLBACK")
+    count = con.execute("SELECT COUNT(*) FROM source_registry").fetchone()[0]
+    assert count == 0

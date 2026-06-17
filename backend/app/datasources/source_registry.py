@@ -87,6 +87,66 @@ def _resolve_registry_path(path: Path) -> Path:
     return resolved
 
 
+def _parse_bool(entry: dict, key: str, *, default: bool, source_id: str) -> bool:
+    if key not in entry:
+        return default
+    val = entry[key]
+    if not isinstance(val, bool):
+        raise InvalidRegistryError(
+            f"source {source_id!r}: {key} must be YAML boolean, got {type(val).__name__}"
+        )
+    return val
+
+
+def _parse_int(entry: dict, key: str, *, default: int, source_id: str) -> int:
+    if key not in entry:
+        return default
+    val = entry[key]
+    if isinstance(val, bool) or not isinstance(val, int):
+        raise InvalidRegistryError(
+            f"source {source_id!r}: {key} must be integer, got {type(val).__name__}"
+        )
+    return val
+
+
+def _parse_required_str(entry: dict, key: str, source_id: str) -> str:
+    if key not in entry:
+        raise InvalidRegistryError(f"source {source_id!r}: missing required field {key!r}")
+    val = entry[key]
+    if not isinstance(val, str) or not val.strip():
+        raise InvalidRegistryError(f"source {source_id!r}: {key} must be non-empty string")
+    return val
+
+
+def _parse_optional_str(entry: dict, key: str, *, default: str, source_id: str) -> str:
+    if key not in entry:
+        return default
+    val = entry[key]
+    if not isinstance(val, str):
+        raise InvalidRegistryError(
+            f"source {source_id!r}: {key} must be string, got {type(val).__name__}"
+        )
+    return val
+
+
+def _parse_allowed_domains(entry: dict, source_id: str) -> frozenset[str]:
+    if "allowed_domains" not in entry:
+        raise InvalidRegistryError(f"source {source_id!r}: allowed_domains is required")
+    allowed = entry["allowed_domains"]
+    if not isinstance(allowed, list) or not allowed:
+        raise InvalidRegistryError(
+            f"source {source_id!r}: allowed_domains must be non-empty list"
+        )
+    domains: list[str] = []
+    for item in allowed:
+        if not isinstance(item, str) or not item.strip():
+            raise InvalidRegistryError(
+                f"source {source_id!r}: allowed_domains entries must be non-empty strings"
+            )
+        domains.append(item)
+    return frozenset(domains)
+
+
 def _record_to_db_row(rec: SourceRecord) -> dict[str, object]:
     return {
         "source_id": rec.source_id,
@@ -139,28 +199,37 @@ class SourceRegistry:
         for source_id, entry in sources_raw.items():
             if not isinstance(entry, dict):
                 raise InvalidRegistryError(f"source {source_id!r} must be a mapping")
-            allowed = entry.get("allowed_domains", [])
-            if not isinstance(allowed, list):
-                raise InvalidRegistryError(f"source {source_id!r} allowed_domains must be a list")
             self._sources[source_id] = SourceRecord(
                 source_id=source_id,
-                source_name=str(entry.get("source_name", source_id)),
-                source_type=str(entry.get("source_type", "")),
-                allowed_domains=frozenset(str(d) for d in allowed),
-                trust_level=int(entry.get("trust_level", 0)),
-                license_type=str(entry.get("license_type", "")),
-                official_api=bool(entry.get("official_api", False)),
-                is_enabled=bool(entry.get("is_enabled", True)),
-                default_priority=int(entry.get("default_priority", 0)),
-                rate_limit_policy=str(entry.get("rate_limit_policy", "")),
-                auth_required=bool(entry.get("auth_required", False)),
-                requires_local_client=bool(entry.get("requires_local_client", False)),
-                expected_frequency=str(entry.get("expected_frequency", "")),
-                expected_lag=str(entry.get("expected_lag", "")),
-                timezone=str(entry.get("timezone", "")),
-                fallback_allowed=bool(entry.get("fallback_allowed", False)),
-                validation_only=bool(entry.get("validation_only", False)),
-                notes=str(entry.get("notes", "")),
+                source_name=_parse_optional_str(
+                    entry, "source_name", default=source_id, source_id=source_id
+                ),
+                source_type=_parse_required_str(entry, "source_type", source_id),
+                allowed_domains=_parse_allowed_domains(entry, source_id),
+                trust_level=_parse_int(entry, "trust_level", default=0, source_id=source_id),
+                license_type=_parse_required_str(entry, "license_type", source_id),
+                official_api=_parse_bool(entry, "official_api", default=False, source_id=source_id),
+                is_enabled=_parse_bool(entry, "is_enabled", default=True, source_id=source_id),
+                default_priority=_parse_int(
+                    entry, "default_priority", default=0, source_id=source_id
+                ),
+                rate_limit_policy=_parse_required_str(entry, "rate_limit_policy", source_id),
+                auth_required=_parse_bool(
+                    entry, "auth_required", default=False, source_id=source_id
+                ),
+                requires_local_client=_parse_bool(
+                    entry, "requires_local_client", default=False, source_id=source_id
+                ),
+                expected_frequency=_parse_required_str(entry, "expected_frequency", source_id),
+                expected_lag=_parse_required_str(entry, "expected_lag", source_id),
+                timezone=_parse_required_str(entry, "timezone", source_id),
+                fallback_allowed=_parse_bool(
+                    entry, "fallback_allowed", default=False, source_id=source_id
+                ),
+                validation_only=_parse_bool(
+                    entry, "validation_only", default=False, source_id=source_id
+                ),
+                notes=_parse_optional_str(entry, "notes", default="", source_id=source_id),
             )
 
         domain_roles_raw = raw.get("domain_roles", {})
@@ -223,6 +292,20 @@ class SourceRegistry:
                     raise InvalidRegistryError(
                         f"domain_roles.{data_domain}.validation references unknown source {vid!r}"
                     )
+                validation = self._sources[vid]
+                if not validation.is_enabled:
+                    raise InvalidRegistryError(
+                        f"domain_roles.{data_domain}.validation {vid!r} is disabled"
+                    )
+                if validation.license_type == "unknown":
+                    raise InvalidRegistryError(
+                        f"domain_roles.{data_domain}.validation {vid!r} has license_type unknown"
+                    )
+                if data_domain not in validation.allowed_domains:
+                    raise InvalidRegistryError(
+                        f"domain_roles.{data_domain}.validation {vid!r} "
+                        f"does not allow domain {data_domain!r}"
+                    )
 
     def get(self, source_id: str) -> SourceRecord:
         if source_id not in self._sources:
@@ -247,6 +330,12 @@ class SourceRegistry:
             )
 
     def sync_to_db(self, con) -> int:
+        """Upsert all YAML sources into source_registry.
+
+        Caller must wrap in an explicit transaction when atomic full sync is required.
+        Sources removed from YAML remain in DB (not tombstoned); disabled/orphan handling
+        is deferred to Batch C+ orchestration.
+        """
         count = 0
         for rec in self._sources.values():
             row = _record_to_db_row(rec)

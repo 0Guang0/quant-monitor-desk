@@ -228,9 +228,11 @@ CREATE TABLE IF NOT EXISTS source_registry (
 
 新版统一使用三角色，不再使用旧的 旧三源命名。
 
-| 新角色 | 旧角色近似对应 | 含义 |
+> **Shadow / Emergency 是历史名词，仅用于理解旧文档。** 它们在 YAML、运行时配置、测试与实现代码中 **一律禁止**；`Validation` 对应旧 Shadow 的语义，`FallbackPolicy` 对应旧 Emergency 的语义，但不得使用旧名称。
+
+| 新角色 | 历史名词（禁止） | 含义 |
 |---|---|---|
-| `Primary` | Primary | 正常情况下进入 clean 表的主源 |
+| `Primary` | — | 正常情况下进入 clean 表的主源 |
 | `Validation` | Shadow | 用于校验主源，不默认接管 |
 | `FallbackPolicy` | Emergency | 不是第三外部源，而是失败时如何处理 |
 

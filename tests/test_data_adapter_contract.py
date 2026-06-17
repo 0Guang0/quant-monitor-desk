@@ -7,7 +7,8 @@ import json
 import duckdb
 import pytest
 from backend.app.datasources.base_adapter import BaseDataAdapter
-from backend.app.datasources.fetch_log import FetchLogWriter
+from backend.app.datasources.exceptions import SourceMismatchError
+from backend.app.datasources.fetch_log import FetchLogValidationError, FetchLogWriter
 from backend.app.datasources.fetch_result import FetchRequest, FetchResult
 from backend.app.datasources.source_registry import DomainNotAllowedError, SourceDisabledError
 from backend.app.db.connection import ConnectionManager
@@ -32,18 +33,25 @@ ERROR_TYPE_BY_STATUS = {
     "SCHEMA_DRIFT": "schema",
     "FAILED": "failed",
 }
-# NOT_PUBLISHED_YET: Batch B+ only (data_sources.md §5.7) — intentionally excluded
+
+
+def _valid_result_for_status(status: str) -> FetchResult:
+    base = {
+        "run_id": "r",
+        "source_id": "s",
+        "data_domain": "d",
+        "fetch_time": "2026-06-17T10:00:00Z",
+    }
+    if status == "SUCCESS":
+        return FetchResult(**base, status=status, row_count=1, staging_table="stg_x")
+    if status == "EMPTY_RESPONSE":
+        return FetchResult(**base, status=status, row_count=0)
+    return FetchResult(**base, status=status, row_count=0, error_message="err")
 
 
 @pytest.mark.parametrize("status", CONTRACT_STATUSES)
 def test_fetchResult_allContractStatuses_areAccepted(status):
-    r = FetchResult(
-        run_id="r",
-        source_id="s",
-        data_domain="d",
-        status=status,
-        fetch_time="2026-06-17T10:00:00Z",
-    )
+    r = _valid_result_for_status(status)
     assert r.status == status
 
 
@@ -58,6 +66,7 @@ def test_fetchResult_stagingTableField_roundTrips():
         source_id="s",
         data_domain="d",
         status="SUCCESS",
+        row_count=1,
         fetch_time="2026-06-17T10:00:00Z",
         staging_table="stg_x",
     )
@@ -93,21 +102,51 @@ def test_write_failedResult_stillPersists(tmp_path, migrated_con, network_error_
 @pytest.mark.parametrize("status", CONTRACT_STATUSES)
 def test_write_allContractStatuses_mapsErrorType(tmp_path, migrated_con, status):
     con = migrated_con(tmp_path)
-    result = FetchResult(
-        run_id="run-1",
-        source_id="baostock",
-        data_domain="market_bar_1d",
-        status=status,
-        row_count=0 if status != "SUCCESS" else 1,
-        fetch_time="2026-06-17T10:00:00Z",
-        error_message="err" if status != "SUCCESS" else None,
-    )
+    result = _valid_result_for_status(status)
     fetch_id = FetchLogWriter().write(con, result)
     row = con.execute(
         "SELECT status, error_type FROM fetch_log WHERE fetch_id=?", [fetch_id]
     ).fetchone()
     assert row[0] == status
     assert row[1] == ERROR_TYPE_BY_STATUS[status]
+
+
+def test_fetchResult_successWithoutEvidence_raisesValidationError():
+    with pytest.raises(ValidationError, match="raw_file_paths or staging_table"):
+        FetchResult(
+            run_id="r",
+            source_id="s",
+            data_domain="d",
+            status="SUCCESS",
+            row_count=1,
+            fetch_time="2026-06-17T10:00:00Z",
+        )
+
+
+def test_fetchResult_negativeRowCount_raisesValidationError():
+    with pytest.raises(ValidationError):
+        FetchResult(
+            run_id="r",
+            source_id="s",
+            data_domain="d",
+            status="EMPTY_RESPONSE",
+            row_count=-1,
+            fetch_time="2026-06-17T10:00:00Z",
+        )
+
+
+def test_fetchLogWriter_negativeRowCount_rejected(tmp_path, migrated_con):
+    con = migrated_con(tmp_path)
+    result = FetchResult.model_construct(
+        run_id="r",
+        source_id="s",
+        data_domain="d",
+        status="EMPTY_RESPONSE",
+        row_count=-1,
+        fetch_time="2026-06-17T10:00:00Z",
+    )
+    with pytest.raises(FetchLogValidationError, match="row_count"):
+        FetchLogWriter().write(con, result)
 
 
 def test_write_closedConnection_propagates(tmp_path, migrated_con, success_result):
@@ -125,11 +164,42 @@ def test_write_underWriterLock_insertsFetchLogRow(tmp_path, success_result, requ
     req = request_factory("baostock")
     with cm.writer() as con:
         fetch_id = FetchLogWriter().write(con, success_result(), req=req)
-    with cm.writer() as con:
+    with cm.reader() as con:
         row = con.execute(
             "SELECT COUNT(*) FROM fetch_log WHERE fetch_id=?", [fetch_id]
         ).fetchone()[0]
     assert row == 1
+
+
+def test_write_latencyAndRetryCount_persistFromResult(tmp_path, migrated_con):
+    con = migrated_con(tmp_path)
+    result = FetchResult(
+        run_id="run-1",
+        source_id="baostock",
+        data_domain="market_bar_1d",
+        status="SUCCESS",
+        row_count=1,
+        fetch_time="2026-06-17T10:00:00Z",
+        staging_table="stg_x",
+        latency_ms=42,
+        retry_count=2,
+    )
+    fetch_id = FetchLogWriter().write(con, result)
+    row = con.execute(
+        "SELECT latency_ms, retry_count FROM fetch_log WHERE fetch_id=?", [fetch_id]
+    ).fetchone()
+    assert row == (42, 2)
+
+
+def test_fetch_requestSourceDoesNotMatchAdapter_raisesAndWritesNoFetchLog(
+    tmp_path, migrated_con, loaded_registry, request_factory,
+):
+    con = migrated_con(tmp_path)
+    adapter = FakeAdapter(loaded_registry)
+    req = request_factory("akshare")
+    with pytest.raises(SourceMismatchError):
+        adapter.fetch(req, con=con)
+    assert con.execute("SELECT COUNT(*) FROM fetch_log").fetchone()[0] == 0
 
 
 class FakeAdapter(BaseDataAdapter):

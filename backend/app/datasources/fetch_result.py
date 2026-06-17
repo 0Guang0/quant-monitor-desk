@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 FetchStatus = Literal[
     "SUCCESS",
@@ -15,6 +15,14 @@ FetchStatus = Literal[
     "SCHEMA_DRIFT",
     "FAILED",
 ]
+
+_FAILURE_STATUSES = frozenset({
+    "AUTH_FAILED",
+    "RATE_LIMITED",
+    "NETWORK_ERROR",
+    "SCHEMA_DRIFT",
+    "FAILED",
+})
 
 
 class FetchRequest(BaseModel):
@@ -40,10 +48,31 @@ class FetchResult(BaseModel):
     status: FetchStatus
     raw_file_paths: list[str] = Field(default_factory=list)
     staging_table: str | None = None
-    row_count: int = 0
+    row_count: int = Field(default=0, ge=0)
     content_hash: str | None = None
     schema_hash: str | None = None
     as_of_timestamp: str | None = None
     publish_timestamp: str | None = None
     fetch_time: str
     error_message: str | None = None
+    latency_ms: int | None = Field(default=None, ge=0)
+    retry_count: int = Field(default=0, ge=0)
+
+    @model_validator(mode="after")
+    def validate_status_contract(self) -> FetchResult:
+        if self.status == "SUCCESS":
+            if self.row_count <= 0:
+                raise ValueError("SUCCESS requires row_count > 0")
+            if not self.raw_file_paths and not self.staging_table:
+                raise ValueError("SUCCESS requires raw_file_paths or staging_table")
+        elif self.status == "EMPTY_RESPONSE":
+            if self.row_count != 0:
+                raise ValueError("EMPTY_RESPONSE requires row_count == 0")
+            if self.raw_file_paths or self.staging_table:
+                raise ValueError("EMPTY_RESPONSE must not carry raw/staging evidence")
+        elif self.status in _FAILURE_STATUSES:
+            if not self.error_message:
+                raise ValueError(f"{self.status} requires error_message")
+        if not self.fetch_time or not self.fetch_time.strip():
+            raise ValueError("fetch_time must be non-empty")
+        return self

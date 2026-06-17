@@ -1,6 +1,7 @@
 """Data source adapters (Round 2)."""
 
 from backend.app.datasources.base_adapter import BaseDataAdapter
+from backend.app.datasources.exceptions import SourceMismatchError
 from backend.app.datasources.fetch_log import FetchLogWriter
 from backend.app.datasources.fetch_result import FetchRequest, FetchResult
 from backend.app.datasources.source_registry import (
@@ -24,6 +25,7 @@ __all__ = [
     "InvalidRegistryError",
     "LegacyRoleError",
     "SourceDisabledError",
+    "SourceMismatchError",
     "SourceNotFoundError",
     "SourceRecord",
     "SourceRegistry",

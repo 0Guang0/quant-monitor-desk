@@ -45,6 +45,21 @@ def bad_primary_domain_mismatch_yaml() -> Path:
 
 
 @pytest.fixture
+def bad_bool_string_yaml() -> Path:
+    return FIXTURES / "bad_bool_string.yaml"
+
+
+@pytest.fixture
+def bad_validation_disabled_yaml() -> Path:
+    return FIXTURES / "bad_validation_disabled.yaml"
+
+
+@pytest.fixture
+def bad_validation_domain_mismatch_yaml() -> Path:
+    return FIXTURES / "bad_validation_domain_mismatch.yaml"
+
+
+@pytest.fixture
 def bad_unknown_primary_yaml() -> Path:
     return FIXTURES / "bad_unknown_primary.yaml"
 

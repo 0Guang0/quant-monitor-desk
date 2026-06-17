@@ -5,6 +5,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from datetime import UTC, datetime
 
+from backend.app.datasources.exceptions import SourceMismatchError
 from backend.app.datasources.fetch_log import FetchLogWriter
 from backend.app.datasources.fetch_result import FetchRequest, FetchResult
 from backend.app.datasources.source_registry import DomainNotAllowedError, SourceRegistry
@@ -29,6 +30,11 @@ class BaseDataAdapter(ABC):
         con,
         job_id: str | None = None,
     ) -> FetchResult:
+        if req.source_id != self.source_id:
+            raise SourceMismatchError(
+                f"request source_id {req.source_id!r} does not match "
+                f"adapter source_id {self.source_id!r}"
+            )
         self.registry.assert_enabled(req.source_id)
         self.registry.assert_domain_allowed(req.source_id, req.data_domain)
         if req.data_domain not in self.supported_domains:
