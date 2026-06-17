@@ -95,6 +95,14 @@ def loaded_registry(registry_yaml_fixture):
 
 
 @pytest.fixture
+def batch_b_registry():
+    p = FIXTURES / "source_registry_batch_b.yaml"
+    reg = SourceRegistry(p)
+    reg.load()
+    return reg
+
+
+@pytest.fixture
 def migrated_con():
     def _open(tmp_path):
         db = tmp_path / "t.duckdb"
@@ -163,3 +171,37 @@ def empty_response_result():
         )
 
     return _make
+
+
+@pytest.fixture
+def raw_data_root(tmp_path):
+    root = tmp_path / "data"
+    root.mkdir()
+    return root
+
+
+@pytest.fixture
+def file_registry_stack(tmp_path):
+    """ConnectionManager + WriteManager + FileRegistry + RawStore on tmp_path DB."""
+    from backend.app.db.connection import ConnectionManager
+    from backend.app.db.write_manager import WriteManager
+    from backend.app.storage.file_registry import FileRegistry
+    from backend.app.storage.raw_store import RawStore
+
+    db = tmp_path / "t.duckdb"
+    con = duckdb.connect(str(db))
+    apply_migrations(con)
+    con.close()
+    cm = ConnectionManager(db)
+    raw_root = tmp_path / "data"
+    raw_root.mkdir()
+    return {
+        "cm": cm,
+        "raw_store": RawStore(raw_root),
+        "file_registry": FileRegistry(cm, WriteManager(cm)),
+    }
+
+
+@pytest.fixture
+def stub_fetch_bytes():
+    return b'{"symbol":"000001","close":10.0}'

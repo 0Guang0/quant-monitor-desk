@@ -16,7 +16,7 @@
 | 批次 | 任务 | Trellis slug（Plan） | 深度计划 |
 |------|------|----------------------|----------|
 | **A** | 011+012 | `06-17-round2-batch-a-sources` | MASTER §8（`plans/` 仅索引） |
-| B | 013 | （Plan 待建） | `plans/013_*.plan.md` |
+| B | 013 | `06-17-round2-batch-b-adapters` | MASTER §8（`plans/013_batch_b.plan.md` 索引） |
 | C | 015+016 | （Plan 待建） | `plans/015_016_*.plan.md` |
 | D | 014 | （Plan 待建） | `plans/014_*.plan.md` |
 
@@ -54,6 +54,9 @@
 | 批次 | Plan | Execute | Audit | GPT 硬ening |
 |------|------|---------|-------|-------------|
 | A | ✅ 已冻结 | ✅ `ee48187` | ✅ PASS | ✅ `ab8d1eb` |
-| B–D | 未开始 | 未开始 | — | — |
+| B | **Plan v1.1 已冻结**（对抗审计 26 项已修） | 待 start | — | — |
+| C–D | 未开始 | 未开始 | — | — |
 
-Trellis 任务目录：`.trellis/tasks/archive/2026-06/06-17-round2-batch-a-sources/`
+Trellis 任务目录：
+- Batch A（已归档）：`.trellis/tasks/archive/2026-06/06-17-round2-batch-a-sources/`
+- Batch B（Plan）：`.trellis/tasks/06-17-round2-batch-b-adapters/`

@@ -1,0 +1,12 @@
+{"file": ".trellis/tasks/06-17-round2-batch-b-adapters/MASTER.plan.md", "reason": "【必读·第1条】Execute 全文 §0.1–§12"}
+{"file": ".cursor/skills/trellis-execute/SKILL.md", "reason": "【必读·第2条】Execute Phase 0 协议 — task.py start 后首 Read"}
+{"file": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/DECISIONS.md", "reason": "Batch B 边界与路径归一"}
+{"file": "specs/contracts/data_adapter_contract.md", "reason": "FetchRequest/Result 与 rule 2"}
+{"file": "specs/datasource_registry/source_registry.yaml", "reason": "五 source_id 与 domains"}
+{"file": "docs/modules/data_sources.md", "reason": "数据源模块职责 §5"}
+{"file": ".trellis/tasks/06-17-round2-batch-b-adapters/research/batch-b-section8-tests.md", "reason": "§8 完整 pytest 正文"}
+{"file": "backend/app/datasources/", "type": "directory", "reason": "Batch A 包 + 本批 adapters 子包"}
+{"file": "backend/app/storage/raw_store.py", "reason": "SUCCESS raw 写盘 API（source-driven §8.1）"}
+{"file": "backend/app/storage/file_registry.py", "reason": "AC-9 FileRegistry.register 偿还 Batch A Beta §6"}
+{"file": ".trellis/tasks/06-17-round2-batch-b-adapters/research/adversarial-audit-remediation.md", "reason": "Plan 对抗审计 remediation 全表"}
+{"file": ".trellis/spec/guides/execute-skill-registry.md", "reason": "§12 Skill 对照（Plan 已冻结）"}

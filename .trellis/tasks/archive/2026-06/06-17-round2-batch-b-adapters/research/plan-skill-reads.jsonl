@@ -1,0 +1,11 @@
+{"phase":"boot","skill":"trellis-plan","path":".cursor/skills/trellis-plan/SKILL.md"}
+{"phase":"P1","skill":"gitnexus-plan","action":"query+context","artifact":"research/gitnexus-summary.md"}
+{"phase":"2a","skill":"trellis-brainstorm","path":".cursor/skills/trellis-brainstorm/SKILL.md"}
+{"phase":"2b","skill":"spec-driven-development","path":"addy/spec-driven-development/SKILL.md"}
+{"phase":"3","skill":"grill-me","path":".claude/skills/grill-me/SKILL.md"}
+{"phase":"4","skill":"brainstorming","path":"superpowers/brainstorming/SKILL.md"}
+{"phase":"4","skill":"api-and-interface-design","path":"addy/api-and-interface-design/SKILL.md"}
+{"phase":"5a","skill":"planning-and-task-breakdown","path":"addy/planning-and-task-breakdown/SKILL.md"}
+{"phase":"5b","skill":"writing-plans","path":"superpowers/writing-plans/SKILL.md"}
+{"phase":"5c","skill":"trellis-before-dev","path":".cursor/skills/trellis-before-dev/SKILL.md"}
+{"phase":"5d","skill":"doubt-driven-development","path":"addy/doubt-driven-development/SKILL.md"}
