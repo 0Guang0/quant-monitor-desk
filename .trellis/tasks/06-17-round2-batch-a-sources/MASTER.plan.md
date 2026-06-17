@@ -38,7 +38,7 @@ Round 2 Batch A Execute：6.pre → 只读 MASTER + implement.jsonl + DECISIONS 
 
 ## 1. 目标
 
-1. migration **003**：`source_registry` + `fetch_log`
+1. migration **`004_ingestion_sources.sql`**：`source_registry` + `fetch_log`（Round 1 已占用 `003_resource_guard_metrics.sql`）
 2. YAML → `SourceRegistry`；Primary/Validation/FallbackPolicy；拒绝 Shadow/Emergency
 3. `FetchRequest`/`FetchResult`（Pydantic v2，见 §6.3 权威说明）
 4. `FetchLogWriter`：成功/失败/异常均落库
@@ -52,7 +52,7 @@ Round 2 Batch A Execute：6.pre → 只读 MASTER + implement.jsonl + DECISIONS 
 
 | # | 预期结果 | 验证链 |
 |---|----------|--------|
-| AC-1 | 003 创建两表 + migration + **schema contract** 回归 | §8.1 Step 4–6 + `test_schema_contract` 003 扩展 |
+| AC-1 | **004** 创建两表 + migration + **schema contract** 回归 | §8.1 Step 4–6 + `test_schema_contract` 004 扩展 |
 | AC-2 | domain_roles Primary=baostock @ market_bar_1d | §8.2 + 默认 seed 测试 |
 | AC-3 | Shadow **与** Emergency → `LegacyRoleError` | §8.2 bad_shadow / bad_emergency |
 | AC-4 | disabled 源 + 非法 domain 阻断 | §8.2 assert_enabled + assert_domain_allowed |
@@ -71,8 +71,8 @@ Round 2 Batch A Execute：6.pre → 只读 MASTER + implement.jsonl + DECISIONS 
 - `tests/conftest.py`（**扩展** Batch A helpers，不删 Round 0/1 fixture）
 - `tests/fixtures/source_registry_*.yaml`
 - `tests/test_source_registry.py`、`tests/test_data_adapter_contract.py`
-- **修改** `tests/test_schema_migration.py`（003 回归 · §8.1 Step 4 **强制**）
-- **修改** `tests/test_schema_contract.py`（003 两表列契约 · §8.1 Step 5 **强制**）
+- **修改** `tests/test_schema_migration.py`（**004** 回归 · §8.1 Step 4 **强制**）
+- **修改** `tests/test_schema_contract.py`（**004** 两表列契约 · §8.1 Step 5 **强制**）
 
 ### 3.2 Out of scope · 明确豁免
 
@@ -106,7 +106,7 @@ BaseDataAdapter.fetch(con, req, job_id=None)
 
 ```text
 §8.0 stub → fixtures → conftest → collect-only
-§8.1 migration 003 + test_schema_migration + test_schema_contract
+§8.1 migration 004 + test_schema_migration + test_schema_contract
 §8.2 SourceRegistry
 §8.3 FetchRequest/Result
 §8.4 FetchLogWriter + BaseDataAdapter (+ writer-lock 集成测)
@@ -146,6 +146,15 @@ class SourceRecord:
     notes: str
     # updated_at: set by sync_to_db to CURRENT_TIMESTAMP on write
 ```
+
+**`allowed_domain` 命名约定（P1-B3 · 实现时勿改 schema 列名）：**
+
+| 层 | 名称 | 说明 |
+|----|------|------|
+| YAML | `allowed_domains` | 复数 list，如 `source_registry.yaml` |
+| Python | `SourceRecord.allowed_domains` | 复数 `frozenset[str]` |
+| DB | `source_registry.allowed_domain` | **singular** VARCHAR，存 `json.dumps(sorted(...))` |
+| 序列化 | `_allowed_domains_to_db()` / `_record_to_db_row()` | YAML/Python → DB 列 `allowed_domain` |
 
 异常：`LegacyRoleError` · `DomainNotAllowedError` · `SourceDisabledError` · `SourceNotFoundError` · `InvalidRegistryError`（malformed YAML / unknown domain_roles 引用 / 非法 fallback_policy / Primary 绑定 disabled 或 license_type=unknown）
 
@@ -332,7 +341,7 @@ def write(
 | pre-impl 校验仍写 log | disabled/domain 失败 **0 条** fetch_log（§8.4） |
 | silent fallback 换源 | §8.4 `test_fetch_implDoesNotSwitchSourceId` |
 | Adapter 写 clean | 禁止 WriteManager；§8.5 `grep -riE` |
-| 整库 schema.sql | 仅 003 两表 |
+| 整库 schema.sql | 仅 **004** 两表（003 为 Round 1 metrics，勿混） |
 | 真实联网 | FakeAdapter |
 | SUCCESS 无 evidence 字段 | FakeAdapter SUCCESS 必带 staging_table + raw_file_paths（§3.2 豁免真实文件） |
 
@@ -342,7 +351,7 @@ def write(
 
 ### 8.0 共享测试基础设施（**先于 8.1** · bootstrap 顺序 **强制**）
 
-> **P0-4：** 禁止在 §8.0 创建 `004_ingestion_sources.sql` 或测试正文（TDD 违反）。003 仅在 §8.1 RED 之后。
+> **P0-4：** 禁止在 §8.0 创建 `004_ingestion_sources.sql` 或测试正文（TDD 违反）。**004** 仅在 §8.1 RED 之后。
 
 | Step | 动作 | 验证 |
 |------|------|------|
@@ -433,8 +442,11 @@ def migrated_con():
         return con
     return _open
 
-def request_for(source_id: str, domain: str = "market_bar_1d") -> FetchRequest:
-    return FetchRequest(run_id="run-1", source_id=source_id, data_domain=domain)
+@pytest.fixture
+def request_factory():
+    def _make(source_id: str, domain: str = "market_bar_1d") -> FetchRequest:
+        return FetchRequest(run_id="run-1", source_id=source_id, data_domain=domain)
+    return _make
 
 @pytest.fixture
 def success_result():
@@ -480,7 +492,7 @@ def empty_response_result():
 
 ---
 
-### 8.1 migration 003
+### 8.1 migration 004（`004_ingestion_sources.sql`）
 
 | 字段 | 内容 |
 |------|------|
@@ -509,6 +521,7 @@ def test_appliedVersions_afterMigration_containsIngestion() -> None:
     assert applied_versions(con) == frozenset({
         "001_foundation",
         "002_registry_hardening",
+        "003_resource_guard_metrics",
         "004_ingestion_sources",
     })
 ```
@@ -529,7 +542,7 @@ def test_ingestionMigrationColumns_existInSchemaContract() -> None:
     migration_text = (MIGRATIONS / "004_ingestion_sources.sql").read_text(encoding="utf-8")
     for table in INGESTION_CONTRACT_TABLES:
         mig_cols = _table_columns(migration_text, table)
-        assert mig_cols, f"{table} missing from 003 migration"
+        assert mig_cols, f"{table} missing from 004 migration"
         contract_cols = _table_columns(schema_text, table)
         assert contract_cols, f"{table} missing from schema.sql"
         assert mig_cols.issubset(contract_cols), (
@@ -541,7 +554,7 @@ def test_ingestionMigrationColumns_existInSchemaContract() -> None:
 
 - [ ] **Step 7：** `pytest tests/test_schema_migration.py tests/test_schema_contract.py -q` 全绿
 
-**已知限制（文档化 · 非 Batch A 阻塞）：** `verify_applied_checksums` 仍无 dedicated 测试（CodeGraph 标注）；003 内容校验由 Step 5 contract 测试覆盖。
+**已知限制（文档化 · 非 Batch A 阻塞）：** `verify_applied_checksums` 仍无 dedicated 测试（CodeGraph 标注）；004 内容校验由 Step 5 contract 测试覆盖。
 
 ---
 
@@ -553,12 +566,30 @@ def test_ingestionMigrationColumns_existInSchemaContract() -> None:
 | 验证 | `pytest tests/test_source_registry.py -v` |
 | 已执行 | [ ] |
 
-**测试清单（先 RED 后实现 §6.1–6.2）：**
+**测试清单（先 RED 后实现 §6.1–6.2 · 全文可复制，无 `...`）：**
 
 ```python
+import json
+import pytest
+from backend.app.datasources.source_registry import (
+    DomainRoleBinding,
+    InvalidRegistryError,
+    LegacyRoleError,
+    SourceDisabledError,
+    SourceNotFoundError,
+    DomainNotAllowedError,
+    SourceRegistry,
+)
+
 # AC-2
-def test_load_validYaml_parsesPrimaryDomainRoles(registry_yaml_fixture): ...
-def test_defaultYaml_loadsFromRepoSeed():  # P3-4 · SourceRegistry.DEFAULT_YAML = specs/datasource_registry/source_registry.yaml
+def test_load_validYaml_parsesPrimaryDomainRoles(registry_yaml_fixture):
+    reg = SourceRegistry(registry_yaml_fixture)
+    reg.load()
+    roles = reg.get_domain_roles("market_bar_1d")
+    assert roles.primary_source_id == "baostock"
+    assert isinstance(roles, DomainRoleBinding)
+
+def test_defaultYaml_loadsFromRepoSeed():
     reg = SourceRegistry()
     reg.load()
     roles = reg.get_domain_roles("market_bar_1d")
@@ -566,30 +597,73 @@ def test_defaultYaml_loadsFromRepoSeed():  # P3-4 · SourceRegistry.DEFAULT_YAML
     assert isinstance(roles, DomainRoleBinding)
 
 # AC-3
-def test_load_yamlWithShadowRole_raisesLegacyRoleError(bad_shadow_yaml): ...
-def test_load_yamlWithEmergencyRole_raisesLegacyRoleError(bad_emergency_yaml): ...
+def test_load_yamlWithShadowRole_raisesLegacyRoleError(bad_shadow_yaml):
+    reg = SourceRegistry(bad_shadow_yaml)
+    with pytest.raises(LegacyRoleError):
+        reg.load()
+
+def test_load_yamlWithEmergencyRole_raisesLegacyRoleError(bad_emergency_yaml):
+    reg = SourceRegistry(bad_emergency_yaml)
+    with pytest.raises(LegacyRoleError):
+        reg.load()
 
 # AC-4 + P1-11
-def test_load_primaryUnknownLicense_raises(bad_unknown_license_primary_yaml): ...
-def test_load_yaml_unknownPrimaryReference_raises(bad_unknown_primary_yaml): ...
-def test_load_invalidFallbackPolicy_raises(bad_invalid_fallback_yaml): ...
-def test_load_malformedYaml_raises(malformed_yaml): ...
-def test_getSource_unknownId_raisesSourceNotFoundError(loaded_registry): ...
+def test_load_primaryUnknownLicense_raises(bad_unknown_license_primary_yaml):
+    reg = SourceRegistry(bad_unknown_license_primary_yaml)
+    with pytest.raises(InvalidRegistryError):
+        reg.load()
 
-# F-13 · 合法 FallbackPolicy（data_sources.md §5.3）
+def test_load_yaml_unknownPrimaryReference_raises(bad_unknown_primary_yaml):
+    reg = SourceRegistry(bad_unknown_primary_yaml)
+    with pytest.raises(InvalidRegistryError):
+        reg.load()
+
+def test_load_invalidFallbackPolicy_raises(bad_invalid_fallback_yaml):
+    reg = SourceRegistry(bad_invalid_fallback_yaml)
+    with pytest.raises(InvalidRegistryError):
+        reg.load()
+
+def test_load_malformedYaml_raises(malformed_yaml):
+    reg = SourceRegistry(malformed_yaml)
+    with pytest.raises(InvalidRegistryError):
+        reg.load()
+
+def test_getSource_unknownId_raisesSourceNotFoundError(loaded_registry):
+    with pytest.raises(SourceNotFoundError):
+        loaded_registry.get("no_such_source")
+
 @pytest.mark.parametrize("policy", [
     "retry_same_source", "use_validation_source_with_flag", "use_last_good_cache",
     "mark_missing", "manual_review_required", "skip_until_next_publish",
 ])
-def test_load_validFallbackPolicy_succeeds(policy, tmp_path, registry_yaml_fixture): ...
+def test_load_validFallbackPolicy_succeeds(policy, tmp_path, registry_yaml_fixture):
+    text = registry_yaml_fixture.read_text(encoding="utf-8")
+    text = text.replace("retry_same_source", policy)
+    p = tmp_path / "policy.yaml"
+    p.write_text(text, encoding="utf-8")
+    reg = SourceRegistry(p)
+    reg.load()
+    roles = reg.get_domain_roles("market_bar_1d")
+    assert roles.fallback_policy == policy
 
-# AC-4
-def test_assertDomainAllowed_unknownDomain_raises(loaded_registry): ...
-def test_assertEnabled_disabledSource_raisesSourceDisabledError(disabled_registry): ...
+def test_assertDomainAllowed_unknownDomain_raises(loaded_registry):
+    with pytest.raises(DomainNotAllowedError):
+        loaded_registry.assert_domain_allowed("baostock", "unknown_domain")
 
-# sync · P0-4 / P1-7 / P2-1
-def test_syncToDb_insertsSourceRows(tmp_path, registry_yaml_fixture): ...
-def test_syncToDb_roundTrip_preservesAllColumns(tmp_path, registry_yaml_fixture):
+def test_assertEnabled_disabledSource_raisesSourceDisabledError(disabled_registry):
+    with pytest.raises(SourceDisabledError):
+        disabled_registry.assert_enabled("baostock")
+
+def test_syncToDb_insertsSourceRows(tmp_path, migrated_con, registry_yaml_fixture):
+    reg = SourceRegistry(registry_yaml_fixture)
+    reg.load()
+    con = migrated_con(tmp_path)
+    n = reg.sync_to_db(con)
+    assert n >= 1
+    count = con.execute("SELECT COUNT(*) FROM source_registry").fetchone()[0]
+    assert count == n
+
+def test_syncToDb_roundTrip_preservesAllColumns(tmp_path, migrated_con, registry_yaml_fixture):
     reg = SourceRegistry(registry_yaml_fixture)
     reg.load()
     con = migrated_con(tmp_path)
@@ -598,10 +672,10 @@ def test_syncToDb_roundTrip_preservesAllColumns(tmp_path, registry_yaml_fixture)
         SELECT rate_limit_policy, auth_required, allowed_domain
         FROM source_registry WHERE source_id='baostock'
     """).fetchone()
-    assert row[0]  # rate_limit_policy non-empty
-    assert json.loads(row[2])  # allowed_domain JSON array
+    assert row[0]
+    assert json.loads(row[2])  # DB column allowed_domain (singular) stores JSON array
 
-def test_syncToDb_calledTwice_isIdempotent(tmp_path, registry_yaml_fixture):
+def test_syncToDb_calledTwice_isIdempotent(tmp_path, migrated_con, registry_yaml_fixture):
     reg = SourceRegistry(registry_yaml_fixture)
     reg.load()
     con = migrated_con(tmp_path)
@@ -611,7 +685,7 @@ def test_syncToDb_calledTwice_isIdempotent(tmp_path, registry_yaml_fixture):
     count = con.execute("SELECT COUNT(*) FROM source_registry").fetchone()[0]
     assert count == n1
 
-def test_syncToDb_secondCall_updatesUpdatedAt(tmp_path, registry_yaml_fixture):  # P1-4
+def test_syncToDb_secondCall_updatesUpdatedAt(tmp_path, migrated_con, registry_yaml_fixture):
     reg = SourceRegistry(registry_yaml_fixture)
     reg.load()
     con = migrated_con(tmp_path)
@@ -677,20 +751,23 @@ def test_fetchResult_stagingTableField_roundTrips():  # P3-3
 
 ```python
 import json
+import duckdb
 import pytest
+from backend.app.db.migrate import apply_migrations
+from backend.app.db.connection import ConnectionManager
 from backend.app.datasources.base_adapter import BaseDataAdapter
 from backend.app.datasources.fetch_log import FetchLogWriter
 from backend.app.datasources.fetch_result import FetchRequest, FetchResult
 from backend.app.datasources.source_registry import SourceDisabledError, DomainNotAllowedError
-# + conftest helpers: migrated_con, loaded_registry, disabled_registry, request_for, ...
+# conftest: migrated_con, loaded_registry, disabled_registry, request_factory, success_result, ...
 ```
 
-**FetchLogWriter 测试：**
+**FetchLogWriter 测试（全文可复制）：**
 
 ```python
-def test_write_successResult_insertsFetchLogRow(tmp_path, success_result, request_for):
+def test_write_successResult_insertsFetchLogRow(tmp_path, migrated_con, success_result, request_factory):
     con = migrated_con(tmp_path)
-    req = request_for("baostock")
+    req = request_factory("baostock")
     fetch_id = FetchLogWriter().write(con, success_result(), req=req, job_id="job-1")
     row = con.execute(
         "SELECT status, row_count, job_id, raw_file_paths, error_type, request_params_hash FROM fetch_log WHERE fetch_id=?",
@@ -699,9 +776,9 @@ def test_write_successResult_insertsFetchLogRow(tmp_path, success_result, reques
     assert row[0] == "SUCCESS" and row[1] == 42 and row[2] == "job-1"
     assert json.loads(row[3]) == ["/data/raw/baostock/run-1.parquet"]
     assert row[4] is None
-    assert row[5]  # request_params_hash non-empty when req passed (F-07)
+    assert row[5]
 
-def test_write_failedResult_stillPersists(tmp_path, network_error_result):
+def test_write_failedResult_stillPersists(tmp_path, migrated_con, network_error_result):
     con = migrated_con(tmp_path)
     fetch_id = FetchLogWriter().write(con, network_error_result())
     row = con.execute(
@@ -709,27 +786,29 @@ def test_write_failedResult_stillPersists(tmp_path, network_error_result):
     ).fetchone()
     assert row[0] == "NETWORK_ERROR" and row[1] == "network"
 
-def test_write_closedConnection_propagates(tmp_path, success_result):  # 非 optional
+def test_write_closedConnection_propagates(tmp_path, migrated_con, success_result):
     con = migrated_con(tmp_path)
     con.close()
     with pytest.raises(duckdb.Error):
         FetchLogWriter().write(con, success_result())
 
-def test_write_underWriterLock_insertsFetchLogRow(tmp_path, success_result, request_for):  # P0-3 集成
-    from backend.app.db.connection import ConnectionManager
+def test_write_underWriterLock_insertsFetchLogRow(tmp_path, success_result, request_factory):
     db = tmp_path / "writer.duckdb"
     cm = ConnectionManager(db_path=db)
-    apply_migrations(cm.writer())
-    req = request_for("baostock")
-    fetch_id = FetchLogWriter().write(cm.writer(), success_result(), req=req)
-    row = cm.writer().execute(
-        "SELECT COUNT(*) FROM fetch_log WHERE fetch_id=?", [fetch_id]
-    ).fetchone()[0]
+    with cm.writer() as con:
+        apply_migrations(con)
+    req = request_factory("baostock")
+    with cm.writer() as con:
+        fetch_id = FetchLogWriter().write(con, success_result(), req=req)
+    with cm.writer() as con:
+        row = con.execute(
+            "SELECT COUNT(*) FROM fetch_log WHERE fetch_id=?", [fetch_id]
+        ).fetchone()[0]
     assert row == 1
     cm.close()
 ```
 
-**BaseDataAdapter · FakeAdapter：**
+**BaseDataAdapter · FakeAdapter（全文可复制）：**
 
 ```python
 class FakeAdapter(BaseDataAdapter):
@@ -742,15 +821,142 @@ class FakeAdapter(BaseDataAdapter):
             staging_table="stg_test", raw_file_paths=["/tmp/x"],
         )
 
-def test_fetch_disabledSource_raisesBeforeImpl_andWritesNoFetchLog(...):  # pre-impl · 0 rows
-def test_fetch_unsupportedDomainOnAdapter_raises_andWritesNoFetchLog(...): ...
-def test_fetch_successResult_writesExactlyOneFetchLogRow(...):  # AC-7
-def test_fetch_calledTwice_writesTwoRows(...):  # AC-7
-def test_fetch_alwaysWritesFetchLog_evenOnEmptyResponse(empty_response_result, ...): ...
-def test_fetch_emptyResponse_hasNoStagingEvidence(empty_response_result, ...):  # P1-3
-def test_fetch_implRaises_stillWritesFetchLogAndReturnsFailed(...):  # P0-3
-def test_fetch_implDoesNotSwitchSourceId(...):  # P1-10
-def test_fetch_success_carriesEvidenceFields(...):  # P1-5
+class ExplodingAdapter(BaseDataAdapter):
+    source_id = "baostock"
+    supported_domains = frozenset({"market_bar_1d"})
+    def _fetch_impl(self, req):
+        raise RuntimeError("boom")
+
+class WrongSourceAdapter(BaseDataAdapter):
+    source_id = "baostock"
+    supported_domains = frozenset({"market_bar_1d"})
+    def _fetch_impl(self, req):
+        return FetchResult(
+            run_id=req.run_id, source_id="other_source", data_domain=req.data_domain,
+            status="SUCCESS", row_count=1, fetch_time="2026-06-17T10:00:00Z",
+            staging_table="stg_test", raw_file_paths=["/tmp/x"],
+        )
+
+class NarrowDomainAdapter(BaseDataAdapter):
+    source_id = "baostock"
+    supported_domains = frozenset({"fundamental"})
+    def _fetch_impl(self, req):
+        return FetchResult(
+            run_id=req.run_id, source_id=self.source_id, data_domain=req.data_domain,
+            status="SUCCESS", row_count=1, fetch_time="2026-06-17T10:00:00Z",
+            staging_table="stg_test", raw_file_paths=["/tmp/x"],
+        )
+
+def test_fetch_disabledSource_raisesBeforeImpl_andWritesNoFetchLog(
+    tmp_path, migrated_con, disabled_registry, request_factory,
+):
+    con = migrated_con(tmp_path)
+    adapter = FakeAdapter(disabled_registry)
+    req = request_factory("baostock")
+    with pytest.raises(SourceDisabledError):
+        adapter.fetch(req, con=con)
+    assert con.execute("SELECT COUNT(*) FROM fetch_log").fetchone()[0] == 0
+
+def test_fetch_unsupportedDomainOnAdapter_raises_andWritesNoFetchLog(
+    tmp_path, migrated_con, loaded_registry, request_factory,
+):
+    con = migrated_con(tmp_path)
+    adapter = NarrowDomainAdapter(loaded_registry)
+    req = request_factory("baostock", domain="market_bar_1d")
+    with pytest.raises(DomainNotAllowedError):
+        adapter.fetch(req, con=con)
+    assert con.execute("SELECT COUNT(*) FROM fetch_log").fetchone()[0] == 0
+
+def test_fetch_successResult_writesExactlyOneFetchLogRow(
+    tmp_path, migrated_con, loaded_registry, request_factory,
+):
+    con = migrated_con(tmp_path)
+    adapter = FakeAdapter(loaded_registry)
+    req = request_factory("baostock")
+    adapter.fetch(req, con=con)
+    assert con.execute("SELECT COUNT(*) FROM fetch_log").fetchone()[0] == 1
+
+def test_fetch_calledTwice_writesTwoRows(
+    tmp_path, migrated_con, loaded_registry, request_factory,
+):
+    con = migrated_con(tmp_path)
+    adapter = FakeAdapter(loaded_registry)
+    req = request_factory("baostock")
+    adapter.fetch(req, con=con)
+    adapter.fetch(req, con=con)
+    assert con.execute("SELECT COUNT(*) FROM fetch_log").fetchone()[0] == 2
+
+def test_fetch_alwaysWritesFetchLog_evenOnEmptyResponse(
+    tmp_path, migrated_con, loaded_registry, request_factory,
+):
+    class EmptyAdapter(BaseDataAdapter):
+        source_id = "baostock"
+        supported_domains = frozenset({"market_bar_1d"})
+        def _fetch_impl(self, req):
+            return FetchResult(
+                run_id=req.run_id, source_id=self.source_id, data_domain=req.data_domain,
+                status="EMPTY_RESPONSE", row_count=0, fetch_time="2026-06-17T10:00:00Z",
+                staging_table=None, raw_file_paths=[],
+            )
+    con = migrated_con(tmp_path)
+    adapter = EmptyAdapter(loaded_registry)
+    req = request_factory("baostock")
+    adapter.fetch(req, con=con)
+    assert con.execute("SELECT COUNT(*) FROM fetch_log").fetchone()[0] == 1
+
+def test_fetch_emptyResponse_hasNoStagingEvidence(
+    tmp_path, migrated_con, loaded_registry, request_factory,
+):
+    class EmptyAdapter(BaseDataAdapter):
+        source_id = "baostock"
+        supported_domains = frozenset({"market_bar_1d"})
+        def _fetch_impl(self, req):
+            return FetchResult(
+                run_id=req.run_id, source_id=self.source_id, data_domain=req.data_domain,
+                status="EMPTY_RESPONSE", row_count=0, fetch_time="2026-06-17T10:00:00Z",
+                staging_table=None, raw_file_paths=[],
+            )
+    con = migrated_con(tmp_path)
+    adapter = EmptyAdapter(loaded_registry)
+    req = request_factory("baostock")
+    adapter.fetch(req, con=con)
+    row = con.execute(
+        "SELECT raw_file_paths FROM fetch_log WHERE run_id=?", [req.run_id]
+    ).fetchone()[0]
+    assert json.loads(row) == []
+
+def test_fetch_implRaises_stillWritesFetchLogAndReturnsFailed(
+    tmp_path, migrated_con, loaded_registry, request_factory,
+):
+    con = migrated_con(tmp_path)
+    adapter = ExplodingAdapter(loaded_registry)
+    req = request_factory("baostock")
+    result = adapter.fetch(req, con=con)
+    assert result.status == "FAILED"
+    assert con.execute("SELECT COUNT(*) FROM fetch_log").fetchone()[0] == 1
+
+def test_fetch_implDoesNotSwitchSourceId(
+    tmp_path, migrated_con, loaded_registry, request_factory,
+):
+    con = migrated_con(tmp_path)
+    adapter = WrongSourceAdapter(loaded_registry)
+    req = request_factory("baostock")
+    result = adapter.fetch(req, con=con)
+    assert result.source_id == "baostock"
+    row = con.execute(
+        "SELECT source_id FROM fetch_log WHERE run_id=?", [req.run_id]
+    ).fetchone()[0]
+    assert row == "baostock"
+
+def test_fetch_success_carriesEvidenceFields(
+    tmp_path, migrated_con, loaded_registry, request_factory,
+):
+    con = migrated_con(tmp_path)
+    adapter = FakeAdapter(loaded_registry)
+    req = request_factory("baostock")
+    result = adapter.fetch(req, con=con)
+    assert result.staging_table
+    assert result.raw_file_paths
 ```
 
 - [ ] 实现 `fetch_log.py`、`base_adapter.py` → GREEN
@@ -808,7 +1014,7 @@ $env:QMD_DATA_ROOT="data"; pytest -q
 | 单元 | `pytest tests/test_source_registry.py tests/test_data_adapter_contract.py -v` | 全绿 |
 | 集成 | `pytest -q` | exit 0 |
 | 管道 | `init_db` ×2 @ `data/` | 幂等 |
-| smoke | `pytest tests/test_schema_migration.py -q` | 含 003 |
+| smoke | `pytest tests/test_schema_migration.py -q` | 含 **004** + 003_resource_guard_metrics |
 
 ---
 
@@ -851,5 +1057,5 @@ $env:QMD_DATA_ROOT="data"; pytest -q
 | 类别 | 说明 |
 |------|------|
 | **已修复（v1.3 文档/plan/CI/schema）** | P0 四项 + 全部 P1–P3 plan 修订；见 remediation 表「状态=已修复」 |
-| **待 Execute §8 实现（非遗漏）** | stub、003、测试代码、ingestion 模块 — plan 已写清，**代码尚未落地** |
+| **待 Execute §8 实现（非遗漏）** | stub、**004**、测试代码、ingestion 模块 — plan 已写清，**代码尚未落地** |
 | **明确未修复 / 延后** | remediation 表「状态=Execute 待实现」或「Batch B+ 偿还」 — **不得静默忽略** |

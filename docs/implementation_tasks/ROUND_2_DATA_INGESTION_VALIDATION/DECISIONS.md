@@ -103,6 +103,6 @@ migration `004_ingestion_sources.sql` 仅包含：
 
 - [ ] `pytest -q` 全绿（Round 1 基线 **105** @ `3d7f93a` + Batch A 增量；**不硬编码**最终计数，见 MASTER §8.5）
 - [ ] `ruff check .` 通过
-- [ ] `python scripts/init_db.py` 在 prod-path 应用 003 且二次幂等
+- [ ] `python scripts/init_db.py` 在 prod-path 应用 **`004_ingestion_sources`**（并保留 **`003_resource_guard_metrics`**）且二次幂等
 - [ ] `source_registry.yaml` 可被加载且 DB sync 行数 ≥ 1
 - [ ] `FetchLogWriter` 对 SUCCESS 与 NETWORK_ERROR 均落库
