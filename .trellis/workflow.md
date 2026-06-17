@@ -239,7 +239,7 @@ Tools: `trellis-implement` / `trellis-research` are sub-agent types only (Task/A
 
 **Simple task flow:** `trellis-implement` -> `trellis-check` -> `trellis-update-spec` -> commit (Phase 3.4) -> `/trellis:finish-work`.
 
-**Complex task (`MASTER.plan.md` present):** Phase 6 Execute per complex-task-planning-protocol.md — **6.pre** refresh GitNexus/CodeGraph first; read MASTER §0.1 + §12 + implement.jsonl; **§8.x 逐步循环**（RED 证据 → GREEN 证据，禁止水平切片）；§9/§10 证据；`task.py validate-execute-handoff`；§11 handoff to Audit. **Do NOT** dispatch `trellis-check` after Execute — Phase 7 Audit (A1–A8 + A9 main session) replaces 2.2. After Audit: Repair if §4.3 items, then Phase 9 Finish (3.3 spec + 3.4 commit + finish-work).
+**Complex task (`MASTER.plan.md` present):** Phase 6 Execute per complex-task-planning-protocol.md — **MUST Read** `.cursor/skills/trellis-execute/SKILL.md` first; **Phase 0 Boot** (gitnexus summary + execute-boot + skill-reads); **§8.x 逐步** with `research/execute-evidence/{step}-red/green.txt`; §9/§10 证据；`validate-execute-step` / `validate-execute-handoff`；§11 handoff to Audit.
 
 **Execute 逐步门禁（复杂任务）：** 一次只完成 MASTER 当前 §8.x 步；未填 RED/GREEN 证据不得勾「已执行」；改 symbol 前 GitNexus `impact()`；读 MASTER §12 中 karpathy-guidelines / testing-guidelines User Rule 行。
 
@@ -317,6 +317,7 @@ When a user request matches one of these intents inside an active task, route fi
 ### Guardrails
 
 - Task creation approval is not implementation approval; implementation waits for `task.py start` after artifact review.
+- **Complex tasks (Plan v2):** MUST Read `.cursor/skills/trellis-plan/SKILL.md` first when `status=planning`; optional per phase: `task.py validate-plan-phase <dir> <phase>` (`boot`, `P1`, `2a`–`5d`).
 - **Complex tasks:** `task.py validate-plan-freeze <dir>` must pass before `task.py start` (or `--force` with documented reason).
 - PRD-only is valid for lightweight tasks; complex tasks need `design.md` + `implement.md` + `MASTER.plan.md` + `plan.freeze.md`.
 - Planning must be persisted to task artifacts; checks must run before reporting completion.

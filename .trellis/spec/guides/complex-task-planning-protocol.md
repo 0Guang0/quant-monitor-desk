@@ -81,16 +81,17 @@
 
 ### 2.2 Execute 契约（Plan 写入 MASTER §0，Execute 不读协议）
 
-Execute agent 须：读 MASTER §8–§12 + §9–§10 → 逐步执行并**填证据** → §11 交接 Audit（**不 finish-work**）。
+Execute agent 须：**Read trellis-execute/SKILL.md** → Phase 0 Boot → 读 MASTER §8–§12 + implement.jsonl → 逐步 §8（execute-evidence）→ §9–§10 证据 → §11 交接 Audit（**不 finish-work**）。
 
-jsonl **第一条必须是 `MASTER.plan.md`**（hook 顺序：jsonl → 薄 prd → design → implement）。
+jsonl **第一条必须是 `MASTER.plan.md`**；Plan 应在 implement.jsonl **第二条**追加 `trellis-execute/SKILL.md`（`task.py start` 后 hook 可读）。
 
 用户 Execute 开场白（可复制进 MASTER §0）：
 
 ```text
-进入 Execute。先做 6.pre：GitNexus/CodeGraph 刷新，写 gitnexus-execute-summary.md。
-读 MASTER（含 §0.1 门控）+ implement.jsonl。
-§8 逐步+证据；§9 四层；§10 Tier Execute 先跑。严格 §12。§11 交接 Audit。
+进入 Execute。MUST Read .cursor/skills/trellis-execute/SKILL.md。
+Phase 0 Boot（gitnexus-execute-summary + execute-boot + skill-reads）
+→ Phase 1 严格 §8.x（execute-evidence/{step}-red/green.txt）
+→ §9/§10 → validate-execute-handoff → §11 Audit。勿 finish-work。
 ```
 
 ### 2.3 批次：多简单任务合并为一轮
@@ -224,6 +225,7 @@ Trellis 命令与 hook 细节见 `.trellis/workflow.md`；`task.py start` = Plan
 
 - **命令：** `task.py create "<标题>" --slug <短名>`
 - **产出：** `task.json`（planning）、种子 `prd.md`
+- **下一步 MUST Read：** `.cursor/skills/trellis-plan/SKILL.md`（Phase P0 Boot）
 
 ### Phase 1 — 代码库分析
 
@@ -275,6 +277,8 @@ Trellis 命令与 hook 细节见 `.trellis/workflow.md`；`task.py start` = Plan
 5. 填写 **`plan.freeze.md`**（含 **§3.0 双契约 one-pager** 全勾）
 6. `implement.jsonl` 第一条 = MASTER（**勿**含 AUDIT / plan.freeze）
 7. plan.freeze §3 全勾 → **`task.py validate-plan-freeze`** exit 0 → 用户批准 → `task.py start`
+
+**Plan protocol v2（机械门禁）：** Phase P0 → `plan-boot.md` + `plan-skill-reads.jsonl` + `gitnexus-summary.md`；详见 `.cursor/skills/trellis-plan/SKILL.md` 与 `plan-skill-paths.yaml`。
 
 ### Phase 6 — Execute
 

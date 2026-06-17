@@ -19,25 +19,36 @@
 
 **Execute 硬性要求：**
 
-- 不读 `AUDIT.plan.md`、Plan 协议、registry
-- 只许 §12 冻结 Skill；§8 每步须 **RED/GREEN 证据** 非空才能勾选
+- **Phase 0 第一步 MUST Read** `.cursor/skills/trellis-execute/SKILL.md`（未完成 Boot 禁止写业务代码）
+- 不读 `AUDIT.plan.md`、Plan 协议、registry（skill 路径见 `.trellis/spec/guides/execute-skill-paths.yaml`）
+- 只许 §12 冻结 Skill；§8 每步须 **execute-evidence/{step}-red/green.txt** 才能勾选
 - **禁止**宣称任务完成（完成在 Audit → Repair → Finish 之后）
 - **禁止**在 §8 内嵌完整测试模块；完整 pytest 放 `research/§8.x-tests.md`
 
 ---
 
-## 0.1 门控速查：怎么测 · 怎么验收 · 什么叫过
+## 0.1 门控速查：Execute 状态机（protocol v2）
 
-> Execute **必读**。无证据 = 未执行 = 未过。
+> Execute **必读** `.cursor/skills/trellis-execute/SKILL.md`。无证据 = 未执行 = 未过。
 
-### Execute 逐步循环（每 §8.x 步 **强制**）
+### Phase 0 · Boot（`task.py start` 后 — 禁止改 backend/tests）
 
-1. **读** 本步「绑定 §12 Skill」对应 SKILL.md
-2. **RED**：只写/启用本步 tracer 测试 → 跑 **RED 命令** → **必须 FAIL** → 写入 **RED 证据**
-3. **GREEN**：最小实现 → 跑 **GREEN 命令** → **必须 PASS** → 写入 **GREEN 证据**
-4. **勾** 本步「已执行」；**禁止**未填证据勾选
-5. **incremental**：全库 pytest 仍绿后再进入 §8.(x+1)
-6. RED 不符合预期 → **systematic-debugging**（§12 条件 Skill）
+| # | 动作 | 产出 | validate |
+|---|------|------|----------|
+| 0a | GitNexus query + impact + detect_changes | `research/gitnexus-execute-summary.md` | handoff |
+| 0b | Read MASTER §0–§12 + implement.jsonl 每条路径 | `research/execute-boot.md` 含 **`Phase 0 complete`** | handoff |
+| 0c | Read trellis-execute + append skill-reads | `research/execute-skill-reads.jsonl` | handoff |
+
+### Phase 1 · 每 §8.x（垂直切片 — 禁止跨步批量编辑）
+
+| 阶段 | Read Skill | 动作 | 证据文件 |
+|------|------------|------|----------|
+| RED | test-driven-development | 仅本步 tracer；RED **必须 FAIL** | `research/execute-evidence/{step}-red.txt` |
+| GREEN | karpathy + testing [+ source-driven] | 最小实现；GREEN PASS | `research/execute-evidence/{step}-green.txt` |
+| SLICE | incremental-implementation | 全库 pytest exit 0 | MASTER §8.x 证据列 |
+| DEBUG | systematic-debugging | 仅 RED 非预期 | `research/execute-debug/{step}.md` |
+
+每步 GREEN 后可跑：`python .trellis/scripts/task.py validate-execute-step <task-dir> 8.x`
 
 **Red Flag：** 单次编辑跨多个 §8 步 / >100 行且无 pytest → 停止，回退当前步。
 
@@ -84,9 +95,9 @@
 **Execute 开场白：**
 
 ```text
-进入 Execute。读 MASTER + implement.jsonl。
-6.pre → 严格 §8.x 逐步循环（RED 证据 → GREEN 证据）→ §9 → §10 → validate-execute-handoff → §11 Audit。
-严格 §12。勿 finish-work。
+进入 Execute。MUST Read .cursor/skills/trellis-execute/SKILL.md。
+Phase 0 Boot → Phase 1 严格 §8.x（execute-evidence/{step}-red/green.txt）→ §9 → §10
+→ validate-execute-handoff → §11 Audit。严格 §12。勿 finish-work。
 ```
 
 **Plan 开工前：** `python .trellis/scripts/task.py validate-plan-freeze <task-dir>` → 用户批准 → `task.py start`。
@@ -163,7 +174,7 @@
 | 做什么 | {{…}} |
 | 绑定 §12 Skill | {{test-driven-development}} |
 | **RED 命令** | `{{pytest …::test_tracer -v}}`（实现前） |
-| **RED 证据** | `research/execute-evidence/8.1-red.txt` 或粘贴 FAIL 摘要 |
+| **RED 证据** | `research/execute-evidence/8.1-red.txt`（含 FAIL 信号 + exit code） |
 | **GREEN 命令** | `{{pytest … -v}}` |
 | **GREEN 证据** | `research/execute-evidence/8.1-green.txt` |
 | **通过条件** | RED 必须 FAIL；GREEN exit 0；{{关键断言}} |
@@ -217,10 +228,11 @@
 
 ## 11. Execute 交接 DoD（≠ 任务完成）
 
-- [ ] §8 每步 **已执行 + RED/GREEN 证据非空**
+- [ ] §8 每步 **已执行 + execute-evidence/{step}-red/green.txt 齐全**
+- [ ] Phase 0：`execute-boot.md` + `execute-skill-reads.jsonl` + `gitnexus-execute-summary.md`
 - [ ] §9 四层 **Execute 证据** 已填
 - [ ] §10 Tier A/B/C Execute 已跑并勾选（B/C 须 prod-path）
-- [ ] §12 Execute Skill **必做** 行已 `[x]`
+- [ ] §12 Execute Skill **必做** 行已 `[x]`；`execute-skill-evaluation.md` 引用 skill-reads
 - [ ] `task.py validate-execute-handoff` exit 0
 - [ ] **未** finish-work（等 Audit → Repair → Finish）
 
@@ -230,17 +242,18 @@
 
 > Plan 填表；Execute **只认本表**，不读 execute-skill-registry.md。
 
-| Skill | 本任务 | 绑定 §8 | 触发 | 证据 | 已执行 |
-|-------|--------|---------|------|------|--------|
-| test-driven-development | 必做 | 8.x | 每步 RED 前 | research/*evidence* | [ ] |
-| incremental-implementation | 必做 | 8.x | 每步 GREEN 后 | 同上 | [ ] |
-| karpathy-guidelines | 必做 | 全程 | 写代码前 | §12 对照笔记 | [ ] |
-| testing-guidelines | 必做 | 8.x 测试 | 写/改测试 | 同上 | [ ] |
-| gitnexus-impact | 必做 | 改 symbol | impact() | 摘要或 MCP 输出 | [ ] |
-| source-driven-development | 条件/不用 | 8.x | {{写死}} | {{URL/笔记}} | [ ] |
-| systematic-debugging | 条件 | 当前步 | pytest RED 异常 | 根因笔记 | [ ] |
-| trellis-implement | inline/必做 | Execute | 派发或主会话 | 实现报告 | [ ] |
-| trellis-check | **不用** | — | → Audit A1 | — | — |
+| Skill | 路径 | 本任务 | 绑定 §8 | Phase | 触发 | 已读 | 已执行 |
+|-------|------|--------|---------|-------|------|------|--------|
+| trellis-execute | `.cursor/skills/trellis-execute/SKILL.md` | 必做 | Boot | Boot | task.py start | [ ] | [ ] |
+| test-driven-development | 见 execute-skill-paths.yaml | 必做 | 8.x | RED | 每步 RED 前 | [ ] | [ ] |
+| incremental-implementation | 见 execute-skill-paths.yaml | 必做 | 8.x | SLICE | 每步 GREEN 后 | [ ] | [ ] |
+| karpathy-guidelines | 见 execute-skill-paths.yaml | 必做 | 全程 | GREEN | 写码前 | [ ] | [ ] |
+| testing-guidelines | 见 execute-skill-paths.yaml | 必做 | 8.x | GREEN | 写测前 | [ ] | [ ] |
+| gitnexus-impact | AGENTS.md + MCP impact() | 必做 | 改 symbol | Boot | 改 symbol 前 | [ ] | [ ] |
+| source-driven-development | 见 execute-skill-paths.yaml | 条件/不用 | 8.x | GREEN | {{写死}} | [ ] | [ ] |
+| systematic-debugging | 见 execute-skill-paths.yaml | 条件 | 当前步 | DEBUG | pytest RED 异常 | [ ] | [ ] |
+| trellis-implement | inline/必做 | {{inline 或派发}} | Execute | — | {{}} | [ ] | [ ] |
+| trellis-check | — | **不用** | — | — | → Audit A1 | — | — |
 
 **Audit 用 Skill + 验证 → `AUDIT.plan.md` §1 + §2**（不进 MASTER §12）。
 

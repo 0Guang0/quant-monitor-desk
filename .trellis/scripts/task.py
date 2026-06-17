@@ -7,6 +7,10 @@ Usage:
     python task.py create "<title>" [--slug <name>] [--assignee <dev>] [--priority P0|P1|P2|P3] [--parent <dir>] [--package <pkg>]
     python task.py add-context <dir> <file> <path> [reason] # Add jsonl entry
     python task.py validate <dir>              # Validate jsonl files
+    python task.py validate-plan-freeze <dir>  # Plan freeze gate (complex tasks)
+    python task.py validate-plan-phase <dir> <phase>  # Plan phase checkpoint (v2)
+    python task.py validate-execute-handoff <dir>  # Execute §11 handoff gate
+    python task.py validate-execute-step <dir> <step>  # Execute §8.x step gate
     python task.py list-context <dir>          # List jsonl entries
     python task.py start <dir>                 # Set active task
     python task.py current [--source]          # Show active task
@@ -61,8 +65,15 @@ from common.task_context import (
     cmd_validate,
     cmd_list_context,
 )
-from common.validate_plan_freeze import cmd_validate_plan_freeze, validate_plan_freeze
-from common.validate_execute_handoff import cmd_validate_execute_handoff
+from common.validate_plan_freeze import (
+    cmd_validate_plan_freeze,
+    cmd_validate_plan_phase,
+    validate_plan_freeze,
+)
+from common.validate_execute_handoff import (
+    cmd_validate_execute_handoff,
+    cmd_validate_execute_step,
+)
 
 
 # =============================================================================
@@ -436,11 +447,30 @@ def main() -> int:
         "--force", action="store_true", help="Report errors but exit 0"
     )
 
+    # validate-plan-phase
+    p_vphase = subparsers.add_parser(
+        "validate-plan-phase",
+        help="Validate one Plan phase checkpoint (protocol v2)",
+    )
+    p_vphase.add_argument("dir", help="Task directory")
+    p_vphase.add_argument(
+        "phase",
+        help="Plan phase id: boot, P1, 2a, 2b, 3, 4, 5a, 5b, 5c, 5d",
+    )
+
     # validate-execute-handoff
     p_vhandoff = subparsers.add_parser(
         "validate-execute-handoff", help="Validate Execute §11 handoff to Audit"
     )
     p_vhandoff.add_argument("dir", help="Task directory")
+
+    # validate-execute-step
+    p_vstep = subparsers.add_parser(
+        "validate-execute-step",
+        help="Validate one §8.x step RED/GREEN evidence (protocol v2)",
+    )
+    p_vstep.add_argument("dir", help="Task directory")
+    p_vstep.add_argument("step", help="Step id e.g. 8.1")
 
     # start
     p_start = subparsers.add_parser("start", help="Set active task")
@@ -509,7 +539,9 @@ def main() -> int:
         "add-context": cmd_add_context,
         "validate": cmd_validate,
         "validate-plan-freeze": cmd_validate_plan_freeze,
+        "validate-plan-phase": cmd_validate_plan_phase,
         "validate-execute-handoff": cmd_validate_execute_handoff,
+        "validate-execute-step": cmd_validate_execute_step,
         "list-context": cmd_list_context,
         "start": cmd_start,
         "current": cmd_current,

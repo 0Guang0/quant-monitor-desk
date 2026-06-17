@@ -1,0 +1,67 @@
+# Execute Skill 路径 — Plan 可复制进 MASTER §12「路径」列
+# Execute agent Read 工具必须使用本表路径（禁止读同名错误 skill）
+
+version: "1"
+
+skills:
+  trellis-execute:
+    path: .cursor/skills/trellis-execute/SKILL.md
+    phase: boot
+    default_role: 必做
+
+  test-driven-development:
+    path: .claude/plugins/cache/addy-agent-skills/agent-skills/3a6fc6392823/skills/test-driven-development/SKILL.md
+    phase: RED
+    default_role: 必做
+    fallback: .claude/skills/tdd/SKILL.md
+
+  incremental-implementation:
+    path: .claude/plugins/cache/addy-agent-skills/agent-skills/3a6fc6392823/skills/incremental-implementation/SKILL.md
+    phase: SLICE
+    default_role: 必做
+
+  source-driven-development:
+    path: .claude/plugins/cache/addy-agent-skills/agent-skills/3a6fc6392823/skills/source-driven-development/SKILL.md
+    phase: GREEN
+    default_role: 条件
+
+  systematic-debugging:
+    path: .claude/plugins/cache/claude-plugins-official/superpowers/5.1.0/skills/systematic-debugging/SKILL.md
+    phase: DEBUG
+    default_role: 条件
+
+  karpathy-guidelines:
+    path: .cursor/plugins/cache/karpathy-skills/andrej-karpathy-skills/2c606141936f1eeef17fa3043a72095b4765b9c2/skills/karpathy-guidelines/SKILL.md
+    phase: GREEN
+    default_role: 必做
+
+  testing-guidelines:
+    path: .claude/skills/testing-guidelines/SKILL.md
+    phase: GREEN
+    default_role: 必做
+
+  gitnexus-impact:
+    path: AGENTS.md
+    phase: boot
+    default_role: 必做
+    note: "Use GitNexus MCP impact(); read gitnexus-impact-analysis skill optional"
+
+boot_required_reads:
+  - trellis-execute
+  - gitnexus-impact
+
+red_required_reads:
+  - test-driven-development
+
+green_required_reads:
+  - karpathy-guidelines
+  - testing-guidelines
+
+slice_required_reads:
+  - incremental-implementation
+
+handoff_required_skills:
+  - test-driven-development
+  - incremental-implementation
+  - karpathy-guidelines
+  - testing-guidelines

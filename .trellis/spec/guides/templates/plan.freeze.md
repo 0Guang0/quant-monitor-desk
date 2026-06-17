@@ -6,14 +6,18 @@
 
 ## 1. Plan 阶段 Skill 执行记录
 
-| Phase | Skill | 产出 | 已完成 |
-|-------|-------|------|--------|
-| 1 | GitNexus | research/gitnexus-summary.md | [ ] |
-| 2a–2b | trellis-brainstorm + SDD | MASTER §1–3 | [ ] |
-| 3 | grill-me / interview-me | §7 | [ ] |
-| 4 | brainstorming / api-and-interface-design | §4–6 | [ ] |
-| 5a–5c | breakdown + writing-plans + trellis-before-dev | §8、jsonl | [ ] |
-| **5d** | **doubt-driven-development** | §7/§8/§12、**AUDIT §1/§2** 修订；**§8 无完整测试函数体**（仅 tracer + research/） | [ ] |
+| Phase | Skill | 路径 | 产出 | 已完成 |
+|-------|-------|------|------|--------|
+| boot | trellis-plan | `.cursor/skills/trellis-plan/SKILL.md` | `research/plan-boot.md` | [ ] |
+| P1 | gitnexus-plan | AGENTS.md + MCP | `research/gitnexus-summary.md` | [ ] |
+| 2a | trellis-brainstorm | `.cursor/skills/trellis-brainstorm/SKILL.md` | `prd.md`、MASTER §1–3 | [ ] |
+| 2b | spec-driven-development | 见 `plan-skill-paths.yaml` | MASTER §2 AC | [ ] |
+| 3 | grill-me / interview-me | 见 yaml | `research/grill-me-session.md` 等 | [ ] |
+| 4 | brainstorming / api-and-interface-design | 见 yaml | MASTER §4–6 | [ ] |
+| 5a | planning-and-task-breakdown | 见 yaml | MASTER §5 | [ ] |
+| 5b | writing-plans | 见 yaml | MASTER §8 + research tests | [ ] |
+| 5c | trellis-before-dev | `.cursor/skills/trellis-before-dev/SKILL.md` | implement/check jsonl | [ ] |
+| **5d** | **doubt-driven-development** | 见 yaml | AUDIT §1/§2 修订 | [ ] |
 
 ---
 
@@ -83,6 +87,8 @@
 
 - [ ] implement.jsonl 第一条 = MASTER
 - [ ] check.jsonl 供 A1；无 Plan 协议
+- [ ] `research/plan-boot.md` 含 **Phase P0 complete**
+- [ ] `research/plan-skill-reads.jsonl` 覆盖 freeze 必做 skill
 - [ ] `validate 通过`
 
 ### 3.6 validate-plan-freeze（机器门禁）
