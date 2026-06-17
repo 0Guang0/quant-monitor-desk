@@ -76,6 +76,9 @@
 | NOT_PUBLISHED_YET / schema_hash / as_of | **FIXED** |
 | ResourceGuard 扫描预算 / DuckDB temp 上限 | **FIXED** |
 | SourceRegistry tombstone | **FIXED** |
+| SourceRegistry validation `"null"` 字符串 | **FIXED**（C-C0-1） |
+| FetchLog timestamp 领域错误 | **FIXED**（C-C0-3） |
+| SourceRegistry atomic sync 策略 | **文档化**（`BATCH_C_LEDGER.md` C-C1） |
 | README Polars | **FIXED** |
 | CI permissions + dependabot + production_gate | **FIXED** |
 | API/前端 placeholder | **DEFERRED** |

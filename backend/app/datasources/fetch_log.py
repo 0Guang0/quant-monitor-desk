@@ -30,8 +30,13 @@ class FetchLogValidationError(ValueError):
 def _parse_timestamp(value: str | None) -> datetime | None:
     if value is None:
         return None
+    if not value.strip():
+        raise FetchLogValidationError("timestamp must be non-empty when provided")
     normalized = value.replace("Z", "+00:00")
-    return datetime.fromisoformat(normalized)
+    try:
+        return datetime.fromisoformat(normalized)
+    except ValueError as exc:
+        raise FetchLogValidationError(f"invalid timestamp: {value!r}") from exc
 
 
 def _validate_for_persist(result: FetchResult) -> None:

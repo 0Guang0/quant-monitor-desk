@@ -92,6 +92,22 @@ def test_load_validationSourceDomainMismatch_raisesInvalidRegistryError(
         reg.load()
 
 
+def test_load_validationStringNull_raisesInvalidRegistryError(
+    bad_validation_string_null_yaml,
+):
+    reg = SourceRegistry(bad_validation_string_null_yaml)
+    with pytest.raises(InvalidRegistryError, match="string 'null'"):
+        reg.load()
+
+
+def test_load_validationYamlNull_allowsNoValidationSource():
+    path = Path(__file__).parent / "fixtures" / "source_registry_batch_b.yaml"
+    reg = SourceRegistry(path)
+    reg.load()
+    roles = reg.get_domain_roles("market_bar_1m")
+    assert roles.validation_source_id is None
+
+
 def test_load_primaryUnknownLicense_raises(bad_unknown_license_primary_yaml):
     reg = SourceRegistry(bad_unknown_license_primary_yaml)
     with pytest.raises(InvalidRegistryError):

@@ -181,6 +181,24 @@ def test_fetchLogWriter_negativeRowCount_rejected(tmp_path, migrated_con):
         FetchLogWriter().write(con, result)
 
 
+def test_fetchLogWriter_invalidFetchTime_raisesFetchLogValidationError(
+    tmp_path, migrated_con, success_result,
+):
+    con = migrated_con(tmp_path)
+    bad = success_result().model_copy(update={"fetch_time": "not-a-timestamp"})
+    with pytest.raises(FetchLogValidationError, match="invalid timestamp"):
+        FetchLogWriter().write(con, bad)
+
+
+def test_fetchLogWriter_invalidAsOfTimestamp_raisesFetchLogValidationError(
+    tmp_path, migrated_con, success_result,
+):
+    con = migrated_con(tmp_path)
+    bad = success_result().model_copy(update={"as_of_timestamp": "2026-13-40"})
+    with pytest.raises(FetchLogValidationError, match="invalid timestamp"):
+        FetchLogWriter().write(con, bad)
+
+
 def test_write_closedConnection_propagates(tmp_path, migrated_con, success_result):
     con = migrated_con(tmp_path)
     con.close()
