@@ -184,9 +184,9 @@ def raw_data_root(tmp_path):
 def file_registry_stack(tmp_path):
     """ConnectionManager + WriteManager + FileRegistry + RawStore on tmp_path DB."""
     from backend.app.db.connection import ConnectionManager
-    from backend.app.db.write_manager import WriteManager
     from backend.app.storage.file_registry import FileRegistry
     from backend.app.storage.raw_store import RawStore
+    from tests.db_helpers import create_test_write_manager
 
     db = tmp_path / "t.duckdb"
     con = duckdb.connect(str(db))
@@ -198,7 +198,11 @@ def file_registry_stack(tmp_path):
     return {
         "cm": cm,
         "raw_store": RawStore(raw_root),
-        "file_registry": FileRegistry(cm, WriteManager(cm)),
+        "file_registry": FileRegistry(
+            cm,
+            create_test_write_manager(cm),
+            validation_report_id="stub-pass-registry",
+        ),
     }
 
 

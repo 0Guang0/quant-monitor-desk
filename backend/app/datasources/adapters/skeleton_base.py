@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 
 from backend.app.datasources.adapters.fetch_port import FetchPayload, FetchPort, PortError
 from backend.app.datasources.base_adapter import BaseDataAdapter, _utc_now_iso
@@ -16,6 +16,14 @@ from backend.app.storage.raw_store import RawStore
 DEFAULT_MAX_PAYLOAD_BYTES = 10 * 1024 * 1024
 
 
+def _shape(value: object) -> object:
+    if isinstance(value, dict):
+        return {k: _shape(v) for k, v in sorted(value.items())}
+    if isinstance(value, list):
+        return ["empty"] if not value else [_shape(value[0])]
+    return type(value).__name__
+
+
 def _infer_schema_hash(payload: FetchPayload) -> str | None:
     if payload.schema_hash is not None:
         return payload.schema_hash
@@ -23,9 +31,9 @@ def _infer_schema_hash(payload: FetchPayload) -> str | None:
         return None
     try:
         obj = json.loads(payload.content)
-        if isinstance(obj, dict):
-            keys_json = json.dumps(sorted(obj.keys()), separators=(",", ":"))
-            return hashlib.sha256(keys_json.encode()).hexdigest()
+        shape = _shape(obj)
+        canonical = json.dumps(shape, sort_keys=True, separators=(",", ":"))
+        return hashlib.sha256(canonical.encode()).hexdigest()
     except (json.JSONDecodeError, UnicodeDecodeError):
         return None
     return None
@@ -48,9 +56,20 @@ class SkeletonAdapterBase(BaseDataAdapter):
         self._max_payload_bytes = max_payload_bytes
 
     def _resolve_as_of(self, req: FetchRequest) -> str:
-        if req.end_time:
-            return req.end_time[:10]
-        return datetime.now(UTC).strftime("%Y-%m-%d")
+        raw = req.end_time
+        if raw:
+            try:
+                return (
+                    datetime.fromisoformat(raw.replace("Z", "+00:00"))
+                    .date()
+                    .isoformat()
+                )
+            except ValueError:
+                try:
+                    return date.fromisoformat(raw).isoformat()
+                except ValueError as exc:
+                    raise ValueError(f"invalid end_time/as_of date: {raw!r}") from exc
+        return datetime.now(UTC).date().isoformat()
 
     def _fetch_impl(self, req: FetchRequest) -> FetchResult:
         fetch_time = _utc_now_iso()

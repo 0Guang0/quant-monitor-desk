@@ -150,9 +150,11 @@ class ConnectionManager:
         temp_dir = DATA_ROOT / "cache" / "duckdb_tmp"
         temp_dir.mkdir(parents=True, exist_ok=True)
         temp_path = _escape_sql_string(temp_dir.as_posix())
+        temp_max_gb = int(profile_limits.get("duckdb_temp_max_gb", 2))
         con.execute(f"SET memory_limit = '{memory_mb}MB'")
         con.execute(f"SET threads = {threads}")
         con.execute(f"SET temp_directory = '{temp_path}'")
+        con.execute(f"SET max_temp_directory_size = '{temp_max_gb}GB'")
 
     @contextmanager
     def writer(self) -> Iterator[duckdb.DuckDBPyConnection]:

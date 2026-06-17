@@ -73,6 +73,12 @@ class FetchResult(BaseModel):
                 raise ValueError(f"{self.status} requires row_count == 0")
             if self.raw_file_paths or self.staging_table:
                 raise ValueError(f"{self.status} must not carry raw/staging evidence")
+            if self.status == "NOT_PUBLISHED_YET":
+                msg = (self.error_message or "").lower()
+                if "publish" not in msg:
+                    raise ValueError(
+                        "NOT_PUBLISHED_YET requires publish-related error_message"
+                    )
         elif self.status in _FAILURE_STATUSES:
             if not self.error_message:
                 raise ValueError(f"{self.status} requires error_message")

@@ -10,9 +10,10 @@ import duckdb
 import pytest
 from backend.app.db.connection import ConnectionManager
 from backend.app.db.migrate import apply_migrations
-from backend.app.db.write_manager import WriteManager, WriteResult
+from backend.app.db.write_manager import WriteResult
 from backend.app.storage.file_registry import FileRegistry
 from backend.app.storage.raw_store import RawStore, sha256_hex
+from tests.db_helpers import create_test_write_manager
 
 
 def test_sha256Hex_knownInput_matchesExpected() -> None:
@@ -84,10 +85,18 @@ def _cm(tmp_path: Path) -> ConnectionManager:
     return ConnectionManager(db)
 
 
+def _registry(cm: ConnectionManager) -> FileRegistry:
+    return FileRegistry(
+        cm,
+        create_test_write_manager(cm),
+        validation_report_id="stub-pass-registry",
+    )
+
+
 def test_register_newFile_insertsRegistryRow(tmp_path: Path) -> None:
     cm = _cm(tmp_path)
     store = RawStore(tmp_path)
-    reg = FileRegistry(cm, WriteManager(cm))
+    reg = _registry(cm)
     saved = store.save(
         b"x", source="qmt", data_domain="daily_bar", file_type="json", as_of="2026-06-15"
     )
@@ -98,12 +107,18 @@ def test_register_newFile_insertsRegistryRow(tmp_path: Path) -> None:
             [fid],
         ).fetchone()
     assert got == ("qmt", saved.content_hash)
+    with cm.reader() as r:
+        status = r.execute(
+            "SELECT parse_status, quality_flag FROM file_registry WHERE file_id=?",
+            [fid],
+        ).fetchone()
+    assert status == ("raw_saved", "pending_validation")
 
 
 def test_register_writesAuditLog(tmp_path: Path) -> None:
     cm = _cm(tmp_path)
     store = RawStore(tmp_path)
-    reg = FileRegistry(cm, WriteManager(cm))
+    reg = _registry(cm)
     saved = store.save(
         b"x", source="qmt", data_domain="daily_bar", file_type="json", as_of="2026-06-15"
     )
@@ -118,7 +133,7 @@ def test_register_writesAuditLog(tmp_path: Path) -> None:
 def test_register_asOfTimestamp_matchesAsOfArgument(tmp_path: Path) -> None:
     cm = _cm(tmp_path)
     store = RawStore(tmp_path)
-    reg = FileRegistry(cm, WriteManager(cm))
+    reg = _registry(cm)
     saved = store.save(
         b"x", source="qmt", data_domain="daily_bar", file_type="json", as_of="2026-06-15"
     )
@@ -134,7 +149,7 @@ def test_register_asOfTimestamp_matchesAsOfArgument(tmp_path: Path) -> None:
 def test_exists_whenHashPresent_returnsTrue(tmp_path: Path) -> None:
     cm = _cm(tmp_path)
     store = RawStore(tmp_path)
-    reg = FileRegistry(cm, WriteManager(cm))
+    reg = _registry(cm)
     saved = store.save(
         b"x", source="qmt", data_domain="daily_bar", file_type="json", as_of="2026-06-15"
     )
@@ -146,7 +161,7 @@ def test_exists_whenHashPresent_returnsTrue(tmp_path: Path) -> None:
 def test_register_duplicateHash_returnsSameFileId(tmp_path: Path) -> None:
     cm = _cm(tmp_path)
     store = RawStore(tmp_path)
-    reg = FileRegistry(cm, WriteManager(cm))
+    reg = _registry(cm)
     saved = store.save(
         b"x", source="qmt", data_domain="daily_bar", file_type="json", as_of="2026-06-15"
     )
@@ -165,7 +180,7 @@ def test_register_duplicateHashViaConstraint_returnsSameFileId(tmp_path: Path) -
     """Simulate race: pre-check misses duplicate but UNIQUE index catches insert."""
     cm = _cm(tmp_path)
     store = RawStore(tmp_path)
-    reg = FileRegistry(cm, WriteManager(cm))
+    reg = _registry(cm)
     saved = store.save(
         b"x", source="qmt", data_domain="daily_bar", file_type="json", as_of="2026-06-15"
     )
@@ -216,7 +231,7 @@ def test_register_whenWriteFails_raisesRuntimeError(tmp_path: Path) -> None:
     store = RawStore(tmp_path)
     wm = MagicMock()
     wm.write.return_value = WriteResult(write_id="x", status="FAILED", error_message="db error")
-    reg = FileRegistry(cm, wm)
+    reg = FileRegistry(cm, wm, validation_report_id="stub-pass-registry")
     saved = store.save(
         b"x", source="qmt", data_domain="daily_bar", file_type="json", as_of="2026-06-15"
     )
@@ -225,3 +240,26 @@ def test_register_whenWriteFails_raisesRuntimeError(tmp_path: Path) -> None:
     with cm.reader() as r:
         cnt = r.execute("SELECT COUNT(*) FROM file_registry").fetchone()[0]
     assert cnt == 0
+
+
+def test_register_validationRejected_persistsFailedAudit(tmp_path: Path) -> None:
+    """Failed validation must leave write_audit_log even when register raises."""
+    cm = _cm(tmp_path)
+    store = RawStore(tmp_path)
+    reg = FileRegistry(
+        cm,
+        create_test_write_manager(cm),
+        validation_report_id="stub-fail-registry",
+    )
+    saved = store.save(
+        b"x", source="qmt", data_domain="daily_bar", file_type="json", as_of="2026-06-15"
+    )
+    with pytest.raises(RuntimeError, match="file_registry write failed"):
+        reg.register(saved)
+    with cm.reader() as r:
+        audit = r.execute(
+            "SELECT status, target_table, error_message FROM write_audit_log"
+        ).fetchone()
+        file_cnt = r.execute("SELECT COUNT(*) FROM file_registry").fetchone()[0]
+    assert file_cnt == 0
+    assert audit == ("FAILED", "file_registry", "validation rejected: stub-fail-registry")

@@ -69,7 +69,30 @@ def test_fetchRequest_missingRunId_raisesValidationError():
         FetchRequest(source_id="s", data_domain="d")
 
 
-def test_fetchResult_stagingTableField_roundTrips():
+def test_fetchResult_notPublishedYet_withoutPublishMessage_raisesValidationError():
+    with pytest.raises(ValidationError, match="publish-related"):
+        FetchResult(
+            run_id="r",
+            source_id="s",
+            data_domain="d",
+            status="NOT_PUBLISHED_YET",
+            row_count=0,
+            fetch_time="2026-06-17T10:00:00Z",
+            error_message="data not ready",
+        )
+
+
+def test_fetchResult_notPublishedYet_withPublishMessage_isAccepted():
+    r = FetchResult(
+        run_id="r",
+        source_id="s",
+        data_domain="d",
+        status="NOT_PUBLISHED_YET",
+        row_count=0,
+        fetch_time="2026-06-17T10:00:00Z",
+        error_message="announcement not published yet",
+    )
+    assert r.status == "NOT_PUBLISHED_YET"
     r = FetchResult(
         run_id="r",
         source_id="s",

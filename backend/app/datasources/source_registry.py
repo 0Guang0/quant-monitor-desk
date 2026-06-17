@@ -329,12 +329,12 @@ class SourceRegistry:
                 f"source {source_id!r} does not allow domain {data_domain!r}"
             )
 
-    def sync_to_db(self, con) -> int:
+    def sync_to_db(self, con, *, tombstone_missing: bool = True) -> int:
         """Upsert all YAML sources into source_registry.
 
-        Caller must wrap in an explicit transaction when atomic full sync is required.
-        Sources removed from YAML remain in DB (not tombstoned); disabled/orphan handling
-        is deferred to Batch C+ orchestration.
+        When ``tombstone_missing`` is True, sources absent from YAML are marked
+        ``is_enabled=false``. Caller may wrap in an explicit transaction when
+        atomic full sync is required.
         """
         count = 0
         for rec in self._sources.values():
@@ -371,4 +371,15 @@ class SourceRegistry:
                 ],
             )
             count += 1
+        if tombstone_missing and self._sources:
+            ids = list(self._sources.keys())
+            placeholders = ", ".join("?" * len(ids))
+            con.execute(
+                f"""
+                UPDATE source_registry
+                SET is_enabled = false, updated_at = CURRENT_TIMESTAMP
+                WHERE source_id NOT IN ({placeholders})
+                """,
+                ids,
+            )
         return count

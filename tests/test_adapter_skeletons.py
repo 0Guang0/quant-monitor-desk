@@ -578,3 +578,88 @@ def test_fetchRecordsLatencyMsWhenPayloadOmitsIt(
         "SELECT latency_ms FROM fetch_log WHERE run_id=?", [req.run_id]
     ).fetchone()
     assert row[0] is not None
+
+
+def test_inferSchemaHash_detectsNestedStructureDrift():
+    from backend.app.datasources.adapters.fetch_port import FetchPayload
+    from backend.app.datasources.adapters.skeleton_base import _infer_schema_hash
+
+    base = _infer_schema_hash(FetchPayload(content=b'{"a": {"b": 1}}', file_type="json"))
+    nested = _infer_schema_hash(FetchPayload(content=b'{"a": {"c": 1}}', file_type="json"))
+    assert base != nested
+
+
+def test_inferSchemaHash_detectsTypeDrift():
+    from backend.app.datasources.adapters.fetch_port import FetchPayload
+    from backend.app.datasources.adapters.skeleton_base import _infer_schema_hash
+
+    as_int = _infer_schema_hash(FetchPayload(content=b'{"a": 1}', file_type="json"))
+    as_str = _infer_schema_hash(FetchPayload(content=b'{"a": "1"}', file_type="json"))
+    assert as_int != as_str
+
+
+def test_resolveAsOf_isoTimestamp_normalizesToDate(
+    tmp_path,
+    migrated_con,
+    batch_b_registry,
+    request_factory,
+    file_registry_stack,
+    stub_fetch_bytes,
+):
+    from backend.app.datasources.adapters.fetch_port import StubFetchPort
+    from backend.app.datasources.adapters.skeleton_base import SkeletonAdapterBase
+    from backend.app.datasources.fetch_result import FetchRequest
+
+    class BaostockSkeleton(SkeletonAdapterBase):
+        source_id = "baostock"
+        supported_domains = frozenset({"market_bar_1d"})
+
+    con = migrated_con(tmp_path)
+    stack = file_registry_stack
+    adapter = BaostockSkeleton(
+        batch_b_registry,
+        raw_store=stack["raw_store"],
+        fetch_port=StubFetchPort(payload=stub_fetch_bytes),
+    )
+    req = FetchRequest(
+        run_id="r1",
+        source_id="baostock",
+        data_domain="market_bar_1d",
+        end_time="2026-06-17T15:30:00Z",
+    )
+    result = adapter.fetch(req, con=con)
+    assert result.as_of_timestamp == "2026-06-17"
+
+
+def test_resolveAsOf_invalidDate_returnsFailedFetch(
+    tmp_path,
+    migrated_con,
+    batch_b_registry,
+    request_factory,
+    file_registry_stack,
+    stub_fetch_bytes,
+):
+    from backend.app.datasources.adapters.fetch_port import StubFetchPort
+    from backend.app.datasources.adapters.skeleton_base import SkeletonAdapterBase
+    from backend.app.datasources.fetch_result import FetchRequest
+
+    class BaostockSkeleton(SkeletonAdapterBase):
+        source_id = "baostock"
+        supported_domains = frozenset({"market_bar_1d"})
+
+    con = migrated_con(tmp_path)
+    stack = file_registry_stack
+    adapter = BaostockSkeleton(
+        batch_b_registry,
+        raw_store=stack["raw_store"],
+        fetch_port=StubFetchPort(payload=stub_fetch_bytes),
+    )
+    req = FetchRequest(
+        run_id="r2",
+        source_id="baostock",
+        data_domain="market_bar_1d",
+        end_time="not-a-date",
+    )
+    result = adapter.fetch(req, con=con)
+    assert result.status == "FAILED"
+    assert "invalid end_time" in (result.error_message or "")
