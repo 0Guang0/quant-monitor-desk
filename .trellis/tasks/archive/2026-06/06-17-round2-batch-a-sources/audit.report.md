@@ -1,8 +1,8 @@
 # Audit Report — 06-17-round2-batch-a-sources (RE-AUDIT round 2)
 
-> **状态：** Phase 9 Finish 完成 · Audit PASS · §4.3 Repair 已清零  
+> **状态：** Phase 9 Finish 完成 · GPT hardening @ `ab8d1eb` · 延后项见 DECISIONS §9  
 > **模型：** 各维子 agent 均使用 **Composer 2.5 fast**（`composer-2.5-fast`）  
-> **审计基线：** commit `ee48187` · Repair `9adef12` · 2026-06-17
+> **审计基线：** commit `ee48187` · Repair `9adef12` · GPT fix `ab8d1eb` · 2026-06-17
 
 ## 1. 元信息
 
@@ -12,8 +12,9 @@
 | 摘要文件 | `research/gitnexus-audit-summary.md` |
 | Execute DATA_ROOT | `data/`（只读索引） |
 | Audit sandbox | `.audit-sandbox/data` |
-| A5 fresh pytest | **163 passed**, exit 0（A5 子 agent + A9 主会话复跑） |
+| A5 fresh pytest | **182 passed**, 93% cov（GPT fix 复跑 @ `ab8d1eb`） |
 | A7 fresh init_db | run1: 001–004 applied；run2: `none (up to date)` |
+| GPT prod smoke | `ci_ingestion_smoke` @ `data/` + `SourceMismatchError` 0-log |
 
 ---
 
@@ -185,5 +186,19 @@ schema_version → 001–004 完整
 ## 7. 下一步
 
 1. ~~Phase 8 Repair~~ ✅ 已完成
-2. **Phase 9 Finish** — push + PR
+2. ~~GPT P0/P1/P2 hardening~~ ✅ `ab8d1eb`（延后项 → `DECISIONS.md` §9）
 3. **Batch B Plan** — 013 adapter skeletons
+
+---
+
+## 8. 延后偿还索引（GPT @ `ab8d1eb`）
+
+完整表见 `docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/DECISIONS.md` §9。
+
+| 优先级 | 项 | 阶段 |
+|--------|-----|------|
+| 中 | DB CHECK/NOT NULL migration | Batch C 前 |
+| 中 | YAML 删除 source tombstone | Batch D |
+| 低 | init_db 自动 sync registry | Batch D |
+| 低 | ResourceGuard + ingestion smoke | Batch D |
+| 低 | CI secret/hooks scan | Batch B 并行 |

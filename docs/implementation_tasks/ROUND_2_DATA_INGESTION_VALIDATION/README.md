@@ -45,14 +45,15 @@
 - [x] migration **004** 已应用（003 resource_guard 保留）
 - [x] YAML 加载 + legacy 角色拒绝（含顶层 banned key）
 - [x] fetch 失败仍写 fetch_log
+- [x] GPT P0 `SourceMismatchError`（`ab8d1eb`）
 
-**Batch A 已完成** — 可进入 Batch B Plan。
+**Batch A 已完成** — 可进入 Batch B Plan。延后项见 `DECISIONS.md` §9。
 
 ## Plan / Execute 状态
 
-| 批次 | Plan | Execute | Audit |
-|------|------|---------|-------|
-| A | ✅ 已冻结 | ✅ 完成 (`ee48187`) | ✅ PASS + §4.3 Repair (`9adef12`) |
-| B–D | 未开始 | 未开始 | — |
+| 批次 | Plan | Execute | Audit | GPT 硬ening |
+|------|------|---------|-------|-------------|
+| A | ✅ 已冻结 | ✅ `ee48187` | ✅ PASS | ✅ `ab8d1eb` |
+| B–D | 未开始 | 未开始 | — | — |
 
 Trellis 任务目录：`.trellis/tasks/archive/2026-06/06-17-round2-batch-a-sources/`

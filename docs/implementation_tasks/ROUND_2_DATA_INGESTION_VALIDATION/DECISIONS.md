@@ -101,8 +101,37 @@ migration `004_ingestion_sources.sql` 仅包含：
 
 在进入 Batch B（013）前必须全绿：
 
-- [ ] `pytest -q` 全绿（Round 1 基线 **105** @ `3d7f93a` + Batch A 增量；**不硬编码**最终计数，见 MASTER §8.5）
-- [ ] `ruff check .` 通过
-- [ ] `python scripts/init_db.py` 在 prod-path 应用 **`004_ingestion_sources`**（并保留 **`003_resource_guard_metrics`**）且二次幂等
-- [ ] `source_registry.yaml` 可被加载且 DB sync 行数 ≥ 1
-- [ ] `FetchLogWriter` 对 SUCCESS 与 NETWORK_ERROR 均落库
+- [x] `pytest -q` 全绿（**182** passed @ `ab8d1eb` · cov **93%**）
+- [x] `ruff check .` 通过
+- [x] `python scripts/init_db.py` 在 prod-path 应用 **`004_ingestion_sources`**（并保留 **`003_resource_guard_metrics`**）且二次幂等
+- [x] `source_registry.yaml` 可被加载且 DB sync 行数 ≥ 1（prod-path **5 rows** @ `data/`）
+- [x] `FetchLogWriter` 对 SUCCESS 与 NETWORK_ERROR 均落库
+- [x] GPT 审计 **P0-1** `SourceMismatchError` 阻断（prod-path 冒烟 + 单测）
+
+---
+
+## 9. Batch A 未完整实现 / 延后偿还登记（GPT 复审 @ `ab8d1eb`）
+
+> **规则：** 下列项已在代码/contract/docstring 中 **显式标注**，不得 silent override。变更偿还批次须先更新本表。
+
+| ID | 未完整实现 | 当前缓解 | **建议修复阶段** | 权威文档 |
+|----|-----------|----------|------------------|----------|
+| **GPT-P1-5-DB** | `fetch_log` / `source_registry` 缺 DB 层 CHECK / NOT NULL | Pydantic `FetchResult` + `FetchLogWriter._validate_for_persist` 应用层双保险 | **Batch C 前** — migration `005_*` 追加约束（勿改已应用的 004） | 本表 · `fetch_log.py` |
+| **GPT-P2-2** | YAML 删除的 source 在 DB 中残留（`sync_to_db` 仅 UPSERT，不 tombstone） | `sync_to_db` docstring 声明行为 | **Batch D** — Orchestrator 引入 `registry_generation` / `removed_from_yaml_at` 或 disabled 策略 | `source_registry.py` · Batch D 014 |
+| **GPT-init_db** | `scripts/init_db.py` 只跑 migration，不调用 `SourceRegistry.sync_to_db()` | 测试 + 手工/prod 脚本覆盖 sync | **Batch D** — 与 Orchestrator 启动钩子一并接入；或 Batch B 末增加可选 `scripts/sync_registry.py` | DECISIONS §8 · Execute eval |
+| **GPT-P3-6** | ResourceGuard + ingestion 交叉 smoke | Round 1 ResourceGuard 独立测试 | **Batch D** — DataSyncOrchestrator smoke（MASTER §8.6） | `adversarial-audit-remediation.md` P3-6 |
+| **GPT-staging-DB** | SUCCESS 不校验 DuckDB 内 staging 表是否存在 | `FetchResult` 字段级证据 + Batch A fixture | **Batch C** — DataQualityValidator 读 staging / raw 证据 | MASTER §8.6 · contract Batch A note |
+| **GPT-NOT-PUBLISHED** | `NOT_PUBLISHED_YET` 第 8 态未纳入 contract | 测试 intentionally excluded | **Batch B+** — vendor adapter 真实 publish 语义 | `test_data_adapter_contract.py` 注释 |
+| **GPT-SEC-CI** | 无 gitleaks / `.cursor/hooks` 静态安全扫描 | 文档化信任边界 `docs/ops/agent_workflow_boundaries.md` | **Batch B 并行** — CI 硬化 sprint（非 Batch A 阻塞） | Round 1 repair backlog 同类 |
+| **A2-shrink** | ~10 行 optional inline（FetchStatus 别名等） | MASTER §6 冻结符号名 | **Info** — 可选 Repair，非阻塞 | audit.report §4.3 |
+
+### Batch A 验收命令（GPT §十二 · 2026-06-17 复跑 @ `ab8d1eb`）
+
+```text
+pytest -q --cov=backend --cov-fail-under=75  → 182 passed, 93% cov, exit 0
+ruff check .                                  → All checks passed
+python -m compileall -q backend scripts tests → exit 0
+QMD_DATA_ROOT=data python scripts/ci_ingestion_smoke.py → ok (init_db ×2 幂等, 004, 两表)
+SourceRegistry.load + sync_to_db @ data/      → 5 rows
+SourceMismatchError prod smoke                → 0 fetch_log on mismatch
+```

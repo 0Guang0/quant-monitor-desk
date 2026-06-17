@@ -46,6 +46,8 @@ error_message: string|null
 Batch A enforces FetchResult evidence **fields** and FakeAdapter/fixture evidence only.
 Real raw file creation and FileRegistry linkage are deferred to Batch B vendor adapter skeletons.
 
+DB-level CHECK/NOT NULL on `fetch_log` columns are deferred to **Batch C前 migration 005**; until then Pydantic + `FetchLogWriter._validate_for_persist` enforce invariants.
+
 ### FetchResult business validation (Pydantic v2)
 
 - `row_count >= 0`
