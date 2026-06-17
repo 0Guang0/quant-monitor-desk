@@ -1,6 +1,6 @@
 ---
 name: trellis-check
-description: "Comprehensive quality verification: spec compliance, lint, type-check, tests, cross-layer data flow, code reuse, and consistency checks. Use when code is written and needs quality verification, before committing changes, or to catch context drift during long sessions."
+description: "Audit A1 and simple-task Execute quality verification. Do NOT use during complex-task Execute (use Audit per AUDIT.plan.md instead). See execute-skill-registry.md."
 ---
 
 # Code Quality Check

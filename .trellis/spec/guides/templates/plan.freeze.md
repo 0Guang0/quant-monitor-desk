@@ -13,7 +13,7 @@
 | 3 | grill-me / interview-me | §7 | [ ] |
 | 4 | brainstorming / api-and-interface-design | §4–6 | [ ] |
 | 5a–5c | breakdown + writing-plans + trellis-before-dev | §8、jsonl | [ ] |
-| **5d** | **doubt-driven-development** | §7/§8/§12、**AUDIT §1/§2** 修订 | [ ] |
+| **5d** | **doubt-driven-development** | §7/§8/§12、**AUDIT §1/§2** 修订；**§8 无完整测试函数体**（仅 tracer + research/） | [ ] |
 
 ---
 
@@ -83,9 +83,23 @@
 
 - [ ] implement.jsonl 第一条 = MASTER
 - [ ] check.jsonl 供 A1；无 Plan 协议
-- [ ] validate 通过
+- [ ] `validate 通过`
 
-### 3.5 批准
+### 3.6 validate-plan-freeze（机器门禁）
+
+`task.py start` 前须 exit 0（失败则禁止 `planning → in_progress`，可用 `--force` 人工 override）：
+
+```bash
+python .trellis/scripts/task.py validate-plan-freeze .trellis/tasks/<slug>
+```
+
+**粘贴最近一次输出（Plan agent 填写）：**
+
+```text
+(paste exit 0 output or N/A if task predates validator)
+```
+
+### 3.7 批准
 
 - [ ] 用户「计划批准」→ `task.py start`
 

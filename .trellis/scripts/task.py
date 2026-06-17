@@ -61,6 +61,8 @@ from common.task_context import (
     cmd_validate,
     cmd_list_context,
 )
+from common.validate_plan_freeze import cmd_validate_plan_freeze, validate_plan_freeze
+from common.validate_execute_handoff import cmd_validate_execute_handoff
 
 
 # =============================================================================
@@ -84,13 +86,24 @@ def cmd_start(args: argparse.Namespace) -> int:
         print("Hint: Use task name (e.g., 'my-task') or full path (e.g., '.trellis/tasks/01-31-my-task')")
         return 1
 
+    task_json_path = full_path / FILE_TASK_JSON
+    task_data = read_json(task_json_path) if task_json_path.is_file() else None
+    if (full_path / "MASTER.plan.md").is_file() and task_data and task_data.get("status") == "planning":
+        freeze_errors = validate_plan_freeze(full_path, repo_root)
+        if freeze_errors:
+            print(colored("Plan freeze validation failed (task.py start blocked):", Colors.RED))
+            for err in freeze_errors:
+                print(f"  - {err}")
+            if not getattr(args, "force", False):
+                print(colored("Fix plan artifacts or pass --force to override.", Colors.YELLOW))
+                return 1
+            print(colored("Continuing with --force", Colors.YELLOW))
+
     # Convert to relative path for storage
     try:
         task_dir = full_path.relative_to(repo_root).as_posix()
     except ValueError:
         task_dir = str(full_path)
-
-    task_json_path = full_path / FILE_TASK_JSON
 
     if not resolve_context_key():
         # Degraded mode: no session identity available.
@@ -414,9 +427,29 @@ def main() -> int:
     p_listctx = subparsers.add_parser("list-context", help="List context entries")
     p_listctx.add_argument("dir", help="Task directory")
 
+    # validate-plan-freeze
+    p_vfreeze = subparsers.add_parser(
+        "validate-plan-freeze", help="Validate MASTER/AUDIT/plan.freeze before start"
+    )
+    p_vfreeze.add_argument("dir", help="Task directory")
+    p_vfreeze.add_argument(
+        "--force", action="store_true", help="Report errors but exit 0"
+    )
+
+    # validate-execute-handoff
+    p_vhandoff = subparsers.add_parser(
+        "validate-execute-handoff", help="Validate Execute §11 handoff to Audit"
+    )
+    p_vhandoff.add_argument("dir", help="Task directory")
+
     # start
     p_start = subparsers.add_parser("start", help="Set active task")
     p_start.add_argument("dir", help="Task directory")
+    p_start.add_argument(
+        "--force",
+        action="store_true",
+        help="Start despite plan freeze validation failures (complex tasks)",
+    )
 
     # current
     p_current = subparsers.add_parser("current", help="Show active task")
@@ -475,6 +508,8 @@ def main() -> int:
         "create": cmd_create,
         "add-context": cmd_add_context,
         "validate": cmd_validate,
+        "validate-plan-freeze": cmd_validate_plan_freeze,
+        "validate-execute-handoff": cmd_validate_execute_handoff,
         "list-context": cmd_list_context,
         "start": cmd_start,
         "current": cmd_current,

@@ -410,6 +410,12 @@ def _get_task_status(trellis_dir: Path, input_data: dict) -> str:
         f"Present: {present_line}\n"
         "Next-Action: Follow the matching per-turn workflow-state. "
         "Implementation/check context order is jsonl entries -> `prd.md` -> `design.md if present` -> `implement.md if present`."
+        + (
+            "\nExecute-Gate: MASTER present — strict §8.x RED→GREEN evidence loop; "
+            "read §12 Skills; no trellis-check; validate-execute-handoff before Audit."
+            if task_status == "in_progress" and (task_dir / "MASTER.plan.md").is_file()
+            else ""
+        )
     )
 
 

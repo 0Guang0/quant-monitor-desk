@@ -259,7 +259,7 @@ Trellis 命令与 hook 细节见 `.trellis/workflow.md`；`task.py start` = Plan
 | 顺序 | Skill | 产出 |
 | --- | --- | --- |
 | 5a | planning-and-task-breakdown（addy） | MASTER §8 依赖与切片 |
-| 5b | writing-plans（Superpowers） | MASTER §8 逐步 + 验证命令 |
+| 5b | writing-plans（Superpowers） | MASTER §8 逐步 + **RED/GREEN 命令与证据列**（**禁止**内嵌完整测试；放 `research/`） |
 | 5c | trellis-before-dev | MASTER §5–6；`implement.jsonl` / `check.jsonl` |
 | **5d** | **doubt-driven-development**（addy，**必做**，主会话） | 对抗审查 §6–8；修订 MASTER §7/§8/§12 + **AUDIT §1/§2**；记录 **plan.freeze.md** |
 
@@ -274,14 +274,14 @@ Trellis 命令与 hook 细节见 `.trellis/workflow.md`；`task.py start` = Plan
    - **人工：** 将 §2 中所有 `{{}}` 换成本任务真实命令/路径（见 AUDIT 模板 **§2.1**）；无性能要求则 A6 按 **§2.2** 写 SKIP，勿留 perf 占位
 5. 填写 **`plan.freeze.md`**（含 **§3.0 双契约 one-pager** 全勾）
 6. `implement.jsonl` 第一条 = MASTER（**勿**含 AUDIT / plan.freeze）
-7. plan.freeze §3 全勾 → 用户批准 → `task.py start`
+7. plan.freeze §3 全勾 → **`task.py validate-plan-freeze`** exit 0 → 用户批准 → `task.py start`
 
 ### Phase 6 — Execute
 
 | 步骤 | 执行者 | 内容 |
 |------|--------|------|
 | **6.pre** | **主会话或 Execute** | GitNexus/CodeGraph 刷新 → `research/gitnexus-execute-summary.md` |
-| 6.x | Execute | MASTER + implement.jsonl；§8 证据、§9/§10；§11 交接 Audit |
+| 6.x | Execute | MASTER §0.1 逐步循环 + implement.jsonl；§8 RED/GREEN 证据、§9/§10；`validate-execute-handoff`；§11 交接 Audit |
 
 **6.pre：** 聚焦 implement.jsonl 触点；Execute 读摘要 + 至少 1 次 GitNexus/CodeGraph 查询；`analysis_waiver` 可豁免。
 
@@ -441,6 +441,8 @@ audit.report §5 PASS + 无未关 §4.3 → trellis-update-spec → archive → 
 > 逐项勾选：**`plan.freeze.md` §3**（**§3.0 one-pager** 优先扫）
 
 - [ ] MASTER **§0.1 门控** + §8–§12、§9 四层必做、§10 Tier 含 B/C prod-path
+- [ ] **§8 每步含 RED/GREEN 命令与证据列**；完整测试正文在 `research/`，不在 MASTER
+- [ ] **`python .trellis/scripts/task.py validate-plan-freeze <dir>`** exit 0
 - [ ] **AUDIT.plan.md §1** Skill + **§2 维度验证矩阵**（A1–A8；**§2 无 `{{}}`** 或 A6 已 §2.2 SKIP）
 - [ ] **Plan 人工：** AUDIT §2 占位已按真实任务替换；无 perf 则 A6 SKIP（见 `plan.freeze.md` §2.5）
 - [ ] Repair 模板路径已知（Audit 后按需生成 REPAIR.plan.md）

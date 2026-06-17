@@ -134,7 +134,22 @@ _SEED_EXAMPLE = (
     "Fill with {\"file\": \"<path>\", \"reason\": \"<why>\"}. "
     "Put spec/research files only — no code paths. "
     "Run `python .trellis/scripts/get_context.py --mode packages` to list available specs. "
-    "Delete this line once real entries are added."
+    "Delete this _example line once real entries are added."
+)
+
+_IMPLEMENT_JSONL_HINTS: tuple[dict[str, str], ...] = (
+    {
+        "file": ".trellis/spec/guides/execute-skill-registry.md",
+        "reason": "Execute Skill 路由 + User Rule 映射（Plan 5c 后 Execute 必读）",
+    },
+    {
+        "file": "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md",
+        "reason": "testing-guidelines 仓库内对照（User Rule）",
+    },
+    {
+        "file": "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md",
+        "reason": "karpathy-guidelines 仓库内对照（最小改动 / 可验证）",
+    },
 )
 
 
@@ -152,14 +167,17 @@ def _has_subagent_platform(repo_root: Path) -> bool:
 
 
 def _write_seed_jsonl(path: Path) -> None:
-    """Write a one-line seed JSONL file with a self-describing ``_example``.
+    """Write seed JSONL with curator hints.
 
-    The seed row has no ``file`` field, so downstream consumers (hooks +
-    preludes) that iterate entries via ``item.get("file")`` naturally skip
-    it. The row exists purely as an in-file prompt for the AI curator.
+    The ``_example`` row has no ``file`` field, so downstream consumers skip it.
     """
-    seed = {"_example": _SEED_EXAMPLE}
-    path.write_text(json.dumps(seed, ensure_ascii=False) + "\n", encoding="utf-8")
+    rows: list[dict[str, str]] = [{"_example": _SEED_EXAMPLE}]
+    if path.name == "implement.jsonl":
+        rows.extend(_IMPLEMENT_JSONL_HINTS)
+    path.write_text(
+        "\n".join(json.dumps(row, ensure_ascii=False) for row in rows) + "\n",
+        encoding="utf-8",
+    )
 
 
 def _default_prd_content(title: str, description: str | None = None) -> str:

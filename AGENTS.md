@@ -18,12 +18,24 @@ If you're using Codex or another agent-capable tool, additional project-scoped h
 
 Managed by Trellis. Edits outside this block are preserved; edits inside may be overwritten by a future `trellis update`.
 
+## Execute gate (complex tasks with `MASTER.plan.md`)
+
+When the active task status is `in_progress` and the task directory contains `MASTER.plan.md`:
+
+1. Read **MASTER §0.1** step protocol and **§12** Skill table before coding.
+2. Execute **one §8.x step at a time**: RED (must FAIL) → evidence → GREEN (must PASS) → evidence → `[x]`.
+3. Read **karpathy-guidelines** and **testing-guidelines** (User Rules; also listed in MASTER §12).
+4. Run GitNexus **`impact()`** before editing symbols; **`detect_changes()`** before commit.
+5. Do **not** run `trellis-check` during Execute — Audit Phase 7 / A1 replaces it.
+6. Before §11 Audit handoff: `python .trellis/scripts/task.py validate-execute-handoff <task-dir>`.
+7. Do **not** `finish-work` until Audit PASS.
+
 <!-- TRELLIS:END -->
 
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **quant-monitor-desk** (2231 symbols, 2688 relationships, 18 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **quant-monitor-desk** (2461 symbols, 3097 relationships, 25 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > Index stale? Run `node .gitnexus/run.cjs analyze` from the project root — it auto-selects an available runner. No `.gitnexus/run.cjs` yet? `npx gitnexus analyze` (npm 11 crash → `npm i -g gitnexus`; #1939).
 

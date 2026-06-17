@@ -75,7 +75,7 @@
 
 ### 3.4 批准
 
-- [ ] **用户「计划批准」** → `task.py start`
+- [x] **用户「计划批准」** → `task.py start`
 - [x] 6.pre GitNexus + CodeGraph 刷新 → `gitnexus-execute-summary.md`
 - [x] 三轮对抗审计 remediation → `adversarial-audit-remediation.md` + MASTER v1.3
 

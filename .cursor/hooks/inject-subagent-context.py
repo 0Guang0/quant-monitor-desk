@@ -278,9 +278,10 @@ def get_implement_context(repo_root: str, task_dir: str) -> str:
 
     Read order:
     1. All files in implement.jsonl (spec/research manifests)
-    2. prd.md (requirements)
-    3. design.md if present (technical design)
-    4. implement.md if present (execution plan)
+    2. MASTER.plan.md (complex tasks — always when present)
+    3. prd.md (requirements)
+    4. design.md if present (technical design)
+    5. implement.md if present (execution plan index)
     """
     context_parts = []
 
@@ -288,6 +289,13 @@ def get_implement_context(repo_root: str, task_dir: str) -> str:
     base_context = get_agent_context(repo_root, task_dir, "implement")
     if base_context:
         context_parts.append(base_context)
+
+    master_content = read_file_content(repo_root, f"{task_dir}/MASTER.plan.md")
+    if master_content:
+        context_parts.append(
+            f"=== {task_dir}/MASTER.plan.md (Execute contract — §0.1 + §8 step protocol + §12) ===\n"
+            f"{master_content}"
+        )
 
     # 2. Requirements document
     prd_content = read_file_content(repo_root, f"{task_dir}/prd.md")
@@ -350,6 +358,17 @@ def get_finish_context(repo_root: str, task_dir: str) -> str:
 
 def build_implement_prompt(original_prompt: str, context: str) -> str:
     """Build complete prompt for Implement"""
+    step_protocol = """
+## Execute Step Protocol (MASTER complex tasks)
+
+1. Work **one MASTER §8.x step at a time** — RED command (must FAIL) → save RED evidence → GREEN (must PASS) → save GREEN evidence → mark [x].
+2. Read MASTER §12 Skill row for each step before coding.
+3. Follow User Rules listed in MASTER §12: karpathy-guidelines, testing-guidelines.
+4. Run GitNexus `impact()` before editing any function/class/method.
+5. Do **not** run trellis-check; Audit replaces check for complex tasks.
+6. Before reporting handoff: `python .trellis/scripts/task.py validate-execute-handoff <task-dir>`.
+7. Do **not** paste/implement entire §8 test files in one pass — vertical slices only.
+"""
     return f"""<!-- trellis-hook-injected -->
 # Implement Agent Task
 
@@ -360,6 +379,8 @@ You are the Implement Agent in the Multi-Agent Pipeline.
 All the information you need has been prepared for you:
 
 {context}
+
+{step_protocol}
 
 ---
 
@@ -372,15 +393,15 @@ All the information you need has been prepared for you:
 ## Workflow
 
 1. **Understand specs** - All dev specs are injected above, understand them
-    2. **Understand task artifacts** - Read requirements, technical design if present, and execution plan if present
-    3. **Implement feature** - Implement following specs and task artifacts
-4. **Self-check** - Ensure code quality against check specs
+2. **Understand task artifacts** - MASTER §0.1 + **current §8 step only**; prd.md for AC
+3. **Implement feature** - RED → GREEN → evidence per step
+4. **Self-check** - Lint/tests per step; validate-execute-handoff before handoff
 
 ## Important Constraints
 
 - Do NOT execute git commit, only code modifications
 - Follow all dev specs injected above
-- Report list of modified/created files when done"""
+- Report list of modified/created files and evidence paths when done"""
 
 
 def build_check_prompt(original_prompt: str, context: str) -> str:

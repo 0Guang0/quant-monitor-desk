@@ -1030,20 +1030,22 @@ $env:QMD_DATA_ROOT="data"; pytest -q
 
 ## 11. Execute 交接
 
-- [ ] §8 证据 + §10 勾 + §12 勾
-- [ ] **交接 Audit**（勿 finish-work）
+- [x] §8 证据 + §10 勾 + §12 勾 — 见 [`research/execute-red-evidence-and-guidelines.md`](research/execute-red-evidence-and-guidelines.md)
+- [x] **交接 Audit**（勿 finish-work）
 
 ---
 
 ## 12. Execute Skill
 
-| Skill | 本任务 | 绑定 | 已执行 |
-|-------|--------|------|--------|
-| test-driven-development | 必做 | §8.0–8.4 | [ ] |
-| incremental-implementation | 必做 | §8.x 顺序 | [ ] |
-| source-driven-development | 条件 | §8.1 SQL | [ ] |
-| systematic-debugging | 条件 | RED | [ ] |
-| trellis-implement | 必做 | Execute | [ ] |
+| Skill | 本任务 | 绑定 | 证据 | 已执行 |
+|-------|--------|------|------|--------|
+| test-driven-development | 必做 | §8.0–8.4 | [`execute-red-evidence-and-guidelines.md`](research/execute-red-evidence-and-guidelines.md) | [x] |
+| incremental-implementation | 必做 | §8.x 顺序 | 同上 §2 | [x] |
+| source-driven-development | 条件 | §8.1 SQL | 同上 §3 | [x] |
+| systematic-debugging | 条件 | RED | 同上 §2.4（cm.close） | [x] |
+| trellis-implement | 必做 | Execute | [`execute-skill-evaluation.md`](research/execute-skill-evaluation.md) | [x] |
+| karpathy-guidelines | 必做 · User Rule | 全程 | execute-red-evidence §3 | [x] |
+| testing-guidelines | 必做 · User Rule | 8.x 测试 | execute-red-evidence §4 | [x] |
 
 **Audit → `AUDIT.plan.md`**
 

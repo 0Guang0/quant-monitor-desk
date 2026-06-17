@@ -15,7 +15,7 @@
 
 ## Requirements
 
-1. migration 003：`source_registry` + `fetch_log`
+1. migration **004**（`004_ingestion_sources.sql`）：`source_registry` + `fetch_log`（003 = `resource_guard_metrics`）
 2. YAML 加载 + Primary/Validation/FallbackPolicy；拒绝 Shadow/Emergency
 3. FetchRequest/FetchResult 符合 `data_adapter_contract.md`
 4. 失败 fetch 也必须写 `fetch_log`
