@@ -46,6 +46,30 @@ def test_load_yamlWithEmergencyRole_raisesLegacyRoleError(bad_emergency_yaml):
         reg.load()
 
 
+def test_load_yamlWithTopLevelShadowSource_raisesLegacyRoleError(
+    bad_top_level_shadow_source_yaml,
+):
+    reg = SourceRegistry(bad_top_level_shadow_source_yaml)
+    with pytest.raises(LegacyRoleError, match="shadow_source"):
+        reg.load()
+
+
+def test_load_yamlWithTopLevelEmergencySource_raisesLegacyRoleError(
+    bad_top_level_emergency_source_yaml,
+):
+    reg = SourceRegistry(bad_top_level_emergency_source_yaml)
+    with pytest.raises(LegacyRoleError, match="emergency_source"):
+        reg.load()
+
+
+def test_load_primaryDomainNotInAllowedDomains_raises(
+    bad_primary_domain_mismatch_yaml,
+):
+    reg = SourceRegistry(bad_primary_domain_mismatch_yaml)
+    with pytest.raises(InvalidRegistryError, match="does not allow domain"):
+        reg.load()
+
+
 def test_load_primaryUnknownLicense_raises(bad_unknown_license_primary_yaml):
     reg = SourceRegistry(bad_unknown_license_primary_yaml)
     with pytest.raises(InvalidRegistryError):

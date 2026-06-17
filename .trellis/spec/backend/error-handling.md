@@ -20,6 +20,19 @@ Questions to answer:
 
 ---
 
+### SourceRegistry loader validation (Batch A)
+
+**Load-time checks in `_validate_domain_roles`:**
+
+- Primary source must exist, be enabled, and not have `license_type: unknown`
+- Primary `allowed_domains` must include the bound `data_domain`
+- Top-level YAML keys `shadow_source` / `emergency_source` → `LegacyRoleError`
+- Role fields `Shadow` / `Emergency` → `LegacyRoleError`
+
+**Tests:** `tests/test_source_registry.py` + `tests/fixtures/bad_*.yaml`
+
+---
+
 ## Error Types
 
 <!-- Custom error classes/types -->

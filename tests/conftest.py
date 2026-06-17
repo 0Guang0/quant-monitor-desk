@@ -30,6 +30,21 @@ def bad_emergency_yaml() -> Path:
 
 
 @pytest.fixture
+def bad_top_level_shadow_source_yaml() -> Path:
+    return FIXTURES / "bad_top_level_shadow_source.yaml"
+
+
+@pytest.fixture
+def bad_top_level_emergency_source_yaml() -> Path:
+    return FIXTURES / "bad_top_level_emergency_source.yaml"
+
+
+@pytest.fixture
+def bad_primary_domain_mismatch_yaml() -> Path:
+    return FIXTURES / "bad_primary_domain_mismatch.yaml"
+
+
+@pytest.fixture
 def bad_unknown_primary_yaml() -> Path:
     return FIXTURES / "bad_unknown_primary.yaml"
 

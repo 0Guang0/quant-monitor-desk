@@ -23,6 +23,15 @@ CONTRACT_STATUSES = [
     "SCHEMA_DRIFT",
     "FAILED",
 ]
+ERROR_TYPE_BY_STATUS = {
+    "SUCCESS": None,
+    "EMPTY_RESPONSE": "empty",
+    "AUTH_FAILED": "auth",
+    "RATE_LIMITED": "rate_limit",
+    "NETWORK_ERROR": "network",
+    "SCHEMA_DRIFT": "schema",
+    "FAILED": "failed",
+}
 # NOT_PUBLISHED_YET: Batch B+ only (data_sources.md §5.7) — intentionally excluded
 
 
@@ -79,6 +88,26 @@ def test_write_failedResult_stillPersists(tmp_path, migrated_con, network_error_
         "SELECT status, error_type FROM fetch_log WHERE fetch_id=?", [fetch_id]
     ).fetchone()
     assert row[0] == "NETWORK_ERROR" and row[1] == "network"
+
+
+@pytest.mark.parametrize("status", CONTRACT_STATUSES)
+def test_write_allContractStatuses_mapsErrorType(tmp_path, migrated_con, status):
+    con = migrated_con(tmp_path)
+    result = FetchResult(
+        run_id="run-1",
+        source_id="baostock",
+        data_domain="market_bar_1d",
+        status=status,
+        row_count=0 if status != "SUCCESS" else 1,
+        fetch_time="2026-06-17T10:00:00Z",
+        error_message="err" if status != "SUCCESS" else None,
+    )
+    fetch_id = FetchLogWriter().write(con, result)
+    row = con.execute(
+        "SELECT status, error_type FROM fetch_log WHERE fetch_id=?", [fetch_id]
+    ).fetchone()
+    assert row[0] == status
+    assert row[1] == ERROR_TYPE_BY_STATUS[status]
 
 
 def test_write_closedConnection_propagates(tmp_path, migrated_con, success_result):

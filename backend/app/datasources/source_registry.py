@@ -212,6 +212,11 @@ class SourceRegistry:
                 raise InvalidRegistryError(
                     f"domain_roles.{data_domain}.primary {primary_id!r} has license_type unknown"
                 )
+            if data_domain not in primary.allowed_domains:
+                raise InvalidRegistryError(
+                    f"domain_roles.{data_domain}.primary {primary_id!r} "
+                    f"does not allow domain {data_domain!r}"
+                )
             if binding.validation_source_id is not None:
                 vid = binding.validation_source_id
                 if vid not in self._sources:

@@ -1,75 +1,47 @@
-# GitNexus Audit 摘要 — Round 2 Batch A（7.pre）
+# GitNexus Audit Summary — Batch A Re-Audit (2026-06-17 round 2)
 
-> **日期：** 2026-06-17  
-> **任务：** `06-17-round2-batch-a-sources`  
-> **用途：** A1–A8 派发前只读索引；Execute 摘要见 `gitnexus-execute-summary.md`（若存在）
+> **7.pre** · 主会话刷新 · 审计对象 commit `ee48187`（feat round2 Batch A）
 
----
+## Index freshness
 
-## 1. 刷新命令
+- MCP `query` + `context` on `SourceRegistry`, `BaseDataAdapter` — 2026-06-17
+- Repo: quant-monitor-desk
 
-| 工具 | 命令 / MCP | 状态 |
-|------|------------|------|
-| GitNexus query | `query("SourceRegistry BaseDataAdapter fetch_log apply_migrations ingestion")` | ✅ |
-| GitNexus context | `context(SourceRegistry)` | ✅ |
-| GitNexus context | `context(BaseDataAdapter, file_path=base_adapter.py)` | ⚠️ 部分（LadybugDB 偶发未初始化） |
-| GitNexus context | `context(apply_migrations)` | ✅ |
+## Scope (Batch A)
 
-**Execute 后索引：** §8.4 完成后建议 `node .gitnexus/run.cjs analyze`（MASTER §0.1 P3-2）。
+| 模块 | 路径 | 角色 |
+|------|------|------|
+| SourceRegistry | `backend/app/datasources/source_registry.py` | YAML 加载、域角色、DB sync |
+| BaseDataAdapter | `backend/app/datasources/base_adapter.py` | 模板方法 fetch + fetch_log |
+| FetchLogWriter | `backend/app/datasources/fetch_log.py` | 参数化 INSERT |
+| FetchResult | `backend/app/datasources/fetch_result.py` | Pydantic 契约 |
+| Migration 004 | `backend/app/db/migrations/004_ingestion_sources.sql` | source_registry + fetch_log 表 |
 
----
+## GitNexus dependency graph
 
-## 2. 命中文件（query 定义）
+**SourceRegistry importers:** `__init__.py`, `base_adapter.py`, `conftest.py`, `test_source_registry.py`, `test_data_adapter_contract.py`
 
-| 路径 | 角色 |
-|------|------|
-| `backend/app/datasources/source_registry.py` | SourceRegistry |
-| `backend/app/datasources/base_adapter.py` | BaseDataAdapter 模板 |
-| `backend/app/datasources/fetch_log.py` | FetchLogWriter |
-| `backend/app/datasources/fetch_result.py` | FetchRequest/FetchResult |
-| `backend/app/db/migrations/004_ingestion_sources.sql` | migration 004 |
-| `tests/test_source_registry.py` | registry 测试 |
-| `tests/test_data_adapter_contract.py` | adapter 契约测试 |
-| `tests/test_schema_migration.py` | 004 migration 回归 |
-| `tests/test_schema_contract.py` | 两表列契约 |
-| `scripts/init_db.py` | prod-path CLI |
+**BaseDataAdapter extenders (tests only):** FakeAdapter, ExplodingAdapter, WrongSourceAdapter, NarrowDomainAdapter, EmptyAdapter — 无生产 adapter 子类 yet（Batch B）
 
----
+**Blast radius:** 修改 SourceRegistry/BaseDataAdapter 影响全部 registry + contract 测试；无 WriteManager 依赖（A3 必查）
 
-## 3. SourceRegistry（context）
+## Audit focus (from AUDIT.plan §6)
 
-**Importers：** `test_source_registry.py`, `test_data_adapter_contract.py`, `conftest.py`, `__init__.py`, `base_adapter.py`
+1. LegacyRoleError — Shadow/Emergency 拒绝
+2. fetch 失败/异常仍写 fetch_log（模板方法不变量）
+3. Adapter 层不写 clean DB（无 WriteManager）
+4. `_resolve_registry_path` — YAML 须在 PROJECT_ROOT 下（上轮 Repair SEC-A3-1）
+5. disabled source / domain-not-allowed 拒绝路径
 
-**Methods：** `load`, `get`, `get_domain_roles`, `assert_enabled`, `assert_domain_allowed`, `sync_to_db`, `_validate_domain_roles`
+## Baseline (主会话 pre-flight)
 
-**Processes：** （索引未分组 process；A1 可补 query）
+- `pytest -q` → **163 passed** (2026-06-17 re-audit start)
+- Commit: `ee48187 feat(round2): Batch A source registry and adapter contract`
 
----
+## Sub-agent instructions
 
-## 4. apply_migrations（context）
-
-**Callers（节选）：** `init_db.main`, `conftest._open`, `test_schema_migration`（含 **004 ingestion** 用例）, `test_data_adapter_contract.test_write_underWriterLock_insertsFetchLogRow`, Round 1 测试集
-
-**Callees：** `_file_checksum`, `applied_versions`, `verify_applied_checksums`
-
-**Processes：** `_open → _file_checksum`, `main → applied_versions`
-
----
-
-## 5. Audit 关注点（§2 映射）
-
-| 维 | GitNexus 建议 query/context |
-|----|----------------------------|
-| A1 | SourceRegistry + DECISIONS §4；check.jsonl 对照 |
-| A2 | diff `backend/app/datasources/`（ponytail-review） |
-| A3 | 静态 grep WriteManager（期望无） |
-| A4 | base_adapter + fetch_log 模板方法 |
-| A5 | AC-1..8 ↔ §8 测试名 |
-| A7 | init_db → apply_migrations → 004 表 |
-| A8 | pytest Red Flags 边界 |
-
----
-
-## 6. Ghost 依赖初筛
-
-Batch A 模块 import 应限于：`duckdb`, `pydantic`, `yaml`, 项目内 `connection`/`sql_identifiers`。**A1 须确认无未文档化 vendor SDK。**
+- Read `AUDIT.plan.md` §2 for your dimension
+- Read `docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/DECISIONS.md`
+- Read `check.jsonl` manifest (A1)
+- A7/A8: use `.audit-sandbox/` isolation
+- Return: PASS/FAIL + evidence + §4.3 items if any
