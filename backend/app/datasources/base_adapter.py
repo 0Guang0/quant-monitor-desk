@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from datetime import UTC, datetime
+from time import perf_counter
 
 from backend.app.datasources.exceptions import SourceMismatchError
 from backend.app.datasources.fetch_log import FetchLogWriter
@@ -42,6 +43,7 @@ class BaseDataAdapter(ABC):
                 f"adapter {self.source_id!r} does not support domain {req.data_domain!r}"
             )
         try:
+            started = perf_counter()
             result = self._fetch_impl(req)
         except Exception as exc:
             result = FetchResult(
@@ -53,7 +55,11 @@ class BaseDataAdapter(ABC):
                 error_message=str(exc),
             )
         else:
-            result = result.model_copy(update={"source_id": self.source_id})
+            elapsed_ms = int((perf_counter() - started) * 1000)
+            updates: dict = {"source_id": self.source_id}
+            if result.latency_ms is None:
+                updates["latency_ms"] = elapsed_ms
+            result = result.model_copy(update=updates)
 
         self._log_writer.write(
             con,

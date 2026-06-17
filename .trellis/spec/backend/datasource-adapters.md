@@ -25,9 +25,11 @@ def create_adapter(
     fetch_port: FetchPort | None = None,
     file_registry: FileRegistry | None = None,
 ) -> BaseDataAdapter
+
+def create_test_adapter(...) -> BaseDataAdapter  # tests only; default StubFetchPort
 ```
 
-`PortError(status: PortErrorStatus, message: str)` — six failure literals aligned 1:1 with `FetchResult.status` failure states (not `SUCCESS`).
+`PortError(status: PortErrorStatus, message: str)` — failure literals aligned 1:1 with `FetchResult.status` (incl. `NOT_PUBLISHED_YET`).
 
 ### 3. Contracts
 
@@ -35,11 +37,14 @@ def create_adapter(
 |--------------|------------|
 | `FetchPayload.content` | Raw bytes written via `RawStore.save` on SUCCESS |
 | `FetchPayload.file_type` | Passed to RawStore (default `"json"`) |
-| SUCCESS `FetchResult` | `row_count=1`, `raw_file_paths`, `content_hash`, `as_of_timestamp` |
-| Failure `FetchResult` | `row_count=0`, `error_message` required; no raw paths for `EMPTY_RESPONSE` |
-| FileRegistry (optional) | When injected, `register(saved)` after save; `local_path == raw_file_paths[0]` |
-| cninfo unpublished | `UnpublishedPort` → `EMPTY_RESPONSE` + business message (not a new FetchStatus literal) |
-| Default port | `StubFetchPort(payload=b"{}")` when `fetch_port=None` |
+| `FetchPayload.row_count` | Optional; defaults to 1 on SUCCESS |
+| `FetchPayload.schema_hash` | Optional; JSON dict keys fingerprint when omitted |
+| SUCCESS `FetchResult` | `raw_file_paths`, `content_hash`, `schema_hash?`, `latency_ms?` |
+| Failure `FetchResult` | `row_count=0`; no raw for `EMPTY_RESPONSE` / `NOT_PUBLISHED_YET` |
+| FileRegistry | **Required** in `create_adapter()`; optional in direct skeleton tests |
+| cninfo unpublished | `UnpublishedPort` → `NOT_PUBLISHED_YET` + business message |
+| Default port | **Forbidden** in `create_adapter()` — use `create_test_adapter()` in tests |
+| Payload size | `max_payload_bytes` default 10MB; oversized → `FAILED` before RawStore |
 
 **Environment:** `QMD_DATA_ROOT` → `RawStore` root (same as Batch A).
 
@@ -47,9 +52,10 @@ def create_adapter(
 
 | Condition | Result |
 |-----------|--------|
-| Unknown `source_id` in `create_adapter` | `KeyError` |
+| Unknown `source_id` in `create_adapter` | `AdapterNotSupportedError` |
+| Missing `fetch_port` / `file_registry` | `AdapterConfigurationError` |
 | `PortError(AUTH_FAILED, …)` | `FetchResult.status=AUTH_FAILED`, fetch_log `error_type=auth` |
-| `PortError(EMPTY_RESPONSE, …)` | `FetchResult.status=EMPTY_RESPONSE`, fetch_log `error_type=empty`, no raw file |
+| `PortError(NOT_PUBLISHED_YET, …)` | `FetchResult.status=NOT_PUBLISHED_YET`, fetch_log `error_type=not_published` |
 | `WriteManager` import in `adapters/` | **Forbidden** — use storage layer only via injected `RawStore` / `FileRegistry` |
 | Real HTTP in skeleton | **Forbidden** — inject `FetchPort` implementation in later batch |
 
@@ -57,9 +63,9 @@ def create_adapter(
 
 **Good:** Inject `StubFetchPort` in tests; assert disk file + hash + optional FileRegistry row.
 
-**Base:** `create_adapter("baostock", registry, data_root)` with default stub port → SUCCESS + minimal `{}` raw file.
+**Base:** `create_test_adapter("baostock", registry, data_root)` with default stub port.
 
-**Bad:** Import `WriteManager` in adapter module; add 8th `FetchStatus` for “not published”; bypass `BaseDataAdapter.fetch` for fetch_log.
+**Bad:** Call `create_adapter()` without `fetch_port` / `file_registry` (raises `AdapterConfigurationError`).
 
 ### 6. Tests Required
 
@@ -67,10 +73,10 @@ def create_adapter(
 |------------|------------------|
 | SUCCESS raw write | File exists; `content_hash == sha256_hex(payload)` |
 | FileRegistry | Row `local_path` matches `raw_file_paths[0]` |
-| PortError mapping | Parametrized 6 statuses → status + fetch_log `error_type` |
+| PortError mapping | Parametrized 7 statuses incl. `NOT_PUBLISHED_YET` |
 | QMT | AUTH_FAILED path + SUCCESS path |
-| cninfo | EMPTY_RESPONSE + message + fetch_log `empty` |
-| Factory | Unknown source raises; all five sources SUCCESS |
+| cninfo | `NOT_PUBLISHED_YET` + fetch_log `not_published` |
+| Factory | Config errors + `AdapterNotSupportedError` |
 
 ### 7. Wrong vs Correct
 
@@ -81,7 +87,8 @@ from backend.app.storage.write_manager import WriteManager  # in adapters/
 
 class MyAdapter(SkeletonAdapterBase):
     def _fetch_impl(self, req):
-        return FetchResult(..., status="NOT_PUBLISHED_YET", ...)  # 8th status
+        # 勿在 adapter 内直接构造 failure status — 应经 FetchPort 抛 PortError
+        return FetchResult(..., status="NOT_PUBLISHED_YET", ...)
 ```
 
 #### Correct
@@ -92,7 +99,7 @@ class CninfoAdapter(SkeletonAdapterBase):
     supported_domains = frozenset({"announcement"})
 
 # Test double:
-fetch_port=UnpublishedPort()  # → PortError(EMPTY_RESPONSE, "announcement not published yet")
+fetch_port=UnpublishedPort()  # → PortError(NOT_PUBLISHED_YET, ...)
 ```
 
 ---
@@ -105,10 +112,28 @@ fetch_port=UnpublishedPort()  # → PortError(EMPTY_RESPONSE, "announcement not 
 
 ---
 
+## Design Decision: 勿让 SkeletonAdapterBase 膨胀为上帝类
+
+**Decision（Batch C/D 前）：** `SkeletonAdapterBase` 只做编排 — FetchPort 调用、PortError 映射、RawStore/FileRegistry 写入、as_of 解析。不在基类内加解析、重试、限流、真实 SDK。
+
+**Batch C/D 扩展时拆分：**
+
+| 层 | 职责 |
+|----|------|
+| `FetchPort` | 网络 / SDK I/O |
+| `PayloadParser`（未来） | bytes → staging rows / metadata |
+| `EvidenceWriter`（未来） | RawStore + FileRegistry 组合 |
+| `*Adapter` | 只编排上述组件 |
+
+**Why:** 真实 adapter 若继续往基类堆逻辑，会破坏 Batch B 的 FetchPort 解耦；规矩写入 spec，实现延后 Batch C/D。
+
+---
+
 ## Anti-patterns
 
 | Don't | Why |
 |-------|-----|
 | Duplicate `_utc_now_iso` in skeleton | Import from `base_adapter` |
 | Thin `FailingPort` wrappers for one-off tests | Use `FailingPort(status, message)` directly |
-| Remove `UnpublishedPort` | MASTER §6.4 frozen semantic name for AC-10 |
+| Remove `UnpublishedPort` | Frozen semantic name for cninfo unpublished |
+| Call `create_adapter()` without explicit port/registry | Raises `AdapterConfigurationError` |

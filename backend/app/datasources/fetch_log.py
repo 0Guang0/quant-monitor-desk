@@ -12,6 +12,7 @@ from backend.app.datasources.fetch_result import FetchRequest, FetchResult, Fetc
 _ERROR_TYPE_MAP: dict[str, str | None] = {
     "SUCCESS": None,
     "EMPTY_RESPONSE": "empty",
+    "NOT_PUBLISHED_YET": "not_published",
     "AUTH_FAILED": "auth",
     "RATE_LIMITED": "rate_limit",
     "NETWORK_ERROR": "network",

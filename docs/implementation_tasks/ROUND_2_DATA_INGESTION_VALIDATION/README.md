@@ -27,6 +27,7 @@
 - `../GLOBAL_RESOURCE_LIMITS.md`
 - `../GLOBAL_TASK_TEMPLATE.md`
 - `./DECISIONS.md` — 本轮已确认决策（**先读**）
+- `./BATCH_B_REPAIR_STATUS.md` — Batch B GPT repair 与延后台账
 
 ## 任务清单
 
@@ -47,16 +48,25 @@
 - [x] fetch 失败仍写 fetch_log
 - [x] GPT P0 `SourceMismatchError`（`ab8d1eb`）
 
-**Batch A 已完成** — 可进入 Batch B Plan。延后项见 `DECISIONS.md` §9。
+**Batch A 已完成** — 延后项见 `DECISIONS.md` §9。
+
+## Batch B Checkpoint（013 + GPT repair）
+
+- [x] 5 vendor skeleton + FetchPort + RawStore + FileRegistry
+- [x] GPT P0/P1 repair（`NOT_PUBLISHED_YET`、禁默认 Stub、生产 FileRegistry 必填等）
+- [x] 契约同步 `specs/contracts/data_adapter_contract.md`
+- [x] PR #2 已合并；GPT repair 文档/测试同步（本 commit）
+
+**Batch B 已完成** — 可进入 Batch C Plan（015+016）。Repair 台账：`BATCH_B_REPAIR_STATUS.md` · 延后项 `DECISIONS.md` §9–§10。
 
 ## Plan / Execute 状态
 
-| 批次 | Plan | Execute | Audit | GPT 硬ening |
-|------|------|---------|-------|-------------|
+| 批次 | Plan | Execute | Audit | GPT repair |
+|------|------|---------|-------|------------|
 | A | ✅ 已冻结 | ✅ `ee48187` | ✅ PASS | ✅ `ab8d1eb` |
-| B | **Plan v1.1 已冻结**（对抗审计 26 项已修） | 待 start | — | — |
+| B | ✅ v1.1 已冻结 | ✅ PR #2 合并 | ✅ PASS | ✅ 本 commit |
 | C–D | 未开始 | 未开始 | — | — |
 
 Trellis 任务目录：
 - Batch A（已归档）：`.trellis/tasks/archive/2026-06/06-17-round2-batch-a-sources/`
-- Batch B（Plan）：`.trellis/tasks/06-17-round2-batch-b-adapters/`
+- Batch B（已归档）：`.trellis/tasks/archive/2026-06/06-17-round2-batch-b-adapters/`

@@ -121,9 +121,39 @@ migration `004_ingestion_sources.sql` 仅包含：
 | **GPT-init_db** | `scripts/init_db.py` 只跑 migration，不调用 `SourceRegistry.sync_to_db()` | 测试 + 手工/prod 脚本覆盖 sync | **Batch D** — 与 Orchestrator 启动钩子一并接入；或 Batch B 末增加可选 `scripts/sync_registry.py` | DECISIONS §8 · Execute eval |
 | **GPT-P3-6** | ResourceGuard + ingestion 交叉 smoke | Round 1 ResourceGuard 独立测试 | **Batch D** — DataSyncOrchestrator smoke（MASTER §8.6） | `adversarial-audit-remediation.md` P3-6 |
 | **GPT-staging-DB** | SUCCESS 不校验 DuckDB 内 staging 表是否存在 | `FetchResult` 字段级证据 + Batch A fixture | **Batch C** — DataQualityValidator 读 staging / raw 证据 | MASTER §8.6 · contract Batch A note |
-| **GPT-NOT-PUBLISHED** | `NOT_PUBLISHED_YET` 第 8 态未纳入 contract | 测试 intentionally excluded | **Batch B+** — vendor adapter 真实 publish 语义 | `test_data_adapter_contract.py` 注释 |
 | **GPT-SEC-CI** | 无 gitleaks / `.cursor/hooks` 静态安全扫描 | 文档化信任边界 `docs/ops/agent_workflow_boundaries.md` | **Batch B 并行** — CI 硬化 sprint（非 Batch A 阻塞） | Round 1 repair backlog 同类 |
 | **A2-shrink** | ~10 行 optional inline（FetchStatus 别名等） | MASTER §6 冻结符号名 | **Info** — 可选 Repair，非阻塞 | audit.report §4.3 |
+
+### 已偿还（勿再标为延后）
+
+| ID | 原登记 | 偿还批次 | 证据 |
+|----|--------|----------|------|
+| **GPT-NOT-PUBLISHED** | Batch B+ 纳入第 8 态 | **Batch B GPT repair** | `FetchStatus` / `PortErrorStatus` / `fetch_log` `not_published` · `UnpublishedPort` · `specs/contracts/data_adapter_contract.md` |
+
+---
+
+## 10. Batch B 完成后 Checkpoint（013 + GPT repair）
+
+在进入 Batch C（015+016）前必须全绿：
+
+- [x] 5 个 vendor skeleton + `FetchPort` / `create_adapter` / `create_test_adapter`
+- [x] GPT repair P0/P1 全关闭（`NOT_PUBLISHED_YET`、禁默认 Stub、FileRegistry 生产必填等）
+- [x] `pytest tests/test_adapter_skeletons.py tests/test_data_adapter_contract.py` 全绿
+- [x] PR #2 合并 + GPT repair 文档/契约同步（本 commit）
+- [x] 延后项见 §9 与 `BATCH_B_REPAIR_STATUS.md` §延后台账
+
+### Batch B 仍开放 / 延后（显式登记）
+
+| ID | 内容 | 阶段 | 说明 |
+|----|------|------|------|
+| **B-D2** | `PortErrorStatus` ↔ `FetchStatus` 共享类型别名 | Batch C | 测试已防 drift；过早抽象增加耦合 |
+| **B-D3** | 真实 Port 凭证/错误消息脱敏 | Batch C/D | skeleton 无 outbound 网络 |
+| **B-D4** | `_resolve_as_of` ISO 严格校验 | 按需 Batch C | RawStore `_safe_segment` 已防路径穿越 |
+| **B-P2-1** | adapter metadata（`adapter_id`、`requires_auth` 等） | Batch C/D | skeleton 仅 `source_id` + domains |
+| **B-P2-2** | Trellis 归档瘦身规则 | 流程建议 | 每批仅保留 MASTER/AUDIT/implement 摘要 |
+| **B-P1-6-full** | Orchestrator fetch 前 ResourceGuard | Batch D | skeleton `max_payload_bytes` 10MB 已做短期防呆 |
+
+完整 GPT 审查处置表：`.trellis/tasks/archive/2026-06/06-17-round2-batch-b-adapters/research/gpt-post-merge-review.md`
 
 ### Batch A 验收命令（GPT §十二 · 2026-06-17 复跑 @ `ab8d1eb`）
 

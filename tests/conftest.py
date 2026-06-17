@@ -194,7 +194,7 @@ def file_registry_stack(tmp_path):
     con.close()
     cm = ConnectionManager(db)
     raw_root = tmp_path / "data"
-    raw_root.mkdir()
+    raw_root.mkdir(parents=True, exist_ok=True)
     return {
         "cm": cm,
         "raw_store": RawStore(raw_root),
