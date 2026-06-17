@@ -76,6 +76,21 @@ def test_reader_appliesTempDirectory(tmp_path: Path, monkeypatch) -> None:
     assert data_root.joinpath("cache", "duckdb_tmp").exists()
 
 
+def test_applyPragmas_setsMaxTempDirectorySize(tmp_path: Path) -> None:
+    db = tmp_path / "t.duckdb"
+    _init(db)
+    cm = ConnectionManager(
+        db,
+        profile="eco",
+        limits={"eco": {"duckdb_memory_max_mb": 512, "max_threads": 1, "duckdb_temp_max_gb": 3}},
+    )
+    with cm.writer() as w:
+        temp_max = w.execute(
+            "SELECT current_setting('max_temp_directory_size')"
+        ).fetchone()[0]
+    assert "gib" in str(temp_max).lower()
+
+
 def test_applyPragmas_ecoProfile_setsThreadsAndMemory(tmp_path: Path) -> None:
     db = tmp_path / "t.duckdb"
     _init(db)

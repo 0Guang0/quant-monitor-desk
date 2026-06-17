@@ -168,6 +168,26 @@ def test_assertEnabled_disabledSource_raisesSourceDisabledError(disabled_registr
         disabled_registry.assert_enabled("baostock")
 
 
+def test_syncToDb_removedYamlSource_isTombstoned(tmp_path, migrated_con, registry_yaml_fixture):
+    reg = SourceRegistry(registry_yaml_fixture)
+    reg.load()
+    con = migrated_con(tmp_path)
+    reg.sync_to_db(con)
+    con.execute(
+        """
+        INSERT INTO source_registry (
+            source_id, source_name, source_type, allowed_domain, is_enabled
+        ) VALUES ('orphan_source', 'Orphan', 'api', '[]', true)
+        """
+    )
+    reg.sync_to_db(con)
+    row = con.execute(
+        "SELECT is_enabled FROM source_registry WHERE source_id='orphan_source'"
+    ).fetchone()
+    assert row is not None
+    assert row[0] is False
+
+
 def test_syncToDb_insertsSourceRows(tmp_path, migrated_con, registry_yaml_fixture):
     reg = SourceRegistry(registry_yaml_fixture)
     reg.load()

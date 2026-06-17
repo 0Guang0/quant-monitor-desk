@@ -5,6 +5,13 @@ on:
     branches: [main, master]
   pull_request:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   backend:
     runs-on: ubuntu-latest
@@ -16,7 +23,8 @@ jobs:
       - run: pip install -e ".[dev]"
       - run: pytest -q --cov=backend --cov-fail-under=75
       - run: ruff check .
-      - run: python -m compileall backend scripts
+      - run: python -m compileall backend scripts tests
+      - run: python scripts/production_gate.py
       - name: Batch A prod-path ingestion smoke (Tier B)
         env:
           QMD_DATA_ROOT: .audit-sandbox/data

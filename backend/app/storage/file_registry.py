@@ -11,22 +11,22 @@ from backend.app.storage.raw_store import SavedFile
 STG_FILE_REGISTRY = "stg_file_registry"
 
 
-def _safe_rollback(con: duckdb.DuckDBPyConnection) -> None:
-    try:
-        con.execute("ROLLBACK")
-    except duckdb.Error:
-        pass
-
-
 def _parse_as_of_timestamp(as_of: str) -> datetime:
     """Parse YYYY-MM-DD as-of date into UTC midnight timestamp."""
     return datetime.fromisoformat(as_of).replace(tzinfo=UTC)
 
 
 class FileRegistry:
-    def __init__(self, conn_manager, write_manager: WriteManager) -> None:
+    def __init__(
+        self,
+        conn_manager,
+        write_manager: WriteManager,
+        *,
+        validation_report_id: str,
+    ) -> None:
         self.conn_manager = conn_manager
         self.write_manager = write_manager
+        self._validation_report_id = validation_report_id
 
     def _lookup_by_content_hash(
         self, content_hash: str, con: duckdb.DuckDBPyConnection | None = None
@@ -57,58 +57,45 @@ class FileRegistry:
             staging_table=STG_FILE_REGISTRY,
             write_mode="append_only",
             primary_keys=("file_id",),
-            # Round 1 stub: always stub-pass-registry until Round 2 ValidationGate
-            validation_report_id="stub-pass-registry",
+            validation_report_id=self._validation_report_id,
             source_used=saved.source,
         )
 
         with self.conn_manager.writer() as con:
-            con.execute("BEGIN")
-            try:
-                existing = self._lookup_by_content_hash(saved.content_hash, con=con)
-                if existing:
-                    con.execute("COMMIT")
-                    return existing
+            existing = self._lookup_by_content_hash(saved.content_hash, con=con)
+            if existing:
+                return existing
 
-                con.execute(f"DELETE FROM {STG_FILE_REGISTRY}")
-                con.execute(
-                    f"""
-                    INSERT INTO {STG_FILE_REGISTRY} (
-                        file_id, file_type, source, source_url, local_path,
-                        content_hash, schema_hash, fetch_time, as_of_timestamp,
-                        parse_status, quality_flag
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """,
-                    [
-                        saved.file_id,
-                        saved.file_type,
-                        saved.source,
-                        None,
-                        saved.local_path,
-                        saved.content_hash,
-                        None,
-                        now,
-                        as_of_ts,
-                        "parsed",
-                        "ok",
-                    ],
-                )
-                result = self.write_manager.write(req, con=con, own_transaction=False)
-                if result.status != "SUCCESS":
-                    err = result.error_message or ""
-                    if "onstraint" in err:
-                        _safe_rollback(con)
-                        con.execute("BEGIN")
-                        existing = self._lookup_by_content_hash(saved.content_hash, con=con)
-                        if existing:
-                            con.execute("COMMIT")
-                            return existing
-                    raise RuntimeError(f"file_registry write failed: {result.error_message}")
-                con.execute("COMMIT")
-            except RuntimeError:
-                raise
-            except Exception:
-                _safe_rollback(con)
-                raise
+            con.execute(f"DELETE FROM {STG_FILE_REGISTRY}")
+            con.execute(
+                f"""
+                INSERT INTO {STG_FILE_REGISTRY} (
+                    file_id, file_type, source, source_url, local_path,
+                    content_hash, schema_hash, fetch_time, as_of_timestamp,
+                    parse_status, quality_flag
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                [
+                    saved.file_id,
+                    saved.file_type,
+                    saved.source,
+                    None,
+                    saved.local_path,
+                    saved.content_hash,
+                    None,
+                    now,
+                    as_of_ts,
+                    "raw_saved",
+                    "pending_validation",
+                ],
+            )
+            result = self.write_manager.write(req, con=con, own_transaction=True)
+            if result.status != "SUCCESS":
+                err = result.error_message or ""
+                if "onstraint" in err:
+                    existing = self._lookup_by_content_hash(saved.content_hash, con=con)
+                    if existing:
+                        return existing
+                raise RuntimeError(f"file_registry write failed: {result.error_message}")
 
         return saved.file_id

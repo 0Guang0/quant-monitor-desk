@@ -13,7 +13,7 @@ Trusted data → Multi-layer modeling → Evidence monitoring → Agent summary 
 
 | Layer    | Technology                                                             |
 | -------- | ---------------------------------------------------------------------- |
-| Backend  | Python, FastAPI, Pydantic, DuckDB, Parquet, Polars Lazy                |
+| Backend  | Python, FastAPI, Pydantic, DuckDB (Parquet export via DuckDB when needed) |
 | Frontend | Vite, React, TypeScript (layout is placeholder until user confirms UI) |
 | Specs    | YAML / JSON / SQL contracts under `specs/`                             |
 

@@ -8,9 +8,10 @@ import duckdb
 from backend.app.core.resource_guard import Decision, ResourceGuard, ResourceSnapshot
 from backend.app.db.connection import ConnectionManager
 from backend.app.db.migrate import apply_migrations
-from backend.app.db.write_manager import WriteManager, WriteRequest
+from backend.app.db.write_manager import WriteRequest
 from backend.app.storage.file_registry import FileRegistry
 from backend.app.storage.raw_store import RawStore
+from tests.db_helpers import create_test_write_manager
 
 FOUNDATION_TABLES = {
     "schema_version",
@@ -56,7 +57,11 @@ def test_foundation_endToEnd_writesCleanAndAudits(tmp_path: Path, monkeypatch) -
     assert decision == Decision.OK
 
     store = RawStore(tmp_path)
-    reg = FileRegistry(cm, WriteManager(cm))
+    reg = FileRegistry(
+        cm,
+        create_test_write_manager(cm),
+        validation_report_id="stub-pass-registry",
+    )
     saved = store.save(
         b"raw-bytes", source="qmt", data_domain="daily_bar", file_type="json", as_of="2026-06-15"
     )
@@ -75,7 +80,7 @@ def test_foundation_endToEnd_writesCleanAndAudits(tmp_path: Path, monkeypatch) -
             "CREATE TABLE security_bar_smoke_clean AS "
             "SELECT * FROM stg_foundation_smoke WHERE 1=0"
         )
-    ok = WriteManager(cm).write(
+    ok = create_test_write_manager(cm).write(
         WriteRequest(
             run_id="r1",
             job_id="j1",
@@ -102,7 +107,7 @@ def test_foundation_endToEnd_writesCleanAndAudits(tmp_path: Path, monkeypatch) -
             == "SUCCESS"
         )
 
-    bad = WriteManager(cm).write(
+    bad = create_test_write_manager(cm).write(
         WriteRequest(
             run_id="r2",
             job_id="j2",

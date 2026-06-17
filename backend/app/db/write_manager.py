@@ -10,7 +10,6 @@ from typing import Literal
 import duckdb
 from backend.app.db.sql_identifiers import quote_ident
 from backend.app.db.validation_gate import (
-    StubValidationGate,
     ValidationGateError,
     ValidationRejected,
 )
@@ -42,15 +41,22 @@ class WriteResult:
 class WriteManager:
     SUPPORTED_MODES = ("append_only", "upsert_by_pk")
 
-    def __init__(self, conn_manager, gate=None) -> None:
+    def __init__(self, conn_manager, gate) -> None:
+        if gate is None:
+            raise ValueError(
+                "WriteManager requires an explicit ValidationGate; "
+                "use tests.db_helpers.create_test_write_manager() in tests"
+            )
         self.conn_manager = conn_manager
-        self.gate = gate or StubValidationGate()
+        self.gate = gate
 
     def _validate_request(self, req: WriteRequest) -> None:
         quote_ident(req.target_table)
         quote_ident(req.staging_table)
         for col in req.primary_keys:
             quote_ident(col)
+        if req.write_mode == "upsert_by_pk" and not req.primary_keys:
+            raise ValueError("upsert_by_pk requires primary_keys")
 
     def _validated_tables(self, req: WriteRequest) -> tuple[str, str, list[str]]:
         target = quote_ident(req.target_table)
@@ -66,18 +72,67 @@ class WriteManager:
             f"SELECT COUNT(*) FROM {target} WHERE EXISTS (SELECT 1 FROM {staging} WHERE {pk_join})"
         ).fetchone()[0]
 
-    def _build_merge_sql(
-        self, req: WriteRequest, target: str, staging: str, primary_keys: list[str]
+    def _table_columns(
+        self, con: duckdb.DuckDBPyConnection, table_name: str
     ) -> list[str]:
+        quoted = quote_ident(table_name)
+        rows = con.execute(f"PRAGMA table_info({quoted})").fetchall()
+        return [row[1] for row in rows]
+
+    def _assert_staging_columns_match(
+        self,
+        con: duckdb.DuckDBPyConnection,
+        req: WriteRequest,
+        target: str,
+        staging: str,
+    ) -> list[str]:
+        target_cols = self._table_columns(con, req.target_table)
+        staging_cols = self._table_columns(con, req.staging_table)
+        if target_cols != staging_cols:
+            raise ValueError(
+                f"column mismatch between {req.target_table!r} and "
+                f"{req.staging_table!r}: target={target_cols!r} staging={staging_cols!r}"
+            )
+        return staging_cols
+
+    def _assert_staging_pk_unique(
+        self,
+        con: duckdb.DuckDBPyConnection,
+        staging: str,
+        primary_keys: list[str],
+    ) -> None:
+        pk_list = ", ".join(primary_keys)
+        dup_count = con.execute(
+            f"""
+            SELECT COUNT(*) FROM (
+                SELECT {pk_list}, COUNT(*) AS c
+                FROM {staging}
+                GROUP BY {pk_list}
+                HAVING COUNT(*) > 1
+            )
+            """
+        ).fetchone()[0]
+        if dup_count:
+            raise ValueError("staging table contains duplicate primary keys")
+
+    def _build_merge_sql(
+        self,
+        req: WriteRequest,
+        target: str,
+        staging: str,
+        primary_keys: list[str],
+        columns: list[str],
+    ) -> list[str]:
+        col_sql = ", ".join(quote_ident(col) for col in columns)
         if req.write_mode == "append_only":
-            return [f"INSERT INTO {target} SELECT * FROM {staging}"]
+            return [f"INSERT INTO {target} ({col_sql}) SELECT {col_sql} FROM {staging}"]
         if req.write_mode == "upsert_by_pk":
             pk_join = " AND ".join(
                 f"{target}.{col} = {staging}.{col}" for col in primary_keys
             )
             return [
                 f"DELETE FROM {target} WHERE EXISTS (SELECT 1 FROM {staging} WHERE {pk_join})",
-                f"INSERT INTO {target} SELECT * FROM {staging}",
+                f"INSERT INTO {target} ({col_sql}) SELECT {col_sql} FROM {staging}",
             ]
         raise ValueError(f"unsupported write_mode: {req.write_mode}")
 
@@ -140,24 +195,20 @@ class WriteManager:
     ) -> WriteResult:
         """Persist FAILED audit after rolling back the data write."""
         if own_transaction:
-            audit_con = duckdb.connect(str(self.conn_manager.db_path))
-            try:
-                audit_con.execute("BEGIN")
-                self._write_audit(
-                    audit_con,
-                    write_id=write_id,
-                    req=req,
-                    started_at=started_at,
-                    status="FAILED",
-                    rows_in_staging=rows_in_staging,
-                    rows_inserted=0,
-                    rows_updated=0,
-                    validation_status=validation_status,
-                    error_message=error_message,
-                )
-                audit_con.execute("COMMIT")
-            finally:
-                audit_con.close()
+            con.execute("BEGIN")
+            self._write_audit(
+                con,
+                write_id=write_id,
+                req=req,
+                started_at=started_at,
+                status="FAILED",
+                rows_in_staging=rows_in_staging,
+                rows_inserted=0,
+                rows_updated=0,
+                validation_status=validation_status,
+                error_message=error_message,
+            )
+            con.execute("COMMIT")
         else:
             self._write_audit(
                 con,
@@ -197,10 +248,14 @@ class WriteManager:
 
             before = con.execute(f"SELECT COUNT(*) FROM {target}").fetchone()[0]
             rows_updated = 0
+            columns = self._assert_staging_columns_match(con, req, target, staging)
             if req.write_mode == "upsert_by_pk":
+                self._assert_staging_pk_unique(con, staging, primary_keys)
                 rows_updated = self._count_pk_matches(con, target, staging, primary_keys)
 
-            for sql in self._build_merge_sql(req, target, staging, primary_keys):
+            for sql in self._build_merge_sql(
+                req, target, staging, primary_keys, columns
+            ):
                 con.execute(sql)
 
             after = con.execute(f"SELECT COUNT(*) FROM {target}").fetchone()[0]

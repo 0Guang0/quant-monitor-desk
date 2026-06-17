@@ -209,16 +209,23 @@ def load_thresholds() -> dict:
     return cfg
 
 
-def _dir_size_gb(path: Path) -> float:
+def _dir_size_gb(path: Path, *, max_files: int = 20_000) -> float:
     total = 0
+    seen = 0
     if not path.exists():
         return 0.0
     for root, _dirs, files in os.walk(path, followlinks=False):
         for name in files:
+            seen += 1
+            if seen > max_files:
+                return total / (1024**3)
             fp = Path(root) / name
             if fp.is_symlink():
                 continue
-            total += fp.stat().st_size
+            try:
+                total += fp.stat().st_size
+            except OSError:
+                pass
     return total / (1024**3)
 
 
