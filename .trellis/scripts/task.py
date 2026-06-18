@@ -10,7 +10,9 @@ Usage:
     python task.py validate-plan-freeze <dir>  # Plan freeze gate (complex tasks)
     python task.py validate-plan-phase <dir> <phase>  # Plan phase checkpoint (v2)
     python task.py validate-execute-handoff <dir>  # Execute §11 handoff gate
+    python task.py validate-execute-boot <dir>  # Execute Phase 0 boot gate (E16/E17)
     python task.py validate-execute-step <dir> <step>  # Execute §8.x step gate
+    python task.py suggest-implement-context <dir>  # Plan 5c manifest suggestions (E12)
     python task.py list-context <dir>          # List jsonl entries
     python task.py start <dir>                 # Set active task
     python task.py current [--source]          # Show active task
@@ -74,6 +76,8 @@ from common.validate_execute_handoff import (
     cmd_validate_execute_handoff,
     cmd_validate_execute_step,
 )
+from common.validate_execute_boot import cmd_validate_execute_boot
+from common.manifest_commands import cmd_suggest_implement_context
 
 
 # =============================================================================
@@ -464,6 +468,20 @@ def main() -> int:
     )
     p_vhandoff.add_argument("dir", help="Task directory")
 
+    # validate-execute-boot
+    p_vboot = subparsers.add_parser(
+        "validate-execute-boot", help="Validate Execute Phase 0 boot (E16/E17)"
+    )
+    p_vboot.add_argument("dir", help="Task directory")
+
+    # suggest-implement-context
+    p_suggest = subparsers.add_parser(
+        "suggest-implement-context",
+        help="Suggest missing implement.jsonl entries (Plan 5c, E12)",
+    )
+    p_suggest.add_argument("dir", help="Task directory")
+    p_suggest.add_argument("--json", action="store_true", help="JSON output")
+
     # validate-execute-step
     p_vstep = subparsers.add_parser(
         "validate-execute-step",
@@ -541,7 +559,9 @@ def main() -> int:
         "validate-plan-freeze": cmd_validate_plan_freeze,
         "validate-plan-phase": cmd_validate_plan_phase,
         "validate-execute-handoff": cmd_validate_execute_handoff,
+        "validate-execute-boot": cmd_validate_execute_boot,
         "validate-execute-step": cmd_validate_execute_step,
+        "suggest-implement-context": cmd_suggest_implement_context,
         "list-context": cmd_list_context,
         "start": cmd_start,
         "current": cmd_current,

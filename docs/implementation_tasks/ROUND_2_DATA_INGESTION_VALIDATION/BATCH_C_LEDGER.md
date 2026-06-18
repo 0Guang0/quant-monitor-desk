@@ -26,7 +26,7 @@
 | 项 | 阶段 | 内容 |
 |----|------|------|
 | validation 表约束 | Batch C migration 005 | 新表内联约束 |
-| `fetch_log` 004 表 CHECK | Batch D | 已应用 migration 不可 ALTER |
+| `fetch_log` 004 表 CHECK | Batch D+（defer） | 已应用 migration 不可 ALTER；**Batch D 仅 app 层**（MASTER §6.7） |
 
 ---
 

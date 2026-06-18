@@ -200,6 +200,11 @@ def validate_execute_handoff(task_dir: Path, repo_root: Path | None = None) -> l
     if sec11 and re.search(r"- \[ \]", sec11.group(0)):
         errors.append("MASTER §11 DoD has unchecked items")
 
+    from .manifest_protocol import validate_execute_boot, validate_manifest_amend_chain
+
+    validate_execute_boot(task_dir, errors)
+    validate_manifest_amend_chain(task_dir, errors)
+
     return errors
 
 

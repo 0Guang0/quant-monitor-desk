@@ -60,17 +60,6 @@
 
 **一条过关：** 左列 = Execute 跑什么；右列 = 各审计维**各自**跑什么（默认不复跑 §10 同行命令）。
 
-### 3.0b 原计划包门禁（Plan agent 必勾）
-
-| ✓ | 检查项 |
-|---|--------|
-| [ ] | 已读 `docs/implementation_tasks/README.md` + `GLOBAL_*.md`（4 个） |
-| [ ] | 已读本 Round `README.md` + `DECISIONS.md` |
-| [ ] | 已读本批 `NNN_*.md` 任务卡及 §3 输入文件（specs / architecture） |
-| [ ] | `research/original-plan-trace.md` 已产出（任务卡 ↔ MASTER §2 AC） |
-| [ ] | `MASTER.plan.md` §0「原计划任务」+ §1.3「原计划归并表」已填 |
-| [ ] | `implement.jsonl` 含 GLOBAL 四文件 + 本批任务卡且路径存在 |
-
 ### 3.0a Plan Phase 产出门禁（Phase 0 → 5d 必检）
 
 | ✓ | 检查项 |
@@ -81,6 +70,51 @@
 | [ ] | Phase 1b `research/gitnexus-summary.md` 已产出或 MASTER §0 `analysis_waiver: true` |
 | [ ] | Phase 4 已完成 **或** MASTER §0 已注明跳过理由（"§8 已足够清晰"） |
 | [ ] | Phase 5d 已完成（主会话 CLAIM→DOUBT→RECONCILE）；`plan.freeze.md` §2 已记录结论 |
+
+### 3.0b 原计划包门禁（Plan agent 必勾）
+
+| ✓ | 检查项 |
+|---|--------|
+| [ ] | 已读 `docs/implementation_tasks/README.md` + `GLOBAL_*.md`（4 个） |
+| [ ] | 已读本 Round `README.md` + `DECISIONS.md` |
+| [ ] | 已读本批 `NNN_*.md` 任务卡及 §3 输入文件（specs / architecture） |
+| [ ] | `research/original-plan-trace.md` 已产出（任务卡 ↔ MASTER §2 AC；含 **manifest** 列） |
+| [ ] | `MASTER.plan.md` §0「原计划任务」+ §1.3「原计划归并表」已填 |
+| [ ] | `implement.jsonl` 含 GLOBAL 四文件 + 本批任务卡且路径存在 |
+
+### 3.0c Context Packing Gate v3
+
+| ✓ | 检查项 |
+|---|--------|
+| [ ] | `research/input-inventory.md`（P0i complete） |
+| [ ] | `research/integration-ledger.md` |
+| [ ] | `research/integration-audit.md`（PASS；含 doc-gap + adversarial + closure） |
+| [ ] | `meta.manifest_protocol_version: "3"` |
+| [ ] | `implement.jsonl` 全条 `extract:/for:`（V7）；ledger anchor 可解析（V8） |
+
+| ✓ | 检查项 |
+|---|--------|
+| [ ] | `plan-manifest-audit.md` stub 或 integration-audit 含 manifest 节 |
+| [ ] | `implement.jsonl` 覆盖 trace `required` + MASTER §6/§9/§10 |
+| [ ] | `check.jsonl` ⊆ `implement.jsonl`（E14） |
+| [ ] | `task.json` `predecessor_tasks`（若有前置 Batch） |
+| [ ] | `suggest-implement-context` 缺失 ≤5 |
+| [ ] | MASTER **§0.3** + **§8.0** 指向 implement/ledger（禁止 §8.0 路径枚举） |
+
+```bash
+python .trellis/scripts/task.py validate-plan-phase .trellis/tasks/<slug> P0i
+python .trellis/scripts/patch_implement_from_ledger.py .trellis/tasks/<slug>
+python .trellis/scripts/task.py suggest-implement-context .trellis/tasks/<slug>
+python .trellis/scripts/task.py validate-plan-phase .trellis/tasks/<slug> 5c
+python .trellis/scripts/task.py validate-plan-freeze .trellis/tasks/<slug>
+```
+
+### 3.0d Manifest Gate（E15 · 与 3.0c 一并勾选）
+
+| ✓ | 检查项 |
+|---|--------|
+| [ ] | `plan.freeze.md` Manifest Gate / Context Packing 节已勾 |
+| [ ] | `validate-plan-freeze` exit 0 |
 
 ### 3.1 MASTER（Execute）
 

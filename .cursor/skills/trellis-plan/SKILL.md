@@ -18,9 +18,10 @@ Skill 路径表：`.trellis/spec/guides/plan-skill-paths.yaml`
 | # | 动作 | 产出 | validate |
 |---|------|------|----------|
 | P0a | **Read 本文件** + `plan-skill-paths.yaml` | `plan-skill-reads.jsonl` 首行 | freeze |
-| P0b | GitNexus `query` + `context`（改 symbol 前 `impact`） | `research/gitnexus-summary.md` | freeze + phase 1b |
-| **P0o** | **读原计划包**（见下表；禁止跳过） | `research/original-plan-trace.md` | freeze |
-| P0c | 读 DECISIONS / 前置 Batch / 任务卡 §3 输入文件 | `research/plan-boot.md` 含 **`Phase P0 complete`** | freeze |
+| **P0i** | **文档宇宙审计**（§3+§5+六类+1-hop） | `research/input-inventory.md` 含 **`P0i complete`** | P0i |
+| **P0o** | **读原计划包**（见下表；**在 P0i 之后**） | `research/original-plan-trace.md` | freeze |
+| P0b | GitNexus 轻量预检（**可选**；深度分析在 **1b**，若跳过须在 plan-boot 注明） | `research/gitnexus-summary.md` 草稿或 defer→1b | freeze + phase 1b |
+| P0c | 读 DECISIONS / 前置 Batch / 任务卡 §3+§5 | `research/plan-boot.md` 含 **`Phase P0 complete`** | freeze |
 
 ### P0o · 原计划必读（`docs/implementation_tasks/`）
 
@@ -41,6 +42,13 @@ Skill 路径表：`.trellis/spec/guides/plan-skill-paths.yaml`
 ## 任务卡清单（NNN → 路径）
 ## AC 映射（任务卡预期结果 → MASTER §2）
 ## 输入文件已读（specs / architecture）
+
+| 路径 | 类别 | manifest |
+|------|------|----------|
+| `docs/implementation_tasks/.../NNN_*.md` | 任务卡 | required |
+| `docs/modules/....md` | 模块 spec | required |
+| `backend/app/....py` | 接线（前置 Batch） | inherited |
+| `scripts/sync_....py` | Execute 新建 | deferred |
 ## 路径纠偏（若任务卡路径与仓库不一致，写明实际路径）
 ```
 
@@ -78,8 +86,8 @@ Skill 路径表：`.trellis/spec/guides/plan-skill-paths.yaml`
 | **4** | brainstorming / api-and-interface-design [+ codebase-design / prototype] | MASTER §4–6（条件性，跳过须书面理由） | `… 4` |
 | **5a** | planning-and-task-breakdown | MASTER §5 切片 | `… 5a` |
 | **5b** | writing-plans | MASTER §8 RED/GREEN 列 + `research/*-tests.md` | `… 5b` |
-| **5c** | trellis-before-dev | `implement.jsonl` / `check.jsonl` spec 路径 | `… 5c` |
-| **5d** | doubt-driven-development（**必做·主会话**） | §7/§8/§12 + AUDIT §1/§2 修订 | `… 5d` |
+| **5c** | trellis-before-dev | `integration-ledger.md` → `implement.jsonl` / `check.jsonl` | `… 5c` |
+| **5d** | doubt-driven-development（**必做·主会话**） | §7/§8/§12 + `plan-manifest-audit` + **`integration-audit`** | `… 5d` |
 
 每 Phase 完成：append `plan-skill-reads.jsonl` + `plan.freeze.md` §1 该行 `[x]`。
 
@@ -94,6 +102,10 @@ Skill 路径表：`.trellis/spec/guides/plan-skill-paths.yaml`
 3. `implement.jsonl` 第一条 = MASTER（Execute 时第二条 = trellis-execute）
 4. `python .trellis/scripts/task.py validate-plan-freeze <task-dir>` → exit 0
 5. 用户批准 → `task.py start`
+
+**5c manifest（E12/E5/v3）：** 维护 `integration-ledger.md` → 从 ledger 生成/校验 `implement.jsonl`（pointer 须 `extract:|for:`）→ `validate-plan-phase … 5c`。
+
+**5d audits（E9/v3）：** **`integration-audit.md`（canonical，含 doc-gap + adversarial + closure）**；`plan-manifest-audit.md` 可为 E9 路径 stub。
 
 ---
 
@@ -116,4 +128,7 @@ Plan **不跑** RED/GREEN pytest。
 - [ ] `project-overview.md` 存在（≤1 页）或 analysis_waiver: true
 - [ ] `gitnexus-summary.md` 存在或 analysis_waiver: true
 - [ ] `plan-skill-reads.jsonl` 覆盖 freeze 必做 skill（见 plan-skill-paths.yaml）
-- [ ] `plan.freeze.md` §3 全 `[x]`
+- [ ] `plan.freeze.md` §3 全 `[x]`；**Manifest Gate** 全 `[x]`
+- [ ] `plan-manifest-audit.md` 存在（E9）
+- [ ] `input-inventory.md` P0i + `integration-ledger.md` + `integration-audit.md` PASS（v3）
+- [ ] `suggest-implement-context` 缺失 ≤5

@@ -58,7 +58,7 @@
 | **A3** | static | 威胁面清单；`rg` 密钥/硬编码 URL；SQL/路径注入点 | local | 无写 | 无 P0/P1 未缓解项 | 可追加 `rg` 搜索 JWT/private_key 等变体敏感模式 | §3.3 | [ ] |
 | **A4** | review-only | code-review-and-quality：正确性/可读性/边界/错误处理 | — | — | 无阻塞 review 项或已列 §4.3 | — | §3.4 | [ ] |
 | **A5** | — | **以下 4 行由同一个 audit-completion agent 按序执行（trace-ac → cli-sandbox 抽检 → read-only 证据真实性 → audit-prod-path 完整复验）** | — | — | — | — | §3.5 | — |
-| **A5** | trace-ac | 逐条对照 MASTER §2 AC ↔ §8/§9/§10 验证链；证据完整性 1–5 分 | local | 无写 | 每条 AC 可追溯；均 ≥4 分 | **必须**挑 1 条最可疑的 AC 链条深入追溯 | §3.5 | [ ] |
+| **A5** | trace-ac | 逐条对照 MASTER §2 AC ↔ §8/§9/§10 验证链；证据完整性 1–5 分；若存在 `research/manifest-amend.md` 须验证 amend 已补读（E20） | local | 无写 | 每条 AC 可追溯；均 ≥4 分 | **必须**挑 1 条最可疑的 AC 链条深入追溯 | §3.5 | [ ] |
 | **A5** | cli-sandbox | **必做**：选 Execute §10 B/C 证据最弱的 **2 行**，于 `AUDIT_DATA_ROOT={{.audit-sandbox/}}` 独立复跑 | audit-sandbox | 独立 DATA_ROOT | 与 Execute 声称一致；不一致 → §4.3 | 可追加 1 行复跑 | §3.5 | [ ] |
 | **A5** | read-only | **必做**：抽检 **2 个** `execute-evidence/{step}-green.txt`：非空、含实际输出非占位符、时间戳合理 | local | 无写 | 证据文件真实有效；无效 → §4.3 | — | §3.5 | [ ] |
 | **A5** | cli-sandbox | **必做**：`AUDIT_PROD_ROOT={{.audit-prod-data}}` 对副本跑 §9 全套 + §10 B/C | audit-prod-path | `cp -r $DATA_ROOT $AUDIT_PROD_ROOT` → 只读验证 → 事后 `rm -rf` | 与 Execute prod-path 结果一致；不一致 → §4.3 | — | §3.5 | [ ] |

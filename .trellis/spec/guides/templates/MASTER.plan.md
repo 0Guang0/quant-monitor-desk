@@ -104,6 +104,14 @@ Phase 0 Boot → Phase 1 严格 §8.x（execute-evidence/{step}-red/green.txt）
 
 **Plan 开工前：** `python .trellis/scripts/task.py validate-plan-freeze <task-dir>` → 用户批准 → `task.py start`。
 
+### 0.3 Execute 强制必读清单（E4 — 零遗漏）
+
+**规则：** Execute Phase 0 **必须 Read `implement.jsonl` 每一条**（不得仅用 §8.0 摘要替代）。产出 `execute-evidence/8.0-boot-reads.txt`（每条路径一行要点）。
+
+**6.pre L2：** GitNexus `impact(upstream)` → `research/context-closure.md`（动态闭包；不等同于 implement 全库）。
+
+**缺口协议（E18）：** 发现 manifest 缺口 → `task.py add-context` + `research/manifest-amend.md` → 补读后继续。
+
 ---
 
 ## 1. 目标

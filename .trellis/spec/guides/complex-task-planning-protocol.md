@@ -54,7 +54,7 @@
 
 **冲突处理：** MASTER 与 DECISIONS / 任务卡冲突 → **先更新 DECISIONS 并获用户确认**，再改 MASTER；禁止 silent override。
 
-**祖父条款：** 2026-06-18 前已归档的 Trellis 任务（`.trellis/tasks/archive/`）若无 `original-plan-trace.md`，视为历史交付；**新任务与重新 Plan 的任务**必须遵守本节。
+**祖父条款：** 2026-06-18 前已归档任务若无 `plan-manifest-audit.md`，视为历史交付。**新任务与重新 Plan 的任务**须在 `task.json` `meta.manifest_protocol_version: "1"` 启用 E1–E20 门禁。
 
 ---
 
@@ -92,7 +92,7 @@
 | 阶段      | 策略                                                            |
 | ------- | ------------------------------------------------------------- |
 | Plan 草稿 | 允许多文件：`research/*`、`design.md` / `implement.md` 草稿            |
-| 冻结门     | 全文并入 **MASTER**；`prd` / `design` / `implement` 改为 **≤15 行索引** |
+| 冻结门     | **MASTER 整合或 ledger 可追溯打包**（inline + `integration-ledger`）；`prd`/`design`/`implement` ≤15 行索引 |
 | Execute | 必读 MASTER 全文 + implement.jsonl 每条路径                           |
 
 
@@ -104,7 +104,7 @@
 | `design.md`    | 「见 MASTER §4–6」或 N/A      |
 
 
-`research/`：Execute **默认不读** Plan 分析溯源；**例外：** `research/gitnexus-execute-summary.md`（6.pre 必读）。Audit **例外：** `research/gitnexus-audit-summary.md`。
+`research/`：Execute **默认不读** Plan 分析溯源；**例外：** `gitnexus-execute-summary.md`（6.pre）、**`integration-ledger.md`**（v3 打包地图）。Audit **例外：** `gitnexus-audit-summary.md`。
 
 ### 2.2 Execute 契约（Plan 写入 MASTER §0，Execute 不读协议）
 
@@ -435,6 +435,97 @@ audit.report §5 PASS + 无未关 §4.3 → trellis-update-spec → archive → 
 ```
 
 追加：`python .trellis/scripts/task.py add-context <slug> implement <path> "<reason>"`
+
+### 6.2 Manifest 协议（E1–E20 · 上下文三层）
+
+> **原则：** Plan 定方案；`implement.jsonl` = Execute **最小充分必读集（L1）**；不可能也不应装入全库上下文。
+
+| 层级 | 载体 | 阶段 | 用途 |
+|------|------|------|------|
+| **L1 强制必读** | `implement.jsonl` | Plan 5c 策展 + freeze 校验 | Execute Phase 0 **逐条 Read** |
+| **L2 接线闭包** | `research/context-closure.md` | Execute 6.pre | GitNexus/CodeGraph 上游差集（动态） |
+| **L3 按需深读** | `impact()` / `context()` | Execute 改 symbol 前 | 不写入 freeze manifest |
+
+**L1 必须覆盖（若本任务涉及）：** 任务卡 §3+§5 · DECISIONS · 前置 handoff/台账 · MASTER §6 接线表每行 · 相关 migration（含只读旧版） · §9/§10 测试与门禁脚本 · 模块 spec **1-hop 引用** · `predecessor_tasks` 继承接线 · `.trellis/spec` 触达层。
+
+**L1 禁止列入（E11）：** Execute 将新建的文件 · Round 3+ defer 契约 · 无接线关系的邻域代码。
+
+| ID | 增强 | 落点 |
+|----|------|------|
+| E1 | trace `required` ⊆ implement | `validate-plan-freeze` |
+| E2 | `predecessor_tasks` 继承 | `task.json` + 5c |
+| E3 | §9/§10 → implement | `validate-plan-freeze` |
+| E4 | §0.3 禁止 §8.0 短清单 | MASTER 模板 |
+| E5 | `validate-plan-phase 5c` | `task.py` |
+| E6–E8 | 覆盖类别 + 1-hop + §6 表 | `manifest_protocol.py` |
+| E9 | `plan-manifest-audit.md` | Plan 5d |
+| E10 | DECISIONS ↔ §3.2 | `validate-plan-freeze` |
+| E11 | implement 负向清单 | `manifest_protocol.py` |
+| E12 | `suggest-implement-context` | `task.py` |
+| E13 | freeze 闭包校验 | `validate-plan-freeze` |
+| E14 | check ⊆ implement | `validate-plan-freeze` |
+| E15 | Manifest Gate | `plan.freeze.md` |
+| E16 | `context-closure.md` | Execute 6.pre |
+| E17 | `8.0-boot-reads.txt` 基数 | `validate-execute-boot` |
+| E18 | `manifest-amend.md` | Execute gap 协议 |
+| E19 | Plan 闭包预检 | `integration-audit.md` §closure |
+| E20 | amend 追溯 | `validate-execute-handoff` |
+| **V7** | implement 全条 `extract:/for:` | `validate-plan-freeze` / 5c |
+| **V8** | ledger `master_anchor` ⊆ MASTER | `validate-plan-freeze` |
+| **V9** | `integration-ledger.md` ∈ implement | `validate-plan-freeze` |
+
+**CLI：**
+
+```bash
+python .trellis/scripts/task.py suggest-implement-context <task-dir>
+python .trellis/scripts/task.py validate-plan-phase <task-dir> 5c
+python .trellis/scripts/task.py validate-plan-freeze <task-dir>
+python .trellis/scripts/task.py validate-execute-boot <task-dir>
+```
+
+`original-plan-trace.md` 输入表须含 **manifest** 列：`required` | `inherited` | `deferred`。
+
+### 6.3 上下文打包协议 v3（整合优先 · 索引有据）
+
+> **用户预期：** Plan = **上下文保真下的可执行压缩**。能 inline 进 MASTER 的写进去；整合必丢义时用 **summary+pointer / pointer**，但须写清 **extract / for（AC 或 §8）**，避免 Execute 迷失。Plan 与 Execute **角色分离**（长度、偏离、责任可追溯）。
+
+**六类关键信息（必须可追溯）：** 决策 · 规则/规范 · 架构 · 业务需求 · 契约 · 接线/测试/门禁。
+
+| 策略 | 何时用 | Execute 行为 |
+|------|--------|--------------|
+| **inline** | 影响实现选择且可无损压缩 | 只读 MASTER |
+| **summary+pointer** | 需摘要冻结 + 全文对照 | 先读 MASTER 锚点，再按 ledger 读原稿 |
+| **pointer** | 全文过长或纯参考 | 按 ledger `execute_extract` 精读 |
+
+**Plan 阶段顺序（v3）：**
+
+```text
+P0a  trellis-plan + plan-skill-paths
+P0i  input-inventory.md（文档宇宙审计）
+P0o  读原稿 → original-plan-trace.md
+P0b  GitNexus 轻量预检（可选；1b 深度必做或 waiver）
+P0c  plan-boot.md → Phase P0 complete
+2–3.5  需求 + grill + to-issues 切片
+1b     GitNexus 深度（锚定切片）
+4–5c   MASTER §4–§6 inline + integration-ledger → implement.jsonl
+5d     integration-audit（含 manifest/doc-gap/adversarial）
+```
+
+**新产物：**
+
+| 文件 | 阶段 |
+|------|------|
+| `research/input-inventory.md` | P0i |
+| `research/integration-ledger.md` | 4→5c |
+| `research/integration-audit.md` | 5d |
+
+**implement.jsonl reason（v3）：** 除 MASTER / trellis-execute 外，每条须 `extract: … | for: AC-x / §8.y`（V7）
+
+**启用：** `task.json` → `meta.manifest_protocol_version: "3"`（v1=仅 manifest E1–E20；`"2"` 已废弃）
+
+```bash
+python .trellis/scripts/task.py validate-plan-phase <task-dir> P0i
+```
 
 ---
 

@@ -298,6 +298,16 @@ def validate_plan_phase(task_dir: Path, phase: str, *, repo_root: Path | None = 
         elif marker not in boot.read_text(encoding="utf-8"):
             errors.append(f"plan-boot.md must contain {marker!r}")
 
+    if phase == "P0i":
+        from .manifest_protocol import validate_manifest_phase_p0i
+
+        validate_manifest_phase_p0i(task_dir, repo_root, errors)
+
+    if phase == "5c":
+        from .manifest_protocol import validate_manifest_phase_5c
+
+        validate_manifest_phase_5c(task_dir, repo_root, errors)
+
     return errors
 
 
@@ -406,6 +416,10 @@ def validate_plan_freeze(task_dir: Path, repo_root: Path | None = None) -> list[
     _validate_implement_jsonl_original_plan(task_dir, repo_root, errors)
     _validate_check_jsonl_original_plan(task_dir, repo_root, errors)
     _validate_plan_freeze_template(task_dir, errors)
+
+    from .manifest_protocol import validate_manifest_freeze
+
+    validate_manifest_freeze(task_dir, repo_root, errors)
 
     return errors
 

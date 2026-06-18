@@ -118,10 +118,10 @@ migration `004_ingestion_sources.sql` 仅包含：
 
 | ID | 未完整实现 | 当前缓解 | **建议修复阶段** | 权威文档 |
 |----|-----------|----------|------------------|----------|
-| **GPT-P1-5-DB** | `fetch_log` / `source_registry` 缺 DB 层 CHECK / NOT NULL | Pydantic `FetchResult` + `FetchLogWriter._validate_for_persist` 应用层双保险 | **Batch D** — 对已应用的 004 表追加约束（005 仅覆盖新 validation 表，见已偿还） | 本表 · `fetch_log.py` |
-| **GPT-P2-2** | YAML 删除的 source 在 DB 中残留（`sync_to_db` 仅 UPSERT，不 tombstone） | `sync_to_db` docstring 声明行为 | **Batch D** — Orchestrator 引入 `registry_generation` / `removed_from_yaml_at` 或 disabled 策略 | `source_registry.py` · Batch D 014 |
+| **GPT-P1-5-DB** | `fetch_log` / `source_registry` 缺 DB 层 CHECK / NOT NULL | Pydantic `FetchResult` + `FetchLogWriter._validate_for_persist` 应用层双保险 | **维持 app 层**（C-C2：004 已应用不可 ALTER；006 不改 004）· 见 MASTER §6.7 | 本表 · `fetch_log.py` · `BATCH_C_LEDGER.md` |
+| **GPT-P2-2** | `registry_generation` / `removed_from_yaml_at` 审计列未建 | `sync_to_db(tombstone_missing=True)` 将 YAML 缺失源 `is_enabled=false` | **Round 3+** | `source_registry.py` · MASTER §6.4 |
 | **GPT-init_db** | `scripts/init_db.py` 只跑 migration，不调用 `SourceRegistry.sync_to_db()` | 测试 + 手工/prod 脚本覆盖 sync | **Batch D** — 与 Orchestrator 启动钩子一并接入；或 Batch B 末增加可选 `scripts/sync_registry.py` | DECISIONS §8 · Execute eval |
-| **GPT-P3-6** | ResourceGuard + ingestion 交叉 smoke | Round 1 ResourceGuard 独立测试 | **Batch D** — DataSyncOrchestrator smoke（MASTER §8.6） | `adversarial-audit-remediation.md` P3-6 |
+| **GPT-P3-6** | ResourceGuard + ingestion 交叉 smoke | Round 1 ResourceGuard 独立测试 | **Batch D** — DataSyncOrchestrator smoke（MASTER **§8.9**） | `adversarial-audit-remediation.md` P3-6 |
 | **GPT-SEC-CI** | 无 gitleaks / `.cursor/hooks` 静态安全扫描 | 文档化信任边界 `docs/ops/agent_workflow_boundaries.md` | **Batch B 并行** — CI 硬化 sprint（非 Batch A 阻塞） | Round 1 repair backlog 同类 |
 | **A2-shrink** | ~10 行 optional inline（FetchStatus 别名等） | MASTER §6 冻结符号名 | **Info** — 可选 Repair，非阻塞 | audit.report §4.3 |
 
@@ -132,6 +132,7 @@ migration `004_ingestion_sources.sql` 仅包含：
 | **GPT-NOT-PUBLISHED** | Batch B+ 纳入第 8 态 | **Batch B GPT repair** | `FetchStatus` / `PortErrorStatus` / `fetch_log` `not_published` · `UnpublishedPort` · `specs/contracts/data_adapter_contract.md` |
 | **GPT-staging-DB** | SUCCESS 不校验 DuckDB staging 存在 | **Batch C Execute + Repair** | `DataQualityValidator` SUCCESS evidence / staging row 校验 · `test_batch_c_validation_flow` |
 | **GPT-P1-5-DB-validation** | validation/conflict 四表 DB 约束 | migration 005 内联约束 | **Batch C migration 005** | `005_ingestion_validation.sql` |
+| **GPT-P2-2-tombstone** | YAML 删除 source 在 DB 残留（仅 UPSERT） | `sync_to_db(tombstone_missing=True)` → `is_enabled=false` | **Batch D Plan 冻结** | `source_registry.py` L340 · MASTER §6.4 · `06-18-round2-batch-d-orchestrator` |
 
 ---
 
@@ -186,6 +187,15 @@ independent Audit, but it is not marked complete until Audit PASS.
 
 Batch C explicitly did not implement DataSyncOrchestrator, real vendor Ports,
 API/frontend production UI, Agent sandbox, release manifest, or full security CI.
+
+### Batch D Plan Checkpoint（014 · 2026-06-18）
+
+Plan frozen; `task.py start` entered Execute phase. **Do not re-Plan** unless user requests replan.
+
+- [x] Trellis slug `06-18-round2-batch-d-orchestrator` · `MASTER.plan.md` + manifest v3（P0i / integration-ledger / V7–V9）
+- [x] `validate-plan-freeze` exit 0 · `implement.jsonl` 68 条 · Batch C `READY_FOR_BATCH_D: yes`
+- [x] ROUND README + `BATCH_D_STATUS.md` + `plans/014_batch_d.plan.md` 索引已更新
+- [ ] Execute §8.0–§8.11（见 task `research/EXECUTE-READY.md`）
 
 ### Batch A 验收命令（GPT §十二 · 2026-06-17 复跑 @ `ab8d1eb`）
 

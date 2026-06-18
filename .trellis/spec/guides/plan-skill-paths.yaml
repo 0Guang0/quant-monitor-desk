@@ -110,6 +110,12 @@ phases:
       - research/original-plan-trace.md
     marker: "Phase P0 complete"
 
+  P0i:
+    skills: [trellis-plan]
+    artifacts:
+      - research/input-inventory.md
+    marker: "P0i complete"
+
   "1a":
     skills: [gitnexus-plan-1a]
     artifacts:
@@ -152,9 +158,13 @@ phases:
     skills: [trellis-before-dev]
     artifacts:
       - implement.jsonl
+      - research/integration-ledger.md
 
   "5d":
     skills: [doubt-driven-development]
+    artifacts:
+      - research/integration-audit.md
+    note: "plan-manifest-audit.md optional E9 stub; integration-audit is canonical"
 
 freeze_required_skills:
   - trellis-plan

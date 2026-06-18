@@ -18,7 +18,7 @@
 | **A** | 011+012 | `06-17-round2-batch-a-sources` | MASTER §8（`plans/` 仅索引） |
 | B | 013 | `06-17-round2-batch-b-adapters` | MASTER §8（`plans/013_batch_b.plan.md` 索引） |
 | C | 015+016 | `06-17-round2-batch-c-validation-conflict` | MASTER §8（`plans/015_016_batch_c.plan.md` 索引） |
-| D | 014 | （Plan 待建） | `plans/014_*.plan.md` |
+| D | 014 | `06-18-round2-batch-d-orchestrator` | MASTER §8（`plans/014_batch_d.plan.md` 索引） |
 
 ## 执行前必读
 
@@ -68,10 +68,11 @@
 |------|------|---------|-------|------------|
 | A | ✅ 已冻结 | ✅ `ee48187` | ✅ PASS | ✅ `ab8d1eb` |
 | B | ✅ v1.1 已冻结 | ✅ PR #2 合并 | ✅ PASS | ✅ 本 commit |
-| C | ✅ 已冻结 | ✅ Execute complete / awaiting Audit | 待 Audit | — |
-| D | 未开始 | 未开始 | — | — |
+| C | ✅ 已冻结 | ✅ finish_complete | ✅ PASS | — |
+| D | ✅ 已冻结（v3） | ⏳ **待 Execute §8.0** | — | — |
 
 Trellis 任务目录：
 - Batch A（已归档）：`.trellis/tasks/archive/2026-06/06-17-round2-batch-a-sources/`
 - Batch B（已归档）：`.trellis/tasks/archive/2026-06/06-17-round2-batch-b-adapters/`
-- Batch C（执行中，待 Audit）：`.trellis/tasks/06-17-round2-batch-c-validation-conflict/`
+- Batch C（已完成）：`.trellis/tasks/06-17-round2-batch-c-validation-conflict/`
+- **Batch D（Execute 入口）**：`.trellis/tasks/06-18-round2-batch-d-orchestrator/` — 见 `BATCH_D_STATUS.md` · `research/EXECUTE-READY.md`
