@@ -18,7 +18,7 @@ These are **design intent**, not silent drift.
 | D7-P1-1 | Orchestrator handler registry (partial ports only) | Round 3 | `sync/pipeline.py` defers full handler split |
 | D7-P2-2 | `sys.path.insert` in scripts | Round 3 packaging | editable install; console_scripts planned |
 | D3-P1-2 | `SourceRegistry._validate_domain_roles` / `WriteManager._execute_write` C901 | Round 3 hygiene | optional refactor; default ruff check excludes C901 |
-| D4-P3-1 | Starlette/httpx deprecation test warning | Dependency upgrade | 0 test failures; install httpx2 when upgrading Starlette |
+| D4-P3-1 | Starlette/httpx deprecation test warning | **Resolved** @ `master` | dev dep `httpx2>=2.0.0` replaces `httpx` for TestClient |
 
 Verification command baseline (2026-06-19):
 
