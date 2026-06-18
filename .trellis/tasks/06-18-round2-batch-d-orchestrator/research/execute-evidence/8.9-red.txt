@@ -1,0 +1,4 @@
+﻿=== 8.9 RED ===
+FAILED scripts/ci_ingestion_smoke.py
+AssertionError: table data_sync_job not found
+exit 1

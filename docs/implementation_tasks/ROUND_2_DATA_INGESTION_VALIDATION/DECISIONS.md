@@ -195,7 +195,14 @@ Plan frozen; `task.py start` entered Execute phase. **Do not re-Plan** unless us
 - [x] Trellis slug `06-18-round2-batch-d-orchestrator` · `MASTER.plan.md` + manifest v3（P0i / integration-ledger / V7–V9）
 - [x] `validate-plan-freeze` exit 0 · `implement.jsonl` 68 条 · Batch C `READY_FOR_BATCH_D: yes`
 - [x] ROUND README + `BATCH_D_STATUS.md` + `plans/014_batch_d.plan.md` 索引已更新
-- [ ] Execute §8.0–§8.11（见 task `research/EXECUTE-READY.md`）
+- [x] Execute §8.0–§8.11 complete（2026-06-18）· evidence `execute-evidence/` · **勿 finish-work**（Audit 后）
+- Open items（O-1/O-3）已于 Repair 2026-06-19 闭合；详见 `BATCH_D_STATUS.md` §Open items 与 `repair.report.md`。
+
+**Execute 偿还（Batch D）：**
+- [x] GPT-init_db → `scripts/sync_registry.py` + optional `bootstrap(sync_registry=True)`
+- [x] GPT-P3-6 → `ci_ingestion_smoke.py` orchestrator_smoke
+- [x] B-P1-6-full → ResourceGuard before each FETCHING (`begin_fetching` / backfill shards)
+- [x] GPT-P2-2 tombstone API → `sync_to_db(tombstone_missing=True)` via CLI/bootstrap
 
 ### Batch A 验收命令（GPT §十二 · 2026-06-17 复跑 @ `ab8d1eb`）
 

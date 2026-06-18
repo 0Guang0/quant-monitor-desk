@@ -1,0 +1,4 @@
+﻿=== 8.9 GREEN ===
+orchestrator_smoke: ok
+ci_ingestion_smoke: ok
+exit 0

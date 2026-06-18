@@ -69,7 +69,7 @@
 | A | ✅ 已冻结 | ✅ `ee48187` | ✅ PASS | ✅ `ab8d1eb` |
 | B | ✅ v1.1 已冻结 | ✅ PR #2 合并 | ✅ PASS | ✅ 本 commit |
 | C | ✅ 已冻结 | ✅ finish_complete | ✅ PASS | — |
-| D | ✅ 已冻结（v3） | ⏳ **待 Execute §8.0** | — | — |
+| D | ✅ 已冻结（v3） | ✅ Execute §8.1–§8.11 | ⏳ Audit | `BATCH_D_STATUS.md` |
 
 Trellis 任务目录：
 - Batch A（已归档）：`.trellis/tasks/archive/2026-06/06-17-round2-batch-a-sources/`

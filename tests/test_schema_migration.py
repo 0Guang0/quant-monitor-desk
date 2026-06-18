@@ -59,6 +59,7 @@ def test_appliedVersions_afterMigration_containsFoundation() -> None:
         "003_resource_guard_metrics",
         "004_ingestion_sources",
         "005_ingestion_validation",
+        "006_ingestion_sync",
     }
 
 
@@ -82,6 +83,7 @@ def test_appliedVersions_afterMigration_containsIngestion() -> None:
         "003_resource_guard_metrics",
         "004_ingestion_sources",
         "005_ingestion_validation",
+        "006_ingestion_sync",
     })
 
 

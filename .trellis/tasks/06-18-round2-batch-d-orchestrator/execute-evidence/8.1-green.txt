@@ -1,0 +1,9 @@
+=== §8.1 GREEN 2026-06-18T23:28:18.1873230+08:00 ===
+sync_migration exit: 0
+full pytest exit: 1
+
+--- sync_migration ---
+...                                                                      [100%]
+
+--- full pytest tail ---
+System.Object[]

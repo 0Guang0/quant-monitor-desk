@@ -1,0 +1,66 @@
+.trellis/tasks/06-18-round2-batch-d-orchestrator/research/integration-ledger.md | v3 boot routing: inline=MASTER, pointer=extract/for per ledger row
+docs/implementation_tasks/README.md | Round/batch order index; Batch D follows A→B→C→D
+docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md | No drive-by refactor; WriteManager-only clean writes; eco defaults
+docs/implementation_tasks/GLOBAL_TESTING_POLICY.md | RED before GREEN; tracer tests in research/*-tests.md
+docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md | eco profile; ResourceGuard before heavy FETCHING
+docs/implementation_tasks/GLOBAL_TASK_TEMPLATE.md | Task artifact structure (prd/design/implement/MASTER)
+docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/DECISIONS.md | §9 defer ledger; GPT-init_db/P2-2/P3-6/B-P1-6-full → Batch D
+docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/014_implement_data_sync_orchestrator.md | Original 014 card: orchestrator + sync tables + smoke
+docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/BATCH_C_REPAIR_STATUS.md | Batch C deferred items; validator/gate ready for wiring
+docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/BATCH_C_LEDGER.md | C-C1 caller-owned tx; C-C2 no ALTER 004 fetch_log
+docs/modules/data_sync_orchestrator.md | §13.2 happy path; §13.4 job_type semantics; §13.4.1 resume defer Round 3
+specs/contracts/sync_job_contract.yaml | Six job_types; normal/terminal/retryable statuses; id_policy run/job/task
+specs/schema/schema.sql | data_sync_job L73-99 + job_event_log L102-113 column authority for migration 006
+docs/architecture/03_runtime_flows.md | Ingestion chain order: registry→fetch→validate→gate→write
+.trellis/tasks/06-18-round2-batch-d-orchestrator/research/gitnexus-summary.md | Plan baseline: no DataSyncOrchestrator symbol yet; touchpoints listed
+.trellis/tasks/06-18-round2-batch-d-orchestrator/research/orchestrator-tests.md | Full def test_* tracers per §8.1–8.9; MASTER cites names only
+.trellis/spec/backend/index.md | Backend spec index: migrations, adapters, quality
+.trellis/spec/backend/database-guidelines.md | DuckDB migration idempotency; checksum discipline for 004/005
+.trellis/spec/backend/datasource-adapters.md | create_adapter factory; adapter must not write clean
+.trellis/spec/guides/index.md | Cross-package guides including execute-skill-paths
+docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/README.md | Round 2 batch order; Batch D prereq Batch C PASS
+docs/architecture/04_data_architecture.md | staging vs clean layers; orchestrator must not INSERT clean
+docs/quality/final_package_rules.md | Task §5 package rules; pytest/ruff/gate expectations
+docs/modules/data_validation_and_conflict.md | Validator boundaries; reconcile delegates to SourceConflictValidator
+docs/modules/data_sources.md | fetch_log authority; adapter.fetch writes fetch_log on writer con
+docs/modules/write_manager.md | Sole clean write path; write_audit carries job_id
+specs/contracts/data_adapter_contract.md | fetch(req, con, job_id) required; FetchResult always persisted
+specs/contracts/data_quality_rules.yaml | Rules for VALIDATING stage (not data_quality job_type)
+specs/contracts/source_conflict_rules.yaml | Severe conflict → reconcile path; resolution_policy
+scripts/ci_ingestion_smoke.py | Current smoke: migrations + registry; extend for orchestrator (GPT-P3-6)
+backend/app/datasources/source_registry.py | sync_to_db(con, tombstone_missing=True) L339-397; caller-owned tx
+backend/app/datasources/adapters/__init__.py | create_adapter(source_id, registry, data_root) factory
+backend/app/db/validation_gate.py | DbValidationGate.assert_can_write before WRITING
+backend/app/db/write_manager.py | WriteManager.write(WriteRequest(..., job_id=job_id))
+backend/app/validators/data_quality.py | DataQualityValidator.validate_table for VALIDATING / data_quality job
+backend/app/validators/source_conflict.py | SourceConflictValidator for reconcile delegate
+backend/app/core/resource_guard.py | ResourceGuard.check(); PAUSE/HARD_STOP → FAILED_RETRYABLE message prefix
+tests/test_batch_c_validation_flow.py | E2E template: same con through quality→conflict→gate→write
+.trellis/tasks/06-17-round2-batch-c-validation-conflict/finish.md | READY_FOR_BATCH_D: yes; 312 tests PASS at handoff
+backend/app/db/migrate.py | apply_migrations registers versions; 006 must be added here
+scripts/init_db.py | Idempotent init; does NOT default registry sync (GPT-init_db separate CLI)
+backend/app/db/connection.py | ConnectionManager.writer() single-writer lock for all ingestion writes
+backend/app/datasources/fetch_log.py | FetchLogWriter inside adapter.fetch; orchestrator must not duplicate
+backend/app/datasources/base_adapter.py | BaseDataAdapter.fetch wraps FetchLogWriter with writer con
+tests/test_data_adapter_contract.py | FakeAdapter for E2E; import only from tests/**
+backend/app/datasources/fetch_result.py | FetchStatus/FetchResult Pydantic for FETCHING stage
+backend/app/datasources/adapters/fetch_port.py | PortErrorStatus mapping at adapter boundary
+backend/app/db/migrations/004_ingestion_sources.sql | fetch_log/source_registry; 006 must NOT ALTER this file
+backend/app/db/migrations/005_ingestion_validation.sql | validation_report/conflict tables orchestrator wires
+specs/datasource_registry/source_registry.yaml | YAML authority for sync_registry.py bootstrap
+backend/app/config.py | QMD_DATA_ROOT / DATA_ROOT for smoke and isolated test DB
+backend/app/util/error_redaction.py | Batch C error redaction; orchestrator inherits policy
+tests/test_write_manager.py | Tier B regression: write_audit with job_id
+tests/test_source_registry.py | tombstone_missing + sync_to_db idempotency baseline for §8.8
+tests/test_resource_guard.py | Guard Decision.OK/PAUSE/HARD_STOP semantics for §8.4
+tests/test_db_validation_gate.py | Gate blocks severe conflict; preserve Batch C behavior
+tests/test_data_quality_validator.py | VALIDATING stage validator baseline
+tests/test_source_conflict_validator.py | Reconcile delegate baseline for §8.7
+tests/conftest.py | migrated_con fixture; registry paths for sync tests
+scripts/production_gate.py | Tier C gate: layered checks before handoff
+scripts/check_doc_links.py | Doc link integrity in §9.3 Tier C
+docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/BATCH_B_REPAIR_STATUS.md | Cross-batch §9 defer ledger from Batch B
+docs/architecture/07_project_directory_structure.md | backend/app/* normalization; no backend/sync/ parallel tree
+docs/modules/duckdb_and_parquet.md | Table/archive rules referenced by orchestrator spec
+.trellis/spec/backend/quality-guidelines.md | Forbidden patterns: no direct clean SQL, no ad-hoc statuses
+.trellis/tasks/06-18-round2-batch-d-orchestrator/research/original-plan-trace.md | P0o AC mapping: 014 + DECISIONS §9 → MASTER §2

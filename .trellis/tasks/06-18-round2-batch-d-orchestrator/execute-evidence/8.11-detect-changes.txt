@@ -1,0 +1,7 @@
+=== GitNexus detect_changes(scope=all) ===
+risk_level: high
+changed_count: 8
+affected_processes: 7
+changed_symbols: docs DECISIONS/README/014_batch_d + scripts/ci_ingestion_smoke.main
+note: Batch D new sync modules + smoke extension; no CRITICAL; expected for orchestrator slice
+exit 0

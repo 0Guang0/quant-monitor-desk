@@ -1,0 +1,4 @@
+﻿=== 8.2 RED ===
+FAILED tests/test_sync_jobs.py::test_sync_job_state_machine
+ModuleNotFoundError: backend.app.sync.jobs
+exit 1
