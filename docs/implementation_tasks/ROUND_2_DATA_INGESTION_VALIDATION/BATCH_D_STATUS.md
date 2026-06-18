@@ -37,6 +37,7 @@
 
 - Execute evidence: `.trellis/tasks/06-18-round2-batch-d-orchestrator/execute-evidence/`（canonical；`research/execute-evidence/` 为副本）
 - Handoff: `research/execute-evidence/8.11-handoff.txt`
+- **缺口/偏差台账:** [`ROUND2_GAPS_AND_DEVIATIONS.md`](./ROUND2_GAPS_AND_DEVIATIONS.md)
 
 ## Open items（Execute → Audit → Repair）
 

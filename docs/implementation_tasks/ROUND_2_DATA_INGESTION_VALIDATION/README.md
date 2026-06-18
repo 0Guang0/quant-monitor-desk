@@ -29,6 +29,7 @@
 - `../GLOBAL_RESOURCE_LIMITS.md`
 - `../GLOBAL_TASK_TEMPLATE.md`
 - `./DECISIONS.md` — 本轮已确认决策（**先读**）
+- `./ROUND2_GAPS_AND_DEVIATIONS.md` — **Round 2 缺口/偏差/漏洞台账**（完成边界必读）
 - `./BATCH_B_REPAIR_STATUS.md` — Batch B GPT repair 与延后台账
 - `./BATCH_C_LEDGER.md` — C-C0 前置约定与 Batch C 台账
 

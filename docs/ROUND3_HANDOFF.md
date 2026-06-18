@@ -1,10 +1,14 @@
 # Round 3 Handoff — from Round 2 completion
 
-> **Date:** 2026-06-19 · **Branch:** `feat/round2-batch-d-orchestrator` · **Audit:** adversarial re-audit PASS_WITH_CONDITIONS (97/100)
+> **Date:** 2026-06-19 · **Branch:** `master` · **Audit:** adversarial re-audit 84/100 (mechanism aligned; paths not all E2E)
 
 ## Round 2 completion boundary
 
-Round 2 Batch A/B/C/D are **functionally complete** with tests, Trellis archive evidence, and `validate-execute-handoff` PASS on archived Batch C and D.
+Round 2 Batch A/B/C/D are **functionally complete** on `master` (PR #10 merged). **Known gaps are documented** — not silent drift:
+
+- **Full ledger:** `docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/ROUND2_GAPS_AND_DEVIATIONS.md`
+- **Decisions:** `DECISIONS.md` §11 (backfill / reconcile / gold-path semantics)
+- **Deferred IDs:** `docs/AUDIT_DEFERRED_REGISTRY.md`
 
 | Batch | Scope | Status |
 |-------|-------|--------|
@@ -13,27 +17,16 @@ Round 2 Batch A/B/C/D are **functionally complete** with tests, Trellis archive 
 | C | 015 data quality + 016 conflict + DbValidationGate | ✅ archived · handoff PASS |
 | D | 014 DataSyncOrchestrator | ✅ archived · Audit PASS / Repair CLOSED |
 
-## Deferred (do not treat as Round 2 gaps)
+**Gold path (trust chain):** `DataSyncOrchestrator.run_incremental` only — fetch → validate → conflict → gate → WriteManager.
 
-See `docs/AUDIT_DEFERRED_REGISTRY.md` and `ROUND_2_DATA_INGESTION_VALIDATION/DECISIONS.md`:
+## Deferred (do not treat as Round 2 bugs)
 
-- `run_full_load`, `run_revision_audit`, `run_data_quality` job paths
+See `AUDIT_DEFERRED_REGISTRY.md` and `DECISIONS.md`:
+
+- `run_full_load`, `run_revision_audit`, `run_data_quality` job runners
 - Real vendor FetchPort, production CLI (`quant_monitor.sync`)
 - `source_health_snapshot`, full reconcile re-fetch
 - Layer 1–5 modeling (Round 3 scope)
-
-## Audit repair pack (working tree)
-
-Key fixes landed in uncommitted working tree:
-
-- `WriteManager` + `DbValidationGate` same-transaction default path
-- Migration `007_sync_constraints_audit.sql` (sync status CHECK, audit columns)
-- `sync/pipeline.py`, `validators/common.py`, `core/api_limits.py`
-- ResourceGuard snapshot TTL cache; DuckDB dynamic memory/thread/temp
-- `tests/test_audit_fixes.py`; frontend Vitest smoke (`App.test.tsx`)
-- `.trellis/spec/backend/*` filled from templates
-
-**Action:** commit audit-repair pack before starting Round 3 on a shared baseline.
 
 ## Verification command snapshot (Windows)
 
@@ -50,11 +43,12 @@ cd frontend && npm run typecheck && npm run test
 node .gitnexus\run.cjs status
 ```
 
-**2026-06-19 results:** 362 tests pass · backend coverage 94.28% · all gates exit 0 · GitNexus indexed == `d71dc54`.
+**Baseline @ master:** 362 tests · backend coverage 94.28% · all gates exit 0.
 
 ## Round 3 start checklist
 
 1. Read `docs/implementation_tasks/ROUND_3_MODELING_LAYERS/README.md`
 2. Read `017_implement_layer1_axis_loader.md`
-3. Obey `GLOBAL_EXECUTION_RULES.md`, ResourceGuard, WriteManager, no-action boundary
-4. Create Trellis task for Round 3 Layer 1 when ready to implement
+3. Read `ROUND2_GAPS_AND_DEVIATIONS.md` §6 (what does **not** block Layer 1)
+4. Obey `GLOBAL_EXECUTION_RULES.md`, ResourceGuard, WriteManager, no-action boundary
+5. Create Trellis task for Round 3 Layer 1 when ready to implement
