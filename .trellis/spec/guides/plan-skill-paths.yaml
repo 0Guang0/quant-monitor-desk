@@ -107,6 +107,7 @@ phases:
     skills: [trellis-plan]
     artifacts:
       - research/plan-boot.md
+      - research/original-plan-trace.md
     marker: "Phase P0 complete"
 
   "1a":

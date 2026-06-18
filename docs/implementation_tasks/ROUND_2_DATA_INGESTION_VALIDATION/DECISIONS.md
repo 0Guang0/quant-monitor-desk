@@ -3,6 +3,8 @@
 > 本文记录 Round 2 各批次开工前用户已拍板的架构与范围决策。实现阶段不得 silent override；若需变更，先更新本文并征得用户确认。
 >
 > **四批次 Execute 顺序：** A（011+012）→ B（013）→ C（015+016）→ D（014）
+>
+> **Trellis：** Plan/Execute 边界以本文件为准。`MASTER.plan.md` 与本文冲突时，**先改 DECISIONS 再改 MASTER**。
 
 ---
 

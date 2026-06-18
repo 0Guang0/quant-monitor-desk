@@ -2,6 +2,8 @@
 
 本目录是给 Claude Code / Codex 等 AI Coding Agent 逐轮执行的正式实施任务包。它不是临时进度记录，也不是草稿目录。
 
+> **Trellis 复杂任务 Plan 硬门禁：** 在编写或冻结 `.trellis/tasks/<slug>/MASTER.plan.md` 之前，**必须先完整阅读**本目录下与本任务相关的：全局规则（下表）→ 所属 `ROUND_*/README.md` → `DECISIONS.md` → `NNN_*.md` 任务卡 → 任务卡 §3 列出的 specs/architecture 文档。`MASTER` 只负责实现方案与验收细节，**不得扩大或缩小**本目录已定义的范围；冲突时先更新 `DECISIONS.md` 并获用户确认。
+
 项目导航地图见仓库根目录 [`MIGRATION_MAP.md`](../../MIGRATION_MAP.md)；文档索引见 [`docs/INDEX.md`](../INDEX.md)。
 
 ## 执行顺序
@@ -58,9 +60,9 @@
 
 | Batch | 任务 | 深度计划 |
 |-------|------|----------|
-| A | 011+012 | MASTER §8（`.trellis/tasks/06-17-round2-batch-a-sources/`） |
-| B | 013 | （待 Plan） |
-| C | 015+016 | （待 Plan） |
+| A | 011+012 | MASTER §8（`.trellis/tasks/archive/2026-06/06-17-round2-batch-a-sources/`） |
+| B | 013 | MASTER §8（`plans/013_batch_b.plan.md` 索引） |
+| C | 015+016 | MASTER §8（`plans/015_016_batch_c.plan.md` 索引） |
 | D | 014 | （待 Plan） |
 
 - `ROUND_2_DATA_INGESTION_VALIDATION/DECISIONS.md` — 本轮已确认决策（先读）

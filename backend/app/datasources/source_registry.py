@@ -347,7 +347,7 @@ class SourceRegistry:
         *not* open ``BEGIN``/``COMMIT``. Batch C Orchestrator and CLI entry
         points must wrap a full sync in an explicit transaction when atomic
         all-or-nothing semantics are required. See
-        ``.trellis/tasks/06-17-gpt-audit-remediation/BATCH_C_LEDGER.md``.
+        ``docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/BATCH_C_LEDGER.md``.
         """
         count = 0
         for rec in self._sources.values():

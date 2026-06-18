@@ -53,7 +53,7 @@
 
 | 维 | 验证类型 | 命令 / 检查 | 环境 | 隔离策略 | 通过条件 | 扩展权限（agent 可在 audit-sandbox 内追加） | 证据 → | 已执行 |
 |----|----------|---------------|------|----------|----------|--------------------------------------------|--------|--------|
-| **A1** | read-only | trellis-check；diff vs `check.jsonl`；GitNexus query 未在 implement.jsonl 声明的依赖 | local | 无写 | 无未授权 spec 偏离；无 ghost 依赖 | 可追加 1 条 GitNexus query 检查未声明但代码引用的模块 | §3.1 | [ ] |
+| **A1** | read-only | trellis-check；diff vs `check.jsonl`；对照 `docs/implementation_tasks/` 任务卡 ↔ MASTER §1.3/§2 AC（无遗漏、无擅自扩 scope）；GitNexus query 未在 implement.jsonl 声明的依赖 | local | 无写 | 无未授权 spec 偏离；无 ghost 依赖 | 可追加 1 条 GitNexus query 检查未声明但代码引用的模块 | §3.1 | [ ] |
 | **A2** | review-only | ponytail-review：仅 over-engineering；每项 Lxx + net lines | — | — | 无必删 bloat 或已列 §4.3 | — | §3.2 | [ ] |
 | **A3** | static | 威胁面清单；`rg` 密钥/硬编码 URL；SQL/路径注入点 | local | 无写 | 无 P0/P1 未缓解项 | 可追加 `rg` 搜索 JWT/private_key 等变体敏感模式 | §3.3 | [ ] |
 | **A4** | review-only | code-review-and-quality：正确性/可读性/边界/错误处理 | — | — | 无阻塞 review 项或已列 §4.3 | — | §3.4 | [ ] |

@@ -19,13 +19,37 @@ Skill 路径表：`.trellis/spec/guides/plan-skill-paths.yaml`
 |---|------|------|----------|
 | P0a | **Read 本文件** + `plan-skill-paths.yaml` | `plan-skill-reads.jsonl` 首行 | freeze |
 | P0b | GitNexus `query` + `context`（改 symbol 前 `impact`） | `research/gitnexus-summary.md` | freeze + phase 1b |
-| P0c | 读 DECISIONS / 前置 Batch 文档（implement.jsonl 若已有） | `research/plan-boot.md` 含 **`Phase P0 complete`** | freeze |
+| **P0o** | **读原计划包**（见下表；禁止跳过） | `research/original-plan-trace.md` | freeze |
+| P0c | 读 DECISIONS / 前置 Batch / 任务卡 §3 输入文件 | `research/plan-boot.md` 含 **`Phase P0 complete`** | freeze |
+
+### P0o · 原计划必读（`docs/implementation_tasks/`）
+
+| 顺序 | 路径 | 说明 |
+|------|------|------|
+| 1 | `docs/implementation_tasks/README.md` | 全局顺序与规则索引 |
+| 2–5 | `GLOBAL_*.md`（**4** 个） | 执行/测试/资源/任务模板 |
+| 6 | `ROUND_*/README.md` | 本 Round 目标与批次 |
+| 7 | `ROUND_*/DECISIONS.md` | 已确认边界（**权威**） |
+| 8 | `NNN_*.md` | 本批正式任务卡 |
+| 9 | 任务卡 §3 列出的 specs / architecture / modules | 架构与契约 |
+
+**`research/original-plan-trace.md` 最低结构：**
+
+```markdown
+# Original Plan Trace — {slug}
+## Round / Batch
+## 任务卡清单（NNN → 路径）
+## AC 映射（任务卡预期结果 → MASTER §2）
+## 输入文件已读（specs / architecture）
+## 路径纠偏（若任务卡路径与仓库不一致，写明实际路径）
+```
 
 **plan-boot.md 最低结构：**
 
 ```markdown
 # Plan Boot — {slug}
 ## 用户目标摘要
+## 原计划已读（ROUND + NNN 任务卡 + DECISIONS）
 ## 前置依赖 / Batch 关系
 ## 预期 AC 草稿（→ MASTER §2）
 ## Plan Phase 顺序（1a→2→3→3.5→1b→4→5a→5d）
@@ -87,7 +111,8 @@ Plan **不跑** RED/GREEN pytest。
 
 ## 自检（validate-plan-freeze 前）
 
-- [ ] `plan-boot.md` 含 `Phase P0 complete`
+- [ ] `research/original-plan-trace.md` 存在且含任务卡 ↔ AC 映射
+- [ ] `plan-boot.md` 含 `Phase P0 complete` 与「原计划已读」
 - [ ] `project-overview.md` 存在（≤1 页）或 analysis_waiver: true
 - [ ] `gitnexus-summary.md` 存在或 analysis_waiver: true
 - [ ] `plan-skill-reads.jsonl` 覆盖 freeze 必做 skill（见 plan-skill-paths.yaml）

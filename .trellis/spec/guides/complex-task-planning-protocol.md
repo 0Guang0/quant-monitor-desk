@@ -29,6 +29,33 @@
 
 **原则：** Execute → **MASTER**；Audit → **AUDIT.plan.md**；Repair → **REPAIR.plan.md**；Plan 自检 → **plan.freeze.md**。
 
+### 0.1 原计划包（`docs/implementation_tasks/`）— Plan 硬门禁
+
+> **定位：** `docs/implementation_tasks/` = **范围与契约权威**（做什么、边界、输入文件）；`MASTER.plan.md` = **实现方案与验收细节**（怎么做、怎么验）。**禁止**在未读原计划前编写 MASTER §8 或扩大/缩小范围。
+
+**Plan Phase P0（`trellis-plan`）必须按序读取：**
+
+1. `docs/implementation_tasks/README.md`
+2. `docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md`
+3. `docs/implementation_tasks/GLOBAL_TESTING_POLICY.md`
+4. `docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md`
+5. `docs/implementation_tasks/GLOBAL_TASK_TEMPLATE.md`
+6. `docs/implementation_tasks/ROUND_*/README.md`（本任务所属 Round）
+7. `docs/implementation_tasks/ROUND_*/DECISIONS.md`（本 Round 已确认决策）
+8. 本批 `NNN_*.md` 正式任务卡（及任务卡 §3「输入文件」列出的 specs / architecture / modules 文档）
+
+**Plan 产出（冻结前必存在）：**
+
+- `research/original-plan-trace.md` — 任务编号 ↔ MASTER §2 AC ↔ 引用文档对照表
+- `research/plan-boot.md` — 含「原计划已读」摘要 + `Phase P0 complete`
+- `MASTER.plan.md` §0「原计划任务」字段 + §1.3「原计划归并表」
+- `implement.jsonl` — 必须列入 GLOBAL 四文件 + 本批 `NNN_*.md`（路径须存在；`validate-plan-freeze` 校验）
+- 可选 `docs/implementation_tasks/ROUND_*/plans/*.plan.md` — **仅索引**，指向 Trellis `MASTER.plan.md`（Execute 不读 plans 正文）
+
+**冲突处理：** MASTER 与 DECISIONS / 任务卡冲突 → **先更新 DECISIONS 并获用户确认**，再改 MASTER；禁止 silent override。
+
+**祖父条款：** 2026-06-18 前已归档的 Trellis 任务（`.trellis/tasks/archive/`）若无 `original-plan-trace.md`，视为历史交付；**新任务与重新 Plan 的任务**必须遵守本节。
+
 ---
 
 ## 1. 何时启用
@@ -229,7 +256,7 @@ Trellis 命令与 hook 细节见 `.trellis/workflow.md`；`task.py start` = Plan
 
 - **命令：** `task.py create "<标题>" --slug <短名>`
 - **产出：** `task.json`（planning）、种子 `prd.md`
-- **下一步 MUST Read：** `.cursor/skills/trellis-plan/SKILL.md`（Phase P0 Boot）
+- **下一步 MUST Read：** `.cursor/skills/trellis-plan/SKILL.md`（Phase P0 Boot，含 **P0o 原计划包** `docs/implementation_tasks/`）
 
 ### Phase 1a — 项目轻量概览（新 · 在需求分析前）
 

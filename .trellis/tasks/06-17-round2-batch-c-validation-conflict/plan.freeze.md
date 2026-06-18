@@ -34,6 +34,13 @@
 - [x] Batch C excludes Orchestrator / frontend / API / Agent / release / full security CI.
 - [x] Path correction documented: use `backend/app/validators/*`.
 
+### 3.0b 原计划包门禁
+
+- [x] 已读 `docs/implementation_tasks/` README + GLOBAL 四文件
+- [x] 已读 ROUND README + DECISIONS + 015/016 任务卡
+- [x] `research/original-plan-trace.md` 已产出
+- [x] `implement.jsonl` 含 GLOBAL + 双任务卡
+
 ## 4. Ready
 
 `PLAN_FREEZE_READY: yes`

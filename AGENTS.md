@@ -22,10 +22,11 @@ Managed by Trellis. Edits outside this block are preserved; edits inside may be 
 
 When authoring or freezing a complex task plan:
 
-1. **MUST Read first:** `.cursor/skills/trellis-plan/SKILL.md` — complete **Phase P0 Boot** before MASTER §8–§12.
-2. Follow **Phases 1a→5d** in `complex-task-planning-protocol.md` §4（新流程：1a→2→3→3.5→1b→4→5a→5d）；append `research/plan-skill-reads.jsonl` per Read.
-3. Before `task.py start`: `python .trellis/scripts/task.py validate-plan-freeze <task-dir>` exit 0.
-4. Optional per phase: `python .trellis/scripts/task.py validate-plan-phase <task-dir> <phase>`.
+1. **MUST Read first:** `.cursor/skills/trellis-plan/SKILL.md` — complete **Phase P0 Boot** (including **P0o** `docs/implementation_tasks/` original plan package) before MASTER §8–§12.
+2. Follow **Phases 1a→5d** in `complex-task-planning-protocol.md` §4；append `research/plan-skill-reads.jsonl` per Read.
+3. Produce `research/original-plan-trace.md` mapping `NNN_*.md` → MASTER §2 AC.
+4. Before `task.py start`: `python .trellis/scripts/task.py validate-plan-freeze <task-dir>` exit 0.
+5. Optional per phase: `python .trellis/scripts/task.py validate-plan-phase <task-dir> <phase>`.
 
 ## Execute gate (complex tasks with `MASTER.plan.md`)
 

@@ -60,6 +60,17 @@
 
 **一条过关：** 左列 = Execute 跑什么；右列 = 各审计维**各自**跑什么（默认不复跑 §10 同行命令）。
 
+### 3.0b 原计划包门禁（Plan agent 必勾）
+
+| ✓ | 检查项 |
+|---|--------|
+| [ ] | 已读 `docs/implementation_tasks/README.md` + `GLOBAL_*.md`（4 个） |
+| [ ] | 已读本 Round `README.md` + `DECISIONS.md` |
+| [ ] | 已读本批 `NNN_*.md` 任务卡及 §3 输入文件（specs / architecture） |
+| [ ] | `research/original-plan-trace.md` 已产出（任务卡 ↔ MASTER §2 AC） |
+| [ ] | `MASTER.plan.md` §0「原计划任务」+ §1.3「原计划归并表」已填 |
+| [ ] | `implement.jsonl` 含 GLOBAL 四文件 + 本批任务卡且路径存在 |
+
 ### 3.0a Plan Phase 产出门禁（Phase 0 → 5d 必检）
 
 | ✓ | 检查项 |
@@ -106,6 +117,7 @@
 - [ ] implement.jsonl 第一条 = MASTER
 - [ ] check.jsonl 供 A1；无 Plan 协议
 - [ ] `research/plan-boot.md` 含 **Phase P0 complete**
+- [ ] `research/original-plan-trace.md` 存在
 - [ ] `research/plan-skill-reads.jsonl` 覆盖 freeze 必做 skill
 - [ ] `validate 通过`
 

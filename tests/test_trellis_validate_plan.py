@@ -28,23 +28,36 @@ plan_val = _load_plan_validate()
 
 def _minimal_master(task_dir: Path) -> None:
     (task_dir / "MASTER.plan.md").write_text(
+        "## 0.\n原计划任务: 015_implement_data_quality_validator.md + 016_implement_source_conflict_validator.md\n"
+        "## 1.\n### 1.3 原计划归并\n"
         "## 8.\n### 8.0\n| RED 命令 | x |\n| GREEN 命令 | x |\n"
         "| RED 证据 | x |\n| GREEN 证据 | x |\n| 已执行 | [ ] |\n",
         encoding="utf-8",
     )
     (task_dir / "AUDIT.plan.md").write_text("# audit\nno placeholders\n", encoding="utf-8")
-    (task_dir / "implement.jsonl").write_text(
-        '{"file": "MASTER.plan.md"}\n', encoding="utf-8"
-    )
+    impl_lines = [
+        '{"file": "MASTER.plan.md"}',
+        '{"file": "docs/implementation_tasks/README.md"}',
+        '{"file": "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"}',
+        '{"file": "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md"}',
+        '{"file": "docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md"}',
+        '{"file": "docs/implementation_tasks/GLOBAL_TASK_TEMPLATE.md"}',
+        '{"file": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/015_implement_data_quality_validator.md"}',
+        '{"file": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/016_implement_source_conflict_validator.md"}',
+    ]
+    (task_dir / "implement.jsonl").write_text("\n".join(impl_lines) + "\n", encoding="utf-8")
     freeze = task_dir / "plan.freeze.md"
-    freeze.write_text("## 3.\n- [x] all done\n", encoding="utf-8")
+    freeze.write_text("## 3.\n### 3.0b 原计划包门禁\n- [x] all done\n", encoding="utf-8")
 
 
 def _plan_boot_artifacts(task_dir: Path) -> None:
     research = task_dir / "research"
     research.mkdir(parents=True, exist_ok=True)
-    (research / "plan-boot.md").write_text("Phase P0 complete\n", encoding="utf-8")
+    (research / "plan-boot.md").write_text("原计划已读\nPhase P0 complete\n", encoding="utf-8")
     (research / "project-overview.md").write_text("# overview\n", encoding="utf-8")
+    (research / "original-plan-trace.md").write_text(
+        "# Original Plan Trace\n## 任务卡清单\n015\n016\n", encoding="utf-8"
+    )
     (research / "gitnexus-summary.md").write_text("# summary\n", encoding="utf-8")
     (research / "grill-me-session.md").write_text("# grill\n", encoding="utf-8")
     (research / "plan-skill-reads.jsonl").write_text(
@@ -73,6 +86,28 @@ def test_validatePlanFreeze_failsWithoutBoot(tmp_path: Path) -> None:
     _minimal_master(tmp_path)
     errors = plan_val.validate_plan_freeze(tmp_path, _REPO)
     assert any("plan-boot" in e for e in errors)
+
+
+def test_validatePlanFreeze_failsWithoutOriginalPlanTrace(tmp_path: Path) -> None:
+    _minimal_master(tmp_path)
+    research = tmp_path / "research"
+    research.mkdir()
+    (research / "plan-boot.md").write_text("Phase P0 complete\n", encoding="utf-8")
+    (research / "project-overview.md").write_text("# ov\n", encoding="utf-8")
+    (research / "gitnexus-summary.md").write_text("# gnx\n", encoding="utf-8")
+    (research / "plan-skill-reads.jsonl").write_text(
+        '{"skill":"trellis-plan"}\n', encoding="utf-8"
+    )
+    errors = plan_val.validate_plan_freeze(tmp_path, _REPO)
+    assert any("original-plan-trace" in e for e in errors)
+
+
+def test_validatePlanFreeze_failsWithoutGlobalInImplementJsonl(tmp_path: Path) -> None:
+    _minimal_master(tmp_path)
+    (tmp_path / "implement.jsonl").write_text('{"file": "MASTER.plan.md"}\n', encoding="utf-8")
+    _plan_boot_artifacts(tmp_path)
+    errors = plan_val.validate_plan_freeze(tmp_path, _REPO)
+    assert any("GLOBAL_EXECUTION_RULES" in e for e in errors)
 
 
 def test_validatePlanFreeze_passesWithArtifacts(tmp_path: Path) -> None:

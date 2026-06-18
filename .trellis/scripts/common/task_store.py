@@ -139,6 +139,10 @@ _SEED_EXAMPLE = (
 
 _IMPLEMENT_JSONL_HINTS: tuple[dict[str, str], ...] = (
     {
+        "file": "docs/implementation_tasks/README.md",
+        "reason": "原计划包索引（Plan P0o 必读）",
+    },
+    {
         "file": ".trellis/spec/guides/execute-skill-registry.md",
         "reason": "Execute Skill 路由 + User Rule 映射（Plan 5c 后 Execute 必读）",
     },
@@ -149,6 +153,14 @@ _IMPLEMENT_JSONL_HINTS: tuple[dict[str, str], ...] = (
     {
         "file": "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md",
         "reason": "karpathy-guidelines 仓库内对照（最小改动 / 可验证）",
+    },
+    {
+        "file": "docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md",
+        "reason": "GLOBAL_RESOURCE_LIMITS（Plan P0o）",
+    },
+    {
+        "file": "docs/implementation_tasks/GLOBAL_TASK_TEMPLATE.md",
+        "reason": "GLOBAL_TASK_TEMPLATE（Plan P0o）",
     },
 )
 

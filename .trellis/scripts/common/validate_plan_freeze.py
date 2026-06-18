@@ -9,6 +9,13 @@ from pathlib import Path
 import yaml
 
 _BOOT_MARKER = "Phase P0 complete"
+_GLOBAL_IMPL_PATHS = (
+    "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md",
+    "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md",
+    "docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md",
+    "docs/implementation_tasks/GLOBAL_TASK_TEMPLATE.md",
+)
+_GLOBAL_IMPL_README = "docs/implementation_tasks/README.md"
 
 
 def _extract_section(text: str, header_prefix: str) -> str:
@@ -85,6 +92,169 @@ def _skills_from_reads(reads: list[dict]) -> set[str]:
     return {str(r.get("skill", "")).strip() for r in reads if r.get("skill")}
 
 
+def _load_impl_jsonl_entries(task_dir: Path) -> list[dict]:
+    path = task_dir / "implement.jsonl"
+    if not path.is_file():
+        return []
+    rows: list[dict] = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        try:
+            rows.append(json.loads(line))
+        except json.JSONDecodeError:
+            continue
+    return rows
+
+
+def _impl_path_from_entry(entry: dict) -> str | None:
+    for key in ("path", "file"):
+        val = entry.get(key)
+        if val:
+            return str(val).replace("\\", "/")
+    return None
+
+
+def _master_analysis_waiver(task_dir: Path) -> bool:
+    master = task_dir / "MASTER.plan.md"
+    if not master.is_file():
+        return False
+    text = master.read_text(encoding="utf-8")
+    return bool(re.search(r"analysis_waiver\s*\|\s*`?true`?", text, re.I))
+
+
+def _task_card_ids_from_master(task_dir: Path) -> set[str]:
+    master = task_dir / "MASTER.plan.md"
+    if not master.is_file():
+        return set()
+    text = master.read_text(encoding="utf-8")
+    return set(re.findall(r"\b(\d{3})_implement_", text))
+
+
+def _task_card_ids_from_trace(task_dir: Path) -> set[str]:
+    trace = task_dir / "research" / "original-plan-trace.md"
+    if not trace.is_file():
+        return set()
+    return set(re.findall(r"\b(\d{3})_implement_", trace.read_text(encoding="utf-8")))
+
+
+def _required_task_card_ids(task_dir: Path) -> set[str]:
+    ids = _task_card_ids_from_master(task_dir) | _task_card_ids_from_trace(task_dir)
+    if ids:
+        return ids
+    for entry in _load_impl_jsonl_entries(task_dir):
+        path = _impl_path_from_entry(entry)
+        if not path:
+            continue
+        m = re.search(r"/(\d{3})_implement_", path.replace("\\", "/"))
+        if m:
+            ids.add(m.group(1))
+    return ids
+
+
+def _validate_original_plan_artifacts(task_dir: Path, repo_root: Path, errors: list[str]) -> None:
+    trace = task_dir / "research" / "original-plan-trace.md"
+    if not trace.is_file():
+        errors.append("Missing research/original-plan-trace.md (Plan P0o original plan trace)")
+
+    boot = task_dir / "research" / "plan-boot.md"
+    if boot.is_file():
+        boot_text = boot.read_text(encoding="utf-8")
+        if "原计划已读" not in boot_text and "原计划" not in boot_text:
+            errors.append("plan-boot.md must document original plan read (原计划已读)")
+
+    master = task_dir / "MASTER.plan.md"
+    if master.is_file():
+        text = master.read_text(encoding="utf-8")
+        if "原计划" not in text and "original-plan" not in text.lower():
+            errors.append("MASTER.plan.md missing original plan linkage (原计划 / §1.3)")
+        if "### 1.3" not in text and "§1.3" not in text:
+            errors.append("MASTER.plan.md missing §1.3 original plan merge table")
+
+
+def _validate_implement_jsonl_original_plan(
+    task_dir: Path, repo_root: Path, errors: list[str]
+) -> None:
+    impl_jsonl = task_dir / "implement.jsonl"
+    if not impl_jsonl.is_file():
+        return
+
+    entries = _load_impl_jsonl_entries(task_dir)
+    paths = [_impl_path_from_entry(e) for e in entries]
+    paths = [p for p in paths if p]
+
+    if not any(p.replace("\\", "/") == _GLOBAL_IMPL_README for p in paths):
+        errors.append(f"implement.jsonl missing required index: {_GLOBAL_IMPL_README}")
+
+    for global_rel in _GLOBAL_IMPL_PATHS:
+        if not any(p.replace("\\", "/") == global_rel for p in paths):
+            errors.append(
+                f"implement.jsonl missing required global rule: {global_rel}"
+            )
+        elif not (repo_root / global_rel).is_file():
+            errors.append(f"implement.jsonl references missing file: {global_rel}")
+
+    required_ids = _required_task_card_ids(task_dir)
+    if not required_ids:
+        errors.append(
+            "implement.jsonl missing original task card "
+            "(docs/implementation_tasks/.../NNN_*.md)"
+        )
+    else:
+        for card_id in sorted(required_ids):
+            pattern = f"/{card_id}_implement_"
+            if not any(pattern in p.replace("\\", "/") for p in paths):
+                errors.append(
+                    f"implement.jsonl missing task card for {card_id} "
+                    f"(expected path containing {pattern})"
+                )
+
+    for rel in paths:
+        norm = rel.replace("\\", "/")
+        if norm.startswith("docs/implementation_tasks/") and not (
+            repo_root / norm
+        ).is_file():
+            errors.append(f"implement.jsonl references missing file: {norm}")
+
+
+def _validate_check_jsonl_original_plan(
+    task_dir: Path, repo_root: Path, errors: list[str]
+) -> None:
+    check_path = task_dir / "check.jsonl"
+    if not check_path.is_file():
+        return
+    entries = []
+    for line in check_path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            entries.append(json.loads(line))
+        except json.JSONDecodeError:
+            continue
+    paths = []
+    for entry in entries:
+        for key in ("path", "file"):
+            if entry.get(key):
+                paths.append(str(entry[key]).replace("\\", "/"))
+    for global_rel in _GLOBAL_IMPL_PATHS:
+        if not any(p == global_rel for p in paths):
+            errors.append(f"check.jsonl missing required global rule: {global_rel}")
+
+
+def _validate_plan_freeze_template(task_dir: Path, errors: list[str]) -> None:
+    freeze = task_dir / "plan.freeze.md"
+    if not freeze.is_file():
+        return
+    text = freeze.read_text(encoding="utf-8")
+    if "### 3.0b" not in text and "原计划包门禁" not in text:
+        errors.append(
+            "plan.freeze.md missing §3.0b original plan package checklist "
+            "(use templates/plan.freeze.md or append ### 3.0b)"
+        )
+
+
 def validate_plan_phase(task_dir: Path, phase: str, *, repo_root: Path | None = None) -> list[str]:
     """Validate one Plan phase checkpoint (protocol v2)."""
     if repo_root is None:
@@ -148,10 +318,13 @@ def validate_plan_freeze(task_dir: Path, repo_root: Path | None = None) -> list[
     errors: list[str] = []
     master = task_dir / "MASTER.plan.md"
     if not master.is_file():
+        if (task_dir / "task.json").is_file():
+            errors.append("MASTER.plan.md missing (complex task requires MASTER)")
         return errors
 
     cfg = _load_plan_paths(repo_root)
     boot_marker = cfg.get("boot_marker", _BOOT_MARKER)
+    waiver = _master_analysis_waiver(task_dir)
 
     boot = task_dir / "research" / "plan-boot.md"
     if not boot.is_file():
@@ -159,13 +332,14 @@ def validate_plan_freeze(task_dir: Path, repo_root: Path | None = None) -> list[
     elif boot_marker not in boot.read_text(encoding="utf-8"):
         errors.append(f"plan-boot.md must contain {boot_marker!r}")
 
-    ov = task_dir / "research" / "project-overview.md"
-    if not ov.is_file():
-        errors.append("Missing research/project-overview.md (Plan Phase 1a)")
+    if not waiver:
+        ov = task_dir / "research" / "project-overview.md"
+        if not ov.is_file():
+            errors.append("Missing research/project-overview.md (Plan Phase 1a)")
 
-    gnx = task_dir / "research" / "gitnexus-summary.md"
-    if not gnx.is_file():
-        errors.append("Missing research/gitnexus-summary.md (Plan Phase 1b)")
+        gnx = task_dir / "research" / "gitnexus-summary.md"
+        if not gnx.is_file():
+            errors.append("Missing research/gitnexus-summary.md (Plan Phase 1b)")
 
     reads_path = task_dir / "research" / "plan-skill-reads.jsonl"
     if not reads_path.is_file():
@@ -227,6 +401,11 @@ def validate_plan_freeze(task_dir: Path, repo_root: Path | None = None) -> list[
         sec3 = _extract_section(freeze.read_text(encoding="utf-8"), "3.")
         if sec3 and re.search(r"- \[ \]", sec3):
             errors.append("plan.freeze.md §3 has unchecked items")
+
+    _validate_original_plan_artifacts(task_dir, repo_root, errors)
+    _validate_implement_jsonl_original_plan(task_dir, repo_root, errors)
+    _validate_check_jsonl_original_plan(task_dir, repo_root, errors)
+    _validate_plan_freeze_template(task_dir, errors)
 
     return errors
 

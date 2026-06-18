@@ -11,6 +11,8 @@
 | 字段 | 值 |
 |------|-----|
 | 任务 slug | `{{slug}}` |
+| 原计划 Round | `docs/implementation_tasks/ROUND_*/` |
+| 原计划任务卡 | `NNN_*.md`（本批；见 `research/original-plan-trace.md`） |
 | Audit 计划 | `.trellis/tasks/{{slug}}/AUDIT.plan.md` |
 | 分析豁免 | `analysis_waiver: false` |
 | Plan 冻结自检 | `plan.freeze.md`（Execute **不读**） |
@@ -113,6 +115,14 @@ Phase 0 Boot → Phase 1 严格 §8.x（execute-evidence/{step}-red/green.txt）
 ### 1.2 非目标
 
 - {{…}}
+
+### 1.3 原计划归并（`docs/implementation_tasks/`）
+
+| 来源 | 进入本任务的内容 |
+|------|------------------|
+| `NNN_*.md` | {{从任务卡摘录的预期结果与边界}} |
+| `DECISIONS.md` | {{本批已确认决策}} |
+| 路径纠偏 | {{若任务卡路径与仓库不一致，写明实际路径}} |
 
 ---
 

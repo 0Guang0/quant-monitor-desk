@@ -17,7 +17,7 @@
 |------|------|----------------------|----------|
 | **A** | 011+012 | `06-17-round2-batch-a-sources` | MASTER §8（`plans/` 仅索引） |
 | B | 013 | `06-17-round2-batch-b-adapters` | MASTER §8（`plans/013_batch_b.plan.md` 索引） |
-| C | 015+016 | `06-17-round2-batch-c-validation-conflict` | MASTER §8（Trellis task plan） |
+| C | 015+016 | `06-17-round2-batch-c-validation-conflict` | MASTER §8（`plans/015_016_batch_c.plan.md` 索引） |
 | D | 014 | （Plan 待建） | `plans/014_*.plan.md` |
 
 ## 执行前必读
@@ -28,6 +28,9 @@
 - `../GLOBAL_TASK_TEMPLATE.md`
 - `./DECISIONS.md` — 本轮已确认决策（**先读**）
 - `./BATCH_B_REPAIR_STATUS.md` — Batch B GPT repair 与延后台账
+- `./BATCH_C_LEDGER.md` — C-C0 前置约定与 Batch C 台账
+
+**Trellis Plan：** 每批次 `MASTER.plan.md` §1.3 须映射本目录 `NNN_*.md` 任务卡；`plans/*.plan.md` 仅为索引（Execute 只读 MASTER）。
 
 ## 任务清单
 

@@ -40,6 +40,9 @@
 
 Verify:
 
+- `research/original-plan-trace.md` maps `docs/implementation_tasks/` task cards 015/016 → MASTER §2 AC (no missing items, no scope creep).
+- `implement.jsonl` / `check.jsonl` list GLOBAL rules + original task cards with **existing** paths.
+- A1 uses `trellis-check` + diff vs `check.jsonl` per AUDIT template §2.
 - Data quality rules follow `specs/contracts/data_quality_rules.yaml`.
 - Conflict logic follows `specs/contracts/source_conflict_rules.yaml`.
 - Runtime flow follows `docs/modules/data_validation_and_conflict.md`.
