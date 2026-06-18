@@ -3,7 +3,7 @@
   "title": "Round 2 Batch C — DataQualityValidator + SourceConflictValidator + DbValidationGate",
   "round": "ROUND_2_DATA_INGESTION_VALIDATION",
   "batch": "C",
-  "status": "repair_complete",
+  "status": "finish_complete",
   "branch": "feat/round2-batch-c-validation-conflict",
   "created_at": "2026-06-17",
   "entrypoints": {
