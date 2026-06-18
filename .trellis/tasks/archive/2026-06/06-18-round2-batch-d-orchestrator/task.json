@@ -1,0 +1,56 @@
+{
+  "id": "round2-batch-d-orchestrator",
+  "name": "round2-batch-d-orchestrator",
+  "title": "Round 2 Batch D — DataSyncOrchestrator",
+  "description": "DataSyncOrchestrator + migration 006 + ingestion smoke; Round 2 Batch D",
+  "status": "completed",
+  "round": "ROUND_2_DATA_INGESTION_VALIDATION",
+  "batch": "D",
+  "dev_type": "complex",
+  "scope": [
+    "014 DataSyncOrchestrator",
+    "006 data_sync_job / job_event_log migration",
+    "ResourceGuard before fetch",
+    "Incremental/Backfill/Reconcile orchestration",
+    "Registry bootstrap sync_registry",
+    "GPT-P3-6 ingestion smoke",
+    "Batch D status documentation"
+  ],
+  "package": "backend",
+  "priority": "P1",
+  "creator": "Guang",
+  "assignee": "Guang",
+  "createdAt": "2026-06-18",
+  "completedAt": "2026-06-19",
+  "branch": "feat/round2-batch-d-orchestrator",
+  "base_branch": "master",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "entrypoints": {
+    "execute": "MASTER.plan.md + implement.jsonl",
+    "audit": "AUDIT.plan.md + audit.jsonl",
+    "repair": "REPAIR.plan.md + repair.jsonl"
+  },
+  "out_of_scope": [
+    "Layer 1-5 modeling",
+    "FastAPI/frontend production",
+    "Agent sandbox",
+    "real vendor FetchPorts",
+    "full security CI sprint"
+  ],
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "Plan frozen 2026-06-18; task.py start → in_progress; next: MASTER §8.0 Boot (see research/EXECUTE-READY.md)",
+  "predecessor_tasks": [
+    "06-17-round2-batch-c-validation-conflict"
+  ],
+  "meta": {
+    "manifest_protocol_version": "3",
+    "predecessor_tasks": [
+      "06-17-round2-batch-c-validation-conflict"
+    ]
+  }
+}

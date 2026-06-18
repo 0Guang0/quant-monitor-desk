@@ -18,7 +18,7 @@
 
 ## 4. 相关代码 / 输出文件
 
-- `backend/validation/data_quality.py`
+- `backend/app/validators/data_quality.py`
 - `tests/test_data_quality_validator.py`
 
 ## 5. 现有模式 / 参考

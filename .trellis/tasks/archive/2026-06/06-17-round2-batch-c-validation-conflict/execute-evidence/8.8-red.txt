@@ -1,0 +1,18 @@
+Command:
+.\.venv\Scripts\python.exe -m pytest tests\test_batch_c_validation_flow.py -q
+
+Exit code: 1
+
+Expected RED:
+New Batch C §8.8 end-to-end flow tests fail before integration fixes.
+
+Key output:
+FAILED tests/test_batch_c_validation_flow.py::test_batchCFlow_validDataQualityAndNoSevereConflict_writesClean
+AssertionError: assert 'FAILED' == 'PASSED'
+
+FAILED tests/test_batch_c_validation_flow.py::test_batchCFlow_invalidDataQuality_rejectsCleanAndPreservesAudit
+AssertionError: assert None == ('FAILED', 'FAILED')
+
+Analysis:
+- The valid-flow test initially fed both primary and validation-source rows into DataQualityValidator, creating duplicate primary keys; test should use primary clean-write staging for DataQuality and peer staging for SourceConflict.
+- WriteManager with own_transaction=False did not persist FAILED audit rows when DbValidationGate rejects before a data write.

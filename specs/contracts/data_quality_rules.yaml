@@ -27,6 +27,9 @@ market_bar_rules:
   - id: INVALID_VOLUME
     condition: volume < 0
     severity: failed
+  - id: INVALID_AMOUNT
+    condition: amount < 0
+    severity: failed
 layer1_rules:
   - id: MISSING_SOURCE_USED
     severity: failed

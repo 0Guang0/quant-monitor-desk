@@ -201,7 +201,8 @@ Complex task: ask the user if you can create a Trellis task and enter the planni
 <!-- Per-turn breadcrumb: shown throughout Phase 1 (status='planning') -->
 
 [workflow-state:planning]
-Load `trellis-brainstorm`; stay in planning.
+Load `trellis-plan`; stay in planning.
+MUST read `docs/implementation_tasks/` first: README + GLOBAL_* (4 files) + ROUND README/DECISIONS + NNN task cards; produce `research/original-plan-trace.md` before MASTER §8.
 Lightweight: `prd.md` can be enough. Complex: finish `prd.md`, `design.md`, and `implement.md`; ask for review before `task.py start`.
 Multi-deliverable scope: consider a parent task plus independently verifiable child tasks; dependencies must be written in child artifacts, not implied by tree position.
 Sub-agent mode: curate `implement.jsonl` and `check.jsonl` as spec/research manifests before start.
@@ -214,7 +215,8 @@ Sub-agent mode: curate `implement.jsonl` and `check.jsonl` as spec/research mani
      into a sub-agent. -->
 
 [workflow-state:planning-inline]
-Load `trellis-brainstorm`; stay in planning.
+Load `trellis-plan`; stay in planning.
+MUST read `docs/implementation_tasks/` first: README + GLOBAL_* (4 files) + ROUND README/DECISIONS + NNN task cards; produce `research/original-plan-trace.md` before MASTER §8.
 Lightweight: `prd.md` can be enough. Complex: finish `prd.md`, `design.md`, and `implement.md`; ask for review before `task.py start`.
 Multi-deliverable scope: consider a parent task plus independently verifiable child tasks; dependencies must be written in child artifacts, not implied by tree position.
 Inline mode: skip jsonl curation; Phase 2 reads artifacts/specs via `trellis-before-dev`.
@@ -317,7 +319,7 @@ When a user request matches one of these intents inside an active task, route fi
 ### Guardrails
 
 - Task creation approval is not implementation approval; implementation waits for `task.py start` after artifact review.
-- **Complex tasks (Plan v2):** MUST Read `.cursor/skills/trellis-plan/SKILL.md` first when `status=planning`; optional per phase: `task.py validate-plan-phase <dir> <phase>` (`boot`, `P1`, `2a`–`5d`).
+- **Complex tasks (Plan v2):** MUST Read `.cursor/skills/trellis-plan/SKILL.md` first when `status=planning`; optional per phase: `task.py validate-plan-phase <dir> <phase>` (`boot`, `1a`, `2a`, `2b`, `3`, `3.5`, `1b`, `4`, `5a`, `5b`, `5c`, `5d`).
 - **Complex tasks:** `task.py validate-plan-freeze <dir>` must pass before `task.py start` (or `--force` with documented reason).
 - PRD-only is valid for lightweight tasks; complex tasks need `design.md` + `implement.md` + `MASTER.plan.md` + `plan.freeze.md`.
 - Planning must be persisted to task artifacts; checks must run before reporting completion.

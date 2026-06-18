@@ -1,0 +1,20 @@
+{"path": "AUDIT.plan.md", "reason": "Primary audit contract; must be first entry."}
+{"path": "MASTER.plan.md", "reason": "Traceability source: §2/§9/§10."}
+{"path": "check.jsonl", "reason": "Spec compliance file set."}
+{"path": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/015_implement_data_quality_validator.md", "reason": "Original task 015 acceptance."}
+{"path": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/016_implement_source_conflict_validator.md", "reason": "Original task 016 acceptance."}
+{"path": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/DECISIONS.md", "reason": "Batch boundary and deferred constraints."}
+{"path": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/BATCH_B_REPAIR_STATUS.md", "reason": "Batch B deferred ledger."}
+{"path": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/BATCH_C_LEDGER.md", "reason": "C-C0 closure context."}
+{"path": "docs/modules/data_validation_and_conflict.md", "reason": "Domain correctness."}
+{"path": "specs/contracts/data_quality_rules.yaml", "reason": "DataQualityValidator rule coverage."}
+{"path": "specs/contracts/source_conflict_rules.yaml", "reason": "SourceConflictValidator rule coverage."}
+{"path": "backend/app/db/migrations/005_ingestion_validation.sql", "reason": "Migration correctness."}
+{"path": "backend/app/validators/data_quality.py", "reason": "DataQualityValidator implementation."}
+{"path": "backend/app/validators/source_conflict.py", "reason": "SourceConflictValidator implementation."}
+{"path": "backend/app/db/validation_gate.py", "reason": "DbValidationGate implementation."}
+{"path": "tests/test_data_quality_validator.py", "reason": "Data quality test evidence."}
+{"path": "tests/test_source_conflict_validator.py", "reason": "Conflict test evidence."}
+{"path": "tests/test_db_validation_gate.py", "reason": "Gate test evidence."}
+{"path": "tests/test_ingestion_validation_migration.py", "reason": "DB/migration test evidence."}
+{"path": "tests/test_batch_c_validation_flow.py", "reason": "End-to-end flow evidence."}

@@ -1,51 +1,28 @@
 # Logging Guidelines
 
-> How logging is done in this project.
-
----
+> Backend logging and operator messaging (Round 0–2).
 
 ## Overview
 
-<!--
-Document your project's logging conventions here.
+- Structured persistence: `resource_guard_log`, `write_audit_log`, `fetch_log`, `job_event_log`.
+- Operator stderr banners for PAUSE/HARD_STOP via `format_pause_event`.
+- Secrets redacted in error messages via `redact_error_message`.
 
-Questions to answer:
-- What logging library do you use?
-- What are the log levels and when to use each?
-- What should be logged?
-- What should NOT be logged (PII, secrets)?
--->
+## Required Patterns
 
-(To be filled by the team)
+| Event | Destination |
+|---|---|
+| ResourceGuard PAUSE/HARD_STOP | stderr banner + optional `resource_guard_log` row |
+| Write success/failure | `write_audit_log` with validation/conflict status |
+| Fetch outcomes | `fetch_log` via adapter skeleton |
+| Sync transitions | `job_event_log` via `SyncJobStateMachine` |
 
----
+## Forbidden Patterns
 
-## Log Levels
+- Logging raw tokens, passwords, API keys in `error_message` fields.
+- Silent swallow of validation failures without audit row.
 
-<!-- When to use each level: debug, info, warn, error -->
+## Testing
 
-(To be filled by the team)
-
----
-
-## Structured Logging
-
-<!-- Log format, required fields -->
-
-(To be filled by the team)
-
----
-
-## What to Log
-
-<!-- Important events to log -->
-
-(To be filled by the team)
-
----
-
-## What NOT to Log
-
-<!-- Sensitive data, PII, secrets -->
-
-(To be filled by the team)
+- ResourceGuard tests assert log row count for PAUSE/HARD_STOP.
+- WriteManager tests assert audit status on FAILED paths.

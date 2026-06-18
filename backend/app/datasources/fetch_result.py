@@ -17,13 +17,15 @@ FetchStatus = Literal[
     "FAILED",
 ]
 
-_FAILURE_STATUSES = frozenset({
-    "AUTH_FAILED",
-    "RATE_LIMITED",
-    "NETWORK_ERROR",
-    "SCHEMA_DRIFT",
-    "FAILED",
-})
+_FAILURE_STATUSES = frozenset(
+    {
+        "AUTH_FAILED",
+        "RATE_LIMITED",
+        "NETWORK_ERROR",
+        "SCHEMA_DRIFT",
+        "FAILED",
+    }
+)
 
 _NO_EVIDENCE_STATUSES = frozenset({"EMPTY_RESPONSE", "NOT_PUBLISHED_YET"})
 
@@ -76,9 +78,7 @@ class FetchResult(BaseModel):
             if self.status == "NOT_PUBLISHED_YET":
                 msg = (self.error_message or "").lower()
                 if "publish" not in msg:
-                    raise ValueError(
-                        "NOT_PUBLISHED_YET requires publish-related error_message"
-                    )
+                    raise ValueError("NOT_PUBLISHED_YET requires publish-related error_message")
         elif self.status in _FAILURE_STATUSES:
             if not self.error_message:
                 raise ValueError(f"{self.status} requires error_message")

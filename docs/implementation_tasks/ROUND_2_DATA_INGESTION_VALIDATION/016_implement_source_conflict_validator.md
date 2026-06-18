@@ -18,7 +18,7 @@
 
 ## 4. 相关代码 / 输出文件
 
-- `backend/validation/source_conflict.py`
+- `backend/app/validators/source_conflict.py`
 - `tests/test_source_conflict_validator.py`
 
 ## 5. 现有模式 / 参考

@@ -13,6 +13,7 @@ from backend.app.db.validation_gate import (
     ValidationGateError,
     ValidationRejected,
 )
+from backend.app.util.error_redaction import redact_error_message
 
 WriteStatus = Literal["SUCCESS", "FAILED"]
 
@@ -27,6 +28,12 @@ class WriteRequest:
     primary_keys: tuple[str, ...]
     validation_report_id: str
     source_used: str
+    data_domain: str = ""
+    partition_keys: tuple[str, ...] = ()
+    conflict_report_id: str | None = None
+    source_role: str = "primary"
+    allow_partial_write: bool = False
+    requested_by: str = "system"
 
 
 @dataclass(frozen=True)
@@ -40,6 +47,11 @@ class WriteResult:
 
 class WriteManager:
     SUPPORTED_MODES = ("append_only", "upsert_by_pk")
+    UNSUPPORTED_MODES = (
+        "replace_partition",
+        "manual_patch",
+        "schema_migration",
+    )
 
     def __init__(self, conn_manager, gate) -> None:
         if gate is None:
@@ -72,9 +84,7 @@ class WriteManager:
             f"SELECT COUNT(*) FROM {target} WHERE EXISTS (SELECT 1 FROM {staging} WHERE {pk_join})"
         ).fetchone()[0]
 
-    def _table_columns(
-        self, con: duckdb.DuckDBPyConnection, table_name: str
-    ) -> list[str]:
+    def _table_columns(self, con: duckdb.DuckDBPyConnection, table_name: str) -> list[str]:
         quoted = quote_ident(table_name)
         rows = con.execute(f"PRAGMA table_info({quoted})").fetchall()
         return [row[1] for row in rows]
@@ -127,9 +137,7 @@ class WriteManager:
         if req.write_mode == "append_only":
             return [f"INSERT INTO {target} ({col_sql}) SELECT {col_sql} FROM {staging}"]
         if req.write_mode == "upsert_by_pk":
-            pk_join = " AND ".join(
-                f"{target}.{col} = {staging}.{col}" for col in primary_keys
-            )
+            pk_join = " AND ".join(f"{target}.{col} = {staging}.{col}" for col in primary_keys)
             return [
                 f"DELETE FROM {target} WHERE EXISTS (SELECT 1 FROM {staging} WHERE {pk_join})",
                 f"INSERT INTO {target} ({col_sql}) SELECT {col_sql} FROM {staging}",
@@ -150,14 +158,21 @@ class WriteManager:
         validation_status: str,
         error_message: str | None,
     ) -> None:
+        safe_message = redact_error_message(error_message) if error_message else None
         con.execute(
             """
             INSERT INTO write_audit_log (
                 write_id, run_id, job_id, target_table, staging_table, write_mode,
-                primary_keys, rows_in_staging, rows_inserted, rows_updated,
-                rows_deleted, rows_rejected, validation_status, source_used,
-                started_at, finished_at, status, error_message
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                primary_keys, partition_keys, rows_in_staging, rows_inserted,
+                rows_updated, rows_deleted, rows_rejected, validation_status,
+                conflict_status, source_used, source_role, source_switched,
+                stale_reason, data_domain, conflict_report_id, requested_by,
+                allow_partial_write, traceback_digest, started_at, finished_at,
+                status, error_message
+            ) VALUES (
+                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?, ?, ?, ?
+            )
             """,
             [
                 write_id,
@@ -167,17 +182,27 @@ class WriteManager:
                 req.staging_table,
                 req.write_mode,
                 ",".join(req.primary_keys),
+                ",".join(req.partition_keys) if req.partition_keys else None,
                 rows_in_staging,
                 rows_inserted,
                 rows_updated,
                 0,
                 0,
                 validation_status,
+                "PASSED" if validation_status == "PASSED" else "FAILED",
                 req.source_used,
+                req.source_role,
+                False,
+                None,
+                req.data_domain or None,
+                req.conflict_report_id,
+                req.requested_by,
+                req.allow_partial_write,
+                None,
                 started_at,
                 datetime.now(UTC),
                 status,
-                error_message,
+                safe_message,
             ],
         )
 
@@ -225,7 +250,7 @@ class WriteManager:
         return WriteResult(
             write_id=write_id,
             status="FAILED",
-            error_message=error_message,
+            error_message=redact_error_message(error_message),
         )
 
     def _execute_write(
@@ -244,7 +269,14 @@ class WriteManager:
             con.execute("BEGIN")
 
         try:
-            self.gate.assert_can_write(req.validation_report_id, req.write_mode)
+            if hasattr(self.gate, "assert_can_write_with"):
+                self.gate.assert_can_write_with(
+                    con,
+                    req.validation_report_id,
+                    req.write_mode,
+                )
+            else:
+                self.gate.assert_can_write(req.validation_report_id, req.write_mode)
 
             before = con.execute(f"SELECT COUNT(*) FROM {target}").fetchone()[0]
             rows_updated = 0
@@ -253,9 +285,7 @@ class WriteManager:
                 self._assert_staging_pk_unique(con, staging, primary_keys)
                 rows_updated = self._count_pk_matches(con, target, staging, primary_keys)
 
-            for sql in self._build_merge_sql(
-                req, target, staging, primary_keys, columns
-            ):
+            for sql in self._build_merge_sql(req, target, staging, primary_keys, columns):
                 con.execute(sql)
 
             after = con.execute(f"SELECT COUNT(*) FROM {target}").fetchone()[0]
@@ -311,7 +341,7 @@ class WriteManager:
             return WriteResult(
                 write_id=write_id,
                 status="FAILED",
-                error_message=str(exc),
+                error_message=redact_error_message(str(exc)),
             )
         except Exception:
             if own_transaction:
@@ -326,6 +356,11 @@ class WriteManager:
         own_transaction: bool = True,
     ) -> WriteResult:
         if req.write_mode not in self.SUPPORTED_MODES:
+            if req.write_mode in self.UNSUPPORTED_MODES:
+                raise ValueError(
+                    f"write_mode {req.write_mode!r} is defined in contract but not "
+                    "implemented yet; use append_only or upsert_by_pk"
+                )
             raise ValueError(f"unsupported write_mode: {req.write_mode}")
         self._validate_request(req)
 

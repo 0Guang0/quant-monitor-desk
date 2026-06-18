@@ -1,71 +1,32 @@
-# Error Handling
+# Error Handling Guidelines
 
-> How errors are handled in this project.
-
----
+> Backend error semantics and logging (Round 0–2).
 
 ## Overview
 
-<!--
-Document your project's error handling conventions here.
+- Domain errors use typed exceptions (`ValidationRejected`, `InvalidRegistryError`, etc.).
+- User/operator facing messages redacted via `redact_error_message`.
+- Resource pauses emit stderr banner via `format_pause_event`.
 
-Questions to answer:
-- What error types do you define?
-- How are errors propagated?
-- How are errors logged?
-- How are errors returned to clients?
--->
+## Patterns
 
-(To be filled by the team)
+| Layer | Pattern |
+|---|---|
+| ValidationGate | `ValidationRejected` / `ValidationGateError` → failed write + audit |
+| WriteManager | DuckDB errors → ROLLBACK + FAILED audit when `own_transaction=True` |
+| ResourceGuard | PAUSE/HARD_STOP logged to `resource_guard_log` when `con` provided |
+| Adapters | Map port errors to `FetchResult.status` + `fetch_log` row |
 
----
+## Broad Exception Policy
 
-### SourceRegistry loader validation (Batch A)
+`except Exception` allowed only when:
+1. Re-raising after ROLLBACK (WriteManager outer safety net), or
+2. Logging resource guard failure after ROLLBACK, or
+3. Migration wrapper with explicit ROLLBACK (migrate.py).
 
-**Load-time checks in `_validate_domain_roles`:**
+Prefer catching `duckdb.Error`, `OSError`, `yaml.YAMLError` where possible.
 
-- Primary source must exist, be enabled, and not have `license_type: unknown`
-- Primary `allowed_domains` must include the bound `data_domain`
-- Validation source (if set): enabled, license known, domain allowed
-- Top-level YAML keys `shadow_source` / `emergency_source` → `LegacyRoleError`
-- Role fields `Shadow` / `Emergency` → `LegacyRoleError`
-- YAML booleans must be native YAML boolean (not `"false"` strings)
+## Testing
 
-### BaseDataAdapter fetch guards
-
-- `req.source_id != adapter.source_id` → `SourceMismatchError` (pre-impl, 0 fetch_log rows)
-- `FetchResult` Pydantic validators enforce status/evidence contract before persist
-
-**Tests:** `tests/test_source_registry.py` + `tests/test_data_adapter_contract.py`
-
----
-
-## Error Types
-
-<!-- Custom error classes/types -->
-
-(To be filled by the team)
-
----
-
-## Error Handling Patterns
-
-<!-- Try-catch patterns, error propagation -->
-
-(To be filled by the team)
-
----
-
-## API Error Responses
-
-<!-- Standard error response format -->
-
-(To be filled by the team)
-
----
-
-## Common Mistakes
-
-<!-- Error handling mistakes your team has made -->
-
-(To be filled by the team)
+- Failure-path tests must assert audit row status and clean row count unchanged.
+- Do not swallow validation failures silently.

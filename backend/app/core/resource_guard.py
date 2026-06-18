@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import sys
+import time
 import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -206,6 +207,8 @@ def load_thresholds() -> dict:
         contract = yaml.safe_load(f)
     cfg["system_thresholds"] = contract["system_thresholds"]
     cfg["project_size_thresholds"] = contract["project_size_thresholds"]
+    cfg["api_limits"] = contract.get("api_limits", {})
+    cfg["actions"] = contract.get("actions", {})
     return cfg
 
 
@@ -247,12 +250,17 @@ def format_pause_event(
 
 
 class ResourceGuard:
+    SNAPSHOT_TTL_SEC = 2.0
+
     def __init__(self, profile: str | None = None, con=None) -> None:
         self.profile = profile or get_resource_profile()
         self.con = con
         self._thresholds = load_thresholds()
+        self._snapshot_cache: ResourceSnapshot | None = None
+        self._snapshot_cache_at: float = 0.0
+        self._shard_checks = 0
 
-    def snapshot(self) -> ResourceSnapshot:
+    def _compute_snapshot(self) -> ResourceSnapshot:
         mem = psutil.virtual_memory()
         data_root = DATA_ROOT if DATA_ROOT.exists() else PROJECT_ROOT / "data"
         disk_root = data_root.parent if data_root.exists() else PROJECT_ROOT
@@ -270,7 +278,25 @@ class ResourceGuard:
             system_disk_usage_pct=float(disk.percent),
         )
 
+    def snapshot(self, **kwargs: object) -> ResourceSnapshot:
+        force_refresh = bool(kwargs.get("force_refresh"))
+        if force_refresh:
+            self._snapshot_cache = None
+        now = time.monotonic()
+        if (
+            self._snapshot_cache is not None
+            and now - self._snapshot_cache_at < self.SNAPSHOT_TTL_SEC
+        ):
+            return self._snapshot_cache
+        snap = self._compute_snapshot()
+        self._snapshot_cache = snap
+        self._snapshot_cache_at = now
+        return snap
+
     def check(self) -> tuple[Decision, str]:
+        self._shard_checks += 1
+        if self._shard_checks % 5 == 0:
+            self._snapshot_cache = None
         snap = self.snapshot()
         profile_limits = self._thresholds["profiles"][self.profile]
         decision, reason = evaluate(snap, self._thresholds, profile_limits)

@@ -10,8 +10,7 @@ from backend.app.datasources.adapters.fetch_port import FetchPayload, FetchPort,
 from backend.app.datasources.base_adapter import BaseDataAdapter, _utc_now_iso
 from backend.app.datasources.fetch_result import FetchRequest, FetchResult
 from backend.app.datasources.source_registry import SourceRegistry
-from backend.app.storage.file_registry import FileRegistry
-from backend.app.storage.raw_store import RawStore
+from backend.app.storage.evidence_ports import FileRegistryPort, RawEvidenceStore
 
 DEFAULT_MAX_PAYLOAD_BYTES = 10 * 1024 * 1024
 
@@ -44,9 +43,9 @@ class SkeletonAdapterBase(BaseDataAdapter):
         self,
         registry: SourceRegistry,
         *,
-        raw_store: RawStore,
+        raw_store: RawEvidenceStore,
         fetch_port: FetchPort,
-        file_registry: FileRegistry | None = None,
+        file_registry: FileRegistryPort | None = None,
         max_payload_bytes: int = DEFAULT_MAX_PAYLOAD_BYTES,
     ) -> None:
         super().__init__(registry)
@@ -59,11 +58,7 @@ class SkeletonAdapterBase(BaseDataAdapter):
         raw = req.end_time
         if raw:
             try:
-                return (
-                    datetime.fromisoformat(raw.replace("Z", "+00:00"))
-                    .date()
-                    .isoformat()
-                )
+                return datetime.fromisoformat(raw.replace("Z", "+00:00")).date().isoformat()
             except ValueError:
                 try:
                     return date.fromisoformat(raw).isoformat()
@@ -96,8 +91,7 @@ class SkeletonAdapterBase(BaseDataAdapter):
                 row_count=0,
                 fetch_time=fetch_time,
                 error_message=(
-                    f"payload too large ({len(payload.content)} > "
-                    f"{self._max_payload_bytes} bytes)"
+                    f"payload too large ({len(payload.content)} > {self._max_payload_bytes} bytes)"
                 ),
             )
 

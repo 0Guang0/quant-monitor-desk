@@ -1,0 +1,22 @@
+Repair final gates — 2026-06-17
+
+pytest tests/test_data_quality_validator.py tests/test_source_conflict_validator.py tests/test_db_validation_gate.py tests/test_ingestion_validation_migration.py tests/test_batch_c_validation_flow.py -q
+→ 64 passed
+
+pytest -q
+→ 312 passed
+
+pytest -q --cov=backend --cov-fail-under=75
+→ 94.14% cov, exit 0
+
+ruff check .
+→ All checks passed
+
+python scripts/production_gate.py
+→ PASS
+
+python scripts/ci_validation_smoke.py
+→ ok
+
+python scripts/check_doc_links.py
+→ OK (110 markdown files)

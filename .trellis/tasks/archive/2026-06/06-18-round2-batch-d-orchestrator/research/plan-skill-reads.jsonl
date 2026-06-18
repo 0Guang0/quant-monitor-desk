@@ -1,0 +1,23 @@
+{"phase":"boot","skill":"trellis-plan","path":".cursor/skills/trellis-plan/SKILL.md"}
+{"phase":"boot","skill":"plan-skill-paths","path":".trellis/spec/guides/plan-skill-paths.yaml"}
+{"phase":"boot","skill":"gitnexus-plan-p0b","action":"query+context","artifact":"research/gitnexus-summary.md"}
+{"phase":"boot","skill":"original-plan","path":"docs/implementation_tasks/README.md"}
+{"phase":"boot","skill":"original-plan","path":"docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"}
+{"phase":"boot","skill":"original-plan","path":"docs/implementation_tasks/GLOBAL_TESTING_POLICY.md"}
+{"phase":"boot","skill":"original-plan","path":"docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md"}
+{"phase":"boot","skill":"original-plan","path":"docs/implementation_tasks/GLOBAL_TASK_TEMPLATE.md"}
+{"phase":"boot","skill":"original-plan","path":"docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/README.md"}
+{"phase":"boot","skill":"original-plan","path":"docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/DECISIONS.md"}
+{"phase":"boot","skill":"original-plan","path":"docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/014_implement_data_sync_orchestrator.md"}
+{"phase":"1a","skill":"gitnexus-plan-1a","action":"query+context","artifact":"research/project-overview.md"}
+{"phase":"2a","skill":"trellis-brainstorm","path":".cursor/skills/trellis-brainstorm/SKILL.md","artifact":"prd.md"}
+{"phase":"2b","skill":"spec-driven-development","path":".claude/plugins/cache/addy-agent-skills/agent-skills/3a6fc6392823/skills/spec-driven-development/SKILL.md","artifact":"MASTER.plan.md §2"}
+{"phase":"3","skill":"grill-with-docs","path":"C:/Users/Guang/.claude/skills/grill-with-docs/SKILL.md","artifact":"research/grill-with-docs-session.md"}
+{"phase":"3.5","skill":"to-issues","path":"C:/Users/Guang/.claude/skills/to-issues/SKILL.md","artifact":"research/slice-issues.md"}
+{"phase":"1b","skill":"gitnexus-plan-1b","action":"query+impact+context","artifact":"research/gitnexus-summary.md"}
+{"phase":"4","skill":"api-and-interface-design","path":".claude/plugins/cache/addy-agent-skills/agent-skills/3a6fc6392823/skills/api-and-interface-design/SKILL.md","artifact":"MASTER.plan.md §4-6"}
+{"phase":"4","skill":"codebase-design","path":"C:/Users/Guang/.claude/skills/codebase-design/SKILL.md","artifact":"MASTER.plan.md §4-6"}
+{"phase":"5a","skill":"planning-and-task-breakdown","path":".claude/plugins/cache/addy-agent-skills/agent-skills/3a6fc6392823/skills/planning-and-task-breakdown/SKILL.md","artifact":"MASTER.plan.md §5"}
+{"phase":"5b","skill":"writing-plans","path":".claude/plugins/cache/claude-plugins-official/superpowers/5.1.0/skills/writing-plans/SKILL.md","artifact":"research/orchestrator-tests.md"}
+{"phase":"5c","skill":"trellis-before-dev","path":".cursor/skills/trellis-before-dev/SKILL.md","artifact":"implement.jsonl"}
+{"phase":"5d","skill":"doubt-driven-development","path":".claude/plugins/cache/addy-agent-skills/agent-skills/3a6fc6392823/skills/doubt-driven-development/SKILL.md","artifact":"MASTER.plan.md §7-8 + AUDIT.plan.md §2"}

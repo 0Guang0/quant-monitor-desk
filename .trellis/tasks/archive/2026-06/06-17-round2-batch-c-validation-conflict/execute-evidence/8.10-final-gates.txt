@@ -1,0 +1,66 @@
+Final Batch C §8.10 gates:
+
+1. Targeted Batch C tests
+Command:
+.\.venv\Scripts\python.exe -m pytest tests/test_data_quality_validator.py tests/test_source_conflict_validator.py tests/test_db_validation_gate.py tests/test_ingestion_validation_migration.py tests/test_batch_c_validation_flow.py -q
+Exit code: 0
+Result: 52 passed
+
+2. Tier B regression tests
+Command:
+.\.venv\Scripts\python.exe -m pytest tests/test_write_manager.py tests/test_data_adapter_contract.py tests/test_source_registry.py tests/test_raw_store.py -q
+Exit code: 0
+Result: passed
+
+3. Full coverage gate
+Command:
+.\.venv\Scripts\python.exe -m pytest -q --cov=backend --cov-fail-under=75
+Exit code: 0
+Result: full suite passed; total coverage 94.02%; required 75% reached
+
+4. Ruff
+Command:
+.\.venv\Scripts\python.exe -m ruff check .
+Exit code: 0
+Result: All checks passed
+
+5. Compileall
+Command:
+.\.venv\Scripts\python.exe -m compileall -q backend scripts tests
+Exit code: 0
+
+6. init_db idempotence
+Command:
+.\.venv\Scripts\python.exe scripts\init_db.py
+.\.venv\Scripts\python.exe scripts\init_db.py
+Exit code: 0 / 0
+Result: init_db: applied none (up to date), twice
+
+7. Ingestion smoke
+Command:
+.\.venv\Scripts\python.exe scripts\ci_ingestion_smoke.py
+Exit code: 0
+Result: ci_ingestion_smoke: ok tables=['fetch_log', 'source_registry'] data_root=data
+
+8. Validation smoke
+Command:
+.\.venv\Scripts\python.exe scripts\ci_validation_smoke.py
+Exit code: 0
+Result: ci_validation_smoke: ok
+
+9. Production gate
+Command:
+.\.venv\Scripts\python.exe scripts\production_gate.py
+Exit code: 0
+Result: production_gate: PASS
+
+10. Doc links
+Command:
+.\.venv\Scripts\python.exe scripts\check_doc_links.py
+Exit code: 0
+Result: OK: checked links in 110 markdown files under docs/
+
+Notes:
+- pytest commands were run with approved escalation because sandboxed temp/cache paths were inaccessible or distorted path-boundary tests.
+- ResourceGuard triggered: no.
+- No frontend/API/Agent/real Port implementation was performed.

@@ -1,0 +1,37 @@
+{"file": "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md", "reason": "A1 boundaries"}
+{"file": "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md", "reason": "A1 test policy"}
+{"file": "docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md", "reason": "A1 resource limits"}
+{"file": "docs/implementation_tasks/GLOBAL_TASK_TEMPLATE.md", "reason": "A1 task template"}
+{"file": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/DECISIONS.md", "reason": "A1 round decisions"}
+{"file": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/014_implement_data_sync_orchestrator.md", "reason": "A1 task card"}
+{"file": "specs/contracts/sync_job_contract.yaml", "reason": "A1 sync contract"}
+{"file": "docs/modules/data_sync_orchestrator.md", "reason": "A1 orchestrator module spec"}
+{"file": ".trellis/spec/backend/index.md", "reason": "Backend guidelines index"}
+{"file": ".trellis/spec/backend/database-guidelines.md", "reason": "Migration layer guidelines"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "Code quality and forbidden patterns"}
+{"file": "docs/architecture/04_data_architecture.md", "reason": "A1 data layer boundary"}
+{"file": "docs/modules/data_validation_and_conflict.md", "reason": "A1 Batch C validator spec"}
+{"file": "docs/modules/data_sources.md", "reason": "A1 fetch_log registry spec"}
+{"file": "specs/contracts/data_adapter_contract.md", "reason": "A1 adapter fetch contract"}
+{"file": "specs/contracts/data_quality_rules.yaml", "reason": "A1 validation rules contract"}
+{"file": "specs/contracts/source_conflict_rules.yaml", "reason": "A1 reconcile rules contract"}
+{"file": "specs/schema/schema.sql", "reason": "A1 migration 006 column authority"}
+{"file": "backend/app/db/migrate.py", "reason": "A3 migration runner idempotency"}
+{"file": "backend/app/datasources/fetch_log.py", "reason": "A1 fetch_log contract via adapter.fetch"}
+{"file": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/README.md", "reason": "A1 round batch order"}
+{"file": "docs/architecture/03_runtime_flows.md", "reason": "A1 runtime chain alignment"}
+{"file": "docs/quality/final_package_rules.md", "reason": "A1 task card §5 package rules"}
+{"file": "docs/modules/write_manager.md", "reason": "A1 write path module spec"}
+{"file": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/BATCH_C_LEDGER.md", "reason": "A1 C-C1 transaction policy"}
+{"file": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/BATCH_C_REPAIR_STATUS.md", "reason": "A1 Batch C handoff context"}
+{"file": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/BATCH_B_REPAIR_STATUS.md", "reason": "A1 cross-batch deferrals"}
+{"file": "backend/app/db/migrations/004_ingestion_sources.sql", "reason": "A3 do-not-ALTER 004 boundary"}
+{"file": "backend/app/db/migrations/005_ingestion_validation.sql", "reason": "A1 validation schema"}
+{"file": "backend/app/db/connection.py", "reason": "A1 writer lock single-writer"}
+{"file": "backend/app/datasources/base_adapter.py", "reason": "A1 fetch_log inside adapter.fetch"}
+{"file": "backend/app/db/validation_gate.py", "reason": "A1 gate orchestrator wires"}
+{"file": "backend/app/db/write_manager.py", "reason": "A2 no direct clean writes"}
+{"file": "backend/app/core/resource_guard.py", "reason": "A7 ResourceGuard integration"}
+{"file": "backend/app/datasources/source_registry.py", "reason": "A1 tombstone API"}
+{"file": "specs/datasource_registry/source_registry.yaml", "reason": "A1 registry YAML contract"}
+{"file": ".trellis/tasks/06-18-round2-batch-d-orchestrator/research/original-plan-trace.md", "reason": "A5 AC traceability"}

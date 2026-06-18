@@ -25,9 +25,7 @@ def check_no_prod_stub_validation() -> None:
         if path.name != "validation_gate.py" and "StubValidationGate()" in text:
             fail(f"production code uses StubValidationGate(): {path.relative_to(ROOT)}")
         if path.name != "validation_gate.py" and "stub-pass" in text:
-            fail(
-                f"production code contains stub-pass validation id: {path.relative_to(ROOT)}"
-            )
+            fail(f"production code contains stub-pass validation id: {path.relative_to(ROOT)}")
 
 
 def check_workflow_permissions() -> None:

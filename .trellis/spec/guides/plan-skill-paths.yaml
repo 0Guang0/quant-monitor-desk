@@ -9,11 +9,11 @@ skills:
     phase: boot
     default_role: 必做
 
-  gitnexus-plan:
+  gitnexus-plan-1a:
     path: AGENTS.md
-    phase: P1
+    phase: "1a"
     default_role: 必做
-    note: "GitNexus MCP query + context; not a SKILL.md file"
+    note: "GitNexus MCP query + context；轻量概览 → project-overview.md"
 
   trellis-brainstorm:
     path: .cursor/skills/trellis-brainstorm/SKILL.md
@@ -25,16 +25,40 @@ skills:
     phase: "2b"
     default_role: 必做
 
+  domain-modeling:
+    path: .claude/skills/domain-modeling/SKILL.md
+    phase: "2"
+    default_role: 条件
+    note: "项目缺少 CONTEXT.md 或领域术语模糊时启用"
+
   grill-me:
     path: .claude/skills/grill-me/SKILL.md
     phase: "3"
     default_role: 条件
-    note: "grill-me OR interview-me — one required for freeze"
+    note: "grill-me OR interview-me OR grill-with-docs — 必须选一"
 
   interview-me:
     path: .claude/plugins/cache/addy-agent-skills/agent-skills/3a6fc6392823/skills/interview-me/SKILL.md
     phase: "3"
     default_role: 条件
+
+  grill-with-docs:
+    path: .claude/skills/grill-with-docs/SKILL.md
+    phase: "3"
+    default_role: 条件
+    note: "更强替代：以 CONTEXT.md/ADR 为锚点质问"
+
+  to-issues:
+    path: .claude/skills/to-issues/SKILL.md
+    phase: "3.5"
+    default_role: 必做
+    note: "需求垂直切片 → 切片工单列表"
+
+  gitnexus-plan-1b:
+    path: AGENTS.md
+    phase: "1b"
+    default_role: 必做
+    note: "GitNexus MCP query + impact + context；需求锚定深度分析 → gitnexus-summary.md"
 
   brainstorming:
     path: .claude/plugins/cache/claude-plugins-official/superpowers/5.1.0/skills/brainstorming/SKILL.md
@@ -45,6 +69,18 @@ skills:
     path: .claude/plugins/cache/addy-agent-skills/agent-skills/3a6fc6392823/skills/api-and-interface-design/SKILL.md
     phase: "4"
     default_role: 条件
+
+  codebase-design:
+    path: .claude/skills/codebase-design/SKILL.md
+    phase: "4"
+    default_role: 条件
+    note: "设计新模块接口或深度重构时启用"
+
+  prototype:
+    path: .claude/skills/prototype/SKILL.md
+    phase: "4"
+    default_role: 条件
+    note: "高风险设计项需可丢弃原型验证时启用"
 
   planning-and-task-breakdown:
     path: .claude/plugins/cache/addy-agent-skills/agent-skills/3a6fc6392823/skills/planning-and-task-breakdown/SKILL.md
@@ -71,12 +107,19 @@ phases:
     skills: [trellis-plan]
     artifacts:
       - research/plan-boot.md
+      - research/original-plan-trace.md
     marker: "Phase P0 complete"
 
-  P1:
-    skills: [gitnexus-plan]
+  P0i:
+    skills: [trellis-plan]
     artifacts:
-      - research/gitnexus-summary.md
+      - research/input-inventory.md
+    marker: "P0i complete"
+
+  "1a":
+    skills: [gitnexus-plan-1a]
+    artifacts:
+      - research/project-overview.md
 
   "2a":
     skills: [trellis-brainstorm]
@@ -87,13 +130,23 @@ phases:
     skills: [spec-driven-development]
 
   "3":
-    skills_any: [grill-me, interview-me]
+    skills_any: [grill-me, interview-me, grill-with-docs]
     artifacts_any:
       - research/grill-me-session.md
       - research/interview-me-session.md
+      - research/grill-with-docs-session.md
+
+  "3.5":
+    skills: [to-issues]
+    note: "产出切片工单列表（≥1 个垂直切片）；to-issues 无独立 artifact 文件"
+
+  "1b":
+    skills: [gitnexus-plan-1b]
+    artifacts:
+      - research/gitnexus-summary.md
 
   "4":
-    skills_any: [brainstorming, api-and-interface-design]
+    skills_any: [brainstorming, api-and-interface-design, codebase-design, prototype]
 
   "5a":
     skills: [planning-and-task-breakdown]
@@ -105,15 +158,21 @@ phases:
     skills: [trellis-before-dev]
     artifacts:
       - implement.jsonl
+      - research/integration-ledger.md
 
   "5d":
     skills: [doubt-driven-development]
+    artifacts:
+      - research/integration-audit.md
+    note: "plan-manifest-audit.md optional E9 stub; integration-audit is canonical"
 
 freeze_required_skills:
   - trellis-plan
-  - gitnexus-plan
+  - gitnexus-plan-1a
   - trellis-brainstorm
   - spec-driven-development
+  - to-issues
+  - gitnexus-plan-1b
   - planning-and-task-breakdown
   - writing-plans
   - trellis-before-dev
@@ -122,5 +181,6 @@ freeze_required_skills:
 freeze_phase3_one_of:
   - grill-me
   - interview-me
+  - grill-with-docs
 
 boot_marker: "Phase P0 complete"

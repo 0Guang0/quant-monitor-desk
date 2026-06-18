@@ -1,0 +1,67 @@
+.trellis/tasks/06-18-round2-batch-d-orchestrator/research/integration-ledger.md | extract: v3 boot routing map (inline vs pointer) | for: §8.0 Boot / §0.4
+docs/implementation_tasks/README.md | extract: Round/batch order and task index | for: global protocol / P0o
+docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md | extract: Execute boundaries and evidence rules | for: global protocol / §0.3
+docs/implementation_tasks/GLOBAL_TESTING_POLICY.md | extract: TDD policy and assertion style | for: global protocol / §8 RED-GREEN
+docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md | extract: eco mode and ResourceGuard limits | for: AC-5 / §8.4
+docs/implementation_tasks/GLOBAL_TASK_TEMPLATE.md | extract: Task artifact structure reference | for: global protocol / P0o
+docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/DECISIONS.md | extract: §9 defer 台账；GPT-P2-2 tombstone API vs generation 列 | for: AC-10 / §8.8
+docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/014_implement_data_sync_orchestrator.md | extract: task card §3 inputs and §5 deliverables | for: AC-1–12 / §8
+docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/BATCH_C_REPAIR_STATUS.md | extract: Batch C deferred items and handoff | for: AC scope / §3.2
+docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/BATCH_C_LEDGER.md | extract: C-C1 transaction and C-C2 fetch_log policy | for: AC-6 / §8.5
+docs/modules/data_sync_orchestrator.md | extract: §13.2 happy path；§13.4 job_type 语义 | for: AC-1,2 / §8.2-8.7
+specs/contracts/sync_job_contract.yaml | extract: job_types + statuses 枚举；禁止自造 status | for: AC-1 / §8.2
+specs/schema/schema.sql | extract: data_sync_job / job_event_log L73-113 列 | for: AC-7 / §8.1
+docs/architecture/03_runtime_flows.md | extract: ingestion 链路顺序 | for: AC-6 / §8.5
+.trellis/tasks/06-18-round2-batch-d-orchestrator/research/gitnexus-summary.md | extract: Plan-phase graph baseline only | for: 6.pre gitnexus-execute-summary / §0.1
+.trellis/tasks/06-18-round2-batch-d-orchestrator/research/orchestrator-tests.md | extract: RED/GREEN tracer names per §8 step | for: §8 RED-GREEN evidence
+.trellis/spec/backend/index.md | extract: backend guidelines index | for: implementation quality / §12
+.trellis/spec/backend/database-guidelines.md | extract: DuckDB migration conventions | for: AC-7 / §8.1
+.trellis/spec/backend/datasource-adapters.md | extract: adapter factory contracts | for: AC-6 / §8.5
+.trellis/spec/guides/index.md | extract: cross-package guides index | for: protocol / §12
+docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/README.md | extract: Round 2 batch order and Batch D prerequisites | for: P0o / scope
+docs/architecture/04_data_architecture.md | extract: clean/staging 分层；禁止直写 clean | for: AC-8 / §8.5
+docs/quality/final_package_rules.md | extract: task card §5 final package rules | for: AC-11 / §10
+docs/modules/data_validation_and_conflict.md | extract: validator/gate module spec orchestrator wires | for: AC-6 / §8.5
+docs/modules/data_sources.md | extract: fetch_log and source_registry authority | for: AC-6 / §8.5
+docs/modules/write_manager.md | extract: job_id write_audit via WriteManager | for: AC-8 / §8.5
+specs/contracts/data_adapter_contract.md | extract: fetch 须 writer con + job_id | for: AC-6 / §8.5
+specs/contracts/data_quality_rules.yaml | extract: VALIDATING 阶段规则集（非 data_quality job 混淆） | for: AC-6 / §8.5
+specs/contracts/source_conflict_rules.yaml | extract: Reconcile 严重冲突策略 | for: AC-6 / §8.7
+scripts/ci_ingestion_smoke.py | extract: smoke 断言基线 | for: AC-9 / §8.9
+backend/app/datasources/source_registry.py | extract: sync_to_db(tombstone_missing=True) | for: AC-10 / §8.8
+backend/app/datasources/adapters/__init__.py | extract: create_adapter factory entry | for: AC-6 / §8.5
+backend/app/db/validation_gate.py | extract: READY_TO_WRITE 门禁 | for: AC-6 / §8.5
+backend/app/db/write_manager.py | extract: 唯一 clean 写；job_id 审计 | for: AC-8 / §8.5
+backend/app/validators/data_quality.py | extract: DataQualityValidator VALIDATING stage | for: AC-6 / §8.5
+backend/app/validators/source_conflict.py | extract: SourceConflictValidator reconcile delegate | for: AC-6 / §8.7
+backend/app/core/resource_guard.py | extract: Decision→FAILED_RETRYABLE；message 含 PAUSED 前缀 | for: AC-5 / §8.4
+tests/test_batch_c_validation_flow.py | extract: con 传递 E2E 模板 | for: AC-6 / §8.5
+.trellis/tasks/06-17-round2-batch-c-validation-conflict/finish.md | extract: Batch C READY_FOR_BATCH_D handoff | for: scope gate / §0
+backend/app/db/migrate.py | extract: migration 006 runner registration | for: AC-7 / §8.1
+scripts/init_db.py | extract: init_db idempotency; does NOT default registry sync | for: AC-7 / §8.1
+backend/app/db/connection.py | extract: ConnectionManager writer single-writer lock | for: AC-6 / §8.5
+backend/app/datasources/fetch_log.py | extract: fetch_log persistence via adapter.fetch writer con | for: AC-6 / §8.5
+backend/app/datasources/base_adapter.py | extract: fetch 内 FetchLogWriter | for: AC-6 / §8.5
+tests/test_data_adapter_contract.py | extract: FakeAdapter 用法 | for: AC-6 / §8.5
+backend/app/datasources/fetch_result.py | extract: FetchStatus/FetchResult for FETCHING stage | for: AC-6 / §8.5
+backend/app/datasources/adapters/fetch_port.py | extract: PortErrorStatus mapping at adapter boundary | for: AC-6 / §8.5
+backend/app/db/migrations/004_ingestion_sources.sql | extract: 禁止 ALTER 004 fetch_log | for: AC-7 / §8.1
+backend/app/db/migrations/005_ingestion_validation.sql | extract: validation_gate tables orchestrator wires | for: AC-6 / §8.5
+specs/datasource_registry/source_registry.yaml | extract: Registry YAML authority for sync_registry | for: AC-10 / §8.8
+backend/app/config.py | extract: DATA_ROOT / QMD_DATA_ROOT for smoke and init_db | for: AC-9 / §8.9
+backend/app/util/error_redaction.py | extract: error message redaction policy | for: MASTER §7 / §8
+tests/test_write_manager.py | extract: §9.2 Tier B write_audit with job_id regression | for: AC-8 / §9.2
+tests/test_source_registry.py | extract: tombstone_missing baseline for §8.8 | for: AC-10 / §8.8
+tests/test_resource_guard.py | extract: ResourceGuard decision semantics | for: AC-5 / §8.4
+tests/test_db_validation_gate.py | extract: Batch C gate behavior to preserve | for: AC-6 / §8.5
+tests/test_data_quality_validator.py | extract: VALIDATING stage validator baseline | for: AC-6 / §8.5
+tests/test_source_conflict_validator.py | extract: reconcile delegate baseline | for: AC-6 / §8.7
+tests/conftest.py | extract: migrated_con and registry fixtures | for: §8 tests / §9.2
+scripts/production_gate.py | extract: Tier C 门禁命令 | for: AC-11 / §8.11
+scripts/check_doc_links.py | extract: §9.3 Tier C doc link gate | for: AC-11 / §9.3
+docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/BATCH_B_REPAIR_STATUS.md | extract: DECISIONS §9 cross-batch defer ledger | for: §3.2 defer
+docs/architecture/07_project_directory_structure.md | extract: backend/app path normalization | for: DECISIONS §1 / wiring
+docs/modules/duckdb_and_parquet.md | extract: table/archive rules from orchestrator spec refs | for: AC-8 / §8.5
+.trellis/spec/backend/quality-guidelines.md | extract: forbidden patterns for orchestrator | for: §12 / code quality
+.trellis/tasks/06-18-round2-batch-d-orchestrator/research/original-plan-trace.md | extract: P0o AC mapping manifest column | for: traceability / Audit A5
+tests/test_batch_d_orchestration_flow.py | extract: MASTER §9.1 Tier A orchestration E2E | for: AC-2,6 / §10 A

@@ -41,6 +41,19 @@ frontend/dist/
 .DS_Store
 Thumbs.db
 
+# Agent / CLI tool mirrors (keep skills in ~/.codex or ~/.cursor; do not vendor in repo)
+.agents/
+.claude/
+.audit_*/
+.audit-sandbox/
+
+# Local npm cache (never commit; Codex git scan was hashing 9k+ files here)
+.npm-cache/
+
+# Test / build artifacts
+.coverage
+frontend/tsconfig.tsbuildinfo
+
 # Temporary agent artifacts (must not ship)
 task_plan.md
 findings.md

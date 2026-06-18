@@ -6,6 +6,7 @@ import json
 
 import duckdb
 import pytest
+from backend.app.datasources.adapters.fetch_port import PortErrorStatus
 from backend.app.datasources.base_adapter import BaseDataAdapter
 from backend.app.datasources.exceptions import SourceMismatchError
 from backend.app.datasources.fetch_log import FetchLogValidationError, FetchLogWriter
@@ -106,7 +107,10 @@ def test_fetchResult_notPublishedYet_withPublishMessage_isAccepted():
 
 
 def test_write_successResult_insertsFetchLogRow(
-    tmp_path, migrated_con, success_result, request_factory,
+    tmp_path,
+    migrated_con,
+    success_result,
+    request_factory,
 ):
     con = migrated_con(tmp_path)
     req = request_factory("baostock")
@@ -141,6 +145,67 @@ def test_write_allContractStatuses_mapsErrorType(tmp_path, migrated_con, status)
     ).fetchone()
     assert row[0] == status
     assert row[1] == ERROR_TYPE_BY_STATUS[status]
+
+
+def test_portErrorStatus_doesNotDriftFromFetchStatusFailures() -> None:
+    expected_port_statuses = {
+        "AUTH_FAILED",
+        "RATE_LIMITED",
+        "NETWORK_ERROR",
+        "SCHEMA_DRIFT",
+        "EMPTY_RESPONSE",
+        "NOT_PUBLISHED_YET",
+        "FAILED",
+    }
+
+    assert set(PortErrorStatus.__args__) == expected_port_statuses
+    assert expected_port_statuses.issubset(set(CONTRACT_STATUSES))
+
+
+def test_fetchLogWriter_redactsSensitiveErrorMessage(tmp_path, migrated_con):
+    con = migrated_con(tmp_path)
+    result = FetchResult(
+        run_id="run-1",
+        source_id="baostock",
+        data_domain="market_bar_1d",
+        status="AUTH_FAILED",
+        row_count=0,
+        fetch_time="2026-06-17T10:00:00Z",
+        error_message=("token=abc password=secret api_key=k authorization: Bearer live-secret"),
+    )
+
+    fetch_id = FetchLogWriter().write(con, result)
+    stored = con.execute(
+        "SELECT error_message FROM fetch_log WHERE fetch_id=?", [fetch_id]
+    ).fetchone()[0]
+
+    lowered = stored.lower()
+    assert "[redacted]" in lowered
+    assert "abc" not in lowered
+    assert "secret" not in lowered
+    assert "api_key=k" not in lowered
+    assert "bearer live-secret" not in lowered
+
+
+def test_fetchLogWriter_redactsApikeyWithoutUnderscore(tmp_path, migrated_con):
+    con = migrated_con(tmp_path)
+    result = FetchResult(
+        run_id="run-1",
+        source_id="baostock",
+        data_domain="market_bar_1d",
+        status="FAILED",
+        row_count=0,
+        fetch_time="2026-06-17T10:00:00Z",
+        error_message="apikey=live123",
+    )
+
+    fetch_id = FetchLogWriter().write(con, result)
+    stored = con.execute(
+        "SELECT error_message FROM fetch_log WHERE fetch_id=?", [fetch_id]
+    ).fetchone()[0]
+
+    assert "[REDACTED]" in stored
+    assert "live123" not in stored
 
 
 def test_fetchResult_successWithoutEvidence_raisesValidationError():
@@ -182,7 +247,9 @@ def test_fetchLogWriter_negativeRowCount_rejected(tmp_path, migrated_con):
 
 
 def test_fetchLogWriter_invalidFetchTime_raisesFetchLogValidationError(
-    tmp_path, migrated_con, success_result,
+    tmp_path,
+    migrated_con,
+    success_result,
 ):
     con = migrated_con(tmp_path)
     bad = success_result().model_copy(update={"fetch_time": "not-a-timestamp"})
@@ -191,7 +258,9 @@ def test_fetchLogWriter_invalidFetchTime_raisesFetchLogValidationError(
 
 
 def test_fetchLogWriter_invalidAsOfTimestamp_raisesFetchLogValidationError(
-    tmp_path, migrated_con, success_result,
+    tmp_path,
+    migrated_con,
+    success_result,
 ):
     con = migrated_con(tmp_path)
     bad = success_result().model_copy(update={"as_of_timestamp": "2026-13-40"})
@@ -215,9 +284,9 @@ def test_write_underWriterLock_insertsFetchLogRow(tmp_path, success_result, requ
     with cm.writer() as con:
         fetch_id = FetchLogWriter().write(con, success_result(), req=req)
     with cm.reader() as con:
-        row = con.execute(
-            "SELECT COUNT(*) FROM fetch_log WHERE fetch_id=?", [fetch_id]
-        ).fetchone()[0]
+        row = con.execute("SELECT COUNT(*) FROM fetch_log WHERE fetch_id=?", [fetch_id]).fetchone()[
+            0
+        ]
     assert row == 1
 
 
@@ -242,7 +311,10 @@ def test_write_latencyAndRetryCount_persistFromResult(tmp_path, migrated_con):
 
 
 def test_fetch_requestSourceDoesNotMatchAdapter_raisesAndWritesNoFetchLog(
-    tmp_path, migrated_con, loaded_registry, request_factory,
+    tmp_path,
+    migrated_con,
+    loaded_registry,
+    request_factory,
 ):
     con = migrated_con(tmp_path)
     adapter = FakeAdapter(loaded_registry)
@@ -331,7 +403,10 @@ class BroadDomainAdapter(BaseDataAdapter):
 
 
 def test_fetch_disabledSource_raisesBeforeImpl_andWritesNoFetchLog(
-    tmp_path, migrated_con, disabled_registry, request_factory,
+    tmp_path,
+    migrated_con,
+    disabled_registry,
+    request_factory,
 ):
     con = migrated_con(tmp_path)
     adapter = FakeAdapter(disabled_registry)
@@ -342,7 +417,10 @@ def test_fetch_disabledSource_raisesBeforeImpl_andWritesNoFetchLog(
 
 
 def test_fetch_unsupportedDomainOnAdapter_raises_andWritesNoFetchLog(
-    tmp_path, migrated_con, loaded_registry, request_factory,
+    tmp_path,
+    migrated_con,
+    loaded_registry,
+    request_factory,
 ):
     con = migrated_con(tmp_path)
     adapter = NarrowDomainAdapter(loaded_registry)
@@ -353,7 +431,10 @@ def test_fetch_unsupportedDomainOnAdapter_raises_andWritesNoFetchLog(
 
 
 def test_fetch_registryDomainNotAllowed_raisesBeforeImpl_andWritesNoFetchLog(
-    tmp_path, migrated_con, loaded_registry, request_factory,
+    tmp_path,
+    migrated_con,
+    loaded_registry,
+    request_factory,
 ):
     con = migrated_con(tmp_path)
     adapter = BroadDomainAdapter(loaded_registry)
@@ -364,7 +445,10 @@ def test_fetch_registryDomainNotAllowed_raisesBeforeImpl_andWritesNoFetchLog(
 
 
 def test_fetch_successResult_writesExactlyOneFetchLogRow(
-    tmp_path, migrated_con, loaded_registry, request_factory,
+    tmp_path,
+    migrated_con,
+    loaded_registry,
+    request_factory,
 ):
     con = migrated_con(tmp_path)
     adapter = FakeAdapter(loaded_registry)
@@ -374,7 +458,10 @@ def test_fetch_successResult_writesExactlyOneFetchLogRow(
 
 
 def test_fetch_calledTwice_writesTwoRows(
-    tmp_path, migrated_con, loaded_registry, request_factory,
+    tmp_path,
+    migrated_con,
+    loaded_registry,
+    request_factory,
 ):
     con = migrated_con(tmp_path)
     adapter = FakeAdapter(loaded_registry)
@@ -385,7 +472,10 @@ def test_fetch_calledTwice_writesTwoRows(
 
 
 def test_fetch_alwaysWritesFetchLog_evenOnEmptyResponse(
-    tmp_path, migrated_con, loaded_registry, request_factory,
+    tmp_path,
+    migrated_con,
+    loaded_registry,
+    request_factory,
 ):
     class EmptyAdapter(BaseDataAdapter):
         source_id = "baostock"
@@ -411,7 +501,10 @@ def test_fetch_alwaysWritesFetchLog_evenOnEmptyResponse(
 
 
 def test_fetch_emptyResponse_hasNoStagingEvidence(
-    tmp_path, migrated_con, loaded_registry, request_factory,
+    tmp_path,
+    migrated_con,
+    loaded_registry,
+    request_factory,
 ):
     class EmptyAdapter(BaseDataAdapter):
         source_id = "baostock"
@@ -440,7 +533,10 @@ def test_fetch_emptyResponse_hasNoStagingEvidence(
 
 
 def test_fetch_implRaises_stillWritesFetchLogAndReturnsFailed(
-    tmp_path, migrated_con, loaded_registry, request_factory,
+    tmp_path,
+    migrated_con,
+    loaded_registry,
+    request_factory,
 ):
     con = migrated_con(tmp_path)
     adapter = ExplodingAdapter(loaded_registry)
@@ -451,21 +547,25 @@ def test_fetch_implRaises_stillWritesFetchLogAndReturnsFailed(
 
 
 def test_fetch_implDoesNotSwitchSourceId(
-    tmp_path, migrated_con, loaded_registry, request_factory,
+    tmp_path,
+    migrated_con,
+    loaded_registry,
+    request_factory,
 ):
     con = migrated_con(tmp_path)
     adapter = WrongSourceAdapter(loaded_registry)
     req = request_factory("baostock")
     result = adapter.fetch(req, con=con)
     assert result.source_id == "baostock"
-    row = con.execute(
-        "SELECT source_id FROM fetch_log WHERE run_id=?", [req.run_id]
-    ).fetchone()[0]
+    row = con.execute("SELECT source_id FROM fetch_log WHERE run_id=?", [req.run_id]).fetchone()[0]
     assert row == "baostock"
 
 
 def test_fetch_success_carriesEvidenceFields(
-    tmp_path, migrated_con, loaded_registry, request_factory,
+    tmp_path,
+    migrated_con,
+    loaded_registry,
+    request_factory,
 ):
     con = migrated_con(tmp_path)
     adapter = FakeAdapter(loaded_registry)

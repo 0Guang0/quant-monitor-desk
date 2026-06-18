@@ -9,11 +9,15 @@
 | Phase | Skill | 路径 | 产出 | 已完成 |
 |-------|-------|------|------|--------|
 | boot | trellis-plan | `.cursor/skills/trellis-plan/SKILL.md` | `research/plan-boot.md` | [ ] |
-| P1 | gitnexus-plan | AGENTS.md + MCP | `research/gitnexus-summary.md` | [ ] |
+| 1a | gitnexus-plan（轻量概览） | AGENTS.md + MCP | `research/project-overview.md` | [ ] |
 | 2a | trellis-brainstorm | `.cursor/skills/trellis-brainstorm/SKILL.md` | `prd.md`、MASTER §1–3 | [ ] |
 | 2b | spec-driven-development | 见 `plan-skill-paths.yaml` | MASTER §2 AC | [ ] |
-| 3 | grill-me / interview-me | 见 yaml | `research/grill-me-session.md` 等 | [ ] |
+| 条件 | domain-modeling | `~/.claude/skills/domain-modeling/SKILL.md` | `CONTEXT.md` | [ ] |
+| 3 | grill-me / interview-me / grill-with-docs | 见 yaml / mattpocock | `research/grill-me-session.md` 等 | [ ] |
+| 3.5 | to-issues | `~/.claude/skills/to-issues/SKILL.md` | 切片工单列表 | [ ] |
+| 1b | gitnexus-plan（深度分析） | AGENTS.md + MCP | `research/gitnexus-summary.md` | [ ] |
 | 4 | brainstorming / api-and-interface-design | 见 yaml | MASTER §4–6 | [ ] |
+| 条件 | codebase-design / prototype | 见 mattpocock | 接口设计 / 原型 | [ ] |
 | 5a | planning-and-task-breakdown | 见 yaml | MASTER §5 | [ ] |
 | 5b | writing-plans | 见 yaml | MASTER §8 + research tests | [ ] |
 | 5c | trellis-before-dev | `.cursor/skills/trellis-before-dev/SKILL.md` | implement/check jsonl | [ ] |
@@ -56,6 +60,62 @@
 
 **一条过关：** 左列 = Execute 跑什么；右列 = 各审计维**各自**跑什么（默认不复跑 §10 同行命令）。
 
+### 3.0a Plan Phase 产出门禁（Phase 0 → 5d 必检）
+
+| ✓ | 检查项 |
+|---|--------|
+| [ ] | Phase 1a `research/project-overview.md` 已产出（≤1 页）或 MASTER §0 `analysis_waiver: true` |
+| [ ] | Phase 3 质疑记录已产出（`research/grill-me-session.md` 或等价） |
+| [ ] | Phase 3.5 切片工单列表已产出（必须 ≥2 个垂直切片；单切片仅当任务只涉及 1 个 MASTER §2 AC 且零跨模块依赖时允许，否则退回 Phase 2 重新拆分） |
+| [ ] | Phase 1b `research/gitnexus-summary.md` 已产出或 MASTER §0 `analysis_waiver: true` |
+| [ ] | Phase 4 已完成 **或** MASTER §0 已注明跳过理由（"§8 已足够清晰"） |
+| [ ] | Phase 5d 已完成（主会话 CLAIM→DOUBT→RECONCILE）；`plan.freeze.md` §2 已记录结论 |
+
+### 3.0b 原计划包门禁（Plan agent 必勾）
+
+| ✓ | 检查项 |
+|---|--------|
+| [ ] | 已读 `docs/implementation_tasks/README.md` + `GLOBAL_*.md`（4 个） |
+| [ ] | 已读本 Round `README.md` + `DECISIONS.md` |
+| [ ] | 已读本批 `NNN_*.md` 任务卡及 §3 输入文件（specs / architecture） |
+| [ ] | `research/original-plan-trace.md` 已产出（任务卡 ↔ MASTER §2 AC；含 **manifest** 列） |
+| [ ] | `MASTER.plan.md` §0「原计划任务」+ §1.3「原计划归并表」已填 |
+| [ ] | `implement.jsonl` 含 GLOBAL 四文件 + 本批任务卡且路径存在 |
+
+### 3.0c Context Packing Gate v3
+
+| ✓ | 检查项 |
+|---|--------|
+| [ ] | `research/input-inventory.md`（P0i complete） |
+| [ ] | `research/integration-ledger.md` |
+| [ ] | `research/integration-audit.md`（PASS；含 doc-gap + adversarial + closure） |
+| [ ] | `meta.manifest_protocol_version: "3"` |
+| [ ] | `implement.jsonl` 全条 `extract:/for:`（V7）；ledger anchor 可解析（V8） |
+
+| ✓ | 检查项 |
+|---|--------|
+| [ ] | `plan-manifest-audit.md` stub 或 integration-audit 含 manifest 节 |
+| [ ] | `implement.jsonl` 覆盖 trace `required` + MASTER §6/§9/§10 |
+| [ ] | `check.jsonl` ⊆ `implement.jsonl`（E14） |
+| [ ] | `task.json` `predecessor_tasks`（若有前置 Batch） |
+| [ ] | `suggest-implement-context` 缺失 ≤5 |
+| [ ] | MASTER **§0.3** + **§8.0** 指向 implement/ledger（禁止 §8.0 路径枚举） |
+
+```bash
+python .trellis/scripts/task.py validate-plan-phase .trellis/tasks/<slug> P0i
+python .trellis/scripts/patch_implement_from_ledger.py .trellis/tasks/<slug>
+python .trellis/scripts/task.py suggest-implement-context .trellis/tasks/<slug>
+python .trellis/scripts/task.py validate-plan-phase .trellis/tasks/<slug> 5c
+python .trellis/scripts/task.py validate-plan-freeze .trellis/tasks/<slug>
+```
+
+### 3.0d Manifest Gate（E15 · 与 3.0c 一并勾选）
+
+| ✓ | 检查项 |
+|---|--------|
+| [ ] | `plan.freeze.md` Manifest Gate / Context Packing 节已勾 |
+| [ ] | `validate-plan-freeze` exit 0 |
+
 ### 3.1 MASTER（Execute）
 
 - [ ] **§0.1 门控速查** 已填（怎么测 / 怎么验收 / 什么叫过 / prod-path / **6.pre**）
@@ -68,12 +128,15 @@
 
 ### 3.2 AUDIT.plan.md
 
-- [ ] §1 **A1–A8** Skill 冻结；**A9 = 主会话**
+- [ ] §1 **A1–A8** Skill 冻结（**A8** = testing-guidelines；全部含 `+ doubt-driven-development`）；**A9 = 主会话**
 - [ ] **§2 已任务化**：无未替换 `{{}}`（占位须按真实任务替换，见 **§2.5** / AUDIT §2.1）
-- [ ] **A6**：§2 已填 perf **或** §2.2 SKIP 行 + 理由（§1 标「不用」）
+- [ ] **A6**：§2 已填 perf **或** §2.2 SKIP 行 + 理由（§1 标「不用」）；**A6 跳过不影响 A5/A7/A8 audit-prod-path**
 - [ ] §2 写库/CLI 行（A5 抽检、A6/A7/A8）隔离路径 **≠** Execute DATA_ROOT
+- [ ] §2 **A5 扩展为 4 行**（追溯 + 必做抽检 + 证据文件真实性 + audit-prod-path）；无遗漏
+- [ ] §2 **A7/A8 audit-prod-path** 行已填写；`AUDIT_PROD_ROOT` 验证步骤已包含
+- [ ] §2 **对抗性触发器** 列 A1–A8 全覆盖（无留空）；**扩展权限** 列已填写
 - [ ] §3 **7.pre** GitNexus 要求已写
-- [ ] A2 ponytail + A1 trellis-check 已写
+- [ ] A2 ponytail + A1 trellis-check 已写；**全部 A1-A8 Skill 含 doubt-driven-development**
 - [ ] `audit.jsonl` 第一条 = AUDIT.plan.md
 
 - [ ] `audit.jsonl` **未含** plan.freeze / implement.jsonl
@@ -88,6 +151,7 @@
 - [ ] implement.jsonl 第一条 = MASTER
 - [ ] check.jsonl 供 A1；无 Plan 协议
 - [ ] `research/plan-boot.md` 含 **Phase P0 complete**
+- [ ] `research/original-plan-trace.md` 存在
 - [ ] `research/plan-skill-reads.jsonl` 覆盖 freeze 必做 skill
 - [ ] `validate 通过`
 

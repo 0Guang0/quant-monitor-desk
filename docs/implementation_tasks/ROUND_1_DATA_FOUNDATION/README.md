@@ -20,6 +20,8 @@
 - `../GLOBAL_TASK_TEMPLATE.md`
 - `./DECISIONS.md` — 本轮已确认的架构与范围决策（路径、范围、依赖、stub 口径）
 
+**Trellis Plan：** 对应 `.trellis/tasks/<slug>/MASTER.plan.md` 的 §1.3 须逐条映射本目录 `005`–`010` 任务卡；`plans/*.plan.md` 仅为索引，Execute 只读 MASTER。
+
 ## 任务清单与依赖关系
 
 | 编号 | 任务 | 主要产出 | 深度计划 |

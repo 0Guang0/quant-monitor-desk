@@ -1,0 +1,69 @@
+{"file": ".trellis/tasks/06-18-round2-batch-d-orchestrator/MASTER.plan.md", "reason": "Execute single source of truth"}
+{"file": ".cursor/skills/trellis-execute/SKILL.md", "reason": "Execute Phase 0 boot protocol"}
+{"file": ".trellis/tasks/06-18-round2-batch-d-orchestrator/research/integration-ledger.md", "reason": "extract: v3 boot routing map (inline vs pointer) | for: §8.0 Boot / §0.4"}
+{"file": "docs/implementation_tasks/README.md", "reason": "extract: Round/batch order and task index | for: global protocol / P0o"}
+{"file": "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md", "reason": "extract: Execute boundaries and evidence rules | for: global protocol / §0.3"}
+{"file": "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md", "reason": "extract: TDD policy and assertion style | for: global protocol / §8 RED-GREEN"}
+{"file": "docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md", "reason": "extract: eco mode and ResourceGuard limits | for: AC-5 / §8.4"}
+{"file": "docs/implementation_tasks/GLOBAL_TASK_TEMPLATE.md", "reason": "extract: Task artifact structure reference | for: global protocol / P0o"}
+{"file": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/DECISIONS.md", "reason": "extract: §9 defer 台账；GPT-P2-2 tombstone API vs generation 列 | for: AC-10 / §8.8"}
+{"file": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/014_implement_data_sync_orchestrator.md", "reason": "extract: task card §3 inputs and §5 deliverables | for: AC-1–12 / §8"}
+{"file": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/BATCH_C_REPAIR_STATUS.md", "reason": "extract: Batch C deferred items and handoff | for: AC scope / §3.2"}
+{"file": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/BATCH_C_LEDGER.md", "reason": "extract: C-C1 transaction and C-C2 fetch_log policy | for: AC-6 / §8.5"}
+{"file": "docs/modules/data_sync_orchestrator.md", "reason": "extract: §13.2 happy path；§13.4 job_type 语义 | for: AC-1,2 / §8.2-8.7"}
+{"file": "specs/contracts/sync_job_contract.yaml", "reason": "extract: job_types + statuses 枚举；禁止自造 status | for: AC-1 / §8.2"}
+{"file": "specs/schema/schema.sql", "reason": "extract: data_sync_job / job_event_log L73-113 列 | for: AC-7 / §8.1"}
+{"file": "docs/architecture/03_runtime_flows.md", "reason": "extract: ingestion 链路顺序 | for: AC-6 / §8.5"}
+{"file": ".trellis/tasks/06-18-round2-batch-d-orchestrator/research/gitnexus-summary.md", "reason": "extract: Plan-phase graph baseline only | for: 6.pre gitnexus-execute-summary / §0.1"}
+{"file": ".trellis/tasks/06-18-round2-batch-d-orchestrator/research/orchestrator-tests.md", "reason": "extract: RED/GREEN tracer names per §8 step | for: §8 RED-GREEN evidence"}
+{"file": ".trellis/spec/backend/index.md", "reason": "extract: backend guidelines index | for: implementation quality / §12"}
+{"file": ".trellis/spec/backend/database-guidelines.md", "reason": "extract: DuckDB migration conventions | for: AC-7 / §8.1"}
+{"file": ".trellis/spec/backend/datasource-adapters.md", "reason": "extract: adapter factory contracts | for: AC-6 / §8.5"}
+{"file": ".trellis/spec/guides/index.md", "reason": "extract: cross-package guides index | for: protocol / §12"}
+{"file": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/README.md", "reason": "extract: Round 2 batch order and Batch D prerequisites | for: P0o / scope"}
+{"file": "docs/architecture/04_data_architecture.md", "reason": "extract: clean/staging 分层；禁止直写 clean | for: AC-8 / §8.5"}
+{"file": "docs/quality/final_package_rules.md", "reason": "extract: task card §5 final package rules | for: AC-11 / §10"}
+{"file": "docs/modules/data_validation_and_conflict.md", "reason": "extract: validator/gate module spec orchestrator wires | for: AC-6 / §8.5"}
+{"file": "docs/modules/data_sources.md", "reason": "extract: fetch_log and source_registry authority | for: AC-6 / §8.5"}
+{"file": "docs/modules/write_manager.md", "reason": "extract: job_id write_audit via WriteManager | for: AC-8 / §8.5"}
+{"file": "specs/contracts/data_adapter_contract.md", "reason": "extract: fetch 须 writer con + job_id | for: AC-6 / §8.5"}
+{"file": "specs/contracts/data_quality_rules.yaml", "reason": "extract: VALIDATING 阶段规则集（非 data_quality job 混淆） | for: AC-6 / §8.5"}
+{"file": "specs/contracts/source_conflict_rules.yaml", "reason": "extract: Reconcile 严重冲突策略 | for: AC-6 / §8.7"}
+{"file": "scripts/ci_ingestion_smoke.py", "reason": "extract: smoke 断言基线 | for: AC-9 / §8.9"}
+{"file": "backend/app/datasources/source_registry.py", "reason": "extract: sync_to_db(tombstone_missing=True) | for: AC-10 / §8.8"}
+{"file": "backend/app/datasources/adapters/__init__.py", "reason": "extract: create_adapter factory entry | for: AC-6 / §8.5"}
+{"file": "backend/app/db/validation_gate.py", "reason": "extract: READY_TO_WRITE 门禁 | for: AC-6 / §8.5"}
+{"file": "backend/app/db/write_manager.py", "reason": "extract: 唯一 clean 写；job_id 审计 | for: AC-8 / §8.5"}
+{"file": "backend/app/validators/data_quality.py", "reason": "extract: DataQualityValidator VALIDATING stage | for: AC-6 / §8.5"}
+{"file": "backend/app/validators/source_conflict.py", "reason": "extract: SourceConflictValidator reconcile delegate | for: AC-6 / §8.7"}
+{"file": "backend/app/core/resource_guard.py", "reason": "extract: Decision→FAILED_RETRYABLE；message 含 PAUSED 前缀 | for: AC-5 / §8.4"}
+{"file": "tests/test_batch_c_validation_flow.py", "reason": "extract: con 传递 E2E 模板 | for: AC-6 / §8.5"}
+{"file": ".trellis/tasks/06-17-round2-batch-c-validation-conflict/finish.md", "reason": "extract: Batch C READY_FOR_BATCH_D handoff | for: scope gate / §0"}
+{"file": "backend/app/db/migrate.py", "reason": "extract: migration 006 runner registration | for: AC-7 / §8.1"}
+{"file": "scripts/init_db.py", "reason": "extract: init_db idempotency; does NOT default registry sync | for: AC-7 / §8.1"}
+{"file": "backend/app/db/connection.py", "reason": "extract: ConnectionManager writer single-writer lock | for: AC-6 / §8.5"}
+{"file": "backend/app/datasources/fetch_log.py", "reason": "extract: fetch_log persistence via adapter.fetch writer con | for: AC-6 / §8.5"}
+{"file": "backend/app/datasources/base_adapter.py", "reason": "extract: fetch 内 FetchLogWriter | for: AC-6 / §8.5"}
+{"file": "tests/test_data_adapter_contract.py", "reason": "extract: FakeAdapter 用法 | for: AC-6 / §8.5"}
+{"file": "backend/app/datasources/fetch_result.py", "reason": "extract: FetchStatus/FetchResult for FETCHING stage | for: AC-6 / §8.5"}
+{"file": "backend/app/datasources/adapters/fetch_port.py", "reason": "extract: PortErrorStatus mapping at adapter boundary | for: AC-6 / §8.5"}
+{"file": "backend/app/db/migrations/004_ingestion_sources.sql", "reason": "extract: 禁止 ALTER 004 fetch_log | for: AC-7 / §8.1"}
+{"file": "backend/app/db/migrations/005_ingestion_validation.sql", "reason": "extract: validation_gate tables orchestrator wires | for: AC-6 / §8.5"}
+{"file": "specs/datasource_registry/source_registry.yaml", "reason": "extract: Registry YAML authority for sync_registry | for: AC-10 / §8.8"}
+{"file": "backend/app/config.py", "reason": "extract: DATA_ROOT / QMD_DATA_ROOT for smoke and init_db | for: AC-9 / §8.9"}
+{"file": "backend/app/util/error_redaction.py", "reason": "extract: error message redaction policy | for: MASTER §7 / §8"}
+{"file": "tests/test_write_manager.py", "reason": "extract: §9.2 Tier B write_audit with job_id regression | for: AC-8 / §9.2"}
+{"file": "tests/test_source_registry.py", "reason": "extract: tombstone_missing baseline for §8.8 | for: AC-10 / §8.8"}
+{"file": "tests/test_resource_guard.py", "reason": "extract: ResourceGuard decision semantics | for: AC-5 / §8.4"}
+{"file": "tests/test_db_validation_gate.py", "reason": "extract: Batch C gate behavior to preserve | for: AC-6 / §8.5"}
+{"file": "tests/test_data_quality_validator.py", "reason": "extract: VALIDATING stage validator baseline | for: AC-6 / §8.5"}
+{"file": "tests/test_source_conflict_validator.py", "reason": "extract: reconcile delegate baseline | for: AC-6 / §8.7"}
+{"file": "tests/conftest.py", "reason": "extract: migrated_con and registry fixtures | for: §8 tests / §9.2"}
+{"file": "scripts/production_gate.py", "reason": "extract: Tier C 门禁命令 | for: AC-11 / §8.11"}
+{"file": "scripts/check_doc_links.py", "reason": "extract: §9.3 Tier C doc link gate | for: AC-11 / §9.3"}
+{"file": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/BATCH_B_REPAIR_STATUS.md", "reason": "extract: DECISIONS §9 cross-batch defer ledger | for: §3.2 defer"}
+{"file": "docs/architecture/07_project_directory_structure.md", "reason": "extract: backend/app path normalization | for: DECISIONS §1 / wiring"}
+{"file": "docs/modules/duckdb_and_parquet.md", "reason": "extract: table/archive rules from orchestrator spec refs | for: AC-8 / §8.5"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "extract: forbidden patterns for orchestrator | for: §12 / code quality"}
+{"file": ".trellis/tasks/06-18-round2-batch-d-orchestrator/research/original-plan-trace.md", "reason": "extract: P0o AC mapping manifest column | for: traceability / Audit A5"}
+{"file": "tests/test_batch_d_orchestration_flow.py", "reason": "extract: MASTER §9.1 Tier A orchestration E2E | for: AC-2,6 / §10 A"}

@@ -1,0 +1,6 @@
+=== Batch D ?8.0 baseline GREEN ===
+compileall exit: 0
+production_gate: PASS
+production_gate exit: 0
+validate-execute-boot: passed
+exit: 0

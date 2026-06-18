@@ -9,14 +9,16 @@ from pathlib import Path
 import yaml
 from backend.app.config import PROJECT_ROOT
 
-VALID_FALLBACK_POLICIES = frozenset({
-    "retry_same_source",
-    "use_validation_source_with_flag",
-    "use_last_good_cache",
-    "mark_missing",
-    "manual_review_required",
-    "skip_until_next_publish",
-})
+VALID_FALLBACK_POLICIES = frozenset(
+    {
+        "retry_same_source",
+        "use_validation_source_with_flag",
+        "use_last_good_cache",
+        "mark_missing",
+        "manual_review_required",
+        "skip_until_next_publish",
+    }
+)
 
 BANNED_ROLE_NAMES = frozenset({"Shadow", "Emergency"})
 
@@ -81,9 +83,7 @@ def _resolve_registry_path(path: Path) -> Path:
     resolved = path.resolve()
     root = PROJECT_ROOT.resolve()
     if not resolved.is_relative_to(root):
-        raise InvalidRegistryError(
-            f"registry path must be under project root, got: {path}"
-        )
+        raise InvalidRegistryError(f"registry path must be under project root, got: {path}")
     return resolved
 
 
@@ -134,9 +134,7 @@ def _parse_allowed_domains(entry: dict, source_id: str) -> frozenset[str]:
         raise InvalidRegistryError(f"source {source_id!r}: allowed_domains is required")
     allowed = entry["allowed_domains"]
     if not isinstance(allowed, list) or not allowed:
-        raise InvalidRegistryError(
-            f"source {source_id!r}: allowed_domains must be non-empty list"
-        )
+        raise InvalidRegistryError(f"source {source_id!r}: allowed_domains must be non-empty list")
     domains: list[str] = []
     for item in allowed:
         if not isinstance(item, str) or not item.strip():
@@ -145,6 +143,68 @@ def _parse_allowed_domains(entry: dict, source_id: str) -> frozenset[str]:
             )
         domains.append(item)
     return frozenset(domains)
+
+
+def _parse_source_record(source_id: str, entry: dict) -> SourceRecord:
+    if not isinstance(entry, dict):
+        raise InvalidRegistryError(f"source {source_id!r} must be a mapping")
+    return SourceRecord(
+        source_id=source_id,
+        source_name=_parse_optional_str(
+            entry, "source_name", default=source_id, source_id=source_id
+        ),
+        source_type=_parse_required_str(entry, "source_type", source_id),
+        allowed_domains=_parse_allowed_domains(entry, source_id),
+        trust_level=_parse_int(entry, "trust_level", default=0, source_id=source_id),
+        license_type=_parse_required_str(entry, "license_type", source_id),
+        official_api=_parse_bool(entry, "official_api", default=False, source_id=source_id),
+        is_enabled=_parse_bool(entry, "is_enabled", default=True, source_id=source_id),
+        default_priority=_parse_int(entry, "default_priority", default=0, source_id=source_id),
+        rate_limit_policy=_parse_required_str(entry, "rate_limit_policy", source_id),
+        auth_required=_parse_bool(entry, "auth_required", default=False, source_id=source_id),
+        requires_local_client=_parse_bool(
+            entry, "requires_local_client", default=False, source_id=source_id
+        ),
+        expected_frequency=_parse_required_str(entry, "expected_frequency", source_id),
+        expected_lag=_parse_required_str(entry, "expected_lag", source_id),
+        timezone=_parse_required_str(entry, "timezone", source_id),
+        fallback_allowed=_parse_bool(entry, "fallback_allowed", default=False, source_id=source_id),
+        validation_only=_parse_bool(entry, "validation_only", default=False, source_id=source_id),
+        notes=_parse_optional_str(entry, "notes", default="", source_id=source_id),
+    )
+
+
+def _parse_domain_role_binding(data_domain: str, roles: dict) -> DomainRoleBinding:
+    if not isinstance(roles, dict):
+        raise InvalidRegistryError(f"domain_roles.{data_domain} must be a mapping")
+    for field in ("primary", "validation"):
+        value = roles.get(field)
+        if value is not None and str(value) in BANNED_ROLE_NAMES:
+            raise LegacyRoleError(f"domain_roles.{data_domain}.{field}: banned role {value!r}")
+    primary = roles.get("primary")
+    if primary is None:
+        raise InvalidRegistryError(f"domain_roles.{data_domain}.primary is required")
+    primary_id = str(primary)
+    validation_raw = roles.get("validation")
+    if validation_raw is None:
+        validation_id = None
+    elif validation_raw == "null":
+        raise InvalidRegistryError(
+            f"domain_roles.{data_domain}.validation: string 'null' is not "
+            "allowed; use YAML null for no validation source"
+        )
+    else:
+        validation_id = str(validation_raw)
+    fallback_policy = str(roles.get("fallback_policy", ""))
+    if fallback_policy not in VALID_FALLBACK_POLICIES:
+        raise InvalidRegistryError(
+            f"domain_roles.{data_domain}.fallback_policy invalid: {fallback_policy!r}"
+        )
+    return DomainRoleBinding(
+        primary_source_id=primary_id,
+        validation_source_id=validation_id,
+        fallback_policy=fallback_policy,
+    )
 
 
 def _record_to_db_row(rec: SourceRecord) -> dict[str, object]:
@@ -197,40 +257,7 @@ class SourceRegistry:
 
         self._sources = {}
         for source_id, entry in sources_raw.items():
-            if not isinstance(entry, dict):
-                raise InvalidRegistryError(f"source {source_id!r} must be a mapping")
-            self._sources[source_id] = SourceRecord(
-                source_id=source_id,
-                source_name=_parse_optional_str(
-                    entry, "source_name", default=source_id, source_id=source_id
-                ),
-                source_type=_parse_required_str(entry, "source_type", source_id),
-                allowed_domains=_parse_allowed_domains(entry, source_id),
-                trust_level=_parse_int(entry, "trust_level", default=0, source_id=source_id),
-                license_type=_parse_required_str(entry, "license_type", source_id),
-                official_api=_parse_bool(entry, "official_api", default=False, source_id=source_id),
-                is_enabled=_parse_bool(entry, "is_enabled", default=True, source_id=source_id),
-                default_priority=_parse_int(
-                    entry, "default_priority", default=0, source_id=source_id
-                ),
-                rate_limit_policy=_parse_required_str(entry, "rate_limit_policy", source_id),
-                auth_required=_parse_bool(
-                    entry, "auth_required", default=False, source_id=source_id
-                ),
-                requires_local_client=_parse_bool(
-                    entry, "requires_local_client", default=False, source_id=source_id
-                ),
-                expected_frequency=_parse_required_str(entry, "expected_frequency", source_id),
-                expected_lag=_parse_required_str(entry, "expected_lag", source_id),
-                timezone=_parse_required_str(entry, "timezone", source_id),
-                fallback_allowed=_parse_bool(
-                    entry, "fallback_allowed", default=False, source_id=source_id
-                ),
-                validation_only=_parse_bool(
-                    entry, "validation_only", default=False, source_id=source_id
-                ),
-                notes=_parse_optional_str(entry, "notes", default="", source_id=source_id),
-            )
+            self._sources[source_id] = _parse_source_record(source_id, entry)
 
         domain_roles_raw = raw.get("domain_roles", {})
         if not isinstance(domain_roles_raw, dict):
@@ -238,38 +265,7 @@ class SourceRegistry:
 
         self._domain_roles = {}
         for data_domain, roles in domain_roles_raw.items():
-            if not isinstance(roles, dict):
-                raise InvalidRegistryError(f"domain_roles.{data_domain} must be a mapping")
-            for field in ("primary", "validation"):
-                value = roles.get(field)
-                if value is not None and str(value) in BANNED_ROLE_NAMES:
-                    raise LegacyRoleError(
-                        f"domain_roles.{data_domain}.{field}: banned role {value!r}"
-                    )
-            primary = roles.get("primary")
-            if primary is None:
-                raise InvalidRegistryError(f"domain_roles.{data_domain}.primary is required")
-            primary_id = str(primary)
-            validation_raw = roles.get("validation")
-            if validation_raw is None:
-                validation_id = None
-            elif validation_raw == "null":
-                raise InvalidRegistryError(
-                    f"domain_roles.{data_domain}.validation: string 'null' is not "
-                    "allowed; use YAML null for no validation source"
-                )
-            else:
-                validation_id = str(validation_raw)
-            fallback_policy = str(roles.get("fallback_policy", ""))
-            if fallback_policy not in VALID_FALLBACK_POLICIES:
-                raise InvalidRegistryError(
-                    f"domain_roles.{data_domain}.fallback_policy invalid: {fallback_policy!r}"
-                )
-            self._domain_roles[data_domain] = DomainRoleBinding(
-                primary_source_id=primary_id,
-                validation_source_id=validation_id,
-                fallback_policy=fallback_policy,
-            )
+            self._domain_roles[data_domain] = _parse_domain_role_binding(data_domain, roles)
 
         self._validate_domain_roles()
 
@@ -347,7 +343,7 @@ class SourceRegistry:
         *not* open ``BEGIN``/``COMMIT``. Batch C Orchestrator and CLI entry
         points must wrap a full sync in an explicit transaction when atomic
         all-or-nothing semantics are required. See
-        ``.trellis/tasks/06-17-gpt-audit-remediation/BATCH_C_LEDGER.md``.
+        ``docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/BATCH_C_LEDGER.md``.
         """
         count = 0
         for rec in self._sources.values():

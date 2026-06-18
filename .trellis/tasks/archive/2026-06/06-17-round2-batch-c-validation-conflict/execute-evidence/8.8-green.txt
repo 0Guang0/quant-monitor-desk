@@ -1,0 +1,12 @@
+Command:
+.\.venv\Scripts\python.exe -m pytest tests\test_batch_c_validation_flow.py -q
+
+Exit code: 0
+
+Result:
+..                                                                       [100%]
+
+Notes:
+- Valid primary staging data validates PASSED, peer-source conflict check has no severe conflict, DbValidationGate allows, and WriteManager writes clean.
+- Invalid primary staging data validates FAILED, DbValidationGate rejects, WriteManager writes no clean rows, and validation/write audit evidence is preserved.
+- WriteManager now uses DbValidationGate.assert_can_write_with when a caller-owned connection is supplied, so validation rows written earlier in the same connection are visible.

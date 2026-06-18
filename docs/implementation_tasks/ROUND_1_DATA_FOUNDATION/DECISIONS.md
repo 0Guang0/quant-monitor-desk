@@ -1,6 +1,8 @@
 # Round 1 已确认决策
 
 > 本文记录 Round 1 开工前用户已拍板的架构与范围决策。实现阶段不得 silent override；若需变更，先更新本文并征得用户确认。
+>
+> **Trellis：** Plan/Execute 边界以本文件为准。`MASTER.plan.md` 与本文冲突时，**先改 DECISIONS 再改 MASTER**。
 
 ## 1. 目录约定
 

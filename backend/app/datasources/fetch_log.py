@@ -8,6 +8,7 @@ import uuid
 from datetime import datetime
 
 from backend.app.datasources.fetch_result import FetchRequest, FetchResult, FetchStatus
+from backend.app.util.error_redaction import redact_error_message
 
 _ERROR_TYPE_MAP: dict[str, str | None] = {
     "SUCCESS": None,
@@ -107,7 +108,7 @@ class FetchLogWriter:
                 result.latency_ms,
                 result.retry_count,
                 _ERROR_TYPE_MAP[result.status],
-                result.error_message,
+                redact_error_message(result.error_message),
             ],
         )
         return fetch_id

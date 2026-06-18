@@ -1,0 +1,25 @@
+{"path": "MASTER.plan.md", "reason": "Execution contract and AC traceability."}
+{"path": "docs/implementation_tasks/README.md", "reason": "Original plan index."}
+{"path": "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md", "reason": "Global execution rules."}
+{"path": "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md", "reason": "Global testing policy."}
+{"path": "docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md", "reason": "Global resource limits."}
+{"path": "docs/implementation_tasks/GLOBAL_TASK_TEMPLATE.md", "reason": "Global task template."}
+{"path": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/015_implement_data_quality_validator.md", "reason": "Original 015 task."}
+{"path": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/016_implement_source_conflict_validator.md", "reason": "Original 016 task."}
+{"path": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/DECISIONS.md", "reason": "Batch C boundary."}
+{"path": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/BATCH_B_REPAIR_STATUS.md", "reason": "Deferred Batch C items."}
+{"path": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/BATCH_C_LEDGER.md", "reason": "C-C0 closure."}
+{"path": "docs/modules/data_validation_and_conflict.md", "reason": "Validation/conflict business flow."}
+{"path": "specs/contracts/data_quality_rules.yaml", "reason": "Data quality rules."}
+{"path": "specs/contracts/source_conflict_rules.yaml", "reason": "Source conflict rules."}
+{"path": "specs/contracts/data_adapter_contract.yaml", "reason": "Fetch/evidence contract."}
+{"path": "specs/schema/schema.sql", "reason": "Schema reference."}
+{"path": "backend/app/db/migrations/005_ingestion_validation.sql", "reason": "Migration to inspect after Execute."}
+{"path": "backend/app/validators/data_quality.py", "reason": "Implementation to inspect after Execute."}
+{"path": "backend/app/validators/source_conflict.py", "reason": "Implementation to inspect after Execute."}
+{"path": "backend/app/db/validation_gate.py", "reason": "Gate implementation to inspect after Execute."}
+{"path": "tests/test_data_quality_validator.py", "reason": "Test to inspect after Execute."}
+{"path": "tests/test_source_conflict_validator.py", "reason": "Test to inspect after Execute."}
+{"path": "tests/test_db_validation_gate.py", "reason": "Test to inspect after Execute."}
+{"path": "tests/test_ingestion_validation_migration.py", "reason": "Test to inspect after Execute."}
+{"path": "tests/test_batch_c_validation_flow.py", "reason": "Test to inspect after Execute."}

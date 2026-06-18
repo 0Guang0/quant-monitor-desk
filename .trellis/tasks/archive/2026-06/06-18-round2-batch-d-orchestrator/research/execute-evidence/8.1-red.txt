@@ -1,0 +1,4 @@
+﻿=== 8.1 RED ===
+FAILED tests/test_sync_migration.py::test_migration_006_tables_exist
+AssertionError: table data_sync_job not found
+exit 1

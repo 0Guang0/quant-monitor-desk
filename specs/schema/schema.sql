@@ -112,6 +112,9 @@ CREATE TABLE IF NOT EXISTS job_event_log (
     created_at      TIMESTAMP
 );
 
+CREATE INDEX IF NOT EXISTS idx_data_sync_job_run_id ON data_sync_job (run_id);
+CREATE INDEX IF NOT EXISTS idx_job_event_log_job_id ON job_event_log (job_id);
+
 CREATE TABLE IF NOT EXISTS validation_report (
     validation_report_id    VARCHAR PRIMARY KEY,
     run_id                  VARCHAR,

@@ -1,0 +1,20 @@
+Command:
+node .gitnexus\run.cjs detect-changes
+
+Exit code: 0
+
+Result:
+Changes: 9 files, 26 symbols
+Affected processes: 3
+Risk level: medium
+
+Affected execution flows:
+- Write -> Quote_ident (5 steps) -- changed: _execute_write
+- Write -> _assert_staging_pk_unique (3 steps) -- changed: _execute_write
+- Write -> _count_pk_matches (3 steps) -- changed: _execute_write
+
+Assessment:
+MEDIUM risk is expected for Batch C because WriteManager now uses the caller-owned
+DbValidationGate connection path when own_transaction=False. Targeted Batch C,
+Tier B regression, full pytest coverage, ruff, compileall, production_gate, and
+doc links passed after the change.

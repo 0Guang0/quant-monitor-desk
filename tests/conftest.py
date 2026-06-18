@@ -108,6 +108,28 @@ def batch_b_registry():
 
 
 @pytest.fixture
+def baostock_skeleton_class():
+    from backend.app.datasources.adapters.skeleton_base import SkeletonAdapterBase
+
+    class BaostockSkeleton(SkeletonAdapterBase):
+        source_id = "baostock"
+        supported_domains = frozenset({"market_bar_1d", "fundamental"})
+
+    return BaostockSkeleton
+
+
+@pytest.fixture
+def baostock_skeleton_market_only_class():
+    from backend.app.datasources.adapters.skeleton_base import SkeletonAdapterBase
+
+    class BaostockSkeleton(SkeletonAdapterBase):
+        source_id = "baostock"
+        supported_domains = frozenset({"market_bar_1d"})
+
+    return BaostockSkeleton
+
+
+@pytest.fixture
 def migrated_con():
     def _open(tmp_path):
         db = tmp_path / "t.duckdb"

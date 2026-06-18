@@ -2,6 +2,8 @@
 
 本目录包含 6 个正式 implementation task 文件（011–016）。**Execute 按四批次进行**（每批独立 Trellis 复杂任务 Plan → Execute → Audit → Finish）。
 
+> **测试基线说明（2026-06-19）：** 历史 README 中的 pass 计数为当时 commit 快照。当前权威基线：`python -m pytest -q`（360 tests）、coverage ≥85%、`production_gate: PASS`。
+
 ## Round 2 目标
 
 建立数据源接入与校验底座：
@@ -17,8 +19,8 @@
 |------|------|----------------------|----------|
 | **A** | 011+012 | `06-17-round2-batch-a-sources` | MASTER §8（`plans/` 仅索引） |
 | B | 013 | `06-17-round2-batch-b-adapters` | MASTER §8（`plans/013_batch_b.plan.md` 索引） |
-| C | 015+016 | （Plan 待建） | `plans/015_016_*.plan.md` |
-| D | 014 | （Plan 待建） | `plans/014_*.plan.md` |
+| C | 015+016 | `06-17-round2-batch-c-validation-conflict` | MASTER §8（`plans/015_016_batch_c.plan.md` 索引） |
+| D | 014 | `06-18-round2-batch-d-orchestrator` | MASTER §8（`plans/014_batch_d.plan.md` 索引） |
 
 ## 执行前必读
 
@@ -28,6 +30,9 @@
 - `../GLOBAL_TASK_TEMPLATE.md`
 - `./DECISIONS.md` — 本轮已确认决策（**先读**）
 - `./BATCH_B_REPAIR_STATUS.md` — Batch B GPT repair 与延后台账
+- `./BATCH_C_LEDGER.md` — C-C0 前置约定与 Batch C 台账
+
+**Trellis Plan：** 每批次 `MASTER.plan.md` §1.3 须映射本目录 `NNN_*.md` 任务卡；`plans/*.plan.md` 仅为索引（Execute 只读 MASTER）。
 
 ## 任务清单
 
@@ -65,8 +70,11 @@
 |------|------|---------|-------|------------|
 | A | ✅ 已冻结 | ✅ `ee48187` | ✅ PASS | ✅ `ab8d1eb` |
 | B | ✅ v1.1 已冻结 | ✅ PR #2 合并 | ✅ PASS | ✅ 本 commit |
-| C–D | 未开始 | 未开始 | — | — |
+| C | ✅ 已冻结 | ✅ finish_complete | ✅ PASS | — |
+| D | ✅ 已冻结（v3） | ✅ Execute §8.1–§8.11 | ✅ Audit PASS / Repair CLOSED | `BATCH_D_STATUS.md` |
 
-Trellis 任务目录：
-- Batch A（已归档）：`.trellis/tasks/archive/2026-06/06-17-round2-batch-a-sources/`
-- Batch B（已归档）：`.trellis/tasks/archive/2026-06/06-17-round2-batch-b-adapters/`
+Trellis 任务目录（canonical 均为 archive）：
+- Batch A：`.trellis/tasks/archive/2026-06/06-17-round2-batch-a-sources/`
+- Batch B：`.trellis/tasks/archive/2026-06/06-17-round2-batch-b-adapters/`
+- Batch C：`.trellis/tasks/archive/2026-06/06-17-round2-batch-c-validation-conflict/` — `validate-execute-handoff` PASS
+- Batch D：`.trellis/tasks/archive/2026-06/06-18-round2-batch-d-orchestrator/` — 见 `BATCH_D_STATUS.md` · Audit PASS / Repair CLOSED
