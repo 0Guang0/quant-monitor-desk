@@ -18,8 +18,7 @@ from common.validate_plan_freeze import (  # noqa: E402
 
 def _minimal_master(task_dir: Path) -> None:
     task_card = (
-        "015_implement_data_quality_validator.md + "
-        "016_implement_source_conflict_validator.md"
+        "015_implement_data_quality_validator.md + 016_implement_source_conflict_validator.md"
     )
     (task_dir / "MASTER.plan.md").write_text(
         f"## 0.\n原计划任务: {task_card}\n"
@@ -97,9 +96,7 @@ def test_validatePlanFreeze_failsWithoutOriginalPlanTrace(tmp_path: Path) -> Non
     (research / "plan-boot.md").write_text("Phase P0 complete\n", encoding="utf-8")
     (research / "project-overview.md").write_text("# ov\n", encoding="utf-8")
     (research / "gitnexus-summary.md").write_text("# gnx\n", encoding="utf-8")
-    (research / "plan-skill-reads.jsonl").write_text(
-        '{"skill":"trellis-plan"}\n', encoding="utf-8"
-    )
+    (research / "plan-skill-reads.jsonl").write_text('{"skill":"trellis-plan"}\n', encoding="utf-8")
     errors = validate_plan_freeze(tmp_path, _REPO)
     assert any("original-plan-trace" in e for e in errors)
 
@@ -143,9 +140,7 @@ def test_validatePlanPhase_boot_requiresMarker(tmp_path: Path) -> None:
     research = tmp_path / "research"
     research.mkdir()
     (research / "plan-boot.md").write_text("incomplete\n", encoding="utf-8")
-    (research / "plan-skill-reads.jsonl").write_text(
-        '{"skill":"trellis-plan"}\n', encoding="utf-8"
-    )
+    (research / "plan-skill-reads.jsonl").write_text('{"skill":"trellis-plan"}\n', encoding="utf-8")
     errors = validate_plan_phase(tmp_path, "boot", repo_root=_REPO)
     assert any("Phase P0 complete" in e for e in errors)
 

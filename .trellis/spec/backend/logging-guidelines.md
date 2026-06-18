@@ -1,63 +1,28 @@
 # Logging Guidelines
 
-> How logging is done in this project.
-
----
+> Backend logging and operator messaging (Round 0–2).
 
 ## Overview
 
-<!--
-Document your project's logging conventions here.
+- Structured persistence: `resource_guard_log`, `write_audit_log`, `fetch_log`, `job_event_log`.
+- Operator stderr banners for PAUSE/HARD_STOP via `format_pause_event`.
+- Secrets redacted in error messages via `redact_error_message`.
 
-Questions to answer:
-- What logging library do you use?
-- What are the log levels and when to use each?
-- What should be logged?
-- What should NOT be logged (PII, secrets)?
--->
+## Required Patterns
 
-(To be filled by the team)
+| Event | Destination |
+|---|---|
+| ResourceGuard PAUSE/HARD_STOP | stderr banner + optional `resource_guard_log` row |
+| Write success/failure | `write_audit_log` with validation/conflict status |
+| Fetch outcomes | `fetch_log` via adapter skeleton |
+| Sync transitions | `job_event_log` via `SyncJobStateMachine` |
 
----
+## Forbidden Patterns
 
-## Log Levels
+- Logging raw tokens, passwords, API keys in `error_message` fields.
+- Silent swallow of validation failures without audit row.
 
-<!-- When to use each level: debug, info, warn, error -->
+## Testing
 
-(To be filled by the team)
-
----
-
-## Structured Logging
-
-<!-- Log format, required fields -->
-
-(To be filled by the team)
-
----
-
-## What to Log
-
-<!-- Important events to log -->
-
-(To be filled by the team)
-
----
-
-## What NOT to Log
-
-<!-- Sensitive data, PII, secrets -->
-
-**Persisted error text (Batch C/D policy):** Any user- or vendor-facing error string written to durable stores must pass through `backend.app.util.error_redaction.redact_error_message` before INSERT/UPDATE.
-
-| Sink | Module | When |
-|------|--------|------|
-| `fetch_log.error_message` | `FetchLogWriter` | Batch C |
-| `write_audit_log` detail fields | write manager | Batch C |
-| `job_event_log.message` | `backend.app.sync.jobs` (`_safe_event_message`) | Batch D Repair |
-
-**Orchestrator transitions:** `SyncJobManager.transition(..., error_message=...)` and `emit_custom_event(..., message=...)` redact at write time. Do not bypass with raw exception strings.
-
-**Tests:** `tests/test_sync_orchestrator.py::test_orchestrator_fetchFailure_redactsErrorInJobEventLog`
-
-**Deferred (Round 3 API):** When `job_event_log` is exposed via HTTP, apply operator-only field ACL — see `BATCH_D_STATUS.md` D-A6-1.
+- ResourceGuard tests assert log row count for PAUSE/HARD_STOP.
+- WriteManager tests assert audit status on FAILED paths.

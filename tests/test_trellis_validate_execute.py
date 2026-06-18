@@ -54,9 +54,7 @@ def _boot_artifacts(task_dir: Path, *, steps: list[str]) -> None:
     )
     ev = research / "execute-evidence"
     ev.mkdir(exist_ok=True)
-    (ev / "8.0-boot-reads.txt").write_text(
-        "MASTER.plan.md | boot read entry\n", encoding="utf-8"
-    )
+    (ev / "8.0-boot-reads.txt").write_text("MASTER.plan.md | boot read entry\n", encoding="utf-8")
     for step in steps:
         (ev / f"{step}-red.txt").write_text(
             "exit 4\nERROR: ModuleNotFoundError\n", encoding="utf-8"

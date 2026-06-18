@@ -132,9 +132,15 @@ def test_load_malformedYaml_raises(malformed_yaml):
         reg.load()
 
 
-def test_load_pathOutsideProjectRoot_raises(tmp_path):
-    outside = tmp_path / "outside.yaml"
+def test_load_pathOutsideProjectRoot_raises(tmp_path, monkeypatch):
+    import backend.app.datasources.source_registry as registry_mod
+
+    fake_project_root = tmp_path / "project"
+    fake_project_root.mkdir()
+    outside = tmp_path / "outside" / "outside.yaml"
+    outside.parent.mkdir()
     outside.write_text("sources: {}\ndomain_roles: {}\n", encoding="utf-8")
+    monkeypatch.setattr(registry_mod, "PROJECT_ROOT", fake_project_root)
     reg = SourceRegistry(outside)
     with pytest.raises(InvalidRegistryError, match="project root"):
         reg.load()
@@ -254,7 +260,9 @@ def test_syncToDb_secondCall_updatesUpdatedAt(tmp_path, migrated_con, registry_y
 
 
 def test_syncToDb_withinExplicitTransaction_rollsBackOnRollback(
-    tmp_path, migrated_con, registry_yaml_fixture,
+    tmp_path,
+    migrated_con,
+    registry_yaml_fixture,
 ):
     """Caller-owned transaction (P1-4): ROLLBACK undoes sync_to_db writes."""
     reg = SourceRegistry(registry_yaml_fixture)

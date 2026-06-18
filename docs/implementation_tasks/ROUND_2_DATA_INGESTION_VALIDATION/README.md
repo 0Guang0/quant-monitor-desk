@@ -2,6 +2,8 @@
 
 本目录包含 6 个正式 implementation task 文件（011–016）。**Execute 按四批次进行**（每批独立 Trellis 复杂任务 Plan → Execute → Audit → Finish）。
 
+> **测试基线说明（2026-06-19）：** 历史 README 中的 pass 计数为当时 commit 快照。当前权威基线：`python -m pytest -q`（360 tests）、coverage ≥85%、`production_gate: PASS`。
+
 ## Round 2 目标
 
 建立数据源接入与校验底座：
@@ -69,10 +71,10 @@
 | A | ✅ 已冻结 | ✅ `ee48187` | ✅ PASS | ✅ `ab8d1eb` |
 | B | ✅ v1.1 已冻结 | ✅ PR #2 合并 | ✅ PASS | ✅ 本 commit |
 | C | ✅ 已冻结 | ✅ finish_complete | ✅ PASS | — |
-| D | ✅ 已冻结（v3） | ✅ Execute §8.1–§8.11 | ⏳ Audit | `BATCH_D_STATUS.md` |
+| D | ✅ 已冻结（v3） | ✅ Execute §8.1–§8.11 | ✅ Audit PASS / Repair CLOSED | `BATCH_D_STATUS.md` |
 
-Trellis 任务目录：
-- Batch A（已归档）：`.trellis/tasks/archive/2026-06/06-17-round2-batch-a-sources/`
-- Batch B（已归档）：`.trellis/tasks/archive/2026-06/06-17-round2-batch-b-adapters/`
-- Batch C（已完成）：`.trellis/tasks/06-17-round2-batch-c-validation-conflict/`
-- **Batch D（Execute 入口）**：`.trellis/tasks/06-18-round2-batch-d-orchestrator/` — 见 `BATCH_D_STATUS.md` · `research/EXECUTE-READY.md`
+Trellis 任务目录（canonical 均为 archive）：
+- Batch A：`.trellis/tasks/archive/2026-06/06-17-round2-batch-a-sources/`
+- Batch B：`.trellis/tasks/archive/2026-06/06-17-round2-batch-b-adapters/`
+- Batch C：`.trellis/tasks/archive/2026-06/06-17-round2-batch-c-validation-conflict/` — `validate-execute-handoff` PASS
+- Batch D：`.trellis/tasks/archive/2026-06/06-18-round2-batch-d-orchestrator/` — 见 `BATCH_D_STATUS.md` · Audit PASS / Repair CLOSED

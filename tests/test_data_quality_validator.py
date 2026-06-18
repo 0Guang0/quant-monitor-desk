@@ -238,9 +238,7 @@ def test_validateTable_persistsValidationReportAndDataQualityLog(tmp_path: Path)
     validator = DataQualityValidator()
     with cm.writer() as con:
         _create_quality_stage(con)
-        con.execute(
-            "INSERT INTO stg_quality VALUES ('AAPL','2026-06-15',195.0,'qmt','b1')"
-        )
+        con.execute("INSERT INTO stg_quality VALUES ('AAPL','2026-06-15',195.0,'qmt','b1')")
         report = validator.validate_table(
             con,
             _request(staging_table="stg_quality", required_fields=("close", "source_used")),
@@ -271,9 +269,7 @@ def test_validateTable_failedReportRejectedByDbValidationGate(tmp_path: Path) ->
     validator = DataQualityValidator()
     with cm.writer() as con:
         _create_quality_stage(con)
-        con.execute(
-            "INSERT INTO stg_quality VALUES (NULL,'2026-06-15',195.0,'qmt','b1')"
-        )
+        con.execute("INSERT INTO stg_quality VALUES (NULL,'2026-06-15',195.0,'qmt','b1')")
         report = validator.validate_table(
             con,
             _request(staging_table="stg_quality", required_fields=("close", "source_used")),

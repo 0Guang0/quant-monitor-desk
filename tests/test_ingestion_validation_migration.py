@@ -67,9 +67,7 @@ def test_validationReport_requiredFieldsEnforced(tmp_path: Path) -> None:
     """status enum guard + NOT NULL on key columns enforced at DB layer."""
     con = _fresh_con(tmp_path)
     with pytest.raises(duckdb.Error):
-        con.execute(
-            "INSERT INTO validation_report (validation_report_id) VALUES (?)", ["x"]
-        )
+        con.execute("INSERT INTO validation_report (validation_report_id) VALUES (?)", ["x"])
     con.close()
 
 
@@ -105,8 +103,18 @@ def test_validationReport_validRows_accepted(tmp_path: Path) -> None:
                 can_write_clean, needs_manual_review
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
-            [f"vr-{status}", "r1", "market_bar_1d", "qmt", status, 1, 0, 0,
-             can_write, needs_review],
+            [
+                f"vr-{status}",
+                "r1",
+                "market_bar_1d",
+                "qmt",
+                status,
+                1,
+                0,
+                0,
+                can_write,
+                needs_review,
+            ],
         )
     cnt = con.execute("SELECT COUNT(*) FROM validation_report").fetchone()[0]
     con.close()
@@ -119,9 +127,7 @@ def test_validationReport_validRows_accepted(tmp_path: Path) -> None:
 def test_sourceConflict_requiredFieldsEnforced(tmp_path: Path) -> None:
     con = _fresh_con(tmp_path)
     with pytest.raises(duckdb.Error):
-        con.execute(
-            "INSERT INTO source_conflict (conflict_id) VALUES (?)", ["c-1"]
-        )
+        con.execute("INSERT INTO source_conflict (conflict_id) VALUES (?)", ["c-1"])
     con.close()
 
 
@@ -136,8 +142,21 @@ def test_sourceConflict_validRow_accepted(tmp_path: Path) -> None:
             severity, manual_review_required
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
-        ["c-1", "r1", "market_bar_1d", "close", "qmt", "10.0", "baostock", "10.5",
-         0.05, 0.0005, 0.002, "severe", True],
+        [
+            "c-1",
+            "r1",
+            "market_bar_1d",
+            "close",
+            "qmt",
+            "10.0",
+            "baostock",
+            "10.5",
+            0.05,
+            0.0005,
+            0.002,
+            "severe",
+            True,
+        ],
     )
     cnt = con.execute("SELECT COUNT(*) FROM source_conflict").fetchone()[0]
     con.close()
@@ -155,8 +174,18 @@ def test_sourceConflict_severityCheck_rejectsInvalid(tmp_path: Path) -> None:
                 severity, manual_review_required
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
-            ["c-x", "r1", "market_bar_1d", "close", "qmt", "10.0", "baostock", "10.5",
-             "totally_wrong", False],
+            [
+                "c-x",
+                "r1",
+                "market_bar_1d",
+                "close",
+                "qmt",
+                "10.0",
+                "baostock",
+                "10.5",
+                "totally_wrong",
+                False,
+            ],
         )
     con.close()
 
@@ -167,9 +196,7 @@ def test_sourceConflict_severityCheck_rejectsInvalid(tmp_path: Path) -> None:
 def test_manualReviewQueue_requiredFieldsEnforced(tmp_path: Path) -> None:
     con = _fresh_con(tmp_path)
     with pytest.raises(duckdb.Error):
-        con.execute(
-            "INSERT INTO manual_review_queue (review_id) VALUES (?)", ["mr-1"]
-        )
+        con.execute("INSERT INTO manual_review_queue (review_id) VALUES (?)", ["mr-1"])
     con.close()
 
 
@@ -214,8 +241,17 @@ def test_dataQualityLog_validRow_accepted(tmp_path: Path) -> None:
             table_name, rule_id, severity, message
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
-        ["dq-1", "vr-1", "r1", "market_bar_1d", "qmt", "stg_x", "MISSING_PRIMARY_KEY",
-         "failed", "primary key is null"],
+        [
+            "dq-1",
+            "vr-1",
+            "r1",
+            "market_bar_1d",
+            "qmt",
+            "stg_x",
+            "MISSING_PRIMARY_KEY",
+            "failed",
+            "primary key is null",
+        ],
     )
     cnt = con.execute("SELECT COUNT(*) FROM data_quality_log").fetchone()[0]
     con.close()

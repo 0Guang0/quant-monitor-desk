@@ -46,9 +46,7 @@ def test_syncJob_transition_createdToPlanned_recordsEvent(tmp_path) -> None:
     sm.create_job(_base_spec())
     sm.transition("job-1", "PLANNED", message="planned")
     with sm._cm.writer() as con:
-        row = con.execute(
-            "SELECT status FROM data_sync_job WHERE job_id = ?", ["job-1"]
-        ).fetchone()
+        row = con.execute("SELECT status FROM data_sync_job WHERE job_id = ?", ["job-1"]).fetchone()
         events = con.execute(
             """
             SELECT old_status, new_status, message

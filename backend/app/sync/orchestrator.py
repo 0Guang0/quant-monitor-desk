@@ -8,8 +8,7 @@ from backend.app.core.resource_guard import Decision, ResourceGuard, format_paus
 from backend.app.datasources.base_adapter import BaseDataAdapter
 from backend.app.datasources.fetch_result import FetchRequest
 from backend.app.db.connection import ConnectionManager
-from backend.app.db.validation_gate import DbValidationGate
-from backend.app.db.write_manager import WriteManager, WriteRequest
+from backend.app.db.write_manager import WriteRequest
 from backend.app.sync.jobs import (
     SyncJobResult,
     SyncJobSpec,
@@ -17,7 +16,8 @@ from backend.app.sync.jobs import (
     normalize_backfill_trigger_reason,
     plan_backfill_shards,
 )
-from backend.app.validators.data_quality import DataQualityRequest, DataQualityValidator
+from backend.app.sync.pipeline import SyncValidationPipeline, SyncWritePipeline
+from backend.app.validators.data_quality import DataQualityRequest
 from backend.app.validators.source_conflict import SourceConflictRequest, SourceConflictValidator
 
 
@@ -25,6 +25,8 @@ class DataSyncOrchestrator:
     def __init__(self, connection_manager: ConnectionManager) -> None:
         self._cm = connection_manager
         self._jobs = SyncJobStateMachine(connection_manager)
+        self._validation = SyncValidationPipeline(connection_manager)
+        self._write = SyncWritePipeline(connection_manager)
 
     def bootstrap(self, *, sync_registry: bool = False) -> None:
         if sync_registry:
@@ -49,9 +51,7 @@ class DataSyncOrchestrator:
             if row is None:
                 raise KeyError(f"unknown job_id: {job_id!r}")
             if row[0] != "PLANNED":
-                raise ValueError(
-                    f"job {job_id!r} must be PLANNED before fetching, got {row[0]!r}"
-                )
+                raise ValueError(f"job {job_id!r} must be PLANNED before fetching, got {row[0]!r}")
             guard = ResourceGuard(con=con)
             decision, reason = guard.check()
             if decision in (Decision.PAUSE, Decision.HARD_STOP):
@@ -135,21 +135,17 @@ class DataSyncOrchestrator:
         self._jobs.transition(job_id, "STAGED")
         self._jobs.transition(job_id, "VALIDATING")
         with self._cm.writer() as con:
-            quality = DataQualityValidator().validate_table(
+            validation = self._validate_staging(
                 con,
-                DataQualityRequest(
-                    run_id=spec.run_id,
-                    job_id=job_id,
-                    data_domain=spec.data_domain,
-                    source_id=spec.source_id,
-                    staging_table=staging_table,
-                    primary_keys=primary_keys,
-                    required_fields=required_fields,
-                    rule_set_id="p0_round_1",
-                ),
-                expected_columns=primary_keys + required_fields + ("batch_id", "source_id"),
-                timestamp_fields=("trade_date",),
+                spec=spec,
+                job_id=job_id,
+                staging_table=staging_table,
+                conflict_staging_table=conflict_staging_table,
+                primary_keys=primary_keys,
+                required_fields=required_fields,
             )
+            quality = validation.quality
+            conflict = validation.conflict
             self._update_job_report_ids(
                 con, job_id, validation_report_id=quality.validation_report_id
             )
@@ -164,24 +160,7 @@ class DataSyncOrchestrator:
                     message="data quality failed",
                 )
             conflict_report_id: str | None = None
-            if conflict_staging_table is not None:
-                validation_sources = tuple(
-                    s for s in ("qmt_xtdata", "baostock") if s != spec.source_id
-                ) or ("qmt_xtdata",)
-                conflict = SourceConflictValidator().validate_table(
-                    con,
-                    SourceConflictRequest(
-                        run_id=spec.run_id,
-                        job_id=job_id,
-                        data_domain=spec.data_domain,
-                        primary_source=spec.source_id,
-                        validation_sources=validation_sources,
-                        key_fields=primary_keys,
-                        comparable_fields=("close",),
-                        tolerance_rule_set_id="p0_round_1",
-                    ),
-                    staging_table=conflict_staging_table,
-                )
+            if conflict is not None:
                 conflict_report_id = conflict.conflict_report_id
                 self._update_job_report_ids(con, job_id, conflict_report_id=conflict_report_id)
                 if conflict.status == "SEVERE_CONFLICT":
@@ -196,19 +175,16 @@ class DataSyncOrchestrator:
                     )
             self._jobs.transition(job_id, "READY_TO_WRITE", con=con)
             self._jobs.transition(job_id, "WRITING", con=con)
-            write_result = WriteManager(self._cm, DbValidationGate(self._cm)).write(
-                WriteRequest(
-                    run_id=spec.run_id,
-                    job_id=job_id,
-                    target_table=clean_table,
-                    staging_table=staging_table,
-                    write_mode=write_mode,
-                    primary_keys=primary_keys,
-                    validation_report_id=quality.validation_report_id,
-                    source_used=spec.source_id,
-                ),
-                con=con,
-                own_transaction=False,
+            write_result = self._write_clean(
+                con,
+                spec=spec,
+                job_id=job_id,
+                clean_table=clean_table,
+                staging_table=staging_table,
+                write_mode=write_mode,
+                primary_keys=primary_keys,
+                validation_report_id=quality.validation_report_id,
+                conflict_report_id=conflict_report_id,
             )
             self._update_job_report_ids(con, job_id, write_id=write_result.write_id)
             if write_result.status != "SUCCESS":
@@ -302,9 +278,7 @@ class DataSyncOrchestrator:
                     task_id=task_id,
                     message=f"continue backfill after {task_id}",
                 )
-                results.append(
-                    SyncJobResult(job_id=job_id, status="PLANNED", message=task_id)
-                )
+                results.append(SyncJobResult(job_id=job_id, status="PLANNED", message=task_id))
             else:
                 self._jobs.transition(job_id, "COMPLETED", task_id=task_id)
                 results.append(SyncJobResult(job_id=job_id, status="COMPLETED"))
@@ -349,9 +323,7 @@ class DataSyncOrchestrator:
                 """,
                 [conflict_id],
             ).fetchone()
-            if status_row and (
-                status_row[0] == "UNRESOLVED" or status_row[1] is True
-            ):
+            if status_row and (status_row[0] == "UNRESOLVED" or status_row[1] is True):
                 SourceConflictValidator().record_unresolved_reconcile(
                     con, conflict_id, title="reconcile unresolved"
                 )
@@ -362,6 +334,82 @@ class DataSyncOrchestrator:
             self._jobs.transition(job_id, "READY_TO_WRITE", con=con)
             self._jobs.transition(job_id, "COMPLETED", con=con, message="reconcile resolved")
         return SyncJobResult(job_id=job_id, status="COMPLETED")
+
+    def _validate_staging(
+        self,
+        con,
+        *,
+        spec: SyncJobSpec,
+        job_id: str,
+        staging_table: str,
+        conflict_staging_table: str | None,
+        primary_keys: tuple[str, ...],
+        required_fields: tuple[str, ...],
+    ):
+        conflict_request = None
+        if conflict_staging_table is not None:
+            validation_sources = tuple(
+                s for s in ("qmt_xtdata", "baostock") if s != spec.source_id
+            ) or ("qmt_xtdata",)
+            conflict_request = SourceConflictRequest(
+                run_id=spec.run_id,
+                job_id=job_id,
+                data_domain=spec.data_domain,
+                primary_source=spec.source_id,
+                validation_sources=validation_sources,
+                key_fields=primary_keys,
+                comparable_fields=("close",),
+                tolerance_rule_set_id="p0_round_1",
+            )
+        return self._validation.validate_staging(
+            con,
+            quality_request=DataQualityRequest(
+                run_id=spec.run_id,
+                job_id=job_id,
+                data_domain=spec.data_domain,
+                source_id=spec.source_id,
+                staging_table=staging_table,
+                primary_keys=primary_keys,
+                required_fields=required_fields,
+                rule_set_id="p0_round_1",
+            ),
+            expected_columns=primary_keys + required_fields + ("batch_id", "source_id"),
+            timestamp_fields=("trade_date",),
+            conflict_request=conflict_request,
+            conflict_staging_table=conflict_staging_table,
+        )
+
+    def _write_clean(
+        self,
+        con,
+        *,
+        spec: SyncJobSpec,
+        job_id: str,
+        clean_table: str,
+        staging_table: str,
+        write_mode: str,
+        primary_keys: tuple[str, ...],
+        validation_report_id: str,
+        conflict_report_id: str | None,
+    ):
+        return self._write.write_clean(
+            con,
+            WriteRequest(
+                run_id=spec.run_id,
+                job_id=job_id,
+                target_table=clean_table,
+                staging_table=staging_table,
+                write_mode=write_mode,
+                primary_keys=primary_keys,
+                validation_report_id=validation_report_id,
+                source_used=spec.source_id,
+                data_domain=spec.data_domain,
+                conflict_report_id=conflict_report_id,
+                source_role="primary",
+                requested_by="orchestrator",
+            ),
+            own_transaction=False,
+        )
 
     @staticmethod
     def _update_job_report_ids(

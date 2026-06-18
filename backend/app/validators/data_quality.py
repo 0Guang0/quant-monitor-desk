@@ -11,6 +11,7 @@ from typing import Literal
 
 import yaml
 from backend.app.db.sql_identifiers import quote_ident
+from backend.app.validators.common import as_float, as_text, fetch_rows, is_missing
 
 ValidationStatus = Literal["PASSED", "WARNING", "FAILED"]
 FindingSeverity = Literal["failed", "warning"]
@@ -76,13 +77,15 @@ def _load_rule_severities(rules_path: Path) -> dict[str, str]:
 
 
 def _is_missing(value: object) -> bool:
-    return value is None or (isinstance(value, str) and not value.strip())
+    return is_missing(value)
 
 
 def _as_text(value: object) -> str | None:
-    if value is None:
-        return "None"
-    return str(value)
+    return as_text(value)
+
+
+def _as_float(value: object) -> float | None:
+    return as_float(value)
 
 
 def _parse_datetime(value: object) -> datetime | None:
@@ -98,15 +101,6 @@ def _parse_datetime(value: object) -> datetime | None:
     except ValueError:
         return None
     return parsed if parsed.tzinfo else parsed.replace(tzinfo=UTC)
-
-
-def _as_float(value: object) -> float | None:
-    if isinstance(value, bool) or value is None:
-        return None
-    try:
-        return float(value)
-    except (TypeError, ValueError):
-        return None
 
 
 class DataQualityValidator:
@@ -199,14 +193,11 @@ class DataQualityValidator:
                 )
             )
 
-    def _add_row_findings(
+    def _add_required_field_findings(
         self,
         request: DataQualityRequest,
         row: dict[str, object],
         row_key: str,
-        *,
-        timestamp_fields: tuple[str, ...],
-        enum_values: dict[str, tuple[str, ...]],
         findings: list[DataQualityFinding],
     ) -> None:
         for field in request.primary_keys:
@@ -247,6 +238,14 @@ class DataQualityValidator:
                     )
                 )
 
+    def _add_timestamp_findings(
+        self,
+        row: dict[str, object],
+        row_key: str,
+        *,
+        timestamp_fields: tuple[str, ...],
+        findings: list[DataQualityFinding],
+    ) -> None:
         for field in timestamp_fields:
             parsed = _parse_datetime(row.get(field))
             if parsed is None:
@@ -261,6 +260,14 @@ class DataQualityValidator:
                     )
                 )
 
+    def _add_market_bar_findings(
+        self,
+        row: dict[str, object],
+        row_key: str,
+        *,
+        enum_values: dict[str, tuple[str, ...]],
+        findings: list[DataQualityFinding],
+    ) -> None:
         for field, allowed_values in enum_values.items():
             value = row.get(field)
             if not _is_missing(value) and str(value) not in allowed_values:
@@ -328,6 +335,22 @@ class DataQualityValidator:
                     message="amount cannot be negative",
                 )
             )
+
+    def _add_row_findings(
+        self,
+        request: DataQualityRequest,
+        row: dict[str, object],
+        row_key: str,
+        *,
+        timestamp_fields: tuple[str, ...],
+        enum_values: dict[str, tuple[str, ...]],
+        findings: list[DataQualityFinding],
+    ) -> None:
+        self._add_required_field_findings(request, row, row_key, findings)
+        self._add_timestamp_findings(
+            row, row_key, timestamp_fields=timestamp_fields, findings=findings
+        )
+        self._add_market_bar_findings(row, row_key, enum_values=enum_values, findings=findings)
 
     def _truthy(self, value: object) -> bool:
         if isinstance(value, bool):
@@ -517,10 +540,7 @@ class DataQualityValidator:
         return bool(row and row[0])
 
     def _fetch_rows(self, con, table_name: str) -> list[dict[str, object]]:
-        quoted_table = quote_ident(table_name)
-        cursor = con.execute(f"SELECT * FROM {quoted_table}")
-        columns = [column[0] for column in cursor.description]
-        return [dict(zip(columns, row, strict=True)) for row in cursor.fetchall()]
+        return fetch_rows(con, table_name)
 
     def _persist_report(
         self,
@@ -669,8 +689,10 @@ class DataQualityValidator:
                 )
             )
 
-        if con is None or not fetch_result.staging_table or not self._table_exists(
-            con, request.staging_table
+        if (
+            con is None
+            or not fetch_result.staging_table
+            or not self._table_exists(con, request.staging_table)
         ):
             findings.append(self._missing_staging_finding(request))
 

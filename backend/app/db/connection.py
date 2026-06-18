@@ -10,8 +10,9 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import duckdb
+import psutil
 import yaml
-from backend.app.config import CONFIGS_ROOT, DATA_ROOT, get_resource_profile
+from backend.app.config import CONFIGS_ROOT, DATA_ROOT, PROJECT_ROOT, get_resource_profile
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -107,9 +108,7 @@ class ConnectionManager:
             except FileExistsError:
                 self._try_remove_stale_lock()
         else:
-            raise WriteLockError(
-                f"could not acquire write lock after {_MAX_LOCK_RETRIES} attempts"
-            )
+            raise WriteLockError(f"could not acquire write lock after {_MAX_LOCK_RETRIES} attempts")
 
         payload = {
             "pid": os.getpid(),
@@ -145,12 +144,30 @@ class ConnectionManager:
 
     def _apply_pragmas(self, con: duckdb.DuckDBPyConnection) -> None:
         profile_limits = _load_profile_limits(self.profile, self._limits)
-        memory_mb = int(profile_limits.get("duckdb_memory_max_mb", 1536))
-        threads = int(profile_limits.get("max_threads", 2))
+        profile_memory_mb = int(profile_limits.get("duckdb_memory_max_mb", 1536))
+        profile_threads = int(profile_limits.get("max_threads", 2))
+        profile_temp_max_gb = int(profile_limits.get("duckdb_temp_max_gb", 2))
+
+        mem = psutil.virtual_memory()
+        total_mb = mem.total // (1024 * 1024)
+        available_mb = mem.available // (1024 * 1024)
+        memory_mb = min(profile_memory_mb, int(total_mb * 0.15), int(available_mb * 0.5))
+        memory_mb = max(int(profile_limits.get("duckdb_memory_min_mb", 512)), memory_mb)
+
+        if total_mb <= 8192:
+            threads = 1
+            memory_mb = min(memory_mb, 768)
+        else:
+            threads = profile_threads
+
+        data_root = DATA_ROOT if DATA_ROOT.exists() else PROJECT_ROOT / "data"
+        disk_root = data_root.parent if data_root.exists() else PROJECT_ROOT
+        disk_free_gb = psutil.disk_usage(str(disk_root)).free / (1024**3)
+        temp_max_gb = min(profile_temp_max_gb, max(1, int(disk_free_gb * 0.05)))
+
         temp_dir = DATA_ROOT / "cache" / "duckdb_tmp"
         temp_dir.mkdir(parents=True, exist_ok=True)
         temp_path = _escape_sql_string(temp_dir.as_posix())
-        temp_max_gb = int(profile_limits.get("duckdb_temp_max_gb", 2))
         con.execute(f"SET memory_limit = '{memory_mb}MB'")
         con.execute(f"SET threads = {threads}")
         con.execute(f"SET temp_directory = '{temp_path}'")

@@ -184,9 +184,7 @@ def test_orchestrator_fetchFailure_redactsErrorInJobEventLog(tmp_path) -> None:
     assert "REDACTED" in msg.upper() or "[REDACTED]" in msg
 
 
-def test_orchestrator_fetchBlockedOnHardStop_setsFailedRetryable(
-    tmp_path, monkeypatch
-) -> None:
+def test_orchestrator_fetchBlockedOnHardStop_setsFailedRetryable(tmp_path, monkeypatch) -> None:
     from backend.app.core.resource_guard import Decision, ResourceGuard, ResourceSnapshot
 
     orch = _orchestrator(tmp_path)
@@ -235,9 +233,7 @@ def test_orchestrator_fetchBlockedOnHardStop_setsFailedRetryable(
     assert "RESOURCE_GUARD_PAUSED" in msg
 
 
-def test_orchestrator_fetchAllowedWhenGuardOk_proceedsToFetching(
-    tmp_path, monkeypatch
-) -> None:
+def test_orchestrator_fetchAllowedWhenGuardOk_proceedsToFetching(tmp_path, monkeypatch) -> None:
     from backend.app.core.resource_guard import Decision, ResourceGuard
 
     orch = _orchestrator(tmp_path)
@@ -276,8 +272,7 @@ def test_backfillJob_largeRange_splitsIntoTasks(tmp_path, monkeypatch) -> None:
     shards = plan_backfill_shards(date(2026, 1, 1), date(2026, 3, 31))
     assert len(shards) >= 3
     assert all(
-        (end - start).days + 1 <= ECO_MAX_BACKFILL_DAYS_PER_TASK
-        for _tid, start, end in shards
+        (end - start).days + 1 <= ECO_MAX_BACKFILL_DAYS_PER_TASK for _tid, start, end in shards
     )
 
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
@@ -334,9 +329,7 @@ def test_backfillJob_recordsTriggerReason(tmp_path, monkeypatch) -> None:
     assert "manual_request" in row[0]
 
 
-def test_backfillJob_eachShard_callsResourceGuardBeforeFetching(
-    tmp_path, monkeypatch
-) -> None:
+def test_backfillJob_eachShard_callsResourceGuardBeforeFetching(tmp_path, monkeypatch) -> None:
     from datetime import date
 
     from backend.app.core.resource_guard import Decision, ResourceGuard

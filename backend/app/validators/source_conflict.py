@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Literal
 
 import yaml
-from backend.app.db.sql_identifiers import quote_ident
+from backend.app.validators.common import as_float, as_text, fetch_rows
 
 ConflictStatus = Literal["PASSED", "WARNING", "SEVERE_CONFLICT"]
 ConflictSeverity = Literal["warning", "severe", "methodology_difference"]
@@ -94,18 +94,11 @@ def _key_for(row: dict[str, object], key_fields: tuple[str, ...]) -> tuple[objec
 
 
 def _as_float(value: object) -> float | None:
-    if isinstance(value, bool) or value is None:
-        return None
-    try:
-        return float(value)
-    except (TypeError, ValueError):
-        return None
+    return as_float(value)
 
 
 def _as_text(value: object) -> str:
-    if value is None:
-        return "None"
-    return str(value)
+    return as_text(value) or "None"
 
 
 class SourceConflictValidator:
@@ -178,12 +171,8 @@ class SourceConflictValidator:
         request: SourceConflictRequest,
         rows: list[dict[str, object]],
     ) -> SourceConflictReport:
-        primary_rows = [
-            row for row in rows if str(row.get("source_id")) == request.primary_source
-        ]
-        peer_rows = [
-            row for row in rows if str(row.get("source_id")) in request.validation_sources
-        ]
+        primary_rows = [row for row in rows if str(row.get("source_id")) == request.primary_source]
+        peer_rows = [row for row in rows if str(row.get("source_id")) in request.validation_sources]
         peers_by_key: dict[tuple[object, ...], list[dict[str, object]]] = {}
         for row in peer_rows:
             peers_by_key.setdefault(_key_for(row, request.key_fields), []).append(row)
@@ -218,10 +207,7 @@ class SourceConflictValidator:
         )
 
     def _fetch_rows(self, con, table_name: str) -> list[dict[str, object]]:
-        quoted_table = quote_ident(table_name)
-        cursor = con.execute(f"SELECT * FROM {quoted_table}")
-        columns = [column[0] for column in cursor.description]
-        return [dict(zip(columns, row, strict=True)) for row in cursor.fetchall()]
+        return fetch_rows(con, table_name)
 
     def _market_id_for(self, row: dict[str, object]) -> str | None:
         value = row.get("market_id")
@@ -332,10 +318,7 @@ class SourceConflictValidator:
                 "HIGH",
                 title or f"Severe source conflict on {field_name}",
                 description
-                or (
-                    f"{primary_source}={primary_value}; "
-                    f"{competing_source}={competing_value}"
-                ),
+                or (f"{primary_source}={primary_value}; {competing_source}={competing_value}"),
                 "manual review before any clean write or downstream manual_patch",
                 "OPEN",
                 created_at,

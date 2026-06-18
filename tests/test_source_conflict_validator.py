@@ -255,13 +255,9 @@ def test_recordUnresolvedReconcile_enqueuesManualReview(tmp_path: Path) -> None:
             """
         )
         validator.validate_table(con, _request(), staging_table="stg_conflict")
-        conflict_id = con.execute(
-            "SELECT conflict_id FROM source_conflict LIMIT 1"
-        ).fetchone()[0]
+        conflict_id = con.execute("SELECT conflict_id FROM source_conflict LIMIT 1").fetchone()[0]
         validator.record_unresolved_reconcile(con, conflict_id)
-        review = con.execute(
-            "SELECT source_object_id, status FROM manual_review_queue"
-        ).fetchone()
+        review = con.execute("SELECT source_object_id, status FROM manual_review_queue").fetchone()
         flags = con.execute(
             "SELECT reconcile_status, manual_review_required FROM source_conflict"
         ).fetchone()

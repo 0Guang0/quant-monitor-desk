@@ -60,6 +60,7 @@ def test_appliedVersions_afterMigration_containsFoundation() -> None:
         "004_ingestion_sources",
         "005_ingestion_validation",
         "006_ingestion_sync",
+        "007_sync_constraints_audit",
     }
 
 
@@ -77,14 +78,17 @@ def test_applyMigrations_freshDb_includesIngestionTables() -> None:
 def test_appliedVersions_afterMigration_containsIngestion() -> None:
     con = duckdb.connect(":memory:")
     apply_migrations(con)
-    assert applied_versions(con) == frozenset({
-        "001_foundation",
-        "002_registry_hardening",
-        "003_resource_guard_metrics",
-        "004_ingestion_sources",
-        "005_ingestion_validation",
-        "006_ingestion_sync",
-    })
+    assert applied_versions(con) == frozenset(
+        {
+            "001_foundation",
+            "002_registry_hardening",
+            "003_resource_guard_metrics",
+            "004_ingestion_sources",
+            "005_ingestion_validation",
+            "006_ingestion_sync",
+            "007_sync_constraints_audit",
+        }
+    )
 
 
 def test_applyMigrations_modifiedFile_raisesChecksumError(tmp_path: Path) -> None:
@@ -123,3 +127,23 @@ def test_applyMigrations_badSqlInFile_raisesAndLeavesNoVersionRow(tmp_path: Path
     assert applied_versions(con) == set()
     tables = {row[0] for row in con.execute("SHOW TABLES").fetchall()}
     assert "ok" not in tables
+
+
+SCHEMA_PHASE_MATRIX = {
+    "001_foundation": ("implemented", {"write_audit_log", "file_registry"}),
+    "005_ingestion_validation": ("implemented", {"validation_report", "source_conflict"}),
+    "006_ingestion_sync": ("implemented", {"data_sync_job", "job_event_log"}),
+    "007_sync_constraints_audit": ("implemented", {"data_sync_job", "write_audit_log"}),
+    "planned_round3": ("planned-later", {"source_health_snapshot"}),
+}
+
+
+def test_schemaPhaseMatrix_documentsImplementedVsPlanned() -> None:
+    con = duckdb.connect(":memory:")
+    apply_migrations(con)
+    tables = {row[0] for row in con.execute("SHOW TABLES").fetchall()}
+    for phase, (status, expected_subset) in SCHEMA_PHASE_MATRIX.items():
+        if status == "implemented":
+            assert expected_subset.issubset(tables), f"{phase} missing {expected_subset - tables}"
+        else:
+            assert not expected_subset.intersection(tables), f"{phase} should not exist yet"

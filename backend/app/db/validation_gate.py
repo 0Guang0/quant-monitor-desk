@@ -69,9 +69,7 @@ class DbValidationGate:
     def __init__(self, conn_manager: ConnectionManager) -> None:
         self.conn_manager = conn_manager
 
-    def _fetch_report(
-        self, validation_report_id: str
-    ) -> tuple[str, bool, bool, str | None] | None:
+    def _fetch_report(self, validation_report_id: str) -> tuple[str, bool, bool, str | None] | None:
         with self.conn_manager.reader() as con:
             row = con.execute(
                 """
@@ -84,8 +82,11 @@ class DbValidationGate:
         if row is None:
             return None
         status, can_write_clean, needs_manual_review, run_id = row
-        return str(status), bool(can_write_clean), bool(needs_manual_review), (
-            None if run_id is None else str(run_id)
+        return (
+            str(status),
+            bool(can_write_clean),
+            bool(needs_manual_review),
+            (None if run_id is None else str(run_id)),
         )
 
     def _has_blocking_severe_conflicts(self, run_id: str, con=None) -> bool:

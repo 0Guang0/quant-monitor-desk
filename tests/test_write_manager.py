@@ -21,9 +21,7 @@ def _setup(tmp_path: Path) -> ConnectionManager:
     db = tmp_path / "t.duckdb"
     con = duckdb.connect(str(db))
     apply_migrations(con)
-    con.execute(
-        "INSERT INTO stg_foundation_smoke VALUES ('AAPL','2026-06-15',195.0,'qmt','b1')"
-    )
+    con.execute("INSERT INTO stg_foundation_smoke VALUES ('AAPL','2026-06-15',195.0,'qmt','b1')")
     con.close()
     return ConnectionManager(db)
 
@@ -85,8 +83,7 @@ def test_write_appendOnlyStubPass_insertsAndAudits(tmp_path: Path) -> None:
     cm = _setup(tmp_path)
     with cm.writer() as w:
         w.execute(
-            "CREATE TABLE security_bar_smoke_clean AS "
-            "SELECT * FROM stg_foundation_smoke WHERE 1=0"
+            "CREATE TABLE security_bar_smoke_clean AS SELECT * FROM stg_foundation_smoke WHERE 1=0"
         )
     res = create_test_write_manager(cm).write(_req())
     assert res.status == "SUCCESS"
@@ -104,16 +101,13 @@ def test_write_stubFail_rollsBackAndAuditsFailed(tmp_path: Path) -> None:
     cm = _setup(tmp_path)
     with cm.writer() as w:
         w.execute(
-            "CREATE TABLE security_bar_smoke_clean AS "
-            "SELECT * FROM stg_foundation_smoke WHERE 1=0"
+            "CREATE TABLE security_bar_smoke_clean AS SELECT * FROM stg_foundation_smoke WHERE 1=0"
         )
     res = create_test_write_manager(cm).write(_req(report="stub-fail-1"))
     assert res.status == "FAILED"
     with cm.reader() as r:
         assert r.execute("SELECT COUNT(*) FROM security_bar_smoke_clean").fetchone()[0] == 0
-        cnt = r.execute(
-            "SELECT COUNT(*) FROM write_audit_log WHERE status='FAILED'"
-        ).fetchone()[0]
+        cnt = r.execute("SELECT COUNT(*) FROM write_audit_log WHERE status='FAILED'").fetchone()[0]
         assert cnt == 1
 
 
@@ -121,8 +115,7 @@ def test_write_gateError_rollsBackAndAuditsFailed(tmp_path: Path) -> None:
     cm = _setup(tmp_path)
     with cm.writer() as w:
         w.execute(
-            "CREATE TABLE security_bar_smoke_clean AS "
-            "SELECT * FROM stg_foundation_smoke WHERE 1=0"
+            "CREATE TABLE security_bar_smoke_clean AS SELECT * FROM stg_foundation_smoke WHERE 1=0"
         )
     res = create_test_write_manager(cm).write(_req(report="real-report-1"))
     assert res.status == "FAILED"
@@ -154,8 +147,7 @@ def test_write_emptyStaging_insertsZeroRows(tmp_path: Path) -> None:
     with cm.writer() as w:
         w.execute("DELETE FROM stg_foundation_smoke")
         w.execute(
-            "CREATE TABLE security_bar_smoke_clean AS "
-            "SELECT * FROM stg_foundation_smoke WHERE 1=0"
+            "CREATE TABLE security_bar_smoke_clean AS SELECT * FROM stg_foundation_smoke WHERE 1=0"
         )
     res = create_test_write_manager(cm).write(_req())
     assert res.status == "SUCCESS"
@@ -196,21 +188,16 @@ def test_write_upsertByPk_pureNewRow_reportsZeroUpdated(tmp_path: Path) -> None:
     cm = _setup(tmp_path)
     with cm.writer() as w:
         w.execute(
-            "CREATE TABLE security_bar_smoke_clean AS "
-            "SELECT * FROM stg_foundation_smoke WHERE 1=0"
+            "CREATE TABLE security_bar_smoke_clean AS SELECT * FROM stg_foundation_smoke WHERE 1=0"
         )
         w.execute(
-            "INSERT INTO security_bar_smoke_clean "
-            "VALUES ('MSFT','2026-06-14',100.0,'qmt','b0')"
+            "INSERT INTO security_bar_smoke_clean VALUES ('MSFT','2026-06-14',100.0,'qmt','b0')"
         )
         w.execute(
-            "INSERT INTO security_bar_smoke_clean "
-            "VALUES ('GOOG','2026-06-13',200.0,'qmt','b0')"
+            "INSERT INTO security_bar_smoke_clean VALUES ('GOOG','2026-06-13',200.0,'qmt','b0')"
         )
         w.execute("DELETE FROM stg_foundation_smoke")
-        w.execute(
-            "INSERT INTO stg_foundation_smoke VALUES ('NVDA','2026-06-16',300.0,'qmt','b2')"
-        )
+        w.execute("INSERT INTO stg_foundation_smoke VALUES ('NVDA','2026-06-16',300.0,'qmt','b2')")
     res = create_test_write_manager(cm).write(_req(mode="upsert_by_pk"))
     assert res.status == "SUCCESS"
     assert res.rows_updated == 0
@@ -244,8 +231,7 @@ def test_write_upsertByPk_duplicateStagingPk_raises(tmp_path: Path) -> None:
     cm = _setup(tmp_path)
     with cm.writer() as w:
         w.execute(
-            "CREATE TABLE security_bar_smoke_clean AS "
-            "SELECT * FROM stg_foundation_smoke WHERE 1=0"
+            "CREATE TABLE security_bar_smoke_clean AS SELECT * FROM stg_foundation_smoke WHERE 1=0"
         )
         w.execute(
             """
@@ -253,12 +239,8 @@ def test_write_upsertByPk_duplicateStagingPk_raises(tmp_path: Path) -> None:
             SELECT * FROM stg_foundation_smoke WHERE 1=0
             """
         )
-        w.execute(
-            "INSERT INTO stg_upsert_dup VALUES ('AAPL','2026-06-15',195.0,'qmt','b1')"
-        )
-        w.execute(
-            "INSERT INTO stg_upsert_dup VALUES ('AAPL','2026-06-15',196.0,'qmt','b2')"
-        )
+        w.execute("INSERT INTO stg_upsert_dup VALUES ('AAPL','2026-06-15',195.0,'qmt','b1')")
+        w.execute("INSERT INTO stg_upsert_dup VALUES ('AAPL','2026-06-15',196.0,'qmt','b2')")
     dup_req = WriteRequest(
         run_id="r1",
         job_id="j1",
@@ -280,8 +262,7 @@ def test_write_stubFail_ownTransaction_doesNotOpenSecondAuditConnection(
     cm = _setup(tmp_path)
     with cm.writer() as w:
         w.execute(
-            "CREATE TABLE security_bar_smoke_clean AS "
-            "SELECT * FROM stg_foundation_smoke WHERE 1=0"
+            "CREATE TABLE security_bar_smoke_clean AS SELECT * FROM stg_foundation_smoke WHERE 1=0"
         )
     import backend.app.db.write_manager as wm_mod
 
@@ -303,9 +284,7 @@ def test_write_upsertByPk_mixedNewAndExisting_reportsCorrectCounts(tmp_path: Pat
     cm = _setup(tmp_path)
     with cm.writer() as w:
         w.execute("CREATE TABLE security_bar_smoke_clean AS SELECT * FROM stg_foundation_smoke")
-        w.execute(
-            "INSERT INTO stg_foundation_smoke VALUES ('MSFT','2026-06-15',120.0,'qmt','b2')"
-        )
+        w.execute("INSERT INTO stg_foundation_smoke VALUES ('MSFT','2026-06-15',120.0,'qmt','b2')")
         w.execute("UPDATE stg_foundation_smoke SET close=200.0 WHERE instrument_id='AAPL'")
     res = create_test_write_manager(cm).write(_req(mode="upsert_by_pk"))
     assert res.status == "SUCCESS"
@@ -323,8 +302,7 @@ def test_write_ownTransactionFalse_stubFail_doesNotRollbackOuterTxn(tmp_path: Pa
     cm = _setup(tmp_path)
     with cm.writer() as w:
         w.execute(
-            "CREATE TABLE security_bar_smoke_clean AS "
-            "SELECT * FROM stg_foundation_smoke WHERE 1=0"
+            "CREATE TABLE security_bar_smoke_clean AS SELECT * FROM stg_foundation_smoke WHERE 1=0"
         )
         w.execute("BEGIN")
         w.execute("INSERT INTO stg_foundation_smoke VALUES ('MSFT','2026-06-16',120.0,'qmt','b2')")
@@ -349,8 +327,7 @@ def test_write_ownTransactionFalse_duckdbError_doesNotOpenSecondAuditConnection(
     cm = _setup(tmp_path)
     with cm.writer() as w:
         w.execute(
-            "CREATE TABLE security_bar_smoke_clean AS "
-            "SELECT * FROM stg_foundation_smoke WHERE 1=0"
+            "CREATE TABLE security_bar_smoke_clean AS SELECT * FROM stg_foundation_smoke WHERE 1=0"
         )
         w.execute("BEGIN")
         import backend.app.db.write_manager as wm_mod

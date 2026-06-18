@@ -42,9 +42,7 @@ def test_foundation_endToEnd_writesCleanAndAudits(tmp_path: Path, monkeypatch) -
     )
     warn_decision, _ = guard_warn.check()
     assert warn_decision == Decision.WARN
-    assert (
-        guard_warn.con.execute("SELECT COUNT(*) FROM resource_guard_log").fetchone()[0] == 1
-    )
+    assert guard_warn.con.execute("SELECT COUNT(*) FROM resource_guard_log").fetchone()[0] == 1
     guard_warn.con.close()
 
     guard = ResourceGuard(profile="eco", con=None)
@@ -73,12 +71,9 @@ def test_foundation_endToEnd_writesCleanAndAudits(tmp_path: Path, monkeypatch) -
         )
 
     with cm.writer() as w:
+        w.execute("INSERT INTO stg_foundation_smoke VALUES ('AAPL','2026-06-15',195.0,'qmt','b1')")
         w.execute(
-            "INSERT INTO stg_foundation_smoke VALUES ('AAPL','2026-06-15',195.0,'qmt','b1')"
-        )
-        w.execute(
-            "CREATE TABLE security_bar_smoke_clean AS "
-            "SELECT * FROM stg_foundation_smoke WHERE 1=0"
+            "CREATE TABLE security_bar_smoke_clean AS SELECT * FROM stg_foundation_smoke WHERE 1=0"
         )
     ok = create_test_write_manager(cm).write(
         WriteRequest(

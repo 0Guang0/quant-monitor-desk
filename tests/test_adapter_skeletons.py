@@ -17,17 +17,13 @@ def test_skeletonAdapterBase_successWritesRawFile(
     request_factory,
     file_registry_stack,
     stub_fetch_bytes,
+    baostock_skeleton_class,
 ):
     from backend.app.datasources.adapters.fetch_port import StubFetchPort
-    from backend.app.datasources.adapters.skeleton_base import SkeletonAdapterBase
-
-    class BaostockSkeleton(SkeletonAdapterBase):
-        source_id = "baostock"
-        supported_domains = frozenset({"market_bar_1d", "fundamental"})
 
     con = migrated_con(tmp_path)
     stack = file_registry_stack
-    adapter = BaostockSkeleton(
+    adapter = baostock_skeleton_class(
         batch_b_registry,
         raw_store=stack["raw_store"],
         fetch_port=StubFetchPort(payload=stub_fetch_bytes),
@@ -151,7 +147,11 @@ def test_baostockAdapter_matchesRegistryDomains(
 
 
 def test_qmtAdapter_localClientMissing_returnsAuthFailed(
-    tmp_path, migrated_con, batch_b_registry, request_factory, file_registry_stack,
+    tmp_path,
+    migrated_con,
+    batch_b_registry,
+    request_factory,
+    file_registry_stack,
 ):
     from backend.app.datasources.adapters.fetch_port import FailingPort
     from backend.app.datasources.adapters.qmt_xtdata import QmtXtdataAdapter
@@ -233,7 +233,11 @@ def test_vendorSkeleton_exposesSourceId(
 
 
 def test_cninfoAdapter_unpublished_returnsNotPublishedYet(
-    tmp_path, migrated_con, batch_b_registry, request_factory, file_registry_stack,
+    tmp_path,
+    migrated_con,
+    batch_b_registry,
+    request_factory,
+    file_registry_stack,
 ):
     from backend.app.datasources.adapters.cninfo import CninfoAdapter
     from backend.app.datasources.adapters.fetch_port import UnpublishedPort
@@ -261,7 +265,10 @@ def test_yahooAdapter_registryMarkedValidationOnly(batch_b_registry):
 
 
 def test_createAdapter_unknownSource_raisesAdapterNotSupportedError(
-    batch_b_registry, raw_data_root, file_registry_stack, stub_fetch_bytes,
+    batch_b_registry,
+    raw_data_root,
+    file_registry_stack,
+    stub_fetch_bytes,
 ):
     from backend.app.datasources.adapters import create_adapter
     from backend.app.datasources.adapters.fetch_port import StubFetchPort
@@ -281,7 +288,9 @@ def test_createAdapter_unknownSource_raisesAdapterNotSupportedError(
 
 
 def test_createAdapter_withoutFetchPort_raisesAdapterConfigurationError(
-    batch_b_registry, raw_data_root, file_registry_stack,
+    batch_b_registry,
+    raw_data_root,
+    file_registry_stack,
 ):
     from backend.app.datasources.adapters import create_adapter
     from backend.app.datasources.exceptions import AdapterConfigurationError
@@ -297,7 +306,9 @@ def test_createAdapter_withoutFetchPort_raisesAdapterConfigurationError(
 
 
 def test_createAdapter_withoutFileRegistry_raisesAdapterConfigurationError(
-    batch_b_registry, raw_data_root, stub_fetch_bytes,
+    batch_b_registry,
+    raw_data_root,
+    stub_fetch_bytes,
 ):
     from backend.app.datasources.adapters import create_adapter
     from backend.app.datasources.adapters.fetch_port import StubFetchPort
@@ -313,7 +324,11 @@ def test_createAdapter_withoutFileRegistry_raisesAdapterConfigurationError(
 
 
 def test_createTestAdapter_defaultStubFetchPort_success(
-    tmp_path, migrated_con, batch_b_registry, request_factory, raw_data_root,
+    tmp_path,
+    migrated_con,
+    batch_b_registry,
+    request_factory,
+    raw_data_root,
 ):
     from backend.app.datasources.adapters import create_test_adapter
 
@@ -480,9 +495,7 @@ def test_payloadRowCount_propagatesToFetchResultAndFetchLog(
     req = request_factory("baostock", "market_bar_1d")
     result = adapter.fetch(req, con=con)
     assert result.row_count == 42
-    row = con.execute(
-        "SELECT row_count FROM fetch_log WHERE run_id=?", [req.run_id]
-    ).fetchone()
+    row = con.execute("SELECT row_count FROM fetch_log WHERE run_id=?", [req.run_id]).fetchone()
     assert row[0] == 42
 
 
@@ -511,9 +524,7 @@ def test_payloadSchemaHash_propagatesToFetchResultAndFetchLog(
     req = request_factory("baostock", "market_bar_1d")
     result = adapter.fetch(req, con=con)
     assert result.schema_hash == schema_hash
-    row = con.execute(
-        "SELECT schema_hash FROM fetch_log WHERE run_id=?", [req.run_id]
-    ).fetchone()
+    row = con.execute("SELECT schema_hash FROM fetch_log WHERE run_id=?", [req.run_id]).fetchone()
     assert row[0] == schema_hash
 
 
@@ -542,9 +553,7 @@ def test_payloadRetryCount_propagatesToFetchResultAndFetchLog(
     req = request_factory("baostock", "market_bar_1d")
     result = adapter.fetch(req, con=con)
     assert result.retry_count == 3
-    row = con.execute(
-        "SELECT retry_count FROM fetch_log WHERE run_id=?", [req.run_id]
-    ).fetchone()
+    row = con.execute("SELECT retry_count FROM fetch_log WHERE run_id=?", [req.run_id]).fetchone()
     assert row[0] == 3
 
 
@@ -574,9 +583,7 @@ def test_fetchRecordsLatencyMsWhenPayloadOmitsIt(
     result = adapter.fetch(req, con=con)
     assert result.latency_ms is not None
     assert result.latency_ms >= 0
-    row = con.execute(
-        "SELECT latency_ms FROM fetch_log WHERE run_id=?", [req.run_id]
-    ).fetchone()
+    row = con.execute("SELECT latency_ms FROM fetch_log WHERE run_id=?", [req.run_id]).fetchone()
     assert row[0] is not None
 
 

@@ -10,47 +10,51 @@ from backend.app.db.migrate import MIGRATIONS_DIR, apply_migrations, verify_appl
 
 MIGRATION_006 = "006_ingestion_sync"
 
-DATA_SYNC_JOB_COLUMNS = frozenset({
-    "job_id",
-    "run_id",
-    "job_type",
-    "data_domain",
-    "market_id",
-    "instrument_id",
-    "partition_key",
-    "date_start",
-    "date_end",
-    "source_id",
-    "adapter_id",
-    "status",
-    "priority",
-    "retry_count",
-    "max_retries",
-    "cursor_before",
-    "cursor_after",
-    "validation_report_id",
-    "conflict_report_id",
-    "write_id",
-    "error_type",
-    "error_message",
-    "created_at",
-    "started_at",
-    "finished_at",
-    "updated_at",
-})
+DATA_SYNC_JOB_COLUMNS = frozenset(
+    {
+        "job_id",
+        "run_id",
+        "job_type",
+        "data_domain",
+        "market_id",
+        "instrument_id",
+        "partition_key",
+        "date_start",
+        "date_end",
+        "source_id",
+        "adapter_id",
+        "status",
+        "priority",
+        "retry_count",
+        "max_retries",
+        "cursor_before",
+        "cursor_after",
+        "validation_report_id",
+        "conflict_report_id",
+        "write_id",
+        "error_type",
+        "error_message",
+        "created_at",
+        "started_at",
+        "finished_at",
+        "updated_at",
+    }
+)
 
-JOB_EVENT_LOG_COLUMNS = frozenset({
-    "event_id",
-    "run_id",
-    "job_id",
-    "task_id",
-    "event_type",
-    "old_status",
-    "new_status",
-    "message",
-    "payload_json",
-    "created_at",
-})
+JOB_EVENT_LOG_COLUMNS = frozenset(
+    {
+        "event_id",
+        "run_id",
+        "job_id",
+        "task_id",
+        "event_type",
+        "old_status",
+        "new_status",
+        "message",
+        "payload_json",
+        "created_at",
+    }
+)
 
 
 def _table_columns(con: duckdb.DuckDBPyConnection, table_name: str) -> set[str]:

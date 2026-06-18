@@ -13,53 +13,57 @@ from datetime import UTC, date, datetime, timedelta
 from backend.app.db.connection import ConnectionManager
 from backend.app.util.error_redaction import redact_error_message
 
-SYNC_JOB_STATUSES: frozenset[str] = frozenset({
-    "CREATED",
-    "PLANNED",
-    "FETCHING",
-    "STAGED",
-    "VALIDATING",
-    "WAITING_RECONCILE",
-    "RECONCILING",
-    "READY_TO_WRITE",
-    "WRITING",
-    "COMPLETED",
-    "FAILED_FINAL",
-    "SKIPPED",
-    "CANCELLED",
-    "MANUAL_REVIEW_REQUIRED",
-    "FAILED_RETRYABLE",
-})
+SYNC_JOB_STATUSES: frozenset[str] = frozenset(
+    {
+        "CREATED",
+        "PLANNED",
+        "FETCHING",
+        "STAGED",
+        "VALIDATING",
+        "WAITING_RECONCILE",
+        "RECONCILING",
+        "READY_TO_WRITE",
+        "WRITING",
+        "COMPLETED",
+        "FAILED_FINAL",
+        "SKIPPED",
+        "CANCELLED",
+        "MANUAL_REVIEW_REQUIRED",
+        "FAILED_RETRYABLE",
+    }
+)
 
-TERMINAL_STATUSES: frozenset[str] = frozenset({
-    "COMPLETED",
-    "FAILED_FINAL",
-    "SKIPPED",
-    "CANCELLED",
-    "MANUAL_REVIEW_REQUIRED",
-})
+TERMINAL_STATUSES: frozenset[str] = frozenset(
+    {
+        "COMPLETED",
+        "FAILED_FINAL",
+        "SKIPPED",
+        "CANCELLED",
+        "MANUAL_REVIEW_REQUIRED",
+    }
+)
 
 ECO_MAX_BACKFILL_DAYS_PER_TASK = 31
 
 # docs/modules/data_sync_orchestrator.md §13.4.3 + eco default (MASTER §6.3)
-BACKFILL_TRIGGER_REASONS: frozenset[str] = frozenset({
-    "network_failure",
-    "source_lag",
-    "missing_partition",
-    "corporate_action_update",
-    "revision_detected",
-    "manual_request",
-    "eco_catchup",
-})
+BACKFILL_TRIGGER_REASONS: frozenset[str] = frozenset(
+    {
+        "network_failure",
+        "source_lag",
+        "missing_partition",
+        "corporate_action_update",
+        "revision_detected",
+        "manual_request",
+        "eco_catchup",
+    }
+)
 
 
 def normalize_backfill_trigger_reason(trigger_reason: str | None) -> str:
     value = trigger_reason or "eco_catchup"
     if value not in BACKFILL_TRIGGER_REASONS:
         allowed = ", ".join(sorted(BACKFILL_TRIGGER_REASONS))
-        raise ValueError(
-            f"unsupported backfill trigger_reason: {value!r}; allowed: {allowed}"
-        )
+        raise ValueError(f"unsupported backfill trigger_reason: {value!r}; allowed: {allowed}")
     return value
 
 
@@ -129,38 +133,46 @@ def plan_backfill_shards(
 
 _BASE_TRANSITIONS: dict[str, frozenset[str]] = {
     "CREATED": frozenset({"PLANNED", "CANCELLED"}),
-    "PLANNED": frozenset({
-        "FETCHING",
-        "CANCELLED",
-        "FAILED_RETRYABLE",
-        "FAILED_FINAL",
-        "SKIPPED",
-    }),
+    "PLANNED": frozenset(
+        {
+            "FETCHING",
+            "CANCELLED",
+            "FAILED_RETRYABLE",
+            "FAILED_FINAL",
+            "SKIPPED",
+        }
+    ),
     "FETCHING": frozenset({"STAGED", "FAILED_RETRYABLE", "FAILED_FINAL", "CANCELLED"}),
     "STAGED": frozenset({"VALIDATING", "FAILED_RETRYABLE", "FAILED_FINAL", "CANCELLED"}),
-    "VALIDATING": frozenset({
-        "WAITING_RECONCILE",
-        "READY_TO_WRITE",
-        "MANUAL_REVIEW_REQUIRED",
-        "FAILED_RETRYABLE",
-        "FAILED_FINAL",
-        "COMPLETED",
-        "CANCELLED",
-    }),
-    "WAITING_RECONCILE": frozenset({
-        "RECONCILING",
-        "MANUAL_REVIEW_REQUIRED",
-        "FAILED_RETRYABLE",
-        "FAILED_FINAL",
-        "CANCELLED",
-    }),
-    "RECONCILING": frozenset({
-        "READY_TO_WRITE",
-        "MANUAL_REVIEW_REQUIRED",
-        "FAILED_RETRYABLE",
-        "FAILED_FINAL",
-        "CANCELLED",
-    }),
+    "VALIDATING": frozenset(
+        {
+            "WAITING_RECONCILE",
+            "READY_TO_WRITE",
+            "MANUAL_REVIEW_REQUIRED",
+            "FAILED_RETRYABLE",
+            "FAILED_FINAL",
+            "COMPLETED",
+            "CANCELLED",
+        }
+    ),
+    "WAITING_RECONCILE": frozenset(
+        {
+            "RECONCILING",
+            "MANUAL_REVIEW_REQUIRED",
+            "FAILED_RETRYABLE",
+            "FAILED_FINAL",
+            "CANCELLED",
+        }
+    ),
+    "RECONCILING": frozenset(
+        {
+            "READY_TO_WRITE",
+            "MANUAL_REVIEW_REQUIRED",
+            "FAILED_RETRYABLE",
+            "FAILED_FINAL",
+            "CANCELLED",
+        }
+    ),
     "READY_TO_WRITE": frozenset({"WRITING", "FAILED_RETRYABLE", "FAILED_FINAL", "CANCELLED"}),
     "WRITING": frozenset({"COMPLETED", "FAILED_RETRYABLE", "FAILED_FINAL", "CANCELLED"}),
     "FAILED_RETRYABLE": frozenset({"PLANNED", "CANCELLED"}),
@@ -371,8 +383,7 @@ class SyncJobStateMachine:
         old_status, job_type = row[0], row[1]
         if not self._is_allowed(old_status, new_status, job_type):
             raise InvalidTransitionError(
-                f"invalid transition {old_status!r} -> {new_status!r} "
-                f"for job_type={job_type!r}"
+                f"invalid transition {old_status!r} -> {new_status!r} for job_type={job_type!r}"
             )
         now = datetime.now(UTC)
         if error_type is not None or error_message is not None:

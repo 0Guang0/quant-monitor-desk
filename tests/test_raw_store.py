@@ -53,17 +53,13 @@ def test_save_fileIdFormat_isHashPrefixPlusSource(tmp_path: Path) -> None:
 def test_save_pathTraversal_raises(tmp_path: Path) -> None:
     store = RawStore(tmp_path)
     with pytest.raises(ValueError, match="invalid source"):
-        store.save(
-            b"x", source="..", data_domain="daily_bar", file_type="json", as_of="2026-06-15"
-        )
+        store.save(b"x", source="..", data_domain="daily_bar", file_type="json", as_of="2026-06-15")
 
 
 def test_save_unsupportedFileType_raises(tmp_path: Path) -> None:
     store = RawStore(tmp_path)
     with pytest.raises(ValueError, match="unsupported file_type"):
-        store.save(
-            b"x", source="qmt", data_domain="daily_bar", file_type="xml", as_of="2026-06-15"
-        )
+        store.save(b"x", source="qmt", data_domain="daily_bar", file_type="xml", as_of="2026-06-15")
 
 
 def test_save_oversizedContent_raises(tmp_path: Path) -> None:

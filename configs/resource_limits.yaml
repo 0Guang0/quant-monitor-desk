@@ -56,3 +56,26 @@ project_size_thresholds:
   cache_warn_gb: 1
   cache_pause_gb: 2
   cache_hard_stop_gb: 4
+api_limits:
+  default_page_size: 100
+  max_page_size: 500
+  agent_default_rows: 100
+  agent_max_rows: 500
+  daily_bar_default_days: 90
+  daily_bar_max_days: 365
+  minute_bar_default_trading_days: 5
+  minute_bar_max_trading_days: 20
+actions:
+  warn:
+    - write_resource_guard_log
+    - reduce_batch_size
+  pause_non_core:
+    - pause_backfill
+    - pause_revision_audit
+    - pause_full_reload
+    - keep_api_readonly_available
+  hard_stop:
+    - stop_non_core_jobs
+    - release_locks
+    - write_failure_summary
+    - require_human_confirmation

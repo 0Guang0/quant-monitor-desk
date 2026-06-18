@@ -52,8 +52,7 @@ class BatchDIncrementalAdapter(BaseDataAdapter):
             """
         )
         con.execute(
-            f"CREATE TABLE IF NOT EXISTS {CLEAN_TABLE} "
-            f"AS SELECT * FROM {STG_TABLE} WHERE 1=0"
+            f"CREATE TABLE IF NOT EXISTS {CLEAN_TABLE} AS SELECT * FROM {STG_TABLE} WHERE 1=0"
         )
         con.execute(f"DELETE FROM {STG_TABLE}")
         con.execute(f"INSERT INTO {STG_TABLE} VALUES (?, ?, ?, ?, ?, ?)", list(self._seed_row))

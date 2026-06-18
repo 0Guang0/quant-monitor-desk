@@ -104,8 +104,7 @@ def main() -> None:
     with cm.reader() as con:
         tables = {row[0] for row in con.execute("SHOW TABLES").fetchall()}
         versions = {
-            row[0]
-            for row in con.execute("SELECT version_id FROM schema_version").fetchall()
+            row[0] for row in con.execute("SELECT version_id FROM schema_version").fetchall()
         }
     required_tables = {"source_registry", "fetch_log", "data_sync_job", "job_event_log"}
     if not required_tables.issubset(tables):

@@ -47,8 +47,18 @@ def _insert_report(
                 can_write_clean, needs_manual_review
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
-            [report_id, run_id, "market_bar_1d", "qmt", status,
-             checked_rows, failed_rows, warning_rows, can_write_clean, needs_manual_review],
+            [
+                report_id,
+                run_id,
+                "market_bar_1d",
+                "qmt",
+                status,
+                checked_rows,
+                failed_rows,
+                warning_rows,
+                can_write_clean,
+                needs_manual_review,
+            ],
         )
 
 
@@ -63,7 +73,11 @@ def test_missingReport_raisesGateError(tmp_path: Path) -> None:
 def test_failedReport_rejected(tmp_path: Path) -> None:
     cm = _setup(tmp_path)
     _insert_report(
-        cm, "vr-failed", status="FAILED", can_write_clean=False, needs_manual_review=True,
+        cm,
+        "vr-failed",
+        status="FAILED",
+        can_write_clean=False,
+        needs_manual_review=True,
         failed_rows=1,
     )
     gate = DbValidationGate(cm)
@@ -76,7 +90,11 @@ def test_canWriteCleanFalse_rejected(tmp_path: Path) -> None:
     """Even a non-FAILED report with can_write_clean=false must reject."""
     cm = _setup(tmp_path)
     _insert_report(
-        cm, "vr-no-write", status="WARNING", can_write_clean=False, needs_manual_review=False,
+        cm,
+        "vr-no-write",
+        status="WARNING",
+        can_write_clean=False,
+        needs_manual_review=False,
     )
     gate = DbValidationGate(cm)
     with pytest.raises(ValidationRejected):
@@ -87,7 +105,11 @@ def test_needsManualReviewTrue_rejected(tmp_path: Path) -> None:
     """needs_manual_review=true must reject regardless of status."""
     cm = _setup(tmp_path)
     _insert_report(
-        cm, "vr-review", status="WARNING", can_write_clean=True, needs_manual_review=True,
+        cm,
+        "vr-review",
+        status="WARNING",
+        can_write_clean=True,
+        needs_manual_review=True,
     )
     gate = DbValidationGate(cm)
     with pytest.raises(ValidationRejected):
@@ -97,7 +119,11 @@ def test_needsManualReviewTrue_rejected(tmp_path: Path) -> None:
 def test_passedReport_canWriteCleanTrue_allows(tmp_path: Path) -> None:
     cm = _setup(tmp_path)
     _insert_report(
-        cm, "vr-pass", status="PASSED", can_write_clean=True, needs_manual_review=False,
+        cm,
+        "vr-pass",
+        status="PASSED",
+        can_write_clean=True,
+        needs_manual_review=False,
     )
     gate = DbValidationGate(cm)
     status = gate.assert_can_write("vr-pass", "append_only")
@@ -108,7 +134,11 @@ def test_warningReport_canWriteTrue_noReview_allows(tmp_path: Path) -> None:
     """Explicit WARNING policy: allow only if can_write_clean=true AND no review."""
     cm = _setup(tmp_path)
     _insert_report(
-        cm, "vr-warn-ok", status="WARNING", can_write_clean=True, needs_manual_review=False,
+        cm,
+        "vr-warn-ok",
+        status="WARNING",
+        can_write_clean=True,
+        needs_manual_review=False,
         warning_rows=2,
     )
     gate = DbValidationGate(cm)
@@ -119,7 +149,11 @@ def test_warningReport_canWriteTrue_noReview_allows(tmp_path: Path) -> None:
 def test_openSevereConflict_rejectsEvenWhenReportPassed(tmp_path: Path) -> None:
     cm = _setup(tmp_path)
     _insert_report(
-        cm, "vr-conflict", status="PASSED", can_write_clean=True, needs_manual_review=False,
+        cm,
+        "vr-conflict",
+        status="PASSED",
+        can_write_clean=True,
+        needs_manual_review=False,
         run_id="run-blocked",
     )
     with cm.writer() as con:
@@ -143,7 +177,11 @@ def test_openSevereConflict_rejectsEvenWhenReportPassed(tmp_path: Path) -> None:
 def test_warningReport_canWriteFalse_rejected(tmp_path: Path) -> None:
     cm = _setup(tmp_path)
     _insert_report(
-        cm, "vr-warn-no", status="WARNING", can_write_clean=False, needs_manual_review=False,
+        cm,
+        "vr-warn-no",
+        status="WARNING",
+        can_write_clean=False,
+        needs_manual_review=False,
     )
     gate = DbValidationGate(cm)
     with pytest.raises(ValidationRejected):
@@ -158,7 +196,11 @@ def test_dbValidationGate_isNotStubBehavior(tmp_path: Path) -> None:
     with pytest.raises(ValidationGateError):
         gate.assert_can_write("stub-pass-1", "append_only")
     _insert_report(
-        cm, "stub-pass-1", status="PASSED", can_write_clean=True, needs_manual_review=False,
+        cm,
+        "stub-pass-1",
+        status="PASSED",
+        can_write_clean=True,
+        needs_manual_review=False,
     )
     # Now that a real row exists, the same id must be allowed.
     gate.assert_can_write("stub-pass-1", "append_only")
@@ -170,22 +212,28 @@ def test_dbValidationGate_writeManagerIntegration_rejectsFailed(tmp_path: Path) 
 
     cm = _setup(tmp_path)
     with cm.writer() as con:
-        con.execute(
-            "CREATE TABLE target_clean AS SELECT * FROM stg_foundation_smoke WHERE 1=0"
-        )
+        con.execute("CREATE TABLE target_clean AS SELECT * FROM stg_foundation_smoke WHERE 1=0")
         con.execute(
             "INSERT INTO stg_foundation_smoke VALUES ('AAPL','2026-06-15',195.0,'qmt','b1')"
         )
     _insert_report(
-        cm, "vr-fail-2", status="FAILED", can_write_clean=False, needs_manual_review=True,
+        cm,
+        "vr-fail-2",
+        status="FAILED",
+        can_write_clean=False,
+        needs_manual_review=True,
         failed_rows=1,
     )
     wm = WriteManager(cm, DbValidationGate(cm))
     req = WriteRequest(
-        run_id="r1", job_id="j1", target_table="target_clean",
-        staging_table="stg_foundation_smoke", write_mode="append_only",
+        run_id="r1",
+        job_id="j1",
+        target_table="target_clean",
+        staging_table="stg_foundation_smoke",
+        write_mode="append_only",
         primary_keys=("instrument_id", "trade_date"),
-        validation_report_id="vr-fail-2", source_used="qmt",
+        validation_report_id="vr-fail-2",
+        source_used="qmt",
     )
     res = wm.write(req)
     assert res.status == "FAILED"

@@ -1,5 +1,7 @@
 # Execute Boot — 06-17-round2-batch-c-validation-conflict
 
+**Phase 0:** `implement.jsonl` was read in full; evidence in `execute-evidence/8.0-boot-reads.txt`.
+
 ## AC 摘要（来自 MASTER §2）
 
 - AC-1: migration 005 新增 validation/conflict/manual review 表，不改已应用 004。

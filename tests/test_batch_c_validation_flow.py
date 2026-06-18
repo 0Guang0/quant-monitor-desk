@@ -45,9 +45,7 @@ def _create_flow_tables(con) -> None:
         )
         """
     )
-    con.execute(
-        "CREATE TABLE clean_batch_c_flow AS SELECT * FROM stg_batch_c_flow WHERE 1=0"
-    )
+    con.execute("CREATE TABLE clean_batch_c_flow AS SELECT * FROM stg_batch_c_flow WHERE 1=0")
 
 
 def _quality_request() -> DataQualityRequest:

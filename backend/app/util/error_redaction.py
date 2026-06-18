@@ -5,9 +5,7 @@ from __future__ import annotations
 import re
 
 _SENSITIVE_ERROR_PATTERNS = (
-    re.compile(
-        r"(?i)\b(token|password|api[_-]?key|apikey|secret)\b\s*[:=]\s*[^,\s;]+"
-    ),
+    re.compile(r"(?i)\b(token|password|api[_-]?key|apikey|secret)\b\s*[:=]\s*[^,\s;]+"),
     re.compile(r"(?i)\bauthorization\b\s*[:=]\s*[^,\s;]+(?:\s+[^,\s;]+)?"),
     re.compile(r"(?i)\bbearer\s+[^,\s;]+"),
 )

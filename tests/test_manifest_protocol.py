@@ -20,7 +20,32 @@ from common.manifest_protocol import (  # noqa: E402
 )
 from common.validate_plan_freeze import validate_plan_freeze  # noqa: E402
 
-BATCH_D = REPO / ".trellis/tasks/06-18-round2-batch-d-orchestrator"
+BATCH_D_SLUG = "06-18-round2-batch-d-orchestrator"
+BATCH_D = REPO / ".trellis/tasks" / BATCH_D_SLUG
+if not BATCH_D.exists():
+    BATCH_D = REPO / ".trellis/tasks/archive/2026-06" / BATCH_D_SLUG
+
+
+def _resolve_task_artifact(rel: str) -> Path | None:
+    """Resolve implement.jsonl task artifact paths across active/archive locations."""
+    full = REPO / rel
+    if full.is_file():
+        return full
+    if not rel.startswith(".trellis/tasks/"):
+        return None
+    parts = Path(rel).parts
+    if len(parts) < 3:
+        return None
+    slug = parts[2]
+    suffix = Path(*parts[3:]) if len(parts) > 3 else Path()
+    candidates = [
+        REPO / ".trellis/tasks" / slug / suffix,
+        REPO / ".trellis/tasks/archive/2026-06" / slug / suffix,
+    ]
+    for candidate in candidates:
+        if candidate.is_file():
+            return candidate
+    return None
 
 
 def test_negative_implement_paths():
@@ -62,15 +87,21 @@ def test_section9_paths_parsed_from_master():
 
 def test_implement_jsonl_paths_exist():
     impl = BATCH_D / "implement.jsonl"
+    task_prefix = f".trellis/tasks/{BATCH_D_SLUG}/"
     for line in impl.read_text(encoding="utf-8").splitlines():
         if not line.strip():
             continue
         obj = json.loads(line)
         rel = obj.get("file") or obj.get("path")
-        if not rel or rel.startswith(".trellis/tasks/"):
-            full = REPO / rel
-            if rel.startswith(".trellis/tasks/"):
-                assert full.is_file(), rel
+        if not rel:
+            continue
+        if rel.startswith(task_prefix):
+            suffix = rel[len(task_prefix) :]
+            assert (BATCH_D / suffix).is_file(), rel
+            continue
+        if rel.startswith(".trellis/tasks/"):
+            resolved = _resolve_task_artifact(rel)
+            assert resolved is not None and resolved.is_file(), rel
             continue
         assert (REPO / rel).is_file(), rel
 

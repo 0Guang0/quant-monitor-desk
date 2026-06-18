@@ -38,10 +38,28 @@ def test_writer_whenLockHeld_raisesWriteLockError(tmp_path: Path) -> None:
                 pass
 
 
-def test_applyPragmas_readerProfile_setsThreadsAndMemory(tmp_path: Path) -> None:
+def test_applyPragmas_readerProfile_setsThreadsAndMemory(tmp_path: Path, monkeypatch) -> None:
     """Alias: GPT P0-3 test_reader_appliesThreadsAndMemoryLimit."""
     db = tmp_path / "t.duckdb"
     _init(db)
+    _assert_reader_threads_and_memory_limit(db, monkeypatch)
+
+
+def test_reader_appliesThreadsAndMemoryLimit(tmp_path: Path, monkeypatch) -> None:
+    db = tmp_path / "t.duckdb"
+    _init(db)
+    _assert_reader_threads_and_memory_limit(db, monkeypatch)
+
+
+def _assert_reader_threads_and_memory_limit(db: Path, monkeypatch=None) -> None:
+    import backend.app.db.connection as conn_mod
+
+    class _Mem:
+        total = 32 * 1024 * 1024 * 1024
+        available = 16 * 1024 * 1024 * 1024
+
+    if monkeypatch is not None:
+        monkeypatch.setattr(conn_mod.psutil, "virtual_memory", lambda: _Mem())
     cm = ConnectionManager(
         db,
         profile="eco",
@@ -52,10 +70,6 @@ def test_applyPragmas_readerProfile_setsThreadsAndMemory(tmp_path: Path) -> None
         mem = r.execute("SELECT current_setting('memory_limit')").fetchone()[0]
     assert int(threads) == 2
     assert "1536" in mem or "1.5" in mem.lower() or "1.4" in mem.lower()
-
-
-def test_reader_appliesThreadsAndMemoryLimit(tmp_path: Path) -> None:
-    test_applyPragmas_readerProfile_setsThreadsAndMemory(tmp_path)
 
 
 def test_reader_appliesTempDirectory(tmp_path: Path, monkeypatch) -> None:
@@ -85,15 +99,20 @@ def test_applyPragmas_setsMaxTempDirectorySize(tmp_path: Path) -> None:
         limits={"eco": {"duckdb_memory_max_mb": 512, "max_threads": 1, "duckdb_temp_max_gb": 3}},
     )
     with cm.writer() as w:
-        temp_max = w.execute(
-            "SELECT current_setting('max_temp_directory_size')"
-        ).fetchone()[0]
+        temp_max = w.execute("SELECT current_setting('max_temp_directory_size')").fetchone()[0]
     assert "gib" in str(temp_max).lower()
 
 
-def test_applyPragmas_ecoProfile_setsThreadsAndMemory(tmp_path: Path) -> None:
+def test_applyPragmas_ecoProfile_setsThreadsAndMemory(tmp_path: Path, monkeypatch) -> None:
     db = tmp_path / "t.duckdb"
     _init(db)
+    import backend.app.db.connection as conn_mod
+
+    class _Mem:
+        total = 32 * 1024 * 1024 * 1024
+        available = 16 * 1024 * 1024 * 1024
+
+    monkeypatch.setattr(conn_mod.psutil, "virtual_memory", lambda: _Mem())
     cm = ConnectionManager(
         db,
         profile="eco",
@@ -104,9 +123,16 @@ def test_applyPragmas_ecoProfile_setsThreadsAndMemory(tmp_path: Path) -> None:
     assert int(threads) == 2
 
 
-def test_applyPragmas_batchProfile_usesConfiguredMaxThreads(tmp_path: Path) -> None:
+def test_applyPragmas_batchProfile_usesConfiguredMaxThreads(tmp_path: Path, monkeypatch) -> None:
     db = tmp_path / "t.duckdb"
     _init(db)
+    import backend.app.db.connection as conn_mod
+
+    class _Mem:
+        total = 32 * 1024 * 1024 * 1024
+        available = 16 * 1024 * 1024 * 1024
+
+    monkeypatch.setattr(conn_mod.psutil, "virtual_memory", lambda: _Mem())
     cm = ConnectionManager(
         db,
         profile="batch",
@@ -191,9 +217,7 @@ def test_writer_connectFailure_releasesLock(tmp_path: Path, monkeypatch) -> None
     with cm.writer() as w:
         w.execute("INSERT INTO file_registry(file_id, source) VALUES ('lock_ok','qmt')")
     with cm.reader() as r:
-        cnt = r.execute(
-            "SELECT COUNT(*) FROM file_registry WHERE file_id='lock_ok'"
-        ).fetchone()[0]
+        cnt = r.execute("SELECT COUNT(*) FROM file_registry WHERE file_id='lock_ok'").fetchone()[0]
         assert cnt == 1
 
 
