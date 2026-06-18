@@ -13,6 +13,7 @@ from backend.app.db.validation_gate import (
     ValidationGateError,
     ValidationRejected,
 )
+from backend.app.util.error_redaction import redact_error_message
 
 WriteStatus = Literal["SUCCESS", "FAILED"]
 
@@ -150,6 +151,7 @@ class WriteManager:
         validation_status: str,
         error_message: str | None,
     ) -> None:
+        safe_message = redact_error_message(error_message) if error_message else None
         con.execute(
             """
             INSERT INTO write_audit_log (
@@ -177,7 +179,7 @@ class WriteManager:
                 started_at,
                 datetime.now(UTC),
                 status,
-                error_message,
+                safe_message,
             ],
         )
 
@@ -225,7 +227,7 @@ class WriteManager:
         return WriteResult(
             write_id=write_id,
             status="FAILED",
-            error_message=error_message,
+            error_message=redact_error_message(error_message),
         )
 
     def _execute_write(
@@ -244,7 +246,14 @@ class WriteManager:
             con.execute("BEGIN")
 
         try:
-            self.gate.assert_can_write(req.validation_report_id, req.write_mode)
+            if not own_transaction and hasattr(self.gate, "assert_can_write_with"):
+                self.gate.assert_can_write_with(
+                    con,
+                    req.validation_report_id,
+                    req.write_mode,
+                )
+            else:
+                self.gate.assert_can_write(req.validation_report_id, req.write_mode)
 
             before = con.execute(f"SELECT COUNT(*) FROM {target}").fetchone()[0]
             rows_updated = 0
@@ -311,7 +320,7 @@ class WriteManager:
             return WriteResult(
                 write_id=write_id,
                 status="FAILED",
-                error_message=str(exc),
+                error_message=redact_error_message(str(exc)),
             )
         except Exception:
             if own_transaction:

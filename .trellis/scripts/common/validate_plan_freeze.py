@@ -159,9 +159,13 @@ def validate_plan_freeze(task_dir: Path, repo_root: Path | None = None) -> list[
     elif boot_marker not in boot.read_text(encoding="utf-8"):
         errors.append(f"plan-boot.md must contain {boot_marker!r}")
 
+    ov = task_dir / "research" / "project-overview.md"
+    if not ov.is_file():
+        errors.append("Missing research/project-overview.md (Plan Phase 1a)")
+
     gnx = task_dir / "research" / "gitnexus-summary.md"
     if not gnx.is_file():
-        errors.append("Missing research/gitnexus-summary.md (Plan Phase P1)")
+        errors.append("Missing research/gitnexus-summary.md (Plan Phase 1b)")
 
     reads_path = task_dir / "research" / "plan-skill-reads.jsonl"
     if not reads_path.is_file():

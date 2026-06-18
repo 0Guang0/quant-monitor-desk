@@ -1,0 +1,29 @@
+{"path": "MASTER.plan.md", "reason": "Primary execution contract; must be first entry."}
+{"path": ".cursor/skills/trellis-execute/SKILL.md", "reason": "Required Execute protocol."}
+{"path": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/GLOBAL_EXECUTION_RULES.md", "reason": "Global implementation constraints."}
+{"path": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/GLOBAL_TESTING_POLICY.md", "reason": "Global testing rules."}
+{"path": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/GLOBAL_RESOURCE_LIMITS.md", "reason": "Resource constraints."}
+{"path": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/README.md", "reason": "Round 2 batch order and checkpoints."}
+{"path": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/DECISIONS.md", "reason": "Batch boundary and deferred ledger."}
+{"path": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/BATCH_B_REPAIR_STATUS.md", "reason": "Batch B outputs and deferred items."}
+{"path": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/BATCH_C_LEDGER.md", "reason": "C-C0 fixes and caller-owned sync transaction context."}
+{"path": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/015_implement_data_quality_validator.md", "reason": "Original Batch C data quality task."}
+{"path": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/016_implement_source_conflict_validator.md", "reason": "Original Batch C source conflict task."}
+{"path": "docs/modules/data_validation_and_conflict.md", "reason": "Business model for validation/conflict."}
+{"path": "specs/contracts/data_quality_rules.yaml", "reason": "Data quality rules contract."}
+{"path": "specs/contracts/source_conflict_rules.yaml", "reason": "Source conflict rules contract."}
+{"path": "specs/contracts/data_adapter_contract.yaml", "reason": "Fetch/evidence contract."}
+{"path": "specs/schema/schema.sql", "reason": "Target schema reference."}
+{"path": "docs/architecture/03_runtime_flows.md", "reason": "Runtime flow reference."}
+{"path": "docs/architecture/04_data_architecture.md", "reason": "Data layer boundary reference."}
+{"path": "backend/app/db/validation_gate.py", "reason": "Stub gate replacement target."}
+{"path": "backend/app/db/write_manager.py", "reason": "Clean write gate integration."}
+{"path": "backend/app/db/connection.py", "reason": "DuckDB writer/reader transaction boundary."}
+{"path": "backend/app/datasources/fetch_result.py", "reason": "FetchStatus contract."}
+{"path": "backend/app/datasources/fetch_log.py", "reason": "Fetch log persistence validation."}
+{"path": "backend/app/datasources/adapters/fetch_port.py", "reason": "PortErrorStatus mapping/redaction."}
+{"path": "backend/app/datasources/source_registry.py", "reason": "Registry sync transaction policy context."}
+{"path": "backend/app/db/migrations/004_ingestion_sources.sql", "reason": "Do-not-modify previous migration context."}
+{"path": "tests/test_write_manager.py", "reason": "Existing gate/write behavior tests."}
+{"path": "tests/test_data_adapter_contract.py", "reason": "Existing adapter contract tests."}
+{"path": "tests/test_source_registry.py", "reason": "C-C0 source registry baseline."}

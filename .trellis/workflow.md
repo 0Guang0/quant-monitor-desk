@@ -317,7 +317,7 @@ When a user request matches one of these intents inside an active task, route fi
 ### Guardrails
 
 - Task creation approval is not implementation approval; implementation waits for `task.py start` after artifact review.
-- **Complex tasks (Plan v2):** MUST Read `.cursor/skills/trellis-plan/SKILL.md` first when `status=planning`; optional per phase: `task.py validate-plan-phase <dir> <phase>` (`boot`, `P1`, `2a`–`5d`).
+- **Complex tasks (Plan v2):** MUST Read `.cursor/skills/trellis-plan/SKILL.md` first when `status=planning`; optional per phase: `task.py validate-plan-phase <dir> <phase>` (`boot`, `1a`, `2a`, `2b`, `3`, `3.5`, `1b`, `4`, `5a`, `5b`, `5c`, `5d`).
 - **Complex tasks:** `task.py validate-plan-freeze <dir>` must pass before `task.py start` (or `--force` with documented reason).
 - PRD-only is valid for lightweight tasks; complex tasks need `design.md` + `implement.md` + `MASTER.plan.md` + `plan.freeze.md`.
 - Planning must be persisted to task artifacts; checks must run before reporting completion.

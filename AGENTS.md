@@ -23,7 +23,7 @@ Managed by Trellis. Edits outside this block are preserved; edits inside may be 
 When authoring or freezing a complex task plan:
 
 1. **MUST Read first:** `.cursor/skills/trellis-plan/SKILL.md` — complete **Phase P0 Boot** before MASTER §8–§12.
-2. Follow **Phases P1→5d** in `complex-task-planning-protocol.md` §4; append `research/plan-skill-reads.jsonl` per Read.
+2. Follow **Phases 1a→5d** in `complex-task-planning-protocol.md` §4（新流程：1a→2→3→3.5→1b→4→5a→5d）；append `research/plan-skill-reads.jsonl` per Read.
 3. Before `task.py start`: `python .trellis/scripts/task.py validate-plan-freeze <task-dir>` exit 0.
 4. Optional per phase: `python .trellis/scripts/task.py validate-plan-phase <task-dir> <phase>`.
 
@@ -35,7 +35,7 @@ When the active task status is `in_progress` and the task directory contains `MA
 2. Read **MASTER §0.1** state machine and **§12** Skill table (paths in `.trellis/spec/guides/execute-skill-paths.yaml`).
 3. Execute **one §8.x step at a time**: Read TDD skill → RED (must FAIL) → `execute-evidence/{step}-red.txt` → GREEN → `{step}-green.txt` → `[x]`.
 4. After each GREEN: Read **incremental-implementation**; full pytest must pass before next §8 step.
-5. Before impl/tests: Read **karpathy-guidelines** and **testing-guidelines** (§12 + paths yaml).
+5. After RED, before GREEN implementation: Read **karpathy-guidelines** (§5 ladder + §1-4) and **testing-guidelines** (§12 + paths yaml).
 6. Run GitNexus **`impact()`** before editing symbols; **`detect_changes()`** before commit.
 7. Do **not** run `trellis-check` during Execute — Audit Phase 7 / A1 replaces it.
 8. Optional per step: `python .trellis/scripts/task.py validate-execute-step <task-dir> 8.x`
@@ -47,7 +47,7 @@ When the active task status is `in_progress` and the task directory contains `MA
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **quant-monitor-desk** (2605 symbols, 3386 relationships, 33 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **quant-monitor-desk** (3191 symbols, 4500 relationships, 60 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > Index stale? Run `node .gitnexus/run.cjs analyze` from the project root — it auto-selects an available runner. No `.gitnexus/run.cjs` yet? `npx gitnexus analyze` (npm 11 crash → `npm i -g gitnexus`; #1939).
 

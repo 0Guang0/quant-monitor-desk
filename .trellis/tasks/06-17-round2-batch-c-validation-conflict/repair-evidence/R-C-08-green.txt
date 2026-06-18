@@ -1,0 +1,1 @@
+R-C-08: pytest-basetemp OS ACL locked (拒绝访问); added task .gitignore; manual `rd /s /q` when no pytest lock.

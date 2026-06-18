@@ -116,11 +116,10 @@ migration `004_ingestion_sources.sql` 仅包含：
 
 | ID | 未完整实现 | 当前缓解 | **建议修复阶段** | 权威文档 |
 |----|-----------|----------|------------------|----------|
-| **GPT-P1-5-DB** | `fetch_log` / `source_registry` 缺 DB 层 CHECK / NOT NULL | Pydantic `FetchResult` + `FetchLogWriter._validate_for_persist` 应用层双保险 | **Batch C 前** — migration `005_*` 追加约束（勿改已应用的 004） | 本表 · `fetch_log.py` |
+| **GPT-P1-5-DB** | `fetch_log` / `source_registry` 缺 DB 层 CHECK / NOT NULL | Pydantic `FetchResult` + `FetchLogWriter._validate_for_persist` 应用层双保险 | **Batch D** — 对已应用的 004 表追加约束（005 仅覆盖新 validation 表，见已偿还） | 本表 · `fetch_log.py` |
 | **GPT-P2-2** | YAML 删除的 source 在 DB 中残留（`sync_to_db` 仅 UPSERT，不 tombstone） | `sync_to_db` docstring 声明行为 | **Batch D** — Orchestrator 引入 `registry_generation` / `removed_from_yaml_at` 或 disabled 策略 | `source_registry.py` · Batch D 014 |
 | **GPT-init_db** | `scripts/init_db.py` 只跑 migration，不调用 `SourceRegistry.sync_to_db()` | 测试 + 手工/prod 脚本覆盖 sync | **Batch D** — 与 Orchestrator 启动钩子一并接入；或 Batch B 末增加可选 `scripts/sync_registry.py` | DECISIONS §8 · Execute eval |
 | **GPT-P3-6** | ResourceGuard + ingestion 交叉 smoke | Round 1 ResourceGuard 独立测试 | **Batch D** — DataSyncOrchestrator smoke（MASTER §8.6） | `adversarial-audit-remediation.md` P3-6 |
-| **GPT-staging-DB** | SUCCESS 不校验 DuckDB 内 staging 表是否存在 | `FetchResult` 字段级证据 + Batch A fixture | **Batch C** — DataQualityValidator 读 staging / raw 证据 | MASTER §8.6 · contract Batch A note |
 | **GPT-SEC-CI** | 无 gitleaks / `.cursor/hooks` 静态安全扫描 | 文档化信任边界 `docs/ops/agent_workflow_boundaries.md` | **Batch B 并行** — CI 硬化 sprint（非 Batch A 阻塞） | Round 1 repair backlog 同类 |
 | **A2-shrink** | ~10 行 optional inline（FetchStatus 别名等） | MASTER §6 冻结符号名 | **Info** — 可选 Repair，非阻塞 | audit.report §4.3 |
 
@@ -129,6 +128,8 @@ migration `004_ingestion_sources.sql` 仅包含：
 | ID | 原登记 | 偿还批次 | 证据 |
 |----|--------|----------|------|
 | **GPT-NOT-PUBLISHED** | Batch B+ 纳入第 8 态 | **Batch B GPT repair** | `FetchStatus` / `PortErrorStatus` / `fetch_log` `not_published` · `UnpublishedPort` · `specs/contracts/data_adapter_contract.md` |
+| **GPT-staging-DB** | SUCCESS 不校验 DuckDB staging 存在 | **Batch C Execute + Repair** | `DataQualityValidator` SUCCESS evidence / staging row 校验 · `test_batch_c_validation_flow` |
+| **GPT-P1-5-DB-validation** | validation/conflict 四表 DB 约束 | migration 005 内联约束 | **Batch C migration 005** | `005_ingestion_validation.sql` |
 
 ---
 
@@ -146,14 +147,43 @@ migration `004_ingestion_sources.sql` 仅包含：
 
 | ID | 内容 | 阶段 | 说明 |
 |----|------|------|------|
-| **B-D2** | `PortErrorStatus` ↔ `FetchStatus` 共享类型别名 | Batch C | 测试已防 drift；过早抽象增加耦合 |
-| **B-D3** | 真实 Port 凭证/错误消息脱敏 | Batch C/D | skeleton 无 outbound 网络 |
+| **B-D2** | `PortErrorStatus` ↔ `FetchStatus` 共享类型别名 | Batch D | 测试已防 drift；过早抽象增加耦合 |
+| **B-D3** | 真实 Port 凭证/错误消息脱敏 | Batch D | skeleton 层已对齐；`write_audit_log` 与 `FetchLogWriter` 共用 `error_redaction`（Batch C Repair） |
 | **B-D4** | `_resolve_as_of` ISO 严格校验 | 按需 Batch C | RawStore `_safe_segment` 已防路径穿越 |
 | **B-P2-1** | adapter metadata（`adapter_id`、`requires_auth` 等） | Batch C/D | skeleton 仅 `source_id` + domains |
 | **B-P2-2** | Trellis 归档瘦身规则 | 流程建议 | 每批仅保留 MASTER/AUDIT/implement 摘要 |
 | **B-P1-6-full** | Orchestrator fetch 前 ResourceGuard | Batch D | skeleton `max_payload_bytes` 10MB 已做短期防呆 |
 
 完整 GPT 审查处置表：`.trellis/tasks/archive/2026-06/06-17-round2-batch-b-adapters/research/gpt-post-merge-review.md`
+
+### Batch C Execute Checkpoint（015+016）
+
+Batch C Execute has delivered the validation/conflict primitives and is ready for
+independent Audit, but it is not marked complete until Audit PASS.
+
+- [x] migration `005_ingestion_validation.sql` creates `validation_report`,
+  `data_quality_log`, `source_conflict`, and `manual_review_queue`.
+- [x] `DbValidationGate` reads persisted `validation_report` rows and rejects
+  missing/FAILED/cannot-write/manual-review reports.
+- [x] `DataQualityValidator` validates staging rows, persists validation reports
+  and data-quality findings, and rejects SUCCESS fetches without staging/raw
+  evidence.
+- [x] `SourceConflictValidator` detects tolerance warnings, severe conflicts,
+  source-methodology differences, persists `source_conflict`, and routes severe
+  conflicts through reconcile-first policy (`record_unresolved_reconcile` after
+  failed reconcile); open severe conflicts block clean writes via `DbValidationGate`.
+- [x] `DataQualityValidator` implements `layer1_rules` + `layer3_rules` from
+  `data_quality_rules.yaml` (incl. `MISSING_SOURCE_USED`, `INVALID_AMOUNT`).
+- [x] `write_audit_log` redacts secrets via shared `error_redaction` util.
+- [x] `PortErrorStatus` / `FetchStatus` drift is covered by tests; persisted
+  fetch error messages redact token/password/api_key/apikey/secret/
+  authorization/bearer-shaped secrets.
+- [x] End-to-end validation flow is covered:
+  DataQualityValidator -> SourceConflictValidator -> DbValidationGate ->
+  WriteManager.
+
+Batch C explicitly did not implement DataSyncOrchestrator, real vendor Ports,
+API/frontend production UI, Agent sandbox, release manifest, or full security CI.
 
 ### Batch A 验收命令（GPT §十二 · 2026-06-17 复跑 @ `ab8d1eb`）
 

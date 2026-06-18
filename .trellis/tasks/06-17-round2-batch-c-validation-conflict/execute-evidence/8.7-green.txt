@@ -1,0 +1,12 @@
+Command:
+.\.venv\Scripts\python.exe -m pytest tests\test_data_adapter_contract.py -q
+
+Exit code: 0
+
+Result:
+..........................................                               [100%]
+
+Notes:
+- PortErrorStatus remains aligned with non-success FetchStatus values that ports can raise.
+- FetchLogWriter redacts token/password/api_key/apikey/secret/authorization/bearer-shaped secrets before persisting error_message.
+- No real vendor FetchPort implementation was added.

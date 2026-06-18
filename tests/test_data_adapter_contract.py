@@ -6,6 +6,7 @@ import json
 
 import duckdb
 import pytest
+from backend.app.datasources.adapters.fetch_port import PortErrorStatus
 from backend.app.datasources.base_adapter import BaseDataAdapter
 from backend.app.datasources.exceptions import SourceMismatchError
 from backend.app.datasources.fetch_log import FetchLogValidationError, FetchLogWriter
@@ -141,6 +142,69 @@ def test_write_allContractStatuses_mapsErrorType(tmp_path, migrated_con, status)
     ).fetchone()
     assert row[0] == status
     assert row[1] == ERROR_TYPE_BY_STATUS[status]
+
+
+def test_portErrorStatus_doesNotDriftFromFetchStatusFailures() -> None:
+    expected_port_statuses = {
+        "AUTH_FAILED",
+        "RATE_LIMITED",
+        "NETWORK_ERROR",
+        "SCHEMA_DRIFT",
+        "EMPTY_RESPONSE",
+        "NOT_PUBLISHED_YET",
+        "FAILED",
+    }
+
+    assert set(PortErrorStatus.__args__) == expected_port_statuses
+    assert expected_port_statuses.issubset(set(CONTRACT_STATUSES))
+
+
+def test_fetchLogWriter_redactsSensitiveErrorMessage(tmp_path, migrated_con):
+    con = migrated_con(tmp_path)
+    result = FetchResult(
+        run_id="run-1",
+        source_id="baostock",
+        data_domain="market_bar_1d",
+        status="AUTH_FAILED",
+        row_count=0,
+        fetch_time="2026-06-17T10:00:00Z",
+        error_message=(
+            "token=abc password=secret api_key=k authorization: Bearer live-secret"
+        ),
+    )
+
+    fetch_id = FetchLogWriter().write(con, result)
+    stored = con.execute(
+        "SELECT error_message FROM fetch_log WHERE fetch_id=?", [fetch_id]
+    ).fetchone()[0]
+
+    lowered = stored.lower()
+    assert "[redacted]" in lowered
+    assert "abc" not in lowered
+    assert "secret" not in lowered
+    assert "api_key=k" not in lowered
+    assert "bearer live-secret" not in lowered
+
+
+def test_fetchLogWriter_redactsApikeyWithoutUnderscore(tmp_path, migrated_con):
+    con = migrated_con(tmp_path)
+    result = FetchResult(
+        run_id="run-1",
+        source_id="baostock",
+        data_domain="market_bar_1d",
+        status="FAILED",
+        row_count=0,
+        fetch_time="2026-06-17T10:00:00Z",
+        error_message="apikey=live123",
+    )
+
+    fetch_id = FetchLogWriter().write(con, result)
+    stored = con.execute(
+        "SELECT error_message FROM fetch_log WHERE fetch_id=?", [fetch_id]
+    ).fetchone()[0]
+
+    assert "[REDACTED]" in stored
+    assert "live123" not in stored
 
 
 def test_fetchResult_successWithoutEvidence_raisesValidationError():

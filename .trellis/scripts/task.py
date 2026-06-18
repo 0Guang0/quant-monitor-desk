@@ -455,7 +455,7 @@ def main() -> int:
     p_vphase.add_argument("dir", help="Task directory")
     p_vphase.add_argument(
         "phase",
-        help="Plan phase id: boot, P1, 2a, 2b, 3, 4, 5a, 5b, 5c, 5d",
+        help="Plan phase id: boot, 1a, 2a, 2b, 3, 3.5, 1b, 4, 5a, 5b, 5c, 5d",
     )
 
     # validate-execute-handoff

@@ -44,16 +44,19 @@ def _plan_boot_artifacts(task_dir: Path) -> None:
     research = task_dir / "research"
     research.mkdir(parents=True, exist_ok=True)
     (research / "plan-boot.md").write_text("Phase P0 complete\n", encoding="utf-8")
+    (research / "project-overview.md").write_text("# overview\n", encoding="utf-8")
     (research / "gitnexus-summary.md").write_text("# summary\n", encoding="utf-8")
     (research / "grill-me-session.md").write_text("# grill\n", encoding="utf-8")
     (research / "plan-skill-reads.jsonl").write_text(
         "\n".join(
             [
                 '{"phase":"boot","skill":"trellis-plan"}',
-                '{"phase":"P1","skill":"gitnexus-plan"}',
+                '{"phase":"1a","skill":"gitnexus-plan-1a"}',
+                '{"phase":"1b","skill":"gitnexus-plan-1b"}',
                 '{"phase":"2a","skill":"trellis-brainstorm"}',
                 '{"phase":"2b","skill":"spec-driven-development"}',
                 '{"phase":"3","skill":"grill-me"}',
+                '{"phase":"3.5","skill":"to-issues"}',
                 '{"phase":"5a","skill":"planning-and-task-breakdown"}',
                 '{"phase":"5b","skill":"writing-plans"}',
                 '{"phase":"5c","skill":"trellis-before-dev"}',
@@ -79,24 +82,24 @@ def test_validatePlanFreeze_passesWithArtifacts(tmp_path: Path) -> None:
     assert errors == []
 
 
-def test_validatePlanPhase_P1_requiresSummary(tmp_path: Path) -> None:
+def test_validatePlanPhase_1b_requiresSummary(tmp_path: Path) -> None:
     research = tmp_path / "research"
     research.mkdir()
     (research / "plan-skill-reads.jsonl").write_text(
-        '{"skill":"gitnexus-plan"}\n', encoding="utf-8"
+        '{"skill":"gitnexus-plan-1b"}\n', encoding="utf-8"
     )
-    errors = plan_val.validate_plan_phase(tmp_path, "P1", repo_root=_REPO)
+    errors = plan_val.validate_plan_phase(tmp_path, "1b", repo_root=_REPO)
     assert any("gitnexus-summary" in e for e in errors)
 
 
-def test_validatePlanPhase_P1_passes(tmp_path: Path) -> None:
+def test_validatePlanPhase_1b_passes(tmp_path: Path) -> None:
     research = tmp_path / "research"
     research.mkdir()
     (research / "gitnexus-summary.md").write_text("# ok\n", encoding="utf-8")
     (research / "plan-skill-reads.jsonl").write_text(
-        '{"skill":"gitnexus-plan"}\n', encoding="utf-8"
+        '{"skill":"gitnexus-plan-1b"}\n', encoding="utf-8"
     )
-    assert plan_val.validate_plan_phase(tmp_path, "P1", repo_root=_REPO) == []
+    assert plan_val.validate_plan_phase(tmp_path, "1b", repo_root=_REPO) == []
 
 
 def test_validatePlanPhase_boot_requiresMarker(tmp_path: Path) -> None:
@@ -112,5 +115,7 @@ def test_validatePlanPhase_boot_requiresMarker(tmp_path: Path) -> None:
 
 def test_loadPlanPaths_parsesPhases() -> None:
     cfg = plan_val._load_plan_paths(_REPO)
-    assert "P1" in cfg.get("phases", {})
-    assert "trellis-plan" in cfg.get("freeze_required_skills", [])
+    assert "1a" in cfg.get("phases", {})
+    assert "1b" in cfg.get("phases", {})
+    assert "gitnexus-plan-1a" in cfg.get("freeze_required_skills", [])
+    assert "gitnexus-plan-1b" in cfg.get("freeze_required_skills", [])

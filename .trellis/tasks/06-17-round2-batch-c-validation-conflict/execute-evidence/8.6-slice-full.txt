@@ -1,0 +1,17 @@
+Command:
+.\.venv\Scripts\python.exe -m pytest -q
+
+Exit code: 0
+
+Result:
+........................................................................ [ 24%]
+........................................................................ [ 48%]
+........................................................................ [ 73%]
+........................................................................ [ 97%]
+.......                                                                  [100%]
+
+Warning:
+StarletteDeprecationWarning from fastapi.testclient import.
+
+Note:
+Sandboxed pytest basetemp under the project root caused false failures in path-boundary and adapter raw-store tests. The successful slice was run with approved escalation so pytest could use normal temp/cache directories outside the repo.

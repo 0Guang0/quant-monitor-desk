@@ -18,7 +18,7 @@ Skill 路径表：`.trellis/spec/guides/plan-skill-paths.yaml`
 | # | 动作 | 产出 | validate |
 |---|------|------|----------|
 | P0a | **Read 本文件** + `plan-skill-paths.yaml` | `plan-skill-reads.jsonl` 首行 | freeze |
-| P0b | GitNexus `query` + `context`（改 symbol 前 `impact`） | `research/gitnexus-summary.md` | freeze + phase P1 |
+| P0b | GitNexus `query` + `context`（改 symbol 前 `impact`） | `research/gitnexus-summary.md` | freeze + phase 1b |
 | P0c | 读 DECISIONS / 前置 Batch 文档（implement.jsonl 若已有） | `research/plan-boot.md` 含 **`Phase P0 complete`** | freeze |
 
 **plan-boot.md 最低结构：**
@@ -28,7 +28,7 @@ Skill 路径表：`.trellis/spec/guides/plan-skill-paths.yaml`
 ## 用户目标摘要
 ## 前置依赖 / Batch 关系
 ## 预期 AC 草稿（→ MASTER §2）
-## Plan Phase 顺序（P1→P5d）
+## Plan Phase 顺序（1a→2→3→3.5→1b→4→5a→5d）
 ## Phase P0 complete
 ```
 
@@ -36,20 +36,22 @@ Skill 路径表：`.trellis/spec/guides/plan-skill-paths.yaml`
 
 ```json
 {"phase":"boot","skill":"trellis-plan","path":".cursor/skills/trellis-plan/SKILL.md"}
-{"phase":"P1","skill":"gitnexus-plan","action":"query+context","artifact":"research/gitnexus-summary.md"}
+{"phase":"1a","skill":"gitnexus-plan-1a","action":"query+context","artifact":"research/project-overview.md"}
 ```
 
 ---
 
-## Phase P1–P5 · 顺序执行（禁止跳步 · 禁止同轮双主笔）
+## Phase 1a–5d · 顺序执行（禁止跳步 · 禁止同轮双主笔）
 
 | Phase | Read Skill | 产出 | 可选 validate |
 |-------|------------|------|---------------|
-| **P1** | GitNexus MCP | `research/gitnexus-summary.md` | `validate-plan-phase … P1` |
+| **1a** | GitNexus MCP（轻量概览） | `research/project-overview.md`（≤1 页） | `validate-plan-phase … 1a` |
 | **2a** | trellis-brainstorm | `prd.md`、MASTER §1–3 初稿 | `… 2a` |
-| **2b** | spec-driven-development | MASTER §2 可验证 AC | `… 2b` |
-| **3** | grill-me **或** interview-me（二选一） | `research/grill-me-session.md` 等、§7 | `… 3` |
-| **4** | brainstorming [+ api-and-interface-design] | MASTER §4–6 | `… 4` |
+| **2b** | spec-driven-development [+ domain-modeling] | MASTER §2 可验证 AC | `… 2b` |
+| **3** | grill-me **或** interview-me **或** grill-with-docs（必须选一） | `research/grill-me-session.md` 等、§7 | `… 3` |
+| **3.5** | to-issues | 切片工单列表 | `… 3.5` |
+| **1b** | GitNexus MCP（需求聚焦深度分析） | `research/gitnexus-summary.md` | `… 1b` |
+| **4** | brainstorming / api-and-interface-design [+ codebase-design / prototype] | MASTER §4–6（条件性，跳过须书面理由） | `… 4` |
 | **5a** | planning-and-task-breakdown | MASTER §5 切片 | `… 5a` |
 | **5b** | writing-plans | MASTER §8 RED/GREEN 列 + `research/*-tests.md` | `… 5b` |
 | **5c** | trellis-before-dev | `implement.jsonl` / `check.jsonl` spec 路径 | `… 5c` |
@@ -86,6 +88,7 @@ Plan **不跑** RED/GREEN pytest。
 ## 自检（validate-plan-freeze 前）
 
 - [ ] `plan-boot.md` 含 `Phase P0 complete`
-- [ ] `gitnexus-summary.md` 存在
+- [ ] `project-overview.md` 存在（≤1 页）或 analysis_waiver: true
+- [ ] `gitnexus-summary.md` 存在或 analysis_waiver: true
 - [ ] `plan-skill-reads.jsonl` 覆盖 freeze 必做 skill（见 plan-skill-paths.yaml）
 - [ ] `plan.freeze.md` §3 全 `[x]`

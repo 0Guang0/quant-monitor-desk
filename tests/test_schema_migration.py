@@ -58,6 +58,7 @@ def test_appliedVersions_afterMigration_containsFoundation() -> None:
         "002_registry_hardening",
         "003_resource_guard_metrics",
         "004_ingestion_sources",
+        "005_ingestion_validation",
     }
 
 
@@ -80,6 +81,7 @@ def test_appliedVersions_afterMigration_containsIngestion() -> None:
         "002_registry_hardening",
         "003_resource_guard_metrics",
         "004_ingestion_sources",
+        "005_ingestion_validation",
     })
 
 
