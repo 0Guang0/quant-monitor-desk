@@ -33,6 +33,9 @@ See [`docs/modules/`](modules/) — one file per implementation module (data syn
 | [layer3_config_health_check.md](ops/layer3_config_health_check.md) | Layer 3 config checks |
 | [daily_weekly_monthly_checklist.md](ops/daily_weekly_monthly_checklist.md) | Routine checklists |
 | [agent_workflow_boundaries.md](ops/agent_workflow_boundaries.md) | `.cursor`/`.trellis` trust boundaries |
+| [verification_commands.md](ops/verification_commands.md) | Canonical audit/CI commands (Windows) |
+| [schema/MIGRATION_COVERAGE.md](schema/MIGRATION_COVERAGE.md) | Design schema vs applied migrations matrix |
+| [schema/MIGRATION_008_PLAN.md](schema/MIGRATION_008_PLAN.md) | Planned migration 008 DB CHECK constraints |
 
 ## ADRs
 

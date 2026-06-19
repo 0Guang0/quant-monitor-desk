@@ -43,7 +43,7 @@ cd frontend && npm run typecheck && npm run test
 node .gitnexus\run.cjs status
 ```
 
-**Baseline @ master:** 362 tests · backend coverage 94.28% · all gates exit 0.
+**Baseline @ master:** 362 tests · backend coverage 94.28% · gates: pytest, cov≥85, ruff check+format, production_gate, frontend typecheck+test, doc links, Trellis handoff (see `docs/ops/verification_commands.md`).
 
 ## Round 3 start checklist
 

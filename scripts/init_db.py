@@ -14,6 +14,7 @@ def main() -> None:
     with cm.writer() as con:
         applied = apply_migrations(con)
     print(f"init_db: applied {applied or 'none (up to date)'}")
+    print("init_db: run scripts/sync_registry.py after first init to load configs/sources.yaml")
 
 
 if __name__ == "__main__":

@@ -21,8 +21,9 @@ jobs:
         with:
           python-version: "3.11"
       - run: pip install -e ".[dev]"
-      - run: pytest -q --cov=backend --cov-fail-under=75
+      - run: pytest -q --cov=backend --cov-fail-under=85
       - run: ruff check .
+      - run: ruff format --check .
       - run: python -m compileall backend scripts tests
       - run: python scripts/production_gate.py
       - name: Batch A prod-path ingestion smoke (Tier B)
@@ -50,6 +51,8 @@ jobs:
       - run: npm audit --audit-level=high
         working-directory: frontend
       - run: npm run typecheck
+        working-directory: frontend
+      - run: npm run test
         working-directory: frontend
       - run: npm run build
         working-directory: frontend
