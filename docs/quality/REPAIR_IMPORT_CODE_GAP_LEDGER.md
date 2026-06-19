@@ -42,7 +42,7 @@ pytest -q                 8 FAILED（见下表）
 | 区域 | 说明 |
 |------|------|
 | `configs/resource_limits.yaml` | 仍为 `default_page_size: 100` / `max_page_size: 500`；契约已为 200/1000 |
-| `docs/ops/agent_workflow_boundaries.md` | 非 manifest 补充文件，仍写 `pip install -e ".[dev]"`；应改为 `uv sync` / `uv run` |
+| `docs/ops/agent_workflow_boundaries.md` | Phase 2 已调和为 `uv` 主路径；`verification_commands.md` 同步 |
 | `README.md` | 已合并为项目型 + 修复包口径；**故意偏离** manifest 中 README hash |
 | `specs/schema/schema.sql` vs migrations | 契约落后于 `backend/migrations/`；schema contract 测试会持续红灯直至合并 |
 
@@ -68,4 +68,4 @@ uv run pytest -q \
 
 | 日期 | 动作 | 备注 |
 |------|------|------|
-| 2026-06-19 | 创建台账 | 修复包 Manifest 导入 Commit 1；8 pytest failures 基线 |
+| 2026-06-19 | Phase 2 调和 | `agent_workflow_boundaries.md`、`verification_commands.md` 改为 uv 主路径 |
