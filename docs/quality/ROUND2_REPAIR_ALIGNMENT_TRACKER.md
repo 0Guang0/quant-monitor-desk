@@ -1,6 +1,6 @@
 # Round 2.5 Repair Alignment Tracker
 
-> **Status:** in progress · **Gate:** must PASS before opening Trellis task **017** (Round 3 Layer 1)  
+> **Status:** **complete** (2026-06-19 · PR #15 merged) · **Gate cleared** for task **017**  
 > **Trellis task:** `.trellis/tasks/06-19-round2-repair-alignment/`  
 > **Baseline:** `master` post PR #14 (repaired-docs import)  
 > **Master registry:** [`AUDIT_DEFERRED_REGISTRY.md`](../AUDIT_DEFERRED_REGISTRY.md) — every issue **RESOLVED** or **DEFERRED** with resolution phase
@@ -9,7 +9,7 @@
 
 1. **全清 or 记录延后** — no undocumented open issues.
 2. **不阻塞 ≠ 不解决** — deferred rows must name **resolution phase**, **task hook**, and **closure test** (see registry).
-3. **017 gate:** only `PROC-R2.5-1` (merge/handoff) may block; all other pre-R3 items must be DEFERRED with phase in registry.
+3. **017 gate:** registry must have **no OPEN rows** (cleared 2026-06-19).
 
 ---
 
@@ -23,7 +23,7 @@
 | R2.5-4 | Doc honesty (handoff, gap ledger, tracker, registry policy) | **DONE** | linked docs |
 | R2.5-5 | `test_legacySourceRoles_forbiddenAsSourceRoles` | **DONE** | `test_source_registry.py` |
 | R2.5-6 | Domain schedulable **before** domain_allowed (`DISABLED_SOURCE` priority) | **DONE** | `base_adapter.py` · `test_fetch_disabledDomain_returnsDisabledSourceBeforeDomainAllowed` |
-| PROC-R2.5-1 | Commit + PR + Trellis complete | **OPEN** | registry OPEN table · blocks 017 |
+| PROC-R2.5-1 | Commit + PR + Trellis complete | **DONE** | PR #15 · merge `7ce283a` |
 
 **Exit criteria:** pytest/ruff green · R2.5-1..6 DONE · `PROC-R2.5-1` RESOLVED.
 

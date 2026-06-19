@@ -1,6 +1,6 @@
 # 修复包导入后 — 代码与 docs/specs 口径差台账
 
-> **状态**：**partial**（Round 2.5 代码完成；`PROC-R2.5-1` 待 merge）  
+> **状态**：**closed**（2026-06-19 · Round 2.5 PR #15 merged）  
 > **性质**：本文件是**项目实施补充台账**，不在 `MANIFEST.json` 权威包内。  
 > **关闭条件**：Phase 3 八项 pytest 已绿；R2.5 RESOLVED；**权威延后表** [`AUDIT_DEFERRED_REGISTRY.md`](../AUDIT_DEFERRED_REGISTRY.md) 无未登记 OPEN 项。
 

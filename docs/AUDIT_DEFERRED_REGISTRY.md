@@ -25,9 +25,7 @@ Every issue MUST be in exactly one state:
 
 ## OPEN — blocks Round 3 entry (017)
 
-| ID | Item | Resolution phase | Task hook | Blocks 017? | Closure test / evidence |
-|----|------|------------------|-----------|-------------|-------------------------|
-| PROC-R2.5-1 | Round 2.5 branch unmerged; Trellis `round2-repair-alignment` still `in_progress` | **Immediate** — before 017 | `.trellis/tasks/06-19-round2-repair-alignment/` | **YES** | PR merged to `master`; Trellis Execute handoff PASS; tracker R2.5-1..6 RESOLVED |
+*(none — last gate `PROC-R2.5-1` closed 2026-06-19 via PR #15)*
 
 ---
 
@@ -100,8 +98,9 @@ Does **not** block 017 per `ROUND2_GAPS` §6; **must** be closed or re-deferred 
 
 | ID | Item | Closed | Evidence |
 |----|------|--------|----------|
-| R2.5-1..5 | Repair-package Round 2 contract drift | 2026-06-19 branch | `ROUND2_REPAIR_ALIGNMENT_TRACKER.md` |
-| R2.5-6 | Domain schedulable before domain_allowed (DISABLED_SOURCE priority) | 2026-06-19 branch | `base_adapter.py` · `test_fetch_disabledDomain_returnsDisabledSourceBeforeDomainAllowed` |
+| R2.5-1..5 | Repair-package Round 2 contract drift | 2026-06-19 | `ROUND2_REPAIR_ALIGNMENT_TRACKER.md` |
+| R2.5-6 | Domain schedulable before domain_allowed (DISABLED_SOURCE priority) | 2026-06-19 | `base_adapter.py` · `test_fetch_disabledDomain_returnsDisabledSourceBeforeDomainAllowed` |
+| PROC-R2.5-1 | Round 2.5 merge + Trellis handoff | 2026-06-19 | PR #15 → `7ce283a` on `master` |
 | R4-API-SEC-1 | `test_apiSecurityContract_isSingleAuthorityForQueryBudget` | R2.5 | `test_api_security_contract.py` |
 | R4-API-SEC-2 | `test_resourceLimitsApiLimits_matchApiSecurityContract` | R2.5 | same |
 | D4-P3-1 | Starlette/httpx deprecation warning | PR #11 | `httpx2` dev dep |
@@ -121,4 +120,6 @@ Does **not** block 017 per `ROUND2_GAPS` §6; **must** be closed or re-deferred 
 cd frontend && npm run typecheck && npm run test
 ```
 
-**Round 3 entry (017):** only `PROC-R2.5-1` may remain OPEN; all other rows must be DEFERRED with phase filled or RESOLVED.
+**Round 3 entry (017):** registry has **no OPEN rows**; all other items DEFERRED with phase or RESOLVED.
+
+---
