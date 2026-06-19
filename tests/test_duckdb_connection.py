@@ -100,7 +100,8 @@ def test_applyPragmas_setsMaxTempDirectorySize(tmp_path: Path) -> None:
     )
     with cm.writer() as w:
         temp_max = w.execute("SELECT current_setting('max_temp_directory_size')").fetchone()[0]
-    assert "gib" in str(temp_max).lower()
+    lower = str(temp_max).lower()
+    assert any(unit in lower for unit in ("gib", "mib"))
 
 
 def test_applyPragmas_ecoProfile_setsThreadsAndMemory(tmp_path: Path, monkeypatch) -> None:

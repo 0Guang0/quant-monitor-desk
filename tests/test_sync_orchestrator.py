@@ -151,7 +151,10 @@ class _SecretLeakAdapter:
         )
 
 
-def test_orchestrator_fetchFailure_redactsErrorInJobEventLog(tmp_path) -> None:
+def test_orchestrator_fetchFailure_redactsErrorInJobEventLog(tmp_path, monkeypatch) -> None:
+    from backend.app.core.resource_guard import Decision, ResourceGuard
+
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
     orch = _orchestrator(tmp_path)
     spec = SyncJobSpec(
         run_id="run-redact",
