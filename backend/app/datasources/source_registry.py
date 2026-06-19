@@ -173,9 +173,10 @@ def _parse_source_record(source_id: str, entry: dict) -> SourceRecord:
         normalized["requires_local_client"] = normalized["requires_user_setup"]
 
     rate_default = "polite_batch"
-    if not isinstance(normalized.get("rate_limit_policy"), str) or not str(
-        normalized.get("rate_limit_policy")
-    ).strip():
+    if (
+        not isinstance(normalized.get("rate_limit_policy"), str)
+        or not str(normalized.get("rate_limit_policy")).strip()
+    ):
         normalized["rate_limit_policy"] = rate_default
 
     return SourceRecord(
@@ -189,9 +190,7 @@ def _parse_source_record(source_id: str, entry: dict) -> SourceRecord:
         license_type=_parse_required_str(normalized, "license_type", source_id),
         official_api=_parse_bool(normalized, "official_api", default=False, source_id=source_id),
         is_enabled=_parse_bool(normalized, "is_enabled", default=True, source_id=source_id),
-        default_priority=_parse_int(
-            normalized, "default_priority", default=0, source_id=source_id
-        ),
+        default_priority=_parse_int(normalized, "default_priority", default=0, source_id=source_id),
         rate_limit_policy=_parse_required_str(normalized, "rate_limit_policy", source_id),
         auth_required=_parse_bool(normalized, "auth_required", default=False, source_id=source_id),
         requires_local_client=_parse_bool(
@@ -241,9 +240,7 @@ def _normalize_fallback_policy(roles: dict, data_domain: str) -> str:
             return raw
         if not raw:
             return "mark_missing"
-        raise InvalidRegistryError(
-            f"domain_roles.{data_domain}.fallback_policy invalid: {raw!r}"
-        )
+        raise InvalidRegistryError(f"domain_roles.{data_domain}.fallback_policy invalid: {raw!r}")
     if isinstance(raw, list):
         if not raw:
             disabled = roles.get("disabled_until_configured")
@@ -251,9 +248,7 @@ def _normalize_fallback_policy(roles: dict, data_domain: str) -> str:
             if disabled or domain_off:
                 return "skip_until_next_publish"
             return "mark_missing"
-        if roles.get("disabled_fallback_behavior") or roles.get(
-            "fallback_requires_source_enabled"
-        ):
+        if roles.get("disabled_fallback_behavior") or roles.get("fallback_requires_source_enabled"):
             return "skip_until_next_publish"
         return "use_validation_source_with_flag"
     raise InvalidRegistryError(

@@ -2,7 +2,7 @@
 
 Canonical gate commands for audits, CI, and Round handoff. **D-01 默认路径：`uv sync` / `uv run`**；下列 `.venv\python` 为已激活 venv 时的等价写法。
 
-> 导入修复包后 pytest 基线含 8 项已知失败，见 [`docs/quality/REPAIR_IMPORT_CODE_GAP_LEDGER.md`](../quality/REPAIR_IMPORT_CODE_GAP_LEDGER.md)（Phase 3 关闭）。
+> Phase 3 已关闭台账中的 8 项 pytest 口径差；全量 `pytest -q` 应为绿。修复包列出的 Round 4+ 命名契约测试见 `specs/contracts/api_security_contract.yaml` 等待办。
 
 ```powershell
 cd C:\Users\Guang\Desktop\quant-monitor-desk

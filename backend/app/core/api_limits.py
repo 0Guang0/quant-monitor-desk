@@ -26,9 +26,7 @@ def _query_budget_from_api_security() -> dict[str, int]:
     return {
         "default_page_size": default_page,
         "max_page_size": int(budget["max_page_size_absolute"]),
-        "agent_default_rows": int(
-            budget.get("frontend_table_default_page_size", default_page)
-        ),
+        "agent_default_rows": int(budget.get("frontend_table_default_page_size", default_page)),
         "agent_max_rows": int(budget["agent_tool_max_rows"]),
     }
 

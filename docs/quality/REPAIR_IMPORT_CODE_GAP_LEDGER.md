@@ -44,3 +44,4 @@ compileall backend/scripts/tests  OK
 | 2026-06-19 | 创建台账 | Commit 1 导入；8 pytest failures 基线 |
 | 2026-06-19 | Phase 2 调和 | `agent_workflow_boundaries.md`、`verification_commands.md` |
 | 2026-06-19 | **Phase 3 关闭** | 全量 pytest 绿 |
+| 2026-06-19 | 对抗性审计后续 | 新增 `test_api_security_contract.py`（2 项）；修复包列出的其余 Round 4+ 命名测试仍为待办 |
