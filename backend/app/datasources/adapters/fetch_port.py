@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Literal, Protocol
 
 from backend.app.datasources.fetch_result import FetchRequest
@@ -40,6 +41,24 @@ class FetchPayload:
 
 class FetchPort(Protocol):
     def fetch_payload(self, req: FetchRequest) -> FetchPayload: ...
+
+
+class LocalFixtureFetchPort:
+    """Read-only fixture vendor port for production-equivalent E2E (P1-03)."""
+
+    def __init__(self, fixture_path: Path, *, row_count: int = 1) -> None:
+        self._fixture_path = fixture_path
+        self._row_count = row_count
+
+    def fetch_payload(self, req: FetchRequest) -> FetchPayload:
+        content = self._fixture_path.read_bytes()
+        return FetchPayload(
+            content=content,
+            file_type="json",
+            row_count=self._row_count,
+            latency_ms=5,
+            retry_count=0,
+        )
 
 
 class StubFetchPort:

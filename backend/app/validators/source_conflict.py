@@ -10,6 +10,7 @@ from typing import Literal
 
 import yaml
 from backend.app.validators.common import as_float, as_text, fetch_rows
+from backend.app.validators.rule_contract import default_conflict_rule_contract
 
 ConflictStatus = Literal["PASSED", "WARNING", "SEVERE_CONFLICT"]
 ConflictSeverity = Literal["warning", "severe", "methodology_difference"]
@@ -106,6 +107,7 @@ class SourceConflictValidator:
 
     def __init__(self, rules_path: Path = _DEFAULT_RULES_PATH) -> None:
         self._field_groups, self._thresholds = _load_rules(rules_path)
+        self._rule_set_id, self._rule_version = default_conflict_rule_contract()
 
     def _is_separate_by_source(self, field_name: str) -> bool:
         return field_name in set(self._field_groups.get("separate_by_source", ()))
@@ -247,9 +249,10 @@ class SourceConflictValidator:
                     conflict_id, run_id, job_id, data_domain, market_id,
                     instrument_id, field_name, as_of_timestamp, primary_source,
                     primary_value, competing_source, competing_value, normalized_diff,
-                    tolerance_warning, tolerance_severe, severity, reconcile_status,
+                    tolerance_warning, tolerance_severe, tolerance_rule_set_id,
+                    rule_version, severity, reconcile_status,
                     manual_review_required, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 [
                     conflict_id,
@@ -267,6 +270,8 @@ class SourceConflictValidator:
                     conflict.normalized_diff,
                     None if threshold is None else threshold.relative_warning,
                     None if threshold is None else threshold.relative_severe,
+                    request.tolerance_rule_set_id,
+                    self._rule_version,
                     conflict.severity,
                     reconcile_status,
                     manual_review_flag,

@@ -466,16 +466,22 @@ class SourceRegistry:
                 """
                 INSERT OR REPLACE INTO source_registry (
                     source_id, source_name, source_type, allowed_domain,
+                    allowed_domains_json,
                     trust_level, license_type, official_api, is_enabled,
                     default_priority, rate_limit_policy, auth_required,
                     requires_local_client, expected_frequency, expected_lag,
-                    timezone, fallback_allowed, validation_only, notes, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                    timezone, fallback_allowed, validation_only, notes,
+                    updated_at
+                ) VALUES (
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                    CURRENT_TIMESTAMP
+                )
                 """,
                 [
                     row["source_id"],
                     row["source_name"],
                     row["source_type"],
+                    row["allowed_domain"],
                     row["allowed_domain"],
                     row["trust_level"],
                     row["license_type"],

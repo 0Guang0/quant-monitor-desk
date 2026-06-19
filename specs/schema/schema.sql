@@ -13,10 +13,22 @@ CREATE TABLE IF NOT EXISTS schema_version (
 CREATE TABLE IF NOT EXISTS source_registry (
     source_id              VARCHAR PRIMARY KEY,
     source_name            VARCHAR,
-    source_type            VARCHAR,
+    source_type            VARCHAR CHECK (
+        source_type IS NULL OR source_type IN (
+            'broker_terminal', 'public_market_data', 'aggregator', 'filing_announcement',
+            'official_api', 'local_sdk', 'vendor_api'
+        )
+    ),
     allowed_domain         VARCHAR,
+    allowed_domains_json   VARCHAR,
     trust_level            INTEGER,
-    license_type           VARCHAR,
+    license_type           VARCHAR CHECK (
+        license_type IS NULL OR license_type IN (
+            'user_local_authorized', 'public_free', 'public_free_aggregator',
+            'public_official', 'public_terms_sensitive',
+            'official_free', 'local_authorized', 'public_web'
+        )
+    ),
     official_api           BOOLEAN,
     is_enabled             BOOLEAN,
     default_priority       INTEGER,
@@ -58,7 +70,14 @@ CREATE TABLE IF NOT EXISTS data_sync_job (
     date_end            DATE,
     source_id           VARCHAR,
     adapter_id          VARCHAR,
-    status              VARCHAR,
+    status              VARCHAR CHECK (
+        status IS NULL OR status IN (
+            'CREATED', 'PLANNED', 'FETCHING', 'STAGED', 'VALIDATING',
+            'WAITING_RECONCILE', 'RECONCILING', 'READY_TO_WRITE', 'WRITING',
+            'COMPLETED', 'FAILED_FINAL', 'SKIPPED', 'CANCELLED',
+            'MANUAL_REVIEW_REQUIRED', 'FAILED_RETRYABLE'
+        )
+    ),
     priority            INTEGER,
     retry_count         INTEGER,
     max_retries         INTEGER,
@@ -103,6 +122,10 @@ CREATE TABLE IF NOT EXISTS validation_report (
     stale_reason            VARCHAR,
     can_write_clean         BOOLEAN,
     needs_manual_review     BOOLEAN,
+    rule_set_id             VARCHAR NOT NULL,
+    rule_version            VARCHAR NOT NULL,
+    source_fetch_ids_json   VARCHAR,
+    source_content_hashes_json VARCHAR,
     created_at              TIMESTAMP
 );
 
@@ -121,6 +144,7 @@ CREATE TABLE IF NOT EXISTS data_quality_log (
     observed_value      VARCHAR,
     expected_condition  VARCHAR,
     message             TEXT,
+    rule_version        VARCHAR,
     created_at          TIMESTAMP
 );
 
@@ -140,8 +164,15 @@ CREATE TABLE IF NOT EXISTS source_conflict (
     normalized_diff         DOUBLE,
     tolerance_warning       DOUBLE,
     tolerance_severe        DOUBLE,
-    severity                VARCHAR,
-    reconcile_status        VARCHAR,
+    tolerance_rule_set_id   VARCHAR,
+    rule_version            VARCHAR,
+    severity                VARCHAR NOT NULL CHECK (severity IN ('warning', 'severe')),
+    reconcile_status        VARCHAR CHECK (
+        reconcile_status IS NULL OR reconcile_status IN (
+            'OPEN', 'N/A', 'UNRESOLVED', 'RESOLVED_BY_REFETCH',
+            'RESOLVED_MANUAL', 'CLOSED'
+        )
+    ),
     manual_review_required  BOOLEAN,
     resolution              VARCHAR,
     resolution_note         TEXT,
@@ -228,7 +259,12 @@ CREATE TABLE IF NOT EXISTS fetch_log (
     market_id           VARCHAR,
     instrument_id       VARCHAR,
     request_params_hash VARCHAR,
-    status              VARCHAR,
+    status              VARCHAR CHECK (
+        status IS NULL OR status IN (
+            'SUCCESS', 'EMPTY_RESPONSE', 'NOT_PUBLISHED_YET', 'DISABLED_SOURCE',
+            'AUTH_FAILED', 'RATE_LIMITED', 'NETWORK_ERROR', 'SCHEMA_DRIFT', 'FAILED'
+        )
+    ),
     row_count           INTEGER,
     raw_file_paths      VARCHAR,
     content_hash        VARCHAR,
@@ -244,13 +280,17 @@ CREATE TABLE IF NOT EXISTS fetch_log (
 
 CREATE TABLE IF NOT EXISTS manual_review_queue (
     review_id           VARCHAR PRIMARY KEY,
-    source_object_type  VARCHAR,
+    source_object_type  VARCHAR NOT NULL CHECK (
+        source_object_type IN ('conflict', 'validation', 'revision', 'schema')
+    ),
     source_object_id    VARCHAR,
     priority            VARCHAR,
     title               VARCHAR,
     description         TEXT,
     suggested_action    TEXT,
-    status              VARCHAR,
+    status              VARCHAR CHECK (
+        status IS NULL OR status IN ('OPEN', 'IN_PROGRESS', 'RESOLVED', 'DISMISSED', 'CANCELLED')
+    ),
     assigned_to         VARCHAR,
     created_at          TIMESTAMP,
     resolved_at         TIMESTAMP,

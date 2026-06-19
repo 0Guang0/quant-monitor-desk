@@ -61,6 +61,9 @@ def test_appliedVersions_afterMigration_containsFoundation() -> None:
         "005_ingestion_validation",
         "006_ingestion_sync",
         "007_sync_constraints_audit",
+        "008_lineage_version_fields",
+        "009_status_check_constraints",
+        "010_lineage_not_null",
     }
 
 
@@ -87,6 +90,9 @@ def test_appliedVersions_afterMigration_containsIngestion() -> None:
             "005_ingestion_validation",
             "006_ingestion_sync",
             "007_sync_constraints_audit",
+            "008_lineage_version_fields",
+            "009_status_check_constraints",
+            "010_lineage_not_null",
         }
     )
 

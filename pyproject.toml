@@ -34,6 +34,9 @@ testpaths = ["tests"]
 pythonpath = ["."]
 addopts = "-q --basetemp=.audit-sandbox/pytest"
 cache_dir = ".audit-sandbox/.pytest_cache"
+filterwarnings = [
+    "ignore:Using `httpx` with `starlette.testclient` is deprecated:starlette.exceptions.StarletteDeprecationWarning",
+]
 
 [tool.ruff]
 target-version = "py311"

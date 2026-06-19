@@ -2,16 +2,39 @@
 
 from __future__ import annotations
 
+import warnings
 from pathlib import Path
 
 import duckdb
 import pytest
+
+try:
+    from starlette.exceptions import StarletteDeprecationWarning
+
+    warnings.filterwarnings("ignore", category=StarletteDeprecationWarning)
+except ImportError:
+    pass
+
 from backend.app.datasources.fetch_result import FetchRequest, FetchResult
 from backend.app.datasources.source_registry import SourceRegistry
 from backend.app.db.migrate import apply_migrations
 
+try:
+    import httpx2  # noqa: F401
+except ImportError:
+    pass
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 FIXTURES = Path(__file__).parent / "fixtures"
+
+
+def pytest_configure(config) -> None:
+    try:
+        from starlette.exceptions import StarletteDeprecationWarning
+
+        warnings.filterwarnings("ignore", category=StarletteDeprecationWarning)
+    except ImportError:
+        pass
 
 
 @pytest.fixture
