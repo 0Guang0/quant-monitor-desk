@@ -291,7 +291,11 @@ def test_backfillJob_largeRange_splitsIntoTasks(tmp_path, monkeypatch) -> None:
         partition_key=None,
         trigger_reason="eco_catchup",
     )
-    results = orch.run_backfill(spec, adapter=_BackfillCountAdapter())
+    results = orch.run_backfill(
+        spec,
+        adapter=_BackfillCountAdapter(),
+        clean_table=_BackfillCountAdapter.CLEAN,
+    )
     assert len(results) >= 3
 
 
@@ -316,7 +320,11 @@ def test_backfillJob_recordsTriggerReason(tmp_path, monkeypatch) -> None:
         partition_key=None,
         trigger_reason="manual_request",
     )
-    orch.run_backfill(spec, adapter=_BackfillCountAdapter())
+    orch.run_backfill(
+        spec,
+        adapter=_BackfillCountAdapter(),
+        clean_table=_BackfillCountAdapter.CLEAN,
+    )
     with orch._cm.writer() as con:
         row = con.execute(
             """
@@ -356,7 +364,11 @@ def test_backfillJob_eachShard_callsResourceGuardBeforeFetching(tmp_path, monkey
         partition_key=None,
         trigger_reason="eco_catchup",
     )
-    orch.run_backfill(spec, adapter=_BackfillCountAdapter())
+    orch.run_backfill(
+        spec,
+        adapter=_BackfillCountAdapter(),
+        clean_table=_BackfillCountAdapter.CLEAN,
+    )
     assert len(calls) >= 3
 
 
@@ -381,7 +393,11 @@ def test_backfillJob_midShardFailure_preservesCompletedTasks(tmp_path, monkeypat
         partition_key=None,
         trigger_reason="eco_catchup",
     )
-    results = orch.run_backfill(spec, adapter=_BackfillFailOnSecondAdapter())
+    results = orch.run_backfill(
+        spec,
+        adapter=_BackfillFailOnSecondAdapter(),
+        clean_table=_BackfillCountAdapter.CLEAN,
+    )
     assert any(r.status == "FAILED_RETRYABLE" for r in results)
     with orch._cm.writer() as con:
         completed_tasks = con.execute(
@@ -395,14 +411,32 @@ def test_backfillJob_midShardFailure_preservesCompletedTasks(tmp_path, monkeypat
 
 
 class _BackfillCountAdapter:
-    """Minimal adapter for backfill shard counting tests."""
+    """Minimal adapter for backfill shard tests with validate+write path."""
 
     source_id = "baostock"
     supported_domains = frozenset({"market_bar_1d"})
+    STG = "stg_backfill"
+    CLEAN = "stg_backfill_clean"
 
     def fetch(self, req, *, con, job_id=None):
         from backend.app.datasources.fetch_result import FetchResult
 
+        con.execute(
+            f"""
+            CREATE TABLE IF NOT EXISTS {self.STG} (
+                instrument_id VARCHAR, trade_date VARCHAR, close DOUBLE,
+                source_used VARCHAR, batch_id VARCHAR, source_id VARCHAR
+            )
+            """
+        )
+        con.execute(
+            f"CREATE TABLE IF NOT EXISTS {self.CLEAN} AS SELECT * FROM {self.STG} WHERE 1=0"
+        )
+        con.execute(f"DELETE FROM {self.STG}")
+        con.execute(
+            f"INSERT INTO {self.STG} VALUES (?, ?, ?, ?, ?, ?)",
+            ["AAPL", "2026-06-15", 100.0, "baostock", "bf1", "baostock"],
+        )
         return FetchResult(
             run_id=req.run_id,
             source_id=self.source_id,
@@ -410,8 +444,10 @@ class _BackfillCountAdapter:
             status="SUCCESS",
             row_count=1,
             fetch_time="2026-06-17T10:00:00Z",
-            staging_table="stg_backfill",
+            staging_table=self.STG,
             raw_file_paths=["/tmp/bf.parquet"],
+            content_hash="abc",
+            schema_hash="def",
         )
 
 

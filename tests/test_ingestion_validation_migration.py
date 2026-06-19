@@ -80,10 +80,24 @@ def test_validationReport_statusCheck_rejectsInvalidStatus(tmp_path: Path) -> No
             INSERT INTO validation_report (
                 validation_report_id, run_id, data_domain, source_id,
                 status, checked_rows, failed_rows, warning_rows,
-                can_write_clean, needs_manual_review
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                can_write_clean, needs_manual_review,
+                rule_set_id, rule_version
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
-            ["vr-1", "r1", "market_bar_1d", "qmt", "BOGUS", 1, 0, 0, True, False],
+            [
+                "vr-1",
+                "r1",
+                "market_bar_1d",
+                "qmt",
+                "BOGUS",
+                1,
+                0,
+                0,
+                True,
+                False,
+                "p0_round_1",
+                "p0_round_1",
+            ],
         )
     con.close()
 
@@ -100,8 +114,9 @@ def test_validationReport_validRows_accepted(tmp_path: Path) -> None:
             INSERT INTO validation_report (
                 validation_report_id, run_id, data_domain, source_id,
                 status, checked_rows, failed_rows, warning_rows,
-                can_write_clean, needs_manual_review
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                can_write_clean, needs_manual_review,
+                rule_set_id, rule_version
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             [
                 f"vr-{status}",
@@ -114,6 +129,8 @@ def test_validationReport_validRows_accepted(tmp_path: Path) -> None:
                 0,
                 can_write,
                 needs_review,
+                "p0_round_1",
+                "p0_round_1",
             ],
         )
     cnt = con.execute("SELECT COUNT(*) FROM validation_report").fetchone()[0]
@@ -222,7 +239,7 @@ def test_manualReviewQueue_validRow_accepted(tmp_path: Path) -> None:
             review_id, source_object_type, source_object_id, priority, status
         ) VALUES (?, ?, ?, ?, ?)
         """,
-        ["mr-1", "conflict", "c-1", "high", "open"],
+        ["mr-1", "conflict", "c-1", "high", "OPEN"],
     )
     cnt = con.execute("SELECT COUNT(*) FROM manual_review_queue").fetchone()[0]
     con.close()

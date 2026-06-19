@@ -201,7 +201,7 @@ def test_syncToDb_removedYamlSource_isTombstoned(tmp_path, migrated_con, registr
         """
         INSERT INTO source_registry (
             source_id, source_name, source_type, allowed_domain, is_enabled
-        ) VALUES ('orphan_source', 'Orphan', 'api', '[]', true)
+        ) VALUES ('orphan_source', 'Orphan', 'vendor_api', '[]', true)
         """
     )
     reg.sync_to_db(con)

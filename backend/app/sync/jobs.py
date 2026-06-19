@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
 
 from backend.app.db.connection import ConnectionManager
+from backend.app.sync.event_payload import build_event_payload
 from backend.app.util.error_redaction import redact_error_message
 
 SYNC_JOB_STATUSES: frozenset[str] = frozenset(
@@ -65,6 +66,22 @@ def normalize_backfill_trigger_reason(trigger_reason: str | None) -> str:
         allowed = ", ".join(sorted(BACKFILL_TRIGGER_REASONS))
         raise ValueError(f"unsupported backfill trigger_reason: {value!r}; allowed: {allowed}")
     return value
+
+
+def _coalesce_payload(
+    payload_json: str | None,
+    *,
+    task_id: str | None = None,
+    error_type: str | None = None,
+    decision: str | None = None,
+) -> str:
+    if payload_json is not None:
+        return payload_json
+    return build_event_payload(
+        task_id=task_id,
+        error_code=error_type,
+        decision=decision or "status_change",
+    )
 
 
 def _safe_event_message(message: str) -> str:
@@ -213,6 +230,10 @@ class SyncJobStateMachine:
     def __init__(self, connection_manager: ConnectionManager) -> None:
         self._cm = connection_manager
 
+    @property
+    def connection_manager(self) -> ConnectionManager:
+        return self._cm
+
     def create_job(self, spec: SyncJobSpec) -> str:
         if spec.job_type not in {
             "full_load",
@@ -349,6 +370,11 @@ class SyncJobStateMachine:
         if row is None:
             raise KeyError(f"unknown job_id: {job_id!r}")
         run_id, current_status = row[0], row[1]
+        resolved_payload = _coalesce_payload(
+            payload_json,
+            task_id=task_id,
+            decision=event_type,
+        )
         return _insert_job_event(
             con,
             job_id=job_id,
@@ -358,7 +384,7 @@ class SyncJobStateMachine:
             old_status=old_status,
             new_status=new_status or current_status,
             message=message,
-            payload_json=payload_json,
+            payload_json=resolved_payload,
         )
 
     def _transition_on_con(
@@ -415,6 +441,12 @@ class SyncJobStateMachine:
         run_id = con.execute(
             "SELECT run_id FROM data_sync_job WHERE job_id = ?", [job_id]
         ).fetchone()[0]
+        resolved_payload = _coalesce_payload(
+            payload_json,
+            task_id=task_id,
+            error_type=error_type,
+            decision=new_status,
+        )
         _insert_job_event(
             con,
             job_id=job_id,
@@ -424,7 +456,7 @@ class SyncJobStateMachine:
             old_status=old_status,
             new_status=new_status,
             message=message,
-            payload_json=payload_json,
+            payload_json=resolved_payload,
             now=now,
         )
 
@@ -438,6 +470,11 @@ class SyncJobStateMachine:
         if job_type == "backfill" and old_status == "STAGED":
             allowed.add("PLANNED")
             allowed.add("COMPLETED")
+        if job_type == "backfill" and old_status == "WRITING":
+            allowed.add("PLANNED")
+            allowed.add("COMPLETED")
         if job_type == "reconcile" and old_status == "PLANNED":
             allowed.add("WAITING_RECONCILE")
+        if job_type == "reconcile" and old_status == "READY_TO_WRITE":
+            allowed.add("COMPLETED")
         return new_status in allowed

@@ -92,3 +92,22 @@ def test_ingestionMigrationColumns_existInSchemaContract() -> None:
         assert mig_cols.issubset(contract_cols), (
             f"{table}: migration columns missing from schema.sql: {mig_cols - contract_cols}"
         )
+
+
+CHECK_CONTRACT_TABLES = (
+    "fetch_log",
+    "source_registry",
+    "manual_review_queue",
+    "source_conflict",
+    "data_sync_job",
+)
+
+
+def test_schemaContract_includesStatusCheckConstraints() -> None:
+    schema_text = SCHEMA_SQL.read_text(encoding="utf-8")
+    for table in CHECK_CONTRACT_TABLES:
+        pattern = rf"CREATE TABLE IF NOT EXISTS {re.escape(table)}\s*\((.*?)\);"
+        match = re.search(pattern, schema_text, re.DOTALL | re.IGNORECASE)
+        assert match is not None, f"{table} missing from schema.sql"
+        body = match.group(1)
+        assert "CHECK" in body, f"{table} missing CHECK constraints in schema.sql contract"

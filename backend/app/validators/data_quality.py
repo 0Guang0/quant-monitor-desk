@@ -12,6 +12,7 @@ from typing import Literal
 import yaml
 from backend.app.db.sql_identifiers import quote_ident
 from backend.app.validators.common import as_float, as_text, fetch_rows, is_missing
+from backend.app.validators.rule_contract import default_quality_rule_contract
 
 ValidationStatus = Literal["PASSED", "WARNING", "FAILED"]
 FindingSeverity = Literal["failed", "warning"]
@@ -108,6 +109,21 @@ class DataQualityValidator:
 
     def __init__(self, rules_path: Path = _DEFAULT_RULES_PATH) -> None:
         self._rule_severities = _load_rule_severities(rules_path)
+        self._rule_set_id, self._rule_version = default_quality_rule_contract()
+
+    def _collect_fetch_lineage(self, con, job_id: str) -> tuple[list[str], list[str]]:
+        rows = con.execute(
+            """
+            SELECT fetch_id, content_hash
+            FROM fetch_log
+            WHERE job_id = ?
+            ORDER BY fetch_time
+            """,
+            [job_id],
+        ).fetchall()
+        fetch_ids = [str(row[0]) for row in rows]
+        content_hashes = [str(row[1]) for row in rows if row[1] is not None]
+        return fetch_ids, content_hashes
 
     def _severity(self, rule_id: str) -> FindingSeverity:
         severity = self._rule_severities.get(rule_id, _FAILED)
@@ -550,14 +566,17 @@ class DataQualityValidator:
     ) -> None:
         created_at = datetime.now(UTC)
         stale_reason = "STALE_DATA" if "STALE_DATA" in report.quality_flags else None
+        fetch_ids, content_hashes = self._collect_fetch_lineage(con, request.job_id)
+        rule_set_id = request.rule_set_id or self._rule_set_id
         con.execute(
             """
             INSERT INTO validation_report (
                 validation_report_id, run_id, job_id, data_domain,
                 staging_table, source_id, status, checked_rows, failed_rows,
                 warning_rows, quality_flags, stale_reason, can_write_clean,
-                needs_manual_review, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                needs_manual_review, created_at, rule_set_id, rule_version,
+                source_fetch_ids_json, source_content_hashes_json
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             [
                 report.validation_report_id,
@@ -575,6 +594,10 @@ class DataQualityValidator:
                 report.can_write_clean,
                 report.needs_manual_review,
                 created_at,
+                rule_set_id,
+                self._rule_version,
+                json.dumps(fetch_ids),
+                json.dumps(content_hashes),
             ],
         )
         for finding in report.findings:
@@ -584,8 +607,8 @@ class DataQualityValidator:
                     log_id, validation_report_id, run_id, job_id, data_domain,
                     source_id, table_name, row_key, field_name, rule_id,
                     severity, observed_value, expected_condition, message,
-                    created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    created_at, rule_version
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 [
                     str(uuid.uuid4()),
@@ -603,6 +626,7 @@ class DataQualityValidator:
                     finding.expected_condition,
                     finding.message,
                     created_at,
+                    self._rule_version,
                 ],
             )
 

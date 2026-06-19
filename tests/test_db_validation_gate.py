@@ -44,8 +44,9 @@ def _insert_report(
             INSERT INTO validation_report (
                 validation_report_id, run_id, data_domain, source_id,
                 status, checked_rows, failed_rows, warning_rows,
-                can_write_clean, needs_manual_review
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                can_write_clean, needs_manual_review,
+                rule_set_id, rule_version
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             [
                 report_id,
@@ -58,6 +59,8 @@ def _insert_report(
                 warning_rows,
                 can_write_clean,
                 needs_manual_review,
+                "p0_round_1",
+                "p0_round_1",
             ],
         )
 
