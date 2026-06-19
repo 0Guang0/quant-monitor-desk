@@ -7,4 +7,4 @@ from backend.app.datasources.adapters.skeleton_base import SkeletonAdapterBase
 
 class QmtXtdataAdapter(SkeletonAdapterBase):
     source_id = "qmt_xtdata"
-    supported_domains = frozenset({"market_bar_1m", "market_bar_1d"})
+    supported_domains = frozenset({"cn_equity_minute_bar", "cn_equity_daily_bar"})

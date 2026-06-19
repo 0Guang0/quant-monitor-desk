@@ -57,6 +57,6 @@ def test_productionCli_notYetImplemented_documentedInTask2() -> None:
     assert (PROJECT_ROOT / "specs/contracts/data_cli_contract.yaml").is_file()
     gate_impl = (
         PROJECT_ROOT
-        / ".trellis/tasks/06-19-round2-6-contract-gate/implement.jsonl"
+        / ".trellis/tasks/06-19-round2-6-routing-service-gate/implement.jsonl"
     ).read_text(encoding="utf-8")
     assert "data_cli_contract.yaml" in gate_impl

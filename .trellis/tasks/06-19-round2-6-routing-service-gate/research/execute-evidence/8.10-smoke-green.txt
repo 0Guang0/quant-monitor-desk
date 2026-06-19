@@ -1,0 +1,2 @@
+python scripts/production_equivalent_smoke.py --use-service-path --data-root .audit-sandbox/r26-repair-v2
+metrics emitted: elapsed_s, fetch_log_rows, resource_guard_log_rows, route_plan_events, guard_status=observable — PASS

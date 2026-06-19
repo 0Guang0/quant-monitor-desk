@@ -106,7 +106,7 @@ def test_load_validationYamlNull_allowsNoValidationSource():
     path = Path(__file__).parent / "fixtures" / "source_registry_batch_b.yaml"
     reg = SourceRegistry(path)
     reg.load()
-    roles = reg.get_domain_roles("market_bar_1m")
+    roles = reg.get_domain_roles("cn_equity_minute_bar")
     assert roles.validation_source_id is None
 
 

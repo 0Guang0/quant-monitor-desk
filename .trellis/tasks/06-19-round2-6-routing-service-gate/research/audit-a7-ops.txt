@@ -1,0 +1,7 @@
+init_db x2 idempotency (2026-06-19 re-audit A7):
+  Run 1: applied 10 migrations
+  Run 2: none (up to date)
+sandbox: .audit-sandbox/r26-audit-final — gitignored, no project duckdb pollution
+deferred registry: no OPEN rows
+DEVELOPER_GUIDE → phase-a-self-check-migrated.md
+root ROUND2_6_PHASE_A_SELF_CHECK.md: absent

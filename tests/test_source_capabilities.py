@@ -1,4 +1,4 @@
-"""Round2.6 Phase B — source capability and adapter domain contract tests."""
+"""Round2.6 Phase B/C — source capability and adapter domain contract tests."""
 
 from __future__ import annotations
 
@@ -9,33 +9,19 @@ from typing import Any
 
 import yaml
 
+import pytest
+
+from backend.app.datasources.capability_registry import (
+    ADAPTER_DOMAIN_COMPATIBILITY_MAP,
+    OperationDisabledError,
+    SourceCapabilityRegistry,
+    UnknownCapabilityError,
+)
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SOURCE_REGISTRY = PROJECT_ROOT / "specs/datasource_registry/source_registry.yaml"
 SOURCE_CAPABILITIES = PROJECT_ROOT / "specs/datasource_registry/source_capabilities.yaml"
 ADAPTERS_PKG = "backend.app.datasources.adapters"
-
-# Explicit tested compatibility map (Round2.6 Phase B contract gate).
-# Task 2 may fold this into production SourceCapabilityRegistry enforcement.
-ADAPTER_DOMAIN_COMPATIBILITY_MAP: dict[str, dict[str, str]] = {
-    "akshare": {
-        "market_bar_1d": "cn_equity_daily_bar",
-        "capital_flow": "macro_supplementary",
-    },
-    "baostock": {
-        "market_bar_1d": "cn_equity_daily_bar",
-        "fundamental": "cn_equity_basic_financial",
-    },
-    "cninfo": {
-        "announcement": "cn_announcements",
-    },
-    "qmt_xtdata": {
-        "market_bar_1d": "cn_equity_daily_bar",
-        "market_bar_1m": "cn_equity_minute_bar",
-    },
-    "yahoo_finance": {
-        "market_bar_1d": "us_equity_daily_bar",
-    },
-}
 
 
 def load_yaml(path: Path) -> dict[str, Any]:
@@ -165,3 +151,33 @@ def test_compatibilityMap_coversEveryProductionAdapter() -> None:
                     f"{source_id}: legacy domain {legacy_domain!r} requires "
                     "ADAPTER_DOMAIN_COMPATIBILITY_MAP entry"
                 )
+
+
+def test_capabilityRegistry_assertSourceDomainOperation_acceptsKnown() -> None:
+    reg = SourceCapabilityRegistry()
+    reg.load()
+    reg.assert_source_domain_operation("baostock", "cn_equity_daily_bar", "fetch_daily_bar")
+
+
+def test_capabilityRegistry_assertSourceDomainOperation_rejectsUnknown() -> None:
+    reg = SourceCapabilityRegistry()
+    reg.load()
+    with pytest.raises(UnknownCapabilityError):
+        reg.assert_source_domain_operation("baostock", "cn_equity_realtime", "fetch_daily_bar")
+
+
+def test_capabilityRegistry_resolveRegistryDomain_forLegacyAdapterDomain() -> None:
+    reg = SourceCapabilityRegistry()
+    reg.load()
+    assert reg.resolve_registry_domain("baostock", "market_bar_1d") == "cn_equity_daily_bar"
+    assert reg.is_capability_declared("baostock", "market_bar_1d") is True
+    assert reg.is_capability_declared("baostock", "cn_equity_daily_bar") is True
+
+
+def test_capabilityRegistry_rejectsProposedDisabledSource() -> None:
+    reg = SourceCapabilityRegistry()
+    reg.load()
+    with pytest.raises(OperationDisabledError):
+        reg.assert_source_domain_operation(
+            "qmt_xqshare", "cn_equity_realtime", "fetch_realtime_quote_remote"
+        )

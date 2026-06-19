@@ -1,0 +1,11 @@
+init_db: applied ['001_foundation', '002_registry_hardening', '003_resource_guard_metrics', '004_ingestion_sources', '005_ingestion_validation', '006_ingestion_sync', '007_sync_constraints_audit', '008_lineage_version_fields', '009_status_check_constraints', '010_lineage_not_null']
+init_db: database at C:\Users\Guang\Desktop\quant-monitor-desk\.audit-sandbox\r26-audit\duckdb\quant_monitor.duckdb
+init_db: run scripts/sync_registry.py after first init to load configs/sources.yaml
+sync_registry: ok rows=5 data_root=C:\Users\Guang\Desktop\quant-monitor-desk\.audit-sandbox\r26-audit
+..................                                                       [100%]
+.                                                                        [100%]
+PASS: init_db
+PASS: sync_registry
+PASS: pytest_service_path
+PASS: pytest_vendor_service_e2e
+production_equivalent_smoke: ALL PASS (elapsed_s=4.26)

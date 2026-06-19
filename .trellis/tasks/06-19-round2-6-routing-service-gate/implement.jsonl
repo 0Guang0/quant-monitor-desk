@@ -30,4 +30,13 @@
 {"file":"backend/app/sync/event_payload.py","reason":"route payload evidence"}
 {"file":"scripts/production_equivalent_smoke.py","reason":"service-path smoke"}
 {"file":"docs/AUDIT_DEFERRED_REGISTRY.md","reason":"final Round3 gate truth"}
-{"file":"ROUND2_6_PHASE_A_SELF_CHECK.md","reason":"cleanup after migration"}
+{"file":".trellis/tasks/06-19-round2-6-routing-service-gate/research/phase-a-self-check-migrated.md","reason":"AC-D4 migrated self-check content"}
+{"file":".trellis/tasks/06-19-round2-6-routing-service-gate/design.md","reason":"Task technical design authority"}
+{"file":".trellis/tasks/06-19-round2-6-routing-service-gate/prd.md","reason":"Task requirements and AC"}
+{"file":"docs/modules/source_route_plan.md","reason":"SourceRoutePlan module contract"}
+{"file":"docs/modules/datasource_service.md","reason":"DataSourceService module contract"}
+{"file":"specs/contracts/data_cli_contract.yaml","reason":"CLI deferred to Round3 ops; contract reference for Task 2 gate tests"}
+{"file":"tests/test_source_route_planner.py","reason":"route planner contract required_tests"}
+{"file":"tests/test_sync_orchestrator.py","reason":"service-path orchestrator integration tests"}
+{"file":"tests/test_platform_source_matrix.py","reason":"AC-C8 disabled source platform matrix"}
+{"file":"tests/service_path_support.py","reason":"production planner test helpers"}

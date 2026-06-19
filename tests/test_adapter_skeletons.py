@@ -28,7 +28,7 @@ def test_skeletonAdapterBase_successWritesRawFile(
         raw_store=stack["raw_store"],
         fetch_port=StubFetchPort(payload=stub_fetch_bytes),
     )
-    req = request_factory("baostock", "market_bar_1d")
+    req = request_factory("baostock", "cn_equity_daily_bar")
     result = adapter.fetch(req, con=con)
     assert result.status == "SUCCESS"
     assert result.row_count == 1
@@ -54,7 +54,7 @@ def test_skeletonAdapterBase_registersFileRegistryWhenInjected(
 
     class BaostockSkeleton(SkeletonAdapterBase):
         source_id = "baostock"
-        supported_domains = frozenset({"market_bar_1d"})
+        supported_domains = frozenset({"cn_equity_daily_bar"})
 
     con = migrated_con(tmp_path)
     stack = file_registry_stack
@@ -64,7 +64,7 @@ def test_skeletonAdapterBase_registersFileRegistryWhenInjected(
         fetch_port=StubFetchPort(payload=stub_fetch_bytes),
         file_registry=stack["file_registry"],
     )
-    req = request_factory("baostock", "market_bar_1d")
+    req = request_factory("baostock", "cn_equity_daily_bar")
     result = adapter.fetch(req, con=con)
     con.close()
     with stack["cm"].reader() as reader:
@@ -103,7 +103,7 @@ def test_portErrors_mapStatusAndFetchLog(
 
     class BaostockSkeleton(SkeletonAdapterBase):
         source_id = "baostock"
-        supported_domains = frozenset({"market_bar_1d"})
+        supported_domains = frozenset({"cn_equity_daily_bar"})
 
     con = migrated_con(tmp_path)
     stack = file_registry_stack
@@ -112,7 +112,7 @@ def test_portErrors_mapStatusAndFetchLog(
         raw_store=stack["raw_store"],
         fetch_port=FailingPort(status=status, message=f"simulated {status}"),
     )
-    req = request_factory("baostock", "market_bar_1d")
+    req = request_factory("baostock", "cn_equity_daily_bar")
     result = adapter.fetch(req, con=con)
     assert result.status == status
     row = con.execute(
@@ -140,8 +140,8 @@ def test_baostockAdapter_matchesRegistryDomains(
         fetch_port=StubFetchPort(payload=stub_fetch_bytes),
     )
     assert adapter.source_id == "baostock"
-    assert "fundamental" in adapter.supported_domains
-    req = request_factory("baostock", "fundamental")
+    assert "cn_equity_basic_financial" in adapter.supported_domains
+    req = request_factory("baostock", "cn_equity_basic_financial")
     result = adapter.fetch(req, con=con)
     assert result.status == "SUCCESS"
 
@@ -163,7 +163,7 @@ def test_qmtAdapter_localClientMissing_returnsAuthFailed(
         raw_store=stack["raw_store"],
         fetch_port=FailingPort("AUTH_FAILED", "QMT client not running"),
     )
-    req = request_factory("qmt_xtdata", "market_bar_1m")
+    req = request_factory("qmt_xtdata", "cn_equity_minute_bar")
     result = adapter.fetch(req, con=con)
     assert result.status == "AUTH_FAILED"
     row = con.execute(
@@ -190,7 +190,7 @@ def test_qmtAdapter_stubClient_successWritesRaw(
         raw_store=stack["raw_store"],
         fetch_port=StubFetchPort(payload=stub_fetch_bytes),
     )
-    req = request_factory("qmt_xtdata", "market_bar_1m")
+    req = request_factory("qmt_xtdata", "cn_equity_minute_bar")
     result = adapter.fetch(req, con=con)
     assert result.status == "SUCCESS"
     assert result.raw_file_paths
@@ -199,8 +199,8 @@ def test_qmtAdapter_stubClient_successWritesRaw(
 @pytest.mark.parametrize(
     "adapter_cls,source_id,domain",
     [
-        ("AkshareAdapter", "akshare", "capital_flow"),
-        ("CninfoAdapter", "cninfo", "announcement"),
+        ("AkshareAdapter", "akshare", "macro_supplementary"),
+        ("CninfoAdapter", "cninfo", "cn_announcements"),
     ],
 )
 def test_vendorSkeleton_exposesSourceId(
@@ -249,7 +249,7 @@ def test_cninfoAdapter_unpublished_returnsNotPublishedYet(
         raw_store=stack["raw_store"],
         fetch_port=UnpublishedPort(),
     )
-    req = request_factory("cninfo", "announcement")
+    req = request_factory("cninfo", "cn_announcements")
     result = adapter.fetch(req, con=con)
     assert result.status == "NOT_PUBLISHED_YET"
     assert "not published" in (result.error_message or "").lower()
@@ -334,7 +334,7 @@ def test_createTestAdapter_defaultStubFetchPort_success(
 
     con = migrated_con(tmp_path)
     adapter = create_test_adapter("baostock", batch_b_registry, raw_data_root)
-    req = request_factory("baostock", "market_bar_1d")
+    req = request_factory("baostock", "cn_equity_daily_bar")
     result = adapter.fetch(req, con=con)
     assert result.status == "SUCCESS"
 
@@ -352,7 +352,7 @@ def test_skeletonAdapterBase_resolveAsOfFromEndTime(
 
     class BaostockSkeleton(SkeletonAdapterBase):
         source_id = "baostock"
-        supported_domains = frozenset({"market_bar_1d"})
+        supported_domains = frozenset({"cn_equity_daily_bar"})
 
     con = migrated_con(tmp_path)
     stack = file_registry_stack
@@ -364,7 +364,7 @@ def test_skeletonAdapterBase_resolveAsOfFromEndTime(
     req = FetchRequest(
         run_id="run-asof",
         source_id="baostock",
-        data_domain="market_bar_1d",
+        data_domain="cn_equity_daily_bar",
         end_time="2026-06-01T15:30:00Z",
     )
     result = adapter.fetch(req, con=con)
@@ -394,7 +394,7 @@ def test_yahooAdapter_createAdapter_fetchesSuccessfully(
         fetch_port=StubFetchPort(payload=stub_fetch_bytes),
         file_registry=stack["file_registry"],
     )
-    req = request_factory("yahoo_finance", "market_bar_1d")
+    req = request_factory("yahoo_finance", "us_equity_daily_bar")
     result = adapter.fetch(req, con=con)
     assert result.status == "SUCCESS"
     assert result.row_count == 1
@@ -404,11 +404,11 @@ def test_yahooAdapter_createAdapter_fetchesSuccessfully(
 @pytest.mark.parametrize(
     "source_id,domain",
     [
-        ("baostock", "market_bar_1d"),
-        ("qmt_xtdata", "market_bar_1m"),
-        ("akshare", "capital_flow"),
-        ("cninfo", "announcement"),
-        ("yahoo_finance", "market_bar_1d"),
+        ("baostock", "cn_equity_daily_bar"),
+        ("qmt_xtdata", "cn_equity_minute_bar"),
+        ("akshare", "macro_supplementary"),
+        ("cninfo", "cn_announcements"),
+        ("yahoo_finance", "us_equity_daily_bar"),
     ],
 )
 def test_createAdapter_allRegisteredSources_success(
@@ -452,7 +452,7 @@ def test_largePayload_returnsFailedAndDoesNotWriteRaw(
 
     class BaostockSkeleton(SkeletonAdapterBase):
         source_id = "baostock"
-        supported_domains = frozenset({"market_bar_1d"})
+        supported_domains = frozenset({"cn_equity_daily_bar"})
 
     huge = b"x" * 200
     con = migrated_con(tmp_path)
@@ -463,7 +463,7 @@ def test_largePayload_returnsFailedAndDoesNotWriteRaw(
         fetch_port=StubFetchPort(payload=huge),
         max_payload_bytes=100,
     )
-    req = request_factory("baostock", "market_bar_1d")
+    req = request_factory("baostock", "cn_equity_daily_bar")
     result = adapter.fetch(req, con=con)
     assert result.status == "FAILED"
     assert "payload too large" in (result.error_message or "")
@@ -483,7 +483,7 @@ def test_payloadRowCount_propagatesToFetchResultAndFetchLog(
 
     class BaostockSkeleton(SkeletonAdapterBase):
         source_id = "baostock"
-        supported_domains = frozenset({"market_bar_1d"})
+        supported_domains = frozenset({"cn_equity_daily_bar"})
 
     con = migrated_con(tmp_path)
     stack = file_registry_stack
@@ -492,7 +492,7 @@ def test_payloadRowCount_propagatesToFetchResultAndFetchLog(
         raw_store=stack["raw_store"],
         fetch_port=StubFetchPort(payload=stub_fetch_bytes, row_count=42),
     )
-    req = request_factory("baostock", "market_bar_1d")
+    req = request_factory("baostock", "cn_equity_daily_bar")
     result = adapter.fetch(req, con=con)
     assert result.row_count == 42
     row = con.execute("SELECT row_count FROM fetch_log WHERE run_id=?", [req.run_id]).fetchone()
@@ -511,7 +511,7 @@ def test_payloadSchemaHash_propagatesToFetchResultAndFetchLog(
 
     class BaostockSkeleton(SkeletonAdapterBase):
         source_id = "baostock"
-        supported_domains = frozenset({"market_bar_1d"})
+        supported_domains = frozenset({"cn_equity_daily_bar"})
 
     schema_hash = "abc123schema"
     con = migrated_con(tmp_path)
@@ -521,7 +521,7 @@ def test_payloadSchemaHash_propagatesToFetchResultAndFetchLog(
         raw_store=stack["raw_store"],
         fetch_port=StubFetchPort(payload=b'{"a":1}', schema_hash=schema_hash),
     )
-    req = request_factory("baostock", "market_bar_1d")
+    req = request_factory("baostock", "cn_equity_daily_bar")
     result = adapter.fetch(req, con=con)
     assert result.schema_hash == schema_hash
     row = con.execute("SELECT schema_hash FROM fetch_log WHERE run_id=?", [req.run_id]).fetchone()
@@ -541,7 +541,7 @@ def test_payloadRetryCount_propagatesToFetchResultAndFetchLog(
 
     class BaostockSkeleton(SkeletonAdapterBase):
         source_id = "baostock"
-        supported_domains = frozenset({"market_bar_1d"})
+        supported_domains = frozenset({"cn_equity_daily_bar"})
 
     con = migrated_con(tmp_path)
     stack = file_registry_stack
@@ -550,7 +550,7 @@ def test_payloadRetryCount_propagatesToFetchResultAndFetchLog(
         raw_store=stack["raw_store"],
         fetch_port=StubFetchPort(payload=stub_fetch_bytes, retry_count=3),
     )
-    req = request_factory("baostock", "market_bar_1d")
+    req = request_factory("baostock", "cn_equity_daily_bar")
     result = adapter.fetch(req, con=con)
     assert result.retry_count == 3
     row = con.execute("SELECT retry_count FROM fetch_log WHERE run_id=?", [req.run_id]).fetchone()
@@ -570,7 +570,7 @@ def test_fetchRecordsLatencyMsWhenPayloadOmitsIt(
 
     class BaostockSkeleton(SkeletonAdapterBase):
         source_id = "baostock"
-        supported_domains = frozenset({"market_bar_1d"})
+        supported_domains = frozenset({"cn_equity_daily_bar"})
 
     con = migrated_con(tmp_path)
     stack = file_registry_stack
@@ -579,7 +579,7 @@ def test_fetchRecordsLatencyMsWhenPayloadOmitsIt(
         raw_store=stack["raw_store"],
         fetch_port=StubFetchPort(payload=stub_fetch_bytes),
     )
-    req = request_factory("baostock", "market_bar_1d")
+    req = request_factory("baostock", "cn_equity_daily_bar")
     result = adapter.fetch(req, con=con)
     assert result.latency_ms is not None
     assert result.latency_ms >= 0
@@ -619,7 +619,7 @@ def test_resolveAsOf_isoTimestamp_normalizesToDate(
 
     class BaostockSkeleton(SkeletonAdapterBase):
         source_id = "baostock"
-        supported_domains = frozenset({"market_bar_1d"})
+        supported_domains = frozenset({"cn_equity_daily_bar"})
 
     con = migrated_con(tmp_path)
     stack = file_registry_stack
@@ -631,7 +631,7 @@ def test_resolveAsOf_isoTimestamp_normalizesToDate(
     req = FetchRequest(
         run_id="r1",
         source_id="baostock",
-        data_domain="market_bar_1d",
+        data_domain="cn_equity_daily_bar",
         end_time="2026-06-17T15:30:00Z",
     )
     result = adapter.fetch(req, con=con)
@@ -652,7 +652,7 @@ def test_resolveAsOf_invalidDate_returnsFailedFetch(
 
     class BaostockSkeleton(SkeletonAdapterBase):
         source_id = "baostock"
-        supported_domains = frozenset({"market_bar_1d"})
+        supported_domains = frozenset({"cn_equity_daily_bar"})
 
     con = migrated_con(tmp_path)
     stack = file_registry_stack
@@ -664,7 +664,7 @@ def test_resolveAsOf_invalidDate_returnsFailedFetch(
     req = FetchRequest(
         run_id="r2",
         source_id="baostock",
-        data_domain="market_bar_1d",
+        data_domain="cn_equity_daily_bar",
         end_time="not-a-date",
     )
     result = adapter.fetch(req, con=con)
