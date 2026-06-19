@@ -106,3 +106,36 @@ Closed Round2.6 Phase B contract gate: specs, contract tests, module boundary ch
 ### Next Steps
 
 - None - task complete
+
+
+## Session 4: Round2.6 routing service gate
+
+**Date**: 2026-06-19
+**Task**: Round2.6 routing service gate
+**Branch**: `06-19-round2-6-routing-service-gate`
+
+### Summary
+
+Implemented CapabilityRegistry, SourceRoutePlanner, DataSourceService; sync incremental service path; audit A1-A8 PASS; 443 tests green; spec updated.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `2e3d93b` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
