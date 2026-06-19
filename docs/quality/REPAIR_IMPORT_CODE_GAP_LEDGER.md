@@ -1,8 +1,8 @@
 # 修复包导入后 — 代码与 docs/specs 口径差台账
 
-> **状态**：closed（2026-06-19，Phase 3 完成）  
+> **状态**：**partial**（Round 2.5 代码完成；`PROC-R2.5-1` 待 merge）  
 > **性质**：本文件是**项目实施补充台账**，不在 `MANIFEST.json` 权威包内。  
-> **关闭条件**：✅ 8 项 pytest 全部绿色；`configs/` 与 Batch D `implement.jsonl` 已同步。
+> **关闭条件**：Phase 3 八项 pytest 已绿；R2.5 RESOLVED；**权威延后表** [`AUDIT_DEFERRED_REGISTRY.md`](../AUDIT_DEFERRED_REGISTRY.md) 无未登记 OPEN 项。
 
 ## 背景
 
@@ -44,4 +44,7 @@ compileall backend/scripts/tests  OK
 | 2026-06-19 | 创建台账 | Commit 1 导入；8 pytest failures 基线 |
 | 2026-06-19 | Phase 2 调和 | `agent_workflow_boundaries.md`、`verification_commands.md` |
 | 2026-06-19 | **Phase 3 关闭** | 全量 pytest 绿 |
-| 2026-06-19 | 对抗性审计后续 | 新增 `test_api_security_contract.py`（2 项）；修复包列出的其余 Round 4+ 命名测试仍为待办 |
+| 2026-06-19 | 对抗性审计后续 | 新增 `test_api_security_contract.py`（2 项）；其余命名测试分入 **Round 2.5** / Round 4+ |
+| 2026-06-19 | **→ partial** | 开启 Round 2.5；跟踪 [`ROUND2_REPAIR_ALIGNMENT_TRACKER.md`](./ROUND2_REPAIR_ALIGNMENT_TRACKER.md) |
+| 2026-06-19 | Round 4 契约表 | tracker + registry |
+| 2026-06-19 | **Issue resolution policy** | `AUDIT_DEFERRED_REGISTRY.md` 全量登记；不阻塞须带解决阶段 |

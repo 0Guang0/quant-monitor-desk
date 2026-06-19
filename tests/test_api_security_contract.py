@@ -34,3 +34,43 @@ def test_resourceLimitsApiLimits_matchApiSecurityContract() -> None:
     assert spec["api_limits"]["authority"] == "specs/contracts/api_security_contract.yaml"
     assert int(spec["api_limits"]["max_page_size"]) == expected_max
     assert int(cfg["api_limits"]["max_page_size"]) == expected_max
+
+
+def test_loadApiLimits_queryBudgetNotOverriddenByLowerPriorityYaml(tmp_path, monkeypatch) -> None:
+    import backend.app.core.api_limits as mod
+
+    security = tmp_path / "api_security_contract.yaml"
+    contract = tmp_path / "resource_limits_spec.yaml"
+    configs_root = tmp_path / "configs"
+    configs_root.mkdir()
+    config = configs_root / "resource_limits.yaml"
+
+    security.write_text(
+        "query_budget:\n"
+        "  default_page_size: 50\n"
+        "  max_page_size_absolute: 500\n"
+        "  frontend_table_default_page_size: 50\n"
+        "  agent_tool_max_rows: 500\n",
+        encoding="utf-8",
+    )
+    override_block = (
+        "api_limits:\n"
+        "  default_page_size: 999\n"
+        "  max_page_size: 9999\n"
+        "  agent_default_rows: 999\n"
+        "  agent_max_rows: 9999\n"
+        "  custom_limit: 42\n"
+    )
+    contract.write_text(override_block, encoding="utf-8")
+    config.write_text(override_block, encoding="utf-8")
+
+    monkeypatch.setattr(mod, "API_SECURITY_PATH", security)
+    monkeypatch.setattr(mod, "CONTRACT_PATH", contract)
+    monkeypatch.setattr(mod, "CONFIGS_ROOT", configs_root)
+
+    limits = mod.load_api_limits()
+    assert limits["default_page_size"] == 50
+    assert limits["max_page_size"] == 500
+    assert limits["agent_default_rows"] == 50
+    assert limits["agent_max_rows"] == 500
+    assert limits["custom_limit"] == 42

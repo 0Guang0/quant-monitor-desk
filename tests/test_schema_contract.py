@@ -63,6 +63,23 @@ def test_foundationMigrationColumns_existInSchemaContract() -> None:
 
 INGESTION_CONTRACT_TABLES = ("source_registry", "fetch_log")
 
+SYNC_AUDIT_TABLES = ("write_audit_log",)
+
+
+def test_syncAuditMigrationColumns_existInSchemaContract() -> None:
+    schema_text = SCHEMA_SQL.read_text(encoding="utf-8")
+    migration_text = (MIGRATIONS / "007_sync_constraints_audit.sql").read_text(encoding="utf-8")
+    for table in SYNC_AUDIT_TABLES:
+        mig_cols = _table_columns(migration_text, table) or set()
+        mig_cols |= _alter_add_columns(migration_text, table)
+        assert mig_cols, f"{table} missing from 007 migration"
+        contract_cols = _table_columns(schema_text, table) or set()
+        contract_cols |= _alter_add_columns(schema_text, table)
+        assert contract_cols, f"{table} missing from schema.sql"
+        assert mig_cols.issubset(contract_cols), (
+            f"{table}: migration columns missing from schema.sql: {mig_cols - contract_cols}"
+        )
+
 
 def test_ingestionMigrationColumns_existInSchemaContract() -> None:
     schema_text = SCHEMA_SQL.read_text(encoding="utf-8")

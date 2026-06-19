@@ -10,6 +10,7 @@ FetchStatus = Literal[
     "SUCCESS",
     "EMPTY_RESPONSE",
     "NOT_PUBLISHED_YET",
+    "DISABLED_SOURCE",
     "AUTH_FAILED",
     "RATE_LIMITED",
     "NETWORK_ERROR",
@@ -27,7 +28,7 @@ _FAILURE_STATUSES = frozenset(
     }
 )
 
-_NO_EVIDENCE_STATUSES = frozenset({"EMPTY_RESPONSE", "NOT_PUBLISHED_YET"})
+_NO_EVIDENCE_STATUSES = frozenset({"EMPTY_RESPONSE", "NOT_PUBLISHED_YET", "DISABLED_SOURCE"})
 
 
 class FetchRequest(BaseModel):

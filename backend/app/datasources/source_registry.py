@@ -39,6 +39,10 @@ class SourceDisabledError(RuntimeError):
     """Raised when source is disabled."""
 
 
+class DomainDisabledError(RuntimeError):
+    """Raised when a data domain or primary source is disabled by registry policy."""
+
+
 class DomainNotAllowedError(ValueError):
     """Raised when data_domain is not allowed for source."""
 
@@ -73,6 +77,7 @@ class DomainRoleBinding:
     validation_source_id: str | None
     fallback_policy: str
     domain_enabled_by_default: bool = True
+    fallback_source_ids: tuple[str, ...] = ()
 
 
 def _allowed_domains_to_db(domains: frozenset[str]) -> str:
@@ -233,24 +238,25 @@ def _normalize_validation_source(raw: object, data_domain: str) -> str | None:
     return str(raw)
 
 
-def _normalize_fallback_policy(roles: dict, data_domain: str) -> str:
+def _normalize_fallback_policy(roles: dict, data_domain: str) -> tuple[str, tuple[str, ...]]:
     raw = roles.get("fallback_policy", "")
     if isinstance(raw, str):
         if raw in VALID_FALLBACK_POLICIES:
-            return raw
+            return raw, ()
         if not raw:
-            return "mark_missing"
+            return "mark_missing", ()
         raise InvalidRegistryError(f"domain_roles.{data_domain}.fallback_policy invalid: {raw!r}")
     if isinstance(raw, list):
-        if not raw:
+        source_ids = tuple(str(item) for item in raw if item is not None)
+        if not source_ids:
             disabled = roles.get("disabled_until_configured")
             domain_off = roles.get("domain_enabled_by_default") is False
             if disabled or domain_off:
-                return "skip_until_next_publish"
-            return "mark_missing"
+                return "skip_until_next_publish", ()
+            return "mark_missing", ()
         if roles.get("disabled_fallback_behavior") or roles.get("fallback_requires_source_enabled"):
-            return "skip_until_next_publish"
-        return "use_validation_source_with_flag"
+            return "skip_until_next_publish", source_ids
+        return "use_validation_source_with_flag", source_ids
     raise InvalidRegistryError(
         f"domain_roles.{data_domain}.fallback_policy must be string or list, "
         f"got {type(raw).__name__}"
@@ -280,12 +286,13 @@ def _parse_domain_role_binding(data_domain: str, roles: dict) -> DomainRoleBindi
         raise InvalidRegistryError(f"domain_roles.{data_domain}.primary is required")
     primary_id = str(primary)
     validation_id = _normalize_validation_source(roles.get("validation"), data_domain)
-    fallback_policy = _normalize_fallback_policy(roles, data_domain)
+    fallback_policy, fallback_source_ids = _normalize_fallback_policy(roles, data_domain)
     return DomainRoleBinding(
         primary_source_id=primary_id,
         validation_source_id=validation_id,
         fallback_policy=fallback_policy,
         domain_enabled_by_default=_domain_enabled_by_default(roles),
+        fallback_source_ids=fallback_source_ids,
     )
 
 
@@ -415,6 +422,30 @@ class SourceRegistry:
             raise DomainNotAllowedError(
                 f"source {source_id!r} does not allow domain {data_domain!r}"
             )
+
+    def assert_domain_schedulable(self, data_domain: str) -> None:
+        """Raise when repair-package D-11 marks domain or primary source disabled."""
+        if data_domain not in self._domain_roles:
+            return
+        binding = self.get_domain_roles(data_domain)
+        if not binding.domain_enabled_by_default:
+            raise DomainDisabledError(
+                f"domain {data_domain!r} is disabled until configured (DISABLED_SOURCE)"
+            )
+        primary = self.get(binding.primary_source_id)
+        if not primary.is_enabled:
+            raise DomainDisabledError(
+                f"primary source {binding.primary_source_id!r} disabled for "
+                f"domain {data_domain!r} (DISABLED_SOURCE)"
+            )
+
+    def disabled_fallback_source_ids(self, data_domain: str) -> frozenset[str]:
+        binding = self.get_domain_roles(data_domain)
+        return frozenset(
+            source_id
+            for source_id in binding.fallback_source_ids
+            if not self.get(source_id).is_enabled
+        )
 
     def sync_to_db(self, con, *, tombstone_missing: bool = True) -> int:
         """Upsert all YAML sources into source_registry.

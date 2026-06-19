@@ -14,6 +14,7 @@ _ERROR_TYPE_MAP: dict[str, str | None] = {
     "SUCCESS": None,
     "EMPTY_RESPONSE": "empty",
     "NOT_PUBLISHED_YET": "not_published",
+    "DISABLED_SOURCE": "disabled_source",
     "AUTH_FAILED": "auth",
     "RATE_LIMITED": "rate_limit",
     "NETWORK_ERROR": "network",

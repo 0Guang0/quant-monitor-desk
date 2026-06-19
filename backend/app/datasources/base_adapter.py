@@ -9,7 +9,11 @@ from time import perf_counter
 from backend.app.datasources.exceptions import SourceMismatchError
 from backend.app.datasources.fetch_log import FetchLogWriter
 from backend.app.datasources.fetch_result import FetchRequest, FetchResult
-from backend.app.datasources.source_registry import DomainNotAllowedError, SourceRegistry
+from backend.app.datasources.source_registry import (
+    DomainDisabledError,
+    DomainNotAllowedError,
+    SourceRegistry,
+)
 
 
 def _utc_now_iso() -> str:
@@ -36,8 +40,28 @@ class BaseDataAdapter(ABC):
                 f"request source_id {req.source_id!r} does not match "
                 f"adapter source_id {self.source_id!r}"
             )
-        self.registry.assert_enabled(req.source_id)
+        try:
+            self.registry.assert_domain_schedulable(req.data_domain)
+        except DomainDisabledError as exc:
+            result = FetchResult(
+                run_id=req.run_id,
+                source_id=self.source_id,
+                data_domain=req.data_domain,
+                status="DISABLED_SOURCE",
+                fetch_time=_utc_now_iso(),
+                error_message=str(exc),
+            )
+            self._log_writer.write(
+                con,
+                result,
+                req=req,
+                job_id=job_id,
+                market_id=req.market_id,
+                instrument_id=req.instrument_id,
+            )
+            return result
         self.registry.assert_domain_allowed(req.source_id, req.data_domain)
+        self.registry.assert_enabled(req.source_id)
         if req.data_domain not in self.supported_domains:
             raise DomainNotAllowedError(
                 f"adapter {self.source_id!r} does not support domain {req.data_domain!r}"
