@@ -8,6 +8,7 @@ from tests.service_path_support import production_route_planner
 def _planner():
     return production_route_planner()
 
+
 def test_qmtDisabled_routePlanShowsSkipReason() -> None:
     planner = _planner()
     plan = planner.plan(
@@ -22,11 +23,7 @@ def test_qmtDisabled_routePlanShowsSkipReason() -> None:
     assert qmt.skip_reason is not None
     assert qmt.capability_declared is True
     lowered = (qmt.skip_reason or "").lower()
-    assert (
-        "disabled" in lowered
-        or "authorization" in lowered
-        or "platform" in lowered
-    )
+    assert "disabled" in lowered or "authorization" in lowered or "platform" in lowered
 
 
 def test_noAvailableSource_hasNoSelectedSource() -> None:
@@ -100,6 +97,4 @@ def test_userAuthRequired_routeStatusWhenAuthorizationMissing() -> None:
     assert plan.selected_source_id is None
     xq = next(c for c in plan.candidates if c.source_id == "qmt_xqshare")
     assert xq.skip_reason is not None
-    assert "user_authorization" in xq.skip_reason or xq.skip_reason.startswith(
-        "missing_env:"
-    )
+    assert "user_authorization" in xq.skip_reason or xq.skip_reason.startswith("missing_env:")

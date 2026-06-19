@@ -5,7 +5,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import yaml
-
 from tests.contract_gate_support import PROJECT_ROOT, load_checker_module
 
 CONTRACT_PATH = PROJECT_ROOT / "specs/contracts/module_boundary_contract.yaml"
@@ -44,7 +43,13 @@ def test_productionBackend_passesModuleBoundaryScan() -> None:
 
 def test_layerModules_forbidAdapterImports() -> None:
     contract = load_contract()
-    for layer in ("layer1_axes", "layer2_sensors", "layer3_chains", "layer4_markets", "layer5_evidence"):
+    for layer in (
+        "layer1_axes",
+        "layer2_sensors",
+        "layer3_chains",
+        "layer4_markets",
+        "layer5_evidence",
+    ):
         rules = (contract.get("modules") or {}).get(layer) or {}
         forbidden = rules.get("must_not_import") or []
         assert any("datasources.adapters" in str(r) for r in forbidden), layer

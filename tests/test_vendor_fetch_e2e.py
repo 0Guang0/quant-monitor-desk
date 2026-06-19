@@ -108,9 +108,7 @@ def test_vendorFixtureFetch_e2eOrchestratorPath(
     assert clean_count == 1
 
 
-def test_vendorFixtureFetch_e2eThroughDataSourceServicePath(
-    tmp_path: Path, monkeypatch
-) -> None:
+def test_vendorFixtureFetch_e2eThroughDataSourceServicePath(tmp_path: Path, monkeypatch) -> None:
     """Service-path E2E: production DataSourceService.fetch → validation/write."""
     from backend.app.datasources.service import DataSourceService
     from backend.app.sync.event_payload import parse_event_payload
@@ -176,9 +174,7 @@ def test_vendorFixtureFetch_e2eThroughDataSourceServicePath(
         partition_key=None,
         trigger_reason=None,
     )
-    result = orch.run_incremental(
-        spec, datasource_service=service, clean_table=CLEAN_TABLE
-    )
+    result = orch.run_incremental(spec, datasource_service=service, clean_table=CLEAN_TABLE)
     assert result.status == "COMPLETED"
     with cm.writer() as con:
         route_row = con.execute(

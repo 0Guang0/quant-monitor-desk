@@ -122,9 +122,7 @@ class DataSyncOrchestrator:
                     con=con,
                     job_id=job_id,
                     operation=operation,
-                    on_enter_fetching=lambda: jobs.transition(
-                        job_id, "FETCHING", con=con
-                    ),
+                    on_enter_fetching=lambda: jobs.transition(job_id, "FETCHING", con=con),
                 )
 
             fetch_callable = _service_fetch

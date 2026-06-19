@@ -28,11 +28,12 @@ SCHEMA_KEYS = (
 )
 
 
-def build_route_plan_payload(plan: "SourceRoutePlan") -> str:
+def build_route_plan_payload(plan: SourceRoutePlan) -> str:
     """Serialize SourceRoutePlan for job_event_log.payload_json."""
     payload = plan.to_payload_dict()
     payload["decision"] = "route_plan"
     return build_event_payload(**payload)
+
 
 _PARSE_ERROR_KEY = "_parse_error"
 

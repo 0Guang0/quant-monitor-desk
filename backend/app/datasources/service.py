@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING
 
 from backend.app.config import DATA_ROOT
 from backend.app.core.resource_guard import Decision, ResourceGuard, format_pause_event
@@ -157,9 +158,7 @@ class DataSourceService:
 
         selected = plan.selected_source_id
         try:
-            self._capability_registry.assert_source_domain_operation(
-                selected, req.data_domain, op
-            )
+            self._capability_registry.assert_source_domain_operation(selected, req.data_domain, op)
         except (UnknownCapabilityError, OperationDisabledError) as exc:
             result = FetchResult(
                 run_id=req.run_id,

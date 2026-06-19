@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import ast
 import importlib.util
-import os
 import platform
 import re
 from pathlib import Path
@@ -102,4 +101,3 @@ def platform_key() -> str:
     if plat == "darwin":
         return "macos"
     return "linux"
-

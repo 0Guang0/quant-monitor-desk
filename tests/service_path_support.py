@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -64,9 +63,7 @@ def make_staging_baostock_adapter_class(staging_table: str) -> type[SkeletonAdap
                         "baostock",
                     ],
                 )
-                return result.model_copy(
-                    update={"staging_table": staging_table, "row_count": 1}
-                )
+                return result.model_copy(update={"staging_table": staging_table, "row_count": 1})
             return result
 
     return StagingBaostockAdapter

@@ -29,9 +29,7 @@ def _collect_scale_metrics(data_root: Path, *, guard_exercised: bool) -> dict[st
         "resource_guard_log_rows": 0,
         "route_plan_events": 0,
         "sync_job_rows": 0,
-        "shard_count_benchmark": len(
-            plan_backfill_shards(date(2026, 1, 1), date(2026, 3, 31))
-        ),
+        "shard_count_benchmark": len(plan_backfill_shards(date(2026, 1, 1), date(2026, 3, 31))),
         "guard_status": "observable" if guard_exercised else "not_exercised",
     }
     db_path = data_root / "duckdb" / "quant_monitor.duckdb"
@@ -43,9 +41,7 @@ def _collect_scale_metrics(data_root: Path, *, guard_exercised: bool) -> dict[st
 
         con = duckdb.connect(str(db_path), read_only=True)
         try:
-            metrics["fetch_log_rows"] = con.execute(
-                "SELECT COUNT(*) FROM fetch_log"
-            ).fetchone()[0]
+            metrics["fetch_log_rows"] = con.execute("SELECT COUNT(*) FROM fetch_log").fetchone()[0]
             metrics["fetch_log_row_count_sum"] = con.execute(
                 "SELECT COALESCE(SUM(row_count), 0) FROM fetch_log"
             ).fetchone()[0]
@@ -57,9 +53,9 @@ def _collect_scale_metrics(data_root: Path, *, guard_exercised: bool) -> dict[st
                 SELECT COUNT(*) FROM job_event_log WHERE event_type = 'ROUTE_PLAN'
                 """
             ).fetchone()[0]
-            metrics["sync_job_rows"] = con.execute(
-                "SELECT COUNT(*) FROM data_sync_job"
-            ).fetchone()[0]
+            metrics["sync_job_rows"] = con.execute("SELECT COUNT(*) FROM data_sync_job").fetchone()[
+                0
+            ]
         finally:
             con.close()
     except Exception as exc:  # pragma: no cover - diagnostic only

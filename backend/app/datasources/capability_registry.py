@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-
 from backend.app.config import PROJECT_ROOT
 
 # Legacy adapter domain names mapped to source_registry / capability domains.
@@ -80,13 +79,9 @@ class SourceCapabilityRegistry:
         registry_domain = self.resolve_registry_domain(source_id, domain)
         entry = self.sources.get(source_id)
         if entry is None:
-            raise UnknownCapabilityError(
-                f"source {source_id!r} has no capability declaration"
-            )
+            raise UnknownCapabilityError(f"source {source_id!r} has no capability declaration")
         if entry.get("status") == "proposed_disabled_source":
-            raise OperationDisabledError(
-                f"source {source_id!r} is proposed_disabled_source"
-            )
+            raise OperationDisabledError(f"source {source_id!r} is proposed_disabled_source")
         domains = entry.get("domains") or {}
         domain_cfg = domains.get(registry_domain)
         if domain_cfg is None:
@@ -97,8 +92,7 @@ class SourceCapabilityRegistry:
         op_cfg = operations.get(operation)
         if op_cfg is None:
             raise UnknownCapabilityError(
-                f"operation {operation!r} not declared for "
-                f"{source_id!r}/{registry_domain!r}"
+                f"operation {operation!r} not declared for {source_id!r}/{registry_domain!r}"
             )
         if op_cfg.get("enabled_by_default") is False:
             raise OperationDisabledError(

@@ -9,10 +9,7 @@ import yaml
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 CLI_CONTRACT = PROJECT_ROOT / "specs/contracts/data_cli_contract.yaml"
 ERROR_GUIDE = PROJECT_ROOT / "docs/ops/ERROR_CODE_GUIDE.md"
-TASK2_DIR = (
-    PROJECT_ROOT
-    / ".trellis/tasks/archive/2026-06/06-19-round2-6-routing-service-gate"
-)
+TASK2_DIR = PROJECT_ROOT / ".trellis/tasks/archive/2026-06/06-19-round2-6-routing-service-gate"
 TASK2_MASTER = TASK2_DIR / "MASTER.plan.md"
 TASK2_IMPLEMENT = TASK2_DIR / "implement.jsonl"
 

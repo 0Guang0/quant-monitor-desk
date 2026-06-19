@@ -313,9 +313,7 @@ def test_serviceDisabledRoute_writesFetchLog(tmp_path: Path, monkeypatch) -> Non
     assert log_row[1] == 0
 
 
-def test_serviceGuardBlocked_emitsResourceGuardPausedRoutePlan(
-    tmp_path: Path, monkeypatch
-) -> None:
+def test_serviceGuardBlocked_emitsResourceGuardPausedRoutePlan(tmp_path: Path, monkeypatch) -> None:
     from backend.app.core.resource_guard import ResourceSnapshot
 
     snap = ResourceSnapshot(
@@ -399,9 +397,7 @@ def test_serviceGuardBlocked_emitsResourceGuardPausedRoutePlan(
     assert log_count == 0
 
 
-def test_serviceUserAuthRequiredRoute_writesDisabledFetchLog(
-    tmp_path: Path, monkeypatch
-) -> None:
+def test_serviceUserAuthRequiredRoute_writesDisabledFetchLog(tmp_path: Path, monkeypatch) -> None:
     from backend.app.datasources.route_models import SourceRouteCandidate, SourceRoutePlan
 
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
@@ -473,9 +469,7 @@ def test_serviceUserAuthRequiredRoute_writesDisabledFetchLog(
             """,
             [job_id],
         ).fetchone()
-        log_row = con.execute(
-            "SELECT status FROM fetch_log WHERE job_id = ?", [job_id]
-        ).fetchone()
+        log_row = con.execute("SELECT status FROM fetch_log WHERE job_id = ?", [job_id]).fetchone()
     assert route_row is not None
     payload = parse_event_payload(route_row[0])
     assert payload.get("route_status") == "USER_AUTH_REQUIRED"

@@ -188,9 +188,7 @@ class IncrementalJobRunner(_PipelineMixin):
             try:
                 with cm.writer() as con:
                     if fetch_operation is not None:
-                        fetch_result = fetch_callable(
-                            req, con, job_id, operation=fetch_operation
-                        )
+                        fetch_result = fetch_callable(req, con, job_id, operation=fetch_operation)
                     else:
                         fetch_result = fetch_callable(req, con, job_id)
             except Exception as exc:

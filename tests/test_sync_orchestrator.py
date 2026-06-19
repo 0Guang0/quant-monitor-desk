@@ -642,9 +642,7 @@ def test_plannedJobWritesRoutePlanBeforeFetching(tmp_path, monkeypatch) -> None:
         partition_key=None,
         trigger_reason=None,
     )
-    result = orch.run_incremental(
-        spec, datasource_service=service, clean_table="clean_route"
-    )
+    result = orch.run_incremental(spec, datasource_service=service, clean_table="clean_route")
     assert result.status == "COMPLETED"
     with orch._cm.writer() as con:
         rows = con.execute(
@@ -706,9 +704,7 @@ def test_servicePath_guardBlocked_setsFailedRetryableWithFormattedMessage(
         partition_key=None,
         trigger_reason=None,
     )
-    result = orch.run_incremental(
-        spec, datasource_service=service, clean_table="clean_guard"
-    )
+    result = orch.run_incremental(spec, datasource_service=service, clean_table="clean_guard")
     assert result.status == "FAILED_RETRYABLE"
     assert "RESOURCE_GUARD_PAUSED" in (result.message or "")
     with orch._cm.writer() as con:
@@ -730,9 +726,7 @@ def test_servicePath_guardBlocked_setsFailedRetryableWithFormattedMessage(
     assert fetch_log_count == 0
 
 
-def test_servicePath_disabledRoute_setsFailedFinalWithFetchLog(
-    tmp_path, monkeypatch
-) -> None:
+def test_servicePath_disabledRoute_setsFailedFinalWithFetchLog(tmp_path, monkeypatch) -> None:
     from backend.app.core.resource_guard import Decision, ResourceGuard
     from backend.app.datasources.route_models import SourceRouteCandidate, SourceRoutePlan
     from backend.app.datasources.service import DataSourceService
@@ -786,9 +780,7 @@ def test_servicePath_disabledRoute_setsFailedFinalWithFetchLog(
         partition_key=None,
         trigger_reason=None,
     )
-    result = orch.run_incremental(
-        spec, datasource_service=service, clean_table="clean_disabled"
-    )
+    result = orch.run_incremental(spec, datasource_service=service, clean_table="clean_disabled")
     assert result.status == "FAILED_FINAL"
     with orch._cm.writer() as con:
         log_row = con.execute(

@@ -7,10 +7,8 @@ import pkgutil
 from pathlib import Path
 from typing import Any
 
-import yaml
-
 import pytest
-
+import yaml
 from backend.app.datasources.capability_registry import (
     ADAPTER_DOMAIN_COMPATIBILITY_MAP,
     OperationDisabledError,
@@ -120,9 +118,7 @@ def test_adapterSupportedDomains_reconciledToCapabilityRegistryOrCompatibilityMa
 
 
 def test_compatibilityMap_doesNotEnableNewSources() -> None:
-    registry_ids = {
-        s["source_id"] for s in load_source_registry().get("sources") or []
-    }
+    registry_ids = {s["source_id"] for s in load_source_registry().get("sources") or []}
     assert set(ADAPTER_DOMAIN_COMPATIBILITY_MAP.keys()).issubset(registry_ids)
 
 

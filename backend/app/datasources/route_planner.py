@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-
 from backend.app.config import PROJECT_ROOT
 from backend.app.datasources.capability_registry import SourceCapabilityRegistry
 from backend.app.datasources.route_models import SourceRouteCandidate, SourceRoutePlan
