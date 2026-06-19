@@ -101,12 +101,14 @@ def test_validatePlanFreeze_failsWithoutOriginalPlanTrace(tmp_path: Path) -> Non
     assert any("original-plan-trace" in e for e in errors)
 
 
-def test_validatePlanFreeze_failsWithoutGlobalInImplementJsonl(tmp_path: Path) -> None:
+def test_validatePlanFreeze_doesNotRequireGlobalOriginalTaskRulesInImplementJsonl(
+    tmp_path: Path,
+) -> None:
     _minimal_master(tmp_path)
     (tmp_path / "implement.jsonl").write_text('{"file": "MASTER.plan.md"}\n', encoding="utf-8")
     _plan_boot_artifacts(tmp_path)
     errors = validate_plan_freeze(tmp_path, _REPO)
-    assert any("GLOBAL_EXECUTION_RULES" in e for e in errors)
+    assert not any("GLOBAL_EXECUTION_RULES" in e for e in errors)
 
 
 def test_validatePlanFreeze_passesWithArtifacts(tmp_path: Path) -> None:

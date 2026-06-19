@@ -1,4 +1,12 @@
-"""Validate Plan freeze (protocol v2) and per-phase checkpoints."""
+"""Validate Plan freeze and per-phase checkpoints.
+
+This validator follows the three-layer context model:
+Design/rules/contracts/definitions -> docs/implementation_tasks original task cards
+-> .trellis/tasks frozen plans and manifests -> Execute/Audit/Repair.
+
+Original task cards are Plan-phase inputs. Execute/Audit manifests should list only the
+frozen plan plus source documents that cannot be safely summarized.
+"""
 
 from __future__ import annotations
 
@@ -9,13 +17,6 @@ from pathlib import Path
 import yaml
 
 _BOOT_MARKER = "Phase P0 complete"
-_GLOBAL_IMPL_PATHS = (
-    "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md",
-    "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md",
-    "docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md",
-    "docs/implementation_tasks/GLOBAL_TASK_TEMPLATE.md",
-)
-_GLOBAL_IMPL_README = "docs/implementation_tasks/README.md"
 
 
 def _extract_section(text: str, header_prefix: str) -> str:
@@ -36,23 +37,7 @@ def _extract_section(text: str, header_prefix: str) -> str:
     return "\n".join(lines[start:end])
 
 
-def _first_jsonl_file(jsonl_path: Path) -> str | None:
-    try:
-        for line in jsonl_path.read_text(encoding="utf-8").splitlines():
-            line = line.strip()
-            if not line:
-                continue
-            item = json.loads(line)
-            path = item.get("file") or item.get("path")
-            if path:
-                return str(path)
-    except (json.JSONDecodeError, OSError):
-        return None
-    return None
-
-
 def _load_plan_paths(repo_root: Path) -> dict:
-    """Load plan-skill-paths.yaml for phase/skill validation."""
     path = repo_root / ".trellis/spec/guides/plan-skill-paths.yaml"
     if not path.is_file():
         return {}
@@ -72,8 +57,7 @@ def _load_plan_paths(repo_root: Path) -> dict:
     return out
 
 
-def _load_skill_reads(task_dir: Path) -> list[dict]:
-    path = task_dir / "research" / "plan-skill-reads.jsonl"
+def _load_jsonl_entries(path: Path) -> list[dict]:
     if not path.is_file():
         return []
     rows: list[dict] = []
@@ -86,34 +70,31 @@ def _load_skill_reads(task_dir: Path) -> list[dict]:
         except json.JSONDecodeError:
             continue
     return rows
+
+
+def _load_skill_reads(task_dir: Path) -> list[dict]:
+    return _load_jsonl_entries(task_dir / "research" / "plan-skill-reads.jsonl")
 
 
 def _skills_from_reads(reads: list[dict]) -> set[str]:
     return {str(r.get("skill", "")).strip() for r in reads if r.get("skill")}
 
 
-def _load_impl_jsonl_entries(task_dir: Path) -> list[dict]:
-    path = task_dir / "implement.jsonl"
-    if not path.is_file():
-        return []
-    rows: list[dict] = []
-    for line in path.read_text(encoding="utf-8").splitlines():
-        line = line.strip()
-        if not line or line.startswith("#"):
-            continue
-        try:
-            rows.append(json.loads(line))
-        except json.JSONDecodeError:
-            continue
-    return rows
-
-
-def _impl_path_from_entry(entry: dict) -> str | None:
+def _path_from_entry(entry: dict) -> str | None:
     for key in ("path", "file"):
         val = entry.get(key)
         if val:
             return str(val).replace("\\", "/")
     return None
+
+
+def _paths_from_jsonl(path: Path) -> list[str]:
+    return [p for p in (_path_from_entry(e) for e in _load_jsonl_entries(path)) if p]
+
+
+def _first_jsonl_file(jsonl_path: Path) -> str | None:
+    paths = _paths_from_jsonl(jsonl_path)
+    return paths[0] if paths else None
 
 
 def _master_analysis_waiver(task_dir: Path) -> bool:
@@ -124,39 +105,51 @@ def _master_analysis_waiver(task_dir: Path) -> bool:
     return bool(re.search(r"analysis_waiver\s*\|\s*`?true`?", text, re.I))
 
 
-def _task_card_ids_from_master(task_dir: Path) -> set[str]:
-    master = task_dir / "MASTER.plan.md"
-    if not master.is_file():
-        return set()
-    text = master.read_text(encoding="utf-8")
-    return set(re.findall(r"\b(\d{3})_implement_", text))
+def _find_repo_root(task_dir: Path) -> Path:
+    repo_root = task_dir
+    while repo_root.name and not (repo_root / ".trellis").is_dir():
+        if repo_root.parent == repo_root:
+            break
+        repo_root = repo_root.parent
+    return repo_root
 
 
-def _task_card_ids_from_trace(task_dir: Path) -> set[str]:
+def _path_exists(task_dir: Path, repo_root: Path, rel: str) -> bool:
+    norm = rel.replace("\\", "/")
+    if norm.startswith((".trellis/", ".cursor/")):
+        return True
+    if norm.startswith(("docs/", "specs/", "backend/", "frontend/", "scripts/", "tests/", "configs/")):
+        return (repo_root / norm).is_file() or (repo_root / norm).is_dir()
+    return (task_dir / norm).is_file() or (task_dir / norm).is_dir()
+
+
+def _is_original_task_card(path: str) -> bool:
+    norm = path.replace("\\", "/")
+    return norm.startswith("docs/implementation_tasks/") and bool(
+        re.search(r"/\d{3}[A-Z]?_", norm)
+    )
+
+
+def _strict_source_context_enabled(task_dir: Path) -> bool:
+    data_path = task_dir / "task.json"
+    if not data_path.is_file():
+        return False
+    try:
+        data = json.loads(data_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return False
+    meta = data.get("meta") or {}
+    return str(meta.get("context_bridge_version", "")) == "1"
+
+
+def _master_allows_original_task_cards(master_text: str) -> bool:
+    return "must read original" in master_text or "必须读原文" in master_text
+
+
+def _validate_original_plan_artifacts(task_dir: Path, errors: list[str]) -> None:
     trace = task_dir / "research" / "original-plan-trace.md"
     if not trace.is_file():
-        return set()
-    return set(re.findall(r"\b(\d{3})_implement_", trace.read_text(encoding="utf-8")))
-
-
-def _required_task_card_ids(task_dir: Path) -> set[str]:
-    ids = _task_card_ids_from_master(task_dir) | _task_card_ids_from_trace(task_dir)
-    if ids:
-        return ids
-    for entry in _load_impl_jsonl_entries(task_dir):
-        path = _impl_path_from_entry(entry)
-        if not path:
-            continue
-        m = re.search(r"/(\d{3})_implement_", path.replace("\\", "/"))
-        if m:
-            ids.add(m.group(1))
-    return ids
-
-
-def _validate_original_plan_artifacts(task_dir: Path, repo_root: Path, errors: list[str]) -> None:
-    trace = task_dir / "research" / "original-plan-trace.md"
-    if not trace.is_file():
-        errors.append("Missing research/original-plan-trace.md (Plan P0o original plan trace)")
+        errors.append("Missing research/original-plan-trace.md (Plan P0 original plan trace)")
 
     boot = task_dir / "research" / "plan-boot.md"
     if boot.is_file():
@@ -171,76 +164,58 @@ def _validate_original_plan_artifacts(task_dir: Path, repo_root: Path, errors: l
             errors.append("MASTER.plan.md missing original plan linkage (原计划 / §1.3)")
         if "### 1.3" not in text and "§1.3" not in text:
             errors.append("MASTER.plan.md missing §1.3 original plan merge table")
+        if _strict_source_context_enabled(task_dir) and "Source Context Index" not in text:
+            errors.append("MASTER.plan.md missing Source Context Index")
 
 
-def _validate_implement_jsonl_original_plan(
-    task_dir: Path, repo_root: Path, errors: list[str]
-) -> None:
+def _validate_implement_jsonl_manifest(task_dir: Path, repo_root: Path, errors: list[str]) -> None:
     impl_jsonl = task_dir / "implement.jsonl"
     if not impl_jsonl.is_file():
         return
 
-    entries = _load_impl_jsonl_entries(task_dir)
-    paths = [_impl_path_from_entry(e) for e in entries]
-    paths = [p for p in paths if p]
+    paths = _paths_from_jsonl(impl_jsonl)
+    if not paths:
+        errors.append("implement.jsonl has no readable file/path entries")
+        return
 
-    if not any(p.replace("\\", "/") == _GLOBAL_IMPL_README for p in paths):
-        errors.append(f"implement.jsonl missing required index: {_GLOBAL_IMPL_README}")
+    first = paths[0].replace("\\", "/")
+    if "MASTER.plan.md" not in first:
+        errors.append(f"implement.jsonl first entry must be MASTER.plan.md (got {first!r})")
 
-    for global_rel in _GLOBAL_IMPL_PATHS:
-        if not any(p.replace("\\", "/") == global_rel for p in paths):
-            errors.append(
-                f"implement.jsonl missing required global rule: {global_rel}"
-            )
-        elif not (repo_root / global_rel).is_file():
-            errors.append(f"implement.jsonl references missing file: {global_rel}")
-
-    required_ids = _required_task_card_ids(task_dir)
-    if not required_ids:
-        errors.append(
-            "implement.jsonl missing original task card "
-            "(docs/implementation_tasks/.../NNN_*.md)"
-        )
-    else:
-        for card_id in sorted(required_ids):
-            pattern = f"/{card_id}_implement_"
-            if not any(pattern in p.replace("\\", "/") for p in paths):
-                errors.append(
-                    f"implement.jsonl missing task card for {card_id} "
-                    f"(expected path containing {pattern})"
-                )
+    master = task_dir / "MASTER.plan.md"
+    master_text = master.read_text(encoding="utf-8") if master.is_file() else ""
+    allow_original = _master_allows_original_task_cards(master_text)
 
     for rel in paths:
         norm = rel.replace("\\", "/")
-        if norm.startswith("docs/implementation_tasks/") and not (
-            repo_root / norm
-        ).is_file():
+        if _strict_source_context_enabled(task_dir) and _is_original_task_card(norm) and not allow_original:
+            errors.append(
+                f"implement.jsonl references original task card without explicit MASTER must-read marker: {norm}"
+            )
+        if not _path_exists(task_dir, repo_root, norm):
             errors.append(f"implement.jsonl references missing file: {norm}")
 
 
-def _validate_check_jsonl_original_plan(
-    task_dir: Path, repo_root: Path, errors: list[str]
-) -> None:
-    check_path = task_dir / "check.jsonl"
-    if not check_path.is_file():
-        return
-    entries = []
-    for line in check_path.read_text(encoding="utf-8").splitlines():
-        line = line.strip()
-        if not line:
+def _validate_audit_manifest(task_dir: Path, repo_root: Path, errors: list[str]) -> None:
+    audit_plan = task_dir / "AUDIT.plan.md"
+    audit_text = audit_plan.read_text(encoding="utf-8") if audit_plan.is_file() else ""
+    if _strict_source_context_enabled(task_dir) and audit_plan.is_file() and "Audit Source Trace" not in audit_text:
+        errors.append("AUDIT.plan.md missing Audit Source Trace")
+
+    for manifest_name in ("audit.jsonl", "check.jsonl"):
+        manifest = task_dir / manifest_name
+        if not manifest.is_file():
             continue
-        try:
-            entries.append(json.loads(line))
-        except json.JSONDecodeError:
-            continue
-    paths = []
-    for entry in entries:
-        for key in ("path", "file"):
-            if entry.get(key):
-                paths.append(str(entry[key]).replace("\\", "/"))
-    for global_rel in _GLOBAL_IMPL_PATHS:
-        if not any(p == global_rel for p in paths):
-            errors.append(f"check.jsonl missing required global rule: {global_rel}")
+        paths = _paths_from_jsonl(manifest)
+        allow_original = "must read original" in audit_text or "必须读原文" in audit_text
+        for rel in paths:
+            norm = rel.replace("\\", "/")
+            if _strict_source_context_enabled(task_dir) and _is_original_task_card(norm) and not allow_original:
+                errors.append(
+                    f"{manifest_name} references original task card without explicit AUDIT.plan must-read marker: {norm}"
+                )
+            if not _path_exists(task_dir, repo_root, norm):
+                errors.append(f"{manifest_name} references missing file: {norm}")
 
 
 def _validate_plan_freeze_template(task_dir: Path, errors: list[str]) -> None:
@@ -256,7 +231,7 @@ def _validate_plan_freeze_template(task_dir: Path, errors: list[str]) -> None:
 
 
 def validate_plan_phase(task_dir: Path, phase: str, *, repo_root: Path | None = None) -> list[str]:
-    """Validate one Plan phase checkpoint (protocol v2)."""
+    """Validate one Plan phase checkpoint."""
     if repo_root is None:
         repo_root = _find_repo_root(task_dir)
 
@@ -278,9 +253,7 @@ def validate_plan_phase(task_dir: Path, phase: str, *, repo_root: Path | None = 
 
     skills_any = phase_cfg.get("skills_any", [])
     if skills_any and not read_skills.intersection(set(skills_any)):
-        errors.append(
-            f"plan-skill-reads.jsonl missing one of {skills_any} for phase {phase}"
-        )
+        errors.append(f"plan-skill-reads.jsonl missing one of {skills_any} for phase {phase}")
 
     for rel in phase_cfg.get("artifacts", []):
         if not (task_dir / rel).is_file():
@@ -309,15 +282,6 @@ def validate_plan_phase(task_dir: Path, phase: str, *, repo_root: Path | None = 
         validate_manifest_phase_5c(task_dir, repo_root, errors)
 
     return errors
-
-
-def _find_repo_root(task_dir: Path) -> Path:
-    repo_root = task_dir
-    while repo_root.name and not (repo_root / ".trellis").is_dir():
-        if repo_root.parent == repo_root:
-            break
-        repo_root = repo_root.parent
-    return repo_root
 
 
 def validate_plan_freeze(task_dir: Path, repo_root: Path | None = None) -> list[str]:
@@ -382,21 +346,10 @@ def validate_plan_freeze(task_dir: Path, repo_root: Path | None = None) -> list[
             test_defs = re.findall(r"def test_\w+", section8)
             if len(test_defs) > 2:
                 errors.append(
-                    f"MASTER §8 embeds {len(test_defs)} test functions; "
-                    "move bodies to research/ (max 2 tracer examples in MASTER)"
+                    f"MASTER §8 embeds {len(test_defs)} test functions; move bodies to research/ (max 2 tracer examples in MASTER)"
                 )
         elif not list(task_dir.glob("research/*evidence*.md")):
-            errors.append(
-                "Legacy MASTER §8 (TDD 全文): require research/*evidence*.md for Execute"
-            )
-
-    impl_jsonl = task_dir / "implement.jsonl"
-    if impl_jsonl.is_file():
-        first = _first_jsonl_file(impl_jsonl)
-        if first and "MASTER.plan" not in first.replace("\\", "/"):
-            errors.append(
-                f"implement.jsonl first entry must be MASTER.plan.md (got {first!r})"
-            )
+            errors.append("Legacy MASTER §8 (TDD 全文): require research/*evidence*.md for Execute")
 
     audit = task_dir / "AUDIT.plan.md"
     if audit.is_file():
@@ -412,15 +365,14 @@ def validate_plan_freeze(task_dir: Path, repo_root: Path | None = None) -> list[
         if sec3 and re.search(r"- \[ \]", sec3):
             errors.append("plan.freeze.md §3 has unchecked items")
 
-    _validate_original_plan_artifacts(task_dir, repo_root, errors)
-    _validate_implement_jsonl_original_plan(task_dir, repo_root, errors)
-    _validate_check_jsonl_original_plan(task_dir, repo_root, errors)
+    _validate_original_plan_artifacts(task_dir, errors)
+    _validate_implement_jsonl_manifest(task_dir, repo_root, errors)
+    _validate_audit_manifest(task_dir, repo_root, errors)
     _validate_plan_freeze_template(task_dir, errors)
 
     from .manifest_protocol import validate_manifest_freeze
 
     validate_manifest_freeze(task_dir, repo_root, errors)
-
     return errors
 
 
