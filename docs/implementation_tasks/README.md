@@ -23,6 +23,7 @@
 - `GLOBAL_TESTING_POLICY.md`
 - `GLOBAL_RESOURCE_LIMITS.md`
 - `GLOBAL_TASK_TEMPLATE.md`
+- `docs/AUDIT_DEFERRED_REGISTRY.md` — 问题须 **RESOLVED** 或 **DEFERRED（含解决阶段）**
 
 ## 最终包规则
 
@@ -57,6 +58,8 @@
 - `ROUND_2_DATA_INGESTION_VALIDATION/016_implement_source_conflict_validator.md` — 实现 SourceConflictValidator
 
 ## ROUND_3_MODELING_LAYERS
+
+> **Gate:** complete Trellis `round2-repair-alignment` (Round 2.5) before **017**. See `docs/quality/ROUND2_REPAIR_ALIGNMENT_TRACKER.md`.
 
 - `ROUND_3_MODELING_LAYERS/017_implement_layer1_axis_loader.md` — 实现 Layer 1 五轴 loader
 - `ROUND_3_MODELING_LAYERS/018_implement_layer1_interpretation_snapshot.md` — 实现 Layer 1 解释快照

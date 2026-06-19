@@ -2,6 +2,17 @@
 
 > **Date:** 2026-06-19 · **Branch:** `master` · **Audit:** adversarial re-audit 84/100 (mechanism aligned; paths not all E2E)
 
+## Round 2.5 gate (required before 017)
+
+PR #14 repaired-docs import closed Phase 3 pytest gaps but left **Round 2 contract drift**. **Do not start task 017** until:
+
+- Trellis **`round2-repair-alignment`** Execute PASS + merge (`PROC-R2.5-1` in registry)
+- Tracker: [`docs/quality/ROUND2_REPAIR_ALIGNMENT_TRACKER.md`](quality/ROUND2_REPAIR_ALIGNMENT_TRACKER.md)
+
+**Issue policy:** every gap must be **RESOLVED** or **DEFERRED** with resolution phase + task hook + closure test — [`docs/AUDIT_DEFERRED_REGISTRY.md`](AUDIT_DEFERRED_REGISTRY.md). Non-blocking ≠ won't fix.
+
+Round 3 **PARTIAL repay** (backfill, FetchPort, reconcile) → registry §DEFERRED Round 3, closed during Round 3 tasks.
+
 ## Round 2 completion boundary
 
 Round 2 Batch A/B/C/D are **functionally complete** on `master` (PR #10 merged). **Known gaps are documented** — not silent drift:
@@ -47,8 +58,10 @@ node .gitnexus\run.cjs status
 
 ## Round 3 start checklist
 
-1. Read `docs/implementation_tasks/ROUND_3_MODELING_LAYERS/README.md`
-2. Read `017_implement_layer1_axis_loader.md`
-3. Read `ROUND2_GAPS_AND_DEVIATIONS.md` §6 (what does **not** block Layer 1)
-4. Obey `GLOBAL_EXECUTION_RULES.md`, ResourceGuard, WriteManager, no-action boundary
-5. Create Trellis task for Round 3 Layer 1 when ready to implement
+0. **Registry clean** — [`AUDIT_DEFERRED_REGISTRY.md`](AUDIT_DEFERRED_REGISTRY.md): only `PROC-R2.5-1` OPEN; all else DEFERRED with phase or RESOLVED
+1. **Confirm R2.5 PASS** — merge + Trellis handoff
+2. Read `docs/implementation_tasks/ROUND_3_MODELING_LAYERS/README.md`
+3. Read `017_implement_layer1_axis_loader.md`
+4. Read `ROUND2_GAPS_AND_DEVIATIONS.md` §6 + `AUDIT_DEFERRED_REGISTRY.md` (deferred phases)
+5. Obey `GLOBAL_EXECUTION_RULES.md`, ResourceGuard, WriteManager, no-action boundary
+6. Create Trellis task for Round 3 Layer 1 when ready to implement

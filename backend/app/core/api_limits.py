@@ -31,6 +31,11 @@ def _query_budget_from_api_security() -> dict[str, int]:
     }
 
 
+QUERY_BUDGET_KEYS = frozenset(
+    {"default_page_size", "max_page_size", "agent_default_rows", "agent_max_rows"}
+)
+
+
 def load_api_limits() -> dict[str, int]:
     """Load api_limits; query budget authority is api_security_contract.yaml."""
     limits = _query_budget_from_api_security()
@@ -38,6 +43,8 @@ def load_api_limits() -> dict[str, int]:
     with CONTRACT_PATH.open(encoding="utf-8") as f:
         contract = yaml.safe_load(f) or {}
     for key, value in (contract.get("api_limits") or {}).items():
+        if key in QUERY_BUDGET_KEYS:
+            continue
         parsed = _int_api_limit_value(key, value)
         if parsed is not None:
             limits[key] = parsed
@@ -46,6 +53,8 @@ def load_api_limits() -> dict[str, int]:
     with config_path.open(encoding="utf-8") as f:
         cfg = yaml.safe_load(f) or {}
     for key, value in (cfg.get("api_limits") or {}).items():
+        if key in QUERY_BUDGET_KEYS:
+            continue
         parsed = _int_api_limit_value(key, value)
         if parsed is not None:
             limits[key] = parsed

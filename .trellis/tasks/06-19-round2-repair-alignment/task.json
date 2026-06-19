@@ -1,0 +1,32 @@
+{
+  "id": "round2-repair-alignment",
+  "name": "round2-repair-alignment",
+  "title": "Round 2.5: repair-package alignment (gate before 017)",
+  "description": "Close post-PR#14 doc-vs-code drift: DISABLED_SOURCE, schema 007, api_limits authority, legacy role tests.",
+  "status": "completed",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P1",
+  "creator": "Guang",
+  "assignee": "Guang",
+  "createdAt": "2026-06-19",
+  "completedAt": "2026-06-19",
+  "branch": "feat/round2-repair-alignment",
+  "base_branch": "master",
+  "worktree_path": null,
+  "commit": "8f7dc81",
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [
+    "docs/quality/ROUND2_REPAIR_ALIGNMENT_TRACKER.md",
+    "backend/app/datasources/source_registry.py",
+    "backend/app/datasources/base_adapter.py",
+    "backend/app/core/api_limits.py",
+    "specs/schema/schema.sql"
+  ],
+  "notes": "Blocks Round 3 task 017 until Execute PASS. Round 3 PARTIAL repay tracked in tracker §Round 3.",
+  "meta": {}
+}

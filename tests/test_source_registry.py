@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pytest
 from backend.app.datasources.source_registry import (
+    DomainDisabledError,
     DomainNotAllowedError,
     DomainRoleBinding,
     InvalidRegistryError,
@@ -275,3 +276,46 @@ def test_syncToDb_withinExplicitTransaction_rollsBackOnRollback(
     con.execute("ROLLBACK")
     count = con.execute("SELECT COUNT(*) FROM source_registry").fetchone()[0]
     assert count == 0
+
+
+def test_disabledPrimaryDomain_returnsDisabledSource():
+    reg = SourceRegistry()
+    reg.load()
+    roles = reg.get_domain_roles("cn_equity_minute_bar")
+    assert roles.domain_enabled_by_default is False
+    with pytest.raises(DomainDisabledError, match="DISABLED_SOURCE"):
+        reg.assert_domain_schedulable("cn_equity_minute_bar")
+
+
+def test_fallbackDisabledByDefault_isSkippedUntilConfigured():
+    reg = SourceRegistry()
+    reg.load()
+    roles = reg.get_domain_roles("cn_equity_daily_bar")
+    assert roles.fallback_policy == "skip_until_next_publish"
+    assert roles.fallback_source_ids == ("qmt_xtdata",)
+    assert reg.disabled_fallback_source_ids("cn_equity_daily_bar") == frozenset({"qmt_xtdata"})
+
+
+@pytest.mark.parametrize("banned_role", ["Shadow", "Emergency"])
+def test_legacySourceRoles_forbiddenAsSourceRoles(banned_role, registry_yaml_fixture):
+    text = registry_yaml_fixture.read_text(encoding="utf-8")
+    text = text.replace("primary: baostock", f"primary: {banned_role}", 1)
+    fixtures_dir = Path(__file__).parent / "fixtures"
+    with tempfile.TemporaryDirectory(dir=fixtures_dir) as d:
+        p = Path(d) / "banned_role.yaml"
+        p.write_text(text, encoding="utf-8")
+        reg = SourceRegistry(p)
+        with pytest.raises(LegacyRoleError):
+            reg.load()
+
+
+def test_legacySourceRoles_forbiddenTopLevelKeys(registry_yaml_fixture):
+    text = registry_yaml_fixture.read_text(encoding="utf-8")
+    text = "shadow_source: {}\n" + text
+    fixtures_dir = Path(__file__).parent / "fixtures"
+    with tempfile.TemporaryDirectory(dir=fixtures_dir) as d:
+        p = Path(d) / "shadow_top.yaml"
+        p.write_text(text, encoding="utf-8")
+        reg = SourceRegistry(p)
+        with pytest.raises(LegacyRoleError, match="shadow_source"):
+            reg.load()

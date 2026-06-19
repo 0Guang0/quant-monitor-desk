@@ -173,7 +173,11 @@ CREATE TABLE IF NOT EXISTS write_audit_log (
     finished_at         TIMESTAMP,
     status              VARCHAR,
     error_message       TEXT,
-    traceback_digest    VARCHAR
+    traceback_digest    VARCHAR,
+    data_domain          VARCHAR,
+    conflict_report_id   VARCHAR,
+    requested_by         VARCHAR,
+    allow_partial_write  BOOLEAN
 );
 
 CREATE TABLE IF NOT EXISTS resource_guard_log (

@@ -573,3 +573,57 @@ def test_fetch_success_carriesEvidenceFields(
     result = adapter.fetch(req, con=con)
     assert result.staging_table
     assert result.raw_file_paths
+
+
+def test_fetch_disabledPrimaryDomain_returnsDisabledSource(
+    tmp_path,
+    migrated_con,
+    request_factory,
+):
+    from backend.app.datasources.source_registry import SourceRegistry
+
+    reg = SourceRegistry()
+    reg.load()
+
+    class MinuteBarAdapter(BaseDataAdapter):
+        source_id = "qmt_xtdata"
+        supported_domains = frozenset({"cn_equity_minute_bar"})
+
+        def _fetch_impl(self, req):
+            raise AssertionError("disabled domain must not reach vendor fetch")
+
+    con = migrated_con(tmp_path)
+    adapter = MinuteBarAdapter(reg)
+    req = request_factory("qmt_xtdata", domain="cn_equity_minute_bar")
+    result = adapter.fetch(req, con=con)
+    assert result.status == "DISABLED_SOURCE"
+    assert result.row_count == 0
+    assert (
+        con.execute("SELECT COUNT(*) FROM fetch_log WHERE run_id=?", [req.run_id]).fetchone()[0]
+        == 1
+    )
+
+
+def test_fetch_disabledDomain_returnsDisabledSourceBeforeDomainAllowed(
+    tmp_path,
+    migrated_con,
+    request_factory,
+):
+    """Disabled domain must yield DISABLED_SOURCE even when source lacks domain allow-list."""
+    from backend.app.datasources.source_registry import SourceRegistry
+
+    reg = SourceRegistry()
+    reg.load()
+
+    class DailyBarAdapter(BaseDataAdapter):
+        source_id = "baostock"
+        supported_domains = frozenset({"cn_equity_daily_bar"})
+
+        def _fetch_impl(self, req):
+            raise AssertionError("disabled domain must not reach vendor fetch")
+
+    con = migrated_con(tmp_path)
+    adapter = DailyBarAdapter(reg)
+    req = request_factory("baostock", domain="cn_equity_minute_bar")
+    result = adapter.fetch(req, con=con)
+    assert result.status == "DISABLED_SOURCE"

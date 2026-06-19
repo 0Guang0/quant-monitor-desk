@@ -7,12 +7,14 @@
 
 | 类型 | 含义 | 是否阻塞 Round 3 |
 |------|------|------------------|
-| **DEFERRED** | 有意延后，已在 `DECISIONS.md` 或 `AUDIT_DEFERRED_REGISTRY.md` 登记 | 通常否 |
-| **PARTIAL** | 模块存在但语义未闭合（见下文 §2） | 视项而定 |
-| **GAP** | 设计卡字面要求 vs 实现差距（含测试/运维） | 通常否 |
-| **RISK** | 架构或运维隐患，短期可运行、长期需收敛 | 否（需排期） |
+| **RESOLVED** | 已实现 + 测试 + 证据 | — |
+| **OPEN** | 未完成且阻塞门控 | 是 |
+| **DEFERRED** | 延后但必须登记 **解决阶段 + 任务钩子 + 闭合测试** | 见 registry 列 `Blocks 017?` |
+| **PARTIAL** | 模块存在但语义未闭合 | 登记为 DEFERRED，不得仅写「不阻塞」 |
+| **GAP** | 设计卡 vs 实现差距 | 同上 |
+| **RISK** | 架构/运维隐患 | 同上 |
 
-**原则：** 凡列入本文的项均**不得视为 silent drift**；Round 3 启动前应先读 §6「建模层影响」。
+**原则：** 凡问题必须 **全清** 或在 [`docs/AUDIT_DEFERRED_REGISTRY.md`](../../AUDIT_DEFERRED_REGISTRY.md) **详细记录延后**；不阻塞 ≠ 不解决。
 
 ---
 
@@ -170,7 +172,7 @@
 | 无生产 CLI | **否** | 开发用 pytest + smoke |
 | Orchestrator 耦合 | **否** | 不影响 layer 包接口设计 |
 
-**结论：Round 3 可启动；本文项应在 Round 3/4/5 按 ID 偿还，而非在启动前全部闭合。**
+**结论：** Round 3 可启动当且仅当 [`AUDIT_DEFERRED_REGISTRY.md`](../../AUDIT_DEFERRED_REGISTRY.md) 中 **无未登记 OPEN 项**（当前仅 `PROC-R2.5-1` 合并/handoff）；其余 PARTIAL/GAP/RISK 必须已转为 **DEFERRED + 解决阶段** 或 **RESOLVED**。本文 §2–§5 各项均已映射至 registry。
 
 ---
 
