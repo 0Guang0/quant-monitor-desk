@@ -49,7 +49,7 @@ Router
     "quality_flags": [],
     "source_used": "duckdb_snapshot",
     "page": 1,
-    "page_size": 100,
+    "page_size": 200,
     "total": 1000,
     "query_cost_class": "LIGHT"
   },
@@ -86,8 +86,8 @@ Router
 
 | 项目 | 默认值 | 硬上限 | 说明 |
 |---|---:|---:|---|
-| page_size | 100 | 500 | 前端表格默认只取 100 行 |
-| Agent 查询行数 | 100 | 500 | 避免 Agent 一次吞太多上下文 |
+| page_size | 200 | 1000 | 以 `specs/contracts/api_security_contract.yaml` 为唯一权威 |
+| Agent 查询行数 | 200 | 1000 | 以 `specs/contracts/api_security_contract.yaml` 为唯一权威，避免 Agent 一次吞太多上下文 |
 | 普通 API date_range | 最近 90 天 | 1 年 | 超过需后台导出任务 |
 | 分钟线 API date_range | 最近 5 个交易日 | 20 个交易日 | 大范围分钟线必须走后台任务 |
 | 单请求超时 | 8 秒 | 30 秒 | 超时返回 `QUERY_TIMEOUT` |
@@ -540,3 +540,13 @@ Request Body：
 
 返回回测复盘报告。必须包含 limitations 和 no_action_semantics=true。
 
+## 用户决策补充：API 安全模式
+
+所有 FastAPI 路由必须遵守 D-02：dev 可关闭 token 但仅限 loopback；prod 必须启用 Bearer token。Admin job、backfill、full reload、manual override 等 mutation endpoint 在 prod 中必须要求认证和权限。
+
+
+## API 安全与分页权威口径
+
+`specs/contracts/api_security_contract.yaml` 是唯一机器契约。第一版采用本地 Bearer token：dev 可关闭但只能绑定 loopback；prod 必须启用 `QMD_API_TOKEN`，且单个本地 token 在第一版视为 `admin`。`viewer` 与 `agent_readonly` 角色保留为第二阶段能力，不得在第一版伪实现半套 RBAC。
+
+分页统一口径：默认 `page_size=200`，绝对上限 `1000`，Agent tool 最大行数 `1000`，full-history 查询必须 admin。实现必须补 `test_pageSizeContract_matchesDocs`。

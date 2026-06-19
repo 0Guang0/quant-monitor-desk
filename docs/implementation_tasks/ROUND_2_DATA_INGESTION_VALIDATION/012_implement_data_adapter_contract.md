@@ -15,7 +15,8 @@
 - `docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md`
 - `docs/implementation_tasks/GLOBAL_TESTING_POLICY.md`
 - `docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md`
-
+- `specs/contracts/runtime_versions.md`
+- `docs/quality/staged_acceptance_policy.md`
 ## 4. 相关代码 / 输出文件
 
 - `backend/sources/base_adapter.py`
@@ -71,17 +72,13 @@
 - 测试命名建议：`functionName_condition_expectedBehavior`。
 
 ## 11. 验收命令
+本任务为后端实现任务。验收命令：
 
 ```bash
-pytest -q
-ruff check .
-python -m compileall backend scripts
-```
-
-如涉及前端，还必须运行：
-
-```bash
-cd frontend && npm run typecheck
+uv sync --locked
+uv run pytest -q
+uv run ruff check .
+uv run python -m compileall backend scripts tests
 ```
 
 ## 12. 完成标准

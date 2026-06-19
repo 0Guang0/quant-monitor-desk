@@ -2,6 +2,8 @@
 
 Navigation hub for **Quant Monitor Desk**. For a compact project map see [`MIGRATION_MAP.md`](../MIGRATION_MAP.md) at the repository root.
 
+> **权威边界**：`MANIFEST.json` 登记的 docs/specs 为 2026-06-19 修复包权威口径。本索引及 `implementation_tasks/**/plans/`、`DECISIONS.md`、Batch 状态文件为**项目实施补充**，不得覆盖 MANIFEST 权威文件。口径差见 [`quality/REPAIR_IMPORT_CODE_GAP_LEDGER.md`](quality/REPAIR_IMPORT_CODE_GAP_LEDGER.md)。
+
 ## Architecture
 
 | File | Topic |
@@ -34,6 +36,10 @@ See [`docs/modules/`](modules/) — one file per implementation module (data syn
 | [daily_weekly_monthly_checklist.md](ops/daily_weekly_monthly_checklist.md) | Routine checklists |
 | [agent_workflow_boundaries.md](ops/agent_workflow_boundaries.md) | `.cursor`/`.trellis` trust boundaries |
 | [verification_commands.md](ops/verification_commands.md) | Canonical audit/CI commands (Windows) |
+| [agent_security_policy.md](ops/agent_security_policy.md) | Agent 安全与 D-12 固定来源 |
+| [config_secret_policy.md](ops/config_secret_policy.md) | Secret 与 `.env.local`（D-03） |
+| [migration_recovery_policy.md](ops/migration_recovery_policy.md) | Migration 备份恢复（D-06） |
+| [privacy_retention_policy.md](ops/privacy_retention_policy.md) | 留存与归档（D-05） |
 | [schema/MIGRATION_COVERAGE.md](schema/MIGRATION_COVERAGE.md) | Design schema vs applied migrations matrix |
 | [schema/MIGRATION_008_PLAN.md](schema/MIGRATION_008_PLAN.md) | Planned migration 008 DB CHECK constraints |
 
@@ -53,6 +59,9 @@ See [`docs/modules/`](modules/) — one file per implementation module (data syn
 |------|-------|
 | [final_package_rules.md](quality/final_package_rules.md) | Deliverable rules |
 | [self_check_and_audit.md](quality/self_check_and_audit.md) | Audit checklist |
+| [staged_acceptance_policy.md](quality/staged_acceptance_policy.md) | 分阶段验收 |
+| [REPAIR_IMPORT_CODE_GAP_LEDGER.md](quality/REPAIR_IMPORT_CODE_GAP_LEDGER.md) | 导入后代码口径差（Phase 3） |
+| [REPAIR_IMPORT_PHASE2_NON_MANIFEST_REVIEW.md](quality/REPAIR_IMPORT_PHASE2_NON_MANIFEST_REVIEW.md) | 非 MANIFEST 文件删留审查 |
 
 ## API & agent contracts (narrative)
 
@@ -74,6 +83,8 @@ Global rules (read before any task):
 Repository root: [`specs/`](../specs/)
 
 - [`specs/schema/schema.sql`](../specs/schema/schema.sql)
+- [`specs/contracts/api_security_contract.yaml`](../specs/contracts/api_security_contract.yaml) — API 分页权威
+- [`specs/contracts/runtime_versions.md`](../specs/contracts/runtime_versions.md) — `uv.lock` / 验收命令（D-01）
 - [`specs/contracts/`](../specs/contracts/)
 - [`specs/layer1_axes/`](../specs/layer1_axes/)
 - [`specs/layer3_global_industry_chains/`](../specs/layer3_global_industry_chains/)

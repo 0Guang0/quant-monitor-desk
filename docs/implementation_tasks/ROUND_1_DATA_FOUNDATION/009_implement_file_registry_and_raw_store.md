@@ -15,15 +15,14 @@
 - `docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md`
 - `docs/implementation_tasks/GLOBAL_TESTING_POLICY.md`
 - `docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md`
-
+- `specs/contracts/runtime_versions.md`
+- `docs/quality/staged_acceptance_policy.md`
+- `docs/ops/privacy_retention_policy.md`
 ## 4. 相关代码 / 输出文件
 
-- `backend/app/storage/raw_store.py`
-- `backend/app/storage/file_registry.py`
+- `backend/storage/raw_store.py`
+- `backend/storage/file_registry.py`
 - `tests/test_raw_store.py`
-
-> 详细 TDD 步骤、API 签名、hash 与目录布局见 `plans/009_raw_store.plan.md`。
-> 路径与范围以 `DECISIONS.md` 为准（统一 `backend/app/*`，hash 用 sha256）。
 
 ## 5. 现有模式 / 参考
 
@@ -58,10 +57,10 @@
 
 ## 9. 实现步骤
 
-- 保存 raw 文件到 `data/raw/<source>/<data_domain>/<date>/`（路径来自 config）。
-- 计算 sha256 content_hash，作为去重与可追溯依据。
-- 通过 WriteManager（append_only）写 `file_registry`，不得直接 INSERT。
-- 先写或补充最小测试 / smoke test，再实现（文件 I/O mock，hash 与去重用真实值）。
+- 保存 raw 文件
+- 计算 hash
+- 写 file_registry
+- 先写或补充最小测试 / smoke test，再实现。
 - 运行本任务验收命令。
 - 汇报改动文件、测试结果、未完成项、资源保护状态。
 
@@ -74,17 +73,13 @@
 - 测试命名建议：`functionName_condition_expectedBehavior`。
 
 ## 11. 验收命令
+本任务为后端实现任务。验收命令：
 
 ```bash
-pytest -q
-ruff check .
-python -m compileall backend scripts
-```
-
-如涉及前端，还必须运行：
-
-```bash
-cd frontend && npm run typecheck
+uv sync --locked
+uv run pytest -q
+uv run ruff check .
+uv run python -m compileall backend scripts tests
 ```
 
 ## 12. 完成标准
@@ -115,3 +110,17 @@ cd frontend && npm run typecheck
 4. 测试命令和结果。
 5. ResourceGuard 是否触发。
 6. 未完成项或需要用户确认的点。
+
+## 15. 审计修复补充要求
+
+Raw Store / FileRegistry 必须实现：
+
+- 内容哈希固定为 SHA-256。
+- 同 content_hash 重复文件不得重复注册；并发冲突必须可恢复。
+- quarantine 区用于存放 schema drift、parse failed、suspect duplicate 文件。
+- 文件权限默认本机用户可读写，不扩大权限。
+- 留存策略必须区分 raw、cache、audit、backup。
+
+### 用户决策补充：D-05
+
+用户已拍板：raw/audit/report/notification 默认保留 1 年；清理前必须提供手动归档按钮或 CLI。

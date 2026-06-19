@@ -15,7 +15,9 @@
 - `docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md`
 - `docs/implementation_tasks/GLOBAL_TESTING_POLICY.md`
 - `docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md`
-
+- `specs/contracts/runtime_versions.md`
+- `docs/quality/staged_acceptance_policy.md`
+- `specs/contracts/backtest_reproducibility_contract.yaml`
 ## 4. 相关代码 / 输出文件
 
 - `backend/backtest/`
@@ -70,17 +72,14 @@
 - 测试命名建议：`functionName_condition_expectedBehavior`。
 
 ## 11. 验收命令
+本任务涉及 API / Agent / 通知 / 回测。验收命令：
 
 ```bash
-pytest -q
-ruff check .
-python -m compileall backend scripts
-```
-
-如涉及前端，还必须运行：
-
-```bash
-cd frontend && npm run typecheck
+uv sync --locked
+uv run pytest -q tests/test_api_routes.py tests/test_agent_tools.py tests/test_notifications.py tests/test_backtest_review.py tests/test_no_action_semantics_guard.py
+uv run ruff check .
+uv run python -m compileall backend scripts tests
+cd frontend && npm ci && npm audit --audit-level=high && npm run typecheck && npm run build
 ```
 
 ## 12. 完成标准
@@ -111,3 +110,13 @@ cd frontend && npm run typecheck
 4. 测试命令和结果。
 5. ResourceGuard 是否触发。
 6. 未完成项或需要用户确认的点。
+
+## 15. 审计修复补充要求
+
+回测必须防前视偏差：
+
+- 使用 frozen_dataset_manifest。
+- 所有输入必须满足 visibility_timestamp <= as_of_cutoff。
+- 记录 parameter_hash、rule_version、code_version、random_seed。
+- 同一 frozen dataset + 参数必须可复现。
+- Agent 只能总结计算结果，不得生成或修改指标。

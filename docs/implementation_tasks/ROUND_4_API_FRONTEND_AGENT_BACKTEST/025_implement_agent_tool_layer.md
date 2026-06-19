@@ -16,7 +16,9 @@
 - `docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md`
 - `docs/implementation_tasks/GLOBAL_TESTING_POLICY.md`
 - `docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md`
-
+- `specs/contracts/runtime_versions.md`
+- `docs/quality/staged_acceptance_policy.md`
+- `docs/ops/agent_security_policy.md`
 ## 4. 相关代码 / 输出文件
 
 - `backend/agent/tools.py`
@@ -72,17 +74,14 @@
 - 测试命名建议：`functionName_condition_expectedBehavior`。
 
 ## 11. 验收命令
+本任务涉及 API / Agent / 通知 / 回测。验收命令：
 
 ```bash
-pytest -q
-ruff check .
-python -m compileall backend scripts
-```
-
-如涉及前端，还必须运行：
-
-```bash
-cd frontend && npm run typecheck
+uv sync --locked
+uv run pytest -q tests/test_api_routes.py tests/test_agent_tools.py tests/test_notifications.py tests/test_backtest_review.py tests/test_no_action_semantics_guard.py
+uv run ruff check .
+uv run python -m compileall backend scripts tests
+cd frontend && npm ci && npm audit --audit-level=high && npm run typecheck && npm run build
 ```
 
 ## 12. 完成标准
@@ -113,3 +112,17 @@ cd frontend && npm run typecheck
 4. 测试命令和结果。
 5. ResourceGuard 是否触发。
 6. 未完成项或需要用户确认的点。
+
+## 15. 审计修复补充要求
+
+Agent 必须实现安全工具边界：
+
+- 工具必须白名单注册，禁止自由 SQL、自由联网、直接写库。
+- 每个工具都有参数 schema、max_rows、max_lookback_days、resource_budget；全局默认 200 行、绝对最高 1000 行，唯一机器权威为 `specs/contracts/api_security_contract.yaml`。
+- 具体工具允许低于全局上限的局部 `max_rows`，但不得超过 1000，也不得恢复高于全局绝对上限的特殊工具例外。
+- Agent 输出只能解释结构化事实，不得创建事实、不得覆盖数据库、不得输出交易动作。
+- 必须有提示注入测试：数据源文本中的指令不得改变工具策略。
+
+### 用户决策补充：D-12
+
+用户已拍板：Agent 只读固定 source adapter 与用户手动导入文本；禁止自由联网搜索。

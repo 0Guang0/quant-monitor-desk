@@ -56,8 +56,8 @@ modules:
       layer: Shadow
       dest_tag: SHADOW
       primary_source: Cboe:VVIX_history_csv
-      role: no_main_score_input; no_takeover
-      plain_language_summary: VVIX 旁证灯，用于观察波动率的波动，不替代 SKEW。
+      role: validation_only; no_main_score_input; no_takeover; diagnostic_only; evidence_only; does_not_replace_main_indicator
+      plain_language_summary: VVIX 旁证灯，用于观察波动率的波动，不替代 SKEW；该条虽位于 R2 indicators 下，但仅作为诊断/旁证信号。
   R3_variance_risk_premium:
     purpose: 隐含方差和实现方差之间的风险补偿楔子。
     indicators:

@@ -15,7 +15,9 @@
 - `docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md`
 - `docs/implementation_tasks/GLOBAL_TESTING_POLICY.md`
 - `docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md`
-
+- `specs/contracts/runtime_versions.md`
+- `docs/quality/staged_acceptance_policy.md`
+- `docs/ops/frontend_security_policy.md`
 ## 4. 相关代码 / 输出文件
 
 - `frontend/src/`
@@ -70,18 +72,17 @@
 - 测试命名建议：`functionName_condition_expectedBehavior`。
 
 ## 11. 验收命令
+本任务涉及前端。验收命令：
 
 ```bash
-pytest -q
-ruff check .
-python -m compileall backend scripts
+uv sync --locked
+uv run pytest -q tests/test_api_contracts.py
+cd frontend && npm ci && npm audit --audit-level=high && npm run typecheck && npm run build
 ```
 
-如涉及前端，还必须运行：
+注意：前端页面布局仍为占位，正式 UI 实现前必须提醒用户确认。
 
-```bash
-cd frontend && npm run typecheck
-```
+复审修复要求：不得使用 会吞掉失败结果的 shell 容错短路写法 掩盖 contract 测试失败；如果 `tests/test_api_contracts.py` 在该阶段尚未存在，本任务必须先创建最小 API/frontend contract smoke test，再运行该测试。
 
 ## 12. 完成标准
 
@@ -111,3 +112,11 @@ cd frontend && npm run typecheck
 4. 测试命令和结果。
 5. ResourceGuard 是否触发。
 6. 未完成项或需要用户确认的点。
+
+## 15. 审计修复补充要求
+
+前端 shell 必须实现安全和稳定性基线：CSP、错误边界、分页、缓存 freshness 标签、secret 不落 localStorage。页面布局仍仅为参考，正式 UI 需用户确认。
+
+### 用户决策补充：D-08
+
+用户已拍板：正式实现前端前必须提醒用户确认 UI 信息架构和交互；当前页面布局仅占位，不得写死。

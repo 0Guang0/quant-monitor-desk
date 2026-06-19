@@ -160,11 +160,14 @@ def test_syncJob_invalidStatus_rejectedByDbCheck(tmp_path: Path) -> None:
 
 def test_apiLimits_enforcesMaxPageSize() -> None:
     limits = load_api_limits()
-    assert limits["max_page_size"] == 500
-    assert clamp_page_size(999) == 500
+    assert limits["max_page_size"] == 1000
+    assert clamp_page_size(999) == 999
     assert clamp_page_size(0) == limits["default_page_size"]
     rows, truncated = clamp_agent_rows(999)
-    assert rows == 500
+    assert rows == 999
+    assert truncated is False
+    rows, truncated = clamp_agent_rows(2000)
+    assert rows == 1000
     assert truncated is True
 
 

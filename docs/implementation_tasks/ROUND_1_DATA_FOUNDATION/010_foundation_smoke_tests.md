@@ -15,13 +15,11 @@
 - `docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md`
 - `docs/implementation_tasks/GLOBAL_TESTING_POLICY.md`
 - `docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md`
-
+- `specs/contracts/runtime_versions.md`
+- `docs/quality/staged_acceptance_policy.md`
 ## 4. 相关代码 / 输出文件
 
 - `tests/smoke/test_foundation_smoke.py`
-
-> 详细端到端步骤与断言清单见 `plans/010_smoke.plan.md`。
-> 执行前确认 Checkpoint：Foundation（见本目录 README）已全绿。
 
 ## 5. 现有模式 / 参考
 
@@ -56,11 +54,10 @@
 
 ## 9. 实现步骤
 
-- 在临时 DuckDB 文件上跑 `init_db`，确认 5 张 foundation 表建出。
-- 经 ResourceGuard 检查（mock 为 OK）后，用 Raw Store 注册一个原始文件 → `file_registry`。
-- 经 WriteManager 用 stub-pass 报告写一次 staging→clean，断言 clean 行数与字段值。
-- 断言 `write_audit_log` 出现一条 `status=SUCCESS` 行，且 rows_inserted 正确。
-- 追加一条 stub-fail 写入，断言 rollback 且出现 `status=FAILED` 审计行。
+- 初始化测试库
+- 写入测试 staging
+- 验证 clean 与 audit
+- 先写或补充最小测试 / smoke test，再实现。
 - 运行本任务验收命令。
 - 汇报改动文件、测试结果、未完成项、资源保护状态。
 
@@ -73,17 +70,13 @@
 - 测试命名建议：`functionName_condition_expectedBehavior`。
 
 ## 11. 验收命令
+本任务为后端实现任务。验收命令：
 
 ```bash
-pytest -q
-ruff check .
-python -m compileall backend scripts
-```
-
-如涉及前端，还必须运行：
-
-```bash
-cd frontend && npm run typecheck
+uv sync --locked
+uv run pytest -q
+uv run ruff check .
+uv run python -m compileall backend scripts tests
 ```
 
 ## 12. 完成标准

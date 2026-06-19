@@ -54,10 +54,11 @@ project_size_thresholds:
   cache_pause_gb: 2
   cache_hard_stop_gb: 4
 api_limits:
-  default_page_size: 100
-  max_page_size: 500
-  agent_default_rows: 100
-  agent_max_rows: 500
+  authority: specs/contracts/api_security_contract.yaml
+  default_page_size: 200
+  max_page_size: 1000
+  agent_default_rows: 200
+  agent_max_rows: 1000
   daily_bar_default_days: 90
   daily_bar_max_days: 365
   minute_bar_default_trading_days: 5

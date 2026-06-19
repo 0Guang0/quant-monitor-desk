@@ -72,6 +72,7 @@ class DomainRoleBinding:
     primary_source_id: str
     validation_source_id: str | None
     fallback_policy: str
+    domain_enabled_by_default: bool = True
 
 
 def _allowed_domains_to_db(domains: frozenset[str]) -> str:
@@ -145,33 +146,126 @@ def _parse_allowed_domains(entry: dict, source_id: str) -> frozenset[str]:
     return frozenset(domains)
 
 
+def _coerce_sources_mapping(sources_raw: object) -> dict[str, dict]:
+    if isinstance(sources_raw, dict):
+        return sources_raw
+    if isinstance(sources_raw, list):
+        mapping: dict[str, dict] = {}
+        for item in sources_raw:
+            if not isinstance(item, dict):
+                raise InvalidRegistryError("sources list entries must be mappings")
+            source_id = item.get("source_id")
+            if not isinstance(source_id, str) or not source_id.strip():
+                raise InvalidRegistryError("sources list entry missing source_id")
+            mapping[source_id] = item
+        return mapping
+    raise InvalidRegistryError("sources must be a mapping or list")
+
+
 def _parse_source_record(source_id: str, entry: dict) -> SourceRecord:
     if not isinstance(entry, dict):
         raise InvalidRegistryError(f"source {source_id!r} must be a mapping")
+
+    normalized = dict(entry)
+    if "is_enabled" not in normalized and "enabled_by_default" in normalized:
+        normalized["is_enabled"] = normalized["enabled_by_default"]
+    if "requires_local_client" not in normalized and "requires_user_setup" in normalized:
+        normalized["requires_local_client"] = normalized["requires_user_setup"]
+
+    rate_default = "polite_batch"
+    if (
+        not isinstance(normalized.get("rate_limit_policy"), str)
+        or not str(normalized.get("rate_limit_policy")).strip()
+    ):
+        normalized["rate_limit_policy"] = rate_default
+
     return SourceRecord(
         source_id=source_id,
         source_name=_parse_optional_str(
-            entry, "source_name", default=source_id, source_id=source_id
+            normalized, "source_name", default=source_id, source_id=source_id
         ),
-        source_type=_parse_required_str(entry, "source_type", source_id),
-        allowed_domains=_parse_allowed_domains(entry, source_id),
-        trust_level=_parse_int(entry, "trust_level", default=0, source_id=source_id),
-        license_type=_parse_required_str(entry, "license_type", source_id),
-        official_api=_parse_bool(entry, "official_api", default=False, source_id=source_id),
-        is_enabled=_parse_bool(entry, "is_enabled", default=True, source_id=source_id),
-        default_priority=_parse_int(entry, "default_priority", default=0, source_id=source_id),
-        rate_limit_policy=_parse_required_str(entry, "rate_limit_policy", source_id),
-        auth_required=_parse_bool(entry, "auth_required", default=False, source_id=source_id),
+        source_type=_parse_required_str(normalized, "source_type", source_id),
+        allowed_domains=_parse_allowed_domains(normalized, source_id),
+        trust_level=_parse_int(normalized, "trust_level", default=0, source_id=source_id),
+        license_type=_parse_required_str(normalized, "license_type", source_id),
+        official_api=_parse_bool(normalized, "official_api", default=False, source_id=source_id),
+        is_enabled=_parse_bool(normalized, "is_enabled", default=True, source_id=source_id),
+        default_priority=_parse_int(normalized, "default_priority", default=0, source_id=source_id),
+        rate_limit_policy=_parse_required_str(normalized, "rate_limit_policy", source_id),
+        auth_required=_parse_bool(normalized, "auth_required", default=False, source_id=source_id),
         requires_local_client=_parse_bool(
-            entry, "requires_local_client", default=False, source_id=source_id
+            normalized, "requires_local_client", default=False, source_id=source_id
         ),
-        expected_frequency=_parse_required_str(entry, "expected_frequency", source_id),
-        expected_lag=_parse_required_str(entry, "expected_lag", source_id),
-        timezone=_parse_required_str(entry, "timezone", source_id),
-        fallback_allowed=_parse_bool(entry, "fallback_allowed", default=False, source_id=source_id),
-        validation_only=_parse_bool(entry, "validation_only", default=False, source_id=source_id),
-        notes=_parse_optional_str(entry, "notes", default="", source_id=source_id),
+        expected_frequency=_parse_optional_str(
+            normalized, "expected_frequency", default="daily", source_id=source_id
+        ),
+        expected_lag=_parse_optional_str(
+            normalized, "expected_lag", default="days", source_id=source_id
+        ),
+        timezone=_parse_optional_str(
+            normalized, "timezone", default="Asia/Shanghai", source_id=source_id
+        ),
+        fallback_allowed=_parse_bool(
+            normalized, "fallback_allowed", default=False, source_id=source_id
+        ),
+        validation_only=_parse_bool(
+            normalized, "validation_only", default=False, source_id=source_id
+        ),
+        notes=_parse_optional_str(normalized, "notes", default="", source_id=source_id),
     )
+
+
+def _normalize_validation_source(raw: object, data_domain: str) -> str | None:
+    if raw is None:
+        return None
+    if isinstance(raw, list):
+        if not raw:
+            return None
+        first = raw[0]
+        if first is None:
+            return None
+        return str(first)
+    if isinstance(raw, str) and raw == "null":
+        raise InvalidRegistryError(
+            f"domain_roles.{data_domain}.validation: string 'null' is not "
+            "allowed; use YAML null for no validation source"
+        )
+    return str(raw)
+
+
+def _normalize_fallback_policy(roles: dict, data_domain: str) -> str:
+    raw = roles.get("fallback_policy", "")
+    if isinstance(raw, str):
+        if raw in VALID_FALLBACK_POLICIES:
+            return raw
+        if not raw:
+            return "mark_missing"
+        raise InvalidRegistryError(f"domain_roles.{data_domain}.fallback_policy invalid: {raw!r}")
+    if isinstance(raw, list):
+        if not raw:
+            disabled = roles.get("disabled_until_configured")
+            domain_off = roles.get("domain_enabled_by_default") is False
+            if disabled or domain_off:
+                return "skip_until_next_publish"
+            return "mark_missing"
+        if roles.get("disabled_fallback_behavior") or roles.get("fallback_requires_source_enabled"):
+            return "skip_until_next_publish"
+        return "use_validation_source_with_flag"
+    raise InvalidRegistryError(
+        f"domain_roles.{data_domain}.fallback_policy must be string or list, "
+        f"got {type(raw).__name__}"
+    )
+
+
+def _domain_enabled_by_default(roles: dict) -> bool:
+    if "domain_enabled_by_default" in roles:
+        val = roles["domain_enabled_by_default"]
+        if not isinstance(val, bool):
+            raise InvalidRegistryError("domain_enabled_by_default must be boolean")
+        return val
+    if roles.get("disabled_until_configured"):
+        return False
+    return True
 
 
 def _parse_domain_role_binding(data_domain: str, roles: dict) -> DomainRoleBinding:
@@ -179,31 +273,19 @@ def _parse_domain_role_binding(data_domain: str, roles: dict) -> DomainRoleBindi
         raise InvalidRegistryError(f"domain_roles.{data_domain} must be a mapping")
     for field in ("primary", "validation"):
         value = roles.get(field)
-        if value is not None and str(value) in BANNED_ROLE_NAMES:
+        if value is not None and not isinstance(value, list) and str(value) in BANNED_ROLE_NAMES:
             raise LegacyRoleError(f"domain_roles.{data_domain}.{field}: banned role {value!r}")
     primary = roles.get("primary")
     if primary is None:
         raise InvalidRegistryError(f"domain_roles.{data_domain}.primary is required")
     primary_id = str(primary)
-    validation_raw = roles.get("validation")
-    if validation_raw is None:
-        validation_id = None
-    elif validation_raw == "null":
-        raise InvalidRegistryError(
-            f"domain_roles.{data_domain}.validation: string 'null' is not "
-            "allowed; use YAML null for no validation source"
-        )
-    else:
-        validation_id = str(validation_raw)
-    fallback_policy = str(roles.get("fallback_policy", ""))
-    if fallback_policy not in VALID_FALLBACK_POLICIES:
-        raise InvalidRegistryError(
-            f"domain_roles.{data_domain}.fallback_policy invalid: {fallback_policy!r}"
-        )
+    validation_id = _normalize_validation_source(roles.get("validation"), data_domain)
+    fallback_policy = _normalize_fallback_policy(roles, data_domain)
     return DomainRoleBinding(
         primary_source_id=primary_id,
         validation_source_id=validation_id,
         fallback_policy=fallback_policy,
+        domain_enabled_by_default=_domain_enabled_by_default(roles),
     )
 
 
@@ -252,11 +334,12 @@ class SourceRegistry:
                 raise LegacyRoleError(f"banned top-level key: {banned_key}")
 
         sources_raw = raw.get("sources")
-        if not isinstance(sources_raw, dict):
-            raise InvalidRegistryError("sources must be a mapping")
+        if sources_raw is None:
+            raise InvalidRegistryError("sources is required")
+        sources_mapping = _coerce_sources_mapping(sources_raw)
 
         self._sources = {}
-        for source_id, entry in sources_raw.items():
+        for source_id, entry in sources_mapping.items():
             self._sources[source_id] = _parse_source_record(source_id, entry)
 
         domain_roles_raw = raw.get("domain_roles", {})
@@ -277,7 +360,7 @@ class SourceRegistry:
                     f"domain_roles.{data_domain}.primary references unknown source {primary_id!r}"
                 )
             primary = self._sources[primary_id]
-            if not primary.is_enabled:
+            if binding.domain_enabled_by_default and not primary.is_enabled:
                 raise InvalidRegistryError(
                     f"domain_roles.{data_domain}.primary {primary_id!r} is disabled"
                 )

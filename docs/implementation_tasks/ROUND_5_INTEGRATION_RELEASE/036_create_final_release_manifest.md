@@ -2,7 +2,7 @@
 
 ## 1. 任务目标
 
-生成 MANIFEST、FINAL_SELF_CHECK_REPORT、最终 zip 验收。
+生成可验证的 MANIFEST、FINAL_AUDIT_REPORT、最终 zip 验收。
 
 ## 2. 预期结果
 
@@ -10,16 +10,18 @@
 
 ## 3. 输入文件
 
-- MANIFEST.json
 - `docs/quality/final_package_rules.md`
 - `docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md`
 - `docs/implementation_tasks/GLOBAL_TESTING_POLICY.md`
 - `docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md`
-
+- `specs/contracts/runtime_versions.md`
+- `docs/quality/staged_acceptance_policy.md`
 ## 4. 相关代码 / 输出文件
 
 - `scripts/create_release_manifest.py`
+- `MANIFEST.json`
 - `FINAL_PACKAGE_MANIFEST.md`
+- `FINAL_AUDIT_REPORT.md`
 
 ## 5. 现有模式 / 参考
 
@@ -70,18 +72,16 @@
 - 测试命名建议：`functionName_condition_expectedBehavior`。
 
 ## 11. 验收命令
+本任务为文档/发布规则类任务，不强制运行 full test suite。验收命令：
 
 ```bash
-pytest -q
-ruff check .
-python -m compileall backend scripts
+uv sync --locked
+uv run python scripts/check_doc_links.py
+uv run python scripts/check_docs_consistency.py
+uv run python scripts/validate_release_allowlist.py
 ```
 
-如涉及前端，还必须运行：
-
-```bash
-cd frontend && npm run typecheck
-```
+若相关脚本尚由本任务创建，则先运行脚本自身单元测试，再在任务完成后运行上述命令。
 
 ## 12. 完成标准
 
@@ -111,3 +111,39 @@ cd frontend && npm run typecheck
 4. 测试命令和结果。
 5. ResourceGuard 是否触发。
 6. 未完成项或需要用户确认的点。
+
+## 15. 审计修复补充要求
+
+`MANIFEST.json` 是本任务输出，不是必需输入。生成时必须：
+
+- 遍历最终包全部正式文件。
+- 记录除 MANIFEST.json 以外全部正式文件的 path、size、sha256；MANIFEST.json 不记录自身 sha256。
+- 记录生成时间、工具版本和根目录名。
+- 与 cleanup allowlist 交叉验证。
+- 输出 `FINAL_AUDIT_REPORT.md`，说明未包含源码/测试结果时只能做文档级审计。
+
+### 用户决策补充：D-01
+
+用户已拍板：Python 默认使用 uv.lock；任务实现与 CI 默认使用 uv sync / uv run；pip-tools 仅备用，不采用 Poetry。
+
+### 用户决策补充：D-07
+
+用户已拍板：Trellis/Cursor 每轮只长期保留 MASTER/AUDIT/DECISIONS；细碎 evidence 归档到 artifacts zip。
+
+### 用户决策补充：D-10
+
+用户已拍板：设计包保持 docs/specs/tasks 轻量包；源码与测试结果通过 Git commit + CI 结果终审。
+
+
+## 16. MANIFEST 自身 hash 策略
+
+`MANIFEST.json` 不得把自身作为普通文件条目写入 sha256。发布脚本必须采用 exclude-self policy：
+
+```text
+MANIFEST.json 不出现在 files[] 中；
+files[] 只记录其他正式文件；
+顶层写 manifest_self_policy: exclude_self_from_file_hashes；
+顶层写 file_count_excluding_manifest；
+```
+
+必须新增测试：`test_manifestSelfHashPolicy_isVerifiable`、`test_finalAuditReport_isAllowlisted`。

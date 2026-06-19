@@ -12,9 +12,9 @@
 
 - `docs/implementation_tasks/GLOBAL_TESTING_POLICY.md`
 - `docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md`
-- `docs/implementation_tasks/GLOBAL_TESTING_POLICY.md`
 - `docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md`
-
+- `specs/contracts/runtime_versions.md`
+- `docs/quality/staged_acceptance_policy.md`
 ## 4. 相关代码 / 输出文件
 
 - pytest.ini
@@ -71,17 +71,13 @@
 - 测试命名建议：`functionName_condition_expectedBehavior`。
 
 ## 11. 验收命令
+本任务为项目骨架/配置/测试基线任务。验收命令：
 
 ```bash
-pytest -q
-ruff check .
-python -m compileall backend scripts
-```
-
-如涉及前端，还必须运行：
-
-```bash
-cd frontend && npm run typecheck
+uv sync --locked
+uv run pytest -q tests/test_project_scaffold.py tests/test_config_templates.py
+uv run ruff check .
+uv run python -m compileall backend scripts tests
 ```
 
 ## 12. 完成标准
@@ -112,3 +108,7 @@ cd frontend && npm run typecheck
 4. 测试命令和结果。
 5. ResourceGuard 是否触发。
 6. 未完成项或需要用户确认的点。
+
+### 用户决策补充：D-01
+
+用户已拍板：Python 默认使用 uv.lock；任务实现与 CI 默认使用 uv sync / uv run；pip-tools 仅备用，不采用 Poetry。

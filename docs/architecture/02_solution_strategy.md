@@ -25,7 +25,7 @@ Vite React TypeScript 看板 / Agent 日报 / 盘中提醒 / 回测复盘
 
 第一阶段不建议上 PostgreSQL、Next.js、Airflow、多 Agent 编排或复杂微服务。当前少数人使用、低门槛优先，最优技术栈为：
 
-- 后端：Python 3.11+、FastAPI、Pydantic、pytest、ruff、uv 或 Poetry。
+- 后端：Python 3.11+、FastAPI、Pydantic、pytest、ruff、uv；pip-tools 仅作为备用方案，Poetry 第一版不采用。
 - 数据库：DuckDB 作为本地核心分析库。
 - 文件归档：本地文件系统；Parquet 作为可选但推荐的历史行情 / 原始数据归档格式。
 - 前端：Vite + React + TypeScript。
@@ -94,3 +94,8 @@ Clean Standard Table
 ```
 
 ---
+
+
+## D-01 依赖锁定决策
+
+用户已拍板：第一版采用 `uv.lock` 作为主锁文件，执行任务和 CI 默认使用 `uv sync --locked` 与 `uv run ...`；`pip-tools` 只作为用户不愿安装 uv 时的备用方案；`Poetry` 第一版不采用，避免给 Claude Code / Codex 引入额外配置复杂度。权威文件见 `specs/contracts/runtime_versions.md`。

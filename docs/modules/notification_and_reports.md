@@ -212,13 +212,15 @@ OPS_RISK：系统资源/运行风险
 
 ## 6.3 throttle
 
-本机默认低打扰：
+本机默认低打扰。Phase 1 throttle 仅适用于 `dashboard_notification`、`local_audit_log`、`console_summary` 与显式配置后的 optional `email`：
 
 ```text
 每小时最多 10 条普通提醒
-每小时最多 3 条桌面通知
 CRITICAL / DATA_RISK 不进入普通提醒上限，但仍要去重
+webhook / desktop_notification / SMS / phone / bot / Slack / Discord / Telegram / 企业微信均延期到 D-13+；Phase 1 不实现发送逻辑，也不实现该延期渠道的节流逻辑
 ```
+
+必须补测试：`test_phase1NotificationThrottle_excludesDesktop`、`test_notificationModule_containsNoActiveDesktopThrottleInPhase1`。
 
 ---
 
@@ -238,9 +240,9 @@ CRITICAL / DATA_RISK 不进入普通提醒上限，但仍要去重
 
 | channel | 默认 | 说明 |
 |---|---|---|
-| `desktop_notification` | 关闭 | 用户授权后开启 |
+| `desktop_notification` | 延期 | D-13+ 重新拍板前不得实现真实发送逻辑 |
 | `email` | 关闭 | 用户配置 SMTP 后开启 |
-| `webhook` | 关闭 | 后续接 Slack / Discord / 企业微信 / Telegram 等 |
+| `webhook` | 延期 | D-13+ 重新拍板前不得实现真实发送逻辑 |
 
 第一阶段不建议：
 
@@ -356,5 +358,37 @@ python -m quant_monitor.notifications.send_pending --channel dashboard_notificat
 所有报告必须有 no_action_semantics=true
 Agent 报告段落触发禁用词时进入 manual_review
 ResourceGuard PAUSE 时只允许 DATA_RISK / OPS_RISK 提醒
-用户未启用 email/webhook 时不得发送外部通知
+用户未启用 email 时不得发送外部通知；webhook/desktop/SMS/phone/bot 均延期到 D-13+，第一版不得实现真实发送逻辑
 ```
+
+## 用户决策补充：通知渠道与留存
+
+落实 D-04/D-05：
+
+```text
+默认通知渠道：前端 Notification Center。
+可选渠道：email，由用户显式配置 SMTP 与收件人后启用。
+禁止第一版默认启用：多 webhook、短信、电话、群机器人。
+默认留存：notification/report 1 年。
+清理前必须支持 archive/export。
+```
+
+如果实现角色需要新增 webhook、短信或机器人通知，必须作为 D-13+ 新决策交用户拍板。
+
+
+## D-04 第一版通知渠道硬约束
+
+第一版通知渠道只允许：
+
+```text
+默认：前端 Notification Center / dashboard_notification、local_markdown、local_audit_log、console_summary
+可选：email（必须用户显式配置 SMTP 与收件人）
+```
+
+以下渠道全部延期到 D-13+ 再拍板，不得在第一版实现真实发送逻辑，也不得预留可误触发的 webhook 发送 skeleton：
+
+```text
+webhook、desktop_notification、SMS、phone_call、bot、Slack、Discord、Telegram、企业微信
+```
+
+如果执行角色认为必须新增外部通知渠道，必须先停止并请用户拍板。

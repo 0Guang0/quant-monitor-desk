@@ -14,7 +14,8 @@
 - `docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md`
 - `docs/implementation_tasks/GLOBAL_TESTING_POLICY.md`
 - `docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md`
-
+- `specs/contracts/runtime_versions.md`
+- `docs/quality/staged_acceptance_policy.md`
 ## 4. 相关代码 / 输出文件
 
 - `backend/sources/adapters/`
@@ -69,17 +70,13 @@
 - 测试命名建议：`functionName_condition_expectedBehavior`。
 
 ## 11. 验收命令
+本任务为后端实现任务。验收命令：
 
 ```bash
-pytest -q
-ruff check .
-python -m compileall backend scripts
-```
-
-如涉及前端，还必须运行：
-
-```bash
-cd frontend && npm run typecheck
+uv sync --locked
+uv run pytest -q
+uv run ruff check .
+uv run python -m compileall backend scripts tests
 ```
 
 ## 12. 完成标准
@@ -110,3 +107,19 @@ cd frontend && npm run typecheck
 4. 测试命令和结果。
 5. ResourceGuard 是否触发。
 6. 未完成项或需要用户确认的点。
+
+### 用户决策补充：D-11
+
+用户已拍板：QMT 第一版默认禁用，用户确认本机授权与配置后再启用。
+
+
+## 15. 数据源默认禁用与 domain gating 补充要求
+
+落实 D-11：`qmt_xtdata` 与 `yahoo_finance` 默认禁用。实现 `SourceRegistry` 和 adapter skeleton 时必须识别 `domain_enabled_by_default=false` / `disabled_until_configured=true`，并在调度或 adapter factory 前返回 `DISABLED_SOURCE`，不得尝试连接未授权 QMT 或默认禁用的 Yahoo 源。
+
+新增测试：
+
+```text
+test_disabledPrimaryDomain_returnsDisabledSource
+test_fallbackDisabledByDefault_isSkippedUntilConfigured
+```

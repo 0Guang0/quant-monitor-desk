@@ -2,60 +2,67 @@ version: 2
 module: notification_and_reports
 authoritative_doc: docs/modules/notification_and_reports.md
 report_types:
-  - daily_market_report
-  - weekly_review_report
-  - data_quality_report
-  - manual_review_report
-  - intraday_alert
-  - ops_health_report
-  - backtest_review_report
+- daily_market_report
+- weekly_review_report
+- data_quality_report
+- manual_review_report
+- intraday_alert
+- ops_health_report
+- backtest_review_report
 alert_types:
-  - data_quality_alert
-  - layer1_state_alert
-  - layer2_cross_asset_alert
-  - layer3_anchor_alert
-  - layer4_market_structure_alert
-  - layer5_evidence_alert
+- data_quality_alert
+- layer1_state_alert
+- layer2_cross_asset_alert
+- layer3_anchor_alert
+- layer4_market_structure_alert
+- layer5_evidence_alert
 severities:
-  - INFO
-  - WATCH
-  - WARN
-  - CRITICAL
-  - DATA_RISK
-  - OPS_RISK
+- INFO
+- WATCH
+- WARN
+- CRITICAL
+- DATA_RISK
+- OPS_RISK
 required_sections_daily:
-  - 今日摘要
-  - 数据质量状态
-  - Layer 1 五轴状态
-  - Layer 2 跨资产传感器
-  - Layer 3 产业链锚点
-  - Layer 4 市场结构
-  - Layer 5 个股/合约证据链
-  - 盘中提醒回顾
-  - 需要人工确认事项
-  - 边界提醒
+- 今日摘要
+- 数据质量状态
+- Layer 1 五轴状态
+- Layer 2 跨资产传感器
+- Layer 3 产业链锚点
+- Layer 4 市场结构
+- Layer 5 个股/合约证据链
+- 盘中提醒回顾
+- 需要人工确认事项
+- 边界提醒
 notification_channels_phase1:
   default_enabled:
-    - dashboard_notification
-    - local_markdown
-    - local_audit_log
-    - console_summary
+  - dashboard_notification
+  - local_markdown
+  - local_audit_log
+  - console_summary
   optional:
-    - local_html
-    - desktop_notification
-    - email
-    - webhook
-  not_recommended_phase1:
-    - sms
-    - phone_call
+  - email
+  deferred_requires_D13_plus:
+  - desktop_notification
+  - webhook
+  - sms
+  - phone_call
+  - bot
+  - slack
+  - discord
+  - telegram
+  - enterprise_wechat
+  rules:
+  - Phase 1 must not implement webhook/desktop/SMS/phone/bot sending logic.
+  - Email requires explicit SMTP config and recipient confirmation.
 required_tables:
-  - report_registry
-  - report_section
-  - notification_log
-  - alert_event
+- report_registry
+- report_section
+- notification_log
+- alert_event
 dedup:
   dedup_key_required: true
-  suggested_format: "{alert_type}:{source_layer}:{target_id}:{trigger_reason_code}:{as_of_date}"
+  suggested_format: '{alert_type}:{source_layer}:{target_id}:{trigger_reason_code}:{as_of_date}'
 cooldown_minutes:
   INFO: 240
   WATCH: 120
@@ -65,22 +72,28 @@ cooldown_minutes:
   OPS_RISK: 30
 throttle:
   max_normal_alerts_per_hour: 10
-  max_desktop_notifications_per_hour: 3
 rules:
   no_action_semantics: true
   facts_used_json_required: true
   evidence_ids_required_for_alerts: true
   notification_failure_must_not_rollback_report: true
   resource_guard_pause_allows_only:
-    - DATA_RISK
-    - OPS_RISK
+  - DATA_RISK
+  - OPS_RISK
 api:
-  - GET /api/reports/daily
-  - GET /api/reports/{report_id}
-  - GET /api/reports/{report_id}/sections
-  - POST /api/reports/generate
-  - GET /api/notifications
-  - GET /api/notifications/{notification_id}
-  - GET /api/notifications/logs
-  - POST /api/notifications/{notification_id}/ack
-  - POST /api/notifications/{notification_id}/mute
+- GET /api/reports/daily
+- GET /api/reports/{report_id}
+- GET /api/reports/{report_id}/sections
+- POST /api/reports/generate
+- GET /api/notifications
+- GET /api/notifications/{notification_id}
+- GET /api/notifications/logs
+- POST /api/notifications/{notification_id}/ack
+- POST /api/notifications/{notification_id}/mute
+tests:
+- test_phase1OptionalChannels_onlyEmail
+- test_webhookDesktopSmsDeferredUntilD13
+- test_phase1NotificationThrottle_excludesDesktop
+- test_notificationModule_containsNoActiveDesktopThrottleInPhase1
+deferred_throttle_notes:
+  desktop_notification: Deferred to D-13+; no phase1 desktop sending or throttle implementation.

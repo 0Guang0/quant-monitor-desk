@@ -17,7 +17,7 @@ thresholds:
   disk_warning_pct: 70
   disk_critical_pct: 85
   disk_stop_non_core_pct: 95
-  default_frontend_page_size: 500
+  default_frontend_page_size: 200
   default_agent_query_limit: 200
 backup:
   daily_duckdb_backup: true

@@ -18,7 +18,7 @@
     "quality_flags": [],
     "source_used": "string or null",
     "page": 1,
-    "page_size": 100,
+    "page_size": 200,
     "total": 1000
   },
   "errors": []

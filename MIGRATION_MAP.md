@@ -1,110 +1,41 @@
-# Migration Map — Quant Monitor Desk
+# MIGRATION_MAP
 
-Project navigation map for humans and AI coding agents. Use this file to orient in the repository without loading the full design document.
+本文件是最终实施文档包的迁移映射索引，供 Claude Code / Codex 在拆分文档后定位“旧设计内容 → 新文件位置”。
 
-## 1. What this repository is
+## 1. 文件定位
 
-| Artifact | Role |
-|----------|------|
-| `docs/` | Human-readable architecture, module design, ops, ADRs, implementation tasks |
-| `specs/` | Machine-readable contracts, schema, Layer 1 axes, Layer 3 chains |
-| `backend/` | Python application (FastAPI, ETL, validators, layers, agents) |
-| `frontend/` | React dashboard shell (UI not finalized — user must confirm before production UI) |
-| `configs/` | Local runtime configuration (secrets stay in `.env`) |
-| `data/` | Local DuckDB, raw files, parquet, audit (gitignored at runtime) |
+- 本文件是 `004_create_documentation_index.md` 的强制输入。
+- 本文件不是运行时代码，不参与数据库 migration。
+- 本文件用于防止执行角色在多个文档版本之间迷路或误用旧口径。
 
-Origin: implementation docs package v1.6 (`quant_monitor_implementation_docs_v1`) merged into this repo as the source of truth.
+## 2. 主要映射
 
-## 2. First reads (recommended order)
+| 原始内容/章节 | 当前权威位置 | 说明 |
+|---|---|---|
+| 总体项目定位 | `docs/architecture/00_project_overview.md` | 本地优先、少数人使用、监控而非自动交易 |
+| 上下文与边界 | `docs/architecture/01_context_and_scope.md` | 使用范围、非目标、人工确认边界 |
+| 运行链路 | `docs/architecture/03_runtime_flows.md` | 数据抓取到前端/Agent 的主链路 |
+| 数据架构 | `docs/architecture/04_data_architecture.md` | DuckDB、Raw Store、Parquet、WriteManager |
+| 模块地图 | `docs/architecture/05_module_map.md` | 各模块职责与边界 |
+| 运维与本机低占用 | `docs/ops/performance_limits.md` 与 `docs/modules/ops_and_performance.md` | ResourceGuard、磁盘、内存、性能 |
+| 数据源设计 | `docs/modules/data_sources.md` 与 `specs/datasource_registry/source_registry.yaml` | Primary / Validation / FallbackPolicy |
+| 数据同步 | `docs/modules/data_sync_orchestrator.md` 与 `specs/contracts/sync_job_contract.yaml` | FullLoad、Incremental、Backfill、RevisionAudit、Reconcile |
+| 数据质量与冲突 | `docs/modules/data_validation_and_conflict.md`、`specs/contracts/data_quality_rules.yaml`、`specs/contracts/source_conflict_rules.yaml` | 质量检查与多源冲突治理分离 |
+| 五层模型 | `docs/modules/layer1_global_regime_panel.md` 至 `docs/modules/layer5_security_evidence.md` | Layer 1-5 分层 |
+| API | `docs/api/fastapi_routes.md`、`specs/api/openapi_contract.md`、`specs/contracts/api_security_contract.yaml` | FastAPI、分页、鉴权、查询预算 |
+| Agent | `docs/modules/agent_module.md`、`docs/api/agent_tool_contracts.md`、`specs/contracts/agent_contract.yaml`、`docs/ops/agent_security_policy.md` | 只读、白名单、抗提示注入 |
+| 通知与报告 | `docs/modules/notification_and_reports.md`、`specs/contracts/notification_report_contract.yaml`、`docs/ops/privacy_retention_policy.md` | 去重、冷却、隐私、留存 |
+| 回测与复盘 | `docs/modules/backtest_and_review.md`、`specs/contracts/backtest_contract.yaml`、`specs/contracts/backtest_reproducibility_contract.yaml` | 防前视偏差、冻结样本、参数快照 |
+| 最终发布 | `docs/quality/final_package_rules.md`、`specs/contracts/release_cleanup_allowlist.yaml` | allowlist、dry-run、manifest |
 
-```text
-1. README.md                          Project entry
-2. MIGRATION_MAP.md                   This file
-3. docs/INDEX.md                      Documentation index
-4. docs/architecture/00_project_overview.md
-5. docs/architecture/03_runtime_flows.md
-6. docs/architecture/04_data_architecture.md
-7. docs/architecture/05_module_map.md
-8. docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md
-9. docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
-10. docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md
-11. docs/implementation_tasks/README.md
-```
+## 3. 旧口径禁止恢复
 
-## 3. Five-layer model (quick reference)
+- 不得恢复 `Primary / Shadow / Emergency` 作为数据源角色模型。
+- 当前权威模型为 `Primary / Validation / FallbackPolicy`。
+- 旧数据源角色 `Shadow` / `Emergency` 不能作为 source role、default role、fallback role、API role、DB role 或前端 source-role 展示恢复。
+- Layer 1 `SHADOW` 诊断标签是窄例外：允许出现在明确带诊断/旁证语义的 Layer 1 indicator 条目、`shadow_diagnostics` 分组、`schema_note` 或说明文档中；不得进入 `source_registry` 角色字段，不得接管 clean 主值。若不在 `shadow_diagnostics` 分组下，必须显式写明 `diagnostic_only` / `evidence_only` / `does_not_replace_main_indicator` 或同等约束。
 
-| Layer | Name | Docs module | Spec / contract |
-|-------|------|-------------|-----------------|
-| L1 | Global Regime Panel | `docs/modules/layer1_global_regime_panel.md` | `specs/layer1_axes/restructured_axes_v1_1/` |
-| L2 | Cross-Asset Sensor | `docs/modules/layer2_cross_asset_sensor.md` | `specs/contracts/layer2_sensor_contract.yaml` |
-| L3 | Industry Chain Shock-Anchor | `docs/modules/layer3_industry_shock_anchor.md` | `specs/layer3_global_industry_chains/` |
-| L4 | Market Structure | `docs/modules/layer4_market_structure.md` | `specs/contracts/layer4_market_contract.yaml` |
-| L5 | Security Evidence | `docs/modules/layer5_security_evidence.md` | `specs/contracts/layer5_evidence_contract.yaml` |
+## 4. MANIFEST 角色说明
 
-Cross-cutting: `docs/modules/data_sync_orchestrator.md`, `write_manager.md`, `agent_module.md`.
-
-## 4. Implementation task rounds
-
-| Round | Directory | Focus |
-|-------|-----------|-------|
-| 0 | `docs/implementation_tasks/ROUND_0_PROJECT_SCAFFOLD/` | Scaffold, config, tests, doc index |
-| 1 | `ROUND_1_DATA_FOUNDATION/` | Schema, ResourceGuard, WriteManager, raw store |
-| 2 | `ROUND_2_DATA_INGESTION_VALIDATION/` | Adapters, sync, quality, conflict |
-| 3 | `ROUND_3_MODELING_LAYERS/` | Layer 1–5 loaders and snapshots |
-| 4 | `ROUND_4_API_FRONTEND_AGENT_BACKTEST/` | API, frontend, agent, reports |
-| 5 | `ROUND_5_INTEGRATION_RELEASE/` | Integration tests, cleanup, release manifest |
-
-Always read the four `GLOBAL_*.md` files before any task file.
-
-## 5. Code ↔ docs mapping (planned)
-
-| Code path | Primary doc |
-|-----------|-------------|
-| `backend/app/db/` | `docs/modules/duckdb_and_parquet.md` |
-| `backend/app/validators/` | `docs/modules/data_validation_and_conflict.md` |
-| `backend/app/datasources/` | `docs/modules/data_sources.md` |
-| `backend/app/layer1_axes/` | `docs/modules/layer1_global_regime_panel.md` |
-| `backend/app/layer2_sensors/` | `docs/modules/layer2_cross_asset_sensor.md` |
-| `backend/app/layer3_chains/` | `docs/modules/layer3_industry_shock_anchor.md` |
-| `backend/app/layer4_markets/` | `docs/modules/layer4_market_structure.md` |
-| `backend/app/layer5_evidence/` | `docs/modules/layer5_security_evidence.md` |
-| `backend/app/agents/` | `docs/modules/agent_module.md` |
-| `backend/app/api/` | `docs/modules/fastapi_backend.md` |
-| `frontend/src/` | `docs/modules/frontend_dashboard.md` |
-| `specs/schema/schema.sql` | Round 1 task 005 |
-
-## 6. Contracts index
-
-All under `specs/contracts/`:
-
-- `resource_limits.yaml` — ResourceGuard limits (mirrored in `configs/resource_limits.yaml`)
-- `write_contract.yaml` — DuckDBWriteManager boundary
-- `layer1_axis_contract.yaml` … `layer5_evidence_contract.yaml`
-- `agent_contract.yaml` — read-only agent tools
-- `runtime_flow_contract.yaml` — orchestration flows
-
-OpenAPI: `specs/api/openapi_contract.md`
-
-## 7. ADR index
-
-See `docs/architecture/08_decision_log_index.md` and `docs/adr/ADR-*.md`.
-
-## 8. Non-negotiable boundaries
-
-- Default resource profile: **`eco`**
-- Data sources: **Primary / Validation / FallbackPolicy** (not Shadow/Emergency)
-- Layer 3: shock-anchor model, not a generic industry list
-- Agent: read-only, no free SQL, no write DB, no trading action semantics
-- Clean table writes: only via **DuckDBWriteManager**
-- Frontend: placeholder until user confirms layout and visual design
-
-## 9. Document lineage
-
-```text
-quant_monitor_design_document_v1_6.md
-  → split into docs/architecture/, docs/modules/, specs/
-  → implementation_tasks/ for AI round execution
-  → merged into quant-monitor-desk/ (this repo)
-```
-
-When docs and code diverge, Round 5 task 034 (`docs_consistency_check`) is the reconciliation gate.
+- `MANIFEST.json` 是最终发布输出，不是 `036_create_final_release_manifest.md` 的必需输入。
+- 如果仓库里已有旧 `MANIFEST.json`，执行角色只能把它作为对比参考，不能把它视为权威输入。

@@ -15,7 +15,9 @@
 - `docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md`
 - `docs/implementation_tasks/GLOBAL_TESTING_POLICY.md`
 - `docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md`
-
+- `specs/contracts/runtime_versions.md`
+- `docs/quality/staged_acceptance_policy.md`
+- `docs/ops/privacy_retention_policy.md`
 ## 4. 相关代码 / 输出文件
 
 - `backend/reports/`
@@ -71,17 +73,14 @@
 - 测试命名建议：`functionName_condition_expectedBehavior`。
 
 ## 11. 验收命令
+本任务涉及 API / Agent / 通知 / 回测。验收命令：
 
 ```bash
-pytest -q
-ruff check .
-python -m compileall backend scripts
-```
-
-如涉及前端，还必须运行：
-
-```bash
-cd frontend && npm run typecheck
+uv sync --locked
+uv run pytest -q tests/test_api_routes.py tests/test_agent_tools.py tests/test_notifications.py tests/test_backtest_review.py tests/test_no_action_semantics_guard.py
+uv run ruff check .
+uv run python -m compileall backend scripts tests
+cd frontend && npm ci && npm audit --audit-level=high && npm run typecheck && npm run build
 ```
 
 ## 12. 完成标准
@@ -112,3 +111,30 @@ cd frontend && npm run typecheck
 4. 测试命令和结果。
 5. ResourceGuard 是否触发。
 6. 未完成项或需要用户确认的点。
+
+## 15. 审计修复补充要求
+
+报告与通知必须实现：
+
+- report/notification 状态机。
+- dedup_key、cooldown、throttle。
+- 隐私分级与 secret masking。
+- 发送失败不回滚已生成报告，但必须写 notification_log。
+- 留存策略：raw/audit/report/notification 逻辑保留期统一为 1 年；可采用 hot/cold 分层（如 hot 30/90 天 + cold 至 365 天），但总留存口径必须服从 D-05；secret-like payload 不保存原文。
+
+### 用户决策补充：D-04
+
+用户已拍板：第一版通知默认前端 Notification Center；邮件可选；不启用多 webhook。
+
+### 用户决策补充：D-05
+
+用户已拍板：raw/audit/report/notification 默认保留 1 年；清理前必须提供手动归档按钮或 CLI。
+
+
+## 15. D-04 通知渠道硬边界
+
+第一版默认只实现前端 Notification Center / dashboard notification、local markdown、local audit log、console summary；可选实现 email，但必须要求用户显式配置 SMTP 与收件人。
+
+webhook、desktop、SMS、phone、bot、Slack、Discord、Telegram、企业微信全部延期到 D-13+，本任务不得实现真实发送逻辑，也不得让配置项默认可触发外部 webhook。
+
+Phase 1 throttle 只允许覆盖 dashboard notification / local audit / console summary / 显式配置后的 email；不得实现该延期渠道的节流逻辑。必须补 `test_phase1NotificationThrottle_excludesDesktop`、`test_notificationModule_containsNoActiveDesktopThrottleInPhase1`。

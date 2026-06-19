@@ -1,0 +1,28 @@
+version: snapshot_lineage_contract_v1
+purpose: Ensure Layer 1-5 snapshots are reproducible, as-of correct, and incrementally rebuildable.
+required_fields:
+  snapshot_id: string
+  snapshot_type: string
+  layer_id: string
+  as_of_timestamp: datetime
+  generated_at: datetime
+  input_data_window_start: datetime
+  input_data_window_end: datetime
+  source_dataset_ids: list[string]
+  source_fetch_ids: list[string]
+  source_content_hashes: list[string]
+  rule_version: string
+  code_version: string
+  parameter_hash: string
+  resource_profile: string
+  upstream_snapshot_ids: list[string]
+  is_incremental: boolean
+  rebuild_reason: string|null
+constraints:
+  no_future_data: as_of_timestamp must be <= every input observation visibility timestamp
+  deterministic_rebuild: same inputs + same rule_version + same parameter_hash must reproduce same business result
+  agent_outputs_not_source: agent-generated prose must never appear in source_dataset_ids
+validation_tests:
+  - test_snapshotRejectsFutureInput
+  - test_snapshotLineageContainsSourceHashes
+  - test_incrementalRebuildPreservesAsOfBoundary

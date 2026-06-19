@@ -311,3 +311,7 @@ python -m quant_monitor layer2 health-check
 7. 实现 Layer 2 前端卡片数据契约
 8. 实现测试集
 ```
+
+## 用户决策补充：不复制 Layer 1 全套标准化字段
+
+落实 D-09：Layer 2 不默认复制 Layer 1 的完整标准化字段。Layer 2 只保留本层业务必需字段；如后续确需引入 z-score、历史百分位、状态桶等标准化字段，必须在本层 contract 中按需增加，不得全量套用 Layer 1 模型。

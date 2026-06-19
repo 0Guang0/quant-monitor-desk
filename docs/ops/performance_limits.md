@@ -5,17 +5,6 @@
 
 ---
 
-## 配置文件权威（Round 1 repair · GPT）
-
-| 文件 | 角色 |
-|------|------|
-| `specs/contracts/resource_limits.yaml` | **权威契约**：`system_thresholds`、`project_size_thresholds`（含 cache / system pct / duckdb temp 上限） |
-| `configs/resource_limits.yaml` | **本地 override**：仅 `profiles`（eco/normal/batch 进程与 DuckDB 限制） |
-
-运行时 `load_thresholds()` 将 contract 中的 thresholds **合并**进 config。`configs/` 中缺少的阈值字段**并非未生效**——它们来自 `specs/contracts/`。修改阈值时请优先改 contract，再在 README/本文件记录 rationale。
-
----
-
 # 1. 总原则
 
 本项目不是服务器集群系统，而是本地优先、少数人使用的量化监控系统。因此所有默认参数都采用 **Conservative Desktop Mode**。
@@ -233,12 +222,12 @@ clean tables
 
 | 查询类型 | 默认 | 硬上限 | 超限处理 |
 |---|---:|---:|---|
-| 前端表格 | 100 行 | 500 行 | 分页 |
-| Agent 查询 | 100 行 | 500 行 | 截断 + truncated=true |
+| 前端表格 | 200 行 | 1000 行 | 分页；唯一机器权威为 `specs/contracts/api_security_contract.yaml` |
+| Agent 查询 | 200 行 | 1000 行 | 截断 + truncated=true；唯一机器权威为 `specs/contracts/api_security_contract.yaml` |
 | 日线历史 | 90 天 | 1 年 | 超过转后台任务 |
 | 分钟线历史 | 5 个交易日 | 20 个交易日 | 超过转后台任务 |
 | Layer 3 图谱 | P0/P1 默认 | 全量允许但不带历史行情 | 历史另查 |
-| source_conflict 列表 | 100 行 | 500 行 | 分页 |
+| source_conflict 列表 | 200 行 | 1000 行 | 分页；服从 API 查询预算 |
 
 禁止接口：
 
@@ -280,7 +269,7 @@ Data Health 自动刷新间隔 >= 60 秒
 # 10. Agent 性能限制
 
 ```text
-Agent 一次最多读取 500 条结构化记录
+Agent 一次默认最多读取 200 条结构化记录，绝对最多 1000 条；具体工具可设置更低局部上限，但不得超过 `specs/contracts/api_security_contract.yaml`
 Agent 不读取原始 PDF 全文，先读取解析摘要和 evidence refs
 Agent 不触发实时大查询
 Agent 不在前端请求链路里执行长推理
@@ -326,8 +315,9 @@ CREATE TABLE IF NOT EXISTS resource_guard_log (
 全市场无 date_range 分钟线查询被拒绝
 磁盘剩余 < 20GB 时 backfill 暂停
 进程 RSS > 1.2GB 时非核心任务暂停
-前端列表默认 page_size=100
-Agent tool 超过 500 条返回 truncated=true
+前端列表默认 page_size=200
+Agent tool 超过 1000 条返回 truncated=true
+必须包含 `test_apiSecurityContract_isSingleAuthorityForQueryBudget`、`test_resourceLimitsApiLimits_matchApiSecurityContract`、`test_frontendPageContracts_doNotUseStale500Limit`
 DuckDB temp 目录不会占用超过 profile limit
 HARD_STOP 时能释放锁并写 audit log
 ```

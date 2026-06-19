@@ -1,0 +1,36 @@
+version: backtest_reproducibility_contract_v1
+purpose: Prevent look-ahead bias and make backtest/review runs reproducible.
+required_artifacts:
+  frozen_dataset_manifest:
+    fields:
+      - dataset_id
+      - created_at
+      - as_of_cutoff
+      - included_fetch_ids
+      - content_hashes
+      - exclusion_reason_if_any
+  parameter_snapshot:
+    fields:
+      - scenario_id
+      - rule_version
+      - parameter_json
+      - parameter_hash
+      - random_seed
+      - code_version
+  result_manifest:
+    fields:
+      - run_id
+      - started_at
+      - completed_at
+      - metrics
+      - warnings
+      - resource_profile
+hard_rules:
+  - no input observation may have visibility_timestamp after scenario as_of_cutoff
+  - all random or sampling operations must set and record random_seed
+  - agent text cannot change metrics; agent may only summarize computed metrics
+  - backtest cannot output trading action semantics
+tests:
+  - test_futureObservationAfterCutoff_rejected
+  - test_sameFrozenDatasetAndParams_reproducesMetrics
+  - test_parameterHashChangesWhenRuleChanges
