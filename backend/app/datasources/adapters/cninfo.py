@@ -7,4 +7,4 @@ from backend.app.datasources.adapters.skeleton_base import SkeletonAdapterBase
 
 class CninfoAdapter(SkeletonAdapterBase):
     source_id = "cninfo"
-    supported_domains = frozenset({"announcement"})
+    supported_domains = frozenset({"cn_announcements"})

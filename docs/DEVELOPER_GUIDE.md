@@ -20,4 +20,4 @@
 
 ## 4. 验证
 
-旧审计闭环验证命令记录在 `ROUND2_6_PHASE_A_SELF_CHECK.md`。
+Round2.6 Phase A 自检已迁移至 Trellis：`.trellis/tasks/06-19-round2-6-routing-service-gate/research/phase-a-self-check-migrated.md`。生产等价 smoke：`python scripts/production_equivalent_smoke.py --use-service-path --data-root .audit-sandbox/r26-smoke`。

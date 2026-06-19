@@ -1,16 +1,9 @@
-"""Round2.6 Phase B — platform source matrix contract tests."""
+"""Round2.6 Phase C — platform source matrix tests (production planner)."""
 
 from __future__ import annotations
 
-import os
-
-import yaml
-from tests.contract_gate_support import (
-    ContractSourceRoutePlanner,
-    PROJECT_ROOT,
-    load_yaml,
-    platform_key,
-)
+from tests.contract_gate_support import PROJECT_ROOT, load_yaml, platform_key
+from tests.service_path_support import plan_route
 
 PLATFORM_MATRIX = PROJECT_ROOT / "specs/contracts/platform_source_matrix.yaml"
 
@@ -23,7 +16,7 @@ def test_qmtXtdataNonWindowsNotSchedulable() -> None:
     assert entry["default_enabled"] is False
 
     if key != "windows":
-        plan = ContractSourceRoutePlanner().plan(
+        plan = plan_route(
             data_domain="cn_equity_minute_bar",
             operation="fetch_minute_bar",
         )
@@ -40,7 +33,7 @@ def test_qmtXqshareMissingEnvNotSchedulable(monkeypatch) -> None:
         monkeypatch.delenv(env_name, raising=False)
     assert entry["default_enabled"] is False
 
-    plan = ContractSourceRoutePlanner().plan(
+    plan = plan_route(
         data_domain="cn_equity_daily_bar",
         operation="fetch_daily_bar",
         extra_candidates=[("qmt_xqshare", "Primary")],
@@ -56,7 +49,7 @@ def test_qmtXqshare_neverAutoProbed() -> None:
     rules = matrix.get("rules") or []
     assert any("never auto-probed" in r.lower() for r in rules)
 
-    plan = ContractSourceRoutePlanner().plan(
+    plan = plan_route(
         data_domain="cn_equity_daily_bar",
         operation="fetch_daily_bar",
         extra_candidates=[("qmt_xqshare", "Primary")],
@@ -70,7 +63,7 @@ def test_platformMatrix_feedsDisabledReason() -> None:
     rules = matrix.get("rules") or []
     assert any("disabled_reason" in r for r in rules)
 
-    plan = ContractSourceRoutePlanner().plan(
+    plan = plan_route(
         data_domain="cn_equity_minute_bar",
         operation="fetch_minute_bar",
     )

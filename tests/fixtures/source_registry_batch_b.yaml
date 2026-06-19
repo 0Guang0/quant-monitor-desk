@@ -6,8 +6,8 @@ sources:
     source_name: "baostock"
     source_type: official_api
     allowed_domains:
-      - market_bar_1d
-      - fundamental
+      - cn_equity_daily_bar
+      - cn_equity_basic_financial
     trust_level: 2
     license_type: official_free
     official_api: true
@@ -27,8 +27,8 @@ sources:
     source_name: "QMT xtdata"
     source_type: local_sdk
     allowed_domains:
-      - market_bar_1d
-      - market_bar_1m
+      - cn_equity_daily_bar
+      - cn_equity_minute_bar
     trust_level: 1
     license_type: local_authorized
     official_api: false
@@ -48,8 +48,8 @@ sources:
     source_name: "AkShare"
     source_type: vendor_api
     allowed_domains:
-      - market_bar_1d
-      - capital_flow
+      - cn_equity_daily_bar
+      - macro_supplementary
     trust_level: 3
     license_type: public_web
     official_api: false
@@ -68,7 +68,7 @@ sources:
     source_name: "CNINFO"
     source_type: official_api
     allowed_domains:
-      - announcement
+      - cn_announcements
     trust_level: 1
     license_type: official_free
     official_api: true
@@ -87,7 +87,7 @@ sources:
     source_name: "Yahoo Finance"
     source_type: vendor_api
     allowed_domains:
-      - market_bar_1d
+      - us_equity_daily_bar
     trust_level: 4
     license_type: public_web
     official_api: false
@@ -103,19 +103,19 @@ sources:
     validation_only: true
 
 domain_roles:
-  market_bar_1d:
+  cn_equity_daily_bar:
     primary: baostock
     validation: qmt_xtdata
     fallback_policy: retry_same_source
-  market_bar_1m:
+  cn_equity_minute_bar:
     primary: qmt_xtdata
     validation: null
     fallback_policy: mark_missing
-  announcement:
+  cn_announcements:
     primary: cninfo
     validation: null
     fallback_policy: manual_review_required
-  capital_flow:
+  macro_supplementary:
     primary: akshare
     validation: null
     fallback_policy: use_last_good_cache

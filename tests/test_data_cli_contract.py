@@ -9,10 +9,9 @@ import yaml
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 CLI_CONTRACT = PROJECT_ROOT / "specs/contracts/data_cli_contract.yaml"
 ERROR_GUIDE = PROJECT_ROOT / "docs/ops/ERROR_CODE_GUIDE.md"
-TASK2_MASTER = (
-    PROJECT_ROOT
-    / ".trellis/tasks/06-19-round2-6-routing-service-gate/MASTER.plan.md"
-)
+TASK2_DIR = PROJECT_ROOT / ".trellis/tasks/archive/2026-06/06-19-round2-6-routing-service-gate"
+TASK2_MASTER = TASK2_DIR / "MASTER.plan.md"
+TASK2_IMPLEMENT = TASK2_DIR / "implement.jsonl"
 
 
 def _load_contract() -> dict:
@@ -55,8 +54,5 @@ def test_productionCli_notYetImplemented_documentedInTask2() -> None:
     assert "DataSourceService" in text
     assert "production_equivalent_smoke" in text or "016F" in text
     assert (PROJECT_ROOT / "specs/contracts/data_cli_contract.yaml").is_file()
-    gate_impl = (
-        PROJECT_ROOT
-        / ".trellis/tasks/06-19-round2-6-contract-gate/implement.jsonl"
-    ).read_text(encoding="utf-8")
+    gate_impl = TASK2_IMPLEMENT.read_text(encoding="utf-8")
     assert "data_cli_contract.yaml" in gate_impl

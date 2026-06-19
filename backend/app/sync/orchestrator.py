@@ -104,16 +104,32 @@ class DataSyncOrchestrator:
         self,
         spec: SyncJobSpec,
         *,
-        adapter: BaseDataAdapter,
+        adapter: BaseDataAdapter | None = None,
+        datasource_service=None,
         clean_table: str,
         conflict_staging_table: str | None = None,
         write_mode: str = "append_only",
         primary_keys: tuple[str, ...] = ("instrument_id", "trade_date"),
         required_fields: tuple[str, ...] = ("close", "source_used"),
     ) -> SyncJobResult:
+        fetch_callable = None
+        if datasource_service is not None:
+            jobs = self._jobs
+
+            def _service_fetch(req, con, job_id, operation=None):
+                return datasource_service.fetch(
+                    req,
+                    con=con,
+                    job_id=job_id,
+                    operation=operation,
+                    on_enter_fetching=lambda: jobs.transition(job_id, "FETCHING", con=con),
+                )
+
+            fetch_callable = _service_fetch
         return self._incremental.run(
             spec,
             adapter=adapter,
+            fetch_callable=fetch_callable,
             config=PipelineConfig(
                 clean_table=clean_table,
                 conflict_staging_table=conflict_staging_table,

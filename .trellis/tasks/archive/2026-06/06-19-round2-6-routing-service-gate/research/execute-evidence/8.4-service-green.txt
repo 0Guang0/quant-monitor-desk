@@ -1,0 +1,1 @@
+pytest tests/test_datasource_service.py -q — guard blocked, disabled fetch_log, payload run_id/job_id — post-repair PASS

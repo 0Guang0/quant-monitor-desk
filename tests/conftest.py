@@ -136,7 +136,7 @@ def baostock_skeleton_class():
 
     class BaostockSkeleton(SkeletonAdapterBase):
         source_id = "baostock"
-        supported_domains = frozenset({"market_bar_1d", "fundamental"})
+        supported_domains = frozenset({"cn_equity_daily_bar", "cn_equity_basic_financial"})
 
     return BaostockSkeleton
 
@@ -147,7 +147,7 @@ def baostock_skeleton_market_only_class():
 
     class BaostockSkeleton(SkeletonAdapterBase):
         source_id = "baostock"
-        supported_domains = frozenset({"market_bar_1d"})
+        supported_domains = frozenset({"cn_equity_daily_bar"})
 
     return BaostockSkeleton
 

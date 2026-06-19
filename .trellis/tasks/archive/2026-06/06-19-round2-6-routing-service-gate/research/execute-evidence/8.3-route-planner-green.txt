@@ -1,0 +1,1 @@
+pytest tests/test_source_route_planner.py -q — includes USER_AUTH_REQUIRED, DISABLED_SOURCE, CAPABILITY_MISSING — post-repair PASS

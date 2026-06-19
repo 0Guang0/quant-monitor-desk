@@ -71,7 +71,7 @@
 
 ## ROUND_3_MODELING_LAYERS
 
-> **Gate:** complete Trellis `round2-repair-alignment` (Round 2.5) before **017**; Round 2.6 datasource routing / ops alignment must also be documented before Round3 implementation proceeds. See `docs/quality/ROUND2_REPAIR_ALIGNMENT_TRACKER.md` and `ROUND2_6_PHASE_A_SELF_CHECK.md`.
+> **Gate:** complete Trellis `round2-repair-alignment` (Round 2.5) and Trellis **`06-19-round2-6-routing-service-gate`** (Round 2.6 Phase C/D) before **017**. Contract gate: `.trellis/tasks/archive/2026-06/06-19-round2-6-contract-gate/`. Routing service gate evidence: `.trellis/tasks/06-19-round2-6-routing-service-gate/`. See `docs/quality/ROUND2_REPAIR_ALIGNMENT_TRACKER.md` and `docs/AUDIT_DEFERRED_REGISTRY.md`.
 
 - `ROUND_3_MODELING_LAYERS/017_implement_layer1_axis_loader.md` — 实现 Layer 1 五轴 loader
 - `ROUND_3_MODELING_LAYERS/018_implement_layer1_interpretation_snapshot.md` — 实现 Layer 1 解释快照

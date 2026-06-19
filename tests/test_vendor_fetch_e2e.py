@@ -106,3 +106,100 @@ def test_vendorFixtureFetch_e2eOrchestratorPath(
     assert report_count >= 1
     assert audit_count >= 1
     assert clean_count == 1
+
+
+def test_vendorFixtureFetch_e2eThroughDataSourceServicePath(tmp_path: Path, monkeypatch) -> None:
+    """Service-path E2E: production DataSourceService.fetch → validation/write."""
+    from backend.app.datasources.service import DataSourceService
+    from backend.app.sync.event_payload import parse_event_payload
+    from tests.service_path_support import (
+        make_fixture_port,
+        patch_create_test_adapter_for_staging,
+        write_bar_fixture,
+    )
+
+    write_bar_fixture(FIXTURE_JSON)
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+
+    db = tmp_path / "vendor_svc_e2e.duckdb"
+    cm = ConnectionManager(db_path=db)
+    with cm.writer() as con:
+        apply_migrations(con)
+        con.execute(
+            f"""
+            CREATE TABLE IF NOT EXISTS {STG_TABLE} (
+                instrument_id VARCHAR, trade_date VARCHAR, close DOUBLE,
+                source_used VARCHAR, batch_id VARCHAR, source_id VARCHAR
+            )
+            """
+        )
+        con.execute(
+            f"CREATE TABLE IF NOT EXISTS {CLEAN_TABLE} AS SELECT * FROM {STG_TABLE} WHERE 1=0"
+        )
+
+    reg = SourceRegistry()
+    reg.load()
+    with cm.writer() as con:
+        reg.sync_to_db(con, tombstone_missing=False)
+
+    raw_root = tmp_path / "raw"
+    raw_root.mkdir()
+    port = make_fixture_port(FIXTURE_JSON)
+    patch_create_test_adapter_for_staging(
+        monkeypatch,
+        staging_table=STG_TABLE,
+        registry=reg,
+        raw_root=raw_root,
+        fetch_port=port,
+    )
+
+    orch = DataSyncOrchestrator(cm)
+    service = DataSourceService(
+        source_registry=reg,
+        data_root=raw_root,
+        fetch_port=port,
+        job_events=orch._jobs,
+    )
+    spec = SyncJobSpec(
+        run_id="run-vendor-svc",
+        job_id="job-vendor-svc",
+        job_type="incremental",
+        data_domain="cn_equity_daily_bar",
+        market_id="CN_A",
+        source_id="baostock",
+        adapter_id="baostock",
+        date_start=None,
+        date_end=None,
+        instrument_id="000001",
+        partition_key=None,
+        trigger_reason=None,
+    )
+    result = orch.run_incremental(spec, datasource_service=service, clean_table=CLEAN_TABLE)
+    assert result.status == "COMPLETED"
+    with cm.writer() as con:
+        route_row = con.execute(
+            """
+            SELECT payload_json FROM job_event_log
+            WHERE job_id = ? AND event_type = 'ROUTE_PLAN' LIMIT 1
+            """,
+            [result.job_id],
+        ).fetchone()
+        fetch_count = con.execute(
+            "SELECT COUNT(*) FROM fetch_log WHERE job_id = ?", [result.job_id]
+        ).fetchone()[0]
+    assert route_row is not None
+    payload = parse_event_payload(route_row[0])
+    assert payload.get("decision") == "route_plan"
+    assert payload.get("selected_source_id") == "baostock"
+    assert fetch_count >= 1
+    with cm.writer() as con:
+        report_count = con.execute(
+            "SELECT COUNT(*) FROM validation_report WHERE job_id = ?", [result.job_id]
+        ).fetchone()[0]
+        audit_count = con.execute(
+            "SELECT COUNT(*) FROM write_audit_log WHERE job_id = ?", [result.job_id]
+        ).fetchone()[0]
+        clean_count = con.execute(f"SELECT COUNT(*) FROM {CLEAN_TABLE}").fetchone()[0]
+    assert report_count >= 1
+    assert audit_count >= 1
+    assert clean_count == 1

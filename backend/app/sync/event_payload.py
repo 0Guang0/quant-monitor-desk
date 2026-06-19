@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import json
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from backend.app.datasources.route_models import SourceRoutePlan
 
 SCHEMA_KEYS = (
     "error_code",
@@ -12,7 +15,25 @@ SCHEMA_KEYS = (
     "retry_count",
     "decision",
     "rule_id",
+    "route_plan_id",
+    "run_id",
+    "job_id",
+    "route_status",
+    "selected_source_id",
+    "quality_flags",
+    "candidates",
+    "data_domain",
+    "operation",
+    "created_at",
 )
+
+
+def build_route_plan_payload(plan: SourceRoutePlan) -> str:
+    """Serialize SourceRoutePlan for job_event_log.payload_json."""
+    payload = plan.to_payload_dict()
+    payload["decision"] = "route_plan"
+    return build_event_payload(**payload)
+
 
 _PARSE_ERROR_KEY = "_parse_error"
 

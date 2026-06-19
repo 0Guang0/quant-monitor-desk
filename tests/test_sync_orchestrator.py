@@ -581,3 +581,210 @@ def test_orchestratorBootstrap_callsSyncToDb(tmp_path, registry_yaml_fixture, mo
     with orch._cm.writer() as con:
         count = con.execute("SELECT COUNT(*) FROM source_registry").fetchone()[0]
     assert count >= 1
+
+
+def test_plannedJobWritesRoutePlanBeforeFetching(tmp_path, monkeypatch) -> None:
+    from backend.app.core.resource_guard import Decision, ResourceGuard
+    from backend.app.datasources.service import DataSourceService
+    from backend.app.datasources.source_registry import SourceRegistry
+    from backend.app.sync.event_payload import parse_event_payload
+    from tests.service_path_support import (
+        make_fixture_port,
+        patch_create_test_adapter_for_staging,
+        write_bar_fixture,
+    )
+
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    orch = _orchestrator(tmp_path)
+    fixture = tmp_path / "route_fixture.json"
+    write_bar_fixture(fixture)
+    reg = SourceRegistry()
+    reg.load()
+    STG = "stg_route_plan_test"
+    with orch._cm.writer() as con:
+        con.execute(
+            f"""
+            CREATE TABLE IF NOT EXISTS {STG} (
+                instrument_id VARCHAR, trade_date VARCHAR, close DOUBLE,
+                source_used VARCHAR, batch_id VARCHAR, source_id VARCHAR
+            )
+            """
+        )
+        con.execute(f"CREATE TABLE IF NOT EXISTS clean_route AS SELECT * FROM {STG} WHERE 1=0")
+
+    raw_root = tmp_path / "raw"
+    raw_root.mkdir()
+    port = make_fixture_port(fixture)
+    patch_create_test_adapter_for_staging(
+        monkeypatch,
+        staging_table=STG,
+        registry=reg,
+        raw_root=raw_root,
+        fetch_port=port,
+    )
+    service = DataSourceService(
+        source_registry=reg,
+        data_root=raw_root,
+        fetch_port=port,
+        job_events=orch._jobs,
+    )
+    spec = SyncJobSpec(
+        run_id="run-route",
+        job_id="job-route",
+        job_type="incremental",
+        data_domain="cn_equity_daily_bar",
+        market_id="CN_A",
+        source_id="baostock",
+        adapter_id="baostock",
+        date_start=None,
+        date_end=None,
+        instrument_id="000001",
+        partition_key=None,
+        trigger_reason=None,
+    )
+    result = orch.run_incremental(spec, datasource_service=service, clean_table="clean_route")
+    assert result.status == "COMPLETED"
+    with orch._cm.writer() as con:
+        rows = con.execute(
+            """
+            SELECT event_type, payload_json, new_status, created_at
+            FROM job_event_log
+            WHERE job_id = ? ORDER BY created_at ASC
+            """,
+            [result.job_id],
+        ).fetchall()
+    route_idx = next(i for i, row in enumerate(rows) if row[0] == "ROUTE_PLAN")
+    fetching_idx = next(i for i, row in enumerate(rows) if row[2] == "FETCHING")
+    assert route_idx < fetching_idx
+    route_payload = parse_event_payload(rows[route_idx][1])
+    assert route_payload.get("route_status") == "READY"
+    assert route_payload.get("selected_source_id") == "baostock"
+
+
+def test_servicePath_guardBlocked_setsFailedRetryableWithFormattedMessage(
+    tmp_path, monkeypatch
+) -> None:
+    from backend.app.core.resource_guard import Decision, ResourceGuard, ResourceSnapshot
+    from backend.app.datasources.service import DataSourceService
+    from backend.app.datasources.source_registry import SourceRegistry
+    from backend.app.sync.event_payload import parse_event_payload
+
+    snap = ResourceSnapshot(
+        available_memory_gb=0.1,
+        disk_free_gb=0.1,
+        process_rss_mb=100.0,
+        project_size_gb=0.1,
+    )
+
+    def _pause(self):
+        return Decision.PAUSE, "disk free space below threshold"
+
+    monkeypatch.setattr(ResourceGuard, "snapshot", lambda self: snap)
+    monkeypatch.setattr(ResourceGuard, "check", _pause)
+
+    orch = _orchestrator(tmp_path)
+    reg = SourceRegistry()
+    reg.load()
+    service = DataSourceService(
+        source_registry=reg,
+        data_root=tmp_path / "raw",
+        job_events=orch._jobs,
+    )
+    spec = SyncJobSpec(
+        run_id="run-svc-guard",
+        job_id="job-svc-guard",
+        job_type="incremental",
+        data_domain="cn_equity_daily_bar",
+        market_id="CN_A",
+        source_id="baostock",
+        adapter_id="baostock",
+        date_start=None,
+        date_end=None,
+        instrument_id="000001",
+        partition_key=None,
+        trigger_reason=None,
+    )
+    result = orch.run_incremental(spec, datasource_service=service, clean_table="clean_guard")
+    assert result.status == "FAILED_RETRYABLE"
+    assert "RESOURCE_GUARD_PAUSED" in (result.message or "")
+    with orch._cm.writer() as con:
+        route_rows = con.execute(
+            """
+            SELECT payload_json FROM job_event_log
+            WHERE job_id = ? AND event_type = 'ROUTE_PLAN'
+            ORDER BY created_at ASC
+            """,
+            [result.job_id],
+        ).fetchall()
+    assert len(route_rows) == 2
+    blocked = parse_event_payload(route_rows[1][0])
+    assert blocked.get("route_status") == "RESOURCE_GUARD_PAUSED"
+    with orch._cm.writer() as con:
+        fetch_log_count = con.execute(
+            "SELECT COUNT(*) FROM fetch_log WHERE job_id = ?", [result.job_id]
+        ).fetchone()[0]
+    assert fetch_log_count == 0
+
+
+def test_servicePath_disabledRoute_setsFailedFinalWithFetchLog(tmp_path, monkeypatch) -> None:
+    from backend.app.core.resource_guard import Decision, ResourceGuard
+    from backend.app.datasources.route_models import SourceRouteCandidate, SourceRoutePlan
+    from backend.app.datasources.service import DataSourceService
+    from backend.app.datasources.source_registry import SourceRegistry
+
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+
+    class DisabledPlanner:
+        def plan(self, **kwargs):
+            return SourceRoutePlan(
+                route_plan_id=SourceRoutePlan.new_id(),
+                run_id=kwargs["run_id"],
+                job_id=kwargs["job_id"],
+                data_domain=kwargs["data_domain"],
+                operation=kwargs["operation"],
+                route_status="CAPABILITY_MISSING",
+                selected_source_id=None,
+                candidates=[
+                    SourceRouteCandidate(
+                        source_id="baostock",
+                        role="Primary",
+                        enabled=False,
+                        allowed_domain=kwargs["data_domain"],
+                        capability_declared=False,
+                        disabled_reason="capability_missing",
+                        skip_reason="capability_missing",
+                    )
+                ],
+            )
+
+    orch = _orchestrator(tmp_path)
+    reg = SourceRegistry()
+    reg.load()
+    service = DataSourceService(
+        source_registry=reg,
+        data_root=tmp_path / "raw",
+        route_planner=DisabledPlanner(),
+        job_events=orch._jobs,
+    )
+    spec = SyncJobSpec(
+        run_id="run-dis-svc",
+        job_id="job-dis-svc",
+        job_type="incremental",
+        data_domain="cn_equity_realtime",
+        market_id="CN_A",
+        source_id="baostock",
+        adapter_id="baostock",
+        date_start=None,
+        date_end=None,
+        instrument_id="000001",
+        partition_key=None,
+        trigger_reason=None,
+    )
+    result = orch.run_incremental(spec, datasource_service=service, clean_table="clean_disabled")
+    assert result.status == "FAILED_FINAL"
+    with orch._cm.writer() as con:
+        log_row = con.execute(
+            "SELECT status FROM fetch_log WHERE job_id = ?", [result.job_id]
+        ).fetchone()
+    assert log_row is not None
+    assert log_row[0] == "DISABLED_SOURCE"
