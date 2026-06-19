@@ -1,12 +1,12 @@
 # Backend Development Guidelines
 
-> Best practices for backend development in this project.
+> Best practices for backend development in this project (Round 0–2 baseline filled).
 
 ---
 
 ## Overview
 
-This directory contains guidelines for backend development. Fill in each file with your project's specific conventions.
+This directory contains **project-specific** backend conventions derived from the implemented codebase. Guides marked **Filled** reflect current `master` behavior; update them when architecture changes.
 
 ---
 
@@ -14,25 +14,22 @@ This directory contains guidelines for backend development. Fill in each file wi
 
 | Guide | Description | Status |
 |-------|-------------|--------|
-| [Directory Structure](./directory-structure.md) | Module organization and file layout | To fill |
-| [Database Guidelines](./database-guidelines.md) | ORM patterns, queries, migrations | To fill |
-| [Error Handling](./error-handling.md) | Error types, handling strategies | To fill |
-| [Quality Guidelines](./quality-guidelines.md) | Code standards, forbidden patterns | To fill |
-| [Datasource Adapters](./datasource-adapters.md) | FetchPort, skeleton base, factory contracts (Batch B) | Filled |
+| [Directory Structure](./directory-structure.md) | Module organization and file layout | Filled |
+| [Database Guidelines](./database-guidelines.md) | DuckDB, migrations, WriteManager | Filled |
+| [Error Handling](./error-handling.md) | Error types, redaction, gate failures | Filled |
+| [Quality Guidelines](./quality-guidelines.md) | Ruff, pytest, coverage, forbidden patterns | Filled |
+| [Datasource Adapters](./datasource-adapters.md) | FetchPort, skeleton base, factory contracts | Filled |
 | [Logging Guidelines](./logging-guidelines.md) | Structured logging, redaction on persisted errors | Partial (Batch D) |
 
 ---
 
-## How to Fill These Guidelines
+## Maintenance
 
-For each guideline file:
+When adding a new backend package or changing write/validation boundaries:
 
-1. Document your project's **actual conventions** (not ideals)
-2. Include **code examples** from your codebase
-3. List **forbidden patterns** and why
-4. Add **common mistakes** your team has made
-
-The goal is to help AI assistants and new team members understand how YOUR project works.
+1. Update the relevant guide with **actual** conventions and file paths.
+2. Run `python scripts/check_doc_links.py` and full pytest before merge.
+3. Run GitNexus `impact` before editing shared symbols.
 
 ---
 

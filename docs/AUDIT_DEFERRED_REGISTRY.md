@@ -14,7 +14,7 @@ These are **design intent**, not silent drift.
 | R2-PARTIAL-2 | Reconcile skeleton (no re-fetch) | Round 3 | `ROUND2_GAPS_AND_DEVIATIONS.md` §2.2 |
 | R2-PARTIAL-3 | manual_review_queue after failed reconcile | By design | `ROUND2_GAPS_AND_DEVIATIONS.md` §2.3 |
 | R2-PARTIAL-4 | COMPLETED vs write non-atomic | Round 3 ops | `BATCH_D_STATUS.md` D-A2-3 |
-| R2-GAP-1 | `init_db.py` does not auto `sync_to_db` | Round 3 ops | `sync_registry.py` / `DECISIONS.md` §9 |
+| R2-GAP-1 | `init_db.py` does not auto `sync_to_db` | Round 3 ops | `init_db.py` prints post-init hint; run `sync_registry.py` manually · `verification_commands.md` |
 | R2-GAP-2 | No source capability list API | Round 4 | `ROUND2_GAPS_AND_DEVIATIONS.md` §2.6 |
 | D2-P3-1 | `registry_generation` / `removed_from_yaml_at` audit columns | Round 3+ | `DECISIONS.md` |
 | D3-P3-1 | Adapter skeleton explicit classes (5 vendors) | By design | `data_adapter_contract.md` |
@@ -25,6 +25,10 @@ These are **design intent**, not silent drift.
 | D7-P2-2 | `sys.path.insert` in scripts | Round 3 packaging | editable install; console_scripts planned |
 | D3-P1-2 | `SourceRegistry._validate_domain_roles` / `WriteManager._execute_write` C901 | Round 3 hygiene | optional refactor; default ruff check excludes C901 |
 | D4-P3-1 | Starlette/httpx deprecation test warning | **Resolved** @ `master` | dev dep `httpx2>=2.0.0` replaces `httpx` for TestClient |
+| A9-P1-01 | `fetch_log` / `source_registry` DB CHECK (004 tables) | Round 3 migration 008 | `docs/schema/MIGRATION_008_PLAN.md` |
+| A9-P2-01 | `manual_review_queue` status/priority CHECK | Round 3 migration 008 | `docs/schema/MIGRATION_008_PLAN.md` |
+| A9-P2-02 | `source_conflict.reconcile_status` CHECK | Round 3 migration 008 | `docs/schema/MIGRATION_008_PLAN.md` |
+| A9-P3-01 | Migration rebuild `INSERT SELECT *` risk | Round 3 migration 008 | explicit column list in 008 plan |
 
 Verification command baseline (2026-06-19):
 
