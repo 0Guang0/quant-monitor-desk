@@ -60,4 +60,4 @@ node .gitnexus\run.cjs status
 4. Read `ROUND2_GAPS_AND_DEVIATIONS.md` §6 + `AUDIT_DEFERRED_REGISTRY.md` (deferred phases)
 5. Obey `GLOBAL_EXECUTION_RULES.md`, ResourceGuard, WriteManager, no-action boundary
 6. Create Trellis task for Round 3 Layer 1 when ready to implement
-7. **Round 3 early ops — local DB inspect CLI:** user writes full design doc (executor must not draft it); after design freeze, executor implements read-only CLI + tests. Not a numbered task file under `ROUND_3_MODELING_LAYERS/`; tracked in `ROUND3_EARLY_CLOSE_PLAN.md`. Do not reuse `.tmp/inspect_db.py`.
+7. **Round 3 early ops — local DB inspect CLI:** frozen design is `docs/ops/db_inspect_cli.md`; machine contract is `specs/contracts/ops_db_inspect_contract.yaml`. Executor must implement only the frozen read-only CLI + tests, not draft a new design. Not a numbered task file under `ROUND_3_MODELING_LAYERS/`; tracked in `ROUND3_EARLY_CLOSE_PLAN.md` and `ROUND3_BATCH_IMPLEMENTATION_MAP.md`. Do not reuse `.tmp/inspect_db.py`.

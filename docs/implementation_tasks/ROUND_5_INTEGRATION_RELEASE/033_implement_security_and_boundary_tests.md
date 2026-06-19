@@ -15,6 +15,9 @@
 - `docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md`
 - `specs/contracts/runtime_versions.md`
 - `docs/quality/staged_acceptance_policy.md`
+- `docs/ops/db_inspect_cli.md`
+- `specs/contracts/ops_db_inspect_contract.yaml`
+
 ## 4. 相关代码 / 输出文件
 
 - `tests/integration/test_boundaries.py`
@@ -68,6 +71,7 @@
 - 测试命名建议：`functionName_condition_expectedBehavior`。
 
 ## 11. 验收命令
+
 本任务为集成/资源/边界测试。验收命令：
 
 ```bash
@@ -108,4 +112,4 @@ uv run python -m compileall backend scripts tests
 
 ### 用户决策补充：D-03
 
-用户已拍板：Secret 第一版使用 .env.local，只提交 .env.example；.env/.env.local/*.secret/*.key 必须 gitignore；prod 必须做 secret 启动检查和 CI secret scan。
+用户已拍板：Secret 第一版使用 .env.local，只提交 .env.example；.env/.env.local/_.secret/_.key 必须 gitignore；prod 必须做 secret 启动检查和 CI secret scan。

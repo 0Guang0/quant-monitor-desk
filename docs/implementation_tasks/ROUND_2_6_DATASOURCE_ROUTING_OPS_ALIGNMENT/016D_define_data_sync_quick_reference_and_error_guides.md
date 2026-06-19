@@ -11,7 +11,9 @@ Design/docs only. Do not change code.
 - `docs/ops/ERROR_CODE_GUIDE.md`
 - `docs/ops/TROUBLESHOOTING.md`
 - `docs/ops/incident_playbook.md`
+- `docs/ops/db_inspect_cli.md`
 - `specs/contracts/data_cli_contract.yaml`
+- `specs/contracts/ops_db_inspect_contract.yaml`
 
 ## Required design updates
 

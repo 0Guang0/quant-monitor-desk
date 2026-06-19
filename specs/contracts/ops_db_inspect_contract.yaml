@@ -1,0 +1,213 @@
+version: 1
+module: ops_db_inspect
+authoritative_doc: docs/ops/db_inspect_cli.md
+status: user_frozen_design_input
+
+command:
+  final: qmd ops db-inspect
+  transitional: python scripts/qmd_ops.py db-inspect
+  transitional_rule: Transitional script must be a thin wrapper around backend/app/ops/db_inspector.py.
+
+scope:
+  tool_type: long_lived_read_only_ops_cli
+  round3_v1_authorized: true
+  round3_v1_phase: Round 3 Batch 1
+  implementation_paths:
+    - backend/app/ops/db_inspector.py
+    - backend/app/ops/models.py
+    - backend/app/cli/main.py
+    - scripts/qmd_ops.py
+    - tests/test_ops_db_inspector.py
+  non_implementation_paths:
+    - docs/ops/db_inspect_cli.md
+    - specs/contracts/ops_db_inspect_contract.yaml
+
+v1_arguments:
+  allowed:
+    db:
+      flag: --db
+      required: false
+      default: $QMD_DATA_ROOT/duckdb/quant_monitor.duckdb or data/duckdb/quant_monitor.duckdb
+      meaning: Read-only target DuckDB path.
+    data_root:
+      flag: --data-root
+      required: false
+      default: $QMD_DATA_ROOT or data
+      meaning: Data root used for raw/parquet/audit/report evidence counts.
+    format:
+      flag: --format
+      required: false
+      default: text
+      enum: [text, json]
+    output:
+      flag: --output
+      required: false
+      default: stdout
+    limit:
+      flag: --limit
+      required: false
+      default: 20
+      hard_cap: 100
+    include_path_check:
+      flag: --include-path-check
+      required: false
+      default: true
+    profile:
+      flag: --profile
+      required: false
+      default: QMD_RESOURCE_PROFILE or eco
+  forbidden:
+    - --sql
+    - --write
+    - --migrate
+    - --allow-network
+    - --enable-qmt
+    - --enable-xqshare
+    - --show-secrets
+    - --full-scan
+
+safety_invariants:
+  duckdb_open_mode: read_only
+  must_not_call:
+    - apply_migrations
+    - ConnectionManager.writer
+    - DuckDBWriteManager
+    - source fetch orchestration
+    - sync orchestration
+  forbidden_sql_verbs:
+    - INSERT
+    - UPDATE
+    - DELETE
+    - CREATE
+    - DROP
+    - ALTER
+    - COPY TO
+    - EXPORT
+  free_sql_allowed: false
+  network_allowed_by_default: false
+  qmt_xqshare_enabled_by_default: false
+  print_secrets_allowed: false
+  raw_row_browsing_default: false
+
+status_enum:
+  - PASS
+  - WARN
+  - FAIL
+
+required_output_fields:
+  - status
+  - generated_at
+  - mode
+  - db
+  - data_root
+  - schema
+  - key_tables
+  - evidence
+  - warnings
+  - errors
+  - deferred_item_mapping
+
+output_model:
+  mode_enum: [read_only]
+  db:
+    required_fields:
+      - path
+      - exists
+      - read_only_open
+      - file_size_bytes
+      - connection_error
+  data_root:
+    required_fields:
+      - path
+      - exists
+      - raw_files_count
+      - parquet_files_count
+      - audit_files_count
+      - report_files_count
+      - scan_limited
+  key_tables:
+    item_required_fields:
+      - name
+      - exists
+      - row_count
+      - error
+  evidence:
+    required_fields:
+      - latest_fetch
+      - job_status_counts
+      - validation_status_counts
+      - conflict_status_counts
+      - manual_review_status_counts
+      - latest_write
+
+key_tables:
+  - schema_version
+  - source_registry
+  - file_registry
+  - fetch_log
+  - data_sync_job
+  - job_event_log
+  - validation_report
+  - data_quality_log
+  - source_conflict
+  - manual_review_queue
+  - write_audit_log
+  - resource_guard_log
+  - instrument_registry
+  - security_bar_1d
+
+deferred_item_mapping:
+  DB-R3-001:
+    evidence_fields:
+      - data_root.raw_files_count
+      - data_root.parquet_files_count
+      - key_tables.file_registry.row_count
+      - key_tables.fetch_log.row_count
+  DB-R3-002:
+    evidence_fields:
+      - db.exists
+      - db.read_only_open
+      - schema
+      - key_tables
+  R3-PARTIAL-2:
+    evidence_fields:
+      - evidence.latest_fetch
+      - evidence.job_status_counts
+      - evidence.validation_status_counts
+  R2.6-IMPL-8:
+    rule: Tool must not enable live sources; it may only report existing DB evidence.
+  R3-EARLY-DB-INSPECT-CLI:
+    evidence_fields:
+      - command availability
+      - read-only mode
+      - json output
+      - no-mutation tests
+
+future_phases:
+  env_doctor:
+    command: qmd ops env-doctor
+    phase: Round 5 / release-readiness
+    v1_in_scope: false
+  data_health:
+    command: qmd data health
+    phase: Batch 6 or later data-quality hardening
+    v1_in_scope: false
+  source_probe:
+    command: qmd source probe
+    phase: Round 3 Batch 1 extension or Round 3 Batch 6
+    v1_in_scope: false
+  source_health_snapshot:
+    command: qmd ops source-health snapshot
+    phase: Batch 6 after source_health_snapshot migration design
+    v1_in_scope: false
+  ops_report:
+    command: qmd ops report
+    phase: Round 5 release/reporting after JSON schema stabilizes
+    v1_in_scope: false
+
+acceptance_tests:
+  required:
+    - tests/test_ops_db_inspector.py
+  commands:
+    - pytest tests/test_ops_db_inspector.py -q
+    - pytest tests/test_documentation_index.py tests/test_project_scaffold.py -q

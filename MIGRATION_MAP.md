@@ -28,24 +28,25 @@
 | Round 2 数据摄取与校验 | re-audit closeout 已闭合，runner/lineage/DB CHECK/backfill/reconcile/vendor-fixture 等差异已登记或修复            | `docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/`、`docs/AUDIT_DEFERRED_REGISTRY.md`                                                                                                |
 | Round 2.5              | gate cleared；无未登记 OPEN 项                                                                                    | `docs/quality/ROUND2_REPAIR_ALIGNMENT_TRACKER.md`、`docs/AUDIT_DEFERRED_REGISTRY.md`                                                                                                             |
 | Round 2.6              | 数据源能力、路由、DataSourceService、模块边界、CLI/运维/隐私/平台矩阵已形成设计与契约；部分后续实现由后续任务落地 | `docs/implementation_tasks/ROUND_2_6_DATASOURCE_ROUTING_OPS_ALIGNMENT/`、`docs/modules/source_capability_registry.md`、`docs/modules/source_route_plan.md`、`docs/modules/datasource_service.md` |
-| Round 3                | 进入五层模型实现阶段的交接资料已存在                                                                              | `docs/ROUND3_HANDOFF.md`、`docs/implementation_tasks/ROUND_3_MODELING_LAYERS/`                                                                                                                   |
+| Round 3                | 进入五层模型实现阶段；Round3 early 本地只读 DB inspect CLI 设计已冻结为 Plan 输入                                 | `docs/ROUND3_HANDOFF.md`、`ROUND3_BATCH_IMPLEMENTATION_MAP.md`、`docs/ops/db_inspect_cli.md`、`docs/implementation_tasks/ROUND_3_MODELING_LAYERS/`                                               |
 | Round 4/5              | API、前端、Agent、报告通知、回测、集成发布仍以任务包和契约驱动                                                    | `docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/`、`docs/implementation_tasks/ROUND_5_INTEGRATION_RELEASE/`                                                                       |
 
 ## 3. 仓库顶层目录地图
 
-| 路径               | 类型               | 用途                                                                             | 是否实现地址         |
-| ------------------ | ------------------ | -------------------------------------------------------------------------------- | -------------------- |
-| `backend/app/`     | Python 后端实现    | FastAPI、数据源、同步、DB、五层模型、Agent、通知、校验等后端实现                 | 是                   |
-| `frontend/src/`    | 前端实现           | Vite + React + TypeScript Dashboard shell 与后续页面                             | 是                   |
-| `scripts/`         | CLI / 维护脚本实现 | 初始化 DB、同步 registry、文档检查、生产 gate、smoke 等                          | 是                   |
-| `configs/`         | 本地配置           | datasource、alert、resource limits、market registry、qmt、layer1 axes 等运行配置 | 是，配置入口         |
-| `tests/`           | 自动化测试         | pytest、contract gate、smoke、边界测试                                           | 是，测试实现         |
-| `data/`            | 运行数据           | DuckDB、raw、parquet、reports、audit、cache、files                               | 运行产物，不是源代码 |
-| `docs/`            | 设计/治理文档      | 架构、模块、运维、任务、质量、ADR、交接                                          | **否：设计依据**     |
-| `specs/`           | 契约/定义/spec     | schema、contracts、registry、Layer specs                                         | **否：契约依据**     |
-| `MIGRATION_MAP.md` | 项目地图           | 跨目录索引、旧口径防恢复、MANIFEST 说明                                          | 否                   |
-| `MANIFEST.json`    | 发布输出清单       | 修复包文件清单与 hash；不是权威输入                                              | 否                   |
-| `README.md`        | 稳定入口           | 项目简介、边界、启动步骤、关键保护规则                                           | 否                   |
+| 路径                                 | 类型                | 用途                                                                             | 是否实现地址         |
+| ------------------------------------ | ------------------- | -------------------------------------------------------------------------------- | -------------------- |
+| `backend/app/`                       | Python 后端实现     | FastAPI、数据源、同步、DB、五层模型、Agent、通知、校验等后端实现                 | 是                   |
+| `frontend/src/`                      | 前端实现            | Vite + React + TypeScript Dashboard shell 与后续页面                             | 是                   |
+| `scripts/`                           | CLI / 维护脚本实现  | 初始化 DB、同步 registry、文档检查、生产 gate、smoke 等                          | 是                   |
+| `configs/`                           | 本地配置            | datasource、alert、resource limits、market registry、qmt、layer1 axes 等运行配置 | 是，配置入口         |
+| `tests/`                             | 自动化测试          | pytest、contract gate、smoke、边界测试                                           | 是，测试实现         |
+| `data/`                              | 运行数据            | DuckDB、raw、parquet、reports、audit、cache、files                               | 运行产物，不是源代码 |
+| `docs/`                              | 设计/治理文档       | 架构、模块、运维、任务、质量、ADR、交接                                          | **否：设计依据**     |
+| `specs/`                             | 契约/定义/spec      | schema、contracts、registry、Layer specs                                         | **否：契约依据**     |
+| `MIGRATION_MAP.md`                   | 项目地图            | 跨目录索引、旧口径防恢复、MANIFEST 说明                                          | 否                   |
+| `ROUND3_BATCH_IMPLEMENTATION_MAP.md` | Round3 批次计划索引 | Round3 六批次切分、Plan Source Index、DB inspect CLI early 边界                  | 否                   |
+| `MANIFEST.json`                      | 发布输出清单        | 修复包文件清单与 hash；不是权威输入                                              | 否                   |
+| `README.md`                          | 稳定入口            | 项目简介、边界、启动步骤、关键保护规则                                           | 否                   |
 
 ## 4. `docs/` 设计文档目录地图
 
@@ -135,30 +136,31 @@
 
 ### 4.6 运维与安全文档 `docs/ops/`
 
-| 路径                                         | 用途                                            |
-| -------------------------------------------- | ----------------------------------------------- |
-| `docs/ops/agent_security_policy.md`          | Agent 安全、只读、固定来源、抗提示注入          |
-| `docs/ops/agent_workflow_boundaries.md`      | `.cursor` / `.trellis` 信任边界与 workflow 清理 |
-| `docs/ops/backup_and_recovery.md`            | 备份与恢复策略                                  |
-| `docs/ops/config_secret_policy.md`           | Secret 与 `.env.local` 策略                     |
-| `docs/ops/daily_weekly_monthly_checklist.md` | 日/周/月例行检查                                |
-| `docs/ops/data_sync_command_matrix.md`       | Round2.6 数据同步 CLI 命令矩阵                  |
-| `docs/ops/data_sync_quick_reference.md`      | Round2.6 安全数据同步速查                       |
-| `docs/ops/ERROR_CODE_GUIDE.md`               | Round2.6 错误码指南                             |
-| `docs/ops/frontend_security_policy.md`       | 前端安全策略                                    |
-| `docs/ops/idempotency_retry_dlq_policy.md`   | 幂等、重试、DLQ 策略                            |
-| `docs/ops/incident_playbook.md`              | 事件处理 playbook                               |
-| `docs/ops/layer3_config_health_check.md`     | Layer 3 配置健康检查                            |
-| `docs/ops/lock_and_concurrency_policy.md`    | 锁与并发策略                                    |
-| `docs/ops/logs_health_audit.md`              | 日志、健康检查、审计                            |
-| `docs/ops/migration_recovery_policy.md`      | migration 备份恢复策略                          |
-| `docs/ops/ops_and_performance_v1_2.md`       | 运维手册；旧文件名但内容仍当前                  |
-| `docs/ops/performance_limits.md`             | ResourceGuard 与性能限制权威                    |
-| `docs/ops/privacy_data_flow.md`              | Round2.6 local-only / privacy data flow         |
-| `docs/ops/privacy_retention_policy.md`       | 隐私与留存策略                                  |
-| `docs/ops/qmt_xqshare_setup.md`              | 可选 qmt_xqshare 设置边界                       |
-| `docs/ops/TROUBLESHOOTING.md`                | 故障排查入口                                    |
-| `docs/ops/verification_commands.md`          | Windows / 本地验证命令                          |
+| 路径                                         | 用途                                                |
+| -------------------------------------------- | --------------------------------------------------- |
+| `docs/ops/agent_security_policy.md`          | Agent 安全、只读、固定来源、抗提示注入              |
+| `docs/ops/agent_workflow_boundaries.md`      | `.cursor` / `.trellis` 信任边界与 workflow 清理     |
+| `docs/ops/backup_and_recovery.md`            | 备份与恢复策略                                      |
+| `docs/ops/config_secret_policy.md`           | Secret 与 `.env.local` 策略                         |
+| `docs/ops/daily_weekly_monthly_checklist.md` | 日/周/月例行检查                                    |
+| `docs/ops/data_sync_command_matrix.md`       | Round2.6 数据同步 CLI 命令矩阵                      |
+| `docs/ops/data_sync_quick_reference.md`      | Round2.6 安全数据同步速查                           |
+| `docs/ops/ERROR_CODE_GUIDE.md`               | Round2.6 错误码指南                                 |
+| `docs/ops/db_inspect_cli.md`                 | QMD 本地只读 DB inspect CLI 设计；Round3 early 输入 |
+| `docs/ops/frontend_security_policy.md`       | 前端安全策略                                        |
+| `docs/ops/idempotency_retry_dlq_policy.md`   | 幂等、重试、DLQ 策略                                |
+| `docs/ops/incident_playbook.md`              | 事件处理 playbook                                   |
+| `docs/ops/layer3_config_health_check.md`     | Layer 3 配置健康检查                                |
+| `docs/ops/lock_and_concurrency_policy.md`    | 锁与并发策略                                        |
+| `docs/ops/logs_health_audit.md`              | 日志、健康检查、审计                                |
+| `docs/ops/migration_recovery_policy.md`      | migration 备份恢复策略                              |
+| `docs/ops/ops_and_performance_v1_2.md`       | 运维手册；旧文件名但内容仍当前                      |
+| `docs/ops/performance_limits.md`             | ResourceGuard 与性能限制权威                        |
+| `docs/ops/privacy_data_flow.md`              | Round2.6 local-only / privacy data flow             |
+| `docs/ops/privacy_retention_policy.md`       | 隐私与留存策略                                      |
+| `docs/ops/qmt_xqshare_setup.md`              | 可选 qmt_xqshare 设置边界                           |
+| `docs/ops/TROUBLESHOOTING.md`                | 故障排查入口                                        |
+| `docs/ops/verification_commands.md`          | Windows / 本地验证命令                              |
 
 ### 4.7 质量与发布治理 `docs/quality/`
 
@@ -303,6 +305,7 @@
 | `specs/contracts/module_boundary_contract.yaml`          | 模块边界契约                                        |
 | `specs/contracts/notification_report_contract.yaml`      | 通知报告契约                                        |
 | `specs/contracts/ops_health_check_contract.yaml`         | 运维健康检查契约                                    |
+| `specs/contracts/ops_db_inspect_contract.yaml`           | QMD 本地只读 DB inspect CLI 契约                    |
 | `specs/contracts/platform_source_matrix.yaml`            | 平台数据源矩阵                                      |
 | `specs/contracts/reference_adoption_guardrails.yaml`     | 外部参考采纳红线                                    |
 | `specs/contracts/release_cleanup_allowlist.yaml`         | 发布清理 allowlist                                  |
@@ -363,6 +366,7 @@
 | 项目总体与边界               | `docs/architecture/00_project_overview.md`、`docs/architecture/01_context_and_scope.md`、`docs/architecture/02_solution_strategy.md`       | `specs/contracts/runtime_flow_contract.yaml`                                                                                                        | `docs/START_HERE.md`、`docs/INDEX.md`、`docs/quality/PENDING_USER_DECISIONS.md`                                                                                                                                                           | 全仓库；先不要改代码                                                       |
 | 目录结构与模块边界           | `docs/architecture/05_module_map.md`、`docs/architecture/07_project_directory_structure.md`、`docs/architecture/module_boundary_matrix.md` | `specs/contracts/module_boundary_contract.yaml`                                                                                                     | `scripts/check_module_boundaries.py`、`tests/test_module_boundaries.py`                                                                                                                                                                   | `backend/app/**`、`frontend/src/**`                                        |
 | 数据架构 / DuckDB / Parquet  | `docs/architecture/04_data_architecture.md`、`docs/modules/duckdb_and_parquet.md`                                                          | `specs/schema/schema.sql`                                                                                                                           | `docs/schema/MIGRATION_COVERAGE.md`、`docs/schema/MIGRATION_008_PLAN.md`、`tests/test_schema_contract.py`                                                                                                                                 | `backend/app/db/`、`backend/app/storage/`、`data/duckdb/`、`data/parquet/` |
+| QMD Ops DB Inspect CLI       | `docs/ops/db_inspect_cli.md`                                                                                                               | `specs/contracts/ops_db_inspect_contract.yaml`                                                                                                      | `ROUND3_BATCH_IMPLEMENTATION_MAP.md`、`docs/implementation_tasks/ROUND3_EARLY_CLOSE_PLAN.md`、`docs/ROUND3_HANDOFF.md`                                                                                                                    | `backend/app/ops/`、`backend/app/cli/`、`scripts/`、`tests/`               |
 | WriteManager / 写入并发      | `docs/modules/write_manager.md`                                                                                                            | `specs/contracts/write_contract.yaml`                                                                                                               | `docs/decisions/ADR-001-ingestion-validation-write-transaction-boundary.md`、`docs/ops/lock_and_concurrency_policy.md`                                                                                                                    | `backend/app/storage/`、`backend/app/db/`                                  |
 | Raw Store / 本地文件         | `docs/modules/local_file_system.md`                                                                                                        | `specs/contracts/snapshot_lineage_contract.yaml`                                                                                                    | `docs/ops/privacy_retention_policy.md`                                                                                                                                                                                                    | `backend/app/storage/`、`data/raw/`、`data/files/`、`data/audit/`          |
 | ResourceGuard / 本机低占用   | `docs/modules/ops_and_performance.md`、`docs/ops/performance_limits.md`                                                                    | `specs/contracts/resource_limits.yaml`                                                                                                              | `docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md`、`configs/resource_limits.yaml`                                                                                                                                                     | `backend/app/core/`、`configs/`                                            |
