@@ -113,7 +113,26 @@ cd frontend && npm ci && npm audit --audit-level=high && npm run typecheck && np
 5. ResourceGuard 是否触发。
 6. 未完成项或需要用户确认的点。
 
-## 15. 审计修复补充要求
+## 15. Round2.6 补充：Agent 隐私与模块边界
+
+执行本任务前必须读取：
+
+- `docs/ops/privacy_data_flow.md`
+- `specs/contracts/user_input_privacy_contract.yaml`
+- `docs/modules/datasource_service.md`
+- `docs/architecture/module_boundary_matrix.md`
+- `specs/contracts/module_boundary_contract.yaml`
+
+新增要求：
+
+- Agent 不得直接依赖 vendor adapter、sync runners 或 WriteManager。
+- Agent 如需展示数据源状态，只能读取 API/service 提供的只读结果或 route preview。
+- 用户手动导入文本默认 `local_only_preview`，不得自动成为事实来源。
+- 保存为 evidence 必须有用户确认、provenance、redaction、retention 字段。
+
+必须补测试：`test_agentTools_followModuleBoundary`、`test_agentInput_defaultsLocalOnly`、`test_saveAsEvidence_requiresDisclosureFields`。
+
+## 16. 审计修复补充要求
 
 Agent 必须实现安全工具边界：
 

@@ -1,0 +1,52 @@
+version: source_route_contract_v1
+status: draft_round2_6
+owner: data_sources
+purpose: "Declare explicit, auditable source routing. Silent fallback is forbidden."
+objects:
+  SourceRouteCandidate:
+    required_fields:
+      - source_id
+      - role
+      - enabled
+      - allowed_domain
+      - capability_declared
+      - disabled_reason
+      - skip_reason
+    role_values: [Primary, Validation, FallbackPolicy]
+  SourceRoutePlan:
+    required_fields:
+      - route_plan_id
+      - run_id
+      - job_id
+      - data_domain
+      - operation
+      - route_status
+      - selected_source_id
+      - candidates
+      - quality_flags
+      - created_at
+    route_status_values:
+      - READY
+      - DISABLED_SOURCE
+      - NO_AVAILABLE_SOURCE
+      - CAPABILITY_MISSING
+      - USER_AUTH_REQUIRED
+      - RESOURCE_GUARD_PAUSED
+rules:
+  - every fetch job must generate SourceRoutePlan before adapter construction
+  - selected_source_id must be null unless route_status=READY
+  - fallback use must add quality_flags=[SOURCE_FALLBACK_USED]
+  - skipped disabled sources must include disabled_reason
+  - qmt_xtdata/qmt_xqshare skip must explain missing user authorization or missing env
+  - Validation source may not write clean table unless FallbackPolicy explicitly allows it and audit flags are written
+  - SourceRoutePlan may be persisted in source_route_log or job_event_log.payload_json; implementation must choose and document exactly one authoritative persistence path
+forbidden:
+  - silent fallback
+  - adapter factory call without route plan
+  - changing source_used after fetch
+  - treating Validation as Primary without quality flag
+required_tests:
+  - tests/test_source_route_planner.py::test_qmtDisabled_routePlanShowsSkipReason
+  - tests/test_source_route_planner.py::test_noAvailableSource_hasNoSelectedSource
+  - tests/test_source_route_planner.py::test_fallbackAddsQualityFlag
+  - tests/test_sync_orchestrator.py::test_plannedJobWritesRoutePlanBeforeFetching

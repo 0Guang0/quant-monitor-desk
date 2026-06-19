@@ -1,0 +1,48 @@
+version: backtest_metric_contract_v1
+status: draft_round2_6
+owner: review
+purpose: "Fix Round4 review/backtest metric names, units, horizons, and no-action boundaries."
+default_horizons: [T+1, T+3, T+5, T+10, T+20]
+required_metrics:
+  forward_return:
+    unit: pct
+    applies_to: [event_study, layer1_state_review, layer3_chain_review, layer4_market_structure_review]
+  max_drawdown:
+    unit: pct
+    applies_to: [event_study, alert_rule_review]
+  realized_volatility:
+    unit: pct
+    applies_to: [event_study, layer1_state_review]
+  hit_rate:
+    unit: ratio
+    applies_to: [alert_rule_review]
+  false_positive_rate:
+    unit: ratio
+    applies_to: [alert_rule_review, agent_explanation_review]
+  benchmark_return:
+    unit: pct
+    applies_to: [event_study]
+  excess_return:
+    unit: pct
+    applies_to: [event_study]
+  data_quality_failure_rate:
+    unit: ratio
+    applies_to: [evidence_chain_review, all]
+  source_fallback_rate:
+    unit: ratio
+    applies_to: [evidence_chain_review, all]
+optional_strategy_sandbox_metrics:
+  trading_turnover:
+    enabled_by_default: false
+  commission_estimate:
+    enabled_by_default: false
+  trade_count:
+    enabled_by_default: false
+rules:
+  - default review metrics must not imply buy/sell/hold recommendations
+  - strategy sandbox metrics require REVIEW-SBX-001 approval and NoActionSemanticGuard
+  - every metric row must include run_id, event_id, horizon, metric_name, metric_value, sample_size, quality_flags_json
+  - every report must include limitations and no_action_semantics=true
+required_tests:
+  - tests/test_backtest_metric_contract.py::test_requiredMetricSchemaStable
+  - tests/test_backtest_review_lifecycle.py::test_reportHasLimitationsAndNoActionSemantics

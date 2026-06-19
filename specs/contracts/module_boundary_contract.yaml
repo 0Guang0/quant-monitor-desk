@@ -1,0 +1,105 @@
+version: module_boundary_contract_v1
+status: draft_round2_6
+owner: architecture
+purpose: "Machine-check import boundaries before Round3/4 module growth."
+modules:
+  datasources:
+    may_import:
+      - backend.app.config
+      - backend.app.core.resource_guard
+      - backend.app.storage
+      - backend.app.datasources
+    must_not_import:
+      - backend.app.api
+      - backend.app.agents
+      - backend.app.db.write_manager
+      - backend.app.notifications
+  sync:
+    may_import:
+      - backend.app.datasources
+      - backend.app.db
+      - backend.app.sync
+      - backend.app.validators
+      - backend.app.core.resource_guard
+    must_not_import:
+      - backend.app.api
+      - backend.app.agents
+      - frontend
+  api:
+    may_import:
+      - backend.app.api
+      - backend.app.config
+      - backend.app.db
+      - backend.app.layer1_axes
+      - backend.app.layer2_sensors
+      - backend.app.layer3_chains
+      - backend.app.layer4_markets
+      - backend.app.layer5_evidence
+      - backend.app.notifications
+    must_not_import:
+      - backend.app.datasources.adapters
+      - backend.app.db.write_manager unless via approved service layer
+  agents:
+    may_import:
+      - backend.app.agents
+      - backend.app.api
+      - backend.app.config
+    must_not_import:
+      - backend.app.db.write_manager
+      - backend.app.datasources.adapters
+      - backend.app.sync.runners
+  review:
+    may_import:
+      - backend.app.core.resource_guard
+      - backend.app.db
+      - backend.app.layer1_axes
+      - backend.app.layer2_sensors
+      - backend.app.layer3_chains
+      - backend.app.layer4_markets
+      - backend.app.layer5_evidence
+    must_not_import:
+      - backend.app.datasources.adapters
+      - backend.app.agents.write_tools
+  layer1_axes:
+    may_import:
+      - backend.app.layer1_axes
+      - backend.app.db
+      - backend.app.config
+    must_not_import:
+      - backend.app.datasources.adapters
+  layer2_sensors:
+    may_import:
+      - backend.app.layer2_sensors
+      - backend.app.db
+      - backend.app.config
+    must_not_import:
+      - backend.app.datasources.adapters
+  layer3_chains:
+    may_import:
+      - backend.app.layer3_chains
+      - backend.app.db
+      - backend.app.config
+    must_not_import:
+      - backend.app.datasources.adapters
+  layer4_markets:
+    may_import:
+      - backend.app.layer4_markets
+      - backend.app.db
+      - backend.app.config
+    must_not_import:
+      - backend.app.datasources.adapters
+  layer5_evidence:
+    may_import:
+      - backend.app.layer5_evidence
+      - backend.app.db
+      - backend.app.config
+    must_not_import:
+      - backend.app.datasources.adapters
+rules:
+  - Round3 layer modules may consume clean snapshots and lineage, not raw vendor adapter classes
+  - Direct adapter factory imports outside DataSourceService are forbidden in production code
+  - Agent modules are read-only and must not import write manager or sync runners
+  - Frontend code must not be referenced from backend modules
+required_checks:
+  - scripts/check_module_boundaries.py
+  - tests/test_module_boundaries.py

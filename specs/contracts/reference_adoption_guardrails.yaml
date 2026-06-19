@@ -1,0 +1,38 @@
+version: reference_adoption_guardrails_v1
+status: draft_round2_6
+owner: architecture_security
+purpose: "Prevent unsafe direct copying from JQ2PTrade, EasyXT, or ptqmt-site into Quant Monitor Desk."
+allowed_adoption:
+  mapping_first_contracts:
+    from: JQ2PTrade
+    allowed_as: [SourceCapabilityRegistry, spec_migrator]
+  low_coupling_module_boundaries:
+    from: EasyXT
+    allowed_as: [ModuleBoundaryMatrix, optional_extras]
+  local_only_user_disclosure:
+    from: ptqmt-site
+    allowed_as: [privacy_data_flow, LocalOnlyBadge]
+  read_only_diagnostics_tools:
+    from: ptqmt-site
+    allowed_as: [Diagnostics Tools Page]
+forbidden_adoption:
+  real_trading_or_order_api:
+    examples: [order, order_value, order_target, buy, sell]
+    severity: P0
+  auto_login_or_captcha:
+    examples: [qmt_auto_login, captcha_solver, terminal_control]
+    severity: P0
+  silent_fallback:
+    examples: [auto_source_switch_without_flag, fallback_without_source_route_log]
+    severity: P0
+  arbitrary_strategy_exec:
+    examples: [compile_user_code, exec_user_code, unrestricted_import]
+    severity: P0
+rules:
+  - reference projects may inform contracts, not override local-first/no-action/security boundaries
+  - any proposed adoption must cite this contract and list allowed_adoption category
+  - any forbidden item found in code or tasks blocks the task until removed
+required_tests:
+  - tests/test_reference_adoption_guardrails.py::test_noTradingApiCopied
+  - tests/test_reference_adoption_guardrails.py::test_noAutoLoginCopied
+  - tests/test_reference_adoption_guardrails.py::test_noSilentFallbackCopied

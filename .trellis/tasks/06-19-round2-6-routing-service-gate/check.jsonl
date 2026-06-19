@@ -1,0 +1,8 @@
+{"file":".trellis/tasks/06-19-round2-6-routing-service-gate/MASTER.plan.md","reason":"A1 trace AC and scope"}
+{"file":".trellis/tasks/06-19-round2-6-contract-gate/MASTER.plan.md","reason":"parent prerequisite scope"}
+{"file":"docs/implementation_tasks/ROUND_2_6_DATASOURCE_ROUTING_OPS_ALIGNMENT/016A_define_source_capability_registry.md","reason":"capability implementation scope"}
+{"file":"docs/implementation_tasks/ROUND_2_6_DATASOURCE_ROUTING_OPS_ALIGNMENT/016B_define_source_route_plan_and_datasource_service.md","reason":"route/service implementation scope"}
+{"file":"docs/implementation_tasks/ROUND_2_6_DATASOURCE_ROUTING_OPS_ALIGNMENT/016F_define_prod_equivalent_scale_benchmark.md","reason":"prod-equivalent scope"}
+{"file":"specs/contracts/source_capability_contract.yaml","reason":"contract source"}
+{"file":"specs/contracts/source_route_contract.yaml","reason":"contract source"}
+{"file":"specs/contracts/datasource_service_contract.yaml","reason":"contract source"}

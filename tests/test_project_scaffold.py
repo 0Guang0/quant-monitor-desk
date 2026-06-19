@@ -41,6 +41,6 @@ def test_initDb_createsDuckDbDirectory(tmp_path, monkeypatch) -> None:
 
     data_root = tmp_path / "data"
     monkeypatch.setattr(init_db_mod, "DATA_ROOT", data_root)
-    init_db_mod.main()
+    init_db_mod.main([])
     assert (data_root / "duckdb").is_dir()
     assert (data_root / "duckdb" / "quant_monitor.duckdb").is_file()

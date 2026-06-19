@@ -66,6 +66,18 @@
 - QMT 第一版默认禁用，用户确认授权后再启用。
 - Agent 只读固定来源与用户手动导入文本，禁止自由联网搜索。
 
+## Round2.6 参考项目采纳红线
+
+Round2.6 允许吸收 JQ2PTrade、EasyXT、ptqmt-site 的 mapping-first、低耦合、local-only disclosure 和诊断工具入口思路，但禁止直接采纳以下能力：
+
+- 真实交易、自动下单、order/order_target/order_value 等 API。
+- QMT 自动登录、验证码识别、终端控制或远程端口自动探测。
+- silent fallback 或无 SourceRoutePlan 的源切换。
+- 任意执行用户策略代码、`compile/exec`、无限制 import、外部网络访问。
+- 未经用户确认新增重型依赖；真实源/QMT/xqshare 依赖必须为 optional extras。
+
+Round2.6 Phase A 只允许修改 docs/specs/implementation_tasks，不允许修改 `backend/app/**`、`frontend/src/**`、测试代码、依赖文件或 schema migration。
+
 ## 决策标签补充
 
 - D-03：Secret 第一版使用 `.env.local`；只提交 `.env.example`；必须配置 `.gitignore`、prod 启动检查与 secret scan。

@@ -112,7 +112,27 @@ cd frontend && npm ci && npm audit --audit-level=high && npm run typecheck && np
 5. ResourceGuard 是否触发。
 6. 未完成项或需要用户确认的点。
 
-## 15. 审计修复补充要求
+## 15. Round2.6 补充：只读 Diagnostics API 与 DataSourceService 边界
+
+执行本任务前必须读取：
+
+- `docs/modules/datasource_service.md`
+- `docs/modules/source_route_plan.md`
+- `specs/contracts/datasource_service_contract.yaml`
+- `specs/contracts/source_route_contract.yaml`
+- `specs/contracts/diagnostics_api_contract.yaml`
+- `specs/contracts/module_boundary_contract.yaml`
+
+新增要求：
+
+- API 层不得直接 import vendor adapter 或 `create_adapter()`。
+- Diagnostics endpoints 只能做 route preview、source registry validation、ResourceGuard snapshot、redacted config path report。
+- Diagnostics endpoints 不得 fetch 外部数据、不得写 raw/clean/snapshot。
+- API 失败响应必须包含 `error_code` 与 docs anchor，对应 `docs/ops/ERROR_CODE_GUIDE.md`。
+
+必须补测试：`test_diagnosticsEndpointsReadOnly`、`test_apiRoutes_doNotImportAdapterFactory`、`test_sourceRoutePreview_returnsDisabledReasonWithoutFetch`。
+
+## 16. 审计修复补充要求
 
 API 必须实现最小安全基线：
 

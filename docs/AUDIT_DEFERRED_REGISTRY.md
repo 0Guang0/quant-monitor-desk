@@ -29,6 +29,21 @@ Every issue MUST be in exactly one state:
 
 ---
 
+## DEFERRED — Round 2.6 (contract gate + routing service)
+
+| ID | Item | Resolution phase | Task hook | Blocks 017? | Closure test / evidence |
+|----|------|------------------|-----------|-------------|-------------------------|
+| R2.6-IMPL-1 | `SourceCapabilityRegistry` production enforcement | **Round 2.6 Task 2** | `06-19-round2-6-routing-service-gate` §8.1 | No | `tests/test_source_capabilities.py` green + registry load in service |
+| R2.6-IMPL-2 | Adapter domain alignment (remove legacy `supported_domains`) | **Round 2.6 Task 2** | Task 2 §8.2 · `016A` | No | compatibility map retired or adapters aligned |
+| R2.6-IMPL-3 | `SourceRoutePlanner` + persistence | **Round 2.6 Task 2** | Task 2 §8.3–8.7 · `016B` | No | route planner tests + job_event payload |
+| R2.6-IMPL-4 | `DataSourceService` fetch facade | **Round 2.6 Task 2** | Task 2 §8.4 · `016B` | No | `tests/test_datasource_service.py` service tests |
+| R2.6-IMPL-5 | Sync runner service-based fetch path | **Round 2.6 Task 2** | Task 2 §8.5 | No | sync orchestrator tests |
+| R2.6-IMPL-6 | `qmd data` production CLI | **Round 3 ops** | `035` prep · Task 2 docs | No | CLI smoke when implemented |
+| R2.6-IMPL-7 | Prod-equivalent scale benchmark | **Round 2.6 Task 2** | Task 2 §8.9 · `016F` · `production_equivalent_smoke.py` | No | smoke script green on fixture scale |
+| R2.6-IMPL-8 | Live QMT/Yahoo/xqshare validation | **User-authorized staging** | ops runbook | No | authorized E2E only |
+
+---
+
 ## DEFERRED — Round 3 (modeling + ops repay)
 
 Does **not** block 017 per `ROUND2_GAPS` §6; **must** be closed or re-deferred with new ID before Round 4.
@@ -108,6 +123,9 @@ Does **not** block 017 per `ROUND2_GAPS` §6; **must** be closed or re-deferred 
 | D3-P3-1 | Five vendor skeleton adapter classes | Round 2 Batch B | `test_adapter_skeletons.py` |
 | D5-P1-2 | Manifest protocol uses archived Trellis | by design | frozen Batch D archive |
 | D1-P3-2 | GitNexus tooling | setup | `node .gitnexus/run.cjs analyze` |
+| R2.6-B1 | Round2.6 Phase B contract gate tests (016A–016E contracts) | 2026-06-19 | `tests/test_source_capabilities.py` · `tests/test_source_route_planner.py` · `tests/test_datasource_service.py` · `tests/test_module_boundaries.py` · `tests/test_data_cli_contract.py` · `tests/test_dependency_extras_contract.py` · `tests/test_platform_source_matrix.py` |
+| R2.6-B2 | Module boundary static checker | 2026-06-19 | `scripts/check_module_boundaries.py` |
+| R2.6-B3 | Phase A self-check migrated to Trellis | 2026-06-19 | `.trellis/tasks/06-19-round2-6-contract-gate/research/phase-a-self-check.md` |
 
 ---
 

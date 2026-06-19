@@ -1,0 +1,7 @@
+=== 8.8 RED ===
+manual grep: stale R3-PARTIAL rows without Round2.6 hooks (pre-reconcile)
+=== 8.8 GREEN ===
+pytest tests/test_documentation_index.py -q
+...                                                                      [100%]
+docs/AUDIT_DEFERRED_REGISTRY.md updated with R2.6-IMPL and RESOLVED R2.6-B*
+exit code: 0

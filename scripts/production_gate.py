@@ -64,12 +64,26 @@ def check_resource_contract() -> None:
             fail(f"resource contract missing {key}")
 
 
+def check_module_boundaries() -> None:
+    import subprocess
+
+    result = subprocess.run(
+        [sys.executable, str(ROOT / "scripts" / "check_module_boundaries.py")],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        fail(f"module boundary check failed: {result.stderr or result.stdout}")
+
+
 def main() -> int:
     check_no_prod_stub_validation()
     check_workflow_permissions()
     check_dependabot_present()
     check_agent_contract()
     check_resource_contract()
+    check_module_boundaries()
 
     if FAILURES:
         for item in FAILURES:

@@ -1,0 +1,5 @@
+=== 8.5 GREEN ===
+pytest tests/test_module_boundaries.py -q && python scripts/check_module_boundaries.py
+...
+Module boundary check passed
+exit code: 0

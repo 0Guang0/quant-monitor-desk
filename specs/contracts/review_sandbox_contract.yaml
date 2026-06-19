@@ -1,0 +1,37 @@
+version: review_sandbox_contract_v1
+status: draft_round2_6
+owner: review_security
+purpose: "Allow optional read-only strategy/evidence review without executing trading code."
+allowed_api:
+  - get_history
+  - get_price
+  - log.info
+  - log.warning
+  - log.error
+  - record_metric
+forbidden_api:
+  - order
+  - order_value
+  - order_target
+  - order_target_value
+  - cancel_order
+  - place_order
+  - buy
+  - sell
+forbidden_runtime_access:
+  - os
+  - sys
+  - subprocess
+  - socket
+  - requests
+  - network
+  - arbitrary_import
+rules:
+  - imported strategy snippets are scanned by AST before any execution
+  - default mode is static analysis only
+  - any detected order-like API is an action_semantics_violation
+  - no sandbox output may become a trading recommendation
+required_tests:
+  - tests/test_review_sandbox_api.py::test_orderApiRejected
+  - tests/test_review_sandbox_api.py::test_forbiddenImportRejected
+  - tests/test_reference_adoption_guardrails.py::test_jq2ptradeExecPatternNotCopied

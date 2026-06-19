@@ -1,0 +1,25 @@
+version: data_cli_contract_v1
+status: draft_round2_6
+owner: ops
+purpose: "Define safe local data sync CLI behavior before adding new command wrappers."
+commands:
+  qmd data init-basic:
+    default_mode: dry_run
+    writes_allowed_when_confirmed: [schema, registry]
+  qmd data sync:
+    required_args: [domain]
+    optional_args: [start, end, since, dry-run]
+    must_use: [ResourceGuard, SourceRoutePlan, idempotency_key, fetch_log]
+  qmd data health:
+    side_effects_allowed: false
+  qmd data route-preview:
+    side_effects_allowed: false
+    output: SourceRoutePlan
+rules:
+  - dry-run must be available for every command that could write data
+  - commands must print route_status and source_used or skip reason
+  - no command may enable qmt/qmt_xqshare without explicit user confirmation
+  - CLI outputs must include error_code and docs_anchor when failing
+required_tests:
+  - tests/test_data_cli_contract.py::test_syncDryRunDoesNotWrite
+  - tests/test_data_cli_contract.py::test_routePreviewReadOnly

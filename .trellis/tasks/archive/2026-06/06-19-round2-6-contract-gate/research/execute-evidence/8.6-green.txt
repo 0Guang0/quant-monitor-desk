@@ -1,0 +1,4 @@
+=== 8.6 GREEN ===
+pytest tests/test_data_cli_contract.py tests/test_dependency_extras_contract.py -q
+........                                                                 [100%]
+8 passed exit code: 0
