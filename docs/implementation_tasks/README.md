@@ -71,7 +71,9 @@
 
 ## ROUND_3_MODELING_LAYERS
 
-> **Gate:** complete Trellis `round2-repair-alignment` (Round 2.5) and Trellis **`06-19-round2-6-routing-service-gate`** (Round 2.6 Phase C/D) before **017**. Contract gate: `.trellis/tasks/archive/2026-06/06-19-round2-6-contract-gate/`. Routing service gate evidence: `.trellis/tasks/06-19-round2-6-routing-service-gate/`. See `docs/quality/ROUND2_REPAIR_ALIGNMENT_TRACKER.md` and `docs/AUDIT_DEFERRED_REGISTRY.md`.
+> **Gate:** complete Trellis `round2-repair-alignment` (Round 2.5) and Trellis **`06-19-round2-6-routing-service-gate`** (Round 2.6 Phase C/D) before **017**. Contract gate: `.trellis/tasks/archive/2026-06/06-19-round2-6-contract-gate/`. Routing service gate evidence: `.trellis/tasks/archive/2026-06/06-19-round2-6-routing-service-gate/`. See `docs/quality/ROUND2_REPAIR_ALIGNMENT_TRACKER.md` and `docs/AUDIT_DEFERRED_REGISTRY.md`.
+>
+> **Round 3 early ops（用户自持设计，不新增 task 文件）：** 本地 DuckDB 只读检查 CLI。完整设计文档由**用户亲自撰写**（执行者禁止代写）；设计冻结后执行者再实现 CLI + 测试。不复用 `.tmp` 脚本。交接索引：`ROUND3_EARLY_CLOSE_PLAN.md` · `docs/ROUND3_HANDOFF.md`。
 
 - `ROUND_3_MODELING_LAYERS/017_implement_layer1_axis_loader.md` — 实现 Layer 1 五轴 loader
 - `ROUND_3_MODELING_LAYERS/018_implement_layer1_interpretation_snapshot.md` — 实现 Layer 1 解释快照

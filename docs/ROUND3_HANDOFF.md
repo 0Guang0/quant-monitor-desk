@@ -16,12 +16,12 @@ Round 2 Batch A/B/C/D are **functionally complete** on `master` (PR #10 merged).
 - **Decisions:** `DECISIONS.md` §11 (backfill / reconcile / gold-path semantics)
 - **Deferred IDs:** `docs/AUDIT_DEFERRED_REGISTRY.md`
 
-| Batch | Scope | Status |
-|-------|-------|--------|
-| A | 011 source_registry + 012 adapter contract | ✅ archived |
-| B | 013 adapter skeletons | ✅ archived |
-| C | 015 data quality + 016 conflict + DbValidationGate | ✅ archived · handoff PASS |
-| D | 014 DataSyncOrchestrator | ✅ archived · Audit PASS / Repair CLOSED |
+| Batch | Scope                                              | Status                                   |
+| ----- | -------------------------------------------------- | ---------------------------------------- |
+| A     | 011 source_registry + 012 adapter contract         | ✅ archived                              |
+| B     | 013 adapter skeletons                              | ✅ archived                              |
+| C     | 015 data quality + 016 conflict + DbValidationGate | ✅ archived · handoff PASS               |
+| D     | 014 DataSyncOrchestrator                           | ✅ archived · Audit PASS / Repair CLOSED |
 
 **Gold path (trust chain):** `DataSyncOrchestrator.run_incremental` only — fetch → validate → conflict → gate → WriteManager.
 
@@ -60,3 +60,4 @@ node .gitnexus\run.cjs status
 4. Read `ROUND2_GAPS_AND_DEVIATIONS.md` §6 + `AUDIT_DEFERRED_REGISTRY.md` (deferred phases)
 5. Obey `GLOBAL_EXECUTION_RULES.md`, ResourceGuard, WriteManager, no-action boundary
 6. Create Trellis task for Round 3 Layer 1 when ready to implement
+7. **Round 3 early ops — local DB inspect CLI:** user writes full design doc (executor must not draft it); after design freeze, executor implements read-only CLI + tests. Not a numbered task file under `ROUND_3_MODELING_LAYERS/`; tracked in `ROUND3_EARLY_CLOSE_PLAN.md`. Do not reuse `.tmp/inspect_db.py`.
