@@ -15,15 +15,14 @@
 - `docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md`
 - `docs/implementation_tasks/GLOBAL_TESTING_POLICY.md`
 - `docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md`
-
+- `specs/contracts/runtime_versions.md`
+- `docs/quality/staged_acceptance_policy.md`
+- `docs/ops/migration_recovery_policy.md`
 ## 4. 相关代码 / 输出文件
 
-- `backend/app/db/migrations/001_foundation.sql`
-- `backend/app/db/migrate.py`（migration runner）
+- `backend/db/schema.sql`
+- `backend/db/migrations/`
 - `scripts/init_db.py`
-
-> 详细 TDD 步骤、表清单、API 签名见 `plans/005_schema.plan.md`。
-> 路径与范围以 `DECISIONS.md` 为准（统一 `backend/app/*`）。
 
 ## 5. 现有模式 / 参考
 
@@ -58,10 +57,9 @@
 
 ## 9. 实现步骤
 
-- 只建 foundation 表（`schema_version`、`file_registry`、`write_audit_log`、`resource_guard_log`、`stg_foundation_smoke`），不整库执行 `specs/schema/schema.sql`。
-- 实现幂等 migration runner（`schema_version` 记录已应用文件，重复执行不报错）。
-- 写 `schema_version` 行（version_id、checksum、applied_at）。
-- smoke test 查询基础表确认存在与可写。
+- 实现 schema 初始化
+- 写 schema_version
+- smoke test 查询基础表
 - 先写或补充最小测试 / smoke test，再实现。
 - 运行本任务验收命令。
 - 汇报改动文件、测试结果、未完成项、资源保护状态。
@@ -75,17 +73,13 @@
 - 测试命名建议：`functionName_condition_expectedBehavior`。
 
 ## 11. 验收命令
+本任务为后端实现任务。验收命令：
 
 ```bash
-pytest -q
-ruff check .
-python -m compileall backend scripts
-```
-
-如涉及前端，还必须运行：
-
-```bash
-cd frontend && npm run typecheck
+uv sync --locked
+uv run pytest -q
+uv run ruff check .
+uv run python -m compileall backend scripts tests
 ```
 
 ## 12. 完成标准
@@ -116,3 +110,17 @@ cd frontend && npm run typecheck
 4. 测试命令和结果。
 5. ResourceGuard 是否触发。
 6. 未完成项或需要用户确认的点。
+
+## 15. 审计修复补充要求
+
+Migration 必须支持：
+
+- `schema_version` 记录 version、name、checksum、applied_at。
+- 每次 schema change 前创建备份。
+- 失败时 rollback；无法 rollback 时恢复备份并写 audit log。
+- 旧 migration 不得原地修改，修正必须新增 migration。
+- 测试覆盖 checksum、失败恢复、并发 migration lock。
+
+### 用户决策补充：D-06
+
+用户已拍板：破坏性 migration 通过备份恢复；非破坏性 migration 可无 down SQL 但必须声明原因。

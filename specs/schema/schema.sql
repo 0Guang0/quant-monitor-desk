@@ -32,30 +32,6 @@ CREATE TABLE IF NOT EXISTS source_registry (
     updated_at             TIMESTAMP
 );
 
--- Batch A ingestion audit (aligned with docs/modules/data_sources.md §5.6)
-CREATE TABLE IF NOT EXISTS fetch_log (
-    fetch_id            VARCHAR PRIMARY KEY,
-    run_id              VARCHAR,
-    job_id              VARCHAR,
-    source_id           VARCHAR,
-    data_domain         VARCHAR,
-    market_id           VARCHAR,
-    instrument_id       VARCHAR,
-    request_params_hash VARCHAR,
-    status              VARCHAR,
-    row_count           INTEGER,
-    raw_file_paths      VARCHAR,
-    content_hash        VARCHAR,
-    schema_hash         VARCHAR,
-    as_of_timestamp     TIMESTAMP,
-    publish_timestamp   TIMESTAMP,
-    fetch_time          TIMESTAMP,
-    latency_ms          INTEGER,
-    retry_count         INTEGER,
-    error_type          VARCHAR,
-    error_message       TEXT
-);
-
 CREATE TABLE IF NOT EXISTS file_registry (
     file_id             VARCHAR PRIMARY KEY,
     file_type           VARCHAR,
@@ -111,9 +87,6 @@ CREATE TABLE IF NOT EXISTS job_event_log (
     payload_json    TEXT,
     created_at      TIMESTAMP
 );
-
-CREATE INDEX IF NOT EXISTS idx_data_sync_job_run_id ON data_sync_job (run_id);
-CREATE INDEX IF NOT EXISTS idx_job_event_log_job_id ON job_event_log (job_id);
 
 CREATE TABLE IF NOT EXISTS validation_report (
     validation_report_id    VARCHAR PRIMARY KEY,
@@ -201,45 +174,6 @@ CREATE TABLE IF NOT EXISTS write_audit_log (
     status              VARCHAR,
     error_message       TEXT,
     traceback_digest    VARCHAR
-);
-
-CREATE TABLE IF NOT EXISTS resource_guard_log (
-    event_id            VARCHAR PRIMARY KEY,
-    decision            VARCHAR,
-    reason              VARCHAR,
-    profile             VARCHAR,
-    available_memory_gb DOUBLE,
-    disk_free_gb        DOUBLE,
-    process_rss_mb      DOUBLE,
-    project_size_gb     DOUBLE,
-    system_memory_usage_pct DOUBLE,
-    system_disk_usage_pct   DOUBLE,
-    cache_size_gb           DOUBLE,
-    duckdb_temp_size_gb     DOUBLE,
-    created_at          TIMESTAMP
-);
-
-CREATE TABLE IF NOT EXISTS stg_foundation_smoke (
-    instrument_id       VARCHAR,
-    trade_date          DATE,
-    close               DOUBLE,
-    source_used         VARCHAR,
-    batch_id            VARCHAR,
-    PRIMARY KEY (instrument_id, trade_date)
-);
-
-CREATE TABLE IF NOT EXISTS stg_file_registry (
-    file_id             VARCHAR,
-    file_type           VARCHAR,
-    source              VARCHAR,
-    source_url          VARCHAR,
-    local_path          VARCHAR,
-    content_hash        VARCHAR,
-    schema_hash         VARCHAR,
-    fetch_time          TIMESTAMP,
-    as_of_timestamp     TIMESTAMP,
-    parse_status        VARCHAR,
-    quality_flag        VARCHAR
 );
 
 CREATE TABLE IF NOT EXISTS manual_review_queue (

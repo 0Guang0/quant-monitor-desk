@@ -414,8 +414,9 @@ backtest_scenario_registry
 # 9. 前端性能规则
 
 ```text
-默认 page_size = 100
-硬上限 page_size = 500
+默认 page_size = 200
+硬上限 page_size = 1000
+唯一机器权威 = specs/contracts/api_security_contract.yaml
 大表使用分页或虚拟滚动
 图谱默认只展示当前 chain，不一次加载全局所有边
 历史图默认最近 90 天
@@ -439,3 +440,17 @@ Agent 文本触发禁用词时被 NoActionSemanticGuard 拦截
 回测结果显示限制说明，不显示交易建议
 通知中心能展示 dedup / cooldown 状态
 ```
+
+## 用户决策补充：UI 必须先确认
+
+落实 D-08：当前文件中的页面结构、组件组合、布局示意仅为参考/占位。正式实现前，Claude Code / Codex 必须提醒用户确认：
+
+```text
+页面信息架构
+核心页面清单
+每页展示哪些模块
+交互方式
+视觉风格与排版
+```
+
+不得把当前文档里的页面布局写死为最终 UI。

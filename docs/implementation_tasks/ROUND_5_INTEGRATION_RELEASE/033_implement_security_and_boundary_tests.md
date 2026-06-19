@@ -11,10 +11,10 @@
 ## 3. 输入文件
 
 - `docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md`
-- `docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md`
 - `docs/implementation_tasks/GLOBAL_TESTING_POLICY.md`
 - `docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md`
-
+- `specs/contracts/runtime_versions.md`
+- `docs/quality/staged_acceptance_policy.md`
 ## 4. 相关代码 / 输出文件
 
 - `tests/integration/test_boundaries.py`
@@ -68,17 +68,13 @@
 - 测试命名建议：`functionName_condition_expectedBehavior`。
 
 ## 11. 验收命令
+本任务为集成/资源/边界测试。验收命令：
 
 ```bash
-pytest -q
-ruff check .
-python -m compileall backend scripts
-```
-
-如涉及前端，还必须运行：
-
-```bash
-cd frontend && npm run typecheck
+uv sync --locked
+uv run pytest -q tests/integration
+uv run ruff check .
+uv run python -m compileall backend scripts tests
 ```
 
 ## 12. 完成标准
@@ -109,3 +105,7 @@ cd frontend && npm run typecheck
 4. 测试命令和结果。
 5. ResourceGuard 是否触发。
 6. 未完成项或需要用户确认的点。
+
+### 用户决策补充：D-03
+
+用户已拍板：Secret 第一版使用 .env.local，只提交 .env.example；.env/.env.local/*.secret/*.key 必须 gitignore；prod 必须做 secret 启动检查和 CI secret scan。

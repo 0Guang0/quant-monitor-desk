@@ -360,3 +360,7 @@ evidence_chain 必须至少包含一层结构化 context。
 Agent 不得把 evidence_chain 输出成买卖建议。
 Layer 5 不得直接写 Layer 1 / Layer 2 / Layer 3 / Layer 4 表。
 ```
+
+## 用户决策补充：不复制 Layer 1 全套标准化字段
+
+落实 D-09：Layer 5 不默认复制 Layer 1 的完整标准化字段。Layer 5 只保留本层业务必需字段；如后续确需引入 z-score、历史百分位、状态桶等标准化字段，必须在本层 contract 中按需增加，不得全量套用 Layer 1 模型。

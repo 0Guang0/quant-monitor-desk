@@ -419,7 +419,7 @@ CREATE TABLE IF NOT EXISTS schema_version (
 
 ```text
 1. Agent 工具默认 limit 200。
-2. 特殊工具最高 limit 2000。
+2. Agent 工具绝对最高 limit 1000；唯一机器权威为 `specs/contracts/api_security_contract.yaml`，不得保留高于全局绝对上限的特殊工具例外。
 3. Agent 只能查受控 view。
 4. Agent 查询必须记录 query_audit_log。
 5. Agent 不允许执行 DDL / DML。

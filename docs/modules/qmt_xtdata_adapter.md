@@ -37,3 +37,7 @@ subscribe_whole_quote
 不要把 `get_market_data_ex` 的某种用法写死到业务层。
 
 ---
+
+## 用户决策补充：第一版默认禁用
+
+落实 D-11：QMT / miniQMT adapter 第一版必须默认禁用。启用前必须由用户确认本机 QMT 安装路径、账号授权、行情权限与本地运行状态。没有用户确认时，QMT 只能作为 fallback candidate，不得自动尝试连接。

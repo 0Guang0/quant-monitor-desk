@@ -80,3 +80,28 @@ resourceGuard_lowDisk_shouldPauseBackfill
 - Agent / Notification 的 No Action Semantics Guard。
 
 每个 implementation task 必须写清本任务最低测试要求。
+
+
+## 7. Deterministic / Golden / Time-freeze 基线
+
+所有涉及数据接入、快照、报告、Agent 输出、回测和前端展示的测试，必须默认可复现。
+
+最低要求：
+
+```text
+1. 固定随机种子：任何随机抽样、样本打散、fixture 生成都必须设置 seed。
+2. 固定时钟：测试不得直接依赖 now()；必须注入 clock/as_of_date，或使用 time-freeze fixture。
+3. 固定时区：所有日期时间测试必须声明 timezone，默认使用 UTC 或明确的交易所时区。
+4. Golden fixture manifest：跨模块快照、日报、Agent summary、backtest report 必须有 fixture manifest，记录输入文件 hash、as_of、版本号。
+5. Contract snapshot regression：API response envelope、Layer snapshot、notification/report JSON、Agent structured output 必须做 contract snapshot 回归。
+6. 外部 I/O 全部 mock 或 fixture 化；不得在测试中真实联网。
+```
+
+新增推荐测试：
+
+```text
+test_goldenFixtureManifest_hashesMatch
+test_reportGeneration_frozenClock_isDeterministic
+test_agentSummary_sameInput_sameStructuredOutput
+test_backtestFrozenDataset_reproducesSameMetrics
+```

@@ -16,7 +16,9 @@
 - `docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md`
 - `docs/implementation_tasks/GLOBAL_TESTING_POLICY.md`
 - `docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md`
-
+- `specs/contracts/runtime_versions.md`
+- `docs/quality/staged_acceptance_policy.md`
+- `specs/contracts/api_security_contract.yaml`
 ## 4. 相关代码 / 输出文件
 
 - `backend/api/`
@@ -71,17 +73,14 @@
 - 测试命名建议：`functionName_condition_expectedBehavior`。
 
 ## 11. 验收命令
+本任务涉及 API / Agent / 通知 / 回测。验收命令：
 
 ```bash
-pytest -q
-ruff check .
-python -m compileall backend scripts
-```
-
-如涉及前端，还必须运行：
-
-```bash
-cd frontend && npm run typecheck
+uv sync --locked
+uv run pytest -q tests/test_api_routes.py tests/test_agent_tools.py tests/test_notifications.py tests/test_backtest_review.py tests/test_no_action_semantics_guard.py
+uv run ruff check .
+uv run python -m compileall backend scripts tests
+cd frontend && npm ci && npm audit --audit-level=high && npm run typecheck && npm run build
 ```
 
 ## 12. 完成标准
@@ -112,3 +111,19 @@ cd frontend && npm run typecheck
 4. 测试命令和结果。
 5. ResourceGuard 是否触发。
 6. 未完成项或需要用户确认的点。
+
+## 15. 审计修复补充要求
+
+API 必须实现最小安全基线：
+
+- 本地版可配置 auth，但生产模式必须启用 auth。
+- 第一版仅实现单本地 Bearer token = admin；`viewer` / `agent_readonly` 仅保留为 Phase 2 deferred role，不得在第一版实现半套 RBAC。
+- 必须补测试：`test_singleLocalToken_mapsToAdmin`、`test_viewerAgentRoles_areDeferredInPhase1`、`test_prodAdminMutationWithoutToken_returnsAuthRequired`。
+- 所有列表 API 必须分页，默认 page_size = 200，绝对上限 = 1000；唯一机器权威为 `specs/contracts/api_security_contract.yaml`。
+- 必须补测试：`test_apiSecurityContract_isSingleAuthorityForQueryBudget`、`test_resourceLimitsApiLimits_matchApiSecurityContract`、`test_frontendPageContracts_doNotUseStale500Limit`。
+- 大查询返回 `QUERY_TOO_LARGE`；资源不足返回 `RESOURCE_GUARD_PAUSED`。
+- API 必须有 rate limit 与 query budget。
+
+### 用户决策补充：D-02
+
+用户已拍板：API dev 可关闭 token 但只允许 loopback；prod 必须启用 Bearer token，缺少 QMD_API_TOKEN 或关闭鉴权必须启动失败。

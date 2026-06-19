@@ -14,7 +14,9 @@
 - `docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md`
 - `docs/implementation_tasks/GLOBAL_TESTING_POLICY.md`
 - `docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md`
-
+- `specs/contracts/runtime_versions.md`
+- `docs/quality/staged_acceptance_policy.md`
+- `specs/contracts/release_cleanup_allowlist.yaml`
 ## 4. 相关代码 / 输出文件
 
 - `scripts/final_package_cleanup.py`
@@ -68,18 +70,16 @@
 - 测试命名建议：`functionName_condition_expectedBehavior`。
 
 ## 11. 验收命令
+本任务为文档/发布规则类任务，不强制运行 full test suite。验收命令：
 
 ```bash
-pytest -q
-ruff check .
-python -m compileall backend scripts
+uv sync --locked
+uv run python scripts/check_doc_links.py
+uv run python scripts/check_docs_consistency.py
+uv run python scripts/validate_release_allowlist.py
 ```
 
-如涉及前端，还必须运行：
-
-```bash
-cd frontend && npm run typecheck
-```
+若相关脚本尚由本任务创建，则先运行脚本自身单元测试，再在任务完成后运行上述命令。
 
 ## 12. 完成标准
 
@@ -109,3 +109,21 @@ cd frontend && npm run typecheck
 4. 测试命令和结果。
 5. ResourceGuard 是否触发。
 6. 未完成项或需要用户确认的点。
+
+## 15. 审计修复补充要求
+
+最终清理必须 allowlist 驱动：
+
+- 先 dry-run，输出将删除文件清单。
+- 生成删除前 manifest。
+- 不得删除 docs/specs/contracts/implementation_tasks 正式文件。
+- 支持 restore plan。
+- 测试必须覆盖“不会误删 specs/contracts”。
+
+### 用户决策补充：D-05
+
+用户已拍板：raw/audit/report/notification 默认保留 1 年；清理前必须提供手动归档按钮或 CLI。
+
+### 用户决策补充：D-07
+
+用户已拍板：Trellis/Cursor 每轮只长期保留 MASTER/AUDIT/DECISIONS；细碎 evidence 归档到 artifacts zip。

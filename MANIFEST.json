@@ -1,0 +1,809 @@
+{
+  "version": "quant_monitor_implementation_docs_v1_final_shadow_position_audit_repaired_2026_06_19",
+  "generated_at_utc": "2026-06-19T05:53:46+00:00",
+  "root_dir": "quant_monitor_implementation_docs_v1",
+  "manifest_self_policy": "exclude_self_from_file_hashes",
+  "file_count_excluding_manifest": 160,
+  "files": [
+    {
+      "path": "FINAL_AUDIT_REPORT.md",
+      "size_bytes": 4948,
+      "sha256": "b8f003b7092c17cf023bfda067f732a031e6f46d0fb3a59d9716f73b2c2e2d1e"
+    },
+    {
+      "path": "MIGRATION_MAP.md",
+      "size_bytes": 3758,
+      "sha256": "138d4238f24a76a950f758f091fa89b60d869614358c9a8428955f32e9150b93"
+    },
+    {
+      "path": "README.md",
+      "size_bytes": 4290,
+      "sha256": "0ec7d1f2e8a8f658848540014ffbc8de79129c06669385c1a0c722f5bb49eef6"
+    },
+    {
+      "path": "docs/adr/ADR-0001-use-duckdb-local-first.md",
+      "size_bytes": 627,
+      "sha256": "8551217ff9a855b60d5bc7df59dbe0cddb4b38f316a7acf4030a9781a7580559"
+    },
+    {
+      "path": "docs/adr/ADR-0002-agent-readonly-boundary.md",
+      "size_bytes": 586,
+      "sha256": "054353559ea36acd0e8b46a79b0ba88afb147ccc2972da324e16e61946c3fde4"
+    },
+    {
+      "path": "docs/adr/ADR-0003-layer1-standardization-only.md",
+      "size_bytes": 927,
+      "sha256": "b579da48ed48093658aeee82d02ca7c6dc2f2c81fd9184fb5275850a905d2dc4"
+    },
+    {
+      "path": "docs/adr/ADR-0004-layer3-shock-anchor-model.md",
+      "size_bytes": 630,
+      "sha256": "5e9eb5b1738c281d0f65da6ae2bd21613869b5241b5fb885552b4829fc3aeaba"
+    },
+    {
+      "path": "docs/adr/ADR-0005-primary-validation-fallback-source-model.md",
+      "size_bytes": 664,
+      "sha256": "6f791ebb9b263cfa622a0bbc49ad01fe9cd8608a83fdd16f4bc28cd3fbbfcc8d"
+    },
+    {
+      "path": "docs/api/agent_tool_contracts.md",
+      "size_bytes": 4947,
+      "sha256": "6d67c91cd42adb94793447f4fd4f487f0267432bc713053d6c8d21f774cd4108"
+    },
+    {
+      "path": "docs/api/fastapi_routes.md",
+      "size_bytes": 10966,
+      "sha256": "2d8621bff7a8754138b316931273b2171ff5f2e32342bf60181624a564208438"
+    },
+    {
+      "path": "docs/architecture/00_project_overview.md",
+      "size_bytes": 10435,
+      "sha256": "4434bed22917ccf71646cd6b102ad83bbcc92a315d9a3db234f2d3b404f7fdf4"
+    },
+    {
+      "path": "docs/architecture/01_context_and_scope.md",
+      "size_bytes": 1082,
+      "sha256": "3bf47b35fd7d5cacddf975241227346537ec29c38ec8a01f12de89d62b20adf6"
+    },
+    {
+      "path": "docs/architecture/02_solution_strategy.md",
+      "size_bytes": 3200,
+      "sha256": "62263195d987086c8665745994c2d947cd4d7aa776f6ffa058a8eea2fc7d0962"
+    },
+    {
+      "path": "docs/architecture/03_runtime_flows.md",
+      "size_bytes": 5719,
+      "sha256": "3a126cd038da25e44474adaa9724ed04fafc5627ee1e123ea4bc4a4756264f51"
+    },
+    {
+      "path": "docs/architecture/04_data_architecture.md",
+      "size_bytes": 4571,
+      "sha256": "12d3bc7e244949b3e91e1104f02db1c968509b9ad11148f87f4d0a8503fce137"
+    },
+    {
+      "path": "docs/architecture/05_module_map.md",
+      "size_bytes": 2128,
+      "sha256": "8c727230da4a1ec194256c2154f8f0218652f72cc9ec24bee4cd73139ebcd217"
+    },
+    {
+      "path": "docs/architecture/06_deployment_and_local_ops.md",
+      "size_bytes": 482,
+      "sha256": "92fa0ca893a22134ada18b59600b1a7bc6af6a21e906723d91ec9affdefd45cf"
+    },
+    {
+      "path": "docs/architecture/07_project_directory_structure.md",
+      "size_bytes": 1159,
+      "sha256": "645ce9e7e6a69e47506d2c48bb91c5828352cc74add814d482c3ac6ec37b5982"
+    },
+    {
+      "path": "docs/architecture/08_decision_log_index.md",
+      "size_bytes": 860,
+      "sha256": "38447c72f71ba39e3320415dbe7b2a9389a98f5d354fc8203ede83615bb00f42"
+    },
+    {
+      "path": "docs/architecture/09_phase_plan.md",
+      "size_bytes": 1165,
+      "sha256": "40e9f73ebc83dd4da9079d618bb3d7a167575d0386677f7ab3ca2603d94bf94b"
+    },
+    {
+      "path": "docs/architecture/10_external_references.md",
+      "size_bytes": 5045,
+      "sha256": "e331808fb4aec921b37a47a142161575e4a2ab050cdbfdf2c4ce3b051aad14fc"
+    },
+    {
+      "path": "docs/architecture/11_final_conclusion.md",
+      "size_bytes": 1294,
+      "sha256": "1effaaeb162ea181484c48f4f7d6910ac3fbdd5bcf382bd5ee981cef31592a3d"
+    },
+    {
+      "path": "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md",
+      "size_bytes": 3053,
+      "sha256": "061047c0cf553af198e89433bee151171cf9e832f0523eb4da34a0d5763d2ce5"
+    },
+    {
+      "path": "docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md",
+      "size_bytes": 1404,
+      "sha256": "925d666c7c1b8bd02fcd88fe827586320c6fcc50f8f67f5784b2ae55dd5a2607"
+    },
+    {
+      "path": "docs/implementation_tasks/GLOBAL_TASK_TEMPLATE.md",
+      "size_bytes": 2591,
+      "sha256": "2ac6f549721caadf8fdf5de068a4040a401a06510b14a20dfd6830c7a16b8c00"
+    },
+    {
+      "path": "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md",
+      "size_bytes": 3022,
+      "sha256": "f0f60cedb6599e68bf0cf5da14398586c036f1c40d6ba3169a3125270a000411"
+    },
+    {
+      "path": "docs/implementation_tasks/README.md",
+      "size_bytes": 5324,
+      "sha256": "f4459f8865716872371624e1b24961b8249a77f419afe259a326cd2874a65c03"
+    },
+    {
+      "path": "docs/implementation_tasks/ROUND_0_PROJECT_SCAFFOLD/000_global_execution_rules.md",
+      "size_bytes": 3940,
+      "sha256": "c2d977264c5b28f2406e6ca5531e7b9df93b25caa6e8c92c0495226b94716f8a"
+    },
+    {
+      "path": "docs/implementation_tasks/ROUND_0_PROJECT_SCAFFOLD/001_create_project_scaffold.md",
+      "size_bytes": 3839,
+      "sha256": "09650d03cc296eb566a7feba735dc4080107fec8a7278160e1253c26aaf50f61"
+    },
+    {
+      "path": "docs/implementation_tasks/ROUND_0_PROJECT_SCAFFOLD/002_create_config_and_env_templates.md",
+      "size_bytes": 4716,
+      "sha256": "b9a5145f0b904517c34806ed686cbdc4574279fcac2c47875da1f717679975dd"
+    },
+    {
+      "path": "docs/implementation_tasks/ROUND_0_PROJECT_SCAFFOLD/003_create_testing_baseline.md",
+      "size_bytes": 3909,
+      "sha256": "38fd924d8d8ad7a3f39e4663ca6279ef72a36c1abd8d3afa7bc9280f91e02811"
+    },
+    {
+      "path": "docs/implementation_tasks/ROUND_0_PROJECT_SCAFFOLD/004_create_documentation_index.md",
+      "size_bytes": 3945,
+      "sha256": "6f726760ebec89fa3ade6d0c34efc7e0bd912e1179fe092652ab389741e2a24d"
+    },
+    {
+      "path": "docs/implementation_tasks/ROUND_0_PROJECT_SCAFFOLD/README.md",
+      "size_bytes": 337,
+      "sha256": "1f722ab0366a6b067ab3b1987ed2128e70fccc2a9dd8f9b59d4f36e9115479a8"
+    },
+    {
+      "path": "docs/implementation_tasks/ROUND_1_DATA_FOUNDATION/005_create_schema_sql.md",
+      "size_bytes": 4316,
+      "sha256": "1df9e616afc838ef95650dc79e60ac07daf19b380e449b93f2acce47784b4131"
+    },
+    {
+      "path": "docs/implementation_tasks/ROUND_1_DATA_FOUNDATION/006_implement_resource_guard.md",
+      "size_bytes": 3771,
+      "sha256": "e08982682a2e7c9d5b29736fad6be7ef36e9fcc834340dfde550f67ec2dfe366"
+    },
+    {
+      "path": "docs/implementation_tasks/ROUND_1_DATA_FOUNDATION/007_implement_duckdb_connection_manager.md",
+      "size_bytes": 4131,
+      "sha256": "b4f09da197c425748cb46b5f9127593258cd028b081950e7f8465c56f6055ab4"
+    },
+    {
+      "path": "docs/implementation_tasks/ROUND_1_DATA_FOUNDATION/008_implement_write_manager.md",
+      "size_bytes": 3738,
+      "sha256": "1aa339d7175fc02fd20e723073eb316acbcf15b4061a3dc9b9c03a2c903dad0f"
+    },
+    {
+      "path": "docs/implementation_tasks/ROUND_1_DATA_FOUNDATION/009_implement_file_registry_and_raw_store.md",
+      "size_bytes": 4375,
+      "sha256": "97962c86a74f5d4b07086f937a712a7bea9d0fa65e46cd056fa01f9d98f8b475"
+    },
+    {
+      "path": "docs/implementation_tasks/ROUND_1_DATA_FOUNDATION/010_foundation_smoke_tests.md",
+      "size_bytes": 3712,
+      "sha256": "d5fedc140088e5d498168648a55ba9cde13a9356e1d1f605b67542069f9c4432"
+    },
+    {
+      "path": "docs/implementation_tasks/ROUND_1_DATA_FOUNDATION/README.md",
+      "size_bytes": 336,
+      "sha256": "f68357b065c8c9b8f6cab1ed3ac4165c5c07fbe1e7090bd34c3ae1fdd01b5fb9"
+    },
+    {
+      "path": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/011_implement_source_registry.md",
+      "size_bytes": 4381,
+      "sha256": "bbba869dda54f0da63dcf87fef9285519621efe31ec0bce0a4aca5842703582e"
+    },
+    {
+      "path": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/012_implement_data_adapter_contract.md",
+      "size_bytes": 3778,
+      "sha256": "1aa9a2fd163c939fd357b45dd5f8f1874481c890fdb7f50f2d6f418ff492ac15"
+    },
+    {
+      "path": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/013_implement_core_adapter_skeletons.md",
+      "size_bytes": 4363,
+      "sha256": "12b6d885e2b2f2316facf59fcdb7573549797f568e6b72bdbb9c20efdf46e48c"
+    },
+    {
+      "path": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/014_implement_data_sync_orchestrator.md",
+      "size_bytes": 4273,
+      "sha256": "f91de0d7db6be8a84c66583f41516bd60d3f7497d7c55956f27fb88c42c4575f"
+    },
+    {
+      "path": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/015_implement_data_quality_validator.md",
+      "size_bytes": 4201,
+      "sha256": "c3d2c925dc2f2e7bc1d7d964c7ec81a66cdf4de11cc67cdb9d1781d6078afde1"
+    },
+    {
+      "path": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/016_implement_source_conflict_validator.md",
+      "size_bytes": 4233,
+      "sha256": "968ece838d6e78085638e7d4269a82a36bc812c73b10ac6739d479836e3b512c"
+    },
+    {
+      "path": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/README.md",
+      "size_bytes": 346,
+      "sha256": "7b8eb55acb71da2ceee49b7e404eb41de01a66db1bd19ba79bc864701bd2132c"
+    },
+    {
+      "path": "docs/implementation_tasks/ROUND_3_MODELING_LAYERS/017_implement_layer1_axis_loader.md",
+      "size_bytes": 4452,
+      "sha256": "a4d60f1fc531620a6ea820f5a2f4e1bb1535b63dc830e94a8144755cbb52dbb4"
+    },
+    {
+      "path": "docs/implementation_tasks/ROUND_3_MODELING_LAYERS/018_implement_layer1_interpretation_snapshot.md",
+      "size_bytes": 4389,
+      "sha256": "4b6bf19c61a120daefa8fcd510c38b735a8db0177e2bc65015c60dabdf9d1d07"
+    },
+    {
+      "path": "docs/implementation_tasks/ROUND_3_MODELING_LAYERS/019_implement_layer2_cross_asset_sensor.md",
+      "size_bytes": 4421,
+      "sha256": "eb4b5bd733a6661f77534eb4b13cfb754ff11ab5e57152eb6e5b6d93053da2c9"
+    },
+    {
+      "path": "docs/implementation_tasks/ROUND_3_MODELING_LAYERS/020_implement_layer3_industry_chain_loader.md",
+      "size_bytes": 4397,
+      "sha256": "426ecee29d9b6c04c675004feeedc59b8981f3f7992bd78b89043c2181ffe949"
+    },
+    {
+      "path": "docs/implementation_tasks/ROUND_3_MODELING_LAYERS/021_implement_layer3_snapshot_builder.md",
+      "size_bytes": 4349,
+      "sha256": "bbe8036e42a97e73d31e562ebe9ef63e67967276f89d866b3a8d900332a5c82c"
+    },
+    {
+      "path": "docs/implementation_tasks/ROUND_3_MODELING_LAYERS/022_implement_layer4_market_structure.md",
+      "size_bytes": 4419,
+      "sha256": "8616112def3b48b5bb769c5170729d4cd058e848e153b2cffd6435a59acd43c6"
+    },
+    {
+      "path": "docs/implementation_tasks/ROUND_3_MODELING_LAYERS/023_implement_layer5_evidence_chain.md",
+      "size_bytes": 4414,
+      "sha256": "6344d3347a418febc3bd4e93e9b26e22ef59b901210247a554d5c2ec916dd164"
+    },
+    {
+      "path": "docs/implementation_tasks/ROUND_3_MODELING_LAYERS/README.md",
+      "size_bytes": 336,
+      "sha256": "9dd718234abd323470df7af05335699a2055bc76a6f575a6c9911679dcd80999"
+    },
+    {
+      "path": "docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/024_implement_fastapi_routes.md",
+      "size_bytes": 5163,
+      "sha256": "b6a7c6365fb3290c63fb92553ed29435fb9477e69806611e446f5e4bf01389b2"
+    },
+    {
+      "path": "docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/025_implement_agent_tool_layer.md",
+      "size_bytes": 4944,
+      "sha256": "64c669e0c5aaa23c49d35c4c82400153e32f63f3568bab32dfb681178331b128"
+    },
+    {
+      "path": "docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/026_implement_frontend_shell.md",
+      "size_bytes": 4559,
+      "sha256": "ba40d580794f0a5e1b075c423653e8258b8b932c2d3c3fddbafa1c704e7ea9f3"
+    },
+    {
+      "path": "docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/027_implement_frontend_layer_pages.md",
+      "size_bytes": 4552,
+      "sha256": "62c3f4c2c2955407f474aa69460733904dcd028282eaa8d3d9c9c8ec6d8f6520"
+    },
+    {
+      "path": "docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/028_implement_reports_and_notifications.md",
+      "size_bytes": 5601,
+      "sha256": "e649a8659dba9aa05b78af3bcb6a6027f6de7a4c1b0a789242a99c3a5af0f5fd"
+    },
+    {
+      "path": "docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/029_implement_backtest_and_review.md",
+      "size_bytes": 4422,
+      "sha256": "64ec3d4be222df605ca2828a3ef05fe6f3650882c0248c0de077d0d20d67d235"
+    },
+    {
+      "path": "docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/030_implement_no_action_semantics_guard.md",
+      "size_bytes": 4064,
+      "sha256": "4773ff7027314d50f5de6d725ed6755e9bb455d00f92b54139ace6f03b3476c8"
+    },
+    {
+      "path": "docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/README.md",
+      "size_bytes": 348,
+      "sha256": "545dfa1d11166905de74a62ccf94d636bfcb0a7b81c54d07b5bb370273fe77f2"
+    },
+    {
+      "path": "docs/implementation_tasks/ROUND_5_INTEGRATION_RELEASE/031_implement_integration_smoke_tests.md",
+      "size_bytes": 3730,
+      "sha256": "30bc01275d81ad09e9d4811de8cc88f599f12fb2ebf6dd53141afaa80455c4da"
+    },
+    {
+      "path": "docs/implementation_tasks/ROUND_5_INTEGRATION_RELEASE/032_implement_resource_limit_tests.md",
+      "size_bytes": 3735,
+      "sha256": "467dc2b556b9fe7c532c0a42560c17593e601c1b9b6e1cd44cb79a54ea5eb960"
+    },
+    {
+      "path": "docs/implementation_tasks/ROUND_5_INTEGRATION_RELEASE/033_implement_security_and_boundary_tests.md",
+      "size_bytes": 3885,
+      "sha256": "7235ad44c5e44c1afc3432a695608dea1b5f83a39ce96cfa2600929a0fc47186"
+    },
+    {
+      "path": "docs/implementation_tasks/ROUND_5_INTEGRATION_RELEASE/034_implement_docs_consistency_check.md",
+      "size_bytes": 3932,
+      "sha256": "209be0873ebcaa30c33170546f97990f4bd8702ca657848e789cc688eba43e72"
+    },
+    {
+      "path": "docs/implementation_tasks/ROUND_5_INTEGRATION_RELEASE/035_implement_final_package_cleanup.md",
+      "size_bytes": 4575,
+      "sha256": "cc309793243379b2904f0b9bca9300021e113313498df75e9f7f5c98b7f25f24"
+    },
+    {
+      "path": "docs/implementation_tasks/ROUND_5_INTEGRATION_RELEASE/036_create_final_release_manifest.md",
+      "size_bytes": 5385,
+      "sha256": "bf84c25d55f14834cb235f64c23826d75e04c36ef7007e5a7335b9e85ef25b18"
+    },
+    {
+      "path": "docs/implementation_tasks/ROUND_5_INTEGRATION_RELEASE/README.md",
+      "size_bytes": 340,
+      "sha256": "ff20154037708e683e09be134583a3596b02a4942ccd504e302f0a1e915da591"
+    },
+    {
+      "path": "docs/modules/agent_module.md",
+      "size_bytes": 6196,
+      "sha256": "46b116f770b049912ef5580ef96f8feda7ef27ab585721069f91361c15478b1d"
+    },
+    {
+      "path": "docs/modules/backtest_and_review.md",
+      "size_bytes": 7508,
+      "sha256": "076c351bcfa78ebdf83b0803b0035ec6429984490960770e624baf5c38dd41f5"
+    },
+    {
+      "path": "docs/modules/data_sources.md",
+      "size_bytes": 17577,
+      "sha256": "181d2cd73eba7d94d6fa4e7d0a15fd0c9de520e60ae7c5fe02aed1a02864838b"
+    },
+    {
+      "path": "docs/modules/data_sync_orchestrator.md",
+      "size_bytes": 11734,
+      "sha256": "87deb73983975b28cba906e22004ecccf4c3bbddbe101a4d1910dca7f1c652fb"
+    },
+    {
+      "path": "docs/modules/data_validation_and_conflict.md",
+      "size_bytes": 10721,
+      "sha256": "30bd4326cb672774dd9f784ca793aaa0af3cc6c1c107d6146b97a7696c8f767a"
+    },
+    {
+      "path": "docs/modules/data_validation_write_concurrency.md",
+      "size_bytes": 1066,
+      "sha256": "eeae84cf83b8ffb8a6174e87482f91fe476fb84001957a6ea782385bc9eea97d"
+    },
+    {
+      "path": "docs/modules/duckdb_and_parquet.md",
+      "size_bytes": 14818,
+      "sha256": "cfe7d6ae74324dfd86d0d0bd69b9621ec5d4c5cedd092783dcb91bb51c37aa1f"
+    },
+    {
+      "path": "docs/modules/fastapi_and_frontend.md",
+      "size_bytes": 363,
+      "sha256": "127e047058459f04c994ea6e15a8efcd0e5e0e1430dc4b11f9ae3cdce422f9cf"
+    },
+    {
+      "path": "docs/modules/fastapi_backend.md",
+      "size_bytes": 8129,
+      "sha256": "36b8cccfec569ed7b7c1ff30623802143681cb150ff3c82a0d04c7999bd17fd9"
+    },
+    {
+      "path": "docs/modules/frontend_dashboard.md",
+      "size_bytes": 10577,
+      "sha256": "a13c3370bf14c996ec8895814339ef85f014a382c493f9ad93324b3a80efcffe"
+    },
+    {
+      "path": "docs/modules/layer1_global_regime_panel.md",
+      "size_bytes": 14968,
+      "sha256": "8d54df76e954ce0055f8a11aa12296585c6101c6bf0d4cdd915181af7e922f6a"
+    },
+    {
+      "path": "docs/modules/layer2_cross_asset_sensor.md",
+      "size_bytes": 8646,
+      "sha256": "3cc440609c3323afb1359d9cc90b028aa1a832bb69e8e52eeecb004180d1135e"
+    },
+    {
+      "path": "docs/modules/layer3_industry_shock_anchor.md",
+      "size_bytes": 23104,
+      "sha256": "2e4abbd3f3a841e5e2f7f04a2f22c3157c4ce883ac1a524b3093d7f0ba46320f"
+    },
+    {
+      "path": "docs/modules/layer4_market_structure.md",
+      "size_bytes": 11129,
+      "sha256": "5db26b4d37ff279f1dea959bed3ee3ab01c545bd2f49c2e9a2fba971c07cfb54"
+    },
+    {
+      "path": "docs/modules/layer5_security_evidence.md",
+      "size_bytes": 10604,
+      "sha256": "a014e818bd6ab9c3d97f8ffaa2291c9673f80ee7f736f200d80cda817e2c9fd4"
+    },
+    {
+      "path": "docs/modules/local_file_system.md",
+      "size_bytes": 2643,
+      "sha256": "0cc85b41f6b3e7d9b4d63d64cd68002a1bc750fb6cc8d7763e3c3ab56ffd89a6"
+    },
+    {
+      "path": "docs/modules/notification_and_reports.md",
+      "size_bytes": 11140,
+      "sha256": "afc100ffb653f3205414ab43b6bd3fe49040f6c59913e52aa38e451c4db76659"
+    },
+    {
+      "path": "docs/modules/ops_and_performance.md",
+      "size_bytes": 4643,
+      "sha256": "8d53de873c4136b3d4f273451d4756fc0140aa2adb23fcebe7961e474bf3121f"
+    },
+    {
+      "path": "docs/modules/qmt_xtdata_adapter.md",
+      "size_bytes": 1409,
+      "sha256": "19323490d16de198206f325f1721275879d1216a311bd48e1fce7637ad0a8759"
+    },
+    {
+      "path": "docs/modules/write_manager.md",
+      "size_bytes": 9976,
+      "sha256": "4669d40c0fcd3a22389bea069815989b3ed68215043d27efbe34f205af13bbb2"
+    },
+    {
+      "path": "docs/ops/agent_security_policy.md",
+      "size_bytes": 1974,
+      "sha256": "cbed85f59b064e4da432bce388bea9ed883159a400ed8d748e928c7c8739eb15"
+    },
+    {
+      "path": "docs/ops/backup_and_recovery.md",
+      "size_bytes": 3450,
+      "sha256": "badc347b4e2764dfaf7fa6db5d18114fe81593ec6a0a82cdafead51d590ec05f"
+    },
+    {
+      "path": "docs/ops/config_secret_policy.md",
+      "size_bytes": 2657,
+      "sha256": "97e6687be3774d06b7375e2f71411df9cc1fc2b10d611820553daa1fe06c1d28"
+    },
+    {
+      "path": "docs/ops/daily_weekly_monthly_checklist.md",
+      "size_bytes": 2773,
+      "sha256": "d59ea525bda2b84d861131dea925f7ec46e94a431750448eb3477711f2d5c724"
+    },
+    {
+      "path": "docs/ops/frontend_security_policy.md",
+      "size_bytes": 1818,
+      "sha256": "7d5dbfb6e06d41daa1485e1dde5c90d634d59b7c15fe6ffb60e35d986a44cd55"
+    },
+    {
+      "path": "docs/ops/idempotency_retry_dlq_policy.md",
+      "size_bytes": 1500,
+      "sha256": "dcbb3dc84a32db75c4a599bf9cc22dc579d5d80a0b0e958931880909d921ebdb"
+    },
+    {
+      "path": "docs/ops/layer3_config_health_check.md",
+      "size_bytes": 3629,
+      "sha256": "606f735a4ef4e913c4e71d94425d83fde2a205149aa6dd9ec156732c0cda6ce8"
+    },
+    {
+      "path": "docs/ops/lock_and_concurrency_policy.md",
+      "size_bytes": 961,
+      "sha256": "a47c1e96de7354321b31d539f5e37b6ec609a2890900ea88f4f7424c8fb41a53"
+    },
+    {
+      "path": "docs/ops/logs_health_audit.md",
+      "size_bytes": 3430,
+      "sha256": "c82cf849f6bdb4496d48a48a07cd1252b53c7f7027891e8c845542b7cc9593b9"
+    },
+    {
+      "path": "docs/ops/migration_recovery_policy.md",
+      "size_bytes": 1749,
+      "sha256": "d327dd2106304eadd517c81e1d6247e8335d2f17beb76a36544f3894a3b8d640"
+    },
+    {
+      "path": "docs/ops/ops_and_performance_v1_2.md",
+      "size_bytes": 16814,
+      "sha256": "5ecc9355dc19fffccb1c417bf00779efbe565cf893de343c5364191c4eaedb4b"
+    },
+    {
+      "path": "docs/ops/performance_limits.md",
+      "size_bytes": 8199,
+      "sha256": "99b818ef1a0c0434f25f8c16d5f071381c6168345fd68ee26e5582a6cf7dc1a2"
+    },
+    {
+      "path": "docs/ops/privacy_retention_policy.md",
+      "size_bytes": 2199,
+      "sha256": "154a29af0e719d20b48e4759555d9e5f3334d208e189dd7bcfb6ddcc30f24495"
+    },
+    {
+      "path": "docs/quality/PENDING_USER_DECISIONS.md",
+      "size_bytes": 6388,
+      "sha256": "ca764a8c49b3c42464c89d69af684c1813c70e60e43d4bebec052bf16c40e9ce"
+    },
+    {
+      "path": "docs/quality/REPAIR_EXECUTION_SELF_CHECK.md",
+      "size_bytes": 11440,
+      "sha256": "fecc2983e785ef58493d1787132aad141698a7c1531459d9e2f0257749d1950e"
+    },
+    {
+      "path": "docs/quality/final_package_rules.md",
+      "size_bytes": 3103,
+      "sha256": "649ecd6b5d736ef6836c70364f35106670ec121f4bfc1c39035f4d890af16bfc"
+    },
+    {
+      "path": "docs/quality/self_check_and_audit.md",
+      "size_bytes": 2263,
+      "sha256": "020d570be9e6b0ac8d80d8434126b413f99f42695435553b137447c62c0173e1"
+    },
+    {
+      "path": "docs/quality/staged_acceptance_policy.md",
+      "size_bytes": 2766,
+      "sha256": "cca4076cf70f61a945a8fe3641431820eb247092986901166767abd983392e74"
+    },
+    {
+      "path": "specs/api/openapi_contract.md",
+      "size_bytes": 909,
+      "sha256": "dd71c70f8b3bf64da2a07b23a299074b9e0c8ac3d61400833d7d347a5d00bfdb"
+    },
+    {
+      "path": "specs/contracts/agent_contract.yaml",
+      "size_bytes": 1538,
+      "sha256": "999d9f8080ab87cbc0a8ee15638bbcc5f2c2c8404f6f80d259a288dade7c09ff"
+    },
+    {
+      "path": "specs/contracts/api_security_contract.yaml",
+      "size_bytes": 2687,
+      "sha256": "7248afa0a749c8e434b2c797ad9431e02ea036b2b0a47623830da436cd14f637"
+    },
+    {
+      "path": "specs/contracts/backtest_contract.yaml",
+      "size_bytes": 1414,
+      "sha256": "875281cc9c2fb49cf560bb5e870f21451bcc1c28c1c391064039027419b10db4"
+    },
+    {
+      "path": "specs/contracts/backtest_reproducibility_contract.yaml",
+      "size_bytes": 1079,
+      "sha256": "009920284762107b64d3dec8d122b104991f148af220c09ac852c8735787e3a5"
+    },
+    {
+      "path": "specs/contracts/backup_recovery_contract.yaml",
+      "size_bytes": 1026,
+      "sha256": "7b4d927e6ef55421cad7c066a058a3ec0176f71509823c46d29b231b0f599f2e"
+    },
+    {
+      "path": "specs/contracts/data_adapter_contract.md",
+      "size_bytes": 881,
+      "sha256": "4882c922320461ca87204f9aa5416a07270bcb49e5c54a08def643347bb5908d"
+    },
+    {
+      "path": "specs/contracts/data_quality_rules.yaml",
+      "size_bytes": 1040,
+      "sha256": "0822d027f7c20b32f289f1b567dd4fb60f0bf35e9a4ba253c46dfb0fdc4804f6"
+    },
+    {
+      "path": "specs/contracts/layer1_axis_contract.yaml",
+      "size_bytes": 785,
+      "sha256": "3cef65665a02f4a086d313f7c182c68b7144592726c33e4170a3174af62907e5"
+    },
+    {
+      "path": "specs/contracts/layer2_sensor_contract.yaml",
+      "size_bytes": 617,
+      "sha256": "28dd288c5ef005db550d17b0746b02d0f80c8855be7f83555d8f36ef0cb9fe77"
+    },
+    {
+      "path": "specs/contracts/layer3_loader_contract.yaml",
+      "size_bytes": 717,
+      "sha256": "ab710d93f672d8c293ef8667377c84e333aea9216628261563d22ae20129492d"
+    },
+    {
+      "path": "specs/contracts/layer4_market_contract.yaml",
+      "size_bytes": 1257,
+      "sha256": "574b910728a2f1be830f60db35eb989f88c7eca2184da9be1ad6f9678183c6bd"
+    },
+    {
+      "path": "specs/contracts/layer5_evidence_contract.yaml",
+      "size_bytes": 1449,
+      "sha256": "2f07310b761b0dee7588ee8307d168e70145e6efd9fad90acb1f220e328f1f49"
+    },
+    {
+      "path": "specs/contracts/log_audit_contract.yaml",
+      "size_bytes": 1074,
+      "sha256": "9df977078b4891db475c87afc65fc9d63f8405598bebaff488ec5066f5c39d82"
+    },
+    {
+      "path": "specs/contracts/notification_report_contract.yaml",
+      "size_bytes": 2457,
+      "sha256": "c37d7f819a61e05a4d081810689cb30dbb2f0e6c3cd66561993c5690ebac747a"
+    },
+    {
+      "path": "specs/contracts/ops_health_check_contract.yaml",
+      "size_bytes": 683,
+      "sha256": "0ca8ddaa2d73ec2d500bd384c756bb2053a4a09cefb68f2e9692fb290ce65129"
+    },
+    {
+      "path": "specs/contracts/release_cleanup_allowlist.yaml",
+      "size_bytes": 1318,
+      "sha256": "e1dd04c62003114677774b5905d54153627bae6daea2b4f7ad7e77db3409670d"
+    },
+    {
+      "path": "specs/contracts/resource_limits.yaml",
+      "size_bytes": 2171,
+      "sha256": "6d3ef6beab7f433679b058bbb1207d3392cbb645347ddb85aac2b97c57631fe8"
+    },
+    {
+      "path": "specs/contracts/runtime_flow_contract.yaml",
+      "size_bytes": 1103,
+      "sha256": "f11faef25c847f01e16587889c9be36f00299bb58e77dc625f51bf0df1c7c91e"
+    },
+    {
+      "path": "specs/contracts/runtime_versions.md",
+      "size_bytes": 1962,
+      "sha256": "294ef1d3d487a790f492c0e9869cba144225619b28be44d418ad49a3da9acf9e"
+    },
+    {
+      "path": "specs/contracts/snapshot_lineage_contract.yaml",
+      "size_bytes": 1097,
+      "sha256": "4a7fc43dd88a6351194a5f6a8a1c5c3bfbd17a79b5c668ff13e70dc069b6eb30"
+    },
+    {
+      "path": "specs/contracts/source_conflict_rules.yaml",
+      "size_bytes": 844,
+      "sha256": "473807dfea0642fd95663ca5d6b30d8ed49c995586197ec9fbe5d3f350acee5f"
+    },
+    {
+      "path": "specs/contracts/sync_job_contract.yaml",
+      "size_bytes": 730,
+      "sha256": "011f57dc7541eb185ccd5da4ebf3541310158ba87b06ba2317f936c330495825"
+    },
+    {
+      "path": "specs/contracts/write_contract.yaml",
+      "size_bytes": 1051,
+      "sha256": "62fd7d1945555072ca5024eebff7939ac68dc1786331c9b2756967f0a3ae346a"
+    },
+    {
+      "path": "specs/datasource_registry/source_registry.yaml",
+      "size_bytes": 4053,
+      "sha256": "7c082e4f46d94a1b686f5fb601110f97d5fb4c6a3415e498b2b77a4a7ea7e9fa"
+    },
+    {
+      "path": "specs/frontend/page_contracts.yaml",
+      "size_bytes": 3415,
+      "sha256": "b656fc3559bc466ab9221f449e0a670a5b7ef7890a49b42f68d30aa387e76409"
+    },
+    {
+      "path": "specs/layer1_axes/restructured_axes_v1_1/README.md",
+      "size_bytes": 1586,
+      "sha256": "0103b97da4a78616e4b9f68f9626e57b573918e2308c93559280890185dfaf4a"
+    },
+    {
+      "path": "specs/layer1_axes/restructured_axes_v1_1/common/common_axis_rules.md",
+      "size_bytes": 4289,
+      "sha256": "b545594f5e9c852e053d299b48095da32efb872d4c23411e0a7fa6eea38cbfbb"
+    },
+    {
+      "path": "specs/layer1_axes/restructured_axes_v1_1/credit_stress_axis/credit_stress_axis_engineering_rules.md",
+      "size_bytes": 1406,
+      "sha256": "83d08d8758ddc50e9549439a643aff25b30c5d0a1720e5e43b43467c97192212"
+    },
+    {
+      "path": "specs/layer1_axes/restructured_axes_v1_1/credit_stress_axis/credit_stress_axis_indicator_spec.yaml",
+      "size_bytes": 6935,
+      "sha256": "c0c9f6ce6a8f373ece5b87c17c5c598b53bcfdd9b01053e7e7ea858634fa2859"
+    },
+    {
+      "path": "specs/layer1_axes/restructured_axes_v1_1/credit_stress_axis/credit_stress_axis_user_guide.md",
+      "size_bytes": 3578,
+      "sha256": "af67aa2be5bd67a1faaa348710205113c37b5d8914d187136362f1c260302a94"
+    },
+    {
+      "path": "specs/layer1_axes/restructured_axes_v1_1/environment_axis/environment_axis_engineering_rules.md",
+      "size_bytes": 1391,
+      "sha256": "124020ef152d91a5f1987e08e3bf7582e4cea3f14780ee8f93ef2e64a1b29442"
+    },
+    {
+      "path": "specs/layer1_axes/restructured_axes_v1_1/environment_axis/environment_axis_indicator_spec.yaml",
+      "size_bytes": 8579,
+      "sha256": "831ef40a860862e33e6caeaced7914c120f769a7351f10480640378a14cb4fc6"
+    },
+    {
+      "path": "specs/layer1_axes/restructured_axes_v1_1/environment_axis/environment_axis_user_guide.md",
+      "size_bytes": 3520,
+      "sha256": "d0acc82f2a1818da793f09dfe2dfd51a8aa1db4b1a77a671a74e22c27bfad38f"
+    },
+    {
+      "path": "specs/layer1_axes/restructured_axes_v1_1/liquidity_axis/liquidity_axis_engineering_rules.md",
+      "size_bytes": 1178,
+      "sha256": "eae5b29e6ce8da2df816a717438979ba891a070162c88dac07668f46c859602d"
+    },
+    {
+      "path": "specs/layer1_axes/restructured_axes_v1_1/liquidity_axis/liquidity_axis_indicator_spec.yaml",
+      "size_bytes": 5813,
+      "sha256": "f12431d0380684d2bae6cfafa232c2c2ebbcbbdce44bd42906e11224d60f548e"
+    },
+    {
+      "path": "specs/layer1_axes/restructured_axes_v1_1/liquidity_axis/liquidity_axis_user_guide.md",
+      "size_bytes": 2217,
+      "sha256": "8222048a387ee4bb7ca72f1df99cdedb39dce14027912b90d03001667bb76367"
+    },
+    {
+      "path": "specs/layer1_axes/restructured_axes_v1_1/risk_appetite_axis/risk_appetite_axis_engineering_rules.md",
+      "size_bytes": 1223,
+      "sha256": "4ec8c34a5be0091508ae70bbfd72cfe711b4a7b0cf4fcced41d36e69464dbd94"
+    },
+    {
+      "path": "specs/layer1_axes/restructured_axes_v1_1/risk_appetite_axis/risk_appetite_axis_indicator_spec.yaml",
+      "size_bytes": 5347,
+      "sha256": "0eb8ce0a285305b410403e4c6747c928817e7e222f52a036a1d65384f836c6a9"
+    },
+    {
+      "path": "specs/layer1_axes/restructured_axes_v1_1/risk_appetite_axis/risk_appetite_axis_user_guide.md",
+      "size_bytes": 2331,
+      "sha256": "518ad0d1c404c099131ce6010a1044c279d725e9acb3cc0e75ecc60fe636a40b"
+    },
+    {
+      "path": "specs/layer1_axes/restructured_axes_v1_1/sentiment_axis/sentiment_axis_engineering_rules.md",
+      "size_bytes": 1304,
+      "sha256": "7494308d36b21bd0df20476c34ed41d4ca50350da1f8225dcb631aaaa35bd9be"
+    },
+    {
+      "path": "specs/layer1_axes/restructured_axes_v1_1/sentiment_axis/sentiment_axis_indicator_spec.yaml",
+      "size_bytes": 5817,
+      "sha256": "254f02f2de918fb310f1f6bed108ed13b96c94fab78ad6d928007411da09c0ef"
+    },
+    {
+      "path": "specs/layer1_axes/restructured_axes_v1_1/sentiment_axis/sentiment_axis_user_guide.md",
+      "size_bytes": 2322,
+      "sha256": "60a8a4c43c5fb573ba510e8bf834e354ed365263032f76c9e44df68c9a97645c"
+    },
+    {
+      "path": "specs/layer3_global_industry_chains/layer3_global_industry_chains_v1_2/README.md",
+      "size_bytes": 1559,
+      "sha256": "591da3cbf6db9506486e9c703d95f427c32b5e97bad5b09080da30a6aee7b941"
+    },
+    {
+      "path": "specs/layer3_global_industry_chains/layer3_global_industry_chains_v1_2/layer3_anchor_registry.json",
+      "size_bytes": 101387,
+      "sha256": "86312773961db456c9477e537ff7bc87ed4aa435decf33eaebfcc22bc2150b55"
+    },
+    {
+      "path": "specs/layer3_global_industry_chains/layer3_global_industry_chains_v1_2/layer3_cross_chain_edge_registry.json",
+      "size_bytes": 3231,
+      "sha256": "d7a04559b423ec5916ac01bf79e82f2e00116e5a9acd0cbb92a848cdc41f0421"
+    },
+    {
+      "path": "specs/layer3_global_industry_chains/layer3_global_industry_chains_v1_2/layer3_data_dictionary.md",
+      "size_bytes": 8345,
+      "sha256": "40ee26864c4a01919f924c92c5c756ca8e0ebe799261bb81293f9c6c9fd67fb2"
+    },
+    {
+      "path": "specs/layer3_global_industry_chains/layer3_global_industry_chains_v1_2/layer3_edge_registry.json",
+      "size_bytes": 30929,
+      "sha256": "49737912ca4795f4d9ae4e1f6602e2b7f812442696c2addbec678da5eb402f1a"
+    },
+    {
+      "path": "specs/layer3_global_industry_chains/layer3_global_industry_chains_v1_2/layer3_global_industry_chain_registry.yaml",
+      "size_bytes": 138026,
+      "sha256": "5c896feab49f101d9c445faeca47216cae9146d7589e6279106a2eb2cf173f23"
+    },
+    {
+      "path": "specs/layer3_global_industry_chains/layer3_global_industry_chains_v1_2/layer3_node_registry.json",
+      "size_bytes": 33885,
+      "sha256": "49b8696e673ba399a665f0eece3f4dbf02accf74c1dd1e80230ac297eb4ef47c"
+    },
+    {
+      "path": "specs/layer3_global_industry_chains/layer3_global_industry_chains_v1_2/references/source_registry.md",
+      "size_bytes": 5799,
+      "sha256": "80b4dac894ac60e15ba235d78c612d9ef0cd7ad95e61fef713e2546be5910a36"
+    },
+    {
+      "path": "specs/schema/schema.sql",
+      "size_bytes": 9404,
+      "sha256": "16ca2cd06a1154b5766ef7b45bc97f67849b3d8a15371008193b5f5d983c4a3b"
+    }
+  ]
+}

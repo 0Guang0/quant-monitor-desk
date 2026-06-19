@@ -15,7 +15,9 @@
 - `docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md`
 - `docs/implementation_tasks/GLOBAL_TESTING_POLICY.md`
 - `docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md`
-
+- `specs/contracts/runtime_versions.md`
+- `docs/quality/staged_acceptance_policy.md`
+- `docs/ops/config_secret_policy.md`
 ## 4. 相关代码 / 输出文件
 
 - .env.example
@@ -71,17 +73,13 @@
 - 测试命名建议：`functionName_condition_expectedBehavior`。
 
 ## 11. 验收命令
+本任务为项目骨架/配置/测试基线任务。验收命令：
 
 ```bash
-pytest -q
-ruff check .
-python -m compileall backend scripts
-```
-
-如涉及前端，还必须运行：
-
-```bash
-cd frontend && npm run typecheck
+uv sync --locked
+uv run pytest -q tests/test_project_scaffold.py tests/test_config_templates.py
+uv run ruff check .
+uv run python -m compileall backend scripts tests
 ```
 
 ## 12. 完成标准
@@ -112,3 +110,21 @@ cd frontend && npm run typecheck
 4. 测试命令和结果。
 5. ResourceGuard 是否触发。
 6. 未完成项或需要用户确认的点。
+
+## 15. 审计修复补充要求
+
+必须实现配置治理：
+
+- `.env.example` 只保留空占位，不得出现真实 secret。
+- 明确配置优先级：环境变量 > `.env.local` > YAML > 代码默认值。
+- 空字符串路径变量必须回落默认值，不能变成当前工作目录。
+- 日志和错误输出必须 mask token、password、cookie、authorization、email、手机号。
+- 测试必须覆盖 secret scan、masking、空路径 fallback、配置优先级。
+
+### 用户决策补充：D-01
+
+用户已拍板：Python 默认使用 uv.lock；任务实现与 CI 默认使用 uv sync / uv run；pip-tools 仅备用，不采用 Poetry。
+
+### 用户决策补充：D-03
+
+用户已拍板：Secret 第一版使用 .env.local，只提交 .env.example；.env/.env.local/*.secret/*.key 必须 gitignore；prod 必须做 secret 启动检查和 CI secret scan。

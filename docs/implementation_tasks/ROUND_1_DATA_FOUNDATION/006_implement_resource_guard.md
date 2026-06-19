@@ -15,14 +15,12 @@
 - `docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md`
 - `docs/implementation_tasks/GLOBAL_TESTING_POLICY.md`
 - `docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md`
-
+- `specs/contracts/runtime_versions.md`
+- `docs/quality/staged_acceptance_policy.md`
 ## 4. 相关代码 / 输出文件
 
-- `backend/app/core/resource_guard.py`
+- `backend/core/resource_guard.py`
 - `tests/test_resource_guard.py`
-
-> 详细 TDD 步骤、API 签名、psutil 用法见 `plans/006_resource_guard.plan.md`。
-> 路径与范围以 `DECISIONS.md` 为准（统一 `backend/app/*`，允许 `psutil`）。
 
 ## 5. 现有模式 / 参考
 
@@ -57,11 +55,10 @@
 
 ## 9. 实现步骤
 
-- 读取 `configs/resource_limits.yaml`，按 `default_profile`（默认 eco）加载阈值。
-- 用 `psutil` 读取可用内存、磁盘剩余、进程 RSS、项目目录大小。
-- 实现 eco/normal/batch 三档阈值判定，返回 `OK / WARN / PAUSE / HARD_STOP` 决策。
-- 触发 PAUSE/HARD_STOP 时写 `resource_guard_log` 并输出 `RESOURCE_GUARD_PAUSED`。
-- 先写或补充最小测试 / smoke test，再实现（系统读数 mock，阈值判定用真实值）。
+- `读取 resource_limits.yaml`
+- `实现 eco/normal/batch`
+- 低内存低磁盘触发暂停
+- 先写或补充最小测试 / smoke test，再实现。
 - 运行本任务验收命令。
 - 汇报改动文件、测试结果、未完成项、资源保护状态。
 
@@ -74,17 +71,13 @@
 - 测试命名建议：`functionName_condition_expectedBehavior`。
 
 ## 11. 验收命令
+本任务为后端实现任务。验收命令：
 
 ```bash
-pytest -q
-ruff check .
-python -m compileall backend scripts
-```
-
-如涉及前端，还必须运行：
-
-```bash
-cd frontend && npm run typecheck
+uv sync --locked
+uv run pytest -q
+uv run ruff check .
+uv run python -m compileall backend scripts tests
 ```
 
 ## 12. 完成标准

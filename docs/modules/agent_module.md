@@ -256,3 +256,7 @@ Agent 输出不能直接写 clean table。
 数据质量异常时必须输出 quality_warnings。
 Agent 失败必须写 agent_run_log。
 ```
+
+## 用户决策补充：Agent 来源固定
+
+落实 D-12：Agent 只允许读取固定 source adapter、结构化数据库事实、file_registry 中已登记文档和用户手动导入文本。禁止 Agent 自由联网搜索新闻或临时浏览未知网页。Agent 输出必须绑定 `facts_used_json` / `evidence_ids`，不得把 LLM 生成内容当事实源。

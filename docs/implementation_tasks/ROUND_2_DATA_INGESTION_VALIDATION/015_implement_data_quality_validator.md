@@ -15,10 +15,12 @@
 - `docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md`
 - `docs/implementation_tasks/GLOBAL_TESTING_POLICY.md`
 - `docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md`
-
+- `specs/contracts/runtime_versions.md`
+- `docs/quality/staged_acceptance_policy.md`
+- `docs/ops/idempotency_retry_dlq_policy.md`
 ## 4. 相关代码 / 输出文件
 
-- `backend/app/validators/data_quality.py`
+- `backend/validation/data_quality.py`
 - `tests/test_data_quality_validator.py`
 
 ## 5. 现有模式 / 参考
@@ -70,17 +72,13 @@
 - 测试命名建议：`functionName_condition_expectedBehavior`。
 
 ## 11. 验收命令
+本任务为后端实现任务。验收命令：
 
 ```bash
-pytest -q
-ruff check .
-python -m compileall backend scripts
-```
-
-如涉及前端，还必须运行：
-
-```bash
-cd frontend && npm run typecheck
+uv sync --locked
+uv run pytest -q
+uv run ruff check .
+uv run python -m compileall backend scripts tests
 ```
 
 ## 12. 完成标准
@@ -111,3 +109,12 @@ cd frontend && npm run typecheck
 4. 测试命令和结果。
 5. ResourceGuard 是否触发。
 6. 未完成项或需要用户确认的点。
+
+## 15. 审计修复补充要求
+
+质量规则必须版本冻结：
+
+- 每条 validation rule 必须有 `rule_id`、`rule_version`、`severity`。
+- validation_report 必须记录 rule_version 与输入 fetch/content hash。
+- 人工 override 必须写 `override_reason`、`reviewer`、`reviewed_at`。
+- 不允许 validator 静默修数据；只能标记、隔离或退回。

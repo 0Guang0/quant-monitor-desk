@@ -77,7 +77,7 @@ data/
 |---|---|---|
 | `data/cache/` | 可以 | 7-30 天定期清理 |
 | `data/audit/` | 不直接删除 | 90 天热日志，历史压缩 |
-| `data/raw/` | 谨慎 | 原始数据建议至少保留 1-3 年 |
+| `data/raw/` | 谨慎 | 历史旧建议为 1-3 年；当前 D-05 权威口径为 raw/audit/report/notification 逻辑保留 1 年 |
 | `data/files/announcements/` | 不建议删 | 公告、财报、PDF 长期保留 |
 | `data/parquet/` | 不建议删 | 历史大表归档 |
 | `data/backups/` | 按策略清理 | 保留最近 N 份日备份和周备份 |
@@ -384,8 +384,8 @@ Agent 查询必须限行
 
 | 场景 | 建议限制 |
 |---|---|
-| 前端表格 | 默认 100-500 行分页 |
-| Agent 查询 | 默认最多 200 行，特殊工具最多 2000 行 |
+| 前端表格 | 默认 200 行分页，绝对上限 1000；唯一机器权威为 `specs/contracts/api_security_contract.yaml` |
+| Agent 查询 | 默认最多 200 行，绝对上限 1000；不得设置高于全局绝对上限的特殊工具例外 |
 | Pandas 转换 | 只转换聚合后的小结果 |
 | 分钟线查询 | 必须带 market、date_range 或 instrument_id |
 | 全市场扫描 | 只允许后台任务，不允许前端直接触发 |
@@ -708,3 +708,8 @@ Parquet 管大历史表；
 ```
 
 这份文件可直接作为 `docs/ops_and_performance_v1_2.md` 交给 Claude Code / Codex 实现。
+
+
+## D-05 当前权威留存口径
+
+本文件是历史运维手册保留稿。若本文件出现与 D-05 冲突的旧留存周期，以 `docs/ops/privacy_retention_policy.md` 为准：raw/audit/report/notification 逻辑保留 1 年，并提供手动归档按钮或 CLI。

@@ -15,7 +15,9 @@
 - `docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md`
 - `docs/implementation_tasks/GLOBAL_TESTING_POLICY.md`
 - `docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md`
-
+- `specs/contracts/runtime_versions.md`
+- `docs/quality/staged_acceptance_policy.md`
+- `docs/ops/idempotency_retry_dlq_policy.md`
 ## 4. 相关代码 / 输出文件
 
 - `backend/sync/orchestrator.py`
@@ -71,17 +73,13 @@
 - 测试命名建议：`functionName_condition_expectedBehavior`。
 
 ## 11. 验收命令
+本任务为后端实现任务。验收命令：
 
 ```bash
-pytest -q
-ruff check .
-python -m compileall backend scripts
-```
-
-如涉及前端，还必须运行：
-
-```bash
-cd frontend && npm run typecheck
+uv sync --locked
+uv run pytest -q
+uv run ruff check .
+uv run python -m compileall backend scripts tests
 ```
 
 ## 12. 完成标准
@@ -112,3 +110,13 @@ cd frontend && npm run typecheck
 4. 测试命令和结果。
 5. ResourceGuard 是否触发。
 6. 未完成项或需要用户确认的点。
+
+## 15. 审计修复补充要求
+
+DataSyncOrchestrator 必须实现：
+
+- idempotency_key，避免重复同步造成重复写入。
+- NETWORK_ERROR 指数退避；RATE_LIMITED cooldown；AUTH_FAILED/SCHEMA_DRIFT 进入人工复核。
+- dead letter / manual_review_queue。
+- 批任务必须支持 item-level 部分成功，不得用一个总状态覆盖全部。
+- 所有 retry、skip、partial success 必须写 audit log。

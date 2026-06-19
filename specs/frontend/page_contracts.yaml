@@ -103,3 +103,13 @@ must_not_hardcode:
   - report_section_count
   - alert_type_count
   - backtest_scenario_count
+
+user_decision_D08:
+  status: confirmed
+  rule: frontend page layout and interaction must be confirmed by user before implementation
+  page_layout_is_not_fixed: true
+  current_layout_is_placeholder: true
+  implementation_must_prompt_user_before_final_ui: true
+
+# user_decision_tag_D-08
+# D-08: 前端 UI 正式实现前必须提醒用户确认信息架构、交互和视觉，不得写死当前占位布局。

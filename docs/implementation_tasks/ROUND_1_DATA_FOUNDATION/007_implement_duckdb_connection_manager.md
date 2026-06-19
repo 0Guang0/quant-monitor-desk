@@ -14,15 +14,13 @@
 - `docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md`
 - `docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md`
 - `docs/implementation_tasks/GLOBAL_TESTING_POLICY.md`
-- `docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md`
-
+- `specs/contracts/runtime_versions.md`
+- `docs/quality/staged_acceptance_policy.md`
+- `docs/ops/lock_and_concurrency_policy.md`
 ## 4. 相关代码 / 输出文件
 
-- `backend/app/db/connection.py`
+- `backend/db/connection.py`
 - `tests/test_duckdb_connection.py`
-
-> 详细 TDD 步骤、API 签名、单写多读锁策略见 `plans/007_connection.plan.md`。
-> 路径与范围以 `DECISIONS.md` 为准（统一 `backend/app/*`，允许 `duckdb`）。
 
 ## 5. 现有模式 / 参考
 
@@ -57,10 +55,9 @@
 
 ## 9. 实现步骤
 
-- 提供唯一可写连接工厂 + 多个只读连接工厂（read_only=True）。
-- 按 `resource_limits.yaml` 当前 profile 设置 `memory_limit`、`threads`、`temp_directory`。
-- 用本地文件锁 `quant_monitor.write.lock` 保证单写边界，禁止多进程同时持写连接。
-- 锁超时不自动删除，必须先检查 pid 是否存活（见 `DECISIONS.md` / write_manager.md）。
+- 设置 DuckDB memory_limit
+- 设置 threads
+- 禁止多进程写入
 - 先写或补充最小测试 / smoke test，再实现。
 - 运行本任务验收命令。
 - 汇报改动文件、测试结果、未完成项、资源保护状态。
@@ -74,17 +71,13 @@
 - 测试命名建议：`functionName_condition_expectedBehavior`。
 
 ## 11. 验收命令
+本任务为后端实现任务。验收命令：
 
 ```bash
-pytest -q
-ruff check .
-python -m compileall backend scripts
-```
-
-如涉及前端，还必须运行：
-
-```bash
-cd frontend && npm run typecheck
+uv sync --locked
+uv run pytest -q
+uv run ruff check .
+uv run python -m compileall backend scripts tests
 ```
 
 ## 12. 完成标准
@@ -115,3 +108,12 @@ cd frontend && npm run typecheck
 4. 测试命令和结果。
 5. ResourceGuard 是否触发。
 6. 未完成项或需要用户确认的点。
+
+## 15. 审计修复补充要求
+
+DuckDB 连接管理必须实现：
+
+- 跨进程单写文件锁。
+- reader 使用 `read_only=True`，并与 writer 一样应用 `memory_limit/threads/temp_directory`。
+- 写任务 STARTED/COMMITTED/FAILED/ABANDONED_NEEDS_REVIEW 审计状态。
+- 启动时检测长时间停留 STARTED 的写任务，不自动重放，进入人工复核。

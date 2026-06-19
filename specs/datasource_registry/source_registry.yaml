@@ -1,126 +1,131 @@
-# Source registry — Batch A seed (011)
-# Roles: Primary | Validation | FallbackPolicy (strategy name, not source_id)
-# Banned role aliases: Shadow, Emergency (loader must reject)
-
-version: "1"
-updated_at: "2026-06-17T00:00:00Z"
-
+version: source_registry_v1
+source_role_model: Primary / Validation / FallbackPolicy
+updated_for: implementation_docs_audit_remediation_v1
+rules:
+  user_decision_D11: qmt_xtdata_default_disabled_until_user_confirms_local_authorization
+  legacy_roles_forbidden:
+  - Shadow
+  - Emergency
+  - shadow_source
+  - emergency_source
+  source_id_must_match_adapter_source_id: true
+  validation_source_must_be_enabled: true
+  validation_source_must_support_domain: true
+  unknown_license_cannot_be_primary: true
+  yaml_type_strict: true
+  domain_roles_must_respect_enabled_by_default: true
+  disabled_domain_must_return: DISABLED_SOURCE
 sources:
-  qmt_xtdata:
-    source_name: "QMT xtdata"
-    source_type: local_sdk
-    allowed_domains:
-      - market_bar_1m
-      - market_bar_1d
-    trust_level: 1
-    license_type: local_authorized
-    official_api: false
-    is_enabled: true
-    default_priority: 10
-    rate_limit_policy: local_client
-    auth_required: true
-    requires_local_client: true
-    expected_frequency: realtime
-    expected_lag: minutes
-    timezone: Asia/Shanghai
-    fallback_allowed: false
-    validation_only: false
-    notes: "Core A-share realtime; requires local QMT client."
-
-  baostock:
-    source_name: "baostock"
-    source_type: official_api
-    allowed_domains:
-      - market_bar_1d
-      - fundamental
-    trust_level: 2
-    license_type: official_free
-    official_api: true
-    is_enabled: true
-    default_priority: 20
-    rate_limit_policy: conservative
-    auth_required: false
-    requires_local_client: false
-    expected_frequency: daily
-    expected_lag: days
-    timezone: Asia/Shanghai
-    fallback_allowed: true
-    validation_only: false
-
-  akshare:
-    source_name: "AkShare"
-    source_type: vendor_api
-    allowed_domains:
-      - market_bar_1d
-      - capital_flow
-    trust_level: 3
-    license_type: public_web
-    official_api: false
-    is_enabled: true
-    default_priority: 40
-    rate_limit_policy: moderate
-    auth_required: false
-    requires_local_client: false
-    expected_frequency: daily
-    expected_lag: hours
-    timezone: Asia/Shanghai
-    fallback_allowed: true
-    validation_only: false
-
-  cninfo:
-    source_name: "CNINFO"
-    source_type: official_api
-    allowed_domains:
-      - announcement
-    trust_level: 1
-    license_type: official_free
-    official_api: true
-    is_enabled: true
-    default_priority: 10
-    rate_limit_policy: conservative
-    auth_required: false
-    requires_local_client: false
-    expected_frequency: event_driven
-    expected_lag: hours
-    timezone: Asia/Shanghai
-    fallback_allowed: false
-    validation_only: false
-
-  yahoo_finance:
-    source_name: "Yahoo Finance"
-    source_type: vendor_api
-    allowed_domains:
-      - market_bar_1d
-    trust_level: 4
-    license_type: public_web
-    official_api: false
-    is_enabled: true
-    default_priority: 50
-    rate_limit_policy: moderate
-    auth_required: false
-    requires_local_client: false
-    expected_frequency: daily
-    expected_lag: hours
-    timezone: UTC
-    fallback_allowed: true
-    validation_only: true
-    notes: "Research/auxiliary only in Phase 1; validation_only for production paths."
-
-# Per data_domain: which source fills Primary vs Validation; FallbackPolicy when Primary fails
+- source_id: qmt_xtdata
+  source_name: QMT xtdata / miniQMT
+  source_type: broker_terminal
+  license_type: user_local_authorized
+  enabled_by_default: false
+  trust_level: 90
+  allowed_domains:
+  - cn_equity_realtime
+  - cn_equity_minute_bar
+  - cn_equity_daily_bar
+  default_role: Primary
+  validation_only: false
+  rate_limit_policy: local_terminal
+  requires_user_setup: true
+  notes: 正式启用前必须由用户确认本机 QMT 授权和账号环境。
+- source_id: baostock
+  source_name: baostock
+  source_type: public_market_data
+  license_type: public_free
+  enabled_by_default: true
+  trust_level: 70
+  allowed_domains:
+  - cn_equity_daily_bar
+  - cn_equity_basic_financial
+  default_role: Primary
+  validation_only: false
+  rate_limit_policy: polite_daily_batch
+  requires_user_setup: false
+  notes: 适合作为 A 股历史日线与基础财务第一阶段主源之一。
+- source_id: akshare
+  source_name: AkShare
+  source_type: aggregator
+  license_type: public_free_aggregator
+  enabled_by_default: true
+  trust_level: 60
+  allowed_domains:
+  - cn_equity_daily_bar
+  - cn_index
+  - sector_board
+  - macro_supplementary
+  default_role: Validation
+  validation_only: true
+  rate_limit_policy: polite_batch_with_cache
+  requires_user_setup: false
+  notes: 聚合源只能带 source_used 与 quality_flags；不得作为唯一事实源。
+- source_id: cninfo
+  source_name: 巨潮资讯 CNINFO
+  source_type: filing_announcement
+  license_type: public_official
+  enabled_by_default: true
+  trust_level: 85
+  allowed_domains:
+  - cn_filings
+  - cn_announcements
+  - cn_pdf_reports
+  default_role: Primary
+  validation_only: false
+  rate_limit_policy: polite_document_fetch
+  requires_user_setup: false
+  notes: 公告和财报 PDF 原文优先来源。
+- source_id: yahoo_finance
+  source_name: Yahoo Finance / yfinance-compatible access
+  source_type: public_market_data
+  license_type: public_terms_sensitive
+  enabled_by_default: false
+  trust_level: 55
+  allowed_domains:
+  - us_equity_daily_bar
+  - etf_daily_bar
+  - global_asset_reference
+  default_role: Validation
+  validation_only: true
+  rate_limit_policy: cache_first_low_frequency
+  requires_user_setup: false
+  notes: 仅作研究/补充验证；生产不可作为唯一主源。
 domain_roles:
-  market_bar_1d:
+  cn_equity_daily_bar:
     primary: baostock
-    validation: qmt_xtdata
-    fallback_policy: retry_same_source
-  market_bar_1m:
+    validation:
+    - akshare
+    fallback_policy:
+    - qmt_xtdata
+    requires_source_enabled: true
+    domain_enabled_by_default: true
+    disabled_until_configured: false
+    fallback_requires_source_enabled: true
+    disabled_fallback_behavior: skip_qmt_until_user_authorizes_local_terminal
+  cn_equity_minute_bar:
     primary: qmt_xtdata
-    validation: null
-    fallback_policy: mark_missing
-  announcement:
+    validation: []
+    fallback_policy: []
+    requires_source_enabled: true
+    domain_enabled_by_default: false
+    disabled_until_configured: true
+    expected_error_before_user_setup: DISABLED_SOURCE
+  cn_filings:
     primary: cninfo
-    validation: null
-    fallback_policy: manual_review_required
-  capital_flow:
-    primary: akshare
-    validation: null
-    fallback_policy: use_last_good_cache
+    validation: []
+    fallback_policy: []
+    requires_source_enabled: true
+    domain_enabled_by_default: true
+    disabled_until_configured: false
+  us_equity_daily_bar:
+    primary: yahoo_finance
+    validation: []
+    fallback_policy: []
+    requires_source_enabled: true
+    domain_enabled_by_default: false
+    disabled_until_configured: true
+    expected_error_before_user_setup: DISABLED_SOURCE
+tests:
+- test_disabledPrimaryDomain_returnsDisabledSource
+- test_fallbackDisabledByDefault_isSkippedUntilConfigured

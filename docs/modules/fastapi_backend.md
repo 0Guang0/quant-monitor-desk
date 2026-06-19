@@ -118,7 +118,7 @@ POST /api/admin/jobs/{job_type}/request
     "quality_flags": [],
     "source_used": "duckdb_snapshot",
     "page": 1,
-    "page_size": 100,
+    "page_size": 200,
     "total": 1000
   },
   "errors": []
@@ -152,8 +152,8 @@ POST /api/admin/jobs/{job_type}/request
 
 | 场景 | 限制 |
 |---|---:|
-| 普通表格 | `page_size=100`，最大 500。 |
-| Agent 查询 | 默认 200 行，最大 2000。 |
+| 普通表格 | `page_size=200`，绝对最大 1000；以 `specs/contracts/api_security_contract.yaml` 为权威。 |
+| Agent 查询 | 默认 200 行，最大 1000；不得绕过 `api_security_contract.yaml`。 |
 | 前端图谱 | 最大 200 nodes / 500 edges。 |
 | 历史曲线 | 默认最近 1 年，必须传 date_range 才能查更长。 |
 | 原始明细 | 必须指定 market / instrument_id / date_range。 |
@@ -372,3 +372,20 @@ frontend TypeScript type
 8. 生成 OpenAPI contract
 9. 编写 API tests
 ```
+
+## 用户决策补充：API 鉴权模式
+
+落实 D-02：第一版采用本地 Bearer token 模式，不做完整 OAuth。
+
+```text
+dev：允许关闭 token，但只能绑定 127.0.0.1 / localhost。
+prod：必须启用 token；没有 QMD_API_TOKEN 直接启动失败。
+prod：禁止 0.0.0.0 且关闭鉴权。
+```
+
+
+## API 安全与分页权威口径
+
+`specs/contracts/api_security_contract.yaml` 是唯一机器契约。第一版采用本地 Bearer token：dev 可关闭但只能绑定 loopback；prod 必须启用 `QMD_API_TOKEN`，且单个本地 token 在第一版视为 `admin`。`viewer` 与 `agent_readonly` 角色保留为第二阶段能力，不得在第一版伪实现半套 RBAC。
+
+分页统一口径：默认 `page_size=200`，绝对上限 `1000`，Agent tool 最大行数 `1000`，full-history 查询必须 admin。实现必须补 `test_pageSizeContract_matchesDocs`。

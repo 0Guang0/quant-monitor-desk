@@ -98,3 +98,7 @@ CREATE TABLE IF NOT EXISTS file_registry (
 ```
 
 ---
+
+## 用户决策补充：raw 文件留存
+
+落实 D-05：第一版 raw 文件默认保留 1 年。清理前必须提供手动归档按钮或 CLI，且必须生成 archive manifest 与 hash 校验结果。

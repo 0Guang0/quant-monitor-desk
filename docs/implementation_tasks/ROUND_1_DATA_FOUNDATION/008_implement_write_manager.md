@@ -15,15 +15,12 @@
 - `docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md`
 - `docs/implementation_tasks/GLOBAL_TESTING_POLICY.md`
 - `docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md`
-
+- `specs/contracts/runtime_versions.md`
+- `docs/quality/staged_acceptance_policy.md`
 ## 4. 相关代码 / 输出文件
 
-- `backend/app/db/write_manager.py`
-- `backend/app/db/validation_gate.py`（stub）
+- `backend/db/write_manager.py`
 - `tests/test_write_manager.py`
-
-> 详细 TDD 步骤、API 签名、stub ValidationGate 口径见 `plans/008_write_manager.plan.md`。
-> 路径与范围以 `DECISIONS.md` 为准：Round 1 = 最小实现 + stub ValidationGate。
 
 ## 5. 现有模式 / 参考
 
@@ -58,11 +55,10 @@
 
 ## 9. 实现步骤
 
-- Round 1 只实现 `append_only` 与 `upsert_by_pk` 两种 write_mode；其余模式留 Round 2+。
-- 写入前过 stub ValidationGate（按 `validation_report_id` 前缀放行/拒绝，见 DECISIONS.md §7）。
-- 只允许 WriteManager 写 clean，全程在事务内执行：staging→merge→audit→commit。
-- 失败 rollback，保留 staging，写 `write_audit_log(status=FAILED)` 与 error 信息。
-- 先写或补充最小测试 / smoke test，再实现（覆盖成功写、stub 拒绝、rollback 三类场景）。
+- 只允许 WriteManager 写 clean
+- 失败 rollback
+- 写 audit log
+- 先写或补充最小测试 / smoke test，再实现。
 - 运行本任务验收命令。
 - 汇报改动文件、测试结果、未完成项、资源保护状态。
 
@@ -75,17 +71,13 @@
 - 测试命名建议：`functionName_condition_expectedBehavior`。
 
 ## 11. 验收命令
+本任务为后端实现任务。验收命令：
 
 ```bash
-pytest -q
-ruff check .
-python -m compileall backend scripts
-```
-
-如涉及前端，还必须运行：
-
-```bash
-cd frontend && npm run typecheck
+uv sync --locked
+uv run pytest -q
+uv run ruff check .
+uv run python -m compileall backend scripts tests
 ```
 
 ## 12. 完成标准

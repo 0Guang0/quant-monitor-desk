@@ -6,14 +6,12 @@
 # 16. 项目目录结构
 
 ```text
-quant-monitor-desk/
+quant-monitor/
   backend/
     app/
       api/
-      core/              # ResourceGuard 等
       datasources/
       db/
-      storage/           # RawStore、FileRegistry
       etl/
       validators/
       layer1_axes/
@@ -24,9 +22,15 @@ quant-monitor-desk/
       agents/
       notifications/
 
-  scripts/               # 仓库根级 CLI（init_db.py 等）
-  tests/
-    smoke/               # Round 1 foundation smoke
+    scripts/
+      init_db.py
+      sync_daily.py
+      sync_intraday.py
+      sync_layer1_axes.py
+      sync_layer2_sensors.py
+      build_industry_graph.py
+      calc_features.py
+      gen_daily_report.py
 
   frontend/
     src/

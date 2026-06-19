@@ -43,3 +43,18 @@ forbidden_action_terms:
 write_boundary:
   direct_clean_table_write: false
   staging_then_validator_then_writemanager: true
+
+user_decision_D12:
+  status: confirmed
+  allowed_text_sources:
+    - fixed_source_adapter
+    - user_manual_import
+    - registered_local_file
+  forbidden_sources:
+    - agent_free_web_search
+    - unknown_webpage_browsing
+    - llm_generated_fact_override
+  requires_evidence_ids: true
+
+# user_decision_tag_D-12
+# D-12: Agent 只允许固定 source adapter、用户手动导入文本和已登记本地文件；禁止自由联网搜索。

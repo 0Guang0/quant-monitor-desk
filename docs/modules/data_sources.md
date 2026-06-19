@@ -228,13 +228,11 @@ CREATE TABLE IF NOT EXISTS source_registry (
 
 新版统一使用三角色，不再使用旧的 旧三源命名。
 
-> **Shadow / Emergency 是历史名词，仅用于理解旧文档。** 它们在 YAML、运行时配置、测试与实现代码中 **一律禁止**；`Validation` 对应旧 Shadow 的语义，`FallbackPolicy` 对应旧 Emergency 的语义，但不得使用旧名称。
-
-| 新角色 | 历史名词（禁止） | 含义 |
+| 新角色 | 含义 | 历史说明 |
 |---|---|---|
-| `Primary` | — | 正常情况下进入 clean 表的主源 |
-| `Validation` | Shadow | 用于校验主源，不默认接管 |
-| `FallbackPolicy` | Emergency | 不是第三外部源，而是失败时如何处理 |
+| `Primary` | 正常情况下进入 clean 表的主源 | 旧文档中的 Primary 仅作为历史迁移参考 |
+| `Validation` | 用于校验主源，不默认接管 | 旧数据源角色名 `Shadow` 不得作为 source role / default role / fallback role；Layer 1 `SHADOW` 诊断标签不是数据源角色，见本页“旧角色名强约束”。 |
+| `FallbackPolicy` | 不是第三外部源，而是失败时如何处理 | 旧数据源角色名 `Emergency` 不得作为 source role / default role / fallback role。 |
 
 FallbackPolicy 可以是：
 
@@ -281,8 +279,6 @@ layer5_security_evidence 个股/合约证据
 ---
 
 ## 5.5 Adapter 接口协议
-
-> **实现口径（Batch A）：** 运行时契约以 `specs/contracts/data_adapter_contract.md` 与 MASTER §6 为准，使用 **Pydantic v2**。本节 dataclass 示例仅供阅读，Execute 不得照抄。
 
 ### 5.5.1 Python 抽象接口
 
@@ -489,3 +485,57 @@ data_adapter_contract.md
 data_sync_orchestrator.md
 data_validation_and_conflict.md
 ```
+
+## 用户决策补充：QMT 默认禁用
+
+落实 D-11：第一版 `qmt_xtdata` 默认禁用。只有用户确认本机 QMT/miniQMT 环境、账号授权、路径配置后，才允许启用 QMT adapter。实现角色不得默认连接本机交易/行情终端。
+
+
+## 数据源默认启用与 domain gating
+
+`specs/datasource_registry/source_registry.yaml` 是数据源启用状态的机器契约。若某个 domain 的 primary source `enabled_by_default=false`，该 domain 第一版必须标记为 `domain_enabled_by_default=false` 与 `disabled_until_configured=true`，调度器不得尝试抓取，而应返回或记录 `DISABLED_SOURCE`。
+
+D-11 已拍板：QMT 默认禁用，只有用户确认本机授权与账号环境后才可启用。因此 `cn_equity_minute_bar` 默认不可调度；`cn_equity_daily_bar` 可以用 baostock 作为 primary，但 QMT fallback 必须在用户启用后才允许接管。Yahoo 也默认禁用，`us_equity_daily_bar` 第一版应标记为 disabled until configured。
+
+必须补测试：`test_disabledPrimaryDomain_returnsDisabledSource`、`test_fallbackDisabledByDefault_isSkippedUntilConfigured`。
+
+
+## 旧角色名强约束
+
+`Shadow`、`Emergency`、`shadow_source`、`emergency_source` 是旧**数据源角色**口径，不得恢复为运行时 source role。禁止范围限定为数据源角色语义，而不是禁止所有文本或诊断标签字面量。
+
+禁止进入或恢复的位置：
+
+```text
+source_registry 的 source_role / default_role / domain role
+API response 中表示数据源角色的字段
+数据库列名或枚举值中的数据源角色
+前端展示字段中的数据源角色
+Python 代码、测试期望中的数据源角色枚举
+运行时 YAML 配置中的数据源角色字段
+```
+
+允许的窄例外：
+
+```text
+specs/datasource_registry/source_registry.yaml 的 legacy_roles_forbidden 禁用清单
+Layer 1 indicator specs 中明确带诊断/旁证语义的 *.SHADOW.* indicator 条目
+Layer 1 indicator specs 中 shadow_diagnostics 下的 *.SHADOW.* 诊断指标命名
+Layer 1 indicator specs / common rules 的 schema_note 或说明文字
+历史迁移说明文档
+```
+
+Layer 1 的 `SHADOW` 只能表示“诊断/旁证信号”，不得表示数据源角色。所有 `*.SHADOW.*` 诊断指标必须满足：
+
+```text
+允许用于明确带诊断/旁证语义的 Layer 1 indicator 条目、shadow_diagnostics 分组、schema_note 或说明文字
+不得作为 source role、default role、fallback role、API role、DB role、frontend source-role 或 source_registry role
+不得进入 clean 主值接管路径
+必须具备 no_main_score_input / no_takeover / validation_only 等约束语义
+若不在 shadow_diagnostics 分组下，必须显式写明 diagnostic_only / evidence_only / does_not_replace_main_indicator 或同等约束
+必须保留 source_used、quality_flags 或 audit 线索，以便解释而非接管
+```
+
+实现角色发现旧数据源角色名被恢复为运行时配置、代码或测试中的 source role 时，必须视为 P0 级口径回退并停止执行。
+
+必须补测试：`test_legacySourceRoles_forbiddenAsSourceRoles`、`test_layer1ShadowDiagnostics_areExplicitlyAllowedButNoTakeover`、`test_shadowDiagnosticLabels_doNotEnterSourceRegistryRoles`、`test_shadowDiagnosticsOutsideGroup_requireExplicitDiagnosticOnly`。

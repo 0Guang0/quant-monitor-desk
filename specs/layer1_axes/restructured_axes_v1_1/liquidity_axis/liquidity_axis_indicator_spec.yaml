@@ -78,19 +78,20 @@ modules:
       display_name_cn: 右尾放量拥堵解释灯
       layer: Shadow
       dest_tag: SHADOW
-      role: no_main_score_input; no_veto_trigger; no_takeover
+      role: validation_only; no_main_score_input; no_veto_trigger; no_takeover
       plain_language_summary: 成交量尖刺旁证，仅用于诊断，不回写主分值。
     - indicator_id: LIQ.SHADOW.ROLL_SPREAD
       display_name_cn: Roll 隐含点差旁证
       layer: Shadow
       dest_tag: SHADOW
       status: research_or_validation_only
-      role: no_takeover
+      role: validation_only; no_main_score_input; no_takeover
       plain_language_summary: Roll spread 旁证，噪声较高，仅用于研究和对账。
     - indicator_id: LIQ.SHADOW.ZERO_RETURN_LOT
       display_name_cn: 零收益/陈旧报价数据卫生
       layer: Shadow
       dest_tag: SHADOW
+      role: validation_only; no_main_score_input; no_takeover
       plain_language_summary: 零收益批次诊断，用于识别价格/成交数据质量问题。
     - indicator_id: LIQ.SHADOW.CROSS_SOURCE_DIV
       display_name_cn: 源间 OHLCV 发散统计
@@ -100,7 +101,7 @@ modules:
       - price_diff_bps
       - hl_diff_bps
       - volume_diff_pct
-      role: divergence_alert_only
+      role: validation_only; no_main_score_input; no_takeover; divergence_alert_only
       plain_language_summary: 跨源分歧诊断，用于发现行情源之间的口径或质量问题。
   layer2_background:
     indicators:
@@ -136,7 +137,7 @@ modules:
       plain_language_summary: 真实市场冲击函数盲区，需要逐笔成交与订单簿数据。
       layer: BlindSpot
 forbidden:
-- Shadow_takeover
+- diagnostic_signal_takeover
 - volume_spike_writeback_to_dryup
 - implied_volatility_as_spread
 - credit_spread_as_liquidity
