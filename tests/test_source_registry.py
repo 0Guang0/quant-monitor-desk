@@ -29,8 +29,9 @@ def test_load_validYaml_parsesPrimaryDomainRoles(registry_yaml_fixture):
 def test_defaultYaml_loadsFromRepoSeed():
     reg = SourceRegistry()
     reg.load()
-    roles = reg.get_domain_roles("market_bar_1d")
+    roles = reg.get_domain_roles("cn_equity_daily_bar")
     assert roles.primary_source_id == "baostock"
+    assert roles.validation_source_id == "akshare"
     assert isinstance(roles, DomainRoleBinding)
 
 

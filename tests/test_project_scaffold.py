@@ -31,8 +31,9 @@ def test_scaffoldDirectory_exists_shouldBePresent(relative_dir: str) -> None:
 
 def test_migrationMap_exists_shouldGuideNavigation() -> None:
     content = (PROJECT_ROOT / "MIGRATION_MAP.md").read_text(encoding="utf-8")
-    assert "Five-layer model" in content
-    assert "docs/implementation_tasks/" in content
+    assert "五层模型" in content
+    assert "docs/architecture/" in content or "docs/modules/" in content
+    assert "MANIFEST.json" in content
 
 
 def test_initDb_createsDuckDbDirectory(tmp_path, monkeypatch) -> None:
