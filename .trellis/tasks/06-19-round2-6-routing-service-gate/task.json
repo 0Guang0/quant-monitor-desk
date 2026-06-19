@@ -19,7 +19,7 @@
   "pr_url": null,
   "subtasks": [],
   "children": [],
-  "parent": "06-19-round2-6-contract-gate",
+  "parent": null,
   "relatedFiles": [
     ".trellis/tasks/06-19-round2-6-contract-gate/",
     "backend/app/datasources/",
