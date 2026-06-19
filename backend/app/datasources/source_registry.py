@@ -246,14 +246,19 @@ def _normalize_fallback_policy(roles: dict, data_domain: str) -> str:
         )
     if isinstance(raw, list):
         if not raw:
-            if roles.get("disabled_until_configured") or roles.get("domain_enabled_by_default") is False:
+            disabled = roles.get("disabled_until_configured")
+            domain_off = roles.get("domain_enabled_by_default") is False
+            if disabled or domain_off:
                 return "skip_until_next_publish"
             return "mark_missing"
-        if roles.get("disabled_fallback_behavior") or roles.get("fallback_requires_source_enabled"):
+        if roles.get("disabled_fallback_behavior") or roles.get(
+            "fallback_requires_source_enabled"
+        ):
             return "skip_until_next_publish"
         return "use_validation_source_with_flag"
     raise InvalidRegistryError(
-        f"domain_roles.{data_domain}.fallback_policy must be string or list, got {type(raw).__name__}"
+        f"domain_roles.{data_domain}.fallback_policy must be string or list, "
+        f"got {type(raw).__name__}"
     )
 
 
