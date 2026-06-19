@@ -1,0 +1,33 @@
+version: source_capability_contract_v1
+status: draft_round2_6
+owner: data_sources
+purpose: "Define machine-checkable source/domain/operation capability declarations before adapter fetch."
+required_top_level_keys: [version, sources, validation]
+source_rules:
+  - source_id must exist in specs/datasource_registry/source_registry.yaml unless marked proposed_disabled_source
+  - every domain listed under source_registry.allowed_domains must be declared under source_capabilities.yaml
+  - adapter.supported_domains requires Round2.6 domain reconciliation against declared source capabilities
+  - every operation must declare frequency, fields or output, and auth requirements
+  - qmt_xtdata and qmt_xqshare capabilities must remain enabled_by_default=false until user authorization is recorded
+  - no operation may imply order placement, auto-login, captcha handling, or account control
+fetch_gate:
+  required_before_fetch:
+    - source registry loaded
+    - capability registry loaded
+    - SourceRoutePlan generated
+    - ResourceGuard checked
+    - selected operation declared and enabled
+current_gap:
+  description: "Round2 adapter supported_domains include legacy or abstract names while source_registry uses concrete registry domains. Phase A records the mismatch only; implementation must close it before production enforcement."
+  phase_a_action: documented_only
+  future_required_action: "Align adapter supported_domains to source_registry domains or add a tested compatibility mapping layer."
+
+failure_modes:
+  UNKNOWN_CAPABILITY: "Reject before adapter construction."
+  DOMAIN_NOT_DECLARED: "Reject before route planning."
+  OPERATION_DISABLED: "Return DISABLED_SOURCE or NO_AVAILABLE_SOURCE with reason."
+  CAPABILITY_SOURCE_MISMATCH: "Treat as contract failure; do not fetch."
+required_tests:
+  - tests/test_source_capabilities.py::test_everyAllowedDomain_hasCapabilityDeclaration
+  - tests/test_source_capabilities.py::test_adapterSupportedDomains_reconciledToCapabilityRegistryOrCompatibilityMap
+  - tests/test_source_capabilities.py::test_unknownCapability_rejectedBeforeFetch

@@ -1,0 +1,4 @@
+=== 8.2 RED ===
+exit code: 4
+ERROR: not found test_adapterSupportedDomains_reconciledToCapabilityRegistryOrCompatibilityMap
+collected 0 items

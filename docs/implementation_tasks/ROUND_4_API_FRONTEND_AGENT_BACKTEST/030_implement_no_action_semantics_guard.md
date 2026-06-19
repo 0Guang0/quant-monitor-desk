@@ -12,15 +12,21 @@
 
 - `docs/modules/agent_module.md`
 - `docs/modules/notification_and_reports.md`
+- `docs/modules/review_sandbox_api.md`
+- `specs/contracts/review_sandbox_contract.yaml`
+- `specs/contracts/reference_adoption_guardrails.yaml`
 - `docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md`
 - `docs/implementation_tasks/GLOBAL_TESTING_POLICY.md`
 - `docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md`
 - `specs/contracts/runtime_versions.md`
 - `docs/quality/staged_acceptance_policy.md`
+
 ## 4. 相关代码 / 输出文件
 
 - `backend/core/no_action_guard.py`
 - `tests/test_no_action_semantics_guard.py`
+- `tests/test_reference_adoption_guardrails.py`
+- `tests/test_review_sandbox_api.py`
 
 ## 5. 现有模式 / 参考
 
@@ -55,9 +61,11 @@
 
 ## 9. 实现步骤
 
-- 拦截买卖加减仓等动作语义
-- `允许观察/关注/数据风险`
-- `覆盖中文/英文关键词`
+- 拦截买卖加减仓等动作语义。
+- 允许“观察/关注/数据风险”等非动作表达。
+- 覆盖中文/英文关键词。
+- 加入参考项目采纳红线：真实交易 API、自动登录、silent fallback、任意执行用户策略代码均为 P0。
+- Review Sandbox 若启用，必须先执行静态扫描并复用 no-action guard。
 - 先写或补充最小测试 / smoke test，再实现。
 - 运行本任务验收命令。
 - 汇报改动文件、测试结果、未完成项、资源保护状态。
@@ -71,11 +79,12 @@
 - 测试命名建议：`functionName_condition_expectedBehavior`。
 
 ## 11. 验收命令
+
 本任务涉及 API / Agent / 通知 / 回测。验收命令：
 
 ```bash
 uv sync --locked
-uv run pytest -q tests/test_api_routes.py tests/test_agent_tools.py tests/test_notifications.py tests/test_backtest_review.py tests/test_no_action_semantics_guard.py
+uv run pytest -q tests/test_api_routes.py tests/test_agent_tools.py tests/test_notifications.py tests/test_backtest_review.py tests/test_no_action_semantics_guard.py tests/test_reference_adoption_guardrails.py tests/test_review_sandbox_api.py
 uv run ruff check .
 uv run python -m compileall backend scripts tests
 cd frontend && npm ci && npm audit --audit-level=high && npm run typecheck && npm run build
@@ -98,6 +107,7 @@ cd frontend && npm ci && npm audit --audit-level=high && npm run typecheck && np
 - Agent 能自由 SQL、自由联网或直接写库。
 - 大查询未经过 ResourceGuard。
 - 测试只验证方法调用，不验证业务结果。
+- 参考项目中的 order API、自动登录、silent fallback 或任意用户代码执行被直接搬入本项目。
 
 ## 14. 输出要求
 

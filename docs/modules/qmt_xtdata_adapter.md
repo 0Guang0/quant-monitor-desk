@@ -41,3 +41,31 @@ subscribe_whole_quote
 ## 用户决策补充：第一版默认禁用
 
 落实 D-11：QMT / miniQMT adapter 第一版必须默认禁用。启用前必须由用户确认本机 QMT 安装路径、账号授权、行情权限与本地运行状态。没有用户确认时，QMT 只能作为 fallback candidate，不得自动尝试连接。
+
+---
+
+## Round2.6 补充：qmt_xqshare 可选远程源边界
+
+`qmt_xqshare` 只作为未来可选远程 QMT 源设计，默认禁用，不阻塞 Round3。启用前必须满足：
+
+```text
+用户明确授权
+XQSHARE_REMOTE_HOST
+XQSHARE_REMOTE_PORT
+platform_source_matrix 允许
+SourceRoutePlan route_status=READY
+```
+
+禁止：
+
+```text
+自动探测远程端口
+自动登录 QMT
+处理验证码
+缺配置时 silent fallback
+把 qmt_xqshare 设为默认启用源
+```
+
+权威文件：`docs/ops/qmt_xqshare_setup.md`、`specs/contracts/platform_source_matrix.yaml`、`specs/contracts/source_route_contract.yaml`、`specs/datasource_registry/source_capabilities.yaml`。
+
+Phase A 不修改 `source_registry.yaml`、不新增 qmt_xqshare adapter 代码、不新增依赖。

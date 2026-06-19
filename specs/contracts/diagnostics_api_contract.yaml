@@ -1,0 +1,26 @@
+version: diagnostics_api_contract_v1
+status: draft_round2_6
+owner: api_frontend
+purpose: "Read-only local diagnostics for source registry, route planning, ResourceGuard, and config paths."
+endpoints:
+  GET /api/diagnostics/source-route:
+    side_effects_allowed: false
+    inputs: [data_domain, operation, market_id]
+    output: SourceRoutePlan
+  POST /api/diagnostics/validate-source-registry:
+    side_effects_allowed: false
+    output: registry_validation_report
+  GET /api/diagnostics/resource-guard:
+    side_effects_allowed: false
+    output: resource_guard_snapshot
+  GET /api/diagnostics/config-paths:
+    side_effects_allowed: false
+    output: redacted_config_path_report
+rules:
+  - diagnostics endpoints are read-only and must not fetch external data
+  - diagnostics must not write clean tables, raw files, or snapshots
+  - qmt/xqshare diagnostics may report missing config but must not probe remote terminals
+  - outputs must use existing API pagination/envelope rules when returning lists
+required_tests:
+  - tests/test_api_security_contract.py::test_diagnosticsEndpointsReadOnly
+  - frontend route-level tests before Round4 UI binding

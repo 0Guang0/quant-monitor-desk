@@ -2,6 +2,15 @@
 
 Navigation hub for **Quant Monitor Desk**. For a compact project map see [`MIGRATION_MAP.md`](../MIGRATION_MAP.md) at the repository root.
 
+## Start here
+
+| File | Topic |
+|------|-------|
+| [START_HERE.md](START_HERE.md) | First-use role router |
+| [OPERATOR_GUIDE.md](OPERATOR_GUIDE.md) | Local ops and safe data sync |
+| [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) | Development and Round task entry |
+| [RESEARCHER_GUIDE.md](RESEARCHER_GUIDE.md) | Layer/review research entry |
+
 > **权威边界**：`MANIFEST.json` 登记的 docs/specs 为 2026-06-19 修复包权威口径。本索引及 `implementation_tasks/**/plans/`、`DECISIONS.md`、Batch 状态文件为**项目实施补充**，不得覆盖 MANIFEST 权威文件。口径差见 [`quality/REPAIR_IMPORT_CODE_GAP_LEDGER.md`](quality/REPAIR_IMPORT_CODE_GAP_LEDGER.md)。
 
 ## Architecture
@@ -14,6 +23,7 @@ Navigation hub for **Quant Monitor Desk**. For a compact project map see [`MIGRA
 | [03_runtime_flows.md](architecture/03_runtime_flows.md) | Runtime orchestration |
 | [04_data_architecture.md](architecture/04_data_architecture.md) | Data layers, stores |
 | [05_module_map.md](architecture/05_module_map.md) | Five-layer framework + modules |
+| [module_boundary_matrix.md](architecture/module_boundary_matrix.md) | Round2.6 import/module boundary matrix |
 | [09_phase_plan.md](architecture/09_phase_plan.md) | Phased delivery |
 | [07_project_directory_structure.md](architecture/07_project_directory_structure.md) | Directory layout |
 | [08_decision_log_index.md](architecture/08_decision_log_index.md) | ADR index |
@@ -36,6 +46,13 @@ See [`docs/modules/`](modules/) — one file per implementation module (data syn
 | [daily_weekly_monthly_checklist.md](ops/daily_weekly_monthly_checklist.md) | Routine checklists |
 | [agent_workflow_boundaries.md](ops/agent_workflow_boundaries.md) | `.cursor`/`.trellis` trust boundaries |
 | [verification_commands.md](ops/verification_commands.md) | Canonical audit/CI commands (Windows) |
+| [data_sync_quick_reference.md](ops/data_sync_quick_reference.md) | Round2.6 safe data sync quick reference |
+| [data_sync_command_matrix.md](ops/data_sync_command_matrix.md) | Round2.6 CLI command matrix |
+| [TROUBLESHOOTING.md](ops/TROUBLESHOOTING.md) | Troubleshooting entry |
+| [ERROR_CODE_GUIDE.md](ops/ERROR_CODE_GUIDE.md) | Error code guide |
+| [incident_playbook.md](ops/incident_playbook.md) | Incident playbook |
+| [privacy_data_flow.md](ops/privacy_data_flow.md) | Local-only/privacy data flow |
+| [qmt_xqshare_setup.md](ops/qmt_xqshare_setup.md) | Optional qmt_xqshare setup boundary |
 | [agent_security_policy.md](ops/agent_security_policy.md) | Agent 安全与 D-12 固定来源 |
 | [config_secret_policy.md](ops/config_secret_policy.md) | Secret 与 `.env.local`（D-03） |
 | [migration_recovery_policy.md](ops/migration_recovery_policy.md) | Migration 备份恢复（D-06） |
@@ -86,5 +103,13 @@ Repository root: [`specs/`](../specs/)
 - [`specs/contracts/api_security_contract.yaml`](../specs/contracts/api_security_contract.yaml) — API 分页权威
 - [`specs/contracts/runtime_versions.md`](../specs/contracts/runtime_versions.md) — `uv.lock` / 验收命令（D-01）
 - [`specs/contracts/`](../specs/contracts/)
+- [`specs/datasource_registry/source_capabilities.yaml`](../specs/datasource_registry/source_capabilities.yaml) — Round2.6 source capability matrix
+- [`specs/contracts/source_capability_contract.yaml`](../specs/contracts/source_capability_contract.yaml)
+- [`specs/contracts/source_route_contract.yaml`](../specs/contracts/source_route_contract.yaml)
+- [`specs/contracts/datasource_service_contract.yaml`](../specs/contracts/datasource_service_contract.yaml)
+- [`specs/contracts/module_boundary_contract.yaml`](../specs/contracts/module_boundary_contract.yaml)
+- [`specs/contracts/backtest_metric_contract.yaml`](../specs/contracts/backtest_metric_contract.yaml)
+- [`specs/contracts/user_input_privacy_contract.yaml`](../specs/contracts/user_input_privacy_contract.yaml)
+- [`specs/contracts/reference_adoption_guardrails.yaml`](../specs/contracts/reference_adoption_guardrails.yaml)
 - [`specs/layer1_axes/`](../specs/layer1_axes/)
 - [`specs/layer3_global_industry_chains/`](../specs/layer3_global_industry_chains/)

@@ -389,3 +389,15 @@ prod：禁止 0.0.0.0 且关闭鉴权。
 `specs/contracts/api_security_contract.yaml` 是唯一机器契约。第一版采用本地 Bearer token：dev 可关闭但只能绑定 loopback；prod 必须启用 `QMD_API_TOKEN`，且单个本地 token 在第一版视为 `admin`。`viewer` 与 `agent_readonly` 角色保留为第二阶段能力，不得在第一版伪实现半套 RBAC。
 
 分页统一口径：默认 `page_size=200`，绝对上限 `1000`，Agent tool 最大行数 `1000`，full-history 查询必须 admin。实现必须补 `test_pageSizeContract_matchesDocs`。
+
+---
+
+# 14. Round2.6 补充：Diagnostics 边界
+
+Diagnostics 只做本地只读状态预览，覆盖 source route、registry validation、ResourceGuard snapshot 与配置路径摘要。它不能启动数据同步，也不能写入项目数据表或文件产物。
+
+权威契约：`specs/contracts/diagnostics_api_contract.yaml`、`specs/contracts/datasource_service_contract.yaml`、`specs/contracts/source_route_contract.yaml`。
+
+错误响应必须包含 `error_code` 与 `docs_anchor`，并链接到 `docs/ops/ERROR_CODE_GUIDE.md`。
+
+必须补测试：`test_diagnosticsEndpointsReadOnly`、`test_apiRoutes_followModuleBoundary`、`test_sourceRoutePreviewDoesNotFetch`。

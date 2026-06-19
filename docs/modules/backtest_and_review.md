@@ -284,3 +284,19 @@ ResourceGuard PAUSE 时不能启动回测
 回测 API 默认分页
 Agent 不能把回测结果渲染为交易建议
 ```
+
+---
+
+# 12. Round2.6 补充：BacktestReviewEngine 生命周期与指标契约
+
+Round4 `029_implement_backtest_and_review.md` 必须先对齐以下新增设计：
+
+- `docs/modules/backtest_review_lifecycle.md`
+- `docs/modules/review_sandbox_api.md`
+- `specs/contracts/backtest_metric_contract.yaml`
+- `specs/contracts/review_sandbox_contract.yaml`
+- `specs/contracts/reference_adoption_guardrails.yaml`
+
+默认回测/复盘只回答“事件后发生了什么、证据链是否支持、数据质量如何”，不得输出买卖动作。JQ2PTrade 的生命周期可作为实现形态参考，但其 order API、策略 exec、持仓/交易语义不得进入默认实现。
+
+策略导入如未来启用，必须先走 Review Sandbox AST 静态扫描，禁止 `order*`、`os/sys/subprocess/network` 与任意外部 import。

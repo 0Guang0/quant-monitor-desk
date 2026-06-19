@@ -454,3 +454,27 @@ Agent 文本触发禁用词时被 NoActionSemanticGuard 拦截
 ```
 
 不得把当前文档里的页面布局写死为最终 UI。
+
+---
+
+# 11. Round2.6 补充：SourceRoute 与 Local-only UI 边界
+
+后续前端实现必须展示数据来源解释，而不是只展示最终数值：
+
+```text
+source_used
+route_status
+quality_flags
+as_of_timestamp
+freshness
+rule_version 或等效 lineage
+error_code / docs_anchor
+```
+
+新增 UI 能力仍是占位能力，不代表最终布局：
+
+- 只读 Diagnostics 入口：展示 source route preview、ResourceGuard snapshot、registry validation。
+- Local-only disclosure：用户导入文本、策略片段、研究笔记时，默认只在本地预览；保存为 evidence 前必须明确确认。
+- Disabled/fallback/source missing 状态不得隐藏，必须显示解释和排障入口。
+
+权威契约：`specs/contracts/source_route_contract.yaml`、`specs/contracts/diagnostics_api_contract.yaml`、`specs/contracts/user_input_privacy_contract.yaml`。

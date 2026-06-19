@@ -1,0 +1,24 @@
+version: dependency_extras_contract_v1
+status: draft_round2_6
+owner: ops_architecture
+purpose: "Keep local-first default install small while allowing optional data/backtest/agent/doc extras."
+extras:
+  default:
+    must_not_include: [qmt, xtquant, xqshare, heavy_gui, browser_automation, external_agent_sdk]
+  dev:
+    may_include: [pytest, ruff, coverage]
+  datasources:
+    may_include: [akshare, baostock]
+    must_not_include_by_default: [xtquant, qmt_terminal_control]
+  backtest:
+    may_include: [numpy, pandas]
+  agent:
+    enabled_by_default: false
+  docs:
+    enabled_by_default: false
+rules:
+  - new heavy dependency requires optional extra and docs justification
+  - qmt/xqshare dependencies must remain optional and disabled by default
+  - default ResourceGuard eco mode must work without optional extras
+required_tests:
+  - tests/test_dependency_extras_contract.py::test_defaultInstallHasNoQmtOrAgentExtras

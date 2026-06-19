@@ -111,7 +111,26 @@ cd frontend && npm ci && npm audit --audit-level=high && npm run typecheck && np
 5. ResourceGuard 是否触发。
 6. 未完成项或需要用户确认的点。
 
-## 15. 审计修复补充要求
+## 15. Round2.6 补充：BacktestReviewEngine 生命周期与指标契约
+
+执行本任务前必须读取：
+
+- `docs/modules/backtest_review_lifecycle.md`
+- `docs/modules/review_sandbox_api.md`
+- `specs/contracts/backtest_metric_contract.yaml`
+- `specs/contracts/review_sandbox_contract.yaml`
+- `specs/contracts/reference_adoption_guardrails.yaml`
+
+新增要求：
+
+- 回测实现必须按 lifecycle 拆分 review context、event set、window compute、metric snapshot、report builder。
+- 默认指标必须符合 `backtest_metric_contract.yaml`，不得新增交易语义指标作为默认输出。
+- 用户策略/片段导入如启用，必须先通过 review sandbox 规则。
+- `pyproject.toml` 只有在 backtest 真实需要新依赖且用户确认 optional extra 策略后才可改。
+
+必须补测试：`test_backtestReviewLifecycle_hasFrozenContext`、`test_requiredMetricSchemaStable`、`test_reportHasNoActionSemantics`。
+
+## 16. 审计修复补充要求
 
 回测必须防前视偏差：
 

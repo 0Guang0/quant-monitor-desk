@@ -1,0 +1,43 @@
+{
+  "id": "06-19-round2-6-routing-service-gate",
+  "name": "06-19-round2-6-routing-service-gate",
+  "title": "Round 2.6 Phase C/D: routing service gate before Round 3",
+  "description": "Implement CapabilityRegistry, SourceRoutePlanner, DataSourceService, service-based sync entry, production-equivalent smoke, cleanup, and Round3 gate update.",
+  "status": "planning",
+  "dev_type": "feature",
+  "scope": "datasources-sync-ops",
+  "package": null,
+  "priority": "P1",
+  "creator": "Guang",
+  "assignee": "Guang",
+  "createdAt": "2026-06-19",
+  "completedAt": null,
+  "branch": "master",
+  "base_branch": "master",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": "06-19-round2-6-contract-gate",
+  "relatedFiles": [
+    ".trellis/tasks/06-19-round2-6-contract-gate/",
+    "backend/app/datasources/",
+    "backend/app/sync/",
+    "scripts/production_equivalent_smoke.py",
+    "scripts/init_db.py",
+    "tests/test_vendor_fetch_e2e.py",
+    "docs/implementation_tasks/ROUND_2_6_DATASOURCE_ROUTING_OPS_ALIGNMENT/",
+    "docs/AUDIT_DEFERRED_REGISTRY.md",
+    "docs/implementation_tasks/README.md"
+  ],
+  "notes": "Plan-only artifact. Execute may start only after Contract Gate PASS or explicit user override.",
+  "meta": {
+    "manifest_protocol_version": "1",
+    "protocol_version": "complex-task-planning-protocol",
+    "round": "2.6",
+    "phase": "C/D",
+    "blocks_round3_task_017": true,
+    "requires_parent_pass": "06-19-round2-6-contract-gate"
+  }
+}

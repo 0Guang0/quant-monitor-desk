@@ -1,0 +1,33 @@
+version: user_input_privacy_contract_v1
+status: draft_round2_6
+owner: frontend_agent
+purpose: "Make local-only user import, Agent prompt input, and evidence persistence explicit."
+user_input_modes:
+  local_only_preview:
+    default: true
+    persisted: false
+    enters_agent_log: false
+    enters_evidence_chain: false
+  save_as_evidence:
+    default: false
+    requires_user_confirmation: true
+    persisted: true
+    required_fields: [source_label, retention_policy, redaction_status, provenance_note]
+  agent_context_input:
+    default_fact_status: untrusted_user_supplied
+    may_be_summarized: true
+    may_be_written_to_clean_tables: false
+rules:
+  - manual text import is local-only unless user explicitly saves it as evidence
+  - saved evidence must carry provenance, source_label, redaction_status, and retention policy
+  - Agent outputs cannot convert user input into facts without evidence id linkage
+  - frontend must display local-only / save-as-evidence disclosure before persistence
+  - any future networked Agent feature requires separate user confirmation and is out of Round2.6 scope
+forbidden:
+  - uploading user strategy/text to external service by default
+  - writing manual input to clean data tables
+  - adding trading action semantics through imported text
+required_tests:
+  - tests/test_privacy_contract.py::test_manualImport_defaultsLocalOnly
+  - tests/test_privacy_contract.py::test_saveAsEvidence_requiresDisclosureFields
+  - tests/test_api_security_contract.py::test_agentInputCannotWriteCleanTables

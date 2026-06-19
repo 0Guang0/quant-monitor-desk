@@ -1,0 +1,4 @@
+=== Tier C docs ===
+python scripts/check_doc_links.py
+OK: checked links in 162 markdown files under docs/
+exit 0

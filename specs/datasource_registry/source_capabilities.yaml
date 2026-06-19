@@ -1,0 +1,180 @@
+version: source_capabilities_v1
+status: draft_round2_6
+authority: "Round2.6 design contract; source_registry.yaml remains source/role authority"
+principles:
+  - every_source_registry_allowed_domain_must_have_capability
+  - adapter_supported_domains_must_be_subset_of_capabilities_after_round2_6_implementation
+  - operations_are_declared_before_orchestrator_fetch
+  - no_capability_means_not_schedulable
+  - no_silent_fallback
+notes:
+  current_domain_authority: "specs/datasource_registry/source_registry.yaml"
+  implementation_gap: "Current adapter supported_domains still include legacy/abstract names such as market_bar_1d and fundamental. Round2.6 implementation must reconcile adapter domains to source_registry domains or add explicit compatibility mapping tests."
+sources:
+  qmt_xtdata:
+    domains:
+      cn_equity_realtime:
+        operations:
+          fetch_realtime_quote:
+            frequency: realtime
+            fields: [instrument_id, timestamp, last_price, bid, ask, volume, amount, source_used]
+            requires_auth: true
+            requires_local_client: true
+            enabled_by_default: false
+      cn_equity_minute_bar:
+        operations:
+          fetch_minute_bar:
+            frequency: intraday
+            fields: [instrument_id, timestamp, open, high, low, close, volume, amount, source_used]
+            requires_auth: true
+            requires_local_client: true
+            enabled_by_default: false
+      cn_equity_daily_bar:
+        operations:
+          fetch_daily_bar:
+            frequency: daily
+            fields: [instrument_id, trade_date, open, high, low, close, volume, amount, source_used]
+            requires_auth: true
+            requires_local_client: true
+            enabled_by_default: false
+  baostock:
+    domains:
+      cn_equity_daily_bar:
+        operations:
+          fetch_daily_bar:
+            frequency: daily
+            fields: [instrument_id, trade_date, open, high, low, close, volume, amount, source_used]
+            supports_adjustment: true
+            supports_incremental: true
+            supports_backfill: true
+            requires_auth: false
+            production_default: true
+      cn_equity_basic_financial:
+        operations:
+          fetch_basic_financial:
+            frequency: quarterly_or_annual
+            fields: [instrument_id, report_period, metric_name, metric_value, source_used]
+            supports_incremental: true
+            requires_auth: false
+            production_default: true
+  akshare:
+    domains:
+      cn_equity_daily_bar:
+        operations:
+          fetch_daily_bar_validation:
+            frequency: daily
+            fields: [instrument_id, trade_date, open, high, low, close, volume, amount, source_used]
+            supports_adjustment: source_specific
+            supports_incremental: true
+            supports_backfill: true
+            requires_auth: false
+            production_default: false
+      cn_index:
+        operations:
+          fetch_index_daily_bar:
+            frequency: daily
+            fields: [index_id, trade_date, open, high, low, close, volume, amount, source_used]
+            supports_incremental: true
+            requires_auth: false
+      sector_board:
+        operations:
+          fetch_sector_board:
+            frequency: daily
+            fields: [board_id, trade_date, metric_name, metric_value, source_used]
+            supports_incremental: true
+            requires_auth: false
+      macro_supplementary:
+        operations:
+          fetch_macro_series:
+            frequency: source_specific
+            fields: [series_id, observation_date, metric_name, metric_value, source_used]
+            supports_incremental: true
+            requires_auth: false
+            notes: "聚合源只能带 source_used 与 quality_flags；不得作为唯一事实源。"
+  cninfo:
+    domains:
+      cn_filings:
+        operations:
+          fetch_filing_index:
+            frequency: intraday_or_daily
+            fields: [filing_id, instrument_id, title, publish_timestamp, url, source_used]
+            supports_incremental: true
+            supports_backfill: true
+            output: metadata
+            requires_auth: false
+      cn_announcements:
+        operations:
+          fetch_announcement_index:
+            frequency: intraday_or_daily
+            fields: [announcement_id, instrument_id, title, publish_timestamp, url, source_used]
+            supports_incremental: true
+            supports_backfill: true
+            output: metadata
+            requires_auth: false
+      cn_pdf_reports:
+        operations:
+          fetch_pdf_report:
+            frequency: on_demand
+            output: raw_pdf
+            requires_auth: false
+            must_write_file_registry: true
+  yahoo_finance:
+    domains:
+      us_equity_daily_bar:
+        operations:
+          fetch_us_daily_bar_validation:
+            frequency: daily
+            fields: [instrument_id, trade_date, open, high, low, close, volume, source_used]
+            requires_auth: false
+            enabled_by_default: false
+            notes: "研究/辅助源；生产关键路径默认禁用直到用户确认。"
+      etf_daily_bar:
+        operations:
+          fetch_etf_daily_bar_validation:
+            frequency: daily
+            fields: [instrument_id, trade_date, open, high, low, close, volume, source_used]
+            requires_auth: false
+            enabled_by_default: false
+      global_asset_reference:
+        operations:
+          fetch_global_asset_reference:
+            frequency: daily_or_on_demand
+            fields: [instrument_id, name, asset_class, currency, exchange, source_used]
+            requires_auth: false
+            enabled_by_default: false
+  qmt_xqshare:
+    status: proposed_disabled_source
+    domains:
+      cn_equity_realtime:
+        operations:
+          fetch_realtime_quote_remote:
+            frequency: realtime
+            fields: [instrument_id, timestamp, last_price, bid, ask, volume, amount, source_used]
+            requires_auth: true
+            requires_remote_host: true
+            enabled_by_default: false
+            env_required: [XQSHARE_REMOTE_HOST, XQSHARE_REMOTE_PORT]
+      cn_equity_minute_bar:
+        operations:
+          fetch_minute_bar_remote:
+            frequency: intraday
+            fields: [instrument_id, timestamp, open, high, low, close, volume, amount, source_used]
+            requires_auth: true
+            requires_remote_host: true
+            enabled_by_default: false
+            env_required: [XQSHARE_REMOTE_HOST, XQSHARE_REMOTE_PORT]
+      cn_equity_daily_bar:
+        operations:
+          fetch_daily_bar_remote:
+            frequency: daily
+            fields: [instrument_id, trade_date, open, high, low, close, volume, amount, source_used]
+            requires_auth: true
+            requires_remote_host: true
+            enabled_by_default: false
+            env_required: [XQSHARE_REMOTE_HOST, XQSHARE_REMOTE_PORT]
+validation:
+  required_tests:
+    - test_everyAllowedDomain_hasCapabilityDeclaration
+    - test_adapterSupportedDomains_reconciledToCapabilityRegistryOrCompatibilityMap
+    - test_unknownCapability_rejectedBeforeFetch
+    - test_sourceRegistryAndCapabilityDomains_areAligned

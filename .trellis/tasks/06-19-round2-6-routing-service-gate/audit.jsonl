@@ -1,0 +1,4 @@
+{"file":".trellis/tasks/06-19-round2-6-routing-service-gate/AUDIT.plan.md","reason":"【必读·第1条】Audit 维度矩阵与 skill 冻结"}
+{"file":".trellis/tasks/06-19-round2-6-routing-service-gate/MASTER.plan.md","reason":"A5 trace-ac 读取 §2 AC"}
+{"file":".trellis/tasks/06-19-round2-6-routing-service-gate/check.jsonl","reason":"A1 spec audit context"}
+{"file":".trellis/tasks/06-19-round2-6-routing-service-gate/implement.jsonl","reason":"A5 evidence/context completeness"}

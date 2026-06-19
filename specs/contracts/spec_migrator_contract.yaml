@@ -1,0 +1,20 @@
+version: spec_migrator_contract_v1
+status: draft_round2_6
+owner: docs_ops
+purpose: "Dry-run migration of project YAML/JSON specs without silently accepting legacy fields at runtime."
+default_mode: dry_run
+inputs:
+  - specs/datasource_registry/source_registry.yaml
+  - future legacy registry fixtures
+outputs:
+  - migration_report
+  - proposed_new_spec
+  - rejected_legacy_fields
+rules:
+  - migrator must never overwrite source files unless explicit output path is supplied
+  - legacy Shadow/Emergency data-source roles are rejected, not normalized silently
+  - generated report must list field mappings, dropped fields, manual review items
+  - runtime loaders should stay strict; migrator is an offline tool
+required_tests:
+  - tests/test_spec_migrator.py::test_sourceRegistryV1ToV2DryRun
+  - tests/test_spec_migrator.py::test_shadowEmergencyRejectedInRuntime

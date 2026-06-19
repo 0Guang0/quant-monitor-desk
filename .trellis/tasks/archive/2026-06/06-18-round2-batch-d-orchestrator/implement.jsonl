@@ -68,3 +68,10 @@
 {"file": ".trellis/tasks/06-18-round2-batch-d-orchestrator/research/original-plan-trace.md", "reason": "extract: P0o AC mapping manifest column | for: traceability / Audit A5"}
 {"file": "tests/test_batch_d_orchestration_flow.py", "reason": "extract: MASTER §9.1 Tier A orchestration E2E | for: AC-2,6 / §10 A"}
 {"file": "specs/contracts/api_security_contract.yaml", "reason": "extract: API pagination/query budget authority (P2-01 repair import) | for: api_limits / FastAPI"}
+{"file": "specs/contracts/source_capability_contract.yaml", "reason": "extract: Round2.6 capability contract E7 1-hop from data_sources.md | for: manifest closure after Phase A docs"}
+{"file": "specs/contracts/source_route_contract.yaml", "reason": "extract: Round2.6 route plan contract E7 1-hop | for: manifest closure after Phase A docs"}
+{"file": "specs/contracts/datasource_service_contract.yaml", "reason": "extract: DataSourceService boundary contract E7 1-hop | for: manifest closure after Phase A docs"}
+{"file": "specs/datasource_registry/source_capabilities.yaml", "reason": "extract: capability matrix authority E7 1-hop | for: manifest closure after Phase A docs"}
+{"file": "docs/modules/datasource_service.md", "reason": "extract: Round2.6 service design supplement E7 1-hop | for: manifest closure after Phase A docs"}
+{"file": "docs/modules/source_route_plan.md", "reason": "extract: Round2.6 route plan design supplement E7 1-hop | for: manifest closure after Phase A docs"}
+{"file": "specs/contracts/platform_source_matrix.yaml", "reason": "extract: platform/qmt matrix contract E7 1-hop | for: manifest closure after Phase A docs"}

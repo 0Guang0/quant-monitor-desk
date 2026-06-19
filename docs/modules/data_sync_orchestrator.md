@@ -431,3 +431,27 @@ write_audit_log
 | WriteManager rollback | job 标记失败但 clean 表无半写入 |
 | 断点续跑 | 已完成 task 不重复写 |
 | 手动取消 | 状态为 CANCELLED，保留审计 |
+
+---
+
+## 13.12 Round2.6 补充：Runner 已拆分后的下一阶段边界
+
+Round2 re-audit closeout 已验证 `IncrementalJobRunner`、`BackfillShardRunner`、`ReconcileJobRunner`、pipeline contract、backfill validate/write 与 reconcile re-fetch。当前剩余调整不是继续拆 runner，而是把 fetch 入口从“直接传 adapter”收敛为：
+
+```text
+Sync runner
+  → DataSourceService.fetch / narrow fetch callable
+  → SourceRoutePlan
+  → SourceCapabilityRegistry
+  → ResourceGuard
+  → internal adapter factory
+```
+
+新增设计权威：
+
+- `docs/modules/datasource_service.md`
+- `docs/modules/source_route_plan.md`
+- `specs/contracts/datasource_service_contract.yaml`
+- `specs/contracts/source_route_contract.yaml`
+
+Round2.6 Phase A 不改当前 orchestrator 代码；未来实现阶段才允许将 runner adapter 参数替换为 service/fetch callable。

@@ -113,7 +113,25 @@ cd frontend && npm ci && npm audit --audit-level=high && npm run typecheck && np
 5. ResourceGuard 是否触发。
 6. 未完成项或需要用户确认的点。
 
-## 15. 审计修复补充要求
+## 15. Round2.6 补充：SourceRoute 与 Evidence 展示
+
+执行本任务前必须读取：
+
+- `docs/modules/source_route_plan.md`
+- `specs/contracts/source_route_contract.yaml`
+- `docs/ops/ERROR_CODE_GUIDE.md`
+- `docs/ops/privacy_data_flow.md`
+
+新增要求：
+
+- Layer 页面必须展示 `source_used`、`route_status`、`quality_flags`、`as_of`、`freshness`、`rule_version` 或等效 lineage 字段。
+- fallback/disabled/source missing 不能被隐藏；必须显示解释性状态或错误码。
+- 保存用户导入内容为 evidence 前必须显示 local-only 与 retention 边界。
+- 页面仍不得写死最终布局；信息层级需用户确认。
+
+必须补测试：`test_layerPageShowsRouteStatusAndQualityFlags`、`test_disabledSourceVisibleToUser`、`test_evidenceSaveRequiresPrivacyDisclosure`。
+
+## 16. 审计修复补充要求
 
 前端 Layer 页面必须显示数据来源、as_of、freshness、quality_flags；所有列表分页；错误边界不得泄露本机路径或 secret。页面排版不写死。
 

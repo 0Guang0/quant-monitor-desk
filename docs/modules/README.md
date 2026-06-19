@@ -13,6 +13,16 @@
 
 拆分背景：P0 第一轮将原合并文档按职责拆开；兼容文件保留旧链接，内容指向上表权威文件。
 
+## Round2.6 设计补充模块
+
+| 主题 | 权威文件 | 关联契约 |
+|------|----------|----------|
+| Source Capability Registry | [`source_capability_registry.md`](source_capability_registry.md) | `specs/contracts/source_capability_contract.yaml` |
+| DataSourceService | [`datasource_service.md`](datasource_service.md) | `specs/contracts/datasource_service_contract.yaml` |
+| SourceRoutePlan | [`source_route_plan.md`](source_route_plan.md) | `specs/contracts/source_route_contract.yaml` |
+| Backtest Review Lifecycle | [`backtest_review_lifecycle.md`](backtest_review_lifecycle.md) | `specs/contracts/backtest_metric_contract.yaml` |
+| Review Sandbox API | [`review_sandbox_api.md`](review_sandbox_api.md) | `specs/contracts/review_sandbox_contract.yaml` |
+
 ## 其他模块
 
-其余 `*.md` 均为该模块的权威设计文档，无重复索引。
+其余 `*.md` 均为该模块的权威设计文档。Round2.6 新增文档是对原模块文档的补充与收敛，不删除历史设计口径。

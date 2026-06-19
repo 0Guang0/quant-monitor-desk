@@ -113,7 +113,25 @@ cd frontend && npm ci && npm audit --audit-level=high && npm run typecheck && np
 5. ResourceGuard 是否触发。
 6. 未完成项或需要用户确认的点。
 
-## 15. 审计修复补充要求
+## 15. Round2.6 补充：前端 Diagnostics 与 Local-only 提示
+
+执行本任务前必须读取：
+
+- `docs/ops/privacy_data_flow.md`
+- `specs/contracts/user_input_privacy_contract.yaml`
+- `specs/contracts/diagnostics_api_contract.yaml`
+- `docs/ops/ERROR_CODE_GUIDE.md`
+
+新增要求：
+
+- `frontend/src/**` 当前阶段不改；后续实现 shell 时必须预留只读 Diagnostics 入口，但最终布局需用户确认。
+- 前端导入文本/策略片段必须默认 local-only，并显示保存为 evidence 的确认边界。
+- API client 需要支持 `error_code`、`docs_anchor`、`route_status`、`quality_flags` 字段显示。
+- `package.json` / `package-lock.json` 只有在真实前端功能需要且用户确认依赖后才可改。
+
+必须补测试：`test_frontendShowsErrorCodeDocAnchor`、`test_localOnlyDisclosureVisibleBeforeEvidenceSave`、`test_diagnosticsNavIsReadOnlyPlaceholder`。
+
+## 16. 审计修复补充要求
 
 前端 shell 必须实现安全和稳定性基线：CSP、错误边界、分页、缓存 freshness 标签、secret 不落 localStorage。页面布局仍仅为参考，正式 UI 需用户确认。
 

@@ -1,0 +1,4 @@
+=== 8.7 GREEN ===
+pytest tests/test_platform_source_matrix.py -q
+....                                                                     [100%]
+4 passed exit code: 0

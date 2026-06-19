@@ -29,3 +29,4 @@
 
 - `tests/test_schema_migration.py` — migration replay + version set.
 - `tests/test_audit_fixes.py` — invalid sync status rejected, default WriteManager gate path.
+- `scripts/init_db.py` exposes `main(argv: list[str] | None = None)` so tests call `main([])`; CLI uses default `sys.argv`.

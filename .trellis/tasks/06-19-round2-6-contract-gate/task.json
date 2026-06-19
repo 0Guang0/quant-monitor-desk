@@ -1,0 +1,47 @@
+{
+  "id": "06-19-round2-6-contract-gate",
+  "name": "06-19-round2-6-contract-gate",
+  "title": "Round 2.6 Phase B: contract gate before Round 3",
+  "description": "Turn Round2.6 Phase A contracts into executable RED tests, static boundary checks, and deferred-registry reconciliation before routing-service implementation.",
+  "status": "in_progress",
+  "dev_type": "feature",
+  "scope": "datasources-tests-docs",
+  "package": null,
+  "priority": "P1",
+  "creator": "Guang",
+  "assignee": "Guang",
+  "createdAt": "2026-06-19",
+  "completedAt": null,
+  "branch": "06-19-round2-6-contract-gate",
+  "base_branch": "master",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [
+    "06-19-round2-6-routing-service-gate"
+  ],
+  "parent": null,
+  "relatedFiles": [
+    "docs/implementation_tasks/ROUND_2_6_DATASOURCE_ROUTING_OPS_ALIGNMENT/",
+    "specs/datasource_registry/source_registry.yaml",
+    "specs/datasource_registry/source_capabilities.yaml",
+    "specs/contracts/source_capability_contract.yaml",
+    "specs/contracts/source_route_contract.yaml",
+    "specs/contracts/datasource_service_contract.yaml",
+    "specs/contracts/module_boundary_contract.yaml",
+    "specs/contracts/platform_source_matrix.yaml",
+    "specs/contracts/data_cli_contract.yaml",
+    "docs/AUDIT_DEFERRED_REGISTRY.md",
+    "tests/"
+  ],
+  "notes": "Plan-only artifact. Execute must not start until validate-plan-freeze passes and user approves.",
+  "meta": {
+    "manifest_protocol_version": "1",
+    "protocol_version": "complex-task-planning-protocol",
+    "round": "2.6",
+    "phase": "B",
+    "blocks_round3_task_017": true,
+    "requires_followup_task": "06-19-round2-6-routing-service-gate"
+  }
+}

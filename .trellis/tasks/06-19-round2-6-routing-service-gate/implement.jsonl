@@ -1,0 +1,33 @@
+{"file":".trellis/tasks/06-19-round2-6-routing-service-gate/MASTER.plan.md","reason":"【必读·第1条】Execute 唯一全文：AC-PRE/C/D + §8 TDD + §9/§10 验收"}
+{"file":".cursor/skills/trellis-execute/SKILL.md","reason":"Execute Phase 0 boot 必读"}
+{"file":"AGENTS.md","reason":"Trellis/GitNexus 项目级门禁"}
+{"file":".trellis/tasks/06-19-round2-6-contract-gate/MASTER.plan.md","reason":"父任务范围与前置 gate"}
+{"file":"docs/implementation_tasks/README.md","reason":"Round3 gate"}
+{"file":"docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md","reason":"no trading/no silent fallback/no auto-login"}
+{"file":"docs/implementation_tasks/GLOBAL_TESTING_POLICY.md","reason":"业务断言与 mock 边界"}
+{"file":"docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md","reason":"ResourceGuard/production-equivalent 约束"}
+{"file":"docs/implementation_tasks/ROUND_2_6_DATASOURCE_ROUTING_OPS_ALIGNMENT/README.md","reason":"Round2.6 scope"}
+{"file":"docs/implementation_tasks/ROUND_2_6_DATASOURCE_ROUTING_OPS_ALIGNMENT/016A_define_source_capability_registry.md","reason":"CapabilityRegistry 实现"}
+{"file":"docs/implementation_tasks/ROUND_2_6_DATASOURCE_ROUTING_OPS_ALIGNMENT/016B_define_source_route_plan_and_datasource_service.md","reason":"SourceRoutePlan/DataSourceService 实现"}
+{"file":"docs/implementation_tasks/ROUND_2_6_DATASOURCE_ROUTING_OPS_ALIGNMENT/016C_define_module_boundary_contract.md","reason":"boundary checker 保持 green"}
+{"file":"docs/implementation_tasks/ROUND_2_6_DATASOURCE_ROUTING_OPS_ALIGNMENT/016F_define_prod_equivalent_scale_benchmark.md","reason":"production-equivalent smoke"}
+{"file":"specs/datasource_registry/source_registry.yaml","reason":"source/domain authority"}
+{"file":"specs/datasource_registry/source_capabilities.yaml","reason":"capability matrix"}
+{"file":"specs/contracts/source_capability_contract.yaml","reason":"capability contract"}
+{"file":"specs/contracts/source_route_contract.yaml","reason":"route contract"}
+{"file":"specs/contracts/datasource_service_contract.yaml","reason":"service contract"}
+{"file":"specs/contracts/module_boundary_contract.yaml","reason":"boundary contract"}
+{"file":"specs/contracts/platform_source_matrix.yaml","reason":"disabled qmt/xqshare"}
+{"file":"backend/app/datasources/source_registry.py","reason":"SourceRegistry authority integration"}
+{"file":"backend/app/datasources/adapters/__init__.py","reason":"adapter factory internal boundary"}
+{"file":"backend/app/datasources/adapters/akshare.py","reason":"supported_domains reconciliation"}
+{"file":"backend/app/datasources/adapters/baostock.py","reason":"supported_domains reconciliation"}
+{"file":"backend/app/datasources/adapters/cninfo.py","reason":"supported_domains reconciliation"}
+{"file":"backend/app/datasources/adapters/qmt_xtdata.py","reason":"supported_domains + disabled safety"}
+{"file":"backend/app/datasources/adapters/yahoo_finance.py","reason":"supported_domains + disabled safety"}
+{"file":"backend/app/sync/runners.py","reason":"service/fetch callable injection"}
+{"file":"backend/app/sync/orchestrator.py","reason":"service injection if needed"}
+{"file":"backend/app/sync/event_payload.py","reason":"route payload evidence"}
+{"file":"scripts/production_equivalent_smoke.py","reason":"service-path smoke"}
+{"file":"docs/AUDIT_DEFERRED_REGISTRY.md","reason":"final Round3 gate truth"}
+{"file":"ROUND2_6_PHASE_A_SELF_CHECK.md","reason":"cleanup after migration"}

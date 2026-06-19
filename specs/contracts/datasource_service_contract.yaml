@@ -1,0 +1,44 @@
+version: datasource_service_contract_v1
+status: draft_round2_6
+owner: data_sources
+purpose: "Provide a single fetch facade so Orchestrator/API/Agent do not directly use adapter factory."
+facade: DataSourceService
+public_methods:
+  fetch:
+    input: FetchRequest
+    output: FetchResult
+    required_steps:
+      - load_source_registry
+      - load_capability_registry
+      - build_source_route_plan
+      - check_resource_guard
+      - create_adapter_internal_only
+      - call_adapter_fetch
+      - ensure_fetch_log_or_failure_event
+  preview_route:
+    input: {data_domain: string, operation: string, market_id: optional_string}
+    output: SourceRoutePlan
+    side_effects_allowed: false
+call_boundaries:
+  allowed_to_call_create_adapter:
+    - backend.app.datasources.service.DataSourceService
+    - tests with explicit create_test_adapter
+  forbidden_direct_callers:
+    - backend.app.api
+    - backend.app.agents
+    - backend.app.sync.runners
+    - backend.app.layer1_axes
+    - backend.app.layer2_sensors
+    - backend.app.layer3_chains
+    - backend.app.layer4_markets
+    - backend.app.layer5_evidence
+rules:
+  - create_adapter remains available but is internal to DataSourceService in production paths
+  - Agent tools may request read-only route previews but may not construct adapters
+  - API diagnostics may preview route plans without fetching
+  - Orchestrator runners should depend on DataSourceService or a narrow fetch callable rather than vendor adapter classes
+  - tests may use create_test_adapter only when the test name and fixture explicitly indicate test-only behavior
+required_tests:
+  - tests/test_datasource_service.py::test_serviceBuildsRouteBeforeFetch
+  - tests/test_datasource_service.py::test_apiAndAgentCannotImportAdapterFactory
+  - tests/test_vendor_fetch_e2e.py::test_vendorFixtureFetch_e2eThroughDataSourceServicePath

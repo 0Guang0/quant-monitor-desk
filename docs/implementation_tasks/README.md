@@ -9,9 +9,10 @@
 1. `ROUND_0_PROJECT_SCAFFOLD/`：项目骨架与执行规则。
 2. `ROUND_1_DATA_FOUNDATION/`：本地数据底座、资源保护、写入边界。
 3. `ROUND_2_DATA_INGESTION_VALIDATION/`：数据源接入、同步、质量检查与冲突治理。
-4. `ROUND_3_MODELING_LAYERS/`：Layer 1-5 建模层、快照层、证据链。
-5. `ROUND_4_API_FRONTEND_AGENT_BACKTEST/`：API、前端、Agent、通知、回测与动作语义保护。
-6. `ROUND_5_INTEGRATION_RELEASE/`：集成测试、资源边界测试、文档一致性、最终包清理。
+4. `ROUND_2_6_DATASOURCE_ROUTING_OPS_ALIGNMENT/`：进入 Round3 前的数据源能力、路由、运维、模块边界与隐私契约对齐（只改设计文档与执行计划，不改代码）。
+5. `ROUND_3_MODELING_LAYERS/`：Layer 1-5 建模层、快照层、证据链。
+6. `ROUND_4_API_FRONTEND_AGENT_BACKTEST/`：API、前端、Agent、通知、回测与动作语义保护。
+7. `ROUND_5_INTEGRATION_RELEASE/`：集成测试、资源边界测试、文档一致性、最终包清理。
 
 每个任务文件都必须独立可读。AI 执行时如果上下文丢失，重新打开当前任务文件和本目录下的全局规则文件即可恢复。
 
@@ -57,9 +58,20 @@
 - `ROUND_2_DATA_INGESTION_VALIDATION/015_implement_data_quality_validator.md` — 实现 DataQualityValidator
 - `ROUND_2_DATA_INGESTION_VALIDATION/016_implement_source_conflict_validator.md` — 实现 SourceConflictValidator
 
+## ROUND_2_6_DATASOURCE_ROUTING_OPS_ALIGNMENT
+
+> **Scope:** Phase A only changes design docs, machine contracts, and execution plans. Code changes require a separate user instruction.
+
+- `ROUND_2_6_DATASOURCE_ROUTING_OPS_ALIGNMENT/016A_define_source_capability_registry.md` — 定义 SourceCapabilityRegistry
+- `ROUND_2_6_DATASOURCE_ROUTING_OPS_ALIGNMENT/016B_define_source_route_plan_and_datasource_service.md` — 定义 SourceRoutePlan 与 DataSourceService
+- `ROUND_2_6_DATASOURCE_ROUTING_OPS_ALIGNMENT/016C_define_module_boundary_contract.md` — 定义模块边界契约
+- `ROUND_2_6_DATASOURCE_ROUTING_OPS_ALIGNMENT/016D_define_data_sync_quick_reference_and_error_guides.md` — 定义数据同步速查与错误手册
+- `ROUND_2_6_DATASOURCE_ROUTING_OPS_ALIGNMENT/016E_define_platform_source_matrix_and_qmt_xqshare.md` — 定义平台数据源矩阵与 qmt_xqshare 可选源
+- `ROUND_2_6_DATASOURCE_ROUTING_OPS_ALIGNMENT/016F_define_prod_equivalent_scale_benchmark.md` — 定义生产等价规模基准计划
+
 ## ROUND_3_MODELING_LAYERS
 
-> **Gate:** complete Trellis `round2-repair-alignment` (Round 2.5) before **017**. See `docs/quality/ROUND2_REPAIR_ALIGNMENT_TRACKER.md`.
+> **Gate:** complete Trellis `round2-repair-alignment` (Round 2.5) before **017**; Round 2.6 datasource routing / ops alignment must also be documented before Round3 implementation proceeds. See `docs/quality/ROUND2_REPAIR_ALIGNMENT_TRACKER.md` and `ROUND2_6_PHASE_A_SELF_CHECK.md`.
 
 - `ROUND_3_MODELING_LAYERS/017_implement_layer1_axis_loader.md` — 实现 Layer 1 五轴 loader
 - `ROUND_3_MODELING_LAYERS/018_implement_layer1_interpretation_snapshot.md` — 实现 Layer 1 解释快照

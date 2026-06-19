@@ -1,0 +1,48 @@
+version: platform_source_matrix_v1
+status: draft_round2_6
+owner: data_sources
+platforms:
+  windows:
+    qmt_xtdata:
+      available_if_user_configured: true
+      default_enabled: false
+      requires_user_confirmation: true
+    qmt_xqshare:
+      available_if_user_configured: true
+      default_enabled: false
+      requires_env: [XQSHARE_REMOTE_HOST, XQSHARE_REMOTE_PORT]
+    baostock:
+      available_if_user_configured: true
+      default_enabled: true
+    akshare:
+      available_if_user_configured: true
+      default_enabled: false
+  macos:
+    qmt_xtdata:
+      available_if_user_configured: false
+      default_enabled: false
+    qmt_xqshare:
+      available_if_user_configured: true
+      default_enabled: false
+      requires_env: [XQSHARE_REMOTE_HOST, XQSHARE_REMOTE_PORT]
+    baostock:
+      available_if_user_configured: true
+      default_enabled: true
+  linux:
+    qmt_xtdata:
+      available_if_user_configured: false
+      default_enabled: false
+    qmt_xqshare:
+      available_if_user_configured: true
+      default_enabled: false
+      requires_env: [XQSHARE_REMOTE_HOST, XQSHARE_REMOTE_PORT]
+    baostock:
+      available_if_user_configured: true
+      default_enabled: true
+rules:
+  - qmt_xtdata on non-Windows is not schedulable by default
+  - qmt_xqshare is never auto-probed and cannot become schedulable without env and explicit user authorization
+  - platform matrix must feed SourceRoutePlan disabled_reason
+required_tests:
+  - tests/test_platform_source_matrix.py::test_qmtXtdataNonWindowsNotSchedulable
+  - tests/test_platform_source_matrix.py::test_qmtXqshareMissingEnvNotSchedulable
