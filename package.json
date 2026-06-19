@@ -1,0 +1,15 @@
+{
+  "name": "quant-monitor-desk",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "prepare": "husky",
+    "typecheck": "npm run typecheck --prefix frontend",
+    "test": "python -m pytest -q"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.7",
+    "prettier": "^3.8.4"
+  }
+}
