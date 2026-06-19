@@ -16,6 +16,9 @@
 - `docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md`
 - `specs/contracts/runtime_versions.md`
 - `docs/quality/staged_acceptance_policy.md`
+- `docs/ops/db_inspect_cli.md`
+- `specs/contracts/ops_db_inspect_contract.yaml`
+
 ## 4. 相关代码 / 输出文件
 
 - `tests/integration/test_end_to_end_smoke.py`
@@ -69,6 +72,7 @@
 - 测试命名建议：`functionName_condition_expectedBehavior`。
 
 ## 11. 验收命令
+
 本任务为集成/资源/边界测试。验收命令：
 
 ```bash

@@ -9,7 +9,9 @@ Design/test-plan only. Do not change code.
 - `scripts/production_equivalent_smoke.py`
 - `docs/implementation_tasks/ROUND3_EARLY_CLOSE_PLAN.md`
 - `docs/ops/data_sync_quick_reference.md`
+- `docs/ops/db_inspect_cli.md`
 - `specs/contracts/source_route_contract.yaml`
+- `specs/contracts/ops_db_inspect_contract.yaml`
 
 ## Required design updates
 

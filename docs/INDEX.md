@@ -39,6 +39,7 @@ See [`docs/modules/`](modules/) — one file per implementation module (data syn
 | File                                                                       | Topic                                                |
 | -------------------------------------------------------------------------- | ---------------------------------------------------- |
 | [backup_and_recovery.md](ops/backup_and_recovery.md)                       | Backup policy                                        |
+| [db_inspect_cli.md](ops/db_inspect_cli.md)                                 | QMD read-only DB inspect CLI design                  |
 | [performance_limits.md](ops/performance_limits.md)                         | ResourceGuard authority                              |
 | [ops_and_performance_v1_2.md](ops/ops_and_performance_v1_2.md)             | Ops handbook _(legacy filename; content is current)_ |
 | [logs_health_audit.md](ops/logs_health_audit.md)                           | Logging and audit                                    |
@@ -111,6 +112,7 @@ Repository root: [`specs/`](../specs/)
 - [`specs/schema/schema.sql`](../specs/schema/schema.sql)
 - [`specs/contracts/api_security_contract.yaml`](../specs/contracts/api_security_contract.yaml) — API 分页权威
 - [`specs/contracts/runtime_versions.md`](../specs/contracts/runtime_versions.md) — `uv.lock` / 验收命令（D-01）
+- [`specs/contracts/ops_db_inspect_contract.yaml`](../specs/contracts/ops_db_inspect_contract.yaml) — read-only DB inspect CLI contract
 - [`specs/contracts/`](../specs/contracts/)
 - [`specs/datasource_registry/source_capabilities.yaml`](../specs/datasource_registry/source_capabilities.yaml) — Round2.6 source capability matrix
 - [`specs/contracts/source_capability_contract.yaml`](../specs/contracts/source_capability_contract.yaml)

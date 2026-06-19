@@ -44,6 +44,80 @@ quant-monitor-desk/
 
 未来重建 `MIGRATION_MAP.md` 或文档索引时，不得删除下列保护性条款；以下两节从旧 `MIGRATION_MAP.md` 逐字迁移到本 README 作为更稳定的保护入口。
 
+## 上下文三层追溯模型
+
+本仓库的实施上下文必须按三层传递，避免 Plan、Execute、Audit 角色各自读取不同来源后产生偏差：
+
+```text
+第一层：设计文档 / 契约 / 规则 / 定义 / registry / schema / ADR
+        ↓  Plan 阶段读取、比对、过滤、去噪、归并
+第二层：docs/implementation_tasks/** 原始执行任务
+        ↓  Plan 阶段转写为冻结的 Trellis 复杂任务计划
+第三层：.trellis/tasks/**/MASTER.plan.md + AUDIT.plan.md + REPAIR.plan.md + jsonl manifest
+        ↓  Execute / Audit / Repair 按冻结计划执行、审计、修复
+实现代码 / 测试 / registry 更新 / 证据产物
+```
+
+### 三层各自职责
+
+| 层级                        | 权威内容                                                                                                | 典型路径                                                                                                                                          | 主要责任                               | 不得做的事                                                                  |
+| --------------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- | --------------------------------------------------------------------------- |
+| 第一层：设计/契约/规则/定义 | 项目真实意图、业务语义、schema、接口契约、source 角色、资源边界、用户已拍板决策                         | `docs/modules/**`、`docs/ops/**`、`docs/architecture/**`、`docs/adr/**`、`docs/decisions/**`、`specs/**`、`docs/*REGISTRY.md`、`MIGRATION_MAP.md` | 提供实现依据和审计依据                 | 不得当作运行时代码落点；不得被 Trellis 临时计划覆盖                         |
+| 第二层：原始执行任务        | 每个 round / task 的范围、输入文件、输出文件、验收命令、边界约束                                        | `docs/implementation_tasks/**`                                                                                                                    | 帮 Plan 定位“要做什么、读什么、验什么” | 不得直接替代第一层契约；不得默认成为 Execute/Audit manifest                 |
+| 第三层：Trellis 冻结计划    | Plan 阶段过滤后形成的可执行计划、Source Context Index、Audit Source Trace、Repair 入口和 jsonl manifest | `.trellis/tasks/**/MASTER.plan.md`、`AUDIT.plan.md`、`REPAIR.plan.md`、`implement.jsonl`、`audit.jsonl` / `check.jsonl`                           | 是 Execute / Audit / Repair 的直接入口 | 不得丢失第一层/第二层关键上下文；不得把过时原始任务原文无过滤地推给 Execute |
+
+### 角色读取规则
+
+| 角色    | 必须读取                                                                                                                               | 可读取                                                     | 默认不读取                                  |
+| ------- | -------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- | ------------------------------------------- |
+| Plan    | 第一层权威来源、第二层原始任务、`MIGRATION_MAP.md`、`docs/implementation_tasks/TASK_INPUT_CONTEXT_INDEX.md`、Trellis planning protocol | 历史 `.trellis/tasks/**` 作为 trace                        | 不能只读原始任务就直接生成执行计划          |
+| Execute | 当前 Trellis `MASTER.plan.md`、`implement.jsonl` 中列出的 Execute must-read 文件                                                       | MASTER Source Context Index 标明必须读原文的设计/契约/代码 | 默认不直接读全部原始任务卡或全部 docs/specs |
+| Audit   | 当前 `AUDIT.plan.md`、`audit.jsonl` / `check.jsonl`、MASTER Source Context Index、需要核验的证据文件                                   | 被 AUDIT Source Trace 标明的原文路径                       | 默认不重新发明任务范围                      |
+| Repair  | `REPAIR.plan.md`、审计报告、失败证据、MASTER/AUDIT 中指定的上下文                                                                      | 必要时回溯第一层/第二层定位偏差来源                        | 默认不扩大修复范围                          |
+
+### Plan 阶段必须产出的追溯字段
+
+每个 Trellis `MASTER.plan.md` 必须包含 Source Context Index，至少说明：
+
+| 字段                | 含义                                                                          |
+| ------------------- | ----------------------------------------------------------------------------- |
+| Source path         | 原始来源路径，例如设计文档、契约、规则、原始任务或 registry                   |
+| Type                | design / contract / rule / schema / registry / original-task / code-reference |
+| Used by             | 哪个 deliverable、AC、测试或审计项使用它                                      |
+| Summary in plan     | 是否已被 MASTER 无损总结                                                      |
+| Must read original? | Execute/Audit 是否必须读原文                                                  |
+| Reason              | 为什么必须读、为什么已过滤、或为什么可只读总结                                |
+
+每个 `AUDIT.plan.md` 必须包含 Audit Source Trace，至少能追溯：
+
+```text
+item ID / task ID → source document → acceptance criterion → code/test evidence → registry or deferred update
+```
+
+### 每个 round 完成后的偏差定位方法
+
+每完成一个 round，审计角色应按下面顺序排查偏差来源：
+
+1. **第一层缺失**：设计文档、契约、规则、定义、schema、registry 本身是否缺内容、冲突或过时。
+2. **第二层缺失**：原始执行任务是否漏列必要输入、输出、验收命令或边界约束。
+3. **Plan 归并缺失**：Trellis `MASTER.plan.md` 是否没有把第一层/第二层关键上下文写入 Source Context Index。
+4. **Manifest 缺失**：`implement.jsonl` / `audit.jsonl` 是否没有列出无法无损总结、必须读原文的文件。
+5. **Execute 偏差**：执行代码是否偏离 MASTER、契约或已拍板决策。
+6. **Audit 偏差**：审计是否只看测试通过而没有核对 source trace、registry 更新和业务语义。
+
+偏差修复时，必须先标明偏差属于哪一层，再决定是修设计/契约、修原始任务、修 Trellis 计划、修 manifest，还是修代码/测试。
+
+### 当前关键索引入口
+
+| 场景                           | 入口                                                                         |
+| ------------------------------ | ---------------------------------------------------------------------------- |
+| 全项目模块定位                 | `MIGRATION_MAP.md`                                                           |
+| 普通文档导航                   | `docs/INDEX.md`                                                              |
+| Plan 上下文桥                  | `docs/implementation_tasks/TASK_INPUT_CONTEXT_INDEX.md`                      |
+| Round3 六批次上下文索引        | `ROUND3_BATCH_IMPLEMENTATION_MAP.md`                                         |
+| Round3 DB inspect CLI 冻结设计 | `docs/ops/db_inspect_cli.md`、`specs/contracts/ops_db_inspect_contract.yaml` |
+| Trellis 复杂任务协议           | `.trellis/spec/guides/complex-task-planning-protocol.md`                     |
+
 ## 3. 旧口径禁止恢复
 
 - 不得恢复 `Primary / Shadow / Emergency` 作为数据源角色模型。

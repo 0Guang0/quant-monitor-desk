@@ -16,6 +16,9 @@
 - `docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md`
 - `specs/contracts/runtime_versions.md`
 - `docs/quality/staged_acceptance_policy.md`
+- `docs/ops/db_inspect_cli.md`
+- `specs/contracts/ops_db_inspect_contract.yaml`
+
 ## 4. 相关代码 / 输出文件
 
 - `scripts/create_release_manifest.py`
@@ -72,6 +75,7 @@
 - 测试命名建议：`functionName_condition_expectedBehavior`。
 
 ## 11. 验收命令
+
 本任务为文档/发布规则类任务，不强制运行 full test suite。验收命令：
 
 ```bash
@@ -133,7 +137,6 @@ uv run python scripts/validate_release_allowlist.py
 ### 用户决策补充：D-10
 
 用户已拍板：设计包保持 docs/specs/tasks 轻量包；源码与测试结果通过 Git commit + CI 结果终审。
-
 
 ## 16. MANIFEST 自身 hash 策略
 
