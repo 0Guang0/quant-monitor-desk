@@ -10,12 +10,12 @@ Trusted data → Multi-layer modeling → Evidence monitoring → Agent summary 
 
 ## Stack
 
-| Layer    | Technology                                                             |
-| -------- | ---------------------------------------------------------------------- |
+| Layer    | Technology                                                                      |
+| -------- | ------------------------------------------------------------------------------- |
 | Backend  | Python 3.11+, FastAPI, Pydantic, DuckDB (Parquet export via DuckDB when needed) |
-| Frontend | Vite, React, TypeScript (layout is placeholder until user confirms UI) |
-| Specs    | YAML / JSON / SQL contracts under `specs/`                             |
-| Tooling  | `uv` + `uv.lock` (Python); `npm ci` + `package-lock.json` (frontend)   |
+| Frontend | Vite, React, TypeScript (layout is placeholder until user confirms UI)          |
+| Specs    | YAML / JSON / SQL contracts under `specs/`                                      |
+| Tooling  | `uv` + `uv.lock` (Python); `npm ci` + `package-lock.json` (frontend)            |
 
 ## Repository layout
 
@@ -35,6 +35,26 @@ quant-monitor-desk/
 ```
 
 `docs/` 与 `specs/` 以 `MANIFEST.json` 中登记的修复包为权威口径。项目实施阶段产生的 Trellis/Batch 补充材料（如 `docs/implementation_tasks/**/plans/`、`DECISIONS.md`）不得覆盖上述权威文件。
+
+## 项目地图与不可回退保护
+
+`MIGRATION_MAP.md` 是当前项目级地图，用于精准索引每个模块对应的设计文档、契约、定义、规则、执行任务与实现目录入口。
+
+必须保持以下边界：`docs/` 与 `specs/` 是设计文档、契约、定义、规则、计划、验收与治理资料目录，不是运行时代码目录，也不是功能实现地址。
+
+未来重建 `MIGRATION_MAP.md` 或文档索引时，不得删除下列保护性条款；以下两节从旧 `MIGRATION_MAP.md` 逐字迁移到本 README 作为更稳定的保护入口。
+
+## 3. 旧口径禁止恢复
+
+- 不得恢复 `Primary / Shadow / Emergency` 作为数据源角色模型。
+- 当前权威模型为 `Primary / Validation / FallbackPolicy`。
+- 旧数据源角色 `Shadow` / `Emergency` 不能作为 source role、default role、fallback role、API role、DB role 或前端 source-role 展示恢复。
+- Layer 1 `SHADOW` 诊断标签是窄例外：允许出现在明确带诊断/旁证语义的 Layer 1 indicator 条目、`shadow_diagnostics` 分组、`schema_note` 或说明文档中；不得进入 `source_registry` 角色字段，不得接管 clean 主值。若不在 `shadow_diagnostics` 分组下，必须显式写明 `diagnostic_only` / `evidence_only` / `does_not_replace_main_indicator` 或同等约束。
+
+## 4. MANIFEST 角色说明
+
+- `MANIFEST.json` 是最终发布输出，不是 `036_create_final_release_manifest.md` 的必需输入。
+- 如果仓库里已有旧 `MANIFEST.json`，执行角色只能把它作为对比参考，不能把它视为权威输入。
 
 ## Getting started
 

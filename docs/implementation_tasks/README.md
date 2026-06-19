@@ -14,17 +14,20 @@
 6. `ROUND_4_API_FRONTEND_AGENT_BACKTEST/`：API、前端、Agent、通知、回测与动作语义保护。
 7. `ROUND_5_INTEGRATION_RELEASE/`：集成测试、资源边界测试、文档一致性、最终包清理。
 
-每个任务文件都必须独立可读。AI 执行时如果上下文丢失，重新打开当前任务文件和本目录下的全局规则文件即可恢复。
+每个原始任务文件都必须独立可读，供 Plan 阶段在上下文丢失时重新定位范围、边界和输入来源。
 
-## 全局规则文件
+## Plan 阶段必读
 
-执行任何任务前必须先读取：
+Plan agent 在将原始执行任务转写为 `.trellis/tasks/**/MASTER.plan.md`、`AUDIT.plan.md`、`REPAIR.plan.md` 与 jsonl manifest 前，必须先读取：
 
+- `TASK_INPUT_CONTEXT_INDEX.md` — Plan 阶段上下文桥；用于建立原始任务、设计/契约/规则/定义与 Trellis 详细计划之间的追溯关系
 - `GLOBAL_EXECUTION_RULES.md`
 - `GLOBAL_TESTING_POLICY.md`
 - `GLOBAL_RESOURCE_LIMITS.md`
 - `GLOBAL_TASK_TEMPLATE.md`
 - `docs/AUDIT_DEFERRED_REGISTRY.md` — 问题须 **RESOLVED** 或 **DEFERRED（含解决阶段）**
+- `docs/RESOLVED_ISSUES_REGISTRY.md`
+- `docs/UNRESOLVED_ISSUES_REGISTRY.md`
 
 ## 最终包规则
 

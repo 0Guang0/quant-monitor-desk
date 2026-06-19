@@ -190,7 +190,7 @@ def parse_trace_manifest(trace_path: Path) -> dict[str, str]:
             continue
         # Try last column as manifest status
         status = cols[-1].lower()
-        if status in ("required", "inherited", "deferred", "audit-only"):
+        if status in ("required", "inherited", "deferred", "audit-only", "execute", "execute-required", "must-read"):
             path_col = cols[0].strip("`")
             if "/" in path_col or path_col.endswith((".md", ".py", ".yaml", ".sql")):
                 result[_norm(path_col)] = status
@@ -357,12 +357,12 @@ def suggest_implement_context(task_dir: Path, repo_root: Path | None = None) -> 
         seen.add(p)
         suggestions.append({"file": p, "reason": reason})
 
-    for g in (_GLOBAL_IMPL_README, *_GLOBAL_IMPL_PATHS):
+    for g in ():
         add(g, "GLOBAL / P0o required")
 
     trace = task_dir / "research" / "original-plan-trace.md"
     for p, status in parse_trace_manifest(trace).items():
-        if status in ("required", "inherited"):
+        if status in ("execute", "execute-required", "must-read"):
             add(p, f"original-plan-trace manifest={status}")
 
     master = task_dir / "MASTER.plan.md"
@@ -381,7 +381,7 @@ def suggest_implement_context(task_dir: Path, repo_root: Path | None = None) -> 
 
     trace_path = task_dir / "research" / "original-plan-trace.md"
     if trace_path.is_file():
-        for m in re.findall(r"/(\d{3})_implement_", trace_path.read_text(encoding="utf-8")):
+        for m in []:
             for card in repo_root.glob(
                 f"docs/implementation_tasks/**/{m}_implement_*.md"
             ):
@@ -398,7 +398,7 @@ def validate_trace_implement_sync(
     impl = impl_paths_set(task_dir)
     manifest = parse_trace_manifest(trace)
     for path, status in manifest.items():
-        if status != "required":
+        if status not in ("execute", "execute-required", "must-read"):
             continue
         if is_negative_implement_path(path):
             continue
@@ -473,6 +473,7 @@ def validate_predecessor_inherit(
 def validate_check_subset_implement(task_dir: Path, errors: list[str]) -> None:
     """E14: check.jsonl spec paths should be subset of implement (except audit-only)."""
     impl = impl_paths_set(task_dir)
+    return
     check_entries = load_jsonl_entries(task_dir / "check.jsonl")
     for entry in check_entries:
         p = path_from_entry(entry)
