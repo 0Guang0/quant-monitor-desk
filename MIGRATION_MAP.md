@@ -1,6 +1,6 @@
 # MIGRATION_MAP
 
-> Last updated: 2026-06-19
+> Last updated: 2026-06-21
 >
 > 本文件已经从“旧设计内容 → 新文件位置”的迁移表，升级为项目级地图（Project Map）。它用于让 Claude Code / Codex / 人类维护者在实施前精准定位：某个模块的设计文档、契约、定义、规则、执行任务、运行实现目录分别在哪里。
 
@@ -22,31 +22,31 @@
 
 ## 2. 当前项目进度快照
 
-| 事项                   | 当前状态                                                                                                          | 主要索引                                                                                                                                                                                         |
-| ---------------------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 修复包导入             | 已导入 `quant_monitor_implementation_docs_v1`；Phase 1-3 代码/配置/测试口径差已关闭                               | `MANIFEST.json`、`docs/quality/REPAIR_IMPORT_CODE_GAP_LEDGER.md`                                                                                                                                 |
-| Round 2 数据摄取与校验 | re-audit closeout 已闭合，runner/lineage/DB CHECK/backfill/reconcile/vendor-fixture 等差异已登记或修复            | `docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/`、`docs/AUDIT_DEFERRED_REGISTRY.md`                                                                                                |
-| Round 2.5              | gate cleared；无未登记 OPEN 项                                                                                    | `docs/quality/ROUND2_REPAIR_ALIGNMENT_TRACKER.md`、`docs/AUDIT_DEFERRED_REGISTRY.md`                                                                                                             |
-| Round 2.6              | 数据源能力、路由、DataSourceService、模块边界、CLI/运维/隐私/平台矩阵已形成设计与契约；部分后续实现由后续任务落地 | `docs/implementation_tasks/ROUND_2_6_DATASOURCE_ROUTING_OPS_ALIGNMENT/`、`docs/modules/source_capability_registry.md`、`docs/modules/source_route_plan.md`、`docs/modules/datasource_service.md` |
-| Round 3                | 进入五层模型实现阶段；Round3 early 本地只读 DB inspect CLI 设计已冻结为 Plan 输入                                 | `docs/ROUND3_HANDOFF.md`、`ROUND3_BATCH_IMPLEMENTATION_MAP.md`、`docs/ops/db_inspect_cli.md`、`docs/implementation_tasks/ROUND_3_MODELING_LAYERS/`                                               |
-| Round 4/5              | API、前端、Agent、报告通知、回测、集成发布仍以任务包和契约驱动                                                    | `docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/`、`docs/implementation_tasks/ROUND_5_INTEGRATION_RELEASE/`                                                                       |
+| 事项                   | 当前状态                                                                                                                                                                         | 主要索引                                                                                                                                                                                           |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 修复包导入             | 已导入 `quant_monitor_implementation_docs_v1`；Phase 1-3 代码/配置/测试口径差已关闭                                                                                              | `MANIFEST.json`、`docs/quality/REPAIR_IMPORT_CODE_GAP_LEDGER.md`                                                                                                                                   |
+| Round 2 数据摄取与校验 | re-audit closeout 已闭合，runner/lineage/DB CHECK/backfill/reconcile/vendor-fixture 等差异已登记或修复                                                                           | `docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/`、`docs/AUDIT_DEFERRED_REGISTRY.md`                                                                                                  |
+| Round 2.5              | gate cleared；无未登记 OPEN 项                                                                                                                                                   | `docs/quality/ROUND2_REPAIR_ALIGNMENT_TRACKER.md`、`docs/AUDIT_DEFERRED_REGISTRY.md`                                                                                                               |
+| Round 2.6              | 数据源能力、路由、DataSourceService、模块边界、CLI/运维/隐私/平台矩阵已形成设计与契约；部分后续实现由后续任务落地                                                                | `docs/implementation_tasks/ROUND_2_6_DATASOURCE_ROUTING_OPS_ALIGNMENT/`、`docs/modules/source_capability_registry.md`、`docs/modules/source_route_plan.md`、`docs/modules/datasource_service.md`   |
+| Round 3                | Batch 1、Batch 2、Batch 2.5 已完成/归档；Batch 2.5 交接仍为 staged 非 live production；Batch 2.75 受控生产/live 数据试点门禁已加入计划、策略和测试，正式 live pilot 实现仍待执行 | `docs/ROUND3_HANDOFF.md`、`ROUND3_BATCH_IMPLEMENTATION_MAP.md`、`docs/ops/db_inspect_cli.md`、`docs/implementation_tasks/ROUND_3_MODELING_LAYERS/`、`docs/quality/production_live_pilot_policy.md` |
+| Round 4/5              | API、前端、Agent、报告通知、回测、集成发布仍以任务包和契约驱动                                                                                                                   | `docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/`、`docs/implementation_tasks/ROUND_5_INTEGRATION_RELEASE/`                                                                         |
 
 ## 3. 仓库顶层目录地图
 
-| 路径                                 | 类型                | 用途                                                                             | 是否实现地址         |
-| ------------------------------------ | ------------------- | -------------------------------------------------------------------------------- | -------------------- |
-| `backend/app/`                       | Python 后端实现     | FastAPI、数据源、同步、DB、五层模型、Agent、通知、校验等后端实现                 | 是                   |
-| `frontend/src/`                      | 前端实现            | Vite + React + TypeScript Dashboard shell 与后续页面                             | 是                   |
-| `scripts/`                           | CLI / 维护脚本实现  | 初始化 DB、同步 registry、文档检查、生产 gate、smoke 等                          | 是                   |
-| `configs/`                           | 本地配置            | datasource、alert、resource limits、market registry、qmt、layer1 axes 等运行配置 | 是，配置入口         |
-| `tests/`                             | 自动化测试          | pytest、contract gate、smoke、边界测试                                           | 是，测试实现         |
-| `data/`                              | 运行数据            | DuckDB、raw、parquet、reports、audit、cache、files                               | 运行产物，不是源代码 |
-| `docs/`                              | 设计/治理文档       | 架构、模块、运维、任务、质量、ADR、交接                                          | **否：设计依据**     |
-| `specs/`                             | 契约/定义/spec      | schema、contracts、registry、Layer specs                                         | **否：契约依据**     |
-| `MIGRATION_MAP.md`                   | 项目地图            | 跨目录索引、旧口径防恢复、MANIFEST 说明                                          | 否                   |
-| `ROUND3_BATCH_IMPLEMENTATION_MAP.md` | Round3 批次计划索引 | Round3 六批次切分、Plan Source Index、DB inspect CLI early 边界                  | 否                   |
-| `MANIFEST.json`                      | 发布输出清单        | 修复包文件清单与 hash；不是权威输入                                              | 否                   |
-| `README.md`                          | 稳定入口            | 项目简介、边界、启动步骤、关键保护规则                                           | 否                   |
+| 路径                                 | 类型                | 用途                                                                                                          | 是否实现地址         |
+| ------------------------------------ | ------------------- | ------------------------------------------------------------------------------------------------------------- | -------------------- |
+| `backend/app/`                       | Python 后端实现     | FastAPI、数据源、同步、DB、五层模型、Agent、通知、校验等后端实现                                              | 是                   |
+| `frontend/src/`                      | 前端实现            | Vite + React + TypeScript Dashboard shell 与后续页面                                                          | 是                   |
+| `scripts/`                           | CLI / 维护脚本实现  | 初始化 DB、同步 registry、文档检查、生产 gate、smoke 等                                                       | 是                   |
+| `configs/`                           | 本地配置            | datasource、alert、resource limits、market registry、qmt、layer1 axes 等运行配置                              | 是，配置入口         |
+| `tests/`                             | 自动化测试          | pytest、contract gate、smoke、边界测试                                                                        | 是，测试实现         |
+| `data/`                              | 运行数据            | DuckDB、raw、parquet、reports、audit、cache、files                                                            | 运行产物，不是源代码 |
+| `docs/`                              | 设计/治理文档       | 架构、模块、运维、任务、质量、ADR、交接                                                                       | **否：设计依据**     |
+| `specs/`                             | 契约/定义/spec      | schema、contracts、registry、Layer specs                                                                      | **否：契约依据**     |
+| `MIGRATION_MAP.md`                   | 项目地图            | 跨目录索引、旧口径防恢复、MANIFEST 说明                                                                       | 否                   |
+| `ROUND3_BATCH_IMPLEMENTATION_MAP.md` | Round3 批次计划索引 | Round3 六批次切分、Batch 2.5 bridge、Batch 2.75 live pilot gate、Plan Source Index、DB inspect CLI early 边界 | 否                   |
+| `MANIFEST.json`                      | 发布输出清单        | 修复包文件清单与 hash；不是权威输入                                                                           | 否                   |
+| `README.md`                          | 稳定入口            | 项目简介、边界、启动步骤、关键保护规则                                                                        | 否                   |
 
 ## 4. `docs/` 设计文档目录地图
 
@@ -164,16 +164,17 @@
 
 ### 4.7 质量与发布治理 `docs/quality/`
 
-| 路径                                                       | 用途                                                  |
-| ---------------------------------------------------------- | ----------------------------------------------------- |
-| `docs/quality/final_package_rules.md`                      | 最终发布包规则                                        |
-| `docs/quality/PENDING_USER_DECISIONS.md`                   | 用户已拍板 D-01 至 D-12，执行角色不得反复询问         |
-| `docs/quality/REPAIR_EXECUTION_SELF_CHECK.md`              | 修复执行自检                                          |
-| `docs/quality/REPAIR_IMPORT_CODE_GAP_LEDGER.md`            | 修复包导入后代码与 docs/specs 口径差台账；当前 closed |
-| `docs/quality/REPAIR_IMPORT_PHASE2_NON_MANIFEST_REVIEW.md` | 非 MANIFEST 文件删留审查                              |
-| `docs/quality/ROUND2_REPAIR_ALIGNMENT_TRACKER.md`          | Round2/Round2.5 修复对齐 tracker                      |
-| `docs/quality/self_check_and_audit.md`                     | 自检与审计清单                                        |
-| `docs/quality/staged_acceptance_policy.md`                 | 分阶段验收策略                                        |
+| 路径                                                       | 用途                                                                             |
+| ---------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `docs/quality/final_package_rules.md`                      | 最终发布包规则                                                                   |
+| `docs/quality/PENDING_USER_DECISIONS.md`                   | 用户已拍板 D-01 至 D-12，执行角色不得反复询问                                    |
+| `docs/quality/REPAIR_EXECUTION_SELF_CHECK.md`              | 修复执行自检                                                                     |
+| `docs/quality/REPAIR_IMPORT_CODE_GAP_LEDGER.md`            | 修复包导入后代码与 docs/specs 口径差台账；当前 closed                            |
+| `docs/quality/REPAIR_IMPORT_PHASE2_NON_MANIFEST_REVIEW.md` | 非 MANIFEST 文件删留审查                                                         |
+| `docs/quality/ROUND2_REPAIR_ALIGNMENT_TRACKER.md`          | Round2/Round2.5 修复对齐 tracker                                                 |
+| `docs/quality/self_check_and_audit.md`                     | 自检与审计清单                                                                   |
+| `docs/quality/production_live_pilot_policy.md`             | Batch 2.75 受控生产/live 数据试点门禁；授权、sandbox、raw-only、no-mutation 规则 |
+| `docs/quality/staged_acceptance_policy.md`                 | 分阶段验收策略                                                                   |
 
 ### 4.8 Schema 迁移说明 `docs/schema/`
 
@@ -242,6 +243,7 @@
 | `docs/implementation_tasks/ROUND_3_MODELING_LAYERS/017_implement_layer1_axis_loader.md`                                          | Layer 1 axis loader 实施任务                                                                      |
 | `docs/implementation_tasks/ROUND_3_MODELING_LAYERS/018_implement_layer1_interpretation_snapshot.md`                              | Layer 1 interpretation snapshot 实施任务                                                          |
 | `docs/implementation_tasks/ROUND_3_MODELING_LAYERS/018A_layer1_observation_ingestion_bridge.md`                                  | Round3 Batch 2.5 Layer 1 observation ingestion bridge；五阶段 Gate 与逐阶段审计                   |
+| `docs/implementation_tasks/ROUND_3_MODELING_LAYERS/018B_production_live_pilot_gate.md`                                           | Round3 Batch 2.75 受控生产/live 数据试点门禁；正式实现前的任务卡与验收边界                        |
 | `docs/implementation_tasks/ROUND_3_MODELING_LAYERS/019_implement_layer2_cross_asset_sensor.md`                                   | Layer 2 cross-asset sensor 实施任务                                                               |
 | `docs/implementation_tasks/ROUND_3_MODELING_LAYERS/020_implement_layer3_industry_chain_loader.md`                                | Layer 3 industry chain loader 实施任务                                                            |
 | `docs/implementation_tasks/ROUND_3_MODELING_LAYERS/021_implement_layer3_snapshot_builder.md`                                     | Layer 3 snapshot builder 实施任务                                                                 |

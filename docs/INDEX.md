@@ -81,13 +81,14 @@ See [`docs/modules/`](modules/) — one file per implementation module (data syn
 
 ## Quality
 
-| File                                                                                               | Topic                       |
-| -------------------------------------------------------------------------------------------------- | --------------------------- |
-| [final_package_rules.md](quality/final_package_rules.md)                                           | Deliverable rules           |
-| [self_check_and_audit.md](quality/self_check_and_audit.md)                                         | Audit checklist             |
-| [staged_acceptance_policy.md](quality/staged_acceptance_policy.md)                                 | 分阶段验收                  |
-| [REPAIR_IMPORT_CODE_GAP_LEDGER.md](quality/REPAIR_IMPORT_CODE_GAP_LEDGER.md)                       | 导入后代码口径差（Phase 3） |
-| [REPAIR_IMPORT_PHASE2_NON_MANIFEST_REVIEW.md](quality/REPAIR_IMPORT_PHASE2_NON_MANIFEST_REVIEW.md) | 非 MANIFEST 文件删留审查    |
+| File                                                                                               | Topic                                 |
+| -------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| [final_package_rules.md](quality/final_package_rules.md)                                           | Deliverable rules                     |
+| [self_check_and_audit.md](quality/self_check_and_audit.md)                                         | Audit checklist                       |
+| [production_live_pilot_policy.md](quality/production_live_pilot_policy.md)                         | Batch 2.75 production/live pilot gate |
+| [staged_acceptance_policy.md](quality/staged_acceptance_policy.md)                                 | 分阶段验收                            |
+| [REPAIR_IMPORT_CODE_GAP_LEDGER.md](quality/REPAIR_IMPORT_CODE_GAP_LEDGER.md)                       | 导入后代码口径差（Phase 3）           |
+| [REPAIR_IMPORT_PHASE2_NON_MANIFEST_REVIEW.md](quality/REPAIR_IMPORT_PHASE2_NON_MANIFEST_REVIEW.md) | 非 MANIFEST 文件删留审查              |
 
 ## API & agent contracts (narrative)
 
@@ -98,6 +99,8 @@ See [`docs/api/`](api/) for FastAPI routes and agent tool documentation.
 Start at [`implementation_tasks/README.md`](implementation_tasks/README.md).
 
 Round 3 Batch 2.5 bridge entry: [`018A_layer1_observation_ingestion_bridge.md`](implementation_tasks/ROUND_3_MODELING_LAYERS/018A_layer1_observation_ingestion_bridge.md).
+
+Round 3 Batch 2.75 pilot entry: [`018B_production_live_pilot_gate.md`](implementation_tasks/ROUND_3_MODELING_LAYERS/018B_production_live_pilot_gate.md).
 
 Plan-stage inputs for turning original tasks into Trellis frozen plans:
 

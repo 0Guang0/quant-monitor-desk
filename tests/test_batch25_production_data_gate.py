@@ -76,8 +76,8 @@ def test_batch25_evidence_is_staged_not_production_live() -> None:
     assert "B2.5-O-05" in master
     assert "**DEFERRED**" in master
     assert "| B2.5-O-05 |" in registry
-    assert "User-authorized live" in registry
-    assert "live requires auth evidence" in registry
+    assert "Batch 2.75" in registry
+    assert "live requires Batch 2.75 auth evidence" in registry
 
     assert "external_user_auth_required | false" in phase1_classification
     assert "Are data-root files production live vendor ingestion? | **No**" in phase1_classification

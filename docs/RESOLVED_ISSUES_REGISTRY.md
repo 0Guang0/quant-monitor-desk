@@ -2,7 +2,7 @@
 
 > Purpose: one file for resolved/closed issues, gates, risks, and repairs.  
 > Pair: unresolved items live in `docs/UNRESOLVED_ISSUES_REGISTRY.md`.  
-> Last reconciled: 2026-06-20 after Round 3 Batch 1 early ops closure.
+> Last reconciled: 2026-06-21 after Batch 2.75 planning/policy gate insertion and targeted verification.
 
 ## Round 3 Batch 1 resolved items (2026-06-20)
 
@@ -52,14 +52,13 @@
 
 ## Current verification snapshot
 
-| Command / evidence                                                                                                                                                                     | Result                                                                                                    |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `pytest -q`                                                                                                                                                                            | PASS in current session.                                                                                  |
-| `pytest tests/test_module_boundaries.py tests/test_source_capabilities.py tests/test_source_route_planner.py tests/test_datasource_service.py tests/test_platform_source_matrix.py -q` | 37 passed in current session.                                                                             |
-| `pytest tests/test_vendor_fetch_e2e.py -q`                                                                                                                                             | 2 passed in current session.                                                                              |
-| `pytest tests/test_sync_orchestrator.py tests/test_sync_jobs.py -q`                                                                                                                    | 24 passed in current session.                                                                             |
-| Archived Round2.6 Contract Gate audit                                                                                                                                                  | PASS.                                                                                                     |
-| Archived Round2.6 Routing Service Gate audit                                                                                                                                           | PASS; records `pytest -q` 443 tests, `check_module_boundaries.py` PASS, production-equivalent smoke PASS. |
+| Command / evidence                                                                                                                                                                                           | Result                                                                                                    |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
+| `pytest tests/test_production_live_pilot_policy.py tests/test_batch25_production_data_gate.py tests/test_documentation_index.py tests/test_global_execution_rules.py tests/test_trellis_validate_plan.py -q` | 25 passed in current session.                                                                             |
+| `pytest tests/test_production_live_pilot_policy.py tests/test_batch25_production_data_gate.py -q`                                                                                                            | 9 passed in current session.                                                                              |
+| `pytest tests/test_documentation_index.py tests/test_global_execution_rules.py tests/test_trellis_validate_plan.py -q`                                                                                       | 16 passed in current session.                                                                             |
+| Archived Round2.6 Contract Gate audit                                                                                                                                                                        | PASS.                                                                                                     |
+| Archived Round2.6 Routing Service Gate audit                                                                                                                                                                 | PASS; records `pytest -q` 443 tests, `check_module_boundaries.py` PASS, production-equivalent smoke PASS. |
 
 ## Round 3 Batch 2.5 — Layer 1 observation ingestion bridge
 
@@ -67,6 +66,12 @@
 | --------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | B2.5-O-04 | 2026-06-20 | `commit_clean_observation_and_snapshots` + `Layer1ObservationWriter`; `test_layer1Observation_cleanWrite_usesWriteManager`      |
 | B2.5-O-07 | 2026-06-20 | Single `fetch_log` per service fetch; `base_adapter.record_fetch_log`; `test_layer1MicroIngestion_writesFetchLogAndRawEvidence` |
+
+## Round 3 Batch 2.75 — planning/policy gate
+
+| ID               | Closed     | Evidence                                                                                                                                                                                                                                                 | Follow-up                                                                                   |
+| ---------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| R3-B2.75-PLAN-01 | 2026-06-21 | `ROUND3_BATCH_IMPLEMENTATION_MAP.md`; `docs/implementation_tasks/ROUND_3_MODELING_LAYERS/018B_production_live_pilot_gate.md`; `docs/quality/production_live_pilot_policy.md`; `tests/test_production_live_pilot_policy.py`; `.ai-bridge/current-plan.md` | Does not close `R3-B2.75-01`; actual controlled live pilot implementation remains DEFERRED. |
 
 ## Operating rule
 

@@ -85,12 +85,26 @@ Does **not** block 017 per `ROUND2_GAPS` §6; **must** be closed or re-deferred 
 
 > Task-scoped index: `.trellis/tasks/06-20-round3-batch2-5-layer1-obs-ingest/research/batch25-deferred-items.md`
 
-| ID        | Item                                                                                  | Resolution phase                              | Task hook                                      | Blocks Phase 1? | Closure test / evidence                                                                |
-| --------- | ------------------------------------------------------------------------------------- | --------------------------------------------- | ---------------------------------------------- | --------------- | -------------------------------------------------------------------------------------- |
-| B2.5-O-02 | `specs/schema/schema.sql` missing all 7 `axis_*` tables (migration 011 authoritative) | **Optional narrow PR** or Batch 2.5 closeout  | `06-20-round3-batch2-5-layer1-obs-ingest` §8.6 | No              | `test_layer1Ingestion_phase0_schemaSqlLagTrackedAsO02` + schema.sql sync PR            |
-| B2.5-O-03 | `axis_observation` no DB CHECK on timestamp ordering                                  | **Phase 4 or migration 012**                  | `ingestion.py` commit path                     | No (Phase 4)    | `test_layer1Ingestion_phase0_axisObservation_noDbCheck_classified` + Phase 4 validator |
-| B2.5-O-05 | Live FRED `primary_source` for `ENV-E1-DGS10` vs staged `macro_supplementary`         | **User-authorized live** or remain staged     | MASTER AC-P2-0                                 | No              | Staged route test green; live requires auth evidence                                   |
-| B2.5-O-06 | Migration 008 broad CHECK closeout                                                    | **Round 3 migration 008** (existing A9-P1-01) | `MIGRATION_008_PLAN.md`                        | No              | migration 008 + contract tests                                                         |
+| ID        | Item                                                                                  | Resolution phase                                           | Task hook                                             | Blocks Phase 1? | Closure test / evidence                                                                       |
+| --------- | ------------------------------------------------------------------------------------- | ---------------------------------------------------------- | ----------------------------------------------------- | --------------- | --------------------------------------------------------------------------------------------- |
+| B2.5-O-02 | `specs/schema/schema.sql` missing all 7 `axis_*` tables (migration 011 authoritative) | **Optional narrow PR** or Batch 2.5 closeout               | `06-20-round3-batch2-5-layer1-obs-ingest` §8.6        | No              | `test_layer1Ingestion_phase0_schemaSqlLagTrackedAsO02` + schema.sql sync PR                   |
+| B2.5-O-03 | `axis_observation` no DB CHECK on timestamp ordering                                  | **Phase 4 or migration 012**                               | `ingestion.py` commit path                            | No (Phase 4)    | `test_layer1Ingestion_phase0_axisObservation_noDbCheck_classified` + Phase 4 validator        |
+| B2.5-O-05 | Live FRED `primary_source` for `ENV-E1-DGS10` vs staged `macro_supplementary`         | **Batch 2.75 user-authorized live pilot** or remain staged | `018B_production_live_pilot_gate.md` · MASTER AC-P2-0 | No              | Staged route test green; live requires Batch 2.75 auth evidence and sandbox/no-mutation proof |
+| B2.5-O-06 | Migration 008 broad CHECK closeout                                                    | **Round 3 migration 008** (existing A9-P1-01)              | `MIGRATION_008_PLAN.md`                               | No              | migration 008 + contract tests                                                                |
+
+---
+
+## DEFERRED — Round 3 Batch 2.75 (controlled production live pilot gate)
+
+| ID          | Item                                                       | Resolution phase                                      | Task hook                                                                             | Blocks 019? | Closure test / evidence                                                                                                                                                         |
+| ----------- | ---------------------------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R3-B2.75-01 | Controlled production/live pilot has not been executed yet | **Batch 2.75** before Batch 3 or explicit re-deferral | `018B_production_live_pilot_gate.md` · `docs/quality/production_live_pilot_policy.md` | No          | Pilot closeout state plus route READY, raw evidence, fetch_log/file_registry evidence, validation evidence, lineage if clean sandbox write, and no production DB mutation proof |
+
+## RESOLVED — Round 3 Batch 2.75 planning/policy gate
+
+| ID               | Item                                            | Evidence                                                                                                                       |
+| ---------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| R3-B2.75-PLAN-01 | Batch 2.75 inserted into Round3 plan and policy | `ROUND3_BATCH_IMPLEMENTATION_MAP.md` · `018B_production_live_pilot_gate.md` · `production_live_pilot_policy.md` · policy tests |
 
 ## RESOLVED — Round 3 Batch 2.5 (Layer 1 observation ingestion bridge)
 
