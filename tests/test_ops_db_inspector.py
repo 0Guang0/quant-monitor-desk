@@ -178,6 +178,33 @@ def test_dbInspect_pathOutsideDataRoot_rejectedFromScan(tmp_path: Path) -> None:
     assert report.data_root["scan_limited"] is False
 
 
+@pytest.mark.parametrize("subdir", ["audit", "report"])
+def test_dbInspect_subdirScan_respectsLimit(tmp_path: Path, subdir: str) -> None:
+    """R3-AUDIT-DEF-03: audit/report subdirs share scan cap with raw/parquet."""
+    db = tmp_path / "t.duckdb"
+    _init_db(db)
+    data_root = tmp_path / "data"
+    target = data_root / subdir
+    target.mkdir(parents=True)
+    for i in range(110):
+        (target / f"file-{i}.txt").write_text("x", encoding="utf-8")
+
+    report = DbInspector(db, data_root, limit=500).inspect()
+    key = f"{subdir}_files_count"
+    assert report.data_root[key] == 100
+    assert report.data_root["scan_limited"] is True
+
+
+def test_dbInspect_missingDataRoot_stillOpensDbReadOnly(tmp_path: Path) -> None:
+    db = tmp_path / "t.duckdb"
+    _init_db(db)
+    missing_root = tmp_path / "no-such-data-root"
+    report = DbInspector(db, missing_root, include_path_check=True).inspect()
+    assert report.db["read_only_open"] is True
+    assert report.data_root["exists"] is False
+    assert report.data_root["raw_files_count"] == 0
+
+
 def test_dbInspect_limit_floorClampsToMinimumOne(tmp_path: Path) -> None:
     db = tmp_path / "t.duckdb"
     _init_db(db)

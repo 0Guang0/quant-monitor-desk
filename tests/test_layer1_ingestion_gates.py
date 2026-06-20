@@ -94,11 +94,10 @@ def test_layer1Ingestion_phase0_migration011_definesAxisTables() -> None:
 
 
 def test_layer1Ingestion_phase0_schemaSqlLagTrackedAsO02() -> None:
-    """schema.sql lags migration 011 for axis tables — O-02 DEFERRED, not silent."""
+    """schema.sql includes all Layer 1 axis tables (B2.5-O-02 closed)."""
     schema_text = SCHEMA_SQL.read_text(encoding="utf-8")
     missing = [t for t in LAYER1_AXIS_TABLES if t not in schema_text]
-    assert "axis_observation" in missing
-    assert len(missing) == len(LAYER1_AXIS_TABLES)
+    assert missing == []
 
 
 def test_layer1Ingestion_phase0_applyMigrations_createsAxisTables() -> None:
@@ -354,10 +353,50 @@ def test_dbInspect_keyTables_includeLayer1AxisTables() -> None:
 
 
 def test_layer1Ingestion_phase0_axisObservation_noDbCheck_classified() -> None:
-    """ADR-002: axis_observation CHECK deferred; app validators enforce no-future-data."""
+    """ADR-002: axis_observation DB CHECK deferred (DuckDB ALTER limitation); app layer enforces."""
     ddl = MIGRATION_011.read_text(encoding="utf-8")
     obs_block = ddl.split("CREATE TABLE IF NOT EXISTS axis_observation")[1].split(");")[0]
     assert "CHECK" not in obs_block.upper()
+
+
+def test_layer1Ingestion_phase0_axisObservation_appValidatorEnforcesTimestampOrder() -> None:
+    """B2.5-O-03 closed via app-layer: future publish blocked in commit path (see Phase 4 tests)."""
+    pipeline = PIPELINE_TESTS.read_text(encoding="utf-8")
+    assert "test_layer1Observation_noFutureDataRejected" in pipeline
+
+
+def test_layer1Ingestion_phase0_knownPytestSkipsDocumented() -> None:
+    """Audit A05-P1-02: platform skips are documented for CI triage."""
+    doc = PROJECT_ROOT / "docs/quality/KNOWN_PYTEST_SKIPS.md"
+    assert doc.is_file()
+    text = doc.read_text(encoding="utf-8")
+    assert "test_dbInspect_symlinkOutsideDataRoot_notCounted" in text
+
+
+def test_layer1Ingestion_phase0_batch25PendingFixRegistryPresent() -> None:
+    """Audit follow-up: deferred items and phases are registered."""
+    reg = PROJECT_ROOT / "docs/quality/ROUND3_BATCH25_PENDING_FIX_REGISTRY.md"
+    assert reg.is_file()
+    text = reg.read_text(encoding="utf-8")
+    assert "R3-B2.75-01" in text
+    assert "layer1_ingestion_refactor_rollback_plan.md" in text
+
+
+def test_layer1Ingestion_phase0_batch3StagedDownstreamGateDocumented() -> None:
+    """A01-P1-02: Batch 3 must inherit staged-only handoff before planning."""
+    gate = PROJECT_ROOT / "docs/quality/BATCH3_STAGED_DOWNSTREAM_GATE.md"
+    assert gate.is_file()
+    text = gate.read_text(encoding="utf-8")
+    assert "R3-B2.75-01" in text
+    assert "staged" in text.lower()
+
+
+def test_layer1Ingestion_phase0_pytestSlowMarkerRegistered() -> None:
+    """A08-P1-02: slow marker registered for quick CI profile."""
+    pyproject = (PROJECT_ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    assert "slow:" in pyproject
+    skips = (PROJECT_ROOT / "docs/quality/KNOWN_PYTEST_SKIPS.md").read_text(encoding="utf-8")
+    assert "not slow" in skips
 
 
 def test_layer1Ingestion_phase0_fetchTraceFieldsDocumented() -> None:

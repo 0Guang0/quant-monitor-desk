@@ -32,10 +32,12 @@ def _load_raw_evidence_payload(micro: MicroFetchResult, data_root: Path) -> dict
     paths = micro.fetch_result.raw_file_paths
     if not paths:
         raise ObservationMappingError("missing raw_file_paths on fetch result")
+    from backend.app.storage.path_compat import is_file, read_bytes
+
     raw_path = (data_root / paths[0]).resolve()
-    if not raw_path.is_file():
+    if not is_file(raw_path):
         raise ObservationMappingError(f"raw fetch file missing: {raw_path}")
-    payload = json.loads(raw_path.read_text(encoding="utf-8"))
+    payload = json.loads(read_bytes(raw_path).decode("utf-8"))
     if not isinstance(payload, dict):
         raise ObservationMappingError("raw fetch payload must be a JSON object")
     return payload

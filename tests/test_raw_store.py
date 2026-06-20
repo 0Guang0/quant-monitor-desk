@@ -56,6 +56,30 @@ def test_save_pathTraversal_raises(tmp_path: Path) -> None:
         store.save(b"x", source="..", data_domain="daily_bar", file_type="json", as_of="2026-06-15")
 
 
+def test_save_invalidDataDomain_raises(tmp_path: Path) -> None:
+    store = RawStore(tmp_path)
+    with pytest.raises(ValueError, match="invalid data_domain"):
+        store.save(
+            b"x",
+            source="qmt",
+            data_domain="../escape",
+            file_type="json",
+            as_of="2026-06-15",
+        )
+
+
+def test_save_invalidAsOf_raises(tmp_path: Path) -> None:
+    store = RawStore(tmp_path)
+    with pytest.raises(ValueError, match="invalid as_of"):
+        store.save(
+            b"x",
+            source="qmt",
+            data_domain="daily_bar",
+            file_type="json",
+            as_of="bad as of!",
+        )
+
+
 def test_save_unsupportedFileType_raises(tmp_path: Path) -> None:
     store = RawStore(tmp_path)
     with pytest.raises(ValueError, match="unsupported file_type"):
@@ -259,3 +283,33 @@ def test_register_validationRejected_persistsFailedAudit(tmp_path: Path) -> None
         file_cnt = r.execute("SELECT COUNT(*) FROM file_registry").fetchone()[0]
     assert file_cnt == 0
     assert audit == ("FAILED", "file_registry", "validation rejected: stub-fail-registry")
+
+
+def test_save_windowsLongPath_writesSuccessfully(tmp_path: Path) -> None:
+    """Regression: deep evidence sandbox paths must not fail on Windows MAX_PATH."""
+    import os
+
+    if os.name != "nt":
+        pytest.skip("Windows long-path regression only")
+    deep_root = tmp_path
+    for segment in (
+        ".audit-sandbox",
+        "pytest-9agent-restored-targeted",
+        "test_layer1Ingestion_phase3_taskEvidenceArtifacts0",
+        "evidence",
+        ".phase3-micro-fetch-sandbox",
+        "data",
+    ):
+        deep_root = deep_root / segment
+    store = RawStore(deep_root)
+    saved = store.save(
+        b'{"observations":[{"metric_value":1.0}]}',
+        source="akshare",
+        data_domain="macro_supplementary",
+        file_type="json",
+        as_of="2024-06-15",
+    )
+    from backend.app.storage.path_compat import is_file
+
+    assert is_file(Path(saved.local_path))
+    assert len(str(Path(saved.local_path).resolve())) >= 260

@@ -95,13 +95,24 @@ class SkeletonAdapterBase(BaseDataAdapter):
                 ),
             )
 
-        saved = self._raw_store.save(
-            payload.content,
-            source=self.source_id,
-            data_domain=req.data_domain,
-            file_type=payload.file_type,
-            as_of=as_of,
-        )
+        try:
+            saved = self._raw_store.save(
+                payload.content,
+                source=self.source_id,
+                data_domain=req.data_domain,
+                file_type=payload.file_type,
+                as_of=as_of,
+            )
+        except OSError as exc:
+            return FetchResult(
+                run_id=req.run_id,
+                source_id=self.source_id,
+                data_domain=req.data_domain,
+                status="FAILED",
+                row_count=0,
+                fetch_time=fetch_time,
+                error_message=str(exc),
+            )
         if self._file_registry is not None:
             self._file_registry.register(saved)
 

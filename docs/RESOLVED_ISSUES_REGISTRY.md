@@ -2,7 +2,15 @@
 
 > Purpose: one file for resolved/closed issues, gates, risks, and repairs.  
 > Pair: unresolved items live in `docs/UNRESOLVED_ISSUES_REGISTRY.md`.  
-> Last reconciled: 2026-06-21 after Batch 2.75 planning/policy gate insertion and targeted verification.
+> Last reconciled: 2026-06-21 after Batch 2.5 audit fix branch (path_compat, schema.sql, uv.lock).
+
+## Round 3 Batch 2.5 resolved items (2026-06-21)
+
+| ID               |     Closed | Item                                                                         | Evidence                                                                                                                         |
+| ---------------- | ---------: | ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| B2.5-O-02        | 2026-06-21 | `specs/schema/schema.sql` synced with migration 011 axis tables              | `test_layer1Ingestion_phase0_schemaSqlLagTrackedAsO02` · `specs/schema/schema.sql`                                               |
+| B2.5-O-03        | 2026-06-21 | `axis_observation` timestamp ordering via app-layer (DuckDB ALTER CHECK N/A) | `test_layer1Observation_noFutureDataRejected` · `test_layer1Ingestion_phase0_axisObservation_appValidatorEnforcesTimestampOrder` |
+| B2.5-WIN-PATH-01 | 2026-06-21 | Windows MAX_PATH raw evidence under deep pytest basetemp                     | `backend/app/storage/path_compat.py` · `test_save_windowsLongPath_writesSuccessfully` · phase3/4 evidence tests                  |
 
 ## Round 3 Batch 1 resolved items (2026-06-20)
 

@@ -8,6 +8,7 @@ staged/fixture evidence from being promoted to production-live readiness by word
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import duckdb
@@ -42,25 +43,33 @@ def _table_count(con: duckdb.DuckDBPyConnection, table_name: str) -> int:
     return int(con.execute(f'SELECT COUNT(*) FROM "{table_name}"').fetchone()[0])
 
 
+def _registry_table_row(registry_text: str, item_id: str) -> bool:
+    """Match markdown table rows regardless of column padding (prettier-safe)."""
+    return bool(re.search(rf"\|\s*{re.escape(item_id)}\s*\|", registry_text))
+
+
 def test_batch25_deferredItems_documentedInRegistries() -> None:
     """Batch 2.5 DEFERRED IDs must appear in registries with closure hooks."""
-    deferred_ids = ("B2.5-O-02", "B2.5-O-03", "B2.5-O-05", "B2.5-O-06")
+    deferred_ids = ("B2.5-O-05", "B2.5-O-06")
     audit_deferred = _read_text(PROJECT_ROOT / "docs/AUDIT_DEFERRED_REGISTRY.md")
     unresolved = _read_text(PROJECT_ROOT / "docs/UNRESOLVED_ISSUES_REGISTRY.md")
     task_register = _read_text(TASK_DIR / "research/batch25-deferred-items.md")
     final_registry = _read_text(EVIDENCE_DIR / "final_registry_update.md")
 
     for item_id in deferred_ids:
-        assert f"| {item_id} |" in audit_deferred
-        assert f"| {item_id} |" in unresolved
+        assert _registry_table_row(audit_deferred, item_id)
+        assert _registry_table_row(unresolved, item_id)
         assert item_id in task_register
         assert "DEFERRED" in task_register or "Deferred" in task_register
         assert item_id in final_registry
 
-    resolved_ids = ("B2.5-O-04", "B2.5-O-07")
+    resolved_ids = ("B2.5-O-02", "B2.5-O-03", "B2.5-O-04", "B2.5-O-07", "B2.5-WIN-PATH-01")
     resolved = _read_text(PROJECT_ROOT / "docs/RESOLVED_ISSUES_REGISTRY.md")
     for item_id in resolved_ids:
         assert item_id in resolved
+
+    pending = _read_text(PROJECT_ROOT / "docs/quality/ROUND3_BATCH25_PENDING_FIX_REGISTRY.md")
+    assert "R3-B2.75-01" in pending
 
 
 def test_batch25_evidence_is_staged_not_production_live() -> None:

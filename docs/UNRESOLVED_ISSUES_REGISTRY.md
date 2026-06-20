@@ -2,7 +2,7 @@
 
 > Purpose: one file for all current unresolved, deferred, open, risk, gap, and improvement items.  
 > Source of truth relationship: this file is the readable unresolved split of `docs/AUDIT_DEFERRED_REGISTRY.md`. If files conflict, update both in the same change and keep this file as the operator-facing unresolved list.  
-> Last reconciled: 2026-06-21 after Batch 2.75 planning/policy gate insertion and targeted registry/documentation tests.
+> Last reconciled: 2026-06-21 after Batch 2.5 audit fix branch + `ROUND3_BATCH25_PENDING_FIX_REGISTRY.md` insertion.
 
 ## Current Round 3 entry status
 
@@ -58,12 +58,16 @@
 
 ## Round 3 Batch 2.5 — Layer 1 observation ingestion bridge
 
-| ID        | State    | Blocks Phase 1? | Problem / gap / risk                                                                     | Evidence / source                                                                                 | Resolution / closure test                                                                                                               |
-| --------- | -------- | --------------: | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| B2.5-O-02 | DEFERRED |              No | `specs/schema/schema.sql` missing all 7 `axis_*` tables; migration 011 is runtime SSOT.  | `AUDIT_DEFERRED_REGISTRY.md`; `phase0_db_contract_gate.md` §1; adversarial audit F-A1-03/F-A2-04. | `test_layer1Ingestion_phase0_schemaSqlLagTrackedAsO02` + optional schema.sql sync PR at §8.6.                                           |
-| B2.5-O-03 | DEFERRED |              No | `axis_observation` has no DB CHECK on timestamp ordering (ADR-002 app-layer).            | `AUDIT_DEFERRED_REGISTRY.md`; `observation_contract.py`; adversarial audit F-A2-05.               | `test_layer1Ingestion_phase0_axisObservation_noDbCheck_classified` + Phase 4 validator or migration 012.                                |
-| B2.5-O-05 | DEFERRED |              No | `ENV-E1-DGS10` declares FRED primary; production path uses staged `macro_supplementary`. | `MASTER.plan.md` AC-P2-0; adversarial audit F-A1-04; `018B_production_live_pilot_gate.md`.        | Staged route gate test green; live FRED requires Batch 2.75 authorization evidence, sandbox evidence, and no-production-mutation proof. |
-| B2.5-O-06 | DEFERRED |              No | Migration 008 broad CHECK closeout (alias of A9-P1-01 for ingestion tables).             | `AUDIT_DEFERRED_REGISTRY.md`; `MIGRATION_008_PLAN.md`; adversarial audit F-A2-05 related.         | migration 008 applied + contract tests.                                                                                                 |
+| ID            | State          | Blocks Phase 1? | Problem / gap / risk                                                                     | Evidence / source                                                                              | Resolution / closure test                                                                                           |
+| ------------- | -------------- | --------------: | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| B2.5-O-05     | DEFERRED       |              No | `ENV-E1-DGS10` declares FRED primary; production path uses staged `macro_supplementary`. | `MASTER.plan.md` AC-P2-0; `018B_production_live_pilot_gate.md`; audit `临时报告` GLOBAL-P2-01. | **Batch 2.75:** staged route test green; live FRED requires authorization + sandbox + no-production-mutation proof. |
+| B2.5-O-06     | DEFERRED       |              No | Migration 008 broad CHECK closeout (alias of A9-P1-01 for ingestion tables).             | `AUDIT_DEFERRED_REGISTRY.md`; `MIGRATION_008_PLAN.md`.                                         | **Round 3 migration 008:** migration applied + contract tests.                                                      |
+| R3-B25-HYG-01 | OPEN (hygiene) |              No | `ingestion.py` ~1500 LOC; evidence/runtime 未拆分                                        | audit A03/A07; `ROUND3_BATCH25_PENDING_FIX_REGISTRY.md` §3.3                                   | **PR-R2a+** per `layer1_ingestion_refactor_rollback_plan.md`                                                        |
+| R3-B25-HYG-02 | OPEN (hygiene) |              No | 前端 Vitest 仅 3 项；无 bundle budget                                                    | audit A05-P2-02 / A08-P2-02                                                                    | **Round 4** task 027 + CI bundle gate                                                                               |
+| R3-B25-HYG-03 | OPEN (hygiene) |              No | full pytest ~100s；无 test tier / 新 A6 benchmark                                        | audit A08-P1-02 / A08-P2-01                                                                    | **Round 3 CI hygiene** + optional nightly smoke                                                                     |
+| R3-B25-HYG-04 | OPEN (hygiene) |              No | `.audit-sandbox*` 测试产物 review 噪音                                                   | audit A05-P3-01                                                                                | **merge/release 前**清理或记录保留原因                                                                              |
+
+> **Moved to RESOLVED:** `B2.5-O-02` (schema.sql sync), `B2.5-O-03` (app-layer timestamp guard), `B2.5-WIN-PATH-01` (Windows MAX_PATH). See `RESOLVED_ISSUES_REGISTRY.md`.
 
 ---
 
@@ -101,8 +105,9 @@
 
 ## Documentation/process unresolved items
 
-| ID  | State | Blocks 017? | Problem / gap / risk | Evidence / source | Resolution / closure test |
-| --- | ----- | ----------: | -------------------- | ----------------- | ------------------------- |
+| ID            | State | Blocks 017? | Problem / gap / risk                             | Evidence / source                                          | Resolution / closure test                                    |
+| ------------- | ----- | ----------: | ------------------------------------------------ | ---------------------------------------------------------- | ------------------------------------------------------------ |
+| R3-B25-DOC-01 | OPEN  |          No | Batch 3 MASTER 必须引用 staged-only handoff 限制 | audit A01-P1-02 · `ROUND3_BATCH25_PENDING_FIX_REGISTRY.md` | Batch 3 规划 PR 引用 `018A` §13 + `final_registry_update.md` |
 
 ---
 
