@@ -1,0 +1,57 @@
+{"file": ".trellis/tasks/06-20-round3-batch2-layer1/MASTER.plan.md", "reason": "Execute single source of truth"}
+{"file": ".cursor/skills/trellis-execute/SKILL.md", "reason": "extract: Phase 0 boot protocol | for: §8.0 Boot"}
+{"file": ".trellis/tasks/06-20-round3-batch2-layer1/research/integration-ledger.md", "reason": "extract: v3 boot routing map | for: §8.0 Boot / §0.4"}
+{"file": ".trellis/tasks/06-20-round3-batch2-layer1/research/layer1-axis-loader-tests.md", "reason": "extract: §8.1-8.2 测试设计 | for: AC-017-*"}
+{"file": ".trellis/tasks/06-20-round3-batch2-layer1/research/layer1-feature-interpretation-tests.md", "reason": "extract: §8.3-8.4 测试设计 | for: AC-018-*"}
+{"file": ".trellis/tasks/06-20-round3-batch2-layer1/research/layer1-lineage-tests.md", "reason": "extract: §8.5 测试设计 | for: AC-LINEAGE-* / AC-WRIT-1"}
+{"file": ".trellis/tasks/06-20-round3-batch2-layer1/research/vertical-slices.md", "reason": "extract: Phase 3.5 垂直切片 | for: §5 顺序"}
+{"file": "README.md", "reason": "extract: docs/specs 非实现边界；三层追溯 | for: §0.8 / §3.1"}
+{"file": "docs/quality/PENDING_USER_DECISIONS.md", "reason": "extract: D-09 Layer1 标准化范围 | for: §0.7 / AC-018-1"}
+{"file": "docs/quality/staged_acceptance_policy.md", "reason": "extract: backend 分层 vs Tier B 加固 | for: §10 注"}
+{"file": "specs/contracts/runtime_versions.md", "reason": "extract: uv sync --locked 与验收命令 | for: §8.0 / §10"}
+{"file": "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md", "reason": "extract: WriteManager/无 drive-by/源角色 | for: §0.7 / §3.3"}
+{"file": "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md", "reason": "extract: RED-GREEN；语义断言 | for: §8.2-8.5 / §12"}
+{"file": "docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md", "reason": "extract: eco；禁止无界扫描 | for: §8.3 / AC-RES-1"}
+{"file": "docs/architecture/03_runtime_flows.md", "reason": "extract: Layer1 运行链路 | for: 017 §5 1-hop"}
+{"file": "docs/architecture/04_data_architecture.md", "reason": "extract: DuckDB clean/staging 分层 | for: 017 §5 1-hop"}
+{"file": "docs/quality/final_package_rules.md", "reason": "extract: 禁止临时 round report | for: §0.7"}
+{"file": "configs/layer1_axes.yml", "reason": "extract: spec_root + enabled_axes | for: AC-017-1 / §8.2"}
+{"file": "docs/modules/layer1_global_regime_panel.md", "reason": "extract: §5-8 DDL/窗口/§13 测试清单 | for: AC-017/018 / §8.1-8.4"}
+{"file": "specs/contracts/layer1_axis_contract.yaml", "reason": "extract: required_indicator_fields; forbidden_output_terms | for: AC-017-2 / AC-018-3"}
+{"file": "specs/layer1_axes/restructured_axes_v1_1/README.md", "reason": "extract: 五轴文件结构 | for: AC-017-1"}
+{"file": "specs/layer1_axes/restructured_axes_v1_1/common/common_axis_rules.md", "reason": "extract: SHADOW 三名强制测试 §4.1 | for: AC-017-6"}
+{"file": "specs/layer1_axes/restructured_axes_v1_1/environment_axis/environment_axis_indicator_spec.yaml", "reason": "extract: ENV 轴指标权威 | for: AC-017-1/2"}
+{"file": "specs/layer1_axes/restructured_axes_v1_1/environment_axis/environment_axis_engineering_rules.md", "reason": "extract: ENV 轴禁止项/混频元数据 | for: AC-017-5"}
+{"file": "specs/layer1_axes/restructured_axes_v1_1/environment_axis/environment_axis_user_guide.md", "reason": "extract: ENV profile 静态解释 | for: axis_indicator_profile"}
+{"file": "specs/layer1_axes/restructured_axes_v1_1/credit_stress_axis/credit_stress_axis_indicator_spec.yaml", "reason": "extract: CREDIT 轴指标权威 | for: AC-017-1/2"}
+{"file": "specs/layer1_axes/restructured_axes_v1_1/credit_stress_axis/credit_stress_axis_engineering_rules.md", "reason": "extract: CREDIT 轴工程规则 | for: AC-017-5"}
+{"file": "specs/layer1_axes/restructured_axes_v1_1/credit_stress_axis/credit_stress_axis_user_guide.md", "reason": "extract: CREDIT profile | for: axis_indicator_profile"}
+{"file": "specs/layer1_axes/restructured_axes_v1_1/risk_appetite_axis/risk_appetite_axis_indicator_spec.yaml", "reason": "extract: RISK 轴指标权威 | for: AC-017-1/2"}
+{"file": "specs/layer1_axes/restructured_axes_v1_1/risk_appetite_axis/risk_appetite_axis_engineering_rules.md", "reason": "extract: RISK 轴工程规则 | for: AC-017-5"}
+{"file": "specs/layer1_axes/restructured_axes_v1_1/risk_appetite_axis/risk_appetite_axis_user_guide.md", "reason": "extract: RISK profile | for: axis_indicator_profile"}
+{"file": "specs/layer1_axes/restructured_axes_v1_1/liquidity_axis/liquidity_axis_indicator_spec.yaml", "reason": "extract: LIQ 轴指标+shadow_diagnostics | for: AC-017-1/6"}
+{"file": "specs/layer1_axes/restructured_axes_v1_1/liquidity_axis/liquidity_axis_engineering_rules.md", "reason": "extract: LIQ 轴工程规则 | for: AC-017-5"}
+{"file": "specs/layer1_axes/restructured_axes_v1_1/liquidity_axis/liquidity_axis_user_guide.md", "reason": "extract: LIQ profile | for: axis_indicator_profile"}
+{"file": "specs/layer1_axes/restructured_axes_v1_1/sentiment_axis/sentiment_axis_indicator_spec.yaml", "reason": "extract: SENT 轴指标权威 | for: AC-017-1/2"}
+{"file": "specs/layer1_axes/restructured_axes_v1_1/sentiment_axis/sentiment_axis_engineering_rules.md", "reason": "extract: SENT 轴工程规则 | for: AC-017-5"}
+{"file": "specs/layer1_axes/restructured_axes_v1_1/sentiment_axis/sentiment_axis_user_guide.md", "reason": "extract: SENT profile | for: axis_indicator_profile"}
+{"file": "specs/contracts/snapshot_lineage_contract.yaml", "reason": "extract: required_fields; validation_tests; constraints | for: AC-LINEAGE-* / §8.5"}
+{"file": "docs/modules/write_manager.md", "reason": "extract: ValidationGate+WriteManager 链路 | for: §3.4 / AC-WRIT-1"}
+{"file": "backend/app/db/write_manager.py", "reason": "extract: WriteRequest API | for: AC-WRIT-1"}
+{"file": "backend/app/db/validation_gate.py", "reason": "extract: DbValidationGate.assert_can_write | for: AC-WRIT-1"}
+{"file": "backend/app/validators/data_quality.py", "reason": "extract: rule_version; _collect_fetch_lineage | for: AC-LINEAGE-2"}
+{"file": "backend/app/core/resource_guard.py", "reason": "extract: ResourceGuard.check eco | for: AC-RES-1"}
+{"file": "specs/contracts/resource_limits.yaml", "reason": "extract: eco profile 阈值 | for: AC-RES-1"}
+{"file": "backend/app/db/migrations/008_lineage_version_fields.sql", "reason": "extract: validation_report lineage 列 | for: AC-LINEAGE-2 前置"}
+{"file": ".trellis/tasks/archive/2026-06/06-20-round3-batch1-early-ops/audit.report.md", "reason": "extract: Batch1 PASS gate | for: AC-PRE"}
+{"file": ".trellis/tasks/archive/2026-06/06-19-round2-6-routing-service-gate/audit.report.md", "reason": "extract: R2.6 routing gate PASS | for: AC-PRE"}
+{"file": ".trellis/tasks/archive/2026-06/06-19-round2-6-contract-gate/audit.report.md", "reason": "extract: R2.6 contract gate PASS | for: AC-PRE"}
+{"file": "docs/adr/ADR-0003-layer1-standardization-only.md", "reason": "extract: D-09 Layer1 only 标准化 | for: AC-018-1 / §0.7"}
+{"file": "docs/modules/duckdb_and_parquet.md", "reason": "extract: Layer1 表存 DuckDB clean | for: §8.1 migration"}
+{"file": "docs/implementation_tasks/ROUND3_EARLY_CLOSE_PLAN.md", "reason": "extract: lineage consumers 范围 | for: AC-LINEAGE-* / §8.5"}
+{"file": "scripts/init_db.py", "reason": "extract: migration 011 应用入口 | for: §8.1 / §10 Tier B"}
+{"file": "scripts/production_gate.py", "reason": "extract: Tier B 门禁 | for: AC-GATE / §8.6"}
+{"file": "scripts/check_doc_links.py", "reason": "extract: doc link gate | for: §10 Tier B"}
+{"file": "backend/app/config.py", "reason": "extract: CONFIGS_ROOT/PROJECT_ROOT for AxisSpecLoader | for: AC-017-1 / A1 trace"}
+{"file": "backend/app/db/connection.py", "reason": "extract: ConnectionManager for Layer1SnapshotWriter | for: AC-WRIT-1 / A1 trace"}
+{"file": "specs/contracts/api_security_contract.yaml", "reason": "extract: duckdb_and_parquet 1-hop；本批不实现 API | for: Boot 对照 only"}

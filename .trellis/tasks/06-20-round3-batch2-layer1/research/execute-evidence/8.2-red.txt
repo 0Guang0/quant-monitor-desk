@@ -1,0 +1,3 @@
+PRE-IMPLEMENTATION RED (loader tests before axis_loader.py):
+FAILED test_axisSpecLoader_loadsFiveAxes - ModuleNotFoundError
+EXIT_CODE=1

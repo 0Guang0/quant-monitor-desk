@@ -1,0 +1,2 @@
+PRE-IMPLEMENTATION RED: FAILED test_axisInterpretation_rejectsForbiddenActionTerms
+EXIT_CODE=1

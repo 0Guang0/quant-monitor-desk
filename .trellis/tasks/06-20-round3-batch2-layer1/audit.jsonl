@@ -1,0 +1,11 @@
+{"file": ".trellis/tasks/06-20-round3-batch2-layer1/AUDIT.plan.md", "reason": "Audit single source of truth"}
+{"file": ".trellis/tasks/06-20-round3-batch2-layer1/MASTER.plan.md", "reason": "extract: §2 AC trace | for: A5 audit-completion"}
+{"file": "specs/contracts/layer1_axis_contract.yaml", "reason": "extract: A1 spec diff | for: A1 audit-spec"}
+{"file": "specs/contracts/snapshot_lineage_contract.yaml", "reason": "extract: lineage required_fields | for: A1 / A5 LINEAGE AC"}
+{"file": "specs/layer1_axes/restructured_axes_v1_1/common/common_axis_rules.md", "reason": "extract: SHADOW 三名 | for: A8 test-gap"}
+{"file": "docs/modules/layer1_global_regime_panel.md", "reason": "extract: §13 验收清单 | for: A8 test-gap"}
+{"file": "backend/app/layer1_axes/", "reason": "extract: 实现符号 | for: A2 ponytail / A3 security"}
+{"file": "backend/app/db/write_manager.py", "reason": "extract: WriteManager 路径 | for: A3 / AC-WRIT-1"}
+{"file": "backend/app/validators/data_quality.py", "reason": "extract: rule_version 消费 | for: A5 LINEAGE trace"}
+{"file": "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md", "reason": "extract: 语义断言 | for: A8"}
+{"file": "research/layer1-axis-loader-tests.md", "reason": "extract: §8.2 测试矩阵 | for: A8"}

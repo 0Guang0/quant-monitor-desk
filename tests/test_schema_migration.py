@@ -64,6 +64,7 @@ def test_appliedVersions_afterMigration_containsFoundation() -> None:
         "008_lineage_version_fields",
         "009_status_check_constraints",
         "010_lineage_not_null",
+        "011_layer1_tables",
     }
 
 
@@ -93,6 +94,7 @@ def test_appliedVersions_afterMigration_containsIngestion() -> None:
             "008_lineage_version_fields",
             "009_status_check_constraints",
             "010_lineage_not_null",
+            "011_layer1_tables",
         }
     )
 
@@ -140,6 +142,7 @@ SCHEMA_PHASE_MATRIX = {
     "005_ingestion_validation": ("implemented", {"validation_report", "source_conflict"}),
     "006_ingestion_sync": ("implemented", {"data_sync_job", "job_event_log"}),
     "007_sync_constraints_audit": ("implemented", {"data_sync_job", "write_audit_log"}),
+    "011_layer1_tables": ("implemented", {"axis_registry", "axis_snapshot_lineage"}),
     "planned_round3": ("planned-later", {"source_health_snapshot"}),
 }
 

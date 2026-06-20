@@ -24,6 +24,7 @@ quality_flags:
   - NO_ACCEPTED_CHANNEL
   - FORBIDDEN_SUBSTITUTE_USED
   - BLINDSPOT_NOT_OBSERVABLE
+  - ROBUST_Z_UNAVAILABLE
 forbidden_output_terms:
   - 买入
   - 卖出

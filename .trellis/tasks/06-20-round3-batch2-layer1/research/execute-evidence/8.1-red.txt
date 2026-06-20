@@ -1,0 +1,34 @@
+FF                                                                       [100%]
+================================== FAILURES ===================================
+_________________ test_layer1Migration_createsRegistryTables __________________
+
+migrated_con = <function migrated_con.<locals>._open at 0x00000209A3BD1E40>
+tmp_path = WindowsPath('C:/Users/Guang/AppData/Local/Temp/pytest-of-Guang/pytest-403/test_layer1Migration_createsRe0')
+
+    def test_layer1Migration_createsRegistryTables(migrated_con, tmp_path) -> None:
+        """migration 011 creates axis registry tables."""
+        con = migrated_con(tmp_path)
+        tables = {row[0] for row in con.execute("SHOW TABLES").fetchall()}
+>       assert LAYER1_REGISTRY_TABLES.issubset(tables)
+E       AssertionError: assert False
+E        +  where False = <built-in method issubset of frozenset object at 0x00000209A3BFDC40>({'data_quality_log', 'data_sync_job', 'fetch_log', 'file_registry', 'job_event_log', 'manual_review_queue', ...})
+E        +    where <built-in method issubset of frozenset object at 0x00000209A3BFDC40> = frozenset({'axis_indicator_profile', 'axis_indicator_registry', 'axis_registry'}).issubset
+
+tests\test_layer1_axis_loader.py:56: AssertionError
+______________ test_layer1Migration_createsSnapshotLineageTable _______________
+
+migrated_con = <function migrated_con.<locals>._open at 0x00000209A3C36DE0>
+tmp_path = WindowsPath('C:/Users/Guang/AppData/Local/Temp/pytest-of-Guang/pytest-403/test_layer1Migration_createsSn0')
+
+    def test_layer1Migration_createsSnapshotLineageTable(migrated_con, tmp_path) -> None:
+        """axis_snapshot_lineage exists with lineage contract columns including rule_version."""
+        con = migrated_con(tmp_path)
+        tables = {row[0] for row in con.execute("SHOW TABLES").fetchall()}
+>       assert "axis_snapshot_lineage" in tables
+E       AssertionError: assert 'axis_snapshot_lineage' in {'data_quality_log', 'data_sync_job', 'fetch_log', 'file_registry', 'job_event_log', 'manual_review_queue', ...}
+
+tests\test_layer1_axis_loader.py:66: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_layer1_axis_loader.py::test_layer1Migration_createsRegistryTables
+FAILED tests/test_layer1_axis_loader.py::test_layer1Migration_createsSnapshotLineageTable
+EXIT_CODE=1

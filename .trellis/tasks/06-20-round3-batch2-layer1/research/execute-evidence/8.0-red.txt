@@ -1,0 +1,2 @@
+PRE-BOOT RED: execute-boot.md missing -> exit 1
+EXIT_CODE=1

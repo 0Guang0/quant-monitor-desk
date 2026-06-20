@@ -1,0 +1,2 @@
+PRE-IMPLEMENTATION RED: FAILED test_layer1Snapshot_writeViaWriteManager
+EXIT_CODE=1
