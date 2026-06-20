@@ -12,10 +12,11 @@ from pathlib import Path
 
 import duckdb
 
-from tests.contract_gate_support import PROJECT_ROOT
+from tests.contract_gate_support import PROJECT_ROOT, trellis_task_dir
 
 
-TASK_DIR = PROJECT_ROOT / ".trellis/tasks/06-20-round3-batch2-5-layer1-obs-ingest"
+BATCH25_TASK_SLUG = "06-20-round3-batch2-5-layer1-obs-ingest"
+TASK_DIR = trellis_task_dir(BATCH25_TASK_SLUG)
 EVIDENCE_DIR = TASK_DIR / "execute-evidence"
 
 

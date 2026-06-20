@@ -21,9 +21,10 @@ from backend.app.layer1_axes.observation_contract import (
     WRITE_REQUEST_REQUIRED_FOR_OBSERVATION,
 )
 from backend.app.ops.db_inspector import FUTURE_PHASE_KEY_TABLES, KEY_TABLES
-from tests.contract_gate_support import PROJECT_ROOT, load_yaml, scan_package_for_create_adapter
+from tests.contract_gate_support import PROJECT_ROOT, load_yaml, scan_package_for_create_adapter, trellis_task_dir
 
-TASK_ROOT = PROJECT_ROOT / ".trellis/tasks/06-20-round3-batch2-5-layer1-obs-ingest"
+BATCH25_TASK_SLUG = "06-20-round3-batch2-5-layer1-obs-ingest"
+TASK_ROOT = trellis_task_dir(BATCH25_TASK_SLUG)
 PIPELINE_TESTS = TASK_ROOT / "research/layer1-ingestion-pipeline-tests.md"
 SERVICE_CONTRACT = PROJECT_ROOT / "specs/contracts/datasource_service_contract.yaml"
 LAYER1_AXES_CONFIG = PROJECT_ROOT / "configs/layer1_axes.yml"

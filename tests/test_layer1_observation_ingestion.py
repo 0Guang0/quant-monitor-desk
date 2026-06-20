@@ -41,12 +41,10 @@ from backend.app.layer1_axes.ingestion_inventory import (
 )
 from backend.app.ops.db_inspector import REQUIRED_TOP_LEVEL_FIELDS
 from backend.app.sync.event_payload import parse_event_payload
-from tests.contract_gate_support import PROJECT_ROOT
+from tests.contract_gate_support import PROJECT_ROOT, trellis_task_dir
 
-TASK_EVIDENCE_DIR = (
-    PROJECT_ROOT
-    / ".trellis/tasks/06-20-round3-batch2-5-layer1-obs-ingest/execute-evidence"
-)
+BATCH25_TASK_SLUG = "06-20-round3-batch2-5-layer1-obs-ingest"
+TASK_EVIDENCE_DIR = trellis_task_dir(BATCH25_TASK_SLUG) / "execute-evidence"
 
 
 def _init_db(db_path: Path) -> None:
