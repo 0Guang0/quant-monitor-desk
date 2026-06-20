@@ -226,5 +226,21 @@ def _default_operation(data_domain: str) -> str:
         "cn_equity_realtime": "fetch_realtime_quote",
         "us_equity_daily_bar": "fetch_us_daily_bar_validation",
         "market_bar_1d": "fetch_daily_bar",
+        "macro_supplementary": "fetch_macro_series",
     }
     return defaults.get(data_domain, "fetch_daily_bar")
+
+
+def build_staged_fixture_service(
+    *,
+    data_root: Path,
+    fixture_path: Path,
+    row_count: int = 1,
+) -> DataSourceService:
+    """Staged micro-fetch facade with injected fixture port (Batch 2.5 Phase 3)."""
+    from backend.app.datasources.adapters.fetch_port import LocalFixtureFetchPort
+
+    return DataSourceService(
+        data_root=data_root,
+        fetch_port=LocalFixtureFetchPort(fixture_path, row_count=row_count),
+    )

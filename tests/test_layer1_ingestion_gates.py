@@ -331,12 +331,12 @@ def test_layer1Ingestion_phase0_stagedFixturePresent() -> None:
 
 
 def test_layer1Ingestion_phase0_axisObservationWritePath_deferredToPhase4() -> None:
-    """Phase 0 records Phase 4 closure test; commit/micro-fetch deferred to §8.4–8.5."""
+    """Phase 0 records Phase 4 closure test; commit deferred to §8.5; micro-fetch in §8.4."""
     ingestion = PROJECT_ROOT / "backend/app/layer1_axes/ingestion.py"
     assert ingestion.is_file()
     text = ingestion.read_text(encoding="utf-8")
     assert "commit_clean_observation" not in text
-    assert "micro_fetch_staging" not in text
+    assert "micro_fetch_staging" in text
     assert "DuckDBWriteManager" not in text
     closure_test = "test_layer1Observation_cleanWrite_usesWriteManager"
     pipeline_tests = PIPELINE_TESTS.read_text(encoding="utf-8")

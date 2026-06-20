@@ -10,7 +10,9 @@ from unittest.mock import patch
 
 import duckdb
 import pytest
-from backend.app.core.resource_guard import Decision
+from backend.app.core.resource_guard import Decision, ResourceGuard
+from backend.app.datasources.adapters.fetch_port import LocalFixtureFetchPort
+from backend.app.datasources.fetch_result import FetchRequest
 from backend.app.datasources.route_models import SourceRouteCandidate, SourceRoutePlan
 from backend.app.datasources.service import DataSourceService, ResourceGuardBlockedError
 from backend.app.db.connection import ConnectionManager
@@ -38,6 +40,7 @@ from backend.app.layer1_axes.ingestion_inventory import (
     record_operator_classification,
 )
 from backend.app.ops.db_inspector import REQUIRED_TOP_LEVEL_FIELDS
+from backend.app.sync.event_payload import parse_event_payload
 from tests.contract_gate_support import PROJECT_ROOT
 
 TASK_EVIDENCE_DIR = (
@@ -717,3 +720,205 @@ def test_layer1Ingestion_phase2_taskEvidenceArtifacts(tmp_path: Path, monkeypatc
     assert payload["previews"][0]["capability_verified"] is True
     assert payload["previews"][0]["intended_as_of_range"]["start"] == "2024-06-15"
     assert evidence["mutation_proof"]["row_counts_unchanged"] is True
+
+
+MACRO_FIXTURE_PATH = PROJECT_ROOT / "tests/fixtures/layer1_macro_observation_fixture.json"
+PHASE3_ROW_COUNT_TABLES = ("axis_observation", "fetch_log", "file_registry", "job_event_log")
+
+
+def _build_micro_fetch_service(
+    tmp_path: Path,
+    *,
+    datasource: DataSourceService | None = None,
+) -> tuple[Layer1ObservationIngestionService, Path]:
+    db = tmp_path / "phase3.duckdb"
+    data_root = tmp_path / "data"
+    data_root.mkdir(parents=True, exist_ok=True)
+    _init_db(db)
+    if datasource is None:
+        datasource = DataSourceService(
+            data_root=data_root,
+            fetch_port=LocalFixtureFetchPort(MACRO_FIXTURE_PATH, row_count=1),
+        )
+    service = Layer1ObservationIngestionService(
+        db_path=db,
+        data_root=data_root,
+        datasource=datasource,
+    )
+    return service, db
+
+
+def test_layer1MicroIngestion_usesDataSourceServiceBeforeFetch(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """Micro-fetch goes through DataSourceService.fetch, not Layer1 adapter factory."""
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    service, _ = _build_micro_fetch_service(tmp_path)
+    calls: list[FetchRequest] = []
+    original_fetch = DataSourceService.fetch
+
+    def tracking_fetch(self, req, **kwargs):
+        calls.append(req)
+        return original_fetch(self, req, **kwargs)
+
+    monkeypatch.setattr(DataSourceService, "fetch", tracking_fetch)
+    adapter_imports: list[str] = []
+
+    def forbidden_create_adapter(*args, **kwargs):
+        adapter_imports.append("create_adapter")
+        raise AssertionError("Layer1 must not call create_adapter")
+
+    monkeypatch.setattr(
+        "backend.app.datasources.adapters.create_adapter",
+        forbidden_create_adapter,
+    )
+
+    result = service.micro_fetch_staging(
+        indicator_id=FROZEN_STAGED_INDICATOR,
+        as_of=date(2024, 6, 15),
+    )
+
+    assert len(calls) == 1
+    assert calls[0].data_domain == STAGED_DATA_DOMAIN
+    assert adapter_imports == []
+    assert result.fetch_result.status == "SUCCESS"
+    assert result.fetch_result.row_count == 1
+
+
+def test_layer1MicroIngestion_persistsRoutePlanBeforeFetch(tmp_path: Path, monkeypatch) -> None:
+    """ROUTE_PLAN job_event_log evidence exists before fetch_log for the same job."""
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    service, db = _build_micro_fetch_service(tmp_path)
+
+    result = service.micro_fetch_staging(
+        indicator_id=FROZEN_STAGED_INDICATOR,
+        as_of=date(2024, 6, 15),
+    )
+
+    con = duckdb.connect(str(db), read_only=True)
+    try:
+        route_row = con.execute(
+            """
+            SELECT created_at, payload_json FROM job_event_log
+            WHERE job_id = ? AND event_type = 'ROUTE_PLAN'
+            ORDER BY created_at ASC LIMIT 1
+            """,
+            [result.job_id],
+        ).fetchone()
+        fetch_row = con.execute(
+            """
+            SELECT fetch_time FROM fetch_log
+            WHERE job_id = ?
+            ORDER BY fetch_time ASC LIMIT 1
+            """,
+            [result.job_id],
+        ).fetchone()
+    finally:
+        con.close()
+
+    assert route_row is not None
+    assert fetch_row is not None
+    payload = parse_event_payload(route_row[1])
+    assert payload.get("route_status") == "READY"
+    assert payload.get("selected_source_id") == "akshare"
+    assert payload.get("decision") == "route_plan"
+    assert result.route_plan.route_status == "READY"
+
+
+def test_layer1MicroIngestion_writesFetchLogAndRawEvidence(tmp_path: Path, monkeypatch) -> None:
+    """Micro-fetch increments fetch_log and file_registry; raw files land under data root."""
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    service, db = _build_micro_fetch_service(tmp_path)
+    data_root = tmp_path / "data"
+    before = _row_counts(db, ("fetch_log", "file_registry"))
+
+    result = service.micro_fetch_staging(
+        indicator_id=FROZEN_STAGED_INDICATOR,
+        as_of=date(2024, 6, 15),
+    )
+
+    after = _row_counts(db, ("fetch_log", "file_registry"))
+    # SkeletonAdapterBase.fetch and DataSourceService.fetch each persist fetch_log.
+    assert after["fetch_log"] == (before["fetch_log"] or 0) + 2
+    assert after["file_registry"] == (before["file_registry"] or 0) + 1
+    assert result.fetch_result.raw_file_paths
+    raw_path = data_root / result.fetch_result.raw_file_paths[0]
+    assert raw_path.is_file()
+    assert not Path(result.fetch_result.raw_file_paths[0]).is_absolute()
+    assert result.fetch_result.content_hash is not None
+
+
+def test_layer1MicroIngestion_phase3DoesNotWriteCleanAxisObservation(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """Phase 3 staging must not write clean axis_observation rows."""
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    service, db = _build_micro_fetch_service(tmp_path)
+    before_obs = _row_counts(db, ("axis_observation",))["axis_observation"]
+
+    service.micro_fetch_staging(
+        indicator_id=FROZEN_STAGED_INDICATOR,
+        as_of=date(2024, 6, 15),
+    )
+
+    after_obs = _row_counts(db, ("axis_observation",))["axis_observation"]
+    assert before_obs == after_obs == 0
+
+
+def test_layer1MicroIngestion_resourceGuardPauseStopsBeforeFetch(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """ResourceGuard PAUSE blocks micro-fetch before fetch_log mutation."""
+    monkeypatch.setattr(
+        ResourceGuard,
+        "check",
+        lambda self: (Decision.PAUSE, "disk_free_gb below pause threshold"),
+    )
+    service, db = _build_micro_fetch_service(tmp_path)
+    before = _row_counts(db, ("fetch_log", "file_registry", "job_event_log"))
+
+    with pytest.raises(ResourceGuardBlockedError):
+        service.micro_fetch_staging(
+            indicator_id=FROZEN_STAGED_INDICATOR,
+            as_of=date(2024, 6, 15),
+        )
+
+    after = _row_counts(db, ("fetch_log", "file_registry", "job_event_log"))
+    assert before == after
+
+
+def test_layer1Ingestion_phase3_taskEvidenceArtifacts(tmp_path: Path, monkeypatch) -> None:
+    """Task execute-evidence exports phase3 json/md from fresh isolated sandbox."""
+    out = tmp_path / "evidence"
+    data_root = tmp_path / "data"
+    data_root.mkdir()
+    db = tmp_path / "db.duckdb"
+    _init_db(db)
+    inventory = capture_phase1_inventory(db, data_root, evidence_dir=out)
+    memo = out / "phase1_data_classification.md"
+    memo.write_text("# fixture memo\n", encoding="utf-8")
+    record_operator_classification(
+        inventory,
+        memo_path=memo,
+        classification=inventory["db_evidence_classification"],
+        operator_ack="authorized_for_phase3_test",
+        evidence_dir=out,
+    )
+
+    from backend.app.layer1_axes.ingestion import capture_task_phase3_evidence
+
+    evidence = capture_task_phase3_evidence(out, as_of=date(2024, 6, 15))
+    assert (out / "phase3_micro_fetch_evidence.json").is_file()
+    assert (out / "phase3_no_clean_write_proof.md").is_file()
+    assert evidence["evidence_baseline_strategy"] == "fresh_phase3_sandbox"
+    proof = evidence["no_clean_write_proof"]
+    assert proof["axis_observation_unchanged"] is True
+    assert proof["before_counts"]["fetch_log"] == 0
+    assert proof["before_counts"]["file_registry"] == 0
+    assert proof["fetch_log_delta"] == 2
+    assert proof["file_registry_delta"] == 1
+    assert "phase3-micro-fetch-sandbox" in evidence["evidence_data_root"]
+    assert "phase3-micro-fetch-sandbox" in evidence["evidence_db_path"]
+    raw_paths = evidence["micro_fetch"]["fetch_result"]["raw_file_paths"]
+    assert raw_paths
+    assert not Path(raw_paths[0]).is_absolute()

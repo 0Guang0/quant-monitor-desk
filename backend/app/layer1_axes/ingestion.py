@@ -11,11 +11,18 @@ from typing import Any
 
 import duckdb
 from backend.app import config as app_config
-from backend.app.core.resource_guard import Decision
+from backend.app.core.resource_guard import Decision, ResourceGuard
+from backend.app.datasources.fetch_result import FetchRequest, FetchResult
 from backend.app.datasources.route_models import SourceRoutePlan
-from backend.app.datasources.service import DataSourceService, ResourceGuardBlockedError
+from backend.app.datasources.service import (
+    DataSourceService,
+    ResourceGuardBlockedError,
+    build_staged_fixture_service,
+)
+from backend.app.db.connection import ConnectionManager
 from backend.app.layer1_axes.axis_loader import AxisSpecLoader
 from backend.app.layer1_axes.models import AxisIndicatorDefinition, AxisLoadResult
+from backend.app.storage.staged_evidence import register_staged_file_registry_rows
 
 FROZEN_STAGED_INDICATOR = "ENV-E1-DGS10"
 STAGED_DATA_DOMAIN = "macro_supplementary"
@@ -49,6 +56,16 @@ PHASE2_MUTATION_TABLES: tuple[str, ...] = (
 ROUTE_PREVIEW_JSON = "phase2_route_preview.json"
 ROUTE_PREVIEW_MD = "phase2_route_preview_matrix.md"
 NO_MUTATION_MD = "phase2_no_mutation_proof.md"
+PHASE3_EVIDENCE_JSON = "phase3_micro_fetch_evidence.json"
+PHASE3_NO_CLEAN_WRITE_MD = "phase3_no_clean_write_proof.md"
+PHASE3_SANDBOX_DIRNAME = ".phase3-micro-fetch-sandbox"
+
+PHASE3_MUTATION_TABLES: tuple[str, ...] = (
+    "axis_observation",
+    "fetch_log",
+    "file_registry",
+    "job_event_log",
+)
 
 
 class IngestionRejectedError(ValueError):
@@ -93,6 +110,22 @@ class RoutePreviewResult:
     dry_run: bool = True
 
 
+@dataclass(frozen=True)
+class MicroFetchResult:
+    indicator_id: str
+    as_of: date
+    binding: IngestionRouteBinding
+    route_plan: SourceRoutePlan
+    fetch_result: FetchResult
+    run_id: str
+    job_id: str
+    fetch_id: str | None
+    file_registry_ids: tuple[str, ...]
+    resource_guard_decision: str
+    resource_guard_reason: str
+    staged_fixture_path: str
+
+
 class Layer1ObservationIngestionService:
     """Controlled Layer 1 observation ingestion facade (§3.4 wiring)."""
 
@@ -111,6 +144,7 @@ class Layer1ObservationIngestionService:
         self._axis_loader = axis_loader or AxisSpecLoader()
         self._allowlist = allowlist if allowlist is not None else DEFAULT_INGESTION_ALLOWLIST
         self._axis_load: AxisLoadResult | None = None
+        self._conn_manager = ConnectionManager(self._db_path)
 
     def _load_axes(self) -> AxisLoadResult:
         if self._axis_load is None:
@@ -255,9 +289,6 @@ class Layer1ObservationIngestionService:
     ) -> RoutePreviewResult:
         """Dry-run SourceRoutePlan preview — no fetch or DB writes (Phase 2)."""
         previews: list[IndicatorRoutePreview] = []
-        guard_decision, guard_reason = self._datasource.check_resource_guard()
-        self._enforce_resource_guard(guard_decision, guard_reason)
-
         for indicator_id in indicators:
             indicator = self._indicator_by_id(indicator_id)
             self._assert_indicator_eligible(indicator)
@@ -276,8 +307,8 @@ class Layer1ObservationIngestionService:
             )
             capability_verified = self._verify_capability(binding, route_plan)
             stop_reason = self._compose_stop_reason(
-                guard_decision=guard_decision,
-                guard_reason=guard_reason,
+                guard_decision=Decision.OK,
+                guard_reason="",
                 route_plan=route_plan,
             )
             previews.append(
@@ -286,13 +317,139 @@ class Layer1ObservationIngestionService:
                     as_of=as_of,
                     binding=binding,
                     route_plan=route_plan,
-                    resource_guard_decision=guard_decision.value,
-                    resource_guard_reason=guard_reason,
+                    resource_guard_decision="pending",
+                    resource_guard_reason="checked after route preview",
                     capability_verified=capability_verified,
                     stop_reason=stop_reason,
                 )
             )
-        return RoutePreviewResult(previews=tuple(previews), dry_run=True)
+        guard_decision, guard_reason = self._datasource.check_resource_guard()
+        self._enforce_resource_guard(guard_decision, guard_reason)
+        finalized: list[IndicatorRoutePreview] = []
+        for preview in previews:
+            finalized.append(
+                IndicatorRoutePreview(
+                    indicator_id=preview.indicator_id,
+                    as_of=preview.as_of,
+                    binding=preview.binding,
+                    route_plan=preview.route_plan,
+                    resource_guard_decision=guard_decision.value,
+                    resource_guard_reason=guard_reason,
+                    capability_verified=preview.capability_verified,
+                    stop_reason=self._compose_stop_reason(
+                        guard_decision=guard_decision,
+                        guard_reason=guard_reason,
+                        route_plan=preview.route_plan,
+                    ),
+                )
+            )
+        return RoutePreviewResult(previews=tuple(finalized), dry_run=True)
+
+    def _prepare_micro_fetch_binding(
+        self,
+        *,
+        indicator_id: str,
+    ) -> IngestionRouteBinding:
+        indicator = self._indicator_by_id(indicator_id)
+        self._assert_indicator_eligible(indicator)
+        if indicator_id not in self._allowlist:
+            raise IngestionRejectedError(
+                f"indicator {indicator_id!r} is not on the ingestion allowlist",
+                reason_code=NOT_ON_ALLOWLIST_REJECTED,
+                indicator_id=indicator_id,
+            )
+        return self._resolve_binding(indicator)
+
+    def micro_fetch_staging(
+        self,
+        *,
+        indicator_id: str,
+        as_of: date,
+        run_id: str | None = None,
+        job_id: str | None = None,
+    ) -> MicroFetchResult:
+        """Micro-fetch via DataSourceService — raw/fetch evidence only (Phase 3)."""
+        binding = self._prepare_micro_fetch_binding(indicator_id=indicator_id)
+        resolved_run_id = run_id or f"layer1-micro-fetch-{indicator_id}"
+        resolved_job_id = job_id or f"layer1-micro-{indicator_id}"
+        primary_source = self._datasource.primary_source_for_domain(binding.data_domain)
+        req = FetchRequest(
+            run_id=resolved_run_id,
+            source_id=primary_source,
+            data_domain=binding.data_domain,
+            end_time=as_of.isoformat(),
+        )
+        route_plan = self._datasource.preview_route(
+            data_domain=binding.data_domain,
+            operation=binding.operation,
+            run_id=resolved_run_id,
+            job_id=resolved_job_id,
+        )
+        self._verify_capability(binding, route_plan)
+        if route_plan.route_status != "READY" or route_plan.selected_source_id is None:
+            raise IngestionRejectedError(
+                f"route not ready: {route_plan.route_status}",
+                reason_code="ROUTE_NOT_READY",
+                indicator_id=indicator_id,
+            )
+
+        fetch_id: str | None = None
+        file_registry_ids: tuple[str, ...] = ()
+        guard_decision = Decision.OK
+        guard_reason = ""
+        with self._conn_manager.writer() as con:
+            guard_decision, guard_reason = ResourceGuard(con=con).check()
+            self._enforce_resource_guard(guard_decision, guard_reason)
+            fetch_result = self._datasource.fetch(
+                req,
+                con=con,
+                job_id=resolved_job_id,
+                operation=binding.operation,
+            )
+            file_registry_ids = register_staged_file_registry_rows(
+                con,
+                fetch_result.model_copy(
+                    update={
+                        "raw_file_paths": [
+                            _relative_to_data_root(p, self._data_root)
+                            for p in fetch_result.raw_file_paths
+                        ]
+                    }
+                ),
+            )
+            if fetch_result.status == "SUCCESS":
+                row = con.execute(
+                    """
+                    SELECT fetch_id FROM fetch_log
+                    WHERE job_id = ? AND run_id = ?
+                    ORDER BY fetch_time DESC LIMIT 1
+                    """,
+                    [resolved_job_id, resolved_run_id],
+                ).fetchone()
+                fetch_id = row[0] if row else None
+
+        normalized_fetch = fetch_result.model_copy(
+            update={
+                "raw_file_paths": [
+                    _relative_to_data_root(p, self._data_root)
+                    for p in fetch_result.raw_file_paths
+                ]
+            }
+        )
+        return MicroFetchResult(
+            indicator_id=indicator_id,
+            as_of=as_of,
+            binding=binding,
+            route_plan=route_plan,
+            fetch_result=normalized_fetch,
+            run_id=resolved_run_id,
+            job_id=resolved_job_id,
+            fetch_id=fetch_id,
+            file_registry_ids=file_registry_ids,
+            resource_guard_decision=guard_decision.value,
+            resource_guard_reason=guard_reason,
+            staged_fixture_path=MACRO_FIXTURE_RELATIVE,
+        )
 
 
 def _binding_to_dict(binding: IngestionRouteBinding) -> dict[str, Any]:
@@ -407,6 +564,15 @@ def _relative_path(path: Path) -> str:
     return _relative_to_project(path)
 
 
+def _relative_to_data_root(path: Path | str, data_root: Path) -> str:
+    resolved = Path(path).resolve()
+    root = data_root.resolve()
+    try:
+        return resolved.relative_to(root).as_posix()
+    except ValueError:
+        return _relative_path(resolved)
+
+
 def _db_file_hash(db_path: Path) -> str:
     if not db_path.is_file():
         return hashlib.sha256(b"").hexdigest()
@@ -493,6 +659,145 @@ def _load_phase2_gate(evidence_dir: Path) -> dict[str, Any] | None:
             or "Phase 2 route preview blocked: phase1 inventory not authorized"
         )
     return gate
+
+
+def _micro_fetch_to_dict(result: MicroFetchResult) -> dict[str, Any]:
+    return {
+        "indicator_id": result.indicator_id,
+        "as_of": result.as_of.isoformat(),
+        "binding": _binding_to_dict(result.binding),
+        "route_plan": result.route_plan.to_payload_dict(),
+        "fetch_result": result.fetch_result.model_dump(),
+        "run_id": result.run_id,
+        "job_id": result.job_id,
+        "fetch_id": result.fetch_id,
+        "file_registry_ids": list(result.file_registry_ids),
+        "resource_guard_decision": result.resource_guard_decision,
+        "resource_guard_reason": result.resource_guard_reason,
+        "staged_fixture_path": result.staged_fixture_path,
+        "fred_primary_deferred": True,
+        "fred_primary_deferred_note": FRED_PRIMARY_DEFERRED_NOTE,
+    }
+
+
+def format_phase3_no_clean_write_md(proof: dict[str, Any]) -> str:
+    lines = [
+        "# Phase 3 — No Clean Write Proof",
+        "",
+        f"- **Generated at:** {proof['generated_at']}",
+        f"- **DB path:** `{proof['db_path']}`",
+        f"- **axis_observation unchanged:** {proof['axis_observation_unchanged']}",
+        f"- **fetch_log delta:** {proof['fetch_log_delta']}",
+        f"- **file_registry delta:** {proof['file_registry_delta']}",
+        "",
+        "## Before micro-fetch",
+        "",
+        "| table | row_count |",
+        "| ----- | --------- |",
+    ]
+    for name, count in proof.get("before_counts", {}).items():
+        lines.append(f"| `{name}` | {count} |")
+    lines.extend(["", "## After micro-fetch", "", "| table | row_count |", "| ----- | --------- |"])
+    for name, count in proof.get("after_counts", {}).items():
+        lines.append(f"| `{name}` | {count} |")
+    lines.append("")
+    return "\n".join(lines) + "\n"
+
+
+def capture_phase3_micro_fetch_evidence(
+    *,
+    service: Layer1ObservationIngestionService,
+    indicator_id: str,
+    as_of: date,
+    evidence_dir: Path | str,
+) -> dict[str, Any]:
+    """Run micro-fetch staging and persist Phase 3 evidence artifacts."""
+    out = Path(evidence_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    db_path = service._db_path
+    before_counts = service._row_counts(PHASE3_MUTATION_TABLES)
+    result = service.micro_fetch_staging(indicator_id=indicator_id, as_of=as_of)
+    after_counts = service._row_counts(PHASE3_MUTATION_TABLES)
+    before_obs = before_counts.get("axis_observation") or 0
+    after_obs = after_counts.get("axis_observation") or 0
+    before_fetch = before_counts.get("fetch_log") or 0
+    after_fetch = after_counts.get("fetch_log") or 0
+    before_files = before_counts.get("file_registry") or 0
+    after_files = after_counts.get("file_registry") or 0
+    proof = {
+        "generated_at": datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
+        "db_path": _relative_path(db_path),
+        "axis_observation_unchanged": before_obs == after_obs,
+        "fetch_log_delta": after_fetch - before_fetch,
+        "file_registry_delta": after_files - before_files,
+        "before_counts": before_counts,
+        "after_counts": after_counts,
+    }
+    payload: dict[str, Any] = {
+        "phase": "phase3_micro_fetch",
+        "generated_at": proof["generated_at"],
+        "frozen_indicator": FROZEN_STAGED_INDICATOR,
+        "micro_fetch": _micro_fetch_to_dict(result),
+        "no_clean_write_proof": proof,
+    }
+    json_path = out / PHASE3_EVIDENCE_JSON
+    md_path = out / PHASE3_NO_CLEAN_WRITE_MD
+    json_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    md_path.write_text(format_phase3_no_clean_write_md(proof), encoding="utf-8")
+    return payload
+
+
+def capture_task_phase3_evidence(
+    evidence_dir: Path | str,
+    *,
+    as_of: date,
+    db_path: Path | str | None = None,
+    data_root: Path | str | None = None,
+    datasource: DataSourceService | None = None,
+) -> dict[str, Any]:
+    """Write task execute-evidence for Phase 3 using an isolated fresh sandbox."""
+    import shutil
+
+    from backend.app.db.migrate import apply_migrations
+    from backend.app.layer1_axes.ingestion_inventory import TARGET_DB_RELATIVE
+
+    out = Path(evidence_dir)
+    _load_phase2_gate(out)
+    sandbox_base = out / PHASE3_SANDBOX_DIRNAME
+    if sandbox_base.exists():
+        shutil.rmtree(sandbox_base)
+    phase3_db = sandbox_base / TARGET_DB_RELATIVE
+    phase3_data_root = sandbox_base / "data"
+    phase3_db.parent.mkdir(parents=True, exist_ok=True)
+    phase3_data_root.mkdir(parents=True, exist_ok=True)
+    con = duckdb.connect(str(phase3_db))
+    try:
+        apply_migrations(con)
+    finally:
+        con.close()
+
+    fixture_path = app_config.PROJECT_ROOT / MACRO_FIXTURE_RELATIVE
+    resolved_datasource = datasource or build_staged_fixture_service(
+        data_root=phase3_data_root,
+        fixture_path=fixture_path,
+    )
+    service = Layer1ObservationIngestionService(
+        db_path=phase3_db,
+        data_root=phase3_data_root,
+        datasource=resolved_datasource,
+    )
+    payload = capture_phase3_micro_fetch_evidence(
+        service=service,
+        indicator_id=FROZEN_STAGED_INDICATOR,
+        as_of=as_of,
+        evidence_dir=out,
+    )
+    payload["evidence_baseline_strategy"] = "fresh_phase3_sandbox"
+    payload["evidence_data_root"] = _relative_path(phase3_data_root)
+    payload["evidence_db_path"] = _relative_path(phase3_db)
+    json_path = out / PHASE3_EVIDENCE_JSON
+    json_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return payload
 
 
 def capture_task_phase2_evidence(

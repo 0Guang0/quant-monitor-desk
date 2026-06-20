@@ -25,3 +25,7 @@ uv run pytest tests/test_sync_orchestrator.py tests/test_sync_jobs.py tests/test
 - `execute-evidence/phase0_test_output.txt`
 - `execute-evidence/phase0_source_context_matrix.md`
 - `execute-evidence/phase0_db_contract_gate.md`
+
+## Gate test inventory（2026-06-20 · 对抗审计 A1-14）
+
+`tests/test_layer1_ingestion_gates.py`：**27** 个 `test_*` 函数（高于初版计划估计；正向漂移，须与本文件语义表同步维护）。

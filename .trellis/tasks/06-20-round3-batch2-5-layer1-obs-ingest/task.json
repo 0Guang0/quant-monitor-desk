@@ -39,7 +39,7 @@
     "backend/app/ops/db_inspector.py",
     ".trellis/tasks/archive/2026-06/06-20-round3-batch2-layer1/"
   ],
-  "notes": "Execute §8.3 Phase 2 COMPLETE 2026-06-20 (route dry-run, PH-A2 PASS remediated). Adversarial A1/A2 closure: research/adversarial-audit-phase2-remediation.md. Next: §8.4 Phase 3 micro-fetch — see research/execute-handoff.md.",
+  "notes": "Execute §8.4 Phase 3 COMPLETE 2026-06-20 (micro-fetch staging, PH-A3 PASS). Next: §8.5 Phase 4 clean write — see research/execute-handoff.md.",
   "predecessor_tasks": [
     "06-20-round3-batch2-layer1",
     "06-20-round3-batch1-early-ops",

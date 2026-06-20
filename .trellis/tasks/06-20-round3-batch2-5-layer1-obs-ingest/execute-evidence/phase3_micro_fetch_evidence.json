@@ -1,0 +1,94 @@
+{
+  "evidence_baseline_strategy": "fresh_phase3_sandbox",
+  "evidence_data_root": ".trellis/tasks/06-20-round3-batch2-5-layer1-obs-ingest/execute-evidence/.phase3-micro-fetch-sandbox/data",
+  "evidence_db_path": ".trellis/tasks/06-20-round3-batch2-5-layer1-obs-ingest/execute-evidence/.phase3-micro-fetch-sandbox/duckdb/quant_monitor.duckdb",
+  "frozen_indicator": "ENV-E1-DGS10",
+  "generated_at": "2026-06-20T13:26:07Z",
+  "micro_fetch": {
+    "as_of": "2024-06-15",
+    "binding": {
+      "axis_id": "ENVIRONMENT",
+      "data_domain": "macro_supplementary",
+      "fallback_policy": "last_good_cache + stale_reason",
+      "frequency": "daily",
+      "indicator_id": "ENV-E1-DGS10",
+      "operation": "fetch_macro_series",
+      "primary_source_declared": "FRED:DGS10",
+      "series_id": "DGS10",
+      "staged_route_note": "B2.5-O-05: declared primary_source FRED:DGS10 deferred; staged route macro_supplementary.fetch_macro_series used",
+      "unit": "pct",
+      "validation_source": "none_optional"
+    },
+    "fetch_id": "32b48d2b-e6c9-45c2-96c0-8072a8745b3b",
+    "fetch_result": {
+      "as_of_timestamp": "2024-06-15",
+      "content_hash": "9a9d5d77af38895ce260a66740bec7eb172a17f9b874510ef0b1cc12bf0382c7",
+      "data_domain": "macro_supplementary",
+      "error_message": null,
+      "fetch_time": "2026-06-20T13:26:07Z",
+      "latency_ms": 5,
+      "publish_timestamp": null,
+      "raw_file_paths": [
+        "raw/akshare/macro_supplementary/2024-06-15/9a9d5d77af38895ce260a66740bec7eb172a17f9b874510ef0b1cc12bf0382c7.json"
+      ],
+      "retry_count": 0,
+      "row_count": 1,
+      "run_id": "layer1-micro-fetch-ENV-E1-DGS10",
+      "schema_hash": "1c168d828c7a69e712c27e8553b9b318220e3fa91c3b17d5d9916fb08ec5a08a",
+      "source_id": "akshare",
+      "staging_table": null,
+      "status": "SUCCESS"
+    },
+    "file_registry_ids": ["4199da56-3e04-489a-8374-594d560aa3e8"],
+    "fred_primary_deferred": true,
+    "fred_primary_deferred_note": "B2.5-O-05: declared primary_source FRED:DGS10 deferred; staged route macro_supplementary.fetch_macro_series used",
+    "indicator_id": "ENV-E1-DGS10",
+    "job_id": "layer1-micro-ENV-E1-DGS10",
+    "resource_guard_decision": "OK",
+    "resource_guard_reason": "",
+    "route_plan": {
+      "candidates": [
+        {
+          "allowed_domain": "macro_supplementary",
+          "capability_declared": true,
+          "disabled_reason": null,
+          "enabled": true,
+          "role": "Primary",
+          "skip_reason": null,
+          "source_id": "akshare"
+        }
+      ],
+      "created_at": "2026-06-20T13:26:07.069909+00:00",
+      "data_domain": "macro_supplementary",
+      "job_id": "layer1-micro-ENV-E1-DGS10",
+      "operation": "fetch_macro_series",
+      "quality_flags": [],
+      "route_plan_id": "c8054227-6603-4066-ac4d-ec470e98c3f4",
+      "route_status": "READY",
+      "run_id": "layer1-micro-fetch-ENV-E1-DGS10",
+      "selected_source_id": "akshare"
+    },
+    "run_id": "layer1-micro-fetch-ENV-E1-DGS10",
+    "staged_fixture_path": "tests/fixtures/layer1_macro_observation_fixture.json"
+  },
+  "no_clean_write_proof": {
+    "after_counts": {
+      "axis_observation": 0,
+      "fetch_log": 2,
+      "file_registry": 1,
+      "job_event_log": 1
+    },
+    "axis_observation_unchanged": true,
+    "before_counts": {
+      "axis_observation": 0,
+      "fetch_log": 0,
+      "file_registry": 0,
+      "job_event_log": 0
+    },
+    "db_path": ".trellis/tasks/06-20-round3-batch2-5-layer1-obs-ingest/execute-evidence/.phase3-micro-fetch-sandbox/duckdb/quant_monitor.duckdb",
+    "fetch_log_delta": 2,
+    "file_registry_delta": 1,
+    "generated_at": "2026-06-20T13:26:07Z"
+  },
+  "phase": "phase3_micro_fetch"
+}

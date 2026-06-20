@@ -65,26 +65,49 @@ Execute 以 MASTER inline 为准；ledger 规定 pointer 原稿 extract/for。**
 
 ### 0.5 Execute 开场白
 
-**Phase 0 已闭合（2026-06-20）：** §8.0 Boot + §8.1 Phase 0 + PH-A0 PASS。§8.2 Phase 1 + PH-A1 PASS。§8.3 Phase 2 + PH-A2 PASS。下一会话 **勿重跑** 已完成阶段；读 `research/execute-handoff.md` 后直接从 §8.4 开始。
+**Phase 0 已闭合（2026-06-20）：** §8.0 Boot + §8.1 Phase 0 + PH-A0 PASS。§8.2 Phase 1 + PH-A1 PASS。§8.3 Phase 2 + PH-A2 PASS。§8.4 Phase 3 + PH-A3 PASS。下一会话 **勿重跑** 已完成阶段；读 `research/execute-handoff.md` 后直接从 §8.5 开始。
 
 ```text
-继续 Execute（06-20-round3-batch2-5-layer1-obs-ingest）。Phase 2 已完成，PH-A2 PASS。
-直接从 §8.4 Phase 3 micro-fetch 开始；每阶段 GREEN 后全量 pytest + Audit PH-A3–A4。
-全部 PASS 后再 finish-work。入口：research/execute-handoff.md + MASTER §8.4。
+继续 Execute（06-20-round3-batch2-5-layer1-obs-ingest）。Phase 3 已完成，PH-A3 PASS。
+直接从 §8.5 Phase 4 clean write 开始；每阶段 GREEN 后全量 pytest + Audit PH-A4。
+全部 PASS 后再 finish-work。入口：research/execute-handoff.md + MASTER §8.5。
 ```
 
 ### 0.9 Execute 进度（会话交接）
 
-| 步           | 状态     | 日期       | 证据                                                                |
-| ------------ | -------- | ---------- | ------------------------------------------------------------------- |
-| §8.0 Boot    | **DONE** | 2026-06-20 | `execute-boot.md`, `8.0-*.txt`                                      |
-| §8.1 Phase 0 | **DONE** | 2026-06-20 | `phase0_*`, PH-A0 PASS                                              |
-| §8.2 Phase 1 | **DONE** | 2026-06-20 | `phase1_before_ingestion_inventory.*`, PH-A1 PASS                   |
-| §8.3 Phase 2 | **DONE** | 2026-06-20 | `phase2_route_preview.*`, `phase2_no_mutation_proof.md`, PH-A2 PASS |
-| §8.4 Phase 3 | **NEXT** | —          | 下一会话入口                                                        |
-| §8.5–8.6     | pending  | —          | —                                                                   |
+| 步           | 状态     | 日期       | 证据                                                                             |
+| ------------ | -------- | ---------- | -------------------------------------------------------------------------------- |
+| §8.0 Boot    | **DONE** | 2026-06-20 | `execute-boot.md`, `8.0-*.txt`                                                   |
+| §8.1 Phase 0 | **DONE** | 2026-06-20 | `phase0_*`, PH-A0 PASS                                                           |
+| §8.2 Phase 1 | **DONE** | 2026-06-20 | `phase1_before_ingestion_inventory.*`, PH-A1 PASS                                |
+| §8.3 Phase 2 | **DONE** | 2026-06-20 | `phase2_route_preview.*`, `phase2_no_mutation_proof.md`, PH-A2 PASS              |
+| §8.4 Phase 3 | **DONE** | 2026-06-20 | `phase3_micro_fetch_evidence.json`, `phase3_no_clean_write_proof.md`, PH-A3 PASS |
+| §8.5 Phase 4 | **NEXT** | —          | 下一会话入口                                                                     |
 
 **Handoff 权威文件：** `research/execute-handoff.md`
+
+### 0.10 Post–PH-A3 开放项登记（2026-06-20 对抗性审计后追加 · 勿覆盖 §0.9）
+
+> **目的：** 下一会话进入 §8.5 前必读；下列项 **不阻塞 PH-A3**，但 **禁止静默遗忘**。关闭时在本节追加行（保留历史），并更新 `AUDIT_DEFERRED_REGISTRY.md` / `UNRESOLVED_ISSUES_REGISTRY.md`。
+
+| ID / AC          | 状态            | 关闭阶段                                | 说明                                                                                                               | 权威引用                                                                                  |
+| ---------------- | --------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
+| **AC-TRACE-1**   | **OPEN**        | §8.5 PH-A4                              | 端到端 trace：indicator→route→fetch→evidence→**validation→write→snapshots→lineage**；Phase 3 仅覆盖至 staged fetch | `audit-ph-a3-staging.md` · MASTER §2 AC-TRACE-1                                           |
+| **AC-REG-1**     | **OPEN**        | §8.6                                    | `final_registry_update.md` 未产出                                                                                  | MASTER §8.6                                                                               |
+| **AC-HANDOFF-1** | **OPEN**        | §8.6                                    | Batch 3 handoff 字段待 Phase 4/6 闭合                                                                              | MASTER §8.6                                                                               |
+| **B2.5-O-04**    | **OPEN**        | §8.5                                    | `commit_clean_observation_and_snapshots` / WriteManager clean write 未实现                                         | `AUDIT_DEFERRED_REGISTRY.md` · `test_layer1Observation_cleanWrite_usesWriteManager` (RED) |
+| **B2.5-O-07**    | **DEFERRED**    | Phase 4 或 `DataSourceService` refactor | 每次 `fetch` 双层 `fetch_log`（adapter + service）；Phase 3 测试断言 `+2`；service 行 authoritative                | `AUDIT_DEFERRED_REGISTRY.md` · `adversarial-audit-phase3-remediation.md` A1-07/B25-A2-04  |
+| **B2.5-O-05**    | **DEFERRED**    | 用户授权 live FRED                      | 冻结指标 `ENV-E1-DGS10` 使用 staged `macro_supplementary` + fixture                                                | `AUDIT_DEFERRED_REGISTRY.md`                                                              |
+| **B2.5-O-02**    | **DEFERRED**    | §8.6 或窄 PR                            | `schema.sql` 滞后 migration 011                                                                                    | `AUDIT_DEFERRED_REGISTRY.md`                                                              |
+| **B2.5-O-03**    | **DEFERRED**    | §8.5 / migration 012                    | `axis_observation` 无 DB CHECK                                                                                     | `AUDIT_DEFERRED_REGISTRY.md`                                                              |
+| **B2.5-O-06**    | **DEFERRED**    | migration 008                           | 广义 CHECK（A9-P1-01）                                                                                             | `AUDIT_DEFERRED_REGISTRY.md`                                                              |
+| **EVID-P3-01**   | **CLOSED**      | —                                       | Phase 3 任务证据须 `evidence_baseline_strategy=fresh_phase3_sandbox` + `before_counts` 全零                        | `phase3_micro_fetch_evidence.json` · `staged_acceptance_policy.md` §6                     |
+| **EVID-P3-02**   | **CLOSED**      | —                                       | `8.4-green.txt` 字段须与 `phase3_micro_fetch_evidence.json` 的 `no_clean_write_proof` 一致                         | `8.4-green.txt` · 对抗审计 A1-02/B25-A2-01                                                |
+| **A1-08**        | **WAIVED**      | —                                       | Phase 1 自动分类 vs operator memo 噪声；operator gate 已闭合，不阻塞 §8.5                                          | `adversarial-audit-phase3-remediation.md`                                                 |
+| **G-07**         | **WAIVED**      | —                                       | 证据 transcript 可用 `.venv` python；MASTER §10 优先 `uv run`                                                      | `8.2-green.txt` 注释                                                                      |
+| **GIT-P3-01**    | **OPEN→本提交** | 本阶段性 commit                         | Phase 3 代码+证据须入 git baseline（对抗审计 A1-15）                                                               | 本 commit                                                                                 |
+
+**对抗审计闭合矩阵：** `research/adversarial-audit-phase3-remediation.md`（26 项 · 0 开放阻断）。
 
 ### 0.6 Source Context Index
 
@@ -433,6 +456,14 @@ class Layer1ObservationIngestionService:
 | 测试设计   | `research/layer1-ingestion-pipeline-tests.md` §Phase 3                                                                                            |
 | **Audit**  | **PH-A3 PASS 后才能 §8.5**                                                                                                                        |
 
+**Phase 3 对抗性审计后追加约束（2026-06-20 · 勿删）：**
+
+| 约束         | 说明                                                                                                     |
+| ------------ | -------------------------------------------------------------------------------------------------------- |
+| 证据沙箱     | `capture_task_phase3_evidence` 必须 wipe+recreate `.phase3-micro-fetch-sandbox/`；禁止写项目 `DATA_ROOT` |
+| staging 例外 | `file_registry` 仅经 `backend/app/storage/staged_evidence.py`；Phase 4 改 `FileRegistry`+`WriteManager`  |
+| 开放登记     | 见 MASTER **§0.10**（AC-TRACE-1、B2.5-O-04、B2.5-O-07 等）                                               |
+
 ### 8.5 Execute Phase 4 — clean write + snapshots
 
 | 字段       | 内容                                                                                                                                                                                                                  |
@@ -546,10 +577,10 @@ Remaining data limitations: <list>
 | Skill                      | 触发            | `@` 指令                   | 本任务 | 绑定 §8                | 已执行      |
 | -------------------------- | --------------- | -------------------------- | ------ | ---------------------- | ----------- |
 | trellis-execute            | Execute 入口    | trellis-execute            | 必做   | 8.0                    | [x]         |
-| test-driven-development    | 每 §8.x RED     | tdd                        | 必做   | 8.1–8.5                | [x] 8.1–8.3 |
-| incremental-implementation | 每 GREEN 后     | incremental-implementation | 必做   | 每 GREEN 后全量 pytest | [x] 8.0–8.3 |
-| karpathy-guidelines        | RED 后 GREEN 前 | karpathy-guidelines        | 必做   | 8.1–8.5（8.0 exempt）  | [x] 8.1–8.3 |
-| testing-guidelines         | 写测试时        | testing-guidelines         | 必做   | 8.1–8.5                | [x] 8.1–8.3 |
+| test-driven-development    | 每 §8.x RED     | tdd                        | 必做   | 8.1–8.5                | [x] 8.1–8.4 |
+| incremental-implementation | 每 GREEN 后     | incremental-implementation | 必做   | 每 GREEN 后全量 pytest | [x] 8.0–8.4 |
+| karpathy-guidelines        | RED 后 GREEN 前 | karpathy-guidelines        | 必做   | 8.1–8.5（8.0 exempt）  | [x] 8.1–8.4 |
+| testing-guidelines         | 写测试时        | testing-guidelines         | 必做   | 8.1–8.5                | [x] 8.1–8.4 |
 | spec-driven-development    | 契约步          | spec-driven-development    | 必做   | 契约步                 | [x] 8.1     |
 | gitnexus-impact-analysis   | 改符号前        | gitnexus-impact-analysis   | 必做   | 改符号前 impact        | [x] 8.0     |
 | security-and-hardening     | live 授权路径   | security-and-hardening     | 条件   | 8.4 live 授权路径      | [ ]         |
