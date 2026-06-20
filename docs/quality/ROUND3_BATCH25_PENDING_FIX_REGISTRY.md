@@ -92,13 +92,13 @@
 
 ### 3.3 高风险 — 大模块拆分 / 解耦（**后置**；必须可回滚）
 
-| ID                                            | 问题                                       | 清理阶段                    | 回滚方案                                                                |
-| --------------------------------------------- | ------------------------------------------ | --------------------------- | ----------------------------------------------------------------------- |
-| A03-P1-01 / A04-P1-02 / A07-P1-01             | `ingestion.py` 1516 LOC；`commit_*` 369 行 | **Batch 2.5+ hygiene PR-2** | 见 `docs/architecture/layer1_ingestion_refactor_rollback_plan.md`       |
-| A03-P2-01 / A05-P2-03 / A06-P2-02 / A07-P2-01 | evidence writer 与 runtime 混置            | **同上 PR-2 第 1 步**       | 仅移动文件 + re-export；零行为变更                                      |
-| A03-P2-02 / A07-P2-02                         | phase sandbox bootstrap 重复               | **PR-2 第 2 步**            | 提取 helper；对比 evidence JSON hash                                    |
-| A03-P3-01                                     | markdown formatter 重复                    | **PR-2 第 3 步**            | 纯函数提取；快照测试                                                    |
-| A03-P1-02                                     | Phase3/4 fetch 重复                        | **已部分关闭**              | `_fetch_staging_on_connection` 已存在；PR-2 仅补回归防 double fetch_log |
+| ID                                            | 问题                                       | 清理阶段                     | 回滚方案                                                                 |
+| --------------------------------------------- | ------------------------------------------ | ---------------------------- | ------------------------------------------------------------------------ |
+| A03-P1-01 / A04-P1-02 / A07-P1-01             | `ingestion.py` 1516 LOC；`commit_*` 369 行 | **Batch 2.5+ hygiene PR-2**  | 见 `docs/architecture/layer1_ingestion_refactor_rollback_plan.md`        |
+| A03-P2-01 / A05-P2-03 / A06-P2-02 / A07-P2-01 | evidence writer 与 runtime 混置            | **PR-R2a DONE** (2026-06-21) | `ingestion_evidence.py` + facade re-export; pytest I1–I7 green on PR #25 |
+| A03-P2-02 / A07-P2-02                         | phase sandbox bootstrap 重复               | **PR-R2b** (next)            | 提取 helper；对比 evidence JSON hash                                     |
+| A03-P3-01                                     | markdown formatter 重复                    | **PR-2 第 3 步**             | 纯函数提取；快照测试                                                     |
+| A03-P1-02                                     | Phase3/4 fetch 重复                        | **已部分关闭**               | `_fetch_staging_on_connection` 已存在；PR-2 仅补回归防 double fetch_log  |
 
 **禁止:** 在单 PR 内同时改 runtime 事务语义 + 拆文件 + 改证据格式。
 

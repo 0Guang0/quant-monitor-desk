@@ -22,8 +22,10 @@ from backend.app.layer1_axes.ingestion import (
     IngestionRouteBinding,
     Layer1ObservationIngestionService,
     MicroFetchResult,
-    _relative_path,
 )
+from backend.app.layer1_axes.ingestion_inventory import _relative_to_project
+
+_relative_path = _relative_to_project
 
 PHASE2_MUTATION_TABLES: tuple[str, ...] = (
     "axis_observation",
@@ -561,7 +563,6 @@ def capture_task_phase4_evidence(
     targets = resolve_phase1_target_paths(data_root=data_root, db_path=db_path)
     sandbox_db = out / SANDBOX_BASELINE_DIRNAME / TARGET_DB_RELATIVE
     db_capture_strategy = "synthetic_migrated_schema_only"
-    evidence_data_root = targets.data_root
 
     if sandbox_db.is_file():
         inspect_db = sandbox_db
@@ -576,9 +577,7 @@ def capture_task_phase4_evidence(
         if sandbox_base.exists():
             shutil.rmtree(sandbox_base)
         inspect_db = sandbox_base / TARGET_DB_RELATIVE
-        evidence_data_root = sandbox_base / "data"
         inspect_db.parent.mkdir(parents=True, exist_ok=True)
-        evidence_data_root.mkdir(parents=True, exist_ok=True)
         con = duckdb.connect(str(inspect_db))
         try:
             apply_migrations(con)
@@ -612,3 +611,29 @@ def capture_task_phase4_evidence(
     json_path = out / PHASE4_EVIDENCE_JSON
     json_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return payload
+
+
+__all__ = [
+    "NO_MUTATION_MD",
+    "PHASE2_MUTATION_TABLES",
+    "PHASE3_EVIDENCE_JSON",
+    "PHASE3_MUTATION_TABLES",
+    "PHASE3_NO_CLEAN_WRITE_MD",
+    "PHASE3_SANDBOX_DIRNAME",
+    "PHASE4_EVIDENCE_JSON",
+    "PHASE4_INVENTORY_DELTA_MD",
+    "PHASE4_MUTATION_TABLES",
+    "PHASE4_SANDBOX_DIRNAME",
+    "ROUTE_PREVIEW_JSON",
+    "ROUTE_PREVIEW_MD",
+    "capture_phase2_route_evidence",
+    "capture_phase3_micro_fetch_evidence",
+    "capture_phase4_clean_write_evidence",
+    "capture_task_phase2_evidence",
+    "capture_task_phase3_evidence",
+    "capture_task_phase4_evidence",
+    "format_phase2_no_mutation_md",
+    "format_phase2_route_preview_md",
+    "format_phase3_no_clean_write_md",
+    "format_phase4_inventory_delta_md",
+]
