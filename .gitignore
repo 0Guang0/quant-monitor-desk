@@ -25,6 +25,11 @@ data/cache/
 
 # Audit sandbox (complex-task-protocol §2.10; ≠ Execute DATA_ROOT)
 .audit-sandbox/
+.audit-sandboxpytest-*/
+
+# Stray npm cache dirs (invalid path names from misconfigured npm)
+=/
+frontend/=/
 
 # Code intelligence indexes (local-only; refresh with analyze --index-only / codegraph sync)
 .gitnexus/

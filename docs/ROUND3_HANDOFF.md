@@ -15,7 +15,7 @@ Batch 1 early ops (`R3-EARLY-DB-INSPECT-CLI`) closes remaining read-only DB evid
 
 PR [#15](https://github.com/0Guang0/quant-monitor-desk/pull/15) merged to `master`. Task **017** may start when Round 3 Trellis task is created.
 
-Issue policy: [`AUDIT_DEFERRED_REGISTRY.md`](AUDIT_DEFERRED_REGISTRY.md) — no OPEN rows; deferred items carry resolution phases.
+Issue policy: [`AUDIT_DEFERRED_REGISTRY.md`](AUDIT_DEFERRED_REGISTRY.md) — no OPEN rows; deferred items carry resolution phases. Batch 2.5 audit follow-ups: [`docs/quality/ROUND3_BATCH25_PENDING_FIX_REGISTRY.md`](quality/ROUND3_BATCH25_PENDING_FIX_REGISTRY.md).
 
 ## Round 2 completion boundary
 
@@ -70,7 +70,7 @@ Archived Trellis task `.trellis/tasks/archive/2026-06/06-20-round3-batch2-layer1
 | `018`                        | Feature + interpretation snapshots               |
 | `R3-EARLY-LINEAGE-CONSUMERS` | Snapshot lineage persistence + consumers         |
 
-**Next:** Batch 2.5 **Execute ready** (2026-06-20) — Trellis `.trellis/tasks/06-20-round3-batch2-5-layer1-obs-ingest/` · `research/execute-handoff.md` · `task.json.status=in_progress`. Five phase gates + phase-by-phase audit before Batch 3 treats Layer 1 as real-data-ready. Source: `018A_layer1_observation_ingestion_bridge.md`.
+**Next:** Batch 2.5 **archived PASS** (2026-06-20) — Trellis `.trellis/tasks/archive/2026-06/06-20-round3-batch2-5-layer1-obs-ingest/` · Audit PASS · **staged/fixture only** (not production-live). Authoritative evidence: `execute-evidence/final_registry_update.md` · deferred live pilot: `R3-B2.75-01` in `AUDIT_DEFERRED_REGISTRY.md`. Post-audit fix ledger: `docs/quality/ROUND3_BATCH25_PENDING_FIX_REGISTRY.md`. Do **not** treat Layer 1 as real-data-ready until Batch 2.75 closes or is explicitly re-deferred. Source: `018A_layer1_observation_ingestion_bridge.md`.
 
 ## Round 3 start checklist
 

@@ -38,39 +38,39 @@
 
 ### 3.1 A1 · Spec
 
-_Pending agent output → research/audit-a1-spec.md_
+**PASS** — See `research/audit-a1-spec.md`. Batch 2.5 AC trace complete; `schema.sql` now includes all 7 `axis_*` tables (B2.5-O-02 closed).
 
 ### 3.2 A2 · 过度工程
 
-_Pending agent output → research/audit-a2-ponytail.md_
+**PASS** — See `research/audit-a2-ponytail.md`. Core Phase 3/4 fetch duplication resolved via `_fetch_staging_on_connection`; evidence writers colocated (optional split deferred).
 
 ### 3.3 A3 · 安全
 
-_Pending agent output → research/audit-a3-security.md_
+**PASS** — See `research/audit-a3-security.md`. Sandbox-first evidence; no production DB mutation in staged path.
 
 ### 3.4 A4 · 代码质量
 
-_Pending agent output → research/audit-a4-quality.md_
+**PASS** — See `research/audit-a4-quality.md`. Full pytest green; `ruff check` clean on backend/tests.
 
 ### 3.5 A5 · 完成情况
 
-_Pending agent output → research/audit-a5-trace.md (+ PH-A5 audit-ph-a5-final.md)_
+**PASS** — See `research/audit-a5-trace.md` (+ PH-A5 `audit-ph-a5-final.md`). Phase 3/4 evidence artifacts stable on Windows deep basetemp after `path_compat` fix.
 
 ### 3.6 A6 · 性能
 
-_Pending agent output → research/audit-a6-perf.md_
+**PASS** — See `research/audit-a6-perf.md`. ResourceGuard + staged micro-fetch within historical budgets.
 
 ### 3.7 A7 · 运维
 
-_Pending agent output → research/audit-a7-ops.md_
+**PASS** — See `research/audit-a7-ops.md`. Migration 011 idempotent; sandbox copy before inspect.
 
 ### 3.8 A8 · 测试缺口
 
-_Pending agent output → research/audit-a8-test-gap.md_
+**PASS** — See `research/audit-a8-test-gap.md`. Windows long-path regression added; phase3/phase4 evidence tests green.
 
 ---
 
-## 4. 风险与结论（A9 · 主会话 — 待 A1–A8 完成后填写）
+## 4. 风险与结论（A9 · 主会话 — A1–A8 已完成；2026-06-21 fix-branch 复核）
 
 ### 4.2 结论
 

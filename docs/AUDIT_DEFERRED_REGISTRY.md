@@ -2,6 +2,9 @@
 
 **Single source of truth** for open issues, intentional deferrals, and resolved audit items.
 
+**Batch 2.5 audit 待修复台账（含合理延期清理阶段）:** [`docs/quality/ROUND3_BATCH25_PENDING_FIX_REGISTRY.md`](quality/ROUND3_BATCH25_PENDING_FIX_REGISTRY.md)  
+**ingestion 拆分回滚方案（后置）:** [`docs/architecture/layer1_ingestion_refactor_rollback_plan.md`](architecture/layer1_ingestion_refactor_rollback_plan.md)
+
 ## Resolution policy (mandatory)
 
 Every issue MUST be in exactly one state:
@@ -85,12 +88,11 @@ Does **not** block 017 per `ROUND2_GAPS` §6; **must** be closed or re-deferred 
 
 > Task-scoped index: `.trellis/tasks/06-20-round3-batch2-5-layer1-obs-ingest/research/batch25-deferred-items.md`
 
-| ID        | Item                                                                                  | Resolution phase                                           | Task hook                                             | Blocks Phase 1? | Closure test / evidence                                                                       |
-| --------- | ------------------------------------------------------------------------------------- | ---------------------------------------------------------- | ----------------------------------------------------- | --------------- | --------------------------------------------------------------------------------------------- |
-| B2.5-O-02 | `specs/schema/schema.sql` missing all 7 `axis_*` tables (migration 011 authoritative) | **Optional narrow PR** or Batch 2.5 closeout               | `06-20-round3-batch2-5-layer1-obs-ingest` §8.6        | No              | `test_layer1Ingestion_phase0_schemaSqlLagTrackedAsO02` + schema.sql sync PR                   |
-| B2.5-O-03 | `axis_observation` no DB CHECK on timestamp ordering                                  | **Phase 4 or migration 012**                               | `ingestion.py` commit path                            | No (Phase 4)    | `test_layer1Ingestion_phase0_axisObservation_noDbCheck_classified` + Phase 4 validator        |
-| B2.5-O-05 | Live FRED `primary_source` for `ENV-E1-DGS10` vs staged `macro_supplementary`         | **Batch 2.75 user-authorized live pilot** or remain staged | `018B_production_live_pilot_gate.md` · MASTER AC-P2-0 | No              | Staged route test green; live requires Batch 2.75 auth evidence and sandbox/no-mutation proof |
-| B2.5-O-06 | Migration 008 broad CHECK closeout                                                    | **Round 3 migration 008** (existing A9-P1-01)              | `MIGRATION_008_PLAN.md`                               | No              | migration 008 + contract tests                                                                |
+| ID        | Item                                                                           | Resolution phase                                           | Task hook                                             | Blocks Phase 1? | Closure test / evidence                                                                                                          |
+| --------- | ------------------------------------------------------------------------------ | ---------------------------------------------------------- | ----------------------------------------------------- | --------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| B2.5-O-03 | `axis_observation` no DB CHECK on timestamp ordering (DuckDB ALTER limitation) | **Closed via app-layer** (ADR-002)                         | `ingestion.py` commit path + `feature_engine.py`      | No (Phase 4)    | `test_layer1Observation_noFutureDataRejected` + `test_layer1Ingestion_phase0_axisObservation_appValidatorEnforcesTimestampOrder` |
+| B2.5-O-05 | Live FRED `primary_source` for `ENV-E1-DGS10` vs staged `macro_supplementary`  | **Batch 2.75 user-authorized live pilot** or remain staged | `018B_production_live_pilot_gate.md` · MASTER AC-P2-0 | No              | Staged route test green; live requires Batch 2.75 auth evidence and sandbox/no-mutation proof                                    |
+| B2.5-O-06 | Migration 008 broad CHECK closeout                                             | **Round 3 migration 008** (existing A9-P1-01)              | `MIGRATION_008_PLAN.md`                               | No              | migration 008 + contract tests                                                                                                   |
 
 ---
 
@@ -108,10 +110,12 @@ Does **not** block 017 per `ROUND2_GAPS` §6; **must** be closed or re-deferred 
 
 ## RESOLVED — Round 3 Batch 2.5 (Layer 1 observation ingestion bridge)
 
-| ID        | Item                                                                                                          | Evidence                                                                                                                                               |
-| --------- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| B2.5-O-04 | `commit_clean_observation_and_snapshots` + `Layer1ObservationWriter` + single-transaction ADR-001 commit path | `test_layer1Observation_cleanWrite_usesWriteManager` · `test_layer1Observation_mappingUsesRawFetchPayload` · `adversarial-audit-phase4-remediation.md` |
-| B2.5-O-07 | Single `fetch_log` row per `DataSourceService.fetch` (service-authoritative write)                            | `base_adapter.py` `record_fetch_log` param · `service.py` · layer1 micro-fetch tests assert `fetch_log_delta=1`                                        |
+| ID               | Item                                                                                                          | Evidence                                                                                                                                               |
+| ---------------- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| B2.5-O-04        | `commit_clean_observation_and_snapshots` + `Layer1ObservationWriter` + single-transaction ADR-001 commit path | `test_layer1Observation_cleanWrite_usesWriteManager` · `test_layer1Observation_mappingUsesRawFetchPayload` · `adversarial-audit-phase4-remediation.md` |
+| B2.5-O-02        | `specs/schema/schema.sql` synced with migration 011 axis tables                                               | `test_layer1Ingestion_phase0_schemaSqlLagTrackedAsO02` · `specs/schema/schema.sql`                                                                     |
+| B2.5-O-07        | Single `fetch_log` row per `DataSourceService.fetch` (service-authoritative write)                            | `base_adapter.py` `record_fetch_log` param · `service.py` · layer1 micro-fetch tests assert `fetch_log_delta=1`                                        |
+| B2.5-WIN-PATH-01 | Windows MAX_PATH raw evidence I/O under deep pytest basetemp                                                  | `backend/app/storage/path_compat.py` · `test_save_windowsLongPath_writesSuccessfully` · phase3/phase4 evidence tests with deep basetemp                |
 
 ---
 

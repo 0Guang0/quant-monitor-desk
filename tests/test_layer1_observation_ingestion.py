@@ -876,6 +876,28 @@ def test_layer1MicroIngestion_resourceGuardPauseStopsBeforeFetch(
     assert before == after
 
 
+def test_layer1Ingestion_phase3_phase4_singleFetchLogRegression(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """A03-P1-02: Phase 3 micro-fetch and Phase 4 commit each add exactly one fetch_log row."""
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    service, db = _build_micro_fetch_service(tmp_path)
+    before_p3 = _row_counts(db, ("fetch_log",))["fetch_log"] or 0
+    service.micro_fetch_staging(indicator_id=FROZEN_STAGED_INDICATOR, as_of=date(2024, 6, 15))
+    after_p3 = _row_counts(db, ("fetch_log",))["fetch_log"] or 0
+    assert after_p3 - before_p3 == 1
+
+    service4, db4 = _build_phase4_service(tmp_path)
+    before_p4 = _row_counts(db4, ("fetch_log",))["fetch_log"] or 0
+    service4.commit_clean_observation_and_snapshots(
+        indicator_id=FROZEN_STAGED_INDICATOR,
+        as_of=PHASE4_AS_OF,
+    )
+    after_p4 = _row_counts(db4, ("fetch_log",))["fetch_log"] or 0
+    assert after_p4 - before_p4 == 1
+
+
+@pytest.mark.slow
 def test_layer1Ingestion_phase3_taskEvidenceArtifacts(tmp_path: Path, monkeypatch) -> None:
     """Task execute-evidence exports phase3 json/md from fresh isolated sandbox."""
     out = tmp_path / "evidence"
@@ -1385,7 +1407,7 @@ def test_layer1Observation_postInspectShowsExpectedDeltasOnly(tmp_path: Path, mo
         before["axis_interpretation_snapshot"] or 0
     ) == 1
     assert (after["axis_snapshot_lineage"] or 0) - (before["axis_snapshot_lineage"] or 0) == 1
-    assert (after["fetch_log"] or 0) - (before["fetch_log"] or 0) >= 1
+    assert (after["fetch_log"] or 0) - (before["fetch_log"] or 0) == 1
     assert (after["file_registry"] or 0) - (before["file_registry"] or 0) == 1
     assert (after["validation_report"] or 0) - (before["validation_report"] or 0) >= 1
     assert (after["write_audit_log"] or 0) - (before["write_audit_log"] or 0) >= 4
@@ -1492,6 +1514,7 @@ def test_layer1Observation_writeAuditUsesSharedValidationReport(
     assert any(row[0] == result.validation_report_id for row in vr_rows)
 
 
+@pytest.mark.slow
 def test_layer1Ingestion_phase4_taskEvidenceArtifacts(tmp_path: Path, monkeypatch) -> None:
     """Task execute-evidence exports phase4 json/md aligned with phase1 baseline."""
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))

@@ -34,6 +34,9 @@ testpaths = ["tests"]
 pythonpath = ["."]
 addopts = "-q --basetemp=.audit-sandbox/pytest"
 cache_dir = ".audit-sandbox/.pytest_cache"
+markers = [
+    "slow: integration or full-pipeline tests; exclude with pytest -m 'not slow' for quick CI",
+]
 filterwarnings = [
     "ignore:Using `httpx` with `starlette.testclient` is deprecated:starlette.exceptions.StarletteDeprecationWarning",
 ]

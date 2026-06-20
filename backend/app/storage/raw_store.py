@@ -7,6 +7,8 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
+from backend.app.storage.path_compat import is_relative_to_data_root, mkdir_parents, write_bytes
+
 _EXT_MAP = {"json": "json", "csv": "csv", "parquet": "parquet"}
 _SEGMENT = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9._-]{0,63}$")
 MAX_RAW_FILE_BYTES = 256 * 1024 * 1024
@@ -60,12 +62,12 @@ class RawStore:
         ext = _EXT_MAP[file_type]
         rel_dir = Path("raw") / safe_source / safe_domain / safe_as_of
         dest_dir = self.data_root / rel_dir
-        dest_dir.mkdir(parents=True, exist_ok=True)
+        mkdir_parents(dest_dir, exist_ok=True)
         filename = f"{content_hash}.{ext}"
         dest_path = (dest_dir / filename).resolve()
-        if not dest_path.is_relative_to(self.data_root):
+        if not is_relative_to_data_root(dest_path, self.data_root):
             raise ValueError("path escapes data_root")
-        dest_path.write_bytes(content)
+        write_bytes(dest_path, content)
         file_id = content_hash[:16] + safe_source
         return SavedFile(
             file_id=file_id,
