@@ -21,3 +21,9 @@
 {"phase":"8.4","skill":"testing-guidelines","before":"GREEN"}
 {"phase":"8.4","skill":"incremental-implementation","after":"GREEN"}
 {"phase":"8.4","skill":"gitnexus-impact","action":"impact(micro_fetch_staging,build_staged_fixture_service)","risk":"LOW"}
+{"phase":"8.5","skill":"test-driven-development","before":"RED"}
+{"phase":"8.5","skill":"karpathy-guidelines","before":"GREEN"}
+{"phase":"8.5","skill":"testing-guidelines","before":"GREEN"}
+{"phase":"8.5","skill":"spec-driven-development","before":"GREEN"}
+{"phase":"8.5","skill":"incremental-implementation","after":"GREEN"}
+{"phase":"8.5","skill":"gitnexus-impact","action":"impact(commit_clean_observation_and_snapshots,Layer1ObservationWriter)","risk":"LOW"}

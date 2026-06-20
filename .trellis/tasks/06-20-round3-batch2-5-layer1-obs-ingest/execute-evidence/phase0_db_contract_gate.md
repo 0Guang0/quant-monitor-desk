@@ -35,7 +35,7 @@
 
 | Contract                               | Verification                                                                                                     | Status                                                             |
 | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| `write_contract.yaml`                  | `test_layer1Ingestion_phase0_writeContractMapsToObservationTarget` + reject_if mapping test                      | PASS (target `axis_observation` write **Phase 4** B2.5-O-04)       |
+| `write_contract.yaml`                  | `test_layer1Ingestion_phase0_writeContractMapsToObservationTarget` + reject_if mapping test                      | PASS (target `axis_observation` write **RESOLVED** B2.5-O-04 §8.5) |
 | `snapshot_lineage_contract.yaml`       | `test_layer1Lineage_phase0_ddlStoresSerializedFetchIds` + Batch 2 lineage tests                                  | PASS (JSON in VARCHAR documented)                                  |
 | `source_route_contract.yaml`           | `test_layer1Ingestion_phase0_sourceRouteContract_forbidsSilentFallback` + `test_noSilentFallbackCopied`          | PASS                                                               |
 | `datasource_service_contract.yaml`     | `test_datasource_service.py::test_apiAndAgentCannotImportAdapterFactory`                                         | PASS                                                               |

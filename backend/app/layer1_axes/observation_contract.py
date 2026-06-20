@@ -29,6 +29,23 @@ AXIS_OBSERVATION_DDL_COLUMNS: tuple[str, ...] = (
     "created_at",
 )
 
+# Non-nullable / business-required fields for DataQualityValidator (nullable DDL cols excluded).
+AXIS_OBSERVATION_REQUIRED_FIELDS: tuple[str, ...] = (
+    "observation_id",
+    "indicator_id",
+    "as_of_timestamp",
+    "publish_timestamp",
+    "fetch_time",
+    "raw_value",
+    "raw_unit",
+    "frequency",
+    "source_used",
+    "source_channel_id",
+    "content_hash",
+    "schema_hash",
+    "source_switched",
+)
+
 # write_contract.yaml required fields for clean observation writes (Phase 4)
 WRITE_REQUEST_REQUIRED_FOR_OBSERVATION: tuple[str, ...] = (
     "run_id",

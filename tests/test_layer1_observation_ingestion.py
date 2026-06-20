@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from datetime import date
+from datetime import UTC, date, datetime
 from pathlib import Path
 from unittest.mock import patch
 
@@ -922,3 +922,491 @@ def test_layer1Ingestion_phase3_taskEvidenceArtifacts(tmp_path: Path, monkeypatc
     raw_paths = evidence["micro_fetch"]["fetch_result"]["raw_file_paths"]
     assert raw_paths
     assert not Path(raw_paths[0]).is_absolute()
+
+
+# --- Phase 4: clean write + snapshots (§8.5) ---
+
+PHASE4_AS_OF = date(2024, 6, 15)
+PHASE4_ROW_COUNT_TABLES = (
+    "axis_observation",
+    "fetch_log",
+    "file_registry",
+    "validation_report",
+    "write_audit_log",
+    "axis_feature_snapshot",
+    "axis_interpretation_snapshot",
+    "axis_snapshot_lineage",
+)
+
+
+def _build_phase4_service(
+    tmp_path: Path,
+    *,
+    datasource: DataSourceService | None = None,
+) -> tuple[Layer1ObservationIngestionService, Path]:
+    db = tmp_path / "phase4.duckdb"
+    data_root = tmp_path / "data"
+    data_root.mkdir(parents=True, exist_ok=True)
+    _init_db(db)
+    if datasource is None:
+        from backend.app.datasources.service import build_staged_fixture_service
+
+        datasource = build_staged_fixture_service(
+            data_root=data_root,
+            fixture_path=MACRO_FIXTURE_PATH,
+        )
+    service = Layer1ObservationIngestionService(
+        db_path=db,
+        data_root=data_root,
+        datasource=datasource,
+    )
+    return service, db
+
+
+def test_layer1Observation_cleanWrite_requiresValidationReport(tmp_path: Path) -> None:
+    """WriteManager rejects clean observation write without persisted validation_report."""
+    from backend.app.layer1_axes.observation_writer import Layer1ObservationWriter
+
+    db = tmp_path / "phase4-gate.duckdb"
+    cm = ConnectionManager(db)
+    with cm.writer() as con:
+        apply_migrations(con)
+    writer = Layer1ObservationWriter(cm)
+    result = writer.write_observations(
+        rows=[
+            {
+                "observation_id": "obs-missing-vr",
+                "indicator_id": FROZEN_STAGED_INDICATOR,
+                "as_of_timestamp": datetime(2024, 6, 15, 16, 0, tzinfo=UTC),
+                "publish_timestamp": datetime(2024, 6, 15, 0, 0, tzinfo=UTC),
+                "fetch_time": datetime(2024, 6, 15, 12, 0, tzinfo=UTC),
+                "raw_value": 4.25,
+                "raw_unit": "pct",
+                "frequency": "daily",
+                "source_used": "staged_fixture",
+                "source_channel_id": "akshare",
+                "data_lag_days": 0.0,
+                "stale_reason": None,
+                "quality_flags": "STAGED_FIXTURE",
+                "content_hash": "abc",
+                "schema_hash": "def",
+                "source_switched": False,
+                "created_at": datetime.now(UTC),
+            }
+        ],
+        validation_report_id="missing-validation-report",
+        run_id="run-vr",
+        job_id="job-vr",
+        source_used="staged_fixture",
+    )
+    assert result.status == "FAILED"
+
+
+def test_layer1Observation_cleanWrite_usesWriteManager(tmp_path: Path, monkeypatch) -> None:
+    """commit_clean_observation_and_snapshots records write_audit_log for axis_observation."""
+
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    service, db = _build_phase4_service(tmp_path)
+    before_audit = _row_counts(db, ("write_audit_log",))["write_audit_log"]
+
+    result = service.commit_clean_observation_and_snapshots(
+        indicator_id=FROZEN_STAGED_INDICATOR,
+        as_of=PHASE4_AS_OF,
+    )
+
+    assert result.observation_write_status == "SUCCESS"
+    con = duckdb.connect(str(db), read_only=True)
+    try:
+        audit_rows = con.execute(
+            """
+            SELECT target_table, status, validation_status
+            FROM write_audit_log
+            WHERE job_id = ?
+            ORDER BY started_at
+            """,
+            [result.micro_fetch.job_id],
+        ).fetchall()
+        obs_count = con.execute("SELECT COUNT(*) FROM axis_observation").fetchone()[0]
+    finally:
+        con.close()
+    assert obs_count == 1
+    assert any(row[0] == "axis_observation" and row[1] == "SUCCESS" for row in audit_rows)
+    after_audit = _row_counts(db, ("write_audit_log",))["write_audit_log"]
+    assert (after_audit or 0) > (before_audit or 0)
+
+
+def test_layer1Observation_validationFailure_blocksCleanWrite(tmp_path: Path, monkeypatch) -> None:
+    """Failed validation_report blocks clean observation write."""
+    from backend.app.layer1_axes.ingestion import IngestionCommitBlockedError
+    from backend.app.validators.data_quality import DataQualityReport
+
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    service, db = _build_phase4_service(tmp_path)
+
+    def failing_validate(self, con, request, **kwargs):
+        report = DataQualityReport(
+            validation_report_id="vr-fail",
+            status="FAILED",
+            checked_rows=1,
+            failed_rows=1,
+            warning_rows=0,
+            quality_flags=("TEST_FAIL",),
+            can_write_clean=False,
+            needs_manual_review=False,
+            findings=(),
+        )
+        self._persist_report(con, request, report)
+        return report
+
+    monkeypatch.setattr(
+        "backend.app.layer1_axes.ingestion.DataQualityValidator.validate_table",
+        failing_validate,
+    )
+    with pytest.raises(IngestionCommitBlockedError) as exc:
+        service.commit_clean_observation_and_snapshots(
+            indicator_id=FROZEN_STAGED_INDICATOR,
+            as_of=PHASE4_AS_OF,
+        )
+    assert exc.value.reason_code == "VALIDATION_FAILED"
+    assert _row_counts(db, ("axis_observation",))["axis_observation"] == 0
+
+
+def test_layer1Observation_severeConflict_blocksCleanWrite(tmp_path: Path, monkeypatch) -> None:
+    """Open severe source_conflict for the run blocks clean write via DbValidationGate."""
+    from backend.app.layer1_axes.ingestion import IngestionCommitBlockedError
+
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    service, db = _build_phase4_service(tmp_path)
+    run_id = "layer1-commit-severe-test"
+
+    def pass_validate(self, con, request, **kwargs):
+        from backend.app.validators.data_quality import DataQualityReport
+
+        report = DataQualityReport(
+            validation_report_id="vr-severe-block",
+            status="PASSED",
+            checked_rows=1,
+            failed_rows=0,
+            warning_rows=0,
+            quality_flags=(),
+            can_write_clean=True,
+            needs_manual_review=False,
+            findings=(),
+        )
+        self._persist_report(con, request, report)
+        con.execute(
+            """
+            INSERT INTO source_conflict (
+                conflict_id, run_id, job_id, data_domain, field_name,
+                primary_source, competing_source, severity, reconcile_status,
+                manual_review_required
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            [
+                "conflict-severe-1",
+                request.run_id,
+                request.job_id,
+                STAGED_DATA_DOMAIN,
+                "raw_value",
+                "akshare",
+                "fred",
+                "severe",
+                "OPEN",
+                False,
+            ],
+        )
+        return report
+
+    monkeypatch.setattr(
+        "backend.app.layer1_axes.ingestion.DataQualityValidator.validate_table",
+        pass_validate,
+    )
+    with pytest.raises(IngestionCommitBlockedError) as exc:
+        service.commit_clean_observation_and_snapshots(
+            indicator_id=FROZEN_STAGED_INDICATOR,
+            as_of=PHASE4_AS_OF,
+            run_id=run_id,
+        )
+    assert exc.value.reason_code == "WRITE_FAILED"
+
+
+def test_layer1Observation_manualReview_blocksNonManualPatchWrite(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """needs_manual_review on validation_report blocks clean write."""
+    from backend.app.layer1_axes.ingestion import IngestionCommitBlockedError
+    from backend.app.validators.data_quality import DataQualityReport
+
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    service, db = _build_phase4_service(tmp_path)
+
+    def manual_review_validate(self, con, request, **kwargs):
+        report = DataQualityReport(
+            validation_report_id="vr-manual",
+            status="PASSED",
+            checked_rows=1,
+            failed_rows=0,
+            warning_rows=0,
+            quality_flags=("SCHEMA_DRIFT",),
+            can_write_clean=True,
+            needs_manual_review=True,
+            findings=(),
+        )
+        self._persist_report(con, request, report)
+        return report
+
+    monkeypatch.setattr(
+        "backend.app.layer1_axes.ingestion.DataQualityValidator.validate_table",
+        manual_review_validate,
+    )
+    with pytest.raises(IngestionCommitBlockedError) as exc:
+        service.commit_clean_observation_and_snapshots(
+            indicator_id=FROZEN_STAGED_INDICATOR,
+            as_of=PHASE4_AS_OF,
+        )
+    assert exc.value.reason_code == "MANUAL_REVIEW_REQUIRED"
+
+
+def test_layer1Observation_lineageIncludesFetchIdsAndHashes(tmp_path: Path, monkeypatch) -> None:
+    """axis_snapshot_lineage carries non-empty fetch ids and content hashes from validation."""
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    service, db = _build_phase4_service(tmp_path)
+
+    result = service.commit_clean_observation_and_snapshots(
+        indicator_id=FROZEN_STAGED_INDICATOR,
+        as_of=PHASE4_AS_OF,
+    )
+
+    assert result.source_fetch_ids
+    assert result.source_content_hashes
+    con = duckdb.connect(str(db), read_only=True)
+    try:
+        row = con.execute(
+            """
+            SELECT source_fetch_ids, source_content_hashes, rule_version, parameter_hash
+            FROM axis_snapshot_lineage
+            WHERE snapshot_id = ?
+            """,
+            [result.lineage_snapshot_id],
+        ).fetchone()
+    finally:
+        con.close()
+    assert row is not None
+    fetch_ids = json.loads(row[0])
+    content_hashes = json.loads(row[1])
+    assert fetch_ids
+    assert content_hashes
+    assert row[2]
+    assert row[3]
+
+
+def test_layer1Observation_noFutureDataRejected(tmp_path: Path, monkeypatch) -> None:
+    """Future publish_timestamp blocks commit before snapshots persist."""
+    from backend.app.layer1_axes.ingestion import IngestionCommitBlockedError
+
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    service, db = _build_phase4_service(tmp_path)
+
+    def future_row(micro, *, data_root, fixture_path=None):
+        from backend.app.layer1_axes.observation_mapper import map_micro_fetch_to_observation_row
+
+        row = map_micro_fetch_to_observation_row(
+            micro, data_root=data_root, fixture_path=fixture_path
+        )
+        row["publish_timestamp"] = datetime(2099, 1, 1, tzinfo=UTC)
+        row["as_of_timestamp"] = datetime(2024, 6, 15, 16, 0, tzinfo=UTC)
+        return row
+
+    monkeypatch.setattr(
+        "backend.app.layer1_axes.ingestion.map_micro_fetch_to_observation_row",
+        future_row,
+    )
+    with pytest.raises(IngestionCommitBlockedError) as exc:
+        service.commit_clean_observation_and_snapshots(
+            indicator_id=FROZEN_STAGED_INDICATOR,
+            as_of=PHASE4_AS_OF,
+        )
+    assert exc.value.reason_code == "NO_FUTURE_DATA"
+
+
+def test_layer1Observation_forbiddenAndBlindspotNeverPersisted(tmp_path: Path) -> None:
+    """Forbidden and BlindSpot indicators never reach axis_observation."""
+    service, db = _build_phase4_service(tmp_path)
+    for indicator_id, code in (
+        ("ENV-FORBIDDEN-WM2NS", FORBIDDEN_INDICATOR_REJECTED),
+        ("ENV-D-DTS_OPERATING_CASH_BALANCE", BLINDSPOT_INDICATOR_REJECTED),
+    ):
+        with pytest.raises(IngestionRejectedError) as exc:
+            service.commit_clean_observation_and_snapshots(
+                indicator_id=indicator_id,
+                as_of=PHASE4_AS_OF,
+            )
+        assert exc.value.reason_code == code
+    assert _row_counts(db, ("axis_observation",))["axis_observation"] == 0
+
+
+def test_layer1Observation_postInspectShowsExpectedDeltasOnly(tmp_path: Path, monkeypatch) -> None:
+    """Post-commit inventory deltas are limited to expected ingestion tables."""
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    service, db = _build_phase4_service(tmp_path)
+    before = _row_counts(db, PHASE4_ROW_COUNT_TABLES)
+
+    service.commit_clean_observation_and_snapshots(
+        indicator_id=FROZEN_STAGED_INDICATOR,
+        as_of=PHASE4_AS_OF,
+    )
+
+    after = _row_counts(db, PHASE4_ROW_COUNT_TABLES)
+    assert (after["axis_observation"] or 0) - (before["axis_observation"] or 0) == 1
+    assert (after["axis_feature_snapshot"] or 0) - (before["axis_feature_snapshot"] or 0) == 1
+    assert (after["axis_interpretation_snapshot"] or 0) - (
+        before["axis_interpretation_snapshot"] or 0
+    ) == 1
+    assert (after["axis_snapshot_lineage"] or 0) - (before["axis_snapshot_lineage"] or 0) == 1
+    assert (after["fetch_log"] or 0) - (before["fetch_log"] or 0) >= 1
+    assert (after["file_registry"] or 0) - (before["file_registry"] or 0) == 1
+    assert (after["validation_report"] or 0) - (before["validation_report"] or 0) >= 1
+    assert (after["write_audit_log"] or 0) - (before["write_audit_log"] or 0) >= 4
+
+
+def test_layer1Observation_mappingUsesRawFetchPayload(tmp_path: Path, monkeypatch) -> None:
+    """metric_value and source_used derive from raw fetch JSON, not fixture alone."""
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    service, db = _build_phase4_service(tmp_path)
+
+    result = service.commit_clean_observation_and_snapshots(
+        indicator_id=FROZEN_STAGED_INDICATOR,
+        as_of=PHASE4_AS_OF,
+    )
+    raw_path = service._data_root / result.micro_fetch.fetch_result.raw_file_paths[0]
+    payload = json.loads(raw_path.read_text(encoding="utf-8"))
+    expected_value = payload["observations"][0]["metric_value"]
+
+    con = duckdb.connect(str(db), read_only=True)
+    try:
+        row = con.execute(
+            "SELECT raw_value, source_used FROM axis_observation WHERE observation_id = ?",
+            [result.observation_id],
+        ).fetchone()
+    finally:
+        con.close()
+    assert row is not None
+    assert row[0] == expected_value
+    assert row[1] == result.micro_fetch.route_plan.selected_source_id
+
+
+def test_layer1Observation_resourceGuardPauseBlocksCommit(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """ResourceGuard PAUSE blocks Phase 4 commit before any clean write."""
+    monkeypatch.setattr(
+        ResourceGuard,
+        "check",
+        lambda self: (Decision.PAUSE, "disk_free_gb below pause threshold"),
+    )
+    service, db = _build_phase4_service(tmp_path)
+    with pytest.raises(ResourceGuardBlockedError):
+        service.commit_clean_observation_and_snapshots(
+            indicator_id=FROZEN_STAGED_INDICATOR,
+            as_of=PHASE4_AS_OF,
+        )
+    assert _row_counts(db, ("axis_observation",))["axis_observation"] == 0
+
+
+def test_layer1Observation_commitRejectsDuplicateObservation(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """Second commit for same indicator/as_of is rejected without duplicate rows."""
+    from backend.app.layer1_axes.ingestion import IngestionCommitBlockedError
+
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    service, db = _build_phase4_service(tmp_path)
+    service.commit_clean_observation_and_snapshots(
+        indicator_id=FROZEN_STAGED_INDICATOR,
+        as_of=PHASE4_AS_OF,
+    )
+    with pytest.raises(IngestionCommitBlockedError) as exc:
+        service.commit_clean_observation_and_snapshots(
+            indicator_id=FROZEN_STAGED_INDICATOR,
+            as_of=PHASE4_AS_OF,
+        )
+    assert exc.value.reason_code == "DUPLICATE_COMMIT"
+    assert _row_counts(db, ("axis_observation",))["axis_observation"] == 1
+
+
+def test_layer1Observation_writeAuditUsesSharedValidationReport(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """All Phase 4 clean writes share one validation_report_id in write_audit_log."""
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    service, db = _build_phase4_service(tmp_path)
+    result = service.commit_clean_observation_and_snapshots(
+        indicator_id=FROZEN_STAGED_INDICATOR,
+        as_of=PHASE4_AS_OF,
+    )
+    con = duckdb.connect(str(db), read_only=True)
+    try:
+        audit_rows = con.execute(
+            """
+            SELECT target_table, status
+            FROM write_audit_log
+            WHERE job_id = ?
+            ORDER BY started_at
+            """,
+            [result.micro_fetch.job_id],
+        ).fetchall()
+        vr_rows = con.execute(
+            """
+            SELECT validation_report_id FROM validation_report
+            WHERE run_id = ? AND job_id = ?
+            """,
+            [result.micro_fetch.run_id, result.micro_fetch.job_id],
+        ).fetchall()
+    finally:
+        con.close()
+    tables = {row[0] for row in audit_rows}
+    assert "axis_observation" in tables
+    assert "axis_feature_snapshot" in tables
+    assert "axis_interpretation_snapshot" in tables
+    assert "axis_snapshot_lineage" in tables
+    assert len(audit_rows) >= 4
+    assert all(row[1] == "SUCCESS" for row in audit_rows)
+    assert any(row[0] == result.validation_report_id for row in vr_rows)
+
+
+def test_layer1Ingestion_phase4_taskEvidenceArtifacts(tmp_path: Path, monkeypatch) -> None:
+    """Task execute-evidence exports phase4 json/md aligned with phase1 baseline."""
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    out = tmp_path / "evidence"
+    data_root = tmp_path / "data"
+    data_root.mkdir()
+    db = tmp_path / "db.duckdb"
+    _init_db(db)
+    inventory = capture_phase1_inventory(db, data_root, evidence_dir=out)
+    memo = out / "phase1_data_classification.md"
+    memo.write_text("# fixture memo\n", encoding="utf-8")
+    record_operator_classification(
+        inventory,
+        memo_path=memo,
+        classification=inventory["db_evidence_classification"],
+        operator_ack="authorized_for_phase4_test",
+        evidence_dir=out,
+    )
+    capture_task_phase2_evidence(out, as_of=date(2024, 6, 15))
+
+    from backend.app.layer1_axes.ingestion import capture_task_phase4_evidence
+
+    evidence = capture_task_phase4_evidence(out, as_of=date(2024, 6, 15))
+    assert (out / "phase4_clean_write_and_snapshot_evidence.json").is_file()
+    assert (out / "phase4_inventory_delta.md").is_file()
+    assert evidence["phase1_baseline_attached"] is True
+    assert evidence["evidence_baseline_strategy"] in {
+        "phase1_sandbox_copy_reused",
+        "sandbox_copy_aligned_with_phase1",
+        "fresh_phase4_sandbox_fallback",
+    }
+    delta = evidence["inventory_delta"]["table_deltas"]
+    assert delta["axis_observation"]["after"] == 1
+    assert delta["fetch_log"]["after"] >= 1
+    assert delta["file_registry"]["after"] >= 1
+

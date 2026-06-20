@@ -7,7 +7,7 @@
 - [x] 8.2 Phase 1 inventory — **DONE** · PH-A1 PASS
 - [x] 8.3 Phase 2 route dry-run — **DONE** · PH-A2 PASS
 - [x] **8.4 Phase 3 micro-fetch — DONE** · PH-A3 PASS（Execute 自检）
-- [ ] 8.5 Phase 4 clean write + snapshots
-- [ ] 8.6 Final gates
+- [x] **8.5 Phase 4 clean write + snapshots — DONE** · PH-A4 PASS（adversarial remediation）
+- [x] **8.6 Final gates — DONE** · PH-A5 待 Audit
 
-**下一会话入口：** `research/execute-handoff.md` → §8.5 Phase 4
+**下一会话入口：** `research/execute-handoff.md` → Audit PH-A5

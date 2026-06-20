@@ -8,6 +8,7 @@ import re
 import uuid
 from datetime import UTC, datetime
 
+import duckdb
 from backend.app.db.connection import ConnectionManager
 from backend.app.db.validation_gate import DbValidationGate
 from backend.app.db.write_manager import WriteManager, WriteRequest
@@ -257,33 +258,71 @@ class Layer1SnapshotWriter:
         validation_report_id: str,
         run_id: str = "layer1-run",
         job_id: str = "layer1-job",
+        source_used: str = "layer1_fixture",
+        data_domain: str = "layer1_axis_feature",
+        con: duckdb.DuckDBPyConnection | None = None,
+        own_transaction: bool = True,
     ):
         _reject_forbidden_substitute_flags(rows)
-        staging = f"stg_axis_feature_{uuid.uuid4().hex[:8]}"
-        with self._cm.writer() as con:
-            con.execute(f"CREATE TABLE {staging} AS SELECT * FROM axis_feature_snapshot WHERE 1=0")
-            for row in rows:
-                con.execute(
-                    f"""
-                    INSERT INTO {staging} VALUES (
-                        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                        ?, ?, ?, ?, ?, ?, ?, ?
-                    )
-                    """,
-                    feature_row_to_db_tuple(row),
+        if con is None:
+            with self._cm.writer() as writer_con:
+                return self._write_features_on_connection(
+                    writer_con,
+                    rows=rows,
+                    validation_report_id=validation_report_id,
+                    run_id=run_id,
+                    job_id=job_id,
+                    source_used=source_used,
+                    data_domain=data_domain,
+                    own_transaction=own_transaction,
                 )
-            req = WriteRequest(
-                run_id=run_id,
-                job_id=job_id,
-                target_table="axis_feature_snapshot",
-                staging_table=staging,
-                write_mode="append_only",
-                primary_keys=("feature_id",),
-                validation_report_id=validation_report_id,
-                source_used="layer1_fixture",
-                data_domain="layer1_axis_feature",
+        return self._write_features_on_connection(
+            con,
+            rows=rows,
+            validation_report_id=validation_report_id,
+            run_id=run_id,
+            job_id=job_id,
+            source_used=source_used,
+            data_domain=data_domain,
+            own_transaction=own_transaction,
+        )
+
+    def _write_features_on_connection(
+        self,
+        con: duckdb.DuckDBPyConnection,
+        *,
+        rows: list[FeatureSnapshotRow],
+        validation_report_id: str,
+        run_id: str,
+        job_id: str,
+        source_used: str,
+        data_domain: str,
+        own_transaction: bool,
+    ):
+        staging = f"stg_axis_feature_{uuid.uuid4().hex[:8]}"
+        con.execute(f"CREATE TABLE {staging} AS SELECT * FROM axis_feature_snapshot WHERE 1=0")
+        for row in rows:
+            con.execute(
+                f"""
+                INSERT INTO {staging} VALUES (
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?, ?, ?, ?
+                )
+                """,
+                feature_row_to_db_tuple(row),
             )
-            return self._wm.write(req, con=con, own_transaction=True)
+        req = WriteRequest(
+            run_id=run_id,
+            job_id=job_id,
+            target_table="axis_feature_snapshot",
+            staging_table=staging,
+            write_mode="append_only",
+            primary_keys=("feature_id",),
+            validation_report_id=validation_report_id,
+            source_used=source_used,
+            data_domain=data_domain,
+        )
+        return self._wm.write(req, con=con, own_transaction=own_transaction)
 
     def write_lineage(
         self,
@@ -292,30 +331,68 @@ class Layer1SnapshotWriter:
         validation_report_id: str,
         run_id: str = "layer1-run",
         job_id: str = "layer1-job",
+        source_used: str = "layer1_fixture",
+        data_domain: str = "layer1_axis_feature",
+        con: duckdb.DuckDBPyConnection | None = None,
+        own_transaction: bool = True,
+    ):
+        if con is None:
+            with self._cm.writer() as writer_con:
+                return self._write_lineage_on_connection(
+                    writer_con,
+                    lineage=lineage,
+                    validation_report_id=validation_report_id,
+                    run_id=run_id,
+                    job_id=job_id,
+                    source_used=source_used,
+                    data_domain=data_domain,
+                    own_transaction=own_transaction,
+                )
+        return self._write_lineage_on_connection(
+            con,
+            lineage=lineage,
+            validation_report_id=validation_report_id,
+            run_id=run_id,
+            job_id=job_id,
+            source_used=source_used,
+            data_domain=data_domain,
+            own_transaction=own_transaction,
+        )
+
+    def _write_lineage_on_connection(
+        self,
+        con: duckdb.DuckDBPyConnection,
+        *,
+        lineage: LineageEnvelope,
+        validation_report_id: str,
+        run_id: str,
+        job_id: str,
+        source_used: str,
+        data_domain: str,
+        own_transaction: bool,
     ):
         staging = f"stg_axis_lineage_{uuid.uuid4().hex[:8]}"
-        with self._cm.writer() as con:
-            con.execute(f"CREATE TABLE {staging} AS SELECT * FROM axis_snapshot_lineage WHERE 1=0")
-            con.execute(
-                f"""
-                INSERT INTO {staging} VALUES (
-                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-                )
-                """,
-                lineage_row_to_db_tuple(lineage),
+        con.execute(f"CREATE TABLE {staging} AS SELECT * FROM axis_snapshot_lineage WHERE 1=0")
+        con.execute(
+            f"""
+            INSERT INTO {staging} VALUES (
+                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
             )
-            req = WriteRequest(
-                run_id=run_id,
-                job_id=job_id,
-                target_table="axis_snapshot_lineage",
-                staging_table=staging,
-                write_mode="upsert_by_pk",
-                primary_keys=("snapshot_id",),
-                validation_report_id=validation_report_id,
-                source_used="layer1_fixture",
-                data_domain="layer1_axis_feature",
-            )
-            return self._wm.write(req, con=con, own_transaction=True)
+            """,
+            lineage_row_to_db_tuple(lineage),
+        )
+        req = WriteRequest(
+            run_id=run_id,
+            job_id=job_id,
+            target_table="axis_snapshot_lineage",
+            staging_table=staging,
+            write_mode="upsert_by_pk",
+            primary_keys=("snapshot_id",),
+            validation_report_id=validation_report_id,
+            source_used=source_used,
+            data_domain=data_domain,
+        )
+        return self._wm.write(req, con=con, own_transaction=own_transaction)
 
     def write_interpretation(
         self,
@@ -324,33 +401,71 @@ class Layer1SnapshotWriter:
         validation_report_id: str,
         run_id: str = "layer1-run",
         job_id: str = "layer1-job",
+        source_used: str = "layer1_fixture",
+        data_domain: str = "layer1_axis_interpretation",
+        con: duckdb.DuckDBPyConnection | None = None,
+        own_transaction: bool = True,
+    ):
+        if con is None:
+            with self._cm.writer() as writer_con:
+                return self._write_interpretation_on_connection(
+                    writer_con,
+                    rows=rows,
+                    validation_report_id=validation_report_id,
+                    run_id=run_id,
+                    job_id=job_id,
+                    source_used=source_used,
+                    data_domain=data_domain,
+                    own_transaction=own_transaction,
+                )
+        return self._write_interpretation_on_connection(
+            con,
+            rows=rows,
+            validation_report_id=validation_report_id,
+            run_id=run_id,
+            job_id=job_id,
+            source_used=source_used,
+            data_domain=data_domain,
+            own_transaction=own_transaction,
+        )
+
+    def _write_interpretation_on_connection(
+        self,
+        con: duckdb.DuckDBPyConnection,
+        *,
+        rows: list[InterpretationSnapshotRow],
+        validation_report_id: str,
+        run_id: str,
+        job_id: str,
+        source_used: str,
+        data_domain: str,
+        own_transaction: bool,
     ):
         staging = f"stg_axis_interp_{uuid.uuid4().hex[:8]}"
-        with self._cm.writer() as con:
+        con.execute(
+            f"CREATE TABLE {staging} AS SELECT * FROM axis_interpretation_snapshot WHERE 1=0"
+        )
+        for row in rows:
             con.execute(
-                f"CREATE TABLE {staging} AS SELECT * FROM axis_interpretation_snapshot WHERE 1=0"
-            )
-            for row in rows:
-                con.execute(
-                    f"""
-                    INSERT INTO {staging} VALUES (
-                        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-                    )
-                    """,
-                    interpretation_row_to_db_tuple(row),
+                f"""
+                INSERT INTO {staging} VALUES (
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
                 )
-            req = WriteRequest(
-                run_id=run_id,
-                job_id=job_id,
-                target_table="axis_interpretation_snapshot",
-                staging_table=staging,
-                write_mode="append_only",
-                primary_keys=("interpretation_id",),
-                validation_report_id=validation_report_id,
-                source_used="layer1_fixture",
-                data_domain="layer1_axis_feature",
+                """,
+                interpretation_row_to_db_tuple(row),
             )
-            return self._wm.write(req, con=con, own_transaction=True)
+        req = WriteRequest(
+            run_id=run_id,
+            job_id=job_id,
+            target_table="axis_interpretation_snapshot",
+            staging_table=staging,
+            write_mode="append_only",
+            primary_keys=("interpretation_id",),
+            validation_report_id=validation_report_id,
+            source_used=source_used,
+            data_domain=data_domain,
+        )
+        return self._wm.write(req, con=con, own_transaction=own_transaction)
 
 
 def _reject_forbidden_substitute_flags(rows: list[FeatureSnapshotRow]) -> None:

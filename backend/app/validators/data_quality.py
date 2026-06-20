@@ -112,17 +112,20 @@ class DataQualityValidator:
         self._rule_set_id, self._rule_version = default_quality_rule_contract()
 
     def _collect_fetch_lineage(self, con, job_id: str) -> tuple[list[str], list[str]]:
-        rows = con.execute(
+        row = con.execute(
             """
             SELECT fetch_id, content_hash
             FROM fetch_log
             WHERE job_id = ?
-            ORDER BY fetch_time
+            ORDER BY fetch_time DESC
+            LIMIT 1
             """,
             [job_id],
-        ).fetchall()
-        fetch_ids = [str(row[0]) for row in rows]
-        content_hashes = [str(row[1]) for row in rows if row[1] is not None]
+        ).fetchone()
+        if row is None:
+            return [], []
+        fetch_ids = [str(row[0])]
+        content_hashes = [str(row[1])] if row[1] is not None else []
         return fetch_ids, content_hashes
 
     def _severity(self, rule_id: str) -> FindingSeverity:
