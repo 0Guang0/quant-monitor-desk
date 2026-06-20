@@ -1,0 +1,5 @@
+passed: inspect JSON archived; registry updated
+OK: checked links in 166 markdown files under docs/
+> **Date:** 2026-06-20 路 **Branch:** `master` 路 **Audit:** Round 2.6 Contract + Routing Service Gate archived PASS
+## Round 2.6 gate 鈥?**archived PASS** (2026-06-19)
+Round 2.6 Contract Gate and Routing Service Gate both archived PASS on `master`:

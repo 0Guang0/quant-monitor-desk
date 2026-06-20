@@ -1,0 +1,1 @@
+FAIL: R3-PARTIAL-2 not yet RESOLVED (RED registry probe exit 0)

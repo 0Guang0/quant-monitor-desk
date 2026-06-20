@@ -1,0 +1,8 @@
+{"file": ".trellis/tasks/06-20-round3-batch1-early-ops/AUDIT.plan.md", "reason": "Audit 主入口"}
+{"file": "specs/contracts/ops_db_inspect_contract.yaml", "reason": "extract: JSON shape / deferred_item_mapping | for: A1 / A5"}
+{"file": "docs/ops/db_inspect_cli.md", "reason": "extract: Phase A scope / no-mutation | for: A3 / A1"}
+{"file": "docs/UNRESOLVED_ISSUES_REGISTRY.md", "reason": "extract: 闭合前 OPEN 状态 | for: A5 trace-ac"}
+{"file": "docs/AUDIT_DEFERRED_REGISTRY.md", "reason": "extract: 闭合后 DEFERRED/RESOLVED | for: A5 / A7"}
+{"file": "README.md", "reason": "extract: docs 非实现路径边界 | for: A1 scope"}
+{"file": "scripts/production_gate.py", "reason": "extract: Tier B 复跑 | for: A5 / A9"}
+{"file": "scripts/check_doc_links.py", "reason": "extract: doc link gate | for: A5 DOC AC"}

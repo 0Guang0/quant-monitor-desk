@@ -166,3 +166,35 @@ Registered local DB inspect CLI in Round3 handoff docs (user design freeze then 
 ### Next Steps
 
 - None - task complete
+
+## Session 6: Round 3 Batch 1 early ops — audit cleanup and finish
+
+**Date**: 2026-06-20
+**Task**: Round 3 Batch 1 early ops — audit cleanup and finish
+**Branch**: `06-20-round3-batch1-early-ops`
+
+### Summary
+
+Completed Phase A read-only db-inspect CLI, registry/doc closure, adversarial audit PASS, post-audit cleanup (restored research/execute-evidence), full pytest/production_gate/handoff validation green, task archived.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash      | Message       |
+| --------- | ------------- |
+| `abaf7ce` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

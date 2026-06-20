@@ -1,0 +1,41 @@
+.trellis/tasks/06-20-round3-batch1-early-ops/MASTER.plan.md — Execute single source of truth
+.cursor/skills/trellis-execute/SKILL.md — Phase 0 boot protocol
+.trellis/tasks/06-20-round3-batch1-early-ops/research/integration-ledger.md — v3 boot routing map (inline vs pointer)
+README.md — docs/specs 非实现边界；Execute 只读 MASTER+implement
+docs/quality/PENDING_USER_DECISIONS.md — D-01 uv.lock；D-11 QMT 默认禁用
+specs/contracts/runtime_versions.md — uv sync --locked 与默认验收命令
+docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md — 无 drive-by；禁止自由 SQL/直写 clean
+docs/implementation_tasks/GLOBAL_TESTING_POLICY.md — RED-GREEN；语义断言
+docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md — eco profile；禁止无界扫描
+docs/implementation_tasks/ROUND_3_MODELING_LAYERS/README.md — 017-023 建模边界；本批禁止
+docs/ROUND3_HANDOFF.md — Round3 入口；DOC-R3-001 编辑目标
+docs/UNRESOLVED_ISSUES_REGISTRY.md — 八项 OPEN/DEFERRED 当前状态
+docs/RESOLVED_ISSUES_REGISTRY.md — 闭合项移入格式
+docs/implementation_tasks/ROUND3_EARLY_CLOSE_PLAN.md — early close items and inspect CLI scope
+docs/implementation_tasks/ROUND_2_6_DATASOURCE_ROUTING_OPS_ALIGNMENT/016F_define_prod_equivalent_scale_benchmark.md — prod-equivalent smoke 设计意图
+.trellis/tasks/archive/2026-06/06-19-round2-6-routing-service-gate/audit.report.md — Round2.6 routing gate archived PASS
+docs/ops/db_inspect_cli.md — Phase A §5–11; deferred_item_mapping
+specs/contracts/ops_db_inspect_contract.yaml — key_tables; forbidden args; acceptance_tests
+specs/schema/schema.sql — key_tables 对应表定义
+docs/modules/data_sources.md — fetch_log；latest_fetch 语义
+specs/contracts/source_capability_contract.yaml — Round2.6 capability contract
+specs/datasource_registry/source_capabilities.yaml — capability matrix authority
+specs/contracts/datasource_service_contract.yaml — DataSourceService fetch facade
+specs/datasource_registry/source_registry.yaml — source enabled_by_default
+specs/contracts/source_route_contract.yaml — route plan contract
+docs/modules/write_manager.md — inspect 禁止 writer/WriteManager
+docs/modules/local_file_system.md — data/raw parquet；duckdb 路径 data/duckdb/
+docs/modules/duckdb_and_parquet.md — key_tables 语义
+specs/contracts/api_security_contract.yaml — duckdb 1-hop 引用；inspect 不实现 API limit
+docs/ops/qmt_xqshare_setup.md — user-authorized QMT staging 路径
+specs/contracts/platform_source_matrix.yaml — QMT/xqshare 默认禁用矩阵
+docs/quality/staged_acceptance_policy.md — backend 分层验收
+specs/contracts/data_adapter_contract.md — FetchPort 语义
+backend/app/db/connection.py — ConnectionManager.reader read_only
+scripts/production_equivalent_smoke.py — isolated sandbox metrics
+scripts/production_gate.py — Tier B 门禁
+scripts/check_doc_links.py — doc link gate
+tests/test_vendor_fetch_e2e.py — service-path fixture E2E
+tests/test_documentation_index.py — contract acceptance_tests
+tests/test_project_scaffold.py — contract acceptance_tests
+docs/AUDIT_DEFERRED_REGISTRY.md — registry wins; item 状态更新

@@ -1,0 +1,141 @@
+........................................................................ [ 15%]
+........................................................................ [ 31%]
+........................................................................ [ 47%]
+........................................................................ [ 63%]
+........................................................................ [ 79%]
+........................................................................ [ 95%]
+...................                                                      [100%]
+........................................................................ [ 15%]
+........................................................................ [ 31%]
+........................................................................ [ 47%]
+........................................................................ [ 63%]
+........................................................................ [ 79%]
+........................................................................ [ 95%]
+...................                                                      [100%]
+=============================== tests coverage ================================
+______________ coverage: platform win32, python 3.12.13-final-0 _______________
+
+Name                                                Stmts   Miss  Cover
+-----------------------------------------------------------------------
+backend\app\__init__.py                                 1      0   100%
+backend\app\agents\__init__.py                          0      0   100%
+backend\app\api\__init__.py                             0      0   100%
+backend\app\config.py                                  17      0   100%
+backend\app\core\__init__.py                            0      0   100%
+backend\app\core\api_limits.py                         55      2    96%
+backend\app\core\resource_guard.py                    148      8    95%
+backend\app\datasources\__init__.py                     7      0   100%
+backend\app\datasources\adapters\__init__.py           41      4    90%
+backend\app\datasources\adapters\akshare.py             5      0   100%
+backend\app\datasources\adapters\baostock.py            5      0   100%
+backend\app\datasources\adapters\cninfo.py              5      0   100%
+backend\app\datasources\adapters\fetch_port.py         48      0   100%
+backend\app\datasources\adapters\qmt_xtdata.py          5      0   100%
+backend\app\datasources\adapters\skeleton_base.py      60      3    95%
+backend\app\datasources\adapters\yahoo_finance.py       5      0   100%
+backend\app\datasources\base_adapter.py                43      0   100%
+backend\app\datasources\capability_registry.py         47      4    91%
+backend\app\datasources\exceptions.py                   8      0   100%
+backend\app\datasources\fetch_log.py                   44      5    89%
+backend\app\datasources\fetch_result.py                56      5    91%
+backend\app\datasources\route_models.py                31      0   100%
+backend\app\datasources\route_planner.py               97      8    92%
+backend\app\datasources\service.py                     85      6    93%
+backend\app\datasources\source_registry.py            266     27    90%
+backend\app\db\__init__.py                              0      0   100%
+backend\app\db\connection.py                          139     17    88%
+backend\app\db\migrate.py                              47      0   100%
+backend\app\db\sql_identifiers.py                       7      0   100%
+backend\app\db\validation_gate.py                      61      1    98%
+backend\app\db\write_manager.py                       137      3    98%
+backend\app\etl\__init__.py                             0      0   100%
+backend\app\layer1_axes\__init__.py                     0      0   100%
+backend\app\layer2_sensors\__init__.py                  0      0   100%
+backend\app\layer3_chains\__init__.py                   0      0   100%
+backend\app\layer4_markets\__init__.py                  0      0   100%
+backend\app\layer5_evidence\__init__.py                 0      0   100%
+backend\app\main.py                                     8      0   100%
+backend\app\notifications\__init__.py                   0      0   100%
+backend\app\ops\__init__.py                             0      0   100%
+backend\app\ops\db_inspector.py                       174     34    80%
+backend\app\storage\__init__.py                         0      0   100%
+backend\app\storage\evidence_ports.py                   5      0   100%
+backend\app\storage\file_registry.py                   41      0   100%
+backend\app\storage\raw_store.py                       46      1    98%
+backend\app\sync\__init__.py                            0      0   100%
+backend\app\sync\event_payload.py                      28      2    93%
+backend\app\sync\jobs.py                              134      7    95%
+backend\app\sync\orchestrator.py                       60      2    97%
+backend\app\sync\pipeline.py                           28      0   100%
+backend\app\sync\runners.py                           204     24    88%
+backend\app\util\error_redaction.py                    10      0   100%
+backend\app\validators\__init__.py                      0      0   100%
+backend\app\validators\common.py                       20      2    90%
+backend\app\validators\data_quality.py                254     12    95%
+backend\app\validators\rule_contract.py                15      1    93%
+backend\app\validators\source_conflict.py             153      6    96%
+-----------------------------------------------------------------------
+TOTAL                                                2650    184    93%
+Required test coverage of 85% reached. Total coverage: 93.06%
+[1m[91mI001 [0m[[1m[96m*[0m] [1mImport block is un-sorted or un-formatted[0m
+  [1m[94m-->[0m backend\app\ops\db_inspector.py:3:1
+   [1m[94m|[0m
+[1m[94m 1 |[0m   """Read-only DB and data-root inspector (Round 3 Batch 1 Phase A)."""
+[1m[94m 2 |[0m
+[1m[94m 3 |[0m [1m[91m/[0m from __future__ import annotations
+[1m[94m 4 |[0m [1m[91m|[0m
+[1m[94m 5 |[0m [1m[91m|[0m from dataclasses import asdict, dataclass, field
+[1m[94m 6 |[0m [1m[91m|[0m from datetime import UTC, datetime
+[1m[94m 7 |[0m [1m[91m|[0m from pathlib import Path
+[1m[94m 8 |[0m [1m[91m|[0m from typing import Any
+[1m[94m 9 |[0m [1m[91m|[0m
+[1m[94m10 |[0m [1m[91m|[0m import duckdb
+[1m[94m11 |[0m [1m[91m|[0m
+[1m[94m12 |[0m [1m[91m|[0m from backend.app.db.connection import ConnectionManager
+[1m[94m13 |[0m [1m[91m|[0m from backend.app.db.sql_identifiers import quote_ident
+   [1m[94m|[0m [1m[91m|______________________________________________________^[0m
+[1m[94m14 |[0m
+[1m[94m15 |[0m   KEY_TABLES: tuple[str, ...] = (
+   [1m[94m|[0m
+[1m[96mhelp[0m: [1mOrganize imports[0m
+
+[1m[91mE501 [0m[1mLine too long (102 > 100)[0m
+   [1m[94m-->[0m backend\app\ops\db_inspector.py:390:101
+    [1m[94m|[0m
+[1m[94m388 |[0m         (
+[1m[94m389 |[0m             f"DB: {report.db.get('path')} "
+[1m[94m390 |[0m             f"{'exists and opened read-only' if report.db.get('read_only_open') else 'not available'}"
+    [1m[94m|[0m                                                                                                     [1m[91m^^[0m
+[1m[94m391 |[0m         ),
+[1m[94m392 |[0m         f"Tables: {report.schema.get('table_count', 0)} found",
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (103 > 100)[0m
+   [1m[94m-->[0m backend\app\ops\db_inspector.py:416:101
+    [1m[94m|[0m
+[1m[94m414 |[0m     if report.status == "WARN":
+[1m[94m415 |[0m         lines.append(
+[1m[94m416 |[0m             "Meaning: database is present, but this run does not prove real vendor data ingestion yet."
+    [1m[94m|[0m                                                                                                     [1m[91m^^^[0m
+[1m[94m417 |[0m         )
+[1m[94m418 |[0m     elif report.status == "FAIL":
+    [1m[94m|[0m
+
+[1m[91mF401 [0m[[1m[96m*[0m] [1m`pytest` imported but unused[0m
+  [1m[94m-->[0m tests\test_ops_db_inspector.py:11:8
+   [1m[94m|[0m
+[1m[94m10 |[0m import duckdb
+[1m[94m11 |[0m import pytest
+   [1m[94m|[0m        [1m[91m^^^^^^[0m
+[1m[94m12 |[0m from backend.app.db.connection import ConnectionManager
+[1m[94m13 |[0m from backend.app.db.migrate import apply_migrations
+   [1m[94m|[0m
+[1m[96mhelp[0m: [1mRemove unused import: `pytest`[0m
+
+Found 4 errors.
+[[36m*[0m] 2 fixable with the `--fix` option.
+Would reformat: [1mbackend\app\ops\db_inspector.py[0m
+1 file would be reformatted, 113 files already formatted
+production_gate: PASS
+OK: checked links in 166 markdown files under docs/
+.................                                                        [100%]

@@ -1,0 +1,13 @@
+init_db: applied none (up to date)
+init_db: database at C:\Users\Guang\Desktop\quant-monitor-desk\.audit-sandbox\prod-equiv-smoke\duckdb\quant_monitor.duckdb
+init_db: run scripts/sync_registry.py after first init to load configs/sources.yaml
+sync_registry: ok rows=5 data_root=C:\Users\Guang\Desktop\quant-monitor-desk\.audit-sandbox\prod-equiv-smoke
+...........................                                              [100%]
+...............................                                          [100%]
+.                                                                        [100%]
+PASS: init_db
+PASS: sync_registry
+PASS: pytest_resource_guard
+PASS: pytest_service_path
+PASS: pytest_vendor_service_e2e
+production_equivalent_smoke: ALL PASS metrics={"data_root": "C:\\Users\\Guang\\Desktop\\quant-monitor-desk\\.audit-sandbox\\prod-equiv-smoke", "db_exists": true, "elapsed_s": 5.98, "fetch_log_row_count_sum": 0, "fetch_log_rows": 0, "guard_status": "observable", "pytest_steps": 5, "resource_guard_log_rows": 0, "route_plan_events": 0, "shard_count_benchmark": 3, "sync_job_rows": 0}

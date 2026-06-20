@@ -2,7 +2,19 @@
 
 > Purpose: one file for resolved/closed issues, gates, risks, and repairs.  
 > Pair: unresolved items live in `docs/UNRESOLVED_ISSUES_REGISTRY.md`.  
-> Last reconciled: 2026-06-19 after Round2.6 Contract Gate and Routing Service Gate audit PASS.
+> Last reconciled: 2026-06-20 after Round 3 Batch 1 early ops closure.
+
+## Round 3 Batch 1 resolved items (2026-06-20)
+
+| ID                        |     Closed | Item                                           | Evidence                                                                                                                                                                                       |
+| ------------------------- | ---------: | ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R3-EARLY-DB-INSPECT-CLI   | 2026-06-20 | Read-only DB inspect CLI Phase A               | `backend/app/ops/db_inspector.py`; `scripts/qmd_ops.py db-inspect`; `tests/test_ops_db_inspector.py`; `specs/contracts/ops_db_inspect_contract.yaml`.                                          |
+| DB-R3-001                 | 2026-06-20 | Project `data/` root inventory via inspect     | `.trellis/tasks/06-20-round3-batch1-early-ops/execute-evidence/8.3-inspect.json` (`raw_files_count`, `parquet_files_count`); documented absence/limited local files acceptable per Batch 1 AC. |
+| DB-R3-002                 | 2026-06-20 | Read-only DuckDB open + key table row counts   | `.trellis/tasks/06-20-round3-batch1-early-ops/execute-evidence/8.3-inspect.json` (`read_only_open=true`, `key_tables`); `tests/test_ops_db_inspector.py::test_dbInspect_dbFile_unchanged`.     |
+| DOC-R3-001                | 2026-06-20 | Round 2.6 archived PASS surfaced in handoff    | `docs/ROUND3_HANDOFF.md` §Round 2.6 gate.                                                                                                                                                      |
+| DOC-R3-002                | 2026-06-20 | Registry authority note on early close plan    | `docs/implementation_tasks/ROUND3_EARLY_CLOSE_PLAN.md` authority block.                                                                                                                        |
+| R3-PARTIAL-2              | 2026-06-20 | Vendor FetchPort E2E + full_load skeleton      | `tests/test_vendor_fetch_e2e.py::test_vendorFixtureFetch_e2eThroughDataSourceServicePath`; `tests/test_sync_jobs.py::test_syncJob_fullLoad_createdToPlanned_recordsEvent`.                     |
+| R3-EARLY-PROD-SCALE-BENCH | 2026-06-20 | Production-equivalent smoke evidence (Batch 1) | `.trellis/tasks/06-20-round3-batch1-early-ops/execute-evidence/8.5-smoke-output.json`; `scripts/production_equivalent_smoke.py --use-service-path` (cross-ref `R2.6-IMPL-7`).                  |
 
 ## Round2.6 resolved items
 

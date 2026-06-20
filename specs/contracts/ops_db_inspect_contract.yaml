@@ -15,7 +15,7 @@ scope:
   implementation_paths:
     - backend/app/ops/db_inspector.py
     - backend/app/ops/models.py
-    - backend/app/cli/main.py
+    - backend/app/cli/main.py # Round 5 packaging target; v1 uses scripts/qmd_ops.py transitional wrapper
     - scripts/qmd_ops.py
     - tests/test_ops_db_inspector.py
   non_implementation_paths:

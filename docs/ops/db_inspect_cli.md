@@ -126,15 +126,15 @@ The transitional command is allowed only as a thin wrapper around `backend/app/o
 
 ### 6.3 Arguments
 
-| Argument               | Required | Default                                                                                                       | v1 behavior                                                                                                                  |
-| ---------------------- | -------- | ------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `--db`                 | No       | `$QMD_DATA_ROOT/duckdb/quant_monitor.duckdb`; if `QMD_DATA_ROOT` is unset, `data/duckdb/quant_monitor.duckdb` | Read-only target DB path                                                                                                     |
-| `--data-root`          | No       | `$QMD_DATA_ROOT`; if unset, `data`                                                                            | Root scanned for raw/parquet/file evidence                                                                                   |
-| `--format`             | No       | `text`                                                                                                        | `text` or `json`                                                                                                             |
-| `--output`             | No       | stdout                                                                                                        | Optional output file for JSON/text; parent directory must already exist unless explicitly created by a future report command |
-| `--limit`              | No       | `20`                                                                                                          | Maximum preview metadata rows per evidence category; hard cap `100`                                                          |
-| `--include-path-check` | No       | enabled in v1                                                                                                 | Count raw/parquet candidate files under safe data-root subdirectories                                                        |
-| `--profile`            | No       | current `QMD_RESOURCE_PROFILE` or `eco`                                                                       | Resource profile passed to connection manager when applicable                                                                |
+| Argument               | Required | Default                                                                                                       | v1 behavior                                                                                                   |
+| ---------------------- | -------- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `--db`                 | No       | `$QMD_DATA_ROOT/duckdb/quant_monitor.duckdb`; if `QMD_DATA_ROOT` is unset, `data/duckdb/quant_monitor.duckdb` | Read-only target DB path                                                                                      |
+| `--data-root`          | No       | `$QMD_DATA_ROOT`; if unset, `data`                                                                            | Root scanned for raw/parquet/file evidence                                                                    |
+| `--format`             | No       | `text`                                                                                                        | `text` or `json`                                                                                              |
+| `--output`             | No       | stdout                                                                                                        | Optional output file for JSON/text; parent directory must already exist (Phase A does not create parent dirs) |
+| `--limit`              | No       | `20`                                                                                                          | Maximum preview metadata rows per evidence category; hard cap `100`                                           |
+| `--include-path-check` | No       | enabled in v1                                                                                                 | Count raw/parquet candidate files under safe data-root subdirectories                                         |
+| `--profile`            | No       | current `QMD_RESOURCE_PROFILE` or `eco`                                                                       | Resource profile passed to connection manager when applicable                                                 |
 
 ### 6.4 Forbidden arguments in v1
 
@@ -311,6 +311,10 @@ v1 output must include trace hints for Round 3 early closure:
 | `R3-PARTIAL-2`            | `latest_fetch`, `job_status_counts`, `validation_status_counts`                                           |
 | `R2.6-IMPL-8`             | No live source enabled by this tool; only route/fetch evidence already present in DB may be reported      |
 | `R3-EARLY-DB-INSPECT-CLI` | Command availability, read-only mode, JSON output, no-mutation tests                                      |
+
+### 9.8 Trust boundary (Phase A)
+
+`db-inspect` is an **operator-trusted local CLI**. The invoking OS user may pass arbitrary `--db` and `--output` paths; the tool does not sandbox filesystem access beyond fixed `data_root` scan subdirs. Do not expose this CLI to untrusted remote callers without additional path allowlists and authentication.
 
 ## 10. Text output UX
 
