@@ -198,3 +198,41 @@ Completed Phase A read-only db-inspect CLI, registry/doc closure, adversarial au
 ### Next Steps
 
 - None - task complete
+
+## Session 7: Round 3 Batch 2.5 finish-work
+
+**Date**: 2026-06-21
+**Task**: Round 3 Batch 2.5 finish-work
+**Branch**: `master`
+
+### Summary
+
+Completed Layer 1 observation ingestion bridge (staged/fixture): five-phase Execute, A1-A8 audit PASS, fetch_log dedup repair, registry closeout, task archived.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash      | Message       |
+| --------- | ------------- |
+| `2a9326c` | (see git log) |
+| `7ace4ed` | (see git log) |
+| `1314afb` | (see git log) |
+| `5d53619` | (see git log) |
+| `d2e1e7d` | (see git log) |
+| `eeec63e` | (see git log) |
+| `c0d45cc` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
