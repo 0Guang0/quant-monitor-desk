@@ -24,8 +24,20 @@ KEY_TABLES: tuple[str, ...] = (
     "manual_review_queue",
     "write_audit_log",
     "resource_guard_log",
+    "axis_registry",
+    "axis_indicator_registry",
+    "axis_indicator_profile",
+    "axis_observation",
+    "axis_feature_snapshot",
+    "axis_interpretation_snapshot",
+    "axis_snapshot_lineage",
     "instrument_registry",
     "security_bar_1d",
+)
+
+# Layer 5 tables — listed for forward inventory; no migration until Batch 5 (023).
+FUTURE_PHASE_KEY_TABLES: frozenset[str] = frozenset(
+    {"instrument_registry", "security_bar_1d"}
 )
 
 DEFERRED_ITEM_MAPPING: tuple[tuple[str, tuple[str, ...]], ...] = (

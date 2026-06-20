@@ -153,6 +153,13 @@ key_tables:
   - manual_review_queue
   - write_audit_log
   - resource_guard_log
+  - axis_registry
+  - axis_indicator_registry
+  - axis_indicator_profile
+  - axis_observation
+  - axis_feature_snapshot
+  - axis_interpretation_snapshot
+  - axis_snapshot_lineage
   - instrument_registry
   - security_bar_1d
 

@@ -1,0 +1,79 @@
+{"file": ".trellis/tasks/06-20-round3-batch2-5-layer1-obs-ingest/MASTER.plan.md", "reason": "Execute single source of truth"}
+{"file": ".cursor/skills/trellis-execute/SKILL.md", "reason": "extract: Phase 0 boot protocol | for: §8.0 Boot"}
+{"file": ".trellis/tasks/06-20-round3-batch2-5-layer1-obs-ingest/research/integration-ledger.md", "reason": "extract: v3 boot routing map | for: §8.0 Boot / §0.4"}
+{"file": ".trellis/tasks/06-20-round3-batch2-5-layer1-obs-ingest/research/layer1-ingestion-gate-tests.md", "reason": "extract: Phase 0 测试设计 | for: §8.1 AC-P0-*"}
+{"file": ".trellis/tasks/06-20-round3-batch2-5-layer1-obs-ingest/research/layer1-ingestion-pipeline-tests.md", "reason": "extract: Phase 2-4 测试设计 | for: §8.3-8.5"}
+{"file": ".trellis/tasks/06-20-round3-batch2-5-layer1-obs-ingest/research/vertical-slices.md", "reason": "extract: 五阶段切片 | for: §5 顺序"}
+{"file": "README.md", "reason": "extract: docs/specs 非实现边界 | for: §0.8 / §3.3"}
+{"file": "docs/quality/PENDING_USER_DECISIONS.md", "reason": "extract: D-01..D-12 禁止重开 | for: §0.7"}
+{"file": "docs/quality/staged_acceptance_policy.md", "reason": "extract: backend 分层 vs Tier B | for: §10 注"}
+{"file": "specs/contracts/runtime_versions.md", "reason": "extract: uv sync --locked | for: §8.0 / §10"}
+{"file": "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md", "reason": "extract: WriteManager/无静默 fallback | for: §0.7 / §3.3"}
+{"file": "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md", "reason": "extract: 语义断言 | for: §8.1-8.5"}
+{"file": "docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md", "reason": "extract: eco/微窗口 | for: §0.2 / §8.4"}
+{"file": "docs/architecture/03_runtime_flows.md", "reason": "extract: fetch→validate→write 主链 | for: AC-TRACE-1"}
+{"file": "docs/architecture/04_data_architecture.md", "reason": "extract: raw/clean 分区 | for: §3.4"}
+{"file": "docs/architecture/module_boundary_matrix.md", "reason": "extract: Layer1 不得直调 adapter | for: AC-P0-4"}
+{"file": "docs/modules/layer1_global_regime_panel.md", "reason": "extract: axis_observation/snapshot 语义 | for: AC-P4-3"}
+{"file": "docs/modules/datasource_service.md", "reason": "extract: 唯一 factory 路径 | for: AC-P3-1"}
+{"file": "docs/modules/source_route_plan.md", "reason": "extract: SourceRoutePlan 字段 | for: AC-P2-*"}
+{"file": "docs/modules/source_capability_registry.md", "reason": "extract: capability gate | for: AC-P2-1"}
+{"file": "docs/modules/data_validation_and_conflict.md", "reason": "extract: validator 语义 | for: AC-P4-1"}
+{"file": "docs/modules/write_manager.md", "reason": "extract: clean write 链路 | for: AC-P4-2"}
+{"file": "docs/modules/data_sync_orchestrator.md", "reason": "extract: runner 关系 | for: §4 可选扩展"}
+{"file": "docs/ops/db_inspect_cli.md", "reason": "extract: 只读 inspect 行为 | for: AC-P1-* / AC-P4-5"}
+{"file": "docs/ops/qmt_xqshare_setup.md", "reason": "extract: live 授权边界 | for: §3.2 live 路径"}
+{"file": "docs/decisions/ADR-001-ingestion-validation-write-transaction-boundary.md", "reason": "extract: validation/write 事务 | for: AC-P4-1"}
+{"file": "specs/schema/schema.sql", "reason": "extract: 对照 migration 011 axis 滞后 | for: AC-P0-2"}
+{"file": "backend/app/db/migrations/011_layer1_tables.sql", "reason": "extract: axis_observation DDL | for: AC-P0-2 / AC-P4-2"}
+{"file": "specs/contracts/source_route_contract.yaml", "reason": "extract: 禁止静默 fallback | for: AC-P2-3"}
+{"file": "specs/contracts/datasource_service_contract.yaml", "reason": "extract: fetch gate 顺序 | for: AC-P3-1"}
+{"file": "specs/contracts/write_contract.yaml", "reason": "extract: WriteRequest 必填 | for: AC-P4-2"}
+{"file": "specs/contracts/snapshot_lineage_contract.yaml", "reason": "extract: required_fields | for: AC-P4-4"}
+{"file": "specs/contracts/data_quality_rules.yaml", "reason": "extract: 质量规则 | for: AC-P4-1"}
+{"file": "specs/contracts/source_conflict_rules.yaml", "reason": "extract: severe/manual review | for: AC-P4-1"}
+{"file": "specs/contracts/ops_db_inspect_contract.yaml", "reason": "extract: inventory 字段 | for: AC-P1-1"}
+{"file": "specs/contracts/resource_limits.yaml", "reason": "extract: eco profile | for: AC-P3-3"}
+{"file": "specs/datasource_registry/source_registry.yaml", "reason": "extract: Primary/Validation 角色 | for: AC-P0-3"}
+{"file": "specs/datasource_registry/source_capabilities.yaml", "reason": "extract: macro_supplementary | for: §4 staged 映射"}
+{"file": "specs/contracts/source_capability_contract.yaml", "reason": "extract: capability gate 字段 | for: AC-P2-1"}
+{"file": "specs/contracts/platform_source_matrix.yaml", "reason": "extract: 可选源约束 | for: §3.2 live 路径"}
+{"file": "configs/layer1_axes.yml", "reason": "extract: enabled_axes allowlist | for: AC-P2-1"}
+{"file": "backend/app/datasources/service.py", "reason": "extract: create_adapter 仅此处 | for: AC-P3-1"}
+{"file": "docs/modules/data_sources.md", "reason": "extract: Primary/Validation 源角色 | for: AC-P0-3 / AC-P3-1"}
+{"file": "docs/modules/duckdb_and_parquet.md", "reason": "extract: clean/staging 表分区 | for: AC-P4-2"}
+{"file": "docs/modules/local_file_system.md", "reason": "extract: data root 路径边界 | for: AC-P1-1"}
+{"file": "docs/ops/data_sync_quick_reference.md", "reason": "extract: dry-run 安全行为 | for: §3.2"}
+{"file": "docs/ops/privacy_data_flow.md", "reason": "extract: 本地隐私流 | for: §3.2 live 路径"}
+{"file": "docs/decisions/ADR-002-db-check-vs-app-validation.md", "reason": "extract: DB CHECK vs app 分工 | for: AC-P0-2"}
+{"file": "specs/contracts/data_adapter_contract.md", "reason": "extract: FetchRequest/Result | for: AC-P3-1"}
+{"file": "specs/contracts/data_cli_contract.yaml", "reason": "extract: dry-run CLI 契约 | for: AC-P2-1"}
+{"file": "specs/contracts/runtime_flow_contract.yaml", "reason": "extract: 运行时序列 | for: AC-TRACE-1"}
+{"file": "backend/app/db/connection.py", "reason": "extract: 只读 DB open | for: AC-P1-1"}
+{"file": "backend/app/config.py", "reason": "extract: DATA_ROOT/DB path | for: AC-P1-1"}
+{"file": "backend/app/datasources/route_planner.py", "reason": "extract: route preview API | for: AC-P2-*"}
+{"file": "backend/app/db/write_manager.py", "reason": "extract: WriteRequest | for: AC-P4-2"}
+{"file": "backend/app/db/validation_gate.py", "reason": "extract: DbValidationGate | for: AC-P4-1"}
+{"file": "backend/app/core/resource_guard.py", "reason": "extract: check before fetch | for: AC-P3-3"}
+{"file": "backend/app/validators/data_quality.py", "reason": "extract: validation_report | for: AC-P4-1"}
+{"file": "backend/app/validators/source_conflict.py", "reason": "extract: conflict severity | for: AC-P4-1"}
+{"file": "backend/app/layer1_axes/axis_loader.py", "reason": "extract: indicator registry | for: AC-P2-1 allowlist"}
+{"file": "backend/app/layer1_axes/feature_engine.py", "reason": "extract: snapshot rebuild | for: AC-P4-3"}
+{"file": "backend/app/layer1_axes/interpretation.py", "reason": "extract: interpretation rebuild | for: AC-P4-3"}
+{"file": "backend/app/layer1_axes/lineage.py", "reason": "extract: lineage builder | for: AC-P4-4"}
+{"file": "backend/app/ops/db_inspector.py", "reason": "extract: read-only inspect | for: AC-P1-*"}
+{"file": "backend/app/storage/raw_store.py", "reason": "extract: raw evidence Phase 3 | for: AC-P3-2"}
+{"file": "backend/app/storage/file_registry.py", "reason": "extract: file_registry delta | for: AC-P3-2"}
+{"file": ".trellis/tasks/archive/2026-06/06-20-round3-batch2-layer1/audit.report.md", "reason": "extract: Batch2 PASS gate | for: AC-PRE"}
+{"file": ".trellis/tasks/archive/2026-06/06-20-round3-batch1-early-ops/audit.report.md", "reason": "extract: Batch1 PASS | for: AC-PRE"}
+{"file": ".trellis/tasks/archive/2026-06/06-19-round2-6-routing-service-gate/audit.report.md", "reason": "extract: R2.6 routing PASS | for: AC-PRE"}
+{"file": ".trellis/tasks/archive/2026-06/06-19-round2-6-contract-gate/audit.report.md", "reason": "extract: R2.6 contract PASS | for: AC-PRE"}
+{"file": "docs/AUDIT_DEFERRED_REGISTRY.md", "reason": "extract: closeout defer 项 | for: AC-REG-1"}
+{"file": "docs/UNRESOLVED_ISSUES_REGISTRY.md", "reason": "extract: operator-facing defer 项 | for: AC-REG-1"}
+{"file": "docs/RESOLVED_ISSUES_REGISTRY.md", "reason": "extract: closeout 对照 | for: AC-REG-1"}
+{"file": "docs/ops/data_sync_command_matrix.md", "reason": "extract: Phase 2 dry-run 命令矩阵 | for: AC-P2-2"}
+{"file": "scripts/init_db.py", "reason": "extract: migration 应用 | for: §8.1 Phase 0"}
+{"file": "scripts/production_gate.py", "reason": "extract: Tier B | for: AC-GATE"}
+{"file": "scripts/check_doc_links.py", "reason": "extract: Tier B doc link gate | for: AC-GATE / §10"}
+{"file": "specs/contracts/api_security_contract.yaml", "reason": "extract: module boundary 1-hop 对照；本批无 API | for: Boot 对照 only"}
+{"file": ".trellis/tasks/06-20-round3-batch2-5-layer1-obs-ingest/research/execute-handoff.md", "reason": "handoff: Phase 0 CLOSED · PH-A0 PASS · next session §8.2 Phase 1 only | for: session resume"}

@@ -4,10 +4,10 @@ updated_for: implementation_docs_audit_remediation_v1
 rules:
   user_decision_D11: qmt_xtdata_default_disabled_until_user_confirms_local_authorization
   legacy_roles_forbidden:
-  - Shadow
-  - Emergency
-  - shadow_source
-  - emergency_source
+    - Shadow
+    - Emergency
+    - shadow_source
+    - emergency_source
   source_id_must_match_adapter_source_id: true
   validation_source_must_be_enabled: true
   validation_source_must_support_domain: true
@@ -16,88 +16,88 @@ rules:
   domain_roles_must_respect_enabled_by_default: true
   disabled_domain_must_return: DISABLED_SOURCE
 sources:
-- source_id: qmt_xtdata
-  source_name: QMT xtdata / miniQMT
-  source_type: broker_terminal
-  license_type: user_local_authorized
-  enabled_by_default: false
-  trust_level: 90
-  allowed_domains:
-  - cn_equity_realtime
-  - cn_equity_minute_bar
-  - cn_equity_daily_bar
-  default_role: Primary
-  validation_only: false
-  rate_limit_policy: local_terminal
-  requires_user_setup: true
-  notes: 正式启用前必须由用户确认本机 QMT 授权和账号环境。
-- source_id: baostock
-  source_name: baostock
-  source_type: public_market_data
-  license_type: public_free
-  enabled_by_default: true
-  trust_level: 70
-  allowed_domains:
-  - cn_equity_daily_bar
-  - cn_equity_basic_financial
-  default_role: Primary
-  validation_only: false
-  rate_limit_policy: polite_daily_batch
-  requires_user_setup: false
-  notes: 适合作为 A 股历史日线与基础财务第一阶段主源之一。
-- source_id: akshare
-  source_name: AkShare
-  source_type: aggregator
-  license_type: public_free_aggregator
-  enabled_by_default: true
-  trust_level: 60
-  allowed_domains:
-  - cn_equity_daily_bar
-  - cn_index
-  - sector_board
-  - macro_supplementary
-  default_role: Validation
-  validation_only: true
-  rate_limit_policy: polite_batch_with_cache
-  requires_user_setup: false
-  notes: 聚合源只能带 source_used 与 quality_flags；不得作为唯一事实源。
-- source_id: cninfo
-  source_name: 巨潮资讯 CNINFO
-  source_type: filing_announcement
-  license_type: public_official
-  enabled_by_default: true
-  trust_level: 85
-  allowed_domains:
-  - cn_filings
-  - cn_announcements
-  - cn_pdf_reports
-  default_role: Primary
-  validation_only: false
-  rate_limit_policy: polite_document_fetch
-  requires_user_setup: false
-  notes: 公告和财报 PDF 原文优先来源。
-- source_id: yahoo_finance
-  source_name: Yahoo Finance / yfinance-compatible access
-  source_type: public_market_data
-  license_type: public_terms_sensitive
-  enabled_by_default: false
-  trust_level: 55
-  allowed_domains:
-  - us_equity_daily_bar
-  - etf_daily_bar
-  - global_asset_reference
-  default_role: Validation
-  validation_only: true
-  rate_limit_policy: cache_first_low_frequency
-  requires_user_setup: false
-  notes: 仅作研究/补充验证；生产不可作为唯一主源。
+  - source_id: qmt_xtdata
+    source_name: QMT xtdata / miniQMT
+    source_type: broker_terminal
+    license_type: user_local_authorized
+    enabled_by_default: false
+    trust_level: 90
+    allowed_domains:
+      - cn_equity_realtime
+      - cn_equity_minute_bar
+      - cn_equity_daily_bar
+    default_role: Primary
+    validation_only: false
+    rate_limit_policy: local_terminal
+    requires_user_setup: true
+    notes: 正式启用前必须由用户确认本机 QMT 授权和账号环境。
+  - source_id: baostock
+    source_name: baostock
+    source_type: public_market_data
+    license_type: public_free
+    enabled_by_default: true
+    trust_level: 70
+    allowed_domains:
+      - cn_equity_daily_bar
+      - cn_equity_basic_financial
+    default_role: Primary
+    validation_only: false
+    rate_limit_policy: polite_daily_batch
+    requires_user_setup: false
+    notes: 适合作为 A 股历史日线与基础财务第一阶段主源之一。
+  - source_id: akshare
+    source_name: AkShare
+    source_type: aggregator
+    license_type: public_free_aggregator
+    enabled_by_default: true
+    trust_level: 60
+    allowed_domains:
+      - cn_equity_daily_bar
+      - cn_index
+      - sector_board
+      - macro_supplementary
+    default_role: Validation
+    validation_only: true
+    rate_limit_policy: polite_batch_with_cache
+    requires_user_setup: false
+    notes: 聚合源只能带 source_used 与 quality_flags；不得作为唯一事实源。
+  - source_id: cninfo
+    source_name: 巨潮资讯 CNINFO
+    source_type: filing_announcement
+    license_type: public_official
+    enabled_by_default: true
+    trust_level: 85
+    allowed_domains:
+      - cn_filings
+      - cn_announcements
+      - cn_pdf_reports
+    default_role: Primary
+    validation_only: false
+    rate_limit_policy: polite_document_fetch
+    requires_user_setup: false
+    notes: 公告和财报 PDF 原文优先来源。
+  - source_id: yahoo_finance
+    source_name: Yahoo Finance / yfinance-compatible access
+    source_type: public_market_data
+    license_type: public_terms_sensitive
+    enabled_by_default: false
+    trust_level: 55
+    allowed_domains:
+      - us_equity_daily_bar
+      - etf_daily_bar
+      - global_asset_reference
+    default_role: Validation
+    validation_only: true
+    rate_limit_policy: cache_first_low_frequency
+    requires_user_setup: false
+    notes: 仅作研究/补充验证；生产不可作为唯一主源。
 domain_roles:
   cn_equity_daily_bar:
     primary: baostock
     validation:
-    - akshare
+      - akshare
     fallback_policy:
-    - qmt_xtdata
+      - qmt_xtdata
     requires_source_enabled: true
     domain_enabled_by_default: true
     disabled_until_configured: false
@@ -126,6 +126,14 @@ domain_roles:
     domain_enabled_by_default: false
     disabled_until_configured: true
     expected_error_before_user_setup: DISABLED_SOURCE
+  macro_supplementary:
+    primary: akshare
+    validation: []
+    fallback_policy: use_last_good_cache
+    requires_source_enabled: true
+    domain_enabled_by_default: true
+    disabled_until_configured: false
+    notes: Staged Layer 1 macro series (AC-P2-0 ENV-E1-DGS10); not live FRED.
 tests:
-- test_disabledPrimaryDomain_returnsDisabledSource
-- test_fallbackDisabledByDefault_isSkippedUntilConfigured
+  - test_disabledPrimaryDomain_returnsDisabledSource
+  - test_fallbackDisabledByDefault_isSkippedUntilConfigured

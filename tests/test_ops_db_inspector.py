@@ -116,6 +116,17 @@ def test_dbInspect_fixtureWithEvidence_reportsCounts(tmp_path: Path) -> None:
     assert report.evidence["job_status_counts"].get("COMPLETED") == 1
 
 
+def test_dbInspect_layer1AxisTables_presentAfterMigration(tmp_path: Path) -> None:
+    db = tmp_path / "t.duckdb"
+    _init_db(db)
+    report = DbInspector(db, tmp_path).inspect()
+    axis_obs = next(t for t in report.key_tables if t["name"] == "axis_observation")
+    assert axis_obs["exists"] is True
+    assert axis_obs["row_count"] == 0
+    lineage = next(t for t in report.key_tables if t["name"] == "axis_snapshot_lineage")
+    assert lineage["exists"] is True
+
+
 def test_dbInspect_pathScan_staysUnderDataRoot(tmp_path: Path) -> None:
     db = tmp_path / "t.duckdb"
     _init_db(db)
