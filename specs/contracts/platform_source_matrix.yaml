@@ -28,6 +28,9 @@ platforms:
     baostock:
       available_if_user_configured: true
       default_enabled: true
+    akshare:
+      available_if_user_configured: true
+      default_enabled: false
   linux:
     qmt_xtdata:
       available_if_user_configured: false
@@ -39,6 +42,9 @@ platforms:
     baostock:
       available_if_user_configured: true
       default_enabled: true
+    akshare:
+      available_if_user_configured: true
+      default_enabled: false
 rules:
   - qmt_xtdata on non-Windows is not schedulable by default
   - qmt_xqshare is never auto-probed and cannot become schedulable without env and explicit user authorization
