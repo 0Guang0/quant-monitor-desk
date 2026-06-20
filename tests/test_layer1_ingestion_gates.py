@@ -4,9 +4,12 @@ from __future__ import annotations
 
 import json
 import re
+from pathlib import Path
 
 import duckdb
+import pytest
 import yaml
+from backend.app.db.connection import ConnectionManager
 from backend.app.datasources.capability_registry import SourceCapabilityRegistry
 from backend.app.datasources.route_planner import SourceRoutePlanner
 from backend.app.datasources.source_registry import SourceRegistry
@@ -285,18 +288,56 @@ def test_layer1Ingestion_phase0_datasourceServiceFactoryBoundaryEnforced() -> No
     )
 
 
-def test_layer1Ingestion_phase0_validationGateModule_exposesDbValidationGate() -> None:
-    from backend.app.db.validation_gate import DbValidationGate, ValidationRejected
+def _init_db(db_path: Path) -> None:
+    cm = ConnectionManager(db_path=db_path)
+    with cm.writer() as con:
+        apply_migrations(con)
 
-    assert DbValidationGate.__name__ == "DbValidationGate"
-    assert ValidationRejected.__name__ == "ValidationRejected"
+
+def test_layer1Ingestion_phase0_validationGateRejectsMissingReport(tmp_path: Path) -> None:
+    """DbValidationGate blocks clean write when validation_report row is absent."""
+    from backend.app.db.validation_gate import DbValidationGate, ValidationGateError
+
+    db = tmp_path / "gate.duckdb"
+    cm = ConnectionManager(db_path=db)
+    with cm.writer() as con:
+        apply_migrations(con)
+    gate = DbValidationGate(cm)
+    with pytest.raises(ValidationGateError):
+        gate.assert_can_write("missing-report-id", "append_only")
 
 
-def test_layer1Ingestion_phase0_resourceGuard_exposesCheckBeforeFetch() -> None:
+def test_layer1Ingestion_phase0_resourceGuardReturnsDecisionOnMigratedDb(tmp_path: Path) -> None:
+    """ResourceGuard.check returns a Decision enum on a migrated sandbox DB."""
     from backend.app.core.resource_guard import Decision, ResourceGuard
 
-    assert hasattr(ResourceGuard, "check")
-    assert Decision.PAUSE.value == "PAUSE"
+    db = tmp_path / "guard.duckdb"
+    cm = ConnectionManager(db_path=db)
+    with cm.writer() as con:
+        apply_migrations(con)
+    with cm.writer() as con:
+        decision, _reason = ResourceGuard(con=con).check()
+    assert decision in (Decision.OK, Decision.PAUSE, Decision.HARD_STOP)
+
+
+def test_layer1Ingestion_phase0_commitPathIsCallable(tmp_path: Path) -> None:
+    """Phase 4 commit entrypoint is importable and wired on the ingestion service."""
+    from backend.app.datasources.service import build_staged_fixture_service
+    from backend.app.layer1_axes.ingestion import Layer1ObservationIngestionService
+
+    db = tmp_path / "commit-smoke.duckdb"
+    data_root = tmp_path / "data"
+    data_root.mkdir()
+    _init_db(db)
+    service = Layer1ObservationIngestionService(
+        db_path=db,
+        data_root=data_root,
+        datasource=build_staged_fixture_service(
+            data_root=data_root,
+            fixture_path=PROJECT_ROOT / "tests/fixtures/layer1_macro_observation_fixture.json",
+        ),
+    )
+    assert callable(service.commit_clean_observation_and_snapshots)
 
 
 def test_dbInspect_keyTables_includeLayer1AxisTables() -> None:

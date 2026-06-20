@@ -86,7 +86,8 @@
       "job_event_log": 0
     },
     "db_path": ".trellis/tasks/06-20-round3-batch2-5-layer1-obs-ingest/execute-evidence/.phase3-micro-fetch-sandbox/duckdb/quant_monitor.duckdb",
-    "fetch_log_delta": 2,
+    "fetch_log_delta": 1,
+    "fetch_log_delta_note": "B2.5-O-07 RESOLVED 2026-06-20: single service-authoritative fetch_log row (record_fetch_log=False on adapter path)",
     "file_registry_delta": 1,
     "generated_at": "2026-06-20T13:26:07Z"
   },

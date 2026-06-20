@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
@@ -268,7 +269,7 @@ def test_incrementalRebuildPreservesAsOfBoundary() -> None:
         validation_report_id="vr-3",
         rule_version="layer1_v1",
         source_fetch_ids_json="[]",
-        source_content_hashes_json="[]",
+        source_content_hashes_json='["hash-incremental-boundary"]',
     )
     builder = SnapshotLineageBuilder()
     as_of = AS_OF
@@ -359,6 +360,58 @@ def test_axisFeatureEngine_shuffledHistory_sortedBeforeStats() -> None:
     shuffled = list(reversed(hist))
     row = engine.compute_features(as_of=AS_OF, observations=[shuffled[-1]], history=shuffled)[0]
     assert row.raw_delta_abs is not None
+
+
+def test_snapshotLineage_missingContentHashes_rejectsSyntheticFallback() -> None:
+    """Production lineage must not invent content hashes (MASTER §7 / Batch 2 A4-09)."""
+    builder = SnapshotLineageBuilder()
+    for hashes_json in (None, "[]"):
+        report = ValidationReportRef(
+            validation_report_id=f"vr-empty-{hashes_json or 'none'}",
+            rule_version="layer1_v1",
+            source_fetch_ids_json="[]",
+            source_content_hashes_json=hashes_json,
+        )
+        with pytest.raises(
+            LineageSnapshotError,
+            match="source_content_hashes required",
+        ):
+            builder.build(
+                snapshot_id="snap-empty-hashes",
+                snapshot_type="axis_feature_snapshot",
+                as_of=AS_OF,
+                validation_report=report,
+                input_window_start=AS_OF - timedelta(days=1),
+                input_window_end=AS_OF,
+                source_dataset_ids=("macro_supplementary:ENV-E1-DGS10",),
+                parameter_hash="ph-empty",
+                allow_synthetic_hashes=False,
+            )
+
+
+def test_snapshotLineage_allowSyntheticHashes_permitsFixtureFallback() -> None:
+    """Explicit fixture mode may synthesize hashes from dataset ids."""
+    report = ValidationReportRef(
+        validation_report_id="vr-fixture",
+        rule_version="layer1_v1",
+        source_fetch_ids_json="[]",
+        source_content_hashes_json=None,
+    )
+    envelope = SnapshotLineageBuilder().build(
+        snapshot_id="snap-fixture",
+        snapshot_type="axis_feature_snapshot",
+        as_of=AS_OF,
+        validation_report=report,
+        input_window_start=AS_OF - timedelta(days=1),
+        input_window_end=AS_OF,
+        source_dataset_ids=("fixture:ENV-E1-DGS10",),
+        parameter_hash="ph-fixture",
+        allow_synthetic_hashes=True,
+    )
+    assert envelope.source_content_hashes
+    assert envelope.source_content_hashes[0] == hashlib.sha256(
+        b"fixture:ENV-E1-DGS10"
+    ).hexdigest()
 
 
 def test_snapshotLineage_agentOutputsNotSource_rejectsAgentProse() -> None:

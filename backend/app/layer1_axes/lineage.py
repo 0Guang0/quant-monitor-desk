@@ -109,7 +109,7 @@ class SnapshotLineageBuilder:
                 f"invalid source_content_hashes_json for {validation_report.validation_report_id!r}"
             ) from exc
         if not content_hashes:
-            if not allow_synthetic_hashes and not validation_report.source_content_hashes_json:
+            if not allow_synthetic_hashes:
                 raise LineageSnapshotError(
                     "source_content_hashes required from validation_report for production lineage"
                 )

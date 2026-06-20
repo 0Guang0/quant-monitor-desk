@@ -52,4 +52,4 @@ uv run ...
 - **micro-fetch staging** 允许经 `backend/app/storage/staged_evidence.py` 直接写入 `file_registry`（`quality_flag=STAGED`），不得写入 clean `axis_observation`。
 - Phase 4 clean write **必须**经 `FileRegistry` + `WriteManager` + `validation_report`。
 - 任务证据必须使用 **fresh Phase 3 sandbox**（`execute-evidence/.phase3-micro-fetch-sandbox/`），不得污染项目 `data/` 根目录。
-- `fetch_log_delta=2` 为已知 Round2 双层持久化（见 `AUDIT_DEFERRED_REGISTRY` **B2.5-O-07**）；审计以 **service 层** `fetch_log` 行（`fetch_time DESC` 首条）为权威 `fetch_id`。
+- `fetch_log_delta=1` per service fetch（**B2.5-O-07 RESOLVED** 2026-06-20：`DataSourceService` 为唯一 `fetch_log` 写入方；adapter 经 `record_fetch_log=False` 委托）。

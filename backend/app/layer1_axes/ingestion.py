@@ -446,18 +446,19 @@ class Layer1ObservationIngestionService:
             )
         return self._resolve_binding(indicator)
 
-    def micro_fetch_staging(
+    def _prepare_staged_route_and_request(
         self,
         *,
         indicator_id: str,
         as_of: date,
-        run_id: str | None = None,
-        job_id: str | None = None,
-    ) -> MicroFetchResult:
-        """Micro-fetch via DataSourceService — raw/fetch evidence only (Phase 3)."""
+        run_id: str | None,
+        job_id: str | None,
+        run_id_prefix: str,
+        job_id_prefix: str,
+    ) -> tuple[IngestionRouteBinding, FetchRequest, SourceRoutePlan, str, str]:
         binding = self._prepare_micro_fetch_binding(indicator_id=indicator_id)
-        resolved_run_id = run_id or f"layer1-micro-fetch-{indicator_id}"
-        resolved_job_id = job_id or f"layer1-micro-{indicator_id}"
+        resolved_run_id = run_id or f"{run_id_prefix}-{indicator_id}"
+        resolved_job_id = job_id or f"{job_id_prefix}-{indicator_id}"
         primary_source = self._datasource.primary_source_for_domain(binding.data_domain)
         req = FetchRequest(
             run_id=resolved_run_id,
@@ -478,42 +479,25 @@ class Layer1ObservationIngestionService:
                 reason_code="ROUTE_NOT_READY",
                 indicator_id=indicator_id,
             )
+        return binding, req, route_plan, resolved_run_id, resolved_job_id
 
-        fetch_id: str | None = None
-        file_registry_ids: tuple[str, ...] = ()
-        guard_decision = Decision.OK
-        guard_reason = ""
-        with self._conn_manager.writer() as con:
-            guard_decision, guard_reason = ResourceGuard(con=con).check()
-            self._enforce_resource_guard(guard_decision, guard_reason)
-            fetch_result = self._datasource.fetch(
-                req,
-                con=con,
-                job_id=resolved_job_id,
-                operation=binding.operation,
-            )
-            file_registry_ids = register_staged_file_registry_rows(
-                con,
-                fetch_result.model_copy(
-                    update={
-                        "raw_file_paths": [
-                            _relative_to_data_root(p, self._data_root)
-                            for p in fetch_result.raw_file_paths
-                        ]
-                    }
-                ),
-            )
-            if fetch_result.status == "SUCCESS":
-                row = con.execute(
-                    """
-                    SELECT fetch_id FROM fetch_log
-                    WHERE job_id = ? AND run_id = ?
-                    ORDER BY fetch_time DESC LIMIT 1
-                    """,
-                    [resolved_job_id, resolved_run_id],
-                ).fetchone()
-                fetch_id = row[0] if row else None
-
+    def _fetch_staging_on_connection(
+        self,
+        con,
+        *,
+        binding: IngestionRouteBinding,
+        req: FetchRequest,
+        job_id: str,
+        register_staged_files: bool,
+    ) -> tuple[FetchResult, str | None, tuple[str, ...], Decision, str]:
+        guard_decision, guard_reason = ResourceGuard(con=con).check()
+        self._enforce_resource_guard(guard_decision, guard_reason)
+        fetch_result = self._datasource.fetch(
+            req,
+            con=con,
+            job_id=job_id,
+            operation=binding.operation,
+        )
         normalized_fetch = fetch_result.model_copy(
             update={
                 "raw_file_paths": [
@@ -522,6 +506,51 @@ class Layer1ObservationIngestionService:
                 ]
             }
         )
+        file_registry_ids: tuple[str, ...] = ()
+        if register_staged_files:
+            file_registry_ids = register_staged_file_registry_rows(con, normalized_fetch)
+        fetch_id: str | None = None
+        if fetch_result.status == "SUCCESS":
+            row = con.execute(
+                """
+                SELECT fetch_id FROM fetch_log
+                WHERE job_id = ? AND run_id = ?
+                ORDER BY fetch_time DESC LIMIT 1
+                """,
+                [job_id, req.run_id],
+            ).fetchone()
+            fetch_id = row[0] if row else None
+        return normalized_fetch, fetch_id, file_registry_ids, guard_decision, guard_reason
+
+    def micro_fetch_staging(
+        self,
+        *,
+        indicator_id: str,
+        as_of: date,
+        run_id: str | None = None,
+        job_id: str | None = None,
+    ) -> MicroFetchResult:
+        """Micro-fetch via DataSourceService — raw/fetch evidence only (Phase 3)."""
+        binding, req, route_plan, resolved_run_id, resolved_job_id = (
+            self._prepare_staged_route_and_request(
+                indicator_id=indicator_id,
+                as_of=as_of,
+                run_id=run_id,
+                job_id=job_id,
+                run_id_prefix="layer1-micro-fetch",
+                job_id_prefix="layer1-micro",
+            )
+        )
+        with self._conn_manager.writer() as con:
+            normalized_fetch, fetch_id, file_registry_ids, guard_decision, guard_reason = (
+                self._fetch_staging_on_connection(
+                    con,
+                    binding=binding,
+                    req=req,
+                    job_id=resolved_job_id,
+                    register_staged_files=True,
+                )
+            )
         return MicroFetchResult(
             indicator_id=indicator_id,
             as_of=as_of,
@@ -586,35 +615,21 @@ class Layer1ObservationIngestionService:
 
         resolved_run_id = run_id or f"layer1-commit-{indicator_id}"
         resolved_job_id = job_id or f"layer1-commit-{indicator_id}"
-        binding = self._prepare_micro_fetch_binding(indicator_id=indicator_id)
+        binding, req, route_plan, resolved_run_id, resolved_job_id = (
+            self._prepare_staged_route_and_request(
+                indicator_id=indicator_id,
+                as_of=as_of,
+                run_id=resolved_run_id,
+                job_id=resolved_job_id,
+                run_id_prefix="layer1-commit",
+                job_id_prefix="layer1-commit",
+            )
+        )
         resolved_fixture = (
             Path(fixture_path)
             if fixture_path is not None
             else app_config.PROJECT_ROOT / MACRO_FIXTURE_RELATIVE
         )
-
-        primary_source = self._datasource.primary_source_for_domain(binding.data_domain)
-        route_plan = self._datasource.preview_route(
-            data_domain=binding.data_domain,
-            operation=binding.operation,
-            run_id=resolved_run_id,
-            job_id=resolved_job_id,
-        )
-        self._verify_capability(binding, route_plan)
-        if route_plan.route_status != "READY" or route_plan.selected_source_id is None:
-            raise IngestionRejectedError(
-                f"route not ready: {route_plan.route_status}",
-                reason_code="ROUTE_NOT_READY",
-                indicator_id=indicator_id,
-            )
-
-        fetch_req = FetchRequest(
-            run_id=resolved_run_id,
-            source_id=primary_source,
-            data_domain=binding.data_domain,
-            end_time=as_of.isoformat(),
-        )
-
         quality_validator = DataQualityValidator()
         conflict_validator = SourceConflictValidator()
         obs_writer = Layer1ObservationWriter(self._conn_manager)
@@ -640,33 +655,15 @@ class Layer1ObservationIngestionService:
         with self._conn_manager.writer() as con:
             con.execute("BEGIN")
             try:
-                guard_decision, guard_reason = ResourceGuard(con=con).check()
-                self._enforce_resource_guard(guard_decision, guard_reason)
-
-                fetch_result = self._datasource.fetch(
-                    fetch_req,
-                    con=con,
-                    job_id=resolved_job_id,
-                    operation=binding.operation,
+                normalized_fetch, fetch_id, _, guard_decision, guard_reason = (
+                    self._fetch_staging_on_connection(
+                        con,
+                        binding=binding,
+                        req=req,
+                        job_id=resolved_job_id,
+                        register_staged_files=False,
+                    )
                 )
-                normalized_paths = [
-                    _relative_to_data_root(p, self._data_root) for p in fetch_result.raw_file_paths
-                ]
-                normalized_fetch = fetch_result.model_copy(
-                    update={"raw_file_paths": normalized_paths}
-                )
-
-                fetch_id: str | None = None
-                if fetch_result.status == "SUCCESS":
-                    row = con.execute(
-                        """
-                        SELECT fetch_id FROM fetch_log
-                        WHERE job_id = ? AND run_id = ?
-                        ORDER BY fetch_time DESC LIMIT 1
-                        """,
-                        [resolved_job_id, resolved_run_id],
-                    ).fetchone()
-                    fetch_id = row[0] if row else None
 
                 micro = MicroFetchResult(
                     indicator_id=indicator_id,
@@ -1018,6 +1015,14 @@ def format_phase2_route_preview_md(payload: dict[str, Any]) -> str:
     return "\n".join(lines) + "\n"
 
 
+def _format_count_table_md(title: str, counts: dict[str, int | None]) -> list[str]:
+    lines = [f"## {title}", "", "| table | row_count |", "| ----- | --------- |"]
+    for name, count in counts.items():
+        lines.append(f"| `{name}` | {count} |")
+    lines.append("")
+    return lines
+
+
 def format_phase2_no_mutation_md(proof: dict[str, Any]) -> str:
     lines = [
         "# Phase 2 — No Mutation Proof",
@@ -1028,17 +1033,9 @@ def format_phase2_no_mutation_md(proof: dict[str, Any]) -> str:
         f"- **Capture strategy:** {proof.get('db_capture_strategy')}",
         f"- **Row counts unchanged:** {proof['row_counts_unchanged']}",
         "",
-        "## Before preview",
-        "",
-        "| table | row_count |",
-        "| ----- | --------- |",
     ]
-    for name, count in proof.get("before_counts", {}).items():
-        lines.append(f"| `{name}` | {count} |")
-    lines.extend(["", "## After preview", "", "| table | row_count |", "| ----- | --------- |"])
-    for name, count in proof.get("after_counts", {}).items():
-        lines.append(f"| `{name}` | {count} |")
-    lines.append("")
+    lines.extend(_format_count_table_md("Before preview", proof.get("before_counts", {})))
+    lines.extend(_format_count_table_md("After preview", proof.get("after_counts", {})))
     return "\n".join(lines) + "\n"
 
 
@@ -1174,17 +1171,9 @@ def format_phase3_no_clean_write_md(proof: dict[str, Any]) -> str:
         f"- **fetch_log delta:** {proof['fetch_log_delta']}",
         f"- **file_registry delta:** {proof['file_registry_delta']}",
         "",
-        "## Before micro-fetch",
-        "",
-        "| table | row_count |",
-        "| ----- | --------- |",
     ]
-    for name, count in proof.get("before_counts", {}).items():
-        lines.append(f"| `{name}` | {count} |")
-    lines.extend(["", "## After micro-fetch", "", "| table | row_count |", "| ----- | --------- |"])
-    for name, count in proof.get("after_counts", {}).items():
-        lines.append(f"| `{name}` | {count} |")
-    lines.append("")
+    lines.extend(_format_count_table_md("Before micro-fetch", proof.get("before_counts", {})))
+    lines.extend(_format_count_table_md("After micro-fetch", proof.get("after_counts", {})))
     return "\n".join(lines) + "\n"
 
 

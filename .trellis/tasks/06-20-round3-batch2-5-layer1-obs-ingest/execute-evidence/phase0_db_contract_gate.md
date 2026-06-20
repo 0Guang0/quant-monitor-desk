@@ -66,7 +66,7 @@
 | ----------------------------- | -------------------------------------------------------------------------------------------------------------- |
 | DDL columns (17)              | `observation_contract.py` + `test_layer1Migration_axisObservation_columnsMatchModuleSpec`                      |
 | DB CHECK on timestamps        | **DEFERRED B2.5-O-03** — ADR-002 app-layer; `test_layer1Ingestion_phase0_axisObservation_noDbCheck_classified` |
-| WriteManager clean write      | **DEFERRED B2.5-O-04** — Phase 4 `test_layer1Observation_cleanWrite_usesWriteManager`                          |
+| WriteManager clean write      | **RESOLVED B2.5-O-04** — `test_layer1Observation_cleanWrite_usesWriteManager` (§8.5 PH-A4)                     |
 | fetch_log → observation trace | Via `validation_report.source_fetch_ids_json` + `content_hash` (`FETCH_TO_OBSERVATION_TRACE_VIA`)              |
 
 ## 5. Staged route (AC-P2-0)

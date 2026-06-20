@@ -61,6 +61,13 @@
 | Archived Round2.6 Contract Gate audit                                                                                                                                                  | PASS.                                                                                                     |
 | Archived Round2.6 Routing Service Gate audit                                                                                                                                           | PASS; records `pytest -q` 443 tests, `check_module_boundaries.py` PASS, production-equivalent smoke PASS. |
 
+## Round 3 Batch 2.5 — Layer 1 observation ingestion bridge
+
+| ID        | Closed     | Evidence                                                                                                                        |
+| --------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| B2.5-O-04 | 2026-06-20 | `commit_clean_observation_and_snapshots` + `Layer1ObservationWriter`; `test_layer1Observation_cleanWrite_usesWriteManager`      |
+| B2.5-O-07 | 2026-06-20 | Single `fetch_log` per service fetch; `base_adapter.record_fetch_log`; `test_layer1MicroIngestion_writesFetchLogAndRawEvidence` |
+
 ## Operating rule
 
 When a row is moved here from `docs/UNRESOLVED_ISSUES_REGISTRY.md`, include:

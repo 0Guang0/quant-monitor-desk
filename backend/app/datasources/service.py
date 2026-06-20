@@ -16,6 +16,7 @@ from backend.app.datasources.capability_registry import (
     SourceCapabilityRegistry,
     UnknownCapabilityError,
 )
+from backend.app.datasources.base_adapter import BaseDataAdapter
 from backend.app.datasources.fetch_log import FetchLogWriter
 from backend.app.datasources.fetch_result import FetchRequest, FetchResult
 from backend.app.datasources.route_models import SourceRoutePlan
@@ -214,7 +215,10 @@ class DataSourceService:
                 file_registry=file_registry,
             )
         routed_req = req.model_copy(update={"source_id": selected})
-        result = adapter.fetch(routed_req, con=con, job_id=job_id)
+        fetch_kwargs: dict = {"con": con, "job_id": job_id}
+        if isinstance(adapter, BaseDataAdapter):
+            fetch_kwargs["record_fetch_log"] = False
+        result = adapter.fetch(routed_req, **fetch_kwargs)
         self._fetch_log.write(con, result, req=routed_req, job_id=job_id)
         return result
 

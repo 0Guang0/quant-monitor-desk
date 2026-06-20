@@ -35,12 +35,12 @@
 
 ## 开放项（不阻塞 PH-A4 签字）
 
-| ID           | 状态   | 说明                            |
-| ------------ | ------ | ------------------------------- |
-| B2.5-O-04    | CLOSED | WriteManager clean write 已实现 |
-| AC-TRACE-1   | CLOSED | Phase 4 端到端 trace 证据齐全   |
-| AC-REG-1     | OPEN   | §8.6 registry closeout          |
-| AC-HANDOFF-1 | OPEN   | §8.6 Batch 3 handoff            |
+| ID           | 状态       | 说明                                                               |
+| ------------ | ---------- | ------------------------------------------------------------------ |
+| B2.5-O-04    | CLOSED     | WriteManager clean write 已实现                                    |
+| AC-TRACE-1   | CLOSED     | Phase 4 端到端 trace 证据齐全                                      |
+| AC-REG-1     | **CLOSED** | Repair 2026-06-20 — `final_registry_update.md` + registries synced |
+| AC-HANDOFF-1 | **CLOSED** | Repair 2026-06-20 — 018A §13 block in `final_registry_update.md`   |
 
 ## 签字
 

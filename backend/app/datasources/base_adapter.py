@@ -34,6 +34,7 @@ class BaseDataAdapter(ABC):
         *,
         con,
         job_id: str | None = None,
+        record_fetch_log: bool = True,
     ) -> FetchResult:
         if req.source_id != self.source_id:
             raise SourceMismatchError(
@@ -51,14 +52,15 @@ class BaseDataAdapter(ABC):
                 fetch_time=_utc_now_iso(),
                 error_message=str(exc),
             )
-            self._log_writer.write(
-                con,
-                result,
-                req=req,
-                job_id=job_id,
-                market_id=req.market_id,
-                instrument_id=req.instrument_id,
-            )
+            if record_fetch_log:
+                self._log_writer.write(
+                    con,
+                    result,
+                    req=req,
+                    job_id=job_id,
+                    market_id=req.market_id,
+                    instrument_id=req.instrument_id,
+                )
             return result
         self.registry.assert_domain_allowed(req.source_id, req.data_domain)
         self.registry.assert_enabled(req.source_id)
@@ -85,14 +87,15 @@ class BaseDataAdapter(ABC):
                 updates["latency_ms"] = elapsed_ms
             result = result.model_copy(update=updates)
 
-        self._log_writer.write(
-            con,
-            result,
-            req=req,
-            job_id=job_id,
-            market_id=req.market_id,
-            instrument_id=req.instrument_id,
-        )
+        if record_fetch_log:
+            self._log_writer.write(
+                con,
+                result,
+                req=req,
+                job_id=job_id,
+                market_id=req.market_id,
+                instrument_id=req.instrument_id,
+            )
         return result
 
     @abstractmethod

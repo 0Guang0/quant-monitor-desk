@@ -30,7 +30,7 @@
 
 ## 设计备注
 
-- `fetch_log_delta=2`：SkeletonAdapter + DataSourceService 双层 fetch_log 持久化（**B2.5-O-07** DEFERRED；service 行 authoritative）。
+- `fetch_log_delta=1`：DataSourceService 为唯一 `fetch_log` 写入方（**B2.5-O-07 RESOLVED** 2026-06-20；adapter 经 `record_fetch_log=False` 委托）。
 - `file_registry` 由 `backend/app/storage/staged_evidence.py::register_staged_file_registry_rows` 写入；**未**在 Layer1 配置 production `file_registry_factory`。
 - Phase 3 任务证据必须使用 `execute-evidence/.phase3-micro-fetch-sandbox/`，不得污染项目 `data/` 根目录（`staged_acceptance_policy.md` §6）。
 - `build_staged_fixture_service` 位于 `datasources/service.py`，保持 module boundary。

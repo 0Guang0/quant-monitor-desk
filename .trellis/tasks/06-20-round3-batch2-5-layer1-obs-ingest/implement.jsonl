@@ -80,4 +80,11 @@
 {"file": "backend/app/sync/pipeline.py", "reason": "extract: §3.4 contrast only; Layer1 does not delegate | for: AC-P4-1 / Phase 0 gate"}
 {"file": "backend/app/sync/orchestrator.py", "reason": "extract: runner relationship read-only | for: AC-P3-1 context"}
 {"file": "backend/app/sync/runners.py", "reason": "extract: optional narrow hook O-04; default direct DataSourceService | for: §4 wiring decision"}
+{"file": "backend/app/layer1_axes/ingestion.py", "reason": "extract: Phase 2–4 orchestration facade | for: AC-P2-* / AC-P3-* / AC-P4-*"}
+{"file": "backend/app/layer1_axes/ingestion_inventory.py", "reason": "extract: Phase 1 read-only inventory | for: AC-P1-*"}
+{"file": "backend/app/layer1_axes/observation_mapper.py", "reason": "extract: raw→axis_observation mapping | for: AC-TRACE-1 / AC-P4-2"}
+{"file": "backend/app/layer1_axes/observation_writer.py", "reason": "extract: WriteManager clean path | for: AC-P4-2"}
+{"file": "backend/app/layer1_axes/observation_contract.py", "reason": "extract: axis_observation DDL contract | for: AC-P0-2 / AC-P4-1"}
+{"file": "backend/app/storage/staged_evidence.py", "reason": "extract: Phase 3 staged file_registry | for: AC-P3-2"}
+{"file": "backend/app/datasources/adapters/fetch_port.py", "reason": "extract: LocalFixtureFetchPort for staged service | for: AC-P3-1"}
 {"file": "docs/ops/data_sync_command_matrix.md", "reason": "extract: dry-run / route-preview command matrix | for: Phase 2–3 ops boundary"}

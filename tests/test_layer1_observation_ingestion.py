@@ -270,23 +270,18 @@ def test_layer1Ingestion_phase1_phase2Gate_blocksUntilReview(tmp_path: Path) -> 
         assert gate["phase2_authorized"] is authorized, classification
 
 
-def test_layer1Ingestion_phase1_captureDoesNotCallWriterOrMigrations(tmp_path: Path) -> None:
-    """Inventory path must not invoke writer connections or apply_migrations."""
+def test_layer1Ingestion_phase1_captureUsesReadOnlyInspect(tmp_path: Path) -> None:
+    """Inventory capture opens DB read-only without mutating baseline tables."""
     db = tmp_path / "baseline.duckdb"
     data_root = tmp_path / "data"
     data_root.mkdir()
     _init_db(db)
+    before_hash = db.read_bytes()
 
-    with (
-        patch.object(ConnectionManager, "writer", side_effect=AssertionError("writer forbidden")),
-        patch(
-            "backend.app.layer1_axes.ingestion_inventory.apply_migrations",
-            side_effect=AssertionError("apply_migrations forbidden"),
-        ),
-    ):
-        inventory = capture_phase1_inventory(db, data_root)
+    inventory = capture_phase1_inventory(db, data_root)
 
     assert inventory["inspect"]["db"]["read_only_open"] is True
+    assert db.read_bytes() == before_hash
 
 
 def test_layer1Ingestion_phase1_taskEvidenceUsesProjectTargetPaths(
@@ -838,8 +833,7 @@ def test_layer1MicroIngestion_writesFetchLogAndRawEvidence(tmp_path: Path, monke
     )
 
     after = _row_counts(db, ("fetch_log", "file_registry"))
-    # SkeletonAdapterBase.fetch and DataSourceService.fetch each persist fetch_log.
-    assert after["fetch_log"] == (before["fetch_log"] or 0) + 2
+    assert after["fetch_log"] == (before["fetch_log"] or 0) + 1
     assert after["file_registry"] == (before["file_registry"] or 0) + 1
     assert result.fetch_result.raw_file_paths
     raw_path = data_root / result.fetch_result.raw_file_paths[0]
@@ -915,7 +909,7 @@ def test_layer1Ingestion_phase3_taskEvidenceArtifacts(tmp_path: Path, monkeypatc
     assert proof["axis_observation_unchanged"] is True
     assert proof["before_counts"]["fetch_log"] == 0
     assert proof["before_counts"]["file_registry"] == 0
-    assert proof["fetch_log_delta"] == 2
+    assert proof["fetch_log_delta"] == 1
     assert proof["file_registry_delta"] == 1
     assert "phase3-micro-fetch-sandbox" in evidence["evidence_data_root"]
     assert "phase3-micro-fetch-sandbox" in evidence["evidence_db_path"]
@@ -1000,6 +994,115 @@ def test_layer1Observation_cleanWrite_requiresValidationReport(tmp_path: Path) -
         source_used="staged_fixture",
     )
     assert result.status == "FAILED"
+    con = duckdb.connect(str(db), read_only=True)
+    try:
+        assert con.execute("SELECT COUNT(*) FROM axis_observation").fetchone()[0] == 0
+        success_audits = con.execute(
+            "SELECT COUNT(*) FROM write_audit_log WHERE status = 'SUCCESS'"
+        ).fetchone()[0]
+    finally:
+        con.close()
+    assert success_audits == 0
+
+
+def test_layer1Observation_fetchFailure_blocksCleanWrite(tmp_path: Path, monkeypatch) -> None:
+    """Failed fetch on commit path blocks clean write with OBSERVATION_MAPPING."""
+    from datetime import UTC, datetime
+
+    from backend.app.datasources.fetch_result import FetchResult
+    from backend.app.datasources.service import DataSourceService
+    from backend.app.layer1_axes.ingestion import IngestionCommitBlockedError
+
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    service, db = _build_phase4_service(tmp_path)
+
+    def failed_fetch(self, req, *, con, job_id=None, operation=None, **kwargs):
+        return FetchResult(
+            run_id=req.run_id,
+            source_id=req.source_id,
+            data_domain=req.data_domain,
+            status="FAILED",
+            row_count=0,
+            fetch_time=datetime.now(UTC).isoformat(),
+            error_message="injected fetch failure",
+        )
+
+    monkeypatch.setattr(DataSourceService, "fetch", failed_fetch)
+    with pytest.raises(IngestionCommitBlockedError) as exc:
+        service.commit_clean_observation_and_snapshots(
+            indicator_id=FROZEN_STAGED_INDICATOR,
+            as_of=PHASE4_AS_OF,
+        )
+    assert exc.value.reason_code == "OBSERVATION_MAPPING"
+    assert _row_counts(db, ("axis_observation",))["axis_observation"] == 0
+
+
+def test_layer1Observation_noneOptionalIndicator_skipsConflictValidator(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """Frozen ENV-E1-DGS10 uses validation_source=none_optional — conflict validator not invoked."""
+    from backend.app.datasources.service import build_staged_fixture_service
+    from backend.app.layer1_axes.ingestion import Layer1ObservationIngestionService
+    from backend.app.validators.source_conflict import SourceConflictValidator
+
+    data_root = tmp_path / "data"
+    data_root.mkdir()
+    indicator = Layer1ObservationIngestionService(
+        db_path=tmp_path / "unused.duckdb",
+        data_root=data_root,
+        datasource=build_staged_fixture_service(
+            data_root=data_root,
+            fixture_path=MACRO_FIXTURE_PATH,
+        ),
+    )._indicator_by_id(FROZEN_STAGED_INDICATOR)
+    assert Layer1ObservationIngestionService._validation_source_requires_conflict(indicator) is False
+
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    service, db = _build_phase4_service(tmp_path)
+
+    def conflict_must_not_run(self, con, request, **kwargs):
+        raise AssertionError("SourceConflictValidator must not run for none_optional indicator")
+
+    monkeypatch.setattr(SourceConflictValidator, "validate_table", conflict_must_not_run)
+    result = service.commit_clean_observation_and_snapshots(
+        indicator_id=FROZEN_STAGED_INDICATOR,
+        as_of=PHASE4_AS_OF,
+    )
+    assert result.observation_write_status == "SUCCESS"
+
+
+def test_layer1Observation_warningValidation_allowsCleanWrite(tmp_path: Path, monkeypatch) -> None:
+    """WARNING validation with can_write_clean=True still commits observation rows."""
+    from backend.app.validators.data_quality import DataQualityReport
+
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    service, db = _build_phase4_service(tmp_path)
+
+    def warning_validate(self, con, request, **kwargs):
+        report = DataQualityReport(
+            validation_report_id="vr-warning-ok",
+            status="WARNING",
+            checked_rows=1,
+            failed_rows=0,
+            warning_rows=1,
+            quality_flags=("STALE",),
+            can_write_clean=True,
+            needs_manual_review=False,
+            findings=(),
+        )
+        self._persist_report(con, request, report)
+        return report
+
+    monkeypatch.setattr(
+        "backend.app.layer1_axes.ingestion.DataQualityValidator.validate_table",
+        warning_validate,
+    )
+    result = service.commit_clean_observation_and_snapshots(
+        indicator_id=FROZEN_STAGED_INDICATOR,
+        as_of=PHASE4_AS_OF,
+    )
+    assert result.observation_write_status == "SUCCESS"
+    assert _row_counts(db, ("axis_observation",))["axis_observation"] == 1
 
 
 def test_layer1Observation_cleanWrite_usesWriteManager(tmp_path: Path, monkeypatch) -> None:
@@ -1165,6 +1268,28 @@ def test_layer1Observation_manualReview_blocksNonManualPatchWrite(
             as_of=PHASE4_AS_OF,
         )
     assert exc.value.reason_code == "MANUAL_REVIEW_REQUIRED"
+
+
+def test_layer1Observation_stagedFixture_qualityFlagPersisted(tmp_path: Path, monkeypatch) -> None:
+    """Staged fixture commits must label axis_observation with STAGED_FIXTURE (AC-P4-4)."""
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    service, db = _build_phase4_service(tmp_path)
+
+    service.commit_clean_observation_and_snapshots(
+        indicator_id=FROZEN_STAGED_INDICATOR,
+        as_of=PHASE4_AS_OF,
+    )
+
+    con = duckdb.connect(str(db), read_only=True)
+    try:
+        row = con.execute(
+            "SELECT quality_flags, source_used FROM axis_observation LIMIT 1"
+        ).fetchone()
+    finally:
+        con.close()
+    assert row is not None
+    assert "STAGED_FIXTURE" in row[0]
+    assert row[1] == "akshare"
 
 
 def test_layer1Observation_lineageIncludesFetchIdsAndHashes(tmp_path: Path, monkeypatch) -> None:

@@ -23,7 +23,7 @@
 # - execute-evidence/.phase3-micro-fetch-sandbox/ (isolated DB + data)
 
 # Key deltas (capture_task_phase3_evidence, before_counts all zero):
-# fetch_log_delta=2 (B2.5-O-07: adapter + service fetch_log persistence)
+# fetch_log_delta=1 (B2.5-O-07 RESOLVED 2026-06-20: service-only fetch_log via record_fetch_log=False)
 # file_registry_delta=1
 # axis_observation_unchanged=True
 # evidence_baseline_strategy=fresh_phase3_sandbox
