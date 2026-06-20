@@ -11,6 +11,7 @@ from backend.app.config import DATA_ROOT
 from backend.app.core.resource_guard import Decision, ResourceGuard, format_pause_event
 from backend.app.datasources.adapters import create_adapter
 from backend.app.datasources.adapters.fetch_port import FetchPort, StubFetchPort
+from backend.app.datasources.base_adapter import BaseDataAdapter
 from backend.app.datasources.capability_registry import (
     OperationDisabledError,
     SourceCapabilityRegistry,
@@ -83,6 +84,25 @@ class DataSourceService:
             job_id=job_id,
             use_fallback=use_fallback,
         )
+
+    def primary_source_for_domain(self, data_domain: str) -> str:
+        return self._source_registry.get_domain_roles(data_domain).primary_source_id
+
+    def assert_capability_declared(
+        self,
+        source_id: str,
+        data_domain: str,
+        operation: str,
+    ) -> None:
+        """Public capability gate for Layer1 ingestion (no private registry access)."""
+        self._capability_registry.assert_source_domain_operation(
+            source_id,
+            data_domain,
+            operation,
+        )
+
+    def check_resource_guard(self) -> tuple[Decision, str]:
+        return ResourceGuard().check()
 
     def _emit_route_plan(self, con, job_id: str, plan: SourceRoutePlan) -> None:
         from backend.app.sync.event_payload import build_route_plan_payload
@@ -195,7 +215,10 @@ class DataSourceService:
                 file_registry=file_registry,
             )
         routed_req = req.model_copy(update={"source_id": selected})
-        result = adapter.fetch(routed_req, con=con, job_id=job_id)
+        fetch_kwargs: dict = {"con": con, "job_id": job_id}
+        if isinstance(adapter, BaseDataAdapter):
+            fetch_kwargs["record_fetch_log"] = False
+        result = adapter.fetch(routed_req, **fetch_kwargs)
         self._fetch_log.write(con, result, req=routed_req, job_id=job_id)
         return result
 
@@ -207,5 +230,21 @@ def _default_operation(data_domain: str) -> str:
         "cn_equity_realtime": "fetch_realtime_quote",
         "us_equity_daily_bar": "fetch_us_daily_bar_validation",
         "market_bar_1d": "fetch_daily_bar",
+        "macro_supplementary": "fetch_macro_series",
     }
     return defaults.get(data_domain, "fetch_daily_bar")
+
+
+def build_staged_fixture_service(
+    *,
+    data_root: Path,
+    fixture_path: Path,
+    row_count: int = 1,
+) -> DataSourceService:
+    """Staged micro-fetch facade with injected fixture port (Batch 2.5 Phase 3)."""
+    from backend.app.datasources.adapters.fetch_port import LocalFixtureFetchPort
+
+    return DataSourceService(
+        data_root=data_root,
+        fetch_port=LocalFixtureFetchPort(fixture_path, row_count=row_count),
+    )

@@ -70,7 +70,7 @@ Archived Trellis task `.trellis/tasks/archive/2026-06/06-20-round3-batch2-layer1
 | `018`                        | Feature + interpretation snapshots               |
 | `R3-EARLY-LINEAGE-CONSUMERS` | Snapshot lineage persistence + consumers         |
 
-**Next:** Batch 2.5 — `docs/implementation_tasks/ROUND_3_MODELING_LAYERS/018A_layer1_observation_ingestion_bridge.md` (five phase gates, phase-by-phase audit) before Batch 3 treats Layer 1 outputs as real-data-ready.
+**Next:** Batch 2.5 **Execute ready** (2026-06-20) — Trellis `.trellis/tasks/06-20-round3-batch2-5-layer1-obs-ingest/` · `research/execute-handoff.md` · `task.json.status=in_progress`. Five phase gates + phase-by-phase audit before Batch 3 treats Layer 1 as real-data-ready. Source: `018A_layer1_observation_ingestion_bridge.md`.
 
 ## Round 3 start checklist
 

@@ -264,9 +264,10 @@ def test_axisSpecLoader_observableIndicators_matchContractFields() -> None:
 
 
 def test_axisSpecLoader_rejectsSpecRootOutsideAllowedRoots() -> None:
+    evil_root = (PROJECT_ROOT.resolve().parent.parent / "evil_layer1_specs_outside").resolve()
     with pytest.raises(AxisSpecLoadError, match="spec_root"):
         AxisSpecLoader().load(
-            spec_root=Path("C:/tmp/evil_layer1_specs"),
+            spec_root=evil_root,
             enabled_axes=["environment"],
         )
 

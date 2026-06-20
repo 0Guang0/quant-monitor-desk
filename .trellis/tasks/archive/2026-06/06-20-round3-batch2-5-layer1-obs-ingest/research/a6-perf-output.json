@@ -1,0 +1,45 @@
+{
+  "thresholds": {
+    "elapsed_s_max": 5.0,
+    "rss_mb_max": 512.0
+  },
+  "indicator_id": "ENV-E1-DGS10",
+  "as_of": "2024-06-15",
+  "profile": "eco",
+  "execute_baseline": {
+    "source": "execute-evidence/phase3_micro_fetch_evidence.json",
+    "latency_ms": 5,
+    "resource_guard_decision": "OK"
+  },
+  "prod_db_sha256_before": "5EB65E0EDAAAB223A77C5A5D2660603383836704B4C0ECE1EB4AEBB047F1682E",
+  "prod_db_sha256_after": "5EB65E0EDAAAB223A77C5A5D2660603383836704B4C0ECE1EB4AEBB047F1682E",
+  "prod_tree_unchanged": true,
+  "results": {
+    "cli_sandbox": {
+      "label": "cli-sandbox",
+      "data_root": ".audit-sandbox/r3b25-audit/data",
+      "elapsed_s": 0.4299,
+      "rss_after_mb": 57.67,
+      "peak_traced_bytes": 319491,
+      "row_count": 1,
+      "fetch_status": "SUCCESS",
+      "resource_guard_decision": "OK",
+      "resource_guard_reason": "",
+      "pass_elapsed": true,
+      "pass_rss": true
+    },
+    "audit_prod_path": {
+      "label": "audit-prod-path",
+      "data_root": ".audit-sandbox/r3b25-audit-prod-equiv/data",
+      "elapsed_s": 0.4435,
+      "rss_after_mb": 58.09,
+      "peak_traced_bytes": 319491,
+      "row_count": 1,
+      "fetch_status": "SUCCESS",
+      "resource_guard_decision": "OK",
+      "resource_guard_reason": "",
+      "pass_elapsed": true,
+      "pass_rss": true
+    }
+  }
+}

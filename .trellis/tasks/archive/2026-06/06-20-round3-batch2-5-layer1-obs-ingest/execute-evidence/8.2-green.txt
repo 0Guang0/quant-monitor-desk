@@ -1,0 +1,50 @@
+§8.2 GREEN — Phase 1 read-only inventory (F-A3 remediation)
+date: 2026-06-20
+next_session: §8.3 Phase 2 route dry-run (PH-A2)
+
+phase1_pytest:
+  canonical: uv run pytest tests/test_layer1_observation_ingestion.py -k phase1 -q
+  executed: .venv\Scripts\python.exe -m pytest tests/test_layer1_observation_ingestion.py -k phase1 -q
+  exit_code: 0
+  phase1_tests: 14 passed
+
+layer1_gate_pytest:
+  canonical: uv run pytest tests/test_layer1_observation_ingestion.py tests/test_layer1_ingestion_gates.py -q
+  executed: .venv\Scripts\python.exe -m pytest tests/test_layer1_observation_ingestion.py tests/test_layer1_ingestion_gates.py -q
+  exit_code: 0
+  tests: 40 passed
+
+full_pytest:
+  canonical: uv run pytest -q
+  executed: .venv\Scripts\python.exe -m pytest -q
+  exit_code: 0
+  skipped: 1 (test_ops_db_inspector symlink — Windows)
+  passed: 535 (536 collected − 1 skip)
+
+tier_a_ruff:
+  canonical: uv run ruff check backend/app/layer1_axes tests/test_layer1_observation_ingestion.py tests/test_layer1_ingestion_gates.py
+  executed: .venv\Scripts\ruff.exe check backend/app/layer1_axes tests/test_layer1_observation_ingestion.py tests/test_layer1_ingestion_gates.py
+  exit_code: 0
+
+note: uv not on PATH in execute shell; venv equivalents recorded per G-07
+
+evidence:
+- execute-evidence/phase1_before_ingestion_inventory.json
+- execute-evidence/phase1_before_ingestion_inventory.md
+- execute-evidence/phase1_data_classification.md
+- execute-evidence/.phase1-baseline-sandbox/duckdb/quant_monitor.duckdb
+- research/audit-ph-a1-inventory.md
+- research/adversarial-audit-ph-a1-agent1.md
+- research/adversarial-audit-ph-a1-agent2-security.md
+- research/adversarial-audit-phase1-remediation.md
+- research/adversarial-audit-ph-a3-remediation.md
+
+implementation:
+- backend/app/layer1_axes/ingestion_inventory.py
+- tests/test_layer1_observation_ingestion.py (Phase 1: 14 tests)
+- tests/test_layer1_ingestion_gates.py (Phase 0 gates extended)
+
+baseline:
+- target_db: data/duckdb/quant_monitor.duckdb (exists; sandbox copy + provenance)
+- classification: fixture_or_staged_evidence
+- phase2_gate: authorized via operator_classification_memo (phase1_data_classification.md)

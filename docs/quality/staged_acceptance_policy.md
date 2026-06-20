@@ -6,13 +6,13 @@
 
 ## 2. 阶段化验收
 
-| 阶段 | 适用任务 | 必跑命令 |
-|---|---|---|
-| docs-only | 文档索引、ADR、设计说明 | `uv sync --locked && uv run python scripts/check_doc_links.py`，若脚本尚未创建则必须先创建等价 markdown link check |
-| scaffold | 目录、配置、测试基线 | `uv sync --locked && uv run pytest -q tests/test_project_scaffold.py && uv run ruff check .` |
-| backend | 后端模块 | `uv sync --locked && uv run pytest -q && uv run ruff check . && uv run python -m compileall backend scripts tests` |
-| frontend | 前端模块 | `uv sync --locked && uv run pytest -q tests/test_api_contracts.py && cd frontend && npm ci && npm audit --audit-level=high && npm run typecheck && npm run build` |
-| release | 最终包 | `uv sync --locked && uv run python scripts/validate_release_allowlist.py && uv run python scripts/validate_manifest.py`；若脚本尚未创建，release 任务必须先创建并运行等价 allowlist/manifest/hash 校验 |
+| 阶段      | 适用任务                | 必跑命令                                                                                                                                                                                               |
+| --------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| docs-only | 文档索引、ADR、设计说明 | `uv sync --locked && uv run python scripts/check_doc_links.py`，若脚本尚未创建则必须先创建等价 markdown link check                                                                                     |
+| scaffold  | 目录、配置、测试基线    | `uv sync --locked && uv run pytest -q tests/test_project_scaffold.py && uv run ruff check .`                                                                                                           |
+| backend   | 后端模块                | `uv sync --locked && uv run pytest -q && uv run ruff check . && uv run python -m compileall backend scripts tests`                                                                                     |
+| frontend  | 前端模块                | `uv sync --locked && uv run pytest -q tests/test_api_contracts.py && cd frontend && npm ci && npm audit --audit-level=high && npm run typecheck && npm run build`                                      |
+| release   | 最终包                  | `uv sync --locked && uv run python scripts/validate_release_allowlist.py && uv run python scripts/validate_manifest.py`；若脚本尚未创建，release 任务必须先创建并运行等价 allowlist/manifest/hash 校验 |
 
 ## 3. 源码与证据声明
 
@@ -36,7 +36,6 @@
 - 本 zip 是设计稿与执行计划包，不包含最终 `backend/`、`frontend/`、`tests/` 源码。
 - 实现完成后的终审必须基于源码 Git commit、CI 结果、测试输出和锁文件，而不是把源码塞回设计包。
 
-
 ## 复审修复补充：阶段化验收命令
 
 所有 implementation task 必须按任务类型执行阶段化验收，不得无差别套用旧统一验收命令。默认 Python 命令使用：
@@ -47,3 +46,10 @@ uv run ...
 ```
 
 文档类任务执行链接、allowlist、manifest、contract consistency 检查；后端任务执行 `uv run` 目标测试 + ruff + compileall；前端任务执行 `npm ci && npm audit --audit-level=high && npm run typecheck && npm run build`，且不得使用 会吞掉失败结果的 shell 容错短路写法 掩盖 API contract 测试失败；release 任务必须执行 manifest exclude-self policy、allowlist 和 FINAL_AUDIT_REPORT 校验。
+
+## 6. Batch 2.5 Phase 3 分期例外（R3-B2.5-L1-OBS-INGEST）
+
+- **micro-fetch staging** 允许经 `backend/app/storage/staged_evidence.py` 直接写入 `file_registry`（`quality_flag=STAGED`），不得写入 clean `axis_observation`。
+- Phase 4 clean write **必须**经 `FileRegistry` + `WriteManager` + `validation_report`。
+- 任务证据必须使用 **fresh Phase 3 sandbox**（`execute-evidence/.phase3-micro-fetch-sandbox/`），不得污染项目 `data/` 根目录。
+- `fetch_log_delta=1` per service fetch（**B2.5-O-07 RESOLVED** 2026-06-20：`DataSourceService` 为唯一 `fetch_log` 写入方；adapter 经 `record_fetch_log=False` 委托）。

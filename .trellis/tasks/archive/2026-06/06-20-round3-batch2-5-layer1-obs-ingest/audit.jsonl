@@ -1,0 +1,17 @@
+{"file": ".trellis/tasks/06-20-round3-batch2-5-layer1-obs-ingest/AUDIT.plan.md", "reason": "Audit 唯一计划入口"}
+{"file": "docs/implementation_tasks/ROUND_3_MODELING_LAYERS/018A_layer1_observation_ingestion_bridge.md", "reason": "A5 trace：五阶段 gate 与证据名"}
+{"file": "specs/contracts/source_route_contract.yaml", "reason": "A1/A3：route 与 silent fallback"}
+{"file": "specs/contracts/datasource_service_contract.yaml", "reason": "A1/A3：factory 边界"}
+{"file": "specs/contracts/write_contract.yaml", "reason": "A3：WriteManager 边界"}
+{"file": "specs/contracts/snapshot_lineage_contract.yaml", "reason": "A5：lineage 字段追溯"}
+{"file": "specs/contracts/ops_db_inspect_contract.yaml", "reason": "A1/A7：inventory 字段"}
+{"file": "specs/contracts/resource_limits.yaml", "reason": "A6 eco 上限"}
+{"file": "docs/architecture/module_boundary_matrix.md", "reason": "A3：Layer1 adapter 禁令"}
+{"file": "docs/modules/write_manager.md", "reason": "A4：clean write 链"}
+{"file": "backend/app/db/validation_gate.py", "reason": "A3/A4：DbValidationGate on clean path"}
+{"file": "backend/app/core/resource_guard.py", "reason": "A3：fetch 前 guard"}
+{"file": "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md", "reason": "A4/A8：语义断言"}
+{"file": ".trellis/tasks/06-20-round3-batch2-5-layer1-obs-ingest/research/layer1-ingestion-pipeline-tests.md", "reason": "A8：Phase 1-4 测试名对照"}
+{"file": ".trellis/tasks/06-20-round3-batch2-5-layer1-obs-ingest/research/layer1-ingestion-gate-tests.md", "reason": "A8：Phase 0 测试名对照"}
+{"file": ".trellis/tasks/archive/2026-06/06-20-round3-batch2-layer1/audit.report.md", "reason": "A5：Batch 2 A4-09 lineage 门控先例"}
+{"file": "docs/UNRESOLVED_ISSUES_REGISTRY.md", "reason": "A5：AC-REG-1 closeout"}

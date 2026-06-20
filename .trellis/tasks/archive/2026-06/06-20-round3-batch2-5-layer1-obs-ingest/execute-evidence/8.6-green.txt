@@ -1,0 +1,13 @@
+# §8.6 GREEN — 2026-06-20
+# Tier A
+.venv\Scripts\python.exe -m pytest tests/test_write_manager.py tests/test_data_quality_validator.py tests/test_source_conflict_validator.py tests/test_layer1_ingestion_gates.py tests/test_layer1_observation_ingestion.py -q
+# exit 0 · 130 passed
+
+# Tier B (full suite)
+.venv\Scripts\python.exe -m pytest -q
+# exit 0 · full green (1 skipped)
+
+# Registry
+execute-evidence/final_registry_update.md
+execute-evidence/final_pytest_output.txt
+research/adversarial-audit-phase4-remediation.md

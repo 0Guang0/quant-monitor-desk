@@ -1,0 +1,7 @@
+§8.2 RED — Phase 1 read-only inventory
+date: 2026-06-20
+
+command: uv run pytest tests/test_layer1_observation_ingestion.py::test_layer1Ingestion_phase1_inventory_readOnly -q
+exit_code: 4
+signal: ERROR: file or directory not found: tests/test_layer1_observation_ingestion.py
+(expected FAIL before pipeline tests + ingestion_inventory module created)

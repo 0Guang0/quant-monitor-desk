@@ -1,0 +1,10 @@
+# Phase 0 pytest output — Batch 2.5 §8.1 GREEN (post adversarial remediation)
+# skip inventory: 1 skipped — test_ops_db_inspector symlink test (Windows); see test_ops_db_inspector.py
+# includes: 018A Phase 0 block + test_layer1_ingestion_gates.py + test_write_manager.py + test_audit_remediation.py
+
+.............................................................s.......... [ 38%]
+........................................................................ [ 77%]
+.........................................                                [100%]
+
+pytest_summary: 536 collected, 535 passed, 1 skipped, 0 failed, exit_code=0
+skip_detail: tests/test_ops_db_inspector.py:262 symlinks not supported on this platform

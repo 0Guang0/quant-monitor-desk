@@ -1,0 +1,25 @@
+{
+  "fixture_id": "layer1-macro-dgs10-staged-v1",
+  "indicator_id": "ENV-E1-DGS10",
+  "series_id": "DGS10",
+  "data_domain": "macro_supplementary",
+  "operation": "fetch_macro_series",
+  "source_used": "staged_fixture",
+  "staged_route_note": "B2.5-O-05: FRED:DGS10 deferred; macro_supplementary staged payload for Phase 3 micro-fetch",
+  "as_of": "2024-06-15",
+  "intended_as_of_range": {
+    "start": "2024-06-15",
+    "end": "2024-06-15"
+  },
+  "unit": "pct",
+  "frequency": "daily",
+  "observations": [
+    {
+      "series_id": "DGS10",
+      "observation_date": "2024-06-15",
+      "metric_name": "DGS10",
+      "metric_value": 4.25,
+      "source_used": "staged_fixture"
+    }
+  ]
+}
