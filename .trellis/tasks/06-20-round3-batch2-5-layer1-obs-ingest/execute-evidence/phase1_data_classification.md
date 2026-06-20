@@ -2,18 +2,29 @@
 
 > Recorded: 2026-06-20 · links `phase1_before_ingestion_inventory.json`
 
+## Operator acknowledgment (structured)
+
+| Field                       | Value                                                          |
+| --------------------------- | -------------------------------------------------------------- |
+| operator_id                 | Guang                                                          |
+| operator_role               | project_owner                                                  |
+| authorization_scope         | Phase 2 route dry-run only for frozen indicator `ENV-E1-DGS10` |
+| authorization_ticket        | batch2.5-phase2-dry-run                                        |
+| reviewed_at                 | 2026-06-20                                                     |
+| external_user_auth_required | false (staged/fixture lineage only)                            |
+
 ## Inventory summary
 
-| Signal                        | Value                              |
-| ----------------------------- | ---------------------------------- |
-| `target_db_path`              | `data/duckdb/quant_monitor.duckdb` |
-| `target_db_exists_at_capture` | true                               |
-| `capture_strategy`            | `sandbox_copy_of_target_db`        |
-| `fetch_log` rows              | 0                                  |
-| `axis_observation` rows       | 0                                  |
-| `raw_files_count`             | 1                                  |
-| `parquet_files_count`         | 1                                  |
-| Automated classification      | `fixture_or_staged_evidence`       |
+| Signal                        | Value                                                               |
+| ----------------------------- | ------------------------------------------------------------------- |
+| `target_db_path`              | `data/duckdb/quant_monitor.duckdb`                                  |
+| `target_db_exists_at_capture` | true                                                                |
+| `capture_strategy`            | `sandbox_copy_of_target_db`                                         |
+| `fetch_log` rows              | 0                                                                   |
+| `axis_observation` rows       | 0                                                                   |
+| `raw_files_count`             | 1 (`.gitkeep` placeholder only)                                     |
+| `parquet_files_count`         | 1 (`.gitkeep` placeholder only)                                     |
+| Automated classification      | `schema_only_empty` (post gitkeep fix) or operator memo when legacy |
 
 ## Data-root file proof (from inventory JSON)
 
@@ -39,5 +50,6 @@
 ```
 Classification: fixture_or_staged_evidence (prior test artifacts; not production observation pipeline)
 Phase 2 route dry-run: AUTHORIZED for frozen indicator ENV-E1-DGS10
+Operator: Guang (project_owner) · ticket batch2.5-phase2-dry-run
 Date: 2026-06-20
 ```

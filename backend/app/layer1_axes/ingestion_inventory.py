@@ -153,6 +153,20 @@ def create_migrated_baseline_db(db_path: Path) -> None:
         con.close()
 
 
+def has_non_placeholder_data_root_files(data_root: Path) -> bool:
+    """True when data-root holds files other than .gitkeep placeholders."""
+    if not data_root.exists():
+        return False
+    for sub in ("raw", "parquet", "audit", "report"):
+        base = data_root / sub
+        if not base.is_dir():
+            continue
+        for path in base.rglob("*"):
+            if path.is_file() and path.name != ".gitkeep":
+                return True
+    return False
+
+
 def classify_db_evidence(
     report: InspectReport,
     *,
@@ -176,12 +190,13 @@ def classify_db_evidence(
         and tables_by_name[name].get("exists")
     )
     has_fetch_evidence = bool(report.evidence.get("latest_fetch", {}).get("fetch_time"))
-    raw_count = int(report.data_root.get("raw_files_count") or 0)
-    parquet_count = int(report.data_root.get("parquet_files_count") or 0)
+    meaningful_data_root = has_non_placeholder_data_root_files(
+        Path(str(report.data_root.get("path") or ""))
+    )
 
     if axis_obs_rows > 0:
         return "production_like_data"
-    if fetch_rows > 0 or has_fetch_evidence or raw_count > 0 or parquet_count > 0:
+    if fetch_rows > 0 or has_fetch_evidence or meaningful_data_root:
         return "fixture_or_staged_evidence"
     if staging_rows > 0:
         return "fixture_or_staged_evidence"
@@ -216,12 +231,13 @@ def assess_phase2_gate(inventory: dict[str, Any]) -> dict[str, Any]:
     )
 
     if operator.get("operator_ack") and operator.get("memo_sha256"):
+        memo_rel = operator.get("memo_path_relative") or operator.get("memo_path")
         return {
             "phase2_authorized": True,
             "stop_reason": None,
             "classification": classification,
             "authorization_source": "operator_classification_memo",
-            "memo_path": operator.get("memo_path"),
+            "memo_path": memo_rel,
             "data_root_classification_note": data_root_note,
         }
 

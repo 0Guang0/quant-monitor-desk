@@ -23,13 +23,16 @@
 
 ## Phase 2 — route preview（8.3）
 
-| 测试名                                                               | 语义                                               |
-| -------------------------------------------------------------------- | -------------------------------------------------- |
-| `test_layer1Ingestion_routePreview_noMutation`                       | dry-run 前后 `axis_observation`/fetch_log 行数不变 |
-| `test_layer1Ingestion_forbiddenIndicator_rejectedBeforeRoute`        | forbidden 不进 route                               |
-| `test_layer1Ingestion_blindspot_rejectedBeforeFetch`                 | blindspot 不进 fetch                               |
-| `test_layer1Ingestion_disabledSource_returnsRouteStatusWithoutFetch` | DISABLED_SOURCE / USER_AUTH_REQUIRED               |
-| `test_layer1Ingestion_noSilentFallback`                              | route 含 skip reason                               |
+| 测试名                                                                           | 语义                                               |
+| -------------------------------------------------------------------------------- | -------------------------------------------------- |
+| `test_layer1Ingestion_routePreview_noMutation`                                   | dry-run 前后 `axis_observation`/fetch_log 行数不变 |
+| `test_layer1Ingestion_forbiddenIndicator_rejectedBeforeRoute`                    | forbidden 不进 route                               |
+| `test_layer1Ingestion_blindspot_rejectedBeforeFetch`                             | blindspot 不进 fetch                               |
+| `test_layer1Ingestion_disabledSource_returnsRouteStatusWithoutFetch`             | DISABLED_SOURCE / USER_AUTH_REQUIRED               |
+| `test_layer1Ingestion_noSilentFallback`                                          | route 含 skip reason                               |
+| `test_layer1Ingestion_routePreview_capabilityDeclaredForSelectedSource`          | capability registry gate (018A step 5)             |
+| `test_layer1Ingestion_routePreview_resourceGuardPauseDocumentsStopReason`        | ResourceGuard PAUSE documented                     |
+| `test_layer1Ingestion_phase2TaskEvidence_requiresPhase1GateWhenInventoryPresent` | phase2_gate blocks task evidence                   |
 
 ## Phase 3 — micro-fetch staging（8.4）
 

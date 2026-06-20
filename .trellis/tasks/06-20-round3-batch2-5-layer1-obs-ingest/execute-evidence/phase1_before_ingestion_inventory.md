@@ -42,22 +42,22 @@
 
 | table                          | row_count |
 | ------------------------------ | --------- |
-| `schema_version`               | 11        |
-| `source_registry`              | 5         |
-| `file_registry`                | 0         |
-| `fetch_log`                    | 0         |
-| `data_sync_job`                | 0         |
-| `job_event_log`                | 0         |
-| `validation_report`            | 0         |
-| `data_quality_log`             | 0         |
-| `source_conflict`              | 0         |
-| `manual_review_queue`          | 0         |
-| `write_audit_log`              | 0         |
-| `resource_guard_log`           | 0         |
-| `axis_observation`             | 0         |
 | `axis_feature_snapshot`        | 0         |
 | `axis_interpretation_snapshot` | 0         |
+| `axis_observation`             | 0         |
 | `axis_snapshot_lineage`        | 0         |
+| `data_quality_log`             | 0         |
+| `data_sync_job`                | 0         |
+| `fetch_log`                    | 0         |
+| `file_registry`                | 0         |
+| `job_event_log`                | 0         |
+| `manual_review_queue`          | 0         |
+| `resource_guard_log`           | 0         |
+| `schema_version`               | 11        |
+| `source_conflict`              | 0         |
+| `source_registry`              | 5         |
+| `validation_report`            | 0         |
+| `write_audit_log`              | 0         |
 
 ## Staging table row counts
 
@@ -77,41 +77,41 @@
 ```json
 [
   {
+    "allowed_domain": "[\"cn_equity_daily_bar\", \"cn_index\", \"macro_supplementary\", \"sector_board\"]",
+    "is_enabled": true,
     "source_id": "akshare",
-    "source_name": "AkShare",
-    "is_enabled": true,
-    "allowed_domain": "[\"cn_equity_daily_bar\", \"cn_index\", \"macro_supplementary\", \"sector_board\"]"
+    "source_name": "AkShare"
   },
   {
+    "allowed_domain": "[\"cn_equity_basic_financial\", \"cn_equity_daily_bar\"]",
+    "is_enabled": true,
     "source_id": "baostock",
-    "source_name": "baostock",
-    "is_enabled": true,
-    "allowed_domain": "[\"cn_equity_basic_financial\", \"cn_equity_daily_bar\"]"
+    "source_name": "baostock"
   },
   {
+    "allowed_domain": "[\"cn_announcements\", \"cn_filings\", \"cn_pdf_reports\"]",
+    "is_enabled": true,
     "source_id": "cninfo",
-    "source_name": "\u5de8\u6f6e\u8d44\u8baf CNINFO",
-    "is_enabled": true,
-    "allowed_domain": "[\"cn_announcements\", \"cn_filings\", \"cn_pdf_reports\"]"
+    "source_name": "\u5de8\u6f6e\u8d44\u8baf CNINFO"
   },
   {
+    "allowed_domain": "[\"cn_equity_daily_bar\", \"cn_equity_minute_bar\", \"cn_equity_realtime\"]",
+    "is_enabled": false,
     "source_id": "qmt_xtdata",
-    "source_name": "QMT xtdata / miniQMT",
-    "is_enabled": false,
-    "allowed_domain": "[\"cn_equity_daily_bar\", \"cn_equity_minute_bar\", \"cn_equity_realtime\"]"
+    "source_name": "QMT xtdata / miniQMT"
   },
   {
-    "source_id": "yahoo_finance",
-    "source_name": "Yahoo Finance / yfinance-compatible access",
+    "allowed_domain": "[\"etf_daily_bar\", \"global_asset_reference\", \"us_equity_daily_bar\"]",
     "is_enabled": false,
-    "allowed_domain": "[\"etf_daily_bar\", \"global_asset_reference\", \"us_equity_daily_bar\"]"
+    "source_id": "yahoo_finance",
+    "source_name": "Yahoo Finance / yfinance-compatible access"
   }
 ]
 ```
 
 ## Evidence summary
 
-- Latest fetch: {'fetch_time': None, 'source_id': None, 'status': None, 'row_count': None}
+- Latest fetch: {'fetch_time': None, 'row_count': None, 'source_id': None, 'status': None}
 - Job status counts: {}
 - Validation status counts: {}
 

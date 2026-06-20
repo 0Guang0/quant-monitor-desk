@@ -77,3 +77,7 @@
 {"file": "scripts/check_doc_links.py", "reason": "extract: Tier B doc link gate | for: AC-GATE / §10"}
 {"file": "specs/contracts/api_security_contract.yaml", "reason": "extract: module boundary 1-hop 对照；本批无 API | for: Boot 对照 only"}
 {"file": ".trellis/tasks/06-20-round3-batch2-5-layer1-obs-ingest/research/execute-handoff.md", "reason": "handoff: Phase 0 CLOSED · PH-A0 PASS · next session §8.2 Phase 1 only | for: session resume"}
+{"file": "backend/app/sync/pipeline.py", "reason": "extract: §3.4 contrast only; Layer1 does not delegate | for: AC-P4-1 / Phase 0 gate"}
+{"file": "backend/app/sync/orchestrator.py", "reason": "extract: runner relationship read-only | for: AC-P3-1 context"}
+{"file": "backend/app/sync/runners.py", "reason": "extract: optional narrow hook O-04; default direct DataSourceService | for: §4 wiring decision"}
+{"file": "docs/ops/data_sync_command_matrix.md", "reason": "extract: dry-run / route-preview command matrix | for: Phase 2–3 ops boundary"}

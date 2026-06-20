@@ -84,6 +84,25 @@ class DataSourceService:
             use_fallback=use_fallback,
         )
 
+    def primary_source_for_domain(self, data_domain: str) -> str:
+        return self._source_registry.get_domain_roles(data_domain).primary_source_id
+
+    def assert_capability_declared(
+        self,
+        source_id: str,
+        data_domain: str,
+        operation: str,
+    ) -> None:
+        """Public capability gate for Layer1 ingestion (no private registry access)."""
+        self._capability_registry.assert_source_domain_operation(
+            source_id,
+            data_domain,
+            operation,
+        )
+
+    def check_resource_guard(self) -> tuple[Decision, str]:
+        return ResourceGuard().check()
+
     def _emit_route_plan(self, con, job_id: str, plan: SourceRoutePlan) -> None:
         from backend.app.sync.event_payload import build_route_plan_payload
 

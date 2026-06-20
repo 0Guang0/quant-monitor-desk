@@ -65,23 +65,24 @@ Execute 以 MASTER inline 为准；ledger 规定 pointer 原稿 extract/for。**
 
 ### 0.5 Execute 开场白
 
-**Phase 0 已闭合（2026-06-20）：** §8.0 Boot + §8.1 Phase 0 + PH-A0 PASS。下一会话 **勿重跑** Boot/Phase 0；读 `research/execute-handoff.md` 后直接从 §8.2 开始。
+**Phase 0 已闭合（2026-06-20）：** §8.0 Boot + §8.1 Phase 0 + PH-A0 PASS。§8.2 Phase 1 + PH-A1 PASS。§8.3 Phase 2 + PH-A2 PASS。下一会话 **勿重跑** 已完成阶段；读 `research/execute-handoff.md` 后直接从 §8.4 开始。
 
 ```text
-继续 Execute（06-20-round3-batch2-5-layer1-obs-ingest）。Phase 0 已完成，PH-A0 PASS。
-直接从 §8.2 Phase 1 inventory 开始；每阶段 GREEN 后全量 pytest + Audit PH-A1–A4。
-全部 PASS 后再 finish-work。入口：research/execute-handoff.md + MASTER §8.2。
+继续 Execute（06-20-round3-batch2-5-layer1-obs-ingest）。Phase 2 已完成，PH-A2 PASS。
+直接从 §8.4 Phase 3 micro-fetch 开始；每阶段 GREEN 后全量 pytest + Audit PH-A3–A4。
+全部 PASS 后再 finish-work。入口：research/execute-handoff.md + MASTER §8.4。
 ```
 
 ### 0.9 Execute 进度（会话交接）
 
-| 步           | 状态     | 日期       | 证据                                              |
-| ------------ | -------- | ---------- | ------------------------------------------------- |
-| §8.0 Boot    | **DONE** | 2026-06-20 | `execute-boot.md`, `8.0-*.txt`                    |
-| §8.1 Phase 0 | **DONE** | 2026-06-20 | `phase0_*`, PH-A0 PASS                            |
-| §8.2 Phase 1 | **DONE** | 2026-06-20 | `phase1_before_ingestion_inventory.*`, PH-A1 PASS |
-| §8.3 Phase 2 | **NEXT** | —          | 下一会话入口                                      |
-| §8.4–8.6     | pending  | —          | —                                                 |
+| 步           | 状态     | 日期       | 证据                                                                |
+| ------------ | -------- | ---------- | ------------------------------------------------------------------- |
+| §8.0 Boot    | **DONE** | 2026-06-20 | `execute-boot.md`, `8.0-*.txt`                                      |
+| §8.1 Phase 0 | **DONE** | 2026-06-20 | `phase0_*`, PH-A0 PASS                                              |
+| §8.2 Phase 1 | **DONE** | 2026-06-20 | `phase1_before_ingestion_inventory.*`, PH-A1 PASS                   |
+| §8.3 Phase 2 | **DONE** | 2026-06-20 | `phase2_route_preview.*`, `phase2_no_mutation_proof.md`, PH-A2 PASS |
+| §8.4 Phase 3 | **NEXT** | —          | 下一会话入口                                                        |
+| §8.5–8.6     | pending  | —          | —                                                                   |
 
 **Handoff 权威文件：** `research/execute-handoff.md`
 
@@ -545,10 +546,10 @@ Remaining data limitations: <list>
 | Skill                      | 触发            | `@` 指令                   | 本任务 | 绑定 §8                | 已执行      |
 | -------------------------- | --------------- | -------------------------- | ------ | ---------------------- | ----------- |
 | trellis-execute            | Execute 入口    | trellis-execute            | 必做   | 8.0                    | [x]         |
-| test-driven-development    | 每 §8.x RED     | tdd                        | 必做   | 8.1–8.5                | [x] 8.1–8.2 |
-| incremental-implementation | 每 GREEN 后     | incremental-implementation | 必做   | 每 GREEN 后全量 pytest | [x] 8.0–8.2 |
-| karpathy-guidelines        | RED 后 GREEN 前 | karpathy-guidelines        | 必做   | 8.1–8.5（8.0 exempt）  | [x] 8.1–8.2 |
-| testing-guidelines         | 写测试时        | testing-guidelines         | 必做   | 8.1–8.5                | [x] 8.1–8.2 |
+| test-driven-development    | 每 §8.x RED     | tdd                        | 必做   | 8.1–8.5                | [x] 8.1–8.3 |
+| incremental-implementation | 每 GREEN 后     | incremental-implementation | 必做   | 每 GREEN 后全量 pytest | [x] 8.0–8.3 |
+| karpathy-guidelines        | RED 后 GREEN 前 | karpathy-guidelines        | 必做   | 8.1–8.5（8.0 exempt）  | [x] 8.1–8.3 |
+| testing-guidelines         | 写测试时        | testing-guidelines         | 必做   | 8.1–8.5                | [x] 8.1–8.3 |
 | spec-driven-development    | 契约步          | spec-driven-development    | 必做   | 契约步                 | [x] 8.1     |
 | gitnexus-impact-analysis   | 改符号前        | gitnexus-impact-analysis   | 必做   | 改符号前 impact        | [x] 8.0     |
 | security-and-hardening     | live 授权路径   | security-and-hardening     | 条件   | 8.4 live 授权路径      | [ ]         |

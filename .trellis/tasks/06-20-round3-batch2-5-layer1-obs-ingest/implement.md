@@ -5,8 +5,8 @@
 - [x] 8.0 Boot — **DONE** 2026-06-20
 - [x] 8.1 Phase 0 contract gate — **DONE** · PH-A0 PASS
 - [x] 8.2 Phase 1 inventory — **DONE** · PH-A1 PASS
-- [ ] **8.3 Phase 2 route dry-run — NEXT SESSION**
-- [ ] 8.4 Phase 3 micro-fetch
+- [x] 8.3 Phase 2 route dry-run — **DONE** · PH-A2 PASS
+- [ ] **8.4 Phase 3 micro-fetch — NEXT SESSION**
 - [ ] 8.5 Phase 4 clean write + snapshots
 - [ ] 8.6 Final gates
 

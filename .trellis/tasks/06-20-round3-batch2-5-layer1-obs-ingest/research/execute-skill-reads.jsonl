@@ -11,3 +11,8 @@
 {"phase":"8.2","skill":"karpathy-guidelines","before":"GREEN"}
 {"phase":"8.2","skill":"incremental-implementation","after":"GREEN"}
 {"phase":"8.2","skill":"doubt-driven-development","action":"adversarial-audit-ph-a1","before":"PH-A1-resign"}
+{"phase":"8.3","skill":"test-driven-development","before":"RED"}
+{"phase":"8.3","skill":"karpathy-guidelines","before":"GREEN"}
+{"phase":"8.3","skill":"testing-guidelines","before":"GREEN"}
+{"phase":"8.3","skill":"incremental-implementation","after":"GREEN"}
+{"phase":"8.3","skill":"gitnexus-impact","action":"impact(SourceRoutePlanner,DataSourceService)","risk":"LOW"}

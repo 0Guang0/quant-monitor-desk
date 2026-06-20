@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 
 import duckdb
@@ -319,10 +320,24 @@ def test_layer1Ingestion_phase0_fetchTraceFieldsDocumented() -> None:
     assert "validation_report.source_fetch_ids_json" in FETCH_TO_OBSERVATION_TRACE_VIA
 
 
+def test_layer1Ingestion_phase0_stagedFixturePresent() -> None:
+    """AC-P2-0 / §8.4: staged macro fixture exists before micro-fetch."""
+    fixture = PROJECT_ROOT / "tests/fixtures/layer1_macro_observation_fixture.json"
+    assert fixture.is_file()
+    doc = json.loads(fixture.read_text(encoding="utf-8"))
+    assert doc["indicator_id"] == FROZEN_STAGED_INDICATOR
+    assert doc["series_id"] == "DGS10"
+    assert doc["as_of"] == "2024-06-15"
+
+
 def test_layer1Ingestion_phase0_axisObservationWritePath_deferredToPhase4() -> None:
-    """Phase 0 records Phase 4 closure test name; WriteManager path not implemented yet."""
+    """Phase 0 records Phase 4 closure test; commit/micro-fetch deferred to §8.4–8.5."""
     ingestion = PROJECT_ROOT / "backend/app/layer1_axes/ingestion.py"
-    assert not ingestion.is_file()
+    assert ingestion.is_file()
+    text = ingestion.read_text(encoding="utf-8")
+    assert "commit_clean_observation" not in text
+    assert "micro_fetch_staging" not in text
+    assert "DuckDBWriteManager" not in text
     closure_test = "test_layer1Observation_cleanWrite_usesWriteManager"
     pipeline_tests = PIPELINE_TESTS.read_text(encoding="utf-8")
     assert closure_test in pipeline_tests

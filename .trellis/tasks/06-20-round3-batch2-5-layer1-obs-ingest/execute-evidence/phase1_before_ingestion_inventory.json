@@ -310,7 +310,7 @@
     "authorization_source": "operator_classification_memo",
     "classification": "fixture_or_staged_evidence",
     "data_root_classification_note": "Data-root raw/parquet files alone trigger fixture_or_staged_evidence on dev machines; use operator_classification memo when lineage is known fixture.",
-    "memo_path": "C:\\Users\\Guang\\Desktop\\quant-monitor-desk\\.trellis\\tasks\\06-20-round3-batch2-5-layer1-obs-ingest\\execute-evidence\\phase1_data_classification.md",
+    "memo_path": ".trellis/tasks/06-20-round3-batch2-5-layer1-obs-ingest/execute-evidence/phase1_data_classification.md",
     "phase2_authorized": true,
     "stop_reason": null
   },
