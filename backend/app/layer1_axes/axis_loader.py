@@ -9,7 +9,6 @@ from typing import Any
 
 import yaml
 from backend.app.config import CONFIGS_ROOT, PROJECT_ROOT
-from backend.app.layer1_axes.guardrails import AxisEngineeringGuardrailValidator
 from backend.app.layer1_axes.models import (
     AxisDefinition,
     AxisEngineeringGuardrail,
@@ -120,8 +119,7 @@ class AxisSpecLoader:
             guardrails.append(
                 AxisEngineeringGuardrail(
                     axis_id=axis_id,
-                    forbidden_labels=axis_forbidden,
-                    forbidden_substitutes=axis_forbidden,
+                    forbidden_terms=axis_forbidden,
                     engineering_rules_path=rel_eng if eng_path.is_file() else "",
                 )
             )
@@ -146,9 +144,6 @@ class AxisSpecLoader:
             profiles=tuple(profiles),
             guardrails=tuple(guardrails),
         )
-
-    def load_from_config(self) -> AxisLoadResult:
-        return self.load()
 
 
 def _iter_indicators(spec: dict[str, Any]):
@@ -328,6 +323,8 @@ def _build_indicator_records(
     )
 
     boundary = str(ind.get("boundary", ""))
+    # Batch 2: static profile text fields are stubbed from indicator YAML only;
+    # full user_guide.md copy lands in a later batch.
     profile = AxisIndicatorProfile(
         indicator_id=str(indicator_id),
         axis_id=axis_id,
@@ -384,7 +381,3 @@ def _validate_engineering_rules_file(*, axis_id: str, eng_path: Path) -> None:
                 f"engineering rules for {axis_id!r} must document "
                 "projection_method and source_frequency_map"
             )
-
-
-def build_guardrail_validator(result: AxisLoadResult) -> AxisEngineeringGuardrailValidator:
-    return AxisEngineeringGuardrailValidator(result.guardrails)

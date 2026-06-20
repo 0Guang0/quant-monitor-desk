@@ -25,7 +25,7 @@ class AxisEngineeringGuardrailValidator:
         blocked = set(indicator.forbidden_substitutes)
         axis_guard = self._guardrails.get(indicator.axis_id)
         if axis_guard:
-            blocked.update(axis_guard.forbidden_substitutes)
+            blocked.update(axis_guard.forbidden_terms)
         if substitute_id in blocked:
             raise GuardrailViolationError(
                 f"forbidden substitute {substitute_id!r} for indicator {indicator.indicator_id!r}"

@@ -12,7 +12,6 @@ from backend.app.config import PROJECT_ROOT
 from backend.app.layer1_axes.axis_loader import (
     AxisSpecLoader,
     AxisSpecLoadError,
-    build_guardrail_validator,
 )
 from backend.app.layer1_axes.guardrails import (
     AxisEngineeringGuardrailValidator,
@@ -148,7 +147,7 @@ def test_axisSpecLoader_blindspot_notObservable() -> None:
 
 def test_axisEngineeringGuardrail_rejectsForbiddenSubstitute() -> None:
     result = AxisSpecLoader().load(spec_root=_spec_root())
-    validator = build_guardrail_validator(result)
+    validator = AxisEngineeringGuardrailValidator(result.guardrails)
     credit = next(i for i in result.indicators if i.forbidden_substitutes)
     substitute = credit.forbidden_substitutes[0]
     with pytest.raises(GuardrailViolationError, match="forbidden substitute"):

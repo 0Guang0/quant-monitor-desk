@@ -20,13 +20,14 @@ from backend.app.layer1_axes.feature_engine import (
 from backend.app.layer1_axes.interpretation import (
     AxisInterpretationEngine,
     InterpretationRejectedError,
-    Layer2WritebackError,
 )
 from backend.app.layer1_axes.lineage import (
     LINEAGE_REQUIRED_FIELDS,
     Layer1SnapshotWriter,
+    Layer2WritebackError,
     LineageSnapshotError,
     SnapshotLineageBuilder,
+    guard_layer2_writeback,
 )
 from backend.app.layer1_axes.models import AxisObservation, ValidationReportRef
 
@@ -134,7 +135,7 @@ def test_axisInterpretation_rejectsForbiddenActionTerms() -> None:
 
 def test_layer2ValueCannotWritebackToLayer1() -> None:
     with pytest.raises(Layer2WritebackError):
-        AxisInterpretationEngine.guard_layer2_writeback(
+        guard_layer2_writeback(
             target_table="axis_feature_snapshot",
             layer_id="layer2",
         )

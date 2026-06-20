@@ -38,6 +38,18 @@ LINEAGE_REQUIRED_FIELDS = (
     "rebuild_reason",
 )
 
+LAYER1_TABLES = frozenset(
+    {
+        "axis_registry",
+        "axis_indicator_registry",
+        "axis_indicator_profile",
+        "axis_observation",
+        "axis_feature_snapshot",
+        "axis_interpretation_snapshot",
+        "axis_snapshot_lineage",
+    }
+)
+
 _AGENT_SOURCE_PATTERN = re.compile(
     r"(agent[_-]?summary|generated_by=agent|建议|买入|卖出|信号)",
     re.IGNORECASE,
@@ -46,6 +58,17 @@ _AGENT_SOURCE_PATTERN = re.compile(
 
 class LineageSnapshotError(ValueError):
     """Invalid lineage envelope or write inputs."""
+
+
+class Layer2WritebackError(ValueError):
+    """Layer 2 values must not write back to Layer 1 tables."""
+
+
+def guard_layer2_writeback(*, target_table: str, layer_id: str) -> None:
+    if layer_id == "layer2" and target_table in LAYER1_TABLES:
+        raise Layer2WritebackError(
+            f"layer2 writeback to layer1 table {target_table!r} is forbidden"
+        )
 
 
 class SnapshotLineageBuilder:
@@ -92,7 +115,7 @@ class SnapshotLineageBuilder:
             content_hashes = tuple(
                 hashlib.sha256(ds.encode()).hexdigest() for ds in source_dataset_ids
             )
-        return LineageEnvelope(
+        envelope = LineageEnvelope(
             snapshot_id=snapshot_id,
             snapshot_type=snapshot_type,
             layer_id="layer1",
@@ -111,6 +134,8 @@ class SnapshotLineageBuilder:
             is_incremental=is_incremental,
             rebuild_reason=rebuild_reason,
         )
+        _assert_lineage_fields_complete(envelope)
+        return envelope
 
     @staticmethod
     def parameter_hash_for(
@@ -129,6 +154,16 @@ def _validate_source_dataset_ids(source_dataset_ids: tuple[str, ...]) -> None:
             raise LineageSnapshotError(
                 f"agent outputs must not appear in source_dataset_ids: {ds_id!r}"
             )
+
+
+def _assert_lineage_fields_complete(envelope: LineageEnvelope) -> None:
+    """Single source of truth for lineage completeness (LINEAGE_REQUIRED_FIELDS)."""
+    optional_nullable = frozenset({"rebuild_reason"})
+    for field in LINEAGE_REQUIRED_FIELDS:
+        if field in optional_nullable:
+            continue
+        if getattr(envelope, field) is None:
+            raise LineageSnapshotError(f"lineage missing required field: {field!r}")
 
 
 def lineage_row_to_db_tuple(lineage: LineageEnvelope) -> list:

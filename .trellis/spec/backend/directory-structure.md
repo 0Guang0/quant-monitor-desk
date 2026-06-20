@@ -1,6 +1,6 @@
 # Directory Structure
 
-> How backend code is organized in this project (Round 0–2).
+> How backend code is organized in this project (Round 0–3).
 
 ## Overview
 
@@ -18,7 +18,7 @@ backend/app/
 ├── storage/        # RawStore, FileRegistry, evidence ports
 ├── sync/           # DataSyncOrchestrator, jobs, pipeline ports
 ├── validators/     # DataQuality, SourceConflict, common helpers
-├── layer1_axes/    # Round 3 placeholder
+├── layer1_axes/    # Five-axis spec loader, feature/interpretation snapshots, lineage writer
 ├── layer2_cross_asset/
 ├── layer3_shock_anchors/
 ├── layer4_markets/

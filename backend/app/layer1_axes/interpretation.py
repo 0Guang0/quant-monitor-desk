@@ -18,25 +18,9 @@ FORBIDDEN_OUTPUT_TERMS = (
     "信号",
 )
 
-LAYER1_TABLES = frozenset(
-    {
-        "axis_registry",
-        "axis_indicator_registry",
-        "axis_indicator_profile",
-        "axis_observation",
-        "axis_feature_snapshot",
-        "axis_interpretation_snapshot",
-        "axis_snapshot_lineage",
-    }
-)
-
 
 class InterpretationRejectedError(ValueError):
     """Interpretation contains forbidden action semantics."""
-
-
-class Layer2WritebackError(ValueError):
-    """Layer 2 values must not write back to Layer 1 tables."""
 
 
 class AxisInterpretationEngine:
@@ -88,10 +72,3 @@ class AxisInterpretationEngine:
     def reject_if_forbidden(self, text: str) -> None:
         if any(term in text for term in self._forbidden):
             raise InterpretationRejectedError("interpretation contains forbidden action terms")
-
-    @staticmethod
-    def guard_layer2_writeback(*, target_table: str, layer_id: str) -> None:
-        if layer_id == "layer2" and target_table in LAYER1_TABLES:
-            raise Layer2WritebackError(
-                f"layer2 writeback to layer1 table {target_table!r} is forbidden"
-            )

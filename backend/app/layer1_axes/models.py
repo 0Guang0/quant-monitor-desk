@@ -72,8 +72,7 @@ class AxisIndicatorProfile:
 @dataclass(frozen=True)
 class AxisEngineeringGuardrail:
     axis_id: str
-    forbidden_labels: tuple[str, ...]
-    forbidden_substitutes: tuple[str, ...]
+    forbidden_terms: tuple[str, ...]
     engineering_rules_path: str
 
 
