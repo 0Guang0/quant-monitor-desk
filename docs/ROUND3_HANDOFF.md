@@ -1,6 +1,15 @@
 # Round 3 Handoff — from Round 2 completion
 
-> **Date:** 2026-06-19 · **Branch:** `master` · **Audit:** adversarial re-audit 84/100 (mechanism aligned; paths not all E2E)
+> **Date:** 2026-06-20 · **Branch:** `master` · **Audit:** Round 2.6 Contract + Routing Service Gate archived PASS
+
+## Round 2.6 gate — **archived PASS** (2026-06-19)
+
+Round 2.6 Contract Gate and Routing Service Gate both archived PASS on `master`:
+
+- Contract gate: `.trellis/tasks/archive/2026-06/06-19-round2-6-contract-gate/audit.report.md`
+- Routing service gate: `.trellis/tasks/archive/2026-06/06-19-round2-6-routing-service-gate/audit.report.md`
+
+Batch 1 early ops (`R3-EARLY-DB-INSPECT-CLI`) closes remaining read-only DB evidence gaps before Layer 1 modeling (`017`).
 
 ## Round 2.5 gate — **cleared** (2026-06-19)
 

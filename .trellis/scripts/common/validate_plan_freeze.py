@@ -120,6 +120,11 @@ def _path_exists(task_dir: Path, repo_root: Path, rel: str) -> bool:
         return True
     if norm.startswith(("docs/", "specs/", "backend/", "frontend/", "scripts/", "tests/", "configs/")):
         return (repo_root / norm).is_file() or (repo_root / norm).is_dir()
+    # Repo-root entry files (README.md, MIGRATION_MAP.md, …)
+    if "/" not in norm:
+        root_candidate = repo_root / norm
+        if root_candidate.is_file() or root_candidate.is_dir():
+            return True
     return (task_dir / norm).is_file() or (task_dir / norm).is_dir()
 
 
