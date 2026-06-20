@@ -60,13 +60,25 @@ node .gitnexus\run.cjs status
 
 **Baseline @ master:** 362 tests · backend coverage 94.28% · gates: pytest, cov≥85, ruff check+format, production_gate, frontend typecheck+test, doc links, Trellis handoff (see `docs/ops/verification_commands.md`).
 
+## Round 3 Batch 2 — **COMPLETE** (2026-06-20)
+
+Archived Trellis task `.trellis/tasks/archive/2026-06/06-20-round3-batch2-layer1/` — Audit PASS, A2 ponytail applied, finish-work done.
+
+| Item                         | Scope                                            |
+| ---------------------------- | ------------------------------------------------ |
+| `017`                        | Layer 1 axis loader (`backend/app/layer1_axes/`) |
+| `018`                        | Feature + interpretation snapshots               |
+| `R3-EARLY-LINEAGE-CONSUMERS` | Snapshot lineage persistence + consumers         |
+
+**Next:** Batch 2.5 — `docs/implementation_tasks/ROUND_3_MODELING_LAYERS/018A_layer1_observation_ingestion_bridge.md` (five phase gates, phase-by-phase audit) before Batch 3 treats Layer 1 outputs as real-data-ready.
+
 ## Round 3 start checklist
 
 0. **Registry clean** — [`AUDIT_DEFERRED_REGISTRY.md`](AUDIT_DEFERRED_REGISTRY.md): no OPEN rows (verified post PR #15)
 1. ~~Confirm R2.5 PASS~~ — **done** (PR #15)
 2. Read `docs/implementation_tasks/ROUND_3_MODELING_LAYERS/README.md`
-3. Read `017_implement_layer1_axis_loader.md`
+3. Read `017_implement_layer1_axis_loader.md`; after Batch 2, read `018A_layer1_observation_ingestion_bridge.md` before real-data Layer 1 ingestion
 4. Read `ROUND2_GAPS_AND_DEVIATIONS.md` §6 + `AUDIT_DEFERRED_REGISTRY.md` (deferred phases)
 5. Obey `GLOBAL_EXECUTION_RULES.md`, ResourceGuard, WriteManager, no-action boundary
-6. Create Trellis task for Round 3 Layer 1 when ready to implement
+6. ~~Create Trellis task for Round 3 Layer 1~~ — **done** (Batch 2 archived)
 7. **Round 3 early ops — local DB inspect CLI:** frozen design is `docs/ops/db_inspect_cli.md`; machine contract is `specs/contracts/ops_db_inspect_contract.yaml`. Executor must implement only the frozen read-only CLI + tests, not draft a new design. Not a numbered task file under `ROUND_3_MODELING_LAYERS/`; tracked in `ROUND3_EARLY_CLOSE_PLAN.md` and `ROUND3_BATCH_IMPLEMENTATION_MAP.md`. Do not reuse `.tmp/inspect_db.py`.

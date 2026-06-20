@@ -35,19 +35,22 @@
 
 1. `docs/implementation_tasks/README.md`
 2. `docs/implementation_tasks/TASK_INPUT_CONTEXT_INDEX.md`（Plan-only 上下文桥）
-3. `docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md`
-4. `docs/implementation_tasks/GLOBAL_TESTING_POLICY.md`
-5. `docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md`
-6. `docs/implementation_tasks/GLOBAL_TASK_TEMPLATE.md`
-7. `docs/implementation_tasks/ROUND_*/README.md`（本任务所属 Round）
-8. `docs/implementation_tasks/ROUND_*/DECISIONS.md`（本 Round 已确认决策）
-9. 本批 `NNN_*.md` 正式任务卡（及任务卡 §3「输入文件」列出的 specs / architecture / modules 文档）
+3. 当前 Round 批次地图：优先读取仓库根目录的 `ROUND*_BATCH_IMPLEMENTATION_MAP.md`（例如 `ROUND3_BATCH_IMPLEMENTATION_MAP.md`；后续 Round 可改写为 `ROUND4_BATCH_IMPLEMENTATION_MAP.md`）。该文件是 Plan 阶段的**批次切片与索引权威入口**：先用它确认当前 Batch / Item IDs / Plan source bundle / MASTER-AUDIT trace requirement / manifest policy，再决定哪些原始任务卡与输入文件需要读取。若当前 Round 没有 batch map，Plan 必须在 `research/plan-boot.md` 记录缺失，并退回 `docs/implementation_tasks/README.md` + 当前 Round README。
+4. `MIGRATION_MAP.md`（项目地图；先用于理解实现目录与 docs/specs 非实现边界，Plan 完成后还要回查一次做遗漏检查）
+5. `docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md`
+6. `docs/implementation_tasks/GLOBAL_TESTING_POLICY.md`
+7. `docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md`
+8. `docs/implementation_tasks/GLOBAL_TASK_TEMPLATE.md`
+9. `docs/implementation_tasks/ROUND_*/README.md`（本任务所属 Round）
+10. `docs/implementation_tasks/ROUND_*/DECISIONS.md`（本 Round 已确认决策）
+11. 本批 `NNN_*.md` 正式任务卡 / 本批本地 alias 执行文件（例如 `018A_*.md`），以及这些原始任务/alias 文件列出的 specs、architecture、modules、rules、contracts、definitions 输入文件
 
 **Plan 产出（冻结前必存在）：**
 
-- `research/original-plan-trace.md` — 任务编号 ↔ MASTER §2 AC ↔ 引用文档对照表
-- `research/plan-boot.md` — 含「原计划已读」摘要 + `Phase P0 complete`
-- `MASTER.plan.md` §0「原计划任务」字段 + §1.3「原计划归并表」
+- `research/original-plan-trace.md` — 任务编号 / 本地 alias / 当前 Round batch map item / MASTER §2 AC / 引用文档对照表
+- `research/plan-boot.md` — 含「当前 Round batch map 已读」「原计划已读」摘要 + `Phase P0 complete`
+- `research/project-map-omission-check.md` — MASTER 冻结前回查 `MIGRATION_MAP.md`，确认实现目录、docs/specs 边界、模块映射、task 索引无遗漏；发现遗漏必须回写 MASTER Source Context Index 或显式 filtered-out
+- `MASTER.plan.md` §0「Round / Batch / Item IDs / 原计划任务」字段 + §1.3「原计划归并表」
 - `MASTER.plan.md` `Source Context Index` — 标明哪些来源已总结、哪些必须读原文、哪些已过滤。
 - `AUDIT.plan.md` `Audit Source Trace` — 标明审计必须追溯哪些原文、按哪一维验证。
 - `implement.jsonl` — 第一条必须是 `MASTER.plan.md`；后续只列 Execute 无法从 MASTER 无损获得且实现必须读取的设计文档、规则、契约、定义或代码/spec 路径。不得默认列入本批 `NNN_*.md` 原始任务卡。

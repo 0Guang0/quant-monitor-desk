@@ -1,6 +1,6 @@
 # ROUND 3 MODELING LAYERS
 
-本目录包含 017–023 共 7 个正式 implementation task 文件。必须按文件编号顺序执行。
+本目录包含 017–023 共 7 个正式 implementation task 文件，并新增 `018A_layer1_observation_ingestion_bridge.md` 作为 Batch 2.5 强制桥接执行文件。必须按 `017` → `018` → `018A` → `019` 顺序进入真实数据相关下游工作。
 
 **Round 3 early（不在本目录编号内）：** 本地 DuckDB 只读检查 CLI — 冻结设计为 `../../ops/db_inspect_cli.md`，契约为 `../../../specs/contracts/ops_db_inspect_contract.yaml`；设计冻结后执行者只能按该设计实现。见 `../ROUND3_EARLY_CLOSE_PLAN.md`、`../../ROUND3_HANDOFF.md` 与 `../../../ROUND3_BATCH_IMPLEMENTATION_MAP.md`。
 
