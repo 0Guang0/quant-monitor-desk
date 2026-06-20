@@ -6,7 +6,6 @@ import hashlib
 import json
 from datetime import UTC, date, datetime
 from pathlib import Path
-from unittest.mock import patch
 
 import duckdb
 import pytest
@@ -741,9 +740,7 @@ def _build_micro_fetch_service(
     return service, db
 
 
-def test_layer1MicroIngestion_usesDataSourceServiceBeforeFetch(
-    tmp_path: Path, monkeypatch
-) -> None:
+def test_layer1MicroIngestion_usesDataSourceServiceBeforeFetch(tmp_path: Path, monkeypatch) -> None:
     """Micro-fetch goes through DataSourceService.fetch, not Layer1 adapter factory."""
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
     service, _ = _build_micro_fetch_service(tmp_path)
@@ -1053,7 +1050,9 @@ def test_layer1Observation_noneOptionalIndicator_skipsConflictValidator(
             fixture_path=MACRO_FIXTURE_PATH,
         ),
     )._indicator_by_id(FROZEN_STAGED_INDICATOR)
-    assert Layer1ObservationIngestionService._validation_source_requires_conflict(indicator) is False
+    assert (
+        Layer1ObservationIngestionService._validation_source_requires_conflict(indicator) is False
+    )
 
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
     service, db = _build_phase4_service(tmp_path)
@@ -1418,9 +1417,7 @@ def test_layer1Observation_mappingUsesRawFetchPayload(tmp_path: Path, monkeypatc
     assert row[1] == result.micro_fetch.route_plan.selected_source_id
 
 
-def test_layer1Observation_resourceGuardPauseBlocksCommit(
-    tmp_path: Path, monkeypatch
-) -> None:
+def test_layer1Observation_resourceGuardPauseBlocksCommit(tmp_path: Path, monkeypatch) -> None:
     """ResourceGuard PAUSE blocks Phase 4 commit before any clean write."""
     monkeypatch.setattr(
         ResourceGuard,
@@ -1436,9 +1433,7 @@ def test_layer1Observation_resourceGuardPauseBlocksCommit(
     assert _row_counts(db, ("axis_observation",))["axis_observation"] == 0
 
 
-def test_layer1Observation_commitRejectsDuplicateObservation(
-    tmp_path: Path, monkeypatch
-) -> None:
+def test_layer1Observation_commitRejectsDuplicateObservation(tmp_path: Path, monkeypatch) -> None:
     """Second commit for same indicator/as_of is rejected without duplicate rows."""
     from backend.app.layer1_axes.ingestion import IngestionCommitBlockedError
 
@@ -1532,4 +1527,3 @@ def test_layer1Ingestion_phase4_taskEvidenceArtifacts(tmp_path: Path, monkeypatc
     assert delta["axis_observation"]["after"] == 1
     assert delta["fetch_log"]["after"] >= 1
     assert delta["file_registry"]["after"] >= 1
-

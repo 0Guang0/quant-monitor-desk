@@ -47,9 +47,7 @@ def make_staging_baostock_adapter_class(staging_table: str) -> type[SkeletonAdap
         supported_domains = frozenset({"cn_equity_daily_bar"})
 
         def fetch(self, req, *, con, job_id=None, record_fetch_log: bool = True):
-            result = super().fetch(
-                req, con=con, job_id=job_id, record_fetch_log=record_fetch_log
-            )
+            result = super().fetch(req, con=con, job_id=job_id, record_fetch_log=record_fetch_log)
             if result.status == "SUCCESS":
                 con.execute(f"DELETE FROM {staging_table}")
                 con.execute(

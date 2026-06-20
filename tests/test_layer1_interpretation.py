@@ -409,9 +409,7 @@ def test_snapshotLineage_allowSyntheticHashes_permitsFixtureFallback() -> None:
         allow_synthetic_hashes=True,
     )
     assert envelope.source_content_hashes
-    assert envelope.source_content_hashes[0] == hashlib.sha256(
-        b"fixture:ENV-E1-DGS10"
-    ).hexdigest()
+    assert envelope.source_content_hashes[0] == hashlib.sha256(b"fixture:ENV-E1-DGS10").hexdigest()
 
 
 def test_snapshotLineage_agentOutputsNotSource_rejectsAgentProse() -> None:

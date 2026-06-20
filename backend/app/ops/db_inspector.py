@@ -36,9 +36,7 @@ KEY_TABLES: tuple[str, ...] = (
 )
 
 # Layer 5 tables — listed for forward inventory; no migration until Batch 5 (023).
-FUTURE_PHASE_KEY_TABLES: frozenset[str] = frozenset(
-    {"instrument_registry", "security_bar_1d"}
-)
+FUTURE_PHASE_KEY_TABLES: frozenset[str] = frozenset({"instrument_registry", "security_bar_1d"})
 
 DEFERRED_ITEM_MAPPING: tuple[tuple[str, tuple[str, ...]], ...] = (
     (
@@ -400,11 +398,7 @@ def _derive_status(report: InspectReport) -> str:
 
 def format_text_report(report: InspectReport) -> str:
     """Human-readable summary for --format text."""
-    db_state = (
-        "exists and opened read-only"
-        if report.db.get("read_only_open")
-        else "not available"
-    )
+    db_state = "exists and opened read-only" if report.db.get("read_only_open") else "not available"
     lines = [
         f"QMD DB Inspect: {report.status}",
         f"DB: {report.db.get('path')} {db_state}",

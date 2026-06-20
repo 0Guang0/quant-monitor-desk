@@ -11,12 +11,12 @@ from backend.app.config import DATA_ROOT
 from backend.app.core.resource_guard import Decision, ResourceGuard, format_pause_event
 from backend.app.datasources.adapters import create_adapter
 from backend.app.datasources.adapters.fetch_port import FetchPort, StubFetchPort
+from backend.app.datasources.base_adapter import BaseDataAdapter
 from backend.app.datasources.capability_registry import (
     OperationDisabledError,
     SourceCapabilityRegistry,
     UnknownCapabilityError,
 )
-from backend.app.datasources.base_adapter import BaseDataAdapter
 from backend.app.datasources.fetch_log import FetchLogWriter
 from backend.app.datasources.fetch_result import FetchRequest, FetchResult
 from backend.app.datasources.route_models import SourceRoutePlan

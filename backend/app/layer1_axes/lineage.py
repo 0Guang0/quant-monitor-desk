@@ -101,9 +101,7 @@ class SnapshotLineageBuilder:
                 f"invalid source_fetch_ids_json for {validation_report.validation_report_id!r}"
             ) from exc
         try:
-            content_hashes = tuple(
-                json.loads(validation_report.source_content_hashes_json or "[]")
-            )
+            content_hashes = tuple(json.loads(validation_report.source_content_hashes_json or "[]"))
         except json.JSONDecodeError as exc:
             raise LineageSnapshotError(
                 f"invalid source_content_hashes_json for {validation_report.validation_report_id!r}"

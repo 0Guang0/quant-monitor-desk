@@ -12,9 +12,7 @@ from pathlib import Path
 
 import duckdb
 import pytest
-
 from tests.contract_gate_support import PROJECT_ROOT, trellis_task_dir
-
 
 BATCH25_TASK_SLUG = "06-20-round3-batch2-5-layer1-obs-ingest"
 TASK_DIR = trellis_task_dir(BATCH25_TASK_SLUG)
@@ -45,7 +43,7 @@ def _table_count(con: duckdb.DuckDBPyConnection, table_name: str) -> int:
 
 
 def test_batch25_deferredItems_documentedInRegistries() -> None:
-    """All active Batch 2.5 DEFERRED IDs must appear in authoritative registries with closure hooks."""
+    """Batch 2.5 DEFERRED IDs must appear in registries with closure hooks."""
     deferred_ids = ("B2.5-O-02", "B2.5-O-03", "B2.5-O-05", "B2.5-O-06")
     audit_deferred = _read_text(PROJECT_ROOT / "docs/AUDIT_DEFERRED_REGISTRY.md")
     unresolved = _read_text(PROJECT_ROOT / "docs/UNRESOLVED_ISSUES_REGISTRY.md")

@@ -9,10 +9,10 @@ from pathlib import Path
 import duckdb
 import pytest
 import yaml
-from backend.app.db.connection import ConnectionManager
 from backend.app.datasources.capability_registry import SourceCapabilityRegistry
 from backend.app.datasources.route_planner import SourceRoutePlanner
 from backend.app.datasources.source_registry import SourceRegistry
+from backend.app.db.connection import ConnectionManager
 from backend.app.db.migrate import MIGRATIONS_DIR, apply_migrations
 from backend.app.layer1_axes.observation_contract import (
     AXIS_OBSERVATION_DDL_COLUMNS,
@@ -21,7 +21,12 @@ from backend.app.layer1_axes.observation_contract import (
     WRITE_REQUEST_REQUIRED_FOR_OBSERVATION,
 )
 from backend.app.ops.db_inspector import FUTURE_PHASE_KEY_TABLES, KEY_TABLES
-from tests.contract_gate_support import PROJECT_ROOT, load_yaml, scan_package_for_create_adapter, trellis_task_dir
+from tests.contract_gate_support import (
+    PROJECT_ROOT,
+    load_yaml,
+    scan_package_for_create_adapter,
+    trellis_task_dir,
+)
 
 BATCH25_TASK_SLUG = "06-20-round3-batch2-5-layer1-obs-ingest"
 TASK_ROOT = trellis_task_dir(BATCH25_TASK_SLUG)
@@ -144,9 +149,7 @@ def test_layer1Ingestion_phase0_ingestionChainTablesAfterApply() -> None:
 
 def test_layer1_axes_doesNotImportCreateAdapter() -> None:
     violations = scan_package_for_create_adapter("layer1_axes")
-    assert violations == [], (
-        "layer1_axes must not import adapter factory: " + "; ".join(violations)
-    )
+    assert violations == [], "layer1_axes must not import adapter factory: " + "; ".join(violations)
 
 
 def test_sourceRegistry_roles_forbidShadowEmergency() -> None:
@@ -284,8 +287,8 @@ def test_layer1Ingestion_phase0_datasourceServiceFactoryBoundaryEnforced() -> No
     for pkg in forbidden_pkgs:
         pkg_path = pkg.replace("backend.app.", "")
         violations.extend(scan_package_for_create_adapter(pkg_path))
-    assert violations == [], (
-        "forbidden packages must not import create_adapter: " + "; ".join(violations)
+    assert violations == [], "forbidden packages must not import create_adapter: " + "; ".join(
+        violations
     )
 
 

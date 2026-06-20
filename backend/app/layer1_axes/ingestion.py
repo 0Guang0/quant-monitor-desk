@@ -501,8 +501,7 @@ class Layer1ObservationIngestionService:
         normalized_fetch = fetch_result.model_copy(
             update={
                 "raw_file_paths": [
-                    _relative_to_data_root(p, self._data_root)
-                    for p in fetch_result.raw_file_paths
+                    _relative_to_data_root(p, self._data_root) for p in fetch_result.raw_file_paths
                 ]
             }
         )
@@ -791,9 +790,7 @@ class Layer1ObservationIngestionService:
                         data_domain=micro.binding.data_domain,
                     )
                 except RuntimeError as exc:
-                    raise IngestionCommitBlockedError(
-                        str(exc), reason_code="WRITE_FAILED"
-                    ) from exc
+                    raise IngestionCommitBlockedError(str(exc), reason_code="WRITE_FAILED") from exc
                 micro = replace(micro, file_registry_ids=file_registry_ids)
 
                 obs_write = obs_writer.write_observations(
@@ -838,9 +835,7 @@ class Layer1ObservationIngestionService:
                     con, quality_report.validation_report_id
                 )
                 lineage_builder = SnapshotLineageBuilder()
-                raw_datasets = tuple(
-                    f"raw:{path}" for path in micro.fetch_result.raw_file_paths
-                )
+                raw_datasets = tuple(f"raw:{path}" for path in micro.fetch_result.raw_file_paths)
                 parameter_hash = lineage_builder.parameter_hash_for(
                     rule_version=report_ref.rule_version,
                     inputs=(indicator_id, micro.binding.data_domain, *raw_datasets),
@@ -852,8 +847,7 @@ class Layer1ObservationIngestionService:
                     validation_report=report_ref,
                     input_window_start=as_of_dt,
                     input_window_end=as_of_dt,
-                    source_dataset_ids=raw_datasets
-                    or (f"staged_fixture:{resolved_fixture.name}",),
+                    source_dataset_ids=raw_datasets or (f"staged_fixture:{resolved_fixture.name}",),
                     parameter_hash=parameter_hash,
                     resource_profile="eco",
                     allow_synthetic_hashes=False,

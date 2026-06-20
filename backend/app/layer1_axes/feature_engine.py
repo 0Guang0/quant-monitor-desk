@@ -95,9 +95,7 @@ class AxisFeatureEngine:
         if obs.source_switched:
             flags.append("SOURCE_SWITCHED")
 
-        stale_reason = (
-            obs.fallback_policy if obs.source_switched and obs.fallback_policy else None
-        )
+        stale_reason = obs.fallback_policy if obs.source_switched and obs.fallback_policy else None
 
         if valid_count < min_required:
             flags.append("INSUFFICIENT_HISTORY")

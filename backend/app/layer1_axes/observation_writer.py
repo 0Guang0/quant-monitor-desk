@@ -69,9 +69,7 @@ class Layer1ObservationWriter:
         own_transaction: bool,
     ) -> WriteResult:
         staging = f"stg_axis_obs_{uuid.uuid4().hex[:8]}"
-        con.execute(
-            f"CREATE TABLE {staging} AS SELECT * FROM {AXIS_OBSERVATION_TABLE} WHERE 1=0"
-        )
+        con.execute(f"CREATE TABLE {staging} AS SELECT * FROM {AXIS_OBSERVATION_TABLE} WHERE 1=0")
         for row in rows:
             con.execute(
                 f"""

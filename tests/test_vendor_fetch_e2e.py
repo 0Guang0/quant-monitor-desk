@@ -55,9 +55,7 @@ def test_vendorFixtureFetch_e2eOrchestratorPath(
         supported_domains = frozenset({"market_bar_1d"})
 
         def fetch(self, req, *, con, job_id=None, record_fetch_log: bool = True):
-            result = super().fetch(
-                req, con=con, job_id=job_id, record_fetch_log=record_fetch_log
-            )
+            result = super().fetch(req, con=con, job_id=job_id, record_fetch_log=record_fetch_log)
             if result.status == "SUCCESS":
                 con.execute(f"DELETE FROM {STG_TABLE}")
                 con.execute(

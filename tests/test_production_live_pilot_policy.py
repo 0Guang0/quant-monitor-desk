@@ -6,10 +6,12 @@ from pathlib import Path
 
 from tests.contract_gate_support import PROJECT_ROOT
 
-
 MIGRATION_MAP = PROJECT_ROOT / "MIGRATION_MAP.md"
 ROUND3_MAP = PROJECT_ROOT / "ROUND3_BATCH_IMPLEMENTATION_MAP.md"
-TASK_CARD = PROJECT_ROOT / "docs/implementation_tasks/ROUND_3_MODELING_LAYERS/018B_production_live_pilot_gate.md"
+TASK_CARD = (
+    PROJECT_ROOT
+    / "docs/implementation_tasks/ROUND_3_MODELING_LAYERS/018B_production_live_pilot_gate.md"
+)
 POLICY = PROJECT_ROOT / "docs/quality/production_live_pilot_policy.md"
 AUDIT_REGISTRY = PROJECT_ROOT / "docs/AUDIT_DEFERRED_REGISTRY.md"
 UNRESOLVED_REGISTRY = PROJECT_ROOT / "docs/UNRESOLVED_ISSUES_REGISTRY.md"

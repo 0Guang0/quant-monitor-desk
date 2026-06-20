@@ -589,9 +589,7 @@ def format_phase1_inventory_md(inventory: dict[str, Any]) -> str:
     registry = inventory.get("source_registry_snapshot") or []
     if registry:
         registry_json = json.dumps(registry, indent=2)
-        lines.extend(
-            ["", "## source_registry snapshot", "", "```json", registry_json, "```"]
-        )
+        lines.extend(["", "## source_registry snapshot", "", "```json", registry_json, "```"])
 
     validation_counts = inspect_payload["evidence"].get("validation_status_counts")
     lines.extend(
@@ -649,9 +647,7 @@ def _classification_note(
     stop_reason: str | None,
 ) -> str:
     notes = {
-        "schema_only_empty": (
-            "Database has migrated schema only; no fetch/raw/parquet evidence."
-        ),
+        "schema_only_empty": ("Database has migrated schema only; no fetch/raw/parquet evidence."),
         "schema_with_config_only": (
             "Database contains registry/config rows only; no fetch or observation evidence."
         ),
