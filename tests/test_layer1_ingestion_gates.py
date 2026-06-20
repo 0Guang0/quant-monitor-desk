@@ -421,9 +421,29 @@ def test_layer1Ingestion_phase0_axisObservationWritePath_implementedInPhase4() -
     text = ingestion.read_text(encoding="utf-8")
     assert "commit_clean_observation_and_snapshots" in text
     assert "micro_fetch_staging" in text
+    assert "def capture_phase" not in text
+    assert "ingestion_evidence" in text
     assert "Layer1ObservationWriter" in (
         PROJECT_ROOT / "backend/app/layer1_axes/observation_writer.py"
     ).read_text(encoding="utf-8")
     closure_test = "test_layer1Observation_cleanWrite_usesWriteManager"
     pipeline_tests = PIPELINE_TESTS.read_text(encoding="utf-8")
     assert closure_test in pipeline_tests
+
+
+def test_layer1Ingestion_phase0_ingestionFacadeReexportsEvidenceModule() -> None:
+    """PR-R2a I7: facade symbols resolve to ingestion_evidence implementations."""
+    import backend.app.layer1_axes.ingestion as ing
+    import backend.app.layer1_axes.ingestion_evidence as ev
+
+    assert ing.capture_task_phase3_evidence is ev.capture_task_phase3_evidence
+    assert ing.PHASE3_SANDBOX_DIRNAME == ev.PHASE3_SANDBOX_DIRNAME
+    assert ing.PHASE3_MUTATION_TABLES == ev.PHASE3_MUTATION_TABLES
+
+
+def test_layer1Ingestion_phase0_evidenceModuleExportsPublicSurface() -> None:
+    """PR-R2a: mutation tables and capture helpers live in ingestion_evidence."""
+    import backend.app.layer1_axes.ingestion_evidence as ev
+
+    assert "capture_task_phase4_evidence" in ev.__all__
+    assert "PHASE4_MUTATION_TABLES" in ev.__all__

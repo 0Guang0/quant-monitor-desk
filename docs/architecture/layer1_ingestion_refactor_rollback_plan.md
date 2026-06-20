@@ -1,7 +1,7 @@
 # Layer 1 Ingestion 拆分回滚方案
 
 > **Scope:** `backend/app/layer1_axes/ingestion.py`（~1500 LOC）ponytail / 解耦重构  
-> **Status:** PLANNING ONLY — **未在本分支执行**  
+> **Status:** **R2a IN PROGRESS** — PR #25 `ingestion_evidence.py` extract merged/on branch; **R2b–R2d PENDING**  
 > **台账:** `docs/quality/ROUND3_BATCH25_PENDING_FIX_REGISTRY.md` §3.3  
 > **原则:** 外部 API 不变；行为由现有 pytest + evidence JSON 快照守卫；每步可独立 revert。
 
