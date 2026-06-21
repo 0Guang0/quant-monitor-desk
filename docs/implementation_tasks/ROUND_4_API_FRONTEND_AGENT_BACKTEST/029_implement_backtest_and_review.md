@@ -18,6 +18,7 @@
 - `specs/contracts/runtime_versions.md`
 - `docs/quality/staged_acceptance_policy.md`
 - `specs/contracts/backtest_reproducibility_contract.yaml`
+
 ## 4. 相关代码 / 输出文件
 
 - `backend/backtest/`
@@ -72,6 +73,7 @@
 - 测试命名建议：`functionName_condition_expectedBehavior`。
 
 ## 11. 验收命令
+
 本任务涉及 API / Agent / 通知 / 回测。验收命令：
 
 ```bash
@@ -139,3 +141,11 @@ cd frontend && npm ci && npm audit --audit-level=high && npm run typecheck && np
 - 记录 parameter_hash、rule_version、code_version、random_seed。
 - 同一 frozen dataset + 参数必须可复现。
 - Agent 只能总结计算结果，不得生成或修改指标。
+
+## 17. 未闭合项覆盖补充（Plan 不得遗漏）
+
+执行 review / manual-review UX 相关计划前，必须读取 `docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md`，并核对：
+
+| ID             | 归属阶段                                              | 本任务卡处理要求                                                                                                                  |
+| -------------- | ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `R3-PARTIAL-4` | Batch5 evidence-chain conflict UX 或 Round4 review UX | failed reconcile 后 manual-review queue vs instant severe queue 行为需要 UX/ADR + pytest；若 023/016 处理，本任务必须 cross-ref。 |

@@ -18,6 +18,7 @@
 - `specs/contracts/runtime_versions.md`
 - `docs/quality/staged_acceptance_policy.md`
 - `specs/contracts/snapshot_lineage_contract.yaml`
+
 ## 4. 相关代码 / 输出文件
 
 - `backend/layers/layer5/evidence_chain.py`
@@ -72,6 +73,7 @@
 - 测试命名建议：`functionName_condition_expectedBehavior`。
 
 ## 11. 验收命令
+
 本任务为后端实现任务。验收命令：
 
 ```bash
@@ -124,3 +126,12 @@ uv run python -m compileall backend scripts tests
 ### 用户决策补充：D-09
 
 用户已拍板：完整标准化字段仅 Layer 1；Layer 2-5 不默认复制，只能按需局部扩展。
+
+## 16. 未闭合项覆盖补充（Plan 不得遗漏）
+
+执行 Layer5 evidence chain / conflict evidence 相关计划前，必须读取 `docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md`，并核对：
+
+| ID             | 归属阶段                                              | 本任务卡处理要求                                                                                   |
+| -------------- | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `R3-PARTIAL-4` | Batch5 evidence-chain conflict UX 或 Round4 review UX | failed reconcile 后 manual-review queue vs instant severe queue 需要 UX/ADR + pytest。             |
+| `R2-RISK-2`    | Batch5 evidence-chain 或 Batch6 adapter hygiene       | 如 evidence path 需要 adapter/storage 解耦，必须通过 port injection 或 explicit re-deferral 处理。 |

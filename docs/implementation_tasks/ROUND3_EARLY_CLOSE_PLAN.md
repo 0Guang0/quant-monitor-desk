@@ -14,3 +14,15 @@ Items deferred from strict Round2 skeleton to Round3 early phase:
 | **Local DB inspect CLI**                         | **R3 early** | 冻结设计：`docs/ops/db_inspect_cli.md`；契约：`specs/contracts/ops_db_inspect_contract.yaml`。执行者**仅**按冻结设计实现 read-only CLI + tests（禁止重新设计、禁止复用 `.tmp` 脚本）。无独立 task 文件，见 `docs/ROUND3_HANDOFF.md` 与 `ROUND3_BATCH_IMPLEMENTATION_MAP.md`。 |
 
 Round2 audit remediation closes: fixture vendor E2E, DB lineage fields, orchestrator runner split, backfill validate+write, reconcile re-fetch.
+
+## Unresolved item coverage（Plan 不得遗漏）
+
+Plan 阶段必须读取 `docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md`，并核对以下仍未闭合项；若当前 batch 不关闭，必须写 explicit re-deferral：
+
+| ID                                        | 目标阶段                                      | 本计划处理要求                                                                                       |
+| ----------------------------------------- | --------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `R2.6-IMPL-8`                             | Batch 2.75 或 user-authorized staging E2E     | live QMT/Yahoo/xqshare validation 只能授权后执行；默认 disabled。                                    |
+| `R3-AUDIT-DEF-01`                         | Round3 ops hygiene 或 Round5 docs consistency | `KEY_TABLES` / mapping 常量与 `ops_db_inspect_contract.yaml` 的 SSOT drift 风险必须关闭或 re-defer。 |
+| `R3-AUDIT-DEF-02`                         | Batch 2.75 或 user-authorized staging E2E     | fixture/full_load skeleton 不能被说成 production live vendor soak。                                  |
+| `R3-AUDIT-DEF-03`                         | Round3 ops hygiene 或 Round5 docs consistency | scan cap 对 raw/parquet/audit/report 子目录的边界测试或 contract 等价说明必须补齐。                  |
+| `R3-B25-PERF-BUDGET-01` / `R3-B25-HYG-03` | Batch 2.75 或 CI nightly                      | production-equivalent benchmark / performance-budget artifact 必须刷新或 explicit re-defer。         |

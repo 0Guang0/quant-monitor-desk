@@ -18,6 +18,7 @@
 - `specs/contracts/runtime_versions.md`
 - `docs/quality/staged_acceptance_policy.md`
 - `docs/ops/idempotency_retry_dlq_policy.md`
+
 ## 4. 相关代码 / 输出文件
 
 - `backend/validation/data_quality.py`
@@ -72,6 +73,7 @@
 - 测试命名建议：`functionName_condition_expectedBehavior`。
 
 ## 11. 验收命令
+
 本任务为后端实现任务。验收命令：
 
 ```bash
@@ -118,3 +120,12 @@ uv run python -m compileall backend scripts tests
 - validation_report 必须记录 rule_version 与输入 fetch/content hash。
 - 人工 override 必须写 `override_reason`、`reviewer`、`reviewed_at`。
 - 不允许 validator 静默修数据；只能标记、隔离或退回。
+
+## 16. 未闭合项覆盖补充（Plan 不得遗漏）
+
+执行 DataQualityValidator / data-quality runner 后续计划前，必须读取 `docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md`，并核对：
+
+| ID         | 归属阶段                        | 本任务卡处理要求                                                                                                                  |
+| ---------- | ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `D2-P1-1`  | Batch6 job matrix               | `run_data_quality` runner 与 job type pytest 必须纳入，或明确 re-defer。                                                          |
+| `R2-HYG-5` | Batch6 adapter contract hygiene | 若 data-quality evidence 需要 adapter metadata，必须补 metadata fields + skeleton metadata pytest，或转交 adapter skeleton task。 |

@@ -18,6 +18,7 @@
 - `specs/contracts/runtime_versions.md`
 - `docs/quality/staged_acceptance_policy.md`
 - `specs/contracts/snapshot_lineage_contract.yaml`
+
 ## 4. 相关代码 / 输出文件
 
 - `backend/layers/layer2/sensor_loader.py`
@@ -72,6 +73,7 @@
 - 测试命名建议：`functionName_condition_expectedBehavior`。
 
 ## 11. 验收命令
+
 本任务为后端实现任务。验收命令：
 
 ```bash
@@ -124,3 +126,14 @@ uv run python -m compileall backend scripts tests
 ### 用户决策补充：D-09
 
 用户已拍板：完整标准化字段仅 Layer 1；Layer 2-5 不默认复制，只能按需局部扩展。
+
+## 16. Batch 3 staged-only downstream gate
+
+在实现或审计 Batch 3 / `019` 前，MASTER.plan.md 与 AUDIT.plan.md 必须显式引用以下上下文：
+
+- `docs/quality/BATCH3_STAGED_DOWNSTREAM_GATE.md`。
+- Batch 2.5 `final_registry_update.md`：当前 ingestion type 是 staged，不是 production-live。
+- `018A_layer1_observation_ingestion_bridge.md` §13。
+- `docs/UNRESOLVED_ISSUES_REGISTRY.md` 中 `R3-B2.75-01` 的当前状态。
+
+若 `R3-B2.75-01` 仍为 `DEFERRED`，本任务不得声称 production-live readiness，不得把 Batch 2.5 staged evidence 升级表述为 live production evidence，也不得使用 live FRED / production DB / external vendor writes 作为默认前提。

@@ -18,6 +18,7 @@
 - `specs/contracts/runtime_versions.md`
 - `docs/quality/staged_acceptance_policy.md`
 - `docs/ops/privacy_retention_policy.md`
+
 ## 4. 相关代码 / 输出文件
 
 - `backend/reports/`
@@ -73,6 +74,7 @@
 - 测试命名建议：`functionName_condition_expectedBehavior`。
 
 ## 11. 验收命令
+
 本任务涉及 API / Agent / 通知 / 回测。验收命令：
 
 ```bash
@@ -130,7 +132,6 @@ cd frontend && npm ci && npm audit --audit-level=high && npm run typecheck && np
 
 用户已拍板：raw/audit/report/notification 默认保留 1 年；清理前必须提供手动归档按钮或 CLI。
 
-
 ## 15. D-04 通知渠道硬边界
 
 第一版默认只实现前端 Notification Center / dashboard notification、local markdown、local audit log、console summary；可选实现 email，但必须要求用户显式配置 SMTP 与收件人。
@@ -138,3 +139,14 @@ cd frontend && npm ci && npm audit --audit-level=high && npm run typecheck && np
 webhook、desktop、SMS、phone、bot、Slack、Discord、Telegram、企业微信全部延期到 D-13+，本任务不得实现真实发送逻辑，也不得让配置项默认可触发外部 webhook。
 
 Phase 1 throttle 只允许覆盖 dashboard notification / local audit / console summary / 显式配置后的 email；不得实现该延期渠道的节流逻辑。必须补 `test_phase1NotificationThrottle_excludesDesktop`、`test_notificationModule_containsNoActiveDesktopThrottleInPhase1`。
+
+## 16. 未闭合项覆盖补充（Plan 不得遗漏）
+
+执行 reports / notifications / Notification Center 相关计划前，必须读取 `docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md`，并核对：
+
+| ID           | 归属阶段               | 本任务卡处理要求                                                                                               |
+| ------------ | ---------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `R4-NOTIF-1` | Round4 task 028        | Phase1 notification throttle excludes desktop test。                                                           |
+| `R4-NOTIF-2` | Round4 task 028        | Notification module scan for desktop throttle missing。                                                        |
+| `R4-NOTIF-3` | Round4 task 028        | Notification dedup key stability test。                                                                        |
+| `R4-FE-2`    | Round4 tasks 026 + 028 | Notification Center `/notifications` page；若 shell 页面由 026 承担，本任务必须 cross-ref 并验证通知数据契约。 |

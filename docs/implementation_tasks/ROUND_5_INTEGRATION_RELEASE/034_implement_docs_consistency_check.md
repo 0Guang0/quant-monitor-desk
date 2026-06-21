@@ -113,3 +113,14 @@ uv run python scripts/validate_release_allowlist.py
 4. 测试命令和结果。
 5. ResourceGuard 是否触发。
 6. 未完成项或需要用户确认的点。
+
+## 15. 未闭合项覆盖补充（Plan 不得遗漏）
+
+执行 docs consistency / contract drift 检查计划前，必须读取 `docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md`，并核对：
+
+| ID                | 归属阶段                                      | 本任务卡处理要求                                                               |
+| ----------------- | --------------------------------------------- | ------------------------------------------------------------------------------ |
+| `R3-AUDIT-DEF-01` | Round3 ops hygiene 或 Round5 docs consistency | `ops_db_inspect_contract.yaml` 与实现/映射常量 drift 风险必须测试或 re-defer。 |
+| `R3-AUDIT-DEF-03` | Round3 ops hygiene 或 Round5 docs consistency | scan cap 对 raw/parquet/audit/report 子目录的边界测试或 contract 等价说明。    |
+| `R2-RISK-3`       | Round3 late / Round5 docs consistency         | `WriteRequest` vs full `write_contract` matrix doc。                           |
+| `R2-RISK-4`       | Batch6 migration coverage                     | app-layer CHECK by design 必须写入 `MIGRATION_COVERAGE.md`。                   |

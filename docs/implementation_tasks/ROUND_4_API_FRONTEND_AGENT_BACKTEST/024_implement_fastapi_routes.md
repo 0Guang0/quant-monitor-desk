@@ -19,6 +19,7 @@
 - `specs/contracts/runtime_versions.md`
 - `docs/quality/staged_acceptance_policy.md`
 - `specs/contracts/api_security_contract.yaml`
+
 ## 4. 相关代码 / 输出文件
 
 - `backend/api/`
@@ -73,6 +74,7 @@
 - 测试命名建议：`functionName_condition_expectedBehavior`。
 
 ## 11. 验收命令
+
 本任务涉及 API / Agent / 通知 / 回测。验收命令：
 
 ```bash
@@ -147,3 +149,21 @@ API 必须实现最小安全基线：
 ### 用户决策补充：D-02
 
 用户已拍板：API dev 可关闭 token 但只允许 loopback；prod 必须启用 Bearer token，缺少 QMD_API_TOKEN 或关闭鉴权必须启动失败。
+
+## 17. 未闭合项覆盖补充（Plan 不得遗漏）
+
+执行 FastAPI / security / query budget 相关计划前，必须读取 `docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md`，并核对：
+
+| ID                               | 归属阶段               | 本任务卡处理要求                                                     |
+| -------------------------------- | ---------------------- | -------------------------------------------------------------------- |
+| `R2-GAP-2`                       | Round4 task 024        | source capability list HTTP API 或 documented deferral to task 025。 |
+| `R4-API-SEC-3` / `R4-API-SEC-10` | Round4 task 024        | page_size above absolute limit 必须返回 `QUERY_TOO_LARGE`。          |
+| `R4-API-SEC-4`                   | Round4 task 024        | page_size contract 必须与 docs / `api_security_contract.yaml` 一致。 |
+| `R4-API-SEC-5`                   | Round4 tasks 024 + 027 | frontend/API stale page-size contract test。                         |
+| `R4-API-SEC-6`                   | Round4 task 024        | unauthenticated request auth-required test。                         |
+| `R4-API-SEC-7`                   | Round4 task 024        | prod without token fails-startup test。                              |
+| `R4-API-SEC-8`                   | Round4 task 024        | prod disabled auth fails-startup test。                              |
+| `R4-API-SEC-9`                   | Round4 task 024        | dev disabled auth only allowed on loopback test。                    |
+| `R4-API-SEC-11`                  | Round4 task 024        | single local token maps to admin test。                              |
+| `R4-API-SEC-12`                  | Round4 task 024        | viewer / agent_readonly roles deferred in Phase 1 tests。            |
+| `R4-API-SEC-13`                  | Round4 task 024        | production admin mutation without token test。                       |

@@ -18,6 +18,7 @@
 - `specs/contracts/runtime_versions.md`
 - `docs/quality/staged_acceptance_policy.md`
 - `docs/ops/frontend_security_policy.md`
+
 ## 4. 相关代码 / 输出文件
 
 - `frontend/src/`
@@ -72,6 +73,7 @@
 - 测试命名建议：`functionName_condition_expectedBehavior`。
 
 ## 11. 验收命令
+
 本任务涉及前端。验收命令：
 
 ```bash
@@ -138,3 +140,11 @@ cd frontend && npm ci && npm audit --audit-level=high && npm run typecheck && np
 ### 用户决策补充：D-08
 
 用户已拍板：正式实现前端前必须提醒用户确认 UI 信息架构和交互；当前页面布局仅占位，不得写死。
+
+## 17. 未闭合项覆盖补充（Plan 不得遗漏）
+
+执行 frontend shell / navigation 相关计划前，必须读取 `docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md`，并核对：
+
+| ID        | 归属阶段               | 本任务卡处理要求                                                                                           |
+| --------- | ---------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `R4-FE-2` | Round4 tasks 026 + 028 | Notification Center `/notifications` page shell/nav 入口；028 负责通知数据与状态机，026 不得漏掉页面入口。 |

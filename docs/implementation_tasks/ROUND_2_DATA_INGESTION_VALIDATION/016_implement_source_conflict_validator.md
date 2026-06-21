@@ -18,6 +18,7 @@
 - `specs/contracts/runtime_versions.md`
 - `docs/quality/staged_acceptance_policy.md`
 - `docs/ops/idempotency_retry_dlq_policy.md`
+
 ## 4. 相关代码 / 输出文件
 
 - `backend/validation/source_conflict.py`
@@ -72,6 +73,7 @@
 - 测试命名建议：`functionName_condition_expectedBehavior`。
 
 ## 11. 验收命令
+
 本任务为后端实现任务。验收命令：
 
 ```bash
@@ -118,3 +120,15 @@ uv run python -m compileall backend scripts tests
 - 冲突必须有 severity、threshold、source_used、compared_sources。
 - 重新抓取仍不一致时进入 manual_review_queue。
 - 口径不同的字段必须分源保存，不得强行覆盖。
+
+## 16. 未闭合项覆盖补充（Plan 不得遗漏）
+
+执行 SourceConflictValidator / manual review / reconcile conflict 后续计划前，必须读取 `docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md`，并核对：
+
+| ID                         | 归属阶段                                              | 本任务卡处理要求                                                                                |
+| -------------------------- | ----------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `R3-PARTIAL-3` / `D2-P2-2` | Batch6 reconcile repay                                | reconcile re-fetch / compare closure pytest；alias 不得重复实现。                               |
+| `R3-PARTIAL-4`             | Batch5 evidence-chain conflict UX 或 Round4 review UX | failed reconcile 后 manual-review queue vs instant severe queue 需要 UX/ADR + pytest。          |
+| `A9-P2-01`                 | Batch6 migration 008                                  | `manual_review_queue` CHECK + contract tests。                                                  |
+| `A9-P2-02`                 | Batch6 migration 008                                  | `source_conflict.reconcile_status` CHECK + contract tests。                                     |
+| `R2-RISK-2`                | Batch5 evidence-chain 或 Batch6 adapter hygiene       | adapter/storage concrete dependency 通过 evidence port injection 或 explicit re-deferral 关闭。 |

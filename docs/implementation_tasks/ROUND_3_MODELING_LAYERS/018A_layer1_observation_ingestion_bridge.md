@@ -695,3 +695,13 @@ Remaining data limitations: <explicit list>
 ```
 
 If Batch 2.5 closes only a fixture/staged micro-ingestion, Batch 3 must still label downstream real-data claims as not proven and must rely on fixture/staged semantics.
+
+## 14. 未闭合项覆盖补充（Plan 不得遗漏）
+
+执行 Batch2.5 follow-up、ingestion bridge refactor 或 Batch6 hygiene 计划前，必须读取 `docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md`，并核对：
+
+| ID                        | 归属阶段                              | 本任务卡处理要求                                                                                                           |
+| ------------------------- | ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `R3-B25-HYG-01`           | Batch6 hygiene / post-B2.5 PR-R2b-R2d | ingestion split R2b/R2c/R2d 必须按 `docs/architecture/layer1_ingestion_refactor_rollback_plan.md`，不能被 Batch2.75 吸收。 |
+| `R2.6-IMPL-6` / `D2-P1-3` | Batch6 ops                            | 若 production CLI 仍不完整，必须继续 deferred 并写 closure tests。                                                         |
+| `D2-P2-1`                 | Batch6 source-health                  | source-health snapshot 未完成时必须继续 deferred。                                                                         |

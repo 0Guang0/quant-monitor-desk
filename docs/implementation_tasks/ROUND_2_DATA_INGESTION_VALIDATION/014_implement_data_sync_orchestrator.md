@@ -18,6 +18,7 @@
 - `specs/contracts/runtime_versions.md`
 - `docs/quality/staged_acceptance_policy.md`
 - `docs/ops/idempotency_retry_dlq_policy.md`
+
 ## 4. 相关代码 / 输出文件
 
 - `backend/sync/orchestrator.py`
@@ -73,6 +74,7 @@
 - 测试命名建议：`functionName_condition_expectedBehavior`。
 
 ## 11. 验收命令
+
 本任务为后端实现任务。验收命令：
 
 ```bash
@@ -120,3 +122,20 @@ DataSyncOrchestrator 必须实现：
 - dead letter / manual_review_queue。
 - 批任务必须支持 item-level 部分成功，不得用一个总状态覆盖全部。
 - 所有 retry、skip、partial success 必须写 audit log。
+
+## 16. 未闭合项覆盖补充（Plan 不得遗漏）
+
+执行 orchestrator / job matrix / backfill / reconcile 后续计划前，必须读取 `docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md`，并核对以下仍未闭合项：
+
+| ID                         | 归属阶段                    | 本任务卡处理要求                                                                   |
+| -------------------------- | --------------------------- | ---------------------------------------------------------------------------------- |
+| `R3-PARTIAL-1`             | Batch6 pipeline repay       | backfill 要么走 validate + clean write + pytest，要么 ADR 保留 scope。             |
+| `R3-PARTIAL-3` / `D2-P2-2` | Batch6 reconcile repay      | reconcile re-fetch / compare closure pytest；`D2-P2-2` 只能作为 alias。            |
+| `R3-PARTIAL-5`             | Batch6 ops optional         | COMPLETED-vs-write crash window 需同事务关闭或 recovery runbook / re-deferral。    |
+| `D2-P1-1`                  | Batch6 job matrix           | `run_revision_audit` / `run_data_quality` runners 与 job type pytest。             |
+| `D2-P1-3`                  | Batch6 ops / task 035 prep  | `python -m quant_monitor.sync` 或 successor console script smoke。                 |
+| `D2-P2-1`                  | Batch6 source-health        | `source_health_snapshot` migration + snapshot pytest。                             |
+| `D2-P3-1`                  | Batch6 registry lifecycle   | `registry_generation` / `removed_from_yaml_at` migration + sync pytest。           |
+| `D7-P1-1` / `R2-RISK-1`    | Batch6 orchestrator hygiene | handler registry extraction + handler registry pytest；关闭 alias 时不得重复实现。 |
+| `D3-P1-2`                  | Batch6 hygiene              | `_validate_domain_roles` 复杂度必须 refactor 或 justified ADR/noqa。               |
+| `R2-HYG-4`                 | Batch6 test hygiene         | `test_duckdb_connection` inter-call smell：refactor 或 close as wont-fix ADR。     |

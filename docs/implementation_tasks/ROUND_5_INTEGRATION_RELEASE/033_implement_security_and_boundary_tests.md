@@ -113,3 +113,11 @@ uv run python -m compileall backend scripts tests
 ### 用户决策补充：D-03
 
 用户已拍板：Secret 第一版使用 .env.local，只提交 .env.example；.env/.env.local/_.secret/_.key 必须 gitignore；prod 必须做 secret 启动检查和 CI secret scan。
+
+## 15. 未闭合项覆盖补充（Plan 不得遗漏）
+
+执行 security / boundary tests 相关计划前，必须读取 `docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md`，并核对：
+
+| ID          | 归属阶段                      | 本任务卡处理要求                                                       |
+| ----------- | ----------------------------- | ---------------------------------------------------------------------- |
+| `R2-RISK-5` | Round5 task 035 / security CI | gitleaks / full security CI 必须集成到 release gate，或明确 re-defer。 |

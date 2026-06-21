@@ -131,3 +131,15 @@ uv run python scripts/validate_release_allowlist.py
 ### 用户决策补充：D-07
 
 用户已拍板：Trellis/Cursor 每轮只长期保留 MASTER/AUDIT/DECISIONS；细碎 evidence 归档到 artifacts zip。
+
+## 16. 未闭合项覆盖补充（Plan 不得遗漏）
+
+执行 final package / packaging / cleanup 相关计划前，必须读取 `docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md`，并核对：
+
+| ID            | 归属阶段                                  | 本任务卡处理要求                                                                |
+| ------------- | ----------------------------------------- | ------------------------------------------------------------------------------- |
+| `R2.6-IMPL-6` | Round3 Batch6 ops 或 Round5 task 035 prep | `qmd data` / production CLI smoke 与 docs anchor；若不关闭，必须保留 deferred。 |
+| `D2-P1-3`     | Batch6 ops / task 035 prep                | `python -m quant_monitor.sync` 或 successor console script smoke。              |
+| `R2-GAP-1`    | Batch6 init/packaging 或 Round5 task 035  | `init_db --sync-registry` 或 documented CI one-liner。                          |
+| `D7-P2-2`     | Batch6 / Round5 packaging                 | 移除 `sys.path.insert` smell，使用 editable install / console scripts。         |
+| `R2-RISK-5`   | Round5 task 035                           | gitleaks / full security CI 集成，或 explicit re-deferral。                     |

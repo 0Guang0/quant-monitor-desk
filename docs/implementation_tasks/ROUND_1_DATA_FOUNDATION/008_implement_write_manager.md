@@ -17,6 +17,7 @@
 - `docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md`
 - `specs/contracts/runtime_versions.md`
 - `docs/quality/staged_acceptance_policy.md`
+
 ## 4. 相关代码 / 输出文件
 
 - `backend/db/write_manager.py`
@@ -71,6 +72,7 @@
 - 测试命名建议：`functionName_condition_expectedBehavior`。
 
 ## 11. 验收命令
+
 本任务为后端实现任务。验收命令：
 
 ```bash
@@ -108,3 +110,12 @@ uv run python -m compileall backend scripts tests
 4. 测试命令和结果。
 5. ResourceGuard 是否触发。
 6. 未完成项或需要用户确认的点。
+
+## 15. 未闭合项覆盖补充（Plan 不得遗漏）
+
+执行任何 WriteManager / write contract 后续计划前，必须读取 `docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md`，并核对：
+
+| ID          | 归属阶段                              | 本任务卡处理要求                                                                                                 |
+| ----------- | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `R2-RISK-3` | Round3 late / Round5 docs consistency | `WriteRequest` 与完整 `write_contract` 的差异必须通过 matrix doc 或 explicit re-deferral 处理。                  |
+| `D3-P1-2`   | Round3 Batch6 hygiene                 | `_execute_write` 复杂度必须通过 refactor 或 justified ADR/noqa 关闭；若不在本任务处理，必须转交 Batch6 hygiene。 |

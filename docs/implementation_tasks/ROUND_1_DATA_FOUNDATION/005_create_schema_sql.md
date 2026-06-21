@@ -18,6 +18,7 @@
 - `specs/contracts/runtime_versions.md`
 - `docs/quality/staged_acceptance_policy.md`
 - `docs/ops/migration_recovery_policy.md`
+
 ## 4. 相关代码 / 输出文件
 
 - `backend/db/schema.sql`
@@ -73,6 +74,7 @@
 - 测试命名建议：`functionName_condition_expectedBehavior`。
 
 ## 11. 验收命令
+
 本任务为后端实现任务。验收命令：
 
 ```bash
@@ -124,3 +126,17 @@ Migration 必须支持：
 ### 用户决策补充：D-06
 
 用户已拍板：破坏性 migration 通过备份恢复；非破坏性 migration 可无 down SQL 但必须声明原因。
+
+## 16. 未闭合项覆盖补充（Plan 不得遗漏）
+
+执行任何 schema / migration / init_db 相关后续计划前，必须读取 `docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md`，并核对以下仍未闭合项是否属于本任务或需要 explicit re-deferral：
+
+| ID                       | 归属阶段                              | 本任务卡处理要求                                                                                                                    |
+| ------------------------ | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `B2.5-O-06` / `A9-P1-01` | Round3 Batch6 migration 008           | `fetch_log` / `source_registry` CHECK 进入 migration 008，并补 contract tests；若不做，写明 deferred owner / phase / closure test。 |
+| `A9-P2-01`               | Round3 Batch6 migration 008           | `manual_review_queue` CHECK 与 contract tests。                                                                                     |
+| `A9-P2-02`               | Round3 Batch6 migration 008           | `source_conflict.reconcile_status` CHECK 与 contract tests。                                                                        |
+| `A9-P3-01`               | Round3 Batch6 migration safety        | migration rebuild 必须使用 explicit column list + review sign-off，避免按表结构隐式复制的风险。                                     |
+| `R2-GAP-1`               | Round3 Batch6 init / Round5 packaging | `init_db --sync-registry` 或 documented CI one-liner。                                                                              |
+| `D2-P3-1`                | Round3 Batch6 registry lifecycle      | `registry_generation` / `removed_from_yaml_at` migration + sync pytest。                                                            |
+| `R2-RISK-4`              | Round3 Batch6 migration coverage      | app-layer CHECK by design 必须记录到 `MIGRATION_COVERAGE.md`；migration 008 只处理 agreed subset。                                  |

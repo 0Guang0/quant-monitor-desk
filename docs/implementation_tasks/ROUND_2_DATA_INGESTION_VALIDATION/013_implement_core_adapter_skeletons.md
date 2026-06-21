@@ -16,6 +16,7 @@
 - `docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md`
 - `specs/contracts/runtime_versions.md`
 - `docs/quality/staged_acceptance_policy.md`
+
 ## 4. 相关代码 / 输出文件
 
 - `backend/sources/adapters/`
@@ -70,6 +71,7 @@
 - 测试命名建议：`functionName_condition_expectedBehavior`。
 
 ## 11. 验收命令
+
 本任务为后端实现任务。验收命令：
 
 ```bash
@@ -112,7 +114,6 @@ uv run python -m compileall backend scripts tests
 
 用户已拍板：QMT 第一版默认禁用，用户确认本机授权与配置后再启用。
 
-
 ## 15. 数据源默认禁用与 domain gating 补充要求
 
 落实 D-11：`qmt_xtdata` 与 `yahoo_finance` 默认禁用。实现 `SourceRegistry` 和 adapter skeleton 时必须识别 `domain_enabled_by_default=false` / `disabled_until_configured=true`，并在调度或 adapter factory 前返回 `DISABLED_SOURCE`，不得尝试连接未授权 QMT 或默认禁用的 Yahoo 源。
@@ -123,3 +124,11 @@ uv run python -m compileall backend scripts tests
 test_disabledPrimaryDomain_returnsDisabledSource
 test_fallbackDisabledByDefault_isSkippedUntilConfigured
 ```
+
+## 16. 未闭合项覆盖补充（Plan 不得遗漏）
+
+执行 adapter skeleton / metadata 后续计划前，必须读取 `docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md`，并核对：
+
+| ID         | 归属阶段                        | 本任务卡处理要求                                                                                  |
+| ---------- | ------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `R2-HYG-5` | Batch6 adapter contract hygiene | metadata fields 必须暴露并补 skeleton metadata pytest；若不在本任务处理，必须 explicit re-defer。 |
