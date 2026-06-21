@@ -61,6 +61,10 @@ def test_taskCard_requiresFailClosedAuthorizationAndSandboxFirst() -> None:
         "Any clean write must target sandbox DB",
         "The production target DB remains unchanged",
         "Batch 6 still owns formal production release",
+        "This default plan has no clean write",
+        "DGS10",
+        "Optional third source",
+        "fetch_macro_series",
     ]
     for token in required_tokens:
         assert token in text

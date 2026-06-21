@@ -1,0 +1,50 @@
+{"file": ".trellis/tasks/06-21-round3-batch2-75-live-pilot/MASTER.plan.md", "reason": "Execute single source of truth"}
+{"file": ".cursor/skills/trellis-execute/SKILL.md", "reason": "extract: Phase 0 boot protocol | for: §8.0 Boot"}
+{"file": ".trellis/tasks/06-21-round3-batch2-75-live-pilot/research/integration-ledger.md", "reason": "extract: v3 boot routing map | for: §0.3 / §8.0"}
+{"file": "docs/quality/batch275_user_authorization_2026-06-21.md", "reason": "extract: three micro-pilot requests | for: AC-P0"}
+{"file": "docs/quality/production_live_pilot_policy.md", "reason": "extract: fail-closed defaults | for: AC-P0"}
+{"file": "docs/quality/PENDING_USER_DECISIONS.md", "reason": "extract: D-11 QMT disabled | for: extract:D-11"}
+{"file": "docs/architecture/layer1_ingestion_refactor_rollback_plan.md", "reason": "extract: §6 sprint mutex | for: AC-PM4"}
+{"file": "specs/datasource_registry/source_registry.yaml", "reason": "extract: baostock primary akshare validation | for: AC-P2"}
+{"file": "specs/datasource_registry/source_capabilities.yaml", "reason": "extract: fetch_daily_bar fetch_macro_series ops | for: AC-P2,P3"}
+{"file": "specs/contracts/source_capability_contract.yaml", "reason": "extract: capability gate fields | for: AC-P2"}
+{"file": "specs/contracts/platform_source_matrix.yaml", "reason": "extract: QMT platform disabled matrix | for: AC-P2"}
+{"file": "specs/contracts/source_route_contract.yaml", "reason": "extract: READY no silent fallback | for: AC-P2"}
+{"file": "specs/contracts/datasource_service_contract.yaml", "reason": "extract: fetch gate order | for: AC-P3"}
+{"file": "specs/contracts/ops_db_inspect_contract.yaml", "reason": "extract: inventory field names | for: AC-P1,P3"}
+{"file": "specs/contracts/data_quality_rules.yaml", "reason": "extract: validation severity | for: AC-P4"}
+{"file": "specs/contracts/resource_limits.yaml", "reason": "extract: eco caps | for: AC-P45"}
+{"file": "docs/modules/datasource_service.md", "reason": "extract: route guard adapter fetch sequence | for: AC-P3"}
+{"file": "docs/modules/source_route_plan.md", "reason": "extract: SourceRoutePlan dry-run | for: AC-P2"}
+{"file": "docs/ops/db_inspect_cli.md", "reason": "extract: read-only no mutation | for: AC-P1"}
+{"file": "backend/app/datasources/service.py", "reason": "extract: preview_route fetch implementation | for: AC-P2,P3"}
+{"file": "backend/app/datasources/route_planner.py", "reason": "extract: plan route_status | for: AC-P2"}
+{"file": "backend/app/ops/db_inspector.py", "reason": "extract: KEY_TABLES inventory | for: AC-P1"}
+{"file": "backend/app/core/resource_guard.py", "reason": "extract: PAUSE HARD_STOP | for: AC-P2,P3"}
+{"file": "backend/app/validators/data_quality.py", "reason": "extract: validation report shape | for: AC-P4"}
+{"file": "research/batch275-live-pilot-gate-tests.md", "reason": "extract: RED GREEN tracer names | for: §8"}
+{"file": "research/vertical-slices.md", "reason": "extract: VS-1..8 order | for: §5"}
+{"file": "scripts/production_equivalent_smoke.py", "reason": "extract: isolated data root smoke | for: AC-P45"}
+{"file": "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md", "reason": "extract: no WriteManager bypass | for: §0.7"}
+{"file": "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md", "reason": "extract: semantic assertions | for: §8"}
+{"file": "docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md", "reason": "extract: no full market scan | for: §10"}
+{"file": "specs/contracts/runtime_versions.md", "reason": "extract: uv sync --locked | for: §10"}
+{"file": "docs/AUDIT_DEFERRED_REGISTRY.md", "reason": "extract: defer owner/phase | for: AC-REG-1, §8.1"}
+{"file": "docs/UNRESOLVED_ISSUES_REGISTRY.md", "reason": "extract: open items B2.5-O-05 | for: AC-PM*, AC-REG-1"}
+{"file": "docs/RESOLVED_ISSUES_REGISTRY.md", "reason": "extract: closeout alignment | for: AC-P5-3"}
+{"file": "docs/quality/ROUND3_BATCH25_PENDING_FIX_REGISTRY.md", "reason": "extract: no staged→live promotion | for: AC-PRE"}
+{"file": "ROUND3_BATCH_IMPLEMENTATION_MAP.md", "reason": "extract: §4.2 bundle §3 Batch 2.75 | for: AC-PM*"}
+{"file": "docs/quality/BATCH3_STAGED_DOWNSTREAM_GATE.md", "reason": "extract: Batch 3 handoff fields | for: AC-P5-4"}
+{"file": "docs/modules/data_sources.md", "reason": "extract: baostock akshare registration | for: AC-P2"}
+{"file": "docs/modules/source_capability_registry.md", "reason": "extract: capability snapshot fields | for: AC-P1-3"}
+{"file": "docs/modules/data_validation_and_conflict.md", "reason": "extract: conflict severity rules | for: AC-P4-5"}
+{"file": "docs/modules/write_manager.md", "reason": "extract: sandbox write path | for: AC-P4"}
+{"file": "specs/contracts/write_contract.yaml", "reason": "extract: WriteRequest allow_clean_write | for: AC-P4-2"}
+{"file": "docs/quality/staged_acceptance_policy.md", "reason": "extract: staged vs live boundary | for: filtered — do not reuse staged as live"}
+{"file": "backend/app/validators/source_conflict.py", "reason": "extract: conflict inspect API | for: AC-P4-5"}
+{"file": "specs/contracts/source_conflict_rules.yaml", "reason": "extract: conflict rule ids | for: AC-P4-5"}
+{"file": "docs/implementation_tasks/ROUND_2_6_DATASOURCE_ROUTING_OPS_ALIGNMENT/016F_define_prod_equivalent_scale_benchmark.md", "reason": "extract: perf smoke scope | for: AC-P45"}
+{"file": "specs/layer1_axes/restructured_axes_v1_1/environment_axis/environment_axis_indicator_spec.yaml", "reason": "extract: ENV-E1-DGS10 indicator | for: AC-P3-5"}
+{"file": "backend/app/layer1_axes/ingestion.py", "reason": "extract: Batch 2.5 orchestration | for: filtered — do NOT reuse for live pilot"}
+{"file": "scripts/production_gate.py", "reason": "extract: Tier F gate script | for: §10"}
+{"file": "scripts/check_doc_links.py", "reason": "extract: doc link checker | for: §10"}

@@ -1,0 +1,12 @@
+{"file": "AUDIT.plan.md", "reason": "Audit 入口"}
+{"file": "MASTER.plan.md", "reason": "for:A5 trace AC §2 only"}
+{"file": "docs/quality/batch275_user_authorization_2026-06-21.md", "reason": "for:A3 A5 authorization boundary"}
+{"file": "docs/quality/production_live_pilot_policy.md", "reason": "for:A1 spec对照"}
+{"file": "docs/quality/BATCH3_STAGED_DOWNSTREAM_GATE.md", "reason": "for:A5 Batch 3 handoff gate"}
+{"file": "docs/AUDIT_DEFERRED_REGISTRY.md", "reason": "for:A5 defer closeout"}
+{"file": "docs/UNRESOLVED_ISSUES_REGISTRY.md", "reason": "for:A5 B2.5-O-05 wording"}
+{"file": "specs/contracts/source_route_contract.yaml", "reason": "for:A1 route contract"}
+{"file": "specs/contracts/source_conflict_rules.yaml", "reason": "for:A1 conflict rules AC-P4-5"}
+{"file": "backend/app/validators/source_conflict.py", "reason": "for:A1 conflict wiring"}
+{"file": "backend/app/datasources/service.py", "reason": "for:A1 fetch gate order"}
+{"file": "research/batch275-live-pilot-gate-tests.md", "reason": "for:A8 phase test names"}

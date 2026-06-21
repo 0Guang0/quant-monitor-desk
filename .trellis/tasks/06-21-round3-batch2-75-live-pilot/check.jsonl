@@ -1,0 +1,3 @@
+{"file": "AUDIT.plan.md", "reason": "A1 trellis-check 入口"}
+{"file": "specs/contracts/datasource_service_contract.yaml", "reason": "A1 契约对照"}
+{"file": "specs/contracts/ops_db_inspect_contract.yaml", "reason": "A1 inspect 字段"}

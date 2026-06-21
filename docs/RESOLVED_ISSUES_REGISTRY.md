@@ -6,6 +6,14 @@
 
 ## Round 3 Batch 2.5 resolved items (2026-06-21)
 
+### Batch 2.5 audit follow-ups（2026-06-21）
+
+| ID            | Closed     | Item                                                 | Evidence                                                  |
+| ------------- | ---------- | ---------------------------------------------------- | --------------------------------------------------------- |
+| R3-B25-DOC-01 | 2026-06-21 | Batch 3 staged-only downstream gate 已记录           | `docs/quality/BATCH3_STAGED_DOWNSTREAM_GATE.md`           |
+| A08-P1-02     | 2026-06-21 | pytest slow marker 与 quick profile tier 已补齐      | `pytest.ini` · `pyproject.toml` · `KNOWN_PYTEST_SKIPS.md` |
+| R3-B25-HYG-04 | 2026-06-21 | audit sandbox artifact review 噪音已通过忽略规则缓解 | `.gitignore` `.audit-sandbox*` rule                       |
+
 | ID               |     Closed | Item                                                                         | Evidence                                                                                                                         |
 | ---------------- | ---------: | ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
 | B2.5-O-02        | 2026-06-21 | `specs/schema/schema.sql` synced with migration 011 axis tables              | `test_layer1Ingestion_phase0_schemaSqlLagTrackedAsO02` · `specs/schema/schema.sql`                                               |
