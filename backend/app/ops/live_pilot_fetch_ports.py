@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterator, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
-from typing import Sequence, TypeVar
+from typing import TypeVar
 
 from backend.app.datasources.adapters.fetch_port import FetchPayload, PortError
 from backend.app.datasources.fetch_result import FetchRequest

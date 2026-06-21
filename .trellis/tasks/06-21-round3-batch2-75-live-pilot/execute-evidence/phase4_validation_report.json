@@ -1,8 +1,22 @@
 {
   "allow_clean_write": false,
+  "can_write_clean": false,
+  "clean_write_block_reasons": [
+    "ALLOW_CLEAN_WRITE_FALSE_DEFAULT",
+    "SEVERE_FINDINGS_PRESENT"
+  ],
   "clean_write_performed": false,
+  "declared_validation_conflict_paths": {
+    "clean_write_gate": "backend.app.db.validation_gate.DbValidationGate",
+    "data_quality_rules": "specs/contracts/data_quality_rules.yaml",
+    "data_quality_validator": "backend.app.validators.data_quality.DataQualityValidator",
+    "freeze_note": "Batch 2.75 Phase 4 remains raw/sandbox validation only. Any future clean write must pass DataQualityValidator, SourceConflictValidator, and DbValidationGate; local raw structure checks cannot independently authorize clean writes.",
+    "source_conflict_rules": "specs/contracts/source_conflict_rules.yaml",
+    "source_conflict_validator": "backend.app.validators.source_conflict.SourceConflictValidator",
+    "write_contract": "specs/contracts/write_contract.yaml"
+  },
   "eastmoney_verdict_ref": "eastmoney_stock_zh_a_hist_verdict.md",
-  "generated_at": "2026-06-21T15:31:52Z",
+  "generated_at": "2026-06-21T19:30:56Z",
   "phase": "phase4_validation",
   "production_mutation_proof": {
     "after_key_table_counts": {
@@ -56,6 +70,14 @@
     "row_counts_unchanged": true
   },
   "request2_reconciliation_ref": "phase3_request2_evidence_reconciliation.md",
+  "severe_findings": [
+    {
+      "pilot_request_id": "pilot-req-2",
+      "status": "SOURCE_ENDPOINT_FAILURE",
+      "validation_scope": "original_approved_semantics"
+    }
+  ],
+  "severe_findings_block_clean_write": true,
   "validation_scope_note": "Request 1 and Request 3 validated under original approved semantics; Request 2 original endpoint failure recorded separately from Sina sidecar rows.",
   "validations": [
     {

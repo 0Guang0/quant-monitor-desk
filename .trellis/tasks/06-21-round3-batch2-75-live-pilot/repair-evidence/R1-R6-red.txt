@@ -1,0 +1,178 @@
+.F...F........Fs.FF..                                                    [100%]
+================================== FAILURES ===================================
+______ test_livePilot_perfAndHygieneRedefer_areAuthoritativeRegistryRows ______
+
+    def test_livePilot_perfAndHygieneRedefer_areAuthoritativeRegistryRows() -> None:
+        """Perf/hygiene re-defers must appear in the authoritative registries."""
+        required_ids = ("R3-B25-PERF-BUDGET-01", "R3-B25-HYG-03")
+        registry_text = {
+            path.name: _read(path)
+            for path in (
+                PROJECT_ROOT / "docs/AUDIT_DEFERRED_REGISTRY.md",
+                PROJECT_ROOT / "docs/UNRESOLVED_ISSUES_REGISTRY.md",
+                PROJECT_ROOT / "docs/quality/ROUND3_BATCH25_PENDING_FIX_REGISTRY.md",
+            )
+        }
+        for item_id in required_ids:
+            for registry_name, text in registry_text.items():
+>               assert item_id in text, f"{registry_name} must track {item_id}"
+E               AssertionError: AUDIT_DEFERRED_REGISTRY.md must track R3-B25-PERF-BUDGET-01
+E               assert 'R3-B25-PERF-BUDGET-01' in '# Audit Deferred Items Registry\n\n**Single source of truth** for open issues, intentional deferrals, and resolved au...`\n\n**Round 3 entry (017):** registry has **no OPEN rows**; all other items DEFERRED with phase or RESOLVED.\n\n---\n'
+
+tests\test_batch275_live_pilot_gate.py:85: AssertionError
+_________ test_livePilot_authorization_rejectsExpandedRequestEnvelope _________
+
+    def test_livePilot_authorization_rejectsExpandedRequestEnvelope() -> None:
+        """Authorization must bind to exact approved symbols/window/per-request row cap."""
+        from backend.app.ops.live_pilot import (
+            LivePilotAuthorizationError,
+            approved_pilot_requests,
+            validate_authorization,
+        )
+
+        approved = approved_pilot_requests()[0]
+        expanded_requests = (
+            replace(approved, symbols_or_indicators=("sh.600000",)),
+            replace(approved, date_window="recent 30 trading days"),
+            replace(approved, max_rows=approved.max_rows + 1),
+        )
+
+        for request in expanded_requests:
+>           with pytest.raises(LivePilotAuthorizationError):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE LivePilotAuthorizationError
+
+tests\test_batch275_live_pilot_gate.py:190: Failed
+_____________ test_livePilot_phase3_failureLeavesDurableEvidence ______________
+
+tmp_path = WindowsPath('C:/Users/Guang/Desktop/quant-monitor-desk/.audit-sandboxpytest-repair-red/test_livePilot_phase3_failureL0')
+
+    def test_livePilot_phase3_failureLeavesDurableEvidence(tmp_path: Path) -> None:
+        """Vendor failures must leave structured failure/no-mutation evidence for reruns."""
+        from backend.app.ops.live_pilot import approved_pilot_requests, capture_phase3_raw_evidence
+
+        calls = {"count": 0}
+
+        def _fake_run(_request, *, sandbox_root: Path, pilot_request_id: str, evidence_dir: Path):
+            calls["count"] += 1
+            if calls["count"] == 2:
+                raise RuntimeError("vendor timeout")
+            return {
+                "pilot_request_id": pilot_request_id,
+                "sandbox_root": str(sandbox_root),
+                "fetch_result": {
+                    "status": "SUCCESS",
+                    "row_count": 1,
+                    "raw_file_paths": [],
+                    "content_hash": "abc",
+                },
+                "production_mutation_proof": {
+                    "db_hash_unchanged": True,
+                    "row_counts_unchanged": True,
+                },
+            }
+
+        with patch("backend.app.ops.live_pilot.run_live_pilot_raw_only", side_effect=_fake_run):
+>           payload = capture_phase3_raw_evidence(
+                requests=approved_pilot_requests(),
+                sandbox_root=tmp_path / "sandbox",
+                evidence_dir=tmp_path / "evidence",
+            )
+
+tests\test_batch275_live_pilot_gate.py:442:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+backend\app\ops\live_pilot.py:559: in capture_phase3_raw_evidence
+    run_live_pilot_raw_only(
+..\..\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\unittest\mock.py:1139: in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\unittest\mock.py:1143: in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\unittest\mock.py:1204: in _execute_mock_call
+    result = effect(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+_request = LivePilotRequest(source_id='akshare', data_domain='cn_equity_daily_bar', operation='fetch_daily_bar_validation', symbo...ch275_user_authorization_2026-06-21.md', dry_run=False, raw_only=True, write_target='sandbox', allow_clean_write=False)
+sandbox_root = WindowsPath('C:/Users/Guang/Desktop/quant-monitor-desk/.audit-sandboxpytest-repair-red/test_livePilot_phase3_failureL0/sandbox/req-2')
+pilot_request_id = 'pilot-req-2'
+evidence_dir = WindowsPath('C:/Users/Guang/Desktop/quant-monitor-desk/.audit-sandboxpytest-repair-red/test_livePilot_phase3_failureL0/evidence')
+
+    def _fake_run(_request, *, sandbox_root: Path, pilot_request_id: str, evidence_dir: Path):
+        calls["count"] += 1
+        if calls["count"] == 2:
+>           raise RuntimeError("vendor timeout")
+E           RuntimeError: vendor timeout
+
+tests\test_batch275_live_pilot_gate.py:425: RuntimeError
+_____________ test_livePilot_phase4_requiresRequest2Prerequisites _____________
+
+tmp_path = WindowsPath('C:/Users/Guang/Desktop/quant-monitor-desk/.audit-sandboxpytest-repair-red/test_livePilot_phase4_requires0')
+
+    def test_livePilot_phase4_requiresRequest2Prerequisites(tmp_path: Path) -> None:
+        """Phase 4 must fail closed without Request 2 verdict and reconciliation artifacts."""
+        from backend.app.ops.live_pilot import (
+            LivePilotAuthorizationError,
+            capture_phase4_validation,
+        )
+
+        phase3_src = EVIDENCE_DIR / "phase3_raw_micro_fetch_evidence.json"
+        assert phase3_src.is_file()
+        (tmp_path / "phase3_raw_micro_fetch_evidence.json").write_text(
+            phase3_src.read_text(encoding="utf-8"),
+            encoding="utf-8",
+        )
+
+>       with pytest.raises(LivePilotAuthorizationError, match="Request 2"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE LivePilotAuthorizationError
+
+tests\test_batch275_live_pilot_gate.py:527: Failed
+____________ test_livePilot_phase4_severeBlocksCleanWriteEvidence _____________
+
+tmp_path = WindowsPath('C:/Users/Guang/Desktop/quant-monitor-desk/.audit-sandboxpytest-repair-red/test_livePilot_phase4_severeBl0')
+
+    def test_livePilot_phase4_severeBlocksCleanWriteEvidence(tmp_path: Path) -> None:
+        """Severe validation findings must be recorded as a clean-write block."""
+        from backend.app.ops.live_pilot import capture_phase4_validation
+
+        (tmp_path / "eastmoney_stock_zh_a_hist_verdict.md").write_text(
+            "Request 2 original endpoint ������\n",
+            encoding="utf-8",
+        )
+        (tmp_path / "phase3_request2_evidence_reconciliation.md").write_text(
+            "Request 2 stock_zh_a_hist push2his.eastmoney.com sidecar only\n",
+            encoding="utf-8",
+        )
+
+        result = capture_phase4_validation(
+            evidence_dir=tmp_path,
+            phase3_payload={"fetches": []},
+        )
+
+>       assert result["severe_findings_block_clean_write"] is True
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'severe_findings_block_clean_write'
+
+tests\test_batch275_live_pilot_gate.py:549: KeyError
+============================== warnings summary ===============================
+tests\test_batch275_live_pilot_gate.py:455
+  C:\Users\Guang\Desktop\quant-monitor-desk\tests\test_batch275_live_pilot_gate.py:455: PytestUnknownMarkWarning: Unknown pytest.mark.network - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.network
+
+.venv\Lib\site-packages\_pytest\cacheprovider.py:469
+  C:\Users\Guang\Desktop\quant-monitor-desk\.venv\Lib\site-packages\_pytest\cacheprovider.py:469: PytestCacheWarning: could not create cache path C:\Users\Guang\Desktop\quant-monitor-desk\.pytest_cache\v\cache\nodeids: [WinError 5] �ܾ����ʡ�: 'C:\\Users\\Guang\\Desktop\\quant-monitor-desk\\.pytest_cache\\v\\cache'
+    config.cache.set("cache/nodeids", sorted(self.cached_nodeids))
+
+.venv\Lib\site-packages\_pytest\cacheprovider.py:423
+  C:\Users\Guang\Desktop\quant-monitor-desk\.venv\Lib\site-packages\_pytest\cacheprovider.py:423: PytestCacheWarning: could not create cache path C:\Users\Guang\Desktop\quant-monitor-desk\.pytest_cache\v\cache\lastfailed: [WinError 5] �ܾ����ʡ�: 'C:\\Users\\Guang\\Desktop\\quant-monitor-desk\\.pytest_cache\\v\\cache'
+    config.cache.set("cache/lastfailed", self.lastfailed)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_batch275_live_pilot_gate.py::test_livePilot_perfAndHygieneRedefer_areAuthoritativeRegistryRows
+FAILED tests/test_batch275_live_pilot_gate.py::test_livePilot_authorization_rejectsExpandedRequestEnvelope
+FAILED tests/test_batch275_live_pilot_gate.py::test_livePilot_phase3_failureLeavesDurableEvidence
+FAILED tests/test_batch275_live_pilot_gate.py::test_livePilot_phase4_requiresRequest2Prerequisites
+FAILED tests/test_batch275_live_pilot_gate.py::test_livePilot_phase4_severeBlocksCleanWriteEvidence

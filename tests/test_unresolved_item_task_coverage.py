@@ -92,7 +92,10 @@ TASK_CARD_EXPECTATIONS = {
         "D3-P1-2",
         "R2-HYG-4",
     },
-    "ROUND_2_DATA_INGESTION_VALIDATION/015_implement_data_quality_validator.md": {"D2-P1-1", "R2-HYG-5"},
+    "ROUND_2_DATA_INGESTION_VALIDATION/015_implement_data_quality_validator.md": {
+        "D2-P1-1",
+        "R2-HYG-5",
+    },
     "ROUND_2_DATA_INGESTION_VALIDATION/016_implement_source_conflict_validator.md": {
         "R3-PARTIAL-3",
         "D2-P2-2",
@@ -101,7 +104,10 @@ TASK_CARD_EXPECTATIONS = {
         "A9-P2-02",
         "R2-RISK-2",
     },
-    "ROUND_2_6_DATASOURCE_ROUTING_OPS_ALIGNMENT/016D_define_data_sync_quick_reference_and_error_guides.md": {
+    (
+        "ROUND_2_6_DATASOURCE_ROUTING_OPS_ALIGNMENT/"
+        "016D_define_data_sync_quick_reference_and_error_guides.md"
+    ): {
         "R2.6-IMPL-6",
         "D2-P1-3",
         "R2-GAP-1",

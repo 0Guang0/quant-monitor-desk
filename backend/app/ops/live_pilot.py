@@ -15,18 +15,16 @@ from backend.app.datasources.capability_registry import SourceCapabilityRegistry
 from backend.app.datasources.service import DataSourceService
 from backend.app.datasources.source_registry import SourceNotFoundError, SourceRegistry
 from backend.app.db.connection import ConnectionManager
-from backend.app.db.validation_gate import StubValidationGate
+from backend.app.db.validation_gate import DbValidationGate
 from backend.app.db.write_manager import WriteManager
-from backend.app.storage.file_registry import FileRegistry
 from backend.app.ops.db_inspector import (
-    DbInspector,
     KEY_TABLES,
+    DbInspector,
     format_text_report,
 )
+from backend.app.storage.file_registry import FileRegistry
 
-DEFAULT_AUTHORIZATION_PATH = (
-    PROJECT_ROOT / "docs/quality/batch275_user_authorization_2026-06-21.md"
-)
+DEFAULT_AUTHORIZATION_PATH = PROJECT_ROOT / "docs/quality/batch275_user_authorization_2026-06-21.md"
 DEFAULT_PRODUCTION_DB = DATA_ROOT / "duckdb" / "quant_monitor.duckdb"
 
 PHASE1_BASELINE_JSON = "phase1_baseline_inventory.json"
@@ -73,6 +71,37 @@ APPROVED_PILOT_REQUESTS: frozenset[tuple[str, str, str]] = frozenset(
         ("akshare", "cn_equity_daily_bar", "fetch_daily_bar_validation"),
         ("akshare", "macro_supplementary", "fetch_macro_series"),
     }
+)
+
+APPROVED_PILOT_REQUEST_ENVELOPES: frozenset[tuple[str, str, str, tuple[str, ...], str, int]] = (
+    frozenset(
+        {
+            (
+                "baostock",
+                "cn_equity_daily_bar",
+                "fetch_daily_bar",
+                ("sh.600519",),
+                "recent 5 trading days",
+                10,
+            ),
+            (
+                "akshare",
+                "cn_equity_daily_bar",
+                "fetch_daily_bar_validation",
+                ("sh.600519",),
+                "recent 5 trading days",
+                10,
+            ),
+            (
+                "akshare",
+                "macro_supplementary",
+                "fetch_macro_series",
+                ("DGS10",),
+                "recent 7 calendar days",
+                20,
+            ),
+        }
+    )
 )
 
 
@@ -161,6 +190,19 @@ def validate_authorization(request: LivePilotRequest) -> None:
         )
     if not request.symbols_or_indicators:
         raise LivePilotAuthorizationError("symbols_or_indicators must be non-empty")
+
+    envelope = (
+        request.source_id,
+        request.data_domain,
+        request.operation,
+        request.symbols_or_indicators,
+        request.date_window,
+        request.max_rows,
+    )
+    if envelope not in APPROVED_PILOT_REQUEST_ENVELOPES:
+        raise LivePilotAuthorizationError(
+            "request envelope does not exactly match approved micro-pilot authorization"
+        )
 
 
 def assert_pilot_ready_before_fetch(request: LivePilotRequest) -> None:
@@ -418,6 +460,41 @@ class _InlineConnectionFileRegistry(FileRegistry):
         return super().register(saved)
 
 
+RAW_FILE_REGISTRY_VALIDATION_REPORT_ID = "batch275-live-pilot-raw-file-registry"
+
+
+def _ensure_raw_file_registry_validation_report(
+    con, request: LivePilotRequest, run_id: str
+) -> None:
+    con.execute(
+        """
+        INSERT OR REPLACE INTO validation_report (
+            validation_report_id, run_id, job_id, data_domain, staging_table,
+            source_id, status, checked_rows, failed_rows, warning_rows,
+            quality_flags, stale_reason, can_write_clean, needs_manual_review,
+            created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        [
+            RAW_FILE_REGISTRY_VALIDATION_REPORT_ID,
+            run_id,
+            "register",
+            request.data_domain,
+            "stg_file_registry",
+            request.source_id,
+            "PASSED",
+            0,
+            0,
+            0,
+            "raw_file_registry_metadata_only",
+            None,
+            True,
+            False,
+            datetime.now(UTC),
+        ],
+    )
+
+
 def run_live_pilot_raw_only(
     request: LivePilotRequest,
     *,
@@ -461,11 +538,11 @@ def run_live_pilot_raw_only(
     registry = SourceRegistry()
     registry.load()
     cm = ConnectionManager(sandbox_db, profile="eco")
-    write_manager = WriteManager(cm, StubValidationGate())
+    write_manager = WriteManager(cm, DbValidationGate(cm))
     file_registry = _InlineConnectionFileRegistry(
         cm,
         write_manager,
-        validation_report_id="stub-pass-batch275-live-pilot-raw",
+        validation_report_id=RAW_FILE_REGISTRY_VALIDATION_REPORT_ID,
     )
     adapter = create_adapter(
         request.source_id,
@@ -485,6 +562,7 @@ def run_live_pilot_raw_only(
     )
 
     with cm.writer() as con:
+        _ensure_raw_file_registry_validation_report(con, request, fetch_req.run_id)
         file_registry.bind_connection(con)
         result = adapter.fetch(fetch_req, con=con, record_fetch_log=True)
 
@@ -497,9 +575,7 @@ def run_live_pilot_raw_only(
     sandbox_resolved = sandbox_root.resolve()
     for path in raw_paths:
         if not Path(path).resolve().is_relative_to(sandbox_resolved):
-            raise LivePilotAuthorizationError(
-                f"raw evidence path outside sandbox: {path}"
-            )
+            raise LivePilotAuthorizationError(f"raw evidence path outside sandbox: {path}")
 
     try:
         hitl_rel = str(hitl_path.relative_to(PROJECT_ROOT))
@@ -555,20 +631,58 @@ def capture_phase3_raw_evidence(
             write_target="sandbox",
             allow_clean_write=False,
         )
-        fetches.append(
-            run_live_pilot_raw_only(
-                live_request,
-                sandbox_root=sandbox_root / f"req-{index}",
-                pilot_request_id=f"pilot-req-{index}",
-                evidence_dir=evidence_dir,
-            )
+        pilot_request_id = f"pilot-req-{index}"
+        prod_before_counts = _key_table_row_counts(DEFAULT_PRODUCTION_DB)
+        prod_before_hash = (
+            DEFAULT_PRODUCTION_DB.read_bytes() if DEFAULT_PRODUCTION_DB.is_file() else None
         )
+        try:
+            fetches.append(
+                run_live_pilot_raw_only(
+                    live_request,
+                    sandbox_root=sandbox_root / f"req-{index}",
+                    pilot_request_id=pilot_request_id,
+                    evidence_dir=evidence_dir,
+                )
+            )
+        except Exception as exc:
+            prod_after_counts = _key_table_row_counts(DEFAULT_PRODUCTION_DB)
+            prod_after_hash = (
+                DEFAULT_PRODUCTION_DB.read_bytes() if DEFAULT_PRODUCTION_DB.is_file() else None
+            )
+            failure_item = {
+                "pilot_request_id": pilot_request_id,
+                "authorization_evidence": live_request.authorization_evidence,
+                "request": _pilot_request_to_dict(live_request),
+                "sandbox_root": str(sandbox_root / f"req-{index}"),
+                "fetch_result": {
+                    "status": "FAILED",
+                    "row_count": 0,
+                    "raw_file_paths": [],
+                    "content_hash": None,
+                    "error_message": str(exc),
+                },
+                "production_mutation_proof": {
+                    "production_db_path": str(DEFAULT_PRODUCTION_DB),
+                    "db_hash_unchanged": prod_before_hash == prod_after_hash,
+                    "before_key_table_counts": prod_before_counts,
+                    "after_key_table_counts": prod_after_counts,
+                    "row_counts_unchanged": prod_before_counts == prod_after_counts,
+                },
+            }
+            fetches.append(failure_item)
+            (evidence_dir / f"phase3_fetch_failure_{pilot_request_id}.json").write_text(
+                json.dumps(failure_item, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
 
     generated_at = _utc_now_iso()
     payload: dict[str, Any] = {
         "generated_at": generated_at,
         "phase": "phase3_raw_micro_fetch",
         "sandbox_root": str(sandbox_root),
+        "rerun_safe": True,
+        "evidence_write_mode": "overwrite_with_per_request_failure_artifacts",
         "authorization_evidence": requests[0].authorization_evidence if requests else None,
         "fred_primary_deferred": True,
         "fred_primary_deferred_note": FRED_PRIMARY_DEFERRED_NOTE,
@@ -747,6 +861,31 @@ def _compare_equity_sidecar_conflict(
     return findings
 
 
+def _phase4_declared_validator_contract_refs() -> dict[str, Any]:
+    """Freeze declared validator/conflict paths used to gate any clean write."""
+    from backend.app.db.validation_gate import DbValidationGate
+    from backend.app.validators.data_quality import DataQualityValidator
+    from backend.app.validators.source_conflict import SourceConflictValidator
+
+    return {
+        "data_quality_validator": (
+            f"{DataQualityValidator.__module__}.{DataQualityValidator.__name__}"
+        ),
+        "source_conflict_validator": (
+            f"{SourceConflictValidator.__module__}.{SourceConflictValidator.__name__}"
+        ),
+        "clean_write_gate": f"{DbValidationGate.__module__}.{DbValidationGate.__name__}",
+        "data_quality_rules": "specs/contracts/data_quality_rules.yaml",
+        "source_conflict_rules": "specs/contracts/source_conflict_rules.yaml",
+        "write_contract": "specs/contracts/write_contract.yaml",
+        "freeze_note": (
+            "Batch 2.75 Phase 4 remains raw/sandbox validation only. Any future clean write "
+            "must pass DataQualityValidator, SourceConflictValidator, and DbValidationGate; "
+            "local raw structure checks cannot independently authorize clean writes."
+        ),
+    }
+
+
 def _format_phase4_conflict_inspect(
     *,
     conflict_rows: list[dict[str, Any]],
@@ -763,7 +902,8 @@ def _format_phase4_conflict_inspect(
         "- Any baostock vs Sina sidecar rows below are **informational candidate comparison only** "
         "and do **not** close original Request 2.",
         "",
-        f"- **Request 2 original semantics:** {request2_classification['original_semantics_status']}",
+        "- **Request 2 original semantics:** "
+        f"{request2_classification['original_semantics_status']}",
         f"- **Sidecar classification:** {request2_classification.get('sidecar_classification')}",
         "",
     ]
@@ -790,6 +930,44 @@ def _format_phase4_conflict_inspect(
     return "\n".join(lines) + "\n"
 
 
+def _require_request2_phase4_prerequisites(evidence_dir: Path) -> bool:
+    reconciliation_path = evidence_dir / PHASE3_REQUEST2_RECONCILIATION_MD
+    verdict_path = evidence_dir / EASTMONEY_VERDICT_MD
+    missing = [
+        name
+        for name, path in (
+            (PHASE3_REQUEST2_RECONCILIATION_MD, reconciliation_path),
+            (EASTMONEY_VERDICT_MD, verdict_path),
+        )
+        if not path.is_file()
+    ]
+    if missing:
+        raise LivePilotAuthorizationError(
+            f"Request 2 Phase 4 prerequisites missing: {', '.join(missing)}"
+        )
+
+    reconciliation = reconciliation_path.read_text(encoding="utf-8")
+    required_reconciliation_markers = (
+        "stock_zh_a_hist",
+        ORIGINAL_REQUEST2_ENDPOINT_HOST,
+        "sidecar",
+    )
+    for marker in required_reconciliation_markers:
+        if marker not in reconciliation:
+            raise LivePilotAuthorizationError(f"Request 2 reconciliation missing marker: {marker}")
+
+    verdict = verdict_path.read_text(encoding="utf-8")
+    if (
+        "不可用" not in verdict
+        and "unreachable" not in verdict.lower()
+        and "failure" not in verdict.lower()
+    ):
+        raise LivePilotAuthorizationError(
+            "Request 2 verdict must record original endpoint failure/unavailability"
+        )
+    return "不可用" in verdict or "unreachable" in verdict.lower() or "failure" in verdict.lower()
+
+
 def capture_phase4_validation(
     *,
     evidence_dir: Path,
@@ -805,10 +983,7 @@ def capture_phase4_validation(
             raise FileNotFoundError(f"missing phase3 evidence: {phase3_path}")
         phase3_payload = json.loads(phase3_path.read_text(encoding="utf-8"))
 
-    verdict_path = evidence_dir / EASTMONEY_VERDICT_MD
-    verdict_unavailable = verdict_path.is_file() and "不可用" in verdict_path.read_text(
-        encoding="utf-8"
-    )
+    verdict_unavailable = _require_request2_phase4_prerequisites(evidence_dir)
 
     prod_before_counts = _key_table_row_counts(DEFAULT_PRODUCTION_DB)
     prod_before_hash = (
@@ -904,6 +1079,16 @@ def capture_phase4_validation(
         primary_rows=primary_equity_rows,
         sidecar_rows=sidecar_equity_rows,
     )
+    severe_findings = [
+        {
+            "pilot_request_id": item["pilot_request_id"],
+            "status": item.get("status"),
+            "validation_scope": item.get("validation_scope"),
+        }
+        for item in validations
+        if item.get("status") in {"FAILED", "SOURCE_ENDPOINT_FAILURE"}
+    ]
+    severe_findings_block_clean_write = bool(severe_findings)
 
     prod_after_counts = _key_table_row_counts(DEFAULT_PRODUCTION_DB)
     prod_after_hash = (
@@ -915,7 +1100,19 @@ def capture_phase4_validation(
         "generated_at": generated_at,
         "phase": "phase4_validation",
         "allow_clean_write": False,
+        "can_write_clean": False,
         "clean_write_performed": False,
+        "clean_write_block_reasons": tuple(
+            reason
+            for reason in (
+                "ALLOW_CLEAN_WRITE_FALSE_DEFAULT",
+                "SEVERE_FINDINGS_PRESENT" if severe_findings_block_clean_write else None,
+            )
+            if reason is not None
+        ),
+        "declared_validation_conflict_paths": _phase4_declared_validator_contract_refs(),
+        "severe_findings_block_clean_write": severe_findings_block_clean_write,
+        "severe_findings": severe_findings,
         "request2_reconciliation_ref": PHASE3_REQUEST2_RECONCILIATION_MD,
         "eastmoney_verdict_ref": EASTMONEY_VERDICT_MD,
         "validation_scope_note": (
@@ -943,8 +1140,13 @@ def capture_phase4_validation(
         "",
         f"- **Generated at:** {generated_at}",
         f"- **Production DB:** `{DEFAULT_PRODUCTION_DB}`",
-        f"- **allow_clean_write:** false",
-        f"- **clean_write_performed:** false",
+        "- **allow_clean_write:** false",
+        "- **can_write_clean:** false",
+        "- **clean_write_performed:** false",
+        f"- **clean_write_block_reasons:** {payload['clean_write_block_reasons']}",
+        "- **declared_validation_conflict_paths:** "
+        f"{payload['declared_validation_conflict_paths']}",
+        f"- **severe_findings_block_clean_write:** {severe_findings_block_clean_write}",
         f"- **db_hash_unchanged:** {prod_before_hash == prod_after_hash}",
         f"- **row_counts_unchanged:** {prod_before_counts == prod_after_counts}",
         "",
@@ -1211,7 +1413,6 @@ def capture_task_phase1_baseline_evidence(
         target_db = sandbox_db_dir / "quant_monitor.duckdb"
         if not target_db.is_file():
             import duckdb
-
             from backend.app.db.migrate import apply_migrations
 
             con = duckdb.connect(str(target_db))

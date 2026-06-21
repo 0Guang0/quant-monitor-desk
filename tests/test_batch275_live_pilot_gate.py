@@ -8,7 +8,6 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-
 from tests.contract_gate_support import PROJECT_ROOT, trellis_task_dir
 
 BATCH275_TASK_SLUG = "06-21-round3-batch2-75-live-pilot"
@@ -67,6 +66,22 @@ def test_livePilot_phaseMinus1_registryReconciliationRequired() -> None:
     pending = _read(PROJECT_ROOT / "docs/quality/ROUND3_BATCH25_PENDING_FIX_REGISTRY.md")
     for item_id in ("R3-B2.75-01", "GLOBAL-P2-01", "B2.5-O-05"):
         assert item_id in pending, f"pending fix registry must reference {item_id}"
+
+
+def test_livePilot_perfAndHygieneRedefer_areAuthoritativeRegistryRows() -> None:
+    """Perf/hygiene re-defers must appear in the authoritative registries."""
+    required_ids = ("R3-B25-PERF-BUDGET-01", "R3-B25-HYG-03")
+    registry_text = {
+        path.name: _read(path)
+        for path in (
+            PROJECT_ROOT / "docs/AUDIT_DEFERRED_REGISTRY.md",
+            PROJECT_ROOT / "docs/UNRESOLVED_ISSUES_REGISTRY.md",
+            PROJECT_ROOT / "docs/quality/ROUND3_BATCH25_PENDING_FIX_REGISTRY.md",
+        )
+    }
+    for item_id in required_ids:
+        for registry_name, text in registry_text.items():
+            assert item_id in text, f"{registry_name} must track {item_id}"
 
 
 def test_livePilot_missingAuthorization_blocksBeforeFetch() -> None:
@@ -155,6 +170,48 @@ def test_livePilot_authorization_approvedRequestPassesGate() -> None:
     validate_authorization(request)
 
 
+def test_livePilot_authorization_rejectsExpandedRequestEnvelope() -> None:
+    """Authorization must bind to exact approved symbols/window/per-request row cap."""
+    from backend.app.ops.live_pilot import (
+        LivePilotAuthorizationError,
+        approved_pilot_requests,
+        validate_authorization,
+    )
+
+    approved = approved_pilot_requests()[0]
+    expanded_requests = (
+        replace(approved, symbols_or_indicators=("sh.600000",)),
+        replace(approved, date_window="recent 30 trading days"),
+        replace(approved, max_rows=approved.max_rows + 1),
+    )
+
+    for request in expanded_requests:
+        with pytest.raises(LivePilotAuthorizationError):
+            validate_authorization(request)
+
+
+def test_livePilot_authorization_rejectsUnapprovedOptionalSource() -> None:
+    """Optional cninfo source/domain/operation is not authorized by the default envelope."""
+    from backend.app.ops.live_pilot import (
+        LivePilotAuthorizationError,
+        LivePilotRequest,
+        validate_authorization,
+    )
+
+    request = LivePilotRequest(
+        source_id="cninfo",
+        data_domain="cn_announcements",
+        operation="fetch_announcement_index",
+        symbols_or_indicators=("600519",),
+        date_window="recent 7 calendar days",
+        max_rows=20,
+        authorization_evidence="docs/quality/batch275_user_authorization_2026-06-21.md",
+    )
+
+    with pytest.raises(LivePilotAuthorizationError):
+        validate_authorization(request)
+
+
 def test_livePilot_authorization_recordDocumentsSourceRiskRationale() -> None:
     """Phase 0 evidence must document why baostock/akshare are lower risk than QMT/FRED."""
     record = EVIDENCE_DIR / "phase0_authorization_record.md"
@@ -171,7 +228,6 @@ def test_livePilot_authorization_recordDocumentsSourceRiskRationale() -> None:
 def test_livePilot_phase1Baseline_readOnly(tmp_path: Path) -> None:
     """Phase 1 must capture read-only baseline inventory with zero DB mutation."""
     import duckdb
-
     from backend.app.db.migrate import apply_migrations
     from backend.app.ops.db_inspector import REQUIRED_TOP_LEVEL_FIELDS
     from backend.app.ops.live_pilot import capture_phase1_baseline
@@ -314,6 +370,204 @@ def test_livePilot_phase3_rejectsFixtureFetchPort(tmp_path: Path) -> None:
         _assert_live_fetch_port(StubFetchPort(payload=b"{}"))
 
 
+def test_livePilot_phase3_rejectsLocalFixtureAndStagedService(tmp_path: Path) -> None:
+    """LocalFixtureFetchPort/build_staged_fixture_service must not satisfy live evidence."""
+    from backend.app.datasources.adapters.fetch_port import LocalFixtureFetchPort
+    from backend.app.datasources.service import build_staged_fixture_service
+    from backend.app.ops.live_pilot import (
+        LivePilotFixtureForbiddenError,
+        _assert_live_fetch_port,
+    )
+
+    fixture = tmp_path / "fixture.json"
+    fixture.write_text("{}", encoding="utf-8")
+    fixture_port = LocalFixtureFetchPort(fixture, row_count=1)
+    with pytest.raises(LivePilotFixtureForbiddenError):
+        _assert_live_fetch_port(fixture_port)
+
+    staged_service = build_staged_fixture_service(
+        data_root=tmp_path / "data",
+        fixture_path=fixture,
+    )
+    with pytest.raises(LivePilotFixtureForbiddenError):
+        _assert_live_fetch_port(getattr(staged_service, "_fetch_port"))
+
+
+@pytest.mark.parametrize(
+    "route_status",
+    ("DISABLED_SOURCE", "CAPABILITY_MISSING", "USER_AUTH_REQUIRED", "RESOURCE_GUARD_PAUSED"),
+)
+def test_livePilot_phase3_routeNotReady_stopsBeforeFetch(
+    tmp_path: Path,
+    route_status: str,
+) -> None:
+    """A non-READY explicit route must stop before live fetch port construction."""
+    from backend.app.ops.live_pilot import (
+        LivePilotRouteNotReadyError,
+        approved_pilot_requests,
+        run_live_pilot_raw_only,
+    )
+
+    out = tmp_path / "evidence"
+    out.mkdir()
+    (out / "phase3_hitl_user_confirmation.md").write_text(
+        "User confirmation: test route gate only\n",
+        encoding="utf-8",
+    )
+    fetch_port_called = {"value": False}
+
+    def _unexpected_fetch_port(**_kwargs):
+        fetch_port_called["value"] = True
+        raise AssertionError("fetch port must not be built when route is not READY")
+
+    with (
+        patch(
+            "backend.app.ops.live_pilot.preview_live_pilot",
+            return_value={"explicit_source_route_status": route_status},
+        ),
+        patch(
+            "backend.app.ops.live_pilot_fetch_ports.create_live_fetch_port",
+            side_effect=_unexpected_fetch_port,
+        ),
+    ):
+        with pytest.raises(LivePilotRouteNotReadyError, match=route_status):
+            run_live_pilot_raw_only(
+                replace(approved_pilot_requests()[0], dry_run=False),
+                sandbox_root=tmp_path / "sandbox",
+                evidence_dir=out,
+            )
+
+    assert fetch_port_called["value"] is False
+
+
+def test_livePilot_phase3_resourceGuardHardStop_stopsBeforeFetch(tmp_path: Path) -> None:
+    """ResourceGuard HARD_STOP from route preview must stop before fetch construction."""
+    from backend.app.ops.live_pilot import approved_pilot_requests, run_live_pilot_raw_only
+
+    out = tmp_path / "evidence"
+    out.mkdir()
+    (out / "phase3_hitl_user_confirmation.md").write_text(
+        "User confirmation: test guard gate only\n",
+        encoding="utf-8",
+    )
+    fetch_port_called = {"value": False}
+
+    def _unexpected_fetch_port(**_kwargs):
+        fetch_port_called["value"] = True
+        raise AssertionError("fetch port must not be built when ResourceGuard blocks")
+
+    with (
+        patch(
+            "backend.app.ops.live_pilot.preview_live_pilot",
+            side_effect=RuntimeError("ResourceGuard HARD_STOP: test"),
+        ),
+        patch(
+            "backend.app.ops.live_pilot_fetch_ports.create_live_fetch_port",
+            side_effect=_unexpected_fetch_port,
+        ),
+    ):
+        with pytest.raises(RuntimeError, match="ResourceGuard HARD_STOP"):
+            run_live_pilot_raw_only(
+                replace(approved_pilot_requests()[0], dry_run=False),
+                sandbox_root=tmp_path / "sandbox",
+                evidence_dir=out,
+            )
+
+    assert fetch_port_called["value"] is False
+
+
+def test_livePilot_phase3_failureLeavesDurableEvidence(tmp_path: Path) -> None:
+    """Vendor failures must leave structured failure/no-mutation evidence for reruns."""
+    from backend.app.ops.live_pilot import approved_pilot_requests, capture_phase3_raw_evidence
+
+    calls = {"count": 0}
+
+    def _fake_run(_request, *, sandbox_root: Path, pilot_request_id: str, evidence_dir: Path):
+        calls["count"] += 1
+        if calls["count"] == 2:
+            raise RuntimeError("vendor timeout")
+        return {
+            "pilot_request_id": pilot_request_id,
+            "sandbox_root": str(sandbox_root),
+            "fetch_result": {
+                "status": "SUCCESS",
+                "row_count": 1,
+                "raw_file_paths": [],
+                "content_hash": "abc",
+            },
+            "production_mutation_proof": {
+                "db_hash_unchanged": True,
+                "row_counts_unchanged": True,
+            },
+        }
+
+    with patch("backend.app.ops.live_pilot.run_live_pilot_raw_only", side_effect=_fake_run):
+        payload = capture_phase3_raw_evidence(
+            requests=approved_pilot_requests(),
+            sandbox_root=tmp_path / "sandbox",
+            evidence_dir=tmp_path / "evidence",
+        )
+
+    assert payload["rerun_safe"] is True
+    assert payload["fetches"][1]["fetch_result"]["status"] == "FAILED"
+    assert "vendor timeout" in payload["fetches"][1]["fetch_result"]["error_message"]
+    assert (tmp_path / "evidence" / "phase3_fetch_failure_pilot-req-2.json").is_file()
+    assert (tmp_path / "evidence" / "phase3_raw_micro_fetch_evidence.json").is_file()
+
+
+def test_livePilot_phase3_repeatExecution_isRerunSafe(tmp_path: Path) -> None:
+    """Repeated Phase 3 evidence capture must preserve structured sandbox semantics."""
+    from backend.app.ops.live_pilot import approved_pilot_requests, capture_phase3_raw_evidence
+
+    def _fake_run(_request, *, sandbox_root: Path, pilot_request_id: str, evidence_dir: Path):
+        raw_path = sandbox_root / "data" / "raw" / f"{pilot_request_id}.json"
+        raw_path.parent.mkdir(parents=True, exist_ok=True)
+        raw_path.write_text('{"rows":[{"date":"2026-06-21"}]}', encoding="utf-8")
+        return {
+            "pilot_request_id": pilot_request_id,
+            "sandbox_root": str(sandbox_root),
+            "fetch_result": {
+                "status": "SUCCESS",
+                "row_count": 1,
+                "raw_file_paths": [str(raw_path)],
+                "content_hash": f"hash-{pilot_request_id}",
+            },
+            "production_mutation_proof": {
+                "db_hash_unchanged": True,
+                "row_counts_unchanged": True,
+            },
+        }
+
+    evidence_dir = tmp_path / "evidence"
+    sandbox_root = tmp_path / "sandbox"
+    with patch("backend.app.ops.live_pilot.run_live_pilot_raw_only", side_effect=_fake_run):
+        first = capture_phase3_raw_evidence(
+            requests=approved_pilot_requests(),
+            sandbox_root=sandbox_root,
+            evidence_dir=evidence_dir,
+        )
+        second = capture_phase3_raw_evidence(
+            requests=approved_pilot_requests(),
+            sandbox_root=sandbox_root,
+            evidence_dir=evidence_dir,
+        )
+
+    assert first["rerun_safe"] is True
+    assert second["rerun_safe"] is True
+    assert len(second["fetches"]) == 3
+    persisted = json.loads((evidence_dir / "phase3_raw_micro_fetch_evidence.json").read_text())
+    assert persisted["rerun_safe"] is True
+    assert [item["pilot_request_id"] for item in persisted["fetches"]] == [
+        "pilot-req-1",
+        "pilot-req-2",
+        "pilot-req-3",
+    ]
+    for item in persisted["fetches"]:
+        proof = item["production_mutation_proof"]
+        assert proof["db_hash_unchanged"] is True
+        assert proof["row_counts_unchanged"] is True
+
+
 @pytest.mark.network
 @pytest.mark.slow
 def test_livePilot_phase3RawOnly_threeRequestsLive(tmp_path: Path) -> None:
@@ -364,12 +618,61 @@ def test_livePilot_phase4Validation_noCleanWriteByDefault() -> None:
 
     payload = json.loads(report_path.read_text(encoding="utf-8"))
     assert payload["allow_clean_write"] is False
+    assert payload["can_write_clean"] is False
+    assert "ALLOW_CLEAN_WRITE_FALSE_DEFAULT" in payload["clean_write_block_reasons"]
+    declared_paths = payload["declared_validation_conflict_paths"]
+    assert declared_paths["data_quality_validator"].endswith("DataQualityValidator")
+    assert declared_paths["source_conflict_validator"].endswith("SourceConflictValidator")
+    assert declared_paths["clean_write_gate"].endswith("DbValidationGate")
     for item in payload["validations"]:
         assert item.get("allow_clean_write") is False
 
     proof = proof_path.read_text(encoding="utf-8")
     assert "allow_clean_write" in proof
     assert "false" in proof.lower()
+
+
+def test_livePilot_phase4_requiresRequest2Prerequisites(tmp_path: Path) -> None:
+    """Phase 4 must fail closed without Request 2 verdict and reconciliation artifacts."""
+    from backend.app.ops.live_pilot import (
+        LivePilotAuthorizationError,
+        capture_phase4_validation,
+    )
+
+    phase3_src = EVIDENCE_DIR / "phase3_raw_micro_fetch_evidence.json"
+    assert phase3_src.is_file()
+    (tmp_path / "phase3_raw_micro_fetch_evidence.json").write_text(
+        phase3_src.read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(LivePilotAuthorizationError, match="Request 2"):
+        capture_phase4_validation(evidence_dir=tmp_path)
+
+
+def test_livePilot_phase4_severeBlocksCleanWriteEvidence(tmp_path: Path) -> None:
+    """Severe validation findings must be recorded as a clean-write block."""
+    from backend.app.ops.live_pilot import capture_phase4_validation
+
+    (tmp_path / "eastmoney_stock_zh_a_hist_verdict.md").write_text(
+        "Request 2 original endpoint 不可用\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "phase3_request2_evidence_reconciliation.md").write_text(
+        "Request 2 stock_zh_a_hist push2his.eastmoney.com sidecar only\n",
+        encoding="utf-8",
+    )
+
+    result = capture_phase4_validation(
+        evidence_dir=tmp_path,
+        phase3_payload={"fetches": []},
+    )
+
+    assert result["severe_findings_block_clean_write"] is True
+    assert result["clean_write_performed"] is False
+    assert result["severe_findings"]
+    proof = _read(tmp_path / "phase4_no_production_mutation_proof.md")
+    assert "severe_findings_block_clean_write" in proof
 
 
 def test_livePilot_phase4Conflict_inspectOrNoConflict() -> None:
