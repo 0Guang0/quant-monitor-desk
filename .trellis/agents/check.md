@@ -20,7 +20,9 @@ Before reviewing, read in this order:
 4. Source files explicitly marked as Audit must-read in `AUDIT.plan.md` or MASTER Source Context Index.
 5. Relevant `.trellis/spec/` files explicitly referenced by `AUDIT.plan.md`, MASTER, or the audit/check manifest.
 
-Original `docs/implementation_tasks/**` task cards are Plan-phase inputs, not Audit-phase authority. Do not read them by default; read them only if `AUDIT.plan.md` or MASTER explicitly requires trace verification against a specific original task card.
+Original `docs/implementation_tasks/**` task cards are Plan-phase inputs by default. However, for complex tasks with `MASTER.plan.md` and `manifest_protocol_version >= 3`, Audit must read original task cards, project maps, round maps, and unresolved coverage when `AUDIT.plan.md` marks them as **Trace Authority Set** (listed in `audit.jsonl`).
+
+A1 / A5 / A8 must not rely solely on MASTER/AUDIT summaries when the Trace Authority Set is present. They must verify that MASTER/AUDIT inherited the original task scope, unresolved/deferred items, boundaries, and red flags.
 
 ## Core Responsibilities
 

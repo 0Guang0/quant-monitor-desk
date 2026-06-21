@@ -21,6 +21,7 @@
 Plan agent 在将原始执行任务转写为 `.trellis/tasks/**/MASTER.plan.md`、`AUDIT.plan.md`、`REPAIR.plan.md` 与 jsonl manifest 前，必须先读取：
 
 - `TASK_INPUT_CONTEXT_INDEX.md` — Plan 阶段上下文桥；用于建立原始任务、设计/契约/规则/定义与 Trellis 详细计划之间的追溯关系
+- `UNRESOLVED_ITEM_TASK_COVERAGE.md` — 未闭合项到原始执行任务卡的覆盖索引；Plan 必须按当前 registry 核对目标批次相关 ID，避免只看任务目标而漏掉待修复项
 - `GLOBAL_EXECUTION_RULES.md`
 - `GLOBAL_TESTING_POLICY.md`
 - `GLOBAL_RESOURCE_LIMITS.md`

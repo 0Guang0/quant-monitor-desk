@@ -63,6 +63,12 @@
 
 | [x] | 无 GitHub issue tracker — `vertical-slices.md` VS-1..8 替代 |
 
+### 3.9 Audit source trace gate
+
+| [x] | `audit.jsonl` includes original task card, implementation task indexes, project map, round map, unresolved coverage, and Plan trace artifacts |
+| [x] | `AUDIT.plan.md` assigns original-source trace duties to A1 / A5 / A8 |
+| [x] | PH-B0 includes source trace authority check (B0-7) before later phase audit |
+
 ## 4. Manifest Gate
 
 | [x] | implement 第一条 = MASTER |

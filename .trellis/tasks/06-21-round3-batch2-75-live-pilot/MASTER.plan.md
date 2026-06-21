@@ -522,6 +522,7 @@ def run_live_pilot_raw_only(request: LivePilotRequest, *, sandbox_root: Path) ->
 
 ## 11. Audit 交接
 
+- Audit **不得**将本 MASTER 视为 source completeness 的唯一权威。A1/A5/A8 必须对照 `AUDIT.plan.md` Trace Authority Set 中的原始任务卡、项目地图、轮次地图、implementation task index、unresolved coverage 与 registry 验证本 MASTER 是否完整继承。
 - 产出 `research/gitnexus-execute-summary.md`（Execute 7.pre 前）
 - `validate-execute-handoff` exit 0
 - Batch 3 handoff 写入 `final_registry_update.md`（模板）：
