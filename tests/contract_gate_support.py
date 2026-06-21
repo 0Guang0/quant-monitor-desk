@@ -19,6 +19,7 @@ ALLOWED_ADAPTER_FACTORY_PATHS = {
     PROJECT_ROOT / "backend" / "app" / "datasources" / "adapters" / "__init__.py",
     PROJECT_ROOT / "backend" / "app" / "datasources" / "__init__.py",
     PROJECT_ROOT / "backend" / "app" / "datasources" / "service.py",
+    PROJECT_ROOT / "backend" / "app" / "ops" / "live_pilot.py",
 }
 
 

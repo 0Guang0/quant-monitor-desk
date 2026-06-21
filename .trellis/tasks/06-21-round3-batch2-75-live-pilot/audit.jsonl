@@ -20,3 +20,5 @@
 {"file": ".trellis/tasks/06-21-round3-batch2-75-live-pilot/research/input-inventory.md", "reason": "for:A1 source universe audit; verify six critical context categories are represented"}
 {"file": ".trellis/tasks/06-21-round3-batch2-75-live-pilot/research/project-map-omission-check.md", "reason": "for:A1,A5 project map omission audit"}
 {"file": ".trellis/tasks/06-21-round3-batch2-75-live-pilot/research/integration-ledger.md", "reason": "for:A1,A5,A8 context packing ledger; verify inline/summary/pointer/filter decisions"}
+{"file": ".trellis/tasks/06-21-round3-batch2-75-live-pilot/execute-evidence/eastmoney_stock_zh_a_hist_verdict.md", "reason": "for:PH-B3,A5 Request 2 endpoint verdict"}
+{"file": ".trellis/tasks/06-21-round3-batch2-75-live-pilot/execute-evidence/phase3_request2_evidence_reconciliation.md", "reason": "for:PH-B3,A5 required reconciliation before Request 2 closeout"}

@@ -1,0 +1,13 @@
+# §8.2 Phase 0 GREEN evidence — 2026-06-21
+# uv run pytest tests/test_batch275_live_pilot_gate.py -k "missingAuthorization or disabledSource or authorization" -q
+
+....                                                                     [100%]
+4 passed
+
+# Slice regression
+# uv run pytest tests/test_batch275_live_pilot_gate.py tests/test_production_live_pilot_policy.py tests/test_batch25_production_data_gate.py tests/test_round3_audit_registry_alignment.py -q
+
+......................                                                   [100%]
+22 passed
+
+exit_code=0

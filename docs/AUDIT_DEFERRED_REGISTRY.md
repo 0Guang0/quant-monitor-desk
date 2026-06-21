@@ -98,9 +98,15 @@ Does **not** block 017 per `ROUND2_GAPS` §6; **must** be closed or re-deferred 
 
 ## DEFERRED — Round 3 Batch 2.75 (controlled production live pilot gate)
 
-| ID          | Item                                                       | Resolution phase                                      | Task hook                                                                             | Blocks 019? | Closure test / evidence                                                                                                                                                         |
-| ----------- | ---------------------------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| R3-B2.75-01 | Controlled production/live pilot has not been executed yet | **Batch 2.75** before Batch 3 or explicit re-deferral | `018B_production_live_pilot_gate.md` · `docs/quality/production_live_pilot_policy.md` | No          | Pilot closeout state plus route READY, raw evidence, fetch_log/file_registry evidence, validation evidence, lineage if clean sandbox write, and no production DB mutation proof |
+| ID               | Item                                                                                        | Resolution phase           | Task hook                                                                   | Blocks 019? | Closure test / evidence                                                                                                    |
+| ---------------- | ------------------------------------------------------------------------------------------- | -------------------------- | --------------------------------------------------------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------- |
+| R3-B2.75-REQ2-EM | Eastmoney `stock_zh_a_hist` / push2his validation endpoint unreachable in pilot environment | **018C / post Batch 2.75** | `018C_tdx_pytdx_low_cost_probe.md` · `eastmoney_stock_zh_a_hist_verdict.md` | No          | Endpoint reachable with evidence **or** approved alternate validation path documented in 018C; Sina sidecar does not close |
+
+## RESOLVED — Round 3 Batch 2.75 live pilot execute closeout
+
+| ID          | Item                                                                                                           | Evidence                                                                                                                                                                                   |
+| ----------- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| R3-B2.75-01 | Controlled production/live pilot executed; closeout `PILOT_FAIL_SOURCE` (Request 2 Eastmoney hist unreachable) | `.trellis/tasks/06-21-round3-batch2-75-live-pilot/execute-evidence/final_pilot_closeout.md` · phase3/4 evidence · production DB zero mutation; does not open formal production-live access |
 
 ## RESOLVED — Round 3 Batch 2.75 planning/policy gate
 

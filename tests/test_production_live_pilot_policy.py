@@ -31,7 +31,7 @@ def test_projectMap_reflectsBatch275CurrentStatus() -> None:
     assert "Batch 2.75" in text
     assert "production_live_pilot_policy.md" in text
     assert "018B_production_live_pilot_gate.md" in text
-    assert "正式 live pilot 实现仍待执行" in text
+    assert "PILOT_FAIL_SOURCE" in text
 
 
 def test_round3Map_placesBatch275_beforeBatch3() -> None:
@@ -42,7 +42,7 @@ def test_round3Map_placesBatch275_beforeBatch3() -> None:
     order = text.split("## 5. Recommended execution order", maxsplit=1)[1]
     assert order.index("**Batch 2.5**") < order.index("**Batch 2.75**") < order.index("**Batch 3**")
     source_index = text.split("### 4.2 Batch-specific Plan source bundles", maxsplit=1)[1]
-    assert "| Batch 2.75 |" in source_index
+    assert "| Batch 2.75" in source_index
     assert "raw-only micro-fetch" in source_index
     assert "no production DB mutation" in source_index
 
@@ -96,14 +96,16 @@ def test_policy_preservesSandboxAndRawOnlyControls() -> None:
 def test_registriesKeepBatch25LiveFredDeferredToBatch275() -> None:
     audit = _read(AUDIT_REGISTRY)
     unresolved = _read(UNRESOLVED_REGISTRY)
+    resolved = _read(RESOLVED_REGISTRY)
     for registry in (audit, unresolved):
         assert "B2.5-O-05" in registry
         assert "Batch 2.75" in registry
-        assert "R3-B2.75-01" in registry
         assert "018B_production_live_pilot_gate.md" in registry
-        assert "production_live_pilot_policy.md" in registry
+    assert "production_live_pilot_policy.md" in audit
     assert "live requires Batch 2.75 auth evidence and sandbox/no-mutation proof" in audit
-    assert "Controlled production/live pilot has not been executed" in unresolved
+    assert "R3-B2.75-01" in resolved
+    assert "PILOT_FAIL_SOURCE" in resolved
+    assert "R3-B2.75-REQ2-EM" in unresolved
 
 
 def test_resolvedRegistry_recordsPlanningGateWithoutClosingLivePilot() -> None:
@@ -114,8 +116,9 @@ def test_resolvedRegistry_recordsPlanningGateWithoutClosingLivePilot() -> None:
     assert "R3-B2.75-PLAN-01" in audit
     assert "R3-B2.75-PLAN-01" in resolved
     assert "Does not close `R3-B2.75-01`" in resolved
-    assert "R3-B2.75-01" in unresolved
-    assert "Controlled production/live pilot has not been executed" in unresolved
+    assert "R3-B2.75-01" in resolved
+    assert "PILOT_FAIL_SOURCE" in resolved
+    assert "R3-B2.75-REQ2-EM" in unresolved
     assert "25 passed in current session" in resolved
 
 
@@ -123,6 +126,8 @@ def test_docsIndexesExposeBatch275EntryPoints() -> None:
     readme = _read(MODELING_README)
     index = _read(DOCS_INDEX)
     assert "018B_production_live_pilot_gate.md" in readme
-    assert "017` → `018` → `018A` → `018B` → `019" in readme
+    assert "018A_layer1_observation_ingestion_bridge.md" in readme
+    assert "018C_tdx_pytdx_low_cost_probe.md" in readme
+    assert "`019`" in readme
     assert "production_live_pilot_policy.md" in index
     assert "018B_production_live_pilot_gate.md" in index

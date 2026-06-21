@@ -42,6 +42,7 @@
 {"file": "specs/contracts/write_contract.yaml", "reason": "extract: WriteRequest allow_clean_write | for: AC-P4-2"}
 {"file": "docs/quality/staged_acceptance_policy.md", "reason": "extract: staged vs live boundary | for: filtered — do not reuse staged as live"}
 {"file": "backend/app/validators/source_conflict.py", "reason": "extract: conflict inspect API | for: AC-P4-5"}
+{"file": ".trellis/tasks/06-21-round3-batch2-75-live-pilot/execute-evidence/eastmoney_stock_zh_a_hist_verdict.md", "reason": "extract: Request 2 original endpoint verdict; stock_zh_a_daily/Sina sidecar cannot close stock_zh_a_hist/Eastmoney hist | for: AC-P3-4,AC-P5-2"}
 {"file": "specs/contracts/source_conflict_rules.yaml", "reason": "extract: conflict rule ids | for: AC-P4-5"}
 {"file": "docs/implementation_tasks/ROUND_2_6_DATASOURCE_ROUTING_OPS_ALIGNMENT/016F_define_prod_equivalent_scale_benchmark.md", "reason": "extract: perf smoke scope | for: AC-P45"}
 {"file": "specs/layer1_axes/restructured_axes_v1_1/environment_axis/environment_axis_indicator_spec.yaml", "reason": "extract: ENV-E1-DGS10 indicator | for: AC-P3-5"}

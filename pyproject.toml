@@ -20,6 +20,11 @@ dev = [
     "httpx2>=2.0.0",
     "ruff>=0.8.0",
 ]
+live-pilot = [
+    "baostock>=0.8.8",
+    "akshare>=1.14.0",
+    "pandas>=2.2.0",
+]
 
 [build-system]
 requires = ["setuptools>=75.0.0"]
@@ -36,6 +41,7 @@ addopts = "-q --basetemp=.audit-sandbox/pytest"
 cache_dir = ".audit-sandbox/.pytest_cache"
 markers = [
     "slow: integration or full-pipeline tests; exclude with pytest -m 'not slow' for quick CI",
+    "network: live vendor fetch tests; skipped unless --run-network",
 ]
 filterwarnings = [
     "ignore:Using `httpx` with `starlette.testclient` is deprecated:starlette.exceptions.StarletteDeprecationWarning",

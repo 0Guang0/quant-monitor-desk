@@ -1,0 +1,6 @@
+# §8.0 Boot RED evidence — 2026-06-21
+# Command: uv run python -c "import sys; from pathlib import Path; p=Path('.trellis/tasks/06-21-round3-batch2-75-live-pilot/research/execute-boot.md'); sys.exit(0 if p.is_file() else 1)"
+# Expected: exit code 1 (execute-boot.md missing before GREEN)
+
+exit_code=1
+reason=execute-boot.md not found at boot start

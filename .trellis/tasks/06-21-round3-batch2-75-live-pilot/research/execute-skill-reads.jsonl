@@ -1,0 +1,23 @@
+{"phase":"boot","skill":"trellis-execute","path":".cursor/skills/trellis-execute/SKILL.md"}
+{"phase":"boot","skill":"gitnexus-impact","action":"query(live pilot datasource fetch preview route)","risk":"LOW"}
+{"phase":"boot","skill":"gitnexus-impact","action":"impact(DataSourceService)","risk":"LOW"}
+{"phase":"boot","skill":"gitnexus-impact","action":"impact(preview_route)","risk":"LOW"}
+{"phase":"boot","skill":"gitnexus-impact","action":"impact(fetch)","risk":"LOW"}
+{"phase":"boot","skill":"gitnexus-impact","action":"impact(DbInspector)","risk":"LOW"}
+{"phase":"boot","skill":"gitnexus-impact","action":"impact(DataQualityValidator)","risk":"LOW"}
+{"phase":"boot","skill":"gitnexus-impact","action":"impact(ResourceGuard)","risk":"LOW"}
+{"phase":"boot","skill":"integration-ledger","path":".trellis/tasks/06-21-round3-batch2-75-live-pilot/research/integration-ledger.md"}
+{"phase":"boot","skill":"implement-manifest","path":".trellis/tasks/06-21-round3-batch2-75-live-pilot/implement.jsonl","entries":50}
+{"phase":"8.0","skill":"trellis-execute","before":"GREEN","result":"boot validation passed, 17 baseline tests green"}
+{"phase":"8.1","skill":"test-driven-development","before":"RED","test":"test_livePilot_phaseMinus1_registryReconciliationRequired"}
+{"phase":"8.1","skill":"test-driven-development","before":"GREEN","result":"phase_minus1_reconciliation.md + phase-1-registry-read.txt"}
+{"phase":"8.2","skill":"test-driven-development","before":"RED","test":"test_livePilot_missingAuthorization_blocksBeforeFetch"}
+{"phase":"8.2","skill":"karpathy-guidelines","before":"GREEN","path":".cursor/plugins/cache/karpathy-skills/andrej-karpathy-skills/2c606141936f1eeef17fa3043a72095b4765b9c2/skills/karpathy-guidelines/SKILL.md"}
+{"phase":"8.2","skill":"testing-guidelines","before":"GREEN","path":".claude/skills/testing-guidelines/SKILL.md"}
+{"phase":"8.2","skill":"test-driven-development","before":"GREEN","result":"live_pilot.py + 4 gate tests green"}
+{"phase":"8.3","skill":"test-driven-development","before":"RED","test":"test_livePilot_phase1Baseline_readOnly"}
+{"phase":"8.3","skill":"incremental-implementation","before":"SLICE","path":".claude/plugins/cache/addy-agent-skills/agent-skills/3a6fc6392823/skills/incremental-implementation/SKILL.md"}
+{"phase":"8.3","skill":"test-driven-development","before":"GREEN","result":"capture_phase1_baseline + phase1 evidence green"}
+{"phase":"8.4","skill":"test-driven-development","before":"RED","test":"test_livePilot_phase2RouteMatrix_threeRequests"}
+{"phase":"8.4","skill":"api-and-interface-design","before":"GREEN","path":".claude/skills/api-and-interface-design/SKILL.md"}
+{"phase":"8.4","skill":"test-driven-development","before":"GREEN","result":"phase2 route matrix READY x3, no fetch"}

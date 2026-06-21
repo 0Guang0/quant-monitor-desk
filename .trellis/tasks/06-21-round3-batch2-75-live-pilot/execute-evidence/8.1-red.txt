@@ -1,0 +1,15 @@
+# §8.1 Phase -1 RED evidence — 2026-06-21
+# uv run pytest tests/test_batch275_live_pilot_gate.py::test_livePilot_phaseMinus1_registryReconciliationRequired -q
+
+F                                                                        [100%]
+================================== FAILURES ===================================
+__________ test_livePilot_phaseMinus1_registryReconciliationRequired __________
+
+    def test_livePilot_phaseMinus1_registryReconciliationRequired() -> None:
+        """Phase -1 must reconcile five tracked IDs against registries before pilot work."""
+        reconciliation = EVIDENCE_DIR / "phase_minus1_reconciliation.md"
+        registry_read = EVIDENCE_DIR / "phase-1-registry-read.txt"
+>       assert reconciliation.is_file(), "phase_minus1_reconciliation.md required"
+E       AssertionError: phase_minus1_reconciliation.md required
+
+exit_code=1

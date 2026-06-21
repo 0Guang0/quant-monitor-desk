@@ -167,14 +167,15 @@ Audit 阶段不得只验证 Execute 是否按 MASTER 执行，还必须验证 MA
 
 ### 3.3 PH-B3 — Phase 3 HITL + raw fetch
 
-| #    | 检查项                        | 证据                                   | 通过 |
-| ---- | ----------------------------- | -------------------------------------- | ---- |
-| B3-1 | HITL 文件存在且先于 fetch     | phase3_hitl_user_confirmation.md       |      |
-| B3-2 | sandbox raw evidence JSON     | phase3_raw_micro_fetch_evidence.json   |      |
-| B3-3 | production DB delta = 0       | phase3_no_production_mutation_proof.md |      |
-| B3-4 | Request 2 不升 Primary        | evidence per-request                   |      |
-| B3-5 | Request 3 不关闭 FRED primary | evidence `fred_primary_deferred`       |      |
-| B3-6 | content hash + fetch_log 字段 | evidence json                          |      |
+| #    | 检查项                                                                                                                     | 证据                                                                                  | 通过 |
+| ---- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ---- |
+| B3-1 | HITL 文件存在且先于 fetch                                                                                                  | phase3_hitl_user_confirmation.md                                                      |      |
+| B3-2 | sandbox raw evidence JSON                                                                                                  | phase3_raw_micro_fetch_evidence.json                                                  |      |
+| B3-3 | production DB delta = 0                                                                                                    | phase3_no_production_mutation_proof.md                                                |      |
+| B3-4 | Request 2 不升 Primary                                                                                                     | evidence per-request                                                                  |      |
+| B3-5 | Request 3 不关闭 FRED primary                                                                                              | evidence `fred_primary_deferred`                                                      |      |
+| B3-6 | content hash + fetch_log 字段                                                                                              | evidence json                                                                         |      |
+| B3-7 | Request 2 endpoint 语义核对：`stock_zh_a_daily` / Sina sidecar evidence 不得关闭 `stock_zh_a_hist` / Eastmoney hist 原请求 | `eastmoney_stock_zh_a_hist_verdict.md` + `phase3_request2_evidence_reconciliation.md` |      |
 
 **产出:** `research/audit-ph-b3-raw-fetch.md`
 

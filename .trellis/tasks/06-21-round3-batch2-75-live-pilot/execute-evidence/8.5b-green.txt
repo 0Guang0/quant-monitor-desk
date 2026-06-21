@@ -1,0 +1,16 @@
+§8.5b Phase 3 live raw-only fetch — GREEN
+generated_at: 2026-06-21T11:47:00Z
+
+pytest tests/test_batch275_live_pilot_gate.py -k test_livePilot_phase3RawOnly_threeRequestsLive --run-network -q
+=> 1 passed
+
+capture_task_phase3_raw_evidence(execute-evidence/)
+=> phase3_raw_micro_fetch_evidence.json
+=> phase3_no_production_mutation_proof.md
+
+Results:
+- pilot-req-1 baostock cn_equity_daily_bar: SUCCESS (9 rows)
+- pilot-req-2 akshare cn_equity_daily_bar validation: SUCCESS (stock_zh_a_daily / sina)
+- pilot-req-3 akshare macro_supplementary DGS10 shape: SUCCESS (20 rows, bond_zh_us_rate)
+
+Production DB hash unchanged; all raw paths under .audit-sandbox/batch275-live-pilot/

@@ -38,6 +38,7 @@
 - **`dry_run` 语义：** Phase 2 始终 `dry_run=true`（route preview only）；Phase 3 每个 live fetch 在 route `READY` + HITL 确认后于 sandbox 内设置 `dry_run=false`。
 - **Route 硬停止码（任一即停止并记录失败证据）：** `DISABLED_SOURCE`, `CAPABILITY_MISSING`, `USER_AUTH_REQUIRED`, `RESOURCE_GUARD_PAUSED`, `route_status != READY`。
 - **Request 3：** akshare `macro_supplementary` / `DGS10` 仅探测 shape；**不**关闭 `ENV-E1-DGS10` 的 FRED primary（`B2.5-O-05`）。
+- **当前执行中补丁（2026-06-21）：** `eastmoney_stock_zh_a_hist_verdict.md` 判定 Request 2 原设计 endpoint `stock_zh_a_hist` / `push2his.eastmoney.com` 在当前 pilot 环境不可用；既有 `stock_zh_a_daily` / Sina raw evidence 可保留为 sidecar/candidate 证据，但**不得**默认关闭原 Request 2，也不得作为 `PILOT_PASS_RAW_ONLY` 的三请求通过依据。
 - 依赖：`uv sync --locked`（`runtime_versions.md`）。
 
 **Sandbox 路径表（canonical）：**
@@ -130,18 +131,20 @@ HITL：§8.5a 首次真实网络 fetch 前须用户确认并产出 phase3_hitl_u
 
 ### 0.8 证据清单（Execute 产出）
 
-| Phase | 路径                                                    | 说明                         |
-| ----- | ------------------------------------------------------- | ---------------------------- |
-| -1    | `execute-evidence/phase-1-registry-read.txt`            | 四 registry 读证             |
-| 0     | `execute-evidence/phase0_authorization_record.md`       | 授权 + source risk rationale |
-| 1     | `execute-evidence/phase1_capability_snapshot.json`      | AC-P1-3                      |
-| 2     | `execute-evidence/phase2_route_preview_matrix.json`     | dry_run route                |
-| 3     | `execute-evidence/phase3_hitl_user_confirmation.md`     | HITL（§8.5a）                |
-| 3     | `execute-evidence/phase3_raw_micro_fetch_evidence.json` | 三请求 raw                   |
-| 4     | `execute-evidence/phase4_validation_report.json`        | validation                   |
-| 4     | `execute-evidence/phase4_conflict_inspect.txt`          | AC-P4-5                      |
-| 5     | `execute-evidence/phase45_perf_budget.json`             | perf re-defer schema         |
-| 5     | `execute-evidence/final_registry_update.md`             | §11 handoff                  |
+| Phase | 路径                                                          | 说明                                                            |
+| ----- | ------------------------------------------------------------- | --------------------------------------------------------------- |
+| -1    | `execute-evidence/phase-1-registry-read.txt`                  | 四 registry 读证                                                |
+| 0     | `execute-evidence/phase0_authorization_record.md`             | 授权 + source risk rationale                                    |
+| 1     | `execute-evidence/phase1_capability_snapshot.json`            | AC-P1-3                                                         |
+| 2     | `execute-evidence/phase2_route_preview_matrix.json`           | dry_run route                                                   |
+| 3     | `execute-evidence/phase3_hitl_user_confirmation.md`           | HITL（§8.5a）                                                   |
+| 3     | `execute-evidence/phase3_raw_micro_fetch_evidence.json`       | 三请求 raw（执行中证据；须经 Request 2 endpoint 语义核对）      |
+| 3     | `execute-evidence/eastmoney_stock_zh_a_hist_verdict.md`       | Request 2 原设计 endpoint 判定：`stock_zh_a_hist` / `push2his`  |
+| 3     | `execute-evidence/phase3_request2_evidence_reconciliation.md` | 必补：将 Sina sidecar evidence 与原 Request 2 closeout 语义分开 |
+| 4     | `execute-evidence/phase4_validation_report.json`              | validation                                                      |
+| 4     | `execute-evidence/phase4_conflict_inspect.txt`                | AC-P4-5                                                         |
+| 5     | `execute-evidence/phase45_perf_budget.json`                   | perf re-defer schema                                            |
+| 5     | `execute-evidence/final_registry_update.md`                   | §11 handoff                                                     |
 
 ### 0.9 边界与反模式
 
@@ -149,21 +152,22 @@ HITL：§8.5a 首次真实网络 fetch 前须用户确认并产出 phase3_hitl_u
 - 不得在同一 sprint 启动 ingestion R2b–R2d。
 - `fred` 非注册 `source_id` — 不得 bypass gate。
 - cninfo 可选：本 pilot **defer**（不在三请求内）。
+- 不得将 `stock_zh_a_daily` / Sina 的 sidecar evidence 作为 `stock_zh_a_hist` / Eastmoney hist 的成功证据；vendor API / endpoint 必须写入 raw evidence 与 closeout。
 
 ### 0.10 进度（Plan 冻结时）
 
-| §8   | VS   | 状态 |
-| ---- | ---- | ---- |
-| 8.0  | —    | Plan |
-| 8.1  | VS-1 | Plan |
-| 8.2  | VS-1 | Plan |
-| 8.3  | VS-2 | Plan |
-| 8.4  | VS-3 | Plan |
-| 8.5a | VS-4 | Plan |
-| 8.5b | VS-5 | Plan |
-| 8.6  | VS-6 | Plan |
-| 8.7  | VS-7 | Plan |
-| 8.8  | VS-8 | Plan |
+| §8   | VS   | 状态    |
+| ---- | ---- | ------- |
+| 8.0  | —    | Execute |
+| 8.1  | VS-1 | Execute |
+| 8.2  | VS-1 | Execute |
+| 8.3  | VS-2 | Execute |
+| 8.4  | VS-3 | Execute |
+| 8.5a | VS-4 | Execute |
+| 8.5b | VS-5 | Execute |
+| 8.6  | VS-6 | Execute |
+| 8.7  | VS-7 | Execute |
+| 8.8  | VS-8 | Execute |
 
 ### 0.11 开放项（Plan 冻结）
 
@@ -172,6 +176,18 @@ HITL：§8.5a 首次真实网络 fetch 前须用户确认并产出 phase3_hitl_u
 | O-01 | 用户 HITL 确认 | User    | `phase3_hitl_user_confirmation.md`   |
 | O-02 | 网络可达性     | Env     | Phase 3 fetch 或 `PILOT_FAIL_SOURCE` |
 | O-03 | Perf budget    | Execute | `phase45_perf_budget.json`           |
+
+### 0.12 当前执行中状态补充（2026-06-21，不覆盖既有证据）
+
+Batch 2.75 当前已进入 Phase 3 raw-only live fetch 之后、Phase 4 validation/Phase 5 closeout 之前。既有 `phase3_raw_micro_fetch_evidence.json` 与 `8.5b-green.txt` 不删除；但 Request 2 的既有 raw 文件标记 `vendor_api=stock_zh_a_daily`，属于 Sina sidecar/candidate evidence，不得覆盖 `eastmoney_stock_zh_a_hist_verdict.md` 对原设计 endpoint `stock_zh_a_hist` / `push2his.eastmoney.com` 的不可用判定。
+
+执行者下一步必须先补 `execute-evidence/phase3_request2_evidence_reconciliation.md`，再进入 §8.6/§8.8。该 reconciliation 必须说明：
+
+1. 原 Request 2 语义是 `akshare` / `fetch_daily_bar_validation` / `stock_zh_a_hist` / Eastmoney `push2his`。
+2. 既有 Sina raw evidence 可保留为 sidecar/candidate 证据，但不得作为原 Request 2 GREEN。
+3. 若未重新跑通当前代码中的 `stock_zh_a_hist`，则 Request 2 closeout 必须按 source/endpoint failure 处理。
+4. `PILOT_PASS_RAW_ONLY` 仅在三条授权 request 按原语义均有 raw evidence 时可用；否则使用 `PILOT_FAIL_SOURCE` 或带 limitation 的 registry/handoff 表述。
+5. 后续低成本数据接口候选源 probe 已拆到 `docs/implementation_tasks/ROUND_3_MODELING_LAYERS/018C_tdx_pytdx_low_cost_probe.md`，不得混入当前 Batch 2.75 closeout。
 
 ## 1. 目标
 
@@ -196,44 +212,44 @@ HITL：§8.5a 首次真实网络 fetch 前须用户确认并产出 phase3_hitl_u
 
 ## 2. 预期结果（A5 trace-ac）
 
-| ID       | 预期结果                                                | 验证链                                 |
-| -------- | ------------------------------------------------------- | -------------------------------------- |
-| AC-PRE   | Batch 2.5 staged + policy tests green                   | §8.0                                   |
-| AC-PM1   | 五 tracked ID 映射 AC                                   | §8.1 `phase_minus1_reconciliation.md`  |
-| AC-PM2   | 不 reopen R3-B25-DOC-01 等                              | §8.1                                   |
-| AC-PM3   | not-in-scope 注释                                       | §8.1                                   |
-| AC-PM4   | sprint 未混 R2b–R2d                                     | §8.1                                   |
-| AC-P0-1  | 授权文件 + 三请求参数                                   | §8.2                                   |
-| AC-P0-2  | source risk rationale（baostock/akshare 低于 QMT/FRED） | §8.2 `phase0_authorization_record.md`  |
-| AC-P0-2b | fail-closed 测试绿（无 network）                        | §8.2 gate tests                        |
-| AC-P0-3  | QMT/Yahoo/FRED 未默认启用                               | §8.2                                   |
-| AC-P0-4  | 无授权则 pilot 不继续                                   | §8.2                                   |
-| AC-P1-1  | baseline inventory json/md                              | §8.3                                   |
-| AC-P1-2  | Phase 1 零 mutation                                     | §8.3                                   |
-| AC-P1-3  | source registry/capability snapshot                     | §8.3 `phase1_capability_snapshot.json` |
-| AC-P2-1  | 三请求 route preview                                    | §8.4                                   |
-| AC-P2-2  | 非 READY 则停止+证据                                    | §8.4                                   |
-| AC-P2-3  | 无 fixture fallback                                     | §8.4                                   |
-| AC-P3-1  | sandbox raw + fetch_log + file_registry                 | §8.5                                   |
-| AC-P3-2  | content hash + 请求参数                                 | §8.5                                   |
-| AC-P3-3  | production DB 不变                                      | §8.5                                   |
-| AC-P3-4  | Request 2 不升 Primary                                  | §8.5                                   |
-| AC-P3-5  | Request 3 不关闭 FRED primary                           | §8.5                                   |
-| AC-P4-1  | validation report on raw                                | §8.6                                   |
-| AC-P4-2  | severe 阻断 clean write                                 | §8.6                                   |
-| AC-P4-3  | 默认无 clean write                                      | §8.6                                   |
-| AC-P4-4  | production DB 仍不变                                    | §8.6                                   |
-| AC-P4-5  | conflict report 或 explicit no-conflict                 | §8.6 `phase4_conflict_inspect.txt`     |
-| AC-P45-1 | smoke 证据或 re-defer 行                                | §8.7                                   |
-| AC-P45-2 | bounded + ResourceGuard                                 | §8.7                                   |
-| AC-P45-3 | 不作 live 授权依据                                      | §8.7                                   |
-| AC-P5-1  | 单一 `PILOT_*` 状态                                     | §8.8                                   |
-| AC-P5-2  | 默认 `PILOT_PASS_RAW_ONLY` 若三请求 raw 成功            | §8.8                                   |
-| AC-P5-3  | registry 三文件一致                                     | §8.8                                   |
-| AC-P5-4  | Batch 3 handoff note                                    | §8.8                                   |
-| AC-REG-1 | 未闭合项 DEFERRED 有 owner                              | §8.8                                   |
-| AC-REG-2 | 四 registry closeout checklist 一致                     | §8.8, §11                              |
-| AC-GATE  | §9–§10 全绿                                             | §8.8                                   |
+| ID       | 预期结果                                                                                                               | 验证链                                 |
+| -------- | ---------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| AC-PRE   | Batch 2.5 staged + policy tests green                                                                                  | §8.0                                   |
+| AC-PM1   | 五 tracked ID 映射 AC                                                                                                  | §8.1 `phase_minus1_reconciliation.md`  |
+| AC-PM2   | 不 reopen R3-B25-DOC-01 等                                                                                             | §8.1                                   |
+| AC-PM3   | not-in-scope 注释                                                                                                      | §8.1                                   |
+| AC-PM4   | sprint 未混 R2b–R2d                                                                                                    | §8.1                                   |
+| AC-P0-1  | 授权文件 + 三请求参数                                                                                                  | §8.2                                   |
+| AC-P0-2  | source risk rationale（baostock/akshare 低于 QMT/FRED）                                                                | §8.2 `phase0_authorization_record.md`  |
+| AC-P0-2b | fail-closed 测试绿（无 network）                                                                                       | §8.2 gate tests                        |
+| AC-P0-3  | QMT/Yahoo/FRED 未默认启用                                                                                              | §8.2                                   |
+| AC-P0-4  | 无授权则 pilot 不继续                                                                                                  | §8.2                                   |
+| AC-P1-1  | baseline inventory json/md                                                                                             | §8.3                                   |
+| AC-P1-2  | Phase 1 零 mutation                                                                                                    | §8.3                                   |
+| AC-P1-3  | source registry/capability snapshot                                                                                    | §8.3 `phase1_capability_snapshot.json` |
+| AC-P2-1  | 三请求 route preview                                                                                                   | §8.4                                   |
+| AC-P2-2  | 非 READY 则停止+证据                                                                                                   | §8.4                                   |
+| AC-P2-3  | 无 fixture fallback                                                                                                    | §8.4                                   |
+| AC-P3-1  | sandbox raw + fetch_log + file_registry                                                                                | §8.5                                   |
+| AC-P3-2  | content hash + 请求参数                                                                                                | §8.5                                   |
+| AC-P3-3  | production DB 不变                                                                                                     | §8.5                                   |
+| AC-P3-4  | Request 2 不升 Primary；且 `stock_zh_a_daily` / Sina sidecar evidence 不得冒充 `stock_zh_a_hist` / Eastmoney hist 成功 | §8.5                                   |
+| AC-P3-5  | Request 3 不关闭 FRED primary                                                                                          | §8.5                                   |
+| AC-P4-1  | validation report on raw                                                                                               | §8.6                                   |
+| AC-P4-2  | severe 阻断 clean write                                                                                                | §8.6                                   |
+| AC-P4-3  | 默认无 clean write                                                                                                     | §8.6                                   |
+| AC-P4-4  | production DB 仍不变                                                                                                   | §8.6                                   |
+| AC-P4-5  | conflict report 或 explicit no-conflict                                                                                | §8.6 `phase4_conflict_inspect.txt`     |
+| AC-P45-1 | smoke 证据或 re-defer 行                                                                                               | §8.7                                   |
+| AC-P45-2 | bounded + ResourceGuard                                                                                                | §8.7                                   |
+| AC-P45-3 | 不作 live 授权依据                                                                                                     | §8.7                                   |
+| AC-P5-1  | 单一 `PILOT_*` 状态                                                                                                    | §8.8                                   |
+| AC-P5-2  | 默认 `PILOT_PASS_RAW_ONLY` 仅限三请求按原授权语义 raw 成功；若 Request 2 仅有 Sina sidecar evidence，则不能 PASS       | §8.8                                   |
+| AC-P5-3  | registry 三文件一致                                                                                                    | §8.8                                   |
+| AC-P5-4  | Batch 3 handoff note                                                                                                   | §8.8                                   |
+| AC-REG-1 | 未闭合项 DEFERRED 有 owner                                                                                             | §8.8                                   |
+| AC-REG-2 | 四 registry closeout checklist 一致                                                                                    | §8.8, §11                              |
+| AC-GATE  | §9–§10 全绿                                                                                                            | §8.8                                   |
 
 ---
 
@@ -351,6 +367,7 @@ def run_live_pilot_raw_only(request: LivePilotRequest, *, sandbox_root: Path) ->
 ## 7. Red flags
 
 - 网络失败时用 fixture 顶上 → `PILOT_FAIL_SOURCE` + 证据，禁止 fallback
+- Request 2 的 `stock_zh_a_hist` / Eastmoney hist 不可用时，用 `stock_zh_a_daily` / Sina raw evidence 冒充原接口 GREEN → 违反 AC-P3-4 / AC-P5-2
 - Request 3 成功后被表述为「FRED live PASS」→ 违反 AC-P3-5
 - production DB 行数变化 → 立即 FAIL + 停止
 - 同 PR 改 `ingestion.py` 拆分 → 违反 sprint 约束
@@ -439,29 +456,29 @@ def run_live_pilot_raw_only(request: LivePilotRequest, *, sandbox_root: Path) ->
 
 ### 8.5b Phase 3 raw-only live fetch
 
-| 字段       | 内容                                                                                                               |
-| ---------- | ------------------------------------------------------------------------------------------------------------------ |
-| 做什么     | HITL 后 sandbox `dry_run=false` raw-only 三请求；**禁止** staged fixture                                           |
-| RED 命令   | `uv run pytest tests/test_batch275_live_pilot_gate.py -k phase3 -q`                                                |
-| GREEN 命令 | 同上 + 产出 evidence JSON（`@pytest.mark.slow` + network 标记见 §9）                                               |
-| RED 证据   | `execute-evidence/8.5b-red.txt`                                                                                    |
-| GREEN 证据 | `execute-evidence/phase3_raw_micro_fetch_evidence.json`, `execute-evidence/phase3_no_production_mutation_proof.md` |
-| 通过条件   | AC-P3-1..5                                                                                                         |
-| Skill      | test-driven-development, security-and-hardening                                                                    |
-| **Audit**  | **PH-B3 PASS 后才能 §8.6**                                                                                         |
+| 字段       | 内容                                                                                                                                                                 |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 做什么     | HITL 后 sandbox `dry_run=false` raw-only 三请求；**禁止** staged fixture                                                                                             |
+| RED 命令   | `uv run pytest tests/test_batch275_live_pilot_gate.py -k phase3 -q`                                                                                                  |
+| GREEN 命令 | 同上 + 产出 evidence JSON（`@pytest.mark.slow` + network 标记见 §9）                                                                                                 |
+| RED 证据   | `execute-evidence/8.5b-red.txt`                                                                                                                                      |
+| GREEN 证据 | `execute-evidence/phase3_raw_micro_fetch_evidence.json`, `execute-evidence/phase3_no_production_mutation_proof.md`                                                   |
+| 通过条件   | AC-P3-1..5；若 Request 2 raw evidence 的 `vendor_api` 不是 `stock_zh_a_hist`，必须补 `phase3_request2_evidence_reconciliation.md` 并不得将该 request 计为原语义 PASS |
+| Skill      | test-driven-development, security-and-hardening                                                                                                                      |
+| **Audit**  | **PH-B3 PASS 后才能 §8.6**                                                                                                                                           |
 
 ### 8.6 Phase 4 validation
 
-| 字段       | 内容                                                                                                                 |
-| ---------- | -------------------------------------------------------------------------------------------------------------------- |
-| 做什么     | validation + `source_conflict` inspect on raw；**默认无 clean write**；`PILOT_PASS_SANDBOX_CLEAN` 分支须单独授权修订 |
-| RED 命令   | `uv run pytest tests/test_batch275_live_pilot_gate.py::test_livePilot_phase4Validation_noCleanWriteByDefault -q`     |
-| GREEN 命令 | `uv run pytest tests/test_batch275_live_pilot_gate.py -k phase4 -q`                                                  |
-| RED 证据   | `execute-evidence/8.6-red.txt`                                                                                       |
-| GREEN 证据 | `execute-evidence/phase4_validation_report.json`, `execute-evidence/phase4_conflict_inspect.txt`                     |
-| 通过条件   | AC-P4-1..5                                                                                                           |
-| Skill      | test-driven-development                                                                                              |
-| **Audit**  | **PH-B4 PASS 后才能 §8.7**                                                                                           |
+| 字段       | 内容                                                                                                                                                                       |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 做什么     | validation + `source_conflict` inspect on raw；**默认无 clean write**；`PILOT_PASS_SANDBOX_CLEAN` 分支须单独授权修订；Phase 4 前必须完成 Request 2 evidence reconciliation |
+| RED 命令   | `uv run pytest tests/test_batch275_live_pilot_gate.py::test_livePilot_phase4Validation_noCleanWriteByDefault -q`                                                           |
+| GREEN 命令 | `uv run pytest tests/test_batch275_live_pilot_gate.py -k phase4 -q`                                                                                                        |
+| RED 证据   | `execute-evidence/8.6-red.txt`                                                                                                                                             |
+| GREEN 证据 | `execute-evidence/phase4_validation_report.json`, `execute-evidence/phase4_conflict_inspect.txt`                                                                           |
+| 通过条件   | AC-P4-1..5                                                                                                                                                                 |
+| Skill      | test-driven-development                                                                                                                                                    |
+| **Audit**  | **PH-B4 PASS 后才能 §8.7**                                                                                                                                                 |
 
 ### 8.7 Phase 4.5 perf budget
 
@@ -480,7 +497,7 @@ def run_live_pilot_raw_only(request: LivePilotRequest, *, sandbox_root: Path) ->
 
 | 字段       | 内容                                                                                                                                                                                                                                                                                                                     |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 做什么     | `PILOT_*` + registry + Batch 3 handoff + §10 全量                                                                                                                                                                                                                                                                        |
+| 做什么     | `PILOT_*` + registry + Batch 3 handoff + §10 全量；closeout 必须引用 `eastmoney_stock_zh_a_hist_verdict.md` 与 `phase3_request2_evidence_reconciliation.md`，并说明 Sina sidecar evidence 不关闭原 Request 2                                                                                                             |
 | RED 命令   | `uv run pytest -q`（若有回归红则 fail）                                                                                                                                                                                                                                                                                  |
 | GREEN 命令 | `uv run pytest tests/test_batch275_live_pilot_gate.py tests/test_production_live_pilot_policy.py tests/test_batch25_production_data_gate.py tests/test_round3_audit_registry_alignment.py tests/test_datasource_service.py tests/test_source_route_planner.py tests/test_ops_db_inspector.py -q` 然后 `uv run pytest -q` |
 | RED 证据   | `execute-evidence/8.8-red.txt`                                                                                                                                                                                                                                                                                           |

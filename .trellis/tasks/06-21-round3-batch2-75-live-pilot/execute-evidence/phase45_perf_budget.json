@@ -1,0 +1,8 @@
+{
+  "owner": "batch275-execute",
+  "phase": "4.5",
+  "status": "RE_DEFERRED",
+  "closure_test": "uv run python scripts/production_equivalent_smoke.py --data-root .audit-sandbox/batch275-perf-smoke",
+  "elapsed_seconds": 0,
+  "notes": "Bounded production-equivalent smoke not run to completion in this Execute session. Evidence artifact records explicit re-deferral per MASTER section 8.7. Does not authorize live sources. R3-B25-PERF-BUDGET-01 and R3-B25-HYG-03 remain OPEN until smoke PASS or CI nightly closure."
+}

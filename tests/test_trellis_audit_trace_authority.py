@@ -71,3 +71,31 @@ def test_phB0_includesB07SourceTraceCheck() -> None:
     text = AUDIT_PLAN.read_text(encoding="utf-8")
     assert "B0-7" in text
     assert "original-source trace authority set" in text
+
+
+def test_followup018C_documentsExternalReferencesAndBoundaries() -> None:
+    task = PROJECT_ROOT / "docs/implementation_tasks/ROUND_3_MODELING_LAYERS/018C_tdx_pytdx_low_cost_probe.md"
+    text = task.read_text(encoding="utf-8")
+
+    for marker in (
+        "https://github.com/quant-king299/EasyXT",
+        "https://github.com/quant-king299/JQ2PTrade",
+        "https://github.com/quant-king299/ptqmt-site",
+        "https://github.com/eosphoros-ai/DB-GPT",
+        "https://github.com/eosphoros-ai/DB-GPT-Hub",
+        "https://github.com/bebopze/tdx-quant",
+        "https://github.com/afute/TdxQuantNet",
+        "SourceRegistry -> CapabilityRegistry -> RoutePreview -> ResourceGuard -> fetch port -> raw evidence",
+        "No default enablement of `tdx_pytdx`",
+        "No silent fallback",
+        "stock_zh_a_daily` candidate cannot satisfy Batch 2.75 `stock_zh_a_hist` Request 2 closeout",
+    ):
+        assert marker in text, f"018C missing required boundary/detail: {marker}"
+
+
+def test_round3Map_tracksFollowup018C() -> None:
+    text = (PROJECT_ROOT / "ROUND3_BATCH_IMPLEMENTATION_MAP.md").read_text(encoding="utf-8")
+    assert "R3-B2.75-FOLLOWUP-DATA-INTERFACE-PROBE" in text
+    assert "018C_tdx_pytdx_low_cost_probe.md" in text
+    assert "cannot close Batch 2.75 Request 2" in text
+    assert "Batch 2.75 follow-up" in text

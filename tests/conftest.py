@@ -37,6 +37,24 @@ def pytest_configure(config) -> None:
         pass
 
 
+def pytest_addoption(parser: pytest.Parser) -> None:
+    parser.addoption(
+        "--run-network",
+        action="store_true",
+        default=False,
+        help="Run tests marked @pytest.mark.network (live vendor fetch)",
+    )
+
+
+def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
+    if config.getoption("--run-network"):
+        return
+    skip_network = pytest.mark.skip(reason="need --run-network for live vendor fetch tests")
+    for item in items:
+        if "network" in item.keywords:
+            item.add_marker(skip_network)
+
+
 @pytest.fixture
 def registry_yaml_fixture() -> Path:
     return FIXTURES / "source_registry_valid.yaml"

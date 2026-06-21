@@ -1,0 +1,11 @@
+# §8.2 Phase 0 RED evidence — 2026-06-21
+# uv run pytest tests/test_batch275_live_pilot_gate.py::test_livePilot_missingAuthorization_blocksBeforeFetch -q
+
+F                                                                        [100%]
+================================== FAILURES ===================================
+____________ test_livePilot_missingAuthorization_blocksBeforeFetch ____________
+
+>       from backend.app.ops.live_pilot import (
+E       ModuleNotFoundError: No module named 'backend.app.ops.live_pilot'
+
+exit_code=1
