@@ -24,12 +24,12 @@
 
 ## 阻塞级检查
 
-- [ ] staged-only：无 production-live 代码路径
-- [ ] no_future_data：trade_time / as_of_timestamp / fetch_time 三重边界
-- [ ] double_count：axis input 不可 for_model
-- [ ] roll event 必须持久化且 roll_event=true
-- [ ] lineage 写入 `axis_snapshot_lineage`（layer_id=layer2）
-- [ ] 未修改 `snapshot_lineage_contract.yaml`
+- [x] staged-only：无 production-live 代码路径（audit 2026-06-22；`merge_gate_report.md` rev 3）
+- [x] no_future_data：trade_time / as_of_timestamp / fetch_time 三重边界
+- [x] double_count：axis input 不可 for_model
+- [x] roll event 必须持久化且 roll_event=true
+- [x] lineage 写入 `axis_snapshot_lineage`（layer_id=layer2）
+- [x] 未修改 `snapshot_lineage_contract.yaml`
 
 ## Deferred（非阻塞）
 
