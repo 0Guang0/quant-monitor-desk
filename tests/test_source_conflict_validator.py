@@ -63,6 +63,11 @@ def _create_conflict_stage(con) -> None:
 
 
 def test_validateRows_objectiveValueWithinTolerance_passedNoConflict() -> None:
+    """覆盖范围：客观字段在容忍度内无冲突。
+
+    测试对象：SourceConflictValidator.validate_rows。
+    目的/目标：close 偏差在容忍内应 PASSED 且可写主源值。
+    """
     report = SourceConflictValidator().validate_rows(
         _request(),
         [_row("qmt", close=100.0), _row("baostock", close=100.04)],
@@ -76,6 +81,11 @@ def test_validateRows_objectiveValueWithinTolerance_passedNoConflict() -> None:
 
 
 def test_validateRows_objectiveValueAboveWarningThreshold_warning() -> None:
+    """覆盖范围：客观字段超 warning 阈值。
+
+    测试对象：SourceConflictValidator.validate_rows。
+    目的/目标：应 WARNING、可写主源值且 conflict severity 为 warning。
+    """
     report = SourceConflictValidator().validate_rows(
         _request(),
         [_row("qmt", close=100.0), _row("baostock", close=100.1)],
@@ -92,6 +102,11 @@ def test_validateRows_objectiveValueAboveWarningThreshold_warning() -> None:
 
 
 def test_validateRows_objectiveValueAboveSevereThreshold_severeConflict() -> None:
+    """覆盖范围：客观字段超 severe 阈值。
+
+    测试对象：SourceConflictValidator.validate_rows。
+    目的/目标：应 SEVERE_CONFLICT、禁止写主源且 needs_reconcile。
+    """
     report = SourceConflictValidator().validate_rows(
         _request(),
         [_row("qmt", close=100.0), _row("baostock", close=100.25)],
@@ -108,7 +123,11 @@ def test_validateRows_objectiveValueAboveSevereThreshold_severeConflict() -> Non
 
 
 def test_validateRows_atExactSevereThreshold_classifiesWarningNotSevere() -> None:
-    """relative_severe=0.002; diff must exceed threshold for severe."""
+    """覆盖范围：severe 阈值边界分类（不含等于）。
+
+    测试对象：SourceConflictValidator.validate_rows。
+    目的/目标：恰在 relative_severe 边界应 WARNING 而非 severe。
+    """
     report = SourceConflictValidator().validate_rows(
         _request(),
         [_row("qmt", close=100.0), _row("baostock", close=100.199)],
@@ -120,6 +139,11 @@ def test_validateRows_atExactSevereThreshold_classifiesWarningNotSevere() -> Non
 
 
 def test_validateRows_sourceSpecificMethodologyField_marksSeparateBySource() -> None:
+    """覆盖范围：方法论差异字段按源区分。
+
+    测试对象：SourceConflictValidator.validate_rows。
+    目的/目标：main_inflow 等字段应 methodology_difference 且仍可写主源。
+    """
     report = SourceConflictValidator().validate_rows(
         _request(comparable_fields=("main_inflow",)),
         [_row("qmt", main_inflow=10_000.0), _row("baostock", main_inflow=12_000.0)],
@@ -132,6 +156,11 @@ def test_validateRows_sourceSpecificMethodologyField_marksSeparateBySource() -> 
 
 
 def test_validateRows_missingPeerSource_noFalseSevereConflict() -> None:
+    """覆盖范围：缺失对端源不产生伪严重冲突。
+
+    测试对象：SourceConflictValidator.validate_rows。
+    目的/目标：仅有主源行时应 PASSED 且无 conflicts。
+    """
     report = SourceConflictValidator().validate_rows(
         _request(validation_sources=("missing_vendor",)),
         [_row("qmt", close=100.0)],
@@ -143,6 +172,11 @@ def test_validateRows_missingPeerSource_noFalseSevereConflict() -> None:
 
 
 def test_validateRows_thresholdLookupUsesDataDomainAndField() -> None:
+    """覆盖范围：阈值查找按 data_domain 与 field 区分。
+
+    测试对象：SourceConflictValidator.validate_rows。
+    目的/目标：market volume 与 futures settlement 应使用不同阈值规则。
+    """
     market_report = SourceConflictValidator().validate_rows(
         _request(
             data_domain="market_bar_1d",
@@ -171,6 +205,11 @@ def test_validateRows_thresholdLookupUsesDataDomainAndField() -> None:
 def test_validateTable_severeConflict_persistsConflictAwaitingReconcile(
     tmp_path: Path,
 ) -> None:
+    """覆盖范围：表级 severe 冲突持久化 source_conflict。
+
+    测试对象：SourceConflictValidator.validate_table。
+    目的/目标：应写入 OPEN reconcile 行且不自动进 manual_review_queue。
+    """
     cm = _cm(tmp_path)
     validator = SourceConflictValidator()
     with cm.writer() as con:
@@ -219,6 +258,11 @@ def test_validateTable_severeConflict_persistsConflictAwaitingReconcile(
 def test_validateTable_multiInstrumentSevereConflicts_distinctInstrumentIds(
     tmp_path: Path,
 ) -> None:
+    """覆盖范围：多标的 severe 冲突逐标的落库。
+
+    测试对象：SourceConflictValidator.validate_table。
+    目的/目标：AAPL/MSFT 各应独立 source_conflict 行。
+    """
     cm = _cm(tmp_path)
     validator = SourceConflictValidator()
     with cm.writer() as con:
@@ -243,6 +287,11 @@ def test_validateTable_multiInstrumentSevereConflicts_distinctInstrumentIds(
 
 
 def test_recordUnresolvedReconcile_enqueuesManualReview(tmp_path: Path) -> None:
+    """覆盖范围：未解决 reconcile 转人工复核队列。
+
+    测试对象：SourceConflictValidator.record_unresolved_reconcile。
+    目的/目标：应写 manual_review_queue 且 conflict 标 UNRESOLVED。
+    """
     cm = _cm(tmp_path)
     validator = SourceConflictValidator()
     with cm.writer() as con:
@@ -270,6 +319,11 @@ def test_recordUnresolvedReconcile_enqueuesManualReview(tmp_path: Path) -> None:
 def test_validateTable_methodologyDifference_doesNotWriteManualReview(
     tmp_path: Path,
 ) -> None:
+    """覆盖范围：方法论差异不写冲突表与人工队列。
+
+    测试对象：SourceConflictValidator.validate_table。
+    目的/目标：methodology_difference 应 PASSED 且 source_conflict/review 计数为 0。
+    """
     cm = _cm(tmp_path)
     validator = SourceConflictValidator()
     with cm.writer() as con:

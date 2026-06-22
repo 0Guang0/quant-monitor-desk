@@ -178,9 +178,21 @@ def test_dbInspect_pathOutsideDataRoot_rejectedFromScan(tmp_path: Path) -> None:
     assert report.data_root["scan_limited"] is False
 
 
-@pytest.mark.parametrize("subdir", ["audit", "report"])
-def test_dbInspect_subdirScan_respectsLimit(tmp_path: Path, subdir: str) -> None:
-    """R3-AUDIT-DEF-03: audit/report subdirs share scan cap with raw/parquet."""
+@pytest.mark.parametrize(
+    ("subdir", "count_key"),
+    [
+        ("raw", "raw_files_count"),
+        ("parquet", "parquet_files_count"),
+        ("audit", "audit_files_count"),
+        ("report", "report_files_count"),
+    ],
+)
+def test_dbInspect_subdirScan_respectsLimit(tmp_path: Path, subdir: str, count_key: str) -> None:
+    """覆盖范围：data_root 各子目录扫描上限（R3-AUDIT-DEF-03）。
+
+    测试对象：DbInspector._inspect_data_root / --limit 硬顶 100。
+    目的/目标：audit/report/parquet/raw 子目录超限时计数封顶且 scan_limited 为真。
+    """
     db = tmp_path / "t.duckdb"
     _init_db(db)
     data_root = tmp_path / "data"
@@ -190,9 +202,82 @@ def test_dbInspect_subdirScan_respectsLimit(tmp_path: Path, subdir: str) -> None
         (target / f"file-{i}.txt").write_text("x", encoding="utf-8")
 
     report = DbInspector(db, data_root, limit=500).inspect()
-    key = f"{subdir}_files_count"
-    assert report.data_root[key] == 100
+    assert report.data_root[count_key] == 100
     assert report.data_root["scan_limited"] is True
+
+
+@pytest.mark.parametrize(
+    ("subdir", "count_key"),
+    [
+        ("raw", "raw_files_count"),
+        ("parquet", "parquet_files_count"),
+        ("audit", "audit_files_count"),
+        ("report", "report_files_count"),
+    ],
+)
+def test_dbInspect_subdirScan_limitFloorClampsToOne(tmp_path: Path, subdir: str, count_key: str) -> None:
+    """覆盖范围：--limit 下限钳制对各子目录一致。
+
+    测试对象：DbInspector limit floor（min 1）。
+    目的/目标：limit=0 时各子目录最多计 1 个文件且 scan_limited 为真（B-027）。
+    """
+    db = tmp_path / "t.duckdb"
+    _init_db(db)
+    data_root = tmp_path / "data"
+    target = data_root / subdir
+    target.mkdir(parents=True)
+    for i in range(5):
+        (target / f"file-{i}.txt").write_text("x", encoding="utf-8")
+
+    report = DbInspector(db, data_root, limit=0).inspect()
+    assert report.data_root[count_key] == 1
+    assert report.data_root["scan_limited"] is True
+
+
+@pytest.mark.parametrize(
+    ("subdir", "count_key"),
+    [
+        ("raw", "raw_files_count"),
+        ("parquet", "parquet_files_count"),
+        ("audit", "audit_files_count"),
+        ("report", "report_files_count"),
+    ],
+)
+def test_qmdOps_cli_subdirScan_respectsContractLimit(
+    tmp_path: Path, subdir: str, count_key: str
+) -> None:
+    """覆盖范围：CLI db-inspect 子目录扫描上限。
+
+    测试对象：qmd_ops db-inspect --limit。
+    目的/目标：CLI 与 DbInspector 对子目录共享 100 硬顶契约（B-027）。
+    """
+    db = tmp_path / "t.duckdb"
+    _init_db(db)
+    data_root = tmp_path / "data"
+    target = data_root / subdir
+    target.mkdir(parents=True)
+    for i in range(110):
+        (target / f"file-{i}.txt").write_text("x", encoding="utf-8")
+
+    project_root = Path(__file__).resolve().parents[1]
+    cmd = [
+        sys.executable,
+        str(project_root / "scripts" / "qmd_ops.py"),
+        "db-inspect",
+        "--db",
+        str(db),
+        "--data-root",
+        str(data_root),
+        "--limit",
+        "500",
+        "--format",
+        "json",
+    ]
+    result = subprocess.run(cmd, capture_output=True, text=True, check=False, cwd=project_root)
+    assert result.returncode == 0, result.stderr
+    payload = json.loads(result.stdout)
+    assert payload["data_root"][count_key] == 100
+    assert payload["data_root"]["scan_limited"] is True
 
 
 def test_dbInspect_missingDataRoot_stillOpensDbReadOnly(tmp_path: Path) -> None:

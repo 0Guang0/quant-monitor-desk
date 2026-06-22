@@ -66,6 +66,11 @@ def _create_quality_stage(con) -> None:
 
 
 def test_validateRows_validMarketBar_passesAndCanWriteClean() -> None:
+    """覆盖范围：market_bar_1d 合法行全规则通过。
+
+    测试对象：DataQualityValidator.validate_rows。
+    目的/目标：有效行情行应 PASSED 且 can_write_clean 为真。
+    """
     report = DataQualityValidator().validate_rows(
         _request(),
         [_row()],
@@ -85,6 +90,11 @@ def test_validateRows_validMarketBar_passesAndCanWriteClean() -> None:
 
 
 def test_validateRows_missingPrimaryKey_failed() -> None:
+    """覆盖范围：主键字段缺失检测。
+
+    测试对象：DataQualityValidator.validate_rows。
+    目的/目标：空主键应 FAILED 且禁止 clean write。
+    """
     report = DataQualityValidator().validate_rows(
         _request(),
         [_row(instrument_id="")],
@@ -97,6 +107,11 @@ def test_validateRows_missingPrimaryKey_failed() -> None:
 
 
 def test_validateRows_duplicatePrimaryKey_failed() -> None:
+    """覆盖范围：主键重复检测。
+
+    测试对象：DataQualityValidator.validate_rows。
+    目的/目标：同主键多行应 FAILED 并计 failed_rows。
+    """
     rows = [_row(), _row(close=12.0)]
 
     report = DataQualityValidator().validate_rows(
@@ -111,6 +126,11 @@ def test_validateRows_duplicatePrimaryKey_failed() -> None:
 
 
 def test_validateRows_missingRequiredField_findingHasBusinessContext() -> None:
+    """覆盖范围：必填字段缺失 finding 契约字段。
+
+    测试对象：DataQualityValidator.validate_rows / ValidationFinding。
+    目的/目标：MISSING_REQUIRED_FIELD 应含 row_key、field_name 与业务 message。
+    """
     report = DataQualityValidator().validate_rows(
         _request(),
         [_row(close=None)],
@@ -128,6 +148,11 @@ def test_validateRows_missingRequiredField_findingHasBusinessContext() -> None:
 
 
 def test_validateRows_invalidTimestamp_failed() -> None:
+    """覆盖范围：时间戳字段格式校验。
+
+    测试对象：DataQualityValidator.validate_rows。
+    目的/目标：非法 trade_date 应触发 MISSING_TIMESTAMP。
+    """
     report = DataQualityValidator().validate_rows(
         _request(),
         [_row(trade_date="not-a-date")],
@@ -140,6 +165,11 @@ def test_validateRows_invalidTimestamp_failed() -> None:
 
 
 def test_validateRows_invalidEnum_failed() -> None:
+    """覆盖范围：枚举字段取值校验。
+
+    测试对象：DataQualityValidator.validate_rows。
+    目的/目标：adjustment_type 越界应 FAILED 并标 INVALID_ENUM。
+    """
     report = DataQualityValidator().validate_rows(
         _request(),
         [_row(adjustment_type="surprise")],
@@ -152,6 +182,11 @@ def test_validateRows_invalidEnum_failed() -> None:
 
 
 def test_validateRows_schemaDrift_failedAndManualReview() -> None:
+    """覆盖范围：schema 漂移检测。
+
+    测试对象：DataQualityValidator.validate_rows。
+    目的/目标：未声明列应 FAILED、需人工复核且禁止 clean write。
+    """
     row = _row()
     row["unexpected_vendor_column"] = "new"
 
@@ -168,6 +203,11 @@ def test_validateRows_schemaDrift_failedAndManualReview() -> None:
 
 
 def test_validateRows_staleData_warningCanStillWrite() -> None:
+    """覆盖范围：数据陈旧度 WARNING 路径。
+
+    测试对象：DataQualityValidator.validate_rows。
+    目的/目标：超 max_stale_days 应 WARNING 但仍允许 can_write_clean。
+    """
     report = DataQualityValidator().validate_rows(
         _request(),
         [_row(as_of_timestamp="2026-06-10T15:00:00+00:00")],
@@ -184,6 +224,11 @@ def test_validateRows_staleData_warningCanStillWrite() -> None:
 
 
 def test_validateRows_insufficientHistory_warning() -> None:
+    """覆盖范围：历史行数不足 WARNING。
+
+    测试对象：DataQualityValidator.validate_rows。
+    目的/目标：低于 min_history_rows 应 WARNING 且可写 clean。
+    """
     report = DataQualityValidator().validate_rows(
         _request(),
         [_row()],
@@ -197,6 +242,11 @@ def test_validateRows_insufficientHistory_warning() -> None:
 
 
 def test_validateRows_highBelowLow_failed() -> None:
+    """覆盖范围：OHLC 价格区间逻辑校验。
+
+    测试对象：DataQualityValidator.validate_rows。
+    目的/目标：high < low 应 FAILED 并标 INVALID_PRICE_RANGE。
+    """
     report = DataQualityValidator().validate_rows(
         _request(),
         [_row(high=8.0, low=9.0)],
@@ -208,6 +258,11 @@ def test_validateRows_highBelowLow_failed() -> None:
 
 
 def test_validateRows_negativePriceVolumeAmount_failed() -> None:
+    """覆盖范围：价格/成交量/金额非负校验。
+
+    测试对象：DataQualityValidator.validate_rows。
+    目的/目标：负 open/volume/amount 应各自触发对应 quality flag。
+    """
     rows = [
         _row(instrument_id="AAPL", open=-1.0),
         _row(instrument_id="MSFT", volume=-100.0),
@@ -234,6 +289,11 @@ def _cm(tmp_path: Path) -> ConnectionManager:
 
 
 def test_validateTable_persistsValidationReportAndDataQualityLog(tmp_path: Path) -> None:
+    """覆盖范围：表级校验持久化 validation_report。
+
+    测试对象：DataQualityValidator.validate_table。
+    目的/目标：PASSED 报告应写入 DB 且无 data_quality_log 行。
+    """
     cm = _cm(tmp_path)
     validator = DataQualityValidator()
     with cm.writer() as con:
@@ -265,6 +325,11 @@ def test_validateTable_persistsValidationReportAndDataQualityLog(tmp_path: Path)
 
 
 def test_validateTable_failedReportRejectedByDbValidationGate(tmp_path: Path) -> None:
+    """覆盖范围：FAILED 报告与 DbValidationGate 联动。
+
+    测试对象：validate_table + DbValidationGate.assert_can_write。
+    目的/目标：can_write_clean=false 时写入门面应 ValidationRejected。
+    """
     cm = _cm(tmp_path)
     validator = DataQualityValidator()
     with cm.writer() as con:
@@ -284,6 +349,11 @@ def test_validateTable_failedReportRejectedByDbValidationGate(tmp_path: Path) ->
 
 
 def test_validateFetchResult_successMissingStagingTable_notCleanWriteReady(tmp_path: Path) -> None:
+    """覆盖范围：FetchResult 成功但 staging 表缺失。
+
+    测试对象：DataQualityValidator.validate_fetch_result。
+    目的/目标：缺失 staging 应 FAILED 且标 MISSING_STAGING_TABLE。
+    """
     from backend.app.datasources.fetch_result import FetchResult
 
     validator = DataQualityValidator()
@@ -310,6 +380,11 @@ def test_validateFetchResult_successMissingStagingTable_notCleanWriteReady(tmp_p
 
 
 def test_validateFetchResult_missingRawEvidence_notCleanWriteReady(tmp_path: Path) -> None:
+    """覆盖范围：FetchResult 声明 raw 路径但文件不存在。
+
+    测试对象：DataQualityValidator.validate_fetch_result。
+    目的/目标：应 FAILED 且标 MISSING_RAW_EVIDENCE。
+    """
     from backend.app.datasources.fetch_result import FetchResult
 
     missing_raw = tmp_path / "does-not-exist.json"
@@ -336,6 +411,11 @@ def test_validateFetchResult_missingRawEvidence_notCleanWriteReady(tmp_path: Pat
 
 
 def test_validateFetchResult_failurePreservesRawEvidence(tmp_path: Path) -> None:
+    """覆盖范围：校验失败不破坏 raw 证据文件。
+
+    测试对象：DataQualityValidator.validate_fetch_result。
+    目的/目标：FAILED 后 raw 文件字节内容应保持不变。
+    """
     from backend.app.datasources.fetch_result import FetchResult
 
     raw_path = tmp_path / "raw.json"
@@ -362,6 +442,11 @@ def test_validateFetchResult_failurePreservesRawEvidence(tmp_path: Path) -> None
 
 
 def test_validateRows_missingSourceUsed_emitsLayer1RuleId() -> None:
+    """覆盖范围：Layer1 source_used 血缘规则。
+
+    测试对象：DataQualityValidator.validate_rows。
+    目的/目标：缺失 source_used 应触发 MISSING_SOURCE_USED 且含 lineage 语义。
+    """
     report = DataQualityValidator().validate_rows(
         _request(),
         [_row(source_used=None)],
@@ -375,6 +460,11 @@ def test_validateRows_missingSourceUsed_emitsLayer1RuleId() -> None:
 
 
 def test_validateRows_fallbackWithoutReason_failed() -> None:
+    """覆盖范围：fallback 无原因 fail-closed。
+
+    测试对象：DataQualityValidator.validate_rows。
+    目的/目标：fallback_used 无 fallback_reason 应 FAILED。
+    """
     report = DataQualityValidator().validate_rows(
         _request(),
         [_row(fallback_used=True, fallback_reason=None)],
@@ -386,6 +476,11 @@ def test_validateRows_fallbackWithoutReason_failed() -> None:
 
 
 def test_validateRows_blindspotWithRawValue_failed() -> None:
+    """覆盖范围：blindspot 行不得携带 raw_value。
+
+    测试对象：DataQualityValidator.validate_rows。
+    目的/目标：is_blindspot 且有 raw_value 应 FAILED。
+    """
     report = DataQualityValidator().validate_rows(
         _request(),
         [_row(is_blindspot=True, raw_value="secret")],
@@ -397,6 +492,11 @@ def test_validateRows_blindspotWithRawValue_failed() -> None:
 
 
 def test_validateRows_layer3DuplicateAnchorId_failed() -> None:
+    """覆盖范围：Layer3 anchor_id 唯一性。
+
+    测试对象：DataQualityValidator.validate_rows（layer3_anchors）。
+    目的/目标：重复 anchor_id 应 FAILED 并标 DUPLICATE_ANCHOR_ID。
+    """
     anchors = [
         {"anchor_id": "a1", "node_id": "n1", "priority": "P1", "source_keys": "k"},
         {"anchor_id": "a1", "node_id": "n2", "priority": "P1", "source_keys": "k"},
@@ -413,6 +513,11 @@ def test_validateRows_layer3DuplicateAnchorId_failed() -> None:
 
 
 def test_validateRows_layer3MissingNodeReference_failed() -> None:
+    """覆盖范围：Layer3 node 引用完整性。
+
+    测试对象：DataQualityValidator.validate_rows（layer3_anchors）。
+    目的/目标：未知 node_id 应 FAILED 并标 MISSING_NODE_REFERENCE。
+    """
     report = DataQualityValidator().validate_rows(
         _request(),
         [],
@@ -425,6 +530,11 @@ def test_validateRows_layer3MissingNodeReference_failed() -> None:
 
 
 def test_validateRows_layer3P0MissingSourceKeys_failed() -> None:
+    """覆盖范围：Layer3 P0 anchor 必填 source_keys。
+
+    测试对象：DataQualityValidator.validate_rows（layer3_anchors）。
+    目的/目标：P0 无 source_keys 应 FAILED 并标 P0_MISSING_SOURCE_KEYS。
+    """
     report = DataQualityValidator().validate_rows(
         _request(),
         [],
@@ -437,6 +547,11 @@ def test_validateRows_layer3P0MissingSourceKeys_failed() -> None:
 
 
 def test_validateRows_missingPrimaryKey_findingHasContractFields() -> None:
+    """覆盖范围：主键缺失 finding 契约字段完整性。
+
+    测试对象：DataQualityValidator.validate_rows / ValidationFinding。
+    目的/目标：MISSING_PRIMARY_KEY finding 应含 severity、field_name 与 expected_condition。
+    """
     report = DataQualityValidator().validate_rows(
         _request(),
         [_row(instrument_id="")],
