@@ -170,6 +170,15 @@ def test_capabilityRegistry_resolveRegistryDomain_forLegacyAdapterDomain() -> No
     assert reg.is_capability_declared("baostock", "cn_equity_daily_bar") is True
 
 
+def test_proposedDisabledSource_tdxPytdx_notEnabledByDefault() -> None:
+    capabilities = load_source_capabilities()
+    entry = (capabilities.get("sources") or {}).get("tdx_pytdx") or {}
+    assert entry.get("status") == "proposed_disabled_source"
+    for domain_cfg in (entry.get("domains") or {}).values():
+        for op in (domain_cfg.get("operations") or {}).values():
+            assert op.get("enabled_by_default") is False
+
+
 def test_capabilityRegistry_rejectsProposedDisabledSource() -> None:
     reg = SourceCapabilityRegistry()
     reg.load()

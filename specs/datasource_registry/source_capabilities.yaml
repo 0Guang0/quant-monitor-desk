@@ -69,6 +69,19 @@ sources:
             supports_backfill: true
             requires_auth: false
             production_default: false
+            vendor_api: stock_zh_a_hist
+            upstream: push2his.eastmoney.com
+          fetch_daily_bar_sina_validation:
+            frequency: daily
+            fields: [instrument_id, trade_date, open, high, low, close, volume, amount, source_used]
+            supports_adjustment: source_specific
+            requires_auth: false
+            enabled_by_default: false
+            pilot_only: true
+            production_default: false
+            vendor_api: stock_zh_a_daily
+            upstream: finance.sina.com.cn
+            notes: "018C sidecar only; does not close stock_zh_a_hist / Eastmoney hist."
       cn_index:
         operations:
           fetch_index_daily_bar:
@@ -141,6 +154,27 @@ sources:
             frequency: daily_or_on_demand
             fields: [instrument_id, name, asset_class, currency, exchange, source_used]
             requires_auth: false
+            enabled_by_default: false
+  tdx_pytdx:
+    status: proposed_disabled_source
+    domains:
+      security_list:
+        operations:
+          fetch_security_list:
+            frequency: on_demand
+            fields: [instrument_id, market, name, security_type, source_used]
+            enabled_by_default: false
+      cn_equity_daily_bar:
+        operations:
+          fetch_daily_bar:
+            frequency: daily
+            fields: [instrument_id, trade_date, open, high, low, close, volume, amount, source_used]
+            enabled_by_default: false
+      cn_index_daily_bar:
+        operations:
+          fetch_index_daily_bar:
+            frequency: daily
+            fields: [index_id, trade_date, open, high, low, close, volume, amount, source_used]
             enabled_by_default: false
   qmt_xqshare:
     status: proposed_disabled_source
