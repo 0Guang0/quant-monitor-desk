@@ -1,0 +1,4 @@
+VA-07 RED — YAML vs Python rule_id dual track undocumented
+
+Evidence: rule_contract.py had no note that rule ids live in both YAML severities and
+Python finding builders.

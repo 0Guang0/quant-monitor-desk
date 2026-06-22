@@ -1,0 +1,6 @@
+VA-08 GREEN — removed dead quote_ident call from _table_exists; dropped unused import.
+
+Command:
+  python -m pytest tests/test_data_quality_validator.py -q
+
+Result: exit 0

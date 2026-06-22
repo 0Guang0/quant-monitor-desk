@@ -10,7 +10,6 @@ from pathlib import Path
 from typing import Literal
 
 import yaml
-from backend.app.db.sql_identifiers import quote_ident
 from backend.app.validators.common import as_float, as_text, fetch_rows, is_missing
 from backend.app.validators.rule_contract import default_quality_rule_contract
 
@@ -78,18 +77,6 @@ def _load_rule_severities(rules_path: Path) -> dict[str, str]:
     return severities
 
 
-def _is_missing(value: object) -> bool:
-    return is_missing(value)
-
-
-def _as_text(value: object) -> str | None:
-    return as_text(value)
-
-
-def _as_float(value: object) -> float | None:
-    return as_float(value)
-
-
 def _parse_datetime(value: object) -> datetime | None:
     if isinstance(value, datetime):
         return value if value.tzinfo else value.replace(tzinfo=UTC)
@@ -148,7 +135,7 @@ class DataQualityValidator:
             severity=self._severity(rule_id),
             row_key=row_key,
             field_name=field_name,
-            observed_value=_as_text(observed_value),
+            observed_value=as_text(observed_value),
             expected_condition=expected_condition,
             message=message,
         )
@@ -221,7 +208,7 @@ class DataQualityValidator:
         findings: list[DataQualityFinding],
     ) -> None:
         for field in request.primary_keys:
-            if _is_missing(row.get(field)):
+            if is_missing(row.get(field)):
                 findings.append(
                     self._finding(
                         "MISSING_PRIMARY_KEY",
@@ -234,7 +221,7 @@ class DataQualityValidator:
                 )
 
         for field in request.required_fields:
-            if field == "source_used" and _is_missing(row.get(field)):
+            if field == "source_used" and is_missing(row.get(field)):
                 findings.append(
                     self._finding(
                         "MISSING_SOURCE_USED",
@@ -246,7 +233,7 @@ class DataQualityValidator:
                     )
                 )
                 continue
-            if _is_missing(row.get(field)):
+            if is_missing(row.get(field)):
                 findings.append(
                     self._finding(
                         "MISSING_REQUIRED_FIELD",
@@ -290,7 +277,7 @@ class DataQualityValidator:
     ) -> None:
         for field, allowed_values in enum_values.items():
             value = row.get(field)
-            if not _is_missing(value) and str(value) not in allowed_values:
+            if not is_missing(value) and str(value) not in allowed_values:
                 findings.append(
                     self._finding(
                         "INVALID_ENUM",
@@ -302,8 +289,8 @@ class DataQualityValidator:
                     )
                 )
 
-        high = _as_float(row.get("high"))
-        low = _as_float(row.get("low"))
+        high = as_float(row.get("high"))
+        low = as_float(row.get("low"))
         if high is not None and low is not None and high < low:
             findings.append(
                 self._finding(
@@ -317,7 +304,7 @@ class DataQualityValidator:
             )
 
         for field in ("open", "high", "low", "close", "pre_close"):
-            value = _as_float(row.get(field))
+            value = as_float(row.get(field))
             if value is not None and value < 0:
                 findings.append(
                     self._finding(
@@ -330,7 +317,7 @@ class DataQualityValidator:
                     )
                 )
 
-        volume = _as_float(row.get("volume"))
+        volume = as_float(row.get("volume"))
         if volume is not None and volume < 0:
             findings.append(
                 self._finding(
@@ -343,7 +330,7 @@ class DataQualityValidator:
                 )
             )
 
-        amount = _as_float(row.get("amount"))
+        amount = as_float(row.get("amount"))
         if amount is not None and amount < 0:
             findings.append(
                 self._finding(
@@ -388,7 +375,7 @@ class DataQualityValidator:
         row_key: str,
         findings: list[DataQualityFinding],
     ) -> None:
-        if self._truthy(row.get("fallback_used")) and _is_missing(row.get("fallback_reason")):
+        if self._truthy(row.get("fallback_used")) and is_missing(row.get("fallback_reason")):
             findings.append(
                 self._finding(
                     "FALLBACK_WITHOUT_REASON",
@@ -400,7 +387,7 @@ class DataQualityValidator:
                 )
             )
         blindspot = self._truthy(row.get("is_blindspot")) or self._truthy(row.get("blindspot"))
-        if blindspot and not _is_missing(row.get("raw_value")):
+        if blindspot and not is_missing(row.get("raw_value")):
             findings.append(
                 self._finding(
                     "BLINDSPOT_SHOULD_NOT_HAVE_VALUE",
@@ -447,7 +434,7 @@ class DataQualityValidator:
                     )
                 )
             priority = str(anchor.get("priority", "")).upper()
-            if priority == "P0" and _is_missing(anchor.get("source_keys")):
+            if priority == "P0" and is_missing(anchor.get("source_keys")):
                 findings.append(
                     self._finding(
                         "P0_MISSING_SOURCE_KEYS",
@@ -483,7 +470,7 @@ class DataQualityValidator:
         for row in rows:
             row_key = self._row_key(request, row)
             pk_values = tuple(row.get(field) for field in request.primary_keys)
-            if not any(_is_missing(value) for value in pk_values):
+            if not any(is_missing(value) for value in pk_values):
                 if pk_values in seen_keys:
                     findings.append(
                         self._finding(
@@ -546,21 +533,6 @@ class DataQualityValidator:
                     )
 
         return self._build_report(checked_rows=len(rows), findings=findings)
-
-    def _table_exists(self, con, table_name: str) -> bool:
-        quote_ident(table_name)
-        row = con.execute(
-            """
-            SELECT COUNT(*)
-            FROM information_schema.tables
-            WHERE table_schema = 'main' AND table_name = ?
-            """,
-            [table_name],
-        ).fetchone()
-        return bool(row and row[0])
-
-    def _fetch_rows(self, con, table_name: str) -> list[dict[str, object]]:
-        return fetch_rows(con, table_name, limit=_VALIDATE_TABLE_ROW_CAP + 1)
 
     def _content_changed_finding(
         self,
@@ -683,6 +655,17 @@ class DataQualityValidator:
             message="SUCCESS fetch result references raw evidence that does not exist",
         )
 
+    def _table_exists(self, con, table_name: str) -> bool:
+        row = con.execute(
+            """
+            SELECT COUNT(*)
+            FROM information_schema.tables
+            WHERE table_schema = 'main' AND table_name = ?
+            """,
+            [table_name],
+        ).fetchone()
+        return bool(row and row[0])
+
     def validate_table(
         self,
         con,
@@ -704,7 +687,7 @@ class DataQualityValidator:
             self._persist_report(con, request, report)
             return report
 
-        rows = self._fetch_rows(con, request.staging_table)
+        rows = fetch_rows(con, request.staging_table, limit=_VALIDATE_TABLE_ROW_CAP + 1)
         if len(rows) > _VALIDATE_TABLE_ROW_CAP:
             raise ValueError(
                 f"staging table {request.staging_table!r} exceeds row cap {_VALIDATE_TABLE_ROW_CAP}"

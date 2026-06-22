@@ -1,0 +1,6 @@
+SC-03 GREEN — evaluate() refactored to _ThresholdSignal list + loop; signal order preserved.
+
+Command:
+  python -m pytest tests/test_resource_guard.py -q
+
+Result: exit 0 (all passed)

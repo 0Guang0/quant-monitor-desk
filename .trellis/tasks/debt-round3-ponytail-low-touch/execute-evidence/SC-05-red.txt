@@ -1,0 +1,9 @@
+SC-05 RED — scan claimed util/error_redaction.py unused
+
+Command:
+  rg "error_redaction" backend/
+
+Result: imports in db/write_manager.py, datasources/fetch_log.py, sync/jobs.py
+(forbidden paths for this slice; module is live, not dead).
+
+Resolution: document wired consumers; do not delete.

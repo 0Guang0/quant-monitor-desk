@@ -1,0 +1,6 @@
+VA-02 GREEN — removed source_conflict wrappers; direct common helpers + inline `as_text(x) or ""`.
+
+Command:
+  python -m pytest tests/test_source_conflict_validator.py -q
+
+Result: exit 0 (all passed)

@@ -1,0 +1,6 @@
+VA-01 GREEN — removed data_quality thin wrappers; call sites use common imports directly.
+
+Command:
+  python -m pytest tests/test_data_quality_validator.py -q
+
+Result: exit 0 (all passed)

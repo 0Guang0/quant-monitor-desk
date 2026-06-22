@@ -1,0 +1,6 @@
+SC-04 GREEN — added valid + invalid profile tests with docstrings.
+
+Command:
+  python -m pytest tests/test_config.py -k getResourceProfile -q
+
+Result: exit 0 (2 passed)

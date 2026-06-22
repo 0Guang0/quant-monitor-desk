@@ -1,4 +1,8 @@
-"""Shared sensitive error-message redaction for persistence layers."""
+"""Shared sensitive error-message redaction for persistence layers.
+
+Used by ``db/write_manager``, ``datasources/fetch_log``, and ``sync/jobs`` when
+persisting operator-visible errors (SC-05: wired, not dead code).
+"""
 
 from __future__ import annotations
 

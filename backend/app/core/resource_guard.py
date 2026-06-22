@@ -58,6 +58,16 @@ _SEVERITY = {
 }
 
 
+@dataclass(frozen=True)
+class _ThresholdSignal:
+    value: float
+    warn: float
+    pause: float
+    hard: float
+    higher_is_worse: bool
+    reason: str
+
+
 def _signal_decision(
     value: float, warn: float, pause: float, hard: float, higher_is_worse: bool
 ) -> Decision:
@@ -78,119 +88,109 @@ def _signal_decision(
     return Decision.OK
 
 
+def _threshold_signals(
+    snapshot: ResourceSnapshot,
+    thresholds: dict,
+    profile_limits: dict | None,
+) -> list[_ThresholdSignal]:
+    sys_t = thresholds["system_thresholds"]
+    proj_t = thresholds["project_size_thresholds"]
+    signals = [
+        _ThresholdSignal(
+            snapshot.available_memory_gb,
+            sys_t["available_memory_warn_gb"],
+            sys_t["available_memory_pause_gb"],
+            sys_t["available_memory_hard_stop_gb"],
+            False,
+            "available memory below threshold",
+        ),
+        _ThresholdSignal(
+            snapshot.disk_free_gb,
+            sys_t["disk_free_warn_gb"],
+            sys_t["disk_free_pause_gb"],
+            sys_t["disk_free_hard_stop_gb"],
+            False,
+            "disk free space below threshold",
+        ),
+        _ThresholdSignal(
+            snapshot.project_size_gb,
+            proj_t["project_warn_gb"],
+            proj_t["project_pause_gb"],
+            proj_t["project_hard_stop_gb"],
+            True,
+            "project size above threshold",
+        ),
+    ]
+    if profile_limits is not None:
+        temp_max = float(profile_limits["duckdb_temp_max_gb"])
+        signals.extend(
+            [
+                _ThresholdSignal(
+                    snapshot.process_rss_mb,
+                    profile_limits["process_rss_warn_mb"],
+                    profile_limits["process_rss_pause_mb"],
+                    profile_limits["process_rss_hard_stop_mb"],
+                    True,
+                    "process rss above threshold",
+                ),
+                _ThresholdSignal(
+                    snapshot.duckdb_temp_size_gb,
+                    temp_max * 0.7,
+                    temp_max * 0.85,
+                    temp_max,
+                    True,
+                    "duckdb temp directory above threshold",
+                ),
+            ]
+        )
+    signals.extend(
+        [
+            _ThresholdSignal(
+                snapshot.cache_size_gb,
+                proj_t["cache_warn_gb"],
+                proj_t["cache_pause_gb"],
+                proj_t["cache_hard_stop_gb"],
+                True,
+                "cache directory above threshold",
+            ),
+            _ThresholdSignal(
+                snapshot.system_memory_usage_pct,
+                sys_t["system_memory_usage_warn_pct"],
+                sys_t["system_memory_usage_pause_pct"],
+                sys_t["system_memory_usage_hard_stop_pct"],
+                True,
+                "system memory usage above threshold",
+            ),
+            _ThresholdSignal(
+                snapshot.system_disk_usage_pct,
+                sys_t["system_disk_usage_warn_pct"],
+                sys_t["system_disk_usage_pause_pct"],
+                sys_t["system_disk_usage_hard_stop_pct"],
+                True,
+                "system disk usage above threshold",
+            ),
+        ]
+    )
+    return signals
+
+
 def evaluate(
     snapshot: ResourceSnapshot,
     thresholds: dict,
     profile_limits: dict | None = None,
 ) -> tuple[Decision, str]:
     """Pure function: return (decision, reason). Most severe signal wins."""
-    sys_t = thresholds["system_thresholds"]
-    proj_t = thresholds["project_size_thresholds"]
-
-    signals: list[tuple[Decision, str]] = [
-        (
-            _signal_decision(
-                snapshot.available_memory_gb,
-                sys_t["available_memory_warn_gb"],
-                sys_t["available_memory_pause_gb"],
-                sys_t["available_memory_hard_stop_gb"],
-                higher_is_worse=False,
-            ),
-            "available memory below threshold",
-        ),
-        (
-            _signal_decision(
-                snapshot.disk_free_gb,
-                sys_t["disk_free_warn_gb"],
-                sys_t["disk_free_pause_gb"],
-                sys_t["disk_free_hard_stop_gb"],
-                higher_is_worse=False,
-            ),
-            "disk free space below threshold",
-        ),
-        (
-            _signal_decision(
-                snapshot.project_size_gb,
-                proj_t["project_warn_gb"],
-                proj_t["project_pause_gb"],
-                proj_t["project_hard_stop_gb"],
-                higher_is_worse=True,
-            ),
-            "project size above threshold",
-        ),
-    ]
-
-    if profile_limits is not None:
-        signals.append(
-            (
-                _signal_decision(
-                    snapshot.process_rss_mb,
-                    profile_limits["process_rss_warn_mb"],
-                    profile_limits["process_rss_pause_mb"],
-                    profile_limits["process_rss_hard_stop_mb"],
-                    higher_is_worse=True,
-                ),
-                "process rss above threshold",
-            )
-        )
-        temp_max = float(profile_limits["duckdb_temp_max_gb"])
-        signals.append(
-            (
-                _signal_decision(
-                    snapshot.duckdb_temp_size_gb,
-                    temp_max * 0.7,
-                    temp_max * 0.85,
-                    temp_max,
-                    higher_is_worse=True,
-                ),
-                "duckdb temp directory above threshold",
-            )
-        )
-
-    cache_t = proj_t
-    signals.extend(
-        [
-            (
-                _signal_decision(
-                    snapshot.cache_size_gb,
-                    cache_t["cache_warn_gb"],
-                    cache_t["cache_pause_gb"],
-                    cache_t["cache_hard_stop_gb"],
-                    higher_is_worse=True,
-                ),
-                "cache directory above threshold",
-            ),
-            (
-                _signal_decision(
-                    snapshot.system_memory_usage_pct,
-                    sys_t["system_memory_usage_warn_pct"],
-                    sys_t["system_memory_usage_pause_pct"],
-                    sys_t["system_memory_usage_hard_stop_pct"],
-                    higher_is_worse=True,
-                ),
-                "system memory usage above threshold",
-            ),
-            (
-                _signal_decision(
-                    snapshot.system_disk_usage_pct,
-                    sys_t["system_disk_usage_warn_pct"],
-                    sys_t["system_disk_usage_pause_pct"],
-                    sys_t["system_disk_usage_hard_stop_pct"],
-                    higher_is_worse=True,
-                ),
-                "system disk usage above threshold",
-            ),
-        ]
-    )
-
     worst = Decision.OK
     reasons: list[str] = []
-    for decision, reason in signals:
+    for spec in _threshold_signals(snapshot, thresholds, profile_limits):
+        decision = _signal_decision(
+            spec.value, spec.warn, spec.pause, spec.hard, spec.higher_is_worse
+        )
         if _SEVERITY[decision] > _SEVERITY[worst]:
             worst = decision
-            reasons = [reason]
+            reasons = [spec.reason]
         elif decision == worst and decision != Decision.OK:
-            reasons.append(reason)
+            reasons.append(spec.reason)
 
     if worst == Decision.OK:
         return Decision.OK, ""
