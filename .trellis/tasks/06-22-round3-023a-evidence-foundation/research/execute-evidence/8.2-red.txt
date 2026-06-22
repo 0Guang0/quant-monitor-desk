@@ -1,0 +1,3 @@
+pytest tests/test_layer5_evidence_foundation.py::test_evidenceFoundation_agentTextNotFactSource_rejectsFactualKind -q
+FAILED: DID NOT RAISE EvidenceFoundationError
+exit code: 1
