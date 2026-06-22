@@ -105,6 +105,7 @@ The plan must define:
 - ResourceGuard caps
 - failure taxonomy
 - close/re-defer criteria
+- rollback/cleanup instructions (see `live_manual_probe_plan.md` §12)
 
 ## 9. Done criteria
 
@@ -112,3 +113,16 @@ The plan must define:
 - The branch does not run any live fetch itself.
 - The branch preserves disabled-by-default / validation-only status.
 - Merge report states that production-live readiness remains blocked until a separately authorized live probe succeeds and passes no-mutation proof.
+
+## 10. Task-local planning artifacts (debt/r3b275-018c-live-manual-probe-plan)
+
+| Artifact | Path |
+| -------- | ---- |
+| Repair/Debt Lite plan | `.trellis/tasks/06-22-round3-018c-live-manual-probe-plan/DEBT.plan.md` |
+| Live manual probe plan | `.trellis/tasks/06-22-round3-018c-live-manual-probe-plan/live_manual_probe_plan.md` |
+| Authorization checklist | `.trellis/tasks/06-22-round3-018c-live-manual-probe-plan/authorization_checklist.md` |
+| Fail-closed gate | `backend/app/ops/tdx_live_manual_probe_gate.py` |
+| Auth tests (no network) | `tests/test_tdx_live_manual_probe_authorization.py` |
+| Verification log | `.trellis/tasks/06-22-round3-018c-live-manual-probe-plan/execute-evidence/verification_2026-06-22.txt` |
+
+Future execute authorization evidence file (not created by planning branch): `docs/quality/tdx_pytdx_live_manual_probe_authorization_<YYYY-MM-DD>.md`

@@ -73,17 +73,31 @@ class AkshareSinaDailyValidationFetchPort:
 class TdxPytdxProbeFetchPort:
     symbols: Sequence[str]
     max_rows: int
+    host: str | None = None
+    port: int | None = None
+    authorization_verified: bool = False
 
     def fetch_payload(self, req: FetchRequest) -> FetchPayload:
+        if not self.authorization_verified or not self.host or self.port is None:
+            raise PortError(
+                "USER_AUTH_REQUIRED",
+                "tdx_pytdx fetch blocked: use run_tdx_live_manual_probe after "
+                "tdx_live_manual_probe_gate.validate_tdx_live_manual_probe_authorization",
+            )
         try:
             from pytdx.hq import TdxHq_API
         except ImportError as exc:
             raise PortError("DISABLED_SOURCE", f"pytdx not installed: {exc}") from exc
 
         symbol = req.instrument_id or (self.symbols[0] if self.symbols else "")
-        market, code = (1, symbol[3:]) if symbol.lower().startswith("sh.") else (0, symbol[3:])
+        if symbol.lower().startswith(("sh.", "sz.")):
+            market, code = (1, symbol[3:]) if symbol.lower().startswith("sh.") else (0, symbol[3:])
+        else:
+            from backend.app.ops.tdx_live_manual_probe_gate import parse_index_instrument
+
+            market, code = parse_index_instrument(symbol)
         api = TdxHq_API()
-        if not api.connect("119.147.212.81", 7709):
+        if not api.connect(self.host, self.port):
             raise PortError("NETWORK_ERROR", "tdx_pytdx probe could not connect")
         try:
             bars = api.get_security_bars(9, market, code, 0, self.max_rows)
@@ -92,7 +106,12 @@ class TdxPytdxProbeFetchPort:
         if not bars:
             raise PortError("EMPTY_RESPONSE", "tdx_pytdx returned no daily bars")
         content = json.dumps(
-            {"symbol": symbol, "source": "tdx_pytdx", "rows": list(bars)[-self.max_rows :]},
+            {
+                "symbol": symbol,
+                "source": "tdx_pytdx",
+                "upstream": f"tdx_hq_host:{self.host}:{self.port}",
+                "rows": list(bars)[-self.max_rows :],
+            },
             ensure_ascii=False,
             default=str,
         ).encode("utf-8")
