@@ -1,0 +1,6 @@
+{"phase":"boot","skill":"trellis-execute","read":true}
+{"phase":"boot","skill":"gitnexus-impact","read":true}
+{"skill":"test-driven-development","read":true}
+{"skill":"incremental-implementation","read":true}
+{"skill":"karpathy-guidelines","read":true}
+{"skill":"testing-guidelines","read":true}

@@ -1,6 +1,26 @@
 version: 1
 module: layer5_security_evidence
 authoritative_doc: docs/modules/layer5_security_evidence.md
+foundation_slice: 023A
+foundation_models:
+  instrument_evidence_ref:
+    primary_key: [instrument_id]
+    required_fields: [instrument_id, symbol, asset_type, market_id, exchange, currency, is_active]
+  evidence_foundation_record:
+    primary_key: [evidence_id]
+    required_fields:
+      - evidence_id
+      - target_id
+      - target_type
+      - trade_date
+      - evidence_kind
+      - evidence_summary
+      - need_human_review
+      - manual_review_state
+      - created_by
+    provenance_required_for: [factual_source, derived_validation]
+    evidence_kind_values: [factual_source, derived_validation, agent_interpretation]
+    manual_review_state_values: [not_required, queued]
 models:
   instrument_registry:
     primary_key: [instrument_id]
@@ -25,6 +45,14 @@ quality_rules:
   - non_negative_volume_amount_open_interest
   - evidence_must_reference_structured_context
   - event_must_have_source_or_local_path
+  - evidence_foundation_must_trace_to_fetch_or_hash
+  - agent_text_not_fact_source
 boundaries:
   no_trading_action_semantics: true
   no_agent_text_as_fact_source: true
+deferred_to_023b:
+  - security_bar_daily ingestion
+  - futures_bar_daily ingestion
+  - options_chain_snapshot ingestion
+  - event_registry ingestion
+  - evidence_chain_builder full pipeline
