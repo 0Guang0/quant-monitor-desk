@@ -3,6 +3,7 @@
 | Field | Value |
 | ----- | ----- |
 | Branch | `debt/r3b275-018c-live-manual-probe-plan` |
+| Commit | `3dc87826` |
 | Owner | Round 3 debt stream / PROMPT_10 |
 | Slice type | Phase 8D planning + fail-closed authorization gate |
 | Live network executed | **No** |
