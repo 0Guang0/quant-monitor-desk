@@ -226,6 +226,19 @@ class SyncJobResult:
     message: str | None = None
 
 
+_JOB_TYPE_TRANSITION_EXTRAS: dict[str, dict[str, frozenset[str]]] = {
+    "data_quality": {("PLANNED",): frozenset({"VALIDATING"})},
+    "backfill": {
+        ("STAGED",): frozenset({"PLANNED", "COMPLETED"}),
+        ("WRITING",): frozenset({"PLANNED", "COMPLETED"}),
+    },
+    "reconcile": {
+        ("PLANNED",): frozenset({"WAITING_RECONCILE"}),
+        ("READY_TO_WRITE",): frozenset({"COMPLETED"}),
+    },
+}
+
+
 class SyncJobStateMachine:
     def __init__(self, connection_manager: ConnectionManager) -> None:
         self._cm = connection_manager
@@ -471,16 +484,8 @@ class SyncJobStateMachine:
         if old_status in TERMINAL_STATUSES:
             return False
         allowed = set(_BASE_TRANSITIONS.get(old_status, frozenset()))
-        if job_type == "data_quality" and old_status == "PLANNED":
-            allowed.add("VALIDATING")
-        if job_type == "backfill" and old_status == "STAGED":
-            allowed.add("PLANNED")
-            allowed.add("COMPLETED")
-        if job_type == "backfill" and old_status == "WRITING":
-            allowed.add("PLANNED")
-            allowed.add("COMPLETED")
-        if job_type == "reconcile" and old_status == "PLANNED":
-            allowed.add("WAITING_RECONCILE")
-        if job_type == "reconcile" and old_status == "READY_TO_WRITE":
-            allowed.add("COMPLETED")
+        extras = _JOB_TYPE_TRANSITION_EXTRAS.get(job_type, {})
+        for statuses, targets in extras.items():
+            if old_status in statuses:
+                allowed.update(targets)
         return new_status in allowed

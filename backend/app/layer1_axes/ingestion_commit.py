@@ -358,16 +358,7 @@ def commit_clean_observation_and_snapshots(
             con.execute("ROLLBACK")
             raise
 
-    assert micro is not None
-    assert observation_row is not None
-    assert quality_report is not None
-    assert obs_write is not None
-    assert feature_write is not None
-    assert interp_write is not None
-    assert lineage_write is not None
-    assert feature_rows is not None
-    assert interp_rows is not None
-    assert lineage is not None
+    assert micro is not None and observation_row is not None and quality_report is not None
 
     return IngestionCommitResult(
         indicator_id=indicator_id,

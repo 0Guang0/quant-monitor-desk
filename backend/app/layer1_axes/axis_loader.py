@@ -221,6 +221,37 @@ def _coerce_rules(
     return (str(raw),)
 
 
+def _ensure_observable_contract_fields(
+    ind: dict[str, Any],
+    *,
+    indicator_id: str,
+    is_shadow: bool,
+    is_blindspot: bool,
+    is_forbidden: bool,
+) -> None:
+    """Apply defaults / validate required observable fields (L1-12)."""
+    for req in CONTRACT_REQUIRED_INDICATOR_FIELDS:
+        if req in ("axis_id", "module", "allow_score", "diagnostic_only"):
+            continue
+        if req == "unit" and not ind.get("unit"):
+            ind.setdefault("unit", "unitless")
+            continue
+        if req == "frequency" and not ind.get("frequency"):
+            ind.setdefault("frequency", "daily")
+            continue
+        if req == "validation_source" and not ind.get("validation_source"):
+            ind.setdefault("validation_source", "none")
+            continue
+        if req == "fallback_policy" and not ind.get("fallback_policy"):
+            ind.setdefault("fallback_policy", "last_good_cache + stale_reason")
+            continue
+        if req == "primary_source" and not ind.get("primary_source"):
+            if is_shadow or is_blindspot or is_forbidden:
+                ind.setdefault("primary_source", "none")
+                continue
+            raise AxisSpecLoadError(f"indicator {indicator_id!r} missing primary_source")
+
+
 def _build_indicator_records(
     ind: dict[str, Any],
     *,
@@ -243,30 +274,13 @@ def _build_indicator_records(
     plain_summary = str(ind.get("plain_language_summary", display_name_cn))
 
     if observable:
-        for req in CONTRACT_REQUIRED_INDICATOR_FIELDS:
-            if req in ("axis_id", "module"):
-                continue
-            if req == "allow_score":
-                continue
-            if req == "diagnostic_only":
-                continue
-            if req == "unit" and not ind.get("unit"):
-                ind.setdefault("unit", "unitless")
-                continue
-            if req == "frequency" and not ind.get("frequency"):
-                ind.setdefault("frequency", "daily")
-                continue
-            if req == "validation_source" and not ind.get("validation_source"):
-                ind.setdefault("validation_source", "none")
-                continue
-            if req == "fallback_policy" and not ind.get("fallback_policy"):
-                ind.setdefault("fallback_policy", "last_good_cache + stale_reason")
-                continue
-            if req == "primary_source" and not ind.get("primary_source"):
-                if is_shadow or is_blindspot or is_forbidden:
-                    ind.setdefault("primary_source", "none")
-                    continue
-                raise AxisSpecLoadError(f"indicator {indicator_id!r} missing primary_source")
+        _ensure_observable_contract_fields(
+            ind,
+            indicator_id=str(indicator_id),
+            is_shadow=is_shadow,
+            is_blindspot=is_blindspot,
+            is_forbidden=is_forbidden,
+        )
 
     quality_rules = _coerce_rules(ind, "quality_rules", DEFAULT_QUALITY_RULES)
     stale_rules = _coerce_rules(ind, "stale_rules", DEFAULT_STALE_RULES)

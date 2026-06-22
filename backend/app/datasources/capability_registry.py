@@ -52,6 +52,17 @@ class SourceCapabilityRegistry:
         entry = self.sources.get(source_id) or {}
         return registry_domain in (entry.get("domains") or {})
 
+    def default_operation_for_domain(self, data_domain: str) -> str:
+        """First enabled operation for domain across sources (DS-06)."""
+        for entry in self.sources.values():
+            domain_cfg = (entry.get("domains") or {}).get(data_domain)
+            if not domain_cfg:
+                continue
+            for op_name, op_cfg in (domain_cfg.get("operations") or {}).items():
+                if op_cfg.get("enabled_by_default", True):
+                    return op_name
+        return "fetch_daily_bar"
+
     def assert_source_domain_operation(
         self,
         source_id: str,

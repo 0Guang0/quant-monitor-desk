@@ -229,6 +229,75 @@ class _PipelineMixin:
                 [write_id, job_id],
             )
 
+    def _finalize_staged(
+        self,
+        con,
+        *,
+        spec: SyncJobSpec,
+        job_id: str,
+        staging_table: str,
+        config: PipelineConfig,
+        source_used: str,
+        task_id: str | None = None,
+    ) -> tuple[str, object, object | None, object | None, str | None]:
+        """Validate staging, resolve conflicts, write clean (SY-02 shared kernel)."""
+        validation = self._validate_staging(
+            con,
+            spec=spec,
+            job_id=job_id,
+            staging_table=staging_table,
+            conflict_staging_table=config.conflict_staging_table,
+            primary_keys=config.primary_keys,
+            required_fields=config.required_fields,
+        )
+        quality = validation.quality
+        conflict = validation.conflict
+        self._update_job_report_ids(con, job_id, validation_report_id=quality.validation_report_id)
+
+        if quality.status == "FAILED" or not quality.can_write_clean:
+            return (
+                "MANUAL_REVIEW_REQUIRED",
+                quality,
+                conflict,
+                None,
+                None,
+            )
+
+        conflict_report_id: str | None = None
+        if conflict is not None:
+            conflict_report_id = conflict.conflict_report_id
+            self._update_job_report_ids(con, job_id, conflict_report_id=conflict_report_id)
+            if conflict.status == "SEVERE_CONFLICT":
+                return (
+                    "WAITING_RECONCILE",
+                    quality,
+                    conflict,
+                    None,
+                    conflict_report_id,
+                )
+
+        transition_kwargs = {"con": con}
+        if task_id is not None:
+            transition_kwargs["task_id"] = task_id
+        self._jobs.transition(job_id, "READY_TO_WRITE", **transition_kwargs)
+        self._jobs.transition(job_id, "WRITING", **transition_kwargs)
+        write_result = self._write_clean(
+            con,
+            spec=spec,
+            job_id=job_id,
+            clean_table=config.clean_table,
+            staging_table=staging_table,
+            write_mode=config.write_mode,
+            primary_keys=config.primary_keys,
+            validation_report_id=quality.validation_report_id,
+            conflict_report_id=conflict_report_id,
+            source_used=source_used,
+        )
+        self._update_job_report_ids(con, job_id, write_id=write_result.write_id)
+        if write_result.status != "SUCCESS":
+            return ("FAILED_FINAL", quality, conflict, write_result, conflict_report_id)
+        return ("COMPLETED", quality, conflict, write_result, conflict_report_id)
+
 
 class IncrementalJobRunner(_PipelineMixin):
     def __init__(
@@ -319,21 +388,15 @@ class IncrementalJobRunner(_PipelineMixin):
         self._jobs.transition(job_id, "STAGED")
         self._jobs.transition(job_id, "VALIDATING")
         with cm.writer() as con:
-            validation = self._validate_staging(
+            status, quality, conflict, write_result, conflict_report_id = self._finalize_staged(
                 con,
                 spec=spec,
                 job_id=job_id,
                 staging_table=staging_table,
-                conflict_staging_table=config.conflict_staging_table,
-                primary_keys=config.primary_keys,
-                required_fields=config.required_fields,
+                config=config,
+                source_used=fetch_result.source_id,
             )
-            quality = validation.quality
-            conflict = validation.conflict
-            self._update_job_report_ids(
-                con, job_id, validation_report_id=quality.validation_report_id
-            )
-            if quality.status == "FAILED" or not quality.can_write_clean:
+            if status == "MANUAL_REVIEW_REQUIRED":
                 self._jobs.transition(
                     job_id,
                     "MANUAL_REVIEW_REQUIRED",
@@ -351,43 +414,24 @@ class IncrementalJobRunner(_PipelineMixin):
                     validation_report_id=quality.validation_report_id,
                     message="data quality failed",
                 )
-            conflict_report_id: str | None = None
-            if conflict is not None:
-                conflict_report_id = conflict.conflict_report_id
-                self._update_job_report_ids(con, job_id, conflict_report_id=conflict_report_id)
-                if conflict.status == "SEVERE_CONFLICT":
-                    self._jobs.transition(
-                        job_id,
-                        "WAITING_RECONCILE",
-                        message="severe conflict",
-                        con=con,
-                        payload_json=build_event_payload(
-                            source_id=spec.source_id,
-                            decision="severe_conflict",
-                        ),
-                    )
-                    return SyncJobResult(
-                        job_id=job_id,
-                        status="WAITING_RECONCILE",
-                        validation_report_id=quality.validation_report_id,
-                        conflict_report_id=conflict_report_id,
-                    )
-            self._jobs.transition(job_id, "READY_TO_WRITE", con=con)
-            self._jobs.transition(job_id, "WRITING", con=con)
-            write_result = self._write_clean(
-                con,
-                spec=spec,
-                job_id=job_id,
-                clean_table=config.clean_table,
-                staging_table=staging_table,
-                write_mode=config.write_mode,
-                primary_keys=config.primary_keys,
-                validation_report_id=quality.validation_report_id,
-                conflict_report_id=conflict_report_id,
-                source_used=fetch_result.source_id,
-            )
-            self._update_job_report_ids(con, job_id, write_id=write_result.write_id)
-            if write_result.status != "SUCCESS":
+            if status == "WAITING_RECONCILE":
+                self._jobs.transition(
+                    job_id,
+                    "WAITING_RECONCILE",
+                    message="severe conflict",
+                    con=con,
+                    payload_json=build_event_payload(
+                        source_id=spec.source_id,
+                        decision="severe_conflict",
+                    ),
+                )
+                return SyncJobResult(
+                    job_id=job_id,
+                    status="WAITING_RECONCILE",
+                    validation_report_id=quality.validation_report_id,
+                    conflict_report_id=conflict_report_id,
+                )
+            if status == "FAILED_FINAL":
                 self._jobs.transition(
                     job_id,
                     "FAILED_FINAL",

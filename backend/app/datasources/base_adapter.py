@@ -36,7 +36,7 @@ class BaseDataAdapter(ABC):
             "source_id": self.source_id,
             "status": "STUB_OK",
             "supported_domains": sorted(self.supported_domains),
-            "registry_loaded": bool(self.registry._sources),
+            "registry_loaded": self.registry.is_loaded(),
         }
 
     def fetch(

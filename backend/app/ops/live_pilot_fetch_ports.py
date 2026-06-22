@@ -72,8 +72,7 @@ def _run_akshare_call(fn: Callable[[], _T]) -> _T:
     raise PortError("NETWORK_ERROR", f"{combined}; {_PROXY_HINT}")
 
 
-def _recent_window_start(*, calendar_days: int = 14) -> date:
-    return datetime.now(UTC).date() - timedelta(days=calendar_days)
+from backend.app.ops.fetch_port_common import recent_window_start
 
 
 def _akshare_hist_symbol(raw_symbol: str) -> str:
@@ -103,7 +102,7 @@ class BaostockLiveFetchPort:
         if not symbol:
             raise PortError("FAILED", "missing instrument_id for baostock fetch")
 
-        start = _recent_window_start()
+        start = recent_window_start()
         end = datetime.now(UTC).date()
         login = bs.login()
         if login.error_code != "0":
@@ -153,7 +152,7 @@ class AkshareEquityLiveFetchPort:
         if not hist_symbol:
             raise PortError("FAILED", "missing instrument_id for akshare equity fetch")
 
-        start = _recent_window_start()
+        start = recent_window_start()
         end = datetime.now(UTC).date()
 
         def _fetch_equity():

@@ -174,6 +174,32 @@ def interpretation_row_to_db_tuple(row: InterpretationSnapshotRow) -> list:
     ]
 
 
+def _with_writer_connection(
+    cm: ConnectionManager,
+    con: duckdb.DuckDBPyConnection | None,
+    own_transaction: bool,
+    fn,
+):
+    """Run write helper on con or acquire writer (L1-09)."""
+    if con is None:
+        with cm.writer() as writer_con:
+            return fn(writer_con, own_transaction=own_transaction)
+    return fn(con, own_transaction=own_transaction)
+
+
+def _with_writer_connection(
+    cm: ConnectionManager,
+    con: duckdb.DuckDBPyConnection | None,
+    own_transaction: bool,
+    fn,
+):
+    """Run write helper on con or acquire writer (L1-09)."""
+    if con is None:
+        with cm.writer() as writer_con:
+            return fn(writer_con, own_transaction=own_transaction)
+    return fn(con, own_transaction=own_transaction)
+
+
 class Layer1SnapshotWriter:
     """Write Layer 1 snapshots via staging → DbValidationGate → WriteManager."""
 
@@ -194,27 +220,20 @@ class Layer1SnapshotWriter:
         own_transaction: bool = True,
     ):
         _reject_forbidden_substitute_flags(rows)
-        if con is None:
-            with self._cm.writer() as writer_con:
-                return self._write_features_on_connection(
-                    writer_con,
-                    rows=rows,
-                    validation_report_id=validation_report_id,
-                    run_id=run_id,
-                    job_id=job_id,
-                    source_used=source_used,
-                    data_domain=data_domain,
-                    own_transaction=own_transaction,
-                )
-        return self._write_features_on_connection(
+        return _with_writer_connection(
+            self._cm,
             con,
-            rows=rows,
-            validation_report_id=validation_report_id,
-            run_id=run_id,
-            job_id=job_id,
-            source_used=source_used,
-            data_domain=data_domain,
-            own_transaction=own_transaction,
+            own_transaction,
+            lambda writer_con, own_transaction: self._write_features_on_connection(
+                writer_con,
+                rows=rows,
+                validation_report_id=validation_report_id,
+                run_id=run_id,
+                job_id=job_id,
+                source_used=source_used,
+                data_domain=data_domain,
+                own_transaction=own_transaction,
+            ),
         )
 
     def _write_features_on_connection(
@@ -266,27 +285,20 @@ class Layer1SnapshotWriter:
         con: duckdb.DuckDBPyConnection | None = None,
         own_transaction: bool = True,
     ):
-        if con is None:
-            with self._cm.writer() as writer_con:
-                return self._write_lineage_on_connection(
-                    writer_con,
-                    lineage=lineage,
-                    validation_report_id=validation_report_id,
-                    run_id=run_id,
-                    job_id=job_id,
-                    source_used=source_used,
-                    data_domain=data_domain,
-                    own_transaction=own_transaction,
-                )
-        return self._write_lineage_on_connection(
+        return _with_writer_connection(
+            self._cm,
             con,
-            lineage=lineage,
-            validation_report_id=validation_report_id,
-            run_id=run_id,
-            job_id=job_id,
-            source_used=source_used,
-            data_domain=data_domain,
-            own_transaction=own_transaction,
+            own_transaction,
+            lambda writer_con, own_transaction: self._write_lineage_on_connection(
+                writer_con,
+                lineage=lineage,
+                validation_report_id=validation_report_id,
+                run_id=run_id,
+                job_id=job_id,
+                source_used=source_used,
+                data_domain=data_domain,
+                own_transaction=own_transaction,
+            ),
         )
 
     def _write_lineage_on_connection(
@@ -336,27 +348,20 @@ class Layer1SnapshotWriter:
         con: duckdb.DuckDBPyConnection | None = None,
         own_transaction: bool = True,
     ):
-        if con is None:
-            with self._cm.writer() as writer_con:
-                return self._write_interpretation_on_connection(
-                    writer_con,
-                    rows=rows,
-                    validation_report_id=validation_report_id,
-                    run_id=run_id,
-                    job_id=job_id,
-                    source_used=source_used,
-                    data_domain=data_domain,
-                    own_transaction=own_transaction,
-                )
-        return self._write_interpretation_on_connection(
+        return _with_writer_connection(
+            self._cm,
             con,
-            rows=rows,
-            validation_report_id=validation_report_id,
-            run_id=run_id,
-            job_id=job_id,
-            source_used=source_used,
-            data_domain=data_domain,
-            own_transaction=own_transaction,
+            own_transaction,
+            lambda writer_con, own_transaction: self._write_interpretation_on_connection(
+                writer_con,
+                rows=rows,
+                validation_report_id=validation_report_id,
+                run_id=run_id,
+                job_id=job_id,
+                source_used=source_used,
+                data_domain=data_domain,
+                own_transaction=own_transaction,
+            ),
         )
 
     def _write_interpretation_on_connection(
