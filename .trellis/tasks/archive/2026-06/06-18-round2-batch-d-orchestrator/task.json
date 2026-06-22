@@ -44,13 +44,10 @@
   "parent": null,
   "relatedFiles": [],
   "notes": "Plan frozen 2026-06-18; task.py start → in_progress; next: MASTER §8.0 Boot (see research/EXECUTE-READY.md)",
-  "predecessor_tasks": [
-    "06-17-round2-batch-c-validation-conflict"
-  ],
+  "predecessor_tasks": ["06-17-round2-batch-c-validation-conflict"],
   "meta": {
     "manifest_protocol_version": "3",
-    "predecessor_tasks": [
-      "06-17-round2-batch-c-validation-conflict"
-    ]
+    "task_track": "simple",
+    "predecessor_tasks": ["06-17-round2-batch-c-validation-conflict"]
   }
 }

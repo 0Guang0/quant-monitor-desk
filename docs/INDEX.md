@@ -36,30 +36,32 @@ See [`docs/modules/`](modules/) — one file per implementation module (data syn
 
 ## Operations
 
-| File                                                                       | Topic                                                |
-| -------------------------------------------------------------------------- | ---------------------------------------------------- |
-| [backup_and_recovery.md](ops/backup_and_recovery.md)                       | Backup policy                                        |
-| [db_inspect_cli.md](ops/db_inspect_cli.md)                                 | QMD read-only DB inspect CLI design                  |
-| [performance_limits.md](ops/performance_limits.md)                         | ResourceGuard authority                              |
-| [ops_and_performance_v1_2.md](ops/ops_and_performance_v1_2.md)             | Ops handbook _(legacy filename; content is current)_ |
-| [logs_health_audit.md](ops/logs_health_audit.md)                           | Logging and audit                                    |
-| [layer3_config_health_check.md](ops/layer3_config_health_check.md)         | Layer 3 config checks                                |
-| [daily_weekly_monthly_checklist.md](ops/daily_weekly_monthly_checklist.md) | Routine checklists                                   |
-| [agent_workflow_boundaries.md](ops/agent_workflow_boundaries.md)           | `.cursor`/`.trellis` trust boundaries                |
-| [verification_commands.md](ops/verification_commands.md)                   | Canonical audit/CI commands (Windows)                |
-| [data_sync_quick_reference.md](ops/data_sync_quick_reference.md)           | Round2.6 safe data sync quick reference              |
-| [data_sync_command_matrix.md](ops/data_sync_command_matrix.md)             | Round2.6 CLI command matrix                          |
-| [TROUBLESHOOTING.md](ops/TROUBLESHOOTING.md)                               | Troubleshooting entry                                |
-| [ERROR_CODE_GUIDE.md](ops/ERROR_CODE_GUIDE.md)                             | Error code guide                                     |
-| [incident_playbook.md](ops/incident_playbook.md)                           | Incident playbook                                    |
-| [privacy_data_flow.md](ops/privacy_data_flow.md)                           | Local-only/privacy data flow                         |
-| [qmt_xqshare_setup.md](ops/qmt_xqshare_setup.md)                           | Optional qmt_xqshare setup boundary                  |
-| [agent_security_policy.md](ops/agent_security_policy.md)                   | Agent 安全与 D-12 固定来源                           |
-| [config_secret_policy.md](ops/config_secret_policy.md)                     | Secret 与 `.env.local`（D-03）                       |
-| [migration_recovery_policy.md](ops/migration_recovery_policy.md)           | Migration 备份恢复（D-06）                           |
-| [privacy_retention_policy.md](ops/privacy_retention_policy.md)             | 留存与归档（D-05）                                   |
-| [schema/MIGRATION_COVERAGE.md](schema/MIGRATION_COVERAGE.md)               | Design schema vs applied migrations matrix           |
-| [schema/MIGRATION_008_PLAN.md](schema/MIGRATION_008_PLAN.md)               | Planned migration 008 DB CHECK constraints           |
+| File                                                                       | Topic                                                         |
+| -------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| [backup_and_recovery.md](ops/backup_and_recovery.md)                       | Backup policy                                                 |
+| [db_inspect_cli.md](ops/db_inspect_cli.md)                                 | QMD read-only DB inspect CLI design                           |
+| [performance_limits.md](ops/performance_limits.md)                         | ResourceGuard authority                                       |
+| [ops_and_performance_v1_2.md](ops/ops_and_performance_v1_2.md)             | Ops handbook _(legacy filename; content is current)_          |
+| [logs_health_audit.md](ops/logs_health_audit.md)                           | Logging and audit                                             |
+| [layer3_config_health_check.md](ops/layer3_config_health_check.md)         | Layer 3 config checks                                         |
+| [daily_weekly_monthly_checklist.md](ops/daily_weekly_monthly_checklist.md) | Routine checklists                                            |
+| [agent_workflow_boundaries.md](ops/agent_workflow_boundaries.md)           | `.cursor`/`.trellis` trust boundaries                         |
+| [verification_commands.md](ops/verification_commands.md)                   | Canonical audit/CI commands (Windows)                         |
+| [user_intervention_policy.md](ops/user_intervention_policy.md)             | Agent vs user intervention boundaries                         |
+| [generated/project_map.generated.md](generated/project_map.generated.md)   | Machine-generated project map (run `generate_project_map.py`) |
+| [data_sync_quick_reference.md](ops/data_sync_quick_reference.md)           | Round2.6 safe data sync quick reference                       |
+| [data_sync_command_matrix.md](ops/data_sync_command_matrix.md)             | Round2.6 CLI command matrix                                   |
+| [TROUBLESHOOTING.md](ops/TROUBLESHOOTING.md)                               | Troubleshooting entry                                         |
+| [ERROR_CODE_GUIDE.md](ops/ERROR_CODE_GUIDE.md)                             | Error code guide                                              |
+| [incident_playbook.md](ops/incident_playbook.md)                           | Incident playbook                                             |
+| [privacy_data_flow.md](ops/privacy_data_flow.md)                           | Local-only/privacy data flow                                  |
+| [qmt_xqshare_setup.md](ops/qmt_xqshare_setup.md)                           | Optional qmt_xqshare setup boundary                           |
+| [agent_security_policy.md](ops/agent_security_policy.md)                   | Agent 安全与 D-12 固定来源                                    |
+| [config_secret_policy.md](ops/config_secret_policy.md)                     | Secret 与 `.env.local`（D-03）                                |
+| [migration_recovery_policy.md](ops/migration_recovery_policy.md)           | Migration 备份恢复（D-06）                                    |
+| [privacy_retention_policy.md](ops/privacy_retention_policy.md)             | 留存与归档（D-05）                                            |
+| [schema/MIGRATION_COVERAGE.md](schema/MIGRATION_COVERAGE.md)               | Design schema vs applied migrations matrix                    |
+| [schema/MIGRATION_008_PLAN.md](schema/MIGRATION_008_PLAN.md)               | Planned migration 008 DB CHECK constraints                    |
 
 ## ADRs
 

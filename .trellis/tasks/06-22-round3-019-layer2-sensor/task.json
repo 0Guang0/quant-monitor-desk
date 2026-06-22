@@ -1,0 +1,29 @@
+{
+  "id": "06-22-round3-019-layer2-sensor",
+  "name": "round3-019-layer2-sensor",
+  "title": "Round 3 019: Layer2 sensor staged pipeline",
+  "description": "Layer2 cross-asset sensor loader and snapshot builder; loop engineering reference task.",
+  "status": "in_progress",
+  "dev_type": "feature",
+  "scope": "layer2_sensors",
+  "package": null,
+  "priority": "P1",
+  "creator": "Guang",
+  "assignee": "Guang",
+  "createdAt": "2026-06-22",
+  "completedAt": null,
+  "branch": null,
+  "base_branch": "master",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "loop engineering exemplar; context_pack + evidence stubs via context_router",
+  "meta": {
+    "task_track": "complex",
+    "manifest_protocol_version": "3"
+  }
+}

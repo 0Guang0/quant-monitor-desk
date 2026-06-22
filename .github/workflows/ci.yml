@@ -65,3 +65,7 @@ jobs:
         with:
           python-version: "3.11"
       - run: python scripts/check_doc_links.py
+      - run: python scripts/check_docs_specs_indexed.py
+      - run: python scripts/loop_maintain.py
+      - run: python scripts/check_verification_matrix.py
+      - run: python scripts/check_contract_coverage.py

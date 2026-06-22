@@ -27,7 +27,7 @@ def _read(path: Path) -> str:
 
 def test_projectMap_reflectsBatch275CurrentStatus() -> None:
     text = _read(MIGRATION_MAP)
-    assert "Last updated: 2026-06-21" in text
+    assert "Last updated: 2026-06-23" in text
     assert "Batch 2.75" in text
     assert "production_live_pilot_policy.md" in text
     assert "018B_production_live_pilot_gate.md" in text

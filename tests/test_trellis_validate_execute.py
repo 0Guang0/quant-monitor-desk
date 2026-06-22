@@ -25,6 +25,10 @@ def _write_master(task_dir: Path, steps_done: list[str]) -> None:
 
 
 def _boot_artifacts(task_dir: Path, *, steps: list[str]) -> None:
+    if not (task_dir / "task.json").is_file():
+        (task_dir / "task.json").write_text(
+            '{"meta":{"task_track":"simple"}}', encoding="utf-8"
+        )
     research = task_dir / "research"
     research.mkdir(parents=True, exist_ok=True)
     (research / "execute-boot.md").write_text(
@@ -95,3 +99,28 @@ def test_validateExecuteHandoff_passesWithFullArtifacts(tmp_path: Path) -> None:
 def test_parseExecutedSteps_findsMarkedSteps() -> None:
     text = "### 8.0 x\n| 已执行 | [x] |\n\n### 8.1 y\n| 已执行 | [ ] |\n"
     assert _parse_executed_steps("## 8.\n" + text) == ["8.0"]
+
+
+def test_validateExecuteHandoff_loopTaskRequiresEvidenceIndex(tmp_path: Path) -> None:
+    """覆盖：validate_execute_handoff loop P3 门禁。
+    对象：task_track=complex 且缺 evidence_index.json 的任务。
+    目的：Execute handoff 必须校验 loop 证据链，不能只有 context_pack。
+    """
+    import json
+
+    _write_master(tmp_path, ["8.0"])
+    _boot_artifacts(tmp_path, steps=["8.0"])
+    (tmp_path / "task.json").write_text(
+        json.dumps({"meta": {"task_track": "complex"}, "status": "in_progress"}),
+        encoding="utf-8",
+    )
+    (tmp_path / "context_pack.json").write_text(
+        json.dumps({"source_authorities": [], "tests": [], "modules": []}),
+        encoding="utf-8",
+    )
+    (tmp_path / "loop_manifest.json").write_text(
+        json.dumps({"acs": [], "modules": []}),
+        encoding="utf-8",
+    )
+    errors = validate_execute_handoff(tmp_path, _REPO)
+    assert any("evidence_index" in e for e in errors)

@@ -36,7 +36,7 @@
 1. `docs/implementation_tasks/README.md`
 2. `docs/implementation_tasks/TASK_INPUT_CONTEXT_INDEX.md`（Plan-only 上下文桥）
 3. 当前 Round 批次地图：优先读取仓库根目录的 `ROUND*_BATCH_IMPLEMENTATION_MAP.md`（例如 `ROUND3_BATCH_IMPLEMENTATION_MAP.md`；后续 Round 可改写为 `ROUND4_BATCH_IMPLEMENTATION_MAP.md`）。该文件是 Plan 阶段的**批次切片与索引权威入口**：先用它确认当前 Batch / Item IDs / Plan source bundle / MASTER-AUDIT trace requirement / manifest policy，再决定哪些原始任务卡与输入文件需要读取。若当前 Round 没有 batch map，Plan 必须在 `research/plan-boot.md` 记录缺失，并退回 `docs/implementation_tasks/README.md` + 当前 Round README。
-4. `MIGRATION_MAP.md`（项目地图；先用于理解实现目录与 docs/specs 非实现边界，Plan 完成后还要回查一次做遗漏检查）
+4. `MIGRATION_MAP.md`（**可选人类全量导航**；机器遗漏检查见 `uv run python scripts/check_docs_specs_indexed.py`）
 5. `docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md`
 6. `docs/implementation_tasks/GLOBAL_TESTING_POLICY.md`
 7. `docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md`
@@ -49,7 +49,12 @@
 
 - `research/original-plan-trace.md` — 任务编号 / 本地 alias / 当前 Round batch map item / MASTER §2 AC / 引用文档对照表
 - `research/plan-boot.md` — 含「当前 Round batch map 已读」「原计划已读」摘要 + `Phase P0 complete`
-- `research/project-map-omission-check.md` — MASTER 冻结前回查 `MIGRATION_MAP.md`，确认实现目录、docs/specs 边界、模块映射、task 索引无遗漏；发现遗漏必须回写 MASTER Source Context Index 或显式 filtered-out
+- `context_pack.json` — 由 `uv run python scripts/context_router.py --task <dir>` 生成；**禁止**向用户询问 docs/specs 路径
+- `research/context-router-output.md` — context router 人类可读摘要
+
+**Loop engineering P0：** 读取 `specs/context/authority_graph.yaml` 权威图；冻结时 `implement.jsonl` 槽位见 §6.1.1。详见 `docs/quality/LOOP_ENGINEERING_TASK_FLOW_REFACTOR_PLAN.md`。
+
+- `research/project-map-omission-check.md` — 冻结前跑 `check_docs_specs_indexed.py`（`MIGRATION_MAP.md` + `docs/generated/docs_specs_index.generated.md`）；人类 narrative 仍可在 MIGRATION_MAP 维护
 - `MASTER.plan.md` §0「Round / Batch / Item IDs / 原计划任务」字段 + §1.3「原计划归并表」
 - `MASTER.plan.md` `Source Context Index` — 标明哪些来源已总结、哪些必须读原文、哪些已过滤。
 - `AUDIT.plan.md` `Audit Source Trace` — 标明审计必须追溯哪些原文、按哪一维验证。
@@ -59,6 +64,8 @@
 **冲突处理：** MASTER 与 DECISIONS / 任务卡冲突 → **先更新 DECISIONS 并获用户确认**，再改 MASTER；禁止 silent override。
 
 **祖父条款：** 2026-06-18 前已归档任务若无 `plan-manifest-audit.md`，视为历史交付。**新任务与重新 Plan 的任务**须在 `task.json` `meta.manifest_protocol_version: "1"` 启用 E1–E20 门禁。
+
+**Loop engineering（Trellis 复杂任务内置层）：** 有 `MASTER.plan.md` 且 `meta.task_track` 不为 `debt-lite`/`simple` 时，**强制** loop 四件套；`validate-plan-freeze` 自动 `context_router`。日常维护：`uv run python scripts/loop_maintain.py --fix`（catalog + 生成索引 + authority_graph 包缺口检查）。
 
 ---
 
@@ -108,7 +115,7 @@
 
 Execute agent 须：**Read trellis-execute/SKILL.md** → Phase 0 Boot → 读 MASTER §8–§12 + implement.jsonl → 逐步 §8（execute-evidence）→ §9–§10 证据 → §11 交接 Audit（**不 finish-work**）。
 
-jsonl **第一条必须是 `MASTER.plan.md`**；Plan 应在 implement.jsonl **第二条**追加 `trellis-execute/SKILL.md`（`task.py start` 后 hook 可读）。
+jsonl **第一条必须是 `MASTER.plan.md`**。槽位顺序见 **§6.1.1**（`context_pack.json` 与 `trellis-execute/SKILL.md` 不得争抢同一序号）。
 
 用户 Execute 开场白（可复制进 MASTER §0）：
 
@@ -541,6 +548,28 @@ audit.report §5 PASS + 无未关 §4.3 → trellis-update-spec → archive → 
 ```
 
 追加：`python .trellis/scripts/task.py add-context <slug> implement <path> "<reason>"`
+
+#### 6.1.1 implement.jsonl 槽位（权威顺序）
+
+| 序号 | 文件                                      | 条件                                    |
+| ---- | ----------------------------------------- | --------------------------------------- |
+| 1    | `MASTER.plan.md`                          | 始终                                    |
+| 2    | `context_pack.json`                       | `task_track=complex`（默认：有 MASTER） |
+| 3    | `.cursor/skills/trellis-execute/SKILL.md` | 始终（复杂任务 Execute）                |
+| 4+   | 任务接线 docs/specs/code                  | `integration-ledger` / MASTER §6        |
+
+> `validate-plan-freeze` 在缺 pack 时自动调用 `context_router.py --task`。
+
+#### 6.1.2 项目地图分工
+
+| 地图                                           | 范围                      | 用途                                                  |
+| ---------------------------------------------- | ------------------------- | ----------------------------------------------------- |
+| `MIGRATION_MAP.md`                             | 人类 narrative + 精选映射 | Plan 导航；非机械全量索引                             |
+| `docs/generated/docs_specs_index.generated.md` | 全仓库 docs/specs         | `generate_project_map.py`；`check_docs_specs_indexed` |
+| `docs/generated/project_map.generated.json`    | Round 3 六模块子集        | Execute `context_pack` 路由                           |
+| `docs/INDEX.md`                                | 文档 hub                  | 角色入口；**不替代** MIGRATION_MAP 逐文件索引         |
+
+校验：`uv run python scripts/check_docs_specs_indexed.py`
 
 ### 6.2 Manifest 协议（E1–E20 · 上下文三层）
 

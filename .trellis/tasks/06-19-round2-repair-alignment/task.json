@@ -28,5 +28,7 @@
     "specs/schema/schema.sql"
   ],
   "notes": "Gate cleared 2026-06-19 PR #15. Round 3 PARTIAL repay in AUDIT_DEFERRED_REGISTRY.",
-  "meta": {}
+  "meta": {
+    "task_track": "simple"
+  }
 }

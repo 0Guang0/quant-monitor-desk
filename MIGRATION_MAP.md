@@ -1,8 +1,10 @@
 # MIGRATION_MAP
 
-> Last updated: 2026-06-21
+> Last updated: 2026-06-23
 >
 > 本文件已经从“旧设计内容 → 新文件位置”的迁移表，升级为项目级地图（Project Map）。它用于让 Claude Code / Codex / 人类维护者在实施前精准定位：某个模块的设计文档、契约、定义、规则、执行任务、运行实现目录分别在哪里。
+>
+> **与 `docs/generated/project_map.generated.*` 分工：** 本文件 = **人类 narrative** + 精选模块映射；`docs/generated/docs_specs_index.generated.md` = **机械全量** docs/specs 列表（`generate_project_map.py` 生成）；generated project map = Round 3 六模块 agent 路由子集。
 
 ## 0. 强制边界：`docs/` 与 `specs/` 不是实现地址
 
@@ -66,21 +68,22 @@
 
 ### 4.2 架构文档 `docs/architecture/`
 
-| 路径                                                  | 用途                                                             |
-| ----------------------------------------------------- | ---------------------------------------------------------------- |
-| `docs/architecture/00_project_overview.md`            | 总体项目定位：本地优先、监控而非自动交易、五层模型总览           |
-| `docs/architecture/01_context_and_scope.md`           | 上下文、使用范围、非目标、人工确认边界                           |
-| `docs/architecture/02_solution_strategy.md`           | 总体方案策略                                                     |
-| `docs/architecture/03_runtime_flows.md`               | 运行链路：数据抓取、写入、前端、Agent 主链路                     |
-| `docs/architecture/04_data_architecture.md`           | 数据架构：DuckDB、Raw Store、Parquet、WriteManager               |
-| `docs/architecture/05_module_map.md`                  | 模块地图：各模块职责与边界                                       |
-| `docs/architecture/06_deployment_and_local_ops.md`    | 本地部署与运维策略，含 Round2.6 平台矩阵补充                     |
-| `docs/architecture/07_project_directory_structure.md` | 项目目录结构说明                                                 |
-| `docs/architecture/08_decision_log_index.md`          | ADR/决策索引                                                     |
-| `docs/architecture/09_phase_plan.md`                  | 分阶段交付计划                                                   |
-| `docs/architecture/10_external_references.md`         | 外部参考与采纳边界                                               |
-| `docs/architecture/11_final_conclusion.md`            | 最终结论                                                         |
-| `docs/architecture/module_boundary_matrix.md`         | Round2.6 import/module boundary matrix；只定义设计边界，不改代码 |
+| 路径                                                           | 用途                                                             |
+| -------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `docs/architecture/00_project_overview.md`                     | 总体项目定位：本地优先、监控而非自动交易、五层模型总览           |
+| `docs/architecture/01_context_and_scope.md`                    | 上下文、使用范围、非目标、人工确认边界                           |
+| `docs/architecture/02_solution_strategy.md`                    | 总体方案策略                                                     |
+| `docs/architecture/03_runtime_flows.md`                        | 运行链路：数据抓取、写入、前端、Agent 主链路                     |
+| `docs/architecture/04_data_architecture.md`                    | 数据架构：DuckDB、Raw Store、Parquet、WriteManager               |
+| `docs/architecture/05_module_map.md`                           | 模块地图：各模块职责与边界                                       |
+| `docs/architecture/06_deployment_and_local_ops.md`             | 本地部署与运维策略，含 Round2.6 平台矩阵补充                     |
+| `docs/architecture/07_project_directory_structure.md`          | 项目目录结构说明                                                 |
+| `docs/architecture/08_decision_log_index.md`                   | ADR/决策索引                                                     |
+| `docs/architecture/09_phase_plan.md`                           | 分阶段交付计划                                                   |
+| `docs/architecture/10_external_references.md`                  | 外部参考与采纳边界                                               |
+| `docs/architecture/11_final_conclusion.md`                     | 最终结论                                                         |
+| `docs/architecture/module_boundary_matrix.md`                  | Round2.6 import/module boundary matrix；只定义设计边界，不改代码 |
+| `docs/architecture/layer1_ingestion_refactor_rollback_plan.md` | Layer1 ingestion 重构回滚计划                                    |
 
 ### 4.3 ADR 与决策记录
 
@@ -161,20 +164,34 @@
 | `docs/ops/qmt_xqshare_setup.md`              | 可选 qmt_xqshare 设置边界                           |
 | `docs/ops/TROUBLESHOOTING.md`                | 故障排查入口                                        |
 | `docs/ops/verification_commands.md`          | Windows / 本地验证命令                              |
+| `docs/ops/user_intervention_policy.md`       | Agent vs 用户介入边界（Loop Engineering）           |
+| `docs/ops/data_health_cli.md`                | 数据健康 CLI 设计                                   |
+| `docs/ops/ops_report_cli.md`                 | 运维报告 CLI 设计                                   |
 
 ### 4.7 质量与发布治理 `docs/quality/`
 
-| 路径                                                       | 用途                                                                             |
-| ---------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| `docs/quality/final_package_rules.md`                      | 最终发布包规则                                                                   |
-| `docs/quality/PENDING_USER_DECISIONS.md`                   | 用户已拍板 D-01 至 D-12，执行角色不得反复询问                                    |
-| `docs/quality/REPAIR_EXECUTION_SELF_CHECK.md`              | 修复执行自检                                                                     |
-| `docs/quality/REPAIR_IMPORT_CODE_GAP_LEDGER.md`            | 修复包导入后代码与 docs/specs 口径差台账；当前 closed                            |
-| `docs/quality/REPAIR_IMPORT_PHASE2_NON_MANIFEST_REVIEW.md` | 非 MANIFEST 文件删留审查                                                         |
-| `docs/quality/ROUND2_REPAIR_ALIGNMENT_TRACKER.md`          | Round2/Round2.5 修复对齐 tracker                                                 |
-| `docs/quality/self_check_and_audit.md`                     | 自检与审计清单                                                                   |
-| `docs/quality/production_live_pilot_policy.md`             | Batch 2.75 受控生产/live 数据试点门禁；授权、sandbox、raw-only、no-mutation 规则 |
-| `docs/quality/staged_acceptance_policy.md`                 | 分阶段验收策略                                                                   |
+| 路径                                                              | 用途                                                                             |
+| ----------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `docs/quality/final_package_rules.md`                             | 最终发布包规则                                                                   |
+| `docs/quality/PENDING_USER_DECISIONS.md`                          | 用户已拍板 D-01 至 D-12，执行角色不得反复询问                                    |
+| `docs/quality/REPAIR_EXECUTION_SELF_CHECK.md`                     | 修复执行自检                                                                     |
+| `docs/quality/REPAIR_IMPORT_CODE_GAP_LEDGER.md`                   | 修复包导入后代码与 docs/specs 口径差台账；当前 closed                            |
+| `docs/quality/REPAIR_IMPORT_PHASE2_NON_MANIFEST_REVIEW.md`        | 非 MANIFEST 文件删留审查                                                         |
+| `docs/quality/ROUND2_REPAIR_ALIGNMENT_TRACKER.md`                 | Round2/Round2.5 修复对齐 tracker                                                 |
+| `docs/quality/self_check_and_audit.md`                            | 自检与审计清单                                                                   |
+| `docs/quality/production_live_pilot_policy.md`                    | Batch 2.75 受控生产/live 数据试点门禁；授权、sandbox、raw-only、no-mutation 规则 |
+| `docs/quality/staged_acceptance_policy.md`                        | 分阶段验收策略                                                                   |
+| `docs/quality/BATCH3_STAGED_DOWNSTREAM_GATE.md`                   | Batch 3 staged-only 下游 gate 语义                                               |
+| `docs/quality/LOOP_ENGINEERING_TASK_FLOW_REFACTOR_PLAN.md`        | Loop Engineering 任务流程改造方案                                                |
+| `docs/quality/KNOWN_PYTEST_SKIPS.md`                              | 已知 pytest skip 登记                                                            |
+| `docs/quality/PONYTAIL_MODULE_SCAN_20260622.md`                   | Ponytail 模块扫描记录                                                            |
+| `docs/quality/ROUND3_BATCH25_PENDING_FIX_REGISTRY.md`             | Batch 2.5 待修复登记                                                             |
+| `docs/quality/adversarial_audit_report.md`                        | 对抗性审计总报告                                                                 |
+| `docs/quality/adversarial_audit_post14_contract_ponytail_lane.md` | Post-14 契约 ponytail lane 审计                                                  |
+| `docs/quality/adversarial_audit_post14_master_fix_manifest.md`    | Post-14 master fix manifest 审计                                                 |
+| `docs/quality/adversarial_audit_post14_ops_data_lane.md`          | Post-14 ops/data lane 审计                                                       |
+| `docs/quality/batch275_user_authorization_2026-06-21.md`          | Batch 2.75 用户授权记录                                                          |
+| `docs/quality/prompt14_user_authorization_2026-06-22.md`          | PROMPT_14 用户授权记录                                                           |
 
 ### 4.8 Schema 迁移说明 `docs/schema/`
 
@@ -265,6 +282,54 @@
 | `docs/implementation_tasks/ROUND_5_INTEGRATION_RELEASE/035_implement_final_package_cleanup.md`                                   | final package cleanup 实施任务                                                                    |
 | `docs/implementation_tasks/ROUND_5_INTEGRATION_RELEASE/036_create_final_release_manifest.md`                                     | final release manifest 创建任务                                                                   |
 | `docs/implementation_tasks/ROUND_5_INTEGRATION_RELEASE/README.md`                                                                | Round 5 入口                                                                                      |
+
+### 4.10 Round 3 扩展任务包（对抗性审计 / 并行 prompt / 参考落地 / 评审）
+
+| 路径                                                                                                                    | 用途                                   |
+| ----------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| `docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md`                                                            | 未解决项与任务卡覆盖映射               |
+| `docs/implementation_tasks/ROUND_3_MODELING_LAYERS/018C_tdx_pytdx_low_cost_probe.md`                                    | 018C TDX 低成本 probe 任务卡           |
+| `docs/implementation_tasks/ROUND_3_MODELING_LAYERS/023A_layer5_evidence_foundation.md`                                  | 023A Layer5 evidence foundation 任务卡 |
+| `docs/implementation_tasks/ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3X_contract_architecture_adversarial_audit.md`           | R3X 契约架构对抗审计                   |
+| `docs/implementation_tasks/ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3X_data_source_routing_blockers.md`                      | R3X 数据源路由 blocker                 |
+| `docs/implementation_tasks/ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3X_db_write_validation_blockers.md`                      | R3X DB 写入校验 blocker                |
+| `docs/implementation_tasks/ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3X_ponytail_low_touch_bucket_c.md`                       | R3X ponytail bucket C                  |
+| `docs/implementation_tasks/ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3X_ponytail_pilot_prep_bucket_a.md`                      | R3X ponytail pilot prep bucket A       |
+| `docs/implementation_tasks/ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3X_real_data_staged_pilot.md`                            | R3X 真实数据 staged pilot              |
+| `docs/implementation_tasks/ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3X_residual_open_items_closure.md`                       | R3X 残余 open items 关闭               |
+| `docs/implementation_tasks/ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3Y_execution_discipline_addendum.md`                     | R3Y 执行纪律附录                       |
+| `docs/implementation_tasks/ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3Y_post_r3x_strict_adversarial_audit.md`                 | R3Y post-R3X 严格对抗审计              |
+| `docs/implementation_tasks/ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3Y_readonly_data_health_v1.md`                           | R3Y 只读数据健康 v1                    |
+| `docs/implementation_tasks/ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3Y_real_data_staged_pilot_v2.md`                         | R3Y staged pilot v2                    |
+| `docs/implementation_tasks/ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3Y_staged_pilot_v2_execution_addendum.md`                | R3Y staged pilot v2 执行附录           |
+| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_00_integration_round3_merge_coordinator.md`                  | PROMPT_00 merge coordinator            |
+| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_01_feature_round3_batch3_staged_gate.md`                     | PROMPT_01 Batch3 staged gate           |
+| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_02_debt_r3b275_018c_low_cost_probe.md`                       | PROMPT_02 018C low cost probe          |
+| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_03_debt_r3b275_perf_hyg_registry.md`                         | PROMPT_03 perf hygiene registry        |
+| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_04_debt_r3b275_fred_staged_semantics.md`                     | PROMPT_04 FRED staged semantics        |
+| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_05_chore_round3_ci_gate_hardening.md`                        | PROMPT_05 CI gate hardening            |
+| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_06_debt_r3_ops_inspect_data_health_references.md`            | PROMPT_06 ops inspect references       |
+| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_07_feature_round3_019_layer2_sensor.md`                      | PROMPT_07 Layer2 sensor                |
+| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_08_feature_round3_023a_evidence_foundation.md`               | PROMPT_08 023A evidence                |
+| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_09_review_round3_019_plan_audit.md`                          | PROMPT_09 019 plan audit               |
+| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_10_debt_r3b275_018c_live_manual_probe_plan.md`               | PROMPT_10 018C live manual probe       |
+| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_11_review_round3_contract_architecture_adversarial_audit.md` | PROMPT_11 contract adversarial audit   |
+| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_12_fix_round3_data_source_routing_blockers.md`               | PROMPT_12 routing blockers             |
+| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_13_fix_round3_db_write_validation_blockers.md`               | PROMPT_13 DB write blockers            |
+| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_14_feature_round3_real_data_staged_pilot.md`                 | PROMPT_14 staged pilot                 |
+| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_15_fix_round3_r3x_residual_open_items_closure.md`            | PROMPT_15 residual closure             |
+| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_16_fix_round3_ponytail_pilot_prep_bucket_a.md`               | PROMPT_16 ponytail bucket A            |
+| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_17_debt_round3_ponytail_low_touch.md`                        | PROMPT_17 ponytail low touch           |
+| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_18_review_round3_post_r3x_strict_adversarial_audit.md`       | PROMPT_18 post-R3X audit               |
+| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_19_feature_round3_real_data_staged_pilot_v2.md`              | PROMPT_19 staged pilot v2              |
+| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_20_feature_round3_readonly_data_health_v1.md`                | PROMPT_20 readonly data health         |
+| `docs/implementation_tasks/ROUND_3_REFERENCE_LANDING/README.md`                                                         | Round 3 参考落地入口                   |
+| `docs/implementation_tasks/ROUND_3_REFERENCE_LANDING/R3D_018C_live_manual_probe_plan.md`                                | R3D 018C live manual probe plan        |
+| `docs/implementation_tasks/ROUND_3_REFERENCE_LANDING/R3D_018C_low_cost_source_probe.md`                                 | R3D 018C low cost probe                |
+| `docs/implementation_tasks/ROUND_3_REFERENCE_LANDING/R3D_ops_db_data_health_reference.md`                               | R3D ops DB data health 参考            |
+| `docs/implementation_tasks/ROUND_3_REFERENCE_LANDING/R4D_readonly_sql_assistant_reference.md`                           | R4D readonly SQL assistant 参考        |
+| `docs/implementation_tasks/ROUND_3_REVIEW/019_plan_audit_report.md`                                                     | 019 plan 审计报告                      |
+| `docs/implementation_tasks/ROUND_3_REVIEW/019_plan_audit_review.md`                                                     | 019 plan 审计评审                      |
 
 ## 5. `specs/` 契约与定义目录地图
 
@@ -359,6 +424,14 @@
 | `specs/layer3_global_industry_chains/layer3_global_industry_chains_v1_2/layer3_global_industry_chain_registry.yaml` | global industry chain registry     |
 | `specs/layer3_global_industry_chains/layer3_global_industry_chains_v1_2/layer3_node_registry.json`                  | node registry                      |
 | `specs/layer3_global_industry_chains/layer3_global_industry_chains_v1_2/references/source_registry.md`              | Layer 3 reference source registry  |
+
+### 5.6 Loop Engineering 机器可读配置
+
+| 路径                                                  | 用途                                          |
+| ----------------------------------------------------- | --------------------------------------------- |
+| `specs/context/authority_graph.yaml`                  | 模块 → 权威 docs/contracts/rules 路由图（P0） |
+| `specs/verification/feature_verification_matrix.yaml` | 功能 AC → pytest 验证矩阵（P2）               |
+| `specs/verification/contract_coverage.yaml`           | 契约 requirement → pytest 覆盖矩阵（P2）      |
 
 ## 6. 模块 → 设计文档 / 契约 / 规则 / 实现目录映射
 

@@ -1,0 +1,140 @@
+#!/usr/bin/env python3
+"""Validate per-task loop engineering evidence chain."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from pathlib import Path
+
+from loop_engineering_common import (
+    find_repo_root,
+    extract_master_ac_ids,
+    load_json,
+    loop_required,
+    path_exists,
+    repo_relative,
+    validate_context_pack,
+)
+
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+
+
+def _extract_master_ac_ids(task_dir: Path) -> list[str]:
+    return extract_master_ac_ids(task_dir)
+
+def _read_json(path: Path) -> dict:
+    if not path.is_file():
+        return {}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def _audit_final_from_report(task_dir: Path) -> str | None:
+    report = task_dir / "audit.report.md"
+    if not report.is_file():
+        return None
+    text = report.read_text(encoding="utf-8")
+    for line in reversed(text.splitlines()):
+        if "PASS" in line.upper() or "FAIL" in line.upper():
+            return line.strip()
+    return None
+
+
+def check_task_evidence(task_dir: Path) -> list[str]:
+    errors: list[str] = []
+    if not loop_required(task_dir):
+        return []
+
+    context_pack_path = task_dir / "context_pack.json"
+    if not context_pack_path.is_file():
+        if (task_dir / "MASTER.plan.md").is_file():
+            errors.append("missing context_pack.json")
+    else:
+        pack = _read_json(context_pack_path)
+        errors.extend(validate_context_pack(pack))
+
+    loop_manifest = _read_json(task_dir / "loop_manifest.json")
+    evidence_index = _read_json(task_dir / "evidence_index.json")
+    audit_matrix = _read_json(task_dir / "audit_matrix.json")
+
+    master_acs = _extract_master_ac_ids(task_dir)
+    manifest_acs = {str(item.get("id")) for item in loop_manifest.get("acs") or [] if item.get("id")}
+    if master_acs and loop_manifest and manifest_acs:
+        missing = sorted(set(master_acs) - manifest_acs)
+        if missing:
+            errors.append(f"loop_manifest missing MASTER §2 AC ids: {missing}")
+
+    def _walk_evidence(node: object, prefix: str = "") -> None:
+        if isinstance(node, dict):
+            for key, value in node.items():
+                _walk_evidence(value, f"{prefix}.{key}" if prefix else key)
+        elif isinstance(node, list):
+            for item in node:
+                _walk_evidence(item, prefix)
+        elif isinstance(node, str):
+            rel = node.replace("\\", "/")
+            if rel.endswith((".txt", ".md", ".json", ".jsonl")):
+                candidate = task_dir / rel
+                if not candidate.is_file() and not path_exists(rel):
+                    errors.append(f"evidence_index missing file at {prefix}: {rel}")
+
+    if evidence_index:
+        _walk_evidence(evidence_index)
+
+    if audit_matrix:
+        final = str(audit_matrix.get("final", "")).upper()
+        report_line = _audit_final_from_report(task_dir)
+        if report_line and final and final not in report_line.upper():
+            errors.append("audit_matrix.final inconsistent with audit.report.md conclusion")
+
+        dimensions = audit_matrix.get("dimensions") or {}
+        for dim, payload in dimensions.items():
+            result = str((payload or {}).get("result", "")).lower()
+            if "fail" in result and "fixed" not in result and "pass" not in result:
+                repairs = loop_manifest.get("acs") or []
+                has_repair = any((item.get("repair_items") or []) for item in repairs if isinstance(item, dict))
+                repair_plan = task_dir / "REPAIR.plan.md"
+                deferred = task_dir / "research" / "audit-deferred.md"
+                if not has_repair and not repair_plan.is_file() and not deferred.is_file():
+                    errors.append(f"audit dimension {dim} failed without repair/deferred artifact")
+
+    task_json = load_json(task_dir / "task.json")
+    status = str(task_json.get("status", "")).lower()
+    if audit_matrix and status == "in_progress":
+        final = str(audit_matrix.get("final", "")).upper()
+        if final.startswith("PASS"):
+            errors.append("task.json still in_progress but audit_matrix indicates pass")
+
+    return errors
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("task_dir", help="Path to .trellis/tasks/<task>")
+    args = parser.parse_args()
+
+    task_dir = Path(args.task_dir)
+    if not task_dir.is_absolute():
+        task_dir = REPO_ROOT / args.task_dir
+    if not task_dir.is_dir():
+        print(f"task directory not found: {args.task_dir}", file=sys.stderr)
+        return 1
+
+    errors = check_task_evidence(task_dir)
+    if errors:
+        print("task evidence check FAILED:", file=sys.stderr)
+        for err in errors:
+            print(f"  - {err}", file=sys.stderr)
+        return 1
+    print(f"OK: task evidence for {repo_relative(task_dir)}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

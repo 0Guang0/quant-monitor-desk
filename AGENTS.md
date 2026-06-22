@@ -45,6 +45,21 @@ When the active task status is `in_progress` and the task directory contains `MA
 9. Before §11 Audit handoff: `python .trellis/scripts/task.py validate-execute-handoff <task-dir>`.
 10. Do **not** `finish-work` until Audit PASS.
 
+## Loop engineering context (Trellis complex-task layer)
+
+Complex tasks (`meta.task_track: "complex"`, default when `MASTER.plan.md` exists) use machine-readable routing — **do not ask the user for docs/specs paths**.
+
+1. Plan freeze: `validate-plan-freeze` auto-runs `context_router` if `context_pack.json` missing
+2. Execute: read `context_pack.json` first; `implement.jsonl` line 2 = `context_pack.json`
+3. Handoff gates: `validate-execute-handoff` → `check_task_evidence.py`
+4. Repo CI: `check_test_catalog.py`, `check_verification_matrix.py`, `check_docs_specs_indexed.py`, `generate_project_map.py --check`
+5. `debt-lite` / no-MASTER tasks: set `meta.task_track: "debt-lite"` or `"simple"` — loop not required
+6. **New test module:** `uv run python scripts/loop_maintain.py --fix` (or `check_test_catalog.py --write-defaults`)
+7. **New docs/specs file:** same `loop_maintain.py --fix` (refreshes `docs/generated/docs_specs_index.generated.md`)
+8. **New backend package:** extend `specs/context/authority_graph.yaml` — `loop_maintain.py` reports unmapped `backend/app/*`
+
+See `docs/quality/LOOP_ENGINEERING_TASK_FLOW_REFACTOR_PLAN.md` and `docs/ops/user_intervention_policy.md`.
+
 <!-- TRELLIS:END -->
 
 ## Repair/Debt Lite Worktree Protocol

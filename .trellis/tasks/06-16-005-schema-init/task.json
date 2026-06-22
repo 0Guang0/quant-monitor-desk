@@ -31,6 +31,7 @@
     "demo": true,
     "protocol_version": "complex-task-planning-protocol",
     "linked_round_task": "005_create_schema_sql",
-    "work_already_completed": true
+    "work_already_completed": true,
+    "task_track": "simple"
   }
 }

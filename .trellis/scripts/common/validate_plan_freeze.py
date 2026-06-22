@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import re
+import sys
 from pathlib import Path
 
 import yaml
@@ -378,7 +379,107 @@ def validate_plan_freeze(task_dir: Path, repo_root: Path | None = None) -> list[
     from .manifest_protocol import validate_manifest_freeze
 
     validate_manifest_freeze(task_dir, repo_root, errors)
+    errors.extend(_deprecated_loop_meta_errors(task_dir, repo_root))
+    _validate_loop_engineering_freeze(task_dir, repo_root, errors)
+    _validate_repo_loop_gates(repo_root, errors)
     return errors
+
+
+def validate_plan_freeze_warnings(task_dir: Path, repo_root: Path) -> list[str]:
+    """Non-blocking freeze warnings (authority_graph gaps, etc.)."""
+    warnings: list[str] = []
+    if not (task_dir / "MASTER.plan.md").is_file():
+        return warnings
+    scripts = repo_root / "scripts"
+    if str(scripts) not in sys.path:
+        sys.path.insert(0, str(scripts))
+    try:
+        from loop_engineering_common import authority_graph_coverage_gaps, loop_required
+    except ImportError:
+        return warnings
+    if not loop_required(task_dir):
+        return warnings
+    for path in authority_graph_coverage_gaps(task_dir):
+        warnings.append(f"authority_graph gap: {path} — add specs/context/authority_graph.yaml entry")
+    return warnings
+
+
+def _deprecated_loop_meta_errors(task_dir: Path, repo_root: Path) -> list[str]:
+    scripts = repo_root / "scripts"
+    if str(scripts) not in sys.path:
+        sys.path.insert(0, str(scripts))
+    try:
+        from loop_engineering_common import deprecated_loop_meta_errors
+    except ImportError:
+        return []
+    return deprecated_loop_meta_errors(task_dir)
+
+
+def _validate_repo_loop_gates(repo_root: Path, errors: list[str]) -> None:
+    """ponytail: reuse existing check scripts at freeze — no duplicate gate logic."""
+    scripts = repo_root / "scripts"
+    if str(scripts) not in sys.path:
+        sys.path.insert(0, str(scripts))
+    try:
+        from check_docs_specs_indexed import check_migration_map_coverage
+        from check_test_catalog import check_catalog
+        from check_verification_matrix import check_matrix
+    except ImportError:
+        return
+    for err in check_catalog():
+        errors.append(f"repo test_catalog: {err}")
+    for err in check_matrix():
+        errors.append(f"repo verification_matrix: {err}")
+    for err in check_migration_map_coverage():
+        errors.append(f"repo docs_specs_index: {err}")
+
+
+def _validate_loop_engineering_freeze(task_dir: Path, repo_root: Path, errors: list[str]) -> None:
+    """Complex tasks (task_track=complex): auto-generate + validate loop artifacts."""
+    if not (repo_root / "specs/context/authority_graph.yaml").is_file():
+        return
+    if not (task_dir / "MASTER.plan.md").is_file():
+        return
+    scripts = repo_root / "scripts"
+    if str(scripts) not in sys.path:
+        sys.path.insert(0, str(scripts))
+    try:
+        from context_router import generate_task_loop_artifacts
+        from loop_engineering_common import loop_required, loop_engineering_enabled, validate_context_pack
+    except ImportError:
+        return
+
+    if not loop_required(task_dir):
+        return
+
+    pack_path = task_dir / "context_pack.json"
+    if not pack_path.is_file():
+        for err in generate_task_loop_artifacts(task_dir):
+            errors.append(f"context_router: {err}")
+        if not pack_path.is_file():
+            errors.append("missing context_pack.json after context_router")
+            return
+
+    try:
+        pack = json.loads(pack_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        errors.append("context_pack.json is invalid JSON")
+        return
+    for err in validate_context_pack(pack):
+        errors.append(err)
+    impl = task_dir / "implement.jsonl"
+    if impl.is_file():
+        paths = _paths_from_jsonl(impl)
+        loop_on = loop_engineering_enabled(task_dir)
+        if loop_on and len(paths) >= 2 and "context_pack.json" not in paths[1]:
+            errors.append(
+                "implement.jsonl slot 2 must be context_pack.json when loop engineering is enabled"
+            )
+        if len(paths) >= 2 and loop_on and "trellis-execute" not in paths[2]:
+            if not any("trellis-execute" in p for p in paths[:4]):
+                errors.append(
+                    "implement.jsonl must include trellis-execute/SKILL.md within first 4 entries"
+                )
 
 
 def cmd_validate_plan_freeze(args) -> int:
@@ -393,6 +494,11 @@ def cmd_validate_plan_freeze(args) -> int:
         return 1
 
     errors = validate_plan_freeze(task_dir, repo_root)
+    warnings = validate_plan_freeze_warnings(task_dir, repo_root)
+    if warnings:
+        print(colored("Plan freeze warnings:", Colors.YELLOW))
+        for warn in warnings:
+            print(f"  ! {warn}")
     if errors:
         print(colored("Plan freeze validation FAILED:", Colors.RED))
         for err in errors:

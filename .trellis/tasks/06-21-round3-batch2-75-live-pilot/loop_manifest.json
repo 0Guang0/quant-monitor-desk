@@ -1,0 +1,192 @@
+{
+  "task": "06-21-round3-batch2-75-live-pilot",
+  "modules": [
+    "layer1_axes",
+    "layer2_sensors",
+    "datasources",
+    "validators",
+    "ops"
+  ],
+  "acs": [
+    {
+      "id": "GATE",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "P0-1",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "P0-2",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "P0-2b",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "P0-3",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "P0-4",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "P1-1",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "P1-2",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "P1-3",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "P2-1",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "P2-2",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "P2-3",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "P3-1",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "P3-2",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "P3-3",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "P3-4",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "P3-5",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "P4-1",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "P4-2",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "P4-3",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "P4-4",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "P4-5",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "P45-1",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "P45-2",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "P45-3",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "P5-1",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "P5-2",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "P5-3",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "P5-4",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "PM1",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "PM2",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "PM3",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "PM4",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "PRE",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "REG-1",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "REG-2",
+      "status": "pending",
+      "repair_items": []
+    }
+  ]
+}

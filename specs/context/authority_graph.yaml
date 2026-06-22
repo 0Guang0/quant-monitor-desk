@@ -1,0 +1,354 @@
+version: "1"
+description: Machine-readable context authority graph for loop engineering task flow.
+
+modules:
+  layer1_axes:
+    implementation:
+      - backend/app/layer1_axes/**
+    docs:
+      - docs/modules/layer1_global_regime_panel.md
+      - docs/architecture/module_boundary_matrix.md
+      - docs/architecture/04_data_architecture.md
+    contracts:
+      - specs/contracts/layer1_axis_contract.yaml
+      - specs/contracts/snapshot_lineage_contract.yaml
+      - specs/contracts/resource_limits.yaml
+    rules:
+      - docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md
+      - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
+      - docs/quality/production_live_pilot_policy.md
+    implementation_tasks:
+      - docs/implementation_tasks/ROUND_3_MODELING_LAYERS/018A_layer1_observation_ingestion_bridge.md
+      - docs/implementation_tasks/ROUND_3_MODELING_LAYERS/018B_production_live_pilot_gate.md
+    tests:
+      - tests/test_layer1_axis_loader.py
+      - tests/test_layer1_interpretation.py
+      - tests/test_layer1_ingestion_gates.py
+      - tests/test_layer1_observation_ingestion.py
+      - tests/test_observation_mapper.py
+      - tests/test_batch25_production_data_gate.py
+      - tests/test_batch275_live_pilot_gate.py
+      - tests/test_production_live_pilot_policy.py
+      - tests/test_fred_staged_semantics.py
+    forbidden_claims:
+      - production-live ready
+      - live production ingestion
+    required_evidence:
+      - context_pack.json
+      - loop_manifest.json
+      - evidence_index.json
+      - audit_matrix.json
+
+  layer2_sensors:
+    implementation:
+      - backend/app/layer2_sensors/**
+    docs:
+      - docs/modules/layer2_cross_asset_sensor.md
+      - docs/architecture/module_boundary_matrix.md
+    contracts:
+      - specs/contracts/layer2_sensor_contract.yaml
+      - specs/contracts/snapshot_lineage_contract.yaml
+      - specs/contracts/resource_limits.yaml
+    rules:
+      - docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md
+      - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
+      - docs/quality/BATCH3_STAGED_DOWNSTREAM_GATE.md
+    implementation_tasks:
+      - docs/implementation_tasks/ROUND_3_MODELING_LAYERS/019_implement_layer2_cross_asset_sensor.md
+    tests:
+      - tests/test_layer2_sensor_loader.py
+      - tests/test_snapshot_lineage_kernel.py
+      - tests/test_batch3_staged_downstream_gate.py
+      - tests/test_batch25_production_data_gate.py
+      - tests/test_resource_guard.py
+    forbidden_claims:
+      - production-live ready
+      - live production ingestion
+    required_evidence:
+      - context_pack.json
+      - loop_manifest.json
+      - evidence_index.json
+      - audit_matrix.json
+
+  layer5_evidence:
+    implementation:
+      - backend/app/layer5_evidence/**
+    docs:
+      - docs/modules/layer5_security_evidence.md
+      - docs/architecture/module_boundary_matrix.md
+    contracts:
+      - specs/contracts/layer5_evidence_contract.yaml
+      - specs/contracts/snapshot_lineage_contract.yaml
+    rules:
+      - docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md
+      - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
+    implementation_tasks:
+      - docs/implementation_tasks/ROUND_3_MODELING_LAYERS/023A_layer5_evidence_foundation.md
+    tests:
+      - tests/test_layer5_evidence_foundation.py
+      - tests/test_trellis_audit_trace_authority.py
+    forbidden_claims:
+      - production-live ready
+    required_evidence:
+      - context_pack.json
+      - loop_manifest.json
+      - evidence_index.json
+      - audit_matrix.json
+
+  datasources:
+    implementation:
+      - backend/app/datasources/**
+    docs:
+      - docs/modules/data_sources.md
+      - docs/modules/datasource_service.md
+      - docs/modules/source_route_plan.md
+      - docs/modules/source_capability_registry.md
+    contracts:
+      - specs/contracts/datasource_service_contract.yaml
+      - specs/contracts/source_route_contract.yaml
+      - specs/contracts/source_capability_contract.yaml
+      - specs/contracts/platform_source_matrix.yaml
+    rules:
+      - docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md
+      - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
+    implementation_tasks:
+      - docs/implementation_tasks/ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3X_data_source_routing_blockers.md
+    tests:
+      - tests/test_datasource_service.py
+      - tests/test_source_registry.py
+      - tests/test_source_route_planner.py
+      - tests/test_source_capabilities.py
+      - tests/test_platform_source_matrix.py
+      - tests/test_r3x_data_source_routing_blockers.py
+    forbidden_claims:
+      - bypass route readiness gate
+    required_evidence:
+      - context_pack.json
+      - loop_manifest.json
+      - evidence_index.json
+      - audit_matrix.json
+
+  validators:
+    implementation:
+      - backend/app/validators/**
+      - backend/app/db/validation_gate.py
+      - backend/app/db/write_manager.py
+    docs:
+      - docs/modules/data_validation_and_conflict.md
+      - docs/modules/data_validation_write_concurrency.md
+      - docs/modules/write_manager.md
+    contracts:
+      - specs/contracts/write_contract.yaml
+      - specs/contracts/data_quality_rules.yaml
+      - specs/contracts/source_conflict_rules.yaml
+    rules:
+      - docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md
+      - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
+    implementation_tasks:
+      - docs/implementation_tasks/ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3X_db_write_validation_blockers.md
+    tests:
+      - tests/test_write_manager.py
+      - tests/test_db_validation_gate.py
+      - tests/test_data_quality_validator.py
+      - tests/test_source_conflict_validator.py
+      - tests/test_batch_c_validation_flow.py
+    forbidden_claims:
+      - direct table write outside WriteManager
+    required_evidence:
+      - context_pack.json
+      - loop_manifest.json
+      - evidence_index.json
+      - audit_matrix.json
+
+  ops:
+    implementation:
+      - backend/app/ops/**
+      - scripts/run_staged_pilot.py
+      - scripts/production_gate.py
+      - scripts/check_doc_links.py
+      - scripts/production_equivalent_smoke.py
+    docs:
+      - docs/modules/ops_and_performance.md
+      - docs/ops/verification_commands.md
+      - docs/ops/performance_limits.md
+      - docs/quality/production_live_pilot_policy.md
+      - docs/quality/BATCH3_STAGED_DOWNSTREAM_GATE.md
+      - docs/ROUND3_HANDOFF.md
+    contracts:
+      - specs/contracts/ops_health_check_contract.yaml
+      - specs/contracts/ops_db_inspect_contract.yaml
+      - specs/contracts/review_sandbox_contract.yaml
+    rules:
+      - docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md
+      - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
+    implementation_tasks:
+      - docs/implementation_tasks/ROUND_3_REFERENCE_LANDING/R3D_018C_live_manual_probe_plan.md
+    tests:
+      - tests/test_staged_pilot.py
+      - tests/test_ops_db_inspector.py
+      - tests/test_ops_interface_probe.py
+      - tests/test_interface_probe_018c.py
+      - tests/test_production_gate.py
+      - tests/test_round3_verification_command_matrix.py
+      - tests/test_round3_audit_registry_alignment.py
+      - tests/test_unresolved_item_task_coverage.py
+      - tests/test_batch3_staged_downstream_gate.py
+    forbidden_claims:
+      - production-live ready
+      - live production ingestion
+    required_evidence:
+      - context_pack.json
+      - loop_manifest.json
+      - evidence_index.json
+      - audit_matrix.json
+
+  db_platform:
+    implementation:
+      - backend/app/db/**
+      - scripts/init_db.py
+    docs:
+      - docs/modules/write_manager.md
+      - docs/architecture/04_data_architecture.md
+    contracts:
+      - specs/schema/schema.sql
+      - specs/contracts/write_contract.yaml
+    rules:
+      - docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md
+      - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
+    implementation_tasks:
+      - docs/implementation_tasks/ROUND_1_DATA_FOUNDATION/005_create_schema_sql.md
+    tests:
+      - tests/test_schema_migration.py
+      - tests/test_schema_contract.py
+      - tests/test_sync_migration.py
+    required_evidence:
+      - context_pack.json
+      - loop_manifest.json
+      - evidence_index.json
+
+  sync_orchestrator:
+    implementation:
+      - backend/app/sync/**
+    docs:
+      - docs/modules/data_sync_orchestrator.md
+      - docs/architecture/module_boundary_matrix.md
+    contracts:
+      - specs/contracts/write_contract.yaml
+    rules:
+      - docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md
+      - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
+    implementation_tasks:
+      - docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/014_implement_data_sync_orchestrator.md
+    tests:
+      - tests/test_sync_orchestrator.py
+      - tests/test_sync_jobs.py
+      - tests/test_sync_pipeline_contract.py
+    required_evidence:
+      - context_pack.json
+      - loop_manifest.json
+      - evidence_index.json
+
+  core_platform:
+    implementation:
+      - backend/app/core/**
+      - backend/app/storage/**
+      - backend/app/util/**
+    docs:
+      - docs/modules/local_file_system.md
+      - docs/architecture/module_boundary_matrix.md
+    contracts:
+      - specs/contracts/resource_limits.yaml
+      - specs/contracts/snapshot_lineage_contract.yaml
+    rules:
+      - docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md
+      - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
+    tests:
+      - tests/test_resource_guard.py
+      - tests/test_path_compat.py
+      - tests/test_raw_store.py
+    required_evidence:
+      - context_pack.json
+      - loop_manifest.json
+      - evidence_index.json
+
+  layer3_chains:
+    implementation:
+      - backend/app/layer3_chains/**
+    docs:
+      - docs/modules/layer3_industry_shock_anchor.md
+    contracts:
+      - specs/contracts/snapshot_lineage_contract.yaml
+    rules:
+      - docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md
+    implementation_tasks:
+      - docs/implementation_tasks/ROUND_3_MODELING_LAYERS/README.md
+    tests: []
+    required_evidence:
+      - context_pack.json
+      - loop_manifest.json
+
+  layer4_markets:
+    implementation:
+      - backend/app/layer4_markets/**
+    docs:
+      - docs/modules/layer4_market_structure.md
+    contracts:
+      - specs/contracts/snapshot_lineage_contract.yaml
+    rules:
+      - docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md
+    implementation_tasks:
+      - docs/implementation_tasks/ROUND_3_MODELING_LAYERS/README.md
+    tests: []
+    required_evidence:
+      - context_pack.json
+      - loop_manifest.json
+
+  api_platform:
+    implementation:
+      - backend/app/api/**
+    docs:
+      - docs/modules/fastapi_backend.md
+      - docs/modules/fastapi_and_frontend.md
+    rules:
+      - docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md
+    implementation_tasks:
+      - docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/README.md
+    tests: []
+    required_evidence:
+      - context_pack.json
+
+  agents:
+    implementation:
+      - backend/app/agents/**
+    docs:
+      - docs/modules/agent_module.md
+    rules:
+      - docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md
+    implementation_tasks:
+      - docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/README.md
+    tests: []
+    required_evidence:
+      - context_pack.json
+
+  notifications:
+    implementation:
+      - backend/app/notifications/**
+    docs:
+      - docs/modules/notification_and_reports.md
+    rules:
+      - docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md
+    tests: []
+    required_evidence:
+      - context_pack.json
+
+  etl:
+    implementation:
+      - backend/app/etl/**
+    docs:
+      - docs/modules/duckdb_and_parquet.md
+    rules:
+      - docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md
+    tests:
+      - tests/test_duckdb_connection.py
+    required_evidence:
+      - context_pack.json

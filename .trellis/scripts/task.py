@@ -25,6 +25,7 @@ Usage:
     python task.py list-archive [month]        # List archived tasks
     python task.py add-subtask <parent-dir> <child-dir>     # Link child to parent
     python task.py remove-subtask <parent-dir> <child-dir>  # Unlink child from parent
+    python task.py maintain [--fix]            # Loop repo maintenance (catalog + maps + graph gaps)
 """
 
 from __future__ import annotations
@@ -80,9 +81,16 @@ from common.validate_execute_boot import cmd_validate_execute_boot
 from common.manifest_commands import cmd_suggest_implement_context
 
 
-# =============================================================================
-# Command: start / finish
-# =============================================================================
+def cmd_maintain(args: argparse.Namespace) -> int:
+    """Run loop_maintain.py (catalog + generated maps + authority_graph gaps)."""
+    import subprocess
+
+    repo_root = get_repo_root()
+    cmd = [sys.executable, str(repo_root / "scripts" / "loop_maintain.py")]
+    if args.fix:
+        cmd.append("--fix")
+    proc = subprocess.run(cmd, cwd=repo_root)
+    return int(proc.returncode or 0)
 
 def cmd_start(args: argparse.Namespace) -> int:
     """Set active task."""
@@ -546,6 +554,16 @@ def main() -> int:
     p_listarch = subparsers.add_parser("list-archive", help="List archived tasks")
     p_listarch.add_argument("month", nargs="?", help="Month (YYYY-MM)")
 
+    p_maintain = subparsers.add_parser(
+        "maintain",
+        help="Loop repo maintenance: test_catalog + generated maps + authority_graph gaps",
+    )
+    p_maintain.add_argument(
+        "--fix",
+        action="store_true",
+        help="Write test_catalog.yaml and generated project/docs indexes",
+    )
+
     args = parser.parse_args()
 
     if not args.command:
@@ -574,6 +592,7 @@ def main() -> int:
         "remove-subtask": cmd_remove_subtask,
         "list": cmd_list,
         "list-archive": cmd_list_archive,
+        "maintain": cmd_maintain,
     }
 
     if args.command in commands:

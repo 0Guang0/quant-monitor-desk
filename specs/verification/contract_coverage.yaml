@@ -1,0 +1,219 @@
+version: "1"
+description: Contract requirement to test/audit coverage matrix.
+
+specs/contracts/source_route_contract.yaml:
+  requirements:
+    SOURCE_ROUTE_READY_REQUIRED:
+      text: "Route must be READY before live fetch"
+      tests:
+        - tests/test_batch275_live_pilot_gate.py
+        - tests/test_source_route_planner.py
+      negative_required: true
+
+specs/contracts/write_contract.yaml:
+  requirements:
+    WRITE_MANAGER_ONLY:
+      text: "Clean table writes must go through DuckDBWriteManager"
+      tests:
+        - tests/test_write_manager.py
+        - tests/test_db_validation_gate.py
+      negative_required: true
+
+specs/contracts/layer2_sensor_contract.yaml:
+  requirements:
+    LAYER2_SNAPSHOT_DETERMINISTIC:
+      text: "Layer2 snapshot hash must be deterministic"
+      tests:
+        - tests/test_layer2_sensor_loader.py::test_snapshotDeterministicRebuild_sameInputsSameHash
+      negative_required: false
+
+specs/contracts/resource_limits.yaml:
+  requirements:
+    RESOURCE_GUARD_HARD_STOP:
+      text: "ResourceGuard HARD_STOP must abort batch processing"
+      tests:
+        - tests/test_resource_guard.py
+        - tests/test_layer2_sensor_loader.py::test_crossAssetSnapshotBuilder_resourceGuardBlocksBatchBuild
+      negative_required: true
+
+specs/contracts/layer1_axis_contract.yaml:
+  requirements:
+    LAYER1_AXIS_LOADER:
+      text: "Layer1 axis loader matches contract schema and registry behavior"
+      tests:
+        - tests/test_layer1_axis_loader.py
+      negative_required: false
+
+specs/contracts/data_quality_rules.yaml:
+  requirements:
+    DATA_QUALITY_VALIDATOR:
+      text: "Data quality validator enforces configured rules"
+      tests:
+        - tests/test_data_quality_validator.py
+      negative_required: true
+
+specs/contracts/source_conflict_rules.yaml:
+  requirements:
+    SOURCE_CONFLICT_VALIDATOR:
+      text: "Source conflict validator blocks conflicting primary sources"
+      tests:
+        - tests/test_source_conflict_validator.py
+      negative_required: true
+
+specs/contracts/layer5_evidence_contract.yaml:
+  requirements:
+    LAYER5_EVIDENCE_FOUNDATION:
+      text: "Layer5 evidence foundation chain metadata"
+      tests:
+        - tests/test_layer5_evidence_foundation.py
+      negative_required: false
+
+specs/contracts/api_security_contract.yaml:
+  requirements:
+    API_SECURITY_CONTRACT:
+      text: "API security contract guardrails"
+      tests:
+        - tests/test_api_security_contract.py
+      negative_required: true
+
+specs/contracts/datasource_service_contract.yaml:
+  requirements:
+    DATASOURCE_SERVICE_CONTRACT:
+      text: "Datasource service contract behavior"
+      tests:
+        - tests/test_datasource_service.py
+      negative_required: false
+
+specs/contracts/platform_source_matrix.yaml:
+  requirements:
+    PLATFORM_SOURCE_MATRIX:
+      text: "Platform source matrix alignment"
+      tests:
+        - tests/test_platform_source_matrix.py
+      negative_required: false
+
+specs/contracts/snapshot_lineage_contract.yaml:
+  requirements:
+    SNAPSHOT_LINEAGE:
+      text: "Snapshot lineage required fields and kernel behavior"
+      tests:
+        - tests/test_snapshot_lineage_kernel.py
+        - tests/test_layer2_sensor_loader.py
+      negative_required: false
+
+specs/contracts/backup_recovery_contract.yaml:
+  waiver: "No dedicated runtime tests yet; covered by ops docs and manual checklist"
+
+specs/contracts/backtest_contract.yaml:
+  waiver: "Round 4 scope; not yet implemented in runtime tests"
+
+specs/contracts/backtest_metric_contract.yaml:
+  waiver: "Round 4 scope; not yet implemented in runtime tests"
+
+specs/contracts/backtest_reproducibility_contract.yaml:
+  waiver: "Round 4 scope; not yet implemented in runtime tests"
+
+specs/contracts/agent_contract.yaml:
+  waiver: "Round 4 scope; partial coverage via api_security_contract tests"
+
+specs/contracts/data_cli_contract.yaml:
+  requirements:
+    DATA_CLI_CONTRACT:
+      text: "Data CLI contract"
+      tests:
+        - tests/test_data_cli_contract.py
+      negative_required: false
+
+specs/contracts/dependency_extras_contract.yaml:
+  requirements:
+    DEPENDENCY_EXTRAS:
+      text: "Optional dependency extras contract"
+      tests:
+        - tests/test_dependency_extras_contract.py
+      negative_required: false
+
+specs/contracts/diagnostics_api_contract.yaml:
+  waiver: "Diagnostics API not yet fully implemented"
+
+specs/contracts/log_audit_contract.yaml:
+  waiver: "Log audit contract covered by ops docs; no dedicated pytest module"
+
+specs/contracts/module_boundary_contract.yaml:
+  requirements:
+    MODULE_BOUNDARIES:
+      text: "Module import boundary enforcement"
+      tests:
+        - tests/test_module_boundaries.py
+      negative_required: true
+
+specs/contracts/notification_report_contract.yaml:
+  waiver: "Round 4 notifications scope"
+
+specs/contracts/ops_db_inspect_contract.yaml:
+  requirements:
+    OPS_DB_INSPECT:
+      text: "Ops DB inspect CLI contract"
+      tests:
+        - tests/test_ops_db_inspector.py
+      negative_required: false
+
+specs/contracts/ops_health_check_contract.yaml:
+  requirements:
+    OPS_HEALTH:
+      text: "Ops health / production gate checks"
+      tests:
+        - tests/test_production_gate.py
+        - tests/test_backend_smoke.py
+      negative_required: false
+
+specs/contracts/reference_adoption_guardrails.yaml:
+  requirements:
+    REFERENCE_ADOPTION:
+      text: "Reference adoption guardrails"
+      tests:
+        - tests/test_reference_adoption_guardrails.py
+      negative_required: false
+
+specs/contracts/release_cleanup_allowlist.yaml:
+  waiver: "Release cleanup allowlist validated at release task time"
+
+specs/contracts/review_sandbox_contract.yaml:
+  requirements:
+    REVIEW_SANDBOX:
+      text: "Review sandbox contract and staged pilot boundaries"
+      tests:
+        - tests/test_staged_pilot.py
+      negative_required: true
+
+specs/contracts/runtime_flow_contract.yaml:
+  waiver: "Runtime flow contract covered by integration smoke tests indirectly"
+
+specs/contracts/source_capability_contract.yaml:
+  requirements:
+    SOURCE_CAPABILITY:
+      text: "Source capability registry contract"
+      tests:
+        - tests/test_source_capabilities.py
+        - tests/test_source_registry.py
+      negative_required: false
+
+specs/contracts/spec_migrator_contract.yaml:
+  waiver: "Spec migrator tooling contract; no dedicated pytest module"
+
+specs/contracts/sync_job_contract.yaml:
+  requirements:
+    SYNC_JOB:
+      text: "Sync job contract"
+      tests:
+        - tests/test_sync_jobs.py
+        - tests/test_sync_pipeline_contract.py
+      negative_required: false
+
+specs/contracts/user_input_privacy_contract.yaml:
+  waiver: "Privacy contract validated via ops policy docs"
+
+specs/contracts/layer3_loader_contract.yaml:
+  waiver: "Layer3 loader not yet implemented in runtime"
+
+specs/contracts/layer4_market_contract.yaml:
+  waiver: "Layer4 market structure not yet implemented in runtime"

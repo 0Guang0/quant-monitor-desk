@@ -1,0 +1,476 @@
+{
+  "version": "1",
+  "modules": {
+    "layer1_axes": {
+      "implementation": ["backend/app/layer1_axes/**"],
+      "docs": [
+        "docs/modules/layer1_global_regime_panel.md",
+        "docs/architecture/module_boundary_matrix.md",
+        "docs/architecture/04_data_architecture.md"
+      ],
+      "contracts": [
+        "specs/contracts/layer1_axis_contract.yaml",
+        "specs/contracts/snapshot_lineage_contract.yaml",
+        "specs/contracts/resource_limits.yaml"
+      ],
+      "rules": [
+        "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md",
+        "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md",
+        "docs/quality/production_live_pilot_policy.md"
+      ],
+      "tests": [
+        {
+          "path": "tests/test_layer1_axis_loader.py",
+          "purpose": "Layer1 axis loader registry and snapshot behavior",
+          "command": "uv run python -m pytest tests/test_layer1_axis_loader.py -q"
+        },
+        {
+          "path": "tests/test_layer1_interpretation.py",
+          "purpose": "Layer 1 feature, interpretation, lineage, and WriteManager integration tests.",
+          "command": "uv run python -m pytest tests/test_layer1_interpretation.py -q"
+        },
+        {
+          "path": "tests/test_layer1_ingestion_gates.py",
+          "purpose": "Layer 1 ingestion Phase 0 gate tests (Round 3 Batch 2.5 §8.1).",
+          "command": "uv run python -m pytest tests/test_layer1_ingestion_gates.py -q"
+        },
+        {
+          "path": "tests/test_layer1_observation_ingestion.py",
+          "purpose": "Layer 1 observation ingestion pipeline tests (Batch 2.5 §8.2–8.5).",
+          "command": "uv run python -m pytest tests/test_layer1_observation_ingestion.py -q"
+        },
+        {
+          "path": "tests/test_observation_mapper.py",
+          "purpose": "Focused tests for observation_mapper boundary paths (audit A05-P1-01 / A04-P2-01).",
+          "command": "uv run python -m pytest tests/test_observation_mapper.py -q"
+        },
+        {
+          "path": "tests/test_batch25_production_data_gate.py",
+          "purpose": "Batch 2.5 evidence is staged-only, not production-live readiness",
+          "command": "uv run python -m pytest tests/test_batch25_production_data_gate.py -q"
+        },
+        {
+          "path": "tests/test_batch275_live_pilot_gate.py",
+          "purpose": "Batch 2.75 live pilot fail-closed gate and route readiness",
+          "command": "uv run python -m pytest tests/test_batch275_live_pilot_gate.py -q -m \"not network\""
+        },
+        {
+          "path": "tests/test_production_live_pilot_policy.py",
+          "purpose": "Batch 2.75 fail-closed pilot policy documentation",
+          "command": "uv run python -m pytest tests/test_production_live_pilot_policy.py -q"
+        },
+        {
+          "path": "tests/test_fred_staged_semantics.py",
+          "purpose": "FRED / macro_supplementary staged-only semantics (B2.5-O-05)",
+          "command": "uv run python -m pytest tests/test_fred_staged_semantics.py -q"
+        }
+      ],
+      "forbidden_claims": ["production-live ready", "live production ingestion"]
+    },
+    "layer2_sensors": {
+      "implementation": ["backend/app/layer2_sensors/**"],
+      "docs": [
+        "docs/modules/layer2_cross_asset_sensor.md",
+        "docs/architecture/module_boundary_matrix.md"
+      ],
+      "contracts": [
+        "specs/contracts/layer2_sensor_contract.yaml",
+        "specs/contracts/snapshot_lineage_contract.yaml",
+        "specs/contracts/resource_limits.yaml"
+      ],
+      "rules": [
+        "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md",
+        "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md",
+        "docs/quality/BATCH3_STAGED_DOWNSTREAM_GATE.md"
+      ],
+      "tests": [
+        {
+          "path": "tests/test_layer2_sensor_loader.py",
+          "purpose": "验证 Layer2 sensor loader、snapshot、observation、lineage、ResourceGuard 行为",
+          "command": "uv run python -m pytest tests/test_layer2_sensor_loader.py -q"
+        },
+        {
+          "path": "tests/test_snapshot_lineage_kernel.py",
+          "purpose": "覆盖范围：core/snapshot_lineage 共享内核；测试对象：校验与 DB tuple 映射；目的：三层层 lineage 去重后行为不变。",
+          "command": "uv run python -m pytest tests/test_snapshot_lineage_kernel.py -q"
+        },
+        {
+          "path": "tests/test_batch3_staged_downstream_gate.py",
+          "purpose": "确保 Batch 3 只能 staged-only，不得被误读为 production-live readiness",
+          "command": "uv run python -m pytest tests/test_batch3_staged_downstream_gate.py -q"
+        },
+        {
+          "path": "tests/test_batch25_production_data_gate.py",
+          "purpose": "Batch 2.5 evidence is staged-only, not production-live readiness",
+          "command": "uv run python -m pytest tests/test_batch25_production_data_gate.py -q"
+        },
+        {
+          "path": "tests/test_resource_guard.py",
+          "purpose": "ResourceGuard HARD_STOP and metrics contract",
+          "command": "uv run python -m pytest tests/test_resource_guard.py -q"
+        }
+      ],
+      "forbidden_claims": ["production-live ready", "live production ingestion"]
+    },
+    "layer5_evidence": {
+      "implementation": ["backend/app/layer5_evidence/**"],
+      "docs": [
+        "docs/modules/layer5_security_evidence.md",
+        "docs/architecture/module_boundary_matrix.md"
+      ],
+      "contracts": [
+        "specs/contracts/layer5_evidence_contract.yaml",
+        "specs/contracts/snapshot_lineage_contract.yaml"
+      ],
+      "rules": [
+        "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md",
+        "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md"
+      ],
+      "tests": [
+        {
+          "path": "tests/test_layer5_evidence_foundation.py",
+          "purpose": "Tests for Layer 5 evidence foundation (Round 3 Batch 5A / 023A).",
+          "command": "uv run python -m pytest tests/test_layer5_evidence_foundation.py -q"
+        },
+        {
+          "path": "tests/test_trellis_audit_trace_authority.py",
+          "purpose": "Trellis Audit Trace Authority — Batch 2.75 plan freeze gate tests.",
+          "command": "uv run python -m pytest tests/test_trellis_audit_trace_authority.py -q"
+        }
+      ],
+      "forbidden_claims": ["production-live ready"]
+    },
+    "datasources": {
+      "implementation": ["backend/app/datasources/**"],
+      "docs": [
+        "docs/modules/data_sources.md",
+        "docs/modules/datasource_service.md",
+        "docs/modules/source_route_plan.md",
+        "docs/modules/source_capability_registry.md"
+      ],
+      "contracts": [
+        "specs/contracts/datasource_service_contract.yaml",
+        "specs/contracts/source_route_contract.yaml",
+        "specs/contracts/source_capability_contract.yaml",
+        "specs/contracts/platform_source_matrix.yaml"
+      ],
+      "rules": [
+        "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md",
+        "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md"
+      ],
+      "tests": [
+        {
+          "path": "tests/test_datasource_service.py",
+          "purpose": "Round2.6 Phase B/C — DataSourceService boundary and fetch facade tests.",
+          "command": "uv run python -m pytest tests/test_datasource_service.py -q"
+        },
+        {
+          "path": "tests/test_source_registry.py",
+          "purpose": "Source registry loader and DB sync tests (Batch A).",
+          "command": "uv run python -m pytest tests/test_source_registry.py -q"
+        },
+        {
+          "path": "tests/test_source_route_planner.py",
+          "purpose": "Source route planner READY gate and routing semantics",
+          "command": "uv run python -m pytest tests/test_source_route_planner.py -q"
+        },
+        {
+          "path": "tests/test_source_capabilities.py",
+          "purpose": "Round2.6 Phase B/C — source capability and adapter domain contract tests.",
+          "command": "uv run python -m pytest tests/test_source_capabilities.py -q"
+        },
+        {
+          "path": "tests/test_platform_source_matrix.py",
+          "purpose": "Round2.6 Phase C — platform source matrix tests (production planner).",
+          "command": "uv run python -m pytest tests/test_platform_source_matrix.py -q"
+        },
+        {
+          "path": "tests/test_r3x_data_source_routing_blockers.py",
+          "purpose": "R3X data-source routing blocker tests (ADV-A2 cluster).",
+          "command": "uv run python -m pytest tests/test_r3x_data_source_routing_blockers.py -q"
+        }
+      ],
+      "forbidden_claims": ["bypass route readiness gate"]
+    },
+    "validators": {
+      "implementation": [
+        "backend/app/validators/**",
+        "backend/app/db/validation_gate.py",
+        "backend/app/db/write_manager.py"
+      ],
+      "docs": [
+        "docs/modules/data_validation_and_conflict.md",
+        "docs/modules/data_validation_write_concurrency.md",
+        "docs/modules/write_manager.md"
+      ],
+      "contracts": [
+        "specs/contracts/write_contract.yaml",
+        "specs/contracts/data_quality_rules.yaml",
+        "specs/contracts/source_conflict_rules.yaml"
+      ],
+      "rules": [
+        "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md",
+        "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md"
+      ],
+      "tests": [
+        {
+          "path": "tests/test_write_manager.py",
+          "purpose": "DuckDBWriteManager exclusive clean-table write path",
+          "command": "uv run python -m pytest tests/test_write_manager.py -q"
+        },
+        {
+          "path": "tests/test_db_validation_gate.py",
+          "purpose": "DB validation gate blocks invalid writes",
+          "command": "uv run python -m pytest tests/test_db_validation_gate.py -q"
+        },
+        {
+          "path": "tests/test_data_quality_validator.py",
+          "purpose": "Data quality validator rejects invalid observations",
+          "command": "uv run python -m pytest tests/test_data_quality_validator.py -q"
+        },
+        {
+          "path": "tests/test_source_conflict_validator.py",
+          "purpose": "Source conflict validator blocks conflicting primary sources",
+          "command": "uv run python -m pytest tests/test_source_conflict_validator.py -q"
+        },
+        {
+          "path": "tests/test_batch_c_validation_flow.py",
+          "purpose": "End-to-end Batch C validation flow tests (§8.8).",
+          "command": "uv run python -m pytest tests/test_batch_c_validation_flow.py -q"
+        }
+      ],
+      "forbidden_claims": ["direct table write outside WriteManager"]
+    },
+    "ops": {
+      "implementation": [
+        "backend/app/ops/**",
+        "scripts/run_staged_pilot.py",
+        "scripts/production_gate.py",
+        "scripts/check_doc_links.py",
+        "scripts/production_equivalent_smoke.py"
+      ],
+      "docs": [
+        "docs/modules/ops_and_performance.md",
+        "docs/ops/verification_commands.md",
+        "docs/ops/performance_limits.md",
+        "docs/quality/production_live_pilot_policy.md",
+        "docs/quality/BATCH3_STAGED_DOWNSTREAM_GATE.md",
+        "docs/ROUND3_HANDOFF.md"
+      ],
+      "contracts": [
+        "specs/contracts/ops_health_check_contract.yaml",
+        "specs/contracts/ops_db_inspect_contract.yaml",
+        "specs/contracts/review_sandbox_contract.yaml"
+      ],
+      "rules": [
+        "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md",
+        "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md"
+      ],
+      "tests": [
+        {
+          "path": "tests/test_staged_pilot.py",
+          "purpose": "Staged pilot sandbox boundaries; does not open production-live",
+          "command": "uv run python -m pytest tests/test_staged_pilot.py -q"
+        },
+        {
+          "path": "tests/test_ops_db_inspector.py",
+          "purpose": "Ops DB inspector tests (Round 3 Batch 1).",
+          "command": "uv run python -m pytest tests/test_ops_db_inspector.py -q"
+        },
+        {
+          "path": "tests/test_ops_interface_probe.py",
+          "purpose": "Ops interface_probe + mutation_proof wiring tests (OP-06).",
+          "command": "uv run python -m pytest tests/test_ops_interface_probe.py -q"
+        },
+        {
+          "path": "tests/test_interface_probe_018c.py",
+          "purpose": "018C low-cost data-interface probe tests.",
+          "command": "uv run python -m pytest tests/test_interface_probe_018c.py -q"
+        },
+        {
+          "path": "tests/test_production_gate.py",
+          "purpose": "ADV-A5-002: production_gate.py smoke tests.",
+          "command": "uv run python -m pytest tests/test_production_gate.py -q"
+        },
+        {
+          "path": "tests/test_round3_verification_command_matrix.py",
+          "purpose": "Round 3 verification command matrix — doc index and gate-test discoverability.",
+          "command": "uv run python -m pytest tests/test_round3_verification_command_matrix.py -q"
+        },
+        {
+          "path": "tests/test_round3_audit_registry_alignment.py",
+          "purpose": "Round 3 Batch 2.5 / Batch 2.75 audit follow-up 文档对齐测试。",
+          "command": "uv run python -m pytest tests/test_round3_audit_registry_alignment.py -q"
+        },
+        {
+          "path": "tests/test_unresolved_item_task_coverage.py",
+          "purpose": "确保未闭合项不会在 Plan 阶段因只读原始任务卡而遗漏。",
+          "command": "uv run python -m pytest tests/test_unresolved_item_task_coverage.py -q"
+        },
+        {
+          "path": "tests/test_batch3_staged_downstream_gate.py",
+          "purpose": "确保 Batch 3 只能 staged-only，不得被误读为 production-live readiness",
+          "command": "uv run python -m pytest tests/test_batch3_staged_downstream_gate.py -q"
+        }
+      ],
+      "forbidden_claims": ["production-live ready", "live production ingestion"]
+    },
+    "db_platform": {
+      "implementation": ["backend/app/db/**", "scripts/init_db.py"],
+      "docs": [
+        "docs/modules/write_manager.md",
+        "docs/architecture/04_data_architecture.md"
+      ],
+      "contracts": [
+        "specs/schema/schema.sql",
+        "specs/contracts/write_contract.yaml"
+      ],
+      "rules": [
+        "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md",
+        "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md"
+      ],
+      "tests": [
+        {
+          "path": "tests/test_schema_migration.py",
+          "purpose": "Foundation schema migration tests (Round 1 task 005).",
+          "command": "uv run python -m pytest tests/test_schema_migration.py -q"
+        },
+        {
+          "path": "tests/test_schema_contract.py",
+          "purpose": "Schema contract vs migration alignment tests.",
+          "command": "uv run python -m pytest tests/test_schema_contract.py -q"
+        },
+        {
+          "path": "tests/test_sync_migration.py",
+          "purpose": "Tests for migration 006 ingestion sync tables (Batch D §8.1).",
+          "command": "uv run python -m pytest tests/test_sync_migration.py -q"
+        }
+      ],
+      "forbidden_claims": []
+    },
+    "sync_orchestrator": {
+      "implementation": ["backend/app/sync/**"],
+      "docs": [
+        "docs/modules/data_sync_orchestrator.md",
+        "docs/architecture/module_boundary_matrix.md"
+      ],
+      "contracts": ["specs/contracts/write_contract.yaml"],
+      "rules": [
+        "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md",
+        "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md"
+      ],
+      "tests": [
+        {
+          "path": "tests/test_sync_orchestrator.py",
+          "purpose": "Tests for DataSyncOrchestrator core (Batch D §8.3).",
+          "command": "uv run python -m pytest tests/test_sync_orchestrator.py -q"
+        },
+        {
+          "path": "tests/test_sync_jobs.py",
+          "purpose": "Tests for SyncJob state machine (Batch D §8.2).",
+          "command": "uv run python -m pytest tests/test_sync_jobs.py -q"
+        },
+        {
+          "path": "tests/test_sync_pipeline_contract.py",
+          "purpose": "Pipeline seam contract tests (Round2 re-audit A7-02).",
+          "command": "uv run python -m pytest tests/test_sync_pipeline_contract.py -q"
+        }
+      ],
+      "forbidden_claims": []
+    },
+    "core_platform": {
+      "implementation": [
+        "backend/app/core/**",
+        "backend/app/storage/**",
+        "backend/app/util/**"
+      ],
+      "docs": [
+        "docs/modules/local_file_system.md",
+        "docs/architecture/module_boundary_matrix.md"
+      ],
+      "contracts": [
+        "specs/contracts/resource_limits.yaml",
+        "specs/contracts/snapshot_lineage_contract.yaml"
+      ],
+      "rules": [
+        "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md",
+        "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md"
+      ],
+      "tests": [
+        {
+          "path": "tests/test_resource_guard.py",
+          "purpose": "ResourceGuard HARD_STOP and metrics contract",
+          "command": "uv run python -m pytest tests/test_resource_guard.py -q"
+        },
+        {
+          "path": "tests/test_path_compat.py",
+          "purpose": "Tests for Windows long-path compatibility helpers.",
+          "command": "uv run python -m pytest tests/test_path_compat.py -q"
+        },
+        {
+          "path": "tests/test_raw_store.py",
+          "purpose": "Raw Store and file_registry tests (Round 1 task 009).",
+          "command": "uv run python -m pytest tests/test_raw_store.py -q"
+        }
+      ],
+      "forbidden_claims": []
+    },
+    "layer3_chains": {
+      "implementation": ["backend/app/layer3_chains/**"],
+      "docs": ["docs/modules/layer3_industry_shock_anchor.md"],
+      "contracts": ["specs/contracts/snapshot_lineage_contract.yaml"],
+      "rules": ["docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"],
+      "tests": [],
+      "forbidden_claims": []
+    },
+    "layer4_markets": {
+      "implementation": ["backend/app/layer4_markets/**"],
+      "docs": ["docs/modules/layer4_market_structure.md"],
+      "contracts": ["specs/contracts/snapshot_lineage_contract.yaml"],
+      "rules": ["docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"],
+      "tests": [],
+      "forbidden_claims": []
+    },
+    "api_platform": {
+      "implementation": ["backend/app/api/**"],
+      "docs": [
+        "docs/modules/fastapi_backend.md",
+        "docs/modules/fastapi_and_frontend.md"
+      ],
+      "contracts": [],
+      "rules": ["docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"],
+      "tests": [],
+      "forbidden_claims": []
+    },
+    "agents": {
+      "implementation": ["backend/app/agents/**"],
+      "docs": ["docs/modules/agent_module.md"],
+      "contracts": [],
+      "rules": ["docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"],
+      "tests": [],
+      "forbidden_claims": []
+    },
+    "notifications": {
+      "implementation": ["backend/app/notifications/**"],
+      "docs": ["docs/modules/notification_and_reports.md"],
+      "contracts": [],
+      "rules": ["docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"],
+      "tests": [],
+      "forbidden_claims": []
+    },
+    "etl": {
+      "implementation": ["backend/app/etl/**"],
+      "docs": ["docs/modules/duckdb_and_parquet.md"],
+      "contracts": [],
+      "rules": ["docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"],
+      "tests": [
+        {
+          "path": "tests/test_duckdb_connection.py",
+          "purpose": "DuckDB connection manager tests (Round 1 task 007).",
+          "command": "uv run python -m pytest tests/test_duckdb_connection.py -q"
+        }
+      ],
+      "forbidden_claims": []
+    }
+  }
+}

@@ -6,7 +6,7 @@
   "branch": "debt/r3b275-018c-low-cost-probe",
   "base_branch": "integration/round3",
   "meta": {
-    "track": "repair-debt-lite",
+    "task_track": "debt-lite",
     "item_ids": [
       "R3-B2.75-REQ2-EM",
       "R3-B2.75-FOLLOWUP-DATA-INTERFACE-PROBE",

@@ -12,6 +12,7 @@ sys.path.insert(0, str(_SCRIPTS))
 from common.validate_plan_freeze import (  # noqa: E402
     _load_plan_paths,
     validate_plan_freeze,
+    validate_plan_freeze_warnings,
     validate_plan_phase,
 )
 
@@ -114,8 +115,84 @@ def test_validatePlanFreeze_doesNotRequireGlobalOriginalTaskRulesInImplementJson
 def test_validatePlanFreeze_passesWithArtifacts(tmp_path: Path) -> None:
     _minimal_master(tmp_path)
     _plan_boot_artifacts(tmp_path)
+    (tmp_path / "task.json").write_text(
+        '{"meta":{"task_track":"simple"}}', encoding="utf-8"
+    )
     errors = validate_plan_freeze(tmp_path, _REPO)
     assert errors == []
+
+
+def test_validatePlanFreeze_loopVersionRequiresContextPack(tmp_path: Path) -> None:
+    """覆盖：validate_plan_freeze 复杂任务 loop 自动生成。
+    对象：task_track=complex 且无 context_pack 的复杂任务。
+    目的：freeze 时自动 context_router，统一 Trellis 与 loop 为单轨。
+    """
+    _minimal_master(tmp_path)
+    _plan_boot_artifacts(tmp_path)
+    import json
+
+    (tmp_path / "task.json").write_text(
+        json.dumps({"meta": {"task_track": "complex"}}),
+        encoding="utf-8",
+    )
+    errors = validate_plan_freeze(tmp_path, _REPO)
+    assert (tmp_path / "context_pack.json").is_file()
+    assert not any("missing context_pack" in e for e in errors)
+
+
+def test_validatePlanFreeze_debtLiteSkipsContextPack(tmp_path: Path) -> None:
+    """覆盖：task_track=debt-lite 跳过 loop 四件套。
+    对象：有 MASTER 但 meta.task_track=debt-lite 的任务。
+    目的：Phase 8D 轻量切片不走 loop，与 complex 单轨区分。
+    """
+    _minimal_master(tmp_path)
+    _plan_boot_artifacts(tmp_path)
+    import json
+
+    (tmp_path / "task.json").write_text(
+        json.dumps({"meta": {"task_track": "debt-lite"}}),
+        encoding="utf-8",
+    )
+    errors = validate_plan_freeze(tmp_path, _REPO)
+    assert not (tmp_path / "context_pack.json").is_file()
+    assert not any("context_pack" in e for e in errors)
+
+
+def test_validatePlanFreeze_rejectsDeprecatedLoopMeta(tmp_path: Path) -> None:
+    """覆盖：deprecated loop_engineering_* meta 字段。
+    对象：仍使用旧 flag 的 task.json。
+    目的：R1 清理后强制 task_track，防止双轨 flag 回流。
+    """
+    _minimal_master(tmp_path)
+    _plan_boot_artifacts(tmp_path)
+    import json
+
+    (tmp_path / "task.json").write_text(
+        json.dumps({"meta": {"loop_engineering_exempt": True}}),
+        encoding="utf-8",
+    )
+    errors = validate_plan_freeze(tmp_path, _REPO)
+    assert any("deprecated meta.loop_engineering" in e for e in errors)
+
+
+def test_validatePlanFreezeWarnings_flagsAuthorityGraphGap(tmp_path: Path) -> None:
+    """覆盖：validate_plan_freeze_warnings authority_graph 缺口。
+    对象：complex 任务引用未收录 backend 路径。
+    目的：R3 非阻塞 warning 提示扩 authority_graph，不拦 freeze。
+    """
+    import json
+
+    _minimal_master(tmp_path)
+    _plan_boot_artifacts(tmp_path)
+    (tmp_path / "task.json").write_text(
+        json.dumps({"meta": {"task_track": "complex"}}),
+        encoding="utf-8",
+    )
+    (tmp_path / "MASTER.plan.md").write_text(
+        "backend/app/brand_new_module/foo.py\n## 8.\n", encoding="utf-8"
+    )
+    warnings = validate_plan_freeze_warnings(tmp_path, _REPO)
+    assert any("authority_graph gap" in w for w in warnings)
 
 
 def test_validatePlanPhase_1b_requiresSummary(tmp_path: Path) -> None:

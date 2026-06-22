@@ -1,0 +1,85 @@
+version: "1"
+description: Feature / AC verification matrix for loop engineering task flow.
+
+features:
+  R3-B3-STAGED-DOWNSTREAM-GATE:
+    description: "Batch 3 下游只能 staged-only"
+    authorities:
+      - docs/quality/BATCH3_STAGED_DOWNSTREAM_GATE.md
+      - docs/quality/production_live_pilot_policy.md
+      - docs/ROUND3_HANDOFF.md
+    acceptance:
+      - id: AC-STAGED-001
+        statement: "Batch 3 不得声明 production-live readiness"
+        tests:
+          - tests/test_batch3_staged_downstream_gate.py::test_batch3_staged_gate_records_fail_closed_decisions
+          - tests/test_batch25_production_data_gate.py::test_batch25_evidence_is_staged_not_production_live
+        verification_type: policy-negative
+        evidence: pytest-output
+      - id: AC-STAGED-002
+        statement: "018C probe PASS 不得关闭 R3-B2.75-REQ2-EM"
+        tests:
+          - tests/test_fred_staged_semantics.py
+        verification_type: registry-contract
+        evidence: pytest-output
+
+  layer2_sensor:
+    description: "Layer2 cross-asset sensor runtime contract"
+    authorities:
+      - docs/modules/layer2_cross_asset_sensor.md
+      - specs/contracts/layer2_sensor_contract.yaml
+    acceptance:
+      - id: AC-L2-001
+        statement: "Layer2 snapshot 必须 deterministic hash"
+        tests:
+          - tests/test_layer2_sensor_loader.py::test_snapshotDeterministicRebuild_sameInputsSameHash
+        verification_type: runtime-contract
+        evidence: pytest-output
+      - id: AC-L2-002
+        statement: "ResourceGuard HARD_STOP 必须中止批处理"
+        tests:
+          - tests/test_layer2_sensor_loader.py::test_crossAssetSnapshotBuilder_resourceGuardBlocksBatchBuild
+        verification_type: negative-runtime
+        evidence: pytest-output
+
+  write_manager:
+    description: "Clean table writes through DuckDBWriteManager only"
+    authorities:
+      - docs/modules/write_manager.md
+      - specs/contracts/write_contract.yaml
+    acceptance:
+      - id: AC-WM-001
+        statement: "Clean table writes must go through WriteManager"
+        tests:
+          - tests/test_write_manager.py
+          - tests/test_db_validation_gate.py
+        verification_type: negative-runtime
+        evidence: pytest-output
+
+  source_route:
+    description: "Source route READY gate before live fetch"
+    authorities:
+      - docs/modules/source_route_plan.md
+      - specs/contracts/source_route_contract.yaml
+    acceptance:
+      - id: AC-SR-001
+        statement: "Route must be READY before live fetch"
+        tests:
+          - tests/test_batch275_live_pilot_gate.py
+          - tests/test_source_route_planner.py
+        verification_type: policy-negative
+        evidence: pytest-output
+
+  layer1_observation:
+    description: "Layer1 observation ingestion staged semantics"
+    authorities:
+      - docs/modules/layer1_global_regime_panel.md
+      - specs/contracts/layer1_axis_contract.yaml
+    acceptance:
+      - id: AC-L1-001
+        statement: "Layer1 observation ingestion preserves staged evidence boundaries"
+        tests:
+          - tests/test_layer1_observation_ingestion.py
+          - tests/test_layer1_ingestion_gates.py
+        verification_type: runtime-contract
+        evidence: pytest-output

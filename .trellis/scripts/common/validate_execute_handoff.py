@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+import sys
 from pathlib import Path
 
 _FAIL_RE = re.compile(
@@ -204,8 +205,28 @@ def validate_execute_handoff(task_dir: Path, repo_root: Path | None = None) -> l
 
     validate_execute_boot(task_dir, errors)
     validate_manifest_amend_chain(task_dir, errors)
+    _validate_loop_handoff(task_dir, repo_root, errors)
 
     return errors
+
+
+def _validate_loop_handoff(task_dir: Path, repo_root: Path, errors: list[str]) -> None:
+    scripts = repo_root / "scripts"
+    if str(scripts) not in sys.path:
+        sys.path.insert(0, str(scripts))
+    try:
+        from check_task_evidence import check_task_evidence
+        from loop_engineering_common import loop_engineering_enabled
+    except ImportError:
+        return
+    if not loop_engineering_enabled(task_dir):
+        return
+    for err in check_task_evidence(task_dir):
+        errors.append(err)
+    if not (task_dir / "evidence_index.json").is_file():
+        errors.append("missing evidence_index.json (loop handoff)")
+    if not (task_dir / "loop_manifest.json").is_file():
+        errors.append("missing loop_manifest.json (loop handoff)")
 
 
 def cmd_validate_execute_handoff(args) -> int:

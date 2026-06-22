@@ -1,0 +1,5 @@
+{
+  "task": "06-22-round3-019-layer2-sensor",
+  "modules": ["layer1_axes", "layer2_sensors", "ops"],
+  "acs": []
+}
