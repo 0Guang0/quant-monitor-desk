@@ -2,12 +2,19 @@
 
 > Purpose: one file for resolved/closed issues, gates, risks, and repairs.  
 > Pair: unresolved items live in `docs/UNRESOLVED_ISSUES_REGISTRY.md`.  
-> Last reconciled: 2026-06-22 after post-14 Slice 2 registry/docs alignment (`fix/round3-post14-audit-registry-docs`).
+> Last reconciled: 2026-06-22 after post-14 registry/docs hygiene slice (`master` @ `4114fcb0`).
+
+## Post-14 registry/docs hygiene resolved (2026-06-22)
+
+| ID              | Closed     | Item                                                                                                                                        | Evidence                                                                                                                                                      |
+| --------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R3-AUDIT-DEF-03 | 2026-06-22 | Per-subdir `--limit` scan cap tests for `raw`/`parquet`/`audit`/`report`                                                                    | `tests/test_ops_db_inspector.py` (`test_dbInspect_subdirScan_respectsLimit` et al.) · post-14 Slice 3 B-027 · `tests/test_round3_audit_registry_alignment.py` |
+| R2-RISK-3       | 2026-06-22 | Unimplemented `write_mode` (`replace_partition` 等) fail-closed via `WriteManager.UNSUPPORTED_MODES` (B-008); `append`/`upsert` implemented | `tests/test_r3x_ponytail_structural_bucket_b.py` · `debt/round3-ponytail-structural-bucket-b` merge gate · `specs/contracts/write_contract.yaml`              |
 
 ## Round 3 PROMPT_14 resolved items (2026-06-22)
 
-| ID                    | Closed     | Item                                                                                                                                                         | Evidence                                                                                                                                                                                                                      |
-| --------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ID                    | Closed     | Item                                                                                                                                                       | Evidence                                                                                                                                                                                                                                              |
+| --------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | R3-PROMPT14-STAGED-01 | 2026-06-22 | PROMPT_14 staged real-data pilot executed; closeout `PILOT_PASS_STAGED_RAW` (partial — akshare validation NETWORK_ERROR; see `R3-PROMPT14-AKSHARE-VAL-01`) | `.trellis/tasks/feature-round3-real-data-staged-pilot/execute-evidence/pilot_closeout.json` · `merge_gate_report.md` · `docs/quality/prompt14_user_authorization_2026-06-22.md` · `tests/test_staged_pilot.py`; does **not** close `R3-B2.75-REQ2-EM` |
 
 ## Round 3 Batch 2.5 resolved items (2026-06-21)

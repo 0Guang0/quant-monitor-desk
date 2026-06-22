@@ -257,3 +257,88 @@ def test_post14Prompt14StagedPilotCloseout_isDocumented() -> None:
         "feature-round3-real-data-staged-pilot",
     ):
         assert token in audit or token in resolved
+
+
+POST14_HYGIENE_CONTRACT_LANE = (
+    PROJECT_ROOT / "docs/quality/adversarial_audit_post14_contract_ponytail_lane.md"
+)
+
+
+def test_post14AuditDef03_isResolvedNotDeferred() -> None:
+    """覆盖范围：R3-AUDIT-DEF-03 registry 卫生（Slice 3 B-027 已落地）。
+    测试对象：三份 registry + test_ops_db_inspector 子目录 limit 测试。
+    目的：per-subdir scan cap 测试已存在后，DEFERRED 表不得再声称缺失。"""
+    audit = _read(AUDIT_DEFERRED)
+    unresolved = _read(UNRESOLVED)
+    resolved = _read(RESOLVED)
+    inspector_tests = _read(PROJECT_ROOT / "tests/test_ops_db_inspector.py")
+
+    assert "R3-AUDIT-DEF-03" in resolved
+    assert "| R3-AUDIT-DEF-03 | Per-subdir" not in audit
+    assert f"| R3-AUDIT-DEF-03 | DEFERRED" not in unresolved
+    for subdir in ("raw", "parquet", "audit", "report"):
+        assert subdir in inspector_tests
+    assert "R3-AUDIT-DEF-03" in inspector_tests
+
+
+def test_post14R2Risk3_failClosedModesDocumented() -> None:
+    """覆盖范围：R2-RISK-3 / ADV-POST14-B-008 契约对齐卫生。
+    测试对象：RESOLVED registry + WriteManager UNSUPPORTED_MODES 测试。
+    目的：未实现 write_mode 显式拒绝已登记为 RESOLVED，而非陈旧“窄于合约”单一叙事。"""
+    resolved = _read(RESOLVED)
+    unresolved = _read(UNRESOLVED)
+
+    assert "R2-RISK-3" in resolved
+    assert f"| R2-RISK-3 | DEFERRED" not in unresolved
+    for token in ("UNSUPPORTED_MODES", "replace_partition", "test_r3x_ponytail_structural_bucket_b"):
+        assert token in resolved
+
+
+def test_round3Map_checkpointReflectsPost14AuditMerge() -> None:
+    """覆盖范围：ROUND3_BATCH_IMPLEMENTATION_MAP checkpoint 与 PROMPT 索引新鲜度。
+    测试对象：ROUND3_BATCH_IMPLEMENTATION_MAP.md 头部 checkpoint 与 PROMPT_14/17 行。
+    目的：map 不得仍写 PROMPT_14 in progress；应指向 post-audit master 与下一项 020。"""
+    text = _read(ROUND3_MAP)
+
+    for token in (
+        "4114fcb0",
+        "PROMPT_01–17",
+        "post-14 audit",
+        "020",
+        "Done",
+    ):
+        assert token in text
+    assert "PROMPT_14 + PROMPT_17** dispatched" not in text
+    assert "**In progress** (user live auth granted)" not in text
+
+
+def test_post14PonytailScan_hasPostBucketBDeltaSection() -> None:
+    """覆盖范围：ponytail 扫描 post Bucket B 增量（Slice 4+4b merge）。
+    测试对象：PONYTAIL_MODULE_SCAN_20260622.md §11。
+    目的：桶 B 结构性闭合有权威 delta；§4 历史表保留但不得无 delta 声称 53 项仍 OPEN。"""
+    text = _read(PONYTAIL_SCAN)
+
+    assert "## 11. Post Bucket B structural delta" in text
+    section = text.split("## 11. Post Bucket B structural delta", maxsplit=1)[1]
+    for token in (
+        "debt/round3-ponytail-structural-bucket-b",
+        "remaining=0",
+        "SC-01",
+        "OP-01",
+        "OP-03",
+        "OP-06",
+    ):
+        assert token in section
+    assert "仍 OPEN（Bucket B，53 项）" not in text
+
+
+def test_post14ContractPonytailLane_reflectsBucketBMerge() -> None:
+    """覆盖范围：post-14 contract ponytail 审计报告新鲜度。
+    测试对象：adversarial_audit_post14_contract_ponytail_lane.md。
+    目的：执行摘要不得仍写 53 项桶 B 开放；应记录 Slice 1–4 merge 后状态。"""
+    text = _read(POST14_HYGIENE_CONTRACT_LANE)
+
+    assert "4114fcb0" in text or "087f7271" in text
+    assert "53 Bucket B items still open" not in text
+    for token in ("Slice 4+4b", "remaining=0", "CLOSED@Slice"):
+        assert token in text
