@@ -72,7 +72,7 @@ Archived Trellis task `.trellis/tasks/archive/2026-06/06-20-round3-batch2-layer1
 
 **Batch 2.5:** archived PASS (2026-06-20) — Trellis `.trellis/tasks/archive/2026-06/06-20-round3-batch2-5-layer1-obs-ingest/` · Audit PASS · **staged/fixture only** (not production-live). Authoritative evidence: `execute-evidence/final_registry_update.md`. Post-audit fix ledger: `docs/quality/ROUND3_BATCH25_PENDING_FIX_REGISTRY.md`. Source: `018A_layer1_observation_ingestion_bridge.md`.
 
-**Batch 2.75:** controlled pilot executed and repaired (2026-06-21/22) with closeout `PILOT_FAIL_SOURCE`. Request 1/3 have bounded sandbox evidence; Request 2 Eastmoney hist remains deferred as `R3-B2.75-REQ2-EM`. Batch 3 / `019` may proceed only as staged-only downstream work after `R3-B3-STAGED-DOWNSTREAM-GATE`; see `docs/quality/BATCH3_STAGED_DOWNSTREAM_GATE.md` and `.trellis/spec/guides/round3-repair-debt-worktree-plan.md`.
+**Batch 2.75:** controlled pilot executed and repaired (2026-06-21/22) with closeout `PILOT_FAIL_SOURCE`. Request 1/3 have bounded sandbox evidence; Request 2 Eastmoney hist remains deferred as `R3-B2.75-REQ2-EM`. **`R3-B3-STAGED-DOWNSTREAM-GATE` is CLOSED** on `feature/round3-batch3-staged-gate` (docs/tests only). Batch 3 / `019` may proceed as **staged-only** after merge to `integration/round3`; see `docs/quality/BATCH3_STAGED_DOWNSTREAM_GATE.md`.
 
 ## Round 3 start checklist
 
