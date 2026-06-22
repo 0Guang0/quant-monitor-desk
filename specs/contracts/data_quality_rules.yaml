@@ -1,5 +1,51 @@
 version: p0_round_1
 contract_name: data_quality_rules
+authoritative_doc: docs/modules/data_validation_and_conflict.md
+ops_cli_design: docs/ops/data_health_cli.md
+reference_landing:
+  task_id: R3-REF-OPS-DB-DATA-HEALTH
+  external_url_easyxt: https://github.com/quant-king299/EasyXT
+  note: Integrity categories from EasyXT map to rule IDs below—not external table names.
+
+# Profiles consumed by future `qmd data health` (Batch 6 / Phase C). Read-only by default.
+ops_cli_profiles:
+  market_bar_1d:
+    rule_set_id: market_bar_p0
+    default_window_days: 90
+    rules:
+    - MISSING_PRIMARY_KEY
+    - DUPLICATE_PRIMARY_KEY
+    - INVALID_PRICE_RANGE
+    - NEGATIVE_PRICE
+    - INVALID_VOLUME
+    - STALE_DATA
+    - INSUFFICIENT_HISTORY
+    - MISSING_SOURCE_USED
+    tables:
+    - security_bar_1d
+    - fetch_log
+    - validation_report
+  layer1_observation:
+    rule_set_id: layer1_p0
+    default_window_days: 30
+    rules:
+    - MISSING_SOURCE_USED
+    - FALLBACK_WITHOUT_REASON
+    - BLINDSPOT_SHOULD_NOT_HAVE_VALUE
+    tables:
+    - axis_observation
+    - validation_report
+  layer3_snapshot:
+    rule_set_id: layer3_p0
+    default_window_days: 30
+    rules:
+    - DUPLICATE_ANCHOR_ID
+    - MISSING_NODE_REFERENCE
+    - P0_MISSING_SOURCE_KEYS
+    tables:
+    - axis_snapshot_lineage
+    - validation_report
+
 common_rules:
   - id: MISSING_PRIMARY_KEY
     severity: failed
