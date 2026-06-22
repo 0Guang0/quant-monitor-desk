@@ -1,0 +1,86 @@
+version: layer2_cross_asset_registry_staged_v1
+mode: staged_fixture_only
+assets:
+  - asset_id: L2-VIX
+    display_name: VIX
+    display_name_cn: 波动率指数
+    asset_group: Volatility
+    asset_type: index
+    market: US
+    # instrument_id is a mapping label only; primary_source=staged_fixture (not live FRED).
+    instrument_id: FRED:VIXCLS
+    layer5_instrument_id: L5-VIXCLS
+    primary_source: staged_fixture
+    validation_source: none
+    fallback_policy: none
+    mapped_axis: RISK_APPETITE
+    is_axis_input: true
+    display_only: true
+    eligible_for_model: false
+    double_count_guard: layer1_axis_input_display_only
+  - asset_id: L2-HYG
+    display_name: HYG
+    display_name_cn: 高收益债 ETF
+    asset_group: CreditETF
+    asset_type: etf
+    market: US
+    instrument_id: ETF:HYG
+    layer5_instrument_id: L5-HYG
+    primary_source: staged_fixture
+    validation_source: none
+    fallback_policy: none
+    mapped_axis: CREDIT_STRESS
+    is_axis_input: true
+    display_only: true
+    eligible_for_model: false
+    double_count_guard: layer1_axis_input_display_only
+  - asset_id: L2-COPPER
+    display_name: Copper
+    display_name_cn: 铜
+    asset_group: Metals
+    asset_type: futures
+    market: COMEX
+    instrument_id: FUT:HG
+    layer5_instrument_id: L5-HG
+    primary_source: staged_fixture
+    validation_source: none
+    fallback_policy: none
+    mapped_axis: ""
+    is_axis_input: false
+    display_only: false
+    eligible_for_model: true
+    double_count_guard: none
+  - asset_id: L2-HG-MAIN
+    display_name: Copper Main
+    display_name_cn: 铜主力
+    asset_group: Futures
+    asset_type: main_contract
+    market: COMEX
+    instrument_id: FUT:HG_MAIN
+    layer5_instrument_id: L5-HG-MAIN
+    primary_source: staged_fixture
+    validation_source: none
+    fallback_policy: none
+    mapped_axis: ""
+    is_axis_input: false
+    display_only: false
+    eligible_for_model: true
+    double_count_guard: none
+    contract_code: HG
+    roll_rule: volume_oi_switch
+  - asset_id: L2-NO-CHANNEL
+    display_name: Missing Channel
+    display_name_cn: 无可用渠道
+    asset_group: Shipping
+    asset_type: index
+    market: GLOBAL
+    instrument_id: IDX:MISSING
+    layer5_instrument_id: ""
+    primary_source: staged_fixture
+    validation_source: none
+    fallback_policy: none
+    mapped_axis: ""
+    is_axis_input: false
+    display_only: true
+    eligible_for_model: false
+    double_count_guard: no_accepted_channel
