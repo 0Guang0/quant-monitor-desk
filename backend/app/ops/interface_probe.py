@@ -244,7 +244,10 @@ def decide_closeout(
     route_matrix: dict[str, Any],
 ) -> dict[str, Any]:
     tdx_rows = [r for r in route_matrix["routes"] if r["source_id"] == "tdx_pytdx"]
-    tdx_ok = all(not r["source_enabled_by_default"] and r["selected_source_id"] != "tdx_pytdx" for r in tdx_rows)
+    tdx_ok = all(
+        not r["source_enabled_by_default"] and r["selected_source_id"] != "tdx_pytdx"
+        for r in tdx_rows
+    )
     sina = next((r for r in raw_records if r.get("operation") == SIDECAR_SINA_OPERATION), None)
     tdx_live = next(
         (

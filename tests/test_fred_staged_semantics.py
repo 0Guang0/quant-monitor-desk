@@ -12,7 +12,8 @@ HANDOFF = PROJECT_ROOT / "docs/ROUND3_HANDOFF.md"
 ROUND3_MAP = PROJECT_ROOT / "ROUND3_BATCH_IMPLEMENTATION_MAP.md"
 TASK_018A = (
     PROJECT_ROOT
-    / "docs/implementation_tasks/ROUND_3_MODELING_LAYERS/018A_layer1_observation_ingestion_bridge.md"
+    / "docs/implementation_tasks/ROUND_3_MODELING_LAYERS"
+    / "018A_layer1_observation_ingestion_bridge.md"
 )
 TASK_019 = (
     PROJECT_ROOT

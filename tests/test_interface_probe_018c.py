@@ -43,9 +43,9 @@ def test_capabilityRegistry_rejectsTdxPytdx() -> None:
 
 
 def test_sinaSidecar_distinctFromEastmoneyHist() -> None:
-    ops = _yaml(ROOT / "specs/datasource_registry/source_capabilities.yaml")["sources"][
-        "akshare"
-    ]["domains"]["cn_equity_daily_bar"]["operations"]
+    ops = _yaml(ROOT / "specs/datasource_registry/source_capabilities.yaml")["sources"]["akshare"][
+        "domains"
+    ]["cn_equity_daily_bar"]["operations"]
     assert ops["fetch_daily_bar_validation"]["vendor_api"] == "stock_zh_a_hist"
     assert ops["fetch_daily_bar_sina_validation"]["vendor_api"] == "stock_zh_a_daily"
 
@@ -71,7 +71,7 @@ def test_runInterfaceProbe_writesEvidence(tmp_path: Path, monkeypatch) -> None:
 
     class Ok:
         def fetch_payload(self, req):
-            return FetchPayload(content=b'{}', file_type="json", row_count=0)
+            return FetchPayload(content=b"{}", file_type="json", row_count=0)
 
     monkeypatch.setattr(
         "backend.app.ops.interface_probe._resolve_fetch_port",

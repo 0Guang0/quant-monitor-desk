@@ -17,7 +17,7 @@
 
 ## Required decision record
 
-1. **Batch 2.75 closeout is `PILOT_FAIL_SOURCE`.**
+1. **Batch 2.75 closeout is `PILOT_FAIL_SOURCE` (`R3-B2.75-01` / live-pilot gate).**
 2. **Request 2 Eastmoney hist remains deferred as `R3-B2.75-REQ2-EM`.**
 3. **Batch 3 / `019` may proceed only as staged-only downstream work.**
 4. **No evidence in the staged-gate branch creates production-live readiness.**
