@@ -1,0 +1,176 @@
+{
+  "authorization_evidence": "docs/quality/prompt14_user_authorization_2026-06-22.md",
+  "dry_run": true,
+  "generated_at": "2026-06-22T14:43:07Z",
+  "mutation_proof": {
+    "after_key_table_counts": {},
+    "before_key_table_counts": {},
+    "db_file_hash_unchanged": true,
+    "db_path": "C:\\Users\\Guang\\Desktop\\quant-monitor-desk-wt-feature-r3-real-data-staged-pilot\\data\\duckdb\\quant_monitor.duckdb",
+    "row_counts_unchanged": true
+  },
+  "phase": "route_preview",
+  "pilot_id": "r3x-staged-pilot-20260622",
+  "previews": [
+    {
+      "authorization_evidence": "docs/quality/prompt14_user_authorization_2026-06-22.md",
+      "dry_run": true,
+      "explicit_source_route_status": "READY",
+      "pilot_id": "r3x-staged-pilot-20260622",
+      "pilot_request_id": "staged-req-1",
+      "request": {
+        "allow_clean_write": false,
+        "authorization_evidence": "docs/quality/prompt14_user_authorization_2026-06-22.md",
+        "data_domain": "cn_equity_daily_bar",
+        "date_window": "recent 10 trading days",
+        "dry_run": true,
+        "max_rows": 10,
+        "operation": "fetch_daily_bar",
+        "raw_only": true,
+        "source_id": "baostock",
+        "symbols_or_indicators": [
+          "sh.600519"
+        ],
+        "write_target": "sandbox"
+      },
+      "resource_guard_decision": "OK",
+      "resource_guard_reason": "",
+      "route_plan": {
+        "candidates": [
+          {
+            "allowed_domain": "cn_equity_daily_bar",
+            "capability_declared": true,
+            "disabled_reason": null,
+            "enabled": true,
+            "role": "Primary",
+            "skip_reason": null,
+            "source_id": "baostock"
+          },
+          {
+            "allowed_domain": "cn_equity_daily_bar",
+            "capability_declared": true,
+            "disabled_reason": null,
+            "enabled": true,
+            "role": "Validation",
+            "skip_reason": null,
+            "source_id": "akshare"
+          }
+        ],
+        "created_at": "2026-06-22T14:43:07.616687+00:00",
+        "data_domain": "cn_equity_daily_bar",
+        "job_id": "r3x-staged-pilot-route",
+        "operation": "fetch_daily_bar",
+        "quality_flags": [],
+        "requested_source_id": null,
+        "route_plan_id": "1b117874-fab5-4560-8e6c-d217b80a3740",
+        "route_status": "READY",
+        "run_id": "staged-req-1-preview",
+        "selected_source_id": "baostock"
+      }
+    },
+    {
+      "authorization_evidence": "docs/quality/prompt14_user_authorization_2026-06-22.md",
+      "dry_run": true,
+      "explicit_source_route_status": "READY",
+      "pilot_id": "r3x-staged-pilot-20260622",
+      "pilot_request_id": "staged-req-2",
+      "request": {
+        "allow_clean_write": false,
+        "authorization_evidence": "docs/quality/prompt14_user_authorization_2026-06-22.md",
+        "data_domain": "cn_equity_daily_bar",
+        "date_window": "recent 10 trading days",
+        "dry_run": true,
+        "max_rows": 10,
+        "operation": "fetch_daily_bar_validation",
+        "raw_only": true,
+        "source_id": "akshare",
+        "symbols_or_indicators": [
+          "sh.600519"
+        ],
+        "write_target": "sandbox"
+      },
+      "resource_guard_decision": "OK",
+      "resource_guard_reason": "",
+      "route_plan": {
+        "candidates": [
+          {
+            "allowed_domain": "cn_equity_daily_bar",
+            "capability_declared": true,
+            "disabled_reason": null,
+            "enabled": true,
+            "role": "Primary",
+            "skip_reason": null,
+            "source_id": "baostock"
+          },
+          {
+            "allowed_domain": "cn_equity_daily_bar",
+            "capability_declared": true,
+            "disabled_reason": null,
+            "enabled": true,
+            "role": "Validation",
+            "skip_reason": null,
+            "source_id": "akshare"
+          }
+        ],
+        "created_at": "2026-06-22T14:43:07.623114+00:00",
+        "data_domain": "cn_equity_daily_bar",
+        "job_id": "r3x-staged-pilot-route",
+        "operation": "fetch_daily_bar_validation",
+        "quality_flags": [],
+        "requested_source_id": null,
+        "route_plan_id": "2b192d29-4541-4ea8-b37b-c1952edd3f2c",
+        "route_status": "READY",
+        "run_id": "staged-req-2-preview",
+        "selected_source_id": "baostock"
+      }
+    },
+    {
+      "authorization_evidence": "docs/quality/prompt14_user_authorization_2026-06-22.md",
+      "dry_run": true,
+      "explicit_source_route_status": "READY",
+      "pilot_id": "r3x-staged-pilot-20260622",
+      "pilot_request_id": "staged-req-3",
+      "request": {
+        "allow_clean_write": false,
+        "authorization_evidence": "docs/quality/prompt14_user_authorization_2026-06-22.md",
+        "data_domain": "cn_announcements",
+        "date_window": "recent 14 calendar days",
+        "dry_run": true,
+        "max_rows": 10,
+        "operation": "fetch_announcement_index",
+        "raw_only": true,
+        "source_id": "cninfo",
+        "symbols_or_indicators": [
+          "sh.600519"
+        ],
+        "write_target": "sandbox"
+      },
+      "resource_guard_decision": "OK",
+      "resource_guard_reason": "",
+      "route_plan": {
+        "candidates": [
+          {
+            "allowed_domain": "cn_announcements",
+            "capability_declared": true,
+            "disabled_reason": null,
+            "enabled": true,
+            "role": "Primary",
+            "skip_reason": null,
+            "source_id": "cninfo"
+          }
+        ],
+        "created_at": "2026-06-22T14:43:07.628800+00:00",
+        "data_domain": "cn_announcements",
+        "job_id": "r3x-staged-pilot-route",
+        "operation": "fetch_announcement_index",
+        "quality_flags": [],
+        "requested_source_id": null,
+        "route_plan_id": "61883b6f-c9a4-4c9b-a914-38330b793cc7",
+        "route_status": "READY",
+        "run_id": "staged-req-3-preview",
+        "selected_source_id": "cninfo"
+      }
+    }
+  ],
+  "run_mode": "staged_only"
+}

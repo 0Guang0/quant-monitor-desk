@@ -1,0 +1,6 @@
+SP-01 RED — tests/test_staged_pilot.py (module missing before implementation)
+
+Command: uv run python -m pytest tests/test_staged_pilot.py -q
+Expected: FAIL (ModuleNotFoundError / no tests collected)
+
+Result: ModuleNotFoundError: No module named 'backend.app.ops.staged_pilot'
