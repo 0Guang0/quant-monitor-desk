@@ -1,4 +1,8 @@
-"""018C low-cost data-interface sidecar probe (sandbox raw-only, fail-closed)."""
+"""018C low-cost data-interface sidecar probe (sandbox raw-only, fail-closed).
+
+Not authorized for TDX live manual probe. Use ``run_tdx_live_manual_probe`` (future)
+after ``tdx_live_manual_probe_gate.validate_tdx_live_manual_probe_authorization``.
+"""
 
 from __future__ import annotations
 
