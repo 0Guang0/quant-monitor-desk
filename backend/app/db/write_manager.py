@@ -309,14 +309,11 @@ class WriteManager:
             con.execute("BEGIN")
 
         try:
-            if hasattr(self.gate, "assert_can_write_with"):
-                self.gate.assert_can_write_with(
-                    con,
-                    req.validation_report_id,
-                    req.write_mode,
-                )
-            else:
-                self.gate.assert_can_write(req.validation_report_id, req.write_mode)
+            self.gate.assert_can_write(
+                req.validation_report_id,
+                req.write_mode,
+                con=con,
+            )
 
             before = con.execute(f"SELECT COUNT(*) FROM {target}").fetchone()[0]
             rows_updated = 0

@@ -26,7 +26,7 @@ from backend.app.ops.interface_probe_fetch_ports import (
     TdxPytdxProbeFetchPort,
     content_hash_bytes,
 )
-from backend.app.ops.live_pilot import _key_table_row_counts
+from backend.app.ops.mutation_proof import key_table_row_counts
 from backend.app.storage.raw_store import RawStore
 
 DEFAULT_PRODUCTION_DB = DATA_ROOT / "duckdb" / "quant_monitor.duckdb"
@@ -107,7 +107,7 @@ def _safe_key_table_row_counts(db_path: Path) -> dict[str, int | None]:
     if not db_path.is_file():
         return {}
     try:
-        return _key_table_row_counts(db_path)
+        return key_table_row_counts(db_path)
     except Exception:
         return {}
 

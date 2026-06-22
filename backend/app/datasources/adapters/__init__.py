@@ -31,22 +31,17 @@ _ADAPTER_TYPES: dict[str, type[SkeletonAdapterBase]] = {
 }
 
 
-def create_adapter(
+def _build_adapter(
     source_id: str,
     registry: SourceRegistry,
     data_root: Path,
     *,
-    fetch_port: FetchPort | None = None,
-    file_registry: FileRegistry | None = None,
+    fetch_port: FetchPort,
+    file_registry: FileRegistry | None,
+    require_file_registry: bool,
     max_payload_bytes: int | None = None,
 ) -> BaseDataAdapter:
-    """Production factory — requires explicit FetchPort and FileRegistry."""
-    if fetch_port is None:
-        raise AdapterConfigurationError(
-            f"fetch_port is required for source_id={source_id!r}; "
-            "use StubFetchPort explicitly in tests via create_test_adapter()"
-        )
-    if file_registry is None:
+    if require_file_registry and file_registry is None:
         raise AdapterConfigurationError(
             f"file_registry is required for source_id={source_id!r}; "
             "inject FileRegistry for production evidence indexing"
@@ -66,6 +61,32 @@ def create_adapter(
     return adapter_cls(**kwargs)
 
 
+def create_adapter(
+    source_id: str,
+    registry: SourceRegistry,
+    data_root: Path,
+    *,
+    fetch_port: FetchPort | None = None,
+    file_registry: FileRegistry | None = None,
+    max_payload_bytes: int | None = None,
+) -> BaseDataAdapter:
+    """Production factory — requires explicit FetchPort and FileRegistry."""
+    if fetch_port is None:
+        raise AdapterConfigurationError(
+            f"fetch_port is required for source_id={source_id!r}; "
+            "use StubFetchPort explicitly in tests via create_test_adapter()"
+        )
+    return _build_adapter(
+        source_id,
+        registry,
+        data_root,
+        fetch_port=fetch_port,
+        file_registry=file_registry,
+        require_file_registry=True,
+        max_payload_bytes=max_payload_bytes,
+    )
+
+
 def create_test_adapter(
     source_id: str,
     registry: SourceRegistry,
@@ -77,24 +98,16 @@ def create_test_adapter(
     max_payload_bytes: int | None = None,
 ) -> BaseDataAdapter:
     """Test factory — defaults StubFetchPort; FileRegistry optional unless required."""
-    if require_file_registry and file_registry is None:
-        raise AdapterConfigurationError(
-            f"file_registry is required for source_id={source_id!r} in this test"
-        )
     port = fetch_port if fetch_port is not None else StubFetchPort(payload=b"{}")
-    adapter_cls = _ADAPTER_TYPES.get(source_id)
-    if adapter_cls is None:
-        raise AdapterNotSupportedError(source_id, tuple(_ADAPTER_TYPES.keys()))
-    raw_store = RawStore(data_root)
-    kwargs: dict = {
-        "registry": registry,
-        "raw_store": raw_store,
-        "fetch_port": port,
-        "file_registry": file_registry,
-    }
-    if max_payload_bytes is not None:
-        kwargs["max_payload_bytes"] = max_payload_bytes
-    return adapter_cls(**kwargs)
+    return _build_adapter(
+        source_id,
+        registry,
+        data_root,
+        fetch_port=port,
+        file_registry=file_registry,
+        require_file_registry=require_file_registry,
+        max_payload_bytes=max_payload_bytes,
+    )
 
 
 __all__ = [

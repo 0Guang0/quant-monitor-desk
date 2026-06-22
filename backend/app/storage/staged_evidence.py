@@ -10,6 +10,7 @@ from backend.app.storage.path_compat import is_relative_to_data_root
 
 STAGED_FILE_REGISTRY_QUALITY = "STAGED"
 STAGED_FILE_REGISTRY_PARSE_STATUS = "PARSED"
+STAGED_EVIDENCE_PHASE = "phase3_staged"
 
 
 def _resolve_under_data_root(local_path: str, data_root: Path) -> Path:
@@ -29,6 +30,7 @@ def register_staged_file_registry_rows(
     result: FetchResult,
     *,
     data_root: Path,
+    phase: str = STAGED_EVIDENCE_PHASE,
 ) -> tuple[str, ...]:
     """Append file_registry rows for micro-fetch raw evidence (Phase 3 only).
 
@@ -38,6 +40,11 @@ def register_staged_file_registry_rows(
 
     Paths must stay within ``data_root`` (ADV-A1-004).
     """
+    if phase != STAGED_EVIDENCE_PHASE:
+        raise ValueError(
+            f"register_staged_file_registry_rows requires "
+            f"phase={STAGED_EVIDENCE_PHASE!r}; got {phase!r}"
+        )
     if result.status != "SUCCESS" or not result.raw_file_paths:
         return ()
     registered: list[str] = []
