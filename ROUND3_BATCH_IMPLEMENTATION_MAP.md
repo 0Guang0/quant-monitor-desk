@@ -6,7 +6,7 @@
 >
 > Scope rule: `docs/` and `specs/` are design/contract inputs only. Runtime implementation must land in `backend/`, `frontend/`, `scripts/`, `configs/`, `tests/`, or other implementation paths already mapped by `MIGRATION_MAP.md`.
 >
-> Current checkpoint (2026-06-22): Batch 1–2.5 archived (staged only). Batch 2.75 `PILOT_FAIL_SOURCE`; `R3-B2.75-REQ2-EM` OPEN. **`R3-B3-STAGED-DOWNSTREAM-GATE` CLOSED.** Mainline **`master` @ `48330611`** (direct merge; `integration/round3` retired). **PROMPT_01–15 merged** (incl. R3X residual closure @ `48330611`). **PROMPT_14** staged pilot next — requires user live authorization only (not blocked on ponytail module scan).
+> Current checkpoint (2026-06-22): Mainline **`master`** @ post-PROMPT_16 merge. **PROMPT_01–16 merged** (R3X closure + ponytail bucket A pilot-prep). **PROMPT_14** next — user live authorization only. `R3-B2.75-REQ2-EM` OPEN.
 
 ## 0. Mandatory inputs before planning any Round 3 batch
 
@@ -114,10 +114,11 @@ Each prompt file is a self-contained startup instruction for one new session. Op
 | `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_11_review_round3_contract_architecture_adversarial_audit.md` | `review/round3-contract-architecture-adversarial-audit` | After PROMPT_07–10 on `master`                    | Parallel review                                   | Read-only adversarial audit WARN report; merged @ `efaf5970`.                  |
 | `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_12_fix_round3_data_source_routing_blockers.md`               | `fix/round3-data-source-routing-blockers`               | After PROMPT_11 optional                          | Parallel with 13 if file ownership clear          | Minimal ADV-A2 routing/registry blockers; merged @ `c3325b26`.                 |
 | `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_13_fix_round3_db_write_validation_blockers.md`               | `fix/round3-db-write-validation-blockers`               | After PROMPT_11 optional                          | Parallel with 12 if file ownership clear          | Minimal ADV-A1/A3 DB/write blockers; merged @ `ae542970`.                      |
-| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_14_feature_round3_real_data_staged_pilot.md`                 | `feature/round3-real-data-staged-pilot`                 | **Now** (after PROMPT_15 + user live auth)        | Serial pilot                                      | Bounded staged real-data pilot; no production clean write.                     |
+| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_14_feature_round3_real_data_staged_pilot.md`                 | `feature/round3-real-data-staged-pilot`                 | **Now** (after PROMPT_16 + user live auth)        | Serial pilot                                      | Bounded staged real-data pilot; no production clean write.                     |
 | `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_15_fix_round3_r3x_residual_open_items_closure.md`            | `fix/round3-r3x-residual-open-items-closure`            | Done @ `48330611`                                 | —                                                 | R3X Master Checklist OPEN=0; merged with ponytail full.                        |
+| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_16_fix_round3_ponytail_pilot_prep_bucket_a.md`               | `fix/round3-ponytail-pilot-prep-bucket-a`               | Done @ merge post-`c8dd25f8`                      | Before 14                                         | Ponytail bucket A pilot-prep (DS/SC/OP/SY/VA/DB).                              |
 
-Do not start `feature/round3-019-layer2-sensor` until `feature/round3-batch3-staged-gate` has merged into `master`. PROMPT_07–15 sessions must create their own branches/worktrees before execution.
+Do not start `feature/round3-019-layer2-sensor` until `feature/round3-batch3-staged-gate` has merged into `master`. PROMPT_07–16 sessions must create their own branches/worktrees before execution.
 
 ## 2.3 Round 3 gate hygiene command matrix
 
