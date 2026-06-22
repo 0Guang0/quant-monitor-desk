@@ -104,14 +104,6 @@ def _key_for(row: dict[str, object], key_fields: tuple[str, ...]) -> tuple[objec
     return tuple(row.get(field) for field in key_fields)
 
 
-def _as_float(value: object) -> float | None:
-    return as_float(value)
-
-
-def _as_text(value: object) -> str:
-    return as_text(value) or ""
-
-
 class SourceConflictValidator:
     """Compare primary-source rows against validation-source rows."""
 
@@ -131,8 +123,8 @@ class SourceConflictValidator:
         return None
 
     def _normalized_diff(self, primary_value: object, competing_value: object) -> float | None:
-        primary = _as_float(primary_value)
-        competing = _as_float(competing_value)
+        primary = as_float(primary_value)
+        competing = as_float(competing_value)
         if primary is None or competing is None:
             return None
         denominator = abs(primary)
@@ -154,13 +146,13 @@ class SourceConflictValidator:
         if primary_value == competing_value:
             return None
 
-        competing_source = _as_text(peer_row.get("source_id"))
+        competing_source = as_text(peer_row.get("source_id")) or ""
         if self._is_separate_by_source(field_name):
             return SourceConflictFinding(
                 field_name=field_name,
-                primary_value=_as_text(primary_value),
+                primary_value=as_text(primary_value) or "",
                 competing_source=competing_source,
-                competing_value=_as_text(competing_value),
+                competing_value=as_text(competing_value) or "",
                 normalized_diff=None,
                 severity=_METHODOLOGY,
                 manual_review_required=False,
@@ -174,9 +166,9 @@ class SourceConflictValidator:
         severity: ConflictSeverity = _SEVERE if diff > threshold.relative_severe else _WARNING
         return SourceConflictFinding(
             field_name=field_name,
-            primary_value=_as_text(primary_value),
+            primary_value=as_text(primary_value) or "",
             competing_source=competing_source,
-            competing_value=_as_text(competing_value),
+            competing_value=as_text(competing_value) or "",
             normalized_diff=diff,
             severity=severity,
             manual_review_required=False,
@@ -222,9 +214,6 @@ class SourceConflictValidator:
             needs_manual_review=False,
             conflicts=tuple(conflicts),
         )
-
-    def _fetch_rows(self, con, table_name: str) -> list[dict[str, object]]:
-        return fetch_rows(con, table_name)
 
     def _market_id_for(self, row: dict[str, object]) -> str | None:
         value = row.get("market_id")
@@ -360,7 +349,7 @@ class SourceConflictValidator:
                 f"staging table {staging_table!r} has {row_count} rows; "
                 f"cap is {_VALIDATE_TABLE_ROW_CAP}"
             )
-        rows = self._fetch_rows(con, staging_table)
+        rows = fetch_rows(con, staging_table)
         report = self.validate_rows(request, rows)
         self._persist_report(con, request, report, rows)
         return report

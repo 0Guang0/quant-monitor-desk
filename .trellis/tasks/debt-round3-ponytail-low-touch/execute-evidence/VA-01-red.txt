@@ -1,0 +1,11 @@
+VA-01 RED — validators common thin wrappers in data_quality.py
+
+Evidence: thin forwarders `_is_missing`, `_as_text`, `_as_float` duplicated
+`backend.app.validators.common` (lines 81-90 pre-fix).
+
+Pre-fix grep:
+  def _is_missing(value: object) -> bool:
+      return is_missing(value)
+
+Status: structural debt confirmed (no dedicated failing test; behavior covered by
+test_data_quality_validator.py).

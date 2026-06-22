@@ -1,4 +1,11 @@
-"""Load frozen rule-set version metadata from contract YAML files."""
+"""Load frozen rule-set version metadata from contract YAML files.
+
+Rule-id dual track (VA-07):
+- YAML contracts (``specs/contracts/*_rules.yaml``) own each rule ``id`` and ``severity``.
+- Python validators emit ``rule_id`` strings in finding builders; adding or removing a rule
+  requires editing both the YAML severity map and the Python check that emits that id.
+  Keep IDs aligned when changing rules; there is no code-generation step.
+"""
 
 from __future__ import annotations
 

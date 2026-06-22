@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 import yaml
-from backend.app.config import PROJECT_ROOT
+from backend.app.config import CONFIGS_ROOT, PROJECT_ROOT
 
-CONFIGS_ROOT = PROJECT_ROOT / "configs"
 CONTRACT_PATH = PROJECT_ROOT / "specs/contracts/resource_limits.yaml"
 API_SECURITY_PATH = PROJECT_ROOT / "specs/contracts/api_security_contract.yaml"
 
