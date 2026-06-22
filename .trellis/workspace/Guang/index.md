@@ -7,10 +7,9 @@
 ## Current Status
 
 <!-- @@@auto:current-status -->
-
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 7
-- **Last Active**: 2026-06-21
+- **Total Sessions**: 8
+- **Last Active**: 2026-06-22
 <!-- @@@/auto:current-status -->
 
 ---
@@ -18,11 +17,9 @@
 ## Active Documents
 
 <!-- @@@auto:active-documents -->
-
-| File           | Lines | Status |
-| -------------- | ----- | ------ |
-| `journal-1.md` | ~239  | Active |
-
+| File | Lines | Status |
+|------|-------|--------|
+| `journal-1.md` | ~271 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -31,8 +28,9 @@
 
 <!-- @@@auto:session-history -->
 
-| #   | Date       | Title                                                | Commits                                                                     | Branch                                    |
-| --- | ---------- | ---------------------------------------------------- | --------------------------------------------------------------------------- | ----------------------------------------- |
+| # | Date | Title | Commits | Branch |
+|---|------|-------|---------|--------|
+| 8 | 2026-06-22 | 019 plan audit review (PROMPT_09) | `99a2a24` | `review/round3-019-plan-audit` |
 | 7   | 2026-06-21 | Round 3 Batch 2.5 finish-work                        | `2a9326c`, `7ace4ed`, `1314afb`, `5d53619`, `d2e1e7d`, `eeec63e`, `c0d45cc` | `master`                                  |
 | 6   | 2026-06-20 | Round 3 Batch 1 early ops — audit cleanup and finish | `abaf7ce`                                                                   | `06-20-round3-batch1-early-ops`           |
 | 5   | 2026-06-19 | Round3 DB inspect handoff docs                       | `ab608b6`                                                                   | `master`                                  |
