@@ -9,6 +9,7 @@
 
 from __future__ import annotations
 
+import json
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -58,6 +59,7 @@ class DbValidationGate:
     - status == FAILED              -> ValidationRejected
     - can_write_clean == false      -> ValidationRejected
     - needs_manual_review == true   -> ValidationRejected
+    - schema_hash_changed w/o approval -> ValidationRejected
     - status == PASSED  + can_write_clean + no review -> allow
     - status == WARNING + can_write_clean + no review -> allow (explicit policy)
 
@@ -66,27 +68,45 @@ class DbValidationGate:
     intentional — validation reports are immutable once persisted.
     """
 
+    _SCHEMA_APPROVED_MODES = frozenset({"manual_patch", "schema_migration"})
+
     def __init__(self, conn_manager: ConnectionManager) -> None:
         self.conn_manager = conn_manager
 
-    def _fetch_report(self, validation_report_id: str) -> tuple[str, bool, bool, str | None] | None:
-        with self.conn_manager.reader() as con:
-            row = con.execute(
-                """
-                SELECT status, can_write_clean, needs_manual_review, run_id
-                FROM validation_report
-                WHERE validation_report_id = ?
-                """,
-                [validation_report_id],
-            ).fetchone()
+    def _fetch_report(
+        self, validation_report_id: str, con=None
+    ) -> tuple[str, bool, bool, str | None, str | None, str | None, str | None] | None:
+        sql = """
+            SELECT status, can_write_clean, needs_manual_review, run_id,
+                   job_id, source_id, quality_flags
+            FROM validation_report
+            WHERE validation_report_id = ?
+        """
+        params = [validation_report_id]
+        if con is not None:
+            row = con.execute(sql, params).fetchone()
+        else:
+            with self.conn_manager.reader() as reader_con:
+                row = reader_con.execute(sql, params).fetchone()
         if row is None:
             return None
-        status, can_write_clean, needs_manual_review, run_id = row
+        (
+            status,
+            can_write_clean,
+            needs_manual_review,
+            run_id,
+            job_id,
+            source_id,
+            quality_flags,
+        ) = row
         return (
             str(status),
             bool(can_write_clean),
             bool(needs_manual_review),
             (None if run_id is None else str(run_id)),
+            (None if job_id is None else str(job_id)),
+            (None if source_id is None else str(source_id)),
+            (None if quality_flags is None else str(quality_flags)),
         )
 
     def _has_blocking_severe_conflicts(self, run_id: str, con=None) -> bool:
@@ -105,6 +125,59 @@ class DbValidationGate:
                 count = reader_con.execute(sql, params).fetchone()[0]
         return int(count) > 0
 
+    def _quality_flags_include_schema_drift(self, quality_flags: str | None) -> bool:
+        if not quality_flags:
+            return False
+        try:
+            parsed = json.loads(quality_flags)
+        except json.JSONDecodeError:
+            return "SCHEMA_DRIFT" in quality_flags
+        if isinstance(parsed, list):
+            return "SCHEMA_DRIFT" in parsed
+        return False
+
+    def _schema_hash_blocks_write(
+        self,
+        con,
+        *,
+        job_id: str | None,
+        source_id: str | None,
+        quality_flags: str | None,
+        write_mode: str,
+    ) -> bool:
+        if write_mode in self._SCHEMA_APPROVED_MODES:
+            return False
+        if self._quality_flags_include_schema_drift(quality_flags):
+            return True
+        if not job_id or not source_id:
+            return False
+        current_row = con.execute(
+            """
+            SELECT schema_hash
+            FROM fetch_log
+            WHERE job_id = ?
+            ORDER BY fetch_time DESC
+            LIMIT 1
+            """,
+            [job_id],
+        ).fetchone()
+        if current_row is None or current_row[0] is None:
+            return False
+        current_hash = str(current_row[0])
+        baseline_row = con.execute(
+            """
+            SELECT schema_hash
+            FROM file_registry
+            WHERE source = ? AND schema_hash IS NOT NULL
+            ORDER BY fetch_time DESC
+            LIMIT 1
+            """,
+            [source_id],
+        ).fetchone()
+        if baseline_row is None or baseline_row[0] is None:
+            return False
+        return current_hash != str(baseline_row[0])
+
     def _enforce_report(
         self,
         validation_report_id: str,
@@ -113,6 +186,10 @@ class DbValidationGate:
         can_write_clean: bool,
         needs_manual_review: bool,
         run_id: str | None,
+        job_id: str | None,
+        source_id: str | None,
+        quality_flags: str | None,
+        write_mode: str,
         con=None,
     ) -> None:
         if status == "FAILED":
@@ -136,6 +213,33 @@ class DbValidationGate:
                 f"source_conflict for run_id={run_id!r}",
                 validation_report_id=validation_report_id,
             )
+        schema_con = con
+        if schema_con is None:
+            with self.conn_manager.reader() as reader_con:
+                if self._schema_hash_blocks_write(
+                    reader_con,
+                    job_id=job_id,
+                    source_id=source_id,
+                    quality_flags=quality_flags,
+                    write_mode=write_mode,
+                ):
+                    raise ValidationRejected(
+                        f"validation report {validation_report_id!r} blocked by "
+                        f"schema_hash_changed without approval",
+                        validation_report_id=validation_report_id,
+                    )
+        elif self._schema_hash_blocks_write(
+            schema_con,
+            job_id=job_id,
+            source_id=source_id,
+            quality_flags=quality_flags,
+            write_mode=write_mode,
+        ):
+            raise ValidationRejected(
+                f"validation report {validation_report_id!r} blocked by "
+                f"schema_hash_changed without approval",
+                validation_report_id=validation_report_id,
+            )
 
     def assert_can_write(self, validation_report_id: str, write_mode: str) -> str:
         report = self._fetch_report(validation_report_id)
@@ -144,46 +248,56 @@ class DbValidationGate:
                 f"unknown validation_report_id: {validation_report_id}",
                 validation_report_id=validation_report_id,
             )
-        status, can_write_clean, needs_manual_review, run_id = report
+        (
+            status,
+            can_write_clean,
+            needs_manual_review,
+            run_id,
+            job_id,
+            source_id,
+            quality_flags,
+        ) = report
         self._enforce_report(
             validation_report_id,
             status=status,
             can_write_clean=can_write_clean,
             needs_manual_review=needs_manual_review,
             run_id=run_id,
+            job_id=job_id,
+            source_id=source_id,
+            quality_flags=quality_flags,
+            write_mode=write_mode,
         )
         return status
 
     def assert_can_write_with(
         self, con: duckdb.DuckDBPyConnection, validation_report_id: str, write_mode: str
     ) -> str:
-        row = con.execute(
-            """
-            SELECT status, can_write_clean, needs_manual_review, run_id
-            FROM validation_report
-            WHERE validation_report_id = ?
-            """,
-            [validation_report_id],
-        ).fetchone()
-        if row is None:
+        report = self._fetch_report(validation_report_id, con=con)
+        if report is None:
             raise ValidationGateError(
                 f"unknown validation_report_id: {validation_report_id}",
                 validation_report_id=validation_report_id,
             )
-        status, can_write_clean, needs_manual_review, run_id = row
-        run_id_str = None if run_id is None else str(run_id)
-        if run_id_str and self._has_blocking_severe_conflicts(run_id_str, con):
-            raise ValidationRejected(
-                f"validation report {validation_report_id!r} blocked by open severe "
-                f"source_conflict for run_id={run_id_str!r}",
-                validation_report_id=validation_report_id,
-            )
+        (
+            status,
+            can_write_clean,
+            needs_manual_review,
+            run_id,
+            job_id,
+            source_id,
+            quality_flags,
+        ) = report
         self._enforce_report(
             validation_report_id,
-            status=str(status),
-            can_write_clean=bool(can_write_clean),
-            needs_manual_review=bool(needs_manual_review),
-            run_id=run_id_str,
+            status=status,
+            can_write_clean=can_write_clean,
+            needs_manual_review=needs_manual_review,
+            run_id=run_id,
+            job_id=job_id,
+            source_id=source_id,
+            quality_flags=quality_flags,
+            write_mode=write_mode,
             con=con,
         )
         return str(status)

@@ -475,6 +475,60 @@ class _BackfillFailOnSecondAdapter(_BackfillCountAdapter):
         return super().fetch(req, con=con, job_id=job_id)
 
 
+def test_backfillJob_severeConflict_blocksCleanWriteAndPersistsConflictReportId(
+    tmp_path, registry_yaml_fixture, monkeypatch
+) -> None:
+    from datetime import date
+
+    from backend.app.core.resource_guard import Decision, ResourceGuard
+    from tests.test_batch_d_orchestration_flow import (
+        CONFLICT_STG,
+        BatchDIncrementalAdapter,
+        _orch_stack,
+    )
+
+    class SevereBackfillAdapter(BatchDIncrementalAdapter):
+        _conflict_peer_rows = (
+            ("baostock", "AAPL", "2026-06-15", 100.0),
+            ("qmt_xtdata", "AAPL", "2026-06-15", 150.0),
+        )
+
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    orch, _ = _orch_stack(tmp_path, registry_yaml_fixture)
+    reg = SourceRegistry(registry_yaml_fixture)
+    reg.load()
+    adapter = SevereBackfillAdapter(reg)
+    spec = SyncJobSpec(
+        run_id="run-bf-severe",
+        job_id="job-bf-severe",
+        job_type="backfill",
+        data_domain="market_bar_1d",
+        market_id="CN_A",
+        source_id="baostock",
+        adapter_id=None,
+        date_start=date(2026, 1, 1),
+        date_end=date(2026, 1, 15),
+        instrument_id=None,
+        partition_key=None,
+        trigger_reason="eco_catchup",
+    )
+    results = orch.run_backfill(
+        spec,
+        adapter=adapter,
+        clean_table="clean_batch_d_flow",
+        conflict_staging_table=CONFLICT_STG,
+    )
+    assert any(r.status == "WAITING_RECONCILE" for r in results)
+    with orch._cm.writer() as con:
+        clean_rows = con.execute("SELECT COUNT(*) FROM clean_batch_d_flow").fetchone()[0]
+        conflict_report_id = con.execute(
+            "SELECT conflict_report_id FROM data_sync_job WHERE job_id = ?",
+            ["job-bf-severe"],
+        ).fetchone()[0]
+    assert clean_rows == 0
+    assert conflict_report_id is not None
+
+
 def test_reconcileJob_severeConflict_entersWaitingReconcile(
     tmp_path, registry_yaml_fixture, monkeypatch
 ) -> None:
