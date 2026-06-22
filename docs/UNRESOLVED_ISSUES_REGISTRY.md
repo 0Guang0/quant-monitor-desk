@@ -2,7 +2,7 @@
 
 > Purpose: one file for all current unresolved, deferred, open, risk, gap, and improvement items.  
 > Source of truth relationship: this file is the readable unresolved split of `docs/AUDIT_DEFERRED_REGISTRY.md`. If files conflict, update both in the same change and keep this file as the operator-facing unresolved list.  
-> Last reconciled: 2026-06-21 after Batch 2.5 audit follow-up alignment across pending-fix registry, Round3 map, and task-card gates.
+> Last reconciled: 2026-06-22 after D-PERF debt slice (`debt/r3b275-perf-hyg-registry`) aligned perf/hyg registry owner and closure command across authoritative registries.
 
 ## Current Round 3 entry status
 
@@ -65,7 +65,7 @@
 | B2.5-O-06     | DEFERRED       |              No | Migration 008 broad CHECK closeout (alias of A9-P1-01 for ingestion tables).                 | `AUDIT_DEFERRED_REGISTRY.md`; `MIGRATION_008_PLAN.md`.                                         | **Round 3 migration 008:** migration applied + contract tests.                                                      |
 | R3-B25-HYG-01 | OPEN (hygiene) |              No | runtime monolith ~974 LOC; evidence extracted to `ingestion_evidence.py` (R2a)               | audit A03/A07; `ROUND3_BATCH25_PENDING_FIX_REGISTRY.md` §3.3                                   | **R2a DONE** (PR #25); **R2b–R2d** still OPEN per `layer1_ingestion_refactor_rollback_plan.md`                      |
 | R3-B25-HYG-02 | OPEN (hygiene) |              No | 前端 Vitest 仅 3 项；无 bundle budget                                                        | audit A05-P2-02 / A08-P2-02                                                                    | **Round 4** task 027 + CI bundle gate                                                                               |
-| R3-B25-HYG-03 | DEFERRED       |              No | test tier 已补；新 A6 production-equivalent benchmark / performance-budget artifact 仍未刷新 | audit A08-P2-01 / A08-P2-02; `ROUND3_BATCH25_PENDING_FIX_REGISTRY.md` §3.2                     | **Batch 2.75 前或 CI nightly:** 运行/扩展 `production_equivalent_smoke.py`，保留阈值化 evidence artifact            |
+| R3-B25-HYG-03 | DEFERRED       |              No | test tier 已补；新 A6 production-equivalent benchmark / performance-budget artifact 仍未刷新 | audit A08-P2-01 / A08-P2-02; `ROUND3_BATCH25_PENDING_FIX_REGISTRY.md` §3.2; repair evidence R-5 | **CI nightly / Batch6 ops:** `uv run python scripts/production_equivalent_smoke.py --use-service-path --data-root .audit-sandbox/r3b275-audit` plus threshold/budget artifact; must not authorize live sources |
 
 > **Moved to RESOLVED:** `B2.5-O-02` (schema.sql sync), `B2.5-O-03` (app-layer timestamp guard), `B2.5-WIN-PATH-01` (Windows MAX_PATH), `R3-B25-DOC-01` (Batch 3 staged-only downstream gate), `A08-P1-02` (pytest slow marker + quick profile), `R3-B25-HYG-04` (`.audit-sandbox*` review noise mitigation). See `RESOLVED_ISSUES_REGISTRY.md`.
 
