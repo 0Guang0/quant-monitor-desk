@@ -423,7 +423,7 @@ def test_fetch_disabledSource_raisesBeforeImpl_andWritesNoFetchLog(
     result = adapter.fetch(req, con=con)
     assert result.status == "DISABLED_SOURCE"
     assert (
-        con.execute("SELECT COUNT(*) FROM fetch_log").fetchone()[0] == 1
+        con.execute("SELECT COUNT(*) FROM fetch_log").fetchone()[0] == 0
     )
 
 
@@ -453,11 +453,11 @@ def test_fetch_registryDomainNotAllowed_raisesBeforeImpl_andWritesNoFetchLog(
     result = adapter.fetch(req, con=con)
     assert result.status == "DISABLED_SOURCE"
     assert (
-        con.execute("SELECT COUNT(*) FROM fetch_log").fetchone()[0] == 1
+        con.execute("SELECT COUNT(*) FROM fetch_log").fetchone()[0] == 0
     )
 
 
-def test_fetch_successResult_writesExactlyOneFetchLogRow(
+def test_fetch_successResult_defaultWritesNoFetchLogRow(
     tmp_path,
     migrated_con,
     loaded_registry,
@@ -467,6 +467,19 @@ def test_fetch_successResult_writesExactlyOneFetchLogRow(
     adapter = FakeAdapter(loaded_registry)
     req = request_factory("baostock")
     adapter.fetch(req, con=con)
+    assert con.execute("SELECT COUNT(*) FROM fetch_log").fetchone()[0] == 0
+
+
+def test_fetch_successResult_optInWritesExactlyOneFetchLogRow(
+    tmp_path,
+    migrated_con,
+    loaded_registry,
+    request_factory,
+):
+    con = migrated_con(tmp_path)
+    adapter = FakeAdapter(loaded_registry)
+    req = request_factory("baostock")
+    adapter.fetch(req, con=con, record_fetch_log=True)
     assert con.execute("SELECT COUNT(*) FROM fetch_log").fetchone()[0] == 1
 
 
@@ -479,8 +492,8 @@ def test_fetch_calledTwice_writesTwoRows(
     con = migrated_con(tmp_path)
     adapter = FakeAdapter(loaded_registry)
     req = request_factory("baostock")
-    adapter.fetch(req, con=con)
-    adapter.fetch(req, con=con)
+    adapter.fetch(req, con=con, record_fetch_log=True)
+    adapter.fetch(req, con=con, record_fetch_log=True)
     assert con.execute("SELECT COUNT(*) FROM fetch_log").fetchone()[0] == 2
 
 
@@ -509,7 +522,7 @@ def test_fetch_alwaysWritesFetchLog_evenOnEmptyResponse(
     con = migrated_con(tmp_path)
     adapter = EmptyAdapter(loaded_registry)
     req = request_factory("baostock")
-    adapter.fetch(req, con=con)
+    adapter.fetch(req, con=con, record_fetch_log=True)
     assert con.execute("SELECT COUNT(*) FROM fetch_log").fetchone()[0] == 1
 
 
@@ -538,7 +551,7 @@ def test_fetch_emptyResponse_hasNoStagingEvidence(
     con = migrated_con(tmp_path)
     adapter = EmptyAdapter(loaded_registry)
     req = request_factory("baostock")
-    adapter.fetch(req, con=con)
+    adapter.fetch(req, con=con, record_fetch_log=True)
     row = con.execute(
         "SELECT raw_file_paths FROM fetch_log WHERE run_id=?", [req.run_id]
     ).fetchone()[0]
@@ -554,7 +567,7 @@ def test_fetch_implRaises_stillWritesFetchLogAndReturnsFailed(
     con = migrated_con(tmp_path)
     adapter = ExplodingAdapter(loaded_registry)
     req = request_factory("baostock")
-    result = adapter.fetch(req, con=con)
+    result = adapter.fetch(req, con=con, record_fetch_log=True)
     assert result.status == "FAILED"
     assert con.execute("SELECT COUNT(*) FROM fetch_log").fetchone()[0] == 1
 
@@ -568,7 +581,7 @@ def test_fetch_implDoesNotSwitchSourceId(
     con = migrated_con(tmp_path)
     adapter = WrongSourceAdapter(loaded_registry)
     req = request_factory("baostock")
-    result = adapter.fetch(req, con=con)
+    result = adapter.fetch(req, con=con, record_fetch_log=True)
     assert result.source_id == "baostock"
     row = con.execute("SELECT source_id FROM fetch_log WHERE run_id=?", [req.run_id]).fetchone()[0]
     assert row == "baostock"
@@ -613,7 +626,7 @@ def test_fetch_disabledPrimaryDomain_returnsDisabledSource(
     assert result.row_count == 0
     assert (
         con.execute("SELECT COUNT(*) FROM fetch_log WHERE run_id=?", [req.run_id]).fetchone()[0]
-        == 1
+        == 0
     )
 
 

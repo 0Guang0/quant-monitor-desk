@@ -1,0 +1,2 @@
+VA-03 GREEN (ALREADY_CLOSED): as_text(None) is None not literal "None".
+pytest tests/test_r3x_ponytail_pilot_prep_bucket_a.py::test_va03_asTextNoneIsNotLiteralString PASSED

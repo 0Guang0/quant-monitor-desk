@@ -1,0 +1,3 @@
+SC-02 GREEN: register_staged_file_registry_rows phase3_staged gate.
+pytest tests/test_r3x_ponytail_pilot_prep_bucket_a.py::test_sc02_stagedEvidenceRejectsWrongPhase PASSED
+pytest tests/test_r3x_ponytail_pilot_prep_bucket_a.py::test_sc02_stagedEvidenceAllowsPhase3Token PASSED

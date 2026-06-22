@@ -31,6 +31,49 @@ _DEFAULT_CONFLICT_RULE_SET, _DEFAULT_CONFLICT_RULE_VERSION = default_conflict_ru
 FetchCallable = Callable[..., FetchResult]
 
 
+class FetchGuardBlocked(Exception):
+    """ResourceGuard blocked fetch before adapter/callable completed."""
+
+    def __init__(self, message: str, *, decision=None) -> None:
+        super().__init__(message)
+        self.decision = decision
+
+
+def _fetch_with_guard(
+    *,
+    begin_fetching: Callable[[str], bool],
+    job_id: str,
+    cm,
+    req: FetchRequest,
+    adapter: BaseDataAdapter | None,
+    fetch_callable: FetchCallable | None,
+    fetch_operation: str | None = None,
+    require_begin_fetching: bool = False,
+) -> FetchResult:
+    """Unified fetch path: adapter uses begin_fetching; callable uses service guard."""
+    from backend.app.datasources.service import ResourceGuardBlockedError
+
+    if adapter is not None or require_begin_fetching:
+        if not begin_fetching(job_id):
+            raise FetchGuardBlocked("resource guard blocked")
+    if adapter is not None:
+        from backend.app.datasources.fetch_log import FetchLogWriter
+
+        with cm.writer() as con:
+            result = adapter.fetch(req, con=con, job_id=job_id)
+            FetchLogWriter().write(con, result, req=req, job_id=job_id)
+            return result
+    if fetch_callable is None:
+        raise ValueError("adapter or fetch_callable is required")
+    try:
+        with cm.writer() as con:
+            if fetch_operation is not None:
+                return fetch_callable(req, con, job_id, operation=fetch_operation)
+            return fetch_callable(req, con, job_id)
+    except ResourceGuardBlockedError as exc:
+        raise FetchGuardBlocked(str(exc), decision=exc.decision) from exc
+
+
 def _resolve_market_id(data_domain: str, market_id: str | None = None) -> str:
     if market_id:
         return market_id
@@ -224,41 +267,37 @@ class IncrementalJobRunner(_PipelineMixin):
             instrument_id=spec.instrument_id,
         )
         cm = self._jobs.connection_manager
-        if fetch_callable is not None:
-            try:
-                with cm.writer() as con:
-                    if fetch_operation is not None:
-                        fetch_result = fetch_callable(req, con, job_id, operation=fetch_operation)
-                    else:
-                        fetch_result = fetch_callable(req, con, job_id)
-            except Exception as exc:
-                from backend.app.datasources.service import ResourceGuardBlockedError
-
-                if isinstance(exc, ResourceGuardBlockedError):
-                    error_type = exc.decision.value if exc.decision else "PAUSE"
-                    self._jobs.transition(
-                        job_id,
-                        "FAILED_RETRYABLE",
-                        message=str(exc),
-                        event_type="RESOURCE_GUARD_BLOCKED",
-                        error_type=error_type,
-                        error_message=str(exc),
-                    )
-                    return SyncJobResult(
-                        job_id=job_id,
-                        status="FAILED_RETRYABLE",
-                        message=str(exc),
-                    )
-                raise
-        else:
-            if not self._begin_fetching(job_id):
+        try:
+            fetch_result = _fetch_with_guard(
+                begin_fetching=self._begin_fetching,
+                job_id=job_id,
+                cm=cm,
+                req=req,
+                adapter=adapter,
+                fetch_callable=fetch_callable,
+                fetch_operation=fetch_operation,
+            )
+        except FetchGuardBlocked as exc:
+            if exc.decision is not None:
+                error_type = exc.decision.value if exc.decision else "PAUSE"
+                self._jobs.transition(
+                    job_id,
+                    "FAILED_RETRYABLE",
+                    message=str(exc),
+                    event_type="RESOURCE_GUARD_BLOCKED",
+                    error_type=error_type,
+                    error_message=str(exc),
+                )
                 return SyncJobResult(
                     job_id=job_id,
                     status="FAILED_RETRYABLE",
-                    message="resource guard blocked",
+                    message=str(exc),
                 )
-            with cm.writer() as con:
-                fetch_result = adapter.fetch(req, con=con, job_id=job_id)
+            return SyncJobResult(
+                job_id=job_id,
+                status="FAILED_RETRYABLE",
+                message=str(exc),
+            )
         if fetch_result.status != "SUCCESS" or not fetch_result.staging_table:
             self._jobs.transition(
                 job_id,
@@ -452,22 +491,6 @@ class BackfillShardRunner(_PipelineMixin):
                     rule_id=trigger_reason,
                 ),
             )
-            if not self._begin_fetching(job_id):
-                self._jobs.transition(
-                    job_id,
-                    "FAILED_RETRYABLE",
-                    task_id=task_id,
-                    message="resource guard blocked",
-                    payload_json=build_event_payload(
-                        source_id=spec.source_id,
-                        task_id=task_id,
-                        decision="guard_blocked",
-                    ),
-                )
-                results.append(
-                    SyncJobResult(job_id=job_id, status="FAILED_RETRYABLE", message="guard")
-                )
-                return results
             req = FetchRequest(
                 run_id=spec.run_id,
                 source_id=spec.source_id,
@@ -477,11 +500,44 @@ class BackfillShardRunner(_PipelineMixin):
                 start_time=shard_start.isoformat(),
                 end_time=shard_end.isoformat(),
             )
-            with cm.writer() as con:
-                if fetch_callable is not None:
-                    fetch_result = fetch_callable(req, con, job_id)
+            try:
+                fetch_result = _fetch_with_guard(
+                    begin_fetching=self._begin_fetching,
+                    job_id=job_id,
+                    cm=cm,
+                    req=req,
+                    adapter=adapter,
+                    fetch_callable=fetch_callable,
+                    require_begin_fetching=True,
+                )
+            except FetchGuardBlocked as exc:
+                if exc.decision is not None:
+                    error_type = exc.decision.value if exc.decision else "PAUSE"
+                    self._jobs.transition(
+                        job_id,
+                        "FAILED_RETRYABLE",
+                        task_id=task_id,
+                        message=str(exc),
+                        event_type="RESOURCE_GUARD_BLOCKED",
+                        error_type=error_type,
+                        error_message=str(exc),
+                    )
                 else:
-                    fetch_result = adapter.fetch(req, con=con, job_id=job_id)
+                    self._jobs.transition(
+                        job_id,
+                        "FAILED_RETRYABLE",
+                        task_id=task_id,
+                        message=str(exc),
+                        payload_json=build_event_payload(
+                            source_id=spec.source_id,
+                            task_id=task_id,
+                            decision="guard_blocked",
+                        ),
+                    )
+                results.append(
+                    SyncJobResult(job_id=job_id, status="FAILED_RETRYABLE", message=str(exc))
+                )
+                return results
             if fetch_result.status != "SUCCESS" or not fetch_result.staging_table:
                 self._jobs.transition(
                     job_id,

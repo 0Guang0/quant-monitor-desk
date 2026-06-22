@@ -1,0 +1,2 @@
+OP-02 GREEN: mutation_proof.key_table_row_counts; interface_probe imports mutation_proof only.
+pytest tests/test_r3x_ponytail_pilot_prep_bucket_a.py::test_op02_interfaceProbeUsesMutationProofNotLivePilotPrivate PASSED

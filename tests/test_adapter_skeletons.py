@@ -29,7 +29,7 @@ def test_skeletonAdapterBase_successWritesRawFile(
         fetch_port=StubFetchPort(payload=stub_fetch_bytes),
     )
     req = request_factory("baostock", "cn_equity_daily_bar")
-    result = adapter.fetch(req, con=con)
+    result = adapter.fetch(req, con=con, record_fetch_log=True)
     assert result.status == "SUCCESS"
     assert result.row_count == 1
     assert len(result.raw_file_paths) == 1
@@ -113,7 +113,7 @@ def test_portErrors_mapStatusAndFetchLog(
         fetch_port=FailingPort(status=status, message=f"simulated {status}"),
     )
     req = request_factory("baostock", "cn_equity_daily_bar")
-    result = adapter.fetch(req, con=con)
+    result = adapter.fetch(req, con=con, record_fetch_log=True)
     assert result.status == status
     row = con.execute(
         "SELECT status, error_type FROM fetch_log WHERE run_id=?", [req.run_id]
@@ -164,7 +164,7 @@ def test_qmtAdapter_localClientMissing_returnsAuthFailed(
         fetch_port=FailingPort("AUTH_FAILED", "QMT client not running"),
     )
     req = request_factory("qmt_xtdata", "cn_equity_minute_bar")
-    result = adapter.fetch(req, con=con)
+    result = adapter.fetch(req, con=con, record_fetch_log=True)
     assert result.status == "AUTH_FAILED"
     row = con.execute(
         "SELECT status, error_type FROM fetch_log WHERE run_id=?", [req.run_id]
@@ -250,7 +250,7 @@ def test_cninfoAdapter_unpublished_returnsNotPublishedYet(
         fetch_port=UnpublishedPort(),
     )
     req = request_factory("cninfo", "cn_announcements")
-    result = adapter.fetch(req, con=con)
+    result = adapter.fetch(req, con=con, record_fetch_log=True)
     assert result.status == "NOT_PUBLISHED_YET"
     assert "not published" in (result.error_message or "").lower()
     row = con.execute(
@@ -493,7 +493,7 @@ def test_payloadRowCount_propagatesToFetchResultAndFetchLog(
         fetch_port=StubFetchPort(payload=stub_fetch_bytes, row_count=42),
     )
     req = request_factory("baostock", "cn_equity_daily_bar")
-    result = adapter.fetch(req, con=con)
+    result = adapter.fetch(req, con=con, record_fetch_log=True)
     assert result.row_count == 42
     row = con.execute("SELECT row_count FROM fetch_log WHERE run_id=?", [req.run_id]).fetchone()
     assert row[0] == 42
@@ -522,7 +522,7 @@ def test_payloadSchemaHash_propagatesToFetchResultAndFetchLog(
         fetch_port=StubFetchPort(payload=b'{"a":1}', schema_hash=schema_hash),
     )
     req = request_factory("baostock", "cn_equity_daily_bar")
-    result = adapter.fetch(req, con=con)
+    result = adapter.fetch(req, con=con, record_fetch_log=True)
     assert result.schema_hash == schema_hash
     row = con.execute("SELECT schema_hash FROM fetch_log WHERE run_id=?", [req.run_id]).fetchone()
     assert row[0] == schema_hash
@@ -551,7 +551,7 @@ def test_payloadRetryCount_propagatesToFetchResultAndFetchLog(
         fetch_port=StubFetchPort(payload=stub_fetch_bytes, retry_count=3),
     )
     req = request_factory("baostock", "cn_equity_daily_bar")
-    result = adapter.fetch(req, con=con)
+    result = adapter.fetch(req, con=con, record_fetch_log=True)
     assert result.retry_count == 3
     row = con.execute("SELECT retry_count FROM fetch_log WHERE run_id=?", [req.run_id]).fetchone()
     assert row[0] == 3
@@ -580,7 +580,7 @@ def test_fetchRecordsLatencyMsWhenPayloadOmitsIt(
         fetch_port=StubFetchPort(payload=stub_fetch_bytes),
     )
     req = request_factory("baostock", "cn_equity_daily_bar")
-    result = adapter.fetch(req, con=con)
+    result = adapter.fetch(req, con=con, record_fetch_log=True)
     assert result.latency_ms is not None
     assert result.latency_ms >= 0
     row = con.execute("SELECT latency_ms FROM fetch_log WHERE run_id=?", [req.run_id]).fetchone()

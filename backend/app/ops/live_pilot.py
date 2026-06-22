@@ -22,6 +22,7 @@ from backend.app.ops.db_inspector import (
     DbInspector,
     format_text_report,
 )
+from backend.app.ops.mutation_proof import key_table_row_counts as _key_table_row_counts
 from backend.app.storage.file_registry import FileRegistry
 
 DEFAULT_AUTHORIZATION_PATH = PROJECT_ROOT / "docs/quality/batch275_user_authorization_2026-06-21.md"
@@ -1205,31 +1206,6 @@ def derive_pilot_closeout_outcome(phase4_payload: dict[str, Any]) -> LivePilotOu
 
 def _utc_now_iso() -> str:
     return datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
-
-
-def _key_table_row_counts(db_path: Path) -> dict[str, int | None]:
-    if not db_path.is_file():
-        return {}
-    counts: dict[str, int | None] = {}
-    cm = ConnectionManager(db_path, profile="eco")
-    with cm.reader() as con:
-        tables = {
-            row[0]
-            for row in con.execute(
-                """
-                SELECT table_name
-                FROM information_schema.tables
-                WHERE table_schema = 'main'
-                """
-            ).fetchall()
-        }
-        for name in KEY_TABLES:
-            if name not in tables:
-                counts[name] = None
-                continue
-            row_count = con.execute(f'SELECT COUNT(*) FROM "{name}"').fetchone()[0]
-            counts[name] = int(row_count)
-    return counts
 
 
 def build_phase1_capability_snapshot() -> dict[str, Any]:

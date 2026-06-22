@@ -45,7 +45,7 @@ class BaseDataAdapter(ABC):
         *,
         con,
         job_id: str | None = None,
-        record_fetch_log: bool = True,
+        record_fetch_log: bool = False,
     ) -> FetchResult:
         if req.source_id != self.source_id:
             raise SourceMismatchError(

@@ -12,8 +12,9 @@ from __future__ import annotations
 import json
 from typing import TYPE_CHECKING
 
+import duckdb
+
 if TYPE_CHECKING:
-    import duckdb
     from backend.app.db.connection import ConnectionManager
 
 
@@ -36,7 +37,13 @@ class ValidationRejected(RuntimeError):
 class StubValidationGate:
     """Test-only gate. Production must inject a real gate (e.g. DbValidationGate)."""
 
-    def assert_can_write(self, validation_report_id: str, write_mode: str) -> None:
+    def assert_can_write(
+        self,
+        validation_report_id: str,
+        write_mode: str,
+        *,
+        con=None,
+    ) -> None:
         if validation_report_id.startswith("stub-pass-"):
             return
         if validation_report_id.startswith("stub-fail-"):
@@ -267,37 +274,12 @@ class DbValidationGate:
                 validation_report_id=validation_report_id,
             )
 
-    def assert_can_write(self, validation_report_id: str, write_mode: str) -> str:
-        report = self._fetch_report(validation_report_id)
-        if report is None:
-            raise ValidationGateError(
-                f"unknown validation_report_id: {validation_report_id}",
-                validation_report_id=validation_report_id,
-            )
-        (
-            status,
-            can_write_clean,
-            needs_manual_review,
-            run_id,
-            job_id,
-            source_id,
-            quality_flags,
-        ) = report
-        self._enforce_report(
-            validation_report_id,
-            status=status,
-            can_write_clean=can_write_clean,
-            needs_manual_review=needs_manual_review,
-            run_id=run_id,
-            job_id=job_id,
-            source_id=source_id,
-            quality_flags=quality_flags,
-            write_mode=write_mode,
-        )
-        return status
-
-    def assert_can_write_with(
-        self, con: duckdb.DuckDBPyConnection, validation_report_id: str, write_mode: str
+    def assert_can_write(
+        self,
+        validation_report_id: str,
+        write_mode: str,
+        *,
+        con: duckdb.DuckDBPyConnection | None = None,
     ) -> str:
         report = self._fetch_report(validation_report_id, con=con)
         if report is None:
