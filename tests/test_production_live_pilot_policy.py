@@ -131,3 +131,29 @@ def test_docsIndexesExposeBatch275EntryPoints() -> None:
     assert "`019`" in readme
     assert "production_live_pilot_policy.md" in index
     assert "018B_production_live_pilot_gate.md" in index
+
+
+def test_policy_requiresStagedPilotConflictEvidenceChecklist() -> None:
+    """覆盖范围：production_live_pilot_policy 对 staged pilot 证据要求。
+
+    测试对象：production_live_pilot_policy.md §6。
+    目的/目标：ADV-POST14-A-012 — 策略要求 conflict report 或显式 no-conflict 证据。
+    """
+    text = _read(POLICY)
+    assert "Conflict report or explicit no-conflict evidence" in text
+    assert "No fixture/staged fallback satisfies live pilot evidence" in text
+
+
+def test_stagedPilotModuleAlignsWithProductionLivePolicyControls() -> None:
+    """覆盖范围：staged_pilot 模块与 Batch 2.75/14 策略控制对齐。
+
+    测试对象：backend.app.ops.staged_pilot 默认请求信封。
+    目的/目标：ADV-POST14-A-012 — raw_only/sandbox/allow_clean_write 默认 fail-closed。
+    """
+    from backend.app.ops.staged_pilot import approved_pilot_requests
+
+    for request in approved_pilot_requests():
+        assert request.raw_only is True
+        assert request.write_target == "sandbox"
+        assert request.allow_clean_write is False
+        assert request.dry_run is True

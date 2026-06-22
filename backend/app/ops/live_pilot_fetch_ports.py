@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from collections.abc import Callable, Iterator, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -72,8 +73,33 @@ def _run_akshare_call(fn: Callable[[], _T]) -> _T:
     raise PortError("NETWORK_ERROR", f"{combined}; {_PROXY_HINT}")
 
 
+_DATE_WINDOW_RE = re.compile(
+    r"^recent\s+(\d+)\s+(trading|calendar)\s+days$",
+    re.IGNORECASE,
+)
+
+
+def parse_pilot_date_window(date_window: str) -> int:
+    """Map authorized ``date_window`` label to a calendar-day span for vendor APIs."""
+    match = _DATE_WINDOW_RE.match(date_window.strip())
+    if not match:
+        raise ValueError(f"unsupported pilot date_window label: {date_window!r}")
+    days = int(match.group(1))
+    unit = match.group(2).lower()
+    if unit == "calendar":
+        return days
+    # Trading days: conservative calendar span (~1.5x + weekend buffer).
+    return int(days * 1.5) + 2
+
+
 def _recent_window_start(*, calendar_days: int = 14) -> date:
     return datetime.now(UTC).date() - timedelta(days=calendar_days)
+
+
+def _window_start_for_label(date_window: str | None) -> date:
+    if date_window is None:
+        return _recent_window_start()
+    return _recent_window_start(calendar_days=parse_pilot_date_window(date_window))
 
 
 def _akshare_hist_symbol(raw_symbol: str) -> str:
@@ -92,6 +118,7 @@ def _akshare_hist_symbol(raw_symbol: str) -> str:
 class BaostockLiveFetchPort:
     symbols: Sequence[str]
     max_rows: int
+    date_window: str | None = None
 
     def fetch_payload(self, req: FetchRequest) -> FetchPayload:
         try:
@@ -103,7 +130,7 @@ class BaostockLiveFetchPort:
         if not symbol:
             raise PortError("FAILED", "missing instrument_id for baostock fetch")
 
-        start = _recent_window_start()
+        start = _window_start_for_label(self.date_window)
         end = datetime.now(UTC).date()
         login = bs.login()
         if login.error_code != "0":
@@ -141,6 +168,7 @@ class BaostockLiveFetchPort:
 class AkshareEquityLiveFetchPort:
     symbols: Sequence[str]
     max_rows: int
+    date_window: str | None = None
 
     def fetch_payload(self, req: FetchRequest) -> FetchPayload:
         try:
@@ -153,7 +181,7 @@ class AkshareEquityLiveFetchPort:
         if not hist_symbol:
             raise PortError("FAILED", "missing instrument_id for akshare equity fetch")
 
-        start = _recent_window_start()
+        start = _window_start_for_label(self.date_window)
         end = datetime.now(UTC).date()
 
         def _fetch_equity():
