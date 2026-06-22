@@ -65,6 +65,24 @@ def _run_script(script: str, *args: str) -> subprocess.CompletedProcess[str]:
     )
 
 
+_LOOP_GENERATED_PATHS = (
+    "tests/test_catalog.yaml",
+    "docs/generated/project_map.generated.json",
+    "docs/generated/project_map.generated.md",
+    "docs/generated/docs_specs_index.generated.md",
+)
+
+
+def _restore_loop_generated_files() -> None:
+    """ponytail: pre-commit pytest must not leave hook-owned files dirty."""
+    subprocess.run(
+        ["git", "checkout", "--", *_LOOP_GENERATED_PATHS],
+        cwd=PROJECT_ROOT,
+        capture_output=True,
+        check=False,
+    )
+
+
 def test_authorityGraph_allReferencedPathsExist() -> None:
     """覆盖：specs/context/authority_graph.yaml。
     对象：各 module 的 docs/contracts/rules/implementation_tasks/tests 路径。
@@ -137,11 +155,20 @@ def test_contextRouter_cli_taskFlag_writesContextPack() -> None:
         "--task",
         ".trellis/tasks/06-22-round3-019-layer2-sensor",
     )
-    assert result.returncode == 0, result.stderr
-    assert pack_path.is_file()
-    assert (SAMPLE_TASK / "research/context-router-output.md").is_file()
-    pack = json.loads(pack_path.read_text(encoding="utf-8"))
-    assert validate_context_pack(pack) == []
+    try:
+        assert result.returncode == 0, result.stderr
+        assert pack_path.is_file()
+        assert (SAMPLE_TASK / "research/context-router-output.md").is_file()
+        pack = json.loads(pack_path.read_text(encoding="utf-8"))
+        assert validate_context_pack(pack) == []
+    finally:
+        rel = SAMPLE_TASK.relative_to(PROJECT_ROOT).as_posix()
+        subprocess.run(
+            ["git", "checkout", "--", f"{rel}/context_pack.json", f"{rel}/research/context-router-output.md"],
+            cwd=PROJECT_ROOT,
+            capture_output=True,
+            check=False,
+        )
 
 
 def test_writeLoopEvidenceStubs_createsManifestAndIndex(tmp_path: Path) -> None:
@@ -228,9 +255,12 @@ def test_loopMaintain_fix_writesCatalogAndMaps() -> None:
     from loop_engineering_common import TEST_CATALOG_PATH
 
     result = _run_script("loop_maintain.py", "--fix")
-    assert result.returncode == 0, result.stderr + result.stdout
-    assert TEST_CATALOG_PATH.is_file()
-    assert (PROJECT_ROOT / "docs/generated/docs_specs_index.generated.md").is_file()
+    try:
+        assert result.returncode == 0, result.stderr + result.stdout
+        assert TEST_CATALOG_PATH.is_file()
+        assert (PROJECT_ROOT / "docs/generated/docs_specs_index.generated.md").is_file()
+    finally:
+        _restore_loop_generated_files()
 
 
 def test_loopMaintain_check_passesWhenRepoFresh() -> None:
@@ -238,8 +268,6 @@ def test_loopMaintain_check_passesWhenRepoFresh() -> None:
     对象：catalog、project map、authority_graph 包覆盖。
     目的：CI/本地可用单命令验证三步维护状态。
     """
-    fix = _run_script("loop_maintain.py", "--fix")
-    assert fix.returncode == 0, fix.stderr
     check = _run_script("loop_maintain.py")
     assert check.returncode == 0, check.stderr + check.stdout
 
@@ -251,10 +279,13 @@ def test_generateProjectMap_writesDocsSpecsIndex() -> None:
     """
     index_path = PROJECT_ROOT / "docs/generated/docs_specs_index.generated.md"
     gen = _run_script("generate_project_map.py")
-    assert gen.returncode == 0, gen.stderr
-    assert index_path.is_file()
-    text = index_path.read_text(encoding="utf-8")
-    assert "docs/ops/user_intervention_policy.md" in text
+    try:
+        assert gen.returncode == 0, gen.stderr
+        assert index_path.is_file()
+        text = index_path.read_text(encoding="utf-8")
+        assert "docs/ops/user_intervention_policy.md" in text
+    finally:
+        _restore_loop_generated_files()
 
 
 def test_testCatalog_coversEveryDiscoveredTestModule() -> None:
@@ -338,14 +369,17 @@ def test_generateProjectMap_writesAndCheckPasses() -> None:
     json_path = PROJECT_ROOT / "docs/generated/project_map.generated.json"
     index_path = PROJECT_ROOT / "docs/generated/docs_specs_index.generated.md"
     gen = _run_script("generate_project_map.py")
-    assert gen.returncode == 0, gen.stderr
-    assert md_path.is_file()
-    assert json_path.is_file()
-    assert index_path.is_file()
-    payload = json.loads(json_path.read_text(encoding="utf-8"))
-    assert "layer2_sensors" in payload.get("modules", {})
-    check = _run_script("generate_project_map.py", "--check")
-    assert check.returncode == 0, check.stderr
+    try:
+        assert gen.returncode == 0, gen.stderr
+        assert md_path.is_file()
+        assert json_path.is_file()
+        assert index_path.is_file()
+        payload = json.loads(json_path.read_text(encoding="utf-8"))
+        assert "layer2_sensors" in payload.get("modules", {})
+        check = _run_script("generate_project_map.py", "--check")
+        assert check.returncode == 0, check.stderr
+    finally:
+        _restore_loop_generated_files()
 
 
 def test_collectModuleAuthorities_layer2_includesForbiddenClaims() -> None:

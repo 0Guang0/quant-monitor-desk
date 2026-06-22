@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 from dataclasses import replace
 from pathlib import Path
 from unittest.mock import patch
@@ -13,6 +14,17 @@ from tests.contract_gate_support import PROJECT_ROOT, trellis_task_dir
 BATCH275_TASK_SLUG = "06-21-round3-batch2-75-live-pilot"
 TASK_DIR = trellis_task_dir(BATCH275_TASK_SLUG)
 EVIDENCE_DIR = TASK_DIR / "execute-evidence"
+
+
+def _restore_batch275_execute_evidence() -> None:
+    """ponytail: pre-commit pytest must not leave task execute-evidence dirty."""
+    rel = EVIDENCE_DIR.relative_to(PROJECT_ROOT).as_posix()
+    subprocess.run(
+        ["git", "checkout", "--", rel],
+        cwd=PROJECT_ROOT,
+        capture_output=True,
+        check=False,
+    )
 
 TRACKED_IDS = (
     "R3-B2.75-01",
@@ -616,28 +628,31 @@ def test_livePilot_phase4Validation_noCleanWriteByDefault() -> None:
     from backend.app.ops.live_pilot import capture_task_phase4_validation_evidence
 
     result = capture_task_phase4_validation_evidence(EVIDENCE_DIR)
-    assert result["allow_clean_write"] is False
-    assert result["clean_write_performed"] is False
+    try:
+        assert result["allow_clean_write"] is False
+        assert result["clean_write_performed"] is False
 
-    report_path = EVIDENCE_DIR / "phase4_validation_report.json"
-    proof_path = EVIDENCE_DIR / "phase4_no_production_mutation_proof.md"
-    assert report_path.is_file()
-    assert proof_path.is_file()
+        report_path = EVIDENCE_DIR / "phase4_validation_report.json"
+        proof_path = EVIDENCE_DIR / "phase4_no_production_mutation_proof.md"
+        assert report_path.is_file()
+        assert proof_path.is_file()
 
-    payload = json.loads(report_path.read_text(encoding="utf-8"))
-    assert payload["allow_clean_write"] is False
-    assert payload["can_write_clean"] is False
-    assert "ALLOW_CLEAN_WRITE_FALSE_DEFAULT" in payload["clean_write_block_reasons"]
-    declared_paths = payload["declared_validation_conflict_paths"]
-    assert declared_paths["data_quality_validator"].endswith("DataQualityValidator")
-    assert declared_paths["source_conflict_validator"].endswith("SourceConflictValidator")
-    assert declared_paths["clean_write_gate"].endswith("DbValidationGate")
-    for item in payload["validations"]:
-        assert item.get("allow_clean_write") is False
+        payload = json.loads(report_path.read_text(encoding="utf-8"))
+        assert payload["allow_clean_write"] is False
+        assert payload["can_write_clean"] is False
+        assert "ALLOW_CLEAN_WRITE_FALSE_DEFAULT" in payload["clean_write_block_reasons"]
+        declared_paths = payload["declared_validation_conflict_paths"]
+        assert declared_paths["data_quality_validator"].endswith("DataQualityValidator")
+        assert declared_paths["source_conflict_validator"].endswith("SourceConflictValidator")
+        assert declared_paths["clean_write_gate"].endswith("DbValidationGate")
+        for item in payload["validations"]:
+            assert item.get("allow_clean_write") is False
 
-    proof = proof_path.read_text(encoding="utf-8")
-    assert "allow_clean_write" in proof
-    assert "false" in proof.lower()
+        proof = proof_path.read_text(encoding="utf-8")
+        assert "allow_clean_write" in proof
+        assert "false" in proof.lower()
+    finally:
+        _restore_batch275_execute_evidence()
 
 
 def test_livePilot_phase4_requiresRequest2Prerequisites(tmp_path: Path) -> None:
@@ -688,22 +703,25 @@ def test_livePilot_phase4Conflict_inspectOrNoConflict() -> None:
     from backend.app.ops.live_pilot import capture_task_phase4_validation_evidence
 
     capture_task_phase4_validation_evidence(EVIDENCE_DIR)
-    conflict_path = EVIDENCE_DIR / "phase4_conflict_inspect.txt"
-    reconciliation_path = EVIDENCE_DIR / "phase3_request2_evidence_reconciliation.md"
-    assert conflict_path.is_file()
-    assert reconciliation_path.is_file()
+    try:
+        conflict_path = EVIDENCE_DIR / "phase4_conflict_inspect.txt"
+        reconciliation_path = EVIDENCE_DIR / "phase3_request2_evidence_reconciliation.md"
+        assert conflict_path.is_file()
+        assert reconciliation_path.is_file()
 
-    text = _read(conflict_path)
-    assert "Request 2" in text
-    assert "sidecar" in text.lower() or "informational" in text.lower()
-    assert "NO_CONFLICT_INSPECT_REQUIRED_FOR_CLOSEOUT" in text or "Informational sidecar" in text
+        text = _read(conflict_path)
+        assert "Request 2" in text
+        assert "sidecar" in text.lower() or "informational" in text.lower()
+        assert "NO_CONFLICT_INSPECT_REQUIRED_FOR_CLOSEOUT" in text or "Informational sidecar" in text
 
-    report = json.loads(_read(EVIDENCE_DIR / "phase4_validation_report.json"))
-    req2 = next(v for v in report["validations"] if v["pilot_request_id"] == "pilot-req-2")
-    assert req2["status"] == "SOURCE_ENDPOINT_FAILURE"
-    classification = req2["request2_endpoint_classification"]
-    assert classification["closes_original_request2"] is False
-    assert classification["supports_pilot_pass_raw_only"] is False
+        report = json.loads(_read(EVIDENCE_DIR / "phase4_validation_report.json"))
+        req2 = next(v for v in report["validations"] if v["pilot_request_id"] == "pilot-req-2")
+        assert req2["status"] == "SOURCE_ENDPOINT_FAILURE"
+        classification = req2["request2_endpoint_classification"]
+        assert classification["closes_original_request2"] is False
+        assert classification["supports_pilot_pass_raw_only"] is False
+    finally:
+        _restore_batch275_execute_evidence()
 
 
 def test_livePilot_request2Reconciliation_requiredBeforePhase4() -> None:
