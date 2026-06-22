@@ -16,7 +16,7 @@
     "write_contract": "specs/contracts/write_contract.yaml"
   },
   "eastmoney_verdict_ref": "eastmoney_stock_zh_a_hist_verdict.md",
-  "generated_at": "2026-06-21T19:30:56Z",
+  "generated_at": "2026-06-22T08:52:55Z",
   "phase": "phase4_validation",
   "production_mutation_proof": {
     "after_key_table_counts": {
