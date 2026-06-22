@@ -1,0 +1,8 @@
+SP-01 GREEN — tests/test_staged_pilot.py
+
+Command: uv run python -m pytest tests/test_staged_pilot.py -q
+Result: 11 passed
+
+Live pilot (authorized 2026-06-22):
+Command: uv run python scripts/run_staged_pilot.py
+Result: staged pilot outcome: PILOT_PASS_STAGED_RAW

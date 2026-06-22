@@ -1,0 +1,21 @@
+{
+  "allow_clean_write": false,
+  "generated_at": "2026-06-22T14:43:11Z",
+  "pilot_id": "r3x-staged-pilot-20260622",
+  "staged_rows": [
+    {
+      "pilot_request_id": "staged-req-1",
+      "quality_flag": "STAGED",
+      "staged_file_ids": [
+        "7e684f2bf13d4ff8baostock"
+      ]
+    },
+    {
+      "pilot_request_id": "staged-req-3",
+      "quality_flag": "STAGED",
+      "staged_file_ids": [
+        "5591830a6d9227cbcninfo"
+      ]
+    }
+  ]
+}

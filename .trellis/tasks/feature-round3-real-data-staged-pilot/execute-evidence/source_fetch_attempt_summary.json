@@ -1,0 +1,33 @@
+{
+  "attempts": [
+    {
+      "data_domain": "cn_equity_daily_bar",
+      "operation": "fetch_daily_bar",
+      "pilot_request_id": "staged-req-1",
+      "row_count": 10,
+      "source_id": "baostock",
+      "status": "SUCCESS",
+      "taxonomy_status": "SUCCESS"
+    },
+    {
+      "data_domain": "cn_equity_daily_bar",
+      "operation": "fetch_daily_bar_validation",
+      "pilot_request_id": "staged-req-2",
+      "row_count": 0,
+      "source_id": "akshare",
+      "status": "NETWORK_ERROR",
+      "taxonomy_status": "NETWORK_ERROR"
+    },
+    {
+      "data_domain": "cn_announcements",
+      "operation": "fetch_announcement_index",
+      "pilot_request_id": "staged-req-3",
+      "row_count": 7,
+      "source_id": "cninfo",
+      "status": "SUCCESS",
+      "taxonomy_status": "SUCCESS"
+    }
+  ],
+  "generated_at": "2026-06-22T14:43:11Z",
+  "pilot_id": "r3x-staged-pilot-20260622"
+}
