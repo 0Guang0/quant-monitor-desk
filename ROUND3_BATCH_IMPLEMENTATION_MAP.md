@@ -105,6 +105,10 @@ Each prompt file is a self-contained startup instruction for one new session. Op
 
 Do not start `feature/round3-019-layer2-sensor` until `feature/round3-batch3-staged-gate` has merged into `integration/round3`.
 
+## 2.3 Round 3 gate hygiene command matrix
+
+Canonical pytest commands for merge review and parallel debt branches live in `docs/ops/verification_commands.md` § **Round 3 gate hygiene**. The matrix covers audit trace authority, registry alignment, unresolved-item coverage, Batch 2.5 staged-not-live guards, production-live pilot policy, Batch 3 staged downstream gate, and FRED staged semantics. `tests/test_round3_verification_command_matrix.py` asserts the doc index stays current.
+
 ## 3. Round 3 split into 6 primary Trellis batches plus Batch 2.5 bridge and Batch 2.75 pilot
 
 ### Batch 1 — R3 early entry, real-data/DB proof, and prerequisite ops
