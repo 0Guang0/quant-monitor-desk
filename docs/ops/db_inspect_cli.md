@@ -43,13 +43,19 @@ Therefore the invariant is:
 
 ## 3. Reference adoption boundary
 
-The research report identified three external reference patterns:
+External reference landing task: `R3-REF-OPS-DB-DATA-HEALTH` (`docs/implementation_tasks/ROUND_3_REFERENCE_LANDING/R3D_ops_db_data_health_reference.md`). Machine trace: `specs/contracts/ops_db_inspect_contract.yaml` `reference_landing`.
 
-| Reference pattern                      | Adopt                                                                                                        | Do not adopt                                                                                                                                     |
-| -------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| EasyXT data integrity / diagnostics    | High-level check categories: data completeness, field quality, data-source diagnostics, monitor-style status | Trading, order placement, GUI/QMT auto-login, hard-coded local paths, fixed single-table stock-daily assumptions, direct string-concatenated SQL |
-| JQ2PTrade local DuckDB path override   | `--db` / `--duckdb-path`-style local DB override and repeatable local validation                             | Backtest engine, strategy conversion, PTrade simulation loop                                                                                     |
-| ptqmt-site local/privacy documentation | Local-only privacy language, offline/static report explanation style                                         | Online site shape or trading-platform tutorial content                                                                                           |
+| Reference | URL | Adopt in db-inspect v1 | Deferred to |
+| --------- | --- | ---------------------- | ----------- |
+| EasyXT data integrity / diagnostics | `https://github.com/quant-king299/EasyXT` | Metadata-only inspect; PASS/WARN/FAIL status vocabulary | `docs/ops/data_health_cli.md` for domain rules (missing days, OHLC, outliers) |
+| JQ2PTrade local DuckDB path override | `https://github.com/quant-king299/JQ2PTrade` | `--db` read-only path override | — |
+| ptqmt-site local/privacy documentation | `https://github.com/quant-king299/ptqmt-site` | — (db-inspect emits JSON only) | `docs/ops/ops_report_cli.md` for offline Markdown/HTML |
+
+| Reference pattern | Adopt | Do not adopt |
+| ----------------- | ----- | ------------ |
+| EasyXT data integrity / diagnostics | High-level check categories land in data-health design, not db-inspect v1 | Trading, order placement, GUI/QMT auto-login, hard-coded local paths, fixed single-table stock-daily assumptions, direct string-concatenated SQL |
+| JQ2PTrade local DuckDB path override | `--db` / `--duckdb-path`-style local DB override and repeatable local validation | Backtest engine, strategy conversion, PTrade simulation loop |
+| ptqmt-site local/privacy documentation | Local-only privacy language in report CLI | Online site shape or trading-platform tutorial content |
 
 Adoption rule: borrow inspection concepts and local-first UX only; implement through this project's contracts, schema, resource boundaries, and Trellis traceability.
 
@@ -72,10 +78,10 @@ Only `qmd ops db-inspect` is authorized for Round 3 v1 implementation. The other
 | -------------------------------- | ------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
 | `qmd ops db-inspect`             | Read-only DB and data-root evidence inspection                                                         | Round 3 Batch 1 v1                                                                        |
 | `qmd ops env-doctor`             | Local environment, dependency, config, and install checks                                              | Round 5 / release-readiness phase                                                         |
-| `qmd data health`                | Domain-aware data quality checks such as missing dates, OHLC validity, duplicate keys, and as-of leaks | Round 6 or later data-quality hardening; may be planned from Batch 6 repay if approved    |
+| `qmd data health`                | Domain-aware data quality checks such as missing dates, OHLC validity, duplicate keys, and as-of leaks | Batch 6 Phase C; design: `docs/ops/data_health_cli.md`; rules: `specs/contracts/data_quality_rules.yaml` `ops_cli_profiles` |
 | `qmd source probe`               | Route preview and user-authorized staging source probe                                                 | Round 3 Batch 1 extension or Round 3 Batch 6, after source authorization rules are frozen |
 | `qmd ops source-health snapshot` | Preview and later persist source health metrics                                                        | Batch 6, only after `source_health_snapshot` migration is designed                        |
-| `qmd ops report`                 | Convert JSON evidence into local Markdown / HTML report                                                | Round 5 release / reporting phase after JSON schema is stable                             |
+| `qmd ops report`                 | Convert JSON evidence into local Markdown / HTML report                                                | Round 5 Phase E; design: `docs/ops/ops_report_cli.md`                                     |
 
 ## 5. Round 3 v1 scope
 

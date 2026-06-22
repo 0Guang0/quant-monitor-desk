@@ -3,6 +3,27 @@ module: ops_db_inspect
 authoritative_doc: docs/ops/db_inspect_cli.md
 status: user_frozen_design_input
 
+reference_landing:
+  task_id: R3-REF-OPS-DB-DATA-HEALTH
+  task_card: docs/implementation_tasks/ROUND_3_REFERENCE_LANDING/R3D_ops_db_data_health_reference.md
+  branch: debt/r3-ops-inspect-data-health-references
+  external_projects:
+  - name: EasyXT
+    url: https://github.com/quant-king299/EasyXT
+    adopted: metadata-only inspect; integrity categories deferred to docs/ops/data_health_cli.md
+    rejected: trading APIs, auto-login, hardcoded stock_daily schema, silent fallback
+  - name: JQ2PTrade
+    url: https://github.com/quant-king299/JQ2PTrade
+    adopted: --db local path override (v1_arguments.db)
+    rejected: PTrade/JoinQuant strategy conversion, order APIs, backtest loop
+  - name: ptqmt-site
+    url: https://github.com/quant-king299/ptqmt-site
+    adopted: local-only disclosure via docs/ops/ops_report_cli.md
+    rejected: online site runtime dependency
+  related_design_docs:
+  - docs/ops/data_health_cli.md
+  - docs/ops/ops_report_cli.md
+
 command:
   final: qmd ops db-inspect
   transitional: python scripts/qmd_ops.py db-inspect
@@ -197,7 +218,8 @@ future_phases:
     v1_in_scope: false
   data_health:
     command: qmd data health
-    phase: Batch 6 or later data-quality hardening
+    phase: Batch 6 Phase C
+    design_doc: docs/ops/data_health_cli.md
     v1_in_scope: false
   source_probe:
     command: qmd source probe
@@ -209,7 +231,8 @@ future_phases:
     v1_in_scope: false
   ops_report:
     command: qmd ops report
-    phase: Round 5 release/reporting after JSON schema stabilizes
+    phase: Round 5 Phase E
+    design_doc: docs/ops/ops_report_cli.md
     v1_in_scope: false
 
 acceptance_tests:
