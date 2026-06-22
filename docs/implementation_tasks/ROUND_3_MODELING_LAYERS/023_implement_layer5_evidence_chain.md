@@ -21,7 +21,7 @@
 
 ## 4. 相关代码 / 输出文件
 
-- `backend/layers/layer5/evidence_chain.py`
+- `backend/app/layer5_evidence/evidence_chain.py`
 - `tests/test_layer5_evidence_chain.py`
 
 ## 5. 现有模式 / 参考
@@ -127,7 +127,11 @@ uv run python -m compileall backend scripts tests
 
 用户已拍板：完整标准化字段仅 Layer 1；Layer 2-5 不默认复制，只能按需局部扩展。
 
-## 16. 未闭合项覆盖补充（Plan 不得遗漏）
+## 16. Round 3 sequencing / branch boundary
+
+本任务拆成两个执行层级：`R3-B23A-EVIDENCE-FOUNDATION` 只实现最小 evidence contract、instrument/evidence identity、source hash/fetch id、manual review flags 与 Agent-text-not-fact-source tests，可在 `020` 附近并行；完整 `023` / `feature/round3-023b-evidence-chain-full` 在 `022` 与 Layer3/4 integration 口径稳定后执行。
+
+## 17. 未闭合项覆盖补充（Plan 不得遗漏）
 
 执行 Layer5 evidence chain / conflict evidence 相关计划前，必须读取 `docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md`，并核对：
 

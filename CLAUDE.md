@@ -1,3 +1,9 @@
+## Repair/Debt Lite Worktree Protocol
+
+For already-audited findings, registry debt, or repair follow-ups, check `.trellis/spec/guides/complex-task-planning-protocol.md` Phase 8D before using the full complex Plan. The main session must produce a lightweight slice plan with source ID, owner, branch/worktree, allowed files, excluded files, verification, evidence path, and merge gate before implementation.
+
+Use one worktree per agent and one branch per slice or tightly related slice group. Do not let two active branches own the same core file group. Registry reconciliation should normally be done by one merge coordinator.
+
 <!-- gitnexus:start -->
 
 # GitNexus — Code Intelligence

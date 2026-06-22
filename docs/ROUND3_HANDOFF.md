@@ -70,7 +70,9 @@ Archived Trellis task `.trellis/tasks/archive/2026-06/06-20-round3-batch2-layer1
 | `018`                        | Feature + interpretation snapshots               |
 | `R3-EARLY-LINEAGE-CONSUMERS` | Snapshot lineage persistence + consumers         |
 
-**Next:** Batch 2.5 **archived PASS** (2026-06-20) — Trellis `.trellis/tasks/archive/2026-06/06-20-round3-batch2-5-layer1-obs-ingest/` · Audit PASS · **staged/fixture only** (not production-live). Authoritative evidence: `execute-evidence/final_registry_update.md` · deferred live pilot: `R3-B2.75-01` in `AUDIT_DEFERRED_REGISTRY.md`. Post-audit fix ledger: `docs/quality/ROUND3_BATCH25_PENDING_FIX_REGISTRY.md`. Do **not** treat Layer 1 as real-data-ready until Batch 2.75 closes or is explicitly re-deferred. Source: `018A_layer1_observation_ingestion_bridge.md`.
+**Batch 2.5:** archived PASS (2026-06-20) — Trellis `.trellis/tasks/archive/2026-06/06-20-round3-batch2-5-layer1-obs-ingest/` · Audit PASS · **staged/fixture only** (not production-live). Authoritative evidence: `execute-evidence/final_registry_update.md`. Post-audit fix ledger: `docs/quality/ROUND3_BATCH25_PENDING_FIX_REGISTRY.md`. Source: `018A_layer1_observation_ingestion_bridge.md`.
+
+**Batch 2.75:** controlled pilot executed and repaired (2026-06-21/22) with closeout `PILOT_FAIL_SOURCE`. Request 1/3 have bounded sandbox evidence; Request 2 Eastmoney hist remains deferred as `R3-B2.75-REQ2-EM`. Batch 3 / `019` may proceed only as staged-only downstream work after `R3-B3-STAGED-DOWNSTREAM-GATE`; see `docs/quality/BATCH3_STAGED_DOWNSTREAM_GATE.md` and `.trellis/spec/guides/round3-repair-debt-worktree-plan.md`.
 
 ## Round 3 start checklist
 

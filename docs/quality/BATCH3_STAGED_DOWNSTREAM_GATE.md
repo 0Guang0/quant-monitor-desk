@@ -12,6 +12,10 @@ Before Batch 3 implementation or any “real-data-ready” claim:
 3. Cite `docs/ROUND3_HANDOFF.md` Batch 2.5 section — **archived PASS · staged/fixture only**.
 4. If `R3-B2.75-01` remains DEFERRED, Batch 3 MUST NOT use live FRED / production DB / external vendor writes.
 
+## R3-B3-STAGED-DOWNSTREAM-GATE
+
+This gate is also tracked in `.trellis/spec/guides/round3-repair-debt-worktree-plan.md`. Batch 3 planning must close this gate before `019` implementation starts. The current Batch 2.75 closeout is `PILOT_FAIL_SOURCE`, so Batch 3 remains staged-only until a later evidence gate narrows that statement.
+
 ## Closure test
 
 - Batch 3 Trellis `MASTER.plan.md` contains a “Staged downstream limitations” subsection referencing this file.

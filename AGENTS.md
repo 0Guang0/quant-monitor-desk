@@ -47,6 +47,14 @@ When the active task status is `in_progress` and the task directory contains `MA
 
 <!-- TRELLIS:END -->
 
+## Repair/Debt Lite Worktree Protocol
+
+When a user asks to close already-audited findings, registry debt, or repair follow-ups, do not restart the full complex Plan by default. First check `.trellis/spec/guides/complex-task-planning-protocol.md` Phase 8D.
+
+Use Repair/Debt Lite only when the item already has an audit/registry source of truth, can be sliced independently, does not add schema/public API/new production source behavior, and does not require production DB writes. The main session must produce a lightweight slice plan with owner, base branch, target branch, allowed files, forbidden files, verification, evidence path, and merge gate before implementation or worktree creation.
+
+For parallel agents: one worktree per agent, one branch per slice or tightly related slice group, and no two active branches may own the same core file group. Registry files should normally be reconciled by a merge coordinator rather than edited concurrently by many agents.
+
 <!-- gitnexus:start -->
 
 # GitNexus — Code Intelligence

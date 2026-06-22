@@ -18,9 +18,10 @@
 - `specs/contracts/runtime_versions.md`
 - `docs/quality/staged_acceptance_policy.md`
 - `specs/contracts/snapshot_lineage_contract.yaml`
+
 ## 4. 相关代码 / 输出文件
 
-- `backend/layers/layer4/market_structure.py`
+- `backend/app/layer4_markets/market_structure.py`
 - `tests/test_layer4_market_structure.py`
 
 ## 5. 现有模式 / 参考
@@ -72,6 +73,7 @@
 - 测试命名建议：`functionName_condition_expectedBehavior`。
 
 ## 11. 验收命令
+
 本任务为后端实现任务。验收命令：
 
 ```bash
@@ -124,3 +126,7 @@ uv run python -m compileall backend scripts tests
 ### 用户决策补充：D-09
 
 用户已拍板：完整标准化字段仅 Layer 1；Layer 2-5 不默认复制，只能按需局部扩展。
+
+## 16. Round 3 sequencing / branch boundary
+
+`022` 建议在 `021` 合并后执行。若未来计划拆成独立 adapter skeleton，可作为受限并行分支；完整 Layer4 market snapshot 仍需等待 Layer3 snapshot/evidence 口径稳定。推荐分支：`feature/round3-022-layer4-market`。

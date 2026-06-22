@@ -147,7 +147,11 @@ Files or behavior that must not be touched by this task:
 
 No outcome in this task may imply production readiness.
 
-## 8. Minimum tests
+## 8. Round 3 sequencing / branch boundary
+
+This task is a Phase 8D debt/probe branch candidate: recommended branch `debt/r3b275-018c-low-cost-probe`. It may run in parallel with staged-only `019`, but it blocks any future production-live readiness claim that depends on replacing or closing the original Eastmoney hist Request 2 failure. It owns only sidecar probe evidence and disabled-candidate decisions; it must not alter Batch 2.75 closeout semantics.
+
+## 9. Minimum tests
 
 - `tdx_pytdx` is disabled by default.
 - `tdx_pytdx` cannot become Primary in this task.

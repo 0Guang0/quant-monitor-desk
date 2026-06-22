@@ -164,7 +164,8 @@ Phase 3: Finish  → verify, update spec, commit, and wrap up
 
 - Simple conversation or small task: ask only whether this turn should create a Trellis task. If the user says no, skip Trellis for this session.
 - Complex task: ask whether you may create a Trellis task and enter planning. If the user says no, do not do broad inline implementation; explain, clarify scope, or suggest a smaller split.
-- User approval to create a task is not approval to start implementation. Planning still happens first.
+- Repair/Debt Lite candidate: if the request is to close already-audited findings or registry debt, use `complex-task-planning-protocol.md` Phase 8D to classify the item, produce a lightweight slice plan, bind owner/branch/worktree, list allowed and forbidden files, and define verification plus merge gate before implementation.
+- User approval to create a task is not approval to start implementation. Planning still happens first; Repair/Debt Lite may use Phase 8D lightweight planning instead of full Phase 0-5 when all 8D eligibility conditions are met.
 
 ### Planning Artifacts
 
@@ -180,6 +181,8 @@ Use a parent task when one user request contains several independently verifiabl
 
 Use child tasks for deliverables that can be planned, implemented, checked, and archived independently. Parent/child structure is not a dependency system: if one child must wait for another, write that ordering in the child `prd.md` / `implement.md` and keep each child's acceptance criteria testable.
 
+For Repair/Debt Lite, prefer a parent coordination task plus one child per registry/audit slice when multiple agents will work in parallel. Each child must declare its owner agent, branch/worktree, allowed files, forbidden files, verification commands, and merge gate. Do not let two active children own the same core file group at the same time.
+
 Create new children with `task.py create "<title>" --slug <name> --parent <parent-dir>`. Link existing tasks with `task.py add-subtask <parent> <child>`, and unlink mistakes with `task.py remove-subtask <parent> <child>`.
 
 <!-- Per-turn breadcrumb: shown when there is no active task (before Phase 1) -->
@@ -188,6 +191,7 @@ Create new children with `task.py create "<title>" --slug <name> --parent <paren
 No active task. First classify the current turn and ask for task-creation consent before creating any Trellis task.
 Simple conversation / small task: ask only whether this turn should create a Trellis task. If the user says no, skip Trellis for this session.
 Complex task: ask the user if you can create a Trellis task and enter the planning phase. If the user says no, explain, clarify scope, or suggest a smaller split.
+Repair/Debt Lite candidate: when the request is to close already-audited findings or registry debt, propose Phase 8D lightweight planning instead of full Phase 0-5, then wait for user approval before implementation or branch/worktree creation.
 [/workflow-state:no_task]
 
 ### Phase 1: Plan

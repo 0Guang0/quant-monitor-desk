@@ -18,9 +18,10 @@
 - `specs/contracts/runtime_versions.md`
 - `docs/quality/staged_acceptance_policy.md`
 - `specs/contracts/snapshot_lineage_contract.yaml`
+
 ## 4. 相关代码 / 输出文件
 
-- `backend/layers/layer3/loader.py`
+- `backend/app/layer3_chains/loader.py`
 - `tests/test_layer3_loader.py`
 
 ## 5. 现有模式 / 参考
@@ -72,6 +73,7 @@
 - 测试命名建议：`functionName_condition_expectedBehavior`。
 
 ## 11. 验收命令
+
 本任务为后端实现任务。验收命令：
 
 ```bash
@@ -124,3 +126,7 @@ uv run python -m compileall backend scripts tests
 ### 用户决策补充：D-09
 
 用户已拍板：完整标准化字段仅 Layer 1；Layer 2-5 不默认复制，只能按需局部扩展。
+
+## 16. Round 3 sequencing / branch boundary
+
+`020` 在 `019` staged-only gate 和 Layer2 snapshot/lineage 口径稳定后执行；`021` 依赖本任务输出。`020` 可与 `R3-B23A-EVIDENCE-FOUNDATION` 并行，前提是只有一个分支拥有 `specs/contracts/snapshot_lineage_contract.yaml` 写权限。推荐分支：`feature/round3-020-layer3-loader`。

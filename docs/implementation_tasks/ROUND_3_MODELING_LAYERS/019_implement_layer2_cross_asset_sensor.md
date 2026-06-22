@@ -21,7 +21,7 @@
 
 ## 4. 相关代码 / 输出文件
 
-- `backend/layers/layer2/sensor_loader.py`
+- `backend/app/layer2_sensors/sensor_loader.py`
 - `tests/test_layer2_sensor_loader.py`
 
 ## 5. 现有模式 / 参考
@@ -129,11 +129,15 @@ uv run python -m compileall backend scripts tests
 
 ## 16. Batch 3 staged-only downstream gate
 
-在实现或审计 Batch 3 / `019` 前，MASTER.plan.md 与 AUDIT.plan.md 必须显式引用以下上下文：
+在实现或审计 Batch 3 / `019` 前，必须先关闭 `R3-B3-STAGED-DOWNSTREAM-GATE`（见 `.trellis/spec/guides/round3-repair-debt-worktree-plan.md`）。MASTER.plan.md 与 AUDIT.plan.md 必须显式引用以下上下文：
 
 - `docs/quality/BATCH3_STAGED_DOWNSTREAM_GATE.md`。
 - Batch 2.5 `final_registry_update.md`：当前 ingestion type 是 staged，不是 production-live。
 - `018A_layer1_observation_ingestion_bridge.md` §13。
 - `docs/UNRESOLVED_ISSUES_REGISTRY.md` 中 `R3-B2.75-01` 的当前状态。
 
-若 `R3-B2.75-01` 仍为 `DEFERRED`，本任务不得声称 production-live readiness，不得把 Batch 2.5 staged evidence 升级表述为 live production evidence，也不得使用 live FRED / production DB / external vendor writes 作为默认前提。
+若 `R3-B2.75-01` 仍为 `DEFERRED`，或 Batch 2.75 closeout 为 `PILOT_FAIL_SOURCE` 且 Request 2 仍在 `R3-B2.75-REQ2-EM`，本任务不得声称 production-live readiness，不得把 Batch 2.5 staged evidence 升级表述为 live production evidence，也不得使用 live FRED / production DB / external vendor writes 作为默认前提。
+
+## 17. Round 3 sequencing / branch boundary
+
+`019` 是 staged-only mainline 的第一批下游建模任务。它可以和 Phase 8D debt branches 并行，但不能与 `020`/`021` 同时修改 snapshot lineage semantics。推荐分支：`feature/round3-019-layer2-sensor`；前置：`feature/round3-batch3-staged-gate` 已关闭。

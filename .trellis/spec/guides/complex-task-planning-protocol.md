@@ -254,6 +254,7 @@ Phase 5b 冻结合并 MASTER + AUDIT.plan.md + plan.freeze + jsonl（implement /
 Phase 6  Execute：6.pre GitNexus → MASTER + implement.jsonl；§0.1 门控
 Phase 7  Audit：7.pre GitNexus → **7.pre.1 Trace Authority Presence Check** → A1–A8 子 agent → **A9 主会话** → audit.report
 Phase 8  Repair（若有 §4.3；REPAIR.plan.md + 必要 skill → 复验 §10）
+Phase 8D Repair/Debt Lite Worktree Track（已审计/已登记问题的轻量修复与并行分支治理）
 Phase 9  Finish（audit.report §5 PASS → update-spec / archive）
 ```
 
@@ -380,6 +381,106 @@ Trellis 命令与 hook 细节见 `.trellis/workflow.md`；`task.py start` = Plan
 - **执行：** 主会话或 `repair-agent`；Skill 见 REPAIR.plan §2（systematic-debugging + TDD + verification 等）
 - **原则：** §2.6 修根因；Deferred 仅 §4.4
 - **产出：** audit.report §5 复验 **MASTER §10** → Phase 9
+
+### Phase 8D — Repair/Debt Lite Worktree Track（已审计/已登记问题）
+
+> **目的：** 对已经有 `audit.report` / registry / `REPAIR.plan.md` 来源的问题，跳过完整重型 Plan 重跑，由主会话生成可执行切片计划并使用短生命周期 worktree 分支并行修复。该 Track 不得用于新增功能、schema 变更、新生产数据源、公共接口设计或未澄清需求。
+
+#### 8D.1 适用条件
+
+以下条件全部满足时，允许走 Repair/Debt Lite，而不是重新执行 Phase 0–5 完整复杂计划：
+
+1. 问题已经由 `audit.report.md` §4.3、`REPAIR.plan.md`、`AUDIT_DEFERRED_REGISTRY.md`、`UNRESOLVED_ISSUES_REGISTRY.md` 或 pending-fix registry 明确记录。
+2. 每个问题能映射到独立垂直切片：有 ID、owner、allowed files、forbidden files、AC、验证命令、证据路径。
+3. 不新增模块/package，不定义会被 ≥2 caller 调用的新公共函数/类/接口，不涉及 schema/migration。
+4. 不启用新生产数据源，不扩大真实生产 fetch/write 范围，不写生产 DB。
+5. 主线可以继续推进，且该问题不是当前轮次必须立即关闭的 Blocking Finding。
+
+任一条件不满足 → 回到完整复杂 Plan，或由用户批准为 Blocking Repair 并留在当前修复批次内。
+
+#### 8D.2 问题分类
+
+| 分类                  | 处理方式                                     | 是否可进 worktree                    |
+| --------------------- | -------------------------------------------- | ------------------------------------ |
+| Blocking Repair       | 当前轮次必须关闭；不得异步化                 | 否，除非主线停止等待该 repair branch |
+| Deferred Debt         | registry 化，短生命周期 debt branch 修复     | 是                                   |
+| Production-Gated Debt | 可分支开发；真实生产验证只在 merge gate 执行 | 是，但开发 agent 不得持有生产写权限  |
+| Experimental Probe    | sidecar/probe only；不得改变 runtime default | 是，但默认不合并到生产路径           |
+| Docs/Registry Hygiene | docs/tests/evidence/registry 对齐            | 是，优先并行                         |
+
+#### 8D.3 轻量计划最小产物
+
+Repair/Debt Lite 不需要重新产出完整 `MASTER.plan.md`，但必须有一个轻量执行计划，位置可为 `DEBT.plan.md`、`REPAIR.plan.md` 新章节或当前任务 `research/worktree-slices.md`：
+
+```markdown
+# Repair/Debt Lite Plan — <slug>
+
+## Source of truth
+
+- audit / registry ID:
+- base branch:
+- target branch:
+- owner agent:
+
+## Boundary
+
+- allowed files:
+- forbidden files:
+- production/data boundary:
+- explicit non-goals:
+
+## Vertical slices
+
+| Slice | Source ID | AC  | Allowed files | Forbidden files | Verification | Evidence |
+| ----- | --------- | --- | ------------- | --------------- | ------------ | -------- |
+
+## Merge gate
+
+- targeted tests:
+- full tests:
+- lint/format/compile:
+- production-equivalent gate if relevant:
+- DB hash proof if relevant:
+- registry reconciliation:
+```
+
+Phase 3.5 `to-issues` 仍适用，但输出改为 **debt vertical slices**：每个 slice 关闭一个 registry/audit item 或一个小的强相关 item 组。
+
+#### 8D.4 Worktree 与核心文件所有权
+
+1. 一个 worktree 只允许一个 agent 工作；一个 branch 只绑定一个 slice 或一个强相关小组。
+2. 分支创建前必须写明 `base_branch`、`target_branch`、`allowed files`、`forbidden files`。
+3. 同一时间只能一个 active branch 拥有核心文件组写权限。其他 branch 对该组只读。
+4. Registry 文件默认由 merge coordinator 收口；debt branch 可提交 proposed registry delta，但不得让多个 agent 同时直接改同一 registry 行。
+5. 以下文件组默认需要协调者锁：
+   - `backend/app/ops/`
+   - `backend/app/datasources/`
+   - `backend/app/db/`
+   - `backend/app/validators/`
+   - `specs/contracts/`
+   - `specs/datasource_registry/`
+   - `configs/datasource.yml`
+   - `configs/resource_limits.yaml`
+   - `docs/AUDIT_DEFERRED_REGISTRY.md`
+   - `docs/UNRESOLVED_ISSUES_REGISTRY.md`
+   - `docs/RESOLVED_ISSUES_REGISTRY.md`
+   - `docs/quality/*REGISTRY*.md`
+   - `data/duckdb/quant_monitor.duckdb`（默认禁止写）
+
+#### 8D.5 Merge Gate
+
+任何 Repair/Debt Lite branch 合并前必须提供：
+
+1. changed files 与 intended scope。
+2. out-of-scope untouched files。
+3. targeted tests 与结果。
+4. full test / lint / format / compile / production gate / doc links 的结果，或工具限制说明。
+5. 如涉及生产等价或真实数据路径：生产等价/真实生产验证只在 merge gate 统一执行；开发 branch 不得私自扩大 live run。
+6. 如涉及 DB 或数据路径：生产 DB hash / no-mutation proof。
+7. registry reconciliation summary。
+8. remaining deferred items 与 owner / phase / closure command。
+
+推荐合并顺序：tests-only → docs/evidence-only → registry-only → backend runtime → source/data/production path。
 
 ### Phase 9 — Finish
 
