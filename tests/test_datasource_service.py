@@ -109,6 +109,7 @@ def test_serviceFetch_runtimeGateOrder(tmp_path: Path, monkeypatch) -> None:
         source_registry=reg,
         data_root=tmp_path / "raw",
         job_events=jobs,
+        staged_fixture_mode=True,
     )
     spec = SyncJobSpec(
         run_id="run-order",
@@ -518,6 +519,7 @@ def test_serviceFetch_recordsSourceOverrideQualityFlag(tmp_path: Path, monkeypat
         source_registry=reg,
         data_root=tmp_path / "raw",
         job_events=jobs,
+        staged_fixture_mode=True,
     )
     spec = SyncJobSpec(
         run_id="run-ovr",

@@ -213,6 +213,7 @@ def load_thresholds() -> dict:
 
 
 def _dir_size_gb(path: Path, *, max_files: int = 20_000) -> float:
+    """Sum file sizes under path; stops at max_files (ADV-A1-013 ceiling, may under-count)."""
     total = 0
     seen = 0
     if not path.exists():
@@ -221,6 +222,7 @@ def _dir_size_gb(path: Path, *, max_files: int = 20_000) -> float:
         for name in files:
             seen += 1
             if seen > max_files:
+                # ponytail: early return avoids walk storms; size is a lower bound past cap
                 return total / (1024**3)
             fp = Path(root) / name
             if fp.is_symlink():
@@ -303,36 +305,35 @@ class ResourceGuard:
         if decision in (Decision.PAUSE, Decision.HARD_STOP):
             print(format_pause_event(decision, reason, snap, self.profile), file=sys.stderr, end="")
         if decision != Decision.OK and self.con is not None:
-            try:
-                self.con.execute("BEGIN")
-                self.con.execute(
-                    """
-                    INSERT INTO resource_guard_log (
-                        event_id, decision, reason, profile,
-                        available_memory_gb, disk_free_gb, process_rss_mb,
-                        project_size_gb, system_memory_usage_pct,
-                        system_disk_usage_pct, cache_size_gb,
-                        duckdb_temp_size_gb, created_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """,
-                    [
-                        str(uuid.uuid4()),
-                        decision.value,
-                        reason,
-                        self.profile,
-                        snap.available_memory_gb,
-                        snap.disk_free_gb,
-                        snap.process_rss_mb,
-                        snap.project_size_gb,
-                        snap.system_memory_usage_pct,
-                        snap.system_disk_usage_pct,
-                        snap.cache_size_gb,
-                        snap.duckdb_temp_size_gb,
-                        datetime.now(UTC),
-                    ],
-                )
-                self.con.execute("COMMIT")
-            except Exception:
-                self.con.execute("ROLLBACK")
-                raise
+            self._log_guard_event(decision, reason, snap)
         return decision, reason
+
+    def _log_guard_event(self, decision: Decision, reason: str, snap: ResourceSnapshot) -> None:
+        """Persist guard event without nested BEGIN when caller owns the transaction."""
+        assert self.con is not None
+        self.con.execute(
+            """
+            INSERT INTO resource_guard_log (
+                event_id, decision, reason, profile,
+                available_memory_gb, disk_free_gb, process_rss_mb,
+                project_size_gb, system_memory_usage_pct,
+                system_disk_usage_pct, cache_size_gb,
+                duckdb_temp_size_gb, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            [
+                str(uuid.uuid4()),
+                decision.value,
+                reason,
+                self.profile,
+                snap.available_memory_gb,
+                snap.disk_free_gb,
+                snap.process_rss_mb,
+                snap.project_size_gb,
+                snap.system_memory_usage_pct,
+                snap.system_disk_usage_pct,
+                snap.cache_size_gb,
+                snap.duckdb_temp_size_gb,
+                datetime.now(UTC),
+            ],
+        )

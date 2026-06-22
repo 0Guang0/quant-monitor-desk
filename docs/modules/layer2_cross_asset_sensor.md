@@ -207,6 +207,8 @@ roll_date
 
 # 7. 更新流程
 
+> **Defer cross-ref (F-019-R02 / MASTER 019):** Full staging→DQ→conflict→clean pipeline below is **deferred** for Batch 3 staged gate. Implemented scope: registry load + snapshot builders + WriteManager-gated writes per `.trellis/tasks/06-22-round3-019-layer2-sensor/MASTER.plan.md` §1 非目标. Task split: **020**–**022** (Batch 4/5).
+
 ```text
 1. 读取 cross_asset_registry
 2. 根据 asset_group 分批抓取

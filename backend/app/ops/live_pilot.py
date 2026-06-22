@@ -523,7 +523,6 @@ def run_live_pilot_raw_only(
     )
 
     data_root, sandbox_db = _ensure_sandbox_db(sandbox_root)
-    from backend.app.datasources.adapters import create_adapter
     from backend.app.datasources.fetch_result import FetchRequest
     from backend.app.ops.live_pilot_fetch_ports import create_live_fetch_port
 
@@ -544,12 +543,11 @@ def run_live_pilot_raw_only(
         write_manager,
         validation_report_id=RAW_FILE_REGISTRY_VALIDATION_REPORT_ID,
     )
-    adapter = create_adapter(
-        request.source_id,
-        registry,
-        data_root,
+    service = DataSourceService(
+        source_registry=registry,
         fetch_port=fetch_port,
-        file_registry=file_registry,
+        file_registry_factory=lambda: file_registry,
+        data_root=data_root,
     )
 
     symbol = request.symbols_or_indicators[0]
@@ -564,7 +562,12 @@ def run_live_pilot_raw_only(
     with cm.writer() as con:
         _ensure_raw_file_registry_validation_report(con, request, fetch_req.run_id)
         file_registry.bind_connection(con)
-        result = adapter.fetch(fetch_req, con=con, record_fetch_log=True)
+        result = service.fetch(
+            fetch_req,
+            con=con,
+            job_id="register",
+            operation=request.operation,
+        )
 
     prod_after_counts = _key_table_row_counts(DEFAULT_PRODUCTION_DB)
     prod_after_hash = (

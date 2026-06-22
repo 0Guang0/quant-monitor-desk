@@ -69,6 +69,9 @@ class DbValidationGate:
     """
 
     _SCHEMA_APPROVED_MODES = frozenset({"manual_patch", "schema_migration"})
+    _SYNTHETIC_QUALITY_MARKERS = frozenset(
+        {"raw_file_registry_metadata_only", "synthetic_migrated_schema_only"}
+    )
 
     def __init__(self, conn_manager: ConnectionManager) -> None:
         self.conn_manager = conn_manager
@@ -109,15 +112,26 @@ class DbValidationGate:
             (None if quality_flags is None else str(quality_flags)),
         )
 
-    def _has_blocking_severe_conflicts(self, run_id: str, con=None) -> bool:
+    def _has_blocking_severe_conflicts(
+        self,
+        run_id: str,
+        con=None,
+        *,
+        job_id: str | None = None,
+    ) -> bool:
         sql = """
             SELECT COUNT(*)
             FROM source_conflict
-            WHERE run_id = ?
-              AND severity = 'severe'
+            WHERE severity = 'severe'
               AND reconcile_status IN ('OPEN', 'UNRESOLVED')
         """
-        params = [run_id]
+        params: list[str] = []
+        if job_id:
+            sql += " AND job_id = ?"
+            params.append(job_id)
+        else:
+            sql += " AND run_id = ?"
+            params.append(run_id)
         if con is not None:
             count = con.execute(sql, params).fetchone()[0]
         else:
@@ -135,6 +149,12 @@ class DbValidationGate:
         if isinstance(parsed, list):
             return "SCHEMA_DRIFT" in parsed
         return False
+
+    def _quality_flags_block_clean_write(self, quality_flags: str | None) -> bool:
+        if not quality_flags:
+            return False
+        lowered = quality_flags.lower()
+        return any(marker in lowered for marker in self._SYNTHETIC_QUALITY_MARKERS)
 
     def _schema_hash_blocks_write(
         self,
@@ -207,7 +227,13 @@ class DbValidationGate:
                 f"validation report {validation_report_id!r} needs_manual_review=true",
                 validation_report_id=validation_report_id,
             )
-        if run_id and self._has_blocking_severe_conflicts(run_id, con):
+        if self._quality_flags_block_clean_write(quality_flags):
+            raise ValidationRejected(
+                f"validation report {validation_report_id!r} is synthetic/staged-only; "
+                "clean write blocked",
+                validation_report_id=validation_report_id,
+            )
+        if run_id and self._has_blocking_severe_conflicts(run_id, con, job_id=job_id):
             raise ValidationRejected(
                 f"validation report {validation_report_id!r} blocked by open severe "
                 f"source_conflict for run_id={run_id!r}",

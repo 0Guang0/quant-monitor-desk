@@ -420,9 +420,11 @@ def test_fetch_disabledSource_raisesBeforeImpl_andWritesNoFetchLog(
     con = migrated_con(tmp_path)
     adapter = FakeAdapter(disabled_registry)
     req = request_factory("baostock")
-    with pytest.raises(SourceDisabledError):
-        adapter.fetch(req, con=con)
-    assert con.execute("SELECT COUNT(*) FROM fetch_log").fetchone()[0] == 0
+    result = adapter.fetch(req, con=con)
+    assert result.status == "DISABLED_SOURCE"
+    assert (
+        con.execute("SELECT COUNT(*) FROM fetch_log").fetchone()[0] == 1
+    )
 
 
 def test_fetch_unsupportedDomainOnAdapter_raises_andWritesNoFetchLog(
@@ -448,9 +450,11 @@ def test_fetch_registryDomainNotAllowed_raisesBeforeImpl_andWritesNoFetchLog(
     con = migrated_con(tmp_path)
     adapter = BroadDomainAdapter(loaded_registry)
     req = request_factory("baostock", domain="fundamental")
-    with pytest.raises(DomainNotAllowedError):
-        adapter.fetch(req, con=con)
-    assert con.execute("SELECT COUNT(*) FROM fetch_log").fetchone()[0] == 0
+    result = adapter.fetch(req, con=con)
+    assert result.status == "DISABLED_SOURCE"
+    assert (
+        con.execute("SELECT COUNT(*) FROM fetch_log").fetchone()[0] == 1
+    )
 
 
 def test_fetch_successResult_writesExactlyOneFetchLogRow(

@@ -85,6 +85,7 @@ def test_foundation_endToEnd_writesCleanAndAudits(tmp_path: Path, monkeypatch) -
             primary_keys=("instrument_id", "trade_date"),
             validation_report_id="stub-pass-1",
             source_used="qmt",
+            data_domain="cn_equity_daily_bar",
         )
     )
     assert ok.status == "SUCCESS" and ok.rows_inserted == 1
@@ -112,6 +113,7 @@ def test_foundation_endToEnd_writesCleanAndAudits(tmp_path: Path, monkeypatch) -
             primary_keys=("instrument_id", "trade_date"),
             validation_report_id="stub-fail-1",
             source_used="qmt",
+            data_domain="cn_equity_daily_bar",
         )
     )
     assert bad.status == "FAILED"

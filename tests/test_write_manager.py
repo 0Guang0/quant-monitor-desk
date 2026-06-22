@@ -36,6 +36,7 @@ def _req(mode: str = "append_only", report: str = "stub-pass-1") -> WriteRequest
         primary_keys=("instrument_id", "trade_date"),
         validation_report_id=report,
         source_used="qmt",
+        data_domain="cn_equity_daily_bar",
     )
 
 
@@ -142,18 +143,16 @@ def test_write_sqlError_rollsBackAndAuditsError(tmp_path: Path) -> None:
         assert audit == ("ERROR", "FAILED")
 
 
-def test_write_emptyStaging_insertsZeroRows(tmp_path: Path) -> None:
+def test_write_emptyStaging_rejected(tmp_path: Path) -> None:
+    """ADV-A1-012/015: empty staging must not proceed to clean write."""
     cm = _setup(tmp_path)
     with cm.writer() as w:
         w.execute("DELETE FROM stg_foundation_smoke")
         w.execute(
             "CREATE TABLE security_bar_smoke_clean AS SELECT * FROM stg_foundation_smoke WHERE 1=0"
         )
-    res = create_test_write_manager(cm).write(_req())
-    assert res.status == "SUCCESS"
-    assert res.rows_inserted == 0
-    with cm.reader() as r:
-        assert r.execute("SELECT COUNT(*) FROM security_bar_smoke_clean").fetchone()[0] == 0
+    with pytest.raises(ValueError, match="minimum"):
+        create_test_write_manager(cm).write(_req())
 
 
 def test_write_unsupportedMode_raises(tmp_path: Path) -> None:
@@ -222,6 +221,7 @@ def test_write_upsertByPk_emptyPrimaryKeys_raises(tmp_path: Path) -> None:
         primary_keys=(),
         validation_report_id="stub-pass-1",
         source_used="qmt",
+        data_domain="cn_equity_daily_bar",
     )
     with pytest.raises(ValueError, match="upsert_by_pk requires primary_keys"):
         create_test_write_manager(cm).write(bad)
@@ -250,6 +250,7 @@ def test_write_upsertByPk_duplicateStagingPk_raises(tmp_path: Path) -> None:
         primary_keys=("instrument_id", "trade_date"),
         validation_report_id="stub-pass-1",
         source_used="qmt",
+        data_domain="cn_equity_daily_bar",
     )
     with pytest.raises(ValueError, match="duplicate primary keys"):
         create_test_write_manager(cm).write(dup_req)

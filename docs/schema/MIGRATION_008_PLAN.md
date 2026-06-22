@@ -9,6 +9,8 @@ DuckDB limits `ALTER TABLE ADD CHECK` on existing tables created in migration 00
 
 ## Planned changes
 
+> **Applied 009 / 010 (2026-06-22):** Status CHECK constraints landed in **009**; lineage NOT NULL rebuild in **010** with explicit `INSERT … SELECT` column list (ADV-A1-009). Remaining rows below are still **planned** for a future **008** rebuild pass.
+
 | Table | Column(s) | Constraint | Strategy |
 |-------|-----------|------------|----------|
 | `fetch_log` | `status` | Enum CHECK | Rebuild table or new `_v2` + swap (same pattern as 007) |

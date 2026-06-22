@@ -80,7 +80,8 @@ def test_capabilityMissing_routeStatusCapabilityMissing() -> None:
     baostock = next(c for c in plan.candidates if c.source_id == "baostock")
     assert baostock.capability_declared is False
     assert baostock.enabled is False
-    assert plan.route_status == "CAPABILITY_MISSING"
+    assert plan.route_status == "DISABLED_SOURCE"
+    assert "DOMAIN_DISABLED_BY_DEFAULT" in plan.quality_flags
     assert plan.selected_source_id is None
 
 
@@ -92,7 +93,8 @@ def test_userAuthRequired_routeStatusWhenAuthorizationMissing() -> None:
         run_id="run-auth",
         job_id="job-auth",
     )
-    assert plan.route_status == "USER_AUTH_REQUIRED"
+    assert plan.route_status == "DISABLED_SOURCE"
+    assert "DOMAIN_DISABLED_BY_DEFAULT" in plan.quality_flags
     assert plan.selected_source_id is None
     yahoo = next(c for c in plan.candidates if c.source_id == "yahoo_finance")
     assert yahoo.skip_reason is not None

@@ -11,7 +11,7 @@ def is_missing(value: object) -> bool:
 
 def as_text(value: object) -> str | None:
     if value is None:
-        return "None"
+        return None
     return str(value)
 
 
@@ -24,8 +24,11 @@ def as_float(value: object) -> float | None:
         return None
 
 
-def fetch_rows(con, table_name: str) -> list[dict[str, object]]:
+def fetch_rows(
+    con, table_name: str, *, limit: int | None = None
+) -> list[dict[str, object]]:
     quoted_table = quote_ident(table_name)
-    cursor = con.execute(f"SELECT * FROM {quoted_table}")
+    limit_sql = f" LIMIT {int(limit)}" if limit is not None else ""
+    cursor = con.execute(f"SELECT * FROM {quoted_table}{limit_sql}")
     columns = [column[0] for column in cursor.description]
     return [dict(zip(columns, row, strict=True)) for row in cursor.fetchall()]

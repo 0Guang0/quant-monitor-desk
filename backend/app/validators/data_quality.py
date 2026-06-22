@@ -22,6 +22,7 @@ _DEFAULT_RULES_PATH = (
 )
 _FAILED = "failed"
 _WARNING = "warning"
+_VALIDATE_TABLE_ROW_CAP = 50_000
 
 
 @dataclass(frozen=True)
@@ -552,14 +553,43 @@ class DataQualityValidator:
             """
             SELECT COUNT(*)
             FROM information_schema.tables
-            WHERE table_name = ?
+            WHERE table_schema = 'main' AND table_name = ?
             """,
             [table_name],
         ).fetchone()
         return bool(row and row[0])
 
     def _fetch_rows(self, con, table_name: str) -> list[dict[str, object]]:
-        return fetch_rows(con, table_name)
+        return fetch_rows(con, table_name, limit=_VALIDATE_TABLE_ROW_CAP + 1)
+
+    def _content_changed_finding(
+        self,
+        con,
+        request: DataQualityRequest,
+        fetch_result,
+    ) -> DataQualityFinding | None:
+        if not fetch_result.content_hash:
+            return None
+        baseline = con.execute(
+            """
+            SELECT content_hash FROM file_registry
+            WHERE source = ? AND content_hash IS NOT NULL
+            ORDER BY fetch_time DESC LIMIT 1
+            """,
+            [request.source_id],
+        ).fetchone()
+        if baseline is None or baseline[0] is None:
+            return None
+        if str(baseline[0]) == str(fetch_result.content_hash):
+            return None
+        return self._finding(
+            "CONTENT_CHANGED",
+            row_key="fetch_result",
+            field_name="content_hash",
+            observed_value=str(fetch_result.content_hash),
+            expected_condition=f"matches prior baseline {baseline[0]!r}",
+            message="content_hash changed from prior file_registry baseline",
+        )
 
     def _persist_report(
         self,
@@ -675,6 +705,10 @@ class DataQualityValidator:
             return report
 
         rows = self._fetch_rows(con, request.staging_table)
+        if len(rows) > _VALIDATE_TABLE_ROW_CAP:
+            raise ValueError(
+                f"staging table {request.staging_table!r} exceeds row cap {_VALIDATE_TABLE_ROW_CAP}"
+            )
         report = self.validate_rows(
             request,
             rows,
@@ -726,6 +760,10 @@ class DataQualityValidator:
         for raw_path in fetch_result.raw_file_paths:
             if not Path(raw_path).is_file():
                 findings.append(self._missing_raw_finding(raw_path))
+
+        content_changed = self._content_changed_finding(con, request, fetch_result)
+        if content_changed is not None:
+            findings.append(content_changed)
 
         if findings:
             report = self._build_report(checked_rows=0, findings=findings)

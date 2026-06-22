@@ -313,7 +313,15 @@ def test_livePilot_phase2RouteMatrix_threeRequests(tmp_path: Path) -> None:
     assert result["dry_run"] is True
     assert len(result["previews"]) == 3
     for preview in result["previews"]:
-        assert preview["explicit_source_route_status"] == "READY"
+        req = preview["request"]
+        domain = preview["route_plan"]["data_domain"]
+        if req["source_id"] == "akshare" and domain == "macro_supplementary":
+            assert preview["explicit_source_route_status"] in {
+                "VALIDATION_ONLY_BLOCKED",
+                "DISABLED_SOURCE",
+            }
+        else:
+            assert preview["explicit_source_route_status"] == "READY"
         assert preview["resource_guard_decision"] in {"OK", "PAUSE"}
         assert preview["route_plan"]["data_domain"]
         assert preview["route_plan"]["operation"]

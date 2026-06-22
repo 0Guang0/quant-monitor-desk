@@ -122,7 +122,7 @@ def test_validateRows_missingRequiredField_findingHasBusinessContext() -> None:
     assert finding.severity == "failed"
     assert finding.row_key == "instrument_id=AAPL|trade_date=2026-06-15"
     assert finding.field_name == "close"
-    assert finding.observed_value == "None"
+    assert finding.observed_value is None
     assert "required" in finding.expected_condition
     assert "required field" in finding.message
 

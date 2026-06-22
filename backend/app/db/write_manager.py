@@ -54,6 +54,7 @@ class WriteManager:
         "manual_patch",
         "schema_migration",
     )
+    MIN_STAGING_ROWS = 1
 
     def __init__(self, conn_manager, gate) -> None:
         if gate is None:
@@ -69,6 +70,8 @@ class WriteManager:
         quote_ident(req.staging_table)
         for col in req.primary_keys:
             quote_ident(col)
+        if not (req.data_domain or "").strip():
+            raise ValueError("WriteRequest.data_domain is required")
         if req.write_mode == "upsert_by_pk" and not req.primary_keys:
             raise ValueError("upsert_by_pk requires primary_keys")
 
@@ -159,8 +162,14 @@ class WriteManager:
         rows_updated: int,
         validation_status: str,
         error_message: str | None,
+        conflict_status: str | None = None,
     ) -> None:
         safe_message = redact_error_message(error_message) if error_message else None
+        resolved_conflict = conflict_status or (
+            "CHECKED"
+            if req.conflict_report_id
+            else ("NOT_APPLICABLE" if validation_status == "PASSED" else "SKIPPED")
+        )
         con.execute(
             """
             INSERT INTO write_audit_log (
@@ -191,7 +200,7 @@ class WriteManager:
                 0,
                 0,
                 validation_status,
-                "PASSED" if validation_status == "PASSED" else "FAILED",
+                resolved_conflict,
                 req.source_used,
                 req.source_role,
                 False,
@@ -285,6 +294,11 @@ class WriteManager:
         started_at = datetime.now(UTC)
         target, staging, primary_keys = self._validated_tables(req)
         rows_in_staging = con.execute(f"SELECT COUNT(*) FROM {staging}").fetchone()[0]
+        if rows_in_staging < self.MIN_STAGING_ROWS:
+            raise ValueError(
+                f"staging table {req.staging_table!r} has {rows_in_staging} rows; "
+                f"minimum {self.MIN_STAGING_ROWS} required before clean write"
+            )
         sidecar_root = audit_sidecar_root
         if not own_transaction and sidecar_root is None:
             from backend.app.config import DATA_ROOT

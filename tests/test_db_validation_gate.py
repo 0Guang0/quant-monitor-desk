@@ -312,6 +312,7 @@ def test_dbValidationGate_writeManagerIntegration_rejectsFailed(tmp_path: Path) 
         primary_keys=("instrument_id", "trade_date"),
         validation_report_id="vr-fail-2",
         source_used="qmt",
+        data_domain="cn_equity_daily_bar",
     )
     res = wm.write(req)
     assert res.status == "FAILED"

@@ -21,6 +21,10 @@ from backend.app.db.validation_gate import DbValidationGate
 from backend.app.db.write_manager import WriteManager
 from backend.app.layer1_axes.axis_loader import AxisSpecLoader
 from backend.app.layer1_axes.feature_engine import AxisFeatureEngine, Layer1SnapshotError
+from backend.app.layer1_axes.guardrails import (
+    AxisEngineeringGuardrailValidator,
+    GuardrailViolationError,
+)
 from backend.app.layer1_axes.interpretation import AxisInterpretationEngine
 from backend.app.layer1_axes.lineage import Layer1SnapshotWriter, SnapshotLineageBuilder
 from backend.app.layer1_axes.models import (
@@ -36,7 +40,6 @@ from backend.app.layer1_axes.observation_mapper import (
 from backend.app.layer1_axes.observation_writer import Layer1ObservationWriter
 from backend.app.storage.file_registry import FileRegistry
 from backend.app.storage.raw_store import SavedFile
-from backend.app.storage.staged_evidence import register_staged_file_registry_rows
 from backend.app.validators.data_quality import DataQualityRequest, DataQualityValidator
 from backend.app.validators.source_conflict import SourceConflictRequest, SourceConflictValidator
 
@@ -52,6 +55,7 @@ FRED_PRIMARY_DEFERRED_NOTE = (
 )
 
 DEFAULT_INGESTION_ALLOWLIST: frozenset[str] = frozenset({FROZEN_STAGED_INDICATOR})
+STAGED_FILE_REGISTRY_VALIDATION_REPORT_ID = "staged-micro-fetch-file-registry"
 
 FORBIDDEN_INDICATOR_REJECTED = "FORBIDDEN_INDICATOR"
 BLINDSPOT_INDICATOR_REJECTED = "BLINDSPOT_INDICATOR"
@@ -101,6 +105,46 @@ def _register_clean_file_registry_rows(
             )
         )
     return tuple(registered)
+
+
+def _ensure_staged_file_registry_validation_report(
+    con,
+    *,
+    validation_report_id: str,
+    run_id: str,
+    job_id: str,
+    data_domain: str,
+    source_id: str,
+) -> None:
+    con.execute(
+        """
+        INSERT OR REPLACE INTO validation_report (
+            validation_report_id, run_id, job_id, data_domain, staging_table,
+            source_id, status, checked_rows, failed_rows, warning_rows,
+            quality_flags, stale_reason, can_write_clean, needs_manual_review,
+            created_at, rule_set_id, rule_version
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        [
+            validation_report_id,
+            run_id,
+            job_id,
+            data_domain,
+            "stg_file_registry",
+            source_id,
+            "PASSED",
+            0,
+            0,
+            0,
+            "staged_file_registry_metadata_only",
+            None,
+            True,
+            False,
+            datetime.now(UTC),
+            "p0_round_1",
+            "p0_round_1",
+        ],
+    )
 
 
 class IngestionRejectedError(ValueError):
@@ -431,7 +475,15 @@ class Layer1ObservationIngestionService:
             job_id=resolved_job_id,
         )
         self._verify_capability(binding, route_plan)
-        if route_plan.route_status != "READY" or route_plan.selected_source_id is None:
+        staged_bypass = (
+            self._datasource.staged_fixture_mode
+            and indicator_id in self._allowlist
+            and route_plan.route_status
+            in {"VALIDATION_ONLY_BLOCKED", "DISABLED_SOURCE", "NO_AVAILABLE_SOURCE"}
+        )
+        if not staged_bypass and (
+            route_plan.route_status != "READY" or route_plan.selected_source_id is None
+        ):
             raise IngestionRejectedError(
                 f"route not ready: {route_plan.route_status}",
                 reason_code="ROUTE_NOT_READY",
@@ -465,8 +517,22 @@ class Layer1ObservationIngestionService:
         )
         file_registry_ids: tuple[str, ...] = ()
         if register_staged_files:
-            file_registry_ids = register_staged_file_registry_rows(
-                con, normalized_fetch, data_root=self._data_root
+            _ensure_staged_file_registry_validation_report(
+                con,
+                validation_report_id=STAGED_FILE_REGISTRY_VALIDATION_REPORT_ID,
+                run_id=req.run_id,
+                job_id=job_id,
+                data_domain=binding.data_domain,
+                source_id=fetch_result.source_id,
+            )
+            file_registry_ids = _register_clean_file_registry_rows(
+                con,
+                conn_manager=self._conn_manager,
+                fetch_result=normalized_fetch,
+                validation_report_id=STAGED_FILE_REGISTRY_VALIDATION_REPORT_ID,
+                run_id=req.run_id,
+                job_id=job_id,
+                data_domain=binding.data_domain,
             )
         fetch_id: str | None = None
         if fetch_result.status == "SUCCESS":
@@ -675,6 +741,18 @@ class Layer1ObservationIngestionService:
 
                 staging_table = f"stg_axis_obs_commit_{uuid.uuid4().hex[:8]}"
                 source_used = str(observation_row["source_used"])
+                guardrail_validator = AxisEngineeringGuardrailValidator(
+                    self._load_axes().guardrails
+                )
+                try:
+                    guardrail_validator.reject_forbidden_substitute(
+                        indicator,
+                        substitute_id=source_used,
+                    )
+                except GuardrailViolationError as exc:
+                    raise IngestionCommitBlockedError(
+                        str(exc), reason_code="GUARDRAIL_VIOLATION"
+                    ) from exc
                 con.execute(
                     f"CREATE TABLE {staging_table} AS SELECT * FROM axis_observation WHERE 1=0"
                 )

@@ -12,6 +12,7 @@ from backend.app.core.resource_guard import Decision, ResourceGuard, format_paus
 from backend.app.datasources.adapters import create_adapter
 from backend.app.datasources.adapters.fetch_port import FetchPort, StubFetchPort
 from backend.app.datasources.base_adapter import BaseDataAdapter
+from backend.app.datasources.exceptions import AdapterConfigurationError
 from backend.app.datasources.capability_registry import (
     OperationDisabledError,
     SourceCapabilityRegistry,
@@ -49,6 +50,7 @@ class DataSourceService:
         fetch_port: FetchPort | None = None,
         file_registry_factory: Callable[[], FileRegistry | None] | None = None,
         job_events: SyncJobStateMachine | None = None,
+        staged_fixture_mode: bool = False,
     ) -> None:
         self._source_registry = source_registry or SourceRegistry()
         if not self._source_registry._sources:
@@ -65,6 +67,14 @@ class DataSourceService:
         self._file_registry_factory = file_registry_factory
         self._job_events = job_events
         self._fetch_log = FetchLogWriter()
+        # ponytail: one flag for staged fixture + test fetch_port without FileRegistry
+        self._fixture_mode = staged_fixture_mode or (
+            fetch_port is not None and file_registry_factory is None
+        )
+
+    @property
+    def staged_fixture_mode(self) -> bool:
+        return self._fixture_mode
 
     def preview_route(
         self,
@@ -164,7 +174,12 @@ class DataSourceService:
             raise ResourceGuardBlockedError(message, decision=decision)
 
         fetch_time = datetime.now(UTC).isoformat()
-        if plan.route_status != "READY" or plan.selected_source_id is None:
+        staged_route_override = (
+            self._fixture_mode
+            and self._fetch_port is not None
+            and plan.route_status in {"VALIDATION_ONLY_BLOCKED", "DISABLED_SOURCE"}
+        )
+        if (plan.route_status != "READY" or plan.selected_source_id is None) and not staged_route_override:
             result = FetchResult(
                 run_id=req.run_id,
                 source_id=req.source_id,
@@ -177,7 +192,9 @@ class DataSourceService:
             self._fetch_log.write(con, result, req=req, job_id=job_id)
             return result
 
-        selected = plan.selected_source_id
+        selected = plan.selected_source_id if plan.selected_source_id is not None else req.source_id
+        if staged_route_override:
+            selected = req.source_id
         try:
             self._capability_registry.assert_source_domain_operation(selected, req.data_domain, op)
         except (UnknownCapabilityError, OperationDisabledError) as exc:
@@ -196,17 +213,29 @@ class DataSourceService:
         if on_enter_fetching is not None:
             on_enter_fetching()
 
+        if self._fetch_port is None and not self._fixture_mode:
+            raise AdapterConfigurationError(
+                "fetch_port is required for production DataSourceService.fetch(); "
+                "inject FetchPort or use build_staged_fixture_service()"
+            )
         fetch_port = self._fetch_port or StubFetchPort(payload=b"{}")
         file_registry = self._file_registry_factory() if self._file_registry_factory else None
         if file_registry is None:
-            from backend.app.datasources.adapters import create_test_adapter
+            if self._fixture_mode:
+                from backend.app.datasources.adapters import create_test_adapter
 
-            adapter = create_test_adapter(
-                selected,
-                self._source_registry,
-                self._data_root,
-                fetch_port=fetch_port,
-            )
+                adapter = create_test_adapter(
+                    selected,
+                    self._source_registry,
+                    self._data_root,
+                    fetch_port=fetch_port,
+                )
+            else:
+                raise AdapterConfigurationError(
+                    "file_registry_factory is required for production "
+                    "DataSourceService.fetch(); inject FileRegistry or use "
+                    "build_staged_fixture_service() for staged fixture paths"
+                )
         else:
             adapter = create_adapter(
                 selected,
@@ -276,4 +305,5 @@ def build_staged_fixture_service(
     return DataSourceService(
         data_root=data_root,
         fetch_port=LocalFixtureFetchPort(fixture_path, row_count=row_count),
+        staged_fixture_mode=True,
     )

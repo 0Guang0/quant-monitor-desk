@@ -248,6 +248,12 @@ class SyncJobStateMachine:
             normalize_backfill_trigger_reason(spec.trigger_reason)
         now = datetime.now(UTC)
         with self._cm.writer() as con:
+            existing = con.execute(
+                "SELECT job_id FROM data_sync_job WHERE job_id = ?",
+                [spec.job_id],
+            ).fetchone()
+            if existing is not None:
+                return spec.job_id
             con.execute(
                 """
                 INSERT INTO data_sync_job (

@@ -1,6 +1,6 @@
 # Schema vs Migration Coverage Matrix
 
-> **Last verified:** 2026-06-20 · **Baseline:** `master` @ migrations `001`–`011`  
+> **Last verified:** 2026-06-22 · **Baseline:** `master` @ migrations `001`–`011`  
 > **Purpose:** Clarify which `specs/schema/schema.sql` objects are implemented vs deferred (closes audit A2-P2-01).
 
 ## Legend
@@ -52,4 +52,6 @@
 .venv\Scripts\python.exe -m pytest tests/test_audit_fixes.py -q
 ```
 
-Cross-reference: `docs/AUDIT_DEFERRED_REGISTRY.md`, `ROUND2_GAPS_AND_DEVIATIONS.md` §1, `docs/schema/MIGRATION_008_PLAN.md` (planned 008 CHECK constraints).
+Cross-reference: `docs/schema/MIGRATION_008_PLAN.md`, `docs/AUDIT_DEFERRED_REGISTRY.md`.
+
+**Migration 009 vs 008 narrative (ADV-A6-003 / R4):** Migration **007** rebuilt sync job tables with CHECK constraints; **008** (planned) covers remaining enum CHECKs per `MIGRATION_008_PLAN.md`; **009** applied `status` CHECK constraints on ingestion tables; **010** enforced non-null `rule_set_id` / `rule_version` on validation lineage with explicit-column rebuild (no `SELECT *` replay).

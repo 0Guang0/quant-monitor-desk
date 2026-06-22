@@ -1,4 +1,3 @@
-# Data source registry (Round 2)
-# Roles: primary | validation | fallback_policy
-
+# DEPRECATED stub — authoritative registry: specs/datasource_registry/source_registry.yaml
+# ponytail: kept as pointer only; runtime loads source_registry.yaml, not this file.
 sources: {}

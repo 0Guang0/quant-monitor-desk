@@ -5,6 +5,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from datetime import UTC, datetime
 from time import perf_counter
+from typing import Any
 
 from backend.app.datasources.exceptions import SourceMismatchError
 from backend.app.datasources.fetch_log import FetchLogWriter
@@ -12,6 +13,7 @@ from backend.app.datasources.fetch_result import FetchRequest, FetchResult
 from backend.app.datasources.source_registry import (
     DomainDisabledError,
     DomainNotAllowedError,
+    SourceDisabledError,
     SourceRegistry,
 )
 
@@ -27,6 +29,15 @@ class BaseDataAdapter(ABC):
     def __init__(self, registry: SourceRegistry) -> None:
         self.registry = registry
         self._log_writer = FetchLogWriter()
+
+    def health_check(self) -> dict[str, Any]:
+        """Contract stub: adapters may override; default reports registry reachability only."""
+        return {
+            "source_id": self.source_id,
+            "status": "STUB_OK",
+            "supported_domains": sorted(self.supported_domains),
+            "registry_loaded": bool(self.registry._sources),
+        }
 
     def fetch(
         self,
@@ -62,8 +73,28 @@ class BaseDataAdapter(ABC):
                     instrument_id=req.instrument_id,
                 )
             return result
-        self.registry.assert_domain_allowed(req.source_id, req.data_domain)
-        self.registry.assert_enabled(req.source_id)
+        try:
+            self.registry.assert_domain_allowed(req.source_id, req.data_domain)
+            self.registry.assert_enabled(req.source_id)
+        except (SourceDisabledError, DomainNotAllowedError) as exc:
+            result = FetchResult(
+                run_id=req.run_id,
+                source_id=self.source_id,
+                data_domain=req.data_domain,
+                status="DISABLED_SOURCE",
+                fetch_time=_utc_now_iso(),
+                error_message=str(exc),
+            )
+            if record_fetch_log:
+                self._log_writer.write(
+                    con,
+                    result,
+                    req=req,
+                    job_id=job_id,
+                    market_id=req.market_id,
+                    instrument_id=req.instrument_id,
+                )
+            return result
         if req.data_domain not in self.supported_domains:
             raise DomainNotAllowedError(
                 f"adapter {self.source_id!r} does not support domain {req.data_domain!r}"

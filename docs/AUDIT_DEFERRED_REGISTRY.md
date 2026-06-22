@@ -125,6 +125,13 @@ Does **not** block 017 per `ROUND2_GAPS` §6; **must** be closed or re-deferred 
 | B2.5-O-07        | Single `fetch_log` row per `DataSourceService.fetch` (service-authoritative write)                            | `base_adapter.py` `record_fetch_log` param · `service.py` · layer1 micro-fetch tests assert `fetch_log_delta=1`                                        |
 | B2.5-WIN-PATH-01 | Windows MAX_PATH raw evidence I/O under deep pytest basetemp                                                  | `backend/app/storage/path_compat.py` · `test_save_windowsLongPath_writesSuccessfully` · phase3/phase4 evidence tests with deep basetemp                |
 
+## RESOLVED — PROMPT_15 R3X residual open-items closure (2026-06-22)
+
+| ID / theme | Item | Evidence |
+| ---------- | ---- | -------- |
+| ADV-R3X-* / ADV-A1–A6 / F-019 / Registry | Master Checklist 37 former OPEN rows | `tests/test_r3x_residual_open_items_closure.py` · `merge_gate_report.md` · branch `fix/round3-r3x-residual-open-items-closure` |
+| R3-PARTIAL-1 dedup | Severe-conflict scope overlaps ADV-R3X-SYNC-002 | `validation_gate.py` job_id-scoped severe conflict check · `ROUND2_REPAIR_ALIGNMENT_TRACKER.md` note |
+
 ---
 
 ## DEFERRED — Round 4 (API / frontend / notifications)

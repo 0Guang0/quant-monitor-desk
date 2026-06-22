@@ -8,27 +8,9 @@ from typing import Any
 import yaml
 from backend.app.config import PROJECT_ROOT
 
-# Legacy adapter domain names mapped to source_registry / capability domains.
-ADAPTER_DOMAIN_COMPATIBILITY_MAP: dict[str, dict[str, str]] = {
-    "akshare": {
-        "market_bar_1d": "cn_equity_daily_bar",
-        "capital_flow": "macro_supplementary",
-    },
-    "baostock": {
-        "market_bar_1d": "cn_equity_daily_bar",
-        "fundamental": "cn_equity_basic_financial",
-    },
-    "cninfo": {
-        "announcement": "cn_announcements",
-    },
-    "qmt_xtdata": {
-        "market_bar_1d": "cn_equity_daily_bar",
-        "market_bar_1m": "cn_equity_minute_bar",
-    },
-    "yahoo_finance": {
-        "market_bar_1d": "us_equity_daily_bar",
-    },
-}
+# ponytail: legacy alias map — adapters now declare registry domain names directly.
+# Kept empty; resolve_registry_domain falls through to the requested domain.
+ADAPTER_DOMAIN_COMPATIBILITY_MAP: dict[str, dict[str, str]] = {}
 
 
 class CapabilityRegistryError(ValueError):
