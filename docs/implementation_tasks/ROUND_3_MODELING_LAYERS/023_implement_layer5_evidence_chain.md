@@ -131,6 +131,8 @@ uv run python -m compileall backend scripts tests
 
 本任务拆成两个执行层级：`R3-B23A-EVIDENCE-FOUNDATION` 只实现最小 evidence contract、instrument/evidence identity、source hash/fetch id、manual review flags 与 Agent-text-not-fact-source tests，可在 `020` 附近并行；完整 `023` / `feature/round3-023b-evidence-chain-full` 在 `022` 与 Layer3/4 integration 口径稳定后执行。
 
+`R3-B23A-EVIDENCE-FOUNDATION` 的独立任务卡是 `docs/implementation_tasks/ROUND_3_MODELING_LAYERS/023A_layer5_evidence_foundation.md`；执行者必须先读取 `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_08_feature_round3_023a_evidence_foundation.md`，并由该提示词创建分支/worktree。023A 不得实现完整 Layer5，不得与 `feature/round3-019-layer2-sensor` 同时拥有 `specs/contracts/snapshot_lineage_contract.yaml` 写权限。
+
 ## 17. 未闭合项覆盖补充（Plan 不得遗漏）
 
 执行 Layer5 evidence chain / conflict evidence 相关计划前，必须读取 `docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md`，并核对：

@@ -141,3 +141,13 @@ uv run python -m compileall backend scripts tests
 ## 17. Round 3 sequencing / branch boundary
 
 `019` 是 staged-only mainline 的第一批下游建模任务。它可以和 Phase 8D debt branches 并行，但不能与 `020`/`021` 同时修改 snapshot lineage semantics。推荐分支：`feature/round3-019-layer2-sensor`；前置：`feature/round3-batch3-staged-gate` 已关闭。
+
+## 18. 下一批并行执行补充（Plan 不得遗漏）
+
+执行 `feature/round3-019-layer2-sensor` 前，执行者必须先读取 `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_07_feature_round3_019_layer2_sensor.md`，并由该提示词创建分支/worktree。Plan 阶段还必须核对：
+
+- `integration/round3` 已合并到执行基线，或用户明确要求从 `integration/round3` 继续开分支。
+- `R3-B3-STAGED-DOWNSTREAM-GATE` 已关闭。
+- `tdx_pytdx` 只能作为 disabled validation candidate，不能成为 `019` 的生产数据源。
+- `feature/round3-023a-evidence-foundation` 如并行启动，不得同时拥有 `specs/contracts/snapshot_lineage_contract.yaml` 写权限。
+- `review/round3-019-plan-audit` 是只读审查分支，不得把 reviewer 修改混入本实现分支。
