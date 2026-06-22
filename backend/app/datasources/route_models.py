@@ -30,6 +30,7 @@ class SourceRoutePlan:
     selected_source_id: str | None
     candidates: list[SourceRouteCandidate] = field(default_factory=list)
     quality_flags: list[str] = field(default_factory=list)
+    requested_source_id: str | None = None
     created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
     @classmethod
@@ -43,6 +44,7 @@ class SourceRoutePlan:
             "job_id": self.job_id,
             "route_status": self.route_status,
             "selected_source_id": self.selected_source_id,
+            "requested_source_id": self.requested_source_id,
             "data_domain": self.data_domain,
             "operation": self.operation,
             "quality_flags": list(self.quality_flags),

@@ -141,10 +141,15 @@ class SourceRoutePlanner:
 
         if route_status != "READY":
             selected = None
-            if any(c.source_id == "qmt_xtdata" and c.skip_reason for c in candidates):
-                route_status = "DISABLED_SOURCE"
-            elif any(c.skip_reason == "capability_missing" for c in candidates):
+            if any(c.skip_reason == "capability_missing" for c in candidates):
                 route_status = "CAPABILITY_MISSING"
+            elif any(c.source_id in ("qmt_xtdata", "tdx_pytdx") and c.skip_reason for c in candidates):
+                route_status = "DISABLED_SOURCE"
+            elif any(
+                c.role == "Primary" and c.skip_reason == "source_disabled_by_default"
+                for c in candidates
+            ):
+                route_status = "DISABLED_SOURCE"
             elif any(
                 c.skip_reason
                 and (

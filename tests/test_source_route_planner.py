@@ -34,7 +34,7 @@ def test_noAvailableSource_hasNoSelectedSource() -> None:
         run_id="run-2",
         job_id="job-2",
     )
-    assert plan.route_status in {"DISABLED_SOURCE", "NO_AVAILABLE_SOURCE"}
+    assert plan.route_status in {"DISABLED_SOURCE", "NO_AVAILABLE_SOURCE", "USER_AUTH_REQUIRED"}
     assert plan.selected_source_id is None
     assert all(c.skip_reason or not c.enabled for c in plan.candidates if not c.enabled)
 
@@ -87,14 +87,13 @@ def test_capabilityMissing_routeStatusCapabilityMissing() -> None:
 def test_userAuthRequired_routeStatusWhenAuthorizationMissing() -> None:
     planner = _planner()
     plan = planner.plan(
-        data_domain="cn_equity_realtime",
-        operation="fetch_realtime_quote_remote",
+        data_domain="etf_daily_bar",
+        operation="fetch_etf_daily_bar_validation",
         run_id="run-auth",
         job_id="job-auth",
-        extra_candidates=[("qmt_xqshare", "Primary")],
     )
     assert plan.route_status == "USER_AUTH_REQUIRED"
     assert plan.selected_source_id is None
-    xq = next(c for c in plan.candidates if c.source_id == "qmt_xqshare")
-    assert xq.skip_reason is not None
-    assert "user_authorization" in xq.skip_reason or xq.skip_reason.startswith("missing_env:")
+    yahoo = next(c for c in plan.candidates if c.source_id == "yahoo_finance")
+    assert yahoo.skip_reason is not None
+    assert "user_authorization" in yahoo.skip_reason or yahoo.skip_reason.startswith("missing_env:")

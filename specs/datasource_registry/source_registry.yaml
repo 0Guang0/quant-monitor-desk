@@ -149,6 +149,83 @@ domain_roles:
     domain_enabled_by_default: true
     disabled_until_configured: false
     notes: Staged Layer 1 macro series (AC-P2-0 ENV-E1-DGS10); not live FRED.
+  cn_equity_basic_financial:
+    primary: baostock
+    validation: []
+    fallback_policy: []
+    requires_source_enabled: true
+    domain_enabled_by_default: true
+    disabled_until_configured: false
+  cn_announcements:
+    primary: cninfo
+    validation: []
+    fallback_policy: []
+    requires_source_enabled: true
+    domain_enabled_by_default: true
+    disabled_until_configured: false
+  cn_pdf_reports:
+    primary: cninfo
+    validation: []
+    fallback_policy: []
+    requires_source_enabled: true
+    domain_enabled_by_default: true
+    disabled_until_configured: false
+  cn_index:
+    primary: akshare
+    validation: []
+    fallback_policy: use_last_good_cache
+    requires_source_enabled: true
+    domain_enabled_by_default: true
+    disabled_until_configured: false
+    notes: akshare validation_only; quality_flags required on clean write.
+  sector_board:
+    primary: akshare
+    validation: []
+    fallback_policy: use_last_good_cache
+    requires_source_enabled: true
+    domain_enabled_by_default: true
+    disabled_until_configured: false
+    notes: akshare validation_only; quality_flags required on clean write.
+  cn_equity_realtime:
+    primary: qmt_xtdata
+    validation: []
+    fallback_policy: []
+    requires_source_enabled: true
+    domain_enabled_by_default: false
+    disabled_until_configured: true
+    expected_error_before_user_setup: DISABLED_SOURCE
+  etf_daily_bar:
+    primary: yahoo_finance
+    validation: []
+    fallback_policy: []
+    requires_source_enabled: true
+    domain_enabled_by_default: false
+    disabled_until_configured: true
+    expected_error_before_user_setup: DISABLED_SOURCE
+  global_asset_reference:
+    primary: yahoo_finance
+    validation: []
+    fallback_policy: []
+    requires_source_enabled: true
+    domain_enabled_by_default: false
+    disabled_until_configured: true
+    expected_error_before_user_setup: DISABLED_SOURCE
+  security_list:
+    primary: tdx_pytdx
+    validation: []
+    fallback_policy: []
+    requires_source_enabled: true
+    domain_enabled_by_default: false
+    disabled_until_configured: true
+    expected_error_before_user_setup: DISABLED_SOURCE
+  cn_index_daily_bar:
+    primary: tdx_pytdx
+    validation: []
+    fallback_policy: []
+    requires_source_enabled: true
+    domain_enabled_by_default: false
+    disabled_until_configured: true
+    expected_error_before_user_setup: DISABLED_SOURCE
 tests:
   - test_disabledPrimaryDomain_returnsDisabledSource
   - test_fallbackDisabledByDefault_isSkippedUntilConfigured

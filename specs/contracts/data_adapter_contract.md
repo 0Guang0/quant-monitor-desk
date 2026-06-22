@@ -20,7 +20,7 @@ force_refresh: boolean
 run_id: string
 source_id: string
 data_domain: string
-status: SUCCESS | EMPTY_RESPONSE | AUTH_FAILED | RATE_LIMITED | NETWORK_ERROR | SCHEMA_DRIFT | FAILED
+status: SUCCESS | EMPTY_RESPONSE | NOT_PUBLISHED_YET | DISABLED_SOURCE | AUTH_FAILED | RATE_LIMITED | NETWORK_ERROR | SCHEMA_DRIFT | FAILED
 raw_file_paths: list[string]
 staging_table: string|null
 row_count: integer
