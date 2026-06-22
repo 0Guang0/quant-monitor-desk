@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from contextvars import ContextVar
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from enum import StrEnum
@@ -17,11 +18,16 @@ from backend.app.datasources.route_planner import SourceRoutePlanner
 from backend.app.datasources.service import DataSourceService
 from backend.app.datasources.source_registry import SourceNotFoundError, SourceRegistry
 from backend.app.db.connection import ConnectionManager
-from backend.app.db.validation_gate import DbValidationGate
-from backend.app.db.write_manager import WriteManager
+from backend.app.db.validation_gate import DbValidationGate, ValidationGateError, ValidationRejected
+from backend.app.db.write_manager import WriteManager, WriteRequest
+from backend.app.ops.mutation_proof import build_production_mutation_proof
 from backend.app.ops.mutation_proof import key_table_row_counts as _key_table_row_counts
-from backend.app.storage.file_registry import FileRegistry
-from backend.app.storage.staged_evidence import register_staged_file_registry_rows
+from backend.app.storage.file_registry import STG_FILE_REGISTRY, FileRegistry, _parse_as_of_timestamp
+from backend.app.storage.staged_evidence import (
+    STAGED_FILE_REGISTRY_PARSE_STATUS,
+    STAGED_FILE_REGISTRY_QUALITY,
+)
+from backend.app.storage.raw_store import SavedFile
 
 PILOT_ID = "r3x-staged-pilot-20260622"
 DEFAULT_AUTHORIZATION_PATH = (
@@ -38,6 +44,7 @@ VALIDATION_REPORT_JSON = "validation_report_summary.json"
 RESOURCE_GUARD_JSON = "resource_guard_caps.json"
 NO_MUTATION_MD = "production_db_no_mutation_proof.md"
 CLOSEOUT_JSON = "pilot_closeout.json"
+CONFLICT_CHECK_JSON = "conflict_check_summary.json"
 
 MAX_PILOT_ROW_CAP = 100
 MAX_NETWORK_CALLS_PER_RUN = 10
@@ -99,6 +106,15 @@ class StagedPilotOutcome(StrEnum):
     PILOT_REDEFERRED = "PILOT_REDEFERRED"
 
 
+class FetchTaxonomyStatus(StrEnum):
+    """Fetch outcome taxonomy for staged pilot evidence (ADV-POST14-A-017)."""
+
+    SUCCESS = "SUCCESS"
+    EMPTY_RESPONSE = "EMPTY_RESPONSE"
+    SOURCE_FAILURE = "SOURCE_FAILURE"
+    UNKNOWN = "UNKNOWN"
+
+
 class StagedPilotAuthorizationError(RuntimeError):
     """Raised when authorization evidence or request parameters fail fail-closed gate."""
 
@@ -154,17 +170,25 @@ class _NetworkCallBudget:
         }
 
 
-_NETWORK_BUDGET = _NetworkCallBudget()
+_NETWORK_BUDGET_CTX: ContextVar[_NetworkCallBudget] = ContextVar("_staged_pilot_network_budget")
 
 
 def reset_network_call_budget() -> None:
     """Test hook: reset per-run network call counter."""
-    global _NETWORK_BUDGET
-    _NETWORK_BUDGET = _NetworkCallBudget()
+    _NETWORK_BUDGET_CTX.set(_NetworkCallBudget())
+
+
+def _active_network_budget() -> _NetworkCallBudget:
+    try:
+        return _NETWORK_BUDGET_CTX.get()
+    except LookupError:
+        budget = _NetworkCallBudget()
+        _NETWORK_BUDGET_CTX.set(budget)
+        return budget
 
 
 def network_call_budget_snapshot() -> dict[str, Any]:
-    return _NETWORK_BUDGET.to_dict()
+    return _active_network_budget().to_dict()
 
 
 def _resolve_authorization_path(path: str) -> Path:
@@ -186,6 +210,10 @@ def validate_authorization(request: StagedPilotRequest) -> None:
     if "prompt14_user_authorization" not in auth_path.name:
         raise StagedPilotAuthorizationError(
             f"authorization evidence must be prompt14 user authorization file: {auth_path.name}"
+        )
+    if not auth_path.name.startswith("prompt14_user_authorization_"):
+        raise StagedPilotAuthorizationError(
+            f"authorization filename must match prompt14_user_authorization_*: {auth_path.name}"
         )
     if "Approved on" not in auth_text:
         raise StagedPilotAuthorizationError("authorization evidence missing approval marker")
@@ -305,6 +333,46 @@ def _explicit_source_route_status(
     return "DISABLED_SOURCE"
 
 
+def _evidence_relative_path(path: Path | str) -> str:
+    """Evidence paths relative to project root when possible (ADV-POST14-A-013)."""
+    candidate = Path(path).resolve()
+    try:
+        return candidate.relative_to(PROJECT_ROOT.resolve()).as_posix()
+    except ValueError:
+        return candidate.as_posix()
+
+
+def _declared_validator_contract_refs() -> dict[str, str]:
+    from backend.app.validators.data_quality import DataQualityValidator
+    from backend.app.validators.source_conflict import SourceConflictValidator
+
+    return {
+        "data_quality_validator": (
+            f"{DataQualityValidator.__module__}.{DataQualityValidator.__name__}"
+        ),
+        "source_conflict_validator": (
+            f"{SourceConflictValidator.__module__}.{SourceConflictValidator.__name__}"
+        ),
+        "clean_write_gate": f"{DbValidationGate.__module__}.{DbValidationGate.__name__}",
+        "data_quality_rules": "specs/contracts/data_quality_rules.yaml",
+        "source_conflict_rules": "specs/contracts/source_conflict_rules.yaml",
+    }
+
+
+def _staged_conflict_check_summary() -> dict[str, Any]:
+    """Explicit no-conflict defer for single-source staged micro-fetch (ADV-POST14-A-002)."""
+    refs = _declared_validator_contract_refs()
+    return {
+        "status": "NO_CONFLICT_CHECK_DEFERRED",
+        "reason": (
+            "staged raw-only micro-fetch uses one authorized source per request envelope; "
+            "multi-source conflict compare deferred until sample expansion"
+        ),
+        "source_conflict_validator": refs["source_conflict_validator"],
+        "policy_ref": "docs/quality/production_live_pilot_policy.md §6",
+    }
+
+
 def preview_staged_pilot(
     request: StagedPilotRequest,
     *,
@@ -331,15 +399,20 @@ def preview_staged_pilot(
         source_id=request.source_id,
         candidates=route_plan.candidates,
     )
+    override_applied = "PILOT_EXPLICIT_SOURCE_SELECTED" in route_plan.quality_flags
 
     return {
         "pilot_id": PILOT_ID,
         "pilot_request_id": pilot_request_id,
         "request": _pilot_request_to_dict(request),
-        "authorization_evidence": request.authorization_evidence,
+        "authorization_evidence": _evidence_relative_path(
+            _resolve_authorization_path(request.authorization_evidence)
+        ),
         "dry_run": True,
         "route_plan": route_plan.to_payload_dict(),
         "explicit_source_route_status": explicit_status,
+        "organic_route_status": route_plan.route_status,
+        "pilot_route_override_applied": override_applied,
         "resource_guard_decision": guard_decision.value,
         "resource_guard_reason": guard_reason,
     }
@@ -371,8 +444,11 @@ def capture_route_preview_matrix(
             )
         )
 
-    after_counts = _key_table_row_counts(target_db) if target_db.is_file() else {}
-    after_bytes = target_db.read_bytes() if target_db.is_file() else None
+    mutation_proof = build_production_mutation_proof(
+        target_db,
+        before_counts=before_counts,
+        before_bytes=before_bytes,
+    )
 
     generated_at = _utc_now_iso()
     payload: dict[str, Any] = {
@@ -383,13 +459,7 @@ def capture_route_preview_matrix(
         "run_mode": "staged_only",
         "authorization_evidence": requests[0].authorization_evidence if requests else None,
         "previews": previews,
-        "mutation_proof": {
-            "db_path": str(target_db),
-            "db_file_hash_unchanged": before_bytes == after_bytes,
-            "before_key_table_counts": before_counts,
-            "after_key_table_counts": after_counts,
-            "row_counts_unchanged": before_counts == after_counts,
-        },
+        "mutation_proof": mutation_proof,
     }
 
     (evidence_dir / ROUTE_MATRIX_JSON).write_text(
@@ -445,7 +515,6 @@ class _ExplicitSourceRoutePlanner:
         return replace(
             plan,
             selected_source_id=self._forced_source_id,
-            route_status="READY",
             quality_flags=flags,
             requested_source_id=self._forced_source_id,
         )
@@ -471,8 +540,124 @@ class _InlineConnectionFileRegistry(FileRegistry):
         return super().register(saved)
 
 
+class _StagedPilotFileRegistry(_InlineConnectionFileRegistry):
+    """WriteManager path with STAGED quality_flag (ADV-POST14-A-004 / B-002)."""
+
+    def __init__(self, *args: object, **kwargs: object) -> None:
+        super().__init__(*args, **kwargs)
+        self.registered_file_ids: list[str] = []
+
+    def register_on_connection(
+        self,
+        con,
+        saved: SavedFile,
+        *,
+        run_id: str,
+        job_id: str,
+        own_transaction: bool = False,
+    ) -> str:
+        existing = self._lookup_by_content_hash(saved.content_hash, con=con)
+        if existing:
+            self.registered_file_ids.append(existing)
+            return existing
+
+        now = datetime.now(UTC)
+        as_of_ts = _parse_as_of_timestamp(saved.as_of)
+        req = WriteRequest(
+            run_id=run_id,
+            job_id=job_id,
+            target_table="file_registry",
+            staging_table=STG_FILE_REGISTRY,
+            write_mode="append_only",
+            primary_keys=("file_id",),
+            validation_report_id=self._validation_report_id,
+            source_used=saved.source,
+            data_domain=saved.data_domain,
+        )
+
+        con.execute(f"DELETE FROM {STG_FILE_REGISTRY}")
+        con.execute(
+            f"""
+            INSERT INTO {STG_FILE_REGISTRY} (
+                file_id, file_type, source, source_url, local_path,
+                content_hash, schema_hash, fetch_time, as_of_timestamp,
+                parse_status, quality_flag
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            [
+                saved.file_id,
+                saved.file_type,
+                saved.source,
+                None,
+                saved.local_path,
+                saved.content_hash,
+                None,
+                now,
+                as_of_ts,
+                STAGED_FILE_REGISTRY_PARSE_STATUS,
+                STAGED_FILE_REGISTRY_QUALITY,
+            ],
+        )
+        result = self.write_manager.write(req, con=con, own_transaction=own_transaction)
+        if result.status != "SUCCESS":
+            err = result.error_message or ""
+            if "onstraint" in err:
+                existing = self._lookup_by_content_hash(saved.content_hash, con=con)
+                if existing:
+                    self.registered_file_ids.append(existing)
+                    return existing
+            raise RuntimeError(f"file_registry write failed: {result.error_message}")
+
+        self.registered_file_ids.append(saved.file_id)
+        return saved.file_id
+
+
 STAGED_RAW_VALIDATION_REPORT_ID = "r3x-staged-pilot-raw-file-registry"
 STAGED_RAW_RULE_SET_ID = "p0_round_1"
+STAGED_RAW_METADATA_QUALITY_FLAG = "staged_raw_metadata_only"
+
+
+class _StagedPilotValidationGate(DbValidationGate):
+    """Allow WriteManager file_registry staging when report is metadata-only (A-007 + A-004)."""
+
+    def assert_can_write(
+        self,
+        validation_report_id: str,
+        write_mode: str,
+        *,
+        con=None,
+    ) -> str:
+        report = self._fetch_report(validation_report_id, con=con)
+        if report is None:
+            raise ValidationGateError(
+                f"unknown validation_report_id: {validation_report_id}",
+                validation_report_id=validation_report_id,
+            )
+        (
+            status,
+            can_write_clean,
+            needs_manual_review,
+            run_id,
+            job_id,
+            source_id,
+            quality_flags,
+        ) = report
+        if (
+            write_mode == "append_only"
+            and not can_write_clean
+            and quality_flags == STAGED_RAW_METADATA_QUALITY_FLAG
+        ):
+            if status == "FAILED":
+                raise ValidationRejected(
+                    f"validation report {validation_report_id!r} status=FAILED",
+                    validation_report_id=validation_report_id,
+                )
+            return str(status)
+        return super().assert_can_write(
+            validation_report_id,
+            write_mode,
+            con=con,
+        )
 
 
 def _ensure_raw_validation_report(con, request: StagedPilotRequest, run_id: str) -> None:
@@ -496,9 +681,9 @@ def _ensure_raw_validation_report(con, request: StagedPilotRequest, run_id: str)
             0,
             0,
             0,
-            "staged_raw_metadata_only",
+            STAGED_RAW_METADATA_QUALITY_FLAG,
             None,
-            True,
+            False,
             True if request.source_id == "akshare" else False,
             STAGED_RAW_RULE_SET_ID,
             STAGED_RAW_RULE_SET_ID,
@@ -541,9 +726,11 @@ def run_staged_pilot_raw_only(
         operation=request.operation,
         symbols_or_indicators=request.symbols_or_indicators,
         max_rows=request.max_rows,
+        date_window=request.date_window,
     )
+    fetch_port_class = type(fetch_port).__name__
     _assert_real_fetch_port(fetch_port)
-    _NETWORK_BUDGET.consume()
+    _active_network_budget().consume()
 
     registry = SourceRegistry()
     registry.load()
@@ -555,8 +742,8 @@ def run_staged_pilot_raw_only(
     )
     route_planner = _ExplicitSourceRoutePlanner(base_planner, request.source_id)
     cm = ConnectionManager(sandbox_db, profile="eco")
-    write_manager = WriteManager(cm, DbValidationGate(cm))
-    file_registry = _InlineConnectionFileRegistry(
+    write_manager = WriteManager(cm, _StagedPilotValidationGate(cm))
+    file_registry = _StagedPilotFileRegistry(
         cm,
         write_manager,
         validation_report_id=STAGED_RAW_VALIDATION_REPORT_ID,
@@ -590,52 +777,48 @@ def run_staged_pilot_raw_only(
             operation=request.operation,
         )
         if result.status == "SUCCESS":
-            staged_file_ids = register_staged_file_registry_rows(
-                con,
-                result,
-                data_root=data_root,
-            )
+            staged_file_ids = tuple(file_registry.registered_file_ids)
 
-    prod_after_counts = _key_table_row_counts(DEFAULT_PRODUCTION_DB)
-    prod_after_hash = (
-        DEFAULT_PRODUCTION_DB.read_bytes() if DEFAULT_PRODUCTION_DB.is_file() else None
+    production_mutation_proof = build_production_mutation_proof(
+        DEFAULT_PRODUCTION_DB,
+        before_counts=prod_before_counts,
+        before_bytes=prod_before_hash,
     )
 
-    raw_paths = [str(Path(p).resolve()) for p in result.raw_file_paths]
+    raw_paths = [_evidence_relative_path(p) for p in result.raw_file_paths]
     sandbox_resolved = sandbox_root.resolve()
-    for path in raw_paths:
+    for path in result.raw_file_paths:
         if not Path(path).resolve().is_relative_to(sandbox_resolved):
             raise StagedPilotAuthorizationError(f"raw evidence path outside sandbox: {path}")
 
     return {
         "pilot_id": PILOT_ID,
         "pilot_request_id": pilot_request_id,
-        "authorization_evidence": request.authorization_evidence,
+        "authorization_evidence": _evidence_relative_path(
+            _resolve_authorization_path(request.authorization_evidence)
+        ),
         "request": _pilot_request_to_dict(request),
         "route_preview": preview,
+        "fetch_port_class": fetch_port_class,
         "fetch_result": result.model_dump(),
         "staged_file_ids": list(staged_file_ids),
-        "sandbox_root": str(sandbox_root),
-        "sandbox_data_root": str(data_root),
-        "production_mutation_proof": {
-            "production_db_path": str(DEFAULT_PRODUCTION_DB),
-            "db_hash_unchanged": prod_before_hash == prod_after_hash,
-            "before_key_table_counts": prod_before_counts,
-            "after_key_table_counts": prod_after_counts,
-            "row_counts_unchanged": prod_before_counts == prod_after_counts,
-        },
-        "taxonomy_status": _classify_fetch_taxonomy(request, result),
+        "file_registry_quality_flag": STAGED_FILE_REGISTRY_QUALITY,
+        "file_registry_write_path": "WriteManager",
+        "sandbox_root": _evidence_relative_path(sandbox_root),
+        "sandbox_data_root": _evidence_relative_path(data_root),
+        "production_mutation_proof": production_mutation_proof,
+        "taxonomy_status": _classify_fetch_taxonomy(request, result).value,
     }
 
 
-def _classify_fetch_taxonomy(request: StagedPilotRequest, result: Any) -> str:
+def _classify_fetch_taxonomy(request: StagedPilotRequest, result: Any) -> FetchTaxonomyStatus:
     if result.status == "SUCCESS" and result.row_count > 0:
-        return "SUCCESS"
+        return FetchTaxonomyStatus.SUCCESS
     if result.status == "SUCCESS" and result.row_count == 0:
-        return "EMPTY_RESPONSE"
+        return FetchTaxonomyStatus.EMPTY_RESPONSE
     if result.status in {"DISABLED_SOURCE", "FAILED"}:
-        return "SOURCE_FAILURE"
-    return str(result.status)
+        return FetchTaxonomyStatus.SOURCE_FAILURE
+    return FetchTaxonomyStatus.UNKNOWN
 
 
 def capture_raw_and_staging_evidence(
@@ -679,9 +862,10 @@ def capture_raw_and_staging_evidence(
                 )
             )
         except Exception as exc:
-            prod_after_counts = _key_table_row_counts(DEFAULT_PRODUCTION_DB)
-            prod_after_hash = (
-                DEFAULT_PRODUCTION_DB.read_bytes() if DEFAULT_PRODUCTION_DB.is_file() else None
+            production_mutation_proof = build_production_mutation_proof(
+                DEFAULT_PRODUCTION_DB,
+                before_counts=prod_before_counts,
+                before_bytes=prod_before_hash,
             )
             failure_item = {
                 "pilot_id": PILOT_ID,
@@ -694,14 +878,8 @@ def capture_raw_and_staging_evidence(
                     "content_hash": None,
                     "error_message": str(exc),
                 },
-                "taxonomy_status": type(exc).__name__,
-                "production_mutation_proof": {
-                    "production_db_path": str(DEFAULT_PRODUCTION_DB),
-                    "db_hash_unchanged": prod_before_hash == prod_after_hash,
-                    "before_key_table_counts": prod_before_counts,
-                    "after_key_table_counts": prod_after_counts,
-                    "row_counts_unchanged": prod_before_counts == prod_after_counts,
-                },
+                "taxonomy_status": FetchTaxonomyStatus.SOURCE_FAILURE.value,
+                "production_mutation_proof": production_mutation_proof,
             }
             fetches.append(failure_item)
 
@@ -725,7 +903,7 @@ def capture_raw_and_staging_evidence(
     raw_manifest = {
         "pilot_id": PILOT_ID,
         "generated_at": generated_at,
-        "sandbox_root": str(sandbox_root),
+        "sandbox_root": _evidence_relative_path(sandbox_root),
         "fetches": fetches,
     }
     staging_manifest = {
@@ -735,7 +913,8 @@ def capture_raw_and_staging_evidence(
             {
                 "pilot_request_id": item["pilot_request_id"],
                 "staged_file_ids": item.get("staged_file_ids", []),
-                "quality_flag": "STAGED",
+                "quality_flag": STAGED_FILE_REGISTRY_QUALITY,
+                "file_registry_write_path": item.get("file_registry_write_path", "WriteManager"),
             }
             for item in fetches
             if item.get("staged_file_ids")
@@ -758,8 +937,15 @@ def capture_raw_and_staging_evidence(
     return raw_manifest
 
 
-def _load_raw_json_payload(raw_path: Path) -> dict[str, Any]:
-    return json.loads(raw_path.read_text(encoding="utf-8"))
+def _resolve_evidence_path(raw_path: str) -> Path:
+    candidate = Path(raw_path)
+    if candidate.is_absolute():
+        return candidate
+    return (PROJECT_ROOT / candidate).resolve()
+
+
+def _load_raw_json_payload(raw_path: Path | str) -> dict[str, Any]:
+    return json.loads(_resolve_evidence_path(str(raw_path)).read_text(encoding="utf-8"))
 
 
 def _equity_bar_rows(payload: dict[str, Any]) -> list[dict[str, Any]]:
@@ -812,6 +998,19 @@ def _validate_metadata_structure(rows: list[dict[str, Any]]) -> dict[str, Any]:
     return {"status": status, "checked_rows": len(rows), "findings": findings}
 
 
+def _validate_cninfo_metadata_structure(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    findings: list[str] = []
+    if not rows:
+        findings.append("EMPTY_ROWS")
+        return {"status": "FAILED", "checked_rows": 0, "findings": findings}
+    title_keys = ("公告标题", "announcementTitle", "title", "公告时间", "announcementTime")
+    for index, row in enumerate(rows):
+        if not any(key in row and row[key] not in (None, "") for key in title_keys):
+            findings.append(f"ROW_{index}_MISSING_ANNOUNCEMENT_FIELDS")
+    status = "FAILED" if findings else "PASSED"
+    return {"status": status, "checked_rows": len(rows), "findings": findings}
+
+
 def capture_validation_report(
     *,
     evidence_dir: Path,
@@ -836,37 +1035,49 @@ def capture_validation_report(
         raw_paths = fetch_result.get("raw_file_paths") or []
         raw_payload = None
         if raw_paths:
-            raw_payload = _load_raw_json_payload(Path(raw_paths[0]))
+            raw_payload = _load_raw_json_payload(raw_paths[0])
 
         request = item.get("request", {})
         domain = request.get("data_domain")
+        source_id = request.get("source_id")
         if domain == "cn_equity_daily_bar":
             structure = _validate_equity_raw_structure(_equity_bar_rows(raw_payload or {}))
+        elif domain == "cn_announcements":
+            rows = (raw_payload or {}).get("rows", [])
+            structure = _validate_cninfo_metadata_structure(
+                rows if isinstance(rows, list) else []
+            )
         else:
             rows = (raw_payload or {}).get("rows", [])
             structure = _validate_metadata_structure(rows if isinstance(rows, list) else [])
 
+        vendor_api = (raw_payload or {}).get("vendor_api")
         validations.append(
             {
                 "pilot_request_id": item.get("pilot_request_id"),
-                "source_id": request.get("source_id"),
+                "source_id": source_id,
                 "data_domain": domain,
                 "operation": request.get("operation"),
                 "fetch_status": fetch_result.get("status"),
+                "vendor_api": vendor_api,
                 "structure_validation": structure,
                 "status": structure["status"]
                 if fetch_result.get("status") == "SUCCESS"
                 else "SOURCE_FAILURE",
                 "allow_clean_write": False,
-                "validation_only": request.get("source_id") == "akshare",
-                "metadata_only": request.get("source_id") == "cninfo",
+                "can_write_clean": False,
+                "validation_only": source_id == "akshare",
+                "metadata_only": source_id == "cninfo",
             }
         )
 
-    prod_after_counts = _key_table_row_counts(DEFAULT_PRODUCTION_DB)
-    prod_after_hash = (
-        DEFAULT_PRODUCTION_DB.read_bytes() if DEFAULT_PRODUCTION_DB.is_file() else None
+    production_mutation_proof = build_production_mutation_proof(
+        DEFAULT_PRODUCTION_DB,
+        before_counts=prod_before_counts,
+        before_bytes=prod_before_hash,
     )
+    conflict_check = _staged_conflict_check_summary()
+    declared_validators = _declared_validator_contract_refs()
 
     generated_at = _utc_now_iso()
     payload: dict[str, Any] = {
@@ -875,14 +1086,14 @@ def capture_validation_report(
         "allow_clean_write": False,
         "can_write_clean": False,
         "clean_write_performed": False,
+        "declared_validators": declared_validators,
+        "sandbox_validation_note": (
+            "Structure checks plus declared DataQualityValidator / DbValidationGate "
+            "contract refs; full rule execution remains gated before any clean write."
+        ),
         "validations": validations,
-        "production_mutation_proof": {
-            "production_db_path": str(DEFAULT_PRODUCTION_DB),
-            "db_hash_unchanged": prod_before_hash == prod_after_hash,
-            "before_key_table_counts": prod_before_counts,
-            "after_key_table_counts": prod_after_counts,
-            "row_counts_unchanged": prod_before_counts == prod_after_counts,
-        },
+        "conflict_check": conflict_check,
+        "production_mutation_proof": production_mutation_proof,
     }
 
     proof_lines = [
@@ -891,15 +1102,22 @@ def capture_validation_report(
         f"- **Pilot ID:** {PILOT_ID}",
         f"- **Generated at:** {generated_at}",
         f"- **Production DB:** `{DEFAULT_PRODUCTION_DB}`",
-        f"- **db_hash_unchanged:** {prod_before_hash == prod_after_hash}",
-        f"- **row_counts_unchanged:** {prod_before_counts == prod_after_counts}",
+        f"- **proof_status:** {production_mutation_proof.get('proof_status')}",
+        f"- **db_hash_unchanged:** {production_mutation_proof.get('db_hash_unchanged')}",
+        f"- **row_counts_unchanged:** {production_mutation_proof.get('row_counts_unchanged')}",
+        "",
+        "## Conflict check",
+        "",
+        f"- **status:** {conflict_check['status']}",
+        f"- **reason:** {conflict_check['reason']}",
         "",
     ]
     for item in raw_manifest.get("fetches", []):
         proof = item.get("production_mutation_proof", {})
         proof_lines.append(
-            f"- **{item.get('pilot_request_id')}:** hash_unchanged="
-            f"{proof.get('db_hash_unchanged')} row_counts_unchanged={proof.get('row_counts_unchanged')}"
+            f"- **{item.get('pilot_request_id')}:** proof_status="
+            f"{proof.get('proof_status')} hash_unchanged={proof.get('db_hash_unchanged')} "
+            f"row_counts_unchanged={proof.get('row_counts_unchanged')}"
         )
 
     (evidence_dir / VALIDATION_REPORT_JSON).write_text(
@@ -907,6 +1125,10 @@ def capture_validation_report(
         encoding="utf-8",
     )
     (evidence_dir / NO_MUTATION_MD).write_text("\n".join(proof_lines) + "\n", encoding="utf-8")
+    (evidence_dir / CONFLICT_CHECK_JSON).write_text(
+        json.dumps(conflict_check, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
     return payload
 
 
@@ -982,6 +1204,7 @@ def run_full_staged_pilot(
         raw_manifest=raw_manifest or {"fetches": []},
     )
     outcome = derive_pilot_closeout_outcome(validation_payload)
+    mutation_status = validation_payload.get("production_mutation_proof", {}).get("proof_status")
     closeout = {
         "pilot_id": PILOT_ID,
         "generated_at": _utc_now_iso(),
@@ -989,6 +1212,14 @@ def run_full_staged_pilot(
         "run_mode": "staged_only",
         "production_live_readiness_claim": False,
         "skip_live_fetch": skip_live_fetch,
+        "mutation_proof_status": mutation_status,
+        "conflict_check_status": validation_payload.get("conflict_check", {}).get("status"),
+        "closeout_narrative": (
+            "Staged raw evidence captured under PROMPT_14 authorization; "
+            "production DB mutation proof is "
+            f"{mutation_status or 'unknown'}. "
+            "Expand sample only after registry review and conflict policy sign-off."
+        ),
         "close_or_redefer": (
             "expand_sample_after_review"
             if outcome == StagedPilotOutcome.PILOT_PASS_STAGED_RAW

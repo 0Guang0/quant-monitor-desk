@@ -12,6 +12,12 @@ STAGED_FILE_REGISTRY_QUALITY = "STAGED"
 STAGED_FILE_REGISTRY_PARSE_STATUS = "PARSED"
 STAGED_EVIDENCE_PHASE = "phase3_staged"
 
+# ADV-POST14-B-007: Layer1 Phase 3 retains this documented WriteManager bypass for
+# micro-fetch rows that must never trigger validation_report-gated clean writes.
+# PROMPT_14 staged pilot uses WriteManager via ``staged_pilot._StagedPilotFileRegistry``
+# plus ``_StagedPilotValidationGate`` (``can_write_clean=false`` metadata-only gate)
+# instead of this raw INSERT helper.
+
 
 def _resolve_under_data_root(local_path: str, data_root: Path) -> Path:
     resolved_root = Path(data_root).resolve()
