@@ -6,7 +6,7 @@
 >
 > Scope rule: `docs/` and `specs/` are design/contract inputs only. Runtime implementation must land in `backend/`, `frontend/`, `scripts/`, `configs/`, `tests/`, or other implementation paths already mapped by `MIGRATION_MAP.md`.
 >
-> Current checkpoint (2026-06-22): Batch 1, Batch 2, and Batch 2.5 are completed/archived; Batch 2.5 handoff is `staged` only, not live production. Batch 2.75 controlled pilot has executed and repaired with closeout `PILOT_FAIL_SOURCE`: Request 1/3 have bounded sandbox evidence, Request 2 Eastmoney hist remains deferred as `R3-B2.75-REQ2-EM`, and downstream Round 3 work may continue only under staged-only semantics until a later gate proves narrower production-live readiness.
+> Current checkpoint (2026-06-22): Batch 1, Batch 2, and Batch 2.5 are completed/archived; Batch 2.5 handoff is `staged` only, not live production. Batch 2.75 closeout is `PILOT_FAIL_SOURCE`; Request 2 remains `R3-B2.75-REQ2-EM`. **`R3-B3-STAGED-DOWNSTREAM-GATE` is CLOSED on `feature/round3-batch3-staged-gate`** (docs/tests only) — `019` may start staged-only after merge to `integration/round3`.
 
 ## 0. Mandatory inputs before planning any Round 3 batch
 
