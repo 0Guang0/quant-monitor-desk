@@ -425,7 +425,7 @@ def test_layer1Ingestion_phase0_axisObservationWritePath_implementedInPhase4() -
     assert "commit_clean_observation_and_snapshots" in text
     assert "micro_fetch_staging" in text
     assert "def capture_phase" not in text
-    assert "ingestion_evidence" in text
+    assert "ingestion_commit" in text
     assert "Layer1ObservationWriter" in (
         PROJECT_ROOT / "backend/app/layer1_axes/observation_writer.py"
     ).read_text(encoding="utf-8")
@@ -435,13 +435,16 @@ def test_layer1Ingestion_phase0_axisObservationWritePath_implementedInPhase4() -
 
 
 def test_layer1Ingestion_phase0_ingestionFacadeReexportsEvidenceModule() -> None:
-    """PR-R2a I7: facade symbols resolve to ingestion_evidence implementations."""
+    """L1-01 ponytail: runtime ingestion facade must not re-export evidence symbols."""
     import backend.app.layer1_axes.ingestion as ing
     import backend.app.layer1_axes.ingestion_evidence as ev
 
-    assert ing.capture_task_phase3_evidence is ev.capture_task_phase3_evidence
-    assert ing.PHASE3_SANDBOX_DIRNAME == ev.PHASE3_SANDBOX_DIRNAME
-    assert ing.PHASE3_MUTATION_TABLES == ev.PHASE3_MUTATION_TABLES
+    assert not hasattr(ing, "capture_task_phase3_evidence") or (
+        getattr(ing, "capture_task_phase3_evidence", None) is not ev.capture_task_phase3_evidence
+    )
+    text = (PROJECT_ROOT / "backend/app/layer1_axes/ingestion.py").read_text(encoding="utf-8")
+    assert "from backend.app.layer1_axes.ingestion_evidence import" not in text
+    assert ev.capture_task_phase3_evidence is not None
 
 
 def test_layer1Ingestion_phase0_evidenceModuleExportsPublicSurface() -> None:

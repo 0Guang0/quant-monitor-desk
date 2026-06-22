@@ -66,10 +66,7 @@ class WriteManager:
         self.gate = gate
 
     def _validate_request(self, req: WriteRequest) -> None:
-        quote_ident(req.target_table)
-        quote_ident(req.staging_table)
-        for col in req.primary_keys:
-            quote_ident(col)
+        self._validated_tables(req)
         if not (req.data_domain or "").strip():
             raise ValueError("WriteRequest.data_domain is required")
         if req.write_mode == "upsert_by_pk" and not req.primary_keys:

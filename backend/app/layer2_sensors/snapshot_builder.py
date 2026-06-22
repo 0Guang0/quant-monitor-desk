@@ -10,7 +10,8 @@ from backend.app.core.resource_guard import ResourceGuard
 from backend.app.db.connection import ConnectionManager
 from backend.app.db.validation_gate import DbValidationGate
 from backend.app.db.write_manager import WriteManager, WriteRequest
-from backend.app.layer1_axes.lineage import guard_layer2_writeback, lineage_row_to_db_tuple
+from backend.app.layer1_axes.lineage import guard_layer2_writeback
+from backend.app.layer2_sensors.lineage import lineage_row_to_db_tuple
 from backend.app.layer2_sensors.double_count_guard import (
     assert_model_eligible,
     quality_flags_for_registry_entry,
@@ -212,32 +213,6 @@ def daily_snapshot_row_to_db_tuple(row: CrossAssetDailySnapshot) -> list:
     ]
 
 
-def layer2_lineage_to_axis_tuple(lineage: Layer2LineageEnvelope) -> list:
-    """Map Layer2 envelope to axis_snapshot_lineage row shape."""
-    from backend.app.layer1_axes.models import LineageEnvelope
-
-    axis_env = LineageEnvelope(
-        snapshot_id=lineage.snapshot_id,
-        snapshot_type=lineage.snapshot_type,
-        layer_id=lineage.layer_id,
-        as_of_timestamp=lineage.as_of_timestamp,
-        generated_at=lineage.generated_at,
-        input_data_window_start=lineage.input_data_window_start,
-        input_data_window_end=lineage.input_data_window_end,
-        source_dataset_ids=lineage.source_dataset_ids,
-        source_fetch_ids=lineage.source_fetch_ids,
-        source_content_hashes=lineage.source_content_hashes,
-        rule_version=lineage.rule_version,
-        code_version=lineage.code_version,
-        parameter_hash=lineage.parameter_hash,
-        resource_profile=lineage.resource_profile,
-        upstream_snapshot_ids=lineage.upstream_snapshot_ids,
-        is_incremental=lineage.is_incremental,
-        rebuild_reason=lineage.rebuild_reason,
-    )
-    return lineage_row_to_db_tuple(axis_env)
-
-
 class Layer2SnapshotWriter:
     """Write Layer 2 snapshots via staging → DbValidationGate → WriteManager."""
 
@@ -347,7 +322,7 @@ class Layer2SnapshotWriter:
         )
         con.execute(
             f"INSERT INTO {staging_lin} VALUES ({','.join(['?'] * 17)})",
-            layer2_lineage_to_axis_tuple(lineage),
+            lineage_row_to_db_tuple(lineage),
         )
         lin_req = WriteRequest(
             run_id=run_id,
