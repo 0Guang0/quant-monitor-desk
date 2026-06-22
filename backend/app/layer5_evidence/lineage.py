@@ -2,37 +2,16 @@
 
 from __future__ import annotations
 
-import hashlib
-import json
-import re
 from datetime import UTC, datetime
 
+from backend.app.core.snapshot_lineage import (
+    LINEAGE_REQUIRED_FIELDS,
+    assert_lineage_fields_complete,
+    lineage_row_to_db_tuple,
+    parameter_hash_for,
+    validate_source_dataset_ids,
+)
 from backend.app.layer5_evidence.models import SourceProvenance
-
-LINEAGE_REQUIRED_FIELDS = (
-    "snapshot_id",
-    "snapshot_type",
-    "layer_id",
-    "as_of_timestamp",
-    "generated_at",
-    "input_data_window_start",
-    "input_data_window_end",
-    "source_dataset_ids",
-    "source_fetch_ids",
-    "source_content_hashes",
-    "rule_version",
-    "code_version",
-    "parameter_hash",
-    "resource_profile",
-    "upstream_snapshot_ids",
-    "is_incremental",
-    "rebuild_reason",
-)
-
-_AGENT_SOURCE_PATTERN = re.compile(
-    r"(agent[_-]?summary|generated_by=agent|建议|买入|卖出|信号)",
-    re.IGNORECASE,
-)
 
 
 class Layer5LineageError(ValueError):
@@ -104,7 +83,7 @@ class Layer5LineageBuilder:
         is_incremental: bool = False,
         rebuild_reason: str | None = None,
     ) -> Layer5LineageEnvelope:
-        _validate_source_dataset_ids(provenance.source_dataset_ids)
+        validate_source_dataset_ids(provenance.source_dataset_ids, error_type=Layer5LineageError)
         if not provenance.source_fetch_ids:
             raise Layer5LineageError("source_fetch_ids required for Layer 5 lineage")
         if not provenance.source_content_hashes:
@@ -131,49 +110,7 @@ class Layer5LineageBuilder:
             is_incremental=is_incremental,
             rebuild_reason=rebuild_reason,
         )
-        _assert_lineage_fields_complete(envelope)
+        assert_lineage_fields_complete(envelope, error_type=Layer5LineageError)
         return envelope
 
-    @staticmethod
-    def parameter_hash_for(*, rule_version: str, inputs: tuple[str, ...]) -> str:
-        payload = "|".join([rule_version, *inputs])
-        return hashlib.sha256(payload.encode()).hexdigest()
-
-
-def lineage_row_to_db_tuple(lineage: Layer5LineageEnvelope) -> list:
-    return [
-        lineage.snapshot_id,
-        lineage.snapshot_type,
-        lineage.layer_id,
-        lineage.as_of_timestamp,
-        lineage.generated_at,
-        lineage.input_data_window_start,
-        lineage.input_data_window_end,
-        json.dumps(list(lineage.source_dataset_ids)),
-        json.dumps(list(lineage.source_fetch_ids)),
-        json.dumps(list(lineage.source_content_hashes)),
-        lineage.rule_version,
-        lineage.code_version,
-        lineage.parameter_hash,
-        lineage.resource_profile,
-        json.dumps(list(lineage.upstream_snapshot_ids)),
-        lineage.is_incremental,
-        lineage.rebuild_reason,
-    ]
-
-
-def _validate_source_dataset_ids(source_dataset_ids: tuple[str, ...]) -> None:
-    for ds_id in source_dataset_ids:
-        if _AGENT_SOURCE_PATTERN.search(ds_id):
-            raise Layer5LineageError(
-                f"agent outputs must not appear in source_dataset_ids: {ds_id!r}"
-            )
-
-
-def _assert_lineage_fields_complete(envelope: Layer5LineageEnvelope) -> None:
-    optional_nullable = frozenset({"rebuild_reason"})
-    for field in LINEAGE_REQUIRED_FIELDS:
-        if field in optional_nullable:
-            continue
-        if getattr(envelope, field) is None:
-            raise Layer5LineageError(f"lineage missing required field: {field!r}")
+    parameter_hash_for = staticmethod(parameter_hash_for)

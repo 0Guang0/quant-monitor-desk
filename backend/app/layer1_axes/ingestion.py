@@ -364,26 +364,18 @@ class Layer1ObservationIngestionService:
             )
         return "; ".join(reasons) if reasons else None
 
+    def _assert_allowlisted(self, indicator_id: str) -> None:
+        if indicator_id not in self._allowlist:
+            raise IngestionRejectedError(
+                f"indicator {indicator_id!r} is not on the ingestion allowlist",
+                reason_code=NOT_ON_ALLOWLIST_REJECTED,
+                indicator_id=indicator_id,
+            )
+
     def _row_counts(self, tables: tuple[str, ...]) -> dict[str, int | None]:
-        con = duckdb.connect(str(self._db_path), read_only=True)
-        counts: dict[str, int | None] = {}
-        try:
-            for name in tables:
-                exists = con.execute(
-                    """
-                    SELECT COUNT(*)
-                    FROM information_schema.tables
-                    WHERE table_schema = 'main' AND table_name = ?
-                    """,
-                    [name],
-                ).fetchone()[0]
-                if not exists:
-                    counts[name] = None
-                    continue
-                counts[name] = int(con.execute(f'SELECT COUNT(*) FROM "{name}"').fetchone()[0])
-        finally:
-            con.close()
-        return counts
+        from backend.app.db.row_counts import table_row_counts
+
+        return table_row_counts(self._db_path, tables)
 
     def preview_routes(
         self,
@@ -401,12 +393,7 @@ class Layer1ObservationIngestionService:
         for indicator_id in indicators:
             indicator = self._indicator_by_id(indicator_id)
             self._assert_indicator_eligible(indicator)
-            if indicator_id not in self._allowlist:
-                raise IngestionRejectedError(
-                    f"indicator {indicator_id!r} is not on the ingestion allowlist",
-                    reason_code=NOT_ON_ALLOWLIST_REJECTED,
-                    indicator_id=indicator_id,
-                )
+            self._assert_allowlisted(indicator_id)
             binding = self._resolve_binding(indicator)
             route_plan = self._datasource.preview_route(
                 data_domain=binding.data_domain,
@@ -440,12 +427,7 @@ class Layer1ObservationIngestionService:
     ) -> IngestionRouteBinding:
         indicator = self._indicator_by_id(indicator_id)
         self._assert_indicator_eligible(indicator)
-        if indicator_id not in self._allowlist:
-            raise IngestionRejectedError(
-                f"indicator {indicator_id!r} is not on the ingestion allowlist",
-                reason_code=NOT_ON_ALLOWLIST_REJECTED,
-                indicator_id=indicator_id,
-            )
+        self._assert_allowlisted(indicator_id)
         return self._resolve_binding(indicator)
 
     def _prepare_staged_route_and_request(
@@ -629,339 +611,17 @@ class Layer1ObservationIngestionService:
         fixture_path: Path | str | None = None,
     ) -> IngestionCommitResult:
         """Validate staged evidence, write clean observation, snapshots, and lineage (Phase 4)."""
-        indicator = self._indicator_by_id(indicator_id)
-        self._assert_indicator_eligible(indicator)
-        if indicator_id not in self._allowlist:
-            raise IngestionRejectedError(
-                f"indicator {indicator_id!r} is not on the ingestion allowlist",
-                reason_code=NOT_ON_ALLOWLIST_REJECTED,
-                indicator_id=indicator_id,
-            )
-
-        resolved_run_id = run_id or f"layer1-commit-{indicator_id}"
-        resolved_job_id = job_id or f"layer1-commit-{indicator_id}"
-        binding, req, route_plan, resolved_run_id, resolved_job_id = (
-            self._prepare_staged_route_and_request(
-                indicator_id=indicator_id,
-                as_of=as_of,
-                run_id=resolved_run_id,
-                job_id=resolved_job_id,
-                run_id_prefix="layer1-commit",
-                job_id_prefix="layer1-commit",
-            )
-        )
-        resolved_fixture = (
-            Path(fixture_path)
-            if fixture_path is not None
-            else app_config.PROJECT_ROOT / MACRO_FIXTURE_RELATIVE
-        )
-        quality_validator = DataQualityValidator()
-        conflict_validator = SourceConflictValidator()
-        obs_writer = Layer1ObservationWriter(self._conn_manager)
-        snapshot_writer = Layer1SnapshotWriter(self._conn_manager)
-
-        from backend.app.layer1_axes.observation_contract import (
-            AXIS_OBSERVATION_DDL_COLUMNS,
-            AXIS_OBSERVATION_REQUIRED_FIELDS,
+        from backend.app.layer1_axes.ingestion_commit import (
+            commit_clean_observation_and_snapshots as _commit_impl,
         )
 
-        micro: MicroFetchResult | None = None
-        observation_row: dict[str, object] | None = None
-        quality_report = None
-        obs_write = None
-        feature_write = None
-        interp_write = None
-        lineage_write = None
-        feature_rows = None
-        interp_rows = None
-        lineage = None
-        source_used = ""
-
-        with self._conn_manager.writer() as con:
-            con.execute("BEGIN")
-            try:
-                normalized_fetch, fetch_id, _, guard_decision, guard_reason = (
-                    self._fetch_staging_on_connection(
-                        con,
-                        binding=binding,
-                        req=req,
-                        job_id=resolved_job_id,
-                        register_staged_files=False,
-                    )
-                )
-
-                micro = MicroFetchResult(
-                    indicator_id=indicator_id,
-                    as_of=as_of,
-                    binding=binding,
-                    route_plan=route_plan,
-                    fetch_result=normalized_fetch,
-                    run_id=resolved_run_id,
-                    job_id=resolved_job_id,
-                    fetch_id=fetch_id,
-                    file_registry_ids=(),
-                    resource_guard_decision=guard_decision.value,
-                    resource_guard_reason=guard_reason,
-                    staged_fixture_path=MACRO_FIXTURE_RELATIVE,
-                )
-
-                try:
-                    observation_row = map_micro_fetch_to_observation_row(
-                        micro,
-                        data_root=self._data_root,
-                        fixture_path=resolved_fixture,
-                    )
-                except ObservationMappingError as exc:
-                    raise IngestionCommitBlockedError(
-                        str(exc), reason_code="OBSERVATION_MAPPING"
-                    ) from exc
-
-                as_of_dt = observation_row["as_of_timestamp"]
-                assert isinstance(as_of_dt, datetime)
-                domain_obs = observation_row_to_domain(observation_row)
-                if domain_obs.publish_timestamp > as_of_dt:
-                    raise IngestionCommitBlockedError(
-                        "publish_timestamp after as_of_timestamp",
-                        reason_code="NO_FUTURE_DATA",
-                    )
-
-                duplicate = con.execute(
-                    """
-                    SELECT observation_id FROM axis_observation
-                    WHERE indicator_id = ? AND as_of_timestamp = ?
-                    LIMIT 1
-                    """,
-                    [indicator_id, as_of_dt],
-                ).fetchone()
-                if duplicate:
-                    raise IngestionCommitBlockedError(
-                        f"observation already committed for {indicator_id} on {as_of.isoformat()}",
-                        reason_code="DUPLICATE_COMMIT",
-                    )
-
-                staging_table = f"stg_axis_obs_commit_{uuid.uuid4().hex[:8]}"
-                source_used = str(observation_row["source_used"])
-                guardrail_validator = AxisEngineeringGuardrailValidator(
-                    self._load_axes().guardrails
-                )
-                try:
-                    guardrail_validator.reject_forbidden_substitute(
-                        indicator,
-                        substitute_id=source_used,
-                    )
-                except GuardrailViolationError as exc:
-                    raise IngestionCommitBlockedError(
-                        str(exc), reason_code="GUARDRAIL_VIOLATION"
-                    ) from exc
-                con.execute(
-                    f"CREATE TABLE {staging_table} AS SELECT * FROM axis_observation WHERE 1=0"
-                )
-                con.execute(
-                    f"""
-                    INSERT INTO {staging_table} VALUES (
-                        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-                    )
-                    """,
-                    [observation_row[col] for col in AXIS_OBSERVATION_DDL_COLUMNS],
-                )
-                quality_request = DataQualityRequest(
-                    run_id=resolved_run_id,
-                    job_id=resolved_job_id,
-                    data_domain=micro.binding.data_domain,
-                    source_id=micro.fetch_result.source_id,
-                    staging_table=staging_table,
-                    primary_keys=("observation_id",),
-                    required_fields=AXIS_OBSERVATION_REQUIRED_FIELDS,
-                    rule_set_id=quality_validator._rule_set_id,  # noqa: SLF001
-                )
-                quality_report = quality_validator.validate_table(
-                    con,
-                    quality_request,
-                    expected_columns=AXIS_OBSERVATION_DDL_COLUMNS,
-                    timestamp_fields=("as_of_timestamp", "publish_timestamp", "fetch_time"),
-                )
-                if not quality_report.can_write_clean:
-                    raise IngestionCommitBlockedError(
-                        f"validation failed: {quality_report.status}",
-                        reason_code="VALIDATION_FAILED",
-                    )
-                if quality_report.needs_manual_review:
-                    raise IngestionCommitBlockedError(
-                        "manual review required before clean write",
-                        reason_code="MANUAL_REVIEW_REQUIRED",
-                    )
-
-                if self._validation_source_requires_conflict(indicator):
-                    conflict_staging = f"stg_axis_obs_conflict_{uuid.uuid4().hex[:8]}"
-                    con.execute(
-                        f"CREATE TABLE {conflict_staging} AS "
-                        "SELECT * FROM source_conflict WHERE 1=0"
-                    )
-                    conflict_request = SourceConflictRequest(
-                        run_id=resolved_run_id,
-                        job_id=resolved_job_id,
-                        data_domain=micro.binding.data_domain,
-                        source_id=micro.fetch_result.source_id,
-                        staging_table=conflict_staging,
-                        primary_keys=("conflict_id",),
-                        rule_set_id="source_conflict_v1",
-                    )
-                    conflict_report = conflict_validator.validate_table(
-                        con,
-                        conflict_request,
-                        staging_table=conflict_staging,
-                    )
-                    if conflict_report.status == "SEVERE_CONFLICT":
-                        raise IngestionCommitBlockedError(
-                            "severe source conflict blocks clean write",
-                            reason_code="SEVERE_CONFLICT",
-                        )
-
-                try:
-                    file_registry_ids = _register_clean_file_registry_rows(
-                        con,
-                        conn_manager=self._conn_manager,
-                        fetch_result=normalized_fetch,
-                        validation_report_id=quality_report.validation_report_id,
-                        run_id=resolved_run_id,
-                        job_id=resolved_job_id,
-                        data_domain=micro.binding.data_domain,
-                    )
-                except RuntimeError as exc:
-                    raise IngestionCommitBlockedError(str(exc), reason_code="WRITE_FAILED") from exc
-                micro = replace(micro, file_registry_ids=file_registry_ids)
-
-                obs_write = obs_writer.write_observations(
-                    rows=[observation_row],
-                    validation_report_id=quality_report.validation_report_id,
-                    run_id=resolved_run_id,
-                    job_id=resolved_job_id,
-                    source_used=source_used,
-                    data_domain=micro.binding.data_domain,
-                    con=con,
-                    own_transaction=False,
-                )
-                if obs_write.status != "SUCCESS":
-                    raise IngestionCommitBlockedError(
-                        obs_write.error_message or "observation write failed",
-                        reason_code="WRITE_FAILED",
-                    )
-
-                feature_engine = AxisFeatureEngine(
-                    resource_guard=ResourceGuard(con=con),
-                    frequency=micro.binding.frequency,
-                    min_obs_required=1,
-                    window_len=1,
-                )
-                try:
-                    feature_rows = feature_engine.compute_features(
-                        as_of=as_of_dt,
-                        observations=[domain_obs],
-                        history=[domain_obs],
-                    )
-                except Layer1SnapshotError as exc:
-                    raise IngestionCommitBlockedError(
-                        str(exc), reason_code="NO_FUTURE_DATA"
-                    ) from exc
-
-                interp_rows = AxisInterpretationEngine().build_interpretation(
-                    as_of=as_of_dt,
-                    features=feature_rows,
-                )
-
-                report_ref = self._load_validation_report_ref(
-                    con, quality_report.validation_report_id
-                )
-                lineage_builder = SnapshotLineageBuilder()
-                raw_datasets = tuple(f"raw:{path}" for path in micro.fetch_result.raw_file_paths)
-                parameter_hash = lineage_builder.parameter_hash_for(
-                    rule_version=report_ref.rule_version,
-                    inputs=(indicator_id, micro.binding.data_domain, *raw_datasets),
-                )
-                lineage = lineage_builder.build(
-                    snapshot_id=feature_rows[0].feature_id,
-                    snapshot_type="axis_feature_snapshot",
-                    as_of=as_of_dt,
-                    validation_report=report_ref,
-                    input_window_start=as_of_dt,
-                    input_window_end=as_of_dt,
-                    source_dataset_ids=raw_datasets or (f"staged_fixture:{resolved_fixture.name}",),
-                    parameter_hash=parameter_hash,
-                    resource_profile="eco",
-                    allow_synthetic_hashes=False,
-                )
-
-                snapshot_source = source_used
-                snapshot_domain = micro.binding.data_domain
-                feature_write = snapshot_writer.write_features(
-                    rows=feature_rows,
-                    validation_report_id=quality_report.validation_report_id,
-                    run_id=resolved_run_id,
-                    job_id=resolved_job_id,
-                    source_used=snapshot_source,
-                    data_domain=snapshot_domain,
-                    con=con,
-                    own_transaction=False,
-                )
-                interp_write = snapshot_writer.write_interpretation(
-                    rows=interp_rows,
-                    validation_report_id=quality_report.validation_report_id,
-                    run_id=resolved_run_id,
-                    job_id=resolved_job_id,
-                    source_used=snapshot_source,
-                    data_domain=snapshot_domain,
-                    con=con,
-                    own_transaction=False,
-                )
-                lineage_write = snapshot_writer.write_lineage(
-                    lineage=lineage,
-                    validation_report_id=quality_report.validation_report_id,
-                    run_id=resolved_run_id,
-                    job_id=resolved_job_id,
-                    source_used=snapshot_source,
-                    data_domain=snapshot_domain,
-                    con=con,
-                    own_transaction=False,
-                )
-
-                con.execute("COMMIT")
-            except IngestionCommitBlockedError:
-                con.execute("ROLLBACK")
-                raise
-            except IngestionRejectedError:
-                con.execute("ROLLBACK")
-                raise
-            except Exception:
-                con.execute("ROLLBACK")
-                raise
-
-        assert micro is not None
-        assert observation_row is not None
-        assert quality_report is not None
-        assert obs_write is not None
-        assert feature_write is not None
-        assert interp_write is not None
-        assert lineage_write is not None
-        assert feature_rows is not None
-        assert interp_rows is not None
-        assert lineage is not None
-
-        return IngestionCommitResult(
+        return _commit_impl(
+            self,
             indicator_id=indicator_id,
             as_of=as_of,
-            micro_fetch=micro,
-            validation_report_id=quality_report.validation_report_id,
-            observation_write_status=obs_write.status,
-            feature_write_status=feature_write.status,
-            interpretation_write_status=interp_write.status,
-            lineage_write_status=lineage_write.status,
-            observation_id=str(observation_row["observation_id"]),
-            feature_id=feature_rows[0].feature_id,
-            interpretation_id=interp_rows[0].interpretation_id,
-            lineage_snapshot_id=lineage.snapshot_id,
-            source_fetch_ids=lineage.source_fetch_ids,
-            source_content_hashes=lineage.source_content_hashes,
-            staged_fixture_path=_relative_path(resolved_fixture),
+            run_id=run_id,
+            job_id=job_id,
+            fixture_path=fixture_path,
         )
 
 
@@ -979,75 +639,3 @@ def _relative_to_data_root(path: Path | str, data_root: Path) -> str:
     except ValueError:
         return _relative_path(resolved)
 
-
-from backend.app.layer1_axes.ingestion_evidence import (  # noqa: E402 — facade re-export (PR-R2a)
-    NO_MUTATION_MD,
-    PHASE2_MUTATION_TABLES,
-    PHASE3_EVIDENCE_JSON,
-    PHASE3_MUTATION_TABLES,
-    PHASE3_NO_CLEAN_WRITE_MD,
-    PHASE3_SANDBOX_DIRNAME,
-    PHASE4_EVIDENCE_JSON,
-    PHASE4_INVENTORY_DELTA_MD,
-    PHASE4_MUTATION_TABLES,
-    PHASE4_SANDBOX_DIRNAME,
-    ROUTE_PREVIEW_JSON,
-    ROUTE_PREVIEW_MD,
-    capture_phase2_route_evidence,
-    capture_phase3_micro_fetch_evidence,
-    capture_phase4_clean_write_evidence,
-    capture_task_phase2_evidence,
-    capture_task_phase3_evidence,
-    capture_task_phase4_evidence,
-    format_phase2_no_mutation_md,
-    format_phase2_route_preview_md,
-    format_phase3_no_clean_write_md,
-    format_phase4_inventory_delta_md,
-)
-
-__all__ = [
-    "BLINDSPOT_INDICATOR_REJECTED",
-    "DEFAULT_INGESTION_ALLOWLIST",
-    "DISABLED_INDICATOR_REJECTED",
-    "FORBIDDEN_INDICATOR_REJECTED",
-    "FROZEN_STAGED_INDICATOR",
-    "FRED_PRIMARY_DEFERRED_NOTE",
-    "IngestionCommitBlockedError",
-    "IngestionCommitResult",
-    "IngestionRejectedError",
-    "IngestionRouteBinding",
-    "IndicatorRoutePreview",
-    "Layer1ObservationIngestionService",
-    "MACRO_FIXTURE_RELATIVE",
-    "MicroFetchResult",
-    "NO_MUTATION_MD",
-    "NOT_OBSERVABLE_REJECTED",
-    "NOT_ON_ALLOWLIST_REJECTED",
-    "PHASE2_MUTATION_TABLES",
-    "PHASE3_EVIDENCE_JSON",
-    "PHASE3_MUTATION_TABLES",
-    "PHASE3_NO_CLEAN_WRITE_MD",
-    "PHASE3_SANDBOX_DIRNAME",
-    "PHASE4_EVIDENCE_JSON",
-    "PHASE4_INVENTORY_DELTA_MD",
-    "PHASE4_MUTATION_TABLES",
-    "PHASE4_SANDBOX_DIRNAME",
-    "ROUTE_PREVIEW_JSON",
-    "ROUTE_PREVIEW_MD",
-    "RoutePreviewResult",
-    "STAGED_DATA_DOMAIN",
-    "STAGED_OPERATION",
-    "STAGED_SERIES_ID",
-    "STAGED_UNIT",
-    "UNKNOWN_INDICATOR_REJECTED",
-    "capture_phase2_route_evidence",
-    "capture_phase3_micro_fetch_evidence",
-    "capture_phase4_clean_write_evidence",
-    "capture_task_phase2_evidence",
-    "capture_task_phase3_evidence",
-    "capture_task_phase4_evidence",
-    "format_phase2_no_mutation_md",
-    "format_phase2_route_preview_md",
-    "format_phase3_no_clean_write_md",
-    "format_phase4_inventory_delta_md",
-]

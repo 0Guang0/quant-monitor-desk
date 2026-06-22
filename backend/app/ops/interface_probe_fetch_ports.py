@@ -10,14 +10,11 @@ from datetime import UTC, date, datetime, timedelta
 
 from backend.app.datasources.adapters.fetch_port import FetchPayload, PortError
 from backend.app.datasources.fetch_result import FetchRequest
+from backend.app.ops.fetch_port_common import recent_window_start
 from backend.app.ops.live_pilot_fetch_ports import _akshare_hist_symbol, _run_akshare_call
 
 EASTMONEY_HIST_VENDOR_API = "stock_zh_a_hist"
 SINA_DAILY_VENDOR_API = "stock_zh_a_daily"
-
-
-def _recent_window_start(*, calendar_days: int = 14) -> date:
-    return datetime.now(UTC).date() - timedelta(days=calendar_days)
 
 
 @dataclass(frozen=True)
@@ -36,7 +33,7 @@ class AkshareSinaDailyValidationFetchPort:
         if not hist_symbol:
             raise PortError("FAILED", "missing instrument_id for akshare sina validation fetch")
 
-        start = _recent_window_start()
+        start = recent_window_start()
         end = datetime.now(UTC).date()
 
         def _fetch_sina():

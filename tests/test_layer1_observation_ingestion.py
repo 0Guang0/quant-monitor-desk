@@ -24,8 +24,8 @@ from backend.app.layer1_axes.ingestion import (
     STAGED_OPERATION,
     IngestionRejectedError,
     Layer1ObservationIngestionService,
-    capture_task_phase2_evidence,
 )
+from backend.app.layer1_axes.ingestion_evidence import capture_task_phase2_evidence
 from backend.app.layer1_axes.ingestion_inventory import (
     INVENTORY_JSON_NAME,
     INVENTORY_MD_NAME,
@@ -697,7 +697,7 @@ def test_layer1Ingestion_phase2_taskEvidenceArtifacts(tmp_path: Path, monkeypatc
     import backend.app.config as config_module
 
     monkeypatch.setattr(config_module, "DATA_ROOT", data_root)
-    from backend.app.layer1_axes.ingestion import capture_phase2_route_evidence
+    from backend.app.layer1_axes.ingestion_evidence import capture_phase2_route_evidence
 
     service = Layer1ObservationIngestionService(db_path=db, data_root=data_root)
     evidence = capture_phase2_route_evidence(
@@ -919,7 +919,7 @@ def test_layer1Ingestion_phase3_taskEvidenceArtifacts(tmp_path: Path, monkeypatc
         evidence_dir=out,
     )
 
-    from backend.app.layer1_axes.ingestion import capture_task_phase3_evidence
+    from backend.app.layer1_axes.ingestion_evidence import capture_task_phase3_evidence
 
     evidence = capture_task_phase3_evidence(out, as_of=date(2024, 6, 15))
     assert (out / "phase3_micro_fetch_evidence.json").is_file()
@@ -1365,7 +1365,7 @@ def test_layer1Observation_noFutureDataRejected(tmp_path: Path, monkeypatch) -> 
         return row
 
     monkeypatch.setattr(
-        "backend.app.layer1_axes.ingestion.map_micro_fetch_to_observation_row",
+        "backend.app.layer1_axes.ingestion_commit.map_micro_fetch_to_observation_row",
         future_row,
     )
     with pytest.raises(IngestionCommitBlockedError) as exc:
@@ -1538,7 +1538,7 @@ def test_layer1Ingestion_phase4_taskEvidenceArtifacts(tmp_path: Path, monkeypatc
     )
     capture_task_phase2_evidence(out, as_of=date(2024, 6, 15))
 
-    from backend.app.layer1_axes.ingestion import capture_task_phase4_evidence
+    from backend.app.layer1_axes.ingestion_evidence import capture_task_phase4_evidence
 
     evidence = capture_task_phase4_evidence(out, as_of=date(2024, 6, 15))
     assert (out / "phase4_clean_write_and_snapshot_evidence.json").is_file()

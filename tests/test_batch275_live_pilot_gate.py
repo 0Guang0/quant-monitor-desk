@@ -430,7 +430,7 @@ def test_livePilot_phase3_routeNotReady_stopsBeforeFetch(
 
     with (
         patch(
-            "backend.app.ops.live_pilot.preview_live_pilot",
+            "backend.app.ops.live_pilot_phase3.preview_live_pilot",
             return_value={"explicit_source_route_status": route_status},
         ),
         patch(
@@ -466,7 +466,7 @@ def test_livePilot_phase3_resourceGuardHardStop_stopsBeforeFetch(tmp_path: Path)
 
     with (
         patch(
-            "backend.app.ops.live_pilot.preview_live_pilot",
+            "backend.app.ops.live_pilot_phase3.preview_live_pilot",
             side_effect=RuntimeError("ResourceGuard HARD_STOP: test"),
         ),
         patch(
@@ -509,7 +509,7 @@ def test_livePilot_phase3_failureLeavesDurableEvidence(tmp_path: Path) -> None:
             },
         }
 
-    with patch("backend.app.ops.live_pilot.run_live_pilot_raw_only", side_effect=_fake_run):
+    with patch("backend.app.ops.live_pilot_phase3.run_live_pilot_raw_only", side_effect=_fake_run):
         payload = capture_phase3_raw_evidence(
             requests=approved_pilot_requests(),
             sandbox_root=tmp_path / "sandbox",
@@ -548,7 +548,7 @@ def test_livePilot_phase3_repeatExecution_isRerunSafe(tmp_path: Path) -> None:
 
     evidence_dir = tmp_path / "evidence"
     sandbox_root = tmp_path / "sandbox"
-    with patch("backend.app.ops.live_pilot.run_live_pilot_raw_only", side_effect=_fake_run):
+    with patch("backend.app.ops.live_pilot_phase3.run_live_pilot_raw_only", side_effect=_fake_run):
         first = capture_phase3_raw_evidence(
             requests=approved_pilot_requests(),
             sandbox_root=sandbox_root,

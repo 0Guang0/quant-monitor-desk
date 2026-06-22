@@ -327,6 +327,10 @@ class SourceRegistry:
         self._sources: dict[str, SourceRecord] = {}
         self._domain_roles: dict[str, DomainRoleBinding] = {}
 
+    def is_loaded(self) -> bool:
+        """True when registry YAML has been parsed into memory (DS-07)."""
+        return bool(self._sources)
+
     def load(self, path: Path | None = None) -> None:
         yaml_path = _resolve_registry_path(path or self._path)
         try:

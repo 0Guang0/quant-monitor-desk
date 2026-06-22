@@ -53,7 +53,7 @@ class DataSourceService:
         staged_fixture_mode: bool = False,
     ) -> None:
         self._source_registry = source_registry or SourceRegistry()
-        if not self._source_registry._sources:
+        if not self._source_registry.is_loaded():
             self._source_registry.load()
         self._capability_registry = capability_registry or SourceCapabilityRegistry()
         if not self._capability_registry.sources:
@@ -145,7 +145,7 @@ class DataSourceService:
         operation: str | None = None,
         on_enter_fetching: Callable[[], None] | None = None,
     ) -> FetchResult:
-        op = operation or _default_operation(req.data_domain)
+        op = operation or self._capability_registry.default_operation_for_domain(req.data_domain)
         plan = self._route_planner.plan(
             data_domain=req.data_domain,
             operation=op,
@@ -195,23 +195,28 @@ class DataSourceService:
         selected = plan.selected_source_id if plan.selected_source_id is not None else req.source_id
         if staged_route_override:
             selected = req.source_id
-        try:
-            self._capability_registry.assert_source_domain_operation(selected, req.data_domain, op)
-        except (UnknownCapabilityError, OperationDisabledError) as exc:
-            result = FetchResult(
-                run_id=req.run_id,
-                source_id=selected,
-                data_domain=req.data_domain,
-                status="DISABLED_SOURCE",
-                row_count=0,
-                fetch_time=fetch_time,
-                error_message=str(exc),
-            )
-            self._fetch_log.write(con, result, req=req, job_id=job_id)
-            return result
 
         if on_enter_fetching is not None:
             on_enter_fetching()
+
+        # Planner validates capability for READY routes; re-assert only for overrides (DS-05).
+        if plan.route_status != "READY" or staged_route_override:
+            try:
+                self._capability_registry.assert_source_domain_operation(
+                    selected, req.data_domain, op
+                )
+            except (UnknownCapabilityError, OperationDisabledError) as exc:
+                result = FetchResult(
+                    run_id=req.run_id,
+                    source_id=selected,
+                    data_domain=req.data_domain,
+                    status="DISABLED_SOURCE",
+                    row_count=0,
+                    fetch_time=fetch_time,
+                    error_message=str(exc),
+                )
+                self._fetch_log.write(con, result, req=req, job_id=job_id)
+                return result
 
         if self._fetch_port is None and not self._fixture_mode:
             raise AdapterConfigurationError(

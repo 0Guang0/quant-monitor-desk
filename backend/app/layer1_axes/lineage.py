@@ -4,11 +4,17 @@ from __future__ import annotations
 
 import hashlib
 import json
-import re
 import uuid
 from datetime import UTC, datetime
 
 import duckdb
+from backend.app.core.snapshot_lineage import (
+    LINEAGE_REQUIRED_FIELDS,
+    assert_lineage_fields_complete,
+    lineage_row_to_db_tuple,
+    parameter_hash_for,
+    validate_source_dataset_ids,
+)
 from backend.app.db.connection import ConnectionManager
 from backend.app.db.validation_gate import DbValidationGate
 from backend.app.db.write_manager import WriteManager, WriteRequest
@@ -17,26 +23,6 @@ from backend.app.layer1_axes.models import (
     InterpretationSnapshotRow,
     LineageEnvelope,
     ValidationReportRef,
-)
-
-LINEAGE_REQUIRED_FIELDS = (
-    "snapshot_id",
-    "snapshot_type",
-    "layer_id",
-    "as_of_timestamp",
-    "generated_at",
-    "input_data_window_start",
-    "input_data_window_end",
-    "source_dataset_ids",
-    "source_fetch_ids",
-    "source_content_hashes",
-    "rule_version",
-    "code_version",
-    "parameter_hash",
-    "resource_profile",
-    "upstream_snapshot_ids",
-    "is_incremental",
-    "rebuild_reason",
 )
 
 LAYER1_TABLES = frozenset(
@@ -50,12 +36,6 @@ LAYER1_TABLES = frozenset(
         "axis_snapshot_lineage",
     }
 )
-
-_AGENT_SOURCE_PATTERN = re.compile(
-    r"(agent[_-]?summary|generated_by=agent|建议|买入|卖出|信号)",
-    re.IGNORECASE,
-)
-
 
 class LineageSnapshotError(ValueError):
     """Invalid lineage envelope or write inputs."""
@@ -93,7 +73,7 @@ class SnapshotLineageBuilder:
         rebuild_reason: str | None = None,
         allow_synthetic_hashes: bool = False,
     ) -> LineageEnvelope:
-        _validate_source_dataset_ids(source_dataset_ids)
+        validate_source_dataset_ids(source_dataset_ids, error_type=LineageSnapshotError)
         try:
             fetch_ids = tuple(json.loads(validation_report.source_fetch_ids_json or "[]"))
         except json.JSONDecodeError as exc:
@@ -133,58 +113,10 @@ class SnapshotLineageBuilder:
             is_incremental=is_incremental,
             rebuild_reason=rebuild_reason,
         )
-        _assert_lineage_fields_complete(envelope)
+        assert_lineage_fields_complete(envelope, error_type=LineageSnapshotError)
         return envelope
 
-    @staticmethod
-    def parameter_hash_for(
-        *,
-        rule_version: str,
-        inputs: tuple[str, ...],
-    ) -> str:
-        payload = "|".join([rule_version, *inputs])
-        return hashlib.sha256(payload.encode()).hexdigest()
-
-
-def _validate_source_dataset_ids(source_dataset_ids: tuple[str, ...]) -> None:
-    """Enforce snapshot_lineage_contract agent_outputs_not_source."""
-    for ds_id in source_dataset_ids:
-        if _AGENT_SOURCE_PATTERN.search(ds_id):
-            raise LineageSnapshotError(
-                f"agent outputs must not appear in source_dataset_ids: {ds_id!r}"
-            )
-
-
-def _assert_lineage_fields_complete(envelope: LineageEnvelope) -> None:
-    """Single source of truth for lineage completeness (LINEAGE_REQUIRED_FIELDS)."""
-    optional_nullable = frozenset({"rebuild_reason"})
-    for field in LINEAGE_REQUIRED_FIELDS:
-        if field in optional_nullable:
-            continue
-        if getattr(envelope, field) is None:
-            raise LineageSnapshotError(f"lineage missing required field: {field!r}")
-
-
-def lineage_row_to_db_tuple(lineage: LineageEnvelope) -> list:
-    return [
-        lineage.snapshot_id,
-        lineage.snapshot_type,
-        lineage.layer_id,
-        lineage.as_of_timestamp,
-        lineage.generated_at,
-        lineage.input_data_window_start,
-        lineage.input_data_window_end,
-        json.dumps(list(lineage.source_dataset_ids)),
-        json.dumps(list(lineage.source_fetch_ids)),
-        json.dumps(list(lineage.source_content_hashes)),
-        lineage.rule_version,
-        lineage.code_version,
-        lineage.parameter_hash,
-        lineage.resource_profile,
-        json.dumps(list(lineage.upstream_snapshot_ids)),
-        lineage.is_incremental,
-        lineage.rebuild_reason,
-    ]
+    parameter_hash_for = staticmethod(parameter_hash_for)
 
 
 def feature_row_to_db_tuple(row: FeatureSnapshotRow) -> list:
@@ -242,6 +174,32 @@ def interpretation_row_to_db_tuple(row: InterpretationSnapshotRow) -> list:
     ]
 
 
+def _with_writer_connection(
+    cm: ConnectionManager,
+    con: duckdb.DuckDBPyConnection | None,
+    own_transaction: bool,
+    fn,
+):
+    """Run write helper on con or acquire writer (L1-09)."""
+    if con is None:
+        with cm.writer() as writer_con:
+            return fn(writer_con, own_transaction=own_transaction)
+    return fn(con, own_transaction=own_transaction)
+
+
+def _with_writer_connection(
+    cm: ConnectionManager,
+    con: duckdb.DuckDBPyConnection | None,
+    own_transaction: bool,
+    fn,
+):
+    """Run write helper on con or acquire writer (L1-09)."""
+    if con is None:
+        with cm.writer() as writer_con:
+            return fn(writer_con, own_transaction=own_transaction)
+    return fn(con, own_transaction=own_transaction)
+
+
 class Layer1SnapshotWriter:
     """Write Layer 1 snapshots via staging → DbValidationGate → WriteManager."""
 
@@ -262,27 +220,20 @@ class Layer1SnapshotWriter:
         own_transaction: bool = True,
     ):
         _reject_forbidden_substitute_flags(rows)
-        if con is None:
-            with self._cm.writer() as writer_con:
-                return self._write_features_on_connection(
-                    writer_con,
-                    rows=rows,
-                    validation_report_id=validation_report_id,
-                    run_id=run_id,
-                    job_id=job_id,
-                    source_used=source_used,
-                    data_domain=data_domain,
-                    own_transaction=own_transaction,
-                )
-        return self._write_features_on_connection(
+        return _with_writer_connection(
+            self._cm,
             con,
-            rows=rows,
-            validation_report_id=validation_report_id,
-            run_id=run_id,
-            job_id=job_id,
-            source_used=source_used,
-            data_domain=data_domain,
-            own_transaction=own_transaction,
+            own_transaction,
+            lambda writer_con, own_transaction: self._write_features_on_connection(
+                writer_con,
+                rows=rows,
+                validation_report_id=validation_report_id,
+                run_id=run_id,
+                job_id=job_id,
+                source_used=source_used,
+                data_domain=data_domain,
+                own_transaction=own_transaction,
+            ),
         )
 
     def _write_features_on_connection(
@@ -334,27 +285,20 @@ class Layer1SnapshotWriter:
         con: duckdb.DuckDBPyConnection | None = None,
         own_transaction: bool = True,
     ):
-        if con is None:
-            with self._cm.writer() as writer_con:
-                return self._write_lineage_on_connection(
-                    writer_con,
-                    lineage=lineage,
-                    validation_report_id=validation_report_id,
-                    run_id=run_id,
-                    job_id=job_id,
-                    source_used=source_used,
-                    data_domain=data_domain,
-                    own_transaction=own_transaction,
-                )
-        return self._write_lineage_on_connection(
+        return _with_writer_connection(
+            self._cm,
             con,
-            lineage=lineage,
-            validation_report_id=validation_report_id,
-            run_id=run_id,
-            job_id=job_id,
-            source_used=source_used,
-            data_domain=data_domain,
-            own_transaction=own_transaction,
+            own_transaction,
+            lambda writer_con, own_transaction: self._write_lineage_on_connection(
+                writer_con,
+                lineage=lineage,
+                validation_report_id=validation_report_id,
+                run_id=run_id,
+                job_id=job_id,
+                source_used=source_used,
+                data_domain=data_domain,
+                own_transaction=own_transaction,
+            ),
         )
 
     def _write_lineage_on_connection(
@@ -404,27 +348,20 @@ class Layer1SnapshotWriter:
         con: duckdb.DuckDBPyConnection | None = None,
         own_transaction: bool = True,
     ):
-        if con is None:
-            with self._cm.writer() as writer_con:
-                return self._write_interpretation_on_connection(
-                    writer_con,
-                    rows=rows,
-                    validation_report_id=validation_report_id,
-                    run_id=run_id,
-                    job_id=job_id,
-                    source_used=source_used,
-                    data_domain=data_domain,
-                    own_transaction=own_transaction,
-                )
-        return self._write_interpretation_on_connection(
+        return _with_writer_connection(
+            self._cm,
             con,
-            rows=rows,
-            validation_report_id=validation_report_id,
-            run_id=run_id,
-            job_id=job_id,
-            source_used=source_used,
-            data_domain=data_domain,
-            own_transaction=own_transaction,
+            own_transaction,
+            lambda writer_con, own_transaction: self._write_interpretation_on_connection(
+                writer_con,
+                rows=rows,
+                validation_report_id=validation_report_id,
+                run_id=run_id,
+                job_id=job_id,
+                source_used=source_used,
+                data_domain=data_domain,
+                own_transaction=own_transaction,
+            ),
         )
 
     def _write_interpretation_on_connection(

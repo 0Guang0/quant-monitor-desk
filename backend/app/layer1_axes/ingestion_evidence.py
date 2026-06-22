@@ -23,7 +23,14 @@ from backend.app.layer1_axes.ingestion import (
     Layer1ObservationIngestionService,
     MicroFetchResult,
 )
+from backend.app.layer1_axes.evidence_sandbox import resolve_task_sandbox_db
 from backend.app.layer1_axes.ingestion_inventory import _relative_to_project
+from backend.app.ops.layer1_evidence.formatters import (
+    format_phase2_no_mutation_md,
+    format_phase2_route_preview_md,
+    format_phase3_no_clean_write_md,
+    format_phase4_inventory_delta_md,
+)
 
 _relative_path = _relative_to_project
 
@@ -85,91 +92,6 @@ def _preview_to_dict(preview: IndicatorRoutePreview) -> dict[str, Any]:
         "capability_verified": preview.capability_verified,
         "stop_reason": preview.stop_reason,
     }
-
-
-def format_phase2_route_preview_md(payload: dict[str, Any]) -> str:
-    lines = [
-        "# Phase 2 — Route Preview Matrix",
-        "",
-        f"- **Generated at:** {payload['generated_at']}",
-        f"- **Frozen indicator:** `{payload['frozen_indicator']}`",
-        f"- **Dry-run:** {payload['dry_run']}",
-        f"- **FRED live deferred:** {payload.get('fred_primary_deferred')}",
-        "",
-        "## Allowlist",
-        "",
-    ]
-    for item in payload.get("allowlist", []):
-        lines.append(f"- `{item}`")
-    lines.extend(["", "## Route previews", ""])
-    for entry in payload.get("previews", []):
-        plan = entry["route_plan"]
-        binding = entry["binding"]
-        lines.extend(
-            [
-                f"### `{entry['indicator_id']}` @ {entry['as_of']}",
-                "",
-                f"- data_domain: `{binding['data_domain']}`",
-                f"- operation: `{binding['operation']}`",
-                f"- series_id: `{binding.get('series_id')}`",
-                f"- declared primary: `{binding['primary_source_declared']}`",
-                f"- staged note: {binding.get('staged_route_note')}",
-                f"- route_status: `{plan['route_status']}`",
-                f"- selected_source_id: `{plan.get('selected_source_id')}`",
-                f"- resource_guard: `{entry['resource_guard_decision']}`",
-                f"- capability_verified: {entry.get('capability_verified')}",
-                f"- intended_as_of_range: {entry.get('intended_as_of_range')}",
-                f"- stop_reason: {entry.get('stop_reason')}",
-                "",
-                "| source_id | role | enabled | skip_reason |",
-                "| --------- | ---- | ------- | ----------- |",
-            ]
-        )
-        for candidate in plan.get("candidates", []):
-            lines.append(
-                f"| `{candidate['source_id']}` | {candidate['role']} | "
-                f"{candidate['enabled']} | {candidate.get('skip_reason')} |"
-            )
-        lines.append("")
-    proof = payload.get("mutation_proof", {})
-    lines.extend(
-        [
-            "## No-mutation proof",
-            "",
-            f"- db_path: `{proof.get('db_path')}`",
-            f"- db_capture_strategy: `{proof.get('db_capture_strategy')}`",
-            f"- db_file_hash_unchanged: {proof.get('db_file_hash_unchanged')}",
-            f"- row_counts_unchanged: {proof.get('row_counts_unchanged')}",
-            f"- before: `{proof.get('before_counts')}`",
-            f"- after: `{proof.get('after_counts')}`",
-            "",
-        ]
-    )
-    return "\n".join(lines) + "\n"
-
-
-def _format_count_table_md(title: str, counts: dict[str, int | None]) -> list[str]:
-    lines = [f"## {title}", "", "| table | row_count |", "| ----- | --------- |"]
-    for name, count in counts.items():
-        lines.append(f"| `{name}` | {count} |")
-    lines.append("")
-    return lines
-
-
-def format_phase2_no_mutation_md(proof: dict[str, Any]) -> str:
-    lines = [
-        "# Phase 2 — No Mutation Proof",
-        "",
-        f"- **Generated at:** {proof['generated_at']}",
-        f"- **DB path:** `{proof['db_path']}`",
-        f"- **DB file hash unchanged:** {proof.get('db_file_hash_unchanged')}",
-        f"- **Capture strategy:** {proof.get('db_capture_strategy')}",
-        f"- **Row counts unchanged:** {proof['row_counts_unchanged']}",
-        "",
-    ]
-    lines.extend(_format_count_table_md("Before preview", proof.get("before_counts", {})))
-    lines.extend(_format_count_table_md("After preview", proof.get("after_counts", {})))
-    return "\n".join(lines) + "\n"
 
 
 def _db_file_hash(db_path: Path) -> str:
@@ -277,22 +199,6 @@ def _micro_fetch_to_dict(result: MicroFetchResult) -> dict[str, Any]:
         "fred_primary_deferred": True,
         "fred_primary_deferred_note": FRED_PRIMARY_DEFERRED_NOTE,
     }
-
-
-def format_phase3_no_clean_write_md(proof: dict[str, Any]) -> str:
-    lines = [
-        "# Phase 3 — No Clean Write Proof",
-        "",
-        f"- **Generated at:** {proof['generated_at']}",
-        f"- **DB path:** `{proof['db_path']}`",
-        f"- **axis_observation unchanged:** {proof['axis_observation_unchanged']}",
-        f"- **fetch_log delta:** {proof['fetch_log_delta']}",
-        f"- **file_registry delta:** {proof['file_registry_delta']}",
-        "",
-    ]
-    lines.extend(_format_count_table_md("Before micro-fetch", proof.get("before_counts", {})))
-    lines.extend(_format_count_table_md("After micro-fetch", proof.get("after_counts", {})))
-    return "\n".join(lines) + "\n"
 
 
 def capture_phase3_micro_fetch_evidence(
@@ -412,26 +318,16 @@ def capture_task_phase2_evidence(
     if inv_path.is_file():
         phase2_gate = json.loads(inv_path.read_text(encoding="utf-8")).get("phase2_gate")
     sandbox_db = out / SANDBOX_BASELINE_DIRNAME / TARGET_DB_RELATIVE
-    db_capture_strategy = "synthetic_migrated_schema_only"
-    baseline_db_relative = _relative_path(sandbox_db)
-
-    if sandbox_db.is_file():
-        inspect_db = sandbox_db
-        db_capture_strategy = "phase1_sandbox_copy_reused"
-    elif targets.target_db_exists:
-        sandbox_db.parent.mkdir(parents=True, exist_ok=True)
-        copy_sandbox_db(targets.target_db, sandbox_db)
-        inspect_db = sandbox_db
-        db_capture_strategy = "sandbox_copy_aligned_with_phase1"
-    else:
-        inspect_db = sandbox_db
-        inspect_db.parent.mkdir(parents=True, exist_ok=True)
-        con = duckdb.connect(str(inspect_db))
-        try:
-            apply_migrations(con)
-        finally:
-            con.close()
-        db_capture_strategy = "synthetic_migrated_schema_only"
+    resolved = resolve_task_sandbox_db(
+        evidence_dir=out,
+        sandbox_db=sandbox_db,
+        target_db=targets.target_db,
+        target_db_exists=targets.target_db_exists,
+        copy_sandbox_db=copy_sandbox_db,
+    )
+    inspect_db = resolved.inspect_db
+    db_capture_strategy = resolved.db_capture_strategy
+    baseline_db_relative = resolved.baseline_db_relative or _relative_path(sandbox_db)
 
     service = Layer1ObservationIngestionService(
         db_path=inspect_db,
@@ -446,29 +342,6 @@ def capture_task_phase2_evidence(
         db_capture_strategy=db_capture_strategy,
         baseline_db_relative=baseline_db_relative,
     )
-
-
-def format_phase4_inventory_delta_md(delta: dict[str, Any]) -> str:
-    lines = [
-        "# Phase 4 — Inventory Delta",
-        "",
-        f"- **Generated at:** {delta['generated_at']}",
-        f"- **DB path:** `{delta['db_path']}`",
-        f"- **Frozen indicator:** `{delta['frozen_indicator']}`",
-        f"- **Staged fixture:** `{delta.get('staged_fixture_path')}`",
-        "",
-        "## Row-count deltas",
-        "",
-        "| table | before | after | delta |",
-        "| ----- | ------ | ----- | ----- |",
-    ]
-    for name, counts in delta.get("table_deltas", {}).items():
-        before = counts.get("before")
-        after = counts.get("after")
-        delta_val = (after or 0) - (before or 0)
-        lines.append(f"| `{name}` | {before} | {after} | {delta_val} |")
-    lines.append("")
-    return "\n".join(lines) + "\n"
 
 
 def capture_phase4_clean_write_evidence(
@@ -562,28 +435,21 @@ def capture_task_phase4_evidence(
 
     targets = resolve_phase1_target_paths(data_root=data_root, db_path=db_path)
     sandbox_db = out / SANDBOX_BASELINE_DIRNAME / TARGET_DB_RELATIVE
-    db_capture_strategy = "synthetic_migrated_schema_only"
-
-    if sandbox_db.is_file():
-        inspect_db = sandbox_db
-        db_capture_strategy = "phase1_sandbox_copy_reused"
-    elif targets.target_db_exists:
-        sandbox_db.parent.mkdir(parents=True, exist_ok=True)
-        copy_sandbox_db(targets.target_db, sandbox_db)
-        inspect_db = sandbox_db
-        db_capture_strategy = "sandbox_copy_aligned_with_phase1"
-    else:
-        sandbox_base = out / PHASE4_SANDBOX_DIRNAME
-        if sandbox_base.exists():
-            shutil.rmtree(sandbox_base)
-        inspect_db = sandbox_base / TARGET_DB_RELATIVE
-        inspect_db.parent.mkdir(parents=True, exist_ok=True)
-        con = duckdb.connect(str(inspect_db))
-        try:
-            apply_migrations(con)
-        finally:
-            con.close()
-        db_capture_strategy = "fresh_phase4_sandbox_fallback"
+    sandbox_base = out / PHASE4_SANDBOX_DIRNAME
+    if sandbox_base.exists():
+        shutil.rmtree(sandbox_base)
+    fallback_db = sandbox_base / TARGET_DB_RELATIVE
+    resolved = resolve_task_sandbox_db(
+        evidence_dir=out,
+        sandbox_db=sandbox_db,
+        target_db=targets.target_db,
+        target_db_exists=targets.target_db_exists,
+        copy_sandbox_db=copy_sandbox_db,
+        fallback_sandbox_db=fallback_db,
+        fallback_strategy="fresh_phase4_sandbox_fallback",
+    )
+    inspect_db = resolved.inspect_db
+    db_capture_strategy = resolved.db_capture_strategy
 
     fixture_path = app_config.PROJECT_ROOT / MACRO_FIXTURE_RELATIVE
     phase4_data_root = out / PHASE4_SANDBOX_DIRNAME / "data"

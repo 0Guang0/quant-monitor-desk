@@ -73,6 +73,8 @@ def _run_akshare_call(fn: Callable[[], _T]) -> _T:
     raise PortError("NETWORK_ERROR", f"{combined}; {_PROXY_HINT}")
 
 
+from backend.app.ops.fetch_port_common import recent_window_start
+
 _DATE_WINDOW_RE = re.compile(
     r"^recent\s+(\d+)\s+(trading|calendar)\s+days$",
     re.IGNORECASE,
@@ -92,14 +94,10 @@ def parse_pilot_date_window(date_window: str) -> int:
     return int(days * 1.5) + 2
 
 
-def _recent_window_start(*, calendar_days: int = 14) -> date:
-    return datetime.now(UTC).date() - timedelta(days=calendar_days)
-
-
 def _window_start_for_label(date_window: str | None) -> date:
     if date_window is None:
-        return _recent_window_start()
-    return _recent_window_start(calendar_days=parse_pilot_date_window(date_window))
+        return recent_window_start()
+    return recent_window_start(calendar_days=parse_pilot_date_window(date_window))
 
 
 def _akshare_hist_symbol(raw_symbol: str) -> str:

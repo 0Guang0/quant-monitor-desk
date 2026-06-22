@@ -15,6 +15,24 @@ from backend.app.sync.runners import (
 )
 
 
+def _default_pipeline_config(
+    *,
+    clean_table: str,
+    conflict_staging_table: str | None = None,
+    write_mode: str = "append_only",
+    primary_keys: tuple[str, ...] = ("instrument_id", "trade_date"),
+    required_fields: tuple[str, ...] = ("close", "source_used"),
+) -> PipelineConfig:
+    """Shared PipelineConfig factory for incremental/backfill (SY-06)."""
+    return PipelineConfig(
+        clean_table=clean_table,
+        conflict_staging_table=conflict_staging_table,
+        write_mode=write_mode,
+        primary_keys=primary_keys,
+        required_fields=required_fields,
+    )
+
+
 class DataSyncOrchestrator:
     def __init__(self, connection_manager: ConnectionManager) -> None:
         self._cm = connection_manager
@@ -136,7 +154,7 @@ class DataSyncOrchestrator:
             spec,
             adapter=adapter,
             fetch_callable=fetch_callable,
-            config=PipelineConfig(
+            config=_default_pipeline_config(
                 clean_table=clean_table,
                 conflict_staging_table=conflict_staging_table,
                 write_mode=write_mode,
@@ -171,7 +189,7 @@ class DataSyncOrchestrator:
                 )
 
             fetch_callable = _service_fetch
-        config = PipelineConfig(
+        config = _default_pipeline_config(
             clean_table=clean_table,
             conflict_staging_table=conflict_staging_table,
             write_mode=write_mode,
