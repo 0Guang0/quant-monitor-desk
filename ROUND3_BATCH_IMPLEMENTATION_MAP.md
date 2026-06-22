@@ -12,25 +12,27 @@
 
 These files are **Plan-stage inputs**. Plan must read them, reconcile them, and fold the relevant parts into `.trellis/tasks/**/MASTER.plan.md` Source Context Index and `AUDIT.plan.md` Audit Source Trace. Execute / Audit / Repair must not treat this list as their default read manifest.
 
-| Input                                                         | Why it is mandatory                                                                                   |
-| ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `MIGRATION_MAP.md`                                            | Project-level map and implementation-directory boundary.                                              |
-| `docs/implementation_tasks/TASK_INPUT_CONTEXT_INDEX.md`       | Plan-only context bridge and Trellis archive pointers.                                                |
-| `docs/AUDIT_DEFERRED_REGISTRY.md`                             | Authoritative registry for OPEN / DEFERRED / RESOLVED audit items.                                    |
-| `docs/UNRESOLVED_ISSUES_REGISTRY.md`                          | Operator-facing unresolved/deferred split.                                                            |
-| `docs/RESOLVED_ISSUES_REGISTRY.md`                            | Prevents reopening items that are already closed.                                                     |
-| `docs/ROUND3_HANDOFF.md`                                      | Round 3 entry handoff and start checklist.                                                            |
-| `docs/implementation_tasks/ROUND3_EARLY_CLOSE_PLAN.md`        | Round 3 early ops and deferral closeout plan.                                                         |
-| `docs/implementation_tasks/ROUND_3_MODELING_LAYERS/README.md` | Declares formal Round 3 tasks `017`-`023` and the unnumbered DB inspect CLI boundary.                 |
-| `.trellis/spec/guides/complex-task-planning-protocol.md`      | Trellis complex-task planning, batching, Execute, Audit, Repair, and Phase 8D Repair/Debt Lite rules. |
-| `.trellis/spec/guides/round3-repair-debt-worktree-plan.md`    | Round 3 branch/worktree split plan for staged mainline plus parallel debt repair.                     |
-| `docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md`         | Global execution boundaries that Plan must fold into MASTER.                                          |
-| `docs/implementation_tasks/GLOBAL_TESTING_POLICY.md`          | Testing policy and semantic assertion requirements.                                                   |
-| `docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md`         | ResourceGuard / eco-mode constraints for every batch.                                                 |
-| `docs/quality/staged_acceptance_policy.md`                    | Stage-specific acceptance and partial-delivery rules.                                                 |
-| `docs/quality/production_live_pilot_policy.md`                | Batch 2.75 live-pilot authorization, sandbox, evidence, and no-mutation controls.                     |
-| `docs/quality/PENDING_USER_DECISIONS.md`                      | User-confirmed D-01 through D-12 decisions that Plan must not reopen.                                 |
-| `specs/contracts/runtime_versions.md`                         | Runtime, lockfile, and acceptance-command authority.                                                  |
+| Input                                                           | Why it is mandatory                                                                                                    |
+| --------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `MIGRATION_MAP.md`                                              | Project-level map and implementation-directory boundary.                                                               |
+| `docs/implementation_tasks/TASK_INPUT_CONTEXT_INDEX.md`         | Plan-only context bridge and Trellis archive pointers.                                                                 |
+| `docs/AUDIT_DEFERRED_REGISTRY.md`                               | Authoritative registry for OPEN / DEFERRED / RESOLVED audit items.                                                     |
+| `docs/UNRESOLVED_ISSUES_REGISTRY.md`                            | Operator-facing unresolved/deferred split.                                                                             |
+| `docs/RESOLVED_ISSUES_REGISTRY.md`                              | Prevents reopening items that are already closed.                                                                      |
+| `docs/ROUND3_HANDOFF.md`                                        | Round 3 entry handoff and start checklist.                                                                             |
+| `docs/implementation_tasks/ROUND3_EARLY_CLOSE_PLAN.md`          | Round 3 early ops and deferral closeout plan.                                                                          |
+| `docs/implementation_tasks/ROUND_3_MODELING_LAYERS/README.md`   | Declares formal Round 3 tasks `017`-`023` and the unnumbered DB inspect CLI boundary.                                  |
+| `.trellis/spec/guides/complex-task-planning-protocol.md`        | Trellis complex-task planning, batching, Execute, Audit, Repair, and Phase 8D Repair/Debt Lite rules.                  |
+| `.trellis/spec/guides/round3-repair-debt-worktree-plan.md`      | Round 3 branch/worktree split plan for staged mainline plus parallel debt repair.                                      |
+| `docs/implementation_tasks/ROUND_3_REFERENCE_LANDING/README.md` | External-reference landing task index with project URLs, round/batch ownership, branchability, and source-input rules. |
+| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/*.md`       | Per-branch startup prompts for independent Round 3 sessions; see §2.2 for the total index.                             |
+| `docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md`           | Global execution boundaries that Plan must fold into MASTER.                                                           |
+| `docs/implementation_tasks/GLOBAL_TESTING_POLICY.md`            | Testing policy and semantic assertion requirements.                                                                    |
+| `docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md`           | ResourceGuard / eco-mode constraints for every batch.                                                                  |
+| `docs/quality/staged_acceptance_policy.md`                      | Stage-specific acceptance and partial-delivery rules.                                                                  |
+| `docs/quality/production_live_pilot_policy.md`                  | Batch 2.75 live-pilot authorization, sandbox, evidence, and no-mutation controls.                                      |
+| `docs/quality/PENDING_USER_DECISIONS.md`                        | User-confirmed D-01 through D-12 decisions that Plan must not reopen.                                                  |
+| `specs/contracts/runtime_versions.md`                           | Runtime, lockfile, and acceptance-command authority.                                                                   |
 
 ## 1. ID convention used by this file
 
@@ -53,6 +55,9 @@ Local aliases introduced here do **not** replace the authoritative registry. The
 | `DOC-R3-002`                             | `docs/UNRESOLVED_ISSUES_REGISTRY.md`                                                                                                                                                                | `ROUND3_EARLY_CLOSE_PLAN.md` should state that `AUDIT_DEFERRED_REGISTRY.md` wins on conflict.                                                                                  |
 | `R3-B3-STAGED-DOWNSTREAM-GATE`           | `docs/quality/BATCH3_STAGED_DOWNSTREAM_GATE.md`; `.trellis/spec/guides/round3-repair-debt-worktree-plan.md`                                                                                         | Batch 3 planning gate for staged-only downstream modeling after Batch 2.75 closeout.                                                                                           |
 | `R3-B23A-EVIDENCE-FOUNDATION`            | `docs/implementation_tasks/ROUND_3_MODELING_LAYERS/023_implement_layer5_evidence_chain.md`; `specs/contracts/layer5_evidence_contract.yaml`                                                         | Early Layer5 evidence foundation slice before full Layer5 implementation.                                                                                                      |
+| `R3-REF-018C-LOW-COST-SOURCE-PROBE`      | `docs/implementation_tasks/ROUND_3_REFERENCE_LANDING/R3D_018C_low_cost_source_probe.md`; `docs/implementation_tasks/ROUND_3_MODELING_LAYERS/018C_tdx_pytdx_low_cost_probe.md`                       | External-reference landing wrapper for `debt/r3b275-018c-low-cost-probe`; includes source-project URLs and Plan/Execute input index.                                           |
+| `R3-REF-OPS-DB-DATA-HEALTH`              | `docs/implementation_tasks/ROUND_3_REFERENCE_LANDING/R3D_ops_db_data_health_reference.md`                                                                                                           | External-reference landing wrapper for EasyXT/JQ2PTrade/ptqmt-site ideas into Round 3 Batch 1/6 ops DB inspect and data health tasks.                                          |
+| `R4-REF-READONLY-SQL-ASSISTANT`          | `docs/implementation_tasks/ROUND_3_REFERENCE_LANDING/R4D_readonly_sql_assistant_reference.md`                                                                                                       | Cross-reference only: DB-GPT / DB-GPT-Hub ideas are Round 4+ read-only reporting research, not Round 3 data-source execution.                                                  |
 
 ## 2. Formal Round 3 numbered tasks
 
@@ -83,6 +88,22 @@ After Batch 2.75 repair closeout, Round 3 uses the Phase 8D Repair/Debt Lite tra
 | CI gate hardening          | `chore/round3-ci-gate-hardening`                                                                                                | Parallel                              | Verification command hygiene and staged/live readiness tests. |
 
 Do not let two active branches own the same core file group. Registry reconciliation is coordinated at merge time unless a slice has explicit registry ownership.
+
+## 2.2 Round 3 parallel-session prompt index
+
+Each prompt file is a self-contained startup instruction for one new session. Open a new session, ask it to read the matching prompt file first, and then let that session run its own Trellis/Phase 8D flow. Do not copy a prompt across branches.
+
+| Prompt file                                                                                                  | Branch / role                                | Start now?                    | Parallel?                    | Purpose                                                                        |
+| ------------------------------------------------------------------------------------------------------------ | -------------------------------------------- | ----------------------------- | ---------------------------- | ------------------------------------------------------------------------------ |
+| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_00_integration_round3_merge_coordinator.md`       | `integration/round3` merge coordinator       | First                         | Serial coordinator           | Create/maintain integration branch and enforce merge gates.                    |
+| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_01_feature_round3_batch3_staged_gate.md`          | `feature/round3-batch3-staged-gate`          | Yes, after coordinator starts | Runs beside debt branches    | Close `R3-B3-STAGED-DOWNSTREAM-GATE` before `019`.                             |
+| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_02_debt_r3b275_018c_low_cost_probe.md`            | `debt/r3b275-018c-low-cost-probe`            | Yes                           | Parallel                     | Execute 018C low-cost source probe under disabled-by-default / raw-only rules. |
+| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_03_debt_r3b275_perf_hyg_registry.md`              | `debt/r3b275-perf-hyg-registry`              | Yes                           | Parallel                     | Close or re-defer Batch 2.75 perf/hyg registry debt.                           |
+| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_04_debt_r3b275_fred_staged_semantics.md`          | `debt/r3b275-fred-staged-semantics`          | Yes                           | Parallel                     | Keep FRED / macro supplementary semantics staged-only.                         |
+| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_05_chore_round3_ci_gate_hardening.md`             | `chore/round3-ci-gate-hardening`             | Optional                      | Parallel if tests/docs only  | Harden verification command and gate hygiene.                                  |
+| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_06_debt_r3_ops_inspect_data_health_references.md` | `debt/r3-ops-inspect-data-health-references` | Optional                      | Parallel docs/contracts only | Land EasyXT/JQ2PTrade/ptqmt-site ops/data-health references.                   |
+
+Do not start `feature/round3-019-layer2-sensor` until `feature/round3-batch3-staged-gate` has merged into `integration/round3`.
 
 ## 3. Round 3 split into 6 primary Trellis batches plus Batch 2.5 bridge and Batch 2.75 pilot
 
