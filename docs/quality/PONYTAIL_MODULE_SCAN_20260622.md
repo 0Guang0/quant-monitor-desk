@@ -216,7 +216,7 @@
 | SC-02 | **MEDIUM** | `staged_evidence.py:35-37`          | WriteManager 旁路仅靠约定                 | Phase3 bypass 有文档；无 runtime phase 锁          | 确认 | 契约测试 + 可选 `phase=` 参数门禁       |
 | SC-03 | **MEDIUM** | `resource_guard.py:339 LOC`         | `evaluate()` 8 路 `_signal_decision` 重复 | 可表驱动压缩 ~40-60 LOC                            | 确认 | 阈值信号改 data-driven 循环             |
 | SC-04 | **LOW**    | `test_config.py`                    | 未测 `get_resource_profile()` 非法值      | 仅测 env path                                      | 确认 | 补合法/非法 profile 用例                |
-| SC-05 | **LOW**    | `util/error_redaction.py`           | 本仓库无引用                              | grep 无 import                                     | 确认 | 删除或接到 ops 错误路径                 |
+| SC-05 | **LOW**    | `util/error_redaction.py`           | 已接入 db/sync/datasources 持久化路径   | `fetch_log.py` · `write_manager.py` · `jobs.py` import `redact_error_message` | **CLOSED@PROMPT_17** | 扫描“无引用”为误报；见 §10 delta 与 `debt-round3-ponytail-low-touch` merge gate |
 | SC-06 | **LOW**    | `api_limits.py:8` vs `config.py:19` | `CONFIGS_ROOT` 双源                       | 两处 `PROJECT_ROOT / "configs"`                    | 确认 | `api_limits` 改用 `config.CONFIGS_ROOT` |
 
 **合规保留（非违规，记录备查）：**
@@ -307,3 +307,30 @@ python -m pytest \
 ## 9. 附录 — Agent 报告索引
 
 本轮 Agent 原始输出可参考工作区 `临时报告/` 下 Round3 Batch2.5 系列；**本文件为 2026-06-22 模块级 ponytail 大扫描的权威汇总**，以主会话核实后的 69 项登记为准。
+
+---
+
+## 10. Post PROMPT_16/17 delta（2026-06-22）
+
+> **Authority:** `fix/round3-ponytail-pilot-prep-bucket-a` (PROMPT_16), `debt/round3-ponytail-low-touch` (PROMPT_17), `docs/quality/adversarial_audit_post14_contract_ponytail_lane.md`.  
+> **Merge gate:** 下列 ID 在 post-14 审计中已验证闭合；§4 原表保留为历史扫描基线，勿重复登记为 OPEN。
+
+| ID    | Bucket | Closure summary                                                                                      | Evidence                                                                 |
+| ----- | ------ | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| DS-01 | A      | `fetch_log` 双写路径统一为 service-authoritative                                                       | `test_r3x_ponytail_pilot_prep_bucket_a.py` · PROMPT_16 merge gate        |
+| DS-02 | A      | Adapter factory 单路径                                                                                 | same                                                                     |
+| DS-03 | A      | `record_fetch_log` 参数化                                                                             | same                                                                     |
+| SC-02 | A      | `staged_evidence` phase lock 文档 + 契约测试                                                           | PROMPT_16                                                                |
+| OP-02 | A      | `mutation_proof` 最小闭环                                                                              | PROMPT_16                                                                |
+| SY-04 | A      | `_fetch_with_guard` 抽取                                                                               | PROMPT_16                                                                |
+| VA-03 | A      | validation gate 路径                                                                                   | PROMPT_16                                                                |
+| SC-03 | C      | `resource_guard.evaluate()` 表驱动                                                                       | PROMPT_17 · `debt-round3-ponytail-low-touch`                             |
+| SC-04 | C      | `get_resource_profile` 合法/非法测试                                                                   | PROMPT_17                                                                |
+| SC-05 | C      | `error_redaction` **wired** in db/sync/datasources（非死代码）                                         | PROMPT_17 · module docstring · ADV-POST14-B-003 fix                      |
+| SC-06 | C      | `api_limits` → `config.CONFIGS_ROOT` 单源                                                              | PROMPT_17                                                                |
+| VA-01 | C      | DQ thin wrappers 删除                                                                                  | PROMPT_17                                                                |
+| VA-02 | C      | conflict thin wrappers 删除                                                                            | PROMPT_17                                                                |
+| VA-07 | C      | YAML/Python `rule_id` 双轨文档化                                                                       | PROMPT_17                                                                |
+| VA-08 | C      | `_table_exists` 冗余 `quote_ident` 副作用移除                                                          | PROMPT_17                                                                |
+
+**仍 OPEN（Bucket B，53 项）：** SC-01, L1-01, L2-01/02, OP-01, SY-01, DB-01 等 — 见 `adversarial_audit_post14_master_fix_manifest.md` Slice 4。

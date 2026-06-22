@@ -14,6 +14,20 @@
 2. Prefer inline CHECK on CREATE; use rebuild migration when ALTER CHECK unavailable.
 3. Document application-layer-only constraints in migration header comments.
 
+## Applied migration ladder (001–011)
+
+| Version | File | Scope |
+| ------- | ---- | ----- |
+| 001–003 | foundation / registry hardening / resource guard | Core tables |
+| 004–006 | ingestion sources / validation / sync | `fetch_log`, `source_registry`, sync jobs |
+| 007 | `007_sync_constraints_audit` | Sync job + audit CHECK rebuild |
+| 008 | `008_lineage_version_fields` | Lineage version columns |
+| 009 | `009_status_check_constraints` | `fetch_log` / ingestion table **status enum CHECK** (rebuild `_v2` swap) |
+| 010 | `010_lineage_not_null` | Lineage `rule_set_id` / `rule_version` NOT NULL (explicit-column rebuild) |
+| 011 | `011_layer1_tables` | Layer 1 axis registry + snapshot tables |
+
+Planned enum/CHECK closeout for remaining tables: `docs/schema/MIGRATION_008_PLAN.md` (narrative id **008**; applied status CHECK is **009** per `MIGRATION_COVERAGE.md`).
+
 ## Write Path
 
 - Clean writes only through `WriteManager` with explicit `ValidationGate`.
@@ -23,7 +37,8 @@
 ## Constraints
 
 - `validation_report.status`, `data_sync_job.status`, `job_event_log` statuses: DB CHECK (migration 007+).
-- `fetch_log` SUCCESS evidence: application layer (`FetchResult` + FetchLogWriter) per Batch C ledger.
+- `fetch_log.status` enum: DB CHECK after migration **009** (`009_status_check_constraints`).
+- `fetch_log` SUCCESS evidence (staging row existence, raw path sanity): still **application layer** (`FetchResult` + `FetchLogWriter._validate_for_persist`) per Batch C ledger — DB CHECK does not replace evidence guards.
 
 ## Layer 1 axis snapshots (Round 3 Batch 2)
 
@@ -34,7 +49,7 @@
 
 ## Testing
 
-- `tests/test_schema_migration.py` — migration replay + version set.
+- `tests/test_schema_migration.py` — migration replay + version set (expects 001–011).
 - `tests/test_audit_fixes.py` — invalid sync status rejected, default WriteManager gate path.
 - `tests/test_layer1_axis_loader.py` / `tests/test_layer1_interpretation.py` — Layer 1 loader, features, interpretation, lineage, WriteManager integration.
 - `scripts/init_db.py` exposes `main(argv: list[str] | None = None)` so tests call `main([])`; CLI uses default `sys.argv`.

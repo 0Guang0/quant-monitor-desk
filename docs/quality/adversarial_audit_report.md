@@ -5,7 +5,8 @@
 > **审计范围：** Round 0/1/2/3 已实现的全部代码 vs docs/、specs/ 中的设计文档、契约、架构、规则
 > **审计维度：** deviation（偏差）、gap（缺口）、vulnerability（漏洞）、risk（风险）、completion_quality（完成质量）
 > **排除规则：** 已在 `docs/UNRESOLVED_ISSUES_REGISTRY.md` 注册的项不重复登记；Round 4/5 计划内的未完成项不算问题
-> **上下文：** 项目当前处于 Round 3，Batch 2/2.5/2.75 已完成（staged），Batch 3（Layer 2）staged gate 已关闭但实现尚未启动
+> **上下文：** 项目当前处于 Round 3，Batch 2/2.5/2.75 已完成（staged），Batch 3（Layer 2）staged gate 已关闭但实现尚未启动  
+> **历史快照说明：** 下文 §A1–A6 为 2026-06-22 首轮对抗审计的**时间点发现**；PROMPT_15/16/17 已闭合 Master Checklist 与多项 ponytail 桶 A/C 项。当前 OPEN/HIGH 状态以 `docs/quality/adversarial_audit_post14_*.md` 与三份 registry 为准，勿将本节 §立即修复 当作未修复清单。
 
 ---
 
@@ -356,7 +357,9 @@ Vite dev proxy 仅转发 `/health` 路径。但 `specs/frontend/page_contracts.y
 
 ## 建议优先级
 
-### 立即修复（HIGH，8 项）
+> **同步注记（ADV-POST14-B-001）：** 下表为审计当日优先级快照。`ADV-A1-003`/`A1-004`/`A1-005`、`ADV-A2-001`/`A2-003`、`ADV-A3-001`/`A3-003`、`ADV-A4-001`/`A4-002` 等 HIGH 项已由 `fix/round3-r3x-residual-open-items-closure`（PROMPT_15）及并行 ponytail 桶 A/C 分支闭合或降级为 registry 跟踪项。合并后请读 `docs/quality/adversarial_audit_post14_master_fix_manifest.md` 与 `docs/AUDIT_DEFERRED_REGISTRY.md` §PROMPT_15 RESOLVED。
+
+### 立即修复（HIGH，8 项 — 历史快照）
 
 | ID         | 模块    | 问题                                                 |
 | ---------- | ------- | ---------------------------------------------------- |
