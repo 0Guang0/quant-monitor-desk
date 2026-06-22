@@ -2,7 +2,13 @@
 
 > Purpose: one file for resolved/closed issues, gates, risks, and repairs.  
 > Pair: unresolved items live in `docs/UNRESOLVED_ISSUES_REGISTRY.md`.  
-> Last reconciled: 2026-06-21 after Batch 2.5 audit fix branch (path_compat, schema.sql, uv.lock).
+> Last reconciled: 2026-06-22 after post-14 Slice 2 registry/docs alignment (`fix/round3-post14-audit-registry-docs`).
+
+## Round 3 PROMPT_14 resolved items (2026-06-22)
+
+| ID                    | Closed     | Item                                                                                                                                                         | Evidence                                                                                                                                                                                                                      |
+| --------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R3-PROMPT14-STAGED-01 | 2026-06-22 | PROMPT_14 staged real-data pilot executed; closeout `PILOT_PASS_STAGED_RAW` (partial — akshare validation NETWORK_ERROR; see `R3-PROMPT14-AKSHARE-VAL-01`) | `.trellis/tasks/feature-round3-real-data-staged-pilot/execute-evidence/pilot_closeout.json` · `merge_gate_report.md` · `docs/quality/prompt14_user_authorization_2026-06-22.md` · `tests/test_staged_pilot.py`; does **not** close `R3-B2.75-REQ2-EM` |
 
 ## Round 3 Batch 2.5 resolved items (2026-06-21)
 

@@ -6,8 +6,12 @@ from pathlib import Path
 
 from tests.contract_gate_support import PROJECT_ROOT
 
+AUDIT_DEFERRED = PROJECT_ROOT / "docs/AUDIT_DEFERRED_REGISTRY.md"
 UNRESOLVED = PROJECT_ROOT / "docs/UNRESOLVED_ISSUES_REGISTRY.md"
 RESOLVED = PROJECT_ROOT / "docs/RESOLVED_ISSUES_REGISTRY.md"
+ADVERSARIAL_REPORT = PROJECT_ROOT / "docs/quality/adversarial_audit_report.md"
+PONYTAIL_SCAN = PROJECT_ROOT / "docs/quality/PONYTAIL_MODULE_SCAN_20260622.md"
+DATABASE_GUIDELINES = PROJECT_ROOT / ".trellis/spec/backend/database-guidelines.md"
 ROUND3_MAP = PROJECT_ROOT / "ROUND3_BATCH_IMPLEMENTATION_MAP.md"
 TASK_018B = (
     PROJECT_ROOT
@@ -139,3 +143,117 @@ def test_round3Map_tracksPostAuditIngestionAndRound4References() -> None:
         "Round4 cross-reference only",
     ):
         assert token in text
+
+
+def test_post14Prompt14AkshareValidationDefer_isInRegistry() -> None:
+    """覆盖范围：PROMPT_14 akshare validation 失败后的 registry 登记（ADV-POST14-A-009 / B-011）。
+    测试对象：AUDIT_DEFERRED_REGISTRY + UNRESOLVED_ISSUES_REGISTRY。
+    目的：确保 akshare validation re-defer 有 SSOT 行且交叉引用 R3-B2.75-REQ2-EM（不得关闭）。"""
+    audit = _read(AUDIT_DEFERRED)
+    unresolved = _read(UNRESOLVED)
+
+    for item_id in ("R3-PROMPT14-AKSHARE-VAL-01",):
+        assert item_id in audit
+        assert item_id in unresolved
+        assert f"| {item_id} | DEFERRED" in unresolved
+
+    for token in (
+        "fetch_daily_bar_validation",
+        "stock_zh_a_hist",
+        "R3-B2.75-REQ2-EM",
+        "prompt14_user_authorization_2026-06-22.md",
+        "feature-round3-real-data-staged-pilot",
+    ):
+        assert token in audit
+        assert token in unresolved
+
+
+def test_post14R3Partial1_noLongerClaimsBackfillSkipsValidator() -> None:
+    """覆盖范围：R3-PARTIAL-1 陈旧叙事修正（ADV-POST14-B-004）。
+    测试对象：三份 registry + ROUND2_REPAIR_ALIGNMENT_TRACKER。
+    目的：registry 不再声称 backfill 跳过 validator；应记录 ADV-R3X-SYNC-002 已闭合 severe-conflict 子范围。"""
+    audit = _read(AUDIT_DEFERRED)
+    unresolved = _read(UNRESOLVED)
+    tracker = _read(PROJECT_ROOT / "docs/quality/ROUND2_REPAIR_ALIGNMENT_TRACKER.md")
+
+    assert "skips validator + clean write" not in audit
+    assert "skips validator + clean write" not in unresolved
+    for token in ("ADV-R3X-SYNC-002", "validate+write", "severe conflict"):
+        assert token in audit
+        assert token in unresolved
+    assert "ADV-R3X-SYNC-002" in tracker
+
+
+def test_post14AdversarialReport_syncsPrompt15ResolvedBanner() -> None:
+    """覆盖范围：adversarial_audit_report 与 PROMPT_15 闭合状态同步（ADV-POST14-B-001）。
+    测试对象：docs/quality/adversarial_audit_report.md。
+    目的：读者可见历史快照标注 + 指向 post-14 审计与 PROMPT_15 RESOLVED 章节。"""
+    text = _read(ADVERSARIAL_REPORT)
+
+    for token in (
+        "历史快照",
+        "PROMPT_15",
+        "adversarial_audit_post14",
+        "立即修复",
+    ):
+        assert token in text
+
+
+def test_post14PonytailScan_sc05DocumentsErrorRedactionWiring() -> None:
+    """覆盖范围：SC-05 语义修正（ADV-POST14-B-003）。
+    测试对象：PONYTAIL_MODULE_SCAN_20260622.md。
+    目的：扫描文档记录 error_redaction 已被 db/sync/datasources 引用，非死代码。"""
+    text = _read(PONYTAIL_SCAN)
+
+    assert "SC-05" in text
+    for token in (
+        "error_redaction",
+        "db/sync/datasources",
+        "PROMPT_17",
+    ):
+        assert token in text
+    assert "本仓库无引用" not in text
+
+
+def test_post14PonytailScan_hasPost1617DeltaSection() -> None:
+    """覆盖范围：ponytail 扫描 post-16/17 增量（ADV-POST14-B-006）。
+    测试对象：PONYTAIL_MODULE_SCAN_20260622.md §10。
+    目的：Bucket A/C 闭合项有权威 delta 节，避免扫描表永久陈旧。"""
+    text = _read(PONYTAIL_SCAN)
+
+    assert "## 10. Post PROMPT_16/17 delta" in text
+    for token in ("PROMPT_16", "PROMPT_17", "SC-05", "DS-01", "OP-02"):
+        assert token in text.split("## 10. Post PROMPT_16/17 delta", maxsplit=1)[1]
+
+
+def test_post14DatabaseGuidelines_listsMigration009StatusCheck() -> None:
+    """覆盖范围：database-guidelines 与 migration 009 叙事对齐（ADV-POST14-B-005）。
+    测试对象：.trellis/spec/backend/database-guidelines.md。
+    目的：spec 列出 007–011 迁移分层，并区分 fetch_log status CHECK vs SUCCESS evidence app 层。"""
+    text = _read(DATABASE_GUIDELINES)
+
+    for token in (
+        "009_status_check_constraints",
+        "010_lineage_not_null",
+        "011_layer1_tables",
+        "fetch_log",
+        "SUCCESS evidence",
+        "application layer",
+    ):
+        assert token in text
+
+
+def test_post14Prompt14StagedPilotCloseout_isDocumented() -> None:
+    """覆盖范围：PROMPT_14 staged pilot closeout 叙事（ADV-POST14-A-016）。
+    测试对象：AUDIT_DEFERRED + RESOLVED registries。
+    目的：closeout PILOT_PASS_STAGED_RAW 与 pilot_closeout.json 证据路径可在 registry 追溯。"""
+    audit = _read(AUDIT_DEFERRED)
+    resolved = _read(RESOLVED)
+
+    for token in (
+        "R3-PROMPT14-STAGED-01",
+        "PILOT_PASS_STAGED_RAW",
+        "pilot_closeout.json",
+        "feature-round3-real-data-staged-pilot",
+    ):
+        assert token in audit or token in resolved
