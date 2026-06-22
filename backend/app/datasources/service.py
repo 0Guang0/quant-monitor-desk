@@ -143,6 +143,7 @@ class DataSourceService:
             job_id=job_id or req.run_id,
             market_id=req.market_id,
         )
+        plan = _augment_plan_with_requested_source(plan, req.source_id)
         if job_id:
             self._emit_route_plan(con, job_id, plan)
 
@@ -223,12 +224,40 @@ class DataSourceService:
         return result
 
 
+def _augment_plan_with_requested_source(plan: SourceRoutePlan, requested_source_id: str) -> SourceRoutePlan:
+    if (
+        plan.route_status == "READY"
+        and plan.selected_source_id
+        and requested_source_id != plan.selected_source_id
+    ):
+        from dataclasses import replace
+
+        flags = list(plan.quality_flags)
+        flags.append("REQUESTED_SOURCE_OVERRIDDEN_BY_ROUTE")
+        return replace(
+            plan,
+            quality_flags=flags,
+            requested_source_id=requested_source_id,
+        )
+    return plan
+
+
 def _default_operation(data_domain: str) -> str:
     defaults = {
         "cn_equity_daily_bar": "fetch_daily_bar",
         "cn_equity_minute_bar": "fetch_minute_bar",
         "cn_equity_realtime": "fetch_realtime_quote",
+        "cn_equity_basic_financial": "fetch_basic_financial",
+        "cn_filings": "fetch_filing_index",
+        "cn_announcements": "fetch_announcement_index",
+        "cn_pdf_reports": "fetch_pdf_report",
+        "cn_index": "fetch_index_daily_bar",
+        "cn_index_daily_bar": "fetch_index_daily_bar",
+        "sector_board": "fetch_sector_board",
         "us_equity_daily_bar": "fetch_us_daily_bar_validation",
+        "etf_daily_bar": "fetch_etf_daily_bar_validation",
+        "global_asset_reference": "fetch_global_asset_reference",
+        "security_list": "fetch_security_list",
         "market_bar_1d": "fetch_daily_bar",
         "macro_supplementary": "fetch_macro_series",
     }

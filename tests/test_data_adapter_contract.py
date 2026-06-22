@@ -20,6 +20,7 @@ CONTRACT_STATUSES = [
     "SUCCESS",
     "EMPTY_RESPONSE",
     "NOT_PUBLISHED_YET",
+    "DISABLED_SOURCE",
     "AUTH_FAILED",
     "RATE_LIMITED",
     "NETWORK_ERROR",
@@ -30,6 +31,7 @@ ERROR_TYPE_BY_STATUS = {
     "SUCCESS": None,
     "EMPTY_RESPONSE": "empty",
     "NOT_PUBLISHED_YET": "not_published",
+    "DISABLED_SOURCE": "disabled_source",
     "AUTH_FAILED": "auth",
     "RATE_LIMITED": "rate_limit",
     "NETWORK_ERROR": "network",
@@ -55,6 +57,13 @@ def _valid_result_for_status(status: str) -> FetchResult:
             status=status,
             row_count=0,
             error_message="announcement not published yet",
+        )
+    if status == "DISABLED_SOURCE":
+        return FetchResult(
+            **base,
+            status=status,
+            row_count=0,
+            error_message="source disabled by registry policy",
         )
     return FetchResult(**base, status=status, row_count=0, error_message="err")
 

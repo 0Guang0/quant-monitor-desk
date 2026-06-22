@@ -17,6 +17,16 @@ platforms:
     akshare:
       available_if_user_configured: true
       default_enabled: false
+    cninfo:
+      available_if_user_configured: true
+      default_enabled: true
+    yahoo_finance:
+      available_if_user_configured: true
+      default_enabled: false
+      requires_user_confirmation: true
+    tdx_pytdx:
+      available_if_user_configured: true
+      default_enabled: false
   macos:
     qmt_xtdata:
       available_if_user_configured: false
@@ -31,6 +41,16 @@ platforms:
     akshare:
       available_if_user_configured: true
       default_enabled: false
+    cninfo:
+      available_if_user_configured: true
+      default_enabled: true
+    yahoo_finance:
+      available_if_user_configured: true
+      default_enabled: false
+      requires_user_confirmation: true
+    tdx_pytdx:
+      available_if_user_configured: true
+      default_enabled: false
   linux:
     qmt_xtdata:
       available_if_user_configured: false
@@ -43,6 +63,16 @@ platforms:
       available_if_user_configured: true
       default_enabled: true
     akshare:
+      available_if_user_configured: true
+      default_enabled: false
+    cninfo:
+      available_if_user_configured: true
+      default_enabled: true
+    yahoo_finance:
+      available_if_user_configured: true
+      default_enabled: false
+      requires_user_confirmation: true
+    tdx_pytdx:
       available_if_user_configured: true
       default_enabled: false
 rules:

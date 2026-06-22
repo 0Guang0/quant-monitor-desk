@@ -475,3 +475,82 @@ def test_serviceUserAuthRequiredRoute_writesDisabledFetchLog(tmp_path: Path, mon
     assert payload.get("route_status") == "USER_AUTH_REQUIRED"
     assert log_row is not None
     assert log_row[0] == "DISABLED_SOURCE"
+
+
+def test_serviceFetch_recordsSourceOverrideQualityFlag(tmp_path: Path, monkeypatch) -> None:
+    """ADV-A2-007: routed source override must be auditable via quality_flags."""
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+
+    def fake_create_test_adapter(sid, registry, data_root, **kwargs):
+        class ProbeAdapter:
+            source_id = sid
+
+            def fetch(self, req, *, con, job_id=None):
+                from datetime import UTC, datetime
+
+                from backend.app.datasources.fetch_result import FetchResult
+
+                return FetchResult(
+                    run_id=req.run_id,
+                    source_id=sid,
+                    data_domain=req.data_domain,
+                    status="SUCCESS",
+                    row_count=1,
+                    fetch_time=datetime.now(UTC).isoformat(),
+                    raw_file_paths=["/tmp/probe.json"],
+                )
+
+        return ProbeAdapter()
+
+    monkeypatch.setattr(
+        "backend.app.datasources.adapters.create_test_adapter",
+        fake_create_test_adapter,
+    )
+
+    db = tmp_path / "override.duckdb"
+    cm = ConnectionManager(db_path=db)
+    with cm.writer() as con:
+        apply_migrations(con)
+    jobs = SyncJobStateMachine(cm)
+    reg = SourceRegistry()
+    reg.load()
+    service = DataSourceService(
+        source_registry=reg,
+        data_root=tmp_path / "raw",
+        job_events=jobs,
+    )
+    spec = SyncJobSpec(
+        run_id="run-ovr",
+        job_id="job-ovr",
+        job_type="incremental",
+        data_domain="cn_equity_daily_bar",
+        market_id="CN_A",
+        source_id="akshare",
+        adapter_id="akshare",
+        date_start=None,
+        date_end=None,
+        instrument_id="000001",
+        partition_key=None,
+        trigger_reason=None,
+    )
+    job_id = jobs.create_job(spec)
+    req = FetchRequest(
+        run_id="run-ovr",
+        source_id="akshare",
+        data_domain="cn_equity_daily_bar",
+    )
+    with cm.writer() as con:
+        service.fetch(req, con=con, job_id=job_id)
+    with cm.writer() as con:
+        row = con.execute(
+            """
+            SELECT payload_json FROM job_event_log
+            WHERE job_id = ? AND event_type = 'ROUTE_PLAN' LIMIT 1
+            """,
+            [job_id],
+        ).fetchone()
+    assert row is not None
+    payload = parse_event_payload(row[0])
+    assert payload.get("requested_source_id") == "akshare"
+    assert payload.get("selected_source_id") == "baostock"
+    assert "REQUESTED_SOURCE_OVERRIDDEN_BY_ROUTE" in (payload.get("quality_flags") or [])
