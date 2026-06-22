@@ -285,6 +285,69 @@ def test_register_validationRejected_persistsFailedAudit(tmp_path: Path) -> None
     assert audit == ("FAILED", "file_registry", "validation rejected: stub-fail-registry")
 
 
+def test_stagedEvidence_pathEscape_rejected(tmp_path: Path) -> None:
+    from datetime import UTC, datetime
+
+    from backend.app.datasources.fetch_result import FetchResult
+    from backend.app.storage.staged_evidence import register_staged_file_registry_rows
+
+    cm = _cm(tmp_path)
+    data_root = tmp_path / "data"
+    data_root.mkdir()
+    evil = tmp_path / "outside" / "evil.json"
+    evil.parent.mkdir(parents=True)
+    evil.write_text("{}", encoding="utf-8")
+    result = FetchResult(
+        run_id="r1",
+        source_id="akshare",
+        data_domain="macro_supplementary",
+        status="SUCCESS",
+        row_count=1,
+        fetch_time=datetime.now(UTC).isoformat(),
+        raw_file_paths=[str(evil)],
+        content_hash="abc123",
+        schema_hash="def456",
+    )
+    with cm.writer() as con:
+        with pytest.raises(ValueError, match="escapes data_root"):
+            register_staged_file_registry_rows(con, result, data_root=data_root)
+
+
+def test_stagedEvidence_allowedPath_registersRow(tmp_path: Path) -> None:
+    from datetime import UTC, datetime
+
+    from backend.app.datasources.fetch_result import FetchResult
+    from backend.app.storage.staged_evidence import register_staged_file_registry_rows
+
+    cm = _cm(tmp_path)
+    data_root = tmp_path / "data"
+    raw_dir = data_root / "raw" / "akshare" / "macro_supplementary" / "2024-06-15"
+    raw_dir.mkdir(parents=True)
+    raw_file = raw_dir / "evidence.json"
+    raw_file.write_text('{"v":1}', encoding="utf-8")
+    result = FetchResult(
+        run_id="r1",
+        source_id="akshare",
+        data_domain="macro_supplementary",
+        status="SUCCESS",
+        row_count=1,
+        fetch_time=datetime.now(UTC).isoformat(),
+        raw_file_paths=[str(raw_file)],
+        content_hash="abc123unique",
+        schema_hash="def456",
+    )
+    with cm.writer() as con:
+        ids = register_staged_file_registry_rows(con, result, data_root=data_root)
+    assert len(ids) == 1
+    with cm.reader() as r:
+        row = r.execute(
+            "SELECT local_path, quality_flag FROM file_registry WHERE file_id = ?",
+            [ids[0]],
+        ).fetchone()
+    assert row[1] == "STAGED"
+    assert "evidence.json" in row[0]
+
+
 def test_save_windowsLongPath_writesSuccessfully(tmp_path: Path) -> None:
     """Regression: deep evidence sandbox paths must not fail on Windows MAX_PATH."""
     import os

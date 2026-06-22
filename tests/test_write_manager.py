@@ -298,6 +298,36 @@ def test_write_upsertByPk_mixedNewAndExisting_reportsCorrectCounts(tmp_path: Pat
         assert aapl_close == 200.0
 
 
+def test_write_ownTransactionFalse_stubFail_sidecarSurvivesOuterRollback(tmp_path: Path) -> None:
+    """ADV-A1-005: FAILED audit must remain traceable after caller rollback."""
+    import json
+
+    cm = _setup(tmp_path)
+    data_root = tmp_path / "data"
+    data_root.mkdir()
+    sidecar = data_root / "logs" / "failed_write_audit.ndjson"
+    with cm.writer() as w:
+        w.execute(
+            "CREATE TABLE security_bar_smoke_clean AS SELECT * FROM stg_foundation_smoke WHERE 1=0"
+        )
+        w.execute("BEGIN")
+        res = create_test_write_manager(cm).write(
+            _req(report="stub-fail-1"),
+            con=w,
+            own_transaction=False,
+            audit_sidecar_root=data_root,
+        )
+        assert res.status == "FAILED"
+        w.execute("ROLLBACK")
+    lines = [ln for ln in sidecar.read_text(encoding="utf-8").splitlines() if ln.strip()]
+    assert len(lines) == 1
+    entry = json.loads(lines[0])
+    assert entry["status"] == "FAILED"
+    assert entry["validation_report_id"] == "stub-fail-1"
+    with cm.reader() as r:
+        assert r.execute("SELECT COUNT(*) FROM write_audit_log").fetchone()[0] == 0
+
+
 def test_write_ownTransactionFalse_stubFail_doesNotRollbackOuterTxn(tmp_path: Path) -> None:
     cm = _setup(tmp_path)
     with cm.writer() as w:

@@ -457,6 +457,10 @@ class BackfillShardRunner(_PipelineMixin):
                     required_fields=pipeline.required_fields,
                 )
                 quality = validation.quality
+                conflict = validation.conflict
+                self._update_job_report_ids(
+                    con, job_id, validation_report_id=quality.validation_report_id
+                )
                 if quality.status == "FAILED" or not quality.can_write_clean:
                     self._emit_event(
                         job_id,
@@ -502,6 +506,46 @@ class BackfillShardRunner(_PipelineMixin):
                     )
                     return results
 
+                conflict_report_id: str | None = None
+                if conflict is not None:
+                    conflict_report_id = conflict.conflict_report_id
+                    self._update_job_report_ids(
+                        con, job_id, conflict_report_id=conflict_report_id
+                    )
+                    if conflict.status == "SEVERE_CONFLICT":
+                        self._jobs.emit_custom_event(
+                            job_id,
+                            task_id=task_id,
+                            event_type="SHARD_SKIPPED",
+                            message=f"shard {task_id} severe conflict",
+                            payload_json=build_event_payload(
+                                source_id=spec.source_id,
+                                task_id=task_id,
+                                decision="severe_conflict",
+                            ),
+                            con=con,
+                        )
+                        self._jobs.transition(
+                            job_id,
+                            "WAITING_RECONCILE",
+                            task_id=task_id,
+                            message="severe conflict",
+                            con=con,
+                            payload_json=build_event_payload(
+                                source_id=spec.source_id,
+                                decision="severe_conflict",
+                            ),
+                        )
+                        results.append(
+                            SyncJobResult(
+                                job_id=job_id,
+                                status="WAITING_RECONCILE",
+                                validation_report_id=quality.validation_report_id,
+                                conflict_report_id=conflict_report_id,
+                            )
+                        )
+                        return results
+
                 self._jobs.transition(job_id, "READY_TO_WRITE", task_id=task_id, con=con)
                 self._jobs.transition(job_id, "WRITING", task_id=task_id, con=con)
                 write_result = self._write_clean(
@@ -513,7 +557,7 @@ class BackfillShardRunner(_PipelineMixin):
                     write_mode=pipeline.write_mode,
                     primary_keys=pipeline.primary_keys,
                     validation_report_id=quality.validation_report_id,
-                    conflict_report_id=None,
+                    conflict_report_id=conflict_report_id,
                 )
                 if write_result.status != "SUCCESS":
                     self._emit_event(

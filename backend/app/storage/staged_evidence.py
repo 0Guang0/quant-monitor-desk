@@ -3,24 +3,46 @@
 from __future__ import annotations
 
 import uuid
+from pathlib import Path
 
 from backend.app.datasources.fetch_result import FetchResult
+from backend.app.storage.path_compat import is_relative_to_data_root
 
 STAGED_FILE_REGISTRY_QUALITY = "STAGED"
 STAGED_FILE_REGISTRY_PARSE_STATUS = "PARSED"
 
 
-def register_staged_file_registry_rows(con, result: FetchResult) -> tuple[str, ...]:
+def _resolve_under_data_root(local_path: str, data_root: Path) -> Path:
+    resolved_root = Path(data_root).resolve()
+    candidate = Path(local_path)
+    if not candidate.is_absolute():
+        candidate = (resolved_root / candidate).resolve()
+    else:
+        candidate = candidate.resolve()
+    if not is_relative_to_data_root(candidate, resolved_root):
+        raise ValueError(f"staged path escapes data_root: {local_path!r}")
+    return candidate
+
+
+def register_staged_file_registry_rows(
+    con,
+    result: FetchResult,
+    *,
+    data_root: Path,
+) -> tuple[str, ...]:
     """Append file_registry rows for micro-fetch raw evidence (Phase 3 only).
 
     Documented staging exception: bypasses WriteManager because Phase 3 must not
     run validation_report-gated clean writes. Phase 4 clean path must use
     ``FileRegistry`` + ``WriteManager``.
+
+    Paths must stay within ``data_root`` (ADV-A1-004).
     """
     if result.status != "SUCCESS" or not result.raw_file_paths:
         return ()
     registered: list[str] = []
     for local_path in result.raw_file_paths:
+        safe_path = _resolve_under_data_root(local_path, data_root)
         content_hash = result.content_hash
         if content_hash:
             existing = con.execute(
@@ -44,7 +66,7 @@ def register_staged_file_registry_rows(con, result: FetchResult) -> tuple[str, .
                 "json",
                 result.source_id,
                 None,
-                local_path,
+                str(safe_path),
                 result.content_hash,
                 result.schema_hash,
                 result.fetch_time,

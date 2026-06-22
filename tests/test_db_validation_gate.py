@@ -209,6 +209,81 @@ def test_dbValidationGate_isNotStubBehavior(tmp_path: Path) -> None:
     gate.assert_can_write("stub-pass-1", "append_only")
 
 
+def test_schemaHashDriftWithoutApproval_rejects(tmp_path: Path) -> None:
+    """write_contract: schema_hash_changed without approval must block clean write."""
+    cm = _setup(tmp_path)
+    _insert_report(
+        cm,
+        "vr-drift",
+        status="PASSED",
+        can_write_clean=True,
+        needs_manual_review=False,
+    )
+    with cm.writer() as con:
+        con.execute(
+            """
+            INSERT INTO file_registry (
+                file_id, file_type, source, local_path, content_hash, schema_hash,
+                fetch_time, as_of_timestamp, parse_status, quality_flag
+            ) VALUES (
+                'f-baseline', 'json', 'qmt', '/data/raw/qmt/a.json', 'hash1', 'schema-v1',
+                CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'parsed', 'ok'
+            )
+            """
+        )
+        con.execute(
+            """
+            INSERT INTO fetch_log (
+                fetch_id, run_id, job_id, source_id, data_domain, status, row_count,
+                schema_hash, fetch_time
+            ) VALUES (
+                'fetch-1', 'r1', 'j1', 'qmt', 'market_bar_1d', 'SUCCESS', 1,
+                'schema-v2', CURRENT_TIMESTAMP
+            )
+            """
+        )
+        con.execute(
+            "UPDATE validation_report SET job_id = 'j1', source_id = 'qmt' WHERE validation_report_id = 'vr-drift'"
+        )
+    gate = DbValidationGate(cm)
+    with pytest.raises(ValidationRejected, match="schema_hash"):
+        gate.assert_can_write("vr-drift", "append_only")
+
+
+def test_schemaHashDriftFlagInQualityFlags_rejects(tmp_path: Path) -> None:
+    cm = _setup(tmp_path)
+    with cm.writer() as con:
+        con.execute(
+            """
+            INSERT INTO validation_report (
+                validation_report_id, run_id, job_id, data_domain, source_id,
+                status, checked_rows, failed_rows, warning_rows,
+                can_write_clean, needs_manual_review,
+                rule_set_id, rule_version, quality_flags
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            [
+                "vr-flag",
+                "r1",
+                "j1",
+                "market_bar_1d",
+                "qmt",
+                "PASSED",
+                1,
+                0,
+                0,
+                True,
+                False,
+                "p0_round_1",
+                "p0_round_1",
+                '["SCHEMA_DRIFT"]',
+            ],
+        )
+    gate = DbValidationGate(cm)
+    with pytest.raises(ValidationRejected, match="schema_hash"):
+        gate.assert_can_write("vr-flag", "append_only")
+
+
 def test_dbValidationGate_writeManagerIntegration_rejectsFailed(tmp_path: Path) -> None:
     """WriteManager injected with DbValidationGate must honor DB state."""
     from backend.app.db.write_manager import WriteManager, WriteRequest

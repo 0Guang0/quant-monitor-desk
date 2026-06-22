@@ -465,7 +465,9 @@ class Layer1ObservationIngestionService:
         )
         file_registry_ids: tuple[str, ...] = ()
         if register_staged_files:
-            file_registry_ids = register_staged_file_registry_rows(con, normalized_fetch)
+            file_registry_ids = register_staged_file_registry_rows(
+                con, normalized_fetch, data_root=self._data_root
+            )
         fetch_id: str | None = None
         if fetch_result.status == "SUCCESS":
             row = con.execute(

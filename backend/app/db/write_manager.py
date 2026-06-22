@@ -5,9 +5,11 @@ from __future__ import annotations
 import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Literal
 
 import duckdb
+from backend.app.db.failed_write_audit_sidecar import append_failed_write_audit
 from backend.app.db.sql_identifiers import quote_ident
 from backend.app.db.validation_gate import (
     ValidationGateError,
@@ -217,6 +219,7 @@ class WriteManager:
         error_message: str,
         *,
         own_transaction: bool = True,
+        audit_sidecar_root: Path | None = None,
     ) -> WriteResult:
         """Persist FAILED audit after rolling back the data write."""
         if own_transaction:
@@ -247,6 +250,23 @@ class WriteManager:
                 validation_status=validation_status,
                 error_message=error_message,
             )
+            if audit_sidecar_root is not None:
+                append_failed_write_audit(
+                    {
+                        "write_id": write_id,
+                        "run_id": req.run_id,
+                        "job_id": req.job_id,
+                        "target_table": req.target_table,
+                        "staging_table": req.staging_table,
+                        "write_mode": req.write_mode,
+                        "validation_report_id": req.validation_report_id,
+                        "validation_status": validation_status,
+                        "status": "FAILED",
+                        "error_message": redact_error_message(error_message),
+                        "rows_in_staging": rows_in_staging,
+                    },
+                    data_root=audit_sidecar_root,
+                )
         return WriteResult(
             write_id=write_id,
             status="FAILED",
@@ -259,11 +279,17 @@ class WriteManager:
         req: WriteRequest,
         *,
         own_transaction: bool = True,
+        audit_sidecar_root: Path | None = None,
     ) -> WriteResult:
         write_id = str(uuid.uuid4())
         started_at = datetime.now(UTC)
         target, staging, primary_keys = self._validated_tables(req)
         rows_in_staging = con.execute(f"SELECT COUNT(*) FROM {staging}").fetchone()[0]
+        sidecar_root = audit_sidecar_root
+        if not own_transaction and sidecar_root is None:
+            from backend.app.config import DATA_ROOT
+
+            sidecar_root = DATA_ROOT
 
         if own_transaction:
             con.execute("BEGIN")
@@ -323,6 +349,7 @@ class WriteManager:
                 "FAILED",
                 str(exc),
                 own_transaction=own_transaction,
+                audit_sidecar_root=sidecar_root,
             )
         except duckdb.Error as exc:
             if own_transaction:
@@ -354,6 +381,7 @@ class WriteManager:
         *,
         con: duckdb.DuckDBPyConnection | None = None,
         own_transaction: bool = True,
+        audit_sidecar_root: Path | None = None,
     ) -> WriteResult:
         if req.write_mode not in self.SUPPORTED_MODES:
             if req.write_mode in self.UNSUPPORTED_MODES:
@@ -365,6 +393,16 @@ class WriteManager:
         self._validate_request(req)
 
         if con is not None:
-            return self._execute_write(con, req, own_transaction=own_transaction)
+            return self._execute_write(
+                con,
+                req,
+                own_transaction=own_transaction,
+                audit_sidecar_root=audit_sidecar_root,
+            )
         with self.conn_manager.writer() as writer_con:
-            return self._execute_write(writer_con, req, own_transaction=own_transaction)
+            return self._execute_write(
+                writer_con,
+                req,
+                own_transaction=own_transaction,
+                audit_sidecar_root=audit_sidecar_root,
+            )
