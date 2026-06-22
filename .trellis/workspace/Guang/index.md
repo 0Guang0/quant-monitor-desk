@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 8
+- **Total Sessions**: 9
 - **Last Active**: 2026-06-22
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~271 | Active |
+| `journal-1.md` | ~304 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -30,6 +30,7 @@
 
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 9 | 2026-06-22 | R3X contract architecture adversarial audit (WARN) | `7c0d455d` | `review/round3-contract-architecture-adversarial-audit` |
 | 8 | 2026-06-22 | 019 plan audit review (PROMPT_09) | `99a2a24` | `review/round3-019-plan-audit` |
 | 7   | 2026-06-21 | Round 3 Batch 2.5 finish-work                        | `2a9326c`, `7ace4ed`, `1314afb`, `5d53619`, `d2e1e7d`, `eeec63e`, `c0d45cc` | `master`                                  |
 | 6   | 2026-06-20 | Round 3 Batch 1 early ops — audit cleanup and finish | `abaf7ce`                                                                   | `06-20-round3-batch1-early-ops`           |
