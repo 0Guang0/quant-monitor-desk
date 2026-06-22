@@ -1,4 +1,5 @@
 -- Migration 010: enforce non-null rule lineage on validation_report (Round2 re-audit A9-02).
+-- Replay safety: applied once via schema_version; rebuild uses explicit column list below.
 
 UPDATE validation_report
 SET rule_set_id = 'p0_round_1'
@@ -42,6 +43,19 @@ CREATE TABLE IF NOT EXISTS validation_report_v3 (
     created_at              TIMESTAMP
 );
 
-INSERT INTO validation_report_v3 SELECT * FROM validation_report;
+INSERT INTO validation_report_v3 (
+    validation_report_id, run_id, job_id, data_domain, staging_table,
+    source_id, status, checked_rows, failed_rows, warning_rows,
+    quality_flags, stale_reason, can_write_clean, needs_manual_review,
+    rule_set_id, rule_version, source_fetch_ids_json, source_content_hashes_json,
+    created_at
+)
+SELECT
+    validation_report_id, run_id, job_id, data_domain, staging_table,
+    source_id, status, checked_rows, failed_rows, warning_rows,
+    quality_flags, stale_reason, can_write_clean, needs_manual_review,
+    rule_set_id, rule_version, source_fetch_ids_json, source_content_hashes_json,
+    created_at
+FROM validation_report;
 DROP TABLE validation_report;
 ALTER TABLE validation_report_v3 RENAME TO validation_report;

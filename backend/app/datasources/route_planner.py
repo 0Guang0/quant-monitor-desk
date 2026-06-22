@@ -23,6 +23,16 @@ def _platform_key() -> str:
     return "linux"
 
 
+_MATRIX_CACHE: dict[str, dict[str, Any]] = {}
+
+
+def _load_platform_matrix(path: Path) -> dict[str, Any]:
+    key = str(path.resolve())
+    if key not in _MATRIX_CACHE:
+        _MATRIX_CACHE[key] = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    return _MATRIX_CACHE[key]
+
+
 class SourceRoutePlanner:
     DEFAULT_MATRIX: Path = PROJECT_ROOT / "specs/contracts/platform_source_matrix.yaml"
 
@@ -36,7 +46,7 @@ class SourceRoutePlanner:
         self._registry = source_registry
         self._capabilities = capability_registry
         matrix_path = platform_matrix_path or self.DEFAULT_MATRIX
-        self._matrix: dict[str, Any] = yaml.safe_load(matrix_path.read_text(encoding="utf-8")) or {}
+        self._matrix: dict[str, Any] = _load_platform_matrix(matrix_path)
 
     def _source_enabled(self, source_id: str) -> tuple[bool, str | None]:
         try:
@@ -98,13 +108,22 @@ class SourceRoutePlanner:
         extra_candidates: list[tuple[str, str]] | None = None,
     ) -> SourceRoutePlan:
         del market_id  # reserved for future market-scoped routing
+        domain_disabled = False
+        try:
+            binding = self._registry.get_domain_roles(data_domain)
+            domain_disabled = not binding.domain_enabled_by_default
+        except KeyError:
+            binding = None
+
         ordered = self._ordered_candidates(
             data_domain, use_fallback=use_fallback, extra_candidates=extra_candidates
         )
         candidates: list[SourceRouteCandidate] = []
         selected: str | None = None
+        selected_role: str | None = None
         quality_flags: list[str] = []
         route_status = "NO_AVAILABLE_SOURCE"
+        validation_only_primary_blocked = False
 
         for source_id, role in ordered:
             cap_ok = self._capabilities.is_capability_declared(source_id, data_domain)
@@ -118,6 +137,13 @@ class SourceRoutePlanner:
                 disabled_reason = plat_reason
             elif not reg_ok:
                 disabled_reason = reg_reason
+            elif role == "Primary":
+                try:
+                    if self._registry.get(source_id).validation_only:
+                        disabled_reason = "validation_only_cannot_be_primary"
+                        validation_only_primary_blocked = True
+                except KeyError:
+                    pass
 
             skip_reason = disabled_reason
             schedulable = disabled_reason is None
@@ -135,13 +161,20 @@ class SourceRoutePlanner:
             )
             if schedulable and selected is None:
                 selected = source_id
+                selected_role = role
                 route_status = "READY"
                 if role == "FallbackPolicy":
                     quality_flags.append("SOURCE_FALLBACK_USED")
 
         if route_status != "READY":
             selected = None
-            if any(c.skip_reason == "capability_missing" for c in candidates):
+            if domain_disabled:
+                route_status = "DISABLED_SOURCE"
+                quality_flags.append("DOMAIN_DISABLED_BY_DEFAULT")
+            elif validation_only_primary_blocked and not any(c.enabled for c in candidates):
+                route_status = "VALIDATION_ONLY_BLOCKED"
+                quality_flags.append("VALIDATION_ONLY_PRIMARY_BLOCKED")
+            elif any(c.skip_reason == "capability_missing" for c in candidates):
                 route_status = "CAPABILITY_MISSING"
             elif any(c.source_id in ("qmt_xtdata", "tdx_pytdx") and c.skip_reason for c in candidates):
                 route_status = "DISABLED_SOURCE"
@@ -159,6 +192,12 @@ class SourceRoutePlanner:
                 for c in candidates
             ):
                 route_status = "USER_AUTH_REQUIRED"
+        elif domain_disabled:
+            selected = None
+            route_status = "DISABLED_SOURCE"
+            quality_flags.append("DOMAIN_DISABLED_BY_DEFAULT")
+        elif selected_role == "Validation":
+            quality_flags.append("VALIDATION_SOURCE_USED")
 
         return SourceRoutePlan(
             route_plan_id=SourceRoutePlan.new_id(),

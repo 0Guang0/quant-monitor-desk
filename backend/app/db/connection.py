@@ -76,13 +76,15 @@ class ConnectionManager:
         if not self._lock_path.exists():
             return None
         try:
-            payload = json.loads(self._lock_path.read_text(encoding="utf-8"))
+            raw = self._lock_path.read_text(encoding="utf-8").strip()
+            if not raw:
+                return None
+            payload = json.loads(raw)
         except PermissionError as exc:
             raise WriteLockError("write lock held by another process") from exc
-        except (json.JSONDecodeError, UnicodeDecodeError) as exc:
-            raise WriteLockError(
-                f"corrupt write lock file at {self._lock_path}; manual cleanup required"
-            ) from exc
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            self._lock_path.unlink(missing_ok=True)
+            return None
         if not isinstance(payload, dict):
             raise WriteLockError(
                 f"corrupt write lock file at {self._lock_path}; manual cleanup required"

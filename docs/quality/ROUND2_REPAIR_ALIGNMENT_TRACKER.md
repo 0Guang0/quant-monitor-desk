@@ -33,7 +33,7 @@
 
 | ID | Resolution phase | Task hook |
 |----|------------------|-----------|
-| R3-PARTIAL-1 | Round 3 **early** ops | `DECISIONS.md` §11 · backfill validate+write or ADR |
+| R3-PARTIAL-1 | Round 3 **early** ops | `DECISIONS.md` §11 · backfill validate+write or ADR — **dedup:** severe-conflict scope closed by ADV-R3X-SYNC-002 / validation_gate job_id filter |
 | R3-PARTIAL-2 | Round 3 **early** (week 1–2) | D2-P1-2 · first FetchPort / `run_full_load` |
 | R3-PARTIAL-3 | Round 3 **mid** | D2-P2-2 · `run_reconcile` re-fetch |
 | R3-PARTIAL-4 | Round 3 **mid** | conflict UX ADR |

@@ -45,8 +45,7 @@ class AxisInterpretationEngine:
             )
             needs_review = any(term in template for term in self._forbidden)
             if needs_review:
-                for term in self._forbidden:
-                    template = template.replace(term, "观察")
+                self.reject_if_forbidden(template)
             rows.append(
                 InterpretationSnapshotRow(
                     interpretation_id=str(uuid.uuid4()),

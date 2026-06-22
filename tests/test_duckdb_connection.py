@@ -171,15 +171,16 @@ def test_writer_staleLockFromDeadPid_allowsNewWriter(tmp_path: Path) -> None:
         assert r.execute("SELECT COUNT(*) FROM file_registry WHERE file_id='f3'").fetchone()[0] == 1
 
 
-def test_writer_corruptLockFile_raisesWriteLockError(tmp_path: Path) -> None:
+def test_writer_corruptLockFile_autoRecovers(tmp_path: Path) -> None:
     db = tmp_path / "t.duckdb"
     _init(db)
     lock_path = db.with_suffix(db.suffix + ".write.lock")
     lock_path.write_text("not-json", encoding="utf-8")
     cm = ConnectionManager(db)
-    with pytest.raises(WriteLockError, match="corrupt write lock"):
-        with cm.writer():
-            pass
+    with cm.writer() as w:
+        w.execute("INSERT INTO file_registry(file_id, source) VALUES ('f3','qmt')")
+    with cm.reader() as r:
+        assert r.execute("SELECT COUNT(*) FROM file_registry WHERE file_id='f3'").fetchone()[0] == 1
 
 
 def test_writer_exceptionInsideContext_releasesLock(tmp_path: Path) -> None:

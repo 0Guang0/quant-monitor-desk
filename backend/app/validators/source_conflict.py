@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Literal
 
 import yaml
+from backend.app.db.sql_identifiers import quote_ident
 from backend.app.validators.common import as_float, as_text, fetch_rows
 from backend.app.validators.rule_contract import default_conflict_rule_contract
 
@@ -63,6 +64,15 @@ class _Threshold:
     relative_severe: float
 
 
+# Domain aliases for conflict threshold lookup (ADV-R3X-CONFLICT-001).
+CONFLICT_DOMAIN_ALIASES: dict[str, str] = {
+    "cn_equity_daily_bar": "market_bar_1d",
+    "market_bar_1d": "cn_equity_daily_bar",
+}
+
+_VALIDATE_TABLE_ROW_CAP = 50_000
+
+
 def _load_rules(
     rules_path: Path,
 ) -> tuple[dict[str, tuple[str, ...]], dict[str, dict[str, _Threshold]]]:
@@ -99,7 +109,7 @@ def _as_float(value: object) -> float | None:
 
 
 def _as_text(value: object) -> str:
-    return as_text(value) or "None"
+    return as_text(value) or ""
 
 
 class SourceConflictValidator:
@@ -113,7 +123,12 @@ class SourceConflictValidator:
         return field_name in set(self._field_groups.get("separate_by_source", ()))
 
     def _threshold_for(self, data_domain: str, field_name: str) -> _Threshold | None:
-        return self._thresholds.get(data_domain, {}).get(field_name)
+        alias = CONFLICT_DOMAIN_ALIASES.get(data_domain, data_domain)
+        for domain_key in (data_domain, alias):
+            threshold = self._thresholds.get(domain_key, {}).get(field_name)
+            if threshold is not None:
+                return threshold
+        return None
 
     def _normalized_diff(self, primary_value: object, competing_value: object) -> float | None:
         primary = _as_float(primary_value)
@@ -337,6 +352,14 @@ class SourceConflictValidator:
         *,
         staging_table: str,
     ) -> SourceConflictReport:
+        row_count = con.execute(
+            f"SELECT COUNT(*) FROM {quote_ident(staging_table)}"
+        ).fetchone()[0]
+        if int(row_count) > _VALIDATE_TABLE_ROW_CAP:
+            raise ValueError(
+                f"staging table {staging_table!r} has {row_count} rows; "
+                f"cap is {_VALIDATE_TABLE_ROW_CAP}"
+            )
         rows = self._fetch_rows(con, staging_table)
         report = self.validate_rows(request, rows)
         self._persist_report(con, request, report, rows)

@@ -59,6 +59,8 @@ common_rules:
     severity: failed
   - id: SCHEMA_DRIFT
     severity: failed
+  - id: CONTENT_CHANGED
+    severity: warning
   - id: STALE_DATA
     severity: warning
   - id: INSUFFICIENT_HISTORY

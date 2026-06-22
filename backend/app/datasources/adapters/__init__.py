@@ -10,6 +10,7 @@ from backend.app.datasources.adapters.cninfo import CninfoAdapter
 from backend.app.datasources.adapters.fetch_port import FetchPort, StubFetchPort
 from backend.app.datasources.adapters.qmt_xtdata import QmtXtdataAdapter
 from backend.app.datasources.adapters.skeleton_base import SkeletonAdapterBase
+from backend.app.datasources.adapters.tdx_pytdx import TdxPytdxAdapter
 from backend.app.datasources.adapters.yahoo_finance import YahooFinanceAdapter
 from backend.app.datasources.base_adapter import BaseDataAdapter
 from backend.app.datasources.exceptions import (
@@ -26,6 +27,7 @@ _ADAPTER_TYPES: dict[str, type[SkeletonAdapterBase]] = {
     "akshare": AkshareAdapter,
     "cninfo": CninfoAdapter,
     "yahoo_finance": YahooFinanceAdapter,
+    "tdx_pytdx": TdxPytdxAdapter,
 }
 
 
@@ -101,6 +103,7 @@ __all__ = [
     "CninfoAdapter",
     "QmtXtdataAdapter",
     "YahooFinanceAdapter",
+    "TdxPytdxAdapter",
     "AdapterConfigurationError",
     "AdapterNotSupportedError",
     "create_adapter",

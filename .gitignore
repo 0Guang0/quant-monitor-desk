@@ -13,6 +13,10 @@ build/
 # Environment
 .env
 .env.local
+*.secret
+*.secret.*
+*.key
+credentials.*
 
 # Runtime data (local-first store)
 data/duckdb/

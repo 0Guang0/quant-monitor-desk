@@ -32,3 +32,13 @@ class FileRegistryPort(Protocol):
         file_type: str,
         as_of_timestamp: str | None = None,
     ) -> str: ...
+
+    def register_on_connection(
+        self,
+        con,
+        saved,
+        *,
+        run_id: str,
+        job_id: str,
+        own_transaction: bool = False,
+    ) -> str: ...

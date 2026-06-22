@@ -84,6 +84,7 @@ def _write_request(validation_report_id: str) -> WriteRequest:
         primary_keys=("instrument_id", "trade_date"),
         validation_report_id=validation_report_id,
         source_used="qmt",
+        data_domain="market_bar_1d",
     )
 
 

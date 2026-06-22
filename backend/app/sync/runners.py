@@ -31,6 +31,14 @@ _DEFAULT_CONFLICT_RULE_SET, _DEFAULT_CONFLICT_RULE_VERSION = default_conflict_ru
 FetchCallable = Callable[..., FetchResult]
 
 
+def _resolve_market_id(data_domain: str, market_id: str | None = None) -> str:
+    if market_id:
+        return market_id
+    if data_domain.startswith("us_"):
+        return "US"
+    return "CN_A"
+
+
 @dataclass(frozen=True)
 class PipelineConfig:
     clean_table: str
@@ -45,6 +53,24 @@ class _PipelineMixin:
     _validation: SyncValidationPipeline
     _write: SyncWritePipeline
 
+    def _resolve_validation_sources(self, spec: SyncJobSpec) -> tuple[str, ...]:
+        from backend.app.datasources.source_registry import SourceRegistry
+
+        registry = SourceRegistry()
+        if not registry._sources:
+            registry.load()
+        try:
+            binding = registry.get_domain_roles(spec.data_domain)
+        except KeyError:
+            return ()
+        sources: list[str] = []
+        if binding.validation_source_id:
+            sources.append(binding.validation_source_id)
+        for fallback_id in binding.fallback_source_ids:
+            if fallback_id != spec.source_id and fallback_id not in sources:
+                sources.append(fallback_id)
+        return tuple(s for s in sources if s != spec.source_id)
+
     def _validate_staging(
         self,
         con,
@@ -58,9 +84,10 @@ class _PipelineMixin:
     ):
         conflict_request = None
         if conflict_staging_table is not None:
-            validation_sources = tuple(
-                s for s in ("qmt_xtdata", "baostock") if s != spec.source_id
-            ) or ("qmt_xtdata",)
+            validation_sources = self._resolve_validation_sources(spec) or (
+                "qmt_xtdata",
+                "baostock",
+            )
             conflict_request = SourceConflictRequest(
                 run_id=spec.run_id,
                 job_id=job_id,
@@ -70,6 +97,17 @@ class _PipelineMixin:
                 key_fields=primary_keys,
                 comparable_fields=("close",),
                 tolerance_rule_set_id=_DEFAULT_CONFLICT_RULE_SET,
+            )
+        elif conflict_staging_table is None:
+            self._jobs.emit_custom_event(
+                job_id,
+                event_type="CONFLICT_CHECK_SKIPPED",
+                message="conflict_staging_table=None; conflict validation skipped (fail-closed audit)",
+                payload_json=build_event_payload(
+                    source_id=spec.source_id,
+                    decision="conflict_check_skipped",
+                ),
+                con=con,
             )
         return self._validation.validate_staging(
             con,
@@ -101,7 +139,9 @@ class _PipelineMixin:
         primary_keys: tuple[str, ...],
         validation_report_id: str,
         conflict_report_id: str | None,
+        source_used: str | None = None,
     ):
+        resolved_source = source_used or spec.source_id
         return self._write.write_clean(
             con,
             WriteRequest(
@@ -112,7 +152,7 @@ class _PipelineMixin:
                 write_mode=write_mode,
                 primary_keys=primary_keys,
                 validation_report_id=validation_report_id,
-                source_used=spec.source_id,
+                source_used=resolved_source,
                 data_domain=spec.data_domain,
                 conflict_report_id=conflict_report_id,
                 source_role="primary",
@@ -305,6 +345,7 @@ class IncrementalJobRunner(_PipelineMixin):
                 primary_keys=config.primary_keys,
                 validation_report_id=quality.validation_report_id,
                 conflict_report_id=conflict_report_id,
+                source_used=fetch_result.source_id,
             )
             self._update_job_report_ids(con, job_id, write_id=write_result.write_id)
             if write_result.status != "SUCCESS":
@@ -362,24 +403,44 @@ class BackfillShardRunner(_PipelineMixin):
         self._begin_fetching = begin_fetching
         self._emit_event = emit_event
 
+    def _backfill_checkpoint_task_id(self, job_id: str) -> str | None:
+        with self._jobs.connection_manager.reader() as con:
+            row = con.execute(
+                """
+                SELECT task_id FROM job_event_log
+                WHERE job_id = ? AND event_type = 'SHARD_COMPLETE' AND task_id IS NOT NULL
+                ORDER BY created_at DESC LIMIT 1
+                """,
+                [job_id],
+            ).fetchone()
+        return str(row[0]) if row else None
+
     def run(
         self,
         spec: SyncJobSpec,
         *,
-        adapter: BaseDataAdapter,
+        adapter: BaseDataAdapter | None = None,
+        fetch_callable: FetchCallable | None = None,
         config: PipelineConfig,
     ) -> list[SyncJobResult]:
+        if adapter is None and fetch_callable is None:
+            raise ValueError("adapter or fetch_callable is required for backfill")
+        if adapter is not None and fetch_callable is not None:
+            raise ValueError("provide adapter or fetch_callable for backfill, not both")
         if spec.date_start is None or spec.date_end is None:
             raise ValueError("backfill requires date_start and date_end")
         trigger_reason = normalize_backfill_trigger_reason(spec.trigger_reason)
         shards = plan_backfill_shards(spec.date_start, spec.date_end)
         job_id = self._jobs.create_job(spec)
         self._jobs.transition(job_id, "PLANNED")
+        checkpoint_task = self._backfill_checkpoint_task_id(job_id)
         results: list[SyncJobResult] = []
         cm = self._jobs.connection_manager
         pipeline = config
 
         for idx, (task_id, shard_start, shard_end) in enumerate(shards):
+            if checkpoint_task is not None and task_id <= checkpoint_task:
+                continue
             self._emit_event(
                 job_id,
                 task_id=task_id,
@@ -417,7 +478,10 @@ class BackfillShardRunner(_PipelineMixin):
                 end_time=shard_end.isoformat(),
             )
             with cm.writer() as con:
-                fetch_result = adapter.fetch(req, con=con, job_id=job_id)
+                if fetch_callable is not None:
+                    fetch_result = fetch_callable(req, con, job_id)
+                else:
+                    fetch_result = adapter.fetch(req, con=con, job_id=job_id)
             if fetch_result.status != "SUCCESS" or not fetch_result.staging_table:
                 self._jobs.transition(
                     job_id,
@@ -558,6 +622,7 @@ class BackfillShardRunner(_PipelineMixin):
                     primary_keys=pipeline.primary_keys,
                     validation_report_id=quality.validation_report_id,
                     conflict_report_id=conflict_report_id,
+                    source_used=fetch_result.source_id,
                 )
                 if write_result.status != "SUCCESS":
                     self._emit_event(
@@ -633,7 +698,7 @@ class ReconcileJobRunner:
                 """
                 SELECT job_id, data_domain, run_id, primary_source, competing_source,
                        instrument_id, field_name, primary_value, competing_value,
-                       severity, reconcile_status, manual_review_required
+                       severity, reconcile_status, manual_review_required, market_id
                 FROM source_conflict WHERE conflict_id = ?
                 """,
                 [conflict_id],
@@ -653,14 +718,23 @@ class ReconcileJobRunner:
             _severity,
             reconcile_status,
             manual_review_required,
+            conflict_market_id,
         ) = row
+        if reconcile_status in {"RESOLVED_BY_REFETCH", "RESOLVED"}:
+            return SyncJobResult(
+                job_id=f"reconcile-{conflict_id[:8]}",
+                status="COMPLETED",
+                message=f"conflict already {reconcile_status}",
+            )
+
+        resolved_market_id = _resolve_market_id(data_domain, conflict_market_id)
 
         spec = SyncJobSpec(
             run_id=run_id or f"reconcile-{conflict_id[:8]}",
             job_id=f"reconcile-{conflict_id[:8]}",
             job_type="reconcile",
             data_domain=data_domain,
-            market_id="CN_A",
+            market_id=resolved_market_id,
             source_id=adapter.source_id,
             adapter_id=adapter.source_id,
             date_start=None,
@@ -687,7 +761,7 @@ class ReconcileJobRunner:
             run_id=spec.run_id,
             source_id=adapter.source_id,
             data_domain=data_domain,
-            market_id="CN_A",
+            market_id=resolved_market_id,
             instrument_id=instrument_id,
         )
         with cm.writer() as con:
@@ -724,66 +798,69 @@ class ReconcileJobRunner:
                 """
             )
             con.execute(f"DELETE FROM {compare_table}")
-            con.execute(
-                f"""
-                INSERT INTO {compare_table}
-                SELECT source_id, instrument_id, trade_date, close
-                FROM {fetch_result.staging_table}
-                """
-            )
+            try:
+                con.execute(
+                    f"""
+                    INSERT INTO {compare_table}
+                    SELECT source_id, instrument_id, trade_date, close
+                    FROM {fetch_result.staging_table}
+                    """
+                )
 
-            conflict_request = SourceConflictRequest(
-                run_id=spec.run_id,
-                job_id=job_id,
-                data_domain=data_domain,
-                primary_source=primary_source,
-                validation_sources=(competing_source,),
-                key_fields=("instrument_id", "trade_date"),
-                comparable_fields=(field_name,),
-                tolerance_rule_set_id=_DEFAULT_CONFLICT_RULE_SET,
-            )
-            report = self._conflict_validator.validate_table(
-                con,
-                conflict_request,
-                staging_table=compare_table,
-            )
+                conflict_request = SourceConflictRequest(
+                    run_id=spec.run_id,
+                    job_id=job_id,
+                    data_domain=data_domain,
+                    primary_source=primary_source,
+                    validation_sources=(competing_source,),
+                    key_fields=("instrument_id", "trade_date"),
+                    comparable_fields=(field_name,),
+                    tolerance_rule_set_id=_DEFAULT_CONFLICT_RULE_SET,
+                )
+                report = self._conflict_validator.validate_table(
+                    con,
+                    conflict_request,
+                    staging_table=compare_table,
+                )
 
-            if report.status == "SEVERE_CONFLICT" or (
-                reconcile_status == "UNRESOLVED" and manual_review_required
-            ):
-                self._conflict_validator.record_unresolved_reconcile(
-                    con, conflict_id, title="reconcile unresolved after re-fetch"
+                if report.status == "SEVERE_CONFLICT" or (
+                    reconcile_status == "UNRESOLVED" and manual_review_required
+                ):
+                    self._conflict_validator.record_unresolved_reconcile(
+                        con, conflict_id, title="reconcile unresolved after re-fetch"
+                    )
+                    self._jobs.transition(
+                        job_id,
+                        "MANUAL_REVIEW_REQUIRED",
+                        con=con,
+                        message="unresolved after reconcile",
+                        payload_json=build_event_payload(
+                            source_id=adapter.source_id,
+                            decision="reconcile_manual_review",
+                        ),
+                    )
+                    return SyncJobResult(job_id=job_id, status="MANUAL_REVIEW_REQUIRED")
+
+                con.execute(
+                    """
+                    UPDATE source_conflict
+                    SET reconcile_status = 'RESOLVED_BY_REFETCH',
+                        manual_review_required = false,
+                        resolved_at = ?
+                    WHERE conflict_id = ?
+                    """,
+                    [datetime.now(UTC), conflict_id],
                 )
                 self._jobs.transition(
                     job_id,
-                    "MANUAL_REVIEW_REQUIRED",
+                    "READY_TO_WRITE",
                     con=con,
-                    message="unresolved after reconcile",
                     payload_json=build_event_payload(
                         source_id=adapter.source_id,
-                        decision="reconcile_manual_review",
+                        decision="reconcile_resolved",
                     ),
                 )
-                return SyncJobResult(job_id=job_id, status="MANUAL_REVIEW_REQUIRED")
-
-            con.execute(
-                """
-                UPDATE source_conflict
-                SET reconcile_status = 'RESOLVED_BY_REFETCH',
-                    manual_review_required = false,
-                    resolved_at = ?
-                WHERE conflict_id = ?
-                """,
-                [datetime.now(UTC), conflict_id],
-            )
-            self._jobs.transition(
-                job_id,
-                "READY_TO_WRITE",
-                con=con,
-                payload_json=build_event_payload(
-                    source_id=adapter.source_id,
-                    decision="reconcile_resolved",
-                ),
-            )
-            self._jobs.transition(job_id, "COMPLETED", con=con, message="reconcile resolved")
+                self._jobs.transition(job_id, "COMPLETED", con=con, message="reconcile resolved")
+            finally:
+                con.execute(f"DROP TABLE IF EXISTS {compare_table}")
         return SyncJobResult(job_id=job_id, status="COMPLETED")

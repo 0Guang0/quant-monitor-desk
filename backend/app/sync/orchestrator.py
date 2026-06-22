@@ -52,6 +52,7 @@ class DataSyncOrchestrator:
         """Enter FETCHING after ResourceGuard.check(); return False if blocked."""
         blocked_message: str | None = None
         blocked_error_type: str | None = None
+        blocked_event_type: str = "RESOURCE_GUARD_PAUSED"
         with self._cm.writer() as con:
             row = con.execute(
                 "SELECT status FROM data_sync_job WHERE job_id = ?", [job_id]
@@ -66,12 +67,17 @@ class DataSyncOrchestrator:
                 snap = guard.snapshot()
                 blocked_message = format_pause_event(decision, reason, snap, guard.profile)
                 blocked_error_type = decision.value
+                blocked_event_type = (
+                    "RESOURCE_GUARD_HARD_STOP"
+                    if decision == Decision.HARD_STOP
+                    else "RESOURCE_GUARD_PAUSED"
+                )
         if blocked_message is not None:
             self._jobs.transition(
                 job_id,
                 "FAILED_RETRYABLE",
                 message=blocked_message,
-                event_type="RESOURCE_GUARD_BLOCKED",
+                event_type=blocked_event_type,
                 error_type=blocked_error_type,
                 error_message=blocked_message,
             )
@@ -143,13 +149,28 @@ class DataSyncOrchestrator:
         self,
         spec: SyncJobSpec,
         *,
-        adapter: BaseDataAdapter,
+        adapter: BaseDataAdapter | None = None,
+        datasource_service=None,
         clean_table: str,
         conflict_staging_table: str | None = None,
         write_mode: str = "append_only",
         primary_keys: tuple[str, ...] = ("instrument_id", "trade_date"),
         required_fields: tuple[str, ...] = ("close", "source_used"),
     ) -> list[SyncJobResult]:
+        fetch_callable = None
+        if datasource_service is not None:
+            jobs = self._jobs
+
+            def _service_fetch(req, con, job_id, operation=None):
+                return datasource_service.fetch(
+                    req,
+                    con=con,
+                    job_id=job_id,
+                    operation=operation,
+                    on_enter_fetching=lambda: jobs.transition(job_id, "FETCHING", con=con),
+                )
+
+            fetch_callable = _service_fetch
         config = PipelineConfig(
             clean_table=clean_table,
             conflict_staging_table=conflict_staging_table,
@@ -157,7 +178,24 @@ class DataSyncOrchestrator:
             primary_keys=primary_keys,
             required_fields=required_fields,
         )
-        return self._backfill.run(spec, adapter=adapter, config=config)
+        return self._backfill.run(
+            spec,
+            adapter=adapter,
+            fetch_callable=fetch_callable,
+            config=config,
+        )
 
     def run_reconcile(self, conflict_id: str, *, adapter: BaseDataAdapter) -> SyncJobResult:
         return self._reconcile.run(conflict_id, adapter=adapter)
+
+    def run_full_load(self, spec: SyncJobSpec, **kwargs) -> SyncJobResult:
+        """Explicit deferred API (D2-P1-1 / ADV-A3-016)."""
+        raise NotImplementedError(
+            "run_full_load is deferred to Batch 6 orchestrator job matrix (D2-P1-1)"
+        )
+
+    def run_data_quality(self, spec: SyncJobSpec, **kwargs) -> SyncJobResult:
+        """Explicit deferred API (D2-P1-1 / ADV-A3-016)."""
+        raise NotImplementedError(
+            "run_data_quality is deferred to Batch 6 orchestrator job matrix (D2-P1-1)"
+        )

@@ -180,8 +180,11 @@ def test_layer1Ingestion_phase0_frozenIndicator_stagedRouteCapabilityDeclared() 
     )
     assert plan.data_domain == STAGED_DATA_DOMAIN
     assert plan.operation == STAGED_OPERATION
-    assert plan.selected_source_id == "akshare"
-    assert plan.route_status == "READY"
+    assert plan.selected_source_id is None
+    assert plan.route_status == "VALIDATION_ONLY_BLOCKED"
+    akshare = next(c for c in plan.candidates if c.source_id == "akshare")
+    assert akshare.capability_declared is True
+    assert akshare.skip_reason == "validation_only_cannot_be_primary"
     assert plan.candidates
 
 

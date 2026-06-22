@@ -424,8 +424,9 @@ def test_layer1Ingestion_routePreview_noMutation(tmp_path: Path) -> None:
     assert len(result.previews) == 1
     preview = result.previews[0]
     assert preview.indicator_id == FROZEN_STAGED_INDICATOR
-    assert preview.route_plan.route_status == "READY"
-    assert preview.route_plan.selected_source_id is not None
+    assert preview.route_plan.route_status == "VALIDATION_ONLY_BLOCKED"
+    assert preview.route_plan.selected_source_id is None
+    assert preview.stop_reason is not None
     assert preview.binding.data_domain == STAGED_DATA_DOMAIN
     assert preview.binding.operation == STAGED_OPERATION
     assert preview.capability_verified is True
@@ -612,7 +613,9 @@ def test_layer1Ingestion_routePreview_capabilityDeclaredForSelectedSource(
     result = service.preview_routes(indicators=[FROZEN_STAGED_INDICATOR], as_of=date(2024, 6, 15))
     preview = result.previews[0]
     assert preview.capability_verified is True
-    assert preview.route_plan.selected_source_id == "akshare"
+    akshare = next(c for c in preview.route_plan.candidates if c.source_id == "akshare")
+    assert akshare.capability_declared is True
+    assert akshare.skip_reason == "validation_only_cannot_be_primary"
 
 
 def test_layer1Ingestion_phase2TaskEvidence_usesSandboxDbAlignedWithPhase1(
@@ -708,7 +711,7 @@ def test_layer1Ingestion_phase2_taskEvidenceArtifacts(tmp_path: Path, monkeypatc
     assert (out / "phase2_no_mutation_proof.md").is_file()
     payload = json.loads((out / "phase2_route_preview.json").read_text(encoding="utf-8"))
     assert payload["frozen_indicator"] == FROZEN_STAGED_INDICATOR
-    assert payload["previews"][0]["route_plan"]["route_status"] == "READY"
+    assert payload["previews"][0]["route_plan"]["route_status"] == "VALIDATION_ONLY_BLOCKED"
     assert payload["previews"][0]["capability_verified"] is True
     assert payload["previews"][0]["intended_as_of_range"]["start"] == "2024-06-15"
     assert evidence["mutation_proof"]["row_counts_unchanged"] is True
@@ -809,10 +812,10 @@ def test_layer1MicroIngestion_persistsRoutePlanBeforeFetch(tmp_path: Path, monke
     assert route_row is not None
     assert fetch_row is not None
     payload = parse_event_payload(route_row[1])
-    assert payload.get("route_status") == "READY"
-    assert payload.get("selected_source_id") == "akshare"
+    assert payload.get("route_status") == "VALIDATION_ONLY_BLOCKED"
+    assert payload.get("selected_source_id") is None
     assert payload.get("decision") == "route_plan"
-    assert result.route_plan.route_status == "READY"
+    assert result.route_plan.route_status == "VALIDATION_ONLY_BLOCKED"
 
 
 def test_layer1MicroIngestion_writesFetchLogAndRawEvidence(tmp_path: Path, monkeypatch) -> None:
@@ -1436,7 +1439,7 @@ def test_layer1Observation_mappingUsesRawFetchPayload(tmp_path: Path, monkeypatc
         con.close()
     assert row is not None
     assert row[0] == expected_value
-    assert row[1] == result.micro_fetch.route_plan.selected_source_id
+    assert row[1] == result.micro_fetch.fetch_result.source_id
 
 
 def test_layer1Observation_resourceGuardPauseBlocksCommit(tmp_path: Path, monkeypatch) -> None:

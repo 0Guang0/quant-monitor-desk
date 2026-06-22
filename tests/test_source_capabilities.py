@@ -162,11 +162,10 @@ def test_capabilityRegistry_assertSourceDomainOperation_rejectsUnknown() -> None
         reg.assert_source_domain_operation("baostock", "cn_equity_realtime", "fetch_daily_bar")
 
 
-def test_capabilityRegistry_resolveRegistryDomain_forLegacyAdapterDomain() -> None:
+def test_capabilityRegistry_resolveRegistryDomain_passthroughWhenNoAlias() -> None:
     reg = SourceCapabilityRegistry()
     reg.load()
-    assert reg.resolve_registry_domain("baostock", "market_bar_1d") == "cn_equity_daily_bar"
-    assert reg.is_capability_declared("baostock", "market_bar_1d") is True
+    assert reg.resolve_registry_domain("baostock", "cn_equity_daily_bar") == "cn_equity_daily_bar"
     assert reg.is_capability_declared("baostock", "cn_equity_daily_bar") is True
 
 

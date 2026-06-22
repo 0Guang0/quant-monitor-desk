@@ -124,14 +124,12 @@ def test_axisInterpretation_rejectsForbiddenActionTerms() -> None:
     interp_engine = AxisInterpretationEngine()
     with pytest.raises(InterpretationRejectedError):
         interp_engine.reject_if_forbidden("建议买入")
-    rows = interp_engine.build_interpretation(
-        as_of=AS_OF,
-        features=[feat],
-        templates={feat.indicator_id: "市场出现买入信号"},
-    )
-    assert rows[0].needs_human_review is True
-    assert "买入" not in rows[0].summary_sentence
-    assert "信号" not in rows[0].summary_sentence
+    with pytest.raises(InterpretationRejectedError, match="forbidden action terms"):
+        interp_engine.build_interpretation(
+            as_of=AS_OF,
+            features=[feat],
+            templates={feat.indicator_id: "市场出现买入信号"},
+        )
 
 
 def test_layer2ValueCannotWritebackToLayer1() -> None:

@@ -404,3 +404,16 @@ Vite dev proxy 仅转发 `/health` 路径。但 `specs/frontend/page_contracts.y
 - Agent 可通过 `Bash` 工具运行测试（若环境允许）
 - 主会话交叉验证 HIGH 发现，确保无误报
 - 所有发现均与 `docs/UNRESOLVED_ISSUES_REGISTRY.md` 交叉核对，确保不重复登记
+
+---
+
+## PROMPT_15 闭合更新（2026-06-22）
+
+`fix/round3-r3x-residual-open-items-closure` 分支已用 **ponytail 最短 diff** 闭合 Master Checklist 全部 OPEN 行（见 `.trellis/tasks/fix-round3-r3x-residual-open-items-closure/execute-evidence/merge_gate_report.md`）。要点：
+
+- **路由/同步/写入：** validation_only Primary 阻断、domain_disabled、service fetch 门面、conflict alias、WriteManager `write_mode` 合约与最小 staging 行数、staged file_registry 经 gate。
+- **Live pilot：** Phase 2 route preview + Phase 3 `DataSourceService.fetch`；合成 validation_report 不得 clean-write（`DbValidationGate` synthetic flag 阻断）。
+- **A1/A3：** 锁文件 crash 恢复、ResourceGuard 无嵌套 BEGIN、batch profile 合约、idempotency `create_job`、reconcile market_id/status/临时表清理、CONTENT_CHANGED runtime、`run_full_load`/`run_data_quality` 显式 defer API。
+- **文档/registry：** `MIGRATION_COVERAGE` / `MIGRATION_008_PLAN` 009–010 叙事、019 AUDIT 阻塞清单、`layer2_cross_asset_sensor` §7 defer 交叉引用、`FRED:VIXCLS` fixture 注释、R3-PARTIAL-1 与 SYNC-002 去重注记。
+
+**仍有意排除（未在本任务声称修复）：** `R3-B2.75-REQ2-EM`、production-live、live fetch 默认启用 disabled source、L3/L4 完整 lineage（`ADV-R3X-LINEAGE-001` → Batch 4/5 defer）。

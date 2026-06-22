@@ -98,6 +98,7 @@ def test_declaredDomains_routePreviewOrExplicitDisabled() -> None:
                 "NO_AVAILABLE_SOURCE",
                 "CAPABILITY_MISSING",
                 "USER_AUTH_REQUIRED",
+                "VALIDATION_ONLY_BLOCKED",
             }
 
 

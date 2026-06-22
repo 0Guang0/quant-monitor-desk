@@ -111,7 +111,21 @@ def test_syncJob_revisionAudit_skeletonReachesStaged(tmp_path) -> None:
     assert status == "STAGED"
 
 
-def test_syncJob_dataQuality_skeletonCompletesOrManualReview(tmp_path) -> None:
+def test_syncJob_createJob_idempotent(tmp_path) -> None:
+    """ADV-A3-005: duplicate create_job with same job_id is idempotent."""
+    sm = _machine(tmp_path)
+    spec = _base_spec(job_id="job-idem")
+    assert sm.create_job(spec) == "job-idem"
+    assert sm.create_job(spec) == "job-idem"
+    with sm._cm.writer() as con:
+        count = con.execute(
+            "SELECT COUNT(*) FROM data_sync_job WHERE job_id = ?", ["job-idem"]
+        ).fetchone()[0]
+    assert count == 1
+
+
+def test_syncJob_dataQuality_skeletonCompletes(tmp_path) -> None:
+    """ADV-A3-015: data_quality skeleton transitions are deterministic."""
     sm = _machine(tmp_path)
     sm.create_job(
         _base_spec(
@@ -129,4 +143,4 @@ def test_syncJob_dataQuality_skeletonCompletesOrManualReview(tmp_path) -> None:
         status = con.execute(
             "SELECT status FROM data_sync_job WHERE job_id = ?", ["job-dq"]
         ).fetchone()[0]
-    assert status in ("COMPLETED", "MANUAL_REVIEW_REQUIRED")
+    assert status == "COMPLETED"

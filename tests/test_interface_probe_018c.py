@@ -84,7 +84,8 @@ def test_runInterfaceProbe_writesEvidence(tmp_path: Path, monkeypatch) -> None:
     assert (ev / "interface_probe_decision.md").is_file()
 
 
-def test_tdxAdapter_notInFactory() -> None:
+def test_tdxAdapter_registeredInFactory() -> None:
+    """ADV-A2-009: factory registration; default enablement unchanged in registry."""
     from backend.app.datasources.adapters import _ADAPTER_TYPES
 
-    assert "tdx_pytdx" not in _ADAPTER_TYPES
+    assert "tdx_pytdx" in _ADAPTER_TYPES
