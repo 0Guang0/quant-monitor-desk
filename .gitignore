@@ -26,6 +26,7 @@ data/parquet/
 data/audit/
 data/reports/
 data/cache/
+data/logs/
 
 # Audit sandbox (complex-task-protocol §2.10; ≠ Execute DATA_ROOT)
 .audit-sandbox/
