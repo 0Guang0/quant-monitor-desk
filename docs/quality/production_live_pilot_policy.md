@@ -46,8 +46,8 @@ A live pilot must fail closed unless the task evidence records all fields below:
 
 1. QMT and xqshare must remain disabled by default.
 2. Yahoo must remain auxiliary/validation-only unless a future policy changes its role.
-3. FRED primary live access for `ENV-E1-DGS10` remains deferred until the pilot records user authorization and evidence.
-4. Akshare or other aggregators may be useful for small-shape pilots but must not be treated as sole authoritative production primary when the relevant source registry says otherwise.
+3. FRED primary live access for `ENV-E1-DGS10` remains deferred (`B2.5-O-05`) until a **separate** user-authorized FRED pilot records authorization evidence and sandbox/no-production-mutation proof. Batch 2.75 Request 3 (`akshare` / `macro_supplementary` / `fetch_macro_series` / `DGS10`) does **not** close `B2.5-O-05` and must not be cited as live FRED primary or production-live macro evidence.
+4. Akshare or other aggregators may be useful for small-shape pilots but must not be treated as sole authoritative production primary when the relevant source registry says otherwise. `macro_supplementary` is a **staged supplementary route** for Layer 1 bridge tests; it is not a FRED primary substitute for production release.
 5. A route/capability result of `DISABLED_SOURCE`, `CAPABILITY_MISSING`, `USER_AUTH_REQUIRED`, or ResourceGuard failure stops the pilot.
 
 ## 5. Required phase gates

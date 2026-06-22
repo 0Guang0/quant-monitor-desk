@@ -696,6 +696,8 @@ Remaining data limitations: <explicit list>
 
 If Batch 2.5 closes only a fixture/staged micro-ingestion, Batch 3 must still label downstream real-data claims as not proven and must rely on fixture/staged semantics.
 
+**`B2.5-O-05` (FRED primary vs `macro_supplementary`):** Layer 1 specs declare `FRED:DGS10` for `ENV-E1-DGS10`, but the Batch 2.5 bridge and Batch 2.75 Request 3 use staged `macro_supplementary.fetch_macro_series` via `akshare`. That route is **supplementary macro shape evidence only** — not live FRED primary and not production-live macro readiness. Downstream batches must not upgrade Request 3 success to FRED primary closure.
+
 ## 14. 未闭合项覆盖补充（Plan 不得遗漏）
 
 执行 Batch2.5 follow-up、ingestion bridge refactor 或 Batch6 hygiene 计划前，必须读取 `docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md`，并核对：

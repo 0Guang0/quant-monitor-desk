@@ -136,7 +136,7 @@ uv run python -m compileall backend scripts tests
 - `018A_layer1_observation_ingestion_bridge.md` §13。
 - `docs/UNRESOLVED_ISSUES_REGISTRY.md` 中 `R3-B2.75-01` 的当前状态。
 
-若 `R3-B2.75-01` 仍为 `DEFERRED`，或 Batch 2.75 closeout 为 `PILOT_FAIL_SOURCE` 且 Request 2 仍在 `R3-B2.75-REQ2-EM`，本任务不得声称 production-live readiness，不得把 Batch 2.5 staged evidence 升级表述为 live production evidence，也不得使用 live FRED / production DB / external vendor writes 作为默认前提。
+若 `R3-B2.75-01` 仍为 `DEFERRED`，或 Batch 2.75 closeout 为 `PILOT_FAIL_SOURCE` 且 Request 2 仍在 `R3-B2.75-REQ2-EM`，本任务不得声称 production-live readiness，不得把 Batch 2.5 staged evidence 升级表述为 live production evidence，也不得使用 live FRED / production DB / external vendor writes 作为默认前提。`B2.5-O-05` 仍为 **DEFERRED**：Batch 2.75 Request 3（`akshare` / `macro_supplementary` / `DGS10`）仅记录 supplementary macro shape，**不**关闭 FRED `primary_source`。
 
 ## 17. Round 3 sequencing / branch boundary
 

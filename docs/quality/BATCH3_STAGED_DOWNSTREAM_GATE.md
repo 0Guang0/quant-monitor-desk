@@ -11,6 +11,7 @@ Before Batch 3 implementation or any “real-data-ready” claim:
 2. Cite `018A_layer1_observation_ingestion_bridge.md` §13 — downstream must not assume continuous production data.
 3. Cite `docs/ROUND3_HANDOFF.md` Batch 2.5 section — **archived PASS · staged/fixture only**.
 4. If `R3-B2.75-01` remains DEFERRED, Batch 3 MUST NOT use live FRED / production DB / external vendor writes.
+5. `B2.5-O-05` remains **DEFERRED**: Batch 2.75 Request 3 (`akshare` / `macro_supplementary`) records supplementary macro shape only and does **not** close FRED `primary_source` for `ENV-E1-DGS10`. Batch 3 must not treat `macro_supplementary` as live FRED or production-live macro evidence.
 
 ## R3-B3-STAGED-DOWNSTREAM-GATE
 

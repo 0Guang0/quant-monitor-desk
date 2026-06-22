@@ -99,10 +99,10 @@ def test_registriesKeepBatch25LiveFredDeferredToBatch275() -> None:
     resolved = _read(RESOLVED_REGISTRY)
     for registry in (audit, unresolved):
         assert "B2.5-O-05" in registry
-        assert "Batch 2.75" in registry
         assert "018B_production_live_pilot_gate.md" in registry
     assert "production_live_pilot_policy.md" in audit
-    assert "live requires Batch 2.75 auth evidence and sandbox/no-mutation proof" in audit
+    assert "Not closed by Batch 2.75 Request 3" in audit
+    assert "test_fred_staged_semantics.py" in audit
     assert "R3-B2.75-01" in resolved
     assert "PILOT_FAIL_SOURCE" in resolved
     assert "R3-B2.75-REQ2-EM" in unresolved
