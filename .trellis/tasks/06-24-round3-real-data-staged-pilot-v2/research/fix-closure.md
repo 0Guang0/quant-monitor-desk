@@ -26,7 +26,7 @@
 | `validation_report_summary.json` | `validation_report_v2.json` |
 | `production_db_no_mutation_proof.md` | `no_mutation_proof_v2.md` |
 
-**状态：** **CLOSED** — handoff 仅以 `*_v2.*` / `pilot_v2_*.json` 为准。
+**状态：** **CLOSED** — handoff 仅以 `*_v2.*` / `pilot_v2_*.json` 为准。主会话复核 MS-B19-01：再次删除误再生 v1 三文件。
 
 ---
 
@@ -155,7 +155,7 @@
 
 ---
 
-## Ponytail 自检
+## Ponytail 自检（A1–A7 首轮）
 
 | 梯级 | 问题 | 结论 |
 |------|------|------|
@@ -166,10 +166,65 @@
 
 ---
 
+## A3 — security（Phase 7 复审计）
+
+| ID | 处置 | 状态 |
+|----|------|------|
+| **OOB-A3-1** | `reset_network_call_budget(limit=MAX_NETWORK_CALLS_V2)` 于 `run_full_staged_pilot_v2`；移除 baostock/cninfo 间 reset；共享整次 run budget | **CLOSED** |
+| **OOB-A3-2** | `consume()` 处 `ponytail:` 注释（per pilot run 非 per HTTP）；`test_stagedPilotV2_authorization_rejectsAllowCleanWrite` | **CLOSED** |
+| **OOB-A3-3** | 仓库级 `adapter=` 旁路不在本 diff；文档记录 defer 至全局 AUD-08 | **CLOSED（文档）** |
+
+---
+
+## A6 — perf（Phase 7 复审计 · SKIP 维度 + 计划外）
+
+| ID | 处置 | 状态 |
+|----|------|------|
+| **OOF-P1** | 同 OOB-A3-1 — budget SSOT=25 | **CLOSED** |
+| **OOF-P2** | `run_full_staged_pilot_v2` 对齐 v1：`ResourceGuard.check()` + HARD_STOP 跳过 live fetch | **CLOSED** |
+| **OOF-P3** | mutation proof 多次全库 COUNT — ponytail defer；扩样本任务再合并 before 快照 | **CLOSED（defer）** |
+| **OOF-P4** | live 仅 `symbols[0]` — ponytail defer；信封多 symbol 为授权边界非多 fetch | **CLOSED（文档）** |
+| **OOF-P5** | v2 产出 `resource_guard_caps.json`（decision/reason/budget/caps） | **CLOSED** |
+| **OOF-P6** | 同 OOB-A3-2 — budget 粒度文档化 | **CLOSED（文档）** |
+
+---
+
+## A8 — test-gap（Phase 7 复审计）
+
+| ID | 处置 | 状态 |
+|----|------|------|
+| **OOF-A8-01** | `required_kinds` 含 `user_auth_required`（A5 OOF-1 已修）；48 测全绿 | **CLOSED** |
+| **OOF-A8-02** | `test_stagedPilotV2_writeNoMutationProofV2_writesMarkdown` | **CLOSED** |
+| **OOF-A8-03** | v2 块 15 测 docstring 四元组补齐（验证点+失败含义） | **CLOSED** |
+| **OOF-A8-04** | `capsExceedingMaxRows` / `capsExceedingMaxTradeDays` + `networkCallBudget_alignsWithCaps` | **CLOSED** |
+| **OOF-A8-05** | akshare 测断言 `re_defer` + NETWORK_ERROR 文案 | **CLOSED** |
+| **OOF-A8-06** | validation 测断言 `source_used == baostock` | **CLOSED** |
+| **OOF-A8-07** | baostock manifest 断言 `vendor_api` / `as_of_timestamp` | **CLOSED** |
+| **OOF-A8-08** | execute-evidence regen（route `user_auth_required`、resource_guard） | **CLOSED** |
+
+---
+
+## A4 — OOB-1-T closeout 三态（交叉）
+
+同 **OOB-1** + `test_stagedPilotV2_closeoutThreeStateSemantics` 四元组完整。**CLOSED**
+
+---
+
+## Ponytail 自检（Phase 7 增补）
+
+| 梯级 | 问题 | 结论 |
+|------|------|------|
+| 1 YAGNI | 新模块？ | 否 — `reset_network_call_budget(limit=)` 一处 SSOT |
+| 2 复用 | v1 模式？ | ResourceGuard + resource_guard_caps.json 照搬 v1 接线 |
+| 6 最小 | diff | ~120 行行为 + 测试；无新依赖 |
+| 注释 | 天花板 | consume 粒度；P3/P4/P6 defer 记入 closure 表 |
+
+---
+
 ## 验证
 
 ```text
-uv run pytest tests/test_staged_pilot.py -q  → 41 passed
+uv run pytest tests/test_staged_pilot.py -q  → 48 passed
 uv run pytest -q                             → exit 0
-execute-evidence 已 regen（closeout null、route user_auth_required）
+execute-evidence 已 regen（closeout null、route user_auth_required、resource_guard_caps.json）
 ```
