@@ -28,6 +28,8 @@
 
 机器路由：`audit-skill-paths.yaml`
 
+Audit 协调者将各维 agent 产出合并为任务根目录 `audit_matrix.json`（`result` + `evidence` 路径；Repair 后 `fail_then_fixed`）。各维模板产出 `audit.report.md` §3.x；矩阵字段见 `.trellis/spec/guides/templates/audit_matrix.json`。
+
 ## 模板分类（行数 ≈ 2026-06 加厚后）
 
 | 类别           | 文件                                                                                                                                                                           |

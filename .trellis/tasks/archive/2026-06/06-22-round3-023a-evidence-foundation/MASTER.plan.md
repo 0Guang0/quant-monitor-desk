@@ -4,13 +4,13 @@
 
 ## 0. 元信息
 
-| 字段 | 值 |
-| ---- | -- |
-| 任务 slug | `06-22-round3-023a-evidence-foundation` |
-| 分支 | `feature/round3-023a-evidence-foundation` |
-| 基分支 | `master` @ `76ea3471` |
+| 字段      | 值                                        |
+| --------- | ----------------------------------------- |
+| 任务 slug | `06-22-round3-023a-evidence-foundation`   |
+| 分支      | `feature/round3-023a-evidence-foundation` |
+| 基分支    | `master` @ `76ea3471`                     |
 | 前置 gate | `R3-B3-STAGED-DOWNSTREAM-GATE` **CLOSED** |
-| 目标合并 | `integration/round3` |
+| 目标合并  | `integration/round3`                      |
 
 ### Contract 所有权
 
@@ -19,11 +19,11 @@
 
 ### 019/020/021 兼容性
 
-| 分支 | 对接点 |
-| ---- | ------ |
+| 分支  | 对接点                                                               |
+| ----- | -------------------------------------------------------------------- |
 | `019` | `InstrumentEvidenceRef` + `layer5_instrument_id`；lineage 字段集一致 |
-| `020` | `target_type` / `target_id` 供 chain anchor |
-| `021` | `upstream_snapshot_ids` 可引用 Layer4 snapshot |
+| `020` | `target_type` / `target_id` 供 chain anchor                          |
+| `021` | `upstream_snapshot_ids` 可引用 Layer4 snapshot                       |
 
 ## 1. 目标
 

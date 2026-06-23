@@ -6,7 +6,7 @@ import json
 
 from tests.contract_gate_support import PROJECT_ROOT
 
-TASK_DIR = PROJECT_ROOT / ".trellis/tasks/06-21-round3-batch2-75-live-pilot"
+TASK_DIR = PROJECT_ROOT / ".trellis/tasks/archive/2026-06/06-21-round3-batch2-75-live-pilot"
 AUDIT_JSONL = TASK_DIR / "audit.jsonl"
 AUDIT_PLAN = TASK_DIR / "AUDIT.plan.md"
 PLAN_FREEZE = TASK_DIR / "plan.freeze.md"

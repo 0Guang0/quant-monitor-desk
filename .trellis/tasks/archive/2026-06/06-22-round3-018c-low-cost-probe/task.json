@@ -2,7 +2,7 @@
   "id": "06-22-round3-018c-low-cost-probe",
   "name": "round3-018c-low-cost-probe",
   "title": "Round 3 018C: Low-cost tdx_pytdx Data Interface Probe",
-  "status": "in_progress",
+  "status": "completed",
   "branch": "debt/r3b275-018c-low-cost-probe",
   "base_branch": "integration/round3",
   "meta": {
@@ -12,5 +12,6 @@
       "R3-B2.75-FOLLOWUP-DATA-INTERFACE-PROBE",
       "PILOT_FAIL_SOURCE"
     ]
-  }
+  },
+  "completedAt": "2026-06-23"
 }

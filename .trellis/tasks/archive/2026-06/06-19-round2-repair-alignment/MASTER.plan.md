@@ -7,19 +7,19 @@
 
 ## 0. 元信息
 
-| 字段 | 值 |
-|------|-----|
-| slug | `06-19-round2-repair-alignment` |
-| 关联 | PR #14 修复包导入后对抗审计遗留 |
+| 字段 | 值                                                |
+| ---- | ------------------------------------------------- |
+| slug | `06-19-round2-repair-alignment`                   |
+| 关联 | PR #14 修复包导入后对抗审计遗留                   |
 | 跟踪 | `docs/quality/ROUND2_REPAIR_ALIGNMENT_TRACKER.md` |
 
 ### 0.1 门控
 
-| 项 | 值 |
-|----|-----|
-| **前置** | `master` post PR #14 merge · pytest 372+ green |
+| 项       | 值                                                               |
+| -------- | ---------------------------------------------------------------- |
+| **前置** | `master` post PR #14 merge · pytest 372+ green                   |
 | **阻塞** | 未完成本计划 **不得** 启动 `017_implement_layer1_axis_loader.md` |
-| **验收** | §2 AC 全绿 + tracker R2.5 行 DONE + full pytest/ruff |
+| **验收** | §2 AC 全绿 + tracker R2.5 行 DONE + full pytest/ruff             |
 
 ---
 
@@ -39,23 +39,23 @@
 
 ## 2. 预期结果（AC）
 
-| ID | 预期结果 | 验证 |
-|----|----------|------|
-| R2.5-1 | `cn_equity_minute_bar` 调度前返回 `DISABLED_SOURCE`（写 fetch_log，不调 vendor） | `test_disabledPrimaryDomain_*` |
-| R2.5-2 | `write_audit_log` 含 007 全部 ADD COLUMN（含 `traceback_digest`） | `test_syncAuditMigration007_*` |
-| R2.5-3 | configs/spec `api_limits` 不能覆盖 query budget 四键 | `test_loadApiLimits_queryBudgetNotOverridden*` |
-| R2.5-4 | `ROUND3_HANDOFF` 标明 R2.5 gate；gap ledger **partial** | 文档 diff |
-| R2.5-5 | Shadow/Emergency + top-level `shadow_source` 拒绝 | `test_legacySourceRoles_*` |
+| ID     | 预期结果                                                                         | 验证                                           |
+| ------ | -------------------------------------------------------------------------------- | ---------------------------------------------- |
+| R2.5-1 | `cn_equity_minute_bar` 调度前返回 `DISABLED_SOURCE`（写 fetch_log，不调 vendor） | `test_disabledPrimaryDomain_*`                 |
+| R2.5-2 | `write_audit_log` 含 007 全部 ADD COLUMN（含 `traceback_digest`）                | `test_syncAuditMigration007_*`                 |
+| R2.5-3 | configs/spec `api_limits` 不能覆盖 query budget 四键                             | `test_loadApiLimits_queryBudgetNotOverridden*` |
+| R2.5-4 | `ROUND3_HANDOFF` 标明 R2.5 gate；gap ledger **partial**                          | 文档 diff                                      |
+| R2.5-5 | Shadow/Emergency + top-level `shadow_source` 拒绝                                | `test_legacySourceRoles_*`                     |
 
 ---
 
 ## 3. Round 3 同步偿还（记录在 tracker，**不在本 Execute 实现**）
 
-| ID | 项 |
-|----|-----|
+| ID           | 项                                             |
+| ------------ | ---------------------------------------------- |
 | R3-PARTIAL-1 | Backfill 不经 validator/clean — 文档或实现闭环 |
-| R3-PARTIAL-2 | 首个真实 FetchPort 或 `run_full_load` 骨架 |
-| R3-PARTIAL-3 | `run_reconcile` 真重抓 |
+| R3-PARTIAL-2 | 首个真实 FetchPort 或 `run_full_load` 骨架     |
+| R3-PARTIAL-3 | `run_reconcile` 真重抓                         |
 
 Round 3 Trellis MASTER 创建时必须从 tracker 复制以上 ID。
 

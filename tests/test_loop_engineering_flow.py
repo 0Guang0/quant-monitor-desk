@@ -52,7 +52,7 @@ ROUND3_MODULES = (
     "ops",
 )
 
-SAMPLE_TASK = PROJECT_ROOT / ".trellis/tasks/06-22-round3-019-layer2-sensor"
+SAMPLE_TASK = PROJECT_ROOT / ".trellis/tasks/archive/2026-06/06-22-round3-019-layer2-sensor"
 
 
 def _run_script(script: str, *args: str) -> subprocess.CompletedProcess[str]:
@@ -156,7 +156,7 @@ def test_contextRouter_cli_taskFlag_writesContextPack() -> None:
     result = _run_script(
         "context_router.py",
         "--task",
-        ".trellis/tasks/06-22-round3-019-layer2-sensor",
+        ".trellis/tasks/archive/2026-06/06-22-round3-019-layer2-sensor",
     )
     try:
         assert result.returncode == 0, result.stderr

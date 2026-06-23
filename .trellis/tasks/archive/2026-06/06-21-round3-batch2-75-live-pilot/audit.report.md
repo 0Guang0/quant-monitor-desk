@@ -115,3 +115,7 @@ Audit cannot pass until §4.3 is repaired and Repair re-verifies MASTER §10.
 | Prod-path hash proof | PASS | `repair-evidence/R-6_tier_ag_prod_hash.md`; hash unchanged `5EB65E0EDAAAB223A77C5A5D2660603383836704B4C0ECE1EB4AEBB047F1682E`     |
 
 Repair closed R-1..R-6. Remaining deferred items are registry-owned follow-ups only: `R3-B2.75-REQ2-EM`, `R3-B25-PERF-BUDGET-01`, `R3-B25-HYG-03`, and `B2.5-O-05`.
+
+## 6. Loop engineering final
+
+**Final audit status:** PASS_AFTER_REPAIR

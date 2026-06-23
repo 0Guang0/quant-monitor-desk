@@ -59,4 +59,5 @@
 
 - [ ] 7.pre → `gitnexus-audit-summary.md`
 - [ ] 按 `audit-skill-paths.yaml` 派发 A1–A8 → `audit.report.md`
+- [ ] 汇总各维 `result` / `evidence` → `audit_matrix.json`（模板：`.trellis/spec/guides/templates/audit_matrix.json`）
 - [ ] PASS / PASS_WITH_FIXES / FAIL

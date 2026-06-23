@@ -30,12 +30,12 @@
 
 ## Tests
 
-| Command | Result |
-| ------- | ------ |
+| Command                                        | Result        |
+| ---------------------------------------------- | ------------- |
 | `pytest tests/test_layer2_sensor_loader.py -q` | **32 passed** |
-| PROMPT §7 gate matrix | all green |
-| `pytest -q` full suite | green |
-| `validate-execute-handoff` | exit 0 |
+| PROMPT §7 gate matrix                          | all green     |
+| `pytest -q` full suite                         | green         |
+| `validate-execute-handoff`                     | exit 0        |
 
 ## ResourceGuard
 
@@ -50,9 +50,9 @@
 
 ## Adversarial audit remediation
 
-| Round | Verdict | Notes |
-| ----- | ------- | ----- |
-| Audit 1 | FAIL → fixed | 22 findings addressed |
+| Round   | Verdict                 | Notes                            |
+| ------- | ----------------------- | -------------------------------- |
+| Audit 1 | FAIL → fixed            | 22 findings addressed            |
 | Audit 2 | PASS_WITH_FIXES → fixed | F-023–F-031 closed; handoff pass |
 
 ## Deferred items
