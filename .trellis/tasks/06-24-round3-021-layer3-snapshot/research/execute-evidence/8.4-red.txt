@@ -1,0 +1,1 @@
+Layer3SnapshotError not raised for future bar (§8.4 RED — as_of guard before GREEN)

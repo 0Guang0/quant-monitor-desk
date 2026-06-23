@@ -1,0 +1,1 @@
+AssertionError / build not implemented (§8.3 RED — builder stub before GREEN)

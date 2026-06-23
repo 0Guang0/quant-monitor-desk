@@ -66,7 +66,7 @@
 2. **每步 GREEN 后** MUST Read `incremental-implementation`；仅跑当前步 RED + 已绿用例；**Tier B 全库 `uv run pytest -q` 仅 §8.6 一次**。
 3. **任何代码修复后** MUST 至少跑 `uv run pytest tests/test_layer3_snapshot_builder.py -q`；§8.6 前不得跳过 Tier B。
 4. **禁止弱化测试目的**：不得为通过而删除业务语义断言或改写 AC 覆盖面；允许重构测试实现，但 AC 不变。
-5. **测试注释（中文）**：每个 `test_*` 须含 **覆盖范围**、**测试对象**、**目的**（可与 `purpose`/`verifies` 并列）。
+5. **测试注释（中文）**：每个 `test_*` 须含 **目的**、**测试对象**、**验证点**、**失败含义**（对齐 `purpose`/`target`/`verifies`/`failure_meaning`）；**目的**与**失败含义**须通俗可读；**验证点**可附 AC/契约名。
 6. **ponytail 违规**（过度抽象、未请求依赖）→ **停止当前 §8 步**，删 bloat 后再 GREEN。
 
 ### 0.4 上下文打包（v3）
@@ -319,7 +319,7 @@ class IndustryChainSnapshotBuilder:
 | GREEN 命令 | `uv sync --locked` + `research/execute-evidence/8.0-boot-reads.txt`                                                                           |
 | RED 证据   | `research/execute-evidence/8.0-red.txt`                                                                                                       |
 | GREEN 证据 | `research/execute-evidence/8.0-green.txt`                                                                                                     |
-| 已执行     | [ ]                                                                                                                                           |
+| 已执行     | [x]                                                                                                                                           |
 
 ### 8.1 Models
 
@@ -330,7 +330,7 @@ class IndustryChainSnapshotBuilder:
 | GREEN 命令 | 同上 exit 0                                                                                                                         |
 | RED 证据   | `research/execute-evidence/8.1-red.txt`                                                                                             |
 | GREEN 证据 | `research/execute-evidence/8.1-green.txt`                                                                                           |
-| 已执行     | [ ]                                                                                                                                 |
+| 已执行     | [x]                                                                                                                                 |
 
 ### 8.2 Lineage builder
 
@@ -341,7 +341,7 @@ class IndustryChainSnapshotBuilder:
 | GREEN 命令 | 同上 exit 0                                                                                        |
 | RED 证据   | `research/execute-evidence/8.2-red.txt`                                                            |
 | GREEN 证据 | `research/execute-evidence/8.2-green.txt`                                                          |
-| 已执行     | [ ]                                                                                                |
+| 已执行     | [x]                                                                                                |
 
 ### 8.3 Snapshot builder core
 
@@ -352,7 +352,7 @@ class IndustryChainSnapshotBuilder:
 | GREEN 命令 | 同上 exit 0                                                                                                                                                                                                                                                                                                                                                                      |
 | RED 证据   | `research/execute-evidence/8.3-red.txt`                                                                                                                                                                                                                                                                                                                                          |
 | GREEN 证据 | `research/execute-evidence/8.3-green.txt`                                                                                                                                                                                                                                                                                                                                        |
-| 已执行     | [ ]                                                                                                                                                                                                                                                                                                                                                                              |
+| 已执行     | [x]                                                                                                                                                                                                                                                                                                                                                                              |
 
 ### 8.4 as_of / no_future_data
 
@@ -363,7 +363,7 @@ class IndustryChainSnapshotBuilder:
 | GREEN 命令 | 同上 exit 0                                                                               |
 | RED 证据   | `research/execute-evidence/8.4-red.txt`                                                   |
 | GREEN 证据 | `research/execute-evidence/8.4-green.txt`                                                 |
-| 已执行     | [ ]                                                                                       |
+| 已执行     | [x]                                                                                       |
 
 ### 8.5 event_only anchors
 
@@ -374,7 +374,7 @@ class IndustryChainSnapshotBuilder:
 | GREEN 命令 | 同上 exit 0                                                                                              |
 | RED 证据   | `research/execute-evidence/8.5-red.txt`                                                                  |
 | GREEN 证据 | `research/execute-evidence/8.5-green.txt`                                                                |
-| 已执行     | [ ]                                                                                                      |
+| 已执行     | [x]                                                                                                      |
 
 ### 8.6 Final gates
 
@@ -384,7 +384,7 @@ class IndustryChainSnapshotBuilder:
 | GREEN 命令 | 见 §10                                                          |
 | RED 证据   | `research/execute-evidence/8.6-red.txt`                         |
 | GREEN 证据 | `research/execute-evidence/8.6-green.txt`                       |
-| 已执行     | [ ]                                                             |
+| 已执行     | [x]                                                             |
 
 ---
 
@@ -413,13 +413,13 @@ class IndustryChainSnapshotBuilder:
 
 | Skill                                    | 本任务                        | 已执行 |
 | ---------------------------------------- | ----------------------------- | ------ |
-| trellis-execute                          | 必做                          | [ ]    |
-| test-driven-development                  | 必做                          | [ ]    |
-| incremental-implementation               | 必做（每步 GREEN 后 §0.3b-2） | [ ]    |
-| karpathy-guidelines                      | 必做                          | [ ]    |
-| testing-guidelines                       | 必做                          | [ ]    |
-| ponytail（`.cursor/rules/ponytail.mdc`） | 必做                          | [ ]    |
-| gitnexus-impact                          | 必做                          | [ ]    |
+| trellis-execute                          | 必做                          | [x]    |
+| test-driven-development                  | 必做                          | [x]    |
+| incremental-implementation               | 必做（每步 GREEN 后 §0.3b-2） | [x]    |
+| karpathy-guidelines                      | 必做                          | [x]    |
+| testing-guidelines                       | 必做                          | [x]    |
+| ponytail（`.cursor/rules/ponytail.mdc`） | 必做                          | [x]    |
+| gitnexus-impact                          | 必做                          | [x]    |
 | trellis-check                            | **不用**                      | —      |
 | ponytail-review                          | **不用**                      | —      |
 
@@ -429,7 +429,7 @@ class IndustryChainSnapshotBuilder:
 
 ## 12. Audit 交接
 
-- [ ] §8 全部步骤已执行
-- [ ] `validate-execute-handoff` 通过
+- [x] §8 全部步骤已执行
+- [x] `validate-execute-handoff` 通过
 - [ ] 无 production-live 声称
 - [ ] §3.2 ADV-R3X / R3Y 边界未被 Execute 越界关闭

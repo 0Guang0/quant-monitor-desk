@@ -1,0 +1,2 @@
+FAILED: Tier A/B not run (§8.6 RED — final gates pending)
+ERROR: full pytest suite not executed before GREEN

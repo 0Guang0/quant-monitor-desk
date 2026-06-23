@@ -1,0 +1,1 @@
+ModuleNotFoundError: backend.app.layer3_chains.lineage (§8.2 RED — lineage absent before GREEN)

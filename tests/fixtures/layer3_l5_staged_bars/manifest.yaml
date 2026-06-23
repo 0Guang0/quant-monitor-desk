@@ -1,0 +1,16 @@
+source_mode: staged_fixture_only
+source_fetch_ids:
+  - l5-staged-fetch-msft-001
+source_content_hashes:
+  - sha256:msft-bar-2026-06-14
+anchors:
+  MSFT:
+    instrument_id: L5-MSFT-US
+    bars:
+      - trade_date: "2026-06-14"
+        close: 420.5
+        volume: 25000000.0
+        as_of_timestamp: "2026-06-14T20:00:00+00:00"
+  OPENAI:
+    instrument_id: L5-OPENAI-EVENT
+    bars: []

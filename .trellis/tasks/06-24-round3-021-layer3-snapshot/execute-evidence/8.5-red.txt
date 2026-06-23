@@ -1,0 +1,2 @@
+FAILED: OPENAI snapshot had latest_price set (§8.5 RED — event_only branch before GREEN)
+ERROR: event_only anchor must not populate latest_price
