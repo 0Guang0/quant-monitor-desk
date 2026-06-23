@@ -12,6 +12,7 @@ from pathlib import Path
 
 import pytest
 import yaml
+from backend.app.config import PROJECT_ROOT
 from backend.app.core.snapshot_lineage import LINEAGE_REQUIRED_FIELDS
 from backend.app.layer3_chains.loader import STAGED_LAYER3_BUNDLE_DIR, IndustryChainLoader
 from backend.app.layer3_chains.models import (
@@ -25,6 +26,7 @@ from backend.app.layer3_chains.snapshot_builder import (
 )
 
 _FIXTURE_L5 = Path(__file__).resolve().parent / "fixtures" / "layer3_l5_staged_bars"
+_MUTATION_ROOT = PROJECT_ROOT / ".audit-sandbox" / "layer3_l5_mutations"
 AS_OF = datetime(2026, 6, 15, 16, 0, tzinfo=UTC)
 TRADE_DATE = date(2026, 6, 14)
 
@@ -45,7 +47,11 @@ def _build(
 
 
 def _copy_l5_bundle(tmp_path: Path) -> Path:
-    dest = tmp_path / "l5_bars"
+    """Copy fixture under PROJECT_ROOT so UF-1 path guard allows mutation tests."""
+    dest = _MUTATION_ROOT / tmp_path.name
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    if dest.exists():
+        shutil.rmtree(dest)
     shutil.copytree(_FIXTURE_L5, dest)
     return dest
 
@@ -285,7 +291,7 @@ def test_layer3Snapshot_naiveBarTimestamp_rejects(tmp_path: Path) -> None:
 def test_layer3Snapshot_emptyAnchors_returnsEmpty() -> None:
     """覆盖范围：产业链加载结果里没有任何锚点（anchors 为空）
     测试对象：IndustryChainSnapshotBuilder.build
-    目的/目标：没有锚点时应返回空结果，而不是报错或捏造快照行
+    目的：没有锚点时应返回空结果，而不是报错或捏造快照行
     验证点：空 anchors → snapshots、mapping_views、lineage_envelopes 均为空元组
     失败含义：空输入仍产出假数据或抛错，说明边界处理坏了
     """
@@ -306,3 +312,117 @@ def test_layer3Snapshot_emptyAnchors_returnsEmpty() -> None:
     assert result.snapshots == ()
     assert result.layer5_mapping_views == ()
     assert result.lineage_envelopes == ()
+
+
+def test_layer3Snapshot_missingManifestFetchIds_rejects(tmp_path: Path) -> None:
+    """覆盖范围：L5 manifest 缺 source_fetch_ids
+    测试对象：IndustryChainSnapshotBuilder.build 的 _manifest_provenance
+    目的：§5.2 S2 失败语义 — 无 fetch id 不得建 lineage
+    验证点：删除 source_fetch_ids → Layer3SnapshotError 含 source_fetch_ids
+    失败含义：缺 fetch id 仍建快照，血缘不可追溯到抓取批次
+    """
+    bundle = _copy_l5_bundle(tmp_path)
+    manifest = yaml.safe_load((bundle / "manifest.yaml").read_text(encoding="utf-8"))
+    del manifest["source_fetch_ids"]
+    (bundle / "manifest.yaml").write_text(
+        yaml.safe_dump(manifest, allow_unicode=True), encoding="utf-8"
+    )
+    with pytest.raises(Layer3SnapshotError, match="source_fetch_ids"):
+        _build(l5_bundle_dir=bundle)
+
+
+def test_layer3Snapshot_missingL5Manifest_rejects(tmp_path: Path) -> None:
+    """覆盖范围：L5 bundle 目录无 manifest.yaml
+    测试对象：IndustryChainSnapshotBuilder.build 的 _read_l5_manifest
+    目的：缺 manifest 须 fail-closed，不得静默空读
+    验证点：空目录作 l5_bundle_dir → Layer3SnapshotError 含 missing L5 manifest
+    失败含义：无 manifest 仍继续 build，staged 双闸与 provenance 链断裂
+    """
+    bundle = _MUTATION_ROOT / tmp_path.name / "empty"
+    bundle.mkdir(parents=True, exist_ok=True)
+    with pytest.raises(Layer3SnapshotError, match="missing L5 manifest"):
+        _build(l5_bundle_dir=bundle)
+
+
+def test_layer3Snapshot_invalidManifestYaml_rejects(tmp_path: Path) -> None:
+    """覆盖范围：L5 manifest YAML 语法非法
+    测试对象：IndustryChainSnapshotBuilder.build 的 _read_l5_manifest
+    目的：畸形 YAML 须包装为 Layer3SnapshotError，不泄漏 YAMLError
+    验证点：写入坏 YAML → Layer3SnapshotError 含 invalid yaml
+    失败含义：YAMLError 逃出信任边界，调用方无法统一 fail-closed
+    """
+    bundle = _copy_l5_bundle(tmp_path)
+    (bundle / "manifest.yaml").write_text("not: valid: yaml: [", encoding="utf-8")
+    with pytest.raises(Layer3SnapshotError, match="invalid yaml"):
+        _build(l5_bundle_dir=bundle)
+
+
+def test_snapshotLineage_agentOutputsNotSource_rejectsAgentProse() -> None:
+    """覆盖范围：agent 文案不得进入 source_dataset_ids（contract 约束）
+    测试对象：Layer3LineageBuilder.build 经 validate_source_dataset_ids
+    目的：对齐 L1 负向测，Layer3 lineage 须拒绝 agent_summary 类 dataset id
+    验证点：source_dataset_ids 含 agent_summary → Layer3LineageError 含 agent outputs
+    失败含义：agent 输出混入血缘来源，agent_outputs_not_source 契约失效
+    """
+    from backend.app.layer3_chains.lineage import Layer3LineageBuilder, Layer3LineageError
+
+    with pytest.raises(Layer3LineageError, match="agent outputs"):
+        Layer3LineageBuilder().build(
+            snapshot_id="l3-agent-bad",
+            snapshot_type="industry_chain_daily_snapshot",
+            as_of=AS_OF,
+            input_window_start=AS_OF - timedelta(days=1),
+            input_window_end=AS_OF,
+            source_dataset_ids=("agent_summary:建议买入",),
+            source_fetch_ids=("fetch-l3-1",),
+            source_content_hashes=("sha256-deadbeef",),
+            rule_version="layer3_chain_staged_v1",
+            parameter_hash="param-hash-l3",
+        )
+
+
+def test_layer3Snapshot_deterministicRebuild_sameInputsSameHash() -> None:
+    """覆盖范围：同输入重复 build 的 parameter_hash 稳定性
+    测试对象：IndustryChainSnapshotBuilder.build 产出的 lineage parameter_hash
+    目的：对齐 contract deterministic_rebuild 与 L2 先例，同输入同哈希
+    验证点：两次 _build() 的 MSFT lineage parameter_hash 与 latest_price 一致
+    失败含义：同输入哈希漂移，增量重建与审计对账不可复现
+    """
+    result1 = _build()
+    result2 = _build()
+    msft_lin1 = next(e for e in result1.lineage_envelopes if "MSFT" in e.snapshot_id)
+    msft_lin2 = next(e for e in result2.lineage_envelopes if "MSFT" in e.snapshot_id)
+    assert msft_lin1.parameter_hash == msft_lin2.parameter_hash
+    snap1 = next(s for s in result1.snapshots if s.anchor_id == "MSFT")
+    snap2 = next(s for s in result2.snapshots if s.anchor_id == "MSFT")
+    assert snap1.latest_price == snap2.latest_price
+
+
+def test_layer3Snapshot_nonNumericClose_rejects(tmp_path: Path) -> None:
+    """覆盖范围：bar close 非数值时的拒绝（OOF-7）
+    测试对象：_parse_bar_close 经 build 集成路径
+    目的：非数值 close 须抛 Layer3SnapshotError，不泄漏 ValueError
+    验证点：close=not-a-number → Layer3SnapshotError 含 numeric
+    失败含义：ValueError 逃出信任边界，ops 侧无法统一捕获
+    """
+    bundle = _copy_l5_bundle(tmp_path)
+    manifest = yaml.safe_load((bundle / "manifest.yaml").read_text(encoding="utf-8"))
+    manifest["anchors"]["MSFT"]["bars"][0]["close"] = "not-a-number"
+    (bundle / "manifest.yaml").write_text(
+        yaml.safe_dump(manifest, allow_unicode=True), encoding="utf-8"
+    )
+    with pytest.raises(Layer3SnapshotError, match="numeric"):
+        _build(l5_bundle_dir=bundle)
+
+
+def test_layer3Snapshot_l5BundleOutsideProjectRoot_rejects(tmp_path: Path) -> None:
+    """覆盖范围：l5_bundle_dir 须在 PROJECT_ROOT 下（UF-1）
+    测试对象：IndustryChainSnapshotBuilder.build 的 _resolve_l5_bundle_root
+    目的：阻止任意路径读 manifest，对齐 staged 本地信任边界
+    验证点：tmp_path（项目外）作 l5_bundle_dir → Layer3SnapshotError 含 project root
+    失败含义：任意可读目录可作 L5 来源，未来 CLI 切片无路径白名单
+    """
+    outside = tmp_path / "outside_l5"
+    shutil.copytree(_FIXTURE_L5, outside)
+    with pytest.raises(Layer3SnapshotError, match="project root"):
+        _build(l5_bundle_dir=outside)

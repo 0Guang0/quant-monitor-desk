@@ -21,7 +21,8 @@ from backend.app.layer3_chains.models import (
 STAGED_LAYER3_L5_BARS_DIR = PROJECT_ROOT / "tests" / "fixtures" / "layer3_l5_staged_bars"
 
 # ponytail: module-level helpers mirror loader.py; no extra abstraction layer;
-# ceiling is single-file builder + thin Layer3LineageBuilder (L2 clone).
+# ceiling is single-file builder + thin Layer3LineageBuilder (L2 clone);
+# each build() re-reads manifest — Batch 6 CLI batch rebuild may memoize (A6 NB-3).
 
 _RULE_VERSION = "layer3_chain_staged_v1"
 _CODE_VERSION = "layer3-staged-v1"
@@ -52,7 +53,8 @@ class IndustryChainSnapshotBuilder:
         trade_date: date,
         l5_bundle_dir: Path | None = None,
     ) -> IndustryChainSnapshotBuildResult:
-        root = (l5_bundle_dir or STAGED_LAYER3_L5_BARS_DIR).resolve()
+        # ponytail: no ResourceGuard on 021 staged join; Batch 6 CLI / live ingest must hook guard
+        root = _resolve_l5_bundle_root(l5_bundle_dir)
         manifest = _read_l5_manifest(root)
         fetch_ids, content_hashes = _manifest_provenance(manifest)
 
@@ -87,7 +89,7 @@ class IndustryChainSnapshotBuilder:
             _reject_future_bar(as_of=as_of, anchor_id=anchor.anchor_id, bar=bar)
 
             bar_as_of = _parse_ts(bar["as_of_timestamp"])
-            close = float(bar["close"])
+            close = _parse_bar_close(bar["close"], ticker=ticker)
             volume = bar.get("volume")
             vol_f = float(volume) if volume is not None else None
 
@@ -134,11 +136,24 @@ class IndustryChainSnapshotBuilder:
         )
 
 
+def _resolve_l5_bundle_root(l5_bundle_dir: Path | None) -> Path:
+    root = (l5_bundle_dir or STAGED_LAYER3_L5_BARS_DIR).resolve()
+    try:
+        root.relative_to(PROJECT_ROOT.resolve())
+    except ValueError as exc:
+        raise Layer3SnapshotError(
+            f"l5_bundle_dir must be under project root, got {root!s}"
+        ) from exc
+    return root
+
+
 def _read_l5_manifest(root: Path) -> dict[str, Any]:
     manifest_path = root / "manifest.yaml"
     if not manifest_path.is_file():
+        # ponytail: error embeds path for local ops; HTTP/CLI slice should redact (UF-2)
         raise Layer3SnapshotError(f"missing L5 manifest: {manifest_path}")
     try:
+        # ponytail: no max_bytes cap; staged_fixture_only trust boundary (UF-3 / A6 NB-2)
         raw = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
     except yaml.YAMLError as exc:
         raise Layer3SnapshotError(f"invalid yaml in L5 manifest: {manifest_path}") from exc
@@ -183,6 +198,7 @@ def _bar_for_trade_date(
     if not isinstance(bars, list):
         raise Layer3SnapshotError(f"bars for {ticker!r} must be a list")
     target = trade_date.isoformat()
+    # ponytail: O(bars) linear scan; staged 子集单日 bar；生产化可加索引或 max_bars cap (A6 NB-2)
     for bar in bars:
         if not isinstance(bar, dict):
             continue
@@ -192,8 +208,18 @@ def _bar_for_trade_date(
                     raise Layer3SnapshotError(
                         f"bar for {ticker!r} missing required field {key!r}"
                     )
+            _parse_bar_close(bar["close"], ticker=ticker)
             return bar
     raise Layer3SnapshotError(f"no L5 bar for {ticker!r} on trade_date={trade_date}")
+
+
+def _parse_bar_close(value: object, *, ticker: str) -> float:
+    try:
+        return float(value)  # type: ignore[arg-type]
+    except (TypeError, ValueError) as exc:
+        raise Layer3SnapshotError(
+            f"bar for {ticker!r} close must be numeric, got {value!r}"
+        ) from exc
 
 
 def _parse_ts(value: object) -> datetime:
