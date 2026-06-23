@@ -1,0 +1,34 @@
+{"file": ".trellis/tasks/06-23-round3-020-layer3-loader/MASTER.plan.md", "reason": "Execute single source of truth"}
+{"file": ".trellis/tasks/06-23-round3-020-layer3-loader/context_pack.json", "reason": "extract: authority graph routing | for: Boot slot 2"}
+{"file": ".cursor/skills/trellis-execute/SKILL.md", "reason": "extract: Phase 0 boot protocol | for: §8.0 Boot"}
+{"file": ".cursor/rules/ponytail.mdc", "reason": "extract: lazy ladder YAGNI→reuse→min diff; ponytail: ceiling comments | for: §0.3a Execute 全程强制（用户 2026-06-23）"}
+{"file": ".trellis/tasks/06-23-round3-020-layer3-loader/research/integration-ledger.md", "reason": "extract: v3 boot routing map | for: §8.0 Boot / §0.4"}
+{"file": ".trellis/tasks/06-23-round3-020-layer3-loader/research/vertical-slices.md", "reason": "extract: Phase 3.5 垂直切片 | for: §8 顺序"}
+{"file": "docs/implementation_tasks/ROUND_3_MODELING_LAYERS/020_implement_layer3_industry_chain_loader.md", "reason": "extract: 任务卡 AC/边界 | for: §2 AC-020-*"}
+{"file": "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md", "reason": "extract: WriteManager/无 drive-by | for: §3.3"}
+{"file": "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md", "reason": "extract: RED-GREEN 语义断言 | for: §5 / §8"}
+{"file": "docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md", "reason": "extract: eco 默认 | for: §7"}
+{"file": "docs/implementation_tasks/GLOBAL_TASK_TEMPLATE.md", "reason": "extract: 任务模板边界 | for: Boot 对照"}
+{"file": "docs/implementation_tasks/README.md", "reason": "extract: Round 入口 | for: §0"}
+{"file": "docs/implementation_tasks/ROUND_3_MODELING_LAYERS/README.md", "reason": "extract: 019→020 顺序 | for: §1.2"}
+{"file": "docs/modules/layer3_industry_shock_anchor.md", "reason": "extract: §8.5 外置 registry 包 | for: AC-020-1 / §4"}
+{"file": "specs/contracts/layer3_loader_contract.yaml", "reason": "extract: hard_validation_rules | for: AC-020-2/4 / §6"}
+{"file": "specs/contracts/snapshot_lineage_contract.yaml", "reason": "extract: required_fields 只读 | for: defer 021; 禁止写"}
+{"file": "specs/contracts/runtime_versions.md", "reason": "extract: uv sync --locked | for: §10 Tier A"}
+{"file": "docs/quality/staged_acceptance_policy.md", "reason": "extract: backend 分层验收 | for: §10"}
+{"file": "docs/quality/BATCH3_STAGED_DOWNSTREAM_GATE.md", "reason": "extract: staged-only gate | for: AC-020-5 / §0"}
+{"file": "docs/quality/final_package_rules.md", "reason": "extract: 禁止临时 round report | for: §7"}
+{"file": "docs/architecture/03_runtime_flows.md", "reason": "extract: Layer3 运行链路 1-hop | for: §4"}
+{"file": "docs/architecture/04_data_architecture.md", "reason": "extract: 数据分层 | for: §3"}
+{"file": "specs/layer3_global_industry_chains/layer3_global_industry_chains_v1_2/layer3_global_industry_chain_registry.yaml", "reason": "extract: chain 字段形态 | for: fixture 设计 AC-020-1"}
+{"file": "specs/layer3_global_industry_chains/layer3_global_industry_chains_v1_2/layer3_anchor_registry.json", "reason": "extract: anchor 字段形态 | for: AC-020-3/4"}
+{"file": "specs/layer3_global_industry_chains/layer3_global_industry_chains_v1_2/layer3_node_registry.json", "reason": "extract: node_id 形态 | for: AC-020-2"}
+{"file": "specs/layer3_global_industry_chains/layer3_global_industry_chains_v1_2/layer3_edge_registry.json", "reason": "extract: edge 引用形态 | for: AC-020-2"}
+{"file": "specs/layer3_global_industry_chains/layer3_global_industry_chains_v1_2/layer3_cross_chain_edge_registry.json", "reason": "extract: cross-chain 边形态 | for: §8.5"}
+{"file": "backend/app/layer2_sensors/sensor_loader.py", "reason": "extract: staged_fixture_only 模式 | for: §8.2"}
+{"file": "backend/app/config.py", "reason": "extract: PROJECT_ROOT | for: loader 路径解析"}
+{"file": "ROUND3_BATCH_IMPLEMENTATION_MAP.md", "reason": "extract: Batch4 020 边界 | for: §1.6"}
+{"file": ".trellis/tasks/06-23-round3-020-layer3-loader/research/worktree-slices.md", "reason": "extract: allowed/forbidden 文件 | for: §3.3"}
+{"file": ".trellis/tasks/archive/2026-06/06-22-round3-019-layer2-sensor/execute-evidence/merge_gate_report.md", "reason": "extract: 019 merge gate PASS | for: §1.2 前置"}
+{"file": "tests/test_batch3_staged_downstream_gate.py", "reason": "extract: staged gate 回归 | for: §10 Tier A"}
+{"file": "tests/test_layer3_loader.py", "reason": "extract: §5.1 测试契约目标 | for: §8 RED/GREEN（Execute 填测试体）"}

@@ -359,6 +359,18 @@ tests/test_layer2_sensor_loader.py:
       - specs/contracts/layer2_sensor_contract.yaml
       - specs/contracts/snapshot_lineage_contract.yaml
       - specs/contracts/resource_limits.yaml
+tests/test_layer3_loader.py:
+  command: uv run python -m pytest tests/test_layer3_loader.py -q
+  evidence_required: pytest output
+  failure_meaning: Layer3 staged loader contract validation or staged-only gate regressed.
+  purpose: Layer 3 industry chain staged loader tests (020 Execute).
+  type: runtime-contract
+  verifies:
+    docs:
+      - docs/modules/layer3_industry_shock_anchor.md
+    rules: []
+    specs:
+      - specs/contracts/layer3_loader_contract.yaml
 tests/test_layer5_evidence_foundation.py:
   command: uv run python -m pytest tests/test_layer5_evidence_foundation.py -q
   failure_meaning:

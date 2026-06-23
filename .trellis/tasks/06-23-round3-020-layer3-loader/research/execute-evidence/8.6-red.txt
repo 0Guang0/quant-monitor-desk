@@ -1,0 +1,2 @@
+ERROR: Tier B full pytest not yet run at §8.5 handoff
+FAIL expected before §8.6 final gates

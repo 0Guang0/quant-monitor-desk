@@ -1,0 +1,32 @@
+{
+  "id": "06-23-round3-020-layer3-loader",
+  "name": "round3-020-layer3-loader",
+  "title": "Round 3 020: Layer3 industry chain loader",
+  "description": "Layer3 chain/anchor/node/edge/cross-chain loader with strict validation; staged-only.",
+  "status": "in_progress",
+  "dev_type": "feature",
+  "scope": "layer3_chains",
+  "package": null,
+  "priority": "P1",
+  "creator": "Guang",
+  "assignee": "Guang",
+  "createdAt": "2026-06-23",
+  "completedAt": null,
+  "branch": "feature/round3-020-layer3-loader",
+  "base_branch": "master",
+  "worktree_path": "../quant-monitor-desk-wt-020-layer3-loader",
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "predecessor_tasks": [
+    ".trellis/tasks/archive/2026-06/06-22-round3-019-layer2-sensor"
+  ],
+  "meta": {
+    "task_track": "complex",
+    "manifest_protocol_version": "3"
+  }
+}

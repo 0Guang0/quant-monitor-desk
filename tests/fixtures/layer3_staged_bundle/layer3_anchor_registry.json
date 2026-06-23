@@ -1,0 +1,26 @@
+[
+  {
+    "anchor_id": "MSFT",
+    "display_name_cn": "微软",
+    "instrument_type": "public_equity",
+    "ticker": "MSFT",
+    "anchor_priority": "P0_CORE",
+    "node_id": "L3_TEST_CHAIN_HYPERSCALER",
+    "chain_id": "L3_TEST_CHAIN",
+    "event_only": false,
+    "source_keys": ["microsoft_fy26_q3"],
+    "source_validation_status": "verified"
+  },
+  {
+    "anchor_id": "OPENAI",
+    "display_name_cn": "OpenAI",
+    "instrument_type": "private_company",
+    "ticker": "",
+    "anchor_priority": "P0_EVENT",
+    "node_id": "L3_TEST_CHAIN_PRIVATE_EVENTS",
+    "chain_id": "L3_TEST_CHAIN",
+    "event_only": true,
+    "source_keys": ["openai_2026_funding"],
+    "source_validation_status": "event_only_verified"
+  }
+]

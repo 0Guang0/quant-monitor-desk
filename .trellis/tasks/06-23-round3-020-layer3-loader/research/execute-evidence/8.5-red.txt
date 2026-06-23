@@ -1,0 +1,2 @@
+1 failed — cross-chain node ref check not implemented
+exit code: 1 — expected RED before §8.5

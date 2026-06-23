@@ -1,0 +1,2 @@
+3 failed — anchor rules not implemented
+exit code: 1 — expected RED before §8.4

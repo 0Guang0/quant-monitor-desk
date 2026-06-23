@@ -69,6 +69,18 @@ CURATED: dict[str, dict] = {
         "failure_meaning": "Layer2 runtime or ResourceGuard blocks batch when limits exceeded.",
         "evidence_required": "pytest output",
     },
+    "tests/test_layer3_loader.py": {
+        "purpose": "Layer 3 industry chain staged loader tests (020 Execute).",
+        "type": "runtime-contract",
+        "verifies": {
+            "docs": ["docs/modules/layer3_industry_shock_anchor.md"],
+            "specs": ["specs/contracts/layer3_loader_contract.yaml"],
+            "rules": [],
+        },
+        "command": "uv run python -m pytest tests/test_layer3_loader.py -q",
+        "failure_meaning": "Layer3 staged loader contract validation or staged-only gate regressed.",
+        "evidence_required": "pytest output",
+    },
     "tests/test_batch25_production_data_gate.py": {
         "purpose": "Batch 2.5 evidence is staged-only, not production-live readiness",
         "type": "policy-contract",

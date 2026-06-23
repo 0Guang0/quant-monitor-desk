@@ -1,0 +1,40 @@
+{
+  "task": "06-23-round3-020-layer3-loader",
+  "modules": [
+    "layer2_sensors",
+    "ops",
+    "layer3_chains"
+  ],
+  "acs": [
+    {
+      "id": "020-1",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "020-2",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "020-3",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "020-4",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "020-5",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "020-6",
+      "status": "pending",
+      "repair_items": []
+    }
+  ]
+}

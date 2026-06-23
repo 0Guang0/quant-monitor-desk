@@ -1,0 +1,2 @@
+1 passed — test_layer3Loader_loadsStagedFixture_success
+ponytail: reused sensor_loader staged_fixture_only gate pattern
