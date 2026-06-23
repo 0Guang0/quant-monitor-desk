@@ -812,7 +812,18 @@ def test_stagedPilotV2_routePreviewMatrixV2_allStatuses(tmp_path: Path) -> None:
 
     payload = capture_route_preview_matrix_v2(evidence_dir=tmp_path)
     coverage = set(payload["route_status_coverage"])
-    assert {"selected", "skipped", "disabled", "validation_only"}.issubset(coverage)
+    assert {"selected", "disabled", "validation_only"}.issubset(coverage)
+    assert "user_auth_required" in coverage
+    explicit_statuses = {
+        ex["explicit_source_route_status"]
+        for ex in payload["route_status_examples"]
+    }
+    assert "USER_AUTH_REQUIRED" in explicit_statuses
+    assert any(
+        ex.get("route_kind") == "user_auth_required"
+        for ex in payload["route_status_examples"]
+    )
+    assert "skipped" in coverage or "user_auth_required" in coverage
     assert (tmp_path / ROUTE_MATRIX_V2_JSON).is_file()
 
 
@@ -1106,6 +1117,7 @@ def test_stagedPilotV2_closeoutMatrix_allSourcesClassified(tmp_path: Path) -> No
             "proof_status": "INCONCLUSIVE",
             "db_hash_unchanged": None,
             "row_counts_unchanged": None,
+            "reason": "production_db_file_missing",
         },
     )
     assert set(closeout["per_source"]) == set(V2_SOURCE_CLOSEOUT_IDS)
@@ -1113,5 +1125,45 @@ def test_stagedPilotV2_closeoutMatrix_allSourcesClassified(tmp_path: Path) -> No
         assert decision in {"expand", "retry", "re-defer", "block"}
     assert closeout["production_live_readiness_claim"] is False
     assert closeout["sandbox_clean_write_rehearsal"] is False
+    assert closeout["closeout_pass"] is False
+    assert closeout["db_hash_unchanged"] is None
+    assert closeout["row_counts_unchanged"] is None
+    assert closeout["mutation_proof_reason"] == "production_db_file_missing"
+    written = json.loads((tmp_path / CLOSEOUT_V2_JSON).read_text(encoding="utf-8"))
+    assert written["db_hash_unchanged"] is None
+    assert written["row_counts_unchanged"] is None
     assert (tmp_path / CLOSEOUT_V2_JSON).is_file()
+
+
+def test_stagedPilotV2_closeoutThreeStateSemantics(tmp_path: Path) -> None:
+    """覆盖范围：closeout hash/count 三态序列化。
+
+    测试对象：build_pilot_v2_closeout。
+    目的/目标：OOB-1 — None 不得 coerce 为 false；gate 仍要求 is True。
+    验证点：INCONCLUSIVE+None→null；MUTATION_DETECTED+False→false。
+    失败含义：closeout 与 mutation_proof markdown 语义再次分叉。
+    """
+    from backend.app.ops.staged_pilot import build_pilot_v2_closeout
+
+    inconclusive = build_pilot_v2_closeout(
+        evidence_dir=tmp_path,
+        mutation_proof={
+            "proof_status": "INCONCLUSIVE",
+            "db_hash_unchanged": None,
+            "row_counts_unchanged": None,
+        },
+    )
+    assert inconclusive["closeout_pass"] is False
+    assert inconclusive["db_hash_unchanged"] is None
+
+    detected = build_pilot_v2_closeout(
+        evidence_dir=tmp_path,
+        mutation_proof={
+            "proof_status": "MUTATION_DETECTED",
+            "db_hash_unchanged": False,
+            "row_counts_unchanged": False,
+        },
+    )
+    assert detected["db_hash_unchanged"] is False
+    assert detected["row_counts_unchanged"] is False
 

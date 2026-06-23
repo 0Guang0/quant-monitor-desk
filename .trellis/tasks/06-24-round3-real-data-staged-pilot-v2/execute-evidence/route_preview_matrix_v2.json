@@ -11,7 +11,7 @@
     "sandbox_root": ".audit-sandbox/r3y-staged-pilot-v2"
   },
   "dry_run": true,
-  "generated_at": "2026-06-23T18:10:47Z",
+  "generated_at": "2026-06-23T19:11:23Z",
   "mutation_proof": {
     "after_all_table_counts": {},
     "after_key_table_counts": {},
@@ -74,13 +74,13 @@
             "source_id": "akshare"
           }
         ],
-        "created_at": "2026-06-23T18:10:47.560310+00:00",
+        "created_at": "2026-06-23T19:11:23.071253+00:00",
         "data_domain": "cn_equity_daily_bar",
         "job_id": "r3x-staged-pilot-route",
         "operation": "fetch_daily_bar",
         "quality_flags": [],
         "requested_source_id": null,
-        "route_plan_id": "042afe9c-2092-48ab-b18d-1ebb47b82c8f",
+        "route_plan_id": "2a4160ef-1f4b-4ecd-a60d-891e103602ae",
         "route_status": "READY",
         "run_id": "v2-req-1-preview",
         "selected_source_id": "baostock"
@@ -133,13 +133,13 @@
             "source_id": "akshare"
           }
         ],
-        "created_at": "2026-06-23T18:10:47.566366+00:00",
+        "created_at": "2026-06-23T19:11:23.077777+00:00",
         "data_domain": "cn_equity_daily_bar",
         "job_id": "r3x-staged-pilot-route",
         "operation": "fetch_daily_bar_validation",
         "quality_flags": [],
         "requested_source_id": null,
-        "route_plan_id": "b8295b92-b419-41f5-85a4-625eb934a891",
+        "route_plan_id": "2d50d491-b124-48b2-a3dd-47342a04f8ff",
         "route_status": "READY",
         "run_id": "v2-req-2-preview",
         "selected_source_id": "baostock"
@@ -183,13 +183,13 @@
             "source_id": "cninfo"
           }
         ],
-        "created_at": "2026-06-23T18:10:47.572273+00:00",
+        "created_at": "2026-06-23T19:11:23.084328+00:00",
         "data_domain": "cn_announcements",
         "job_id": "r3x-staged-pilot-route",
         "operation": "fetch_announcement_index",
         "quality_flags": [],
         "requested_source_id": null,
-        "route_plan_id": "f8965983-6907-47be-9a32-4ac0be475891",
+        "route_plan_id": "af5ea339-0d16-4da0-9962-c0cbde2ca564",
         "route_status": "READY",
         "run_id": "v2-req-3-preview",
         "selected_source_id": "cninfo"
@@ -199,7 +199,7 @@
   "route_status_coverage": [
     "disabled",
     "selected",
-    "skipped",
+    "user_auth_required",
     "validation_only"
   ],
   "route_status_examples": [
@@ -271,7 +271,7 @@
       "explicit_source_route_status": "USER_AUTH_REQUIRED",
       "operation": "fetch_daily_bar",
       "organic_route_status": "READY",
-      "route_kind": "skipped",
+      "route_kind": "user_auth_required",
       "selected_source_id": "baostock",
       "source_id": "qmt_xtdata"
     }

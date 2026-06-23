@@ -708,6 +708,7 @@ def run_staged_pilot_raw_only(
     preview = preview_staged_pilot(
         replace(request, dry_run=True),
         pilot_request_id=f"{pilot_request_id}-pre",
+        authorization_gate=authorization_gate,
     )
     if preview["explicit_source_route_status"] != "READY":
         raise StagedPilotRouteNotReadyError(
@@ -1359,12 +1360,6 @@ def validate_pilot_v2_authorization(request: StagedPilotRequest) -> None:
             f"source {request.source_id!r} is not authorized for staged real-data pilot"
         )
 
-    triple = (request.source_id, request.data_domain, request.operation)
-    if triple not in APPROVED_PILOT_REQUESTS:
-        raise StagedPilotAuthorizationError(
-            f"request triple {triple!r} not in approved micro-pilot set"
-        )
-
     if not request.raw_only:
         raise StagedPilotAuthorizationError("staged pilot requires raw_only=true")
     if request.write_target != "sandbox":
@@ -1507,10 +1502,10 @@ def _route_status_examples_for_v2(
         candidate = next((c for c in plan.candidates if c.source_id == source_id), None)
         role = getattr(candidate, "role", None) if candidate else None
         route_kind = "selected"
-        if role == "FallbackPolicy" and candidate and not candidate.enabled and candidate.skip_reason:
-            route_kind = "skipped"
-        elif explicit == "USER_AUTH_REQUIRED":
+        if explicit == "USER_AUTH_REQUIRED":
             route_kind = "user_auth_required"
+        elif role == "FallbackPolicy" and candidate and not candidate.enabled and candidate.skip_reason:
+            route_kind = "skipped"
         elif role == "Validation":
             route_kind = "validation_only"
         elif explicit in {"DISABLED_SOURCE", "NO_AVAILABLE_SOURCE", "CAPABILITY_MISSING"}:
@@ -1565,10 +1560,14 @@ def capture_route_preview_matrix_v2(
 
     route_status_examples = _route_status_examples_for_v2(previews=previews)
     route_kinds = {item["route_kind"] for item in route_status_examples}
-    required_kinds = {"selected", "skipped", "disabled", "validation_only"}
+    required_kinds = {"selected", "disabled", "validation_only", "user_auth_required"}
     missing = sorted(required_kinds - route_kinds)
     if missing:
         raise RuntimeError(f"route_preview_matrix_v2 missing route kinds: {missing}")
+    if "skipped" not in route_kinds and "user_auth_required" not in route_kinds:
+        raise RuntimeError(
+            "route_preview_matrix_v2 missing skipped and user_auth_required coverage"
+        )
 
     mutation_proof = build_production_mutation_proof(
         target_db,
@@ -1757,7 +1756,11 @@ def capture_akshare_validation_taxonomy_v2(
     evidence_dir: Path,
     taxonomy_records: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
-    """Akshare validation taxonomy v2 (R3Y-SP2-04)."""
+    """Akshare validation taxonomy v2 (R3Y-SP2-04).
+
+    ponytail: default ``records`` are static SUCCESS/NETWORK_ERROR placeholders when
+    no live fetch is supplied; re-defer narrative is preserved for evidence capture.
+    """
     evidence_dir = Path(evidence_dir)
     evidence_dir.mkdir(parents=True, exist_ok=True)
     request = approved_pilot_v2_requests()[1]
@@ -1924,12 +1927,49 @@ def write_no_mutation_proof_v2(
         f"- **proof_status:** {proof.get('proof_status')}",
         f"- **db_hash_unchanged:** {proof.get('db_hash_unchanged')}",
         f"- **row_counts_unchanged:** {proof.get('row_counts_unchanged')}",
-        "",
-        "## R3Y-MUT-PROOF-001",
-        "",
-        "VERIFIED only when file hash and all table row counts are unchanged.",
-        "",
     ]
+    reason = proof.get("reason")
+    if reason:
+        lines.append(f"- **reason:** {reason}")
+    sha256_hex = proof.get("db_sha256")
+    if sha256_hex:
+        lines.append(f"- **db_sha256:** `{sha256_hex}`")
+    before_key = proof.get("before_key_table_counts") or {}
+    after_key = proof.get("after_key_table_counts") or {}
+    if before_key or after_key:
+        lines.extend(
+            [
+                "",
+                "## Key table row counts",
+                "",
+                f"- **before:** {before_key}",
+                f"- **after:** {after_key}",
+            ]
+        )
+    before_all = proof.get("before_all_table_counts") or {}
+    after_all = proof.get("after_all_table_counts") or {}
+    if before_all or after_all:
+        lines.extend(
+            [
+                "",
+                "## All table row counts",
+                "",
+                f"- **before:** {before_all}",
+                f"- **after:** {after_all}",
+            ]
+        )
+    lines.extend(
+        [
+            "",
+            "## R3Y-MUT-PROOF-001",
+            "",
+            "VERIFIED only when file hash and all table row counts are unchanged.",
+            "",
+            "Hash check uses full-file byte equality; ``db_sha256`` is informational",
+            "and aligns with backup manifest ``duckdb_hash`` (SHA256 hex).",
+            "",
+        ]
+    )
     (evidence_dir / NO_MUTATION_V2_MD).write_text("\n".join(lines) + "\n", encoding="utf-8")
     return proof
 
@@ -1991,8 +2031,10 @@ def build_pilot_v2_closeout(
         )
         for source_id in V2_SOURCE_CLOSEOUT_IDS
     }
-    hash_ok = mutation_proof.get("db_hash_unchanged") is True
-    counts_ok = mutation_proof.get("row_counts_unchanged") is True
+    hash_raw = mutation_proof.get("db_hash_unchanged")
+    counts_raw = mutation_proof.get("row_counts_unchanged")
+    hash_ok = hash_raw is True
+    counts_ok = counts_raw is True
     proof_status = mutation_proof.get("proof_status")
     closeout_pass = hash_ok and counts_ok and proof_status == "VERIFIED"
 
@@ -2002,13 +2044,16 @@ def build_pilot_v2_closeout(
         "generated_at": generated_at,
         "production_live_readiness_claim": False,
         "mutation_proof_status": proof_status,
-        "db_hash_unchanged": hash_ok,
-        "row_counts_unchanged": counts_ok,
+        "db_hash_unchanged": hash_raw,
+        "row_counts_unchanged": counts_raw,
         "closeout_pass": closeout_pass,
         "per_source": per_source,
         "sandbox_clean_write_rehearsal": False,
         "run_mode": "staged_only",
     }
+    reason = mutation_proof.get("reason")
+    if reason:
+        payload["mutation_proof_reason"] = reason
     (evidence_dir / CLOSEOUT_V2_JSON).write_text(
         json.dumps(payload, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",

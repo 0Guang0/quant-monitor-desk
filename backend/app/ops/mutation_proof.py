@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 from pathlib import Path
 from typing import Any, Literal
 
@@ -132,6 +133,7 @@ def build_production_mutation_proof(
         "proof_status": proof_status,
         "db_hash_unchanged": hash_unchanged,
         "row_counts_unchanged": row_counts_unchanged,
+        "db_sha256": hashlib.sha256(after_bytes).hexdigest(),
         "before_key_table_counts": before_counts,
         "after_key_table_counts": after_counts,
         "before_all_table_counts": before_all,
