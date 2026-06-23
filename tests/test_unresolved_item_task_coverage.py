@@ -7,6 +7,8 @@ from pathlib import Path
 from tests.contract_gate_support import PROJECT_ROOT
 
 COVERAGE = PROJECT_ROOT / "docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md"
+UNRESOLVED = PROJECT_ROOT / "docs/UNRESOLVED_ISSUES_REGISTRY.md"
+RESOLVED = PROJECT_ROOT / "docs/RESOLVED_ISSUES_REGISTRY.md"
 TASK_INDEX = PROJECT_ROOT / "docs/implementation_tasks/TASK_INPUT_CONTEXT_INDEX.md"
 TASK_README = PROJECT_ROOT / "docs/implementation_tasks/README.md"
 
@@ -63,7 +65,6 @@ EXPECTED_UNRESOLVED_IDS = {
     "R4-FE-2",
     "R4-FE-3",
     "R3-PROMPT14-AKSHARE-VAL-01",
-    "R3Y-SYNC-001",
     "R3Y-MUT-PROOF-001",
     "R3Y-STAGED-REG-001",
     "R3Y-PROMPT15-EVID-001",
@@ -211,6 +212,38 @@ def test_coverageIndex_mentionsEveryCurrentUnresolvedId() -> None:
     text = _read(COVERAGE)
     missing = sorted(item_id for item_id in EXPECTED_UNRESOLVED_IDS if item_id not in text)
     assert not missing, f"unresolved IDs missing from coverage index: {missing}"
+
+
+def test_r3ySync001_closedInResolvedNotOpen() -> None:
+    """覆盖范围：R3Y-SYNC-001 registry 闭合（AA-03）。
+    测试对象：RESOLVED / UNRESOLVED / COVERAGE §4.5。
+    目的：adapter bypass 已登记 RESOLVED，不得仍为 UNRESOLVED OPEN 行。"""
+    resolved = _read(RESOLVED)
+    unresolved = _read(UNRESOLVED)
+    coverage = _read(PROJECT_ROOT / "docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md")
+
+    assert "R3Y-SYNC-001" in resolved
+    assert "test_r3ySync001" in resolved
+    assert f"| R3Y-SYNC-001 | OPEN" not in unresolved
+    assert "R3Y-SYNC-001" in coverage
+    assert "CLOSED" in coverage.split("R3Y-SYNC-001", maxsplit=1)[1][:200]
+
+
+def test_r3yOpenItems_ownerBranchesInCoverageSection45() -> None:
+    """覆盖范围：R3Y OPEN 项 owner branch 映射（slice α2-5）。
+    测试对象：UNRESOLVED_ITEM_TASK_COVERAGE.md §4.5。
+    目的：OPEN R3Y 项须指向 fix α-1 / PROMPT_19 / β-2 / fix α-3 branch，防止并行 slice 抢 owner。"""
+    text = _read(COVERAGE)
+    section = text.split("## 4.5 Round 3 PROMPT_18", maxsplit=1)[1].split("## 5.", maxsplit=1)[0]
+
+    expectations = {
+        "R3Y-MUT-PROOF-001": "PROMPT_19",
+        "R3Y-STAGED-REG-001": "β-2",
+        "R3Y-PROMPT15-EVID-001": "fix/r3y-prompt15-evidence",
+    }
+    for item_id, owner_token in expectations.items():
+        assert item_id in section, f"{item_id} missing from §4.5"
+        assert owner_token in section, f"{owner_token} owner missing for {item_id} in §4.5"
 
 
 def test_taskCardsMentionMappedUnresolvedIds() -> None:

@@ -2,7 +2,7 @@
 
 > Purpose: one file for all current unresolved, deferred, open, risk, gap, and improvement items.  
 > Source of truth relationship: this file is the readable unresolved split of `docs/AUDIT_DEFERRED_REGISTRY.md`. If files conflict, update both in the same change and keep this file as the operator-facing unresolved list.  
-> Last reconciled: 2026-06-23 after wave-A merge + PROMPT_18 R3Y registry slice (`master` @ `527d6506`).
+> Last reconciled: 2026-06-24 after fix α-2 registry slice + wave-A merge + PROMPT_18 R3Y rows (`master` @ `527d6506`).
 
 ## Current Round 3 entry status
 
@@ -85,7 +85,6 @@
 
 | ID                    | State          | Blocks PROMPT_19? | Problem / gap / risk                                                                                             | Evidence / source                                                                 | Resolution / owner                                                                                       |
 | --------------------- | -------------- | ----------------: | ---------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| R3Y-SYNC-001          | OPEN (hygiene) |               Yes | `run_incremental` / `run_backfill` / `run_reconcile` still accept `adapter=` and can bypass `DataSourceService`. | AUD-01 F-02 · AUD-02 HIGH · `orchestrator.py` · `tests/test_sync_orchestrator.py` | **fix α-1** `fix/r3y-sync-adapter-guard`: production-profile fail-closed + dedicated pytest.             |
 | R3Y-MUT-PROOF-001     | OPEN (hygiene) |               Yes | `proof_status=VERIFIED` can mean DB-exists-only; hash/row-count failures may still read as verified.             | AUD-04 HIGH · `backend/app/ops/mutation_proof.py`                                 | **PROMPT_19 / β-1**: tighten VERIFIED semantics + closeout must attach hash/row-count detail.            |
 | R3Y-STAGED-REG-001    | OPEN (hygiene) |                No | `register_staged_file_registry_rows` bypasses WriteManager.                                                      | AUD-03 WARN · `backend/app/storage/staged_evidence.py`                            | **β-2** after α-1: privatize or route through WriteManager; document metadata-only policy.               |
 | R3Y-PROMPT15-EVID-001 | OPEN (hygiene) |                No | PROMPT_15 claims 73 closures; umbrella tests + thin execute evidence.                                            | AUD-01 F-01 · AUD-07 · `tests/test_r3x_residual_open_items_closure.py` (18 tests) | **fix α-3**: backfill `*-green.txt` + closed-claim matrix mapping.                                       |
@@ -93,7 +92,7 @@
 | ADV-R3X-LINEAGE-001   | DEFERRED       |                No | Full L3/L4 snapshot lineage not implemented; was missing from registry SSOT.                                     | PROMPT_15 defer table · AUD-06 HIGH · `021`+ scope                                | **fix α-2** registry row + owner `021`+; do not implement in fix α.                                      |
 | R3Y-LINEAGE-VR-001    | DEFERRED       |                No | Layer2 staged lineage credible but VR / fetch_log binding not closed.                                            | AUD-05 WARN                                                                       | Owner **021**+; sandbox rehearsal must not use synthetic IDs as VR binding.                              |
 
-> **Partial closure note:** `ADV-R3X-SYNC-001` service-path injection is **done** (`R2.6-IMPL-5`, PROMPT_15); `R3Y-SYNC-001` tracks the remaining **adapter= bypass**, not a full reopen of service-path work.
+> **Partial closure note:** `ADV-R3X-SYNC-001` service-path injection is **done** (`R2.6-IMPL-5`, PROMPT_15). **`R3Y-SYNC-001`** adapter bypass **CLOSED** 2026-06-24 on branch `fix/r3y-sync-adapter-guard` (`test_r3ySync001_*`); reconcile internal `adapter.fetch` remains test-only (`R3-PARTIAL-3`).
 
 ---
 

@@ -20,6 +20,8 @@
 - `docs/AUDIT_DEFERRED_REGISTRY.md`, `docs/UNRESOLVED_ISSUES_REGISTRY.md`, `docs/RESOLVED_ISSUES_REGISTRY.md`
 - `docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md`
 - `ROUND3_BATCH_IMPLEMENTATION_MAP.md`, `docs/ROUND3_HANDOFF.md`（checkpoint 一句，若需）
+- `.trellis/tasks/archive/2026-06/06-22-round3-batch3-staged-gate/**`（bootstrap 归档重定位）
+- `.trellis/workspace/Guang/round3-wave-a-slice-plans.md`（协调者 slice 索引一句）
 - `tests/test_round3_audit_registry_alignment.py`, `tests/test_unresolved_item_task_coverage.py`
 - `.trellis/tasks/fix-r3y-registry-lineage-defer/**`
 
@@ -62,7 +64,7 @@
 | ----- | --------------------- | ----------------------------------------------------------------------------------- | --------------------------------------------------- |
 | α2-1  | R3Y row SSOT          | 三 registry + COVERAGE 与 Map §1 aliases 一致；`Last reconciled` 更新               | `test_unresolved_item_task_coverage.py`             |
 | α2-2  | `ADV-R3X-LINEAGE-001` | DEFERRED 行含 owner `021`+、closure test                                            | registry alignment tests                            |
-| α2-3  | Wave-A resolved       | `R3-TASK-019/020/023A`, `R3Y-AUDIT-GATE-18`, `R3-B3-STAGED-GATE` 在 RESOLVED 可追溯 | `test_round3_audit_registry_alignment.py`           |
+| α2-3  | Wave-A resolved       | `R3-TASK-019/020/023A`, `R3Y-AUDIT-GATE-18`, `R3-B3-STAGED-DOWNSTREAM-GATE` 在 RESOLVED 可追溯 | `test_round3_audit_registry_alignment.py`           |
 | α2-4  | Map checkpoint        | `527d6506` / §2.4 准确                                                              | `test_round3Map_checkpointReflectsPost14AuditMerge` |
 | α2-5  | OPEN 项 owner         | `R3Y-SYNC-001` 等 OPEN 行指向 α-1 / B-19 / β-2 branch                               | COVERAGE §4.5                                       |
 

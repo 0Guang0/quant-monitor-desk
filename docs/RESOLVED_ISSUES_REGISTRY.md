@@ -2,12 +2,13 @@
 
 > Purpose: one file for resolved/closed issues, gates, risks, and repairs.  
 > Pair: unresolved items live in `docs/UNRESOLVED_ISSUES_REGISTRY.md`.  
-> Last reconciled: 2026-06-23 after wave-A merge + PROMPT_18 R3Y registry slice (`master` @ `527d6506`).
+> Last reconciled: 2026-06-24 after fix α-2 registry slice + wave-A merge + PROMPT_18 R3Y rows (`master` @ `527d6506`).
 
 ## Post-PROMPT_18 wave-A resolved (2026-06-23)
 
 | ID                           | Closed     | Item                                                    | Evidence                                                                                                                                               |
 | ---------------------------- | ---------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| R3Y-SYNC-001                 | 2026-06-24 | Sync production `adapter=` bypass fail-closed           | `fix/r3y-sync-adapter-guard` · `tests/test_sync_orchestrator.py::test_r3ySync001_*` · AUD-01 F-02 / AUD-02 HIGH public+runner guard                    |
 | R3-B3-STAGED-DOWNSTREAM-GATE | 2026-06-22 | Batch 3 staged-only downstream gate closed (docs/tests) | `docs/quality/BATCH3_STAGED_DOWNSTREAM_GATE.md` · `.trellis/tasks/archive/2026-06/06-22-round3-batch3-staged-gate/`                                    |
 | R3-TASK-019                  | 2026-06-23 | Layer2 cross-asset sensor (`019`) staged pipeline       | `.trellis/tasks/archive/2026-06/06-22-round3-019-layer2-sensor/` · Audit PASS                                                                          |
 | R3-TASK-020                  | 2026-06-23 | Layer3 industry chain loader (`020`)                    | `.trellis/tasks/archive/2026-06/06-23-round3-020-layer3-loader/` · `backend/app/layer3_chains/` · Audit PASS · 14 tests                                |

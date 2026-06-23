@@ -1,6 +1,6 @@
 # Unresolved Item → 原始执行任务覆盖索引
 
-> Last reconciled: 2026-06-23（wave-A + PROMPT_18 R3Y registry slice）。  
+> Last reconciled: 2026-06-24（fix α-2 registry slice + wave-A merge + PROMPT_18 R3Y rows · `527d6506`）。  
 > 用途：防止 Plan 阶段只读取 `docs/implementation_tasks/**` 原始任务卡而漏掉 `docs/UNRESOLVED_ISSUES_REGISTRY.md` / `docs/AUDIT_DEFERRED_REGISTRY.md` 中仍未闭合的项目。  
 > 规则：新建 MASTER/AUDIT/REPAIR plan 前，必须先读取本文件、当前 registry、目标任务卡，并把本表中目标批次相关 ID 逐项映射到 AC、evidence、closeout 或 explicit re-deferral。若 registry 状态变化，本文件必须同步更新。
 
@@ -63,7 +63,8 @@
 
 | ID                      | 当前阶段 / owner                     | 原始任务入口                                                                                                                                                                                            | Plan 阶段必须纳入的处理                                                                                |
 | ----------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `R3Y-SYNC-001`          | fix α-1 `fix/r3y-sync-adapter-guard` | `ROUND_2_DATA_INGESTION_VALIDATION/014_implement_data_sync_orchestrator.md`; `ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3Y_post_r3x_strict_adversarial_audit.md`; `ROUND3_BATCH_IMPLEMENTATION_MAP.md` §2.4.4 | production sync 入口禁止裸 `adapter=`；dedicated orchestrator pytest；不得与 PROMPT_15「全闭合」混读。 |
+| `R3Y-SYNC-001`          | **CLOSED** fix α-1 `fix/r3y-sync-adapter-guard` (2026-06-24) | `ROUND_2_DATA_INGESTION_VALIDATION/014_implement_data_sync_orchestrator.md`; `ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3Y_post_r3x_strict_adversarial_audit.md` | production sync 入口 + runner `run()` fail-closed；`test_r3ySync001_*`；reconcile 内部 fetch 仍 test-only（`R3-PARTIAL-3`）。 |
+| `R3-B2.75-REQ2-EM`      | Batch 2.75 / 018C                    | `ROUND_3_MODELING_LAYERS/018B_production_live_pilot_gate.md`; `docs/AUDIT_DEFERRED_REGISTRY.md` | Eastmoney hist live path；**DEFERRED**；不得单独 unblock；PROMPT_19 可 re-defer/retry。 |
 | `R3Y-MUT-PROOF-001`     | PROMPT_19 / β-1                      | `ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3Y_real_data_staged_pilot_v2.md`; `ROUND_3_PARALLEL_PROMPTS/PROMPT_19_feature_round3_real_data_staged_pilot_v2.md`                                                 | closeout 不得仅引用 `proof_status=VERIFIED`；须 hash/row-count 明细或修复 AUD-04 HIGH。                |
 | `R3Y-STAGED-REG-001`    | β-2 after α-1                        | `ROUND_1_DATA_FOUNDATION/008_implement_write_manager.md`; AUD-03 evidence                                                                                                                               | `register_staged_file_registry_rows` 私有化或经 WriteManager；metadata-only 策略文档化。               |
 | `R3Y-PROMPT15-EVID-001` | fix α-3 `fix/r3y-prompt15-evidence`  | `ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3X_residual_open_items_closure.md`; `.trellis/tasks/fix-round3-r3x-residual-open-items-closure/`                                                                   | 补 execute `*-green.txt` + closed-claim checklist 映射；不得改测试目的掩盖缺口。                       |
