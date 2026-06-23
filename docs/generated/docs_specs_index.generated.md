@@ -218,6 +218,7 @@ Used with MIGRATION_MAP.md for machine omission checks (`check_docs_specs_indexe
 - `docs/quality/REPAIR_IMPORT_PHASE2_NON_MANIFEST_REVIEW.md`
 - `docs/quality/ROUND2_REPAIR_ALIGNMENT_TRACKER.md`
 - `docs/quality/ROUND3_BATCH25_PENDING_FIX_REGISTRY.md`
+- `docs/quality/ROUND3_BATCH6_021_PENDING_FIX_REGISTRY.md`
 - `docs/quality/adversarial_audit_post14_contract_ponytail_lane.md`
 - `docs/quality/adversarial_audit_post14_master_fix_manifest.md`
 - `docs/quality/adversarial_audit_post14_ops_data_lane.md`

@@ -89,9 +89,18 @@ class IndustryChainSnapshotBuilder:
             _reject_future_bar(as_of=as_of, anchor_id=anchor.anchor_id, bar=bar)
 
             bar_as_of = _parse_ts(bar["as_of_timestamp"])
-            close = _parse_bar_close(bar["close"], ticker=ticker)
+            close = _parse_bar_numeric(bar["close"], ticker=ticker, field="close")
             volume = bar.get("volume")
-            vol_f = float(volume) if volume is not None else None
+            vol_f = (
+                None
+                if volume is None
+                else _parse_bar_numeric(volume, ticker=ticker, field="volume")
+            )
+            inst_raw = anchor_cfg.get("instrument_id")
+            if inst_raw is None or str(inst_raw) == "":
+                raise Layer3SnapshotError(
+                    f"missing instrument_id for anchor ticker {ticker!r}"
+                )
 
             snapshots.append(
                 IndustryChainDailySnapshotRow(
@@ -107,7 +116,7 @@ class IndustryChainSnapshotBuilder:
             )
             mapping_views.append(
                 Layer5MappingView(
-                    instrument_id=str(anchor_cfg["instrument_id"]),
+                    instrument_id=str(inst_raw),
                     trade_date=trade_date,
                     close=close,
                     volume=vol_f,
@@ -212,12 +221,12 @@ def _bar_for_trade_date(
     raise Layer3SnapshotError(f"no L5 bar for {ticker!r} on trade_date={trade_date}")
 
 
-def _parse_bar_close(value: object, *, ticker: str) -> float:
+def _parse_bar_numeric(value: object, *, ticker: str, field: str) -> float:
     try:
         return float(value)  # type: ignore[arg-type]
     except (TypeError, ValueError) as exc:
         raise Layer3SnapshotError(
-            f"bar for {ticker!r} close must be numeric, got {value!r}"
+            f"bar for {ticker!r} {field} must be numeric, got {value!r}"
         ) from exc
 
 

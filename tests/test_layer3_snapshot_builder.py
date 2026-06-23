@@ -398,9 +398,43 @@ def test_layer3Snapshot_deterministicRebuild_sameInputsSameHash() -> None:
     assert snap1.latest_price == snap2.latest_price
 
 
+def test_layer3Snapshot_nonNumericVolume_rejects(tmp_path: Path) -> None:
+    """覆盖范围：bar volume 非数值时的拒绝（主会话对抗复核 / OOF-7 对称）
+    测试对象：_parse_bar_numeric 经 build 集成路径
+    目的：非数值 volume 须抛 Layer3SnapshotError，不泄漏 ValueError
+    验证点：volume=not-a-number → Layer3SnapshotError 含 numeric
+    失败含义：close 已 fail-closed 而 volume 仍 ValueError，信任边界不一致
+    """
+    bundle = _copy_l5_bundle(tmp_path)
+    manifest = yaml.safe_load((bundle / "manifest.yaml").read_text(encoding="utf-8"))
+    manifest["anchors"]["MSFT"]["bars"][0]["volume"] = "not-a-number"
+    (bundle / "manifest.yaml").write_text(
+        yaml.safe_dump(manifest, allow_unicode=True), encoding="utf-8"
+    )
+    with pytest.raises(Layer3SnapshotError, match="numeric"):
+        _build(l5_bundle_dir=bundle)
+
+
+def test_layer3Snapshot_missingInstrumentId_rejects(tmp_path: Path) -> None:
+    """覆盖范围：L5 anchor 配置缺 instrument_id（主会话对抗复核）
+    测试对象：IndustryChainSnapshotBuilder.build 的 mapping view 路径
+    目的：缺 instrument_id 须抛 Layer3SnapshotError，不泄漏 KeyError
+    验证点：删 MSFT instrument_id → Layer3SnapshotError 含 instrument_id
+    失败含义：KeyError 逃出信任边界，CLI 无法统一捕获畸形 manifest
+    """
+    bundle = _copy_l5_bundle(tmp_path)
+    manifest = yaml.safe_load((bundle / "manifest.yaml").read_text(encoding="utf-8"))
+    del manifest["anchors"]["MSFT"]["instrument_id"]
+    (bundle / "manifest.yaml").write_text(
+        yaml.safe_dump(manifest, allow_unicode=True), encoding="utf-8"
+    )
+    with pytest.raises(Layer3SnapshotError, match="instrument_id"):
+        _build(l5_bundle_dir=bundle)
+
+
 def test_layer3Snapshot_nonNumericClose_rejects(tmp_path: Path) -> None:
     """覆盖范围：bar close 非数值时的拒绝（OOF-7）
-    测试对象：_parse_bar_close 经 build 集成路径
+    测试对象：_parse_bar_numeric 经 build 集成路径
     目的：非数值 close 须抛 Layer3SnapshotError，不泄漏 ValueError
     验证点：close=not-a-number → Layer3SnapshotError 含 numeric
     失败含义：ValueError 逃出信任边界，ops 侧无法统一捕获

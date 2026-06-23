@@ -17,7 +17,7 @@
 | G5  | NB       | **已闭合**               | `test_layer3Snapshot_invalidManifestYaml_rejects`                                                       |
 | G6  | NB       | **已闭合**               | `test_snapshotLineage_agentOutputsNotSource_rejectsAgentProse`                                          |
 | G7  | NB       | **已闭合**               | `test_layer3Snapshot_deterministicRebuild_sameInputsSameHash`                                           |
-| G8  | NB       | **已闭合**               | 全部 22 条 `test_*` 含四元组（覆盖/对象/目的/验证点/失败含义）                                          |
+| G8  | NB       | **已闭合**               | 全部 24 条 `test_*` 含四元组（覆盖/对象/目的/验证点/失败含义）                                          |
 | G9  | NB       | **defer**                | event_only 误有价负向价值低；代码 `event_only` 分支不读 L5 bar，已有正向测 `eventOnly_skipsPriceFields` |
 
 ---
@@ -32,7 +32,7 @@
 | OOF-4       | **defer**                | `price_proxy_needs_feed` — MASTER §3.2 Batch 5+；loader 已识别状态                                           |
 | OOF-5       | **defer**                | `pct_change_1d` 恒 None — fixture 单日 bar 无 prev close；设计 §8.12.6 staged 子集                           |
 | OOF-6       | **已闭合**               | 核心文件纳入 commit（见 NB-1）                                                                               |
-| OOF-7       | **已闭合**               | `_parse_bar_close` → `Layer3SnapshotError` + `test_layer3Snapshot_nonNumericClose_rejects`                   |
+| OOF-7       | **已闭合**               | `_parse_bar_numeric` → `Layer3SnapshotError`（close + volume 单点）+ 负向测                                  |
 
 ---
 
@@ -67,6 +67,15 @@
 | NB-3 | **defer + ponytail** | 模块头注释：每次 build 重读 manifest；Batch 6 批量重建可 memoize           |
 
 **A6 判定维持 SKIP** — 无 hot path / 无冻结 perf 阈值；结构性备忘已 ponytail 标注升级路径。
+
+## Batch 6 偿还（主会话对抗复核登记）
+
+| ID             | 严重度 | 处置                | 证据 / 关闭条件                                                                                    |
+| -------------- | ------ | ------------------- | -------------------------------------------------------------------------------------------------- |
+| R3-B6-021-O-01 | NB     | **defer — Batch 6** | `_bar_for_trade_date` 非 dict bar `continue`；Batch 6 `layer3 build-snapshot` schema 校验 + pytest |
+| R3-B6-021-O-02 | NB     | **defer — Batch 6** | `test_layer3Snapshot_deterministicRebuild_*` 仅 hash+price；Batch 6 扩展全 row tuple 断言          |
+
+登记：`docs/AUDIT_DEFERRED_REGISTRY.md` · `docs/UNRESOLVED_ISSUES_REGISTRY.md` · `ROUND3_BATCH_IMPLEMENTATION_MAP.md` Batch 6 表。
 
 ---
 
