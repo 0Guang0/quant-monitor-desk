@@ -1,10 +1,6 @@
 {
   "task": "06-23-round3-020-layer3-loader",
-  "modules": [
-    "layer2_sensors",
-    "ops",
-    "layer3_chains"
-  ],
+  "modules": ["layer2_sensors", "ops", "layer3_chains"],
   "source_authorities": [
     {
       "type": "design",
@@ -165,10 +161,7 @@
       "purpose": "Layer 3 industry chain loader tests — 020 Execute 占位（Plan freeze；无测试体）。"
     }
   ],
-  "forbidden_claims": [
-    "production-live ready",
-    "live production ingestion"
-  ],
+  "forbidden_claims": ["production-live ready", "live production ingestion"],
   "required_evidence": [
     "context_pack.json",
     "loop_manifest.json",

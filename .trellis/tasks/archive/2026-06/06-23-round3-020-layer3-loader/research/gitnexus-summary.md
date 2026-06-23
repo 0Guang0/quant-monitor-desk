@@ -8,12 +8,12 @@
 
 ## Impact 预判（改码前 Execute 须 `impact()`）
 
-| 目标 | 方向 | 风险 |
-| ---- | ---- | ---- |
-| `IndustryChainLoader` | 新建 | LOW — 无 upstream caller |
-| `layer3_chains/models.py` | 新建 | LOW |
-| `layer2_sensors/*` | 禁止改 | — |
-| `snapshot_lineage_contract.yaml` | 禁止写 | — |
+| 目标                             | 方向   | 风险                     |
+| -------------------------------- | ------ | ------------------------ |
+| `IndustryChainLoader`            | 新建   | LOW — 无 upstream caller |
+| `layer3_chains/models.py`        | 新建   | LOW                      |
+| `layer2_sensors/*`               | 禁止改 | —                        |
+| `snapshot_lineage_contract.yaml` | 禁止写 | —                        |
 
 ## 执行流（Plan 冻结）
 

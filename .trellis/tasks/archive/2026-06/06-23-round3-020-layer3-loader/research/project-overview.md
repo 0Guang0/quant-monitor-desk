@@ -27,11 +27,11 @@
 
 ## 风险
 
-| 风险 | 缓解 |
-| ---- | ---- |
-| 全量 registry 过大 | fixture 最小子集 + eco |
-| 误读生产 registry | `staged_fixture_only` 拒绝其他 mode |
-| scope 漂移到 layer2/4/5 | slice plan forbidden 列表 |
+| 风险                    | 缓解                                |
+| ----------------------- | ----------------------------------- |
+| 全量 registry 过大      | fixture 最小子集 + eco              |
+| 误读生产 registry       | `staged_fixture_only` 拒绝其他 mode |
+| scope 漂移到 layer2/4/5 | slice plan forbidden 列表           |
 
 ## Blast radius（Plan 预估）
 

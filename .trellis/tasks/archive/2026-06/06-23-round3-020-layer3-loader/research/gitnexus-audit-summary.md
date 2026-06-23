@@ -9,10 +9,10 @@
 
 ## 查询记录（协调者）
 
-| 查询 | 结果 |
-|------|------|
-| `IndustryChainLoader` context | 索引滞后 / 未跟踪（A1） |
-| blast radius | LOW — 新建 `layer3_chains` 包，无 production DB 路径 |
+| 查询                          | 结果                                                 |
+| ----------------------------- | ---------------------------------------------------- |
+| `IndustryChainLoader` context | 索引滞后 / 未跟踪（A1）                              |
+| blast radius                  | LOW — 新建 `layer3_chains` 包，无 production DB 路径 |
 
 ## 结论
 
