@@ -1,0 +1,6 @@
+{"file": "specs/contracts/layer3_loader_contract.yaml", "reason": "A1 spec diff vs loader"}
+{"file": "docs/modules/layer3_industry_shock_anchor.md", "reason": "A1 module authority"}
+{"file": "docs/implementation_tasks/ROUND_3_MODELING_LAYERS/020_implement_layer3_industry_chain_loader.md", "reason": "A1 task card scope"}
+{"file": "docs/quality/BATCH3_STAGED_DOWNSTREAM_GATE.md", "reason": "A1 staged-only gate"}
+{"file": "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md", "reason": "A8 semantic assertion policy"}
+{"file": ".trellis/tasks/06-23-round3-020-layer3-loader/research/source-index.md", "reason": "A5 trace manifest"}

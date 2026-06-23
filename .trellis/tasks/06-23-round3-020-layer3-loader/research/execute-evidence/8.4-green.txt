@@ -1,0 +1,5 @@
+$ uv run pytest tests/test_layer3_loader.py::test_layer3Loader_anchorMissingNode_rejects tests/test_layer3_loader.py::test_layer3Loader_eventOnlyPrivate_notDailyPriceAnchor tests/test_layer3_loader.py::test_layer3Loader_p0Anchor_missingSourceKeys_rejects tests/test_layer3_loader.py::test_layer3Loader_invalidSourceValidationStatus_rejects tests/test_layer3_loader.py::test_layer3Loader_p0Anchor_needsSourceStatus_rejects -q
+.....                                                                    [100%]
+exit_code=0
+
+ponytail: _validate_anchor_rules extended for P0 + needs_source status gate

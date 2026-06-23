@@ -1,0 +1,51 @@
+{
+  "dimensions": {
+    "A1": {
+      "result": "pass",
+      "evidence": "research/audit-sections/A1.md",
+      "agent": "audit-a1-spec"
+    },
+    "A2": {
+      "result": "pass",
+      "evidence": "research/audit-sections/A2.md",
+      "agent": "audit-a2-ponytail"
+    },
+    "A3": {
+      "result": "pass",
+      "evidence": "research/audit-sections/A3.md",
+      "agent": "security-auditor"
+    },
+    "A4": {
+      "result": "pass",
+      "evidence": "research/audit-sections/A4.md",
+      "agent": "code-reviewer"
+    },
+    "A5": {
+      "result": "pass",
+      "evidence": "research/audit-sections/A5.md",
+      "agent": "audit-a5-completion"
+    },
+    "A6": {
+      "result": "skip",
+      "evidence": "AUDIT.plan.md §2.2",
+      "agent": "performance-engineer"
+    },
+    "A7": {
+      "result": "pass",
+      "evidence": "research/audit-sections/A7.md",
+      "agent": "database-administrator"
+    },
+    "A8": {
+      "result": "pass",
+      "evidence": "research/audit-sections/A8.md",
+      "agent": "qa-expert"
+    }
+  },
+  "orthogonal_checks": {
+    "spec_scope": "pass",
+    "security": "pass",
+    "test_gap": "pass",
+    "prod_hash": "pass"
+  },
+  "final": "PASS"
+}

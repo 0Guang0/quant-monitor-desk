@@ -1,0 +1,10 @@
+version: '1.2-staged'
+chains:
+  - chain_id: L3_TEST_CHAIN
+    chain_name_cn: 测试产业链
+    chain_name_en: Test Chain
+    chain_type: demand_side_capex
+  - chain_id: L3_TEST_CHAIN_2
+    chain_name_cn: 测试产业链二
+    chain_name_en: Test Chain 2
+    chain_type: supply_side

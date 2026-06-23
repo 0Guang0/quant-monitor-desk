@@ -1,0 +1,9 @@
+{"file": ".trellis/tasks/06-23-round3-020-layer3-loader/AUDIT.plan.md", "reason": "Audit single source of truth"}
+{"file": ".trellis/tasks/06-23-round3-020-layer3-loader/MASTER.plan.md", "reason": "extract: §2 AC trace | for: A5 audit-completion"}
+{"file": "specs/contracts/layer3_loader_contract.yaml", "reason": "extract: hard_validation_rules | for: A1 audit-spec"}
+{"file": "docs/modules/layer3_industry_shock_anchor.md", "reason": "extract: §8.5 registry 边界 | for: A1 / A8 test-gap"}
+{"file": "docs/implementation_tasks/ROUND_3_MODELING_LAYERS/020_implement_layer3_industry_chain_loader.md", "reason": "extract: scope / Red Flags | for: A1 trace"}
+{"file": "docs/quality/BATCH3_STAGED_DOWNSTREAM_GATE.md", "reason": "extract: staged-only 约束 | for: A5 AC-020-5"}
+{"file": "backend/app/layer2_sensors/sensor_loader.py", "reason": "extract: staged_fixture 模式 | for: A2 ponytail 对照"}
+{"file": "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md", "reason": "extract: 语义断言 | for: A8"}
+{"file": ".trellis/tasks/06-23-round3-020-layer3-loader/research/source-index.md", "reason": "extract: manifest 血缘 | for: A5 trace"}

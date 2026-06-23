@@ -1,0 +1,26 @@
+[
+  {
+    "node_id": "L3_TEST_CHAIN_ROOT",
+    "node_name_cn": "测试根节点",
+    "chain_id": "L3_TEST_CHAIN",
+    "node_role": "chain_root"
+  },
+  {
+    "node_id": "L3_TEST_CHAIN_HYPERSCALER",
+    "node_name_cn": "云厂商节点",
+    "chain_id": "L3_TEST_CHAIN",
+    "node_role": "demand_setter"
+  },
+  {
+    "node_id": "L3_TEST_CHAIN_PRIVATE_EVENTS",
+    "node_name_cn": "私有事件节点",
+    "chain_id": "L3_TEST_CHAIN",
+    "node_role": "event_source"
+  },
+  {
+    "node_id": "L3_TEST_CHAIN_2_ROOT",
+    "node_name_cn": "第二条链根节点",
+    "chain_id": "L3_TEST_CHAIN_2",
+    "node_role": "chain_root"
+  }
+]

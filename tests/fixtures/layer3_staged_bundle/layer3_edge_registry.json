@@ -1,0 +1,16 @@
+[
+  {
+    "edge_id": "L3_TEST_EDGE_01",
+    "chain_id": "L3_TEST_CHAIN",
+    "from_node_id": "L3_TEST_CHAIN_ROOT",
+    "to_node_id": "L3_TEST_CHAIN_HYPERSCALER",
+    "relation_type": "root_to_node"
+  },
+  {
+    "edge_id": "L3_TEST_EDGE_02",
+    "chain_id": "L3_TEST_CHAIN",
+    "from_node_id": "L3_TEST_CHAIN_ROOT",
+    "to_node_id": "L3_TEST_CHAIN_PRIVATE_EVENTS",
+    "relation_type": "root_to_node"
+  }
+]

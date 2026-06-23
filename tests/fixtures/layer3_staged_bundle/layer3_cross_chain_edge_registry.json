@@ -1,0 +1,10 @@
+[
+  {
+    "edge_id": "XTEST_01",
+    "from_chain_id": "L3_TEST_CHAIN",
+    "from_node_id": "L3_TEST_CHAIN_HYPERSCALER",
+    "to_chain_id": "L3_TEST_CHAIN_2",
+    "to_node_id": "L3_TEST_CHAIN_2_ROOT",
+    "relation_type": "capex_to_compute"
+  }
+]
