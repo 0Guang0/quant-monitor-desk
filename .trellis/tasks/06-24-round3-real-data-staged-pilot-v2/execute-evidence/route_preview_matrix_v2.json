@@ -1,0 +1,280 @@
+{
+  "caps": {
+    "full_history_backfill": false,
+    "full_market_scan": false,
+    "max_network_calls_per_run": 25,
+    "max_rows_per_source_domain": 500,
+    "max_symbols": 5,
+    "max_trade_days": 30,
+    "pilot_id": "r3y-staged-pilot-v2-20260624",
+    "production_clean_write": false,
+    "sandbox_root": ".audit-sandbox/r3y-staged-pilot-v2"
+  },
+  "dry_run": true,
+  "generated_at": "2026-06-23T19:23:49Z",
+  "mutation_proof": {
+    "after_all_table_counts": {},
+    "after_key_table_counts": {},
+    "before_all_table_counts": {},
+    "before_key_table_counts": {},
+    "db_hash_unchanged": null,
+    "production_db_path": "C:\\Users\\Guang\\Desktop\\quant-monitor-desk-wt-r3-pilot-v2\\data\\duckdb\\quant_monitor.duckdb",
+    "proof_status": "INCONCLUSIVE",
+    "reason": "production_db_file_missing",
+    "row_counts_unchanged": null
+  },
+  "phase": "route_preview_v2",
+  "pilot_id": "r3y-staged-pilot-v2-20260624",
+  "previews": [
+    {
+      "authorization_evidence": "docs/quality/prompt14_user_authorization_2026-06-22.md",
+      "dry_run": true,
+      "explicit_source_route_status": "READY",
+      "organic_route_status": "READY",
+      "pilot_id": "r3y-staged-pilot-v2-20260624",
+      "pilot_request_id": "v2-req-1",
+      "pilot_route_override_applied": false,
+      "request": {
+        "allow_clean_write": false,
+        "authorization_evidence": "docs/quality/prompt14_user_authorization_2026-06-22.md",
+        "data_domain": "cn_equity_daily_bar",
+        "date_window": "recent 30 trading days",
+        "dry_run": true,
+        "max_rows": 100,
+        "operation": "fetch_daily_bar",
+        "raw_only": true,
+        "source_id": "baostock",
+        "symbols_or_indicators": [
+          "sh.600519",
+          "sh.600000",
+          "sz.000001"
+        ],
+        "write_target": "sandbox"
+      },
+      "resource_guard_decision": "OK",
+      "resource_guard_reason": "",
+      "route_plan": {
+        "candidates": [
+          {
+            "allowed_domain": "cn_equity_daily_bar",
+            "capability_declared": true,
+            "disabled_reason": null,
+            "enabled": true,
+            "role": "Primary",
+            "skip_reason": null,
+            "source_id": "baostock"
+          },
+          {
+            "allowed_domain": "cn_equity_daily_bar",
+            "capability_declared": true,
+            "disabled_reason": null,
+            "enabled": true,
+            "role": "Validation",
+            "skip_reason": null,
+            "source_id": "akshare"
+          }
+        ],
+        "created_at": "2026-06-23T19:23:49.707964+00:00",
+        "data_domain": "cn_equity_daily_bar",
+        "job_id": "r3x-staged-pilot-route",
+        "operation": "fetch_daily_bar",
+        "quality_flags": [],
+        "requested_source_id": null,
+        "route_plan_id": "e394e09a-153c-439f-b928-c6dd3721e8fe",
+        "route_status": "READY",
+        "run_id": "v2-req-1-preview",
+        "selected_source_id": "baostock"
+      }
+    },
+    {
+      "authorization_evidence": "docs/quality/prompt14_user_authorization_2026-06-22.md",
+      "dry_run": true,
+      "explicit_source_route_status": "READY",
+      "organic_route_status": "READY",
+      "pilot_id": "r3y-staged-pilot-v2-20260624",
+      "pilot_request_id": "v2-req-2",
+      "pilot_route_override_applied": false,
+      "request": {
+        "allow_clean_write": false,
+        "authorization_evidence": "docs/quality/prompt14_user_authorization_2026-06-22.md",
+        "data_domain": "cn_equity_daily_bar",
+        "date_window": "recent 30 trading days",
+        "dry_run": true,
+        "max_rows": 100,
+        "operation": "fetch_daily_bar_validation",
+        "raw_only": true,
+        "source_id": "akshare",
+        "symbols_or_indicators": [
+          "sh.600519",
+          "sh.600000"
+        ],
+        "write_target": "sandbox"
+      },
+      "resource_guard_decision": "OK",
+      "resource_guard_reason": "",
+      "route_plan": {
+        "candidates": [
+          {
+            "allowed_domain": "cn_equity_daily_bar",
+            "capability_declared": true,
+            "disabled_reason": null,
+            "enabled": true,
+            "role": "Primary",
+            "skip_reason": null,
+            "source_id": "baostock"
+          },
+          {
+            "allowed_domain": "cn_equity_daily_bar",
+            "capability_declared": true,
+            "disabled_reason": null,
+            "enabled": true,
+            "role": "Validation",
+            "skip_reason": null,
+            "source_id": "akshare"
+          }
+        ],
+        "created_at": "2026-06-23T19:23:49.714367+00:00",
+        "data_domain": "cn_equity_daily_bar",
+        "job_id": "r3x-staged-pilot-route",
+        "operation": "fetch_daily_bar_validation",
+        "quality_flags": [],
+        "requested_source_id": null,
+        "route_plan_id": "d6bccf5d-43d8-453d-8675-9f31e64bf231",
+        "route_status": "READY",
+        "run_id": "v2-req-2-preview",
+        "selected_source_id": "baostock"
+      }
+    },
+    {
+      "authorization_evidence": "docs/quality/prompt14_user_authorization_2026-06-22.md",
+      "dry_run": true,
+      "explicit_source_route_status": "READY",
+      "organic_route_status": "READY",
+      "pilot_id": "r3y-staged-pilot-v2-20260624",
+      "pilot_request_id": "v2-req-3",
+      "pilot_route_override_applied": false,
+      "request": {
+        "allow_clean_write": false,
+        "authorization_evidence": "docs/quality/prompt14_user_authorization_2026-06-22.md",
+        "data_domain": "cn_announcements",
+        "date_window": "recent 30 calendar days",
+        "dry_run": true,
+        "max_rows": 50,
+        "operation": "fetch_announcement_index",
+        "raw_only": true,
+        "source_id": "cninfo",
+        "symbols_or_indicators": [
+          "sh.600519",
+          "sz.000001"
+        ],
+        "write_target": "sandbox"
+      },
+      "resource_guard_decision": "OK",
+      "resource_guard_reason": "",
+      "route_plan": {
+        "candidates": [
+          {
+            "allowed_domain": "cn_announcements",
+            "capability_declared": true,
+            "disabled_reason": null,
+            "enabled": true,
+            "role": "Primary",
+            "skip_reason": null,
+            "source_id": "cninfo"
+          }
+        ],
+        "created_at": "2026-06-23T19:23:49.721437+00:00",
+        "data_domain": "cn_announcements",
+        "job_id": "r3x-staged-pilot-route",
+        "operation": "fetch_announcement_index",
+        "quality_flags": [],
+        "requested_source_id": null,
+        "route_plan_id": "55b4ee63-38e4-4372-853f-27310a12c687",
+        "route_status": "READY",
+        "run_id": "v2-req-3-preview",
+        "selected_source_id": "cninfo"
+      }
+    }
+  ],
+  "route_status_coverage": [
+    "disabled",
+    "selected",
+    "user_auth_required",
+    "validation_only"
+  ],
+  "route_status_examples": [
+    {
+      "data_domain": "cn_equity_daily_bar",
+      "explicit_source_route_status": "READY",
+      "operation": "fetch_daily_bar",
+      "organic_route_status": "READY",
+      "route_kind": "selected",
+      "selected_source_id": "baostock",
+      "source_id": "baostock"
+    },
+    {
+      "data_domain": "cn_equity_daily_bar",
+      "explicit_source_route_status": "READY",
+      "operation": "fetch_daily_bar",
+      "organic_route_status": "READY",
+      "route_kind": "validation_only",
+      "selected_source_id": "baostock",
+      "source_id": "akshare"
+    },
+    {
+      "data_domain": "cn_equity_daily_bar",
+      "explicit_source_route_status": "READY",
+      "operation": "fetch_daily_bar_validation",
+      "organic_route_status": "READY",
+      "route_kind": "selected",
+      "selected_source_id": "baostock",
+      "source_id": "baostock"
+    },
+    {
+      "data_domain": "cn_equity_daily_bar",
+      "explicit_source_route_status": "READY",
+      "operation": "fetch_daily_bar_validation",
+      "organic_route_status": "READY",
+      "route_kind": "validation_only",
+      "selected_source_id": "baostock",
+      "source_id": "akshare"
+    },
+    {
+      "data_domain": "cn_announcements",
+      "explicit_source_route_status": "READY",
+      "operation": "fetch_announcement_index",
+      "organic_route_status": "READY",
+      "route_kind": "selected",
+      "selected_source_id": "cninfo",
+      "source_id": "cninfo"
+    },
+    {
+      "data_domain": "cn_equity_daily_bar",
+      "explicit_source_route_status": "NO_AVAILABLE_SOURCE",
+      "operation": "fetch_daily_bar",
+      "organic_route_status": "READY",
+      "route_kind": "disabled",
+      "selected_source_id": "baostock",
+      "source_id": "fred"
+    },
+    {
+      "data_domain": "cn_equity_daily_bar",
+      "explicit_source_route_status": "NO_AVAILABLE_SOURCE",
+      "operation": "fetch_daily_bar",
+      "organic_route_status": "READY",
+      "route_kind": "disabled",
+      "selected_source_id": "baostock",
+      "source_id": "tdx_pytdx"
+    },
+    {
+      "data_domain": "cn_equity_daily_bar",
+      "explicit_source_route_status": "USER_AUTH_REQUIRED",
+      "operation": "fetch_daily_bar",
+      "organic_route_status": "READY",
+      "route_kind": "user_auth_required",
+      "selected_source_id": "baostock",
+      "source_id": "qmt_xtdata"
+    }
+  ],
+  "run_mode": "staged_only"
+}

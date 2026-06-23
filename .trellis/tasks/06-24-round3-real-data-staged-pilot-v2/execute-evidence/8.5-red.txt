@@ -1,0 +1,2 @@
+FAILED: slice 5 pre-GREEN
+EXIT:1

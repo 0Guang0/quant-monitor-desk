@@ -1,0 +1,16 @@
+{
+  "task": "06-24-round3-real-data-staged-pilot-v2",
+  "modules": ["ops", "datasources", "storage", "db"],
+  "acs": [
+    {"id": "SP2-01", "status": "execute_complete", "repair_items": []},
+    {"id": "SP2-02", "status": "execute_complete", "repair_items": []},
+    {"id": "SP2-03", "status": "execute_complete", "repair_items": []},
+    {"id": "SP2-04", "status": "execute_complete", "repair_items": []},
+    {"id": "SP2-05", "status": "execute_complete", "repair_items": []},
+    {"id": "SP2-06", "status": "execute_complete", "repair_items": []},
+    {"id": "SP2-07", "status": "execute_complete", "repair_items": []},
+    {"id": "SP2-08", "status": "execute_complete", "repair_items": []},
+    {"id": "SP2-09", "status": "execute_complete", "repair_items": []},
+    {"id": "MUT-001", "status": "execute_complete", "repair_items": []}
+  ]
+}

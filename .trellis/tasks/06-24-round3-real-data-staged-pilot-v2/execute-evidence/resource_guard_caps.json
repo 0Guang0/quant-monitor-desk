@@ -1,0 +1,22 @@
+{
+  "caps": {
+    "full_history_backfill": false,
+    "full_market_scan": false,
+    "max_network_calls_per_run": 25,
+    "max_rows_per_source_domain": 500,
+    "max_symbols": 5,
+    "max_trade_days": 30,
+    "pilot_id": "r3y-staged-pilot-v2-20260624",
+    "production_clean_write": false,
+    "sandbox_root": ".audit-sandbox/r3y-staged-pilot-v2"
+  },
+  "decision": "OK",
+  "generated_at": "2026-06-23T19:23:49Z",
+  "network_call_budget": {
+    "max_network_calls_per_run": 25,
+    "network_calls_consumed": 0,
+    "within_cap": true
+  },
+  "pilot_id": "r3y-staged-pilot-v2-20260624",
+  "reason": ""
+}

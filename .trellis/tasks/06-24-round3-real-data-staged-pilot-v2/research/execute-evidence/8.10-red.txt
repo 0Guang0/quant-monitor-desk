@@ -1,0 +1,2 @@
+RED: Tier B full suite pre-v2 — FAILED
+EXIT:1
