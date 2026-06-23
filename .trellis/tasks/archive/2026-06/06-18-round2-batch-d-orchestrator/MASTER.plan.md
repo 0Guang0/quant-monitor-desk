@@ -9,17 +9,17 @@
 
 ## 0. 元信息
 
-| 字段 | 值 |
-|------|-----|
-| slug | `06-18-round2-batch-d-orchestrator` |
-| 关联 Round | `ROUND_2_DATA_INGESTION_VALIDATION` Batch **D** |
-| 原计划任务 | `014_implement_data_sync_orchestrator.md` |
-| 前置 | Batch A/B/C PASS；Batch C `READY_FOR_BATCH_D: yes` |
-| 决策输入 | `docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/DECISIONS.md` |
-| Batch C 台账 | `BATCH_C_REPAIR_STATUS.md` · `BATCH_C_LEDGER.md` |
-| 默认分支 | `master` |
-| 建议执行分支 | `feat/round2-batch-d-orchestrator` |
-| analysis_waiver | `false` |
+| 字段            | 值                                                                         |
+| --------------- | -------------------------------------------------------------------------- |
+| slug            | `06-18-round2-batch-d-orchestrator`                                        |
+| 关联 Round      | `ROUND_2_DATA_INGESTION_VALIDATION` Batch **D**                            |
+| 原计划任务      | `014_implement_data_sync_orchestrator.md`                                  |
+| 前置            | Batch A/B/C PASS；Batch C `READY_FOR_BATCH_D: yes`                         |
+| 决策输入        | `docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/DECISIONS.md` |
+| Batch C 台账    | `BATCH_C_REPAIR_STATUS.md` · `BATCH_C_LEDGER.md`                           |
+| 默认分支        | `master`                                                                   |
+| 建议执行分支    | `feat/round2-batch-d-orchestrator`                                         |
+| analysis_waiver | `false`                                                                    |
 
 ### 0.1 Execute 开场白（复制给执行角色）
 
@@ -67,47 +67,57 @@ Execute **以 MASTER inline 为准**；`research/integration-ledger.md` 规定 p
 
 ### 1.2 子交付物
 
-| ID | 交付 | 目标路径 |
-|----|------|----------|
-| D-1 | migration 006 | `backend/app/db/migrations/006_ingestion_sync.sql` |
-| D-2 | Job 状态机 + 模型 | `backend/app/sync/jobs.py` |
-| D-3 | Orchestrator | `backend/app/sync/orchestrator.py` |
-| D-4 | Registry bootstrap CLI | `scripts/sync_registry.py` |
-| D-5 | 测试 | `tests/test_sync_migration.py`, `tests/test_sync_jobs.py`, `tests/test_sync_orchestrator.py`, `tests/test_batch_d_orchestration_flow.py` |
-| D-6 | Smoke 扩展 | `scripts/ci_ingestion_smoke.py` |
-| D-7 | 状态文档 | `docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/BATCH_D_STATUS.md` |
-| D-8 | 可选索引 | `docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/plans/014_batch_d.plan.md` |
+| ID  | 交付                   | 目标路径                                                                                                                                 |
+| --- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| D-1 | migration 006          | `backend/app/db/migrations/006_ingestion_sync.sql`                                                                                       |
+| D-2 | Job 状态机 + 模型      | `backend/app/sync/jobs.py`                                                                                                               |
+| D-3 | Orchestrator           | `backend/app/sync/orchestrator.py`                                                                                                       |
+| D-4 | Registry bootstrap CLI | `scripts/sync_registry.py`                                                                                                               |
+| D-5 | 测试                   | `tests/test_sync_migration.py`, `tests/test_sync_jobs.py`, `tests/test_sync_orchestrator.py`, `tests/test_batch_d_orchestration_flow.py` |
+| D-6 | Smoke 扩展             | `scripts/ci_ingestion_smoke.py`                                                                                                          |
+| D-7 | 状态文档               | `docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/BATCH_D_STATUS.md`                                                          |
+| D-8 | 可选索引               | `docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/plans/014_batch_d.plan.md`                                                  |
 
 ### 1.3 原计划 + 延后项归并
 
-| 来源 | 进入 Batch D 的内容 |
-|------|---------------------|
-| 原计划 014 | FullLoad/Incremental/Backfill/RevisionAudit/Reconcile 状态机；job/run/task id；ResourceGuard |
-| 014 §9 用语纠偏 | 任务卡写 `job_run_log` → 权威表名 **`job_event_log`**（`schema.sql` L102+） |
-| `data_sync_orchestrator.md` §13 | 状态转移、event log、断点续跑字段 |
-| `sync_job_contract.yaml` | job_type + status 枚举 |
-| `DECISIONS.md` §9 | GPT-init_db、GPT-P3-6、GPT-P2-2（`tombstone_missing` API）、B-P1-6-full |
-| `BATCH_C_LEDGER.md` C-C2 | fetch_log 004 CHECK 继续 app 层 |
-| Batch C finish | validator/gate 已就绪，Batch D 只编排不重写 |
+| 来源                            | 进入 Batch D 的内容                                                                          |
+| ------------------------------- | -------------------------------------------------------------------------------------------- |
+| 原计划 014                      | FullLoad/Incremental/Backfill/RevisionAudit/Reconcile 状态机；job/run/task id；ResourceGuard |
+| 014 §9 用语纠偏                 | 任务卡写 `job_run_log` → 权威表名 **`job_event_log`**（`schema.sql` L102+）                  |
+| `data_sync_orchestrator.md` §13 | 状态转移、event log、断点续跑字段                                                            |
+| `sync_job_contract.yaml`        | job_type + status 枚举                                                                       |
+| `DECISIONS.md` §9               | GPT-init_db、GPT-P3-6、GPT-P2-2（`tombstone_missing` API）、B-P1-6-full                      |
+| `BATCH_C_LEDGER.md` C-C2        | fetch_log 004 CHECK 继续 app 层                                                              |
+| Batch C finish                  | validator/gate 已就绪，Batch D 只编排不重写                                                  |
+
+### 1.5 停止条件（可追加 · loop 必填）
+
+| #   | 事件                    | 处理                   |
+| --- | ----------------------- | ---------------------- |
+| 1   | Batch C gate 未关       | 禁止 start             |
+| 2   | ResourceGuard HARD_STOP | 中止 orchestrator run  |
+| 3   | scope 偏离 014 任务卡   | 退回 Plan              |
+| 4   | RED 非本步预期失败      | 停当前 §8 步           |
+| 5   | 状态机不可恢复转移      | 中止；记 MANUAL_REVIEW |
 
 ---
 
 ## 2. 预期结果（A5 trace-ac）
 
-| AC | 预期结果 | 验证链 |
-|----|----------|--------|
-| AC-1 | 六种 `job_type` 可 **create_job** 创建且状态转移符合 `sync_job_contract.yaml`（含 `reconcile`；见 §4.2） | §8.2 + §10 A |
-| AC-2 | 六种 `job_type` **各有语义测试**（§4.2 骨架边界：FullLoad/RevisionAudit **无**完整 fetch→write E2E；Incremental 以 §8.5 E2E 为准） | §8.2–§8.7 + §10 A |
-| AC-3 | Backfill 大范围在 eco 下自动分片（≤31 天/task） | §8.6 + §10 A |
-| AC-4 | `data_sync_job` + `job_event_log` 持久化 run_id/job_id/task_id | §8.1–§8.3 + §10 A |
-| AC-5 | 重任务 `FETCHING` 前 `ResourceGuard.check()`；guard 暂停 → job `FAILED_RETRYABLE` + event message 含 `RESOURCE_GUARD_PAUSED` | §8.4 + §10 A |
-| AC-6 | Incremental：`Adapter→staging→DataQualityValidator→SourceConflictValidator→DbValidationGate→WriteManager` | §8.5 + §10 B |
-| AC-7 | migration 006 对齐 `specs/schema/schema.sql` L73–113 | §8.1 + §10 A |
-| AC-8 | Orchestrator **不**直接 SQL 写 clean；不经 WriteManager 不写 clean | §8.5 + Audit A2 |
-| AC-9 | `ci_ingestion_smoke.py` 覆盖 orchestrator 路径（GPT-P3-6） | §8.9 + §10 C |
-| AC-10 | `sync_registry.py` 或 bootstrap 同步 YAML→DB（GPT-init_db） | §8.8 + §10 B |
-| AC-11 | 全库 pytest、ruff、compileall、production_gate 通过 | §10 |
-| AC-12 | 不实现 Layer 建模/API·前端/Agent/真实 vendor Port/全量 security CI | §3.2 + Audit A7 |
+| AC    | 预期结果                                                                                                                           | 验证链            |
+| ----- | ---------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
+| AC-1  | 六种 `job_type` 可 **create_job** 创建且状态转移符合 `sync_job_contract.yaml`（含 `reconcile`；见 §4.2）                           | §8.2 + §10 A      |
+| AC-2  | 六种 `job_type` **各有语义测试**（§4.2 骨架边界：FullLoad/RevisionAudit **无**完整 fetch→write E2E；Incremental 以 §8.5 E2E 为准） | §8.2–§8.7 + §10 A |
+| AC-3  | Backfill 大范围在 eco 下自动分片（≤31 天/task）                                                                                    | §8.6 + §10 A      |
+| AC-4  | `data_sync_job` + `job_event_log` 持久化 run_id/job_id/task_id                                                                     | §8.1–§8.3 + §10 A |
+| AC-5  | 重任务 `FETCHING` 前 `ResourceGuard.check()`；guard 暂停 → job `FAILED_RETRYABLE` + event message 含 `RESOURCE_GUARD_PAUSED`       | §8.4 + §10 A      |
+| AC-6  | Incremental：`Adapter→staging→DataQualityValidator→SourceConflictValidator→DbValidationGate→WriteManager`                          | §8.5 + §10 B      |
+| AC-7  | migration 006 对齐 `specs/schema/schema.sql` L73–113                                                                               | §8.1 + §10 A      |
+| AC-8  | Orchestrator **不**直接 SQL 写 clean；不经 WriteManager 不写 clean                                                                 | §8.5 + Audit A2   |
+| AC-9  | `ci_ingestion_smoke.py` 覆盖 orchestrator 路径（GPT-P3-6）                                                                         | §8.9 + §10 C      |
+| AC-10 | `sync_registry.py` 或 bootstrap 同步 YAML→DB（GPT-init_db）                                                                        | §8.8 + §10 B      |
+| AC-11 | 全库 pytest、ruff、compileall、production_gate 通过                                                                                | §10               |
+| AC-12 | 不实现 Layer 建模/API·前端/Agent/真实 vendor Port/全量 security CI                                                                 | §3.2 + Audit A7   |
 
 ---
 
@@ -125,18 +135,18 @@ Execute **以 MASTER inline 为准**；`research/integration-ledger.md` 规定 p
 
 ### 3.2 Out of scope · 显式 defer
 
-| 项 | 偿还批次 | 说明 |
-|----|----------|------|
-| Layer 1–5 建模 | Round 3 | Batch D 只编排 ingestion |
-| FastAPI 生产路由 / 前端 | Round 4 | 不碰 `frontend/*` 生产页 |
-| Agent sandbox / ToolRegistry | Round 5 | — |
-| 真实 HTTP/SDK vendor Port | Batch D+ | 用 FakeAdapter/RecordingAdapter |
-| CodeQL/gitleaks/SBOM 全量 CI | Round 5 | — |
-| `fetch_log` 004 ALTER CHECK | 不可行 | C-C2 app 层 + 文档 |
-| `registry_generation` / `removed_from_yaml_at` 列 | Round 3+ | §8.8 调用既有 `sync_to_db(tombstone_missing=True)` |
-| FullLoad checkpoint / 断点续跑字段 | Round 3 | §13.4.1 完整 resume；Batch D 仅 `create_job` + 最小状态转移（AC-2） |
-| `quant_monitor.sync` 生产 CLI | Round 3 ops | Batch D 以 programmatic API + `sync_registry.py` + smoke |
-| 014 任务卡 §11 `npm run typecheck` | N/A | Batch D **backend-only**；不触 `frontend/*` |
+| 项                                                | 偿还批次    | 说明                                                                |
+| ------------------------------------------------- | ----------- | ------------------------------------------------------------------- |
+| Layer 1–5 建模                                    | Round 3     | Batch D 只编排 ingestion                                            |
+| FastAPI 生产路由 / 前端                           | Round 4     | 不碰 `frontend/*` 生产页                                            |
+| Agent sandbox / ToolRegistry                      | Round 5     | —                                                                   |
+| 真实 HTTP/SDK vendor Port                         | Batch D+    | 用 FakeAdapter/RecordingAdapter                                     |
+| CodeQL/gitleaks/SBOM 全量 CI                      | Round 5     | —                                                                   |
+| `fetch_log` 004 ALTER CHECK                       | 不可行      | C-C2 app 层 + 文档                                                  |
+| `registry_generation` / `removed_from_yaml_at` 列 | Round 3+    | §8.8 调用既有 `sync_to_db(tombstone_missing=True)`                  |
+| FullLoad checkpoint / 断点续跑字段                | Round 3     | §13.4.1 完整 resume；Batch D 仅 `create_job` + 最小状态转移（AC-2） |
+| `quant_monitor.sync` 生产 CLI                     | Round 3 ops | Batch D 以 programmatic API + `sync_registry.py` + smoke            |
+| 014 任务卡 §11 `npm run typecheck`                | N/A         | Batch D **backend-only**；不触 `frontend/*`                         |
 
 ### 3.3 路径修正
 
@@ -297,14 +307,14 @@ ECO_MAX_BACKFILL_DAYS_PER_TASK = 31
 
 ### 6.5 Orchestrator 接线契约（Batch C 继承）
 
-| 触点 | 要求 |
-|------|------|
-| DB 连接 | `ConnectionManager.writer()` 用于 `data_sync_job` / `job_event_log` / registry sync / fetch 阶段 |
+| 触点            | 要求                                                                                                                              |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| DB 连接         | `ConnectionManager.writer()` 用于 `data_sync_job` / `job_event_log` / registry sync / fetch 阶段                                  |
 | `adapter.fetch` | **必须** `con=writer_con` 且传 `job_id`；`FetchLogWriter` 在 `BaseDataAdapter.fetch` 内落库（勿在 orchestrator 重复写 fetch_log） |
-| Staging 写入 | **Batch D：仅经 `adapter.fetch`**；orchestrator **禁止**直接 `INSERT` staging 表 |
-| Registry sync | caller-owned 事务（`BATCH_C_LEDGER` **C-C1**）；`sync_to_db` 不内部 BEGIN |
-| Write | `WriteManager.write(WriteRequest(..., job_id=job_id))`；gate 用同 `con` |
-| Validators | 与 `test_batch_c_validation_flow.py` 相同 `con` 传递模式 |
+| Staging 写入    | **Batch D：仅经 `adapter.fetch`**；orchestrator **禁止**直接 `INSERT` staging 表                                                  |
+| Registry sync   | caller-owned 事务（`BATCH_C_LEDGER` **C-C1**）；`sync_to_db` 不内部 BEGIN                                                         |
+| Write           | `WriteManager.write(WriteRequest(..., job_id=job_id))`；gate 用同 `con`                                                           |
+| Validators      | 与 `test_batch_c_validation_flow.py` 相同 `con` 传递模式                                                                          |
 
 ### 6.6 `job_type=data_quality`（AC-2 第六种）
 
@@ -350,20 +360,20 @@ ECO_MAX_BACKFILL_DAYS_PER_TASK = 31
 
 ## 8. Execute steps
 
-| Step | 内容 | RED 命令 | GREEN 命令 | RED 证据 | GREEN 证据 |
-|------|------|----------|------------|----------|------------|
-| 8.0 | Boot + baseline | `pytest -q`（记录基线） | 同左 + production_gate | `8.0-baseline.txt` | `8.0-baseline.txt` |
-| 8.1 | migration 006 | `pytest tests/test_sync_migration.py -q` | 同左 exit 0 | `8.1-red.txt` | `8.1-green.txt` |
-| 8.2 | state machine | `pytest tests/test_sync_jobs.py -q` | 同左 exit 0 | `8.2-red.txt` | `8.2-green.txt` |
-| 8.3 | orchestrator core | `pytest tests/test_sync_orchestrator.py -q` | 同左 exit 0 | `8.3-red.txt` | `8.3-green.txt` |
-| 8.4 | ResourceGuard | `pytest tests/test_sync_orchestrator.py -k guard -q` | 同左 exit 0 | `8.4-red.txt` | `8.4-green.txt` |
-| 8.5 | incremental E2E | `pytest tests/test_batch_d_orchestration_flow.py -q` | 同左 exit 0 | `8.5-red.txt` | `8.5-green.txt`（可选 `8.5-slice-full.txt`） |
-| 8.6 | backfill | `pytest tests/test_sync_orchestrator.py -k backfill -q` | 同左 exit 0 | `8.6-red.txt` | `8.6-green.txt` |
-| 8.7 | reconcile | `pytest tests/test_sync_orchestrator.py -k reconcile -q` | 同左 exit 0 | `8.7-red.txt` | `8.7-green.txt` |
-| 8.8 | registry | `pytest tests/test_sync_orchestrator.py -k registry -q` | 同左 exit 0 | `8.8-red.txt` | `8.8-green.txt` |
-| 8.9 | smoke | `QMD_DATA_ROOT=data python scripts/ci_ingestion_smoke.py` | 输出含 orchestrator ok | `8.9-smoke.txt` | `8.9-smoke.txt` |
-| 8.10 | docs | — | 文档已更新 | `8.10-docs.txt` | `8.10-docs.txt` |
-| 8.11 | handoff | — | §10 Tier C 全绿 | `8.11-final-gates.txt` | `8.11-handoff.txt` |
+| Step | 内容              | RED 命令                                                  | GREEN 命令             | RED 证据               | GREEN 证据                                   |
+| ---- | ----------------- | --------------------------------------------------------- | ---------------------- | ---------------------- | -------------------------------------------- |
+| 8.0  | Boot + baseline   | `pytest -q`（记录基线）                                   | 同左 + production_gate | `8.0-baseline.txt`     | `8.0-baseline.txt`                           |
+| 8.1  | migration 006     | `pytest tests/test_sync_migration.py -q`                  | 同左 exit 0            | `8.1-red.txt`          | `8.1-green.txt`                              |
+| 8.2  | state machine     | `pytest tests/test_sync_jobs.py -q`                       | 同左 exit 0            | `8.2-red.txt`          | `8.2-green.txt`                              |
+| 8.3  | orchestrator core | `pytest tests/test_sync_orchestrator.py -q`               | 同左 exit 0            | `8.3-red.txt`          | `8.3-green.txt`                              |
+| 8.4  | ResourceGuard     | `pytest tests/test_sync_orchestrator.py -k guard -q`      | 同左 exit 0            | `8.4-red.txt`          | `8.4-green.txt`                              |
+| 8.5  | incremental E2E   | `pytest tests/test_batch_d_orchestration_flow.py -q`      | 同左 exit 0            | `8.5-red.txt`          | `8.5-green.txt`（可选 `8.5-slice-full.txt`） |
+| 8.6  | backfill          | `pytest tests/test_sync_orchestrator.py -k backfill -q`   | 同左 exit 0            | `8.6-red.txt`          | `8.6-green.txt`                              |
+| 8.7  | reconcile         | `pytest tests/test_sync_orchestrator.py -k reconcile -q`  | 同左 exit 0            | `8.7-red.txt`          | `8.7-green.txt`                              |
+| 8.8  | registry          | `pytest tests/test_sync_orchestrator.py -k registry -q`   | 同左 exit 0            | `8.8-red.txt`          | `8.8-green.txt`                              |
+| 8.9  | smoke             | `QMD_DATA_ROOT=data python scripts/ci_ingestion_smoke.py` | 输出含 orchestrator ok | `8.9-smoke.txt`        | `8.9-smoke.txt`                              |
+| 8.10 | docs              | —                                                         | 文档已更新             | `8.10-docs.txt`        | `8.10-docs.txt`                              |
+| 8.11 | handoff           | —                                                         | §10 Tier C 全绿        | `8.11-final-gates.txt` | `8.11-handoff.txt`                           |
 
 Tracer 全文见 `research/orchestrator-tests.md`（禁止在 MASTER 内嵌 >2 个 `def test_*`）。
 
@@ -584,11 +594,11 @@ QMD_DATA_ROOT=data python scripts/ci_ingestion_smoke.py
 
 ## 10. Acceptance commands（DoD）
 
-| Tier | 命令 | 通过条件 |
-|------|------|----------|
-| A | §9.1 | exit 0 |
-| B | §9.2 | exit 0 |
-| C | §9.3 | exit 0；cov ≥75% |
+| Tier   | 命令                        | 通过条件                      |
+| ------ | --------------------------- | ----------------------------- |
+| A      | §9.1                        | exit 0                        |
+| B      | §9.2                        | exit 0                        |
+| C      | §9.3                        | exit 0；cov ≥75%              |
 | Detect | GitNexus `detect_changes()` | 记录 risk；无 CRITICAL 未说明 |
 
 Handoff 模板 `execute-evidence/8.11-handoff.txt`:
@@ -613,30 +623,30 @@ Execute 完成后主会话填写 handoff；Audit 读 `AUDIT.plan.md` + `audit.js
 
 ## 12. Execute Skill 冻结清单
 
-| Skill | 本任务 | 绑定 §8 | 触发 | @ 指令 | 已执行 |
-|-------|--------|---------|------|--------|--------|
-| trellis-execute | 必做 | 8.0 | 每步 | Read SKILL.md Phase 0 Boot | [x] |
-| test-driven-development | 必做 | 8.1–8.9 | 每步写代码 | RED→GREEN per §8.x | [x] |
-| incremental-implementation | 必做 | 8.1–8.11 | 全程 | 一次只完成当前 §8.x | [x] |
-| systematic-debugging | 条件 | 当前失败步 | pytest RED | 根因→最小修复 | [ ] |
-| karpathy-guidelines | 必做 | 8.x 实现前 | 每步 GREEN 前 | User Rule | [x] |
-| testing-guidelines | 必做 | 8.x 测试 | 每步 | User Rule | [x] |
-| GitNexus impact | 必做 | 改 symbol 前 | 非平凡编辑 | `impact({target, upstream})` | [x] |
-| trellis-implement | 不用 | — | inline 主会话 | — | — |
-| trellis-check | 不用 | — | Audit 取代 | — | — |
-| trellis-before-dev | 不用 | — | Plan 5c 已完成 | — | — |
-| doubt-driven-development | 条件 | 8.1 migration 幂等声称 | 声称前 | 对抗审查 | [ ] |
+| Skill                      | 本任务 | 绑定 §8                | 触发           | @ 指令                       | 已执行 |
+| -------------------------- | ------ | ---------------------- | -------------- | ---------------------------- | ------ |
+| trellis-execute            | 必做   | 8.0                    | 每步           | Read SKILL.md Phase 0 Boot   | [x]    |
+| test-driven-development    | 必做   | 8.1–8.9                | 每步写代码     | RED→GREEN per §8.x           | [x]    |
+| incremental-implementation | 必做   | 8.1–8.11               | 全程           | 一次只完成当前 §8.x          | [x]    |
+| systematic-debugging       | 条件   | 当前失败步             | pytest RED     | 根因→最小修复                | [ ]    |
+| karpathy-guidelines        | 必做   | 8.x 实现前             | 每步 GREEN 前  | User Rule                    | [x]    |
+| testing-guidelines         | 必做   | 8.x 测试               | 每步           | User Rule                    | [x]    |
+| GitNexus impact            | 必做   | 改 symbol 前           | 非平凡编辑     | `impact({target, upstream})` | [x]    |
+| trellis-implement          | 不用   | —                      | inline 主会话  | —                            | —      |
+| trellis-check              | 不用   | —                      | Audit 取代     | —                            | —      |
+| trellis-before-dev         | 不用   | —                      | Plan 5c 已完成 | —                            | —      |
+| doubt-driven-development   | 条件   | 8.1 migration 幂等声称 | 声称前         | 对抗审查                     | [ ]    |
 
 ---
 
 ## 13. Plan 5d doubt-driven 修订记录
 
-| 声称 | 对抗结论 | 修订 |
-|------|----------|------|
-| ReconcileJob 独立实现冲突比较 | 与 Batch C 重复 | §4 委托 SourceConflictValidator |
-| init_db 默认 sync registry | 破坏 Round 1 测试假设 | §8.8 独立 CLI + 可选 bootstrap |
-| 六种 job 全生产调度 | 范围膨胀 | §4.2 骨架+各 1 测；调度表 defer Round 3 |
-| Backfill 无分片上限 | 违反 eco | §6.3 冻结 31 天 |
-| fetch 不传 writer con | fetch_log 缺失 | §6.5 冻结 adapter.fetch 签名 |
-| RESOURCE_GUARD_PAUSED 当 status | 契约 drift | §4.4 冻结 FAILED_RETRYABLE |
-| data_quality 当 VALIDATING 阶段 | 六种 job 语义混淆 | §6.6 冻结独立 job_type |
+| 声称                            | 对抗结论              | 修订                                    |
+| ------------------------------- | --------------------- | --------------------------------------- |
+| ReconcileJob 独立实现冲突比较   | 与 Batch C 重复       | §4 委托 SourceConflictValidator         |
+| init_db 默认 sync registry      | 破坏 Round 1 测试假设 | §8.8 独立 CLI + 可选 bootstrap          |
+| 六种 job 全生产调度             | 范围膨胀              | §4.2 骨架+各 1 测；调度表 defer Round 3 |
+| Backfill 无分片上限             | 违反 eco              | §6.3 冻结 31 天                         |
+| fetch 不传 writer con           | fetch_log 缺失        | §6.5 冻结 adapter.fetch 签名            |
+| RESOURCE_GUARD_PAUSED 当 status | 契约 drift            | §4.4 冻结 FAILED_RETRYABLE              |
+| data_quality 当 VALIDATING 阶段 | 六种 job 语义混淆     | §6.6 冻结独立 job_type                  |

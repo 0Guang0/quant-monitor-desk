@@ -152,10 +152,47 @@ def _master_allows_original_task_cards(master_text: str) -> bool:
     return "must read original" in master_text or "必须读原文" in master_text
 
 
+def _extract_subsection(text: str, heading_marker: str) -> str:
+    """Block under ### 1.5 … until next ### or ##."""
+    lines = text.splitlines()
+    start: int | None = None
+    for i, line in enumerate(lines):
+        if heading_marker in line and line.strip().startswith("#"):
+            start = i
+            break
+    if start is None:
+        return ""
+    end = len(lines)
+    for j in range(start + 1, len(lines)):
+        s = lines[j].strip()
+        if s.startswith("## ") or (s.startswith("### ") and heading_marker not in s):
+            end = j
+            break
+    return "\n".join(lines[start:end])
+
+
+def _validate_stop_conditions(master_text: str, errors: list[str]) -> None:
+    """§1.5: examples 1–4 are not enough; need row #≥5 or explicit 自定义."""
+    sec = _extract_section(master_text, "1.5") or _extract_subsection(master_text, "1.5")
+    if not sec:
+        return
+    has_custom = bool(re.search(r"\|\s*5\+?\s*\|", sec)) or "自定义" in sec
+    numbered = re.findall(r"^\|\s*(\d+)\s*\|", sec, re.MULTILINE)
+    has_fifth = any(int(n) >= 5 for n in numbered if n.isdigit())
+    if not (has_custom or has_fifth):
+        errors.append(
+            "MASTER §1.5: add ≥1 custom stop condition (row #≥5 or 自定义 column); "
+            "examples 1–4 alone are insufficient"
+        )
+
+
 def _validate_original_plan_artifacts(task_dir: Path, errors: list[str]) -> None:
+    source = task_dir / "research" / "source-index.md"
     trace = task_dir / "research" / "original-plan-trace.md"
-    if not trace.is_file():
-        errors.append("Missing research/original-plan-trace.md (Plan P0 original plan trace)")
+    if not source.is_file() and not trace.is_file():
+        errors.append(
+            "Missing research/source-index.md (or legacy original-plan-trace.md)"
+        )
 
     boot = task_dir / "research" / "plan-boot.md"
     if boot.is_file():
@@ -166,12 +203,23 @@ def _validate_original_plan_artifacts(task_dir: Path, errors: list[str]) -> None
     master = task_dir / "MASTER.plan.md"
     if master.is_file():
         text = master.read_text(encoding="utf-8")
-        if "原计划" not in text and "original-plan" not in text.lower():
-            errors.append("MASTER.plan.md missing original plan linkage (原计划 / §1.3)")
-        if "### 1.3" not in text and "§1.3" not in text:
-            errors.append("MASTER.plan.md missing §1.3 original plan merge table")
+        if "原计划" not in text and "source-index" not in text.lower():
+            errors.append(
+                "MASTER.plan.md missing original plan linkage (原计划 / source-index)"
+            )
+        if "### 1.6" not in text and "§1.6" not in text and "### 1.3" not in text:
+            errors.append("MASTER.plan.md missing §1.6 original plan merge table")
+        if "### 1.5" not in text and "停止条件" not in text:
+            errors.append("MASTER.plan.md missing §1.5 stop conditions (停止条件)")
+        else:
+            _validate_stop_conditions(text, errors)
+        if "### 5.1" in text or "测试契约" in text:
+            for label in ("测试文件路径", "测试目的", "成功怎么测", "失败怎么测"):
+                if label not in text:
+                    errors.append(f"MASTER §5 test contract missing: {label}")
         if _strict_source_context_enabled(task_dir) and "Source Context Index" not in text:
-            errors.append("MASTER.plan.md missing Source Context Index")
+            if "source-index" not in text.lower():
+                errors.append("MASTER.plan.md missing source-index linkage")
 
 
 def _validate_implement_jsonl_manifest(task_dir: Path, repo_root: Path, errors: list[str]) -> None:
@@ -277,7 +325,7 @@ def validate_plan_phase(task_dir: Path, phase: str, *, repo_root: Path | None = 
         elif marker not in boot.read_text(encoding="utf-8"):
             errors.append(f"plan-boot.md must contain {marker!r}")
 
-    if phase == "P0i":
+    if phase in ("P0i", "P0-index"):
         from .manifest_protocol import validate_manifest_phase_p0i
 
         validate_manifest_phase_p0i(task_dir, repo_root, errors)
@@ -342,20 +390,55 @@ def validate_plan_freeze(task_dir: Path, repo_root: Path | None = None) -> list[
         uniq = sorted(set(placeholders))[:8]
         errors.append(f"MASTER.plan.md unresolved placeholders: {uniq}")
 
+    section9 = _extract_section(text, "9.")
     section8 = _extract_section(text, "8.")
-    if section8:
-        legacy = "TDD 全文" in section8 or "legacy-execute-evidence" in text
+    section_steps = section9 or section8
+    # Legacy plans put Execute steps in §8 and testing tiers in §9; prefer the block with RED/GREEN gates.
+    if section9 and not (
+        "RED 命令" in section9 or "RED/GREEN" in section9 or "RED / GREEN" in section9
+    ):
+        if section8 and ("RED 命令" in section8 or "RED/GREEN" in section8):
+            section_steps = section8
+    if section_steps:
+        legacy = "TDD 全文" in section_steps or "legacy-execute-evidence" in text
         if not legacy:
-            for label in ("RED 命令", "GREEN 命令", "RED 证据", "GREEN 证据"):
-                if label not in section8:
-                    errors.append(f"MASTER §8 missing column: {label}")
-            test_defs = re.findall(r"def test_\w+", section8)
+            has_step_gates = (
+                ("RED 命令" in section_steps and "GREEN 命令" in section_steps)
+                or "RED / GREEN" in section_steps
+                or "RED/GREEN" in section_steps
+            )
+            if not has_step_gates:
+                errors.append(
+                    "MASTER §9 missing RED/GREEN commands (RED 命令+GREEN 命令 or RED/GREEN column)"
+                )
+            test_defs = re.findall(r"def test_\w+", section_steps)
             if len(test_defs) > 2:
                 errors.append(
-                    f"MASTER §8 embeds {len(test_defs)} test functions; move bodies to research/ (max 2 tracer examples in MASTER)"
+                    f"MASTER steps embed {len(test_defs)} test functions; "
+                    "move bodies to research/ (max 2 tracer examples in MASTER)"
                 )
         elif not list(task_dir.glob("research/*evidence*.md")):
-            errors.append("Legacy MASTER §8 (TDD 全文): require research/*evidence*.md for Execute")
+            errors.append("Legacy MASTER steps (TDD 全文): require research/*evidence*.md for Execute")
+
+    section9 = _extract_section(text, "9.")
+    if section9:
+        plan_skills = (
+            "writing-plans",
+            "to-issues",
+            "planning-and-task-breakdown",
+            "trellis-plan",
+            "doubt-driven-development",
+        )
+        for m in re.finditer(r"绑定 Execute Skill\s*\|([^|\n]+)", section9):
+            cell = m.group(1)
+            for skill in plan_skills:
+                if skill in cell:
+                    errors.append(f"MASTER §9 binds Plan-only skill in Execute column: {skill}")
+
+    section_slices = _extract_section(text, "8.")
+    if section_slices and ("垂直切片" in section_slices or "SLICE-" in section_slices):
+        if "交付物" not in section_slices and "完标准" not in section_slices:
+            errors.append("MASTER §8 vertical slices missing 交付物/完标准 column")
 
     audit = task_dir / "AUDIT.plan.md"
     if audit.is_file():

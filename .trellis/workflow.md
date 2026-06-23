@@ -247,7 +247,7 @@ Tools: `trellis-implement` / `trellis-research` are sub-agent types only (Task/A
 
 **Simple task flow:** `trellis-implement` -> `trellis-check` -> `trellis-update-spec` -> commit (Phase 3.4) -> `/trellis:finish-work`.
 
-**Complex task (`MASTER.plan.md` present):** Phase 6 Execute per complex-task-planning-protocol.md — **MUST Read** `.cursor/skills/trellis-execute/SKILL.md` first; **Phase 0 Boot** (gitnexus summary + execute-boot + skill-reads); **§8.x 逐步** with `research/execute-evidence/{step}-red/green.txt`; §9/§10 证据；`validate-execute-step` / `validate-execute-handoff`；§11 handoff to Audit.
+**Complex task (`MASTER.plan.md` present):** Phase 6 Execute per complex-task-planning-protocol.md — **MUST Read** `.cursor/skills/trellis-execute/SKILL.md` first; **Phase 0 Boot** (gitnexus summary + implement.jsonl + skill-reads); **§8.x 逐步** with `research/execute-evidence/{step}-red/green.txt`; §9/§10 证据；`validate-execute-step` / `validate-execute-handoff`；§11 handoff to Audit.
 
 **Execute 逐步门禁（复杂任务）：** 一次只完成 MASTER 当前 §8.x 步；未填 RED/GREEN 证据不得勾「已执行」；改 symbol 前 GitNexus `impact()`；读 MASTER §12 中 karpathy-guidelines / testing-guidelines User Rule 行。
 

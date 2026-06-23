@@ -17,7 +17,7 @@ def _row(task_dir: Path, *, strict: bool) -> tuple[str, str, str] | None:
     if not (task_dir / "MASTER.plan.md").is_file():
         return None
     if strict and not loop_engineering_enabled(task_dir) and not (
-        task_dir / "research/context-router-output.md"
+        task_dir / "context_pack.json"
     ).is_file():
         return None
     status = str(load_json(task_dir / "task.json").get("status", "unknown"))

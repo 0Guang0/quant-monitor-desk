@@ -14,7 +14,7 @@
 | ----------------------------- | ------------------------- | ---------------------------------------------------------------- |
 | **本文**                      | Plan agent                | 流程、产出物、冻结合并、Plan DoD、Skill 注册表                   |
 | **`MASTER.plan.md`**          | Execute                   | §8 步骤+证据、§9 四层测试、§10 Tier、§11 交接、§12 Execute Skill |
-| **`AUDIT.plan.md`**           | Audit agent               | §1 Skill 冻结 + **§2 维度验证矩阵**；§3 工具/7.pre               |
+| **`AUDIT.plan.md`**           | Audit agent               | Trace Authority + **§1 任务覆写**；默认矩阵见 registry §2        |
 | **`audit.jsonl`**             | Audit hook                | 第一条 = AUDIT.plan.md；**不含** implement/plan.freeze           |
 | **`audit.report.md`**         | Audit 产出 / Repair 输入  | 各维度结论 + §4.3 修复项                                         |
 | **`REPAIR.plan.md`**          | Repair 执行者             | Audit 后修复清单 + Skill 冻结                                    |
@@ -50,7 +50,7 @@
 - `research/original-plan-trace.md` — 任务编号 / 本地 alias / 当前 Round batch map item / MASTER §2 AC / 引用文档对照表
 - `research/plan-boot.md` — 含「当前 Round batch map 已读」「原计划已读」摘要 + `Phase P0 complete`
 - `context_pack.json` — 由 `uv run python scripts/context_router.py --task <dir>` 生成；**禁止**向用户询问 docs/specs 路径
-- `research/context-router-output.md` — context router 人类可读摘要
+- `research/source-index.md` — 唯一索引（§A 血缘 · §B manifest · §C 六类 · §D 指向 `context_pack.json`）
 
 **Loop engineering P0：** 读取 `specs/context/authority_graph.yaml` 权威图；冻结时 `implement.jsonl` 槽位见 §6.1.1。详见 `docs/quality/LOOP_ENGINEERING_TASK_FLOW_REFACTOR_PLAN.md`。
 
@@ -121,7 +121,7 @@ jsonl **第一条必须是 `MASTER.plan.md`**。槽位顺序见 **§6.1.1**（`c
 
 ```text
 进入 Execute。MUST Read .cursor/skills/trellis-execute/SKILL.md。
-Phase 0 Boot（gitnexus-execute-summary + execute-boot + skill-reads）
+Phase 0 Boot（gitnexus-execute-summary + implement.jsonl 全读 + skill-reads）
 → Phase 1 严格 §8.x（execute-evidence/{step}-red/green.txt）
 → §9/§10 → validate-execute-handoff → §11 Audit。勿 finish-work。
 ```
@@ -566,7 +566,7 @@ audit.report §5 PASS + 无未关 §4.3 → trellis-update-spec → archive → 
 | ---------------------------------------------- | ------------------------- | ----------------------------------------------------- |
 | `MIGRATION_MAP.md`                             | 人类 narrative + 精选映射 | Plan 导航；非机械全量索引                             |
 | `docs/generated/docs_specs_index.generated.md` | 全仓库 docs/specs         | `generate_project_map.py`；`check_docs_specs_indexed` |
-| `docs/generated/project_map.generated.json`    | Round 3 六模块子集        | Execute `context_pack` 路由                           |
+| `docs/generated/project_map.generated.json`    | Round 3 六模块子集        | 与 `context_pack` 同源：`authority_graph.yaml`        |
 | `docs/INDEX.md`                                | 文档 hub                  | 角色入口；**不替代** MIGRATION_MAP 逐文件索引         |
 
 校验：`uv run python scripts/check_docs_specs_indexed.py`
@@ -600,8 +600,8 @@ audit.report §5 PASS + 无未关 §4.3 → trellis-update-spec → archive → 
 | E13    | freeze 闭包校验                     | `validate-plan-freeze`          |
 | E14    | check ⊆ implement                   | `validate-plan-freeze`          |
 | E15    | Manifest Gate                       | `plan.freeze.md`                |
-| E16    | `context-closure.md`                | Execute 6.pre                   |
-| E17    | `8.0-boot-reads.txt` 基数           | `validate-execute-boot`         |
+| E16    | `context-closure.md`                | `validate-execute-boot`         |
+| E17    | （已废弃）execute-boot 自述         | —                               |
 | E18    | `manifest-amend.md`                 | Execute gap 协议                |
 | E19    | Plan 闭包预检                       | `integration-audit.md` §closure |
 | E20    | amend 追溯                          | `validate-execute-handoff`      |
@@ -636,8 +636,7 @@ python .trellis/scripts/task.py validate-execute-boot <task-dir>
 
 ```text
 P0a  trellis-plan + plan-skill-paths
-P0i  input-inventory.md（文档宇宙审计）
-P0o  读原稿 → original-plan-trace.md
+P0-index  `research/source-index.md`（§A–§C 人工 + §D 指向 JSON）
 P0b  GitNexus 轻量预检（可选；1b 深度必做或 waiver）
 P0c  plan-boot.md → Phase P0 complete
 2–3.5  需求 + grill + to-issues 切片
@@ -648,18 +647,18 @@ P0c  plan-boot.md → Phase P0 complete
 
 **新产物：**
 
-| 文件                             | 阶段 |
-| -------------------------------- | ---- |
-| `research/input-inventory.md`    | P0i  |
-| `research/integration-ledger.md` | 4→5c |
-| `research/integration-audit.md`  | 5d   |
+| 文件                             | 阶段     |
+| -------------------------------- | -------- |
+| `research/source-index.md`       | P0-index |
+| `research/integration-ledger.md` | 4→5c     |
+| `research/integration-audit.md`  | 5d       |
 
 **implement.jsonl reason（v3）：** 除 MASTER / trellis-execute 外，每条须 `extract: … | for: AC-x / §8.y`（V7）
 
 **启用：** `task.json` → `meta.manifest_protocol_version: "3"`（v1=仅 manifest E1–E20；`"2"` 已废弃）
 
 ```bash
-python .trellis/scripts/task.py validate-plan-phase <task-dir> P0i
+python .trellis/scripts/task.py validate-plan-phase <task-dir> P0-index
 ```
 
 ---
@@ -741,7 +740,7 @@ python .trellis/scripts/task.py validate-plan-phase <task-dir> P0i
 - [ ] MASTER **§0.1 门控** + §8–§12、§9 四层必做、§10 Tier 含 B/C prod-path
 - [ ] **§8 每步含 RED/GREEN 命令与证据列**；完整测试正文在 `research/`，不在 MASTER
 - [ ] **`python .trellis/scripts/task.py validate-plan-freeze <dir>`** exit 0
-- [ ] **AUDIT.plan.md §1** Skill + **§2 维度验证矩阵**（A1–A8；**§2 无 `{{}}`** 或 A6 已 §2.2 SKIP）
+- [ ] **AUDIT.plan.md** Trace Authority + **§1 覆写**（无 `{{}}`；默认验证见 `audit-skill-registry.md` §2）
 - [ ] **Plan 人工：** AUDIT §2 占位已按真实任务替换；无 perf 则 A6 SKIP（见 `plan.freeze.md` §2.5）
 - [ ] Repair 模板路径已知（Audit 后按需生成 REPAIR.plan.md）
 - [ ] **audit.jsonl** 第一条 = AUDIT.plan.md

@@ -4,6 +4,12 @@
 version: "1"
 
 skills:
+  agent-toolchain:
+    path: agent-toolchain.md
+    phase: boot
+    default_role: 必做
+    note: "场景工具路由；全员必读（根目录）"
+
   trellis-plan:
     path: .cursor/skills/trellis-plan/SKILL.md
     phase: boot
@@ -104,17 +110,17 @@ skills:
 
 phases:
   boot:
-    skills: [trellis-plan]
+    skills: [agent-toolchain, trellis-plan]
     artifacts:
       - research/plan-boot.md
-      - research/original-plan-trace.md
     marker: "Phase P0 complete"
 
-  P0i:
+  P0-index:
     skills: [trellis-plan]
     artifacts:
-      - research/input-inventory.md
-    marker: "P0i complete"
+      - research/source-index.md
+      - context_pack.json
+    marker: "索引完整"
 
   "1a":
     skills: [gitnexus-plan-1a]
@@ -138,7 +144,7 @@ phases:
 
   "3.5":
     skills: [to-issues]
-    note: "产出切片工单列表（≥1 个垂直切片）；to-issues 无独立 artifact 文件"
+    note: "Plan 专用垂直切片；产出工单列表；冻结为 MASTER §8，不进 Execute Skill 表"
 
   "1b":
     skills: [gitnexus-plan-1b]
@@ -146,13 +152,16 @@ phases:
       - research/gitnexus-summary.md
 
   "4":
-    skills_any: [brainstorming, api-and-interface-design, codebase-design, prototype]
+    skills_any:
+      [brainstorming, api-and-interface-design, codebase-design, prototype]
 
   "5a":
     skills: [planning-and-task-breakdown]
+    note: "与 3.5 to-issues 配合完成垂直切片 → MASTER §8"
 
   "5b":
     skills: [writing-plans]
+    note: "Plan 专用：填 MASTER §5 测试契约 + §9 步骤骨架；不得写入 MASTER §11 Execute Skill"
 
   "5c":
     skills: [trellis-before-dev]
@@ -167,6 +176,7 @@ phases:
     note: "plan-manifest-audit.md optional E9 stub; integration-audit is canonical"
 
 freeze_required_skills:
+  - agent-toolchain
   - trellis-plan
   - gitnexus-plan-1a
   - trellis-brainstorm

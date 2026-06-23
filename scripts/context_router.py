@@ -99,29 +99,41 @@ def build_context_pack(
     }
 
 
-def write_context_outputs(task_dir: Path, pack: dict) -> tuple[Path, Path]:
+def _render_router_section_d() -> str:
+    return (
+        "## D. 机器路由\n\n"
+        "权威数据在 **`context_pack.json`**（本任务根目录）。"
+        " 由 `context_router.py --task` 写入；本段不重复列举。\n"
+    )
+
+
+def _upsert_source_index_section_d(task_dir: Path) -> Path | None:
+    research = task_dir / "research"
+    md_path = research / "source-index.md"
+    if not md_path.is_file():
+        return None
+    text = md_path.read_text(encoding="utf-8")
+    section_d = _render_router_section_d()
+    start_marker = "## D."
+    end_marker = "## E."
+    start = text.find(start_marker)
+    if start < 0:
+        md_path.write_text(text.rstrip() + "\n\n" + section_d, encoding="utf-8")
+        return md_path
+    end = text.find(end_marker, start + len(start_marker))
+    if end < 0:
+        new_text = text[:start].rstrip() + "\n\n" + section_d
+    else:
+        new_text = text[:start].rstrip() + "\n\n" + section_d + "\n" + text[end:]
+    md_path.write_text(new_text.rstrip() + "\n", encoding="utf-8")
+    return md_path
+
+
+def write_context_outputs(task_dir: Path, pack: dict) -> tuple[Path, Path | None]:
     task_dir.mkdir(parents=True, exist_ok=True)
     pack_path = task_dir / "context_pack.json"
     pack_path.write_text(json.dumps(pack, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-
-    research = task_dir / "research"
-    research.mkdir(parents=True, exist_ok=True)
-    md_path = research / "context-router-output.md"
-    lines = [
-        "# Context Router Output",
-        "",
-        f"- task: `{pack.get('task', '')}`",
-        f"- modules: {', '.join(pack.get('modules') or [])}",
-        "",
-        "## Source authorities",
-        "",
-    ]
-    for item in pack.get("source_authorities") or []:
-        lines.append(f"- `{item.get('type')}` {item.get('path')} — {item.get('reason')}")
-    lines.extend(["", "## Tests", ""])
-    for item in pack.get("tests") or []:
-        lines.append(f"- `{item.get('path')}` — {item.get('purpose')}")
-    md_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    md_path = _upsert_source_index_section_d(task_dir)
     return pack_path, md_path
 
 
@@ -207,11 +219,12 @@ def cmd_task(task_arg: str, check_only: bool) -> int:
             print(err, file=sys.stderr)
         return 1
     pack_path = task_dir / "context_pack.json"
-    md_path = task_dir / "research/context-router-output.md"
+    md_path = task_dir / "research" / "source-index.md"
     manifest_path = task_dir / "loop_manifest.json"
     evidence_path = task_dir / "evidence_index.json"
     print(f"Wrote {repo_relative(pack_path)}")
-    print(f"Wrote {repo_relative(md_path)}")
+    if md_path.is_file():
+        print(f"Updated {repo_relative(md_path)} §D")
     print(f"Wrote {repo_relative(manifest_path)}")
     print(f"Wrote {repo_relative(evidence_path)}")
     return 0

@@ -16,7 +16,6 @@ _PASS_RE = re.compile(
     re.IGNORECASE,
 )
 _STEP_HEADER_RE = re.compile(r"^###\s+(8\.\d+)", re.MULTILINE)
-_BOOT_COMPLETE = "Phase 0 complete"
 
 
 def _extract_section(text: str, header_prefix: str) -> str:
@@ -138,12 +137,6 @@ def validate_execute_handoff(task_dir: Path, repo_root: Path | None = None) -> l
         return errors
 
     # --- Protocol v2 boot artifacts ---
-    boot = task_dir / "research" / "execute-boot.md"
-    if not boot.is_file():
-        errors.append("Missing research/execute-boot.md (Phase 0 boot)")
-    elif _BOOT_COMPLETE not in boot.read_text(encoding="utf-8"):
-        errors.append(f"execute-boot.md must contain {_BOOT_COMPLETE!r}")
-
     gnxs = task_dir / "research" / "gitnexus-execute-summary.md"
     if not gnxs.is_file():
         errors.append("Missing research/gitnexus-execute-summary.md (Phase 0a GitNexus)")

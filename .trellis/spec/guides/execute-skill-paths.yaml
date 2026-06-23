@@ -4,6 +4,12 @@
 version: "1"
 
 skills:
+  agent-toolchain:
+    path: agent-toolchain.md
+    phase: boot
+    default_role: 必做
+    note: "场景工具路由；全员必读（根目录）"
+
   trellis-execute:
     path: .cursor/skills/trellis-execute/SKILL.md
     phase: boot
@@ -36,7 +42,7 @@ skills:
     default_role: 必做
 
   testing-guidelines:
-    path: .claude/skills/testing-guidelines/SKILL.md
+    path: .cursor/skills/testing-guidelines/SKILL.md
     phase: GREEN
     default_role: 必做
 
@@ -47,6 +53,7 @@ skills:
     note: "Use GitNexus MCP impact(); read gitnexus-impact-analysis skill optional"
 
 boot_required_reads:
+  - agent-toolchain
   - trellis-execute
   - gitnexus-impact
 

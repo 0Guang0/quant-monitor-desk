@@ -1,6 +1,8 @@
 # Audit 阶段 — 维度 / Agent / Skill 候选词典
 
-> Plan 填 `AUDIT.plan.md` §1（Skill）与 **§2（维度验证矩阵）** 时查阅。**Audit agent 不读本文。**
+> **默认验证矩阵（§2）** — Plan 未在 `AUDIT.plan.md` §1 覆写时，Audit 按本文件 §2 执行。  
+> **维度 skill / 派发 / 必读** — 见 `audit-skill-paths.yaml` + `agents/` 下模板（Plan 不手填 §1）。  
+> **Audit agent 不读本文**（Plan 填 AUDIT 时查阅）。
 
 ---
 

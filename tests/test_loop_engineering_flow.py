@@ -145,9 +145,12 @@ def test_contextRouter_cli_moduleFlag_exitsZero() -> None:
 def test_contextRouter_cli_taskFlag_writesContextPack() -> None:
     """覆盖：scripts/context_router.py CLI --task。
     对象：06-22-round3-019-layer2-sensor 任务目录。
-    目的：复杂任务 Plan P0 必须能生成 context_pack.json 与 research/context-router-output.md。
+    目的：复杂任务 Plan P0 必须能生成 context_pack.json。
     """
     pack_path = SAMPLE_TASK / "context_pack.json"
+    source_index = SAMPLE_TASK / "research" / "source-index.md"
+    had_index = source_index.is_file()
+    index_before = source_index.read_text(encoding="utf-8") if had_index else None
     if pack_path.is_file():
         pack_path.unlink()
     result = _run_script(
@@ -158,17 +161,20 @@ def test_contextRouter_cli_taskFlag_writesContextPack() -> None:
     try:
         assert result.returncode == 0, result.stderr
         assert pack_path.is_file()
-        assert (SAMPLE_TASK / "research/context-router-output.md").is_file()
         pack = json.loads(pack_path.read_text(encoding="utf-8"))
         assert validate_context_pack(pack) == []
+        if had_index:
+            assert "context_pack.json" in source_index.read_text(encoding="utf-8")
     finally:
         rel = SAMPLE_TASK.relative_to(PROJECT_ROOT).as_posix()
         subprocess.run(
-            ["git", "checkout", "--", f"{rel}/context_pack.json", f"{rel}/research/context-router-output.md"],
+            ["git", "checkout", "--", f"{rel}/context_pack.json"],
             cwd=PROJECT_ROOT,
             capture_output=True,
             check=False,
         )
+        if had_index and index_before is not None:
+            source_index.write_text(index_before, encoding="utf-8")
 
 
 def test_writeLoopEvidenceStubs_createsManifestAndIndex(tmp_path: Path) -> None:

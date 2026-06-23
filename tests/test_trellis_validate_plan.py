@@ -24,6 +24,9 @@ def _minimal_master(task_dir: Path) -> None:
     (task_dir / "MASTER.plan.md").write_text(
         f"## 0.\n原计划任务: {task_card}\n"
         "## 1.\n### 1.3 原计划归并\n"
+        "### 1.5 停止条件\n"
+        "| # | 条件 | 动作 |\n"
+        "| 5 | 自定义：AC 未全绿不得 handoff | 停止并回 Plan |\n"
         "## 8.\n### 8.0\n| RED 命令 | x |\n| GREEN 命令 | x |\n"
         "| RED 证据 | x |\n| GREEN 证据 | x |\n| 已执行 | [ ] |\n",
         encoding="utf-8",
@@ -65,6 +68,7 @@ def _plan_boot_artifacts(task_dir: Path) -> None:
     (research / "plan-skill-reads.jsonl").write_text(
         "\n".join(
             [
+                '{"phase":"boot","skill":"agent-toolchain"}',
                 '{"phase":"boot","skill":"trellis-plan"}',
                 '{"phase":"1a","skill":"gitnexus-plan-1a"}',
                 '{"phase":"1b","skill":"gitnexus-plan-1b"}',
@@ -110,6 +114,31 @@ def test_validatePlanFreeze_doesNotRequireGlobalOriginalTaskRulesInImplementJson
     _plan_boot_artifacts(tmp_path)
     errors = validate_plan_freeze(tmp_path, _REPO)
     assert not any("GLOBAL_EXECUTION_RULES" in e for e in errors)
+
+
+def test_validatePlanFreeze_requiresCustomStopCondition(tmp_path: Path) -> None:
+    """覆盖：MASTER §1.5 除示例 1–4 外须至少一行自定义停止条件。
+    对象：仅有模板示例行、无 #≥5 或「自定义」的 MASTER。
+    目的：freeze 机械门禁防止只抄示例就冻结计划。
+  """
+    _minimal_master(tmp_path)
+    _plan_boot_artifacts(tmp_path)
+    (tmp_path / "task.json").write_text(
+        '{"meta":{"task_track":"simple"}}', encoding="utf-8"
+    )
+    (tmp_path / "MASTER.plan.md").write_text(
+        "## 0.\n原计划任务: 015\n## 1.\n### 1.3 原计划归并\n"
+        "### 1.5 停止条件\n"
+        "| # | 条件 | 动作 |\n"
+        "| 1 | 示例 | x |\n"
+        "| 2 | 示例 | x |\n"
+        "| 3 | 示例 | x |\n"
+        "| 4 | 示例 | x |\n"
+        "## 8.\n### 8.0\n| RED 命令 | x |\n",
+        encoding="utf-8",
+    )
+    errors = validate_plan_freeze(tmp_path, _REPO)
+    assert any("§1.5" in e for e in errors)
 
 
 def test_validatePlanFreeze_passesWithArtifacts(tmp_path: Path) -> None:

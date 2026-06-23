@@ -31,9 +31,6 @@ def _boot_artifacts(task_dir: Path, *, steps: list[str]) -> None:
         )
     research = task_dir / "research"
     research.mkdir(parents=True, exist_ok=True)
-    (research / "execute-boot.md").write_text(
-        "Phase 0 complete\nimplement.jsonl read in full\n", encoding="utf-8"
-    )
     (research / "context-closure.md").write_text(
         "upstream wiring closure verified\n", encoding="utf-8"
     )
@@ -58,7 +55,6 @@ def _boot_artifacts(task_dir: Path, *, steps: list[str]) -> None:
     )
     ev = research / "execute-evidence"
     ev.mkdir(exist_ok=True)
-    (ev / "8.0-boot-reads.txt").write_text("MASTER.plan.md | boot read entry\n", encoding="utf-8")
     for step in steps:
         (ev / f"{step}-red.txt").write_text(
             "exit 4\nERROR: ModuleNotFoundError\n", encoding="utf-8"
@@ -83,10 +79,10 @@ def test_validateExecuteStep_passesWithEvidence(tmp_path: Path) -> None:
     assert validate_execute_step(tmp_path, "8.1") == []
 
 
-def test_validateExecuteHandoff_failsWithoutBoot(tmp_path: Path) -> None:
+def test_validateExecuteHandoff_failsWithoutGitnexusSummary(tmp_path: Path) -> None:
     _write_master(tmp_path, ["8.0"])
     errors = validate_execute_handoff(tmp_path, _REPO)
-    assert any("execute-boot" in e for e in errors)
+    assert any("gitnexus-execute-summary" in e for e in errors)
 
 
 def test_validateExecuteHandoff_passesWithFullArtifacts(tmp_path: Path) -> None:

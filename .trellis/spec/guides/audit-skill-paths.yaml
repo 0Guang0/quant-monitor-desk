@@ -1,0 +1,65 @@
+# Audit Skill 路径 — 主会话 + A1–A8 派发
+# Plan 复制任务 AUDIT.plan.md；维度派发见 agents/ 下可派发模板
+
+version: "1"
+
+skills:
+  agent-toolchain:
+    path: agent-toolchain.md
+    phase: boot
+    default_role: 必做
+    note: "场景工具路由；全员必读（根目录）"
+
+boot_required_reads:
+  - agent-toolchain
+
+orchestrator_reads:
+  - .trellis/spec/guides/templates/AUDIT.plan.md
+  - audit.jsonl
+
+dimensions:
+  A1:
+    agent: audit-spec
+    template: agents/audit-a1-spec.md
+    skills: [trellis-check, doubt-driven-development]
+    gitnexus: 必用
+  A2:
+    agent: audit-ponytail
+    template: agents/audit-a2-ponytail.md
+    skills: [ponytail-review, doubt-driven-development]
+    gitnexus: 建议
+  A3:
+    agent: audit-security
+    template: agents/security-auditor.md
+    also_read: [agents/sql-pro.md]
+    skills: [security-and-hardening, doubt-driven-development]
+    gitnexus: 必用
+  A4:
+    agent: audit-quality
+    template: agents/code-reviewer.md
+    skills: [code-review-and-quality, doubt-driven-development]
+    gitnexus: 建议
+  A5:
+    agent: audit-completion
+    template: agents/audit-a5-completion.md
+    also_read: [agents/quant-analyst.md, agents/risk-manager.md]
+    skills: [verification-before-completion, doubt-driven-development]
+    gitnexus: 必用
+  A6:
+    agent: audit-perf
+    template: agents/performance-engineer.md
+    skills: []
+    gitnexus: 必用
+    note: "无性能要求时 Plan 标 SKIP"
+  A7:
+    agent: audit-ops
+    template: agents/database-administrator.md
+    also_read: [agents/sre-engineer.md, agents/devops-incident-responder.md]
+    skills: [doubt-driven-development]
+    gitnexus: 必用
+  A8:
+    agent: audit-test-gap
+    template: agents/qa-expert.md
+    also_read: [agents/test-automator.md]
+    skills: [testing-guidelines, doubt-driven-development]
+    gitnexus: 必用

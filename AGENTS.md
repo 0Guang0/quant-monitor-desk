@@ -6,10 +6,14 @@ These instructions are for AI assistants working in this project.
 
 This project is managed by Trellis. The working knowledge you need lives under `.trellis/`:
 
+- **`agent-toolchain.md`**（仓库根目录）— 全员场景工具路由；歧义消解
+- **角色必做表：** `plan-skill-paths.yaml` · `execute-skill-paths.yaml` · `audit-skill-paths.yaml`（均在 `.trellis/spec/guides/`）
 - `.trellis/workflow.md` — development phases, when to create tasks, skill routing
 - `.trellis/spec/` — package- and layer-scoped coding guidelines (read before writing code in a given layer)
 - `.trellis/workspace/` — per-developer journals and session traces
 - `.trellis/tasks/` — active and archived tasks (PRDs, research, jsonl context)
+- **`agents/`**（项目根）— 可派发子 agent 模板；`_upstream/` 为 VoltAgent 原文
+- `.trellis/agents/` — 仅 Trellis channel：`check.md`、`implement.md`
 
 If a Trellis command is available on your platform (e.g. `/trellis:finish-work`, `/trellis:continue`), prefer it over manual steps. Not every platform exposes every command.
 
@@ -24,7 +28,7 @@ Managed by Trellis. Edits outside this block are preserved; edits inside may be 
 
 When authoring or freezing a complex task plan:
 
-1. **MUST Read first:** `.cursor/skills/trellis-plan/SKILL.md` — complete **Phase P0 Boot** (including **P0o** `docs/implementation_tasks/` original plan package) before MASTER §8–§12.
+1. **MUST Read first:** `agent-toolchain.md`（根目录）+ `.cursor/skills/trellis-plan/SKILL.md` — complete **Phase P0 Boot** (including **P0o** `docs/implementation_tasks/` original plan package) before MASTER §8–§12.
 2. Follow **Phases 1a→5d** in `complex-task-planning-protocol.md` §4；append `research/plan-skill-reads.jsonl` per Read.
 3. Produce `research/original-plan-trace.md` mapping `NNN_*.md` → MASTER §2 AC.
 4. Before `task.py start`: `python .trellis/scripts/task.py validate-plan-freeze <task-dir>` exit 0.
@@ -34,29 +38,37 @@ When authoring or freezing a complex task plan:
 
 When the active task status is `in_progress` and the task directory contains `MASTER.plan.md`:
 
-1. **MUST Read first:** `.cursor/skills/trellis-execute/SKILL.md` — complete **Phase 0 Boot** before any business code.
-2. Read **MASTER §0.1** state machine and **§12** Skill table (paths in `.trellis/spec/guides/execute-skill-paths.yaml`).
-3. Execute **one §8.x step at a time**: Read TDD skill → RED (must FAIL) → `execute-evidence/{step}-red.txt` → GREEN → `{step}-green.txt` → `[x]`.
-4. After each GREEN: Read **incremental-implementation**; full pytest must pass before next §8 step.
-5. After RED, before GREEN implementation: Read **karpathy-guidelines** (§5 ladder + §1-4) and **testing-guidelines** (§12 + paths yaml).
-6. Run GitNexus **`impact()`** before editing symbols; **`detect_changes()`** before commit.
-7. Do **not** run `trellis-check` during Execute — Audit Phase 7 / A1 replaces it.
-8. Optional per step: `python .trellis/scripts/task.py validate-execute-step <task-dir> 8.x`
-9. Before §11 Audit handoff: `python .trellis/scripts/task.py validate-execute-handoff <task-dir>`.
-10. Do **not** `finish-work` until Audit PASS.
+1. **MUST Read first:** `agent-toolchain.md`（根目录）+ `.cursor/skills/trellis-execute/SKILL.md` — complete **Phase 0 Boot** before any business code.
+2. **MUST Read `implement.jsonl` every line** in the active task directory (authoritative manifest; do not skip by summarizing MASTER §0).
+3. Read **MASTER §0.1** state machine and **§12** Skill table (paths in `.trellis/spec/guides/execute-skill-paths.yaml`).
+4. Execute **one §8.x step at a time**: Read TDD skill → RED (must FAIL) → `execute-evidence/{step}-red.txt` → GREEN → `{step}-green.txt` → `[x]`.
+5. After each GREEN: Read **incremental-implementation**; full pytest must pass before next §8 step.
+6. After RED, before GREEN implementation: Read **karpathy-guidelines** (§5 ladder + §1-4) and **testing-guidelines** (§12 + paths yaml).
+7. Run GitNexus **`impact()`** before editing symbols; **`detect_changes()`** before commit.
+8. Do **not** run `trellis-check` during Execute — Audit Phase 7 / A1 replaces it.
+9. Optional per step: `python .trellis/scripts/task.py validate-execute-step <task-dir> 8.x`
+10. Before §11 Audit handoff: `python .trellis/scripts/task.py validate-execute-handoff <task-dir>`.
+11. Do **not** `finish-work` until Audit PASS.
+
+## Audit gate (complex tasks with `AUDIT.plan.md`)
+
+1. **MUST Read first:** `agent-toolchain.md`（根目录）+ `.trellis/spec/guides/audit-skill-paths.yaml` + 任务 `AUDIT.plan.md` + `audit.jsonl`.
+2. 按 `audit-skill-paths.yaml` 派发 A1–A8；各维读 `agents/` 对应模板（skill 另 Read；派发者指定 model）。
+3. 产出 `audit.report.md`；PASS 前勿 `finish-work`。
 
 ## Loop engineering context (Trellis complex-task layer)
 
 Complex tasks (`meta.task_track: "complex"`, default when `MASTER.plan.md` exists) use machine-readable routing — **do not ask the user for docs/specs paths**.
 
 1. Plan freeze: `validate-plan-freeze` auto-runs `context_router` if `context_pack.json` missing
-2. Execute: read `context_pack.json` first; `implement.jsonl` line 2 = `context_pack.json`
+2. Execute: **MUST Read `implement.jsonl` every line** before business code (`task.py current` → task dir); slot 2 is often `context_pack.json`
 3. Handoff gates: `validate-execute-handoff` → `check_task_evidence.py`
 4. Repo CI: `check_test_catalog.py`, `check_verification_matrix.py`, `check_docs_specs_indexed.py`, `generate_project_map.py --check`
 5. `debt-lite` / no-MASTER tasks: set `meta.task_track: "debt-lite"` or `"simple"` — loop not required
 6. **New test module:** `uv run python scripts/loop_maintain.py --fix` (or `check_test_catalog.py --write-defaults`)
 7. **New docs/specs file:** same `loop_maintain.py --fix` (refreshes `docs/generated/docs_specs_index.generated.md`)
 8. **New backend package:** extend `specs/context/authority_graph.yaml` — `loop_maintain.py` reports unmapped `backend/app/*`
+9. **Before commit** (when touching `backend/`, `docs/`, `specs/`, or `authority_graph.yaml`): run `uv run python scripts/loop_maintain.py` (check) or `--fix` to refresh project map + docs index; CI enforces the same
 
 See `docs/quality/LOOP_ENGINEERING_TASK_FLOW_REFACTOR_PLAN.md` and `docs/ops/user_intervention_policy.md`.
 

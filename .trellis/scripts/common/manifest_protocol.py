@@ -168,6 +168,15 @@ def wiring_paths_from_predecessors(task_dir: Path, repo_root: Path) -> set[str]:
     return out
 
 
+def resolve_trace_path(task_dir: Path) -> Path | None:
+    """Prefer unified source-index; fall back to legacy original-plan-trace."""
+    for name in ("source-index.md", "original-plan-trace.md"):
+        p = task_dir / "research" / name
+        if p.is_file():
+            return p
+    return None
+
+
 def parse_trace_manifest(trace_path: Path) -> dict[str, str]:
     """
     E1: Parse original-plan-trace.md → {path: required|inherited|deferred}.
@@ -179,6 +188,7 @@ def parse_trace_manifest(trace_path: Path) -> dict[str, str]:
     result: dict[str, str] = {}
 
     # Explicit manifest column table (| path | ... | required |)
+    # source-index §B uses same shape
     for line in text.splitlines():
         if not line.strip().startswith("|"):
             continue
@@ -205,14 +215,18 @@ def parse_trace_manifest(trace_path: Path) -> dict[str, str]:
                 elif "defer" in line.lower() or "延后" in line:
                     result[p] = "deferred"
 
-    # Paths in backticks under input files section
+    # Paths in backticks under input files / manifest sections
     in_input = False
     for line in text.splitlines():
-        if "输入文件已读" in line or "输入文件" in line:
+        if any(
+            marker in line
+            for marker in ("输入文件已读", "输入文件", "输入 manifest", "## B.")
+        ):
             in_input = True
             continue
-        if in_input and line.startswith("## "):
-            break
+        if in_input and line.startswith("## ") and "B." not in line:
+            if "输入" not in line and "manifest" not in line.lower():
+                break
         if in_input:
             for m in _PATH_IN_BACKTICKS.finditer(line):
                 p = _norm(m.group(1))
@@ -221,23 +235,27 @@ def parse_trace_manifest(trace_path: Path) -> dict[str, str]:
     return result
 
 
-def parse_master_section9_paths(master_text: str) -> set[str]:
-    """E3: Extract tests/ and scripts/ from §9 bash blocks."""
-    sec9 = ""
+def _master_section_blob(master_text: str, section_prefix: str) -> str:
+    """Collect lines under ## {section_prefix}* until next ## N."""
     lines = master_text.splitlines()
+    blob: list[str] = []
     in_sec = False
     for line in lines:
-        if re.match(r"^## 9\.", line):
+        if re.match(rf"^## {re.escape(section_prefix)}", line):
             in_sec = True
+            blob.append(line)
             continue
         if in_sec and re.match(r"^## \d+\.", line):
             break
         if in_sec:
-            sec9 += line + "\n"
+            blob.append(line)
+    return "\n".join(blob)
 
+
+def _paths_from_command_blob(blob: str) -> set[str]:
     paths: set[str] = set()
     for pat in (_PYTEST_PATH, _SCRIPT_PATH, _BARE_SCRIPT):
-        for m in pat.finditer(sec9):
+        for m in pat.finditer(blob):
             raw = m.group(0)
             if raw.startswith("pytest "):
                 raw = raw.replace("pytest ", "").split()[0]
@@ -247,46 +265,43 @@ def parse_master_section9_paths(master_text: str) -> set[str]:
     return paths
 
 
-def parse_master_section10_scripts(master_text: str) -> set[str]:
-    sec10 = ""
-    lines = master_text.splitlines()
-    in_sec = False
-    for line in lines:
-        if re.match(r"^## 10\.", line):
-            in_sec = True
-            continue
-        if in_sec and re.match(r"^## \d+\.", line):
-            break
-        if in_sec:
-            sec10 += line + "\n"
+def parse_master_section9_paths(master_text: str) -> set[str]:
+    """E3: tests/scripts from §5.4, §6, §9 steps; legacy §9 four-layer / §10 tier."""
+    blobs = [
+        _master_section_blob(master_text, "5."),
+        _master_section_blob(master_text, "6."),
+        _master_section_blob(master_text, "9."),
+        _master_section_blob(master_text, "10."),
+    ]
     paths: set[str] = set()
-    for m in _SCRIPT_PATH.finditer(sec10):
+    for blob in blobs:
+        paths |= _paths_from_command_blob(blob)
+    return paths
+
+
+def parse_master_section10_scripts(master_text: str) -> set[str]:
+    """Legacy alias: tier scripts now live in §6; keep §10 for old MASTER."""
+    sec = _master_section_blob(master_text, "6.") + "\n" + _master_section_blob(master_text, "10.")
+    paths: set[str] = set()
+    for m in _SCRIPT_PATH.finditer(sec):
         paths.add(_norm(m.group(0).replace("python ", "").split()[0]))
-    for m in _BARE_SCRIPT.finditer(sec10):
+    for m in _BARE_SCRIPT.finditer(sec):
         paths.add(_norm(m.group(0)))
     return paths
 
 
 def parse_master_wiring_paths(master_text: str) -> set[str]:
-    """E8: Paths from §6 wiring / touchpoint tables."""
-    sec6 = ""
-    lines = master_text.splitlines()
-    in_sec = False
-    for line in lines:
-        if re.match(r"^## 6\.", line):
-            in_sec = True
-        elif in_sec and re.match(r"^## \d+\.", line) and not re.match(r"^## 6\.", line):
-            if sec6:
-                break
-        if in_sec:
-            sec6 += line + "\n"
+    """E8: Paths from wiring / touchpoint tables (§2 legacy §4 §6 §8)."""
+    sec = ""
+    for prefix in ("2.", "4.", "6.", "8."):
+        sec += _master_section_blob(master_text, prefix) + "\n"
 
     paths: set[str] = set()
-    for m in _PATH_IN_BACKTICKS.finditer(sec6):
+    for m in _PATH_IN_BACKTICKS.finditer(sec):
         p = _norm(m.group(1))
         if p.startswith(("backend/", "specs/", "tests/", "scripts/")):
             paths.add(p)
-    for m in _PATH_IN_TABLE.finditer(sec6):
+    for m in _PATH_IN_TABLE.finditer(sec):
         p = _norm(m.group(1))
         if "/" in p:
             paths.add(p)
@@ -360,10 +375,11 @@ def suggest_implement_context(task_dir: Path, repo_root: Path | None = None) -> 
     for g in ():
         add(g, "GLOBAL / P0o required")
 
-    trace = task_dir / "research" / "original-plan-trace.md"
-    for p, status in parse_trace_manifest(trace).items():
-        if status in ("execute", "execute-required", "must-read"):
-            add(p, f"original-plan-trace manifest={status}")
+    trace = resolve_trace_path(task_dir)
+    if trace:
+        for p, status in parse_trace_manifest(trace).items():
+            if status in ("execute", "execute-required", "must-read"):
+                add(p, f"source-index manifest={status}")
 
     master = task_dir / "MASTER.plan.md"
     if master.is_file():
@@ -379,8 +395,8 @@ def suggest_implement_context(task_dir: Path, repo_root: Path | None = None) -> 
     for p in module_spec_one_hop_refs(repo_root, impl | seen):
         add(p, "module spec 1-hop reference (E7)")
 
-    trace_path = task_dir / "research" / "original-plan-trace.md"
-    if trace_path.is_file():
+    trace_path = resolve_trace_path(task_dir)
+    if trace_path and trace_path.is_file():
         for m in []:
             for card in repo_root.glob(
                 f"docs/implementation_tasks/**/{m}_implement_*.md"
@@ -394,9 +410,9 @@ def validate_trace_implement_sync(
     task_dir: Path, repo_root: Path, errors: list[str]
 ) -> None:
     """E1: trace required paths must be in implement.jsonl."""
-    trace = task_dir / "research" / "original-plan-trace.md"
+    trace = resolve_trace_path(task_dir)
     impl = impl_paths_set(task_dir)
-    manifest = parse_trace_manifest(trace)
+    manifest = parse_trace_manifest(trace) if trace else {}
     for path, status in manifest.items():
         if status not in ("execute", "execute-required", "must-read"):
             continue
@@ -406,14 +422,14 @@ def validate_trace_implement_sync(
             # Allow partial path match for trace shorthand
             if not any(path in ip or ip.endswith(path) for ip in impl):
                 errors.append(
-                    f"E1: original-plan-trace required path missing from implement.jsonl: {path}"
+                    f"E1: source-index required path missing from implement.jsonl: {path}"
                 )
 
 
 def validate_section9_in_implement(
     task_dir: Path, repo_root: Path, errors: list[str]
 ) -> None:
-    """E3: MASTER §9/§10 tests and gate scripts in implement."""
+    """E3: MASTER §5.4/§6/§9 tests and gate scripts in implement."""
     master = task_dir / "MASTER.plan.md"
     if not master.is_file():
         return
@@ -424,7 +440,7 @@ def validate_section9_in_implement(
         if is_negative_implement_path(p):
             continue
         if p not in impl and (repo_root / p).is_file():
-            errors.append(f"E3: MASTER §9/§10 path missing from implement.jsonl: {p}")
+            errors.append(f"E3: MASTER §5/§6/§9 path missing from implement.jsonl: {p}")
 
 
 def validate_wiring_in_implement(
@@ -435,7 +451,7 @@ def validate_wiring_in_implement(
     if not master.is_file():
         return
     impl = impl_paths_set(task_dir)
-    manifest = parse_trace_manifest(task_dir / "research" / "original-plan-trace.md")
+    manifest = parse_trace_manifest(resolve_trace_path(task_dir) or Path("__missing__"))
     deferred = {p for p, s in manifest.items() if s == "deferred"}
     for p in parse_master_wiring_paths(master.read_text(encoding="utf-8")):
         if p in deferred or is_negative_implement_path(p):
@@ -458,9 +474,7 @@ def validate_predecessor_inherit(
         master_wiring = parse_master_wiring_paths(master.read_text(encoding="utf-8"))
     trace_required = {
         p
-        for p, s in parse_trace_manifest(
-            task_dir / "research" / "original-plan-trace.md"
-        ).items()
+        for p, s in parse_trace_manifest(resolve_trace_path(task_dir) or Path("__missing__")).items()
         if s in ("required", "inherited")
     }
     pred_wiring = wiring_paths_from_predecessors(task_dir, repo_root)
@@ -495,7 +509,7 @@ def validate_module_spec_refs(
 ) -> None:
     """E7: 1-hop module spec refs in implement or deferred."""
     impl = impl_paths_set(task_dir)
-    manifest = parse_trace_manifest(task_dir / "research" / "original-plan-trace.md")
+    manifest = parse_trace_manifest(resolve_trace_path(task_dir) or Path("__missing__"))
     deferred = {p for p, s in manifest.items() if s == "deferred"}
     for ref in module_spec_one_hop_refs(repo_root, impl):
         if ref in impl or ref in deferred:
@@ -609,34 +623,31 @@ def _extract_master_section(text: str, section: str) -> str:
 
 
 def validate_master_no_short_boot_list(task_dir: Path, errors: list[str]) -> None:
-    """E4: §8.0 must reference §0.3 + ledger; forbid substitute path enumeration."""
+    """E4: §9.0 (or legacy §8.0) must reference §0.3 + ledger."""
     master = task_dir / "MASTER.plan.md"
     if not master.is_file():
         return
     text = master.read_text(encoding="utf-8")
     if "§0.3" not in text and "### 0.3" not in text:
-        errors.append(
-            "E4: MASTER missing §0.3 Execute mandatory read manifest"
-        )
-    sec80 = _extract_master_section(text, "8.0")
-    if not sec80:
+        errors.append("E4: MASTER missing §0.3 Execute mandatory read manifest")
+    sec_boot = _extract_master_section(text, "9.0") or _extract_master_section(text, "8.0")
+    if not sec_boot:
         return
-    if "§0.3" not in sec80 and "### 0.3" not in sec80:
-        errors.append("E4: MASTER §8.0 must point to §0.3 (not standalone boot list)")
+    if "§0.3" not in sec_boot and "### 0.3" not in sec_boot:
+        errors.append("E4: MASTER boot step must point to §0.3 (not standalone boot list)")
     if _integration_protocol_enabled(task_dir):
-        if "integration-ledger" not in sec80.lower():
+        if "integration-ledger" not in sec_boot.lower():
             errors.append(
-                "E4: MASTER §8.0 must reference integration-ledger.md when v3 packing enabled"
+                "E4: MASTER boot step must reference integration-ledger.md when v3 packing enabled"
             )
-    # Forbidden: §8.0 摘要路径枚举替代 implement 全读
-    if re.search(r"至少含[：:]", sec80):
+    if re.search(r"至少含[：:]", sec_boot):
         errors.append(
-            "E4: MASTER §8.0 must not use 至少含 path enumeration; use §0.3 + implement.jsonl"
+            "E4: MASTER boot step must not use 至少含 path enumeration; use §0.3 + implement.jsonl"
         )
-    backticks = _PATH_IN_BACKTICKS.findall(sec80)
+    backticks = _PATH_IN_BACKTICKS.findall(sec_boot)
     if len(backticks) > 3:
         errors.append(
-            f"E4: MASTER §8.0 lists {len(backticks)} inline paths; "
+            f"E4: MASTER boot step lists {len(backticks)} inline paths; "
             "boot reads come from implement.jsonl only (max 3 example paths)"
         )
 
@@ -666,10 +677,10 @@ def validate_manifest_phase_5c(
             f"Phase 5c: implement.jsonl too thin ({len(entries)} entries); "
             "run suggest-implement-context and curate manifest"
         )
-    trace = task_dir / "research" / "original-plan-trace.md"
-    if trace.is_file() and "manifest" not in trace.read_text(encoding="utf-8").lower():
+    trace = resolve_trace_path(task_dir)
+    if trace and trace.is_file() and "manifest" not in trace.read_text(encoding="utf-8").lower():
         errors.append(
-            "Phase 5c: original-plan-trace.md missing manifest column (required|inherited|deferred)"
+            "Phase 5c: source-index.md §B missing manifest column (required|inherited|deferred)"
         )
     validate_trace_implement_sync(task_dir, repo_root, errors)
     ledger = task_dir / "research" / "integration-ledger.md"
@@ -735,10 +746,20 @@ def parse_integration_ledger(ledger_path: Path) -> list[dict]:
 
 
 def validate_input_inventory(task_dir: Path, errors: list[str]) -> None:
-    """V1 / P0i: input-inventory.md must exist and mark P0i complete."""
+    """V1 / P0i: source-index §C or legacy input-inventory."""
+    source = task_dir / "research" / "source-index.md"
+    if source.is_file():
+        text = source.read_text(encoding="utf-8")
+        if "索引完整" not in text:
+            errors.append("V1: source-index.md must mark 索引完整")
+        if "六类" not in text:
+            errors.append("V1: source-index.md §C must document six categories")
+        return
     inv = task_dir / "research" / "input-inventory.md"
     if not inv.is_file():
-        errors.append("V1: Missing research/input-inventory.md (Plan P0i)")
+        errors.append(
+            "V1: Missing research/source-index.md (or legacy input-inventory.md)"
+        )
         return
     text = inv.read_text(encoding="utf-8")
     if "P0i complete" not in text:
@@ -948,21 +969,10 @@ def validate_integration_protocol_freeze(
 def validate_manifest_phase_p0i(
     task_dir: Path, repo_root: Path, errors: list[str]
 ) -> None:
-    """P0i phase gate."""
+    """P0-index phase gate (legacy name P0i)."""
     if not _integration_protocol_enabled(task_dir):
         return
     validate_input_inventory(task_dir, errors)
-    inv = task_dir / "research" / "input-inventory.md"
-    if inv.is_file() and "missing-in-repo" in inv.read_text(encoding="utf-8").lower():
-        # If missing-in-repo lists real gaps (not 无/none), warn
-        body = inv.read_text(encoding="utf-8")
-        sec = body.split("missing-in-repo")[-1] if "missing-in-repo" in body.lower() else ""
-        if sec and not re.search(r"（无）|无缺口|none|n/a", sec, re.I):
-            if re.search(r"missing-in-repo.*\n\s*-\s+\S", sec, re.I):
-                errors.append(
-                    "P0i: input-inventory lists missing-in-repo items; "
-                    "resolve via DECISIONS or user ack before Phase 2"
-                )
 
 
 def validate_manifest_freeze(task_dir: Path, repo_root: Path, errors: list[str]) -> None:
@@ -983,58 +993,15 @@ def validate_manifest_freeze(task_dir: Path, repo_root: Path, errors: list[str])
     validate_integration_protocol_freeze(task_dir, repo_root, errors)
 
 
-def count_implement_read_entries(task_dir: Path) -> int:
-    """Entries Execute must read (exclude MASTER + trellis-execute if listed)."""
-    entries = load_jsonl_entries(task_dir / "implement.jsonl")
-    count = 0
-    for e in entries:
-        p = path_from_entry(e) or ""
-        if "MASTER.plan" in p:
-            continue
-        if "trellis-execute" in p:
-            continue
-        count += 1
-    return count
-
-
 def validate_execute_boot(task_dir: Path, errors: list[str]) -> None:
-    """E16/E17: Execute Phase 0 boot evidence."""
-    boot_reads = task_dir / "research" / "execute-evidence" / "8.0-boot-reads.txt"
-    if not boot_reads.is_file():
-        boot_reads = task_dir / "execute-evidence" / "8.0-boot-reads.txt"
-    if not boot_reads.is_file():
-        errors.append(
-            "E17: Missing execute-evidence/8.0-boot-reads.txt (one line per implement.jsonl path)"
-        )
-        return
-    lines = [
-        ln.strip()
-        for ln in boot_reads.read_text(encoding="utf-8").splitlines()
-        if ln.strip() and not ln.strip().startswith("#")
-    ]
-    required = count_implement_read_entries(task_dir)
-    if len(lines) < required:
-        errors.append(
-            f"E17: 8.0-boot-reads.txt has {len(lines)} lines but implement requires "
-            f"≥{required} read entries (excl. MASTER + trellis-execute)"
-        )
-
+    """E16: Execute Phase 0 — context-closure only (no execute-boot self-attestation)."""
     closure = task_dir / "research" / "context-closure.md"
     if not closure.is_file():
         errors.append(
             "E16: Missing research/context-closure.md (Execute 6.pre L2 closure report)"
         )
-    else:
-        if "upstream" not in closure.read_text(encoding="utf-8").lower():
-            errors.append("E16: context-closure.md must document upstream/wiring closure")
-
-    boot = task_dir / "research" / "execute-boot.md"
-    if boot.is_file():
-        bt = boot.read_text(encoding="utf-8")
-        if "implement.jsonl" not in bt and "全读" not in bt and "every" not in bt.lower():
-            errors.append(
-                "E17: execute-boot.md must state implement.jsonl was read in full"
-            )
+    elif "upstream" not in closure.read_text(encoding="utf-8").lower():
+        errors.append("E16: context-closure.md must document upstream/wiring closure")
 
 
 def validate_manifest_amend_chain(task_dir: Path, errors: list[str]) -> None:
@@ -1047,10 +1014,3 @@ def validate_manifest_amend_chain(task_dir: Path, errors: list[str]) -> None:
         errors.append(
             "E20: manifest-amend.md must document add-context / implement.jsonl amendments"
         )
-    boot_reads = task_dir / "research" / "execute-evidence" / "8.0-boot-reads.txt"
-    if amend.is_file() and boot_reads.is_file():
-        # Amend after boot requires re-read note
-        if "re-read" not in text.lower() and "补读" not in text:
-            errors.append(
-                "E20: manifest-amend.md should note Execute re-read after amend"
-            )

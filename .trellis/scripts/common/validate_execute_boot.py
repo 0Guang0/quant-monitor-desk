@@ -1,4 +1,4 @@
-"""Validate Execute Phase 0 boot (E16/E17/E18)."""
+"""Validate Execute Phase 0 boot (E16/E18)."""
 
 from __future__ import annotations
 

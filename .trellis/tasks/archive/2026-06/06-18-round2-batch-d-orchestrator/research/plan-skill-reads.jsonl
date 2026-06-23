@@ -1,3 +1,4 @@
+{"phase":"boot","skill":"agent-toolchain","path":"agent-toolchain.md"}
 {"phase":"boot","skill":"trellis-plan","path":".cursor/skills/trellis-plan/SKILL.md"}
 {"phase":"boot","skill":"plan-skill-paths","path":".trellis/spec/guides/plan-skill-paths.yaml"}
 {"phase":"boot","skill":"gitnexus-plan-p0b","action":"query+context","artifact":"research/gitnexus-summary.md"}

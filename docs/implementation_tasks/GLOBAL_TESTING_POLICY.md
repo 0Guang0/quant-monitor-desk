@@ -1,5 +1,7 @@
 # Global Testing Policy
 
+> **权威 skill：** `.cursor/skills/testing-guidelines/SKILL.md`（Agent 写测/审测时 Read；本文为项目策略摘要）
+
 本测试策略来自项目约束与用户上传的测试规范。目标是让测试验证业务行为，而不是验证内部实现细节。
 
 ## 1. Mock 边界
@@ -80,7 +82,6 @@ resourceGuard_lowDisk_shouldPauseBackfill
 - Agent / Notification 的 No Action Semantics Guard。
 
 每个 implementation task 必须写清本任务最低测试要求。
-
 
 ## 7. Deterministic / Golden / Time-freeze 基线
 
