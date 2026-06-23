@@ -12,6 +12,7 @@ from backend.app.sync.runners import (
     IncrementalJobRunner,
     PipelineConfig,
     ReconcileJobRunner,
+    guard_production_adapter_bypass,
 )
 
 
@@ -136,6 +137,11 @@ class DataSyncOrchestrator:
         primary_keys: tuple[str, ...] = ("instrument_id", "trade_date"),
         required_fields: tuple[str, ...] = ("close", "source_used"),
     ) -> SyncJobResult:
+        guard_production_adapter_bypass(
+            adapter=adapter,
+            datasource_service=datasource_service,
+            entry="run_incremental",
+        )
         fetch_callable = None
         if datasource_service is not None:
             jobs = self._jobs
@@ -175,6 +181,11 @@ class DataSyncOrchestrator:
         primary_keys: tuple[str, ...] = ("instrument_id", "trade_date"),
         required_fields: tuple[str, ...] = ("close", "source_used"),
     ) -> list[SyncJobResult]:
+        guard_production_adapter_bypass(
+            adapter=adapter,
+            datasource_service=datasource_service,
+            entry="run_backfill",
+        )
         fetch_callable = None
         if datasource_service is not None:
             jobs = self._jobs
@@ -204,6 +215,11 @@ class DataSyncOrchestrator:
         )
 
     def run_reconcile(self, conflict_id: str, *, adapter: BaseDataAdapter) -> SyncJobResult:
+        guard_production_adapter_bypass(
+            adapter=adapter,
+            datasource_service=None,
+            entry="run_reconcile",
+        )
         return self._reconcile.run(conflict_id, adapter=adapter)
 
     def run_full_load(self, spec: SyncJobSpec, **kwargs) -> SyncJobResult:

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -29,6 +30,44 @@ _DEFAULT_QUALITY_RULE_SET, _DEFAULT_QUALITY_RULE_VERSION = default_quality_rule_
 _DEFAULT_CONFLICT_RULE_SET, _DEFAULT_CONFLICT_RULE_VERSION = default_conflict_rule_contract()
 
 FetchCallable = Callable[..., FetchResult]
+
+
+def sync_adapter_bypass_allowed() -> bool:
+    """Test-only: pytest permits direct adapter= on sync entry."""
+    # ponytail: PYTEST_CURRENT_TEST only; no production env escape hatch (AA-02)
+    return bool(os.getenv("PYTEST_CURRENT_TEST"))
+
+
+def guard_production_adapter_bypass(
+    *,
+    adapter: BaseDataAdapter | None,
+    datasource_service,
+    entry: str,
+) -> None:
+    """Fail-closed when production profile passes adapter= without DataSourceService."""
+    if adapter is None or datasource_service is not None:
+        return
+    if sync_adapter_bypass_allowed():
+        return
+    raise ValueError(
+        f"{entry}: direct adapter= bypasses DataSourceService; "
+        "use datasource_service= in production"
+    )
+
+
+def guard_runner_direct_adapter_bypass(
+    *,
+    adapter: BaseDataAdapter | None,
+    fetch_callable: FetchCallable | None,
+    entry: str,
+) -> None:
+    """Fail-closed on runner.run when adapter= is passed without fetch_callable (AA-01)."""
+    if adapter is not None and fetch_callable is None:
+        guard_production_adapter_bypass(
+            adapter=adapter,
+            datasource_service=None,
+            entry=entry,
+        )
 
 
 class FetchGuardBlocked(Exception):
@@ -145,7 +184,10 @@ class _PipelineMixin:
             self._jobs.emit_custom_event(
                 job_id,
                 event_type="CONFLICT_CHECK_SKIPPED",
-                message="conflict_staging_table=None; conflict validation skipped (fail-closed audit)",
+                message=(
+                    "conflict_staging_table=None; conflict validation skipped "
+                    "(fail-closed audit)"
+                ),
                 payload_json=build_event_payload(
                     source_id=spec.source_id,
                     decision="conflict_check_skipped",
@@ -326,6 +368,11 @@ class IncrementalJobRunner(_PipelineMixin):
             raise ValueError("adapter or fetch_callable is required")
         if adapter is not None and fetch_callable is not None:
             raise ValueError("provide adapter or fetch_callable, not both")
+        guard_runner_direct_adapter_bypass(
+            adapter=adapter,
+            fetch_callable=fetch_callable,
+            entry="IncrementalJobRunner.run",
+        )
         job_id = self._jobs.create_job(spec)
         self._jobs.transition(job_id, "PLANNED")
         req = FetchRequest(
@@ -510,6 +557,11 @@ class BackfillShardRunner(_PipelineMixin):
             raise ValueError("adapter or fetch_callable is required for backfill")
         if adapter is not None and fetch_callable is not None:
             raise ValueError("provide adapter or fetch_callable for backfill, not both")
+        guard_runner_direct_adapter_bypass(
+            adapter=adapter,
+            fetch_callable=fetch_callable,
+            entry="BackfillShardRunner.run",
+        )
         if spec.date_start is None or spec.date_end is None:
             raise ValueError("backfill requires date_start and date_end")
         trigger_reason = normalize_backfill_trigger_reason(spec.trigger_reason)
@@ -792,6 +844,11 @@ class ReconcileJobRunner:
         self._conflict_validator = SourceConflictValidator()
 
     def run(self, conflict_id: str, *, adapter: BaseDataAdapter) -> SyncJobResult:
+        guard_production_adapter_bypass(
+            adapter=adapter,
+            datasource_service=None,
+            entry="ReconcileJobRunner.run",
+        )
         cm = self._jobs.connection_manager
         with cm.writer() as con:
             row = con.execute(
