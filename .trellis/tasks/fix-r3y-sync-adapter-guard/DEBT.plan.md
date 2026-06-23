@@ -6,7 +6,7 @@
 | ------------- | ------------------------------------------------------------------- |
 | Registry ID   | `R3Y-SYNC-001`（ADV-R3X-SYNC-001 partial）                          |
 | Audit         | `R3Y-AUD-01` F-02 · `R3Y-AUD-02` HIGH · `R3Y-AUD-03` reconcile WARN |
-| Map slice     | `ROUND3_BATCH_IMPLEMENTATION_MAP.md` §2.4.4                         |
+| Map slice     | `ROUND3_BATCH_IMPLEMENTATION_MAP.md` §2.4（repair-debt α-1 row）    |
 | base branch   | `master` @ `527d6506`                                               |
 | target branch | `fix/r3y-sync-adapter-guard`                                        |
 | worktree      | `../quant-monitor-desk-wt-fix-r3y-sync-adapter-guard`               |

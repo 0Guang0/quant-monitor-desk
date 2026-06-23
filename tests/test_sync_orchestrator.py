@@ -845,3 +845,242 @@ def test_servicePath_disabledRoute_setsFailedFinalWithFetchLog(tmp_path, monkeyp
         ).fetchone()
     assert log_row is not None
     assert log_row[0] == "DISABLED_SOURCE"
+
+
+def _simulate_production_profile(monkeypatch) -> None:
+    """Drop pytest/test-hook signals so sync entry behaves like production profile."""
+    monkeypatch.delenv("PYTEST_CURRENT_TEST", raising=False)
+    monkeypatch.delenv("QMD_SYNC_ALLOW_ADAPTER", raising=False)
+
+
+def test_r3ySync001_incremental_rejectsAdapterBypassInProductionProfile(
+    tmp_path, monkeypatch
+) -> None:
+    """R3Y-SYNC-001: production-profile incremental must reject adapter= without service.
+
+    覆盖范围: DataSyncOrchestrator.run_incremental 生产入口 adapter 旁路守卫。
+    测试对象: run_incremental(..., adapter=X) 且无 datasource_service。
+    目的/目标: 生产 profile 下 fail-closed，禁止绕过 DataSourceService 路由链。
+    """
+    import pytest
+
+    _simulate_production_profile(monkeypatch)
+    orch = _orchestrator(tmp_path)
+    spec = SyncJobSpec(
+        run_id="run-r3y-inc",
+        job_id="job-r3y-inc",
+        job_type="incremental",
+        data_domain="market_bar_1d",
+        market_id="CN_A",
+        source_id="baostock",
+        adapter_id=None,
+        date_start=None,
+        date_end=None,
+        instrument_id=None,
+        partition_key=None,
+        trigger_reason=None,
+    )
+    with pytest.raises(ValueError, match="DataSourceService"):
+        orch.run_incremental(
+            spec,
+            adapter=_BackfillCountAdapter(),
+            clean_table=_BackfillCountAdapter.CLEAN,
+        )
+
+
+def test_r3ySync001_backfill_rejectsAdapterBypassInProductionProfile(
+    tmp_path, monkeypatch
+) -> None:
+    """R3Y-SYNC-001: production-profile backfill must reject adapter= without service.
+
+    覆盖范围: DataSyncOrchestrator.run_backfill 生产入口 adapter 旁路守卫。
+    测试对象: run_backfill(..., adapter=X) 且无 datasource_service。
+    目的/目标: 与 incremental 对称 fail-closed，防止分片回补绕过路由服务。
+    """
+    from datetime import date
+
+    import pytest
+
+    _simulate_production_profile(monkeypatch)
+    orch = _orchestrator(tmp_path)
+    spec = SyncJobSpec(
+        run_id="run-r3y-bf",
+        job_id="job-r3y-bf",
+        job_type="backfill",
+        data_domain="market_bar_1d",
+        market_id="CN_A",
+        source_id="baostock",
+        adapter_id=None,
+        date_start=date(2026, 1, 1),
+        date_end=date(2026, 1, 15),
+        instrument_id=None,
+        partition_key=None,
+        trigger_reason="eco_catchup",
+    )
+    with pytest.raises(ValueError, match="DataSourceService"):
+        orch.run_backfill(
+            spec,
+            adapter=_BackfillCountAdapter(),
+            clean_table=_BackfillCountAdapter.CLEAN,
+        )
+
+
+def test_r3ySync001_reconcile_rejectsAdapterBypassInProductionProfile(
+    tmp_path, monkeypatch
+) -> None:
+    """R3Y-SYNC-001: production-profile reconcile must reject direct adapter= entry.
+
+    覆盖范围: DataSyncOrchestrator.run_reconcile 生产入口 adapter 旁路守卫。
+    测试对象: run_reconcile(conflict_id, adapter=X) 在无 test hook 时。
+    目的/目标: reconcile 仍可在 pytest/test hook 下用 adapter；生产 profile fail-closed。
+    """
+    from datetime import UTC, datetime
+
+    import pytest
+
+    _simulate_production_profile(monkeypatch)
+    orch = _orchestrator(tmp_path)
+    conflict_id = "conflict-r3y"
+    with orch._cm.writer() as con:
+        con.execute(
+            """
+            INSERT INTO source_conflict (
+                conflict_id, run_id, job_id, data_domain, market_id,
+                field_name, primary_source, primary_value,
+                competing_source, competing_value, normalized_diff,
+                severity, reconcile_status, manual_review_required, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            [
+                conflict_id,
+                "run-r3y-rc",
+                "job-r3y-rc",
+                "market_bar_1d",
+                "CN_A",
+                "close",
+                "baostock",
+                "100",
+                "qmt_xtdata",
+                "150",
+                "0.5",
+                "severe",
+                "UNRESOLVED",
+                True,
+                datetime.now(UTC),
+            ],
+        )
+    with pytest.raises(ValueError, match="DataSourceService"):
+        orch.run_reconcile(conflict_id, adapter=_BackfillCountAdapter())
+
+
+def test_r3ySync001_testHookAllowsAdapterBypassUnderPytest(
+    tmp_path, monkeypatch
+) -> None:
+    """R3Y-SYNC-001: pytest session preserves adapter= test paths.
+
+    覆盖范围: pytest 内 run_incremental adapter= 路径。
+    测试对象: run_incremental(..., adapter=X) 在 PYTEST_CURRENT_TEST 下可达 runner。
+    目的/目标: 守卫仅封生产 profile，不阻断既有 pytest 套件。
+    """
+    from backend.app.core.resource_guard import Decision, ResourceGuard
+
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    orch = _orchestrator(tmp_path)
+    spec = SyncJobSpec(
+        run_id="run-r3y-hook",
+        job_id="job-r3y-hook",
+        job_type="incremental",
+        data_domain="market_bar_1d",
+        market_id="CN_A",
+        source_id="baostock",
+        adapter_id=None,
+        date_start=None,
+        date_end=None,
+        instrument_id=None,
+        partition_key=None,
+        trigger_reason=None,
+    )
+    result = orch.run_incremental(
+        spec,
+        adapter=_BackfillCountAdapter(),
+        clean_table=_BackfillCountAdapter.CLEAN,
+    )
+    assert result.status in {
+        "COMPLETED",
+        "FAILED_FINAL",
+        "MANUAL_REVIEW_REQUIRED",
+        "WAITING_RECONCILE",
+    }
+
+
+def test_r3ySync001_explicitEnvDoesNotBypassProductionProfile(
+    tmp_path, monkeypatch
+) -> None:
+    """R3Y-SYNC-001: QMD_SYNC_ALLOW_ADAPTER alone cannot bypass production profile.
+
+    覆盖范围: 生产 profile 模拟 + 误配 QMD_SYNC_ALLOW_ADAPTER=1。
+    测试对象: run_incremental(..., adapter=X) 无 datasource_service。
+    目的/目标: 运维 env 误配不能恢复 adapter 旁路（AA-02）。
+    """
+    import pytest
+
+    _simulate_production_profile(monkeypatch)
+    monkeypatch.setenv("QMD_SYNC_ALLOW_ADAPTER", "1")
+    orch = _orchestrator(tmp_path)
+    spec = SyncJobSpec(
+        run_id="run-r3y-env",
+        job_id="job-r3y-env",
+        job_type="incremental",
+        data_domain="market_bar_1d",
+        market_id="CN_A",
+        source_id="baostock",
+        adapter_id=None,
+        date_start=None,
+        date_end=None,
+        instrument_id=None,
+        partition_key=None,
+        trigger_reason=None,
+    )
+    with pytest.raises(ValueError, match="DataSourceService"):
+        orch.run_incremental(
+            spec,
+            adapter=_BackfillCountAdapter(),
+            clean_table=_BackfillCountAdapter.CLEAN,
+        )
+
+
+def test_r3ySync001_privateIncrementalRunner_rejectsAdapterBypassInProductionProfile(
+    tmp_path, monkeypatch
+) -> None:
+    """R3Y-SYNC-001: private IncrementalJobRunner.run rejects adapter= in production profile.
+
+    覆盖范围: orchestrator 私有 runner 入口（AA-01）。
+    测试对象: orch._incremental.run(..., adapter=X)。
+    目的/目标: 调用方不能经私有 runner 绕过公开入口 guard。
+    """
+    import pytest
+
+    from backend.app.sync.orchestrator import _default_pipeline_config
+
+    _simulate_production_profile(monkeypatch)
+    orch = _orchestrator(tmp_path)
+    spec = SyncJobSpec(
+        run_id="run-r3y-priv",
+        job_id="job-r3y-priv",
+        job_type="incremental",
+        data_domain="market_bar_1d",
+        market_id="CN_A",
+        source_id="baostock",
+        adapter_id=None,
+        date_start=None,
+        date_end=None,
+        instrument_id=None,
+        partition_key=None,
+        trigger_reason=None,
+    )
+    with pytest.raises(ValueError, match="DataSourceService"):
+        orch._incremental.run(
+            spec,
+            adapter=_BackfillCountAdapter(),
+            config=_default_pipeline_config(clean_table=_BackfillCountAdapter.CLEAN),
+        )
