@@ -156,6 +156,7 @@ class _NetworkCallBudget:
         self._count = 0
 
     def consume(self) -> None:
+        # ponytail: one consume per run_staged_pilot_raw_only call, not per vendor HTTP
         if self._count >= self._limit:
             raise StagedPilotNetworkCapExceededError(
                 f"max_network_calls_per_run={self._limit} exceeded"
@@ -173,9 +174,10 @@ class _NetworkCallBudget:
 _NETWORK_BUDGET_CTX: ContextVar[_NetworkCallBudget] = ContextVar("_staged_pilot_network_budget")
 
 
-def reset_network_call_budget() -> None:
-    """Test hook: reset per-run network call counter."""
-    _NETWORK_BUDGET_CTX.set(_NetworkCallBudget())
+def reset_network_call_budget(*, limit: int | None = None) -> None:
+    """Test hook: reset per-run network call counter (v1 default 10, v2 uses MAX_NETWORK_CALLS_V2)."""
+    effective = limit if limit is not None else MAX_NETWORK_CALLS_PER_RUN
+    _NETWORK_BUDGET_CTX.set(_NetworkCallBudget(limit=effective))
 
 
 def _active_network_budget() -> _NetworkCallBudget:
@@ -1564,10 +1566,6 @@ def capture_route_preview_matrix_v2(
     missing = sorted(required_kinds - route_kinds)
     if missing:
         raise RuntimeError(f"route_preview_matrix_v2 missing route kinds: {missing}")
-    if "skipped" not in route_kinds and "user_auth_required" not in route_kinds:
-        raise RuntimeError(
-            "route_preview_matrix_v2 missing skipped and user_auth_required coverage"
-        )
 
     mutation_proof = build_production_mutation_proof(
         target_db,
@@ -1635,7 +1633,6 @@ def capture_baostock_evidence_v2(
     request = approved_pilot_v2_requests()[0]
     validate_pilot_v2_authorization(request)
 
-    reset_network_call_budget()
     if fetch_runner is not None:
         fetch_item = fetch_runner(request, sandbox_root=sandbox)
     else:
@@ -1699,7 +1696,6 @@ def capture_cninfo_evidence_v2(
     request = approved_pilot_v2_requests()[2]
     validate_pilot_v2_authorization(request)
 
-    reset_network_call_budget()
     if fetch_runner is not None:
         fetch_item = fetch_runner(request, sandbox_root=sandbox)
     else:
@@ -2074,10 +2070,28 @@ def run_full_staged_pilot_v2(
     sandbox = sandbox_root or DEFAULT_SANDBOX_ROOT_V2
 
     caps = write_pilot_v2_caps(evidence_dir)
+    reset_network_call_budget(limit=MAX_NETWORK_CALLS_V2)
+
+    guard = ResourceGuard()
+    guard_decision, guard_reason = guard.check()
+    guard_payload = {
+        "pilot_id": PILOT_ID_V2,
+        "generated_at": _utc_now_iso(),
+        "decision": guard_decision.value,
+        "reason": guard_reason,
+        "network_call_budget": network_call_budget_snapshot(),
+        "caps": pilot_v2_caps_payload(),
+    }
+    (evidence_dir / RESOURCE_GUARD_JSON).write_text(
+        json.dumps(guard_payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
     route_payload = capture_route_preview_matrix_v2(evidence_dir=evidence_dir)
 
     raw_manifest: dict[str, Any] | None = None
-    if not skip_live_fetch:
+    live_fetch_allowed = not skip_live_fetch and guard_decision != Decision.HARD_STOP
+    if live_fetch_allowed:
         raw_manifest = capture_baostock_evidence_v2(
             evidence_dir=evidence_dir,
             sandbox_root=sandbox,
@@ -2087,6 +2101,11 @@ def run_full_staged_pilot_v2(
             evidence_dir=evidence_dir,
             sandbox_root=sandbox,
             fetch_runner=fetch_runner,
+        )
+        guard_payload["network_call_budget"] = network_call_budget_snapshot()
+        (evidence_dir / RESOURCE_GUARD_JSON).write_text(
+            json.dumps(guard_payload, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
         )
 
     capture_akshare_validation_taxonomy_v2(evidence_dir=evidence_dir)
@@ -2114,5 +2133,6 @@ def run_full_staged_pilot_v2(
         "mutation_proof": mutation_proof,
         "closeout": closeout,
         "skip_live_fetch": skip_live_fetch,
+        "resource_guard": guard_payload,
     }
 

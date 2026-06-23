@@ -682,6 +682,8 @@ def test_stagedPilotV2_capsJson_matchesApprovedEnvelope(tmp_path: Path) -> None:
 
     测试对象：write_pilot_v2_caps / pilot_v2_caps_payload。
     目的/目标：AC-SP2-01 — 冻结 pilot_id、caps、sandbox 路径。
+    验证点：caps 字段含 max_network_calls_per_run=25 且 production_clean_write=false。
+    失败含义：caps JSON 与 R3Y §6 冻结边界不一致，授权 gate 将误判可扩样范围。
     """
     from backend.app.ops.staged_pilot import (
         PILOT_ID_V2,
@@ -708,6 +710,8 @@ def test_stagedPilotV2_capsExceedingMaxSymbols_rejects() -> None:
 
     测试对象：validate_pilot_v2_authorization。
     目的/目标：AC-SP2-01 — 未经批准的 caps 扩样 fail-closed。
+    验证点：6 个 symbol 触发 StagedPilotAuthorizationError 且消息含 max_symbols。
+    失败含义：超 cap 扩样被静默放行，违反 R3Y 小样本边界。
     """
     from backend.app.ops.staged_pilot import (
         StagedPilotAuthorizationError,
@@ -722,11 +726,134 @@ def test_stagedPilotV2_capsExceedingMaxSymbols_rejects() -> None:
         validate_pilot_v2_authorization(too_many)
 
 
+def test_stagedPilotV2_capsExceedingMaxRows_rejects() -> None:
+    """覆盖范围：v2 超 max_rows 拒绝。
+
+    测试对象：validate_pilot_v2_authorization。
+    目的/目标：AC-SP2-01 — max_rows 超 500 fail-closed。
+    验证点：max_rows=501 触发 StagedPilotAuthorizationError。
+    失败含义：大行数拉取绕过 caps，可能触发无界 I/O。
+    """
+    from backend.app.ops.staged_pilot import (
+        StagedPilotAuthorizationError,
+        validate_pilot_v2_authorization,
+    )
+
+    over_rows = replace(_approved_baostock_v2_request(), max_rows=501)
+    with pytest.raises(StagedPilotAuthorizationError, match="max_rows"):
+        validate_pilot_v2_authorization(over_rows)
+
+
+def test_stagedPilotV2_capsExceedingMaxTradeDays_rejects() -> None:
+    """覆盖范围：v2 超 max_trade_days（date_window）拒绝。
+
+    测试对象：validate_pilot_v2_authorization。
+    目的/目标：AC-SP2-01 — 未批准 date_window fail-closed。
+    验证点：date_window 不在冻结 envelope 时拒绝。
+    失败含义：更长历史窗口被静默接受，与 R3Y §6 max_trade_days 叙事分叉。
+    """
+    from backend.app.ops.staged_pilot import (
+        StagedPilotAuthorizationError,
+        validate_pilot_v2_authorization,
+    )
+
+    wide_window = replace(
+        _approved_baostock_v2_request(),
+        date_window="recent 60 trading days",
+    )
+    with pytest.raises(StagedPilotAuthorizationError, match="envelope"):
+        validate_pilot_v2_authorization(wide_window)
+
+
+def test_stagedPilotV2_authorization_rejectsAllowCleanWrite() -> None:
+    """覆盖范围：v2 allow_clean_write=true 拒绝。
+
+    测试对象：validate_pilot_v2_authorization。
+    目的/目标：OOB-A3-2 对称 — 与 v1 gate 一致拒绝 production clean write。
+    验证点：allow_clean_write=True 触发 StagedPilotAuthorizationError。
+    失败含义：v2 路径可能旁路 production clean write 禁令。
+    """
+    from backend.app.ops.staged_pilot import (
+        StagedPilotAuthorizationError,
+        validate_pilot_v2_authorization,
+    )
+
+    dirty = replace(_approved_baostock_v2_request(), allow_clean_write=True)
+    with pytest.raises(StagedPilotAuthorizationError, match="allow_clean_write"):
+        validate_pilot_v2_authorization(dirty)
+
+
+def test_stagedPilotV2_networkCallBudget_alignsWithCaps() -> None:
+    """覆盖范围：v2 运行时网络预算与 caps JSON 对齐。
+
+    测试对象：reset_network_call_budget / _NetworkCallBudget。
+    目的/目标：OOB-A3-1 / OOF-P1 — max_network_calls_per_run=25 SSOT。
+    验证点：limit=25 时可 consume 25 次，第 26 次 fail-closed。
+    失败含义：v2 仍用 v1 常量 10，扩样会在 caps 声明前被误杀。
+    """
+    from backend.app.ops import staged_pilot as mod
+    from backend.app.ops.staged_pilot import (
+        MAX_NETWORK_CALLS_V2,
+        StagedPilotNetworkCapExceededError,
+        reset_network_call_budget,
+    )
+
+    reset_network_call_budget(limit=MAX_NETWORK_CALLS_V2)
+    budget = mod._active_network_budget()
+    for _ in range(MAX_NETWORK_CALLS_V2):
+        budget.consume()
+    with pytest.raises(StagedPilotNetworkCapExceededError):
+        budget.consume()
+    snapshot = mod.network_call_budget_snapshot()
+    assert snapshot["max_network_calls_per_run"] == MAX_NETWORK_CALLS_V2
+    assert snapshot["network_calls_consumed"] == MAX_NETWORK_CALLS_V2
+
+
+def test_stagedPilotV2_networkBudget_sharedAcrossCaptures(tmp_path: Path) -> None:
+    """覆盖范围：v2 整次 run 共享网络 budget，capture 间不 reset。
+
+    测试对象：capture_baostock_evidence_v2 / capture_cninfo_evidence_v2。
+    目的/目标：OOB-A3-1 — 避免 3×10 次隐性额度。
+    验证点：连续两次 capture 后 consumed 累加为 2。
+    失败含义：每次 capture 重置 budget，整次 run 实际额度与 caps 叙事不一致。
+    """
+    from backend.app.ops import staged_pilot as mod
+    from backend.app.ops.staged_pilot import (
+        MAX_NETWORK_CALLS_V2,
+        capture_baostock_evidence_v2,
+        capture_cninfo_evidence_v2,
+        reset_network_call_budget,
+    )
+
+    reset_network_call_budget(limit=MAX_NETWORK_CALLS_V2)
+
+    def _counting_runner(request, *, sandbox_root: Path) -> dict:
+        mod._active_network_budget().consume()
+        return _mock_v2_fetch_item(request, sandbox_root=sandbox_root)
+
+    capture_baostock_evidence_v2(
+        evidence_dir=tmp_path / "bs",
+        fetch_runner=_counting_runner,
+    )
+    assert mod.network_call_budget_snapshot()["network_calls_consumed"] == 1
+    with patch(
+        "backend.app.ops.staged_pilot._load_raw_json_payload",
+        return_value={"rows": []},
+    ):
+        capture_cninfo_evidence_v2(
+            evidence_dir=tmp_path / "cn",
+            fetch_runner=_counting_runner,
+        )
+    assert mod.network_call_budget_snapshot()["network_calls_consumed"] == 2
+
+
 def test_stagedPilotV2_baostockExpanded_writesManifestV2(tmp_path: Path) -> None:
     """覆盖范围：baostock 扩样 manifest v2 必需字段。
 
     测试对象：capture_baostock_evidence_v2。
     目的/目标：AC-SP2-02 — manifest 含 hash/fetch_id/relative path。
+    验证点：manifest_entry 含 vendor_api 与 as_of_timestamp（R3Y Q7）。
+    失败含义：扩样 manifest 缺 Q7 字段，live 证据不可追溯。
     """
     from backend.app.ops.staged_pilot import (
         RAW_MANIFEST_V2_JSON,
@@ -734,16 +861,22 @@ def test_stagedPilotV2_baostockExpanded_writesManifestV2(tmp_path: Path) -> None
         capture_baostock_evidence_v2,
     )
 
-    payload = capture_baostock_evidence_v2(
-        evidence_dir=tmp_path,
-        fetch_runner=_mock_v2_fetch_item,
-    )
+    with patch(
+        "backend.app.ops.staged_pilot._load_raw_json_payload",
+        return_value={"vendor_api": "query_history_k_data_plus"},
+    ):
+        payload = capture_baostock_evidence_v2(
+            evidence_dir=tmp_path,
+            fetch_runner=_mock_v2_fetch_item,
+        )
     assert (tmp_path / RAW_MANIFEST_V2_JSON).is_file()
     assert (tmp_path / STAGING_MANIFEST_V2_JSON).is_file()
     entry = payload["manifest_entries"][0]
     assert entry["content_hash"] == "abc123deadbeef"
     assert entry["source_fetch_id"] == "fetch-baostock-v2"
     assert entry["relative_paths"]
+    assert entry["vendor_api"] == "query_history_k_data_plus"
+    assert entry["as_of_timestamp"]
     assert payload["required_fields_present"] is True
 
 
@@ -752,6 +885,8 @@ def test_stagedPilotV2_cninfoExpanded_schemaFieldsPresent(tmp_path: Path) -> Non
 
     测试对象：capture_cninfo_evidence_v2。
     目的/目标：AC-SP2-03 — schema notes 与 metadata 字段可追溯。
+    验证点：schema_fields 含公告标题且 cninfo_schema_notes_v2.md 落盘。
+    失败含义：metadata 结构漂移无法从证据工件追溯。
     """
     from backend.app.ops.staged_pilot import (
         CNINFO_SCHEMA_NOTES_V2_MD,
@@ -783,6 +918,8 @@ def test_stagedPilotV2_akshareValidation_recordsTaxonomy(tmp_path: Path) -> None
 
     测试对象：capture_akshare_validation_taxonomy_v2。
     目的/目标：AC-SP2-04 — taxonomy 含 SUCCESS/ERROR 等稳定 status。
+    验证点：存在 re_defer=true 记录且 reason 含 NETWORK_ERROR。
+    失败含义：re-defer 叙事丢失，NETWORK 失败被静默当作终态。
     """
     from backend.app.ops.staged_pilot import (
         AKSHARE_TAXONOMY_V2_JSON,
@@ -794,6 +931,11 @@ def test_stagedPilotV2_akshareValidation_recordsTaxonomy(tmp_path: Path) -> None
     statuses = {record["status"] for record in payload["records"]}
     assert FetchTaxonomyStatus.SUCCESS.value in statuses
     assert FetchTaxonomyStatus.SOURCE_FAILURE.value in statuses
+    assert any(record.get("re_defer") for record in payload["records"])
+    assert any(
+        "NETWORK_ERROR" in (record.get("reason") or "")
+        for record in payload["records"]
+    )
     assert payload["validation_only"] is True
     assert payload["primary_forbidden"] is True
     assert (tmp_path / AKSHARE_TAXONOMY_V2_JSON).is_file()
@@ -803,7 +945,9 @@ def test_stagedPilotV2_routePreviewMatrixV2_allStatuses(tmp_path: Path) -> None:
     """覆盖范围：route preview matrix v2 全 route status。
 
     测试对象：capture_route_preview_matrix_v2。
-    目的/目标：AC-SP2-05 — selected/skipped/disabled/validation-only 均可见。
+    目的/目标：AC-SP2-05 — selected/disabled/validation-only/user_auth_required 均可见。
+    验证点：coverage 含 user_auth_required；USER_AUTH_REQUIRED 显式状态存在。
+    失败含义：若 skipped 与 user_auth 均缺失则 matrix 不可落盘（OOF-A8-01）。
     """
     from backend.app.ops.staged_pilot import (
         ROUTE_MATRIX_V2_JSON,
@@ -832,6 +976,8 @@ def test_stagedPilotV2_validationReportV2_exposesQualityFlags(tmp_path: Path) ->
 
     测试对象：capture_validation_report_v2。
     目的/目标：AC-SP2-06 — quality_flags 与 row_count 字段可见。
+    验证点：validations_v2[0].source_used == baostock。
+    失败含义：R3Y Q5 source_used 字段回归丢失，primary 来源不可审计。
     """
     from backend.app.ops.staged_pilot import (
         VALIDATION_REPORT_V2_JSON,
@@ -861,6 +1007,7 @@ def test_stagedPilotV2_validationReportV2_exposesQualityFlags(tmp_path: Path) ->
     )
     item = payload["validations_v2"][0]
     assert item["row_count"] == 5
+    assert item["source_used"] == "baostock"
     assert "quality_flags" in item
     assert (tmp_path / VALIDATION_REPORT_V2_JSON).is_file()
 
@@ -870,6 +1017,8 @@ def test_stagedPilotV2_conflictSummaryV2_primaryOrDeferred(tmp_path: Path) -> No
 
     测试对象：capture_conflict_summary_v2。
     目的/目标：AC-SP2-07 — 记录 conflict 比较或 deferred reason。
+    验证点：status 为两枚举之一且 reason 非空。
+    失败含义：conflict 策略退化或 reason 可被空串糊弄通过。
     """
     from backend.app.ops.staged_pilot import (
         CONFLICT_CHECK_V2_JSON,
@@ -898,6 +1047,8 @@ def test_mutationProof_verifiedOnlyWhenHashAndCountsUnchanged(tmp_path: Path) ->
 
     测试对象：build_production_mutation_proof。
     目的/目标：AC-MUT-001 / R3Y-MUT-PROOF-001 — 收紧 proof_status 语义。
+    验证点：稳定 DB 快照返回 proof_status=VERIFIED 且两布尔均为 True。
+    失败含义：假 VERIFIED（AUD-04）回归，closeout 可能误标 pass。
     """
     import duckdb
 
@@ -930,6 +1081,8 @@ def test_mutationProof_mutationDetectedWhenKeyTableRowsChange(tmp_path: Path) ->
 
     测试对象：build_production_mutation_proof。
     目的/目标：AC-MUT-001 — KEY 表变异 → MUTATION_DETECTED。
+    验证点：INSERT 后 proof_status=MUTATION_DETECTED。
+    失败含义：生产 KEY 表被写却标 VERIFIED，mutation 旁路。
     """
     import duckdb
 
@@ -977,6 +1130,8 @@ def test_mutationProof_mutationDetectedWhenNonKeyTableRowCountChanges(
 
     测试对象：build_production_mutation_proof。
     目的/目标：AC-MUT-001 — 非 KEY 表行数变 → MUTATION_DETECTED。
+    验证点：stg 表 INSERT 后 proof_status=MUTATION_DETECTED。
+    失败含义：非 KEY 表变异被忽略，AUDIT.plan A8 对抗测失效。
     """
     import duckdb
 
@@ -1020,6 +1175,8 @@ def test_mutationProof_inconclusiveWhenHashChangesKeyCountUnchanged(
 
     测试对象：build_production_mutation_proof。
     目的/目标：AC-MUT-001 — 不得将 hash-only 漂移标为 VERIFIED。
+    验证点：字节扰动后 proof_status=INCONCLUSIVE 且 row_counts_unchanged=True。
+    失败含义：hash-only 漂移被标 VERIFIED，用户误以为生产库未变。
     """
     import duckdb
 
@@ -1053,11 +1210,54 @@ def test_mutationProof_inconclusiveWhenHashChangesKeyCountUnchanged(
     assert proof["row_counts_unchanged"] is True
 
 
+def test_stagedPilotV2_writeNoMutationProofV2_writesMarkdown(tmp_path: Path) -> None:
+    """覆盖范围：no_mutation_proof_v2.md 工件生成。
+
+    测试对象：write_no_mutation_proof_v2。
+    目的/目标：AC-SP2-08 / OOF-A8-02 — markdown 含 proof_status 与 R3Y 段。
+    验证点：md 文件存在且正文含 proof_status 与 R3Y-MUT-PROOF-001。
+    失败含义：mutation proof 工件回归丢失，ops 审计无 markdown 锚点。
+    """
+    from backend.app.ops.staged_pilot import NO_MUTATION_V2_MD, write_no_mutation_proof_v2
+
+    proof = write_no_mutation_proof_v2(evidence_dir=tmp_path)
+    md_path = tmp_path / NO_MUTATION_V2_MD
+    assert md_path.is_file()
+    text = md_path.read_text(encoding="utf-8")
+    assert "proof_status" in text
+    assert str(proof.get("proof_status")) in text
+    assert "R3Y-MUT-PROOF-001" in text
+
+
+def test_stagedPilotV2_runFull_writesResourceGuardCaps(tmp_path: Path) -> None:
+    """覆盖范围：v2 全链路写出 resource_guard_caps.json。
+
+    测试对象：run_full_staged_pilot_v2。
+    目的/目标：OOF-P2/P5 — 对齐 v1 ResourceGuard 运行时证据。
+    验证点：resource_guard_caps.json 含 decision 与 caps.max_network_calls_per_run=25。
+    失败含义：v2 扩 live 样本前无 guard 快照，ops 不可追溯 HARD_STOP。
+    """
+    from backend.app.ops.staged_pilot import (
+        MAX_NETWORK_CALLS_V2,
+        RESOURCE_GUARD_JSON,
+        run_full_staged_pilot_v2,
+    )
+
+    run_full_staged_pilot_v2(evidence_dir=tmp_path, skip_live_fetch=True)
+    guard_path = tmp_path / RESOURCE_GUARD_JSON
+    assert guard_path.is_file()
+    guard = json.loads(guard_path.read_text(encoding="utf-8"))
+    assert "decision" in guard
+    assert guard["caps"]["max_network_calls_per_run"] == MAX_NETWORK_CALLS_V2
+
+
 def test_stagedPilotV2_closeoutRequiresHashAndRowCountsUnchanged(tmp_path: Path) -> None:
     """覆盖范围：closeout AUD-08 hash∧counts gate。
 
     测试对象：build_pilot_v2_closeout。
     目的/目标：AC-MUT-001 / AUD-08 — closeout 须 db_hash_unchanged∧row_counts_unchanged。
+    验证点：VERIFIED+双 True → closeout_pass；MUTATION_DETECTED → false。
+    失败含义：closeout 仅凭 proof_status 通过，AUD-08 假安全回归。
     """
     from backend.app.ops.staged_pilot import build_pilot_v2_closeout
 
@@ -1089,6 +1289,8 @@ def test_stagedPilotV2_closeoutMatrix_allSourcesClassified(tmp_path: Path) -> No
 
     测试对象：build_pilot_v2_closeout。
     目的/目标：AC-SP2-09 — 每源 expand/retry/re-defer/block 分类完整。
+    验证点：三源均在 per_source 且 production_live_readiness_claim=false。
+    失败含义：某源缺分类或误声称 production-live ready。
     """
     from backend.app.ops.staged_pilot import (
         CLOSEOUT_V2_JSON,

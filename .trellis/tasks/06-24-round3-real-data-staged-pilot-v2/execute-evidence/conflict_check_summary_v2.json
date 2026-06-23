@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-23T19:11:23Z",
+  "generated_at": "2026-06-23T19:23:49Z",
   "pilot_id": "r3y-staged-pilot-v2-20260624",
   "policy_ref": "docs/modules/data_validation_and_conflict.md",
   "reason": "staged raw-only micro-fetch uses one authorized source per request envelope; multi-source conflict compare deferred until sample expansion",

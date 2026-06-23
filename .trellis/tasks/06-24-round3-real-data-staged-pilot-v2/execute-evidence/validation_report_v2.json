@@ -15,7 +15,7 @@
     "source_conflict_rules": "specs/contracts/source_conflict_rules.yaml",
     "source_conflict_validator": "backend.app.validators.source_conflict.SourceConflictValidator"
   },
-  "generated_at": "2026-06-23T19:11:23Z",
+  "generated_at": "2026-06-23T19:23:49Z",
   "pilot_id": "r3y-staged-pilot-v2-20260624",
   "production_mutation_proof": {
     "after_all_table_counts": {},
