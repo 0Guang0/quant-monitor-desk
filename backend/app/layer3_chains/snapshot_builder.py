@@ -208,7 +208,6 @@ def _bar_for_trade_date(
                     raise Layer3SnapshotError(
                         f"bar for {ticker!r} missing required field {key!r}"
                     )
-            _parse_bar_close(bar["close"], ticker=ticker)
             return bar
     raise Layer3SnapshotError(f"no L5 bar for {ticker!r} on trade_date={trade_date}")
 

@@ -85,5 +85,5 @@
 1. **YAGNI** — 未加 ResourceGuard stub、bar 索引、manifest 缓存；仅 UF-1/OOF-7 等廉价共享 guard。
 2. **复用** — `_parse_bar_close`、`_resolve_l5_bundle_root` 单点；lineage 仍薄封装 L2 模式。
 3. **无新依赖** — 仅 stdlib + 既有 yaml/config。
-4. **最小 diff** — 测试 mutation 改 copy 至 `.audit-sandbox/layer3_l5_mutations/` 以兼容 UF-1。
+4. **最小 diff** — 测试 mutation 改 copy 至 `.audit-sandbox/layer3_l5_mutations/` 以兼容 UF-1；`_parse_bar_close` 仅在 `build()` 调用一次（不在 `_bar_for_trade_date` 重复解析）。
 5. **天花板已标注** — event_only provenance、YAML 体积、线性 bar 扫、manifest 重读、路径 redaction 均有 `ponytail:` 注释与本文 defer 行。
