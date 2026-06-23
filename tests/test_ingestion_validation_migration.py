@@ -1,4 +1,8 @@
-"""Tests for migration 005 ingestion validation tables (Batch C §8.1)."""
+"""数据库迁移 005：摄取校验相关表测试。
+
+覆盖范围：校验报告、源冲突、人工复核队列、质量日志等表
+是否建好、字段约束是否生效、重复执行迁移是否安全。
+"""
 
 from __future__ import annotations
 
@@ -27,6 +31,12 @@ def _fresh_con(tmp_path: Path) -> duckdb.DuckDBPyConnection:
     ["validation_report", "data_quality_log", "source_conflict", "manual_review_queue"],
 )
 def test_initDb_createsValidationTables(tmp_path: Path, table_name: str) -> None:
+    """覆盖范围：全新数据库执行迁移后，摄取校验相关表是否建好
+    测试对象：migration 005 创建的 {table_name} 表
+    目的/目标：校验报告、源冲突、人工复核等核心表必须随迁移一并落地
+    验证点：information_schema 能查到对应 table_name
+    失败含义：校验表缺失，后续写入门禁与 WriteManager 无表可写
+    """
     con = _fresh_con(tmp_path)
     rows = con.execute(
         "SELECT table_name FROM information_schema.tables WHERE table_name = ?",
@@ -37,6 +47,12 @@ def test_initDb_createsValidationTables(tmp_path: Path, table_name: str) -> None
 
 
 def test_initDb_runTwice_isIdempotent(tmp_path: Path) -> None:
+    """覆盖范围：对同一数据库重复执行迁移是否安全、不重复建表
+    测试对象：apply_migrations
+    目的/目标：已应用过的迁移不得再次执行或重复登记版本记录
+    验证点：第二次返回空列表；schema_version 中 005 仅一条记录
+    失败含义：重复迁移破坏版本表或重复执行 DDL，升级路径不可信
+    """
     con = _fresh_con(tmp_path)
     # second apply must be a no-op (already-applied versions skipped)
     second = apply_migrations(con)
@@ -50,6 +66,12 @@ def test_initDb_runTwice_isIdempotent(tmp_path: Path) -> None:
 
 
 def test_initDb_doesNotModifyMigration004Checksum(tmp_path: Path) -> None:
+    """覆盖范围：应用新迁移后，旧迁移的校验和记录是否仍有效
+    测试对象：verify_applied_checksums 与 schema_version
+    目的/目标：新迁移不得篡改已应用迁移的校验和，保证迁移链完整
+    验证点：verify 不抛错；004 与 005 均在 schema_version 中
+    失败含义：迁移链完整性校验失败，生产库升级可能静默漂移
+    """
     con = _fresh_con(tmp_path)
     # 004 must be applied and unchanged; verify_applied_checksums must not raise
     verify_applied_checksums(con)
@@ -64,7 +86,12 @@ def test_initDb_doesNotModifyMigration004Checksum(tmp_path: Path) -> None:
 
 
 def test_validationReport_requiredFieldsEnforced(tmp_path: Path) -> None:
-    """status enum guard + NOT NULL on key columns enforced at DB layer."""
+    """覆盖范围：校验报告表对必填字段的数据库层约束
+    测试对象：validation_report 表 DDL
+    目的/目标：只填主键、缺其他必填列的插入必须在数据库层被拒绝
+    验证点：pytest.raises(duckdb.Error)
+    失败含义：残缺校验报告能入库，写入门禁失去数据库层兜底
+    """
     con = _fresh_con(tmp_path)
     with pytest.raises(duckdb.Error):
         con.execute("INSERT INTO validation_report (validation_report_id) VALUES (?)", ["x"])
@@ -72,7 +99,12 @@ def test_validationReport_requiredFieldsEnforced(tmp_path: Path) -> None:
 
 
 def test_validationReport_statusCheck_rejectsInvalidStatus(tmp_path: Path) -> None:
-    """DB CHECK must reject unknown status values (not PASSED/WARNING/FAILED)."""
+    """覆盖范围：校验报告状态字段只允许约定枚举值
+    测试对象：validation_report 表 status 列 CHECK 约束
+    目的/目标：非法状态值必须在写入数据库时被拒绝，不能悄悄入库
+    验证点：status 为 BOGUS 的 INSERT 触发 duckdb.Error
+    失败含义：非法状态入库，下游写入门禁无法按契约分支处理
+    """
     con = _fresh_con(tmp_path)
     with pytest.raises(duckdb.Error):
         con.execute(
@@ -103,6 +135,12 @@ def test_validationReport_statusCheck_rejectsInvalidStatus(tmp_path: Path) -> No
 
 
 def test_validationReport_validRows_accepted(tmp_path: Path) -> None:
+    """覆盖范围：合法校验报告（通过、警告、失败三种状态）能否正常写入
+    测试对象：validation_report INSERT
+    目的/目标：契约允许的三种状态及对应写入许可组合都应被数据库接受
+    验证点：写入 3 行后 COUNT(*) == 3
+    失败含义：合法校验报告无法持久化，正式提交路径永远缺报告
+    """
     con = _fresh_con(tmp_path)
     for status, can_write, needs_review in [
         ("PASSED", True, False),
@@ -142,6 +180,12 @@ def test_validationReport_validRows_accepted(tmp_path: Path) -> None:
 
 
 def test_sourceConflict_requiredFieldsEnforced(tmp_path: Path) -> None:
+    """覆盖范围：源冲突表对必填字段的数据库层约束
+    测试对象：source_conflict 表 DDL
+    目的/目标：只填冲突编号、缺其他必填列的插入必须失败
+    验证点：pytest.raises(duckdb.Error)
+    失败含义：残缺冲突记录入库，写入门禁无法判断冲突严重程度
+    """
     con = _fresh_con(tmp_path)
     with pytest.raises(duckdb.Error):
         con.execute("INSERT INTO source_conflict (conflict_id) VALUES (?)", ["c-1"])
@@ -149,6 +193,12 @@ def test_sourceConflict_requiredFieldsEnforced(tmp_path: Path) -> None:
 
 
 def test_sourceConflict_validRow_accepted(tmp_path: Path) -> None:
+    """覆盖范围：完整的多源冲突记录能否正常写入数据库
+    测试对象：source_conflict INSERT
+    目的/目标：含严重级别标记的合法冲突行应成功持久化，供后续门禁读取
+    验证点：写入后 COUNT(*) == 1
+    失败含义：合法冲突无法记录，多源对账审计链断裂
+    """
     con = _fresh_con(tmp_path)
     con.execute(
         """
@@ -181,6 +231,12 @@ def test_sourceConflict_validRow_accepted(tmp_path: Path) -> None:
 
 
 def test_sourceConflict_severityCheck_rejectsInvalid(tmp_path: Path) -> None:
+    """覆盖范围：源冲突严重程度字段只允许约定枚举值
+    测试对象：source_conflict severity 列 CHECK 约束
+    目的/目标：非法严重程度值必须在数据库层被拒绝
+    验证点：severity 为 totally_wrong 的 INSERT 触发 duckdb.Error
+    失败含义：任意严重程度都能入库，严重冲突写入门禁失效
+    """
     con = _fresh_con(tmp_path)
     with pytest.raises(duckdb.Error):
         con.execute(
@@ -211,6 +267,12 @@ def test_sourceConflict_severityCheck_rejectsInvalid(tmp_path: Path) -> None:
 
 
 def test_manualReviewQueue_requiredFieldsEnforced(tmp_path: Path) -> None:
+    """覆盖范围：人工复核队列表对必填字段的数据库层约束
+    测试对象：manual_review_queue 表 DDL
+    目的/目标：只填复核编号、缺其他必填列的插入必须失败
+    验证点：pytest.raises(duckdb.Error)
+    失败含义：残缺复核队列项入库，运维无法追踪待审对象
+    """
     con = _fresh_con(tmp_path)
     with pytest.raises(duckdb.Error):
         con.execute("INSERT INTO manual_review_queue (review_id) VALUES (?)", ["mr-1"])
@@ -218,6 +280,12 @@ def test_manualReviewQueue_requiredFieldsEnforced(tmp_path: Path) -> None:
 
 
 def test_manualReviewQueue_sourceObjectTypeCheck(tmp_path: Path) -> None:
+    """覆盖范围：人工复核队列的对象类型字段只允许约定枚举值
+    测试对象：manual_review_queue source_object_type 列 CHECK 约束
+    目的/目标：非法对象类型必须在写入数据库时被拒绝
+    验证点：source_object_type 为 not_a_valid_type 的 INSERT 触发 duckdb.Error
+    失败含义：任意对象类型入库，复核界面与路由无法正确分类
+    """
     con = _fresh_con(tmp_path)
     with pytest.raises(duckdb.Error):
         con.execute(
@@ -232,6 +300,12 @@ def test_manualReviewQueue_sourceObjectTypeCheck(tmp_path: Path) -> None:
 
 
 def test_manualReviewQueue_validRow_accepted(tmp_path: Path) -> None:
+    """覆盖范围：合法的人工复核队列项能否正常写入数据库
+    测试对象：manual_review_queue INSERT
+    目的/目标：对象类型为冲突、字段完整的复核项应成功持久化
+    验证点：写入后 COUNT(*) == 1
+    失败含义：合法复核队列项无法创建，需人工复核的流程悬空
+    """
     con = _fresh_con(tmp_path)
     con.execute(
         """
@@ -250,6 +324,12 @@ def test_manualReviewQueue_validRow_accepted(tmp_path: Path) -> None:
 
 
 def test_dataQualityLog_validRow_accepted(tmp_path: Path) -> None:
+    """覆盖范围：数据质量明细日志能否正常写入数据库
+    测试对象：data_quality_log INSERT
+    目的/目标：关联校验报告的质量发现明细应成功持久化，供审计追溯
+    验证点：写入后 COUNT(*) == 1
+    失败含义：质量发现无法落库，校验报告缺少明细追溯
+    """
     con = _fresh_con(tmp_path)
     con.execute(
         """
@@ -279,6 +359,12 @@ def test_dataQualityLog_validRow_accepted(tmp_path: Path) -> None:
 
 
 def test_initDb_prodPath_appliesMigration005(tmp_path: Path) -> None:
+    """覆盖范围：用生产同款连接方式初始化数据库时，校验迁移是否生效
+    测试对象：ConnectionManager 与 apply_migrations
+    目的/目标：与生产一致的建库路径也必须应用 005 校验迁移
+    验证点：schema_version 含 005_ingestion_validation
+    失败含义：生产初始化路径漏掉校验迁移，生产库缺校验表
+    """
     db = tmp_path / "prod.duckdb"
     cm = ConnectionManager(db_path=db)
     with cm.writer() as con:

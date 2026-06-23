@@ -1,4 +1,4 @@
-"""Round2 ABCD adversarial audit remediation tests."""
+"""Round2 ABCD 对抗审计修复回归：血缘持久化、DB 约束与编排事件。"""
 
 from __future__ import annotations
 
@@ -35,6 +35,12 @@ def _migrated_cm(tmp_path: Path) -> ConnectionManager:
 def test_validationReport_persistsRuleVersionAndFetchLineage(
     tmp_path: Path, registry_yaml_fixture: Path, monkeypatch
 ) -> None:
+    """覆盖范围：增量 job 完成后 validation_report 血缘字段
+    测试对象：validation_report 表 rule_version、source_fetch_ids_json
+    目的/目标：校验报告须持久化规则版本与 fetch_log 血缘 ID
+    验证点：rule_set_id/rule_version=p0_round_1；fetch_ids 为非空列表
+    失败含义：校验报告无法追溯到具体 fetch，审计链断裂
+    """
     from backend.app.core.resource_guard import Decision, ResourceGuard
 
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
@@ -67,6 +73,12 @@ def test_validationReport_persistsRuleVersionAndFetchLineage(
 def test_sourceConflict_persistsToleranceRuleVersion(
     tmp_path: Path, registry_yaml_fixture: Path, monkeypatch
 ) -> None:
+    """覆盖范围：严重源冲突写入 source_conflict 表
+    测试对象：source_conflict.tolerance_rule_set_id、rule_version
+    目的/目标：冲突记录须携带容忍规则集 ID 与版本
+    验证点：两字段均为 p0_round_1
+    失败含义：冲突无法关联当时生效的容忍规则，复核无依据
+    """
     from backend.app.core.resource_guard import Decision, ResourceGuard
 
     class SevereConflictAdapter(BatchDIncrementalAdapter):
@@ -102,6 +114,12 @@ def test_sourceConflict_persistsToleranceRuleVersion(
 
 
 def test_dbRejectsInvalidFetchStatus(tmp_path: Path) -> None:
+    """覆盖范围：fetch_log.status CHECK 约束
+    测试对象：INSERT fetch_log 非法 status
+    目的/目标：DB 层须拒绝未定义的 fetch 状态枚举
+    验证点：插入 NOT_A_STATUS 抛出 ConstraintException
+    失败含义：脏 fetch 状态可入库，与 FetchResult 合约不一致
+    """
     cm = _migrated_cm(tmp_path)
     with cm.writer() as con, pytest.raises(duckdb.ConstraintException):
         con.execute(
@@ -115,6 +133,12 @@ def test_dbRejectsInvalidFetchStatus(tmp_path: Path) -> None:
 
 
 def test_dbRejectsInvalidManualReviewStatus(tmp_path: Path) -> None:
+    """覆盖范围：manual_review_queue.status CHECK 约束
+    测试对象：INSERT manual_review_queue 非法 status
+    目的/目标：人工审核队列状态须在 DB 枚举内
+    验证点：插入 INVALID_STATUS 抛出 ConstraintException
+    失败含义：非法审核状态可存在，工作流状态机失真
+    """
     cm = _migrated_cm(tmp_path)
     with cm.writer() as con, pytest.raises(duckdb.ConstraintException):
         con.execute(
@@ -128,6 +152,12 @@ def test_dbRejectsInvalidManualReviewStatus(tmp_path: Path) -> None:
 
 
 def test_backfillShard_successPath_validatesAndWritesClean(tmp_path: Path, monkeypatch) -> None:
+    """覆盖范围：backfill 分片成功路径
+    测试对象：DataSyncOrchestrator.run_backfill
+    目的/目标：回填 job 应完成校验并写入 clean 与 validation_report
+    验证点：至少一片 COMPLETED；clean 与 report 行数 ≥1
+    失败含义：backfill 主路径不通，历史数据无法补齐
+    """
     from backend.app.core.resource_guard import Decision, ResourceGuard
     from tests.test_sync_orchestrator import _BackfillCountAdapter
 
@@ -166,6 +196,12 @@ def test_backfillShard_successPath_validatesAndWritesClean(tmp_path: Path, monke
 
 
 def test_runReconcile_refetchStillDiff_entersManualReview(tmp_path: Path) -> None:
+    """覆盖范围：reconcile 重拉后仍不一致
+    测试对象：DataSyncOrchestrator.run_reconcile + StillDiffAdapter
+    目的/目标：refetch 后双源仍冲突应转人工审核
+    验证点：result.status == MANUAL_REVIEW_REQUIRED
+    失败含义：无法自动解决的冲突被误标完成，数据争议未上报
+    """
     from backend.app.datasources.fetch_result import FetchResult
 
     class StillDiffAdapter:
@@ -239,6 +275,12 @@ def test_runReconcile_refetchStillDiff_entersManualReview(tmp_path: Path) -> Non
 
 
 def test_runReconcile_refetchMatches_resolvesByRefetch(tmp_path: Path) -> None:
+    """覆盖范围：reconcile 重拉后双源一致
+    测试对象：run_reconcile + MatchAdapter
+    目的/目标：refetch 证实一致时应 COMPLETED 并 RESOLVED_BY_REFETCH
+    验证点：result.status=COMPLETED；source_conflict.reconcile_status=RESOLVED_BY_REFETCH
+    失败含义：可自动消解的冲突仍挂起，人工队列膨胀
+    """
     from backend.app.datasources.fetch_result import FetchResult
 
     class MatchAdapter:
@@ -318,6 +360,12 @@ def test_runReconcile_refetchMatches_resolvesByRefetch(tmp_path: Path) -> None:
 
 
 def test_jobEventLog_payloadSchema_isMachineReadable(tmp_path: Path, monkeypatch) -> None:
+    """覆盖范围：job_event_log.payload_json 可机读 schema
+    测试对象：parse_event_payload + job_event_log
+    目的/目标：增量 job 事件 payload 须符合 SCHEMA_KEYS 约定
+    验证点：每条非空 payload 解析为 dict 且含 schema 键之一
+    失败含义：事件 payload 不可机器解析，编排可观测性丧失
+    """
     from backend.app.core.resource_guard import Decision, ResourceGuard
 
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
@@ -345,6 +393,12 @@ def test_jobEventLog_payloadSchema_isMachineReadable(tmp_path: Path, monkeypatch
 
 
 def test_partialSuccess_eachItemWritesAuditEvent(tmp_path: Path, monkeypatch) -> None:
+    """覆盖范围：backfill 多分片逐项审计事件
+    测试对象：job_event_log 带 task_id 的事件
+    目的/目标：partial success 时每个分片/task 须写审计事件
+    验证点：events ≥3；每条 payload 含 task_id 或 decision
+    失败含义：分片级进度不可追溯，长跑 backfill 黑盒
+    """
     from backend.app.core.resource_guard import Decision, ResourceGuard
     from tests.test_sync_orchestrator import _BackfillCountAdapter
 
@@ -385,6 +439,12 @@ def test_partialSuccess_eachItemWritesAuditEvent(tmp_path: Path, monkeypatch) ->
 
 
 def test_allowedDomains_dbLoaderRoundTrip(registry_yaml_fixture: Path, tmp_path: Path) -> None:
+    """覆盖范围：SourceRegistry DB 同步 allowed_domains 往返
+    测试对象：sync_to_db + get('baostock')
+    目的/目标：DB 列 allowed_domain 与 allowed_domains_json 须与内存 registry 一致
+    验证点：两 JSON 列相等；与 rec.allowed_domains 集合一致
+    失败含义：DB 与 YAML registry 域列表分叉，路由用错域
+    """
     cm = _migrated_cm(tmp_path)
     reg = SourceRegistry(registry_yaml_fixture)
     reg.load()
@@ -405,6 +465,12 @@ def test_allowedDomains_dbLoaderRoundTrip(registry_yaml_fixture: Path, tmp_path:
 
 
 def test_dataQualityLog_persistsRuleVersion(tmp_path: Path) -> None:
+    """覆盖范围：data_quality_log.rule_version 持久化
+    测试对象：DataQualityValidator.validate_table → data_quality_log
+    目的/目标：质量日志须记录当时规则版本
+    验证点：data_quality_log.rule_version == p0_round_1
+    失败含义：质量失败无法关联规则版本，审计复核无据
+    """
     cm = _migrated_cm(tmp_path)
     validator = DataQualityValidator()
     with cm.writer() as con:
@@ -457,6 +523,12 @@ def test_dataQualityLog_persistsRuleVersion(tmp_path: Path) -> None:
 
 
 def test_runReconcile_refetchFails_entersManualReview(tmp_path: Path) -> None:
+    """覆盖范围：reconcile 重拉 fetch 失败
+    测试对象：run_reconcile + FailFetchAdapter（NETWORK_ERROR）
+    目的/目标：refetch 失败不得假装消解，应转人工审核
+    验证点：result.status == MANUAL_REVIEW_REQUIRED
+    失败含义：网络失败被忽略，冲突长期处于 OPEN
+    """
     from backend.app.datasources.fetch_result import FetchResult
 
     class FailFetchAdapter:
@@ -508,6 +580,12 @@ def test_runReconcile_refetchFails_entersManualReview(tmp_path: Path) -> None:
 
 
 def test_eventPayload_parseMalformed_returnsParseError() -> None:
+    """覆盖范围：parse_event_payload 畸形 JSON
+    测试对象：parse_event_payload('{not-json')
+    目的/目标：损坏 payload 须返回可识别的 parse_failed 结构
+    验证点：payload_parse_failed(payload) 为真
+    失败含义：坏 JSON 被当空 dict，事件消费方静默忽略错误
+    """
     from backend.app.sync.event_payload import parse_event_payload, payload_parse_failed
 
     payload = parse_event_payload("{not-json")
@@ -517,6 +595,12 @@ def test_eventPayload_parseMalformed_returnsParseError() -> None:
 def test_incrementalJob_emitsItemSuccessEvent(
     tmp_path: Path, registry_yaml_fixture: Path, monkeypatch
 ) -> None:
+    """覆盖范围：增量 job ITEM_SUCCESS 事件
+    测试对象：job_event_log event_type=ITEM_SUCCESS
+    目的/目标：成功处理单项后须发 ITEM_SUCCESS 审计事件
+    验证点：存在 ITEM_SUCCESS 行且 payload_json 非空
+    失败含义：单项成功无事件，编排进度不可观测
+    """
     from backend.app.core.resource_guard import Decision, ResourceGuard
 
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
@@ -539,6 +623,12 @@ def test_incrementalJob_emitsItemSuccessEvent(
 
 
 def test_backfill_requiresCleanTable(tmp_path: Path, monkeypatch) -> None:
+    """覆盖范围：run_backfill 必填 clean_table 参数
+    测试对象：DataSyncOrchestrator.run_backfill 缺 clean_table
+    目的/目标：backfill 须显式指定目标 clean 表，禁止隐式默认
+    验证点：省略 clean_table 抛出 TypeError
+    失败含义：backfill 可能写到错误表或静默失败
+    """
     from datetime import date
 
     from backend.app.core.resource_guard import Decision, ResourceGuard

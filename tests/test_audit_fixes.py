@@ -1,4 +1,4 @@
-"""Regression tests for multi-dimension audit fixes."""
+"""多维度审计修复回归：写入事务、API 限额、资源守护与连接调优。"""
 
 from __future__ import annotations
 
@@ -25,6 +25,12 @@ def _cm(tmp_path: Path) -> ConnectionManager:
 
 
 def test_writeManager_defaultTransaction_withDbValidationGate_succeeds(tmp_path: Path) -> None:
+    """覆盖范围：WriteManager 在外部事务中写入 + DbValidationGate
+    测试对象：WriteManager.write(own_transaction=False)
+    目的/目标：审计修复后，共享数据库连接的事务内写入应成功并留下审计记录
+    验证点：status=SUCCESS；clean 1 行；write_audit_log 含 primary/market_bar_1d/system
+    失败含义：外部事务写入路径断裂，编排层无法与校验同事务提交
+    """
     cm = _cm(tmp_path)
     with cm.writer() as con:
         con.execute(
@@ -91,6 +97,12 @@ def test_writeManager_defaultTransaction_withDbValidationGate_succeeds(tmp_path:
 
 
 def test_writeManager_ownTransactionDefault_withDbValidationGate_succeeds(tmp_path: Path) -> None:
+    """覆盖范围：WriteManager 默认自管事务写入
+    测试对象：WriteManager.write() 不传 con/own_transaction
+    目的/目标：写入管理器自行开启事务时，在校验门控下也应能成功落库
+    验证点：status=SUCCESS；reader 侧 clean 表 1 行
+    失败含义：默认事务模式写入失败，命令行与编排独立调用无法写入正式表
+    """
     cm = _cm(tmp_path)
     with cm.writer() as con:
         con.execute(
@@ -153,12 +165,24 @@ def test_writeManager_ownTransactionDefault_withDbValidationGate_succeeds(tmp_pa
 
 
 def test_syncJob_invalidStatus_rejectedByDbCheck(tmp_path: Path) -> None:
+    """覆盖范围：data_sync_job.status 数据库 CHECK 约束
+    测试对象：DuckDB INSERT 非法 status
+    目的/目标：同步 job 状态机须在 DB 层拒绝未知枚举值
+    验证点：插入 BROKEN 抛出 duckdb.ConstraintException
+    失败含义：脏状态可入库，job 状态追踪与编排语义不一致
+    """
     cm = _cm(tmp_path)
     with cm.writer() as con, pytest.raises(duckdb.ConstraintException):
         con.execute("INSERT INTO data_sync_job (job_id, status) VALUES ('bad-job', 'BROKEN')")
 
 
 def test_apiLimits_enforcesMaxPageSize() -> None:
+    """覆盖范围：load_api_limits 与 clamp_* 辅助函数
+    测试对象：clamp_page_size、clamp_agent_rows
+    目的/目标：单次查询返回的行数不得超过安全合约上限
+    验证点：max_page_size=1000；超限时截断且 truncated=True
+    失败含义：接口可能一次返回过多数据，拖垮服务或占满内存
+    """
     limits = load_api_limits()
     assert limits["max_page_size"] == 1000
     assert clamp_page_size(999) == 999
@@ -172,6 +196,12 @@ def test_apiLimits_enforcesMaxPageSize() -> None:
 
 
 def test_resourceGuard_reusesSnapshotWithinTtl(tmp_path: Path) -> None:
+    """覆盖范围：ResourceGuard.snapshot TTL 缓存
+    测试对象：ResourceGuard.snapshot / force_refresh
+    目的/目标：短时间内重复读取资源快照应复用缓存，强制刷新才重新计算
+    验证点：第二次 is 第一次；force_refresh 后对象不同；_compute_snapshot 仅多调 1 次
+    失败含义：每次 check 都全量扫描磁盘，资源探针性能退化
+    """
     guard = ResourceGuard()
     first = guard.snapshot(force_refresh=True)
     with patch.object(guard, "_compute_snapshot", wraps=guard._compute_snapshot) as compute:
@@ -183,6 +213,12 @@ def test_resourceGuard_reusesSnapshotWithinTtl(tmp_path: Path) -> None:
 
 
 def test_connection_lowMemoryForcesEcoThreads(tmp_path: Path, monkeypatch) -> None:
+    """覆盖范围：ConnectionManager 低可用内存时的 DuckDB 线程/内存限制
+    测试对象：ConnectionManager eco profile 连接参数
+    目的/目标：系统可用内存不足时须降为单线程并收紧 memory_limit
+    验证点：threads=1；memory_limit 含 732/768/767 之一
+    失败含义：低内存环境仍多线程大缓冲，进程可能被系统强制终止
+    """
     db = tmp_path / "lowmem.duckdb"
     with duckdb.connect(str(db)) as con:
         apply_migrations(con)
@@ -205,6 +241,12 @@ def test_connection_lowMemoryForcesEcoThreads(tmp_path: Path, monkeypatch) -> No
 
 
 def test_resourceGuard_largeCacheDir_completesWithinReasonableTime(tmp_path: Path) -> None:
+    """覆盖范围：大 cache 目录下 ResourceGuard.check 性能
+    测试对象：ResourceGuard.check
+    目的/目标：数百小文件 cache 扫描须在合理时间内完成且返回合法决策
+    验证点：decision 在 OK/WARN/PAUSE/HARD_STOP；elapsed < 5s
+    失败含义：cache 扫描过慢阻塞同步编排，或决策枚举异常
+    """
     import time
 
     cache = tmp_path / "data" / "cache" / "many_files"

@@ -1,4 +1,8 @@
-"""确保未闭合项不会在 Plan 阶段因只读原始任务卡而遗漏。"""
+"""未闭合项任务覆盖索引门禁测试。
+
+覆盖范围：UNRESOLVED_ITEM_TASK_COVERAGE 是否为 Plan 必读、是否列出全部当前 OPEN/DEFERRED ID、
+各任务卡是否交叉引用映射的未闭合项，防止只读单卡而遗漏开放债。
+"""
 
 from __future__ import annotations
 
@@ -200,6 +204,12 @@ def _read(path: Path) -> str:
 
 
 def test_coverageIndex_isMandatoryPlanInput() -> None:
+    """覆盖范围：Plan 阶段是否把未闭合项覆盖索引列为必读输入
+    测试对象：docs/implementation_tasks/README.md 与 TASK_INPUT_CONTEXT_INDEX.md
+    目的/目标：做复杂任务 Plan 时不能只读单张任务卡而漏掉开放项
+    验证点：两份文档都提到 UNRESOLVED_ITEM_TASK_COVERAGE.md 且含 Plan 字样
+    失败含义：覆盖索引未入 Plan 必读，未闭合项可能在规划阶段被遗漏
+    """
     readme = _read(TASK_README)
     index = _read(TASK_INDEX)
 
@@ -209,15 +219,24 @@ def test_coverageIndex_isMandatoryPlanInput() -> None:
 
 
 def test_coverageIndex_mentionsEveryCurrentUnresolvedId() -> None:
+    """覆盖范围：覆盖索引是否列出当前全部未闭合项 ID
+    测试对象：UNRESOLVED_ITEM_TASK_COVERAGE.md 与 EXPECTED_UNRESOLVED_IDS 集合
+    目的/目标：每个已知 OPEN/DEFERRED 项在覆盖表里有对应行
+    验证点：EXPECTED_UNRESOLVED_IDS 中每个 item_id 都出现在 COVERAGE 正文
+    失败含义：有开放项未进覆盖索引，Plan 阶段无法追溯到责任任务卡
+    """
     text = _read(COVERAGE)
     missing = sorted(item_id for item_id in EXPECTED_UNRESOLVED_IDS if item_id not in text)
     assert not missing, f"unresolved IDs missing from coverage index: {missing}"
 
 
 def test_r3ySync001_closedInResolvedNotOpen() -> None:
-    """覆盖范围：R3Y-SYNC-001 registry 闭合（AA-03）。
-    测试对象：RESOLVED / UNRESOLVED / COVERAGE §4.5。
-    目的：adapter bypass 已登记 RESOLVED，不得仍为 UNRESOLVED OPEN 行。"""
+    """覆盖范围：R3Y-SYNC-001 adapter bypass 项的 registry 闭合状态
+    测试对象：RESOLVED_ISSUES_REGISTRY、UNRESOLVED_ISSUES_REGISTRY、COVERAGE §4.5
+    目的/目标：已闭合的 SYNC-001 不得仍出现在 UNRESOLVED 的 OPEN 行
+    验证点：R3Y-SYNC-001 在 RESOLVED 与 COVERAGE；UNRESOLVED 无 | R3Y-SYNC-001 | OPEN；COVERAGE 邻近文本含 CLOSED
+    失败含义：已修复项仍标 OPEN，会误导并行 slice 重复抢同一修复
+    """
     resolved = _read(RESOLVED)
     unresolved = _read(UNRESOLVED)
     coverage = _read(PROJECT_ROOT / "docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md")
@@ -230,9 +249,12 @@ def test_r3ySync001_closedInResolvedNotOpen() -> None:
 
 
 def test_r3yOpenItems_ownerBranchesInCoverageSection45() -> None:
-    """覆盖范围：R3Y OPEN 项 owner branch 映射（slice α2-5）。
-    测试对象：UNRESOLVED_ITEM_TASK_COVERAGE.md §4.5。
-    目的：OPEN R3Y 项须指向 fix α-1 / PROMPT_19 / β-2 / fix α-3 branch，防止并行 slice 抢 owner。"""
+    """覆盖范围：§4.5 中 R3Y 开放项的 owner 分支映射
+    测试对象：UNRESOLVED_ITEM_TASK_COVERAGE.md §4.5（Round 3 PROMPT_18 段）
+    目的/目标：并行 slice 能看清每项该由哪条分支负责
+    验证点：R3Y-MUT-PROOF-001→PROMPT_19；R3Y-STAGED-REG-001→β-2；R3Y-PROMPT15-EVID-001→fix/r3y-prompt15-evidence，均在 §4.5 出现
+    失败含义：owner 分支未登记，多 agent 可能同时改同一开放项
+    """
     text = _read(COVERAGE)
     section = text.split("## 4.5 Round 3 PROMPT_18", maxsplit=1)[1].split("## 5.", maxsplit=1)[0]
 
@@ -247,6 +269,12 @@ def test_r3yOpenItems_ownerBranchesInCoverageSection45() -> None:
 
 
 def test_taskCardsMentionMappedUnresolvedIds() -> None:
+    """覆盖范围：各任务卡是否提及映射表要求的未闭合项 ID
+    测试对象：TASK_CARD_EXPECTATIONS 中列出的 implementation_tasks/*.md
+    目的/目标：读单张任务卡时仍能看到相关开放项，不会以为范围已干净
+    验证点：每张卡正文包含其映射集合里全部 expected_ids；缺失则 assert not missing
+    失败含义：任务卡与开放项脱节，执行者可能 unaware 地踩到已知缺口
+    """
     missing: dict[str, list[str]] = {}
     for relative_path, expected_ids in TASK_CARD_EXPECTATIONS.items():
         path = PROJECT_ROOT / "docs/implementation_tasks" / relative_path

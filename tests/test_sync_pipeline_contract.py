@@ -1,4 +1,7 @@
-"""Pipeline seam contract tests (Round2 re-audit A7-02)."""
+"""同步校验与写入流水线接缝测试（Round2 审计 A7-02）。
+
+覆盖范围：staging 质量校验通过后才允许进入 clean 写入路径。
+"""
 
 from __future__ import annotations
 
@@ -11,7 +14,12 @@ from backend.app.validators.data_quality import DataQualityRequest
 
 
 def test_syncValidationPipeline_validateStaging_beforeWrite(tmp_path: Path) -> None:
-    """Validation pipeline must run before write pipeline on staging data."""
+    """覆盖范围：同步流水线中校验与写入的顺序
+    测试对象：SyncValidationPipeline.validate_staging 与 SyncWritePipeline
+    目的/目标：staging 里的数据要先过质量校验，通过后才允许写入 clean 正式表
+    验证点：can_write_clean 为 True；WritePipeline.write_clean 可调用
+    失败含义：校验和写入顺序乱了，脏数据可能直接进正式表
+    """
     db = tmp_path / "pipeline.duckdb"
     cm = ConnectionManager(db_path=db)
     with cm.writer() as con:

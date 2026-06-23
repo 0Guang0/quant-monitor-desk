@@ -1,4 +1,8 @@
-"""Document-only tests for Round 3 Batch 2.75 planning gates."""
+"""Batch 2.75 线上试点规划门禁文档对齐测试。
+
+覆盖范围：MIGRATION_MAP、ROUND3 地图、018B 任务卡、production_live_pilot_policy
+与三份 registry 是否一致反映 staged-only、fail-closed 与 sandbox-first 约束。
+"""
 
 from __future__ import annotations
 
@@ -26,6 +30,12 @@ def _read(path: Path) -> str:
 
 
 def test_projectMap_reflectsBatch275CurrentStatus() -> None:
+    """覆盖范围：MIGRATION_MAP 是否反映 Batch 2.75 当前规划状态
+    测试对象：MIGRATION_MAP.md
+    目的/目标：项目地图读者能看到 2.75 试点策略与任务卡入口
+    验证点：含 Last updated: 2026-06-23、Batch 2.75、production_live_pilot_policy.md、018B_production_live_pilot_gate.md、PILOT_FAIL_SOURCE
+    失败含义：迁移地图未更新 2.75，新人会按旧批次顺序理解优先级
+    """
     text = _read(MIGRATION_MAP)
     assert "Last updated: 2026-06-23" in text
     assert "Batch 2.75" in text
@@ -35,6 +45,12 @@ def test_projectMap_reflectsBatch275CurrentStatus() -> None:
 
 
 def test_round3Map_placesBatch275_beforeBatch3() -> None:
+    """覆盖范围：ROUND3 地图里 Batch 2.75 相对 2.5/3 的执行顺序与来源索引
+    测试对象：ROUND3_BATCH_IMPLEMENTATION_MAP.md §4.2 与 §5
+    目的/目标：2.75 live pilot 规划必须在 Batch 3 建模之前，且来源包写明 raw-only 约束
+    验证点：含 R3-B2.75-PROD-LIVE-PILOT 等；执行顺序 Batch 2.5 < 2.75 < 3；来源索引含 Batch 2.75、raw-only micro-fetch、no production DB mutation
+    失败含义：顺序或来源索引错误，可能先开 Batch 3 而跳过 pilot 门禁
+    """
     text = _read(ROUND3_MAP)
     assert "R3-B2.75-PROD-LIVE-PILOT" in text
     assert "018B_production_live_pilot_gate.md" in text
@@ -48,6 +64,12 @@ def test_round3Map_placesBatch275_beforeBatch3() -> None:
 
 
 def test_taskCard_requiresFailClosedAuthorizationAndSandboxFirst() -> None:
+    """覆盖范围：018B 任务卡对授权、sandbox 与默认参数的 fail-closed 要求
+    测试对象：018B_production_live_pilot_gate.md
+    目的/目标：任务卡明文禁止未授权 live、生产库写入与静默回退 fixture
+    验证点：required_tokens 全部出现；dry_run/raw_only/write_target/allow_clean_write 字段与对应默认值文案同在
+    失败含义：任务卡缺关键禁止项，执行者可能默认打开 live 或写生产库
+    """
     text = _read(TASK_CARD)
     required_tokens = [
         "does not enable any live source",
@@ -78,6 +100,12 @@ def test_taskCard_requiresFailClosedAuthorizationAndSandboxFirst() -> None:
 
 
 def test_policy_preservesSandboxAndRawOnlyControls() -> None:
+    """覆盖范围：production_live_pilot_policy 默认控制项与通过 2.75 的含义
+    测试对象：docs/quality/production_live_pilot_policy.md
+    目的/目标：策略表应保持线上源默认关闭、只写沙箱、禁止全市场拉取与静默回退
+    验证点：各 control/default 成对出现；含 Passing Batch 2.75 does not mean formal production data access is open
+    失败含义：策略文档弱化默认锁，读者可能以为过 2.75 即开放正式生产数据
+    """
     text = _read(POLICY)
     for control, default in (
         ("Live source access", "Disabled"),
@@ -94,6 +122,12 @@ def test_policy_preservesSandboxAndRawOnlyControls() -> None:
 
 
 def test_registriesKeepBatch25LiveFredDeferredToBatch275() -> None:
+    """覆盖范围：三份 registry 对 B2.5-O-05 与 Batch 2.75 项的交叉引用
+    测试对象：AUDIT_DEFERRED、UNRESOLVED、RESOLVED registries
+    目的/目标：live FRED 仍 deferred 到 2.75，且 2.75 规划/开放项状态一致
+    验证点：audit/unresolved 含 B2.5-O-05 与 018B；audit 含 production_live_pilot_policy、Not closed by Batch 2.75 Request 3、test_fred_staged_semantics；resolved 含 R3-B2.75-01、PILOT_FAIL_SOURCE；unresolved 含 R3-B2.75-REQ2-EM
+    失败含义：registry 叙事不一致，会误判 FRED live 或 Request 2 是否已闭合
+    """
     audit = _read(AUDIT_REGISTRY)
     unresolved = _read(UNRESOLVED_REGISTRY)
     resolved = _read(RESOLVED_REGISTRY)
@@ -109,6 +143,12 @@ def test_registriesKeepBatch25LiveFredDeferredToBatch275() -> None:
 
 
 def test_resolvedRegistry_recordsPlanningGateWithoutClosingLivePilot() -> None:
+    """覆盖范围：R3-B2.75-PLAN-01 规划门禁已 RESOLVED 但未闭合 live pilot
+    测试对象：AUDIT_DEFERRED、RESOLVED、UNRESOLVED registries
+    目的/目标：规划阶段通过不等于线上 live pilot 已关闭
+    验证点：PLAN-01 在 audit 与 resolved；resolved 写明 Does not close R3-B2.75-01 且仍含 PILOT_FAIL_SOURCE；REQ2-EM 仍在 unresolved；resolved 含 25 passed in current session
+    失败含义：把规划门禁误当 live pilot 闭合，会过早宣称 production-live 就绪
+    """
     audit = _read(AUDIT_REGISTRY)
     resolved = _read(RESOLVED_REGISTRY)
     unresolved = _read(UNRESOLVED_REGISTRY)
@@ -123,6 +163,12 @@ def test_resolvedRegistry_recordsPlanningGateWithoutClosingLivePilot() -> None:
 
 
 def test_docsIndexesExposeBatch275EntryPoints() -> None:
+    """覆盖范围：建模 README 与 docs INDEX 是否暴露 Batch 2.75 入口
+    测试对象：ROUND_3_MODELING_LAYERS/README.md、docs/INDEX.md
+    目的/目标：文档索引能一键找到 018B 策略与相邻任务卡
+    验证点：readme 含 018B、018A、018C、019；index 含 production_live_pilot_policy 与 018B
+    失败含义：索引缺入口，执行者要从散落路径手工搜 2.75 材料
+    """
     readme = _read(MODELING_README)
     index = _read(DOCS_INDEX)
     assert "018B_production_live_pilot_gate.md" in readme
@@ -134,10 +180,11 @@ def test_docsIndexesExposeBatch275EntryPoints() -> None:
 
 
 def test_policy_requiresStagedPilotConflictEvidenceChecklist() -> None:
-    """覆盖范围：production_live_pilot_policy 对 staged pilot 证据要求。
-
-    测试对象：production_live_pilot_policy.md §6。
-    目的/目标：ADV-POST14-A-012 — 策略要求 conflict report 或显式 no-conflict 证据。
+    """覆盖范围：策略 §6 对 staged pilot 冲突证据的检查清单
+    测试对象：production_live_pilot_policy.md §6
+    目的/目标：live pilot 证据必须来自冲突报告或显式无冲突记录，不能用 fixture 顶替
+    验证点：含 Conflict report or explicit no-conflict evidence；含 No fixture/staged fallback satisfies live pilot evidence
+    失败含义：策略未要求冲突证据，staged 数据可能被当成 live pilot 合格证明
     """
     text = _read(POLICY)
     assert "Conflict report or explicit no-conflict evidence" in text
@@ -145,10 +192,11 @@ def test_policy_requiresStagedPilotConflictEvidenceChecklist() -> None:
 
 
 def test_stagedPilotModuleAlignsWithProductionLivePolicyControls() -> None:
-    """覆盖范围：staged_pilot 模块与 Batch 2.75/14 策略控制对齐。
-
-    测试对象：backend.app.ops.staged_pilot 默认请求信封。
-    目的/目标：ADV-POST14-A-012 — raw_only/sandbox/allow_clean_write 默认 fail-closed。
+    """覆盖范围：staged_pilot 预批准请求信封是否与策略默认一致
+    测试对象：backend.app.ops.staged_pilot.approved_pilot_requests()
+    目的/目标：代码层预批准请求应与策略一致：只拉 raw、只写沙箱、默认 dry-run、禁止清洁写入
+    验证点：每个 request 满足 raw_only is True、write_target==sandbox、allow_clean_write is False、dry_run is True
+    失败含义：模块默认参数比策略松，试点可能悄悄允许写库或非 dry-run
     """
     from backend.app.ops.staged_pilot import approved_pilot_requests
 

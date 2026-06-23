@@ -32,10 +32,11 @@ def _approved_baostock_request():
 
 
 def test_stagedPilot_missingAuthorization_blocksBeforeFetch() -> None:
-    """覆盖范围：授权门禁在 fetch 之前 fail-closed。
-
-    测试对象：run_staged_pilot_raw_only。
-    目的/目标：缺失授权证据时必须阻止任何网络 fetch。
+    """覆盖范围：授权门禁在 fetch 之前 fail-closed
+    测试对象：run_staged_pilot_raw_only
+    目的/目标：缺失授权证据时须抛 StagedPilotAuthorizationError 且不得调用 fetch
+    验证点：pytest.raises(StagedPilotAuthorizationError)；fetch_called['value'] is False
+    失败含义：无授权仍发起网络 fetch，违反 prompt14 fail-closed
     """
     from backend.app.ops.staged_pilot import (
         StagedPilotAuthorizationError,
@@ -68,10 +69,11 @@ def test_stagedPilot_missingAuthorization_blocksBeforeFetch() -> None:
 
 
 def test_stagedPilot_disabledSource_blocksBeforeFetch() -> None:
-    """覆盖范围：禁用源在 fetch 前被拦截。
-
-    测试对象：validate_authorization / run_staged_pilot_raw_only。
-    目的/目标：tdx_pytdx 等禁用源不得发起 fetch。
+    """覆盖范围：禁用源在 fetch 前被拦截
+    测试对象：run_staged_pilot_raw_only（source_id=tdx_pytdx）
+    目的/目标：平台禁用源须抛 StagedPilotDisabledSourceError，不得进入 fetch
+    验证点：pytest.raises(StagedPilotDisabledSourceError)
+    失败含义：禁用源仍可进入 staged pilot，生产路由门禁失效
     """
     from backend.app.ops.staged_pilot import (
         StagedPilotDisabledSourceError,
@@ -93,10 +95,11 @@ def test_stagedPilot_disabledSource_blocksBeforeFetch() -> None:
 
 
 def test_stagedPilot_approvedRequestPassesAuthorizationGate() -> None:
-    """覆盖范围：三请求授权信封与 prompt14 授权文件一致。
-
-    测试对象：validate_authorization。
-    目的/目标：已批准 baostock 请求通过 Phase 0 授权门禁。
+    """覆盖范围：已批准 baostock 请求通过 Phase 0 授权门禁
+    测试对象：validate_authorization
+    目的/目标：授权信封与 prompt14 批准文件一致时不应抛错
+    验证点：validate_authorization(_approved_baostock_request()) 正常返回
+    失败含义：合法授权请求被误拒，无法进入 staged pilot
     """
     from backend.app.ops.staged_pilot import validate_authorization
 
@@ -104,10 +107,11 @@ def test_stagedPilot_approvedRequestPassesAuthorizationGate() -> None:
 
 
 def test_stagedPilot_authorization_rejectsExpandedEnvelope() -> None:
-    """覆盖范围：授权绑定精确符号/窗口/行数上限。
-
-    测试对象：validate_authorization。
-    目的/目标：扩大样本必须 fail-closed。
+    """覆盖范围：授权绑定精确符号/窗口/行数/clean-write 上限
+    测试对象：validate_authorization
+    目的/目标：扩大符号、窗口、max_rows 或 allow_clean_write 须 fail-closed
+    验证点：四类扩样变体均 pytest.raises(StagedPilotAuthorizationError)
+    失败含义：授权信封可被扩样绕过，超出 prompt14 批准范围
     """
     from backend.app.ops.staged_pilot import (
         StagedPilotAuthorizationError,
@@ -127,10 +131,11 @@ def test_stagedPilot_authorization_rejectsExpandedEnvelope() -> None:
 
 
 def test_stagedPilot_cninfoInApprovedSet() -> None:
-    """覆盖范围：PROMPT_14 授权包含 cninfo metadata 请求。
-
-    测试对象：approved_pilot_requests。
-    目的/目标：cninfo / cn_announcements 在批准集合内（区别于 Batch 2.75 三请求集）。
+    """覆盖范围：PROMPT_14 批准集含 cninfo metadata 请求
+    测试对象：approved_pilot_requests
+    目的/目标：cninfo/cn_announcements/fetch_announcement_index 须在批准三元组内且总数为 3
+    验证点：triples 含 cninfo 三元组；len(triples)==3
+    失败含义：PROMPT_14 批准集缺 cninfo 或条目数与冻结信封不符
     """
     from backend.app.ops.staged_pilot import approved_pilot_requests
 
@@ -142,10 +147,11 @@ def test_stagedPilot_cninfoInApprovedSet() -> None:
 
 
 def test_stagedPilot_routePreview_dryRunNoFetch() -> None:
-    """覆盖范围：route preview 阶段零 fetch。
-
-    测试对象：preview_staged_pilot。
-    目的/目标：dry_run=true 时产出 route 矩阵字段且不调用 fetch。
+    """覆盖范围：route preview 阶段零网络 fetch
+    测试对象：preview_staged_pilot
+    目的/目标：dry_run 路径须产出 route 字段且 DataSourceService.fetch 不被调用
+    验证点：preview['dry_run'] is True；含 explicit_source_route_status；fetch 未调用
+    失败含义：route preview 阶段发生网络 fetch，dry-run 语义被破坏
     """
     from backend.app.ops.staged_pilot import preview_staged_pilot
 
@@ -166,10 +172,11 @@ def test_stagedPilot_routePreview_dryRunNoFetch() -> None:
 
 
 def test_stagedPilot_captureRouteMatrix_writesEvidenceAndNoMutation(tmp_path: Path) -> None:
-    """覆盖范围：route preview 矩阵与 DB no-mutation proof。
-
-    测试对象：capture_route_preview_matrix。
-    目的/目标：写出 route_preview_matrix.json 且 key table counts 不变。
+    """覆盖范围：route preview 矩阵落盘与 DB no-mutation proof
+    测试对象：capture_route_preview_matrix
+    目的/目标：须写出 route_preview_matrix.json 且 mutation_proof 为 VERIFIED 或 INCONCLUSIVE
+    验证点：ROUTE_MATRIX_JSON 存在；run_mode=staged_only；proof 合法；previews 数量=3
+    失败含义：route 矩阵证据未落盘或 mutation proof 空 pass
     """
     from backend.app.ops.staged_pilot import (
         ROUTE_MATRIX_JSON,
@@ -193,10 +200,11 @@ def test_stagedPilot_captureRouteMatrix_writesEvidenceAndNoMutation(tmp_path: Pa
 
 
 def test_stagedPilot_networkCallCapEnforced() -> None:
-    """覆盖范围：单次运行网络调用上限。
-
-    测试对象：_NetworkCallBudget。
-    目的/目标：超过 max_network_calls_per_run 时 fail-closed。
+    """覆盖范围：单次运行网络调用上限
+    测试对象：_NetworkCallBudget / network_call_budget_snapshot
+    目的/目标：消耗达 MAX_NETWORK_CALLS_PER_RUN 后再次 consume 须 fail-closed
+    验证点：超额 consume raises StagedPilotNetworkCapExceededError；snapshot within_cap
+    失败含义：网络调用上限未强制，单次 pilot 可无限 fetch
     """
     from backend.app.ops import staged_pilot as mod
     from backend.app.ops.staged_pilot import (
@@ -217,10 +225,11 @@ def test_stagedPilot_networkCallCapEnforced() -> None:
 
 
 def test_stagedPilot_validationReport_blocksCleanWrite(tmp_path: Path) -> None:
-    """覆盖范围：validation report 默认禁止 clean write。
-
-    测试对象：capture_validation_report。
-    目的/目标：allow_clean_write=false 且 can_write_clean=false。
+    """覆盖范围：validation report 默认禁止 clean write
+    测试对象：capture_validation_report
+    目的/目标：staged pilot 路径须 allow_clean_write=false 且 can_write_clean=false
+    验证点：allow_clean_write、can_write_clean、clean_write_performed 均为 False
+    失败含义：validation report 默认可 clean write，staging 数据可污染生产路径
     """
     from backend.app.ops.staged_pilot import capture_validation_report
 
@@ -247,10 +256,11 @@ def test_stagedPilot_validationReport_blocksCleanWrite(tmp_path: Path) -> None:
 
 
 def test_stagedPilot_runFullPilot_skipLiveFetch_writesEvidence(tmp_path: Path) -> None:
-    """覆盖范围：skip_live_fetch 路径写出完整证据集。
-
-    测试对象：run_full_staged_pilot。
-    目的/目标：route + resource guard + validation + closeout 文件落盘。
+    """覆盖范围：skip_live_fetch 路径写出完整证据集
+    测试对象：run_full_staged_pilot
+    目的/目标：route/resource/validation/closeout 四类 JSON 须落盘且不得声称 production-ready
+    验证点：四类 JSON 均存在；production_live_readiness_claim is False
+    失败含义：skip_live_fetch 路径缺证据文件或误报 production-ready
     """
     from backend.app.ops.staged_pilot import (
         CLOSEOUT_JSON,
@@ -270,10 +280,11 @@ def test_stagedPilot_runFullPilot_skipLiveFetch_writesEvidence(tmp_path: Path) -
 
 
 def test_stagedPilot_partialSuccess_closeoutPassStagedRaw() -> None:
-    """覆盖范围：部分 source 成功时的 closeout 判定。
-
-    测试对象：derive_pilot_closeout_outcome。
-    目的/目标：至少一个 PASSED 即 PILOT_PASS_STAGED_RAW（非 production-live）。
+    """覆盖范围：部分 source 成功时的 closeout 判定
+    测试对象：derive_pilot_closeout_outcome
+    目的/目标：至少一个 PASSED 即应判 PILOT_PASS_STAGED_RAW（非 production-live）
+    验证点：derive_pilot_closeout_outcome(payload)==PILOT_PASS_STAGED_RAW
+    失败含义：部分源成功时 closeout 未判 PILOT_PASS_STAGED_RAW
     """
     from backend.app.ops.staged_pilot import (
         StagedPilotOutcome,
@@ -290,10 +301,11 @@ def test_stagedPilot_partialSuccess_closeoutPassStagedRaw() -> None:
 
 
 def test_stagedPilot_authorizationFile_exists() -> None:
-    """覆盖范围：prompt14 用户授权证据文件存在且含批准标记。
-
-    测试对象：docs/quality/prompt14_user_authorization_2026-06-22.md。
-    目的/目标：Execute 门禁要求的授权证据在仓库内可追溯。
+    """覆盖范围：prompt14 用户授权证据文件存在且含批准标记
+    测试对象：docs/quality/prompt14_user_authorization_2026-06-22.md
+    目的/目标：Execute 门禁要求的授权证据须在仓库内可追溯
+    验证点：文件存在；正文含 Approved on、r3x-staged-pilot-20260622、production_clean_write
+    失败含义：prompt14 授权证据缺失或内容不符，无法 sign-off staged pilot
     """
     path = PROJECT_ROOT / AUTH_PATH
     assert path.is_file(), f"missing authorization evidence: {path}"
@@ -304,10 +316,11 @@ def test_stagedPilot_authorizationFile_exists() -> None:
 
 
 def test_stagedPilot_mutationProof_inconclusiveWhenProductionDbMissing(tmp_path: Path) -> None:
-    """覆盖范围：生产库缺失时 no-mutation proof fail-closed。
-
-    测试对象：build_production_mutation_proof。
-    目的/目标：ADV-POST14-A-001 — proof_status=INCONCLUSIVE，不得空 pass。
+    """覆盖范围：生产库缺失时 no-mutation proof fail-closed
+    测试对象：build_production_mutation_proof
+    目的/目标：ADV-POST14-A-001 — 生产 DuckDB 不存在时须 INCONCLUSIVE，不得空 pass
+    验证点：proof_status=INCONCLUSIVE；db_hash/row_counts 为 None；reason=production_db_file_missing
+    失败含义：生产库缺失时 mutation proof 空 pass，无法证明未改生产数据
     """
     from backend.app.ops.mutation_proof import build_production_mutation_proof
 
@@ -320,10 +333,11 @@ def test_stagedPilot_mutationProof_inconclusiveWhenProductionDbMissing(tmp_path:
 
 
 def test_stagedPilot_validationReport_emitsConflictDeferArtifact(tmp_path: Path) -> None:
-    """覆盖范围：冲突检查显式 defer 证据。
-
-    测试对象：capture_validation_report。
-    目的/目标：ADV-POST14-A-002 — NO_CONFLICT_CHECK_DEFERRED 落盘。
+    """覆盖范围：冲突检查显式 defer 证据
+    测试对象：capture_validation_report
+    目的/目标：ADV-POST14-A-002 — 须落盘 NO_CONFLICT_CHECK_DEFERRED 状态
+    验证点：conflict_check.status=NO_CONFLICT_CHECK_DEFERRED；CONFLICT_CHECK_JSON 文件存在
+    失败含义：冲突检查 defer 未落盘，审计无法追踪未执行 conflict check
     """
     from backend.app.ops.staged_pilot import CONFLICT_CHECK_JSON, capture_validation_report
 
@@ -333,10 +347,11 @@ def test_stagedPilot_validationReport_emitsConflictDeferArtifact(tmp_path: Path)
 
 
 def test_stagedPilot_validationReport_declaresSandboxValidators(tmp_path: Path) -> None:
-    """覆盖范围：validation report 声明 DbValidationGate / DQV 契约。
-
-    测试对象：capture_validation_report。
-    目的/目标：ADV-POST14-A-006 — 不得仅 shallow JSON，需声明 validator 路径。
+    """覆盖范围：validation report 声明 DbValidationGate / DQV 契约
+    测试对象：capture_validation_report
+    目的/目标：ADV-POST14-A-006 — 不得仅 shallow JSON，须声明 validator 引用路径
+    验证点：declared_validators 含 DataQualityValidator、DbValidationGate、SourceConflictValidator
+    失败含义：validation report 未声明 sandbox validator 契约，证据不可复核
     """
     from backend.app.ops.staged_pilot import capture_validation_report
 
@@ -348,10 +363,11 @@ def test_stagedPilot_validationReport_declaresSandboxValidators(tmp_path: Path) 
 
 
 def test_stagedPilot_dateWindowBoundToFetchPort() -> None:
-    """覆盖范围：授权 date_window 绑定 fetch 窗口。
-
-    测试对象：parse_pilot_date_window / create_staged_fetch_port。
-    目的/目标：ADV-POST14-A-005 — cninfo 14 calendar days 不得硬编码忽略。
+    """覆盖范围：授权 date_window 绑定 fetch 窗口
+    测试对象：parse_pilot_date_window / CninfoMetadataStagedFetchPort
+    目的/目标：ADV-POST14-A-005 — cninfo 14 calendar days 不得被硬编码忽略
+    验证点：parse 返回值正确；CninfoMetadataStagedFetchPort.date_window 与授权字符串一致
+    失败含义：授权 date_window 未绑定 fetch port，cninfo 窗口与批准信封脱节
     """
     from backend.app.ops.live_pilot_fetch_ports import parse_pilot_date_window
     from backend.app.ops.staged_pilot_fetch_ports import CninfoMetadataStagedFetchPort
@@ -367,10 +383,11 @@ def test_stagedPilot_dateWindowBoundToFetchPort() -> None:
 
 
 def test_stagedPilot_cninfoFetchPayloadAttributesVendorApi() -> None:
-    """覆盖范围：cninfo metadata 源归因与 vendor_api。
-
-    测试对象：CninfoMetadataStagedFetchPort（mock akshare）。
-    目的/目标：ADV-POST14-A-003 — source=cninfo 且 vendor_api 可追溯。
+    """覆盖范围：cninfo metadata 源归因与 vendor_api
+    测试对象：CninfoMetadataStagedFetchPort（mock akshare）
+    目的/目标：ADV-POST14-A-003 — payload 须标注 source=cninfo 且 vendor_api 可追溯
+    验证点：body['source']=='cninfo'；vendor_api=='stock_zh_a_disclosure_report_cninfo'
+    失败含义：cninfo metadata 源归因或 vendor_api 不可追溯
     """
     import json
     from datetime import UTC, datetime
@@ -418,10 +435,11 @@ def test_stagedPilot_cninfoFetchPayloadAttributesVendorApi() -> None:
 
 
 def test_stagedPilot_routePreview_exposesOrganicRouteAndOverrideFlag() -> None:
-    """覆盖范围：显式 source 路由 override 证据字段。
-
-    测试对象：preview_staged_pilot。
-    目的/目标：ADV-POST14-A-008 — organic_route_status 与 override 标记可见。
+    """覆盖范围：显式 source 路由 override 证据字段
+    测试对象：preview_staged_pilot
+    目的/目标：ADV-POST14-A-008 — preview 须暴露 organic_route_status 与 override 标记
+    验证点：preview 含 organic_route_status、pilot_route_override_applied
+    失败含义：显式 source 路由 override 证据字段不可见
     """
     from backend.app.ops.staged_pilot import preview_staged_pilot
 
@@ -433,10 +451,11 @@ def test_stagedPilot_routePreview_exposesOrganicRouteAndOverrideFlag() -> None:
 def test_stagedPilot_mockFetchSuccess_usesWriteManagerStagedQualityFlag(
     tmp_path: Path,
 ) -> None:
-    """覆盖范围：mock fetch 成功路径与 file_registry 单一路径。
-
-    测试对象：run_staged_pilot_raw_only / _StagedPilotFileRegistry。
-    目的/目标：ADV-POST14-A-004 / B-002 — quality_flag=STAGED via WriteManager。
+    """覆盖范围：mock fetch 成功路径与 file_registry 单一路径
+    测试对象：run_staged_pilot_raw_only / _StagedPilotFileRegistry
+    目的/目标：ADV-POST14-A-004 — 须经 WriteManager 写入 quality_flag=STAGED
+    验证点：file_registry_write_path==WriteManager；quality_flag==STAGED；staged_file_ids 非空
+    失败含义：mock fetch 成功路径未经 WriteManager 写 STAGED，file_registry 双路径
     """
     from backend.app.datasources.adapters.fetch_port import FetchPayload
     from backend.app.datasources.fetch_result import FetchRequest
@@ -472,10 +491,11 @@ def test_stagedPilot_mockFetchSuccess_usesWriteManagerStagedQualityFlag(
 
 
 def test_stagedPilot_sandboxValidationReport_canWriteCleanFalse(tmp_path: Path) -> None:
-    """覆盖范围：sandbox validation_report stub can_write_clean 门禁。
-
-    测试对象：_ensure_raw_validation_report。
-    目的/目标：ADV-POST14-A-007 — stub 不得 can_write_clean=True。
+    """覆盖范围：sandbox validation_report stub can_write_clean 门禁
+    测试对象：_ensure_raw_validation_report
+    目的/目标：ADV-POST14-A-007 — stub 行须 can_write_clean=False
+    验证点：validation_report 行 can_write_clean=False；needs_manual_review=False
+    失败含义：sandbox stub validation_report 允许 can_write_clean=True
     """
     import duckdb
     from backend.app.db.migrate import apply_migrations
@@ -498,10 +518,11 @@ def test_stagedPilot_sandboxValidationReport_canWriteCleanFalse(tmp_path: Path) 
 
 
 def test_stagedPilot_cninfoMetadataValidation_requiresAnnouncementFields() -> None:
-    """覆盖范围：cninfo metadata 结构校验增强。
-
-    测试对象：_validate_cninfo_metadata_structure。
-    目的/目标：ADV-POST14-A-018 — 弱校验升级为公告字段检查。
+    """覆盖范围：cninfo metadata 结构校验增强
+    测试对象：_validate_cninfo_metadata_structure
+    目的/目标：ADV-POST14-A-018 — 缺公告字段须 FAILED，含公告标题须 PASSED
+    验证点：弱记录 status==FAILED；含公告标题记录 status==PASSED
+    失败含义：cninfo metadata 仅弱校验，缺公告字段仍 PASSED
     """
     from backend.app.ops.staged_pilot import _validate_cninfo_metadata_structure
 
@@ -512,10 +533,11 @@ def test_stagedPilot_cninfoMetadataValidation_requiresAnnouncementFields() -> No
 
 
 def test_stagedPilot_fetchTaxonomyUsesStableEnumValues() -> None:
-    """覆盖范围：fetch taxonomy 稳定枚举名。
-
-    测试对象：FetchTaxonomyStatus / _classify_fetch_taxonomy。
-    目的/目标：ADV-POST14-A-017 — 不得暴露异常类名作为 taxonomy。
+    """覆盖范围：fetch taxonomy 稳定枚举名
+    测试对象：FetchTaxonomyStatus / _classify_fetch_taxonomy
+    目的/目标：ADV-POST14-A-017 — 成功 fetch 须映射为 FetchTaxonomyStatus.SUCCESS
+    验证点：_classify_fetch_taxonomy(req, success)==FetchTaxonomyStatus.SUCCESS
+    失败含义：fetch taxonomy 暴露异常类名而非稳定枚举
     """
     from backend.app.datasources.fetch_result import FetchResult
     from backend.app.ops.staged_pilot import (
@@ -538,10 +560,11 @@ def test_stagedPilot_fetchTaxonomyUsesStableEnumValues() -> None:
 
 
 def test_stagedPilot_authorization_rejectsWrongFilenamePrefix(tmp_path: Path) -> None:
-    """覆盖范围：授权文件名前缀 fail-closed。
-
-    测试对象：validate_authorization。
-    目的/目标：ADV-POST14-A-019 — 必须 prompt14_user_authorization_* 前缀。
+    """覆盖范围：授权文件名前缀 fail-closed
+    测试对象：validate_authorization
+    目的/目标：ADV-POST14-A-019 — 授权证据须 prompt14_user_authorization_* 前缀
+    验证点：非前缀文件名 pytest.raises(StagedPilotAuthorizationError, match='prompt14_user_authorization')
+    失败含义：授权文件名前缀未校验，非 prompt14 文件可被接受
     """
     from backend.app.ops.staged_pilot import StagedPilotAuthorizationError, validate_authorization
 
@@ -556,10 +579,11 @@ def test_stagedPilot_authorization_rejectsWrongFilenamePrefix(tmp_path: Path) ->
 
 
 def test_stagedPilot_runFullPilot_closeoutIncludesNarrative(tmp_path: Path) -> None:
-    """覆盖范围：closeout 叙事与 mutation/conflict 状态。
-
-    测试对象：run_full_staged_pilot closeout payload。
-    目的/目标：ADV-POST14-A-016 — closeout 含 regen/review 叙事字段。
+    """覆盖范围：closeout 叙事与 mutation/conflict 状态
+    测试对象：run_full_staged_pilot closeout payload
+    目的/目标：ADV-POST14-A-016 — closeout 须含 regen/review 叙事及 proof 状态字段
+    验证点：closeout 含 closeout_narrative、mutation_proof_status、conflict_check_status
+    失败含义：closeout 缺叙事或 mutation/conflict 状态，无法人工 sign-off
     """
     from backend.app.ops.staged_pilot import run_full_staged_pilot
 
@@ -572,10 +596,11 @@ def test_stagedPilot_runFullPilot_closeoutIncludesNarrative(tmp_path: Path) -> N
 
 
 def test_stagedPilot_stagedFetchPortsUseStagedClassNames() -> None:
-    """覆盖范围：staged fetch port 命名与 live pilot 区分。
-
-    测试对象：create_staged_fetch_port。
-    目的/目标：ADV-POST14-A-015 — 证据不得混用 LiveFetchPort 类名。
+    """覆盖范围：staged fetch port 命名与 live pilot 区分
+    测试对象：create_staged_fetch_port
+    目的/目标：ADV-POST14-A-015 — baostock/akshare/cninfo 须实例化 *StagedFetchPort 类
+    验证点：三路 create_staged_fetch_port 分别返回 Baostock/AkshareEquity/CninfoMetadata StagedFetchPort
+    失败含义：staged fetch port 混用 LiveFetchPort 类名，证据与 live pilot 不可区分
     """
     from backend.app.ops.staged_pilot_fetch_ports import (
         AkshareEquityStagedFetchPort,
@@ -617,10 +642,11 @@ def test_stagedPilot_stagedFetchPortsUseStagedClassNames() -> None:
 
 
 def test_stagedPilot_evidencePathsPreferProjectRelative(tmp_path: Path) -> None:
-    """覆盖范围：证据 JSON 路径相对化。
-
-    测试对象：_evidence_relative_path。
-    目的/目标：ADV-POST14-A-013 — 避免绝对路径泄漏到 evidence。
+    """覆盖范围：证据 JSON 路径相对化
+    测试对象：_evidence_relative_path
+    目的/目标：ADV-POST14-A-013 — 证据路径须相对项目根，避免绝对路径泄漏
+    验证点：返回值不以 / 开头；以 docs/ 开头
+    失败含义：evidence JSON 写入绝对路径，泄漏本机路径信息
     """
     from backend.app.ops.staged_pilot import _evidence_relative_path
 

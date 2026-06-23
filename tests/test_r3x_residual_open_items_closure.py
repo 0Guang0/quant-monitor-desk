@@ -1,4 +1,8 @@
-"""R3X residual open-items closure regression umbrella (PROMPT_15)."""
+"""R3X 残余开放项闭环回归（PROMPT_15）。
+
+覆盖范围：路由阻断、生产 fetch 注入、write_mode fail-closed、适配器注册、
+编排器延期 API、Layer1 解读禁词与 .gitignore 密钥模式等 ADV 审计项。
+"""
 
 from __future__ import annotations
 
@@ -23,7 +27,12 @@ SOURCE_REGISTRY = PROJECT_ROOT / "specs/datasource_registry/source_registry.yaml
 
 
 def test_advR3xRoute001_validationOnlyPrimaryBlocked() -> None:
-    """ADV-R3X-ROUTE-001: validation_only source must not be sole READY Primary."""
+    """覆盖范围：validation_only 源不得作为唯一 READY 主源（ADV-R3X-ROUTE-001）
+    测试对象：SourceRoutePlanner 对 macro_supplementary 的路由
+    目的/目标：akshare 仅校验角色时须阻断为 Primary
+    验证点：route_status 在阻断集合内；selected_source_id=None；akshare skip_reason=validation_only_cannot_be_primary
+    失败含义：仅校验源被误选为主源，生产数据血缘不可信
+    """
     planner = production_route_planner()
     plan = planner.plan(
         data_domain="macro_supplementary",
@@ -38,7 +47,12 @@ def test_advR3xRoute001_validationOnlyPrimaryBlocked() -> None:
 
 
 def test_advR3xRoute003_domainDisabledByDefault() -> None:
-    """ADV-R3X-ROUTE-003: domain_enabled_by_default=false returns DISABLED_SOURCE."""
+    """覆盖范围：domain_enabled_by_default=false 域的路由（ADV-R3X-ROUTE-003）
+    测试对象：cn_equity_minute_bar 路由预览
+    目的/目标：默认禁用域须返回 DISABLED_SOURCE 并带 DOMAIN_DISABLED_BY_DEFAULT 标记
+    验证点：route_status=DISABLED_SOURCE；quality_flags 含 DOMAIN_DISABLED_BY_DEFAULT
+    失败含义：默认关闭的分钟线域仍可路由，违背 staged pilot 策略
+    """
     planner = production_route_planner()
     plan = planner.plan(
         data_domain="cn_equity_minute_bar",
@@ -51,7 +65,12 @@ def test_advR3xRoute003_domainDisabledByDefault() -> None:
 
 
 def test_advR3xRoute004_validationRoleAddsQualityFlag() -> None:
-    """ADV-R3X-ROUTE-004: Validation role selection adds quality flag."""
+    """覆盖范围：显式注入 Validation 候选时的质量标记（ADV-R3X-ROUTE-004）
+    测试对象：SourceRoutePlanner.plan(extra_candidates)
+    目的/目标：若选中 validation 源，须打 VALIDATION_SOURCE_USED 质量旗标
+    验证点：选中 akshare 时 quality_flags 含 VALIDATION_SOURCE_USED
+    失败含义：校验源被使用但无标记，下游无法识别非主源数据
+    """
     registry = SourceRegistry()
     registry.load(SOURCE_REGISTRY)
     from backend.app.datasources.capability_registry import SourceCapabilityRegistry
@@ -72,7 +91,12 @@ def test_advR3xRoute004_validationRoleAddsQualityFlag() -> None:
 
 
 def test_advR3xService001_productionFetchRequiresFileRegistry() -> None:
-    """ADV-R3X-SERVICE-001: production fetch must not silently use test adapter."""
+    """覆盖范围：生产 DataSourceService.fetch 依赖注入（ADV-R3X-SERVICE-001）
+    测试对象：DataSourceService.fetch 无 fetch_port/file_registry
+    目的/目标：生产路径不得静默回落到测试适配器
+    验证点：抛出 AdapterConfigurationError 且消息含 fetch_port
+    失败含义：生产 fetch 无端口仍执行，可能写脏数据或跳过审计
+    """
     service = DataSourceService()
     req = FetchRequest(
         run_id="r3x-svc",
@@ -85,7 +109,12 @@ def test_advR3xService001_productionFetchRequiresFileRegistry() -> None:
 
 
 def test_advR3xConflict001_domainAliasThresholdLookup() -> None:
-    """ADV-R3X-CONFLICT-001: cn_equity_daily_bar aliases to market_bar_1d thresholds."""
+    """覆盖范围：源冲突校验的域别名阈值（ADV-R3X-CONFLICT-001）
+    测试对象：SourceConflictValidator._threshold_for
+    目的/目标：cn_equity_daily_bar 应别名到 market_bar_1d 的 close 阈值
+    验证点：threshold 非空；CONFLICT_DOMAIN_ALIASES 含该域
+    失败含义：日 K 域冲突判定用错阈值，多源一致性误判
+    """
     validator = SourceConflictValidator()
     threshold = validator._threshold_for("cn_equity_daily_bar", "close")
     assert threshold is not None
@@ -93,12 +122,22 @@ def test_advR3xConflict001_domainAliasThresholdLookup() -> None:
 
 
 def test_advA2_009_tdxPytdxRegisteredInFactory() -> None:
-    """ADV-A2-009: TdxPytdxAdapter registered (disabled-by-default unchanged)."""
+    """覆盖范围：适配器工厂 TDX 注册（ADV-A2-009）
+    测试对象：_ADAPTER_TYPES
+    目的/目标：tdx_pytdx 已注册；默认启用仍由 registry 控制不变
+    验证点：'tdx_pytdx' in _ADAPTER_TYPES
+    失败含义：TDX 适配器未接入工厂，018C 探针无法实例化
+    """
     assert "tdx_pytdx" in _ADAPTER_TYPES
 
 
 def test_advA2_004_cninfoSupportsFilingsDomains() -> None:
-    """ADV-A2-004: cninfo adapter declares cn_filings and cn_pdf_reports."""
+    """覆盖范围：CninfoAdapter 声明的数据域（ADV-A2-004）
+    测试对象：CninfoAdapter.supported_domains
+    目的/目标：cninfo 须支持 cn_filings 与 cn_pdf_reports
+    验证点：两域均在 supported_domains
+    失败含义：公告/财报域无法经 cninfo 路由， filings 链路断裂
+    """
     from backend.app.datasources.adapters.cninfo import CninfoAdapter
 
     assert "cn_filings" in CninfoAdapter.supported_domains
@@ -106,7 +145,12 @@ def test_advA2_004_cninfoSupportsFilingsDomains() -> None:
 
 
 def test_advA1_001_writeRequestRequiresDataDomain(tmp_path: Path) -> None:
-    """ADV-A1-001: WriteRequest without data_domain is rejected."""
+    """覆盖范围：WriteRequest 必填 data_domain（ADV-A1-001）
+    测试对象：WriteManager.write 空 data_domain
+    目的/目标：无数据域的写入请求须在门禁层拒绝
+    验证点：抛出 ValueError 且消息含 data_domain
+    失败含义：空域写入可落库，血缘与审计无法追溯域
+    """
     from backend.app.db.connection import ConnectionManager
     from backend.app.db.migrate import apply_migrations
     from backend.app.db.write_manager import WriteRequest
@@ -133,20 +177,35 @@ def test_advA1_001_writeRequestRequiresDataDomain(tmp_path: Path) -> None:
 
 
 def test_advA5_001_gitignoreSecretPatterns() -> None:
-    """ADV-A5-001: .gitignore includes secret file patterns."""
+    """覆盖范围：.gitignore 密钥文件模式（ADV-A5-001）
+    测试对象：仓库根 .gitignore
+    目的/目标：须忽略 *.secret、*.key、credentials.* 等敏感后缀
+    验证点：三模式均出现在 gitignore 正文
+    失败含义：密钥文件可能被误提交，供应链安全风险
+    """
     text = (PROJECT_ROOT / ".gitignore").read_text(encoding="utf-8")
     for pattern in ("*.secret", "*.key", "credentials.*"):
         assert pattern in text
 
 
 def test_advA6_004_viteApiProxy() -> None:
-    """ADV-A6-004: Vite dev proxy forwards /api/* to backend."""
+    """覆盖范围：前端开发代理配置（ADV-A6-004）
+    测试对象：frontend/vite.config.ts
+    目的/目标：Vite dev server 须将 /api/* 代理到 backend
+    验证点：配置文本含 '"/api"' 代理段
+    失败含义：本地开发 API 请求未转发，前后端联调断裂
+    """
     text = (PROJECT_ROOT / "frontend/vite.config.ts").read_text(encoding="utf-8")
     assert '"/api"' in text
 
 
 def test_advR3xL1_002_interpretationRejectsForbiddenTerms() -> None:
-    """ADV-R3X-L1-002 / ADV-A4-002: forbidden terms reject write path."""
+    """覆盖范围：Layer1 解读模板禁用词（ADV-R3X-L1-002 / ADV-A4-002）
+    测试对象：AxisInterpretationEngine.build_interpretation
+    目的/目标：含「建议买入」等禁词的模板须拒绝写路径
+    验证点：抛出 InterpretationRejectedError
+    失败含义：投资建议类措辞可进入解读层，合规与审计风险
+    """
     from tests.test_layer1_interpretation import _history
 
     engine = AxisInterpretationEngine()
@@ -165,20 +224,35 @@ def test_advR3xL1_002_interpretationRejectsForbiddenTerms() -> None:
 
 
 def test_advR3xCap002_tdxPytdxFactoryParity() -> None:
-    """ADV-R3X-CAP-002: tdx_pytdx factory registration matches qmt pattern."""
+    """覆盖范围：TDX 与 QMT 工厂注册对等（ADV-R3X-CAP-002）
+    测试对象：_ADAPTER_TYPES
+    目的/目标：tdx_pytdx 与 qmt_xtdata 均须在工厂注册
+    验证点：两 source_id 均在 _ADAPTER_TYPES
+    失败含义：某本地行情源未注册，路由选中后无法实例化
+    """
     assert "qmt_xtdata" in _ADAPTER_TYPES
     assert "tdx_pytdx" in _ADAPTER_TYPES
 
 
 def test_defaultOperation_coversAllDomainRoles() -> None:
-    """Regression: domain_roles keys remain mapped in _default_operation."""
+    """覆盖范围：domain_roles 全键 _default_operation 映射
+    测试对象：_default_operation
+    目的/目标：注册表每个 domain_roles 键须有非空默认 operation
+    验证点：all(_default_operation(k) for k in role_keys)
+    失败含义：某域无默认 operation，服务层 fetch 无法自动选操作
+    """
     registry = load_yaml(SOURCE_REGISTRY)
     role_keys = set((registry.get("domain_roles") or {}).keys())
     assert all(_default_operation(k) for k in role_keys)
 
 
 def test_advR3xWrite002_unsupportedWriteModeRejected(tmp_path) -> None:
-    """ADV-R3X-WRITE-002: contract write_modes not yet implemented are rejected."""
+    """覆盖范围：未实现 write_mode 拒绝（ADV-R3X-WRITE-002）
+    测试对象：WriteManager.write(write_mode=replace_partition)
+    目的/目标：合约列出但未实现的写模式须 fail-closed
+    验证点：抛出 ValueError 且消息含 not implemented
+    失败含义：未实现模式静默成功或部分写入，数据完整性风险
+    """
     from backend.app.db.connection import ConnectionManager
     from backend.app.db.migrate import apply_migrations
     from backend.app.db.write_manager import WriteRequest
@@ -205,7 +279,12 @@ def test_advR3xWrite002_unsupportedWriteModeRejected(tmp_path) -> None:
 
 
 def test_advA2_002_healthCheckStub(tmp_path: Path) -> None:
-    """ADV-A2-002: BaseDataAdapter.health_check returns structured stub."""
+    """覆盖范围：BaseDataAdapter.health_check 结构化 stub（ADV-A2-002）
+    测试对象：create_test_adapter(...).health_check()
+    目的/目标：健康检查须返回 STUB_OK 及 supported_domains 列表
+    验证点：status=STUB_OK；含 cn_equity_daily_bar
+    失败含义：运维探针无法获取结构化健康报告，接口契约破裂
+    """
     from backend.app.datasources.adapters import create_test_adapter
     from backend.app.datasources.source_registry import SourceRegistry
 
@@ -218,14 +297,24 @@ def test_advA2_002_healthCheckStub(tmp_path: Path) -> None:
 
 
 def test_advR3xCap001_compatibilityMapEmpty() -> None:
-    """ADV-R3X-CAP-001: legacy compatibility map cleared; adapters use registry domains."""
+    """覆盖范围：遗留适配器域兼容映射清空（ADV-R3X-CAP-001）
+    测试对象：ADAPTER_DOMAIN_COMPATIBILITY_MAP
+    目的/目标：适配器域须完全来自 registry，不得靠硬编码兼容表
+    验证点：ADAPTER_DOMAIN_COMPATIBILITY_MAP == {}
+    失败含义：双轨域定义残留，路由与能力注册可能不一致
+    """
     from backend.app.datasources.capability_registry import ADAPTER_DOMAIN_COMPATIBILITY_MAP
 
     assert ADAPTER_DOMAIN_COMPATIBILITY_MAP == {}
 
 
 def test_advA3_016_orchestratorDeferredRunners(tmp_path) -> None:
-    """ADV-A3-016: run_full_load / run_data_quality explicit deferred APIs."""
+    """覆盖范围：编排器延期 API 显式 NotImplemented（ADV-A3-016）
+    测试对象：DataSyncOrchestrator.run_full_load / run_data_quality
+    目的/目标：未实现的批跑入口须明确抛 NotImplemented 而非空操作
+    验证点：两方法均 pytest.raises(NotImplementedError)
+    失败含义：调用方误以为全量/质检已可用，生产 job 静默无效果
+    """
     from backend.app.db.connection import ConnectionManager
     from backend.app.db.migrate import apply_migrations
     from backend.app.sync.jobs import SyncJobSpec
@@ -258,7 +347,12 @@ def test_advA3_016_orchestratorDeferredRunners(tmp_path) -> None:
 
 
 def test_advA1_012_minStagingRowsEnforced(tmp_path) -> None:
-    """ADV-A1-012 / ADV-A1-015: empty staging rejected before clean write."""
+    """覆盖范围：空 staging 写入拒绝（ADV-A1-012 / ADV-A1-015）
+    测试对象：WriteManager.write 对空 staging 表
+    目的/目标：clean 写入前须有最小 staging 行数
+    验证点：抛出 ValueError 且消息含 minimum
+    失败含义：空批次可写 clean，产生无意义审计与空洞分区
+    """
     from backend.app.db.connection import ConnectionManager
     from backend.app.db.migrate import apply_migrations
     from backend.app.db.write_manager import WriteRequest

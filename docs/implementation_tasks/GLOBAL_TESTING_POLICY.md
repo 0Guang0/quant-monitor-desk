@@ -83,7 +83,53 @@ resourceGuard_lowDisk_shouldPauseBackfill
 
 每个 implementation task 必须写清本任务最低测试要求。
 
-## 7. Deterministic / Golden / Time-freeze 基线
+## 7. 测试函数 docstring（五字段 · 新增/修改 `test_*` 必填）
+
+**权威细则与门禁：** `docs/quality/ROUND3_TEST_DOCSTRING_HYGIENE_PLAN.md` · `tests/test_docstring_quadruple_coverage.py`
+
+每个 `test_*` 函数 docstring **必须**包含以下五行（通俗中文；第三行标签写 **`目的/目标：`** 或 **`目的：`**）：
+
+| 字段      | 要求                                                                        |
+| --------- | --------------------------------------------------------------------------- |
+| 覆盖范围  | 本条测哪种业务场景（如拉数成功/失败、坏文件拒绝、合法数据映射、分阶段边界） |
+| 测试对象  | 被测函数或行为路径                                                          |
+| 目的/目标 | 要证明什么事实（小白能懂）                                                  |
+| 验证点    | 关键断言/异常（技术名、错误码可写在此）                                     |
+| 失败含义  | 挂了以后业务或审计失去什么保障                                              |
+
+**金样（只读对照）：** `tests/test_layer3_snapshot_builder.py` 首条 `test_layer3Snapshot_buildsFromStagedLoaderAndL5_success`。
+
+### 测试注释模板 1 — 正式提交时拉数失败不得入库
+
+```python
+    """覆盖范围：正式提交时底层拉数失败的处理——不得入库
+    测试对象：commit_clean_observation_and_snapshots（fetch 被 mock 为失败）
+    目的/目标：拉数失败就不能往正式观测表写任何数据，必须报错并中断整个提交
+    验证点：抛出 IngestionCommitBlockedError，原因码 OBSERVATION_MAPPING；观测表仍为 0 行
+    失败含义：拉数失败仍入库，脏或空数据会进入正式观测表
+    """
+```
+
+对应实现：`tests/test_layer1_observation_ingestion.py::test_layer1Observation_fetchFailure_blocksCleanWrite`
+
+### 测试注释模板 2 — 只拉原始数据时不写正式观测表
+
+```python
+    """覆盖范围：第三阶段「只拉原始数据」时，不得写入正式观测表
+    测试对象：micro_fetch_staging
+    目的/目标：staging 阶段只记拉取痕迹和 raw 文件，正式观测表（axis_observation）一行都不能多
+    验证点：拉数前后观测表行数都是 0
+    失败含义：第三阶段小批量拉数就写了正式观测，与第四阶段校验后再入库的设计冲突
+    """
+```
+
+对应实现：`tests/test_layer1_observation_ingestion.py::test_layer1MicroIngestion_phase3DoesNotWriteCleanAxisObservation`
+
+**禁止：** 用批量脚本生成 docstring；在目的/失败含义里堆 JSON 键名或异常类名而无业务解释。
+
+**新增测试模块：** 登记 `tests/test_catalog.yaml`（`uv run python scripts/loop_maintain.py --fix`）。
+
+## 8. Deterministic / Golden / Time-freeze 基线
 
 所有涉及数据接入、快照、报告、Agent 输出、回测和前端展示的测试，必须默认可复现。
 

@@ -1,4 +1,8 @@
-"""Layer 2 cross-asset sensor loader, guard, lineage, and staged snapshot tests."""
+"""第二层跨资产传感器加载、双计_guard、血缘与 staged 快照测试。
+
+覆盖范围：CrossAsset 注册表、日快照构建、期货换月、ResourceGuard
+与 WriteManager 持久化路径。
+"""
 
 from __future__ import annotations
 
@@ -99,6 +103,12 @@ def _insert_validation_report(cm: ConnectionManager, report_id: str) -> None:
 
 
 def test_crossAssetRegistryLoader_stagedFixture_loadsAxisInputAssets() -> None:
+    """覆盖范围：staged 资产注册表加载与轴输入标记
+    测试对象：CrossAssetRegistryLoader.load（STAGED_REGISTRY_FIXTURE）
+    目的/目标：staged_fixture_only 模式下正确解析 VIX 等轴输入仅展示资产
+    验证点：mode=staged_fixture_only；L2-VIX is_axis_input/display_only/eligible 与 double_count_guard
+    失败含义：注册表误标可入模资产，Layer1 轴输入双计_guard 失效
+    """
     result = CrossAssetRegistryLoader().load(registry_path=STAGED_REGISTRY_FIXTURE)
     assert result.mode == "staged_fixture_only"
     vix = next(a for a in result.assets if a.asset_id == "L2-VIX")
@@ -109,6 +119,12 @@ def test_crossAssetRegistryLoader_stagedFixture_loadsAxisInputAssets() -> None:
 
 
 def test_crossAssetRegistryLoader_rejectsNonStagedMode(tmp_path: Path) -> None:
+    """覆盖范围：非 staged 模式注册表拒收
+    测试对象：CrossAssetRegistryLoader.load（production_live YAML）
+    目的/目标：Layer2 当前仅允许 staged_fixture_only，防误用线上配置
+    验证点：pytest.raises(Exception, match=staged_fixture_only)
+    失败含义：production_live 注册表仍可加载，Batch3 双闸失效
+    """
     bad = tmp_path / "bad_registry.yaml"
     bad.write_text(
         "version: v1\nmode: production_live\nassets:\n"
@@ -124,6 +140,12 @@ def test_crossAssetRegistryLoader_rejectsNonStagedMode(tmp_path: Path) -> None:
 
 
 def test_crossAssetRegistryLoader_rejectsPrimarySourceNone(tmp_path: Path) -> None:
+    """覆盖范围：primary_source=none 非法配置
+    测试对象：CrossAssetRegistryLoader.load
+    目的/目标：每个资产必须声明可接受的主数据源，none 不可作为 primary
+    验证点：pytest.raises(Exception, match=primary_source)
+    失败含义：无来源资产进入流水线，血缘无法追溯
+    """
     bad = tmp_path / "bad_none_primary.yaml"
     bad.write_text(
         "version: v1\nmode: staged_fixture_only\nassets:\n"
@@ -139,6 +161,12 @@ def test_crossAssetRegistryLoader_rejectsPrimarySourceNone(tmp_path: Path) -> No
 
 
 def test_crossAssetRegistryLoader_rejectsDuplicateInstrumentId(tmp_path: Path) -> None:
+    """覆盖范围：instrument_id 全局唯一性
+    测试对象：CrossAssetRegistryLoader.load（重复 FUT:DUP）
+    目的/目标：跨资产不得共享同一 instrument_id，防映射冲突
+    验证点：pytest.raises(Exception, match=duplicate instrument_id)
+    失败含义：重复 instrument 可共存，Layer5 对齐与 roll 逻辑错乱
+    """
     bad = tmp_path / "dup_instrument.yaml"
     bad.write_text(
         "version: v1\nmode: staged_fixture_only\nassets:\n"
@@ -161,6 +189,12 @@ def test_crossAssetRegistryLoader_rejectsDuplicateInstrumentId(tmp_path: Path) -
 
 
 def test_doubleCountGuard_axisInputCannotEnterModelAggregation() -> None:
+    """覆盖范围：轴输入资产不得入模聚合
+    测试对象：assert_model_eligible（L2-VIX）
+    目的/目标：Layer1 轴输入仅展示，进入模型聚合须抛 DoubleCountGuardError
+    验证点：pytest.raises(DoubleCountGuardError, match=display/reference only)
+    失败含义：VIX 等展示指标进入模型，与 Layer1 双计策略冲突
+    """
     result = CrossAssetRegistryLoader().load(registry_path=STAGED_REGISTRY_FIXTURE)
     vix = next(a for a in result.assets if a.asset_id == "L2-VIX")
     with pytest.raises(DoubleCountGuardError, match="display/reference only"):
@@ -168,6 +202,12 @@ def test_doubleCountGuard_axisInputCannotEnterModelAggregation() -> None:
 
 
 def test_snapshotBuilder_forModel_blocksAxisInput() -> None:
+    """覆盖范围：for_model 构建时拦截轴输入
+    测试对象：CrossAssetSnapshotBuilder.build_daily_snapshots(for_model=True)
+    目的/目标：即使能建展示快照，for_model=True 对轴输入须 fail-closed
+    验证点：pytest.raises(DoubleCountGuardError)
+    失败含义：模型路径可写入轴输入快照，双计_guard 被绕过
+    """
     loader = CrossAssetRegistryLoader().load(registry_path=STAGED_REGISTRY_FIXTURE)
     vix = next(a for a in loader.assets if a.asset_id == "L2-VIX")
     builder = CrossAssetSnapshotBuilder()
@@ -184,18 +224,36 @@ def test_snapshotBuilder_forModel_blocksAxisInput() -> None:
 
 
 def test_doubleCountGuard_modelEligibleAsset_passes() -> None:
+    """覆盖范围：可入模资产通过资格检查
+    测试对象：assert_model_eligible（L2-COPPER）
+    目的/目标：eligible_for_model 的常规定价资产应无 guard 异常
+    验证点：assert_model_eligible 不抛错
+    失败含义：合法铜价资产被拒，模型特征链路断供
+    """
     result = CrossAssetRegistryLoader().load(registry_path=STAGED_REGISTRY_FIXTURE)
     copper = next(a for a in result.assets if a.asset_id == "L2-COPPER")
     assert_model_eligible(copper)
 
 
 def test_snapshotRejectsFutureInput() -> None:
+    """覆盖范围：未来可见性时间戳拒收
+    测试对象：reject_future_observation（as_of_visibility 超前）
+    目的/目标：as_of 边界后可见的数据不得参与当前快照
+    验证点：pytest.raises(Exception, match=future input blocked)
+    失败含义：未来数据泄漏进快照，时点审计失真
+    """
     future = _obs("L2-COPPER", as_of_visibility=AS_OF + timedelta(hours=1))
     with pytest.raises(Exception, match="future input blocked"):
         reject_future_observation(as_of=AS_OF, observation=future)
 
 
 def test_snapshotRejectsFutureTradeTime() -> None:
+    """覆盖范围：未来 trade_time 拒收
+    测试对象：reject_future_observation（trade_time 超前 as_of）
+    目的/目标：成交时间不得晚于 as_of 可见边界
+    验证点：pytest.raises(Exception, match=future trade_time blocked)
+    失败含义：未来交易日数据可入库，回测与实盘边界混乱
+    """
     future = _obs(
         "L2-COPPER",
         trade_time=AS_OF + timedelta(hours=1),
@@ -205,6 +263,12 @@ def test_snapshotRejectsFutureTradeTime() -> None:
 
 
 def test_snapshotRejectsFutureFetch_viaBuilder() -> None:
+    """覆盖范围：未来 fetch_time 经 builder 拒收
+    测试对象：CrossAssetSnapshotBuilder.build_daily_snapshots
+    目的/目标：抓取时间晚于 as_of 的观测不得建快照
+    验证点：pytest.raises(Exception, match=future fetch blocked)
+    失败含义：延迟抓取未校验，血缘时间窗不可信
+    """
     loader = CrossAssetRegistryLoader().load(registry_path=STAGED_REGISTRY_FIXTURE)
     copper = next(a for a in loader.assets if a.asset_id == "L2-COPPER")
     future_fetch = _obs("L2-COPPER", fetch_time=AS_OF + timedelta(hours=1))
@@ -221,6 +285,12 @@ def test_snapshotRejectsFutureFetch_viaBuilder() -> None:
 
 
 def test_snapshotBuilder_rejectsMixedTradeDateBatch() -> None:
+    """覆盖范围：同批观测 trade_date 必须一致
+    测试对象：CrossAssetSnapshotBuilder.build_daily_snapshots（混合两日）
+    目的/目标：日快照批内不得混入多个 trade_date
+    验证点：pytest.raises(Exception, match=mixed trade_date batch)
+    失败含义：一日快照掺入他日 bar，OHLC 聚合错误
+    """
     loader = CrossAssetRegistryLoader().load(registry_path=STAGED_REGISTRY_FIXTURE)
     copper = next(a for a in loader.assets if a.asset_id == "L2-COPPER")
     mixed = [
@@ -242,6 +312,12 @@ def test_snapshotBuilder_rejectsMixedTradeDateBatch() -> None:
 
 
 def test_snapshotBuilder_rejectsTradeDateMismatch() -> None:
+    """覆盖范围：观测日与请求 trade_date 对齐
+    测试对象：CrossAssetSnapshotBuilder.build_daily_snapshots（trade_date 无匹配观测）
+    目的/目标：指定 trade_date 下无观测应 fail-closed
+    验证点：pytest.raises(Exception, match=no observations)
+    失败含义：空日仍产出快照或误用邻日数据
+    """
     loader = CrossAssetRegistryLoader().load(registry_path=STAGED_REGISTRY_FIXTURE)
     copper = next(a for a in loader.assets if a.asset_id == "L2-COPPER")
     wrong_day = _obs(
@@ -260,6 +336,12 @@ def test_snapshotBuilder_rejectsTradeDateMismatch() -> None:
 
 
 def test_stagedSource_rejectsTdxPytdx_viaBuilder() -> None:
+    """覆盖范围：staged 路径拒绝 tdx_pytdx 来源
+    测试对象：CrossAssetSnapshotBuilder（source=tdx_pytdx）
+    目的/目标：staged fixture 管线不得接受未审批 TDX 实时源
+    验证点：pytest.raises(Exception, match=tdx_pytdx)
+    失败含义：生产 TDX 数据混入 staged 快照，gate 隔离失效
+    """
     loader = CrossAssetRegistryLoader().load(registry_path=STAGED_REGISTRY_FIXTURE)
     copper = next(a for a in loader.assets if a.asset_id == "L2-COPPER")
     tdx_obs = _obs("L2-COPPER", source="tdx_pytdx")
@@ -275,6 +357,12 @@ def test_stagedSource_rejectsTdxPytdx_viaBuilder() -> None:
 
 
 def test_crossAssetSnapshotBuilder_buildsDailySnapshotWithLineage() -> None:
+    """覆盖范围：日快照与血缘正常构建
+    测试对象：CrossAssetSnapshotBuilder.build_daily_snapshots（L2-COPPER 多 bar）
+    目的/目标：收盘取末 bar；产出 lineage layer2 与 source_fetch_ids
+    验证点：roll is None；close=100；pct_change 正确；lineage.layer_id=layer2
+    失败含义：主路径建不出带血缘日快照，Layer2 落库链路断裂
+    """
     loader = CrossAssetRegistryLoader().load(registry_path=STAGED_REGISTRY_FIXTURE)
     copper = next(a for a in loader.assets if a.asset_id == "L2-COPPER")
     obs = [
@@ -305,6 +393,12 @@ def test_crossAssetSnapshotBuilder_buildsDailySnapshotWithLineage() -> None:
 
 
 def test_snapshotDeterministicRebuild_sameInputsSameHash() -> None:
+    """覆盖范围：相同输入确定性重建
+    测试对象：CrossAssetSnapshotBuilder 两次相同入参
+    目的/目标：close/pct_change 与 parameter_hash 可复现
+    验证点：snap1==snap2 关键字段；lin1.parameter_hash==lin2.parameter_hash
+    失败含义：同输入哈希漂移，增量重建无法判等
+    """
     loader = CrossAssetRegistryLoader().load(registry_path=STAGED_REGISTRY_FIXTURE)
     copper = next(a for a in loader.assets if a.asset_id == "L2-COPPER")
     obs = [_obs("L2-COPPER")]
@@ -331,6 +425,12 @@ def test_snapshotDeterministicRebuild_sameInputsSameHash() -> None:
 
 
 def test_snapshotLineageContainsSourceHashes() -> None:
+    """覆盖范围：Layer2LineageBuilder 必填字段
+    测试对象：Layer2LineageBuilder.build
+    目的/目标：LINEAGE_REQUIRED_FIELDS 除 rebuild_reason 外均非空
+    验证点：逐字段 getattr 非 None
+    失败含义：血缘信封残缺，axis_snapshot_lineage 写入被拒
+    """
     lineage = Layer2LineageBuilder().build(
         snapshot_id="l2-test-lineage",
         snapshot_type="cross_asset_daily_snapshot",
@@ -350,6 +450,12 @@ def test_snapshotLineageContainsSourceHashes() -> None:
 
 
 def test_futuresRollHandler_emitsExplicitRollEvent_notSilentSwitch() -> None:
+    """覆盖范围：期货换月显式 roll 事件
+    测试对象：FuturesRollHandler.detect_roll
+    目的/目标：流动性挑战者胜出时须 roll_event=True 并记录新旧合约
+    验证点：roll 非空；roll_event；old/new contract 正确
+    失败含义：换月静默切换，持仓连续性与审计丢失
+    """
     roll = FuturesRollHandler().detect_roll(
         asset_id="L2-HG-MAIN",
         roll_date=TRADE_DATE,
@@ -363,6 +469,12 @@ def test_futuresRollHandler_emitsExplicitRollEvent_notSilentSwitch() -> None:
 
 
 def test_futuresRollEvent_persistedViaWriteManager(tmp_path: Path) -> None:
+    """覆盖范围：roll 事件经 WriteManager 持久化
+    测试对象：Layer2RollEventWriter.write_roll_event
+    目的/目标：detect_roll 结果写入 cross_asset_roll_event 表
+    验证点：res.status=SUCCESS；DB 行 roll_event 与合约对
+    失败含义：换月事件仅内存存在，复盘无法查历史 roll
+    """
     db = tmp_path / "layer2_roll.duckdb"
     cm = ConnectionManager(db)
     with cm.writer() as con:
@@ -389,6 +501,12 @@ def test_futuresRollEvent_persistedViaWriteManager(tmp_path: Path) -> None:
 
 
 def test_crossAssetSnapshotBuilder_resourceGuardBlocksBatchBuild() -> None:
+    """覆盖范围：ResourceGuard HARD_STOP 阻断构建
+    测试对象：CrossAssetSnapshotBuilder（mock guard HARD_STOP）
+    目的/目标：资源守卫拒绝时不得继续 build_daily_snapshots
+    验证点：pytest.raises(ResourceGuardBlockedError)
+    失败含义：低资源环境仍批量建快照，可能 OOM
+    """
     guard = MagicMock()
     guard.check.return_value = (Decision.HARD_STOP, "eco limit")
     loader = CrossAssetRegistryLoader().load(registry_path=STAGED_REGISTRY_FIXTURE)
@@ -405,6 +523,12 @@ def test_crossAssetSnapshotBuilder_resourceGuardBlocksBatchBuild() -> None:
 
 
 def test_resourceGuard_realInstance_returnsDecision(tmp_path: Path) -> None:
+    """覆盖范围：真实 ResourceGuard 返回决策枚举
+    测试对象：ResourceGuard.check（真实 DuckDB 连接）
+    目的/目标：check 应返回 OK/WARN/PAUSE/HARD_STOP 之一
+    验证点：decision in 四枚举值
+    失败含义：守卫接口异常，service 层无法解释阻断原因
+    """
     db = tmp_path / "rg.duckdb"
     cm = ConnectionManager(db)
     with cm.writer() as con:
@@ -414,6 +538,12 @@ def test_resourceGuard_realInstance_returnsDecision(tmp_path: Path) -> None:
 
 
 def test_noAcceptedChannel_notModelEligible() -> None:
+    """覆盖范围：无接受通道资产不可入模
+    测试对象：assert_model_eligible（L2-NO-CHANNEL）
+    目的/目标：缺 primary 等通道的资产须 DoubleCountGuardError
+    验证点：pytest.raises(DoubleCountGuardError)
+    失败含义：无来源资产进入模型聚合
+    """
     loader = CrossAssetRegistryLoader().load(registry_path=STAGED_REGISTRY_FIXTURE)
     missing = next(a for a in loader.assets if a.asset_id == "L2-NO-CHANNEL")
     with pytest.raises(DoubleCountGuardError):
@@ -421,6 +551,12 @@ def test_noAcceptedChannel_notModelEligible() -> None:
 
 
 def test_vixAxisInput_displayOnlySnapshot_carriesGuardFlag() -> None:
+    """覆盖范围：轴输入展示快照质量标记
+    测试对象：CrossAssetSnapshotBuilder（L2-VIX 非 for_model）
+    目的/目标：展示快照须含 LAYER1_AXIS_INPUT_DISPLAY_ONLY 标记
+    验证点：quality_flags 含该常量
+    失败含义：展示用 VIX 无标记，下游难区分可入模与仅参考
+    """
     loader = CrossAssetRegistryLoader().load(registry_path=STAGED_REGISTRY_FIXTURE)
     vix = next(a for a in loader.assets if a.asset_id == "L2-VIX")
     snap, _, _ = CrossAssetSnapshotBuilder().build_daily_snapshots(
@@ -435,6 +571,12 @@ def test_vixAxisInput_displayOnlySnapshot_carriesGuardFlag() -> None:
 
 
 def test_incrementalRebuildPreservesAsOfBoundary() -> None:
+    """覆盖范围：增量重建 as_of 边界
+    测试对象：build_daily_snapshots(is_incremental=True)
+    目的/目标：增量血缘 is_incremental=True 且 input_window_end<=as_of
+    验证点：lineage.is_incremental；window_end 不越界
+    失败含义：增量重建越界读未来数据，时点一致性破坏
+    """
     loader = CrossAssetRegistryLoader().load(registry_path=STAGED_REGISTRY_FIXTURE)
     copper = next(a for a in loader.assets if a.asset_id == "L2-COPPER")
     _snap, lineage, _ = CrossAssetSnapshotBuilder().build_daily_snapshots(
@@ -452,6 +594,12 @@ def test_incrementalRebuildPreservesAsOfBoundary() -> None:
 
 
 def test_upstreamSnapshotIds_propagateToLineage() -> None:
+    """覆盖范围：上游快照 ID 写入血缘
+    测试对象：build_daily_snapshots(upstream_snapshot_ids=...)
+    目的/目标：Layer1 等上游快照 ID 须原样进入 lineage
+    验证点：lineage.upstream_snapshot_ids == 入参元组
+    失败含义：跨层血缘链断裂，无法追溯 Layer1 输入
+    """
     loader = CrossAssetRegistryLoader().load(registry_path=STAGED_REGISTRY_FIXTURE)
     copper = next(a for a in loader.assets if a.asset_id == "L2-COPPER")
     upstream = ("l1-snap-env-2026-06-14",)
@@ -468,6 +616,12 @@ def test_upstreamSnapshotIds_propagateToLineage() -> None:
 
 
 def test_rollEvent_integratedInSnapshotBuild_setsActiveContract() -> None:
+    """覆盖范围：构建集成换月设活跃合约
+    测试对象：build_daily_snapshots（roll_incumbent/challenger）
+    目的/目标：换月时 snap.active_contract 切到挑战者合约
+    验证点：roll 非空；active_contract=HGF26
+    失败含义：换月后快照仍指旧合约，连续价序列错误
+    """
     loader = CrossAssetRegistryLoader().load(registry_path=STAGED_REGISTRY_FIXTURE)
     main = next(a for a in loader.assets if a.asset_id == "L2-HG-MAIN")
     snap, _, roll = CrossAssetSnapshotBuilder().build_daily_snapshots(
@@ -485,6 +639,12 @@ def test_rollEvent_integratedInSnapshotBuild_setsActiveContract() -> None:
 
 
 def test_layer2Observation_blocksAxisInputWithoutDisplayOnlyWrite(tmp_path: Path) -> None:
+    """覆盖范围：观测写入拦截非 display_only 轴输入
+    测试对象：Layer2ObservationWriter.write_observations（VIX, display_only_write=False）
+    目的/目标：轴输入未经 display_only 路径不得写入观测表
+    验证点：pytest.raises(DoubleCountGuardError)
+    失败含义：轴输入观测误入库，与展示/入模策略冲突
+    """
     loader = CrossAssetRegistryLoader().load(registry_path=STAGED_REGISTRY_FIXTURE)
     vix = next(a for a in loader.assets if a.asset_id == "L2-VIX")
     cm = ConnectionManager(tmp_path / "block.duckdb")
@@ -500,6 +660,12 @@ def test_layer2Observation_blocksAxisInputWithoutDisplayOnlyWrite(tmp_path: Path
 
 
 def test_layer2Snapshot_writeWithRollEvent_persistsAllTables(tmp_path: Path) -> None:
+    """覆盖范围：快照+换月一并落库
+    测试对象：Layer2SnapshotWriter.write_daily_snapshot（含 roll_event）
+    目的/目标：日快照、血缘、roll 三表均有记录且 active_contract 更新
+    验证点：roll_row=1；snap active_contract=HGF26
+    失败含义：换月与日快照不同步持久化，DB 状态不一致
+    """
     db = tmp_path / "layer2_roll_snap.duckdb"
     cm = ConnectionManager(db)
     with cm.writer() as con:
@@ -534,6 +700,12 @@ def test_layer2Snapshot_writeWithRollEvent_persistsAllTables(tmp_path: Path) -> 
 
 
 def test_layer2Observation_writeViaWriteManager(tmp_path: Path) -> None:
+    """覆盖范围：观测经 WriteManager 成功写入
+    测试对象：Layer2ObservationWriter.write_observations（L2-COPPER）
+    目的/目标：合法观测在 validation_report 存在时 status=SUCCESS
+    验证点：result.status == SUCCESS
+    失败含义：主路径观测无法落库，Layer2 管道中断
+    """
     db = tmp_path / "layer2_obs_wm.duckdb"
     cm = ConnectionManager(db)
     with cm.writer() as con:
@@ -554,6 +726,12 @@ def test_layer2Observation_writeViaWriteManager(tmp_path: Path) -> None:
 
 
 def test_layer2Observation_rejectsAssetIdMismatch(tmp_path: Path) -> None:
+    """覆盖范围：观测 asset_id 与注册表条目一致
+    测试对象：Layer2ObservationWriter（registry=copper, obs=vix）
+    目的/目标：观测 asset_id 必须与 registry_entry.asset_id 匹配
+    验证点：pytest.raises(Exception, match=asset_id)
+    失败含义：错资产观测可写入，跨资产污染
+    """
     loader = CrossAssetRegistryLoader().load(registry_path=STAGED_REGISTRY_FIXTURE)
     copper = next(a for a in loader.assets if a.asset_id == "L2-COPPER")
     with pytest.raises(Exception, match="asset_id"):
@@ -567,6 +745,12 @@ def test_layer2Observation_rejectsAssetIdMismatch(tmp_path: Path) -> None:
 
 
 def test_layer2Snapshot_writeViaWriteManager(tmp_path: Path) -> None:
+    """覆盖范围：日快照与血缘经 WriteManager 写入
+    测试对象：Layer2SnapshotWriter.write_daily_snapshot
+    目的/目标：快照与 lineage 均 SUCCESS 且 layer_id=layer2
+    验证点：snap_res/lin_res.status=SUCCESS；DB lineage layer_id=layer2
+    失败含义：快照或血缘单独失败，staging 表不完整
+    """
     db = tmp_path / "layer2_wm.duckdb"
     cm = ConnectionManager(db)
     with cm.writer() as con:
@@ -601,6 +785,12 @@ def test_layer2Snapshot_writeViaWriteManager(tmp_path: Path) -> None:
 
 
 def test_layer2Registry_syncViaWriteManager(tmp_path: Path) -> None:
+    """覆盖范围：注册表全量同步到 DB
+    测试对象：CrossAssetRegistryWriter.sync_registry
+    目的/目标：loaded.assets 条数与 cross_asset_registry 行数一致
+    验证点：res.status=SUCCESS；count==len(assets)
+    失败含义：YAML 注册表与 DB 副本不一致，运行时读到过期元数据
+    """
     db = tmp_path / "layer2_reg.duckdb"
     cm = ConnectionManager(db)
     with cm.writer() as con:
@@ -618,6 +808,12 @@ def test_layer2Registry_syncViaWriteManager(tmp_path: Path) -> None:
 
 
 def test_layer2Loader_defaultRejectsProductionLiveMode(tmp_path: Path) -> None:
+    """覆盖范围：默认 loader 拒绝 production_live
+    测试对象：CrossAssetRegistryLoader.load（production_live 与 staged fixture 对照）
+    目的/目标：production_live 抛错；STAGED_REGISTRY_FIXTURE 仍为 staged_fixture_only
+    验证点：bad yaml raises staged_fixture_only；fixture mode 正确
+    失败含义：生产模式配置被误当作 staged 加载
+    """
     bad = tmp_path / "production_live.yaml"
     bad.write_text(
         "version: v1\nmode: production_live\nassets:\n"

@@ -1,4 +1,7 @@
-"""B2.5-O-05 FRED / macro_supplementary staged-semantics gate tests."""
+"""B2.5-O-05 FRED / macro_supplementary staged 语义门禁测试。
+
+覆盖范围：审计延期、生产试点策略、Batch3 gate 与 Round3 任务卡对 FRED 主源的禁止误读。
+"""
 
 from __future__ import annotations
 
@@ -30,6 +33,12 @@ def _read(path: Path) -> str:
 
 
 def test_b250o05_remainsDeferred_withExplicitClosureCommand() -> None:
+    """覆盖范围：B2.5-O-05 在三份延期/待修注册表中的登记
+    测试对象：AUDIT_DEFERRED、UNRESOLVED_ISSUES、ROUND3_BATCH25_PENDING_FIX 注册表
+    目的/目标：FRED 主源闭合项保持延期且带明确闭合命令与测试锚点
+    验证点：三表均含 B2.5-O-05；审计/待修表含 RE-DEFERRED、FRED:DGS10、test_fred_staged_semantics.py 等 token
+    失败含义：注册表缺失会导致 agent 误以为 Request 3 已关闭 FRED 主源
+    """
     audit = _read(AUDIT_DEFERRED)
     unresolved = _read(UNRESOLVED)
     pending = _read(PENDING_FIX)
@@ -49,6 +58,12 @@ def test_b250o05_remainsDeferred_withExplicitClosureCommand() -> None:
 
 
 def test_policy_and_gate_forbidFredPrimaryMisreadFromRequest3() -> None:
+    """覆盖范围：生产试点策略与 Batch3 gate 对 FRED 误读的禁止条款
+    测试对象：production_live_pilot_policy.md、BATCH3_STAGED_DOWNSTREAM_GATE.md
+    目的/目标：Request 3 不得被引用为 live FRED primary；macro 仅 staged supplementary
+    验证点：策略含 B2.5-O-05、does not close、not be cited as live FRED primary；gate 含同类禁止表述
+    失败含义：策略缺口会允许 staged 宏观数据被宣称生产主源
+    """
     policy = _read(POLICY)
     gate = _read(GATE_DOC)
 
@@ -69,6 +84,12 @@ def test_policy_and_gate_forbidFredPrimaryMisreadFromRequest3() -> None:
 
 
 def test_handoff_map_and_taskCards_preserveStagedMacroSemantics() -> None:
+    """覆盖范围：Round3 handoff、实现地图与 018A/019 任务卡
+    测试对象：ROUND3_HANDOFF、ROUND3_BATCH_IMPLEMENTATION_MAP、018A/019 任务文档
+    目的/目标：交接与任务卡持续声明 macro_supplementary 仅为形状证据、不闭合 B2.5-O-05
+    验证点：各文档含 B2.5-O-05 与 macro_supplementary；handoff/map 含 does not close；018A 含 supplementary macro shape evidence only
+    失败含义：任务卡语义漂移会导致建模层误用 Request 3 为 FRED 主源
+    """
     handoff = _read(HANDOFF)
     round3_map = _read(ROUND3_MAP)
     task_018a = _read(TASK_018A)

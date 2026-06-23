@@ -1,4 +1,8 @@
-"""Batch 2.75 live pilot gate tests — fail-closed orchestration evidence."""
+"""Batch 2.75 线上试点门禁测试（fail-closed 编排证据）。
+
+覆盖范围：Phase -1 至 Phase 4 的授权、路由预览、HITL、raw-only 微拉取、
+校验与 Request 2 对账；确保无授权、禁用源或 fixture 端口不得冒充 live 证据。
+"""
 
 from __future__ import annotations
 
@@ -48,7 +52,12 @@ def _read(path: Path) -> str:
 
 
 def test_livePilot_phaseMinus1_registryReconciliationRequired() -> None:
-    """Phase -1 must reconcile five tracked IDs against registries before pilot work."""
+    """覆盖范围：Batch 2.75 Phase -1 是否完成五 ID registry 对账与读档证据
+    测试对象：execute-evidence/phase_minus1_reconciliation.md、phase-1-registry-read.txt 及三份 registry
+    目的/目标：开工前要把五类待对账项与 registry 对齐，不能把「规划已通过」误当成「线上试点已通过」
+    验证点：reconciliation 含五个 ID 与 out-of-scope 说明；read log 含四 registry 路径；resolved 含 PLAN-01 且写明不闭合 R3-B2.75-01；pending 含 R3-B2.75-01 等
+    失败含义：对账证据缺失，后续 live 阶段可能在错误的开放项状态下推进
+    """
     reconciliation = EVIDENCE_DIR / "phase_minus1_reconciliation.md"
     registry_read = EVIDENCE_DIR / "phase-1-registry-read.txt"
     assert reconciliation.is_file(), "phase_minus1_reconciliation.md required"
@@ -81,7 +90,12 @@ def test_livePilot_phaseMinus1_registryReconciliationRequired() -> None:
 
 
 def test_livePilot_perfAndHygieneRedefer_areAuthoritativeRegistryRows() -> None:
-    """Perf/hygiene re-defers must appear in the authoritative registries."""
+    """覆盖范围：性能与 hygiene 重 defer 项是否在权威 registry 有行
+    测试对象：AUDIT_DEFERRED、UNRESOLVED、ROUND3_BATCH25_PENDING_FIX_REGISTRY
+    目的/目标：R3-B25-PERF-BUDGET-01 与 R3-B25-HYG-03 在三表均可查
+    验证点：两个 item_id 在三个 registry 正文均出现
+    失败含义：perf/hygiene 债未双登记，Batch 2.75 closeout 无法引用 SSOT 行
+    """
     required_ids = ("R3-B25-PERF-BUDGET-01", "R3-B25-HYG-03")
     registry_text = {
         path.name: _read(path)
@@ -97,7 +111,12 @@ def test_livePilot_perfAndHygieneRedefer_areAuthoritativeRegistryRows() -> None:
 
 
 def test_livePilot_missingAuthorization_blocksBeforeFetch() -> None:
-    """Missing authorization evidence must block before any adapter fetch."""
+    """覆盖范围：缺少授权文件时 live pilot 是否在 fetch 前阻断
+    测试对象：run_live_pilot_raw_only 与 DataSourceService.fetch（mock）
+    目的/目标：没有真实授权文件时，必须在发起拉数之前就拒绝请求
+    验证点：pytest.raises(LivePilotAuthorizationError)；fetch_called 仍为 False
+    失败含义：无授权也能触发拉数，线上试点授权链形同虚设
+    """
     from backend.app.ops.live_pilot import (
         LivePilotAuthorizationError,
         LivePilotRequest,
@@ -132,7 +151,12 @@ def test_livePilot_missingAuthorization_blocksBeforeFetch() -> None:
 
 
 def test_livePilot_disabledSource_blocksBeforeFetch() -> None:
-    """Disabled sources (e.g. qmt_xtdata) must block before fetch even with auth file present."""
+    """覆盖范围：禁用数据源（qmt_xtdata）是否在 fetch 前阻断
+    测试对象：run_live_pilot_raw_only 对 qmt_xtdata 请求
+    目的/目标：即便用户授权文件齐全，默认禁用的数据源也不能开始拉数
+    验证点：pytest.raises(LivePilotDisabledSourceError)；fetch_called 为 False
+    失败含义：高风险禁用源仍能拉数，试点范围可能被悄悄扩大
+    """
     from backend.app.ops.live_pilot import (
         LivePilotDisabledSourceError,
         LivePilotRequest,
@@ -167,7 +191,12 @@ def test_livePilot_disabledSource_blocksBeforeFetch() -> None:
 
 
 def test_livePilot_authorization_approvedRequestPassesGate() -> None:
-    """Approved baostock request with valid authorization evidence passes Phase 0 gate."""
+    """覆盖范围：已批准的 baostock 请求能否通过 Phase 0 授权校验
+    测试对象：validate_authorization 与 batch275_user_authorization 证据路径
+    目的/目标：符号、窗口、行数与授权文件匹配的请求不应被误拒
+    验证点：对合法 LivePilotRequest 调用 validate_authorization 不抛异常
+    失败含义：合法 pilot 请求过不了授权门，已批准 envelope 与实现脱节
+    """
     from backend.app.ops.live_pilot import LivePilotRequest, validate_authorization
 
     request = LivePilotRequest(
@@ -183,7 +212,12 @@ def test_livePilot_authorization_approvedRequestPassesGate() -> None:
 
 
 def test_livePilot_authorization_rejectsExpandedRequestEnvelope() -> None:
-    """Authorization must bind to exact approved symbols/window/per-request row cap."""
+    """覆盖范围：授权是否绑定精确 symbols/窗口/行数上限
+    测试对象：validate_authorization 对 approved_pilot_requests 的扩 envelope 变体
+    目的/目标：换股票、拉长窗口或增大 max_rows 必须拒掉
+    验证点：三处 replace 变体均 pytest.raises(LivePilotAuthorizationError)
+    失败含义：授权可被套利扩大，micro-fetch 行数上限形同虚设
+    """
     from backend.app.ops.live_pilot import (
         LivePilotAuthorizationError,
         approved_pilot_requests,
@@ -203,7 +237,12 @@ def test_livePilot_authorization_rejectsExpandedRequestEnvelope() -> None:
 
 
 def test_livePilot_authorization_rejectsUnapprovedOptionalSource() -> None:
-    """Optional cninfo source/domain/operation is not authorized by the default envelope."""
+    """覆盖范围：未在默认 envelope 内的可选源 cninfo 是否被拒
+    测试对象：validate_authorization 对 cninfo/announcements 请求
+    目的/目标：仅有通用授权文件不足以批准额外源域操作
+    验证点：cninfo 请求 pytest.raises(LivePilotAuthorizationError)
+    失败含义：可选源无单独批准也能过门，pilot 范围会被悄悄扩大
+    """
     from backend.app.ops.live_pilot import (
         LivePilotAuthorizationError,
         LivePilotRequest,
@@ -225,7 +264,12 @@ def test_livePilot_authorization_rejectsUnapprovedOptionalSource() -> None:
 
 
 def test_livePilot_authorization_recordDocumentsSourceRiskRationale() -> None:
-    """Phase 0 evidence must document why baostock/akshare are lower risk than QMT/FRED."""
+    """覆盖范围：Phase 0 授权记录是否写明各源风险 rationale
+    测试对象：execute-evidence/phase0_authorization_record.md
+    目的/目标：证据解释为何 baostock/akshare 低于 qmt/fred/yahoo，并引用用户授权文件
+    验证点：文件存在；含 baostock、akshare、qmt、fred、yahoo；含 batch275_user_authorization 相对路径
+    失败含义：缺风险说明，审计无法判断源选择是否与策略一致
+    """
     record = EVIDENCE_DIR / "phase0_authorization_record.md"
     assert record.is_file(), "phase0_authorization_record.md required"
     text = _read(record)
@@ -238,7 +282,12 @@ def test_livePilot_authorization_recordDocumentsSourceRiskRationale() -> None:
 
 
 def test_livePilot_phase1Baseline_readOnly(tmp_path: Path) -> None:
-    """Phase 1 must capture read-only baseline inventory with zero DB mutation."""
+    """覆盖范围：Phase 1 基线采集是否只读且不改动 DB 哈希
+    测试对象：capture_phase1_baseline 与临时 DuckDB
+    目的/目标：基线盘点只能读库、不能改库，并产出完整的能力快照与无写入证明
+    验证点：db 字节前后相同；mutation_proof 两 flag 为 True；inspect mode 为 read_only；capability 含 baostock/akshare 三请求；任务 execute-evidence 三文件存在
+    失败含义：基线阶段偷偷改库或缺能力快照，后续「生产库未动」证明不可信
+    """
     import duckdb
     from backend.app.db.migrate import apply_migrations
     from backend.app.ops.db_inspector import REQUIRED_TOP_LEVEL_FIELDS
@@ -299,7 +348,12 @@ AUTH_EVIDENCE = "docs/quality/batch275_user_authorization_2026-06-21.md"
 
 
 def test_livePilot_phase2RouteMatrix_threeRequests(tmp_path: Path) -> None:
-    """Phase 2 dry-run route matrix for three authorized requests — no fetch."""
+    """覆盖范围：Phase 2 三路 dry-run 路由矩阵是否不触发 fetch
+    测试对象：capture_phase2_route_matrix 与 approved_pilot_requests
+    目的/目标：三条已授权请求只做路由预览与资源守卫检查，不真正拉数
+    验证点：fetch 未调用；dry_run True；三 preview 各有 route_status/resource_guard；macro 请求 explicit_source_route_status 为 VALIDATION_ONLY_BLOCKED 或 DISABLED_SOURCE；任务 evidence 中 matrix JSON dry_run 且 fred_primary_deferred
+    失败含义：预览阶段仍去拉 vendor 数据，dry-run 与真实 live 边界混淆
+    """
     from backend.app.ops.live_pilot import (
         approved_pilot_requests,
         capture_phase2_route_matrix,
@@ -348,7 +402,12 @@ def test_livePilot_phase2RouteMatrix_threeRequests(tmp_path: Path) -> None:
 
 
 def test_livePilot_phase2_previewIncludesResourceGuardDecision(tmp_path: Path) -> None:
-    """Each route preview must include ResourceGuard decision snapshot."""
+    """覆盖范围：单条 route preview 是否携带 ResourceGuard 决策字段
+    测试对象：preview_live_pilot 对首个 approved 请求
+    目的/目标：每条预览除路由状态外还须暴露 guard 决策与原因
+    验证点：preview 含 resource_guard_decision、resource_guard_reason；dry_run True；explicit_source_route_status==READY
+    失败含义：预览缺 guard 字段，Phase 3 可能在资源压力下仍尝试 fetch
+    """
     from backend.app.ops.live_pilot import approved_pilot_requests, preview_live_pilot
 
     request = approved_pilot_requests()[0]
@@ -360,7 +419,12 @@ def test_livePilot_phase2_previewIncludesResourceGuardDecision(tmp_path: Path) -
 
 
 def test_livePilot_phase3_requiresHitlBeforeFetch(tmp_path: Path) -> None:
-    """Phase 3 live fetch must fail without HITL confirmation file."""
+    """覆盖范围：Phase 3 live fetch 是否要求 HITL 确认文件
+    测试对象：run_live_pilot_raw_only(dry_run=False) 无 phase3_hitl 文件时
+    目的/目标：无人机确认不得进入真实 fetch
+    验证点：pytest.raises(LivePilotAuthorizationError, match='HITL')
+    失败含义：缺 HITL 也能拉 live 数据，违背 Batch 2.75 人工确认门
+    """
     from backend.app.ops.live_pilot import (
         LivePilotAuthorizationError,
         approved_pilot_requests,
@@ -379,7 +443,12 @@ def test_livePilot_phase3_requiresHitlBeforeFetch(tmp_path: Path) -> None:
 
 
 def test_livePilot_phase3_rejectsFixtureFetchPort(tmp_path: Path) -> None:
-    """StubFetchPort must not satisfy live pilot evidence requirements."""
+    """覆盖范围：StubFetchPort 是否不能满足 live pilot 证据要求
+    测试对象：_assert_live_fetch_port(StubFetchPort(...))
+    目的/目标：测试用 stub 端口必须被显式拒绝
+    验证点：pytest.raises(LivePilotFixtureForbiddenError)
+    失败含义：stub 端口可通过 live 检查，fixture 数据会被当成 live 证据
+    """
     from backend.app.datasources.adapters.fetch_port import StubFetchPort
     from backend.app.ops.live_pilot import (
         LivePilotFixtureForbiddenError,
@@ -391,7 +460,12 @@ def test_livePilot_phase3_rejectsFixtureFetchPort(tmp_path: Path) -> None:
 
 
 def test_livePilot_phase3_rejectsLocalFixtureAndStagedService(tmp_path: Path) -> None:
-    """LocalFixtureFetchPort/build_staged_fixture_service must not satisfy live evidence."""
+    """覆盖范围：LocalFixtureFetchPort 与 staged fixture service 是否被拒
+    测试对象：_assert_live_fetch_port 对本地 fixture 与 build_staged_fixture_service
+    目的/目标：本地 JSON fixture 与 staged service 端口不能冒充 live fetch
+    验证点：两处均 pytest.raises(LivePilotFixtureForbiddenError)
+    失败含义：staged fixture 服务可过 live 门，Request 3 证据与 Batch 2.5 叙事冲突
+    """
     from backend.app.datasources.adapters.fetch_port import LocalFixtureFetchPort
     from backend.app.datasources.service import build_staged_fixture_service
     from backend.app.ops.live_pilot import (
@@ -421,7 +495,12 @@ def test_livePilot_phase3_routeNotReady_stopsBeforeFetch(
     tmp_path: Path,
     route_status: str,
 ) -> None:
-    """A non-READY explicit route must stop before live fetch port construction."""
+    """覆盖范围：非 READY 显式路由是否在构建 fetch port 前停止
+    测试对象：run_live_pilot_raw_only 在 mock preview 返回 DISABLED/CAPABILITY_MISSING 等状态时
+    目的/目标：路由未就绪时不得创建 live fetch port
+    验证点：pytest.raises(LivePilotRouteNotReadyError, match=route_status)；fetch_port_called 为 False
+    失败含义：坏路由仍建 fetch 端口，live pilot 可能在禁用源上拉数
+    """
     from backend.app.ops.live_pilot import (
         LivePilotRouteNotReadyError,
         approved_pilot_requests,
@@ -461,7 +540,12 @@ def test_livePilot_phase3_routeNotReady_stopsBeforeFetch(
 
 
 def test_livePilot_phase3_resourceGuardHardStop_stopsBeforeFetch(tmp_path: Path) -> None:
-    """ResourceGuard HARD_STOP from route preview must stop before fetch construction."""
+    """覆盖范围：ResourceGuard HARD_STOP 是否在 fetch port 构建前终止
+    测试对象：run_live_pilot_raw_only 当 preview 抛 ResourceGuard HARD_STOP 时
+    目的/目标：资源硬停必须比 fetch 更早，且不得创建 fetch port
+    验证点：pytest.raises(RuntimeError, match='ResourceGuard HARD_STOP')；fetch_port_called 为 False
+    失败含义：guard 硬停后仍建端口，可能在高负载下继续 live 拉数
+    """
     from backend.app.ops.live_pilot import approved_pilot_requests, run_live_pilot_raw_only
 
     out = tmp_path / "evidence"
@@ -497,7 +581,12 @@ def test_livePilot_phase3_resourceGuardHardStop_stopsBeforeFetch(tmp_path: Path)
 
 
 def test_livePilot_phase3_failureLeavesDurableEvidence(tmp_path: Path) -> None:
-    """Vendor failures must leave structured failure/no-mutation evidence for reruns."""
+    """覆盖范围：Phase 3 vendor 失败是否留下可重跑的结构化证据
+    测试对象：capture_phase3_raw_evidence 在第二次 fetch 抛 timeout 时
+    目的/目标：某一路拉数失败时，仍要留下可复查的失败记录，且允许安全重跑
+    验证点：payload rerun_safe True；第二路 status FAILED 含 vendor timeout；存在 phase3_fetch_failure 与 phase3_raw_micro_fetch_evidence 文件
+    失败含义：失败无持久记录，重跑会丢失失败语义或覆盖审计轨迹
+    """
     from backend.app.ops.live_pilot import approved_pilot_requests, capture_phase3_raw_evidence
 
     calls = {"count": 0}
@@ -536,7 +625,12 @@ def test_livePilot_phase3_failureLeavesDurableEvidence(tmp_path: Path) -> None:
 
 
 def test_livePilot_phase3_repeatExecution_isRerunSafe(tmp_path: Path) -> None:
-    """Repeated Phase 3 evidence capture must preserve structured sandbox semantics."""
+    """覆盖范围：重复执行 Phase 3 证据采集是否保持 rerun_safe 语义
+    测试对象：capture_phase3_raw_evidence 连续调用两次
+    目的/目标：重复执行采集时仍应保留三路结果，且生产库未被改动
+    验证点：两次 rerun_safe True；持久化 JSON 含 pilot-req-1/2/3 且各 proof db_hash_unchanged 与 row_counts_unchanged
+    失败含义：重跑破坏结构化证据或未改库证明，沙箱语义不可复现
+    """
     from backend.app.ops.live_pilot import approved_pilot_requests, capture_phase3_raw_evidence
 
     def _fake_run(_request, *, sandbox_root: Path, pilot_request_id: str, evidence_dir: Path):
@@ -591,7 +685,12 @@ def test_livePilot_phase3_repeatExecution_isRerunSafe(tmp_path: Path) -> None:
 @pytest.mark.network
 @pytest.mark.slow
 def test_livePilot_phase3RawOnly_threeRequestsLive(tmp_path: Path) -> None:
-    """Live sandbox raw-only fetch for three authorized requests (network)."""
+    """覆盖范围：三路授权请求的 sandbox live raw-only 微拉取（需外网）
+    测试对象：capture_phase3_raw_evidence 与 execute-evidence HITL 文件
+    目的/目标：真实网络下三路 SUCCESS 且 raw 文件落在 sandbox、生产 DB 不变
+    验证点：三 fetch status SUCCESS、row_count>0、有 content_hash；mutation_proof 两 True；raw 路径在 sandbox 下；标记 network/slow
+    失败含义：live micro-fetch 不能成功或污染生产路径，Batch 2.75 Request 1 证据无效
+    """
     from backend.app.ops.live_pilot import (
         approved_pilot_requests,
         capture_phase3_raw_evidence,
@@ -624,7 +723,12 @@ def test_livePilot_phase3RawOnly_threeRequestsLive(tmp_path: Path) -> None:
 
 
 def test_livePilot_phase4Validation_noCleanWriteByDefault() -> None:
-    """Phase 4 validation must default to allow_clean_write=false and perform no clean write."""
+    """覆盖范围：Phase 4 任务证据是否默认禁止 clean write
+    测试对象：capture_task_phase4_validation_evidence(EVIDENCE_DIR)
+    目的/目标：第四阶段校验默认不能写清洁库，只应记录校验结论
+    验证点：result allow_clean_write/clean_write_performed 为 False；report 含 ALLOW_CLEAN_WRITE_FALSE_DEFAULT 与三类 validator 路径；proof 含 allow_clean_write false
+    失败含义：校验阶段默认允许写清洁层，试点可能误把观测写入生产库
+    """
     from backend.app.ops.live_pilot import capture_task_phase4_validation_evidence
 
     result = capture_task_phase4_validation_evidence(EVIDENCE_DIR)
@@ -656,7 +760,12 @@ def test_livePilot_phase4Validation_noCleanWriteByDefault() -> None:
 
 
 def test_livePilot_phase4_requiresRequest2Prerequisites(tmp_path: Path) -> None:
-    """Phase 4 must fail closed without Request 2 verdict and reconciliation artifacts."""
+    """覆盖范围：Phase 4 是否在缺 Request 2 前置工件时 fail-closed
+    测试对象：capture_phase4_validation 仅有 phase3 JSON、无 eastmoney verdict/reconciliation 时
+    目的/目标：仅有 raw fetch 证据不足以进入 Phase 4 校验
+    验证点：pytest.raises(LivePilotAuthorizationError, match='Request 2')；phase3 源文件存在并已复制到 tmp
+    失败含义：缺 Request 2 裁决也能跑 Phase 4，stock_zh_a_hist 边界会被跳过
+    """
     from backend.app.ops.live_pilot import (
         LivePilotAuthorizationError,
         capture_phase4_validation,
@@ -674,7 +783,12 @@ def test_livePilot_phase4_requiresRequest2Prerequisites(tmp_path: Path) -> None:
 
 
 def test_livePilot_phase4_severeBlocksCleanWriteEvidence(tmp_path: Path) -> None:
-    """Severe validation findings must be recorded as a clean-write block."""
+    """覆盖范围：严重校验发现是否阻止 clean write 并写入证据
+    测试对象：capture_phase4_validation 在提供 Request 2 工件后
+    目的/目标：出现严重校验问题时，必须阻止清洁层写入并留下证明
+    验证点：result 三 flag：severe_findings_block_clean_write True、clean_write_performed False、severe_findings 非空；proof 含 severe_findings_block_clean_write
+    失败含义：严重问题仍允许写清洁层，数据质量门禁失去阻断作用
+    """
     from backend.app.ops.live_pilot import capture_phase4_validation
 
     (tmp_path / "eastmoney_stock_zh_a_hist_verdict.md").write_text(
@@ -699,7 +813,12 @@ def test_livePilot_phase4_severeBlocksCleanWriteEvidence(tmp_path: Path) -> None
 
 
 def test_livePilot_phase4Conflict_inspectOrNoConflict() -> None:
-    """Phase 4 must emit conflict inspect text with explicit Request 2 sidecar boundary."""
+    """覆盖范围：Phase 4 冲突 inspect 与 Request 2 sidecar 边界
+    测试对象：任务 execute-evidence 中 phase4_conflict_inspect 与 validation_report
+    目的/目标：冲突报告须说明 Request 2 只是旁路信息，不能当成原接口已闭合
+    验证点：conflict 与 reconciliation 文件存在；inspect 含 Request 2/sidecar/NO_CONFLICT 或 Informational；report 中 req-2 closes_original_request2 为 False
+    失败含义：冲突叙事含糊，Request 2 失败可能被误当成原 endpoint 已闭合
+    """
     from backend.app.ops.live_pilot import capture_task_phase4_validation_evidence
 
     capture_task_phase4_validation_evidence(EVIDENCE_DIR)
@@ -725,7 +844,12 @@ def test_livePilot_phase4Conflict_inspectOrNoConflict() -> None:
 
 
 def test_livePilot_request2Reconciliation_requiredBeforePhase4() -> None:
-    """Request 2 reconciliation artifact must exist and reference eastmoney verdict."""
+    """覆盖范围：Phase 4 前 Request 2 对账工件是否齐全
+    测试对象：phase3_request2_evidence_reconciliation.md 与 eastmoney_stock_zh_a_hist_verdict.md
+    目的/目标：对账文须连接 stock_zh_a_hist、eastmoney sidecar、daily 候选与 018C 边界
+    验证点：两文件存在；reconciliation 含 hist/push2his/stock_zh_a_daily/sidecar/PILOT_PASS_RAW_ONLY/018C
+    失败含义：缺对账或裁决，Phase 4 无法证明 Request 2 未越权闭合
+    """
     reconciliation = EVIDENCE_DIR / "phase3_request2_evidence_reconciliation.md"
     verdict = EVIDENCE_DIR / "eastmoney_stock_zh_a_hist_verdict.md"
     assert reconciliation.is_file()

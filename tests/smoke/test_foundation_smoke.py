@@ -1,4 +1,4 @@
-"""Foundation end-to-end smoke tests (Round 1 task 010)."""
+"""Foundation 端到端冒烟：迁移、资源守卫、原始存储、注册与写入审计。"""
 
 from __future__ import annotations
 
@@ -23,6 +23,12 @@ FOUNDATION_TABLES = {
 
 
 def test_foundation_endToEnd_writesCleanAndAudits(tmp_path: Path, monkeypatch) -> None:
+    """覆盖范围：Round 1 foundation 主路径串联
+    测试对象：apply_migrations、ResourceGuard、RawStore、FileRegistry、WriteManager
+    目的/目标：验证迁移建表、资源 WARN/OK、原始文件登记、校验门控写入与审计成败各走一路
+    验证点：001–002 迁移与 foundation 表齐全；guard WARN 写 log；成功写入 1 行且 audit SUCCESS；stub-fail 写入 FAILED 且不增行
+    失败含义：foundation 链路任一环节断裂，后续 batch 数据落库无法信任
+    """
     db = tmp_path / "smoke.duckdb"
     con = duckdb.connect(str(db))
     applied = apply_migrations(con)

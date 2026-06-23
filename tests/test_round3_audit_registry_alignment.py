@@ -1,4 +1,8 @@
-"""Round 3 Batch 2.5 / Batch 2.75 audit follow-up 文档对齐测试。"""
+"""Round 3 Batch 2.5 / 2.75 审计跟进 registry 对齐测试。
+
+覆盖范围：三份 registry、ROUND3 地图、ponytail 扫描与 post-14 审计报告
+是否一致反映 wave-A 合并、Bucket B 闭合与仍开放的 perf/hygiene 叙事。
+"""
 
 from __future__ import annotations
 
@@ -31,6 +35,12 @@ def _read(path: Path) -> str:
 
 
 def test_batch25ClosedItems_areResolvedAndNotStillOpen() -> None:
+    """覆盖范围：Batch 2.5 已闭合项在 registry 与 .gitignore 中的状态
+    测试对象：RESOLVED、UNRESOLVED registries 与 .gitignore
+    目的/目标：已解决的文档债不应还在开放项表里占一行
+    验证点：三项 ID 在 resolved 且 unresolved 无 | ID | OPEN；resolved 含 BATCH3 gate 与 pytest slow；gitignore 含 .audit-sandboxpytest-*/
+    失败含义：已闭合项仍显示 OPEN，审计会重复派工同一文档债
+    """
     unresolved = _read(UNRESOLVED)
     resolved = _read(RESOLVED)
     gitignore = _read(GITIGNORE)
@@ -46,6 +56,12 @@ def test_batch25ClosedItems_areResolvedAndNotStillOpen() -> None:
 
 
 def test_hyg03_keepsOnlyPerformanceBudgetGapOpen() -> None:
+    """覆盖范围：R3-B25-HYG-03 性能预算缺口是否仍为唯一开放 hygiene 叙事
+    测试对象：UNRESOLVED_ISSUES_REGISTRY.md 中 HYG-03 段落
+    目的/目标：测试分层补齐后，开放项叙事应只追生产级性能基准缺口
+    验证点：含 R3-B25-HYG-03、test tier 已补、A08-P2-01/02、production-equivalent benchmark、performance-budget artifact；不含「无 test tier / 新 A6 benchmark」
+    失败含义：HYG-03 叙事陈旧，协调人不知道只剩性能基准证据缺口
+    """
     unresolved = _read(UNRESOLVED)
 
     assert "R3-B25-HYG-03" in unresolved
@@ -57,6 +73,12 @@ def test_hyg03_keepsOnlyPerformanceBudgetGapOpen() -> None:
 
 
 def test_task019_requiresBatch3StagedOnlyDownstreamGate() -> None:
+    """覆盖范围：019 任务卡对 Batch 3 staged-only 下游门禁的前置引用
+    测试对象：019_implement_layer2_cross_asset_sensor.md
+    目的/目标：Layer2 实现必须承认 ingestion 仍是 staged 且 2.75 live 未就绪
+    验证点：含 Batch 3 staged-only gate 文档路径、staged 非 production-live、018A 桥接、R3-B2.75-01、production-live readiness 措辞
+    失败含义：019 卡未绑 Batch3 gate，建模层可能假设 production-live 已开
+    """
     text = _read(TASK_019)
 
     for token in (
@@ -71,6 +93,12 @@ def test_task019_requiresBatch3StagedOnlyDownstreamGate() -> None:
 
 
 def test_round3Map_tracksCompleteBatch275Scope() -> None:
+    """覆盖范围：ROUND3 地图是否完整列出 Batch 2.75 范围内外条目
+    测试对象：ROUND3_BATCH_IMPLEMENTATION_MAP.md
+    目的/目标：地图同时记录 2.75 必做 ID、试点 verdict 与明确不在 2.75 的工作
+    验证点：必含 R3-B2.75-PROD-LIVE-PILOT、各 PILOT_* verdict、perf-budget 脚本等；亦含 migration 008、ingestion split、frontend budget、Batch3 modeling 等「在范围内」说明 token
+    失败含义：2.75 范围 ledger 残缺，执行者不知道哪些债仍属本批次
+    """
     text = _read(ROUND3_MAP)
 
     for token in (
@@ -103,6 +131,12 @@ def test_round3Map_tracksCompleteBatch275Scope() -> None:
 
 
 def test_task018B_declaresCompleteBatch275ScopeAndCloseout() -> None:
+    """覆盖范围：018B 任务卡内的 Batch 2.75 scope ledger 与 closeout 阶段
+    测试对象：018B_production_live_pilot_gate.md
+    目的/目标：任务卡自描述 2.75 各 phase、perf gate 与 handoff，并列出 not in Batch 2.75 项
+    验证点：含 scope ledger 各 ID、Phase -1/4.5、production_equivalent_smoke、Batch 3 handoff；含 No migration 008、No R2b-R2d、No frontend budget、No Batch3 Layer2、No Batch6 gate 等排除项
+    失败含义：018B 范围自述不全，审计无法对照 plan 验 scope 边界
+    """
     text = _read(TASK_018B)
 
     for token in (
@@ -133,6 +167,12 @@ def test_task018B_declaresCompleteBatch275ScopeAndCloseout() -> None:
 
 
 def test_round3Map_tracksPostAuditIngestionAndRound4References() -> None:
+    """覆盖范围：ROUND3 地图对 post-audit ingestion split 与 Round4 交叉引用
+    测试对象：ROUND3_BATCH_IMPLEMENTATION_MAP.md
+    目的/目标：R2b/R2c/R2d 与 FE bundle budget 等债在地图有独立条目且标 Round4 cross-reference
+    验证点：含 R3-B25-INGEST-SPLIT-R2B、INGEST-MONOLITH-R2C-R2D、rollback plan、R3-B25-FE-BUNDLE-BUDGET、Round4 cross-reference only
+    失败含义：ingestion/FE 债未入地图，会被误当成 2.75 内必须当场闭合
+    """
     text = _read(ROUND3_MAP)
 
     for token in (
@@ -147,9 +187,12 @@ def test_round3Map_tracksPostAuditIngestionAndRound4References() -> None:
 
 
 def test_post14Prompt14AkshareValidationDefer_isInRegistry() -> None:
-    """覆盖范围：PROMPT_14 akshare validation 失败后的 registry 登记（ADV-POST14-A-009 / B-011）。
-    测试对象：AUDIT_DEFERRED_REGISTRY + UNRESOLVED_ISSUES_REGISTRY。
-    目的：确保 akshare validation re-defer 有 SSOT 行且交叉引用 R3-B2.75-REQ2-EM（不得关闭）。"""
+    """覆盖范围：PROMPT_14 akshare validation 失败后的 registry 登记
+    测试对象：AUDIT_DEFERRED_REGISTRY、UNRESOLVED_ISSUES_REGISTRY
+    目的/目标：R3-PROMPT14-AKSHARE-VAL-01 在 audit/unresolved 为 DEFERRED 且交叉引用 REQ2-EM
+    验证点：item_id 在两 registry；unresolved 有 | ID | DEFERRED 行；含 fetch_daily_bar_validation、stock_zh_a_hist、R3-B2.75-REQ2-EM、prompt14 授权与分支名
+    失败含义：akshare validation 重 defer 无 SSOT，Request 2 状态会被误读为已关闭
+    """
     audit = _read(AUDIT_DEFERRED)
     unresolved = _read(UNRESOLVED)
 
@@ -170,9 +213,12 @@ def test_post14Prompt14AkshareValidationDefer_isInRegistry() -> None:
 
 
 def test_post14R3Partial1_noLongerClaimsBackfillSkipsValidator() -> None:
-    """覆盖范围：R3-PARTIAL-1 陈旧叙事修正（ADV-POST14-B-004）。
-    测试对象：三份 registry + ROUND2_REPAIR_ALIGNMENT_TRACKER。
-    目的：registry 不再声称 backfill 跳过 validator；应记录 ADV-R3X-SYNC-002 已闭合 severe-conflict 子范围。"""
+    """覆盖范围：R3-PARTIAL-1 陈旧「backfill 跳过 validator」叙事是否已修正
+    测试对象：三份 registry 与 ROUND2_REPAIR_ALIGNMENT_TRACKER.md
+    目的/目标：registry 应记录 ADV-R3X-SYNC-002 已闭合 severe-conflict 子范围，而非声称跳过 validator
+    验证点：audit/unresolved 不含 skips validator + clean write；含 ADV-R3X-SYNC-002、validate+write、severe conflict；tracker 含 SYNC-002
+    失败含义：陈旧叙事仍在，读者会以为 backfill 仍可绕过校验写库
+    """
     audit = _read(AUDIT_DEFERRED)
     unresolved = _read(UNRESOLVED)
     tracker = _read(PROJECT_ROOT / "docs/quality/ROUND2_REPAIR_ALIGNMENT_TRACKER.md")
@@ -186,9 +232,12 @@ def test_post14R3Partial1_noLongerClaimsBackfillSkipsValidator() -> None:
 
 
 def test_post14AdversarialReport_syncsPrompt15ResolvedBanner() -> None:
-    """覆盖范围：adversarial_audit_report 与 PROMPT_15 闭合状态同步（ADV-POST14-B-001）。
-    测试对象：docs/quality/adversarial_audit_report.md。
-    目的：读者可见历史快照标注 + 指向 post-14 审计与 PROMPT_15 RESOLVED 章节。"""
+    """覆盖范围：adversarial_audit_report 与 PROMPT_15 闭合横幅是否同步
+    测试对象：docs/quality/adversarial_audit_report.md
+    目的/目标：读者看到历史快照标注并指向 post-14 审计与 PROMPT_15 RESOLVED 章节
+    验证点：含 历史快照、PROMPT_15、adversarial_audit_post14、立即修复 等 token
+    失败含义：对抗审计报告仍像未闭合快照，会误导 PROMPT_15 实际状态
+    """
     text = _read(ADVERSARIAL_REPORT)
 
     for token in (
@@ -201,9 +250,12 @@ def test_post14AdversarialReport_syncsPrompt15ResolvedBanner() -> None:
 
 
 def test_post14PonytailScan_sc05DocumentsErrorRedactionWiring() -> None:
-    """覆盖范围：SC-05 语义修正（ADV-POST14-B-003）。
-    测试对象：PONYTAIL_MODULE_SCAN_20260622.md。
-    目的：扫描文档记录 error_redaction 已被 db/sync/datasources 引用，非死代码。"""
+    """覆盖范围：PONYTAIL 扫描 SC-05 是否修正为 error_redaction 已接线
+    测试对象：PONYTAIL_MODULE_SCAN_20260622.md SC-05 段
+    目的/目标：扫描文档不得再写 error_redaction 为死代码
+    验证点：含 SC-05、error_redaction、db/sync/datasources、PROMPT_17；不含「本仓库无引用」
+    失败含义：SC-05 仍标死代码，后续 hardening 可能重复派工同一模块
+    """
     text = _read(PONYTAIL_SCAN)
 
     assert "SC-05" in text
@@ -217,9 +269,12 @@ def test_post14PonytailScan_sc05DocumentsErrorRedactionWiring() -> None:
 
 
 def test_post14PonytailScan_hasPost1617DeltaSection() -> None:
-    """覆盖范围：ponytail 扫描 post-16/17 增量（ADV-POST14-B-006）。
-    测试对象：PONYTAIL_MODULE_SCAN_20260622.md §10。
-    目的：Bucket A/C 闭合项有权威 delta 节，避免扫描表永久陈旧。"""
+    """覆盖范围：ponytail 扫描是否新增 §10 Post PROMPT_16/17 delta
+    测试对象：PONYTAIL_MODULE_SCAN_20260622.md §10
+    目的/目标：Bucket A/C 闭合项有权威增量节，避免扫描表永久停在旧 OPEN 数
+    验证点：含 ## 10. Post PROMPT_16/17 delta；该节含 PROMPT_16/17、SC-05、DS-01、OP-02
+    失败含义：缺 delta 节，读者会按过时扫描表理解模块卫生状态
+    """
     text = _read(PONYTAIL_SCAN)
 
     assert "## 10. Post PROMPT_16/17 delta" in text
@@ -228,9 +283,12 @@ def test_post14PonytailScan_hasPost1617DeltaSection() -> None:
 
 
 def test_post14DatabaseGuidelines_listsMigration009StatusCheck() -> None:
-    """覆盖范围：database-guidelines 与 migration 009 叙事对齐（ADV-POST14-B-005）。
-    测试对象：.trellis/spec/backend/database-guidelines.md。
-    目的：spec 列出 007–011 迁移分层，并区分 fetch_log status CHECK vs SUCCESS evidence app 层。"""
+    """覆盖范围：database-guidelines 是否与 migration 009–011 叙事对齐
+    测试对象：.trellis/spec/backend/database-guidelines.md
+    目的/目标：spec 列出迁移分层并区分 fetch_log CHECK 与 SUCCESS evidence 的应用层职责
+    验证点：含 009_status_check、010_lineage_not_null、011_layer1_tables、fetch_log、SUCCESS evidence、application layer
+    失败含义：数据库指南缺新迁移说明，实现者可能误判 status CHECK 与证据层边界
+    """
     text = _read(DATABASE_GUIDELINES)
 
     for token in (
@@ -245,9 +303,12 @@ def test_post14DatabaseGuidelines_listsMigration009StatusCheck() -> None:
 
 
 def test_post14Prompt14StagedPilotCloseout_isDocumented() -> None:
-    """覆盖范围：PROMPT_14 staged pilot closeout 叙事（ADV-POST14-A-016）。
-    测试对象：AUDIT_DEFERRED + RESOLVED registries。
-    目的：closeout PILOT_PASS_STAGED_RAW 与 pilot_closeout.json 证据路径可在 registry 追溯。"""
+    """覆盖范围：PROMPT_14 staged pilot closeout 是否在 registry 可追溯
+    测试对象：AUDIT_DEFERRED、RESOLVED registries
+    目的/目标：PILOT_PASS_STAGED_RAW 与 pilot_closeout.json 证据路径可在 registry 查到
+    验证点：R3-PROMPT14-STAGED-01、PILOT_PASS_STAGED_RAW、pilot_closeout.json、feature-round3-real-data-staged-pilot 至少在 audit 或 resolved 之一出现
+    失败含义：staged pilot 闭合无 registry 行，无法审计 PROMPT_14 实际完成证据
+    """
     audit = _read(AUDIT_DEFERRED)
     resolved = _read(RESOLVED)
 
@@ -266,9 +327,12 @@ POST14_HYGIENE_CONTRACT_LANE = (
 
 
 def test_post14AuditDef03_isResolvedNotDeferred() -> None:
-    """覆盖范围：R3-AUDIT-DEF-03 registry 卫生（Slice 3 B-027 已落地）。
-    测试对象：三份 registry + test_ops_db_inspector 子目录 limit 测试。
-    目的：per-subdir scan cap 测试已存在后，DEFERRED 表不得再声称缺失。"""
+    """覆盖范围：R3-AUDIT-DEF-03 per-subdir scan cap 是否已 RESOLVED
+    测试对象：三份 registry 与 tests/test_ops_db_inspector.py
+    目的/目标：测试已存在后 DEFERRED 表不得再声称缺 per-subdir limit 测试
+    验证点：DEF-03 在 resolved；audit 无 Per-subdir DEF-03 行；unresolved 无 DEFERRED DEF-03；inspector 测试含 raw/parquet/audit/report 与 R3-AUDIT-DEF-03
+    失败含义：registry 仍标 deferred，会与已合并的 inspector 测试矛盾
+    """
     audit = _read(AUDIT_DEFERRED)
     unresolved = _read(UNRESOLVED)
     resolved = _read(RESOLVED)
@@ -283,9 +347,12 @@ def test_post14AuditDef03_isResolvedNotDeferred() -> None:
 
 
 def test_post14R2Risk3_failClosedModesDocumented() -> None:
-    """覆盖范围：R2-RISK-3 / ADV-POST14-B-008 契约对齐卫生。
-    测试对象：RESOLVED registry + WriteManager UNSUPPORTED_MODES 测试。
-    目的：未实现 write_mode 显式拒绝已登记为 RESOLVED，而非陈旧“窄于合约”单一叙事。"""
+    """覆盖范围：R2-RISK-3 未实现 write_mode 显式拒绝是否已 RESOLVED
+    测试对象：RESOLVED、UNRESOLVED registries
+    目的/目标：UNSUPPORTED_MODES 行为已登记 resolved，而非留在 DEFERRED
+    验证点：R2-RISK-3 在 resolved；unresolved 无 | R2-RISK-3 | DEFERRED；resolved 含 UNSUPPORTED_MODES、replace_partition、test_r3x_ponytail_structural_bucket_b
+    失败含义：write_mode 拒绝仍标开放，与 bucket B 已闭合测试不一致
+    """
     resolved = _read(RESOLVED)
     unresolved = _read(UNRESOLVED)
 
@@ -299,9 +366,12 @@ _RECONCILED_TOKENS = ("2026-06-24", "fix α-2", "527d6506", "wave-A", "PROMPT_18
 
 
 def test_r3yRegistrySlice_alpha2LastReconciled() -> None:
-    """覆盖范围：fix α-2 registry 切片后 SSOT 对账戳（slice α2-1）。
-    测试对象：三份 registry + UNRESOLVED_ITEM_TASK_COVERAGE 头部 Last reconciled。
-    目的：四份 SSOT 对账戳含同一组 mandatory tokens，防止措辞漂移（AUD-α2-002）。"""
+    """覆盖范围：fix α-2 registry 切片后四份 SSOT 的对账戳一致性
+    测试对象：UNRESOLVED、RESOLVED、AUDIT_DEFERRED、UNRESOLVED_ITEM_TASK_COVERAGE
+    目的/目标：Last reconciled 块含同一组 mandatory tokens，防止措辞漂移
+    验证点：四份文档均含 2026-06-24、fix α-2、527d6506、wave-A、PROMPT_18
+    失败含义：对账戳不一致，并行 slice 无法判断 registry 是否同一次 reconcile
+    """
     coverage = PROJECT_ROOT / "docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md"
     for path in (UNRESOLVED, RESOLVED, AUDIT_DEFERRED, coverage):
         text = _read(path)
@@ -310,9 +380,12 @@ def test_r3yRegistrySlice_alpha2LastReconciled() -> None:
 
 
 def test_r3yAdvLineageDefer_registrySSOTWithOwner021() -> None:
-    """覆盖范围：ADV-R3X-LINEAGE-001 DEFERRED 登记（slice α2-2）。
-    测试对象：AUDIT_DEFERRED + UNRESOLVED + COVERAGE。
-    目的：三 registry 与 COVERAGE 含 owner `021`+、closure test 描述；不得仍为 OPEN。"""
+    """覆盖范围：ADV-R3X-LINEAGE-001 DEFERRED 登记与 owner 021
+    测试对象：AUDIT_DEFERRED、UNRESOLVED、UNRESOLVED_ITEM_TASK_COVERAGE
+    目的/目标：血缘债在三 registry 与 COVERAGE 一致为 DEFERRED，owner 指向任务 021
+    验证点：item 在三文档；unresolved 有 DEFERRED 表行且无 OPEN 行；audit 含 021、snapshot lineage pytest、Batch 4B+；coverage 含 021_implement_layer3_snapshot_builder.md
+    失败含义：lineage defer 缺 owner 或状态不一，Batch 4B 前可能被误关
+    """
     audit = _read(AUDIT_DEFERRED)
     unresolved = _read(UNRESOLVED)
     coverage = _read(PROJECT_ROOT / "docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md")
@@ -329,9 +402,12 @@ def test_r3yAdvLineageDefer_registrySSOTWithOwner021() -> None:
 
 
 def test_waveAMainlineResolvedRows_traceableInRegistries() -> None:
-    """覆盖范围：wave-A 已合并项 RESOLVED 可追溯（slice α2-3）。
-    测试对象：RESOLVED + AUDIT_DEFERRED wave-A RESOLVED 节。
-    目的：R3-TASK-019/020/023A、R3Y-AUDIT-GATE-18、R3-B3-STAGED-DOWNSTREAM-GATE 可在 registry 追溯。"""
+    """覆盖范围：wave-A 已合并主线项在 registry 的可追溯性
+    测试对象：RESOLVED、AUDIT_DEFERRED registries
+    目的/目标：019/020/023A、AUDIT-GATE-18、B3-STAGED-DOWNSTREAM-GATE 均可在两表查到
+    验证点：五个 wave_a_ids 每个同时出现在 resolved 与 audit
+    失败含义：wave-A 合并项未双登记，审计无法从 DEFERRED 表反查已闭合叙事
+    """
     resolved = _read(RESOLVED)
     audit = _read(AUDIT_DEFERRED)
 
@@ -348,9 +424,12 @@ def test_waveAMainlineResolvedRows_traceableInRegistries() -> None:
 
 
 def test_round3Map_checkpointReflectsPost14AuditMerge() -> None:
-    """覆盖范围：ROUND3_BATCH_IMPLEMENTATION_MAP checkpoint 与 wave-B 索引新鲜度。
-    测试对象：ROUND3_BATCH_IMPLEMENTATION_MAP.md 头部 checkpoint 与 §2.4 / PROMPT 索引。
-    目的：map 不得仍写 pre-wave-A checkpoint；应反映 020/PROMPT_18 已合并与 §2.4 活跃切片。"""
+    """覆盖范围：ROUND3 地图 checkpoint 是否反映 post-wave-A / PROMPT_18 合并后状态
+    测试对象：ROUND3_BATCH_IMPLEMENTATION_MAP.md 头部与 §2.4
+    目的/目标：地图不得仍写 pre-wave-A 或 PROMPT_14+17 dispatched 旧 checkpoint
+    验证点：含 527d6506、post-wave-A、PROMPT_18、2.4、020、Done；不含 PROMPT_14 + PROMPT_17** dispatched 与 **In progress** (user live auth granted)
+    失败含义：地图 checkpoint 陈旧，协调人会按错误 wave 状态排期
+    """
     text = _read(ROUND3_MAP)
 
     for token in (
@@ -367,9 +446,12 @@ def test_round3Map_checkpointReflectsPost14AuditMerge() -> None:
 
 
 def test_post14PonytailScan_hasPostBucketBDeltaSection() -> None:
-    """覆盖范围：ponytail 扫描 post Bucket B 增量（Slice 4+4b merge）。
-    测试对象：PONYTAIL_MODULE_SCAN_20260622.md §11。
-    目的：桶 B 结构性闭合有权威 delta；§4 历史表保留但不得无 delta 声称 53 项仍 OPEN。"""
+    """覆盖范围：ponytail 扫描 §11 Post Bucket B structural delta
+    测试对象：PONYTAIL_MODULE_SCAN_20260622.md §11
+    目的/目标：桶 B 结构性闭合有权威 delta，且全文不再声称 53 项仍 OPEN
+    验证点：含 ## 11. Post Bucket B structural delta；节内含 bucket-b branch、remaining=0、SC-01、OP-01/03/06；全文无「仍 OPEN（Bucket B，53 项）」
+    失败含义：扫描表永久显示 53 项 OPEN，与 bucket B merge 后事实不符
+    """
     text = _read(PONYTAIL_SCAN)
 
     assert "## 11. Post Bucket B structural delta" in text
@@ -387,9 +469,12 @@ def test_post14PonytailScan_hasPostBucketBDeltaSection() -> None:
 
 
 def test_post14ContractPonytailLane_reflectsBucketBMerge() -> None:
-    """覆盖范围：post-14 contract ponytail 审计报告新鲜度。
-    测试对象：adversarial_audit_post14_contract_ponytail_lane.md。
-    目的：执行摘要不得仍写 53 项桶 B 开放；应记录 Slice 1–4 merge 后状态。"""
+    """覆盖范围：post-14 contract ponytail 审计报告是否反映 Bucket B merge
+    测试对象：adversarial_audit_post14_contract_ponytail_lane.md
+    目的/目标：执行摘要不得仍写 53 项桶 B 开放，应记录 Slice 1–4 merge 后 remaining=0
+    验证点：含 4114fcb0 或 087f7271；不含 53 Bucket B items still open；含 Slice 4+4b、remaining=0、CLOSED@Slice
+    失败含义：contract lane 报告仍标 53 项开放，与结构性闭合证据冲突
+    """
     text = _read(POST14_HYGIENE_CONTRACT_LANE)
 
     assert "4114fcb0" in text or "087f7271" in text

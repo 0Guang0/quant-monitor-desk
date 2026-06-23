@@ -1,4 +1,8 @@
-"""R3X ponytail pilot-prep bucket A umbrella regression tests (PROMPT_16)."""
+"""R3X ponytail pilot-prep 桶 A 回归测试（PROMPT_16）。
+
+覆盖范围：adapter 工厂默认无 DB 副作用、生产 fetch 须显式端口、staged evidence 旁路
+phase 门禁、interface_probe 与 live_pilot 导入边界、sync guard 统一入口等 DS/SC/OP 项。
+"""
 
 from __future__ import annotations
 
@@ -21,9 +25,11 @@ from backend.app.validators.common import as_text
 
 
 def test_ds01_adapterFetchLogDefaultIsNoDbSideEffect() -> None:
-    """覆盖范围：BaseDataAdapter.fetch 默认 fetch_log 写入策略。
-    测试对象：BaseDataAdapter.fetch 的 record_fetch_log 默认值。
-    目的/目标：adapter 默认不写 fetch_log；service 为单点 owner（DS-01）。
+    """覆盖范围：adapter fetch 默认不写 fetch_log（DS-01）
+    测试对象：BaseDataAdapter.fetch 的 record_fetch_log 默认参数
+    目的/目标：adapter 层默认无 DB 副作用，fetch_log 由 service 单点写入
+    验证点：inspect.signature 中 record_fetch_log 默认值为 False
+    失败含义：adapter 默认写 fetch_log，与 service 单点 owner 契约冲突、重复记账
     """
     sig = inspect.signature(BaseDataAdapter.fetch)
     default = sig.parameters["record_fetch_log"].default
@@ -31,9 +37,11 @@ def test_ds01_adapterFetchLogDefaultIsNoDbSideEffect() -> None:
 
 
 def test_ds02_buildAdapterDedupesFactoryPaths() -> None:
-    """覆盖范围：datasources adapter factory 内部实现。
-    测试对象：adapters.__init__ 模块中的 _build_adapter。
-    目的/目标：create_adapter/create_test_adapter 共享 _build_adapter（DS-02）。
+    """覆盖范围：adapter 工厂路径去重（DS-02）
+    测试对象：adapters 模块 _build_adapter 与 create_* 入口
+    目的/目标：create_adapter 与 create_test_adapter 应共用 _build_adapter 实现
+    验证点：模块含 _build_adapter；两 create 函数源码均调用 _build_adapter(
+    失败含义：双份工厂逻辑漂移，测试与生产 adapter 构造行为不一致
     """
     import backend.app.datasources.adapters as adapters_mod
 
@@ -45,9 +53,11 @@ def test_ds02_buildAdapterDedupesFactoryPaths() -> None:
 
 
 def test_ds03_productionFetchRejectsImplicitTestAdapter() -> None:
-    """覆盖范围：DataSourceService 生产 fetch 路径。
-    测试对象：DataSourceService.fetch 在无 file_registry_factory 且非 fixture 时的行为。
-    目的/目标：production fetch 不得隐式 create_test_adapter（DS-03）。
+    """覆盖范围：生产 fetch 禁止隐式 test adapter（DS-03）
+    测试对象：DataSourceService.fetch（无 fetch_port、非 fixture）
+    目的/目标：生产路径须显式 fetch_port，不得静默 create_test_adapter
+    验证点：pytest.raises(AdapterConfigurationError, match='fetch_port is required')
+    失败含义：生产环境误用 test adapter，数据来源与审计边界被击穿
     """
     import duckdb
     from backend.app.datasources.fetch_result import FetchRequest
@@ -66,9 +76,11 @@ def test_ds03_productionFetchRejectsImplicitTestAdapter() -> None:
 
 
 def test_sc02_stagedEvidenceRejectsWrongPhase() -> None:
-    """覆盖范围：staged_evidence WriteManager 旁路契约。
-    测试对象：register_staged_file_registry_rows 的 phase 门禁。
-    目的/目标：非 phase3_staged 不得旁路写入 file_registry（SC-02）。
+    """覆盖范围：staged evidence 旁路 phase 门禁（SC-02）
+    测试对象：register_staged_file_registry_rows
+    目的/目标：非 phase3_staged 不得旁路写入 file_registry
+    验证点：phase=phase4_clean 时 pytest.raises(ValueError, match='phase3_staged')
+    失败含义：任意 phase 可写 registry，staged 旁路与 clean 路径混淆
     """
     import duckdb
     from datetime import UTC, datetime
@@ -108,9 +120,11 @@ def _test_cm(tmp_path: Path) -> ConnectionManager:
 
 
 def test_sc02_stagedEvidenceAllowsPhase3Token(tmp_path: Path) -> None:
-    """覆盖范围：staged_evidence 合法 phase 路径。
-    测试对象：register_staged_file_registry_rows phase=phase3_staged。
-    目的/目标：文档化 phase3 旁路在显式 token 下可用（SC-02）。
+    """覆盖范围：staged evidence 合法 phase3 旁路（SC-02）
+    测试对象：register_staged_file_registry_rows（phase=STAGED_EVIDENCE_PHASE）
+    目的/目标：显式 phase3_staged token 下应成功注册 file_registry 行
+    验证点：返回 ids 长度为 1
+    失败含义：合法 staged 旁路被误拒，Phase3 证据无法登记 raw 文件
     """
     from datetime import UTC, datetime
 
@@ -143,9 +157,11 @@ def test_sc02_stagedEvidenceAllowsPhase3Token(tmp_path: Path) -> None:
 
 
 def test_op02_interfaceProbeUsesMutationProofNotLivePilotPrivate() -> None:
-    """覆盖范围：interface_probe 与 live_pilot 导入边界。
-    测试对象：interface_probe 模块导入面。
-    目的/目标：probe 经 mutation_proof 取 key counts，不 import live_pilot 私有 API（OP-02）。
+    """覆盖范围：interface_probe 与 live_pilot 导入边界（OP-02）
+    测试对象：interface_probe 模块源码
+    目的/目标：probe 经 mutation_proof 取 key counts，不依赖 live_pilot 私有 API
+    验证点：源码不含 live_pilot；含 mutation_proof；key_table_row_counts 可引用
+    失败含义：probe 耦合 live_pilot 私有实现，pilot 重构即破坏运维探针
     """
     source = inspect.getsource(interface_probe)
     assert "live_pilot" not in source
@@ -154,9 +170,11 @@ def test_op02_interfaceProbeUsesMutationProofNotLivePilotPrivate() -> None:
 
 
 def test_sy04_fetchWithGuardUnifiesAdapterAndCallablePaths(tmp_path: Path) -> None:
-    """覆盖范围：sync runners fetch + ResourceGuard 统一入口。
-    测试对象：runners._fetch_with_guard。
-    目的/目标：adapter 与 fetch_callable 共用 helper（SY-04）。
+    """覆盖范围：sync fetch 与 ResourceGuard 统一入口（SY-04）
+    测试对象：runners._fetch_with_guard
+    目的/目标：adapter 路径应先过 guard 再 fetch，且返回 SUCCESS
+    验证点：result.status=SUCCESS；calls 顺序为 ['guard', 'fetch']
+    失败含义：guard 与 fetch 顺序错乱或分支不统一，资源暂停时仍可能拉数
     """
     from backend.app.datasources.fetch_result import FetchRequest, FetchResult
     from backend.app.db.connection import ConnectionManager
@@ -203,18 +221,22 @@ def test_sy04_fetchWithGuardUnifiesAdapterAndCallablePaths(tmp_path: Path) -> No
 
 
 def test_va03_asTextNoneIsNotLiteralString() -> None:
-    """覆盖范围：validators common 文本规范化。
-    测试对象：common.as_text(None)。
-    目的/目标：None 不变成字面量 \"None\" 字符串（VA-03）。
+    """覆盖范围：校验层文本规范化 None 语义（VA-03）
+    测试对象：validators.common.as_text
+    目的/目标：None 应保持 None，不得变成字面量字符串 "None"
+    验证点：as_text(None) is None；as_text("None") == "None"
+    失败含义：空值被写成 "None" 字符串，DB 与报表出现伪非空字段
     """
     assert as_text(None) is None
     assert as_text("None") == "None"
 
 
 def test_db03_assertCanWriteSingleEntryWithOptionalCon() -> None:
-    """覆盖范围：DbValidationGate 写入门面。
-    测试对象：DbValidationGate.assert_can_write。
-    目的/目标：合并 assert_can_write_with 为 con= 可选单入口（DB-03）。
+    """覆盖范围：DbValidationGate 写入门面合并（DB-03）
+    测试对象：DbValidationGate.assert_can_write
+    目的/目标：单入口 assert_can_write 接受可选 con，废弃 assert_can_write_with
+    验证点：signature 含 con 参数；类上无 assert_can_write_with 属性
+    失败含义：双写入门面并存，调用方不知用哪条路径、行为易分叉
     """
     sig = inspect.signature(DbValidationGate.assert_can_write)
     assert "con" in sig.parameters
@@ -222,9 +244,11 @@ def test_db03_assertCanWriteSingleEntryWithOptionalCon() -> None:
 
 
 def test_mutationProof_keyTableCountsEmptyDb(tmp_path: Path) -> None:
-    """覆盖范围：mutation_proof 只读计数。
-    测试对象：key_table_row_counts。
-    目的/目标：缺失 DB 文件返回空 dict，供 probe/pilot 共享（OP-02）。
+    """覆盖范围：mutation_proof 缺失 DB 时的只读计数（OP-02）
+    测试对象：key_table_row_counts
+    目的/目标：DB 文件不存在应返回空 dict，供 probe/pilot 安全调用
+    验证点：key_table_row_counts(不存在的路径) == {}
+    失败含义：缺库抛错而非空结果，interface_probe 无法在无 DB 环境运行
     """
     missing = tmp_path / "missing.duckdb"
     assert key_table_row_counts(missing) == {}

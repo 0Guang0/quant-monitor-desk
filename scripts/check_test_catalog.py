@@ -233,6 +233,17 @@ CURATED: dict[str, dict] = {
         "command": "uv run python -m pytest tests/test_staged_pilot.py -q",
         "failure_meaning": "Staged pilot may be misread as production-live readiness.",
     },
+    "tests/test_docstring_quadruple_coverage.py": {
+        "purpose": "Gate — every test_* carries five-field Chinese docstring per hygiene plan",
+        "type": "runtime-contract",
+        "verifies": {
+            "docs": ["docs/quality/ROUND3_TEST_DOCSTRING_HYGIENE_PLAN.md"],
+            "specs": [],
+            "rules": ["docs/implementation_tasks/GLOBAL_TESTING_POLICY.md"],
+        },
+        "command": "uv run python -m pytest tests/test_docstring_quadruple_coverage.py -q",
+        "failure_meaning": "Test self-description contract broke; docstring hygiene regresses silently.",
+    },
 }
 
 

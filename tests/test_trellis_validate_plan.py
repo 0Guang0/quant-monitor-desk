@@ -1,4 +1,7 @@
-"""Tests for Trellis Plan protocol v2 validators."""
+"""Trellis Plan 协议 v2 校验器测试。
+
+覆盖范围：validate_plan_freeze、validate_plan_phase 与 plan freeze warning 对任务目录的机械门禁。
+"""
 
 from __future__ import annotations
 
@@ -89,12 +92,24 @@ def _plan_boot_artifacts(task_dir: Path) -> None:
 
 
 def test_validatePlanFreeze_failsWithoutBoot(tmp_path: Path) -> None:
+    """覆盖范围：缺 plan-boot 时的 freeze 失败
+    测试对象：validate_plan_freeze（仅 _minimal_master）
+    目的/目标：P0 boot 工件缺失必须阻断 freeze
+    验证点：errors 含 plan-boot
+    失败含义：未 boot 即可 freeze 会导致 Plan 协议形同虚设
+    """
     _minimal_master(tmp_path)
     errors = validate_plan_freeze(tmp_path, _REPO)
     assert any("plan-boot" in e for e in errors)
 
 
 def test_validatePlanFreeze_failsWithoutOriginalPlanTrace(tmp_path: Path) -> None:
+    """覆盖范围：缺 original-plan-trace 时的 freeze 失败
+    测试对象：validate_plan_freeze（有 plan-boot 无 trace）
+    目的/目标：原计划追溯文档为 freeze 硬性要求
+    验证点：errors 含 original-plan-trace
+    失败含义：无 trace 无法证明 §2 AC 与原任务卡对齐
+    """
     _minimal_master(tmp_path)
     research = tmp_path / "research"
     research.mkdir()
@@ -109,6 +124,12 @@ def test_validatePlanFreeze_failsWithoutOriginalPlanTrace(tmp_path: Path) -> Non
 def test_validatePlanFreeze_doesNotRequireGlobalOriginalTaskRulesInImplementJsonl(
     tmp_path: Path,
 ) -> None:
+    """覆盖范围：implement.jsonl 不必重复列 GLOBAL_* 规则文件
+    测试对象：validate_plan_freeze（implement 仅 MASTER.plan.md）
+    目的/目标：全局规则由 boot 读取，不应在 implement 重复强制
+    验证点：errors 不含 GLOBAL_EXECUTION_RULES
+    失败含义：误强制 GLOBAL 条目会增加 implement 维护负担且无安全收益
+    """
     _minimal_master(tmp_path)
     (tmp_path / "implement.jsonl").write_text('{"file": "MASTER.plan.md"}\n', encoding="utf-8")
     _plan_boot_artifacts(tmp_path)
@@ -117,10 +138,12 @@ def test_validatePlanFreeze_doesNotRequireGlobalOriginalTaskRulesInImplementJson
 
 
 def test_validatePlanFreeze_requiresCustomStopCondition(tmp_path: Path) -> None:
-    """覆盖：MASTER §1.5 除示例 1–4 外须至少一行自定义停止条件。
-    对象：仅有模板示例行、无 #≥5 或「自定义」的 MASTER。
-    目的：freeze 机械门禁防止只抄示例就冻结计划。
-  """
+    """覆盖范围：MASTER §1.5 自定义停止条件
+    测试对象：validate_plan_freeze（仅模板示例行 1–4）
+    目的/目标：freeze 须至少一行 #≥5 或「自定义」停止条件，防抄示例
+    验证点：errors 含 §1.5
+    失败含义：无自定义停止条件会导致计划冻结后无退出策略
+    """
     _minimal_master(tmp_path)
     _plan_boot_artifacts(tmp_path)
     (tmp_path / "task.json").write_text(
@@ -142,6 +165,12 @@ def test_validatePlanFreeze_requiresCustomStopCondition(tmp_path: Path) -> None:
 
 
 def test_validatePlanFreeze_passesWithArtifacts(tmp_path: Path) -> None:
+    """覆盖范围：齐备 Plan 工件时的 freeze 通过
+    测试对象：validate_plan_freeze（_minimal_master + _plan_boot_artifacts + simple）
+    目的/目标：标准 simple 任务在工件齐全时应零错误 freeze
+    验证点：errors == []
+    失败含义：合规任务无法 freeze 会阻断 Trellis Plan 主流程
+    """
     _minimal_master(tmp_path)
     _plan_boot_artifacts(tmp_path)
     (tmp_path / "task.json").write_text(
@@ -152,9 +181,11 @@ def test_validatePlanFreeze_passesWithArtifacts(tmp_path: Path) -> None:
 
 
 def test_validatePlanFreeze_loopVersionRequiresContextPack(tmp_path: Path) -> None:
-    """覆盖：validate_plan_freeze 复杂任务 loop 自动生成。
-    对象：task_track=complex 且无 context_pack 的复杂任务。
-    目的：freeze 时自动 context_router，统一 Trellis 与 loop 为单轨。
+    """覆盖范围：complex 轨道 freeze 自动生成 context_pack
+    测试对象：validate_plan_freeze（task_track=complex）
+    目的/目标：freeze 时须调用 context_router 写出 context_pack.json
+    验证点：context_pack.json 存在；errors 不含 missing context_pack
+    失败含义：complex 无 context_pack 会导致 loop 单轨上下文缺失
     """
     _minimal_master(tmp_path)
     _plan_boot_artifacts(tmp_path)
@@ -170,9 +201,11 @@ def test_validatePlanFreeze_loopVersionRequiresContextPack(tmp_path: Path) -> No
 
 
 def test_validatePlanFreeze_debtLiteSkipsContextPack(tmp_path: Path) -> None:
-    """覆盖：task_track=debt-lite 跳过 loop 四件套。
-    对象：有 MASTER 但 meta.task_track=debt-lite 的任务。
-    目的：Phase 8D 轻量切片不走 loop，与 complex 单轨区分。
+    """覆盖范围：debt-lite 轨道跳过 loop 四件套
+    测试对象：validate_plan_freeze（task_track=debt-lite）
+    目的/目标：Phase 8D 轻量切片不应生成 context_pack 也不应报错
+    验证点：无 context_pack.json；errors 不含 context_pack
+    失败含义：debt-lite 误走 loop 会增加 Repair 切片成本
     """
     _minimal_master(tmp_path)
     _plan_boot_artifacts(tmp_path)
@@ -188,9 +221,11 @@ def test_validatePlanFreeze_debtLiteSkipsContextPack(tmp_path: Path) -> None:
 
 
 def test_validatePlanFreeze_rejectsDeprecatedLoopMeta(tmp_path: Path) -> None:
-    """覆盖：deprecated loop_engineering_* meta 字段。
-    对象：仍使用旧 flag 的 task.json。
-    目的：R1 清理后强制 task_track，防止双轨 flag 回流。
+    """覆盖范围：废弃 loop_engineering_* meta 字段
+    测试对象：validate_plan_freeze（loop_engineering_exempt=True）
+    目的/目标：R1 后强制 task_track，拒绝旧双轨 flag 回流
+    验证点：errors 含 deprecated meta.loop_engineering
+    失败含义：旧 flag 复活会导致 loop 与 Trellis 双轨配置
     """
     _minimal_master(tmp_path)
     _plan_boot_artifacts(tmp_path)
@@ -205,9 +240,11 @@ def test_validatePlanFreeze_rejectsDeprecatedLoopMeta(tmp_path: Path) -> None:
 
 
 def test_validatePlanFreezeWarnings_flagsAuthorityGraphGap(tmp_path: Path) -> None:
-    """覆盖：validate_plan_freeze_warnings authority_graph 缺口。
-    对象：complex 任务引用未收录 backend 路径。
-    目的：R3 非阻塞 warning 提示扩 authority_graph，不拦 freeze。
+    """覆盖范围：freeze 非阻塞 authority_graph 缺口 warning
+    测试对象：validate_plan_freeze_warnings（MASTER 引用未收录 backend 路径）
+    目的/目标：R3 以 warning 提示扩图，不拦 freeze
+    验证点：warnings 含 authority_graph gap
+    失败含义：无 warning 会静默遗漏新模块 authority 映射
     """
     import json
 
@@ -225,6 +262,12 @@ def test_validatePlanFreezeWarnings_flagsAuthorityGraphGap(tmp_path: Path) -> No
 
 
 def test_validatePlanPhase_1b_requiresSummary(tmp_path: Path) -> None:
+    """覆盖范围：Plan phase 1b 门禁
+    测试对象：validate_plan_phase(tmp_path, '1b')
+    目的/目标：1b 阶段须已写 gitnexus-summary.md
+    验证点：errors 含 gitnexus-summary
+    失败含义：缺摘会导致 GitNexus 影响面未在 Plan 留痕
+    """
     research = tmp_path / "research"
     research.mkdir()
     (research / "plan-skill-reads.jsonl").write_text(
@@ -235,6 +278,12 @@ def test_validatePlanPhase_1b_requiresSummary(tmp_path: Path) -> None:
 
 
 def test_validatePlanPhase_1b_passes(tmp_path: Path) -> None:
+    """覆盖范围：Plan phase 1b 合规通过
+    测试对象：validate_plan_phase(tmp_path, '1b')（含 summary 与 skill read）
+    目的/目标：工件齐全时 1b 应零错误
+    验证点：validate_plan_phase == []
+    失败含义：合规 1b 误报会拖慢 Plan 阶段推进
+    """
     research = tmp_path / "research"
     research.mkdir()
     (research / "gitnexus-summary.md").write_text("# ok\n", encoding="utf-8")
@@ -245,6 +294,12 @@ def test_validatePlanPhase_1b_passes(tmp_path: Path) -> None:
 
 
 def test_validatePlanPhase_boot_requiresMarker(tmp_path: Path) -> None:
+    """覆盖范围：Plan phase boot 完成标记
+    测试对象：validate_plan_phase(tmp_path, 'boot')
+    目的/目标：plan-boot.md 须含 Phase P0 complete 标记
+    验证点：errors 含 Phase P0 complete
+    失败含义：无完成标记会导致 agent 跳过 P0 boot
+    """
     research = tmp_path / "research"
     research.mkdir()
     (research / "plan-boot.md").write_text("incomplete\n", encoding="utf-8")
@@ -254,6 +309,12 @@ def test_validatePlanPhase_boot_requiresMarker(tmp_path: Path) -> None:
 
 
 def test_loadPlanPaths_parsesPhases() -> None:
+    """覆盖范围：plan-skill-paths.yaml 阶段配置加载
+    测试对象：_load_plan_paths(_REPO)
+    目的/目标：freeze 所需 phase 与 gitnexus-plan skill 须在配置中登记
+    验证点：phases 含 1a/1b；freeze_required_skills 含 gitnexus-plan-1a/1b
+    失败含义：配置缺 phase 会导致 validate_plan_phase 无法路由
+    """
     cfg = _load_plan_paths(_REPO)
     assert "1a" in cfg.get("phases", {})
     assert "1b" in cfg.get("phases", {})

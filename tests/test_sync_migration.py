@@ -1,4 +1,7 @@
-"""Tests for migration 006 ingestion sync tables (Batch D §8.1)."""
+"""006 迁移：同步作业表结构测试（Batch D）。
+
+覆盖范围：全新库建表、重复迁移幂等、不得篡改既有 004/005 迁移脚本。
+"""
 
 from __future__ import annotations
 
@@ -74,7 +77,12 @@ def _file_checksum(sql_path: Path) -> str:
 
 
 def test_migration006_freshDb_createsSyncTables(migrated_con, tmp_path) -> None:
-    """tables data_sync_job and job_event_log exist with expected columns."""
+    """覆盖范围：全新库首次应用 006 迁移后的同步表结构
+    测试对象：migration 006_ingestion_sync
+    目的/目标：第一次建库时，同步任务表和事件日志表及约定字段都要建好
+    验证点：两表存在；列集覆盖契约字段；schema_version 含 006
+    失败含义：同步任务没法落库或缺事件表，编排层根本起不来
+    """
     con = migrated_con(tmp_path)
     tables = {row[0] for row in con.execute("SHOW TABLES").fetchall()}
     assert "data_sync_job" in tables
@@ -87,7 +95,12 @@ def test_migration006_freshDb_createsSyncTables(migrated_con, tmp_path) -> None:
 
 
 def test_migration006_initDbTwice_isIdempotent(migrated_con, tmp_path) -> None:
-    """second init_db does not fail."""
+    """覆盖范围：已迁移库再次执行 apply_migrations 的幂等行为
+    测试对象：apply_migrations 对已应用 006 的库
+    目的/目标：重复初始化不应报错，也不应重复记录同一版本
+    验证点：第二次返回空列表；006 在 schema_version 中仅一条
+    失败含义：重复迁移报错或版本重复，运维脚本和 CI 初始化不可靠
+    """
     con = migrated_con(tmp_path)
     second = apply_migrations(con)
     assert second == []
@@ -100,7 +113,12 @@ def test_migration006_initDbTwice_isIdempotent(migrated_con, tmp_path) -> None:
 
 
 def test_migration006_doesNotModify004Or005Checksum(tmp_path) -> None:
-    """004/005 migration files unchanged."""
+    """覆盖范围：应用 006 不得篡改既有 004/005 迁移文件
+    测试对象：MIGRATIONS_DIR 下 004、005 SQL 文件
+    目的/目标：新迁移只增表，不能回头改历史迁移脚本内容
+    验证点：迁移前后 004/005 文件 SHA256 不变；schema_version 仍含 004、005
+    失败含义：历史迁移被静默改写，已部署库的校验和会与仓库漂移
+    """
     before_004 = _file_checksum(MIGRATIONS_DIR / "004_ingestion_sources.sql")
     before_005 = _file_checksum(MIGRATIONS_DIR / "005_ingestion_validation.sql")
     con = duckdb.connect(str(tmp_path / "t.duckdb"))

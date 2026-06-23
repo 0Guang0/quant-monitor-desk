@@ -1,4 +1,4 @@
-"""Batch D incremental orchestration E2E (§8.5)."""
+"""Batch D 增量同步编排端到端（§8.5）：fetch → 校验 → 写 clean。"""
 
 from __future__ import annotations
 
@@ -113,6 +113,12 @@ def _incremental_spec(job_id: str = "job-inc-d") -> SyncJobSpec:
 def test_incrementalJob_happyPath_writesCleanAndCompletes(
     tmp_path: Path, registry_yaml_fixture: Path, monkeypatch
 ) -> None:
+    """覆盖范围：增量 job 从 fetch 到写 clean 的完整编排
+    测试对象：DataSyncOrchestrator.run_incremental
+    目的/目标：合法数据经编排后应 COMPLETED 且 clean 表有数据
+    验证点：result.status=COMPLETED；clean 1 行；fetch_log 有记录；job 状态 COMPLETED
+    失败含义：Batch D 增量主路径不通，生产同步无法闭环
+    """
     from backend.app.core.resource_guard import Decision, ResourceGuard
 
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
@@ -140,6 +146,12 @@ def test_incrementalJob_happyPath_writesCleanAndCompletes(
 def test_incrementalJob_validationFailed_doesNotWriteClean(
     tmp_path: Path, registry_yaml_fixture: Path, monkeypatch
 ) -> None:
+    """覆盖范围：staging 含空主键导致质量校验失败
+    测试对象：DataSyncOrchestrator.run_incremental + BatchDBadQualityAdapter
+    目的/目标：质量不通过时 job 应转人工审核且 clean 表保持为空
+    验证点：result.status=MANUAL_REVIEW_REQUIRED；clean 0 行
+    失败含义：坏数据经编排仍能落库，增量同步质量门禁失效
+    """
     from backend.app.core.resource_guard import Decision, ResourceGuard
 
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
@@ -162,6 +174,12 @@ def test_incrementalJob_validationFailed_doesNotWriteClean(
 def test_incrementalJob_repeatRun_noDuplicatePrimaryKey(
     tmp_path: Path, registry_yaml_fixture: Path, monkeypatch
 ) -> None:
+    """覆盖范围：同一主键连续两次 upsert 增量运行
+    测试对象：run_incremental + write_mode=upsert_by_pk
+    目的/目标：重复跑同一 instrument 不应产生 duplicate PK
+    验证点：两次均 COMPLETED；clean 表始终 1 行
+    失败含义：重复增量导致主键重复，clean 表数据膨胀
+    """
     from backend.app.core.resource_guard import Decision, ResourceGuard
 
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))

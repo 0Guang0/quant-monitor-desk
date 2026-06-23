@@ -1,4 +1,7 @@
-"""WriteManager tests (Round 1 task 008)."""
+"""写入管理器测试（Round 1 任务 008）。
+
+覆盖范围：校验门闸、append/upsert 写入、失败回滚与审计留痕。
+"""
 
 from __future__ import annotations
 
@@ -41,6 +44,12 @@ def _req(mode: str = "append_only", report: str = "stub-pass-1") -> WriteRequest
 
 
 def test_assertCanWrite_stubPass_allowsWhileStubFailRejects() -> None:
+    """覆盖范围：测试用校验门闸对通过/拒绝报告的分流
+    测试对象：StubValidationGate.assert_can_write
+    目的/目标：校验通过的报告应放行写入，明确失败的报告应拒绝
+    验证点：stub-pass-001 不抛错；stub-fail-001 抛 ValidationRejected
+    失败含义：门闸分不清通过和拒绝，脏数据可能写进正式表
+    """
     gate = StubValidationGate()
     gate.assert_can_write("stub-pass-001", "append_only")
     with pytest.raises(ValidationRejected):
@@ -48,23 +57,47 @@ def test_assertCanWrite_stubPass_allowsWhileStubFailRejects() -> None:
 
 
 def test_assertCanWrite_unknownId_raisesGateError() -> None:
+    """覆盖范围：非测试前缀的 validation_report_id 须拒绝
+    测试对象：StubValidationGate.assert_can_write
+    目的/目标：真实校验报告 ID 在测试门闸下不能误放行
+    验证点：real-123 抛 ValidationGateError
+    失败含义：没验过的报告被当成可写，生产门禁形同虚设
+    """
     with pytest.raises(ValidationGateError):
         StubValidationGate().assert_can_write("real-123", "append_only")
 
 
 def test_writeManager_withoutGate_raisesValueError(tmp_path: Path) -> None:
+    """覆盖范围：WriteManager 构造时 validation_gate 为必填
+    测试对象：WriteManager.__init__
+    目的/目标：不允许没有校验门闸就创建写入管理器，必须显式注入
+    验证点：WriteManager(cm, None) 抛 ValueError 且含 requires an explicit ValidationGate
+    失败含义：可以绕过校验门闸创建写入器，违反 fail-closed 设计
+    """
     cm = _setup(tmp_path)
     with pytest.raises(ValueError, match="requires an explicit ValidationGate"):
         WriteManager(cm, None)
 
 
 def test_writeManager_defaultConstructor_raisesTypeError(tmp_path: Path) -> None:
+    """覆盖范围：WriteManager 不接受省略 gate 的默认构造
+    测试对象：WriteManager.__init__ 参数签名
+    目的/目标：类型层面阻止只传连接、不传门闸的旧式调用
+    验证点：WriteManager(cm) 抛 TypeError
+    失败含义：旧式无门闸构造仍可用，静态检查和运行时约束不一致
+    """
     cm = _setup(tmp_path)
     with pytest.raises(TypeError):
         WriteManager(cm)  # type: ignore[call-arg]
 
 
 def test_write_invalidIdentifier_raisesBeforeWrite(tmp_path: Path) -> None:
+    """覆盖范围：目标表名含 SQL 注入字符时写入前拒绝
+    测试对象：WriteManager.write 的标识符校验
+    目的/目标：表名必须是合法 SQL 标识符，防止拼接注入破坏数据
+    验证点：含 DROP 的 target_table 抛 ValueError match invalid SQL identifier
+    失败含义：恶意表名能拼进 SQL，存在删表或破坏数据的风险
+    """
     cm = _setup(tmp_path)
     bad = WriteRequest(
         run_id="r1",
@@ -81,6 +114,12 @@ def test_write_invalidIdentifier_raisesBeforeWrite(tmp_path: Path) -> None:
 
 
 def test_write_appendOnlyStubPass_insertsAndAudits(tmp_path: Path) -> None:
+    """覆盖范围：append_only 模式校验通过后成功写入与审计
+    测试对象：WriteManager.write
+    目的/目标：校验通过后 staging 行应插入 clean 表，并留下成功审计记录
+    验证点：status=SUCCESS；rows_inserted=1；clean 表 1 行；audit 三元组一致
+    失败含义：主写入 happy path 断了，同步流水线没法把数据落进正式表
+    """
     cm = _setup(tmp_path)
     with cm.writer() as w:
         w.execute(
@@ -99,6 +138,12 @@ def test_write_appendOnlyStubPass_insertsAndAudits(tmp_path: Path) -> None:
 
 
 def test_write_stubFail_rollsBackAndAuditsFailed(tmp_path: Path) -> None:
+    """覆盖范围：校验明确拒绝时回滚且不写 clean
+    测试对象：WriteManager.write 对 ValidationRejected 的处理
+    目的/目标：校验失败应回滚事务、正式表保持空、并记下失败审计
+    验证点：status=FAILED；clean COUNT=0；write_audit_log 一条 FAILED
+    失败含义：校验失败仍落盘或不留审计，数据质量门禁失效
+    """
     cm = _setup(tmp_path)
     with cm.writer() as w:
         w.execute(
@@ -113,6 +158,12 @@ def test_write_stubFail_rollsBackAndAuditsFailed(tmp_path: Path) -> None:
 
 
 def test_write_gateError_rollsBackAndAuditsFailed(tmp_path: Path) -> None:
+    """覆盖范围：未知 validation_report_id 导致门闸错误时的失败路径
+    测试对象：WriteManager.write 对 ValidationGateError 的处理
+    目的/目标：门闸异常须回滚、记 FAILED 审计并带 error_message
+    验证点：status=FAILED；error_message 非空；clean 零行；validation_status=FAILED
+    失败含义：门闸错误被吞或 clean 已写入，审计无法追溯拒绝原因
+    """
     cm = _setup(tmp_path)
     with cm.writer() as w:
         w.execute(
@@ -131,6 +182,12 @@ def test_write_gateError_rollsBackAndAuditsFailed(tmp_path: Path) -> None:
 
 
 def test_write_sqlError_rollsBackAndAuditsError(tmp_path: Path) -> None:
+    """覆盖范围：目标表不存在等 SQL 执行错误
+    测试对象：WriteManager.write 对 duckdb 执行失败的处理
+    目的/目标：SQL 错误须记 validation_status=ERROR、status=FAILED
+    验证点：status=FAILED；error_message 非空；audit=(ERROR, FAILED)
+    失败含义：SQL 失败无审计或状态码混淆，运维无法区分校验与执行错误
+    """
     cm = _setup(tmp_path)
     res = create_test_write_manager(cm).write(_req())
     assert res.status == "FAILED"
@@ -144,7 +201,12 @@ def test_write_sqlError_rollsBackAndAuditsError(tmp_path: Path) -> None:
 
 
 def test_write_emptyStaging_rejected(tmp_path: Path) -> None:
-    """ADV-A1-012/015: empty staging must not proceed to clean write."""
+    """覆盖范围：staging 表零行时拒绝写入（ADV-A1-012/015）
+    测试对象：WriteManager.write 的最小行数校验
+    目的/目标：空 staging 不得进入 clean 写入，避免无意义或误导性 SUCCESS
+    验证点：空 staging 抛 ValueError match minimum
+    失败含义：空批次可写 clean，增量同步误报成功
+    """
     cm = _setup(tmp_path)
     with cm.writer() as w:
         w.execute("DELETE FROM stg_foundation_smoke")
@@ -156,12 +218,24 @@ def test_write_emptyStaging_rejected(tmp_path: Path) -> None:
 
 
 def test_write_unsupportedMode_raises(tmp_path: Path) -> None:
+    """覆盖范围：未实现的 write_mode 须早拒
+    测试对象：WriteManager.write 的模式分发
+    目的/目标：replace_partition 等未支持模式不得静默失败或误写
+    验证点：write_mode=replace_partition 抛 ValueError
+    失败含义：不支持的模式被当作 append，分区替换语义 silently 错误
+    """
     cm = _setup(tmp_path)
     with pytest.raises(ValueError):
         create_test_write_manager(cm).write(_req(mode="replace_partition"))
 
 
 def test_write_upsertByPk_replacesExistingRow(tmp_path: Path) -> None:
+    """覆盖范围：upsert_by_pk 更新已存在主键行
+    测试对象：WriteManager.write write_mode=upsert_by_pk
+    目的/目标：同 PK 行应 UPDATE 而非重复 INSERT
+    验证点：status=SUCCESS；rows_updated=1、rows_inserted=0；close=200；clean 仍 1 行
+    失败含义：upsert 变重复插入或计数错误，增量修正无法覆盖旧值
+    """
     cm = _setup(tmp_path)
     with cm.writer() as w:
         w.execute("CREATE TABLE security_bar_smoke_clean AS SELECT * FROM stg_foundation_smoke")
@@ -184,6 +258,12 @@ def test_write_upsertByPk_replacesExistingRow(tmp_path: Path) -> None:
 
 
 def test_write_upsertByPk_pureNewRow_reportsZeroUpdated(tmp_path: Path) -> None:
+    """覆盖范围：upsert_by_pk 仅插入新主键行
+    测试对象：WriteManager.write upsert 插入分支
+    目的/目标：staging PK 在 clean 不存在时应 INSERT 且 rows_updated=0
+    验证点：rows_inserted=1；clean 总行数 3；audit=(0,1)
+    失败含义：新行被误报为 update 或计数颠倒，监控指标失真
+    """
     cm = _setup(tmp_path)
     with cm.writer() as w:
         w.execute(
@@ -211,6 +291,12 @@ def test_write_upsertByPk_pureNewRow_reportsZeroUpdated(tmp_path: Path) -> None:
 
 
 def test_write_upsertByPk_emptyPrimaryKeys_raises(tmp_path: Path) -> None:
+    """覆盖范围：upsert_by_pk 要求非空 primary_keys
+    测试对象：WriteManager.write 对 upsert 前置校验
+    目的/目标：无主键无法定义 upsert 语义，须早拒
+    验证点：primary_keys=() 抛 ValueError match upsert_by_pk requires primary_keys
+    失败含义：空 PK upsert 可能全表覆盖或行为未定义
+    """
     cm = _setup(tmp_path)
     bad = WriteRequest(
         run_id="r1",
@@ -228,6 +314,12 @@ def test_write_upsertByPk_emptyPrimaryKeys_raises(tmp_path: Path) -> None:
 
 
 def test_write_upsertByPk_duplicateStagingPk_raises(tmp_path: Path) -> None:
+    """覆盖范围：staging 内主键重复时 upsert 前拒绝
+    测试对象：WriteManager.write staging PK 唯一性校验
+    目的/目标：同一批次 duplicate PK 不得进入 merge，避免不确定写入
+    验证点：stg 两行同 PK 抛 ValueError match duplicate primary keys
+    失败含义：重复 PK 静默取一行，clean 数据不可复现
+    """
     cm = _setup(tmp_path)
     with cm.writer() as w:
         w.execute(
@@ -259,7 +351,12 @@ def test_write_upsertByPk_duplicateStagingPk_raises(tmp_path: Path) -> None:
 def test_write_stubFail_ownTransaction_doesNotOpenSecondAuditConnection(
     tmp_path: Path, monkeypatch
 ) -> None:
-    """Failed audit must reuse writer connection, not duckdb.connect again."""
+    """覆盖范围：失败审计复用 writer 连接，不另开 duckdb.connect
+    测试对象：WriteManager.write 审计连接策略
+    目的/目标：自有事务模式下审计与写入共连接，避免双连接竞态
+    验证点：stub-fail 后 status=FAILED；duckdb.connect 仅调用 1 次（建库）
+    失败含义：失败路径多开连接，锁争用或审计与主事务不一致
+    """
     cm = _setup(tmp_path)
     with cm.writer() as w:
         w.execute(
@@ -282,6 +379,12 @@ def test_write_stubFail_ownTransaction_doesNotOpenSecondAuditConnection(
 
 
 def test_write_upsertByPk_mixedNewAndExisting_reportsCorrectCounts(tmp_path: Path) -> None:
+    """覆盖范围：upsert 批次同时含更新行与新增行
+    测试对象：WriteManager.write upsert 混合场景计数
+    目的/目标：rows_updated 与 rows_inserted 须分别统计正确
+    验证点：updated=1、inserted=1；clean 2 行；AAPL close=200
+    失败含义：混合 upsert 计数错误，作业报告与真实写入不符
+    """
     cm = _setup(tmp_path)
     with cm.writer() as w:
         w.execute("CREATE TABLE security_bar_smoke_clean AS SELECT * FROM stg_foundation_smoke")
@@ -300,7 +403,12 @@ def test_write_upsertByPk_mixedNewAndExisting_reportsCorrectCounts(tmp_path: Pat
 
 
 def test_write_ownTransactionFalse_stubFail_sidecarSurvivesOuterRollback(tmp_path: Path) -> None:
-    """ADV-A1-005: FAILED audit must remain traceable after caller rollback."""
+    """覆盖范围：own_transaction=False 失败时 sidecar 审计 survives 外层 ROLLBACK（ADV-A1-005）
+    测试对象：WriteManager.write audit_sidecar_root
+    目的/目标：外层事务回滚后 FAILED 记录仍可在 ndjson sidecar 追溯
+    验证点：sidecar 1 行 JSON status=FAILED；write_audit_log 表 0 行
+    失败含义：外层回滚抹掉失败审计，运维无法追查拒写原因
+    """
     import json
 
     cm = _setup(tmp_path)
@@ -330,6 +438,12 @@ def test_write_ownTransactionFalse_stubFail_sidecarSurvivesOuterRollback(tmp_pat
 
 
 def test_write_ownTransactionFalse_stubFail_doesNotRollbackOuterTxn(tmp_path: Path) -> None:
+    """覆盖范围：own_transaction=False 失败不触发外层事务回滚
+    测试对象：WriteManager.write 与调用方事务边界
+    目的/目标：写入失败只记 FAILED 审计，调用方 BEGIN 内其他 DML 仍可见
+    验证点：FAILED 审计 1 条；stg_foundation_smoke COUNT=2（含外层 INSERT）
+    失败含义：嵌套写入失败误回滚外层，编排器大事务被整批撤销
+    """
     cm = _setup(tmp_path)
     with cm.writer() as w:
         w.execute(
@@ -354,7 +468,12 @@ def test_write_ownTransactionFalse_stubFail_doesNotRollbackOuterTxn(tmp_path: Pa
 def test_write_ownTransactionFalse_duckdbError_doesNotOpenSecondAuditConnection(
     tmp_path: Path, monkeypatch
 ) -> None:
-    """GPT P1: own_transaction=False + SQL error → FAILED result, no audit_con spawn."""
+    """覆盖范围：own_transaction=False 且 SQL 错误时不 spawn 独立审计连接（GPT P1）
+    测试对象：WriteManager.write 失败路径连接策略
+    目的/目标：merge 失败用同一 con 记审计，禁止 duckdb.connect 二次打开
+    验证点：status=FAILED；connect_calls 为空列表
+    失败含义：SQL 错误路径偷偷开第二连接写审计，锁与事务语义混乱
+    """
     cm = _setup(tmp_path)
     with cm.writer() as w:
         w.execute(
@@ -387,12 +506,24 @@ def test_write_ownTransactionFalse_duckdbError_doesNotOpenSecondAuditConnection(
 
 
 def test_assertCanWrite_unknownId_exposesReportId() -> None:
+    """覆盖范围：ValidationGateError 携带 validation_report_id
+    测试对象：StubValidationGate.assert_can_write 异常载荷
+    目的/目标：调用方可从异常取回被拒报告 ID 用于日志与重试
+    验证点：exc_info.value.validation_report_id == 'real-123'
+    失败含义：门闸错误丢失报告 ID，上游无法关联校验工件
+    """
     with pytest.raises(ValidationGateError) as exc_info:
         StubValidationGate().assert_can_write("real-123", "append_only")
     assert exc_info.value.validation_report_id == "real-123"
 
 
 def test_assertCanWrite_stubFail_exposesReportId() -> None:
+    """覆盖范围：ValidationRejected 携带 validation_report_id
+    测试对象：StubValidationGate.assert_can_write 异常载荷
+    目的/目标：拒绝写入时异常须暴露具体 stub-fail 报告 ID
+    验证点：exc_info.value.validation_report_id == 'stub-fail-001'
+    失败含义：拒绝原因无法映射到校验报告，审计链断档
+    """
     with pytest.raises(ValidationRejected) as exc_info:
         StubValidationGate().assert_can_write("stub-fail-001", "append_only")
     assert exc_info.value.validation_report_id == "stub-fail-001"

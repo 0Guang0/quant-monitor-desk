@@ -1,4 +1,4 @@
-"""Round2.6 Phase B — dependency extras contract tests."""
+"""Round2.6 可选依赖 extras 契约：默认安装不得夹带重型/代理包。"""
 
 from __future__ import annotations
 
@@ -39,6 +39,12 @@ def _optional_extra_block(extra_name: str) -> str:
 
 
 def test_defaultInstallHasNoQmtOrAgentExtras() -> None:
+    """覆盖范围：pyproject 默认 dependencies 与契约 must_not_include
+    测试对象：[project].dependencies 文本块
+    目的/目标：最小安装不应默认拉上 QMT、浏览器自动化或外部 agent SDK
+    验证点：契约列出的 must_not 项及 FORBIDDEN_DEFAULT_PATTERNS 均不在 deps_block 中
+    失败含义：用户 pip install 即装重型/闭源依赖，违背 extras 分层策略
+    """
     contract = _load_contract()
     must_not = contract["extras"]["default"]["must_not_include"]
     deps_block = _default_dependencies_text().lower()
@@ -52,6 +58,12 @@ def test_defaultInstallHasNoQmtOrAgentExtras() -> None:
 
 
 def test_datasourcesExtra_doesNotIncludeQmtByDefault() -> None:
+    """覆盖范围：datasources extra 与默认依赖的隔离
+    测试对象：default dependencies 与 datasources optional extra
+    目的/目标：QMT 等数据源包只能显式 extra 安装，不能混进默认或 datasources 块
+    验证点：must_not_include_by_default 各项不在 default_deps，且若定义了 datasources extra 也不含
+    失败含义：数据源重型依赖被默认拉起，CI 与无 QMT 环境无法轻量运行
+    """
     contract = _load_contract()
     must_not = contract["extras"]["datasources"].get("must_not_include_by_default") or []
     default_deps = _default_dependencies_text().lower()
@@ -64,6 +76,12 @@ def test_datasourcesExtra_doesNotIncludeQmtByDefault() -> None:
 
 
 def test_agentExtra_disabledByDefault() -> None:
+    """覆盖范围：agent optional extra 默认关闭
+    测试对象：dependency_extras_contract.yaml 的 agent 段与 pyproject
+    目的/目标：agent 能力尚未就绪时不应定义可选 extra 或默认启用
+    验证点：enabled_by_default 为 False；pyproject 中无 agent extra 块
+    失败含义：agent 依赖被误开，默认环境承担未验收的 SDK 面
+    """
     contract = _load_contract()
     assert contract["extras"]["agent"]["enabled_by_default"] is False
     agent_block = _optional_extra_block("agent")

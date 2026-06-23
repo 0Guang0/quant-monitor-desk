@@ -1,8 +1,4 @@
-"""Tests for DbValidationGate (Batch C §8.2).
-
-DbValidationGate reads the persisted validation_report row and decides whether
-WriteManager may proceed. It must NOT be a stub: decisions come from real DB state.
-"""
+"""DbValidationGate：依据 validation_report 等库内状态决定是否允许 WriteManager 写入。"""
 
 from __future__ import annotations
 
@@ -66,6 +62,12 @@ def _insert_report(
 
 
 def test_missingReport_raisesGateError(tmp_path: Path) -> None:
+    """覆盖范围：validation_report 行不存在
+    测试对象：DbValidationGate.assert_can_write
+    目的/目标：没有校验报告时，一律禁止往正式表写入
+    验证点：未知 ID 触发 ValidationGateError，且 exc.validation_report_id 与入参一致
+    失败含义：缺失报告仍可能写库，校验门形同虚设
+    """
     cm = _setup(tmp_path)
     gate = DbValidationGate(cm)
     with pytest.raises(ValidationGateError) as exc:
@@ -74,6 +76,12 @@ def test_missingReport_raisesGateError(tmp_path: Path) -> None:
 
 
 def test_failedReport_rejected(tmp_path: Path) -> None:
+    """覆盖范围：status=FAILED 的校验报告
+    测试对象：DbValidationGate 对 FAILED 行
+    目的/目标：失败报告必须拒绝任何 clean 写入
+    验证点：vr-failed 触发 ValidationRejected，异常携带同一 report_id
+    失败含义：校验已判失败仍能落库，脏数据可能进入正式表
+    """
     cm = _setup(tmp_path)
     _insert_report(
         cm,
@@ -90,7 +98,12 @@ def test_failedReport_rejected(tmp_path: Path) -> None:
 
 
 def test_canWriteCleanFalse_rejected(tmp_path: Path) -> None:
-    """Even a non-FAILED report with can_write_clean=false must reject."""
+    """覆盖范围：can_write_clean=false 非 FAILED 报告
+    测试对象：DbValidationGate 对 WARNING 且不可写行
+    目的/目标：报告标明不可写入时，不论表面状态如何都必须拒绝
+    验证点：can_write_clean=false 的 WARNING 行触发 ValidationRejected
+    失败含义：质量未达标却被允许写入，数据质量合约失效
+    """
     cm = _setup(tmp_path)
     _insert_report(
         cm,
@@ -105,7 +118,12 @@ def test_canWriteCleanFalse_rejected(tmp_path: Path) -> None:
 
 
 def test_needsManualReviewTrue_rejected(tmp_path: Path) -> None:
-    """needs_manual_review=true must reject regardless of status."""
+    """覆盖范围：needs_manual_review=true
+    测试对象：DbValidationGate 对手工复核标记
+    目的/目标：需要人工复核的数据，不得自动写入正式表
+    验证点：vr-review 触发 ValidationRejected
+    失败含义：待复核数据自动落库，审计与合规链路断裂
+    """
     cm = _setup(tmp_path)
     _insert_report(
         cm,
@@ -120,6 +138,12 @@ def test_needsManualReviewTrue_rejected(tmp_path: Path) -> None:
 
 
 def test_passedReport_canWriteCleanTrue_allows(tmp_path: Path) -> None:
+    """覆盖范围：PASSED 且可写报告
+    测试对象：DbValidationGate.assert_can_write 正常放行
+    目的/目标：校验全部通过且允许写入时，应放行写入
+    验证点：vr-pass 调用成功且返回 status == 'PASSED'
+    失败含义：合格报告被误拒，正常数据同步无法推进
+    """
     cm = _setup(tmp_path)
     _insert_report(
         cm,
@@ -134,7 +158,12 @@ def test_passedReport_canWriteCleanTrue_allows(tmp_path: Path) -> None:
 
 
 def test_warningReport_canWriteTrue_noReview_allows(tmp_path: Path) -> None:
-    """Explicit WARNING policy: allow only if can_write_clean=true AND no review."""
+    """覆盖范围：WARNING 显式放行策略
+    测试对象：DbValidationGate 对 WARNING 可写无复核行
+    目的/目标：带警告但明确允许写入、且无需人工复核时，可以落库
+    验证点：can_write_clean=true 且 needs_manual_review=false 的 WARNING 返回 status=='WARNING'
+    失败含义：带警告数据的放行策略与校验流程合约不一致，可能误拒或误放
+    """
     cm = _setup(tmp_path)
     _insert_report(
         cm,
@@ -150,6 +179,12 @@ def test_warningReport_canWriteTrue_noReview_allows(tmp_path: Path) -> None:
 
 
 def test_openSevereConflict_rejectsEvenWhenReportPassed(tmp_path: Path) -> None:
+    """覆盖范围：OPEN severe source_conflict 与 PASSED 报告并存
+    测试对象：DbValidationGate 冲突表联动检查
+    目的/目标：同一批次仍有未解决的严重数据源冲突时，即使校验报告通过也不得写入
+    验证点：插入 severe OPEN 冲突后 assert_can_write 抛出 ValidationRejected（含 severe）
+    失败含义：严重源冲突被忽略，多源 reconcile 门禁失效
+    """
     cm = _setup(tmp_path)
     _insert_report(
         cm,
@@ -178,6 +213,12 @@ def test_openSevereConflict_rejectsEvenWhenReportPassed(tmp_path: Path) -> None:
 
 
 def test_warningReport_canWriteFalse_rejected(tmp_path: Path) -> None:
+    """覆盖范围：WARNING 且 can_write_clean=false
+    测试对象：DbValidationGate 对 WARNING 不可写行
+    目的/目标：带警告且不可写入的报告，必须与通过报告一样被拒绝
+    验证点：vr-warn-no 触发 ValidationRejected
+    失败含义：带警告且不可写的报告仍写入，数据质量无保障
+    """
     cm = _setup(tmp_path)
     _insert_report(
         cm,
@@ -192,7 +233,12 @@ def test_warningReport_canWriteFalse_rejected(tmp_path: Path) -> None:
 
 
 def test_dbValidationGate_isNotStubBehavior(tmp_path: Path) -> None:
-    """Production gate must query DB; stub-pass/stub-fail prefixes must not short-circuit."""
+    """覆盖范围：生产 gate 非 stub 短路
+    测试对象：DbValidationGate 对 stub-pass 前缀 ID
+    目的/目标：生产环境不得凭测试用报告编号绕过真实库校验
+    验证点：无行时 stub-pass-1 抛 ValidationGateError；插入真实 PASSED 行后同 ID 允许
+    失败含义：生产环境仍走测试短路，校验结果与数据库实际状态脱节
+    """
     cm = _setup(tmp_path)
     gate = DbValidationGate(cm)
     # stub-style ids that StubValidationGate would pass must be unknown to DbValidationGate.
@@ -210,7 +256,12 @@ def test_dbValidationGate_isNotStubBehavior(tmp_path: Path) -> None:
 
 
 def test_schemaHashDriftWithoutApproval_rejects(tmp_path: Path) -> None:
-    """write_contract: schema_hash_changed without approval must block clean write."""
+    """覆盖范围：file_registry 与 fetch_log schema_hash 漂移
+    测试对象：DbValidationGate write_contract schema_hash 检查
+    目的/目标：历史数据结构与本次抓取结构不一致且未经审批时，必须拒绝写入
+    验证点：注册 baseline schema-v1、fetch schema-v2 后抛出 ValidationRejected（含 schema_hash）
+    失败含义：未审批的 schema 漂移可写入，下游表结构 silently 变化
+    """
     cm = _setup(tmp_path)
     _insert_report(
         cm,
@@ -251,6 +302,12 @@ def test_schemaHashDriftWithoutApproval_rejects(tmp_path: Path) -> None:
 
 
 def test_schemaHashDriftFlagInQualityFlags_rejects(tmp_path: Path) -> None:
+    """覆盖范围：quality_flags 含 SCHEMA_DRIFT
+    测试对象：DbValidationGate 对 quality_flags JSON
+    目的/目标：校验报告已标记数据结构漂移时，必须拒绝写入
+    验证点：quality_flags='["SCHEMA_DRIFT"]' 的 PASSED 行触发 ValidationRejected（schema_hash）
+    失败含义：漂移标记被忽略，gate 与 validator 语义不一致
+    """
     cm = _setup(tmp_path)
     with cm.writer() as con:
         con.execute(
@@ -285,7 +342,12 @@ def test_schemaHashDriftFlagInQualityFlags_rejects(tmp_path: Path) -> None:
 
 
 def test_dbValidationGate_writeManagerIntegration_rejectsFailed(tmp_path: Path) -> None:
-    """WriteManager injected with DbValidationGate must honor DB state."""
+    """覆盖范围：WriteManager 注入 DbValidationGate 集成
+    测试对象：WriteManager.write + DbValidationGate
+    目的/目标：校验失败的报告经写入管理器提交时，必须整体失败且正式表行数不变
+    验证点：res.status=='FAILED'；target_clean 行数仍为 0
+    失败含义：写入管理器绕过 DB gate，失败校验仍可能落库
+    """
     from backend.app.db.write_manager import WriteManager, WriteRequest
 
     cm = _setup(tmp_path)

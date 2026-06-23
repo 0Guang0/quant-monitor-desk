@@ -1,4 +1,7 @@
-"""Round2.6 Phase B/C — DataSourceService boundary and fetch facade tests."""
+"""数据源服务门面与抓取边界测试（Round2.6 Phase B/C）。
+
+覆盖范围：服务契约步骤顺序、禁止直连适配器工厂、路由事件与 fetch_log 联动。
+"""
 
 from __future__ import annotations
 
@@ -33,6 +36,12 @@ def _load_service_contract() -> dict:
 
 
 def test_apiAndAgentCannotImportAdapterFactory() -> None:
+    """覆盖范围：生产代码不得绕过服务门面直接创建适配器
+    测试对象：contract forbidden_direct_callers 包扫描
+    目的/目标：API 和 agent 层只能通过统一服务拉数，不能自己 import 适配器工厂
+    验证点：violations 列表为空
+    失败含义：调用方可绕过服务门面直接建 adapter，边界审计失效
+    """
     contract = _load_service_contract()
     forbidden_pkgs = contract.get("call_boundaries", {}).get("forbidden_direct_callers") or []
     violations: list[str] = []
@@ -45,7 +54,12 @@ def test_apiAndAgentCannotImportAdapterFactory() -> None:
 
 
 def test_serviceBuildsRouteBeforeFetch() -> None:
-    """Contract + runtime: route plan and guard precede adapter fetch."""
+    """覆盖范围：服务契约声明的抓取步骤顺序
+    测试对象：SERVICE_CONTRACT public_methods.fetch.required_steps
+    目的/目标：必须先定路由、过资源守卫，最后才创建适配器并真正拉数
+    验证点：steps 列表与契约冻结顺序完全一致（load_source_registry → … → ensure_fetch_log_or_failure_event）
+    失败含义：文档与实现步骤错位，gate 无法证明先路由后抓取
+    """
     contract = _load_service_contract()
     steps = contract["public_methods"]["fetch"]["required_steps"]
     assert steps == [
@@ -60,7 +74,12 @@ def test_serviceBuildsRouteBeforeFetch() -> None:
 
 
 def test_serviceFetch_runtimeGateOrder(tmp_path: Path, monkeypatch) -> None:
-    """Runtime gate order: route event → guard → adapter fetch → fetch_log."""
+    """覆盖范围：运行时 fetch 闸门实际执行顺序
+    测试对象：DataSourceService.fetch（monkeypatch guard/adapter）
+    目的/目标：guard → enter_fetching → create_adapter → adapter_fetch，且写 ROUTE_PLAN 与 fetch_log
+    验证点：order 索引顺序；result=SUCCESS；route_count=1；log_count=1
+    失败含义：运行时跳过路由或守卫，与契约步骤不一致
+    """
     order: list[str] = []
 
     def guard_check(self):
@@ -163,10 +182,22 @@ def test_serviceFetch_runtimeGateOrder(tmp_path: Path, monkeypatch) -> None:
 
 
 def test_serviceContract_declaresFetchGateOrder() -> None:
+    """覆盖范围：契约步骤与专用测试一致
+    测试对象：test_serviceBuildsRouteBeforeFetch 委托
+    目的/目标：契约测试与步骤列表测试保持同一断言源
+    验证点：调用 test_serviceBuildsRouteBeforeFetch 不失败
+    失败含义：重复门禁分叉，契约变更只改一处仍可能漏检
+    """
     test_serviceBuildsRouteBeforeFetch()
 
 
 def test_forbiddenDirectCallers_includesSyncRunners_andScanIsContractDriven() -> None:
+    """覆盖范围：同步编排 runner 不得直连适配器工厂
+    测试对象：forbidden_direct_callers + scan_package_for_create_adapter('sync/runners')
+    目的/目标：定时同步任务也应走服务门面，不能自己 import 工厂
+    验证点：backend.app.sync.runners 在 forbidden；runners 扫描 violations 为空
+    失败含义：同步 runner 可绕过服务直接建 adapter
+    """
     contract = _load_service_contract()
     forbidden = contract.get("call_boundaries", {}).get("forbidden_direct_callers") or []
     assert "backend.app.sync.runners" in forbidden
@@ -174,7 +205,12 @@ def test_forbiddenDirectCallers_includesSyncRunners_andScanIsContractDriven() ->
 
 
 def test_createAdapterImports_onlyUnderTests() -> None:
-    """create_adapter imports allowed only in datasources factory modules until Task 2 service."""
+    """覆盖范围：create_adapter 仅允许出现在工厂模块路径
+    测试对象：backend/app/**/*.py import 扫描（排除 ALLOWED_ADAPTER_FACTORY_PATHS）
+    目的/目标：除 datasources 工厂外任何生产代码不得 import create_adapter
+    验证点：violations 列表为空
+    失败含义：隐藏入口可实例化任意 adapter，服务边界名存实亡
+    """
     violations: list[str] = []
     for py_file in BACKEND_APP.rglob("*.py"):
         if py_file in ALLOWED_ADAPTER_FACTORY_PATHS:
@@ -187,6 +223,12 @@ def test_createAdapterImports_onlyUnderTests() -> None:
 
 
 def test_syncRunners_doesNotImportConcreteAdaptersOrFactory() -> None:
+    """覆盖范围：sync/runners.py 导入洁净性
+    测试对象：collect_imports(RUNNERS)
+    目的/目标：runner 不得 import create_adapter 或具体 Adapter 类
+    验证点：imports 无 create_adapter、无 adapters 包具体 Adapter
+    失败含义：runner 与 vendor 适配器耦合，无法统一经 service fetch
+    """
     imports = collect_imports(RUNNERS)
     assert "create_adapter" not in imports
     assert not any(imp.startswith(CONCRETE_ADAPTER_PREFIX) for imp in imports)
@@ -194,6 +236,12 @@ def test_syncRunners_doesNotImportConcreteAdaptersOrFactory() -> None:
 
 
 def test_servicePreviewRoute_returnsReadyPlan() -> None:
+    """覆盖范围：preview_route 只读路由预览
+    测试对象：DataSourceService.preview_route
+    目的/目标：不触发 fetch 即可得到 READY 计划与 baostock 选中
+    验证点：route_status=READY；selected_source_id=baostock
+    失败含义：运维预览接口无法判断日线主路径是否可用
+    """
     service = DataSourceService()
     plan = service.preview_route(
         data_domain="cn_equity_daily_bar",
@@ -204,6 +252,12 @@ def test_servicePreviewRoute_returnsReadyPlan() -> None:
 
 
 def test_serviceWritesRoutePlanPayloadBeforeFetch(tmp_path: Path, monkeypatch) -> None:
+    """覆盖范围：真正拉数前是否先写下路由决策
+    测试对象：DataSourceService.fetch + job_event_log
+    目的/目标：事后要能还原「当时选了哪条路」，路由计划必须在调适配器之前就落库
+    验证点：ROUTE_PLAN 行存在；payload 含 route_status/selected_source_id/candidates/run_id/job_id/route_plan_id/created_at
+    失败含义：事后无法重建当时路由决策，故障复盘缺证据
+    """
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
     db = tmp_path / "svc.duckdb"
     cm = ConnectionManager(db_path=db)
@@ -269,6 +323,12 @@ def test_serviceWritesRoutePlanPayloadBeforeFetch(tmp_path: Path, monkeypatch) -
 
 
 def test_serviceDisabledRoute_writesFetchLog(tmp_path: Path, monkeypatch) -> None:
+    """覆盖范围：路由被策略禁用时的日志行为
+    测试对象：DataSourceService.fetch（cn_equity_realtime 禁用域）
+    目的/目标：即使没去拉数，也要留下「被策略拒绝」的记录，不能静默消失
+    验证点：result.status=DISABLED_SOURCE；fetch_log 行 status 同、row_count=0
+    失败含义：禁用路由无日志，运维无法区分「未跑」与「被策略拒绝」
+    """
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
     db = tmp_path / "disabled.duckdb"
     cm = ConnectionManager(db_path=db)
@@ -315,6 +375,12 @@ def test_serviceDisabledRoute_writesFetchLog(tmp_path: Path, monkeypatch) -> Non
 
 
 def test_serviceGuardBlocked_emitsResourceGuardPausedRoutePlan(tmp_path: Path, monkeypatch) -> None:
+    """覆盖范围：机器资源不足时的路由与日志行为
+    测试对象：DataSourceService.fetch（ResourceGuard HARD_STOP）
+    目的/目标：内存等硬指标不达标时应立刻停住，留下暂停事件，且不能假装已经拉过数
+    验证点：pytest.raises(ResourceGuardBlockedError, decision=HARD_STOP, 含 RESOURCE_GUARD_PAUSED)；两条 ROUTE_PLAN（READY 后 RESOURCE_GUARD_PAUSED）；fetch_log count=0
+    失败含义：守卫阻断仍写 fetch 或缺暂停事件，容量事故无法追溯
+    """
     from backend.app.core.resource_guard import ResourceSnapshot
 
     snap = ResourceSnapshot(
@@ -399,6 +465,12 @@ def test_serviceGuardBlocked_emitsResourceGuardPausedRoutePlan(tmp_path: Path, m
 
 
 def test_serviceUserAuthRequiredRoute_writesDisabledFetchLog(tmp_path: Path, monkeypatch) -> None:
+    """覆盖范围：USER_AUTH_REQUIRED 路由写禁用 fetch_log
+    测试对象：DataSourceService.fetch（注入 AuthBlockedPlanner）
+    目的/目标：缺用户授权时 route 事件标明 USER_AUTH_REQUIRED 且 fetch_log=DISABLED_SOURCE
+    验证点：result=DISABLED_SOURCE；ROUTE_PLAN payload；fetch_log status
+    失败含义：授权缺失仍尝试 vendor 或无日志，合规审计缺口
+    """
     from backend.app.datasources.route_models import SourceRouteCandidate, SourceRoutePlan
 
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
@@ -479,7 +551,12 @@ def test_serviceUserAuthRequiredRoute_writesDisabledFetchLog(tmp_path: Path, mon
 
 
 def test_serviceFetch_recordsSourceOverrideQualityFlag(tmp_path: Path, monkeypatch) -> None:
-    """ADV-A2-007: routed source override must be auditable via quality_flags."""
+    """覆盖范围：请求指定源与路由实际选中源不一致时的审计标记
+    测试对象：DataSourceService.fetch（请求 akshare，路由选 baostock）
+    目的/目标：调用方要的源和系统最终选的源不同时，必须在路由事件里标明，不能悄悄改
+    验证点：payload requested_source_id=akshare；selected_source_id=baostock；quality_flags 含 REQUESTED_SOURCE_OVERRIDDEN_BY_ROUTE
+    失败含义：静默改源无审计标记，数据血缘与运维预期不一致
+    """
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
 
     def fake_create_test_adapter(sid, registry, data_root, **kwargs):

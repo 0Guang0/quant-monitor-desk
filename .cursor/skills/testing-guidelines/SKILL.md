@@ -175,13 +175,36 @@ When tests touch ingest, snapshots, reports, agents, or backtest output:
 - Contract snapshots for API envelopes and structured JSON.
 - No real network in unit tests — mock or fixture files.
 
-Details: [GLOBAL_TESTING_POLICY.md §7](../../../docs/implementation_tasks/GLOBAL_TESTING_POLICY.md).
+Details: [GLOBAL_TESTING_POLICY.md §8](../../../docs/implementation_tasks/GLOBAL_TESTING_POLICY.md).
 
 ## 9. Trellis / quant-monitor-desk
 
 **Tests are contract evidence for Execute and Audit.**
 
-- Every test file: **中文** comment block — `purpose` / `verifies` / `failure_meaning` (do not change test **goal** to make green).
+### 9.1 每个 `test_*` 五字段 docstring（新增/修改必填）
+
+**细则：** [ROUND3_TEST_DOCSTRING_HYGIENE_PLAN.md](../../../docs/quality/ROUND3_TEST_DOCSTRING_HYGIENE_PLAN.md) · 门禁 `tests/test_docstring_quadruple_coverage.py`
+
+| 字段      | 要求                                                          |
+| --------- | ------------------------------------------------------------- |
+| 覆盖范围  | 场景人话（拉数成功/失败、坏文件拒绝、合法映射、分阶段边界等） |
+| 测试对象  | 被测符号或路径                                                |
+| 目的/目标 | 证明什么（通俗中文）                                          |
+| 验证点    | 断言/异常（技术名可在此）                                     |
+| 失败含义  | 回归时失去什么保障                                            |
+
+**金样：** `tests/test_layer3_snapshot_builder.py::test_layer3Snapshot_buildsFromStagedLoaderAndL5_success`
+
+**Layer1 参考模板（勿堆 JSON 键进目的）：**
+
+```python
+# 模板 1 — 正式提交拉数失败不得入库 → test_layer1Observation_fetchFailure_blocksCleanWrite
+# 模板 2 — 只拉 raw 不写正式观测表 → test_layer1MicroIngestion_phase3DoesNotWriteCleanAxisObservation
+```
+
+全文见 [GLOBAL_TESTING_POLICY.md §7](../../../docs/implementation_tasks/GLOBAL_TESTING_POLICY.md)。
+
+- Do **not** change test **goal** to make green; maps to catalog `purpose` / `verifies` / `failure_meaning`.
 - Sandbox: `QMD_DATA_ROOT=<task>/.audit-sandbox/data`; Audit A8: `--basetemp=.audit-sandbox/pytest`.
 - New module: `uv run python scripts/loop_maintain.py --fix` (test catalog).
 - Audit A8: each original Red Flag → test | explicit defer | §4.3.

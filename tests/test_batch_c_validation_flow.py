@@ -1,4 +1,4 @@
-"""End-to-end Batch C validation flow tests (§8.8)."""
+"""Batch C 端到端校验流（§8.8）：质量校验 → 源冲突 → 写 clean 表。"""
 
 from __future__ import annotations
 
@@ -91,6 +91,12 @@ def _write_request(validation_report_id: str) -> WriteRequest:
 def test_batchCFlow_validDataQualityAndNoSevereConflict_writesClean(
     tmp_path: Path,
 ) -> None:
+    """覆盖范围：质量通过 + 冲突在容忍度内的完整写入路径
+    测试对象：DataQualityValidator → SourceConflictValidator → WriteManager
+    目的/目标：校验链全部通过后应成功写入 clean 表
+    验证点：quality/conflict 均为 PASSED；write SUCCESS；clean 表 1 行
+    失败含义：合法数据无法落库，Batch C 主路径断裂
+    """
     cm = _cm(tmp_path)
     with cm.writer() as con:
         _create_flow_tables(con)
@@ -141,6 +147,12 @@ def test_batchCFlow_validDataQualityAndNoSevereConflict_writesClean(
 def test_batchCFlow_invalidDataQuality_rejectsCleanAndPreservesAudit(
     tmp_path: Path,
 ) -> None:
+    """覆盖范围：主键为空等质量失败时的 fail-closed 写入
+    测试对象：WriteManager + DbValidationGate 对 FAILED 校验报告的处理
+    目的/目标：质量不通过时禁止写 clean，但须保留审计痕迹
+    验证点：quality FAILED、can_write_clean=False；clean 0 行；write_audit 记录 FAILED
+    失败含义：坏数据仍能落库或审计丢失，数据质量门禁失效
+    """
     cm = _cm(tmp_path)
     with cm.writer() as con:
         _create_flow_tables(con)
@@ -183,6 +195,12 @@ def test_batchCFlow_invalidDataQuality_rejectsCleanAndPreservesAudit(
 
 
 def test_batchCFlow_severeConflict_blocksCleanWrite(tmp_path: Path) -> None:
+    """覆盖范围：质量通过但源冲突超阈值的写入阻断
+    测试对象：SourceConflictValidator 严重冲突判定 + WriteManager 门禁
+    目的/目标：主源与校验源价差过大时不得写 clean
+    验证点：quality PASSED、conflict SEVERE_CONFLICT；write FAILED；clean 0 行
+    失败含义：严重冲突数据仍能入库，多源一致性保障失效
+    """
     cm = _cm(tmp_path)
     with cm.writer() as con:
         _create_flow_tables(con)

@@ -1,4 +1,7 @@
-"""Pure logic tests for SourceConflictValidator (Batch C 8.5)."""
+"""多源冲突校验器纯逻辑测试（Batch C 8.5）。
+
+覆盖范围：主源与校验源客观字段偏差分级、方法论差异、表级落库与人工复核队列。
+"""
 
 from __future__ import annotations
 
@@ -63,10 +66,11 @@ def _create_conflict_stage(con) -> None:
 
 
 def test_validateRows_objectiveValueWithinTolerance_passedNoConflict() -> None:
-    """覆盖范围：客观字段在容忍度内无冲突。
-
-    测试对象：SourceConflictValidator.validate_rows。
-    目的/目标：close 偏差在容忍内应 PASSED 且可写主源值。
+    """覆盖范围：客观字段偏差在容忍度内
+    测试对象：SourceConflictValidator.validate_rows
+    目的/目标：主源与校验源 close 偏差极小时应无冲突且可写主源值
+    验证点：status=PASSED；can_write_primary_value=True；needs_reconcile=False；needs_manual_review=False；conflicts 为空
+    失败含义：正常偏差被误报冲突，主源写入被不必要阻断
     """
     report = SourceConflictValidator().validate_rows(
         _request(),
@@ -81,10 +85,11 @@ def test_validateRows_objectiveValueWithinTolerance_passedNoConflict() -> None:
 
 
 def test_validateRows_objectiveValueAboveWarningThreshold_warning() -> None:
-    """覆盖范围：客观字段超 warning 阈值。
-
-    测试对象：SourceConflictValidator.validate_rows。
-    目的/目标：应 WARNING、可写主源值且 conflict severity 为 warning。
+    """覆盖范围：客观字段超 warning 阈值但未达 severe
+    测试对象：SourceConflictValidator.validate_rows
+    目的/目标：中等偏差应 WARNING 且仍可写主源值
+    验证点：status=WARNING；can_write_primary_value=True；needs_reconcile=False；首条 conflict 为 close/baostock、severity=warning、不需人工复核
+    失败含义：warning 级偏差被静默或误升 severe，运维无法分级处理
     """
     report = SourceConflictValidator().validate_rows(
         _request(),
@@ -102,10 +107,11 @@ def test_validateRows_objectiveValueAboveWarningThreshold_warning() -> None:
 
 
 def test_validateRows_objectiveValueAboveSevereThreshold_severeConflict() -> None:
-    """覆盖范围：客观字段超 severe 阈值。
-
-    测试对象：SourceConflictValidator.validate_rows。
-    目的/目标：应 SEVERE_CONFLICT、禁止写主源且 needs_reconcile。
+    """覆盖范围：客观字段超 severe 阈值
+    测试对象：SourceConflictValidator.validate_rows
+    目的/目标：大偏差应 SEVERE_CONFLICT 且禁止写主源、需 reconcile
+    验证点：status=SEVERE_CONFLICT；can_write_primary_value=False；needs_reconcile=True；conflict.severity=severe；normalized_diff=0.0025
+    失败含义：严重分歧仍可写主源，错误行情静默入主表
     """
     report = SourceConflictValidator().validate_rows(
         _request(),
@@ -123,10 +129,11 @@ def test_validateRows_objectiveValueAboveSevereThreshold_severeConflict() -> Non
 
 
 def test_validateRows_atExactSevereThreshold_classifiesWarningNotSevere() -> None:
-    """覆盖范围：severe 阈值边界分类（不含等于）。
-
-    测试对象：SourceConflictValidator.validate_rows。
-    目的/目标：恰在 relative_severe 边界应 WARNING 而非 severe。
+    """覆盖范围：severe 阈值边界（不含等于）
+    测试对象：SourceConflictValidator.validate_rows
+    目的/目标：恰在 relative_severe 边界应 WARNING 而非 severe
+    验证点：status=WARNING；needs_reconcile=False；conflicts[0].severity=warning
+    失败含义：边界值分类错误，轻微超限被误拦或严重超限被放行
     """
     report = SourceConflictValidator().validate_rows(
         _request(),
@@ -139,10 +146,11 @@ def test_validateRows_atExactSevereThreshold_classifiesWarningNotSevere() -> Non
 
 
 def test_validateRows_sourceSpecificMethodologyField_marksSeparateBySource() -> None:
-    """覆盖范围：方法论差异字段按源区分。
-
-    测试对象：SourceConflictValidator.validate_rows。
-    目的/目标：main_inflow 等字段应 methodology_difference 且仍可写主源。
+    """覆盖范围：方法论差异字段按源区分、不视为数值冲突
+    测试对象：SourceConflictValidator.validate_rows
+    目的/目标：main_inflow 等源特异字段偏差应标 methodology_difference 且仍可写主源
+    验证点：status=PASSED；can_write_primary_value=True；conflicts[0].severity=methodology_difference；不需人工复核
+    失败含义：口径差异被当成 severe 冲突，主源资金流字段被误拦
     """
     report = SourceConflictValidator().validate_rows(
         _request(comparable_fields=("main_inflow",)),
@@ -156,10 +164,11 @@ def test_validateRows_sourceSpecificMethodologyField_marksSeparateBySource() -> 
 
 
 def test_validateRows_missingPeerSource_noFalseSevereConflict() -> None:
-    """覆盖范围：缺失对端源不产生伪严重冲突。
-
-    测试对象：SourceConflictValidator.validate_rows。
-    目的/目标：仅有主源行时应 PASSED 且无 conflicts。
+    """覆盖范围：校验源无对端行时不产生伪严重冲突
+    测试对象：SourceConflictValidator.validate_rows
+    目的/目标：仅有主源行、对端 vendor 缺失时应 PASSED 且无 conflicts
+    验证点：status=PASSED；can_write_primary_value=True；conflicts 为空
+    失败含义：缺对端被误报 severe，正常单源批次无法写入
     """
     report = SourceConflictValidator().validate_rows(
         _request(validation_sources=("missing_vendor",)),
@@ -172,10 +181,11 @@ def test_validateRows_missingPeerSource_noFalseSevereConflict() -> None:
 
 
 def test_validateRows_thresholdLookupUsesDataDomainAndField() -> None:
-    """覆盖范围：阈值查找按 data_domain 与 field 区分。
-
-    测试对象：SourceConflictValidator.validate_rows。
-    目的/目标：market volume 与 futures settlement 应使用不同阈值规则。
+    """覆盖范围：容忍度查找按 data_domain 与 field 区分
+    测试对象：SourceConflictValidator.validate_rows
+    目的/目标：market volume 与 futures settlement 应套用不同阈值规则
+    验证点：market_bar_1d+volume→WARNING；futures_bar+settlement_price→SEVERE_CONFLICT；各自 conflict.field_name 正确
+    失败含义：全域共用阈值，期货结算价与股票成交量误判同一严重级别
     """
     market_report = SourceConflictValidator().validate_rows(
         _request(
@@ -205,10 +215,11 @@ def test_validateRows_thresholdLookupUsesDataDomainAndField() -> None:
 def test_validateTable_severeConflict_persistsConflictAwaitingReconcile(
     tmp_path: Path,
 ) -> None:
-    """覆盖范围：表级 severe 冲突持久化 source_conflict。
-
-    测试对象：SourceConflictValidator.validate_table。
-    目的/目标：应写入 OPEN reconcile 行且不自动进 manual_review_queue。
+    """覆盖范围：表级 severe 冲突写入 source_conflict 待 reconcile
+    测试对象：SourceConflictValidator.validate_table
+    目的/目标：severe 应落库 OPEN 行且不自动进 manual_review_queue
+    验证点：report 为 SEVERE_CONFLICT 且不可写主源；source_conflict 行含 run/job/标的/双方值/severe/OPEN；manual_review_queue 计数为 0
+    失败含义：严重冲突不落库，reconcile 工作流无法挂起待处理项
     """
     cm = _cm(tmp_path)
     validator = SourceConflictValidator()
@@ -258,10 +269,11 @@ def test_validateTable_severeConflict_persistsConflictAwaitingReconcile(
 def test_validateTable_multiInstrumentSevereConflicts_distinctInstrumentIds(
     tmp_path: Path,
 ) -> None:
-    """覆盖范围：多标的 severe 冲突逐标的落库。
-
-    测试对象：SourceConflictValidator.validate_table。
-    目的/目标：AAPL/MSFT 各应独立 source_conflict 行。
+    """覆盖范围：多标的 severe 冲突逐标的独立落库
+    测试对象：SourceConflictValidator.validate_table
+    目的/目标：AAPL 与 MSFT 各应一条 source_conflict 且 field 均为 close
+    验证点：report.status=SEVERE_CONFLICT；source_conflict 两行 instrument_id 分别为 AAPL、MSFT
+    失败含义：多标的冲突合并或漏记，单标的 reconcile 无法精准处理
     """
     cm = _cm(tmp_path)
     validator = SourceConflictValidator()
@@ -287,10 +299,11 @@ def test_validateTable_multiInstrumentSevereConflicts_distinctInstrumentIds(
 
 
 def test_recordUnresolvedReconcile_enqueuesManualReview(tmp_path: Path) -> None:
-    """覆盖范围：未解决 reconcile 转人工复核队列。
-
-    测试对象：SourceConflictValidator.record_unresolved_reconcile。
-    目的/目标：应写 manual_review_queue 且 conflict 标 UNRESOLVED。
+    """覆盖范围：未解决 reconcile 转入人工复核队列
+    测试对象：SourceConflictValidator.record_unresolved_reconcile
+    目的/目标：reconcile 失败应写 manual_review_queue 且 conflict 标 UNRESOLVED
+    验证点：review.source_object_id 等于 conflict_id 且 status=OPEN；source_conflict.reconcile_status=UNRESOLVED 且 manual_review_required=True
+    失败含义：僵持冲突无人工队列入口，运维无法接手未决项
     """
     cm = _cm(tmp_path)
     validator = SourceConflictValidator()
@@ -319,10 +332,11 @@ def test_recordUnresolvedReconcile_enqueuesManualReview(tmp_path: Path) -> None:
 def test_validateTable_methodologyDifference_doesNotWriteManualReview(
     tmp_path: Path,
 ) -> None:
-    """覆盖范围：方法论差异不写冲突表与人工队列。
-
-    测试对象：SourceConflictValidator.validate_table。
-    目的/目标：methodology_difference 应 PASSED 且 source_conflict/review 计数为 0。
+    """覆盖范围：方法论差异不写冲突表与人工队列
+    测试对象：SourceConflictValidator.validate_table
+    目的/目标：methodology_difference 应 PASSED 且 source_conflict/review 计数均为 0
+    验证点：report.status=PASSED；can_write_primary_value=True；conflicts[0].severity=methodology_difference；两表计数为 0
+    失败含义：口径差异误入 reconcile 或人工队列，制造无效运维负担
     """
     cm = _cm(tmp_path)
     validator = SourceConflictValidator()

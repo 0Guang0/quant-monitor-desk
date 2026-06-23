@@ -1,4 +1,4 @@
-"""Loop engineering task-flow refactor — gate script and machine-readable config tests.
+"""Loop 工程任务流重构门禁测试。
 
 覆盖范围：LOOP_ENGINEERING_TASK_FLOW_REFACTOR_PLAN 的 P0–P4 落地物。
 测试对象：authority_graph、context_router、test_catalog、verification matrix、
@@ -84,9 +84,11 @@ def _restore_loop_generated_files() -> None:
 
 
 def test_authorityGraph_allReferencedPathsExist() -> None:
-    """覆盖：specs/context/authority_graph.yaml。
-    对象：各 module 的 docs/contracts/rules/implementation_tasks/tests 路径。
-    目的：P0 权威图引用的每个路径在仓库中必须存在，防止 agent 路由到幽灵文档。
+    """覆盖范围：authority_graph.yaml 各模块引用路径存在性
+    测试对象：load_authority_graph 与 path_exists（Round3 模块及全量 bucket）
+    目的/目标：P0 权威图引用的 docs/contracts/rules/implementation_tasks/tests 路径必须真实存在
+    验证点：Round3 六模块均在图中；missing 列表为空
+    失败含义：幽灵路径会导致 agent 上下文路由到不存在的文档
     """
     graph = load_authority_graph()
     modules = graph.get("modules") or {}
@@ -103,9 +105,11 @@ def test_authorityGraph_allReferencedPathsExist() -> None:
 
 
 def test_contextRouter_layer2Module_packHasDesignAndContractAuthorities() -> None:
-    """覆盖：scripts/context_router.build_context_pack。
-    对象：layer2_sensors 模块上下文包。
-    目的：P0 context_pack 必须包含设计文档与 machine-readable 契约，不得为空路由。
+    """覆盖范围：layer2_sensors 模块 context_pack 内容
+    测试对象：build_context_pack + validate_context_pack
+    目的/目标：P0 上下文包须含设计文档、契约 YAML 与登记测试，不得空路由
+    验证点：validate 零错误；含 layer2_cross_asset_sensor.md、layer2_sensor_contract.yaml、test_layer2_sensor_loader.py
+    失败含义：空包会让 Execute agent 缺少 layer2 权威输入
     """
     pack = build_context_pack(task="sample", modules=["layer2_sensors"], touched_paths=[])
     errors = validate_context_pack(pack)
@@ -118,9 +122,11 @@ def test_contextRouter_layer2Module_packHasDesignAndContractAuthorities() -> Non
 
 
 def test_contextRouter_filePath_mapsToLayer2Module() -> None:
-    """覆盖：modules_for_paths + build_context_pack。
-    对象：backend/app/layer2_sensors/snapshot_builder.py 触达路径。
-    目的：按文件路由时必须推断正确 module，避免 agent 读错权威上下文。
+    """覆盖范围：按触达文件路径推断模块
+    测试对象：modules_for_paths + build_context_pack
+    目的/目标：编辑 layer2 snapshot_builder 时应路由到 layer2_sensors 模块
+    验证点：matched 含 layer2_sensors；pack.modules 含 layer2_sensors
+    失败含义：路径映射错误会导致 agent 读取错误模块权威
     """
     rel = "backend/app/layer2_sensors/snapshot_builder.py"
     graph = load_authority_graph()
@@ -131,9 +137,11 @@ def test_contextRouter_filePath_mapsToLayer2Module() -> None:
 
 
 def test_contextRouter_cli_moduleFlag_exitsZero() -> None:
-    """覆盖：scripts/context_router.py CLI --module。
-    对象：layer2_sensors 命令行入口。
-    目的：Plan P0 规定的 context_router 命令必须可执行且返回 0。
+    """覆盖范围：context_router.py CLI --module
+    测试对象：scripts/context_router.py 子进程（layer2_sensors）
+    目的/目标：Plan P0 规定的模块路由命令须可执行且退出码为 0
+    验证点：returncode==0；stdout JSON modules==['layer2_sensors']
+    失败含义：CLI 不可用会阻断 Plan freeze 自动 context 生成
     """
     result = _run_script("context_router.py", "--module", "layer2_sensors")
     assert result.returncode == 0, result.stderr
@@ -143,9 +151,11 @@ def test_contextRouter_cli_moduleFlag_exitsZero() -> None:
 
 @pytest.mark.skipif(not SAMPLE_TASK.is_dir(), reason="sample task directory missing")
 def test_contextRouter_cli_taskFlag_writesContextPack() -> None:
-    """覆盖：scripts/context_router.py CLI --task。
-    对象：06-22-round3-019-layer2-sensor 任务目录。
-    目的：复杂任务 Plan P0 必须能生成 context_pack.json。
+    """覆盖范围：context_router.py CLI --task
+    测试对象：round3-019-layer2-sensor 归档任务目录
+    目的/目标：复杂任务须能生成并通过校验的 context_pack.json
+    验证点：returncode==0；pack 文件存在且 validate_context_pack 为空；source-index 可引用 pack
+    失败含义：任务级路由失败会导致 complex 轨道无机器可读上下文
     """
     pack_path = SAMPLE_TASK / "context_pack.json"
     source_index = SAMPLE_TASK / "research" / "source-index.md"
@@ -178,9 +188,11 @@ def test_contextRouter_cli_taskFlag_writesContextPack() -> None:
 
 
 def test_writeLoopEvidenceStubs_createsManifestAndIndex(tmp_path: Path) -> None:
-    """覆盖：loop_engineering_common.write_loop_evidence_stubs。
-    对象：含 MASTER §2 AC 的任务目录。
-    目的：context_router 必须为 loop 任务写出 evidence_index 与 loop_manifest 初稿。
+    """覆盖范围：loop 证据桩文件生成
+    测试对象：write_loop_evidence_stubs（含 MASTER §2 AC 的临时任务）
+    目的/目标：context_router 须为 loop 任务写出 loop_manifest 与 evidence_index 初稿
+    验证点：两文件均存在；manifest.acs 含 019-01/019-02 类 AC id
+    失败含义：无证据桩会导致 P3 evidence 门禁无法 bootstrap
     """
     (tmp_path / "MASTER.plan.md").write_text(
         "## 2. AC\n### AC-019-01\n| AC-019-02 | desc |\n",
@@ -196,9 +208,11 @@ def test_writeLoopEvidenceStubs_createsManifestAndIndex(tmp_path: Path) -> None:
 
 
 def test_taskTrack_complexWhenMasterWithoutMeta(tmp_path: Path) -> None:
-    """覆盖：loop_engineering_common.task_track 默认推断。
-    对象：仅有 MASTER.plan.md、无 task.json 的目录。
-    目的：复杂任务默认 complex，统一单轨，不依赖 loop_engineering_version flag。
+    """覆盖范围：无 task.json 时 task_track 默认推断
+    测试对象：task_track、loop_required（仅 MASTER.plan.md）
+    目的/目标：有 MASTER 无 meta 时默认 complex 且须走 loop
+    验证点：task_track=='complex'；loop_required 为 True
+    失败含义：默认轨道错误会导致 simple 任务误套 loop 或反之
     """
     (tmp_path / "MASTER.plan.md").write_text("# master\n", encoding="utf-8")
     assert task_track(tmp_path) == "complex"
@@ -206,9 +220,11 @@ def test_taskTrack_complexWhenMasterWithoutMeta(tmp_path: Path) -> None:
 
 
 def test_taskTrack_debtLiteSkipsLoop(tmp_path: Path) -> None:
-    """覆盖：task_track=debt-lite 时 loop_required 为 false。
-    对象：018c 类 repair-debt-lite 任务。
-    目的：轻量切片与 complex 单轨并存但不重复维护 loop 四件套。
+    """覆盖范围：debt-lite 轨道跳过 loop
+    测试对象：task_track、loop_required（meta.task_track=debt-lite）
+    目的/目标：Repair 轻量切片不必维护 loop 四件套
+    验证点：task_track=='debt-lite'；loop_required 为 False
+    失败含义：debt-lite 仍要求 loop 会增加 Repair 切片摩擦
     """
     (tmp_path / "MASTER.plan.md").write_text("# master\n", encoding="utf-8")
     (tmp_path / "task.json").write_text(
@@ -220,9 +236,11 @@ def test_taskTrack_debtLiteSkipsLoop(tmp_path: Path) -> None:
 
 
 def test_deprecatedLoopMeta_errorsOnOldFlags(tmp_path: Path) -> None:
-    """覆盖：deprecated_loop_meta_errors。
-    对象：含 loop_engineering_exempt 的 task.json。
-    目的：R1 旧 flag 必须报错，引导迁移到 task_track。
+    """覆盖范围：废弃 loop_engineering_* meta 检测
+    测试对象：deprecated_loop_meta_errors（loop_engineering_version）
+    目的/目标：R1 旧 flag 须报错并引导迁移到 task_track
+    验证点：errors 含 loop_engineering_version
+    失败含义：旧 flag 静默通过会导致双轨配置回流
     """
     (tmp_path / "task.json").write_text(
         '{"meta":{"loop_engineering_version":"1"}}', encoding="utf-8"
@@ -232,9 +250,11 @@ def test_deprecatedLoopMeta_errorsOnOldFlags(tmp_path: Path) -> None:
 
 
 def test_authorityGraphCoverageGaps_detectsUnknownBackendPath(tmp_path: Path) -> None:
-    """覆盖：authority_graph_coverage_gaps。
-    对象：MASTER 引用 authority_graph 未收录的 backend 路径。
-    目的：R3 freeze warning 能发现新模块未扩图。
+    """覆盖范围：MASTER 引用未收录 backend 路径的缺口检测
+    测试对象：authority_graph_coverage_gaps
+    目的/目标：R3 freeze warning 须能发现新模块未扩 authority_graph
+    验证点：gaps 含 backend/app/brand_new_module/foo.py
+    失败含义：缺口未检出会导致 agent 上下文缺少新包映射
     """
     (tmp_path / "MASTER.plan.md").write_text(
         "touch backend/app/brand_new_module/foo.py\n", encoding="utf-8"
@@ -244,9 +264,11 @@ def test_authorityGraphCoverageGaps_detectsUnknownBackendPath(tmp_path: Path) ->
 
 
 def test_discoverUnmappedBackendPackages_emptyWhenGraphComplete() -> None:
-    """覆盖：discover_unmapped_backend_packages。
-    对象：authority_graph 全量 backend/app 顶层包。
-    目的：日常维护第三步：新包必须扩图，本测试在图完整时应无缺口。
+    """覆盖范围：backend/app 顶层包与 authority_graph 对齐
+    测试对象：discover_unmapped_backend_packages
+    目的/目标：日常维护第三步：图完整时不得有未映射顶层包
+    验证点：返回 []
+    失败含义：未映射包会导致 loop_maintain 持续报错或漏扩图
     """
     from loop_engineering_common import discover_unmapped_backend_packages
 
@@ -254,9 +276,11 @@ def test_discoverUnmappedBackendPackages_emptyWhenGraphComplete() -> None:
 
 
 def test_loopMaintain_fix_writesCatalogAndMaps() -> None:
-    """覆盖：scripts/loop_maintain.py --fix。
-    对象：test_catalog 与 docs/generated 生成物。
-    目的：一键完成日常维护前三步中的 catalog + docs/specs 索引。
+    """覆盖范围：loop_maintain.py --fix 生成物
+    测试对象：scripts/loop_maintain.py --fix
+    目的/目标：一键刷新 test_catalog 与 docs/specs 索引
+    验证点：returncode==0；test_catalog.yaml 与 docs_specs_index.generated.md 存在
+    失败含义：--fix 失败会导致 CI catalog/索引门禁无法自愈
     """
     from loop_engineering_common import TEST_CATALOG_PATH
 
@@ -270,18 +294,22 @@ def test_loopMaintain_fix_writesCatalogAndMaps() -> None:
 
 
 def test_loopMaintain_check_passesWhenRepoFresh() -> None:
-    """覆盖：scripts/loop_maintain.py 检查模式。
-    对象：catalog、project map、authority_graph 包覆盖。
-    目的：CI/本地可用单命令验证三步维护状态。
+    """覆盖范围：loop_maintain.py 检查模式（无 --fix）
+    测试对象：scripts/loop_maintain.py 默认检查
+    目的/目标：CI/本地单命令验证 catalog、project map、authority 包覆盖
+    验证点：returncode==0
+    失败含义：仓库 stale 时检查应失败，误绿会放过维护债务
     """
     check = _run_script("loop_maintain.py")
     assert check.returncode == 0, check.stderr + check.stdout
 
 
 def test_generateProjectMap_writesDocsSpecsIndex() -> None:
-    """覆盖：generate_project_map 同时写出 docs_specs_index.generated.md。
-    对象：docs/generated/docs_specs_index.generated.md。
-    目的：R4 机械全量索引生成，减负 MIGRATION_MAP 手工维护。
+    """覆盖范围：generate_project_map 写出 docs/specs 索引
+    测试对象：scripts/generate_project_map.py
+    目的/目标：R4 机械生成全量 docs/specs 索引，减负手工 MIGRATION_MAP
+    验证点：returncode==0；索引文件含 user_intervention_policy.md
+    失败含义：索引未生成会导致 docs 门禁与 agent 路由缺条目
     """
     index_path = PROJECT_ROOT / "docs/generated/docs_specs_index.generated.md"
     gen = _run_script("generate_project_map.py")
@@ -295,9 +323,11 @@ def test_generateProjectMap_writesDocsSpecsIndex() -> None:
 
 
 def test_testCatalog_coversEveryDiscoveredTestModule() -> None:
-    """覆盖：tests/test_catalog.yaml + scripts/check_test_catalog.py。
-    对象：tests/**/test_*.py 与 catalog 登记一致性。
-    目的：P1 每个测试模块必须有 purpose/type/verifies/command/failure_meaning，防止测试语义黑洞。
+    """覆盖范围：test_catalog 与发现测试模块的一致性
+    测试对象：check_catalog、discover_test_modules、tests/test_catalog.yaml
+    目的/目标：P1 每个 test_*.py 须在 catalog 登记完整元数据
+    验证点：check_catalog 零错误；discovered 键集等于 catalog 键集
+    失败含义：catalog 缺口会导致测试语义与 CI 追溯黑洞
     """
     assert TEST_CATALOG_PATH.is_file(), "tests/test_catalog.yaml must exist"
     errors = check_catalog()
@@ -308,9 +338,11 @@ def test_testCatalog_coversEveryDiscoveredTestModule() -> None:
 
 
 def test_testCatalog_round3GateEntry_documentsStagedOnlySemantics() -> None:
-    """覆盖：tests/test_catalog.yaml 中 Batch 3 gate 条目。
-    对象：tests/test_batch3_staged_downstream_gate.py catalog 元数据。
-    目的：P1 关键 gate 测试必须声明 staged-only 语义与失败业务含义。
+    """覆盖范围：Batch3 gate 测试的 catalog 元数据
+    测试对象：test_batch3_staged_downstream_gate.py 的 catalog 条目
+    目的/目标：关键 gate 须声明 staged-only 语义与 production/live 失败含义
+    验证点：purpose 含 staged/batch 3；failure_meaning 含 production 与 live；verifies 含 BATCH3 gate 文档
+    失败含义：元数据缺失会导致误将 staged gate 当作生产放行
     """
     catalog = yaml.safe_load(TEST_CATALOG_PATH.read_text(encoding="utf-8")) or {}
     entry = catalog["tests/test_batch3_staged_downstream_gate.py"]
@@ -323,9 +355,11 @@ def test_testCatalog_round3GateEntry_documentsStagedOnlySemantics() -> None:
 
 
 def test_verificationMatrix_acLinksResolveToExistingTests() -> None:
-    """覆盖：specs/verification/feature_verification_matrix.yaml。
-    对象：feature AC → pytest 目标映射。
-    目的：P2 每个 AC 必须绑定存在且已登记的测试，功能验收可追溯到 pytest。
+    """覆盖范围：feature_verification_matrix AC→pytest 映射
+    测试对象：check_matrix、feature_verification_matrix.yaml
+    目的/目标：P2 每个 AC 须绑定存在且已登记的测试
+    验证点：矩阵文件存在；check_matrix 零错误
+    失败含义：AC 无测试落点会导致功能验收无法追溯 pytest
     """
     assert FEATURE_MATRIX_PATH.is_file()
     errors = check_matrix()
@@ -333,9 +367,11 @@ def test_verificationMatrix_acLinksResolveToExistingTests() -> None:
 
 
 def test_contractCoverage_everyContractHasRequirementOrWaiver() -> None:
-    """覆盖：specs/verification/contract_coverage.yaml。
-    对象：specs/contracts/*.yaml 覆盖矩阵。
-    目的：P2 每个契约文件必须有 tests 或 explicit waiver，防止契约无验证落点。
+    """覆盖范围：contract_coverage 矩阵完整性
+    测试对象：check_coverage、contract_coverage.yaml
+    目的/目标：P2 每个 specs/contracts/*.yaml 须有 tests 或 explicit waiver
+    验证点：覆盖文件存在；check_coverage 零错误
+    失败含义：无覆盖契约会成为「纸面契约」无 pytest 落点
     """
     assert CONTRACT_COVERAGE_PATH.is_file()
     errors = check_coverage()
@@ -343,9 +379,11 @@ def test_contractCoverage_everyContractHasRequirementOrWaiver() -> None:
 
 
 def test_taskEvidence_checkScript_passesOnSampleTask() -> None:
-    """覆盖：scripts/check_task_evidence.py。
-    对象：带 MASTER.plan.md 的示例复杂任务目录。
-    目的：P3 evidence_index / loop_manifest / audit_matrix 机械门禁必须对真实任务可运行。
+    """覆盖范围：复杂任务 evidence 机械门禁
+    测试对象：check_task_evidence（round3-019 示例任务）
+    目的/目标：P3 evidence_index/loop_manifest/audit_matrix 须对真实任务可运行
+    验证点：errors == []
+    失败含义：示例任务 evidence 失败会阻断 loop handoff 回归基线
     """
     from check_task_evidence import check_task_evidence  # noqa: E402
 
@@ -357,9 +395,11 @@ def test_taskEvidence_checkScript_passesOnSampleTask() -> None:
 
 
 def test_loopDashboard_cli_listsTasksWithoutCrash() -> None:
-    """覆盖：scripts/loop_dashboard.py。
-    对象：.trellis/tasks 下活跃任务列表。
-    目的：P3 提供统一任务状态视图，merge coordinator 可一眼看到 blocker。
+    """覆盖范围：loop_dashboard.py CLI 可用性
+    测试对象：scripts/loop_dashboard.py
+    目的/目标：P3 提供统一任务状态视图供 merge coordinator 查看 blocker
+    验证点：returncode==0；stdout 含 Task/task
+    失败含义：dashboard 崩溃会导致并行任务协调失去总览
     """
     result = _run_script("loop_dashboard.py")
     assert result.returncode == 0, result.stderr
@@ -367,9 +407,11 @@ def test_loopDashboard_cli_listsTasksWithoutCrash() -> None:
 
 
 def test_generateProjectMap_writesAndCheckPasses() -> None:
-    """覆盖：scripts/generate_project_map.py。
-    对象：docs/generated/project_map.generated.{md,json}。
-    目的：P4 项目地图必须从机器可读配置自动生成且 --check 能发现 stale。
+    """覆盖范围：project_map 生成与 --check 一致性
+    测试对象：scripts/generate_project_map.py（写模式与 --check）
+    目的/目标：P4 项目地图须自动生成且 --check 能发现 stale
+    验证点：写出 md/json/index；JSON modules 含 layer2_sensors；--check returncode==0
+    失败含义：地图 stale 未检出会导致 agent 读到过期模块索引
     """
     md_path = PROJECT_ROOT / "docs/generated/project_map.generated.md"
     json_path = PROJECT_ROOT / "docs/generated/project_map.generated.json"
@@ -389,9 +431,11 @@ def test_generateProjectMap_writesAndCheckPasses() -> None:
 
 
 def test_collectModuleAuthorities_layer2_includesForbiddenClaims() -> None:
-    """覆盖：loop_engineering_common.collect_module_authorities。
-    对象：layer2_sensors forbidden_claims 字段。
-    目的：context_pack 必须把禁止声明（production-live）注入 agent，防止越权宣称。
+    """覆盖范围：layer2 模块 forbidden_claims 注入
+    测试对象：collect_module_authorities('layer2_sensors', graph)
+    目的/目标：context_pack 须把 production-live 禁止声明注入 agent
+    验证点：forbidden_claims 拼接文本含 production-live
+    失败含义：缺禁止声明会导致 agent 越权宣称生产 live 能力
     """
     graph = load_authority_graph()
     bundle = collect_module_authorities("layer2_sensors", graph)

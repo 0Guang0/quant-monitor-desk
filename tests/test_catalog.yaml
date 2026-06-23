@@ -230,6 +230,19 @@ tests/test_docs_specs_indexed.py:
     docs: []
     rules: []
     specs: []
+tests/test_docstring_quadruple_coverage.py:
+  command: uv run python -m pytest tests/test_docstring_quadruple_coverage.py -q
+  failure_meaning:
+    Test self-description contract broke; docstring hygiene regresses
+    silently.
+  purpose: Gate — every test_* carries five-field Chinese docstring per hygiene plan
+  type: runtime-contract
+  verifies:
+    docs:
+      - docs/quality/ROUND3_TEST_DOCSTRING_HYGIENE_PLAN.md
+    rules:
+      - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
+    specs: []
 tests/test_documentation_index.py:
   command: uv run python -m pytest tests/test_documentation_index.py -q
   failure_meaning:

@@ -1,8 +1,7 @@
-"""Batch 2.5 production-data readiness gate tests.
+"""Batch 2.5 生产数据就绪门禁测试。
 
-These tests intentionally inspect the Batch 2.5 evidence and current local data root.
-They do not modify production code or production data. Their purpose is to prevent
-staged/fixture evidence from being promoted to production-live readiness by wording drift.
+覆盖范围：Batch 2.5 Trellis 执行证据、三份 registry 与本地 data/raw、目标 DuckDB
+是否仍明确为 staged/fixture，防止措辞漂移被误读为已开放 production-live。
 """
 
 from __future__ import annotations
@@ -49,7 +48,12 @@ def _registry_table_row(registry_text: str, item_id: str) -> bool:
 
 
 def test_batch25_deferredItems_documentedInRegistries() -> None:
-    """Batch 2.5 DEFERRED IDs must appear in registries with closure hooks."""
+    """覆盖范围：Batch 2.5 DEFERRED/RESOLVED 项在 registry 与任务证据中的一致登记
+    测试对象：三份 registry、batch25-deferred-items.md、final_registry_update.md、ROUND3_BATCH25_PENDING_FIX_REGISTRY
+    目的/目标：B2.5-O-05/O-06 等 deferred 与已 resolved 项有 closure hook，且 pending 仍跟踪 R3-B2.75-01
+    验证点：deferred_ids 在 audit/unresolved/task_register/final_registry 有表行；resolved_ids 在 RESOLVED；pending 含 R3-B2.75-01
+    失败含义：registry 与任务证据脱节，2.5 收尾状态无法被审计追溯
+    """
     deferred_ids = ("B2.5-O-05", "B2.5-O-06")
     audit_deferred = _read_text(PROJECT_ROOT / "docs/AUDIT_DEFERRED_REGISTRY.md")
     unresolved = _read_text(PROJECT_ROOT / "docs/UNRESOLVED_ISSUES_REGISTRY.md")
@@ -73,7 +77,12 @@ def test_batch25_deferredItems_documentedInRegistries() -> None:
 
 
 def test_batch25_evidence_is_staged_not_production_live() -> None:
-    """Batch 2.5 evidence must not be interpreted as production-live ingestion."""
+    """覆盖范围：Batch 2.5 执行证据是否明确为 staged/fixture 而非 production-live
+    测试对象：MASTER.plan、AUDIT_DEFERRED、phase1/2/4 execute-evidence 工件
+    目的/目标：防止把 2.5 执行证据误读为已开放线上行情或已写入生产观测
+    验证点：master 标 staged/fixture 与 DEFERRED；phase1 答 No 于 production live；phase2 dry_run 且 fred deferred、路由 akshare；phase4 分类 fixture_or_staged_evidence 且路径在 sandbox/fixture
+    失败含义：证据叙事像 live production，正式发版前可能误判数据就绪
+    """
     master = _read_text(TASK_DIR / "MASTER.plan.md")
     registry = _read_text(PROJECT_ROOT / "docs/AUDIT_DEFERRED_REGISTRY.md")
     phase1_classification = _read_text(EVIDENCE_DIR / "phase1_data_classification.md")
@@ -107,7 +116,12 @@ def test_batch25_evidence_is_staged_not_production_live() -> None:
 
 
 def test_current_target_db_has_no_clean_layer1_production_observations() -> None:
-    """The current target DB must not contain clean Layer 1 rows promoted as production data."""
+    """覆盖范围：当前目标 DuckDB 是否尚无 Layer1 清洁生产观测行
+    测试对象：data/duckdb/quant_monitor.duckdb 中 fetch_log 等表行数
+    目的/目标：本地目标库不应已被 Batch 2.5  promoted 成生产观测数据
+    验证点：fetch_log、validation_report、write_audit_log、axis_* 表 count 均为 0；无库文件则 pytest.skip
+    失败含义：目标库已有 Layer1 行，说明 staged 证据可能已写入生产路径
+    """
     db_path = PROJECT_ROOT / "data/duckdb/quant_monitor.duckdb"
     if not db_path.is_file():
         pytest.skip("target DB not present; local readiness gate only")
@@ -126,7 +140,12 @@ def test_current_target_db_has_no_clean_layer1_production_observations() -> None
 
 
 def test_current_raw_data_root_contains_only_staged_batch25_fixture_payloads() -> None:
-    """Any non-placeholder current raw files for Batch 2.5 must remain staged fixture evidence."""
+    """覆盖范围：data/raw 现存文件是否全是 Batch 2.5 staged fixture 载荷
+    测试对象：data/raw 下非 .gitkeep 的 JSON 文件
+    目的/目标：raw 目录里不应混入 vendor live 拉数残留
+    验证点：每文件 JSON 的 source_used==staged_fixture、macro_supplementary、fetch_macro_series、ENV-E1-DGS10、staged_route_note 含 FRED:DGS10 deferred；无文件则 skip
+    失败含义：raw 根目录出现非 staged 载荷，本地数据根与 2.5 叙事不一致
+    """
     raw_root = PROJECT_ROOT / "data/raw"
     raw_files = sorted(p for p in raw_root.rglob("*") if p.is_file() and p.name != ".gitkeep")
     if not raw_files:

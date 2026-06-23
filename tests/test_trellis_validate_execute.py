@@ -1,4 +1,7 @@
-"""Tests for Trellis Execute protocol v2 validators."""
+"""Trellis Execute 协议 v2 校验器测试。
+
+覆盖范围：validate_execute_step、validate_execute_handoff 与 _parse_executed_steps 的 RED/GREEN 证据门禁。
+"""
 
 from __future__ import annotations
 
@@ -63,6 +66,12 @@ def _boot_artifacts(task_dir: Path, *, steps: list[str]) -> None:
 
 
 def test_validateExecuteStep_requiresFailSignal(tmp_path: Path) -> None:
+    """覆盖范围：单步 Execute RED 证据须含失败信号
+    测试对象：validate_execute_step（8.1，RED 仅 all good）
+    目的/目标：TDD RED 阶段必须留下 FAIL/ERROR 痕迹，禁止假 RED
+    验证点：errors 中任一条含 FAIL/ERROR
+    失败含义：无失败信号的 RED 会让 handoff 误判已走 TDD
+    """
     ev = tmp_path / "research" / "execute-evidence"
     ev.mkdir(parents=True)
     (ev / "8.1-red.txt").write_text("all good\n", encoding="utf-8")
@@ -72,6 +81,12 @@ def test_validateExecuteStep_requiresFailSignal(tmp_path: Path) -> None:
 
 
 def test_validateExecuteStep_passesWithEvidence(tmp_path: Path) -> None:
+    """覆盖范围：合规 RED/GREEN 证据的单步校验
+    测试对象：validate_execute_step（8.1，含 ModuleNotFoundError 与 exit 码）
+    目的/目标：标准 TDD 证据文件应零错误通过
+    验证点：validate_execute_step(tmp_path, '8.1') == []
+    失败含义：合法证据被拒会阻断 Execute 进度门禁
+    """
     ev = tmp_path / "research" / "execute-evidence"
     ev.mkdir(parents=True)
     (ev / "8.1-red.txt").write_text("ModuleNotFoundError\nexit 1\n", encoding="utf-8")
@@ -80,12 +95,24 @@ def test_validateExecuteStep_passesWithEvidence(tmp_path: Path) -> None:
 
 
 def test_validateExecuteHandoff_failsWithoutGitnexusSummary(tmp_path: Path) -> None:
+    """覆盖范围：handoff 缺 gitnexus-execute-summary
+    测试对象：validate_execute_handoff（仅 MASTER 已勾选 8.0）
+    目的/目标：Execute handoff 必须要求 GitNexus 执行摘要
+    验证点：errors 含 gitnexus-execute-summary
+    失败含义：无摘要 handoff 会导致审计无法追溯影响面
+    """
     _write_master(tmp_path, ["8.0"])
     errors = validate_execute_handoff(tmp_path, _REPO)
     assert any("gitnexus-execute-summary" in e for e in errors)
 
 
 def test_validateExecuteHandoff_passesWithFullArtifacts(tmp_path: Path) -> None:
+    """覆盖范围：完整 Execute 工件下的 handoff
+    测试对象：validate_execute_handoff（MASTER + boot 工件 + 8.0/8.1 证据）
+    目的/目标：simple 轨道任务齐备时应零错误 handoff
+    验证点：errors == []
+    失败含义：全量工件仍失败说明 handoff 规则回归
+    """
     _write_master(tmp_path, ["8.0", "8.1"])
     _boot_artifacts(tmp_path, steps=["8.0", "8.1"])
     errors = validate_execute_handoff(tmp_path, _REPO)
@@ -93,14 +120,22 @@ def test_validateExecuteHandoff_passesWithFullArtifacts(tmp_path: Path) -> None:
 
 
 def test_parseExecutedSteps_findsMarkedSteps() -> None:
+    """覆盖范围：MASTER §8 已执行步骤解析
+    测试对象：_parse_executed_steps
+    目的/目标：仅 [x] 标记的步骤应进入已执行列表
+    验证点：8.0 已勾选、8.1 未勾选时返回 ['8.0']
+    失败含义：解析错误会导致 evidence 与 MASTER 勾选不一致
+    """
     text = "### 8.0 x\n| 已执行 | [x] |\n\n### 8.1 y\n| 已执行 | [ ] |\n"
     assert _parse_executed_steps("## 8.\n" + text) == ["8.0"]
 
 
 def test_validateExecuteHandoff_loopTaskRequiresEvidenceIndex(tmp_path: Path) -> None:
-    """覆盖：validate_execute_handoff loop P3 门禁。
-    对象：task_track=complex 且缺 evidence_index.json 的任务。
-    目的：Execute handoff 必须校验 loop 证据链，不能只有 context_pack。
+    """覆盖范围：complex 轨道 handoff 的 loop P3 证据链
+    测试对象：validate_execute_handoff（task_track=complex，缺 evidence_index.json）
+    目的/目标：仅有 context_pack/loop_manifest 不足，须 evidence_index
+    验证点：errors 含 evidence_index
+    失败含义：loop 单轨 handoff 缺口会导致 AC 证据无法机械索引
     """
     import json
 
