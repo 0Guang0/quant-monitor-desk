@@ -3,7 +3,7 @@
   "name": "round3-real-data-staged-pilot-v2",
   "title": "B-19: PROMPT_19 staged pilot v2",
   "description": "Bounded staged real-data pilot v2 expansion; staged-only.",
-  "status": "planning",
+  "status": "in_progress",
   "dev_type": "feature",
   "scope": "staged_pilot",
   "branch": "feature/round3-real-data-staged-pilot-v2",
