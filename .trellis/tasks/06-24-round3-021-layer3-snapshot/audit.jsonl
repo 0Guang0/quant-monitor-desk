@@ -1,0 +1,10 @@
+{"file": ".trellis/tasks/06-24-round3-021-layer3-snapshot/AUDIT.plan.md", "reason": "Audit single source of truth"}
+{"file": ".trellis/tasks/06-24-round3-021-layer3-snapshot/MASTER.plan.md", "reason": "extract: §2 AC trace | for: A5 audit-completion"}
+{"file": "specs/contracts/snapshot_lineage_contract.yaml", "reason": "extract: required_fields | for: A1 audit-spec"}
+{"file": "docs/modules/layer3_industry_shock_anchor.md", "reason": "extract: §8.12.6 snapshot 边界 | for: A1 / A8 test-gap"}
+{"file": "docs/implementation_tasks/ROUND_3_MODELING_LAYERS/021_implement_layer3_snapshot_builder.md", "reason": "extract: scope / Red Flags | for: A1 trace"}
+{"file": "docs/quality/BATCH3_STAGED_DOWNSTREAM_GATE.md", "reason": "extract: staged-only 约束 | for: A5 AC-021-6"}
+{"file": "backend/app/layer2_sensors/snapshot_builder.py", "reason": "extract: L2 snapshot 模式 | for: A2 ponytail 对照"}
+{"file": "backend/app/layer3_chains/loader.py", "reason": "extract: 020 输入契约 | for: A1 wiring trace"}
+{"file": "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md", "reason": "extract: 语义断言 | for: A8"}
+{"file": ".trellis/tasks/06-24-round3-021-layer3-snapshot/research/source-index.md", "reason": "extract: manifest 血缘 | for: A5 trace"}

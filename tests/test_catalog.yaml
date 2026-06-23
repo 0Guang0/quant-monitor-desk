@@ -371,6 +371,17 @@ tests/test_layer3_loader.py:
     rules: []
     specs:
       - specs/contracts/layer3_loader_contract.yaml
+tests/test_layer3_snapshot_builder.py:
+  command: uv run python -m pytest tests/test_layer3_snapshot_builder.py -q
+  failure_meaning:
+    Regression in test_layer3_snapshot_builder; inspect purpose and
+    linked authorities.
+  purpose: Layer 3 industry-chain snapshot builder tests (Round 3 task 021).
+  type: runtime-contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
 tests/test_layer5_evidence_foundation.py:
   command: uv run python -m pytest tests/test_layer5_evidence_foundation.py -q
   failure_meaning:

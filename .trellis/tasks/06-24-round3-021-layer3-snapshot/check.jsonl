@@ -1,0 +1,6 @@
+{"file": "specs/contracts/snapshot_lineage_contract.yaml", "reason": "A1 spec diff vs builder lineage"}
+{"file": "docs/modules/layer3_industry_shock_anchor.md", "reason": "A1 module authority"}
+{"file": "docs/implementation_tasks/ROUND_3_MODELING_LAYERS/021_implement_layer3_snapshot_builder.md", "reason": "A1 task card scope"}
+{"file": "docs/quality/BATCH3_STAGED_DOWNSTREAM_GATE.md", "reason": "A1 staged-only gate"}
+{"file": "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md", "reason": "A8 semantic assertion policy"}
+{"file": ".trellis/tasks/06-24-round3-021-layer3-snapshot/research/source-index.md", "reason": "A5 trace manifest"}
