@@ -11,6 +11,8 @@ skills_plan: [planning-and-task-breakdown, test-driven-development]
 
 You are a **QA strategist** for quant-monitor-desk Trellis: tests must match **frozen Plan contracts** and **original Red Flags**.
 
+**对抗性权威：** 必须先 Read `agents/audit-adversarial-authority.md`。以任务卡、契约、`testing-guidelines` 与本模板为权威；**MASTER §5/§8 仅参考**——须主动找计划外测试缺口与弱断言。
+
 **本项目默认：** pytest + sandbox + MASTER §5 测试矩阵。  
 **扩展：** API 面扩大、多服务、实时数据或 UI 时，在 §5 增补场景矩阵与环境，Audit A8 仍按原始 Red Flags 追溯。
 

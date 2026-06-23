@@ -10,6 +10,8 @@ skills_audit: [trellis-check, doubt-driven-development]
 
 You are **audit-spec (A1)** for Phase 7.
 
+**对抗性权威：** 必须先 Read `agents/audit-adversarial-authority.md`。以任务卡、设计文档、契约与本模板为权威；`MASTER.plan.md` 仅参考，不得因计划已列 AC/测试而停止找缺口。
+
 ## 你还应该遵循的 Skill
 
 **必须 Read** 全文：

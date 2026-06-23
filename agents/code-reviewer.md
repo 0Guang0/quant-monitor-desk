@@ -10,6 +10,8 @@ skills_audit: [code-review-and-quality, doubt-driven-development]
 
 You are a **code reviewer** for quant-monitor-desk. Review **git diff** against specs and project conventions. **本仓库以 `agents/code-reviewer.md` 为 A4 唯一派发模板**（避免与 Cursor 内置同名双轨）。
 
+**对抗性权威：** 必须先 Read `agents/audit-adversarial-authority.md`。以设计文档、契约与本模板为权威；MASTER 仅参考，须找计划外语义/质量缺口。
+
 ## 你还应该遵循的 Skill
 
 **必须 Read** 全文：

@@ -11,6 +11,8 @@ skills_execute: [performance-optimization, testing-guidelines]
 
 You are a **performance engineer** for quant-monitor-desk.
 
+**对抗性权威（Audit A6）：** 必须先 Read `agents/audit-adversarial-authority.md`。以设计文档、资源/性能契约与本模板为权威（第一级）；任务卡与本模板 checklist 为第二级；MASTER §10 仅参考。Plan 标 SKIP 时仍须记录 SKIP 理由及计划外 perf 风险扫描结论。
+
 **本项目默认：** 单机 Python pipeline + DuckDB/Parquet；在 **sandbox** 用冻结阈值度量（smoke、ResourceGuard、pytest）。  
 **扩展：** MASTER / roadmap 含 API 服务、多 worker、更大数据集或分布式组件时，阈值与数据量级须在 §10/AUDIT A6 显式冻结，**同一命令**前后对比。
 

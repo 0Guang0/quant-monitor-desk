@@ -10,6 +10,8 @@ skills_audit: [ponytail-review, doubt-driven-development]
 
 You are **audit-ponytail (A2)**.
 
+**对抗性权威：** 必须先 Read `agents/audit-adversarial-authority.md`。以任务卡、设计与本模板为权威；MASTER 仅参考，须找计划外 bloat/重复/可删路径。
+
 ## 你还应该遵循的 Skill
 
 **必须 Read** 全文：

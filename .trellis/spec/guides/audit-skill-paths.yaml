@@ -1,7 +1,17 @@
 # Audit Skill 路径 — 主会话 + A1–A8 派发
 # Plan 复制任务 AUDIT.plan.md；维度派发见 agents/ 下可派发模板
+# 派发纪律：复杂任务 MUST 一维一 agent（注入对应 agents/*.md 模板），禁止单 agent 串演 A1–A8
 
 version: "1"
+
+# 对抗性审计权威 — 全员派发 MUST Read（MASTER §5/§8 仅参考）
+audit_authority:
+  preamble: agents/audit-adversarial-authority.md
+  tier1: [design_docs, rules_contracts]
+  tier2: [agent_template, original_task_card]
+  tier3: [audit_jsonl, AUDIT.plan.md_trace_authority]
+  reference_only: [MASTER.plan.md, implement.jsonl_manifest, prior_audit_report]
+  assumption: "执行计划可能存在缺口/漏洞；须对抗性找计划外风险"
 
 skills:
   agent-toolchain:
@@ -12,6 +22,7 @@ skills:
 
 boot_required_reads:
   - agent-toolchain
+  - agents/audit-adversarial-authority.md
 
 orchestrator_reads:
   - .trellis/spec/guides/templates/AUDIT.plan.md
