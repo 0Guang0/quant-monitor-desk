@@ -9,33 +9,33 @@ Worktree: `quant-monitor-desk-wt-review-r3-post-r3x-strict-audit` · 基准 `mas
 
 ## 目标与反证假设
 
-| 反证假设 | 核查结论 |
-|----------|----------|
-| `DataSourceService.fetch` 未必先经 `SourceRoutePlanner` | **生产 service 路径：否**（L149–158 必先 `plan`）；**orchestrator `adapter=` 路径：是旁路** |
-| disabled / validation-only / authorization-required 源可被默认调度 | **默认生产路径 fail-closed**；staged fixture 模式存在受控旁路 |
-| sync orchestrator `adapter=` 可绕过 route / capability gate | **是**（测试与 reconcile 路径保留直调） |
-| registry yaml 与 runtime planner 行为漂移 | **部分**：akshare 作 primary 的 validation-only domain 在 registry 与 runtime 语义分裂，但 runtime 阻断正确 |
+| 反证假设                                                           | 核查结论                                                                                                    |
+| ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
+| `DataSourceService.fetch` 未必先经 `SourceRoutePlanner`            | **生产 service 路径：否**（L149–158 必先 `plan`）；**orchestrator `adapter=` 路径：是旁路**                 |
+| disabled / validation-only / authorization-required 源可被默认调度 | **默认生产路径 fail-closed**；staged fixture 模式存在受控旁路                                               |
+| sync orchestrator `adapter=` 可绕过 route / capability gate        | **是**（测试与 reconcile 路径保留直调）                                                                     |
+| registry yaml 与 runtime planner 行为漂移                          | **部分**：akshare 作 primary 的 validation-only domain 在 registry 与 runtime 语义分裂，但 runtime 阻断正确 |
 
 ---
 
 ## 读取文件（含 call path 追溯）
 
-| 类别 | 路径 |
-|------|------|
-| 派发矩阵 | `.trellis/tasks/06-23-round3-post-r3x-strict-audit/research/parallel-audit-dispatch.md` |
-| R3Y §4 R3Y-AUD-02 | `docs/implementation_tasks/ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3Y_post_r3x_strict_adversarial_audit.md` |
-| Fetch facade | `backend/app/datasources/service.py` |
-| Route planner | `backend/app/datasources/route_planner.py` |
-| Capability gate | `backend/app/datasources/capability_registry.py` |
-| Registry 权威 | `specs/datasource_registry/source_registry.yaml` |
-| Capability 权威 | `specs/datasource_registry/source_capabilities.yaml` |
-| Platform matrix | `specs/contracts/platform_source_matrix.yaml` |
-| Service 契约 | `specs/contracts/datasource_service_contract.yaml` |
-| Sync 旁路入口 | `backend/app/sync/orchestrator.py` L127–204 |
-| Adapter 直调 | `backend/app/sync/runners.py` L42–75、L325–328、L868 |
-| Staged pilot route | `backend/app/ops/staged_pilot.py` L316–334、L500–520、L700–778 |
-| Layer1 staged bypass | `backend/app/layer1_axes/ingestion.py` L433–474 |
-| 必跑测试 | `tests/test_datasource_service.py`（12）· `tests/test_source_route_planner.py`（6）· `tests/test_source_capabilities.py`（13） |
+| 类别                 | 路径                                                                                                                           |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| 派发矩阵             | `.trellis/tasks/06-23-round3-post-r3x-strict-audit/research/parallel-audit-dispatch.md`                                        |
+| R3Y §4 R3Y-AUD-02    | `docs/implementation_tasks/ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3Y_post_r3x_strict_adversarial_audit.md`                        |
+| Fetch facade         | `backend/app/datasources/service.py`                                                                                           |
+| Route planner        | `backend/app/datasources/route_planner.py`                                                                                     |
+| Capability gate      | `backend/app/datasources/capability_registry.py`                                                                               |
+| Registry 权威        | `specs/datasource_registry/source_registry.yaml`                                                                               |
+| Capability 权威      | `specs/datasource_registry/source_capabilities.yaml`                                                                           |
+| Platform matrix      | `specs/contracts/platform_source_matrix.yaml`                                                                                  |
+| Service 契约         | `specs/contracts/datasource_service_contract.yaml`                                                                             |
+| Sync 旁路入口        | `backend/app/sync/orchestrator.py` L127–204                                                                                    |
+| Adapter 直调         | `backend/app/sync/runners.py` L42–75、L325–328、L868                                                                           |
+| Staged pilot route   | `backend/app/ops/staged_pilot.py` L316–334、L500–520、L700–778                                                                 |
+| Layer1 staged bypass | `backend/app/layer1_axes/ingestion.py` L433–474                                                                                |
+| 必跑测试             | `tests/test_datasource_service.py`（12）· `tests/test_source_route_planner.py`（6）· `tests/test_source_capabilities.py`（13） |
 
 ### Call path（生产 fetch 主链）
 
@@ -63,13 +63,13 @@ DataSyncOrchestrator.run_incremental / run_backfill (adapter= 分支)
 
 ### Runtime 探针（route planner 生产配置）
 
-| data_domain | route_status | selected_source | primary skip_reason |
-|-------------|--------------|-----------------|---------------------|
-| `cn_equity_daily_bar` | READY | baostock | — |
-| `macro_supplementary` | VALIDATION_ONLY_BLOCKED | None | validation_only_cannot_be_primary |
-| `cn_index` | VALIDATION_ONLY_BLOCKED | None | validation_only_cannot_be_primary |
-| `sector_board` | VALIDATION_ONLY_BLOCKED | None | validation_only_cannot_be_primary |
-| `security_list` | DISABLED_SOURCE | None | source_disabled_by_default |
+| data_domain           | route_status            | selected_source | primary skip_reason               |
+| --------------------- | ----------------------- | --------------- | --------------------------------- |
+| `cn_equity_daily_bar` | READY                   | baostock        | —                                 |
+| `macro_supplementary` | VALIDATION_ONLY_BLOCKED | None            | validation_only_cannot_be_primary |
+| `cn_index`            | VALIDATION_ONLY_BLOCKED | None            | validation_only_cannot_be_primary |
+| `sector_board`        | VALIDATION_ONLY_BLOCKED | None            | validation_only_cannot_be_primary |
+| `security_list`       | DISABLED_SOURCE         | None            | source_disabled_by_default        |
 
 ### Pytest 执行记录
 
@@ -80,12 +80,12 @@ uv run pytest tests/test_datasource_service.py \
              tests/test_source_capabilities.py -q
 ```
 
-| 指标 | 结果 |
-|------|------|
+| 指标     | 结果              |
+| -------- | ----------------- |
 | 收集用例 | 31（12 + 6 + 13） |
-| 通过 | 31 |
-| 失败 | 0 |
-| 跳过 | 0 |
+| 通过     | 31                |
+| 失败     | 0                 |
+| 跳过     | 0                 |
 
 ---
 
@@ -157,14 +157,14 @@ uv run pytest tests/test_datasource_service.py \
 
 ## 反证结论（修复是否进入 runtime）
 
-| 声称修复 | Runtime 验证 | 证据 |
-|----------|--------------|------|
-| fetch 必先 route（PROMPT_12 / R3X routing） | **已进入** — `DataSourceService.fetch` 主链 | `service.py:149-158`；`test_serviceBuildsRouteBeforeFetch` |
-| disabled source fail-closed | **已进入** — `DISABLED_SOURCE` + 零行 fetch_log | `test_serviceDisabledRoute_writesFetchLog`；`security_list` 探针 |
-| validation-only 不可作 primary | **已进入** — `VALIDATION_ONLY_BLOCKED` | runtime 探针；`test_r3x_residual_open_items_closure`（非必跑集） |
-| authorization-required fail-closed | **部分** — service 层 mock 测试覆盖；planner 对 qmt/yahoo/tdx 平台矩阵阻断 | `test_serviceUserAuthRequiredRoute_*`；platform matrix |
-| orchestrator 统一经 DataSourceService | **未完全闭合** — `adapter=` 旁路仍存在 | `runners.py:59-64`；大量 sync 测试仍用 adapter |
-| staged pilot 不绕过 route | **受控闭合** — 授权 + explicit READY + disabled 列表 | `staged_pilot.py:702-713` |
+| 声称修复                                    | Runtime 验证                                                               | 证据                                                             |
+| ------------------------------------------- | -------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| fetch 必先 route（PROMPT_12 / R3X routing） | **已进入** — `DataSourceService.fetch` 主链                                | `service.py:149-158`；`test_serviceBuildsRouteBeforeFetch`       |
+| disabled source fail-closed                 | **已进入** — `DISABLED_SOURCE` + 零行 fetch_log                            | `test_serviceDisabledRoute_writesFetchLog`；`security_list` 探针 |
+| validation-only 不可作 primary              | **已进入** — `VALIDATION_ONLY_BLOCKED`                                     | runtime 探针；`test_r3x_residual_open_items_closure`（非必跑集） |
+| authorization-required fail-closed          | **部分** — service 层 mock 测试覆盖；planner 对 qmt/yahoo/tdx 平台矩阵阻断 | `test_serviceUserAuthRequiredRoute_*`；platform matrix           |
+| orchestrator 统一经 DataSourceService       | **未完全闭合** — `adapter=` 旁路仍存在                                     | `runners.py:59-64`；大量 sync 测试仍用 adapter                   |
+| staged pilot 不绕过 route                   | **受控闭合** — 授权 + explicit READY + disabled 列表                       | `staged_pilot.py:702-713`                                        |
 
 **相对 v0-monolithic（`review-evidence/v0-monolithic/R3Y-AUD-02-source-route.md` PASS）：** 深读后降级为 **WARN** — 主 service 链正确，但 sync `adapter=` / reconcile / staged_fixture 旁路未在必跑测试集中被否定，存在 latent bypass。
 
@@ -172,11 +172,11 @@ uv run pytest tests/test_datasource_service.py \
 
 ## 阻塞项 / 建议
 
-| 类型 | 项 |
-|------|-----|
-| **不阻塞 pilot v2（受控）** | 主 fetch facade 与 staged_pilot 授权链可用 |
-| **WARN 控制项** | 合并前确认无生产 CLI 使用 `adapter=`；document reconcile exception |
-| **建议 follow-up issue** | Orchestrator adapter 旁路 runtime guard；必跑集补 `VALIDATION_ONLY_BLOCKED` |
+| 类型                        | 项                                                                          |
+| --------------------------- | --------------------------------------------------------------------------- |
+| **不阻塞 pilot v2（受控）** | 主 fetch facade 与 staged_pilot 授权链可用                                  |
+| **WARN 控制项**             | 合并前确认无生产 CLI 使用 `adapter=`；document reconcile exception          |
+| **建议 follow-up issue**    | Orchestrator adapter 旁路 runtime guard；必跑集补 `VALIDATION_ONLY_BLOCKED` |
 
 ---
 

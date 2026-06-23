@@ -15,20 +15,20 @@
 
 ## 读取文件（含 call path 追溯）
 
-| 层级 | 文件 | 作用 |
-|------|------|------|
-| Gate | `backend/app/db/validation_gate.py` | `DbValidationGate` / `StubValidationGate` |
-| Write | `backend/app/db/write_manager.py` | 唯一标准写入口；L309 `gate.assert_can_write` |
-| Pipeline | `backend/app/sync/pipeline.py` | `SyncWritePipeline` → `WriteManager` + `DbValidationGate` |
-| Sync | `backend/app/sync/runners.py` | `_finalize_staged` → `_write_clean`；`ReconcileJobRunner.run` |
-| Storage | `backend/app/storage/file_registry.py` | `FileRegistry.register_on_connection` → `write_manager.write` |
-| Storage bypass | `backend/app/storage/staged_evidence.py` | `register_staged_file_registry_rows` 裸 `INSERT` |
-| Layer1 | `backend/app/layer1_axes/ingestion.py` | Phase 3 `_register_clean_file_registry_rows`；Phase 4 `ingestion_commit.py` |
-| Staged pilot | `backend/app/ops/staged_pilot.py` | `_StagedPilotValidationGate`、`_StagedPilotFileRegistry` |
-| 契约 | `docs/modules/write_manager.md` §4 | clean 写入须经 WriteManager |
-| Blocker 卡 | `docs/.../R3X_db_write_validation_blockers.md` | ADV-A1-004 等闭合声明 |
-| Merge evidence | `.trellis/tasks/fix-round3-db-write-validation-blockers/execute-evidence/merge_gate_report.md` | |
-| Tests | `tests/test_db_validation_gate.py` `test_write_manager.py` `test_raw_store.py` `test_sync_orchestrator.py` `test_layer1_observation_ingestion.py` | |
+| 层级           | 文件                                                                                                                                              | 作用                                                                        |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| Gate           | `backend/app/db/validation_gate.py`                                                                                                               | `DbValidationGate` / `StubValidationGate`                                   |
+| Write          | `backend/app/db/write_manager.py`                                                                                                                 | 唯一标准写入口；L309 `gate.assert_can_write`                                |
+| Pipeline       | `backend/app/sync/pipeline.py`                                                                                                                    | `SyncWritePipeline` → `WriteManager` + `DbValidationGate`                   |
+| Sync           | `backend/app/sync/runners.py`                                                                                                                     | `_finalize_staged` → `_write_clean`；`ReconcileJobRunner.run`               |
+| Storage        | `backend/app/storage/file_registry.py`                                                                                                            | `FileRegistry.register_on_connection` → `write_manager.write`               |
+| Storage bypass | `backend/app/storage/staged_evidence.py`                                                                                                          | `register_staged_file_registry_rows` 裸 `INSERT`                            |
+| Layer1         | `backend/app/layer1_axes/ingestion.py`                                                                                                            | Phase 3 `_register_clean_file_registry_rows`；Phase 4 `ingestion_commit.py` |
+| Staged pilot   | `backend/app/ops/staged_pilot.py`                                                                                                                 | `_StagedPilotValidationGate`、`_StagedPilotFileRegistry`                    |
+| 契约           | `docs/modules/write_manager.md` §4                                                                                                                | clean 写入须经 WriteManager                                                 |
+| Blocker 卡     | `docs/.../R3X_db_write_validation_blockers.md`                                                                                                    | ADV-A1-004 等闭合声明                                                       |
+| Merge evidence | `.trellis/tasks/fix-round3-db-write-validation-blockers/execute-evidence/merge_gate_report.md`                                                    |                                                                             |
+| Tests          | `tests/test_db_validation_gate.py` `test_write_manager.py` `test_raw_store.py` `test_sync_orchestrator.py` `test_layer1_observation_ingestion.py` |                                                                             |
 
 **Call graph 摘要（clean write 主路径）：**
 
@@ -60,7 +60,7 @@ rg -n "register_staged_file_registry_rows" backend/
 # → 仅 staged_evidence.py 定义；无其他 backend 调用方
 
 # WriteManager 构造时 gate 必填
-rg -n "WriteManager\(" backend/ 
+rg -n "WriteManager\(" backend/
 # → 均注入 DbValidationGate 或 _StagedPilotValidationGate（staged_pilot）；测试用 Stub 仅在 tests/
 
 # reconcile 裸 fetch
@@ -70,11 +70,11 @@ rg -n "adapter\.fetch" backend/app/sync/runners.py
 
 ### DOUBT 三类威胁（A3 基线）
 
-| 类别 | 范围 | 结论 |
-|------|------|------|
-| 硬编码 URL / 密钥 | `backend/` 非测试 | 无发现；`error_redaction.py` 含 redact 模式 |
-| SQL 拼接注入 | `backend/app/db/` `storage/` `sync/` | `write_manager` / `file_registry` 使用 `quote_ident`；staging 表名为内部 uuid 前缀；reconcile `compare_table` 来自 `conflict_id[:8]`（UUID 片段，非用户输入） |
-| `subprocess`/`eval` | `backend/app/db/` | 无发现 |
+| 类别                | 范围                                 | 结论                                                                                                                                                          |
+| ------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 硬编码 URL / 密钥   | `backend/` 非测试                    | 无发现；`error_redaction.py` 含 redact 模式                                                                                                                   |
+| SQL 拼接注入        | `backend/app/db/` `storage/` `sync/` | `write_manager` / `file_registry` 使用 `quote_ident`；staging 表名为内部 uuid 前缀；reconcile `compare_table` 来自 `conflict_id[:8]`（UUID 片段，非用户输入） |
+| `subprocess`/`eval` | `backend/app/db/`                    | 无发现                                                                                                                                                        |
 
 ### 必跑 pytest
 
@@ -137,27 +137,27 @@ uv run pytest tests/test_db_validation_gate.py tests/test_write_manager.py tests
 
 ## 反证结论（修复是否进入 runtime）
 
-| 声称 | 反证结果 | 证据 |
-|------|----------|------|
-| clean table 仅经 WriteManager | **PASS**（主路径） | `SyncWritePipeline`、`FileRegistry`、Layer1/2 writers；无 clean 表裸 INSERT |
-| DbValidationGate 执行 write_contract 拒绝条件 | **PASS** | failed/can_write_clean/manual_review/schema_drift/severe — 均有测试 |
-| severe conflict 阻断 clean write | **PASS** | gate + orchestrator 双检查；54 pytest 含 severe 用例 |
-| staged_evidence 路径逃逸修复 (ADV-A1-004) | **PASS** | `_resolve_under_data_root` + `test_stagedEvidence_pathEscape_rejected` |
-| staged_evidence WriteManager 旁路消除 | **WARN** | 函数仍存在、测试仍调用；生产 backend 无 caller |
-| backfill severe 后继续写 | **PASS**（已修） | `_finalize_staged` L270-277 |
-| reconcile 不经 ValidationGate 写 clean | **PASS**（不写 clean） | reconcile 仅 UPDATE `source_conflict` + staging compare |
-| reconcile fetch 经 source route | **WARN** | 裸 `adapter.fetch` L868 |
+| 声称                                          | 反证结果               | 证据                                                                        |
+| --------------------------------------------- | ---------------------- | --------------------------------------------------------------------------- |
+| clean table 仅经 WriteManager                 | **PASS**（主路径）     | `SyncWritePipeline`、`FileRegistry`、Layer1/2 writers；无 clean 表裸 INSERT |
+| DbValidationGate 执行 write_contract 拒绝条件 | **PASS**               | failed/can_write_clean/manual_review/schema_drift/severe — 均有测试         |
+| severe conflict 阻断 clean write              | **PASS**               | gate + orchestrator 双检查；54 pytest 含 severe 用例                        |
+| staged_evidence 路径逃逸修复 (ADV-A1-004)     | **PASS**               | `_resolve_under_data_root` + `test_stagedEvidence_pathEscape_rejected`      |
+| staged_evidence WriteManager 旁路消除         | **WARN**               | 函数仍存在、测试仍调用；生产 backend 无 caller                              |
+| backfill severe 后继续写                      | **PASS**（已修）       | `_finalize_staged` L270-277                                                 |
+| reconcile 不经 ValidationGate 写 clean        | **PASS**（不写 clean） | reconcile 仅 UPDATE `source_conflict` + staging compare                     |
+| reconcile fetch 经 source route               | **WARN**               | 裸 `adapter.fetch` L868                                                     |
 
 **总结：** PROMPT_13 核心修复（`DbValidationGate`、`WriteManager` 强制 gate、severe 阻断、路径 containment）**已进入 sync / Layer1 commit / FileRegistry 主路径**。残留风险为 **文档化但未退役的 `register_staged_file_registry_rows` 旁路 API**、**metadata-only gate 策略分裂**、**reconcile fetch 不经 DataSourceService**（不写 clean，属授权/路由面）。
 
 ## 阻塞项 / 建议
 
-| 优先级 | 项 | 阻塞 pilot v2? |
-|--------|-----|----------------|
-| P1 | 删除或硬门禁 `register_staged_file_registry_rows` | 建议修，非硬 BLOCK（当前无生产 caller） |
-| P2 | 统一 synthetic metadata quality_flags + gate 子类策略 | WARN 管控即可 |
-| P2 | Reconcile fetch 接入 DataSourceService（与 AUD-02 联动） | WARN |
-| — | Severe conflict / WM+Gate 主路径 | 不阻塞 |
+| 优先级 | 项                                                       | 阻塞 pilot v2?                          |
+| ------ | -------------------------------------------------------- | --------------------------------------- |
+| P1     | 删除或硬门禁 `register_staged_file_registry_rows`        | 建议修，非硬 BLOCK（当前无生产 caller） |
+| P2     | 统一 synthetic metadata quality_flags + gate 子类策略    | WARN 管控即可                           |
+| P2     | Reconcile fetch 接入 DataSourceService（与 AUD-02 联动） | WARN                                    |
+| —      | Severe conflict / WM+Gate 主路径                         | 不阻塞                                  |
 
 **建议下一步：** 允许 sandbox clean-write rehearsal **附带控件**：禁止新代码 import `register_staged_file_registry_rows`；staged pilot 继续仅用 `_StagedPilotValidationGate`；reconcile 任务卡注明 adapter 来源约束。
 
@@ -188,4 +188,4 @@ uv run pytest tests/test_db_validation_gate.py tests/test_write_manager.py tests
 
 ---
 
-*审计 agent: R3Y-AUD-03 · worktree `quant-monitor-desk-wt-review-r3-post-r3x-strict-audit` · 基准 master @ 61436a51 · 只读*
+_审计 agent: R3Y-AUD-03 · worktree `quant-monitor-desk-wt-review-r3-post-r3x-strict-audit` · 基准 master @ 61436a51 · 只读_

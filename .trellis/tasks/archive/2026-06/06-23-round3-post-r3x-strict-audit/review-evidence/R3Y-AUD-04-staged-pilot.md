@@ -26,17 +26,17 @@
 
 ## 读取文件（含 call path 追溯）
 
-| 层级 | 路径 | 作用 |
-|------|------|------|
-| 编排入口 | `backend/app/ops/staged_pilot.py` | 授权门禁、route preview、sandbox fetch、证据落盘 |
-| 变异证明 | `backend/app/ops/mutation_proof.py` | `key_table_row_counts` / `build_production_mutation_proof` |
-| KEY 表集合 | `backend/app/ops/db_inspector.py` (`KEY_TABLES`) | no-mutation 行数快照范围 |
-| 服务层 | `backend/app/datasources/service.py` | `preview_route` / `fetch` / `check_resource_guard` |
-| 存储契约 | `backend/app/storage/staged_evidence.py` | `STAGED` quality_flag；文档说明 pilot 走 WriteManager |
-| Fetch 端口 | `backend/app/ops/staged_pilot_fetch_ports.py` | staged 专用 FetchPort（与 live 区分） |
-| 测试 | `tests/test_staged_pilot.py` | 26 项门禁与 mock 路径测试 |
-| 派发说明 | `.trellis/tasks/06-23-round3-post-r3x-strict-audit/research/parallel-audit-dispatch.md` | AUD-04 范围与交付格式 |
-| 任务卡 | `docs/implementation_tasks/ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3Y_post_r3x_strict_adversarial_audit.md` | 四类 proof 与 bypass 必答项 |
+| 层级       | 路径                                                                                                    | 作用                                                       |
+| ---------- | ------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| 编排入口   | `backend/app/ops/staged_pilot.py`                                                                       | 授权门禁、route preview、sandbox fetch、证据落盘           |
+| 变异证明   | `backend/app/ops/mutation_proof.py`                                                                     | `key_table_row_counts` / `build_production_mutation_proof` |
+| KEY 表集合 | `backend/app/ops/db_inspector.py` (`KEY_TABLES`)                                                        | no-mutation 行数快照范围                                   |
+| 服务层     | `backend/app/datasources/service.py`                                                                    | `preview_route` / `fetch` / `check_resource_guard`         |
+| 存储契约   | `backend/app/storage/staged_evidence.py`                                                                | `STAGED` quality_flag；文档说明 pilot 走 WriteManager      |
+| Fetch 端口 | `backend/app/ops/staged_pilot_fetch_ports.py`                                                           | staged 专用 FetchPort（与 live 区分）                      |
+| 测试       | `tests/test_staged_pilot.py`                                                                            | 26 项门禁与 mock 路径测试                                  |
+| 派发说明   | `.trellis/tasks/06-23-round3-post-r3x-strict-audit/research/parallel-audit-dispatch.md`                 | AUD-04 范围与交付格式                                      |
+| 任务卡     | `docs/implementation_tasks/ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3Y_post_r3x_strict_adversarial_audit.md` | 四类 proof 与 bypass 必答项                                |
 
 ### Runtime call path（live fetch 成功路径）
 
@@ -72,13 +72,13 @@ run_full_staged_pilot
 
 **旁路核查**
 
-| 组件 | staged pilot 是否经过 | 备注 |
-|------|----------------------|------|
-| DataSourceService | ✅ | preview + fetch 均构造 `DataSourceService` |
-| SourceRoutePlanner | ✅ | `_ExplicitSourceRoutePlanner` 包装内层 planner |
-| WriteManager | ✅ | `_StagedPilotFileRegistry` → `write_manager.write`；测试 `test_stagedPilot_mockFetchSuccess_usesWriteManagerStagedQualityFlag` 覆盖 |
-| DbValidationGate | ⚠️ 窄豁免 | `_StagedPilotValidationGate`（`620-660`）在 `can_write_clean=false` 且 `quality_flags=staged_raw_metadata_only` 时允许 `append_only` 写 staging；仅 sandbox con |
-| ResourceGuard | ✅ | preview：`service.check_resource_guard`（`388-390`）；fetch：`DataSourceService.fetch` 内 `ResourceGuard(con=con).check()`（`service.py:160-174`）；full pilot 另写 `resource_guard_caps.json` |
+| 组件               | staged pilot 是否经过 | 备注                                                                                                                                                                                           |
+| ------------------ | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| DataSourceService  | ✅                    | preview + fetch 均构造 `DataSourceService`                                                                                                                                                     |
+| SourceRoutePlanner | ✅                    | `_ExplicitSourceRoutePlanner` 包装内层 planner                                                                                                                                                 |
+| WriteManager       | ✅                    | `_StagedPilotFileRegistry` → `write_manager.write`；测试 `test_stagedPilot_mockFetchSuccess_usesWriteManagerStagedQualityFlag` 覆盖                                                            |
+| DbValidationGate   | ⚠️ 窄豁免             | `_StagedPilotValidationGate`（`620-660`）在 `can_write_clean=false` 且 `quality_flags=staged_raw_metadata_only` 时允许 `append_only` 写 staging；仅 sandbox con                                |
+| ResourceGuard      | ✅                    | preview：`service.check_resource_guard`（`388-390`）；fetch：`DataSourceService.fetch` 内 `ResourceGuard(con=con).check()`（`service.py:160-174`）；full pilot 另写 `resource_guard_caps.json` |
 
 **未实际执行的「声明型」校验**
 
@@ -87,12 +87,12 @@ run_full_staged_pilot
 
 **no-mutation proof 四类情形**
 
-| 情形 | 实现行为 | 测试覆盖 |
-|------|----------|----------|
-| DB **缺失** | `proof_status=INCONCLUSIVE`，`db_hash_unchanged`/`row_counts_unchanged`=None（`mutation_proof.py:54-63`） | ✅ `test_stagedPilot_mutationProof_inconclusiveWhenProductionDbMissing` |
-| DB **存在**且未变异 | `proof_status=VERIFIED`，比较 before/after 全文件 hash + `KEY_TABLES` 行数 | ✅ `test_stagedPilot_captureRouteMatrix_writesEvidenceAndNoMutation`（条件断言） |
-| **schema-only** 漂移（非 KEY 表 DDL / 元数据变更） | 全文件 `read_bytes` 比较通常可捕获；但若仅 KEY 表内「行数不变」的 in-place 更新则 hash 可能变而 `row_counts_unchanged` 仍为 true | ❌ 无对抗测试 |
-| **row-count-only**（非 `KEY_TABLES` 表增删行） | `key_table_row_counts` 只扫 `KEY_TABLES`（`db_inspector.py:14-29`）；非 KEY 表变异可使 `row_counts_unchanged=true` 同时 `db_hash_unchanged=false` | ❌ 无对抗测试；且 `proof_status` 仍为 `VERIFIED` |
+| 情形                                               | 实现行为                                                                                                                                          | 测试覆盖                                                                         |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| DB **缺失**                                        | `proof_status=INCONCLUSIVE`，`db_hash_unchanged`/`row_counts_unchanged`=None（`mutation_proof.py:54-63`）                                         | ✅ `test_stagedPilot_mutationProof_inconclusiveWhenProductionDbMissing`          |
+| DB **存在**且未变异                                | `proof_status=VERIFIED`，比较 before/after 全文件 hash + `KEY_TABLES` 行数                                                                        | ✅ `test_stagedPilot_captureRouteMatrix_writesEvidenceAndNoMutation`（条件断言） |
+| **schema-only** 漂移（非 KEY 表 DDL / 元数据变更） | 全文件 `read_bytes` 比较通常可捕获；但若仅 KEY 表内「行数不变」的 in-place 更新则 hash 可能变而 `row_counts_unchanged` 仍为 true                  | ❌ 无对抗测试                                                                    |
+| **row-count-only**（非 `KEY_TABLES` 表增删行）     | `key_table_row_counts` 只扫 `KEY_TABLES`（`db_inspector.py:14-29`）；非 KEY 表变异可使 `row_counts_unchanged=true` 同时 `db_hash_unchanged=false` | ❌ 无对抗测试；且 `proof_status` 仍为 `VERIFIED`                                 |
 
 ### pytest 命令与结果
 
@@ -143,13 +143,13 @@ EXIT:0
 
 ## 反证结论（修复是否进入 runtime）
 
-| 主张 | 反证结果 |
-|------|----------|
-| 只写 raw/staging/sandbox | **成立** — production DB 无写连接；raw 路径 sandbox 相对性检查；`allow_clean_write=false` 全链路 |
-| 旁路 DataSourceService / RoutePlanner / WriteManager | **不成立** — live fetch 必经三者；有 mock 测试证据 |
-| 旁路 ResourceGuard | **不成立** — preview + fetch 双检查 |
-| 旁路 ValidationGate（production clean write） | **不成立** — clean write 未启用；sandbox 有 intentional 窄豁免 |
-| no-mutation proof 四类均可信 | **部分成立** — 缺失→INCONCLUSIVE 可信；存在→依赖子字段；schema-only / row-count-only **未对抗验证**；`proof_status` 语义过宽 |
+| 主张                                                 | 反证结果                                                                                                                     |
+| ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| 只写 raw/staging/sandbox                             | **成立** — production DB 无写连接；raw 路径 sandbox 相对性检查；`allow_clean_write=false` 全链路                             |
+| 旁路 DataSourceService / RoutePlanner / WriteManager | **不成立** — live fetch 必经三者；有 mock 测试证据                                                                           |
+| 旁路 ResourceGuard                                   | **不成立** — preview + fetch 双检查                                                                                          |
+| 旁路 ValidationGate（production clean write）        | **不成立** — clean write 未启用；sandbox 有 intentional 窄豁免                                                               |
+| no-mutation proof 四类均可信                         | **部分成立** — 缺失→INCONCLUSIVE 可信；存在→依赖子字段；schema-only / row-count-only **未对抗验证**；`proof_status` 语义过宽 |
 
 **总结：** PROMPT_14 staged pilot 的 **sandbox 隔离与主链路集成**已进入 runtime 且测试较全；**production no-mutation 证明的 gate 语义与对抗深度不足**，不足以单独支撑「production 绝对未变异」的强声明。
 
@@ -179,4 +179,4 @@ EXIT:0
 
 ---
 
-*v0 单 agent 浅表结论见 `review-evidence/v0-monolithic/R3Y-AUD-04-staged-pilot.md`（WARN，本报告为加深版）。*
+_v0 单 agent 浅表结论见 `review-evidence/v0-monolithic/R3Y-AUD-04-staged-pilot.md`（WARN，本报告为加深版）。_
