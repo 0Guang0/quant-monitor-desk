@@ -2,6 +2,8 @@
 
 **Single source of truth** for open issues, intentional deferrals, and resolved audit items.
 
+> Last reconciled: 2026-06-24 after fix α-2 registry slice + wave-A merge + PROMPT_18 R3Y rows (`master` @ `527d6506`). Pair: `docs/UNRESOLVED_ISSUES_REGISTRY.md`.
+
 **Batch 2.5 audit 待修复台账（含合理延期清理阶段）:** [`docs/quality/ROUND3_BATCH25_PENDING_FIX_REGISTRY.md`](quality/ROUND3_BATCH25_PENDING_FIX_REGISTRY.md)  
 **Batch 6 / 021 Layer3 待偿还台账:** [`docs/quality/ROUND3_BATCH6_021_PENDING_FIX_REGISTRY.md`](quality/ROUND3_BATCH6_021_PENDING_FIX_REGISTRY.md)  
 **ingestion 拆分回滚方案（后置）:** [`docs/architecture/layer1_ingestion_refactor_rollback_plan.md`](architecture/layer1_ingestion_refactor_rollback_plan.md)
@@ -141,6 +143,47 @@ Does **not** block 017 per `ROUND2_GAPS` §6; **must** be closed or re-deferred 
 | ----------------------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | ADV-R3X-\* / ADV-A1–A6 / F-019 / Registry | Master Checklist 37 former OPEN rows            | `tests/test_r3x_residual_open_items_closure.py` · `merge_gate_report.md` · branch `fix/round3-r3x-residual-open-items-closure` |
 | R3-PARTIAL-1 dedup                        | Severe-conflict scope overlaps ADV-R3X-SYNC-002 | `validation_gate.py` job_id-scoped severe conflict check · `ROUND2_REPAIR_ALIGNMENT_TRACKER.md` note                           |
+| ADV-R3X-SYNC-001 (partial)                | Service-path `datasource_service` injection     | `runners.py` · `orchestrator.run_incremental(..., datasource_service=...)` · PROMPT_15 merge gate                              |
+
+> **Follow-up (closed 2026-06-24):** `R3Y-SYNC-001` adapter bypass → **RESOLVED** via `fix/r3y-sync-adapter-guard` (`test_r3ySync001_*`); reconcile internal fetch remains test-only (`R3-PARTIAL-3`).
+
+## RESOLVED — Round 3 wave A mainline (2026-06-23)
+
+| ID                           | Item                                    | Evidence                                                                        |
+| ---------------------------- | --------------------------------------- | ------------------------------------------------------------------------------- |
+| R3-B3-STAGED-DOWNSTREAM-GATE | Batch 3 staged gate                     | `BATCH3_STAGED_DOWNSTREAM_GATE.md` · archived `06-22-round3-batch3-staged-gate` |
+| R3-TASK-019                  | Layer2 sensor `019`                     | archived `06-22-round3-019-layer2-sensor`                                       |
+| R3-TASK-020                  | Layer3 loader `020`                     | archived `06-23-round3-020-layer3-loader` · Audit PASS                          |
+| R3-TASK-023A                 | Evidence foundation `023A`              | archived `06-22-round3-023a-evidence-foundation`                                |
+| R3Y-AUDIT-GATE-18            | PROMPT_18 strict audit gate synthesized | `R3Y-AUD-08-go-no-go.md` · `WARN_ALLOW_WITH_CONTROLS`                           |
+
+## DEFERRED — Round 3 PROMPT_18 R3Y follow-ups
+
+Does **not** block staged-only mainline; **does** gate PROMPT_19/20 controls per AUD-08.
+
+| ID                  | Item                                      | Resolution phase       | Task hook                                  | Blocks 019? | Closure test / evidence                                             |
+| ------------------- | ----------------------------------------- | ---------------------- | ------------------------------------------ | ----------- | ------------------------------------------------------------------- |
+| ADV-R3X-LINEAGE-001 | Full L3/L4 snapshot lineage               | **Batch 4B+** (`021`+) | `021_implement_layer3_snapshot_builder.md` | No          | snapshot lineage pytest + registry row; fix **α-2** registers defer |
+| R3Y-LINEAGE-VR-001  | VR / fetch_log binding for Layer2 lineage | **Batch 4B+** (`021`+) | same · AUD-05                              | No          | lineage tests must not use synthetic IDs as VR binding              |
+| R3Y-TEST-DEPTH-001  | Runtime-strong closed-claim test depth    | **Batch 6 hygiene**    | `ROUND3_BATCH_IMPLEMENTATION_MAP.md` §2.4  | No          | per-ID runtime pytest or explicit wont-fix ADR                      |
+
+| ADV-R3X-SYNC-001 (full)                 | Production sync adapter= fail-closed + runner guard | `fix/r3y-sync-adapter-guard` · `tests/test_sync_orchestrator.py::test_r3ySync001_*` · merge α-1 after α-2 registry |
+
+## RESOLVED — Round 3 PROMPT_18 R3Y hygiene (2026-06-24)
+
+| ID           | Item                         | Evidence                                                                                          |
+| ------------ | ---------------------------- | ------------------------------------------------------------------------------------------------- |
+| R3Y-SYNC-001 | Sync `adapter=` prod bypass  | `fix/r3y-sync-adapter-guard` · `guard_production_adapter_bypass` + `guard_runner_direct_adapter_bypass` · `test_r3ySync001_*` |
+
+## OPEN (hygiene) — Round 3 PROMPT_18 R3Y follow-ups
+
+Non-blocking for read-only audit; **blocks claiming PROMPT_15 fully proven** and **blocks PROMPT_19 closeout without controls**.
+
+| ID                    | Item                                     | Resolution phase    | Task hook                                  | Closure test / evidence                                            |
+| --------------------- | ---------------------------------------- | ------------------- | ------------------------------------------ | ------------------------------------------------------------------ |
+| R3Y-MUT-PROOF-001     | `mutation_proof` VERIFIED semantics      | **PROMPT_19 / β-1** | `feature/round3-real-data-staged-pilot-v2` | VERIFIED requires hash/row-count; INCONCLUSIVE when inconclusive   |
+| R3Y-STAGED-REG-001    | staged file_registry WriteManager bypass | **β-2 after α-1**   | `fix/r3y-staged-registry-privatize`        | API privatized or WriteManager-routed; doc metadata-only policy    |
+| R3Y-PROMPT15-EVID-001 | PROMPT_15 execute evidence chain         | **fix α-3**         | `fix/r3y-prompt15-evidence`                | `*-green.txt` + closed-claim matrix per AUD-01/07                  |
 
 ---
 

@@ -1,0 +1,25 @@
+{
+  "id": "fix-r3y-registry-lineage-defer",
+  "name": "r3y-registry-lineage-defer",
+  "title": "α-2: R3Y registry reconciliation",
+  "description": "Phase 8D docs/registry hygiene for PROMPT_18 follow-ups.",
+  "status": "in_progress",
+  "dev_type": "debt",
+  "scope": "registry",
+  "branch": "fix/r3y-registry-lineage-defer",
+  "base_branch": "master",
+  "worktree_path": "../quant-monitor-desk-wt-fix-r3y-registry",
+  "meta": {
+    "task_track": "debt-lite",
+    "item_ids": [
+      "ADV-R3X-LINEAGE-001",
+      "R3Y-SYNC-001",
+      "R3Y-MUT-PROOF-001",
+      "R3Y-STAGED-REG-001",
+      "R3Y-PROMPT15-EVID-001",
+      "R3Y-TEST-DEPTH-001",
+      "R3Y-LINEAGE-VR-001"
+    ],
+    "manifest_protocol_version": "3"
+  }
+}

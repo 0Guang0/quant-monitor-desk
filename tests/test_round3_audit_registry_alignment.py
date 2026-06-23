@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 from tests.contract_gate_support import PROJECT_ROOT
@@ -294,16 +295,69 @@ def test_post14R2Risk3_failClosedModesDocumented() -> None:
         assert token in resolved
 
 
+_RECONCILED_TOKENS = ("2026-06-24", "fix α-2", "527d6506", "wave-A", "PROMPT_18")
+
+
+def test_r3yRegistrySlice_alpha2LastReconciled() -> None:
+    """覆盖范围：fix α-2 registry 切片后 SSOT 对账戳（slice α2-1）。
+    测试对象：三份 registry + UNRESOLVED_ITEM_TASK_COVERAGE 头部 Last reconciled。
+    目的：四份 SSOT 对账戳含同一组 mandatory tokens，防止措辞漂移（AUD-α2-002）。"""
+    coverage = PROJECT_ROOT / "docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md"
+    for path in (UNRESOLVED, RESOLVED, AUDIT_DEFERRED, coverage):
+        text = _read(path)
+        for token in _RECONCILED_TOKENS:
+            assert token in text, f"missing {token!r} in {path.name} Last reconciled block"
+
+
+def test_r3yAdvLineageDefer_registrySSOTWithOwner021() -> None:
+    """覆盖范围：ADV-R3X-LINEAGE-001 DEFERRED 登记（slice α2-2）。
+    测试对象：AUDIT_DEFERRED + UNRESOLVED + COVERAGE。
+    目的：三 registry 与 COVERAGE 含 owner `021`+、closure test 描述；不得仍为 OPEN。"""
+    audit = _read(AUDIT_DEFERRED)
+    unresolved = _read(UNRESOLVED)
+    coverage = _read(PROJECT_ROOT / "docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md")
+
+    item_id = "ADV-R3X-LINEAGE-001"
+    assert item_id in audit
+    assert item_id in unresolved
+    assert item_id in coverage
+    assert re.search(rf"\|\s*{re.escape(item_id)}\s*\|\s*DEFERRED", unresolved)
+    assert f"| {item_id} | OPEN" not in unresolved
+    for token in ("021", "snapshot lineage pytest", "Batch 4B+"):
+        assert token in audit
+    assert "021_implement_layer3_snapshot_builder.md" in coverage
+
+
+def test_waveAMainlineResolvedRows_traceableInRegistries() -> None:
+    """覆盖范围：wave-A 已合并项 RESOLVED 可追溯（slice α2-3）。
+    测试对象：RESOLVED + AUDIT_DEFERRED wave-A RESOLVED 节。
+    目的：R3-TASK-019/020/023A、R3Y-AUDIT-GATE-18、R3-B3-STAGED-DOWNSTREAM-GATE 可在 registry 追溯。"""
+    resolved = _read(RESOLVED)
+    audit = _read(AUDIT_DEFERRED)
+
+    wave_a_ids = (
+        "R3-TASK-019",
+        "R3-TASK-020",
+        "R3-TASK-023A",
+        "R3Y-AUDIT-GATE-18",
+        "R3-B3-STAGED-DOWNSTREAM-GATE",
+    )
+    for item_id in wave_a_ids:
+        assert item_id in resolved, f"{item_id} missing from RESOLVED"
+        assert item_id in audit, f"{item_id} missing from AUDIT_DEFERRED wave-A section"
+
+
 def test_round3Map_checkpointReflectsPost14AuditMerge() -> None:
-    """覆盖范围：ROUND3_BATCH_IMPLEMENTATION_MAP checkpoint 与 PROMPT 索引新鲜度。
-    测试对象：ROUND3_BATCH_IMPLEMENTATION_MAP.md 头部 checkpoint 与 PROMPT_14/17 行。
-    目的：map 不得仍写 PROMPT_14 in progress；应指向 post-audit master 与下一项 020。"""
+    """覆盖范围：ROUND3_BATCH_IMPLEMENTATION_MAP checkpoint 与 wave-B 索引新鲜度。
+    测试对象：ROUND3_BATCH_IMPLEMENTATION_MAP.md 头部 checkpoint 与 §2.4 / PROMPT 索引。
+    目的：map 不得仍写 pre-wave-A checkpoint；应反映 020/PROMPT_18 已合并与 §2.4 活跃切片。"""
     text = _read(ROUND3_MAP)
 
     for token in (
-        "4114fcb0",
-        "PROMPT_01–17",
-        "post-14 audit",
+        "527d6506",
+        "post-wave-A",
+        "PROMPT_18",
+        "2.4",
         "020",
         "Done",
     ):

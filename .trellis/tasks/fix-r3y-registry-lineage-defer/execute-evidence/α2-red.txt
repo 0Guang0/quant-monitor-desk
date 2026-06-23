@@ -1,0 +1,23 @@
+...............FF........                                                [100%]
+================================== FAILURES ===================================
+_________________ test_r3yRegistrySlice_alpha2LastReconciled __________________
+
+    def test_r3yRegistrySlice_alpha2LastReconciled() -> None:
+        """覆盖范围：fix α-2 registry 切片后 SSOT 对账戳（slice α2-1）。
+        测试对象：三份 registry + UNRESOLVED_ITEM_TASK_COVERAGE 头部 Last reconciled。
+        目的：merge coordinator 完成 α-2 后须含 `527d6506` 与 `fix α-2` 标记，防止 Plan 索引滞后。"""
+        coverage = PROJECT_ROOT / "docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md"
+        for path in (UNRESOLVED, RESOLVED, AUDIT_DEFERRED, coverage):
+            text = _read(path)
+            assert "527d6506" in text, f"missing master checkpoint in {path.name}"
+>           assert "fix α-2" in text, f"missing fix α-2 reconciled marker in {path.name}"
+E           AssertionError: missing fix α-2 reconciled marker in RESOLVED_ISSUES_REGISTRY.md
+
+______________ test_r3yAdvLineageDefer_registrySSOTWithOwner021 _______________
+
+>       assert f"| {item_id} | DEFERRED" in unresolved
+E       AssertionError: assert '| ADV-R3X-LINEAGE-001 | DEFERRED' in ...
+
+=========================== short test summary info ===========================
+FAILED tests/test_round3_audit_registry_alignment.py::test_r3yRegistrySlice_alpha2LastReconciled
+FAILED tests/test_round3_audit_registry_alignment.py::test_r3yAdvLineageDefer_registrySSOTWithOwner021
