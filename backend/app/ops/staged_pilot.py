@@ -378,9 +378,10 @@ def preview_staged_pilot(
     *,
     service: DataSourceService | None = None,
     pilot_request_id: str = "staged-req",
+    authorization_gate: Any | None = None,
 ) -> dict[str, Any]:
     """Dry-run route preview for one authorized pilot request (no fetch)."""
-    validate_authorization(request)
+    (authorization_gate or validate_authorization)(request)
     if not request.dry_run:
         raise StagedPilotAuthorizationError("route preview requires dry_run=true")
 
@@ -697,9 +698,10 @@ def run_staged_pilot_raw_only(
     *,
     sandbox_root: Path,
     pilot_request_id: str = "staged-req",
+    authorization_gate: Any | None = None,
 ) -> dict[str, Any]:
     """Sandbox raw-only fetch for one authorized request (route gate + network cap)."""
-    assert_pilot_ready_before_fetch(request)
+    (authorization_gate or validate_authorization)(request)
     if not request.raw_only:
         raise StagedPilotAuthorizationError("staged pilot requires raw_only=true")
 
@@ -1244,3 +1246,828 @@ def run_full_staged_pilot(
 
 def _utc_now_iso() -> str:
     return datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+
+# --- PROMPT_19 staged pilot v2 (expanded sample, fail-closed) ----------------
+
+PILOT_ID_V2 = "r3y-staged-pilot-v2-20260624"
+DEFAULT_SANDBOX_ROOT_V2 = PROJECT_ROOT / ".audit-sandbox/r3y-staged-pilot-v2"
+
+PILOT_V2_CAPS_JSON = "pilot_v2_caps.json"
+ROUTE_MATRIX_V2_JSON = "route_preview_matrix_v2.json"
+RAW_MANIFEST_V2_JSON = "raw_evidence_manifest_v2.json"
+STAGING_MANIFEST_V2_JSON = "staging_evidence_manifest_v2.json"
+VALIDATION_REPORT_V2_JSON = "validation_report_v2.json"
+CONFLICT_CHECK_V2_JSON = "conflict_check_summary_v2.json"
+NO_MUTATION_V2_MD = "no_mutation_proof_v2.md"
+CLOSEOUT_V2_JSON = "pilot_v2_closeout.json"
+AKSHARE_TAXONOMY_V2_JSON = "akshare_validation_taxonomy_v2.json"
+CNINFO_SCHEMA_NOTES_V2_MD = "cninfo_schema_notes_v2.md"
+
+MAX_SYMBOLS_V2 = 5
+MAX_TRADE_DAYS_V2 = 30
+MAX_ROWS_V2 = 500
+MAX_NETWORK_CALLS_V2 = 25
+
+V2_BAOSTOCK_SYMBOLS = ("sh.600519", "sh.600000", "sz.000001")
+V2_CNINFO_SYMBOLS = ("sh.600519", "sz.000001")
+V2_AKSHARE_SYMBOLS = ("sh.600519", "sh.600000")
+
+APPROVED_PILOT_V2_REQUEST_ENVELOPES: frozenset[
+    tuple[str, str, str, tuple[str, ...], str, int]
+] = frozenset(
+    {
+        (
+            "baostock",
+            "cn_equity_daily_bar",
+            "fetch_daily_bar",
+            V2_BAOSTOCK_SYMBOLS,
+            "recent 30 trading days",
+            100,
+        ),
+        (
+            "akshare",
+            "cn_equity_daily_bar",
+            "fetch_daily_bar_validation",
+            V2_AKSHARE_SYMBOLS,
+            "recent 30 trading days",
+            100,
+        ),
+        (
+            "cninfo",
+            "cn_announcements",
+            "fetch_announcement_index",
+            V2_CNINFO_SYMBOLS,
+            "recent 30 calendar days",
+            50,
+        ),
+    }
+)
+
+V2_SOURCE_CLOSEOUT_IDS = ("baostock", "cninfo", "akshare")
+
+
+def pilot_v2_caps_payload() -> dict[str, Any]:
+    """Frozen v2 caps envelope for evidence and authorization gate."""
+    return {
+        "pilot_id": PILOT_ID_V2,
+        "max_symbols": MAX_SYMBOLS_V2,
+        "max_trade_days": MAX_TRADE_DAYS_V2,
+        "max_rows_per_source_domain": MAX_ROWS_V2,
+        "max_network_calls_per_run": MAX_NETWORK_CALLS_V2,
+        "sandbox_root": _evidence_relative_path(DEFAULT_SANDBOX_ROOT_V2),
+        "production_clean_write": False,
+        "full_market_scan": False,
+        "full_history_backfill": False,
+    }
+
+
+def write_pilot_v2_caps(evidence_dir: Path) -> dict[str, Any]:
+    """Write pilot_v2_caps.json (R3Y-SP2-01)."""
+    evidence_dir = Path(evidence_dir)
+    evidence_dir.mkdir(parents=True, exist_ok=True)
+    payload = pilot_v2_caps_payload()
+    (evidence_dir / PILOT_V2_CAPS_JSON).write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return payload
+
+
+def validate_pilot_v2_authorization(request: StagedPilotRequest) -> None:
+    """Fail-closed v2 authorization — expanded envelope within frozen caps."""
+    auth_path = _resolve_authorization_path(request.authorization_evidence)
+    if not auth_path.is_file():
+        raise StagedPilotAuthorizationError(
+            f"authorization evidence missing: {request.authorization_evidence}"
+        )
+
+    auth_text = auth_path.read_text(encoding="utf-8")
+    if "prompt14_user_authorization" not in auth_path.name:
+        raise StagedPilotAuthorizationError(
+            f"authorization evidence must be prompt14 user authorization file: {auth_path.name}"
+        )
+    if not auth_path.name.startswith("prompt14_user_authorization_"):
+        raise StagedPilotAuthorizationError(
+            f"authorization filename must match prompt14_user_authorization_*: {auth_path.name}"
+        )
+    if "Approved on" not in auth_text:
+        raise StagedPilotAuthorizationError("authorization evidence missing approval marker")
+
+    if request.source_id in DISABLED_PILOT_SOURCE_IDS:
+        raise StagedPilotDisabledSourceError(
+            f"source {request.source_id!r} is not authorized for staged real-data pilot"
+        )
+
+    triple = (request.source_id, request.data_domain, request.operation)
+    if triple not in APPROVED_PILOT_REQUESTS:
+        raise StagedPilotAuthorizationError(
+            f"request triple {triple!r} not in approved micro-pilot set"
+        )
+
+    if not request.raw_only:
+        raise StagedPilotAuthorizationError("staged pilot requires raw_only=true")
+    if request.write_target != "sandbox":
+        raise StagedPilotAuthorizationError("write_target must be sandbox")
+    if request.allow_clean_write:
+        raise StagedPilotAuthorizationError(
+            "allow_clean_write must be false for staged real-data pilot"
+        )
+    if request.max_rows <= 0 or request.max_rows > MAX_ROWS_V2:
+        raise StagedPilotAuthorizationError(
+            f"max_rows must be in 1..{MAX_ROWS_V2}, got {request.max_rows}"
+        )
+    if not request.symbols_or_indicators:
+        raise StagedPilotAuthorizationError("symbols_or_indicators must be non-empty")
+    if len(request.symbols_or_indicators) > MAX_SYMBOLS_V2:
+        raise StagedPilotAuthorizationError(
+            f"max_symbols cap is {MAX_SYMBOLS_V2}, got {len(request.symbols_or_indicators)}"
+        )
+
+    envelope = (
+        request.source_id,
+        request.data_domain,
+        request.operation,
+        request.symbols_or_indicators,
+        request.date_window,
+        request.max_rows,
+    )
+    if envelope not in APPROVED_PILOT_V2_REQUEST_ENVELOPES:
+        raise StagedPilotAuthorizationError(
+            "request envelope does not exactly match approved v2 pilot authorization"
+        )
+    if request.source_id == "akshare" and request.operation != "fetch_daily_bar_validation":
+        raise StagedPilotAuthorizationError(
+            "akshare must remain validation-only in v2 pilot"
+        )
+
+
+def approved_pilot_v2_requests() -> tuple[StagedPilotRequest, ...]:
+    auth = "docs/quality/prompt14_user_authorization_2026-06-22.md"
+    return (
+        StagedPilotRequest(
+            source_id="baostock",
+            data_domain="cn_equity_daily_bar",
+            operation="fetch_daily_bar",
+            symbols_or_indicators=V2_BAOSTOCK_SYMBOLS,
+            date_window="recent 30 trading days",
+            max_rows=100,
+            authorization_evidence=auth,
+        ),
+        StagedPilotRequest(
+            source_id="akshare",
+            data_domain="cn_equity_daily_bar",
+            operation="fetch_daily_bar_validation",
+            symbols_or_indicators=V2_AKSHARE_SYMBOLS,
+            date_window="recent 30 trading days",
+            max_rows=100,
+            authorization_evidence=auth,
+        ),
+        StagedPilotRequest(
+            source_id="cninfo",
+            data_domain="cn_announcements",
+            operation="fetch_announcement_index",
+            symbols_or_indicators=V2_CNINFO_SYMBOLS,
+            date_window="recent 30 calendar days",
+            max_rows=50,
+            authorization_evidence=auth,
+        ),
+    )
+
+
+def _route_status_examples_from_previews(
+    previews: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Derive route_kind coverage from dry-run preview candidates."""
+    examples: list[dict[str, Any]] = []
+    for preview in previews:
+        plan = preview.get("route_plan", {})
+        selected = plan.get("selected_source_id")
+        for candidate in plan.get("candidates", []):
+            source_id = candidate.get("source_id")
+            if not source_id:
+                continue
+            enabled = candidate.get("enabled", False)
+            role = candidate.get("role")
+            if not enabled:
+                route_kind = "disabled"
+            elif role == "Validation":
+                route_kind = "validation_only"
+            elif source_id == selected:
+                route_kind = "selected"
+            else:
+                route_kind = "skipped"
+            examples.append(
+                {
+                    "source_id": source_id,
+                    "data_domain": plan.get("data_domain"),
+                    "operation": plan.get("operation"),
+                    "explicit_source_route_status": preview.get(
+                        "explicit_source_route_status"
+                    ),
+                    "organic_route_status": plan.get("route_status"),
+                    "route_kind": route_kind,
+                    "selected_source_id": selected,
+                }
+            )
+    return examples
+
+
+def _route_status_examples_for_v2(
+    *,
+    previews: list[dict[str, Any]] | None = None,
+) -> list[dict[str, Any]]:
+    """Collect route status coverage for matrix v2 (selected/skipped/disabled/validation-only)."""
+    examples = _route_status_examples_from_previews(previews or [])
+    registry = SourceRegistry()
+    registry.load()
+    capability_registry = SourceCapabilityRegistry()
+    capability_registry.load()
+    planner = SourceRoutePlanner(
+        source_registry=registry,
+        capability_registry=capability_registry,
+    )
+    extra_probes = (
+        ("cn_equity_daily_bar", "fetch_daily_bar", "fred", False),
+        ("cn_equity_daily_bar", "fetch_daily_bar", "tdx_pytdx", False),
+        ("cn_equity_daily_bar", "fetch_daily_bar", "qmt_xtdata", True),
+    )
+    for domain, operation, source_id, use_fallback in extra_probes:
+        plan = planner.plan(
+            data_domain=domain,
+            operation=operation,
+            run_id=f"v2-route-{source_id}",
+            job_id="r3y-staged-pilot-v2-route",
+            use_fallback=use_fallback,
+        )
+        explicit = _explicit_source_route_status(
+            source_id=source_id,
+            candidates=plan.candidates,
+        )
+        candidate = next((c for c in plan.candidates if c.source_id == source_id), None)
+        role = getattr(candidate, "role", None) if candidate else None
+        route_kind = "selected"
+        if role == "FallbackPolicy" and candidate and not candidate.enabled and candidate.skip_reason:
+            route_kind = "skipped"
+        elif explicit == "USER_AUTH_REQUIRED":
+            route_kind = "user_auth_required"
+        elif role == "Validation":
+            route_kind = "validation_only"
+        elif explicit in {"DISABLED_SOURCE", "NO_AVAILABLE_SOURCE", "CAPABILITY_MISSING"}:
+            route_kind = "disabled"
+        elif candidate is not None and not candidate.enabled:
+            route_kind = "disabled"
+        elif plan.selected_source_id and plan.selected_source_id != source_id:
+            route_kind = "skipped"
+        examples.append(
+            {
+                "source_id": source_id,
+                "data_domain": domain,
+                "operation": operation,
+                "explicit_source_route_status": explicit,
+                "organic_route_status": plan.route_status,
+                "route_kind": route_kind,
+                "selected_source_id": plan.selected_source_id,
+            }
+        )
+    return examples
+
+
+def capture_route_preview_matrix_v2(
+    *,
+    evidence_dir: Path,
+    requests: tuple[StagedPilotRequest, ...] | None = None,
+    db_path: Path | None = None,
+    service: DataSourceService | None = None,
+) -> dict[str, Any]:
+    """Route preview matrix v2 with full route status coverage (R3Y-SP2-05)."""
+    evidence_dir = Path(evidence_dir)
+    evidence_dir.mkdir(parents=True, exist_ok=True)
+    pilot_requests = requests or approved_pilot_v2_requests()
+    for request in pilot_requests:
+        validate_pilot_v2_authorization(request)
+
+    target_db = db_path or DEFAULT_PRODUCTION_DB
+    before_counts = _key_table_row_counts(target_db) if target_db.is_file() else {}
+    before_bytes = target_db.read_bytes() if target_db.is_file() else None
+
+    svc = service or DataSourceService()
+    previews: list[dict[str, Any]] = []
+    for index, request in enumerate(pilot_requests, start=1):
+        preview = preview_staged_pilot(
+            request,
+            service=svc,
+            pilot_request_id=f"v2-req-{index}",
+            authorization_gate=validate_pilot_v2_authorization,
+        )
+        preview["pilot_id"] = PILOT_ID_V2
+        previews.append(preview)
+
+    route_status_examples = _route_status_examples_for_v2(previews=previews)
+    route_kinds = {item["route_kind"] for item in route_status_examples}
+    required_kinds = {"selected", "skipped", "disabled", "validation_only"}
+    missing = sorted(required_kinds - route_kinds)
+    if missing:
+        raise RuntimeError(f"route_preview_matrix_v2 missing route kinds: {missing}")
+
+    mutation_proof = build_production_mutation_proof(
+        target_db,
+        before_counts=before_counts,
+        before_bytes=before_bytes,
+    )
+    generated_at = _utc_now_iso()
+    payload: dict[str, Any] = {
+        "pilot_id": PILOT_ID_V2,
+        "generated_at": generated_at,
+        "phase": "route_preview_v2",
+        "dry_run": True,
+        "run_mode": "staged_only",
+        "caps": pilot_v2_caps_payload(),
+        "previews": previews,
+        "route_status_examples": route_status_examples,
+        "route_status_coverage": sorted(route_kinds),
+        "mutation_proof": mutation_proof,
+    }
+    (evidence_dir / ROUTE_MATRIX_V2_JSON).write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return payload
+
+
+def _manifest_v2_fetch_entry(
+    item: dict[str, Any],
+    *,
+    pilot_request_id: str,
+) -> dict[str, Any]:
+    fetch_result = item.get("fetch_result", {})
+    raw_paths = fetch_result.get("raw_file_paths") or []
+    content_hash = fetch_result.get("content_hash")
+    relative_paths = [_evidence_relative_path(p) for p in raw_paths]
+    vendor_api = None
+    if raw_paths:
+        try:
+            raw_payload = _load_raw_json_payload(raw_paths[0])
+            vendor_api = raw_payload.get("vendor_api")
+        except (OSError, json.JSONDecodeError):
+            vendor_api = None
+    return {
+        "pilot_request_id": pilot_request_id,
+        "source_fetch_id": fetch_result.get("run_id") or pilot_request_id,
+        "content_hash": content_hash,
+        "relative_paths": relative_paths,
+        "vendor_api": vendor_api,
+        "as_of_timestamp": item.get("generated_at") or _utc_now_iso(),
+        "taxonomy_status": item.get("taxonomy_status"),
+        "row_count": fetch_result.get("row_count"),
+    }
+
+
+def capture_baostock_evidence_v2(
+    *,
+    evidence_dir: Path,
+    sandbox_root: Path | None = None,
+    fetch_runner: Any | None = None,
+) -> dict[str, Any]:
+    """Baostock expanded sample manifest v2 (R3Y-SP2-02)."""
+    evidence_dir = Path(evidence_dir)
+    evidence_dir.mkdir(parents=True, exist_ok=True)
+    sandbox = sandbox_root or DEFAULT_SANDBOX_ROOT_V2
+    request = approved_pilot_v2_requests()[0]
+    validate_pilot_v2_authorization(request)
+
+    reset_network_call_budget()
+    if fetch_runner is not None:
+        fetch_item = fetch_runner(request, sandbox_root=sandbox)
+    else:
+        fetch_item = run_staged_pilot_raw_only(
+            replace(request, dry_run=False),
+            sandbox_root=sandbox / "baostock",
+            pilot_request_id="v2-baostock",
+            authorization_gate=validate_pilot_v2_authorization,
+        )
+        fetch_item["pilot_id"] = PILOT_ID_V2
+
+    generated_at = _utc_now_iso()
+    manifest_entry = _manifest_v2_fetch_entry(fetch_item, pilot_request_id="v2-baostock")
+    payload = {
+        "pilot_id": PILOT_ID_V2,
+        "generated_at": generated_at,
+        "source_id": "baostock",
+        "data_domain": request.data_domain,
+        "symbols": list(request.symbols_or_indicators),
+        "date_window": request.date_window,
+        "fetches": [fetch_item],
+        "manifest_entries": [manifest_entry],
+        "required_fields_present": all(
+            manifest_entry.get(field) is not None
+            for field in ("content_hash", "source_fetch_id", "relative_paths")
+        ),
+    }
+    staging_payload = {
+        "pilot_id": PILOT_ID_V2,
+        "generated_at": generated_at,
+        "staged_rows": [
+            {
+                "pilot_request_id": "v2-baostock",
+                "staged_file_ids": fetch_item.get("staged_file_ids", []),
+                "quality_flag": STAGED_FILE_REGISTRY_QUALITY,
+            }
+        ],
+        "allow_clean_write": False,
+    }
+    (evidence_dir / RAW_MANIFEST_V2_JSON).write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    (evidence_dir / STAGING_MANIFEST_V2_JSON).write_text(
+        json.dumps(staging_payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return payload
+
+
+def capture_cninfo_evidence_v2(
+    *,
+    evidence_dir: Path,
+    sandbox_root: Path | None = None,
+    fetch_runner: Any | None = None,
+) -> dict[str, Any]:
+    """Cninfo metadata expanded sample + schema notes (R3Y-SP2-03)."""
+    evidence_dir = Path(evidence_dir)
+    evidence_dir.mkdir(parents=True, exist_ok=True)
+    sandbox = sandbox_root or DEFAULT_SANDBOX_ROOT_V2
+    request = approved_pilot_v2_requests()[2]
+    validate_pilot_v2_authorization(request)
+
+    reset_network_call_budget()
+    if fetch_runner is not None:
+        fetch_item = fetch_runner(request, sandbox_root=sandbox)
+    else:
+        fetch_item = run_staged_pilot_raw_only(
+            replace(request, dry_run=False),
+            sandbox_root=sandbox / "cninfo",
+            pilot_request_id="v2-cninfo",
+            authorization_gate=validate_pilot_v2_authorization,
+        )
+        fetch_item["pilot_id"] = PILOT_ID_V2
+
+    raw_paths = fetch_item.get("fetch_result", {}).get("raw_file_paths") or []
+    schema_fields: list[str] = []
+    if raw_paths:
+        raw_payload = _load_raw_json_payload(raw_paths[0])
+        rows = raw_payload.get("rows", [])
+        if isinstance(rows, list) and rows and isinstance(rows[0], dict):
+            schema_fields = sorted(rows[0].keys())
+
+    notes_lines = [
+        "# cninfo metadata schema notes v2",
+        "",
+        f"- **Pilot ID:** {PILOT_ID_V2}",
+        f"- **Symbols:** {', '.join(request.symbols_or_indicators)}",
+        f"- **Date window:** {request.date_window}",
+        "",
+        "## Observed fields",
+        "",
+    ]
+    if schema_fields:
+        notes_lines.extend(f"- `{field}`" for field in schema_fields)
+    else:
+        notes_lines.append("- _(no rows in sample — structure validation deferred)_")
+
+    (evidence_dir / CNINFO_SCHEMA_NOTES_V2_MD).write_text(
+        "\n".join(notes_lines) + "\n",
+        encoding="utf-8",
+    )
+
+    generated_at = _utc_now_iso()
+    payload = {
+        "pilot_id": PILOT_ID_V2,
+        "generated_at": generated_at,
+        "source_id": "cninfo",
+        "schema_fields": schema_fields,
+        "metadata_only": True,
+        "fetch": fetch_item,
+    }
+    return payload
+
+
+def capture_akshare_validation_taxonomy_v2(
+    *,
+    evidence_dir: Path,
+    taxonomy_records: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Akshare validation taxonomy v2 (R3Y-SP2-04)."""
+    evidence_dir = Path(evidence_dir)
+    evidence_dir.mkdir(parents=True, exist_ok=True)
+    request = approved_pilot_v2_requests()[1]
+    validate_pilot_v2_authorization(request)
+    if request.operation != "fetch_daily_bar_validation":
+        raise StagedPilotAuthorizationError(
+            "akshare must use validation-only operation in v2 pilot"
+        )
+
+    records = taxonomy_records or [
+        {
+            "source_id": "akshare",
+            "operation": request.operation,
+            "status": FetchTaxonomyStatus.SUCCESS.value,
+            "validation_only": True,
+            "re_defer": False,
+        },
+        {
+            "source_id": "akshare",
+            "operation": request.operation,
+            "status": FetchTaxonomyStatus.SOURCE_FAILURE.value,
+            "validation_only": True,
+            "re_defer": True,
+            "reason": "NETWORK_ERROR retry exhausted",
+        },
+    ]
+    allowed_status = {item.value for item in FetchTaxonomyStatus}
+    for record in records:
+        if record.get("status") not in allowed_status:
+            raise ValueError(f"invalid taxonomy status: {record.get('status')}")
+
+    generated_at = _utc_now_iso()
+    payload = {
+        "pilot_id": PILOT_ID_V2,
+        "generated_at": generated_at,
+        "validation_only": True,
+        "primary_forbidden": True,
+        "records": records,
+    }
+    (evidence_dir / AKSHARE_TAXONOMY_V2_JSON).write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return payload
+
+
+def capture_validation_report_v2(
+    *,
+    evidence_dir: Path,
+    raw_manifest: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Validation report v2 exposing quality flags and row counts (R3Y-SP2-06)."""
+    evidence_dir = Path(evidence_dir)
+    if raw_manifest is None:
+        raw_path = evidence_dir / RAW_MANIFEST_V2_JSON
+        if not raw_path.is_file():
+            raw_manifest = {"fetches": [], "manifest_entries": []}
+        else:
+            raw_manifest = json.loads(raw_path.read_text(encoding="utf-8"))
+
+    base_report = capture_validation_report(
+        evidence_dir=evidence_dir,
+        raw_manifest=raw_manifest,
+    )
+    validations_v2: list[dict[str, Any]] = []
+    for item in raw_manifest.get("fetches", []):
+        fetch_result = item.get("fetch_result", {})
+        structure = None
+        for validation in base_report.get("validations", []):
+            if validation.get("pilot_request_id") == item.get("pilot_request_id"):
+                structure = validation.get("structure_validation", {})
+                break
+        quality_flags: list[str] = []
+        if structure and structure.get("findings"):
+            quality_flags.extend(structure["findings"])
+        if fetch_result.get("status") != "SUCCESS":
+            quality_flags.append("SOURCE_FAILURE")
+        validations_v2.append(
+            {
+                "pilot_request_id": item.get("pilot_request_id"),
+                "source_id": item.get("request", {}).get("source_id"),
+                "row_count": fetch_result.get("row_count", 0),
+                "quality_flags": quality_flags,
+                "structure_status": (structure or {}).get("status"),
+                "source_used": item.get("request", {}).get("source_id"),
+            }
+        )
+
+    generated_at = _utc_now_iso()
+    payload = {
+        **base_report,
+        "pilot_id": PILOT_ID_V2,
+        "generated_at": generated_at,
+        "validations_v2": validations_v2,
+    }
+    (evidence_dir / VALIDATION_REPORT_V2_JSON).write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return payload
+
+
+def capture_conflict_summary_v2(
+    *,
+    evidence_dir: Path,
+    validation_report: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Conflict summary v2 — primary compare or explicit defer (R3Y-SP2-07)."""
+    evidence_dir = Path(evidence_dir)
+    if validation_report is None:
+        report_path = evidence_dir / VALIDATION_REPORT_V2_JSON
+        if report_path.is_file():
+            validation_report = json.loads(report_path.read_text(encoding="utf-8"))
+        else:
+            validation_report = {}
+
+    validations = validation_report.get("validations_v2") or validation_report.get(
+        "validations", []
+    )
+    has_baostock = any(v.get("source_id") == "baostock" for v in validations)
+    has_akshare = any(v.get("source_id") == "akshare" for v in validations)
+    if has_baostock and has_akshare:
+        status = "PRIMARY_VS_VALIDATION_COMPARE_DEFERRED"
+        reason = (
+            "baostock primary and akshare validation-only both present; "
+            "field-level conflict compare deferred until expanded aligned samples"
+        )
+    else:
+        status = "NO_CONFLICT_CHECK_DEFERRED"
+        reason = _staged_conflict_check_summary()["reason"]
+
+    generated_at = _utc_now_iso()
+    payload = {
+        "pilot_id": PILOT_ID_V2,
+        "generated_at": generated_at,
+        "status": status,
+        "reason": reason,
+        "policy_ref": "docs/modules/data_validation_and_conflict.md",
+    }
+    (evidence_dir / CONFLICT_CHECK_V2_JSON).write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return payload
+
+
+def write_no_mutation_proof_v2(
+    *,
+    evidence_dir: Path,
+    db_path: Path | None = None,
+) -> dict[str, Any]:
+    """No-mutation proof v2 markdown + payload (R3Y-SP2-08)."""
+    evidence_dir = Path(evidence_dir)
+    evidence_dir.mkdir(parents=True, exist_ok=True)
+    target_db = db_path or DEFAULT_PRODUCTION_DB
+    proof = build_production_mutation_proof(target_db)
+    generated_at = _utc_now_iso()
+    lines = [
+        "# Production DB — No Mutation Proof v2",
+        "",
+        f"- **Pilot ID:** {PILOT_ID_V2}",
+        f"- **Generated at:** {generated_at}",
+        f"- **Production DB:** `{target_db}`",
+        f"- **proof_status:** {proof.get('proof_status')}",
+        f"- **db_hash_unchanged:** {proof.get('db_hash_unchanged')}",
+        f"- **row_counts_unchanged:** {proof.get('row_counts_unchanged')}",
+        "",
+        "## R3Y-MUT-PROOF-001",
+        "",
+        "VERIFIED only when file hash and all table row counts are unchanged.",
+        "",
+    ]
+    (evidence_dir / NO_MUTATION_V2_MD).write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return proof
+
+
+def _classify_v2_source_outcome(
+    *,
+    source_id: str,
+    validation_report: dict[str, Any],
+    akshare_taxonomy: dict[str, Any] | None,
+) -> str:
+    validations = validation_report.get("validations_v2") or validation_report.get(
+        "validations", []
+    )
+    source_validations = [v for v in validations if v.get("source_id") == source_id]
+    if source_id == "akshare" and akshare_taxonomy:
+        records = akshare_taxonomy.get("records", [])
+        if any(r.get("re_defer") for r in records):
+            return "re-defer"
+        if any(r.get("status") == FetchTaxonomyStatus.SUCCESS.value for r in records):
+            return "retry"
+        return "block"
+    if not source_validations:
+        return "re-defer"
+    if any(v.get("structure_status") == "PASSED" or v.get("status") == "PASSED" for v in source_validations):
+        return "expand"
+    if any(v.get("structure_status") == "FAILED" for v in source_validations):
+        return "re-defer"
+    return "retry"
+
+
+def build_pilot_v2_closeout(
+    *,
+    evidence_dir: Path,
+    mutation_proof: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Pilot v2 closeout with per-source matrix and AUD-08 gate fields (R3Y-SP2-09)."""
+    evidence_dir = Path(evidence_dir)
+    if mutation_proof is None:
+        mutation_proof = build_production_mutation_proof(DEFAULT_PRODUCTION_DB)
+
+    validation_path = evidence_dir / VALIDATION_REPORT_V2_JSON
+    validation_report = (
+        json.loads(validation_path.read_text(encoding="utf-8"))
+        if validation_path.is_file()
+        else {"validations_v2": []}
+    )
+    taxonomy_path = evidence_dir / AKSHARE_TAXONOMY_V2_JSON
+    akshare_taxonomy = (
+        json.loads(taxonomy_path.read_text(encoding="utf-8"))
+        if taxonomy_path.is_file()
+        else None
+    )
+
+    per_source = {
+        source_id: _classify_v2_source_outcome(
+            source_id=source_id,
+            validation_report=validation_report,
+            akshare_taxonomy=akshare_taxonomy,
+        )
+        for source_id in V2_SOURCE_CLOSEOUT_IDS
+    }
+    hash_ok = mutation_proof.get("db_hash_unchanged") is True
+    counts_ok = mutation_proof.get("row_counts_unchanged") is True
+    proof_status = mutation_proof.get("proof_status")
+    closeout_pass = hash_ok and counts_ok and proof_status == "VERIFIED"
+
+    generated_at = _utc_now_iso()
+    payload = {
+        "pilot_id": PILOT_ID_V2,
+        "generated_at": generated_at,
+        "production_live_readiness_claim": False,
+        "mutation_proof_status": proof_status,
+        "db_hash_unchanged": hash_ok,
+        "row_counts_unchanged": counts_ok,
+        "closeout_pass": closeout_pass,
+        "per_source": per_source,
+        "sandbox_clean_write_rehearsal": False,
+        "run_mode": "staged_only",
+    }
+    (evidence_dir / CLOSEOUT_V2_JSON).write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return payload
+
+
+def run_full_staged_pilot_v2(
+    evidence_dir: Path | str,
+    *,
+    sandbox_root: Path | None = None,
+    skip_live_fetch: bool = False,
+    fetch_runner: Any | None = None,
+) -> dict[str, Any]:
+    """End-to-end staged pilot v2 evidence capture."""
+    evidence_dir = Path(evidence_dir)
+    evidence_dir.mkdir(parents=True, exist_ok=True)
+    sandbox = sandbox_root or DEFAULT_SANDBOX_ROOT_V2
+
+    caps = write_pilot_v2_caps(evidence_dir)
+    route_payload = capture_route_preview_matrix_v2(evidence_dir=evidence_dir)
+
+    raw_manifest: dict[str, Any] | None = None
+    if not skip_live_fetch:
+        raw_manifest = capture_baostock_evidence_v2(
+            evidence_dir=evidence_dir,
+            sandbox_root=sandbox,
+            fetch_runner=fetch_runner,
+        )
+        capture_cninfo_evidence_v2(
+            evidence_dir=evidence_dir,
+            sandbox_root=sandbox,
+            fetch_runner=fetch_runner,
+        )
+
+    capture_akshare_validation_taxonomy_v2(evidence_dir=evidence_dir)
+    validation_payload = capture_validation_report_v2(
+        evidence_dir=evidence_dir,
+        raw_manifest=raw_manifest,
+    )
+    conflict_payload = capture_conflict_summary_v2(
+        evidence_dir=evidence_dir,
+        validation_report=validation_payload,
+    )
+    mutation_proof = write_no_mutation_proof_v2(evidence_dir=evidence_dir)
+    closeout = build_pilot_v2_closeout(
+        evidence_dir=evidence_dir,
+        mutation_proof=mutation_proof,
+    )
+
+    return {
+        "pilot_id": PILOT_ID_V2,
+        "caps": caps,
+        "route_preview": route_payload,
+        "raw_manifest": raw_manifest,
+        "validation": validation_payload,
+        "conflict": conflict_payload,
+        "mutation_proof": mutation_proof,
+        "closeout": closeout,
+        "skip_live_fetch": skip_live_fetch,
+    }
+

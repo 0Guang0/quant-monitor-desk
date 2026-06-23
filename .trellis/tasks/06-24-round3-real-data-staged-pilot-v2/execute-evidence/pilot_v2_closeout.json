@@ -1,0 +1,16 @@
+{
+  "closeout_pass": false,
+  "db_hash_unchanged": false,
+  "generated_at": "2026-06-23T18:11:44Z",
+  "mutation_proof_status": "INCONCLUSIVE",
+  "per_source": {
+    "akshare": "re-defer",
+    "baostock": "expand",
+    "cninfo": "re-defer"
+  },
+  "pilot_id": "r3y-staged-pilot-v2-20260624",
+  "production_live_readiness_claim": false,
+  "row_counts_unchanged": false,
+  "run_mode": "staged_only",
+  "sandbox_clean_write_rehearsal": false
+}

@@ -1,0 +1,6 @@
+{
+  "policy_ref": "docs/quality/production_live_pilot_policy.md \u00a76",
+  "reason": "staged raw-only micro-fetch uses one authorized source per request envelope; multi-source conflict compare deferred until sample expansion",
+  "source_conflict_validator": "backend.app.validators.source_conflict.SourceConflictValidator",
+  "status": "NO_CONFLICT_CHECK_DEFERRED"
+}

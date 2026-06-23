@@ -1,0 +1,24 @@
+# GitNexus post-audit analyze — AR-03
+
+> **任务：** `06-24-round3-real-data-staged-pilot-v2`  
+> **工作区：** `quant-monitor-desk-wt-r3-pilot-v2`  
+> **日期：** 2026-06-24  
+> **命令：** `npx gitnexus analyze`（worktree 无 `.gitnexus/run.cjs`，按 AGENTS.md fallback）
+
+## 输出摘要
+
+```
+GitNexus Analyzer
+
+Warning: the default branch "master" is not the primary index — "feature/round3-real-data-staged-pilot-v2" owns the flat slot. Run `gitnexus clean --branch feature/round3-real-data-staged-pilot-v2` then re-index on "master", or query it explicitly with `--branch master`.
+
+Repository indexed successfully (13.2s)
+
+9,020 nodes | 14,700 edges | 186 clusters | 300 flows
+C:\Users\Guang\Desktop\quant-monitor-desk-wt-r3-pilot-v2
+```
+
+## 结论
+
+- exit 0 — 索引已刷新，包含 `mutation_proof.py`、`staged_pilot.py`、`test_staged_pilot.py` 新增符号。
+- 合并协调者可在 master 上 `gitnexus clean` 后重索引 flat slot（非本 fix 阻塞项）。

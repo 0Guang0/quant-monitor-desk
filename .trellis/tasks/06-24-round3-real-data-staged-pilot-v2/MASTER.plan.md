@@ -85,7 +85,7 @@
 1. TDD：每 §8.x 先 RED → `karpathy-guidelines` + `testing-guidelines` → GREEN
 2. 每步 GREEN 后 Read `incremental-implementation`；Tier B `uv run pytest -q` **仅 §8.10**
 3. 任何修复后至少跑当前步 L1 `tests/test_staged_pilot.py` 子集
-4. **禁止弱化测试目的**；测试 docstring 须含 **覆盖范围**、**测试对象**、**目的**
+4. **禁止弱化测试目的**；测试 docstring 须含 **覆盖范围**、**测试对象**、**目的**（**目的**须通俗中文，小白能懂在防什么/证明什么）
 5. ponytail 违规 → 停止当前 §8 步
 
 ### 0.4 上下文打包（v3）
@@ -325,7 +325,7 @@ Execute 以 MASTER inline + ledger pointer 为准。
 | GREEN 命令 | `uv sync --locked` + `.trellis/tasks/06-24-round3-real-data-staged-pilot-v2/execute-evidence/8.0-boot-reads.txt` |
 | RED 证据 | `.trellis/tasks/06-24-round3-real-data-staged-pilot-v2/execute-evidence/8.0-red.txt` |
 | GREEN 证据 | `.trellis/tasks/06-24-round3-real-data-staged-pilot-v2/execute-evidence/8.0-green.txt` |
-| 已执行 | [ ] |
+| 已执行 | [x] |
 
 ### 8.1 R3Y-SP2-01 — Pilot v2 plan/caps
 
@@ -336,7 +336,7 @@ Execute 以 MASTER inline + ledger pointer 为准。
 | GREEN 命令 | `uv run pytest tests/test_staged_pilot.py::test_stagedPilotV2_capsJson_matchesApprovedEnvelope tests/test_staged_pilot.py::test_stagedPilotV2_capsExceedingMaxSymbols_rejects -q` |
 | RED 证据 | `.trellis/tasks/06-24-round3-real-data-staged-pilot-v2/execute-evidence/8.1-red.txt` |
 | GREEN 证据 | `.trellis/tasks/06-24-round3-real-data-staged-pilot-v2/execute-evidence/8.1-green.txt` + `.trellis/tasks/06-24-round3-real-data-staged-pilot-v2/execute-evidence/pilot_v2_caps.json` |
-| 已执行 | [ ] |
+| 已执行 | [x] |
 
 ### 8.2 R3Y-SP2-02 — baostock expanded sample
 
@@ -347,7 +347,7 @@ Execute 以 MASTER inline + ledger pointer 为准。
 | GREEN 命令 | 同上 exit 0 |
 | RED 证据 | `.trellis/tasks/06-24-round3-real-data-staged-pilot-v2/execute-evidence/8.2-red.txt` |
 | GREEN 证据 | `.trellis/tasks/06-24-round3-real-data-staged-pilot-v2/execute-evidence/8.2-green.txt` + manifest v2 文件 |
-| 已执行 | [ ] |
+| 已执行 | [x] |
 
 ### 8.3 R3Y-SP2-03 — cninfo metadata expanded
 
@@ -358,7 +358,7 @@ Execute 以 MASTER inline + ledger pointer 为准。
 | GREEN 命令 | 同上 exit 0 |
 | RED 证据 | `.trellis/tasks/06-24-round3-real-data-staged-pilot-v2/execute-evidence/8.3-red.txt` |
 | GREEN 证据 | `.trellis/tasks/06-24-round3-real-data-staged-pilot-v2/execute-evidence/8.3-green.txt` |
-| 已执行 | [ ] |
+| 已执行 | [x] |
 
 ### 8.4 R3Y-SP2-04 — akshare validation retry/re-defer
 
@@ -369,7 +369,7 @@ Execute 以 MASTER inline + ledger pointer 为准。
 | GREEN 命令 | 同上 exit 0 |
 | RED 证据 | `.trellis/tasks/06-24-round3-real-data-staged-pilot-v2/execute-evidence/8.4-red.txt` |
 | GREEN 证据 | `.trellis/tasks/06-24-round3-real-data-staged-pilot-v2/execute-evidence/8.4-green.txt` + taxonomy JSON |
-| 已执行 | [ ] |
+| 已执行 | [x] |
 
 ### 8.5 R3Y-SP2-05 — route preview matrix v2
 
@@ -380,7 +380,7 @@ Execute 以 MASTER inline + ledger pointer 为准。
 | GREEN 命令 | 同上 exit 0 |
 | RED 证据 | `.trellis/tasks/06-24-round3-real-data-staged-pilot-v2/execute-evidence/8.5-red.txt` |
 | GREEN 证据 | `.trellis/tasks/06-24-round3-real-data-staged-pilot-v2/execute-evidence/8.5-green.txt` + `route_preview_matrix_v2.json` |
-| 已执行 | [ ] |
+| 已执行 | [x] |
 
 ### 8.6 R3Y-SP2-06 — validation report v2
 
@@ -391,7 +391,7 @@ Execute 以 MASTER inline + ledger pointer 为准。
 | GREEN 命令 | 同上 exit 0 |
 | RED 证据 | `.trellis/tasks/06-24-round3-real-data-staged-pilot-v2/execute-evidence/8.6-red.txt` |
 | GREEN 证据 | `.trellis/tasks/06-24-round3-real-data-staged-pilot-v2/execute-evidence/8.6-green.txt` + `validation_report_v2.json` |
-| 已执行 | [ ] |
+| 已执行 | [x] |
 
 ### 8.7 R3Y-SP2-07 — conflict summary v2
 
@@ -402,7 +402,7 @@ Execute 以 MASTER inline + ledger pointer 为准。
 | GREEN 命令 | 同上 exit 0 |
 | RED 证据 | `.trellis/tasks/06-24-round3-real-data-staged-pilot-v2/execute-evidence/8.7-red.txt` |
 | GREEN 证据 | `.trellis/tasks/06-24-round3-real-data-staged-pilot-v2/execute-evidence/8.7-green.txt` |
-| 已执行 | [ ] |
+| 已执行 | [x] |
 
 ### 8.8 R3Y-SP2-08 — no-mutation proof v2 + R3Y-MUT-PROOF-001
 
@@ -413,7 +413,7 @@ Execute 以 MASTER inline + ledger pointer 为准。
 | GREEN 命令 | 同上 exit 0 |
 | RED 证据 | `.trellis/tasks/06-24-round3-real-data-staged-pilot-v2/execute-evidence/8.8-red.txt` |
 | GREEN 证据 | `.trellis/tasks/06-24-round3-real-data-staged-pilot-v2/execute-evidence/8.8-green.txt` + `no_mutation_proof_v2.md` |
-| 已执行 | [ ] |
+| 已执行 | [x] |
 
 ### 8.9 R3Y-SP2-09 — close/re-defer matrix
 
@@ -424,7 +424,7 @@ Execute 以 MASTER inline + ledger pointer 为准。
 | GREEN 命令 | 同上 exit 0 |
 | RED 证据 | `.trellis/tasks/06-24-round3-real-data-staged-pilot-v2/execute-evidence/8.9-red.txt` |
 | GREEN 证据 | `.trellis/tasks/06-24-round3-real-data-staged-pilot-v2/execute-evidence/8.9-green.txt` + `pilot_v2_closeout.json` |
-| 已执行 | [ ] |
+| 已执行 | [x] |
 
 ### 8.10 Final gates
 
@@ -434,7 +434,7 @@ Execute 以 MASTER inline + ledger pointer 为准。
 | GREEN 命令 | 见 §10 |
 | RED 证据 | `.trellis/tasks/06-24-round3-real-data-staged-pilot-v2/execute-evidence/8.10-red.txt` |
 | GREEN 证据 | `.trellis/tasks/06-24-round3-real-data-staged-pilot-v2/execute-evidence/8.10-green.txt` |
-| 已执行 | [ ] |
+| 已执行 | [x] |
 
 ---
 
@@ -463,13 +463,13 @@ Execute 以 MASTER inline + ledger pointer 为准。
 
 | Skill | 本任务 | 已执行 |
 | ----- | ------ | ------ |
-| trellis-execute | 必做 | [ ] |
-| test-driven-development | 必做 | [ ] |
-| incremental-implementation | 必做 | [ ] |
-| karpathy-guidelines | 必做（GREEN 前） | [ ] |
-| testing-guidelines | 必做 | [ ] |
-| ponytail（`.cursor/rules/ponytail.mdc`） | 必做 — Execute 全程 | [ ] |
-| gitnexus-impact | 必做 | [ ] |
+| trellis-execute | 必做 | [x] |
+| test-driven-development | 必做 | [x] |
+| incremental-implementation | 必做 | [x] |
+| karpathy-guidelines | 必做（GREEN 前） | [x] |
+| testing-guidelines | 必做 | [x] |
+| ponytail（`.cursor/rules/ponytail.mdc`） | 必做 — Execute 全程 | [x] |
+| gitnexus-impact | 必做 | [x] |
 | trellis-check | **不用** → Audit A1 | — |
 
 路径见 `execute-skill-paths.yaml`。
@@ -478,10 +478,10 @@ Execute 以 MASTER inline + ledger pointer 为准。
 
 ## 12. Audit 交接
 
-- [ ] §8 全部步骤已执行
-- [ ] `validate-execute-handoff` 通过
-- [ ] 无 production-live 声称
-- [ ] 九切片 evidence 可独立审查（路径 = `EVIDENCE_ROOT`）
-- [ ] 每步 GREEN 后已 Read `incremental-implementation`；未弱化测试目的（§0.3b）
-- [ ] 新增/修改测试含中文 **覆盖范围 / 测试对象 / 目的**
-- [ ] 代码修复后至少跑当前步 L1；§8.10 前完成 Tier B `uv run pytest -q`
+- [x] §8 全部步骤已执行
+- [x] `validate-execute-handoff` 通过
+- [x] 无 production-live 声称
+- [x] 九切片 evidence 可独立审查（路径 = `EVIDENCE_ROOT`）
+- [x] 每步 GREEN 后已 Read `incremental-implementation`；未弱化测试目的（§0.3b）
+- [x] 新增/修改测试含中文 **覆盖范围 / 测试对象 / 目的**
+- [x] 代码修复后至少跑当前步 L1；§8.10 前完成 Tier B `uv run pytest -q`

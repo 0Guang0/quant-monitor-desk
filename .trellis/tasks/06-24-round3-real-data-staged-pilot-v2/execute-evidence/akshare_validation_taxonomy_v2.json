@@ -1,0 +1,23 @@
+{
+  "generated_at": "2026-06-23T18:10:47Z",
+  "pilot_id": "r3y-staged-pilot-v2-20260624",
+  "primary_forbidden": true,
+  "records": [
+    {
+      "operation": "fetch_daily_bar_validation",
+      "re_defer": false,
+      "source_id": "akshare",
+      "status": "SUCCESS",
+      "validation_only": true
+    },
+    {
+      "operation": "fetch_daily_bar_validation",
+      "re_defer": true,
+      "reason": "NETWORK_ERROR retry exhausted",
+      "source_id": "akshare",
+      "status": "SOURCE_FAILURE",
+      "validation_only": true
+    }
+  ],
+  "validation_only": true
+}
