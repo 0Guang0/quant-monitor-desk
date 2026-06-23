@@ -16,13 +16,13 @@
 
 ## Required decision record
 
-| Decision | State |
-| -------- | ----- |
-| Batch 2.75 closeout | `PILOT_FAIL_SOURCE` |
-| Request 2 Eastmoney hist | `R3-B2.75-REQ2-EM` deferred |
-| Batch 3 / `019` | staged-only only |
-| This branch evidence | does not open production-live |
-| `018C` parallel | does not unblock production-live |
+| Decision                 | State                            |
+| ------------------------ | -------------------------------- |
+| Batch 2.75 closeout      | `PILOT_FAIL_SOURCE`              |
+| Request 2 Eastmoney hist | `R3-B2.75-REQ2-EM` deferred      |
+| Batch 3 / `019`          | staged-only only                 |
+| This branch evidence     | does not open production-live    |
+| `018C` parallel          | does not unblock production-live |
 
 ## Merge gate
 

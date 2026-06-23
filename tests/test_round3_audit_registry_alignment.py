@@ -295,15 +295,16 @@ def test_post14R2Risk3_failClosedModesDocumented() -> None:
 
 
 def test_round3Map_checkpointReflectsPost14AuditMerge() -> None:
-    """覆盖范围：ROUND3_BATCH_IMPLEMENTATION_MAP checkpoint 与 PROMPT 索引新鲜度。
-    测试对象：ROUND3_BATCH_IMPLEMENTATION_MAP.md 头部 checkpoint 与 PROMPT_14/17 行。
-    目的：map 不得仍写 PROMPT_14 in progress；应指向 post-audit master 与下一项 020。"""
+    """覆盖范围：ROUND3_BATCH_IMPLEMENTATION_MAP checkpoint 与 wave-B 索引新鲜度。
+    测试对象：ROUND3_BATCH_IMPLEMENTATION_MAP.md 头部 checkpoint 与 §2.4 / PROMPT 索引。
+    目的：map 不得仍写 pre-wave-A checkpoint；应反映 020/PROMPT_18 已合并与 §2.4 活跃切片。"""
     text = _read(ROUND3_MAP)
 
     for token in (
-        "4114fcb0",
-        "PROMPT_01–17",
-        "post-14 audit",
+        "527d6506",
+        "post-wave-A",
+        "PROMPT_18",
+        "2.4",
         "020",
         "Done",
     ):

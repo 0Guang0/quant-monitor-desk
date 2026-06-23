@@ -6,7 +6,7 @@
 >
 > Scope rule: `docs/` and `specs/` are design/contract inputs only. Runtime implementation must land in `backend/`, `frontend/`, `scripts/`, `configs/`, `tests/`, or other implementation paths already mapped by `MIGRATION_MAP.md`.
 >
-> Current checkpoint (2026-06-22): Mainline **`master`** @ **`4114fcb0`** (post-PROMPT_14/17 + post-14 audit fixes + Bucket B). **PROMPT_01–17 merged**; post-14 registry/staged/ponytail hygiene merged. **Next:** formal task **`020`** (Layer 3 loader). `R3-B2.75-REQ2-EM` remains DEFERRED (hard constraint).
+> Current checkpoint (2026-06-23): Mainline **`master`** @ **`527d6506`** (post-wave-A). **Wave A merged:** `019` / `023A` / **`020`** / **PROMPT_18** (`WARN_ALLOW_WITH_CONTROLS`). **Active:** §2.4 wave B + fix α slices. **Next serial:** PROMPT_19 → PROMPT_20; **021** may run parallel with B. `R3-B2.75-REQ2-EM` remains DEFERRED (hard constraint).
 
 ## 0. Mandatory inputs before planning any Round 3 batch
 
@@ -62,6 +62,13 @@ Local aliases introduced here do **not** replace the authoritative registry. The
 | `R3-018C-LIVE-MANUAL-PROBE-PLAN`         | `docs/implementation_tasks/ROUND_3_REFERENCE_LANDING/R3D_018C_live_manual_probe_plan.md`; `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_10_debt_r3b275_018c_live_manual_probe_plan.md`                                 | Planning-only future TDX live/manual probe; requires explicit user authorization before any live network call.                                                                                                  |
 | `R3X-RESIDUAL-OPEN-CLOSURE`              | `docs/implementation_tasks/ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3X_residual_open_items_closure.md`; `PROMPT_15_fix_round3_r3x_residual_open_items_closure.md`                                                                        | Post PROMPT_11–13 exhaustive closure of every fixable ADV-R3X / ADV-A\* / F-019 residual item at current staged-only stage; zero intentional deferrals inside fixable set.                                      |
 | `R4-REF-READONLY-SQL-ASSISTANT`          | `docs/implementation_tasks/ROUND_3_REFERENCE_LANDING/R4D_readonly_sql_assistant_reference.md`                                                                                                                                       | Cross-reference only: DB-GPT / DB-GPT-Hub ideas are Round 4+ read-only reporting research, not Round 3 data-source execution.                                                                                   |
+| `R3Y-SYNC-001`                           | `.trellis/tasks/archive/2026-06/06-23-round3-post-r3x-strict-audit/review-evidence/R3Y-AUD-08-go-no-go.md` · AUD-01/02/03                                                                                                           | PROMPT_18 follow-up: production sync must not accept bare `adapter=` bypass of `DataSourceService` + route/capability.                                                                                          |
+| `R3Y-MUT-PROOF-001`                      | same · AUD-04                                                                                                                                                                                                                       | `mutation_proof` `VERIFIED` must not mean DB-exists-only; hash/row-count detail required for pilot closeout.                                                                                                    |
+| `R3Y-STAGED-REG-001`                     | same · AUD-03                                                                                                                                                                                                                       | Retire or privatize `register_staged_file_registry_rows` WriteManager bypass.                                                                                                                                   |
+| `R3Y-PROMPT15-EVID-001`                  | same · AUD-01/07                                                                                                                                                                                                                    | PROMPT_15 closed-claim matrix needs execute `*-green.txt` + checklist mapping.                                                                                                                                  |
+| `R3Y-TEST-DEPTH-001`                     | same · AUD-07                                                                                                                                                                                                                       | Runtime-strong pytest ratio for closed claims; not blocking staged-only mainline.                                                                                                                               |
+| `ADV-R3X-LINEAGE-001`                    | `docs/implementation_tasks/ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3X_residual_open_items_closure.md` · AUD-06                                                                                                                          | Full L3/L4 snapshot lineage deferred to `021`+; registry row required (fix α-2).                                                                                                                                |
+| `R3Y-LINEAGE-VR-001`                     | same · AUD-05                                                                                                                                                                                                                       | Layer2 synthetic lineage IDs must not impersonate validation_report / fetch_log binding; owner `021`+.                                                                                                          |
 
 ## 2. Formal Round 3 numbered tasks
 
@@ -118,9 +125,184 @@ Each prompt file is a self-contained startup instruction for one new session. Op
 | `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_15_fix_round3_r3x_residual_open_items_closure.md`            | `fix/round3-r3x-residual-open-items-closure`            | Done @ `48330611`                                 | —                                                 | R3X Master Checklist OPEN=0; merged with ponytail full.                        |
 | `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_16_fix_round3_ponytail_pilot_prep_bucket_a.md`               | `fix/round3-ponytail-pilot-prep-bucket-a`               | Done @ merge post-`c8dd25f8`                      | Before 14                                         | Ponytail bucket A pilot-prep (DS/SC/OP/SY/VA/DB).                              |
 | `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_17_debt_round3_ponytail_low_touch.md`                        | `debt/round3-ponytail-low-touch`                        | Done @ `aac6a4e9`                                 | Parallel with 14                                  | Ponytail bucket C: validators/config/util low-touch (VA/SC).                   |
-| _(next formal)_                                                                                                         | `feature/round3-020-layer3-loader`                      | **Now** — after 019 merged                        | Serial mainline                                   | Task `020` Layer 3 industry-chain loader (staged-only).                        |
+| _(next formal)_                                                                                                         | `feature/round3-020-layer3-loader`                      | **Done** @ `527d6506`                             | —                                                 | Task `020` merged; archived.                                                   |
+| `PROMPT_18_review_round3_post_r3x_strict_adversarial_audit.md`                                                          | `review/round3-post-r3x-strict-adversarial-audit`       | **Done** @ `527d6506`                             | —                                                 | WARN_ALLOW_WITH_CONTROLS; archived.                                            |
+| `PROMPT_19_feature_round3_real_data_staged_pilot_v2.md`                                                                 | `feature/round3-real-data-staged-pilot-v2`              | **Now** — after PROMPT_18 gate                    | Parallel with `021` / fix α-2 / α-3               | Staged pilot v2; owns `backend/app/ops/` including `mutation_proof.py`.        |
+| `PROMPT_20_feature_round3_readonly_data_health_v1.md`                                                                   | `feature/round3-readonly-data-health-v1`                | After PROMPT_19 evidence                          | Serial after 19                                   | Read-only data health v1; no `adapter=` / staged-reg bypass.                   |
+| _(next formal)_                                                                                                         | `feature/round3-021-layer3-snapshot`                    | **Now** — after `020`                             | Parallel with PROMPT_19 / fix α-2 / α-3           | Task `021` Layer 3 snapshot builder (staged-only).                             |
 
 Do not start `feature/round3-019-layer2-sensor` until `feature/round3-batch3-staged-gate` has merged into `master`. PROMPT_07–16 sessions must create their own branches/worktrees before execution.
+
+## 2.4 Phase 8D — Wave B + fix α (active slices)
+
+> Coordinator: main session · baseline **`master`** @ **`527d6506`** · 2026-06-23  
+> Hard constraints: `R3-B2.75-REQ2-EM` **DEFERRED**;全程 **staged-only**；不得声称 production-live。  
+> Registry SSOT for R3Y follow-ups: §1 aliases + `docs/UNRESOLVED_ISSUES_REGISTRY.md` §PROMPT_18 + `docs/AUDIT_DEFERRED_REGISTRY.md` §DEFERRED R3Y.
+
+### 2.4.1 Parallel matrix
+
+| Slice              | Owner agent              | Base     | Target branch                              | Worktree (suggested)                                  | Parallel with                        |
+| ------------------ | ------------------------ | -------- | ------------------------------------------ | ----------------------------------------------------- | ------------------------------------ |
+| **B-19** PROMPT_19 | `implement-agent-p19`    | `master` | `feature/round3-real-data-staged-pilot-v2` | `../quant-monitor-desk-wt-r3-pilot-v2`                | **021**, **α-2**, **α-3**            |
+| **B-21** task 021  | `implement-agent-021`    | `master` | `feature/round3-021-layer3-snapshot`       | `../quant-monitor-desk-wt-021-layer3-snapshot`        | **B-19**, **α-2**, **α-3**           |
+| **α-1** sync guard | `fix-agent-r3y-sync`     | `master` | `fix/r3y-sync-adapter-guard`               | `../quant-monitor-desk-wt-fix-r3y-sync-adapter-guard` | **α-2**, **α-3** only (not B-19 ops) |
+| **α-2** registry   | merge coordinator        | `master` | `fix/r3y-registry-lineage-defer`           | `../quant-monitor-desk-wt-fix-r3y-registry`           | **B-19**, **B-21**, **α-1**, **α-3** |
+| **α-3** evidence   | `fix-agent-r3y-evidence` | `master` | `fix/r3y-prompt15-evidence`                | `../quant-monitor-desk-wt-fix-r3y-prompt15-evidence`  | all except registry row edits in α-2 |
+
+**Serial after wave B + α:**
+
+1. **C-20** PROMPT_20 — after PROMPT_19 evidence lands on `master` (or integration branch).
+2. **β-1** `mutation_proof` deep fix — **inside PROMPT_19** (do not open a fourth `ops/` branch).
+3. **β-2** `register_staged_file_registry_rows` privatize — after **α-1** merges (or same branch if coordinator combines).
+
+### 2.4.2 Slice B-19 — PROMPT_19 staged pilot v2
+
+| Field         | Value                                                                                                      |
+| ------------- | ---------------------------------------------------------------------------------------------------------- |
+| Source ID     | `PROMPT_19` · `R3Y_real_data_staged_pilot_v2.md` · AUD-08 controls                                         |
+| Trellis track | complex (`MASTER.plan.md`) or debt-lite if scoped to ops-only delta                                        |
+| Prompt        | `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_19_feature_round3_real_data_staged_pilot_v2.md` |
+
+**Allowed files**
+
+- `backend/app/ops/staged_pilot.py`, `staged_pilot_fetch_ports.py`, `mutation_proof.py`
+- `scripts/run_staged_pilot.py`
+- `tests/test_staged_pilot.py`, `tests/contract_gate_support.py`
+- `.trellis/tasks/*-round3-real-data-staged-pilot-v2/**` (task artifacts)
+- `docs/quality/prompt19_*` (authorization / closeout evidence only)
+
+**Forbidden files**
+
+- `backend/app/sync/**` (owned by **α-1**)
+- `backend/app/storage/staged_evidence.py` (owned by **β-2**)
+- `backend/app/layer3_chains/**` (owned by **B-21**)
+- `docs/AUDIT_DEFERRED_REGISTRY.md`, `docs/UNRESOLVED_ISSUES_REGISTRY.md`, `docs/RESOLVED_ISSUES_REGISTRY.md` (owned by **α-2** coordinator)
+- `data/duckdb/quant_monitor.duckdb`, production clean write, live source default enablement
+
+**Verification**
+
+```bash
+uv run pytest tests/test_staged_pilot.py -q
+uv run pytest tests/test_batch3_staged_downstream_gate.py tests/test_batch25_production_data_gate.py -q
+uv run pytest tests/test_round3_audit_registry_alignment.py -q
+uv run python scripts/check_doc_links.py
+```
+
+**Merge gate evidence:** `.trellis/tasks/<task>/execute-evidence/merge_gate_report.md` · pilot closeout JSON · no-mutation proof v2
+
+### 2.4.3 Slice B-21 — task 021 Layer 3 snapshot builder
+
+| Field     | Value                                                                           |
+| --------- | ------------------------------------------------------------------------------- |
+| Source ID | formal `021` · `020_implement_layer3_industry_chain_loader.md` predecessor done |
+| Prompt    | _(formal task card)_ `021_implement_layer3_snapshot_builder.md`                 |
+
+**Allowed files**
+
+- `backend/app/layer3_chains/**` (snapshot builder modules only; loader frozen except bugfix)
+- `tests/test_layer3_snapshot*.py`, `tests/fixtures/layer3_*`
+- `.trellis/tasks/*-round3-021-layer3-snapshot/**`
+
+**Forbidden files**
+
+- `backend/app/ops/**` (B-19)
+- `backend/app/sync/**` (α-1)
+- registry trio (α-2 coordinator)
+- production DB / live fetch
+
+**Verification**
+
+```bash
+uv run pytest tests/test_layer3_loader.py tests/test_layer3_snapshot*.py -q
+uv run pytest tests/test_batch3_staged_downstream_gate.py -q
+uv run ruff check backend/app/layer3_chains tests/test_layer3_snapshot*.py
+```
+
+### 2.4.4 Slice α-1 — sync `adapter=` production guard (`R3Y-SYNC-001`)
+
+| Field         | Value                                                                 |
+| ------------- | --------------------------------------------------------------------- |
+| Source ID     | `R3Y-SYNC-001` · ADV-R3X-SYNC-001 partial · AUD-01 F-02 · AUD-02 HIGH |
+| Trellis track | debt-lite (`DEBT.plan.md`)                                            |
+
+**Allowed files**
+
+- `backend/app/sync/orchestrator.py`, `backend/app/sync/runners.py`
+- `tests/test_sync_orchestrator.py`, `tests/test_sync_jobs.py`
+- `.trellis/tasks/fix-r3y-sync-adapter-guard/**`
+
+**Forbidden files**
+
+- `backend/app/ops/**`, `backend/app/datasources/**` (unless one-line import for guard)
+- registry trio (α-2)
+- `layer3_chains/**`
+
+**Verification**
+
+```bash
+uv run pytest tests/test_sync_orchestrator.py tests/test_sync_jobs.py -q
+uv run pytest tests/test_datasource_service.py tests/test_source_route_planner.py -q
+```
+
+**Closure test:** production-profile entry rejects `adapter=` without `datasource_service`; dedicated pytest maps `R3Y-SYNC-001`.
+
+### 2.4.5 Slice α-2 — registry + plan index (`ADV-R3X-LINEAGE-001`, `R3Y-*` rows)
+
+| Field     | Value                                                       |
+| --------- | ----------------------------------------------------------- |
+| Source ID | AUD-06 HIGH · AUD-08 P1/P2 registry controls                |
+| Owner     | **single merge coordinator** — no concurrent registry edits |
+
+**Allowed files**
+
+- `docs/AUDIT_DEFERRED_REGISTRY.md`, `docs/UNRESOLVED_ISSUES_REGISTRY.md`, `docs/RESOLVED_ISSUES_REGISTRY.md`
+- `docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md`
+- `ROUND3_BATCH_IMPLEMENTATION_MAP.md`, `docs/ROUND3_HANDOFF.md`
+- `tests/test_round3_audit_registry_alignment.py`, `tests/test_unresolved_item_task_coverage.py` (if ID set changes)
+- `.trellis/tasks/fix-r3y-registry-lineage-defer/**`
+
+**Forbidden files**
+
+- `backend/**` runtime (docs/tests only slice)
+- concurrent edits by other agents to registry trio
+
+**Verification**
+
+```bash
+uv run pytest tests/test_round3_audit_registry_alignment.py tests/test_unresolved_item_task_coverage.py -q
+uv run python scripts/check_doc_links.py
+```
+
+### 2.4.6 Slice α-3 — PROMPT_15 evidence backfill (`R3Y-PROMPT15-EVID-001`)
+
+**Allowed files**
+
+- `.trellis/tasks/fix-round3-r3x-residual-open-items-closure/**` (evidence only)
+- `.trellis/tasks/fix-r3y-prompt15-evidence/**`
+- `tests/test_r3x_residual_open_items_closure.py` (mapping comments / narrow asserts only)
+
+**Forbidden files**
+
+- `backend/**` production code
+- registry trio (α-2)
+
+**Verification**
+
+```bash
+uv run pytest tests/test_r3x_residual_open_items_closure.py -q
+```
+
+### 2.4.7 Recommended merge order (into `master`)
+
+1. **α-2** registry reconciliation (establishes R3Y row SSOT for other slices).
+2. **α-1** sync guard (unblocks PROMPT_19 AUD-08 “no production CLI `adapter=`”).
+3. **α-3** PROMPT_15 evidence (independent).
+4. **B-19** PROMPT_19 (includes **β-1** `mutation_proof` / `R3Y-MUT-PROOF-001`).
+5. **B-21** task 021 (may merge before or after B-19 if no conflict; prefer after α-2).
+6. **C-20** PROMPT_20 (after B-19 evidence).
+7. **β-2** staged file_registry privatize (`R3Y-STAGED-REG-001`) — after α-1.
+
+**Conflict rule:** one active branch per core file group (`.trellis/spec/guides/round3-repair-debt-worktree-plan.md` §6).
 
 ## 2.3 Round 3 gate hygiene command matrix
 
@@ -334,13 +516,16 @@ This section is a **Plan-stage source index**, not an Execute or Audit manifest.
 3. **Batch 2.5** — Layer 1 observation ingestion bridge (`R3-B2.5-L1-OBS-INGEST`) with five phase gates and phase-by-phase audit.
 4. **Batch 2.75** — controlled production/live-data pilot gate (`R3-B2.75-PROD-LIVE-PILOT`) plus `R3-B2.75-01` / `GLOBAL-P2-01` / `B2.5-O-05` closeout and `R3-B25-PERF-BUDGET-01` evidence gate, with authorization, sandbox-first raw-only evidence, bounded performance-budget artifact, and no production clean DB mutation.
 5. **Repair/Debt Lite parallel tracks** — after Batch 2.75 repair closeout, run `R3-B2.75-FOLLOWUP-DATA-INTERFACE-PROBE`, `R3-B25-PERF-BUDGET-01`, `R3-B25-HYG-03`, `B2.5-O-05`, and CI gate hardening as Phase 8D slices where eligible. These tracks do not block staged-only Batch 3.
-6. **Batch 3 staged gate** — close `R3-B3-STAGED-DOWNSTREAM-GATE` before implementing `019`.
-7. **Batch 3** — Layer 2 `019`.
-8. **Batch 4A** — Layer 3 loader `020`; may run beside `R3-B23A-EVIDENCE-FOUNDATION` after the Batch 3 gate.
-9. **Batch 4B** — Layer 3 snapshot builder `021`, after `020` and evidence-foundation contract stability.
-10. **Batch 5A** — Layer 4 `022`, after `021` unless a future plan limits the work to isolated adapter skeletons.
-11. **Batch 5B** — full Layer 5 `023`, after Layer 4/Layer 3 integration readiness.
-12. **Batch 6** — pipeline/migration/CLI/packaging/hygiene closeout.
+6. **Batch 3 staged gate** — close `R3-B3-STAGED-DOWNSTREAM-GATE` before implementing `019`. **Done** (archived `06-22-round3-batch3-staged-gate`).
+7. **Batch 3** — Layer 2 `019`. **Done** (archived).
+8. **Batch 4A** — Layer 3 loader `020`. **Done** (archived; Audit PASS).
+9. **Wave A audit** — PROMPT_18 post-R3X strict audit. **Done** (`WARN_ALLOW_WITH_CONTROLS`).
+10. **Wave B + fix α** — §2.4: PROMPT_19 ∥ `021` ∥ fix α-1/α-2/α-3 (registry coordinator first).
+11. **Wave C** — PROMPT_20 read-only data health v1 (after PROMPT_19 evidence).
+12. **Batch 4B** — Layer 3 snapshot `021` (if not closed in wave B-21).
+13. **Batch 5A** — Layer 4 `022`, after `021`.
+14. **Batch 5B** — full Layer 5 `023`, after Layer 4 readiness.
+15. **Batch 6** — pipeline/migration/CLI/packaging/hygiene closeout.
 
 ## 6. Trellis batching constraints
 

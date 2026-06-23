@@ -2,7 +2,17 @@
 
 > Purpose: one file for resolved/closed issues, gates, risks, and repairs.  
 > Pair: unresolved items live in `docs/UNRESOLVED_ISSUES_REGISTRY.md`.  
-> Last reconciled: 2026-06-22 after post-14 registry/docs hygiene slice (`master` @ `4114fcb0`).
+> Last reconciled: 2026-06-23 after wave-A merge + PROMPT_18 R3Y registry slice (`master` @ `527d6506`).
+
+## Post-PROMPT_18 wave-A resolved (2026-06-23)
+
+| ID                           | Closed     | Item                                                    | Evidence                                                                                                                                               |
+| ---------------------------- | ---------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| R3-B3-STAGED-DOWNSTREAM-GATE | 2026-06-22 | Batch 3 staged-only downstream gate closed (docs/tests) | `docs/quality/BATCH3_STAGED_DOWNSTREAM_GATE.md` · `.trellis/tasks/archive/2026-06/06-22-round3-batch3-staged-gate/`                                    |
+| R3-TASK-019                  | 2026-06-23 | Layer2 cross-asset sensor (`019`) staged pipeline       | `.trellis/tasks/archive/2026-06/06-22-round3-019-layer2-sensor/` · Audit PASS                                                                          |
+| R3-TASK-020                  | 2026-06-23 | Layer3 industry chain loader (`020`)                    | `.trellis/tasks/archive/2026-06/06-23-round3-020-layer3-loader/` · `backend/app/layer3_chains/` · Audit PASS · 14 tests                                |
+| R3-TASK-023A                 | 2026-06-23 | Layer5 evidence foundation (`023A`) minimal slice       | `.trellis/tasks/archive/2026-06/06-22-round3-023a-evidence-foundation/`                                                                                |
+| R3Y-AUDIT-GATE-18            | 2026-06-23 | PROMPT_18 post-R3X strict adversarial audit complete    | `.trellis/tasks/archive/2026-06/06-23-round3-post-r3x-strict-audit/review-evidence/R3Y-AUD-08-go-no-go.md` · **`WARN_ALLOW_WITH_CONTROLS`** (no BLOCK) |
 
 ## Post-14 registry/docs hygiene resolved (2026-06-22)
 

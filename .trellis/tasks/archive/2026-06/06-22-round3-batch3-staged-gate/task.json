@@ -1,0 +1,23 @@
+{
+  "id": "06-22-round3-batch3-staged-gate",
+  "name": "round3-batch3-staged-gate",
+  "title": "Round 3 Batch 3 staged downstream gate",
+  "description": "Close R3-B3-STAGED-DOWNSTREAM-GATE; docs/tests only before 019.",
+  "status": "completed",
+  "dev_type": "debt",
+  "scope": "staged_gate",
+  "priority": "P0",
+  "creator": "Guang",
+  "assignee": "Guang",
+  "createdAt": "2026-06-22",
+  "completedAt": "2026-06-24",
+  "branch": "feature/round3-batch3-staged-gate",
+  "base_branch": "master",
+  "worktree_path": "../quant-monitor-desk-wt-r3-batch3-staged-gate",
+  "notes": "PROMPT_01; gate CLOSED; merged to master via integration/round3",
+  "meta": {
+    "task_track": "debt-lite",
+    "item_ids": ["R3-B3-STAGED-DOWNSTREAM-GATE"],
+    "manifest_protocol_version": "3"
+  }
+}

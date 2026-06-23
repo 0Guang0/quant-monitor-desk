@@ -1,6 +1,6 @@
 # Round 3 波次 A — Merge Coordinator Slice Plans
 
-> 协调者：主会话 · 基准 `master` @ `61436a51` · 2026-06-23  
+> 协调者：主会话 · 基准 `master` @ `527d6506` · 2026-06-23  
 > 硬约束：`R3-B2.75-REQ2-EM` DEFERRED；全程 **staged-only**，不得声称 production-live。
 
 ---
@@ -16,10 +16,10 @@
 
 **Core file 锁：** 020 独占 `backend/app/layer3_chains/` + `tests/test_layer3_loader.py`；PROMPT_18 只读，无写锁冲突。
 
-**串行后续：**
+**串行后续：** 见 `ROUND3_BATCH_IMPLEMENTATION_MAP.md` §2.4（wave B + fix α）；勿在本文件重复维护 slice 边界。
 
-- 波次 B：PROMPT_19 — 等 **PROMPT_18 v2 AUD-08** gate（非 v0 单 agent 结论）
-- 波次 C：PROMPT_20 — 等 PROMPT_19 evidence
+- 波次 B：**PROMPT_19**（可与 **021** / fix α 并行）
+- 波次 C：**PROMPT_20** — 等 PROMPT_19 evidence
 
 **派发（v2）：** 7 个并行 module agent（R3Y-AUD-01…07 各一）；AUD-08 由协调者在 01–07 落盘后合成 gate。见 `parallel-audit-dispatch.md`。
 
