@@ -78,6 +78,34 @@ Archived Trellis task `.trellis/tasks/archive/2026-06/06-20-round3-batch2-layer1
 
 Archived Trellis tasks: `06-24-round3-real-data-staged-pilot-v2` (PROMPT_19) · `06-24-round3-021-layer3-snapshot` (`021`) · `fix-r3y-sync-adapter-guard` (α-1) · `fix-r3y-registry-lineage-defer` (α-2). Merges on `master`: `984c7b28`, `616feeb8`, `e4abb372`; `021` @ `1cdb7e48`. **Residual hygiene:** `docs/quality/ROUND3_WAVE_B_PENDING_FIX_REGISTRY.md` (α-3, β-2). **Next:** Wave C PROMPT_20 read-only data health v1.
 
+## Round 3 Wave C — **COMPLETE** (2026-06-24)
+
+PROMPT_20 read-only data health v1 · `022` Layer4 · fix α-3 / β-2. Registry reconcile @ `d49e21d3`. Trellis archived under `archive/2026-06/`.
+
+## Round 3 Batch 01 — **COMPLETE** (2026-06-25)
+
+Seven branches merged to `master` @ **`376e30e6`** via `integration/round3-batch01` (Track A) + `integration/round3-wave-d` (Track B `023`). Coordinator playbook: `docs/quality/coordination/BATCH_01_MAIN_SESSION_COORDINATOR_PLAYBOOK.md`.
+
+| Playbook ID | Branch                                         | Merge commit | Main output                                                |
+| ----------- | ---------------------------------------------- | ------------ | ---------------------------------------------------------- |
+| B01-WL      | `chore/round3-model-input-whitelist`           | `b09a3ca6`   | `specs/model_inputs/**`, `model_input_readiness_matrix.md` |
+| B01-LIN     | `fix/round3-batch6-lineage-and-layer3-hygiene` | `06bcfde1`   | lineage/L3 hygiene tests                                   |
+| B01-FRED    | `feature/round3-fred-authorized-sandbox-pilot` | `9ae91648`   | FRED sandbox pilot + registry三件套 `fred` 行              |
+| B01-TDX     | `debt/round3-tdx-manual-probe`                 | `01ad6a07`   | TDX mocked `PROBE_PASS_RAW_ONLY`; live `PROBE_REDEFERRED`  |
+| B01-SP3     | `feature/round3-real-data-staged-pilot-v3`     | `1a099e8d`   | WL-driven staged pilot v3 + readiness matrix               |
+| B01-DH2     | `feature/round3-readonly-data-health-v2`       | `dd5fda5f`   | read-only data health v2 profiles                          |
+| B01-023     | `feature/round3-023b-evidence-chain-full`      | `376e30e6`   | full Layer5 evidence chain + ADR-023                       |
+
+**Registry reconcile (主会话 §7.4):** `specs/datasource_registry/source_registry.yaml` · `source_capabilities.yaml` · `specs/contracts/platform_source_matrix.yaml` — FRED/TDX rows from branch merges; proposed deltas reconciled (see `docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md` §7).
+
+**Still DEFERRED (Batch 01 does not close):**
+
+- **`B2.5-O-05`** — FRED-only **sandbox** evidence recorded (`fred_pilot_closeout.json`); live FRED primary for `ENV-E1-DGS10` remains **RE-DEFERRED → Batch 6** (`test_fred_staged_semantics.py`). Request 3 / `macro_supplementary` does **not** close `B2.5-O-05`.
+- **`R3-PROMPT14-AKSHARE-VAL-01`** — SP3 v3 records akshare **validation-only** taxonomy + re-defer; live Eastmoney hist family still open (cross-ref `R3-B2.75-REQ2-EM`).
+- **`R3-B2.75-REQ2-EM`** — not closable by TDX probe alone.
+
+**Next gate:** `PROJECT_IMPLEMENTATION_ROADMAP.md` **Round 3F** (Batch6 migration/CLI/source-health). No production-live or production clean-write claims.
+
 ## Round 3 start checklist
 
 0. **Registry clean** — [`AUDIT_DEFERRED_REGISTRY.md`](AUDIT_DEFERRED_REGISTRY.md): no OPEN rows (verified post PR #15)

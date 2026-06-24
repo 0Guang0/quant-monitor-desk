@@ -362,14 +362,14 @@ def test_post14R2Risk3_failClosedModesDocumented() -> None:
         assert token in resolved
 
 
-_RECONCILED_TOKENS = ("2026-06-24", "wave-C", "d49e21d3", "post-wave-C", "Trellis archive")
+_RECONCILED_TOKENS = ("2026-06-25", "Batch 01", "376e30e6", "post-Batch 01", "registry reconcile")
 
 
 def test_r3yRegistrySlice_alpha2LastReconciled() -> None:
-    """覆盖范围：Wave C 合并后四份 SSOT 的对账戳一致性
+    """覆盖范围：Batch 01 合并后四份 SSOT 的对账戳一致性
     测试对象：UNRESOLVED、RESOLVED、AUDIT_DEFERRED、UNRESOLVED_ITEM_TASK_COVERAGE
     目的/目标：Last reconciled 块含同一组 mandatory tokens，防止措辞漂移
-    验证点：四份文档均含 2026-06-24、wave-C、d49e21d3、post-wave-C、Trellis archive
+    验证点：四份文档均含 2026-06-25、Batch 01、376e30e6、post-Batch 01、registry reconcile
     失败含义：对账戳不一致，并行 slice 无法判断 registry 是否同一次 reconcile
     """
     coverage = PROJECT_ROOT / "docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md"
@@ -466,27 +466,46 @@ def test_waveCMainlineResolvedRows_traceableInRegistries() -> None:
         assert item_id in audit, f"{item_id} missing from AUDIT_DEFERRED wave-C section"
 
 
-def test_round3Map_checkpointReflectsPostWaveCMerge() -> None:
-    """覆盖范围：ROUND3 地图 checkpoint 是否反映 post-wave-C 合并与 Wave D 激活状态
+def test_round3Map_checkpointReflectsPostBatch01Merge() -> None:
+    """覆盖范围：ROUND3 地图 checkpoint 是否反映 post-Batch-01 合并与 Wave E 激活状态
     测试对象：ROUND3_BATCH_IMPLEMENTATION_MAP.md 头部与 §2
-    目的/目标：地图不得仍写 Wave C active；须标明 Wave D（023）为当前主线
-    验证点：含 d49e21d3、post-wave-C、023、Wave D、Done、ROUND3_WAVE_B_PENDING_FIX_REGISTRY、§2.3；不含 Wave C **Active**
+    目的/目标：地图须标明 Wave D/Batch 01 Done、Wave E（Batch 6）为当前主线
+    验证点：含 376e30e6、Batch 01、023、Wave D、Done、Wave E、Active、§2.3；Wave D 非 Active
     失败含义：地图 checkpoint 陈旧，协调人会按错误 wave 状态排期
     """
     text = _read(ROUND3_MAP)
 
     for token in (
-        "d49e21d3",
-        "post-wave-C",
+        "376e30e6",
+        "Batch 01",
         "023",
         "Wave D",
         "Done",
+        "Wave E",
+        "Active",
         "ROUND3_WAVE_B_PENDING_FIX_REGISTRY",
         "§2.3",
     ):
         assert token in text
-    assert "| **C** | **Active**" not in text
-    assert "**Active — Wave C" not in text
+    assert "| **D** | **Active**" not in text
+    assert "**Active — Wave D" not in text
+
+
+def test_round3Map_checkpointReflectsPostWaveCMerge() -> None:
+    """覆盖范围：ROUND3 地图仍保留 wave-C 历史可追溯 token（向后兼容）
+    测试对象：ROUND3_BATCH_IMPLEMENTATION_MAP.md §2.2 / §2.4
+    目的/目标：post-Batch-01 地图仍提及 wave-C reconcile d49e21d3 等历史完成项
+    验证点：含 d49e21d3、871b76e2、§2.2
+    失败含义：wave-C 完成记录被 Batch 01 更新误删
+    """
+    text = _read(ROUND3_MAP)
+
+    for token in (
+        "d49e21d3",
+        "871b76e2",
+        "§2.2",
+    ):
+        assert token in text
 
 
 def test_round3Map_checkpointReflectsPostWaveBMerge() -> None:

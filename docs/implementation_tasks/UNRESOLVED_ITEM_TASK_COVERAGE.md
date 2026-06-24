@@ -1,6 +1,6 @@
 # Unresolved Item → 原始执行任务覆盖索引
 
-> Last reconciled: 2026-06-24 post-wave-C registry reconcile + Trellis archive (`master` @ `d49e21d3`).  
+> Last reconciled: 2026-06-25 post-Batch 01 merge + registry reconcile (`master` @ `376e30e6`).  
 > 用途：防止 Plan 阶段只读取 `docs/implementation_tasks/**` 原始任务卡而漏掉 `docs/UNRESOLVED_ISSUES_REGISTRY.md` / `docs/AUDIT_DEFERRED_REGISTRY.md` 中仍未闭合的项目。  
 > 规则：新建 MASTER/AUDIT/REPAIR plan 前，必须先读取本文件、当前 registry、目标任务卡，并把本表中目标批次相关 ID 逐项映射到 AC、evidence、closeout 或 explicit re-deferral。若 registry 状态变化，本文件必须同步更新。
 
@@ -71,6 +71,30 @@
 | `R3Y-TEST-DEPTH-001`    | Batch 6 hygiene                         | `ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3Y_post_r3x_strict_adversarial_audit.md`                                                                              | runtime-strong 反证测试比例；不阻塞 staged-only 主线。                                                                        |
 | `ADV-R3X-LINEAGE-001`   | `021`+ / fix α-2 registry               | `ROUND_3_MODELING_LAYERS/021_implement_layer3_snapshot_builder.md`; `ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3X_residual_open_items_closure.md`                | `021`/`022` merged; full L3/L4 lineage **Batch 6** — registry defer only until pytest closeout.                               |
 | `R3Y-LINEAGE-VR-001`    | **Batch 6**                             | `ROUND_3_MODELING_LAYERS/021_implement_layer3_snapshot_builder.md`; `019_implement_layer2_cross_asset_sensor.md`                                           | Layer2 VR→lineage 绑定；sandbox 不得用合成 ID 冒充 VR。                                                                       |
+
+## 7. Batch 01 — Model Source Readiness (merged 2026-06-25)
+
+> Coordinator merge: `integration/round3-batch01` + `integration/round3-wave-d` → `master` @ `376e30e6`. Playbook: `docs/quality/coordination/BATCH_01_MAIN_SESSION_COORDINATOR_PLAYBOOK.md` §7.4.
+
+| Manifest ID | Branch                                         | Registry row / family                          | Closure outcome                                                        | Evidence path                                                                                                                     |
+| ----------- | ---------------------------------------------- | ---------------------------------------------- | ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `B01-C01`   | `chore/round3-model-input-whitelist`           | — (SSOT: `specs/model_inputs/**`)              | **CLOSED** — whitelist + readiness matrix                              | merge `b09a3ca6` · `specs/model_inputs/**` · `tests/test_model_input_whitelist.py`                                                |
+| `B01-C02`   | `feature/round3-fred-authorized-sandbox-pilot` | `B2.5-O-05`                                    | **RE-DEFERRED** live primary; FRED-only **sandbox** evidence recorded  | `.trellis/tasks/round3-fred-authorized-sandbox-pilot/execute-evidence/` · `proposed_registry_delta.yaml` → registry三件套 applied |
+| `B01-C03`   | `debt/round3-tdx-manual-probe`                 | TDX disabled-candidate                         | **PROBE_PASS_RAW_ONLY** (mocked); live **PROBE_REDEFERRED**            | `.trellis/tasks/round3-tdx-manual-probe/research/registry_proposed_delta.yaml` · `tests/test_tdx_manual_probe.py`                 |
+| `B01-C04`   | `feature/round3-real-data-staged-pilot-v3`     | `R3-PROMPT14-AKSHARE-VAL-01`                   | **RE-DEFERRED** validation-only; taxonomy + proposed registry delta    | `.trellis/tasks/06-25-round3-real-data-staged-pilot-v3/execute-evidence/registry_proposed_delta_v3.yaml`                          |
+| `B01-C05`   | `feature/round3-readonly-data-health-v2`       | Data health v2 readiness                       | **CLOSED** read-only profiles; not production-ready                    | merge `dd5fda5f` · `tests/test_data_health_v2.py`                                                                                 |
+| `B01-LIN`   | `fix/round3-batch6-lineage-and-layer3-hygiene` | `ADV-R3X-LINEAGE-001` (partial hygiene)        | Hygiene tests delivered; full lineage registry row remains **Batch 6** | merge `06bcfde1`                                                                                                                  |
+| `B01-023`   | `feature/round3-023b-evidence-chain-full`      | `R3-PARTIAL-4` (ADR path); `R2-RISK-2` (ports) | Chain + ADR-023; model validators honestly **deferred** in contract    | merge `376e30e6` · `tests/test_layer5_evidence_chain.py` · ADR-023                                                                |
+
+**Registry 三件套 reconcile (主会话):**
+
+| Artifact                                             | Batch 01 delta source                                                          | Applied state           |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------ | ----------------------- |
+| `specs/datasource_registry/source_registry.yaml`     | FRED `fred` row + `macro_series` domain; TDX `tdx_pytdx` validation-only notes | merge Track A #1–#4     |
+| `specs/datasource_registry/source_capabilities.yaml` | FRED `sandbox_candidate`; TDX `proposed_disabled_source`                       | merge FRED/TDX branches |
+| `specs/contracts/platform_source_matrix.yaml`        | FRED `default_enabled: false`, `requires_user_confirmation`                    | merge FRED branch       |
+
+**Explicit non-closure:** `R3-B2.75-REQ2-EM` — TDX/SP3 cannot close alone (manifest §5).
 
 ## 5. Round4 unresolved / deferred items
 

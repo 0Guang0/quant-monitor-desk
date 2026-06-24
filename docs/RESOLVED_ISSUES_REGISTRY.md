@@ -2,7 +2,19 @@
 
 > Purpose: one file for resolved/closed issues, gates, risks, and repairs.  
 > Pair: unresolved items live in `docs/UNRESOLVED_ISSUES_REGISTRY.md`.  
-> Last reconciled: 2026-06-24 post-wave-C registry reconcile + Trellis archive (`master` @ `d49e21d3`).
+> Last reconciled: 2026-06-25 post-Batch 01 merge + registry reconcile (`master` @ `376e30e6`).
+
+## Post-Batch 01 resolved (2026-06-25)
+
+| ID           | Closed     | Item                                            | Evidence                                                                                                                                                                                                           |
+| ------------ | ---------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| R3-TASK-023  | 2026-06-25 | Full Layer5 evidence chain (`023b` / Wave D)    | merge `376e30e6` · `backend/app/layer5_evidence/evidence_chain.py` · `tests/test_layer5_evidence_chain.py` · `docs/adr/ADR-023-layer5-conflict-review-path.md` · `.trellis/tasks/round3-023b-evidence-chain-full/` |
+| R3D-B01-WL   | 2026-06-25 | Model input whitelist (Batch 3D.2 / B01-C01)    | merge `b09a3ca6` · `specs/model_inputs/**` · `docs/quality/model_input_readiness_matrix.md` · `tests/test_model_input_whitelist.py`                                                                                |
+| R3D-B01-LIN  | 2026-06-25 | Lineage & Layer3 hygiene (Batch 3D.3 / B01-LIN) | merge `06bcfde1` · debt-lite lineage/L3 hygiene tests                                                                                                                                                              |
+| R3E-B01-FRED | 2026-06-25 | FRED authorized sandbox pilot (3E.1 / B01-C02)  | merge `9ae91648` · registry三件套 `fred` · `tests/test_fred_sandbox_pilot.py` · FRED-only sandbox closeout; **does not** close live `B2.5-O-05` primary                                                            |
+| R3E-B01-TDX  | 2026-06-25 | TDX manual probe (3E.2 / B01-C03)               | merge `01ad6a07` · `tests/test_tdx_manual_probe.py` · mocked `PROBE_PASS_RAW_ONLY` · live `PROBE_REDEFERRED`                                                                                                       |
+| R3E-B01-SP3  | 2026-06-25 | Staged pilot v3 (3E.3 / B01-C04)                | merge `1a099e8d` · `tests/test_real_data_staged_pilot_v3.py` · proposed delta reconciled                                                                                                                           |
+| R3E-B01-DH2  | 2026-06-25 | Read-only data health v2 (3E.4 / B01-C05)       | merge `dd5fda5f` · `tests/test_data_health_v2.py` · read-only profiles; not production-ready                                                                                                                       |
 
 ## Post-Wave C resolved (2026-06-24)
 

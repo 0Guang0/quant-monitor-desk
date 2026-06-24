@@ -44,7 +44,7 @@ sources:
     validation_only: false
     rate_limit_policy: polite_daily_batch
     requires_user_setup: false
-    notes: 适合作为 A 股历史日线与基础财务第一阶段主源之一。
+    notes: 适合作为 A 股历史日线与基础财务第一阶段主源之一。Batch 01 SP3 v3 staged expand sample (merge 1a099e8d); sandbox_candidate readiness.
   - source_id: akshare
     source_name: AkShare
     source_type: aggregator
@@ -60,7 +60,7 @@ sources:
     validation_only: true
     rate_limit_policy: polite_batch_with_cache
     requires_user_setup: false
-    notes: 聚合源只能带 source_used 与 quality_flags；不得作为唯一事实源。
+    notes: 聚合源只能带 source_used 与 quality_flags；不得作为唯一事实源。Batch 01 SP3 v3 validation-only re-defer (R3-PROMPT14-AKSHARE-VAL-01 open).
   - source_id: cninfo
     source_name: 巨潮资讯 CNINFO
     source_type: filing_announcement
@@ -75,7 +75,7 @@ sources:
     validation_only: false
     rate_limit_policy: polite_document_fetch
     requires_user_setup: false
-    notes: 公告和财报 PDF 原文优先来源。
+    notes: 公告和财报 PDF 原文优先来源。Batch 01 SP3 v3 metadata expand sample (merge 1a099e8d); sandbox_candidate readiness.
   - source_id: yahoo_finance
     source_name: Yahoo Finance / yfinance-compatible access
     source_type: public_market_data
@@ -105,7 +105,7 @@ sources:
     validation_only: true
     rate_limit_policy: polite_batch
     requires_user_setup: false
-    notes: 018C disabled-by-default candidate; validation-only probe until explicit TDX host authorization.
+    notes: Batch 01 B01-TDX mocked PROBE_PASS_RAW_ONLY; live PROBE_REDEFERRED; 018C disabled-by-default validation-only probe.
   - source_id: fred
     source_name: Federal Reserve Economic Data (FRED)
     source_type: vendor_api
@@ -118,7 +118,7 @@ sources:
     validation_only: false
     rate_limit_policy: polite_api_with_key
     requires_user_setup: true
-    notes: B01-FRED sandbox-candidate; disabled-by-default; not production-live.
+    notes: Batch 01 B01-FRED sandbox-candidate (merge 9ae91648); disabled-by-default; FRED-only sandbox evidence recorded; live primary B2.5-O-05 RE-DEFERRED Batch 6.
 domain_roles:
   cn_equity_daily_bar:
     primary: baostock
