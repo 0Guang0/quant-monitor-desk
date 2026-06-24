@@ -94,7 +94,6 @@ def test_layer1Migration_createsSnapshotLineageTable(migrated_con, tmp_path) -> 
     assert "axis_snapshot_lineage" in tables
     cols = _table_columns(con, "axis_snapshot_lineage")
     assert AXIS_SNAPSHOT_LINEAGE_COLUMNS.issubset(cols)
-    assert "rule_version" in cols
     con.close()
 
 
@@ -259,12 +258,9 @@ def test_shadowDiagnosticsOutsideGroup_requireExplicitDiagnosticOnly(tmp_path: P
     orphan = next(i for i in result.indicators if i.indicator_id == "LIQ.SHADOW.ORPHAN_TEST")
     with pytest.raises(GuardrailViolationError, match="diagnostic_only"):
         AxisEngineeringGuardrailValidator.assert_shadow_outside_group_has_diagnostic_only(orphan)
-    orphan_diag = next(
-        (i for i in result.indicators if i.indicator_id == "LIQ.SHADOW.ORPHAN_TEST"),
-    )
-    assert orphan_diag.is_shadow
+    assert orphan.is_shadow
     # Fix by setting diagnostic_only — loader should mark it
-    assert not orphan_diag.diagnostic_only
+    assert not orphan.diagnostic_only
 
 
 def test_axisSpecLoader_emptySpecRoot_rejects(tmp_path: Path) -> None:

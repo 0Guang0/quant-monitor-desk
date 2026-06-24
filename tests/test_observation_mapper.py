@@ -107,6 +107,28 @@ def _write_raw(data_root: Path, rel: str, payload: dict) -> None:
     path.write_text(json.dumps(payload), encoding="utf-8")
 
 
+def test_mapMicroFetch_mapsValidFixturePayload(tmp_path: Path) -> None:
+    """覆盖范围：合法原始拉取数据如何映射成可入库观测行
+    测试对象：map_micro_fetch_to_observation_row
+    目的/目标：冻结指标夹具的数值与来源须正确写入观测行核心字段
+    验证点：indicator_id/raw_value/source_used/quality_flags 与夹具一致
+    失败含义：合法拉取无法映射，正式提交路径永远无法生成观测行
+    """
+    rel = "raw/akshare/macro_supplementary/2024-06-15/valid.json"
+    payload = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    _write_raw(tmp_path, rel, payload)
+    row = map_micro_fetch_to_observation_row(
+        _micro(raw_paths=(rel,)),
+        data_root=tmp_path,
+        fixture_path=FIXTURE,
+    )
+    expected_value = payload["observations"][0]["metric_value"]
+    assert row["indicator_id"] == FROZEN_STAGED_INDICATOR
+    assert row["raw_value"] == float(expected_value)
+    assert row["source_used"] == "akshare"
+    assert row["quality_flags"] == "STAGED_FIXTURE"
+
+
 def test_mapMicroFetch_rejectsNonSuccessStatus(tmp_path: Path) -> None:
     """覆盖范围：拉数失败时，不能把拉取结果转成可入库观测行
     测试对象：map_micro_fetch_to_observation_row
