@@ -8,10 +8,6 @@ from __future__ import annotations
 from tests.service_path_support import production_route_planner
 
 
-def _planner():
-    return production_route_planner()
-
-
 def test_qmtDisabled_routePlanShowsSkipReason() -> None:
     """覆盖范围：默认禁用的 QMT 分钟线域路由
     测试对象：SourceRoutePlanner.plan（cn_equity_minute_bar）
@@ -19,7 +15,7 @@ def test_qmtDisabled_routePlanShowsSkipReason() -> None:
     验证点：route_status=DISABLED_SOURCE；qmt_xtdata.skip_reason 非空且 capability_declared=True
     失败含义：禁用 QMT 仍可能被选中或跳过原因不可审计
     """
-    planner = _planner()
+    planner = production_route_planner()
     plan = planner.plan(
         data_domain="cn_equity_minute_bar",
         operation="fetch_minute_bar",
@@ -42,7 +38,7 @@ def test_noAvailableSource_hasNoSelectedSource() -> None:
     验证点：route_status 为 DISABLED/NO_AVAILABLE/USER_AUTH 之一；selected 为 None
     失败含义：无源域仍返回 READY，调度会误触发 vendor fetch
     """
-    planner = _planner()
+    planner = production_route_planner()
     plan = planner.plan(
         data_domain="us_equity_daily_bar",
         operation="fetch_us_daily_bar_validation",
@@ -61,7 +57,7 @@ def test_fallbackAddsQualityFlag() -> None:
     验证点：选中 qmt_xtdata 时含 SOURCE_FALLBACK_USED；否则 READY+baostock
     失败含义：fallback 切换无审计标记，数据质量追溯失真
     """
-    planner = _planner()
+    planner = production_route_planner()
     plan = planner.plan(
         data_domain="cn_equity_daily_bar",
         operation="fetch_daily_bar",
@@ -83,7 +79,7 @@ def test_readyRoute_selectedSourceIdNotNull() -> None:
     验证点：route_status=READY；selected_source_id=baostock；quality_flags 为空
     失败含义：主域日线无法自动路由，同步编排主路径断裂
     """
-    planner = _planner()
+    planner = production_route_planner()
     plan = planner.plan(
         data_domain="cn_equity_daily_bar",
         operation="fetch_daily_bar",
@@ -102,7 +98,7 @@ def test_capabilityMissing_routeStatusCapabilityMissing() -> None:
     验证点：baostock capability_declared=False；route_status=DISABLED_SOURCE；含 DOMAIN_DISABLED_BY_DEFAULT
     失败含义：未声明能力的源仍可进入 fetch 路径
     """
-    planner = _planner()
+    planner = production_route_planner()
     plan = planner.plan(
         data_domain="cn_equity_realtime",
         operation="fetch_realtime_quote",
@@ -118,14 +114,14 @@ def test_capabilityMissing_routeStatusCapabilityMissing() -> None:
     assert plan.selected_source_id is None
 
 
-def test_userAuthRequired_routeStatusWhenAuthorizationMissing() -> None:
+def test_etfDailyBar_disabledSource_marksYahooSkipWhenAuthorizationMissing() -> None:
     """覆盖范围：ETF 日线校验域需用户授权
     测试对象：SourceRoutePlanner.plan（etf_daily_bar）
     目的/目标：缺授权的环境变量时 yahoo 等候选应标明 skip_reason
     验证点：route_status=DISABLED_SOURCE；yahoo skip_reason 含 user_authorization 或 missing_env
     失败含义：未授权外部源被静默选中，合规与计费风险
     """
-    planner = _planner()
+    planner = production_route_planner()
     plan = planner.plan(
         data_domain="etf_daily_bar",
         operation="fetch_etf_daily_bar_validation",

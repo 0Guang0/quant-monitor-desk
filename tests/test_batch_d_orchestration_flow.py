@@ -185,7 +185,6 @@ def test_incrementalJob_repeatRun_noDuplicatePrimaryKey(
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
     orch, adapter = _orch_stack(tmp_path, registry_yaml_fixture)
     spec = _incremental_spec("job-repeat-d")
-    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
     r1 = orch.run_incremental(
         spec,
         adapter=adapter,

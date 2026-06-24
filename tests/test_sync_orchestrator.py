@@ -745,6 +745,7 @@ def test_plannedJobWritesRoutePlanBeforeFetching(tmp_path, monkeypatch) -> None:
     from backend.app.datasources.source_registry import SourceRegistry
     from backend.app.sync.event_payload import parse_event_payload
     from tests.service_path_support import (
+        ensure_bar_staging_tables,
         make_fixture_port,
         patch_create_test_adapter_for_staging,
         write_bar_fixture,
@@ -758,15 +759,7 @@ def test_plannedJobWritesRoutePlanBeforeFetching(tmp_path, monkeypatch) -> None:
     reg.load()
     STG = "stg_route_plan_test"
     with orch._cm.writer() as con:
-        con.execute(
-            f"""
-            CREATE TABLE IF NOT EXISTS {STG} (
-                instrument_id VARCHAR, trade_date VARCHAR, close DOUBLE,
-                source_used VARCHAR, batch_id VARCHAR, source_id VARCHAR
-            )
-            """
-        )
-        con.execute(f"CREATE TABLE IF NOT EXISTS clean_route AS SELECT * FROM {STG} WHERE 1=0")
+        ensure_bar_staging_tables(con, STG, clean_name="clean_route")
 
     raw_root = tmp_path / "raw"
     raw_root.mkdir()

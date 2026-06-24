@@ -7,11 +7,9 @@ from __future__ import annotations
 
 import importlib
 import pkgutil
-from pathlib import Path
 from typing import Any
 
 import pytest
-import yaml
 from backend.app.datasources.capability_registry import (
     ADAPTER_DOMAIN_COMPATIBILITY_MAP,
     OperationDisabledError,
@@ -19,14 +17,10 @@ from backend.app.datasources.capability_registry import (
     UnknownCapabilityError,
 )
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
+from tests.contract_gate_support import PROJECT_ROOT, load_yaml
+
 SOURCE_REGISTRY = PROJECT_ROOT / "specs/datasource_registry/source_registry.yaml"
 SOURCE_CAPABILITIES = PROJECT_ROOT / "specs/datasource_registry/source_capabilities.yaml"
-ADAPTERS_PKG = "backend.app.datasources.adapters"
-
-
-def load_yaml(path: Path) -> dict[str, Any]:
-    return yaml.safe_load(path.read_text(encoding="utf-8")) or {}
 
 
 def load_source_registry() -> dict[str, Any]:

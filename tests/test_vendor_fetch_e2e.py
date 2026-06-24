@@ -5,18 +5,21 @@
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 from backend.app.core.resource_guard import Decision, ResourceGuard
-from backend.app.datasources.adapters.fetch_port import LocalFixtureFetchPort
-from backend.app.datasources.adapters.skeleton_base import SkeletonAdapterBase
 from backend.app.datasources.source_registry import SourceRegistry
 from backend.app.db.connection import ConnectionManager
 from backend.app.db.migrate import apply_migrations
 from backend.app.storage.raw_store import RawStore
 from backend.app.sync.jobs import SyncJobSpec
 from backend.app.sync.orchestrator import DataSyncOrchestrator
+from tests.service_path_support import (
+    ensure_bar_staging_tables,
+    make_fixture_port,
+    make_staging_baostock_adapter_class,
+    write_bar_fixture,
+)
 
 FIXTURE_JSON = Path(__file__).parent / "fixtures" / "vendor_bar_fixture.json"
 STG_TABLE = "stg_vendor_e2e"
@@ -32,56 +35,30 @@ def test_vendorFixtureFetch_e2eOrchestratorPath(
     验证点：status==COMPLETED；fetch/report/audit 计数≥1；clean 表 1 行
     失败含义：编排器主路径断链会导致 Round2 vendor E2E 门禁失效
     """
-    FIXTURE_JSON.write_text(
-        json.dumps([{"symbol": "000001", "close": 10.5, "trade_date": "2026-06-15"}]),
-        encoding="utf-8",
-    )
+    write_bar_fixture(FIXTURE_JSON)
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
 
     db = tmp_path / "vendor_e2e.duckdb"
     cm = ConnectionManager(db_path=db)
     with cm.writer() as con:
         apply_migrations(con)
-        con.execute(
-            f"""
-            CREATE TABLE IF NOT EXISTS {STG_TABLE} (
-                instrument_id VARCHAR, trade_date VARCHAR, close DOUBLE,
-                source_used VARCHAR, batch_id VARCHAR, source_id VARCHAR
-            )
-            """
-        )
-        con.execute(
-            f"CREATE TABLE IF NOT EXISTS {CLEAN_TABLE} AS SELECT * FROM {STG_TABLE} WHERE 1=0"
-        )
+        ensure_bar_staging_tables(con, STG_TABLE, clean_name=CLEAN_TABLE)
 
     reg = SourceRegistry(registry_yaml_fixture)
     reg.load()
     with cm.writer() as con:
         reg.sync_to_db(con, tombstone_missing=False)
 
-    class FixtureStagingAdapter(SkeletonAdapterBase):
-        source_id = "baostock"
-        supported_domains = frozenset({"market_bar_1d"})
-
-        def fetch(self, req, *, con, job_id=None, record_fetch_log: bool = True):
-            result = super().fetch(req, con=con, job_id=job_id, record_fetch_log=record_fetch_log)
-            if result.status == "SUCCESS":
-                con.execute(f"DELETE FROM {STG_TABLE}")
-                con.execute(
-                    f"""
-                    INSERT INTO {STG_TABLE} VALUES (?, ?, ?, ?, ?, ?)
-                    """,
-                    ["000001", "2026-06-15", 10.5, "baostock", "v1", "baostock"],
-                )
-                return result.model_copy(update={"staging_table": STG_TABLE, "row_count": 1})
-            return result
-
+    staging_cls = make_staging_baostock_adapter_class(
+        STG_TABLE,
+        supported_domains=frozenset({"market_bar_1d"}),
+    )
     raw_root = tmp_path / "raw"
     raw_root.mkdir()
-    adapter = FixtureStagingAdapter(
+    adapter = staging_cls(
         reg,
         raw_store=RawStore(raw_root),
-        fetch_port=LocalFixtureFetchPort(FIXTURE_JSON, row_count=1),
+        fetch_port=make_fixture_port(FIXTURE_JSON),
     )
     orch = DataSyncOrchestrator(cm)
     spec = SyncJobSpec(
@@ -139,17 +116,7 @@ def test_vendorFixtureFetch_e2eThroughDataSourceServicePath(tmp_path: Path, monk
     cm = ConnectionManager(db_path=db)
     with cm.writer() as con:
         apply_migrations(con)
-        con.execute(
-            f"""
-            CREATE TABLE IF NOT EXISTS {STG_TABLE} (
-                instrument_id VARCHAR, trade_date VARCHAR, close DOUBLE,
-                source_used VARCHAR, batch_id VARCHAR, source_id VARCHAR
-            )
-            """
-        )
-        con.execute(
-            f"CREATE TABLE IF NOT EXISTS {CLEAN_TABLE} AS SELECT * FROM {STG_TABLE} WHERE 1=0"
-        )
+        ensure_bar_staging_tables(con, STG_TABLE, clean_name=CLEAN_TABLE)
 
     reg = SourceRegistry()
     reg.load()

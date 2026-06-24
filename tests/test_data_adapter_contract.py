@@ -15,7 +15,7 @@ from backend.app.datasources.base_adapter import BaseDataAdapter
 from backend.app.datasources.exceptions import SourceMismatchError
 from backend.app.datasources.fetch_log import FetchLogValidationError, FetchLogWriter
 from backend.app.datasources.fetch_result import FetchRequest, FetchResult
-from backend.app.datasources.source_registry import DomainNotAllowedError, SourceDisabledError
+from backend.app.datasources.source_registry import DomainNotAllowedError
 from backend.app.db.connection import ConnectionManager
 from backend.app.db.migrate import apply_migrations
 from pydantic import ValidationError
@@ -42,6 +42,25 @@ ERROR_TYPE_BY_STATUS = {
     "SCHEMA_DRIFT": "schema",
     "FAILED": "failed",
 }
+
+
+class _EmptyResponseAdapter(BaseDataAdapter):
+    """Returns EMPTY_RESPONSE for fetch_log contract tests."""
+
+    source_id = "baostock"
+    supported_domains = frozenset({"market_bar_1d"})
+
+    def _fetch_impl(self, req):
+        return FetchResult(
+            run_id=req.run_id,
+            source_id=self.source_id,
+            data_domain=req.data_domain,
+            status="EMPTY_RESPONSE",
+            row_count=0,
+            fetch_time="2026-06-17T10:00:00Z",
+            staging_table=None,
+            raw_file_paths=[],
+        )
 
 
 def _valid_result_for_status(status: str) -> FetchResult:
@@ -663,24 +682,8 @@ def test_fetch_alwaysWritesFetchLog_evenOnEmptyResponse(
     验证点：COUNT(*)==1
     失败含义：空抓取无记录，与「失败也记」策略不一致
     """
-    class EmptyAdapter(BaseDataAdapter):
-        source_id = "baostock"
-        supported_domains = frozenset({"market_bar_1d"})
-
-        def _fetch_impl(self, req):
-            return FetchResult(
-                run_id=req.run_id,
-                source_id=self.source_id,
-                data_domain=req.data_domain,
-                status="EMPTY_RESPONSE",
-                row_count=0,
-                fetch_time="2026-06-17T10:00:00Z",
-                staging_table=None,
-                raw_file_paths=[],
-            )
-
     con = migrated_con(tmp_path)
-    adapter = EmptyAdapter(loaded_registry)
+    adapter = _EmptyResponseAdapter(loaded_registry)
     req = request_factory("baostock")
     adapter.fetch(req, con=con, record_fetch_log=True)
     assert con.execute("SELECT COUNT(*) FROM fetch_log").fetchone()[0] == 1
@@ -698,24 +701,8 @@ def test_fetch_emptyResponse_hasNoStagingEvidence(
     验证点：json.loads(row)==[]
     失败含义：空响应伪造 staging 路径，validation 误判有数据
     """
-    class EmptyAdapter(BaseDataAdapter):
-        source_id = "baostock"
-        supported_domains = frozenset({"market_bar_1d"})
-
-        def _fetch_impl(self, req):
-            return FetchResult(
-                run_id=req.run_id,
-                source_id=self.source_id,
-                data_domain=req.data_domain,
-                status="EMPTY_RESPONSE",
-                row_count=0,
-                fetch_time="2026-06-17T10:00:00Z",
-                staging_table=None,
-                raw_file_paths=[],
-            )
-
     con = migrated_con(tmp_path)
-    adapter = EmptyAdapter(loaded_registry)
+    adapter = _EmptyResponseAdapter(loaded_registry)
     req = request_factory("baostock")
     adapter.fetch(req, con=con, record_fetch_log=True)
     row = con.execute(
