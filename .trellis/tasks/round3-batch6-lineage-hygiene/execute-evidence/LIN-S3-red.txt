@@ -1,0 +1,3 @@
+LIN-S3 RED — missing L3 empty fetch/hash direct tests + L3→L4 upstream propagation test
+Expected: -k lineage collected fewer contract-scoped cases
+Observed: gaps documented in AUD-R3X / 021 recheck before Execute

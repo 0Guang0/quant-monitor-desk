@@ -210,7 +210,9 @@ def _bar_for_trade_date(
     # ponytail: O(bars) linear scan; staged 子集单日 bar；生产化可加索引或 max_bars cap (A6 NB-2)
     for bar in bars:
         if not isinstance(bar, dict):
-            continue
+            raise Layer3SnapshotError(
+                f"bar element for {ticker!r} must be a mapping, got {type(bar).__name__}"
+            )
         if str(bar.get("trade_date", "")) == target:
             for key in _BAR_REQUIRED_KEYS:
                 if key not in bar:
