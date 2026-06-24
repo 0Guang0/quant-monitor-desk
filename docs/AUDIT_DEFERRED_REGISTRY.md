@@ -2,9 +2,10 @@
 
 **Single source of truth** for open issues, intentional deferrals, and resolved audit items.
 
-> Last reconciled: 2026-06-24 after fix α-2 registry slice + wave-A merge + PROMPT_18 R3Y rows (`master` @ `527d6506`). Pair: `docs/UNRESOLVED_ISSUES_REGISTRY.md`.
+> Last reconciled: 2026-06-24 post-wave-B merge + Trellis archive (`master` @ `68b10982`). Pair: `docs/UNRESOLVED_ISSUES_REGISTRY.md`.
 
 **Batch 2.5 audit 待修复台账（含合理延期清理阶段）:** [`docs/quality/ROUND3_BATCH25_PENDING_FIX_REGISTRY.md`](quality/ROUND3_BATCH25_PENDING_FIX_REGISTRY.md)  
+**Wave B 待偿还台账:** [`docs/quality/ROUND3_WAVE_B_PENDING_FIX_REGISTRY.md`](quality/ROUND3_WAVE_B_PENDING_FIX_REGISTRY.md)  
 **Batch 6 / 021 Layer3 待偿还台账:** [`docs/quality/ROUND3_BATCH6_021_PENDING_FIX_REGISTRY.md`](quality/ROUND3_BATCH6_021_PENDING_FIX_REGISTRY.md)  
 **ingestion 拆分回滚方案（后置）:** [`docs/architecture/layer1_ingestion_refactor_rollback_plan.md`](architecture/layer1_ingestion_refactor_rollback_plan.md)
 
@@ -159,31 +160,38 @@ Does **not** block 017 per `ROUND2_GAPS` §6; **must** be closed or re-deferred 
 
 ## DEFERRED — Round 3 PROMPT_18 R3Y follow-ups
 
-Does **not** block staged-only mainline; **does** gate PROMPT_19/20 controls per AUD-08.
+Does **not** block staged-only mainline; PROMPT_19/β-1 **closed** 2026-06-24. Remaining hygiene gates PROMPT_15 claim (α-3) and staged-reg bypass (β-2).
 
-| ID                  | Item                                      | Resolution phase       | Task hook                                  | Blocks 019? | Closure test / evidence                                             |
-| ------------------- | ----------------------------------------- | ---------------------- | ------------------------------------------ | ----------- | ------------------------------------------------------------------- |
-| ADV-R3X-LINEAGE-001 | Full L3/L4 snapshot lineage               | **Batch 4B+** (`021`+) | `021_implement_layer3_snapshot_builder.md` | No          | snapshot lineage pytest + registry row; fix **α-2** registers defer |
-| R3Y-LINEAGE-VR-001  | VR / fetch_log binding for Layer2 lineage | **Batch 4B+** (`021`+) | same · AUD-05                              | No          | lineage tests must not use synthetic IDs as VR binding              |
-| R3Y-TEST-DEPTH-001  | Runtime-strong closed-claim test depth    | **Batch 6 hygiene**    | `ROUND3_BATCH_IMPLEMENTATION_MAP.md` §2.4  | No          | per-ID runtime pytest or explicit wont-fix ADR                      |
+| ID                  | Item                                      | Resolution phase       | Task hook                                  | Blocks 019? | Closure test / evidence                                          |
+| ------------------- | ----------------------------------------- | ---------------------- | ------------------------------------------ | ----------- | ---------------------------------------------------------------- |
+| ADV-R3X-LINEAGE-001 | Full L3/L4 snapshot lineage               | **Batch 5A+** (`022`+) | `022_implement_layer4_market_structure.md` | No          | snapshot lineage pytest + registry row; 021 staged envelope only |
+| R3Y-LINEAGE-VR-001  | VR / fetch_log binding for Layer2 lineage | **Batch 5A+** (`022`+) | same · AUD-05                              | No          | lineage tests must not use synthetic IDs as VR binding           |
+| R3Y-TEST-DEPTH-001  | Runtime-strong closed-claim test depth    | **Batch 6 hygiene**    | `ROUND3_BATCH_IMPLEMENTATION_MAP.md` §2.4  | No          | per-ID runtime pytest or explicit wont-fix ADR                   |
 
-| ADV-R3X-SYNC-001 (full)                 | Production sync adapter= fail-closed + runner guard | `fix/r3y-sync-adapter-guard` · `tests/test_sync_orchestrator.py::test_r3ySync001_*` · merge α-1 after α-2 registry |
+## RESOLVED — Round 3 Wave B mainline (2026-06-24)
+
+| ID                  | Item                                    | Evidence                                                                          |
+| ------------------- | --------------------------------------- | --------------------------------------------------------------------------------- |
+| R3-TASK-021         | Layer3 snapshot builder `021`           | archived `06-24-round3-021-layer3-snapshot` · `snapshot_builder.py` · Audit PASS  |
+| R3-PROMPT19-V2      | PROMPT_19 staged pilot v2               | merge `e4abb372` · archived `06-24-round3-real-data-staged-pilot-v2` · Audit PASS |
+| R3Y-MUT-PROOF-001   | `mutation_proof` VERIFIED semantics     | `mutation_proof.py` · `tests/test_staged_pilot.py` AC-MUT-001                     |
+| R3Y-REGISTRY-ALPHA2 | fix α-2 registry / Map reconcile        | merge `984c7b28` · archived `fix-r3y-registry-lineage-defer`                      |
+| R3Y-SYNC-001        | Sync `adapter=` prod bypass fail-closed | merge `616feeb8` · archived `fix-r3y-sync-adapter-guard` · `test_r3ySync001_*`    |
 
 ## RESOLVED — Round 3 PROMPT_18 R3Y hygiene (2026-06-24)
 
-| ID           | Item                         | Evidence                                                                                          |
-| ------------ | ---------------------------- | ------------------------------------------------------------------------------------------------- |
-| R3Y-SYNC-001 | Sync `adapter=` prod bypass  | `fix/r3y-sync-adapter-guard` · `guard_production_adapter_bypass` + `guard_runner_direct_adapter_bypass` · `test_r3ySync001_*` |
+| ID           | Item                        | Evidence                                                                                                                               |
+| ------------ | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| R3Y-SYNC-001 | Sync `adapter=` prod bypass | archived `fix-r3y-sync-adapter-guard` · `guard_production_adapter_bypass` + `guard_runner_direct_adapter_bypass` · `test_r3ySync001_*` |
 
 ## OPEN (hygiene) — Round 3 PROMPT_18 R3Y follow-ups
 
-Non-blocking for read-only audit; **blocks claiming PROMPT_15 fully proven** and **blocks PROMPT_19 closeout without controls**.
+Non-blocking for read-only audit; **blocks claiming PROMPT_15 fully proven** until α-3 closes.
 
-| ID                    | Item                                     | Resolution phase    | Task hook                                  | Closure test / evidence                                            |
-| --------------------- | ---------------------------------------- | ------------------- | ------------------------------------------ | ------------------------------------------------------------------ |
-| R3Y-MUT-PROOF-001     | `mutation_proof` VERIFIED semantics      | **PROMPT_19 / β-1** | `feature/round3-real-data-staged-pilot-v2` | VERIFIED requires hash/row-count; INCONCLUSIVE when inconclusive   |
-| R3Y-STAGED-REG-001    | staged file_registry WriteManager bypass | **β-2 after α-1**   | `fix/r3y-staged-registry-privatize`        | API privatized or WriteManager-routed; doc metadata-only policy    |
-| R3Y-PROMPT15-EVID-001 | PROMPT_15 execute evidence chain         | **fix α-3**         | `fix/r3y-prompt15-evidence`                | `*-green.txt` + closed-claim matrix per AUD-01/07                  |
+| ID                    | Item                                     | Resolution phase  | Task hook                           | Closure test / evidence                                         |
+| --------------------- | ---------------------------------------- | ----------------- | ----------------------------------- | --------------------------------------------------------------- |
+| R3Y-STAGED-REG-001    | staged file_registry WriteManager bypass | **β-2 after α-1** | `fix/r3y-staged-registry-privatize` | API privatized or WriteManager-routed; doc metadata-only policy |
+| R3Y-PROMPT15-EVID-001 | PROMPT_15 execute evidence chain         | **fix α-3**       | `fix/r3y-prompt15-evidence`         | `*-green.txt` + closed-claim matrix per AUD-01/07               |
 
 ---
 

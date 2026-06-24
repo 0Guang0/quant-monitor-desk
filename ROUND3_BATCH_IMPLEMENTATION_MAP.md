@@ -6,34 +6,34 @@
 >
 > Scope rule: `docs/` and `specs/` are design/contract inputs only. Runtime implementation must land in `backend/`, `frontend/`, `scripts/`, `configs/`, `tests/`, or other implementation paths already mapped by `MIGRATION_MAP.md`.
 >
-> Current checkpoint (2026-06-23): Mainline **`master`** @ **`527d6506`** (post-wave-A). **Wave A merged:** `019` / `023A` / **`020`** / **PROMPT_18** (`WARN_ALLOW_WITH_CONTROLS`). **Active:** §2.4 wave B + fix α slices. **Next serial:** PROMPT_19 → PROMPT_20; **021** may run parallel with B. `R3-B2.75-REQ2-EM` remains DEFERRED (hard constraint).
+> Current checkpoint (2026-06-24): Mainline **`master`** @ **`68b10982`** (post-wave-B). **Active — Wave C (four-way parallel):** **PROMPT_20** ∥ **022** ∥ fix **α-3** ∥ fix **β-2**. **Done + archived:** Wave A/B incl. `019`/`020`/`021`/`023A`, PROMPT_18/19, fix α-1/α-2. **Next serial after Wave C merge:** **`023`**. Hard constraint: `R3-B2.75-REQ2-EM` **DEFERRED** (staged-only; no production-live). Pending hygiene: `docs/quality/ROUND3_WAVE_B_PENDING_FIX_REGISTRY.md`. **Worktree SSOT:** §2.2–§2.3 below.
 
 ## 0. Mandatory inputs before planning any Round 3 batch
 
 These files are **Plan-stage inputs**. Plan must read them, reconcile them, and fold the relevant parts into `.trellis/tasks/**/MASTER.plan.md` Source Context Index and `AUDIT.plan.md` Audit Source Trace. Execute / Audit / Repair must not treat this list as their default read manifest.
 
-| Input                                                               | Why it is mandatory                                                                                                           |
-| ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `MIGRATION_MAP.md`                                                  | Project-level map and implementation-directory boundary.                                                                      |
-| `docs/implementation_tasks/TASK_INPUT_CONTEXT_INDEX.md`             | Plan-only context bridge and Trellis archive pointers.                                                                        |
-| `docs/AUDIT_DEFERRED_REGISTRY.md`                                   | Authoritative registry for OPEN / DEFERRED / RESOLVED audit items.                                                            |
-| `docs/UNRESOLVED_ISSUES_REGISTRY.md`                                | Operator-facing unresolved/deferred split.                                                                                    |
-| `docs/RESOLVED_ISSUES_REGISTRY.md`                                  | Prevents reopening items that are already closed.                                                                             |
-| `docs/ROUND3_HANDOFF.md`                                            | Round 3 entry handoff and start checklist.                                                                                    |
-| `docs/implementation_tasks/ROUND3_EARLY_CLOSE_PLAN.md`              | Round 3 early ops and deferral closeout plan.                                                                                 |
-| `docs/implementation_tasks/ROUND_3_MODELING_LAYERS/README.md`       | Declares formal Round 3 tasks `017`-`023` and the unnumbered DB inspect CLI boundary.                                         |
-| `.trellis/spec/guides/complex-task-planning-protocol.md`            | Trellis complex-task planning, batching, Execute, Audit, Repair, and Phase 8D Repair/Debt Lite rules.                         |
-| `.trellis/spec/guides/round3-repair-debt-worktree-plan.md`          | Round 3 branch/worktree split plan for staged mainline plus parallel debt repair.                                             |
-| `docs/implementation_tasks/ROUND_3_REFERENCE_LANDING/README.md`     | External-reference landing task index with project URLs, round/batch ownership, branchability, and source-input rules.        |
-| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/*.md`           | Per-branch startup prompts for independent Round 3 sessions; see §2.2 for the total index, including next-batch PROMPT_07–10. |
-| `docs/implementation_tasks/ROUND_3_REVIEW/019_plan_audit_review.md` | Read-only review task card for `review/round3-019-plan-audit`.                                                                |
-| `docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md`               | Global execution boundaries that Plan must fold into MASTER.                                                                  |
-| `docs/implementation_tasks/GLOBAL_TESTING_POLICY.md`                | Testing policy and semantic assertion requirements.                                                                           |
-| `docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md`               | ResourceGuard / eco-mode constraints for every batch.                                                                         |
-| `docs/quality/staged_acceptance_policy.md`                          | Stage-specific acceptance and partial-delivery rules.                                                                         |
-| `docs/quality/production_live_pilot_policy.md`                      | Batch 2.75 live-pilot authorization, sandbox, evidence, and no-mutation controls.                                             |
-| `docs/quality/PENDING_USER_DECISIONS.md`                            | User-confirmed D-01 through D-12 decisions that Plan must not reopen.                                                         |
-| `specs/contracts/runtime_versions.md`                               | Runtime, lockfile, and acceptance-command authority.                                                                          |
+| Input                                                               | Why it is mandatory                                                                                                    |
+| ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `MIGRATION_MAP.md`                                                  | Project-level map and implementation-directory boundary.                                                               |
+| `docs/implementation_tasks/TASK_INPUT_CONTEXT_INDEX.md`             | Plan-only context bridge and Trellis archive pointers.                                                                 |
+| `docs/AUDIT_DEFERRED_REGISTRY.md`                                   | Authoritative registry for OPEN / DEFERRED / RESOLVED audit items.                                                     |
+| `docs/UNRESOLVED_ISSUES_REGISTRY.md`                                | Operator-facing unresolved/deferred split.                                                                             |
+| `docs/RESOLVED_ISSUES_REGISTRY.md`                                  | Prevents reopening items that are already closed.                                                                      |
+| `docs/ROUND3_HANDOFF.md`                                            | Round 3 entry handoff and start checklist.                                                                             |
+| `docs/implementation_tasks/ROUND3_EARLY_CLOSE_PLAN.md`              | Round 3 early ops and deferral closeout plan.                                                                          |
+| `docs/implementation_tasks/ROUND_3_MODELING_LAYERS/README.md`       | Declares formal Round 3 tasks `017`-`023` and the unnumbered DB inspect CLI boundary.                                  |
+| `.trellis/spec/guides/complex-task-planning-protocol.md`            | Trellis complex-task planning, batching, Execute, Audit, Repair, and Phase 8D Repair/Debt Lite rules.                  |
+| `.trellis/spec/guides/round3-repair-debt-worktree-plan.md`          | Round 3 branch/worktree split plan for staged mainline plus parallel debt repair.                                      |
+| `docs/implementation_tasks/ROUND_3_REFERENCE_LANDING/README.md`     | External-reference landing task index with project URLs, round/batch ownership, branchability, and source-input rules. |
+| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/*.md`           | Per-branch startup prompts for independent Round 3 sessions; see §2.5 for the active/future index.                     |
+| `docs/implementation_tasks/ROUND_3_REVIEW/019_plan_audit_review.md` | Read-only review task card for `review/round3-019-plan-audit`.                                                         |
+| `docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md`               | Global execution boundaries that Plan must fold into MASTER.                                                           |
+| `docs/implementation_tasks/GLOBAL_TESTING_POLICY.md`                | Testing policy and semantic assertion requirements.                                                                    |
+| `docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md`               | ResourceGuard / eco-mode constraints for every batch.                                                                  |
+| `docs/quality/staged_acceptance_policy.md`                          | Stage-specific acceptance and partial-delivery rules.                                                                  |
+| `docs/quality/production_live_pilot_policy.md`                      | Batch 2.75 live-pilot authorization, sandbox, evidence, and no-mutation controls.                                      |
+| `docs/quality/PENDING_USER_DECISIONS.md`                            | User-confirmed D-01 through D-12 decisions that Plan must not reopen.                                                  |
+| `specs/contracts/runtime_versions.md`                               | Runtime, lockfile, and acceptance-command authority.                                                                   |
 
 ## 1. ID convention used by this file
 
@@ -83,230 +83,103 @@ Local aliases introduced here do **not** replace the authoritative registry. The
 | `023A`  | `docs/implementation_tasks/ROUND_3_MODELING_LAYERS/023A_layer5_evidence_foundation.md`              | Minimal Layer5 evidence foundation: evidence identity, source hashes/fetch IDs, manual-review flags, Agent text not fact source. | Batch 5A foundation |
 | `023`   | `docs/implementation_tasks/ROUND_3_MODELING_LAYERS/023_implement_layer5_evidence_chain.md`          | Layer 5 instrument registry, bars, events, financials, valuation, evidence chain.                                                | Batch 5             |
 
-## 2.1 Post-Batch-2.75 branch/worktree split
+## 2. Progress routing & worktrees
 
-After Batch 2.75 repair closeout, Round 3 uses the Phase 8D Repair/Debt Lite track for known non-blocking debt while the staged-only modeling mainline continues. This map is authoritative for ordering; the detailed worktree plan is `.trellis/spec/guides/round3-repair-debt-worktree-plan.md`.
+Phase 8D Repair/Debt Lite + staged-only modeling mainline. Authoritative ordering: this map; worktree mechanics: `.trellis/spec/guides/round3-repair-debt-worktree-plan.md` §6. **One active branch per core file group.** Registry trio edits: **single merge coordinator only.**
 
-| Stream                     | Branch pattern                                                                                                                  | Ordering                              | Scope                                                         |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- | ------------------------------------------------------------- |
-| Protocol baseline          | `chore/trellis-repair-debt-lite-protocol`                                                                                       | Serial first                          | Phase 8D protocol, workflow, agent entry files.               |
-| Integration                | `integration/round3`                                                                                                            | Serial merge gate                     | Receives only reviewed branches that passed their slice gate. |
-| Staged Batch 3 gate        | `feature/round3-batch3-staged-gate`                                                                                             | Before `019` implementation           | Freezes staged-only semantics for Batch 3.                    |
-| Mainline modeling          | `feature/round3-019-*` -> `feature/round3-020-*` -> `feature/round3-021-*` -> `feature/round3-022-*` -> `feature/round3-023b-*` | Mostly serial                         | Layer2-5 implementation without production-live claims.       |
-| Evidence foundation        | `feature/round3-023a-evidence-foundation`                                                                                       | May run with `020` after `019` gate   | Minimal Layer5 evidence contract used by Layer2-4 references. |
-| Data-interface probe debt  | `debt/r3b275-018c-low-cost-probe`                                                                                               | Parallel; does not block staged `019` | Sidecar candidate probe only.                                 |
-| Perf/hyg registry debt     | `debt/r3b275-perf-hyg-registry`                                                                                                 | Parallel                              | CI/Batch6-owned smoke/perf evidence and registry alignment.   |
-| FRED staged semantics debt | `debt/r3b275-fred-staged-semantics`                                                                                             | Parallel                              | Keep FRED/macro supplementary staged semantics explicit.      |
-| CI gate hardening          | `chore/round3-ci-gate-hardening`                                                                                                | Parallel                              | Verification command hygiene and staged/live readiness tests. |
+### 2.1 Wave ledger
 
-Do not let two active branches own the same core file group. Registry reconciliation is coordinated at merge time unless a slice has explicit registry ownership.
+| Wave  | Status     | Scope                                 | Evidence / pointer                        |
+| ----- | ---------- | ------------------------------------- | ----------------------------------------- |
+| **A** | **Done**   | `019`, `020`, `023A`, PROMPT_18       | merged on `master`; Trellis archived      |
+| **B** | **Done**   | PROMPT_19, `021`, fix α-1/α-2         | @ `68b10982`; Trellis archived 2026-06-24 |
+| **C** | **Active** | PROMPT_20 ∥ `022` ∥ fix α-3 ∥ fix β-2 | §2.2 below                                |
+| **D** | Planned    | full `023` Layer 5                    | §2.3 — serial after Wave C                |
+| **E** | Planned    | Batch 6 repay / migration / CLI       | §2.3                                      |
 
-## 2.2 Round 3 parallel-session prompt index
+Hard constraint (all waves): `R3-B2.75-REQ2-EM` **DEFERRED** — staged-only; no production-live claims.
 
-Each prompt file is a self-contained startup instruction for one new session. Open a new session, ask it to read the matching prompt file first, and then let that session run its own Trellis/Phase 8D flow. Do not copy a prompt across branches.
+### 2.2 Worktree creation checklist — **ACTIVE: Wave C** (four-way parallel)
 
-| Prompt file                                                                                                             | Branch / role                                           | Start now?                                        | Parallel?                                         | Purpose                                                                        |
-| ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------------------------------------ |
-| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_00_integration_round3_merge_coordinator.md`                  | `integration/round3` merge coordinator                  | First                                             | Serial coordinator                                | Create/maintain integration branch and enforce merge gates.                    |
-| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_01_feature_round3_batch3_staged_gate.md`                     | `feature/round3-batch3-staged-gate`                     | Yes, after coordinator starts                     | Runs beside debt branches                         | Close `R3-B3-STAGED-DOWNSTREAM-GATE` before `019`.                             |
-| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_02_debt_r3b275_018c_low_cost_probe.md`                       | `debt/r3b275-018c-low-cost-probe`                       | Yes                                               | Parallel                                          | Execute 018C low-cost source probe under disabled-by-default / raw-only rules. |
-| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_03_debt_r3b275_perf_hyg_registry.md`                         | `debt/r3b275-perf-hyg-registry`                         | Yes                                               | Parallel                                          | Close or re-defer Batch 2.75 perf/hyg registry debt.                           |
-| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_04_debt_r3b275_fred_staged_semantics.md`                     | `debt/r3b275-fred-staged-semantics`                     | Yes                                               | Parallel                                          | Keep FRED / macro supplementary semantics staged-only.                         |
-| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_05_chore_round3_ci_gate_hardening.md`                        | `chore/round3-ci-gate-hardening`                        | Optional                                          | Parallel if tests/docs only                       | Harden verification command and gate hygiene.                                  |
-| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_06_debt_r3_ops_inspect_data_health_references.md`            | `debt/r3-ops-inspect-data-health-references`            | Optional                                          | Parallel docs/contracts only                      | Land EasyXT/JQ2PTrade/ptqmt-site ops/data-health references.                   |
-| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_07_feature_round3_019_layer2_sensor.md`                      | `feature/round3-019-layer2-sensor`                      | After PROMPT 01-06 merge-back                     | Parallel with 023A/review                         | Implement staged-only Layer2 cross-asset sensor.                               |
-| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_08_feature_round3_023a_evidence_foundation.md`               | `feature/round3-023a-evidence-foundation`               | After PROMPT 01-06 merge-back                     | Parallel with 019 if core-file ownership is clear | Implement minimal Layer5 evidence foundation only.                             |
-| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_09_review_round3_019_plan_audit.md`                          | `review/round3-019-plan-audit`                          | With/after 019 plan appears                       | Parallel review lane                              | Review 019 plan/audit for staged-only, source, lineage, and test risks.        |
-| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_10_debt_r3b275_018c_live_manual_probe_plan.md`               | `debt/r3b275-018c-live-manual-probe-plan`               | After 018C disabled candidate evidence is visible | Parallel planning-only                            | Prepare future user-authorized TDX live manual probe plan; no live fetch.      |
-| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_11_review_round3_contract_architecture_adversarial_audit.md` | `review/round3-contract-architecture-adversarial-audit` | After PROMPT_07–10 on `master`                    | Parallel review                                   | Read-only adversarial audit WARN report; merged @ `efaf5970`.                  |
-| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_12_fix_round3_data_source_routing_blockers.md`               | `fix/round3-data-source-routing-blockers`               | After PROMPT_11 optional                          | Parallel with 13 if file ownership clear          | Minimal ADV-A2 routing/registry blockers; merged @ `c3325b26`.                 |
-| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_13_fix_round3_db_write_validation_blockers.md`               | `fix/round3-db-write-validation-blockers`               | After PROMPT_11 optional                          | Parallel with 12 if file ownership clear          | Minimal ADV-A1/A3 DB/write blockers; merged @ `ae542970`.                      |
-| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_14_feature_round3_real_data_staged_pilot.md`                 | `feature/round3-real-data-staged-pilot`                 | Done @ `5c16c675` + post-14 Slice 1               | —                                                 | Bounded staged real-data pilot; no production clean write.                     |
-| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_15_fix_round3_r3x_residual_open_items_closure.md`            | `fix/round3-r3x-residual-open-items-closure`            | Done @ `48330611`                                 | —                                                 | R3X Master Checklist OPEN=0; merged with ponytail full.                        |
-| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_16_fix_round3_ponytail_pilot_prep_bucket_a.md`               | `fix/round3-ponytail-pilot-prep-bucket-a`               | Done @ merge post-`c8dd25f8`                      | Before 14                                         | Ponytail bucket A pilot-prep (DS/SC/OP/SY/VA/DB).                              |
-| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_17_debt_round3_ponytail_low_touch.md`                        | `debt/round3-ponytail-low-touch`                        | Done @ `aac6a4e9`                                 | Parallel with 14                                  | Ponytail bucket C: validators/config/util low-touch (VA/SC).                   |
-| _(next formal)_                                                                                                         | `feature/round3-020-layer3-loader`                      | **Done** @ `527d6506`                             | —                                                 | Task `020` merged; archived.                                                   |
-| `PROMPT_18_review_round3_post_r3x_strict_adversarial_audit.md`                                                          | `review/round3-post-r3x-strict-adversarial-audit`       | **Done** @ `527d6506`                             | —                                                 | WARN_ALLOW_WITH_CONTROLS; archived.                                            |
-| `PROMPT_19_feature_round3_real_data_staged_pilot_v2.md`                                                                 | `feature/round3-real-data-staged-pilot-v2`              | **Now** — after PROMPT_18 gate                    | Parallel with `021` / fix α-2 / α-3               | Staged pilot v2; owns `backend/app/ops/` including `mutation_proof.py`.        |
-| `PROMPT_20_feature_round3_readonly_data_health_v1.md`                                                                   | `feature/round3-readonly-data-health-v1`                | After PROMPT_19 evidence                          | Serial after 19                                   | Read-only data health v1; no `adapter=` / staged-reg bypass.                   |
-| _(next formal)_                                                                                                         | `feature/round3-021-layer3-snapshot`                    | **Now** — after `020`                             | Parallel with PROMPT_19 / fix α-2 / α-3           | Task `021` Layer 3 snapshot builder (staged-only).                             |
+**Baseline:** `master` @ `68b10982` · **Coordinator:** main session · **Integration gate:** `integration/round3` (optional) or direct PR to `master`.
 
-Do not start `feature/round3-019-layer2-sensor` until `feature/round3-batch3-staged-gate` has merged into `master`. PROMPT_07–16 sessions must create their own branches/worktrees before execution.
-
-## 2.4 Phase 8D — Wave B + fix α (active slices)
-
-> Coordinator: main session · baseline **`master`** @ **`527d6506`** · 2026-06-23  
-> Hard constraints: `R3-B2.75-REQ2-EM` **DEFERRED**;全程 **staged-only**；不得声称 production-live。  
-> Registry SSOT for R3Y follow-ups: §1 aliases + `docs/UNRESOLVED_ISSUES_REGISTRY.md` §PROMPT_18 + `docs/AUDIT_DEFERRED_REGISTRY.md` §DEFERRED R3Y.
-
-### 2.4.1 Parallel matrix
-
-| Slice              | Owner agent              | Base     | Target branch                              | Worktree (suggested)                                  | Parallel with                        |
-| ------------------ | ------------------------ | -------- | ------------------------------------------ | ----------------------------------------------------- | ------------------------------------ |
-| **B-19** PROMPT_19 | `implement-agent-p19`    | `master` | `feature/round3-real-data-staged-pilot-v2` | `../quant-monitor-desk-wt-r3-pilot-v2`                | **021**, **α-2**, **α-3**            |
-| **B-21** task 021  | `implement-agent-021`    | `master` | `feature/round3-021-layer3-snapshot`       | `../quant-monitor-desk-wt-021-layer3-snapshot`        | **B-19**, **α-2**, **α-3**           |
-| **α-1** sync guard | `fix-agent-r3y-sync`     | `master` | `fix/r3y-sync-adapter-guard`               | `../quant-monitor-desk-wt-fix-r3y-sync-adapter-guard` | **α-2**, **α-3** only (not B-19 ops) |
-| **α-2** registry   | merge coordinator        | `master` | `fix/r3y-registry-lineage-defer`           | `../quant-monitor-desk-wt-fix-r3y-registry`           | **B-19**, **B-21**, **α-1**, **α-3** |
-| **α-3** evidence   | `fix-agent-r3y-evidence` | `master` | `fix/r3y-prompt15-evidence`                | `../quant-monitor-desk-wt-fix-r3y-prompt15-evidence`  | all except registry row edits in α-2 |
-
-**Serial after wave B + α:**
-
-1. **C-20** PROMPT_20 — after PROMPT_19 evidence lands on `master` (or integration branch).
-2. **β-1** `mutation_proof` deep fix — **inside PROMPT_19** (do not open a fourth `ops/` branch).
-3. **β-2** `register_staged_file_registry_rows` privatize — after **α-1** merges (or same branch if coordinator combines).
-
-### 2.4.2 Slice B-19 — PROMPT_19 staged pilot v2
-
-| Field         | Value                                                                                                      |
-| ------------- | ---------------------------------------------------------------------------------------------------------- |
-| Source ID     | `PROMPT_19` · `R3Y_real_data_staged_pilot_v2.md` · AUD-08 controls                                         |
-| Trellis track | complex (`MASTER.plan.md`) or debt-lite if scoped to ops-only delta                                        |
-| Prompt        | `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_19_feature_round3_real_data_staged_pilot_v2.md` |
-
-**Allowed files**
-
-- `backend/app/ops/staged_pilot.py`, `staged_pilot_fetch_ports.py`, `mutation_proof.py`
-- `scripts/run_staged_pilot.py`
-- `tests/test_staged_pilot.py`, `tests/contract_gate_support.py`
-- `.trellis/tasks/*-round3-real-data-staged-pilot-v2/**` (task artifacts)
-- `docs/quality/prompt19_*` (authorization / closeout evidence only)
-
-**Forbidden files**
-
-- `backend/app/sync/**` (owned by **α-1**)
-- `backend/app/storage/staged_evidence.py` (owned by **β-2**)
-- `backend/app/layer3_chains/**` (owned by **B-21**)
-- `docs/AUDIT_DEFERRED_REGISTRY.md`, `docs/UNRESOLVED_ISSUES_REGISTRY.md`, `docs/RESOLVED_ISSUES_REGISTRY.md` (owned by **α-2** coordinator)
-- `data/duckdb/quant_monitor.duckdb`, production clean write, live source default enablement
-
-**Verification**
+**Bootstrap (per slice; run from repo parent):**
 
 ```bash
-uv run pytest tests/test_staged_pilot.py -q
-uv run pytest tests/test_batch3_staged_downstream_gate.py tests/test_batch25_production_data_gate.py -q
-uv run pytest tests/test_round3_audit_registry_alignment.py -q
-uv run python scripts/check_doc_links.py
+git fetch origin master
+git worktree add -b <target-branch> <worktree-path> origin/master
 ```
 
-**Merge gate evidence:** `.trellis/tasks/<task>/execute-evidence/merge_gate_report.md` · pilot closeout JSON · no-mutation proof v2
+| Slice              | Owner                      | Target branch                            | Worktree (suggested)                                 | Parallel with              |
+| ------------------ | -------------------------- | ---------------------------------------- | ---------------------------------------------------- | -------------------------- |
+| **C-20** PROMPT_20 | `implement-agent-p20`      | `feature/round3-readonly-data-health-v1` | `../quant-monitor-desk-wt-r3-data-health`            | **022**, **α-3**, **β-2**  |
+| **022** Layer 4    | `implement-agent-022`      | `feature/round3-022-layer4-market`       | `../quant-monitor-desk-wt-022-layer4`                | **C-20**, **α-3**, **β-2** |
+| **α-3** evidence   | `fix-agent-r3y-evidence`   | `fix/r3y-prompt15-evidence`              | `../quant-monitor-desk-wt-fix-r3y-prompt15-evidence` | **C-20**, **022**, **β-2** |
+| **β-2** staged reg | `fix-agent-r3y-staged-reg` | `fix/r3y-staged-registry-privatize`      | `../quant-monitor-desk-wt-fix-r3y-staged-reg`        | **C-20**, **022**, **α-3** |
 
-### 2.4.3 Slice B-21 — task 021 Layer 3 snapshot builder
+**Per-slice scope**
 
-| Field     | Value                                                                           |
-| --------- | ------------------------------------------------------------------------------- |
-| Source ID | formal `021` · `020_implement_layer3_industry_chain_loader.md` predecessor done |
-| Prompt    | _(formal task card)_ `021_implement_layer3_snapshot_builder.md`                 |
+| Slice    | Prompt / source                                       | Allowed (core)                                                                                                                                                                   | Forbidden                                                                                                                 |
+| -------- | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| **C-20** | `PROMPT_20_feature_round3_readonly_data_health_v1.md` | `backend/app/ops/data_health*.py`, `tests/test_ops_data_health.py`, task evidence                                                                                                | `backend/app/layer4_markets/**`, `backend/app/storage/staged_evidence.py`, registry trio, production DB write, live fetch |
+| **022**  | `022_implement_layer4_market_structure.md`            | `backend/app/layer4_markets/**`, `tests/test_layer4_market_structure.py`, task evidence                                                                                          | `backend/app/ops/staged_pilot.py`, `mutation_proof.py`, `staged_evidence.py`, registry trio                               |
+| **α-3**  | `R3Y-PROMPT15-EVID-001`                               | `.trellis/tasks/fix-r3y-prompt15-evidence/**`, `.trellis/tasks/fix-round3-r3x-residual-open-items-closure/**` (evidence), narrow `tests/test_r3x_residual_open_items_closure.py` | `backend/**` production code, registry trio                                                                               |
+| **β-2**  | `R3Y-STAGED-REG-001`                                  | `backend/app/storage/staged_evidence.py`, focused storage tests                                                                                                                  | `backend/app/ops/**`, `layer4_markets/**`, registry trio                                                                  |
 
-**Allowed files**
+**Verification (merge gate minimum per slice)**
 
-- `backend/app/layer3_chains/**` (snapshot builder modules only; loader frozen except bugfix)
-- `tests/test_layer3_snapshot*.py`, `tests/fixtures/layer3_*`
-- `.trellis/tasks/*-round3-021-layer3-snapshot/**`
+| Slice    | Commands                                                                                                                                                            |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **C-20** | `uv run pytest tests/test_ops_data_health.py -q`; `uv run pytest tests/test_ops_db_inspector.py tests/test_staged_pilot.py tests/test_data_quality_validator.py -q` |
+| **022**  | `uv run pytest tests/test_layer4_market_structure.py -q`; `uv run pytest tests/test_batch3_staged_downstream_gate.py -q`                                            |
+| **α-3**  | `uv run pytest tests/test_r3x_residual_open_items_closure.py -q`                                                                                                    |
+| **β-2**  | `uv run pytest tests/test_staged_pilot.py tests/test_raw_store.py -q`                                                                                               |
 
-**Forbidden files**
+**Recommended merge order into `master`:** **C-20** → **022** → **β-2** → **α-3**. Registry row updates for α-3/β-2 closure: **coordinator batch** after implementation PRs land (do not let four agents edit registry trio concurrently).
 
-- `backend/app/ops/**` (B-19)
-- `backend/app/sync/**` (α-1)
-- registry trio (α-2 coordinator)
-- production DB / live fetch
+**Residual hygiene (tracked, not blocking C-20/022 start):** `docs/quality/ROUND3_WAVE_B_PENDING_FIX_REGISTRY.md` — `R3-B6-021-O-01/02` defer to Batch 6.
 
-**Verification**
+### 2.3 Worktree creation checklist — **PLANNED** (post–Wave C)
 
-```bash
-uv run pytest tests/test_layer3_loader.py tests/test_layer3_snapshot*.py -q
-uv run pytest tests/test_batch3_staged_downstream_gate.py -q
-uv run ruff check backend/app/layer3_chains tests/test_layer3_snapshot*.py
-```
+| Wave            | When                        | Slice                  | Target branch (suggested)                         | Worktree (suggested)                   | Notes                                                       |
+| --------------- | --------------------------- | ---------------------- | ------------------------------------------------- | -------------------------------------- | ----------------------------------------------------------- |
+| **D**           | After Wave C merge          | **`023`** full Layer 5 | `feature/round3-023b-evidence-chain-full`         | `../quant-monitor-desk-wt-023-layer5`  | **Serial** — needs `022` + `023A` on `master`               |
+| **E**           | After `023`                 | Batch 6 migration/CLI  | `feature/round3-batch6-*` (split by item cluster) | TBD per `R3-B6-*` row in §3            | Includes `R3-B6-021-O-01/02`, migration 008, `qmd data` CLI |
+| Debt (optional) | Parallel to D/E if capacity | CI gate                | `chore/round3-ci-gate-hardening`                  | `../quant-monitor-desk-wt-ci-gate`     | PROMPT_05; tests/docs only                                  |
+| Debt (optional) | Parallel to D/E if capacity | FRED staged            | `debt/r3b275-fred-staged-semantics`               | `../quant-monitor-desk-wt-fred-staged` | PROMPT_04                                                   |
+| Debt (optional) | Parallel to D/E if capacity | Perf/hyg registry      | `debt/r3b275-perf-hyg-registry`                   | `../quant-monitor-desk-wt-perf-hyg`    | PROMPT_03                                                   |
 
-### 2.4.4 Slice α-1 — sync `adapter=` production guard (`R3Y-SYNC-001`)
+Do **not** start **`023`** until **022** merges. Do **not** open a fifth branch that touches `backend/app/ops/` while **C-20** is active.
 
-| Field         | Value                                                                 |
-| ------------- | --------------------------------------------------------------------- |
-| Source ID     | `R3Y-SYNC-001` · ADV-R3X-SYNC-001 partial · AUD-01 F-02 · AUD-02 HIGH |
-| Trellis track | debt-lite (`DEBT.plan.md`)                                            |
+### 2.4 Archived waves (Wave A + B — detail retired)
 
-**Allowed files**
+> **Wave B** merged + Trellis-archived 2026-06-24 @ `68b10982`. Items **Done:** PROMPT_19 (`e4abb372`), **`021`** (`1cdb7e48`), fix α-1 (`616feeb8`), α-2 (`984c7b28`). β-1 `mutation_proof` closed inside PROMPT_19.  
+> **Wave A** items **Done:** `019`, `020`, `023A`, PROMPT_18 (`527d6506`).  
+> Slice-level allowed/forbidden matrices for Wave B live in Trellis archive (`.trellis/tasks/archive/2026-06/`) and git history — not duplicated here.  
+> **Open residual:** `docs/quality/ROUND3_WAVE_B_PENDING_FIX_REGISTRY.md` (α-3, β-2, Batch6 021 hygiene).
 
-- `backend/app/sync/orchestrator.py`, `backend/app/sync/runners.py`
-- `tests/test_sync_orchestrator.py`, `tests/test_sync_jobs.py`
-- `.trellis/tasks/fix-r3y-sync-adapter-guard/**`
+### 2.5 Prompt index (active + future only)
 
-**Forbidden files**
+Completed PROMPT_00–19 and formal `020`/`021` are **Done** — see §2.1 / §2.4. Start new sessions from the prompt file; one branch/worktree per session.
 
-- `backend/app/ops/**`, `backend/app/datasources/**` (unless one-line import for guard)
-- registry trio (α-2)
-- `layer3_chains/**`
+| Prompt / task                                         | Branch                                    | Start?           | Parallel?        | Purpose                        |
+| ----------------------------------------------------- | ----------------------------------------- | ---------------- | ---------------- | ------------------------------ |
+| `PROMPT_20_feature_round3_readonly_data_health_v1.md` | `feature/round3-readonly-data-health-v1`  | **Now** (Wave C) | ∥ 022, α-3, β-2  | Read-only data health v1       |
+| _(formal)_ `022_implement_layer4_market_structure.md` | `feature/round3-022-layer4-market`        | **Now** (Wave C) | ∥ C-20, α-3, β-2 | Layer 4 market structure       |
+| fix α-3 (`R3Y-PROMPT15-EVID-001`)                     | `fix/r3y-prompt15-evidence`               | **Now** (Wave C) | ∥ C-20, 022, β-2 | PROMPT_15 evidence backfill    |
+| fix β-2 (`R3Y-STAGED-REG-001`)                        | `fix/r3y-staged-registry-privatize`       | **Now** (Wave C) | ∥ C-20, 022, α-3 | Privatize staged file_registry |
+| _(formal)_ `023_implement_layer5_evidence_chain.md`   | `feature/round3-023b-evidence-chain-full` | After Wave C     | Serial           | Full Layer 5 evidence chain    |
+| `PROMPT_05_chore_round3_ci_gate_hardening.md`         | `chore/round3-ci-gate-hardening`          | Optional post-C  | Parallel debt    | CI / verification hygiene      |
+| `PROMPT_03_debt_r3b275_perf_hyg_registry.md`          | `debt/r3b275-perf-hyg-registry`           | Optional post-C  | Parallel debt    | Perf/hyg registry              |
+| `PROMPT_04_debt_r3b275_fred_staged_semantics.md`      | `debt/r3b275-fred-staged-semantics`       | Optional post-C  | Parallel debt    | FRED staged semantics          |
 
-**Verification**
+Historical PROMPT_00–18 index: git history @ pre–Wave C MAP or `docs/ROUND3_HANDOFF.md`.
 
-```bash
-uv run pytest tests/test_sync_orchestrator.py tests/test_sync_jobs.py -q
-uv run pytest tests/test_datasource_service.py tests/test_source_route_planner.py -q
-```
-
-**Closure test:** production-profile entry rejects `adapter=` without `datasource_service`; dedicated pytest maps `R3Y-SYNC-001`.
-
-### 2.4.5 Slice α-2 — registry + plan index (`ADV-R3X-LINEAGE-001`, `R3Y-*` rows)
-
-| Field     | Value                                                       |
-| --------- | ----------------------------------------------------------- |
-| Source ID | AUD-06 HIGH · AUD-08 P1/P2 registry controls                |
-| Owner     | **single merge coordinator** — no concurrent registry edits |
-
-**Allowed files**
-
-- `docs/AUDIT_DEFERRED_REGISTRY.md`, `docs/UNRESOLVED_ISSUES_REGISTRY.md`, `docs/RESOLVED_ISSUES_REGISTRY.md`
-- `docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md`
-- `ROUND3_BATCH_IMPLEMENTATION_MAP.md`, `docs/ROUND3_HANDOFF.md`
-- `tests/test_round3_audit_registry_alignment.py`, `tests/test_unresolved_item_task_coverage.py` (if ID set changes)
-- `.trellis/tasks/fix-r3y-registry-lineage-defer/**`
-
-**Forbidden files**
-
-- `backend/**` runtime (docs/tests only slice)
-- concurrent edits by other agents to registry trio
-
-**Verification**
-
-```bash
-uv run pytest tests/test_round3_audit_registry_alignment.py tests/test_unresolved_item_task_coverage.py -q
-uv run python scripts/check_doc_links.py
-```
-
-### 2.4.6 Slice α-3 — PROMPT_15 evidence backfill (`R3Y-PROMPT15-EVID-001`)
-
-**Allowed files**
-
-- `.trellis/tasks/fix-round3-r3x-residual-open-items-closure/**` (evidence only)
-- `.trellis/tasks/fix-r3y-prompt15-evidence/**`
-- `tests/test_r3x_residual_open_items_closure.py` (mapping comments / narrow asserts only)
-
-**Forbidden files**
-
-- `backend/**` production code
-- registry trio (α-2)
-
-**Verification**
-
-```bash
-uv run pytest tests/test_r3x_residual_open_items_closure.py -q
-```
-
-### 2.4.7 Recommended merge order (into `master`)
-
-1. **α-2** registry reconciliation (establishes R3Y row SSOT for other slices).
-2. **α-1** sync guard (unblocks PROMPT_19 AUD-08 “no production CLI `adapter=`”).
-3. **α-3** PROMPT_15 evidence (independent).
-4. **B-19** PROMPT_19 (includes **β-1** `mutation_proof` / `R3Y-MUT-PROOF-001`).
-5. **B-21** task 021 (may merge before or after B-19 if no conflict; prefer after α-2).
-6. **C-20** PROMPT_20 (after B-19 evidence).
-7. **β-2** staged file_registry privatize (`R3Y-STAGED-REG-001`) — after α-1.
-
-**Conflict rule:** one active branch per core file group (`.trellis/spec/guides/round3-repair-debt-worktree-plan.md` §6).
-
-## 2.3 Round 3 gate hygiene command matrix
+### 2.6 Round 3 gate hygiene command matrix
 
 Canonical pytest commands for merge review and parallel debt branches live in `docs/ops/verification_commands.md` § **Round 3 gate hygiene**. The matrix covers audit trace authority, registry alignment, unresolved-item coverage, Batch 2.5 staged-not-live guards, production-live pilot policy, Batch 3 staged downstream gate, and FRED staged semantics. `tests/test_round3_verification_command_matrix.py` asserts the doc index stays current.
+
+**Batch 3 gate (CLOSED; token retained for audit alignment):** Do not start `feature/round3-019-layer2-sensor` until `feature/round3-batch3-staged-gate` has merged into `master`.
 
 ## 3. Round 3 split into 6 primary Trellis batches plus Batch 2.5 bridge and Batch 2.75 pilot
 
@@ -522,12 +395,10 @@ This section is a **Plan-stage source index**, not an Execute or Audit manifest.
 7. **Batch 3** — Layer 2 `019`. **Done** (archived).
 8. **Batch 4A** — Layer 3 loader `020`. **Done** (archived; Audit PASS).
 9. **Wave A audit** — PROMPT_18 post-R3X strict audit. **Done** (`WARN_ALLOW_WITH_CONTROLS`).
-10. **Wave B + fix α** — §2.4: PROMPT_19 ∥ `021` ∥ fix α-1/α-2/α-3 (registry coordinator first).
-11. **Wave C** — PROMPT_20 read-only data health v1 (after PROMPT_19 evidence).
-12. **Batch 4B** — Layer 3 snapshot `021` (if not closed in wave B-21).
-13. **Batch 5A** — Layer 4 `022`, after `021`.
-14. **Batch 5B** — full Layer 5 `023`, after Layer 4 readiness.
-15. **Batch 6** — pipeline/migration/CLI/packaging/hygiene closeout.
+10. **Wave B + fix α** — §2.4 archived: PROMPT_19 + `021` + fix α-1/α-2. **Done** (2026-06-24).
+11. **Wave C (four-way parallel)** — §2.2: PROMPT_20 ∥ `022` ∥ fix α-3 ∥ fix β-2 (**active**).
+12. **Batch 5B** — full Layer 5 `023` — **serial after Wave C** (§2.3).
+13. **Batch 6** — pipeline/migration/CLI/packaging/hygiene closeout (§2.3 Wave E).
 
 ## 6. Trellis batching constraints
 

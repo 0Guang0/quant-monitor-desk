@@ -220,6 +220,7 @@ Used with MIGRATION_MAP.md for machine omission checks (`check_docs_specs_indexe
 - `docs/quality/ROUND3_BATCH25_PENDING_FIX_REGISTRY.md`
 - `docs/quality/ROUND3_BATCH6_021_PENDING_FIX_REGISTRY.md`
 - `docs/quality/ROUND3_TEST_DOCSTRING_HYGIENE_PLAN.md`
+- `docs/quality/ROUND3_WAVE_B_PENDING_FIX_REGISTRY.md`
 - `docs/quality/adversarial_audit_post14_contract_ponytail_lane.md`
 - `docs/quality/adversarial_audit_post14_master_fix_manifest.md`
 - `docs/quality/adversarial_audit_post14_ops_data_lane.md`

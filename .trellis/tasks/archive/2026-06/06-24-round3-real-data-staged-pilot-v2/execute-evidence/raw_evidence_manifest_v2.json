@@ -1,0 +1,40 @@
+{
+  "data_domain": "cn_equity_daily_bar",
+  "date_window": "recent 30 trading days",
+  "fetches": [
+    {
+      "fetch_result": {
+        "content_hash": "evidence-hash",
+        "raw_file_paths": [".audit-sandbox/mock/baostock.json"],
+        "row_count": 2,
+        "run_id": "fetch-baostock",
+        "status": "SUCCESS"
+      },
+      "pilot_request_id": "v2-baostock",
+      "request": {
+        "data_domain": "cn_equity_daily_bar",
+        "operation": "fetch_daily_bar",
+        "source_id": "baostock"
+      },
+      "staged_file_ids": ["f1"],
+      "taxonomy_status": "SUCCESS"
+    }
+  ],
+  "generated_at": "2026-06-23T18:11:44Z",
+  "manifest_entries": [
+    {
+      "as_of_timestamp": "2026-06-23T18:11:44Z",
+      "content_hash": "evidence-hash",
+      "pilot_request_id": "v2-baostock",
+      "relative_paths": [".audit-sandbox/mock/baostock.json"],
+      "row_count": 2,
+      "source_fetch_id": "fetch-baostock",
+      "taxonomy_status": "SUCCESS",
+      "vendor_api": null
+    }
+  ],
+  "pilot_id": "r3y-staged-pilot-v2-20260624",
+  "required_fields_present": true,
+  "source_id": "baostock",
+  "symbols": ["sh.600519", "sh.600000", "sz.000001"]
+}

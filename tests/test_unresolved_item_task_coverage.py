@@ -69,7 +69,6 @@ EXPECTED_UNRESOLVED_IDS = {
     "R4-FE-2",
     "R4-FE-3",
     "R3-PROMPT14-AKSHARE-VAL-01",
-    "R3Y-MUT-PROOF-001",
     "R3Y-STAGED-REG-001",
     "R3Y-PROMPT15-EVID-001",
     "R3Y-TEST-DEPTH-001",
@@ -248,18 +247,34 @@ def test_r3ySync001_closedInResolvedNotOpen() -> None:
     assert "CLOSED" in coverage.split("R3Y-SYNC-001", maxsplit=1)[1][:200]
 
 
+def test_r3yMutProof001_closedInResolvedNotOpen() -> None:
+    """覆盖范围：R3Y-MUT-PROOF-001 在 PROMPT_19 合并后应已闭合
+    测试对象：RESOLVED、UNRESOLVED、COVERAGE registries
+    目的/目标：mutation_proof 语义债不得仍标 OPEN，避免重复开 PROMPT_19
+    验证点：R3Y-MUT-PROOF-001 在 RESOLVED 与 COVERAGE CLOSED；UNRESOLVED 无 OPEN 行
+    失败含义：已修复项仍标 OPEN，会误导并行 slice 重复抢同一修复
+    """
+    resolved = _read(RESOLVED)
+    unresolved = _read(UNRESOLVED)
+    coverage = _read(COVERAGE)
+
+    assert "R3Y-MUT-PROOF-001" in resolved
+    assert "R3Y-MUT-PROOF-001" in coverage
+    assert "CLOSED" in coverage.split("R3Y-MUT-PROOF-001", maxsplit=1)[1][:200]
+    assert f"| R3Y-MUT-PROOF-001 | OPEN" not in unresolved
+
+
 def test_r3yOpenItems_ownerBranchesInCoverageSection45() -> None:
     """覆盖范围：§4.5 中 R3Y 开放项的 owner 分支映射
     测试对象：UNRESOLVED_ITEM_TASK_COVERAGE.md §4.5（Round 3 PROMPT_18 段）
     目的/目标：并行 slice 能看清每项该由哪条分支负责
-    验证点：R3Y-MUT-PROOF-001→PROMPT_19；R3Y-STAGED-REG-001→β-2；R3Y-PROMPT15-EVID-001→fix/r3y-prompt15-evidence，均在 §4.5 出现
+    验证点：R3Y-STAGED-REG-001→β-2；R3Y-PROMPT15-EVID-001→fix/r3y-prompt15-evidence，均在 §4.5 出现
     失败含义：owner 分支未登记，多 agent 可能同时改同一开放项
     """
     text = _read(COVERAGE)
     section = text.split("## 4.5 Round 3 PROMPT_18", maxsplit=1)[1].split("## 5.", maxsplit=1)[0]
 
     expectations = {
-        "R3Y-MUT-PROOF-001": "PROMPT_19",
         "R3Y-STAGED-REG-001": "β-2",
         "R3Y-PROMPT15-EVID-001": "fix/r3y-prompt15-evidence",
     }

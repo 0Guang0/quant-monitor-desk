@@ -74,6 +74,10 @@ Archived Trellis task `.trellis/tasks/archive/2026-06/06-20-round3-batch2-layer1
 
 **Batch 2.75:** controlled pilot executed and repaired (2026-06-21/22) with closeout `PILOT_FAIL_SOURCE`. Request 1/3 have bounded sandbox evidence; Request 2 Eastmoney hist remains deferred as `R3-B2.75-REQ2-EM`. **`B2.5-O-05` remains DEFERRED:** Request 3 (`akshare` / `macro_supplementary` / `DGS10`) is supplementary macro shape only — it does **not** close FRED `primary_source` for `ENV-E1-DGS10` and must not be read as production-live macro evidence. **`R3-B3-STAGED-DOWNSTREAM-GATE` is CLOSED** on `integration/round3` (docs/tests only). Batch 3 / `019` may proceed as **staged-only** after merge to `integration/round3`; see `docs/quality/BATCH3_STAGED_DOWNSTREAM_GATE.md` and `.trellis/spec/guides/round3-repair-debt-worktree-plan.md`.
 
+## Round 3 Wave B — **COMPLETE** (2026-06-24)
+
+Archived Trellis tasks: `06-24-round3-real-data-staged-pilot-v2` (PROMPT_19) · `06-24-round3-021-layer3-snapshot` (`021`) · `fix-r3y-sync-adapter-guard` (α-1) · `fix-r3y-registry-lineage-defer` (α-2). Merges on `master`: `984c7b28`, `616feeb8`, `e4abb372`; `021` @ `1cdb7e48`. **Residual hygiene:** `docs/quality/ROUND3_WAVE_B_PENDING_FIX_REGISTRY.md` (α-3, β-2). **Next:** Wave C PROMPT_20 read-only data health v1.
+
 ## Round 3 start checklist
 
 0. **Registry clean** — [`AUDIT_DEFERRED_REGISTRY.md`](AUDIT_DEFERRED_REGISTRY.md): no OPEN rows (verified post PR #15)

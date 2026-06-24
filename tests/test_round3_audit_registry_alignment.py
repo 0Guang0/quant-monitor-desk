@@ -362,14 +362,14 @@ def test_post14R2Risk3_failClosedModesDocumented() -> None:
         assert token in resolved
 
 
-_RECONCILED_TOKENS = ("2026-06-24", "fix α-2", "527d6506", "wave-A", "PROMPT_18")
+_RECONCILED_TOKENS = ("2026-06-24", "wave-B", "68b10982", "post-wave-B", "Trellis archive")
 
 
 def test_r3yRegistrySlice_alpha2LastReconciled() -> None:
     """覆盖范围：fix α-2 registry 切片后四份 SSOT 的对账戳一致性
     测试对象：UNRESOLVED、RESOLVED、AUDIT_DEFERRED、UNRESOLVED_ITEM_TASK_COVERAGE
     目的/目标：Last reconciled 块含同一组 mandatory tokens，防止措辞漂移
-    验证点：四份文档均含 2026-06-24、fix α-2、527d6506、wave-A、PROMPT_18
+    验证点：四份文档均含 2026-06-24、wave-B、68b10982、post-wave-B、Trellis archive
     失败含义：对账戳不一致，并行 slice 无法判断 registry 是否同一次 reconcile
     """
     coverage = PROJECT_ROOT / "docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md"
@@ -383,7 +383,7 @@ def test_r3yAdvLineageDefer_registrySSOTWithOwner021() -> None:
     """覆盖范围：ADV-R3X-LINEAGE-001 DEFERRED 登记与 owner 021
     测试对象：AUDIT_DEFERRED、UNRESOLVED、UNRESOLVED_ITEM_TASK_COVERAGE
     目的/目标：血缘债在三 registry 与 COVERAGE 一致为 DEFERRED，owner 指向任务 021
-    验证点：item 在三文档；unresolved 有 DEFERRED 表行且无 OPEN 行；audit 含 021、snapshot lineage pytest、Batch 4B+；coverage 含 021_implement_layer3_snapshot_builder.md
+    验证点：item 在三文档；unresolved 有 DEFERRED 表行且无 OPEN 行；audit 含 021、snapshot lineage pytest、Batch 5A+；coverage 含 021_implement_layer3_snapshot_builder.md
     失败含义：lineage defer 缺 owner 或状态不一，Batch 4B 前可能被误关
     """
     audit = _read(AUDIT_DEFERRED)
@@ -396,7 +396,7 @@ def test_r3yAdvLineageDefer_registrySSOTWithOwner021() -> None:
     assert item_id in coverage
     assert re.search(rf"\|\s*{re.escape(item_id)}\s*\|\s*DEFERRED", unresolved)
     assert f"| {item_id} | OPEN" not in unresolved
-    for token in ("021", "snapshot lineage pytest", "Batch 4B+"):
+    for token in ("021", "snapshot lineage pytest", "Batch 5A+"):
         assert token in audit
     assert "021_implement_layer3_snapshot_builder.md" in coverage
 
@@ -423,26 +423,66 @@ def test_waveAMainlineResolvedRows_traceableInRegistries() -> None:
         assert item_id in audit, f"{item_id} missing from AUDIT_DEFERRED wave-A section"
 
 
-def test_round3Map_checkpointReflectsPost14AuditMerge() -> None:
-    """覆盖范围：ROUND3 地图 checkpoint 是否反映 post-wave-A / PROMPT_18 合并后状态
-    测试对象：ROUND3_BATCH_IMPLEMENTATION_MAP.md 头部与 §2.4
-    目的/目标：地图不得仍写 pre-wave-A 或 PROMPT_14+17 dispatched 旧 checkpoint
-    验证点：含 527d6506、post-wave-A、PROMPT_18、2.4、020、Done；不含 PROMPT_14 + PROMPT_17** dispatched 与 **In progress** (user live auth granted)
+def test_waveBMainlineResolvedRows_traceableInRegistries() -> None:
+    """覆盖范围：wave-B 已合并主线项在 registry 的可追溯性
+    测试对象：RESOLVED、AUDIT_DEFERRED registries
+    目的/目标：021/PROMPT19-v2/MUT-PROOF/α-2 均可在两表查到
+    验证点：五个 wave_b_ids 每个同时出现在 resolved 与 audit
+    失败含义：wave-B 合并项未双登记，审计无法从 DEFERRED 表反查已闭合叙事
+    """
+    resolved = _read(RESOLVED)
+    audit = _read(AUDIT_DEFERRED)
+
+    wave_b_ids = (
+        "R3-TASK-021",
+        "R3-PROMPT19-V2",
+        "R3Y-MUT-PROOF-001",
+        "R3Y-REGISTRY-ALPHA2",
+        "R3Y-SYNC-001",
+    )
+    for item_id in wave_b_ids:
+        assert item_id in resolved, f"{item_id} missing from RESOLVED"
+        assert item_id in audit, f"{item_id} missing from AUDIT_DEFERRED wave-B section"
+
+
+def test_round3Map_checkpointReflectsPostWaveBMerge() -> None:
+    """覆盖范围：ROUND3 地图 checkpoint 是否反映 post-wave-B 合并与 Wave C 四路并行状态
+    测试对象：ROUND3_BATCH_IMPLEMENTATION_MAP.md 头部与 §2
+    目的/目标：地图不得仍写 wave-B active；须标明 Wave C 四路 worktree 清单
+    验证点：含 68b10982、post-wave-B、PROMPT_20、021、Done、ROUND3_WAVE_B_PENDING_FIX_REGISTRY、four-way parallel、§2.2；不含 **Active:** §2.4 wave B
     失败含义：地图 checkpoint 陈旧，协调人会按错误 wave 状态排期
     """
     text = _read(ROUND3_MAP)
 
     for token in (
-        "527d6506",
-        "post-wave-A",
-        "PROMPT_18",
-        "2.4",
-        "020",
+        "68b10982",
+        "post-wave-B",
+        "PROMPT_20",
+        "021",
         "Done",
+        "ROUND3_WAVE_B_PENDING_FIX_REGISTRY",
+        "four-way parallel",
+        "§2.2",
     ):
         assert token in text
-    assert "PROMPT_14 + PROMPT_17** dispatched" not in text
-    assert "**In progress** (user live auth granted)" not in text
+    assert "**Active:** §2.4 wave B" not in text
+
+
+def test_round3Map_checkpointReflectsPost14AuditMerge() -> None:
+    """覆盖范围：ROUND3 地图仍保留 wave-A 历史可追溯 token（向后兼容）
+    测试对象：ROUND3_BATCH_IMPLEMENTATION_MAP.md
+    目的/目标：post-wave-B 地图仍提及 PROMPT_18 / 020 等 wave-A 完成项
+    验证点：含 PROMPT_18、020、2.4
+    失败含义：wave-A 完成记录被 wave-B 更新误删
+    """
+    text = _read(ROUND3_MAP)
+
+    for token in (
+        "PROMPT_18",
+        "020",
+        "2.4",
+    ):
+        assert token in text
 
 
 def test_post14PonytailScan_hasPostBucketBDeltaSection() -> None:

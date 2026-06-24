@@ -1,0 +1,20 @@
+{
+  "id": "06-24-round3-021-layer3-snapshot",
+  "name": "round3-021-layer3-snapshot",
+  "title": "B-21: task 021 Layer3 snapshot builder",
+  "description": "Layer3 industry_chain_daily_snapshot + Layer5 mapping view; staged-only.",
+  "status": "completed",
+  "dev_type": "feature",
+  "scope": "layer3_chains",
+  "branch": "feature/round3-021-layer3-snapshot",
+  "base_branch": "master",
+  "worktree_path": "../quant-monitor-desk-wt-021-layer3-snapshot",
+  "meta": {
+    "task_track": "complex",
+    "manifest_protocol_version": "3",
+    "predecessor_tasks": [
+      ".trellis/tasks/archive/2026-06/06-23-round3-020-layer3-loader"
+    ]
+  },
+  "completedAt": "2026-06-24"
+}
