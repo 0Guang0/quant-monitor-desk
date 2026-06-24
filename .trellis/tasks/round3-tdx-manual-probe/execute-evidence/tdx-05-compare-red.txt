@@ -1,0 +1,2 @@
+TDX-05 RED: build_comparison_report missing — comparable/missing/conflict undifferentiated
+TDX-05 RED: comparison summary JSON not written

@@ -292,6 +292,23 @@ CURATED: dict[str, dict] = {
         "command": "uv run python -m pytest tests/test_docstring_quadruple_coverage.py -q",
         "failure_meaning": "Test self-description contract broke; docstring hygiene regresses silently.",
     },
+    "tests/test_tdx_manual_probe.py": {
+        "purpose": "Batch 01 B01-TDX manual probe — mocked CI + auth-gated live (TDX-01..06)",
+        "type": "policy-contract",
+        "verifies": {
+            "docs": [
+                "docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/R3E_tdx_manual_probe_addendum.md",
+                "docs/quality/tdx_pytdx_live_manual_probe_authorization_2026-06-24.md",
+            ],
+            "specs": [
+                "specs/datasource_registry/source_registry.yaml",
+                "specs/datasource_registry/source_capabilities.yaml",
+            ],
+            "rules": ["docs/implementation_tasks/GLOBAL_TESTING_POLICY.md"],
+        },
+        "command": "uv run python -m pytest tests/test_tdx_manual_probe.py -q",
+        "failure_meaning": "TDX manual probe regression; validation-only/disabled-by-default guard may be broken.",
+    },
 }
 
 

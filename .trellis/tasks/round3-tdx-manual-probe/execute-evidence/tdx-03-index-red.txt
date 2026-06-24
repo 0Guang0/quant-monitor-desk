@@ -1,0 +1,2 @@
+TDX-03 RED: index probe 000001.SH raw evidence missing
+TDX-03 RED: validation_only_preserved not asserted

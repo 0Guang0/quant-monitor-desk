@@ -795,6 +795,21 @@ tests/test_tdx_live_manual_probe_authorization.py:
     docs: []
     rules: []
     specs: []
+tests/test_tdx_manual_probe.py:
+  command: uv run python -m pytest tests/test_tdx_manual_probe.py -q
+  failure_meaning: TDX manual probe regression; validation-only/disabled-by-default
+    guard may be broken.
+  purpose: Batch 01 B01-TDX manual probe — mocked CI + auth-gated live (TDX-01..06)
+  type: policy-contract
+  verifies:
+    docs:
+    - docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/R3E_tdx_manual_probe_addendum.md
+    - docs/quality/tdx_pytdx_live_manual_probe_authorization_2026-06-24.md
+    rules:
+    - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
+    specs:
+    - specs/datasource_registry/source_registry.yaml
+    - specs/datasource_registry/source_capabilities.yaml
 tests/test_trellis_audit_trace_authority.py:
   command: uv run python -m pytest tests/test_trellis_audit_trace_authority.py -q
   failure_meaning: Regression in test_trellis_audit_trace_authority; inspect purpose
