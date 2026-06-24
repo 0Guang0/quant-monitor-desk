@@ -50,4 +50,17 @@ quality_rules:
 boundaries:
   no_trading_action_semantics: true
   no_agent_text_as_fact_source: true
-deferred_to_023b: []
+# 023b bar-only slice closure — see research/context-closure.md §023b-delivered
+closed_in_023b:
+  - instrument_registry staged row validator
+  - security_bar_daily staged row validator (no-future-trade_date)
+  - evidence_chain staged builder (upstream_snapshot_ids, agent-not-fact, severe→queued)
+  - EvidenceReadPort boundary (R2-RISK-2 staged injection)
+deferred_to_023b:
+  - futures_bar_daily staged validator
+  - options_chain_snapshot staged validator
+  - event_registry staged validator
+  - financial_statement staged validator
+  - valuation_snapshot staged validator
+  - security_bar_daily full ingestion pipeline
+  - evidence_chain_builder full ingestion pipeline

@@ -121,6 +121,35 @@ def test_securityBar_rejectsFutureTradeDate() -> None:
         validator.validate_bar(bar, as_of_end=date(2026, 6, 15))
 
 
+def test_evidenceChain_rejectsEmptyUpstreamContext() -> None:
+    """覆盖范围：空 upstream / 空 layer context 边界
+    测试对象：EvidenceChainBuilder.build
+    目的/目标：证据链须绑定非空 L3/L4 upstream 与 context 槽
+    验证点：空 upstream_snapshot_ids 或空 layer3/4 context → EvidenceChainError
+    失败含义：无上游快照的链可构建，审计追溯断链
+    """
+    builder = EvidenceChainBuilder()
+    record = _factual_record()
+    with pytest.raises(EvidenceChainError, match="upstream_snapshot_ids required"):
+        builder.build(
+            record=record,
+            layer_context=LayerContextBundle(
+                layer3_context='{"anchor_id":"ANCHOR-CU"}',
+                layer4_context='{"market_id":"CN_A"}',
+                upstream_snapshot_ids=(),
+            ),
+        )
+    with pytest.raises(EvidenceChainError, match="layer3_context and layer4_context are required"):
+        builder.build(
+            record=record,
+            layer_context=LayerContextBundle(
+                layer3_context="",
+                layer4_context='{"market_id":"CN_A"}',
+                upstream_snapshot_ids=("L3-SNAPSHOT-001",),
+            ),
+        )
+
+
 def test_evidenceChain_traceUpstreamSnapshots() -> None:
     """覆盖范围：EvidenceChainBuilder 上游 snapshot 追溯
     测试对象：EvidenceChainBuilder.build

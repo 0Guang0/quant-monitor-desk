@@ -262,7 +262,6 @@ Used with MIGRATION_MAP.md for machine omission checks (`check_docs_specs_indexe
 - `docs/quality/audit_evidence/round3_batch25/临时报告/ROUND3_BATCH25_AUDIT_AGENT_08_PERFORMANCE.md`
 - `docs/quality/audit_evidence/round3_batch25/临时报告/ROUND3_BATCH25_AUDIT_AGENT_09_DATABASE.md`
 - `docs/quality/batch275_user_authorization_2026-06-21.md`
-- `docs/quality/coordination/BATCH_01_MAIN_SESSION_COORDINATOR_PLAYBOOK.md`
 - `docs/quality/coordination/WAVE_C_MAIN_SESSION_COORDINATOR_PLAYBOOK.md`
 - `docs/quality/final_package_rules.md`
 - `docs/quality/production_live_pilot_policy.md`

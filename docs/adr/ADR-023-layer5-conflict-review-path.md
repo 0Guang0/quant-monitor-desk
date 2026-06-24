@@ -24,3 +24,7 @@
 ## Alternatives rejected
 
 - **Instant severe queue UI** — 超出 Batch 5 scope；任务卡 §17 明确 UX/ADR + pytest，非 UI
+
+## 023b scope note (AC-023-2)
+
+`023b` Execute 以 **bar-only staged slice** 闭合 MASTER §5.3 与 Tier A 门禁；`event_registry` / financial / valuation staged validators 诚实登记于 `layer5_evidence_contract.yaml` `deferred_to_023b`。不得因 `models` 段 schema 定义而声称全族 validator 已落地。
