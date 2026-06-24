@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 from datetime import UTC, date, datetime, timedelta
+from functools import lru_cache
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -40,6 +41,7 @@ TRADE_DATE = date(2026, 6, 14)
 TRADE_DT = datetime(2026, 6, 14, 16, 0, tzinfo=UTC)
 
 
+@lru_cache(maxsize=1)
 def _staged_registry():
     return CrossAssetRegistryLoader().load(registry_path=STAGED_REGISTRY_FIXTURE)
 

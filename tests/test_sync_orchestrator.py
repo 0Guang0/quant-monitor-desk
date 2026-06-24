@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+from datetime import date
 from pathlib import Path
 
 from backend.app.datasources.source_registry import SourceRegistry
@@ -12,6 +13,14 @@ from backend.app.db.connection import ConnectionManager
 from backend.app.db.migrate import apply_migrations
 from backend.app.sync.jobs import SyncJobSpec
 from backend.app.sync.orchestrator import DataSyncOrchestrator
+
+# ponytail: smallest span with ≥3 shards at ECO_MAX_BACKFILL_DAYS_PER_TASK (64d); satisfies shard/backfill assertions
+_BACKFILL_3SHARD_START = date(2026, 1, 1)
+_BACKFILL_3SHARD_END = date(2026, 3, 5)
+# ponytail: 1 shard (15d) — enough when test only needs one BACKFILL_SHARD event
+_BACKFILL_1SHARD_END = date(2026, 1, 15)
+# ponytail: 2 shards (46d) — min for _BackfillFailOnSecondAdapter (fail on 2nd fetch)
+_BACKFILL_2SHARD_END = date(2026, 2, 15)
 
 
 def _orchestrator(tmp_path) -> DataSyncOrchestrator:
@@ -312,12 +321,10 @@ def test_backfillJob_largeRange_splitsIntoTasks(tmp_path, monkeypatch) -> None:
     验证点：shards≥3；每片天数≤ECO_MAX_BACKFILL_DAYS_PER_TASK；run_backfill 返回 results≥3
     失败含义：大区间单次抓取，容易超时或占满内存，也无法按片重试
     """
-    from datetime import date
-
     from backend.app.core.resource_guard import Decision, ResourceGuard
     from backend.app.sync.jobs import ECO_MAX_BACKFILL_DAYS_PER_TASK, plan_backfill_shards
 
-    shards = plan_backfill_shards(date(2026, 1, 1), date(2026, 3, 31))
+    shards = plan_backfill_shards(_BACKFILL_3SHARD_START, _BACKFILL_3SHARD_END)
     assert len(shards) >= 3
     assert all(
         (end - start).days + 1 <= ECO_MAX_BACKFILL_DAYS_PER_TASK for _tid, start, end in shards
@@ -333,8 +340,8 @@ def test_backfillJob_largeRange_splitsIntoTasks(tmp_path, monkeypatch) -> None:
         market_id="CN_A",
         source_id="baostock",
         adapter_id=None,
-        date_start=date(2026, 1, 1),
-        date_end=date(2026, 3, 31),
+        date_start=_BACKFILL_3SHARD_START,
+        date_end=_BACKFILL_3SHARD_END,
         instrument_id=None,
         partition_key=None,
         trigger_reason="eco_catchup",
@@ -368,8 +375,8 @@ def test_backfillJob_recordsTriggerReason(tmp_path, monkeypatch) -> None:
         market_id="CN_A",
         source_id="baostock",
         adapter_id=None,
-        date_start=date(2026, 1, 1),
-        date_end=date(2026, 2, 15),
+        date_start=_BACKFILL_3SHARD_START,
+        date_end=_BACKFILL_1SHARD_END,
         instrument_id=None,
         partition_key=None,
         trigger_reason="manual_request",
@@ -418,8 +425,8 @@ def test_backfillJob_eachShard_callsResourceGuardBeforeFetching(tmp_path, monkey
         market_id="CN_A",
         source_id="baostock",
         adapter_id=None,
-        date_start=date(2026, 1, 1),
-        date_end=date(2026, 3, 31),
+        date_start=_BACKFILL_3SHARD_START,
+        date_end=_BACKFILL_3SHARD_END,
         instrument_id=None,
         partition_key=None,
         trigger_reason="eco_catchup",
@@ -453,8 +460,8 @@ def test_backfillJob_midShardFailure_preservesCompletedTasks(tmp_path, monkeypat
         market_id="CN_A",
         source_id="baostock",
         adapter_id=None,
-        date_start=date(2026, 1, 1),
-        date_end=date(2026, 3, 31),
+        date_start=_BACKFILL_3SHARD_START,
+        date_end=_BACKFILL_2SHARD_END,
         instrument_id=None,
         partition_key=None,
         trigger_reason="eco_catchup",

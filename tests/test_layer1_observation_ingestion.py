@@ -1059,19 +1059,26 @@ def test_layer1Ingestion_phase3_phase4_singleFetchLogRegression(
     失败含义：重复或漏记拉取日志，摄取链行计数回归
     """
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
-    service, db = _build_micro_fetch_service(tmp_path)
+    data_root = tmp_path / "data"
+    data_root.mkdir(parents=True, exist_ok=True)
+    from backend.app.datasources.service import build_staged_fixture_service
+
+    datasource = build_staged_fixture_service(
+        data_root=data_root,
+        fixture_path=MACRO_FIXTURE_PATH,
+    )
+    service, db = _build_micro_fetch_service(tmp_path, datasource=datasource)
     before_p3 = _row_counts(db, ("fetch_log",))["fetch_log"] or 0
     service.micro_fetch_staging(indicator_id=FROZEN_STAGED_INDICATOR, as_of=date(2024, 6, 15))
     after_p3 = _row_counts(db, ("fetch_log",))["fetch_log"] or 0
     assert after_p3 - before_p3 == 1
 
-    service4, db4 = _build_phase4_service(tmp_path)
-    before_p4 = _row_counts(db4, ("fetch_log",))["fetch_log"] or 0
-    service4.commit_clean_observation_and_snapshots(
+    before_p4 = _row_counts(db, ("fetch_log",))["fetch_log"] or 0
+    service.commit_clean_observation_and_snapshots(
         indicator_id=FROZEN_STAGED_INDICATOR,
         as_of=PHASE4_AS_OF,
     )
-    after_p4 = _row_counts(db4, ("fetch_log",))["fetch_log"] or 0
+    after_p4 = _row_counts(db, ("fetch_log",))["fetch_log"] or 0
     assert after_p4 - before_p4 == 1
 
 

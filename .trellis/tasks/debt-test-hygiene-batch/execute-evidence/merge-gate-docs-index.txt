@@ -1,0 +1,1 @@
+OK: docs/specs indexed (MIGRATION_MAP + generated index)

@@ -1,0 +1,8 @@
+# bucket-SMK Phase A pytest evidence
+# worktree: C:\Users\Guang\Desktop\quant-monitor-desk-worktrees\bucket-smk-smoke
+# branch: debt/test-hygiene/bucket-smk-smoke
+# command: uv run python -m pytest tests/smoke/test_foundation_smoke.py -q --tb=short
+# date: 2026-06-24
+
+.                                                                        [100%]
+1 passed in ~13s (post ponytail refactor)

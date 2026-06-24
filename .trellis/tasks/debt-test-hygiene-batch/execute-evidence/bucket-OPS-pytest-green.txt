@@ -1,0 +1,12 @@
+# bucket-OPS pytest (Phase A)
+
+Command:
+```
+uv run python -m pytest tests/test_ops_db_inspector.py tests/test_ops_interface_probe.py tests/test_interface_probe_018c.py tests/test_data_cli_contract.py tests/test_config.py tests/test_config_templates.py tests/test_dependency_extras_contract.py tests/test_api_security_contract.py tests/test_reference_adoption_guardrails.py -q --tb=short
+```
+
+Result: **PASSED** (63 passed, 1 skipped, 0 failed)
+
+Skip: `test_dbInspect_symlinkOutsideDataRoot_notCounted` (symlinks not supported on platform)
+
+Exit code: 0

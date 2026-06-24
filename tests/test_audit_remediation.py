@@ -24,7 +24,11 @@ from tests.test_batch_d_orchestration_flow import (
     _incremental_spec,
     _orch_stack,
 )
-from tests.test_sync_orchestrator import _BackfillCountAdapter
+from tests.test_sync_orchestrator import (
+    _BackfillCountAdapter,
+    _BACKFILL_3SHARD_END,
+    _BACKFILL_3SHARD_START,
+)
 
 
 def _migrated_cm(tmp_path: Path) -> ConnectionManager:
@@ -391,8 +395,8 @@ def test_partialSuccess_eachItemWritesAuditEvent(tmp_path: Path, monkeypatch) ->
         market_id="CN_A",
         source_id="baostock",
         adapter_id=None,
-        date_start=date(2026, 1, 1),
-        date_end=date(2026, 3, 31),
+        date_start=_BACKFILL_3SHARD_START,
+        date_end=_BACKFILL_3SHARD_END,
         instrument_id=None,
         partition_key=None,
         trigger_reason="eco_catchup",

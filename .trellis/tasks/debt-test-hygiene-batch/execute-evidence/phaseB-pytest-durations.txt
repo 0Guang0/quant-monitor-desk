@@ -1,0 +1,35 @@
+........................................................................ [  7%]
+...................s.................................................... [ 15%]
+........................................................................ [ 22%]
+........................................................................ [ 30%]
+........................................................................ [ 37%]
+........................................................................ [ 45%]
+........................................................................ [ 52%]
+..................................................s..................... [ 60%]
+........................................................................ [ 67%]
+........................................................................ [ 75%]
+........................................................................ [ 82%]
+........................................................................ [ 90%]
+........................................................................ [ 97%]
+......................                                                   [100%]
+============================ slowest 20 durations =============================
+2.25s call     tests/test_audit_remediation.py::test_partialSuccess_eachItemWritesAuditEvent
+2.21s call     tests/test_sync_orchestrator.py::test_backfillJob_eachShard_callsResourceGuardBeforeFetching
+2.20s call     tests/test_sync_orchestrator.py::test_backfillJob_largeRange_splitsIntoTasks
+1.73s call     tests/test_batch_d_orchestration_flow.py::test_incrementalJob_repeatRun_noDuplicatePrimaryKey
+1.58s call     tests/test_sync_orchestrator.py::test_backfillJob_recordsTriggerReason
+1.21s call     tests/test_sync_orchestrator.py::test_backfillJob_midShardFailure_preservesCompletedTasks
+1.00s call     tests/test_audit_remediation.py::test_validationReport_persistsRuleVersionAndFetchLineage
+1.00s call     tests/test_vendor_fetch_e2e.py::test_vendorFixtureFetch_e2eThroughDataSourceServicePath
+0.99s call     tests/test_audit_remediation.py::test_backfillShard_successPath_validatesAndWritesClean
+0.98s call     tests/test_vendor_fetch_e2e.py::test_vendorFixtureFetch_e2eOrchestratorPath
+0.98s call     tests/test_batch_d_orchestration_flow.py::test_incrementalJob_happyPath_writesCleanAndCompletes
+0.96s call     tests/test_audit_remediation.py::test_jobEventLog_payloadSchema_isMachineReadable
+0.95s call     tests/test_audit_remediation.py::test_incrementalJob_emitsItemSuccessEvent
+0.90s call     tests/test_layer1_observation_ingestion.py::test_layer1Ingestion_phase3_phase4_singleFetchLogRegression
+0.90s call     tests/test_sync_orchestrator.py::test_plannedJobWritesRoutePlanBeforeFetching
+0.88s call     tests/test_loop_engineering_flow.py::test_contextRouter_cli_taskFlag_writesContextPack
+0.86s call     tests/test_sync_orchestrator.py::test_backfillJob_severeConflict_blocksCleanWriteAndPersistsConflictReportId
+0.85s call     tests/test_layer1_observation_ingestion.py::test_layer1Ingestion_phase4_taskEvidenceArtifacts
+0.84s call     tests/test_sync_orchestrator.py::test_r3ySync001_testHookAllowsAdapterBypassUnderPytest
+0.82s call     tests/test_audit_remediation.py::test_sourceConflict_persistsToleranceRuleVersion

@@ -8,14 +8,11 @@ from __future__ import annotations
 from pathlib import Path
 
 from backend.app.core.resource_guard import Decision, ResourceGuard
-from backend.app.datasources.source_registry import SourceRegistry
-from backend.app.db.connection import ConnectionManager
-from backend.app.db.migrate import apply_migrations
 from backend.app.storage.raw_store import RawStore
 from backend.app.sync.jobs import SyncJobSpec
 from backend.app.sync.orchestrator import DataSyncOrchestrator
 from tests.service_path_support import (
-    ensure_bar_staging_tables,
+    bootstrap_vendor_e2e_db,
     make_fixture_port,
     make_staging_baostock_adapter_class,
     write_bar_fixture,
@@ -38,16 +35,12 @@ def test_vendorFixtureFetch_e2eOrchestratorPath(
     write_bar_fixture(FIXTURE_JSON)
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
 
-    db = tmp_path / "vendor_e2e.duckdb"
-    cm = ConnectionManager(db_path=db)
-    with cm.writer() as con:
-        apply_migrations(con)
-        ensure_bar_staging_tables(con, STG_TABLE, clean_name=CLEAN_TABLE)
-
-    reg = SourceRegistry(registry_yaml_fixture)
-    reg.load()
-    with cm.writer() as con:
-        reg.sync_to_db(con, tombstone_missing=False)
+    cm, reg = bootstrap_vendor_e2e_db(
+        tmp_path,
+        stg_table=STG_TABLE,
+        clean_table=CLEAN_TABLE,
+        registry_yaml=registry_yaml_fixture,
+    )
 
     staging_cls = make_staging_baostock_adapter_class(
         STG_TABLE,
@@ -112,16 +105,12 @@ def test_vendorFixtureFetch_e2eThroughDataSourceServicePath(tmp_path: Path, monk
     write_bar_fixture(FIXTURE_JSON)
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
 
-    db = tmp_path / "vendor_svc_e2e.duckdb"
-    cm = ConnectionManager(db_path=db)
-    with cm.writer() as con:
-        apply_migrations(con)
-        ensure_bar_staging_tables(con, STG_TABLE, clean_name=CLEAN_TABLE)
-
-    reg = SourceRegistry()
-    reg.load()
-    with cm.writer() as con:
-        reg.sync_to_db(con, tombstone_missing=False)
+    cm, reg = bootstrap_vendor_e2e_db(
+        tmp_path,
+        stg_table=STG_TABLE,
+        clean_table=CLEAN_TABLE,
+        db_filename="vendor_svc_e2e.duckdb",
+    )
 
     raw_root = tmp_path / "raw"
     raw_root.mkdir()

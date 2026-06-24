@@ -11,6 +11,8 @@ from backend.app.datasources.adapters.skeleton_base import SkeletonAdapterBase
 from backend.app.datasources.capability_registry import SourceCapabilityRegistry
 from backend.app.datasources.route_planner import SourceRoutePlanner
 from backend.app.datasources.source_registry import SourceRegistry
+from backend.app.db.connection import ConnectionManager
+from backend.app.db.migrate import apply_migrations
 from backend.app.storage.raw_store import RawStore
 
 
@@ -39,6 +41,27 @@ def plan_route(
         use_fallback=use_fallback,
         extra_candidates=extra_candidates,
     )
+
+
+def bootstrap_vendor_e2e_db(
+    tmp_path: Path,
+    *,
+    stg_table: str,
+    clean_table: str,
+    registry_yaml: Path | None = None,
+    db_filename: str = "vendor_e2e.duckdb",
+) -> tuple[ConnectionManager, SourceRegistry]:
+    """ponytail: migrate + bar staging + registry sync once per vendor E2E test."""
+    db = tmp_path / db_filename
+    cm = ConnectionManager(db_path=db)
+    with cm.writer() as con:
+        apply_migrations(con)
+        ensure_bar_staging_tables(con, stg_table, clean_name=clean_table)
+    reg = SourceRegistry(registry_yaml) if registry_yaml is not None else SourceRegistry()
+    reg.load()
+    with cm.writer() as con:
+        reg.sync_to_db(con, tombstone_missing=False)
+    return cm, reg
 
 
 def ensure_bar_staging_tables(
