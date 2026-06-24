@@ -1,0 +1,101 @@
+version: model_input_whitelist_v1
+layer: layer2
+description: >
+  Layer2 cross-asset sensor first-batch whitelist aligned to
+  tests/fixtures/layer2_cross_asset_registry_fixture.yaml.
+  Display-only axis inputs remain fixture_only; no live FRED default for L2 assets.
+rows:
+  - input_id: L2-VIX
+    layer: layer2
+    business_purpose: 波动率指数 display-only 轴展示（非 live 模型输入）
+    data_domain: global_asset_reference
+    source_id: staged_fixture
+    operation: load_staged_fixture
+    role: staged_fixture
+    readiness: fixture_only
+    symbol_or_series: FRED:VIXCLS
+    window_cap: fixture_bundle
+    row_cap: null
+    requires_user_authorization: false
+    allowed_next_gate: none
+    forbidden_claims:
+      - production-live ready
+      - live FRED default
+      - eligible_for_model true
+    closure_test: layer2_cross_asset_registry_fixture display_only=true
+    notes: 对照 fixture L2-VIX；Layer1 L1-RA-VIXCLS 为 FRED sandbox_candidate
+
+  - input_id: L2-HYG
+    layer: layer2
+    business_purpose: 高收益债 ETF display-only 信用压力轴展示
+    data_domain: etf_daily_bar
+    source_id: staged_fixture
+    operation: load_staged_fixture
+    role: staged_fixture
+    readiness: fixture_only
+    symbol_or_series: ETF:HYG
+    window_cap: fixture_bundle
+    row_cap: null
+    requires_user_authorization: false
+    allowed_next_gate: none
+    forbidden_claims:
+      - production-live ready
+      - live FRED default
+    closure_test: layer2_cross_asset_registry_fixture display_only=true
+    notes: 对照 fixture L2-HYG；double_count_guard layer1_axis_input_display_only
+
+  - input_id: L2-COPPER
+    layer: layer2
+    business_purpose: 铜期货代理跨资产传感器候选
+    data_domain: global_asset_reference
+    source_id: staged_fixture
+    operation: load_staged_fixture
+    role: staged_fixture
+    readiness: staged_fixture
+    symbol_or_series: FUT:HG
+    window_cap: 60d
+    row_cap: 80
+    requires_user_authorization: false
+    allowed_next_gate: none
+    forbidden_claims:
+      - production-live ready
+      - live FRED default
+    closure_test: staged pilot v3 whitelist-driven evidence
+    notes: eligible_for_model=true in fixture；仍为 staged_fixture 非 production
+
+  - input_id: L2-HG-MAIN
+    layer: layer2
+    business_purpose: 铜主力合约跨资产传感器候选
+    data_domain: global_asset_reference
+    source_id: staged_fixture
+    operation: load_staged_fixture
+    role: staged_fixture
+    readiness: staged_fixture
+    symbol_or_series: FUT:HG_MAIN
+    window_cap: 60d
+    row_cap: 80
+    requires_user_authorization: false
+    allowed_next_gate: sandbox_clean_rehearsal
+    forbidden_claims:
+      - production-live ready
+      - live FRED default
+    closure_test: staged pilot v3 + roll_rule volume_oi_switch evidence
+    notes: sandbox_candidate path reserved for later commodity pilot；当前 staged_fixture
+
+  - input_id: L2-NO-CHANNEL
+    layer: layer2
+    business_purpose: 无可用渠道的航运指数占位
+    data_domain: global_asset_reference
+    source_id: none
+    operation: none
+    role: deferred
+    readiness: deferred
+    symbol_or_series: IDX:MISSING
+    window_cap: none
+    row_cap: null
+    requires_user_authorization: false
+    allowed_next_gate: none
+    forbidden_claims:
+      - production-live ready
+    closure_test: no_accepted_channel — await source routing decision
+    notes: 对照 fixture L2-NO-CHANNEL；缺源 deferred

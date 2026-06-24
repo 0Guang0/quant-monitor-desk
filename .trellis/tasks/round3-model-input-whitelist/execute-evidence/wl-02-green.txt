@@ -1,0 +1,4 @@
+WL-02 GREEN — 2026-06-25
+uv run pytest tests/test_model_input_whitelist.py -k layer2 -q
+....                                                                     [100%]
+4 passed

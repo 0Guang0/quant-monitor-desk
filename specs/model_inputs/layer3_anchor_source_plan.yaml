@@ -1,0 +1,79 @@
+version: model_input_anchor_plan_v1
+layer: layer3
+description: >
+  Layer3 industry-chain anchor → source_id/operation mapping.
+  Staged bundle anchors remain staged_only; missing sources deferred with closure_test.
+rows:
+  - input_id: L3-ANCHOR-MSFT
+    layer: layer3
+    business_purpose: 微软 hyperscaler anchor（staged bundle 验证）
+    data_domain: cn_filings
+    source_id: staged_fixture
+    operation: load_staged_fixture
+    role: staged_fixture
+    readiness: staged_only
+    symbol_or_series: MSFT
+    window_cap: bundle_manifest
+    row_cap: null
+    requires_user_authorization: false
+    allowed_next_gate: none
+    forbidden_claims:
+      - production-live ready
+      - live cninfo default
+    closure_test: layer3_staged_bundle bundle_manifest staged_fixture_only
+    notes: anchor_id MSFT；source_keys microsoft_fy26_q3；node L3_TEST_CHAIN_HYPERSCALER
+
+  - input_id: L3-ANCHOR-OPENAI
+    layer: layer3
+    business_purpose: OpenAI 私募事件 anchor（event_only staged）
+    data_domain: cn_announcements
+    source_id: staged_fixture
+    operation: load_staged_fixture
+    role: staged_fixture
+    readiness: staged_only
+    symbol_or_series: OPENAI
+    window_cap: bundle_manifest
+    row_cap: null
+    requires_user_authorization: false
+    allowed_next_gate: none
+    forbidden_claims:
+      - production-live ready
+    closure_test: layer3_staged_bundle event_only_verified staged path
+    notes: anchor_id OPENAI；event_only=true；source_keys openai_2026_funding
+
+  - input_id: L3-ANCHOR-NVDA-DEFERRED
+    layer: layer3
+    business_purpose: NVDA 产业链 anchor（无 staged source_keys）
+    data_domain: us_equity_daily_bar
+    source_id: none
+    operation: none
+    role: deferred
+    readiness: deferred
+    symbol_or_series: NVDA
+    window_cap: none
+    row_cap: null
+    requires_user_authorization: false
+    allowed_next_gate: none
+    forbidden_claims:
+      - production-live ready
+      - full-market equity scan
+    closure_test: await Layer3 source registry + whitelist expansion
+    notes: 缺源 deferred；不得默认全市场 instrument 扫描
+
+  - input_id: L3-ANCHOR-TSMC-DEFERRED
+    layer: layer3
+    business_purpose: TSMC 先进制程节点 anchor（无可信 live source）
+    data_domain: cn_filings
+    source_id: none
+    operation: none
+    role: deferred
+    readiness: deferred
+    symbol_or_series: TSM
+    window_cap: none
+    row_cap: null
+    requires_user_authorization: false
+    allowed_next_gate: none
+    forbidden_claims:
+      - production-live ready
+    closure_test: await cross-border filing source routing
+    notes: 缺源 deferred + closure_test

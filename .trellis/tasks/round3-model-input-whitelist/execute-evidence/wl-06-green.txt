@@ -1,0 +1,10 @@
+WL-06 GREEN — 2026-06-25
+uv run pytest tests/test_model_input_whitelist.py -q
+......................... [100%]
+25 passed
+
+uv run python scripts/loop_maintain.py --fix
+OK: loop maintain
+
+uv run pytest -q (full)
+full suite green (WL-PLAN-06: v2_integration_bundle fixture)

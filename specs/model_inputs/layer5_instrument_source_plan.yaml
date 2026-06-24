@@ -1,0 +1,145 @@
+version: model_input_instrument_plan_v1
+layer: layer5
+description: >
+  Layer5 instrument/bar/event/metadata evidence first-batch plan.
+  baostock daily bars, cninfo metadata, FRED macro daily, tdx_pytdx validation-only.
+  No production_candidate rows in Batch 01.
+rows:
+  - input_id: L5-BS-DAILY-BAR-P0
+    layer: layer5
+    business_purpose: A 股模型输入日线 OHLCV 证据
+    data_domain: cn_equity_daily_bar
+    source_id: baostock
+    operation: fetch_daily_bar
+    role: primary_candidate
+    readiness: sandbox_candidate
+    symbol_or_series:
+      - sh.600000
+      - sz.000001
+      - sh.601318
+    window_cap: 252d
+    row_cap: 20
+    requires_user_authorization: false
+    allowed_next_gate: raw_staging_pilot
+    forbidden_claims:
+      - production-live ready
+      - full-market daily scan
+    closure_test: capped symbol pilot with source_fetch_id lineage
+    notes: P0 3–20 symbols cap；非全市场
+
+  - input_id: L5-CNINFO-FILING-META
+    layer: layer5
+    business_purpose: 公告/财报元数据索引证据
+    data_domain: cn_filings
+    source_id: cninfo
+    operation: fetch_filing_index
+    role: primary_candidate
+    readiness: sandbox_candidate
+    symbol_or_series:
+      - sh.600000
+      - sz.000001
+    window_cap: 90d
+    row_cap: 20
+    requires_user_authorization: false
+    allowed_next_gate: raw_staging_pilot
+    forbidden_claims:
+      - production-live ready
+      - full-universe filing scan
+    closure_test: metadata-only pilot with content_hash on PDF fetch deferred
+    notes: cninfo metadata candidate；PDF raw 另卡
+
+  - input_id: L5-CNINFO-ANNOUNCEMENT-META
+    layer: layer5
+    business_purpose: 公告索引元数据证据
+    data_domain: cn_announcements
+    source_id: cninfo
+    operation: fetch_announcement_index
+    role: primary_candidate
+    readiness: sandbox_candidate
+    symbol_or_series:
+      - sh.601318
+    window_cap: 60d
+    row_cap: 10
+    requires_user_authorization: false
+    allowed_next_gate: raw_staging_pilot
+    forbidden_claims:
+      - production-live ready
+    closure_test: announcement index pilot capped issuers
+    notes: 2–20 issuer cap per task card
+
+  - input_id: L5-FRED-MACRO-DAILY
+    layer: layer5
+    business_purpose: FRED 宏观日频序列作为 L5 宏观证据交叉引用
+    data_domain: us_macro_series
+    source_id: fred
+    operation: fetch_macro_series
+    role: primary_candidate
+    readiness: sandbox_candidate
+    symbol_or_series: DGS10
+    window_cap: 90d
+    row_cap: 100
+    requires_user_authorization: true
+    allowed_next_gate: raw_staging_pilot
+    forbidden_claims:
+      - production-live ready
+      - production_candidate
+    closure_test: B01-FRED sandbox pilot authorization YAML
+    notes: FRED macro daily；须授权；非 production
+
+  - input_id: L5-TDX-DAILY-VALIDATION
+    layer: layer5
+    business_purpose: TDX 日线 validation-only 对照探针
+    data_domain: cn_equity_daily_bar
+    source_id: tdx_pytdx
+    operation: fetch_daily_bar
+    role: validation_only
+    readiness: sandbox_candidate
+    symbol_or_series: sh.600000
+    window_cap: 30d
+    row_cap: 30
+    requires_user_authorization: true
+    allowed_next_gate: none
+    forbidden_claims:
+      - production-live ready
+      - production primary
+      - production_candidate
+    closure_test: R3E TDX manual probe addendum with host authorization
+    notes: disabled-by-default validation-only；1 equity cap
+
+  - input_id: L5-TDX-INDEX-VALIDATION
+    layer: layer5
+    business_purpose: TDX 指数日线 validation-only 探针
+    data_domain: cn_index_daily_bar
+    source_id: tdx_pytdx
+    operation: fetch_index_daily_bar
+    role: validation_only
+    readiness: sandbox_candidate
+    symbol_or_series: sh.000001
+    window_cap: 30d
+    row_cap: 30
+    requires_user_authorization: true
+    allowed_next_gate: none
+    forbidden_claims:
+      - production-live ready
+      - production primary
+    closure_test: TDX index probe 1 index + capped security-list
+    notes: 1 index cap per task card resource limits
+
+  - input_id: L5-TDX-SECURITY-LIST-PROBE
+    layer: layer5
+    business_purpose: TDX 证券列表 capped probe
+    data_domain: security_list
+    source_id: tdx_pytdx
+    operation: fetch_security_list
+    role: validation_only
+    readiness: sandbox_candidate
+    symbol_or_series: market_sh
+    window_cap: on_demand
+    row_cap: 100
+    requires_user_authorization: true
+    allowed_next_gate: none
+    forbidden_claims:
+      - production-live ready
+      - full-market security list
+    closure_test: capped security-list probe only
+    notes: validation-only；非 production primary

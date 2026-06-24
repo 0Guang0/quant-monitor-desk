@@ -1,0 +1,4 @@
+WL-06 RED — 2026-06-25
+uv run pytest tests/test_model_input_whitelist.py -k "forbidden or readiness_matrix or readme" -q
+FFFFFFF [100%] — missing model_input_readiness_matrix.md + hardening negative coverage
+CLOSURE: debt-lite slice-incremental; GREEN wl-06-green.txt
