@@ -1,0 +1,5 @@
+# full-pytest — R3X_residual_open_items_closure.md §5 Tier B
+# Command: uv run pytest -q --tb=no (α-3 backfill capture @ fix/r3y-prompt15-evidence)
+
+966 passed, 4 skipped in 119.6s
+EXIT:0
