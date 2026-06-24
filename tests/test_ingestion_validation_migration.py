@@ -53,22 +53,19 @@ def test_initDb_createsValidationTables(validation_con, table_name: str) -> None
     assert rows, f"migration 005 must create table {table_name!r}"
 
 
-def test_initDb_runTwice_isIdempotent(migrated_con, tmp_path: Path) -> None:
+def test_initDb_runTwice_isIdempotent(validation_con) -> None:
     """覆盖范围：对同一数据库重复执行迁移是否安全、不重复建表
     测试对象：apply_migrations
     目的/目标：已应用过的迁移不得再次执行或重复登记版本记录
     验证点：第二次返回空列表；schema_version 中 005 仅一条记录
     失败含义：重复迁移破坏版本表或重复执行 DDL，升级路径不可信
     """
-    con = migrated_con(tmp_path)
-    # second apply must be a no-op (already-applied versions skipped)
-    second = apply_migrations(con)
+    # ponytail: reuse validation_module_db (migrations already applied once)
+    second = apply_migrations(validation_con)
     assert second == [], f"second apply should skip applied migrations, got {second}"
-    # schema_version records 005 exactly once
-    cnt = con.execute(
+    cnt = validation_con.execute(
         "SELECT COUNT(*) FROM schema_version WHERE version_id = '005_ingestion_validation'"
     ).fetchone()[0]
-    con.close()
     assert cnt == 1
 
 

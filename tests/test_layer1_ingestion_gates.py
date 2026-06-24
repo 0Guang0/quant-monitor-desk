@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import re
+from functools import lru_cache
 from pathlib import Path
 
 import duckdb
@@ -78,6 +79,12 @@ STAGED_DATA_DOMAIN = "macro_supplementary"
 STAGED_OPERATION = "fetch_macro_series"
 
 
+@lru_cache(maxsize=64)
+def _repo_text(path: Path) -> str:
+    """ponytail: gate tests re-read the same repo files; cache by path."""
+    return path.read_text(encoding="utf-8")
+
+
 def _table_columns(con: duckdb.DuckDBPyConnection, table_name: str) -> set[str]:
     rows = con.execute(
         """
@@ -97,7 +104,7 @@ def test_layer1Ingestion_phase0_migration011_definesAxisTables() -> None:
     验证点：每张 LAYER1_AXIS_TABLES 表名出现在 migration 文本中
     失败含义：迁移漏表，后续建库与盘点门禁全部失效
     """
-    migration_text = MIGRATION_011.read_text(encoding="utf-8")
+    migration_text = _repo_text(MIGRATION_011)
     for table in LAYER1_AXIS_TABLES:
         assert f"CREATE TABLE IF NOT EXISTS {table}" in migration_text
 
@@ -109,7 +116,7 @@ def test_layer1Ingestion_phase0_schemaSqlLagTrackedAsO02() -> None:
     验证点：missing == []（七张表均出现在 schema.sql）
     失败含义：schema 文档漂移，运维检查与 DBA 参考不一致
     """
-    schema_text = SCHEMA_SQL.read_text(encoding="utf-8")
+    schema_text = _repo_text(SCHEMA_SQL)
     missing = [t for t in LAYER1_AXIS_TABLES if t not in schema_text]
     assert missing == []
 
@@ -140,7 +147,7 @@ def test_layer1Migration_axisObservation_columnsMatchModuleSpec(migrated_con, tm
     con = migrated_con(tmp_path)
     cols = _table_columns(con, AXIS_OBSERVATION_TABLE)
     assert set(AXIS_OBSERVATION_DDL_COLUMNS) == cols
-    spec_text = MODULE_SPEC_DDL.read_text(encoding="utf-8")
+    spec_text = _repo_text(MODULE_SPEC_DDL)
     for col in AXIS_OBSERVATION_DDL_COLUMNS:
         assert col in spec_text
     con.close()
@@ -199,12 +206,12 @@ def test_sourceRegistry_roles_forbidShadowEmergency() -> None:
     验证点：source_role_model 正确；legacy_roles_forbidden 含 Shadow/Emergency；正文无 Shadow:/Emergency: 行
     失败含义：废弃角色仍可用，多源路由与降级语义混乱
     """
-    doc = yaml.safe_load(SOURCE_REGISTRY.read_text(encoding="utf-8")) or {}
+    doc = yaml.safe_load(_repo_text(SOURCE_REGISTRY)) or {}
     assert doc.get("source_role_model") == "Primary / Validation / FallbackPolicy"
     rules = doc.get("rules") or {}
     forbidden = {str(r) for r in (rules.get("legacy_roles_forbidden") or [])}
     assert forbidden >= {"Shadow", "Emergency", "shadow_source", "emergency_source"}
-    text = SOURCE_REGISTRY.read_text(encoding="utf-8")
+    text = _repo_text(SOURCE_REGISTRY)
     for role in ("Shadow", "Emergency"):
         assert not re.search(rf"\b{role}\b\s*:", text)
 
@@ -386,7 +393,7 @@ def test_layer1Ingestion_phase0_layer1AxesConfig_resolvesSpecRoot() -> None:
     spec_root = PROJECT_ROOT / cfg["spec_root"]
     assert spec_root.is_dir()
     env_spec = spec_root / "environment_axis" / "environment_axis_indicator_spec.yaml"
-    text = env_spec.read_text(encoding="utf-8")
+    text = _repo_text(env_spec)
     assert FROZEN_STAGED_INDICATOR in text
 
 
@@ -498,7 +505,7 @@ def test_layer1Ingestion_phase0_axisObservation_noDbCheck_classified() -> None:
     验证点：obs_block 大写文本不含 CHECK
     失败含义：误以为数据库有 CHECK，与 ADR-002 及应用校验策略不一致
     """
-    ddl = MIGRATION_011.read_text(encoding="utf-8")
+    ddl = _repo_text(MIGRATION_011)
     obs_block = ddl.split("CREATE TABLE IF NOT EXISTS axis_observation")[1].split(");")[0]
     assert "CHECK" not in obs_block.upper()
 
@@ -510,7 +517,7 @@ def test_layer1Ingestion_phase0_axisObservation_appValidatorEnforcesTimestampOrd
     验证点：pipeline 文本含 test_layer1Observation_noFutureDataRejected
     失败含义：时间序约束无回归测试，正式提交路径可能接受未来数据
     """
-    pipeline = PIPELINE_TESTS.read_text(encoding="utf-8")
+    pipeline = _repo_text(PIPELINE_TESTS)
     assert "test_layer1Observation_noFutureDataRejected" in pipeline
 
 
@@ -523,7 +530,7 @@ def test_layer1Ingestion_phase0_knownPytestSkipsDocumented() -> None:
     """
     doc = PROJECT_ROOT / "docs/quality/KNOWN_PYTEST_SKIPS.md"
     assert doc.is_file()
-    text = doc.read_text(encoding="utf-8")
+    text = _repo_text(doc)
     assert "test_dbInspect_symlinkOutsideDataRoot_notCounted" in text
 
 
@@ -536,7 +543,7 @@ def test_layer1Ingestion_phase0_batch25PendingFixRegistryPresent() -> None:
     """
     reg = PROJECT_ROOT / "docs/quality/ROUND3_BATCH25_PENDING_FIX_REGISTRY.md"
     assert reg.is_file()
-    text = reg.read_text(encoding="utf-8")
+    text = _repo_text(reg)
     assert "R3-B2.75-01" in text
     assert "layer1_ingestion_refactor_rollback_plan.md" in text
 
@@ -550,7 +557,7 @@ def test_layer1Ingestion_phase0_batch3StagedDownstreamGateDocumented() -> None:
     """
     gate = PROJECT_ROOT / "docs/quality/BATCH3_STAGED_DOWNSTREAM_GATE.md"
     assert gate.is_file()
-    text = gate.read_text(encoding="utf-8")
+    text = _repo_text(gate)
     assert "R3-B2.75-01" in text
     assert "staged" in text.lower()
 
@@ -562,9 +569,9 @@ def test_layer1Ingestion_phase0_pytestSlowMarkerRegistered() -> None:
     验证点：pyproject 含 slow:；skips 文档含 not slow
     失败含义：快速 CI 无法排除慢用例，流水线耗时失控
     """
-    pyproject = (PROJECT_ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    pyproject = _repo_text(PROJECT_ROOT / "pyproject.toml")
     assert "slow:" in pyproject
-    skips = (PROJECT_ROOT / "docs/quality/KNOWN_PYTEST_SKIPS.md").read_text(encoding="utf-8")
+    skips = _repo_text(PROJECT_ROOT / "docs/quality/KNOWN_PYTEST_SKIPS.md")
     assert "not slow" in skips
 
 
@@ -588,7 +595,7 @@ def test_layer1Ingestion_phase0_stagedFixturePresent() -> None:
     """
     fixture = PROJECT_ROOT / "tests/fixtures/layer1_macro_observation_fixture.json"
     assert fixture.is_file()
-    doc = json.loads(fixture.read_text(encoding="utf-8"))
+    doc = json.loads(_repo_text(fixture))
     assert doc["indicator_id"] == FROZEN_STAGED_INDICATOR
     assert doc["series_id"] == "DGS10"
     assert doc["as_of"] == "2024-06-15"
@@ -603,16 +610,16 @@ def test_layer1Ingestion_phase0_axisObservationWritePath_implementedInPhase4() -
     """
     ingestion = PROJECT_ROOT / "backend/app/layer1_axes/ingestion.py"
     assert ingestion.is_file()
-    text = ingestion.read_text(encoding="utf-8")
+    text = _repo_text(ingestion)
     assert "commit_clean_observation_and_snapshots" in text
     assert "micro_fetch_staging" in text
     assert "def capture_phase" not in text
     assert "ingestion_commit" in text
-    assert "Layer1ObservationWriter" in (
+    assert "Layer1ObservationWriter" in _repo_text(
         PROJECT_ROOT / "backend/app/layer1_axes/observation_writer.py"
-    ).read_text(encoding="utf-8")
+    )
     closure_test = "test_layer1Observation_cleanWrite_usesWriteManager"
-    pipeline_tests = PIPELINE_TESTS.read_text(encoding="utf-8")
+    pipeline_tests = _repo_text(PIPELINE_TESTS)
     assert closure_test in pipeline_tests
 
 
@@ -629,7 +636,7 @@ def test_layer1Ingestion_phase0_ingestionFacadeReexportsEvidenceModule() -> None
     assert not hasattr(ing, "capture_task_phase3_evidence") or (
         getattr(ing, "capture_task_phase3_evidence", None) is not ev.capture_task_phase3_evidence
     )
-    text = (PROJECT_ROOT / "backend/app/layer1_axes/ingestion.py").read_text(encoding="utf-8")
+    text = _repo_text(PROJECT_ROOT / "backend/app/layer1_axes/ingestion.py")
     assert "from backend.app.layer1_axes.ingestion_evidence import" not in text
     assert ev.capture_task_phase3_evidence is not None
 
