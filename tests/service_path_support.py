@@ -41,10 +41,36 @@ def plan_route(
     )
 
 
-def make_staging_baostock_adapter_class(staging_table: str) -> type[SkeletonAdapterBase]:
+def ensure_bar_staging_tables(
+    con: Any,
+    stg_name: str,
+    *,
+    clean_name: str | None = None,
+) -> str:
+    """Create 6-column bar staging table and an empty clean copy."""
+    con.execute(
+        f"""
+        CREATE TABLE IF NOT EXISTS {stg_name} (
+            instrument_id VARCHAR, trade_date VARCHAR, close DOUBLE,
+            source_used VARCHAR, batch_id VARCHAR, source_id VARCHAR
+        )
+        """
+    )
+    clean = clean_name if clean_name is not None else f"clean_{stg_name}"
+    con.execute(f"CREATE TABLE IF NOT EXISTS {clean} AS SELECT * FROM {stg_name} WHERE 1=0")
+    return clean
+
+
+def make_staging_baostock_adapter_class(
+    staging_table: str,
+    *,
+    supported_domains: frozenset[str] | None = None,
+) -> type[SkeletonAdapterBase]:
+    domains = supported_domains or frozenset({"cn_equity_daily_bar"})
+
     class StagingBaostockAdapter(SkeletonAdapterBase):
         source_id = "baostock"
-        supported_domains = frozenset({"cn_equity_daily_bar"})
+        supported_domains = domains
 
         def fetch(self, req, *, con, job_id=None, record_fetch_log: bool = True):
             result = super().fetch(req, con=con, job_id=job_id, record_fetch_log=record_fetch_log)

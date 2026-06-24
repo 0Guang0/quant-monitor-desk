@@ -5,11 +5,9 @@
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 from backend.app.core.resource_guard import Decision, ResourceGuard
-from backend.app.datasources.adapters.fetch_port import LocalFixtureFetchPort
 from backend.app.datasources.fetch_result import FetchRequest
 from backend.app.datasources.service import DataSourceService
 from backend.app.datasources.source_registry import SourceRegistry
@@ -25,14 +23,44 @@ from tests.contract_gate_support import (
     load_yaml,
     scan_package_for_create_adapter,
 )
+from tests.service_path_support import make_fixture_port, write_bar_fixture
 
 BACKEND_APP = PROJECT_ROOT / "backend" / "app"
 RUNNERS = BACKEND_APP / "sync" / "runners.py"
 CONCRETE_ADAPTER_PREFIX = "backend.app.datasources.adapters."
 
 
-def _load_service_contract() -> dict:
-    return load_yaml(SERVICE_CONTRACT)
+def _patch_probe_adapter_factory(monkeypatch, *, track_order: list[str] | None = None) -> None:
+    def fake_create_test_adapter(sid, registry, data_root, **kwargs):
+        if track_order is not None:
+            track_order.append("create_adapter")
+
+        class ProbeAdapter:
+            source_id = sid
+
+            def fetch(self, req, *, con, job_id=None):
+                if track_order is not None:
+                    track_order.append("adapter_fetch")
+                from datetime import UTC, datetime
+
+                from backend.app.datasources.fetch_result import FetchResult
+
+                return FetchResult(
+                    run_id=req.run_id,
+                    source_id=sid,
+                    data_domain=req.data_domain,
+                    status="SUCCESS",
+                    row_count=1,
+                    fetch_time=datetime.now(UTC).isoformat(),
+                    raw_file_paths=["/tmp/probe.json"],
+                )
+
+        return ProbeAdapter()
+
+    monkeypatch.setattr(
+        "backend.app.datasources.adapters.create_test_adapter",
+        fake_create_test_adapter,
+    )
 
 
 def test_apiAndAgentCannotImportAdapterFactory() -> None:
@@ -42,7 +70,7 @@ def test_apiAndAgentCannotImportAdapterFactory() -> None:
     验证点：violations 列表为空
     失败含义：调用方可绕过服务门面直接建 adapter，边界审计失效
     """
-    contract = _load_service_contract()
+    contract = load_yaml(SERVICE_CONTRACT)
     forbidden_pkgs = contract.get("call_boundaries", {}).get("forbidden_direct_callers") or []
     violations: list[str] = []
     for pkg in forbidden_pkgs:
@@ -60,7 +88,7 @@ def test_serviceBuildsRouteBeforeFetch() -> None:
     验证点：steps 列表与契约冻结顺序完全一致（load_source_registry → … → ensure_fetch_log_or_failure_event）
     失败含义：文档与实现步骤错位，gate 无法证明先路由后抓取
     """
-    contract = _load_service_contract()
+    contract = load_yaml(SERVICE_CONTRACT)
     steps = contract["public_methods"]["fetch"]["required_steps"]
     assert steps == [
         "load_source_registry",
@@ -87,35 +115,7 @@ def test_serviceFetch_runtimeGateOrder(tmp_path: Path, monkeypatch) -> None:
         return Decision.OK, ""
 
     monkeypatch.setattr(ResourceGuard, "check", guard_check)
-
-    def fake_create_test_adapter(sid, registry, data_root, **kwargs):
-        order.append("create_adapter")
-
-        class ProbeAdapter:
-            source_id = sid
-
-            def fetch(self, req, *, con, job_id=None):
-                order.append("adapter_fetch")
-                from datetime import UTC, datetime
-
-                from backend.app.datasources.fetch_result import FetchResult
-
-                return FetchResult(
-                    run_id=req.run_id,
-                    source_id=sid,
-                    data_domain=req.data_domain,
-                    status="SUCCESS",
-                    row_count=1,
-                    fetch_time=datetime.now(UTC).isoformat(),
-                    raw_file_paths=["/tmp/probe.json"],
-                )
-
-        return ProbeAdapter()
-
-    monkeypatch.setattr(
-        "backend.app.datasources.adapters.create_test_adapter",
-        fake_create_test_adapter,
-    )
+    _patch_probe_adapter_factory(monkeypatch, track_order=order)
 
     db = tmp_path / "order.duckdb"
     cm = ConnectionManager(db_path=db)
@@ -198,7 +198,7 @@ def test_forbiddenDirectCallers_includesSyncRunners_andScanIsContractDriven() ->
     验证点：backend.app.sync.runners 在 forbidden；runners 扫描 violations 为空
     失败含义：同步 runner 可绕过服务直接建 adapter
     """
-    contract = _load_service_contract()
+    contract = load_yaml(SERVICE_CONTRACT)
     forbidden = contract.get("call_boundaries", {}).get("forbidden_direct_callers") or []
     assert "backend.app.sync.runners" in forbidden
     assert scan_package_for_create_adapter("sync/runners") == []
@@ -265,16 +265,13 @@ def test_serviceWritesRoutePlanPayloadBeforeFetch(tmp_path: Path, monkeypatch) -
         apply_migrations(con)
     jobs = SyncJobStateMachine(cm)
     fixture = tmp_path / "bar.json"
-    fixture.write_text(
-        json.dumps([{"symbol": "000001", "close": 1.0, "trade_date": "2026-06-15"}]),
-        encoding="utf-8",
-    )
+    write_bar_fixture(fixture)
     reg = SourceRegistry()
     reg.load()
     service = DataSourceService(
         source_registry=reg,
         data_root=tmp_path / "raw",
-        fetch_port=LocalFixtureFetchPort(fixture, row_count=1),
+        fetch_port=make_fixture_port(fixture),
         job_events=jobs,
     )
     spec = SyncJobSpec(
@@ -558,32 +555,7 @@ def test_serviceFetch_recordsSourceOverrideQualityFlag(tmp_path: Path, monkeypat
     失败含义：静默改源无审计标记，数据血缘与运维预期不一致
     """
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
-
-    def fake_create_test_adapter(sid, registry, data_root, **kwargs):
-        class ProbeAdapter:
-            source_id = sid
-
-            def fetch(self, req, *, con, job_id=None):
-                from datetime import UTC, datetime
-
-                from backend.app.datasources.fetch_result import FetchResult
-
-                return FetchResult(
-                    run_id=req.run_id,
-                    source_id=sid,
-                    data_domain=req.data_domain,
-                    status="SUCCESS",
-                    row_count=1,
-                    fetch_time=datetime.now(UTC).isoformat(),
-                    raw_file_paths=["/tmp/probe.json"],
-                )
-
-        return ProbeAdapter()
-
-    monkeypatch.setattr(
-        "backend.app.datasources.adapters.create_test_adapter",
-        fake_create_test_adapter,
-    )
+    _patch_probe_adapter_factory(monkeypatch)
 
     db = tmp_path / "override.duckdb"
     cm = ConnectionManager(db_path=db)

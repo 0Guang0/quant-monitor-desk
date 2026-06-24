@@ -60,6 +60,7 @@ def test_skeletonAdapterBase_registersFileRegistryWhenInjected(
     request_factory,
     file_registry_stack,
     stub_fetch_bytes,
+    baostock_skeleton_market_only_class,
 ):
     """覆盖范围：注入 file_registry 时登记 raw 路径
     测试对象：SkeletonAdapterBase + file_registry
@@ -68,15 +69,10 @@ def test_skeletonAdapterBase_registersFileRegistryWhenInjected(
     失败含义：raw 文件未进注册表，下游无法按 hash 去重与追溯
     """
     from backend.app.datasources.adapters.fetch_port import StubFetchPort
-    from backend.app.datasources.adapters.skeleton_base import SkeletonAdapterBase
-
-    class BaostockSkeleton(SkeletonAdapterBase):
-        source_id = "baostock"
-        supported_domains = frozenset({"cn_equity_daily_bar"})
 
     con = migrated_con(tmp_path)
     stack = file_registry_stack
-    adapter = BaostockSkeleton(
+    adapter = baostock_skeleton_market_only_class(
         batch_b_registry,
         raw_store=stack["raw_store"],
         fetch_port=StubFetchPort(payload=stub_fetch_bytes),
@@ -113,6 +109,7 @@ def test_portErrors_mapStatusAndFetchLog(
     batch_b_registry,
     request_factory,
     file_registry_stack,
+    baostock_skeleton_market_only_class,
     status,
     error_type,
 ):
@@ -123,15 +120,10 @@ def test_portErrors_mapStatusAndFetchLog(
     失败含义：错误分类不一致，运维与重试策略无法按类型处理
     """
     from backend.app.datasources.adapters.fetch_port import FailingPort
-    from backend.app.datasources.adapters.skeleton_base import SkeletonAdapterBase
-
-    class BaostockSkeleton(SkeletonAdapterBase):
-        source_id = "baostock"
-        supported_domains = frozenset({"cn_equity_daily_bar"})
 
     con = migrated_con(tmp_path)
     stack = file_registry_stack
-    adapter = BaostockSkeleton(
+    adapter = baostock_skeleton_market_only_class(
         batch_b_registry,
         raw_store=stack["raw_store"],
         fetch_port=FailingPort(status=status, message=f"simulated {status}"),
@@ -429,6 +421,7 @@ def test_skeletonAdapterBase_resolveAsOfFromEndTime(
     batch_b_registry,
     file_registry_stack,
     stub_fetch_bytes,
+    baostock_skeleton_market_only_class,
 ):
     """覆盖范围：end_time 推导 as_of 与 raw 路径分区
     测试对象：SkeletonAdapterBase.fetch(end_time=...)
@@ -437,16 +430,11 @@ def test_skeletonAdapterBase_resolveAsOfFromEndTime(
     失败含义：as_of 与物理 raw 分区不一致，按日落盘错乱
     """
     from backend.app.datasources.adapters.fetch_port import StubFetchPort
-    from backend.app.datasources.adapters.skeleton_base import SkeletonAdapterBase
     from backend.app.datasources.fetch_result import FetchRequest
-
-    class BaostockSkeleton(SkeletonAdapterBase):
-        source_id = "baostock"
-        supported_domains = frozenset({"cn_equity_daily_bar"})
 
     con = migrated_con(tmp_path)
     stack = file_registry_stack
-    adapter = BaostockSkeleton(
+    adapter = baostock_skeleton_market_only_class(
         batch_b_registry,
         raw_store=stack["raw_store"],
         fetch_port=StubFetchPort(payload=stub_fetch_bytes),
@@ -548,6 +536,7 @@ def test_largePayload_returnsFailedAndDoesNotWriteRaw(
     batch_b_registry,
     request_factory,
     file_registry_stack,
+    baostock_skeleton_market_only_class,
 ):
     """覆盖范围：payload 超 max_payload_bytes
     测试对象：SkeletonAdapterBase(max_payload_bytes=100) + 200 字节 payload
@@ -556,16 +545,11 @@ def test_largePayload_returnsFailedAndDoesNotWriteRaw(
     失败含义：巨包可落盘，磁盘与内存 DoS 风险
     """
     from backend.app.datasources.adapters.fetch_port import StubFetchPort
-    from backend.app.datasources.adapters.skeleton_base import SkeletonAdapterBase
-
-    class BaostockSkeleton(SkeletonAdapterBase):
-        source_id = "baostock"
-        supported_domains = frozenset({"cn_equity_daily_bar"})
 
     huge = b"x" * 200
     con = migrated_con(tmp_path)
     stack = file_registry_stack
-    adapter = BaostockSkeleton(
+    adapter = baostock_skeleton_market_only_class(
         batch_b_registry,
         raw_store=stack["raw_store"],
         fetch_port=StubFetchPort(payload=huge),
@@ -585,6 +569,7 @@ def test_payloadRowCount_propagatesToFetchResultAndFetchLog(
     request_factory,
     file_registry_stack,
     stub_fetch_bytes,
+    baostock_skeleton_market_only_class,
 ):
     """覆盖范围：FetchPayload.row_count 传播
     测试对象：StubFetchPort(row_count=42)
@@ -593,15 +578,10 @@ def test_payloadRowCount_propagatesToFetchResultAndFetchLog(
     失败含义：行数元数据丢失，质量校验与审计统计不准
     """
     from backend.app.datasources.adapters.fetch_port import StubFetchPort
-    from backend.app.datasources.adapters.skeleton_base import SkeletonAdapterBase
-
-    class BaostockSkeleton(SkeletonAdapterBase):
-        source_id = "baostock"
-        supported_domains = frozenset({"cn_equity_daily_bar"})
 
     con = migrated_con(tmp_path)
     stack = file_registry_stack
-    adapter = BaostockSkeleton(
+    adapter = baostock_skeleton_market_only_class(
         batch_b_registry,
         raw_store=stack["raw_store"],
         fetch_port=StubFetchPort(payload=stub_fetch_bytes, row_count=42),
@@ -619,6 +599,7 @@ def test_payloadSchemaHash_propagatesToFetchResultAndFetchLog(
     batch_b_registry,
     request_factory,
     file_registry_stack,
+    baostock_skeleton_market_only_class,
 ):
     """覆盖范围：FetchPayload.schema_hash 传播
     测试对象：StubFetchPort(schema_hash=...)
@@ -627,16 +608,11 @@ def test_payloadSchemaHash_propagatesToFetchResultAndFetchLog(
     失败含义： schema 版本无法追溯，漂移检测失效
     """
     from backend.app.datasources.adapters.fetch_port import StubFetchPort
-    from backend.app.datasources.adapters.skeleton_base import SkeletonAdapterBase
-
-    class BaostockSkeleton(SkeletonAdapterBase):
-        source_id = "baostock"
-        supported_domains = frozenset({"cn_equity_daily_bar"})
 
     schema_hash = "abc123schema"
     con = migrated_con(tmp_path)
     stack = file_registry_stack
-    adapter = BaostockSkeleton(
+    adapter = baostock_skeleton_market_only_class(
         batch_b_registry,
         raw_store=stack["raw_store"],
         fetch_port=StubFetchPort(payload=b'{"a":1}', schema_hash=schema_hash),
@@ -655,6 +631,7 @@ def test_payloadRetryCount_propagatesToFetchResultAndFetchLog(
     request_factory,
     file_registry_stack,
     stub_fetch_bytes,
+    baostock_skeleton_market_only_class,
 ):
     """覆盖范围：FetchPayload.retry_count 传播
     测试对象：StubFetchPort(retry_count=3)
@@ -663,15 +640,10 @@ def test_payloadRetryCount_propagatesToFetchResultAndFetchLog(
     失败含义：重试信息丢失，SLA 与故障分析无据
     """
     from backend.app.datasources.adapters.fetch_port import StubFetchPort
-    from backend.app.datasources.adapters.skeleton_base import SkeletonAdapterBase
-
-    class BaostockSkeleton(SkeletonAdapterBase):
-        source_id = "baostock"
-        supported_domains = frozenset({"cn_equity_daily_bar"})
 
     con = migrated_con(tmp_path)
     stack = file_registry_stack
-    adapter = BaostockSkeleton(
+    adapter = baostock_skeleton_market_only_class(
         batch_b_registry,
         raw_store=stack["raw_store"],
         fetch_port=StubFetchPort(payload=stub_fetch_bytes, retry_count=3),
@@ -690,6 +662,7 @@ def test_fetchRecordsLatencyMsWhenPayloadOmitsIt(
     request_factory,
     file_registry_stack,
     stub_fetch_bytes,
+    baostock_skeleton_market_only_class,
 ):
     """覆盖范围：payload 未提供 latency 时的自动记录
     测试对象：SkeletonAdapterBase.fetch(record_fetch_log=True)
@@ -698,15 +671,10 @@ def test_fetchRecordsLatencyMsWhenPayloadOmitsIt(
     失败含义：延迟指标缺失，性能监控与 SLO 无法统计
     """
     from backend.app.datasources.adapters.fetch_port import StubFetchPort
-    from backend.app.datasources.adapters.skeleton_base import SkeletonAdapterBase
-
-    class BaostockSkeleton(SkeletonAdapterBase):
-        source_id = "baostock"
-        supported_domains = frozenset({"cn_equity_daily_bar"})
 
     con = migrated_con(tmp_path)
     stack = file_registry_stack
-    adapter = BaostockSkeleton(
+    adapter = baostock_skeleton_market_only_class(
         batch_b_registry,
         raw_store=stack["raw_store"],
         fetch_port=StubFetchPort(payload=stub_fetch_bytes),
@@ -756,6 +724,7 @@ def test_resolveAsOf_isoTimestamp_normalizesToDate(
     request_factory,
     file_registry_stack,
     stub_fetch_bytes,
+    baostock_skeleton_market_only_class,
 ):
     """覆盖范围：ISO end_time 规范为日期 as_of
     测试对象：fetch(end_time='2026-06-17T15:30:00Z')
@@ -764,16 +733,11 @@ def test_resolveAsOf_isoTimestamp_normalizesToDate(
     失败含义：as_of 截断错误，按日对齐与 raw 分区错乱
     """
     from backend.app.datasources.adapters.fetch_port import StubFetchPort
-    from backend.app.datasources.adapters.skeleton_base import SkeletonAdapterBase
     from backend.app.datasources.fetch_result import FetchRequest
-
-    class BaostockSkeleton(SkeletonAdapterBase):
-        source_id = "baostock"
-        supported_domains = frozenset({"cn_equity_daily_bar"})
 
     con = migrated_con(tmp_path)
     stack = file_registry_stack
-    adapter = BaostockSkeleton(
+    adapter = baostock_skeleton_market_only_class(
         batch_b_registry,
         raw_store=stack["raw_store"],
         fetch_port=StubFetchPort(payload=stub_fetch_bytes),
@@ -795,6 +759,7 @@ def test_resolveAsOf_invalidDate_returnsFailedFetch(
     request_factory,
     file_registry_stack,
     stub_fetch_bytes,
+    baostock_skeleton_market_only_class,
 ):
     """覆盖范围：非法 end_time 的 fail-closed
     测试对象：fetch(end_time='not-a-date')
@@ -803,16 +768,11 @@ def test_resolveAsOf_invalidDate_returnsFailedFetch(
     失败含义：脏时间仍走成功路径，raw 分区与 as_of 不可信
     """
     from backend.app.datasources.adapters.fetch_port import StubFetchPort
-    from backend.app.datasources.adapters.skeleton_base import SkeletonAdapterBase
     from backend.app.datasources.fetch_result import FetchRequest
-
-    class BaostockSkeleton(SkeletonAdapterBase):
-        source_id = "baostock"
-        supported_domains = frozenset({"cn_equity_daily_bar"})
 
     con = migrated_con(tmp_path)
     stack = file_registry_stack
-    adapter = BaostockSkeleton(
+    adapter = baostock_skeleton_market_only_class(
         batch_b_registry,
         raw_store=stack["raw_store"],
         fetch_port=StubFetchPort(payload=stub_fetch_bytes),
