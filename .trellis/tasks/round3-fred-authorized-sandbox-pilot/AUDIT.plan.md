@@ -15,30 +15,30 @@
 
 | 维 | Agent | Skill | 本任务 | 已执行 |
 | --- | --- | --- | --- | --- |
-| A1 | audit-spec | trellis-check + doubt-driven-development | 必做 | [ ] |
-| A2 | audit-ponytail | ponytail-review + doubt-driven-development | 必做 | [ ] |
-| A3 | audit-security | security-and-hardening + doubt-driven-development | 必做 | [ ] |
-| A4 | audit-quality | code-review-and-quality + doubt-driven-development | 必做 | [ ] |
-| A5 | audit-completion | verification-before-completion + doubt-driven-development | 必做 | [ ] |
-| A6 | audit-perf | doubt-driven-development | **不用** | [ ] |
-| A7 | audit-ops | doubt-driven-development | 必做 | [ ] |
-| A8 | audit-test-gap | testing-guidelines + doubt-driven-development | 必做 | [ ] |
-| A9 | 主会话 | — | 必做 | [ ] |
+| A1 | audit-spec | trellis-check + doubt-driven-development | 必做 | [x] |
+| A2 | audit-ponytail | ponytail-review + doubt-driven-development | 必做 | [x] |
+| A3 | audit-security | security-and-hardening + doubt-driven-development | 必做 | [x] |
+| A4 | audit-quality | code-review-and-quality + doubt-driven-development | 必做 | [x] |
+| A5 | audit-completion | verification-before-completion + doubt-driven-development | 必做 | [x] |
+| A6 | audit-perf | doubt-driven-development | **不用** | [x] |
+| A7 | audit-ops | doubt-driven-development | 必做 | [x] |
+| A8 | audit-test-gap | testing-guidelines + doubt-driven-development | 必做 | [x] |
+| A9 | 主会话 | — | 必做 | [x] |
 
 ## 2. 维度验证矩阵
 
 | 维 | 验证类型 | 命令 / 检查 | 环境 | 通过条件 | 已执行 |
 | --- | --- | --- | --- | --- | --- |
-| A1 | read-only | 对照 R3E、BATCH_01 hardening、MASTER §2/§3 | local | 无 scope 泄漏；未改 data_health 主体 | [ ] |
-| A2 | review-only | ponytail-review `fred_sandbox_pilot.py` `fred_fetch_ports.py` | local | 最小 diff；无新依赖 | [ ] |
-| A3 | static | `rg` API key / production clean write / FRED default enabled | local | 无密钥泄露 | [ ] |
-| A4 | review-only | closeout 字段、evidence 命名一致性 | local | 无阻断质量问题 | [ ] |
-| A5 | trace-ac | AC-FRED-01..07 ↔ §9 evidence | local | 切片可追溯 | [ ] |
-| A5 | cli-sandbox | 复跑 `test_fred_source_registry.py` + `test_fred_sandbox_pilot.py` | audit-sandbox | 与 Execute 一致 | [ ] |
-| A5 | audit-prod-path | `uv run pytest -q`；prod data hash 不变 | audit-prod-path | 无污染 | [ ] |
-| A6 | — | **跳过 — 受控小样本 sandbox pilot** | — | SKIP | [ ] |
-| A7 | cli-sandbox | 无 migration/DB clean write | audit-sandbox | 无 prod 写 | [ ] |
-| A8 | pytest-isolated | macro 不能关 B2.5-O-05；缺授权 live 失败 | audit-sandbox | 边界测试绿 | [ ] |
+| A1 | read-only | 对照 R3E、BATCH_01 hardening、MASTER §2/§3 | local | 无 scope 泄漏；未改 data_health 主体 | [x] |
+| A2 | review-only | ponytail-review `fred_sandbox_pilot.py` `fred_fetch_ports.py` | local | 最小 diff；无新依赖 | [x] |
+| A3 | static | `rg` API key / production clean write / FRED default enabled | local | 无密钥泄露 | [x] |
+| A4 | review-only | closeout 字段、evidence 命名一致性 | local | 无阻断质量问题 | [x] |
+| A5 | trace-ac | AC-FRED-01..07 ↔ §9 evidence | local | 切片可追溯 | [x] |
+| A5 | cli-sandbox | 复跑 `test_fred_source_registry.py` + `test_fred_sandbox_pilot.py` | audit-sandbox | 与 Execute 一致 | [x] |
+| A5 | audit-prod-path | `uv run pytest -q`；prod data hash 不变 | audit-prod-path | 无污染 | [x] |
+| A6 | — | **跳过 — 受控小样本 sandbox pilot** | — | SKIP | [x] |
+| A7 | cli-sandbox | 无 migration/DB clean write | audit-sandbox | 无 prod 写 | [x] |
+| A8 | pytest-isolated | macro 不能关 B2.5-O-05；缺授权 live 失败 | audit-sandbox | 边界测试绿 | [x] |
 
 ### 2.2 A6 SKIP
 
@@ -57,6 +57,6 @@
 
 ## 4. Audit DoD
 
-- [ ] 7.pre `gitnexus-audit-summary.md`
-- [ ] A1–A8（A6 SKIP）
-- [ ] A9 汇总 PASS / FAIL
+- [x] 7.pre `gitnexus-audit-summary.md`
+- [x] A1–A8（A6 SKIP）
+- [x] A9 汇总 PASS / FAIL
