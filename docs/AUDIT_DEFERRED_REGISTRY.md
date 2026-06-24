@@ -2,7 +2,7 @@
 
 **Single source of truth** for open issues, intentional deferrals, and resolved audit items.
 
-> Last reconciled: 2026-06-24 post-wave-C merge + Trellis archive (`master` @ `871b76e2`). Pair: `docs/UNRESOLVED_ISSUES_REGISTRY.md`.
+> Last reconciled: 2026-06-24 post-wave-C registry reconcile + Trellis archive (`master` @ `d49e21d3`). Pair: `docs/UNRESOLVED_ISSUES_REGISTRY.md`.
 
 **Batch 2.5 audit 待修复台账（含合理延期清理阶段）:** [`docs/quality/ROUND3_BATCH25_PENDING_FIX_REGISTRY.md`](quality/ROUND3_BATCH25_PENDING_FIX_REGISTRY.md)  
 **Wave B 待偿还台账:** [`docs/quality/ROUND3_WAVE_B_PENDING_FIX_REGISTRY.md`](quality/ROUND3_WAVE_B_PENDING_FIX_REGISTRY.md)  
@@ -160,13 +160,13 @@ Does **not** block 017 per `ROUND2_GAPS` §6; **must** be closed or re-deferred 
 
 ## DEFERRED — Round 3 PROMPT_18 R3Y follow-ups
 
-Does **not** block staged-only mainline; PROMPT_19/β-1 **closed** 2026-06-24. Remaining hygiene gates PROMPT_15 claim (α-3) and staged-reg bypass (β-2).
+Does **not** block staged-only mainline; PROMPT_19/β-1 **closed** 2026-06-24; Wave C closed α-3 / β-2 / C-20 / `022` (2026-06-24).
 
-| ID                  | Item                                      | Resolution phase       | Task hook                                  | Blocks 019? | Closure test / evidence                                          |
-| ------------------- | ----------------------------------------- | ---------------------- | ------------------------------------------ | ----------- | ---------------------------------------------------------------- |
-| ADV-R3X-LINEAGE-001 | Full L3/L4 snapshot lineage               | **Batch 5A+** (`022`+) | `022_implement_layer4_market_structure.md` | No          | snapshot lineage pytest + registry row; 021 staged envelope only |
-| R3Y-LINEAGE-VR-001  | VR / fetch_log binding for Layer2 lineage | **Batch 5A+** (`022`+) | same · AUD-05                              | No          | lineage tests must not use synthetic IDs as VR binding           |
-| R3Y-TEST-DEPTH-001  | Runtime-strong closed-claim test depth    | **Batch 6 hygiene**    | `ROUND3_BATCH_IMPLEMENTATION_MAP.md` §2.4  | No          | per-ID runtime pytest or explicit wont-fix ADR                   |
+| ID                  | Item                                      | Resolution phase    | Task hook                                 | Blocks 019? | Closure test / evidence                                                 |
+| ------------------- | ----------------------------------------- | ------------------- | ----------------------------------------- | ----------- | ----------------------------------------------------------------------- |
+| ADV-R3X-LINEAGE-001 | Full L3/L4 snapshot lineage               | **Batch 6**         | `023_implement_layer5_evidence_chain.md`  | No          | snapshot lineage pytest + registry row; 021/022 staged envelopes merged |
+| R3Y-LINEAGE-VR-001  | VR / fetch_log binding for Layer2 lineage | **Batch 6**         | same · AUD-05                             | No          | lineage tests must not use synthetic IDs as VR binding                  |
+| R3Y-TEST-DEPTH-001  | Runtime-strong closed-claim test depth    | **Batch 6 hygiene** | `ROUND3_BATCH_IMPLEMENTATION_MAP.md` §2.4 | No          | per-ID runtime pytest or explicit wont-fix ADR                          |
 
 ## RESOLVED — Round 3 Wave B mainline (2026-06-24)
 
@@ -187,10 +187,10 @@ Does **not** block staged-only mainline; PROMPT_19/β-1 **closed** 2026-06-24. R
 
 ## RESOLVED — Round 3 Wave C mainline (2026-06-24)
 
-| ID             | Item                     | Evidence                                                                                                                                      |
-| -------------- | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| R3-PROMPT20-DH | PROMPT_20 data health v1 | merge `5b19e9b1` · `backend/app/ops/data_health.py` · `tests/test_ops_data_health.py` · `.trellis/tasks/round3-readonly-data-health-v1/`      |
-| R3-TASK-022    | Layer4 market structure  | merge `18fd64a3` · `backend/app/layer4_markets/` · `tests/test_layer4_market_structure.py` · `.trellis/tasks/06-24-round3-022-layer4-market/` |
+| ID             | Item                     | Evidence                                                                                                                               |
+| -------------- | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
+| R3-PROMPT20-DH | PROMPT_20 data health v1 | merge `5b19e9b1` · `backend/app/ops/data_health.py` · `tests/test_ops_data_health.py` · archived `round3-readonly-data-health-v1`      |
+| R3-TASK-022    | Layer4 market structure  | merge `18fd64a3` · `backend/app/layer4_markets/` · `tests/test_layer4_market_structure.py` · archived `06-24-round3-022-layer4-market` |
 
 ## RESOLVED — Round 3 PROMPT_18 R3Y hygiene (2026-06-24) — sync bypass only
 

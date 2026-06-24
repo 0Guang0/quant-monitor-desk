@@ -362,14 +362,14 @@ def test_post14R2Risk3_failClosedModesDocumented() -> None:
         assert token in resolved
 
 
-_RECONCILED_TOKENS = ("2026-06-24", "wave-C", "871b76e2", "post-wave-C", "Trellis archive")
+_RECONCILED_TOKENS = ("2026-06-24", "wave-C", "d49e21d3", "post-wave-C", "Trellis archive")
 
 
 def test_r3yRegistrySlice_alpha2LastReconciled() -> None:
     """覆盖范围：Wave C 合并后四份 SSOT 的对账戳一致性
     测试对象：UNRESOLVED、RESOLVED、AUDIT_DEFERRED、UNRESOLVED_ITEM_TASK_COVERAGE
     目的/目标：Last reconciled 块含同一组 mandatory tokens，防止措辞漂移
-    验证点：四份文档均含 2026-06-24、wave-C、871b76e2、post-wave-C、Trellis archive
+    验证点：四份文档均含 2026-06-24、wave-C、d49e21d3、post-wave-C、Trellis archive
     失败含义：对账戳不一致，并行 slice 无法判断 registry 是否同一次 reconcile
     """
     coverage = PROJECT_ROOT / "docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md"
@@ -396,7 +396,7 @@ def test_r3yAdvLineageDefer_registrySSOTWithOwner021() -> None:
     assert item_id in coverage
     assert re.search(rf"\|\s*{re.escape(item_id)}\s*\|\s*DEFERRED", unresolved)
     assert f"| {item_id} | OPEN" not in unresolved
-    for token in ("021", "snapshot lineage pytest", "Batch 5A+"):
+    for token in ("021", "snapshot lineage pytest", "Batch 6"):
         assert token in audit
     assert "021_implement_layer3_snapshot_builder.md" in coverage
 
@@ -470,13 +470,13 @@ def test_round3Map_checkpointReflectsPostWaveCMerge() -> None:
     """覆盖范围：ROUND3 地图 checkpoint 是否反映 post-wave-C 合并与 Wave D 激活状态
     测试对象：ROUND3_BATCH_IMPLEMENTATION_MAP.md 头部与 §2
     目的/目标：地图不得仍写 Wave C active；须标明 Wave D（023）为当前主线
-    验证点：含 871b76e2、post-wave-C、023、Wave D、Done、ROUND3_WAVE_B_PENDING_FIX_REGISTRY、§2.3；不含 Wave C **Active**
+    验证点：含 d49e21d3、post-wave-C、023、Wave D、Done、ROUND3_WAVE_B_PENDING_FIX_REGISTRY、§2.3；不含 Wave C **Active**
     失败含义：地图 checkpoint 陈旧，协调人会按错误 wave 状态排期
     """
     text = _read(ROUND3_MAP)
 
     for token in (
-        "871b76e2",
+        "d49e21d3",
         "post-wave-C",
         "023",
         "Wave D",

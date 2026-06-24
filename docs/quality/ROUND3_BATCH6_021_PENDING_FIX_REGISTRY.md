@@ -1,8 +1,8 @@
 # Round 3 Batch 6 — 021 Layer3 Snapshot 待偿还清单（追加登记）
 
-> **Authority:** 021 主会话对抗性复核（2026-06-24）残余风险；**不阻塞** 021 staged 闭环。  
+> **Authority:** 021 主会话对抗性复核（2026-06-24）残余风险；**不阻塞** 021/022 staged 闭环（均已合并 `master`）。  
 > **配对文档:** `docs/AUDIT_DEFERRED_REGISTRY.md` · `docs/UNRESOLVED_ISSUES_REGISTRY.md` · `ROUND3_BATCH_IMPLEMENTATION_MAP.md` §Batch 6  
-> **规则:** 仅追加登记；Batch 6 closeout 时须 `RESOLVED` 或带新 ID 显式 re-defer。
+> **基准:** `master` @ `d49e21d3` · 2026-06-24
 
 ---
 

@@ -2,7 +2,7 @@
 
 > Purpose: one file for all current unresolved, deferred, open, risk, gap, and improvement items.  
 > Source of truth relationship: this file is the readable unresolved split of `docs/AUDIT_DEFERRED_REGISTRY.md`. If files conflict, update both in the same change and keep this file as the operator-facing unresolved list.  
-> Last reconciled: 2026-06-24 post-wave-C merge + Trellis archive (`master` @ `871b76e2`).
+> Last reconciled: 2026-06-24 post-wave-C registry reconcile + Trellis archive (`master` @ `d49e21d3`).
 
 ## Current Round 3 entry status
 
@@ -83,13 +83,13 @@
 
 ## Round 3 PROMPT_18 — R3Y follow-up fixes (post strict audit)
 
-> Gate: `WARN_ALLOW_WITH_CONTROLS` · evidence: `.trellis/tasks/archive/2026-06/06-23-round3-post-r3x-strict-audit/review-evidence/R3Y-AUD-08-go-no-go.md` · active slice plan: `ROUND3_BATCH_IMPLEMENTATION_MAP.md` §2.4.
+> Gate: `WARN_ALLOW_WITH_CONTROLS` · evidence: `.trellis/tasks/archive/2026-06/06-23-round3-post-r3x-strict-audit/review-evidence/R3Y-AUD-08-go-no-go.md` · active slice plan: `ROUND3_BATCH_IMPLEMENTATION_MAP.md` §2.3 (Wave D).
 
-| ID                  | State    | Blocks PROMPT_20? | Problem / gap / risk                                                                                                   | Evidence / source                                                                 | Resolution / owner                                                                                                |
-| ------------------- | -------- | ----------------: | ---------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| R3Y-TEST-DEPTH-001  | DEFERRED |                No | Runtime-strong pytest ratio insufficient for closed-claim反证.                                                         | AUD-07 WARN                                                                       | Batch 6 / ongoing hygiene: expand runtime-strong tests per closed ID; not blocking staged-only mainline.          |
-| ADV-R3X-LINEAGE-001 | DEFERRED |                No | Full L3/L4 snapshot lineage persistence beyond 021 staged envelope; 021 closed in-memory contract-scoped lineage only. | PROMPT_15 defer table · AUD-06 HIGH · archived `06-24-round3-021-layer3-snapshot` | **Batch 5A+ (`022`+):** snapshot lineage pytest + registry RESOLVED; see `ROUND3_WAVE_B_PENDING_FIX_REGISTRY.md`. |
-| R3Y-LINEAGE-VR-001  | DEFERRED |                No | Layer2 staged lineage credible but VR / fetch_log binding not closed.                                                  | AUD-05 WARN                                                                       | Owner **021**+; sandbox rehearsal must not use synthetic IDs as VR binding.                                       |
+| ID                  | State    | Blocks `023`? | Problem / gap / risk                                                     | Evidence / source                                                                                                             | Resolution / owner                                                                                       |
+| ------------------- | -------- | ------------: | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| R3Y-TEST-DEPTH-001  | DEFERRED |            No | Runtime-strong pytest ratio insufficient for closed-claim反证.           | AUD-07 WARN                                                                                                                   | Batch 6 / ongoing hygiene: expand runtime-strong tests per closed ID; not blocking staged-only mainline. |
+| ADV-R3X-LINEAGE-001 | DEFERRED |            No | Full L3/L4 snapshot lineage persistence beyond 021/022 staged envelopes. | PROMPT_15 defer table · AUD-06 HIGH · archived `06-24-round3-021-layer3-snapshot` · archived `06-24-round3-022-layer4-market` | **Batch 6:** snapshot lineage pytest + registry RESOLVED; see `ROUND3_WAVE_B_PENDING_FIX_REGISTRY.md`.   |
+| R3Y-LINEAGE-VR-001  | DEFERRED |            No | Layer2 staged lineage credible but VR / fetch_log binding not closed.    | AUD-05 WARN                                                                                                                   | Owner **Batch 6**; sandbox rehearsal must not use synthetic IDs as VR binding.                           |
 
 > **Wave B closed (2026-06-24):** `R3Y-SYNC-001`, `R3Y-MUT-PROOF-001`, `R3-TASK-021`, `R3-PROMPT19-V2` → `docs/RESOLVED_ISSUES_REGISTRY.md`. **Wave C closed (2026-06-24):** `R3-PROMPT20-DH`, `R3-TASK-022`, `R3Y-STAGED-REG-001`, `R3Y-PROMPT15-EVID-001` → `docs/RESOLVED_ISSUES_REGISTRY.md`. **Residual hygiene:** `docs/quality/ROUND3_WAVE_B_PENDING_FIX_REGISTRY.md`.  
 > **Partial closure note:** `ADV-R3X-SYNC-001` service-path injection is **done** (`R2.6-IMPL-5`, PROMPT_15). Reconcile internal `adapter.fetch` remains test-only (`R3-PARTIAL-3`).

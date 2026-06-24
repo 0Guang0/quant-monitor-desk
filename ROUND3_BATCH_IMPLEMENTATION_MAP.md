@@ -6,7 +6,7 @@
 >
 > Scope rule: `docs/` and `specs/` are design/contract inputs only. Runtime implementation must land in `backend/`, `frontend/`, `scripts/`, `configs/`, `tests/`, or other implementation paths already mapped by `MIGRATION_MAP.md`.
 >
-> Current checkpoint (2026-06-24): Mainline **`master`** @ **`871b76e2`** (post-wave-C). **Active — Wave D:** full **`023`** Layer 5 evidence chain. **Done + archived:** Wave A/B/C incl. `019`/`020`/`021`/`022`/`023A`, PROMPT_18/19/20, fix α-1/α-2/α-3, fix β-1/β-2. **Next serial:** **`023`** (Wave D). Hard constraint: `R3-B2.75-REQ2-EM` **DEFERRED** (staged-only; no production-live). Residual hygiene: `docs/quality/ROUND3_WAVE_B_PENDING_FIX_REGISTRY.md`. **Worktree SSOT:** §2.2–§2.3 below.
+> Current checkpoint (2026-06-24): Mainline **`master`** @ **`d49e21d3`** (post-wave-C registry reconcile). **Active — Wave D:** full **`023`** Layer 5 evidence chain. **Done + archived:** Wave A/B/C incl. `019`/`020`/`021`/`022`/`023A`, PROMPT_18/19/20, fix α-1/α-2/α-3, fix β-1/β-2 (Trellis archived under `archive/2026-06/`). **Next serial:** **`023`** (Wave D). Hard constraint: `R3-B2.75-REQ2-EM` **DEFERRED** (staged-only; no production-live). Residual hygiene: `docs/quality/ROUND3_WAVE_B_PENDING_FIX_REGISTRY.md`. **Worktree SSOT:** §2.3 below.
 
 ## 0. Mandatory inputs before planning any Round 3 batch
 
@@ -89,71 +89,37 @@ Phase 8D Repair/Debt Lite + staged-only modeling mainline. Authoritative orderin
 
 ### 2.1 Wave ledger
 
-| Wave  | Status     | Scope                                 | Evidence / pointer                             |
-| ----- | ---------- | ------------------------------------- | ---------------------------------------------- |
-| **A** | **Done**   | `019`, `020`, `023A`, PROMPT_18       | merged on `master`; Trellis archived           |
-| **B** | **Done**   | PROMPT_19, `021`, fix α-1/α-2         | @ `68b10982`; Trellis archived 2026-06-24      |
-| **C** | **Done**   | PROMPT_20 ∥ `022` ∥ fix α-3 ∥ fix β-2 | @ `871b76e2`; merged 2026-06-24; §2.2 archived |
-| **D** | **Active** | full `023` Layer 5                    | §2.3 below                                     |
-| **E** | Planned    | Batch 6 repay / migration / CLI       | §2.3                                           |
+| Wave  | Status     | Scope                                 | Evidence / pointer                                             |
+| ----- | ---------- | ------------------------------------- | -------------------------------------------------------------- |
+| **A** | **Done**   | `019`, `020`, `023A`, PROMPT_18       | merged on `master`; Trellis archived                           |
+| **B** | **Done**   | PROMPT_19, `021`, fix α-1/α-2         | @ `68b10982`; Trellis archived 2026-06-24                      |
+| **C** | **Done**   | PROMPT_20 ∥ `022` ∥ fix α-3 ∥ fix β-2 | @ `871b76e2`; registry `d49e21d3`; Trellis archived 2026-06-24 |
+| **D** | **Active** | full `023` Layer 5                    | §2.3 below                                                     |
+| **E** | Planned    | Batch 6 repay / migration / CLI       | §2.3                                                           |
 
 Hard constraint (all waves): `R3-B2.75-REQ2-EM` **DEFERRED** — staged-only; no production-live claims.
 
-### 2.2 Worktree creation checklist — **ARCHIVED: Wave C** (four-way parallel)
+### 2.2 Archived — Wave C (detail retired)
 
-**Baseline:** `master` @ `871b76e2` · **Coordinator:** main session · **Playbook:** `WAVE_C_MAIN_SESSION_COORDINATOR_PLAYBOOK.md` · **Merged:** 2026-06-24 (C-20 → 022 → β-2 → α-3).
+**Merged:** 2026-06-24 · wave-C tip `871b76e2` · registry reconcile `d49e21d3` · playbook `WAVE_C_MAIN_SESSION_COORDINATOR_PLAYBOOK.md`.
 
-**Bootstrap (per slice; run from repo parent):**
+**Done:** C-20 PROMPT_20 (`5b19e9b1`), `022` (`18fd64a3`), fix β-2 (`37142924`), fix α-3 (`871b76e2`). **Trellis archived:** `archive/2026-06/round3-readonly-data-health-v1`, `archive/2026-06/06-24-round3-022-layer4-market`, `archive/2026-06/fix-r3y-prompt15-evidence`, `archive/2026-06/fix-r3y-staged-registry-privatize`.
 
-```bash
-git fetch origin master
-git worktree add -b <target-branch> <worktree-path> origin/master
-```
-
-| Slice              | Owner                      | Target branch                            | Worktree (suggested)                                 | Parallel with              |
-| ------------------ | -------------------------- | ---------------------------------------- | ---------------------------------------------------- | -------------------------- |
-| **C-20** PROMPT_20 | `implement-agent-p20`      | `feature/round3-readonly-data-health-v1` | `../quant-monitor-desk-wt-r3-data-health`            | **022**, **α-3**, **β-2**  |
-| **022** Layer 4    | `implement-agent-022`      | `feature/round3-022-layer4-market`       | `../quant-monitor-desk-wt-022-layer4`                | **C-20**, **α-3**, **β-2** |
-| **α-3** evidence   | `fix-agent-r3y-evidence`   | `fix/r3y-prompt15-evidence`              | `../quant-monitor-desk-wt-fix-r3y-prompt15-evidence` | **C-20**, **022**, **β-2** |
-| **β-2** staged reg | `fix-agent-r3y-staged-reg` | `fix/r3y-staged-registry-privatize`      | `../quant-monitor-desk-wt-fix-r3y-staged-reg`        | **C-20**, **022**, **α-3** |
-
-**Per-slice scope**
-
-| Slice    | Prompt / source                                       | Allowed (core)                                                                                                                                                                   | Forbidden                                                                                                                 |
-| -------- | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| **C-20** | `PROMPT_20_feature_round3_readonly_data_health_v1.md` | `backend/app/ops/data_health*.py`, `tests/test_ops_data_health.py`, task evidence                                                                                                | `backend/app/layer4_markets/**`, `backend/app/storage/staged_evidence.py`, registry trio, production DB write, live fetch |
-| **022**  | `022_implement_layer4_market_structure.md`            | `backend/app/layer4_markets/**`, `tests/test_layer4_market_structure.py`, task evidence                                                                                          | `backend/app/ops/staged_pilot.py`, `mutation_proof.py`, `staged_evidence.py`, registry trio                               |
-| **α-3**  | `R3Y-PROMPT15-EVID-001`                               | `.trellis/tasks/fix-r3y-prompt15-evidence/**`, `.trellis/tasks/fix-round3-r3x-residual-open-items-closure/**` (evidence), narrow `tests/test_r3x_residual_open_items_closure.py` | `backend/**` production code, registry trio                                                                               |
-| **β-2**  | `R3Y-STAGED-REG-001`                                  | `backend/app/storage/staged_evidence.py`, focused storage tests                                                                                                                  | `backend/app/ops/**`, `layer4_markets/**`, registry trio                                                                  |
-
-**Verification (merge gate minimum per slice)**
-
-| Slice    | Commands                                                                                                                                                            |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **C-20** | `uv run pytest tests/test_ops_data_health.py -q`; `uv run pytest tests/test_ops_db_inspector.py tests/test_staged_pilot.py tests/test_data_quality_validator.py -q` |
-| **022**  | `uv run pytest tests/test_layer4_market_structure.py -q`; `uv run pytest tests/test_batch3_staged_downstream_gate.py -q`                                            |
-| **α-3**  | `uv run pytest tests/test_r3x_residual_open_items_closure.py -q`                                                                                                    |
-| **β-2**  | `uv run pytest tests/test_staged_pilot.py tests/test_raw_store.py -q`                                                                                               |
-
-**Recommended merge order into `master`:** **C-20** → **022** → **β-2** → **α-3**. Registry row updates for α-3/β-2 closure: **coordinator batch** after implementation PRs land (do not let four agents edit registry trio concurrently).
-
-**Residual hygiene (tracked, not blocking C-20/022 start):** `docs/quality/ROUND3_WAVE_B_PENDING_FIX_REGISTRY.md` — `R3-B6-021-O-01/02` defer to Batch 6.
+Slice matrices / merge-gate commands: Trellis archive + git history only — not duplicated here. Residual hygiene: `docs/quality/ROUND3_WAVE_B_PENDING_FIX_REGISTRY.md` §2.
 
 ### 2.3 Worktree creation checklist — **ACTIVE: Wave D**
 
 | Wave            | When                        | Slice                  | Target branch (suggested)                         | Worktree (suggested)                   | Notes                                                       |
 | --------------- | --------------------------- | ---------------------- | ------------------------------------------------- | -------------------------------------- | ----------------------------------------------------------- |
-| **D**           | **Now** (post–Wave C)       | **`023`** full Layer 5 | `feature/round3-023b-evidence-chain-full`         | `../quant-monitor-desk-wt-023-layer5`  | **Serial** — needs `022` + `023A` on `master` @ `871b76e2`  |
+| **D**           | **Now** (post–Wave C)       | **`023`** full Layer 5 | `feature/round3-023b-evidence-chain-full`         | `../quant-monitor-desk-wt-023-layer5`  | **Serial** — `022` + `023A` on `master` @ `d49e21d3`        |
 | **E**           | After `023`                 | Batch 6 migration/CLI  | `feature/round3-batch6-*` (split by item cluster) | TBD per `R3-B6-*` row in §3            | Includes `R3-B6-021-O-01/02`, migration 008, `qmd data` CLI |
 | Debt (optional) | Parallel to D/E if capacity | CI gate                | `chore/round3-ci-gate-hardening`                  | `../quant-monitor-desk-wt-ci-gate`     | PROMPT_05; tests/docs only                                  |
 | Debt (optional) | Parallel to D/E if capacity | FRED staged            | `debt/r3b275-fred-staged-semantics`               | `../quant-monitor-desk-wt-fred-staged` | PROMPT_04                                                   |
 | Debt (optional) | Parallel to D/E if capacity | Perf/hyg registry      | `debt/r3b275-perf-hyg-registry`                   | `../quant-monitor-desk-wt-perf-hyg`    | PROMPT_03                                                   |
 
-Do **not** start **`023`** until **022** merges. Do **not** open a fifth branch that touches `backend/app/ops/` while **C-20** is active.
-
 ### 2.4 Archived waves (Wave A + B + C — detail retired)
 
-> **Wave C** merged 2026-06-24 @ `871b76e2`. Items **Done:** PROMPT_20/C-20 (`5b19e9b1`), **`022`** (`18fd64a3`), fix β-2 (`37142924`), fix α-3 (`871b76e2`). Registry closure batch on same coordinator commit.  
+> **Wave C** merged 2026-06-24 @ `871b76e2`; registry reconcile `d49e21d3`; Trellis tasks archived same day. Items **Done:** PROMPT_20/C-20 (`5b19e9b1`), **`022`** (`18fd64a3`), fix β-2 (`37142924`), fix α-3 (`871b76e2`).  
 > **Wave B** merged + Trellis-archived 2026-06-24 (post-wave-B) @ `68b10982`. Items **Done:** PROMPT_19 (`e4abb372`), **`021`** (`1cdb7e48`), fix α-1 (`616feeb8`), α-2 (`984c7b28`). β-1 `mutation_proof` closed inside PROMPT_19.  
 > **Wave A** items **Done:** `019`, `020`, `023A`, PROMPT_18 (`527d6506`).  
 > Slice-level allowed/forbidden matrices for Wave B/C live in Trellis archive (`.trellis/tasks/archive/2026-06/` and active task dirs) and git history — not duplicated here.  
@@ -170,16 +136,7 @@ Completed PROMPT_00–19 and formal `020`/`021` are **Done** — see §2.1 / §2
 | `PROMPT_03_debt_r3b275_perf_hyg_registry.md`        | `debt/r3b275-perf-hyg-registry`           | Optional post-D  | Parallel debt | Perf/hyg registry           |
 | `PROMPT_04_debt_r3b275_fred_staged_semantics.md`    | `debt/r3b275-fred-staged-semantics`       | Optional post-D  | Parallel debt | FRED staged semantics       |
 
-Historical PROMPT_00–20, formal `020`/`021`/`022`, and Wave C fix branches are **Done** — see §2.1 / §2.4. Start new sessions from the prompt file; one branch/worktree per session.
-
-_Archived Wave C index (merged 2026-06-24):_
-
-| Prompt / task                                         | Branch                                   | Status |
-| ----------------------------------------------------- | ---------------------------------------- | ------ |
-| `PROMPT_20_feature_round3_readonly_data_health_v1.md` | `feature/round3-readonly-data-health-v1` | Done   |
-| _(formal)_ `022_implement_layer4_market_structure.md` | `feature/round3-022-layer4-market`       | Done   |
-| fix α-3 (`R3Y-PROMPT15-EVID-001`)                     | `fix/r3y-prompt15-evidence`              | Done   |
-| fix β-2 (`R3Y-STAGED-REG-001`)                        | `fix/r3y-staged-registry-privatize`      | Done   |
+Historical PROMPT_00–20, formal `020`/`021`/`022`, and Wave C fix branches are **Done** — see §2.1 / §2.2 / §2.4.
 
 ### 2.6 Round 3 gate hygiene command matrix
 

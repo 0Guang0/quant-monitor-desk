@@ -1,6 +1,6 @@
 # Unresolved Item → 原始执行任务覆盖索引
 
-> Last reconciled: 2026-06-24 post-wave-C merge + Trellis archive (`master` @ `871b76e2`).  
+> Last reconciled: 2026-06-24 post-wave-C registry reconcile + Trellis archive (`master` @ `d49e21d3`).  
 > 用途：防止 Plan 阶段只读取 `docs/implementation_tasks/**` 原始任务卡而漏掉 `docs/UNRESOLVED_ISSUES_REGISTRY.md` / `docs/AUDIT_DEFERRED_REGISTRY.md` 中仍未闭合的项目。  
 > 规则：新建 MASTER/AUDIT/REPAIR plan 前，必须先读取本文件、当前 registry、目标任务卡，并把本表中目标批次相关 ID 逐项映射到 AC、evidence、closeout 或 explicit re-deferral。若 registry 状态变化，本文件必须同步更新。
 
@@ -69,8 +69,8 @@
 | `R3Y-STAGED-REG-001`    | **CLOSED** fix β-2 (2026-06-24)         | `ROUND_1_DATA_FOUNDATION/008_implement_write_manager.md`; AUD-03 evidence                                                                                  | `_register_staged_file_registry_rows` 私有化；metadata-only 策略注释 + `tests/test_raw_store.py`。                            |
 | `R3Y-PROMPT15-EVID-001` | **CLOSED** fix α-3 (2026-06-24)         | `ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3X_residual_open_items_closure.md`; `.trellis/tasks/archive/2026-06/fix-round3-r3x-residual-open-items-closure/`      | `closed_claim_evidence_index.yaml` + execute `*-green.txt` 映射；`tests/test_r3x_residual_open_items_closure.py` 门禁未弱化。 |
 | `R3Y-TEST-DEPTH-001`    | Batch 6 hygiene                         | `ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3Y_post_r3x_strict_adversarial_audit.md`                                                                              | runtime-strong 反证测试比例；不阻塞 staged-only 主线。                                                                        |
-| `ADV-R3X-LINEAGE-001`   | `021`+ / fix α-2 registry               | `ROUND_3_MODELING_LAYERS/021_implement_layer3_snapshot_builder.md`; `ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3X_residual_open_items_closure.md`                | 仅 registry 登记 defer + owner；不得在 fix α 假装实现 L3/L4 完整 lineage。                                                    |
-| `R3Y-LINEAGE-VR-001`    | `021`+                                  | `ROUND_3_MODELING_LAYERS/021_implement_layer3_snapshot_builder.md`; `019_implement_layer2_cross_asset_sensor.md`                                           | Layer2 VR→lineage 绑定；sandbox 不得用合成 ID 冒充 VR。                                                                       |
+| `ADV-R3X-LINEAGE-001`   | `021`+ / fix α-2 registry               | `ROUND_3_MODELING_LAYERS/021_implement_layer3_snapshot_builder.md`; `ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3X_residual_open_items_closure.md`                | `021`/`022` merged; full L3/L4 lineage **Batch 6** — registry defer only until pytest closeout.                               |
+| `R3Y-LINEAGE-VR-001`    | **Batch 6**                             | `ROUND_3_MODELING_LAYERS/021_implement_layer3_snapshot_builder.md`; `019_implement_layer2_cross_asset_sensor.md`                                           | Layer2 VR→lineage 绑定；sandbox 不得用合成 ID 冒充 VR。                                                                       |
 
 ## 5. Round4 unresolved / deferred items
 
