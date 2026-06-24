@@ -371,6 +371,19 @@ tests/test_layer3_snapshot_builder.py:
     docs: []
     rules: []
     specs: []
+tests/test_layer4_market_structure.py:
+  command: uv run python -m pytest tests/test_layer4_market_structure.py -q
+  evidence_required: pytest output
+  failure_meaning: Layer4 staged market structure or lineage contract regressed.
+  purpose: Layer 4 market structure staged snapshot tests (Round 3 task 022).
+  type: runtime-contract
+  verifies:
+    docs:
+    - docs/modules/layer4_market_structure.md
+    rules: []
+    specs:
+    - specs/contracts/layer4_market_contract.yaml
+    - specs/contracts/snapshot_lineage_contract.yaml
 tests/test_layer5_evidence_foundation.py:
   command: uv run python -m pytest tests/test_layer5_evidence_foundation.py -q
   failure_meaning: Regression in test_layer5_evidence_foundation; inspect purpose

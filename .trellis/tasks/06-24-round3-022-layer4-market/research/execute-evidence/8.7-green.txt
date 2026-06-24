@@ -1,0 +1,12 @@
+# §8.7 GREEN — AC-022-7 + Tier A/B
+$ uv run pytest tests/test_layer4_market_structure.py::test_marketSnapshot_noLayer5HistoryFields -q
+.                                                                        [100%]
+$ uv run pytest tests/test_layer4_market_structure.py -q
+.......                                                                  [100%]
+$ uv run pytest tests/test_batch3_staged_downstream_gate.py -q
+..                                                                       [100%]
+$ uv run pytest -q
+100% passed (full suite)
+$ uv run ruff check backend/app/layer4_markets tests/test_layer4_market_structure.py
+All checks passed!
+exit 0 (PASS)

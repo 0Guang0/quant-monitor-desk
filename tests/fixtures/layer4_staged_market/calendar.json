@@ -1,0 +1,12 @@
+[
+  {
+    "market_id": "CN_A",
+    "trade_date": "2026-06-14",
+    "is_trading_day": true,
+    "session_type": "regular",
+    "timezone": "Asia/Shanghai",
+    "source": "staged_fixture",
+    "quality_flag": "ok",
+    "as_of_timestamp": "2026-06-14T07:00:00+00:00"
+  }
+]

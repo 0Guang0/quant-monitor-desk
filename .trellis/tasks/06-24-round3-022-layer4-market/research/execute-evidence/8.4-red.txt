@@ -1,0 +1,4 @@
+# §8.4 RED
+$ uv run pytest tests/test_layer4_market_structure.py::test_marketSnapshot_lineageRequiredFieldsComplete -q
+FAILED — lineage_envelope missing / LINEAGE_REQUIRED_FIELDS incomplete
+exit code: 1 (FAIL)

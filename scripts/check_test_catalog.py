@@ -81,6 +81,21 @@ CURATED: dict[str, dict] = {
         "failure_meaning": "Layer3 staged loader contract validation or staged-only gate regressed.",
         "evidence_required": "pytest output",
     },
+    "tests/test_layer4_market_structure.py": {
+        "purpose": "Layer 4 market structure staged snapshot tests (Round 3 task 022).",
+        "type": "runtime-contract",
+        "verifies": {
+            "docs": ["docs/modules/layer4_market_structure.md"],
+            "specs": [
+                "specs/contracts/layer4_market_contract.yaml",
+                "specs/contracts/snapshot_lineage_contract.yaml",
+            ],
+            "rules": [],
+        },
+        "command": "uv run python -m pytest tests/test_layer4_market_structure.py -q",
+        "failure_meaning": "Layer4 staged market structure or lineage contract regressed.",
+        "evidence_required": "pytest output",
+    },
     "tests/test_batch25_production_data_gate.py": {
         "purpose": "Batch 2.5 evidence is staged-only, not production-live readiness",
         "type": "policy-contract",

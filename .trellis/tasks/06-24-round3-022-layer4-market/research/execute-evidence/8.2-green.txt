@@ -1,0 +1,5 @@
+# §8.2 GREEN — AC-022-6 staged manifest gate
+$ uv run pytest tests/test_layer4_market_structure.py::test_marketAdapter_nonStagedSource_rejects -q
+.                                                                        [100%]
+1 passed — exit 0 (PASS)
+ponytail: manifest check cloned from L3 _read_l5_manifest pattern.
