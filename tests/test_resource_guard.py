@@ -4,7 +4,14 @@ from __future__ import annotations
 
 import duckdb
 import pytest
-from backend.app.core.resource_guard import Decision, ResourceSnapshot, evaluate, format_pause_event
+from backend.app.core.resource_guard import (
+    Decision,
+    ResourceGuard,
+    ResourceSnapshot,
+    evaluate,
+    format_pause_event,
+)
+from backend.app.db.migrate import apply_migrations
 
 THRESH = {
     "profiles": {
@@ -38,6 +45,15 @@ THRESH = {
         "cache_hard_stop_gb": 4,
     },
 }
+
+
+def _memory_guard(monkeypatch, **snap_overrides) -> tuple[ResourceGuard, duckdb.DuckDBPyConnection]:
+    con = duckdb.connect(":memory:")
+    apply_migrations(con)
+    guard = ResourceGuard(profile="eco", con=con)
+    snap = _snap(**snap_overrides)
+    monkeypatch.setattr(guard, "snapshot", lambda: snap)
+    return guard, con
 
 
 def _snap(**overrides) -> ResourceSnapshot:
@@ -283,17 +299,7 @@ def test_check_okDecision_doesNotWriteGuardLog(monkeypatch, capsys) -> None:
     验证点：decision=OK；log 0 行；stderr 无 RESOURCE_GUARD_PAUSED
     失败含义：健康检查污染日志与 stderr，运维噪声过大
     """
-    from backend.app.core.resource_guard import ResourceGuard
-    from backend.app.db.migrate import apply_migrations
-
-    con = duckdb.connect(":memory:")
-    apply_migrations(con)
-    guard = ResourceGuard(profile="eco", con=con)
-    monkeypatch.setattr(
-        guard,
-        "snapshot",
-        lambda: _snap(),
-    )
+    guard, con = _memory_guard(monkeypatch)
     decision, _ = guard.check()
     assert decision == Decision.OK
     rows = con.execute("SELECT COUNT(*) FROM resource_guard_log").fetchone()[0]
@@ -308,22 +314,13 @@ def test_check_lowMemorySnapshot_writesExtendedGuardLogColumns(monkeypatch) -> N
     验证点：log 行中四列等于注入快照值
     失败含义：审计库缺少扩展指标，事后无法复盘资源状态
     """
-    from backend.app.core.resource_guard import ResourceGuard
-    from backend.app.db.migrate import apply_migrations
-
-    con = duckdb.connect(":memory:")
-    apply_migrations(con)
-    guard = ResourceGuard(profile="eco", con=con)
-    monkeypatch.setattr(
-        guard,
-        "snapshot",
-        lambda: _snap(
-            available_memory_gb=1.5,
-            system_memory_usage_pct=88.0,
-            system_disk_usage_pct=80.0,
-            cache_size_gb=2.5,
-            duckdb_temp_size_gb=1.8,
-        ),
+    guard, con = _memory_guard(
+        monkeypatch,
+        available_memory_gb=1.5,
+        system_memory_usage_pct=88.0,
+        system_disk_usage_pct=80.0,
+        cache_size_gb=2.5,
+        duckdb_temp_size_gb=1.8,
     )
     guard.check()
     row = con.execute(
@@ -346,17 +343,7 @@ def test_check_lowMemorySnapshot_writesGuardLog(monkeypatch, capsys) -> None:
     验证点：decision=PAUSE；log 1 行；stderr 含 RESOURCE_GUARD_PAUSED
     失败含义：暂停无日志无 stderr，编排层不知道被限流
     """
-    from backend.app.core.resource_guard import ResourceGuard
-    from backend.app.db.migrate import apply_migrations
-
-    con = duckdb.connect(":memory:")
-    apply_migrations(con)
-    guard = ResourceGuard(profile="eco", con=con)
-    monkeypatch.setattr(
-        guard,
-        "snapshot",
-        lambda: _snap(available_memory_gb=1.5),
-    )
+    guard, con = _memory_guard(monkeypatch, available_memory_gb=1.5)
     decision, _ = guard.check()
     assert decision == Decision.PAUSE
     rows = con.execute("SELECT COUNT(*) FROM resource_guard_log").fetchone()[0]
@@ -371,17 +358,7 @@ def test_check_hardStopDecision_writesGuardLog(monkeypatch, capsys) -> None:
     验证点：decision=HARD_STOP；log decision=HARD_STOP；stderr 有哨兵
     失败含义：硬停无持久记录，无法审计为何拒绝任务
     """
-    from backend.app.core.resource_guard import ResourceGuard
-    from backend.app.db.migrate import apply_migrations
-
-    con = duckdb.connect(":memory:")
-    apply_migrations(con)
-    guard = ResourceGuard(profile="eco", con=con)
-    monkeypatch.setattr(
-        guard,
-        "snapshot",
-        lambda: _snap(available_memory_gb=0.5),
-    )
+    guard, con = _memory_guard(monkeypatch, available_memory_gb=0.5)
     decision, _ = guard.check()
     assert decision == Decision.HARD_STOP
     row = con.execute("SELECT decision FROM resource_guard_log").fetchone()
@@ -396,17 +373,7 @@ def test_check_warnDecision_writesGuardLog(monkeypatch, capsys) -> None:
     验证点：decision=WARN；log 1 行 decision=WARN；stderr 无 PAUSED
     失败含义：预警不写库或误打暂停哨兵，监控语义混乱
     """
-    from backend.app.core.resource_guard import ResourceGuard
-    from backend.app.db.migrate import apply_migrations
-
-    con = duckdb.connect(":memory:")
-    apply_migrations(con)
-    guard = ResourceGuard(profile="eco", con=con)
-    monkeypatch.setattr(
-        guard,
-        "snapshot",
-        lambda: _snap(available_memory_gb=3.5),
-    )
+    guard, con = _memory_guard(monkeypatch, available_memory_gb=3.5)
     decision, _ = guard.check()
     assert decision == Decision.WARN
     rows = con.execute("SELECT COUNT(*) FROM resource_guard_log").fetchone()[0]
@@ -423,8 +390,6 @@ def test_snapshot_realCall_doesNotRaise() -> None:
     验证点：memory/disk/rss/project_size 均 >= 0
     失败含义：生产环境 snapshot 崩溃，所有编排前置检查失败
     """
-    from backend.app.core.resource_guard import ResourceGuard
-
     snap = ResourceGuard().snapshot()
     assert snap.available_memory_gb >= 0
     assert snap.disk_free_gb >= 0
