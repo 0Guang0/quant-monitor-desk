@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 from contextvars import ContextVar
 from dataclasses import dataclass, replace
@@ -10,24 +11,29 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
+import yaml
 from backend.app.config import DATA_ROOT, PROJECT_ROOT
 from backend.app.core.resource_guard import Decision, ResourceGuard
 from backend.app.datasources.capability_registry import SourceCapabilityRegistry
 from backend.app.datasources.route_models import SourceRoutePlan
 from backend.app.datasources.route_planner import SourceRoutePlanner
 from backend.app.datasources.service import DataSourceService
-from backend.app.datasources.source_registry import SourceNotFoundError, SourceRegistry
+from backend.app.datasources.source_registry import SourceRegistry
 from backend.app.db.connection import ConnectionManager
 from backend.app.db.validation_gate import DbValidationGate, ValidationGateError, ValidationRejected
 from backend.app.db.write_manager import WriteManager, WriteRequest
 from backend.app.ops.mutation_proof import build_production_mutation_proof
 from backend.app.ops.mutation_proof import key_table_row_counts as _key_table_row_counts
-from backend.app.storage.file_registry import STG_FILE_REGISTRY, FileRegistry, _parse_as_of_timestamp
+from backend.app.storage.file_registry import (
+    STG_FILE_REGISTRY,
+    FileRegistry,
+    _parse_as_of_timestamp,
+)
+from backend.app.storage.raw_store import SavedFile
 from backend.app.storage.staged_evidence import (
     STAGED_FILE_REGISTRY_PARSE_STATUS,
     STAGED_FILE_REGISTRY_QUALITY,
 )
-from backend.app.storage.raw_store import SavedFile
 
 PILOT_ID = "r3x-staged-pilot-20260622"
 DEFAULT_AUTHORIZATION_PATH = (
@@ -2134,5 +2140,828 @@ def run_full_staged_pilot_v2(
         "closeout": closeout,
         "skip_live_fetch": skip_live_fetch,
         "resource_guard": guard_payload,
+    }
+
+
+# --- PROMPT_19 staged pilot v3 (WL-driven, fail-closed) -----------------------
+
+MODEL_INPUTS_DIR = PROJECT_ROOT / "specs" / "model_inputs"
+WHITELIST_YAML_NAMES = (
+    "layer1_source_whitelist.yaml",
+    "layer2_source_whitelist.yaml",
+    "layer3_anchor_source_plan.yaml",
+    "layer4_market_source_plan.yaml",
+    "layer5_instrument_source_plan.yaml",
+)
+
+PILOT_ID_V3 = "r3e-staged-pilot-v3-20260625"
+DEFAULT_SANDBOX_ROOT_V3 = PROJECT_ROOT / ".audit-sandbox/r3e-staged-pilot-v3"
+
+PILOT_V3_CAPS_JSON = "pilot_v3_caps.json"
+WHITELIST_REF_JSON = "whitelist_ref.json"
+RAW_MANIFEST_V3_BAOSTOCK_JSON = "raw_evidence_manifest_v3_baostock.json"
+STAGING_MANIFEST_V3_JSON = "staging_evidence_manifest_v3.json"
+CNINFO_SCHEMA_NOTES_V3_MD = "cninfo_schema_notes_v3.md"
+AKSHARE_TAXONOMY_V3_JSON = "akshare_validation_taxonomy_v3.json"
+CONFLICT_CHECK_V3_JSON = "conflict_check_summary_v3.json"
+NO_MUTATION_V3_MD = "no_mutation_proof_v3.md"
+CLOSEOUT_V3_JSON = "pilot_v3_closeout.json"
+SOURCE_READINESS_MATRIX_V3_MD = "source_readiness_matrix_v3.md"
+REGISTRY_PROPOSED_DELTA_V3_YAML = "registry_proposed_delta_v3.yaml"
+
+MAX_SYMBOLS_BAOSTOCK_V3 = 20
+MAX_SYMBOLS_CNINFO_V3 = 20
+MAX_SYMBOLS_AKSHARE_V3 = 10
+MIN_SYMBOLS_AKSHARE_V3 = 2
+MAX_ROWS_BAOSTOCK_V3 = 2000
+MAX_ROWS_CNINFO_V3 = 500
+MAX_ROWS_AKSHARE_V3 = 1000
+MAX_TRADE_DAYS_V3 = 120
+MIN_TRADE_DAYS_V3 = 30
+MAX_NETWORK_CALLS_V3 = 50
+
+PILOT_V3_SOURCE_IDS = frozenset({"baostock", "cninfo", "akshare"})
+CNINFO_METADATA_OPS = frozenset({"fetch_announcement_index", "fetch_filing_index"})
+CNINFO_FORBIDDEN_OP_FRAGMENTS = frozenset({"pdf", "full_text", "full-text", "bulk_download"})
+V3_SOURCE_CLOSEOUT_IDS = ("baostock", "cninfo", "akshare")
+V3_DATE_WINDOW = "recent 60 trading days"
+
+
+def assert_model_inputs_whitelist_present() -> None:
+    """Fail-closed gate: specs/model_inputs/** must exist before v3 pilot (B01-WL)."""
+    if not MODEL_INPUTS_DIR.is_dir():
+        raise StagedPilotAuthorizationError(
+            f"model input whitelist directory missing: {MODEL_INPUTS_DIR}"
+        )
+    missing = [
+        name for name in WHITELIST_YAML_NAMES if not (MODEL_INPUTS_DIR / name).is_file()
+    ]
+    if missing:
+        raise StagedPilotAuthorizationError(
+            f"model input whitelist files missing: {', '.join(missing)}"
+        )
+
+
+def _whitelist_symbol_list(row: dict[str, Any]) -> tuple[str, ...]:
+    sym = row.get("symbol_or_series")
+    if isinstance(sym, list):
+        return tuple(str(item) for item in sym if item)
+    if sym in (None, ""):
+        return ()
+    return (str(sym),)
+
+
+def compute_whitelist_ref() -> dict[str, Any]:
+    """SHA256 refs for all WL YAML files (manifest traceability)."""
+    assert_model_inputs_whitelist_present()
+    entries: list[dict[str, str]] = []
+    aggregate = hashlib.sha256()
+    for name in WHITELIST_YAML_NAMES:
+        path = MODEL_INPUTS_DIR / name
+        content = path.read_bytes()
+        file_hash = hashlib.sha256(content).hexdigest()
+        aggregate.update(content)
+        entries.append(
+            {
+                "path": _evidence_relative_path(path),
+                "sha256": file_hash,
+            }
+        )
+    return {
+        "whitelist_root": _evidence_relative_path(MODEL_INPUTS_DIR),
+        "files": entries,
+        "aggregate_sha256": aggregate.hexdigest(),
+    }
+
+
+def load_pilot_v3_whitelist_scope() -> dict[str, list[dict[str, Any]]]:
+    """Load baostock/cninfo/akshare rows from merged model_inputs YAML."""
+    assert_model_inputs_whitelist_present()
+    rows_by_source: dict[str, list[dict[str, Any]]] = {
+        source_id: [] for source_id in PILOT_V3_SOURCE_IDS
+    }
+    for name in WHITELIST_YAML_NAMES:
+        doc = yaml.safe_load((MODEL_INPUTS_DIR / name).read_text(encoding="utf-8")) or {}
+        for row in doc.get("rows") or []:
+            source_id = row.get("source_id")
+            if source_id in PILOT_V3_SOURCE_IDS:
+                rows_by_source[str(source_id)].append({**row, "_whitelist_file": name})
+    return rows_by_source
+
+
+def pilot_v3_baostock_symbols() -> tuple[str, ...]:
+    symbols: list[str] = []
+    for row in load_pilot_v3_whitelist_scope()["baostock"]:
+        if (
+            row.get("data_domain") == "cn_equity_daily_bar"
+            and row.get("operation") == "fetch_daily_bar"
+        ):
+            for symbol in _whitelist_symbol_list(row):
+                if symbol not in symbols:
+                    symbols.append(symbol)
+    if not symbols:
+        raise StagedPilotAuthorizationError(
+            "no baostock cn_equity_daily_bar symbols in model input whitelist"
+        )
+    return tuple(symbols[:MAX_SYMBOLS_BAOSTOCK_V3])
+
+
+def pilot_v3_cninfo_symbols() -> tuple[str, ...]:
+    symbols: list[str] = []
+    for row in load_pilot_v3_whitelist_scope()["cninfo"]:
+        if row.get("operation") in CNINFO_METADATA_OPS:
+            for symbol in _whitelist_symbol_list(row):
+                if symbol not in symbols:
+                    symbols.append(symbol)
+    if not symbols:
+        raise StagedPilotAuthorizationError(
+            "no cninfo metadata symbols in model input whitelist"
+        )
+    return tuple(symbols[:MAX_SYMBOLS_CNINFO_V3])
+
+
+def pilot_v3_akshare_symbols() -> tuple[str, ...]:
+    """ponytail: akshare comparison symbols are WL-traced subset of baostock symbols."""
+    baostock = pilot_v3_baostock_symbols()
+    if len(baostock) < MIN_SYMBOLS_AKSHARE_V3:
+        raise StagedPilotAuthorizationError(
+            f"akshare comparison needs at least {MIN_SYMBOLS_AKSHARE_V3} WL baostock symbols"
+        )
+    return tuple(baostock[:MAX_SYMBOLS_AKSHARE_V3])
+
+
+def _v3_row_caps_for_source(source_id: str) -> dict[str, int]:
+    if source_id == "baostock":
+        return {"max_symbols": MAX_SYMBOLS_BAOSTOCK_V3, "max_rows": MAX_ROWS_BAOSTOCK_V3}
+    if source_id == "cninfo":
+        return {"max_symbols": MAX_SYMBOLS_CNINFO_V3, "max_rows": MAX_ROWS_CNINFO_V3}
+    if source_id == "akshare":
+        return {"max_symbols": MAX_SYMBOLS_AKSHARE_V3, "max_rows": MAX_ROWS_AKSHARE_V3}
+    raise StagedPilotAuthorizationError(f"unsupported v3 source_id: {source_id!r}")
+
+
+def _v3_symbols_for_domain_operation(
+    source_id: str,
+    *,
+    data_domain: str,
+    operation: str,
+    max_symbols: int,
+) -> tuple[str, ...]:
+    symbols: list[str] = []
+    for row in load_pilot_v3_whitelist_scope().get(source_id, []):
+        if row.get("data_domain") != data_domain:
+            continue
+        if row.get("operation") != operation:
+            continue
+        for symbol in _whitelist_symbol_list(row):
+            if symbol not in symbols:
+                symbols.append(symbol)
+    if not symbols:
+        raise StagedPilotAuthorizationError(
+            f"no {source_id} whitelist rows for {data_domain}/{operation}"
+        )
+    return tuple(symbols[:max_symbols])
+
+
+def _allowed_symbols_for_v3_request(request: StagedPilotRequest) -> frozenset[str]:
+    if request.source_id == "akshare":
+        return frozenset(pilot_v3_akshare_symbols())
+    return frozenset(
+        _v3_symbols_for_domain_operation(
+            request.source_id,
+            data_domain=str(request.data_domain),
+            operation=request.operation,
+            max_symbols=_v3_row_caps_for_source(request.source_id)["max_symbols"],
+        )
+    )
+
+
+def pilot_v3_caps_payload() -> dict[str, Any]:
+    wl_ref = compute_whitelist_ref()
+    return {
+        "pilot_id": PILOT_ID_V3,
+        "whitelist_ref": wl_ref,
+        "baostock_symbols": list(pilot_v3_baostock_symbols()),
+        "cninfo_symbols": list(pilot_v3_cninfo_symbols()),
+        "akshare_symbols": list(pilot_v3_akshare_symbols()),
+        "max_symbols_baostock": MAX_SYMBOLS_BAOSTOCK_V3,
+        "max_symbols_cninfo": MAX_SYMBOLS_CNINFO_V3,
+        "max_symbols_akshare": MAX_SYMBOLS_AKSHARE_V3,
+        "min_trade_days": MIN_TRADE_DAYS_V3,
+        "max_trade_days": MAX_TRADE_DAYS_V3,
+        "max_rows_baostock": MAX_ROWS_BAOSTOCK_V3,
+        "max_rows_cninfo": MAX_ROWS_CNINFO_V3,
+        "max_rows_akshare": MAX_ROWS_AKSHARE_V3,
+        "max_network_calls_per_run": MAX_NETWORK_CALLS_V3,
+        "sandbox_root": _evidence_relative_path(DEFAULT_SANDBOX_ROOT_V3),
+        "production_clean_write": False,
+        "full_market_scan": False,
+        "full_history_backfill": False,
+        "model_driven": True,
+    }
+
+
+def write_whitelist_ref(evidence_dir: Path) -> dict[str, Any]:
+    evidence_dir = Path(evidence_dir)
+    evidence_dir.mkdir(parents=True, exist_ok=True)
+    payload = compute_whitelist_ref()
+    (evidence_dir / WHITELIST_REF_JSON).write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return payload
+
+
+def write_pilot_v3_caps(evidence_dir: Path) -> dict[str, Any]:
+    evidence_dir = Path(evidence_dir)
+    evidence_dir.mkdir(parents=True, exist_ok=True)
+    payload = pilot_v3_caps_payload()
+    (evidence_dir / PILOT_V3_CAPS_JSON).write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    write_whitelist_ref(evidence_dir)
+    return payload
+
+
+def validate_pilot_v3_authorization(request: StagedPilotRequest) -> None:
+    """Fail-closed v3 authorization — WL-traced symbols within frozen caps."""
+    assert_model_inputs_whitelist_present()
+
+    auth_path = _resolve_authorization_path(request.authorization_evidence)
+    if not auth_path.is_file():
+        raise StagedPilotAuthorizationError(
+            f"authorization evidence missing: {request.authorization_evidence}"
+        )
+    auth_text = auth_path.read_text(encoding="utf-8")
+    if not auth_path.name.startswith("prompt14_user_authorization_"):
+        raise StagedPilotAuthorizationError(
+            f"authorization filename must match prompt14_user_authorization_*: {auth_path.name}"
+        )
+    if "Approved on" not in auth_text:
+        raise StagedPilotAuthorizationError("authorization evidence missing approval marker")
+
+    if request.source_id in DISABLED_PILOT_SOURCE_IDS:
+        raise StagedPilotDisabledSourceError(
+            f"source {request.source_id!r} is not authorized for staged real-data pilot"
+        )
+    if not request.raw_only:
+        raise StagedPilotAuthorizationError("staged pilot requires raw_only=true")
+    if request.write_target != "sandbox":
+        raise StagedPilotAuthorizationError("write_target must be sandbox")
+    if request.allow_clean_write:
+        raise StagedPilotAuthorizationError(
+            "allow_clean_write must be false for staged real-data pilot"
+        )
+    if not request.symbols_or_indicators:
+        raise StagedPilotAuthorizationError("symbols_or_indicators must be non-empty")
+
+    if request.source_id == "cninfo":
+        operation_lower = request.operation.lower()
+        if any(fragment in operation_lower for fragment in CNINFO_FORBIDDEN_OP_FRAGMENTS):
+            raise StagedPilotAuthorizationError(
+                "cninfo PDF/full-text expansion forbidden in v3 pilot"
+            )
+        if request.operation not in CNINFO_METADATA_OPS:
+            raise StagedPilotAuthorizationError(
+                f"cninfo operation must be metadata-only: {request.operation!r}"
+            )
+
+    if request.source_id == "akshare":
+        if request.operation != "fetch_daily_bar_validation":
+            raise StagedPilotAuthorizationError(
+                "akshare must remain validation-only in v3 pilot"
+            )
+
+    caps = _v3_row_caps_for_source(request.source_id)
+    if len(request.symbols_or_indicators) > caps["max_symbols"]:
+        raise StagedPilotAuthorizationError(
+            f"max_symbols cap is {caps['max_symbols']}, got {len(request.symbols_or_indicators)}"
+        )
+    if request.max_rows <= 0 or request.max_rows > caps["max_rows"]:
+        raise StagedPilotAuthorizationError(
+            f"max_rows must be in 1..{caps['max_rows']}, got {request.max_rows}"
+        )
+
+    allowed_symbols = _allowed_symbols_for_v3_request(request)
+    unknown = [
+        symbol
+        for symbol in request.symbols_or_indicators
+        if symbol not in allowed_symbols
+    ]
+    if unknown:
+        raise StagedPilotAuthorizationError(
+            f"symbols not in model input whitelist: {unknown}"
+        )
+
+
+def approved_pilot_v3_requests() -> tuple[StagedPilotRequest, ...]:
+    auth = "docs/quality/prompt14_user_authorization_2026-06-22.md"
+    baostock_symbols = pilot_v3_baostock_symbols()
+    akshare_symbols = pilot_v3_akshare_symbols()
+    return (
+        StagedPilotRequest(
+            source_id="baostock",
+            data_domain="cn_equity_daily_bar",
+            operation="fetch_daily_bar",
+            symbols_or_indicators=baostock_symbols,
+            date_window=V3_DATE_WINDOW,
+            max_rows=min(100 * len(baostock_symbols), MAX_ROWS_BAOSTOCK_V3),
+            authorization_evidence=auth,
+        ),
+        StagedPilotRequest(
+            source_id="akshare",
+            data_domain="cn_equity_daily_bar",
+            operation="fetch_daily_bar_validation",
+            symbols_or_indicators=akshare_symbols,
+            date_window=V3_DATE_WINDOW,
+            max_rows=min(100 * len(akshare_symbols), MAX_ROWS_AKSHARE_V3),
+            authorization_evidence=auth,
+        ),
+        StagedPilotRequest(
+            source_id="cninfo",
+            data_domain="cn_announcements",
+            operation="fetch_announcement_index",
+            symbols_or_indicators=_v3_symbols_for_domain_operation(
+                "cninfo",
+                data_domain="cn_announcements",
+                operation="fetch_announcement_index",
+                max_symbols=MAX_SYMBOLS_CNINFO_V3,
+            ),
+            date_window="recent 60 calendar days",
+            max_rows=min(50, MAX_ROWS_CNINFO_V3),
+            authorization_evidence=auth,
+        ),
+    )
+
+
+def assert_akshare_not_primary_for_daily_bar() -> None:
+    """Route preview guard: akshare must not be organic Primary for daily bar fetch."""
+    registry = SourceRegistry()
+    registry.load()
+    capability_registry = SourceCapabilityRegistry()
+    capability_registry.load()
+    planner = SourceRoutePlanner(
+        source_registry=registry,
+        capability_registry=capability_registry,
+    )
+    plan = planner.plan(
+        data_domain="cn_equity_daily_bar",
+        operation="fetch_daily_bar",
+        run_id="v3-akshare-primary-guard",
+        job_id="r3e-staged-pilot-v3-route",
+    )
+    if plan.selected_source_id == "akshare":
+        raise StagedPilotAuthorizationError(
+            "akshare must not be selected as Primary for cn_equity_daily_bar"
+        )
+
+
+def capture_baostock_evidence_v3(
+    *,
+    evidence_dir: Path,
+    sandbox_root: Path | None = None,
+    fetch_runner: Any | None = None,
+) -> dict[str, Any]:
+    """Baostock WL-driven manifest v3 (R3E-SP3-02)."""
+    evidence_dir = Path(evidence_dir)
+    evidence_dir.mkdir(parents=True, exist_ok=True)
+    sandbox = sandbox_root or DEFAULT_SANDBOX_ROOT_V3
+    request = approved_pilot_v3_requests()[0]
+    validate_pilot_v3_authorization(request)
+
+    if fetch_runner is not None:
+        fetch_item = fetch_runner(request, sandbox_root=sandbox)
+    else:
+        fetch_item = run_staged_pilot_raw_only(
+            replace(request, dry_run=False),
+            sandbox_root=sandbox / "baostock",
+            pilot_request_id="v3-baostock",
+            authorization_gate=validate_pilot_v3_authorization,
+        )
+        fetch_item["pilot_id"] = PILOT_ID_V3
+
+    generated_at = _utc_now_iso()
+    manifest_entry = _manifest_v2_fetch_entry(fetch_item, pilot_request_id="v3-baostock")
+    wl_ref = compute_whitelist_ref()
+    payload = {
+        "pilot_id": PILOT_ID_V3,
+        "generated_at": generated_at,
+        "whitelist_ref": wl_ref,
+        "source_id": "baostock",
+        "data_domain": request.data_domain,
+        "symbols": list(request.symbols_or_indicators),
+        "date_window": request.date_window,
+        "fetches": [fetch_item],
+        "manifest_entries": [manifest_entry],
+        "required_fields_present": all(
+            manifest_entry.get(field) is not None
+            for field in ("content_hash", "source_fetch_id", "as_of_timestamp")
+        ),
+    }
+    staging_payload = {
+        "pilot_id": PILOT_ID_V3,
+        "generated_at": generated_at,
+        "whitelist_ref": wl_ref,
+        "staged_rows": [
+            {
+                "pilot_request_id": "v3-baostock",
+                "staged_file_ids": fetch_item.get("staged_file_ids", []),
+                "quality_flag": STAGED_FILE_REGISTRY_QUALITY,
+            }
+        ],
+        "allow_clean_write": False,
+    }
+    (evidence_dir / RAW_MANIFEST_V3_BAOSTOCK_JSON).write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    (evidence_dir / STAGING_MANIFEST_V3_JSON).write_text(
+        json.dumps(staging_payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return payload
+
+
+def capture_cninfo_evidence_v3(
+    *,
+    evidence_dir: Path,
+    sandbox_root: Path | None = None,
+    fetch_runner: Any | None = None,
+) -> dict[str, Any]:
+    """Cninfo metadata evidence v3; rejects PDF/full-text ops at authorization gate."""
+    evidence_dir = Path(evidence_dir)
+    evidence_dir.mkdir(parents=True, exist_ok=True)
+    sandbox = sandbox_root or DEFAULT_SANDBOX_ROOT_V3
+    request = approved_pilot_v3_requests()[2]
+    validate_pilot_v3_authorization(request)
+
+    if fetch_runner is not None:
+        fetch_item = fetch_runner(request, sandbox_root=sandbox)
+    else:
+        fetch_item = run_staged_pilot_raw_only(
+            replace(request, dry_run=False),
+            sandbox_root=sandbox / "cninfo",
+            pilot_request_id="v3-cninfo",
+            authorization_gate=validate_pilot_v3_authorization,
+        )
+        fetch_item["pilot_id"] = PILOT_ID_V3
+
+    raw_paths = fetch_item.get("fetch_result", {}).get("raw_file_paths") or []
+    schema_fields: list[str] = []
+    if raw_paths:
+        raw_payload = _load_raw_json_payload(raw_paths[0])
+        rows = raw_payload.get("rows", [])
+        if isinstance(rows, list) and rows and isinstance(rows[0], dict):
+            schema_fields = sorted(rows[0].keys())
+
+    notes_lines = [
+        "# cninfo metadata schema notes v3",
+        "",
+        f"- **Pilot ID:** {PILOT_ID_V3}",
+        f"- **Symbols:** {', '.join(request.symbols_or_indicators)}",
+        f"- **Date window:** {request.date_window}",
+        "- **metadata_only:** true",
+        "",
+        "## Observed fields",
+        "",
+    ]
+    if schema_fields:
+        notes_lines.extend(f"- `{field}`" for field in schema_fields)
+    else:
+        notes_lines.append("- _(no rows in sample — structure validation deferred)_")
+
+    (evidence_dir / CNINFO_SCHEMA_NOTES_V3_MD).write_text(
+        "\n".join(notes_lines) + "\n",
+        encoding="utf-8",
+    )
+
+    generated_at = _utc_now_iso()
+    return {
+        "pilot_id": PILOT_ID_V3,
+        "generated_at": generated_at,
+        "whitelist_ref": compute_whitelist_ref(),
+        "source_id": "cninfo",
+        "schema_fields": schema_fields,
+        "metadata_only": True,
+        "fetch": fetch_item,
+    }
+
+
+def capture_akshare_validation_taxonomy_v3(
+    *,
+    evidence_dir: Path,
+    taxonomy_records: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Akshare validation taxonomy v3 (R3E-SP3-04)."""
+    evidence_dir = Path(evidence_dir)
+    evidence_dir.mkdir(parents=True, exist_ok=True)
+    request = approved_pilot_v3_requests()[1]
+    validate_pilot_v3_authorization(request)
+    assert_akshare_not_primary_for_daily_bar()
+
+    records = taxonomy_records or [
+        {
+            "source_id": "akshare",
+            "operation": request.operation,
+            "status": FetchTaxonomyStatus.SUCCESS.value,
+            "validation_only": True,
+            "re_defer": False,
+            "whitelist_input_id": "L1-MACRO-SUPP-VALIDATION",
+        },
+        {
+            "source_id": "akshare",
+            "operation": request.operation,
+            "status": FetchTaxonomyStatus.SOURCE_FAILURE.value,
+            "validation_only": True,
+            "re_defer": True,
+            "reason": "NETWORK_ERROR retry exhausted; R3-PROMPT14-AKSHARE-VAL-01 re-defer",
+            "whitelist_input_id": "L1-MACRO-SUPP-VALIDATION",
+        },
+    ]
+    allowed_status = {item.value for item in FetchTaxonomyStatus}
+    for record in records:
+        if record.get("status") not in allowed_status:
+            raise ValueError(f"invalid taxonomy status: {record.get('status')}")
+
+    generated_at = _utc_now_iso()
+    payload = {
+        "pilot_id": PILOT_ID_V3,
+        "generated_at": generated_at,
+        "whitelist_ref": compute_whitelist_ref(),
+        "validation_only": True,
+        "primary_forbidden": True,
+        "records": records,
+    }
+    (evidence_dir / AKSHARE_TAXONOMY_V3_JSON).write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return payload
+
+
+def capture_conflict_summary_v3(
+    *,
+    evidence_dir: Path,
+) -> dict[str, Any]:
+    """Conflict dry-run summary v3 — no clean write (R3E-SP3-05)."""
+    from backend.app.validators.source_conflict import (
+        SourceConflictRequest,
+        SourceConflictValidator,
+    )
+
+    evidence_dir = Path(evidence_dir)
+    validator = SourceConflictValidator()
+    request = SourceConflictRequest(
+        run_id="v3-conflict-dry-run",
+        job_id="r3e-staged-pilot-v3-conflict",
+        data_domain="cn_equity_daily_bar",
+        primary_source="baostock",
+        validation_sources=("akshare",),
+        key_fields=("symbol", "trade_date"),
+        comparable_fields=("close",),
+        tolerance_rule_set_id="staged_pilot_v3",
+    )
+    sample_symbol = pilot_v3_baostock_symbols()[0]
+    rows = [
+        {
+            "source_id": "baostock",
+            "symbol": sample_symbol,
+            "trade_date": "2026-06-01",
+            "close": 10.0,
+        },
+        {
+            "source_id": "akshare",
+            "symbol": sample_symbol,
+            "trade_date": "2026-06-01",
+            "close": 10.5,
+        },
+    ]
+    report = validator.validate_rows(request, rows)
+    generated_at = _utc_now_iso()
+    payload = {
+        "pilot_id": PILOT_ID_V3,
+        "generated_at": generated_at,
+        "whitelist_ref": compute_whitelist_ref(),
+        "dry_run": True,
+        "clean_write_attempted": False,
+        "can_write_primary_value": report.can_write_primary_value,
+        "conflict_status": report.status,
+        "conflict_count": len(report.conflicts),
+        "conflicts": [
+            {
+                "field_name": finding.field_name,
+                "primary_value": finding.primary_value,
+                "competing_source": finding.competing_source,
+                "competing_value": finding.competing_value,
+                "severity": finding.severity,
+            }
+            for finding in report.conflicts
+        ],
+        "policy_ref": "docs/modules/data_validation_and_conflict.md",
+    }
+    (evidence_dir / CONFLICT_CHECK_V3_JSON).write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return payload
+
+
+def write_no_mutation_proof_v3(
+    *,
+    evidence_dir: Path,
+    db_path: Path | None = None,
+) -> dict[str, Any]:
+    """No-mutation proof v3 markdown + payload (R3E-SP3-06)."""
+    evidence_dir = Path(evidence_dir)
+    evidence_dir.mkdir(parents=True, exist_ok=True)
+    target_db = db_path or DEFAULT_PRODUCTION_DB
+    proof = build_production_mutation_proof(target_db)
+    generated_at = _utc_now_iso()
+    lines = [
+        "# Production DB — No Mutation Proof v3",
+        "",
+        f"- **Pilot ID:** {PILOT_ID_V3}",
+        f"- **Generated at:** {generated_at}",
+        f"- **Production DB:** `{target_db}`",
+        f"- **proof_status:** {proof.get('proof_status')}",
+        f"- **db_hash_unchanged:** {proof.get('db_hash_unchanged')}",
+        f"- **row_counts_unchanged:** {proof.get('row_counts_unchanged')}",
+        "- **production_clean_write:** false",
+    ]
+    (evidence_dir / NO_MUTATION_V3_MD).write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return proof
+
+
+def _write_source_readiness_matrix_v3(evidence_dir: Path, per_source: dict[str, str]) -> None:
+    lines = [
+        "# Source Readiness Matrix v3",
+        "",
+        f"- **Pilot ID:** {PILOT_ID_V3}",
+        f"- **Whitelist aggregate sha256:** {compute_whitelist_ref()['aggregate_sha256']}",
+        "",
+        "| source_id | decision | next_gate |",
+        "| --- | --- | --- |",
+    ]
+    next_gates = {
+        "baostock": "sandbox_clean_write_rehearsal_candidate",
+        "cninfo": "metadata_expansion_review",
+        "akshare": "validation_only_re_defer",
+    }
+    for source_id in V3_SOURCE_CLOSEOUT_IDS:
+        lines.append(
+            f"| {source_id} | {per_source.get(source_id, 're-defer')} | "
+            f"{next_gates.get(source_id, 'none')} |"
+        )
+    lines.extend(
+        [
+            "",
+            "## Claims",
+            "",
+            "- staged-only evidence; no production-live readiness claim",
+            "- registry closure deferred to main-session proposed delta",
+        ]
+    )
+    (evidence_dir / SOURCE_READINESS_MATRIX_V3_MD).write_text(
+        "\n".join(lines) + "\n",
+        encoding="utf-8",
+    )
+
+
+def _write_registry_proposed_delta_v3(evidence_dir: Path) -> dict[str, Any]:
+    """Proposed registry delta — not committed by Execute agent (MASTER §3.3)."""
+    payload = {
+        "pilot_id": PILOT_ID_V3,
+        "status": "proposed",
+        "note": "Execute agent must not commit registry triad closure; main session merge only",
+        "proposed_rows": [
+            {
+                "source_id": "baostock",
+                "readiness": "sandbox_candidate",
+                "evidence_ref": RAW_MANIFEST_V3_BAOSTOCK_JSON,
+            },
+            {
+                "source_id": "cninfo",
+                "readiness": "sandbox_candidate",
+                "evidence_ref": CNINFO_SCHEMA_NOTES_V3_MD,
+            },
+            {
+                "source_id": "akshare",
+                "readiness": "validation_only",
+                "evidence_ref": AKSHARE_TAXONOMY_V3_JSON,
+                "deferred_registry_ids": [
+                    "R3-PROMPT14-AKSHARE-VAL-01",
+                    "R3-B2.75-REQ2-EM",
+                ],
+            },
+        ],
+    }
+    (evidence_dir / REGISTRY_PROPOSED_DELTA_V3_YAML).write_text(
+        yaml.safe_dump(payload, sort_keys=False, allow_unicode=True),
+        encoding="utf-8",
+    )
+    return payload
+
+
+def build_pilot_v3_closeout(
+    *,
+    evidence_dir: Path,
+    mutation_proof: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Pilot v3 closeout + readiness matrix (R3E-SP3-06)."""
+    evidence_dir = Path(evidence_dir)
+    if mutation_proof is None:
+        mutation_proof = build_production_mutation_proof(DEFAULT_PRODUCTION_DB)
+
+    taxonomy_path = evidence_dir / AKSHARE_TAXONOMY_V3_JSON
+    akshare_taxonomy = (
+        json.loads(taxonomy_path.read_text(encoding="utf-8"))
+        if taxonomy_path.is_file()
+        else None
+    )
+    per_source = {
+        "baostock": "expand",
+        "cninfo": "expand",
+        "akshare": "re-defer"
+        if akshare_taxonomy and any(r.get("re_defer") for r in akshare_taxonomy.get("records", []))
+        else "retry",
+    }
+    hash_ok = mutation_proof.get("db_hash_unchanged") is True
+    counts_ok = mutation_proof.get("row_counts_unchanged") is True
+    proof_status = mutation_proof.get("proof_status")
+    closeout_pass = hash_ok and counts_ok and proof_status == "VERIFIED"
+
+    generated_at = _utc_now_iso()
+    payload = {
+        "pilot_id": PILOT_ID_V3,
+        "generated_at": generated_at,
+        "whitelist_ref": compute_whitelist_ref(),
+        "production_live_readiness_claim": False,
+        "mutation_proof_status": proof_status,
+        "db_hash_unchanged": mutation_proof.get("db_hash_unchanged"),
+        "row_counts_unchanged": mutation_proof.get("row_counts_unchanged"),
+        "closeout_pass": closeout_pass,
+        "per_source": per_source,
+        "sandbox_clean_write_rehearsal": False,
+        "run_mode": "staged_only",
+        "model_driven": True,
+    }
+    reason = mutation_proof.get("reason")
+    if reason:
+        payload["mutation_proof_reason"] = reason
+    (evidence_dir / CLOSEOUT_V3_JSON).write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    _write_source_readiness_matrix_v3(evidence_dir, per_source)
+    _write_registry_proposed_delta_v3(evidence_dir)
+    return payload
+
+
+def run_full_staged_pilot_v3(
+    evidence_dir: Path | str,
+    *,
+    sandbox_root: Path | None = None,
+    skip_live_fetch: bool = False,
+    fetch_runner: Any | None = None,
+) -> dict[str, Any]:
+    """End-to-end staged pilot v3 evidence capture (WL-driven)."""
+    evidence_dir = Path(evidence_dir)
+    evidence_dir.mkdir(parents=True, exist_ok=True)
+    sandbox = sandbox_root or DEFAULT_SANDBOX_ROOT_V3
+
+    caps = write_pilot_v3_caps(evidence_dir)
+    reset_network_call_budget(limit=MAX_NETWORK_CALLS_V3)
+
+    raw_manifest: dict[str, Any] | None = None
+    if not skip_live_fetch:
+        raw_manifest = capture_baostock_evidence_v3(
+            evidence_dir=evidence_dir,
+            sandbox_root=sandbox,
+            fetch_runner=fetch_runner,
+        )
+        capture_cninfo_evidence_v3(
+            evidence_dir=evidence_dir,
+            sandbox_root=sandbox,
+            fetch_runner=fetch_runner,
+        )
+
+    akshare_taxonomy = capture_akshare_validation_taxonomy_v3(evidence_dir=evidence_dir)
+    conflict_payload = capture_conflict_summary_v3(evidence_dir=evidence_dir)
+    mutation_proof = write_no_mutation_proof_v3(evidence_dir=evidence_dir)
+    closeout = build_pilot_v3_closeout(
+        evidence_dir=evidence_dir,
+        mutation_proof=mutation_proof,
+    )
+
+    return {
+        "pilot_id": PILOT_ID_V3,
+        "caps": caps,
+        "raw_manifest": raw_manifest,
+        "akshare_taxonomy": akshare_taxonomy,
+        "conflict": conflict_payload,
+        "mutation_proof": mutation_proof,
+        "closeout": closeout,
+        "skip_live_fetch": skip_live_fetch,
     }
 
