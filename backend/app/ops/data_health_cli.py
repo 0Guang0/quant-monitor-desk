@@ -9,6 +9,7 @@ from pathlib import Path
 
 from backend.app.config import PROJECT_ROOT
 from backend.app.ops.data_health import (
+    V2_PROFILES,
     DataHealthService,
     build_text_summary,
     evidence_dir_within_project,
@@ -29,6 +30,15 @@ def main(argv: list[str] | None = None) -> int:
         default="text",
         help="Output format",
     )
+    parser.add_argument(
+        "--profile",
+        default="staged_pilot_bundle",
+        help=(
+            "Data health profile (staged_pilot_bundle or v2: "
+            + ", ".join(sorted(V2_PROFILES))
+            + ")"
+        ),
+    )
     parser.add_argument("--output", type=Path, default=None, help="Optional output file")
 
     args = parser.parse_args(argv)
@@ -43,8 +53,16 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 2
 
+    profile = args.profile
+    if profile != "staged_pilot_bundle" and profile not in V2_PROFILES:
+        print(f"error: unknown data health profile: {profile}", file=sys.stderr)
+        return 2
+
     service = DataHealthService()
-    report = service.check_evidence_dir(evidence_dir)
+    report = service.check_evidence_dir(
+        evidence_dir,
+        profile=None if profile == "staged_pilot_bundle" else profile,
+    )
 
     if args.format == "json":
         output = json.dumps(report.to_dict(), indent=2)
@@ -62,7 +80,7 @@ def main(argv: list[str] | None = None) -> int:
     else:
         print(output)
 
-    if report.overall_status == "FAIL":
+    if report.overall_status in {"FAIL", "BLOCKED"}:
         return 2
     return 0
 

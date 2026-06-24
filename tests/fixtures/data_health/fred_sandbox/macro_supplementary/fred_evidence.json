@@ -1,0 +1,13 @@
+{
+  "series_id": "DGS10",
+  "source_id": "macro_supplementary",
+  "role": "supplementary",
+  "observations": [
+    {"date": "2024-01-02", "value": "4.25"}
+  ],
+  "source_fetch_id": "macro-fetch-1",
+  "content_hash": "macro-hash",
+  "as_of_timestamp": "2026-06-23T18:00:00Z",
+  "retrieved_at": "2026-06-23T18:00:00Z",
+  "fred_primary_readiness_closed": false
+}

@@ -1,0 +1,14 @@
+{
+  "pilot_id": "dh2-v3-akshare-primary",
+  "pilot_version": "v3",
+  "generated_at": "2026-06-23T18:11:44Z",
+  "fetches": [
+    {
+      "request": {"source_id": "akshare", "data_domain": "cn_equity_daily_bar", "role": "primary"},
+      "source_used": "akshare",
+      "role": "primary",
+      "row_count": 5,
+      "fetch_result": {"run_id": "v3-ak-bad", "content_hash": "ak-bad", "status": "SUCCESS"}
+    }
+  ]
+}

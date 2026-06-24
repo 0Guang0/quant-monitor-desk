@@ -1,0 +1,16 @@
+{
+  "pilot_id": "dh2-v3-cninfo-pdf-bulk",
+  "pilot_version": "v3",
+  "generated_at": "2026-06-23T18:11:44Z",
+  "fetches": [
+    {
+      "request": {"source_id": "cninfo", "data_domain": "cn_pdf_reports", "role": "primary"},
+      "source_used": "cninfo",
+      "role": "primary",
+      "metadata_only": false,
+      "bulk_pdf_download": true,
+      "row_count": 100,
+      "fetch_result": {"run_id": "v3-pdf", "content_hash": "pdf-bad", "status": "SUCCESS"}
+    }
+  ]
+}

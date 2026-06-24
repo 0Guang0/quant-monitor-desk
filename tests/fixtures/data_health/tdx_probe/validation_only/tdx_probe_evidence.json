@@ -1,0 +1,14 @@
+{
+  "source_id": "tdx_pytdx",
+  "role": "validation",
+  "validation_only": true,
+  "authorization": {
+    "authorized": true,
+    "statement": "fixture authorized TDX validation-only probe",
+    "host": "127.0.0.1",
+    "port": 7709
+  },
+  "probe_results": [
+    {"data_domain": "cn_equity_daily_bar", "row_count": 2, "status": "SUCCESS"}
+  ]
+}

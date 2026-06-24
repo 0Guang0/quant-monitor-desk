@@ -14,11 +14,30 @@ from backend.app.datasources.source_registry import SourceNotFoundError, SourceR
 from backend.app.ops.staged_pilot import _equity_bar_rows, _resolve_evidence_path
 
 Severity = Literal["INFO", "WARN", "FAIL"]
-CheckStatus = Literal["PASS", "WARN", "FAIL", "NOT_APPLICABLE"]
-OverallStatus = Literal["PASS", "WARN", "FAIL"]
+CheckStatus = Literal["PASS", "WARN", "FAIL", "NOT_APPLICABLE", "BLOCKED"]
+OverallStatus = Literal["PASS", "WARN", "FAIL", "BLOCKED"]
 
 VALID_SEVERITIES: frozenset[str] = frozenset({"INFO", "WARN", "FAIL"})
-VALID_CHECK_STATUSES: frozenset[str] = frozenset({"PASS", "WARN", "FAIL", "NOT_APPLICABLE"})
+VALID_CHECK_STATUSES: frozenset[str] = frozenset(
+    {"PASS", "WARN", "FAIL", "NOT_APPLICABLE", "BLOCKED"}
+)
+
+MODEL_INPUTS_DIR = PROJECT_ROOT / "specs" / "model_inputs"
+V2_PROFILES: frozenset[str] = frozenset(
+    {
+        "model_input_whitelist",
+        "fred_sandbox_pilot",
+        "tdx_manual_probe",
+        "staged_pilot_v3",
+        "source_readiness_rollup",
+    }
+)
+# ponytail: v3 pilot default caps when manifest omits explicit resource_caps
+_V3_DEFAULT_CAPS: dict[str, int] = {
+    "baostock_max_rows": 2000,
+    "cninfo_max_rows": 500,
+    "akshare_max_rows": 1000,
+}
 
 _RAW_MANIFEST_CANDIDATES: tuple[str, ...] = (
     "raw_evidence_manifest_v2.json",
@@ -157,6 +176,25 @@ def _warn_check(
         rule_id=rule_id,
         severity="WARN",
         status="WARN",
+        source_id=source_id,
+        domain=domain,
+        evidence_path=None,
+        row_count=None,
+        message=message,
+    )
+
+
+def _blocked_check(
+    rule_id: str,
+    *,
+    domain: str,
+    message: str,
+    source_id: str | None = None,
+) -> DataHealthCheckResult:
+    return DataHealthCheckResult(
+        rule_id=rule_id,
+        severity="WARN",
+        status="BLOCKED",
         source_id=source_id,
         domain=domain,
         evidence_path=None,
@@ -584,6 +622,8 @@ def check_staleness(
 def _aggregate_status(checks: list[DataHealthCheckResult]) -> OverallStatus:
     if any(c.status == "FAIL" for c in checks):
         return "FAIL"
+    if any(c.status == "BLOCKED" for c in checks):
+        return "BLOCKED"
     if any(c.status == "WARN" for c in checks):
         return "WARN"
     return "PASS"
@@ -787,10 +827,391 @@ def evaluate_gate(bundle: EvidenceBundle, checks: list[DataHealthCheckResult]) -
     )
 
 
+def _model_inputs_whitelist_available() -> bool:
+    if not MODEL_INPUTS_DIR.is_dir():
+        return False
+    return any(MODEL_INPUTS_DIR.glob("**/*.yaml"))
+
+
+def _read_profile_json(evidence_dir: Path, names: tuple[str, ...]) -> dict[str, Any] | None:
+    for name in names:
+        path = evidence_dir / name
+        if path.is_file():
+            try:
+                return _read_json(path)
+            except (OSError, json.JSONDecodeError):
+                return None
+    return None
+
+
+def _checks_model_input_whitelist(evidence_dir: Path) -> list[DataHealthCheckResult]:
+    domain = "model_input_whitelist"
+    if _model_inputs_whitelist_available():
+        return [
+            _pass_check(
+                "MODEL_INPUT_WHITELIST",
+                domain=domain,
+                message="specs/model_inputs whitelist artifacts present",
+            )
+        ]
+    fixture_yaml = list(evidence_dir.glob("*.yaml")) + list(evidence_dir.glob("**/*.yaml"))
+    if fixture_yaml and "whitelist" in evidence_dir.as_posix():
+        return [
+            _pass_check(
+                "MODEL_INPUT_WHITELIST",
+                domain=domain,
+                message="fixture whitelist YAML present for staged review",
+                source_id="B01-WL-fixture",
+            )
+        ]
+    return [
+        _blocked_check(
+            "MODEL_INPUT_WHITELIST_MISSING",
+            domain=domain,
+            message=(
+                "specs/model_inputs/** not merged; whitelist profile BLOCKED "
+                "(owner: B01-WL; do not guess scope)"
+            ),
+        )
+    ]
+
+
+def _checks_fred_sandbox(evidence_dir: Path) -> list[DataHealthCheckResult]:
+    domain = "fred_sandbox_pilot"
+    data = _read_profile_json(evidence_dir, ("fred_evidence.json",))
+    if data is None:
+        return [
+            _fail_check(
+                "MISSING_REQUIRED_FIELD",
+                domain=domain,
+                message="fred_evidence.json missing",
+                source_id="fred",
+            )
+        ]
+
+    checks: list[DataHealthCheckResult] = []
+    source_id = str(data.get("source_id") or "fred")
+    for required_field in ("series_id", "source_fetch_id", "content_hash", "retrieved_at"):
+        if not data.get(required_field):
+            checks.append(
+                _fail_check(
+                    "MISSING_REQUIRED_FIELD",
+                    domain=domain,
+                    message=f"FRED evidence missing {required_field}",
+                    source_id=source_id,
+                )
+            )
+
+    observations = data.get("observations") or []
+    if not observations:
+        checks.append(
+            _fail_check(
+                "EMPTY_RESPONSE",
+                domain=domain,
+                message="FRED observations missing",
+                source_id=source_id,
+            )
+        )
+    else:
+        obs = observations[0] if isinstance(observations[0], dict) else {}
+        if not obs.get("date") or obs.get("value") is None:
+            checks.append(
+                _fail_check(
+                    "MISSING_REQUIRED_FIELD",
+                    domain=domain,
+                    message="FRED observation missing date/value",
+                    source_id=source_id,
+                )
+            )
+
+    if not data.get("as_of_timestamp"):
+        checks.append(
+            _fail_check(
+                "MISSING_AS_OF_TIMESTAMP",
+                domain=domain,
+                message="FRED evidence missing as_of_timestamp",
+                source_id=source_id,
+            )
+        )
+
+    if source_id == "macro_supplementary":
+        checks.append(
+            _warn_check(
+                "FRED_PRIMARY_NOT_CLOSED",
+                domain=domain,
+                message="macro_supplementary does not close FRED primary readiness",
+                source_id=source_id,
+            )
+        )
+        return checks
+
+    if not any(c.status == "FAIL" for c in checks):
+        checks.append(
+            _pass_check(
+                "FRED_SANDBOX_EVIDENCE",
+                domain=domain,
+                message="FRED sandbox evidence fields complete",
+                source_id=source_id,
+            )
+        )
+    return checks
+
+
+def _checks_tdx_manual_probe(evidence_dir: Path) -> list[DataHealthCheckResult]:
+    domain = "tdx_manual_probe"
+    data = _read_profile_json(evidence_dir, ("tdx_probe_evidence.json",))
+    if data is None:
+        return [
+            _fail_check(
+                "MISSING_REQUIRED_FIELD",
+                domain=domain,
+                message="tdx_probe_evidence.json missing",
+                source_id="tdx_pytdx",
+            )
+        ]
+
+    source_id = str(data.get("source_id") or "tdx_pytdx")
+    role = str(data.get("role") or "")
+    auth = data.get("authorization") or {}
+    if not auth.get("authorized") or not auth.get("statement"):
+        return [
+            _fail_check(
+                "MISSING_AUTHORIZATION",
+                domain=domain,
+                message="TDX probe missing authorization statement",
+                source_id=source_id,
+            )
+        ]
+
+    if role == "primary" or not data.get("validation_only", True):
+        return [
+            _fail_check(
+                "VALIDATION_ONLY_AS_PRIMARY",
+                domain=domain,
+                message="TDX cannot be used as production primary",
+                source_id=source_id,
+            )
+        ]
+
+    return [
+        _pass_check(
+            "TDX_VALIDATION_ONLY",
+            domain=domain,
+            message="TDX probe authorized and validation-only",
+            source_id=source_id,
+        )
+    ]
+
+
+def _checks_staged_pilot_v3(evidence_dir: Path) -> list[DataHealthCheckResult]:
+    domain = "staged_pilot_v3"
+    manifest = _read_profile_json(evidence_dir, ("pilot_v3_manifest.json",))
+    if manifest is None:
+        return [
+            _fail_check(
+                "MISSING_REQUIRED_FIELD",
+                domain=domain,
+                message="pilot_v3_manifest.json missing",
+            )
+        ]
+
+    caps = {**_V3_DEFAULT_CAPS, **(manifest.get("resource_caps") or {})}
+    checks: list[DataHealthCheckResult] = []
+    for entry in manifest.get("fetches") or []:
+        if not isinstance(entry, dict):
+            continue
+        request = entry.get("request") or {}
+        source_id = str(entry.get("source_used") or request.get("source_id") or "")
+        role = str(entry.get("role") or request.get("role") or "")
+        data_domain = str(request.get("data_domain") or "")
+        row_count = int(entry.get("row_count") or 0)
+
+        if source_id == "akshare" and role == "primary":
+            checks.append(
+                _fail_check(
+                    "VALIDATION_ONLY_AS_PRIMARY",
+                    domain=domain,
+                    message="AkShare cannot be primary in v3 pilot",
+                    source_id=source_id,
+                )
+            )
+
+        if data_domain == "cn_pdf_reports" or entry.get("bulk_pdf_download"):
+            checks.append(
+                _fail_check(
+                    "CNINFO_PDF_BULK_FORBIDDEN",
+                    domain=domain,
+                    message="cninfo PDF bulk download forbidden for v3 metadata-only profile",
+                    source_id="cninfo",
+                )
+            )
+
+        cap_key = f"{source_id}_max_rows"
+        cap_limit = caps.get(cap_key)
+        if cap_limit is not None and (entry.get("cap_breach") or row_count > int(cap_limit)):
+            checks.append(
+                _fail_check(
+                    "RESOURCE_CAP_BREACH",
+                    domain=domain,
+                    message=f"{source_id} row_count {row_count} exceeds cap {cap_limit}",
+                    source_id=source_id,
+                    row_count=row_count,
+                )
+            )
+
+    if not checks:
+        checks.append(
+            _pass_check(
+                "STAGED_PILOT_V3",
+                domain=domain,
+                message="staged pilot v3 caps/roles acceptable",
+            )
+        )
+    return checks
+
+
+def _evaluate_rollup_gate(
+    rollup: dict[str, Any], checks: list[DataHealthCheckResult]
+) -> tuple[bool, str]:
+    if any(c.status == "FAIL" for c in checks):
+        return (
+            False,
+            "FAIL checks present; sandbox clean-write gate blocked until issues resolved",
+        )
+    safety = rollup.get("safety_evidence") or {}
+    required = ("role_checks", "schema_checks", "conflict_summary", "no_mutation_proof")
+    missing = [key for key in required if not safety.get(key)]
+    if missing:
+        return (
+            False,
+            f"missing safety evidence: {', '.join(missing)}; gate blocked",
+        )
+    validation = rollup.get("validation_report") or {}
+    closeout = rollup.get("pilot_closeout") or {}
+    if not validation.get("allow_clean_write"):
+        return (
+            False,
+            "staged-only: allow_clean_write=false; rehearsal not authorized",
+        )
+    if not closeout.get("sandbox_clean_write_rehearsal"):
+        return (
+            False,
+            "pilot closeout missing sandbox_clean_write_rehearsal authorization",
+        )
+    return (
+        True,
+        "safety evidence complete; sandbox clean-write rehearsal eligible "
+        "(staged/sandbox only, not production-live)",
+    )
+
+
+def _checks_source_readiness_rollup(evidence_dir: Path) -> list[DataHealthCheckResult]:
+    domain = "source_readiness_rollup"
+    rollup = _read_profile_json(evidence_dir, ("rollup_manifest.json",))
+    if rollup is None:
+        return [
+            _fail_check(
+                "MISSING_REQUIRED_FIELD",
+                domain=domain,
+                message="rollup_manifest.json missing",
+            )
+        ]
+
+    checks: list[DataHealthCheckResult] = []
+    service = DataHealthService()
+    for profile_name, rel_path in (rollup.get("profiles") or {}).items():
+        sub_dir = PROJECT_ROOT / str(rel_path)
+        sub_report = service.check_evidence_dir(sub_dir, profile=str(profile_name))
+        checks.append(
+            DataHealthCheckResult(
+                rule_id=f"ROLLUP_{profile_name}",
+                severity="INFO" if sub_report.overall_status == "PASS" else "WARN",
+                status=(
+                    "PASS"
+                    if sub_report.overall_status == "PASS"
+                    else sub_report.overall_status  # type: ignore[arg-type]
+                ),
+                source_id=None,
+                domain=domain,
+                evidence_path=str(rel_path),
+                row_count=len(sub_report.checks),
+                message=f"{profile_name} overall={sub_report.overall_status}",
+            )
+        )
+        checks.extend(sub_report.checks)
+
+    if rollup.get("staged_only"):
+        checks.append(
+            _warn_check(
+                "STAGED_ONLY_ROLLUP",
+                domain=domain,
+                message=(
+                    "rollup evidence is staged-only; insufficient for production "
+                    "clean-write rehearsal"
+                ),
+            )
+        )
+    elif not any(c.status in {"FAIL", "BLOCKED"} for c in checks):
+        checks.append(
+            _pass_check(
+                "SOURCE_READINESS_ROLLUP",
+                domain=domain,
+                message="rollup profile checks collected",
+            )
+        )
+    return checks
+
+
+def _evaluate_profile_gate(
+    profile: str,
+    evidence_dir: Path,
+    checks: list[DataHealthCheckResult],
+) -> tuple[bool, str]:
+    if profile == "source_readiness_rollup":
+        rollup = _read_profile_json(evidence_dir, ("rollup_manifest.json",)) or {}
+        return _evaluate_rollup_gate(rollup, checks)
+    if any(c.status == "FAIL" for c in checks):
+        return False, "FAIL checks present; sandbox clean-write gate blocked"
+    if any(c.status == "BLOCKED" for c in checks):
+        return False, "BLOCKED prerequisites; gate not ready"
+    if profile == "model_input_whitelist" and not _model_inputs_whitelist_available():
+        return False, "whitelist BLOCKED until specs/model_inputs merged (B01-WL)"
+    return False, "staged-only profile; gate input sufficient for review only"
+
+
+_PROFILE_CHECKERS = {
+    "model_input_whitelist": _checks_model_input_whitelist,
+    "fred_sandbox_pilot": _checks_fred_sandbox,
+    "tdx_manual_probe": _checks_tdx_manual_probe,
+    "staged_pilot_v3": _checks_staged_pilot_v3,
+    "source_readiness_rollup": _checks_source_readiness_rollup,
+}
+
+
 class DataHealthService:
     """Read-only data health over staged pilot evidence directories."""
 
-    def check_evidence_dir(self, evidence_dir: Path) -> DataHealthReport:
+    def check_evidence_dir(
+        self, evidence_dir: Path, *, profile: str | None = None
+    ) -> DataHealthReport:
+        resolved = profile or "staged_pilot_bundle"
+        if resolved in V2_PROFILES:
+            return self._check_v2_profile(resolved, evidence_dir)
+        return self._check_staged_pilot_bundle(evidence_dir)
+
+    def _check_v2_profile(self, profile: str, evidence_dir: Path) -> DataHealthReport:
+        checker = _PROFILE_CHECKERS[profile]
+        checks = checker(evidence_dir)
+        gate_ready, rationale = _evaluate_profile_gate(profile, evidence_dir, checks)
+        return build_report(
+            checks,
+            profile=profile,
+            input_kind="data_health_v2_profile",
+            gate_ready=gate_ready,
+            gate_rationale=rationale,
+        )
+
+    def _check_staged_pilot_bundle(self, evidence_dir: Path) -> DataHealthReport:
         bundle = load_evidence_bundle(evidence_dir)
         if bundle.load_error:
             checks = [

@@ -1,0 +1,43 @@
+{"file": ".trellis/tasks/round3-readonly-data-health-v2/MASTER.plan.md", "reason": "extract: Execute SSOT | for: Boot slot 1"}
+{"file": ".trellis/tasks/round3-readonly-data-health-v2/context_pack.json", "reason": "extract: authority graph routing | for: Boot slot 2"}
+{"file": ".cursor/skills/trellis-execute/SKILL.md", "reason": "extract: Phase 0 boot | for: §9.0 Boot"}
+{"file": ".cursor/rules/ponytail.mdc", "reason": "extract: lazy ladder | for: §0.3a"}
+{"file": ".trellis/tasks/round3-readonly-data-health-v2/research/integration-ledger.md", "reason": "extract: context packing map | for: §8.0 Boot"}
+{"file": ".trellis/tasks/round3-readonly-data-health-v2/research/vertical-slices.md", "reason": "extract: DH2-BASE..07 | for: §8 order"}
+{"file": "docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/R3E_readonly_data_health_v2.md", "reason": "extract: forward AC/profiles | for: §2 AC-DH2-*"}
+{"file": "docs/implementation_tasks/ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3Y_readonly_data_health_v1.md", "reason": "extract: v1 read-only patterns | for: §3 boundary"}
+{"file": "docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/PROMPT_20_feature_round3_readonly_data_health_v1.md", "reason": "extract: legacy B01-L03 | for: §1.6"}
+{"file": "docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/R3D_model_input_whitelist.md", "reason": "extract: whitelist schema | for: §9.1"}
+{"file": "docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/R3E_fred_authorized_sandbox_pilot.md", "reason": "extract: FRED evidence fields | for: §9.2"}
+{"file": "docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/R3E_tdx_manual_probe_addendum.md", "reason": "extract: TDX auth boundary | for: §9.3"}
+{"file": "docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/R3E_real_data_staged_pilot_v3.md", "reason": "extract: v3 caps/roles | for: §9.4"}
+{"file": "docs/quality/coordination/BATCH_01_MAIN_SESSION_COORDINATOR_PLAYBOOK.md", "reason": "extract: §3.7 §2.5 §8.7 | for: AC-DH2-PLAYBOOK"}
+{"file": "docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/BATCH_01_MODEL_SOURCE_READINESS/BATCH_01_TASK_CARD_MANIFEST.md", "reason": "extract: C05 deps | for: §0"}
+{"file": "docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/BATCH_01_MODEL_SOURCE_READINESS/BATCH_01_HARDENING_RULES.md", "reason": "extract: §1-10 hard stops | for: §1.5"}
+{"file": "docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/BATCH_01_MODEL_SOURCE_READINESS/README.md", "reason": "extract: Batch 01 purpose | for: §0 boundary"}
+{"file": "docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/BATCH_01_MODEL_SOURCE_READINESS/BATCH_01_ADVERSARIAL_AUDIT.md", "reason": "extract: batch adversarial verdict | for: §1.5"}
+{"file": "PROJECT_IMPLEMENTATION_ROADMAP.md", "reason": "extract: Round 3E.4 lineage | for: §0"}
+{"file": "docs/RESOLVED_ISSUES_REGISTRY.md", "reason": "extract: closed rows read-only | for: Plan context"}
+{"file": "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md", "reason": "extract: scope | for: §3"}
+{"file": "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md", "reason": "extract: semantic tests | for: §5"}
+{"file": "docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md", "reason": "extract: scan cap | for: §3"}
+{"file": "docs/quality/staged_acceptance_policy.md", "reason": "extract: staged tiers | for: §0"}
+{"file": "docs/quality/production_live_pilot_policy.md", "reason": "extract: no production-live | for: §0"}
+{"file": "specs/contracts/data_quality_rules.yaml", "reason": "extract: rule_id SSOT | for: §9.2-4"}
+{"file": "specs/contracts/source_conflict_rules.yaml", "reason": "extract: conflict summary | for: §9.4"}
+{"file": "specs/contracts/resource_limits.yaml", "reason": "extract: caps | for: §9.4"}
+{"file": "specs/contracts/runtime_versions.md", "reason": "extract: runtime lock | for: R3E §3"}
+{"file": "specs/datasource_registry/source_registry.yaml", "reason": "extract: source roles | for: §9.3-4"}
+{"file": "specs/datasource_registry/source_capabilities.yaml", "reason": "extract: validation_only | for: §9.3-4"}
+{"file": "backend/app/ops/data_health.py", "reason": "extract: v1 implementation | for: §9 impact target"}
+{"file": "backend/app/ops/data_health_cli.py", "reason": "extract: CLI entry | for: §9.7"}
+{"file": "backend/app/ops/staged_pilot.py", "reason": "extract: manifest constants read-only | for: §9.4"}
+{"file": "tests/test_ops_data_health.py", "reason": "extract: v1 tests + BASE | for: §9.0"}
+{"file": "tests/fixtures/data_health/", "reason": "extract: synthetic fixtures | for: RED"}
+{"file": "docs/AUDIT_DEFERRED_REGISTRY.md", "reason": "extract: defer read-only | for: Plan context"}
+{"file": "docs/UNRESOLVED_ISSUES_REGISTRY.md", "reason": "extract: OPEN rows | for: Plan context"}
+{"file": "MIGRATION_MAP.md", "reason": "extract: ops placement | for: §4"}
+{"file": "tests/test_staged_pilot.py", "reason": "extract: staged pilot regression | for: §10 Tier A"}
+{"file": "tests/test_raw_store.py", "reason": "extract: raw store regression | for: §10 Tier A"}
+{"file": "tests/test_data_health_v2.py", "reason": "extract: v2 profile tests | for: §5.1 §9.1-6"}
+{"file": "docs/architecture/module_boundary_matrix.md", "reason": "extract: ops boundary | for: §3"}

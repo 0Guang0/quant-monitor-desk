@@ -1,0 +1,26 @@
+{
+  "data_domain": "cn_equity_daily_bar",
+  "source_id": "baostock",
+  "generated_at": "2026-06-23T18:11:44Z",
+  "pilot_id": "dh2-v2-integration-fixture",
+  "fetches": [
+    {
+      "pilot_request_id": "v2-baostock",
+      "request": {
+        "data_domain": "cn_equity_daily_bar",
+        "operation": "fetch_daily_bar",
+        "source_id": "baostock"
+      },
+      "source_used": "baostock",
+      "as_of_timestamp": "2026-06-23T18:11:44Z",
+      "fetch_result": {
+        "run_id": "fetch-baostock",
+        "content_hash": "evidence-hash",
+        "raw_file_paths": ["bars.json"],
+        "row_count": 2,
+        "status": "SUCCESS"
+      },
+      "taxonomy_status": "SUCCESS"
+    }
+  ]
+}

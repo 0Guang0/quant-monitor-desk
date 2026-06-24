@@ -1,0 +1,20 @@
+{
+  "pilot_id": "dh2-v3-cap-breach",
+  "pilot_version": "v3",
+  "generated_at": "2026-06-23T18:11:44Z",
+  "resource_caps": {
+    "baostock_max_rows": 2000,
+    "cninfo_max_rows": 500,
+    "akshare_max_rows": 1000
+  },
+  "fetches": [
+    {
+      "request": {"source_id": "baostock", "data_domain": "cn_equity_daily_bar", "role": "primary"},
+      "source_used": "baostock",
+      "role": "primary",
+      "row_count": 2500,
+      "cap_breach": true,
+      "fetch_result": {"run_id": "v3-cap", "content_hash": "cap-bad", "status": "SUCCESS"}
+    }
+  ]
+}

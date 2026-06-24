@@ -1,0 +1,24 @@
+{
+  "allow_clean_write": false,
+  "can_write_clean": false,
+  "clean_write_performed": false,
+  "generated_at": "2026-06-23T19:23:49Z",
+  "pilot_id": "dh2-v2-integration-fixture",
+  "conflict_check": {
+    "status": "NO_CONFLICT_CHECK_DEFERRED",
+    "reason": "staged-only fixture bundle"
+  },
+  "production_mutation_proof": {
+    "proof_status": "NOT_TOUCHED",
+    "reason": "read-only fixture evidence"
+  },
+  "validations": [
+    {
+      "data_domain": "cn_equity_daily_bar",
+      "source_id": "baostock",
+      "status": "PASSED",
+      "row_count": 2,
+      "as_of_timestamp": "2026-06-23T18:11:44Z"
+    }
+  ]
+}

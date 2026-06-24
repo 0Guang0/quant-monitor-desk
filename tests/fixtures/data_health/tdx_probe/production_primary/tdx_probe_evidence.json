@@ -1,0 +1,12 @@
+{
+  "source_id": "tdx_pytdx",
+  "role": "primary",
+  "validation_only": false,
+  "authorization": {
+    "authorized": true,
+    "statement": "fixture but invalid production primary role"
+  },
+  "probe_results": [
+    {"data_domain": "cn_equity_daily_bar", "row_count": 2, "status": "SUCCESS"}
+  ]
+}

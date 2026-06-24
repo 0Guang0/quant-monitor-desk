@@ -1,0 +1,22 @@
+{
+  "rollup_id": "dh2-gate-complete",
+  "profiles": {
+    "fred_sandbox_pilot": "tests/fixtures/data_health/fred_sandbox/complete",
+    "staged_pilot_v3": "tests/fixtures/data_health/staged_pilot_v3/compliant"
+  },
+  "safety_evidence": {
+    "role_checks": true,
+    "schema_checks": true,
+    "conflict_summary": true,
+    "no_mutation_proof": true
+  },
+  "validation_report": {
+    "allow_clean_write": true,
+    "conflict_check": {"status": "NO_CONFLICT"},
+    "production_mutation_proof": {"proof_status": "VERIFIED", "db_hash_unchanged": true}
+  },
+  "pilot_closeout": {
+    "sandbox_clean_write_rehearsal": true,
+    "production_live_readiness_claim": false
+  }
+}

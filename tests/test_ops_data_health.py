@@ -25,10 +25,7 @@ from backend.app.ops.data_health import (
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[1]
 _FIXTURES = _PROJECT_ROOT / "tests" / "fixtures" / "data_health"
-_V2_EVIDENCE = (
-    _PROJECT_ROOT
-    / ".trellis/tasks/archive/2026-06/06-24-round3-real-data-staged-pilot-v2/execute-evidence"
-)
+_V2_EVIDENCE = _FIXTURES / "v2_integration_bundle"
 
 _GOOD_BUNDLE = _FIXTURES / "good_bundle"
 _BAD_BAR_BUNDLE = _FIXTURES / "bad_bar_bundle"
@@ -451,3 +448,41 @@ def test_dataHealthIntegration_v2Evidence_bundle() -> None:
     )
     assert isinstance(report.sandbox_clean_write_gate_ready, bool)
     assert report.gate_rationale
+
+
+def test_dataHealthCli_profileUnknown_exit2() -> None:
+    """覆盖范围：CLI 未知 profile
+    测试对象：data_health_cli --profile 路由
+    目的/目标：未知 profile 须 exit 2
+    验证点：returncode == 2
+    失败含义：未知 profile 被静默当成 v1 bundle
+    """
+    result = _run_data_health_cli(
+        "--evidence",
+        str(_GOOD_BUNDLE),
+        "--profile",
+        "not_a_real_profile",
+    )
+    assert result.returncode == 2
+
+
+def test_dataHealthCli_profileFred_routes() -> None:
+    """覆盖范围：CLI v2 profile 路由
+    测试对象：data_health_cli --profile fred_sandbox_pilot
+    目的/目标：--profile 路由到 v2 checker；默认仍 v1 bundle
+    验证点：FRED complete fixture exit 0；JSON profile 字段正确
+    失败含义：CLI 未暴露 v2 profile
+    """
+    fred_dir = _FIXTURES / "fred_sandbox" / "complete"
+    result = _run_data_health_cli(
+        "--evidence",
+        str(fred_dir),
+        "--profile",
+        "fred_sandbox_pilot",
+        "--format",
+        "json",
+    )
+    assert result.returncode == 0
+    payload = json.loads(result.stdout)
+    assert payload["profile"] == "fred_sandbox_pilot"
+    assert payload["overall_status"] == "PASS"

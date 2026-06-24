@@ -1,0 +1,8 @@
+{
+  "source_id": "tdx_pytdx",
+  "role": "validation",
+  "validation_only": true,
+  "probe_results": [
+    {"data_domain": "cn_equity_daily_bar", "row_count": 2, "status": "SUCCESS"}
+  ]
+}
