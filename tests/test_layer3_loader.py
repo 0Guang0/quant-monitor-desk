@@ -32,6 +32,24 @@ def _write_json(path: Path, data: object) -> None:
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+def _mutate_bundle_json(tmp_path: Path, rel: str, mutator) -> Path:
+    bundle = _copy_bundle(tmp_path)
+    path = bundle / rel
+    data = json.loads(path.read_text(encoding="utf-8"))
+    mutator(data)
+    _write_json(path, data)
+    return bundle
+
+
+def _mutate_bundle_yaml(tmp_path: Path, rel: str, mutator) -> Path:
+    bundle = _copy_bundle(tmp_path)
+    path = bundle / rel
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    mutator(data)
+    path.write_text(yaml.safe_dump(data, allow_unicode=True), encoding="utf-8")
+    return bundle
+
+
 def test_layer3Loader_loadsStagedFixture_success() -> None:
     """覆盖范围：测试用产业链配置包五表成功加载
     测试对象：IndustryChainLoader.load
@@ -59,11 +77,8 @@ def test_layer3Loader_nonStagedMode_rejects(tmp_path: Path) -> None:
     验证点：loader_mode=production_live → IndustryChainLoadError 且含 staged_fixture_only
     失败含义：生产模式包仍可加载，Batch3 双闸失效
     """
-    bundle = _copy_bundle(tmp_path)
-    manifest = yaml.safe_load((bundle / "bundle_manifest.yaml").read_text(encoding="utf-8"))
-    manifest["loader_mode"] = "production_live"
-    (bundle / "bundle_manifest.yaml").write_text(
-        yaml.safe_dump(manifest, allow_unicode=True), encoding="utf-8"
+    bundle = _mutate_bundle_yaml(
+        tmp_path, "bundle_manifest.yaml", lambda m: m.update({"loader_mode": "production_live"})
     )
     with pytest.raises(IndustryChainLoadError, match="staged_fixture_only"):
         IndustryChainLoader().load(bundle_dir=bundle)
@@ -76,11 +91,11 @@ def test_layer3Loader_duplicateChainId_rejects(tmp_path: Path) -> None:
     验证点：重复 chain_id → IndustryChainLoadError 且含 chain_id
     失败含义：重复产业链可共存，下游路由与快照归属混乱
     """
-    bundle = _copy_bundle(tmp_path)
-    reg_path = bundle / "layer3_global_industry_chain_registry.yaml"
-    reg = yaml.safe_load(reg_path.read_text(encoding="utf-8"))
-    reg["chains"].append(dict(reg["chains"][0]))
-    reg_path.write_text(yaml.safe_dump(reg, allow_unicode=True), encoding="utf-8")
+    bundle = _mutate_bundle_yaml(
+        tmp_path,
+        "layer3_global_industry_chain_registry.yaml",
+        lambda reg: reg["chains"].append(dict(reg["chains"][0])),
+    )
     with pytest.raises(IndustryChainLoadError, match="chain_id"):
         IndustryChainLoader().load(bundle_dir=bundle)
 
@@ -92,11 +107,9 @@ def test_layer3Loader_duplicateNodeId_rejects(tmp_path: Path) -> None:
     验证点：重复 node_id → IndustryChainLoadError 且含 node_id
     失败含义：重复节点可共存，边引用与快照聚合会指向错误实体
     """
-    bundle = _copy_bundle(tmp_path)
-    node_path = bundle / "layer3_node_registry.json"
-    nodes = json.loads(node_path.read_text(encoding="utf-8"))
-    nodes.append(dict(nodes[0]))
-    _write_json(node_path, nodes)
+    bundle = _mutate_bundle_json(
+        tmp_path, "layer3_node_registry.json", lambda nodes: nodes.append(dict(nodes[0]))
+    )
     with pytest.raises(IndustryChainLoadError, match="node_id"):
         IndustryChainLoader().load(bundle_dir=bundle)
 
@@ -108,11 +121,9 @@ def test_layer3Loader_duplicateAnchorId_rejects(tmp_path: Path) -> None:
     验证点：重复 anchor_id → IndustryChainLoadError 且含 anchor_id
     失败含义：重复锚点可共存，第三层与第五层对齐会冲突
     """
-    bundle = _copy_bundle(tmp_path)
-    anchor_path = bundle / "layer3_anchor_registry.json"
-    anchors = json.loads(anchor_path.read_text(encoding="utf-8"))
-    anchors.append(dict(anchors[0]))
-    _write_json(anchor_path, anchors)
+    bundle = _mutate_bundle_json(
+        tmp_path, "layer3_anchor_registry.json", lambda anchors: anchors.append(dict(anchors[0]))
+    )
     with pytest.raises(IndustryChainLoadError, match="anchor_id"):
         IndustryChainLoader().load(bundle_dir=bundle)
 
@@ -124,11 +135,11 @@ def test_layer3Loader_edgeMissingToNode_rejects(tmp_path: Path) -> None:
     验证点：to_node_id 不存在 → IndustryChainLoadError 且含 to_node_id
     失败含义：悬空边可加载，图遍历与快照展开会读到幽灵节点
     """
-    bundle = _copy_bundle(tmp_path)
-    edge_path = bundle / "layer3_edge_registry.json"
-    edges = json.loads(edge_path.read_text(encoding="utf-8"))
-    edges[0]["to_node_id"] = "L3_MISSING_NODE"
-    _write_json(edge_path, edges)
+    bundle = _mutate_bundle_json(
+        tmp_path,
+        "layer3_edge_registry.json",
+        lambda edges: edges[0].update({"to_node_id": "L3_MISSING_NODE"}),
+    )
     with pytest.raises(IndustryChainLoadError, match="to_node_id"):
         IndustryChainLoader().load(bundle_dir=bundle)
 
@@ -140,11 +151,11 @@ def test_layer3Loader_edgeMissingFromNode_rejects(tmp_path: Path) -> None:
     验证点：from_node_id 不存在 → IndustryChainLoadError 且含 from_node_id
     失败含义：悬空源节点边可加载，上游归因链断裂
     """
-    bundle = _copy_bundle(tmp_path)
-    edge_path = bundle / "layer3_edge_registry.json"
-    edges = json.loads(edge_path.read_text(encoding="utf-8"))
-    edges[0]["from_node_id"] = "L3_MISSING_NODE"
-    _write_json(edge_path, edges)
+    bundle = _mutate_bundle_json(
+        tmp_path,
+        "layer3_edge_registry.json",
+        lambda edges: edges[0].update({"from_node_id": "L3_MISSING_NODE"}),
+    )
     with pytest.raises(IndustryChainLoadError, match="from_node_id"):
         IndustryChainLoader().load(bundle_dir=bundle)
 
@@ -182,11 +193,11 @@ def test_layer3Loader_anchorMissingNode_rejects(tmp_path: Path) -> None:
     验证点：node_id 悬空 → IndustryChainLoadError 且含 node_id
     失败含义：锚点与节点脱钩可加载，股价对照视图无法定位链上位置
     """
-    bundle = _copy_bundle(tmp_path)
-    anchor_path = bundle / "layer3_anchor_registry.json"
-    anchors = json.loads(anchor_path.read_text(encoding="utf-8"))
-    anchors[0]["node_id"] = "L3_MISSING_NODE"
-    _write_json(anchor_path, anchors)
+    bundle = _mutate_bundle_json(
+        tmp_path,
+        "layer3_anchor_registry.json",
+        lambda anchors: anchors[0].update({"node_id": "L3_MISSING_NODE"}),
+    )
     with pytest.raises(IndustryChainLoadError, match="node_id"):
         IndustryChainLoader().load(bundle_dir=bundle)
 
@@ -226,11 +237,11 @@ def test_layer3Loader_p0Anchor_missingSourceKeys_rejects(tmp_path: Path) -> None
     验证点：P0 锚点 source_keys 为空 → IndustryChainLoadError 且含 source_keys
     失败含义：核心锚点无来源键仍可加载，来源审计链断裂
     """
-    bundle = _copy_bundle(tmp_path)
-    anchor_path = bundle / "layer3_anchor_registry.json"
-    anchors = json.loads(anchor_path.read_text(encoding="utf-8"))
-    anchors[0]["source_keys"] = []
-    _write_json(anchor_path, anchors)
+    bundle = _mutate_bundle_json(
+        tmp_path,
+        "layer3_anchor_registry.json",
+        lambda anchors: anchors[0].update({"source_keys": []}),
+    )
     with pytest.raises(IndustryChainLoadError, match="source_keys"):
         IndustryChainLoader().load(bundle_dir=bundle)
 
@@ -242,11 +253,11 @@ def test_layer3Loader_crossChainMissingNode_rejects(tmp_path: Path) -> None:
     验证点：to_node_id 悬空 → IndustryChainLoadError 且含 to_node_id 或 cross
     失败含义：跨链端点悬空可加载，多链归因与展开逻辑失真
     """
-    bundle = _copy_bundle(tmp_path)
-    cc_path = bundle / "layer3_cross_chain_edge_registry.json"
-    edges = json.loads(cc_path.read_text(encoding="utf-8"))
-    edges[0]["to_node_id"] = "L3_MISSING_NODE"
-    _write_json(cc_path, edges)
+    bundle = _mutate_bundle_json(
+        tmp_path,
+        "layer3_cross_chain_edge_registry.json",
+        lambda edges: edges[0].update({"to_node_id": "L3_MISSING_NODE"}),
+    )
     with pytest.raises(IndustryChainLoadError, match="to_node_id|cross"):
         IndustryChainLoader().load(bundle_dir=bundle)
 
@@ -318,11 +329,11 @@ def test_layer3Loader_invalidSourceValidationStatus_rejects(tmp_path: Path) -> N
     验证点：bogus_status → IndustryChainLoadError 且含 source_validation_status
     失败含义：非法状态可入库，来源可信度标注不可信
     """
-    bundle = _copy_bundle(tmp_path)
-    anchor_path = bundle / "layer3_anchor_registry.json"
-    anchors = json.loads(anchor_path.read_text(encoding="utf-8"))
-    anchors[0]["source_validation_status"] = "bogus_status"
-    _write_json(anchor_path, anchors)
+    bundle = _mutate_bundle_json(
+        tmp_path,
+        "layer3_anchor_registry.json",
+        lambda anchors: anchors[0].update({"source_validation_status": "bogus_status"}),
+    )
     with pytest.raises(IndustryChainLoadError, match="source_validation_status"):
         IndustryChainLoader().load(bundle_dir=bundle)
 
@@ -334,11 +345,11 @@ def test_layer3Loader_p0Anchor_needsSourceStatus_rejects(tmp_path: Path) -> None
     验证点：P0 标 needs_source → IndustryChainLoadError 且含 needs_source 或 P0
     失败含义：核心锚点标待补来源仍可加载，强证据门控失效
     """
-    bundle = _copy_bundle(tmp_path)
-    anchor_path = bundle / "layer3_anchor_registry.json"
-    anchors = json.loads(anchor_path.read_text(encoding="utf-8"))
-    anchors[0]["source_validation_status"] = "needs_source"
-    _write_json(anchor_path, anchors)
+    bundle = _mutate_bundle_json(
+        tmp_path,
+        "layer3_anchor_registry.json",
+        lambda anchors: anchors[0].update({"source_validation_status": "needs_source"}),
+    )
     with pytest.raises(IndustryChainLoadError, match="needs_source|P0"):
         IndustryChainLoader().load(bundle_dir=bundle)
 

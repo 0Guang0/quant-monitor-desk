@@ -56,6 +56,16 @@ def _copy_l5_bundle(tmp_path: Path) -> Path:
     return dest
 
 
+def _mutate_l5_manifest(tmp_path: Path, mutator) -> Path:
+    """ponytail: copy L5 bundle then apply in-place manifest mutation."""
+    bundle = _copy_l5_bundle(tmp_path)
+    manifest_path = bundle / "manifest.yaml"
+    manifest = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
+    mutator(manifest)
+    manifest_path.write_text(yaml.safe_dump(manifest, allow_unicode=True), encoding="utf-8")
+    return bundle
+
+
 def test_layer3Snapshot_buildsFromStagedLoaderAndL5_success() -> None:
     """覆盖范围：用测试用的产业链数据和股价文件，在数据齐全时走正常建快照路径
     测试对象：IndustryChainSnapshotBuilder.build
@@ -77,11 +87,8 @@ def test_layer3Snapshot_nonStagedL5Source_rejects(tmp_path: Path) -> None:
     验证点：source_mode=production_live → Layer3SnapshotError 且含 staged_fixture_only
     失败含义：非 staged 行情仍能建快照，Batch3 gate 双闸失效
     """
-    bundle = _copy_l5_bundle(tmp_path)
-    manifest = yaml.safe_load((bundle / "manifest.yaml").read_text(encoding="utf-8"))
-    manifest["source_mode"] = "production_live"
-    (bundle / "manifest.yaml").write_text(
-        yaml.safe_dump(manifest, allow_unicode=True), encoding="utf-8"
+    bundle = _mutate_l5_manifest(
+        tmp_path, lambda m: m.update({"source_mode": "production_live"})
     )
     with pytest.raises(Layer3SnapshotError, match="staged_fixture_only"):
         _build(l5_bundle_dir=bundle)
@@ -140,12 +147,11 @@ def test_snapshotRejectsFutureInput(tmp_path: Path) -> None:
     验证点：bar as_of_timestamp 晚于 build as_of → Layer3SnapshotError 含 future
     失败含义：未来可见数据混入快照，no_future_data 契约被绕过
     """
-    bundle = _copy_l5_bundle(tmp_path)
-    manifest = yaml.safe_load((bundle / "manifest.yaml").read_text(encoding="utf-8"))
-    future_ts = (AS_OF + timedelta(days=1)).isoformat()
-    manifest["anchors"]["MSFT"]["bars"][0]["as_of_timestamp"] = future_ts
-    (bundle / "manifest.yaml").write_text(
-        yaml.safe_dump(manifest, allow_unicode=True), encoding="utf-8"
+    bundle = _mutate_l5_manifest(
+        tmp_path,
+        lambda m: m["anchors"]["MSFT"]["bars"][0].update(
+            {"as_of_timestamp": (AS_OF + timedelta(days=1)).isoformat()}
+        ),
     )
     with pytest.raises(Layer3SnapshotError, match="future"):
         _build(l5_bundle_dir=bundle)
@@ -199,12 +205,7 @@ def test_layer3Snapshot_missingL5Bar_rejects(tmp_path: Path) -> None:
     验证点：manifest 删 MSFT 锚点 → Layer3SnapshotError 且提及 MSFT
     失败含义：缺 bar 仍部分成功，fail-fast 与 L2 对称行为失效
     """
-    bundle = _copy_l5_bundle(tmp_path)
-    manifest = yaml.safe_load((bundle / "manifest.yaml").read_text(encoding="utf-8"))
-    del manifest["anchors"]["MSFT"]
-    (bundle / "manifest.yaml").write_text(
-        yaml.safe_dump(manifest, allow_unicode=True), encoding="utf-8"
-    )
+    bundle = _mutate_l5_manifest(tmp_path, lambda m: m["anchors"].pop("MSFT"))
     with pytest.raises(Layer3SnapshotError, match="MSFT"):
         _build(l5_bundle_dir=bundle)
 
@@ -216,11 +217,9 @@ def test_layer3Snapshot_tradeDateMismatch_rejects(tmp_path: Path) -> None:
     验证点：bar 仅含 2026-06-13、build 要 2026-06-14 → Layer3SnapshotError 含 trade_date
     失败含义：错日 bar 被误用或静默跳过，日快照键与行情日不一致
     """
-    bundle = _copy_l5_bundle(tmp_path)
-    manifest = yaml.safe_load((bundle / "manifest.yaml").read_text(encoding="utf-8"))
-    manifest["anchors"]["MSFT"]["bars"][0]["trade_date"] = "2026-06-13"
-    (bundle / "manifest.yaml").write_text(
-        yaml.safe_dump(manifest, allow_unicode=True), encoding="utf-8"
+    bundle = _mutate_l5_manifest(
+        tmp_path,
+        lambda m: m["anchors"]["MSFT"]["bars"][0].update({"trade_date": "2026-06-13"}),
     )
     with pytest.raises(Layer3SnapshotError, match="trade_date"):
         _build(l5_bundle_dir=bundle)
@@ -233,12 +232,7 @@ def test_layer3Snapshot_missingManifestHashes_rejects(tmp_path: Path) -> None:
     验证点：删除 source_content_hashes → Layer3SnapshotError 含 source_content_hashes
     失败含义：缺 hash 仍建快照，血缘不可审计
     """
-    bundle = _copy_l5_bundle(tmp_path)
-    manifest = yaml.safe_load((bundle / "manifest.yaml").read_text(encoding="utf-8"))
-    del manifest["source_content_hashes"]
-    (bundle / "manifest.yaml").write_text(
-        yaml.safe_dump(manifest, allow_unicode=True), encoding="utf-8"
-    )
+    bundle = _mutate_l5_manifest(tmp_path, lambda m: m.pop("source_content_hashes"))
     with pytest.raises(Layer3SnapshotError, match="source_content_hashes"):
         _build(l5_bundle_dir=bundle)
 
@@ -250,11 +244,8 @@ def test_layer3Snapshot_missingBarField_rejects(tmp_path: Path) -> None:
     验证点：删 MSFT bar 的 close → Layer3SnapshotError 含 close
     失败含义：KeyError 逃出信任边界，调用方无法统一 fail-closed
     """
-    bundle = _copy_l5_bundle(tmp_path)
-    manifest = yaml.safe_load((bundle / "manifest.yaml").read_text(encoding="utf-8"))
-    del manifest["anchors"]["MSFT"]["bars"][0]["close"]
-    (bundle / "manifest.yaml").write_text(
-        yaml.safe_dump(manifest, allow_unicode=True), encoding="utf-8"
+    bundle = _mutate_l5_manifest(
+        tmp_path, lambda m: m["anchors"]["MSFT"]["bars"][0].pop("close")
     )
     with pytest.raises(Layer3SnapshotError, match="close"):
         _build(l5_bundle_dir=bundle)
@@ -278,11 +269,11 @@ def test_layer3Snapshot_naiveBarTimestamp_rejects(tmp_path: Path) -> None:
     验证点：MSFT bar as_of_timestamp 去掉时区 → Layer3SnapshotError
     失败含义：集成路径仍接受 naive，生产化 as_of 边界不可靠
     """
-    bundle = _copy_l5_bundle(tmp_path)
-    manifest = yaml.safe_load((bundle / "manifest.yaml").read_text(encoding="utf-8"))
-    manifest["anchors"]["MSFT"]["bars"][0]["as_of_timestamp"] = "2026-06-14T20:00:00"
-    (bundle / "manifest.yaml").write_text(
-        yaml.safe_dump(manifest, allow_unicode=True), encoding="utf-8"
+    bundle = _mutate_l5_manifest(
+        tmp_path,
+        lambda m: m["anchors"]["MSFT"]["bars"][0].update(
+            {"as_of_timestamp": "2026-06-14T20:00:00"}
+        ),
     )
     with pytest.raises(Layer3SnapshotError, match="timezone-aware"):
         _build(l5_bundle_dir=bundle)
@@ -321,12 +312,7 @@ def test_layer3Snapshot_missingManifestFetchIds_rejects(tmp_path: Path) -> None:
     验证点：删除 source_fetch_ids → Layer3SnapshotError 含 source_fetch_ids
     失败含义：缺 fetch id 仍建快照，血缘不可追溯到抓取批次
     """
-    bundle = _copy_l5_bundle(tmp_path)
-    manifest = yaml.safe_load((bundle / "manifest.yaml").read_text(encoding="utf-8"))
-    del manifest["source_fetch_ids"]
-    (bundle / "manifest.yaml").write_text(
-        yaml.safe_dump(manifest, allow_unicode=True), encoding="utf-8"
-    )
+    bundle = _mutate_l5_manifest(tmp_path, lambda m: m.pop("source_fetch_ids"))
     with pytest.raises(Layer3SnapshotError, match="source_fetch_ids"):
         _build(l5_bundle_dir=bundle)
 
@@ -405,11 +391,9 @@ def test_layer3Snapshot_nonNumericVolume_rejects(tmp_path: Path) -> None:
     验证点：volume=not-a-number → Layer3SnapshotError 含 numeric
     失败含义：close 已 fail-closed 而 volume 仍 ValueError，信任边界不一致
     """
-    bundle = _copy_l5_bundle(tmp_path)
-    manifest = yaml.safe_load((bundle / "manifest.yaml").read_text(encoding="utf-8"))
-    manifest["anchors"]["MSFT"]["bars"][0]["volume"] = "not-a-number"
-    (bundle / "manifest.yaml").write_text(
-        yaml.safe_dump(manifest, allow_unicode=True), encoding="utf-8"
+    bundle = _mutate_l5_manifest(
+        tmp_path,
+        lambda m: m["anchors"]["MSFT"]["bars"][0].update({"volume": "not-a-number"}),
     )
     with pytest.raises(Layer3SnapshotError, match="numeric"):
         _build(l5_bundle_dir=bundle)
@@ -422,11 +406,8 @@ def test_layer3Snapshot_missingInstrumentId_rejects(tmp_path: Path) -> None:
     验证点：删 MSFT instrument_id → Layer3SnapshotError 含 instrument_id
     失败含义：KeyError 逃出信任边界，CLI 无法统一捕获畸形 manifest
     """
-    bundle = _copy_l5_bundle(tmp_path)
-    manifest = yaml.safe_load((bundle / "manifest.yaml").read_text(encoding="utf-8"))
-    del manifest["anchors"]["MSFT"]["instrument_id"]
-    (bundle / "manifest.yaml").write_text(
-        yaml.safe_dump(manifest, allow_unicode=True), encoding="utf-8"
+    bundle = _mutate_l5_manifest(
+        tmp_path, lambda m: m["anchors"]["MSFT"].pop("instrument_id")
     )
     with pytest.raises(Layer3SnapshotError, match="instrument_id"):
         _build(l5_bundle_dir=bundle)
@@ -439,11 +420,9 @@ def test_layer3Snapshot_nonNumericClose_rejects(tmp_path: Path) -> None:
     验证点：close=not-a-number → Layer3SnapshotError 含 numeric
     失败含义：ValueError 逃出信任边界，ops 侧无法统一捕获
     """
-    bundle = _copy_l5_bundle(tmp_path)
-    manifest = yaml.safe_load((bundle / "manifest.yaml").read_text(encoding="utf-8"))
-    manifest["anchors"]["MSFT"]["bars"][0]["close"] = "not-a-number"
-    (bundle / "manifest.yaml").write_text(
-        yaml.safe_dump(manifest, allow_unicode=True), encoding="utf-8"
+    bundle = _mutate_l5_manifest(
+        tmp_path,
+        lambda m: m["anchors"]["MSFT"]["bars"][0].update({"close": "not-a-number"}),
     )
     with pytest.raises(Layer3SnapshotError, match="numeric"):
         _build(l5_bundle_dir=bundle)
