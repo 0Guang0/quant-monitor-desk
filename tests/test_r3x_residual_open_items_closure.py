@@ -27,6 +27,13 @@ from tests.service_path_support import production_route_planner
 
 SOURCE_REGISTRY = PROJECT_ROOT / "specs/datasource_registry/source_registry.yaml"
 
+# ponytail: SSOT for PROMPT_15 archived execute evidence (α-3 backfill)
+PROMPT15_ARCHIVE_EVIDENCE = (
+    PROJECT_ROOT
+    / ".trellis/tasks/archive/2026-06/fix-round3-r3x-residual-open-items-closure/execute-evidence"
+)
+PROMPT15_EVIDENCE_INDEX = PROMPT15_ARCHIVE_EVIDENCE / "closed_claim_evidence_index.yaml"
+
 
 def _migrated_write_manager(tmp_path: Path, *, db_name: str = "wm.duckdb"):
     from backend.app.db.connection import ConnectionManager
@@ -365,3 +372,96 @@ def test_advA1_012_minStagingRowsEnforced(tmp_path) -> None:
     )
     with pytest.raises(ValueError, match="minimum"):
         wm.write(req)
+
+
+def test_r3yPrompt15_closedClaimEvidenceIndexMapsToGreenTxt() -> None:
+    """覆盖范围：PROMPT_15 closed-claim 与 execute *-green.txt 可审计映射（R3Y-PROMPT15-EVID-001）
+    测试对象：归档 execute-evidence/closed_claim_evidence_index.yaml 与 *-green.txt
+    目的/目标：73 项 Master Checklist 闭合声称须各有 green 证据与 pytest 交叉引用，不得仅 merge_gate 自述
+    验证点：索引存在；每组 green 文件存在且含 passed/EXIT:0；伞测 18 条均被索引；checklist 行数=73
+    失败含义：PROMPT_15 全量闭合仍不可审计，AUD-01 F-01  hygiene 未关闭
+    """
+    assert PROMPT15_EVIDENCE_INDEX.is_file(), "closed_claim_evidence_index.yaml missing"
+    index = load_yaml(PROMPT15_EVIDENCE_INDEX)
+    assert index.get("checklist_total") == 73
+
+    groups = index.get("groups") or []
+    assert groups, "evidence index must list checklist groups"
+
+    green_names: set[str] = set()
+    indexed_claims: set[str] = set()
+    umbrella_tests_in_index: set[str] = set()
+
+    for group in groups:
+        green_rel = group.get("green")
+        assert green_rel, f"group {group.get('id')} missing green file"
+        green_path = PROMPT15_ARCHIVE_EVIDENCE / green_rel
+        assert green_path.is_file(), f"missing green evidence: {green_rel}"
+        body = green_path.read_text(encoding="utf-8")
+        assert "passed" in body.lower() or "exit:0" in body.lower(), (
+            f"{green_rel} lacks pytest pass marker"
+        )
+        green_names.add(green_rel)
+
+        for claim_id in group.get("claim_ids") or []:
+            indexed_claims.add(str(claim_id))
+
+        for test_name in group.get("umbrella_tests") or []:
+            umbrella_tests_in_index.add(str(test_name))
+
+    assert len(indexed_claims) == 73, f"expected 73 claim_ids, got {len(indexed_claims)}"
+
+    # ponytail: 73 = 75 checklist rows − R3/R4 merged into DOC-001 / A6-003 aliases
+    expected_claims = {
+        "ADV-R3X-ROUTE-001", "ADV-R3X-ROUTE-002", "ADV-R3X-ROUTE-003", "ADV-R3X-ROUTE-004",
+        "ADV-R3X-SYNC-001", "ADV-R3X-SYNC-002", "ADV-R3X-SYNC-003",
+        "ADV-R3X-WRITE-001", "ADV-R3X-WRITE-002", "ADV-R3X-VALID-001",
+        "ADV-R3X-CONFLICT-001", "ADV-R3X-L1-001", "ADV-R3X-L1-002",
+        "ADV-R3X-PILOT-001", "ADV-R3X-PILOT-002", "ADV-R3X-SERVICE-001",
+        "ADV-R3X-STAGE-001", "ADV-R3X-CAP-001", "ADV-R3X-CAP-002",
+        "ADV-A1-001", "ADV-A1-002", "ADV-A1-003", "ADV-A1-004", "ADV-A1-005",
+        "ADV-A1-006", "ADV-A1-007", "ADV-A1-008", "ADV-A1-009", "ADV-A1-010",
+        "ADV-A1-011", "ADV-A1-012", "ADV-A1-013", "ADV-A1-014", "ADV-A1-015",
+        "ADV-A2-001", "ADV-A2-002", "ADV-A2-003", "ADV-A2-004", "ADV-A2-005",
+        "ADV-A2-006", "ADV-A2-007", "ADV-A2-008", "ADV-A2-009", "ADV-A2-010",
+        "ADV-A2-011", "ADV-A2-012",
+        "ADV-A3-001", "ADV-A3-002", "ADV-A3-003", "ADV-A3-004", "ADV-A3-005",
+        "ADV-A3-006", "ADV-A3-007", "ADV-A3-008", "ADV-A3-009", "ADV-A3-010",
+        "ADV-A3-011", "ADV-A3-012", "ADV-A3-013", "ADV-A3-014", "ADV-A3-015",
+        "ADV-A3-016",
+        "ADV-A5-001", "ADV-A5-002", "ADV-A6-001", "ADV-A6-003", "ADV-A6-004",
+        "F-019-R01", "F-019-R02", "F-019-R03",
+        "R1", "R2", "ADV-R3X-DOC-001",
+    }
+    assert indexed_claims == expected_claims, (
+        f"claim_id set mismatch: missing={expected_claims - indexed_claims}, "
+        f"extra={indexed_claims - expected_claims}"
+    )
+    assert "full-pytest-green.txt" in green_names
+
+    expected_umbrella = {
+        "test_advR3xRoute001_validationOnlyPrimaryBlocked",
+        "test_advR3xRoute003_domainDisabledByDefault",
+        "test_advR3xRoute004_validationRoleAddsQualityFlag",
+        "test_advR3xService001_productionFetchRequiresFileRegistry",
+        "test_advR3xConflict001_domainAliasThresholdLookup",
+        "test_advA2_009_tdxPytdxRegisteredInFactory",
+        "test_advA2_004_cninfoSupportsFilingsDomains",
+        "test_advA1_001_writeRequestRequiresDataDomain",
+        "test_advA5_001_gitignoreSecretPatterns",
+        "test_advA6_004_viteApiProxy",
+        "test_advR3xL1_002_interpretationRejectsForbiddenTerms",
+        "test_advR3xCap002_tdxPytdxFactoryParity",
+        "test_defaultOperation_coversAllDomainRoles",
+        "test_advR3xWrite002_unsupportedWriteModeRejected",
+        "test_advA2_002_healthCheckStub",
+        "test_advR3xCap001_compatibilityMapEmpty",
+        "test_advA3_016_orchestratorDeferredRunners",
+        "test_advA1_012_minStagingRowsEnforced",
+    }
+    assert expected_umbrella <= umbrella_tests_in_index, (
+        f"umbrella tests missing from index: {expected_umbrella - umbrella_tests_in_index}"
+    )
+
+    merge_gate = PROMPT15_ARCHIVE_EVIDENCE / "merge_gate_report.md"
+    assert merge_gate.is_file(), "archived merge_gate_report.md missing"

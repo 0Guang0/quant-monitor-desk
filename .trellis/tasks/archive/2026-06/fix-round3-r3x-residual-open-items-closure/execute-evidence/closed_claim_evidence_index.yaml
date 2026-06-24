@@ -1,0 +1,224 @@
+# PROMPT_15 closed-claim → execute *-green.txt 可审计映射（α-3 backfill）
+# Authority: merge_gate_report.md Master Checklist · AUD-01 F-01 closure
+schema_version: 1
+task: fix-round3-r3x-residual-open-items-closure
+branch: fix/round3-r3x-residual-open-items-closure
+archived_at: "2026-06-24"
+backfill_branch: fix/r3y-prompt15-evidence
+checklist_total: 73
+merge_gate: merge_gate_report.md
+
+groups:
+  - id: g1-adv-r3x
+    checklist_section: "4.1 ADV-R3X"
+    green: g1-adv-r3x-green.txt
+    pytest_command: >-
+      uv run pytest tests/test_r3x_residual_open_items_closure.py
+      -k "Route or Service or Conflict or Write or Cap or L1"
+      tests/test_sync_orchestrator.py -k "servicePath or Sync001"
+      tests/test_batch275_live_pilot_gate.py -q
+    claim_ids:
+      - ADV-R3X-ROUTE-001
+      - ADV-R3X-ROUTE-002
+      - ADV-R3X-ROUTE-003
+      - ADV-R3X-ROUTE-004
+      - ADV-R3X-SYNC-001
+      - ADV-R3X-SYNC-002
+      - ADV-R3X-SYNC-003
+      - ADV-R3X-WRITE-001
+      - ADV-R3X-WRITE-002
+      - ADV-R3X-VALID-001
+      - ADV-R3X-CONFLICT-001
+      - ADV-R3X-L1-001
+      - ADV-R3X-L1-002
+      - ADV-R3X-PILOT-001
+      - ADV-R3X-PILOT-002
+      - ADV-R3X-SERVICE-001
+      - ADV-R3X-STAGE-001
+      - ADV-R3X-CAP-001
+      - ADV-R3X-CAP-002
+    umbrella_tests:
+      - test_advR3xRoute001_validationOnlyPrimaryBlocked
+      - test_advR3xRoute003_domainDisabledByDefault
+      - test_advR3xRoute004_validationRoleAddsQualityFlag
+      - test_advR3xService001_productionFetchRequiresFileRegistry
+      - test_advR3xConflict001_domainAliasThresholdLookup
+      - test_advR3xL1_002_interpretationRejectsForbiddenTerms
+      - test_advR3xWrite002_unsupportedWriteModeRejected
+      - test_advR3xCap001_compatibilityMapEmpty
+      - test_advR3xCap002_tdxPytdxFactoryParity
+    cross_tests:
+      - tests/test_sync_orchestrator.py::test_servicePath_*
+      - tests/test_r3ySync001_*
+      - tests/test_batch275_live_pilot_gate.py
+
+  - id: g2-adv-a1
+    checklist_section: "4.2 ADV-A1"
+    green: g2-adv-a1-green.txt
+    pytest_command: >-
+      uv run pytest tests/test_r3x_residual_open_items_closure.py
+      -k "advA1" tests/test_write_manager.py tests/test_db_validation_gate.py
+      tests/test_raw_store.py -q
+    claim_ids:
+      - ADV-A1-003
+      - ADV-A1-004
+      - ADV-A1-005
+      - ADV-A1-001
+      - ADV-A1-002
+      - ADV-A1-006
+      - ADV-A1-007
+      - ADV-A1-008
+      - ADV-A1-009
+      - ADV-A1-010
+      - ADV-A1-012
+      - ADV-A1-011
+      - ADV-A1-013
+      - ADV-A1-014
+      - ADV-A1-015
+    umbrella_tests:
+      - test_advA1_001_writeRequestRequiresDataDomain
+      - test_advA1_012_minStagingRowsEnforced
+    cross_tests:
+      - tests/test_write_manager.py
+      - tests/test_db_validation_gate.py
+      - tests/test_raw_store.py
+
+  - id: g3-adv-a2
+    checklist_section: "4.3 ADV-A2"
+    green: g3-adv-a2-green.txt
+    pytest_command: >-
+      uv run pytest tests/test_r3x_residual_open_items_closure.py
+      -k "advA2 or defaultOperation or Cap"
+      tests/test_source_route_planner.py tests/test_data_adapter_contract.py -q
+    claim_ids:
+      - ADV-A2-001
+      - ADV-A2-003
+      - ADV-A2-005
+      - ADV-A2-006
+      - ADV-A2-007
+      - ADV-A2-002
+      - ADV-A2-004
+      - ADV-A2-009
+      - ADV-A2-010
+      - ADV-A2-012
+      - ADV-A2-008
+      - ADV-A2-011
+    umbrella_tests:
+      - test_advA2_009_tdxPytdxRegisteredInFactory
+      - test_advA2_004_cninfoSupportsFilingsDomains
+      - test_advA2_002_healthCheckStub
+      - test_defaultOperation_coversAllDomainRoles
+      - test_advR3xCap001_compatibilityMapEmpty
+      - test_advR3xCap002_tdxPytdxFactoryParity
+    cross_tests:
+      - tests/test_source_route_planner.py
+      - tests/test_data_adapter_contract.py
+
+  - id: g4-adv-a3
+    checklist_section: "4.4 ADV-A3"
+    green: g4-adv-a3-green.txt
+    pytest_command: >-
+      uv run pytest tests/test_r3x_residual_open_items_closure.py::test_advA3_016_orchestratorDeferredRunners
+      tests/test_sync_orchestrator.py tests/test_sync_jobs.py -q
+    claim_ids:
+      - ADV-A3-001
+      - ADV-A3-003
+      - ADV-A3-002
+      - ADV-A3-004
+      - ADV-A3-005
+      - ADV-A3-006
+      - ADV-A3-007
+      - ADV-A3-008
+      - ADV-A3-009
+      - ADV-A3-010
+      - ADV-A3-011
+      - ADV-A3-012
+      - ADV-A3-013
+      - ADV-A3-014
+      - ADV-A3-015
+      - ADV-A3-016
+    umbrella_tests:
+      - test_advA3_016_orchestratorDeferredRunners
+    cross_tests:
+      - tests/test_sync_orchestrator.py
+      - tests/test_sync_jobs.py
+
+  - id: g5-adv-a5-a6
+    checklist_section: "4.5 ADV-A5 / ADV-A6"
+    green: g5-adv-a5-a6-green.txt
+    pytest_command: >-
+      uv run pytest tests/test_r3x_residual_open_items_closure.py
+      -k "advA5 or advA6" tests/test_production_gate.py -q
+    claim_ids:
+      - ADV-A5-001
+      - ADV-A5-002
+      - ADV-A6-001
+      - ADV-A6-003
+      - ADV-A6-004
+    umbrella_tests:
+      - test_advA5_001_gitignoreSecretPatterns
+      - test_advA6_004_viteApiProxy
+    cross_tests:
+      - tests/test_production_gate.py
+
+  - id: g6-f019
+    checklist_section: "4.6 F-019"
+    green: g6-f019-green.txt
+    pytest_command: >-
+      uv run pytest tests/test_round3_audit_registry_alignment.py
+      -k "F019 or f019" -q
+    claim_ids:
+      - F-019-R01
+      - F-019-R02
+      - F-019-R03
+    cross_tests:
+      - tests/test_round3_audit_registry_alignment.py
+
+  - id: g7-registry
+    checklist_section: "4.7 Registry"
+    green: g7-registry-green.txt
+    pytest_command: >-
+      uv run pytest tests/test_round3_audit_registry_alignment.py
+      tests/test_unresolved_item_task_coverage.py -q
+    claim_ids:
+      - R1
+      - R2
+      - ADV-R3X-DOC-001
+    merged_claim_aliases:
+      R3: ADV-R3X-DOC-001
+      R4: ADV-A6-003
+    cross_tests:
+      - tests/test_round3_audit_registry_alignment.py
+      - tests/test_unresolved_item_task_coverage.py
+
+  - id: umbrella-full
+    checklist_section: "PROMPT_15 umbrella regression"
+    green: umbrella-r3x-green.txt
+    pytest_command: uv run pytest tests/test_r3x_residual_open_items_closure.py -q
+    claim_ids: []
+    umbrella_tests:
+      - test_advR3xRoute001_validationOnlyPrimaryBlocked
+      - test_advR3xRoute003_domainDisabledByDefault
+      - test_advR3xRoute004_validationRoleAddsQualityFlag
+      - test_advR3xService001_productionFetchRequiresFileRegistry
+      - test_advR3xConflict001_domainAliasThresholdLookup
+      - test_advA2_009_tdxPytdxRegisteredInFactory
+      - test_advA2_004_cninfoSupportsFilingsDomains
+      - test_advA1_001_writeRequestRequiresDataDomain
+      - test_advA5_001_gitignoreSecretPatterns
+      - test_advA6_004_viteApiProxy
+      - test_advR3xL1_002_interpretationRejectsForbiddenTerms
+      - test_advR3xCap002_tdxPytdxFactoryParity
+      - test_defaultOperation_coversAllDomainRoles
+      - test_advR3xWrite002_unsupportedWriteModeRejected
+      - test_advA2_002_healthCheckStub
+      - test_advR3xCap001_compatibilityMapEmpty
+      - test_advA3_016_orchestratorDeferredRunners
+      - test_advA1_012_minStagingRowsEnforced
+
+  - id: full-suite
+    checklist_section: "§5 验收 full pytest"
+    green: full-pytest-green.txt
+    pytest_command: uv run pytest -q
+    claim_ids: []
+    note: Tier B full suite per R3X_residual_open_items_closure.md §5

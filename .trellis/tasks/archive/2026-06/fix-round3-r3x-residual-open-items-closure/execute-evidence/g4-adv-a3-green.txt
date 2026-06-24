@@ -1,0 +1,6 @@
+# g4-adv-a3 — checklist §4.4 ADV-A3
+# Command: uv run pytest tests/test_r3x_residual_open_items_closure.py::test_advA3_016_orchestratorDeferredRunners -q --tb=no
+
+.                                                                        [100%]
+1 passed in 0.8s
+EXIT:0

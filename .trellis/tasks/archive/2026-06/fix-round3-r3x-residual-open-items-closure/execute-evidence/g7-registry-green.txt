@@ -1,0 +1,6 @@
+# g7-registry — checklist §4.7 Registry + ADV-R3X-DOC-001
+# Command: uv run pytest tests/test_round3_audit_registry_alignment.py tests/test_unresolved_item_task_coverage.py -q --tb=no
+
+.............................                                            [100%]
+29 passed in 2.1s
+EXIT:0
