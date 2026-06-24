@@ -38,6 +38,6 @@
 
 ## 2. DoD
 
-- [ ] A1–A8 报告 + `audit_matrix.json`
-- [ ] 对抗性零 OPEN
+- [x] A1–A8 报告 + `audit_matrix.json`
+- [x] 对抗性零 OPEN
 - [ ] PASS 前不 finish-work
