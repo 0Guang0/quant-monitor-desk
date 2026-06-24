@@ -17,13 +17,26 @@ from backend.app.datasources.fetch_result import FetchRequest
 from backend.app.datasources.route_planner import SourceRoutePlanner
 from backend.app.datasources.service import DataSourceService, _default_operation
 from backend.app.datasources.source_registry import SourceRegistry
+from backend.app.db.write_manager import WriteRequest
 from backend.app.layer1_axes.feature_engine import AxisFeatureEngine
 from backend.app.layer1_axes.interpretation import AxisInterpretationEngine, InterpretationRejectedError
 from backend.app.validators.source_conflict import CONFLICT_DOMAIN_ALIASES, SourceConflictValidator
 from tests.contract_gate_support import PROJECT_ROOT, load_yaml
+from tests.db_helpers import create_test_write_manager
 from tests.service_path_support import production_route_planner
 
 SOURCE_REGISTRY = PROJECT_ROOT / "specs/datasource_registry/source_registry.yaml"
+
+
+def _migrated_write_manager(tmp_path: Path, *, db_name: str = "wm.duckdb"):
+    from backend.app.db.connection import ConnectionManager
+    from backend.app.db.migrate import apply_migrations
+
+    db = tmp_path / db_name
+    cm = ConnectionManager(db)
+    with cm.writer() as con:
+        apply_migrations(con)
+    return create_test_write_manager(cm), cm
 
 
 def test_advR3xRoute001_validationOnlyPrimaryBlocked() -> None:
@@ -151,16 +164,7 @@ def test_advA1_001_writeRequestRequiresDataDomain(tmp_path: Path) -> None:
     验证点：抛出 ValueError 且消息含 data_domain
     失败含义：空域写入可落库，血缘与审计无法追溯域
     """
-    from backend.app.db.connection import ConnectionManager
-    from backend.app.db.migrate import apply_migrations
-    from backend.app.db.write_manager import WriteRequest
-    from tests.db_helpers import create_test_write_manager
-
-    db = tmp_path / "wm.duckdb"
-    cm = ConnectionManager(db)
-    with cm.writer() as con:
-        apply_migrations(con)
-    wm = create_test_write_manager(cm)
+    wm, _cm = _migrated_write_manager(tmp_path)
     req = WriteRequest(
         run_id="r",
         job_id="j",
@@ -253,16 +257,7 @@ def test_advR3xWrite002_unsupportedWriteModeRejected(tmp_path) -> None:
     验证点：抛出 ValueError 且消息含 not implemented
     失败含义：未实现模式静默成功或部分写入，数据完整性风险
     """
-    from backend.app.db.connection import ConnectionManager
-    from backend.app.db.migrate import apply_migrations
-    from backend.app.db.write_manager import WriteRequest
-    from tests.db_helpers import create_test_write_manager
-
-    db = tmp_path / "wm2.duckdb"
-    cm = ConnectionManager(db)
-    with cm.writer() as con:
-        apply_migrations(con)
-    wm = create_test_write_manager(cm)
+    wm, _cm = _migrated_write_manager(tmp_path, db_name="wm2.duckdb")
     req = WriteRequest(
         run_id="r",
         job_id="j",
@@ -353,18 +348,10 @@ def test_advA1_012_minStagingRowsEnforced(tmp_path) -> None:
     验证点：抛出 ValueError 且消息含 minimum
     失败含义：空批次可写 clean，产生无意义审计与空洞分区
     """
-    from backend.app.db.connection import ConnectionManager
-    from backend.app.db.migrate import apply_migrations
-    from backend.app.db.write_manager import WriteRequest
-    from tests.db_helpers import create_test_write_manager
-
-    db = tmp_path / "empty-stg.duckdb"
-    cm = ConnectionManager(db)
+    wm, cm = _migrated_write_manager(tmp_path, db_name="empty-stg.duckdb")
     with cm.writer() as con:
-        apply_migrations(con)
         con.execute("CREATE TABLE t (id INTEGER)")
         con.execute("CREATE TABLE s (id INTEGER)")
-    wm = create_test_write_manager(cm)
     req = WriteRequest(
         run_id="r",
         job_id="j",
