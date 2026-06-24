@@ -17,6 +17,7 @@ Used with MIGRATION_MAP.md for machine omission checks (`check_docs_specs_indexe
 - `docs/adr/ADR-0003-layer1-standardization-only.md`
 - `docs/adr/ADR-0004-layer3-shock-anchor-model.md`
 - `docs/adr/ADR-0005-primary-validation-fallback-source-model.md`
+- `docs/adr/ADR-023-layer5-conflict-review-path.md`
 - `docs/api/agent_tool_contracts.md`
 - `docs/api/fastapi_routes.md`
 - `docs/architecture/00_project_overview.md`

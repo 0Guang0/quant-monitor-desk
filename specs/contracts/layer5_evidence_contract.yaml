@@ -5,7 +5,16 @@ foundation_slice: 023A
 foundation_models:
   instrument_evidence_ref:
     primary_key: [instrument_id]
-    required_fields: [instrument_id, symbol, asset_type, market_id, exchange, currency, is_active]
+    required_fields:
+      [
+        instrument_id,
+        symbol,
+        asset_type,
+        market_id,
+        exchange,
+        currency,
+        is_active,
+      ]
   evidence_foundation_record:
     primary_key: [evidence_id]
     required_fields:
@@ -19,27 +28,89 @@ foundation_models:
       - manual_review_state
       - created_by
     provenance_required_for: [factual_source, derived_validation]
-    evidence_kind_values: [factual_source, derived_validation, agent_interpretation]
+    evidence_kind_values:
+      [factual_source, derived_validation, agent_interpretation]
     manual_review_state_values: [not_required, queued]
 models:
   instrument_registry:
     primary_key: [instrument_id]
-    required_fields: [instrument_id, symbol, asset_type, market_id, exchange, currency, is_active]
+    required_fields:
+      [
+        instrument_id,
+        symbol,
+        asset_type,
+        market_id,
+        exchange,
+        currency,
+        is_active,
+      ]
   security_bar_daily:
     primary_key: [instrument_id, trade_date, adjust_type]
-    required_fields: [instrument_id, trade_date, open, high, low, close, volume, amount, source, quality_flag]
+    required_fields:
+      [
+        instrument_id,
+        trade_date,
+        open,
+        high,
+        low,
+        close,
+        volume,
+        amount,
+        source,
+        quality_flag,
+      ]
   futures_bar_daily:
     primary_key: [instrument_id, trade_date]
-    required_fields: [instrument_id, trade_date, contract_code, underlying_id, close, open_interest, source, quality_flag]
+    required_fields:
+      [
+        instrument_id,
+        trade_date,
+        contract_code,
+        underlying_id,
+        close,
+        open_interest,
+        source,
+        quality_flag,
+      ]
   options_chain_snapshot:
     primary_key: [option_id, trade_date]
-    required_fields: [option_id, underlying_id, trade_date, expiry_date, strike_price, option_type, close, source, quality_flag]
+    required_fields:
+      [
+        option_id,
+        underlying_id,
+        trade_date,
+        expiry_date,
+        strike_price,
+        option_type,
+        close,
+        source,
+        quality_flag,
+      ]
   event_registry:
     primary_key: [event_id]
-    required_fields: [event_id, instrument_id, event_date, event_type, event_title, source, content_hash, quality_flag]
+    required_fields:
+      [
+        event_id,
+        instrument_id,
+        event_date,
+        event_type,
+        event_title,
+        source,
+        content_hash,
+        quality_flag,
+      ]
   evidence_chain:
     primary_key: [evidence_id]
-    required_fields: [evidence_id, target_id, target_type, trade_date, evidence_summary, need_human_review, created_by]
+    required_fields:
+      [
+        evidence_id,
+        target_id,
+        target_type,
+        trade_date,
+        evidence_summary,
+        need_human_review,
+        created_by,
+      ]
 quality_rules:
   - high_must_be_greater_or_equal_low
   - non_negative_volume_amount_open_interest
@@ -50,9 +121,17 @@ quality_rules:
 boundaries:
   no_trading_action_semantics: true
   no_agent_text_as_fact_source: true
+# 023b bar-only slice closure — see research/context-closure.md §023b-delivered
+closed_in_023b:
+  - instrument_registry staged row validator
+  - security_bar_daily staged row validator (no-future-trade_date)
+  - evidence_chain staged builder (upstream_snapshot_ids, agent-not-fact, severe→queued)
+  - EvidenceReadPort boundary (R2-RISK-2 staged injection)
 deferred_to_023b:
-  - security_bar_daily ingestion
-  - futures_bar_daily ingestion
-  - options_chain_snapshot ingestion
-  - event_registry ingestion
-  - evidence_chain_builder full pipeline
+  - futures_bar_daily staged validator
+  - options_chain_snapshot staged validator
+  - event_registry staged validator
+  - financial_statement staged validator
+  - valuation_snapshot staged validator
+  - security_bar_daily full ingestion pipeline
+  - evidence_chain_builder full ingestion pipeline

@@ -1,0 +1,6 @@
+{"skill": ".cursor/skills/trellis-execute/SKILL.md", "phase": "0", "timestamp": "2026-06-25"}
+{"skill": ".cursor/rules/ponytail.mdc", "phase": "0", "timestamp": "2026-06-25"}
+{"skill": "test-driven-development", "phase": "RED", "read": true, "timestamp": "2026-06-25"}
+{"skill": "incremental-implementation", "phase": "SLICE", "read": true, "timestamp": "2026-06-25"}
+{"skill": "karpathy-guidelines", "phase": "GREEN", "read": true, "timestamp": "2026-06-25"}
+{"skill": "testing-guidelines", "phase": "GREEN", "read": true, "timestamp": "2026-06-25"}

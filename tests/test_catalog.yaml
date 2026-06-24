@@ -453,6 +453,17 @@ tests/test_layer4_market_structure.py:
     specs:
       - specs/contracts/layer4_market_contract.yaml
       - specs/contracts/snapshot_lineage_contract.yaml
+tests/test_layer5_evidence_chain.py:
+  command: uv run python -m pytest tests/test_layer5_evidence_chain.py -q
+  failure_meaning:
+    Regression in test_layer5_evidence_chain; inspect purpose and linked
+    authorities.
+  purpose: 第五层完整证据链 staged 测试（Round 3 Batch 5B / 023b Execute）。
+  type: policy-contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
 tests/test_layer5_evidence_foundation.py:
   command: uv run python -m pytest tests/test_layer5_evidence_foundation.py -q
   failure_meaning:
