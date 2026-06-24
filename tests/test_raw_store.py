@@ -381,9 +381,42 @@ def test_register_validationRejected_persistsFailedAudit(tmp_path: Path) -> None
     assert audit == ("FAILED", "file_registry", "validation rejected: stub-fail-registry")
 
 
+def test_stagedEvidence_publicBypassNotExported() -> None:
+    """覆盖范围：R3Y-STAGED-REG-001 — file_registry 旁路不得为公开 API
+    测试对象：staged_evidence 模块导出面
+    目的/目标：staging 写路径须经 WriteManager；legacy 旁路仅保留为私有符号
+    验证点：register_staged_file_registry_rows 不在模块属性中；__all__ 不含该名
+    失败含义：公开旁路仍可被 ops/adapter 导入，AUD-03 WriteManager 绕过未关闭
+    """
+    import backend.app.storage.staged_evidence as staged_mod
+
+    assert not hasattr(staged_mod, "register_staged_file_registry_rows")
+    assert "register_staged_file_registry_rows" not in getattr(staged_mod, "__all__", ())
+
+
+def test_stagedEvidence_noProductionReferenceToRegistryBypass() -> None:
+    """覆盖范围：R3Y-STAGED-REG-001 — 生产代码不得引用 registry 旁路符号
+    测试对象：backend/ 下除 staged_evidence.py 外的全部 .py
+    目的/目标：私有化后仅测试可 import 私有 helper；ops/staged_pilot 等须零引用
+    验证点：无文件含 register_staged_file_registry_rows 或 _register_staged_file_registry_rows
+    失败含义：生产模块仍可调用裸 INSERT 旁路，WriteManager 门禁被击穿
+    """
+    backend_root = Path(__file__).resolve().parents[1] / "backend"
+    legacy = "register_staged_file_registry_rows"
+    private = "_register_staged_file_registry_rows"
+    offenders: list[str] = []
+    for path in backend_root.rglob("*.py"):
+        if path.name == "staged_evidence.py":
+            continue
+        text = path.read_text(encoding="utf-8")
+        if legacy in text or private in text:
+            offenders.append(str(path.relative_to(backend_root.parent)))
+    assert offenders == []
+
+
 def test_stagedEvidence_pathEscape_rejected(tmp_path: Path) -> None:
     """覆盖范围：staged 证据路径逃出 data_root 时拒绝
-    测试对象：register_staged_file_registry_rows
+    测试对象：_register_staged_file_registry_rows
     目的/目标：FetchResult 中的 raw_file_paths 须在 data_root 沙箱内
     验证点：data_root 外路径抛 ValueError match escapes data_root
     失败含义：外部路径可被注册，证据链与真实落盘位置脱节
@@ -391,7 +424,7 @@ def test_stagedEvidence_pathEscape_rejected(tmp_path: Path) -> None:
     from datetime import UTC, datetime
 
     from backend.app.datasources.fetch_result import FetchResult
-    from backend.app.storage.staged_evidence import register_staged_file_registry_rows
+    from backend.app.storage.staged_evidence import _register_staged_file_registry_rows
 
     cm = _cm(tmp_path)
     data_root = tmp_path / "data"
@@ -412,12 +445,46 @@ def test_stagedEvidence_pathEscape_rejected(tmp_path: Path) -> None:
     )
     with cm.writer() as con:
         with pytest.raises(ValueError, match="escapes data_root"):
-            register_staged_file_registry_rows(con, result, data_root=data_root)
+            _register_staged_file_registry_rows(con, result, data_root=data_root)
+
+
+def test_stagedEvidence_rejectsWrongPhase() -> None:
+    """覆盖范围：staged evidence 旁路 phase 门禁（R3Y-STAGED-REG-001 私有旁路）
+    测试对象：_register_staged_file_registry_rows
+    目的/目标：非 phase3_staged 不得旁路写入 file_registry
+    验证点：phase=phase4_clean 时 pytest.raises(ValueError, match='phase3_staged')
+    失败含义：任意 phase 可写 registry，staged 旁路与 clean 路径混淆
+    """
+    from datetime import UTC, datetime
+
+    import duckdb
+
+    from backend.app.datasources.fetch_result import FetchResult
+    from backend.app.storage.staged_evidence import _register_staged_file_registry_rows
+
+    con = duckdb.connect(":memory:")
+    result = FetchResult(
+        run_id="r1",
+        source_id="akshare",
+        data_domain="macro_supplementary",
+        status="SUCCESS",
+        row_count=1,
+        fetch_time=datetime.now(UTC).isoformat(),
+        raw_file_paths=["raw.json"],
+        content_hash="hash1",
+    )
+    with pytest.raises(ValueError, match="phase3_staged"):
+        _register_staged_file_registry_rows(
+            con,
+            result,
+            data_root=Path("."),
+            phase="phase4_clean",
+        )
 
 
 def test_stagedEvidence_allowedPath_registersRow(tmp_path: Path) -> None:
     """覆盖范围：data_root 内合法 staged 证据路径注册
-    测试对象：register_staged_file_registry_rows
+    测试对象：_register_staged_file_registry_rows
     目的/目标：抓取结果中的 raw 文件应插入 file_registry 且 quality_flag=STAGED
     验证点：返回 1 个 file_id；local_path 含 evidence.json；quality_flag=STAGED
     失败含义：合法证据无法挂接注册表，下游校验找不到原始文件
@@ -425,7 +492,7 @@ def test_stagedEvidence_allowedPath_registersRow(tmp_path: Path) -> None:
     from datetime import UTC, datetime
 
     from backend.app.datasources.fetch_result import FetchResult
-    from backend.app.storage.staged_evidence import register_staged_file_registry_rows
+    from backend.app.storage.staged_evidence import _register_staged_file_registry_rows
 
     cm = _cm(tmp_path)
     data_root = tmp_path / "data"
@@ -445,7 +512,7 @@ def test_stagedEvidence_allowedPath_registersRow(tmp_path: Path) -> None:
         schema_hash="def456",
     )
     with cm.writer() as con:
-        ids = register_staged_file_registry_rows(con, result, data_root=data_root)
+        ids = _register_staged_file_registry_rows(con, result, data_root=data_root)
     assert len(ids) == 1
     with cm.reader() as r:
         row = r.execute(

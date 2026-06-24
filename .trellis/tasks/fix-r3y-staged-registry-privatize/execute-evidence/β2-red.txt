@@ -1,0 +1,13 @@
+β2 RED — R3Y-STAGED-REG-001 privatize (pre-fix expectations)
+
+1. test_stagedEvidence_publicBypassNotExported
+   ImportError / AssertionError: register_staged_file_registry_rows still public on staged_evidence module
+
+2. test_stagedEvidence_noProductionReferenceToRegistryBypass
+   (post-audit addition) N/A at initial RED — documents production zero-reference invariant
+
+3. tests/test_r3x_ponytail_pilot_prep_bucket_a.py
+   ImportError: cannot import name 'register_staged_file_registry_rows' from staged_evidence
+   (after rename without bucket_a import alignment)
+
+Pre-fix: register_staged_file_registry_rows was public; ops/staged_pilot already used WriteManager only.
