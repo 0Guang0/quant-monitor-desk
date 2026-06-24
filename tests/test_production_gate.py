@@ -7,9 +7,8 @@ from __future__ import annotations
 
 import subprocess
 import sys
-from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
+from tests.contract_gate_support import PROJECT_ROOT
 
 
 def test_productionGate_exitsZero() -> None:

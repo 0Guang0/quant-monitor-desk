@@ -61,8 +61,9 @@ def test_task019_and_handoff_require_closed_gate_before_runtime() -> None:
     验证点：019 含 R3-B3-STAGED-DOWNSTREAM-GATE 与 feature/round3-batch3-staged-gate；handoff 含 PILOT_FAIL_SOURCE 与 CLOSED；地图禁止启动 feature/round3-019-layer2-sensor
     失败含义：任务卡或交接文未绑门禁，可能绕过 staged-only 直接开 019 实现
     """
-    assert "R3-B3-STAGED-DOWNSTREAM-GATE" in _read(TASK_019)
-    assert "feature/round3-batch3-staged-gate" in _read(TASK_019)
+    task019 = _read(TASK_019)
+    assert "R3-B3-STAGED-DOWNSTREAM-GATE" in task019
+    assert "feature/round3-batch3-staged-gate" in task019
     handoff = _read(HANDOFF)
     assert "PILOT_FAIL_SOURCE" in handoff
     assert "R3-B2.75-REQ2-EM" in handoff

@@ -51,6 +51,28 @@ def _read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
+def _fetch_call_tracker(deny_message: str) -> tuple[dict[str, bool], object]:
+    """ponytail: shared fetch-not-called guard for authorization/source gate tests."""
+    called = {"value": False}
+
+    def _track(*_args, **_kwargs):
+        called["value"] = True
+        raise AssertionError(deny_message)
+
+    return called, _track
+
+
+def _phase3_evidence_with_hitl(tmp_path: Path, label: str) -> Path:
+    """ponytail: HITL confirmation file required before Phase 3 live fetch."""
+    out = tmp_path / "evidence"
+    out.mkdir()
+    (out / "phase3_hitl_user_confirmation.md").write_text(
+        f"User confirmation: {label}\n",
+        encoding="utf-8",
+    )
+    return out
+
+
 def test_livePilot_phaseMinus1_registryReconciliationRequired() -> None:
     """覆盖范围：Batch 2.75 Phase -1 是否完成五 ID registry 对账与读档证据
     测试对象：execute-evidence/phase_minus1_reconciliation.md、phase-1-registry-read.txt 及三份 registry
@@ -132,11 +154,9 @@ def test_livePilot_missingAuthorization_blocksBeforeFetch() -> None:
         max_rows=10,
         authorization_evidence="docs/quality/nonexistent_batch275_authorization.md",
     )
-    fetch_called = {"value": False}
-
-    def _track_fetch(*_args, **_kwargs):
-        fetch_called["value"] = True
-        raise AssertionError("fetch must not be called without authorization")
+    fetch_called, _track_fetch = _fetch_call_tracker(
+        "fetch must not be called without authorization"
+    )
 
     with patch(
         "backend.app.datasources.service.DataSourceService.fetch",
@@ -172,11 +192,9 @@ def test_livePilot_disabledSource_blocksBeforeFetch() -> None:
         max_rows=10,
         authorization_evidence="docs/quality/batch275_user_authorization_2026-06-21.md",
     )
-    fetch_called = {"value": False}
-
-    def _track_fetch(*_args, **_kwargs):
-        fetch_called["value"] = True
-        raise AssertionError("fetch must not be called for disabled source")
+    fetch_called, _track_fetch = _fetch_call_tracker(
+        "fetch must not be called for disabled source"
+    )
 
     with patch(
         "backend.app.datasources.service.DataSourceService.fetch",
@@ -359,11 +377,7 @@ def test_livePilot_phase2RouteMatrix_threeRequests(tmp_path: Path) -> None:
         capture_phase2_route_matrix,
     )
 
-    fetch_called = {"value": False}
-
-    def _track_fetch(*_args, **_kwargs):
-        fetch_called["value"] = True
-        raise AssertionError("Phase 2 must not invoke fetch")
+    fetch_called, _track_fetch = _fetch_call_tracker("Phase 2 must not invoke fetch")
 
     with patch(
         "backend.app.datasources.service.DataSourceService.fetch",
@@ -507,12 +521,7 @@ def test_livePilot_phase3_routeNotReady_stopsBeforeFetch(
         run_live_pilot_raw_only,
     )
 
-    out = tmp_path / "evidence"
-    out.mkdir()
-    (out / "phase3_hitl_user_confirmation.md").write_text(
-        "User confirmation: test route gate only\n",
-        encoding="utf-8",
-    )
+    out = _phase3_evidence_with_hitl(tmp_path, "test route gate only")
     fetch_port_called = {"value": False}
 
     def _unexpected_fetch_port(**_kwargs):
@@ -548,12 +557,7 @@ def test_livePilot_phase3_resourceGuardHardStop_stopsBeforeFetch(tmp_path: Path)
     """
     from backend.app.ops.live_pilot import approved_pilot_requests, run_live_pilot_raw_only
 
-    out = tmp_path / "evidence"
-    out.mkdir()
-    (out / "phase3_hitl_user_confirmation.md").write_text(
-        "User confirmation: test guard gate only\n",
-        encoding="utf-8",
-    )
+    out = _phase3_evidence_with_hitl(tmp_path, "test guard gate only")
     fetch_port_called = {"value": False}
 
     def _unexpected_fetch_port(**_kwargs):
