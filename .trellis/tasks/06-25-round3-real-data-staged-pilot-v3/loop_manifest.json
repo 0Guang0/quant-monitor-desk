@@ -10,32 +10,32 @@
   "acs": [
     {
       "id": "SP3-01",
-      "status": "pending",
+      "status": "execute_complete",
       "repair_items": []
     },
     {
       "id": "SP3-02",
-      "status": "pending",
+      "status": "execute_complete",
       "repair_items": []
     },
     {
       "id": "SP3-03",
-      "status": "pending",
+      "status": "execute_complete",
       "repair_items": []
     },
     {
       "id": "SP3-04",
-      "status": "pending",
+      "status": "execute_complete",
       "repair_items": []
     },
     {
       "id": "SP3-05",
-      "status": "pending",
+      "status": "execute_complete",
       "repair_items": []
     },
     {
       "id": "SP3-06",
-      "status": "pending",
+      "status": "execute_complete",
       "repair_items": []
     }
   ]

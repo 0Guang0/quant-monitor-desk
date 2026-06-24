@@ -1,0 +1,4 @@
+Tier A/B/C merge gate — 2026-06-25
+uv run pytest -q => exit 0 (full suite)
+uv run ruff check backend/app/ops/staged_pilot.py tests/test_real_data_staged_pilot_v3.py tests/test_staged_pilot.py tests/test_raw_store.py => pre-existing E501 in v2 blocks only; v3 files clean after --fix
+commit: f3163bf5 on feature/round3-real-data-staged-pilot-v3
