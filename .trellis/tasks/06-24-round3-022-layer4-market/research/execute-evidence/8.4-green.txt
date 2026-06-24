@@ -1,0 +1,5 @@
+# §8.4 GREEN — AC-022-4 Layer4LineageBuilder
+$ uv run pytest tests/test_layer4_market_structure.py::test_marketSnapshot_lineageRequiredFieldsComplete -q
+.                                                                        [100%]
+1 passed — exit 0 (PASS)
+ponytail: thin clone of Layer3LineageBuilder; layer_id=layer4.

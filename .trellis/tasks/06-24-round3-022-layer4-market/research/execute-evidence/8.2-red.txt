@@ -1,0 +1,4 @@
+# §8.2 RED
+$ uv run pytest tests/test_layer4_market_structure.py::test_marketAdapter_nonStagedSource_rejects -q
+FAILED — Layer4MarketError not raised / module missing
+exit code: 1 (FAIL)

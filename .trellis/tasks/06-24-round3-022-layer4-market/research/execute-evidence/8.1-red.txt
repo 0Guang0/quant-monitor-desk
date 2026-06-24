@@ -1,0 +1,4 @@
+# §8.1 RED
+$ uv run pytest tests/test_layer4_market_structure.py::test_marketRegistry_uniqueMarketIds -q
+FAILED — ModuleNotFoundError / ImportError seed_registry_rows
+exit code: 1 (FAIL)

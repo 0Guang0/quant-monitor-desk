@@ -1,0 +1,19 @@
+{
+  "id": "06-24-round3-022-layer4-market",
+  "name": "round3-022-layer4-market",
+  "title": "B-22: task 022 Layer4 market structure",
+  "description": "Layer4 market registry, calendar, breadth, market snapshots; staged-only + as_of lineage.",
+  "status": "review",
+  "dev_type": "feature",
+  "scope": "layer4_markets",
+  "branch": "feature/round3-022-layer4-market",
+  "base_branch": "master",
+  "worktree_path": "../quant-monitor-desk-wt-022-layer4",
+  "meta": {
+    "task_track": "complex",
+    "manifest_protocol_version": "3",
+    "predecessor_tasks": [
+      ".trellis/tasks/archive/2026-06/06-24-round3-021-layer3-snapshot"
+    ]
+  }
+}

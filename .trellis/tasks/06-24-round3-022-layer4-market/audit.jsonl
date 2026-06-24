@@ -1,0 +1,12 @@
+{"file": ".trellis/tasks/06-24-round3-022-layer4-market/AUDIT.plan.md", "reason": "Audit single source of truth"}
+{"file": ".trellis/tasks/06-24-round3-022-layer4-market/MASTER.plan.md", "reason": "extract: §2 AC trace | for: A5 audit-completion"}
+{"file": "specs/contracts/layer4_market_contract.yaml", "reason": "extract: models + quality_rules | for: A1 audit-spec"}
+{"file": "specs/contracts/snapshot_lineage_contract.yaml", "reason": "extract: required_fields | for: A1 / A8 test-gap"}
+{"file": "docs/modules/layer4_market_structure.md", "reason": "extract: MarketAdapter 边界 | for: A1 / A8"}
+{"file": "docs/implementation_tasks/ROUND_3_MODELING_LAYERS/022_implement_layer4_market_structure.md", "reason": "extract: scope / Red Flags | for: A1 trace"}
+{"file": "WAVE_C_MAIN_SESSION_COORDINATOR_PLAYBOOK.md", "reason": "extract: §8.2 PASS 子 AC | for: A5"}
+{"file": "docs/quality/BATCH3_STAGED_DOWNSTREAM_GATE.md", "reason": "extract: staged-only 约束 | for: A5 AC-022-6"}
+{"file": "backend/app/layer2_sensors/snapshot_builder.py", "reason": "extract: L2 snapshot 模式 | for: A2 ponytail 对照"}
+{"file": "backend/app/layer3_chains/snapshot_builder.py", "reason": "extract: L3 lineage 上游 | for: A1 wiring trace"}
+{"file": "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md", "reason": "extract: 语义断言 + 五字段 | for: A8"}
+{"file": ".trellis/tasks/06-24-round3-022-layer4-market/research/source-index.md", "reason": "extract: manifest 血缘 | for: A5 trace"}

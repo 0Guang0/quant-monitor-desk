@@ -1,0 +1,6 @@
+source_mode: staged_fixture_only
+source_fetch_ids:
+  - l4-staged-fetch-cna-001
+source_content_hashes:
+  - sha256:cna-market-2026-06-14
+market_id: CN_A

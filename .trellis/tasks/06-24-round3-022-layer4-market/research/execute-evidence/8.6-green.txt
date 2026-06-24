@@ -1,0 +1,4 @@
+# §8.6 GREEN — AC-022-5 no_future_data
+$ uv run pytest tests/test_layer4_market_structure.py::test_marketSnapshotRejectsFutureInput -q
+.                                                                        [100%]
+1 passed — exit 0 (PASS)

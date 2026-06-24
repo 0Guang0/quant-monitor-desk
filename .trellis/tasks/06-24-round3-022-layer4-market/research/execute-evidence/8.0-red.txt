@@ -1,0 +1,4 @@
+# §8.0 Boot RED — baseline before implementation
+$ uv run pytest tests/test_layer4_market_structure.py -q
+ERROR: collected 0 items / ModuleNotFoundError: No module named 'backend.app.layer4_markets.market_structure'
+exit code: 1 (FAIL)

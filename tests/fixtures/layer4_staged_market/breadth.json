@@ -1,0 +1,11 @@
+{
+  "market_id": "CN_A",
+  "trade_date": "2026-06-14",
+  "advancers": 2500,
+  "decliners": 1800,
+  "total_amount": 850000000000.0,
+  "breadth_label": "balanced",
+  "source": "staged_fixture",
+  "quality_flag": "ok",
+  "as_of_timestamp": "2026-06-14T07:00:00+00:00"
+}
