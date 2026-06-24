@@ -1,0 +1,2 @@
+GREEN: uv run pytest tests/test_fred_staged_semantics.py -q
+status: PASS

@@ -294,6 +294,7 @@ def _default_operation(data_domain: str) -> str:
         "security_list": "fetch_security_list",
         "market_bar_1d": "fetch_daily_bar",
         "macro_supplementary": "fetch_macro_series",
+        "macro_series": "fetch_macro_series",
     }
     return defaults.get(data_domain, "fetch_daily_bar")
 

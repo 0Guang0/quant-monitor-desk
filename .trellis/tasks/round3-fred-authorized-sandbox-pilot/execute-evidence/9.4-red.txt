@@ -1,0 +1,2 @@
+RED: uv run pytest tests/test_fred_sandbox_pilot.py -k FailAuth or Network or Schema or Validation -v
+status: FAIL (stub before GREEN)

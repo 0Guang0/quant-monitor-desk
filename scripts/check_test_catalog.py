@@ -29,6 +29,8 @@ ROUND3_GATE_MODULES = {
     "tests/test_production_live_pilot_policy.py",
     "tests/test_batch3_staged_downstream_gate.py",
     "tests/test_fred_staged_semantics.py",
+    "tests/test_fred_source_registry.py",
+    "tests/test_fred_sandbox_pilot.py",
 }
 
 # Curated entries for high-signal gate and module tests.
@@ -187,6 +189,37 @@ CURATED: dict[str, dict] = {
         },
         "command": "uv run python -m pytest tests/test_fred_staged_semantics.py -q",
         "failure_meaning": "FRED staged semantics drifted; macro supplementary may imply production-live.",
+        "evidence_required": "pytest output",
+    },
+    "tests/test_fred_source_registry.py": {
+        "purpose": "FRED sandbox/disabled-by-default registry guard (B01-FRED FRED-01)",
+        "type": "policy-contract",
+        "verifies": {
+            "docs": [],
+            "specs": [
+                "specs/datasource_registry/source_registry.yaml",
+                "specs/datasource_registry/source_capabilities.yaml",
+            ],
+            "rules": [
+                "docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/BATCH_01_MODEL_SOURCE_READINESS/BATCH_01_HARDENING_RULES.md",
+            ],
+        },
+        "command": "uv run python -m pytest tests/test_fred_source_registry.py -q",
+        "failure_meaning": "FRED registry row missing or production-live; unauthorized FRED routing risk.",
+        "evidence_required": "pytest output",
+    },
+    "tests/test_fred_sandbox_pilot.py": {
+        "purpose": "FRED-only sandbox pilot orchestration (B01-FRED FRED-02..07)",
+        "type": "runtime-contract",
+        "verifies": {
+            "docs": [
+                "docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/R3E_fred_authorized_sandbox_pilot.md",
+            ],
+            "specs": ["specs/contracts/datasource_service_contract.yaml"],
+            "rules": ["docs/quality/production_live_pilot_policy.md"],
+        },
+        "command": "uv run python -m pytest tests/test_fred_sandbox_pilot.py -q",
+        "failure_meaning": "FRED pilot route/fetch/health/closeout broken; B2.5-O-05 evidence gap.",
         "evidence_required": "pytest output",
     },
     "tests/test_production_live_pilot_policy.py": {

@@ -1,0 +1,2 @@
+GREEN: uv run pytest tests/test_fred_sandbox_pilot.py::test_fredMockFetch_writesManifestWithHashAndFetchId -v
+status: PASS

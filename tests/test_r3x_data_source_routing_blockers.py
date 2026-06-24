@@ -91,6 +91,7 @@ def test_defaultOperation_mapsEveryDomainRoleDomain() -> None:
         "global_asset_reference": "fetch_global_asset_reference",
         "security_list": "fetch_security_list",
         "macro_supplementary": "fetch_macro_series",
+        "macro_series": "fetch_macro_series",
     }
     missing = sorted(set(_domain_roles_keys()) - set(expected.keys()))
     assert missing == [], f"test table missing domain_roles keys: {missing}"

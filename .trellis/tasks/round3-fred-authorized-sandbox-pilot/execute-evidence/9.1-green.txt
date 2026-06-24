@@ -1,0 +1,2 @@
+GREEN: uv run pytest tests/test_fred_source_registry.py -q
+status: PASS

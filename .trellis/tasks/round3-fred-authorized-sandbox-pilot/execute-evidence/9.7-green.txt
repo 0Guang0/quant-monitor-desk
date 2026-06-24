@@ -1,0 +1,2 @@
+GREEN: uv run pytest tests/test_fred_sandbox_pilot.py -k LiveFetch -v (skip without FRED_API_KEY)
+status: PASS
