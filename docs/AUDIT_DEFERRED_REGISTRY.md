@@ -2,7 +2,7 @@
 
 **Single source of truth** for open issues, intentional deferrals, and resolved audit items.
 
-> Last reconciled: 2026-06-24 post-wave-B merge + Trellis archive (`master` @ `68b10982`). Pair: `docs/UNRESOLVED_ISSUES_REGISTRY.md`.
+> Last reconciled: 2026-06-24 post-wave-C merge + Trellis archive (`master` @ `871b76e2`). Pair: `docs/UNRESOLVED_ISSUES_REGISTRY.md`.
 
 **Batch 2.5 audit 待修复台账（含合理延期清理阶段）:** [`docs/quality/ROUND3_BATCH25_PENDING_FIX_REGISTRY.md`](quality/ROUND3_BATCH25_PENDING_FIX_REGISTRY.md)  
 **Wave B 待偿还台账:** [`docs/quality/ROUND3_WAVE_B_PENDING_FIX_REGISTRY.md`](quality/ROUND3_WAVE_B_PENDING_FIX_REGISTRY.md)  
@@ -180,18 +180,31 @@ Does **not** block staged-only mainline; PROMPT_19/β-1 **closed** 2026-06-24. R
 
 ## RESOLVED — Round 3 PROMPT_18 R3Y hygiene (2026-06-24)
 
+| ID                    | Item                                     | Evidence                                                                                                                                       |
+| --------------------- | ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| R3Y-STAGED-REG-001    | staged file_registry WriteManager bypass | merge `37142924` · `_register_staged_file_registry_rows` privatized · `tests/test_raw_store.py` · archived `fix-r3y-staged-registry-privatize` |
+| R3Y-PROMPT15-EVID-001 | PROMPT_15 execute evidence chain         | merge `871b76e2` · `closed_claim_evidence_index.yaml` · `tests/test_r3x_residual_open_items_closure.py` · archived `fix-r3y-prompt15-evidence` |
+
+## RESOLVED — Round 3 Wave C mainline (2026-06-24)
+
+| ID             | Item                     | Evidence                                                                                                                                      |
+| -------------- | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| R3-PROMPT20-DH | PROMPT_20 data health v1 | merge `5b19e9b1` · `backend/app/ops/data_health.py` · `tests/test_ops_data_health.py` · `.trellis/tasks/round3-readonly-data-health-v1/`      |
+| R3-TASK-022    | Layer4 market structure  | merge `18fd64a3` · `backend/app/layer4_markets/` · `tests/test_layer4_market_structure.py` · `.trellis/tasks/06-24-round3-022-layer4-market/` |
+
+## RESOLVED — Round 3 PROMPT_18 R3Y hygiene (2026-06-24) — sync bypass only
+
 | ID           | Item                        | Evidence                                                                                                                               |
 | ------------ | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | R3Y-SYNC-001 | Sync `adapter=` prod bypass | archived `fix-r3y-sync-adapter-guard` · `guard_production_adapter_bypass` + `guard_runner_direct_adapter_bypass` · `test_r3ySync001_*` |
 
 ## OPEN (hygiene) — Round 3 PROMPT_18 R3Y follow-ups
 
-Non-blocking for read-only audit; **blocks claiming PROMPT_15 fully proven** until α-3 closes.
+Non-blocking for read-only audit; **Wave C merge closed α-3 / β-2 rows** (2026-06-24).
 
-| ID                    | Item                                     | Resolution phase  | Task hook                           | Closure test / evidence                                         |
-| --------------------- | ---------------------------------------- | ----------------- | ----------------------------------- | --------------------------------------------------------------- |
-| R3Y-STAGED-REG-001    | staged file_registry WriteManager bypass | **β-2 after α-1** | `fix/r3y-staged-registry-privatize` | API privatized or WriteManager-routed; doc metadata-only policy |
-| R3Y-PROMPT15-EVID-001 | PROMPT_15 execute evidence chain         | **fix α-3**       | `fix/r3y-prompt15-evidence`         | `*-green.txt` + closed-claim matrix per AUD-01/07               |
+| ID                 | Item                            | Resolution phase    | Task hook    | Closure test / evidence                      |
+| ------------------ | ------------------------------- | ------------------- | ------------ | -------------------------------------------- |
+| R3Y-TEST-DEPTH-001 | closed-claim runtime-strong gap | **Batch 6 hygiene** | MAP §Batch 6 | per-ID runtime-strong pytest or wont-fix ADR |
 
 ---
 

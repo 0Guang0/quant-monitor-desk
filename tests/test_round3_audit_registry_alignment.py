@@ -362,14 +362,14 @@ def test_post14R2Risk3_failClosedModesDocumented() -> None:
         assert token in resolved
 
 
-_RECONCILED_TOKENS = ("2026-06-24", "wave-B", "68b10982", "post-wave-B", "Trellis archive")
+_RECONCILED_TOKENS = ("2026-06-24", "wave-C", "871b76e2", "post-wave-C", "Trellis archive")
 
 
 def test_r3yRegistrySlice_alpha2LastReconciled() -> None:
-    """覆盖范围：fix α-2 registry 切片后四份 SSOT 的对账戳一致性
+    """覆盖范围：Wave C 合并后四份 SSOT 的对账戳一致性
     测试对象：UNRESOLVED、RESOLVED、AUDIT_DEFERRED、UNRESOLVED_ITEM_TASK_COVERAGE
     目的/目标：Last reconciled 块含同一组 mandatory tokens，防止措辞漂移
-    验证点：四份文档均含 2026-06-24、wave-B、68b10982、post-wave-B、Trellis archive
+    验证点：四份文档均含 2026-06-24、wave-C、871b76e2、post-wave-C、Trellis archive
     失败含义：对账戳不一致，并行 slice 无法判断 registry 是否同一次 reconcile
     """
     coverage = PROJECT_ROOT / "docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md"
@@ -445,27 +445,66 @@ def test_waveBMainlineResolvedRows_traceableInRegistries() -> None:
         assert item_id in audit, f"{item_id} missing from AUDIT_DEFERRED wave-B section"
 
 
-def test_round3Map_checkpointReflectsPostWaveBMerge() -> None:
-    """覆盖范围：ROUND3 地图 checkpoint 是否反映 post-wave-B 合并与 Wave C 四路并行状态
+def test_waveCMainlineResolvedRows_traceableInRegistries() -> None:
+    """覆盖范围：wave-C 已合并主线项在 registry 的可追溯性
+    测试对象：RESOLVED、AUDIT_DEFERRED registries
+    目的/目标：PROMPT20-DH/022/STAGED-REG/PROMPT15-EVID 均可在两表查到
+    验证点：四个 wave_c_ids 每个同时出现在 resolved 与 audit
+    失败含义：wave-C 合并项未双登记，审计无法从 DEFERRED 表反查已闭合叙事
+    """
+    resolved = _read(RESOLVED)
+    audit = _read(AUDIT_DEFERRED)
+
+    wave_c_ids = (
+        "R3-PROMPT20-DH",
+        "R3-TASK-022",
+        "R3Y-STAGED-REG-001",
+        "R3Y-PROMPT15-EVID-001",
+    )
+    for item_id in wave_c_ids:
+        assert item_id in resolved, f"{item_id} missing from RESOLVED"
+        assert item_id in audit, f"{item_id} missing from AUDIT_DEFERRED wave-C section"
+
+
+def test_round3Map_checkpointReflectsPostWaveCMerge() -> None:
+    """覆盖范围：ROUND3 地图 checkpoint 是否反映 post-wave-C 合并与 Wave D 激活状态
     测试对象：ROUND3_BATCH_IMPLEMENTATION_MAP.md 头部与 §2
-    目的/目标：地图不得仍写 wave-B active；须标明 Wave C 四路 worktree 清单
-    验证点：含 68b10982、post-wave-B、PROMPT_20、021、Done、ROUND3_WAVE_B_PENDING_FIX_REGISTRY、four-way parallel、§2.2；不含 **Active:** §2.4 wave B
+    目的/目标：地图不得仍写 Wave C active；须标明 Wave D（023）为当前主线
+    验证点：含 871b76e2、post-wave-C、023、Wave D、Done、ROUND3_WAVE_B_PENDING_FIX_REGISTRY、§2.3；不含 Wave C **Active**
     失败含义：地图 checkpoint 陈旧，协调人会按错误 wave 状态排期
+    """
+    text = _read(ROUND3_MAP)
+
+    for token in (
+        "871b76e2",
+        "post-wave-C",
+        "023",
+        "Wave D",
+        "Done",
+        "ROUND3_WAVE_B_PENDING_FIX_REGISTRY",
+        "§2.3",
+    ):
+        assert token in text
+    assert "| **C** | **Active**" not in text
+    assert "**Active — Wave C" not in text
+
+
+def test_round3Map_checkpointReflectsPostWaveBMerge() -> None:
+    """覆盖范围：ROUND3 地图仍保留 wave-B 历史可追溯 token（向后兼容）
+    测试对象：ROUND3_BATCH_IMPLEMENTATION_MAP.md
+    目的/目标：post-wave-C 地图仍提及 wave-B / 021 等历史完成项
+    验证点：含 68b10982、post-wave-B、021、§2.4
+    失败含义：wave-B 完成记录被 wave-C 更新误删
     """
     text = _read(ROUND3_MAP)
 
     for token in (
         "68b10982",
         "post-wave-B",
-        "PROMPT_20",
         "021",
-        "Done",
-        "ROUND3_WAVE_B_PENDING_FIX_REGISTRY",
-        "four-way parallel",
-        "§2.2",
+        "§2.4",
     ):
         assert token in text
-    assert "**Active:** §2.4 wave B" not in text
 
 
 def test_round3Map_checkpointReflectsPost14AuditMerge() -> None:

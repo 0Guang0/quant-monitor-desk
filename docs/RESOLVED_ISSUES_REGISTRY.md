@@ -2,7 +2,16 @@
 
 > Purpose: one file for resolved/closed issues, gates, risks, and repairs.  
 > Pair: unresolved items live in `docs/UNRESOLVED_ISSUES_REGISTRY.md`.  
-> Last reconciled: 2026-06-24 post-wave-B merge + Trellis archive (`master` @ `68b10982`).
+> Last reconciled: 2026-06-24 post-wave-C merge + Trellis archive (`master` @ `871b76e2`).
+
+## Post-Wave C resolved (2026-06-24)
+
+| ID                    | Closed     | Item                                            | Evidence                                                                                                                                                                                  |
+| --------------------- | ---------- | ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R3-PROMPT20-DH        | 2026-06-24 | PROMPT_20 read-only data health v1 (C-20)       | merge `5b19e9b1` · `backend/app/ops/data_health.py` · `tests/test_ops_data_health.py` (23 tests) · `.trellis/tasks/round3-readonly-data-health-v1/` · Audit PASS_WITH_MERGE_GATE          |
+| R3-TASK-022           | 2026-06-24 | Layer4 market structure (`022`)                 | merge `18fd64a3` · `backend/app/layer4_markets/` · `tests/test_layer4_market_structure.py` (14 tests) · `.trellis/tasks/06-24-round3-022-layer4-market/` · Audit PASS                     |
+| R3Y-STAGED-REG-001    | 2026-06-24 | `register_staged_file_registry_rows` privatized | merge `37142924` · `backend/app/storage/staged_evidence.py` · `tests/test_raw_store.py` · archived `fix-r3y-staged-registry-privatize`                                                    |
+| R3Y-PROMPT15-EVID-001 | 2026-06-24 | PROMPT_15 closed-claim execute evidence mapping | merge `871b76e2` · `closed_claim_evidence_index.yaml` (73 claims → 9 green.txt) · `tests/test_r3x_residual_open_items_closure.py` · archived `fix-round3-r3x-residual-open-items-closure` |
 
 ## Post-Wave B resolved (2026-06-24)
 
