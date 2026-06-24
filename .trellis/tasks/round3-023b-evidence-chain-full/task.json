@@ -1,0 +1,24 @@
+{
+  "id": "round3-023b-evidence-chain-full",
+  "name": "round3-023b-evidence-chain-full",
+  "title": "B01-023: full Layer5 evidence chain (Wave D)",
+  "description": "Instrument registry, bars/events/financials/valuation models, evidence chain builder, R3-PARTIAL-4 ADR, optional storage port — staged-only; builds on 023A foundation.",
+  "status": "planning",
+  "dev_type": "feature",
+  "scope": "layer5_evidence",
+  "branch": "feature/round3-023b-evidence-chain-full",
+  "base_branch": "master",
+  "worktree_path": "../quant-monitor-desk-wt-023-layer5",
+  "meta": {
+    "task_track": "complex",
+    "manifest_protocol_version": "3",
+    "context_bridge_version": "1",
+    "playbook_id": "B01-023",
+    "merge_track": "Track B",
+    "predecessor_tasks": [
+      ".trellis/tasks/archive/2026-06/06-22-round3-023a-evidence-foundation",
+      ".trellis/tasks/archive/2026-06/06-24-round3-021-layer3-snapshot",
+      ".trellis/tasks/archive/2026-06/06-24-round3-022-layer4-market"
+    ]
+  }
+}

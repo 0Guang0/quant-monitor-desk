@@ -1,0 +1,29 @@
+{
+  "instrument_id": "L5-000001.SZ",
+  "evidence_id": "EV-023B-001",
+  "target_id": "L5-000001.SZ",
+  "target_type": "instrument",
+  "trade_date": "2026-06-15",
+  "evidence_summary": "close=12.34 volume=1.2e6 source=staged_fixture",
+  "created_by": "layer5_evidence_chain",
+  "layer3_context": "{\"anchor_id\":\"ANCHOR-CU\"}",
+  "layer4_context": "{\"market_id\":\"CN_A\"}",
+  "upstream_snapshot_ids": ["L3-SNAPSHOT-001", "L4-SNAPSHOT-001"],
+  "provenance": {
+    "source_fetch_ids": ["fetch-staged-001"],
+    "source_content_hashes": ["sha256:abc123"],
+    "source_dataset_ids": ["staged_fixture:security_bar_daily"]
+  },
+  "security_bar": {
+    "instrument_id": "L5-000001.SZ",
+    "trade_date": "2026-06-15",
+    "open": 12.0,
+    "high": 13.0,
+    "low": 11.5,
+    "close": 12.34,
+    "volume": 1200000.0,
+    "amount": 14800000.0,
+    "source": "staged_fixture",
+    "quality_flag": "STAGED"
+  }
+}

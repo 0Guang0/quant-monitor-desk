@@ -50,9 +50,4 @@ quality_rules:
 boundaries:
   no_trading_action_semantics: true
   no_agent_text_as_fact_source: true
-deferred_to_023b:
-  - security_bar_daily ingestion
-  - futures_bar_daily ingestion
-  - options_chain_snapshot ingestion
-  - event_registry ingestion
-  - evidence_chain_builder full pipeline
+deferred_to_023b: []

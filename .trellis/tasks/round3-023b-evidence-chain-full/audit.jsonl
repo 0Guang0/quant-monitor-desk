@@ -1,0 +1,9 @@
+{"file": ".trellis/tasks/round3-023b-evidence-chain-full/AUDIT.plan.md", "reason": "Audit single source of truth"}
+{"file": "specs/contracts/layer5_evidence_contract.yaml", "reason": "A1 contract authority"}
+{"file": "docs/modules/layer5_security_evidence.md", "reason": "A1 module doc"}
+{"file": "docs/implementation_tasks/ROUND_3_MODELING_LAYERS/023_implement_layer5_evidence_chain.md", "reason": "A5 AC trace"}
+{"file": "docs/modules/data_validation_and_conflict.md", "reason": "A4 conflict / manual review"}
+{"file": "backend/app/layer5_evidence/foundation.py", "reason": "A2 ponytail reuse baseline"}
+{"file": "tests/test_layer5_evidence_chain.py", "reason": "A8 test gap review"}
+{"file": "tests/test_layer5_evidence_foundation.py", "reason": "A8 023A regression"}
+{"file": "docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md", "reason": "A1 R3-PARTIAL-4 / R2-RISK-2"}

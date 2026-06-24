@@ -1,0 +1,62 @@
+{"file": ".trellis/tasks/round3-023b-evidence-chain-full/MASTER.plan.md", "reason": "extract: Execute single source of truth | for: Boot slot 1"}
+{"file": ".trellis/tasks/round3-023b-evidence-chain-full/context_pack.json", "reason": "extract: authority graph routing | for: Boot slot 2"}
+{"file": ".cursor/skills/trellis-execute/SKILL.md", "reason": "extract: Phase 0 boot protocol | for: §9.0 Boot"}
+{"file": ".cursor/rules/ponytail.mdc", "reason": "extract: lazy ladder YAGNI→reuse→min diff | for: §0.3a Execute 全程强制"}
+{"file": ".trellis/tasks/round3-023b-evidence-chain-full/research/integration-ledger.md", "reason": "extract: v3 boot routing map | for: §9.0 Boot / §0.4"}
+{"file": ".trellis/tasks/round3-023b-evidence-chain-full/research/vertical-slices.md", "reason": "extract: Phase 3.5 垂直切片 R3D-023-01..05 | for: §8 顺序"}
+{"file": "docs/quality/coordination/BATCH_01_MAIN_SESSION_COORDINATOR_PLAYBOOK.md", "reason": "extract: §0 Track B + §3.2 + §8.4 PASS | for: SCI / AC-023-6"}
+{"file": "docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/BATCH_01_MODEL_SOURCE_READINESS/BATCH_01_HARDENING_RULES.md", "reason": "extract: §1–§10 硬停 | for: §0 / §1.5"}
+{"file": "docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/BATCH_01_MODEL_SOURCE_READINESS/BATCH_01_TASK_CARD_MANIFEST.md", "reason": "extract: Wave D B01-023 行 | for: §0 merge track"}
+{"file": "docs/implementation_tasks/ROUND_3_MODELING_LAYERS/023_implement_layer5_evidence_chain.md", "reason": "extract: 任务卡 AC/§16/§17 | for: §2 AC-023-*"}
+{"file": "docs/implementation_tasks/ROUND_3_MODELING_LAYERS/023A_layer5_evidence_foundation.md", "reason": "extract: 023A 边界不得重复 | for: §3.2 / §4"}
+{"file": "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md", "reason": "extract: WriteManager/无 drive-by | for: §3.3"}
+{"file": "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md", "reason": "extract: RED-GREEN 语义断言 | for: §5 / §9"}
+{"file": "docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md", "reason": "extract: eco 默认 | for: §1.5 #5"}
+{"file": "docs/implementation_tasks/GLOBAL_TASK_TEMPLATE.md", "reason": "extract: 任务模板边界 | for: Boot 对照"}
+{"file": "docs/implementation_tasks/README.md", "reason": "extract: Round 入口 | for: §0"}
+{"file": "docs/modules/layer5_security_evidence.md", "reason": "extract: evidence_chain 表 + builder 规则 | for: AC-023-3"}
+{"file": "docs/modules/data_validation_and_conflict.md", "reason": "extract: manual_review_queue severe 语义 | for: AC-023-4"}
+{"file": "docs/modules/write_manager.md", "reason": "extract: clean 写必经 WriteManager | for: §3.2 defer"}
+{"file": "docs/architecture/03_runtime_flows.md", "reason": "extract: Layer5 运行链路 | for: §4"}
+{"file": "docs/architecture/04_data_architecture.md", "reason": "extract: 数据分层 | for: §3"}
+{"file": "docs/architecture/module_boundary_matrix.md", "reason": "extract: layer5_evidence 边界 | for: SCI-A"}
+{"file": "docs/quality/staged_acceptance_policy.md", "reason": "extract: backend 分层验收 | for: §10"}
+{"file": "docs/quality/BATCH3_STAGED_DOWNSTREAM_GATE.md", "reason": "extract: staged-only gate | for: §5.4 L3"}
+{"file": "docs/quality/production_live_pilot_policy.md", "reason": "extract: 不得 production-live | for: §0"}
+{"file": "docs/quality/final_package_rules.md", "reason": "extract: 禁止临时 round report | for: §7"}
+{"file": "docs/quality/ROUND3_TEST_DOCSTRING_HYGIENE_PLAN.md", "reason": "extract: 五字段 docstring | for: §5.0"}
+{"file": "specs/contracts/layer5_evidence_contract.yaml", "reason": "extract: models + deferred_to_023b | for: AC-023-1..3"}
+{"file": "specs/contracts/snapshot_lineage_contract.yaml", "reason": "extract: required_fields | for: AC-023-2,3"}
+{"file": "specs/contracts/runtime_versions.md", "reason": "extract: uv sync --locked | for: §10 Tier A"}
+{"file": "specs/contracts/write_contract.yaml", "reason": "extract: 写路径合约 | for: SCI-A"}
+{"file": "specs/contracts/resource_limits.yaml", "reason": "extract: ResourceGuard 上限 | for: §1.5"}
+{"file": "docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md", "reason": "extract: R3-PARTIAL-4 / R2-RISK-2 | for: AC-023-4,5"}
+{"file": "docs/AUDIT_DEFERRED_REGISTRY.md", "reason": "extract: defer ID 只读 | for: §3.2"}
+{"file": "PROJECT_IMPLEMENTATION_ROADMAP.md", "reason": "extract: Batch 3D.1 R3D-023-01..05 | for: §2 / §8"}
+{"file": "MIGRATION_MAP.md", "reason": "extract: layer5_evidence 目录映射 | for: SCI-A"}
+{"file": "ROUND3_BATCH_IMPLEMENTATION_MAP.md", "reason": "extract: §2.3 Serial 023 | for: §0 / §16"}
+{"file": ".trellis/spec/guides/round3-repair-debt-worktree-plan.md", "reason": "extract: 一分支一文件组 | for: SCI-A"}
+{"file": "backend/app/layer5_evidence/foundation.py", "reason": "extract: 023A validator 复用 | for: §9.3 / AC-023-3"}
+{"file": "backend/app/layer5_evidence/models.py", "reason": "extract: foundation 类型扩展点 | for: §9.1–9.2 / AC-023-1,2"}
+{"file": "backend/app/layer5_evidence/lineage.py", "reason": "extract: Layer5LineageBuilder | for: §9.3 / AC-023-3"}
+{"file": "backend/app/layer3_chains/snapshot_builder.py", "reason": "extract: upstream L3 snapshot 模式 | for: §9.3 / AC-023-3"}
+{"file": "backend/app/layer4_markets/market_structure.py", "reason": "extract: upstream L4 snapshot 模式 | for: §9.3 / AC-023-3"}
+{"file": "backend/app/core/snapshot_lineage.py", "reason": "extract: LINEAGE_REQUIRED_FIELDS kernel | for: §9.3 / AC-023-3"}
+{"file": ".trellis/tasks/round3-023b-evidence-chain-full/research/worktree-slices.md", "reason": "extract: allowed/forbidden 文件 | for: §3.3"}
+{"file": ".trellis/tasks/archive/2026-06/06-22-round3-023a-evidence-foundation/MASTER.plan.md", "reason": "extract: 023A merge 前置 + 边界 | for: §1.2"}
+{"file": "tests/test_layer5_evidence_foundation.py", "reason": "extract: 023A 回归基线 | for: §9.6 / §5.1"}
+{"file": "tests/test_batch3_staged_downstream_gate.py", "reason": "extract: staged gate 回归 | for: §5.4 L3"}
+{"file": "tests/test_layer3_snapshot_builder.py", "reason": "extract: L3 回归不破坏 | for: §16 gate"}
+{"file": "tests/test_layer4_market_structure.py", "reason": "extract: L4 回归不破坏 | for: §16 gate"}
+{"file": "tests/test_layer5_evidence_chain.py", "reason": "extract: §5.1 测试契约目标 | for: §9 RED/GREEN（Execute 填测试体）"}
+{"file": "docs/adr/ADR-023-layer5-conflict-review-path.md", "reason": "extract: R3-PARTIAL-4 决策 | for: §9.4 SLICE-CONFLICT"}
+{"file": "agent-toolchain.md", "reason": "extract: Boot 工具路由 SSOT | for: §0.3 Execute Boot"}
+{"file": ".trellis/spec/guides/complex-task-planning-protocol.md", "reason": "extract: Plan/Execute 门控协议 | for: SCI-A"}
+{"file": "docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/README.md", "reason": "extract: Round 3 父入口 | for: SCI-A"}
+{"file": "docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/BATCH_01_MODEL_SOURCE_READINESS/README.md", "reason": "extract: Batch 01 协调包入口 | for: SCI-A"}
+{"file": "docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/BATCH_01_MODEL_SOURCE_READINESS/BATCH_01_ADVERSARIAL_AUDIT.md", "reason": "extract: 对抗性审计来源 | for: SCI-C"}
+{"file": "docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/FIRST_BATCH_SELF_CHECK.md", "reason": "extract: 首包自检清单 | for: SCI-A"}
+{"file": "docs/RESOLVED_ISSUES_REGISTRY.md", "reason": "extract: 已闭合项只读 | for: SCI-A"}
+{"file": "docs/ROUND3_HANDOFF.md", "reason": "extract: Round 交接上下文 | for: SCI-A"}
+{"file": "docs/ops/verification_commands.md", "reason": "extract: Round 3 gate hygiene 命令 | for: §10 Tier B"}
+{"file": "specs/context/authority_graph.yaml", "reason": "extract: layer5_evidence 模块路由 | for: §3.9 authority 核对"}

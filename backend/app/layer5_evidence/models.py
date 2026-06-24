@@ -26,6 +26,56 @@ class ManualReviewState(StrEnum):
 
 
 @dataclass(frozen=True)
+class SecurityBarDaily:
+    """Staged security_bar_daily row per layer5_evidence_contract.yaml."""
+
+    instrument_id: str
+    trade_date: date
+    open: float
+    high: float
+    low: float
+    close: float
+    volume: float
+    amount: float
+    source: str
+    quality_flag: str
+    adjust_type: str = "none"
+
+
+@dataclass(frozen=True)
+class LayerContextBundle:
+    """Upstream layer context slots for evidence_chain builder."""
+
+    layer3_context: str
+    layer4_context: str
+    upstream_snapshot_ids: tuple[str, ...]
+    layer1_context: str = ""
+    layer2_context: str = ""
+    layer5_context: str = ""
+
+
+@dataclass(frozen=True)
+class EvidenceChainRecord:
+    """Staged evidence_chain row; not a DB persistence type."""
+
+    evidence_id: str
+    target_id: str
+    target_type: str
+    trade_date: date
+    layer1_context: str
+    layer2_context: str
+    layer3_context: str
+    layer4_context: str
+    layer5_context: str
+    evidence_summary: str
+    confidence: float
+    need_human_review: bool
+    manual_review_state: ManualReviewState
+    created_by: str
+    upstream_snapshot_ids: tuple[str, ...]
+
+
+@dataclass(frozen=True)
 class InstrumentEvidenceRef:
     """Minimal instrument identity reference for Layer2-4 downstream use."""
 
