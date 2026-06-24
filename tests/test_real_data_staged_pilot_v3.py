@@ -237,8 +237,59 @@ def test_v3_closeout_readiness_matrix(tmp_path: Path) -> None:
     assert closeout["production_live_readiness_claim"] is False
     assert closeout["model_driven"] is True
     assert closeout["whitelist_ref"]["aggregate_sha256"]
+    assert closeout["mutation_proof_status"] == mutation_proof["proof_status"]
+    assert closeout["db_hash_unchanged"] == mutation_proof["db_hash_unchanged"]
+    assert closeout["row_counts_unchanged"] == mutation_proof["row_counts_unchanged"]
+    assert closeout["closeout_pass"] is False
+    assert closeout["mutation_proof_reason"] == "production_db_file_missing"
     assert set(closeout["per_source"]) == {"baostock", "cninfo", "akshare"}
     assert (tmp_path / CLOSEOUT_V3_JSON).is_file()
     assert (tmp_path / SOURCE_READINESS_MATRIX_V3_MD).is_file()
     assert (tmp_path / REGISTRY_PROPOSED_DELTA_V3_YAML).is_file()
     assert (tmp_path / AKSHARE_TAXONOMY_V3_JSON).is_file()
+
+
+def test_v3_noMutationProof_failClosedWhenDbMissing(tmp_path: Path) -> None:
+    """
+    覆盖范围：生产库缺失时 v3 no-mutation proof fail-closed。
+    测试对象：write_no_mutation_proof_v3。
+    目的/目标：镜像 v2 — DB 不存在时不得空 pass。
+    验证点：proof_status=INCONCLUSIVE；reason=production_db_file_missing。
+    失败含义：v3 closeout 可误报 mutation 已验证。
+    """
+    from backend.app.ops.staged_pilot import NO_MUTATION_V3_MD, write_no_mutation_proof_v3
+
+    missing = tmp_path / "missing-production.duckdb"
+    proof = write_no_mutation_proof_v3(evidence_dir=tmp_path, db_path=missing)
+    assert proof["proof_status"] == "INCONCLUSIVE"
+    assert proof["db_hash_unchanged"] is None
+    assert proof["row_counts_unchanged"] is None
+    assert proof["reason"] == "production_db_file_missing"
+    assert (tmp_path / NO_MUTATION_V3_MD).is_file()
+
+
+def test_v3_refuses_missing_single_whitelist_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """
+    覆盖范围：五 YAML 缺一仍 fail-closed。
+    测试对象：assert_model_inputs_whitelist_present。
+    目的/目标：目录存在但单文件缺失时拒绝 v3。
+    验证点：缺 layer1_source_whitelist.yaml 抛错。
+    失败含义：部分 WL 仍可跑 pilot。
+    """
+    from backend.app.ops import staged_pilot
+    from backend.app.ops.staged_pilot import (
+        StagedPilotAuthorizationError,
+        WHITELIST_YAML_NAMES,
+        assert_model_inputs_whitelist_present,
+    )
+
+    partial = tmp_path / "partial_wl"
+    partial.mkdir()
+    for name in WHITELIST_YAML_NAMES[1:]:
+        (partial / name).write_text("sources: []\n", encoding="utf-8")
+    monkeypatch.setattr(staged_pilot, "MODEL_INPUTS_DIR", partial)
+
+    with pytest.raises(StagedPilotAuthorizationError, match="layer1_source_whitelist"):
+        assert_model_inputs_whitelist_present()

@@ -2,17 +2,24 @@
 
 Per-step RED/GREEN and slice artifacts live at task-root `execute-evidence/` (MASTER §0 `EVIDENCE_ROOT`).
 
-| Step | Evidence |
-| ---- | -------- |
-| §9.0 Boot | `9.0-red.txt` / `9.0-green.txt` / `9.0-wl-gate.txt` |
-| §9.1 SP3-01 | `9.1-red.txt` / `9.1-green.txt` + `pilot_v3_caps.json` + `whitelist_ref.json` |
-| §9.2 SP3-02 | `9.2-red.txt` / `9.2-green.txt` |
-| §9.3 SP3-03 | `9.3-red.txt` / `9.3-green.txt` |
-| §9.4 SP3-04 | `9.4-red.txt` / `9.4-green.txt` + `akshare_validation_taxonomy_v3.json` |
-| §9.5 SP3-05 | `9.5-red.txt` / `9.5-green.txt` + `conflict_check_summary_v3.json` |
-| §9.6 SP3-06 | `9.6-red.txt` / `9.6-green.txt` + `pilot_v3_closeout.json` + `source_readiness_matrix_v3.md` + `no_mutation_proof_v3.md` |
-| §9.7 SP3-07 | `9.7-green.txt` (Tier A/B/C merge gate) |
+## Tier gate
 
-Supporting artifacts: `live_authorization_2026-06-24.yaml`, `registry_proposed_delta_v3.yaml`.
+| Step | Evidence | 状态 |
+| ---- | -------- | ---- |
+| §9.7 SP3-07 | `9.7-green.txt` | 全库 `uv run pytest -q` exit 0 |
+| §9.0–§9.6 | 逐步 `*-red.txt`/`*-green.txt` | **未落盘** — Execute 以 v3 专测 + 切片 JSON 闭环；Audit Repair 补全切片产物 |
 
-Tier B: `9.7-green.txt` — full `uv run pytest -q` exit 0 at commit `f3163bf5`.
+## 切片工件（execute-evidence/）
+
+| 切片 | 文件 |
+| ---- | ---- |
+| SP3-01 | `pilot_v3_caps.json`, `whitelist_ref.json` |
+| SP3-02 | `raw_evidence_manifest_v3_baostock.json` |
+| SP3-03 | `cninfo_schema_notes_v3.md` |
+| SP3-04 | `akshare_validation_taxonomy_v3.json` |
+| SP3-05 | `conflict_check_summary_v3.json` |
+| SP3-06 | `pilot_v3_closeout.json`, `source_readiness_matrix_v3.md`, `no_mutation_proof_v3.md`, `registry_proposed_delta_v3.yaml` |
+
+Supporting: `live_authorization_2026-06-24.yaml`（hardening §3 字段齐；runtime gate 仍为 prompt14 markdown）。
+
+Tier B: `9.7-green.txt` — full `uv run pytest -q` exit 0 at Audit Repair commit.

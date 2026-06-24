@@ -1,9 +1,21 @@
 # B01-SP3 live fetch authorization (user approved 2026-06-24)
-pilot_id: r3e-staged-pilot-v3-20260625
-authorized_on: "2026-06-24"
+authorization_present: true
 authorized_by: user
+authorized_at: "2026-06-24T00:00:00Z"
+pilot_id: r3e-staged-pilot-v3-20260625
 scope: staged_only
+source_id: baostock
+domain: cn_equity_daily_bar
+operation: fetch_daily_bar
+symbols_or_series:
+  - sh.600000
+  - sz.000001
+window: recent 60 trading days
+max_rows: 2000
+max_calls: 50
+write_target: sandbox
+allow_production_clean_write: false
 production_clean_write: false
 max_network_calls_per_run: 50
 skip_live_fetch_default: true
-notes: Execute may set skip_live_fetch=false only with this file present.
+notes: Execute may set skip_live_fetch=false only with this file present; runtime gate remains prompt14 markdown.

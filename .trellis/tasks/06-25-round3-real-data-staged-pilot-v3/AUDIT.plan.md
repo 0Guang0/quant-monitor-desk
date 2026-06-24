@@ -15,15 +15,15 @@
 
 | 维 | Agent | Skill | 本任务 | 已执行 |
 | --- | ----- | ----- | ------ | ------ |
-| A1 | audit-spec | trellis-check + doubt-driven-development | 必做 | [ ] |
-| A2 | audit-ponytail | ponytail-review + doubt-driven-development | 必做 | [ ] |
-| A3 | audit-security | security-and-hardening + doubt-driven-development | 必做 | [ ] |
-| A4 | audit-quality | code-review-and-quality + doubt-driven-development | 必做 | [ ] |
-| A5 | audit-completion | verification-before-completion + doubt-driven-development | 必做 | [ ] |
-| A6 | audit-perf | doubt-driven-development | **不用** | [ ] |
-| A7 | audit-ops | doubt-driven-development | 必做 | [ ] |
-| A8 | audit-test-gap | testing-guidelines + doubt-driven-development | 必做 | [ ] |
-| A9 | 主会话 | — | 必做 | [ ] |
+| A1 | audit-spec | trellis-check + doubt-driven-development | 必做 | [x] |
+| A2 | audit-ponytail | ponytail-review + doubt-driven-development | 必做 | [x] |
+| A3 | audit-security | security-and-hardening + doubt-driven-development | 必做 | [x] |
+| A4 | audit-quality | code-review-and-quality + doubt-driven-development | 必做 | [x] |
+| A5 | audit-completion | verification-before-completion + doubt-driven-development | 必做 | [x] |
+| A6 | audit-perf | doubt-driven-development | **不用** | [x] |
+| A7 | audit-ops | doubt-driven-development | 必做 | [x] |
+| A8 | audit-test-gap | testing-guidelines + doubt-driven-development | 必做 | [x] |
+| A9 | 主会话 | — | 必做 | [x] |
 
 ## 2. 维度验证矩阵
 
@@ -60,6 +60,6 @@
 
 ## 4. Audit DoD
 
-- [ ] 7.pre `gitnexus-audit-summary.md`
-- [ ] A1–A8（A6 SKIP）
-- [ ] A9 汇总 PASS / FAIL
+- [x] 7.pre `gitnexus-audit-summary.md`
+- [x] A1–A8（A6 SKIP）
+- [x] A9 汇总 PASS / FAIL

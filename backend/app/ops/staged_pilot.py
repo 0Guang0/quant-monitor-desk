@@ -2300,17 +2300,40 @@ def _v3_row_caps_for_source(source_id: str) -> dict[str, int]:
     raise StagedPilotAuthorizationError(f"unsupported v3 source_id: {source_id!r}")
 
 
+def _v3_symbols_for_domain_operation(
+    source_id: str,
+    *,
+    data_domain: str,
+    operation: str,
+    max_symbols: int,
+) -> tuple[str, ...]:
+    symbols: list[str] = []
+    for row in load_pilot_v3_whitelist_scope().get(source_id, []):
+        if row.get("data_domain") != data_domain:
+            continue
+        if row.get("operation") != operation:
+            continue
+        for symbol in _whitelist_symbol_list(row):
+            if symbol not in symbols:
+                symbols.append(symbol)
+    if not symbols:
+        raise StagedPilotAuthorizationError(
+            f"no {source_id} whitelist rows for {data_domain}/{operation}"
+        )
+    return tuple(symbols[:max_symbols])
+
+
 def _allowed_symbols_for_v3_request(request: StagedPilotRequest) -> frozenset[str]:
     if request.source_id == "akshare":
         return frozenset(pilot_v3_akshare_symbols())
-    allowed: set[str] = set()
-    for row in load_pilot_v3_whitelist_scope().get(request.source_id, []):
-        if row.get("data_domain") != request.data_domain:
-            continue
-        if row.get("operation") != request.operation:
-            continue
-        allowed.update(_whitelist_symbol_list(row))
-    return frozenset(allowed)
+    return frozenset(
+        _v3_symbols_for_domain_operation(
+            request.source_id,
+            data_domain=str(request.data_domain),
+            operation=request.operation,
+            max_symbols=_v3_row_caps_for_source(request.source_id)["max_symbols"],
+        )
+    )
 
 
 def pilot_v3_caps_payload() -> dict[str, Any]:
@@ -2435,7 +2458,6 @@ def validate_pilot_v3_authorization(request: StagedPilotRequest) -> None:
 def approved_pilot_v3_requests() -> tuple[StagedPilotRequest, ...]:
     auth = "docs/quality/prompt14_user_authorization_2026-06-22.md"
     baostock_symbols = pilot_v3_baostock_symbols()
-    cninfo_symbols = pilot_v3_cninfo_symbols()
     akshare_symbols = pilot_v3_akshare_symbols()
     return (
         StagedPilotRequest(
@@ -2460,7 +2482,12 @@ def approved_pilot_v3_requests() -> tuple[StagedPilotRequest, ...]:
             source_id="cninfo",
             data_domain="cn_announcements",
             operation="fetch_announcement_index",
-            symbols_or_indicators=cninfo_symbols,
+            symbols_or_indicators=_v3_symbols_for_domain_operation(
+                "cninfo",
+                data_domain="cn_announcements",
+                operation="fetch_announcement_index",
+                max_symbols=MAX_SYMBOLS_CNINFO_V3,
+            ),
             date_window="recent 60 calendar days",
             max_rows=min(50, MAX_ROWS_CNINFO_V3),
             authorization_evidence=auth,
@@ -2676,7 +2703,6 @@ def capture_akshare_validation_taxonomy_v3(
 def capture_conflict_summary_v3(
     *,
     evidence_dir: Path,
-    validation_report: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Conflict dry-run summary v3 — no clean write (R3E-SP3-05)."""
     from backend.app.validators.source_conflict import (
@@ -2696,16 +2722,17 @@ def capture_conflict_summary_v3(
         comparable_fields=("close",),
         tolerance_rule_set_id="staged_pilot_v3",
     )
+    sample_symbol = pilot_v3_baostock_symbols()[0]
     rows = [
         {
             "source_id": "baostock",
-            "symbol": "sh.600000",
+            "symbol": sample_symbol,
             "trade_date": "2026-06-01",
             "close": 10.0,
         },
         {
             "source_id": "akshare",
-            "symbol": "sh.600000",
+            "symbol": sample_symbol,
             "trade_date": "2026-06-01",
             "close": 10.5,
         },
@@ -2879,6 +2906,9 @@ def build_pilot_v3_closeout(
         "run_mode": "staged_only",
         "model_driven": True,
     }
+    reason = mutation_proof.get("reason")
+    if reason:
+        payload["mutation_proof_reason"] = reason
     (evidence_dir / CLOSEOUT_V3_JSON).write_text(
         json.dumps(payload, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
