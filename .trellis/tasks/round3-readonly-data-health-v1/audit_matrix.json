@@ -1,0 +1,198 @@
+{
+  "task": "round3-readonly-data-health-v1",
+  "wave": "C-20",
+  "repair_agent": "trellis-implement",
+  "repair_date": "2026-06-24",
+  "dimensions": {
+    "A1": {
+      "result": "pass",
+      "evidence": "research/audit-evidence/a1.md",
+      "agent": "audit-a1-spec"
+    },
+    "A2": {
+      "result": "pass",
+      "evidence": "research/audit-evidence/a2.md",
+      "agent": "audit-a2-ponytail"
+    },
+    "A3": {
+      "result": "pass",
+      "evidence": "research/audit-evidence/a3.md",
+      "agent": "security-auditor"
+    },
+    "A4": {
+      "result": "pass",
+      "evidence": "research/audit-evidence/a4.md",
+      "agent": "code-reviewer"
+    },
+    "A5": {
+      "result": "pass",
+      "evidence": "research/audit-evidence/a5.md",
+      "agent": "audit-a5-completion"
+    },
+    "A6": {
+      "result": "skip",
+      "evidence": "research/audit-evidence/a6.md",
+      "agent": "performance-engineer"
+    },
+    "A7": {
+      "result": "pass",
+      "evidence": "research/audit-evidence/a7.md",
+      "agent": "database-administrator"
+    },
+    "A8": {
+      "result": "pass",
+      "evidence": "research/audit-evidence/a8.md",
+      "agent": "qa-expert"
+    }
+  },
+  "findings": [
+    {
+      "id": "A1-01",
+      "severity": "BLOCKING",
+      "status": "CLOSED",
+      "closure": "_checks_from_bundle 接线 check_daily_bars/check_metadata_rows；读 manifest raw 路径"
+    },
+    {
+      "id": "A4-01",
+      "severity": "BLOCKING",
+      "status": "CLOSED",
+      "closure": "check_lineage_entry v2 回退 source_id/default_as_of；集成测禁止假 FAIL"
+    },
+    {
+      "id": "A5-B01",
+      "severity": "BLOCKING",
+      "status": "CLOSED",
+      "closure": "loop_maintain.py --fix 登记 tests/test_ops_data_health.py"
+    },
+    {
+      "id": "A5-B02",
+      "severity": "BLOCKING",
+      "status": "CLOSED",
+      "closure": "validate-plan-freeze exit 0；implement.jsonl 含 data_health*.py"
+    },
+    {
+      "id": "A5-B03",
+      "severity": "BLOCKING",
+      "status": "CLOSED",
+      "closure": "同 A1-01"
+    },
+    {
+      "id": "A3-P2-01",
+      "severity": "NON-BLOCKING",
+      "status": "CLOSED",
+      "closure": "SourceNotFoundError fail-closed；test_dataHealthLineage_unknownSource_fails"
+    },
+    {
+      "id": "A3-P2-02",
+      "severity": "NON-BLOCKING",
+      "status": "CLOSED",
+      "closure": "evidence_dir_within_project + CLI exit 2"
+    },
+    {
+      "id": "A2-OOB-01",
+      "severity": "NON-BLOCKING",
+      "status": "CLOSED",
+      "closure": "删除 default_v2_evidence_dir 与 _DEFAULT_V2_EVIDENCE"
+    },
+    {
+      "id": "A2-OOB-02",
+      "severity": "NON-BLOCKING",
+      "status": "CLOSED",
+      "closure": "CLI 测试复用 tests/fixtures/data_health/good_bundle"
+    },
+    {
+      "id": "A2-OOB-03",
+      "severity": "NON-BLOCKING",
+      "status": "CLOSED",
+      "closure": "fetches 优先单循环；内联 payload 加载"
+    },
+    {
+      "id": "A4-02",
+      "severity": "NON-BLOCKING",
+      "status": "CLOSED",
+      "closure": "STALE_DATA 改为 WARN；test_dataHealthStaleness_staleData_warns"
+    },
+    {
+      "id": "A8-NB-01",
+      "severity": "NON-BLOCKING",
+      "status": "CLOSED",
+      "closure": "CLI 坏 evidence/越界 exit 2 测"
+    },
+    {
+      "id": "A8-NB-03",
+      "severity": "NON-BLOCKING",
+      "status": "CLOSED",
+      "closure": "v2 集成断言 PASS/WARN + 日 K 规则曾运行"
+    },
+    {
+      "id": "A1-06",
+      "severity": "NON-BLOCKING",
+      "status": "CLOSED",
+      "closure": "test_dataHealthIntegration_badBarBundle_fails"
+    },
+    {
+      "id": "A1-02",
+      "severity": "NON-BLOCKING",
+      "status": "DEFERRED",
+      "owner": "Batch6",
+      "phase": "data_health_cli --domain DuckDB",
+      "closure_test": "委托 DataQualityValidator.validate_rows 集成测（未建）"
+    },
+    {
+      "id": "A1-03",
+      "severity": "NON-BLOCKING",
+      "status": "DEFERRED",
+      "owner": "Batch6",
+      "phase": "R3Y-DH-04 扩展",
+      "closure_test": "metadata date/source/vendor 字段测（v1 冻结 title 子集）"
+    },
+    {
+      "id": "A1-05",
+      "severity": "NON-BLOCKING",
+      "status": "DEFERRED",
+      "owner": "merge-coordinator",
+      "phase": "post-merge",
+      "closure_test": "gitnexus analyze 后 context(DataHealthService) 命中"
+    },
+    {
+      "id": "A1-07",
+      "severity": "NON-BLOCKING",
+      "status": "DEFERRED",
+      "owner": "Batch6",
+      "phase": "rule_id 对齐",
+      "closure_test": "INVALID_OHLC ↔ INVALID_PRICE_RANGE 映射文档测"
+    },
+    {
+      "id": "A5-B04",
+      "severity": "BLOCKING",
+      "status": "OPEN",
+      "owner": "main-session",
+      "phase": "pre-merge commit",
+      "closure_test": "git log 含 data_health 实现 SHA"
+    },
+    {
+      "id": "A5-NB01",
+      "severity": "NON-BLOCKING",
+      "status": "DEFERRED",
+      "owner": "main-session",
+      "phase": "evidence hygiene",
+      "closure_test": "execute-evidence/*-green.txt 含完整 pytest session"
+    },
+    {
+      "id": "A6-SKIP",
+      "severity": "INFO",
+      "status": "CLOSED",
+      "closure": "记入 audit_matrix；AUDIT.plan A6 SKIP 维持"
+    }
+  ],
+  "orthogonal_checks": {
+    "spec_scope": "pass",
+    "security": "pass",
+    "test_gap": "pass",
+    "prod_hash": "n/a"
+  },
+  "open_blocking_count": 1,
+  "open_non_blocking_count": 0,
+  "deferred_count": 5,
+  "final": "PASS_WITH_MERGE_GATE"
+}

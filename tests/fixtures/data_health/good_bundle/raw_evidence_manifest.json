@@ -1,0 +1,14 @@
+{
+  "data_domain": "cn_equity_daily_bar",
+  "source_id": "baostock",
+  "generated_at": "2026-06-23T18:11:44Z",
+  "manifest_entries": [
+    {
+      "source_used": "baostock",
+      "source_fetch_id": "fetch-1",
+      "content_hash": "hash-1",
+      "as_of_timestamp": "2026-06-23T18:11:44Z",
+      "relative_paths": ["bars.json"]
+    }
+  ]
+}

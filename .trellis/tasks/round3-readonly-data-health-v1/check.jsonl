@@ -1,0 +1,7 @@
+{"file": ".trellis/tasks/round3-readonly-data-health-v1/AUDIT.plan.md", "reason": "A1 spec compliance anchor"}
+{"file": "docs/implementation_tasks/ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3Y_readonly_data_health_v1.md", "reason": "task card AC"}
+{"file": "specs/contracts/data_quality_rules.yaml", "reason": "rule contract"}
+{"file": "specs/contracts/write_contract.yaml", "reason": "no-write boundary"}
+{"file": "WAVE_C_MAIN_SESSION_COORDINATOR_PLAYBOOK.md", "reason": "Wave C PASS criteria"}
+{"file": "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md", "reason": "execution boundary"}
+{"file": "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md", "reason": "semantic test policy"}

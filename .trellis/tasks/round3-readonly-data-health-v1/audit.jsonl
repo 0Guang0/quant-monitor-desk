@@ -1,0 +1,10 @@
+{"file": ".trellis/tasks/round3-readonly-data-health-v1/AUDIT.plan.md", "reason": "Audit single source of truth"}
+{"file": "docs/implementation_tasks/ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3Y_readonly_data_health_v1.md", "reason": "extract: AC trace | for: A5"}
+{"file": "WAVE_C_MAIN_SESSION_COORDINATOR_PLAYBOOK.md", "reason": "extract: §8.1 PASS | for: A5"}
+{"file": "specs/contracts/data_quality_rules.yaml", "reason": "extract: rule_id | for: A1"}
+{"file": "docs/ops/data_health_cli.md", "reason": "extract: report schema | for: A1"}
+{"file": ".trellis/tasks/round3-readonly-data-health-v1/MASTER.plan.md", "reason": "extract: §4 代码地图 data_health.py | for: A2/A4 Execute 后对照"}
+{"file": "tests/test_ops_data_health.py", "reason": "extract: test coverage | for: A8"}
+{"file": ".trellis/tasks/round3-readonly-data-health-v1/MASTER.plan.md", "reason": "extract: §2 AC | for: A5"}
+{"file": "ROUND3_BATCH_IMPLEMENTATION_MAP.md", "reason": "extract: forbidden boundary | for: A3"}
+{"file": "docs/quality/production_live_pilot_policy.md", "reason": "extract: no live claim | for: A1"}
