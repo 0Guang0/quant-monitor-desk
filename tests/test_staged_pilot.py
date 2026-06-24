@@ -12,9 +12,6 @@ from tests.contract_gate_support import PROJECT_ROOT
 
 AUTH_PATH = "docs/quality/prompt14_user_authorization_2026-06-22.md"
 SANDBOX_ROOT = PROJECT_ROOT / ".audit-sandbox/r3x-staged-pilot-test"
-TASK_EVIDENCE = (
-    PROJECT_ROOT / ".trellis/tasks/feature-round3-real-data-staged-pilot/execute-evidence"
-)
 
 
 def _approved_baostock_request():
@@ -389,9 +386,6 @@ def test_stagedPilot_cninfoFetchPayloadAttributesVendorApi() -> None:
     验证点：body['source']=='cninfo'；vendor_api=='stock_zh_a_disclosure_report_cninfo'
     失败含义：cninfo metadata 源归因或 vendor_api 不可追溯
     """
-    import json
-    from datetime import UTC, datetime
-
     from backend.app.datasources.adapters.fetch_port import FetchPayload
     from backend.app.datasources.fetch_result import FetchRequest
     from backend.app.ops.staged_pilot_fetch_ports import CninfoMetadataStagedFetchPort
@@ -501,7 +495,6 @@ def test_stagedPilot_sandboxValidationReport_canWriteCleanFalse(tmp_path: Path) 
     from backend.app.db.migrate import apply_migrations
     from backend.app.ops.staged_pilot import (
         STAGED_RAW_VALIDATION_REPORT_ID,
-        StagedPilotRequest,
         _ensure_raw_validation_report,
     )
 
@@ -657,10 +650,18 @@ def test_stagedPilot_evidencePathsPreferProjectRelative(tmp_path: Path) -> None:
 
 # --- PROMPT_19 staged pilot v2 (R3Y-SP2-01..09) --------------------------------
 
-TASK_EVIDENCE_V2 = (
-    PROJECT_ROOT
-    / ".trellis/tasks/06-24-round3-real-data-staged-pilot-v2/execute-evidence"
-)
+
+def _fresh_migrated_db(tmp_path: Path, name: str) -> Path:
+    """ponytail: shared DuckDB migrate setup for mutation_proof tests."""
+    import duckdb
+
+    from backend.app.db.migrate import apply_migrations
+
+    db_path = tmp_path / name
+    con = duckdb.connect(str(db_path))
+    apply_migrations(con)
+    con.close()
+    return db_path
 
 
 def _approved_baostock_v2_request():
@@ -1076,15 +1077,9 @@ def test_mutationProof_verifiedOnlyWhenHashAndCountsUnchanged(tmp_path: Path) ->
     验证点：稳定 DB 快照返回 proof_status=VERIFIED 且两布尔均为 True。
     失败含义：假 VERIFIED（AUD-04）回归，closeout 可能误标 pass。
     """
-    import duckdb
-
-    from backend.app.db.migrate import apply_migrations
     from backend.app.ops.mutation_proof import build_production_mutation_proof
 
-    db_path = tmp_path / "stable.duckdb"
-    con = duckdb.connect(str(db_path))
-    apply_migrations(con)
-    con.close()
+    db_path = _fresh_migrated_db(tmp_path, "stable.duckdb")
     before_bytes = db_path.read_bytes()
     before_counts = build_production_mutation_proof(db_path)["before_key_table_counts"]
     before_all = build_production_mutation_proof(db_path)["before_all_table_counts"]
@@ -1112,17 +1107,13 @@ def test_mutationProof_mutationDetectedWhenKeyTableRowsChange(tmp_path: Path) ->
     """
     import duckdb
 
-    from backend.app.db.migrate import apply_migrations
     from backend.app.ops.mutation_proof import (
         all_table_row_counts,
         build_production_mutation_proof,
         key_table_row_counts,
     )
 
-    db_path = tmp_path / "mutated-key.duckdb"
-    con = duckdb.connect(str(db_path))
-    apply_migrations(con)
-    con.close()
+    db_path = _fresh_migrated_db(tmp_path, "mutated-key.duckdb")
     before_bytes = db_path.read_bytes()
     before_counts = key_table_row_counts(db_path)
     before_all = all_table_row_counts(db_path)
@@ -1161,17 +1152,13 @@ def test_mutationProof_mutationDetectedWhenNonKeyTableRowCountChanges(
     """
     import duckdb
 
-    from backend.app.db.migrate import apply_migrations
     from backend.app.ops.mutation_proof import (
         all_table_row_counts,
         build_production_mutation_proof,
         key_table_row_counts,
     )
 
-    db_path = tmp_path / "mutated-nonkey.duckdb"
-    con = duckdb.connect(str(db_path))
-    apply_migrations(con)
-    con.close()
+    db_path = _fresh_migrated_db(tmp_path, "mutated-nonkey.duckdb")
     before_bytes = db_path.read_bytes()
     before_counts = key_table_row_counts(db_path)
     before_all = all_table_row_counts(db_path)
@@ -1204,19 +1191,13 @@ def test_mutationProof_inconclusiveWhenHashChangesKeyCountUnchanged(
     验证点：字节扰动后 proof_status=INCONCLUSIVE 且 row_counts_unchanged=True。
     失败含义：hash-only 漂移被标 VERIFIED，用户误以为生产库未变。
     """
-    import duckdb
-
-    from backend.app.db.migrate import apply_migrations
     from backend.app.ops.mutation_proof import (
         all_table_row_counts,
         build_production_mutation_proof,
         key_table_row_counts,
     )
 
-    db_path = tmp_path / "hash-only.duckdb"
-    con = duckdb.connect(str(db_path))
-    apply_migrations(con)
-    con.close()
+    db_path = _fresh_migrated_db(tmp_path, "hash-only.duckdb")
     before_bytes = db_path.read_bytes()
     before_counts = key_table_row_counts(db_path)
     before_all = all_table_row_counts(db_path)

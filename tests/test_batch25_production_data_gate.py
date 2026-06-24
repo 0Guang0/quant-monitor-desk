@@ -25,8 +25,7 @@ def _read_text(path: Path) -> str:
 
 
 def _read_json(path: Path) -> dict:
-    assert path.is_file(), f"missing evidence file: {path}"
-    return json.loads(path.read_text(encoding="utf-8"))
+    return json.loads(_read_text(path))
 
 
 def _table_count(con: duckdb.DuckDBPyConnection, table_name: str) -> int:

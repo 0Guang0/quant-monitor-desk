@@ -5,11 +5,9 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import pytest
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
+from tests.contract_gate_support import PROJECT_ROOT
 
 REQUIRED_GLOBAL_FILES = [
     "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md",

@@ -9,7 +9,9 @@ import json
 import sys
 from pathlib import Path
 
-REPO = Path(__file__).resolve().parents[1]
+from tests.contract_gate_support import PROJECT_ROOT
+
+REPO = PROJECT_ROOT
 SCRIPTS = REPO / ".trellis" / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 

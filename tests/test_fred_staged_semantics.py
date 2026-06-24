@@ -39,9 +39,7 @@ def test_b250o05_remainsDeferred_withExplicitClosureCommand() -> None:
     验证点：三表均含 B2.5-O-05；审计/待修表含 RE-DEFERRED、FRED:DGS10、test_fred_staged_semantics.py 等 token
     失败含义：注册表缺失会导致 agent 误以为 Request 3 已关闭 FRED 主源
     """
-    audit = _read(AUDIT_DEFERRED)
-    unresolved = _read(UNRESOLVED)
-    pending = _read(PENDING_FIX)
+    audit, unresolved, pending = map(_read, (AUDIT_DEFERRED, UNRESOLVED, PENDING_FIX))
 
     for registry in (audit, unresolved, pending):
         assert "B2.5-O-05" in registry
@@ -64,8 +62,7 @@ def test_policy_and_gate_forbidFredPrimaryMisreadFromRequest3() -> None:
     验证点：策略含 B2.5-O-05、does not close、not be cited as live FRED primary；gate 含同类禁止表述
     失败含义：策略缺口会允许 staged 宏观数据被宣称生产主源
     """
-    policy = _read(POLICY)
-    gate = _read(GATE_DOC)
+    policy, gate = map(_read, (POLICY, GATE_DOC))
 
     for token in (
         "B2.5-O-05",
@@ -90,10 +87,9 @@ def test_handoff_map_and_taskCards_preserveStagedMacroSemantics() -> None:
     验证点：各文档含 B2.5-O-05 与 macro_supplementary；handoff/map 含 does not close；018A 含 supplementary macro shape evidence only
     失败含义：任务卡语义漂移会导致建模层误用 Request 3 为 FRED 主源
     """
-    handoff = _read(HANDOFF)
-    round3_map = _read(ROUND3_MAP)
-    task_018a = _read(TASK_018A)
-    task_019 = _read(TASK_019)
+    handoff, round3_map, task_018a, task_019 = map(
+        _read, (HANDOFF, ROUND3_MAP, TASK_018A, TASK_019)
+    )
 
     for text in (handoff, round3_map, task_018a, task_019):
         assert "B2.5-O-05" in text

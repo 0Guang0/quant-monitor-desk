@@ -29,6 +29,15 @@ def _read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
+def _read_three_registries() -> tuple[str, str, str]:
+    """ponytail: audit/unresolved/resolved triple read used by registry alignment tests."""
+    return (
+        _read(AUDIT_REGISTRY),
+        _read(UNRESOLVED_REGISTRY),
+        _read(RESOLVED_REGISTRY),
+    )
+
+
 def test_projectMap_reflectsBatch275CurrentStatus() -> None:
     """覆盖范围：MIGRATION_MAP 是否反映 Batch 2.75 当前规划状态
     测试对象：MIGRATION_MAP.md
@@ -128,17 +137,15 @@ def test_registriesKeepBatch25LiveFredDeferredToBatch275() -> None:
     验证点：audit/unresolved 含 B2.5-O-05 与 018B；audit 含 production_live_pilot_policy、Not closed by Batch 2.75 Request 3、test_fred_staged_semantics；resolved 含 R3-B2.75-01、PILOT_FAIL_SOURCE；unresolved 含 R3-B2.75-REQ2-EM
     失败含义：registry 叙事不一致，会误判 FRED live 或 Request 2 是否已闭合
     """
-    audit = _read(AUDIT_REGISTRY)
-    unresolved = _read(UNRESOLVED_REGISTRY)
-    resolved = _read(RESOLVED_REGISTRY)
+    audit, unresolved, _resolved = _read_three_registries()
     for registry in (audit, unresolved):
         assert "B2.5-O-05" in registry
         assert "018B_production_live_pilot_gate.md" in registry
     assert "production_live_pilot_policy.md" in audit
     assert "Not closed by Batch 2.75 Request 3" in audit
     assert "test_fred_staged_semantics.py" in audit
-    assert "R3-B2.75-01" in resolved
-    assert "PILOT_FAIL_SOURCE" in resolved
+    assert "R3-B2.75-01" in _resolved
+    assert "PILOT_FAIL_SOURCE" in _resolved
     assert "R3-B2.75-REQ2-EM" in unresolved
 
 
@@ -149,16 +156,14 @@ def test_resolvedRegistry_recordsPlanningGateWithoutClosingLivePilot() -> None:
     验证点：PLAN-01 在 audit 与 resolved；resolved 写明 Does not close R3-B2.75-01 且仍含 PILOT_FAIL_SOURCE；REQ2-EM 仍在 unresolved；resolved 含 25 passed in current session
     失败含义：把规划门禁误当 live pilot 闭合，会过早宣称 production-live 就绪
     """
-    audit = _read(AUDIT_REGISTRY)
-    resolved = _read(RESOLVED_REGISTRY)
-    unresolved = _read(UNRESOLVED_REGISTRY)
+    audit, _unresolved, resolved = _read_three_registries()
 
     assert "R3-B2.75-PLAN-01" in audit
     assert "R3-B2.75-PLAN-01" in resolved
     assert "Does not close `R3-B2.75-01`" in resolved
     assert "R3-B2.75-01" in resolved
     assert "PILOT_FAIL_SOURCE" in resolved
-    assert "R3-B2.75-REQ2-EM" in unresolved
+    assert "R3-B2.75-REQ2-EM" in _unresolved
     assert "25 passed in current session" in resolved
 
 
