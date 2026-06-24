@@ -1,0 +1,1 @@
+TDX-03 GREEN: mocked index 000001.SH -> TDX_PROBE_PASS_RAW_ONLY; validation_only preserved

@@ -1,0 +1,32 @@
+# Proposed registry delta — B01-TDX Execute (do NOT commit registry三件套 from this branch)
+# Merge coordinator applies after adversarial audit PASS.
+
+tdx_pytdx:
+  decision: PROBE_PASS_RAW_ONLY
+  enabled_by_default: false
+  validation_only: true
+  rationale: >
+    Mocked manual probe (TDX-02..04) produced raw-only sandbox evidence with
+    TDX_PROBE_PASS_RAW_ONLY. Live probe remains PROBE_REDEFERRED until user fills
+    host/port in authorization MD (BLK-TDX-04).
+
+tdx_pytdx_live_probe:
+  decision: PROBE_REDEFERRED
+  rationale: >
+    Authorization MD present (2026-06-24) but host/port placeholder; live bounded
+    fetch not executed on this branch.
+
+registry_rows_remain_open:
+  R3-B2.75-REQ2-EM: OPEN
+  R3-PROMPT14-AKSHARE-VAL-01: OPEN
+  R2.6-IMPL-8: OPEN
+
+does_not_close_via_tdx_probe:
+  - R3-B2.75-REQ2-EM
+  - R3-PROMPT14-AKSHARE-VAL-01
+
+commit_policy: proposed_only_no_direct_registry_commit
+
+# BLK-TDX-06 closure: registry delta is COORDINATOR-QUEUED (主会话 Track A §7.4).
+# This branch delivers proposed YAML only — not OPEN, not merged registry state.
+coordinator_status: COORDINATOR-QUEUED

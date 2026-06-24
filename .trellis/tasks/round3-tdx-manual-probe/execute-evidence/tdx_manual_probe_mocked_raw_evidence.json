@@ -1,0 +1,76 @@
+{
+  "records": [
+    {
+      "probe_id": "probe-tdx-equity-daily",
+      "source_id": "tdx_pytdx",
+      "operation": "fetch_daily_bar",
+      "vendor_api": "pytdx.get_security_bars",
+      "upstream": "mocked:tdx_pytdx",
+      "source_fetch_id": "tdx-probe-0b4473edcee2",
+      "params": {
+        "instrument_id": "sh.600519",
+        "window_label": "recent 5 trading days",
+        "max_rows": 10,
+        "raw_only": true,
+        "write_target": "sandbox",
+        "allow_clean_write": false,
+        "live": false
+      },
+      "timestamp": "2026-06-24T16:21:34Z",
+      "status": "TDX_PROBE_PASS_RAW_ONLY",
+      "row_count": 2,
+      "content_hash": "21c8130edc43c2e452f6f16804dbb382f95ae438d821fa56b2e2ace816c13772",
+      "sandbox_path": "C:\\Users\\Guang\\Desktop\\quant-monitor-desk-wt-b01-tdx\\.audit-sandbox\\tdx-pytdx-live-manual-probe\\mocked\\raw\\tdx_pytdx\\cn_equity_daily_bar\\2026-06-24\\21c8130edc43c2e452f6f16804dbb382f95ae438d821fa56b2e2ace816c13772.json",
+      "failure_reason": null,
+      "retrieved_at": "2026-06-24T16:21:34Z"
+    },
+    {
+      "probe_id": "probe-tdx-index-daily",
+      "source_id": "tdx_pytdx",
+      "operation": "fetch_index_daily_bar",
+      "vendor_api": "pytdx.get_index_bars",
+      "upstream": "mocked:tdx_pytdx",
+      "source_fetch_id": "tdx-probe-d7543d39c821",
+      "params": {
+        "instrument_id": "000001.SH",
+        "window_label": "recent 5 trading days",
+        "max_rows": 10,
+        "raw_only": true,
+        "write_target": "sandbox",
+        "allow_clean_write": false,
+        "live": false
+      },
+      "timestamp": "2026-06-24T16:21:34Z",
+      "status": "TDX_PROBE_PASS_RAW_ONLY",
+      "row_count": 1,
+      "content_hash": "0ffae460f1a6c706bc318e79a7f7f9e2d44eed4bc73177e1b48834eafbb631eb",
+      "sandbox_path": "C:\\Users\\Guang\\Desktop\\quant-monitor-desk-wt-b01-tdx\\.audit-sandbox\\tdx-pytdx-live-manual-probe\\mocked\\raw\\tdx_pytdx\\cn_index_daily_bar\\2026-06-24\\0ffae460f1a6c706bc318e79a7f7f9e2d44eed4bc73177e1b48834eafbb631eb.json",
+      "failure_reason": null,
+      "retrieved_at": "2026-06-24T16:21:34Z"
+    },
+    {
+      "probe_id": "probe-tdx-security-list",
+      "source_id": "tdx_pytdx",
+      "operation": "fetch_security_list",
+      "vendor_api": "pytdx.get_security_list",
+      "upstream": "mocked:tdx_pytdx",
+      "source_fetch_id": "tdx-probe-9d1e30db2c0d",
+      "params": {
+        "instrument_id": "sh",
+        "window_label": "max_rows=20 per market",
+        "max_rows": 20,
+        "raw_only": true,
+        "write_target": "sandbox",
+        "allow_clean_write": false,
+        "live": false
+      },
+      "timestamp": "2026-06-24T16:21:34Z",
+      "status": "TDX_PROBE_PASS_RAW_ONLY",
+      "row_count": 2,
+      "content_hash": "e72ea3818e52636cca0c26beb0800970b12b86ddf3529be893d10ba59de03e30",
+      "sandbox_path": "C:\\Users\\Guang\\Desktop\\quant-monitor-desk-wt-b01-tdx\\.audit-sandbox\\tdx-pytdx-live-manual-probe\\mocked\\raw\\tdx_pytdx\\security_list\\2026-06-24\\e72ea3818e52636cca0c26beb0800970b12b86ddf3529be893d10ba59de03e30.json",
+      "failure_reason": null,
+      "retrieved_at": "2026-06-24T16:21:34Z"
+    }
+  ]
+}

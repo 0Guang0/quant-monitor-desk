@@ -1,0 +1,1 @@
+TDX-04 GREEN: security list cap=20 enforced; requested_rows=25 -> TDX_PROBE_FAIL_VALIDATION

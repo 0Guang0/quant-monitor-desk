@@ -1,0 +1,2 @@
+TDX-01 RED: ModuleNotFoundError / missing run_tdx_live_manual_probe — live runner absent
+TDX-01 RED: tests/test_tdx_manual_probe.py not found

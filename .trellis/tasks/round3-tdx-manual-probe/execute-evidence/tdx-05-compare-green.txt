@@ -1,0 +1,1 @@
+TDX-05 GREEN: comparison report distinguishes comparable/missing/conflicts; no auto-overwrite

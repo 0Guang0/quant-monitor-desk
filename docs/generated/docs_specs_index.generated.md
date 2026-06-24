@@ -267,6 +267,7 @@ Used with MIGRATION_MAP.md for machine omission checks (`check_docs_specs_indexe
 - `docs/quality/prompt14_user_authorization_2026-06-22.md`
 - `docs/quality/self_check_and_audit.md`
 - `docs/quality/staged_acceptance_policy.md`
+- `docs/quality/tdx_pytdx_live_manual_probe_authorization_2026-06-24.md`
 - `docs/schema/MIGRATION_008_PLAN.md`
 - `docs/schema/MIGRATION_COVERAGE.md`
 - `specs/api/openapi_contract.md`
