@@ -3,7 +3,7 @@
   "name": "round3-readonly-data-health-v1",
   "title": "C-20: R3Y read-only data health v1",
   "description": "Read-only data health over staged pilot evidence; nine vertical slices R3Y-DH-01..09.",
-  "status": "in_progress",
+  "status": "completed",
   "dev_type": "feature",
   "scope": "ops_data_health",
   "branch": "feature/round3-readonly-data-health-v1",
@@ -16,5 +16,6 @@
     "predecessor_tasks": [
       ".trellis/tasks/archive/2026-06/06-24-round3-real-data-staged-pilot-v2"
     ]
-  }
+  },
+  "completedAt": "2026-06-24"
 }

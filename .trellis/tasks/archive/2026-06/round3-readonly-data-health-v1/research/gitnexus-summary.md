@@ -8,10 +8,10 @@
 
 ## impact 预判（Execute 前必跑）
 
-| 目标符号 | 预期 callers | 风险 |
-| -------- | ------------ | ---- |
-| `DataHealthService`（拟） | CLI wrapper, tests | LOW — 新文件 |
-| `load_evidence_bundle`（拟） | health checks only | LOW |
+| 目标符号                     | 预期 callers       | 风险         |
+| ---------------------------- | ------------------ | ------------ |
+| `DataHealthService`（拟）    | CLI wrapper, tests | LOW — 新文件 |
+| `load_evidence_bundle`（拟） | health checks only | LOW          |
 
 ## 建议 Execute 路径
 

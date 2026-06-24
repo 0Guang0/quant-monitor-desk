@@ -4,36 +4,36 @@
 
 ## 1. Plan Phase 完成
 
-| Phase | 产出 | [x] |
-| ----- | ---- | --- |
-| P0 | plan-boot, source-index, original-plan-trace | [x] |
+| Phase | 产出                                            | [x] |
+| ----- | ----------------------------------------------- | --- |
+| P0    | plan-boot, source-index, original-plan-trace    | [x] |
 | 1a–5d | project-overview, prd, MASTER, AUDIT, manifests | [x] |
 
 ## 2. 必需文件
 
-| 文件 | [x] |
-| ---- | --- |
-| MASTER.plan.md | [x] |
-| AUDIT.plan.md | [x] |
+| 文件                                        | [x] |
+| ------------------------------------------- | --- |
+| MASTER.plan.md                              | [x] |
+| AUDIT.plan.md                               | [x] |
 | implement.jsonl / audit.jsonl / check.jsonl | [x] |
 
 ## 3. 冻结自检
 
 ### 3.0 双契约 one-pager
 
-| 契约 | 冻结位置 | Execute | Audit |
-| ---- | -------- | ------- | ----- |
-| 验收 | MASTER §8–§10 | 拥有 | A5 抽检 |
-| 维度验证 | AUDIT §2 | 不做 | A1–A8 |
+| 契约     | 冻结位置      | Execute | Audit   |
+| -------- | ------------- | ------- | ------- |
+| 验收     | MASTER §8–§10 | 拥有    | A5 抽检 |
+| 维度验证 | AUDIT §2      | 不做    | A1–A8   |
 
 ### 3.0a Phase 产出门禁
 
-| Phase | 产出 | [x] |
-| ----- | ---- | --- |
-| P0-index | source-index, plan-boot | [x] |
-| 1a/1b | project-overview, gitnexus-summary | [x] |
-| 2–3.5 | prd, grill-me, vertical-slices | [x] |
-| 5c/5d | integration-ledger, integration-audit PASS | [x] |
+| Phase    | 产出                                       | [x] |
+| -------- | ------------------------------------------ | --- |
+| P0-index | source-index, plan-boot                    | [x] |
+| 1a/1b    | project-overview, gitnexus-summary         | [x] |
+| 2–3.5    | prd, grill-me, vertical-slices             | [x] |
+| 5c/5d    | integration-ledger, integration-audit PASS | [x] |
 
 ### 3.0b 原计划包门禁
 

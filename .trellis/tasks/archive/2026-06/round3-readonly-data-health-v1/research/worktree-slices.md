@@ -1,11 +1,11 @@
 # Worktree slices — C-20 data health
 
-| 字段 | 值 |
-| ---- | --- |
-| 分支 | `feature/round3-readonly-data-health-v1` |
+| 字段     | 值                                        |
+| -------- | ----------------------------------------- |
+| 分支     | `feature/round3-readonly-data-health-v1`  |
 | Worktree | `../quant-monitor-desk-wt-r3-data-health` |
-| 基线 | `master` @ Wave C |
-| 并行 | 022, α-3, β-2 |
+| 基线     | `master` @ Wave C                         |
+| 并行     | 022, α-3, β-2                             |
 
 ## Allowed（MAP §2.2）
 
