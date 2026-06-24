@@ -40,9 +40,7 @@
         "operation": "fetch_daily_bar",
         "raw_only": true,
         "source_id": "baostock",
-        "symbols_or_indicators": [
-          "sh.600519"
-        ],
+        "symbols_or_indicators": ["sh.600519"],
         "write_target": "sandbox"
       },
       "route_preview": {
@@ -61,9 +59,7 @@
           "operation": "fetch_daily_bar",
           "raw_only": true,
           "source_id": "baostock",
-          "symbols_or_indicators": [
-            "sh.600519"
-          ],
+          "symbols_or_indicators": ["sh.600519"],
           "write_target": "sandbox"
         },
         "resource_guard_decision": "OK",
@@ -103,9 +99,7 @@
       },
       "sandbox_data_root": "C:\\Users\\Guang\\Desktop\\quant-monitor-desk-wt-feature-r3-real-data-staged-pilot\\.audit-sandbox\\r3x-staged-pilot\\req-1\\data",
       "sandbox_root": "C:\\Users\\Guang\\Desktop\\quant-monitor-desk-wt-feature-r3-real-data-staged-pilot\\.audit-sandbox\\r3x-staged-pilot\\req-1",
-      "staged_file_ids": [
-        "7e684f2bf13d4ff8baostock"
-      ],
+      "staged_file_ids": ["7e684f2bf13d4ff8baostock"],
       "taxonomy_status": "SUCCESS"
     },
     {
@@ -146,9 +140,7 @@
         "operation": "fetch_daily_bar_validation",
         "raw_only": true,
         "source_id": "akshare",
-        "symbols_or_indicators": [
-          "sh.600519"
-        ],
+        "symbols_or_indicators": ["sh.600519"],
         "write_target": "sandbox"
       },
       "route_preview": {
@@ -167,9 +159,7 @@
           "operation": "fetch_daily_bar_validation",
           "raw_only": true,
           "source_id": "akshare",
-          "symbols_or_indicators": [
-            "sh.600519"
-          ],
+          "symbols_or_indicators": ["sh.600519"],
           "write_target": "sandbox"
         },
         "resource_guard_decision": "OK",
@@ -252,9 +242,7 @@
         "operation": "fetch_announcement_index",
         "raw_only": true,
         "source_id": "cninfo",
-        "symbols_or_indicators": [
-          "sh.600519"
-        ],
+        "symbols_or_indicators": ["sh.600519"],
         "write_target": "sandbox"
       },
       "route_preview": {
@@ -273,9 +261,7 @@
           "operation": "fetch_announcement_index",
           "raw_only": true,
           "source_id": "cninfo",
-          "symbols_or_indicators": [
-            "sh.600519"
-          ],
+          "symbols_or_indicators": ["sh.600519"],
           "write_target": "sandbox"
         },
         "resource_guard_decision": "OK",
@@ -306,9 +292,7 @@
       },
       "sandbox_data_root": "C:\\Users\\Guang\\Desktop\\quant-monitor-desk-wt-feature-r3-real-data-staged-pilot\\.audit-sandbox\\r3x-staged-pilot\\req-3\\data",
       "sandbox_root": "C:\\Users\\Guang\\Desktop\\quant-monitor-desk-wt-feature-r3-real-data-staged-pilot\\.audit-sandbox\\r3x-staged-pilot\\req-3",
-      "staged_file_ids": [
-        "5591830a6d9227cbcninfo"
-      ],
+      "staged_file_ids": ["5591830a6d9227cbcninfo"],
       "taxonomy_status": "SUCCESS"
     }
   ],

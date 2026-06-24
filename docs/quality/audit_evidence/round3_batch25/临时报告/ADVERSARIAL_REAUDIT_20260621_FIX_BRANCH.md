@@ -1,7 +1,7 @@
 # Adversarial Re-Audit — `fix/audit-report-issues-20260621`
 
 **Date:** 2026-06-21  
-**Baseline:** Round3 Batch2.5 nine-agent audit (`临时报告/ROUND3_BATCH25_AUDIT_AGENT_*.md` + `ROUND3_BATCH25_ADVERSARIAL_AUDIT_FINAL_SUMMARY.md`)  
+**Baseline:** Round3 Batch2.5 nine-agent audit (`docs/quality/audit_evidence/round3_batch25/临时报告/ROUND3_BATCH25_AUDIT_AGENT_*.md` + `ROUND3_BATCH25_ADVERSARIAL_AUDIT_FINAL_SUMMARY.md`)  
 **Fix branch under review:** `fix/audit-report-issues-20260621`  
 **Registries:** `docs/quality/ROUND3_BATCH25_PENDING_FIX_REGISTRY.md`, `docs/AUDIT_DEFERRED_REGISTRY.md`, `docs/UNRESOLVED_ISSUES_REGISTRY.md`  
 **High-risk deferral authority:** `docs/architecture/layer1_ingestion_refactor_rollback_plan.md`
@@ -238,7 +238,7 @@ _Re-audit performed by adversarial agent on working tree of `fix/audit-report-is
 
 ## 11. §7.1 fix completion (2026-06-21 follow-up)
 
-**See:** `临时报告/REAUDIT_FIX_COMPLETION_20260621.md`
+**See:** `docs/quality/audit_evidence/round3_batch25/临时报告/REAUDIT_FIX_COMPLETION_20260621.md`
 
 | §7.1 item                                             | Status                                                |
 | ----------------------------------------------------- | ----------------------------------------------------- |

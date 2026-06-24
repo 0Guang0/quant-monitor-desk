@@ -1,7 +1,7 @@
 # Re-Audit Fix Completion — 2026-06-21
 
 **Branch:** `fix/audit-report-issues-20260621`  
-**Baseline:** `临时报告/ADVERSARIAL_REAUDIT_20260621_FIX_BRANCH.md`  
+**Baseline:** `docs/quality/audit_evidence/round3_batch25/临时报告/ADVERSARIAL_REAUDIT_20260621_FIX_BRANCH.md`  
 **Registries updated:** `docs/quality/ROUND3_BATCH25_PENDING_FIX_REGISTRY.md` §3.1
 
 ---

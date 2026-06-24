@@ -104,29 +104,29 @@
 
 ### 3.1 四路共用底座（每个分支 Plan 前必须 Read + 摘要）
 
-| 类别         | 路径                                                          | 遵守什么                                  |
-| ------------ | ------------------------------------------------------------- | ----------------------------------------- |
-| **协调**     | `WAVE_C_MAIN_SESSION_COORDINATOR_PLAYBOOK.md`（本文件）       | Wave C 派发、PASS、模型、测试铁律         |
-| **协调**     | `ROUND3_BATCH_IMPLEMENTATION_MAP.md` §2.2–§2.6                | worktree、allowed/forbidden、验证命令     |
-| **协调**     | `.trellis/spec/guides/round3-repair-debt-worktree-plan.md` §6 | 一分支一核心文件组                        |
-| **Registry** | `docs/AUDIT_DEFERRED_REGISTRY.md`                             | 开放/已关闭 ID；**本分支只读，勿并发改**  |
-| **Registry** | `docs/UNRESOLVED_ISSUES_REGISTRY.md`                          | 操作面 OPEN 项                            |
-| **Registry** | `docs/RESOLVED_ISSUES_REGISTRY.md`                            | 防重复打开                                |
-| **Registry** | `docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md`  | ID → 任务/分支映射                        |
-| **Handoff**  | `docs/ROUND3_HANDOFF.md`                                      | Round 3 入口与 staged-only 语境           |
-| **质量门**   | `docs/quality/staged_acceptance_policy.md`                    | 分阶段验收                                |
-| **质量门**   | `docs/quality/production_live_pilot_policy.md`                | Batch 2.75 / **不得声称 production-live** |
-| **质量门**   | `docs/quality/BATCH3_STAGED_DOWNSTREAM_GATE.md`               | Batch 3 下游 staged 门禁（022 须遵守）    |
-| **质量门**   | `docs/quality/ROUND3_TEST_DOCSTRING_HYGIENE_PLAN.md`          | 测试五字段                                |
-| **全局规则** | `docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md`         | 边界：docs/specs 非实现路径               |
-| **全局规则** | `docs/implementation_tasks/GLOBAL_TESTING_POLICY.md`          | 语义测试                                  |
-| **全局规则** | `docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md`         | eco / ResourceGuard                       |
-| **契约**     | `specs/contracts/runtime_versions.md`                         | 工具链与验证命令权威                      |
-| **契约**     | `specs/contracts/write_contract.yaml`                         | 写路径合约                                |
-| **契约**     | `specs/contracts/resource_limits.yaml`                        | 资源上限                                  |
-| **契约**     | `specs/contracts/snapshot_lineage_contract.yaml`              | 快照血缘（022 及一切 snapshot）           |
-| **架构**     | `docs/architecture/module_boundary_matrix.md`                 | 模块边界                                  |
-| **索引**     | `MIGRATION_MAP.md`                                            | 实现目录与文档映射                        |
+| 类别         | 路径                                                                              | 遵守什么                                  |
+| ------------ | --------------------------------------------------------------------------------- | ----------------------------------------- |
+| **协调**     | `docs/quality/coordination/WAVE_C_MAIN_SESSION_COORDINATOR_PLAYBOOK.md`（本文件） | Wave C 派发、PASS、模型、测试铁律         |
+| **协调**     | `ROUND3_BATCH_IMPLEMENTATION_MAP.md` §2.2–§2.6                                    | worktree、allowed/forbidden、验证命令     |
+| **协调**     | `.trellis/spec/guides/round3-repair-debt-worktree-plan.md` §6                     | 一分支一核心文件组                        |
+| **Registry** | `docs/AUDIT_DEFERRED_REGISTRY.md`                                                 | 开放/已关闭 ID；**本分支只读，勿并发改**  |
+| **Registry** | `docs/UNRESOLVED_ISSUES_REGISTRY.md`                                              | 操作面 OPEN 项                            |
+| **Registry** | `docs/RESOLVED_ISSUES_REGISTRY.md`                                                | 防重复打开                                |
+| **Registry** | `docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md`                      | ID → 任务/分支映射                        |
+| **Handoff**  | `docs/ROUND3_HANDOFF.md`                                                          | Round 3 入口与 staged-only 语境           |
+| **质量门**   | `docs/quality/staged_acceptance_policy.md`                                        | 分阶段验收                                |
+| **质量门**   | `docs/quality/production_live_pilot_policy.md`                                    | Batch 2.75 / **不得声称 production-live** |
+| **质量门**   | `docs/quality/BATCH3_STAGED_DOWNSTREAM_GATE.md`                                   | Batch 3 下游 staged 门禁（022 须遵守）    |
+| **质量门**   | `docs/quality/ROUND3_TEST_DOCSTRING_HYGIENE_PLAN.md`                              | 测试五字段                                |
+| **全局规则** | `docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md`                             | 边界：docs/specs 非实现路径               |
+| **全局规则** | `docs/implementation_tasks/GLOBAL_TESTING_POLICY.md`                              | 语义测试                                  |
+| **全局规则** | `docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md`                             | eco / ResourceGuard                       |
+| **契约**     | `specs/contracts/runtime_versions.md`                                             | 工具链与验证命令权威                      |
+| **契约**     | `specs/contracts/write_contract.yaml`                                             | 写路径合约                                |
+| **契约**     | `specs/contracts/resource_limits.yaml`                                            | 资源上限                                  |
+| **契约**     | `specs/contracts/snapshot_lineage_contract.yaml`                                  | 快照血缘（022 及一切 snapshot）           |
+| **架构**     | `docs/architecture/module_boundary_matrix.md`                                     | 模块边界                                  |
+| **索引**     | `MIGRATION_MAP.md`                                                                | 实现目录与文档映射                        |
 
 ### 3.2 C-20 — 只读 Data Health（§3.1 + 本节）
 

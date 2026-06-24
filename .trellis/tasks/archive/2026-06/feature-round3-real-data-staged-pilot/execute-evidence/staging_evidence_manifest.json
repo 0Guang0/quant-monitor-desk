@@ -6,16 +6,12 @@
     {
       "pilot_request_id": "staged-req-1",
       "quality_flag": "STAGED",
-      "staged_file_ids": [
-        "7e684f2bf13d4ff8baostock"
-      ]
+      "staged_file_ids": ["7e684f2bf13d4ff8baostock"]
     },
     {
       "pilot_request_id": "staged-req-3",
       "quality_flag": "STAGED",
-      "staged_file_ids": [
-        "5591830a6d9227cbcninfo"
-      ]
+      "staged_file_ids": ["5591830a6d9227cbcninfo"]
     }
   ]
 }

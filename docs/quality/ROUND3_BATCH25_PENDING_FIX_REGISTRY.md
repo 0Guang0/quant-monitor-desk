@@ -1,6 +1,6 @@
 # Round 3 Batch 2.5 — 待修复清单（审计对账）
 
-> **Authority:** 本文件是 `临时报告/` 九 Agent 对抗审计（2026-06-21）的**可执行待办台账**。  
+> **Authority:** 本文件是 `docs/quality/audit_evidence/round3_batch25/临时报告/` 九 Agent 对抗审计（2026-06-21）的**可执行待办台账**。  
 > **配对文档:** `docs/AUDIT_DEFERRED_REGISTRY.md`（正式延期登记）· `docs/UNRESOLVED_ISSUES_REGISTRY.md`（运营视图）  
 > **分支:** `fix/audit-report-issues-20260621`  
 > **规则:** 每项必须标明 **清理阶段**、**是否阻塞**、**关闭测试/证据**；合并前更新三项 registry 保持一致。
@@ -84,10 +84,10 @@
 
 ### 3.2 中风险 — 下一小 PR（仍不拆 ingestion 主模块）
 
-| ID                                | 问题                                      | 清理阶段                    | 计划                                                                                                                                                             |
-| --------------------------------- | ----------------------------------------- | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| A08-P1-02                         | full pytest ~100s+，缺 test tier          | **Round 3 CI hygiene**      | **DONE（本分支）**                                                                                                                                               | `@pytest.mark.slow` on phase3/4 evidence tests · `pyproject.toml` marker · `KNOWN_PYTEST_SKIPS.md` quick profile |
-| A08-P2-01 / R3-B25-PERF-BUDGET-01 | 未重跑 A6 production-equivalent benchmark | **CI nightly / Batch6 ops** | `uv run python scripts/production_equivalent_smoke.py --use-service-path --data-root .audit-sandbox/r3b275-audit` 新证据文件；不得作为 live-source authorization |
+| ID                                | 问题                                      | 清理阶段                    | 计划                                                                                                                                                                      |
+| --------------------------------- | ----------------------------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| A08-P1-02                         | full pytest ~100s+，缺 test tier          | **Round 3 CI hygiene**      | **DONE（本分支）**                                                                                                                                                        | `@pytest.mark.slow` on phase3/4 evidence tests · `pyproject.toml` marker · `KNOWN_PYTEST_SKIPS.md` quick profile |
+| A08-P2-01 / R3-B25-PERF-BUDGET-01 | 未重跑 A6 production-equivalent benchmark | **CI nightly / Batch6 ops** | `uv run python scripts/production_equivalent_smoke.py --use-service-path --data-root .audit-sandbox/r3b275-audit` 新证据文件；不得作为 live-source authorization          |
 | A08-P2-02 / R3-B25-HYG-03         | 无 performance budget 报告文件            | **CI nightly / Batch6 ops** | `uv run python scripts/production_equivalent_smoke.py --use-service-path --data-root .audit-sandbox/r3b275-audit` 扩展 smoke 输出阈值；不得作为 live-source authorization |
 
 ### 3.3 高风险 — 大模块拆分 / 解耦（**后置**；必须可回滚）

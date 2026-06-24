@@ -306,7 +306,7 @@ python -m pytest \
 
 ## 9. 附录 — Agent 报告索引
 
-本轮 Agent 原始输出可参考工作区 `临时报告/` 下 Round3 Batch2.5 系列；**本文件为 2026-06-22 模块级 ponytail 大扫描的权威汇总**，以主会话核实后的 69 项登记为准。
+本轮 Agent 原始输出可参考 `docs/quality/audit_evidence/round3_batch25/临时报告/` 下 Round3 Batch2.5 系列；**本文件为 2026-06-22 模块级 ponytail 大扫描的权威汇总**，以主会话核实后的 69 项登记为准。
 
 ---
 

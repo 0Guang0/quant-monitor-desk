@@ -39,9 +39,7 @@
       "status": "SOURCE_FAILURE",
       "structure_validation": {
         "checked_rows": 0,
-        "findings": [
-          "EMPTY_ROWS"
-        ],
+        "findings": ["EMPTY_ROWS"],
         "status": "FAILED"
       },
       "validation_only": true

@@ -118,4 +118,4 @@
 
 ## 6. 分 agent 报告索引
 
-主会话子 agent 输出见对话 transcript；维度与 `临时报告/ROUND3_BATCH25_AUDIT_AGENT_*.md` 对齐。
+主会话子 agent 输出见对话 transcript；维度与 `docs/quality/audit_evidence/round3_batch25/临时报告/ROUND3_BATCH25_AUDIT_AGENT_*.md` 对齐。

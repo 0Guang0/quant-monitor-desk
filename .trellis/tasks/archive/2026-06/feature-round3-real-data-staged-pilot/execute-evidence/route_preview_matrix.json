@@ -28,9 +28,7 @@
         "operation": "fetch_daily_bar",
         "raw_only": true,
         "source_id": "baostock",
-        "symbols_or_indicators": [
-          "sh.600519"
-        ],
+        "symbols_or_indicators": ["sh.600519"],
         "write_target": "sandbox"
       },
       "resource_guard_decision": "OK",
@@ -84,9 +82,7 @@
         "operation": "fetch_daily_bar_validation",
         "raw_only": true,
         "source_id": "akshare",
-        "symbols_or_indicators": [
-          "sh.600519"
-        ],
+        "symbols_or_indicators": ["sh.600519"],
         "write_target": "sandbox"
       },
       "resource_guard_decision": "OK",
@@ -140,9 +136,7 @@
         "operation": "fetch_announcement_index",
         "raw_only": true,
         "source_id": "cninfo",
-        "symbols_or_indicators": [
-          "sh.600519"
-        ],
+        "symbols_or_indicators": ["sh.600519"],
         "write_target": "sandbox"
       },
       "resource_guard_decision": "OK",
