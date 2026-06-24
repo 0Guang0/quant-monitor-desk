@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from datetime import UTC, datetime
 
 from backend.app.core.snapshot_lineage import (
@@ -69,3 +70,55 @@ class Layer2LineageBuilder:
         return envelope
 
     parameter_hash_for = staticmethod(parameter_hash_for)
+
+
+def load_validation_report_provenance(
+    con,
+    validation_report_id: str,
+) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    """Load fetch/hash tuples from validation_report for WM write binding."""
+    row = con.execute(
+        """
+        SELECT source_fetch_ids_json, source_content_hashes_json
+        FROM validation_report
+        WHERE validation_report_id = ?
+        """,
+        [validation_report_id],
+    ).fetchone()
+    if row is None:
+        raise Layer2LineageError(
+            f"validation_report {validation_report_id!r} missing for lineage binding"
+        )
+    try:
+        fetch_ids = tuple(json.loads(row[0] or "[]"))
+    except json.JSONDecodeError as exc:
+        raise Layer2LineageError(
+            f"invalid source_fetch_ids_json for {validation_report_id!r}"
+        ) from exc
+    try:
+        content_hashes = tuple(json.loads(row[1] or "[]"))
+    except json.JSONDecodeError as exc:
+        raise Layer2LineageError(
+            f"invalid source_content_hashes_json for {validation_report_id!r}"
+        ) from exc
+    return fetch_ids, content_hashes
+
+
+def assert_lineage_matches_validation_report(
+    envelope: Layer2LineageEnvelope,
+    *,
+    validation_report_id: str,
+    vr_fetch_ids: tuple[str, ...],
+    vr_content_hashes: tuple[str, ...],
+) -> None:
+    """Fail-closed when WM lineage envelope drifts from validation_report provenance."""
+    if envelope.source_fetch_ids != vr_fetch_ids:
+        raise Layer2LineageError(
+            f"lineage source_fetch_ids {envelope.source_fetch_ids!r} "
+            f"do not match validation_report {validation_report_id!r} {vr_fetch_ids!r}"
+        )
+    if envelope.source_content_hashes != vr_content_hashes:
+        raise Layer2LineageError(
+            f"lineage source_content_hashes {envelope.source_content_hashes!r} "
+            f"do not match validation_report {validation_report_id!r} {vr_content_hashes!r}"
+        )

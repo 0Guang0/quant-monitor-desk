@@ -1,0 +1,3 @@
+LIN-S2 RED — pre-fix deterministic test only compared parameter_hash + latest_price
+Expected: full tuple assertion FAIL on omitted fields
+Observed: narrow assertion passed while A8 G7 gap remained

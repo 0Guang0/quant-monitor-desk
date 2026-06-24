@@ -185,6 +185,25 @@ def test_marketSnapshot_lineageRequiredFieldsComplete() -> None:
     assert envelope.upstream_snapshot_ids == ("l3-snap-001",)
 
 
+def test_marketSnapshot_lineageUpstreamFromLayer3() -> None:
+    """覆盖范围：L4 lineage upstream_snapshot_ids 与 L3 snapshot_id 传播
+    测试对象：MarketStructureBuilder.build 的 upstream_snapshot_ids 参数
+    目的/目标：ADV-R3X contract-scoped — L3→L4 staged builder lineage 链可 runtime 断言
+    验证点：传入 L3 lineage snapshot_id → envelope.upstream_snapshot_ids 原样保留
+    失败含义：上游 L3 ID 未传播，跨层血缘链在 staged 路径不可审计
+    """
+    from tests.test_layer3_snapshot_builder import _build as build_layer3
+
+    l3_result = build_layer3()
+    l3_lineage = next(e for e in l3_result.lineage_envelopes if "MSFT" in e.snapshot_id)
+    result = _build(upstream_snapshot_ids=(l3_lineage.snapshot_id,))
+    assert result.lineage_envelope.upstream_snapshot_ids == (l3_lineage.snapshot_id,)
+    for field in LINEAGE_REQUIRED_FIELDS:
+        if field == "rebuild_reason":
+            continue
+        assert getattr(result.lineage_envelope, field) is not None, field
+
+
 def test_marketSnapshotRejectsFutureInput(tmp_path: Path) -> None:
     """覆盖范围：观测时间晚于 snapshot as_of 时的拒绝逻辑
     测试对象：MarketStructureBuilder.build 对 as_of 边界的检查

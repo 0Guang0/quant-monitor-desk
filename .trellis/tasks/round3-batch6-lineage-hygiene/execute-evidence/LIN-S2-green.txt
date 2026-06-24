@@ -1,0 +1,5 @@
+LIN-S2 GREEN — R3-B6-021-O-02 deterministic full tuple
+Date: 2026-06-25
+Command: uv run pytest tests/test_layer3_snapshot_builder.py::test_layer3Snapshot_deterministicRebuild_sameInputsSameHash -q
+Result: 1 passed
+Change: test asserts full IndustryChainDailySnapshotRow equality + lineage fields (excl. generated_at)

@@ -13,7 +13,9 @@ from backend.app.layer1_axes.lineage import guard_layer2_writeback
 from backend.app.layer2_sensors.lineage import (
     Layer2LineageError,
     Layer2LineageEnvelope,
+    assert_lineage_matches_validation_report,
     lineage_row_to_db_tuple,
+    load_validation_report_provenance,
 )
 from backend.app.layer2_sensors.models import CrossAssetDailySnapshot, MainContractRollEvent
 from backend.app.layer2_sensors.schema_ddl import AXIS_SNAPSHOT_LINEAGE_TABLE, ensure_layer2_staging_tables
@@ -122,6 +124,16 @@ class Layer2SnapshotWriter:
                 con=con,
                 own_transaction=False,
             )
+
+        vr_fetch_ids, vr_content_hashes = load_validation_report_provenance(
+            con, validation_report_id
+        )
+        assert_lineage_matches_validation_report(
+            lineage,
+            validation_report_id=validation_report_id,
+            vr_fetch_ids=vr_fetch_ids,
+            vr_content_hashes=vr_content_hashes,
+        )
 
         staging_snap = f"stg_l2_snap_{uuid.uuid4().hex[:8]}"
         con.execute(

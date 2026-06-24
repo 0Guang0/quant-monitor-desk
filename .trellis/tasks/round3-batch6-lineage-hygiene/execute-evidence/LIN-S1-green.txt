@@ -1,0 +1,5 @@
+LIN-S1 GREEN — R3-B6-021-O-01 malformed bars[] fail-closed
+Date: 2026-06-25
+Command: uv run pytest tests/test_layer3_snapshot_builder.py::test_layer3Snapshot_malformedBarElement_rejects -q
+Result: 1 passed
+Change: snapshot_builder._bar_for_trade_date raises Layer3SnapshotError on non-dict bar elements

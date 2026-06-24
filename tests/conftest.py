@@ -35,6 +35,19 @@ def pytest_configure(config) -> None:
         warnings.filterwarnings("ignore", category=StarletteDeprecationWarning)
     except ImportError:
         pass
+    _ensure_v2_evidence_mock_baostock()
+
+
+def _ensure_v2_evidence_mock_baostock() -> None:
+    """Materialize v2 archive evidence raw payload for data-health integration (OPEN-01)."""
+    dest = PROJECT_ROOT / ".audit-sandbox" / "mock" / "baostock.json"
+    if dest.is_file():
+        return
+    src = FIXTURES / "data_health" / "v2_baostock_raw.json"
+    if not src.is_file():
+        return
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_bytes(src.read_bytes())
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:

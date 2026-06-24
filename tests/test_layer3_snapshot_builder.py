@@ -237,6 +237,21 @@ def test_layer3Snapshot_missingManifestHashes_rejects(tmp_path: Path) -> None:
         _build(l5_bundle_dir=bundle)
 
 
+def test_layer3Snapshot_malformedBarElement_rejects(tmp_path: Path) -> None:
+    """覆盖范围：bars[] 含非 dict 元素时的 schema 边界拒绝
+    测试对象：IndustryChainSnapshotBuilder.build 的 _bar_for_trade_date
+    目的/目标：R3-B6-021-O-01 — 畸形 bar 须 fail-closed，禁止 continue 静默跳过
+    验证点：bars 插入字符串元素 → Layer3SnapshotError 含 mapping
+    失败含义：非 dict bar 被跳过或误用，manifest 畸形数据可渗入快照
+    """
+    bundle = _mutate_l5_manifest(
+        tmp_path,
+        lambda m: m["anchors"]["MSFT"]["bars"].insert(0, "not-a-dict-bar"),
+    )
+    with pytest.raises(Layer3SnapshotError, match="mapping"):
+        _build(l5_bundle_dir=bundle)
+
+
 def test_layer3Snapshot_missingBarField_rejects(tmp_path: Path) -> None:
     """覆盖范围：匹配到的 bar 缺必填字段 close
     测试对象：_bar_for_trade_date 返回前的字段校验（D-2）
@@ -343,6 +358,54 @@ def test_layer3Snapshot_invalidManifestYaml_rejects(tmp_path: Path) -> None:
         _build(l5_bundle_dir=bundle)
 
 
+def test_layer3Lineage_rejectsEmptySourceFetchIds() -> None:
+    """覆盖范围：Layer3 lineage builder 对空 source_fetch_ids 的拒绝
+    测试对象：Layer3LineageBuilder.build
+    目的/目标：ADV-R3X contract-scoped — 无 fetch id 不得建 lineage envelope
+    验证点：source_fetch_ids=() → Layer3LineageError 含 source_fetch_ids
+    失败含义：空 fetch id 仍建 lineage，血缘不可追溯到抓取批次
+    """
+    from backend.app.layer3_chains.lineage import Layer3LineageBuilder, Layer3LineageError
+
+    with pytest.raises(Layer3LineageError, match="source_fetch_ids"):
+        Layer3LineageBuilder().build(
+            snapshot_id="l3-empty-fetch",
+            snapshot_type="industry_chain_daily_snapshot",
+            as_of=AS_OF,
+            input_window_start=AS_OF - timedelta(days=1),
+            input_window_end=AS_OF,
+            source_dataset_ids=("staged:layer3_anchor:MSFT",),
+            source_fetch_ids=(),
+            source_content_hashes=("sha256-deadbeef",),
+            rule_version="layer3_chain_staged_v1",
+            parameter_hash="param-hash-l3",
+        )
+
+
+def test_layer3Lineage_rejectsEmptySourceContentHashes() -> None:
+    """覆盖范围：Layer3 lineage builder 对空 source_content_hashes 的拒绝
+    测试对象：Layer3LineageBuilder.build
+    目的/目标：ADV-R3X contract-scoped — 无内容指纹不得建 lineage envelope
+    验证点：source_content_hashes=() → Layer3LineageError 含 source_content_hashes
+    失败含义：空 hash 仍建 lineage，增量重建无法校验输入完整性
+    """
+    from backend.app.layer3_chains.lineage import Layer3LineageBuilder, Layer3LineageError
+
+    with pytest.raises(Layer3LineageError, match="source_content_hashes"):
+        Layer3LineageBuilder().build(
+            snapshot_id="l3-empty-hash",
+            snapshot_type="industry_chain_daily_snapshot",
+            as_of=AS_OF,
+            input_window_start=AS_OF - timedelta(days=1),
+            input_window_end=AS_OF,
+            source_dataset_ids=("staged:layer3_anchor:MSFT",),
+            source_fetch_ids=("fetch-l3-1",),
+            source_content_hashes=(),
+            rule_version="layer3_chain_staged_v1",
+            parameter_hash="param-hash-l3",
+        )
+
+
 def test_snapshotLineage_agentOutputsNotSource_rejectsAgentProse() -> None:
     """覆盖范围：agent 文案不得进入 source_dataset_ids（contract 约束）
     测试对象：Layer3LineageBuilder.build 经 validate_source_dataset_ids
@@ -368,20 +431,43 @@ def test_snapshotLineage_agentOutputsNotSource_rejectsAgentProse() -> None:
 
 
 def test_layer3Snapshot_deterministicRebuild_sameInputsSameHash() -> None:
-    """覆盖范围：同输入重复 build 的 parameter_hash 稳定性
-    测试对象：IndustryChainSnapshotBuilder.build 产出的 lineage parameter_hash
-    目的/目标：对齐 contract deterministic_rebuild 与 L2 先例，同输入同哈希
-    验证点：两次 _build() 的 MSFT lineage parameter_hash 与 latest_price 一致
-    失败含义：同输入哈希漂移，增量重建与审计对账不可复现
+    """覆盖范围：同输入重复 build 的全 row tuple 与 lineage 稳定性
+    测试对象：IndustryChainSnapshotBuilder.build 产出的 snapshots 与 lineage_envelopes
+    目的/目标：R3-B6-021-O-02 — 同输入两次 build 全字段一致（lineage 除 generated_at）
+    验证点：两次 _build() 的 IndustryChainDailySnapshotRow 全等；lineage 约定字段全等
+    失败含义：同输入 row/lineage 漂移，增量重建与审计对账不可复现
     """
     result1 = _build()
     result2 = _build()
-    msft_lin1 = next(e for e in result1.lineage_envelopes if "MSFT" in e.snapshot_id)
-    msft_lin2 = next(e for e in result2.lineage_envelopes if "MSFT" in e.snapshot_id)
-    assert msft_lin1.parameter_hash == msft_lin2.parameter_hash
-    snap1 = next(s for s in result1.snapshots if s.anchor_id == "MSFT")
-    snap2 = next(s for s in result2.snapshots if s.anchor_id == "MSFT")
-    assert snap1.latest_price == snap2.latest_price
+
+    snaps1 = sorted(result1.snapshots, key=lambda s: s.anchor_id)
+    snaps2 = sorted(result2.snapshots, key=lambda s: s.anchor_id)
+    assert snaps1 == snaps2
+
+    lin1 = sorted(result1.lineage_envelopes, key=lambda e: e.snapshot_id)
+    lin2 = sorted(result2.lineage_envelopes, key=lambda e: e.snapshot_id)
+    assert len(lin1) == len(lin2)
+    lineage_compare_fields = (
+        "snapshot_id",
+        "snapshot_type",
+        "layer_id",
+        "as_of_timestamp",
+        "input_data_window_start",
+        "input_data_window_end",
+        "source_dataset_ids",
+        "source_fetch_ids",
+        "source_content_hashes",
+        "rule_version",
+        "code_version",
+        "parameter_hash",
+        "resource_profile",
+        "upstream_snapshot_ids",
+        "is_incremental",
+        "rebuild_reason",
+    )
+    for env1, env2 in zip(lin1, lin2, strict=True):
+        for field in lineage_compare_fields:
+            assert getattr(env1, field) == getattr(env2, field), field
 
 
 def test_layer3Snapshot_nonNumericVolume_rejects(tmp_path: Path) -> None:

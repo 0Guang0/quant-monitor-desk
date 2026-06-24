@@ -31,7 +31,7 @@ from backend.app.layer2_sensors import (
     assert_model_eligible,
 )
 from backend.app.layer2_sensors.futures_roll import ContractLiquidity
-from backend.app.layer2_sensors.lineage import LINEAGE_REQUIRED_FIELDS
+from backend.app.layer2_sensors.lineage import LINEAGE_REQUIRED_FIELDS, Layer2LineageError
 from backend.app.layer2_sensors.observation import reject_future_observation
 from backend.app.layer2_sensors.schema_ddl import ensure_layer2_staging_tables
 from backend.app.layer2_sensors.sensor_loader import STAGED_REGISTRY_FIXTURE
@@ -90,7 +90,15 @@ def _obs(
     )
 
 
-def _insert_validation_report(cm: ConnectionManager, report_id: str) -> None:
+def _insert_validation_report(
+    cm: ConnectionManager,
+    report_id: str,
+    *,
+    fetch_ids: list[str] | None = None,
+    content_hashes: list[str] | None = None,
+) -> None:
+    fetch_ids = fetch_ids if fetch_ids is not None else ["fetch-l2-wm"]
+    content_hashes = content_hashes if content_hashes is not None else ["hash-l2-wm"]
     with cm.writer() as con:
         con.execute(
             """
@@ -115,9 +123,85 @@ def _insert_validation_report(cm: ConnectionManager, report_id: str) -> None:
                 False,
                 "layer2_v1",
                 "layer2_sensor_staged_v1",
-                json.dumps(["fetch-l2-wm"]),
-                json.dumps(["hash-l2-wm"]),
+                json.dumps(fetch_ids),
+                json.dumps(content_hashes),
             ],
+        )
+
+
+def test_layer2Snapshot_lineageIncludesFetchIdsAndHashes(tmp_path: Path) -> None:
+    """覆盖范围：WM 写入后 DB lineage 行含 VR 一致的 fetch/hash
+    测试对象：Layer2SnapshotWriter.write_daily_snapshot → axis_snapshot_lineage
+    目的/目标：R3Y-LINEAGE-VR-001 — 对标 L1 test_layer1Observation_lineageIncludesFetchIdsAndHashes
+    验证点：DB source_fetch_ids/content_hashes JSON 与 VR 及 envelope 一致
+    失败含义：WM 路径 lineage 与 validation_report 漂移，staged 测试可绿而生产可写合成 ID
+    """
+    cm = _layer2_cm(tmp_path, "layer2_lineage_db.duckdb")
+    _insert_validation_report(
+        cm,
+        "vr-layer2-lin",
+        fetch_ids=["fetch-l2-wm"],
+        content_hashes=["hash-l2-wm"],
+    )
+
+    copper = _staged_asset("L2-COPPER")
+    snap, lineage, roll = CrossAssetSnapshotBuilder().build_daily_snapshots(
+        as_of=AS_OF,
+        trade_date=TRADE_DATE,
+        registry_entry=copper,
+        observations=[_obs("L2-COPPER")],
+        source_fetch_ids=("fetch-l2-wm",),
+        source_content_hashes=("hash-l2-wm",),
+    )
+    Layer2SnapshotWriter(cm).write_daily_snapshot(
+        snapshot=snap,
+        lineage=lineage,
+        roll_event=roll,
+        validation_report_id="vr-layer2-lin",
+    )
+    with cm.reader() as con:
+        row = con.execute(
+            """
+            SELECT source_fetch_ids, source_content_hashes, rule_version, parameter_hash
+            FROM axis_snapshot_lineage
+            WHERE snapshot_id = ?
+            """,
+            [lineage.snapshot_id],
+        ).fetchone()
+    assert row is not None
+    db_fetch = json.loads(row[0])
+    db_hashes = json.loads(row[1])
+    assert db_fetch == ["fetch-l2-wm"]
+    assert db_hashes == ["hash-l2-wm"]
+    assert row[2]
+    assert row[3]
+
+
+def test_layer2Snapshot_lineageVrMismatch_rejects(tmp_path: Path) -> None:
+    """覆盖范围：lineage envelope 与 validation_report provenance 不一致时拒绝写入
+    测试对象：Layer2SnapshotWriter.write_daily_snapshot VR 绑定守卫
+    目的/目标：R3Y-LINEAGE-VR-001 负向 — VR 含 fetch-A、envelope 填 fetch-B 须 fail-closed
+    验证点：VR fetch-A / envelope fetch-B → Layer2LineageError 含 source_fetch_ids
+    失败含义：合成 fetch id 可冒充 VR，WriteManager gate 仅校验 report 存在
+    """
+    cm = _layer2_cm(tmp_path, "layer2_vr_mismatch.duckdb")
+    _insert_validation_report(cm, "vr-mismatch", fetch_ids=["fetch-A"], content_hashes=["hash-A"])
+
+    copper = _staged_asset("L2-COPPER")
+    snap, lineage, roll = CrossAssetSnapshotBuilder().build_daily_snapshots(
+        as_of=AS_OF,
+        trade_date=TRADE_DATE,
+        registry_entry=copper,
+        observations=[_obs("L2-COPPER")],
+        source_fetch_ids=("fetch-B",),
+        source_content_hashes=("hash-B",),
+    )
+    with pytest.raises(Layer2LineageError, match="source_fetch_ids"):
+        Layer2SnapshotWriter(cm).write_daily_snapshot(
+            snapshot=snap,
+            lineage=lineage,
+            roll_event=roll,
+            validation_report_id="vr-mismatch",
         )
 
 
@@ -480,6 +564,29 @@ def test_futuresRollHandler_emitsExplicitRollEvent_notSilentSwitch() -> None:
     assert roll.new_contract == "HGF26"
 
 
+def test_layer2RollEvent_rejectsMissingValidationReport(tmp_path: Path) -> None:
+    """覆盖范围：roll 写入缺 validation_report 时 fail-closed
+    测试对象：Layer2RollEventWriter.write_roll_event（无 VR 行）
+    目的/目标：OPEN-05 — observation/roll writer 无 lineage envelope，仅 WM gate 绑定 VR
+    验证点：res.status=FAILED；cross_asset_roll_event 无 SUCCESS 行
+    失败含义：缺失 VR 仍可写 roll，与 DbValidationGate 契约断裂
+    """
+    cm = _layer2_cm(tmp_path, "layer2_roll_missing_vr.duckdb")
+    roll = FuturesRollHandler().detect_roll(
+        asset_id="L2-HG-MAIN",
+        roll_date=TRADE_DATE,
+        incumbent=ContractLiquidity("HGZ25", TRADE_DATE, volume=1000, open_interest=5000),
+        challenger=ContractLiquidity("HGF26", TRADE_DATE, volume=5000, open_interest=5200),
+    )
+    assert roll is not None
+    res = Layer2RollEventWriter(cm).write_roll_event(
+        roll, validation_report_id="vr-missing-roll"
+    )
+    assert res.status == "FAILED"
+    with cm.reader() as con:
+        assert con.execute("SELECT COUNT(*) FROM cross_asset_roll_event").fetchone()[0] == 0
+
+
 def test_futuresRollEvent_persistedViaWriteManager(tmp_path: Path) -> None:
     """覆盖范围：roll 事件经 WriteManager 持久化
     测试对象：Layer2RollEventWriter.write_roll_event
@@ -668,7 +775,12 @@ def test_layer2Snapshot_writeWithRollEvent_persistsAllTables(tmp_path: Path) -> 
     失败含义：换月与日快照不同步持久化，DB 状态不一致
     """
     cm = _layer2_cm(tmp_path, "layer2_roll_snap.duckdb")
-    _insert_validation_report(cm, "vr-roll-snap")
+    _insert_validation_report(
+        cm,
+        "vr-roll-snap",
+        fetch_ids=["fetch-roll-snap"],
+        content_hashes=["hash-roll-snap"],
+    )
 
     main = _staged_asset("L2-HG-MAIN")
     snap, lineage, roll = CrossAssetSnapshotBuilder().build_daily_snapshots(
@@ -737,9 +849,9 @@ def test_layer2Observation_rejectsAssetIdMismatch(tmp_path: Path) -> None:
 def test_layer2Snapshot_writeViaWriteManager(tmp_path: Path) -> None:
     """覆盖范围：日快照与血缘经 WriteManager 写入
     测试对象：Layer2SnapshotWriter.write_daily_snapshot
-    目的/目标：快照与 lineage 均 SUCCESS 且 layer_id=layer2
-    验证点：snap_res/lin_res.status=SUCCESS；DB lineage layer_id=layer2
-    失败含义：快照或血缘单独失败，staging 表不完整
+    目的/目标：快照与 lineage 均 SUCCESS 且 layer_id=layer2；DB 行与 VR 绑定
+    验证点：snap_res/lin_res.status=SUCCESS；DB lineage layer_id=layer2；fetch/hash JSON 非空
+    失败含义：快照或血缘单独失败，staging 表不完整或 provenance 未入库
     """
     cm = _layer2_cm(tmp_path, "layer2_wm.duckdb")
     _insert_validation_report(cm, "vr-layer2-1")
@@ -763,10 +875,15 @@ def test_layer2Snapshot_writeViaWriteManager(tmp_path: Path) -> None:
     assert lin_res.status == "SUCCESS"
     with cm.reader() as con:
         lin = con.execute(
-            "SELECT layer_id FROM axis_snapshot_lineage WHERE snapshot_id = ?",
+            """
+            SELECT layer_id, source_fetch_ids, source_content_hashes
+            FROM axis_snapshot_lineage WHERE snapshot_id = ?
+            """,
             [lineage.snapshot_id],
         ).fetchone()
         assert lin[0] == "layer2"
+        assert json.loads(lin[1]) == ["fetch-l2-wm"]
+        assert json.loads(lin[2]) == ["hash-l2-wm"]
 
 
 def test_layer2Registry_syncViaWriteManager(tmp_path: Path) -> None:
