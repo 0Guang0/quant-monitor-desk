@@ -7,11 +7,11 @@
 
 ## impact (pre-edit)
 
-| Target | Direction | Risk | Blast radius |
-| --- | --- | --- | --- |
-| `MarketStructureBuilder` (new) | upstream | LOW | tests + layer4_markets |
-| `Layer4LineageBuilder` (new) | upstream | LOW | market_structure + tests |
-| `StagedCNAMarketAdapter` (new) | — | LOW | staged fixture only |
+| Target                         | Direction | Risk | Blast radius             |
+| ------------------------------ | --------- | ---- | ------------------------ |
+| `MarketStructureBuilder` (new) | upstream  | LOW  | tests + layer4_markets   |
+| `Layer4LineageBuilder` (new)   | upstream  | LOW  | market_structure + tests |
+| `StagedCNAMarketAdapter` (new) | —         | LOW  | staged fixture only      |
 
 No production callers. Forbidden paths untouched.
 

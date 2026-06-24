@@ -26,11 +26,11 @@
 
 ## 风险
 
-| 风险                         | 缓解                               |
-| ---------------------------- | ---------------------------------- |
-| live 全市场扫描              | staged fixture + ResourceGuard     |
-| 越界改 ops/staged/registry   | MAP §2.2 forbidden + §3.3          |
-| 复制 Layer5 大表 / L1 标准化 | contract boundaries + D-09         |
+| 风险                         | 缓解                                |
+| ---------------------------- | ----------------------------------- |
+| live 全市场扫描              | staged fixture + ResourceGuard      |
+| 越界改 ops/staged/registry   | MAP §2.2 forbidden + §3.3           |
+| 复制 Layer5 大表 / L1 标准化 | contract boundaries + D-09          |
 | 声称 production-live         | §0 staged limitations + batch3 gate |
 
 ## Blast radius（Plan 预估）
