@@ -13,6 +13,15 @@ import pytest
 from backend.app.config import VALID_RESOURCE_PROFILES, get_resource_profile
 
 
+def _reload_config(monkeypatch: pytest.MonkeyPatch, **env: str):
+    for key, value in env.items():
+        monkeypatch.setenv(key, value)
+    import backend.app.config as cfg
+
+    importlib.reload(cfg)
+    return cfg
+
+
 def test_dataRoot_emptyEnv_fallsBackToProjectData(monkeypatch) -> None:
     """覆盖范围：未设置 QMD_DATA_ROOT 时的默认数据目录
     测试对象：backend.app.config.DATA_ROOT（reload 后）
@@ -20,10 +29,7 @@ def test_dataRoot_emptyEnv_fallsBackToProjectData(monkeypatch) -> None:
     验证点：DATA_ROOT == PROJECT_ROOT / 'data'
     失败含义：默认数据根目录漂移，同步与存储会写到错误位置
     """
-    monkeypatch.setenv("QMD_DATA_ROOT", "")
-    import backend.app.config as cfg
-
-    importlib.reload(cfg)
+    cfg = _reload_config(monkeypatch, QMD_DATA_ROOT="")
     assert cfg.DATA_ROOT == cfg.PROJECT_ROOT / "data"
 
 
@@ -34,10 +40,7 @@ def test_configsRoot_emptyEnv_fallsBackToProjectConfigs(monkeypatch) -> None:
     验证点：CONFIGS_ROOT == PROJECT_ROOT / 'configs'
     失败含义：配置模板与契约 YAML 查找路径错误
     """
-    monkeypatch.setenv("QMD_CONFIGS_ROOT", "")
-    import backend.app.config as cfg
-
-    importlib.reload(cfg)
+    cfg = _reload_config(monkeypatch, QMD_CONFIGS_ROOT="")
     assert cfg.CONFIGS_ROOT == cfg.PROJECT_ROOT / "configs"
 
 
@@ -48,10 +51,7 @@ def test_dataRoot_tildePath_expandsUserHome(monkeypatch) -> None:
     验证点：DATA_ROOT == Path('~').expanduser()
     失败含义：波浪号未展开会导致读写落到字面量 ~ 目录
     """
-    monkeypatch.setenv("QMD_DATA_ROOT", "~")
-    import backend.app.config as cfg
-
-    importlib.reload(cfg)
+    cfg = _reload_config(monkeypatch, QMD_DATA_ROOT="~")
     assert cfg.DATA_ROOT == Path("~").expanduser()
 
 
