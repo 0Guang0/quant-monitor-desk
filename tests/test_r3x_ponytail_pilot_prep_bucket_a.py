@@ -23,7 +23,7 @@ from backend.app.ops import interface_probe
 from backend.app.ops.mutation_proof import key_table_row_counts
 from backend.app.storage.staged_evidence import (
     STAGED_EVIDENCE_PHASE,
-    register_staged_file_registry_rows,
+    _register_staged_file_registry_rows,
 )
 from backend.app.sync.runners import _fetch_with_guard
 from backend.app.validators.common import as_text
@@ -87,7 +87,7 @@ def test_ds03_productionFetchRejectsImplicitTestAdapter() -> None:
 
 def test_sc02_stagedEvidenceRejectsWrongPhase() -> None:
     """覆盖范围：staged evidence 旁路 phase 门禁（SC-02）
-    测试对象：register_staged_file_registry_rows
+    测试对象：_register_staged_file_registry_rows
     目的/目标：非 phase3_staged 不得旁路写入 file_registry
     验证点：phase=phase4_clean 时 pytest.raises(ValueError, match='phase3_staged')
     失败含义：任意 phase 可写 registry，staged 旁路与 clean 路径混淆
@@ -104,7 +104,7 @@ def test_sc02_stagedEvidenceRejectsWrongPhase() -> None:
         content_hash="hash1",
     )
     with pytest.raises(ValueError, match="phase3_staged"):
-        register_staged_file_registry_rows(
+        _register_staged_file_registry_rows(
             con,
             result,
             data_root=Path("."),
@@ -114,7 +114,7 @@ def test_sc02_stagedEvidenceRejectsWrongPhase() -> None:
 
 def test_sc02_stagedEvidenceAllowsPhase3Token(tmp_path: Path) -> None:
     """覆盖范围：staged evidence 合法 phase3 旁路（SC-02）
-    测试对象：register_staged_file_registry_rows（phase=STAGED_EVIDENCE_PHASE）
+    测试对象：_register_staged_file_registry_rows（phase=STAGED_EVIDENCE_PHASE）
     目的/目标：显式 phase3_staged token 下应成功注册 file_registry 行
     验证点：返回 ids 长度为 1
     失败含义：合法 staged 旁路被误拒，Phase3 证据无法登记 raw 文件
@@ -135,7 +135,7 @@ def test_sc02_stagedEvidenceAllowsPhase3Token(tmp_path: Path) -> None:
         content_hash="unique-hash-sc02",
     )
     with cm.writer() as con:
-        ids = register_staged_file_registry_rows(
+        ids = _register_staged_file_registry_rows(
             con,
             result,
             data_root=data_root,

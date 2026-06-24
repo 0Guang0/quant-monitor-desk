@@ -1,0 +1,2 @@
+full pytest green — adversarial audit 2026-06-24
+exit code: 0
