@@ -165,6 +165,20 @@ tests/test_data_cli_contract.py:
     docs: []
     rules: []
     specs: []
+tests/test_data_health_v2.py:
+  command: uv run python -m pytest tests/test_data_health_v2.py -q
+  evidence_required: pytest output
+  failure_meaning: v2 profile semantics drifted; missing WL may PASS or production-primary
+    may slip through.
+  purpose: 'Read-only data health v2 profiles (B01-DH2): whitelist BLOCKED, FRED/TDX/SP3/rollup/gate'
+  type: runtime-contract
+  verifies:
+    docs:
+    - docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/R3E_readonly_data_health_v2.md
+    - docs/quality/coordination/BATCH_01_MAIN_SESSION_COORDINATOR_PLAYBOOK.md
+    rules:
+    - docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md
+    specs: []
 tests/test_data_quality_validator.py:
   command: uv run python -m pytest tests/test_data_quality_validator.py -q
   failure_meaning: Invalid data may pass quality validator.
