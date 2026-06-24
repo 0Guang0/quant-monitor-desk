@@ -16,6 +16,13 @@
 | `B01-C04` | `../R3E_real_data_staged_pilot_v3.md`     | `B01-C01` model input whitelist          | v3 staged/raw evidence and source readiness matrix         | After whitelist                                  |
 | `B01-C05` | `../R3E_readonly_data_health_v2.md`       | Evidence from C01–C04 as available       | PASS/WARN/FAIL/BLOCKED source-readiness report             | After evidence exists; can develop with fixtures |
 
+### Parallel Wave D / hygiene (not forward cards; playbook SSOT)
+
+| ID        | Branch / scope                                                       | Canonical authority                                                                | Main output                                           | Notes                                                                                                  |
+| --------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `B01-LIN` | `fix/round3-batch6-lineage-and-layer3-hygiene` · roadmap Batch 3D.3  | `PROJECT_IMPLEMENTATION_ROADMAP.md` 3D.3 · `ROUND3_WAVE_B_PENDING_FIX_REGISTRY.md` | lineage/L3 hygiene tests + registry deltas (proposed) | debt-lite; must not touch `layer5_evidence/**`                                                         |
+| `B01-023` | `feature/round3-023b-evidence-chain-full` · Wave D (serial mainline) | `023_implement_layer5_evidence_chain.md` · MAP §2.3                                | full Layer5 evidence chain                            | **Parallel worktree OK**; **separate merge track** from Batch 01 package (see coordinator playbook §0) |
+
 ---
 
 ## 2. Included legacy/original cards
@@ -64,6 +71,9 @@ Recommended branch ownership:
 | `debt/round3-tdx-manual-probe`                 | TDX probe addendum execution artifacts and narrow probe code/tests         | production primary/fallback, Layer2 production source |
 | `feature/round3-real-data-staged-pilot-v3`     | whitelist-driven baostock/cninfo/akshare v3 pilot                          | FRED/TDX/QMT/Yahoo production enablement              |
 | `feature/round3-readonly-data-health-v2`       | read-only evidence health profiles                                         | fetch code, source_health_snapshot writer, migration  |
+| `fix/round3-batch6-lineage-and-layer3-hygiene` | lineage/L3 hygiene per roadmap 3D.3                                        | `layer5_evidence/**`, schema expansion                |
+
+> **Wave D (separate merge track):** `feature/round3-023b-evidence-chain-full` — see `docs/quality/coordination/BATCH_01_MAIN_SESSION_COORDINATOR_PLAYBOOK.md` §0.
 
 ---
 

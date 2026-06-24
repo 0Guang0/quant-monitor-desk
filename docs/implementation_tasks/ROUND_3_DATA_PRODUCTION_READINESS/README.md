@@ -15,6 +15,7 @@ The flat files in this directory are the canonical forward task cards. The first
 - `BATCH_01_MODEL_SOURCE_READINESS/BATCH_01_TASK_CARD_MANIFEST.md`
 - `BATCH_01_MODEL_SOURCE_READINESS/BATCH_01_ADVERSARIAL_AUDIT.md`
 - `BATCH_01_MODEL_SOURCE_READINESS/BATCH_01_HARDENING_RULES.md`
+- `docs/quality/coordination/BATCH_01_MAIN_SESSION_COORDINATOR_PLAYBOOK.md` — merge coordinator playbook for seven-way parallel execution
 
 Executors must treat those batch files as mandatory companions. Legacy/original task cards stay at their historical paths and are included by the batch manifest; they are not copied or moved to avoid stale duplicates.
 

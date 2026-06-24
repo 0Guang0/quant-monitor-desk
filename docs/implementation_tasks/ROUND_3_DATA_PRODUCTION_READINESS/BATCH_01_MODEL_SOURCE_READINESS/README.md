@@ -49,13 +49,15 @@ This batch does **not** enable production ingestion, clean-table writes, full-ma
 
 ## 3. Mandatory companion files
 
-| File                             | Purpose                                                                          |
-| -------------------------------- | -------------------------------------------------------------------------------- |
-| `BATCH_01_TASK_CARD_MANIFEST.md` | Full task-card inclusion manifest and dependency order.                          |
-| `BATCH_01_ADVERSARIAL_AUDIT.md`  | Adversarial audit of new and legacy cards, with findings and required hardening. |
-| `BATCH_01_HARDENING_RULES.md`    | Batch-level rules that every card in this batch inherits.                        |
+| File                                                                      | Purpose                                                                            |
+| ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `BATCH_01_TASK_CARD_MANIFEST.md`                                          | Full task-card inclusion manifest and dependency order.                            |
+| `BATCH_01_ADVERSARIAL_AUDIT.md`                                           | Adversarial audit of new and legacy cards, with findings and required hardening.   |
+| `BATCH_01_HARDENING_RULES.md`                                             | Batch-level rules that every card in this batch inherits.                          |
+| `docs/quality/coordination/BATCH_01_MAIN_SESSION_COORDINATOR_PLAYBOOK.md` | **主会话**七路并行派发、Audit 队列、合并顺序与 PASS 门禁（执行 Batch 01 前必读）。 |
+| `docs/quality/coordination/BATCH_01_PLAYBOOK_ADVERSARIAL_AUDIT.report.md` | Playbook 对抗性审计与修复闭环索引。                                                |
 
-Executors must read all three companion files before turning any card into `/to-issues` issues.
+Executors must read all companion files above before turning any card into `/to-issues` issues. Merge coordinators must read the playbook before opening worktrees.
 
 ---
 
