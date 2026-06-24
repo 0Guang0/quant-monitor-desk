@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import re
-from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
+from tests.contract_gate_support import PROJECT_ROOT
+
 INDEX_PATH = PROJECT_ROOT / "docs/INDEX.md"
 LINK_PATTERN = re.compile(r"\[[^\]]*\]\(([^)]+)\)")
 

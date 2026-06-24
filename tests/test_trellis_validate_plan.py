@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -189,7 +190,6 @@ def test_validatePlanFreeze_loopVersionRequiresContextPack(tmp_path: Path) -> No
     """
     _minimal_master(tmp_path)
     _plan_boot_artifacts(tmp_path)
-    import json
 
     (tmp_path / "task.json").write_text(
         json.dumps({"meta": {"task_track": "complex"}}),
@@ -209,7 +209,6 @@ def test_validatePlanFreeze_debtLiteSkipsContextPack(tmp_path: Path) -> None:
     """
     _minimal_master(tmp_path)
     _plan_boot_artifacts(tmp_path)
-    import json
 
     (tmp_path / "task.json").write_text(
         json.dumps({"meta": {"task_track": "debt-lite"}}),
@@ -229,7 +228,6 @@ def test_validatePlanFreeze_rejectsDeprecatedLoopMeta(tmp_path: Path) -> None:
     """
     _minimal_master(tmp_path)
     _plan_boot_artifacts(tmp_path)
-    import json
 
     (tmp_path / "task.json").write_text(
         json.dumps({"meta": {"loop_engineering_exempt": True}}),
@@ -246,8 +244,6 @@ def test_validatePlanFreezeWarnings_flagsAuthorityGraphGap(tmp_path: Path) -> No
     验证点：warnings 含 authority_graph gap
     失败含义：无 warning 会静默遗漏新模块 authority 映射
     """
-    import json
-
     _minimal_master(tmp_path)
     _plan_boot_artifacts(tmp_path)
     (tmp_path / "task.json").write_text(
