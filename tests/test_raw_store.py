@@ -9,7 +9,6 @@ import os
 from pathlib import Path
 from unittest.mock import MagicMock
 
-import duckdb
 import pytest
 from backend.app.db.connection import ConnectionManager
 from backend.app.db.migrate import apply_migrations
@@ -17,6 +16,17 @@ from backend.app.db.write_manager import WriteResult
 from backend.app.storage.file_registry import FileRegistry
 from backend.app.storage.raw_store import RawStore, sha256_hex
 from tests.db_helpers import create_test_write_manager
+
+_SAVE_KW = {
+    "source": "qmt",
+    "data_domain": "daily_bar",
+    "file_type": "json",
+    "as_of": "2026-06-15",
+}
+
+
+def _save_default(store: RawStore, content: bytes = b"x"):
+    return store.save(content, **_SAVE_KW)
 
 
 def test_sha256Hex_knownInput_matchesExpected() -> None:
@@ -155,11 +165,10 @@ def test_save_oversizedContent_raises(tmp_path: Path) -> None:
 
 
 def _cm(tmp_path: Path) -> ConnectionManager:
-    db = tmp_path / "t.duckdb"
-    con = duckdb.connect(str(db))
-    apply_migrations(con)
-    con.close()
-    return ConnectionManager(db)
+    cm = ConnectionManager(tmp_path / "t.duckdb")
+    with cm.writer() as con:
+        apply_migrations(con)
+    return cm
 
 
 def _registry(cm: ConnectionManager) -> FileRegistry:
@@ -180,9 +189,7 @@ def test_register_newFile_insertsRegistryRow(tmp_path: Path) -> None:
     cm = _cm(tmp_path)
     store = RawStore(tmp_path)
     reg = _registry(cm)
-    saved = store.save(
-        b"x", source="qmt", data_domain="daily_bar", file_type="json", as_of="2026-06-15"
-    )
+    saved = _save_default(store)
     fid = reg.register(saved)
     with cm.reader() as r:
         got = r.execute(
@@ -208,9 +215,7 @@ def test_register_writesAuditLog(tmp_path: Path) -> None:
     cm = _cm(tmp_path)
     store = RawStore(tmp_path)
     reg = _registry(cm)
-    saved = store.save(
-        b"x", source="qmt", data_domain="daily_bar", file_type="json", as_of="2026-06-15"
-    )
+    saved = _save_default(store)
     reg.register(saved)
     with cm.reader() as r:
         audit = r.execute(
@@ -229,9 +234,7 @@ def test_register_asOfTimestamp_matchesAsOfArgument(tmp_path: Path) -> None:
     cm = _cm(tmp_path)
     store = RawStore(tmp_path)
     reg = _registry(cm)
-    saved = store.save(
-        b"x", source="qmt", data_domain="daily_bar", file_type="json", as_of="2026-06-15"
-    )
+    saved = _save_default(store)
     reg.register(saved)
     with cm.reader() as r:
         as_of_ts = r.execute(
@@ -251,9 +254,7 @@ def test_exists_whenHashPresent_returnsTrue(tmp_path: Path) -> None:
     cm = _cm(tmp_path)
     store = RawStore(tmp_path)
     reg = _registry(cm)
-    saved = store.save(
-        b"x", source="qmt", data_domain="daily_bar", file_type="json", as_of="2026-06-15"
-    )
+    saved = _save_default(store)
     assert reg.exists(saved.content_hash) is False
     reg.register(saved)
     assert reg.exists(saved.content_hash) is True
@@ -269,9 +270,7 @@ def test_register_duplicateHash_returnsSameFileId(tmp_path: Path) -> None:
     cm = _cm(tmp_path)
     store = RawStore(tmp_path)
     reg = _registry(cm)
-    saved = store.save(
-        b"x", source="qmt", data_domain="daily_bar", file_type="json", as_of="2026-06-15"
-    )
+    saved = _save_default(store)
     fid1 = reg.register(saved)
     fid2 = reg.register(saved)
     assert fid1 == fid2
@@ -293,9 +292,7 @@ def test_register_duplicateHashViaConstraint_returnsSameFileId(tmp_path: Path) -
     cm = _cm(tmp_path)
     store = RawStore(tmp_path)
     reg = _registry(cm)
-    saved = store.save(
-        b"x", source="qmt", data_domain="daily_bar", file_type="json", as_of="2026-06-15"
-    )
+    saved = _save_default(store)
 
     with cm.writer() as con:
         con.execute("BEGIN")
@@ -350,9 +347,7 @@ def test_register_whenWriteFails_raisesRuntimeError(tmp_path: Path) -> None:
     wm = MagicMock()
     wm.write.return_value = WriteResult(write_id="x", status="FAILED", error_message="db error")
     reg = FileRegistry(cm, wm, validation_report_id="stub-pass-registry")
-    saved = store.save(
-        b"x", source="qmt", data_domain="daily_bar", file_type="json", as_of="2026-06-15"
-    )
+    saved = _save_default(store)
     with pytest.raises(RuntimeError, match="file_registry write failed"):
         reg.register(saved)
     with cm.reader() as r:
@@ -374,9 +369,7 @@ def test_register_validationRejected_persistsFailedAudit(tmp_path: Path) -> None
         create_test_write_manager(cm),
         validation_report_id="stub-fail-registry",
     )
-    saved = store.save(
-        b"x", source="qmt", data_domain="daily_bar", file_type="json", as_of="2026-06-15"
-    )
+    saved = _save_default(store)
     with pytest.raises(RuntimeError, match="file_registry write failed"):
         reg.register(saved)
     with cm.reader() as r:
