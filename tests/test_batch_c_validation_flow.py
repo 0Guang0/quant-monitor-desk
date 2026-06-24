@@ -88,6 +88,25 @@ def _write_request(validation_report_id: str) -> WriteRequest:
     )
 
 
+FLOW_COLUMNS = (
+    "instrument_id",
+    "trade_date",
+    "close",
+    "source_used",
+    "batch_id",
+    "source_id",
+)
+
+
+def _validate_quality(con, request: DataQualityRequest | None = None):
+    return DataQualityValidator().validate_table(
+        con,
+        request or _quality_request(),
+        expected_columns=FLOW_COLUMNS,
+        timestamp_fields=("trade_date",),
+    )
+
+
 def test_batchCFlow_validDataQualityAndNoSevereConflict_writesClean(
     tmp_path: Path,
 ) -> None:
@@ -113,19 +132,7 @@ def test_batchCFlow_validDataQualityAndNoSevereConflict_writesClean(
                 ('baostock', 'AAPL', '2026-06-15', 100.04)
             """
         )
-        quality_report = DataQualityValidator().validate_table(
-            con,
-            _quality_request(),
-            expected_columns=(
-                "instrument_id",
-                "trade_date",
-                "close",
-                "source_used",
-                "batch_id",
-                "source_id",
-            ),
-            timestamp_fields=("trade_date",),
-        )
+        quality_report = _validate_quality(con)
         conflict_report = SourceConflictValidator().validate_table(
             con,
             _conflict_request(),
@@ -162,19 +169,7 @@ def test_batchCFlow_invalidDataQuality_rejectsCleanAndPreservesAudit(
                 (NULL, '2026-06-15', 100.0, 'qmt', 'b1', 'qmt')
             """
         )
-        quality_report = DataQualityValidator().validate_table(
-            con,
-            _quality_request(),
-            expected_columns=(
-                "instrument_id",
-                "trade_date",
-                "close",
-                "source_used",
-                "batch_id",
-                "source_id",
-            ),
-            timestamp_fields=("trade_date",),
-        )
+        quality_report = _validate_quality(con)
         write_result = WriteManager(cm, DbValidationGate(cm)).write(
             _write_request(quality_report.validation_report_id),
             con=con,
@@ -217,19 +212,7 @@ def test_batchCFlow_severeConflict_blocksCleanWrite(tmp_path: Path) -> None:
                 ('baostock', 'AAPL', '2026-06-15', 100.25)
             """
         )
-        quality_report = DataQualityValidator().validate_table(
-            con,
-            _quality_request(),
-            expected_columns=(
-                "instrument_id",
-                "trade_date",
-                "close",
-                "source_used",
-                "batch_id",
-                "source_id",
-            ),
-            timestamp_fields=("trade_date",),
-        )
+        quality_report = _validate_quality(con)
         conflict_report = SourceConflictValidator().validate_table(
             con,
             _conflict_request(),

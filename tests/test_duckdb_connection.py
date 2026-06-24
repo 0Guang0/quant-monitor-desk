@@ -10,6 +10,7 @@ from pathlib import Path
 
 import duckdb
 import pytest
+import backend.app.db.connection as conn_mod
 from backend.app.db.connection import ConnectionManager, WriteLockError
 from backend.app.db.migrate import apply_migrations
 
@@ -18,6 +19,15 @@ def _init(db_path: Path) -> None:
     con = duckdb.connect(str(db_path))
     apply_migrations(con)
     con.close()
+
+
+class _FakePsutilMem:
+    total = 32 * 1024 * 1024 * 1024
+    available = 16 * 1024 * 1024 * 1024
+
+
+def _patch_psutil_mem(monkeypatch) -> None:
+    monkeypatch.setattr(conn_mod.psutil, "virtual_memory", lambda: _FakePsutilMem())
 
 
 def test_writer_writesRow_readerSeesIt(tmp_path: Path) -> None:
@@ -78,14 +88,8 @@ def test_reader_appliesThreadsAndMemoryLimit(tmp_path: Path, monkeypatch) -> Non
 
 
 def _assert_reader_threads_and_memory_limit(db: Path, monkeypatch=None) -> None:
-    import backend.app.db.connection as conn_mod
-
-    class _Mem:
-        total = 32 * 1024 * 1024 * 1024
-        available = 16 * 1024 * 1024 * 1024
-
     if monkeypatch is not None:
-        monkeypatch.setattr(conn_mod.psutil, "virtual_memory", lambda: _Mem())
+        _patch_psutil_mem(monkeypatch)
     cm = ConnectionManager(
         db,
         profile="eco",
@@ -107,8 +111,6 @@ def test_reader_appliesTempDirectory(tmp_path: Path, monkeypatch) -> None:
     """
     db = tmp_path / "t.duckdb"
     _init(db)
-    import backend.app.db.connection as conn_mod
-
     data_root = tmp_path / "data"
     monkeypatch.setattr(conn_mod, "DATA_ROOT", data_root)
     cm = ConnectionManager(
@@ -151,13 +153,7 @@ def test_applyPragmas_ecoProfile_setsThreadsAndMemory(tmp_path: Path, monkeypatc
     """
     db = tmp_path / "t.duckdb"
     _init(db)
-    import backend.app.db.connection as conn_mod
-
-    class _Mem:
-        total = 32 * 1024 * 1024 * 1024
-        available = 16 * 1024 * 1024 * 1024
-
-    monkeypatch.setattr(conn_mod.psutil, "virtual_memory", lambda: _Mem())
+    _patch_psutil_mem(monkeypatch)
     cm = ConnectionManager(
         db,
         profile="eco",
@@ -177,13 +173,7 @@ def test_applyPragmas_batchProfile_usesConfiguredMaxThreads(tmp_path: Path, monk
     """
     db = tmp_path / "t.duckdb"
     _init(db)
-    import backend.app.db.connection as conn_mod
-
-    class _Mem:
-        total = 32 * 1024 * 1024 * 1024
-        available = 16 * 1024 * 1024 * 1024
-
-    monkeypatch.setattr(conn_mod.psutil, "virtual_memory", lambda: _Mem())
+    _patch_psutil_mem(monkeypatch)
     cm = ConnectionManager(
         db,
         profile="batch",
@@ -280,8 +270,6 @@ def test_writer_connectFailure_releasesLock(tmp_path: Path, monkeypatch) -> None
     db = tmp_path / "t.duckdb"
     db.parent.mkdir(parents=True, exist_ok=True)
     cm = ConnectionManager(db)
-    import backend.app.db.connection as conn_mod
-
     real_connect = conn_mod.duckdb.connect
     calls = {"n": 0}
 
@@ -314,8 +302,6 @@ def test_applyPragmas_tempDirectoryWithQuote_doesNotBreakPragma(
     """
     db = tmp_path / "t.duckdb"
     _init(db)
-    import backend.app.db.connection as conn_mod
-
     quoted_root = tmp_path / "data'quote"
     monkeypatch.setattr(conn_mod, "DATA_ROOT", quoted_root)
     limits = {"eco": {"duckdb_memory_max_mb": 512, "max_threads": 1}}

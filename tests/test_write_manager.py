@@ -5,10 +5,12 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import duckdb
 import pytest
+import backend.app.db.write_manager as wm_mod
 from backend.app.db.connection import ConnectionManager
 from backend.app.db.migrate import apply_migrations
 from backend.app.db.validation_gate import (
@@ -21,12 +23,31 @@ from tests.db_helpers import create_test_write_manager
 
 
 def _setup(tmp_path: Path) -> ConnectionManager:
-    db = tmp_path / "t.duckdb"
-    con = duckdb.connect(str(db))
-    apply_migrations(con)
-    con.execute("INSERT INTO stg_foundation_smoke VALUES ('AAPL','2026-06-15',195.0,'qmt','b1')")
-    con.close()
-    return ConnectionManager(db)
+    cm = ConnectionManager(tmp_path / "t.duckdb")
+    with cm.writer() as con:
+        apply_migrations(con)
+        con.execute(
+            "INSERT INTO stg_foundation_smoke VALUES ('AAPL','2026-06-15',195.0,'qmt','b1')"
+        )
+    return cm
+
+
+def _empty_clean_table(w, table: str = "security_bar_smoke_clean") -> None:
+    w.execute(
+        f"CREATE TABLE {table} AS SELECT * FROM stg_foundation_smoke WHERE 1=0"
+    )
+
+
+def _patch_connect_calls(monkeypatch) -> list[bool]:
+    original_connect = duckdb.connect
+    connect_calls: list[bool] = []
+
+    def _tracking_connect(path, *args, **kwargs):
+        connect_calls.append(True)
+        return original_connect(path, *args, **kwargs)
+
+    monkeypatch.setattr(wm_mod.duckdb, "connect", _tracking_connect)
+    return connect_calls
 
 
 def _req(mode: str = "append_only", report: str = "stub-pass-1") -> WriteRequest:
@@ -122,9 +143,7 @@ def test_write_appendOnlyStubPass_insertsAndAudits(tmp_path: Path) -> None:
     """
     cm = _setup(tmp_path)
     with cm.writer() as w:
-        w.execute(
-            "CREATE TABLE security_bar_smoke_clean AS SELECT * FROM stg_foundation_smoke WHERE 1=0"
-        )
+        _empty_clean_table(w)
     res = create_test_write_manager(cm).write(_req())
     assert res.status == "SUCCESS"
     assert res.rows_inserted == 1
@@ -146,9 +165,7 @@ def test_write_stubFail_rollsBackAndAuditsFailed(tmp_path: Path) -> None:
     """
     cm = _setup(tmp_path)
     with cm.writer() as w:
-        w.execute(
-            "CREATE TABLE security_bar_smoke_clean AS SELECT * FROM stg_foundation_smoke WHERE 1=0"
-        )
+        _empty_clean_table(w)
     res = create_test_write_manager(cm).write(_req(report="stub-fail-1"))
     assert res.status == "FAILED"
     with cm.reader() as r:
@@ -166,9 +183,7 @@ def test_write_gateError_rollsBackAndAuditsFailed(tmp_path: Path) -> None:
     """
     cm = _setup(tmp_path)
     with cm.writer() as w:
-        w.execute(
-            "CREATE TABLE security_bar_smoke_clean AS SELECT * FROM stg_foundation_smoke WHERE 1=0"
-        )
+        _empty_clean_table(w)
     res = create_test_write_manager(cm).write(_req(report="real-report-1"))
     assert res.status == "FAILED"
     assert res.error_message
@@ -210,9 +225,7 @@ def test_write_emptyStaging_rejected(tmp_path: Path) -> None:
     cm = _setup(tmp_path)
     with cm.writer() as w:
         w.execute("DELETE FROM stg_foundation_smoke")
-        w.execute(
-            "CREATE TABLE security_bar_smoke_clean AS SELECT * FROM stg_foundation_smoke WHERE 1=0"
-        )
+        _empty_clean_table(w)
     with pytest.raises(ValueError, match="minimum"):
         create_test_write_manager(cm).write(_req())
 
@@ -266,9 +279,7 @@ def test_write_upsertByPk_pureNewRow_reportsZeroUpdated(tmp_path: Path) -> None:
     """
     cm = _setup(tmp_path)
     with cm.writer() as w:
-        w.execute(
-            "CREATE TABLE security_bar_smoke_clean AS SELECT * FROM stg_foundation_smoke WHERE 1=0"
-        )
+        _empty_clean_table(w)
         w.execute(
             "INSERT INTO security_bar_smoke_clean VALUES ('MSFT','2026-06-14',100.0,'qmt','b0')"
         )
@@ -322,9 +333,7 @@ def test_write_upsertByPk_duplicateStagingPk_raises(tmp_path: Path) -> None:
     """
     cm = _setup(tmp_path)
     with cm.writer() as w:
-        w.execute(
-            "CREATE TABLE security_bar_smoke_clean AS SELECT * FROM stg_foundation_smoke WHERE 1=0"
-        )
+        _empty_clean_table(w)
         w.execute(
             """
             CREATE TABLE stg_upsert_dup AS
@@ -359,19 +368,8 @@ def test_write_stubFail_ownTransaction_doesNotOpenSecondAuditConnection(
     """
     cm = _setup(tmp_path)
     with cm.writer() as w:
-        w.execute(
-            "CREATE TABLE security_bar_smoke_clean AS SELECT * FROM stg_foundation_smoke WHERE 1=0"
-        )
-    import backend.app.db.write_manager as wm_mod
-
-    original_connect = duckdb.connect
-    connect_calls: list[bool] = []
-
-    def _tracking_connect(path, *args, **kwargs):
-        connect_calls.append(True)
-        return original_connect(path, *args, **kwargs)
-
-    monkeypatch.setattr(wm_mod.duckdb, "connect", _tracking_connect)
+        _empty_clean_table(w)
+    connect_calls = _patch_connect_calls(monkeypatch)
     connect_calls.clear()
     res = create_test_write_manager(cm).write(_req(report="stub-fail-1"))
     assert res.status == "FAILED"
@@ -409,16 +407,12 @@ def test_write_ownTransactionFalse_stubFail_sidecarSurvivesOuterRollback(tmp_pat
     验证点：sidecar 1 行 JSON status=FAILED；write_audit_log 表 0 行
     失败含义：外层回滚抹掉失败审计，运维无法追查拒写原因
     """
-    import json
-
     cm = _setup(tmp_path)
     data_root = tmp_path / "data"
     data_root.mkdir()
     sidecar = data_root / "logs" / "failed_write_audit.ndjson"
     with cm.writer() as w:
-        w.execute(
-            "CREATE TABLE security_bar_smoke_clean AS SELECT * FROM stg_foundation_smoke WHERE 1=0"
-        )
+        _empty_clean_table(w)
         w.execute("BEGIN")
         res = create_test_write_manager(cm).write(
             _req(report="stub-fail-1"),
@@ -446,9 +440,7 @@ def test_write_ownTransactionFalse_stubFail_doesNotRollbackOuterTxn(tmp_path: Pa
     """
     cm = _setup(tmp_path)
     with cm.writer() as w:
-        w.execute(
-            "CREATE TABLE security_bar_smoke_clean AS SELECT * FROM stg_foundation_smoke WHERE 1=0"
-        )
+        _empty_clean_table(w)
         w.execute("BEGIN")
         w.execute("INSERT INTO stg_foundation_smoke VALUES ('MSFT','2026-06-16',120.0,'qmt','b2')")
         res = create_test_write_manager(cm).write(
@@ -476,20 +468,9 @@ def test_write_ownTransactionFalse_duckdbError_doesNotOpenSecondAuditConnection(
     """
     cm = _setup(tmp_path)
     with cm.writer() as w:
-        w.execute(
-            "CREATE TABLE security_bar_smoke_clean AS SELECT * FROM stg_foundation_smoke WHERE 1=0"
-        )
+        _empty_clean_table(w)
         w.execute("BEGIN")
-        import backend.app.db.write_manager as wm_mod
-
-        original_connect = duckdb.connect
-        connect_calls: list[bool] = []
-
-        def _tracking_connect(path, *args, **kwargs):
-            connect_calls.append(True)
-            return original_connect(path, *args, **kwargs)
-
-        monkeypatch.setattr(wm_mod.duckdb, "connect", _tracking_connect)
+        connect_calls = _patch_connect_calls(monkeypatch)
 
         original_execute = duckdb.DuckDBPyConnection.execute
 

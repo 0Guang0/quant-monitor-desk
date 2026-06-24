@@ -22,6 +22,22 @@ FOUNDATION_TABLES = {
     "stg_foundation_smoke",
 }
 
+ALL_MIGRATION_VERSIONS = frozenset(
+    {
+        "001_foundation",
+        "002_registry_hardening",
+        "003_resource_guard_metrics",
+        "004_ingestion_sources",
+        "005_ingestion_validation",
+        "006_ingestion_sync",
+        "007_sync_constraints_audit",
+        "008_lineage_version_fields",
+        "009_status_check_constraints",
+        "010_lineage_not_null",
+        "011_layer1_tables",
+    }
+)
+
 
 def test_applyMigrations_freshDb_createsFoundationTables() -> None:
     """覆盖范围：空库首次 apply_migrations
@@ -77,19 +93,7 @@ def test_appliedVersions_afterMigration_containsFoundation() -> None:
     """
     con = duckdb.connect(":memory:")
     apply_migrations(con)
-    assert applied_versions(con) == {
-        "001_foundation",
-        "002_registry_hardening",
-        "003_resource_guard_metrics",
-        "004_ingestion_sources",
-        "005_ingestion_validation",
-        "006_ingestion_sync",
-        "007_sync_constraints_audit",
-        "008_lineage_version_fields",
-        "009_status_check_constraints",
-        "010_lineage_not_null",
-        "011_layer1_tables",
-    }
+    assert applied_versions(con) == ALL_MIGRATION_VERSIONS
 
 
 INGESTION_TABLES = frozenset({"source_registry", "fetch_log"})
@@ -118,21 +122,7 @@ def test_appliedVersions_afterMigration_containsIngestion() -> None:
     """
     con = duckdb.connect(":memory:")
     apply_migrations(con)
-    assert applied_versions(con) == frozenset(
-        {
-            "001_foundation",
-            "002_registry_hardening",
-            "003_resource_guard_metrics",
-            "004_ingestion_sources",
-            "005_ingestion_validation",
-            "006_ingestion_sync",
-            "007_sync_constraints_audit",
-            "008_lineage_version_fields",
-            "009_status_check_constraints",
-            "010_lineage_not_null",
-            "011_layer1_tables",
-        }
-    )
+    assert applied_versions(con) == ALL_MIGRATION_VERSIONS
 
 
 def test_applyMigrations_modifiedFile_raisesChecksumError(tmp_path: Path) -> None:
