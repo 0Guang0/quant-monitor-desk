@@ -270,8 +270,6 @@ def test_discoverUnmappedBackendPackages_emptyWhenGraphComplete() -> None:
     验证点：返回 []
     失败含义：未映射包会导致 loop_maintain 持续报错或漏扩图
     """
-    from loop_engineering_common import discover_unmapped_backend_packages
-
     assert discover_unmapped_backend_packages() == []
 
 

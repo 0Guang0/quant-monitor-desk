@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -137,8 +138,6 @@ def test_validateExecuteHandoff_loopTaskRequiresEvidenceIndex(tmp_path: Path) ->
     验证点：errors 含 evidence_index
     失败含义：loop 单轨 handoff 缺口会导致 AC 证据无法机械索引
     """
-    import json
-
     _write_master(tmp_path, ["8.0"])
     _boot_artifacts(tmp_path, steps=["8.0"])
     (tmp_path / "task.json").write_text(

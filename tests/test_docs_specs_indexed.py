@@ -44,7 +44,10 @@ def test_migrationMapCoverage_coversUserInterventionPolicy() -> None:
     """
     errors = check_migration_map_coverage()
     policy = "docs/ops/user_intervention_policy.md"
-    assert policy not in {e.split(":", 1)[-1].strip() for e in errors if "missing from MIGRATION_MAP" in e} or errors == []
+    missing_policy = [
+        e for e in errors if "missing from MIGRATION_MAP" in e and policy in e
+    ]
+    assert not missing_policy, f"missing policy from MIGRATION_MAP: {missing_policy}"
 
 
 def test_migrationMapCoverage_noStaleReferences() -> None:
