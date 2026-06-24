@@ -1,0 +1,44 @@
+{"file": ".trellis/tasks/06-25-round3-real-data-staged-pilot-v3/MASTER.plan.md", "reason": "extract: Execute single source of truth | for: Boot slot 1"}
+{"file": ".trellis/tasks/06-25-round3-real-data-staged-pilot-v3/context_pack.json", "reason": "extract: authority graph routing | for: Boot slot 2"}
+{"file": ".cursor/skills/trellis-execute/SKILL.md", "reason": "extract: Phase 0 boot protocol | for: §9.0 Boot"}
+{"file": ".cursor/rules/ponytail.mdc", "reason": "extract: lazy ladder | for: §0.3a Execute 全程"}
+{"file": ".trellis/tasks/06-25-round3-real-data-staged-pilot-v3/research/integration-ledger.md", "reason": "extract: v3 boot routing map | for: §9.0 Boot / §0.4"}
+{"file": ".trellis/tasks/06-25-round3-real-data-staged-pilot-v3/research/vertical-slices.md", "reason": "extract: R3E-SP3-01..06 | for: §8 顺序"}
+{"file": "docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/R3E_real_data_staged_pilot_v3.md", "reason": "extract: forward 卡 AC/caps | for: AC-SP3-*"}
+{"file": "docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/R3D_model_input_whitelist.md", "reason": "extract: WL 输出路径与 gate | for: AC-SP3-01 / §12"}
+{"file": "docs/implementation_tasks/ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3X_real_data_staged_pilot.md", "reason": "extract: v1 staged evidence baseline | for: §1.6 legacy L02"}
+{"file": "docs/implementation_tasks/ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3Y_real_data_staged_pilot_v2.md", "reason": "extract: v2 模式基线 | for: §1.2 对照"}
+{"file": "docs/implementation_tasks/ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3Y_staged_pilot_v2_execution_addendum.md", "reason": "extract: TDD/ponytail | for: §5 / §11"}
+{"file": "docs/implementation_tasks/ROUND_3_MODELING_LAYERS/018B_production_live_pilot_gate.md", "reason": "extract: sandbox boundary | for: §0 staged-only"}
+{"file": "docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/BATCH_01_MODEL_SOURCE_READINESS/README.md", "reason": "extract: Batch 01 入口 + §2.5/§2.6 摘要 | for: 边界与验收"}
+{"file": "docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/BATCH_01_MODEL_SOURCE_READINESS/BATCH_01_HARDENING_RULES.md", "reason": "extract: §3 授权/registry | for: §0 hardening"}
+{"file": "docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/BATCH_01_MODEL_SOURCE_READINESS/BATCH_01_TASK_CARD_MANIFEST.md", "reason": "extract: C04 依赖 C01 | for: §12 WL"}
+{"file": "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md", "reason": "extract: WriteManager | for: §3.3"}
+{"file": "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md", "reason": "extract: RED-GREEN | for: §5 / §9"}
+{"file": "docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md", "reason": "extract: caps | for: §0 caps"}
+{"file": "docs/implementation_tasks/GLOBAL_TASK_TEMPLATE.md", "reason": "extract: 模板边界 | for: Boot"}
+{"file": "docs/quality/production_live_pilot_policy.md", "reason": "extract: fail-closed staged | for: AC-SP3-06"}
+{"file": "docs/quality/staged_acceptance_policy.md", "reason": "extract: staged 验收 | for: §6"}
+{"file": "docs/quality/prompt14_user_authorization_2026-06-22.md", "reason": "extract: 授权链 | for: live fetch"}
+{"file": "docs/modules/data_validation_and_conflict.md", "reason": "extract: conflict 规则 | for: AC-SP3-05"}
+{"file": "docs/modules/write_manager.md", "reason": "extract: sandbox write | for: §3"}
+{"file": "specs/contracts/source_route_contract.yaml", "reason": "extract: route status | for: route preview"}
+{"file": "specs/contracts/data_quality_rules.yaml", "reason": "extract: validation | for: AC-SP3-02..03"}
+{"file": "specs/contracts/source_conflict_rules.yaml", "reason": "extract: dry-run conflict | for: AC-SP3-05"}
+{"file": "specs/contracts/write_contract.yaml", "reason": "extract: clean write forbidden | for: §3.3"}
+{"file": "specs/contracts/resource_limits.yaml", "reason": "extract: network caps | for: §0"}
+{"file": "specs/datasource_registry/source_registry.yaml", "reason": "extract: source roles | for: proposed delta"}
+{"file": "specs/datasource_registry/source_capabilities.yaml", "reason": "extract: capabilities | for: AC-SP3-04"}
+{"file": "backend/app/ops/staged_pilot.py", "reason": "extract: v2 orchestration | for: §9.1–9.6"}
+{"file": "backend/app/ops/staged_pilot_fetch_ports.py", "reason": "extract: fetch ports | for: §9.2–9.4"}
+{"file": "backend/app/validators/data_quality.py", "reason": "extract: validation rules reuse | for: AC-SP3-02..03"}
+{"file": "backend/app/validators/source_conflict.py", "reason": "extract: conflict dry-run reuse | for: AC-SP3-05"}
+{"file": "backend/app/ops/live_pilot_fetch_ports.py", "reason": "extract: live port adjacency readonly | for: §4 边界"}
+{"file": "docs/AUDIT_DEFERRED_REGISTRY.md", "reason": "extract: AKSHARE-VAL / EM debt rows | for: §0 hardening #4-5"}
+{"file": ".trellis/tasks/archive/2026-06/06-24-round3-real-data-staged-pilot-v2/execute-evidence/pilot_v2_closeout.json", "reason": "extract: v2 closeout 基线 | for: AC-SP3-06 对照"}
+{"file": "tests/test_staged_pilot.py", "reason": "extract: v2 回归 | for: §9.0 / §9.7"}
+{"file": "tests/test_real_data_staged_pilot_v3.py", "reason": "extract: v3 §5.3 用例 | for: §9.1–9.6"}
+{"file": "tests/test_raw_store.py", "reason": "extract: raw store | for: §9.7"}
+{"file": "tests/test_production_live_pilot_policy.py", "reason": "extract: staged policy | for: §6 Tier"}
+{"file": "tests/test_source_route_planner.py", "reason": "extract: route planner | for: §9.7 回归"}
+{"file": "tests/test_source_capabilities.py", "reason": "extract: capabilities | for: §9.7 回归"}

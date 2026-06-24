@@ -1,0 +1,8 @@
+{"file": ".trellis/tasks/06-25-round3-real-data-staged-pilot-v3/AUDIT.plan.md", "reason": "extract: A1–A8 维度矩阵 | for: Audit Boot"}
+{"file": ".trellis/tasks/06-25-round3-real-data-staged-pilot-v3/MASTER.plan.md", "reason": "extract: AC-SP3-* 对照 | for: A5 trace"}
+{"file": "docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/R3E_real_data_staged_pilot_v3.md", "reason": "extract: 任务卡原文 | for: A1 spec"}
+{"file": "docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/BATCH_01_MODEL_SOURCE_READINESS/README.md", "reason": "extract: §8.6 验收 | for: A5"}
+{"file": "docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/BATCH_01_MODEL_SOURCE_READINESS/BATCH_01_HARDENING_RULES.md", "reason": "extract: hardening | for: A3"}
+{"file": "backend/app/ops/staged_pilot.py", "reason": "extract: v3 diff 面 | for: A2/A4"}
+{"file": "tests/test_staged_pilot.py", "reason": "extract: v2 回归 + v3 测计划 §5.3 | for: A8"}
+{"file": "tests/test_production_live_pilot_policy.py", "reason": "extract: policy gate | for: A8 audit-prod-path"}

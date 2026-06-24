@@ -248,6 +248,23 @@ CURATED: dict[str, dict] = {
         "command": "uv run python -m pytest tests/test_staged_pilot.py -q",
         "failure_meaning": "Staged pilot may be misread as production-live readiness.",
     },
+    "tests/test_real_data_staged_pilot_v3.py": {
+        "purpose": "Model-input-whitelist driven staged pilot v3 safety boundaries (B01-SP3)",
+        "type": "policy-contract",
+        "verifies": {
+            "docs": [
+                "docs/quality/production_live_pilot_policy.md",
+                "docs/quality/staged_acceptance_policy.md",
+            ],
+            "specs": [
+                "specs/model_inputs/README.md",
+                "specs/contracts/source_conflict_rules.yaml",
+            ],
+            "rules": ["docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"],
+        },
+        "command": "uv run python -m pytest tests/test_real_data_staged_pilot_v3.py -q",
+        "failure_meaning": "v3 staged pilot may bypass WL caps or claim production-live readiness.",
+    },
     "tests/test_docstring_quadruple_coverage.py": {
         "purpose": "Gate — every test_* carries five-field Chinese docstring per hygiene plan",
         "type": "runtime-contract",

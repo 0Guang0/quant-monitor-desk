@@ -1,0 +1,9 @@
+# B01-SP3 live fetch authorization (user approved 2026-06-24)
+pilot_id: r3e-staged-pilot-v3-20260625
+authorized_on: "2026-06-24"
+authorized_by: user
+scope: staged_only
+production_clean_write: false
+max_network_calls_per_run: 50
+skip_live_fetch_default: true
+notes: Execute may set skip_live_fetch=false only with this file present.
