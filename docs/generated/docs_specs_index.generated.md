@@ -263,6 +263,7 @@ Used with MIGRATION_MAP.md for machine omission checks (`check_docs_specs_indexe
 - `docs/quality/batch275_user_authorization_2026-06-21.md`
 - `docs/quality/coordination/WAVE_C_MAIN_SESSION_COORDINATOR_PLAYBOOK.md`
 - `docs/quality/final_package_rules.md`
+- `docs/quality/model_input_readiness_matrix.md`
 - `docs/quality/production_live_pilot_policy.md`
 - `docs/quality/prompt14_user_authorization_2026-06-22.md`
 - `docs/quality/self_check_and_audit.md`
@@ -332,5 +333,11 @@ Used with MIGRATION_MAP.md for machine omission checks (`check_docs_specs_indexe
 - `specs/layer3_global_industry_chains/layer3_global_industry_chains_v1_2/layer3_data_dictionary.md`
 - `specs/layer3_global_industry_chains/layer3_global_industry_chains_v1_2/layer3_global_industry_chain_registry.yaml`
 - `specs/layer3_global_industry_chains/layer3_global_industry_chains_v1_2/references/source_registry.md`
+- `specs/model_inputs/README.md`
+- `specs/model_inputs/layer1_source_whitelist.yaml`
+- `specs/model_inputs/layer2_source_whitelist.yaml`
+- `specs/model_inputs/layer3_anchor_source_plan.yaml`
+- `specs/model_inputs/layer4_market_source_plan.yaml`
+- `specs/model_inputs/layer5_instrument_source_plan.yaml`
 - `specs/verification/contract_coverage.yaml`
 - `specs/verification/feature_verification_matrix.yaml`

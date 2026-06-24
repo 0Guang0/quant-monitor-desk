@@ -1,0 +1,173 @@
+version: model_input_whitelist_v1
+layer: layer1
+description: >
+  Layer1 macro/risk-axis first-batch model input whitelist.
+  P0 FRED series are sandbox_candidate only; requires user authorization before live fetch.
+  macro_supplementary (akshare) is validation-only and must not substitute FRED primary.
+rows:
+  - input_id: L1-ENV-DGS10
+    layer: layer1
+    business_purpose: ENV-E1-DGS10 10年期名义美债收益率状态锚
+    data_domain: us_macro_series
+    source_id: fred
+    operation: fetch_macro_series
+    role: primary_candidate
+    readiness: sandbox_candidate
+    symbol_or_series: DGS10
+    window_cap: 252d
+    row_cap: 500
+    requires_user_authorization: true
+    allowed_next_gate: raw_staging_pilot
+    forbidden_claims:
+      - production-live ready
+      - macro_supplementary substitute
+    closure_test: B01-FRED sandbox pilot with authorization YAML
+    notes: ENV-E1-DGS10；须用户授权后 live；非 macro_supplementary
+
+  - input_id: L1-ENV-T10Y3M
+    layer: layer1
+    business_purpose: ENV-E1-T10Y3M 收益率曲线斜率形态
+    data_domain: us_macro_series
+    source_id: fred
+    operation: fetch_macro_series
+    role: primary_candidate
+    readiness: sandbox_candidate
+    symbol_or_series: T10Y3M
+    window_cap: 252d
+    row_cap: 500
+    requires_user_authorization: true
+    allowed_next_gate: raw_staging_pilot
+    forbidden_claims:
+      - production-live ready
+    closure_test: B01-FRED sandbox pilot with authorization YAML
+    notes: 收益率曲线利差；P0 macro
+
+  - input_id: L1-RA-VIXCLS
+    layer: layer1
+    business_purpose: RA.R1.VIXCLS 风险轴隐含波动率输入
+    data_domain: us_macro_series
+    source_id: fred
+    operation: fetch_macro_series
+    role: primary_candidate
+    readiness: sandbox_candidate
+    symbol_or_series: VIXCLS
+    window_cap: 60d
+    row_cap: 120
+    requires_user_authorization: true
+    allowed_next_gate: raw_staging_pilot
+    forbidden_claims:
+      - production-live ready
+      - layer2_staged_fixture_counts_as_live
+    closure_test: B01-FRED sandbox pilot；Layer2 L2-VIX 仍为 staged_fixture
+    notes: Layer2 fixture 仍为 staged_fixture/display_only
+
+  - input_id: L1-RA-SP500
+    layer: layer1
+    business_purpose: RA 风险轴 SP500 交叉验证序列
+    data_domain: us_macro_series
+    source_id: fred
+    operation: fetch_macro_series
+    role: primary_candidate
+    readiness: sandbox_candidate
+    symbol_or_series: SP500
+    window_cap: 252d
+    row_cap: 500
+    requires_user_authorization: true
+    allowed_next_gate: raw_staging_pilot
+    forbidden_claims:
+      - production-live ready
+    closure_test: B01-FRED sandbox pilot with authorization YAML
+    notes: 风险轴交叉验证；P0 macro
+
+  - input_id: L1-ENV-DFII10
+    layer: layer1
+    business_purpose: ENV-E2-DFII10 10年期 TIPS 真实收益率
+    data_domain: us_macro_series
+    source_id: fred
+    operation: fetch_macro_series
+    role: primary_candidate
+    readiness: sandbox_candidate
+    symbol_or_series: DFII10
+    window_cap: 252d
+    row_cap: 500
+    requires_user_authorization: true
+    allowed_next_gate: raw_staging_pilot
+    forbidden_claims:
+      - production-live ready
+      - macro_supplementary substitute
+    closure_test: B01-FRED sandbox pilot with authorization YAML
+    notes: 实际利率；非 macro_supplementary
+
+  - input_id: L1-ENV-EFFR
+    layer: layer1
+    business_purpose: ENV-E1-EFFR 有效联邦基金利率
+    data_domain: us_macro_series
+    source_id: fred
+    operation: fetch_macro_series
+    role: deferred
+    readiness: deferred
+    symbol_or_series: EFFR
+    window_cap: 90d
+    row_cap: 200
+    requires_user_authorization: true
+    allowed_next_gate: none
+    forbidden_claims:
+      - production-live ready
+    closure_test: deferred until P1 FRED pilot expands series cap
+    notes: P2 — NYFed primary in spec; FRED validation path deferred to batch 2
+
+  - input_id: L1-ENV-WRESBAL
+    layer: layer1
+    business_purpose: ENV-E0-RESERVE_BALANCES_WRESBAL 准备金余额
+    data_domain: us_macro_series
+    source_id: fred
+    operation: fetch_macro_series
+    role: deferred
+    readiness: deferred
+    symbol_or_series: WRESBAL
+    window_cap: 52w
+    row_cap: 120
+    requires_user_authorization: true
+    allowed_next_gate: none
+    forbidden_claims:
+      - production-live ready
+    closure_test: deferred P2 liquidity module
+    notes: P2 — E0 money quantity; not in P0 macro cap
+
+  - input_id: L1-ENV-M2SL
+    layer: layer1
+    business_purpose: ENV-E0-M2_MONEY_STOCK_SA_MONTHLY M2 货币存量
+    data_domain: us_macro_series
+    source_id: fred
+    operation: fetch_macro_series
+    role: deferred
+    readiness: deferred
+    symbol_or_series: M2SL
+    window_cap: 60m
+    row_cap: 80
+    requires_user_authorization: true
+    allowed_next_gate: none
+    forbidden_claims:
+      - production-live ready
+    closure_test: deferred P2 slow-variable background
+    notes: P2 — monthly slow variable
+
+  - input_id: L1-MACRO-SUPP-VALIDATION
+    layer: layer1
+    business_purpose: macro_supplementary 聚合源对照验证（非 FRED 主路径）
+    data_domain: macro_supplementary
+    source_id: akshare
+    operation: fetch_macro_series
+    role: validation_only
+    readiness: sandbox_candidate
+    symbol_or_series: staged_sample_only
+    window_cap: 30d
+    row_cap: 50
+    requires_user_authorization: false
+    allowed_next_gate: none
+    forbidden_claims:
+      - primary_candidate for FRED P0 series
+      - production-live ready
+      - closes B2.5-O-05
+    closure_test: R3-PROMPT14-AKSHARE-VAL-01 validation-only proof required
+    notes: akshare validation-only；不得替代 DGS10/T10Y3M/VIXCLS/SP500/DFII10 FRED primary

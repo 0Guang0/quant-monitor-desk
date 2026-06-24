@@ -1,0 +1,116 @@
+version: model_input_market_plan_v1
+layer: layer4
+description: >
+  Layer4 market structure source plan. CN_A calendar/breadth first-batch
+  sandbox_candidate aligned to tests/fixtures/layer4_staged_market/manifest.yaml.
+  US/HK/FUT/options default deferred.
+rows:
+  - input_id: L4-CN-A-CALENDAR
+    layer: layer4
+    business_purpose: CN_A 交易日历首批 sandbox 候选
+    data_domain: cn_equity_daily_bar
+    source_id: baostock
+    operation: fetch_daily_bar
+    role: primary_candidate
+    readiness: sandbox_candidate
+    symbol_or_series: CN_A
+    window_cap: 90d
+    row_cap: 120
+    requires_user_authorization: false
+    allowed_next_gate: raw_staging_pilot
+    forbidden_claims:
+      - production-live ready
+      - full-market calendar scan
+    closure_test: layer4_staged_market manifest l4-staged-fetch-cna-001
+    notes: market_id CN_A；对照 manifest source_fetch_ids
+
+  - input_id: L4-CN-A-BREADTH
+    layer: layer4
+    business_purpose: CN_A 市场广度快照首批 sandbox 候选
+    data_domain: cn_equity_daily_bar
+    source_id: baostock
+    operation: fetch_daily_bar
+    role: primary_candidate
+    readiness: sandbox_candidate
+    symbol_or_series: CN_A
+    window_cap: 60d
+    row_cap: 60
+    requires_user_authorization: false
+    allowed_next_gate: raw_staging_pilot
+    forbidden_claims:
+      - production-live ready
+      - full-universe breadth
+    closure_test: staged market breadth evidence with capped symbol set
+    notes: breadth_label 须有界 symbol cap；非全市场
+
+  - input_id: L4-US-DEFERRED
+    layer: layer4
+    business_purpose: US 市场结构输入
+    data_domain: us_equity_daily_bar
+    source_id: none
+    operation: none
+    role: deferred
+    readiness: deferred
+    symbol_or_series: US
+    window_cap: none
+    row_cap: null
+    requires_user_authorization: true
+    allowed_next_gate: none
+    forbidden_claims:
+      - production-live ready
+    closure_test: deferred until US market adapter whitelist expansion
+    notes: US market deferred — 非首批
+
+  - input_id: L4-HK-DEFERRED
+    layer: layer4
+    business_purpose: HK 市场结构输入
+    data_domain: global_asset_reference
+    source_id: none
+    operation: none
+    role: deferred
+    readiness: deferred
+    symbol_or_series: HK
+    window_cap: none
+    row_cap: null
+    requires_user_authorization: true
+    allowed_next_gate: none
+    forbidden_claims:
+      - production-live ready
+    closure_test: deferred HK market routing
+    notes: HK market deferred
+
+  - input_id: L4-FUT-DEFERRED
+    layer: layer4
+    business_purpose: 期货市场结构输入
+    data_domain: global_asset_reference
+    source_id: none
+    operation: none
+    role: deferred
+    readiness: deferred
+    symbol_or_series: FUT
+    window_cap: none
+    row_cap: null
+    requires_user_authorization: true
+    allowed_next_gate: none
+    forbidden_claims:
+      - production-live ready
+    closure_test: deferred futures market structure pilot
+    notes: FUT market deferred
+
+  - input_id: L4-OPTIONS-DEFERRED
+    layer: layer4
+    business_purpose: 期权链市场结构输入
+    data_domain: global_asset_reference
+    source_id: none
+    operation: none
+    role: deferred
+    readiness: deferred
+    symbol_or_series: OPTIONS
+    window_cap: none
+    row_cap: null
+    requires_user_authorization: true
+    allowed_next_gate: none
+    forbidden_claims:
+      - production-live ready
+    closure_test: deferred options chain snapshot pilot
+    notes: OPTIONS market deferred

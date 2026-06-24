@@ -25,10 +25,7 @@ from backend.app.ops.data_health import (
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[1]
 _FIXTURES = _PROJECT_ROOT / "tests" / "fixtures" / "data_health"
-_V2_EVIDENCE = (
-    _PROJECT_ROOT
-    / ".trellis/tasks/archive/2026-06/06-24-round3-real-data-staged-pilot-v2/execute-evidence"
-)
+_V2_EVIDENCE = _FIXTURES / "v2_integration_bundle"
 
 _GOOD_BUNDLE = _FIXTURES / "good_bundle"
 _BAD_BAR_BUNDLE = _FIXTURES / "bad_bar_bundle"

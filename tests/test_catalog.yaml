@@ -415,6 +415,16 @@ tests/test_manifest_protocol.py:
     docs: []
     rules: []
     specs: []
+tests/test_model_input_whitelist.py:
+  command: uv run python -m pytest tests/test_model_input_whitelist.py -q
+  failure_meaning: Regression in test_model_input_whitelist; inspect purpose and linked
+    authorities.
+  purpose: Round 3D — 五层模型输入白名单语义契约测试。
+  type: runtime-contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
 tests/test_module_boundaries.py:
   command: uv run python -m pytest tests/test_module_boundaries.py -q
   failure_meaning: Forbidden module imports may slip through boundary gate.

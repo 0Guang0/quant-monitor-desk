@@ -1,0 +1,4 @@
+WL-02 RED — 2026-06-25
+uv run pytest tests/test_model_input_whitelist.py -k layer2 -q
+FFFF [100%] — missing specs/model_inputs/layer2_source_whitelist.yaml
+CLOSURE: debt-lite slice-incremental; GREEN wl-02-green.txt

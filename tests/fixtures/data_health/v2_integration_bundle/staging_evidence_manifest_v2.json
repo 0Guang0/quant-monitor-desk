@@ -1,0 +1,12 @@
+{
+  "allow_clean_write": false,
+  "generated_at": "2026-06-23T18:11:44Z",
+  "pilot_id": "dh2-v2-integration-fixture",
+  "staged_rows": [
+    {
+      "pilot_request_id": "v2-baostock",
+      "quality_flag": "STAGED",
+      "staged_file_ids": ["f1"]
+    }
+  ]
+}

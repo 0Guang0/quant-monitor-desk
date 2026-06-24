@@ -1,0 +1,3 @@
+WL-01 RED — 2026-06-25
+uv run pytest tests/test_model_input_whitelist.py -k layer1 -q
+FFFF [100%] — missing specs/model_inputs/layer1_source_whitelist.yaml
