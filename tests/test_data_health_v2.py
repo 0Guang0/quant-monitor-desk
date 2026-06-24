@@ -11,6 +11,24 @@ _FIXTURES = _PROJECT_ROOT / "tests" / "fixtures" / "data_health"
 _SERVICE = DataHealthService()
 
 
+def test_dataHealthV2_whitelist_fixture_pass() -> None:
+    """覆盖范围：whitelist fixture PASS 路径
+    测试对象：model_input_whitelist profile + B01-WL fixture YAML
+    目的/目标：evidence 目录含 whitelist fixture 时须 PASS 而非 BLOCKED
+    验证点：overall_status PASS；含 MODEL_INPUT_WHITELIST
+    失败含义：合法 fixture 被当成缺 SSOT
+    """
+    evidence = _FIXTURES / "whitelist"
+    report = _SERVICE.check_evidence_dir(
+        evidence, profile="model_input_whitelist"
+    )
+    assert report.overall_status == "PASS"
+    assert any(
+        c.rule_id == "MODEL_INPUT_WHITELIST" and c.status == "PASS"
+        for c in report.checks
+    )
+
+
 def test_dataHealthV2_whitelist_missing_blocked() -> None:
     """覆盖范围：whitelist profile 缺 SSOT
     测试对象：model_input_whitelist profile
@@ -141,6 +159,24 @@ def test_dataHealthV2_v3CapBreach_fails() -> None:
     assert report.overall_status == "FAIL"
     assert any(
         c.rule_id == "RESOURCE_CAP_BREACH" and c.status == "FAIL"
+        for c in report.checks
+    )
+
+
+def test_dataHealthV2_rollup_outOfBounds_fails() -> None:
+    """覆盖范围：rollup 子 evidence 路径 sandbox
+    测试对象：source_readiness_rollup profile
+    目的/目标：manifest profiles 含项目外相对路径须 FAIL
+    验证点：overall_status FAIL；含 EVIDENCE_PATH_OUT_OF_BOUNDS
+    失败含义：rollup 可读取 PROJECT_ROOT 外目录
+    """
+    evidence = _FIXTURES / "rollup" / "out_of_bounds"
+    report = _SERVICE.check_evidence_dir(
+        evidence, profile="source_readiness_rollup"
+    )
+    assert report.overall_status == "FAIL"
+    assert any(
+        c.rule_id == "EVIDENCE_PATH_OUT_OF_BOUNDS" and c.status == "FAIL"
         for c in report.checks
     )
 

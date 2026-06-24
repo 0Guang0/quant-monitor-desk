@@ -1121,11 +1121,30 @@ def _checks_source_readiness_rollup(evidence_dir: Path) -> list[DataHealthCheckR
     service = DataHealthService()
     for profile_name, rel_path in (rollup.get("profiles") or {}).items():
         sub_dir = PROJECT_ROOT / str(rel_path)
+        if not evidence_dir_within_project(sub_dir):
+            checks.append(
+                _fail_check(
+                    "EVIDENCE_PATH_OUT_OF_BOUNDS",
+                    domain=domain,
+                    message=(
+                        f"rollup profile {profile_name} path outside project: {rel_path}"
+                    ),
+                    evidence_path=str(rel_path),
+                )
+            )
+            continue
         sub_report = service.check_evidence_dir(sub_dir, profile=str(profile_name))
+        rollup_severity = (
+            "INFO"
+            if sub_report.overall_status == "PASS"
+            else "FAIL"
+            if sub_report.overall_status == "FAIL"
+            else "WARN"
+        )
         checks.append(
             DataHealthCheckResult(
                 rule_id=f"ROLLUP_{profile_name}",
-                severity="INFO" if sub_report.overall_status == "PASS" else "WARN",
+                severity=rollup_severity,
                 status=(
                     "PASS"
                     if sub_report.overall_status == "PASS"

@@ -1,0 +1,6 @@
+{
+  "rollup_id": "dh2-oob-path",
+  "profiles": {
+    "fred_sandbox_pilot": ".."
+  }
+}

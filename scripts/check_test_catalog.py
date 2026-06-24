@@ -195,7 +195,7 @@ CURATED: dict[str, dict] = {
         "verifies": {
             "docs": [
                 "docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/R3E_readonly_data_health_v2.md",
-                "docs/quality/coordination/BATCH_01_MAIN_SESSION_COORDINATOR_PLAYBOOK.md",
+                "docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/BATCH_01_MODEL_SOURCE_READINESS/BATCH_01_HARDENING_RULES.md",
             ],
             "specs": [],
             "rules": ["docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"],
