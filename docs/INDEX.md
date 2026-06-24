@@ -104,6 +104,8 @@ Round 3 Batch 2.5 bridge entry: [`018A_layer1_observation_ingestion_bridge.md`](
 
 Round 3 Batch 2.75 pilot entry: [`018B_production_live_pilot_gate.md`](implementation_tasks/ROUND_3_MODELING_LAYERS/018B_production_live_pilot_gate.md).
 
+Forward planning (Round 3D/3E): [`PROJECT_IMPLEMENTATION_ROADMAP.md`](../PROJECT_IMPLEMENTATION_ROADMAP.md) · Batch 01 entry: [`ROUND_3_DATA_PRODUCTION_READINESS/BATCH_01_MODEL_SOURCE_READINESS/README.md`](implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/BATCH_01_MODEL_SOURCE_READINESS/README.md).
+
 Plan-stage inputs for turning original tasks into Trellis frozen plans:
 
 - [TASK_INPUT_CONTEXT_INDEX.md](implementation_tasks/TASK_INPUT_CONTEXT_INDEX.md)

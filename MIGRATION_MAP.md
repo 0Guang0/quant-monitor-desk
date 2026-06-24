@@ -47,6 +47,7 @@
 | `specs/`                             | 契约/定义/spec      | schema、contracts、registry、Layer specs                                                                      | **否：契约依据**     |
 | `MIGRATION_MAP.md`                   | 项目地图            | 跨目录索引、旧口径防恢复、MANIFEST 说明                                                                       | 否                   |
 | `ROUND3_BATCH_IMPLEMENTATION_MAP.md` | Round3 批次计划索引 | Round3 六批次切分、Batch 2.5 bridge、Batch 2.75 live pilot gate、Plan Source Index、DB inspect CLI early 边界 | 否                   |
+| `PROJECT_IMPLEMENTATION_ROADMAP.md`  | 前向实施规划 SSOT   | Round 3D/3E/3F/3G 及后续 Round 的 forward planning；`ROUND3_BATCH_IMPLEMENTATION_MAP.md` 保留历史批次索引     | 否                   |
 | `MANIFEST.json`                      | 发布输出清单        | 修复包文件清单与 hash；不是权威输入                                                                           | 否                   |
 | `README.md`                          | 稳定入口            | 项目简介、边界、启动步骤、关键保护规则                                                                        | 否                   |
 
