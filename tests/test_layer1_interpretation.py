@@ -247,7 +247,7 @@ def _persist_lineage(
     return cm
 
 
-def test_snapshotLineageIncludesAllRequiredFields(migrated_con, tmp_path) -> None:
+def test_snapshotLineageIncludesAllRequiredFields(tmp_path) -> None:
     """覆盖范围：快照来源追溯记录持久化后，必填字段是否齐全
     测试对象：SnapshotLineageBuilder.build 与 Layer1SnapshotWriter.write_lineage
     目的/目标：除重建原因可空外，契约要求的来源追溯字段均须非空
@@ -284,7 +284,7 @@ def test_snapshotLineageIncludesAllRequiredFields(migrated_con, tmp_path) -> Non
         assert row[idx] is not None or field == "rebuild_reason"
 
 
-def test_snapshotLineageContainsSourceHashes(migrated_con, tmp_path) -> None:
+def test_snapshotLineageContainsSourceHashes(tmp_path) -> None:
     """覆盖范围：快照血缘中来源指纹与拉取编号是否正确落库
     测试对象：Layer1SnapshotWriter.write_lineage
     目的/目标：校验报告中的内容指纹与拉取编号必须原样写入血缘表
@@ -377,33 +377,7 @@ def test_layer1Snapshot_writeViaWriteManager(tmp_path: Path) -> None:
     cm = ConnectionManager(db)
     with cm.writer() as con:
         apply_migrations(con)
-        con.execute(
-            """
-            INSERT INTO validation_report (
-                validation_report_id, run_id, data_domain, source_id,
-                status, checked_rows, failed_rows, warning_rows,
-                can_write_clean, needs_manual_review,
-                rule_set_id, rule_version,
-                source_fetch_ids_json, source_content_hashes_json
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            [
-                "vr-layer1-wm",
-                "run-layer1",
-                "layer1_axis_feature",
-                "fixture",
-                "PASSED",
-                1,
-                0,
-                0,
-                True,
-                False,
-                "layer1_v1",
-                "layer1_v1",
-                json.dumps(["fetch-1"]),
-                json.dumps(["hash-abc"]),
-            ],
-        )
+    _insert_validation_report(cm, "vr-layer1-wm")
     engine = AxisFeatureEngine(min_obs_required=3, window_len=10)
     hist = _history("ENV-E1-EFFR", 5)
     feat = engine.compute_features(as_of=AS_OF, observations=[hist[-1]], history=hist)[0]

@@ -1217,8 +1217,6 @@ def test_layer1Observation_fetchFailure_blocksCleanWrite(tmp_path: Path, monkeyp
     验证点：抛出 IngestionCommitBlockedError，原因码 OBSERVATION_MAPPING；观测表仍为 0 行
     失败含义：拉数失败仍入库，脏或空数据会进入正式观测表
     """
-    from datetime import UTC, datetime
-
     from backend.app.datasources.fetch_result import FetchResult
     from backend.app.datasources.service import DataSourceService
     from backend.app.layer1_axes.ingestion import IngestionCommitBlockedError

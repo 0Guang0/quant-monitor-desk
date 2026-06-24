@@ -284,7 +284,9 @@ def test_layer1Lineage_phase0_ddlStoresSerializedFetchIds(migrated_con, tmp_path
     assert "source_fetch_ids" in cols
     assert "source_content_hashes" in cols
     contract = load_yaml(LINEAGE_CONTRACT)
-    assert contract["required_fields"]["source_fetch_ids"] == "list[string]"
+    required = contract["required_fields"]
+    assert required["source_fetch_ids"] == "list[string]"
+    assert required["source_content_hashes"] == "list[string]"
     con.close()
 
 
