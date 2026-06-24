@@ -1,0 +1,13 @@
+{
+  "rollup_id": "dh2-staged-only",
+  "staged_only": true,
+  "profiles": {
+    "fred_sandbox_pilot": "tests/fixtures/data_health/fred_sandbox/complete",
+    "staged_pilot_v3": "tests/fixtures/data_health/staged_pilot_v3/compliant"
+  },
+  "validation_report": {
+    "allow_clean_write": false,
+    "conflict_check": { "status": "DEFERRED" },
+    "production_mutation_proof": { "proof_status": "NOT_TOUCHED" }
+  }
+}

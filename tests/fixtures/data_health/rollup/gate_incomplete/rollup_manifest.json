@@ -1,0 +1,13 @@
+{
+  "rollup_id": "dh2-gate-incomplete",
+  "profiles": {
+    "fred_sandbox_pilot": "tests/fixtures/data_health/fred_sandbox/complete",
+    "staged_pilot_v3": "tests/fixtures/data_health/staged_pilot_v3/compliant"
+  },
+  "safety_evidence": {
+    "role_checks": true,
+    "schema_checks": true,
+    "conflict_summary": false,
+    "no_mutation_proof": false
+  }
+}

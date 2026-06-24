@@ -1,0 +1,10 @@
+{
+  "series_id": "DGS10",
+  "source_id": "fred",
+  "role": "primary",
+  "observations": [{ "date": "2024-01-02", "value": "4.25" }],
+  "source_fetch_id": "fred-fetch-1",
+  "content_hash": "fred-hash-complete",
+  "as_of_timestamp": "2026-06-23T18:00:00Z",
+  "retrieved_at": "2026-06-23T18:00:00Z"
+}

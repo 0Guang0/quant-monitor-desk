@@ -228,7 +228,10 @@ def test_v3_closeout_readiness_matrix(tmp_path: Path) -> None:
     )
 
     capture_akshare_validation_taxonomy_v3(evidence_dir=tmp_path)
-    mutation_proof = write_no_mutation_proof_v3(evidence_dir=tmp_path)
+    missing_db = tmp_path / "missing-production.duckdb"
+    mutation_proof = write_no_mutation_proof_v3(
+        evidence_dir=tmp_path, db_path=missing_db
+    )
     closeout = build_pilot_v3_closeout(
         evidence_dir=tmp_path,
         mutation_proof=mutation_proof,

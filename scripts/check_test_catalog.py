@@ -222,6 +222,21 @@ CURATED: dict[str, dict] = {
         "failure_meaning": "FRED pilot route/fetch/health/closeout broken; B2.5-O-05 evidence gap.",
         "evidence_required": "pytest output",
     },
+    "tests/test_data_health_v2.py": {
+        "purpose": "Read-only data health v2 profiles (B01-DH2): whitelist BLOCKED, FRED/TDX/SP3/rollup/gate",
+        "type": "runtime-contract",
+        "verifies": {
+            "docs": [
+                "docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/R3E_readonly_data_health_v2.md",
+                "docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/BATCH_01_MODEL_SOURCE_READINESS/BATCH_01_HARDENING_RULES.md",
+            ],
+            "specs": [],
+            "rules": ["docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"],
+        },
+        "command": "uv run python -m pytest tests/test_data_health_v2.py -q",
+        "failure_meaning": "v2 profile semantics drifted; missing WL may PASS or production-primary may slip through.",
+        "evidence_required": "pytest output",
+    },
     "tests/test_production_live_pilot_policy.py": {
         "purpose": "Batch 2.75 fail-closed pilot policy documentation",
         "type": "policy-contract",

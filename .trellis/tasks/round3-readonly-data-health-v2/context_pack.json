@@ -1,0 +1,151 @@
+{
+  "task": "round3-readonly-data-health-v2",
+  "modules": ["ops", "core_platform"],
+  "source_authorities": [
+    {
+      "type": "design",
+      "path": "docs/modules/ops_and_performance.md",
+      "reason": "ops design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/ops/verification_commands.md",
+      "reason": "ops design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/ops/performance_limits.md",
+      "reason": "ops design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/quality/production_live_pilot_policy.md",
+      "reason": "ops design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/quality/BATCH3_STAGED_DOWNSTREAM_GATE.md",
+      "reason": "ops design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/ROUND3_HANDOFF.md",
+      "reason": "ops design authority"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/ops_health_check_contract.yaml",
+      "reason": "ops contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/ops_db_inspect_contract.yaml",
+      "reason": "ops contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/review_sandbox_contract.yaml",
+      "reason": "ops contract"
+    },
+    {
+      "type": "policy",
+      "path": "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md",
+      "reason": "ops rule"
+    },
+    {
+      "type": "policy",
+      "path": "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md",
+      "reason": "ops rule"
+    },
+    {
+      "type": "task-card",
+      "path": "docs/implementation_tasks/ROUND_3_REFERENCE_LANDING/R3D_018C_live_manual_probe_plan.md",
+      "reason": "ops implementation task"
+    },
+    {
+      "type": "design",
+      "path": "docs/modules/local_file_system.md",
+      "reason": "core_platform design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/architecture/module_boundary_matrix.md",
+      "reason": "core_platform design authority"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/resource_limits.yaml",
+      "reason": "core_platform contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/snapshot_lineage_contract.yaml",
+      "reason": "core_platform contract"
+    }
+  ],
+  "tests": [
+    {
+      "path": "tests/test_staged_pilot.py",
+      "purpose": "Staged pilot sandbox boundaries; does not open production-live"
+    },
+    {
+      "path": "tests/test_ops_db_inspector.py",
+      "purpose": "Ops DB inspector tests (Round 3 Batch 1)."
+    },
+    {
+      "path": "tests/test_ops_interface_probe.py",
+      "purpose": "Ops interface_probe + mutation_proof wiring tests (OP-06)."
+    },
+    {
+      "path": "tests/test_interface_probe_018c.py",
+      "purpose": "018C low-cost data-interface probe tests."
+    },
+    {
+      "path": "tests/test_production_gate.py",
+      "purpose": "ADV-A5-002: production_gate.py smoke tests."
+    },
+    {
+      "path": "tests/test_round3_verification_command_matrix.py",
+      "purpose": "Round 3 verification command matrix — doc index and gate-test discoverability."
+    },
+    {
+      "path": "tests/test_round3_audit_registry_alignment.py",
+      "purpose": "Round 3 Batch 2.5 / Batch 2.75 audit follow-up 文档对齐测试。"
+    },
+    {
+      "path": "tests/test_unresolved_item_task_coverage.py",
+      "purpose": "确保未闭合项不会在 Plan 阶段因只读原始任务卡而遗漏。"
+    },
+    {
+      "path": "tests/test_batch3_staged_downstream_gate.py",
+      "purpose": "确保 Batch 3 只能 staged-only，不得被误读为 production-live readiness"
+    },
+    {
+      "path": "tests/test_resource_guard.py",
+      "purpose": "ResourceGuard HARD_STOP and metrics contract"
+    },
+    {
+      "path": "tests/test_path_compat.py",
+      "purpose": "Tests for Windows long-path compatibility helpers."
+    },
+    {
+      "path": "tests/test_raw_store.py",
+      "purpose": "Raw Store and file_registry tests (Round 1 task 009)."
+    },
+    {
+      "path": "tests/test_data_health_v2.py",
+      "purpose": "Tests for read-only data health v2 Batch 01 profiles (B01-DH2)."
+    },
+    {
+      "path": "tests/test_ops_data_health.py",
+      "purpose": "Tests for read-only ops data health (C-20)."
+    }
+  ],
+  "forbidden_claims": ["production-live ready", "live production ingestion"],
+  "required_evidence": [
+    "context_pack.json",
+    "loop_manifest.json",
+    "evidence_index.json",
+    "audit_matrix.json"
+  ]
+}
