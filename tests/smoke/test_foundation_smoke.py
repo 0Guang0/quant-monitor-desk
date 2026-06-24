@@ -39,6 +39,7 @@ def test_foundation_endToEnd_writesCleanAndAudits(tmp_path: Path, monkeypatch) -
     assert FOUNDATION_TABLES.issubset(tables)
 
     cm = ConnectionManager(db)
+    wm = create_test_write_manager(cm)
 
     guard_warn = ResourceGuard(profile="eco", con=duckdb.connect(str(db)))
     monkeypatch.setattr(
@@ -61,11 +62,7 @@ def test_foundation_endToEnd_writesCleanAndAudits(tmp_path: Path, monkeypatch) -
     assert decision == Decision.OK
 
     store = RawStore(tmp_path)
-    reg = FileRegistry(
-        cm,
-        create_test_write_manager(cm),
-        validation_report_id="stub-pass-registry",
-    )
+    reg = FileRegistry(cm, wm, validation_report_id="stub-pass-registry")
     saved = store.save(
         b"raw-bytes", source="qmt", data_domain="daily_bar", file_type="json", as_of="2026-06-15"
     )
@@ -81,7 +78,7 @@ def test_foundation_endToEnd_writesCleanAndAudits(tmp_path: Path, monkeypatch) -
         w.execute(
             "CREATE TABLE security_bar_smoke_clean AS SELECT * FROM stg_foundation_smoke WHERE 1=0"
         )
-    ok = create_test_write_manager(cm).write(
+    ok = wm.write(
         WriteRequest(
             run_id="r1",
             job_id="j1",
@@ -109,7 +106,7 @@ def test_foundation_endToEnd_writesCleanAndAudits(tmp_path: Path, monkeypatch) -
             == "SUCCESS"
         )
 
-    bad = create_test_write_manager(cm).write(
+    bad = wm.write(
         WriteRequest(
             run_id="r2",
             job_id="j2",
