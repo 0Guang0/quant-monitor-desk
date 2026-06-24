@@ -8,6 +8,8 @@ from pathlib import Path
 
 import duckdb
 import pytest
+from backend.app.core.resource_guard import Decision, ResourceGuard
+from backend.app.datasources.fetch_result import FetchResult
 from backend.app.datasources.source_registry import SourceRegistry
 from backend.app.db.connection import ConnectionManager
 from backend.app.db.migrate import apply_migrations
@@ -22,6 +24,7 @@ from tests.test_batch_d_orchestration_flow import (
     _incremental_spec,
     _orch_stack,
 )
+from tests.test_sync_orchestrator import _BackfillCountAdapter
 
 
 def _migrated_cm(tmp_path: Path) -> ConnectionManager:
@@ -30,6 +33,46 @@ def _migrated_cm(tmp_path: Path) -> ConnectionManager:
     with cm.writer() as con:
         apply_migrations(con)
     return cm
+
+
+def _patch_guard_ok(monkeypatch) -> None:
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+
+
+def _insert_open_conflict(
+    con,
+    conflict_id: str,
+    *,
+    primary_value: str = "100",
+    competing_value: str = "200",
+    normalized_diff: float = 1.0,
+) -> None:
+    con.execute(
+        """
+        INSERT INTO source_conflict (
+            conflict_id, run_id, job_id, data_domain, field_name,
+            primary_source, primary_value, competing_source, competing_value,
+            normalized_diff, severity, reconcile_status, manual_review_required,
+            created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        [
+            conflict_id,
+            "run-rc",
+            "job-rc",
+            "market_bar_1d",
+            "close",
+            "baostock",
+            primary_value,
+            "qmt_xtdata",
+            competing_value,
+            normalized_diff,
+            "severe",
+            "OPEN",
+            False,
+            datetime.now(UTC),
+        ],
+    )
 
 
 def test_validationReport_persistsRuleVersionAndFetchLineage(
@@ -41,9 +84,7 @@ def test_validationReport_persistsRuleVersionAndFetchLineage(
     验证点：rule_set_id/rule_version=p0_round_1；fetch_ids 为非空列表
     失败含义：校验报告无法追溯到具体 fetch，审计链断裂
     """
-    from backend.app.core.resource_guard import Decision, ResourceGuard
-
-    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    _patch_guard_ok(monkeypatch)
     orch, adapter = _orch_stack(tmp_path, registry_yaml_fixture)
     result = orch.run_incremental(
         _incremental_spec("job-lineage"),
@@ -79,15 +120,13 @@ def test_sourceConflict_persistsToleranceRuleVersion(
     验证点：两字段均为 p0_round_1
     失败含义：冲突无法关联当时生效的容忍规则，复核无依据
     """
-    from backend.app.core.resource_guard import Decision, ResourceGuard
-
     class SevereConflictAdapter(BatchDIncrementalAdapter):
         _conflict_peer_rows = (
             ("baostock", "AAPL", "2026-06-15", 100.0),
             ("qmt_xtdata", "AAPL", "2026-06-15", 150.0),
         )
 
-    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    _patch_guard_ok(monkeypatch)
     orch, _ = _orch_stack(tmp_path, registry_yaml_fixture)
     reg = SourceRegistry(registry_yaml_fixture)
     reg.load()
@@ -158,10 +197,7 @@ def test_backfillShard_successPath_validatesAndWritesClean(tmp_path: Path, monke
     验证点：至少一片 COMPLETED；clean 与 report 行数 ≥1
     失败含义：backfill 主路径不通，历史数据无法补齐
     """
-    from backend.app.core.resource_guard import Decision, ResourceGuard
-    from tests.test_sync_orchestrator import _BackfillCountAdapter
-
-    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    _patch_guard_ok(monkeypatch)
     cm = _migrated_cm(tmp_path)
     orch = DataSyncOrchestrator(cm)
     spec = SyncJobSpec(
@@ -202,8 +238,6 @@ def test_runReconcile_refetchStillDiff_entersManualReview(tmp_path: Path) -> Non
     验证点：result.status == MANUAL_REVIEW_REQUIRED
     失败含义：无法自动解决的冲突被误标完成，数据争议未上报
     """
-    from backend.app.datasources.fetch_result import FetchResult
-
     class StillDiffAdapter:
         source_id = "baostock"
 
@@ -244,32 +278,7 @@ def test_runReconcile_refetchStillDiff_entersManualReview(tmp_path: Path) -> Non
     orch = DataSyncOrchestrator(_migrated_cm(tmp_path))
     conflict_id = "conflict-refetch-diff"
     with orch._cm.writer() as con:
-        con.execute(
-            """
-            INSERT INTO source_conflict (
-                conflict_id, run_id, job_id, data_domain, field_name,
-                primary_source, primary_value, competing_source, competing_value,
-                normalized_diff, severity, reconcile_status, manual_review_required,
-                created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            [
-                conflict_id,
-                "run-rc",
-                "job-rc",
-                "market_bar_1d",
-                "close",
-                "baostock",
-                "100",
-                "qmt_xtdata",
-                "200",
-                1.0,
-                "severe",
-                "OPEN",
-                False,
-                datetime.now(UTC),
-            ],
-        )
+        _insert_open_conflict(con, conflict_id)
     result = orch.run_reconcile(conflict_id, adapter=StillDiffAdapter())
     assert result.status == "MANUAL_REVIEW_REQUIRED"
 
@@ -281,8 +290,6 @@ def test_runReconcile_refetchMatches_resolvesByRefetch(tmp_path: Path) -> None:
     验证点：result.status=COMPLETED；source_conflict.reconcile_status=RESOLVED_BY_REFETCH
     失败含义：可自动消解的冲突仍挂起，人工队列膨胀
     """
-    from backend.app.datasources.fetch_result import FetchResult
-
     class MatchAdapter:
         source_id = "baostock"
 
@@ -323,31 +330,8 @@ def test_runReconcile_refetchMatches_resolvesByRefetch(tmp_path: Path) -> None:
     orch = DataSyncOrchestrator(_migrated_cm(tmp_path))
     conflict_id = "conflict-refetch-match"
     with orch._cm.writer() as con:
-        con.execute(
-            """
-            INSERT INTO source_conflict (
-                conflict_id, run_id, job_id, data_domain, field_name,
-                primary_source, primary_value, competing_source, competing_value,
-                normalized_diff, severity, reconcile_status, manual_review_required,
-                created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            [
-                conflict_id,
-                "run-rc",
-                "job-rc",
-                "market_bar_1d",
-                "close",
-                "baostock",
-                "100",
-                "qmt_xtdata",
-                "100",
-                0.0,
-                "severe",
-                "OPEN",
-                False,
-                datetime.now(UTC),
-            ],
+        _insert_open_conflict(
+            con, conflict_id, primary_value="100", competing_value="100", normalized_diff=0.0
         )
     result = orch.run_reconcile(conflict_id, adapter=MatchAdapter())
     assert result.status == "COMPLETED"
@@ -366,9 +350,7 @@ def test_jobEventLog_payloadSchema_isMachineReadable(tmp_path: Path, monkeypatch
     验证点：每条非空 payload 解析为 dict 且含 schema 键之一
     失败含义：事件 payload 不可机器解析，编排可观测性丧失
     """
-    from backend.app.core.resource_guard import Decision, ResourceGuard
-
-    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    _patch_guard_ok(monkeypatch)
     orch, adapter = _orch_stack(tmp_path, Path("tests/fixtures/source_registry_valid.yaml"))
     orch.run_incremental(
         _incremental_spec("job-payload"),
@@ -399,10 +381,7 @@ def test_partialSuccess_eachItemWritesAuditEvent(tmp_path: Path, monkeypatch) ->
     验证点：events ≥3；每条 payload 含 task_id 或 decision
     失败含义：分片级进度不可追溯，长跑 backfill 黑盒
     """
-    from backend.app.core.resource_guard import Decision, ResourceGuard
-    from tests.test_sync_orchestrator import _BackfillCountAdapter
-
-    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    _patch_guard_ok(monkeypatch)
     orch = DataSyncOrchestrator(_migrated_cm(tmp_path))
     spec = SyncJobSpec(
         run_id="run-partial",
@@ -529,8 +508,6 @@ def test_runReconcile_refetchFails_entersManualReview(tmp_path: Path) -> None:
     验证点：result.status == MANUAL_REVIEW_REQUIRED
     失败含义：网络失败被忽略，冲突长期处于 OPEN
     """
-    from backend.app.datasources.fetch_result import FetchResult
-
     class FailFetchAdapter:
         source_id = "baostock"
 
@@ -549,32 +526,7 @@ def test_runReconcile_refetchFails_entersManualReview(tmp_path: Path) -> None:
     orch = DataSyncOrchestrator(_migrated_cm(tmp_path))
     conflict_id = "conflict-refetch-fail"
     with orch._cm.writer() as con:
-        con.execute(
-            """
-            INSERT INTO source_conflict (
-                conflict_id, run_id, job_id, data_domain, field_name,
-                primary_source, primary_value, competing_source, competing_value,
-                normalized_diff, severity, reconcile_status, manual_review_required,
-                created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            [
-                conflict_id,
-                "run-rc",
-                "job-rc",
-                "market_bar_1d",
-                "close",
-                "baostock",
-                "100",
-                "qmt_xtdata",
-                "200",
-                1.0,
-                "severe",
-                "OPEN",
-                False,
-                datetime.now(UTC),
-            ],
-        )
+        _insert_open_conflict(con, conflict_id)
     result = orch.run_reconcile(conflict_id, adapter=FailFetchAdapter())
     assert result.status == "MANUAL_REVIEW_REQUIRED"
 
@@ -601,9 +553,7 @@ def test_incrementalJob_emitsItemSuccessEvent(
     验证点：存在 ITEM_SUCCESS 行且 payload_json 非空
     失败含义：单项成功无事件，编排进度不可观测
     """
-    from backend.app.core.resource_guard import Decision, ResourceGuard
-
-    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    _patch_guard_ok(monkeypatch)
     orch, adapter = _orch_stack(tmp_path, registry_yaml_fixture)
     orch.run_incremental(
         _incremental_spec("job-item-success"),
@@ -629,12 +579,7 @@ def test_backfill_requiresCleanTable(tmp_path: Path, monkeypatch) -> None:
     验证点：省略 clean_table 抛出 TypeError
     失败含义：backfill 可能写到错误表或静默失败
     """
-    from datetime import date
-
-    from backend.app.core.resource_guard import Decision, ResourceGuard
-    from tests.test_sync_orchestrator import _BackfillCountAdapter
-
-    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    _patch_guard_ok(monkeypatch)
     orch = DataSyncOrchestrator(_migrated_cm(tmp_path))
     spec = SyncJobSpec(
         run_id="run-req",

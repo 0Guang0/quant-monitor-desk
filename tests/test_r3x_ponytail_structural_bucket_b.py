@@ -9,9 +9,15 @@ from __future__ import annotations
 import inspect
 from pathlib import Path
 
+import duckdb
 import pytest
 
 from backend.app.core.snapshot_lineage import LINEAGE_REQUIRED_FIELDS, parameter_hash_for
+from tests.db_helpers import create_test_write_manager
+
+_REPO_ROOT = Path(__file__).resolve().parents[1]
+_OPS_DIR = _REPO_ROOT / "backend/app/ops"
+_LAYER1_DIR = _REPO_ROOT / "backend/app/layer1_axes"
 
 
 def test_snapshot_lineage_kernel_exports_contract_fields():
@@ -32,11 +38,9 @@ def test_write_manager_rejects_unimplemented_contract_modes(tmp_path):
     验证点：抛出 ValueError 且消息含 not implemented yet
     失败含义：未实现写模式被误用，clean 表写入语义不明
     """
-    import duckdb
     from backend.app.db.connection import ConnectionManager
     from backend.app.db.migrate import apply_migrations
     from backend.app.db.write_manager import WriteRequest
-    from tests.db_helpers import create_test_write_manager
 
     db = tmp_path / "wm.duckdb"
     con = duckdb.connect(str(db))
@@ -83,7 +87,7 @@ def test_live_pilot_modules_under_loc_cap():
     验证点：多数模块 ≤300 行；phase3 ≤400；phase4 ≤480
     失败含义：门面模块再次臃肿，后续维护与审查成本失控
     """
-    ops = Path(__file__).resolve().parents[1] / "backend/app/ops"
+    ops = _OPS_DIR
     for name in (
         "live_pilot_auth.py",
         "live_pilot_phase1.py",
@@ -133,7 +137,7 @@ def test_l1_06_inventory_lives_under_ops():
     验证点：文件存在且体积 >1000 字节
     失败含义：evidence 与运行时逻辑仍耦合在同一包
     """
-    inv = Path(__file__).resolve().parents[1] / "backend/app/ops/layer1_evidence/inventory.py"
+    inv = _OPS_DIR / "layer1_evidence/inventory.py"
     assert inv.is_file()
     assert inv.stat().st_size > 1000
 
@@ -148,7 +152,7 @@ def test_l1_07_formatters_split_under_ops():
     from backend.app.ops.layer1_evidence import formatters
 
     assert hasattr(formatters, "format_phase2_route_preview_md")
-    evidence = Path(__file__).resolve().parents[1] / "backend/app/layer1_axes/ingestion_evidence.py"
+    evidence = _LAYER1_DIR / "ingestion_evidence.py"
     assert len(evidence.read_text(encoding="utf-8").splitlines()) <= 520
 
 

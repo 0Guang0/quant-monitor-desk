@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from pathlib import Path
 from unittest.mock import patch
 
@@ -22,6 +23,37 @@ def _cm(tmp_path: Path) -> ConnectionManager:
     with cm.writer() as con:
         apply_migrations(con)
     return cm
+
+
+def _market_bar_quality(
+    con,
+    *,
+    run_id: str,
+    job_id: str,
+    staging_table: str,
+):
+    return DataQualityValidator().validate_table(
+        con,
+        DataQualityRequest(
+            run_id=run_id,
+            job_id=job_id,
+            data_domain="market_bar_1d",
+            source_id="qmt_xtdata",
+            staging_table=staging_table,
+            primary_keys=("instrument_id", "trade_date"),
+            required_fields=("close", "source_used"),
+            rule_set_id="p0_round_1",
+        ),
+        expected_columns=(
+            "instrument_id",
+            "trade_date",
+            "close",
+            "source_used",
+            "batch_id",
+            "source_id",
+        ),
+        timestamp_fields=("trade_date",),
+    )
 
 
 def test_writeManager_defaultTransaction_withDbValidationGate_succeeds(tmp_path: Path) -> None:
@@ -49,27 +81,8 @@ def test_writeManager_defaultTransaction_withDbValidationGate_succeeds(tmp_path:
             )
             """
         )
-        quality = DataQualityValidator().validate_table(
-            con,
-            DataQualityRequest(
-                run_id="run-audit",
-                job_id="job-audit",
-                data_domain="market_bar_1d",
-                source_id="qmt_xtdata",
-                staging_table="stg_audit",
-                primary_keys=("instrument_id", "trade_date"),
-                required_fields=("close", "source_used"),
-                rule_set_id="p0_round_1",
-            ),
-            expected_columns=(
-                "instrument_id",
-                "trade_date",
-                "close",
-                "source_used",
-                "batch_id",
-                "source_id",
-            ),
-            timestamp_fields=("trade_date",),
+        quality = _market_bar_quality(
+            con, run_id="run-audit", job_id="job-audit", staging_table="stg_audit"
         )
         result = WriteManager(cm, DbValidationGate(cm)).write(
             WriteRequest(
@@ -121,27 +134,11 @@ def test_writeManager_ownTransactionDefault_withDbValidationGate_succeeds(tmp_pa
             )
             """
         )
-        quality = DataQualityValidator().validate_table(
+        quality = _market_bar_quality(
             con,
-            DataQualityRequest(
-                run_id="run-audit-default",
-                job_id="job-audit-default",
-                data_domain="market_bar_1d",
-                source_id="qmt_xtdata",
-                staging_table="stg_audit_default",
-                primary_keys=("instrument_id", "trade_date"),
-                required_fields=("close", "source_used"),
-                rule_set_id="p0_round_1",
-            ),
-            expected_columns=(
-                "instrument_id",
-                "trade_date",
-                "close",
-                "source_used",
-                "batch_id",
-                "source_id",
-            ),
-            timestamp_fields=("trade_date",),
+            run_id="run-audit-default",
+            job_id="job-audit-default",
+            staging_table="stg_audit_default",
         )
         report_id = quality.validation_report_id
 
@@ -247,8 +244,6 @@ def test_resourceGuard_largeCacheDir_completesWithinReasonableTime(tmp_path: Pat
     验证点：decision 在 OK/WARN/PAUSE/HARD_STOP；elapsed < 5s
     失败含义：cache 扫描过慢阻塞同步编排，或决策枚举异常
     """
-    import time
-
     cache = tmp_path / "data" / "cache" / "many_files"
     cache.mkdir(parents=True)
     for i in range(500):
