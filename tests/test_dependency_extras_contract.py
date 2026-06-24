@@ -24,17 +24,19 @@ def _load_contract() -> dict:
     return yaml.safe_load(EXTRAS_CONTRACT.read_text(encoding="utf-8")) or {}
 
 
+def _pyproject_text() -> str:
+    return PYPROJECT.read_text(encoding="utf-8")
+
+
 def _default_dependencies_text() -> str:
-    text = PYPROJECT.read_text(encoding="utf-8")
-    match = re.search(r"dependencies\s*=\s*\[(.*?)\]", text, re.DOTALL)
+    match = re.search(r"dependencies\s*=\s*\[(.*?)\]", _pyproject_text(), re.DOTALL)
     assert match, "pyproject.toml must declare [project] dependencies"
     return match.group(1)
 
 
 def _optional_extra_block(extra_name: str) -> str:
-    text = PYPROJECT.read_text(encoding="utf-8")
     pattern = rf"{extra_name}\s*=\s*\[(.*?)\]"
-    match = re.search(pattern, text, re.DOTALL)
+    match = re.search(pattern, _pyproject_text(), re.DOTALL)
     return match.group(1).lower() if match else ""
 
 

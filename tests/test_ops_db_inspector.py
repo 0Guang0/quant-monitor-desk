@@ -16,6 +16,8 @@ from backend.app.ops.db_inspector import (
     DbInspector,
 )
 
+_PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
 
 def _init_db(db_path: Path) -> None:
     con = duckdb.connect(str(db_path))
@@ -43,6 +45,22 @@ def _seed_evidence(db_path: Path) -> None:
             """,
             ["job-1", "run-1", "backfill", "COMPLETED"],
         )
+
+
+def _write_files(directory: Path, count: int, *, prefix: str = "file", suffix: str = ".txt") -> None:
+    directory.mkdir(parents=True, exist_ok=True)
+    for i in range(count):
+        (directory / f"{prefix}-{i}{suffix}").write_text("x", encoding="utf-8")
+
+
+def _run_qmd_db_inspect_cli(*args: str) -> subprocess.CompletedProcess[str]:
+    cmd = [sys.executable, str(_PROJECT_ROOT / "scripts" / "qmd_ops.py"), "db-inspect", *args]
+    return subprocess.run(cmd, capture_output=True, text=True, check=False, cwd=_PROJECT_ROOT)
+
+
+def _parse_cli_json(result: subprocess.CompletedProcess[str]) -> dict:
+    assert result.returncode == 0, result.stderr
+    return json.loads(result.stdout)
 
 
 def test_dbInspect_missingDb_returnsFail(tmp_path: Path) -> None:
@@ -202,10 +220,7 @@ def test_dbInspect_limit_hardCapsAtContractMaximum(tmp_path: Path) -> None:
     db = tmp_path / "t.duckdb"
     _init_db(db)
     data_root = tmp_path / "data"
-    raw_dir = data_root / "raw"
-    raw_dir.mkdir(parents=True)
-    for i in range(110):
-        (raw_dir / f"sample-{i}.csv").write_text("x", encoding="utf-8")
+    _write_files(data_root / "raw", 110, prefix="sample", suffix=".csv")
 
     report = DbInspector(db, data_root, limit=500).inspect()
     assert report.data_root["raw_files_count"] == 100
@@ -257,10 +272,7 @@ def test_dbInspect_subdirScan_respectsLimit(tmp_path: Path, subdir: str, count_k
     db = tmp_path / "t.duckdb"
     _init_db(db)
     data_root = tmp_path / "data"
-    target = data_root / subdir
-    target.mkdir(parents=True)
-    for i in range(110):
-        (target / f"file-{i}.txt").write_text("x", encoding="utf-8")
+    _write_files(data_root / subdir, 110)
 
     report = DbInspector(db, data_root, limit=500).inspect()
     assert report.data_root[count_key] == 100
@@ -286,10 +298,7 @@ def test_dbInspect_subdirScan_limitFloorClampsToOne(tmp_path: Path, subdir: str,
     db = tmp_path / "t.duckdb"
     _init_db(db)
     data_root = tmp_path / "data"
-    target = data_root / subdir
-    target.mkdir(parents=True)
-    for i in range(5):
-        (target / f"file-{i}.txt").write_text("x", encoding="utf-8")
+    _write_files(data_root / subdir, 5)
 
     report = DbInspector(db, data_root, limit=0).inspect()
     assert report.data_root[count_key] == 1
@@ -317,28 +326,20 @@ def test_qmdOps_cli_subdirScan_respectsContractLimit(
     db = tmp_path / "t.duckdb"
     _init_db(db)
     data_root = tmp_path / "data"
-    target = data_root / subdir
-    target.mkdir(parents=True)
-    for i in range(110):
-        (target / f"file-{i}.txt").write_text("x", encoding="utf-8")
+    _write_files(data_root / subdir, 110)
 
-    project_root = Path(__file__).resolve().parents[1]
-    cmd = [
-        sys.executable,
-        str(project_root / "scripts" / "qmd_ops.py"),
-        "db-inspect",
-        "--db",
-        str(db),
-        "--data-root",
-        str(data_root),
-        "--limit",
-        "500",
-        "--format",
-        "json",
-    ]
-    result = subprocess.run(cmd, capture_output=True, text=True, check=False, cwd=project_root)
-    assert result.returncode == 0, result.stderr
-    payload = json.loads(result.stdout)
+    payload = _parse_cli_json(
+        _run_qmd_db_inspect_cli(
+            "--db",
+            str(db),
+            "--data-root",
+            str(data_root),
+            "--limit",
+            "500",
+            "--format",
+            "json",
+        )
+    )
     assert payload["data_root"][count_key] == 100
     assert payload["data_root"]["scan_limited"] is True
 
@@ -369,10 +370,7 @@ def test_dbInspect_limit_floorClampsToMinimumOne(tmp_path: Path) -> None:
     db = tmp_path / "t.duckdb"
     _init_db(db)
     data_root = tmp_path / "data"
-    raw_dir = data_root / "raw"
-    raw_dir.mkdir(parents=True)
-    for i in range(5):
-        (raw_dir / f"sample-{i}.csv").write_text("x", encoding="utf-8")
+    _write_files(data_root / "raw", 5, prefix="sample", suffix=".csv")
 
     report = DbInspector(db, data_root, limit=0).inspect()
     assert report.data_root["raw_files_count"] == 1
@@ -389,33 +387,25 @@ def test_qmdOps_cli_limitHardCapsAtContractMaximum(tmp_path: Path) -> None:
     db = tmp_path / "t.duckdb"
     _init_db(db)
     data_root = tmp_path / "data"
-    raw_dir = data_root / "raw"
-    raw_dir.mkdir(parents=True)
-    for i in range(110):
-        (raw_dir / f"sample-{i}.csv").write_text("x", encoding="utf-8")
+    _write_files(data_root / "raw", 110, prefix="sample", suffix=".csv")
 
-    project_root = Path(__file__).resolve().parents[1]
-    cmd = [
-        sys.executable,
-        str(project_root / "scripts" / "qmd_ops.py"),
-        "db-inspect",
-        "--db",
-        str(db),
-        "--data-root",
-        str(data_root),
-        "--limit",
-        "500",
-        "--format",
-        "json",
-    ]
-    result = subprocess.run(cmd, capture_output=True, text=True, check=False, cwd=project_root)
-    assert result.returncode == 0, result.stderr
-    payload = json.loads(result.stdout)
+    payload = _parse_cli_json(
+        _run_qmd_db_inspect_cli(
+            "--db",
+            str(db),
+            "--data-root",
+            str(data_root),
+            "--limit",
+            "500",
+            "--format",
+            "json",
+        )
+    )
     assert payload["data_root"]["raw_files_count"] == 100
     assert payload["data_root"]["scan_limited"] is True
 
 
-def test_qmdOps_cli_invokesSameInspector(tmp_path: Path, monkeypatch) -> None:
+def test_qmdOps_cli_invokesSameInspector(tmp_path: Path) -> None:
     """覆盖范围：CLI 与 DbInspector 输出一致性
     测试对象：qmd_ops db-inspect JSON
     目的/目标：命令行巡检应产出与库内 inspect 同形的只读报告
@@ -426,21 +416,16 @@ def test_qmdOps_cli_invokesSameInspector(tmp_path: Path, monkeypatch) -> None:
     _init_db(db)
     data_root = tmp_path / "data"
     data_root.mkdir()
-    project_root = Path(__file__).resolve().parents[1]
-    cmd = [
-        sys.executable,
-        str(project_root / "scripts" / "qmd_ops.py"),
-        "db-inspect",
-        "--db",
-        str(db),
-        "--data-root",
-        str(data_root),
-        "--format",
-        "json",
-    ]
-    result = subprocess.run(cmd, capture_output=True, text=True, check=False, cwd=project_root)
-    assert result.returncode == 0, result.stderr
-    payload = json.loads(result.stdout)
+    payload = _parse_cli_json(
+        _run_qmd_db_inspect_cli(
+            "--db",
+            str(db),
+            "--data-root",
+            str(data_root),
+            "--format",
+            "json",
+        )
+    )
     assert payload["mode"] == "read_only"
     assert payload["db"]["read_only_open"] is True
     assert "deferred_item_mapping" in payload
@@ -471,40 +456,25 @@ def test_dbInspect_symlinkOutsideDataRoot_notCounted(tmp_path: Path) -> None:
     assert report.data_root["raw_files_count"] == 0
 
 
-def test_qmdOps_cli_rejectsForbiddenSqlFlag(tmp_path: Path) -> None:
+def test_qmdOps_cli_rejectsForbiddenSqlFlag() -> None:
     """覆盖范围：CLI 禁止 --sql 旁路
     测试对象：qmd_ops db-inspect --sql
     目的/目标：只读巡检不得接受任意 SQL 执行参数
     验证点：returncode != 0
     失败含义：运维 CLI 可执行任意 SQL，只读承诺被破坏
     """
-    project_root = Path(__file__).resolve().parents[1]
-    cmd = [
-        sys.executable,
-        str(project_root / "scripts" / "qmd_ops.py"),
-        "db-inspect",
-        "--sql",
-        "SELECT 1",
-    ]
-    result = subprocess.run(cmd, capture_output=True, text=True, check=False, cwd=project_root)
+    result = _run_qmd_db_inspect_cli("--sql", "SELECT 1")
     assert result.returncode != 0
 
 
-def test_qmdOps_cli_rejectsForbiddenEnableQmtFlag(tmp_path: Path) -> None:
+def test_qmdOps_cli_rejectsForbiddenEnableQmtFlag() -> None:
     """覆盖范围：CLI 禁止 --enable-qmt
     测试对象：qmd_ops db-inspect --enable-qmt
     目的/目标：db-inspect 不得携带启用 QMT 的旁路开关
     验证点：returncode != 0
     失败含义：巡检命令可意外拉起重型 QMT 依赖，违背 extras 策略
     """
-    project_root = Path(__file__).resolve().parents[1]
-    cmd = [
-        sys.executable,
-        str(project_root / "scripts" / "qmd_ops.py"),
-        "db-inspect",
-        "--enable-qmt",
-    ]
-    result = subprocess.run(cmd, capture_output=True, text=True, check=False, cwd=project_root)
+    result = _run_qmd_db_inspect_cli("--enable-qmt")
     assert result.returncode != 0
 
 
@@ -539,19 +509,14 @@ def test_qmdOps_cli_jsonRoundTripsStrictly(tmp_path: Path) -> None:
     _init_db(db)
     data_root = tmp_path / "data"
     data_root.mkdir()
-    project_root = Path(__file__).resolve().parents[1]
-    cmd = [
-        sys.executable,
-        str(project_root / "scripts" / "qmd_ops.py"),
-        "db-inspect",
-        "--db",
-        str(db),
-        "--data-root",
-        str(data_root),
-        "--format",
-        "json",
-    ]
-    result = subprocess.run(cmd, capture_output=True, text=True, check=False, cwd=project_root)
-    assert result.returncode == 0, result.stderr
-    payload = json.loads(result.stdout)
+    payload = _parse_cli_json(
+        _run_qmd_db_inspect_cli(
+            "--db",
+            str(db),
+            "--data-root",
+            str(data_root),
+            "--format",
+            "json",
+        )
+    )
     json.dumps(payload)
