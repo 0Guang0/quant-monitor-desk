@@ -1,0 +1,2 @@
+RED: uv run pytest -q
+status: FAIL (stub before GREEN)

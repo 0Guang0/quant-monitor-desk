@@ -1,0 +1,44 @@
+# B01-FRED proposed registry delta (主会话 merge Track A #3)
+# Do not commit source_registry.yaml directly from this branch without coordinator merge gate.
+
+source_registry_additions:
+  source_id: fred
+  enabled_by_default: false
+  source_type: vendor_api
+  license_type: public_official
+  allowed_domains:
+    - macro_series
+  notes: B01-FRED sandbox-candidate; disabled-by-default; not production-live.
+
+domain_roles_additions:
+  macro_series:
+    primary: fred
+    domain_enabled_by_default: false
+    disabled_until_configured: true
+    expected_error_before_user_setup: DISABLED_SOURCE
+
+source_capabilities_additions:
+  fred:
+    status: sandbox_candidate
+    domains:
+      macro_series:
+        operations:
+          fetch_macro_series:
+            enabled_by_default: false
+            production_default: false
+            pilot_only: true
+            requires_auth: true
+            api_key_env: FRED_API_KEY
+
+platform_source_matrix_additions:
+  fred:
+    default_enabled: false
+    requires_user_confirmation: true
+
+p0_series_whitelist:
+  - DGS10
+  - T10Y3M
+  - VIXCLS
+  - SP500
+  - DFII10
+  ssot_fallback: specs/layer1_axes/restructured_axes_v1_1/** (WL 未合并只读)

@@ -1,0 +1,2 @@
+GREEN: uv run pytest tests/test_fred_staged_semantics.py tests/test_fred_sandbox_pilot.py -k Closeout or macroSupplementary -v
+status: PASS

@@ -1,0 +1,57 @@
+{
+  "task": "round3-fred-authorized-sandbox-pilot",
+  "dimensions": {
+    "A1": {
+      "result": "pass",
+      "evidence": "research/audit-evidence/a1.md",
+      "agent": "audit-a1-spec"
+    },
+    "A2": {
+      "result": "pass",
+      "evidence": "research/audit-evidence/a2.md",
+      "agent": "audit-a2-ponytail"
+    },
+    "A3": {
+      "result": "pass",
+      "evidence": "research/audit-evidence/a3.md",
+      "agent": "security-auditor"
+    },
+    "A4": {
+      "result": "pass",
+      "evidence": "research/audit-evidence/a4.md",
+      "agent": "code-reviewer"
+    },
+    "A5": {
+      "result": "pass",
+      "evidence": "research/audit-evidence/a5.md",
+      "agent": "audit-a5-completion"
+    },
+    "A6": {
+      "result": "skip",
+      "evidence": "research/audit-evidence/a6.md",
+      "agent": "performance-engineer",
+      "note": "AUDIT.plan §2.2 — sandbox pilot; maintained SKIP"
+    },
+    "A7": {
+      "result": "pass",
+      "evidence": "research/audit-evidence/a7.md",
+      "agent": "database-administrator"
+    },
+    "A8": {
+      "result": "pass_after_repair",
+      "evidence": "research/audit-evidence/a8.md",
+      "agent": "qa-expert",
+      "repair": ["AA-FRED-A8-01", "AA-FRED-A8-03"]
+    }
+  },
+  "orthogonal_checks": {
+    "spec_scope": "pass",
+    "security": "pass",
+    "test_gap": "pass_after_repair",
+    "prod_hash": "pass",
+    "repair_verification": "repair-evidence/final_repair_verification.md"
+  },
+  "final": "PASS",
+  "open_blocking": 0,
+  "open_total": 0
+}

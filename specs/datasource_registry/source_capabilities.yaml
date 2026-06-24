@@ -155,6 +155,28 @@ sources:
             fields: [instrument_id, name, asset_class, currency, exchange, source_used]
             requires_auth: false
             enabled_by_default: false
+  fred:
+    status: sandbox_candidate
+    domains:
+      macro_series:
+        operations:
+          fetch_macro_series:
+            frequency: daily_or_monthly
+            fields:
+              - series_id
+              - observation_date
+              - value
+              - source_fetch_id
+              - content_hash
+              - as_of_timestamp
+              - retrieved_at
+              - source_used
+            requires_auth: true
+            enabled_by_default: false
+            production_default: false
+            pilot_only: true
+            api_key_env: FRED_API_KEY
+            notes: "FRED-only sandbox pilot; does not close B2.5-O-05 via macro_supplementary."
   tdx_pytdx:
     status: proposed_disabled_source
     domains:

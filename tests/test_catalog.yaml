@@ -249,6 +249,34 @@ tests/test_duckdb_connection.py:
     docs: []
     rules: []
     specs: []
+tests/test_fred_sandbox_pilot.py:
+  command: uv run python -m pytest tests/test_fred_sandbox_pilot.py -q
+  evidence_required: pytest output
+  failure_meaning: FRED pilot route/fetch/health/closeout broken; B2.5-O-05 evidence
+    gap.
+  purpose: FRED-only sandbox pilot orchestration (B01-FRED FRED-02..07)
+  type: runtime-contract
+  verifies:
+    docs:
+    - docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/R3E_fred_authorized_sandbox_pilot.md
+    rules:
+    - docs/quality/production_live_pilot_policy.md
+    specs:
+    - specs/contracts/datasource_service_contract.yaml
+tests/test_fred_source_registry.py:
+  command: uv run python -m pytest tests/test_fred_source_registry.py -q
+  evidence_required: pytest output
+  failure_meaning: FRED registry row missing or production-live; unauthorized FRED
+    routing risk.
+  purpose: FRED sandbox/disabled-by-default registry guard (B01-FRED FRED-01)
+  type: policy-contract
+  verifies:
+    docs: []
+    rules:
+    - docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/BATCH_01_MODEL_SOURCE_READINESS/BATCH_01_HARDENING_RULES.md
+    specs:
+    - specs/datasource_registry/source_registry.yaml
+    - specs/datasource_registry/source_capabilities.yaml
 tests/test_fred_staged_semantics.py:
   command: uv run python -m pytest tests/test_fred_staged_semantics.py -q
   evidence_required: pytest output

@@ -1,0 +1,2 @@
+RED: uv run pytest tests/test_fred_sandbox_pilot.py::test_fredRoutePreview_whitelistedSeries_sandboxOnly -v
+status: FAIL (stub before GREEN)

@@ -27,6 +27,10 @@ platforms:
     tdx_pytdx:
       available_if_user_configured: true
       default_enabled: false
+    fred:
+      available_if_user_configured: true
+      default_enabled: false
+      requires_user_confirmation: true
   macos:
     qmt_xtdata:
       available_if_user_configured: false
@@ -51,6 +55,10 @@ platforms:
     tdx_pytdx:
       available_if_user_configured: true
       default_enabled: false
+    fred:
+      available_if_user_configured: true
+      default_enabled: false
+      requires_user_confirmation: true
   linux:
     qmt_xtdata:
       available_if_user_configured: false
@@ -75,6 +83,10 @@ platforms:
     tdx_pytdx:
       available_if_user_configured: true
       default_enabled: false
+    fred:
+      available_if_user_configured: true
+      default_enabled: false
+      requires_user_confirmation: true
 rules:
   - qmt_xtdata on non-Windows is not schedulable by default
   - qmt_xqshare is never auto-probed and cannot become schedulable without env and explicit user authorization

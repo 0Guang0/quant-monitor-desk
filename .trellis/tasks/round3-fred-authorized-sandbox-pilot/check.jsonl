@@ -1,0 +1,4 @@
+{"file": ".trellis/tasks/round3-fred-authorized-sandbox-pilot/AUDIT.plan.md", "reason": "A1 spec scope baseline"}
+{"file": "docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/R3E_fred_authorized_sandbox_pilot.md", "reason": "A1 original task card trace"}
+{"file": "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md", "reason": "A8 testing policy"}
+{"file": "docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/BATCH_01_MODEL_SOURCE_READINESS/BATCH_01_ADVERSARIAL_AUDIT.md", "reason": "A1 vertical slice rule"}
