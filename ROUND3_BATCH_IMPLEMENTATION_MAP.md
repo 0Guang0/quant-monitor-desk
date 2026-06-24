@@ -101,7 +101,7 @@ Hard constraint (all waves): `R3-B2.75-REQ2-EM` **DEFERRED** — staged-only; no
 
 ### 2.2 Worktree creation checklist — **ACTIVE: Wave C** (four-way parallel)
 
-**Baseline:** `master` @ `68b10982` · **Coordinator:** main session · **Integration gate:** `integration/round3` (optional) or direct PR to `master`.
+**Baseline:** `master` @ `68b10982` · **Coordinator:** main session · **Playbook:** `WAVE_C_MAIN_SESSION_COORDINATOR_PLAYBOOK.md` · **Integration gate:** `integration/round3` (optional) or direct PR to `master`.
 
 **Bootstrap (per slice; run from repo parent):**
 
