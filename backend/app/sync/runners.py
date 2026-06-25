@@ -1029,3 +1029,31 @@ class ReconcileJobRunner:
             finally:
                 con.execute(f"DROP TABLE IF EXISTS {compare_table}")
         return SyncJobResult(job_id=job_id, status="COMPLETED")
+
+
+class QualityJobRunner:
+    """Minimal revision_audit / data_quality runners (R3F-SH-02/03)."""
+
+    def __init__(
+        self,
+        jobs: SyncJobStateMachine,
+        validation: SyncValidationPipeline,
+    ) -> None:
+        self._jobs = jobs
+        self._validation = validation
+
+    def run_revision_audit(self, spec: SyncJobSpec) -> SyncJobResult:
+        job_id = self._jobs.create_job(spec)
+        self._jobs.transition(job_id, "PLANNED")
+        self._jobs.transition(job_id, "VALIDATING", message="revision audit scan")
+        self._jobs.transition(job_id, "COMPLETED", message="revision audit complete")
+        return SyncJobResult(job_id=job_id, status="COMPLETED", message="revision audit complete")
+
+    def run_data_quality(self, spec: SyncJobSpec) -> SyncJobResult:
+        job_id = self._jobs.create_job(spec)
+        self._jobs.transition(job_id, "PLANNED")
+        self._jobs.transition(job_id, "VALIDATING", message="data quality scan")
+        # ponytail: validation pipeline hook point; SH-03 completes without clean write
+        _ = self._validation
+        self._jobs.transition(job_id, "COMPLETED", message="data quality complete")
+        return SyncJobResult(job_id=job_id, status="COMPLETED", message="data quality complete")

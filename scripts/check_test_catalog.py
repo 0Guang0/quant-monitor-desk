@@ -222,6 +222,71 @@ CURATED: dict[str, dict] = {
         "failure_meaning": "FRED pilot route/fetch/health/closeout broken; B2.5-O-05 evidence gap.",
         "evidence_required": "pytest output",
     },
+    "tests/test_source_health_snapshot.py": {
+        "purpose": "Batch 3F B3F-SH source_health_snapshot writer and rollup persist (R3F-SH-01/04)",
+        "type": "runtime-contract",
+        "verifies": {
+            "docs": [
+                "docs/decisions/ADR-024-source-health-snapshot-boundary.md",
+                "docs/modules/data_sources.md",
+            ],
+            "specs": [],
+            "rules": [
+                "docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/BATCH_3F_HARDENING_RULES.md",
+            ],
+        },
+        "command": "uv run python -m pytest tests/test_source_health_snapshot.py -q",
+        "failure_meaning": "Snapshot writer or rollup persist broken; Batch6 source health tracking fails.",
+        "evidence_required": "pytest output",
+    },
+    "tests/test_b3f_quality_runners.py": {
+        "purpose": "Batch 3F quality runners — revision_audit and data_quality non-defer (R3F-SH-02/03)",
+        "type": "runtime-contract",
+        "verifies": {
+            "docs": [
+                "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/014_implement_data_sync_orchestrator.md",
+            ],
+            "specs": ["specs/contracts/sync_job_contract.yaml"],
+            "rules": [],
+        },
+        "command": "uv run python -m pytest tests/test_b3f_quality_runners.py -q",
+        "failure_meaning": "Quality runners still defer; Batch6 job matrix not closed.",
+        "evidence_required": "pytest output",
+    },
+    "tests/test_fred_live_primary_closeout.py": {
+        "purpose": "FRED live primary authorization fail-closed gate (R3F-SH-06)",
+        "type": "policy-contract",
+        "verifies": {
+            "docs": [
+                "docs/quality/batch3f_fred_live_pilot_authorization_2026-06-25.md",
+                "docs/quality/production_live_pilot_policy.md",
+            ],
+            "specs": ["specs/contracts/datasource_service_contract.yaml"],
+            "rules": [
+                "docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/BATCH_3F_HARDENING_RULES.md",
+            ],
+        },
+        "command": "uv run python -m pytest tests/test_fred_live_primary_closeout.py -q",
+        "failure_meaning": "Unauthorized FRED live path may open; violates Batch 3F hardening.",
+        "evidence_required": "pytest output",
+    },
+    "tests/test_b3f_sh_hard_constraints.py": {
+        "purpose": "Batch 3F AkShare/Eastmoney no-false-close registry guard (R3F-SH-07)",
+        "type": "policy-contract",
+        "verifies": {
+            "docs": [
+                "docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/BATCH_3F_HARDENING_RULES.md",
+            ],
+            "specs": [
+                "specs/datasource_registry/source_registry.yaml",
+                "specs/datasource_registry/source_capabilities.yaml",
+            ],
+            "rules": ["docs/UNRESOLVED_ISSUES_REGISTRY.md"],
+        },
+        "command": "uv run python -m pytest tests/test_b3f_sh_hard_constraints.py -q",
+        "failure_meaning": "Sidecar evidence may falsely close AkShare/EM validation rows.",
+        "evidence_required": "pytest output",
+    },
     "tests/test_data_health_v2.py": {
         "purpose": "Read-only data health v2 profiles (B01-DH2): whitelist BLOCKED, FRED/TDX/SP3/rollup/gate",
         "type": "runtime-contract",

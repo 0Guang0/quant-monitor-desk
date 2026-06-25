@@ -37,6 +37,7 @@ Used with MIGRATION_MAP.md for machine omission checks (`check_docs_specs_indexe
 - `docs/decisions/ADR-001-ingestion-validation-write-transaction-boundary.md`
 - `docs/decisions/ADR-002-db-check-vs-app-validation.md`
 - `docs/decisions/ADR-003-implementation-path-mapping.md`
+- `docs/decisions/ADR-024-source-health-snapshot-boundary.md`
 - `docs/decisions/README.md`
 - `docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md`
 - `docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md`
@@ -294,6 +295,7 @@ Used with MIGRATION_MAP.md for machine omission checks (`check_docs_specs_indexe
 - `docs/quality/audit_evidence/round3_batch25/临时报告/ROUND3_BATCH25_AUDIT_AGENT_08_PERFORMANCE.md`
 - `docs/quality/audit_evidence/round3_batch25/临时报告/ROUND3_BATCH25_AUDIT_AGENT_09_DATABASE.md`
 - `docs/quality/batch275_user_authorization_2026-06-21.md`
+- `docs/quality/batch3f_fred_live_pilot_authorization_2026-06-25.md`
 - `docs/quality/coordination/BATCH_01_MAIN_SESSION_COORDINATOR_PLAYBOOK.md`
 - `docs/quality/coordination/BATCH_01_PLAYBOOK_ADVERSARIAL_AUDIT.report.md`
 - `docs/quality/coordination/BATCH_01_ZERO_OPEN_CLOSURE_POLICY.md`

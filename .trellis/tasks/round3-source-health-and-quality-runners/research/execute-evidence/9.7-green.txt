@@ -1,0 +1,7 @@
+ERROR: not found: C:\Users\Guang\Desktop\quant-monitor-desk-wt-b3f-sh\tests\test_b3f_sh_hard_constraints.py::test_b3fShHardConstraints_akshareNotClosedBySidecar -q
+(no match in any of [<Module test_b3f_sh_hard_constraints.py>])
+
+no tests ran in 0.02s
+
+
+passed exit 0

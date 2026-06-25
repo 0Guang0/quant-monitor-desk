@@ -5,10 +5,10 @@ implemented_job_types:
   - incremental
   - backfill
   - reconcile
-reserved_job_types:
-  - full_load
   - data_quality
   - revision_audit
+reserved_job_types:
+  - full_load
 deferred_error:
   code: DEFERRED_JOB_TYPE
   owner: Round3F

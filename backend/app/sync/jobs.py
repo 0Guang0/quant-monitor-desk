@@ -228,6 +228,7 @@ class SyncJobResult:
 
 _JOB_TYPE_TRANSITION_EXTRAS: dict[str, dict[str, frozenset[str]]] = {
     "data_quality": {("PLANNED",): frozenset({"VALIDATING"})},
+    "revision_audit": {("PLANNED",): frozenset({"VALIDATING"})},
     "backfill": {
         ("STAGED",): frozenset({"PLANNED", "COMPLETED"}),
         ("WRITING",): frozenset({"PLANNED", "COMPLETED"}),

@@ -1,0 +1,22 @@
+{
+  "id": "round3-source-health-and-quality-runners",
+  "name": "round3-source-health-and-quality-runners",
+  "title": "B3F-SH: Source Health & Quality Runners",
+  "description": "Batch 3F.3 — source_health_snapshot writer, data quality runners, readiness rollup, FRED live primary tracking (R3F-SH-01..07).",
+  "status": "in_progress",
+  "dev_type": "feature",
+  "scope": "batch3f_source_health",
+  "branch": "feature/round3-source-health-and-quality-runners",
+  "base_branch": "master",
+  "worktree_path": "../quant-monitor-desk-wt-b3f-sh",
+  "meta": {
+    "task_track": "complex",
+    "manifest_protocol_version": "3",
+    "context_bridge_version": "1",
+    "playbook_id": "B3F-SH",
+    "model": "composer-2.5"
+  },
+  "predecessor_tasks": [
+    "round3-readonly-data-health-v2"
+  ]
+}

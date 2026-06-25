@@ -365,8 +365,8 @@ def test_advA3_016_orchestratorDeferredRunners(tmp_path) -> None:
         partition_key=None,
         trigger_reason=None,
     )
-    with pytest.raises(DeferredJobTypeError, match="run_data_quality"):
-        orch.run_data_quality(dq_spec)
+    dq_result = orch.run_data_quality(dq_spec)
+    assert dq_result.status == "COMPLETED"
     ra_spec = SyncJobSpec(
         run_id="r",
         job_id="j-ra",
@@ -381,8 +381,8 @@ def test_advA3_016_orchestratorDeferredRunners(tmp_path) -> None:
         partition_key=None,
         trigger_reason=None,
     )
-    with pytest.raises(DeferredJobTypeError, match="run_revision_audit"):
-        orch.run_revision_audit(ra_spec)
+    ra_result = orch.run_revision_audit(ra_spec)
+    assert ra_result.status == "COMPLETED"
 
 
 def test_advA1_012_minStagingRowsEnforced(tmp_path) -> None:

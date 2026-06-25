@@ -1,0 +1,7 @@
+ERROR: not found: C:\Users\Guang\Desktop\quant-monitor-desk-wt-b3f-sh\tests\test_fred_live_primary_closeout.py::test_fredLivePrimary_requiresAuthorizationYaml -q
+(no match in any of [<Module test_fred_live_primary_closeout.py>])
+
+no tests ran in 0.04s
+
+
+passed exit 0

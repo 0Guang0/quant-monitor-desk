@@ -1300,38 +1300,30 @@ def test_syncJob_reservedFullLoad_returnsDeferredJobTypeError(tmp_path) -> None:
     _assert_deferred_job_type_error(exc_info, job_type="full_load")
 
 
-def test_syncJob_reservedDataQuality_returnsDeferredJobTypeError(tmp_path) -> None:
-    """覆盖范围：reserved data_quality 返回稳定 deferred 错误（VR-SYNC-002 / SYNC-03）
+def test_syncJob_reservedDataQuality_completesJob(tmp_path) -> None:
+    """覆盖范围：data_quality runner 已实现（R3F-SH-03 / VR-SYNC-002 更新）
     测试对象：DataSyncOrchestrator.run_data_quality
-    目的/目标：独立质检 job 未实现时须抛 DeferredJobTypeError
-    验证点：code=DEFERRED_JOB_TYPE；docs_anchor 含 D2-P1-1
-    失败含义：质检入口泄漏 NIE 或空操作，生产 job 无效果
+    目的/目标：独立质检 job 可完成且状态为 COMPLETED
+    验证点：result.status == COMPLETED
+    失败含义：质检入口仍 defer 或空操作，Batch6 job 矩阵未闭包
     """
-    import pytest
-
-    from backend.app.sync.contract import DeferredJobTypeError
-
     orch = _orchestrator(tmp_path)
-    with pytest.raises(DeferredJobTypeError) as exc_info:
-        orch.run_data_quality(_reserved_job_spec("data_quality"))
-    _assert_deferred_job_type_error(exc_info, job_type="data_quality")
+    result = orch.run_data_quality(_reserved_job_spec("data_quality", job_id="job-dq-orch"))
+    assert result.status == "COMPLETED"
 
 
-def test_syncJob_reservedRevisionAudit_returnsDeferredJobTypeError(tmp_path) -> None:
-    """覆盖范围：reserved revision_audit 返回稳定 deferred 错误（VR-SYNC-002 / SYNC-03）
+def test_syncJob_reservedRevisionAudit_completesJob(tmp_path) -> None:
+    """覆盖范围：revision_audit runner 已实现（R3F-SH-02 / VR-SYNC-002 更新）
     测试对象：DataSyncOrchestrator.run_revision_audit
-    目的/目标：修订审计 runner 未实现时须有显式 deferred 薄入口
-    验证点：code=DEFERRED_JOB_TYPE；docs_anchor 含 D2-P1-1
-    失败含义：revision_audit 无入口或抛 NIE，状态机可达但无法安全调用
+    目的/目标：修订审计 runner 可完成且状态为 COMPLETED
+    验证点：result.status == COMPLETED
+    失败含义：revision_audit 仍 defer，状态机可达但无法安全调用
     """
-    import pytest
-
-    from backend.app.sync.contract import DeferredJobTypeError
-
     orch = _orchestrator(tmp_path)
-    with pytest.raises(DeferredJobTypeError) as exc_info:
-        orch.run_revision_audit(_reserved_job_spec("revision_audit"))
-    _assert_deferred_job_type_error(exc_info, job_type="revision_audit")
+    result = orch.run_revision_audit(
+        _reserved_job_spec("revision_audit", job_id="job-rev-orch")
+    )
+    assert result.status == "COMPLETED"
 
 
 def test_syncJob_incremental_crashWindow_leavesWritingWithWriteId(tmp_path, monkeypatch) -> None:

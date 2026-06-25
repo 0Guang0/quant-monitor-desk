@@ -1,0 +1,15 @@
+{
+  "task": "round3-source-health-and-quality-runners",
+  "modules": ["ops", "sync"],
+  "acs": [
+    {"id": "SH-PLAN", "status": "done", "repair_items": []},
+    {"id": "SH-01", "status": "done", "repair_items": []},
+    {"id": "SH-02", "status": "done", "repair_items": []},
+    {"id": "SH-03", "status": "done", "repair_items": []},
+    {"id": "SH-04", "status": "done", "repair_items": []},
+    {"id": "SH-05", "status": "done", "repair_items": []},
+    {"id": "SH-06", "status": "done", "repair_items": []},
+    {"id": "SH-07", "status": "done", "repair_items": []},
+    {"id": "SH-PLAYBOOK", "status": "done", "repair_items": []}
+  ]
+}

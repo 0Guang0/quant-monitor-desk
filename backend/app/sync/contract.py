@@ -12,11 +12,9 @@ DEFERRED_PHASE = "R3F-SH-*"
 DOCS_ANCHOR_D2_P1_1 = "D2-P1-1"
 
 IMPLEMENTED_JOB_TYPES: frozenset[str] = frozenset(
-    {"incremental", "backfill", "reconcile"}
+    {"incremental", "backfill", "reconcile", "data_quality", "revision_audit"}
 )
-RESERVED_JOB_TYPES: frozenset[str] = frozenset(
-    {"full_load", "data_quality", "revision_audit"}
-)
+RESERVED_JOB_TYPES: frozenset[str] = frozenset({"full_load"})
 
 _CONTRACT_PATH = (
     Path(__file__).resolve().parents[3] / "specs" / "contracts" / "sync_job_contract.yaml"

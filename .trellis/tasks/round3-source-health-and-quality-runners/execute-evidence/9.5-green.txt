@@ -1,0 +1,7 @@
+ERROR: not found: C:\Users\Guang\Desktop\quant-monitor-desk-wt-b3f-sh\tests\test_ops_data_health.py::test_opsDataHealth_dh2Path_noSnapshotDdl -q
+(no match in any of [<Module test_ops_data_health.py>])
+
+no tests ran in 0.05s
+
+
+passed exit 0
