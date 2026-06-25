@@ -14,6 +14,14 @@ AUTH_PATH = "docs/quality/prompt14_user_authorization_2026-06-22.md"
 SANDBOX_ROOT = PROJECT_ROOT / ".audit-sandbox/r3x-staged-pilot-test"
 
 
+@pytest.fixture(autouse=True)
+def _stagedPilot_resourceGuardOk(monkeypatch: pytest.MonkeyPatch) -> None:
+    """ponytail: staged pilot 测路由/证据链，不测宿主机内存；与 test_vendor_fetch_e2e 同模式。"""
+    from backend.app.core.resource_guard import Decision, ResourceGuard
+
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+
+
 def _approved_baostock_request():
     from backend.app.ops.staged_pilot import StagedPilotRequest
 
