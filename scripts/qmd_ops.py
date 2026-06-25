@@ -48,7 +48,18 @@ def main(argv: list[str] | None = None) -> int:
         help="Resource profile for ConnectionManager",
     )
 
+    data_parser = sub.add_parser("data", help="Data sync CLI (dry-run / route-preview)")
+    data_parser.add_argument("rest", nargs=argparse.REMAINDER)
+
     args = parser.parse_args(argv)
+    if args.command == "data":
+        from backend.app.cli.main import main as data_main
+
+        rest = list(args.rest or [])
+        if rest and rest[0] == "--":
+            rest = rest[1:]
+        return data_main(["data", *rest])
+
     if args.command != "db-inspect":
         parser.error(f"unsupported command: {args.command}")
 

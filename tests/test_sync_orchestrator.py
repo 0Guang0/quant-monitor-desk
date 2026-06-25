@@ -695,16 +695,16 @@ def test_syncRegistry_cli_syncsYamlToDb(tmp_path, registry_yaml_fixture, monkeyp
     """
     import os
     import subprocess
-    import sys
 
     data_root = tmp_path / "data"
     data_root.mkdir()
     (data_root / "duckdb").mkdir()
     monkeypatch.setenv("QMD_DATA_ROOT", str(data_root))
+    project_root = Path(__file__).resolve().parents[1]
     env = os.environ.copy()
     proc = subprocess.run(
-        [sys.executable, "scripts/sync_registry.py", "--yaml", str(registry_yaml_fixture)],
-        cwd=str(Path(__file__).resolve().parents[1]),
+        ["uv", "run", "qmd-sync-registry", "--yaml", str(registry_yaml_fixture)],
+        cwd=str(project_root),
         env=env,
         capture_output=True,
         text=True,

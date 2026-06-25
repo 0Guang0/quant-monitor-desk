@@ -264,15 +264,20 @@
     "ops": {
       "implementation": [
         "backend/app/ops/**",
+        "backend/app/cli/**",
         "scripts/run_staged_pilot.py",
         "scripts/production_gate.py",
         "scripts/check_doc_links.py",
-        "scripts/production_equivalent_smoke.py"
+        "scripts/production_equivalent_smoke.py",
+        "scripts/init_db.py",
+        "scripts/sync_registry.py",
+        "scripts/qmd_ops.py"
       ],
       "docs": [
         "docs/modules/ops_and_performance.md",
         "docs/ops/verification_commands.md",
         "docs/ops/performance_limits.md",
+        "docs/ops/staging_data_e2e_runbook.md",
         "docs/quality/production_live_pilot_policy.md",
         "docs/quality/BATCH3_STAGED_DOWNSTREAM_GATE.md",
         "docs/ROUND3_HANDOFF.md"
@@ -331,6 +336,11 @@
           "path": "tests/test_batch3_staged_downstream_gate.py",
           "purpose": "确保 Batch 3 只能 staged-only，不得被误读为 production-live readiness",
           "command": "uv run python -m pytest tests/test_batch3_staged_downstream_gate.py -q"
+        },
+        {
+          "path": "tests/test_qmd_data_cli.py",
+          "purpose": "B3F-CLI — qmd data CLI, packaging, init_db --sync-registry (R3F-CLI-01..05).",
+          "command": "uv run python -m pytest tests/test_qmd_data_cli.py -q"
         }
       ],
       "forbidden_claims": [

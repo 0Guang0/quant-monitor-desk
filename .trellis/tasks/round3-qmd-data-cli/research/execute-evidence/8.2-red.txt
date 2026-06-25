@@ -1,0 +1,1 @@
+FAILED import qmd-data console script - no project.scripts entry

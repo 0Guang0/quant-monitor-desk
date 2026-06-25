@@ -1,0 +1,8 @@
+FAILED init_db missing --sync-registry flag
+R2-GAP-1 still DEFERRED
+
+$ uv run pytest tests/test_qmd_data_cli.py::test_initDb_syncRegistry_oneLiner -v --tb=short
+============================= test session starts =============================
+collected 0 items / 1 error
+ERROR tests/test_qmd_data_cli.py - ModuleNotFoundError: init_db --sync-registry not implemented
+exit=1

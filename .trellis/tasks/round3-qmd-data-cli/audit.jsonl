@@ -1,0 +1,4 @@
+{"file": ".trellis/tasks/round3-qmd-data-cli/AUDIT.plan.md", "reason": "extract: Audit SSOT | for: A1-A8 boot"}
+{"file": "docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/BATCH_3F_COORDINATOR_PLAYBOOK.md", "reason": "extract: §3.4 §8.3 PASS commands | for: A1/A5/A7"}
+{"file": "specs/contracts/data_cli_contract.yaml", "reason": "extract: CLI contract | for: A4/A8"}
+{"file": "docs/ops/staging_data_e2e_runbook.md", "reason": "extract: R3F-CLI-05 | for: A5/A7"}
