@@ -1,0 +1,5 @@
+B03-MODEL-03 RED — test_migration_coverage.py missing
+Date: 2026-06-25
+Command: uv run pytest tests/test_migration_coverage.py -q
+Result: ERROR: file or directory not found: tests/test_migration_coverage.py
+Exit code: 4

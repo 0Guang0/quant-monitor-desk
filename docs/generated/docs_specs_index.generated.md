@@ -100,6 +100,8 @@ Used with MIGRATION_MAP.md for machine omission checks (`check_docs_specs_indexe
 - `docs/implementation_tasks/ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3Y_readonly_data_health_v1.md`
 - `docs/implementation_tasks/ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3Y_real_data_staged_pilot_v2.md`
 - `docs/implementation_tasks/ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3Y_staged_pilot_v2_execution_addendum.md`
+- `docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/R3F_verified_audit_ops_perf_hygiene.md`
+- `docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/README.md`
 - `docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/BATCH_01_MODEL_SOURCE_READINESS/BATCH_01_ADVERSARIAL_AUDIT.md`
 - `docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/BATCH_01_MODEL_SOURCE_READINESS/BATCH_01_HARDENING_RULES.md`
 - `docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/BATCH_01_MODEL_SOURCE_READINESS/BATCH_01_TASK_CARD_MANIFEST.md`
@@ -161,9 +163,11 @@ Used with MIGRATION_MAP.md for machine omission checks (`check_docs_specs_indexe
 - `docs/implementation_tasks/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/B03_01_layer5_model_schema_reconcile.md`
 - `docs/implementation_tasks/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/BATCH_3V_ADVERSARIAL_AUDIT.md`
 - `docs/implementation_tasks/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/BATCH_3V_COORDINATOR_PLAYBOOK.md`
+- `docs/implementation_tasks/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/BATCH_3V_COORDINATOR_STATUS.md`
 - `docs/implementation_tasks/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/BATCH_3V_HARDENING_RULES.md`
 - `docs/implementation_tasks/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/BATCH_3V_SELF_CHECK.md`
 - `docs/implementation_tasks/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/BATCH_3V_TASK_CARD_MANIFEST.md`
+- `docs/implementation_tasks/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/BATCH_3V_ZERO_OPEN_REPAIR_MANIFEST.md`
 - `docs/implementation_tasks/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/README.md`
 - `docs/implementation_tasks/ROUND_3_VERIFIED_AUDIT_CLEANUP/README.md`
 - `docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/024_implement_fastapi_routes.md`
@@ -173,6 +177,12 @@ Used with MIGRATION_MAP.md for machine omission checks (`check_docs_specs_indexe
 - `docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/028_implement_reports_and_notifications.md`
 - `docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/029_implement_backtest_and_review.md`
 - `docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/030_implement_no_action_semantics_guard.md`
+- `docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/BATCH_04_VERIFIED_AUDIT_PRODUCTIZATION/B04_01_api_runtime_security.md`
+- `docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/BATCH_04_VERIFIED_AUDIT_PRODUCTIZATION/B04_02_agent_policy_runtime.md`
+- `docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/BATCH_04_VERIFIED_AUDIT_PRODUCTIZATION/B04_03_frontend_error_boundary_and_routes.md`
+- `docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/BATCH_04_VERIFIED_AUDIT_PRODUCTIZATION/B04_04_notification_report_runtime.md`
+- `docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/BATCH_04_VERIFIED_AUDIT_PRODUCTIZATION/B04_05_backtest_review_runtime.md`
+- `docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/BATCH_04_VERIFIED_AUDIT_PRODUCTIZATION/README.md`
 - `docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/README.md`
 - `docs/implementation_tasks/ROUND_5_INTEGRATION_RELEASE/031_implement_integration_smoke_tests.md`
 - `docs/implementation_tasks/ROUND_5_INTEGRATION_RELEASE/032_implement_resource_limit_tests.md`
@@ -180,6 +190,8 @@ Used with MIGRATION_MAP.md for machine omission checks (`check_docs_specs_indexe
 - `docs/implementation_tasks/ROUND_5_INTEGRATION_RELEASE/034_implement_docs_consistency_check.md`
 - `docs/implementation_tasks/ROUND_5_INTEGRATION_RELEASE/035_implement_final_package_cleanup.md`
 - `docs/implementation_tasks/ROUND_5_INTEGRATION_RELEASE/036_create_final_release_manifest.md`
+- `docs/implementation_tasks/ROUND_5_INTEGRATION_RELEASE/BATCH_05_VERIFIED_AUDIT_SECURITY_RELEASE/B05_01_security_ci_release_gate.md`
+- `docs/implementation_tasks/ROUND_5_INTEGRATION_RELEASE/BATCH_05_VERIFIED_AUDIT_SECURITY_RELEASE/README.md`
 - `docs/implementation_tasks/ROUND_5_INTEGRATION_RELEASE/README.md`
 - `docs/implementation_tasks/TASK_INPUT_CONTEXT_INDEX.md`
 - `docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md`

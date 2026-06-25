@@ -29,15 +29,15 @@ Agent Run Logs
 
 # 2. 存储边界
 
-| 数据类型 | 存储位置 | 原因 |
-|---|---|---|
-| 标准行情、指标、快照 | DuckDB | 结构化查询和聚合 |
-| 长历史分钟线、大历史归档 | Parquet | 文件分区和压缩 |
-| 公告 PDF、网页快照、原始 JSON | 本地文件系统 | 可审计、可重放 |
-| 文件索引 | DuckDB `file_registry` | 查找和引用原始文件 |
-| 配置 | `specs/` | 可版本化、可加载 |
-| 日志 | `data/audit/` | 可追溯 |
-| 临时缓存 | `data/cache/` | 可清理 |
+| 数据类型                      | 存储位置               | 原因               |
+| ----------------------------- | ---------------------- | ------------------ |
+| 标准行情、指标、快照          | DuckDB                 | 结构化查询和聚合   |
+| 长历史分钟线、大历史归档      | Parquet                | 文件分区和压缩     |
+| 公告 PDF、网页快照、原始 JSON | 本地文件系统           | 可审计、可重放     |
+| 文件索引                      | DuckDB `file_registry` | 查找和引用原始文件 |
+| 配置                          | `specs/`               | 可版本化、可加载   |
+| 日志                          | `data/audit/`          | 可追溯             |
+| 临时缓存                      | `data/cache/`          | 可清理             |
 
 ---
 
@@ -205,17 +205,19 @@ migration note
 audit log
 ```
 
+> **L3/L4/L5 migration matrix (2026-06-25):** `docs/schema/MIGRATION_COVERAGE.md` — reconcile SSOT `.trellis/tasks/round3v-layer5-model-schema-reconcile/research/l5-reconcile-matrix.md`; closure `tests/test_migration_coverage.py`.
+
 ---
 
 # 9. 数据访问边界
 
-| 调用方 | 允许读取 | 禁止 |
-|---|---|---|
-| Frontend | API snapshot / paginated detail | 直连 DuckDB |
-| Agent | Agent tools / evidence refs | 自由 SQL / 写库 |
-| DataSync | staging / raw / clean via WriteManager | 绕过 Validation |
-| Research scripts | read-only workspace | 直接覆盖 clean |
-| Ops scripts | audit / backup / health | 删除正式数据 |
+| 调用方           | 允许读取                               | 禁止            |
+| ---------------- | -------------------------------------- | --------------- |
+| Frontend         | API snapshot / paginated detail        | 直连 DuckDB     |
+| Agent            | Agent tools / evidence refs            | 自由 SQL / 写库 |
+| DataSync         | staging / raw / clean via WriteManager | 绕过 Validation |
+| Research scripts | read-only workspace                    | 直接覆盖 clean  |
+| Ops scripts      | audit / backup / health                | 删除正式数据    |
 
 ---
 
