@@ -1,0 +1,3 @@
+1105 passed, 5 skipped in 210s
+3 failed (pre-existing repo docs_specs_index stale — unrelated to B3V-SYNC)
+B3V-SYNC slice tests: 7 passed

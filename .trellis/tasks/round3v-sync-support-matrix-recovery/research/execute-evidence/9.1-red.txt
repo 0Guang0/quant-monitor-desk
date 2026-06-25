@@ -1,0 +1,3 @@
+FAILED test_syncJobContract_implementedTypes_matchRuntimeCallables
+AssertionError: assert frozenset() == frozenset({'incremental', 'backfill', 'reconcile'})
+ERROR: sync_job_contract missing implemented_job_types

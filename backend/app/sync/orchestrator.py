@@ -5,6 +5,7 @@ from __future__ import annotations
 from backend.app.core.resource_guard import Decision, ResourceGuard, format_pause_event
 from backend.app.datasources.base_adapter import BaseDataAdapter
 from backend.app.db.connection import ConnectionManager
+from backend.app.sync.contract import raise_deferred_job_type
 from backend.app.sync.jobs import SyncJobResult, SyncJobSpec, SyncJobStateMachine
 from backend.app.sync.pipeline import SyncValidationPipeline, SyncWritePipeline
 from backend.app.sync.runners import (
@@ -223,13 +224,31 @@ class DataSyncOrchestrator:
         return self._reconcile.run(conflict_id, adapter=adapter)
 
     def run_full_load(self, spec: SyncJobSpec, **kwargs) -> SyncJobResult:
-        """Explicit deferred API (D2-P1-1 / ADV-A3-016)."""
-        raise NotImplementedError(
-            "run_full_load is deferred to Batch 6 orchestrator job matrix (D2-P1-1)"
-        )
+        """Reserved job type — stable deferred error (D2-P1-1 / VR-SYNC-002)."""
+        raise_deferred_job_type(spec.job_type, entrypoint="run_full_load")
 
     def run_data_quality(self, spec: SyncJobSpec, **kwargs) -> SyncJobResult:
-        """Explicit deferred API (D2-P1-1 / ADV-A3-016)."""
-        raise NotImplementedError(
-            "run_data_quality is deferred to Batch 6 orchestrator job matrix (D2-P1-1)"
-        )
+        """Reserved job type — stable deferred error (D2-P1-1 / VR-SYNC-002)."""
+        raise_deferred_job_type(spec.job_type, entrypoint="run_data_quality")
+
+    def run_revision_audit(self, spec: SyncJobSpec, **kwargs) -> SyncJobResult:
+        """Reserved job type — stable deferred error (D2-P1-1 / VR-SYNC-002)."""
+        raise_deferred_job_type(spec.job_type, entrypoint="run_revision_audit")
+
+    def recover_stuck_writing_job(self, job_id: str) -> SyncJobResult:
+        """Complete a job stuck in WRITING after write commit (ADR-001 crash-window)."""
+        with self._cm.reader() as con:
+            row = con.execute(
+                "SELECT status, write_id FROM data_sync_job WHERE job_id = ?",
+                [job_id],
+            ).fetchone()
+        if row is None:
+            raise KeyError(f"unknown job_id: {job_id!r}")
+        status, write_id = row
+        if status != "WRITING" or not write_id:
+            raise ValueError(
+                f"job {job_id!r} must be WRITING with write_id set for recovery, "
+                f"got status={status!r} write_id={write_id!r}"
+            )
+        self._jobs.transition(job_id, "COMPLETED", message="recovered after crash-window")
+        return SyncJobResult(job_id=job_id, status="COMPLETED", write_id=write_id)

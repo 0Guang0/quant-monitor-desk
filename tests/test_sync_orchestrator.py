@@ -1195,3 +1195,274 @@ def test_r3ySync001_privateIncrementalRunner_rejectsAdapterBypassInProductionPro
             adapter=_BackfillCountAdapter(),
             config=_default_pipeline_config(clean_table=_BackfillCountAdapter.CLEAN),
         )
+
+
+def _reserved_job_spec(job_type: str, *, job_id: str = "job-reserved") -> SyncJobSpec:
+    return SyncJobSpec(
+        run_id="run-reserved",
+        job_id=job_id,
+        job_type=job_type,
+        data_domain="market_bar_1d",
+        market_id="CN_A",
+        source_id="baostock",
+        adapter_id=None,
+        date_start=None,
+        date_end=None,
+        instrument_id=None,
+        partition_key=None,
+        trigger_reason=None,
+    )
+
+
+def test_syncJobContract_implementedTypes_matchRuntimeCallables() -> None:
+    """覆盖范围：sync job 契约与 runtime 已实现类型 parity（VR-SYNC-002 / SYNC-01）
+    测试对象：sync_job_contract.yaml · IMPLEMENTED_JOB_TYPES · DataSyncOrchestrator.run_*
+    目的/目标：契约声明的已实现 job 类型须与模块常量及可调用 run_* 方法一一对应
+    验证点：YAML implemented == IMPLEMENTED_JOB_TYPES；implemented run_* 集相等；reserved 分离
+    失败含义：调用方或 CLI 无法从契约判断哪些 job 真正可跑，矩阵与代码漂移
+    """
+    from backend.app.sync.contract import (
+        IMPLEMENTED_JOB_TYPES,
+        RESERVED_JOB_TYPES,
+        load_sync_job_contract,
+    )
+    from backend.app.sync.orchestrator import DataSyncOrchestrator
+
+    contract = load_sync_job_contract()
+    yaml_impl = frozenset(contract["implemented_job_types"])
+    yaml_reserved = frozenset(contract["reserved_job_types"])
+    assert yaml_impl == IMPLEMENTED_JOB_TYPES
+    assert yaml_reserved == RESERVED_JOB_TYPES
+    assert yaml_impl.isdisjoint(yaml_reserved)
+    run_suffixes = frozenset(
+        name[4:]
+        for name in dir(DataSyncOrchestrator)
+        if name.startswith("run_") and callable(getattr(DataSyncOrchestrator, name))
+    )
+    assert run_suffixes == IMPLEMENTED_JOB_TYPES | RESERVED_JOB_TYPES
+
+
+def _assert_deferred_job_type_error(exc_info, *, job_type: str) -> None:
+    from backend.app.sync.contract import (
+        DEFERRED_JOB_TYPE_CODE,
+        DEFERRED_OWNER,
+        DEFERRED_PHASE,
+        DOCS_ANCHOR_D2_P1_1,
+    )
+
+    err = exc_info.value
+    assert err.code == DEFERRED_JOB_TYPE_CODE
+    assert err.job_type == job_type
+    assert err.owner == DEFERRED_OWNER
+    assert err.phase == DEFERRED_PHASE
+    assert err.docs_anchor == DOCS_ANCHOR_D2_P1_1
+    assert DOCS_ANCHOR_D2_P1_1 in str(err)
+    assert DEFERRED_OWNER in str(err)
+    assert DEFERRED_PHASE in str(err)
+
+
+def test_syncJobContract_deferredErrorYaml_parityWithRuntimeConstants() -> None:
+    """覆盖范围：deferred_error 契约字段与 runtime 常量 parity（ZO-05/06）
+    测试对象：sync_job_contract.yaml deferred_error · contract.py 常量
+    目的/目标：owner/phase/code/docs_anchor 单源 YAML 与模块常量一致，防漂移
+    验证点：load_sync_job_contract() deferred_error 各字段 == DEFERRED_* 常量
+    失败含义：调用方或 registry 读到与 runtime 不一致的 deferred 元数据
+    """
+    from backend.app.sync.contract import (
+        DEFERRED_JOB_TYPE_CODE,
+        DEFERRED_OWNER,
+        DEFERRED_PHASE,
+        DOCS_ANCHOR_D2_P1_1,
+        load_sync_job_contract,
+    )
+
+    deferred = load_sync_job_contract()["deferred_error"]
+    assert deferred["code"] == DEFERRED_JOB_TYPE_CODE
+    assert deferred["owner"] == DEFERRED_OWNER
+    assert deferred["phase"] == DEFERRED_PHASE
+    assert deferred["docs_anchor"] == DOCS_ANCHOR_D2_P1_1
+
+
+def test_syncJob_reservedFullLoad_returnsDeferredJobTypeError(tmp_path) -> None:
+    """覆盖范围：reserved full_load 返回稳定 deferred 错误（VR-SYNC-002 / SYNC-03）
+    测试对象：DataSyncOrchestrator.run_full_load
+    目的/目标：全量同步未实现时须抛 DeferredJobTypeError，不得裸 NotImplementedError
+    验证点：code=DEFERRED_JOB_TYPE；docs_anchor 含 D2-P1-1
+    失败含义：调用方收到 NIE 或静默成功，误以为全量同步已可用
+    """
+    import pytest
+
+    from backend.app.sync.contract import DeferredJobTypeError
+
+    orch = _orchestrator(tmp_path)
+    with pytest.raises(DeferredJobTypeError) as exc_info:
+        orch.run_full_load(_reserved_job_spec("full_load"))
+    _assert_deferred_job_type_error(exc_info, job_type="full_load")
+
+
+def test_syncJob_reservedDataQuality_returnsDeferredJobTypeError(tmp_path) -> None:
+    """覆盖范围：reserved data_quality 返回稳定 deferred 错误（VR-SYNC-002 / SYNC-03）
+    测试对象：DataSyncOrchestrator.run_data_quality
+    目的/目标：独立质检 job 未实现时须抛 DeferredJobTypeError
+    验证点：code=DEFERRED_JOB_TYPE；docs_anchor 含 D2-P1-1
+    失败含义：质检入口泄漏 NIE 或空操作，生产 job 无效果
+    """
+    import pytest
+
+    from backend.app.sync.contract import DeferredJobTypeError
+
+    orch = _orchestrator(tmp_path)
+    with pytest.raises(DeferredJobTypeError) as exc_info:
+        orch.run_data_quality(_reserved_job_spec("data_quality"))
+    _assert_deferred_job_type_error(exc_info, job_type="data_quality")
+
+
+def test_syncJob_reservedRevisionAudit_returnsDeferredJobTypeError(tmp_path) -> None:
+    """覆盖范围：reserved revision_audit 返回稳定 deferred 错误（VR-SYNC-002 / SYNC-03）
+    测试对象：DataSyncOrchestrator.run_revision_audit
+    目的/目标：修订审计 runner 未实现时须有显式 deferred 薄入口
+    验证点：code=DEFERRED_JOB_TYPE；docs_anchor 含 D2-P1-1
+    失败含义：revision_audit 无入口或抛 NIE，状态机可达但无法安全调用
+    """
+    import pytest
+
+    from backend.app.sync.contract import DeferredJobTypeError
+
+    orch = _orchestrator(tmp_path)
+    with pytest.raises(DeferredJobTypeError) as exc_info:
+        orch.run_revision_audit(_reserved_job_spec("revision_audit"))
+    _assert_deferred_job_type_error(exc_info, job_type="revision_audit")
+
+
+def test_syncJob_incremental_crashWindow_leavesWritingWithWriteId(tmp_path, monkeypatch) -> None:
+    """覆盖范围：写提交后 COMPLETED 前 crash 窗口（VR-SYNC-001 / SYNC-05）
+    测试对象：IncrementalJobRunner.run + post_write_pre_complete_hook
+    目的/目标：写成功但进程在 COMPLETED 前崩溃时，job 应停在 WRITING 且 write_id 已落库
+    验证点：hook 抛错后 status=WRITING 且 write_id 非空
+    失败含义：过早 COMPLETED 或丢失 write_id，crash 后无法检测/恢复
+    """
+    import pytest
+
+    from backend.app.core.resource_guard import Decision, ResourceGuard
+    from backend.app.sync.orchestrator import _default_pipeline_config
+
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    orch = _orchestrator(tmp_path)
+    spec = _reserved_job_spec("incremental", job_id="job-crash-window")
+
+    def _crash_after_write(job_id: str, write_id: str) -> None:
+        raise RuntimeError("simulated crash after write commit")
+
+    with pytest.raises(RuntimeError, match="simulated crash"):
+        orch._incremental.run(
+            spec,
+            adapter=_BackfillCountAdapter(),
+            config=_default_pipeline_config(clean_table=_BackfillCountAdapter.CLEAN),
+            post_write_pre_complete_hook=_crash_after_write,
+        )
+
+    with orch._cm.reader() as con:
+        row = con.execute(
+            "SELECT status, write_id FROM data_sync_job WHERE job_id = ?",
+            [spec.job_id],
+        ).fetchone()
+    assert row is not None
+    assert row[0] == "WRITING"
+    assert row[1]
+
+
+def test_syncJob_incremental_recoverStuckWriting_completesWithoutDoubleWrite(
+    tmp_path, monkeypatch
+) -> None:
+    """覆盖范围：WRITING+write_id 卡死恢复（VR-SYNC-001 / SYNC-06 路径 A）
+    测试对象：DataSyncOrchestrator.recover_stuck_writing_job
+    目的/目标：crash-window 后恢复应 COMPLETED 且不重复写入 clean 表
+    验证点：recovery 后 status=COMPLETED；clean 行数与 crash 后一致
+    失败含义：重复写或永久 WRITING，数据重复或作业无法收尾
+    """
+    from backend.app.core.resource_guard import Decision, ResourceGuard
+    from backend.app.sync.orchestrator import _default_pipeline_config
+
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    orch = _orchestrator(tmp_path)
+    spec = _reserved_job_spec("incremental", job_id="job-recover-writing")
+    clean = _BackfillCountAdapter.CLEAN
+
+    def _crash_after_write(job_id: str, write_id: str) -> None:
+        raise RuntimeError("simulated crash after write commit")
+
+    try:
+        orch._incremental.run(
+            spec,
+            adapter=_BackfillCountAdapter(),
+            config=_default_pipeline_config(clean_table=clean),
+            post_write_pre_complete_hook=_crash_after_write,
+        )
+    except RuntimeError:
+        pass
+
+    with orch._cm.reader() as con:
+        rows_before = con.execute(f"SELECT COUNT(*) FROM {clean}").fetchone()[0]
+
+    result = orch.recover_stuck_writing_job(spec.job_id)
+    assert result.status == "COMPLETED"
+    assert result.write_id
+
+    with orch._cm.reader() as con:
+        rows_after = con.execute(f"SELECT COUNT(*) FROM {clean}").fetchone()[0]
+        status = con.execute(
+            "SELECT status FROM data_sync_job WHERE job_id = ?",
+            [spec.job_id],
+        ).fetchone()[0]
+    assert rows_after == rows_before
+    assert status == "COMPLETED"
+
+
+def test_syncJob_incremental_hook_rejectedOutsidePytest(tmp_path, monkeypatch) -> None:
+    """覆盖范围：post_write_pre_complete_hook 非 pytest 环境 fail-closed（ZO-07）
+    测试对象：IncrementalJobRunner.run + post_write_pre_complete_hook guard
+    目的/目标：生产路径不得注入 crash-window hook，须显式拒绝
+    验证点：sync_adapter_bypass_allowed=False 时传 hook 抛 ValueError 且含 pytest-only
+    失败含义：hook 泄漏到生产，可被滥用改变 COMPLETED 时序
+    """
+    import pytest
+
+    from backend.app.core.resource_guard import Decision, ResourceGuard
+    from backend.app.sync.orchestrator import _default_pipeline_config
+
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    monkeypatch.setattr(
+        "backend.app.sync.runners.guard_runner_direct_adapter_bypass",
+        lambda **kwargs: None,
+    )
+    monkeypatch.setattr(
+        "backend.app.sync.runners.sync_adapter_bypass_allowed",
+        lambda: False,
+    )
+    orch = _orchestrator(tmp_path)
+    spec = _reserved_job_spec("incremental", job_id="job-hook-guard")
+
+    with pytest.raises(ValueError, match="pytest-only"):
+        orch._incremental.run(
+            spec,
+            adapter=_BackfillCountAdapter(),
+            config=_default_pipeline_config(clean_table=_BackfillCountAdapter.CLEAN),
+            post_write_pre_complete_hook=lambda _jid, _wid: None,
+        )
+
+
+def test_syncJob_recoverStuckWriting_rejectsInvalidState(tmp_path) -> None:
+    """覆盖范围：recover_stuck_writing_job 对非法状态 fail-closed（ZO-07）
+    测试对象：DataSyncOrchestrator.recover_stuck_writing_job
+    目的/目标：非 WRITING+write_id 作业不得被误恢复为 COMPLETED
+    验证点：CREATED 作业调用 recovery 抛 ValueError 且含 WRITING
+    失败含义：recovery 误操作正常作业，掩盖真实失败或跳过写入
+    """
+    import pytest
+
+    orch = _orchestrator(tmp_path)
+    spec = _reserved_job_spec("incremental", job_id="job-recover-invalid")
+    orch.create_job(spec)
+
+    with pytest.raises(ValueError, match="WRITING"):
+        orch.recover_stuck_writing_job(spec.job_id)

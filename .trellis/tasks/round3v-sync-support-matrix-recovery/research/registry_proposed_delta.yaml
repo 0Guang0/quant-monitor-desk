@@ -1,0 +1,30 @@
+# Proposed registry delta — B3V-SYNC Execute (do NOT commit registry三件套 from this branch)
+# Merge coordinator applies after adversarial audit PASS.
+
+D2-P1-1:
+  decision: PARTIALLY_CLOSED
+  rationale: >
+    sync_job_contract.yaml now splits implemented vs reserved job types.
+    run_full_load / run_data_quality / run_revision_audit return stable
+    DeferredJobTypeError (DEFERRED_JOB_TYPE, owner Round3F, docs_anchor D2-P1-1).
+    Full runner implementations remain deferred to Round 3F shared hooks.
+
+R3-PARTIAL-5:
+  decision: CLOSED_BRANCH
+  rationale: >
+    VR-SYNC-001 path A: crash-window pytest proves WRITING+write_id after
+    post-write hook failure; recover_stuck_writing_job completes without double write.
+    ADR-001 intentional window preserved — recovery not same-transaction COMPLETED.
+
+VR-SYNC-002:
+  decision: CLOSED_BRANCH
+  rationale: >
+    Explicit support matrix in sync_job_contract.yaml; parity test GREEN;
+    reserved types return DeferredJobTypeError not bare NotImplementedError.
+
+registry_rows_remain_open:
+  D2-P1-1: OPEN_RUNNER_IMPL
+  R3-PARTIAL-5: CLOSED_ON_BRANCH
+
+commit_policy: proposed_only_no_direct_registry_commit
+coordinator_status: COORDINATOR-QUEUED

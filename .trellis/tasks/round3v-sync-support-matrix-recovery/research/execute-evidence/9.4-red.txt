@@ -1,0 +1,2 @@
+FAILED test_advA3_016_orchestratorDeferredRunners
+pytest.raises(NotImplementedError) did not raise DeferredJobTypeError
