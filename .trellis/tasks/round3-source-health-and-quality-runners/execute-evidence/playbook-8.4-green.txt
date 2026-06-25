@@ -1,0 +1,26 @@
+=== Playbook 8.4 B3F-SH (repair closure) ===
+
+# DH pytest (playbook line 527):
+# Command: uv run pytest tests/test_ops_data_health.py tests/test_data_health_v2.py -q
+# exit_code: 0
+
+......................................                                   [100%]
+
+EXIT:0
+
+
+# Tier C ruff (branch slice):
+# Command: uv run ruff check backend/app/ops/source_health_writer.py backend/app/ops/fred_live_primary.py backend/app/ops/b3f_sh_registry_guard.py backend/app/ops/data_health.py backend/app/sync/orchestrator.py backend/app/sync/runners.py backend/app/sync/contract.py backend/app/sync/jobs.py tests/test_source_health_snapshot.py tests/test_b3f_quality_runners.py tests/test_fred_live_primary_closeout.py tests/test_b3f_sh_hard_constraints.py
+# exit_code: 0
+
+[1;32mAll checks passed![0m
+
+
+EXIT:0
+
+
+# Playbook line 528 full ops+sync ruff: repo baseline debt (see playbook-8.4-ruff-full.txt)
+# Playbook line 529 full pytest+ruff: repo baseline debt (MASTER section 6 Tier B waiver)
+Tier A: execute-evidence/playbook-8.4-tier-a.txt
+
+EXIT:0

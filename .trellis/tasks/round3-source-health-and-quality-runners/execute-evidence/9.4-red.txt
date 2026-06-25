@@ -1,0 +1,3 @@
+FAILED tests/test_source_health_snapshot.py::test_sourceHealthSnapshot_rollupPersist_fields
+Failed: RED: rollup persist not implemented (R3F-SH-04)
+exit 1

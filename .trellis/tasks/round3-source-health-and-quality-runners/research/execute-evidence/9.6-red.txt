@@ -1,0 +1,3 @@
+FAILED tests/test_fred_live_primary_closeout.py::test_fredLivePrimary_requiresAuthorizationYaml
+Failed: RED: FRED live closeout gate not implemented (R3F-SH-06)
+exit 1

@@ -1,0 +1,6 @@
+# Command: uv run pytest tests/test_b3f_sh_hard_constraints.py::test_b3fShHardConstraints_akshareNotClosedBySidecar -q
+# exit_code: 0
+
+.                                                                        [100%]
+
+EXIT:0

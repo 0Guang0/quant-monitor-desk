@@ -50,6 +50,32 @@ tests/test_audit_remediation.py:
     docs: []
     rules: []
     specs: []
+tests/test_b3f_quality_runners.py:
+  command: uv run python -m pytest tests/test_b3f_quality_runners.py -q
+  evidence_required: pytest output
+  failure_meaning: Quality runners still defer; Batch6 job matrix not closed.
+  purpose: Batch 3F quality runners — revision_audit and data_quality non-defer (R3F-SH-02/03)
+  type: runtime-contract
+  verifies:
+    docs:
+      - docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/014_implement_data_sync_orchestrator.md
+    rules: []
+    specs:
+      - specs/contracts/sync_job_contract.yaml
+tests/test_b3f_sh_hard_constraints.py:
+  command: uv run python -m pytest tests/test_b3f_sh_hard_constraints.py -q
+  evidence_required: pytest output
+  failure_meaning: Sidecar evidence may falsely close AkShare/EM validation rows.
+  purpose: Batch 3F AkShare/Eastmoney no-false-close registry guard (R3F-SH-07)
+  type: policy-contract
+  verifies:
+    docs:
+      - docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/BATCH_3F_HARDENING_RULES.md
+    rules:
+      - docs/UNRESOLVED_ISSUES_REGISTRY.md
+    specs:
+      - specs/datasource_registry/source_registry.yaml
+      - specs/datasource_registry/source_capabilities.yaml
 tests/test_backend_smoke.py:
   command: uv run python -m pytest tests/test_backend_smoke.py -q
   failure_meaning: Regression in test_backend_smoke; inspect purpose and linked authorities.
@@ -295,6 +321,20 @@ tests/test_duckdb_connection.py:
     docs: []
     rules: []
     specs: []
+tests/test_fred_live_primary_closeout.py:
+  command: uv run python -m pytest tests/test_fred_live_primary_closeout.py -q
+  evidence_required: pytest output
+  failure_meaning: Unauthorized FRED live path may open; violates Batch 3F hardening.
+  purpose: FRED live primary authorization fail-closed gate (R3F-SH-06)
+  type: policy-contract
+  verifies:
+    docs:
+      - docs/quality/batch3f_fred_live_pilot_authorization_2026-06-25.md
+      - docs/quality/production_live_pilot_policy.md
+    rules:
+      - docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/BATCH_3F_HARDENING_RULES.md
+    specs:
+      - specs/contracts/datasource_service_contract.yaml
 tests/test_fred_sandbox_pilot.py:
   command: uv run python -m pytest tests/test_fred_sandbox_pilot.py -q
   evidence_required: pytest output
@@ -874,6 +914,21 @@ tests/test_source_conflict_validator.py:
     rules: []
     specs:
       - specs/contracts/source_conflict_rules.yaml
+tests/test_source_health_snapshot.py:
+  command: uv run python -m pytest tests/test_source_health_snapshot.py -q
+  evidence_required: pytest output
+  failure_meaning:
+    Snapshot writer or rollup persist broken; Batch6 source health
+    tracking fails.
+  purpose: Batch 3F B3F-SH source_health_snapshot writer and rollup persist (R3F-SH-01/04)
+  type: runtime-contract
+  verifies:
+    docs:
+      - docs/decisions/ADR-024-source-health-snapshot-boundary.md
+      - docs/modules/data_sources.md
+    rules:
+      - docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/BATCH_3F_HARDENING_RULES.md
+    specs: []
 tests/test_source_registry.py:
   command: uv run python -m pytest tests/test_source_registry.py -q
   failure_meaning:

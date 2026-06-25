@@ -12,6 +12,7 @@ from backend.app.sync.runners import (
     BackfillShardRunner,
     IncrementalJobRunner,
     PipelineConfig,
+    QualityJobRunner,
     ReconcileJobRunner,
     guard_production_adapter_bypass,
 )
@@ -55,6 +56,7 @@ class DataSyncOrchestrator:
             emit_event=self.emit_event,
         )
         self._reconcile = ReconcileJobRunner(self._jobs)
+        self._quality = QualityJobRunner(self._jobs, self._validation)
 
     def bootstrap(self, *, sync_registry: bool = False) -> None:
         if sync_registry:
@@ -228,12 +230,12 @@ class DataSyncOrchestrator:
         raise_deferred_job_type(spec.job_type, entrypoint="run_full_load")
 
     def run_data_quality(self, spec: SyncJobSpec, **kwargs) -> SyncJobResult:
-        """Reserved job type — stable deferred error (D2-P1-1 / VR-SYNC-002)."""
-        raise_deferred_job_type(spec.job_type, entrypoint="run_data_quality")
+        """Data quality runner (R3F-SH-03)."""
+        return self._quality.run_data_quality(spec)
 
     def run_revision_audit(self, spec: SyncJobSpec, **kwargs) -> SyncJobResult:
-        """Reserved job type — stable deferred error (D2-P1-1 / VR-SYNC-002)."""
-        raise_deferred_job_type(spec.job_type, entrypoint="run_revision_audit")
+        """Revision audit runner (R3F-SH-02)."""
+        return self._quality.run_revision_audit(spec)
 
     def recover_stuck_writing_job(self, job_id: str) -> SyncJobResult:
         """Complete a job stuck in WRITING after write commit (ADR-001 crash-window)."""
