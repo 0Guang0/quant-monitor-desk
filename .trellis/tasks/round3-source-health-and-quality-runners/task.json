@@ -3,7 +3,7 @@
   "name": "round3-source-health-and-quality-runners",
   "title": "B3F-SH: Source Health & Quality Runners",
   "description": "Batch 3F.3 — source_health_snapshot writer, data quality runners, readiness rollup, FRED live primary tracking (R3F-SH-01..07).",
-  "status": "in_progress",
+  "status": "review",
   "dev_type": "feature",
   "scope": "batch3f_source_health",
   "branch": "feature/round3-source-health-and-quality-runners",
