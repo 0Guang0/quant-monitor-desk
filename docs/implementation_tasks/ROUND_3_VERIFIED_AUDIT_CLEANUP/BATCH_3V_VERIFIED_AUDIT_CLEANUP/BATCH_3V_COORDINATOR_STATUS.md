@@ -1,54 +1,42 @@
 # Batch 3V 主会话协调状态
 
-> 更新：2026-06-25 · merge coordinator 开波记录  
-> 基线：`master` @ `d62e8dc4`
+> 更新：2026-06-25 · merge coordinator §7.3 registry 批闭合完成  
+> Integration：`integration/round3-batch3v` @ `af081770`
 
-## 开波门禁（§9）
+## 合并进度（§7.2）
 
-| Gate                          | 状态                   | 证据                     |
-| ----------------------------- | ---------------------- | ------------------------ |
-| `check_docs_specs_indexed.py` | ✅ exit 0              | 主会话已跑               |
-| `BATCH_3V_SELF_CHECK.md`      | ✅ `PASS_FOR_DISPATCH` | rev.3                    |
-| 协调包在 master               | ✅                     | `af4e97f7` docs(batch3v) |
-| playbook §9 清单              | ✅                     | 本文件 + 六 worktree     |
-| live fetch / production write | 🚫 禁止                | hardening §3             |
-| 模型                          | `composer-2.5` only    | 六 Plan agent 已派发     |
+| ID       | 分支                                           | Merge commit | 状态     |
+| -------- | ---------------------------------------------- | ------------ | -------- |
+| B3V-REG  | `fix/round3v-registry-manifest-consistency`    | `340a1f4c`   | ✅ merged |
+| B3V-L5R  | `review/round3v-layer5-model-schema-reconcile` | `2800f832`   | ✅ merged |
+| B3V-OPS  | `fix/round3v-contract-drift-write-modes`       | `75aae665`   | ✅ merged |
+| B3V-DATA | `fix/round3v-schema-hash-fail-closed`          | `0e3316a2`   | ✅ merged |
+| B3V-STOR | `fix/round3v-rawstore-atomic-write`            | `2a496af7`   | ✅ merged |
+| B3V-SYNC | `fix/round3v-sync-support-matrix-recovery`     | `af081770`   | ✅ merged |
 
-## Worktree 登记（§2.5 文件锁）
+## §7.3 Registry 批闭合（2026-06-25）
 
-| ID       | 分支                                           | Worktree                            | 独占写                                  |
-| -------- | ---------------------------------------------- | ----------------------------------- | --------------------------------------- |
-| B3V-REG  | `fix/round3v-registry-manifest-consistency`    | `../quant-monitor-desk-wt-b3v-reg`  | migration/README/MANIFEST/registry 文档 |
-| B3V-L5R  | `review/round3v-layer5-model-schema-reconcile` | `../quant-monitor-desk-wt-b3v-l5r`  | reconcile 矩阵（runtime 默认只读）      |
-| B3V-OPS  | `fix/round3v-contract-drift-write-modes`       | `../quant-monitor-desk-wt-b3v-ops`  | db-inspect + write 契约                 |
-| B3V-DATA | `fix/round3v-schema-hash-fail-closed`          | `../quant-monitor-desk-wt-b3v-data` | validation_gate + schema_hash           |
-| B3V-STOR | `fix/round3v-rawstore-atomic-write`            | `../quant-monitor-desk-wt-b3v-stor` | raw_store + path_compat                 |
-| B3V-SYNC | `fix/round3v-sync-support-matrix-recovery`     | `../quant-monitor-desk-wt-b3v-sync` | sync 契约 + orchestrator/runners        |
+| 动作 | 状态 |
+| ---- | ---- |
+| `RESOLVED_ISSUES_REGISTRY.md` Post-Batch 3V 段 | ✅ |
+| `UNRESOLVED_ISSUES_REGISTRY.md` 收窄/移除 009 闭合项 | ✅ |
+| `AUDIT_DEFERRED_REGISTRY.md` + `R3-MODEL-L3L4-MIGRATION` defer | ✅ |
+| `UNRESOLVED_ITEM_TASK_COVERAGE.md` §8 MERGED | ✅ |
+| `EXPECTED_UNRESOLVED_IDS` 更新 | ✅ |
+| `ROUND3_HANDOFF.md` / `PROJECT_IMPLEMENTATION_ROADMAP.md` checkpoint | ✅ |
 
-## 零遗留策略（用户授权 · 2026-06-25）
+## 验收命令
 
-**BLOCKING + NON-BLOCKING 全部修复闭合，0 OPEN。** 见 `BATCH_3V_ZERO_OPEN_REPAIR_MANIFEST.md`。
+```bash
+uv run pytest tests/test_unresolved_item_task_coverage.py tests/test_manifest_files_check.py \
+  tests/test_migration_coverage.py tests/test_contract_drift_ops_write.py \
+  tests/test_raw_store.py tests/test_sync_orchestrator.py -q
+uv run python scripts/loop_maintain.py
+```
 
-## 派发状态
+## 待办（主会话 / 用户授权）
 
-| ID       | 阶段                                | Agent                                                    | Trellis task-dir                        | 状态                         |
-| -------- | ----------------------------------- | -------------------------------------------------------- | --------------------------------------- | ---------------------------- |
-| B3V-REG  | **Zero-Open Repair**                | [repair](313d0218-11bd-4fb7-9156-443d72cfc558)           | `round3v-registry-manifest-consistency` | commit + 0 OPEN signoff      |
-| B3V-L5R  | **Zero-Open Repair**                | [repair](4f4384f3-c286-4aa2-98ac-9f979364b595)           | `round3v-layer5-model-schema-reconcile` | ADV-L5R + N\* 全闭合         |
-| B3V-OPS  | Audit 收口中 · **Zero-Open Repair** | [repair](365c919c-f906-4b9b-81e5-14e72801ecf0)           | `round3v-contract-drift-write-modes`    | A1–A8 findings 全修 + commit |
-| B3V-DATA | Plan质检 ✅ → Execute 派发中        | [Plan质检](86cea2d9-4909-4ff4-ad41-a7a5b89a9a38)         | `round3v-schema-hash-fail-closed`       | **PASS_FOR_EXECUTE**         |
-| B3V-STOR | Audit 收齐 · **Zero-Open Repair**   | A4 [BLOCKING](b74f5039-ebd1-474e-8cfc-3f83bd812fd8) 驱动 | `round3v-rawstore-atomic-write`         | 0 OPEN 强制                  |
-| B3V-SYNC | Execute ✅ → **Audit A1–A8 并行**   | [Execute](7cba305f-ee83-4b8c-a4e3-1eae9ec8e595)          | `round3v-sync-support-matrix-recovery`  | VR-SYNC-001 路径 A；53 测绿  |
-
-## 合并策略（§7）
-
-- Integration 分支：`integration/round3-batch3v`（待六路 Done 后创建）
-- 合并顺序：REG → L5R → OPS → DATA → STOR → SYNC
-- Registry 闭合：**仅主会话** §7.3 批处理
-
-## 下一步（主会话）
-
-1. 验收六路 Plan 产出（DEBT.plan / MASTER.plan + `validate-plan-freeze`）
-2. 派发 Plan 质检 agent（§3.8–§3.10）
-3. REG/L5R → 实现/核对；四条正式线 → Execute（TDD）→ Audit 串行 OPS→DATA→STOR→SYNC
-4. 按 §7.2 合并 + §7.3 registry 批闭合
+1. 提交 integration 工作区（registry + loop_maintain 生成物）
+2. 全量 `uv run pytest -q`（本机 ResourceGuard 可能需 `QMD_RESOURCE_PROFILE=normal` 或 CI）
+3. FF merge `integration/round3-batch3v` → `master`（用户授权后）
+4. `node .gitnexus/run.cjs analyze`（勿覆盖 `AGENTS.md` 定制段）

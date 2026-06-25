@@ -26,7 +26,6 @@ EXPECTED_UNRESOLVED_IDS = {
     "R3-PARTIAL-1",
     "R3-PARTIAL-3",
     "R3-PARTIAL-4",
-    "R3-PARTIAL-5",
     "D2-P1-1",
     "D2-P1-3",
     "D2-P2-1",
@@ -36,9 +35,7 @@ EXPECTED_UNRESOLVED_IDS = {
     "D7-P1-1",
     "D7-P2-2",
     "D3-P1-2",
-    "A9-P1-01",
     "A9-P2-01",
-    "A9-P2-02",
     "A9-P3-01",
     "R2-RISK-1",
     "R2-RISK-2",
@@ -47,7 +44,6 @@ EXPECTED_UNRESOLVED_IDS = {
     "R2-HYG-4",
     "R2-HYG-5",
     "B2.5-O-05",
-    "B2.5-O-06",
     "R3-B25-HYG-01",
     "R3-B25-HYG-02",
     "R3-B25-HYG-03",
@@ -77,10 +73,7 @@ EXPECTED_UNRESOLVED_IDS = {
 
 TASK_CARD_EXPECTATIONS = {
     "ROUND_1_DATA_FOUNDATION/005_create_schema_sql.md": {
-        "B2.5-O-06",
-        "A9-P1-01",
         "A9-P2-01",
-        "A9-P2-02",
         "A9-P3-01",
         "R2-GAP-1",
         "D2-P3-1",
@@ -91,7 +84,6 @@ TASK_CARD_EXPECTATIONS = {
     "ROUND_2_DATA_INGESTION_VALIDATION/014_implement_data_sync_orchestrator.md": {
         "R3-PARTIAL-1",
         "R3-PARTIAL-3",
-        "R3-PARTIAL-5",
         "D2-P1-1",
         "D2-P1-3",
         "D2-P2-1",
@@ -111,7 +103,6 @@ TASK_CARD_EXPECTATIONS = {
         "D2-P2-2",
         "R3-PARTIAL-4",
         "A9-P2-01",
-        "A9-P2-02",
         "R2-RISK-2",
     },
     (
@@ -294,6 +285,38 @@ def test_r3yPrompt15Evid001_closedInResolvedNotOpen() -> None:
     assert "R3Y-PROMPT15-EVID-001" in coverage
     assert "CLOSED" in coverage.split("R3Y-PROMPT15-EVID-001", maxsplit=1)[1][:200]
     assert f"| R3Y-PROMPT15-EVID-001 | OPEN" not in unresolved
+
+
+def test_batch3vR3Partial5_closedInResolvedNotOpen() -> None:
+    """覆盖范围：R3-PARTIAL-5 在 B3V-C04 合并后应已闭合
+    测试对象：RESOLVED、UNRESOLVED、COVERAGE registries
+    目的/目标：crash recovery path A 已交付，不得仍标 DEFERRED OPEN
+    验证点：R3-PARTIAL-5 在 RESOLVED 与 COVERAGE CLOSED；UNRESOLVED 无 DEFERRED 行
+    失败含义：已修复项仍标 OPEN，会误导并行 slice 重复抢同一修复
+    """
+    resolved = _read(RESOLVED)
+    unresolved = _read(UNRESOLVED)
+    coverage = _read(COVERAGE)
+
+    assert "R3-PARTIAL-5" in resolved
+    assert "R3-PARTIAL-5" in coverage
+    assert "CLOSED" in coverage.split("R3-PARTIAL-5", maxsplit=1)[1][:200]
+    assert "| R3-PARTIAL-5          | DEFERRED" not in unresolved
+
+
+def test_batch3vMigration009Check_closedInResolvedNotOpen() -> None:
+    """覆盖范围：A9-P1-01 / A9-P2-02 / B2.5-O-06 在 B3V-C05 migration 009 后应已闭合
+    测试对象：RESOLVED、UNRESOLVED registries
+    目的/目标：009 CHECK 已落地，不得仍出现在 UNRESOLVED DEFERRED 表
+    验证点：三 ID 均在 RESOLVED；UNRESOLVED 无对应 DEFERRED 行
+    失败含义：migration 009 闭合未同步 registry，Plan 会重复开 migration 008 债
+    """
+    resolved = _read(RESOLVED)
+    unresolved = _read(UNRESOLVED)
+
+    for item_id in ("A9-P1-01", "A9-P2-02", "B2.5-O-06"):
+        assert item_id in resolved
+        assert f"| {item_id}" not in unresolved or f"| {item_id}              | DEFERRED" not in unresolved
 
 
 def test_r3yOpenItems_ownerBranchesInCoverageSection45() -> None:

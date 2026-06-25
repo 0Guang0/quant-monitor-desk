@@ -1,7 +1,7 @@
 # Project Implementation Roadmap
 
 > **Purpose:** 从当前 `master` 最新状态出发，只规划尚未完成的代表任务，避免执行者继续被旧 Round3 历史批次干扰。  
-> **Status checkpoint:** `master` @ `376e30e6`（post Batch 01 merge — Round 3D.1–3D.3 + Round 3E.1–3E.4 + Wave D `023`）；Wave A/B/C 已归档；**新增 verified audit cleanup 先进入 Round 3V，随后进入 Round 3F（Batch6 数据治理）**。  
+> **Status checkpoint:** `integration/round3-batch3v` @ `af081770`（Batch 3V verified audit cleanup merged — six slices + registry §7.3 closed）；Wave A/B/C 已归档；**下一入口 Round 3F（Batch6 数据治理）**。  
 > **This file supersedes forward planning in:** `ROUND3_BATCH_IMPLEMENTATION_MAP.md` for **future work only**. 旧 map 保留作历史追踪与证据索引；后续新任务优先读本文件。  
 > **First executable batch entrypoint:** `docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/BATCH_01_MODEL_SOURCE_READINESS/README.md`.
 
