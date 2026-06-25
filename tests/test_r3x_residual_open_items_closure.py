@@ -11,12 +11,14 @@ from pathlib import Path
 import duckdb
 import pytest
 
+from backend.app.core.resource_guard import Decision, ResourceGuard
 from backend.app.datasources.adapters import _ADAPTER_TYPES
 from backend.app.datasources.exceptions import AdapterConfigurationError
 from backend.app.datasources.fetch_result import FetchRequest
 from backend.app.datasources.route_planner import SourceRoutePlanner
 from backend.app.datasources.service import DataSourceService, _default_operation
 from backend.app.datasources.source_registry import SourceRegistry
+from backend.app.db.migrate import apply_migrations
 from backend.app.db.write_manager import WriteRequest
 from backend.app.layer1_axes.feature_engine import AxisFeatureEngine
 from backend.app.layer1_axes.interpretation import AxisInterpretationEngine, InterpretationRejectedError
@@ -110,13 +112,15 @@ def test_advR3xRoute004_validationRoleAddsQualityFlag() -> None:
         assert "VALIDATION_SOURCE_USED" in plan.quality_flags
 
 
-def test_advR3xService001_productionFetchRequiresFileRegistry() -> None:
+def test_advR3xService001_productionFetchRequiresFileRegistry(monkeypatch) -> None:
     """覆盖范围：生产 DataSourceService.fetch 依赖注入（ADV-R3X-SERVICE-001）
     测试对象：DataSourceService.fetch 无 fetch_port/file_registry
     目的/目标：生产路径不得静默回落到测试适配器
     验证点：抛出 AdapterConfigurationError 且消息含 fetch_port
     失败含义：生产 fetch 无端口仍执行，可能写脏数据或跳过审计
     """
+    # ponytail: adapter-only; apply_migrations = prod-shaped log table; guard thresholds → test_resource_guard.py
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
     service = DataSourceService()
     req = FetchRequest(
         run_id="r3x-svc",
@@ -124,6 +128,7 @@ def test_advR3xService001_productionFetchRequiresFileRegistry() -> None:
         data_domain="cn_equity_daily_bar",
     )
     con = duckdb.connect(":memory:")
+    apply_migrations(con)  # ponytail: prod-shaped con so guard WARN log does not CatalogException
     with pytest.raises(AdapterConfigurationError, match="fetch_port"):
         service.fetch(req, con=con, job_id=None)
 

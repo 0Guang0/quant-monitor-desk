@@ -12,6 +12,7 @@ from pathlib import Path
 
 import duckdb
 import pytest
+from backend.app.core.resource_guard import Decision, ResourceGuard
 from backend.app.datasources.base_adapter import BaseDataAdapter
 from backend.app.datasources.exceptions import AdapterConfigurationError
 from backend.app.datasources.fetch_result import FetchRequest, FetchResult
@@ -65,13 +66,15 @@ def test_ds02_buildAdapterDedupesFactoryPaths() -> None:
     assert "_build_adapter(" in source_test
 
 
-def test_ds03_productionFetchRejectsImplicitTestAdapter() -> None:
+def test_ds03_productionFetchRejectsImplicitTestAdapter(monkeypatch) -> None:
     """覆盖范围：生产 fetch 禁止隐式 test adapter（DS-03）
     测试对象：DataSourceService.fetch（无 fetch_port、非 fixture）
     目的/目标：生产路径须显式 fetch_port，不得静默 create_test_adapter
     验证点：pytest.raises(AdapterConfigurationError, match='fetch_port is required')
     失败含义：生产环境误用 test adapter，数据来源与审计边界被击穿
     """
+    # ponytail: adapter-only; apply_migrations = prod-shaped log table; guard thresholds → test_resource_guard.py
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
     service = DataSourceService()
     req = FetchRequest(
         run_id="r1",
@@ -81,6 +84,7 @@ def test_ds03_productionFetchRejectsImplicitTestAdapter() -> None:
         instrument_id="sh.600519",
     )
     con = duckdb.connect(":memory:")
+    apply_migrations(con)  # ponytail: prod-shaped con so guard WARN log does not CatalogException
     with pytest.raises(AdapterConfigurationError, match="fetch_port is required"):
         service.fetch(req, con=con, job_id=None)
 

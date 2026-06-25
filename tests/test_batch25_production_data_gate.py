@@ -49,11 +49,11 @@ def _registry_table_row(registry_text: str, item_id: str) -> bool:
 def test_batch25_deferredItems_documentedInRegistries() -> None:
     """覆盖范围：Batch 2.5 DEFERRED/RESOLVED 项在 registry 与任务证据中的一致登记
     测试对象：三份 registry、batch25-deferred-items.md、final_registry_update.md、ROUND3_BATCH25_PENDING_FIX_REGISTRY
-    目的/目标：B2.5-O-05/O-06 等 deferred 与已 resolved 项有 closure hook，且 pending 仍跟踪 R3-B2.75-01
-    验证点：deferred_ids 在 audit/unresolved/task_register/final_registry 有表行；resolved_ids 在 RESOLVED；pending 含 R3-B2.75-01
-    失败含义：registry 与任务证据脱节，2.5 收尾状态无法被审计追溯
+    目的/目标：B2.5-O-05 仍 deferred；B2.5-O-06 已由 Batch 3V migration 009 闭合；历史 task 证据仍可追溯
+    验证点：B2.5-O-05 在 audit/unresolved/task_register；B2.5-O-06 在 RESOLVED；resolved 批次含 O-02..O-07；pending 含 R3-B2.75-01
+    失败含义：registry 与任务证据脱节，2.5/3V 收尾状态无法被审计追溯
     """
-    deferred_ids = ("B2.5-O-05", "B2.5-O-06")
+    deferred_ids = ("B2.5-O-05",)
     audit_deferred = _read_text(PROJECT_ROOT / "docs/AUDIT_DEFERRED_REGISTRY.md")
     unresolved = _read_text(PROJECT_ROOT / "docs/UNRESOLVED_ISSUES_REGISTRY.md")
     task_register = _read_text(TASK_DIR / "research/batch25-deferred-items.md")
@@ -66,7 +66,14 @@ def test_batch25_deferredItems_documentedInRegistries() -> None:
         assert "DEFERRED" in task_register or "Deferred" in task_register
         assert item_id in final_registry
 
-    resolved_ids = ("B2.5-O-02", "B2.5-O-03", "B2.5-O-04", "B2.5-O-07", "B2.5-WIN-PATH-01")
+    resolved_ids = (
+        "B2.5-O-02",
+        "B2.5-O-03",
+        "B2.5-O-04",
+        "B2.5-O-06",
+        "B2.5-O-07",
+        "B2.5-WIN-PATH-01",
+    )
     resolved = _read_text(PROJECT_ROOT / "docs/RESOLVED_ISSUES_REGISTRY.md")
     for item_id in resolved_ids:
         assert item_id in resolved
