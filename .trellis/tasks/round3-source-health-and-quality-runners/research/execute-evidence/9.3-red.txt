@@ -1,0 +1,3 @@
+FAILED tests/test_b3f_quality_runners.py::test_b3fQualityRunners_dataQuality_notDeferred
+DeferredJobTypeError: run_data_quality
+exit 1

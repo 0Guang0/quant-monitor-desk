@@ -534,6 +534,19 @@ def test_layer1Ingestion_phase0_knownPytestSkipsDocumented() -> None:
     assert "test_dbInspect_symlinkOutsideDataRoot_notCounted" in text
 
 
+def test_layer1Ingestion_rollbackPlanDocumentsR2bSandboxBootstrap() -> None:
+    """覆盖范围：回滚计划是否登记 R2b sandbox_bootstrap 模块
+    测试对象：layer1_ingestion_refactor_rollback_plan.md
+    目的/目标：R3F-HYG-07 拆分进度须可审计
+    验证点：文档含 sandbox_bootstrap.py 与 R2b DONE
+    失败含义：ingestion 拆分状态与代码漂移，并行 agent 误判可合并
+    """
+    plan = PROJECT_ROOT / "docs/architecture/layer1_ingestion_refactor_rollback_plan.md"
+    text = _repo_text(plan)
+    assert "sandbox_bootstrap.py" in text
+    assert "R2b DONE" in text
+
+
 def test_layer1Ingestion_phase0_batch25PendingFixRegistryPresent() -> None:
     """覆盖范围：开工前检查——Batch2.5 待办项注册表文档是否存在
     测试对象：ROUND3_BATCH25_PENDING_FIX_REGISTRY.md

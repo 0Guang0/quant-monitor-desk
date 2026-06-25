@@ -3,20 +3,17 @@
 from __future__ import annotations
 
 import os
-import sys
 import tempfile
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(PROJECT_ROOT))
+from backend.app.config import DATA_ROOT
+from backend.app.core.resource_guard import Decision, ResourceGuard
+from backend.app.datasources.fetch_result import FetchRequest, FetchResult
+from backend.app.db.connection import ConnectionManager
+from backend.app.sync.jobs import SyncJobSpec
+from backend.app.sync.orchestrator import DataSyncOrchestrator
 
-from backend.app.config import DATA_ROOT  # noqa: E402
-from backend.app.core.resource_guard import Decision, ResourceGuard  # noqa: E402
-from backend.app.datasources.fetch_result import FetchRequest, FetchResult  # noqa: E402
-from backend.app.db.connection import ConnectionManager  # noqa: E402
-from backend.app.sync.jobs import SyncJobSpec  # noqa: E402
-from backend.app.sync.orchestrator import DataSyncOrchestrator  # noqa: E402
-from scripts.init_db import main as init_db_main  # noqa: E402
+from scripts.init_db import main as init_db_main
 
 
 class _SmokeAdapter:
@@ -96,7 +93,7 @@ def main() -> None:
     data_root = os.environ.get("QMD_DATA_ROOT", "data")
     os.environ["QMD_DATA_ROOT"] = data_root
     init_db_main()
-    init_db_main()
+    init_db_main()  # ponytail: idempotent second init proves migrate no-op on warm DB
     db_path = DATA_ROOT / "duckdb" / "quant_monitor.duckdb"
     if not db_path.is_file():
         raise SystemExit(f"duckdb not found at {db_path}")

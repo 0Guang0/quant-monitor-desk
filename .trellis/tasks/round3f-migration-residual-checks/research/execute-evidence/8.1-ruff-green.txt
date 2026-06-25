@@ -1,0 +1,2134 @@
+[1m[91mI001 [0m[[1m[96m*[0m] [1mImport block is un-sorted or un-formatted[0m
+  [1m[94m-->[0m backend\app\db\con_helpers.py:3:1
+   [1m[94m|[0m
+[1m[94m 1 |[0m   """Connection scope helpers for db layer (DB-05)."""
+[1m[94m 2 |[0m
+[1m[94m 3 |[0m [1m[91m/[0m from __future__ import annotations
+[1m[94m 4 |[0m [1m[91m|[0m
+[1m[94m 5 |[0m [1m[91m|[0m from collections.abc import Callable
+[1m[94m 6 |[0m [1m[91m|[0m from typing import TypeVar
+[1m[94m 7 |[0m [1m[91m|[0m
+[1m[94m 8 |[0m [1m[91m|[0m import duckdb
+[1m[94m 9 |[0m [1m[91m|[0m
+[1m[94m10 |[0m [1m[91m|[0m from backend.app.db.connection import ConnectionManager
+   [1m[94m|[0m [1m[91m|_______________________________________________________^[0m
+[1m[94m11 |[0m
+[1m[94m12 |[0m   _T = TypeVar("_T")
+   [1m[94m|[0m
+[1m[96mhelp[0m: [1mOrganize imports[0m
+
+[1m[91mE501 [0m[1mLine too long (126 > 100)[0m
+  [1m[94m-->[0m tests\smoke\test_foundation_smoke.py:29:81
+   [1m[94m|[0m
+[1m[94m27 |[0m     娴嬭瘯瀵硅薄锛歛pply_migrations銆丷esourceGuard銆丷awStore銆丗ileRegistry銆乄riteManager
+[1m[94m28 |[0m     鐩殑/鐩爣锛氶獙璇佽縼绉诲缓琛ㄣ€佽祫婧?WARN/OK銆佸師濮嬫枃浠剁櫥璁般€佹牎楠岄棬鎺у啓鍏ヤ笌瀹¤鎴愯触鍚勮蛋涓€璺?[1m[94m29 |[0m     楠岃瘉鐐癸細001鈥?02 杩佺Щ涓?foundation 琛ㄩ綈鍏紱guard WARN 鍐?log锛涙垚鍔熷啓鍏?1 琛屼笖 audit SUCCESS锛泂tub-fail 鍐欏叆 FAILED 涓斾笉澧炶
+   [1m[94m|[0m                                                                                                     [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m30 |[0m     澶辫触鍚箟锛歠oundation 閾捐矾浠讳竴鐜妭鏂锛屽悗缁?batch 鏁版嵁钀藉簱鏃犳硶淇′换
+[1m[94m31 |[0m     """
+   [1m[94m|[0m
+
+[1m[91mI001 [0m[[1m[96m*[0m] [1mImport block is un-sorted or un-formatted[0m
+  [1m[94m-->[0m tests\test_audit_remediation.py:3:1
+   [1m[94m|[0m
+[1m[94m 1 |[0m   """Round2 ABCD 瀵规姉瀹¤淇鍥炲綊锛氳缂樻寔涔呭寲銆丏B 绾︽潫涓庣紪鎺掍簨浠躲€?""
+[1m[94m 2 |[0m
+[1m[94m 3 |[0m [1m[91m/[0m from __future__ import annotations
+[1m[94m 4 |[0m [1m[91m|[0m
+[1m[94m 5 |[0m [1m[91m|[0m import json
+[1m[94m 6 |[0m [1m[91m|[0m from datetime import UTC, date, datetime
+[1m[94m 7 |[0m [1m[91m|[0m from pathlib import Path
+[1m[94m 8 |[0m [1m[91m|[0m
+[1m[94m 9 |[0m [1m[91m|[0m import duckdb
+[1m[94m10 |[0m [1m[91m|[0m import pytest
+[1m[94m11 |[0m [1m[91m|[0m from backend.app.core.resource_guard import Decision, ResourceGuard
+[1m[94m12 |[0m [1m[91m|[0m from backend.app.datasources.fetch_result import FetchResult
+[1m[94m13 |[0m [1m[91m|[0m from backend.app.datasources.source_registry import SourceRegistry
+[1m[94m14 |[0m [1m[91m|[0m from backend.app.db.connection import ConnectionManager
+[1m[94m15 |[0m [1m[91m|[0m from backend.app.db.migrate import apply_migrations
+[1m[94m16 |[0m [1m[91m|[0m from backend.app.sync.event_payload import SCHEMA_KEYS, parse_event_payload
+[1m[94m17 |[0m [1m[91m|[0m from backend.app.sync.jobs import SyncJobSpec
+[1m[94m18 |[0m [1m[91m|[0m from backend.app.sync.orchestrator import DataSyncOrchestrator
+[1m[94m19 |[0m [1m[91m|[0m from backend.app.validators.data_quality import DataQualityRequest, DataQualityValidator
+[1m[94m20 |[0m [1m[91m|[0m from tests.test_batch_d_orchestration_flow import (
+[1m[94m21 |[0m [1m[91m|[0m     CLEAN_TABLE,
+[1m[94m22 |[0m [1m[91m|[0m     CONFLICT_STG,
+[1m[94m23 |[0m [1m[91m|[0m     BatchDIncrementalAdapter,
+[1m[94m24 |[0m [1m[91m|[0m     _incremental_spec,
+[1m[94m25 |[0m [1m[91m|[0m     _orch_stack,
+[1m[94m26 |[0m [1m[91m|[0m )
+[1m[94m27 |[0m [1m[91m|[0m from tests.test_sync_orchestrator import (
+[1m[94m28 |[0m [1m[91m|[0m     _BackfillCountAdapter,
+[1m[94m29 |[0m [1m[91m|[0m     _BACKFILL_3SHARD_END,
+[1m[94m30 |[0m [1m[91m|[0m     _BACKFILL_3SHARD_START,
+[1m[94m31 |[0m [1m[91m|[0m )
+   [1m[94m|[0m [1m[91m|_^[0m
+   [1m[94m|[0m
+[1m[96mhelp[0m: [1mOrganize imports[0m
+
+[1m[91mE501 [0m[1mLine too long (117 > 100)[0m
+  [1m[94m-->[0m tests\test_batch25_production_data_gate.py:51:91
+   [1m[94m|[0m
+[1m[94m49 |[0m def test_batch25_deferredItems_documentedInRegistries() -> None:
+[1m[94m50 |[0m     """瑕嗙洊鑼冨洿锛欱atch 2.5 DEFERRED/RESOLVED 椤瑰湪 registry 涓庝换鍔¤瘉鎹腑鐨勪竴鑷寸櫥璁?[1m[94m51 |[0m     娴嬭瘯瀵硅薄锛氫笁浠?registry銆乥atch25-deferred-items.md銆乫inal_registry_update.md銆丷OUND3_BATCH25_PENDING_FIX_REGISTRY
+   [1m[94m|[0m                                                                                                     [1m[91m^^^^^^^^^^^^^^^^^[0m
+[1m[94m52 |[0m     鐩殑/鐩爣锛欱2.5-O-05 浠?deferred锛汢2.5-O-06 宸茬敱 Batch 3V migration 009 闂悎锛涘巻鍙?task 璇佹嵁浠嶅彲杩芥函
+[1m[94m53 |[0m     楠岃瘉鐐癸細B2.5-O-05 鍦?audit/unresolved/task_register锛汢2.5-O-06 鍦?RESOLVED锛況esolved 鎵规鍚?O-02..O-07锛沺ending 鍚?R3-B2.75-01
+   [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (104 > 100)[0m
+  [1m[94m-->[0m tests\test_batch25_production_data_gate.py:52:83
+   [1m[94m|[0m
+[1m[94m50 |[0m     """瑕嗙洊鑼冨洿锛欱atch 2.5 DEFERRED/RESOLVED 椤瑰湪 registry 涓庝换鍔¤瘉鎹腑鐨勪竴鑷寸櫥璁?[1m[94m51 |[0m     娴嬭瘯瀵硅薄锛氫笁浠?registry銆乥atch25-deferred-items.md銆乫inal_registry_update.md銆丷OUND3_BATCH25_PENDING_FIX_REGISTRY
+[1m[94m52 |[0m     鐩殑/鐩爣锛欱2.5-O-05 浠?deferred锛汢2.5-O-06 宸茬敱 Batch 3V migration 009 闂悎锛涘巻鍙?task 璇佹嵁浠嶅彲杩芥函
+   [1m[94m|[0m                                                                                                     [1m[91m^^^^[0m
+[1m[94m53 |[0m     楠岃瘉鐐癸細B2.5-O-05 鍦?audit/unresolved/task_register锛汢2.5-O-06 鍦?RESOLVED锛況esolved 鎵规鍚?O-02..O-07锛沺ending 鍚?R3-B2.75-01
+[1m[94m54 |[0m     澶辫触鍚箟锛歳egistry 涓庝换鍔¤瘉鎹劚鑺傦紝2.5/3V 鏀跺熬鐘舵€佹棤娉曡瀹¤杩芥函
+   [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (130 > 100)[0m
+  [1m[94m-->[0m tests\test_batch25_production_data_gate.py:53:90
+   [1m[94m|[0m
+[1m[94m51 |[0m [1m[94m鈥?[0mnal_registry_update.md銆丷OUND3_BATCH25_PENDING_FIX_REGISTRY
+[1m[94m52 |[0m [1m[94m鈥?[0m 3V migration 009 闂悎锛涘巻鍙?task 璇佹嵁浠嶅彲杩芥函
+[1m[94m53 |[0m [1m[94m鈥?[0mr锛汢2.5-O-06 鍦?RESOLVED锛況esolved 鎵规鍚?O-02..O-07锛沺ending 鍚?R3-B2.75-01
+   [1m[94m|[0m                                                [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m54 |[0m [1m[94m鈥?[0m
+[1m[94m55 |[0m [1m[94m鈥?[0m
+   [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (193 > 100)[0m
+  [1m[94m-->[0m tests\test_batch25_production_data_gate.py:89:90
+   [1m[94m|[0m
+[1m[94m87 |[0m [1m[94m鈥?[0m
+[1m[94m88 |[0m [1m[94m鈥?[0m
+[1m[94m89 |[0m [1m[94m鈥?[0mdry_run 涓?fred deferred銆佽矾鐢?akshare锛沺hase4 鍒嗙被 fixture_or_staged_evidence 涓旇矾寰勫湪 sandbox/fixture
+   [1m[94m|[0m            [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m90 |[0m [1m[94m鈥?[0m
+[1m[94m91 |[0m [1m[94m鈥?[0m
+   [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (105 > 100)[0m
+   [1m[94m-->[0m tests\test_batch25_production_data_gate.py:128:85
+    [1m[94m|[0m
+[1m[94m126 |[0m     娴嬭瘯瀵硅薄锛歞ata/duckdb/quant_monitor.duckdb 涓?fetch_log 绛夎〃琛屾暟
+[1m[94m127 |[0m     鐩殑/鐩爣锛氭湰鍦扮洰鏍囧簱涓嶅簲宸茶 Batch 2.5  promoted 鎴愮敓浜ц娴嬫暟鎹?[1m[94m128 |[0m     楠岃瘉鐐癸細fetch_log銆乿alidation_report銆亀rite_audit_log銆乤xis_* 琛?count 鍧囦负 0锛涙棤搴撴枃浠跺垯 pytest.skip
+    [1m[94m|[0m                                                                                                     [1m[91m^^^^^[0m
+[1m[94m129 |[0m     澶辫触鍚箟锛氱洰鏍囧簱宸叉湁 Layer1 琛岋紝璇存槑 staged 璇佹嵁鍙兘宸插啓鍏ョ敓浜ц矾寰?[1m[94m130 |[0m     """
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (166 > 100)[0m
+   [1m[94m-->[0m tests\test_batch25_production_data_gate.py:152:90
+    [1m[94m|[0m
+[1m[94m150 |[0m [1m[94m鈥?[0m
+[1m[94m151 |[0m [1m[94m鈥?[0m
+[1m[94m152 |[0m [1m[94m鈥?[0mfetch_macro_series銆丒NV-E1-DGS10銆乻taged_route_note 鍚?FRED:DGS10 deferred锛涙棤鏂囦欢鍒?skip
+    [1m[94m|[0m                          [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m153 |[0m [1m[94m鈥?[0m
+[1m[94m154 |[0m [1m[94m鈥?[0m
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (104 > 100)[0m
+  [1m[94m-->[0m tests\test_batch275_live_pilot_gate.py:78:92
+   [1m[94m|[0m
+[1m[94m76 |[0m def test_livePilot_phaseMinus1_registryReconciliationRequired() -> None:
+[1m[94m77 |[0m     """瑕嗙洊鑼冨洿锛欱atch 2.75 Phase -1 鏄惁瀹屾垚浜?ID registry 瀵硅处涓庤妗ｈ瘉鎹?[1m[94m78 |[0m     娴嬭瘯瀵硅薄锛歟xecute-evidence/phase_minus1_reconciliation.md銆乸hase-1-registry-read.txt 鍙婁笁浠?registry
+   [1m[94m|[0m                                                                                                     [1m[91m^^^^[0m
+[1m[94m79 |[0m     鐩殑/鐩爣锛氬紑宸ュ墠瑕佹妸浜旂被寰呭璐﹂」涓?registry 瀵归綈锛屼笉鑳芥妸銆岃鍒掑凡閫氳繃銆嶈褰撴垚銆岀嚎涓婅瘯鐐瑰凡閫氳繃銆?[1m[94m80 |[0m     楠岃瘉鐐癸細reconciliation 鍚簲涓?ID 涓?out-of-scope 璇存槑锛況ead log 鍚洓 registry 璺緞锛況esolved 鍚?PLAN-01 涓斿啓鏄庝笉闂悎 R3-B2.75-01锛沺                       [1m[94m鈥?[0m
+   [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (159 > 100)[0m
+  [1m[94m-->[0m tests\test_batch275_live_pilot_gate.py:80:84
+   [1m[94m|[0m
+[1m[94m78 |[0m [1m[94m鈥?[0m1-registry-read.txt 鍙婁笁浠?registry
+[1m[94m79 |[0m [1m[94m鈥?[0m
+[1m[94m80 |[0m [1m[94m鈥?[0mistry 璺緞锛況esolved 鍚?PLAN-01 涓斿啓鏄庝笉闂悎 R3-B2.75-01锛沺ending 鍚?R3-B2.75-01 绛?   [1m[94m|[0m                          [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m81 |[0m [1m[94m鈥?[0m
+[1m[94m82 |[0m [1m[94m鈥?[0m
+   [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (101 > 100)[0m
+   [1m[94m-->[0m tests\test_batch275_live_pilot_gate.py:288:82
+    [1m[94m|[0m
+[1m[94m286 |[0m     娴嬭瘯瀵硅薄锛歟xecute-evidence/phase0_authorization_record.md
+[1m[94m287 |[0m     鐩殑/鐩爣锛氳瘉鎹В閲婁负浣?baostock/akshare 浣庝簬 qmt/fred/yahoo锛屽苟寮曠敤鐢ㄦ埛鎺堟潈鏂囦欢
+[1m[94m288 |[0m     楠岃瘉鐐癸細鏂囦欢瀛樺湪锛涘惈 baostock銆乤kshare銆乹mt銆乫red銆亂ahoo锛涘惈 batch275_user_authorization 鐩稿璺緞
+    [1m[94m|[0m                                                                                                      [1m[91m^[0m
+[1m[94m289 |[0m     澶辫触鍚箟锛氱己椋庨櫓璇存槑锛屽璁℃棤娉曞垽鏂簮閫夋嫨鏄惁涓庣瓥鐣ヤ竴鑷?[1m[94m290 |[0m     """
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (159 > 100)[0m
+   [1m[94m-->[0m tests\test_batch275_live_pilot_gate.py:306:85
+    [1m[94m|[0m
+[1m[94m304 |[0m [1m[94m鈥?[0m
+[1m[94m305 |[0m [1m[94m鈥?[0m
+[1m[94m306 |[0m [1m[94m鈥?[0mad_only锛沜apability 鍚?baostock/akshare 涓夎姹傦紱浠诲姟 execute-evidence 涓夋枃浠跺瓨鍦?    [1m[94m|[0m                        [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m307 |[0m [1m[94m鈥?[0m
+[1m[94m308 |[0m [1m[94m鈥?[0m
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (233 > 100)[0m
+   [1m[94m-->[0m tests\test_batch275_live_pilot_gate.py:372:86
+    [1m[94m|[0m
+[1m[94m370 |[0m [1m[94m鈥?[0m
+[1m[94m371 |[0m [1m[94m鈥?[0m
+[1m[94m372 |[0m [1m[94m鈥?[0me_route_status 涓?VALIDATION_ONLY_BLOCKED 鎴?DISABLED_SOURCE锛涗换鍔?evidence 涓?matrix JSON dry_run 涓?fred_primary_deferred
+[1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m373 |[0m [1m[94m鈥?[0m
+[1m[94m374 |[0m [1m[94m鈥?[0m
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (120 > 100)[0m
+   [1m[94m-->[0m tests\test_batch275_live_pilot_gate.py:422:93
+    [1m[94m|[0m
+[1m[94m420 |[0m     娴嬭瘯瀵硅薄锛歱review_live_pilot 瀵归涓?approved 璇锋眰
+[1m[94m421 |[0m     鐩殑/鐩爣锛氭瘡鏉￠瑙堥櫎璺敱鐘舵€佸杩橀』鏆撮湶 guard 鍐崇瓥涓庡師鍥?[1m[94m422 |[0m     楠岃瘉鐐癸細preview 鍚?resource_guard_decision銆乺esource_guard_reason锛沝ry_run True锛沞xplicit_source_route_status==READY
+    [1m[94m|[0m                                                                                                     [1m[91m^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m423 |[0m     澶辫触鍚箟锛氶瑙堢己 guard 瀛楁锛孭hase 3 鍙兘鍦ㄨ祫婧愬帇鍔涗笅浠嶅皾璇?fetch
+[1m[94m424 |[0m     """
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (102 > 100)[0m
+   [1m[94m-->[0m tests\test_batch275_live_pilot_gate.py:515:95
+    [1m[94m|[0m
+[1m[94m513 |[0m     娴嬭瘯瀵硅薄锛歳un_live_pilot_raw_only 鍦?mock preview 杩斿洖 DISABLED/CAPABILITY_MISSING 绛夌姸鎬佹椂
+[1m[94m514 |[0m     鐩殑/鐩爣锛氳矾鐢辨湭灏辩华鏃朵笉寰楀垱寤?live fetch port
+[1m[94m515 |[0m     楠岃瘉鐐癸細pytest.raises(LivePilotRouteNotReadyError, match=route_status)锛沠etch_port_called 涓?False
+    [1m[94m|[0m                                                                                                     [1m[91m^^[0m
+[1m[94m516 |[0m     澶辫触鍚箟锛氬潖璺敱浠嶅缓 fetch 绔彛锛宭ive pilot 鍙兘鍦ㄧ鐢ㄦ簮涓婃媺鏁?[1m[94m517 |[0m     """
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (142 > 100)[0m
+   [1m[94m-->[0m tests\test_batch275_live_pilot_gate.py:591:89
+    [1m[94m|[0m
+[1m[94m589 |[0m [1m[94m鈥?[0mut 鏃?[1m[94m590 |[0m [1m[94m鈥?[0m
+[1m[94m591 |[0m [1m[94m鈥?[0mdor timeout锛涘瓨鍦?phase3_fetch_failure 涓?phase3_raw_micro_fetch_evidence 鏂囦欢
+    [1m[94m|[0m                                      [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m592 |[0m [1m[94m鈥?[0m
+[1m[94m593 |[0m [1m[94m鈥?[0m
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (117 > 100)[0m
+   [1m[94m-->[0m tests\test_batch275_live_pilot_gate.py:635:87
+    [1m[94m|[0m
+[1m[94m633 |[0m     娴嬭瘯瀵硅薄锛歝apture_phase3_raw_evidence 杩炵画璋冪敤涓ゆ
+[1m[94m634 |[0m     鐩殑/鐩爣锛氶噸澶嶆墽琛岄噰闆嗘椂浠嶅簲淇濈暀涓夎矾缁撴灉锛屼笖鐢熶骇搴撴湭琚敼鍔?[1m[94m635 |[0m     楠岃瘉鐐癸細涓ゆ rerun_safe True锛涙寔涔呭寲 JSON 鍚?pilot-req-1/2/3 涓斿悇 proof db_hash_unchanged 涓?row_counts_unchanged
+    [1m[94m|[0m                                                                                                     [1m[91m^^^^^^^^^^^^^^^^^[0m
+[1m[94m636 |[0m     澶辫触鍚箟锛氶噸璺戠牬鍧忕粨鏋勫寲璇佹嵁鎴栨湭鏀瑰簱璇佹槑锛屾矙绠辫涔変笉鍙鐜?[1m[94m637 |[0m     """
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (131 > 100)[0m
+   [1m[94m-->[0m tests\test_batch275_live_pilot_gate.py:695:88
+    [1m[94m|[0m
+[1m[94m693 |[0m [1m[94m鈥?[0mdence HITL 鏂囦欢
+[1m[94m694 |[0m [1m[94m鈥?[0m 涓嶅彉
+[1m[94m695 |[0m [1m[94m鈥?[0mnt_hash锛沵utation_proof 涓?True锛況aw 璺緞鍦?sandbox 涓嬶紱鏍囪 network/slow
+    [1m[94m|[0m                                             [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m696 |[0m [1m[94m鈥?[0mequest 1 璇佹嵁鏃犳晥
+[1m[94m697 |[0m [1m[94m鈥?[0m
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (166 > 100)[0m
+   [1m[94m-->[0m tests\test_batch275_live_pilot_gate.py:733:94
+    [1m[94m|[0m
+[1m[94m731 |[0m [1m[94m鈥?[0m
+[1m[94m732 |[0m [1m[94m鈥?[0m
+[1m[94m733 |[0m [1m[94m鈥?[0mrt 鍚?ALLOW_CLEAN_WRITE_FALSE_DEFAULT 涓庝笁绫?validator 璺緞锛沺roof 鍚?allow_clean_write false
+    [1m[94m|[0m                             [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m734 |[0m [1m[94m鈥?[0m
+[1m[94m735 |[0m [1m[94m鈥?[0m
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (106 > 100)[0m
+   [1m[94m-->[0m tests\test_batch275_live_pilot_gate.py:770:87
+    [1m[94m|[0m
+[1m[94m768 |[0m     娴嬭瘯瀵硅薄锛歝apture_phase4_validation 浠呮湁 phase3 JSON銆佹棤 eastmoney verdict/reconciliation 鏃?[1m[94m769 |[0m     鐩殑/鐩爣锛氫粎鏈?raw fetch 璇佹嵁涓嶈冻浠ヨ繘鍏?Phase 4 鏍￠獙
+[1m[94m770 |[0m     楠岃瘉鐐癸細pytest.raises(LivePilotAuthorizationError, match='Request 2')锛沺hase3 婧愭枃浠跺瓨鍦ㄥ苟宸插鍒跺埌 tmp
+    [1m[94m|[0m                                                                                                     [1m[91m^^^^^^[0m
+[1m[94m771 |[0m     澶辫触鍚箟锛氱己 Request 2 瑁佸喅涔熻兘璺?Phase 4锛宻tock_zh_a_hist 杈圭晫浼氳璺宠繃
+[1m[94m772 |[0m     """
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (161 > 100)[0m
+   [1m[94m-->[0m tests\test_batch275_live_pilot_gate.py:793:93
+    [1m[94m|[0m
+[1m[94m791 |[0m [1m[94m鈥?[0m
+[1m[94m792 |[0m [1m[94m鈥?[0m
+[1m[94m793 |[0m [1m[94m鈥?[0mn_write_performed False銆乻evere_findings 闈炵┖锛沺roof 鍚?severe_findings_block_clean_write
+    [1m[94m|[0m                              [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m794 |[0m [1m[94m鈥?[0m
+[1m[94m795 |[0m [1m[94m鈥?[0m
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (157 > 100)[0m
+   [1m[94m-->[0m tests\test_batch275_live_pilot_gate.py:823:89
+    [1m[94m|[0m
+[1m[94m821 |[0m [1m[94m鈥?[0mtion_report
+[1m[94m822 |[0m [1m[94m鈥?[0m
+[1m[94m823 |[0m [1m[94m鈥?[0mcar/NO_CONFLICT 鎴?Informational锛況eport 涓?req-2 closes_original_request2 涓?False
+    [1m[94m|[0m                            [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m824 |[0m [1m[94m鈥?[0m
+[1m[94m825 |[0m [1m[94m鈥?[0m
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (101 > 100)[0m
+   [1m[94m-->[0m tests\test_batch275_live_pilot_gate.py:838:101
+    [1m[94m|[0m
+[1m[94m836 |[0m         assert "Request 2" in text
+[1m[94m837 |[0m         assert "sidecar" in text.lower() or "informational" in text.lower()
+[1m[94m838 |[0m         assert "NO_CONFLICT_INSPECT_REQUIRED_FOR_CLOSEOUT" in text or "Informational sidecar" in text
+    [1m[94m|[0m                                                                                                     [1m[91m^[0m
+[1m[94m839 |[0m
+[1m[94m840 |[0m         report = json.loads(_read(EVIDENCE_DIR / "phase4_validation_report.json"))
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (105 > 100)[0m
+   [1m[94m-->[0m tests\test_batch275_live_pilot_gate.py:854:90
+    [1m[94m|[0m
+[1m[94m852 |[0m     娴嬭瘯瀵硅薄锛歱hase3_request2_evidence_reconciliation.md 涓?eastmoney_stock_zh_a_hist_verdict.md
+[1m[94m853 |[0m     鐩殑/鐩爣锛氬璐︽枃椤昏繛鎺?stock_zh_a_hist銆乪astmoney sidecar銆乨aily 鍊欓€変笌 018C 杈圭晫
+[1m[94m854 |[0m     楠岃瘉鐐癸細涓ゆ枃浠跺瓨鍦紱reconciliation 鍚?hist/push2his/stock_zh_a_daily/sidecar/PILOT_PASS_RAW_ONLY/018C
+    [1m[94m|[0m                                                                                                     [1m[91m^^^^^[0m
+[1m[94m855 |[0m     澶辫触鍚箟锛氱己瀵硅处鎴栬鍐筹紝Phase 4 鏃犳硶璇佹槑 Request 2 鏈秺鏉冮棴鍚?[1m[94m856 |[0m     """
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (137 > 100)[0m
+  [1m[94m-->[0m tests\test_batch3_staged_downstream_gate.py:31:90
+   [1m[94m|[0m
+[1m[94m29 |[0m [1m[94m鈥?[0mmd
+[1m[94m30 |[0m [1m[94m鈥?[0m
+[1m[94m31 |[0m [1m[94m鈥?[0mURCE銆乻taged-only銆?*CLOSED**锛涚姝?live FRED銆佺敓浜у簱鍐欏叆銆佸叏甯傚満鎷夊彇绛夋帾杈炲瓨鍦?   [1m[94m|[0m                                            [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m32 |[0m [1m[94m鈥?[0m
+[1m[94m33 |[0m [1m[94m鈥?[0m
+   [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (171 > 100)[0m
+  [1m[94m-->[0m tests\test_batch3_staged_downstream_gate.py:61:93
+   [1m[94m|[0m
+[1m[94m59 |[0m [1m[94m鈥?[0m銆丷OUND3_BATCH_IMPLEMENTATION_MAP.md
+[1m[94m60 |[0m [1m[94m鈥?[0m
+[1m[94m61 |[0m [1m[94m鈥?[0maged-gate锛沨andoff 鍚?PILOT_FAIL_SOURCE 涓?CLOSED锛涘湴鍥剧姝㈠惎鍔?feature/round3-019-layer2-sensor
+   [1m[94m|[0m                           [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m62 |[0m [1m[94m鈥?[0m
+[1m[94m63 |[0m [1m[94m鈥?[0m
+   [1m[94m|[0m
+
+[1m[91mI001 [0m[[1m[96m*[0m] [1mImport block is un-sorted or un-formatted[0m
+  [1m[94m-->[0m tests\test_config.py:6:1
+   [1m[94m|[0m
+[1m[94m 4 |[0m   """
+[1m[94m 5 |[0m
+[1m[94m 6 |[0m [1m[91m/[0m from __future__ import annotations
+[1m[94m 7 |[0m [1m[91m|[0m
+[1m[94m 8 |[0m [1m[91m|[0m import importlib
+[1m[94m 9 |[0m [1m[91m|[0m from pathlib import Path
+[1m[94m10 |[0m [1m[91m|[0m
+[1m[94m11 |[0m [1m[91m|[0m import pytest
+[1m[94m12 |[0m [1m[91m|[0m
+[1m[94m13 |[0m [1m[91m|[0m from backend.app.config import VALID_RESOURCE_PROFILES, get_resource_profile
+   [1m[94m|[0m [1m[91m|____________________________________________________________________________^[0m
+   [1m[94m|[0m
+[1m[96mhelp[0m: [1mOrganize imports[0m
+
+[1m[91mE501 [0m[1mLine too long (119 > 100)[0m
+   [1m[94m-->[0m tests\test_data_adapter_contract.py:307:94
+    [1m[94m|[0m
+[1m[94m305 |[0m     娴嬭瘯瀵硅薄锛欶etchResult SUCCESS 鏃?raw/staging
+[1m[94m306 |[0m     鐩殑/鐩爣锛氬彧璇存垚鍔熷嵈涓嶆寚鏄庢暟鎹惤鍦ㄥ摢锛屼笅娓告棤娉曟牳瀵癸紝搴旂洿鎺ユ嫆缁?[1m[94m307 |[0m     楠岃瘉鐐癸細缂?raw_file_paths 涓?staging_table 鏃?pytest.raises(ValidationError, match=raw_file_paths or staging_table)
+    [1m[94m|[0m                                                                                                     [1m[91m^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m308 |[0m     澶辫触鍚箟锛氱┖鎴愬姛鍙０鏄庯紝涓嬫父 validation 鏃犵墿鍙獙
+[1m[94m309 |[0m     """
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (105 > 100)[0m
+   [1m[94m-->[0m tests\test_data_adapter_contract.py:367:96
+    [1m[94m|[0m
+[1m[94m365 |[0m     娴嬭瘯瀵硅薄锛欶etchLogWriter.write锛坒etch_time=not-a-timestamp锛?[1m[94m366 |[0m     鐩殑/鐩爣锛氭棤娉曡В鏋愮殑鎶撳彇鏃堕棿涓嶅簲鍐欏叆鏁版嵁搴擄紝鍚﹀垯鏃跺簭鏌ヨ浼氫贡
+[1m[94m367 |[0m     楠岃瘉鐐癸細fetch_time=not-a-timestamp 鏃?pytest.raises(FetchLogValidationError, match=invalid timestamp)
+    [1m[94m|[0m                                                                                                     [1m[91m^^^^^[0m
+[1m[94m368 |[0m     澶辫触鍚箟锛氫贡鏃堕棿鎴冲叆搴擄紝鏃跺簭鏌ヨ涓?TTL 閿欒
+[1m[94m369 |[0m     """
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (105 > 100)[0m
+   [1m[94m-->[0m tests\test_data_adapter_contract.py:384:96
+    [1m[94m|[0m
+[1m[94m382 |[0m     娴嬭瘯瀵硅薄锛欶etchLogWriter.write锛坅s_of 鏈?13锛?[1m[94m383 |[0m     鐩殑/鐩爣锛氫笉瀛樺湪鐨勬棩鏈熶笉搴斾綔涓恒€屾暟鎹埅鑷充綍鏃躲€嶅啓鍏ユ棩蹇?[1m[94m384 |[0m     楠岃瘉鐐癸細as_of_timestamp=2026-13-40 鏃?pytest.raises(FetchLogValidationError, match=invalid timestamp)
+    [1m[94m|[0m                                                                                                     [1m[91m^^^^^[0m
+[1m[94m385 |[0m     澶辫触鍚箟锛歛s_of 杈圭晫涓嶅彲淇★紝蹇収瀵归綈澶辫触
+[1m[94m386 |[0m     """
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (114 > 100)[0m
+  [1m[94m-->[0m tests\test_data_cli_contract.py:82:92
+   [1m[94m|[0m
+[1m[94m80 |[0m     娴嬭瘯瀵硅薄锛歳ound2-6-routing-service-gate 浠诲姟 MASTER 涓?implement.jsonl
+[1m[94m81 |[0m     鐩殑/鐩爣锛欴ataSourceService 鐢熶骇璺緞椤诲湪浠诲姟鍗′笌 implement 涓櫥璁板绾﹁矾寰?[1m[94m82 |[0m     楠岃瘉鐐癸細MASTER 鍚?DataSourceService 涓?production_equivalent_smoke/016F锛沬mplement 寮曠敤 data_cli_contract.yaml
+   [1m[94m|[0m                                                                                                     [1m[91m^^^^^^^^^^^^^^[0m
+[1m[94m83 |[0m     澶辫触鍚箟锛氱敓浜?CLI 缂哄彛鏃犳枃妗ｉ敋鐐逛細瀵艰嚧璇绉板凡涓婄嚎
+[1m[94m84 |[0m     """
+   [1m[94m|[0m
+
+[1m[91mI001 [0m[[1m[96m*[0m] [1mImport block is un-sorted or un-formatted[0m
+  [1m[94m-->[0m tests\test_data_health_v2.py:3:1
+   [1m[94m|[0m
+[1m[94m 1 |[0m   """Tests for read-only data health v2 profiles (B01-DH2)."""
+[1m[94m 2 |[0m
+[1m[94m 3 |[0m [1m[91m/[0m from __future__ import annotations
+[1m[94m 4 |[0m [1m[91m|[0m
+[1m[94m 5 |[0m [1m[91m|[0m from pathlib import Path
+[1m[94m 6 |[0m [1m[91m|[0m
+[1m[94m 7 |[0m [1m[91m|[0m import pytest
+[1m[94m 8 |[0m [1m[91m|[0m
+[1m[94m 9 |[0m [1m[91m|[0m from backend.app.ops import data_health as data_health_mod
+[1m[94m10 |[0m [1m[91m|[0m from backend.app.ops.data_health import DataHealthService
+   [1m[94m|[0m [1m[91m|_________________________________________________________^[0m
+[1m[94m11 |[0m
+[1m[94m12 |[0m   _PROJECT_ROOT = Path(__file__).resolve().parents[1]
+   [1m[94m|[0m
+[1m[96mhelp[0m: [1mOrganize imports[0m
+
+[1m[91mE501 [0m[1mLine too long (161 > 100)[0m
+   [1m[94m-->[0m tests\test_data_quality_validator.py:138:89
+    [1m[94m|[0m
+[1m[94m136 |[0m [1m[94m鈥?[0m
+[1m[94m137 |[0m [1m[94m鈥?[0m
+[1m[94m138 |[0m [1m[94m鈥?[0mfield_name=close锛沷bserved_value=None锛沞xpected_condition 涓?message 鍚?required 璇箟
+    [1m[94m|[0m                           [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m139 |[0m [1m[94m鈥?[0m
+[1m[94m140 |[0m [1m[94m鈥?[0m
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (105 > 100)[0m
+   [1m[94m-->[0m tests\test_data_quality_validator.py:197:93
+    [1m[94m|[0m
+[1m[94m195 |[0m     娴嬭瘯瀵硅薄锛欴ataQualityValidator.validate_rows
+[1m[94m196 |[0m     鐩殑/鐩爣锛氳鍐呭鍑?expected_columns 鏈垪瀛楁搴旈樆鏂苟璇锋眰浜哄伐澶嶆牳
+[1m[94m197 |[0m     楠岃瘉鐐癸細status=FAILED锛沶eeds_manual_review=True锛沜an_write_clean=False锛泀uality_flags 鍚?SCHEMA_DRIFT
+    [1m[94m|[0m                                                                                                     [1m[91m^^^^^[0m
+[1m[94m198 |[0m     澶辫触鍚箟锛氫緵搴斿晢鏂板鍒楅潤榛樺叆搴擄紝schema 濂戠害涓庤縼绉绘棤娉曞榻?[1m[94m199 |[0m     """
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (120 > 100)[0m
+   [1m[94m-->[0m tests\test_data_quality_validator.py:309:87
+    [1m[94m|[0m
+[1m[94m307 |[0m     娴嬭瘯瀵硅薄锛欴ataQualityValidator.validate_table
+[1m[94m308 |[0m     鐩殑/鐩爣锛歅ASSED 鎶ュ憡搴斿啓鍏?DB 涓旀棤闇€ data_quality_log 鏄庣粏琛?[1m[94m309 |[0m     楠岃瘉鐐癸細report.status=PASSED锛泇alidation_report 琛?status/璁℃暟/can_write_clean 涓庢姤鍛婁竴鑷达紱data_quality_log 璁℃暟涓?0
+    [1m[94m|[0m                                                                                                     [1m[91m^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m310 |[0m     澶辫触鍚箟锛氳〃绾ф牎楠岀粨鏋滀笉钀藉簱锛孌bValidationGate 鏃犳硶鎸?report_id 杩芥函
+[1m[94m311 |[0m     """
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (117 > 100)[0m
+   [1m[94m-->[0m tests\test_data_quality_validator.py:467:94
+    [1m[94m|[0m
+[1m[94m465 |[0m     娴嬭瘯瀵硅薄锛欴ataQualityValidator.validate_rows
+[1m[94m466 |[0m     鐩殑/鐩爣锛氱己澶?source_used 搴旇Е鍙?MISSING_SOURCE_USED 涓斿惈 lineage 璇箟
+[1m[94m467 |[0m     楠岃瘉鐐癸細status=FAILED锛沠inding.rule_id=MISSING_SOURCE_USED锛沠ield_name=source_used锛沞xpected_condition 鍚?lineage
+    [1m[94m|[0m                                                                                                     [1m[91m^^^^^^^^^^^^^^^^^[0m
+[1m[94m468 |[0m     澶辫触鍚箟锛氭棤鏉ユ簮琛€缂樿鍙叆搴擄紝澶氭簮鍐茬獊涓庤拷婧棤娉曞畾浣嶄富婧?[1m[94m469 |[0m     """
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (110 > 100)[0m
+   [1m[94m-->[0m tests\test_data_quality_validator.py:578:91
+    [1m[94m|[0m
+[1m[94m576 |[0m     娴嬭瘯瀵硅薄锛欴ataQualityValidator.validate_rows / ValidationFinding
+[1m[94m577 |[0m     鐩殑/鐩爣锛歁ISSING_PRIMARY_KEY finding 搴斿惈鏍囧噯 severity銆乫ield_name 涓?expected_condition
+[1m[94m578 |[0m     楠岃瘉鐐癸細finding.severity=failed锛沠ield_name=instrument_id锛沵essage 闈炵┖锛沞xpected_condition 鍚?primary key
+    [1m[94m|[0m                                                                                                     [1m[91m^^^^^^^^^^[0m
+[1m[94m579 |[0m     澶辫触鍚箟锛氫富閿繚瑙?finding 缂哄绾﹀瓧娈碉紝鑷姩鍖栨姤琛ㄤ笌浜哄伐澶嶆牳鏃犳硶瑙ｆ瀽
+[1m[94m580 |[0m     """
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (108 > 100)[0m
+  [1m[94m-->[0m tests\test_datasource_service.py:88:83
+   [1m[94m|[0m
+[1m[94m86 |[0m     娴嬭瘯瀵硅薄锛歋ERVICE_CONTRACT public_methods.fetch.required_steps
+[1m[94m87 |[0m     鐩殑/鐩爣锛氬繀椤诲厛瀹氳矾鐢便€佽繃璧勬簮瀹堝崼锛屾渶鍚庢墠鍒涘缓閫傞厤鍣ㄥ苟鐪熸鎷夋暟
+[1m[94m88 |[0m     楠岃瘉鐐癸細steps 鍒楄〃涓庡绾﹀喕缁撻『搴忓畬鍏ㄤ竴鑷达紙load_source_registry 鈫?鈥?鈫?ensure_fetch_log_or_failure_event锛?   [1m[94m|[0m                                                                                                     [1m[91m^^^^^^^^[0m
+[1m[94m89 |[0m     澶辫触鍚箟锛氭枃妗ｄ笌瀹炵幇姝ラ閿欎綅锛実ate 鏃犳硶璇佹槑鍏堣矾鐢卞悗鎶撳彇
+[1m[94m90 |[0m     """
+   [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (123 > 100)[0m
+   [1m[94m-->[0m tests\test_datasource_service.py:258:92
+    [1m[94m|[0m
+[1m[94m256 |[0m     娴嬭瘯瀵硅薄锛欴ataSourceService.fetch + job_event_log
+[1m[94m257 |[0m     鐩殑/鐩爣锛氫簨鍚庤鑳借繕鍘熴€屽綋鏃堕€変簡鍝潯璺€嶏紝璺敱璁″垝蹇呴』鍦ㄨ皟閫傞厤鍣ㄤ箣鍓嶅氨钀藉簱
+[1m[94m258 |[0m     楠岃瘉鐐癸細ROUTE_PLAN 琛屽瓨鍦紱payload 鍚?route_status/selected_source_id/candidates/run_id/job_id/route_plan_id/created_at
+    [1m[94m|[0m                                                                                                     [1m[91m^^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m259 |[0m     澶辫触鍚箟锛氫簨鍚庢棤娉曢噸寤哄綋鏃惰矾鐢卞喅绛栵紝鏁呴殰澶嶇洏缂鸿瘉鎹?[1m[94m260 |[0m     """
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (168 > 100)[0m
+   [1m[94m-->[0m tests\test_datasource_service.py:378:95
+    [1m[94m|[0m
+[1m[94m376 |[0m [1m[94m鈥?[0m
+[1m[94m377 |[0m [1m[94m鈥?[0m
+[1m[94m378 |[0m [1m[94m鈥?[0m 鍚?RESOURCE_GUARD_PAUSED)锛涗袱鏉?ROUTE_PLAN锛圧EADY 鍚?RESOURCE_GUARD_PAUSED锛夛紱fetch_log count=0
+    [1m[94m|[0m                              [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m379 |[0m [1m[94m鈥?[0m
+[1m[94m380 |[0m [1m[94m鈥?[0m
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (131 > 100)[0m
+   [1m[94m-->[0m tests\test_datasource_service.py:554:94
+    [1m[94m|[0m
+[1m[94m552 |[0m [1m[94m鈥?[0mostock锛?[1m[94m553 |[0m [1m[94m鈥?[0m
+[1m[94m554 |[0m [1m[94m鈥?[0med_source_id=baostock锛泀uality_flags 鍚?REQUESTED_SOURCE_OVERRIDDEN_BY_ROUTE
+    [1m[94m|[0m                                               [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m555 |[0m [1m[94m鈥?[0m
+[1m[94m556 |[0m [1m[94m鈥?[0m
+    [1m[94m|[0m
+
+[1m[91mI001 [0m[[1m[96m*[0m] [1mImport block is un-sorted or un-formatted[0m
+  [1m[94m-->[0m tests\test_docs_specs_indexed.py:6:1
+   [1m[94m|[0m
+[1m[94m 4 |[0m   """
+[1m[94m 5 |[0m
+[1m[94m 6 |[0m [1m[91m/[0m from __future__ import annotations
+[1m[94m 7 |[0m [1m[91m|[0m
+[1m[94m 8 |[0m [1m[91m|[0m import sys
+[1m[94m 9 |[0m [1m[91m|[0m from pathlib import Path
+[1m[94m10 |[0m [1m[91m|[0m
+[1m[94m11 |[0m [1m[91m|[0m import pytest
+[1m[94m12 |[0m [1m[91m|[0m
+[1m[94m13 |[0m [1m[91m|[0m from tests.contract_gate_support import PROJECT_ROOT
+   [1m[94m|[0m [1m[91m|____________________________________________________^[0m
+[1m[94m14 |[0m
+[1m[94m15 |[0m   SCRIPTS = PROJECT_ROOT / "scripts"
+   [1m[94m|[0m
+[1m[96mhelp[0m: [1mOrganize imports[0m
+
+[1m[91mF401 [0m[[1m[96m*[0m] [1m`pathlib.Path` imported but unused[0m
+  [1m[94m-->[0m tests\test_docs_specs_indexed.py:9:21
+   [1m[94m|[0m
+[1m[94m 8 |[0m import sys
+[1m[94m 9 |[0m from pathlib import Path
+   [1m[94m|[0m                     [1m[91m^^^^[0m
+[1m[94m10 |[0m
+[1m[94m11 |[0m import pytest
+   [1m[94m|[0m
+[1m[96mhelp[0m: [1mRemove unused import: `pathlib.Path`[0m
+
+[1m[91mF401 [0m[[1m[96m*[0m] [1m`pytest` imported but unused[0m
+  [1m[94m-->[0m tests\test_docs_specs_indexed.py:11:8
+   [1m[94m|[0m
+[1m[94m 9 |[0m from pathlib import Path
+[1m[94m10 |[0m
+[1m[94m11 |[0m import pytest
+   [1m[94m|[0m        [1m[91m^^^^^^[0m
+[1m[94m12 |[0m
+[1m[94m13 |[0m from tests.contract_gate_support import PROJECT_ROOT
+   [1m[94m|[0m
+[1m[96mhelp[0m: [1mRemove unused import: `pytest`[0m
+
+[1m[91mI001 [0m[[1m[96m*[0m] [1mImport block is un-sorted or un-formatted[0m
+  [1m[94m-->[0m tests\test_duckdb_connection.py:6:1
+   [1m[94m|[0m
+[1m[94m 4 |[0m   """
+[1m[94m 5 |[0m
+[1m[94m 6 |[0m [1m[91m/[0m from __future__ import annotations
+[1m[94m 7 |[0m [1m[91m|[0m
+[1m[94m 8 |[0m [1m[91m|[0m import json
+[1m[94m 9 |[0m [1m[91m|[0m from pathlib import Path
+[1m[94m10 |[0m [1m[91m|[0m
+[1m[94m11 |[0m [1m[91m|[0m import duckdb
+[1m[94m12 |[0m [1m[91m|[0m import pytest
+[1m[94m13 |[0m [1m[91m|[0m import backend.app.db.connection as conn_mod
+[1m[94m14 |[0m [1m[91m|[0m from backend.app.db.connection import ConnectionManager, WriteLockError
+[1m[94m15 |[0m [1m[91m|[0m from backend.app.db.migrate import apply_migrations
+   [1m[94m|[0m [1m[91m|___________________________________________________^[0m
+   [1m[94m|[0m
+[1m[96mhelp[0m: [1mOrganize imports[0m
+
+[1m[91mI001 [0m[[1m[96m*[0m] [1mImport block is un-sorted or un-formatted[0m
+  [1m[94m-->[0m tests\test_global_execution_rules.py:6:1
+   [1m[94m|[0m
+[1m[94m 4 |[0m   """
+[1m[94m 5 |[0m
+[1m[94m 6 |[0m [1m[91m/[0m from __future__ import annotations
+[1m[94m 7 |[0m [1m[91m|[0m
+[1m[94m 8 |[0m [1m[91m|[0m import pytest
+[1m[94m 9 |[0m [1m[91m|[0m
+[1m[94m10 |[0m [1m[91m|[0m from tests.contract_gate_support import PROJECT_ROOT
+   [1m[94m|[0m [1m[91m|____________________________________________________^[0m
+[1m[94m11 |[0m
+[1m[94m12 |[0m   REQUIRED_GLOBAL_FILES = [
+   [1m[94m|[0m
+[1m[96mhelp[0m: [1mOrganize imports[0m
+
+[1m[91mE501 [0m[1mLine too long (101 > 100)[0m
+   [1m[94m-->[0m tests\test_layer1_axis_loader.py:239:88
+    [1m[94m|[0m
+[1m[94m237 |[0m     娴嬭瘯瀵硅薄锛欰xisEngineeringGuardrailValidator.assert_shadow_outside_group_has_diagnostic_only
+[1m[94m238 |[0m     鐩殑/鐩爣锛氶潪褰卞瓙璇婃柇妯″潡鐨勫奖瀛愭寚鏍囩己 diagnostic_only 鏍囪搴旇鎷掔粷
+[1m[94m239 |[0m     楠岃瘉鐐癸細瀛ゅ効褰卞瓙瑙﹀彂 GuardrailViolationError(match='diagnostic_only')锛沝iagnostic_only 浠嶄负 False
+    [1m[94m|[0m                                                                                                     [1m[91m^[0m
+[1m[94m240 |[0m     澶辫触鍚箟锛氱粍澶栧奖瀛愭棤绾︽潫锛屽彲鑳芥倓鎮勮繘鍏ヤ富闈㈡澘
+[1m[94m241 |[0m     """
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (108 > 100)[0m
+   [1m[94m-->[0m tests\test_layer1_ingestion_gates.py:206:89
+    [1m[94m|[0m
+[1m[94m204 |[0m     娴嬭瘯瀵硅薄锛歋OURCE_REGISTRY YAML 涓庡師鏂?[1m[94m205 |[0m     鐩殑/鐩爣锛氳鑹叉ā鍨嬩粎鍏佽 Primary/Validation/FallbackPolicy锛屽簾寮冭鑹蹭笉寰楀嚭鐜?[1m[94m206 |[0m     楠岃瘉鐐癸細source_role_model 姝ｇ‘锛沴egacy_roles_forbidden 鍚?Shadow/Emergency锛涙鏂囨棤 Shadow:/Emergency: 琛?    [1m[94m|[0m                                                                                                     [1m[91m^^^^^^^^[0m
+[1m[94m207 |[0m     澶辫触鍚箟锛氬簾寮冭鑹蹭粛鍙敤锛屽婧愯矾鐢变笌闄嶇骇璇箟娣蜂贡
+[1m[94m208 |[0m     """
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (120 > 100)[0m
+   [1m[94m-->[0m tests\test_layer1_ingestion_gates.py:223:95
+    [1m[94m|[0m
+[1m[94m221 |[0m     娴嬭瘯瀵硅薄锛歋ourceRegistry銆丼ourceCapabilityRegistry銆丼ourceRoutePlanner
+[1m[94m222 |[0m     鐩殑/鐩爣锛氬喕缁撴寚鏍囪蛋鏆傚瓨瀹忔暟鎹矾寰勬椂锛岄』涓轰粎鏍￠獙涓嶆媺鏁颁笖 akshare 鑳藉姏宸插０鏄?[1m[94m223 |[0m     楠岃瘉鐐癸細primary=akshare锛況oute_status=VALIDATION_ONLY_BLOCKED锛沘kshare skip_reason=validation_only_cannot_be_primary
+    [1m[94m|[0m                                                                                                     [1m[91m^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m224 |[0m     澶辫触鍚箟锛氬喕缁撴寚鏍囪矾鐢变笌鑳藉姏娉ㄥ唽涓嶄竴鑷达紝璇曡矾鐢辫瘉鎹け鐪?[1m[94m225 |[0m     """
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (103 > 100)[0m
+   [1m[94m-->[0m tests\test_layer1_ingestion_gates.py:304:93
+    [1m[94m|[0m
+[1m[94m302 |[0m     娴嬭瘯瀵硅薄锛欴ATA_QUALITY_RULES layer1_rules
+[1m[94m303 |[0m     鐩殑/鐩爣锛氱涓€灞傚繀椤诲０鏄庣己鏉ユ簮銆佹棤闄嶇骇鐞嗙敱銆佺洸鐐规湁鍊肩瓑鏍稿績瑙勫垯
+[1m[94m304 |[0m     楠岃瘉鐐癸細rule_ids 鍖呭惈 MISSING_SOURCE_USED銆丗ALLBACK_WITHOUT_REASON銆丅LINDSPOT_SHOULD_NOT_HAVE_VALUE
+    [1m[94m|[0m                                                                                                     [1m[91m^^^[0m
+[1m[94m305 |[0m     澶辫触鍚箟锛氱涓€灞傝川閲忚鍒欐湭娉ㄥ唽锛屾牎楠屽櫒鏃犺鍒欏彲鎵ц
+[1m[94m306 |[0m     """
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (108 > 100)[0m
+   [1m[94m-->[0m tests\test_layer1_ingestion_gates.py:490:90
+    [1m[94m|[0m
+[1m[94m488 |[0m     娴嬭瘯瀵硅薄锛欿EY_TABLES 涓?OPS_INSPECT_CONTRACT key_tables
+[1m[94m489 |[0m     鐩殑/鐩爣锛氫竷寮犺酱琛ㄤ笌鏈潵闃舵琛ㄥ潎椤诲湪 inspect 鍏抽敭琛ㄥ垪琛?[1m[94m490 |[0m     楠岃瘉鐐癸細姣忓紶 LAYER1_AXIS_TABLE 鍦?KEY_TABLES 涓?contract_tables锛汧UTURE_PHASE_KEY_TABLES 涔熷湪 KEY_TABLES
+    [1m[94m|[0m                                                                                                     [1m[91m^^^^^^^^[0m
+[1m[94m491 |[0m     澶辫触鍚箟锛歩nspect 婕忚〃锛岀洏鐐归樁娈佃鏁扮粺璁′笉瀹屾暣
+[1m[94m492 |[0m     """
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (103 > 100)[0m
+  [1m[94m-->[0m tests\test_layer1_interpretation.py:77:91
+   [1m[94m|[0m
+[1m[94m75 |[0m     娴嬭瘯瀵硅薄锛欰xisFeatureEngine.compute_features
+[1m[94m76 |[0m     鐩殑/鐩爣锛氭牱鏈笉澶熸椂涓嶅簲杈撳嚭 z 鍒嗘暟鎴栫櫨鍒嗕綅绛変笉鍙潬缁熻
+[1m[94m77 |[0m     楠岃瘉鐐癸細state_bucket 涓?insufficient_history锛泎 涓?percentile 涓?None锛涘惈 INSUFFICIENT_HISTORY 鏍囪
+   [1m[94m|[0m                                                                                                      [1m[91m^^[0m
+[1m[94m78 |[0m     澶辫触鍚箟锛氱煭鍘嗗彶浠嶄骇鍑哄亣 z 鍊硷紝闈㈡澘浼氬睍绀鸿瀵兼€х粺璁?[1m[94m79 |[0m     """
+   [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (111 > 100)[0m
+   [1m[94m-->[0m tests\test_layer1_interpretation.py:428:92
+    [1m[94m|[0m
+[1m[94m426 |[0m     娴嬭瘯瀵硅薄锛歋napshotLineageBuilder.build锛坅llow_synthetic_hashes=False锛?[1m[94m427 |[0m     鐩殑/鐩爣锛氭牎楠屾姤鍛婃棤鍐呭鎸囩汗鏃朵笉寰楄嚜鍔ㄥ悎鎴愶紝蹇呴』鎷掔粷寤鸿缂?[1m[94m428 |[0m     楠岃瘉鐐癸細None 鎴栫┖鍒楄〃 hashes 鍧?pytest.raises(LineageSnapshotError, match='source_content_hashes required')
+    [1m[94m|[0m                                                                                                     [1m[91m^^^^^^^^^^^[0m
+[1m[94m429 |[0m     澶辫触鍚箟锛氱敓浜ц缂樹吉閫犳寚绾癸紝瀹¤鏃犳硶楠岃瘉鐪熷疄杈撳叆
+[1m[94m430 |[0m     """
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (106 > 100)[0m
+  [1m[94m-->[0m tests\test_layer1_observation_ingestion.py:86:92
+   [1m[94m|[0m
+[1m[94m84 |[0m     娴嬭瘯瀵硅薄锛歝apture_phase1_inventory
+[1m[94m85 |[0m     鐩殑/鐩爣锛氳瘉鏄庣洏鐐硅繃绋嬩笉鏀规暟鎹紝涓旂┖搴撲細琚垽涓轰粎缁撴瀯鏃犱笟鍔℃暟鎹紝鍏佽杩涘叆璇曡矾鐢?[1m[94m86 |[0m     楠岃瘉鐐癸細浜у嚭 json/md锛沬nspect.mode=read_only锛沜lassification=schema_only_empty锛沺hase2_authorized=True
+   [1m[94m|[0m                                                                                                     [1m[91m^^^^^^[0m
+[1m[94m87 |[0m     澶辫触鍚箟锛氳繛鍙鐩樼偣閮藉仛涓嶅ソ锛屾垨绌哄簱琚鎷︼紝鍚庣画鍩虹嚎鏉愭枡鏃犳硶瀵煎嚭
+[1m[94m88 |[0m     """
+   [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (105 > 100)[0m
+   [1m[94m-->[0m tests\test_layer1_observation_ingestion.py:118:82
+    [1m[94m|[0m
+[1m[94m116 |[0m     娴嬭瘯瀵硅薄锛歝apture_phase1_inventory.phase1_minimum_key_tables
+[1m[94m117 |[0m     鐩殑/鐩爣锛氭竻鍗曢噷鐨勮〃鍚嶉泦鍚堝拰姣忓紶琛ㄨ鏁帮紝蹇呴』涓庢暟鎹簱妫€鏌ュ伐鍏风湅鍒扮殑涓€鑷?[1m[94m118 |[0m     楠岃瘉鐐癸細phase1_tables 闆嗗悎绛変簬 PHASE1_MINIMUM_KEY_TABLES锛涘悇琛屾暟涓?inspect 瀵归綈锛沬nspect 椤跺眰瀛楁榻愬叏
+    [1m[94m|[0m                                                                                                      [1m[91m^^^^[0m
+[1m[94m119 |[0m     澶辫触鍚箟锛氭竻鍗曟紡琛ㄦ垨琛屾暟瀵逛笉涓婏紝杩愮淮鏃犳硶瀵圭収鏁版嵁搴撶湡瀹炵姸鎬?[1m[94m120 |[0m     """
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (116 > 100)[0m
+   [1m[94m-->[0m tests\test_layer1_observation_ingestion.py:340:93
+    [1m[94m|[0m
+[1m[94m338 |[0m     娴嬭瘯瀵硅薄锛歝apture_task_phase1_evidence
+[1m[94m339 |[0m     鐩殑/鐩爣锛氱洰鏍囧簱灏氫笉瀛樺湪鏃讹紝搴旇嚜鍔ㄥ缓浠呰縼绉荤粨鏋勭殑娌欑搴撳苟璁板綍绛栫暐
+[1m[94m340 |[0m     楠岃瘉鐐癸細target_db_exists_at_capture=False锛沜apture_strategy=synthetic_migrated_schema_only锛涙矙绠?duckdb 鏂囦欢瀛樺湪
+    [1m[94m|[0m                                                                                                     [1m[91m^^^^^^^^^^^^^^^^[0m
+[1m[94m341 |[0m     澶辫触鍚箟锛氫换鍔¤瘉鎹矾寰勬垨寤哄簱绛栫暐閿欎簡锛孴rellis 鎵ц鏉愭枡鏃犳硶澶嶇幇鍩虹嚎
+[1m[94m342 |[0m     """
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (114 > 100)[0m
+   [1m[94m-->[0m tests\test_layer1_observation_ingestion.py:389:89
+    [1m[94m|[0m
+[1m[94m387 |[0m     娴嬭瘯瀵硅薄锛歝apture_phase1_inventory
+[1m[94m388 |[0m     鐩殑/鐩爣锛氭竻鍗曢櫎琛ㄨ鏁板锛岃繕搴旀湁鏁版嵁鐩綍鏂囦欢鎸囩汗涓庢殏瀛樿〃缁熻
+[1m[94m389 |[0m     楠岃瘉鐐癸細data_root_file_samples 闈炵┖涓斿惈 sha256锛泂taging_table_row_counts 瀛樺湪锛泂ource_registry_snapshot 涓哄垪琛?    [1m[94m|[0m                                                                                                     [1m[91m^^^^^^^^^^^^^^[0m
+[1m[94m390 |[0m     澶辫触鍚箟锛氬寮哄瓧娈电己澶憋紝鏃犳硶瀵圭収婧愭敞鍐岃〃涓庣鐩樻枃浠舵爲
+[1m[94m391 |[0m     """
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (110 > 100)[0m
+   [1m[94m-->[0m tests\test_layer1_observation_ingestion.py:411:93
+    [1m[94m|[0m
+[1m[94m409 |[0m     娴嬭瘯瀵硅薄锛歳ecord_operator_classification
+[1m[94m410 |[0m     鐩殑/鐩爣锛氳嚜鍔ㄥ垽瀹氫笉鍏佽璇曡矾鐢辨椂锛岃繍缁村蹇樺彲澹版槑宸插闃呭苟閲嶆柊鏀捐
+[1m[94m411 |[0m     楠岃瘉鐐癸細memo 鍓?phase2_authorized=False锛沵emo 鍚?True 涓?authorization_source=operator_classification_memo
+    [1m[94m|[0m                                                                                                     [1m[91m^^^^^^^^^^[0m
+[1m[94m412 |[0m     澶辫触鍚箟锛氫汉宸ュ闃呮棤娉曡В闄ゆ嫤鎴紝娴嬭瘯鍩虹嚎鍗″湪鐩樼偣闃舵
+[1m[94m413 |[0m     """
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (101 > 100)[0m
+   [1m[94m-->[0m tests\test_layer1_observation_ingestion.py:444:91
+    [1m[94m|[0m
+[1m[94m442 |[0m     娴嬭瘯瀵硅薄锛歝apture_task_phase1_evidence
+[1m[94m443 |[0m     鐩殑/鐩爣锛氫笉浼氱洿鎺ユ敼鐢熶骇璺緞涓婄殑搴擄紝鑰屾槸澶嶅埗鍒版矙绠卞苟璁颁笅鏍￠獙鍜?[1m[94m444 |[0m     楠岃瘉鐐癸細capture_strategy=sandbox_copy_of_target_db锛沜opy_provenance.copy_sha256 绛変簬鐩爣搴?sha256
+    [1m[94m|[0m                                                                                                     [1m[91m^[0m
+[1m[94m445 |[0m     澶辫触鍚箟锛氫换鍔¤瘉鎹洿鎺ヨ/鍐欑敓浜у簱锛屾垨澶嶅埗鏉ユ簮鏃犳硶杩芥函
+[1m[94m446 |[0m     """
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (109 > 100)[0m
+   [1m[94m-->[0m tests\test_layer1_observation_ingestion.py:822:89
+    [1m[94m|[0m
+[1m[94m820 |[0m     娴嬭瘯瀵硅薄锛歝apture_phase2_route_evidence
+[1m[94m821 |[0m     鐩殑/鐩爣锛氶』瀵煎嚭 json/md/鏃犲彉鏇磋瘉鏄庝笖棰勮瀛楁涓庡喕缁撴寚鏍囦竴鑷?[1m[94m822 |[0m     楠岃瘉鐐癸細涓変唤 artifact 鏂囦欢瀛樺湪锛況oute_status=VALIDATION_ONLY_BLOCKED锛沵utation_proof.row_counts_unchanged
+    [1m[94m|[0m                                                                                                     [1m[91m^^^^^^^^^[0m
+[1m[94m823 |[0m     澶辫触鍚箟锛氳瘯璺敱 Trellis 璇佹嵁缂烘枃浠舵垨棰勮璇箟閿欙紝鎵ц鏃犳硶 sign-off
+[1m[94m824 |[0m     """
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (128 > 100)[0m
+    [1m[94m-->[0m tests\test_layer1_observation_ingestion.py:1090:82
+     [1m[94m|[0m
+[1m[94m1088 |[0m [1m[94m鈥?[0m
+[1m[94m1089 |[0m [1m[94m鈥?[0m鎭板ソ澶?1 鏉?[1m[94m1090 |[0m [1m[94m鈥?[0mclean_write 璇佹槑锛涜瘉鏄庝腑瑙傛祴琛ㄦ湭鍙樸€乫etch_log 澧為噺涓?1銆佹枃浠剁櫥璁板閲忎负 1
+     [1m[94m|[0m                                              [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m1091 |[0m [1m[94m鈥?[0mrite
+[1m[94m1092 |[0m [1m[94m鈥?[0m
+     [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (102 > 100)[0m
+   [1m[94m-->[0m tests\test_layer2_sensor_loader.py:212:95
+    [1m[94m|[0m
+[1m[94m210 |[0m     娴嬭瘯瀵硅薄锛欳rossAssetRegistryLoader.load锛圫TAGED_REGISTRY_FIXTURE锛?[1m[94m211 |[0m     鐩殑/鐩爣锛歴taged_fixture_only 妯″紡涓嬫纭В鏋?VIX 绛夎酱杈撳叆浠呭睍绀鸿祫浜?[1m[94m212 |[0m     楠岃瘉鐐癸細mode=staged_fixture_only锛汱2-VIX is_axis_input/display_only/eligible 涓?double_count_guard
+    [1m[94m|[0m                                                                                                     [1m[91m^^[0m
+[1m[94m213 |[0m     澶辫触鍚箟锛氭敞鍐岃〃璇爣鍙叆妯¤祫浜э紝Layer1 杞磋緭鍏ュ弻璁guard 澶辨晥
+[1m[94m214 |[0m     """
+    [1m[94m|[0m
+
+[1m[91mF841 [0m[1mLocal variable `result` is assigned to but never used[0m
+   [1m[94m-->[0m tests\test_layer2_sensor_loader.py:301:5
+    [1m[94m|[0m
+[1m[94m299 |[0m     澶辫触鍚箟锛歏IX 绛夊睍绀烘寚鏍囪繘鍏ユā鍨嬶紝涓?Layer1 鍙岃绛栫暐鍐茬獊
+[1m[94m300 |[0m     """
+[1m[94m301 |[0m     result = _staged_registry()
+    [1m[94m|[0m     [1m[91m^^^^^^[0m
+[1m[94m302 |[0m     vix = _staged_asset("L2-VIX")
+[1m[94m303 |[0m     with pytest.raises(DoubleCountGuardError, match="display/reference only"):
+    [1m[94m|[0m
+[1m[96mhelp[0m: [1mRemove assignment to unused variable `result`[0m
+
+[1m[91mF841 [0m[1mLocal variable `result` is assigned to but never used[0m
+   [1m[94m-->[0m tests\test_layer2_sensor_loader.py:335:5
+    [1m[94m|[0m
+[1m[94m333 |[0m     澶辫触鍚箟锛氬悎娉曢摐浠疯祫浜ц鎷掞紝妯″瀷鐗瑰緛閾捐矾鏂緵
+[1m[94m334 |[0m     """
+[1m[94m335 |[0m     result = _staged_registry()
+    [1m[94m|[0m     [1m[91m^^^^^^[0m
+[1m[94m336 |[0m     copper = _staged_asset("L2-COPPER")
+[1m[94m337 |[0m     assert_model_eligible(copper)
+    [1m[94m|[0m
+[1m[96mhelp[0m: [1mRemove assignment to unused variable `result`[0m
+
+[1m[91mE501 [0m[1mLine too long (116 > 100)[0m
+   [1m[94m-->[0m tests\test_layer3_loader.py:209:94
+    [1m[94m|[0m
+[1m[94m207 |[0m     娴嬭瘯瀵硅薄锛歟vent_only 涓?instrument_type 璇箟鏍￠獙
+[1m[94m208 |[0m     鐩殑/鐩爣锛氱鏈夊叕鍙歌嫢鏈爣涓轰粎浜嬩欢閿氾紝涓嶅緱鍙備笌鏃ュ害琛屾儏瀵圭収
+[1m[94m209 |[0m     楠岃瘉鐐癸細private_company 涓?event_only=false 鈫?IndustryChainLoadError 涓斿惈 event_only/private_company/daily price
+    [1m[94m|[0m                                                                                                     [1m[91m^^^^^^^^^^^^^^^^[0m
+[1m[94m210 |[0m     澶辫触鍚箟锛氱鏈夊叕鍙歌褰撲綔鏃ュ害琛屾儏閿氾紝蹇収浼氬睍绀轰笉瀛樺湪鐨勫競浠?[1m[94m211 |[0m     """
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (108 > 100)[0m
+  [1m[94m-->[0m tests\test_layer5_evidence_foundation.py:86:86
+   [1m[94m|[0m
+[1m[94m84 |[0m     娴嬭瘯瀵硅薄锛欵videnceFoundationValidator.validate_record锛堝悇 EvidenceKind锛?[1m[94m85 |[0m     鐩殑/鐩爣锛氭淳鐢熶笌鏍￠獙绫诲彲鏃犳潵婧愶紱浠ｇ悊瑙ｉ噴绫讳笉寰楀す甯︿簨瀹炴潵婧愭寚绾?[1m[94m86 |[0m     楠岃瘉鐐癸細DERIVED/AGENT 鍚堟硶璺緞閫氳繃锛汚GENT 鎼哄甫浜嬪疄 provenance 鈫?must not carry factual source provenance
+   [1m[94m|[0m                                                                                                     [1m[91m^^^^^^^^[0m
+[1m[94m87 |[0m     澶辫触鍚箟锛氳瘉鎹绫昏竟鐣屾ā绯婏紝浠ｇ悊瑙ｉ噴鍙吉瑁呮垚琛屾儏浜嬪疄
+[1m[94m88 |[0m     """
+   [1m[94m|[0m
+
+[1m[91mI001 [0m[[1m[96m*[0m] [1mImport block is un-sorted or un-formatted[0m
+  [1m[94m-->[0m tests\test_loop_engineering_flow.py:9:1
+   [1m[94m|[0m
+[1m[94m 7 |[0m   """
+[1m[94m 8 |[0m
+[1m[94m 9 |[0m [1m[91m/[0m from __future__ import annotations
+[1m[94m10 |[0m [1m[91m|[0m
+[1m[94m11 |[0m [1m[91m|[0m import json
+[1m[94m12 |[0m [1m[91m|[0m import subprocess
+[1m[94m13 |[0m [1m[91m|[0m import sys
+[1m[94m14 |[0m [1m[91m|[0m from pathlib import Path
+[1m[94m15 |[0m [1m[91m|[0m
+[1m[94m16 |[0m [1m[91m|[0m import pytest
+[1m[94m17 |[0m [1m[91m|[0m import yaml
+[1m[94m18 |[0m [1m[91m|[0m
+[1m[94m19 |[0m [1m[91m|[0m from tests.contract_gate_support import PROJECT_ROOT
+   [1m[94m|[0m [1m[91m|____________________________________________________^[0m
+[1m[94m20 |[0m
+[1m[94m21 |[0m   SCRIPTS = PROJECT_ROOT / "scripts"
+   [1m[94m|[0m
+[1m[96mhelp[0m: [1mOrganize imports[0m
+
+[1m[91mI001 [0m[[1m[96m*[0m] [1mImport block is un-sorted or un-formatted[0m
+  [1m[94m-->[0m tests\test_loop_engineering_flow.py:24:1
+   [1m[94m|[0m
+[1m[94m22 |[0m   sys.path.insert(0, str(SCRIPTS))
+[1m[94m23 |[0m
+[1m[94m24 |[0m [1m[91m/[0m from loop_engineering_common import (  # noqa: E402
+[1m[94m25 |[0m [1m[91m|[0m     AUTHORITY_GRAPH_PATH,
+[1m[94m26 |[0m [1m[91m|[0m     CONTRACT_COVERAGE_PATH,
+[1m[94m27 |[0m [1m[91m|[0m     FEATURE_MATRIX_PATH,
+[1m[94m28 |[0m [1m[91m|[0m     TEST_CATALOG_PATH,
+[1m[94m29 |[0m [1m[91m|[0m     authority_graph_coverage_gaps,
+[1m[94m30 |[0m [1m[91m|[0m     collect_module_authorities,
+[1m[94m31 |[0m [1m[91m|[0m     deprecated_loop_meta_errors,
+[1m[94m32 |[0m [1m[91m|[0m     discover_test_modules,
+[1m[94m33 |[0m [1m[91m|[0m     discover_unmapped_backend_packages,
+[1m[94m34 |[0m [1m[91m|[0m     load_authority_graph,
+[1m[94m35 |[0m [1m[91m|[0m     loop_required,
+[1m[94m36 |[0m [1m[91m|[0m     modules_for_paths,
+[1m[94m37 |[0m [1m[91m|[0m     path_exists,
+[1m[94m38 |[0m [1m[91m|[0m     task_track,
+[1m[94m39 |[0m [1m[91m|[0m     write_loop_evidence_stubs,
+[1m[94m40 |[0m [1m[91m|[0m )
+[1m[94m41 |[0m [1m[91m|[0m from context_router import build_context_pack, validate_context_pack  # noqa: E402
+[1m[94m42 |[0m [1m[91m|[0m from check_test_catalog import check_catalog  # noqa: E402
+[1m[94m43 |[0m [1m[91m|[0m from check_verification_matrix import check_matrix  # noqa: E402
+[1m[94m44 |[0m [1m[91m|[0m from check_contract_coverage import check_coverage  # noqa: E402
+   [1m[94m|[0m [1m[91m|__________________________________________________^[0m
+[1m[94m45 |[0m
+[1m[94m46 |[0m   ROUND3_MODULES = (
+   [1m[94m|[0m
+[1m[96mhelp[0m: [1mOrganize imports[0m
+
+[1m[91mF401 [0m[[1m[96m*[0m] [1m`loop_engineering_common.AUTHORITY_GRAPH_PATH` imported but unused[0m
+  [1m[94m-->[0m tests\test_loop_engineering_flow.py:25:5
+   [1m[94m|[0m
+[1m[94m24 |[0m from loop_engineering_common import (  # noqa: E402
+[1m[94m25 |[0m     AUTHORITY_GRAPH_PATH,
+   [1m[94m|[0m     [1m[91m^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m26 |[0m     CONTRACT_COVERAGE_PATH,
+[1m[94m27 |[0m     FEATURE_MATRIX_PATH,
+   [1m[94m|[0m
+[1m[96mhelp[0m: [1mRemove unused import: `loop_engineering_common.AUTHORITY_GRAPH_PATH`[0m
+
+[1m[91mE501 [0m[1mLine too long (119 > 100)[0m
+   [1m[94m-->[0m tests\test_loop_engineering_flow.py:111:90
+    [1m[94m|[0m
+[1m[94m109 |[0m     娴嬭瘯瀵硅薄锛歜uild_context_pack + validate_context_pack
+[1m[94m110 |[0m     鐩殑/鐩爣锛歅0 涓婁笅鏂囧寘椤诲惈璁捐鏂囨。銆佸绾?YAML 涓庣櫥璁版祴璇曪紝涓嶅緱绌鸿矾鐢?[1m[94m111 |[0m     楠岃瘉鐐癸細validate 闆堕敊璇紱鍚?layer2_cross_asset_sensor.md銆乴ayer2_sensor_contract.yaml銆乼est_layer2_sensor_loader.py
+    [1m[94m|[0m                                                                                                     [1m[91m^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m112 |[0m     澶辫触鍚箟锛氱┖鍖呬細璁?Execute agent 缂哄皯 layer2 鏉冨▉杈撳叆
+[1m[94m113 |[0m     """
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (106 > 100)[0m
+   [1m[94m-->[0m tests\test_loop_engineering_flow.py:342:91
+    [1m[94m|[0m
+[1m[94m340 |[0m     娴嬭瘯瀵硅薄锛歵est_batch3_staged_downstream_gate.py 鐨?catalog 鏉＄洰
+[1m[94m341 |[0m     鐩殑/鐩爣锛氬叧閿?gate 椤诲０鏄?staged-only 璇箟涓?production/live 澶辫触鍚箟
+[1m[94m342 |[0m     楠岃瘉鐐癸細purpose 鍚?staged/batch 3锛沠ailure_meaning 鍚?production 涓?live锛泇erifies 鍚?BATCH3 gate 鏂囨。
+    [1m[94m|[0m                                                                                                     [1m[91m^^^^^^[0m
+[1m[94m343 |[0m     澶辫触鍚箟锛氬厓鏁版嵁缂哄け浼氬鑷磋灏?staged gate 褰撲綔鐢熶骇鏀捐
+[1m[94m344 |[0m     """
+    [1m[94m|[0m
+
+[1m[91mI001 [0m[[1m[96m*[0m] [1mImport block is un-sorted or un-formatted[0m
+  [1m[94m-->[0m tests\test_manifest_files_check.py:6:1
+   [1m[94m|[0m
+[1m[94m 4 |[0m   """
+[1m[94m 5 |[0m
+[1m[94m 6 |[0m [1m[91m/[0m from __future__ import annotations
+[1m[94m 7 |[0m [1m[91m|[0m
+[1m[94m 8 |[0m [1m[91m|[0m import json
+[1m[94m 9 |[0m [1m[91m|[0m import sys
+[1m[94m10 |[0m [1m[91m|[0m from pathlib import Path
+[1m[94m11 |[0m [1m[91m|[0m
+[1m[94m12 |[0m [1m[91m|[0m import pytest
+[1m[94m13 |[0m [1m[91m|[0m
+[1m[94m14 |[0m [1m[91m|[0m from tests.contract_gate_support import PROJECT_ROOT
+   [1m[94m|[0m [1m[91m|____________________________________________________^[0m
+[1m[94m15 |[0m
+[1m[94m16 |[0m   SCRIPTS = PROJECT_ROOT / "scripts"
+   [1m[94m|[0m
+[1m[96mhelp[0m: [1mOrganize imports[0m
+
+[1m[91mF401 [0m[[1m[96m*[0m] [1m`pathlib.Path` imported but unused[0m
+  [1m[94m-->[0m tests\test_manifest_files_check.py:10:21
+   [1m[94m|[0m
+[1m[94m 8 |[0m import json
+[1m[94m 9 |[0m import sys
+[1m[94m10 |[0m from pathlib import Path
+   [1m[94m|[0m                     [1m[91m^^^^[0m
+[1m[94m11 |[0m
+[1m[94m12 |[0m import pytest
+   [1m[94m|[0m
+[1m[96mhelp[0m: [1mRemove unused import: `pathlib.Path`[0m
+
+[1m[91mF401 [0m[[1m[96m*[0m] [1m`pytest` imported but unused[0m
+  [1m[94m-->[0m tests\test_manifest_files_check.py:12:8
+   [1m[94m|[0m
+[1m[94m10 |[0m from pathlib import Path
+[1m[94m11 |[0m
+[1m[94m12 |[0m import pytest
+   [1m[94m|[0m        [1m[91m^^^^^^[0m
+[1m[94m13 |[0m
+[1m[94m14 |[0m from tests.contract_gate_support import PROJECT_ROOT
+   [1m[94m|[0m
+[1m[96mhelp[0m: [1mRemove unused import: `pytest`[0m
+
+[1m[91mE501 [0m[1mLine too long (101 > 100)[0m
+  [1m[94m-->[0m tests\test_ops_db_inspector.py:50:101
+   [1m[94m|[0m
+[1m[94m50 |[0m def _write_files(directory: Path, count: int, *, prefix: str = "file", suffix: str = ".txt") -> None:
+   [1m[94m|[0m                                                                                                     [1m[91m^[0m
+[1m[94m51 |[0m     directory.mkdir(parents=True, exist_ok=True)
+[1m[94m52 |[0m     for i in range(count):
+   [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (105 > 100)[0m
+   [1m[94m-->[0m tests\test_ops_db_inspector.py:291:101
+    [1m[94m|[0m
+[1m[94m289 |[0m     ],
+[1m[94m290 |[0m )
+[1m[94m291 |[0m def test_dbInspect_subdirScan_limitFloorClampsToOne(tmp_path: Path, subdir: str, count_key: str) -> None:
+    [1m[94m|[0m                                                                                                     [1m[91m^^^^^[0m
+[1m[94m292 |[0m     """瑕嗙洊鑼冨洿锛?-limit 涓嬮檺閽冲埗瀵瑰悇瀛愮洰褰曚竴鑷达紙B-027锛?[1m[94m293 |[0m     娴嬭瘯瀵硅薄锛欴bInspector limit floor锛坢in 1锛?    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (102 > 100)[0m
+ [1m[94m-->[0m tests\test_platform_source_matrix.py:3:84
+  [1m[94m|[0m
+[1m[94m1 |[0m """Round2.6 Phase C 鈥?骞冲彴鏁版嵁婧愮煩闃典笌鐢熶骇璺敱瑙勫垝鍣ㄦ祴璇曘€?[1m[94m2 |[0m
+[1m[94m3 |[0m 瑕嗙洊鑼冨洿锛歴pecs/contracts/platform_source_matrix.yaml 瀵?QMT 绫绘簮鐨勫钩鍙板彲鐢ㄦ€т笌 disabled_reason 瑙勫垯銆?  [1m[94m|[0m                                                                                                     [1m[91m^^[0m
+[1m[94m4 |[0m """
+  [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (153 > 100)[0m
+  [1m[94m-->[0m tests\test_platform_source_matrix.py:18:90
+   [1m[94m|[0m
+[1m[94m16 |[0m [1m[94m鈥?[0m
+[1m[94m17 |[0m [1m[94m鈥?[0m
+[1m[94m18 |[0m [1m[94m鈥?[0med 涓?False锛涢潪 Windows 鏃?selected_source_id 涓?None 涓?qmt_xtdata 鏈?disabled_reason
+   [1m[94m|[0m                                   [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m19 |[0m [1m[94m鈥?[0m
+[1m[94m20 |[0m [1m[94m鈥?[0m
+   [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (139 > 100)[0m
+  [1m[94m-->[0m tests\test_production_live_pilot_policy.py:45:93
+   [1m[94m|[0m
+[1m[94m43 |[0m [1m[94m鈥?[0m
+[1m[94m44 |[0m [1m[94m鈥?[0m
+[1m[94m45 |[0m [1m[94m鈥?[0mion_live_pilot_policy.md銆?18B_production_live_pilot_gate.md銆丳ILOT_FAIL_SOURCE
+   [1m[94m|[0m                                          [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m46 |[0m [1m[94m鈥?[0m
+[1m[94m47 |[0m [1m[94m鈥?[0m
+   [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (145 > 100)[0m
+  [1m[94m-->[0m tests\test_production_live_pilot_policy.py:60:83
+   [1m[94m|[0m
+[1m[94m58 |[0m [1m[94m鈥?[0m
+[1m[94m59 |[0m [1m[94m鈥?[0monly 绾︽潫
+[1m[94m60 |[0m [1m[94m鈥?[0m75 < 3锛涙潵婧愮储寮曞惈 Batch 2.75銆乺aw-only micro-fetch銆乶o production DB mutation
+   [1m[94m|[0m                                   [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m61 |[0m [1m[94m鈥?[0m
+[1m[94m62 |[0m [1m[94m鈥?[0m
+   [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (110 > 100)[0m
+  [1m[94m-->[0m tests\test_production_live_pilot_policy.py:79:85
+   [1m[94m|[0m
+[1m[94m77 |[0m     娴嬭瘯瀵硅薄锛?18B_production_live_pilot_gate.md
+[1m[94m78 |[0m     鐩殑/鐩爣锛氫换鍔″崱鏄庢枃绂佹鏈巿鏉?live銆佺敓浜у簱鍐欏叆涓庨潤榛樺洖閫€ fixture
+[1m[94m79 |[0m     楠岃瘉鐐癸細required_tokens 鍏ㄩ儴鍑虹幇锛沝ry_run/raw_only/write_target/allow_clean_write 瀛楁涓庡搴旈粯璁ゅ€兼枃妗堝悓鍦?   [1m[94m|[0m                                                                                                     [1m[91m^^^^^^^^^^[0m
+[1m[94m80 |[0m     澶辫触鍚箟锛氫换鍔″崱缂哄叧閿姝㈤」锛屾墽琛岃€呭彲鑳介粯璁ゆ墦寮€ live 鎴栧啓鐢熶骇搴?[1m[94m81 |[0m     """
+   [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (114 > 100)[0m
+   [1m[94m-->[0m tests\test_production_live_pilot_policy.py:115:90
+    [1m[94m|[0m
+[1m[94m113 |[0m     娴嬭瘯瀵硅薄锛歞ocs/quality/production_live_pilot_policy.md
+[1m[94m114 |[0m     鐩殑/鐩爣锛氱瓥鐣ヨ〃搴斾繚鎸佺嚎涓婃簮榛樿鍏抽棴銆佸彧鍐欐矙绠便€佺姝㈠叏甯傚満鎷夊彇涓庨潤榛樺洖閫€
+[1m[94m115 |[0m     楠岃瘉鐐癸細鍚?control/default 鎴愬鍑虹幇锛涘惈 Passing Batch 2.75 does not mean formal production data access is open
+    [1m[94m|[0m                                                                                                     [1m[91m^^^^^^^^^^^^^^[0m
+[1m[94m116 |[0m     澶辫触鍚箟锛氱瓥鐣ユ枃妗ｅ急鍖栭粯璁ら攣锛岃鑰呭彲鑳戒互涓鸿繃 2.75 鍗冲紑鏀炬寮忕敓浜ф暟鎹?[1m[94m117 |[0m     """
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (228 > 100)[0m
+   [1m[94m-->[0m tests\test_production_live_pilot_policy.py:137:92
+    [1m[94m|[0m
+[1m[94m135 |[0m [1m[94m鈥?[0m
+[1m[94m136 |[0m [1m[94m鈥?[0m
+[1m[94m137 |[0m [1m[94m鈥?[0mBatch 2.75 Request 3銆乼est_fred_staged_semantics锛況esolved 鍚?R3-B2.75-01銆丳ILOT_FAIL_SOURCE锛泆nresolved 鍚?R3-B2.75-REQ2-EM
+   [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m138 |[0m [1m[94m鈥?[0m
+[1m[94m139 |[0m [1m[94m鈥?[0m
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (174 > 100)[0m
+   [1m[94m-->[0m tests\test_production_live_pilot_policy.py:156:89
+    [1m[94m|[0m
+[1m[94m154 |[0m [1m[94m鈥?[0m
+[1m[94m155 |[0m [1m[94m鈥?[0m
+[1m[94m156 |[0m [1m[94m鈥?[0m01 涓斾粛鍚?PILOT_FAIL_SOURCE锛汻EQ2-EM 浠嶅湪 unresolved锛況esolved 鍚?25 passed in current session
+    [1m[94m|[0m                      [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m157 |[0m [1m[94m鈥?[0m
+[1m[94m158 |[0m [1m[94m鈥?[0m
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (124 > 100)[0m
+   [1m[94m-->[0m tests\test_production_live_pilot_policy.py:191:94
+    [1m[94m|[0m
+[1m[94m189 |[0m     娴嬭瘯瀵硅薄锛歱roduction_live_pilot_policy.md 搂6
+[1m[94m190 |[0m     鐩殑/鐩爣锛歭ive pilot 璇佹嵁蹇呴』鏉ヨ嚜鍐茬獊鎶ュ憡鎴栨樉寮忔棤鍐茬獊璁板綍锛屼笉鑳界敤 fixture 椤舵浛
+[1m[94m191 |[0m     楠岃瘉鐐癸細鍚?Conflict report or explicit no-conflict evidence锛涘惈 No fixture/staged fallback satisfies live pilot evidence
+    [1m[94m|[0m                                                                                                     [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m192 |[0m     澶辫触鍚箟锛氱瓥鐣ユ湭瑕佹眰鍐茬獊璇佹嵁锛宻taged 鏁版嵁鍙兘琚綋鎴?live pilot 鍚堟牸璇佹槑
+[1m[94m193 |[0m     """
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (114 > 100)[0m
+   [1m[94m-->[0m tests\test_production_live_pilot_policy.py:203:90
+    [1m[94m|[0m
+[1m[94m201 |[0m     娴嬭瘯瀵硅薄锛歜ackend.app.ops.staged_pilot.approved_pilot_requests()
+[1m[94m202 |[0m     鐩殑/鐩爣锛氫唬鐮佸眰棰勬壒鍑嗚姹傚簲涓庣瓥鐣ヤ竴鑷达細鍙媺 raw銆佸彧鍐欐矙绠便€侀粯璁?dry-run銆佺姝㈡竻娲佸啓鍏?[1m[94m203 |[0m     楠岃瘉鐐癸細姣忎釜 request 婊¤冻 raw_only is True銆亀rite_target==sandbox銆乤llow_clean_write is False銆乨ry_run is True
+    [1m[94m|[0m                                                                                                     [1m[91m^^^^^^^^^^^^^^[0m
+[1m[94m204 |[0m     澶辫触鍚箟锛氭ā鍧楅粯璁ゅ弬鏁版瘮绛栫暐鏉撅紝璇曠偣鍙兘鎮勬倓鍏佽鍐欏簱鎴栭潪 dry-run
+[1m[94m205 |[0m     """
+    [1m[94m|[0m
+
+[1m[91mI001 [0m[[1m[96m*[0m] [1mImport block is un-sorted or un-formatted[0m
+ [1m[94m-->[0m tests\test_project_scaffold.py:3:1
+  [1m[94m|[0m
+[1m[94m1 |[0m   """椤圭洰鑴氭墜鏋剁洰褰曚笌 init_db 鏈€灏忓紩瀵兼祴璇曘€?""
+[1m[94m2 |[0m
+[1m[94m3 |[0m [1m[91m/[0m from __future__ import annotations
+[1m[94m4 |[0m [1m[91m|[0m
+[1m[94m5 |[0m [1m[91m|[0m import pytest
+[1m[94m6 |[0m [1m[91m|[0m
+[1m[94m7 |[0m [1m[91m|[0m from tests.contract_gate_support import PROJECT_ROOT
+  [1m[94m|[0m [1m[91m|____________________________________________________^[0m
+[1m[94m8 |[0m
+[1m[94m9 |[0m   REQUIRED_DIRS = [
+  [1m[94m|[0m
+[1m[96mhelp[0m: [1mOrganize imports[0m
+
+[1m[91mI001 [0m[[1m[96m*[0m] [1mImport block is un-sorted or un-formatted[0m
+  [1m[94m-->[0m tests\test_r3x_data_source_routing_blockers.py:7:1
+   [1m[94m|[0m
+[1m[94m 5 |[0m   """
+[1m[94m 6 |[0m
+[1m[94m 7 |[0m [1m[91m/[0m from __future__ import annotations
+[1m[94m 8 |[0m [1m[91m|[0m
+[1m[94m 9 |[0m [1m[91m|[0m from backend.app.datasources.service import _default_operation
+[1m[94m10 |[0m [1m[91m|[0m
+[1m[94m11 |[0m [1m[91m|[0m from tests.contract_gate_support import PROJECT_ROOT, load_yaml
+[1m[94m12 |[0m [1m[91m|[0m from tests.service_path_support import production_route_planner
+   [1m[94m|[0m [1m[91m|_______________________________________________________________^[0m
+[1m[94m13 |[0m
+[1m[94m14 |[0m   SOURCE_REGISTRY = PROJECT_ROOT / "specs/datasource_registry/source_registry.yaml"
+   [1m[94m|[0m
+[1m[96mhelp[0m: [1mOrganize imports[0m
+
+[1m[91mE501 [0m[1mLine too long (113 > 100)[0m
+  [1m[94m-->[0m tests\test_r3x_ponytail_pilot_prep_bucket_a.py:76:101
+   [1m[94m|[0m
+[1m[94m74 |[0m     澶辫触鍚箟锛氱敓浜х幆澧冭鐢?test adapter锛屾暟鎹潵婧愪笌瀹¤杈圭晫琚嚮绌?[1m[94m75 |[0m     """
+[1m[94m76 |[0m     # ponytail: adapter-only; apply_migrations = prod-shaped log table; guard thresholds 鈫?test_resource_guard.py
+   [1m[94m|[0m                                                                                                     [1m[91m^^^^^^^^^^^^^[0m
+[1m[94m77 |[0m     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+[1m[94m78 |[0m     service = DataSourceService()
+   [1m[94m|[0m
+
+[1m[91mI001 [0m[[1m[96m*[0m] [1mImport block is un-sorted or un-formatted[0m
+  [1m[94m-->[0m tests\test_r3x_ponytail_structural_bucket_b.py:7:1
+   [1m[94m|[0m
+[1m[94m 5 |[0m   """
+[1m[94m 6 |[0m
+[1m[94m 7 |[0m [1m[91m/[0m from __future__ import annotations
+[1m[94m 8 |[0m [1m[91m|[0m
+[1m[94m 9 |[0m [1m[91m|[0m import inspect
+[1m[94m10 |[0m [1m[91m|[0m from pathlib import Path
+[1m[94m11 |[0m [1m[91m|[0m
+[1m[94m12 |[0m [1m[91m|[0m import duckdb
+[1m[94m13 |[0m [1m[91m|[0m import pytest
+[1m[94m14 |[0m [1m[91m|[0m
+[1m[94m15 |[0m [1m[91m|[0m from backend.app.core.snapshot_lineage import LINEAGE_REQUIRED_FIELDS, parameter_hash_for
+[1m[94m16 |[0m [1m[91m|[0m from tests.db_helpers import create_test_write_manager
+   [1m[94m|[0m [1m[91m|______________________________________________________^[0m
+[1m[94m17 |[0m
+[1m[94m18 |[0m   _REPO_ROOT = Path(__file__).resolve().parents[1]
+   [1m[94m|[0m
+[1m[96mhelp[0m: [1mOrganize imports[0m
+
+[1m[91mI001 [0m[[1m[96m*[0m] [1mImport block is un-sorted or un-formatted[0m
+   [1m[94m-->[0m tests\test_r3x_ponytail_structural_bucket_b.py:114:5
+    [1m[94m|[0m
+[1m[94m112 |[0m     澶辫触鍚箟锛氭椂闂寸獥鍙ｉ€昏緫鍒嗗弶锛屾帰閽堜笌 pilot 琛屼负涓嶄竴鑷?[1m[94m113 |[0m     """
+[1m[94m114 |[0m     from backend.app.ops import fetch_port_common, interface_probe_fetch_ports, live_pilot_fetch_ports
+    [1m[94m|[0m     [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m115 |[0m
+[1m[94m116 |[0m     assert hasattr(fetch_port_common, "recent_window_start")
+    [1m[94m|[0m
+[1m[96mhelp[0m: [1mOrganize imports[0m
+
+[1m[91mE501 [0m[1mLine too long (102 > 100)[0m
+   [1m[94m-->[0m tests\test_r3x_ponytail_structural_bucket_b.py:114:101
+    [1m[94m|[0m
+[1m[94m112 |[0m     澶辫触鍚箟锛氭椂闂寸獥鍙ｉ€昏緫鍒嗗弶锛屾帰閽堜笌 pilot 琛屼负涓嶄竴鑷?[1m[94m113 |[0m     """
+[1m[94m114 |[0m     from backend.app.ops import fetch_port_common, interface_probe_fetch_ports, live_pilot_fetch_ports
+    [1m[94m|[0m                                                                                                     [1m[91m^^[0m
+[1m[94m115 |[0m
+[1m[94m116 |[0m     assert hasattr(fetch_port_common, "recent_window_start")
+    [1m[94m|[0m
+
+[1m[91mI001 [0m[[1m[96m*[0m] [1mImport block is un-sorted or un-formatted[0m
+  [1m[94m-->[0m tests\test_r3x_residual_open_items_closure.py:7:1
+   [1m[94m|[0m
+[1m[94m 5 |[0m   """
+[1m[94m 6 |[0m
+[1m[94m 7 |[0m [1m[91m/[0m from __future__ import annotations
+[1m[94m 8 |[0m [1m[91m|[0m
+[1m[94m 9 |[0m [1m[91m|[0m from pathlib import Path
+[1m[94m10 |[0m [1m[91m|[0m
+[1m[94m11 |[0m [1m[91m|[0m import duckdb
+[1m[94m12 |[0m [1m[91m|[0m import pytest
+[1m[94m13 |[0m [1m[91m|[0m
+[1m[94m14 |[0m [1m[91m|[0m from backend.app.core.resource_guard import Decision, ResourceGuard
+[1m[94m15 |[0m [1m[91m|[0m from backend.app.datasources.adapters import _ADAPTER_TYPES
+[1m[94m16 |[0m [1m[91m|[0m from backend.app.datasources.exceptions import AdapterConfigurationError
+[1m[94m17 |[0m [1m[91m|[0m from backend.app.datasources.fetch_result import FetchRequest
+[1m[94m18 |[0m [1m[91m|[0m from backend.app.datasources.route_planner import SourceRoutePlanner
+[1m[94m19 |[0m [1m[91m|[0m from backend.app.datasources.service import DataSourceService, _default_operation
+[1m[94m20 |[0m [1m[91m|[0m from backend.app.datasources.source_registry import SourceRegistry
+[1m[94m21 |[0m [1m[91m|[0m from backend.app.db.migrate import apply_migrations
+[1m[94m22 |[0m [1m[91m|[0m from backend.app.db.write_manager import WriteRequest
+[1m[94m23 |[0m [1m[91m|[0m from backend.app.layer1_axes.feature_engine import AxisFeatureEngine
+[1m[94m24 |[0m [1m[91m|[0m from backend.app.layer1_axes.interpretation import AxisInterpretationEngine, InterpretationRejectedError
+[1m[94m25 |[0m [1m[91m|[0m from backend.app.validators.source_conflict import CONFLICT_DOMAIN_ALIASES, SourceConflictValidator
+[1m[94m26 |[0m [1m[91m|[0m from tests.contract_gate_support import PROJECT_ROOT, load_yaml
+[1m[94m27 |[0m [1m[91m|[0m from tests.db_helpers import create_test_write_manager
+[1m[94m28 |[0m [1m[91m|[0m from tests.service_path_support import production_route_planner
+   [1m[94m|[0m [1m[91m|_______________________________________________________________^[0m
+[1m[94m29 |[0m
+[1m[94m30 |[0m   SOURCE_REGISTRY = PROJECT_ROOT / "specs/datasource_registry/source_registry.yaml"
+   [1m[94m|[0m
+[1m[96mhelp[0m: [1mOrganize imports[0m
+
+[1m[91mE501 [0m[1mLine too long (104 > 100)[0m
+  [1m[94m-->[0m tests\test_r3x_residual_open_items_closure.py:24:101
+   [1m[94m|[0m
+[1m[94m22 |[0m from backend.app.db.write_manager import WriteRequest
+[1m[94m23 |[0m from backend.app.layer1_axes.feature_engine import AxisFeatureEngine
+[1m[94m24 |[0m from backend.app.layer1_axes.interpretation import AxisInterpretationEngine, InterpretationRejectedError
+   [1m[94m|[0m                                                                                                     [1m[91m^^^^[0m
+[1m[94m25 |[0m from backend.app.validators.source_conflict import CONFLICT_DOMAIN_ALIASES, SourceConflictValidator
+[1m[94m26 |[0m from tests.contract_gate_support import PROJECT_ROOT, load_yaml
+   [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (117 > 100)[0m
+  [1m[94m-->[0m tests\test_r3x_residual_open_items_closure.py:55:89
+   [1m[94m|[0m
+[1m[94m53 |[0m     娴嬭瘯瀵硅薄锛歋ourceRoutePlanner 瀵?macro_supplementary 鐨勮矾鐢?[1m[94m54 |[0m     鐩殑/鐩爣锛歛kshare 浠呮牎楠岃鑹叉椂椤婚樆鏂负 Primary
+[1m[94m55 |[0m     楠岃瘉鐐癸細route_status 鍦ㄩ樆鏂泦鍚堝唴锛泂elected_source_id=None锛沘kshare skip_reason=validation_only_cannot_be_primary
+   [1m[94m|[0m                                                                                                     [1m[91m^^^^^^^^^^^^^^^^^[0m
+[1m[94m56 |[0m     澶辫触鍚箟锛氫粎鏍￠獙婧愯璇€変负涓绘簮锛岀敓浜ф暟鎹缂樹笉鍙俊
+[1m[94m57 |[0m     """
+   [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (101 > 100)[0m
+  [1m[94m-->[0m tests\test_r3x_residual_open_items_closure.py:65:101
+   [1m[94m|[0m
+[1m[94m63 |[0m         job_id="j3x-route-001",
+[1m[94m64 |[0m     )
+[1m[94m65 |[0m     assert plan.route_status in {"VALIDATION_ONLY_BLOCKED", "DISABLED_SOURCE", "NO_AVAILABLE_SOURCE"}
+   [1m[94m|[0m                                                                                                     [1m[91m^[0m
+[1m[94m66 |[0m     assert plan.selected_source_id is None
+[1m[94m67 |[0m     akshare = next(c for c in plan.candidates if c.source_id == "akshare")
+   [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (113 > 100)[0m
+   [1m[94m-->[0m tests\test_r3x_residual_open_items_closure.py:122:101
+    [1m[94m|[0m
+[1m[94m120 |[0m     澶辫触鍚箟锛氱敓浜?fetch 鏃犵鍙ｄ粛鎵ц锛屽彲鑳藉啓鑴忔暟鎹垨璺宠繃瀹¤
+[1m[94m121 |[0m     """
+[1m[94m122 |[0m     # ponytail: adapter-only; apply_migrations = prod-shaped log table; guard thresholds 鈫?test_resource_guard.py
+    [1m[94m|[0m                                                                                                     [1m[91m^^^^^^^^^^^^^[0m
+[1m[94m123 |[0m     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+[1m[94m124 |[0m     service = DataSourceService()
+    [1m[94m|[0m
+
+[1m[91mI001 [0m[[1m[96m*[0m] [1mImport block is un-sorted or un-formatted[0m
+   [1m[94m-->[0m tests\test_r3x_residual_open_items_closure.py:325:5
+    [1m[94m|[0m
+[1m[94m323 |[0m       澶辫触鍚箟锛氳皟鐢ㄦ柟璇互涓哄叏閲?璐ㄦ/淇瀹¤宸插彲鐢紝鐢熶骇 job 闈欓粯鏃犳晥鏋?[1m[94m324 |[0m       """
+[1m[94m325 |[0m [1m[91m/[0m     from backend.app.db.connection import ConnectionManager
+[1m[94m326 |[0m [1m[91m|[0m     from backend.app.db.migrate import apply_migrations
+[1m[94m327 |[0m [1m[91m|[0m     from backend.app.sync.contract import DEFERRED_JOB_TYPE_CODE, DeferredJobTypeError
+[1m[94m328 |[0m [1m[91m|[0m     from backend.app.sync.jobs import SyncJobSpec
+[1m[94m329 |[0m [1m[91m|[0m     from backend.app.sync.orchestrator import DataSyncOrchestrator
+[1m[94m330 |[0m [1m[91m|[0m     from datetime import date
+    [1m[94m|[0m [1m[91m|_____________________________^[0m
+[1m[94m331 |[0m
+[1m[94m332 |[0m       db = tmp_path / "orch.duckdb"
+    [1m[94m|[0m
+[1m[96mhelp[0m: [1mOrganize imports[0m
+
+[1m[91mE501 [0m[1mLine too long (105 > 100)[0m
+   [1m[94m-->[0m tests\test_r3x_residual_open_items_closure.py:417:77
+    [1m[94m|[0m
+[1m[94m415 |[0m     """瑕嗙洊鑼冨洿锛歅ROMPT_15 closed-claim 涓?execute *-green.txt 鍙璁℃槧灏勶紙R3Y-PROMPT15-EVID-001锛?[1m[94m416 |[0m     娴嬭瘯瀵硅薄锛氬綊妗?execute-evidence/closed_claim_evidence_index.yaml 涓?*-green.txt
+[1m[94m417 |[0m     鐩殑/鐩爣锛?3 椤?Master Checklist 闂悎澹扮О椤诲悇鏈?green 璇佹嵁涓?pytest 浜ゅ弶寮曠敤锛屼笉寰椾粎 merge_gate 鑷堪
+    [1m[94m|[0m                                                                                                     [1m[91m^^^^^[0m
+[1m[94m418 |[0m     楠岃瘉鐐癸細绱㈠紩瀛樺湪锛涙瘡缁?green 鏂囦欢瀛樺湪涓斿惈 passed/EXIT:0锛涗紴娴?18 鏉″潎琚储寮曪紱checklist 琛屾暟=73
+[1m[94m419 |[0m     澶辫触鍚箟锛歅ROMPT_15 鍏ㄩ噺闂悎浠嶄笉鍙璁★紝AUD-01 F-01  hygiene 鏈叧闂?    [1m[94m|[0m
+
+[1m[91mI001 [0m[[1m[96m*[0m] [1mImport block is un-sorted or un-formatted[0m
+   [1m[94m-->[0m tests\test_real_data_staged_pilot_v3.py:284:5
+    [1m[94m|[0m
+[1m[94m282 |[0m       澶辫触鍚箟锛氶儴鍒?WL 浠嶅彲璺?pilot銆?[1m[94m283 |[0m       """
+[1m[94m284 |[0m [1m[91m/[0m     from backend.app.ops import staged_pilot
+[1m[94m285 |[0m [1m[91m|[0m     from backend.app.ops.staged_pilot import (
+[1m[94m286 |[0m [1m[91m|[0m         StagedPilotAuthorizationError,
+[1m[94m287 |[0m [1m[91m|[0m         WHITELIST_YAML_NAMES,
+[1m[94m288 |[0m [1m[91m|[0m         assert_model_inputs_whitelist_present,
+[1m[94m289 |[0m [1m[91m|[0m     )
+    [1m[94m|[0m [1m[91m|_____^[0m
+[1m[94m290 |[0m
+[1m[94m291 |[0m       partial = tmp_path / "partial_wl"
+    [1m[94m|[0m
+[1m[96mhelp[0m: [1mOrganize imports[0m
+
+[1m[91mE501 [0m[1mLine too long (138 > 100)[0m
+  [1m[94m-->[0m tests\test_round3_audit_registry_alignment.py:41:89
+   [1m[94m|[0m
+[1m[94m39 |[0m [1m[94m鈥?[0m
+[1m[94m40 |[0m [1m[94m鈥?[0m
+[1m[94m41 |[0m [1m[94m鈥?[0mesolved 鍚?BATCH3 gate 涓?pytest slow锛沢itignore 鍚?.audit-sandboxpytest-*/
+   [1m[94m|[0m                                       [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m42 |[0m [1m[94m鈥?[0m
+[1m[94m43 |[0m [1m[94m鈥?[0m
+   [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (160 > 100)[0m
+  [1m[94m-->[0m tests\test_round3_audit_registry_alignment.py:62:90
+   [1m[94m|[0m
+[1m[94m60 |[0m [1m[94m鈥?[0m
+[1m[94m61 |[0m [1m[94m鈥?[0m
+[1m[94m62 |[0m [1m[94m鈥?[0mivalent benchmark銆乸erformance-budget artifact锛涗笉鍚€屾棤 test tier / 鏂?A6 benchmark銆?   [1m[94m|[0m                            [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m63 |[0m [1m[94m鈥?[0m
+[1m[94m64 |[0m [1m[94m鈥?[0m
+   [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (131 > 100)[0m
+  [1m[94m-->[0m tests\test_round3_audit_registry_alignment.py:79:86
+   [1m[94m|[0m
+[1m[94m77 |[0m [1m[94m鈥?[0md
+[1m[94m78 |[0m [1m[94m鈥?[0m live 鏈氨缁?[1m[94m79 |[0m [1m[94m鈥?[0mroduction-live銆?18A 妗ユ帴銆丷3-B2.75-01銆乸roduction-live readiness 鎺緸
+   [1m[94m|[0m                                          [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m80 |[0m [1m[94m鈥?[0mve 宸插紑
+[1m[94m81 |[0m [1m[94m鈥?[0m
+   [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (177 > 100)[0m
+   [1m[94m-->[0m tests\test_round3_audit_registry_alignment.py:99:86
+    [1m[94m|[0m
+[1m[94m 97 |[0m [1m[94m鈥?[0m
+[1m[94m 98 |[0m [1m[94m鈥?[0m
+[1m[94m 99 |[0m [1m[94m鈥?[0mmigration 008銆乮ngestion split銆乫rontend budget銆丅atch3 modeling 绛夈€屽湪鑼冨洿鍐呫€嶈鏄?token
+    [1m[94m|[0m              [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m100 |[0m [1m[94m鈥?[0m
+[1m[94m101 |[0m [1m[94m鈥?[0m
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (189 > 100)[0m
+   [1m[94m-->[0m tests\test_round3_audit_registry_alignment.py:137:90
+    [1m[94m|[0m
+[1m[94m135 |[0m [1m[94m鈥?[0m
+[1m[94m136 |[0m [1m[94m鈥?[0m
+[1m[94m137 |[0m [1m[94m鈥?[0mndoff锛涘惈 No migration 008銆丯o R2b-R2d銆丯o frontend budget銆丯o Batch3 Layer2銆丯o Batch6 gate 绛夋帓闄ら」
+    [1m[94m|[0m              [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m138 |[0m [1m[94m鈥?[0m
+[1m[94m139 |[0m [1m[94m鈥?[0m
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (132 > 100)[0m
+   [1m[94m-->[0m tests\test_round3_audit_registry_alignment.py:173:93
+    [1m[94m|[0m
+[1m[94m171 |[0m [1m[94m鈥?[0m
+[1m[94m172 |[0m [1m[94m鈥?[0m鐩笖鏍?Round4 cross-reference
+[1m[94m173 |[0m [1m[94m鈥?[0mR2C-R2D銆乺ollback plan銆丷3-B25-FE-BUNDLE-BUDGET銆丷ound4 cross-reference only
+    [1m[94m|[0m                                              [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m174 |[0m [1m[94m鈥?[0m
+[1m[94m175 |[0m [1m[94m鈥?[0m
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (156 > 100)[0m
+   [1m[94m-->[0m tests\test_round3_audit_registry_alignment.py:193:89
+    [1m[94m|[0m
+[1m[94m191 |[0m [1m[94m鈥?[0m
+[1m[94m192 |[0m [1m[94m鈥?[0mRRED 涓斾氦鍙夊紩鐢?REQ2-EM
+[1m[94m193 |[0m [1m[94m鈥?[0metch_daily_bar_validation銆乻tock_zh_a_hist銆丷3-B2.75-REQ2-EM銆乸rompt14 鎺堟潈涓庡垎鏀悕
+    [1m[94m|[0m                             [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m194 |[0m [1m[94m鈥?[0m闂?[1m[94m195 |[0m [1m[94m鈥?[0m
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (101 > 100)[0m
+   [1m[94m-->[0m tests\test_round3_audit_registry_alignment.py:218:80
+    [1m[94m|[0m
+[1m[94m216 |[0m     """瑕嗙洊鑼冨洿锛歊3-PARTIAL-1 闄堟棫銆宐ackfill 璺宠繃 validator銆嶅彊浜嬫槸鍚﹀凡淇
+[1m[94m217 |[0m     娴嬭瘯瀵硅薄锛氫笁浠?registry 涓?ROUND2_REPAIR_ALIGNMENT_TRACKER.md
+[1m[94m218 |[0m     鐩殑/鐩爣锛歳egistry 搴旇褰?ADV-R3X-SYNC-002 宸查棴鍚?severe-conflict 瀛愯寖鍥达紝鑰岄潪澹扮О璺宠繃 validator
+    [1m[94m|[0m                                                                                                     [1m[91m^[0m
+[1m[94m219 |[0m     楠岃瘉鐐癸細audit/unresolved 涓嶅惈 skips validator + clean write锛涘惈 ADV-R3X-SYNC-002銆乿alidate+write銆乻evere conflict锛泃racker 鍚?SYNC           [1m[94m鈥?[0m
+[1m[94m220 |[0m     澶辫触鍚箟锛氶檲鏃у彊浜嬩粛鍦紝璇昏€呬細浠ヤ负 backfill 浠嶅彲缁曡繃鏍￠獙鍐欏簱
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (138 > 100)[0m
+   [1m[94m-->[0m tests\test_round3_audit_registry_alignment.py:219:92
+    [1m[94m|[0m
+[1m[94m217 |[0m [1m[94m鈥?[0mR.md
+[1m[94m218 |[0m [1m[94m鈥?[0mnflict 瀛愯寖鍥达紝鑰岄潪澹扮О璺宠繃 validator
+[1m[94m219 |[0m [1m[94m鈥?[0mrite锛涘惈 ADV-R3X-SYNC-002銆乿alidate+write銆乻evere conflict锛泃racker 鍚?SYNC-002
+    [1m[94m|[0m                                           [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m220 |[0m [1m[94m鈥?[0m
+[1m[94m221 |[0m [1m[94m鈥?[0m
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (120 > 100)[0m
+   [1m[94m-->[0m tests\test_round3_audit_registry_alignment.py:289:92
+    [1m[94m|[0m
+[1m[94m287 |[0m     娴嬭瘯瀵硅薄锛?trellis/spec/backend/database-guidelines.md
+[1m[94m288 |[0m     鐩殑/鐩爣锛歴pec 鍒楀嚭杩佺Щ鍒嗗眰骞跺尯鍒?fetch_log CHECK 涓?SUCCESS evidence 鐨勫簲鐢ㄥ眰鑱岃矗
+[1m[94m289 |[0m     楠岃瘉鐐癸細鍚?009_status_check銆?10_lineage_not_null銆?11_layer1_tables銆乫etch_log銆丼UCCESS evidence銆乤pplication layer
+    [1m[94m|[0m                                                                                                     [1m[91m^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m290 |[0m     澶辫触鍚箟锛氭暟鎹簱鎸囧崡缂烘柊杩佺Щ璇存槑锛屽疄鐜拌€呭彲鑳借鍒?status CHECK 涓庤瘉鎹眰杈圭晫
+[1m[94m291 |[0m     """
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (150 > 100)[0m
+   [1m[94m-->[0m tests\test_round3_audit_registry_alignment.py:309:94
+    [1m[94m|[0m
+[1m[94m307 |[0m [1m[94m鈥?[0m
+[1m[94m308 |[0m [1m[94m鈥?[0m鍦?registry 鏌ュ埌
+[1m[94m309 |[0m [1m[94m鈥?[0mloseout.json銆乫eature-round3-real-data-staged-pilot 鑷冲皯鍦?audit 鎴?resolved 涔嬩竴鍑虹幇
+    [1m[94m|[0m                                     [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m310 |[0m [1m[94m鈥?[0m
+[1m[94m311 |[0m [1m[94m鈥?[0m
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (154 > 100)[0m
+   [1m[94m-->[0m tests\test_round3_audit_registry_alignment.py:333:90
+    [1m[94m|[0m
+[1m[94m331 |[0m [1m[94m鈥?[0m
+[1m[94m332 |[0m [1m[94m鈥?[0m
+[1m[94m333 |[0m [1m[94m鈥?[0mved 鏃?DEFERRED DEF-03锛沬nspector 娴嬭瘯鍚?raw/parquet/audit/report 涓?R3-AUDIT-DEF-03
+    [1m[94m|[0m                                [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m334 |[0m [1m[94m鈥?[0m
+[1m[94m335 |[0m [1m[94m鈥?[0m
+    [1m[94m|[0m
+
+[1m[91mF541 [0m[[1m[96m*[0m] [1mf-string without any placeholders[0m
+   [1m[94m-->[0m tests\test_round3_audit_registry_alignment.py:343:12
+    [1m[94m|[0m
+[1m[94m341 |[0m     assert "R3-AUDIT-DEF-03" in resolved
+[1m[94m342 |[0m     assert "| R3-AUDIT-DEF-03 | Per-subdir" not in audit
+[1m[94m343 |[0m     assert f"| R3-AUDIT-DEF-03 | DEFERRED" not in unresolved
+    [1m[94m|[0m            [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m344 |[0m     for subdir in ("raw", "parquet", "audit", "report"):
+[1m[94m345 |[0m         assert subdir in inspector_tests
+    [1m[94m|[0m
+[1m[96mhelp[0m: [1mRemove extraneous `f` prefix[0m
+
+[1m[91mE501 [0m[1mLine too long (160 > 100)[0m
+   [1m[94m-->[0m tests\test_round3_audit_registry_alignment.py:353:92
+    [1m[94m|[0m
+[1m[94m351 |[0m [1m[94m鈥?[0m
+[1m[94m352 |[0m [1m[94m鈥?[0m
+[1m[94m353 |[0m [1m[94m鈥?[0m锛況esolved 鍚?UNSUPPORTED_MODES銆乺eplace_partition銆乼est_r3x_ponytail_structural_bucket_b
+    [1m[94m|[0m                               [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m354 |[0m [1m[94m鈥?[0m
+[1m[94m355 |[0m [1m[94m鈥?[0m
+    [1m[94m|[0m
+
+[1m[91mF541 [0m[[1m[96m*[0m] [1mf-string without any placeholders[0m
+   [1m[94m-->[0m tests\test_round3_audit_registry_alignment.py:360:12
+    [1m[94m|[0m
+[1m[94m359 |[0m     assert "R2-RISK-3" in resolved
+[1m[94m360 |[0m     assert f"| R2-RISK-3 | DEFERRED" not in unresolved
+    [1m[94m|[0m            [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m361 |[0m     for token in ("UNSUPPORTED_MODES", "replace_partition", "test_r3x_ponytail_structural_bucket_b"):
+[1m[94m362 |[0m         assert token in resolved
+    [1m[94m|[0m
+[1m[96mhelp[0m: [1mRemove extraneous `f` prefix[0m
+
+[1m[91mE501 [0m[1mLine too long (101 > 100)[0m
+   [1m[94m-->[0m tests\test_round3_audit_registry_alignment.py:361:101
+    [1m[94m|[0m
+[1m[94m359 |[0m     assert "R2-RISK-3" in resolved
+[1m[94m360 |[0m     assert f"| R2-RISK-3 | DEFERRED" not in unresolved
+[1m[94m361 |[0m     for token in ("UNSUPPORTED_MODES", "replace_partition", "test_r3x_ponytail_structural_bucket_b"):
+    [1m[94m|[0m                                                                                                     [1m[91m^[0m
+[1m[94m362 |[0m         assert token in resolved
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (170 > 100)[0m
+   [1m[94m-->[0m tests\test_round3_audit_registry_alignment.py:392:83
+    [1m[94m|[0m
+[1m[94m390 |[0m [1m[94m鈥?[0m
+[1m[94m391 |[0m [1m[94m鈥?[0m
+[1m[94m392 |[0m [1m[94m鈥?[0mhot lineage pytest銆丅atch 5A+锛沜overage 鍚?021_implement_layer3_snapshot_builder.md
+    [1m[94m|[0m               [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m393 |[0m [1m[94m鈥?[0m
+[1m[94m394 |[0m [1m[94m鈥?[0m
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (144 > 100)[0m
+   [1m[94m-->[0m tests\test_round3_audit_registry_alignment.py:479:90
+    [1m[94m|[0m
+[1m[94m477 |[0m [1m[94m鈥?[0m
+[1m[94m478 |[0m [1m[94m鈥?[0mBatch 3F 鎵ц鍖呭彲琚储寮?[1m[94m479 |[0m [1m[94m鈥?[0m3F_BATCH6_DATA_GOVERNANCE銆丳ROJECT_IMPLEMENTATION_ROADMAP.md锛沇ave D 闈?Active
+    [1m[94m|[0m                                    [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m480 |[0m [1m[94m鈥?[0m
+[1m[94m481 |[0m [1m[94m鈥?[0m
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (147 > 100)[0m
+   [1m[94m-->[0m tests\test_round3_audit_registry_alignment.py:558:89
+    [1m[94m|[0m
+[1m[94m556 |[0m [1m[94m鈥?[0m
+[1m[94m557 |[0m [1m[94m鈥?[0m
+[1m[94m558 |[0m [1m[94m鈥?[0m-b branch銆乺emaining=0銆丼C-01銆丱P-01/03/06锛涘叏鏂囨棤銆屼粛 OPEN锛圔ucket B锛?3 椤癸級銆?    [1m[94m|[0m                                   [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m559 |[0m [1m[94m鈥?[0m
+[1m[94m560 |[0m [1m[94m鈥?[0m
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (112 > 100)[0m
+   [1m[94m-->[0m tests\test_round3_audit_registry_alignment.py:581:88
+    [1m[94m|[0m
+[1m[94m579 |[0m     娴嬭瘯瀵硅薄锛歛dversarial_audit_post14_contract_ponytail_lane.md
+[1m[94m580 |[0m     鐩殑/鐩爣锛氭墽琛屾憳瑕佷笉寰椾粛鍐?53 椤规《 B 寮€鏀撅紝搴旇褰?Slice 1鈥? merge 鍚?remaining=0
+[1m[94m581 |[0m     楠岃瘉鐐癸細鍚?4114fcb0 鎴?087f7271锛涗笉鍚?53 Bucket B items still open锛涘惈 Slice 4+4b銆乺emaining=0銆丆LOSED@Slice
+    [1m[94m|[0m                                                                                                     [1m[91m^^^^^^^^^^^^[0m
+[1m[94m582 |[0m     澶辫触鍚箟锛歝ontract lane 鎶ュ憡浠嶆爣 53 椤瑰紑鏀撅紝涓庣粨鏋勬€ч棴鍚堣瘉鎹啿绐?[1m[94m583 |[0m     """
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (104 > 100)[0m
+  [1m[94m-->[0m tests\test_round3_verification_command_matrix.py:81:85
+   [1m[94m|[0m
+[1m[94m79 |[0m     娴嬭瘯瀵硅薄锛歞ocs/ops/verification_commands.md
+[1m[94m80 |[0m     鐩殑/鐩爣锛氫竴澶勬枃妗ｈ兘鏌ュ埌鍏ㄩ儴 gate id銆佹祴璇曟ā鍧椾笌 uv pytest 鍛戒护
+[1m[94m81 |[0m     楠岃瘉鐐癸細鍚?## Round 3 gate hygiene銆乧heck_doc_links 鍛戒护锛涙瘡涓?gate_id/module/command 涓夊厓缁勯兘鍦ㄦ鏂?   [1m[94m|[0m                                                                                                     [1m[91m^^^^[0m
+[1m[94m82 |[0m     澶辫触鍚箟锛氳繍缁存壘涓嶅埌鏍囧噯 pytest 鍛戒护锛屽悇鎵规闂ㄧ妫€鏌ヤ細鍚勮嚜涓烘斂
+[1m[94m83 |[0m     """
+   [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (104 > 100)[0m
+  [1m[94m-->[0m tests\test_round3_verification_command_matrix.py:97:87
+   [1m[94m|[0m
+[1m[94m95 |[0m     娴嬭瘯瀵硅薄锛歞ocs/ops/verification_commands.md 涓殑 staged/live 鎺緸
+[1m[94m96 |[0m     鐩殑/鐩爣锛氳鑰呬笉浼氭妸 staged 璇佹嵁娴嬭瘯褰撴垚宸插紑鏀剧嚎涓婃媺鏁?[1m[94m97 |[0m     楠岃瘉鐐癸細鍚?staged-only銆乸roduction-live銆乨oes not open production-live 鍙婂洓涓唬琛ㄦ€?test_*.py 鏂囦欢鍚?   [1m[94m|[0m                                                                                                     [1m[91m^^^^[0m
+[1m[94m98 |[0m     澶辫触鍚箟锛氭枃妗ｆ贩娣?staged 涓?live锛屽鏄撹鍒?Batch 2.5/2.75/3 鏁版嵁灏辩华鐘舵€?[1m[94m99 |[0m     """
+   [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (115 > 100)[0m
+   [1m[94m-->[0m tests\test_round3_verification_command_matrix.py:117:89
+    [1m[94m|[0m
+[1m[94m115 |[0m     娴嬭瘯瀵硅薄锛歞ocs/ops/verification_commands.md 涓?test_batch275_live_pilot_gate.py 鏉＄洰
+[1m[94m116 |[0m     鐩殑/鐩爣锛氶粯璁?Round 3 CI 涓嶅簲璇窇闇€澶栫綉鐨?live pilot 鐢ㄤ緥
+[1m[94m117 |[0m     楠岃瘉鐐癸細鍚?test_batch275_live_pilot_gate.py锛涙鏂囪鏄?not default CI锛堟垨 not default Round 3 CI锛変笖鎻愬埌 network
+    [1m[94m|[0m                                                                                                      [1m[91m^^^^^^^^^^^^^^[0m
+[1m[94m118 |[0m     澶辫触鍚箟锛氭枃妗ｆ湭鏍囨敞缃戠粶鎺掗櫎锛孋I 鍙兘鎰忓鎷夎捣澶栫綉 live fetch
+[1m[94m119 |[0m     """
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (109 > 100)[0m
+   [1m[94m-->[0m tests\test_round3_verification_command_matrix.py:130:93
+    [1m[94m|[0m
+[1m[94m128 |[0m     娴嬭瘯瀵硅薄锛歊OUND3_BATCH_IMPLEMENTATION_MAP.md
+[1m[94m129 |[0m     鐩殑/鐩爣锛欱atch 鍦板浘涓庤繍缁村懡浠ょ储寮曚簰鐩稿彲鍙戠幇
+[1m[94m130 |[0m     楠岃瘉鐐癸細鍚?docs/ops/verification_commands.md锛涘惈 Round 3 gate hygiene 鎴?gate hygiene command matrix 鎺緸
+    [1m[94m|[0m                                                                                                     [1m[91m^^^^^^^^^[0m
+[1m[94m131 |[0m     澶辫触鍚箟锛氬湴鍥剧己鍛戒护鐭╅樀閾炬帴锛屽崗璋冧汉鍙兘浠庢暎钀芥祴璇曟枃浠跺弽鏌?pytest 鍛戒护
+[1m[94m132 |[0m     """
+    [1m[94m|[0m
+
+[1m[91mI001 [0m[[1m[96m*[0m] [1mImport block is un-sorted or un-formatted[0m
+  [1m[94m-->[0m tests\test_snapshot_lineage_kernel.py:7:1
+   [1m[94m|[0m
+[1m[94m 5 |[0m   """
+[1m[94m 6 |[0m
+[1m[94m 7 |[0m [1m[91m/[0m from __future__ import annotations
+[1m[94m 8 |[0m [1m[91m|[0m
+[1m[94m 9 |[0m [1m[91m|[0m from datetime import UTC, datetime
+[1m[94m10 |[0m [1m[91m|[0m
+[1m[94m11 |[0m [1m[91m|[0m import pytest
+[1m[94m12 |[0m [1m[91m|[0m
+[1m[94m13 |[0m [1m[91m|[0m from backend.app.core.snapshot_lineage import (
+[1m[94m14 |[0m [1m[91m|[0m     LINEAGE_REQUIRED_FIELDS,
+[1m[94m15 |[0m [1m[91m|[0m     assert_lineage_fields_complete,
+[1m[94m16 |[0m [1m[91m|[0m     lineage_row_to_db_tuple,
+[1m[94m17 |[0m [1m[91m|[0m     parameter_hash_for,
+[1m[94m18 |[0m [1m[91m|[0m     validate_source_dataset_ids,
+[1m[94m19 |[0m [1m[91m|[0m )
+   [1m[94m|[0m [1m[91m|_^[0m
+   [1m[94m|[0m
+[1m[96mhelp[0m: [1mOrganize imports[0m
+
+[1m[91mI001 [0m[[1m[96m*[0m] [1mImport block is un-sorted or un-formatted[0m
+  [1m[94m-->[0m tests\test_source_capabilities.py:6:1
+   [1m[94m|[0m
+[1m[94m 4 |[0m   """
+[1m[94m 5 |[0m
+[1m[94m 6 |[0m [1m[91m/[0m from __future__ import annotations
+[1m[94m 7 |[0m [1m[91m|[0m
+[1m[94m 8 |[0m [1m[91m|[0m import importlib
+[1m[94m 9 |[0m [1m[91m|[0m import pkgutil
+[1m[94m10 |[0m [1m[91m|[0m from typing import Any
+[1m[94m11 |[0m [1m[91m|[0m
+[1m[94m12 |[0m [1m[91m|[0m import pytest
+[1m[94m13 |[0m [1m[91m|[0m from backend.app.datasources.capability_registry import (
+[1m[94m14 |[0m [1m[91m|[0m     ADAPTER_DOMAIN_COMPATIBILITY_MAP,
+[1m[94m15 |[0m [1m[91m|[0m     OperationDisabledError,
+[1m[94m16 |[0m [1m[91m|[0m     SourceCapabilityRegistry,
+[1m[94m17 |[0m [1m[91m|[0m     UnknownCapabilityError,
+[1m[94m18 |[0m [1m[91m|[0m )
+[1m[94m19 |[0m [1m[91m|[0m
+[1m[94m20 |[0m [1m[91m|[0m from tests.contract_gate_support import PROJECT_ROOT, load_yaml
+   [1m[94m|[0m [1m[91m|_______________________________________________________________^[0m
+[1m[94m21 |[0m
+[1m[94m22 |[0m   SOURCE_REGISTRY = PROJECT_ROOT / "specs/datasource_registry/source_registry.yaml"
+   [1m[94m|[0m
+[1m[96mhelp[0m: [1mOrganize imports[0m
+
+[1m[91mE501 [0m[1mLine too long (104 > 100)[0m
+   [1m[94m-->[0m tests\test_source_capabilities.py:219:94
+    [1m[94m|[0m
+[1m[94m217 |[0m     娴嬭瘯瀵硅薄锛歋ourceCapabilityRegistry.resolve_registry_domain / is_capability_declared
+[1m[94m218 |[0m     鐩殑/鐩爣锛氭病鏈夐仐鐣欏埆鍚嶆槧灏勬椂锛岃緭鍏ヤ粈涔堝煙鍚嶅氨鎸変粈涔堝煙鍚嶆煡鑳藉姏
+[1m[94m219 |[0m     楠岃瘉鐐癸細resolve 杩斿洖 cn_equity_daily_bar锛沬s_capability_declared(baostock, cn_equity_daily_bar)=True
+    [1m[94m|[0m                                                                                                     [1m[91m^^^^[0m
+[1m[94m220 |[0m     澶辫触鍚箟锛氬煙瑙ｆ瀽閿欒瀵艰嚧 capability 鏌ヨ璇姤鏈０鏄?[1m[94m221 |[0m     """
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (115 > 100)[0m
+   [1m[94m-->[0m tests\test_source_capabilities.py:247:96
+    [1m[94m|[0m
+[1m[94m245 |[0m     娴嬭瘯瀵硅薄锛歋ourceCapabilityRegistry.assert_source_domain_operation锛坬mt_xqshare锛?[1m[94m246 |[0m     鐩殑/鐩爣锛氬嵆浣?YAML 閲屽啓浜嗚兘鍔涙潯鐩紝鏈鎵圭殑婧愪篃涓嶅簲琚湡姝ｈ皟搴?[1m[94m247 |[0m     楠岃瘉鐐癸細qmt_xqshare + cn_equity_realtime + fetch_realtime_quote_remote 鏃?pytest.raises(OperationDisabledError)
+    [1m[94m|[0m                                                                                                     [1m[91m^^^^^^^^^^^^^^^[0m
+[1m[94m248 |[0m     澶辫触鍚箟锛氭彁璁鐢ㄦ簮浠嶅彲閫氳繃 registry 鏂█锛岀粫杩囩瓥鐣ラ椄闂?[1m[94m249 |[0m     """
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (121 > 100)[0m
+  [1m[94m-->[0m tests\test_source_conflict_validator.py:72:94
+   [1m[94m|[0m
+[1m[94m70 |[0m     娴嬭瘯瀵硅薄锛歋ourceConflictValidator.validate_rows
+[1m[94m71 |[0m     鐩殑/鐩爣锛氫富婧愪笌鏍￠獙婧?close 鍋忓樊鏋佸皬鏃跺簲鏃犲啿绐佷笖鍙啓涓绘簮鍊?[1m[94m72 |[0m     楠岃瘉鐐癸細status=PASSED锛沜an_write_primary_value=True锛沶eeds_reconcile=False锛沶eeds_manual_review=False锛沜onflicts 涓虹┖
+   [1m[94m|[0m                                                                                                     [1m[91m^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m73 |[0m     澶辫触鍚箟锛氭甯稿亸宸璇姤鍐茬獊锛屼富婧愬啓鍏ヨ涓嶅繀瑕侀樆鏂?[1m[94m74 |[0m     """
+   [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (144 > 100)[0m
+  [1m[94m-->[0m tests\test_source_conflict_validator.py:91:91
+   [1m[94m|[0m
+[1m[94m89 |[0m [1m[94m鈥?[0m
+[1m[94m90 |[0m [1m[94m鈥?[0m
+[1m[94m91 |[0m [1m[94m鈥?[0ms_reconcile=False锛涢鏉?conflict 涓?close/baostock銆乻everity=warning銆佷笉闇€浜哄伐澶嶆牳
+   [1m[94m|[0m                                        [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m92 |[0m [1m[94m鈥?[0m
+[1m[94m93 |[0m [1m[94m鈥?[0m
+   [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (117 > 100)[0m
+   [1m[94m-->[0m tests\test_source_conflict_validator.py:187:93
+    [1m[94m|[0m
+[1m[94m185 |[0m     娴嬭瘯瀵硅薄锛歋ourceConflictValidator.validate_rows
+[1m[94m186 |[0m     鐩殑/鐩爣锛歮arket volume 涓?futures settlement 搴斿鐢ㄤ笉鍚岄槇鍊艰鍒?[1m[94m187 |[0m     楠岃瘉鐐癸細market_bar_1d+volume鈫扺ARNING锛沠utures_bar+settlement_price鈫扴EVERE_CONFLICT锛涘悇鑷?conflict.field_name 姝ｇ‘
+    [1m[94m|[0m                                                                                                     [1m[91m^^^^^^^^^^^^^^^^^[0m
+[1m[94m188 |[0m     澶辫触鍚箟锛氬叏鍩熷叡鐢ㄩ槇鍊硷紝鏈熻揣缁撶畻浠蜂笌鑲＄エ鎴愪氦閲忚鍒ゅ悓涓€涓ラ噸绾у埆
+[1m[94m189 |[0m     """
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (134 > 100)[0m
+   [1m[94m-->[0m tests\test_source_conflict_validator.py:221:82
+    [1m[94m|[0m
+[1m[94m219 |[0m [1m[94m鈥?[0m
+[1m[94m220 |[0m [1m[94m鈥?[0me
+[1m[94m221 |[0m [1m[94m鈥?[0mlict 琛屽惈 run/job/鏍囩殑/鍙屾柟鍊?severe/OPEN锛沵anual_review_queue 璁℃暟涓?0
+    [1m[94m|[0m                                       [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m222 |[0m [1m[94m鈥?[0m
+[1m[94m223 |[0m [1m[94m鈥?[0m
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (143 > 100)[0m
+   [1m[94m-->[0m tests\test_source_conflict_validator.py:305:93
+    [1m[94m|[0m
+[1m[94m303 |[0m [1m[94m鈥?[0mcile
+[1m[94m304 |[0m [1m[94m鈥?[0m鏍?UNRESOLVED
+[1m[94m305 |[0m [1m[94m鈥?[0mOPEN锛泂ource_conflict.reconcile_status=UNRESOLVED 涓?manual_review_required=True
+    [1m[94m|[0m                                       [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m306 |[0m [1m[94m鈥?[0m
+[1m[94m307 |[0m [1m[94m鈥?[0m
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (122 > 100)[0m
+   [1m[94m-->[0m tests\test_source_conflict_validator.py:338:95
+    [1m[94m|[0m
+[1m[94m336 |[0m     娴嬭瘯瀵硅薄锛歋ourceConflictValidator.validate_table
+[1m[94m337 |[0m     鐩殑/鐩爣锛歮ethodology_difference 搴?PASSED 涓?source_conflict/review 璁℃暟鍧囦负 0
+[1m[94m338 |[0m     楠岃瘉鐐癸細report.status=PASSED锛沜an_write_primary_value=True锛沜onflicts[0].severity=methodology_difference锛涗袱琛ㄨ鏁颁负 0
+    [1m[94m|[0m                                                                                                     [1m[91m^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m339 |[0m     澶辫触鍚箟锛氬彛寰勫樊寮傝鍏?reconcile 鎴栦汉宸ラ槦鍒楋紝鍒堕€犳棤鏁堣繍缁磋礋鎷?[1m[94m340 |[0m     """
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (102 > 100)[0m
+   [1m[94m-->[0m tests\test_source_registry.py:463:96
+    [1m[94m|[0m
+[1m[94m461 |[0m     娴嬭瘯瀵硅薄锛歡et_domain_roles + assert_domain_schedulable锛坈n_equity_minute_bar锛?[1m[94m462 |[0m     鐩殑/鐩爣锛氬垎閽熺嚎榛樿涓嶅紑锛屽皾璇曡皟搴︽椂搴旀槑纭姤銆屽煙宸茬鐢ㄣ€?[1m[94m463 |[0m     楠岃瘉鐐癸細domain_enabled_by_default=False锛沺ytest.raises(DomainDisabledError, match=DISABLED_SOURCE)
+    [1m[94m|[0m                                                                                                     [1m[91m^^[0m
+[1m[94m464 |[0m     澶辫触鍚箟锛氶粯璁ょ鐢ㄥ垎閽熺嚎浠嶅彲璋冨害锛孮MT 璇Е鍙?[1m[94m465 |[0m     """
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (107 > 100)[0m
+   [1m[94m-->[0m tests\test_source_route_planner.py:98:94
+    [1m[94m|[0m
+[1m[94m 96 |[0m     娴嬭瘯瀵硅薄锛歋ourceRoutePlanner.plan锛坈n_equity_realtime + 棰濆 baostock 鍊欓€夛級
+[1m[94m 97 |[0m     鐩殑/鐩爣锛氭棤 capability 鐨勬簮搴旇鏍囪涓斿煙榛樿绂佺敤
+[1m[94m 98 |[0m     楠岃瘉鐐癸細baostock capability_declared=False锛況oute_status=DISABLED_SOURCE锛涘惈 DOMAIN_DISABLED_BY_DEFAULT
+    [1m[94m|[0m                                                                                                     [1m[91m^^^^^^^[0m
+[1m[94m 99 |[0m     澶辫触鍚箟锛氭湭澹版槑鑳藉姏鐨勬簮浠嶅彲杩涘叆 fetch 璺緞
+[1m[94m100 |[0m     """
+    [1m[94m|[0m
+
+[1m[91mF401 [0m[[1m[96m*[0m] [1m`backend.app.datasources.adapters.fetch_port.FetchPayload` imported but unused[0m
+   [1m[94m-->[0m tests\test_staged_pilot.py:397:61
+    [1m[94m|[0m
+[1m[94m395 |[0m     澶辫触鍚箟锛歝ninfo metadata 婧愬綊鍥犳垨 vendor_api 涓嶅彲杩芥函
+[1m[94m396 |[0m     """
+[1m[94m397 |[0m     from backend.app.datasources.adapters.fetch_port import FetchPayload
+    [1m[94m|[0m                                                             [1m[91m^^^^^^^^^^^^[0m
+[1m[94m398 |[0m     from backend.app.datasources.fetch_result import FetchRequest
+[1m[94m399 |[0m     from backend.app.ops.staged_pilot_fetch_ports import CninfoMetadataStagedFetchPort
+    [1m[94m|[0m
+[1m[96mhelp[0m: [1mRemove unused import: `backend.app.datasources.adapters.fetch_port.FetchPayload`[0m
+
+[1m[91mE501 [0m[1mLine too long (108 > 100)[0m
+   [1m[94m-->[0m tests\test_staged_pilot.py:514:101
+    [1m[94m|[0m
+[1m[94m512 |[0m     _ensure_raw_validation_report(con, request, "run-1")
+[1m[94m513 |[0m     row = con.execute(
+[1m[94m514 |[0m         "SELECT can_write_clean, needs_manual_review FROM validation_report WHERE validation_report_id = ?",
+    [1m[94m|[0m                                                                                                     [1m[91m^^^^^^^^[0m
+[1m[94m515 |[0m         [STAGED_RAW_VALIDATION_REPORT_ID],
+[1m[94m516 |[0m     ).fetchone()
+    [1m[94m|[0m
+
+[1m[91mF401 [0m[[1m[96m*[0m] [1m`backend.app.ops.staged_pilot.StagedPilotRequest` imported but unused[0m
+   [1m[94m-->[0m tests\test_staged_pilot.py:546:9
+    [1m[94m|[0m
+[1m[94m544 |[0m     from backend.app.ops.staged_pilot import (
+[1m[94m545 |[0m         FetchTaxonomyStatus,
+[1m[94m546 |[0m         StagedPilotRequest,
+    [1m[94m|[0m         [1m[91m^^^^^^^^^^^^^^^^^^[0m
+[1m[94m547 |[0m         _classify_fetch_taxonomy,
+[1m[94m548 |[0m     )
+    [1m[94m|[0m
+[1m[96mhelp[0m: [1mRemove unused import: `backend.app.ops.staged_pilot.StagedPilotRequest`[0m
+
+[1m[91mE501 [0m[1mLine too long (106 > 100)[0m
+   [1m[94m-->[0m tests\test_staged_pilot.py:567:91
+    [1m[94m|[0m
+[1m[94m565 |[0m     娴嬭瘯瀵硅薄锛歷alidate_authorization
+[1m[94m566 |[0m     鐩殑/鐩爣锛欰DV-POST14-A-019 鈥?鎺堟潈璇佹嵁椤?prompt14_user_authorization_* 鍓嶇紑
+[1m[94m567 |[0m     楠岃瘉鐐癸細闈炲墠缂€鏂囦欢鍚?pytest.raises(StagedPilotAuthorizationError, match='prompt14_user_authorization')
+    [1m[94m|[0m                                                                                                     [1m[91m^^^^^^[0m
+[1m[94m568 |[0m     澶辫触鍚箟锛氭巿鏉冩枃浠跺悕鍓嶇紑鏈牎楠岋紝闈?prompt14 鏂囦欢鍙鎺ュ彈
+[1m[94m569 |[0m     """
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (104 > 100)[0m
+   [1m[94m-->[0m tests\test_staged_pilot.py:603:91
+    [1m[94m|[0m
+[1m[94m601 |[0m     娴嬭瘯瀵硅薄锛歝reate_staged_fetch_port
+[1m[94m602 |[0m     鐩殑/鐩爣锛欰DV-POST14-A-015 鈥?baostock/akshare/cninfo 椤诲疄渚嬪寲 *StagedFetchPort 绫?[1m[94m603 |[0m     楠岃瘉鐐癸細涓夎矾 create_staged_fetch_port 鍒嗗埆杩斿洖 Baostock/AkshareEquity/CninfoMetadata StagedFetchPort
+    [1m[94m|[0m                                                                                                     [1m[91m^^^^[0m
+[1m[94m604 |[0m     澶辫触鍚箟锛歴taged fetch port 娣风敤 LiveFetchPort 绫诲悕锛岃瘉鎹笌 live pilot 涓嶅彲鍖哄垎
+[1m[94m605 |[0m     """
+    [1m[94m|[0m
+
+[1m[91mI001 [0m[[1m[96m*[0m] [1mImport block is un-sorted or un-formatted[0m
+   [1m[94m-->[0m tests\test_staged_pilot.py:664:5
+    [1m[94m|[0m
+[1m[94m662 |[0m   def _fresh_migrated_db(tmp_path: Path, name: str) -> Path:
+[1m[94m663 |[0m       """ponytail: shared DuckDB migrate setup for mutation_proof tests."""
+[1m[94m664 |[0m [1m[91m/[0m     import duckdb
+[1m[94m665 |[0m [1m[91m|[0m
+[1m[94m666 |[0m [1m[91m|[0m     from backend.app.db.migrate import apply_migrations
+    [1m[94m|[0m [1m[91m|_______________________________________________________^[0m
+[1m[94m667 |[0m
+[1m[94m668 |[0m       db_path = tmp_path / name
+    [1m[94m|[0m
+[1m[96mhelp[0m: [1mOrganize imports[0m
+
+[1m[91mI001 [0m[[1m[96m*[0m] [1mImport block is un-sorted or un-formatted[0m
+   [1m[94m-->[0m tests\test_staged_pilot.py:676:5
+    [1m[94m|[0m
+[1m[94m675 |[0m def _approved_baostock_v2_request():
+[1m[94m676 |[0m     from backend.app.ops.staged_pilot import StagedPilotRequest, V2_BAOSTOCK_SYMBOLS
+    [1m[94m|[0m     [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m677 |[0m
+[1m[94m678 |[0m     return StagedPilotRequest(
+    [1m[94m|[0m
+[1m[96mhelp[0m: [1mOrganize imports[0m
+
+[1m[91mI001 [0m[[1m[96m*[0m] [1mImport block is un-sorted or un-formatted[0m
+   [1m[94m-->[0m tests\test_staged_pilot.py:723:5
+    [1m[94m|[0m
+[1m[94m721 |[0m       澶辫触鍚箟锛歝aps JSON 涓?R3Y 搂6 鍐荤粨杈圭晫涓嶄竴鑷达紝鎺堟潈 gate 灏嗚鍒ゅ彲鎵╂牱鑼冨洿銆?[1m[94m722 |[0m       """
+[1m[94m723 |[0m [1m[91m/[0m     from backend.app.ops.staged_pilot import (
+[1m[94m724 |[0m [1m[91m|[0m         PILOT_ID_V2,
+[1m[94m725 |[0m [1m[91m|[0m         PILOT_V2_CAPS_JSON,
+[1m[94m726 |[0m [1m[91m|[0m         MAX_NETWORK_CALLS_V2,
+[1m[94m727 |[0m [1m[91m|[0m         MAX_ROWS_V2,
+[1m[94m728 |[0m [1m[91m|[0m         MAX_SYMBOLS_V2,
+[1m[94m729 |[0m [1m[91m|[0m         MAX_TRADE_DAYS_V2,
+[1m[94m730 |[0m [1m[91m|[0m         write_pilot_v2_caps,
+[1m[94m731 |[0m [1m[91m|[0m     )
+    [1m[94m|[0m [1m[91m|_____^[0m
+[1m[94m732 |[0m
+[1m[94m733 |[0m       payload = write_pilot_v2_caps(tmp_path)
+    [1m[94m|[0m
+[1m[96mhelp[0m: [1mOrganize imports[0m
+
+[1m[91mI001 [0m[[1m[96m*[0m] [1mImport block is un-sorted or un-formatted[0m
+    [1m[94m-->[0m tests\test_staged_pilot.py:1116:5
+     [1m[94m|[0m
+[1m[94m1114 |[0m       澶辫触鍚箟锛氱敓浜?KEY 琛ㄨ鍐欏嵈鏍?VERIFIED锛宮utation 鏃佽矾銆?[1m[94m1115 |[0m       """
+[1m[94m1116 |[0m [1m[91m/[0m     import duckdb
+[1m[94m1117 |[0m [1m[91m|[0m
+[1m[94m1118 |[0m [1m[91m|[0m     from backend.app.ops.mutation_proof import (
+[1m[94m1119 |[0m [1m[91m|[0m         all_table_row_counts,
+[1m[94m1120 |[0m [1m[91m|[0m         build_production_mutation_proof,
+[1m[94m1121 |[0m [1m[91m|[0m         key_table_row_counts,
+[1m[94m1122 |[0m [1m[91m|[0m     )
+     [1m[94m|[0m [1m[91m|_____^[0m
+[1m[94m1123 |[0m
+[1m[94m1124 |[0m       db_path = _fresh_migrated_db(tmp_path, "mutated-key.duckdb")
+     [1m[94m|[0m
+[1m[96mhelp[0m: [1mOrganize imports[0m
+
+[1m[91mI001 [0m[[1m[96m*[0m] [1mImport block is un-sorted or un-formatted[0m
+    [1m[94m-->[0m tests\test_staged_pilot.py:1161:5
+     [1m[94m|[0m
+[1m[94m1159 |[0m       澶辫触鍚箟锛氶潪 KEY 琛ㄥ彉寮傝蹇界暐锛孉UDIT.plan A8 瀵规姉娴嬪け鏁堛€?[1m[94m1160 |[0m       """
+[1m[94m1161 |[0m [1m[91m/[0m     import duckdb
+[1m[94m1162 |[0m [1m[91m|[0m
+[1m[94m1163 |[0m [1m[91m|[0m     from backend.app.ops.mutation_proof import (
+[1m[94m1164 |[0m [1m[91m|[0m         all_table_row_counts,
+[1m[94m1165 |[0m [1m[91m|[0m         build_production_mutation_proof,
+[1m[94m1166 |[0m [1m[91m|[0m         key_table_row_counts,
+[1m[94m1167 |[0m [1m[91m|[0m     )
+     [1m[94m|[0m [1m[91m|_____^[0m
+[1m[94m1168 |[0m
+[1m[94m1169 |[0m       db_path = _fresh_migrated_db(tmp_path, "mutated-nonkey.duckdb")
+     [1m[94m|[0m
+[1m[96mhelp[0m: [1mOrganize imports[0m
+
+[1m[91mE501 [0m[1mLine too long (117 > 100)[0m
+  [1m[94m-->[0m tests\test_sync_orchestrator.py:17:101
+   [1m[94m|[0m
+[1m[94m15 |[0m from backend.app.sync.orchestrator import DataSyncOrchestrator
+[1m[94m16 |[0m
+[1m[94m17 |[0m # ponytail: smallest span with 鈮? shards at ECO_MAX_BACKFILL_DAYS_PER_TASK (64d); satisfies shard/backfill assertions
+   [1m[94m|[0m                                                                                                     [1m[91m^^^^^^^^^^^^^^^^^[0m
+[1m[94m18 |[0m _BACKFILL_3SHARD_START = date(2026, 1, 1)
+[1m[94m19 |[0m _BACKFILL_3SHARD_END = date(2026, 3, 5)
+   [1m[94m|[0m
+
+[1m[91mF401 [0m[[1m[96m*[0m] [1m`datetime.date` imported but unused[0m
+   [1m[94m-->[0m tests\test_sync_orchestrator.py:364:26
+    [1m[94m|[0m
+[1m[94m362 |[0m     澶辫触鍚箟锛氬洖琛ュ師鍥犱涪澶憋紝杩愮淮鏃犳硶鎸夎Е鍙戠被鍨嬬粺璁″拰鎺掗殰
+[1m[94m363 |[0m     """
+[1m[94m364 |[0m     from datetime import date
+    [1m[94m|[0m                          [1m[91m^^^^[0m
+[1m[94m365 |[0m
+[1m[94m366 |[0m     from backend.app.core.resource_guard import Decision, ResourceGuard
+    [1m[94m|[0m
+[1m[96mhelp[0m: [1mRemove unused import: `datetime.date`[0m
+
+[1m[91mF401 [0m[[1m[96m*[0m] [1m`datetime.date` imported but unused[0m
+   [1m[94m-->[0m tests\test_sync_orchestrator.py:408:26
+    [1m[94m|[0m
+[1m[94m406 |[0m     澶辫触鍚箟锛氬彧鏈夌涓€鐗囨鏌ヨ祫婧愶紝鍚庣画鍒嗙墖鍙兘鍦ㄧ幆澧冩伓鍖栨椂纭窇
+[1m[94m407 |[0m     """
+[1m[94m408 |[0m     from datetime import date
+    [1m[94m|[0m                          [1m[91m^^^^[0m
+[1m[94m409 |[0m
+[1m[94m410 |[0m     from backend.app.core.resource_guard import Decision, ResourceGuard
+    [1m[94m|[0m
+[1m[96mhelp[0m: [1mRemove unused import: `datetime.date`[0m
+
+[1m[91mF401 [0m[[1m[96m*[0m] [1m`datetime.date` imported but unused[0m
+   [1m[94m-->[0m tests\test_sync_orchestrator.py:449:26
+    [1m[94m|[0m
+[1m[94m447 |[0m     澶辫触鍚箟锛氫竴鐗囧け璐ュ氨瑕佷粠澶撮噸鏉ワ紝鍥炶ˉ鎴愭湰鍜岀瓑寰呮椂闂撮兘浼氭斁澶?[1m[94m448 |[0m     """
+[1m[94m449 |[0m     from datetime import date
+    [1m[94m|[0m                          [1m[91m^^^^[0m
+[1m[94m450 |[0m
+[1m[94m451 |[0m     from backend.app.core.resource_guard import Decision, ResourceGuard
+    [1m[94m|[0m
+[1m[96mhelp[0m: [1mRemove unused import: `datetime.date`[0m
+
+[1m[91mE501 [0m[1mLine too long (110 > 100)[0m
+   [1m[94m-->[0m tests\test_sync_orchestrator.py:747:90
+    [1m[94m|[0m
+[1m[94m745 |[0m     娴嬭瘯瀵硅薄锛欴ataSyncOrchestrator.run_incremental 涓?DataSourceService
+[1m[94m746 |[0m     鐩殑/鐩爣锛氬紑濮嬫姄鏁版嵁涔嬪墠锛岀郴缁熷簲鍏堣涓嬨€屾墦绠楃敤鍝釜婧愩€佽矾鐢辨槸鍚﹀氨缁€?[1m[94m747 |[0m     楠岃瘉鐐癸細COMPLETED锛汻OUTE_PLAN 浜嬩欢绱㈠紩 < FETCHING锛沺ayload route_status=READY銆乻elected_source_id=baostock
+    [1m[94m|[0m                                                                                                     [1m[91m^^^^^^^^^^[0m
+[1m[94m748 |[0m     澶辫触鍚箟锛氭病瑙勫垝灏卞厛鎶擄紝澶氭簮璺敱椤哄簭鍜屽璁￠摼閮戒細涔?[1m[94m749 |[0m     """
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (114 > 100)[0m
+   [1m[94m-->[0m tests\test_sync_orchestrator.py:826:91
+    [1m[94m|[0m
+[1m[94m824 |[0m     娴嬭瘯瀵硅薄锛歳un_incremental + DataSourceService + 璧勬簮鏆傚仠
+[1m[94m825 |[0m     鐩殑/鐩爣锛氳祫婧愭尅涓嬫姄鍙栨椂锛屽簲鏍囧彲閲嶈瘯澶辫触銆佽矾鐢变簨浠跺啓鏄庢殏鍋滃師鍥狅紝涓斾笉搴旂暀涓嬫姄鍙栬褰?[1m[94m826 |[0m     楠岃瘉鐐癸細result.status=FAILED_RETRYABLE 涓?message 鍚?RESOURCE_GUARD_PAUSED锛涗袱鏉?ROUTE_PLAN锛沠etch_log COUNT=0
+    [1m[94m|[0m                                                                                                     [1m[91m^^^^^^^^^^^^^^[0m
+[1m[94m827 |[0m     澶辫触鍚箟锛氭槑鏄庢病鎶撳埌鏁版嵁鍗寸暀涓嬫姄鍙栨棩蹇楋紝鎴栬矾鐢变簨浠朵笉瀹屾暣锛屾帓闅滀細琚瀵?[1m[94m828 |[0m     """
+    [1m[94m|[0m
+
+[1m[91mI001 [0m[[1m[96m*[0m] [1mImport block is un-sorted or un-formatted[0m
+    [1m[94m-->[0m tests\test_sync_orchestrator.py:1172:5
+     [1m[94m|[0m
+[1m[94m1170 |[0m       澶辫触鍚箟锛氬叕寮€鍏ュ彛灏佷綇浜嗭紝鍐呴儴鍏ュ彛杩樿兘鐩存彃 adapter锛屽畧鍗彲琚嚮绌?[1m[94m1171 |[0m       """
+[1m[94m1172 |[0m [1m[91m/[0m     import pytest
+[1m[94m1173 |[0m [1m[91m|[0m
+[1m[94m1174 |[0m [1m[91m|[0m     from backend.app.sync.orchestrator import _default_pipeline_config
+     [1m[94m|[0m [1m[91m|______________________________________________________________________^[0m
+[1m[94m1175 |[0m
+[1m[94m1176 |[0m       _simulate_production_profile(monkeypatch)
+     [1m[94m|[0m
+[1m[96mhelp[0m: [1mOrganize imports[0m
+
+[1m[91mI001 [0m[[1m[96m*[0m] [1mImport block is un-sorted or un-formatted[0m
+    [1m[94m-->[0m tests\test_sync_orchestrator.py:1293:5
+     [1m[94m|[0m
+[1m[94m1291 |[0m       澶辫触鍚箟锛氳皟鐢ㄦ柟鏀跺埌 NIE 鎴栭潤榛樻垚鍔燂紝璇互涓哄叏閲忓悓姝ュ凡鍙敤
+[1m[94m1292 |[0m       """
+[1m[94m1293 |[0m [1m[91m/[0m     import pytest
+[1m[94m1294 |[0m [1m[91m|[0m
+[1m[94m1295 |[0m [1m[91m|[0m     from backend.app.sync.contract import DeferredJobTypeError
+     [1m[94m|[0m [1m[91m|______________________________________________________________^[0m
+[1m[94m1296 |[0m
+[1m[94m1297 |[0m       orch = _orchestrator(tmp_path)
+     [1m[94m|[0m
+[1m[96mhelp[0m: [1mOrganize imports[0m
+
+[1m[91mI001 [0m[[1m[96m*[0m] [1mImport block is un-sorted or un-formatted[0m
+    [1m[94m-->[0m tests\test_sync_orchestrator.py:1310:5
+     [1m[94m|[0m
+[1m[94m1308 |[0m       澶辫触鍚箟锛氳川妫€鍏ュ彛娉勬紡 NIE 鎴栫┖鎿嶄綔锛岀敓浜?job 鏃犳晥鏋?[1m[94m1309 |[0m       """
+[1m[94m1310 |[0m [1m[91m/[0m     import pytest
+[1m[94m1311 |[0m [1m[91m|[0m
+[1m[94m1312 |[0m [1m[91m|[0m     from backend.app.sync.contract import DeferredJobTypeError
+     [1m[94m|[0m [1m[91m|______________________________________________________________^[0m
+[1m[94m1313 |[0m
+[1m[94m1314 |[0m       orch = _orchestrator(tmp_path)
+     [1m[94m|[0m
+[1m[96mhelp[0m: [1mOrganize imports[0m
+
+[1m[91mI001 [0m[[1m[96m*[0m] [1mImport block is un-sorted or un-formatted[0m
+    [1m[94m-->[0m tests\test_sync_orchestrator.py:1327:5
+     [1m[94m|[0m
+[1m[94m1325 |[0m       澶辫触鍚箟锛歳evision_audit 鏃犲叆鍙ｆ垨鎶?NIE锛岀姸鎬佹満鍙揪浣嗘棤娉曞畨鍏ㄨ皟鐢?[1m[94m1326 |[0m       """
+[1m[94m1327 |[0m [1m[91m/[0m     import pytest
+[1m[94m1328 |[0m [1m[91m|[0m
+[1m[94m1329 |[0m [1m[91m|[0m     from backend.app.sync.contract import DeferredJobTypeError
+     [1m[94m|[0m [1m[91m|______________________________________________________________^[0m
+[1m[94m1330 |[0m
+[1m[94m1331 |[0m       orch = _orchestrator(tmp_path)
+     [1m[94m|[0m
+[1m[96mhelp[0m: [1mOrganize imports[0m
+
+[1m[91mI001 [0m[[1m[96m*[0m] [1mImport block is un-sorted or un-formatted[0m
+    [1m[94m-->[0m tests\test_sync_orchestrator.py:1344:5
+     [1m[94m|[0m
+[1m[94m1342 |[0m       澶辫触鍚箟锛氳繃鏃?COMPLETED 鎴栦涪澶?write_id锛宑rash 鍚庢棤娉曟娴?鎭㈠
+[1m[94m1343 |[0m       """
+[1m[94m1344 |[0m [1m[91m/[0m     import pytest
+[1m[94m1345 |[0m [1m[91m|[0m
+[1m[94m1346 |[0m [1m[91m|[0m     from backend.app.core.resource_guard import Decision, ResourceGuard
+[1m[94m1347 |[0m [1m[91m|[0m     from backend.app.sync.orchestrator import _default_pipeline_config
+     [1m[94m|[0m [1m[91m|______________________________________________________________________^[0m
+[1m[94m1348 |[0m
+[1m[94m1349 |[0m       monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+     [1m[94m|[0m
+[1m[96mhelp[0m: [1mOrganize imports[0m
+
+[1m[91mI001 [0m[[1m[96m*[0m] [1mImport block is un-sorted or un-formatted[0m
+    [1m[94m-->[0m tests\test_sync_orchestrator.py:1428:5
+     [1m[94m|[0m
+[1m[94m1426 |[0m       澶辫触鍚箟锛歨ook 娉勬紡鍒扮敓浜э紝鍙婊ョ敤鏀瑰彉 COMPLETED 鏃跺簭
+[1m[94m1427 |[0m       """
+[1m[94m1428 |[0m [1m[91m/[0m     import pytest
+[1m[94m1429 |[0m [1m[91m|[0m
+[1m[94m1430 |[0m [1m[91m|[0m     from backend.app.core.resource_guard import Decision, ResourceGuard
+[1m[94m1431 |[0m [1m[91m|[0m     from backend.app.sync.orchestrator import _default_pipeline_config
+     [1m[94m|[0m [1m[91m|______________________________________________________________________^[0m
+[1m[94m1432 |[0m
+[1m[94m1433 |[0m       monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+     [1m[94m|[0m
+[1m[96mhelp[0m: [1mOrganize imports[0m
+
+[1m[91mE501 [0m[1mLine too long (107 > 100)[0m
+  [1m[94m-->[0m tests\test_tdx_live_manual_probe_authorization.py:31:101
+   [1m[94m|[0m
+[1m[94m29 |[0m ## TDX host
+[1m[94m30 |[0m
+[1m[94m31 |[0m | host | port | provided_by | provided_on | reachability_note | reference_only_default | user_attestation |
+   [1m[94m|[0m                                                                                                     [1m[91m^^^^^^^[0m
+[1m[94m32 |[0m | ---- | ---- | ----------- | ----------- | ----------------- | ---------------------- | ---------------- |
+[1m[94m33 |[0m | 127.0.0.1 | 7709 | owner | 2026-06-22 | user confirms | false | bounded read-only probe |
+   [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (107 > 100)[0m
+  [1m[94m-->[0m tests\test_tdx_live_manual_probe_authorization.py:32:101
+   [1m[94m|[0m
+[1m[94m31 |[0m | host | port | provided_by | provided_on | reachability_note | reference_only_default | user_attestation |
+[1m[94m32 |[0m | ---- | ---- | ----------- | ----------- | ----------------- | ---------------------- | ---------------- |
+   [1m[94m|[0m                                                                                                     [1m[91m^^^^^^^[0m
+[1m[94m33 |[0m | 127.0.0.1 | 7709 | owner | 2026-06-22 | user confirms | false | bounded read-only probe |
+[1m[94m34 |[0m """
+   [1m[94m|[0m
+
+[1m[91mI001 [0m[[1m[96m*[0m] [1mImport block is un-sorted or un-formatted[0m
+  [1m[94m-->[0m tests\test_tdx_manual_probe.py:3:1
+   [1m[94m|[0m
+[1m[94m 1 |[0m   """Batch 01 B01-TDX manual probe 鈥?six vertical slices (TDX-01..06)."""
+[1m[94m 2 |[0m
+[1m[94m 3 |[0m [1m[91m/[0m from __future__ import annotations
+[1m[94m 4 |[0m [1m[91m|[0m
+[1m[94m 5 |[0m [1m[91m|[0m import json
+[1m[94m 6 |[0m [1m[91m|[0m from pathlib import Path
+[1m[94m 7 |[0m [1m[91m|[0m
+[1m[94m 8 |[0m [1m[91m|[0m import pytest
+[1m[94m 9 |[0m [1m[91m|[0m import yaml
+[1m[94m10 |[0m [1m[91m|[0m from backend.app.datasources.adapters.tdx_pytdx import (
+[1m[94m11 |[0m [1m[91m|[0m     build_equity_bar_manifest,
+[1m[94m12 |[0m [1m[91m|[0m     build_index_bar_manifest,
+[1m[94m13 |[0m [1m[91m|[0m     build_security_list_manifest,
+[1m[94m14 |[0m [1m[91m|[0m )
+[1m[94m15 |[0m [1m[91m|[0m from backend.app.ops.tdx_manual_probe import (
+[1m[94m16 |[0m [1m[91m|[0m     TDX_PROBE_FAIL_AUTH_MISSING,
+[1m[94m17 |[0m [1m[91m|[0m     TDX_PROBE_FAIL_VALIDATION,
+[1m[94m18 |[0m [1m[91m|[0m     TDX_PROBE_PASS_RAW_ONLY,
+[1m[94m19 |[0m [1m[91m|[0m     TDX_PROBE_REDEFERRED,
+[1m[94m20 |[0m [1m[91m|[0m     MAX_NETWORK_CALLS,
+[1m[94m21 |[0m [1m[91m|[0m     TDX_PROBE_TARGETS,
+[1m[94m22 |[0m [1m[91m|[0m     build_comparison_report,
+[1m[94m23 |[0m [1m[91m|[0m     run_security_list_cap_probe,
+[1m[94m24 |[0m [1m[91m|[0m     run_tdx_live_manual_probe,
+[1m[94m25 |[0m [1m[91m|[0m     run_tdx_manual_probe,
+[1m[94m26 |[0m [1m[91m|[0m )
+[1m[94m27 |[0m [1m[91m|[0m from backend.app.ops.tdx_live_manual_probe_gate import MAX_TOTAL_ROWS
+   [1m[94m|[0m [1m[91m|_____________________________________________________________________^[0m
+   [1m[94m|[0m
+[1m[96mhelp[0m: [1mOrganize imports[0m
+
+[1m[91mF401 [0m[[1m[96m*[0m] [1m`backend.app.ops.tdx_manual_probe.MAX_NETWORK_CALLS` imported but unused[0m
+  [1m[94m-->[0m tests\test_tdx_manual_probe.py:20:5
+   [1m[94m|[0m
+[1m[94m18 |[0m     TDX_PROBE_PASS_RAW_ONLY,
+[1m[94m19 |[0m     TDX_PROBE_REDEFERRED,
+[1m[94m20 |[0m     MAX_NETWORK_CALLS,
+   [1m[94m|[0m     [1m[91m^^^^^^^^^^^^^^^^^[0m
+[1m[94m21 |[0m     TDX_PROBE_TARGETS,
+[1m[94m22 |[0m     build_comparison_report,
+   [1m[94m|[0m
+[1m[96mhelp[0m: [1mRemove unused import: `backend.app.ops.tdx_manual_probe.MAX_NETWORK_CALLS`[0m
+
+[1m[91mF401 [0m[[1m[96m*[0m] [1m`backend.app.datasources.adapters.fetch_port.FetchPort` imported but unused[0m
+   [1m[94m-->[0m tests\test_tdx_manual_probe.py:314:75
+    [1m[94m|[0m
+[1m[94m312 |[0m     澶辫触鍚箟锛歝ap 缁曡繃瀵艰嚧瓒呴噺 raw 璇佹嵁
+[1m[94m313 |[0m     """
+[1m[94m314 |[0m     from backend.app.datasources.adapters.fetch_port import FetchPayload, FetchPort
+    [1m[94m|[0m                                                                           [1m[91m^^^^^^^^^[0m
+[1m[94m315 |[0m     from backend.app.datasources.fetch_result import FetchRequest
+    [1m[94m|[0m
+[1m[96mhelp[0m: [1mRemove unused import: `backend.app.datasources.adapters.fetch_port.FetchPort`[0m
+
+[1m[91mE501 [0m[1mLine too long (138 > 100)[0m
+  [1m[94m-->[0m tests\test_trellis_audit_trace_authority.py:53:90
+   [1m[94m|[0m
+[1m[94m51 |[0m [1m[94m鈥?[0m
+[1m[94m52 |[0m [1m[94m鈥?[0m
+[1m[94m53 |[0m [1m[94m鈥?[0mace锛汚5 鍋?AC source-chain锛汚8 鍋?red-flags test-gap锛涘苟鍐欐槑蹇呴』鍊掓煡鍘熷浠诲姟鍗?   [1m[94m|[0m                                          [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m54 |[0m [1m[94m鈥?[0m
+[1m[94m55 |[0m [1m[94m鈥?[0m
+   [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (132 > 100)[0m
+  [1m[94m-->[0m tests\test_trellis_audit_trace_authority.py:68:90
+   [1m[94m|[0m
+[1m[94m66 |[0m [1m[94m鈥?[0m
+[1m[94m67 |[0m [1m[94m鈥?[0m
+[1m[94m68 |[0m [1m[94m鈥?[0mED_ITEM_TASK_COVERAGE銆乷riginal-plan-trace銆乮ntegration-ledger 绛?marker
+   [1m[94m|[0m                                          [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m69 |[0m [1m[94m鈥?[0m
+[1m[94m70 |[0m [1m[94m鈥?[0m
+   [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (134 > 100)[0m
+  [1m[94m-->[0m tests\test_trellis_audit_trace_authority.py:87:93
+   [1m[94m|[0m
+[1m[94m85 |[0m [1m[94m鈥?[0m
+[1m[94m86 |[0m [1m[94m鈥?[0m
+[1m[94m87 |[0m [1m[94m鈥?[0mdes original task card锛汚1/A5/A8锛汸H-B0 includes source trace authority check
+   [1m[94m|[0m                                             [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m88 |[0m [1m[94m鈥?[0m
+[1m[94m89 |[0m [1m[94m鈥?[0m
+   [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (181 > 100)[0m
+   [1m[94m-->[0m tests\test_trellis_audit_trace_authority.py:113:87
+    [1m[94m|[0m
+[1m[94m111 |[0m [1m[94m鈥?[0m
+[1m[94m112 |[0m [1m[94m鈥?[0m
+[1m[94m113 |[0m [1m[94m鈥?[0m enablement of tdx_pytdx锛汵o silent fallback锛泂tock_zh_a_daily 涓嶈兘闂悎 Batch 2.75 Request 2
+    [1m[94m|[0m             [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m114 |[0m [1m[94m鈥?[0m
+[1m[94m115 |[0m [1m[94m鈥?[0m
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (144 > 100)[0m
+   [1m[94m-->[0m tests\test_trellis_audit_trace_authority.py:145:94
+    [1m[94m|[0m
+[1m[94m143 |[0m [1m[94m鈥?[0m
+[1m[94m144 |[0m [1m[94m鈥?[0mst 2
+[1m[94m145 |[0m [1m[94m鈥?[0mx_pytdx_low_cost_probe.md銆乧annot close Batch 2.75 Request 2銆丅atch 2.75 follow-up
+    [1m[94m|[0m                                        [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m146 |[0m [1m[94m鈥?[0m
+[1m[94m147 |[0m [1m[94m鈥?[0m
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (106 > 100)[0m
+ [1m[94m-->[0m tests\test_trellis_validate_execute.py:3:91
+  [1m[94m|[0m
+[1m[94m1 |[0m """Trellis Execute 鍗忚 v2 鏍￠獙鍣ㄦ祴璇曘€?[1m[94m2 |[0m
+[1m[94m3 |[0m 瑕嗙洊鑼冨洿锛歷alidate_execute_step銆乿alidate_execute_handoff 涓?_parse_executed_steps 鐨?RED/GREEN 璇佹嵁闂ㄧ銆?  [1m[94m|[0m                                                                                                     [1m[91m^^^^^^[0m
+[1m[94m4 |[0m """
+  [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (113 > 100)[0m
+   [1m[94m-->[0m tests\test_unresolved_item_task_coverage.py:225:90
+    [1m[94m|[0m
+[1m[94m223 |[0m     娴嬭瘯瀵硅薄锛歊ESOLVED_ISSUES_REGISTRY銆乁NRESOLVED_ISSUES_REGISTRY銆丆OVERAGE 搂4.5
+[1m[94m224 |[0m     鐩殑/鐩爣锛氬凡闂悎鐨?SYNC-001 涓嶅緱浠嶅嚭鐜板湪 UNRESOLVED 鐨?OPEN 琛?[1m[94m225 |[0m     楠岃瘉鐐癸細R3Y-SYNC-001 鍦?RESOLVED 涓?COVERAGE锛沀NRESOLVED 鏃?| R3Y-SYNC-001 | OPEN锛汣OVERAGE 閭昏繎鏂囨湰鍚?CLOSED
+    [1m[94m|[0m                                                                                                     [1m[91m^^^^^^^^^^^^^[0m
+[1m[94m226 |[0m     澶辫触鍚箟锛氬凡淇椤逛粛鏍?OPEN锛屼細璇骞惰 slice 閲嶅鎶㈠悓涓€淇
+[1m[94m227 |[0m     """
+    [1m[94m|[0m
+
+[1m[91mF541 [0m[[1m[96m*[0m] [1mf-string without any placeholders[0m
+   [1m[94m-->[0m tests\test_unresolved_item_task_coverage.py:234:12
+    [1m[94m|[0m
+[1m[94m232 |[0m     assert "R3Y-SYNC-001" in resolved
+[1m[94m233 |[0m     assert "test_r3ySync001" in resolved
+[1m[94m234 |[0m     assert f"| R3Y-SYNC-001 | OPEN" not in unresolved
+    [1m[94m|[0m            [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m235 |[0m     assert "R3Y-SYNC-001" in coverage
+[1m[94m236 |[0m     assert "CLOSED" in coverage.split("R3Y-SYNC-001", maxsplit=1)[1][:200]
+    [1m[94m|[0m
+[1m[96mhelp[0m: [1mRemove extraneous `f` prefix[0m
+
+[1m[91mF541 [0m[[1m[96m*[0m] [1mf-string without any placeholders[0m
+   [1m[94m-->[0m tests\test_unresolved_item_task_coverage.py:253:12
+    [1m[94m|[0m
+[1m[94m251 |[0m     assert "R3Y-MUT-PROOF-001" in coverage
+[1m[94m252 |[0m     assert "CLOSED" in coverage.split("R3Y-MUT-PROOF-001", maxsplit=1)[1][:200]
+[1m[94m253 |[0m     assert f"| R3Y-MUT-PROOF-001 | OPEN" not in unresolved
+    [1m[94m|[0m            [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+    [1m[94m|[0m
+[1m[96mhelp[0m: [1mRemove extraneous `f` prefix[0m
+
+[1m[91mF541 [0m[[1m[96m*[0m] [1mf-string without any placeholders[0m
+   [1m[94m-->[0m tests\test_unresolved_item_task_coverage.py:270:12
+    [1m[94m|[0m
+[1m[94m268 |[0m     assert "R3Y-STAGED-REG-001" in coverage
+[1m[94m269 |[0m     assert "CLOSED" in coverage.split("R3Y-STAGED-REG-001", maxsplit=1)[1][:200]
+[1m[94m270 |[0m     assert f"| R3Y-STAGED-REG-001 | OPEN" not in unresolved
+    [1m[94m|[0m            [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+    [1m[94m|[0m
+[1m[96mhelp[0m: [1mRemove extraneous `f` prefix[0m
+
+[1m[91mF541 [0m[[1m[96m*[0m] [1mf-string without any placeholders[0m
+   [1m[94m-->[0m tests\test_unresolved_item_task_coverage.py:287:12
+    [1m[94m|[0m
+[1m[94m285 |[0m     assert "R3Y-PROMPT15-EVID-001" in coverage
+[1m[94m286 |[0m     assert "CLOSED" in coverage.split("R3Y-PROMPT15-EVID-001", maxsplit=1)[1][:200]
+[1m[94m287 |[0m     assert f"| R3Y-PROMPT15-EVID-001 | OPEN" not in unresolved
+    [1m[94m|[0m            [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+    [1m[94m|[0m
+[1m[96mhelp[0m: [1mRemove extraneous `f` prefix[0m
+
+[1m[91mE501 [0m[1mLine too long (107 > 100)[0m
+   [1m[94m-->[0m tests\test_unresolved_item_task_coverage.py:319:101
+    [1m[94m|[0m
+[1m[94m317 |[0m     for item_id in ("A9-P1-01", "A9-P2-02", "B2.5-O-06"):
+[1m[94m318 |[0m         assert item_id in resolved
+[1m[94m319 |[0m         assert f"| {item_id}" not in unresolved or f"| {item_id}              | DEFERRED" not in unresolved
+    [1m[94m|[0m                                                                                                     [1m[91m^^^^^^^[0m
+    [1m[94m|[0m
+
+[1m[91mE501 [0m[1mLine too long (133 > 100)[0m
+  [1m[94m-->[0m tests\test_vendor_fetch_e2e.py:94:95
+   [1m[94m|[0m
+[1m[94m92 |[0m [1m[94m鈥?[0mrun_incremental(datasource_service=...)
+[1m[94m93 |[0m [1m[94m鈥?[0m钀藉簱
+[1m[94m94 |[0m [1m[94m鈥?[0mion=route_plan 涓?selected_source_id=baostock锛沠etch/report/audit/clean 鍧囪揪鏍?   [1m[94m|[0m                                               [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[1m[94m95 |[0m [1m[94m鈥?[0m
+[1m[94m96 |[0m [1m[94m鈥?[0m
+   [1m[94m|[0m
+
+[1m[91mI001 [0m[[1m[96m*[0m] [1mImport block is un-sorted or un-formatted[0m
+  [1m[94m-->[0m tests\test_write_manager.py:6:1
+   [1m[94m|[0m
+[1m[94m 4 |[0m   """
+[1m[94m 5 |[0m
+[1m[94m 6 |[0m [1m[91m/[0m from __future__ import annotations
+[1m[94m 7 |[0m [1m[91m|[0m
+[1m[94m 8 |[0m [1m[91m|[0m import json
+[1m[94m 9 |[0m [1m[91m|[0m from pathlib import Path
+[1m[94m10 |[0m [1m[91m|[0m
+[1m[94m11 |[0m [1m[91m|[0m import duckdb
+[1m[94m12 |[0m [1m[91m|[0m import pytest
+[1m[94m13 |[0m [1m[91m|[0m import backend.app.db.write_manager as wm_mod
+[1m[94m14 |[0m [1m[91m|[0m from backend.app.db.connection import ConnectionManager
+[1m[94m15 |[0m [1m[91m|[0m from backend.app.db.migrate import apply_migrations
+[1m[94m16 |[0m [1m[91m|[0m from backend.app.db.validation_gate import (
+[1m[94m17 |[0m [1m[91m|[0m     StubValidationGate,
+[1m[94m18 |[0m [1m[91m|[0m     ValidationGateError,
+[1m[94m19 |[0m [1m[91m|[0m     ValidationRejected,
+[1m[94m20 |[0m [1m[91m|[0m )
+[1m[94m21 |[0m [1m[91m|[0m from backend.app.db.write_manager import WriteManager, WriteRequest
+[1m[94m22 |[0m [1m[91m|[0m from tests.db_helpers import create_test_write_manager
+   [1m[94m|[0m [1m[91m|______________________________________________________^[0m
+   [1m[94m|[0m
+[1m[96mhelp[0m: [1mOrganize imports[0m
+
+Found 178 errors.
+[[36m*[0m] 50 fixable with the `--fix` option (2 hidden fixes can be enabled with the `--unsafe-fixes` option).

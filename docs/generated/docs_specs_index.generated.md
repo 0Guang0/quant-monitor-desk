@@ -37,6 +37,7 @@ Used with MIGRATION_MAP.md for machine omission checks (`check_docs_specs_indexe
 - `docs/decisions/ADR-001-ingestion-validation-write-transaction-boundary.md`
 - `docs/decisions/ADR-002-db-check-vs-app-validation.md`
 - `docs/decisions/ADR-003-implementation-path-mapping.md`
+- `docs/decisions/ADR-024-source-health-snapshot-boundary.md`
 - `docs/decisions/README.md`
 - `docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md`
 - `docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md`
@@ -101,6 +102,7 @@ Used with MIGRATION_MAP.md for machine omission checks (`check_docs_specs_indexe
 - `docs/implementation_tasks/ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3Y_real_data_staged_pilot_v2.md`
 - `docs/implementation_tasks/ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3Y_staged_pilot_v2_execution_addendum.md`
 - `docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/BATCH_3F_COORDINATOR_PLAYBOOK.md`
+- `docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/BATCH_3F_COORDINATOR_STATUS.md`
 - `docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/BATCH_3F_HARDENING_RULES.md`
 - `docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/BATCH_3F_PLAYBOOK_ADVERSARIAL_AUDIT.report.md`
 - `docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/BATCH_3F_TASK_CARD_MANIFEST.md`
@@ -250,6 +252,7 @@ Used with MIGRATION_MAP.md for machine omission checks (`check_docs_specs_indexe
 - `docs/ops/privacy_data_flow.md`
 - `docs/ops/privacy_retention_policy.md`
 - `docs/ops/qmt_xqshare_setup.md`
+- `docs/ops/staging_data_e2e_runbook.md`
 - `docs/ops/user_intervention_policy.md`
 - `docs/ops/verification_commands.md`
 - `docs/quality/BATCH3_STAGED_DOWNSTREAM_GATE.md`
@@ -294,6 +297,7 @@ Used with MIGRATION_MAP.md for machine omission checks (`check_docs_specs_indexe
 - `docs/quality/audit_evidence/round3_batch25/临时报告/ROUND3_BATCH25_AUDIT_AGENT_08_PERFORMANCE.md`
 - `docs/quality/audit_evidence/round3_batch25/临时报告/ROUND3_BATCH25_AUDIT_AGENT_09_DATABASE.md`
 - `docs/quality/batch275_user_authorization_2026-06-21.md`
+- `docs/quality/batch3f_fred_live_pilot_authorization_2026-06-25.md`
 - `docs/quality/coordination/BATCH_01_MAIN_SESSION_COORDINATOR_PLAYBOOK.md`
 - `docs/quality/coordination/BATCH_01_PLAYBOOK_ADVERSARIAL_AUDIT.report.md`
 - `docs/quality/coordination/BATCH_01_ZERO_OPEN_CLOSURE_POLICY.md`
@@ -336,6 +340,7 @@ Used with MIGRATION_MAP.md for machine omission checks (`check_docs_specs_indexe
 - `specs/contracts/ops_db_inspect_contract.yaml`
 - `specs/contracts/ops_health_check_contract.yaml`
 - `specs/contracts/platform_source_matrix.yaml`
+- `specs/contracts/production_equivalent_smoke_budget.yaml`
 - `specs/contracts/reference_adoption_guardrails.yaml`
 - `specs/contracts/release_cleanup_allowlist.yaml`
 - `specs/contracts/resource_limits.yaml`

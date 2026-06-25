@@ -486,3 +486,18 @@ def test_dataHealthCli_profileFred_routes() -> None:
     payload = json.loads(result.stdout)
     assert payload["profile"] == "fred_sandbox_pilot"
     assert payload["overall_status"] == "PASS"
+
+
+def test_opsDataHealth_dh2Path_noSnapshotDdl() -> None:
+    """覆盖范围：DH2 只读路径不得建 source_health_snapshot 表
+    测试对象：backend.app.ops.data_health 只读 profile 路径
+    目的/目标：VR-DATAHEALTH-001 — Batch01/DH2 禁止 CREATE snapshot 表
+    验证点：data_health 模块无 snapshot DDL / writer 默认接线
+    失败含义：DH2 路径误建表，违反 Batch 3F 边界
+    """
+    import backend.app.ops.data_health as dh
+
+    source = Path(dh.__file__).read_text(encoding="utf-8")
+    assert dh.DH2_FORBIDS_SNAPSHOT_DDL is True
+    assert "source_health_writer" not in source
+    assert "CREATE TABLE" not in source or "source_health_snapshot" not in source

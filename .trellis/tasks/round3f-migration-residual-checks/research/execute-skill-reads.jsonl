@@ -1,0 +1,6 @@
+{"skill": "trellis-execute", "phase": "boot", "path": ".cursor/skills/trellis-execute/SKILL.md"}
+{"skill": "gitnexus-impact", "phase": "boot", "path": "AGENTS.md"}
+{"skill": "test-driven-development", "phase": "RED", "path": ".agents/skills/test-driven-development/SKILL.md"}
+{"skill": "karpathy-guidelines", "phase": "GREEN", "path": ".cursor/plugins/cache/karpathy-skills/andrej-karpathy-skills/2c606141936f1eeef17fa3043a72095b4765b9c2/skills/karpathy-guidelines/SKILL.md"}
+{"skill": "testing-guidelines", "phase": "GREEN", "path": ".cursor/skills/testing-guidelines/SKILL.md"}
+{"skill": "incremental-implementation", "phase": "SLICE", "path": ".agents/skills/incremental-implementation/SKILL.md"}

@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "codebase-memory-mcp": {
+      "command": "C:/Users/Guang/AppData/Local/Programs/codebase-memory-mcp/codebase-memory-mcp.exe"
+    },
+    "gitnexus": {
+      "command": "C:/Users/Guang/AppData/Roaming/npm/gitnexus.cmd",
+      "args": ["mcp"]
+    }
+  }
+}

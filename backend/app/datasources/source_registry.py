@@ -464,6 +464,13 @@ class SourceRegistry:
         ``docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/BATCH_C_LEDGER.md``.
         """
         count = 0
+        # ponytail: global batch generation (one MAX+1 per sync_to_db call, not per-row) —
+        # all YAML upserts share registry_generation; tombstone UPDATE keeps prior generation.
+        # Ceiling: no per-source epoch within a batch; upgrade: per-source column if SH needs it.
+        generation_row = con.execute(
+            "SELECT COALESCE(MAX(registry_generation), 0) + 1 FROM source_registry"
+        ).fetchone()
+        generation = int(generation_row[0]) if generation_row else 1
         for rec in self._sources.values():
             row = _record_to_db_row(rec)
             con.execute(
@@ -475,10 +482,10 @@ class SourceRegistry:
                     default_priority, rate_limit_policy, auth_required,
                     requires_local_client, expected_frequency, expected_lag,
                     timezone, fallback_allowed, validation_only, notes,
-                    updated_at
+                    updated_at, registry_generation, removed_from_yaml_at
                 ) VALUES (
                     ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                    CURRENT_TIMESTAMP
+                    CURRENT_TIMESTAMP, ?, NULL
                 )
                 """,
                 [
@@ -501,6 +508,7 @@ class SourceRegistry:
                     row["fallback_allowed"],
                     row["validation_only"],
                     row["notes"],
+                    generation,
                 ],
             )
             count += 1
@@ -510,7 +518,9 @@ class SourceRegistry:
             con.execute(
                 f"""
                 UPDATE source_registry
-                SET is_enabled = false, updated_at = CURRENT_TIMESTAMP
+                SET is_enabled = false,
+                    updated_at = CURRENT_TIMESTAMP,
+                    removed_from_yaml_at = CURRENT_TIMESTAMP
                 WHERE source_id NOT IN ({placeholders})
                 """,
                 ids,

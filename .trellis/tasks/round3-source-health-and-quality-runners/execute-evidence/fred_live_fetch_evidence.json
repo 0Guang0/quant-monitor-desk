@@ -1,0 +1,9 @@
+{
+  "pilot_id": "r3f-sh-06-fred-live-20260625",
+  "live_fetch_executed": false,
+  "skip_live_fetch": true,
+  "reason": "SH-06 closeout uses authorization gate + sandbox metadata only; live fetch deferred per skip_live_fetch_default in fred_live_authorization_2026-06-25.yaml",
+  "authorization_yaml": ".trellis/tasks/round3-source-health-and-quality-runners/execute-evidence/fred_live_authorization_2026-06-25.yaml",
+  "production_clean_write": false,
+  "sandbox_only": true
+}

@@ -38,10 +38,10 @@ Do not edit by hand. Regenerate with `uv run python scripts/generate_project_map
 - forbidden: direct table write outside WriteManager
 
 ## ops
-- implementation: backend/app/ops/**, scripts/run_staged_pilot.py, scripts/production_gate.py, scripts/check_doc_links.py, scripts/production_equivalent_smoke.py
-- docs: 6
+- implementation: backend/app/ops/**, backend/app/cli/**, scripts/run_staged_pilot.py, scripts/production_gate.py, scripts/check_doc_links.py, scripts/production_equivalent_smoke.py, scripts/init_db.py, scripts/sync_registry.py, scripts/qmd_ops.py
+- docs: 7
 - contracts: 3
-- tests: 9
+- tests: 10
 - forbidden: production-live ready, live production ingestion
 
 ## db_platform

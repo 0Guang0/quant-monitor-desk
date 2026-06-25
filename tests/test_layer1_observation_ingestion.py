@@ -51,6 +51,12 @@ BATCH25_TASK_SLUG = "06-20-round3-batch2-5-layer1-obs-ingest"
 TASK_EVIDENCE_DIR = trellis_task_dir(BATCH25_TASK_SLUG) / "execute-evidence"
 
 
+@pytest.fixture(autouse=True)
+def _layer1Ingestion_resourceGuardOk(monkeypatch: pytest.MonkeyPatch) -> None:
+    """ponytail: 测 ingestion 路由/证据链，不测宿主机内存；RG 专项见 routePreview_resourceGuardPauseRaises。"""
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+
+
 def _init_db(db_path: Path) -> None:
     con = duckdb.connect(str(db_path))
     apply_migrations(con)

@@ -4,16 +4,12 @@ from __future__ import annotations
 
 import argparse
 import os
-import sys
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(PROJECT_ROOT))
-
-from backend.app.config import DATA_ROOT  # noqa: E402
-from backend.app.datasources.source_registry import SourceRegistry  # noqa: E402
-from backend.app.db.connection import ConnectionManager  # noqa: E402
-from backend.app.db.migrate import apply_migrations  # noqa: E402
+from backend.app.config import DATA_ROOT
+from backend.app.datasources.source_registry import SourceRegistry
+from backend.app.db.connection import ConnectionManager
+from backend.app.db.migrate import apply_migrations
 
 
 def main(argv: list[str] | None = None) -> int:

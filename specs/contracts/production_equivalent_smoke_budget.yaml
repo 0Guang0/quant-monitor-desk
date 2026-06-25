@@ -1,0 +1,16 @@
+# Bounded production-equivalent smoke thresholds (Batch 3F / R3F-HYG-06).
+# Does not authorize live sources or production clean write.
+
+version: v1
+name: production_equivalent_smoke_budget
+owner: b3f-hyg
+closure_command: >-
+  uv run python scripts/production_equivalent_smoke.py
+  --use-service-path
+  --data-root .audit-sandbox/r3b275-audit
+  --write-artifact .audit-sandbox/r3b275-audit/production_equivalent_smoke_budget.json
+thresholds:
+  elapsed_s_max: 180
+  pytest_steps_min: 5
+  shard_count_benchmark_min: 1
+  guard_status_required: observable

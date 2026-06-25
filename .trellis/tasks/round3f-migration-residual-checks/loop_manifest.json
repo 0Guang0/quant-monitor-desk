@@ -1,0 +1,8 @@
+{
+  "task": "round3f-migration-residual-checks",
+  "modules": [
+    "datasources",
+    "db_platform"
+  ],
+  "acs": []
+}

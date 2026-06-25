@@ -1,0 +1,2 @@
+FAILED tests/test_layer3_snapshot_builder.py::test_layer3Snapshot_malformedBarElement_rejects
+Layer3SnapshotError: not raised (bars[] continue skip — 021 O-01 open)

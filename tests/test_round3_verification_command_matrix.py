@@ -78,7 +78,8 @@ def test_verificationCommandsDoc_listsRound3GateMatrix() -> None:
     """覆盖范围：verification_commands.md 是否列出完整 Round 3 门禁命令矩阵
     测试对象：docs/ops/verification_commands.md
     目的/目标：一处文档能查到全部 gate id、测试模块与 uv pytest 命令
-    验证点：含 ## Round 3 gate hygiene、check_doc_links 命令；每个 gate_id/module/command 三元组都在正文
+    验证点：含 ## Round 3 gate hygiene、check_doc_links 命令；
+    每个 gate_id/module/command 三元组都在正文
     失败含义：运维找不到标准 pytest 命令，各批次门禁检查会各自为政
     """
     text = _read(VERIFICATION_COMMANDS)
@@ -94,7 +95,8 @@ def test_verificationCommandsDoc_distinguishesStagedFromProductionLive() -> None
     """覆盖范围：verification_commands.md 是否区分 staged-only 与 production-live 两类守卫
     测试对象：docs/ops/verification_commands.md 中的 staged/live 措辞
     目的/目标：读者不会把 staged 证据测试当成已开放线上拉数
-    验证点：含 staged-only、production-live、does not open production-live 及四个代表性 test_*.py 文件名
+    验证点：含 staged-only、production-live、does not open production-live
+    及四个代表性 test_*.py 文件名
     失败含义：文档混淆 staged 与 live，容易误判 Batch 2.5/2.75/3 数据就绪状态
     """
     text = _read(VERIFICATION_COMMANDS)
@@ -114,7 +116,8 @@ def test_verificationCommandsDoc_notesBatch275NetworkExclusion() -> None:
     """覆盖范围：verification_commands.md 对 Batch 2.75 网络测试的 CI 排除说明
     测试对象：docs/ops/verification_commands.md 中 test_batch275_live_pilot_gate.py 条目
     目的/目标：默认 Round 3 CI 不应误跑需外网的 live pilot 用例
-    验证点：含 test_batch275_live_pilot_gate.py；正文说明 not default CI（或 not default Round 3 CI）且提到 network
+    验证点：含 test_batch275_live_pilot_gate.py；
+    正文说明 not default CI（或 not default Round 3 CI）且提到 network
     失败含义：文档未标注网络排除，CI 可能意外拉起外网 live fetch
     """
     text = _read(VERIFICATION_COMMANDS)
@@ -127,7 +130,8 @@ def test_round3BatchMap_pointsToVerificationCommandMatrix() -> None:
     """覆盖范围：ROUND3_BATCH_IMPLEMENTATION_MAP 是否指向 verification_commands 矩阵
     测试对象：ROUND3_BATCH_IMPLEMENTATION_MAP.md
     目的/目标：Batch 地图与运维命令索引互相可发现
-    验证点：含 docs/ops/verification_commands.md；含 Round 3 gate hygiene 或 gate hygiene command matrix 措辞
+    验证点：含 docs/ops/verification_commands.md；
+    含 Round 3 gate hygiene 或 gate hygiene command matrix 措辞
     失败含义：地图缺命令矩阵链接，协调人只能从散落测试文件反查 pytest 命令
     """
     text = _read(ROUND3_MAP)

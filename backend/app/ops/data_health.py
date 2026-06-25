@@ -32,6 +32,8 @@ V2_PROFILES: frozenset[str] = frozenset(
         "source_readiness_rollup",
     }
 )
+# VR-DATAHEALTH-001 / ADR-024 — DH2 read-only path must not CREATE source_health_snapshot
+DH2_FORBIDS_SNAPSHOT_DDL = True
 # ponytail: v3 pilot default caps when manifest omits explicit resource_caps
 _V3_DEFAULT_CAPS: dict[str, int] = {
     "baostock_max_rows": 2000,
