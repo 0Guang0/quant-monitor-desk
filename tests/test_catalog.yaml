@@ -488,6 +488,17 @@ tests/test_loop_engineering_flow.py:
     docs: []
     rules: []
     specs: []
+tests/test_manifest_files_check.py:
+  command: uv run python -m pytest tests/test_manifest_files_check.py -q
+  failure_meaning:
+    Regression in test_manifest_files_check; inspect purpose and linked
+    authorities.
+  purpose: MANIFEST.json 文件存在性对抗性审计测试。
+  type: protocol
+  verifies:
+    docs: []
+    rules: []
+    specs: []
 tests/test_manifest_protocol.py:
   command: uv run python -m pytest tests/test_manifest_protocol.py -q
   failure_meaning:

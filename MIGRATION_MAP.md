@@ -332,6 +332,21 @@
 | `docs/implementation_tasks/ROUND_3_REVIEW/019_plan_audit_report.md`                                                     | 019 plan 审计报告                      |
 | `docs/implementation_tasks/ROUND_3_REVIEW/019_plan_audit_review.md`                                                     | 019 plan 审计评审                      |
 
+### 4.11 Round 3V verified audit cleanup（Batch 3V）
+
+| 路径                                                                                                                        | 用途                              |
+| --------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
+| `docs/implementation_tasks/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/README.md`                        | Batch 3V 执行入口                 |
+| `docs/implementation_tasks/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/BATCH_3V_COORDINATOR_PLAYBOOK.md` | 六路主会话协调手册                |
+| `docs/implementation_tasks/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/BATCH_3V_TASK_CARD_MANIFEST.md`   | 任务卡清单与分支归属              |
+| `docs/implementation_tasks/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/BATCH_3V_HARDENING_RULES.md`      | Batch 3V 硬化规则                 |
+| `docs/implementation_tasks/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/BATCH_3V_SELF_CHECK.md`           | 静态自检与 dispatch 门禁          |
+| `docs/implementation_tasks/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/BATCH_3V_ADVERSARIAL_AUDIT.md`    | 任务卡对抗审计                    |
+| `docs/quality/coordination/BATCH_3V_COORDINATOR_PLAYBOOK_POINTER.md`                                                        | Playbook 索引指针                 |
+| `docs/quality/coordination/BATCH_3V_ZERO_OPEN_CLOSURE_POLICY.md`                                                            | 零遗留闭合策略                    |
+| `docs/quality/coordination/BATCH_3V_PLAYBOOK_ADVERSARIAL_AUDIT.report.md`                                                   | Playbook 对抗审计报告             |
+| `docs/quality/quant_monitor_desk_verified_audit_report_2026-06-25_v3_INDEX.md`                                              | Verified audit v3 `VR-*` 路由索引 |
+
 ## 5. `specs/` 契约与定义目录地图
 
 ### 5.1 API、schema、frontend

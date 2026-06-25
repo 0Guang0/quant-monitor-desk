@@ -96,6 +96,22 @@
 
 **Explicit non-closure:** `R3-B2.75-REQ2-EM` — TDX/SP3 cannot close alone (manifest §5).
 
+## 8. Batch 3V — Verified Audit Cleanup (planning 2026-06-25)
+
+> Coordinator: `BATCH_3V_COORDINATOR_PLAYBOOK.md` · Zero-open: `docs/quality/coordination/BATCH_3V_ZERO_OPEN_CLOSURE_POLICY.md`  
+> Status: **PLANNING** — branches not merged; table is dispatch SSOT.
+
+| Manifest ID | Branch                                         | Owns `VR-*`                  | Task card | Track     |
+| ----------- | ---------------------------------------------- | ---------------------------- | --------- | --------- |
+| `B3V-C01`   | `fix/round3v-contract-drift-write-modes`       | `VR-OPS-001`, `VR-WRITE-001` | `B02_01`  | complex   |
+| `B3V-C02`   | `fix/round3v-schema-hash-fail-closed`          | `VR-DATA-001`                | `B02_02`  | complex   |
+| `B3V-C03`   | `fix/round3v-rawstore-atomic-write`            | `VR-STOR-001`                | `B02_03`  | complex   |
+| `B3V-C04`   | `fix/round3v-sync-support-matrix-recovery`     | `VR-SYNC-002`, `VR-SYNC-001` | `B02_04`  | complex   |
+| `B3V-C05`   | `fix/round3v-registry-manifest-consistency`    | `VR-REG-001`, `VR-DOC-001`   | `B02_05`  | debt-lite |
+| `B3V-C06`   | `review/round3v-layer5-model-schema-reconcile` | `VR-L5-001`, `VR-MODEL-001`  | `B03_01`  | debt-lite |
+
+**Routed out:** `VR-DATAHEALTH-001`, `VR-RG-001`, `VR-L1PERF-001`, `VR-PERF-001` → Round 3F; `VR-API/FE/AGENT/BT/NOTIF` → Round 4; `VR-SEC-001` → Round 5. See `docs/quality/quant_monitor_desk_verified_audit_report_2026-06-25_v3_INDEX.md`.
+
 ## 5. Round4 unresolved / deferred items
 
 | ID                                         | 当前阶段 / owner       | 原始任务入口                                                                                                                                            | Plan 阶段必须纳入的处理                                                      |
