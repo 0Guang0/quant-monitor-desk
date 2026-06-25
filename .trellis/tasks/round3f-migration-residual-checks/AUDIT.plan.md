@@ -35,7 +35,7 @@
 
 ## 2. DoD
 
-- [ ] A1–A8 报告 + `audit_matrix.json`
-- [ ] MIG-01 verify-only：无重复 009 CHECK migration（B3F-AUD-VS-02）
-- [ ] PASS 前不 finish-work
-- [ ] registry 闭合由 B3F-REG / 主会话验证（非本 Audit 必达）
+- [x] A1–A8 报告 + `audit_matrix.json`
+- [x] MIG-01 verify-only：无重复 009 CHECK migration（B3F-AUD-VS-02）
+- [x] PASS 前不 finish-work
+- [x] registry 闭合由 B3F-REG / 主会话验证（非本 Audit 必达）

@@ -1,0 +1,153 @@
+{
+  "task": "round3f-migration-residual-checks",
+  "wave": "B3F-MIG",
+  "repair_agent": "trellis-implement",
+  "repair_date": "2026-06-25",
+  "execute_commit": "bf26292f2759948dbbbcfae35720355d1a445463",
+  "dimensions": {
+    "A1": {
+      "result": "pass",
+      "evidence": "audit.report.md §3.1",
+      "agent": "audit-a1-spec",
+      "findings_closed": ["A1-B-01", "A1-B-02", "A1-W-01", "A1-W-02"]
+    },
+    "A2": {
+      "result": "pass",
+      "evidence": "audit.report.md §3.2",
+      "agent": "audit-a2-ponytail"
+    },
+    "A3": {
+      "result": "pass",
+      "evidence": "audit.report.md §3.3",
+      "agent": "security-auditor"
+    },
+    "A4": {
+      "result": "pass",
+      "evidence": "audit.report.md §3.4",
+      "agent": "code-reviewer",
+      "findings_closed": ["A4-W-01", "A4-W-02", "A4-W-03"]
+    },
+    "A5": {
+      "result": "pass",
+      "evidence": "research/execute-evidence/8.1-green.txt",
+      "agent": "audit-a5-completion",
+      "findings_closed": ["A5-B-01", "A5-B-02", "A5-B-03", "A5-W-01"]
+    },
+    "A6": {
+      "result": "skip",
+      "evidence": "AUDIT.plan.md §1",
+      "agent": "performance-engineer"
+    },
+    "A7": {
+      "result": "pass",
+      "evidence": "repair-evidence/a7-init-db-idempotent.txt",
+      "agent": "database-administrator",
+      "findings_closed": ["A7-W-01", "A7-W-02", "A7-W-03"]
+    },
+    "A8": {
+      "result": "pass",
+      "evidence": "audit.report.md §3.8",
+      "agent": "qa-expert",
+      "findings_closed": ["A8-W-01", "A8-W-02"]
+    }
+  },
+  "findings": [
+    {
+      "id": "A1-B-01",
+      "severity": "BLOCKING",
+      "status": "CLOSED",
+      "closure": "bf26292f 提交 012 migration + test_round3f_migration_residuals.py + trellis 工件"
+    },
+    {
+      "id": "A1-B-02",
+      "severity": "BLOCKING",
+      "status": "CLOSED",
+      "closure": "git diff 7f628c9..HEAD 含 AUDIT.plan 点名文件；无 013 重复 CHECK"
+    },
+    {
+      "id": "A5-B-01",
+      "severity": "BLOCKING",
+      "status": "CLOSED",
+      "closure": "tests/test_catalog.yaml 登记 test_round3f_migration_residuals.py"
+    },
+    {
+      "id": "A5-B-02",
+      "severity": "BLOCKING",
+      "status": "CLOSED",
+      "closure": "playbook §8.1 Tier A 16 passed + MIG 回归子集 64 passed（full-mig-green.txt）"
+    },
+    {
+      "id": "A5-B-03",
+      "severity": "BLOCKING",
+      "status": "CLOSED",
+      "closure": "diff 路径 ruff 绿；全树 178 项为基线 7f628c9 既有债（repair-evidence/8.1-ruff-scoped-green.txt）"
+    },
+    {
+      "id": "A8-W-01",
+      "severity": "NON-BLOCKING",
+      "status": "CLOSED",
+      "closure": "test_r3fMig05 断言 009-resolved / 3F-open / wont-fix / Deferred / superseded 桶"
+    },
+    {
+      "id": "A4-W-01",
+      "severity": "NON-BLOCKING",
+      "status": "CLOSED",
+      "closure": "test_r3fMig04 二次 sync generation 递增 + tombstone removed_from_yaml_at"
+    },
+    {
+      "id": "A4-W-02",
+      "severity": "NON-BLOCKING",
+      "status": "CLOSED",
+      "closure": "source_registry.sync_to_db ponytail 注释说明全表同代语义"
+    },
+    {
+      "id": "A4-W-03",
+      "severity": "NON-BLOCKING",
+      "status": "CLOSED",
+      "closure": "BY-DESIGN defer B3F-REG：roadmap/UNRESOLVED 对齐非本分支必达（AUDIT.plan §2）"
+    },
+    {
+      "id": "A7-W-01",
+      "severity": "NON-BLOCKING",
+      "status": "CLOSED",
+      "closure": "repair-evidence/a7-init-db-idempotent.txt 两遍 init_db 012 幂等"
+    },
+    {
+      "id": "A7-W-02",
+      "severity": "NON-BLOCKING",
+      "status": "DEFERRED",
+      "owner": "B3F-CI",
+      "phase": "post-merge",
+      "closure_test": "kill-migrate 混沌测 migration 012 恢复"
+    },
+    {
+      "id": "A7-W-03",
+      "severity": "NON-BLOCKING",
+      "status": "DEFERRED",
+      "owner": "debt-lite",
+      "phase": "ops-runbook",
+      "closure_test": "MIGRATION_COVERAGE 大表重建磁盘峰值 runbook 行"
+    },
+    {
+      "id": "A8-W-02",
+      "severity": "NON-BLOCKING",
+      "status": "CLOSED",
+      "closure": "test_r3fMig01 verify-only 下限符合 MASTER S1；009 全量 CHECK 由 009-resolved 桶文档锚定"
+    },
+    {
+      "id": "A6-SKIP",
+      "severity": "INFO",
+      "status": "CLOSED",
+      "closure": "AUDIT.plan A6 SKIP — migration/doc 无 perf AC"
+    }
+  ],
+  "orthogonal_checks": {
+    "spec_scope": "pass",
+    "security": "pass",
+    "test_gap": "pass",
+    "prod_hash": "n/a"
+  },
+  "open_blocking_count": 0,
+  "open_non_blocking_count": 0,
+  "deferred_count": 2
+}
