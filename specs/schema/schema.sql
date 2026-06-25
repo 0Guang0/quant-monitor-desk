@@ -41,7 +41,9 @@ CREATE TABLE IF NOT EXISTS source_registry (
     fallback_allowed       BOOLEAN,
     validation_only        BOOLEAN,
     notes                  TEXT,
-    updated_at             TIMESTAMP
+    updated_at             TIMESTAMP,
+    registry_generation    INTEGER,
+    removed_from_yaml_at   TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS file_registry (

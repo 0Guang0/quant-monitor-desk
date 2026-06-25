@@ -14,7 +14,16 @@ DuckDB cannot safely `ALTER TABLE ADD CONSTRAINT` on applied tables. Round2 audi
 2. **Migration 009** rebuilds affected tables with inline `CHECK` constraints as defense-in-depth against direct SQL or script bypass.
 3. New enum values require both contract YAML / Python updates **and** a forward migration to extend CHECK lists.
 
+## App-layer-only columns (R2-RISK-4 / R3F-MIG-02)
+
+`manual_review_queue.priority` remains **application-layer only**. Writers such as
+`SourceConflictValidator` supply known values (e.g. `HIGH`); the DB has **no CHECK**
+on `priority` so future priority taxonomy can evolve without a migration per enum value.
+See `docs/schema/MIGRATION_COVERAGE.md` §Round 3F routing.
+
 ## Consequences
 
 - Invalid direct INSERTs fail at DB level in tests (`test_dbRejectsInvalidFetchStatus`).
-- Schema migrations use table-rebuild pattern (see migration 007/009).
+- Schema migrations use table-rebuild pattern (see migration 007/009/012).
+- `priority` invalid values are rejected in app code, not at DB CHECK (see
+  `tests/test_round3f_migration_residuals.py`).

@@ -35,6 +35,7 @@ ALL_MIGRATION_VERSIONS = frozenset(
         "009_status_check_constraints",
         "010_lineage_not_null",
         "011_layer1_tables",
+        "012_migration_residuals",
     }
 )
 
@@ -87,8 +88,8 @@ def test_appliedVersions_emptyDb_returnsEmptySet() -> None:
 def test_appliedVersions_afterMigration_containsFoundation() -> None:
     """覆盖范围：全量迁移后的版本集合
     测试对象：applied_versions 在 apply_migrations 之后
-    目的/目标：当前仓库应登记 001–011 全部已实现迁移 ID
-    验证点：返回集合等于 001_foundation 至 011_layer1_tables 共 11 项
+    目的/目标：当前仓库应登记 001–012 全部已实现迁移 ID
+    验证点：返回集合等于 001_foundation 至 012_migration_residuals 共 12 项
     失败含义：版本登记与磁盘迁移文件不一致，升级路径不可追踪
     """
     con = duckdb.connect(":memory:")

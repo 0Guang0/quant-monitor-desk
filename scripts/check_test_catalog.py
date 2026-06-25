@@ -289,6 +289,22 @@ CURATED: dict[str, dict] = {
         "command": "uv run python -m pytest tests/test_source_conflict_validator.py -q",
         "failure_meaning": "Conflicting sources may not be rejected.",
     },
+    "tests/test_round3f_migration_residuals.py": {
+        "purpose": "Round 3F B3F-MIG migration residuals (R3F-MIG-01..06)",
+        "type": "contract",
+        "verifies": {
+            "docs": [
+                "docs/schema/MIGRATION_COVERAGE.md",
+                "docs/schema/MIGRATION_008_PLAN.md",
+                "docs/decisions/ADR-002-db-check-vs-app-validation.md",
+            ],
+            "specs": ["specs/schema/schema.sql"],
+            "rules": [],
+        },
+        "command": "uv run python -m pytest tests/test_round3f_migration_residuals.py -q",
+        "failure_meaning": "Migration 012 residuals or 009 verify-only guard regressed; registry D2-P3-1 gap reopens.",
+        "evidence_required": "pytest output",
+    },
     "tests/test_staged_pilot.py": {
         "purpose": "Staged pilot sandbox boundaries; does not open production-live",
         "type": "policy-contract",

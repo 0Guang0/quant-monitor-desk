@@ -328,16 +328,20 @@ def test_assertEnabled_disabledSource_raisesSourceDisabledError(disabled_registr
 
 
 def test_syncToDb_removedYamlSource_isTombstoned(tmp_path, migrated_con, registry_yaml_fixture):
-    """覆盖范围：YAML 移除源 DB 墓碑
+    """覆盖范围：YAML 移除源 DB 墓碑与 lifecycle 列
     测试对象：SourceRegistry.sync_to_db 二次同步
-    目的/目标：YAML 中消失的源 is_enabled=false（墓碑）
-    验证点：orphan_source 行存在且 is_enabled False
-    失败含义：已删源仍在 DB 启用，幽灵源可被路由
+    目的/目标：YAML 中消失的源 is_enabled=false 且 removed_from_yaml_at 非空
+    验证点：orphan_source 墓碑；首次 sync 写入 registry_generation>=1
+    失败含义：已删源仍在 DB 启用，或 lifecycle 审计列未写入
     """
     reg = SourceRegistry(registry_yaml_fixture)
     reg.load()
     con = migrated_con(tmp_path)
     reg.sync_to_db(con)
+    gen_after_first = con.execute(
+        "SELECT registry_generation FROM source_registry WHERE source_id='baostock'"
+    ).fetchone()[0]
+    assert gen_after_first is not None and int(gen_after_first) >= 1
     con.execute(
         """
         INSERT INTO source_registry (
@@ -347,10 +351,14 @@ def test_syncToDb_removedYamlSource_isTombstoned(tmp_path, migrated_con, registr
     )
     reg.sync_to_db(con)
     row = con.execute(
-        "SELECT is_enabled FROM source_registry WHERE source_id='orphan_source'"
+        """
+        SELECT is_enabled, removed_from_yaml_at
+        FROM source_registry WHERE source_id='orphan_source'
+        """
     ).fetchone()
     assert row is not None
     assert row[0] is False
+    assert row[1] is not None
 
 
 def test_syncToDb_insertsSourceRows(tmp_path, migrated_con, registry_yaml_fixture):

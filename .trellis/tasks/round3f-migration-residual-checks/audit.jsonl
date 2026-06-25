@@ -1,0 +1,4 @@
+{"file": ".trellis/tasks/round3f-migration-residual-checks/AUDIT.plan.md", "reason": "extract: Audit SSOT | for: A1-A8 boot"}
+{"file": "docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/BATCH_3F_COORDINATOR_PLAYBOOK.md", "reason": "extract: §8.1 PASS | for: A5"}
+{"file": "docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/BATCH_3F_PLAYBOOK_ADVERSARIAL_AUDIT.report.md", "reason": "extract: B3F-AUD-VS-02 | for: A8 negative"}
+{"file": "docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/BATCH_3F_HARDENING_RULES.md", "reason": "extract: forbidden language | for: A3/A5"}

@@ -1,6 +1,6 @@
 # Schema vs Migration Coverage Matrix
 
-> **Last verified:** 2026-06-25 · **Baseline:** `master` @ migrations `001`–`011` · B3V-REG + B3V-L5R reconcile
+> **Last verified:** 2026-06-25 · **Baseline:** `master` @ migrations `001`–`012` · B3F-MIG reconcile
 > **Purpose:** Clarify which `specs/schema/schema.sql` objects are implemented vs deferred (closes audit A2-P2-01).
 
 ## Legend
@@ -17,8 +17,8 @@
 | Object                   | Migration | Status   | Notes                                                                                                          |
 | ------------------------ | --------- | -------- | -------------------------------------------------------------------------------------------------------------- |
 | `schema_version`         | 001       | DONE     |                                                                                                                |
-| `source_registry`        | 004, 009  | DONE     | `source_type` / `license_type` CHECK via 009                                                                   |
-| `fetch_log`              | 004, 009  | PARTIAL  | `status` CHECK via 009; rebuild used `SELECT *` (A9-P3-01)                                                     |
+| `source_registry`        | 004, 009, 012 | PARTIAL  | `source_type` / `license_type` CHECK via 009; `registry_generation` / `removed_from_yaml_at` via **012** (R3F-MIG-04) |
+| `fetch_log`              | 004, 009, 012 | PARTIAL  | `status` CHECK via 009; explicit-column rebuild via **012** (R3F-MIG-03)                                       |
 | `file_registry`          | 001/004   | DONE     | `content_hash` UNIQUE                                                                                          |
 | `data_sync_job`          | 006, 007  | DONE     | Status CHECK via 007 rebuild                                                                                   |
 | `job_event_log`          | 006, 007  | DONE     | old/new status CHECK                                                                                           |
@@ -27,7 +27,7 @@
 | `source_conflict`        | 005, 009  | DONE     | `severity` / `reconcile_status` CHECK via 009                                                                  |
 | `write_audit_log`        | 001, 007  | PARTIAL  | Extra audit columns in design not all migrated                                                                 |
 | `resource_guard_log`     | 003       | DONE     |                                                                                                                |
-| `manual_review_queue`    | 005, 009  | PARTIAL  | `status` / `source_object_type` CHECK via 009; `priority` app-layer (R2-RISK-4); `SELECT *` rebuild (A9-P3-01) |
+| `manual_review_queue`    | 005, 009, 012 | PARTIAL  | `status` / `source_object_type` CHECK via 009; `priority` app-layer (R2-RISK-4, ADR-002); explicit rebuild **012** |
 | `source_health_snapshot` | —         | DEFERRED | D2-P2-1                                                                                                        |
 
 ## Modeling / backtest (Round 3+)
@@ -100,4 +100,13 @@
 
 Cross-reference: `docs/schema/MIGRATION_008_PLAN.md`, `docs/AUDIT_DEFERRED_REGISTRY.md`.
 
-**Migration 009 vs 008 narrative (ADV-A6-003 / R4):** Migration **007** rebuilt sync job tables with CHECK constraints; **008** (planned) covers remaining enum CHECKs per `MIGRATION_008_PLAN.md`; **009** applied `status` CHECK constraints on ingestion tables; **010** enforced non-null `rule_set_id` / `rule_version` on validation lineage with explicit-column rebuild (no `SELECT *` replay).
+**Migration 009 vs 008 narrative (ADV-A6-003 / R4):** Migration **007** rebuilt sync job tables with CHECK constraints; **008** (`008_lineage_version_fields.sql`) lineage columns; **009** applied `status` CHECK constraints on ingestion tables; **010** enforced non-null `rule_set_id` / `rule_version` on validation lineage with explicit-column rebuild (no `SELECT *` replay); **012** (Round 3F / R3F-MIG) adds `registry_generation` / `removed_from_yaml_at`, explicit-column rebuild for `fetch_log` / `manual_review_queue`, and documents `priority` app-layer-only per ADR-002.
+
+## Round 3F routing (R3F-MIG-05)
+
+| Bucket | Items | Owner / evidence |
+| ------ | ----- | ---------------- |
+| **009-resolved** | `fetch_log.status`, `source_registry` enum CHECKs, `manual_review_queue.status`/`source_object_type`, `source_conflict` severity/reconcile | `009_status_check_constraints.sql`; `test_schemaContract_includesStatusCheckConstraints` |
+| **3F-open → closed** | `registry_generation` / `removed_from_yaml_at` (D2-P3-1); `fetch_log`/`manual_review_queue` explicit rebuild (A9-P3-01 subset) | **012**; `tests/test_round3f_migration_residuals.py` |
+| **App-layer / wont-fix DB CHECK** | `manual_review_queue.priority` (R2-RISK-4) | ADR-002 §App-layer-only columns |
+| **Deferred** | `source_health_snapshot` table (D2-P2-1) | B3F-SH owns table semantics — **not** B3F-MIG |

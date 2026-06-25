@@ -724,6 +724,21 @@ tests/test_round3_verification_command_matrix.py:
     docs: []
     rules: []
     specs: []
+tests/test_round3f_migration_residuals.py:
+  command: uv run python -m pytest tests/test_round3f_migration_residuals.py -q
+  evidence_required: pytest output
+  failure_meaning: Migration 012 residuals or 009 verify-only guard regressed; registry
+    D2-P3-1 gap reopens.
+  purpose: Round 3F B3F-MIG migration residuals (R3F-MIG-01..06)
+  type: contract
+  verifies:
+    docs:
+    - docs/schema/MIGRATION_COVERAGE.md
+    - docs/schema/MIGRATION_008_PLAN.md
+    - docs/decisions/ADR-002-db-check-vs-app-validation.md
+    rules: []
+    specs:
+    - specs/schema/schema.sql
 tests/test_schema_contract.py:
   command: uv run python -m pytest tests/test_schema_contract.py -q
   failure_meaning: Regression in test_schema_contract; inspect purpose and linked

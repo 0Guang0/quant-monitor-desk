@@ -1,6 +1,7 @@
 # Migration 008 Plan — Remaining DB CHECK Constraints
 
-> **Status:** partially superseded by **009** (2026-06-22) · **Target:** Round 3F / future hygiene for residual gaps  
+> **Status:** partially superseded by **009** (2026-06-22); **012** closed Round 3F residuals (2026-06-25)  
+> **Target:** Round 3F / future hygiene for residual gaps  
 > **Closes audit:** A9-P1-01 (subset), A9-P2-01 (subset), A9-P2-02, A9-P3-01 (subset)
 
 ## Scope
@@ -23,9 +24,10 @@ DuckDB limits `ALTER TABLE ADD CHECK` on existing tables created in migration 00
 | Table | Column(s) | Constraint | Notes |
 |-------|-----------|------------|-------|
 | `source_registry` | `role`, `license_status` | Enum CHECK | Not in `schema.sql` design contract today |
-| `manual_review_queue` | `priority` | Enum CHECK | App-layer by design (R2-RISK-4); ADR in `MIGRATION_COVERAGE.md` |
-| `fetch_log` | rebuild hygiene | Explicit `INSERT … SELECT` | Replace `SELECT *` in 009 rebuild (A9-P3-01) |
-| `manual_review_queue` | rebuild hygiene | Explicit `INSERT … SELECT` | Replace `SELECT *` in 009 rebuild (A9-P3-01) |
+| `manual_review_queue` | `priority` | Enum CHECK | **Closed Round 3F:** app-layer by design (R2-RISK-4); see ADR-002 |
+| `fetch_log` | rebuild hygiene | Explicit `INSERT … SELECT` | **Closed Round 3F:** migration **012** |
+| `manual_review_queue` | rebuild hygiene | Explicit `INSERT … SELECT` | **Closed Round 3F:** migration **012** |
+| `source_registry` | `registry_generation`, `removed_from_yaml_at` | ADD COLUMN | **Closed Round 3F:** migration **012** (D2-P3-1) |
 
 ## Non-goals (008)
 
