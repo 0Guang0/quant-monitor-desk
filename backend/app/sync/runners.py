@@ -1046,6 +1046,7 @@ class QualityJobRunner:
         job_id = self._jobs.create_job(spec)
         self._jobs.transition(job_id, "PLANNED")
         self._jobs.transition(job_id, "VALIDATING", message="revision audit scan")
+        # ponytail: state-machine stub; SH-02 completes without revision diff scan yet
         self._jobs.transition(job_id, "COMPLETED", message="revision audit complete")
         return SyncJobResult(job_id=job_id, status="COMPLETED", message="revision audit complete")
 

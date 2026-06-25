@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from datetime import date
+
+import pytest
 from backend.app.db.connection import ConnectionManager
 from backend.app.db.migrate import apply_migrations
 from backend.app.sync.jobs import SyncJobSpec
@@ -55,3 +58,32 @@ def test_b3fQualityRunners_dataQuality_notDeferred(tmp_path) -> None:
     orch = _orchestrator(tmp_path)
     result = orch.run_data_quality(_reserved_job_spec("data_quality", job_id="job-dq"))
     assert result.status == "COMPLETED"
+
+
+def test_b3fQualityRunners_fullLoad_stillDeferred(tmp_path) -> None:
+    """覆盖范围：full_load 仍为 defer，与 dq/ra 闭包分离
+    测试对象：DataSyncOrchestrator.run_full_load
+    目的/目标：W-A8-05 — SH-02/03 实现不得削弱 full_load deferred 语义
+    验证点：pytest.raises(DeferredJobTypeError) 且 match run_full_load
+    失败含义：full_load 误实现，与 ADV-A3-016 / orchestrator 契约冲突
+    """
+    from backend.app.sync.contract import DeferredJobTypeError
+    from backend.app.sync.jobs import SyncJobSpec
+
+    orch = _orchestrator(tmp_path)
+    spec = SyncJobSpec(
+        run_id="run-b3f-fl",
+        job_id="job-fl",
+        job_type="full_load",
+        data_domain="macro_series",
+        market_id="GLOBAL",
+        source_id="fred",
+        adapter_id=None,
+        date_start=date(2026, 1, 1),
+        date_end=date(2026, 1, 2),
+        instrument_id=None,
+        partition_key=None,
+        trigger_reason=None,
+    )
+    with pytest.raises(DeferredJobTypeError, match="run_full_load"):
+        orch.run_full_load(spec)

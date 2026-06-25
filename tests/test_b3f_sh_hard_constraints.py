@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 from backend.app.ops.b3f_sh_registry_guard import (
     OPEN_VALIDATION_REGISTRY_ROWS,
     assert_sidecar_does_not_close_validation_rows,
@@ -21,3 +22,16 @@ def test_b3fShHardConstraints_akshareNotClosedBySidecar() -> None:
     assert guard["does_not_close_R3-PROMPT14-AKSHARE-VAL-01"] is True
     assert OPEN_VALIDATION_REGISTRY_ROWS <= frozenset(guard["registry_rows_must_remain_open"])
     assert_sidecar_does_not_close_validation_rows(guard)
+
+
+def test_b3fShHardConstraints_sidecarFalseCloseRejected() -> None:
+    """覆盖范围：sidecar closeout 误关 validation 行负向断言
+    测试对象：assert_sidecar_does_not_close_validation_rows
+    目的/目标：W-A8-06 — 守卫须在错误 closeout 时抛 AssertionError
+    验证点：does_not_close_R3-B2.75-REQ2-EM=False 时拒绝
+    失败含义：守卫可被空 dict 绕过，sidecar 可关 EM/AkShare
+    """
+    with pytest.raises(AssertionError, match="does_not_close_R3-B2.75-REQ2-EM"):
+        assert_sidecar_does_not_close_validation_rows(
+            {"does_not_close_R3-B2.75-REQ2-EM": False}
+        )

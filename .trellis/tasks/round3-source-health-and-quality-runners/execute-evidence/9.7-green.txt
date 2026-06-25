@@ -1,7 +1,6 @@
-ERROR: not found: C:\Users\Guang\Desktop\quant-monitor-desk-wt-b3f-sh\tests\test_b3f_sh_hard_constraints.py::test_b3fShHardConstraints_akshareNotClosedBySidecar -q
-(no match in any of [<Module test_b3f_sh_hard_constraints.py>])
+# Command: uv run pytest tests/test_b3f_sh_hard_constraints.py::test_b3fShHardConstraints_akshareNotClosedBySidecar -q
+# exit_code: 0
 
-no tests ran in 0.02s
+.                                                                        [100%]
 
-
-passed exit 0
+EXIT:0

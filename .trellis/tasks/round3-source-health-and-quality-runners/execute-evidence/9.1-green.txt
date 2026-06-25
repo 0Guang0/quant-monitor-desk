@@ -1,7 +1,6 @@
+# Command: uv run pytest tests/test_source_health_snapshot.py::test_sourceHealthSnapshot_writer_insertsRow -q
+# exit_code: 0
 
-ERROR: not found: C:\Users\Guang\Desktop\quant-monitor-desk-wt-b3f-sh\tests\test_source_health_snapshot.py::test_sourceHealthSnapshot_writer_insertsRow -q
-no tests ran in 0.08s
-(no match in any of [<Module test_source_health_snapshot.py>])
+.                                                                        [100%]
 
-
-passed exit 0
+EXIT:0

@@ -117,6 +117,8 @@ def persist_readiness_rollup(
 ) -> str:
     """Persist DH2 rollup summary into source_health_snapshot (SH-04, non-DH2 path)."""
     manifest_path = evidence_dir / "rollup_manifest.json"
+    if not manifest_path.is_file():
+        raise FileNotFoundError(f"rollup_manifest.json missing under {evidence_dir}")
     rollup = json.loads(manifest_path.read_text(encoding="utf-8"))
     writer = SourceHealthSnapshotWriter(con)
     writer.ensure_schema()

@@ -1,6 +1,6 @@
+# Command: uv run pytest tests/test_sync_orchestrator.py -q
+# exit_code: 0
 
-no tests ran in 0.00s
-ERROR: file or directory not found: tests/test_sync_orchestrator.py -q --tb=no
+.................................                                        [100%]
 
-
-passed exit 0
+EXIT:0

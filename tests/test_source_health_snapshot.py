@@ -7,7 +7,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import duckdb
-
+import pytest
 from backend.app.ops.data_health import DataHealthService
 from backend.app.ops.source_health_writer import (
     SourceHealthSnapshotRow,
@@ -69,3 +69,25 @@ def test_sourceHealthSnapshot_rollupPersist_fields() -> None:
     notes = json.loads(row["notes"])
     assert notes["rollup_id"] == "dh2-gate-complete"
     assert "fred_sandbox_pilot" in notes["profiles"]
+
+
+def test_sourceHealthSnapshot_rollupPersist_missingManifest(tmp_path) -> None:
+    """覆盖范围：rollup persist 缺 manifest fail-closed
+    测试对象：persist_readiness_rollup
+    目的/目标：W-A8-04 — 无 rollup_manifest.json 不得静默空 persist
+    验证点：FileNotFoundError 且消息含 rollup_manifest.json
+    失败含义：缺 manifest 仍写 snapshot，rollup 字段不可追溯
+    """
+    import duckdb
+
+    con = duckdb.connect(":memory:")
+    empty_dir = tmp_path / "no_manifest"
+    empty_dir.mkdir()
+    with pytest.raises(FileNotFoundError, match="rollup_manifest.json"):
+        persist_readiness_rollup(
+            con,
+            evidence_dir=empty_dir,
+            overall_status="PASS",
+            gate_ready=True,
+            gate_rationale="test",
+        )

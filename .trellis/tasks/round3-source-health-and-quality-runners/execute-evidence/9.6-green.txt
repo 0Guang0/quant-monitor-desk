@@ -1,7 +1,6 @@
-ERROR: not found: C:\Users\Guang\Desktop\quant-monitor-desk-wt-b3f-sh\tests\test_fred_live_primary_closeout.py::test_fredLivePrimary_requiresAuthorizationYaml -q
-(no match in any of [<Module test_fred_live_primary_closeout.py>])
+# Command: uv run pytest tests/test_fred_live_primary_closeout.py::test_fredLivePrimary_requiresAuthorizationYaml -q
+# exit_code: 0
 
-no tests ran in 0.04s
+.                                                                        [100%]
 
-
-passed exit 0
+EXIT:0
