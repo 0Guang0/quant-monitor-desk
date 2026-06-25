@@ -6,7 +6,7 @@
 >
 > Scope rule: `docs/` and `specs/` are design/contract inputs only. Runtime implementation must land in `backend/`, `frontend/`, `scripts/`, `configs/`, `tests/`, or other implementation paths already mapped by `MIGRATION_MAP.md`.
 >
-> Current checkpoint (2026-06-25): Mainline **`master`** @ **`376e30e6`** (post Batch 01 — Round 3D + 3E + full `023`). **Active — Wave E:** Batch 6 data governance / migration / CLI / source-health (`PROJECT_IMPLEMENTATION_ROADMAP.md` Round 3F). **Done + archived:** Wave A/B/C incl. `019`/`020`/`021`/`022`/`023A`, PROMPT_18–20, fix α/β waves; **Batch 01** seven-branch merge (WL/LIN/FRED/TDX/SP3/DH2 + `023`). Hard constraint: `R3-B2.75-REQ2-EM` **DEFERRED**; `B2.5-O-05` live FRED primary **RE-DEFERRED Batch 6** (sandbox evidence recorded). Residual hygiene: `docs/quality/ROUND3_WAVE_B_PENDING_FIX_REGISTRY.md`. **Worktree SSOT:** §2.3 below.
+> Current checkpoint (2026-06-25): Mainline **`master`** @ **`2aeb6f0`** (post Batch 3V verified audit cleanup). **Active — Round 3F / Wave E:** Batch6 data governance / migration / CLI / source-health / lineage closure. Forward planning SSOT is now `PROJECT_IMPLEMENTATION_ROADMAP.md`; this map is historical evidence/index only. **Done + archived:** Wave A/B/C/D and Batch 3V. Hard constraint: `R3-B2.75-REQ2-EM` **DEFERRED**; `B2.5-O-05` live FRED primary **RE-DEFERRED Batch 6** (sandbox evidence recorded only). Residual hygiene is centralized into `PROJECT_IMPLEMENTATION_ROADMAP.md` Round 3F and `docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/`.
 
 ## 0. Mandatory inputs before planning any Round 3 batch
 
@@ -89,13 +89,13 @@ Phase 8D Repair/Debt Lite + staged-only modeling mainline. Authoritative orderin
 
 ### 2.1 Wave ledger
 
-| Wave  | Status     | Scope                                 | Evidence / pointer                                             |
-| ----- | ---------- | ------------------------------------- | -------------------------------------------------------------- |
-| **A** | **Done**   | `019`, `020`, `023A`, PROMPT_18       | merged on `master`; Trellis archived                           |
-| **B** | **Done**   | PROMPT_19, `021`, fix α-1/α-2         | @ `68b10982`; Trellis archived 2026-06-24                      |
-| **C** | **Done**   | PROMPT_20 ∥ `022` ∥ fix α-3 ∥ fix β-2 | @ `871b76e2`; registry `d49e21d3`; Trellis archived 2026-06-24 |
-| **D** | **Done**   | full `023` Layer 5 + Batch 01 package | @ `376e30e6`; `integration/round3-batch01` + `round3-wave-d`   |
-| **E** | **Active** | Batch 6 repay / migration / CLI       | `PROJECT_IMPLEMENTATION_ROADMAP.md` Round 3F · §2.3 below      |
+| Wave  | Status     | Scope                                                             | Evidence / pointer                                                                                               |
+| ----- | ---------- | ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| **A** | **Done**   | `019`, `020`, `023A`, PROMPT_18                                   | merged on `master`; Trellis archived                                                                             |
+| **B** | **Done**   | PROMPT_19, `021`, fix α-1/α-2                                     | @ `68b10982`; Trellis archived 2026-06-24                                                                        |
+| **C** | **Done**   | PROMPT_20 ∥ `022` ∥ fix α-3 ∥ fix β-2                             | @ `871b76e2`; registry `d49e21d3`; Trellis archived 2026-06-24                                                   |
+| **D** | **Done**   | full `023` Layer 5 + Batch 01 package                             | @ `376e30e6`; `integration/round3-batch01` + `round3-wave-d`                                                     |
+| **E** | **Active** | Batch 6 repay / migration / CLI / source-health / lineage closure | `PROJECT_IMPLEMENTATION_ROADMAP.md` Round 3F · `ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/` |
 
 Hard constraint (all waves): `R3-B2.75-REQ2-EM` **DEFERRED** — staged-only; no production-live claims.
 
@@ -109,10 +109,10 @@ Slice matrices / merge-gate commands: Trellis archive + git history only — not
 
 ### 2.3 Worktree creation checklist — **ACTIVE: Wave E (Batch 6)**
 
-| Wave            | When                    | Slice                 | Target branch (suggested)                         | Worktree (suggested)               | Notes                                                       |
-| --------------- | ----------------------- | --------------------- | ------------------------------------------------- | ---------------------------------- | ----------------------------------------------------------- |
-| **E**           | **Now** (post–Batch 01) | Batch 6 migration/CLI | `feature/round3-batch6-*` (split by item cluster) | TBD per `R3-B6-*` row in §3        | Includes migration 008, `qmd data` CLI, source-health table |
-| Debt (optional) | Parallel to E           | CI gate               | `chore/round3-ci-gate-hardening`                  | `../quant-monitor-desk-wt-ci-gate` | PROMPT_05; tests/docs only                                  |
+| Wave            | When                    | Slice                               | Target branch (suggested)                                                           | Worktree (suggested)                 | Notes                                                                                                          |
+| --------------- | ----------------------- | ----------------------------------- | ----------------------------------------------------------------------------------- | ------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| **E**           | **Now** (post–Batch 3V) | Batch 6 / Round 3F centralized plan | `feature/round3f-*` / `fix/round3f-*` / `chore/round3-batch6-*` split by 3F segment | see `BATCH_3F_TASK_CARD_MANIFEST.md` | Includes migration 009 residual + 008 routing, `qmd data`, source health, lineage/Layer3 closure, perf/hygiene |
+| Debt (optional) | Parallel to E           | CI gate                             | `chore/round3-ci-gate-hardening`                                                    | `../quant-monitor-desk-wt-ci-gate`   | PROMPT_05; tests/docs only                                                                                     |
 
 **Archived — Wave D / Batch 01 (2026-06-25 @ `376e30e6`):** seven branches via coordinator playbook — WL `b09a3ca6` · LIN `06bcfde1` · FRED `9ae91648` · TDX `01ad6a07` · SP3 `1a099e8d` · DH2 `dd5fda5f` · `023` `376e30e6`. Trellis task dirs: `.trellis/tasks/round3-*` + `06-25-round3-real-data-staged-pilot-v3`. Worktrees may be removed after push.
 
@@ -363,9 +363,10 @@ This section is a **Plan-stage source index**, not an Execute or Audit manifest.
 8. **Batch 4A** — Layer 3 loader `020`. **Done** (archived; Audit PASS).
 9. **Wave A audit** — PROMPT_18 post-R3X strict audit. **Done** (`WARN_ALLOW_WITH_CONTROLS`).
 10. **Wave B + fix α** — §2.4 archived: PROMPT_19 + `021` + fix α-1/α-2. **Done** (2026-06-24).
-11. **Wave C (four-way parallel)** — §2.2: PROMPT_20 ∥ `022` ∥ fix α-3 ∥ fix β-2 (**active**).
-12. **Batch 5B** — full Layer 5 `023` — **serial after Wave C** (§2.3).
-13. **Batch 6** — pipeline/migration/CLI/packaging/hygiene closeout (§2.3 Wave E).
+11. **Wave C (four-way parallel)** — PROMPT_20 ∥ `022` ∥ fix α-3 ∥ fix β-2 — **Done / archived**.
+12. **Batch 5B / Wave D** — full Layer 5 `023` + Batch 01 package — **Done** @ `376e30e6`.
+13. **Batch 3V** — verified audit cleanup — **Done** @ `2aeb6f0`.
+14. **Batch 6 / Round 3F** — active centralized plan: see `PROJECT_IMPLEMENTATION_ROADMAP.md` Round 3F and `docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/`.
 
 ## 6. Trellis batching constraints
 

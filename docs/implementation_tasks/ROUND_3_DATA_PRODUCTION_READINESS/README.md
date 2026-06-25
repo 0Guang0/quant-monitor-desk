@@ -3,7 +3,8 @@
 > Status: planning task-card package only. These cards do not authorize production live access or production clean write.  
 > Parent roadmap: `PROJECT_IMPLEMENTATION_ROADMAP.md` Round 3D / 3E.  
 > Purpose: turn the first batch of future-roadmap items into execution-ready task cards so agents do not infer full-market ingestion, production readiness, or live-source enablement from staged evidence.  
-> Batch entrypoint: `BATCH_01_MODEL_SOURCE_READINESS/README.md` is mandatory before executing any first-batch card.
+> Batch entrypoint: `BATCH_01_MODEL_SOURCE_READINESS/README.md` is mandatory before executing any first-batch card.  
+> Historical status: Batch 01 / Round 3D–3E is complete; current executable entrypoint has moved to `../ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/README.md`.
 
 ---
 

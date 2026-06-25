@@ -472,25 +472,27 @@ def test_waveCMainlineResolvedRows_traceableInRegistries() -> None:
         assert item_id in audit, f"{item_id} missing from AUDIT_DEFERRED wave-C section"
 
 
-def test_round3Map_checkpointReflectsPostBatch01Merge() -> None:
-    """覆盖范围：ROUND3 地图 checkpoint 是否反映 post-Batch-01 合并与 Wave E 激活状态
+def test_round3Map_checkpointReflectsPostBatch3VAndRound3F() -> None:
+    """覆盖范围：ROUND3 地图 checkpoint 是否反映 post-Batch-3V 与 Round 3F 激活状态
     测试对象：ROUND3_BATCH_IMPLEMENTATION_MAP.md 头部与 §2
-    目的/目标：地图须标明 Wave D/Batch 01 Done、Wave E（Batch 6）为当前主线
-    验证点：含 376e30e6、Batch 01、023、Wave D、Done、Wave E、Active、§2.3；Wave D 非 Active
-    失败含义：地图 checkpoint 陈旧，协调人会按错误 wave 状态排期
+    目的/目标：地图须标明 Batch 3V Done、Wave E / Round 3F 为当前主线，且 Batch 3F 执行包可被索引
+    验证点：含 2aeb6f0、Batch 3V、Round 3F、Wave E、Active、BATCH_3F_BATCH6_DATA_GOVERNANCE、PROJECT_IMPLEMENTATION_ROADMAP.md；Wave D 非 Active
+    失败含义：地图 checkpoint 陈旧，协调人会按错误 wave/批次状态排期
     """
     text = _read(ROUND3_MAP)
 
     for token in (
-        "376e30e6",
-        "Batch 01",
-        "023",
-        "Wave D",
-        "Done",
+        "2aeb6f0",
+        "Batch 3V",
+        "Round 3F",
         "Wave E",
         "Active",
-        "ROUND3_WAVE_B_PENDING_FIX_REGISTRY",
-        "§2.3",
+        "BATCH_3F_BATCH6_DATA_GOVERNANCE",
+        "PROJECT_IMPLEMENTATION_ROADMAP.md",
+        "2.3 Worktree creation checklist",
+        "376e30e6",
+        "Wave D",
+        "Done",
     ):
         assert token in text
     assert "| **D** | **Active**" not in text
