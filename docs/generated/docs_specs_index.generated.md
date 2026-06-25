@@ -336,6 +336,7 @@ Used with MIGRATION_MAP.md for machine omission checks (`check_docs_specs_indexe
 - `specs/contracts/ops_db_inspect_contract.yaml`
 - `specs/contracts/ops_health_check_contract.yaml`
 - `specs/contracts/platform_source_matrix.yaml`
+- `specs/contracts/production_equivalent_smoke_budget.yaml`
 - `specs/contracts/reference_adoption_guardrails.yaml`
 - `specs/contracts/release_cleanup_allowlist.yaml`
 - `specs/contracts/resource_limits.yaml`

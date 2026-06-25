@@ -1,0 +1,4 @@
+production_equivalent_smoke: ALL PASS
+production_equivalent_smoke: artifact written .audit-sandbox/r3b275-audit/production_equivalent_smoke_budget.json
+status PASS elapsed_s within budget
+pytest HYG slice: passed

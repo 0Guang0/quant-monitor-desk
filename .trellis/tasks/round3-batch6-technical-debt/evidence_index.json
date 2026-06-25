@@ -1,0 +1,8 @@
+{
+  "execute": {
+    "8.1": "research/execute-evidence/8.1-green.txt",
+    "8.2": "research/execute-evidence/8.2-green.txt",
+    "8.3": "research/execute-evidence/8.3-green.txt"
+  },
+  "audit": {}
+}

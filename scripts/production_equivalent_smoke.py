@@ -76,6 +76,18 @@ def main() -> int:
         default=PROJECT_ROOT / ".audit-sandbox" / "prod-equiv-smoke",
         help="Isolated QMD_DATA_ROOT (default: .audit-sandbox/prod-equiv-smoke)",
     )
+    parser.add_argument(
+        "--write-artifact",
+        type=Path,
+        default=None,
+        help="Write threshold-checked budget JSON artifact to this path",
+    )
+    parser.add_argument(
+        "--budget-yaml",
+        type=Path,
+        default=PROJECT_ROOT / "specs/contracts/production_equivalent_smoke_budget.yaml",
+        help="Threshold YAML (default: specs/contracts/production_equivalent_smoke_budget.yaml)",
+    )
     args = parser.parse_args()
 
     data_root = args.data_root.resolve()
@@ -173,6 +185,31 @@ def main() -> int:
     metrics = _collect_scale_metrics(data_root, guard_exercised=guard_exercised)
     metrics["elapsed_s"] = round(elapsed, 2)
     metrics["pytest_steps"] = step_count
+
+    if args.write_artifact is not None:
+        from backend.app.ops.perf_budget import build_smoke_artifact, load_smoke_budget
+
+        budget = load_smoke_budget(args.budget_yaml)
+        artifact = build_smoke_artifact(
+            metrics,
+            budget=budget,
+            use_service_path=args.use_service_path,
+        )
+        artifact_path = args.write_artifact.resolve()
+        artifact_path.parent.mkdir(parents=True, exist_ok=True)
+        artifact_path.write_text(
+            json.dumps(artifact, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        print(f"production_equivalent_smoke: artifact written {artifact_path}")
+        if artifact["status"] == "FAIL":
+            print(
+                "production_equivalent_smoke: budget FAIL "
+                f"violations={json.dumps(artifact['violations'])}",
+                file=sys.stderr,
+            )
+            return 1
+
     print(f"production_equivalent_smoke: ALL PASS metrics={json.dumps(metrics, sort_keys=True)}")
     return 0
 

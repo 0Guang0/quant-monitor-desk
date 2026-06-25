@@ -390,6 +390,18 @@ tests/test_layer1_observation_ingestion.py:
     docs: []
     rules: []
     specs: []
+tests/test_layer1_sandbox_bootstrap.py:
+  command: uv run python -m pytest tests/test_layer1_sandbox_bootstrap.py -q
+  evidence_required: pytest output
+  failure_meaning: Phase3/4 evidence sandbox bootstrap regressed; ingestion split
+    rollback risk.
+  purpose: Layer1 ingestion sandbox bootstrap PR-R2b (R3F-HYG-07)
+  type: runtime-contract
+  verifies:
+    docs:
+    - docs/architecture/layer1_ingestion_refactor_rollback_plan.md
+    rules: []
+    specs: []
 tests/test_layer2_sensor_loader.py:
   command: uv run python -m pytest tests/test_layer2_sensor_loader.py -q
   evidence_required: pytest output
@@ -581,6 +593,19 @@ tests/test_platform_source_matrix.py:
     docs: []
     rules: []
     specs: []
+tests/test_production_equivalent_smoke_budget.py:
+  command: uv run python -m pytest tests/test_production_equivalent_smoke_budget.py
+    -q
+  evidence_required: pytest output + smoke budget JSON artifact
+  failure_meaning: Perf smoke budget thresholds missing or mis-evaluated.
+  purpose: Bounded production-equivalent smoke threshold artifact (R3F-HYG-06)
+  type: policy-contract
+  verifies:
+    docs:
+    - docs/ops/performance_limits.md
+    rules: []
+    specs:
+    - specs/contracts/production_equivalent_smoke_budget.yaml
 tests/test_production_gate.py:
   command: uv run python -m pytest tests/test_production_gate.py -q
   failure_meaning: Regression in test_production_gate; inspect purpose and linked

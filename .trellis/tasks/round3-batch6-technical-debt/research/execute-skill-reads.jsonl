@@ -1,0 +1,6 @@
+{"skill": "test-driven-development", "step": "8.1", "note": "RED perf budget tests before perf_budget module"}
+{"skill": "karpathy-guidelines", "step": "8.1", "note": "minimal threshold evaluator"}
+{"skill": "testing-guidelines", "step": "8.1", "note": "five-field docstrings on new tests"}
+{"skill": "test-driven-development", "step": "8.2", "note": "RED sandbox_bootstrap tests"}
+{"skill": "incremental-implementation", "step": "8.2", "note": "wire ingestion_evidence only"}
+{"skill": "testing-guidelines", "step": "8.3", "note": "playbook §8.6 regression"}
