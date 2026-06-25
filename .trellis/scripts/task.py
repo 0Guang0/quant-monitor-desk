@@ -68,6 +68,7 @@ from common.task_context import (
     cmd_validate,
     cmd_list_context,
 )
+from common.plan_protocol import plan_freeze_required_before_start
 from common.validate_plan_freeze import (
     cmd_validate_plan_freeze,
     cmd_validate_plan_phase,
@@ -112,7 +113,11 @@ def cmd_start(args: argparse.Namespace) -> int:
 
     task_json_path = full_path / FILE_TASK_JSON
     task_data = read_json(task_json_path) if task_json_path.is_file() else None
-    if (full_path / "MASTER.plan.md").is_file() and task_data and task_data.get("status") == "planning":
+    if (
+        plan_freeze_required_before_start(full_path)
+        and task_data
+        and task_data.get("status") == "planning"
+    ):
         freeze_errors = validate_plan_freeze(full_path, repo_root)
         if freeze_errors:
             print(colored("Plan freeze validation failed (task.py start blocked):", Colors.RED))

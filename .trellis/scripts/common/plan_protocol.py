@@ -20,8 +20,11 @@ def plan_protocol_version(task_dir: Path) -> str:
     """Return '4' (frozen card + index) or '3' (MASTER legacy)."""
     meta = load_task_json(task_dir).get("meta") or {}
     explicit = str(meta.get("plan_protocol_version", "")).strip()
-    if explicit in ("3", "4"):
-        return explicit
+    if explicit == "3":
+        return "3"
+    if explicit == "4":
+        return "4"
+    # ponytail: v4 三件套优先于同目录遗留 MASTER
     if (task_dir / "EXECUTION_INDEX.md").is_file() and any(
         (task_dir / "frozen").glob("*.md")
     ):
@@ -29,6 +32,13 @@ def plan_protocol_version(task_dir: Path) -> str:
     if (task_dir / "MASTER.plan.md").is_file():
         return "3"
     return "4"
+
+
+def plan_freeze_required_before_start(task_dir: Path) -> bool:
+    """Whether task.py start must pass validate_plan_freeze while status=planning."""
+    if plan_protocol_version(task_dir) == "4":
+        return (task_dir / "EXECUTION_INDEX.md").is_file()
+    return (task_dir / "MASTER.plan.md").is_file()
 
 
 def frozen_task_card_path(task_dir: Path) -> Path | None:

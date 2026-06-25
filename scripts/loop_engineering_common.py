@@ -197,11 +197,11 @@ def task_track(task_dir: Path) -> str:
     track = str(meta.get("task_track", "")).lower()
     if track in ("complex", "debt-lite", "simple"):
         return track
-    if (task_dir / "MASTER.plan.md").is_file():
-        return "complex"
     if (task_dir / "EXECUTION_INDEX.md").is_file() and any(
         (task_dir / "frozen").glob("*.md")
     ):
+        return "complex"
+    if (task_dir / "MASTER.plan.md").is_file():
         return "complex"
     return "simple"
 

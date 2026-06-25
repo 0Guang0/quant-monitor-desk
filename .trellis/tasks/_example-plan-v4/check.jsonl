@@ -1,0 +1,2 @@
+{"file": ".trellis/tasks/_example-plan-v4/frozen/GLOBAL_TASK_TEMPLATE.md", "reason": "extract: spec scope | for: A1 trellis-check"}
+{"file": ".trellis/tasks/_example-plan-v4/EXECUTION_INDEX.md", "reason": "extract: manifest trace | for: A1"}

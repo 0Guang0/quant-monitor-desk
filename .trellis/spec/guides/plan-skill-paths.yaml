@@ -144,7 +144,7 @@ phases:
 
   "3.5":
     skills: [to-issues]
-    note: "Plan 专用垂直切片；产出工单列表；冻结为 MASTER §8，不进 Execute Skill 表"
+    note: "Plan 专用垂直切片；产出工单列表；冻结为 EXECUTION_INDEX §1 或 legacy MASTER §8"
 
   "1b":
     skills: [gitnexus-plan-1b]
@@ -157,7 +157,7 @@ phases:
 
   "5a":
     skills: [planning-and-task-breakdown]
-    note: "与 3.5 to-issues 配合完成垂直切片 → MASTER §8"
+    note: "与 3.5 to-issues 配合；垂直切片写入 EXECUTION_INDEX §1/§2 或 legacy MASTER §8"
 
   "5b":
     skills: [writing-plans]

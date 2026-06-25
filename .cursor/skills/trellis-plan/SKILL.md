@@ -11,8 +11,9 @@ description: "Complex-task Plan. MUST Read when status=planning. Blocks freeze u
 
 1. 本文件 + **`agent-toolchain.md`**（根目录）+ `.trellis/spec/guides/plan-skill-paths.yaml`
 2. **模板：** `templates/EXECUTION_INDEX.md` · `templates/FROZEN_TASK_CARD.md` · `templates/AUDIT.plan.md`
-3. **遗留 v3：** `templates/MASTER.plan.md`（仅维护旧任务）
-4. `docs/implementation_tasks/`（README → GLOBAL×4 → ROUND README/DECISIONS → NNN 任务卡）
+3. **填好后的执行计划样板：** `.trellis/tasks/_example-plan-v4/README.md`（v4 产出步骤；**非** Coordinator PLAYBOOK）
+4. **遗留 v3：** `templates/MASTER.plan.md`（仅维护旧任务）
+5. `docs/implementation_tasks/`（README → GLOBAL×4 → ROUND README/DECISIONS → NNN 任务卡）
 
 ## P0-index
 

@@ -24,31 +24,46 @@ If you're using Codex or another agent-capable tool, additional project-scoped h
 
 Managed by Trellis. Edits outside this block are preserved; edits inside may be overwritten by a future `trellis update`.
 
-## Plan gate (complex tasks with `MASTER.plan.md`, `status=planning`)
+## Plan gate (complex tasks: v4 `EXECUTION_INDEX` + frozen card, or legacy `MASTER.plan.md`)
 
-When authoring or freezing a complex task plan:
+When authoring or freezing a complex task plan (`status=planning`):
 
-1. **MUST Read first:** `agent-toolchain.md`（根目录）+ `.cursor/skills/trellis-plan/SKILL.md` — complete **Phase P0 Boot** (including **P0o** `docs/implementation_tasks/` original plan package) before MASTER §8–§12.
-2. Follow **Phases 1a→5d** in `complex-task-planning-protocol.md` §4；append `research/plan-skill-reads.jsonl` per Read.
-3. Produce `research/original-plan-trace.md` mapping `NNN_*.md` → MASTER §2 AC.
+**Protocol v4** (`meta.plan_protocol_version: "4"` or `EXECUTION_INDEX.md` + `frozen/*.md`):
+
+1. **MUST Read first:** `agent-toolchain.md`（根目录）+ `.cursor/skills/trellis-plan/SKILL.md` — complete **Phase P0 Boot** (including **P0o** `docs/implementation_tasks/`).
+2. Follow **Phases 1a→5d** in `complex-task-planning-protocol.md` §4；`EXECUTION_INDEX.md` 为唯一人工索引（§1 步骤、§2 AC、§3 manifest）。
+3. Produce `research/original-plan-trace.md` mapping `NNN_*.md` → `EXECUTION_INDEX` §2 AC.
 4. Before `task.py start`: `python .trellis/scripts/task.py validate-plan-freeze <task-dir>` exit 0.
 5. Optional per phase: `python .trellis/scripts/task.py validate-plan-phase <task-dir> <phase>`.
 
-## Execute gate (complex tasks with `MASTER.plan.md`)
+**Legacy v3** (`MASTER.plan.md`, explicit `plan_protocol_version: "3"`):
 
-When the active task status is `in_progress` and the task directory contains `MASTER.plan.md`:
+1. Same boot as v4; freeze into **MASTER §8–§12** instead of frozen card.
+2. `research/original-plan-trace.md` maps `NNN_*.md` → MASTER §2 AC.
+3. Same `validate-plan-freeze` / `validate-plan-phase` before `start`.
 
-1. **MUST Read first:** `agent-toolchain.md`（根目录）+ `.cursor/skills/trellis-execute/SKILL.md` — complete **Phase 0 Boot** before any business code.
-2. **MUST Read `implement.jsonl` every line** in the active task directory (authoritative manifest; do not skip by summarizing MASTER §0).
-3. Read **MASTER §0.1** state machine and **§12** Skill table (paths in `.trellis/spec/guides/execute-skill-paths.yaml`).
-4. Execute **one §8.x step at a time**: Read TDD skill → RED (must FAIL) → `execute-evidence/{step}-red.txt` → GREEN → `{step}-green.txt` → `[x]`.
-5. After each GREEN: Read **incremental-implementation**; full pytest must pass before next §8 step.
-6. After RED, before GREEN implementation: Read **karpathy-guidelines** (§5 ladder + §1-4) and **testing-guidelines** (§12 + paths yaml).
-7. Run GitNexus **`impact()`** before editing symbols; **`detect_changes()`** before commit.
-8. Do **not** run `trellis-check` during Execute — Audit Phase 7 / A1 replaces it.
-9. Optional per step: `python .trellis/scripts/task.py validate-execute-step <task-dir> 8.x`
-10. Before §11 Audit handoff: `python .trellis/scripts/task.py validate-execute-handoff <task-dir>`.
-11. Do **not** `finish-work` until Audit PASS.
+## Execute gate (complex tasks in progress)
+
+When the active task status is `in_progress`:
+
+**Protocol v4** — SSOT: `frozen/*.md` + `implement.jsonl` (slot 1 = frozen card):
+
+1. **MUST Read first:** `agent-toolchain.md` + `.cursor/skills/trellis-execute/SKILL.md` — Phase 0 Boot.
+2. **MUST Read `implement.jsonl` every line**; do not skip by summarizing the frozen task card.
+3. Read frozen card §9 state machine; skill table in `execute-skill-paths.yaml`.
+4. Execute **one §9.x step at a time**: TDD RED → `execute-evidence/{step}-red.txt` → GREEN → `{step}-green.txt` → `[x]`.
+5. After each GREEN: **incremental-implementation**; full pytest before next step.
+6. GitNexus **`impact()`** before edits; **`detect_changes()`** before commit.
+7. Optional: `validate-execute-step <task-dir> 9.x`
+8. Before Audit: `validate-execute-handoff <task-dir>`.
+9. Do **not** `finish-work` until Audit PASS.
+
+**Legacy v3** (`MASTER.plan.md`):
+
+1. Same boot; **MUST Read `implement.jsonl` every line** + MASTER §0.1 / §12.
+2. Execute **one §8.x step at a time** (evidence paths as MASTER §8).
+3. Optional: `validate-execute-step <task-dir> 8.x`
+4. Before Audit: `validate-execute-handoff`; no `finish-work` until Audit PASS.
 
 ## Audit gate (complex tasks with `AUDIT.plan.md`)
 
@@ -58,7 +73,7 @@ When the active task status is `in_progress` and the task directory contains `MA
 
 ## Loop engineering context (Trellis complex-task layer)
 
-Complex tasks (`meta.task_track: "complex"`, default when `MASTER.plan.md` exists) use machine-readable routing — **do not ask the user for docs/specs paths**.
+Complex tasks (`meta.task_track: "complex"`, default when `EXECUTION_INDEX.md`+`frozen/` or `MASTER.plan.md` exists) use machine-readable routing — **do not ask the user for docs/specs paths**.
 
 1. Plan freeze: `validate-plan-freeze` auto-runs `context_router` if `context_pack.json` missing
 2. Execute: **MUST Read `implement.jsonl` every line** before business code (`task.py current` → task dir); slot 2 is often `context_pack.json`

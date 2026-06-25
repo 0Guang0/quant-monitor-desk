@@ -1,0 +1,3 @@
+{"file": ".trellis/tasks/_example-plan-v4/AUDIT.plan.md", "reason": "extract: Audit SSOT | for: A1-A8 boot"}
+{"file": ".trellis/tasks/_example-plan-v4/frozen/GLOBAL_TASK_TEMPLATE.md", "reason": "extract: frozen task card trace | for: A5 scope"}
+{"file": ".trellis/tasks/_example-plan-v4/EXECUTION_INDEX.md", "reason": "extract: manifest index | for: A1/A5/A8"}

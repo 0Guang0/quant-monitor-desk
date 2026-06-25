@@ -15,6 +15,7 @@ sys.path.insert(0, str(_SCRIPTS))
 
 from common.validate_execute_handoff import (  # noqa: E402
     _parse_executed_steps,
+    _parse_v4_executed_steps,
     validate_execute_handoff,
     validate_execute_step,
 )
@@ -154,3 +155,54 @@ def test_validateExecuteHandoff_loopTaskRequiresEvidenceIndex(tmp_path: Path) ->
     )
     errors = validate_execute_handoff(tmp_path, _REPO)
     assert any("evidence_index" in e for e in errors)
+
+
+def test_validateExecuteStep_acceptsV4StepId(tmp_path: Path) -> None:
+    """覆盖范围：v4 步骤号 9.x
+    测试对象：validate_execute_step（9.0）
+    目的/目标：handoff 须校验 frozen §9 步骤证据
+    验证点：合规 9.0 证据零错误
+    失败含义：仅认 8.x 会导致 v4 Execute 无法 handoff
+    """
+    ev = tmp_path / "research" / "execute-evidence"
+    ev.mkdir(parents=True)
+    (ev / "9.0-red.txt").write_text("ERROR: expected fail\n", encoding="utf-8")
+    (ev / "9.0-green.txt").write_text("passed\nexit 0\n", encoding="utf-8")
+    assert validate_execute_step(tmp_path, "9.0") == []
+
+
+def test_validateExecuteHandoff_v4UsesFrozenCard(tmp_path: Path) -> None:
+    """覆盖范围：v4 handoff（无 MASTER）
+    测试对象：validate_execute_handoff + frozen §9 已执行
+    目的/目标：v4 从 frozen 卡解析 9.x 并校验证据
+    验证点：齐备工件时 errors == []
+    失败含义：无 MASTER 时 handoff 被短路跳过
+    """
+    (tmp_path / "task.json").write_text(
+        json.dumps({"meta": {"plan_protocol_version": "4", "task_track": "simple"}}),
+        encoding="utf-8",
+    )
+    (tmp_path / "EXECUTION_INDEX.md").write_text(
+        "P0i：索引完整\n## 3.\n| path | manifest | audience |\n| x | must-read | execute |\n",
+        encoding="utf-8",
+    )
+    frozen = tmp_path / "frozen"
+    frozen.mkdir()
+    (frozen / "card.md").write_text(
+        "## 9. 实现步骤\n### 9.0 boot\n| 已执行 | [x] |\n",
+        encoding="utf-8",
+    )
+    _boot_artifacts(tmp_path, steps=["9.0"])
+    errors = validate_execute_handoff(tmp_path, _REPO)
+    assert errors == []
+
+
+def test_parseV4ExecutedSteps_findsMarkedSteps() -> None:
+    """覆盖范围：frozen §9 已执行解析
+    测试对象：_parse_v4_executed_steps
+    目的/目标：仅 [x] 的 9.x 进入 handoff 校验列表
+    验证点：9.0 勾选、9.1 未勾选 → ['9.0']
+    失败含义：v4 步骤与证据文件脱节
+    """
+    text = "## 9.\n### 9.0 x\n| 已执行 | [x] |\n\n### 9.1 y\n| 已执行 | [ ] |\n"
+    assert _parse_v4_executed_steps(text) == ["9.0"]

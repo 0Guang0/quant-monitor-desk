@@ -109,7 +109,7 @@
 
 ## 2. 核心原则
 
-1. **Plan 多文件草稿 → Execute 双入口**：冻结后只认 `MASTER.plan.md` + `implement.jsonl`。
+1. **Plan 多文件草稿 → Execute 双入口**：v4 冻结后认 `EXECUTION_INDEX.md` + `frozen/*.md` + `implement.jsonl`；legacy v3 认 `MASTER.plan.md` + `implement.jsonl`。
 2. **分析先于争论**：GitNexus 摘要后再调 planning skill。
 3. **多 skill 分轮、禁止同轮双主笔**（避免 prd 被改乱）。
 4. **计划可验收**：无 §10 命令 + DoD → 禁止 `task.py start`。

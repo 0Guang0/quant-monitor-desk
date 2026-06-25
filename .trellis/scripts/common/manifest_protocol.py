@@ -773,7 +773,18 @@ def parse_integration_ledger(ledger_path: Path) -> list[dict]:
 
 
 def validate_input_inventory(task_dir: Path, errors: list[str]) -> None:
-    """V1 / P0i: source-index §C or legacy input-inventory."""
+    """V1 / P0i: v4 EXECUTION_INDEX, source-index §C, or legacy input-inventory."""
+    from .plan_protocol import plan_protocol_version
+
+    if plan_protocol_version(task_dir) == "4":
+        idx = task_dir / "EXECUTION_INDEX.md"
+        if not idx.is_file():
+            errors.append("V1: Missing EXECUTION_INDEX.md (v4 P0i index)")
+            return
+        if "索引完整" not in idx.read_text(encoding="utf-8"):
+            errors.append("V1: EXECUTION_INDEX.md must mark 索引完整 (v4 P0i)")
+        return
+
     source = task_dir / "research" / "source-index.md"
     if source.is_file():
         text = source.read_text(encoding="utf-8")

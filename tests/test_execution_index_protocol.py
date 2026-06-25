@@ -22,6 +22,10 @@ from common.execution_index import (  # noqa: E402
     generate_manifests,
     parse_manifest_rows,
 )
+from common.plan_protocol import (  # noqa: E402
+    plan_freeze_required_before_start,
+    plan_protocol_version,
+)
 from common.validate_plan_freeze import validate_plan_freeze  # noqa: E402
 
 _SOURCE = (
@@ -57,6 +61,8 @@ def _v4_minimal(task_dir: Path) -> None:
     )
     (task_dir / "EXECUTION_INDEX.md").write_text(
         """# Index
+
+P0i：索引完整
 
 ## 0. 冻结元数据
 | source_card | `docs/implementation_tasks/GLOBAL_TASK_TEMPLATE.md` |
@@ -157,3 +163,53 @@ def test_validatePlanFreeze_v4_passesMinimal(tmp_path: Path) -> None:
     errors = validate_plan_freeze(tmp_path, _REPO)
     assert not any("missing EXECUTION_INDEX" in e for e in errors)
     assert not any("frozen task card" in e and "missing" in e for e in errors)
+
+
+def test_planProtocolVersion_prefersV4WhenMasterAndIndex(tmp_path: Path) -> None:
+    """覆盖范围：v4/v3 版本启发式
+    测试对象：plan_protocol_version
+    目的/目标：同目录既有 MASTER 又有 v4 三件套时应判 v4
+    验证点：返回 '4'
+    失败含义：遗留 MASTER 会让 start/freeze 走错旧协议
+    """
+    _v4_minimal(tmp_path)
+    (tmp_path / "MASTER.plan.md").write_text("## 8.\nlegacy\n", encoding="utf-8")
+    assert plan_protocol_version(tmp_path) == "4"
+
+
+def test_planFreezeRequiredBeforeStart_v4WithoutMaster(tmp_path: Path) -> None:
+    """覆盖范围：task.py start 冻结门
+    测试对象：plan_freeze_required_before_start
+    目的/目标：无 MASTER 的 v4 任务仍须在 planning 时过 validate-plan-freeze
+    验证点：返回 True
+    失败含义：v4 未冻结即可 start
+    """
+    _v4_minimal(tmp_path)
+    assert plan_freeze_required_before_start(tmp_path)
+
+
+def test_validateInputInventory_acceptsV4ExecutionIndex(tmp_path: Path) -> None:
+    """覆盖范围：P0i 输入清单（v4）
+    测试对象：validate_input_inventory
+    目的/目标：v4 用 EXECUTION_INDEX 标记索引完整即可
+    验证点：errors 为空
+    失败含义：v4 被误要求 source-index.md
+    """
+    from common.manifest_protocol import validate_input_inventory
+
+    _v4_minimal(tmp_path)
+    errors: list[str] = []
+    validate_input_inventory(tmp_path, errors)
+    assert errors == []
+
+
+def test_examplePlanV4_passesValidatePlanFreeze() -> None:
+    """覆盖范围：仓库内 v4 样板任务
+    测试对象：.trellis/tasks/_example-plan-v4
+    目的/目标：参考目录须通过 validate-plan-freeze
+    验证点：errors == []
+    失败含义：新任务无可靠 v4 样板可复制
+    """
+    task = _REPO / ".trellis" / "tasks" / "_example-plan-v4"
+    errors = validate_plan_freeze(task, _REPO)
+    assert errors == []

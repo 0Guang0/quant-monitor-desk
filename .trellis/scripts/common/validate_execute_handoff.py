@@ -15,7 +15,7 @@ _PASS_RE = re.compile(
     r"passed|PASSED|exit 0|exit_code.?0|All checks passed|100%",
     re.IGNORECASE,
 )
-_STEP_HEADER_RE = re.compile(r"^###\s+(8\.\d+)", re.MULTILINE)
+_STEP_HEADER_RE = re.compile(r"^###\s+(\d+\.\d+)", re.MULTILINE)
 
 
 def _extract_section(text: str, header_prefix: str) -> str:
@@ -38,13 +38,26 @@ def _extract_section(text: str, header_prefix: str) -> str:
 
 def _parse_executed_steps(master_text: str) -> list[str]:
     section8 = _extract_section(master_text, "8.")
+    return _parse_marked_steps_in_section(section8, prefix="8.")
+
+
+def _parse_v4_executed_steps(frozen_text: str) -> list[str]:
+    section9 = _extract_section(frozen_text, "9.")
+    return _parse_marked_steps_in_section(section9 or frozen_text)
+
+
+def _parse_marked_steps_in_section(section: str, *, prefix: str | None = None) -> list[str]:
     steps: list[str] = []
-    for match in _STEP_HEADER_RE.finditer(section8):
+    for match in _STEP_HEADER_RE.finditer(section):
         step_id = match.group(1)
-        chunk = section8[match.start() :]
-        next_hdr = re.search(r"\n###\s+8\.\d+", chunk[len(match.group(0)) :])
+        if prefix and not step_id.startswith(prefix):
+            continue
+        chunk = section[match.start() :]
+        next_hdr = re.search(r"\n###\s+\d+\.\d+", chunk[len(match.group(0)) :])
         block = chunk[: len(match.group(0)) + next_hdr.start()] if next_hdr else chunk
-        if re.search(r"已执行\s*\|\s*\[x\]", block) or re.search(r"\|\s*已执行\s*\|\s*\[x\]", block):
+        if re.search(r"已执行\s*\|\s*\[x\]", block) or re.search(
+            r"\|\s*已执行\s*\|\s*\[x\]", block
+        ):
             steps.append(step_id)
     return steps
 
@@ -93,8 +106,8 @@ def validate_execute_step(task_dir: Path, step: str, *, repo_root: Path | None =
     """Validate one §8.x step has RED/GREEN evidence files."""
     _ = repo_root
     errors: list[str] = []
-    if not re.fullmatch(r"8\.\d+", step):
-        errors.append(f"Invalid step id: {step!r} (expected 8.0, 8.1, …)")
+    if not re.fullmatch(r"\d+\.\d+", step):
+        errors.append(f"Invalid step id: {step!r} (expected e.g. 8.0 or 9.0)")
         return errors
 
     evidence_dir = task_dir / "research" / "execute-evidence"
@@ -122,21 +135,9 @@ def validate_execute_step(task_dir: Path, step: str, *, repo_root: Path | None =
     return errors
 
 
-def validate_execute_handoff(task_dir: Path, repo_root: Path | None = None) -> list[str]:
-    """Return validation errors; empty list means pass."""
-    if repo_root is None:
-        repo_root = task_dir
-        while repo_root.name and not (repo_root / ".trellis").is_dir():
-            if repo_root.parent == repo_root:
-                break
-            repo_root = repo_root.parent
-
-    errors: list[str] = []
-    master = task_dir / "MASTER.plan.md"
-    if not master.is_file():
-        return errors
-
-    # --- Protocol v2 boot artifacts ---
+def _append_execute_handoff_boot_errors(
+    task_dir: Path, repo_root: Path, errors: list[str]
+) -> None:
     gnxs = task_dir / "research" / "gitnexus-execute-summary.md"
     if not gnxs.is_file():
         errors.append("Missing research/gitnexus-execute-summary.md (Phase 0a GitNexus)")
@@ -153,7 +154,6 @@ def validate_execute_handoff(task_dir: Path, repo_root: Path | None = None) -> l
             if skill not in read_skills:
                 errors.append(f"execute-skill-reads.jsonl missing required skill: {skill}")
 
-    # --- Evidence (legacy summary OR per-step dir) ---
     evidence_md = list(task_dir.glob("research/*evidence*.md"))
     evidence_dir = task_dir / "research" / "execute-evidence"
     if not evidence_md and not evidence_dir.is_dir():
@@ -170,6 +170,40 @@ def validate_execute_handoff(task_dir: Path, repo_root: Path | None = None) -> l
             errors.append(
                 "execute-skill-evaluation.md must reference execute-skill-reads.jsonl"
             )
+
+
+def validate_execute_handoff(task_dir: Path, repo_root: Path | None = None) -> list[str]:
+    """Return validation errors; empty list means pass."""
+    if repo_root is None:
+        repo_root = task_dir
+        while repo_root.name and not (repo_root / ".trellis").is_dir():
+            if repo_root.parent == repo_root:
+                break
+            repo_root = repo_root.parent
+
+    errors: list[str] = []
+    from .plan_protocol import frozen_task_card_path, plan_protocol_version
+
+    if plan_protocol_version(task_dir) == "4" and (
+        task_dir / "EXECUTION_INDEX.md"
+    ).is_file():
+        _append_execute_handoff_boot_errors(task_dir, repo_root, errors)
+        frozen = frozen_task_card_path(task_dir)
+        if frozen and frozen.is_file():
+            for step in _parse_v4_executed_steps(frozen.read_text(encoding="utf-8")):
+                errors.extend(validate_execute_step(task_dir, step, repo_root=repo_root))
+        from .manifest_protocol import validate_execute_boot, validate_manifest_amend_chain
+
+        validate_execute_boot(task_dir, errors)
+        validate_manifest_amend_chain(task_dir, errors)
+        _validate_loop_handoff(task_dir, repo_root, errors)
+        return errors
+
+    master = task_dir / "MASTER.plan.md"
+    if not master.is_file():
+        return errors
+
+    _append_execute_handoff_boot_errors(task_dir, repo_root, errors)
 
     text = master.read_text(encoding="utf-8")
 

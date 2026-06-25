@@ -1,0 +1,9 @@
+{
+  "title": "Plan v4 reference (read-only)",
+  "status": "completed",
+  "meta": {
+    "task_track": "complex",
+    "plan_protocol_version": "4",
+    "source_task_card": "docs/implementation_tasks/GLOBAL_TASK_TEMPLATE.md"
+  }
+}
