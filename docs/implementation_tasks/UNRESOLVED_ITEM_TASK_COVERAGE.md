@@ -1,6 +1,6 @@
 # Unresolved Item → 原始执行任务覆盖索引
 
-> Last reconciled: 2026-06-25 post-Batch 3V on `master` @ `2aeb6f0`.  
+> Last reconciled: 2026-06-25 post-Batch 3V on `master` @ `2aeb6f0`; post-Batch 3F registry closeout (B3F-REG) on `chore/round3f-registry-batch-closeout` @ `7f628c9` baseline.  
 > 用途：防止 Plan 阶段只读取 `docs/implementation_tasks/**` 原始任务卡而漏掉 `docs/UNRESOLVED_ISSUES_REGISTRY.md` / `docs/AUDIT_DEFERRED_REGISTRY.md` 中仍未闭合的项目。  
 > 规则：新建 MASTER/AUDIT/REPAIR plan 前，必须先读取本文件、当前 registry、目标任务卡，并把本表中目标批次相关 ID 逐项映射到 AC、evidence、closeout 或 explicit re-deferral。若 registry 状态变化，本文件必须同步更新。
 
@@ -24,7 +24,7 @@
 | -------------------------- | ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | `R3-AUDIT-DEF-01`          | Round3 ops hygiene 或 Round5 docs consistency         | `ROUND3_EARLY_CLOSE_PLAN.md`; `ROUND_5_INTEGRATION_RELEASE/034_implement_docs_consistency_check.md`                                                                                                                                                       | `KEY_TABLES` / `DEFERRED_ITEM_MAPPING` 与 `ops_db_inspect_contract.yaml` 的 SSOT drift 风险必须关闭或 re-defer。 |
 | `R3-AUDIT-DEF-02`          | Batch 2.75 或 user-authorized staging E2E             | `ROUND3_EARLY_CLOSE_PLAN.md`; `ROUND_2_6_DATASOURCE_ROUTING_OPS_ALIGNMENT/016F_define_prod_equivalent_scale_benchmark.md`; `ROUND_3_MODELING_LAYERS/018B_production_live_pilot_gate.md`                                                                   | fixture/full_load skeleton 不能被说成 production live vendor soak；关闭需授权 staging/live evidence。            |
-| `R3-AUDIT-DEF-03`          | Round3 ops hygiene 或 Round5 docs consistency         | `ROUND3_EARLY_CLOSE_PLAN.md`; `ROUND_5_INTEGRATION_RELEASE/034_implement_docs_consistency_check.md`                                                                                                                                                       | scan `--limit` hard cap 对 `raw/parquet/audit/report` 的边界测试或 contract 等价说明必须补齐。                   |
+| `R3-AUDIT-DEF-03`          | **CLOSED** post-14 Slice 3 · `test_ops_db_inspector` verify-only B3F-REG | `ROUND3_EARLY_CLOSE_PLAN.md`; `ROUND_5_INTEGRATION_RELEASE/034_implement_docs_consistency_check.md`                                                                                                                                                       | per-subdir scan cap closed; registry alignment only — do not reimplement.           |
 | `R3-B2.75-01`              | Batch 2.75                                            | `ROUND_3_MODELING_LAYERS/018B_production_live_pilot_gate.md`                                                                                                                                                                                              | controlled production/live pilot 执行或 explicit re-deferral；不得跳过后直接做 Batch 3 production-facing claim。 |
 | `R3-PARTIAL-1`             | Batch6 pipeline repay                                 | `ROUND_2_DATA_INGESTION_VALIDATION/014_implement_data_sync_orchestrator.md`                                                                                                                                                                               | backfill 要么走 validate + clean write + pytest，要么 ADR 保留 scope。                                           |
 | `R3-PARTIAL-3` / `D2-P2-2` | Batch6 pipeline / reconcile repay                     | `ROUND_2_DATA_INGESTION_VALIDATION/014_implement_data_sync_orchestrator.md`; `ROUND_2_DATA_INGESTION_VALIDATION/016_implement_source_conflict_validator.md`                                                                                               | reconcile re-fetch / compare closure pytest；`D2-P2-2` 只能作为 alias，不重复实现。                              |
@@ -41,7 +41,7 @@
 | `A9-P2-01`                 | Batch6 migration 009 partial                          | `ROUND_1_DATA_FOUNDATION/005_create_schema_sql.md`; `ROUND_2_DATA_INGESTION_VALIDATION/016_implement_source_conflict_validator.md`                                                                                                                        | 009 partial; `priority` CHECK → Round 3F。                                                                       |
 | `A9-P3-01`                 | Batch6 migration safety (009 partial)                 | `ROUND_1_DATA_FOUNDATION/005_create_schema_sql.md`                                                                                                                                                                                                        | fetch_log/manual_review_queue `SELECT *` rebuild → Round 3F。                                                    |
 | `R2-RISK-2`                | Batch5 evidence-chain or Batch6 adapter hygiene       | `ROUND_3_MODELING_LAYERS/023_implement_layer5_evidence_chain.md`; `ROUND_2_DATA_INGESTION_VALIDATION/016_implement_source_conflict_validator.md`                                                                                                          | adapter/storage concrete dependency 通过 evidence port injection 或 explicit re-deferral 关闭。                  |
-| `R2-RISK-3`                | Round3 late / Round5 docs consistency                 | `ROUND_1_DATA_FOUNDATION/008_implement_write_manager.md`; `ROUND_5_INTEGRATION_RELEASE/034_implement_docs_consistency_check.md`                                                                                                                           | `WriteRequest` vs full `write_contract` matrix doc 或 re-defer。                                                 |
+| `R2-RISK-3`                | **CLOSED** post-14 B-008 · `UNSUPPORTED_MODES` verify-only B3F-REG | `ROUND_1_DATA_FOUNDATION/008_implement_write_manager.md`; `ROUND_5_INTEGRATION_RELEASE/034_implement_docs_consistency_check.md`                                                                                                                           | fail-closed write_mode; `test_r3x_ponytail_structural_bucket_b` — registry alignment only. |
 | `R2-RISK-4`                | Batch6 migration 009 partial                          | `ROUND_1_DATA_FOUNDATION/005_create_schema_sql.md`; `ROUND_5_INTEGRATION_RELEASE/034_implement_docs_consistency_check.md`                                                                                                                                 | 009 agreed subset applied; `priority` etc. app-layer → Round 3F。                                                |
 | `R2-HYG-4`                 | Batch6 test hygiene                                   | `ROUND_2_DATA_INGESTION_VALIDATION/014_implement_data_sync_orchestrator.md`                                                                                                                                                                               | `test_duckdb_connection` inter-call smell：refactor 或 close as wont-fix ADR。                                   |
 | `R2-HYG-5`                 | Batch6 adapter contract hygiene                       | `ROUND_2_DATA_INGESTION_VALIDATION/013_implement_core_adapter_skeletons.md`; `ROUND_2_DATA_INGESTION_VALIDATION/015_implement_data_quality_validator.md`                                                                                                  | adapter metadata fields + skeleton metadata pytest 或 explicit re-deferral。                                     |
@@ -109,6 +109,20 @@
 | `B3V-C06`   | `review/round3v-layer5-model-schema-reconcile` | `VR-L5-001`, `VR-MODEL-001`  | `B03_01`  | debt-lite | **CLOSED** (`R3-MODEL-L3L4-MIGRATION` defer)              |
 
 **Routed out:** `VR-DATAHEALTH-001`, `VR-RG-001`, `VR-L1PERF-001`, `VR-PERF-001` → Round 3F; `VR-API/FE/AGENT/BT/NOTIF` → Round 4; `VR-SEC-001` → Round 5. See `docs/quality/quant_monitor_desk_verified_audit_report_2026-06-25_v3_INDEX.md`.
+
+## 9. Batch 3F — Registry batch closeout (B3F-REG · debt-lite)
+
+> Branch: `chore/round3f-registry-batch-closeout` · baseline `7f628c9` · **verify-only** for already-RESOLVED rows.
+
+| Registry / reconcile ID | Action on branch | Main-session delta |
+| ----------------------- | ---------------- | ------------------ |
+| `R3-PARTIAL-5`          | COVERAGE + map **CLOSED**; pytest verify-only | proposed delta: confirm RESOLVED narrative |
+| `R2-RISK-3`             | COVERAGE + map **CLOSED**; pytest verify-only | proposed delta: confirm RESOLVED narrative |
+| `R3-AUDIT-DEF-03`       | COVERAGE **CLOSED**; pytest verify-only       | proposed delta: confirm RESOLVED narrative |
+| `WAVE-B-HYG-01/02/03`   | Wave-B doc §5 reconcile                       | optional map cross-ref only |
+| `R3F-LIN-03`            | Wave-B + registry no-conflict check           | pending six complex-line evidence |
+
+**Forbidden on branch:** direct commit closing RESOLVED registry三件套 rows; backend runtime changes without regression evidence.
 
 ## 5. Round4 unresolved / deferred items
 

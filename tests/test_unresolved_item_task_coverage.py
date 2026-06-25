@@ -21,7 +21,6 @@ EXPECTED_UNRESOLVED_IDS = {
     "R2.6-IMPL-8",
     "R3-AUDIT-DEF-01",
     "R3-AUDIT-DEF-02",
-    "R3-AUDIT-DEF-03",
     "R3-B2.75-01",
     "R3-PARTIAL-1",
     "R3-PARTIAL-3",
@@ -39,7 +38,6 @@ EXPECTED_UNRESOLVED_IDS = {
     "A9-P3-01",
     "R2-RISK-1",
     "R2-RISK-2",
-    "R2-RISK-3",
     "R2-RISK-4",
     "R2-HYG-4",
     "R2-HYG-5",
@@ -285,6 +283,42 @@ def test_r3yPrompt15Evid001_closedInResolvedNotOpen() -> None:
     assert "R3Y-PROMPT15-EVID-001" in coverage
     assert "CLOSED" in coverage.split("R3Y-PROMPT15-EVID-001", maxsplit=1)[1][:200]
     assert f"| R3Y-PROMPT15-EVID-001 | OPEN" not in unresolved
+
+
+def test_batch3fR3AuditDef03_closedInCoverageVerifyOnly() -> None:
+    """覆盖范围：R3-AUDIT-DEF-03 在 post-14 已 RESOLVED 后的 COVERAGE 对齐
+    测试对象：RESOLVED、UNRESOLVED、UNRESOLVED_ITEM_TASK_COVERAGE.md
+    目的/目标：per-subdir scan cap 已闭合，COVERAGE 须标 CLOSED 而非仍要求补齐测试
+    验证点：DEF-03 在 RESOLVED 与 COVERAGE CLOSED；UNRESOLVED 无 DEFERRED 行；邻近文本含 test_ops_db_inspector
+    失败含义：Plan 索引仍把已闭合项当开放债，会重开 inspector 实现
+    """
+    resolved = _read(RESOLVED)
+    unresolved = _read(UNRESOLVED)
+    coverage = _read(COVERAGE)
+
+    assert "R3-AUDIT-DEF-03" in resolved
+    assert "R3-AUDIT-DEF-03" in coverage
+    assert "CLOSED" in coverage.split("R3-AUDIT-DEF-03", maxsplit=1)[1][:220]
+    assert f"| R3-AUDIT-DEF-03 | DEFERRED" not in unresolved
+    assert "test_ops_db_inspector" in coverage.split("R3-AUDIT-DEF-03", maxsplit=1)[1][:220]
+
+
+def test_batch3fR2Risk3_closedInCoverageVerifyOnly() -> None:
+    """覆盖范围：R2-RISK-3 在 post-14 B-008 已 RESOLVED 后的 COVERAGE 对齐
+    测试对象：RESOLVED、UNRESOLVED、UNRESOLVED_ITEM_TASK_COVERAGE.md
+    目的/目标：UNSUPPORTED_MODES fail-closed 已闭合，COVERAGE 须标 CLOSED 而非 matrix doc 开放债
+    验证点：R2-RISK-3 在 RESOLVED 与 COVERAGE CLOSED；UNRESOLVED 无 DEFERRED 行；邻近文本含 UNSUPPORTED_MODES
+    失败含义：Plan 索引仍把 write_mode 拒绝当开放实现项，会重开 WriteManager 改动
+    """
+    resolved = _read(RESOLVED)
+    unresolved = _read(UNRESOLVED)
+    coverage = _read(COVERAGE)
+
+    assert "R2-RISK-3" in resolved
+    assert "R2-RISK-3" in coverage
+    assert "CLOSED" in coverage.split("R2-RISK-3", maxsplit=1)[1][:220]
+    assert f"| R2-RISK-3 | DEFERRED" not in unresolved
+    assert "UNSUPPORTED_MODES" in coverage.split("R2-RISK-3", maxsplit=1)[1][:220]
 
 
 def test_batch3vR3Partial5_closedInResolvedNotOpen() -> None:

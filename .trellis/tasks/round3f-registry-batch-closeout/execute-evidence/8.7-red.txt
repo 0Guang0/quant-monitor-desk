@@ -1,0 +1,9 @@
+# RED evidence — B3F-REG §8.7 (2026-06-25)
+# Command: uv run pytest tests/...::test_batch3fR3AuditDef03_* ...::test_batch3fWaveBHygieneRegistry_* -q
+
+FAILED tests/test_unresolved_item_task_coverage.py::test_batch3fR3AuditDef03_closedInCoverageVerifyOnly
+FAILED tests/test_unresolved_item_task_coverage.py::test_batch3fR2Risk3_closedInCoverageVerifyOnly
+FAILED tests/test_round3_audit_registry_alignment.py::test_batch3fMap_resolvedBatch6ItemsMarkedClosed
+FAILED tests/test_round3_audit_registry_alignment.py::test_batch3fWaveBHygieneRegistry_reconciledInWaveBDoc
+
+Exit code: 1 (expected RED before doc alignment)

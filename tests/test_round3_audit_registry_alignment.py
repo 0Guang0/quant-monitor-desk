@@ -472,6 +472,38 @@ def test_waveCMainlineResolvedRows_traceableInRegistries() -> None:
         assert item_id in audit, f"{item_id} missing from AUDIT_DEFERRED wave-C section"
 
 
+def test_batch3fMap_resolvedBatch6ItemsMarkedClosed() -> None:
+    """覆盖范围：Batch 6 地图表中已 RESOLVED 项不得仍用活跃 repay 叙事
+    测试对象：ROUND3_BATCH_IMPLEMENTATION_MAP.md §Batch 6 表
+    目的/目标：R3-PARTIAL-5、R2-RISK-3 仅 regression guard，地图须标 CLOSED
+    验证点：两 ID 邻近 chunk 含 CLOSED；不含「Close COMPLETED-vs-write」或「Add write_contract matrix doc」活跃措辞
+    失败含义：地图仍派活已闭合项，六复杂线 agent 可能重复实现 crash-window / write_mode
+    """
+    text = _read(ROUND3_MAP)
+
+    partial_chunk = text.split("R3-PARTIAL-5", maxsplit=1)[1][:320]
+    risk_chunk = text.split("R2-RISK-3", maxsplit=1)[1][:320]
+
+    assert "CLOSED" in partial_chunk
+    assert "Close COMPLETED-vs-write crash window by same-transaction" not in partial_chunk
+    assert "CLOSED" in risk_chunk
+    assert "Add write_contract matrix doc or re-defer to Round5" not in risk_chunk
+
+
+def test_batch3fWaveBHygieneRegistry_reconciledInWaveBDoc() -> None:
+    """覆盖范围：WAVE-B-HYG-01/02/03 在 Wave-B 归档文档的 B3F-REG reconcile 登记
+    测试对象：docs/quality/ROUND3_WAVE_B_PENDING_FIX_REGISTRY.md
+    目的/目标：R3F-LIN-03 要求 Wave-B 残余 hygiene 行有明确 reconcile 状态
+    验证点：§4 或 §5 含 WAVE-B-HYG-01/02/03 与 B3F-REG 或 reconcile 字样
+    失败含义：Wave-B hygiene 残余无收口记录，主会话无法批处理 registry 三件套
+    """
+    wave_b = _read(PROJECT_ROOT / "docs/quality/ROUND3_WAVE_B_PENDING_FIX_REGISTRY.md")
+
+    for item_id in ("WAVE-B-HYG-01", "WAVE-B-HYG-02", "WAVE-B-HYG-03"):
+        assert item_id in wave_b
+    assert "B3F-REG" in wave_b or "reconcile" in wave_b.lower()
+
+
 def test_round3Map_checkpointReflectsPostBatch3VAndRound3F() -> None:
     """覆盖范围：ROUND3 地图 checkpoint 是否反映 post-Batch-3V 与 Round 3F 激活状态
     测试对象：ROUND3_BATCH_IMPLEMENTATION_MAP.md 头部与 §2

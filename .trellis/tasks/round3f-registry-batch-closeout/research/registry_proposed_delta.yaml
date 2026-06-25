@@ -1,0 +1,87 @@
+# Proposed registry delta — B3F-REG (main session batch apply ONLY)
+# Branch: chore/round3f-registry-batch-closeout @ 7f628c9 baseline
+# Policy: verify-only for already-RESOLVED rows; no runtime reopen
+
+commit_policy: proposed_only_no_direct_registry_commit
+coordinator_status: COORDINATOR-QUEUED
+owner: B3F-REG
+verified_on: 2026-06-25
+
+proposed_deltas:
+  - id: R3-PARTIAL-5
+    action: VERIFY_ONLY_ALREADY_RESOLVED
+    registry_files:
+      - docs/RESOLVED_ISSUES_REGISTRY.md
+      - docs/UNRESOLVED_ISSUES_REGISTRY.md
+    branch_delta:
+      - docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md
+      - ROUND3_BATCH_IMPLEMENTATION_MAP.md
+    evidence:
+      - tests/test_sync_orchestrator.py
+      - tests/test_batch3vR3Partial5_closedInResolvedNotOpen
+      - tests/test_batch3fMap_resolvedBatch6ItemsMarkedClosed
+    notes: >
+      B3V-C04 closed path A. Branch marks COVERAGE+map CLOSED; do not reopen
+      same-transaction COMPLETED implementation.
+
+  - id: R2-RISK-3
+    action: VERIFY_ONLY_ALREADY_RESOLVED
+    registry_files:
+      - docs/RESOLVED_ISSUES_REGISTRY.md
+    branch_delta:
+      - docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md
+      - ROUND3_BATCH_IMPLEMENTATION_MAP.md
+    evidence:
+      - tests/test_r3x_ponytail_structural_bucket_b.py
+      - tests/test_post14R2Risk3_failClosedModesDocumented
+      - tests/test_batch3fR2Risk3_closedInCoverageVerifyOnly
+    notes: >
+      post-14 B-008 UNSUPPORTED_MODES. COVERAGE was stale OPEN narrative;
+      aligned to CLOSED verify-only. No WriteManager code changes.
+
+  - id: R3-AUDIT-DEF-03
+    action: VERIFY_ONLY_ALREADY_RESOLVED
+    registry_files:
+      - docs/RESOLVED_ISSUES_REGISTRY.md
+    branch_delta:
+      - docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md
+    evidence:
+      - tests/test_ops_db_inspector.py
+      - tests/test_post14AuditDef03_perSubdirScanCapResolved
+      - tests/test_batch3fR3AuditDef03_closedInCoverageVerifyOnly
+    notes: >
+      per-subdir scan cap tests exist. COVERAGE aligned CLOSED; no inspector reopen.
+
+  - id: WAVE-B-HYG-01
+    action: RECONCILED_DOC_ONLY
+    branch_delta:
+      - docs/quality/ROUND3_WAVE_B_PENDING_FIX_REGISTRY.md
+    evidence:
+      - tests/test_r3yRegistrySlice_alpha2LastReconciled
+    notes: Four SSOT Last reconciled tokens unified post-Batch 3V.
+
+  - id: WAVE-B-HYG-02
+    action: RECONCILED_DOC_ONLY
+    branch_delta:
+      - docs/quality/ROUND3_WAVE_B_PENDING_FIX_REGISTRY.md
+    notes: >
+      Substring reconcile on branch; normalize equality assert deferred to B3F-HYG.
+
+  - id: WAVE-B-HYG-03
+    action: RE_DEFERRED_OPS
+    branch_delta:
+      - docs/quality/ROUND3_WAVE_B_PENDING_FIX_REGISTRY.md
+    notes: QMD_SYNC_ALLOW_ADAPTER=1 ops escape hatch; not registry-blocking.
+
+  - id: R3F-LIN-03
+    action: RECONCILE_PENDING_MAIN_SESSION
+    depends_on: six_complex_line_evidence
+    notes: >
+      Full Wave-B registry reconcile after B3F-LIN/B3F-HYG evidence lands.
+      Branch delivers §5 Wave-B doc + no-conflict tests only.
+
+main_session_apply_order:
+  - verify pytest green on integration branch
+  - apply COVERAGE §9 + map closed rows (this branch)
+  - refresh Last reconciled block on registry三件套 if needed
+  - merge chore/round3f-registry-batch-closeout last

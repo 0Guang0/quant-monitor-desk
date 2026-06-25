@@ -52,3 +52,21 @@
 | `WAVE-B-HYG-01` | 四份 SSOT `Last reconciled` 措辞曾不一致                | 已在本归档 reconcile 统一；后续改 registry 须四文件同句 |
 | `WAVE-B-HYG-02` | `test_r3yRegistrySlice_alpha2LastReconciled` 仅子串匹配 | Batch 6：可增加 normalize 相等断言                      |
 | `WAVE-B-HYG-03` | `QMD_SYNC_ALLOW_ADAPTER=1` 生产逃生口                   | 运维文档 + 部署检查；非代码阻塞                         |
+
+---
+
+## 5. B3F-REG reconcile（2026-06-25 · verify-only）
+
+> Owner: `chore/round3f-registry-batch-closeout` · `R3F-LIN-03` / `R3F-HYG-13` (docs part).  
+> Policy: **no reopen** of resolved runtime rows; COVERAGE + map alignment + proposed registry delta for main session.
+
+| ID              | B3F-REG action                                                                 | Evidence / note                                                                 |
+| --------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------- |
+| `WAVE-B-HYG-01` | **RECONCILED** — four SSOT `Last reconciled` tokens unified post-Batch 3V      | `test_r3yRegistrySlice_alpha2LastReconciled`                                    |
+| `WAVE-B-HYG-02` | **RECONCILED** — substrings retained; normalize-equality deferred to B3F-HYG   | registry alignment tests pass; stricter assert optional in hygiene branch       |
+| `WAVE-B-HYG-03` | **RE-DEFERRED** ops — escape hatch documented; not registry-blocking           | `QMD_SYNC_ALLOW_ADAPTER=1` ops note; no production claim                        |
+| `R3-PARTIAL-5`  | **VERIFY-ONLY** — RESOLVED; map/COVERAGE marked CLOSED                         | `tests/test_sync_orchestrator.py` SYNC-05/06                                    |
+| `R2-RISK-3`     | **VERIFY-ONLY** — RESOLVED; COVERAGE/map marked CLOSED                         | `test_r3x_ponytail_structural_bucket_b` · `test_post14R2Risk3_*`                |
+| `R3-AUDIT-DEF-03` | **VERIFY-ONLY** — RESOLVED; COVERAGE marked CLOSED                           | `tests/test_ops_db_inspector.py` · `test_post14AuditDef03_*`                      |
+
+Proposed registry三件套 delta: `.trellis/tasks/round3f-registry-batch-closeout/research/registry_proposed_delta.yaml` (main session batch apply).
