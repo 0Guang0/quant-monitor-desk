@@ -1,0 +1,1 @@
+Boot reads: MASTER.plan.md, implement.jsonl, data_cli_contract.yaml, BATCH_3F_HARDENING_RULES.md

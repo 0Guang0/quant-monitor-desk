@@ -1,0 +1,3 @@
+test_initDb_syncRegistry_oneLiner passed
+init_db --sync-registry rows>=1 source_registry
+CI one-liner: uv run qmd-init-db --sync-registry

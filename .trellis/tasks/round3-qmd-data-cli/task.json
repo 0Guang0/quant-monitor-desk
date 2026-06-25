@@ -1,0 +1,9 @@
+{
+  "slug": "round3-qmd-data-cli",
+  "status": "in_progress",
+  "meta": {
+    "task_track": "complex",
+    "playbook_id": "B3F-CLI",
+    "branch": "feature/round3-qmd-data-cli"
+  }
+}

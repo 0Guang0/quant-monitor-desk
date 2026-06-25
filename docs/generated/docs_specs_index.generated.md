@@ -250,6 +250,7 @@ Used with MIGRATION_MAP.md for machine omission checks (`check_docs_specs_indexe
 - `docs/ops/privacy_data_flow.md`
 - `docs/ops/privacy_retention_policy.md`
 - `docs/ops/qmt_xqshare_setup.md`
+- `docs/ops/staging_data_e2e_runbook.md`
 - `docs/ops/user_intervention_policy.md`
 - `docs/ops/verification_commands.md`
 - `docs/quality/BATCH3_STAGED_DOWNSTREAM_GATE.md`

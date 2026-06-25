@@ -613,6 +613,15 @@ tests/test_project_scaffold.py:
     docs: []
     rules: []
     specs: []
+tests/test_qmd_data_cli.py:
+  command: uv run python -m pytest tests/test_qmd_data_cli.py -q
+  failure_meaning: Regression in test_qmd_data_cli; inspect purpose and linked authorities.
+  purpose: B3F-CLI — qmd data CLI, packaging, init_db --sync-registry (R3F-CLI-01..05).
+  type: protocol
+  verifies:
+    docs: []
+    rules: []
+    specs: []
 tests/test_r3x_data_source_routing_blockers.py:
   command: uv run python -m pytest tests/test_r3x_data_source_routing_blockers.py
     -q

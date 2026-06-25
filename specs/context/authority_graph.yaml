@@ -163,14 +163,19 @@ modules:
   ops:
     implementation:
       - backend/app/ops/**
+      - backend/app/cli/**
       - scripts/run_staged_pilot.py
       - scripts/production_gate.py
       - scripts/check_doc_links.py
       - scripts/production_equivalent_smoke.py
+      - scripts/init_db.py
+      - scripts/sync_registry.py
+      - scripts/qmd_ops.py
     docs:
       - docs/modules/ops_and_performance.md
       - docs/ops/verification_commands.md
       - docs/ops/performance_limits.md
+      - docs/ops/staging_data_e2e_runbook.md
       - docs/quality/production_live_pilot_policy.md
       - docs/quality/BATCH3_STAGED_DOWNSTREAM_GATE.md
       - docs/ROUND3_HANDOFF.md
@@ -193,6 +198,7 @@ modules:
       - tests/test_round3_audit_registry_alignment.py
       - tests/test_unresolved_item_task_coverage.py
       - tests/test_batch3_staged_downstream_gate.py
+      - tests/test_qmd_data_cli.py
     forbidden_claims:
       - production-live ready
       - live production ingestion

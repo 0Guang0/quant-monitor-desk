@@ -1,0 +1,5 @@
+{"path": "MASTER.plan.md", "role": "execute-manifest", "note": "§8 vertical slices R3F-CLI-01..05"}
+{"path": "docs/ops/data_sync_quick_reference.md", "role": "spec", "note": "CLI semantics"}
+{"path": "specs/contracts/data_cli_contract.yaml", "role": "contract", "note": "qmd data contract"}
+{"path": "scripts/init_db.py", "role": "implementation", "note": "--sync-registry"}
+{"path": "pyproject.toml", "role": "packaging", "note": "console_scripts"}

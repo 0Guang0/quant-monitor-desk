@@ -1,0 +1,2 @@
+FAILED init_db missing --sync-registry flag
+R2-GAP-1 still DEFERRED

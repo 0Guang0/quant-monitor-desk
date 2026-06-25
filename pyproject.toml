@@ -26,13 +26,19 @@ live-pilot = [
     "pandas>=2.2.0",
 ]
 
+[project.scripts]
+qmd-data = "backend.app.cli.main:main"
+qmd-ops = "scripts.qmd_ops:main"
+qmd-init-db = "scripts.init_db:main"
+qmd-sync-registry = "scripts.sync_registry:main"
+
 [build-system]
 requires = ["setuptools>=75.0.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["backend*"]
+include = ["backend*", "scripts*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

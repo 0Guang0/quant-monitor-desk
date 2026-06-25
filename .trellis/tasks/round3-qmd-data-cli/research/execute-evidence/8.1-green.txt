@@ -1,0 +1,2 @@
+8 passed in test_qmd_data_cli.py
+route-preview dry_run=True side_effects_allowed semantics verified
