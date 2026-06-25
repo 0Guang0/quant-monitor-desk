@@ -1,0 +1,28 @@
+# Proposed registry delta — B3V-STOR zero-open repair (do NOT commit registry三件套)
+# Merge coordinator applies after adversarial audit PASS.
+
+verified_audit_resolutions:
+  VR-STOR-001:
+    decision: RESOLVED_EXECUTE
+    task_slug: round3v-rawstore-atomic-write
+    branch: fix/round3v-rawstore-atomic-write
+    card: B02_03_rawstore_atomic_write.md
+    playbook_slice: B3V-C03
+    rationale: >
+      RawStore.save calls path_compat.write_bytes_atomic (same-dir temp, flush+fsync,
+      os.replace, temp cleanup on failure). Zero-open repair adds same-path replace-fail
+      tests at save and helper layers; crash/idempotency/csv smoke covered in
+      tests/test_raw_store.py. AC-STOR-01..04 satisfied; FileRegistry semantics unchanged.
+    evidence_paths:
+      - backend/app/storage/path_compat.py
+      - backend/app/storage/raw_store.py
+      - tests/test_raw_store.py
+      - .trellis/tasks/round3v-rawstore-atomic-write/execute-evidence/
+      - .trellis/tasks/round3v-rawstore-atomic-write/repair-evidence/zero-open-signoff.md
+    verification_commands:
+      - uv run pytest tests/test_raw_store.py -q
+      - uv run ruff check backend/app/storage tests/test_raw_store.py
+      - uv run pytest -q
+
+commit_policy: proposed_only_no_direct_registry_commit
+coordinator_status: COORDINATOR-QUEUED

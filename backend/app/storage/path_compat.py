@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import secrets
 from pathlib import Path, PureWindowsPath
 
 _WIN_MAX_PATH = 260
@@ -43,6 +44,31 @@ def mkdir_parents(path: Path, *, exist_ok: bool = False) -> None:
 
 def write_bytes(path: Path, data: bytes) -> None:
     to_extended_path(path).write_bytes(data)
+
+
+def write_bytes_atomic(path: Path, data: bytes) -> None:
+    """Write bytes atomically via same-dir temp file and os.replace.
+
+    Caller must validate path containment (e.g. data_root sandbox) before calling.
+    ponytail: same-dir temp + os.replace is crash-safe on POSIX/NT; ceiling—no
+    parent-dir fsync (directory durability on power loss), full payload in RAM.
+    """
+    dest = Path(path)
+    temp_path = dest.parent / f".{dest.name}.tmp.{os.getpid()}.{secrets.token_hex(4)}"
+    extended_temp = to_extended_path(temp_path)
+    extended_dest = to_extended_path(dest)
+    try:
+        with open(extended_temp, "wb") as handle:
+            handle.write(data)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(str(extended_temp), str(extended_dest))
+    except BaseException:
+        try:
+            extended_temp.unlink(missing_ok=True)
+        except OSError:
+            pass
+        raise
 
 
 def read_bytes(path: Path) -> bytes:

@@ -13,6 +13,7 @@ import pytest
 from backend.app.db.connection import ConnectionManager
 from backend.app.db.migrate import apply_migrations
 from backend.app.db.write_manager import WriteResult
+from backend.app.storage import raw_store
 from backend.app.storage.file_registry import FileRegistry
 from backend.app.storage.raw_store import RawStore, sha256_hex
 from tests.db_helpers import create_test_write_manager
@@ -154,8 +155,6 @@ def test_save_oversizedContent_raises(tmp_path: Path) -> None:
     验证点：MAX+1 字节抛 ValueError match exceeds max size
     失败含义：无大小护栏，恶意或异常抓取可 OOM/占满分区
     """
-    from backend.app.storage import raw_store
-
     store = RawStore(tmp_path)
     huge = b"x" * (raw_store.MAX_RAW_FILE_BYTES + 1)
     with pytest.raises(ValueError, match="exceeds max size"):
@@ -458,7 +457,6 @@ def test_stagedEvidence_rejectsWrongPhase() -> None:
     from datetime import UTC, datetime
 
     import duckdb
-
     from backend.app.datasources.fetch_result import FetchResult
     from backend.app.storage.staged_evidence import _register_staged_file_registry_rows
 
@@ -521,6 +519,190 @@ def test_stagedEvidence_allowedPath_registersRow(tmp_path: Path) -> None:
         ).fetchone()
     assert row[1] == "STAGED"
     assert "evidence.json" in row[0]
+
+
+def test_writeBytesAtomic_writesCompleteFile(tmp_path: Path) -> None:
+    """覆盖范围：path_compat.write_bytes_atomic 完整落盘
+    测试对象：write_bytes_atomic
+    目的/目标：原子 helper 须将完整字节写入目标路径（AC-STOR-01 / S1）
+    验证点：目标文件存在且 read_bytes 等于输入
+    失败含义：原子写 helper 缺失或直写不完整，证据链无法依赖该 API
+    """
+    from backend.app.storage.path_compat import write_bytes_atomic
+
+    dest = tmp_path / "evidence.json"
+    payload = b'{"v":1}'
+    write_bytes_atomic(dest, payload)
+    assert dest.read_bytes() == payload
+
+
+def test_writeBytesAtomic_replaceFailure_cleansTempAndLeavesTargetAbsent(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """覆盖范围：write_bytes_atomic 在 os.replace 失败时的清理
+    测试对象：write_bytes_atomic 错误路径
+    目的/目标：replace 前失败不得留下目标文件或残留 temp（AC-STOR-01 / S1）
+    验证点：抛 OSError；目标不存在；目录无 .*.tmp.* 残留
+    失败含义：失败泄漏半写目标或 temp，崩溃窗口可污染证据目录
+    """
+    from backend.app.storage.path_compat import write_bytes_atomic
+
+    dest = tmp_path / "evidence.json"
+
+    def _boom(*_args: object, **_kwargs: object) -> None:
+        raise OSError("simulated replace failure")
+
+    monkeypatch.setattr(os, "replace", _boom)
+    with pytest.raises(OSError, match="simulated replace failure"):
+        write_bytes_atomic(dest, b"x")
+    assert not dest.exists()
+    assert list(tmp_path.glob(".*.tmp.*")) == []
+
+
+def test_writeBytesAtomic_preexistingTarget_replaceFailure_preservesOriginalBytes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """覆盖范围：已有目标时 write_bytes_atomic 在 os.replace 失败须保留原字节
+    测试对象：write_bytes_atomic 覆盖失败路径
+    目的/目标：replace 失败不得损坏既有文件（AC-STOR-03 / A4 helper 层）
+    验证点：预置 dest 字节；replace 抛错后 read_bytes 仍等于 original
+    失败含义：原子写失败截断或清空已有证据，同路径覆盖场景不可信
+    """
+    from backend.app.storage.path_compat import write_bytes_atomic
+
+    dest = tmp_path / "evidence.json"
+    original = b'{"v":1}'
+    dest.write_bytes(original)
+
+    def _boom(*_args: object, **_kwargs: object) -> None:
+        raise OSError("simulated replace failure")
+
+    monkeypatch.setattr(os, "replace", _boom)
+    with pytest.raises(OSError, match="simulated replace failure"):
+        write_bytes_atomic(dest, b'{"v":2}')
+    assert dest.read_bytes() == original
+
+
+def test_writeBytesAtomic_writeFailure_cleansTemp(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """覆盖范围：write_bytes_atomic 在 open 写阶段失败时的 temp 清理
+    测试对象：write_bytes_atomic 写失败错误路径
+    目的/目标：写中途异常须删除 temp、不创建目标（A8-D01）
+    验证点：handle.write 抛 OSError；目标不存在；无 .*.tmp.* 残留
+    失败含义：写失败泄漏 temp 或半写目标，证据目录可被孤儿文件污染
+    """
+    import builtins
+
+    from backend.app.storage.path_compat import write_bytes_atomic
+
+    dest = tmp_path / "evidence.json"
+    real_open = builtins.open
+
+    def _open_fail_on_write(
+        path: str | os.PathLike[str],
+        mode: str = "r",
+        *args: object,
+        **kwargs: object,
+    ):
+        handle = real_open(path, mode, *args, **kwargs)  # type: ignore[arg-type]
+        if "w" in mode and "b" in mode:
+            real_write = handle.write
+
+            def _write_fail(data: bytes) -> int:
+                real_write(data)
+                raise OSError("simulated write failure")
+
+            handle.write = _write_fail  # type: ignore[method-assign]
+        return handle
+
+    monkeypatch.setattr(builtins, "open", _open_fail_on_write)
+    with pytest.raises(OSError, match="simulated write failure"):
+        write_bytes_atomic(dest, b"x")
+    assert not dest.exists()
+    assert list(tmp_path.glob(".*.tmp.*")) == []
+
+
+def test_save_midWriteFailure_leavesTargetAbsentOrUnchanged(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """覆盖范围：RawStore.save 写中途失败时目标文件状态
+    测试对象：RawStore.save 与原子写接线
+    目的/目标：写失败不得创建半写目标（AC-STOR-03 / S3）
+    验证点：os.replace 抛错后目标路径不存在
+    失败含义：崩溃或 I/O 异常后留下截断证据文件，证据链完整性破坏
+    """
+    store = RawStore(tmp_path)
+
+    def _boom(*_args: object, **_kwargs: object) -> None:
+        raise OSError("mid-write failure")
+
+    monkeypatch.setattr(os, "replace", _boom)
+    with pytest.raises(OSError, match="mid-write failure"):
+        store.save(b"new content", **_SAVE_KW)
+    expected_hash = sha256_hex(b"new content")
+    dest = tmp_path / "raw" / "qmt" / "daily_bar" / "2026-06-15" / f"{expected_hash}.json"
+    assert not dest.exists()
+
+
+def test_save_midWriteFailure_whenTargetExists_preservesOriginalBytes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """覆盖范围：已有目标文件时同内容 save 写失败须保留原字节
+    测试对象：RawStore.save 同路径覆盖失败
+    目的/目标：同 content 二次 save + replace 失败不得损坏既有证据（AC-STOR-03 / A4）
+    验证点：两次 save 同 content；失败后 dest read_bytes 仍等于写前 original
+    失败含义：同路径 replace 失败截断已有 raw 文件，注册表引用的证据损坏
+    """
+    store = RawStore(tmp_path)
+    content = b"same-payload-for-replace-fail"
+    saved = store.save(content, **_SAVE_KW)
+    dest = Path(saved.local_path)
+    original = dest.read_bytes()
+    assert original == content
+
+    def _boom(*_args: object, **_kwargs: object) -> None:
+        raise OSError("replace blocked")
+
+    monkeypatch.setattr(os, "replace", _boom)
+    with pytest.raises(OSError, match="replace blocked"):
+        store.save(content, **_SAVE_KW)
+    assert dest.read_bytes() == original
+
+
+def test_save_csvFileType_writesWithCsvSuffix(tmp_path: Path) -> None:
+    """覆盖范围：RawStore.save 对 csv file_type 的落盘与后缀
+    测试对象：RawStore.save file_type=csv
+    目的/目标：csv 原始证据须写入 {hash}.csv 且字节完整（A8-D02）
+    验证点：local_path 以 .csv 结尾；磁盘内容与输入一致
+    失败含义：csv 类型未走原子写或后缀错误，下游解析无法定位文件
+    """
+    store = RawStore(tmp_path)
+    payload = b"symbol,close\n000001,10.5\n"
+    saved = store.save(
+        payload,
+        source="qmt",
+        data_domain="daily_bar",
+        file_type="csv",
+        as_of="2026-06-15",
+    )
+    assert saved.local_path.endswith(".csv")
+    assert Path(saved.local_path).read_bytes() == payload
+
+
+def test_save_repeatedSameContent_isIdempotent(tmp_path: Path) -> None:
+    """覆盖范围：同内容重复 RawStore.save 的幂等性
+    测试对象：RawStore.save
+    目的/目标：同 content_hash 重复保存须同路径同字节（AC-STOR-04 / S4）
+    验证点：两次 local_path、content_hash 相同；磁盘字节不变
+    失败含义：重复 save 损坏文件或路径漂移，去重与注册引用不可靠
+    """
+    store = RawStore(tmp_path)
+    saved1 = store.save(b"same-payload", **_SAVE_KW)
+    saved2 = store.save(b"same-payload", **_SAVE_KW)
+    assert saved1.local_path == saved2.local_path
+    assert saved1.content_hash == saved2.content_hash
+    assert Path(saved1.local_path).read_bytes() == b"same-payload"
 
 
 def test_save_windowsLongPath_writesSuccessfully(tmp_path: Path) -> None:

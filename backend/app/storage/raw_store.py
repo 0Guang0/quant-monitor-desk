@@ -7,7 +7,11 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
-from backend.app.storage.path_compat import is_relative_to_data_root, mkdir_parents, write_bytes
+from backend.app.storage.path_compat import (
+    is_relative_to_data_root,
+    mkdir_parents,
+    write_bytes_atomic,
+)
 
 _EXT_MAP = {"json": "json", "csv": "csv", "parquet": "parquet"}
 _SEGMENT = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9._-]{0,63}$")
@@ -67,7 +71,7 @@ class RawStore:
         dest_path = (dest_dir / filename).resolve()
         if not is_relative_to_data_root(dest_path, self.data_root):
             raise ValueError("path escapes data_root")
-        write_bytes(dest_path, content)
+        write_bytes_atomic(dest_path, content)
         file_id = content_hash[:16] + safe_source
         return SavedFile(
             file_id=file_id,

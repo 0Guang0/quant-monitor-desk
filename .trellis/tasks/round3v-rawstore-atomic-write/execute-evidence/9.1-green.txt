@@ -1,0 +1,2 @@
+STOR-01 GREEN — test_writeBytesAtomic_writesCompleteFile + replaceFailure
+Exit code: 0 — 2 passed in 0.33s
