@@ -31,7 +31,12 @@ from backend.app.layer2_sensors import (
     assert_model_eligible,
 )
 from backend.app.layer2_sensors.futures_roll import ContractLiquidity
-from backend.app.layer2_sensors.lineage import LINEAGE_REQUIRED_FIELDS, Layer2LineageError
+from backend.app.layer2_sensors.lineage import (
+    LINEAGE_REQUIRED_FIELDS,
+    Layer2LineageError,
+    assert_lineage_matches_validation_report,
+)
+from backend.app.layer2_sensors.models import Layer2LineageEnvelope
 from backend.app.layer2_sensors.observation import reject_future_observation
 from backend.app.layer2_sensors.schema_ddl import ensure_layer2_staging_tables
 from backend.app.layer2_sensors.sensor_loader import STAGED_REGISTRY_FIXTURE
@@ -39,6 +44,20 @@ from backend.app.layer2_sensors.sensor_loader import STAGED_REGISTRY_FIXTURE
 AS_OF = datetime(2026, 6, 15, 16, 0, tzinfo=UTC)
 TRADE_DATE = date(2026, 6, 14)
 TRADE_DT = datetime(2026, 6, 14, 16, 0, tzinfo=UTC)
+
+
+@pytest.fixture(autouse=True)
+def _layer2_snapshot_build_allows_resource_guard(request, monkeypatch):
+    """ponytail: lineage/VR 测契约不测宿主机内存；与 test_staged_pilot autouse 同模式。"""
+    if request.node.get_closest_marker("resourceguard") is not None:
+        return
+    allow_guard = MagicMock()
+    allow_guard.check.return_value = (Decision.OK, "test-fixture")
+    for target in (
+        "backend.app.layer2_sensors.snapshot_builder.ResourceGuard",
+        "backend.app.layer2_sensors.observation_writer.ResourceGuard",
+    ):
+        monkeypatch.setattr(target, lambda *args, **kwargs: allow_guard)
 
 
 @lru_cache(maxsize=1)
@@ -202,6 +221,91 @@ def test_layer2Snapshot_lineageVrMismatch_rejects(tmp_path: Path) -> None:
             lineage=lineage,
             roll_event=roll,
             validation_report_id="vr-mismatch",
+        )
+
+
+def test_layer2Snapshot_lineageVrHashOnlyMismatch_rejects(tmp_path: Path) -> None:
+    """覆盖范围：fetch 对齐但 content_hash 与 VR 不一致时拒绝写入
+    测试对象：Layer2SnapshotWriter.write_daily_snapshot VR 绑定守卫
+    目的/目标：R3Y-LINEAGE-VR-001 负向 — 单维 hash 漂移须 fail-closed
+    验证点：VR fetch-A/hash-A、envelope fetch-A/hash-B → Layer2LineageError 含 source_content_hashes
+    失败含义：仅 hash 漂移可绕过 VR 绑定，与 fetch-id 负向测形成盲区
+    """
+    cm = _layer2_cm(tmp_path, "layer2_vr_hash_mismatch.duckdb")
+    _insert_validation_report(
+        cm, "vr-hash-mismatch", fetch_ids=["fetch-A"], content_hashes=["hash-A"]
+    )
+
+    copper = _staged_asset("L2-COPPER")
+    snap, lineage, roll = CrossAssetSnapshotBuilder().build_daily_snapshots(
+        as_of=AS_OF,
+        trade_date=TRADE_DATE,
+        registry_entry=copper,
+        observations=[_obs("L2-COPPER")],
+        source_fetch_ids=("fetch-A",),
+        source_content_hashes=("hash-B",),
+    )
+    with pytest.raises(Layer2LineageError, match="source_content_hashes"):
+        Layer2SnapshotWriter(cm).write_daily_snapshot(
+            snapshot=snap,
+            lineage=lineage,
+            roll_event=roll,
+            validation_report_id="vr-hash-mismatch",
+        )
+
+
+def _minimal_layer2_lineage_envelope(
+    *,
+    fetch_ids: tuple[str, ...] = ("fetch-1",),
+    content_hashes: tuple[str, ...] = ("hash-1",),
+) -> Layer2LineageEnvelope:
+    return Layer2LineageEnvelope(
+        snapshot_id="snap-lin-unit",
+        snapshot_type="cross_asset_daily",
+        layer_id="layer2",
+        as_of_timestamp=AS_OF,
+        generated_at=AS_OF,
+        input_data_window_start=TRADE_DT,
+        input_data_window_end=TRADE_DT,
+        source_dataset_ids=("L2-COPPER",),
+        source_fetch_ids=fetch_ids,
+        source_content_hashes=content_hashes,
+        rule_version="layer2_sensor_staged_v1",
+        code_version="layer2-staged-v1",
+        parameter_hash="param-unit",
+        resource_profile="normal",
+        upstream_snapshot_ids=(),
+        is_incremental=False,
+    )
+
+
+def test_layer2Lineage_assertLineageMatchesValidationReport_unit() -> None:
+    """覆盖范围：VR provenance 与 lineage envelope 双向绑定断言函数
+    测试对象：assert_lineage_matches_validation_report
+    目的/目标：R3Y-LINEAGE-VR-001 — registry 草案证据须有直接单测锚点（非仅 WM 集成）
+    验证点：匹配不抛；fetch 或 hash 单维漂移 → Layer2LineageError
+    失败含义：守卫函数无单测，回归仅依赖集成路径间接覆盖
+    """
+    envelope = _minimal_layer2_lineage_envelope()
+    assert_lineage_matches_validation_report(
+        envelope,
+        validation_report_id="vr-unit",
+        vr_fetch_ids=("fetch-1",),
+        vr_content_hashes=("hash-1",),
+    )
+    with pytest.raises(Layer2LineageError, match="source_fetch_ids"):
+        assert_lineage_matches_validation_report(
+            envelope,
+            validation_report_id="vr-unit",
+            vr_fetch_ids=("fetch-2",),
+            vr_content_hashes=("hash-1",),
+        )
+    with pytest.raises(Layer2LineageError, match="source_content_hashes"):
+        assert_lineage_matches_validation_report(
+            envelope,
+            validation_report_id="vr-unit",
+            vr_fetch_ids=("fetch-1",),
+            vr_content_hashes=("hash-2",),
         )
 
 
@@ -615,6 +719,7 @@ def test_futuresRollEvent_persistedViaWriteManager(tmp_path: Path) -> None:
         assert row[2] == "HGF26"
 
 
+@pytest.mark.resourceguard
 def test_crossAssetSnapshotBuilder_resourceGuardBlocksBatchBuild() -> None:
     """覆盖范围：ResourceGuard HARD_STOP 阻断构建
     测试对象：CrossAssetSnapshotBuilder（mock guard HARD_STOP）
@@ -636,6 +741,7 @@ def test_crossAssetSnapshotBuilder_resourceGuardBlocksBatchBuild() -> None:
         )
 
 
+@pytest.mark.resourceguard
 def test_resourceGuard_realInstance_returnsDecision(tmp_path: Path) -> None:
     """覆盖范围：真实 ResourceGuard 返回决策枚举
     测试对象：ResourceGuard.check（真实 DuckDB 连接）

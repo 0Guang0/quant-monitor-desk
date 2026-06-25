@@ -492,14 +492,18 @@ uv run pytest -q && uv run ruff check .
 uv sync --locked
 uv run pytest tests/test_layer3_snapshot_builder.py tests/test_layer2_sensor_loader.py -q
 uv run pytest tests/test_round3_audit_registry_alignment.py -q -k lineage
+uv run pytest tests/test_round3f_lineage_layer3_registry_closure.py -q
 uv run pytest -q && uv run ruff check .
 ```
+
+> **closure gate：** 第三行 `test_round3f_lineage_layer3_registry_closure.py` 与 Trellis `MASTER.plan.md` §9 验收对齐。
 
 | 维度    | PASS                                                    |
 | ------- | ------------------------------------------------------- |
 | Lineage | L3/L4 snapshot lineage pytest；registry 行草案          |
 | L3      | malformed `bars[]` fail-closed；full row tuple 重建测试 |
 | VR      | synthetic ID 不得冒充 VR binding                        |
+| Closure | manifest 六键 + collect-only gate 绿                    |
 
 **未改什么：** production clean write；live source；宣称 3D.3 已全关 without registry。
 

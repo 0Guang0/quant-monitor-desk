@@ -6,7 +6,6 @@ from __future__ import annotations
 import argparse
 import re
 import sys
-from pathlib import Path
 
 import yaml
 
@@ -52,7 +51,10 @@ CURATED: dict[str, dict] = {
             "required": ["staged-only", "does not open production-live"],
         },
         "command": "uv run python -m pytest tests/test_batch3_staged_downstream_gate.py -q",
-        "failure_meaning": "Batch 3 gate language or references drifted; downstream agent may wrongly assume live production readiness.",
+        "failure_meaning": (
+            "Batch 3 gate language or references drifted; "
+            "downstream agent may wrongly assume live production readiness."
+        ),
         "evidence_required": "pytest output + doc link check",
     },
     "tests/test_layer2_sensor_loader.py": {
@@ -80,7 +82,9 @@ CURATED: dict[str, dict] = {
             "rules": [],
         },
         "command": "uv run python -m pytest tests/test_layer3_loader.py -q",
-        "failure_meaning": "Layer3 staged loader contract validation or staged-only gate regressed.",
+        "failure_meaning": (
+            "Layer3 staged loader contract validation or staged-only gate regressed."
+        ),
         "evidence_required": "pytest output",
     },
     "tests/test_layer4_market_structure.py": {
@@ -96,6 +100,23 @@ CURATED: dict[str, dict] = {
         },
         "command": "uv run python -m pytest tests/test_layer4_market_structure.py -q",
         "failure_meaning": "Layer4 staged market structure or lineage contract regressed.",
+        "evidence_required": "pytest output",
+    },
+    "tests/test_round3f_lineage_layer3_registry_closure.py": {
+        "purpose": "B3F-LIN acceptance gate for lineage/Layer3 registry closure pytest mapping.",
+        "type": "runtime-contract",
+        "verifies": {
+            "docs": [
+                "docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/BATCH_3F_COORDINATOR_PLAYBOOK.md",
+            ],
+            "specs": ["specs/contracts/snapshot_lineage_contract.yaml"],
+            "rules": [],
+        },
+        "command": (
+            "uv run python -m pytest "
+            "tests/test_round3f_lineage_layer3_registry_closure.py -q"
+        ),
+        "failure_meaning": "B3F-LIN closure gate broken; registry evidence chain invalid.",
         "evidence_required": "pytest output",
     },
     "tests/test_batch25_production_data_gate.py": {
@@ -124,7 +145,10 @@ CURATED: dict[str, dict] = {
             "specs": ["specs/contracts/source_route_contract.yaml"],
             "rules": ["docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"],
         },
-        "command": 'uv run python -m pytest tests/test_batch275_live_pilot_gate.py -q -m "not network"',
+        "command": (
+            'uv run python -m pytest tests/test_batch275_live_pilot_gate.py -q '
+            '-m "not network"'
+        ),
         "failure_meaning": "Live pilot gate no longer fail-closed on route/auth preconditions.",
         "evidence_required": "pytest output",
     },
@@ -188,7 +212,9 @@ CURATED: dict[str, dict] = {
             "rules": ["docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"],
         },
         "command": "uv run python -m pytest tests/test_fred_staged_semantics.py -q",
-        "failure_meaning": "FRED staged semantics drifted; macro supplementary may imply production-live.",
+        "failure_meaning": (
+            "FRED staged semantics drifted; macro supplementary may imply production-live."
+        ),
         "evidence_required": "pytest output",
     },
     "tests/test_fred_source_registry.py": {
@@ -205,7 +231,9 @@ CURATED: dict[str, dict] = {
             ],
         },
         "command": "uv run python -m pytest tests/test_fred_source_registry.py -q",
-        "failure_meaning": "FRED registry row missing or production-live; unauthorized FRED routing risk.",
+        "failure_meaning": (
+            "FRED registry row missing or production-live; unauthorized FRED routing risk."
+        ),
         "evidence_required": "pytest output",
     },
     "tests/test_fred_sandbox_pilot.py": {
@@ -223,7 +251,10 @@ CURATED: dict[str, dict] = {
         "evidence_required": "pytest output",
     },
     "tests/test_data_health_v2.py": {
-        "purpose": "Read-only data health v2 profiles (B01-DH2): whitelist BLOCKED, FRED/TDX/SP3/rollup/gate",
+        "purpose": (
+            "Read-only data health v2 profiles (B01-DH2): "
+            "whitelist BLOCKED, FRED/TDX/SP3/rollup/gate"
+        ),
         "type": "runtime-contract",
         "verifies": {
             "docs": [
@@ -234,7 +265,10 @@ CURATED: dict[str, dict] = {
             "rules": ["docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"],
         },
         "command": "uv run python -m pytest tests/test_data_health_v2.py -q",
-        "failure_meaning": "v2 profile semantics drifted; missing WL may PASS or production-primary may slip through.",
+        "failure_meaning": (
+            "v2 profile semantics drifted; missing WL may PASS or "
+            "production-primary may slip through."
+        ),
         "evidence_required": "pytest output",
     },
     "tests/test_production_live_pilot_policy.py": {
@@ -264,14 +298,22 @@ CURATED: dict[str, dict] = {
     "tests/test_api_security_contract.py": {
         "purpose": "API security contract fail-closed guardrails",
         "type": "policy-contract",
-        "verifies": {"docs": [], "specs": ["specs/contracts/api_security_contract.yaml"], "rules": []},
+        "verifies": {
+            "docs": [],
+            "specs": ["specs/contracts/api_security_contract.yaml"],
+            "rules": [],
+        },
         "command": "uv run python -m pytest tests/test_api_security_contract.py -q",
         "failure_meaning": "API security contract drifted; unsafe endpoints may open.",
     },
     "tests/test_module_boundaries.py": {
         "purpose": "Module import boundary enforcement blocks forbidden cross-layer imports",
         "type": "policy-contract",
-        "verifies": {"docs": ["docs/architecture/module_boundary_matrix.md"], "specs": ["specs/contracts/module_boundary_contract.yaml"], "rules": []},
+        "verifies": {
+            "docs": ["docs/architecture/module_boundary_matrix.md"],
+            "specs": ["specs/contracts/module_boundary_contract.yaml"],
+            "rules": [],
+        },
         "command": "uv run python -m pytest tests/test_module_boundaries.py -q",
         "failure_meaning": "Forbidden module imports may slip through boundary gate.",
     },
@@ -285,7 +327,11 @@ CURATED: dict[str, dict] = {
     "tests/test_source_conflict_validator.py": {
         "purpose": "Source conflict validator blocks conflicting primary sources",
         "type": "negative-runtime",
-        "verifies": {"docs": [], "specs": ["specs/contracts/source_conflict_rules.yaml"], "rules": []},
+        "verifies": {
+            "docs": [],
+            "specs": ["specs/contracts/source_conflict_rules.yaml"],
+            "rules": [],
+        },
         "command": "uv run python -m pytest tests/test_source_conflict_validator.py -q",
         "failure_meaning": "Conflicting sources may not be rejected.",
     },
@@ -308,7 +354,11 @@ CURATED: dict[str, dict] = {
     "tests/test_staged_pilot.py": {
         "purpose": "Staged pilot sandbox boundaries; does not open production-live",
         "type": "policy-contract",
-        "verifies": {"docs": ["docs/quality/production_live_pilot_policy.md"], "specs": ["specs/contracts/review_sandbox_contract.yaml"], "rules": []},
+        "verifies": {
+            "docs": ["docs/quality/production_live_pilot_policy.md"],
+            "specs": ["specs/contracts/review_sandbox_contract.yaml"],
+            "rules": [],
+        },
         "command": "uv run python -m pytest tests/test_staged_pilot.py -q",
         "failure_meaning": "Staged pilot may be misread as production-live readiness.",
     },
@@ -338,7 +388,9 @@ CURATED: dict[str, dict] = {
             "rules": ["docs/implementation_tasks/GLOBAL_TESTING_POLICY.md"],
         },
         "command": "uv run python -m pytest tests/test_docstring_quadruple_coverage.py -q",
-        "failure_meaning": "Test self-description contract broke; docstring hygiene regresses silently.",
+        "failure_meaning": (
+            "Test self-description contract broke; docstring hygiene regresses silently."
+        ),
     },
     "tests/test_tdx_manual_probe.py": {
         "purpose": "Batch 01 B01-TDX manual probe — mocked CI + auth-gated live (TDX-01..06)",
@@ -355,7 +407,10 @@ CURATED: dict[str, dict] = {
             "rules": ["docs/implementation_tasks/GLOBAL_TESTING_POLICY.md"],
         },
         "command": "uv run python -m pytest tests/test_tdx_manual_probe.py -q",
-        "failure_meaning": "TDX manual probe regression; validation-only/disabled-by-default guard may be broken.",
+        "failure_meaning": (
+            "TDX manual probe regression; validation-only/disabled-by-default "
+            "guard may be broken."
+        ),
     },
 }
 

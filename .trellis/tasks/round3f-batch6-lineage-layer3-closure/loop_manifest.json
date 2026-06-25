@@ -1,0 +1,5 @@
+{
+  "task": "round3f-batch6-lineage-layer3-closure",
+  "modules": ["layer3_chains", "layer2_sensors", "layer4_markets"],
+  "acs": []
+}
