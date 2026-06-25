@@ -545,7 +545,7 @@ uv run pytest -q && uv run ruff check .
 
 ```bash
 uv sync --locked
-uv run pytest tests/test_sync_orchestrator.py tests/test_sync_runners.py -q
+uv run pytest tests/test_sync_orchestrator.py tests/test_sync_runners.py tests/test_r3f_br_backfill_reconcile_closure.py -q
 uv run pytest -q && uv run ruff check .
 ```
 

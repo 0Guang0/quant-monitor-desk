@@ -1,0 +1,4 @@
+{"file": ".trellis/tasks/round3f-backfill-reconcile-parity/AUDIT.plan.md", "reason": "extract: Audit SSOT | for: A1-A8 boot"}
+{"file": "docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/BATCH_3F_COORDINATOR_PLAYBOOK.md", "reason": "extract: §8.5 PASS | for: A5"}
+{"file": "docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/BATCH_3F_HARDENING_RULES.md", "reason": "extract: forbidden production write | for: A3/A5"}
+{"file": "PROJECT_IMPLEMENTATION_ROADMAP.md", "reason": "extract: R3F-BR trace | for: A5"}

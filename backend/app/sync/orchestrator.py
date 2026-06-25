@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+from typing import Literal
+
 from backend.app.core.resource_guard import Decision, ResourceGuard, format_pause_event
 from backend.app.datasources.base_adapter import BaseDataAdapter
 from backend.app.db.connection import ConnectionManager
@@ -16,6 +19,40 @@ from backend.app.sync.runners import (
     ReconcileJobRunner,
     guard_production_adapter_bypass,
 )
+
+
+@dataclass(frozen=True, slots=True)
+class OrchestratorJobHandler:
+    """Registry row for orchestrator job-type → runner/deferred entry (R3F-BR-04 / D7-P1-1)."""
+
+    job_type: str
+    entrypoint: str
+    kind: Literal["runner", "deferred", "utility"]
+    runner_attr: str | None = None
+
+
+ORCHESTRATOR_HANDLER_REGISTRY: dict[str, OrchestratorJobHandler] = {
+    "incremental": OrchestratorJobHandler(
+        "incremental", "run_incremental", "runner", "_incremental"
+    ),
+    "backfill": OrchestratorJobHandler("backfill", "run_backfill", "runner", "_backfill"),
+    "reconcile": OrchestratorJobHandler("reconcile", "run_reconcile", "runner", "_reconcile"),
+    "full_load": OrchestratorJobHandler("full_load", "run_full_load", "deferred"),
+    "data_quality": OrchestratorJobHandler(
+        "data_quality", "run_data_quality", "runner", "_quality"
+    ),
+    "revision_audit": OrchestratorJobHandler(
+        "revision_audit", "run_revision_audit", "runner", "_quality"
+    ),
+    "recover_stuck_writing_job": OrchestratorJobHandler(
+        "recover_stuck_writing_job", "recover_stuck_writing_job", "utility"
+    ),
+}
+
+
+def orchestrator_handler_registry() -> dict[str, OrchestratorJobHandler]:
+    """Return a copy of the frozen handler registry (R3F-BR-04)."""
+    return dict(ORCHESTRATOR_HANDLER_REGISTRY)
 
 
 def _default_pipeline_config(
@@ -57,6 +94,10 @@ class DataSyncOrchestrator:
         )
         self._reconcile = ReconcileJobRunner(self._jobs)
         self._quality = QualityJobRunner(self._jobs, self._validation)
+
+    def handler_registry(self) -> dict[str, OrchestratorJobHandler]:
+        """Expose job-type handler map for ops/CLI matrix (R3F-BR-04)."""
+        return orchestrator_handler_registry()
 
     def bootstrap(self, *, sync_registry: bool = False) -> None:
         if sync_registry:

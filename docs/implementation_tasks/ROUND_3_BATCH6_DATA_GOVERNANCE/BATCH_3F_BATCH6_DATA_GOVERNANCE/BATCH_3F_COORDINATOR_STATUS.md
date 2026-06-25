@@ -1,29 +1,38 @@
 # Batch 3F 主会话协调状态
 
 > 更新：2026-06-25 · **Phase C：integration merge**  
-> **Integration：** `integration/round3-batch3f`
+> **纪律：** 禁止 `--no-verify`；**禁止**为通过 hook 削弱测试目的/价值（不得全局 mock RG 等）  
+> **Integration：** `integration/round3-batch3f` @ `e000791a`
 
 ---
 
-## 分支闭合状态（全部 6 复杂线 + CI）
+## merge 进度
 
-| ID      | HEAD       | audit.report | merge                                           |
-| ------- | ---------- | ------------ | ----------------------------------------------- |
-| **MIG** | `12cbb3d`  | ✅           | ✅ **#1** merged                                |
-| **LIN** | `fb70277`  | ✅           | 🟡 **#2** commit 受阻（pre-commit 全量 pytest） |
-| **CLI** | `dcc4f9b`  | ✅           | ⏳ #3                                           |
-| **SH**  | `6e778d48` | ✅           | ⏳ #4                                           |
-| **BR**  | `71f09550` | ✅           | ⏳ #5                                           |
-| **HYG** | `a753dfc`  | ✅           | ⏳ #6                                           |
-| **CI**  | `b9805a28` | N/A          | ⏳ #7                                           |
-| **REG** | —          | —            | ⏳ #8                                           |
+| 序     | 分支       | 状态             |
+| ------ | ---------- | ---------------- |
+| #1 MIG | `12cbb3d`  | ✅               |
+| #2 LIN | `9f9320d`  | ✅               |
+| #3 CLI | `fe495cfd` | ✅               |
+| #4 SH  | `e000791a` | ✅               |
+| #5 BR  | `71f09550` | ⏳ 待 merge      |
+| #6 HYG | `a753dfc`  | ⏳ 待 merge      |
+| #7 CI  | `b9805a28` | ⏳ 待 merge      |
+| #8 REG | —          | ⏳ 六线 merge 后 |
 
 ---
 
-## 本波次 agent
+## pre-commit 失败处置原则（用户确认）
 
-| Agent                                                           | 任务                        | 状态      |
-| --------------------------------------------------------------- | --------------------------- | --------- |
-| [Integration merge #3–#7](4e0b3832-32f5-4c36-b7a1-fa7f8ef244b0) | CLI→SH→BR→HYG→CI 顺序 merge | 🟡 进行中 |
+| 类型                                | 处置                                                        |
+| ----------------------------------- | ----------------------------------------------------------- |
+| **环境**（RG HARD_STOP / 内存不足） | `QMD_RESOURCE_PROFILE=normal`、释放内存后重跑；**不**改测试 |
+| **真实回归**                        | 修 **生产代码** 或测试与实现/docstring **对齐**（目的不变） |
+| **禁止**                            | autouse 全局 stub RG、删断言、改测试目标换绿、`--no-verify` |
 
-**阻塞：** LIN merge commit 时 pre-commit 跑全量 `pytest -q` 红（layer1 RG + loop_maintain）；已 `loop_maintain --fix` 索引 coordinator status。
+---
+
+## 下一步
+
+1. merge **BR → HYG → CI**（冲突仅合并 `test_catalog`，不削弱测）
+2. integration 全量 pytest（normal profile）
+3. **REG #8** + §7.3 registry 批处理
