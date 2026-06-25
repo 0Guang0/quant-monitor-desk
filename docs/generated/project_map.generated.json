@@ -2,9 +2,7 @@
   "version": "1",
   "modules": {
     "layer1_axes": {
-      "implementation": [
-        "backend/app/layer1_axes/**"
-      ],
+      "implementation": ["backend/app/layer1_axes/**"],
       "docs": [
         "docs/modules/layer1_global_regime_panel.md",
         "docs/architecture/module_boundary_matrix.md",
@@ -67,15 +65,10 @@
           "command": "uv run python -m pytest tests/test_fred_staged_semantics.py -q"
         }
       ],
-      "forbidden_claims": [
-        "production-live ready",
-        "live production ingestion"
-      ]
+      "forbidden_claims": ["production-live ready", "live production ingestion"]
     },
     "layer2_sensors": {
-      "implementation": [
-        "backend/app/layer2_sensors/**"
-      ],
+      "implementation": ["backend/app/layer2_sensors/**"],
       "docs": [
         "docs/modules/layer2_cross_asset_sensor.md",
         "docs/architecture/module_boundary_matrix.md"
@@ -117,15 +110,10 @@
           "command": "uv run python -m pytest tests/test_resource_guard.py -q"
         }
       ],
-      "forbidden_claims": [
-        "production-live ready",
-        "live production ingestion"
-      ]
+      "forbidden_claims": ["production-live ready", "live production ingestion"]
     },
     "layer5_evidence": {
-      "implementation": [
-        "backend/app/layer5_evidence/**"
-      ],
+      "implementation": ["backend/app/layer5_evidence/**"],
       "docs": [
         "docs/modules/layer5_security_evidence.md",
         "docs/architecture/module_boundary_matrix.md"
@@ -150,14 +138,10 @@
           "command": "uv run python -m pytest tests/test_trellis_audit_trace_authority.py -q"
         }
       ],
-      "forbidden_claims": [
-        "production-live ready"
-      ]
+      "forbidden_claims": ["production-live ready"]
     },
     "datasources": {
-      "implementation": [
-        "backend/app/datasources/**"
-      ],
+      "implementation": ["backend/app/datasources/**"],
       "docs": [
         "docs/modules/data_sources.md",
         "docs/modules/datasource_service.md",
@@ -182,7 +166,7 @@
         },
         {
           "path": "tests/test_source_registry.py",
-          "purpose": "Source registry loader and DB sync tests (Batch A).",
+          "purpose": "Source registry loader, DB sync, and schema enum compatibility tests (Batch A / data source expansion).",
           "command": "uv run python -m pytest tests/test_source_registry.py -q"
         },
         {
@@ -206,9 +190,7 @@
           "command": "uv run python -m pytest tests/test_r3x_data_source_routing_blockers.py -q"
         }
       ],
-      "forbidden_claims": [
-        "bypass route readiness gate"
-      ]
+      "forbidden_claims": ["bypass route readiness gate"]
     },
     "validators": {
       "implementation": [
@@ -257,9 +239,7 @@
           "command": "uv run python -m pytest tests/test_batch_c_validation_flow.py -q"
         }
       ],
-      "forbidden_claims": [
-        "direct table write outside WriteManager"
-      ]
+      "forbidden_claims": ["direct table write outside WriteManager"]
     },
     "ops": {
       "implementation": [
@@ -343,16 +323,10 @@
           "command": "uv run python -m pytest tests/test_qmd_data_cli.py -q"
         }
       ],
-      "forbidden_claims": [
-        "production-live ready",
-        "live production ingestion"
-      ]
+      "forbidden_claims": ["production-live ready", "live production ingestion"]
     },
     "db_platform": {
-      "implementation": [
-        "backend/app/db/**",
-        "scripts/init_db.py"
-      ],
+      "implementation": ["backend/app/db/**", "scripts/init_db.py"],
       "docs": [
         "docs/modules/write_manager.md",
         "docs/architecture/04_data_architecture.md",
@@ -391,16 +365,12 @@
       "forbidden_claims": []
     },
     "sync_orchestrator": {
-      "implementation": [
-        "backend/app/sync/**"
-      ],
+      "implementation": ["backend/app/sync/**"],
       "docs": [
         "docs/modules/data_sync_orchestrator.md",
         "docs/architecture/module_boundary_matrix.md"
       ],
-      "contracts": [
-        "specs/contracts/write_contract.yaml"
-      ],
+      "contracts": ["specs/contracts/write_contract.yaml"],
       "rules": [
         "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md",
         "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md"
@@ -462,91 +432,53 @@
       "forbidden_claims": []
     },
     "layer3_chains": {
-      "implementation": [
-        "backend/app/layer3_chains/**"
-      ],
-      "docs": [
-        "docs/modules/layer3_industry_shock_anchor.md"
-      ],
-      "contracts": [
-        "specs/contracts/snapshot_lineage_contract.yaml"
-      ],
-      "rules": [
-        "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"
-      ],
+      "implementation": ["backend/app/layer3_chains/**"],
+      "docs": ["docs/modules/layer3_industry_shock_anchor.md"],
+      "contracts": ["specs/contracts/snapshot_lineage_contract.yaml"],
+      "rules": ["docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"],
       "tests": [],
       "forbidden_claims": []
     },
     "layer4_markets": {
-      "implementation": [
-        "backend/app/layer4_markets/**"
-      ],
-      "docs": [
-        "docs/modules/layer4_market_structure.md"
-      ],
-      "contracts": [
-        "specs/contracts/snapshot_lineage_contract.yaml"
-      ],
-      "rules": [
-        "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"
-      ],
+      "implementation": ["backend/app/layer4_markets/**"],
+      "docs": ["docs/modules/layer4_market_structure.md"],
+      "contracts": ["specs/contracts/snapshot_lineage_contract.yaml"],
+      "rules": ["docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"],
       "tests": [],
       "forbidden_claims": []
     },
     "api_platform": {
-      "implementation": [
-        "backend/app/api/**"
-      ],
+      "implementation": ["backend/app/api/**"],
       "docs": [
         "docs/modules/fastapi_backend.md",
         "docs/modules/fastapi_and_frontend.md"
       ],
       "contracts": [],
-      "rules": [
-        "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"
-      ],
+      "rules": ["docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"],
       "tests": [],
       "forbidden_claims": []
     },
     "agents": {
-      "implementation": [
-        "backend/app/agents/**"
-      ],
-      "docs": [
-        "docs/modules/agent_module.md"
-      ],
+      "implementation": ["backend/app/agents/**"],
+      "docs": ["docs/modules/agent_module.md"],
       "contracts": [],
-      "rules": [
-        "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"
-      ],
+      "rules": ["docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"],
       "tests": [],
       "forbidden_claims": []
     },
     "notifications": {
-      "implementation": [
-        "backend/app/notifications/**"
-      ],
-      "docs": [
-        "docs/modules/notification_and_reports.md"
-      ],
+      "implementation": ["backend/app/notifications/**"],
+      "docs": ["docs/modules/notification_and_reports.md"],
       "contracts": [],
-      "rules": [
-        "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"
-      ],
+      "rules": ["docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"],
       "tests": [],
       "forbidden_claims": []
     },
     "etl": {
-      "implementation": [
-        "backend/app/etl/**"
-      ],
-      "docs": [
-        "docs/modules/duckdb_and_parquet.md"
-      ],
+      "implementation": ["backend/app/etl/**"],
+      "docs": ["docs/modules/duckdb_and_parquet.md"],
       "contracts": [],
-      "rules": [
-        "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"
-      ],
+      "rules": ["docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"],
       "tests": [
         {
           "path": "tests/test_duckdb_connection.py",

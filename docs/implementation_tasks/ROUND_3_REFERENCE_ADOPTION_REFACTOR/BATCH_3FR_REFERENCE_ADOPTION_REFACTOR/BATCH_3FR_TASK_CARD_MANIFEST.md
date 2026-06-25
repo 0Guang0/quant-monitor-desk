@@ -49,7 +49,7 @@ Batch 3F-R is not complete unless:
 4. `market_bar_p0` data health profile is complete enough for Round 3G admission.
 5. `qmd data health` has a real read-only path for supported profiles.
 6. TDX has a QMD-owned disabled/raw-only provider-port boundary.
-7. Provider catalog distinguishes production candidate vs production enabled.
+7. Provider catalog covers every source in `source_registry.yaml`, preserves proposed-disabled posture, and distinguishes production candidate vs production enabled.
 8. Round4 backtest/review planning requires JQ2PTrade/EasyXT-informed QMD-owned implementation.
 9. No backend runtime imports from `参考项目/**`.
 10. No module is planned to need more than three implementation batches to reach full stable production shape for its declared scope.

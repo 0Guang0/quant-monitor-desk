@@ -1059,7 +1059,9 @@ tests/test_source_registry.py:
   failure_meaning:
     Regression in test_source_registry; inspect purpose and linked
     authorities.
-  purpose: Source registry loader and DB sync tests (Batch A).
+  purpose:
+    Source registry loader, DB sync, and schema enum compatibility tests (Batch
+    A / data source expansion).
   type: protocol
   verifies:
     docs: []

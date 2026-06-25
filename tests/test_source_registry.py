@@ -16,6 +16,8 @@ from backend.app.datasources.source_registry import (
     DomainRoleBinding,
     InvalidRegistryError,
     LegacyRoleError,
+    SCHEMA_CHECK_LICENSE_TYPES,
+    SCHEMA_CHECK_SOURCE_TYPES,
     SourceDisabledError,
     SourceNotFoundError,
     SourceRegistry,
@@ -49,6 +51,31 @@ def test_defaultYaml_loadsFromRepoSeed():
     assert roles.primary_source_id == "baostock"
     assert roles.validation_source_id == "akshare"
     assert isinstance(roles, DomainRoleBinding)
+
+
+def test_sourceTypeAndLicenseType_matchSchemaCheckEnums():
+    """覆盖范围：source_registry.yaml 的 source_type/license_type 与 DB CHECK 枚举一致
+    测试对象：SourceRegistry 默认 YAML 全量 source 记录
+    目的/目标：新增数据源不能使用 schema.sql / migration 009 不允许的枚举值
+    验证点：每个 source.source_type 和 source.license_type 均在 CHECK 白名单内
+    失败含义：registry 可加载但同步 DB 或迁移约束会失败，数据源扩展不可发布
+    """
+    allowed_source_types = SCHEMA_CHECK_SOURCE_TYPES
+    allowed_license_types = SCHEMA_CHECK_LICENSE_TYPES
+    reg = SourceRegistry()
+    reg.load()
+    bad_source_types = {
+        source_id: rec.source_type
+        for source_id, rec in reg._sources.items()
+        if rec.source_type not in allowed_source_types
+    }
+    bad_license_types = {
+        source_id: rec.license_type
+        for source_id, rec in reg._sources.items()
+        if rec.license_type not in allowed_license_types
+    }
+    assert bad_source_types == {}
+    assert bad_license_types == {}
 
 
 def test_load_yamlWithShadowRole_raisesLegacyRoleError(bad_shadow_yaml):

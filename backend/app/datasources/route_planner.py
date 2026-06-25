@@ -11,7 +11,12 @@ import yaml
 from backend.app.config import PROJECT_ROOT
 from backend.app.datasources.capability_registry import SourceCapabilityRegistry
 from backend.app.datasources.route_models import SourceRouteCandidate, SourceRoutePlan
-from backend.app.datasources.source_registry import SourceRegistry
+from backend.app.datasources.source_registry import (
+    SCHEMA_CHECK_LICENSE_TYPES,
+    SCHEMA_CHECK_SOURCE_TYPES,
+    SourceRegistry,
+    schema_check_enums_valid,
+)
 
 
 def _platform_key() -> str:
@@ -137,7 +142,16 @@ class SourceRoutePlanner:
                 disabled_reason = plat_reason
             elif not reg_ok:
                 disabled_reason = reg_reason
-            elif role == "Primary":
+            else:
+                try:
+                    rec = self._registry.get(source_id)
+                    if not schema_check_enums_valid(
+                        source_type=rec.source_type, license_type=rec.license_type
+                    ):
+                        disabled_reason = "invalid_schema_source_or_license_type"
+                except KeyError:
+                    pass
+            if disabled_reason is None and role == "Primary":
                 try:
                     if self._registry.get(source_id).validation_only:
                         disabled_reason = "validation_only_cannot_be_primary"

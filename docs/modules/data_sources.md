@@ -251,7 +251,7 @@ skip_until_next_publish
 2. 不允许把 Validation 源无标记地写成 Primary。
 3. 不允许没有 source_used 的数据入库。
 4. 不允许用 unknown license 的源做生产主源。
-5. 不允许把网页抓取当成官方 API，除非 source_type 明确为 web_page。
+5. 不允许把网页抓取当成官方 API；网页/搜索类补充源必须用 schema CHECK 允许的 `aggregator` 或其他合规 `source_type` 标注，并保持 `validation_only=true` / evidence-only 边界。
 ```
 
 ---
@@ -518,6 +518,10 @@ DuckDB clean / snapshot
 
 ```text
 source_registry.yaml
+source_capabilities.yaml
+source_capability_contract.yaml
+source_route_contract.yaml
+source_route_plan.md
 data_adapter_contract.md
 data_sync_orchestrator.md
 data_validation_and_conflict.md

@@ -22,6 +22,38 @@ VALID_FALLBACK_POLICIES = frozenset(
 
 BANNED_ROLE_NAMES = frozenset({"Shadow", "Emergency"})
 
+# ponytail: keep in sync with migration 009 source_registry CHECK constraints.
+SCHEMA_CHECK_SOURCE_TYPES = frozenset(
+    {
+        "broker_terminal",
+        "public_market_data",
+        "aggregator",
+        "filing_announcement",
+        "official_api",
+        "local_sdk",
+        "vendor_api",
+    }
+)
+SCHEMA_CHECK_LICENSE_TYPES = frozenset(
+    {
+        "user_local_authorized",
+        "public_free",
+        "public_free_aggregator",
+        "public_official",
+        "public_terms_sensitive",
+        "official_free",
+        "local_authorized",
+        "public_web",
+    }
+)
+
+
+def schema_check_enums_valid(*, source_type: str, license_type: str) -> bool:
+    return (
+        source_type in SCHEMA_CHECK_SOURCE_TYPES
+        and license_type in SCHEMA_CHECK_LICENSE_TYPES
+    )
+
 
 class LegacyRoleError(ValueError):
     """Raised when YAML uses banned Shadow/Emergency role aliases."""

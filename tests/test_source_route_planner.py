@@ -5,7 +5,41 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
+from backend.app.datasources.capability_registry import SourceCapabilityRegistry
+from backend.app.datasources.route_planner import SourceRoutePlanner
+from backend.app.datasources.source_registry import SourceRegistry
+
 from tests.service_path_support import production_route_planner
+
+_BAD_SCHEMA_ENUM_FIXTURE = (
+    Path(__file__).parent / "fixtures" / "bad_schema_enum_route.yaml"
+)
+
+
+def test_invalidSourceTypeOrLicense_blocksReadyRoute() -> None:
+    """覆盖范围：source_type/license_type 与 DB CHECK 枚举不一致时的路由
+    测试对象：SourceRoutePlanner.plan（schema 非法 license 的 baostock primary）
+    目的/目标：契约要求枚举非法时 route planner 不得返回 READY
+    验证点：route_status 非 READY；selected_source_id 为 None；primary skip_reason 标明 schema 枚举非法
+    失败含义：非法枚举源仍被选中，sync_to_db 或生产路由会在 DB CHECK 处爆炸
+    """
+    reg = SourceRegistry(_BAD_SCHEMA_ENUM_FIXTURE)
+    reg.load()
+    caps = SourceCapabilityRegistry()
+    caps.load()
+    planner = SourceRoutePlanner(source_registry=reg, capability_registry=caps)
+    plan = planner.plan(
+        data_domain="cn_equity_daily_bar",
+        operation="fetch_daily_bar",
+        run_id="run-schema",
+        job_id="job-schema",
+    )
+    assert plan.route_status != "READY"
+    assert plan.selected_source_id is None
+    baostock = next(c for c in plan.candidates if c.source_id == "baostock")
+    assert baostock.skip_reason == "invalid_schema_source_or_license_type"
 
 
 def test_qmtDisabled_routePlanShowsSkipReason() -> None:

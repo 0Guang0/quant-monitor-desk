@@ -50,7 +50,9 @@ skip_reason
 
 ## 5. 新增外部数据源路由规则
 
-新增的 Polymarket、Kalshi、Stooq、Deribit、US Treasury、CFTC COT、CoinGecko、SEC EDGAR、BIS、World Bank、Alpha Vantage、mootdx、东方财富、新浪、同花顺/iFinD 与 Web Search 必须先进入 `DISABLED_SOURCE` 路由，直到对应 adapter、授权/条款、capability、ResourceGuard、回放样本和验收测试完成。
+新增的 `us_treasury`、`sec_edgar`、`cftc_cot`、`bis`、`world_bank`、`deribit`、`coingecko`、`kalshi`、`polymarket`、`stooq`、`alpha_vantage`、`mootdx`、`eastmoney`、`sina_finance`、`ths_ifind` 与 `web_search` 必须先进入 `DISABLED_SOURCE` 路由，直到对应 adapter、授权/条款、capability、ResourceGuard、回放样本和验收测试完成。
+
+SourceRoutePlan 可以把这些源暴露为候选/诊断项，但不得把 proposed-disabled source 选为 `READY`，也不得构造 adapter。`source_type` 与 `license_type` 必须保持与 `specs/schema/schema.sql` / migration 009 CHECK 枚举一致，否则 route plan 必须失败为 contract/config error。
 
 路由优先级原则：官方/监管/披露源优先于聚合源；交易所级 market-data 优先于聚合价格；授权终端优先于网页源；预测市场只能输出 `probability_signal`；Web Search 只能输出 evidence/manual_review，不得进入 clean writer。
 

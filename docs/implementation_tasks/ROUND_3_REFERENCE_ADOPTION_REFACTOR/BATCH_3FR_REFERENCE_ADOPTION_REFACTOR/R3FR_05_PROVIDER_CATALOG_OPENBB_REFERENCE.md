@@ -10,7 +10,7 @@
 
 Create the provider catalog shape needed before Round 3G and Round4 provider-facing work. The catalog should use OpenBB as architecture reference only, not as copied runtime source.
 
-This task must complete the catalog contract and first candidate entries in one batch. Do not split provider catalog work into repeated tiny “add one field” tasks.
+This task must complete the catalog contract and all active/proposed source entries in one batch. Do not split provider catalog work into repeated tiny “add one field” tasks.
 
 ---
 
