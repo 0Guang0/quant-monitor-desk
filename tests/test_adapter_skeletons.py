@@ -687,6 +687,109 @@ def test_fetchRecordsLatencyMsWhenPayloadOmitsIt(
     assert row[0] is not None
 
 
+def test_inferSchemaHash_csvHeader_producesStableHash():
+    """覆盖范围：CSV 表头有界 schema_hash 推导
+    测试对象：_infer_schema_hash(FetchPayload file_type=csv)
+    目的/目标：AC-DATA-02 — CSV SUCCESS 路径须产生稳定非空 schema_hash
+    验证点：同 header 两次 hash 相同且非空；不同 header 产生不同 hash
+    失败含义：CSV 结构化抓取无 schema 指纹，ValidationGate 无法检测漂移
+    """
+    from backend.app.datasources.adapters.fetch_port import FetchPayload
+    from backend.app.datasources.adapters.skeleton_base import _infer_schema_hash
+
+    content = b"symbol,close,volume\n000001,10.0,100\n"
+    payload = FetchPayload(content=content, file_type="csv")
+    h1 = _infer_schema_hash(payload)
+    h2 = _infer_schema_hash(payload)
+    assert h1 is not None and len(h1) == 64
+    assert h1 == h2
+    other = _infer_schema_hash(
+        FetchPayload(content=b"symbol,open,volume\n1,2,3\n", file_type="csv")
+    )
+    assert other is not None and h1 != other
+
+
+def test_inferSchemaHash_parquetColumns_producesHash(tmp_path):
+    """覆盖范围：Parquet 列名有界 schema_hash 推导
+    测试对象：_infer_schema_hash(FetchPayload file_type=parquet)
+    目的/目标：AC-DATA-02 — Parquet SUCCESS 路径须产生非空列指纹 hash
+    验证点：DuckDB 生成的最小 parquet 推断出 64 字符 hex
+    失败含义：Parquet 无 schema_hash，结构化源可 silent 绕过 drift 检查
+    """
+    import duckdb
+    from backend.app.datasources.adapters.fetch_port import FetchPayload
+    from backend.app.datasources.adapters.skeleton_base import _infer_schema_hash
+
+    pq_path = tmp_path / "minimal.parquet"
+    duckdb.connect().execute(
+        f"COPY (SELECT 1::INTEGER AS symbol, 10.0::DOUBLE AS close) "
+        f"TO '{pq_path.as_posix()}' (FORMAT PARQUET)"
+    )
+    payload = FetchPayload(content=pq_path.read_bytes(), file_type="parquet")
+    schema_hash = _infer_schema_hash(payload)
+    assert schema_hash is not None and len(schema_hash) == 64
+
+
+def test_skeletonFetch_corruptCsv_notSuccessEligible(
+    tmp_path,
+    migrated_con,
+    batch_b_registry,
+    request_factory,
+    file_registry_stack,
+    baostock_skeleton_market_only_class,
+):
+    """覆盖范围：损坏 CSV 不可进入 SUCCESS+clean-write 资格路径
+    测试对象：SkeletonAdapterBase + StubFetchPort(corrupt csv)
+    目的/目标：AC-DATA-04 — infer 失败时不得 SUCCESS 且缺 schema_hash
+    验证点：status 为 SCHEMA_DRIFT 或 FAILED；非 SUCCESS
+    失败含义：损坏 CSV 仍标 SUCCESS，gate 因 NULL hash fail-open 可写库
+    """
+    from backend.app.datasources.adapters.fetch_port import StubFetchPort
+
+    corrupt = b"\xff\xfe not,a,valid\x00csv"
+    con = migrated_con(tmp_path)
+    stack = file_registry_stack
+    adapter = baostock_skeleton_market_only_class(
+        batch_b_registry,
+        raw_store=stack["raw_store"],
+        fetch_port=StubFetchPort(payload=corrupt, file_type="csv", row_count=1),
+    )
+    req = request_factory("baostock", "cn_equity_daily_bar")
+    result = adapter.fetch(req, con=con)
+    assert result.status in ("FAILED", "SCHEMA_DRIFT")
+    assert result.status != "SUCCESS"
+
+
+def test_skeletonFetch_corruptParquet_notSuccessEligible(
+    tmp_path,
+    migrated_con,
+    batch_b_registry,
+    request_factory,
+    file_registry_stack,
+    baostock_skeleton_market_only_class,
+):
+    """覆盖范围：损坏 Parquet 不可进入 SUCCESS+clean-write 资格路径
+    测试对象：SkeletonAdapterBase + StubFetchPort(corrupt parquet)
+    目的/目标：AC-DATA-04 — 损坏 parquet infer 失败须非 SUCCESS
+    验证点：status 为 SCHEMA_DRIFT 或 FAILED
+    失败含义：损坏 Parquet 伪装 SUCCESS，schema_hash 缺失绕过 drift gate
+    """
+    from backend.app.datasources.adapters.fetch_port import StubFetchPort
+
+    corrupt = b"PAR1\x00not-a-real-parquet-file"
+    con = migrated_con(tmp_path)
+    stack = file_registry_stack
+    adapter = baostock_skeleton_market_only_class(
+        batch_b_registry,
+        raw_store=stack["raw_store"],
+        fetch_port=StubFetchPort(payload=corrupt, file_type="parquet", row_count=1),
+    )
+    req = request_factory("baostock", "cn_equity_daily_bar")
+    result = adapter.fetch(req, con=con)
+    assert result.status in ("FAILED", "SCHEMA_DRIFT")
+    assert result.status != "SUCCESS"
+
+
 def test_inferSchemaHash_detectsNestedStructureDrift():
     """覆盖范围：_infer_schema_hash 嵌套结构漂移
     测试对象：_infer_schema_hash(JSON 嵌套键不同)

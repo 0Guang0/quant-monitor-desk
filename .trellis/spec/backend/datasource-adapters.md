@@ -38,8 +38,8 @@ def create_test_adapter(...) -> BaseDataAdapter  # tests only; default StubFetch
 | `FetchPayload.content` | Raw bytes written via `RawStore.save` on SUCCESS |
 | `FetchPayload.file_type` | Passed to RawStore (default `"json"`) |
 | `FetchPayload.row_count` | Optional; defaults to 1 on SUCCESS |
-| `FetchPayload.schema_hash` | Optional; JSON dict keys fingerprint when omitted |
-| SUCCESS `FetchResult` | `raw_file_paths`, `content_hash`, `schema_hash?`, `latency_ms?` |
+| `FetchPayload.schema_hash` | Required on structured SUCCESS (`json`/`csv`/`parquet`); bounded infer when omitted — see `specs/contracts/data_adapter_contract.md` §Structured schema_hash |
+| SUCCESS `FetchResult` | `raw_file_paths`, `content_hash`, `schema_hash` (non-empty when structured), `latency_ms?` |
 | Failure `FetchResult` | `row_count=0`; no raw for `EMPTY_RESPONSE` / `NOT_PUBLISHED_YET` |
 | FileRegistry | **Required** in `create_adapter()`; optional in direct skeleton tests |
 | cninfo unpublished | `UnpublishedPort` → `NOT_PUBLISHED_YET` + business message |

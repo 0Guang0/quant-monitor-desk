@@ -1,0 +1,33 @@
+{"file": ".trellis/tasks/round3v-schema-hash-fail-closed/MASTER.plan.md", "reason": "extract: Execute SSOT | for: Boot slot 1"}
+{"file": ".trellis/tasks/round3v-schema-hash-fail-closed/context_pack.json", "reason": "extract: authority graph routing | for: Boot slot 2"}
+{"file": ".cursor/skills/trellis-execute/SKILL.md", "reason": "extract: Phase 0 boot | for: §9.0 Boot"}
+{"file": ".cursor/rules/ponytail.mdc", "reason": "extract: lazy ladder | for: §0.3a"}
+{"file": ".trellis/tasks/round3v-schema-hash-fail-closed/research/integration-ledger.md", "reason": "extract: context packing map | for: §8 order"}
+{"file": ".trellis/tasks/round3v-schema-hash-fail-closed/research/vertical-slices.md", "reason": "extract: DATA-01..04 | for: §8 order"}
+{"file": "docs/implementation_tasks/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/B02_02_schema_hash_fail_closed.md", "reason": "extract: VR-DATA-001 AC | for: §2 AC-DATA-*"}
+{"file": "docs/implementation_tasks/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/BATCH_3V_COORDINATOR_PLAYBOOK.md", "reason": "extract: §3.1 §3.3 §2.5 §2.6 | for: §0 boundary"}
+{"file": "docs/implementation_tasks/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/BATCH_3V_TASK_CARD_MANIFEST.md", "reason": "extract: B3V-C02 routing | for: §0"}
+{"file": "docs/implementation_tasks/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/BATCH_3V_HARDENING_RULES.md", "reason": "extract: §1-7 hard stops | for: §1.5"}
+{"file": "docs/implementation_tasks/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/BATCH_3V_ADVERSARIAL_AUDIT.md", "reason": "extract: B3V-AUD-05 gate weaken | for: §5 negative"}
+{"file": "docs/implementation_tasks/ROUND_3_VERIFIED_AUDIT_CLEANUP/README.md", "reason": "extract: Round 3V scope | for: §0"}
+{"file": "PROJECT_IMPLEMENTATION_ROADMAP.md", "reason": "extract: R3V-B02-DATA-01 | for: §0 lineage"}
+{"file": "docs/quality/quant_monitor_desk_verified_audit_report_2026-06-25_v3_INDEX.md", "reason": "extract: VR-DATA-001 route | for: §1.2"}
+{"file": "docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md", "reason": "extract: B3V-C02 row read-only | for: Plan trace"}
+{"file": "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md", "reason": "extract: scope discipline | for: §3"}
+{"file": "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md", "reason": "extract: semantic tests | for: §5"}
+{"file": "docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md", "reason": "extract: bounded scan | for: §1.4"}
+{"file": "specs/contracts/data_adapter_contract.md", "reason": "extract: structured schema_hash rules | for: §9.1 DATA-01"}
+{"file": "specs/contracts/write_contract.yaml", "reason": "extract: schema_hash_changed reject | for: §9.3 DATA-03"}
+{"file": "specs/contracts/data_quality_rules.yaml", "reason": "extract: SCHEMA_DRIFT failed | for: §3 S4"}
+{"file": "specs/contracts/resource_limits.yaml", "reason": "extract: resource caps spirit | for: §9.2 bounded infer"}
+{"file": "docs/modules/data_validation_and_conflict.md", "reason": "extract: schema_hash gate semantics | for: §2"}
+{"file": "backend/app/datasources/adapters/skeleton_base.py", "reason": "extract: _infer_schema_hash _fetch_impl | for: §9.2 impact target"}
+{"file": "backend/app/datasources/adapters/fetch_port.py", "reason": "extract: FetchPayload.schema_hash | for: §9.2"}
+{"file": "backend/app/db/validation_gate.py", "reason": "extract: _schema_hash_blocks_write | for: §9.3 impact target"}
+{"file": "backend/app/datasources/fetch_log.py", "reason": "extract: schema_hash persistence | for: §9.3"}
+{"file": "tests/test_db_validation_gate.py", "reason": "extract: gate tests + new missing hash | for: §9.3 RED"}
+{"file": "tests/test_adapter_skeletons.py", "reason": "extract: infer + corrupt tests | for: §9.2 §9.4 RED"}
+{"file": "tests/test_data_adapter_contract.py", "reason": "extract: FetchResult contract | for: §9.1"}
+{"file": "tests/test_data_quality_validator.py", "reason": "extract: SCHEMA_DRIFT adjacency | for: §6 Tier A+"}
+{"file": ".trellis/spec/backend/datasource-adapters.md", "reason": "extract: schema_hash optional note | for: §9.1 contract align"}
+{"file": "MIGRATION_MAP.md", "reason": "extract: db layer placement | for: §2"}

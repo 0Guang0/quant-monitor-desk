@@ -255,6 +255,100 @@ def test_dbValidationGate_isNotStubBehavior(tmp_path: Path) -> None:
     gate.assert_can_write("stub-pass-1", "append_only")
 
 
+@pytest.mark.parametrize(
+    "suffix",
+    [".csv", ".parquet", ".json"],
+    ids=["csv", "parquet", "json"],
+)
+def test_missingSchemaHashOnStructuredFetch_rejects(
+    tmp_path: Path, suffix: str
+) -> None:
+    """覆盖范围：结构化 fetch_log 缺 schema_hash 时 gate fail-closed（三后缀）
+    测试对象：DbValidationGate._schema_hash_blocks_write
+    目的/目标：AC-DATA-03 — SUCCESS 且 row_count>0 的结构化路径不得因 NULL hash 放行
+    验证点：PASSED 报告 + fetch_log schema_hash=NULL + .csv/.parquet/.json 路径 → ValidationRejected
+    失败含义：gate fail-open，结构化源可绕过 schema drift 检查写入 clean 表
+    """
+    cm = _setup(tmp_path)
+    report_id = f"vr-missing-hash-{suffix.lstrip('.')}"
+    _insert_report(
+        cm,
+        report_id,
+        status="PASSED",
+        can_write_clean=True,
+        needs_manual_review=False,
+    )
+    raw_paths = f'["/data/raw/qmt/a{suffix}"]'
+    with cm.writer() as con:
+        con.execute(
+            """
+            INSERT INTO fetch_log (
+                fetch_id, run_id, job_id, source_id, data_domain, status, row_count,
+                schema_hash, raw_file_paths, fetch_time
+            ) VALUES (
+                ?, 'r1', 'j1', 'qmt', 'market_bar_1d', 'SUCCESS', 1,
+                NULL, ?, CURRENT_TIMESTAMP
+            )
+            """,
+            [f"fetch-mh-{suffix.lstrip('.')}", raw_paths],
+        )
+        con.execute(
+            "UPDATE validation_report SET job_id = 'j1', source_id = 'qmt' "
+            f"WHERE validation_report_id = '{report_id}'"
+        )
+    gate = DbValidationGate(cm)
+    with pytest.raises(ValidationRejected, match="schema_hash"):
+        gate.assert_can_write(report_id, "append_only")
+
+
+def test_missingSchemaHash_registryFallback_rejects(tmp_path: Path) -> None:
+    """覆盖范围：无路径后缀时 file_registry 结构化回退仍 fail-closed
+    测试对象：DbValidationGate._fetch_log_is_structured registry 分支
+    目的/目标：G-03 — raw_file_paths 空且 registry 有 structured file_type 时缺 hash 须拒绝
+    验证点：file_registry parquet 行 + fetch_log 无后缀路径 + schema_hash=NULL → ValidationRejected
+    失败含义：registry 回退分支未纳入 structured 判定，gate 对缺 hash 放行
+    """
+    cm = _setup(tmp_path)
+    _insert_report(
+        cm,
+        "vr-missing-hash-reg",
+        status="PASSED",
+        can_write_clean=True,
+        needs_manual_review=False,
+    )
+    with cm.writer() as con:
+        con.execute(
+            """
+            INSERT INTO file_registry (
+                file_id, file_type, source, local_path, content_hash, schema_hash,
+                fetch_time, as_of_timestamp, parse_status, quality_flag
+            ) VALUES (
+                'f-structured', 'parquet', 'qmt', '/data/raw/qmt/legacy.parquet',
+                'hash1', 'schema-v1', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP,
+                'parsed', 'ok'
+            )
+            """
+        )
+        con.execute(
+            """
+            INSERT INTO fetch_log (
+                fetch_id, run_id, job_id, source_id, data_domain, status, row_count,
+                schema_hash, raw_file_paths, fetch_time
+            ) VALUES (
+                'fetch-mh-reg', 'r1', 'j1', 'qmt', 'market_bar_1d', 'SUCCESS', 1,
+                NULL, '[]', CURRENT_TIMESTAMP
+            )
+            """
+        )
+        con.execute(
+            "UPDATE validation_report SET job_id = 'j1', source_id = 'qmt' "
+            "WHERE validation_report_id = 'vr-missing-hash-reg'"
+        )
+    gate = DbValidationGate(cm)
+    with pytest.raises(ValidationRejected, match="schema_hash"):
+        gate.assert_can_write("vr-missing-hash-reg", "append_only")
+
+
 def test_schemaHashDriftWithoutApproval_rejects(tmp_path: Path) -> None:
     """覆盖范围：file_registry 与 fetch_log schema_hash 漂移
     测试对象：DbValidationGate write_contract schema_hash 检查
@@ -294,7 +388,8 @@ def test_schemaHashDriftWithoutApproval_rejects(tmp_path: Path) -> None:
             """
         )
         con.execute(
-            "UPDATE validation_report SET job_id = 'j1', source_id = 'qmt' WHERE validation_report_id = 'vr-drift'"
+            "UPDATE validation_report SET job_id = 'j1', source_id = 'qmt' "
+            "WHERE validation_report_id = 'vr-drift'"
         )
     gate = DbValidationGate(cm)
     with pytest.raises(ValidationRejected, match="schema_hash"):
