@@ -3,7 +3,7 @@
   "name": "round3-batch6-technical-debt",
   "title": "B3F-HYG: Batch 3F hygiene / perf / ingestion split",
   "description": "R3F-HYG-06 perf budget artifact, R3F-HYG-07 R2b sandbox_bootstrap, ResourceGuard verify, registry proposed delta.",
-  "status": "in_progress",
+  "status": "review",
   "dev_type": "chore",
   "scope": "batch6_technical_debt",
   "branch": "chore/round3-batch6-technical-debt",

@@ -8,6 +8,7 @@
 | 分支 | `chore/round3-batch6-technical-debt` |
 | Execute handoff | `validate-execute-handoff` exit 0 |
 | Execute commit | `e65c9718492f5880b959baaa3ce448503c86bf2c` |
+| Repair 二轮 commit | `fa68b5c90c9637a9d50de4ad8d1fcebaedf6fa77` |
 | Repair 二轮 | `repair-evidence/round2_audit_closure.md` |
 
 ---
@@ -75,7 +76,7 @@
 
 ### 4.2 结论
 
-- [x] **PASS** — Repair 二轮闭合 §4.3；可进入 merge gate
+- [x] **PASS_AFTER_REPAIR** — Repair 二轮闭合 §4.3；可进入 merge gate
 - [ ] **PASS_WITH_FIXES**
 - [ ] **FAIL**
 
@@ -102,3 +103,5 @@
 | audit_matrix.json | **PASS_AFTER_REPAIR** | `audit_matrix.json` |
 
 **复验 PASS → 可 merge gate**
+
+**Audit final: PASS_AFTER_REPAIR**
