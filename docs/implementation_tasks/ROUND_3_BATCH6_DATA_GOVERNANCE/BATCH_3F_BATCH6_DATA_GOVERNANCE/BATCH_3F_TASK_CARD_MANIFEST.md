@@ -6,16 +6,20 @@
 
 ---
 
-## 1. Segment ownership
+## 1. Segment ownership（八路并行）
 
-| Segment                    | Branch family                         | Owns                                                                         | Primary roadmap rows              |
-| -------------------------- | ------------------------------------- | ---------------------------------------------------------------------------- | --------------------------------- |
-| 3F.1 Migration residuals   | `feature/round3f-migration-*`         | 009 residual, 008 plan routing, migration coverage                           | `R3F-MIG-01..06`                  |
-| 3F.2 CLI / ops entrypoints | `feature/round3-qmd-data-cli`         | `qmd data`, console scripts, authorized staging E2E runbook                  | `R3F-CLI-01..05`                  |
-| 3F.3 Source health         | `feature/round3-source-health-*`      | source health table/writer, data quality runners, live FRED primary tracking | `R3F-SH-01..07`                   |
-| 3F.4 Backfill/reconcile    | `feature/round3-backfill-reconcile-*` | reconcile, backfill parity, orchestrator registry, R3-PARTIAL-4/5 closeout   | `R3F-BR-01..05`                   |
-| 3F.5 Hygiene/perf          | `chore/round3-batch6-*`               | C901, packaging, adapter/storage port, ResourceGuard, perf, CI handoff       | `R3F-HYG-01..13`                  |
-| 3F.6 Lineage/Layer3        | `fix/round3f-batch6-lineage-*`        | `ADV-R3X-LINEAGE-001`, `R3Y-LINEAGE-VR-001`, `R3-B6-021-O-01/02`             | `R3F-LIN-01..03`, `R3F-L3-01..02` |
+| Playbook ID | 轨道          | Segment                    | Branch（canonical）                                  | Owns                                                                         | Primary roadmap rows                          |
+| ----------- | ------------- | -------------------------- | ---------------------------------------------------- | ---------------------------------------------------------------------------- | --------------------------------------------- |
+| **B3F-MIG** | **complex**   | 3F.1 Migration residuals   | `feature/round3f-migration-residual-checks`          | 009 residual, 008 plan routing, migration coverage                           | `R3F-MIG-01..06`                              |
+| **B3F-CLI** | **complex**   | 3F.2 CLI / ops entrypoints | `feature/round3-qmd-data-cli`                        | `qmd data`, console scripts, authorized staging E2E runbook                  | `R3F-CLI-01..05`                              |
+| **B3F-SH**  | **complex**   | 3F.3 Source health         | `feature/round3-source-health-and-quality-runners`   | source health table/writer, data quality runners, live FRED primary tracking | `R3F-SH-01..07`                               |
+| **B3F-BR**  | **complex**   | 3F.4 Backfill/reconcile    | `feature/round3-backfill-reconcile-parity`           | reconcile, backfill parity, orchestrator registry, R3-PARTIAL-4/5 closeout   | `R3F-BR-01..05`                               |
+| **B3F-HYG** | **complex**   | 3F.5 Hygiene/perf          | `chore/round3-batch6-technical-debt`                 | C901, packaging, adapter/storage port, ResourceGuard, perf, CI handoff       | `R3F-HYG-01..13`                              |
+| **B3F-LIN** | **complex**   | 3F.6 Lineage/Layer3        | `fix/round3f-batch6-lineage-layer3-registry-closure` | `ADV-R3X-LINEAGE-001`, `R3Y-LINEAGE-VR-001`, `R3-B6-021-O-01/02`             | `R3F-LIN-01..03`, `R3F-L3-01..02`             |
+| **B3F-REG** | **debt-lite** | Registry closeout          | `chore/round3f-registry-batch-closeout`              | 三 registry + COVERAGE 收口；已 RESOLVED verify-only                         | `R3F-LIN-03`, `R3F-BR-05`, `R3F-HYG-11/13` 等 |
+| **B3F-CI**  | **debt-lite** | CI gate handoff            | `chore/round3-ci-gate-hardening`                     | verification command matrix；PROMPT_05                                       | `R3F-HYG-12`                                  |
+
+**轨道统计：** 6 complex + 2 debt-lite = **8 路并行**。派发表 SSOT：`BATCH_3F_COORDINATOR_PLAYBOOK.md` §3.0。
 
 ---
 

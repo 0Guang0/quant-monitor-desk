@@ -21,11 +21,12 @@ The project planning source of truth is now:
 
 ## 2. Companion files
 
-| File                               | Purpose                                                                |
-| ---------------------------------- | ---------------------------------------------------------------------- |
-| `BATCH_3F_TASK_CARD_MANIFEST.md`   | Batch task/card manifest and item ownership.                           |
-| `BATCH_3F_COORDINATOR_PLAYBOOK.md` | Execution order, parallel boundaries, merge gates, and closeout rules. |
-| `BATCH_3F_HARDENING_RULES.md`      | Safety constraints inherited by every 3F task.                         |
+| File                                            | Purpose                                                           |
+| ----------------------------------------------- | ----------------------------------------------------------------- |
+| `BATCH_3F_TASK_CARD_MANIFEST.md`                | Batch task/card manifest and item ownership（八路 Playbook ID）。 |
+| `BATCH_3F_COORDINATOR_PLAYBOOK.md`              | **主会话协调手册**：六复杂 + 两精简、文件锁、合并顺序、§8 验收。  |
+| `BATCH_3F_PLAYBOOK_ADVERSARIAL_AUDIT.report.md` | Playbook 对抗性审计与修补闭环索引。                               |
+| `BATCH_3F_HARDENING_RULES.md`                   | Safety constraints inherited by every 3F task.                    |
 
 ---
 
