@@ -1,0 +1,30 @@
+{"file": ".trellis/tasks/round3v-rawstore-atomic-write/MASTER.plan.md", "reason": "extract: Execute SSOT | for: Boot slot 1"}
+{"file": ".trellis/tasks/round3v-rawstore-atomic-write/context_pack.json", "reason": "extract: authority graph routing | for: Boot slot 2"}
+{"file": ".cursor/skills/trellis-execute/SKILL.md", "reason": "extract: Phase 0 boot | for: §9.0 Boot"}
+{"file": ".cursor/rules/ponytail.mdc", "reason": "extract: lazy ladder | for: §0.3a"}
+{"file": ".trellis/tasks/round3v-rawstore-atomic-write/research/integration-ledger.md", "reason": "extract: v3 boot routing map | for: §9.0 Boot"}
+{"file": ".trellis/tasks/round3v-rawstore-atomic-write/research/vertical-slices.md", "reason": "extract: STOR-01..05 | for: §8 order"}
+{"file": ".trellis/tasks/round3v-rawstore-atomic-write/research/gitnexus-summary.md", "reason": "extract: impact MEDIUM blast radius | for: Boot impact gate"}
+{"file": "docs/implementation_tasks/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/B02_03_rawstore_atomic_write.md", "reason": "extract: 任务卡 AC/切片/验收 | for: AC-STOR-*"}
+{"file": "docs/implementation_tasks/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/BATCH_3V_COORDINATOR_PLAYBOOK.md", "reason": "extract: §2.5/§2.6/§8.3 | for: Boundary §0"}
+{"file": "docs/implementation_tasks/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/BATCH_3V_HARDENING_RULES.md", "reason": "extract: §1-7 hard stops | for: §1.5"}
+{"file": "docs/implementation_tasks/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/BATCH_3V_TASK_CARD_MANIFEST.md", "reason": "extract: C03 manifest | for: §0 meta"}
+{"file": "docs/implementation_tasks/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/README.md", "reason": "extract: Batch 3V 入口 | for: §1.6"}
+{"file": "docs/implementation_tasks/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/BATCH_3V_ADVERSARIAL_AUDIT.md", "reason": "extract: 对抗性纪律 | for: §7"}
+{"file": "docs/implementation_tasks/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/BATCH_3V_SELF_CHECK.md", "reason": "extract: PASS_FOR_DISPATCH | for: Plan gate"}
+{"file": "docs/quality/quant_monitor_desk_verified_audit_report_2026-06-25_v3_INDEX.md", "reason": "extract: VR-STOR-001 路由 | for: AC-STOR-05"}
+{"file": "docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md", "reason": "extract: B3V-C03 映射 | for: closeout 只读"}
+{"file": "docs/ROUND3_HANDOFF.md", "reason": "extract: post Batch 01 checkpoint | for: §1.3"}
+{"file": "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md", "reason": "extract: scope 纪律 | for: §3"}
+{"file": "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md", "reason": "extract: RED-GREEN 语义 | for: §5"}
+{"file": "docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md", "reason": "extract: 资源 caps | for: §3"}
+{"file": "docs/implementation_tasks/GLOBAL_TASK_TEMPLATE.md", "reason": "extract: 15 节模板 | for: Plan 对照"}
+{"file": "PROJECT_IMPLEMENTATION_ROADMAP.md", "reason": "extract: Round 3V R3V-B02-STOR-01 | for: §1"}
+{"file": "MIGRATION_MAP.md", "reason": "extract: storage 模块放置 | for: §2"}
+{"file": "specs/context/authority_graph.yaml", "reason": "extract: storage 域 | for: context_pack"}
+{"file": "specs/contracts/resource_limits.yaml", "reason": "extract: 资源契约 | for: MAX_RAW 邻接"}
+{"file": "specs/contracts/snapshot_lineage_contract.yaml", "reason": "extract: 证据链契约只读 | for: §3.2"}
+{"file": "backend/app/storage/raw_store.py", "reason": "extract: save 写路径 | for: §9.2 impact target"}
+{"file": "backend/app/storage/path_compat.py", "reason": "extract: write_bytes 基线 | for: §9.1 atomic helper"}
+{"file": "backend/app/storage/file_registry.py", "reason": "extract: 注册邻接只读 | for: forbidden 对照"}
+{"file": "tests/test_raw_store.py", "reason": "extract: 基线+新测 RED/GREEN | for: §5.1 §9"}

@@ -1,0 +1,3 @@
+STOR-01 RED — test_writeBytesAtomic_writesCompleteFile
+Exit code: 1
+ImportError: cannot import name 'write_bytes_atomic' from 'backend.app.storage.path_compat'

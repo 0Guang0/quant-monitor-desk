@@ -1,0 +1,2 @@
+STOR-03 RED — midWriteFailure tests fail without atomic path (os.replace mock ineffective on direct write_bytes)
+Pre-impl: target would exist after mocked replace failure.

@@ -1,0 +1,2 @@
+STOR-04 GREEN — test_save_repeatedSameContent_isIdempotent
+Exit code: 0 — 1 passed in 0.08s

@@ -1,0 +1,2 @@
+STOR-02 RED — save regression (baseline passes; wiring verified post STOR-01)
+Note: existing save tests green on write_bytes; atomic wire is STOR-02 deliverable.
