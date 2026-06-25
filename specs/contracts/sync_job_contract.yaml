@@ -1,5 +1,19 @@
 version: p0_round_1
 contract_name: sync_job_contract
+# Support matrix (VR-SYNC-002): implemented vs reserved job runners.
+implemented_job_types:
+  - incremental
+  - backfill
+  - reconcile
+reserved_job_types:
+  - full_load
+  - data_quality
+  - revision_audit
+deferred_error:
+  code: DEFERRED_JOB_TYPE
+  owner: Round3F
+  phase: R3F-SH-*
+  docs_anchor: D2-P1-1
 job_types:
   - full_load
   - incremental

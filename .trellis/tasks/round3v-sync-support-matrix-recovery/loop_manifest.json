@@ -1,0 +1,13 @@
+{
+  "task": "round3v-sync-support-matrix-recovery",
+  "modules": ["sync", "core_platform"],
+  "acs": [
+    { "id": "AC-SYNC-PLAN", "status": "passed", "repair_items": [] },
+    { "id": "AC-SYNC-002", "status": "passed", "repair_items": [] },
+    { "id": "AC-SYNC-001", "status": "passed", "repair_items": [] },
+    { "id": "AC-SYNC-REG", "status": "passed", "repair_items": [] },
+    { "id": "AC-SYNC-TEST", "status": "passed", "repair_items": [] },
+    { "id": "AC-SYNC-PLAYBOOK", "status": "passed", "repair_items": [] },
+    { "id": "AC-SYNC-CLOSE", "status": "passed", "repair_items": [] }
+  ]
+}

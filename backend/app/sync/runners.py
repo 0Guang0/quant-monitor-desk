@@ -30,6 +30,7 @@ _DEFAULT_QUALITY_RULE_SET, _DEFAULT_QUALITY_RULE_VERSION = default_quality_rule_
 _DEFAULT_CONFLICT_RULE_SET, _DEFAULT_CONFLICT_RULE_VERSION = default_conflict_rule_contract()
 
 FetchCallable = Callable[..., FetchResult]
+PostWritePreCompleteHook = Callable[[str, str], None]
 
 
 def sync_adapter_bypass_allowed() -> bool:
@@ -363,6 +364,7 @@ class IncrementalJobRunner(_PipelineMixin):
         fetch_callable: FetchCallable | None = None,
         config: PipelineConfig,
         fetch_operation: str | None = None,
+        post_write_pre_complete_hook: PostWritePreCompleteHook | None = None,
     ) -> SyncJobResult:
         if adapter is None and fetch_callable is None:
             raise ValueError("adapter or fetch_callable is required")
@@ -496,6 +498,12 @@ class IncrementalJobRunner(_PipelineMixin):
                     conflict_report_id=conflict_report_id,
                     message="write failed",
                 )
+        if post_write_pre_complete_hook is not None:
+            if not sync_adapter_bypass_allowed():
+                raise ValueError(
+                    "post_write_pre_complete_hook is pytest-only (PYTEST_CURRENT_TEST)"
+                )
+            post_write_pre_complete_hook(job_id, write_result.write_id)
         self._jobs.emit_custom_event(
             job_id,
             task_id=spec.instrument_id,

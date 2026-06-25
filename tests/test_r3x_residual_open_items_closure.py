@@ -311,14 +311,15 @@ def test_advR3xCap001_compatibilityMapEmpty() -> None:
 
 
 def test_advA3_016_orchestratorDeferredRunners(tmp_path) -> None:
-    """覆盖范围：编排器延期 API 显式 NotImplemented（ADV-A3-016）
-    测试对象：DataSyncOrchestrator.run_full_load / run_data_quality
-    目的/目标：未实现的批跑入口须明确抛 NotImplemented 而非空操作
-    验证点：两方法均 pytest.raises(NotImplementedError)
-    失败含义：调用方误以为全量/质检已可用，生产 job 静默无效果
+    """覆盖范围：编排器延期 API 显式 deferred 错误（ADV-A3-016 / VR-SYNC-002）
+    测试对象：DataSyncOrchestrator.run_full_load / run_data_quality / run_revision_audit
+    目的/目标：未实现的批跑入口须明确抛 DeferredJobTypeError，调用方不得误以为已实现
+    验证点：三方法均 pytest.raises(DeferredJobTypeError) 且 code=DEFERRED_JOB_TYPE
+    失败含义：调用方误以为全量/质检/修订审计已可用，生产 job 静默无效果
     """
     from backend.app.db.connection import ConnectionManager
     from backend.app.db.migrate import apply_migrations
+    from backend.app.sync.contract import DEFERRED_JOB_TYPE_CODE, DeferredJobTypeError
     from backend.app.sync.jobs import SyncJobSpec
     from backend.app.sync.orchestrator import DataSyncOrchestrator
     from datetime import date
@@ -342,10 +343,41 @@ def test_advA3_016_orchestratorDeferredRunners(tmp_path) -> None:
         partition_key=None,
         trigger_reason=None,
     )
-    with pytest.raises(NotImplementedError, match="run_full_load"):
+    with pytest.raises(DeferredJobTypeError, match="run_full_load") as exc_info:
         orch.run_full_load(spec)
-    with pytest.raises(NotImplementedError, match="run_data_quality"):
-        orch.run_data_quality(spec)
+    assert exc_info.value.code == DEFERRED_JOB_TYPE_CODE
+    dq_spec = SyncJobSpec(
+        run_id="r",
+        job_id="j-dq",
+        job_type="data_quality",
+        data_domain="cn_equity_daily_bar",
+        market_id="CN_A",
+        source_id="baostock",
+        adapter_id=None,
+        date_start=None,
+        date_end=None,
+        instrument_id=None,
+        partition_key=None,
+        trigger_reason=None,
+    )
+    with pytest.raises(DeferredJobTypeError, match="run_data_quality"):
+        orch.run_data_quality(dq_spec)
+    ra_spec = SyncJobSpec(
+        run_id="r",
+        job_id="j-ra",
+        job_type="revision_audit",
+        data_domain="cn_equity_daily_bar",
+        market_id="CN_A",
+        source_id="baostock",
+        adapter_id=None,
+        date_start=None,
+        date_end=None,
+        instrument_id=None,
+        partition_key=None,
+        trigger_reason=None,
+    )
+    with pytest.raises(DeferredJobTypeError, match="run_revision_audit"):
+        orch.run_revision_audit(ra_spec)
 
 
 def test_advA1_012_minStagingRowsEnforced(tmp_path) -> None:
