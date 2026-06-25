@@ -1,0 +1,5 @@
+# A7 ops repair evidence — init_db migration 012 idempotency (repair 2026-06-25)
+# Command: QMD_DATA_ROOT=.audit-sandbox/a7-mig-check/data uv run python scripts/init_db.py --db .audit-sandbox/a7-mig-check/quant_monitor.duckdb (x2)
+# First run: applied ... 012_migration_residuals
+# Second run: applied none (up to date)
+# exit_code=0 (both runs)

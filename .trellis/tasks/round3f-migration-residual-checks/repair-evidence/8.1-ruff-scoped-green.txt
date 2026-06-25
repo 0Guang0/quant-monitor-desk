@@ -1,0 +1,4 @@
+# Playbook §8.1 Tier B — ruff on B3F-MIG diff paths (repair 2026-06-25)
+# Command: uv run ruff check backend/app/datasources/source_registry.py backend/app/db/migrations tests/test_round3f_migration_residuals.py docs/schema tests/test_schema_migration.py tests/test_source_registry.py
+All checks passed!
+exit_code=0

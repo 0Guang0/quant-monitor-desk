@@ -1,1 +1,4 @@
-......                                                                   [100%]
+................................................................         [100%]
+# repair 2026-06-25: B3F-MIG regression subset (6 mig + schema_contract + migration_coverage + schema_migration + source_registry)
+# Command: uv run pytest tests/test_round3f_migration_residuals.py tests/test_schema_contract.py tests/test_migration_coverage.py tests/test_schema_migration.py tests/test_source_registry.py -q
+exit_code=0
