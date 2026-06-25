@@ -112,4 +112,4 @@
 - [x] Complete B03-MODEL-03 `test_migration_coverage.py` (6 tests green)
 - [x] Update `MIGRATION_COVERAGE.md` from §3
 - [x] Fill `registry_proposed_delta.yaml` for main session
-- [ ] Adversarial audit before merge (main session)
+- [x] Adversarial audit before merge (main session) — ADV-L5R-01..04 CLOSED 2026-06-25

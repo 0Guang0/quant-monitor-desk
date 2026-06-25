@@ -209,6 +209,7 @@ modules:
     docs:
       - docs/modules/write_manager.md
       - docs/architecture/04_data_architecture.md
+      - docs/schema/MIGRATION_COVERAGE.md
     contracts:
       - specs/schema/schema.sql
       - specs/contracts/write_contract.yaml
@@ -221,6 +222,7 @@ modules:
       - tests/test_schema_migration.py
       - tests/test_schema_contract.py
       - tests/test_sync_migration.py
+      - tests/test_migration_coverage.py
     required_evidence:
       - context_pack.json
       - loop_manifest.json

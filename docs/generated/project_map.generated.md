@@ -46,9 +46,9 @@ Do not edit by hand. Regenerate with `uv run python scripts/generate_project_map
 
 ## db_platform
 - implementation: backend/app/db/**, scripts/init_db.py
-- docs: 2
+- docs: 3
 - contracts: 2
-- tests: 3
+- tests: 4
 
 ## sync_orchestrator
 - implementation: backend/app/sync/**

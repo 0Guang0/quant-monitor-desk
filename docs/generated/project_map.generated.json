@@ -345,7 +345,8 @@
       ],
       "docs": [
         "docs/modules/write_manager.md",
-        "docs/architecture/04_data_architecture.md"
+        "docs/architecture/04_data_architecture.md",
+        "docs/schema/MIGRATION_COVERAGE.md"
       ],
       "contracts": [
         "specs/schema/schema.sql",
@@ -370,6 +371,11 @@
           "path": "tests/test_sync_migration.py",
           "purpose": "Tests for migration 006 ingestion sync tables (Batch D §8.1).",
           "command": "uv run python -m pytest tests/test_sync_migration.py -q"
+        },
+        {
+          "path": "tests/test_migration_coverage.py",
+          "purpose": "L3/L4/L5 建模表 migration 覆盖矩阵门禁（B3V-L5R / VR-MODEL-001 closure test）。",
+          "command": "uv run python -m pytest tests/test_migration_coverage.py -q"
         }
       ],
       "forbidden_claims": []
