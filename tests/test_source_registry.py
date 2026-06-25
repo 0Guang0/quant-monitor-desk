@@ -460,7 +460,8 @@ def test_disabledPrimaryDomain_returnsDisabledSource():
     """覆盖范围：默认禁用的分钟线域调度检查
     测试对象：get_domain_roles + assert_domain_schedulable（cn_equity_minute_bar）
     目的/目标：分钟线默认不开，尝试调度时应明确报「域已禁用」
-    验证点：domain_enabled_by_default=False；pytest.raises(DomainDisabledError, match=DISABLED_SOURCE)
+    验证点：domain_enabled_by_default=False；
+        pytest.raises(DomainDisabledError, match=DISABLED_SOURCE)
     失败含义：默认禁用分钟线仍可调度，QMT 误触发
     """
     reg = SourceRegistry()
