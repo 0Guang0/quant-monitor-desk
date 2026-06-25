@@ -1,0 +1,2 @@
+..........................s..........................                    [100%]
+Boot baseline: test_ops_db_inspector + test_write_manager — PASS (exit 0)

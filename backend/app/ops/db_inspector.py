@@ -8,77 +8,54 @@ from pathlib import Path
 from typing import Any
 
 import duckdb
+import yaml
 from backend.app.db.connection import ConnectionManager
 from backend.app.db.sql_identifiers import quote_ident
 
-KEY_TABLES: tuple[str, ...] = (
-    "schema_version",
-    "source_registry",
-    "file_registry",
-    "fetch_log",
-    "data_sync_job",
-    "job_event_log",
-    "validation_report",
-    "data_quality_log",
-    "source_conflict",
-    "manual_review_queue",
-    "write_audit_log",
-    "resource_guard_log",
-    "axis_registry",
-    "axis_indicator_registry",
-    "axis_indicator_profile",
-    "axis_observation",
-    "axis_feature_snapshot",
-    "axis_interpretation_snapshot",
-    "axis_snapshot_lineage",
-    "instrument_registry",
-    "security_bar_1d",
+_OPS_INSPECT_CONTRACT = (
+    Path(__file__).resolve().parents[3] / "specs/contracts/ops_db_inspect_contract.yaml"
+)
+
+
+def _load_ops_inspect_contract() -> dict[str, Any]:
+    return yaml.safe_load(_OPS_INSPECT_CONTRACT.read_text(encoding="utf-8")) or {}
+
+
+def _key_tables_from_contract(raw: dict[str, Any]) -> tuple[str, ...]:
+    names = tuple(str(name) for name in raw.get("key_tables") or ())
+    for name in names:
+        quote_ident(name)
+    return names
+
+
+def _deferred_mapping_from_contract(
+    raw: dict[str, Any],
+) -> tuple[tuple[str, tuple[str, ...]], ...]:
+    mapping = raw.get("deferred_item_mapping") or {}
+    items: list[tuple[str, tuple[str, ...]]] = []
+    for item_id, spec in mapping.items():
+        if not isinstance(spec, dict):
+            raise ValueError(f"invalid deferred_item_mapping entry for {item_id!r}")
+        if "evidence_fields" in spec:
+            fields = tuple(str(field) for field in spec["evidence_fields"])
+        elif "rule" in spec:
+            fields = (f"rule: {spec['rule']}",)
+        else:
+            raise ValueError(
+                f"deferred_item_mapping[{item_id!r}] missing evidence_fields or rule"
+            )
+        items.append((str(item_id), fields))
+    return tuple(items)
+
+
+_contract = _load_ops_inspect_contract()
+KEY_TABLES: tuple[str, ...] = _key_tables_from_contract(_contract)
+DEFERRED_ITEM_MAPPING: tuple[tuple[str, tuple[str, ...]], ...] = _deferred_mapping_from_contract(
+    _contract
 )
 
 # Layer 5 tables — listed for forward inventory; no migration until Batch 5 (023).
 FUTURE_PHASE_KEY_TABLES: frozenset[str] = frozenset({"instrument_registry", "security_bar_1d"})
-
-DEFERRED_ITEM_MAPPING: tuple[tuple[str, tuple[str, ...]], ...] = (
-    (
-        "DB-R3-001",
-        (
-            "data_root.raw_files_count",
-            "data_root.parquet_files_count",
-            "key_tables.file_registry.row_count",
-            "key_tables.fetch_log.row_count",
-        ),
-    ),
-    (
-        "DB-R3-002",
-        (
-            "db.exists",
-            "db.read_only_open",
-            "schema",
-            "key_tables",
-        ),
-    ),
-    (
-        "R3-PARTIAL-2",
-        (
-            "evidence.latest_fetch",
-            "evidence.job_status_counts",
-            "evidence.validation_status_counts",
-        ),
-    ),
-    (
-        "R2.6-IMPL-8",
-        ("rule: no live source enablement; report existing DB evidence only",),
-    ),
-    (
-        "R3-EARLY-DB-INSPECT-CLI",
-        (
-            "command availability",
-            "read-only mode",
-            "json output",
-            "no-mutation tests",
-        ),
-    ),
-)
 
 REQUIRED_TOP_LEVEL_FIELDS: tuple[str, ...] = (
     "status",

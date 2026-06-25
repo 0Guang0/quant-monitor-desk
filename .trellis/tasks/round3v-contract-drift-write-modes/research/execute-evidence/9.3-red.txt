@@ -1,0 +1,2 @@
+KeyError: 'implemented_modes' (write_contract.yaml before WRITE-01 split)
+parity test would FAIL — expected RED before contract split

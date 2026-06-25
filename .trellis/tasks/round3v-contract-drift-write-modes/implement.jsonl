@@ -1,0 +1,29 @@
+{"file": ".trellis/tasks/round3v-contract-drift-write-modes/MASTER.plan.md", "reason": "extract: Execute SSOT | for: Boot slot 1"}
+{"file": ".trellis/tasks/round3v-contract-drift-write-modes/context_pack.json", "reason": "extract: authority graph routing | for: Boot slot 2"}
+{"file": ".cursor/skills/trellis-execute/SKILL.md", "reason": "extract: Phase 0 boot | for: §9.0 Boot"}
+{"file": ".cursor/rules/ponytail.mdc", "reason": "extract: lazy ladder | for: §0.3a"}
+{"file": ".trellis/tasks/round3v-contract-drift-write-modes/research/integration-ledger.md", "reason": "extract: context packing map | for: §8.0 Boot"}
+{"file": ".trellis/tasks/round3v-contract-drift-write-modes/research/vertical-slices.md", "reason": "extract: OPS/WRITE slices | for: §8 order"}
+{"file": "docs/implementation_tasks/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/B02_01_contract_drift_and_write_modes.md", "reason": "extract: VR AC + forbidden | for: §2 AC-*"}
+{"file": "docs/implementation_tasks/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/BATCH_3V_TASK_CARD_MANIFEST.md", "reason": "extract: C01 deps + branch lock | for: §0"}
+{"file": "docs/implementation_tasks/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/BATCH_3V_HARDENING_RULES.md", "reason": "extract: §3-7 hard stops | for: §1.5"}
+{"file": "docs/implementation_tasks/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/README.md", "reason": "extract: Batch 3V purpose | for: §0 boundary"}
+{"file": "docs/implementation_tasks/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/BATCH_3V_COORDINATOR_PLAYBOOK.md", "reason": "extract: §3.1+§3.2+§4 | for: AC-BOUND"}
+{"file": "docs/quality/quant_monitor_desk_verified_audit_report_2026-06-25_v3_INDEX.md", "reason": "extract: VR-OPS/WRITE routing | for: §2"}
+{"file": "PROJECT_IMPLEMENTATION_ROADMAP.md", "reason": "extract: Round 3V.1 lineage | for: §0"}
+{"file": "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md", "reason": "extract: scope | for: §3"}
+{"file": "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md", "reason": "extract: semantic tests | for: §5"}
+{"file": "docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md", "reason": "extract: caps | for: §3"}
+{"file": "docs/quality/staged_acceptance_policy.md", "reason": "extract: staged tiers | for: §0"}
+{"file": "specs/contracts/ops_db_inspect_contract.yaml", "reason": "extract: key_tables + deferred SSOT | for: §9.1-9.2"}
+{"file": "specs/contracts/write_contract.yaml", "reason": "extract: write modes contract | for: §9.3-9.5"}
+{"file": "specs/contracts/runtime_versions.md", "reason": "extract: runtime lock | for: §2.4"}
+{"file": "backend/app/ops/db_inspector.py", "reason": "extract: inspect runtime + loader target | for: §9.1-9.2"}
+{"file": "backend/app/db/write_manager.py", "reason": "extract: SUPPORTED/UNSUPPORTED modes | for: §9.3-9.5"}
+{"file": "tests/test_ops_db_inspector.py", "reason": "extract: inspect regression | for: §9.0 §10"}
+{"file": "tests/test_write_manager.py", "reason": "extract: write regression | for: §9.0 §10"}
+{"file": "tests/test_db_validation_gate.py", "reason": "extract: gate regression unchanged | for: §9.0 §10"}
+{"file": "docs/architecture/module_boundary_matrix.md", "reason": "extract: ops/db boundary | for: §3"}
+{"file": "docs/UNRESOLVED_ISSUES_REGISTRY.md", "reason": "extract: read-only registry context | for: Plan context"}
+{"file": "docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md", "reason": "extract: B3V-C01 coverage row | for: A5 trace"}
+{"file": "tests/test_contract_drift_ops_write.py", "reason": "extract: drift/parity tests RED placeholders | for: §5.1 §9.2-9.5"}
