@@ -41,6 +41,25 @@ TRADE_DATE = date(2026, 6, 14)
 TRADE_DT = datetime(2026, 6, 14, 16, 0, tzinfo=UTC)
 
 
+@pytest.fixture(autouse=True)
+def _layer2_snapshot_build_allows_resource_guard(request, monkeypatch):
+    """覆盖范围：非 ResourceGuard 专项测试的构建路径
+    测试对象：CrossAssetSnapshotBuilder 默认 ResourceGuard 注入
+    目的/目标：低内存 CI/开发机不因 ambient HARD_STOP 使 lineage/VR 测试假红
+    验证点：跳过名称含 resourceGuard 的专项；其余默认 builder 获 ALLOW mock
+    失败含义：专项 guard 测试被误 mock，ResourceGuard 负向覆盖失效
+    """
+    if "resourceguard" in request.node.name.lower():
+        return
+    allow_guard = MagicMock()
+    allow_guard.check.return_value = (Decision.OK, "test-fixture")
+    for target in (
+        "backend.app.layer2_sensors.snapshot_builder.ResourceGuard",
+        "backend.app.layer2_sensors.observation_writer.ResourceGuard",
+    ):
+        monkeypatch.setattr(target, lambda *args, **kwargs: allow_guard)
+
+
 @lru_cache(maxsize=1)
 def _staged_registry():
     return CrossAssetRegistryLoader().load(registry_path=STAGED_REGISTRY_FIXTURE)

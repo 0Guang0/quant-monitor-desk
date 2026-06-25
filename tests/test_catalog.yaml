@@ -724,6 +724,19 @@ tests/test_round3_verification_command_matrix.py:
     docs: []
     rules: []
     specs: []
+tests/test_round3f_lineage_layer3_registry_closure.py:
+  command: uv run python -m pytest tests/test_round3f_lineage_layer3_registry_closure.py
+    -q
+  evidence_required: pytest output
+  failure_meaning: B3F-LIN closure gate broken; registry evidence chain invalid.
+  purpose: B3F-LIN acceptance gate for lineage/Layer3 registry closure pytest mapping.
+  type: runtime-contract
+  verifies:
+    docs:
+    - docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/BATCH_3F_COORDINATOR_PLAYBOOK.md
+    rules: []
+    specs:
+    - specs/contracts/snapshot_lineage_contract.yaml
 tests/test_schema_contract.py:
   command: uv run python -m pytest tests/test_schema_contract.py -q
   failure_meaning: Regression in test_schema_contract; inspect purpose and linked

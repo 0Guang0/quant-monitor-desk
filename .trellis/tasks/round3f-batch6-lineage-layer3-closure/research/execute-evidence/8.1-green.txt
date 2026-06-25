@@ -1,0 +1,4 @@
+1 passed
+exit 0
+test_layer3Snapshot_malformedBarElement_rejects PASSED
+test_b3fLin_r3fL301_malformedBarElement_failClosed PASSED

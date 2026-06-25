@@ -1,0 +1,19 @@
+FF.s                                                                     [100%]
+================================== FAILURES ===================================
+___________ test_b3fLin_closureEvidenceManifest_listsAllRoadmapIds ____________
+tests\test_round3f_lineage_layer3_registry_closure.py:32: in test_b3fLin_closureEvidenceManifest_listsAllRoadmapIds
+    assert MANIFEST_PATH.is_file(), f"missing closure manifest: {MANIFEST_PATH}"
+E   AssertionError: missing closure manifest: C:\Users\Guang\Desktop\quant-monitor-desk-wt-b3f-lin\.trellis\tasks\round3f-batch6-lineage-layer3-closure\research\closure-evidence-manifest.yaml
+E   assert False
+E    +  where False = is_file()
+E    +    where is_file = WindowsPath('C:/Users/Guang/Desktop/quant-monitor-desk-wt-b3f-lin/.trellis/tasks/round3f-batch6-lineage-layer3-closure/research/closure-evidence-manifest.yaml').is_file
+_____________ test_b3fLin_registryProposedDelta_documentsFourIds ______________
+tests\test_round3f_lineage_layer3_registry_closure.py:46: in test_b3fLin_registryProposedDelta_documentsFourIds
+    assert REGISTRY_DRAFT.is_file(), f"missing registry draft: {REGISTRY_DRAFT}"
+E   AssertionError: missing registry draft: C:\Users\Guang\Desktop\quant-monitor-desk-wt-b3f-lin\.trellis\tasks\round3f-batch6-lineage-layer3-closure\research\registry-proposed-delta.md
+E   assert False
+E    +  where False = is_file()
+E    +    where is_file = WindowsPath('C:/Users/Guang/Desktop/quant-monitor-desk-wt-b3f-lin/.trellis/tasks/round3f-batch6-lineage-layer3-closure/research/registry-proposed-delta.md').is_file
+=========================== short test summary info ===========================
+FAILED tests/test_round3f_lineage_layer3_registry_closure.py::test_b3fLin_closureEvidenceManifest_listsAllRoadmapIds
+FAILED tests/test_round3f_lineage_layer3_registry_closure.py::test_b3fLin_registryProposedDelta_documentsFourIds

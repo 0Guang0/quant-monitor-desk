@@ -98,6 +98,20 @@ CURATED: dict[str, dict] = {
         "failure_meaning": "Layer4 staged market structure or lineage contract regressed.",
         "evidence_required": "pytest output",
     },
+    "tests/test_round3f_lineage_layer3_registry_closure.py": {
+        "purpose": "B3F-LIN acceptance gate for lineage/Layer3 registry closure pytest mapping.",
+        "type": "runtime-contract",
+        "verifies": {
+            "docs": [
+                "docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/BATCH_3F_COORDINATOR_PLAYBOOK.md",
+            ],
+            "specs": ["specs/contracts/snapshot_lineage_contract.yaml"],
+            "rules": [],
+        },
+        "command": "uv run python -m pytest tests/test_round3f_lineage_layer3_registry_closure.py -q",
+        "failure_meaning": "B3F-LIN closure gate broken; registry evidence chain invalid.",
+        "evidence_required": "pytest output",
+    },
     "tests/test_batch25_production_data_gate.py": {
         "purpose": "Batch 2.5 evidence is staged-only, not production-live readiness",
         "type": "policy-contract",

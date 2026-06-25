@@ -1,0 +1,4 @@
+2 passed
+exit 0
+test_layer2Snapshot_lineageIncludesFetchIdsAndHashes PASSED
+test_layer2Snapshot_lineageVrMismatch_rejects PASSED
