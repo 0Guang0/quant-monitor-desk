@@ -10,6 +10,7 @@ from backend.app.cli.errors import CliFailure, error_for_route_status
 from backend.app.config import DATA_ROOT
 from backend.app.core.resource_guard import ResourceGuard
 from backend.app.datasources.service import DataSourceService
+from backend.app.datasources.source_registry import SourceRegistry
 from backend.app.db.connection import ConnectionManager
 from backend.app.db.migrate import apply_migrations
 
@@ -112,14 +113,19 @@ def init_basic(*, dry_run: bool = True, db_path: Path | None = None) -> dict[str
     }
     if dry_run:
         payload["message"] = (
-            "dry-run only; use init_db without --dry-run or qmd-init-db --sync-registry"
+            "dry-run only; use qmd-init-db --sync-registry for migrations + registry"
         )
         return payload
     target.parent.mkdir(parents=True, exist_ok=True)
     cm = ConnectionManager(target)
+    registry_rows: int | None = None
     with cm.writer() as con:
         applied = apply_migrations(con)
+        registry = SourceRegistry()
+        registry.load()
+        registry_rows = registry.sync_to_db(con, tombstone_missing=True)
     payload["migrations_applied"] = applied or "none (up to date)"
+    payload["registry_rows"] = registry_rows
     return payload
 
 

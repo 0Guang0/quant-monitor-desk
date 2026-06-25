@@ -22,4 +22,7 @@ rules:
   - CLI outputs must include error_code and docs_anchor when failing
 required_tests:
   - tests/test_data_cli_contract.py::test_syncDryRunDoesNotWrite
-  - tests/test_data_cli_contract.py::test_routePreviewReadOnly
+  - tests/test_data_cli_contract.py::test_routePreviewContract_isReadOnly
+  - tests/test_qmd_data_cli.py::test_qmdData_syncWithoutDryRun_failsClosed
+  - tests/test_qmd_data_cli.py::test_initDb_syncRegistry_oneLiner
+  - tests/test_qmd_data_cli.py::test_packaging_consoleScripts_smoke

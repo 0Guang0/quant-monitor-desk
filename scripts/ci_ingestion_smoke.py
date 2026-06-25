@@ -93,7 +93,7 @@ def main() -> None:
     data_root = os.environ.get("QMD_DATA_ROOT", "data")
     os.environ["QMD_DATA_ROOT"] = data_root
     init_db_main()
-    init_db_main()
+    init_db_main()  # ponytail: idempotent second init proves migrate no-op on warm DB
     db_path = DATA_ROOT / "duckdb" / "quant_monitor.duckdb"
     if not db_path.is_file():
         raise SystemExit(f"duckdb not found at {db_path}")

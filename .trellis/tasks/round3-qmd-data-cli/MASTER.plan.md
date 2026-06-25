@@ -68,11 +68,14 @@ uv run pytest -q
 
 ## 11. Execute → Audit DoD
 
-- [x] §8.1–8.5 RED/GREEN 证据齐全
-- [x] 全量 pytest 绿
+- [x] §8.1–8.5 RED/GREEN 证据齐全（§8.3 含真实 pytest transcript）
+- [x] Playbook §8.3 / MASTER §10 scoped pytest+ruff 绿（`test_sync_jobs` + `test_qmd_data_cli` + `test_data_cli_contract`）
 - [x] 无 `source_health_snapshot` migration
 - [x] 无默认 live fetch
 - [x] `validate-execute-handoff` exit 0
+- [x] `AUDIT.plan.md` + `audit.report.md` 已提交
+
+> 全量 `uv run pytest -q` 归 **integration/round3-batch3f** 主会话轨；本分支 Repair 不宣称。
 
 ## 12. Skill 表
 

@@ -695,7 +695,6 @@ def test_syncRegistry_cli_syncsYamlToDb(tmp_path, registry_yaml_fixture, monkeyp
     """
     import os
     import subprocess
-    import sys
 
     data_root = tmp_path / "data"
     data_root.mkdir()
@@ -703,9 +702,8 @@ def test_syncRegistry_cli_syncsYamlToDb(tmp_path, registry_yaml_fixture, monkeyp
     monkeypatch.setenv("QMD_DATA_ROOT", str(data_root))
     project_root = Path(__file__).resolve().parents[1]
     env = os.environ.copy()
-    env["PYTHONPATH"] = str(project_root)
     proc = subprocess.run(
-        [sys.executable, "scripts/sync_registry.py", "--yaml", str(registry_yaml_fixture)],
+        ["uv", "run", "qmd-sync-registry", "--yaml", str(registry_yaml_fixture)],
         cwd=str(project_root),
         env=env,
         capture_output=True,

@@ -51,11 +51,12 @@ def test_qmdData_routePreview_isReadOnly_json(registry_yaml_fixture: Path, monke
     assert proc.returncode == 0, proc.stderr
     payload = json.loads(proc.stdout)
     assert payload["dry_run"] is True
+    assert payload.get("side_effects_allowed") is False
     assert "route_status" in payload
     assert payload["route_plan"]["data_domain"] == "market_bar_1d"
 
 
-def test_qmdData_sync_defaultDryRun_printsPlan(monkeypatch, tmp_path) -> None:
+def test_qmdData_sync_defaultDryRun_printsPlan(monkeypatch) -> None:
     """覆盖范围：qmd data sync 默认 dry-run
     测试对象：backend.app.cli.data_commands.sync_plan
     目的/目标：同步命令默认只规划、不抓取不写库
@@ -63,11 +64,16 @@ def test_qmdData_sync_defaultDryRun_printsPlan(monkeypatch, tmp_path) -> None:
     失败含义：默认实写会导致未授权生产同步
     """
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
-    try:
-        payload = data_commands.sync_plan(data_domain="market_bar_1d", dry_run=True)
-    except CliFailure as err:
-        assert err.error_code in {"DISABLED_SOURCE", "NO_AVAILABLE_SOURCE", "CAPABILITY_MISSING"}
-        return
+    monkeypatch.setattr(
+        data_commands,
+        "route_preview",
+        lambda **kwargs: {
+            "route_status": "READY",
+            "selected_source_id": "fixture_source",
+            "dry_run": True,
+        },
+    )
+    payload = data_commands.sync_plan(data_domain="market_bar_1d", dry_run=True)
     assert payload["dry_run"] is True
 
 
@@ -98,7 +104,9 @@ def test_qmdData_cliFailure_exposesErrorCodeAndDocsAnchor(monkeypatch) -> None:
     assert exc.value.docs_anchor.startswith("docs/")
 
 
-def test_initDb_syncRegistry_oneLiner(tmp_path, monkeypatch, registry_yaml_fixture: Path) -> None:
+def test_initDb_syncRegistry_oneLiner(
+    tmp_path, monkeypatch, registry_yaml_fixture: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
     """覆盖范围：init_db --sync-registry 一键初始化
     测试对象：scripts.init_db.main --sync-registry
     目的/目标：闭合 R2-GAP-1 的 CI one-liner
@@ -113,6 +121,8 @@ def test_initDb_syncRegistry_oneLiner(tmp_path, monkeypatch, registry_yaml_fixtu
     monkeypatch.setattr(init_db_mod, "DATA_ROOT", data_root)
     db_path = data_root / "duckdb" / "quant_monitor.duckdb"
     init_db_mod.main(["--db", str(db_path), "--sync-registry"])
+    out = capsys.readouterr().out
+    assert "sync_registry rows=" in out
     cm = ConnectionManager(db_path)
     with cm.reader() as con:
         count = con.execute("SELECT COUNT(*) FROM source_registry").fetchone()[0]
@@ -135,6 +145,29 @@ def test_packaging_consoleScripts_smoke(monkeypatch, tmp_path) -> None:
     assert callable(sync_main)
     sync_src = (PROJECT_ROOT / "scripts/sync_registry.py").read_text(encoding="utf-8")
     assert "sys.path.insert" not in sync_src
+    ci_src = (PROJECT_ROOT / "scripts/ci_ingestion_smoke.py").read_text(encoding="utf-8")
+    assert "sys.path.insert" not in ci_src
+
+
+def test_initBasic_noDryRun_syncsRegistry(tmp_path, monkeypatch, registry_yaml_fixture: Path) -> None:
+    """覆盖范围：qmd data init-basic --no-dry-run 实写路径
+    测试对象：backend.app.cli.data_commands.init_basic
+    目的/目标：闭合 A7-PLAN-01 — steps 声明 sync_registry 时须真实同步
+    验证点：registry_rows≥1；source_registry 表有行
+    失败含义：运维误以为 init-basic 已加载 registry 导致路由失败
+    """
+    from backend.app.db.connection import ConnectionManager
+
+    data_root = tmp_path / "data"
+    data_root.mkdir()
+    monkeypatch.setenv("QMD_DATA_ROOT", str(data_root))
+    db_path = data_root / "duckdb" / "quant_monitor.duckdb"
+    payload = data_commands.init_basic(dry_run=False, db_path=db_path)
+    assert payload["registry_rows"] >= 1
+    cm = ConnectionManager(db_path)
+    with cm.reader() as con:
+        count = con.execute("SELECT COUNT(*) FROM source_registry").fetchone()[0]
+    assert count >= 1
 
 
 def test_stagingE2eRunbook_documentsNoDefaultLive() -> None:
