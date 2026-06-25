@@ -40,10 +40,11 @@
 
 ### 2.2 Round 3 迁移 / DB 契约（非 live 授权类）
 
-| ID                               | 问题                                            | 清理阶段                  | 任务挂钩                            | 关闭条件                        |
-| -------------------------------- | ----------------------------------------------- | ------------------------- | ----------------------------------- | ------------------------------- |
-| B2.5-O-06 / A09-P2-01 / A9-P1-01 | Migration 008 广义 DB CHECK closeout            | **Round 3 migration 008** | `docs/schema/MIGRATION_008_PLAN.md` | migration 应用 + contract tests |
-| A9-P2-01..03 (registry)          | `manual_review_queue` / `source_conflict` CHECK | **Round 3 migration 008** | 同上                                | 同上                            |
+| ID                               | 问题                                            | 清理阶段                 | 任务挂钩                                     | 关闭条件                                  |
+| -------------------------------- | ----------------------------------------------- | ------------------------ | -------------------------------------------- | ----------------------------------------- |
+| B2.5-O-06 / A09-P2-01 / A9-P1-01 | Migration 009 status CHECK closeout (Batch 3V)  | **RESOLVED** @ `2aeb6f0` | `009_status_check_constraints.sql` · B3V-C05 | migration 009 + `test_schema_contract.py` |
+| A9-P2-01 (partial)               | `manual_review_queue` / `source_conflict` CHECK | **Round 3F**             | `docs/schema/MIGRATION_COVERAGE.md`          | 009 未覆盖表 → 3F migration slice         |
+| A9-P2-02                         | 生产 DB checksum before/after                   | **RESOLVED** (Batch 3V)  | `RESOLVED_ISSUES_REGISTRY.md`                | registry closed                           |
 
 ### 2.3 Round 3 架构卫生（既有 registry，非 Batch 2.5 阻塞）
 

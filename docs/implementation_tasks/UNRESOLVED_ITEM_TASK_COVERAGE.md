@@ -1,6 +1,6 @@
 # Unresolved Item → 原始执行任务覆盖索引
 
-> Last reconciled: 2026-06-25 post-Batch 3V integration merge (`integration/round3-batch3v` @ `af081770`).  
+> Last reconciled: 2026-06-25 post-Batch 3V on `master` @ `2aeb6f0`.  
 > 用途：防止 Plan 阶段只读取 `docs/implementation_tasks/**` 原始任务卡而漏掉 `docs/UNRESOLVED_ISSUES_REGISTRY.md` / `docs/AUDIT_DEFERRED_REGISTRY.md` 中仍未闭合的项目。  
 > 规则：新建 MASTER/AUDIT/REPAIR plan 前，必须先读取本文件、当前 registry、目标任务卡，并把本表中目标批次相关 ID 逐项映射到 AC、evidence、closeout 或 explicit re-deferral。若 registry 状态变化，本文件必须同步更新。
 
@@ -97,7 +97,7 @@
 ## 8. Batch 3V — Verified Audit Cleanup (merged 2026-06-25)
 
 > Coordinator: `BATCH_3V_COORDINATOR_PLAYBOOK.md` · Zero-open: `docs/quality/coordination/BATCH_3V_ZERO_OPEN_CLOSURE_POLICY.md`  
-> Status: **MERGED** on `integration/round3-batch3v` @ `af081770` — registry §7.3 batch closed.
+> Status: **DONE on master** @ `2aeb6f0` — registry §7.3 batch closed; post-merge test stamp `2aeb6f0`.
 
 | Manifest ID | Branch                                         | Owns `VR-*`                  | Task card | Track     | Status                                                    |
 | ----------- | ---------------------------------------------- | ---------------------------- | --------- | --------- | --------------------------------------------------------- |

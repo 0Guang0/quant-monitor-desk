@@ -365,9 +365,9 @@ def test_post14R2Risk3_failClosedModesDocumented() -> None:
 _RECONCILED_TOKENS = (
     "2026-06-25",
     "Batch 3V",
-    "af081770",
+    "2aeb6f0",
     "post-Batch 3V",
-    "integration merge",
+    "master",
 )
 
 
@@ -375,7 +375,7 @@ def test_r3yRegistrySlice_alpha2LastReconciled() -> None:
     """覆盖范围：Batch 3V 合并后四份 SSOT 的对账戳一致性
     测试对象：UNRESOLVED、RESOLVED、AUDIT_DEFERRED、UNRESOLVED_ITEM_TASK_COVERAGE
     目的/目标：Last reconciled 块含同一组 mandatory tokens，防止措辞漂移
-    验证点：四份文档均含 2026-06-25、Batch 3V、af081770、post-Batch 3V、integration merge
+    验证点：四份文档均含 2026-06-25、Batch 3V、2aeb6f0、post-Batch 3V、master
     失败含义：对账戳不一致，并行 slice 无法判断 registry 是否同一次 reconcile
     """
     coverage = PROJECT_ROOT / "docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md"

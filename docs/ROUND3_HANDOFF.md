@@ -104,20 +104,20 @@ Seven branches merged to `master` @ **`376e30e6`** via `integration/round3-batch
 - **`R3-PROMPT14-AKSHARE-VAL-01`** — SP3 v3 records akshare **validation-only** taxonomy + re-defer; live Eastmoney hist family still open (cross-ref `R3-B2.75-REQ2-EM`).
 - **`R3-B2.75-REQ2-EM`** — not closable by TDX probe alone.
 
-**Next gate:** FF merge `integration/round3-batch3v` → `master`; then **Round 3F** (Batch6 data governance). No production-live or production clean-write claims until Round 3G.
+**Next gate:** **Round 3F** (Batch6 data governance). No production-live or production clean-write claims until Round 3G.
 
-## Round 3 Batch 3V — **MERGED** (2026-06-25)
+## Round 3 Batch 3V — **DONE on master** (2026-06-25)
 
-Integration branch: `integration/round3-batch3v` @ `af081770`. Registry §7.3 batch closed.
+`master` @ `2aeb6f0`（FF from integration `af081770` + test/registry post-merge `2aeb6f0`）。Registry §7.3 batch closed。
 
-| Playbook ID | Branch                                         | Track     | Owns `VR-*`                  | Status   |
-| ----------- | ---------------------------------------------- | --------- | ---------------------------- | -------- |
-| B3V-OPS     | `fix/round3v-contract-drift-write-modes`       | complex   | `VR-OPS-001`, `VR-WRITE-001` | **CLOSED** |
+| Playbook ID | Branch                                         | Track     | Owns `VR-*`                  | Status                                      |
+| ----------- | ---------------------------------------------- | --------- | ---------------------------- | ------------------------------------------- |
+| B3V-OPS     | `fix/round3v-contract-drift-write-modes`       | complex   | `VR-OPS-001`, `VR-WRITE-001` | **CLOSED**                                  |
 | B3V-DATA    | `fix/round3v-schema-hash-fail-closed`          | complex   | `VR-DATA-001`                | **CLOSED** (runtime; registry partial → 3F) |
-| B3V-STOR    | `fix/round3v-rawstore-atomic-write`            | complex   | `VR-STOR-001`                | **CLOSED** |
-| B3V-SYNC    | `fix/round3v-sync-support-matrix-recovery`     | complex   | `VR-SYNC-002`, `VR-SYNC-001` | **CLOSED** |
-| B3V-REG     | `fix/round3v-registry-manifest-consistency`    | debt-lite | `VR-REG-001`, `VR-DOC-001`   | **CLOSED** |
-| B3V-L5R     | `review/round3v-layer5-model-schema-reconcile` | debt-lite | `VR-L5-001`, `VR-MODEL-001`  | **CLOSED** |
+| B3V-STOR    | `fix/round3v-rawstore-atomic-write`            | complex   | `VR-STOR-001`                | **CLOSED**                                  |
+| B3V-SYNC    | `fix/round3v-sync-support-matrix-recovery`     | complex   | `VR-SYNC-002`, `VR-SYNC-001` | **CLOSED**                                  |
+| B3V-REG     | `fix/round3v-registry-manifest-consistency`    | debt-lite | `VR-REG-001`, `VR-DOC-001`   | **CLOSED**                                  |
+| B3V-L5R     | `review/round3v-layer5-model-schema-reconcile` | debt-lite | `VR-L5-001`, `VR-MODEL-001`  | **CLOSED**                                  |
 
 **Entrypoint:** `docs/implementation_tasks/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/README.md`  
 **Coordinator:** `BATCH_3V_COORDINATOR_PLAYBOOK.md` · `docs/quality/coordination/BATCH_3V_ZERO_OPEN_CLOSURE_POLICY.md`  
