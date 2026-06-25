@@ -3,7 +3,7 @@
   "name": "round3f-backfill-reconcile-parity",
   "title": "B3F-BR: Backfill/reconcile parity and orchestrator handler registry",
   "description": "Close R3F-BR-01..05: backfill/reconcile parity guards, handler registry extraction, R3-PARTIAL-4/5 registry closeout chain; Playbook §8.5 verification.",
-  "status": "in_progress",
+  "status": "review",
   "dev_type": "feature",
   "scope": "backfill_reconcile_parity",
   "branch": "feature/round3-backfill-reconcile-parity",
