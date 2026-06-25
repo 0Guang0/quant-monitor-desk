@@ -3,6 +3,7 @@
 ## Source of truth
 
 - audit / registry ID: D-CI (Round 3 gate hygiene) — `.trellis/spec/guides/round3-repair-debt-worktree-plan.md` §5
+- roadmap ID: `R3F-HYG-12` — `PROMPT_05` / CI command matrix (`PROJECT_IMPLEMENTATION_ROADMAP.md`)
 - base branch: `integration/round3`
 - target branch: `chore/round3-ci-gate-hardening`
 - owner agent: CI agent (PROMPT_05 session)
