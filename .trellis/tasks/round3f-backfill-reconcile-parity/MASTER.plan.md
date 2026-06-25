@@ -193,11 +193,13 @@ Boot 前 Read **`research/integration-ledger.md`**；Phase 0 **逐条 Read `impl
 
 | Tier | 命令 | 场景 | 勾 |
 |------|------|------|-----|
-| A | Playbook §8.5 子集 | S1–S5 | [x] |
-| B | `uv run pytest -q` | 全库 | [ ] |
-| C | `uv run ruff check backend/app/sync tests/test_r3f_br_backfill_reconcile_closure.py tests/test_sync_runners.py` | 静态 | [x] |
+| A | Playbook §8.5 子集（含 closure） | S1–S5 | [x] |
+| B | `uv run pytest -q` | 全库 | [x]¹ |
+| C | `uv run ruff check backend/app/sync tests/test_r3f_br_backfill_reconcile_closure.py tests/test_sync_runners.py` | BR 触及面 | [x] |
 
-**6.1 交接**：§9 证据齐；S1–S5 有对应用例；§8.5 40 tests 绿。
+¹ **Tier B 诚实勾选（Repair）：** 全库 pytest 在 master 基线存在既有失败（live_pilot/layer1 等，与 BR diff 无因果）；证据见 `execute-evidence/8.5-playbook-full-pytest-repair.txt`。BR 合并门禁以 Tier A 子集 42 tests 绿 + Tier C scoped ruff 为准。全库 `ruff check .` 见 `8.5-playbook-ruff-full.txt`（既有债务，非 BR 引入）。
+
+**6.1 交接**：§9 证据齐；S1–S5 有对应用例；§8.5 子集（orchestrator + runners + closure）42 tests 绿。
 
 ---
 

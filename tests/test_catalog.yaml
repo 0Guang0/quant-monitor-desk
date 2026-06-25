@@ -621,9 +621,15 @@ tests/test_r3f_br_backfill_reconcile_closure.py:
   purpose: R3F-BR-01..05 closure guards (Batch 3F.4 backfill/reconcile parity).
   type: runtime-contract
   verifies:
-    docs: []
-    rules: []
-    specs: []
+    docs:
+    - docs/adr/ADR-023-layer5-conflict-review-path.md
+    - docs/AUDIT_DEFERRED_REGISTRY.md
+    - docs/UNRESOLVED_ISSUES_REGISTRY.md
+    - docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/BATCH_3F_COORDINATOR_PLAYBOOK.md
+    rules:
+    - docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/BATCH_3F_HARDENING_RULES.md
+    specs:
+    - specs/contracts/sync_job_contract.yaml
 tests/test_r3x_data_source_routing_blockers.py:
   command: uv run python -m pytest tests/test_r3x_data_source_routing_blockers.py
     -q
@@ -853,9 +859,11 @@ tests/test_sync_orchestrator.py:
   purpose: Tests for DataSyncOrchestrator core (Batch D §8.3).
   type: runtime-contract
   verifies:
-    docs: []
+    docs:
+    - docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/BATCH_3F_COORDINATOR_PLAYBOOK.md
     rules: []
-    specs: []
+    specs:
+    - specs/contracts/sync_job_contract.yaml
 tests/test_sync_pipeline_contract.py:
   command: uv run python -m pytest tests/test_sync_pipeline_contract.py -q
   failure_meaning: Regression in test_sync_pipeline_contract; inspect purpose and
@@ -872,9 +880,11 @@ tests/test_sync_runners.py:
   purpose: Sync job runner wiring tests (B3F-BR / playbook §8.5).
   type: runtime-contract
   verifies:
-    docs: []
+    docs:
+    - docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/BATCH_3F_COORDINATOR_PLAYBOOK.md
     rules: []
-    specs: []
+    specs:
+    - specs/contracts/sync_job_contract.yaml
 tests/test_tdx_live_manual_probe_authorization.py:
   command: uv run python -m pytest tests/test_tdx_live_manual_probe_authorization.py
     -q

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Literal
 
 from backend.app.core.resource_guard import Decision, ResourceGuard, format_pause_event
 from backend.app.datasources.base_adapter import BaseDataAdapter
@@ -25,7 +26,7 @@ class OrchestratorJobHandler:
 
     job_type: str
     entrypoint: str
-    kind: str
+    kind: Literal["runner", "deferred", "utility"]
     runner_attr: str | None = None
 
 
