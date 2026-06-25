@@ -42,6 +42,7 @@ cache_dir = ".audit-sandbox/.pytest_cache"
 markers = [
     "slow: integration or full-pipeline tests; exclude with pytest -m 'not slow' for quick CI",
     "network: live vendor fetch tests; skipped unless --run-network",
+    "resourceguard: uses real ResourceGuard; skip autouse OK mock in layer2 loader tests",
 ]
 filterwarnings = [
     "ignore:Using `httpx` with `starlette.testclient` is deprecated:starlette.exceptions.StarletteDeprecationWarning",

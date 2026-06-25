@@ -17,3 +17,4 @@ acceptance_commands:
   - uv run pytest tests/test_layer3_snapshot_builder.py tests/test_layer2_sensor_loader.py -q
   - uv run pytest tests/test_round3_audit_registry_alignment.py -q -k lineage
   - uv run pytest tests/test_round3f_lineage_layer3_registry_closure.py -q
+  - uv run pytest -q && uv run ruff check .

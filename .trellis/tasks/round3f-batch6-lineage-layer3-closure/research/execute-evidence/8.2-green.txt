@@ -1,3 +1,12 @@
-1 passed
+============================= test session starts =============================
+platform win32 -- Python 3.14.6, pytest-9.1.0, pluggy-1.6.0
+rootdir: C:\Users\Guang\Desktop\quant-monitor-desk-wt-b3f-lin
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: anyio-4.14.0, cov-7.1.0
+collected 1 item
+
+tests\test_layer3_snapshot_builder.py .                                  [100%]
+
+============================== 1 passed in 0.09s ==============================
+
 exit 0
-test_layer3Snapshot_deterministicRebuild_sameInputsSameHash PASSED — full IndustryChainDailySnapshotRow tuple
