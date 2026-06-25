@@ -1,33 +1,43 @@
 # Migration 008 Plan — Remaining DB CHECK Constraints
 
-> **Status:** planned · **Target:** Round 3 ops / DB hygiene  
-> **Closes audit:** A9-P1-01, A9-P2-01, A9-P2-02, A9-P3-01
+> **Status:** partially superseded by **009** (2026-06-22) · **Target:** Round 3F / future hygiene for residual gaps  
+> **Closes audit:** A9-P1-01 (subset), A9-P2-01 (subset), A9-P2-02, A9-P3-01 (subset)
 
 ## Scope
 
-DuckDB limits `ALTER TABLE ADD CHECK` on existing tables created in migration 004/005. Migration **007** already rebuilt `data_sync_job` / `job_event_log` with status CHECKs. Migration **008** will address remaining app-layer-only enums.
+DuckDB limits `ALTER TABLE ADD CHECK` on existing tables created in migration 004/005. Migration **007** rebuilt `data_sync_job` / `job_event_log` with status CHECKs. Migration **009** applied status/enum CHECKs on ingestion tables (see matrix below). Migration **008** (if retained) covers **remaining** app-layer-only enums and explicit-column rebuilds.
 
-## Planned changes
+## Applied in migration 009 (2026-06-22)
 
-> **Applied 009 / 010 (2026-06-22):** Status CHECK constraints landed in **009**; lineage NOT NULL rebuild in **010** with explicit `INSERT … SELECT` column list (ADV-A1-009). Remaining rows below are still **planned** for a future **008** rebuild pass.
+| Table | Column(s) | Constraint | Strategy in 009 |
+|-------|-----------|------------|-----------------|
+| `fetch_log` | `status` | Enum CHECK | `fetch_log_v2` rebuild + `SELECT *` (A9-P3-01 residual) |
+| `source_registry` | `source_type`, `license_type` | Enum CHECK | Explicit column list rebuild |
+| `manual_review_queue` | `status`, `source_object_type` | Enum CHECK | `SELECT *` rebuild (A9-P3-01 residual) |
+| `source_conflict` | `severity`, `reconcile_status` | Enum CHECK | Explicit column list rebuild |
 
-| Table | Column(s) | Constraint | Strategy |
-|-------|-----------|------------|----------|
-| `fetch_log` | `status` | Enum CHECK | Rebuild table or new `_v2` + swap (same pattern as 007) |
-| `source_registry` | `role`, `license_status` | Enum CHECK | Rebuild with explicit column list |
-| `manual_review_queue` | `status`, `priority` | Enum CHECK | Rebuild |
-| `source_conflict` | `reconcile_status` | `OPEN/UNRESOLVED/RESOLVED/N/A` | Rebuild or ADD if DuckDB allows |
+**Evidence:** `backend/app/db/migrations/009_status_check_constraints.sql`; `tests/test_schema_contract.py::test_schemaContract_includesStatusCheckConstraints`.
+
+## Still planned (future 008 or Round 3F)
+
+| Table | Column(s) | Constraint | Notes |
+|-------|-----------|------------|-------|
+| `source_registry` | `role`, `license_status` | Enum CHECK | Not in `schema.sql` design contract today |
+| `manual_review_queue` | `priority` | Enum CHECK | App-layer by design (R2-RISK-4); ADR in `MIGRATION_COVERAGE.md` |
+| `fetch_log` | rebuild hygiene | Explicit `INSERT … SELECT` | Replace `SELECT *` in 009 rebuild (A9-P3-01) |
+| `manual_review_queue` | rebuild hygiene | Explicit `INSERT … SELECT` | Replace `SELECT *` in 009 rebuild (A9-P3-01) |
 
 ## Non-goals (008)
 
 - Cross-table FK (evaluate separately; DuckDB FK support limited)
 - `source_health_snapshot` table (separate migration; D2-P2-1)
 - Full `write_audit_log` design columns (incremental ADD COLUMN where possible)
+- Re-applying CHECKs already landed in **009** (no duplicate rebuild)
 
 ## Implementation checklist
 
-1. Draft `008_db_check_constraints.sql` with explicit `INSERT INTO … SELECT col1, col2, …` (no `SELECT *`).
-2. Add negative tests: illegal enum inserts must fail.
+1. Draft `008_db_check_constraints.sql` with explicit `INSERT INTO … SELECT col1, col2, …` (no `SELECT *`) for residual tables only.
+2. Add negative tests: illegal enum inserts must fail where DB CHECK added.
 3. Update `MIGRATION_COVERAGE.md` statuses from PARTIAL → DONE where applied.
 4. Run `pytest tests/test_schema_migration.py` on fresh + upgraded DB.
 

@@ -1,0 +1,21 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+______ test_checkManifest_verifyHash_matchesManifestForFinalAuditReport _______
+
+    def test_checkManifest_verifyHash_matchesManifestForFinalAuditReport() -> None:
+        """覆盖范围：FINAL_AUDIT_REPORT sha256 与 MANIFEST 登记一致
+        测试对象：MANIFEST.json files[] 中 FINAL_AUDIT_REPORT.md 条目 vs 磁盘文件
+        目的/目标：restore 后该 artifact 的字节 hash 必须匹配 MANIFEST（VR-DOC-001）
+        验证点：文件存在且 sha256 等于 MANIFEST 登记值
+        失败含义：restore 内容错误或 MANIFEST 行需 coordinator 更新
+        """
+        report_path = PROJECT_ROOT / FINAL_AUDIT_REPORT
+>       assert report_path.is_file(), f"missing {FINAL_AUDIT_REPORT}"
+E       AssertionError: missing FINAL_AUDIT_REPORT.md
+E       assert False
+E        +  where False = is_file()
+E        +    where is_file = WindowsPath('C:/Users/Guang/Desktop/quant-monitor-desk-wt-b3v-reg/FINAL_AUDIT_REPORT.md').is_file
+
+tests\test_manifest_files_check.py:51: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_manifest_files_check.py::test_checkManifest_verifyHash_matchesManifestForFinalAuditReport

@@ -1,0 +1,13 @@
+DOC-01 FINAL_AUDIT_REPORT restore evidence
+Date: 2026-06-25
+Source: git show 416e74bc:FINAL_AUDIT_REPORT.md
+Size: 4948 bytes
+sha256: b8f003b7092c17cf023bfda067f732a031e6f46d0fb3a59d9716f73b2c2e2d1e
+MANIFEST match: yes (byte+hash identical to MANIFEST.json entry)
+
+Commands:
+  git show 416e74bc:FINAL_AUDIT_REPORT.md > FINAL_AUDIT_REPORT.md
+  uv run python scripts/check_manifest_files.py → exit 0
+  uv run pytest tests/test_manifest_files_check.py::test_checkManifest_verifyHash_matchesManifestForFinalAuditReport -q → PASS
+
+Note: full `check_manifest_files.py --verify-hash` not used as Done gate — MANIFEST hashes are from 2026-06-19 import package; living repo docs evolved. VR-DOC-001 scope is existence + FINAL_AUDIT_REPORT hash only.

@@ -1,0 +1,10 @@
+REG-01 matrix reconciliation evidence
+Date: 2026-06-25
+Command: uv run pytest tests/test_schema_contract.py::test_schemaContract_includesStatusCheckConstraints -q
+Result: PASS (1 passed)
+
+Docs updated:
+- docs/schema/MIGRATION_COVERAGE.md (009 CHECK rows)
+- docs/schema/MIGRATION_008_PLAN.md (009 applied vs residual 008)
+
+Matrix reference: research/migration-009-coverage-matrix.md

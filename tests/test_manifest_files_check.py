@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -15,7 +16,7 @@ from tests.contract_gate_support import PROJECT_ROOT
 SCRIPTS = PROJECT_ROOT / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
-from check_manifest_files import check_manifest  # noqa: E402
+from check_manifest_files import _sha256, check_manifest  # noqa: E402
 
 MANIFEST = PROJECT_ROOT / "MANIFEST.json"
 FINAL_AUDIT_REPORT = "FINAL_AUDIT_REPORT.md"
@@ -37,6 +38,22 @@ def test_checkManifest_reportsMissingFinalAuditReportUntilRegRestores() -> None:
         assert any(FINAL_AUDIT_REPORT in e for e in errors), (
             f"expected missing {FINAL_AUDIT_REPORT} in errors, got: {errors}"
         )
+
+
+def test_checkManifest_verifyHash_matchesManifestForFinalAuditReport() -> None:
+    """覆盖范围：FINAL_AUDIT_REPORT sha256 与 MANIFEST 登记一致
+    测试对象：MANIFEST.json files[] 中 FINAL_AUDIT_REPORT.md 条目 vs 磁盘文件
+    目的/目标：restore 后该 artifact 的字节 hash 必须匹配 MANIFEST（VR-DOC-001）
+    验证点：文件存在且 sha256 等于 MANIFEST 登记值
+    失败含义：restore 内容错误或 MANIFEST 行需 coordinator 更新
+    """
+    report_path = PROJECT_ROOT / FINAL_AUDIT_REPORT
+    assert report_path.is_file(), f"missing {FINAL_AUDIT_REPORT}"
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    entry = next(e for e in manifest.get("files", []) if e.get("path") == FINAL_AUDIT_REPORT)
+    expected = entry.get("sha256")
+    assert expected, "MANIFEST missing sha256 for FINAL_AUDIT_REPORT.md"
+    assert _sha256(report_path) == expected
 
 
 def test_checkManifest_noOtherMissingFiles() -> None:

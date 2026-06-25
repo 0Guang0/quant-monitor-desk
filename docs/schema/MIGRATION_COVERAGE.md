@@ -1,6 +1,6 @@
 # Schema vs Migration Coverage Matrix
 
-> **Last verified:** 2026-06-22 · **Baseline:** `master` @ migrations `001`–`011`  
+> **Last verified:** 2026-06-25 · **Baseline:** `master` @ migrations `001`–`011`  
 > **Purpose:** Clarify which `specs/schema/schema.sql` objects are implemented vs deferred (closes audit A2-P2-01).
 
 ## Legend
@@ -17,17 +17,17 @@
 | Object                   | Migration | Status   | Notes                                            |
 | ------------------------ | --------- | -------- | ------------------------------------------------ |
 | `schema_version`         | 001       | DONE     |                                                  |
-| `source_registry`        | 004       | PARTIAL  | Status/enums enforced in app; no DB CHECK on 004 |
-| `fetch_log`              | 004       | PARTIAL  | Status enums app-layer                           |
+| `source_registry`        | 004, 009  | DONE     | `source_type` / `license_type` CHECK via 009     |
+| `fetch_log`              | 004, 009  | PARTIAL  | `status` CHECK via 009; rebuild used `SELECT *` (A9-P3-01) |
 | `file_registry`          | 001/004   | DONE     | `content_hash` UNIQUE                            |
 | `data_sync_job`          | 006, 007  | DONE     | Status CHECK via 007 rebuild                     |
 | `job_event_log`          | 006, 007  | DONE     | old/new status CHECK                             |
 | `validation_report`      | 005       | DONE     | Status CHECK                                     |
 | `data_quality_log`       | 005       | DONE     |                                                  |
-| `source_conflict`        | 005       | PARTIAL  | `reconcile_status` CHECK deferred                |
+| `source_conflict`        | 005, 009  | DONE     | `severity` / `reconcile_status` CHECK via 009    |
 | `write_audit_log`        | 001, 007  | PARTIAL  | Extra audit columns in design not all migrated   |
 | `resource_guard_log`     | 003       | DONE     |                                                  |
-| `manual_review_queue`    | 005       | PARTIAL  | status/priority CHECK deferred                   |
+| `manual_review_queue`    | 005, 009  | PARTIAL  | `status` / `source_object_type` CHECK via 009; `priority` app-layer (R2-RISK-4); `SELECT *` rebuild (A9-P3-01) |
 | `source_health_snapshot` | —         | DEFERRED | D2-P2-1                                          |
 
 ## Modeling / backtest (Round 3+)

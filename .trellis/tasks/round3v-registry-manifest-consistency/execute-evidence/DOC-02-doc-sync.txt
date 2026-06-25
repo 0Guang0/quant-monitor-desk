@@ -1,0 +1,13 @@
+DOC-02 doc sync evidence
+Date: 2026-06-25
+Path: restore (not replace) — no MANIFEST.json row edits required
+
+Cross-check (allowed files):
+- README.md: references FINAL_AUDIT_REPORT.md in layout + §审计修复包 — consistent with restored file
+- MANIFEST.json: entry unchanged (sha256 b8f003b7… matches restored bytes)
+- docs/quality/final_package_rules.md: requires FINAL_AUDIT_REPORT in zip/MANIFEST — satisfied
+- specs/contracts/release_cleanup_allowlist.yaml: lists FINAL_AUDIT_REPORT.md — satisfied
+
+Command: uv run python scripts/check_manifest_files.py → exit 0 (OK: manifest files)
+
+Stale "missing" narrative remains only in planning/task docs (out of B3V-REG allowed files); coordinator may update BATCH_3V_SELF_CHECK / ROUND3_HANDOFF on merge.
