@@ -1,0 +1,5 @@
+FAILED tests/test_contract_drift_ops_write.py::test_opsInspect_keyTables_matchContract
+FAILED tests/test_contract_drift_ops_write.py::test_opsInspect_deferredMapping_matchContract
+Failed: RED: OPS-02 contract drift test not implemented
+Failed: RED: OPS-02 deferred drift test not implemented
+exit 1 — expected RED before drift test implementation

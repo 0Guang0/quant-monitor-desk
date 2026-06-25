@@ -153,6 +153,20 @@ tests/test_config_templates.py:
     docs: []
     rules: []
     specs: []
+tests/test_contract_drift_ops_write.py:
+  command: uv run python -m pytest tests/test_contract_drift_ops_write.py -q
+  failure_meaning:
+    Regression in test_contract_drift_ops_write; inspect purpose and linked
+    authorities.
+  purpose: Contract drift tests — ops db-inspect YAML SSOT and WriteManager parity
+    (B3V-C01).
+  type: contract
+  verifies:
+    docs: []
+    rules: []
+    specs:
+      - specs/contracts/ops_db_inspect_contract.yaml
+      - specs/contracts/write_contract.yaml
 tests/test_data_adapter_contract.py:
   command: uv run python -m pytest tests/test_data_adapter_contract.py -q
   failure_meaning:

@@ -1,0 +1,2 @@
+Failed: RED: WRITE-03 reserved reject test not implemented
+exit 1 — expected RED before reserved rejection test implementation

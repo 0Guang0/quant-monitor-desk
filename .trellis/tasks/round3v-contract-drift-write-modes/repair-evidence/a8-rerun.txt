@@ -1,0 +1,16 @@
+Command:
+uv run pytest tests/test_contract_drift_ops_write.py tests/test_ops_db_inspector.py tests/test_write_manager.py -v --basetemp=.audit-sandbox/pytest
+
+============================= test session starts =============================
+platform win32 -- Python 3.14.6, pytest-9.1.0, pluggy-1.6.0
+rootdir: C:\Users\Guang\Desktop\quant-monitor-desk-wt-b3v-ops
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: anyio-4.14.0, cov-7.1.0
+collected 58 items
+
+tests/test_contract_drift_ops_write.py .....                             [  8%]
+tests/test_ops_db_inspector.py ..........................s....           [ 62%]
+tests/test_write_manager.py ......................                       [100%]
+
+======================= 57 passed, 1 skipped in 13.87s ========================
+exit 0

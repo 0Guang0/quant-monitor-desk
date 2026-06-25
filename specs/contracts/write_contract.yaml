@@ -1,5 +1,12 @@
 version: p0_round_1
 contract_name: write_contract
+implemented_modes:
+  - append_only
+  - upsert_by_pk
+reserved_modes:
+  - replace_partition
+  - manual_patch
+  - schema_migration
 write_request:
   required:
     - run_id

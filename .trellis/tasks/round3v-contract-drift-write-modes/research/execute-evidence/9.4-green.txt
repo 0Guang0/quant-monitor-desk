@@ -1,0 +1,2 @@
+tests/test_contract_drift_ops_write.py::test_writeContract_implementedModes_matchWriteManager PASSED
+exit 0 — WRITE-02 parity confirmed
