@@ -111,17 +111,17 @@ Execute 以 MASTER inline + ledger + `implement.jsonl` 为准；`context_pack.js
 
 **`docs/` 设计文档**
 
-| 路径                                                    | 用途                               | 摘要                                 | implement |
-| ------------------------------------------------------- | ---------------------------------- | ------------------------------------ | --------- |
-| `docs/ops/data_health_cli.md`                           | CLI 行为与只读边界                 | Batch6 设计；v1 子集 + evidence 模式 | [x]       |
-| `docs/ops/db_inspect_cli.md`                            | DB/数据根只读检查模式              | 与 db-inspect 分工                   | [x]       |
-| `docs/ops/verification_commands.md`                     | Round 3 gate hygiene pytest 矩阵   | §10 回归引用                         | [x]       |
-| `docs/modules/data_validation_and_conflict.md`          | 校验与冲突语义                     | validator 权威                       | [x]       |
-| `docs/modules/duckdb_and_parquet.md`                    | 只读 DuckDB/Parquet 约定           | 只读连接                             | [x]       |
-| `docs/modules/write_manager.md`                         | **禁止绕过** WriteManager 写 clean | 本任务不写 clean                     | [x]       |
-| `docs/modules/data_sources.md`                          | source 角色与 disabled 默认        | DISABLED_SOURCE_USED 规则            | [x]       |
-| `docs/modules/ops_and_performance.md`                   | ops 模块边界                       | ops 包范围                           | [x]       |
-| `docs/quality/ROUND3_WAVE_B_PENDING_FIX_REGISTRY.md` §3 | `R3-B2.75-REQ2-EM` 等硬约束        | REQ2-EM 保持 DEFERRED                | [x]       |
+| 路径                                           | 用途                               | 摘要                                 | implement |
+| ---------------------------------------------- | ---------------------------------- | ------------------------------------ | --------- |
+| `docs/ops/data_health_cli.md`                  | CLI 行为与只读边界                 | Batch6 设计；v1 子集 + evidence 模式 | [x]       |
+| `docs/ops/db_inspect_cli.md`                   | DB/数据根只读检查模式              | 与 db-inspect 分工                   | [x]       |
+| `docs/ops/verification_commands.md`            | Round 3 gate hygiene pytest 矩阵   | §10 回归引用                         | [x]       |
+| `docs/modules/data_validation_and_conflict.md` | 校验与冲突语义                     | validator 权威                       | [x]       |
+| `docs/modules/duckdb_and_parquet.md`           | 只读 DuckDB/Parquet 约定           | 只读连接                             | [x]       |
+| `docs/modules/write_manager.md`                | **禁止绕过** WriteManager 写 clean | 本任务不写 clean                     | [x]       |
+| `docs/modules/data_sources.md`                 | source 角色与 disabled 默认        | DISABLED_SOURCE_USED 规则            | [x]       |
+| `docs/modules/ops_and_performance.md`          | ops 模块边界                       | ops 包范围                           | [x]       |
+| `docs/quality/待修复清单.md` §3                | `R3-B2.75-REQ2-EM` 等硬约束        | REQ2-EM 保持 DEFERRED                | [x]       |
 
 **`specs/` 契约与注册表**
 

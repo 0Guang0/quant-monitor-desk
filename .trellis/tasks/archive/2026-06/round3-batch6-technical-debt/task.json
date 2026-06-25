@@ -1,0 +1,19 @@
+{
+  "id": "round3-batch6-technical-debt",
+  "name": "round3-batch6-technical-debt",
+  "title": "B3F-HYG: Batch 3F hygiene / perf / ingestion split",
+  "description": "R3F-HYG-06 perf budget artifact, R3F-HYG-07 R2b sandbox_bootstrap, ResourceGuard verify, registry proposed delta.",
+  "status": "completed",
+  "dev_type": "chore",
+  "scope": "batch6_technical_debt",
+  "branch": "chore/round3-batch6-technical-debt",
+  "base_branch": "master",
+  "worktree_path": "../quant-monitor-desk-wt-b3f-hyg",
+  "meta": {
+    "task_track": "complex",
+    "manifest_protocol_version": "3",
+    "playbook_id": "B3F-HYG",
+    "model": "composer-2.5"
+  },
+  "completedAt": "2026-06-26"
+}

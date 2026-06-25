@@ -18,10 +18,10 @@
 
 ### Parallel Wave D / hygiene (not forward cards; playbook SSOT)
 
-| ID        | Branch / scope                                                       | Canonical authority                                                                | Main output                                           | Notes                                                                                                  |
-| --------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `B01-LIN` | `fix/round3-batch6-lineage-and-layer3-hygiene` · roadmap Batch 3D.3  | `PROJECT_IMPLEMENTATION_ROADMAP.md` 3D.3 · `ROUND3_WAVE_B_PENDING_FIX_REGISTRY.md` | lineage/L3 hygiene tests + registry deltas (proposed) | debt-lite; must not touch `layer5_evidence/**`                                                         |
-| `B01-023` | `feature/round3-023b-evidence-chain-full` · Wave D (serial mainline) | `023_implement_layer5_evidence_chain.md` · MAP §2.3                                | full Layer5 evidence chain                            | **Parallel worktree OK**; **separate merge track** from Batch 01 package (see coordinator playbook §0) |
+| ID        | Branch / scope                                                       | Canonical authority                                        | Main output                                           | Notes                                                                                                  |
+| --------- | -------------------------------------------------------------------- | ---------------------------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `B01-LIN` | `fix/round3-batch6-lineage-and-layer3-hygiene` · roadmap Batch 3D.3  | `PROJECT_IMPLEMENTATION_ROADMAP.md` 3D.3 · `待修复清单.md` | lineage/L3 hygiene tests + registry deltas (proposed) | debt-lite; must not touch `layer5_evidence/**`                                                         |
+| `B01-023` | `feature/round3-023b-evidence-chain-full` · Wave D (serial mainline) | `023_implement_layer5_evidence_chain.md` · MAP §2.3        | full Layer5 evidence chain                            | **Parallel worktree OK**; **separate merge track** from Batch 01 package (see coordinator playbook §0) |
 
 ---
 

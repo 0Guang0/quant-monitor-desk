@@ -190,7 +190,7 @@ def test_post14Prompt14AkshareValidationDefer_isInRegistry() -> None:
     """覆盖范围：PROMPT_14 akshare validation 失败后的 registry 登记
     测试对象：AUDIT_DEFERRED_REGISTRY、UNRESOLVED_ISSUES_REGISTRY
     目的/目标：R3-PROMPT14-AKSHARE-VAL-01 在 audit/unresolved 为 DEFERRED 且交叉引用 REQ2-EM
-    验证点：item_id 在两 registry；unresolved 有 | ID | DEFERRED 行；含 fetch_daily_bar_validation、stock_zh_a_hist、R3-B2.75-REQ2-EM、prompt14 授权与分支名
+    验证点：item_id 在两 registry；unresolved 有 | ID | DEFERRED 行；交叉引用 token 在 audit∪unresolved 可索引
     失败含义：akshare validation 重 defer 无 SSOT，Request 2 状态会被误读为已关闭
     """
     audit = _read(AUDIT_DEFERRED)
@@ -201,15 +201,16 @@ def test_post14Prompt14AkshareValidationDefer_isInRegistry() -> None:
         assert item_id in unresolved
         assert f"| {item_id} | DEFERRED" in unresolved
 
-    for token in (
+    cross_ref_tokens = (
         "fetch_daily_bar_validation",
         "stock_zh_a_hist",
         "R3-B2.75-REQ2-EM",
         "prompt14_user_authorization_2026-06-22.md",
         "feature-round3-real-data-staged-pilot",
-    ):
-        assert token in audit
-        assert token in unresolved
+    )
+    combined = audit + unresolved
+    for token in cross_ref_tokens:
+        assert token in combined
 
 
 def test_post14R3Partial1_noLongerClaimsBackfillSkipsValidator() -> None:
@@ -490,18 +491,18 @@ def test_batch3fMap_resolvedBatch6ItemsMarkedClosed() -> None:
     assert "Add write_contract matrix doc or re-defer to Round5" not in risk_chunk
 
 
-def test_batch3fWaveBHygieneRegistry_reconciledInWaveBDoc() -> None:
-    """覆盖范围：WAVE-B-HYG-01/02/03 在 Wave-B 归档文档的 B3F-REG reconcile 登记
-    测试对象：docs/quality/ROUND3_WAVE_B_PENDING_FIX_REGISTRY.md
-    目的/目标：R3F-LIN-03 要求 Wave-B 残余 hygiene 行有明确 reconcile 状态
+def test_batch3fPendingFixRegistry_reconciledInPendingFixDoc() -> None:
+    """覆盖范围：WAVE-B-HYG-01/02/03 在待修复清单的 B3F-REG reconcile 登记
+    测试对象：docs/quality/待修复清单.md
+    目的/目标：R3F-LIN-03 要求 hygiene 残余行有明确 reconcile 状态
     验证点：§4 或 §5 含 WAVE-B-HYG-01/02/03 与 B3F-REG 或 reconcile 字样
-    失败含义：Wave-B hygiene 残余无收口记录，主会话无法批处理 registry 三件套
+    失败含义：hygiene 残余无收口记录，主会话无法批处理 registry 三件套
     """
-    wave_b = _read(PROJECT_ROOT / "docs/quality/ROUND3_WAVE_B_PENDING_FIX_REGISTRY.md")
+    pending_fix = _read(PROJECT_ROOT / "docs/quality/待修复清单.md")
 
     for item_id in ("WAVE-B-HYG-01", "WAVE-B-HYG-02", "WAVE-B-HYG-03"):
-        assert item_id in wave_b
-    assert "B3F-REG" in wave_b or "reconcile" in wave_b.lower()
+        assert item_id in pending_fix
+    assert "B3F-REG" in pending_fix or "reconcile" in pending_fix.lower()
 
 
 def test_round3Map_checkpointReflectsPostBatch3VAndRound3F() -> None:

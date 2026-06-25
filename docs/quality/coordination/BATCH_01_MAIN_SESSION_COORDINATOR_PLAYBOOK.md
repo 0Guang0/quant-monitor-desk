@@ -259,7 +259,7 @@
 
 ### 3.8 B01-LIN — Lineage & Layer3 Hygiene
 
-**无 forward 卡**；权威 = 路线图 Batch 3D.3 + `ROUND3_WAVE_B_PENDING_FIX_REGISTRY.md` + `ROUND3_BATCH6_021_PENDING_FIX_REGISTRY.md`
+**无 forward 卡**；权威 = 路线图 Batch 3D.3 + `待修复清单.md` + `ROUND3_BATCH6_021_PENDING_FIX_REGISTRY.md`
 
 | ID / 路径                                                                                    | 用途                   |
 | -------------------------------------------------------------------------------------------- | ---------------------- |

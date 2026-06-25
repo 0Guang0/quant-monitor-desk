@@ -50,7 +50,7 @@
 | `docs/modules/duckdb_and_parquet.md`                                               | staging vs clean 边界             |
 | `docs/quality/adversarial_audit_report.md`                                         | AUD-03 WARN 来源                  |
 | `docs/implementation_tasks/ROUND_1_DATA_FOUNDATION/008_implement_write_manager.md` | WriteManager 任务口径             |
-| `docs/quality/ROUND3_WAVE_B_PENDING_FIX_REGISTRY.md` §2                            | `R3Y-STAGED-REG-001` 台账         |
+| `docs/quality/待修复清单.md` §2                                                    | `R3Y-STAGED-REG-001` 台账         |
 | `specs/contracts/write_contract.yaml`                                              | metadata-only gate 合约           |
 | `specs/contracts/snapshot_lineage_contract.yaml`                                   | lineage metadata-only 策略边界    |
 

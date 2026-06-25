@@ -61,7 +61,7 @@
 | `docs/modules/write_manager.md`                                          | [x]    | [x] L36         | 禁旁路写 clean     | 无                                |
 | `docs/modules/data_sources.md`                                           | [x]    | [x] L37         | disabled source    | 无                                |
 | `docs/modules/ops_and_performance.md`                                    | [x]    | [x] L38         | ops 边界           | 无                                |
-| `ROUND3_WAVE_B_PENDING_FIX_REGISTRY.md` §3                               | [x]    | [x] L39         | REQ2-EM DEFERRED   | 无                                |
+| `待修复清单.md` §3                                                       | [x]    | [x] L39         | REQ2-EM DEFERRED   | 无                                |
 | `specs/contracts/data_quality_rules.yaml`                                | [x]    | [x] L40         | rule_id SSOT       | 无                                |
 | `specs/contracts/source_conflict_rules.yaml`                             | [x]    | [x] L41         | 冲突只读           | 无                                |
 | `specs/contracts/ops_db_inspect_contract.yaml`                           | [x]    | [x] L42         | inspect 合约       | 无                                |

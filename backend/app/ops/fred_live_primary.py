@@ -8,10 +8,10 @@ from typing import Any
 from backend.app.config import PROJECT_ROOT
 from backend.app.ops.fred_sandbox_pilot import FredPilotAuthorizationError, load_authorization_yaml
 
-# SSOT path for Plan freeze + pytest (execute-evidence canonical copy)
+# SSOT path for Plan freeze + pytest (archived execute-evidence canonical copy)
 FRED_LIVE_AUTHORIZATION_DEFAULT = (
     PROJECT_ROOT
-    / ".trellis/tasks/round3-source-health-and-quality-runners/execute-evidence"
+    / ".trellis/tasks/archive/2026-06/round3-source-health-and-quality-runners/execute-evidence"
     / "fred_live_authorization_2026-06-25.yaml"
 )
 

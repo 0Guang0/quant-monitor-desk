@@ -16,6 +16,7 @@ ADR_002 = PROJECT_ROOT / "docs/decisions/ADR-002-db-check-vs-app-validation.md"
 MIGRATION_COVERAGE = PROJECT_ROOT / "docs/schema/MIGRATION_COVERAGE.md"
 MIGRATION_008_PLAN = PROJECT_ROOT / "docs/schema/MIGRATION_008_PLAN.md"
 ROADMAP = PROJECT_ROOT / "PROJECT_IMPLEMENTATION_ROADMAP.md"
+ROUND3_MAP = PROJECT_ROOT / "ROUND3_BATCH_IMPLEMENTATION_MAP.md"
 
 
 def test_r3fMig01_migration009_statusChecks_present_verifyOnly() -> None:
@@ -172,12 +173,12 @@ def test_r3fMig05_migrationCoverage_routes008To009To3f() -> None:
 
 def test_r3fMig06_partial5_regressionGuard_noReopenAsActive() -> None:
     """覆盖范围：R3-PARTIAL-5 crash-window 不得被 roadmap 重开为实现任务
-    测试对象：PROJECT_IMPLEMENTATION_ROADMAP.md Round 3F R3F-MIG-06 行
+    测试对象：ROUND3_BATCH_IMPLEMENTATION_MAP.md R3-PARTIAL-5 行（regression guard SSOT）
     目的/目标：R3F-MIG-06 verify-only；B3V 已关 path A 仅保留 regression guard
-    验证点：R3F-MIG-06 标记 CLOSED B3V；closure 为 no duplicate task check
-    失败含义：roadmap 误导后续 agent 重复实现 crash-window，违反 BATCH_3F §3
+    验证点：R3-PARTIAL-5 标记 CLOSED B3V；closure 为 do not reopen / regression guard
+    失败含义：地图误导后续 agent 重复实现 crash-window，违反 BATCH_3F §3
     """
-    roadmap = ROADMAP.read_text(encoding="utf-8")
-    mig06 = roadmap.split("R3F-MIG-06", maxsplit=1)[1].split("\n", maxsplit=1)[0]
-    assert "CLOSED B3V" in mig06.upper()
-    assert "no duplicate task" in mig06.lower()
+    map_text = ROUND3_MAP.read_text(encoding="utf-8")
+    partial5 = map_text.split("R3-PARTIAL-5", maxsplit=1)[1].split("\n", maxsplit=1)[0]
+    assert "CLOSED B3V" in partial5.upper()
+    assert "do not reopen" in partial5.lower()

@@ -482,18 +482,18 @@ class MarketStructureBuilder:
 
 **`docs/` 设计文档**
 
-| 路径                                                 | 用途                                                   |
-| ---------------------------------------------------- | ------------------------------------------------------ |
-| `docs/modules/layer4_market_structure.md`            | **Layer 4 实现级权威**                                 |
-| `docs/modules/layer3_industry_shock_anchor.md`       | 上游 Layer 3 接口语境                                  |
-| `docs/modules/duckdb_and_parquet.md`                 | 存储与只读/写入分层                                    |
-| `docs/modules/write_manager.md`                      | clean 写入必经 WriteManager                            |
-| `docs/architecture/03_runtime_flows.md`              | 运行链路                                               |
-| `docs/architecture/04_data_architecture.md`          | 数据分层                                               |
-| `docs/quality/final_package_rules.md`                | 包与产出规则                                           |
-| `docs/quality/ROUND3_WAVE_B_PENDING_FIX_REGISTRY.md` | `ADV-R3X-LINEAGE-001` defer 语境（§2）                 |
-| `docs/adr/ADR-0004-layer3-shock-anchor-model.md`     | Layer 3 模型（接口依赖）                               |
-| `docs/quality/PENDING_USER_DECISIONS.md` §D-09       | Layer 2–5 lineage 字段范围（**替代** docs/decisions/） |
+| 路径                                             | 用途                                                   |
+| ------------------------------------------------ | ------------------------------------------------------ |
+| `docs/modules/layer4_market_structure.md`        | **Layer 4 实现级权威**                                 |
+| `docs/modules/layer3_industry_shock_anchor.md`   | 上游 Layer 3 接口语境                                  |
+| `docs/modules/duckdb_and_parquet.md`             | 存储与只读/写入分层                                    |
+| `docs/modules/write_manager.md`                  | clean 写入必经 WriteManager                            |
+| `docs/architecture/03_runtime_flows.md`          | 运行链路                                               |
+| `docs/architecture/04_data_architecture.md`      | 数据分层                                               |
+| `docs/quality/final_package_rules.md`            | 包与产出规则                                           |
+| `docs/quality/待修复清单.md`                     | `ADV-R3X-LINEAGE-001` defer 语境（§2）                 |
+| `docs/adr/ADR-0004-layer3-shock-anchor-model.md` | Layer 3 模型（接口依赖）                               |
+| `docs/quality/PENDING_USER_DECISIONS.md` §D-09   | Layer 2–5 lineage 字段范围（**替代** docs/decisions/） |
 
 **`specs/` 契约**
 

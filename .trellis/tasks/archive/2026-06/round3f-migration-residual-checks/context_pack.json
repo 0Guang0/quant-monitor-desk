@@ -1,0 +1,144 @@
+{
+  "task": "round3f-migration-residual-checks",
+  "modules": ["datasources", "db_platform"],
+  "source_authorities": [
+    {
+      "type": "design",
+      "path": "docs/modules/data_sources.md",
+      "reason": "datasources design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/modules/datasource_service.md",
+      "reason": "datasources design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/modules/source_route_plan.md",
+      "reason": "datasources design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/modules/source_capability_registry.md",
+      "reason": "datasources design authority"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/datasource_service_contract.yaml",
+      "reason": "datasources contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/source_route_contract.yaml",
+      "reason": "datasources contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/source_capability_contract.yaml",
+      "reason": "datasources contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/platform_source_matrix.yaml",
+      "reason": "datasources contract"
+    },
+    {
+      "type": "policy",
+      "path": "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md",
+      "reason": "datasources rule"
+    },
+    {
+      "type": "policy",
+      "path": "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md",
+      "reason": "datasources rule"
+    },
+    {
+      "type": "task-card",
+      "path": "docs/implementation_tasks/ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3X_data_source_routing_blockers.md",
+      "reason": "datasources implementation task"
+    },
+    {
+      "type": "design",
+      "path": "docs/modules/write_manager.md",
+      "reason": "db_platform design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/architecture/04_data_architecture.md",
+      "reason": "db_platform design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/schema/MIGRATION_COVERAGE.md",
+      "reason": "db_platform design authority"
+    },
+    {
+      "type": "contract",
+      "path": "specs/schema/schema.sql",
+      "reason": "db_platform contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/write_contract.yaml",
+      "reason": "db_platform contract"
+    },
+    {
+      "type": "task-card",
+      "path": "docs/implementation_tasks/ROUND_1_DATA_FOUNDATION/005_create_schema_sql.md",
+      "reason": "db_platform implementation task"
+    }
+  ],
+  "tests": [
+    {
+      "path": "tests/test_datasource_service.py",
+      "purpose": "Round2.6 Phase B/C — DataSourceService boundary and fetch facade tests."
+    },
+    {
+      "path": "tests/test_source_registry.py",
+      "purpose": "Source registry loader and DB sync tests (Batch A)."
+    },
+    {
+      "path": "tests/test_source_route_planner.py",
+      "purpose": "Source route planner READY gate and routing semantics"
+    },
+    {
+      "path": "tests/test_source_capabilities.py",
+      "purpose": "Round2.6 Phase B/C — source capability and adapter domain contract tests."
+    },
+    {
+      "path": "tests/test_platform_source_matrix.py",
+      "purpose": "Round2.6 Phase C — platform source matrix tests (production planner)."
+    },
+    {
+      "path": "tests/test_r3x_data_source_routing_blockers.py",
+      "purpose": "R3X data-source routing blocker tests (ADV-A2 cluster)."
+    },
+    {
+      "path": "tests/test_schema_migration.py",
+      "purpose": "Foundation schema migration tests (Round 1 task 005)."
+    },
+    {
+      "path": "tests/test_schema_contract.py",
+      "purpose": "Schema contract vs migration alignment tests."
+    },
+    {
+      "path": "tests/test_sync_migration.py",
+      "purpose": "Tests for migration 006 ingestion sync tables (Batch D §8.1)."
+    },
+    {
+      "path": "tests/test_migration_coverage.py",
+      "purpose": "L3/L4/L5 建模表 migration 覆盖矩阵门禁（B3V-L5R / VR-MODEL-001 closure test）。"
+    },
+    {
+      "path": "tests/test_round3f_migration_residuals.py",
+      "purpose": "Regression coverage for test_round3f_migration_residuals"
+    }
+  ],
+  "forbidden_claims": ["bypass route readiness gate"],
+  "required_evidence": [
+    "context_pack.json",
+    "loop_manifest.json",
+    "evidence_index.json",
+    "audit_matrix.json"
+  ]
+}

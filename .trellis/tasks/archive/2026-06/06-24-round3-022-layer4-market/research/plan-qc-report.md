@@ -77,7 +77,7 @@
 | 8   | `docs/architecture/03_runtime_flows.md`                                                             | ✅         | L20             | Layer4 运行链路                      | 无            |
 | 9   | `docs/architecture/04_data_architecture.md`                                                         | ✅         | L21             | 数据分层                             | 无            |
 | 10  | `docs/quality/final_package_rules.md`                                                               | ✅         | L26             | 包与产出规则                         | 无            |
-| 11  | `docs/quality/ROUND3_WAVE_B_PENDING_FIX_REGISTRY.md` §2                                             | ✅         | L28             | ADV-R3X defer 语境                   | 无            |
+| 11  | `docs/quality/待修复清单.md` §2                                                                     | ✅         | L28             | ADV-R3X defer 语境                   | 无            |
 | 12  | `docs/adr/ADR-0004-layer3-shock-anchor-model.md`                                                    | ✅         | L30             | L3 模型依赖                          | 无            |
 | 13  | `docs/decisions/` D-09 → **`docs/quality/PENDING_USER_DECISIONS.md` §D-09**                         | ✅ 纠偏    | L29             | L2–5 不复制 L1 全套标准化字段        | 无（见 §5.2） |
 | 14  | `specs/contracts/layer4_market_contract.yaml`                                                       | ✅         | L31             | 主契约 models + quality_rules        | 无            |

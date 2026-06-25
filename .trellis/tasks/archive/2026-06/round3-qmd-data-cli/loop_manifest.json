@@ -1,0 +1,11 @@
+{
+  "task": "round3-qmd-data-cli",
+  "modules": ["ops"],
+  "acs": [
+    { "id": "R3F-CLI-01", "status": "done", "repair_items": [] },
+    { "id": "R3F-CLI-02", "status": "done", "repair_items": [] },
+    { "id": "R3F-CLI-03", "status": "done", "repair_items": [] },
+    { "id": "R3F-CLI-04", "status": "done", "repair_items": [] },
+    { "id": "R3F-CLI-05", "status": "done", "repair_items": [] }
+  ]
+}

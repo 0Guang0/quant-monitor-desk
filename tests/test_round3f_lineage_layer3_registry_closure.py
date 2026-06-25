@@ -14,7 +14,8 @@ from backend.app.layer3_chains.snapshot_builder import (
 )
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-TASK_DIR = PROJECT_ROOT / ".trellis" / "tasks" / "round3f-batch6-lineage-layer3-closure"
+_ARCHIVE_2026_06 = PROJECT_ROOT / ".trellis" / "tasks" / "archive" / "2026-06"
+TASK_DIR = _ARCHIVE_2026_06 / "round3f-batch6-lineage-layer3-closure"
 MANIFEST_PATH = TASK_DIR / "research" / "closure-evidence-manifest.yaml"
 REGISTRY_DRAFT = TASK_DIR / "research" / "registry-proposed-delta.md"
 
@@ -53,7 +54,7 @@ def _collect_node_id(node_id: str) -> None:
 
 def test_b3fLin_closureEvidenceManifest_listsAllRoadmapIds() -> None:
     """覆盖范围：B3F-LIN Execute 闭环证据清单是否齐全
-    测试对象：.trellis/tasks/round3f-batch6-lineage-layer3-closure/research/closure-evidence-manifest.yaml
+    测试对象：archive/2026-06/round3f-batch6-lineage-layer3-closure/research/closure-evidence-manifest.yaml
     目的/目标：R3F-LIN-03 — 主会话批处理 registry 前，分支内须有可审计的 pytest→registry ID 映射
     验证点：manifest 存在且含 closure_tests 全部六键（含负向与 L3 子项）
     失败含义：无 manifest 则无法证明 Batch6 lineage 项已由本分支验收，易与 3D.3 partial hygiene 混淆

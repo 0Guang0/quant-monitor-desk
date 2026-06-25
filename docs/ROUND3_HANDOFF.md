@@ -76,7 +76,7 @@ Archived Trellis task `.trellis/tasks/archive/2026-06/06-20-round3-batch2-layer1
 
 ## Round 3 Wave B — **COMPLETE** (2026-06-24)
 
-Archived Trellis tasks: `06-24-round3-real-data-staged-pilot-v2` (PROMPT_19) · `06-24-round3-021-layer3-snapshot` (`021`) · `fix-r3y-sync-adapter-guard` (α-1) · `fix-r3y-registry-lineage-defer` (α-2). Merges on `master`: `984c7b28`, `616feeb8`, `e4abb372`; `021` @ `1cdb7e48`. **Residual hygiene:** `docs/quality/ROUND3_WAVE_B_PENDING_FIX_REGISTRY.md` (α-3, β-2). **Next:** Wave C PROMPT_20 read-only data health v1.
+Archived Trellis tasks: `06-24-round3-real-data-staged-pilot-v2` (PROMPT_19) · `06-24-round3-021-layer3-snapshot` (`021`) · `fix-r3y-sync-adapter-guard` (α-1) · `fix-r3y-registry-lineage-defer` (α-2). Merges on `master`: `984c7b28`, `616feeb8`, `e4abb372`; `021` @ `1cdb7e48`. **Residual hygiene:** `docs/quality/待修复清单.md` (α-3, β-2). **Next:** Wave C PROMPT_20 read-only data health v1.
 
 ## Round 3 Wave C — **COMPLETE** (2026-06-24)
 

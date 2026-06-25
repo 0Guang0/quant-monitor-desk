@@ -165,17 +165,17 @@
 
 ### 3.1 共用底座（每分支 Plan 前 Read + 摘要）
 
-| 类别         | 路径                                                                                                                                       |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| **协调**     | 本 playbook · `BATCH_3F_*` 包 · `BATCH_3F_PLAYBOOK_ADVERSARIAL_AUDIT.report.md` · `BATCH_3F_HARDENING_RULES.md`                            |
-| **协调**     | `PROJECT_IMPLEMENTATION_ROADMAP.md` Round 3F · `complex-task-planning-protocol.md` Phase 8D · `**agent-toolchain.md`\*\*                   |
-| **协调**     | `round3-repair-debt-worktree-plan.md` §6–§8 · `ROUND3_BATCH_IMPLEMENTATION_MAP.md` §2.3（历史索引）                                        |
-| **Registry** | `AUDIT_DEFERRED` / `UNRESOLVED` / `RESOLVED` · `UNRESOLVED_ITEM_TASK_COVERAGE.md`                                                          |
-| **待办台账** | `ROUND3_WAVE_B_PENDING_FIX_REGISTRY.md` · `ROUND3_BATCH25_PENDING_FIX_REGISTRY.md` · `ROUND3_BATCH6_021_PENDING_FIX_REGISTRY.md`（若存在） |
-| **Handoff**  | `ROUND3_HANDOFF.md` · post Batch 3V checkpoint                                                                                             |
-| **质量门**   | `staged_acceptance_policy.md` · `production_live_pilot_policy.md` · `docs/ops/verification_commands.md`                                    |
-| **全局**     | `GLOBAL_EXECUTION_RULES.md` · `GLOBAL_TESTING_POLICY.md` · `GLOBAL_RESOURCE_LIMITS.md` · `**GLOBAL_TASK_TEMPLATE.md`\*\*                   |
-| **架构**     | `MIGRATION_MAP.md` · `specs/context/authority_graph.yaml`                                                                                  |
+| 类别         | 路径                                                                                                                     |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| **协调**     | 本 playbook · `BATCH_3F_*` 包 · `BATCH_3F_PLAYBOOK_ADVERSARIAL_AUDIT.report.md` · `BATCH_3F_HARDENING_RULES.md`          |
+| **协调**     | `PROJECT_IMPLEMENTATION_ROADMAP.md` Round 3F · `complex-task-planning-protocol.md` Phase 8D · `**agent-toolchain.md`\*\* |
+| **协调**     | `round3-repair-debt-worktree-plan.md` §6–§8 · `ROUND3_BATCH_IMPLEMENTATION_MAP.md` §2.3（历史索引）                      |
+| **Registry** | `AUDIT_DEFERRED` / `UNRESOLVED` / `RESOLVED` · `UNRESOLVED_ITEM_TASK_COVERAGE.md`                                        |
+| **待办台账** | `待修复清单.md` · `ROUND3_BATCH25_PENDING_FIX_REGISTRY.md` · `ROUND3_BATCH6_021_PENDING_FIX_REGISTRY.md`（若存在）       |
+| **Handoff**  | `ROUND3_HANDOFF.md` · post Batch 3V checkpoint                                                                           |
+| **质量门**   | `staged_acceptance_policy.md` · `production_live_pilot_policy.md` · `docs/ops/verification_commands.md`                  |
+| **全局**     | `GLOBAL_EXECUTION_RULES.md` · `GLOBAL_TESTING_POLICY.md` · `GLOBAL_RESOURCE_LIMITS.md` · `**GLOBAL_TASK_TEMPLATE.md`\*\* |
+| **架构**     | `MIGRATION_MAP.md` · `specs/context/authority_graph.yaml`                                                                |
 
 ### 3.2 B3F-LIN — Lineage / Layer3 Registry Closure
 
@@ -183,7 +183,7 @@
 
 | 路径                                                                     | 用途             |
 | ------------------------------------------------------------------------ | ---------------- |
-| `docs/quality/ROUND3_WAVE_B_PENDING_FIX_REGISTRY.md` §2                  | 开放项来源       |
+| `docs/quality/待修复清单.md` §2                                          | 开放项来源       |
 | `backend/app/layer3_chains/snapshot_builder.py`                          | L3 manifest 边界 |
 | `backend/app/layer2_sensor/` · `layer4_markets/`                         | lineage 邻接     |
 | `specs/contracts/snapshot_lineage_contract.yaml`                         | 契约             |

@@ -39,6 +39,8 @@ CONTEXT_CLOSURE = (
     PROJECT_ROOT
     / ".trellis"
     / "tasks"
+    / "archive"
+    / "2026-06"
     / "round3f-backfill-reconcile-parity"
     / "research"
     / "context-closure.md"

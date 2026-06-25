@@ -25,18 +25,18 @@
 
 ## 2. High-priority open items newly centralized
 
-| Item                          | Prior scattered location                                           | Batch 3F owner                         |
-| ----------------------------- | ------------------------------------------------------------------ | -------------------------------------- |
-| `ADV-R3X-LINEAGE-001`         | `UNRESOLVED_ISSUES_REGISTRY`, `ROUND3_WAVE_B_PENDING_FIX_REGISTRY` | 3F.6 / `R3F-LIN-01`                    |
-| `R3Y-LINEAGE-VR-001`          | same                                                               | 3F.6 / `R3F-LIN-02`                    |
-| `R3-B6-021-O-01`              | `ROUND3_BATCH6_021_PENDING_FIX_REGISTRY`                           | 3F.6 / `R3F-L3-01`                     |
-| `R3-B6-021-O-02`              | `ROUND3_BATCH6_021_PENDING_FIX_REGISTRY`                           | 3F.6 / `R3F-L3-02`                     |
-| `B2.5-O-05` live FRED primary | Batch01 FRED card + registries                                     | 3F.3 / `R3F-SH-06`                     |
-| `R2-RISK-2`                   | 023/016 task notes + registries                                    | 3F.5 / `R3F-HYG-10`                    |
-| `R2-RISK-3`                   | old map/unresolved vs resolved conflict                            | 3F.5 / `R3F-HYG-11` registry reconcile |
-| `R3-AUDIT-DEF-01/02/03`       | early close plan / unresolved coverage                             | 3F.2 + 3F.5                            |
-| `R3-PARTIAL-4`                | ADR-023 + unresolved registry                                      | 3F.4 / `R3F-BR-05` registry closeout   |
-| `R3-PARTIAL-5`                | resolved but old roadmap row active                                | 3F.1/3F.4 regression guard only        |
+| Item                          | Prior scattered location                   | Batch 3F owner                         |
+| ----------------------------- | ------------------------------------------ | -------------------------------------- |
+| `ADV-R3X-LINEAGE-001`         | `UNRESOLVED_ISSUES_REGISTRY`, `待修复清单` | 3F.6 / `R3F-LIN-01`                    |
+| `R3Y-LINEAGE-VR-001`          | same                                       | 3F.6 / `R3F-LIN-02`                    |
+| `R3-B6-021-O-01`              | `ROUND3_BATCH6_021_PENDING_FIX_REGISTRY`   | 3F.6 / `R3F-L3-01`                     |
+| `R3-B6-021-O-02`              | `ROUND3_BATCH6_021_PENDING_FIX_REGISTRY`   | 3F.6 / `R3F-L3-02`                     |
+| `B2.5-O-05` live FRED primary | Batch01 FRED card + registries             | 3F.3 / `R3F-SH-06`                     |
+| `R2-RISK-2`                   | 023/016 task notes + registries            | 3F.5 / `R3F-HYG-10`                    |
+| `R2-RISK-3`                   | old map/unresolved vs resolved conflict    | 3F.5 / `R3F-HYG-11` registry reconcile |
+| `R3-AUDIT-DEF-01/02/03`       | early close plan / unresolved coverage     | 3F.2 + 3F.5                            |
+| `R3-PARTIAL-4`                | ADR-023 + unresolved registry              | 3F.4 / `R3F-BR-05` registry closeout   |
+| `R3-PARTIAL-5`                | resolved but old roadmap row active        | 3F.1/3F.4 regression guard only        |
 
 ---
 

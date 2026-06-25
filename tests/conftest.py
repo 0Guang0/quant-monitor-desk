@@ -68,6 +68,23 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
             item.add_marker(skip_network)
 
 
+_SKIP_RESOURCE_GUARD_AUTOPATCH = frozenset(
+    {"test_resource_guard.py", "test_foundation_smoke.py"}
+)
+
+
+@pytest.fixture(autouse=True)
+def _resourceGuardOkUnlessTestOverrides(
+    request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """ponytail: unit tests must not flake on host memory; guard cases patch their own check."""
+    if request.node.fspath and request.node.fspath.basename in _SKIP_RESOURCE_GUARD_AUTOPATCH:
+        return
+    from backend.app.core.resource_guard import Decision, ResourceGuard
+
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+
+
 @pytest.fixture
 def registry_yaml_fixture() -> Path:
     return FIXTURES / "source_registry_valid.yaml"

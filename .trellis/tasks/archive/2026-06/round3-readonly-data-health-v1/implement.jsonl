@@ -36,7 +36,7 @@
 {"file": "docs/modules/write_manager.md", "reason": "extract: 禁止旁路写 | for: AC-DH-BOUND"}
 {"file": "docs/modules/data_sources.md", "reason": "extract: disabled source | for: §8.5"}
 {"file": "docs/modules/ops_and_performance.md", "reason": "extract: ops 边界 | for: §4"}
-{"file": "docs/quality/ROUND3_WAVE_B_PENDING_FIX_REGISTRY.md", "reason": "extract: §3 REQ2-EM | for: §0"}
+{"file": "docs/quality/待修复清单.md", "reason": "extract: §3 REQ2-EM | for: §0"}
 {"file": "specs/contracts/data_quality_rules.yaml", "reason": "extract: rule_id 子集 | for: §6.1 / §8.3–8.6"}
 {"file": "specs/contracts/source_conflict_rules.yaml", "reason": "extract: 冲突只读 | for: §8.5"}
 {"file": "specs/contracts/ops_db_inspect_contract.yaml", "reason": "extract: inspect 合约 | for: §8.2"}

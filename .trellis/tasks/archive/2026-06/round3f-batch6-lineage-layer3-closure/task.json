@@ -1,0 +1,10 @@
+{
+  "slug": "round3f-batch6-lineage-layer3-closure",
+  "status": "completed",
+  "meta": {
+    "task_track": "complex",
+    "playbook_id": "B3F-LIN",
+    "branch": "fix/round3f-batch6-lineage-layer3-registry-closure"
+  },
+  "completedAt": "2026-06-26"
+}

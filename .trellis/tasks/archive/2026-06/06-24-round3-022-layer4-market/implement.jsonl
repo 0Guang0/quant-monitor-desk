@@ -25,7 +25,7 @@
 {"file": "docs/quality/production_live_pilot_policy.md", "reason": "extract: 不得 production-live | for: §0"}
 {"file": "docs/quality/final_package_rules.md", "reason": "extract: 禁止临时 round report | for: §7"}
 {"file": "docs/quality/ROUND3_TEST_DOCSTRING_HYGIENE_PLAN.md", "reason": "extract: 五字段 docstring | for: §5.0"}
-{"file": "docs/quality/ROUND3_WAVE_B_PENDING_FIX_REGISTRY.md", "reason": "extract: ADV-R3X defer §2 | for: §3.2"}
+{"file": "docs/quality/待修复清单.md", "reason": "extract: ADV-R3X defer §2 | for: §3.2"}
 {"file": "docs/quality/PENDING_USER_DECISIONS.md", "reason": "extract: D-09 Layer2-5 字段范围 | for: AC-022-7"}
 {"file": "docs/adr/ADR-0004-layer3-shock-anchor-model.md", "reason": "extract: L3 模型依赖 | for: SCI-B"}
 {"file": "specs/contracts/layer4_market_contract.yaml", "reason": "extract: models + quality_rules | for: AC-022-2,3,7"}

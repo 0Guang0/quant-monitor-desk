@@ -6,7 +6,7 @@
 **Date:** 2026-06-24  
 **Scope:** MAP §2.2 β-2 — privatize `register_staged_file_registry_rows` WriteManager bypass (not registry trio, not ops rewrite)
 
-**Sources read:** `agents/audit-adversarial-authority.md`, `WAVE_C_MAIN_SESSION_COORDINATOR_PLAYBOOK.md` §8.4, `ROUND3_BATCH_IMPLEMENTATION_MAP.md` §2.2, `DEBT.plan.md`, `docs/quality/ROUND3_WAVE_B_PENDING_FIX_REGISTRY.md` §2, `docs/modules/write_manager.md` (§4 旁路禁令), `backend/app/storage/staged_evidence.py`, `backend/app/ops/staged_pilot.py` (import 邻接), 三测文件 diff, pytest 复跑输出
+**Sources read:** `agents/audit-adversarial-authority.md`, `WAVE_C_MAIN_SESSION_COORDINATOR_PLAYBOOK.md` §8.4, `ROUND3_BATCH_IMPLEMENTATION_MAP.md` §2.2, `DEBT.plan.md`, `docs/quality/待修复清单.md` §2, `docs/modules/write_manager.md` (§4 旁路禁令), `backend/app/storage/staged_evidence.py`, `backend/app/ops/staged_pilot.py` (import 邻接), 三测文件 diff, pytest 复跑输出
 
 ---
 

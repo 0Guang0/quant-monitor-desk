@@ -100,7 +100,7 @@
 | **α-3**  | 卫生 | `fix/r3y-prompt15-evidence`              | `../quant-monitor-desk-wt-fix-r3y-prompt15-evidence` | **debt-lite** | §3.1 + **§3.4** |
 | **β-2**  | 卫生 | `fix/r3y-staged-registry-privatize`      | `../quant-monitor-desk-wt-fix-r3y-staged-reg`        | **debt-lite** | §3.1 + **§3.5** |
 
-启动 Prompt：`ROUND3_BATCH_IMPLEMENTATION_MAP.md` §2.5 · 残留台账：`docs/quality/ROUND3_WAVE_B_PENDING_FIX_REGISTRY.md` · 边界 SSOT：MAP §2.2。
+启动 Prompt：`ROUND3_BATCH_IMPLEMENTATION_MAP.md` §2.5 · 残留台账：`docs/quality/待修复清单.md` · 边界 SSOT：MAP §2.2。
 
 ### 3.1 四路共用底座（每个分支 Plan 前必须 Read + 摘要）
 
@@ -150,7 +150,7 @@
 | `docs/modules/write_manager.md`                            | **禁止绕过** WriteManager 写 clean |
 | `docs/modules/data_sources.md`                             | source 角色与 disabled 默认        |
 | `docs/modules/ops_and_performance.md`                      | ops 模块边界                       |
-| `docs/quality/ROUND3_WAVE_B_PENDING_FIX_REGISTRY.md` §3    | `R3-B2.75-REQ2-EM` 等硬约束        |
+| `docs/quality/待修复清单.md` §3                            | `R3-B2.75-REQ2-EM` 等硬约束        |
 
 **`specs/` 契约与注册表**
 
@@ -196,7 +196,7 @@
 | `docs/architecture/03_runtime_flows.md`                                                | 运行链路                                          |
 | `docs/architecture/04_data_architecture.md`                                            | 数据分层                                          |
 | `docs/quality/final_package_rules.md`                                                  | 包与产出规则                                      |
-| `docs/quality/ROUND3_WAVE_B_PENDING_FIX_REGISTRY.md` §2                                | `ADV-R3X-LINEAGE-001` 等 defer 语境               |
+| `docs/quality/待修复清单.md` §2                                                        | `ADV-R3X-LINEAGE-001` 等 defer 语境               |
 | `docs/adr/ADR-0004-layer3-shock-anchor-model.md`                                       | Layer 3 模型（接口依赖）                          |
 | `docs/decisions/` 中 D-09 相关条目（经 `docs/quality/PENDING_USER_DECISIONS.md` 索引） | Layer 2–5 lineage 字段范围                        |
 
@@ -215,7 +215,7 @@
 
 ### 3.4 α-3 — PROMPT_15 证据链（§3.1 + 本节）
 
-**关闭 ID：** `R3Y-PROMPT15-EVID-001` · 台账：`docs/quality/ROUND3_WAVE_B_PENDING_FIX_REGISTRY.md` §2
+**关闭 ID：** `R3Y-PROMPT15-EVID-001` · 台账：`docs/quality/待修复清单.md` §2
 
 | 路径                                                                                                         | 用途                                  |
 | ------------------------------------------------------------------------------------------------------------ | ------------------------------------- |
@@ -232,7 +232,7 @@
 
 ### 3.5 β-2 — Staged file_registry 私有化（§3.1 + 本节）
 
-**关闭 ID：** `R3Y-STAGED-REG-001` · 台账：`docs/quality/ROUND3_WAVE_B_PENDING_FIX_REGISTRY.md` §2
+**关闭 ID：** `R3Y-STAGED-REG-001` · 台账：`docs/quality/待修复清单.md` §2
 
 | 路径                                                                               | 用途                                  |
 | ---------------------------------------------------------------------------------- | ------------------------------------- |
@@ -429,7 +429,7 @@ flowchart LR
 
 ### 8.3 α-3 — `fix/r3y-prompt15-evidence`（`R3Y-PROMPT15-EVID-001`）
 
-**权威台账：** `ROUND3_WAVE_B_PENDING_FIX_REGISTRY.md` §2 · **必读索引 §3.4**
+**权威台账：** `待修复清单.md` §2 · **必读索引 §3.4**
 
 | 维度           | PASS 条件                                                                                                                                                                         |
 | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -443,7 +443,7 @@ flowchart LR
 
 ### 8.4 β-2 — `fix/r3y-staged-registry-privatize`（`R3Y-STAGED-REG-001`）
 
-**权威台账：** `ROUND3_WAVE_B_PENDING_FIX_REGISTRY.md` §2 · **必读索引 §3.5**
+**权威台账：** `待修复清单.md` §2 · **必读索引 §3.5**
 
 | 维度           | PASS 条件                                                                                                                           |
 | -------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
