@@ -1,0 +1,5 @@
+B03-MODEL-02 — docs/schema/MIGRATION_COVERAGE.md + check_docs_specs_indexed
+Date: 2026-06-25
+Updated: L3/L4/L5 sections; last_verified 2026-06-25
+Command: uv run python scripts/check_docs_specs_indexed.py
+Result: OK: docs/specs indexed (MIGRATION_MAP + generated index)
