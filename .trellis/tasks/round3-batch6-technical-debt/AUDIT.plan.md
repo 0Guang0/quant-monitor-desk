@@ -35,8 +35,8 @@
 
 ## 2. DoD
 
-- [ ] A1–A8 报告 + `audit_matrix.json`
-- [ ] perf budget 负向：pytest_steps / shard_count / guard_status / bad YAML
-- [ ] sandbox_bootstrap 二次 prepare 幂等测
-- [ ] PASS 前不 finish-work
-- [ ] registry 闭合由 B3F-REG / 主会话验证（非本 Audit 必达）
+- [x] A1–A8 报告 + `audit_matrix.json`
+- [x] perf budget 负向：pytest_steps / shard_count / guard_status / bad YAML
+- [x] sandbox_bootstrap 二次 prepare 幂等测
+- [x] PASS 前不 finish-work
+- [x] registry 闭合由 B3F-REG / 主会话验证（非本 Audit 必达）
