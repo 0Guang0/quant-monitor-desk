@@ -613,6 +613,17 @@ tests/test_project_scaffold.py:
     docs: []
     rules: []
     specs: []
+tests/test_r3f_br_backfill_reconcile_closure.py:
+  command: uv run python -m pytest tests/test_r3f_br_backfill_reconcile_closure.py
+    -q
+  failure_meaning: Regression in test_r3f_br_backfill_reconcile_closure; inspect purpose
+    and linked authorities.
+  purpose: R3F-BR-01..05 closure guards (Batch 3F.4 backfill/reconcile parity).
+  type: runtime-contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
 tests/test_r3x_data_source_routing_blockers.py:
   command: uv run python -m pytest tests/test_r3x_data_source_routing_blockers.py
     -q
@@ -851,6 +862,15 @@ tests/test_sync_pipeline_contract.py:
     linked authorities.
   purpose: Pipeline seam contract tests (Round2 re-audit A7-02).
   type: contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_sync_runners.py:
+  command: uv run python -m pytest tests/test_sync_runners.py -q
+  failure_meaning: Regression in test_sync_runners; inspect purpose and linked authorities.
+  purpose: Sync job runner wiring tests (B3F-BR / playbook §8.5).
+  type: runtime-contract
   verifies:
     docs: []
     rules: []

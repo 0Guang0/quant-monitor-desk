@@ -1,0 +1,4 @@
+# 9.1 RED baseline (pre-implementation / TDD RED)
+ERROR: not found: no tests matched test_r3fBr01_backfillParity_registryDocumentsValidateWritePath
+collected 0 items
+FAILED
