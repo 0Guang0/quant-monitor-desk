@@ -1,0 +1,3 @@
+DATA-04 RED: corrupt csv/parquet
+pytest tests/test_adapter_skeletons.py::test_skeletonFetch_corruptCsv_notSuccessEligible tests/test_adapter_skeletons.py::test_skeletonFetch_corruptParquet_notSuccessEligible -v
+FAILED assert SUCCESS in (FAILED, SCHEMA_DRIFT)

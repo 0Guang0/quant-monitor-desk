@@ -39,3 +39,25 @@ error_message: string|null
 3. Adapter 失败也必须返回 FetchResult。
 4. Adapter 不负责最终主值选择。
 5. Adapter 不允许 silent fallback。
+
+## Structured schema_hash (VR-DATA-001)
+
+Structured file types: `json`, `csv`, `parquet`.
+
+When `status == SUCCESS` and `row_count > 0` for a structured fetch:
+
+- `schema_hash` **must** be non-null (port-supplied or adapter-inferred).
+- Adapter **must not** return `SUCCESS` with a null `schema_hash` for structured payloads.
+- If bounded schema inference fails (corrupt file, unreadable header/columns), adapter returns
+  `SCHEMA_DRIFT` or `FAILED` — never `SUCCESS` with a missing hash.
+
+Schemaless exemptions (no `schema_hash` required): sources explicitly registered as schemaless
+(e.g. opaque binary evidence). Registry field closure is out of scope for adapter-only slices;
+gate may still use `raw_file_paths` suffix or `file_registry.file_type` to classify structured
+fetches.
+
+Inference bounds (no full-file scan):
+
+- JSON: shape fingerprint via canonical JSON structure (existing).
+- CSV: first header line only, max 64 KiB prefix, stdlib `csv`.
+- Parquet: DuckDB `DESCRIBE SELECT * FROM read_parquet(?)` column names (LIMIT 0 semantics).

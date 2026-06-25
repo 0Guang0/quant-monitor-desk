@@ -79,6 +79,8 @@ class DbValidationGate:
     _SYNTHETIC_QUALITY_MARKERS = frozenset(
         {"raw_file_registry_metadata_only", "synthetic_migrated_schema_only"}
     )
+    _STRUCTURED_FILE_TYPES = frozenset({"json", "csv", "parquet"})
+    _STRUCTURED_PATH_SUFFIXES = (".json", ".csv", ".parquet")
 
     def __init__(self, conn_manager: ConnectionManager) -> None:
         self.conn_manager = conn_manager
@@ -163,6 +165,46 @@ class DbValidationGate:
         lowered = quality_flags.lower()
         return any(marker in lowered for marker in self._SYNTHETIC_QUALITY_MARKERS)
 
+    def _raw_paths_indicate_structured(self, raw_file_paths: str | None) -> bool:
+        if not raw_file_paths:
+            return False
+        try:
+            paths = json.loads(raw_file_paths)
+        except json.JSONDecodeError:
+            paths = [raw_file_paths]
+        if not isinstance(paths, list):
+            return False
+        for path in paths:
+            lower = str(path).lower()
+            if any(lower.endswith(suffix) for suffix in self._STRUCTURED_PATH_SUFFIXES):
+                return True
+        return False
+
+    def _fetch_log_is_structured(
+        self,
+        con,
+        *,
+        job_id: str,
+        source_id: str | None,
+        raw_file_paths: str | None,
+    ) -> bool:
+        if self._raw_paths_indicate_structured(raw_file_paths):
+            return True
+        if not source_id:
+            return False
+        row = con.execute(
+            """
+            SELECT file_type
+            FROM file_registry
+            WHERE source = ?
+              AND file_type IN ('json', 'csv', 'parquet')
+            ORDER BY fetch_time DESC
+            LIMIT 1
+            """,
+            [source_id],
+        ).fetchone()
+        return row is not None
+
     def _schema_hash_blocks_write(
         self,
         con,
@@ -176,11 +218,11 @@ class DbValidationGate:
             return False
         if self._quality_flags_include_schema_drift(quality_flags):
             return True
-        if not job_id or not source_id:
+        if not job_id:
             return False
         current_row = con.execute(
             """
-            SELECT schema_hash
+            SELECT schema_hash, raw_file_paths, row_count, status
             FROM fetch_log
             WHERE job_id = ?
             ORDER BY fetch_time DESC
@@ -188,9 +230,27 @@ class DbValidationGate:
             """,
             [job_id],
         ).fetchone()
-        if current_row is None or current_row[0] is None:
+        if current_row is None:
             return False
-        current_hash = str(current_row[0])
+        current_hash, raw_file_paths, row_count, status = current_row
+        structured = self._fetch_log_is_structured(
+            con,
+            job_id=job_id,
+            source_id=source_id,
+            raw_file_paths=(None if raw_file_paths is None else str(raw_file_paths)),
+        )
+        if (
+            structured
+            and str(status) == "SUCCESS"
+            and int(row_count or 0) > 0
+            and current_hash is None
+        ):
+            return True
+        if current_hash is None:
+            return False
+        current_hash = str(current_hash)
+        if not source_id:
+            return False
         baseline_row = con.execute(
             """
             SELECT schema_hash

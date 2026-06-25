@@ -807,6 +807,24 @@ def test_fetch_disabledPrimaryDomain_returnsDisabledSource(
     )
 
 
+def test_dataAdapterContract_documentsStructuredSchemaHashRequirement():
+    """覆盖范围：data_adapter_contract 结构化 schema_hash 契约段
+    测试对象：specs/contracts/data_adapter_contract.md
+    目的/目标：AC-DATA-01 — SUCCESS 结构化抓取必须非空 schema_hash，且写明 csv/parquet 有界推导
+    验证点：契约含 structured 规则、json/csv/parquet、SUCCESS+row_count 约束
+    失败含义：契约未冻结 fail-closed 语义，实现与审计 VR-DATA-001 无法对齐
+    """
+    from pathlib import Path
+
+    text = Path("specs/contracts/data_adapter_contract.md").read_text(encoding="utf-8")
+    lowered = text.lower()
+    assert "structured schema_hash" in lowered or "structured file types" in lowered
+    for token in ("json", "csv", "parquet"):
+        assert token in lowered
+    assert "success" in lowered and "row_count" in lowered
+    assert "schemaless" in lowered
+
+
 def test_fetch_disabledDomain_returnsDisabledSourceBeforeDomainAllowed(
     tmp_path,
     migrated_con,

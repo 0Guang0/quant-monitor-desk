@@ -1,0 +1,3 @@
+DATA-02 RED: CSV/Parquet infer tests
+pytest tests/test_adapter_skeletons.py::test_inferSchemaHash_csvHeader_producesStableHash tests/test_adapter_skeletons.py::test_inferSchemaHash_parquetColumns_producesHash -v
+FAILED assert (None is not None)

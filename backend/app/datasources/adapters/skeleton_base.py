@@ -2,10 +2,15 @@
 
 from __future__ import annotations
 
+import csv
 import hashlib
+import io
 import json
+import os
+import tempfile
 from datetime import UTC, date, datetime
 
+import duckdb
 from backend.app.datasources.adapters.fetch_port import FetchPayload, FetchPort, PortError
 from backend.app.datasources.base_adapter import BaseDataAdapter, _utc_now_iso
 from backend.app.datasources.fetch_result import FetchRequest, FetchResult
@@ -13,6 +18,8 @@ from backend.app.datasources.source_registry import SourceRegistry
 from backend.app.storage.evidence_ports import FileRegistryPort, RawEvidenceStore
 
 DEFAULT_MAX_PAYLOAD_BYTES = 10 * 1024 * 1024
+_STRUCTURED_FILE_TYPES = frozenset({"json", "csv", "parquet"})
+_CSV_SCHEMA_PREFIX_BYTES = 64 * 1024
 
 
 def _shape(value: object) -> object:
@@ -23,18 +30,73 @@ def _shape(value: object) -> object:
     return type(value).__name__
 
 
+def _canonical_schema_hash(value: object) -> str:
+    canonical = json.dumps(value, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(canonical.encode()).hexdigest()
+
+
+def _infer_csv_schema_hash(content: bytes) -> str | None:
+    prefix = content[:_CSV_SCHEMA_PREFIX_BYTES]
+    try:
+        text = prefix.decode("utf-8")
+    except UnicodeDecodeError:
+        return None
+    lines = text.splitlines()
+    if not lines or not lines[0].strip():
+        return None
+    try:
+        row = next(csv.reader(io.StringIO(lines[0])))
+    except csv.Error:
+        return None
+    if not row:
+        return None
+    return _canonical_schema_hash(row)
+
+
+def _infer_parquet_schema_hash(content: bytes) -> str | None:
+    fd, path = tempfile.mkstemp(suffix=".parquet")
+    try:
+        os.write(fd, content)
+        os.close(fd)
+        fd = -1
+        con = duckdb.connect()
+        try:
+            rows = con.execute(
+                "DESCRIBE SELECT * FROM read_parquet(?)",
+                [path],
+            ).fetchall()
+        finally:
+            con.close()
+        if not rows:
+            return None
+        colnames = [str(row[0]) for row in rows]
+        return _canonical_schema_hash(colnames)
+    except (OSError, duckdb.Error):
+        return None
+    finally:
+        if fd >= 0:
+            os.close(fd)
+        try:
+            os.unlink(path)
+        except OSError:
+            pass
+
+
 def _infer_schema_hash(payload: FetchPayload) -> str | None:
     if payload.schema_hash is not None:
         return payload.schema_hash
-    if payload.file_type != "json":
-        return None
-    try:
-        obj = json.loads(payload.content)
-        shape = _shape(obj)
-        canonical = json.dumps(shape, sort_keys=True, separators=(",", ":"))
-        return hashlib.sha256(canonical.encode()).hexdigest()
-    except (json.JSONDecodeError, UnicodeDecodeError):
-        return None
+    file_type = payload.file_type
+    if file_type == "json":
+        try:
+            obj = json.loads(payload.content)
+            shape = _shape(obj)
+            return _canonical_schema_hash(shape)
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            return None
+    if file_type == "csv":
+        return _infer_csv_schema_hash(payload.content)
+    if file_type == "parquet":
+        return _infer_parquet_schema_hash(payload.content)
     return None
 
 
@@ -117,6 +179,27 @@ class SkeletonAdapterBase(BaseDataAdapter):
             self._file_registry.register(saved)
 
         row_count = payload.row_count if payload.row_count is not None else 1
+        schema_hash = _infer_schema_hash(payload)
+        if (
+            payload.file_type in _STRUCTURED_FILE_TYPES
+            and row_count > 0
+            and schema_hash is None
+        ):
+            return FetchResult(
+                run_id=req.run_id,
+                source_id=self.source_id,
+                data_domain=req.data_domain,
+                status="SCHEMA_DRIFT",
+                row_count=0,
+                fetch_time=fetch_time,
+                error_message="structured fetch missing schema_hash",
+                raw_file_paths=[saved.local_path],
+                content_hash=saved.content_hash,
+                schema_hash=None,
+                as_of_timestamp=as_of,
+                latency_ms=payload.latency_ms,
+                retry_count=payload.retry_count,
+            )
         return FetchResult(
             run_id=req.run_id,
             source_id=self.source_id,
@@ -126,7 +209,7 @@ class SkeletonAdapterBase(BaseDataAdapter):
             fetch_time=fetch_time,
             raw_file_paths=[saved.local_path],
             content_hash=saved.content_hash,
-            schema_hash=_infer_schema_hash(payload),
+            schema_hash=schema_hash,
             as_of_timestamp=as_of,
             latency_ms=payload.latency_ms,
             retry_count=payload.retry_count,

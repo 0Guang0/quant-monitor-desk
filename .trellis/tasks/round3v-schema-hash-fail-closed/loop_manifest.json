@@ -1,0 +1,11 @@
+{
+  "task": "round3v-schema-hash-fail-closed",
+  "modules": ["datasources", "db"],
+  "acs": [
+    { "id": "AC-DATA-01", "status": "passed", "repair_items": [] },
+    { "id": "AC-DATA-02", "status": "passed", "repair_items": [] },
+    { "id": "AC-DATA-03", "status": "passed", "repair_items": [] },
+    { "id": "AC-DATA-04", "status": "passed", "repair_items": [] },
+    { "id": "AC-DATA-05", "status": "passed", "repair_items": [] }
+  ]
+}

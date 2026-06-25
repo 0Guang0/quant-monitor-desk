@@ -1,0 +1,4 @@
+§9.0 Boot baseline
+uv run pytest tests/test_db_validation_gate.py tests/test_adapter_skeletons.py -q
+49 passed
+exit 0
