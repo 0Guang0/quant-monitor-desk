@@ -16,7 +16,8 @@ public_methods:
       - call_adapter_fetch
       - ensure_fetch_log_or_failure_event
   preview_route:
-    input: {data_domain: string, operation: string, market_id: optional_string}
+    input:
+      { data_domain: string, operation: string, market_id: optional_string }
     output: SourceRoutePlan
     side_effects_allowed: false
 call_boundaries:
@@ -36,8 +37,24 @@ rules:
   - create_adapter remains available but is internal to DataSourceService in production paths
   - Agent tools may request read-only route previews but may not construct adapters
   - API diagnostics may preview route plans without fetching
+  - proposed_disabled_source entries may be exposed in readiness/source-list diagnostics but must not be adapter-constructible until explicitly enabled
   - Orchestrator runners should depend on DataSourceService or a narrow fetch callable rather than vendor adapter classes
   - tests may use create_test_adapter only when the test name and fixture explicitly indicate test-only behavior
+reference_adoption:
+  policy: >
+    New provider/fetch-port implementations should first inspect approved mature
+    reference projects under 参考项目/ and adapt only QMD-owned logic behind this
+    facade. Direct runtime imports from 参考项目/** are forbidden.
+  allowed_reference_uses:
+    easyxt_tdx_provider: architecture_and_connection_lifecycle_only
+    openbb_provider_layout: architecture_only_no_runtime_copy
+    jq2ptrade_loader_shape: read_only_review_or_rehearsal_shape_only
+  required_boundaries:
+    - DataSourceService remains the only production fetch facade
+    - SourceRoutePlan must record provider choice and disabled/fallback reasons
+    - ResourceGuard must run before network or write-rehearsal operations
+    - provider code must produce FetchResult/evidence lineage, not clean-table writes
+    - Agent/API code may not construct adapters or expand source scope
 required_tests:
   - tests/test_datasource_service.py::test_serviceBuildsRouteBeforeFetch
   - tests/test_datasource_service.py::test_apiAndAgentCannotImportAdapterFactory

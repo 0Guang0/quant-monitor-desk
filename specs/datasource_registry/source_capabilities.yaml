@@ -275,6 +275,28 @@ sources:
               ]
             requires_auth: false
             enabled_by_default: false
+      us_option_chain:
+        operations:
+          fetch_us_option_chain_validation:
+            frequency: daily_or_intraday
+            fields:
+              [
+                instrument_id,
+                expiration_date,
+                strike,
+                option_type,
+                bid,
+                ask,
+                last_price,
+                implied_volatility,
+                open_interest,
+                volume,
+                source_used,
+              ]
+            requires_auth: false
+            enabled_by_default: false
+            production_default: false
+            notes: "Yahoo/yfinance-compatible option chain is validation-only; do not use as production OPRA replacement."
       global_asset_reference:
         operations:
           fetch_global_asset_reference:
@@ -322,7 +344,9 @@ sources:
           fetch_security_list:
             frequency: on_demand
             fields: [instrument_id, market, name, security_type, source_used]
+            requires_auth: false
             enabled_by_default: false
+            production_default: false
       cn_equity_daily_bar:
         operations:
           fetch_daily_bar:
@@ -339,7 +363,9 @@ sources:
                 amount,
                 source_used,
               ]
+            requires_auth: false
             enabled_by_default: false
+            production_default: false
       cn_index_daily_bar:
         operations:
           fetch_index_daily_bar:
@@ -356,7 +382,9 @@ sources:
                 amount,
                 source_used,
               ]
+            requires_auth: false
             enabled_by_default: false
+            production_default: false
   qmt_xqshare:
     status: proposed_disabled_source
     domains:
@@ -419,6 +447,840 @@ sources:
             requires_remote_host: true
             enabled_by_default: false
             env_required: [XQSHARE_REMOTE_HOST, XQSHARE_REMOTE_PORT]
+  us_treasury:
+    status: proposed_disabled_source
+    domains:
+      us_treasury_yield_curve:
+        operations:
+          fetch_yield_curve:
+            frequency: daily
+            fields:
+              [
+                observation_date,
+                tenor,
+                yield_percent,
+                source_used,
+                source_fetch_id,
+                content_hash,
+              ]
+            requires_auth: false
+            enabled_by_default: false
+            production_default: false
+      inflation_expectation:
+        operations:
+          fetch_inflation_expectation_reference:
+            frequency: daily_or_monthly
+            fields:
+              [
+                observation_date,
+                metric_name,
+                metric_value,
+                source_used,
+                source_fetch_id,
+                content_hash,
+              ]
+            requires_auth: false
+            enabled_by_default: false
+            production_default: false
+  sec_edgar:
+    status: proposed_disabled_source
+    domains:
+      us_filings:
+        operations:
+          fetch_company_filings:
+            frequency: intraday_or_daily
+            fields:
+              [
+                accession_number,
+                cik,
+                form_type,
+                filing_date,
+                report_date,
+                primary_document_url,
+                source_used,
+                content_hash,
+              ]
+            requires_auth: false
+            requires_identity_header: true
+            enabled_by_default: false
+            production_default: false
+      us_insider_form4:
+        operations:
+          fetch_form4_transactions:
+            frequency: intraday_or_daily
+            fields:
+              [
+                accession_number,
+                cik,
+                issuer_symbol,
+                owner_name,
+                transaction_date,
+                transaction_code,
+                shares,
+                price,
+                source_used,
+                content_hash,
+              ]
+            requires_auth: false
+            requires_identity_header: true
+            enabled_by_default: false
+            production_default: false
+  cftc_cot:
+    status: proposed_disabled_source
+    domains:
+      cot_positioning:
+        operations:
+          fetch_cot_positioning:
+            frequency: weekly
+            fields:
+              [
+                market_code,
+                report_date,
+                trader_category,
+                long_contracts,
+                short_contracts,
+                spread_contracts,
+                source_used,
+                content_hash,
+              ]
+            requires_auth: false
+            enabled_by_default: false
+            production_default: false
+            notes: "Weekly official release; not realtime positioning."
+  bis:
+    status: proposed_disabled_source
+    domains:
+      central_bank_policy:
+        operations:
+          fetch_policy_rate:
+            frequency: daily_or_monthly
+            fields:
+              [
+                country_code,
+                observation_date,
+                policy_rate,
+                frequency,
+                source_used,
+                content_hash,
+              ]
+            requires_auth: false
+            enabled_by_default: false
+            production_default: false
+      credit_gap:
+        operations:
+          fetch_credit_to_gdp_gap:
+            frequency: quarterly
+            fields:
+              [
+                country_code,
+                observation_date,
+                credit_to_gdp_gap,
+                source_used,
+                content_hash,
+              ]
+            requires_auth: false
+            enabled_by_default: false
+            production_default: false
+  world_bank:
+    status: proposed_disabled_source
+    domains:
+      development_indicator:
+        operations:
+          fetch_indicator_series:
+            frequency: annual_or_quarterly
+            fields:
+              [
+                country_code,
+                indicator_id,
+                observation_date,
+                value,
+                unit,
+                source_used,
+                content_hash,
+              ]
+            requires_auth: false
+            enabled_by_default: false
+            production_default: false
+      global_macro_reference:
+        operations:
+          fetch_macro_reference:
+            frequency: annual_or_quarterly
+            fields:
+              [
+                country_code,
+                indicator_id,
+                observation_date,
+                value,
+                unit,
+                source_used,
+                content_hash,
+              ]
+            requires_auth: false
+            enabled_by_default: false
+            production_default: false
+  deribit:
+    status: proposed_disabled_source
+    domains:
+      crypto_derivatives:
+        operations:
+          fetch_derivatives_instruments:
+            frequency: intraday_or_realtime
+            fields:
+              [
+                instrument_name,
+                base_currency,
+                quote_currency,
+                kind,
+                expiration_timestamp,
+                source_used,
+                content_hash,
+              ]
+            requires_auth: false
+            enabled_by_default: false
+            production_default: false
+            no_trading_or_account_scope: true
+      crypto_futures_term_structure:
+        operations:
+          fetch_futures_term_structure:
+            frequency: intraday_or_realtime
+            fields:
+              [
+                instrument_name,
+                expiration_timestamp,
+                mark_price,
+                index_price,
+                basis,
+                source_used,
+                content_hash,
+              ]
+            requires_auth: false
+            enabled_by_default: false
+            production_default: false
+            no_trading_or_account_scope: true
+      crypto_options_surface:
+        operations:
+          fetch_options_surface:
+            frequency: intraday_or_realtime
+            fields:
+              [
+                instrument_name,
+                expiration_timestamp,
+                strike,
+                option_type,
+                mark_iv,
+                bid_iv,
+                ask_iv,
+                delta,
+                gamma,
+                theta,
+                vega,
+                source_used,
+              ]
+            requires_auth: false
+            enabled_by_default: false
+            production_default: false
+            no_trading_or_account_scope: true
+  coingecko:
+    status: proposed_disabled_source
+    domains:
+      crypto_spot_market:
+        operations:
+          fetch_spot_market_reference:
+            frequency: daily_or_intraday
+            fields:
+              [
+                asset_id,
+                symbol,
+                price_usd,
+                market_cap_usd,
+                volume_24h_usd,
+                source_used,
+                content_hash,
+              ]
+            requires_auth: false
+            enabled_by_default: false
+            production_default: false
+            notes: "Reference/validation source; exchange-level trade facts require a future exchange adapter."
+      crypto_asset_reference:
+        operations:
+          fetch_crypto_asset_reference:
+            frequency: daily_or_on_demand
+            fields:
+              [
+                asset_id,
+                symbol,
+                name,
+                platform,
+                contract_address,
+                source_used,
+                content_hash,
+              ]
+            requires_auth: false
+            enabled_by_default: false
+            production_default: false
+  kalshi:
+    status: proposed_disabled_source
+    domains:
+      regulated_event_contract:
+        operations:
+          fetch_regulated_event_contracts:
+            frequency: intraday_or_daily
+            fields:
+              [
+                market_ticker,
+                event_ticker,
+                title,
+                close_time,
+                yes_bid,
+                yes_ask,
+                volume,
+                open_interest,
+                source_used,
+                content_hash,
+              ]
+            requires_auth: false
+            enabled_by_default: false
+            production_default: false
+      prediction_market_probability:
+        operations:
+          fetch_regulated_probability_signal:
+            frequency: intraday_or_daily
+            fields:
+              [
+                market_ticker,
+                event_ticker,
+                yes_bid,
+                yes_ask,
+                last_price,
+                volume,
+                liquidity,
+                source_used,
+                content_hash,
+              ]
+            requires_auth: false
+            enabled_by_default: false
+            production_default: false
+            notes: "Probability signal only; not a factual resolution source."
+  polymarket:
+    status: proposed_disabled_source
+    domains:
+      prediction_market_probability:
+        operations:
+          fetch_prediction_market_probability:
+            frequency: intraday_or_daily
+            fields:
+              [
+                market_slug,
+                condition_id,
+                question,
+                outcome,
+                probability,
+                liquidity,
+                volume,
+                spread,
+                source_used,
+                content_hash,
+              ]
+            requires_auth: false
+            enabled_by_default: false
+            production_default: false
+            notes: "Probability signal only; record resolution_source separately."
+      event_market_contract:
+        operations:
+          fetch_event_market_contracts:
+            frequency: intraday_or_daily
+            fields:
+              [
+                market_slug,
+                question,
+                active,
+                closed,
+                start_date,
+                end_date,
+                liquidity,
+                volume,
+                source_used,
+                content_hash,
+              ]
+            requires_auth: false
+            enabled_by_default: false
+            production_default: false
+  stooq:
+    status: proposed_disabled_source
+    domains:
+      global_market_daily_bar:
+        operations:
+          fetch_global_daily_bar:
+            frequency: daily
+            fields:
+              [
+                instrument_id,
+                trade_date,
+                open,
+                high,
+                low,
+                close,
+                volume,
+                source_used,
+                content_hash,
+              ]
+            requires_auth: false
+            enabled_by_default: false
+            production_default: false
+      fx_daily_bar:
+        operations:
+          fetch_fx_daily_bar:
+            frequency: daily
+            fields:
+              [
+                pair_id,
+                trade_date,
+                open,
+                high,
+                low,
+                close,
+                source_used,
+                content_hash,
+              ]
+            requires_auth: false
+            enabled_by_default: false
+            production_default: false
+      commodity_daily_bar:
+        operations:
+          fetch_commodity_daily_bar:
+            frequency: daily
+            fields:
+              [
+                instrument_id,
+                trade_date,
+                open,
+                high,
+                low,
+                close,
+                volume,
+                source_used,
+                content_hash,
+              ]
+            requires_auth: false
+            enabled_by_default: false
+            production_default: false
+  alpha_vantage:
+    status: proposed_disabled_source
+    domains:
+      us_equity_daily_bar:
+        operations:
+          fetch_us_daily_bar:
+            frequency: daily
+            fields:
+              [
+                instrument_id,
+                trade_date,
+                open,
+                high,
+                low,
+                close,
+                volume,
+                source_used,
+                content_hash,
+              ]
+            requires_auth: true
+            api_key_env: ALPHA_VANTAGE_API_KEY
+            enabled_by_default: false
+            production_default: false
+      etf_daily_bar:
+        operations:
+          fetch_etf_daily_bar:
+            frequency: daily
+            fields:
+              [
+                instrument_id,
+                trade_date,
+                open,
+                high,
+                low,
+                close,
+                volume,
+                source_used,
+                content_hash,
+              ]
+            requires_auth: true
+            api_key_env: ALPHA_VANTAGE_API_KEY
+            enabled_by_default: false
+            production_default: false
+      us_option_chain:
+        operations:
+          fetch_us_option_chain:
+            frequency: daily_or_intraday
+            fields:
+              [
+                instrument_id,
+                expiration_date,
+                strike,
+                option_type,
+                bid,
+                ask,
+                last_price,
+                implied_volatility,
+                delta,
+                gamma,
+                theta,
+                vega,
+                open_interest,
+                volume,
+                source_used,
+              ]
+            requires_auth: true
+            api_key_env: ALPHA_VANTAGE_API_KEY
+            enabled_by_default: false
+            production_default: false
+      macro_series:
+        operations:
+          fetch_macro_series:
+            frequency: daily_or_monthly
+            fields:
+              [series_id, observation_date, value, source_used, content_hash]
+            requires_auth: true
+            api_key_env: ALPHA_VANTAGE_API_KEY
+            enabled_by_default: false
+            production_default: false
+      fx_daily_bar:
+        operations:
+          fetch_fx_daily_bar:
+            frequency: daily_or_intraday
+            fields:
+              [
+                pair_id,
+                trade_date,
+                open,
+                high,
+                low,
+                close,
+                source_used,
+                content_hash,
+              ]
+            requires_auth: true
+            api_key_env: ALPHA_VANTAGE_API_KEY
+            enabled_by_default: false
+            production_default: false
+      commodity_daily_bar:
+        operations:
+          fetch_commodity_daily_bar:
+            frequency: daily_or_monthly
+            fields:
+              [
+                instrument_id,
+                observation_date,
+                value,
+                source_used,
+                content_hash,
+              ]
+            requires_auth: true
+            api_key_env: ALPHA_VANTAGE_API_KEY
+            enabled_by_default: false
+            production_default: false
+      crypto_spot_market:
+        operations:
+          fetch_crypto_spot_reference:
+            frequency: daily_or_intraday
+            fields:
+              [
+                asset_pair,
+                observation_time,
+                price,
+                volume,
+                source_used,
+                content_hash,
+              ]
+            requires_auth: true
+            api_key_env: ALPHA_VANTAGE_API_KEY
+            enabled_by_default: false
+            production_default: false
+  mootdx:
+    status: proposed_disabled_source
+    domains:
+      security_list:
+        operations:
+          fetch_security_list:
+            frequency: on_demand
+            fields: [instrument_id, market, name, security_type, source_used]
+            requires_auth: false
+            enabled_by_default: false
+            production_default: false
+      cn_equity_daily_bar:
+        operations:
+          fetch_daily_bar:
+            frequency: daily
+            fields:
+              [
+                instrument_id,
+                trade_date,
+                open,
+                high,
+                low,
+                close,
+                volume,
+                amount,
+                source_used,
+              ]
+            requires_auth: false
+            enabled_by_default: false
+            production_default: false
+      cn_index_daily_bar:
+        operations:
+          fetch_index_daily_bar:
+            frequency: daily
+            fields:
+              [
+                index_id,
+                trade_date,
+                open,
+                high,
+                low,
+                close,
+                volume,
+                amount,
+                source_used,
+              ]
+            requires_auth: false
+            enabled_by_default: false
+            production_default: false
+  eastmoney:
+    status: proposed_disabled_source
+    domains:
+      cn_equity_daily_bar:
+        operations:
+          fetch_daily_bar_validation:
+            frequency: daily
+            fields:
+              [
+                instrument_id,
+                trade_date,
+                open,
+                high,
+                low,
+                close,
+                volume,
+                amount,
+                source_used,
+                content_hash,
+              ]
+            requires_auth: false
+            enabled_by_default: false
+            production_default: false
+      cn_index:
+        operations:
+          fetch_index_daily_bar_validation:
+            frequency: daily
+            fields:
+              [
+                index_id,
+                trade_date,
+                open,
+                high,
+                low,
+                close,
+                volume,
+                amount,
+                source_used,
+                content_hash,
+              ]
+            requires_auth: false
+            enabled_by_default: false
+            production_default: false
+      sector_board:
+        operations:
+          fetch_sector_board_validation:
+            frequency: daily
+            fields:
+              [
+                board_id,
+                trade_date,
+                metric_name,
+                metric_value,
+                source_used,
+                content_hash,
+              ]
+            requires_auth: false
+            enabled_by_default: false
+            production_default: false
+      capital_flow:
+        operations:
+          fetch_capital_flow:
+            frequency: intraday_or_daily
+            fields:
+              [
+                instrument_id,
+                as_of_timestamp,
+                metric_name,
+                metric_value,
+                source_used,
+                content_hash,
+              ]
+            requires_auth: false
+            enabled_by_default: false
+            production_default: false
+            notes: "Source-specific methodology; store per-source metric observations."
+      cn_announcements:
+        operations:
+          fetch_announcement_index_validation:
+            frequency: intraday_or_daily
+            fields:
+              [
+                announcement_id,
+                instrument_id,
+                title,
+                publish_timestamp,
+                url,
+                source_used,
+                content_hash,
+              ]
+            requires_auth: false
+            enabled_by_default: false
+            production_default: false
+  sina_finance:
+    status: proposed_disabled_source
+    domains:
+      cn_equity_daily_bar:
+        operations:
+          fetch_daily_bar_validation:
+            frequency: daily
+            fields:
+              [
+                instrument_id,
+                trade_date,
+                open,
+                high,
+                low,
+                close,
+                volume,
+                amount,
+                source_used,
+                content_hash,
+              ]
+            requires_auth: false
+            enabled_by_default: false
+            production_default: false
+      cn_equity_realtime:
+        operations:
+          fetch_realtime_quote_validation:
+            frequency: intraday
+            fields:
+              [
+                instrument_id,
+                timestamp,
+                last_price,
+                bid,
+                ask,
+                volume,
+                amount,
+                source_used,
+                content_hash,
+              ]
+            requires_auth: false
+            enabled_by_default: false
+            production_default: false
+      cn_index_daily_bar:
+        operations:
+          fetch_index_daily_bar_validation:
+            frequency: daily
+            fields:
+              [
+                index_id,
+                trade_date,
+                open,
+                high,
+                low,
+                close,
+                volume,
+                amount,
+                source_used,
+              ]
+            requires_auth: false
+            enabled_by_default: false
+            production_default: false
+  ths_ifind:
+    status: proposed_disabled_source
+    domains:
+      concept_theme:
+        operations:
+          fetch_concept_theme:
+            frequency: daily_or_on_demand
+            fields:
+              [
+                concept_id,
+                concept_name,
+                instrument_id,
+                relation_strength,
+                source_used,
+                content_hash,
+              ]
+            requires_auth: true
+            enabled_by_default: false
+            production_default: false
+      research_report:
+        operations:
+          fetch_research_report_index:
+            frequency: daily_or_on_demand
+            fields:
+              [
+                report_id,
+                title,
+                publish_timestamp,
+                institution,
+                instrument_id,
+                url,
+                source_used,
+                content_hash,
+              ]
+            requires_auth: true
+            enabled_by_default: false
+            production_default: false
+      capital_flow:
+        operations:
+          fetch_capital_flow_authorized:
+            frequency: intraday_or_daily
+            fields:
+              [
+                instrument_id,
+                as_of_timestamp,
+                metric_name,
+                metric_value,
+                source_used,
+                content_hash,
+              ]
+            requires_auth: true
+            enabled_by_default: false
+            production_default: false
+  web_search:
+    status: proposed_disabled_source
+    domains:
+      supplemental_web_evidence:
+        operations:
+          fetch_supplemental_web_evidence:
+            frequency: on_demand
+            output: evidence_staging_only
+            requires_auth: false
+            enabled_by_default: false
+            production_default: false
+            manual_review_required: true
+      vix_cds_supplement:
+        operations:
+          fetch_vix_cds_supplement:
+            frequency: on_demand
+            output: evidence_staging_only
+            requires_auth: false
+            enabled_by_default: false
+            production_default: false
+            manual_review_required: true
+      event_resolution_evidence:
+        operations:
+          fetch_event_resolution_evidence:
+            frequency: on_demand
+            output: manual_review_only
+            requires_auth: false
+            enabled_by_default: false
+            production_default: false
+            manual_review_required: true
 validation:
   required_tests:
     - test_everyAllowedDomain_hasCapabilityDeclaration

@@ -1,5 +1,7 @@
 # 027_implement_frontend_layer_pages 实现前端 Layer 页面数据绑定
 
+> **Historical input notice:** canonical Round4 execution now starts from `BATCH_04_VERIFIED_AUDIT_PRODUCTIZATION/README.md`. This loose card remains source material for `B04_03_frontend_error_boundary_and_routes.md`; do not execute it as the default entrypoint without checking the Batch 04 manifest.
+
 ## 1. 任务目标
 
 实现 Layer1-5 页面骨架和动态配置驱动，不写死指标/链条/布局。

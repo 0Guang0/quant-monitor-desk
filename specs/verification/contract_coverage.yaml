@@ -196,6 +196,18 @@ specs/contracts/review_sandbox_contract.yaml:
 specs/contracts/runtime_flow_contract.yaml:
   waiver: "Runtime flow contract covered by integration smoke tests indirectly"
 
+specs/contracts/sandbox_clean_write_contract.yaml:
+  requirements:
+    SANDBOX_CLEAN_WRITE:
+      text: "Round 3G sandbox rehearsal, adversarial audit, and limited clean-write gates"
+      tests:
+        - tests/test_round3g_sandbox_clean_write_rehearsal.py
+        - tests/test_round3g_pre_production_adversarial_audit.py
+        - tests/test_round3g_limited_production_clean_write.py
+        - tests/test_round3g_limited_production_rollback.py
+        - tests/test_reference_adoption_guardrails.py
+      negative_required: true
+
 specs/contracts/source_capability_contract.yaml:
   requirements:
     SOURCE_CAPABILITY:

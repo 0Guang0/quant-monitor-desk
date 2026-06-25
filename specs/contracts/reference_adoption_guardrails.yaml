@@ -1,38 +1,140 @@
-version: reference_adoption_guardrails_v1
-status: draft_round2_6
+version: reference_adoption_guardrails_v2
+status: draft_round3g
 owner: architecture_security
-purpose: "Prevent unsafe direct copying from JQ2PTrade, EasyXT, or ptqmt-site into Quant Monitor Desk."
+purpose: >
+  Permit scoped, audited adaptation from mature reference projects while blocking
+  unsafe runtime copying, execution semantics, source fallback, and license-risky
+  adoption. Execution details belong in the concrete task card that uses the
+  reference source; Batch 3F-R and Batch 3G must not move executable adoption
+  details into a separate inventory file that execution agents must chase.
+
+structure_rules:
+  task_card_local_reference_details: true
+  one_task_id_one_task_card: true
+  executable_reference_details_must_be_task_card_local: true
+  separate_reference_inventory_may_exist_only_as_non_executable_index: true
+  batch3fr_separate_reference_inventory_allowed: false
+  batch3g_separate_reference_inventory_allowed: false
+  batch3g_canonical_cards:
+    - docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_01_SANDBOX_CLEAN_WRITE_REHEARSAL.md
+    - docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_02_PRE_PRODUCTION_ADVERSARIAL_AUDIT.md
+    - docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_03_LIMITED_PRODUCTION_CLEAN_WRITE.md
+
 allowed_adoption:
-  mapping_first_contracts:
-    from: JQ2PTrade
-    allowed_as: [SourceCapabilityRegistry, spec_migrator]
-  low_coupling_module_boundaries:
+  easyxt_data_quality_rules:
     from: EasyXT
-    allowed_as: [ModuleBoundaryMatrix, optional_extras]
-  local_only_user_disclosure:
-    from: ptqmt-site
-    allowed_as: [privacy_data_flow, LocalOnlyBadge]
-  read_only_diagnostics_tools:
-    from: ptqmt-site
-    allowed_as: [Diagnostics Tools Page]
+    source_paths:
+      - 参考项目/EasyXT/data_manager/data_integrity_checker.py
+      - 参考项目/EasyXT/data_manager/smart_data_detector.py
+    allowed_as:
+      - qmd_owned_data_health_profile_rules
+      - qmd_owned_missing_calendar_gap_report_shape
+      - qmd_owned_data_quality_summary_shape
+    required_rewrites:
+      - remove_runtime_import_from_reference_project
+      - remove_sys_path_mutation
+      - remove_default_db_path_lookup
+      - remove_hardcoded_table_names
+      - remove_interpolated_sql
+      - replace_reference_calendar_with_qmd_calendar_or_warning_status
+  jq2ptrade_loader_report_shapes:
+    from: JQ2PTrade
+    source_paths:
+      - 参考项目/JQ2PTrade/ptrade_local/engine/data_loader.py
+      - 参考项目/JQ2PTrade/ptrade_local/engine/report.py
+      - 参考项目/JQ2PTrade/api_mapping.json
+    allowed_as:
+      - qmd_owned_bounded_rehearsal_loader_shape
+      - qmd_owned_structured_rehearsal_report_shape
+      - forbidden_api_name_deny_list
+    required_rewrites:
+      - remove_default_local_database_path
+      - remove_broad_universe_loading
+      - preserve_raw_source_symbol_identity
+      - replace_console_reporting_with_structured_evidence
+      - exclude_execution_style_api_names
+  openbb_provider_architecture:
+    from: OpenBB
+    source_paths:
+      - 参考项目/OpenBB/openbb_platform/providers/
+      - 参考项目/OpenBB/openbb_platform/providers/fred/README.md
+    allowed_as:
+      - architecture_only_provider_catalog_pattern
+      - qmd_owned_provider_metadata_fields
+    required_rewrites:
+      - no_openbb_runtime_source_copy
+      - no_openbb_provider_class_copy
+      - no_round3g_openbb_runtime_dependency
+  agents_round4_only:
+    from:
+      - TradingAgents
+      - TradingAgents-astock
+      - agents-for-openbb
+    allowed_as:
+      - future_round4_agent_ui_reference_only
+    round3g_allowed_use: none
+
 forbidden_adoption:
+  runtime_import_from_reference_project:
+    examples:
+      - import_from_reference_project_runtime
+      - sys_path_insert_reference_project
+    severity: P0
   real_trading_or_order_api:
-    examples: [order, order_value, order_target, buy, sell]
+    examples:
+      - order
+      - order_value
+      - order_target
+      - order_target_value
+      - cancel_order
+      - get_open_orders
+      - get_portfolio
+      - get_positions
+      - get_orders
+      - get_trades
+    severity: P0
+  scheduler_or_execution_hook:
+    examples:
+      - run_daily
+      - run_weekly
+      - run_monthly
+      - arbitrary_strategy_exec
     severity: P0
   auto_login_or_captcha:
-    examples: [qmt_auto_login, captcha_solver, terminal_control]
+    examples:
+      - qmt_auto_login
+      - captcha_solver
+      - terminal_control
     severity: P0
   silent_fallback:
-    examples: [auto_source_switch_without_flag, fallback_without_source_route_log]
+    examples:
+      - auto_source_switch_without_flag
+      - fallback_without_source_route_log
     severity: P0
-  arbitrary_strategy_exec:
-    examples: [compile_user_code, exec_user_code, unrestricted_import]
+  copied_openbb_runtime_source:
+    examples:
+      - copied_provider_fetcher_class
+      - openbb_runtime_dependency_in_round3g
     severity: P0
-rules:
-  - reference projects may inform contracts, not override local-first/no-action/security boundaries
-  - any proposed adoption must cite this contract and list allowed_adoption category
-  - any forbidden item found in code or tasks blocks the task until removed
+  round3g_agent_triggered_write:
+    examples:
+      - agent_triggered_write
+      - agent_expanded_candidate_set
+      - agent_substituted_user_approval
+    severity: P0
+
+round3g_rules:
+  - R3G reference adoption details must live in R3G task cards, not in a separate inventory file.
+  - R3G-01 may adapt EasyXT/JQ2PTrade/OpenBB ideas only into QMD-owned bounded sandbox rehearsal code.
+  - R3G-02 must block if reference code is imported at runtime or copied unsafely.
+  - R3G-03 must block without explicit user approval, before/after proof, and rollback dry run.
+  - TradingAgents, TradingAgents-astock, and agents-for-openbb have no active Round3G use.
+
 required_tests:
   - tests/test_reference_adoption_guardrails.py::test_noTradingApiCopied
   - tests/test_reference_adoption_guardrails.py::test_noAutoLoginCopied
   - tests/test_reference_adoption_guardrails.py::test_noSilentFallbackCopied
+  - tests/test_reference_adoption_guardrails.py::test_jq2ptradeExecPatternNotCopied
+  - tests/test_round3g_sandbox_clean_write_rehearsal.py
+  - tests/test_round3g_pre_production_adversarial_audit.py
+  - tests/test_round3g_limited_production_clean_write.py

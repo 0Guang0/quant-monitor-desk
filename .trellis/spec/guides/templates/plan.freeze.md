@@ -158,6 +158,17 @@ python .trellis/scripts/task.py validate-plan-freeze .trellis/tasks/<slug>
 - [ ] `research/plan-skill-reads.jsonl` 覆盖 freeze 必做 skill
 - [ ] `validate 通过`
 
+### 3.0v4 冻结三件套（plan_protocol_version: "4" · Execute/Audit 必读）
+
+| ✓   | Execute 验收（冻结卡 + 索引）                         | ✓   | Audit（AUDIT + 索引 §5）             |
+| --- | ----------------------------------------------------- | --- | ------------------------------------ |
+| [ ] | `frozen/*.md` 含 §8 停止条件 + §9 步骤 + §10 测试契约 | [ ] | `AUDIT.plan.md` §2 无 `{{}}` 占位符  |
+| [ ] | `EXECUTION_INDEX.md` §1 RED/GREEN + §2 验收 Tier      | [ ] | 索引 §5 Audit 追溯集已填             |
+| [ ] | §3 仅列 **不可无损内联** 的原文路径                   | [ ] | `audit.jsonl` 第一条 = AUDIT.plan.md |
+| [ ] | §4 已内联来源与冻结卡章节对照                         | [ ] | A6：perf 或 SKIP + 理由              |
+| [ ] | `task.py freeze-task-card` 已执行                     | [ ] | 7.pre → `gitnexus-audit-summary.md`  |
+| [ ] | `implement.jsonl` 第一条 = frozen 卡（自动生成）      | [ ] | A1/A5/A8 倒查 frozen + 索引 §3       |
+
 ### 3.6 validate-plan-freeze（机器门禁）
 
 `task.py start` 前须 exit 0（失败则禁止 `planning → in_progress`，可用 `--force` 人工 override）：

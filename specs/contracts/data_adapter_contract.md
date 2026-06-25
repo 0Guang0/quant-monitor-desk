@@ -39,6 +39,9 @@ error_message: string|null
 3. Adapter 失败也必须返回 FetchResult。
 4. Adapter 不负责最终主值选择。
 5. Adapter 不允许 silent fallback。
+6. Adapter 可以借鉴 `参考项目/` 中成熟 provider 的连接管理、字段映射、错误分类、schema 识别和报告形态，但落地代码必须是 QMD-owned module，不得在运行时 import `参考项目/**`。
+7. 参考项目中的交易、下单、自动登录、验证码、账户控制、全市场默认扫描、silent fallback 语义不得进入 Adapter contract。
+8. OpenBB 只能作为 provider/package/catalog 架构参考；不得复制 AGPL runtime source 或 provider fetcher class。
 
 ## Structured schema_hash (VR-DATA-001)
 

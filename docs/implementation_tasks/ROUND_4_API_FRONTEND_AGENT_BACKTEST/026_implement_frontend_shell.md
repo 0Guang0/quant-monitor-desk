@@ -1,5 +1,7 @@
 # 026_implement_frontend_shell 实现前端 shell
 
+> **Historical input notice:** canonical Round4 execution now starts from `BATCH_04_VERIFIED_AUDIT_PRODUCTIZATION/README.md`. This loose card remains source material for `B04_03_frontend_error_boundary_and_routes.md`; do not execute it as the default entrypoint without checking the Batch 04 manifest.
+
 ## 1. 任务目标
 
 创建 Vite/React/TS 骨架、API client、全局状态和通用组件。

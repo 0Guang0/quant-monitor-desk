@@ -39,6 +39,10 @@ rules:
   - skipped disabled sources must include disabled_reason
   - qmt_xtdata/qmt_xqshare skip must explain missing user authorization or missing env
   - Validation source may not write clean table unless FallbackPolicy explicitly allows it and audit flags are written
+  - new proposed external sources must route as DISABLED_SOURCE until explicitly enabled by adapter/license/auth evidence
+  - web_search routes may only target evidence_staging/manual_review outputs and must never select a clean-table writer
+  - prediction_market_probability routes must tag outputs as probability_signal and must not resolve factual event outcomes
+  - official/regulator/filing Primary sources outrank aggregator/web candidates for factual domains when both are enabled
   - SourceRoutePlan may be persisted in source_route_log or job_event_log.payload_json; implementation must choose and document exactly one authoritative persistence path
 forbidden:
   - silent fallback

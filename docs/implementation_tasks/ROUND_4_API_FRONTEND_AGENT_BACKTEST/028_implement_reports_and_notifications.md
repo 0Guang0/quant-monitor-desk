@@ -1,5 +1,7 @@
 # 028_implement_reports_and_notifications 实现报告与通知
 
+> **Historical input notice:** canonical Round4 execution now starts from `BATCH_04_VERIFIED_AUDIT_PRODUCTIZATION/README.md`. This loose card remains source material for `B04_04_notification_report_runtime.md`; do not execute it as the default entrypoint without checking the Batch 04 manifest.
+
 ## 1. 任务目标
 
 实现日报、周报、盘中提醒、notification_log、默认/可选渠道。

@@ -1,5 +1,7 @@
 # 035_implement_final_package_cleanup 实现最终包清理
 
+> **Historical input notice:** canonical Round5 execution now starts from `BATCH_05_VERIFIED_AUDIT_SECURITY_RELEASE/README.md`. This loose card remains source material for `B05_03_release_manifest_and_package_cleanup.md`; do not execute it as the default entrypoint without checking the Batch 05 manifest.
+
 ## 1. 任务目标
 
 删除临时文件、round report、scratch、重复 zip，保留正式文档。

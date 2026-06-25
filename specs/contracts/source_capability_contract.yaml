@@ -5,11 +5,42 @@ purpose: "Define machine-checkable source/domain/operation capability declaratio
 required_top_level_keys: [version, sources, validation]
 source_rules:
   - source_id must exist in specs/datasource_registry/source_registry.yaml unless marked proposed_disabled_source
+  - every source_registry.source_type must remain compatible with specs/schema/schema.sql and backend/app/db/migrations/009_status_check_constraints.sql CHECK values
+  - every source_registry.license_type must remain compatible with specs/schema/schema.sql and backend/app/db/migrations/009_status_check_constraints.sql CHECK values
   - every domain listed under source_registry.allowed_domains must be declared under source_capabilities.yaml
   - adapter.supported_domains requires Round2.6 domain reconciliation against declared source capabilities
   - every operation must declare frequency, fields or output, and auth requirements
   - qmt_xtdata and qmt_xqshare capabilities must remain enabled_by_default=false until user authorization is recorded
+  - newly added external sources must remain enabled_by_default=false until adapter, license/auth, ResourceGuard, route-plan, and replay evidence are complete
+  - official/regulator/filing sources should be preferred as Primary over aggregators or web sources for factual domains
+  - prediction market sources may only emit probability/contract signals and must not be treated as factual resolution sources
+  - web_search capabilities may only output evidence_staging/manual_review data and must never imply clean-table writes
   - no operation may imply order placement, auto-login, captcha handling, or account control
+reference_adoption:
+  policy: >
+    Capability declarations must describe QMD-owned provider behavior, even when
+    the implementation is adapted from mature external projects under 参考项目/.
+    Reference projects may inform field coverage, auth requirements, provider
+    packaging, and operation naming, but they must not bypass QMD source roles,
+    route planning, auth posture, or license boundaries.
+  source_specific_reference_rules:
+    easyxt:
+      allowed_for:
+        [tdx_pytdx_connection_lifecycle, data_quality_field_expectations]
+      forbidden_for:
+        [auto_login, account_control, order_execution, default_full_market_scan]
+    jq2ptrade:
+      allowed_for:
+        [read_only_loader_shape, report_shape, forbidden_api_name_deny_list]
+      forbidden_for:
+        [
+          order_api_surface,
+          portfolio_execution_state,
+          scheduler_execution_hooks,
+        ]
+    openbb:
+      allowed_for: [provider_catalog_architecture, optional_provider_metadata]
+      forbidden_for: [runtime_source_copy, provider_fetcher_class_copy]
 fetch_gate:
   required_before_fetch:
     - source registry loaded
@@ -28,6 +59,7 @@ failure_modes:
   OPERATION_DISABLED: "Return DISABLED_SOURCE or NO_AVAILABLE_SOURCE with reason."
   CAPABILITY_SOURCE_MISMATCH: "Treat as contract failure; do not fetch."
 required_tests:
+  - tests/test_source_registry.py::test_sourceTypeAndLicenseType_matchSchemaCheckEnums
   - tests/test_source_capabilities.py::test_everyAllowedDomain_hasCapabilityDeclaration
   - tests/test_source_capabilities.py::test_adapterSupportedDomains_reconciledToCapabilityRegistryOrCompatibilityMap
   - tests/test_source_capabilities.py::test_unknownCapability_rejectedBeforeFetch

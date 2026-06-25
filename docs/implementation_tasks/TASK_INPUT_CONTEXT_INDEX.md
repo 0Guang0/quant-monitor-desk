@@ -7,20 +7,20 @@
 ```text
 设计文档 / 规则 / 契约 / 定义
         ↓
-docs/implementation_tasks/** 原始执行任务
-        ↓   Plan 阶段过滤、归并、去噪、总结、建立追溯索引
-.trellis/tasks/** 详细计划与执行/审计 manifest
-        ↓
-Execute / Audit / Repair
+docs/implementation_tasks/** 活任务卡（Plan 加固）
+        ↓   freeze-task-card + EXECUTION_INDEX.md §3/§4 分流
+.trellis/tasks/**  frozen/*.md + EXECUTION_INDEX.md + AUDIT.plan.md
+        ↓   generate-manifests → implement/audit/check.jsonl（机器）
+Execute / Audit
 ```
+
+**v3 遗留：** 仍可使用 `MASTER.plan.md` + `research/source-index.md`（归档任务）。
 
 ## 2. 使用规则
 
-- Plan agent 在把原始执行任务转写为 `.trellis/tasks/**/MASTER.plan.md`、`AUDIT.plan.md`、`REPAIR.plan.md` 与 jsonl manifest 前，必须读取本文件。
-- Plan agent 必须先用当前 Round 的 `ROUND*_BATCH_IMPLEMENTATION_MAP.md` 确认当前批次、Item IDs、source bundle 与 manifest policy，再读取该批次对应的原始任务卡 / alias 执行文件及其输入文件。
-- Execute / Audit / Repair 默认不直接读取本文件，也默认不直接读取 `docs/implementation_tasks/**` 原始任务卡。
-- Execute 读取 `.trellis/tasks/**/MASTER.plan.md` 与 `implement.jsonl`；Audit 读取 `AUDIT.plan.md`、`audit.jsonl`/`check.jsonl` 与 MASTER 中的追溯索引；Repair 读取 `REPAIR.plan.md`。
-- 原始任务卡只作为 Plan 阶段的范围、边界、输入声明。Plan 必须把仍然有效的上下文归并进 Trellis 计划；无法无损总结的上下文必须在 Trellis 计划中列明原文路径和读取原因。
+- Plan agent 在冻结前必须加固活任务卡，并产出 `EXECUTION_INDEX.md` + `AUDIT.plan.md`；`task.py freeze-task-card` 生成 `frozen/*.md`。
+- Execute 读取 **frozen 任务卡 + EXECUTION_INDEX.md**（及 `implement.jsonl` 列出的 §3 原文）；Audit 读取 **AUDIT.plan.md + EXECUTION_INDEX.md §5**。
+- v3 遗留：Plan 仍可将上下文归并进 `MASTER.plan.md`；Execute 读 MASTER + implement.jsonl。
 - `docs/` 与 `specs/` 是设计文档、契约、定义、规则、计划、验收与治理资料目录，不是运行时代码目录，也不是功能实现地址。
 
 ## 3. Plan 阶段共同必读上下文
@@ -68,12 +68,12 @@ Execute / Audit / Repair
 
 Plan agent 必须把每个原始输入文件归类为以下之一，并写入 `MASTER.plan.md` 的 Source Context Index：
 
-| 分类         | 处理方式                                                                                                 |
-| ------------ | -------------------------------------------------------------------------------------------------------- |
-| 可总结       | 把约束、验收点、边界写入 MASTER / AUDIT.plan；jsonl 不必列原文                                           |
-| 不可无损总结 | 在 MASTER Source Context Index 中列出原文路径、必须读取章节、使用原因；需要执行/审计读取时进入对应 jsonl |
-| 已过时/无效  | 写入 filtered-out / obsolete context list，说明原因；禁止进入 Execute/Audit manifest                     |
-| 原始任务卡   | 只作为 Plan 来源；原则上不进入 implement.jsonl/audit.jsonl，除非 MASTER 明确要求追溯原始卡原文           |
+| 分类         | 处理方式（v4）                                                                                       |
+| ------------ | ---------------------------------------------------------------------------------------------------- |
+| 可总结       | 写入 **冻结任务卡** §5–§8；`EXECUTION_INDEX.md` §4 记录对照                                          |
+| 不可无损总结 | **`EXECUTION_INDEX.md` §3**（`manifest=must-read`）；`generate-manifests` 写入 implement/audit.jsonl |
+| 已过时/无效  | 索引 §4 或 Plan 笔记说明；禁止进入 §3                                                                |
+| 活任务卡     | Plan 来源；Execute 只读 **frozen/** 副本                                                             |
 
 ## 6. 关键主题追溯入口
 

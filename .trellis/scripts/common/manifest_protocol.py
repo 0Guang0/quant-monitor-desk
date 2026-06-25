@@ -169,7 +169,10 @@ def wiring_paths_from_predecessors(task_dir: Path, repo_root: Path) -> set[str]:
 
 
 def resolve_trace_path(task_dir: Path) -> Path | None:
-    """Prefer unified source-index; fall back to legacy original-plan-trace."""
+    """Prefer v4 EXECUTION_INDEX; then research/source-index; legacy original-plan-trace."""
+    idx = task_dir / "EXECUTION_INDEX.md"
+    if idx.is_file():
+        return idx
     for name in ("source-index.md", "original-plan-trace.md"):
         p = task_dir / "research" / name
         if p.is_file():
@@ -429,7 +432,31 @@ def validate_trace_implement_sync(
 def validate_section9_in_implement(
     task_dir: Path, repo_root: Path, errors: list[str]
 ) -> None:
-    """E3: MASTER §5.4/§6/§9 tests and gate scripts in implement."""
+    """E3: §9/§10 tests and gate scripts in implement (MASTER v3 or EXECUTION_INDEX v4)."""
+    from .plan_protocol import plan_protocol_version
+
+    if plan_protocol_version(task_dir) == "4":
+        idx = task_dir / "EXECUTION_INDEX.md"
+        if not idx.is_file():
+            return
+        from .execution_index import parse_step_section
+
+        text = idx.read_text(encoding="utf-8")
+        impl = impl_paths_set(task_dir)
+        needed: set[str] = set()
+        for m in _PYTEST_PATH.finditer(text):
+            needed.add(m.group(0).replace("pytest ", "").strip())
+        for m in _SCRIPT_PATH.finditer(text):
+            needed.add(m.group(0).replace("python ", "").strip())
+        sec2 = text
+        for p in needed:
+            if is_negative_implement_path(p):
+                continue
+            if p not in impl and (repo_root / p).is_file():
+                errors.append(f"E3: EXECUTION_INDEX §2 path missing from implement.jsonl: {p}")
+        _ = parse_step_section  # noqa: F841 — reserved for step-scoped E3
+        return
+
     master = task_dir / "MASTER.plan.md"
     if not master.is_file():
         return
@@ -838,7 +865,13 @@ def _reason_has_extract_for(reason: str) -> bool:
 
 def _is_v7_exempt_implement_path(path: str) -> bool:
     norm = _norm(path)
-    return norm.endswith("MASTER.plan.md") or "trellis-execute/SKILL.md" in norm
+    if norm.endswith("MASTER.plan.md"):
+        return True
+    if "/frozen/" in norm and norm.endswith(".md"):
+        return True
+    if norm.endswith("EXECUTION_INDEX.md"):
+        return True
+    return "trellis-execute/SKILL.md" in norm
 
 
 def validate_ledger_master_anchors(task_dir: Path, errors: list[str]) -> None:

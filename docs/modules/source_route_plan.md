@@ -39,16 +39,22 @@ skip_reason
 
 ## 4. 关键状态
 
-| route_status | 含义 |
-|---|---|
-| READY | 可安全进入 fetch |
-| DISABLED_SOURCE | 目标源或 domain 默认禁用 |
-| NO_AVAILABLE_SOURCE | 没有合格候选源 |
-| CAPABILITY_MISSING | capability 未声明 |
-| USER_AUTH_REQUIRED | 需要用户授权 |
-| RESOURCE_GUARD_PAUSED | 资源保护暂停 |
+| route_status          | 含义                     |
+| --------------------- | ------------------------ |
+| READY                 | 可安全进入 fetch         |
+| DISABLED_SOURCE       | 目标源或 domain 默认禁用 |
+| NO_AVAILABLE_SOURCE   | 没有合格候选源           |
+| CAPABILITY_MISSING    | capability 未声明        |
+| USER_AUTH_REQUIRED    | 需要用户授权             |
+| RESOURCE_GUARD_PAUSED | 资源保护暂停             |
 
-## 5. 持久化边界
+## 5. 新增外部数据源路由规则
+
+新增的 Polymarket、Kalshi、Stooq、Deribit、US Treasury、CFTC COT、CoinGecko、SEC EDGAR、BIS、World Bank、Alpha Vantage、mootdx、东方财富、新浪、同花顺/iFinD 与 Web Search 必须先进入 `DISABLED_SOURCE` 路由，直到对应 adapter、授权/条款、capability、ResourceGuard、回放样本和验收测试完成。
+
+路由优先级原则：官方/监管/披露源优先于聚合源；交易所级 market-data 优先于聚合价格；授权终端优先于网页源；预测市场只能输出 `probability_signal`；Web Search 只能输出 evidence/manual_review，不得进入 clean writer。
+
+## 6. 持久化边界
 
 实现阶段必须二选一并记录 ADR：
 
@@ -57,7 +63,7 @@ skip_reason
 
 未确定前，设计上要求所有 fetch 前必须生成 RoutePlan，但不强制当前 Round2 代码立即落库。
 
-## 6. 验收
+## 7. 验收
 
 ```bash
 python -m pytest tests/test_source_route_planner.py tests/test_source_registry.py tests/test_sync_orchestrator.py -q

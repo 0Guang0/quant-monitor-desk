@@ -315,7 +315,10 @@ def cmd_create(args: argparse.Namespace) -> int:
         "parent": None,
         "relatedFiles": [],
         "notes": "",
-        "meta": {"task_track": "complex"},
+        "meta": {
+            "task_track": "complex",
+            "plan_protocol_version": "4",
+        },
     }
 
     write_json(task_json_path, task_data)

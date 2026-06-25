@@ -1,5 +1,7 @@
 # 030_implement_no_action_semantics_guard 实现 No Action Semantics Guard
 
+> **Historical input notice:** canonical Round4 execution now starts from `BATCH_04_VERIFIED_AUDIT_PRODUCTIZATION/README.md`. This loose card remains source material for `B04_02_agent_policy_runtime.md` and `B04_05_backtest_review_runtime.md`; do not execute it as the default entrypoint without checking the Batch 04 manifest.
+
 ## 1. 任务目标
 
 统一拦截 Agent、前端、报告、通知中的交易动作语义。

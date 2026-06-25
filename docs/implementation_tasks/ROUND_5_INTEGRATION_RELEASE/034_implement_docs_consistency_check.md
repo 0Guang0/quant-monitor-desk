@@ -1,5 +1,7 @@
 # 034_implement_docs_consistency_check 实现文档一致性检查
 
+> **Historical input notice:** canonical Round5 execution now starts from `BATCH_05_VERIFIED_AUDIT_SECURITY_RELEASE/README.md`. This loose card remains source material for `B05_01_security_ci_release_gate.md` and `B05_03_release_manifest_and_package_cleanup.md`; do not execute it as the default entrypoint without checking the Batch 05 manifest.
+
 ## 1. 任务目标
 
 检查 docs/spec/schema/contract 是否存在冲突和旧口径残留。

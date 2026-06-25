@@ -1,8 +1,9 @@
 # 执行计划 — {{任务标题}}
 
-> **Execute：** 本文件 + `implement.jsonl` + `context_pack.json`（**不读** `source-index.md`）  
-> **Audit：** `AUDIT.plan.md` · **索引（Plan/Audit）：** `research/source-index.md`  
-> 流程门控见 `.cursor/skills/trellis-execute/SKILL.md`（不进本文件）。
+> **LEGACY（plan_protocol v3）：** 新任务默认 v4 — 使用 `frozen/*.md` + `EXECUTION_INDEX.md` + `AUDIT.plan.md`。见 `complex-task-planning-protocol.md` §0.0。
+
+> **Execute（v3）：** 本文件 + `implement.jsonl` + `context_pack.json`  
+> **Audit（v3）：** `AUDIT.plan.md` · **索引：** `research/source-index.md` 或 `EXECUTION_INDEX.md`
 
 **契约：** Plan 已冻结垂直切片（§8）、测试契约（§5）、停止条件（§1.5）。Execute 不得重新切片，不得改 §5 冻结的测试 purpose。
 

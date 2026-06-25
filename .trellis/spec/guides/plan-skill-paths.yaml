@@ -117,9 +117,9 @@ phases:
 
   P0-index:
     skills: [trellis-plan]
-    artifacts:
+    artifacts_any:
+      - EXECUTION_INDEX.md
       - research/source-index.md
-      - context_pack.json
     marker: "索引完整"
 
   "1a":
@@ -161,7 +161,7 @@ phases:
 
   "5b":
     skills: [writing-plans]
-    note: "Plan 专用：填 MASTER §5 测试契约 + §9 步骤骨架；不得写入 MASTER §11 Execute Skill"
+    note: "Plan 专用：填 EXECUTION_INDEX §1 RED/GREEN + §2 验收；或 legacy MASTER §9"
 
   "5c":
     skills: [trellis-before-dev]

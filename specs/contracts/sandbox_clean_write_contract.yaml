@@ -1,0 +1,154 @@
+version: sandbox_clean_write_contract_v1
+status: draft_round3g
+owner: data_governance
+purpose: >
+  Define Round 3G sandbox rehearsal, adversarial audit, and limited approved
+  clean-write entry gates. This contract is referenced by Batch 3G task cards;
+  task-card-local reference adoption details remain in the R3G_* cards.
+
+batch: R3G
+canonical_task_cards:
+  R3G-01: docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_01_SANDBOX_CLEAN_WRITE_REHEARSAL.md
+  R3G-02: docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_02_PRE_PRODUCTION_ADVERSARIAL_AUDIT.md
+  R3G-03: docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_03_LIMITED_PRODUCTION_CLEAN_WRITE.md
+
+candidate_caps:
+  baostock:
+    allowed_domains: [cn_equity_daily_bar]
+    r3g01_max_symbols: 3
+    r3g01_max_window_days: 30
+    r3g03_max_symbols: 10
+    r3g03_max_window_days: 120
+  cninfo:
+    allowed_domains: [cn_announcements]
+    metadata_only: true
+    full_pdf_download_allowed: false
+    r3g01_max_symbols: 3
+    r3g01_max_window_days: 30
+    r3g03_max_symbols: 10
+    r3g03_max_window_days: 120
+  fred:
+    allowed_domains: [macro_series]
+    requires_user_authorization: true
+    enabled_by_default: false
+    r3g01_max_series: 3
+    r3g01_max_window_days: 120
+    r3g03_max_series: 10
+    r3g03_max_window_days: 120
+
+required_qmd_gates:
+  - DataSourceService
+  - SourceRoutePlanner
+  - ResourceGuard
+  - DbValidationGate
+  - WriteManager
+  - QMD-owned data-health profiles
+
+r3g01_rehearsal:
+  production_mutation_allowed: false
+  sandbox_only: true
+  required_report_fields:
+    - candidate_set
+    - source_id
+    - domain
+    - symbol_or_series_count
+    - window_start
+    - window_end
+    - raw_row_count
+    - staged_row_count
+    - sandbox_clean_row_count
+    - validation_status
+    - data_health_status
+    - source_fetch_id_coverage
+    - content_hash_coverage
+    - schema_hash_coverage
+    - write_manager_operation_id
+    - rollback_artifact_path
+
+r3g02_audit:
+  production_mutation_allowed: false
+  decision_enum:
+    - PASS_ALLOW_LIMITED_PROD_WRITE
+    - WARN_ALLOW_WITH_MANUAL_APPROVAL
+    - BLOCK_PRODUCTION_WRITE
+  block_if:
+    - missing_rehearsal_report
+    - missing_data_health_profile_evidence
+    - uncapped_candidate_set
+    - runtime_import_from_reference_project
+    - copied_openbb_runtime_source
+    - jq2ptrade_disallowed_api_surface
+    - agent_triggered_write_path
+    - write_manager_or_db_validation_gate_bypass
+
+r3g03_limited_entry:
+  explicit_user_approval_required: true
+  before_after_proof_required: true
+  rollback_dry_run_required: true
+  block_if:
+    - missing_approval_file
+    - audit_decision_not_allowing_entry
+    - approval_audit_mismatch
+    - cap_expansion
+    - missing_before_proof
+    - missing_after_proof
+    - missing_rollback_plan
+    - agent_triggered_write_path
+
+reference_adoption:
+  detail_location: task_card_local
+  separate_reference_inventory_file_allowed_for_batch3g: false
+  easyxt:
+    allowed_use: scoped_data_quality_rule_adaptation
+    source_paths:
+      - 参考项目/EasyXT/data_manager/data_integrity_checker.py
+      - 参考项目/EasyXT/data_manager/smart_data_detector.py
+    forbidden_runtime_patterns:
+      - runtime_import_from_easyxt
+      - sys_path_mutation
+      - default_db_path_lookup
+      - hardcoded_stock_daily_table
+      - interpolated_sql
+      - copied_holiday_calendar_as_authoritative
+  jq2ptrade:
+    allowed_use: scoped_loader_report_shape_and_deny_list
+    source_paths:
+      - 参考项目/JQ2PTrade/ptrade_local/engine/data_loader.py
+      - 参考项目/JQ2PTrade/ptrade_local/engine/report.py
+      - 参考项目/JQ2PTrade/api_mapping.json
+    disallowed_api_names:
+      - order
+      - order_value
+      - order_target
+      - order_target_value
+      - cancel_order
+      - get_open_orders
+      - get_portfolio
+      - get_positions
+      - get_orders
+      - get_trades
+      - run_daily
+      - run_weekly
+      - run_monthly
+  openbb:
+    allowed_use: architecture_only_provider_metadata_reference
+    source_paths:
+      - 参考项目/OpenBB/openbb_platform/providers/
+      - 参考项目/OpenBB/openbb_platform/providers/fred/README.md
+    forbidden_runtime_patterns:
+      - copied_openbb_runtime_source
+      - copied_provider_fetcher_class
+      - round3g_openbb_runtime_dependency
+  agents:
+    allowed_use: none_in_round3g
+    forbidden_patterns:
+      - agent_triggered_write
+      - agent_expanded_candidate_set
+      - agent_substituted_user_approval
+
+required_tests:
+  - tests/test_round3g_sandbox_clean_write_rehearsal.py
+  - tests/test_round3g_pre_production_adversarial_audit.py
+  - tests/test_round3g_limited_production_clean_write.py
+  - tests/test_round3g_limited_production_rollback.py
+  - tests/test_reference_adoption_guardrails.py

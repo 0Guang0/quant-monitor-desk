@@ -7,17 +7,17 @@
 
 ## 4.1 数据源分层
 
-| 数据源 | 推荐角色 | 第一阶段定位 |
-|---|---|---|
-| QMT / xtdata | 实时行情、分钟线、实盘相关 | 核心源之一 |
-| baostock | A 股历史日线、基础财务 | 主历史源之一 |
-| AkShare | 补充数据、指数、板块、资金流 | 快速接入与补充 |
-| 巨潮 CNINFO | 公告、财报、PDF 原文 | 权威公告源 |
-| 东方财富 | 资金流、板块、公告备份 | 重要补充源 |
-| Yahoo / yfinance | 美股、ETF、全球资产辅助 | 研究与补充，不做核心生产源 |
-| 同花顺 / 问财 / iFinD | 概念、题材、智能查询、研报 | 正式使用需授权；免费端只做辅助 |
-| 腾讯财经 | 实时行情备份、轻量校验 | 备份源 |
-| 百度股市通 | 新闻、行情辅助 | 辅助源，不做主源 |
+| 数据源                | 推荐角色                     | 第一阶段定位                   |
+| --------------------- | ---------------------------- | ------------------------------ |
+| QMT / xtdata          | 实时行情、分钟线、实盘相关   | 核心源之一                     |
+| baostock              | A 股历史日线、基础财务       | 主历史源之一                   |
+| AkShare               | 补充数据、指数、板块、资金流 | 快速接入与补充                 |
+| 巨潮 CNINFO           | 公告、财报、PDF 原文         | 权威公告源                     |
+| 东方财富              | 资金流、板块、公告备份       | 重要补充源                     |
+| Yahoo / yfinance      | 美股、ETF、全球资产辅助      | 研究与补充，不做核心生产源     |
+| 同花顺 / 问财 / iFinD | 概念、题材、智能查询、研报   | 正式使用需授权；免费端只做辅助 |
+| 腾讯财经              | 实时行情备份、轻量校验       | 备份源                         |
+| 百度股市通            | 新闻、行情辅助               | 辅助源，不做主源               |
 
 ## 4.2 source_registry
 
@@ -72,12 +72,12 @@ open, high, low, close, pre_close, volume, amount, settlement_price, open_intere
 
 处理规则：
 
-| 情况 | 处理 |
-|---|---|
-| 差异在容忍范围内 | 主源值进入标准表，备用源记录为校验通过 |
+| 情况             | 处理                                                          |
+| ---------------- | ------------------------------------------------------------- |
+| 差异在容忍范围内 | 主源值进入标准表，备用源记录为校验通过                        |
 | 差异略超容忍范围 | 主源值进入标准表，但 `quality_flag=source_divergence_warning` |
-| 差异严重 | 不写标准表，写入 `source_conflict`，触发 ReconcileJob 重抓 |
-| 重抓后仍严重冲突 | 标记 `manual_review_required=true`，等待人工确认 |
+| 差异严重         | 不写标准表，写入 `source_conflict`，触发 ReconcileJob 重抓    |
+| 重抓后仍严重冲突 | 标记 `manual_review_required=true`，等待人工确认              |
 
 ### 4.4.2 口径差异类字段
 
@@ -148,7 +148,6 @@ CREATE TABLE IF NOT EXISTS source_conflict (
 
 ---
 
-
 ---
 
 # 5. P0 扩展：实现级数据源设计
@@ -190,10 +189,10 @@ CREATE TABLE IF NOT EXISTS source_conflict (
 CREATE TABLE IF NOT EXISTS source_registry (
     source_id              VARCHAR PRIMARY KEY,
     source_name            VARCHAR,
-    source_type            VARCHAR, -- official_api / vendor_api / web_page / local_sdk / file_import / derived
+    source_type            VARCHAR, -- CHECK: broker_terminal / public_market_data / aggregator / filing_announcement / official_api / local_sdk / vendor_api
     allowed_domain         VARCHAR, -- JSON array string or comma-separated list
-    trust_level            INTEGER, -- 1 highest, 5 lowest
-    license_type           VARCHAR, -- official_free / vendor_paid / public_web / local_authorized / unknown
+    trust_level            INTEGER, -- 0-100 confidence score; higher is more trusted
+    license_type           VARCHAR, -- CHECK: user_local_authorized / public_free / public_free_aggregator / public_official / public_terms_sensitive / official_free / local_authorized / public_web
     official_api           BOOLEAN,
     is_enabled             BOOLEAN,
     default_priority       INTEGER,
@@ -212,15 +211,15 @@ CREATE TABLE IF NOT EXISTS source_registry (
 
 ### 字段解释
 
-| 字段 | 解释 |
-|---|---|
-| `source_type` | 区分官方 API、供应商 API、网页、SDK、本地文件、衍生计算 |
-| `allowed_domain` | 该源允许服务的数据域，避免一个源被滥用到所有地方 |
-| `trust_level` | 用于默认主源排序，但不能绕过冲突检查 |
-| `license_type` | 决定是否能正式生产使用 |
-| `expected_lag` | 用于 stale 判断 |
-| `fallback_allowed` | 该源是否允许作为 fallback 接管 |
-| `validation_only` | 是否只做校验，不进入主值 |
+| 字段               | 解释                                                                                                                                                                                             |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `source_type`      | 必须兼容 `specs/schema/schema.sql` 与 migration 009 的 CHECK 枚举：`broker_terminal` / `public_market_data` / `aggregator` / `filing_announcement` / `official_api` / `local_sdk` / `vendor_api` |
+| `allowed_domain`   | 该源允许服务的数据域，避免一个源被滥用到所有地方                                                                                                                                                 |
+| `trust_level`      | 用于默认主源排序，但不能绕过冲突检查                                                                                                                                                             |
+| `license_type`     | 必须兼容 `specs/schema/schema.sql` 与 migration 009 的 CHECK 枚举；决定是否能正式生产使用                                                                                                        |
+| `expected_lag`     | 用于 stale 判断                                                                                                                                                                                  |
+| `fallback_allowed` | 该源是否允许作为 fallback 接管                                                                                                                                                                   |
+| `validation_only`  | 是否只做校验，不进入主值                                                                                                                                                                         |
 
 ---
 
@@ -228,11 +227,11 @@ CREATE TABLE IF NOT EXISTS source_registry (
 
 新版统一使用三角色，不再使用旧的 旧三源命名。
 
-| 新角色 | 含义 | 历史说明 |
-|---|---|---|
-| `Primary` | 正常情况下进入 clean 表的主源 | 旧文档中的 Primary 仅作为历史迁移参考 |
-| `Validation` | 用于校验主源，不默认接管 | 旧数据源角色名 `Shadow` 不得作为 source role / default role / fallback role；Layer 1 `SHADOW` 诊断标签不是数据源角色，见本页“旧角色名强约束”。 |
-| `FallbackPolicy` | 不是第三外部源，而是失败时如何处理 | 旧数据源角色名 `Emergency` 不得作为 source role / default role / fallback role。 |
+| 新角色           | 含义                               | 历史说明                                                                                                                                       |
+| ---------------- | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Primary`        | 正常情况下进入 clean 表的主源      | 旧文档中的 Primary 仅作为历史迁移参考                                                                                                          |
+| `Validation`     | 用于校验主源，不默认接管           | 旧数据源角色名 `Shadow` 不得作为 source role / default role / fallback role；Layer 1 `SHADOW` 诊断标签不是数据源角色，见本页“旧角色名强约束”。 |
+| `FallbackPolicy` | 不是第三外部源，而是失败时如何处理 | 旧数据源角色名 `Emergency` 不得作为 source role / default role / fallback role。                                                               |
 
 FallbackPolicy 可以是：
 
@@ -377,15 +376,15 @@ CREATE TABLE IF NOT EXISTS fetch_log (
 
 ## 5.7 重试、限流、缓存策略
 
-| 场景 | 处理 |
-|---|---|
-| 网络超时 | 指数退避重试，最多 3 次 |
-| 429 / rate limit | 按 source policy 暂停，不换源伪装成功 |
-| 403 / auth failed | 标记 AUTH_FAILED，停止该源任务 |
-| 空数据 | 标记 EMPTY_RESPONSE，进入质量检查 |
-| schema drift | 标记 SCHEMA_DRIFT，不写 clean 表 |
-| 数据尚未发布 | 标记 NOT_PUBLISHED_YET，可等待下次调度 |
-| 接口字段变更 | 写 schema_hash 变化，触发人工或适配器更新 |
+| 场景              | 处理                                      |
+| ----------------- | ----------------------------------------- |
+| 网络超时          | 指数退避重试，最多 3 次                   |
+| 429 / rate limit  | 按 source policy 暂停，不换源伪装成功     |
+| 403 / auth failed | 标记 AUTH_FAILED，停止该源任务            |
+| 空数据            | 标记 EMPTY_RESPONSE，进入质量检查         |
+| schema drift      | 标记 SCHEMA_DRIFT，不写 clean 表          |
+| 数据尚未发布      | 标记 NOT_PUBLISHED_YET，可等待下次调度    |
+| 接口字段变更      | 写 schema_hash 变化，触发人工或适配器更新 |
 
 缓存规则：
 
@@ -436,30 +435,68 @@ CREATE TABLE IF NOT EXISTS source_health_snapshot (
 
 ## 5.9 第一阶段数据源定位
 
-| 数据源 | 第一阶段角色 | 注意事项 |
-|---|---|---|
-| QMT / xtdata | A 股实时、分钟线、本地授权源 | 需要本地客户端和授权，作为核心源但仍需校验 |
-| baostock | A 股历史日线、基础财务 | 适合历史补齐，不适合实时 |
-| AkShare | 快速补充、板块、指数、资金流 | 口径变化需严格 schema drift 检测 |
-| 巨潮 CNINFO | 公告、财报 PDF | 公告原文权威源，文件入 File Lake |
-| 东方财富 | 资金流、板块、公告备份 | 资金流口径独立保存，不强行合并 |
-| Yahoo / yfinance | 美股、ETF、全球资产辅助 | 第一阶段研究/辅助，不做关键生产唯一源 |
-| 同花顺 / iFinD | 题材、概念、研报 | 正式使用必须确认授权 |
-| FRED / Cboe / CFTC 等 | 五轴和全球指标 | 进入 Layer 1 / Layer 2 专用 source registry |
+| 数据源                | 第一阶段角色                 | 注意事项                                    |
+| --------------------- | ---------------------------- | ------------------------------------------- |
+| QMT / xtdata          | A 股实时、分钟线、本地授权源 | 需要本地客户端和授权，作为核心源但仍需校验  |
+| baostock              | A 股历史日线、基础财务       | 适合历史补齐，不适合实时                    |
+| AkShare               | 快速补充、板块、指数、资金流 | 口径变化需严格 schema drift 检测            |
+| 巨潮 CNINFO           | 公告、财报 PDF               | 公告原文权威源，文件入 File Lake            |
+| 东方财富              | 资金流、板块、公告备份       | 资金流口径独立保存，不强行合并              |
+| Yahoo / yfinance      | 美股、ETF、全球资产辅助      | 第一阶段研究/辅助，不做关键生产唯一源       |
+| 同花顺 / iFinD        | 题材、概念、研报             | 正式使用必须确认授权                        |
+| FRED / Cboe / CFTC 等 | 五轴和全球指标               | 进入 Layer 1 / Layer 2 专用 source registry |
+
+---
+
+### 5.9.1 总数据源扩展清单与定位
+
+`specs/datasource_registry/source_registry.yaml` 是机器可读权威；本表是面向设计、实现和审核的解释口径。新增外部源默认 `enabled_by_default=false`，只有完成 adapter、capability、route plan、ResourceGuard、license/auth gate 和回放证据后才能启用。
+
+| 数据源                   | 数据类型                                    | 推荐定位                                      | 用途                                      | 可靠性/稳定性/实时性判断                                                           |
+| ------------------------ | ------------------------------------------- | --------------------------------------------- | ----------------------------------------- | ---------------------------------------------------------------------------------- |
+| QMT / xtdata             | A 股实时、分钟线、日线                      | A 股实时 Primary（用户本机授权后）            | 实时行情、分钟线、交易日内监控            | 授权终端可靠性高、实时性强；默认禁用，需用户确认本机授权                           |
+| baostock                 | A 股历史日线、基础财务                      | A 股低频 Primary                              | 历史日线补齐、基础财务                    | 免费稳定，适合日频/低频；不适合实时                                                |
+| AkShare                  | A 股/宏观聚合数据                           | Validation                                    | 指数、板块、宏观补充、快速验证            | 覆盖广但上游口径可能变化；必须 schema_hash 与 quality_flags                        |
+| 巨潮 CNINFO              | 公告、财报、PDF 原文                        | A 股披露 Primary                              | 公告索引、财报 PDF、文件证据链            | 官方/准官方披露源，权威性高；需 polite fetch 与文件哈希                            |
+| Yahoo Finance / yfinance | 美股、ETF、期权链、全球资产参考             | Validation                                    | 美股/ETF/US option chain 辅助校验         | 覆盖方便但条款和稳定性敏感；不做生产唯一主源                                       |
+| Alpha Vantage            | 美股、ETF、期权链、FX、商品、宏观、加密参考 | API-key gated Primary candidate               | 文档化 API 补充美国市场与跨资产数据       | 稳定性好于网页源；受 API key、限流和授权条款约束                                   |
+| Stooq                    | 股票/ETF/外汇/商品历史行情                  | Validation / low-frequency fallback           | 全球历史价格趋势、低频交叉验证            | 适合日频历史，不适合实时生产                                                       |
+| Deribit                  | 加密期货、期权、IV、term structure          | Crypto derivatives Primary candidate          | BTC/ETH 期货曲线、期权 IV surface         | 交易所级市场数据，实时性强；只允许 market-data，禁止账户/交易能力                  |
+| CoinGecko                | 加密现货聚合、币种映射、市值                | Spot/reference Primary candidate + Validation | BTC/ETH 现货参考价、市值、asset reference | 聚合源覆盖广；不能替代交易所逐笔/盘口事实源                                        |
+| US Treasury              | 国债收益率、利率曲线、通胀预期参考          | Official Primary                              | 利率曲线、期限利差、通胀预期上下文        | 官方源，可靠性最高；日频/低频，适合 Layer 1 regime                                 |
+| SEC EDGAR                | 公司披露、Form 4 内部人交易                 | Official Primary                              | 美国 filings、Form 4 买卖信号、原文证据   | 官方披露源，准确性高；必须保存 accession/content_hash                              |
+| CFTC COT                 | 期货持仓                                    | Official Primary                              | 机构/非商业仓位方向、smart-money 背景     | 官方周频，稳定但滞后；不得当实时仓位                                               |
+| BIS                      | 央行、政策利率、信贷缺口                    | Official Primary                              | 全球政策利率、credit/GDP gap、宏观 regime | 官方/央行协作数据，低频稳健                                                        |
+| World Bank               | GDP、人口、贸易、发展指标                   | Official Primary                              | 长周期宏观背景变量                        | 官方低频数据，可靠但滞后，不做短线触发                                             |
+| FRED                     | 美国宏观序列                                | API-key gated Primary candidate               | Layer 1 宏观序列、官方/准官方美国宏观     | 已有 sandbox_candidate；需 key 与 live gate                                        |
+| Kalshi                   | 监管预测市场合约                            | Prediction probability Primary candidate      | 美国政治/经济事件概率、二元合约价格       | 受监管事件市场，适合概率信号；不是事实结果源                                       |
+| Polymarket               | 预测市场合约                                | Prediction probability Validation             | 全球事件概率、市场情绪、流动性观察        | 流动性和 resolution 质量差异大；必须记录 volume/liquidity/spread/resolution_source |
+| mootdx / TDX compatible  | A 股 security list、日线、指数              | Validation                                    | 通达信兼容校验、A 股代码表探针            | 默认禁用；只读校验，不得 silent fallback                                           |
+| 东方财富                 | A 股行情、板块、资金流、公告备份            | Validation                                    | 资金流、板块、公告备份和日线交叉验证      | 覆盖强但网页/API 口径可能变；资金流必须分源保存                                    |
+| 新浪财经                 | A 股行情轻量备份                            | Fallback / Validation                         | 实时/日线轻量校验、故障诊断               | 稳定性和授权边界弱于主源；不进入主值接管                                           |
+| 同花顺 / iFinD           | 概念、题材、研报、资金流                    | Licensed Validation                           | 题材、概念、研报索引、授权数据补充        | 仅商业授权后启用；免费网页端不得生产化                                             |
+| Web Search               | 网页补充证据                                | Manual-review Validation only                 | VIX、CDS、事件解释、resolution 佐证       | 非结构化且不稳定；只能进 evidence/manual_review，不直接写 clean 表                 |
+
+### 5.9.2 四点关键实现建议
+
+1. **按 domain-level role 分配，不按 provider 平铺。** 新增 source 必须同时写入 `source_registry.yaml`、`source_capabilities.yaml` 和 route plan 规则；同一个 provider 在不同 domain 可以是 Primary、Validation 或 fallback candidate。示例：Alpha Vantage 可作为 `us_equity_daily_bar` 的 API-key gated Primary candidate，但在 `macro_series` 中只能作为 FRED/官方源的补充候选。
+2. **预测市场单独建概率信号语义。** `kalshi`、`polymarket` 只能写入 `prediction_market_probability`、`regulated_event_contract`、`event_market_contract` 等概率/合约域；必须保存 `liquidity`、`volume`、`spread`、`resolution_source`、`closed/active` 状态。其价格不得被解释为事实结果，也不得替代 SEC/CFTC/Treasury/CNINFO 等事实源。
+3. **官方宏观源按低频/滞后处理。** US Treasury、CFTC COT、BIS、World Bank、FRED 等应进入 Layer 1/Layer 2 regime 和背景变量，不得驱动分钟级 UI 或实时告警；允许 `use_last_good_cache`，但必须写 `stale_reason`、`source_fetch_id`、`content_hash`。
+4. **中国市场继续保持授权终端/官方披露优先。** QMT 授权后才可作为实时主源；CNINFO 是公告/财报原文主源；baostock 是历史日线/基础财务主源；AkShare、东方财富、Sina、mootdx、同花顺免费端只能做验证、补充或授权后候选，并强制 schema drift、限速、缓存和 no-silent-fallback。
 
 ---
 
 ## 5.10 验收测试
 
-| 测试 | 预期 |
-|---|---|
-| 未声明 data_domain 的 adapter 被调用 | 拒绝 |
-| source disabled | 不执行抓取 |
-| 403 auth failed | 写 fetch_log，停止该源任务 |
-| schema_hash 变化 | 标记 SCHEMA_DRIFT，不直接写 clean |
-| 主源失败且 fallback_policy=mark_missing | 不接管，写缺失 |
-| 使用 last_good_cache | 必须写 stale_reason 和 source_switched |
-| Validation 源数据不同 | 进入 SourceConflictValidator，不在 Adapter 内判断 |
+| 测试                                    | 预期                                              |
+| --------------------------------------- | ------------------------------------------------- |
+| 未声明 data_domain 的 adapter 被调用    | 拒绝                                              |
+| source disabled                         | 不执行抓取                                        |
+| 403 auth failed                         | 写 fetch_log，停止该源任务                        |
+| schema_hash 变化                        | 标记 SCHEMA_DRIFT，不直接写 clean                 |
+| 主源失败且 fallback_policy=mark_missing | 不接管，写缺失                                    |
+| 使用 last_good_cache                    | 必须写 stale_reason 和 source_switched            |
+| Validation 源数据不同                   | 进入 SourceConflictValidator，不在 Adapter 内判断 |
 
 ---
 
@@ -490,7 +527,6 @@ data_validation_and_conflict.md
 
 落实 D-11：第一版 `qmt_xtdata` 默认禁用。只有用户确认本机 QMT/miniQMT 环境、账号授权、路径配置后，才允许启用 QMT adapter。实现角色不得默认连接本机交易/行情终端。
 
-
 ## 数据源默认启用与 domain gating
 
 `specs/datasource_registry/source_registry.yaml` 是数据源启用状态的机器契约。若某个 domain 的 primary source `enabled_by_default=false`，该 domain 第一版必须标记为 `domain_enabled_by_default=false` 与 `disabled_until_configured=true`，调度器不得尝试抓取，而应返回或记录 `DISABLED_SOURCE`。
@@ -498,7 +534,6 @@ data_validation_and_conflict.md
 D-11 已拍板：QMT 默认禁用，只有用户确认本机授权与账号环境后才可启用。因此 `cn_equity_minute_bar` 默认不可调度；`cn_equity_daily_bar` 可以用 baostock 作为 primary，但 QMT fallback 必须在用户启用后才允许接管。Yahoo 也默认禁用，`us_equity_daily_bar` 第一版应标记为 disabled until configured。
 
 必须补测试：`test_disabledPrimaryDomain_returnsDisabledSource`、`test_fallbackDisabledByDefault_isSkippedUntilConfigured`。
-
 
 ## 旧角色名强约束
 
@@ -548,7 +583,9 @@ Round2.6 不删除本文件既有 source_registry 与 adapter 设计，而是在
 2. `SourceRoutePlan`：fetch 前必须解释候选源、禁用源、跳过原因、fallback 标记，权威契约为 `specs/contracts/source_route_contract.yaml`。
 3. `DataSourceService`：生产路径唯一 fetch facade，避免 Orchestrator/API/Agent 直接触碰 adapter factory，权威契约为 `specs/contracts/datasource_service_contract.yaml`。
 
-当前 Round2 closeout 已验证 adapter skeleton、runner 拆分、vendor fixture E2E、backfill validate/write、reconcile re-fetch；但它尚未实现 SourceCapabilityRegistry、SourceRoutePlan、DataSourceService facade。因此这些被列入 Round2.6 后续设计/执行计划，不视为旧审计未闭环，而是进入真实源扩展前的新边界层。
+当前实现已具备 `SourceCapabilityRegistry`、`SourceRoutePlan` 与 `DataSourceService` facade，并保留 adapter skeleton、vendor fixture E2E、backfill validate/write、reconcile 相关证据。后续真实源扩展不得再从零自建重复 provider/health/backtest 轮子；应优先从已下载到 `参考项目/` 的成熟项目中做有边界的源码阅读、架构借鉴或 QMD-owned 改造，并通过 license gate、source registry、capability registry、route plan、ResourceGuard、ValidationGate、WriteManager 与 fetch/evidence lineage 约束落地。
+
+`参考项目/EasyXT` 可作为数据完整性检查、TDX/pytdx provider 连接管理、A 股量化工具结构的直接改造参考，但不得引入其交易/自动登录/默认全市场下载语义。`参考项目/JQ2PTrade` 可作为只读 backtest/review 数据加载、报告形态、API deny-list 的改造参考，但不得引入 order/trade/portfolio execution API。`参考项目/OpenBB` 仅作为 provider/package/catalog 架构参考，不得复制 AGPL runtime source。`参考项目/agents-for-openbb` 仅供未来 Agent/UI artifact 形态参考，不得替代 QMD evidence source 或触发写入。
 
 qmt_xqshare 仅作为 P2 可选远程 QMT 源设计，默认禁用；不得自动探测、自动登录或 silent fallback。
 

@@ -73,6 +73,7 @@ from common.validate_plan_freeze import (
     cmd_validate_plan_phase,
     validate_plan_freeze,
 )
+from common.execution_index import cmd_freeze_task_card, cmd_generate_manifests
 from common.validate_execute_handoff import (
     cmd_validate_execute_handoff,
     cmd_validate_execute_step,
@@ -459,6 +460,22 @@ def main() -> int:
         "--force", action="store_true", help="Report errors but exit 0"
     )
 
+    p_freeze_card = subparsers.add_parser(
+        "freeze-task-card",
+        help="Copy repo task card to frozen/ and regenerate jsonl manifests (v4)",
+    )
+    p_freeze_card.add_argument("dir", help="Task directory")
+    p_freeze_card.add_argument(
+        "--source",
+        help="Repo-relative source task card path (default: task.json meta.source_task_card)",
+    )
+
+    p_gen_manifest = subparsers.add_parser(
+        "generate-manifests",
+        help="Regenerate implement/audit/check.jsonl from EXECUTION_INDEX.md (v4)",
+    )
+    p_gen_manifest.add_argument("dir", help="Task directory")
+
     # validate-plan-phase
     p_vphase = subparsers.add_parser(
         "validate-plan-phase",
@@ -575,6 +592,8 @@ def main() -> int:
         "add-context": cmd_add_context,
         "validate": cmd_validate,
         "validate-plan-freeze": cmd_validate_plan_freeze,
+        "freeze-task-card": cmd_freeze_task_card,
+        "generate-manifests": cmd_generate_manifests,
         "validate-plan-phase": cmd_validate_plan_phase,
         "validate-execute-handoff": cmd_validate_execute_handoff,
         "validate-execute-boot": cmd_validate_execute_boot,

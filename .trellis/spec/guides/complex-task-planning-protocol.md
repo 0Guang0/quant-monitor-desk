@@ -1,8 +1,9 @@
 # 复杂任务规划协议
 
 > **读者：Plan / 规划 agent**（复杂任务启动时读本文精简版）  
-> **Execute agent** — 只读 `MASTER.plan.md` + `implement.jsonl`  
-> **Audit 编排器 / 维度 agent** — 读 `AUDIT.plan.md` + `audit.jsonl` + MASTER **§2**（A5 追溯）+ Execute **§10 证据只读**  
+> **Execute agent（v4）** — `frozen/*.md` + `EXECUTION_INDEX.md` + `implement.jsonl`（自动生成）  
+> **Execute agent（v3 遗留）** — `MASTER.plan.md` + `implement.jsonl`  
+> **Audit 编排器** — `AUDIT.plan.md` + `EXECUTION_INDEX.md` §5 + `audit.jsonl`  
 > **定位**：Trellis 管任务状态、hooks、验收门；**本协议管 Plan 阶段**流程、产出物、Skill 注册表。  
 > **语言**：计划与验收用中文；代码标识符、命令、路径保持英文。
 
@@ -10,26 +11,38 @@
 
 ## 0. 文档分工（必读）
 
-| 文档                          | 谁读                      | 放什么                                                           |
-| ----------------------------- | ------------------------- | ---------------------------------------------------------------- |
-| **本文**                      | Plan agent                | 流程、产出物、冻结合并、Plan DoD、Skill 注册表                   |
-| **`MASTER.plan.md`**          | Execute                   | §8 步骤+证据、§9 四层测试、§10 Tier、§11 交接、§12 Execute Skill |
-| **`AUDIT.plan.md`**           | Audit agent               | Trace Authority + **§1 任务覆写**；默认矩阵见 registry §2        |
-| **`audit.jsonl`**             | Audit hook                | 第一条 = AUDIT.plan.md；**不含** implement/plan.freeze           |
-| **`audit.report.md`**         | Audit 产出 / Repair 输入  | 各维度结论 + §4.3 修复项                                         |
-| **`REPAIR.plan.md`**          | Repair 执行者             | Audit 后修复清单 + Skill 冻结                                    |
-| **`plan.freeze.md`**          | Plan                      | 冻结自检                                                         |
-| **`implement.jsonl`**         | Execute hook              | 第一条 = MASTER                                                  |
-| **`check.jsonl`**             | A1 audit-spec             | Spec 合规维度                                                    |
-| **execute-skill-registry.md** | Plan 填 §12               | Execute 不读                                                     |
-| **audit-skill-registry.md**   | Plan 填 AUDIT **§1 + §2** | Audit 不读                                                       |
-| **repair-skill-registry.md**  | Plan / Audit 后填 REPAIR  | Repair 不读词典全文                                              |
+| 文档                            | 谁读              | 放什么                                                 |
+| ------------------------------- | ----------------- | ------------------------------------------------------ |
+| **本文**                        | Plan agent        | 流程、产出物、冻结合并、Plan DoD、Skill 注册表         |
+| **`frozen/*.md`**（v4）         | Execute + Audit   | 加固后的冻结任务卡（正文 SSOT）                        |
+| **`EXECUTION_INDEX.md`**（v4）  | Execute + Audit   | 唯一索引：步骤/证据、必读原文 manifest、Audit 追溯     |
+| **`MASTER.plan.md`**（v3 遗留） | Execute（旧任务） | §8 步骤+证据、§9 四层测试、§10 Tier、§12 Execute Skill |
+| **`AUDIT.plan.md`**             | Audit agent       | §1 覆写 + §2 维度验证矩阵                              |
+| **`audit.jsonl`**               | Audit hook        | 自动生成；第一条 = AUDIT.plan.md                       |
+| **`implement.jsonl`**           | Execute hook      | 自动生成；第一条 = frozen 任务卡                       |
+| **`check.jsonl`**               | A1 audit-spec     | 自动生成；spec 子集                                    |
+| **`plan.freeze.md`**            | Plan              | 冻结自检（含 §3.0v4）                                  |
+| 活任务卡 `docs/.../NNN_*.md`    | Plan（加固）      | 冻结前编辑；Execute **不读**活卡                       |
 
-**原则：** Execute → **MASTER**；Audit → **AUDIT.plan.md**；Repair → **REPAIR.plan.md**；Plan 自检 → **plan.freeze.md**。
+**原则（v4）：** Execute → **frozen 卡 + EXECUTION_INDEX**；Audit → **AUDIT.plan.md + EXECUTION_INDEX §5**；`task.py freeze-task-card` 生成冻结快照；`generate-manifests` 从索引 §3 写 jsonl。
+
+### 0.0 Plan 协议 v4（冻结三件套 · 2026-06 起默认）
+
+`task.json` `meta.plan_protocol_version: "4"`（`task.py create` 默认）。
+
+| 阶段       | 产出                                                                       |
+| ---------- | -------------------------------------------------------------------------- |
+| Plan P0–5d | 加固 **仓库活任务卡**；草稿可写 `research/*`（Execute 不读）               |
+| 冻结 5b    | `EXECUTION_INDEX.md` + `frozen/<NNN>.md` + `AUDIT.plan.md`                 |
+| 冻结命令   | `task.py freeze-task-card` → `generate-manifests` → `validate-plan-freeze` |
+
+**内联规则：** 设计/契约/规则/架构中 **可无损总结** 的并入冻结任务卡 §5–§8；**不可精简** 的仅列 `EXECUTION_INDEX.md` §3（`manifest=must-read`）。
+
+**原则（v3 遗留）：** Execute → **MASTER**；见 `templates/MASTER.plan.md`（已标记 legacy）。
 
 ### 0.1 原计划包（`docs/implementation_tasks/`）— Plan 硬门禁
 
-> **定位：** `docs/implementation_tasks/` = **Plan 阶段范围与契约输入**（做什么、边界、输入文件）；`MASTER.plan.md` / `AUDIT.plan.md` / `REPAIR.plan.md` = **冻结后的执行、审计、修复入口**。Execute / Audit / Repair 默认不直接读取原始任务卡。**禁止**在未读原计划前编写 MASTER §8 或扩大/缩小范围。
+> **定位：** `docs/implementation_tasks/` = **Plan 阶段范围与契约输入**；v4 冻结后 Execute/Audit 读 **frozen 卡 + EXECUTION_INDEX**，不读活任务卡。v3 遗留读 `MASTER.plan.md`。**禁止**在未读原计划前编写 §9 步骤或扩大/缩小范围。
 
 **Plan Phase P0（`trellis-plan`）必须按序读取：**
 
@@ -45,9 +58,17 @@
 10. `docs/implementation_tasks/ROUND_*/DECISIONS.md`（本 Round 已确认决策）
 11. 本批 `NNN_*.md` 正式任务卡 / 本批本地 alias 执行文件（例如 `018A_*.md`），以及这些原始任务/alias 文件列出的 specs、architecture、modules、rules、contracts、definitions 输入文件
 
-**Plan 产出（冻结前必存在）：**
+**Plan 产出（冻结前必存在 · v4）：**
 
-- `research/original-plan-trace.md` — 任务编号 / 本地 alias / 当前 Round batch map item / MASTER §2 AC / 引用文档对照表
+- `EXECUTION_INDEX.md` — 唯一 Execute/Audit 索引（模板 `templates/EXECUTION_INDEX.md`）
+- `frozen/<NNN>_*.md` — `task.py freeze-task-card` 从活任务卡复制并加固
+- `AUDIT.plan.md` — §2 维度矩阵
+- `research/plan-boot.md` — P0 摘要（Plan-only，非 Execute 三件套）
+- `context_pack.json` — `context_router.py --task <dir>`
+
+**Plan 产出（v3 遗留，归档任务可保留）：**
+
+- `research/original-plan-trace.md` — 已由 `EXECUTION_INDEX.md` §0/§5 取代
 - `research/plan-boot.md` — 含「当前 Round batch map 已读」「原计划已读」摘要 + `Phase P0 complete`
 - `context_pack.json` — 由 `uv run python scripts/context_router.py --task <dir>` 生成；**禁止**向用户询问 docs/specs 路径
 - `research/source-index.md` — 唯一索引（§A 血缘 · §B manifest · §C 六类 · §D 指向 `context_pack.json`）

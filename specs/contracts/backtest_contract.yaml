@@ -41,6 +41,25 @@ resource_limits:
   require_confirmation_if_scan_gb_gt: 5
   pause_if_available_memory_gb_lt: 2
   pause_if_free_disk_gb_lt: 20
+reference_adoption:
+  policy: >
+    Backtest/review runtime should not be built as a blank duplicate engine when
+    mature local references exist. It should adapt read-only data loader,
+    lifecycle, report, metric, and API deny-list ideas from approved reference
+    projects into QMD-owned code and contracts.
+  allowed_reference_paths:
+    jq2ptrade:
+      - 参考项目/JQ2PTrade/ptrade_local/engine/data_loader.py
+      - 参考项目/JQ2PTrade/ptrade_local/engine/report.py
+      - 参考项目/JQ2PTrade/api_mapping.json
+    easyxt:
+      - 参考项目/EasyXT/easyxt_backtest/
+  forbidden_reference_semantics:
+    - portfolio_action_api_surface
+    - external_account_control
+    - arbitrary_strategy_runtime
+    - agent_metric_mutation
+
 guardrails:
   no_action_semantics: true
   no_auto_trade: true

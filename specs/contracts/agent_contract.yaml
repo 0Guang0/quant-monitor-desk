@@ -40,6 +40,24 @@ forbidden_action_terms:
   - 出场
   - 抄底
   - 逃顶
+reference_adoption:
+  policy: >
+    Agent/UI artifact design may study agents-for-openbb and OpenBB Workspace
+    integration examples for artifact shape, citations, widget context, and
+    reasoning-step presentation. Reference agent code must not become a factual
+    data source, must not bypass QMD tools, and must not initiate writes.
+  allowed_reference_paths:
+    agents_for_openbb:
+      - 参考项目/agents-for-openbb/README.md
+      - 参考项目/agents-for-openbb/31-vanilla-agent-reasoning-steps/
+      - 参考项目/agents-for-openbb/32-vanilla-agent-raw-widget-data-citations/
+      - 参考项目/agents-for-openbb/39-vanilla-agent-html-artifacts/
+  forbidden_reference_semantics:
+    - agent_as_fact_source
+    - direct_adapter_construction
+    - candidate_scope_expansion
+    - write_trigger
+
 write_boundary:
   direct_clean_table_write: false
   staging_then_validator_then_writemanager: true

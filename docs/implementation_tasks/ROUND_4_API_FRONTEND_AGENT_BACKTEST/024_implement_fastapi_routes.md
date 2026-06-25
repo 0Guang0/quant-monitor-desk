@@ -1,5 +1,7 @@
 # 024_implement_fastapi_routes 实现 FastAPI 路由
 
+> **Historical input notice:** canonical Round4 execution now starts from `BATCH_04_VERIFIED_AUDIT_PRODUCTIZATION/README.md`. This loose card remains source material for `B04_01_api_runtime_security.md`; do not execute it as the default entrypoint without checking the Batch 04 manifest.
+
 ## 1. 任务目标
 
 实现统一 response envelope、Layer1-5、reports、notifications、backtest API。

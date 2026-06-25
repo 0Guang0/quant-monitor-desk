@@ -17,17 +17,17 @@
 
 ## 0.1 Trace Authority Set（必填 · 写入 `audit.jsonl`）
 
-| 类别                | 文件                                                         | 用途                   |
-| ------------------- | ------------------------------------------------------------ | ---------------------- |
-| 原始任务卡          | `{{docs/implementation_tasks/.../NNN_task.md}}`              | scope / AC / Red Flags |
-| task README         | `docs/implementation_tasks/README.md`                        | 入口合规               |
-| task input index    | `docs/implementation_tasks/TASK_INPUT_CONTEXT_INDEX.md`      | 必读上下文             |
-| unresolved coverage | `docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md` | 未闭合项               |
-| project map         | `MIGRATION_MAP.md`                                           | docs/specs 边界        |
-| round map           | `{{ROUND*_BATCH_IMPLEMENTATION_MAP.md}}`                     | batch / out-of-scope   |
-| source-index        | `research/source-index.md`                                   | 血缘 + manifest        |
-| omission-check      | `research/project-map-omission-check.md`                     | 地图倒查               |
-| integration-ledger  | `research/integration-ledger.md`                             | context packing        |
+| 类别                | 文件                                                          | 用途                   |
+| ------------------- | ------------------------------------------------------------- | ---------------------- |
+| 原始任务卡          | `{{docs/implementation_tasks/.../NNN_task.md}}`               | scope / AC / Red Flags |
+| task README         | `docs/implementation_tasks/README.md`                         | 入口合规               |
+| task input index    | `docs/implementation_tasks/TASK_INPUT_CONTEXT_INDEX.md`       | 必读上下文             |
+| unresolved coverage | `docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md`  | 未闭合项               |
+| project map         | `MIGRATION_MAP.md`                                            | docs/specs 边界        |
+| round map           | `{{ROUND*_BATCH_IMPLEMENTATION_MAP.md}}`                      | batch / out-of-scope   |
+| source-index        | `EXECUTION_INDEX.md`（v4）或 `research/source-index.md`（v3） | 血缘 + manifest        |
+| omission-check      | `research/project-map-omission-check.md`                      | 地图倒查               |
+| integration-ledger  | `research/integration-ledger.md`                              | context packing        |
 
 缺失或未解释差异 → A1/A5 列入 `audit.report.md` §4.3。
 

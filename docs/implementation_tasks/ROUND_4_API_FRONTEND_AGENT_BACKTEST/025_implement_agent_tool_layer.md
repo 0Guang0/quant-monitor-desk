@@ -1,5 +1,7 @@
 # 025_implement_agent_tool_layer 实现 Agent Tool Layer
 
+> **Historical input notice:** canonical Round4 execution now starts from `BATCH_04_VERIFIED_AUDIT_PRODUCTIZATION/README.md`. This loose card remains source material for `B04_02_agent_policy_runtime.md`; do not execute it as the default entrypoint without checking the Batch 04 manifest.
+
 ## 1. 任务目标
 
 实现只读 Agent tools、Structured Outputs、agent_run_log、agent_output_staging。
@@ -19,6 +21,7 @@
 - `specs/contracts/runtime_versions.md`
 - `docs/quality/staged_acceptance_policy.md`
 - `docs/ops/agent_security_policy.md`
+
 ## 4. 相关代码 / 输出文件
 
 - `backend/agent/tools.py`
@@ -74,6 +77,7 @@
 - 测试命名建议：`functionName_condition_expectedBehavior`。
 
 ## 11. 验收命令
+
 本任务涉及 API / Agent / 通知 / 回测。验收命令：
 
 ```bash

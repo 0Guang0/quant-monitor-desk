@@ -1,5 +1,7 @@
 # 033_implement_security_and_boundary_tests 实现安全与边界测试
 
+> **Historical input notice:** canonical Round5 execution now starts from `BATCH_05_VERIFIED_AUDIT_SECURITY_RELEASE/README.md`. This loose card remains source material for `B05_01_security_ci_release_gate.md`; do not execute it as the default entrypoint without checking the Batch 05 manifest.
+
 ## 1. 任务目标
 
 验证 Agent 只读、No Action、禁止绕过 WriteManager。

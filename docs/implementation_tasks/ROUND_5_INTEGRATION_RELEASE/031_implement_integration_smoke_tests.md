@@ -1,5 +1,7 @@
 # 031_implement_integration_smoke_tests 实现集成 smoke tests
 
+> **Historical input notice:** canonical Round5 execution now starts from `BATCH_05_VERIFIED_AUDIT_SECURITY_RELEASE/README.md`. This loose card remains source material for `B05_02_integration_and_resource_smoke.md`; do not execute it as the default entrypoint without checking the Batch 05 manifest.
+
 ## 1. 任务目标
 
 验证数据源 skeleton → staging → validation → snapshot → API → frontend smoke。

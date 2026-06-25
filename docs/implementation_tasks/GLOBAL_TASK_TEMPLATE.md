@@ -1,5 +1,9 @@
 # Global Task Template
 
+> **活任务卡（Plan）：** Plan 阶段在 `docs/implementation_tasks/**/NNN_*.md` 上按本模板加固。  
+> **冻结（v4）：** `task.py freeze-task-card` → `.trellis/tasks/<slug>/frozen/<NNN>.md` 为 Execute/Audit 正文 SSOT。  
+> **索引（v4）：** 不可无损内联的原文路径写入 `EXECUTION_INDEX.md` §3。
+
 每个 implementation task 必须按这个结构书写和执行。
 
 ## 1. 任务目标
@@ -43,6 +47,7 @@ ResourceGuard 要求与低占用边界。
 单元测试、集成测试、smoke test、fixture。
 
 ## 11. 验收命令
+
 按任务类型选择阶段化验收命令，不得无差别套用 full pytest：
 
 ```bash
@@ -72,7 +77,15 @@ cd frontend && npm ci && npm audit --audit-level=high && npm run typecheck && np
 
 最终汇报必须包含改动文件、测试结果、未完成项、资源保护状态。
 
-## 15. 审计修复新增强制项
+## 15. Execute Skill 冻结（v4 · 写入冻结卡 §14）
+
+| Skill                   | 本任务    | 绑定 Step | 触发 |
+| ----------------------- | --------- | --------- | ---- |
+| test-driven-development | 必做/不用 | 9.x       | 每步 |
+
+Plan 冻结时从 `execute-skill-registry.md` 填表；Execute 不得自选未列 skill。
+
+## 16. 审计修复新增强制项
 
 所有 implementation task 还必须显式处理以下审计修复项：
 

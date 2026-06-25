@@ -186,7 +186,28 @@ def _validate_stop_conditions(master_text: str, errors: list[str]) -> None:
         )
 
 
+def _manifest_protocol_enabled_v4(task_dir: Path) -> bool:
+    from .plan_protocol import load_task_json, plan_protocol_version
+
+    if plan_protocol_version(task_dir) == "4":
+        ver = str((load_task_json(task_dir).get("meta") or {}).get("manifest_protocol_version", ""))
+        return ver in ("1", "2", "3", "4", "")
+    return False
+
+
 def _validate_original_plan_artifacts(task_dir: Path, errors: list[str]) -> None:
+    from .plan_protocol import plan_protocol_version
+
+    if plan_protocol_version(task_dir) == "4":
+        if not (task_dir / "EXECUTION_INDEX.md").is_file():
+            errors.append("Missing EXECUTION_INDEX.md (v4 index)")
+        boot = task_dir / "research" / "plan-boot.md"
+        if boot.is_file():
+            boot_text = boot.read_text(encoding="utf-8")
+            if "原计划已读" not in boot_text and "原计划" not in boot_text:
+                errors.append("plan-boot.md must document original plan read (原计划已读)")
+        return
+
     source = task_dir / "research" / "source-index.md"
     trace = task_dir / "research" / "original-plan-trace.md"
     if not source.is_file() and not trace.is_file():
@@ -338,10 +359,158 @@ def validate_plan_phase(task_dir: Path, phase: str, *, repo_root: Path | None = 
     return errors
 
 
+def validate_plan_freeze_v4(task_dir: Path, repo_root: Path) -> list[str]:
+    """Plan protocol v4: frozen task card + EXECUTION_INDEX + AUDIT.plan.md."""
+    from .execution_index import (
+        generate_manifests,
+        validate_execution_index_structure,
+        validate_frozen_task_card,
+        validate_manifests_match_index,
+    )
+    from .plan_protocol import execute_ssot_rel, plan_protocol_version
+
+    errors: list[str] = []
+    if plan_protocol_version(task_dir) != "4":
+        return ["internal: validate_plan_freeze_v4 called for non-v4 task"]
+
+    cfg = _load_plan_paths(repo_root)
+    boot_marker = cfg.get("boot_marker", _BOOT_MARKER)
+
+    boot = task_dir / "research" / "plan-boot.md"
+    if not boot.is_file():
+        errors.append("Missing research/plan-boot.md (Plan Phase P0 boot)")
+    elif boot_marker not in boot.read_text(encoding="utf-8"):
+        errors.append(f"plan-boot.md must contain {boot_marker!r}")
+
+    reads_path = task_dir / "research" / "plan-skill-reads.jsonl"
+    if not reads_path.is_file():
+        errors.append("Missing research/plan-skill-reads.jsonl")
+    else:
+        reads = _load_skill_reads(task_dir)
+        read_skills = _skills_from_reads(reads)
+        for skill in cfg.get("freeze_required_skills", []):
+            if skill not in read_skills:
+                errors.append(f"plan-skill-reads.jsonl missing required skill: {skill}")
+        one_of = cfg.get("freeze_phase3_one_of", [])
+        if one_of and not read_skills.intersection(set(one_of)):
+            errors.append(f"plan-skill-reads.jsonl missing Phase 3 skill (one of {one_of})")
+
+    validate_execution_index_structure(task_dir, errors)
+    validate_frozen_task_card(task_dir, errors)
+
+    audit = task_dir / "AUDIT.plan.md"
+    if not audit.is_file():
+        errors.append("AUDIT.plan.md missing (v4 requires thin audit matrix)")
+    else:
+        audit_text = audit.read_text(encoding="utf-8")
+        if re.search(r"\{\{[^}]+\}\}", audit_text):
+            errors.append("AUDIT.plan.md has unresolved {{placeholders}}")
+        if "EXECUTION_INDEX" not in audit_text and "execution_index" not in audit_text.lower():
+            errors.append("AUDIT.plan.md must reference EXECUTION_INDEX.md (v4 trace)")
+
+    freeze = task_dir / "plan.freeze.md"
+    if not freeze.is_file():
+        errors.append("plan.freeze.md missing (required for v4 freeze)")
+    else:
+        freeze_text = freeze.read_text(encoding="utf-8")
+        if "3.0v4" not in freeze_text and "协议 v4" not in freeze_text:
+            errors.append("plan.freeze.md missing §3.0v4 v4 freeze checklist")
+        sec3 = _extract_section(freeze_text, "3.")
+        if sec3 and re.search(r"- \[ \]", sec3):
+            errors.append("plan.freeze.md §3 has unchecked items")
+
+    gen_errors = generate_manifests(task_dir, repo_root)
+    errors.extend(gen_errors)
+    validate_manifests_match_index(task_dir, repo_root, errors)
+
+    impl_jsonl = task_dir / "implement.jsonl"
+    if impl_jsonl.is_file():
+        first = _first_jsonl_file(impl_jsonl)
+        frozen_rel = execute_ssot_rel(task_dir, repo_root)
+        if frozen_rel and first and frozen_rel not in first and "frozen/" not in (first or ""):
+            errors.append(
+                f"implement.jsonl first entry must be frozen task card (got {first!r})"
+            )
+        paths = _paths_from_jsonl(impl_jsonl)
+        for rel in paths:
+            if not _path_exists(task_dir, repo_root, rel):
+                errors.append(f"implement.jsonl references missing file: {rel}")
+
+    audit_jsonl = task_dir / "audit.jsonl"
+    if audit_jsonl.is_file():
+        first = _first_jsonl_file(audit_jsonl)
+        if first and "AUDIT.plan.md" not in first:
+            errors.append(f"audit.jsonl first entry must be AUDIT.plan.md (got {first!r})")
+
+    _validate_plan_freeze_template(task_dir, errors)
+
+    from .manifest_protocol import (
+        validate_check_subset_implement,
+        validate_implement_negative_list,
+        validate_plan_manifest_audit,
+        validate_trace_implement_sync,
+    )
+
+    if _manifest_protocol_enabled_v4(task_dir):
+        validate_trace_implement_sync(task_dir, repo_root, errors)
+        validate_check_subset_implement(task_dir, errors)
+        validate_implement_negative_list(task_dir, errors)
+        validate_plan_manifest_audit(task_dir, errors)
+
+    errors.extend(_deprecated_loop_meta_errors(task_dir, repo_root))
+    _validate_loop_engineering_freeze_v4(task_dir, repo_root, errors)
+    _validate_repo_loop_gates(repo_root, errors)
+    return errors
+
+
+def _validate_loop_engineering_freeze_v4(
+    task_dir: Path, repo_root: Path, errors: list[str]
+) -> None:
+    """v4 loop: context_pack + implement slots; no MASTER required."""
+    if not (repo_root / "specs/context/authority_graph.yaml").is_file():
+        return
+    scripts = repo_root / "scripts"
+    if str(scripts) not in sys.path:
+        sys.path.insert(0, str(scripts))
+    try:
+        from context_router import generate_task_loop_artifacts
+        from loop_engineering_common import loop_required, validate_context_pack
+    except ImportError:
+        return
+    if not loop_required(task_dir):
+        return
+    pack_path = task_dir / "context_pack.json"
+    if not pack_path.is_file():
+        for err in generate_task_loop_artifacts(task_dir):
+            errors.append(f"context_router: {err}")
+    if pack_path.is_file():
+        try:
+            pack = json.loads(pack_path.read_text(encoding="utf-8"))
+            for err in validate_context_pack(pack):
+                errors.append(err)
+        except json.JSONDecodeError:
+            errors.append("context_pack.json is invalid JSON")
+    impl = task_dir / "implement.jsonl"
+    if impl.is_file():
+        paths = _paths_from_jsonl(impl)
+        if len(paths) >= 3 and "context_pack.json" not in paths[2] and "context_pack.json" not in paths[1]:
+            if "context_pack.json" not in paths:
+                errors.append("implement.jsonl must include context_pack.json (v4 slot 3)")
+        if not any("trellis-execute" in p for p in paths[:5]):
+            errors.append(
+                "implement.jsonl must include trellis-execute/SKILL.md (v4 boot)"
+            )
+
+
 def validate_plan_freeze(task_dir: Path, repo_root: Path | None = None) -> list[str]:
     """Return validation errors; empty list means pass."""
     if repo_root is None:
         repo_root = _find_repo_root(task_dir)
+
+    from .plan_protocol import plan_protocol_version
+
+    if plan_protocol_version(task_dir) == "4":
+        return validate_plan_freeze_v4(task_dir, repo_root)
 
     errors: list[str] = []
     master = task_dir / "MASTER.plan.md"
@@ -471,7 +640,13 @@ def validate_plan_freeze(task_dir: Path, repo_root: Path | None = None) -> list[
 def validate_plan_freeze_warnings(task_dir: Path, repo_root: Path) -> list[str]:
     """Non-blocking freeze warnings (authority_graph gaps, etc.)."""
     warnings: list[str] = []
-    if not (task_dir / "MASTER.plan.md").is_file():
+    from .plan_protocol import plan_protocol_version
+
+    has_plan = (task_dir / "MASTER.plan.md").is_file() or (
+        plan_protocol_version(task_dir) == "4"
+        and (task_dir / "EXECUTION_INDEX.md").is_file()
+    )
+    if not has_plan:
         return warnings
     scripts = repo_root / "scripts"
     if str(scripts) not in sys.path:

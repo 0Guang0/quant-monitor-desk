@@ -1,6 +1,7 @@
 # 来源索引 — {{任务标题}}
 
-> **Plan / Audit 读本文件** · Execute 只读 `implement.jsonl` + `context_pack.json`  
+> **Plan / Audit 读本文件（v3）** · v4 使用任务根目录 **`EXECUTION_INDEX.md`**  
+> Execute v4 读 `frozen/*.md` + `EXECUTION_INDEX.md` + `implement.jsonl`  
 > 替代已删除的 `input-inventory.md` 与 `original-plan-trace.md`（legacy 任务可保留旧文件）
 
 ---

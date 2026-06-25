@@ -199,6 +199,10 @@ def task_track(task_dir: Path) -> str:
         return track
     if (task_dir / "MASTER.plan.md").is_file():
         return "complex"
+    if (task_dir / "EXECUTION_INDEX.md").is_file() and any(
+        (task_dir / "frozen").glob("*.md")
+    ):
+        return "complex"
     return "simple"
 
 
@@ -229,17 +233,38 @@ def discover_unmapped_backend_packages() -> list[str]:
     return unmapped
 
 
-def extract_master_ac_ids(task_dir: Path) -> list[str]:
+def _ac_ids_from_plan_text(text: str) -> list[str]:
     import re
 
-    master = task_dir / "MASTER.plan.md"
-    if not master.is_file():
-        return []
-    text = master.read_text(encoding="utf-8")
-    section = text.split("## 2.", 1)[1].split("## 3.", 1)[0] if "## 2." in text else text
+    section = (
+        text.split("## 2.", 1)[1].split("## 3.", 1)[0] if "## 2." in text else text
+    )
     header = re.compile(r"^###\s+AC[-\s]?([A-Z0-9._-]+)", re.I | re.M)
     table = re.compile(r"\|\s*AC[-\s]?([A-Z0-9._-]+)\s*\|", re.I)
-    return sorted(set(header.findall(section)) | set(table.findall(section)))
+    ids = sorted(set(header.findall(section)) | set(table.findall(section)))
+    if ids:
+        return ids
+    dotted = sorted(set(re.findall(r"\bAC-[A-Z0-9._-]+\b", text, re.I)))
+    return dotted
+
+
+def extract_master_ac_ids(task_dir: Path) -> list[str]:
+    master = task_dir / "MASTER.plan.md"
+    if master.is_file():
+        return _ac_ids_from_plan_text(master.read_text(encoding="utf-8"))
+
+    extra: list[Path] = []
+    frozen_dir = task_dir / "frozen"
+    if frozen_dir.is_dir():
+        extra.extend(sorted(frozen_dir.glob("*.md")))
+    idx = task_dir / "EXECUTION_INDEX.md"
+    if idx.is_file():
+        extra.append(idx)
+    for candidate in extra:
+        ids = _ac_ids_from_plan_text(candidate.read_text(encoding="utf-8"))
+        if ids:
+            return ids
+    return []
 
 
 def write_loop_evidence_stubs(task_dir: Path, pack: dict[str, Any]) -> tuple[Path, Path]:

@@ -1,5 +1,7 @@
 # 036_create_final_release_manifest 创建最终发布清单
 
+> **Historical input notice:** canonical Round5 execution now starts from `BATCH_05_VERIFIED_AUDIT_SECURITY_RELEASE/README.md`. This loose card remains source material for `B05_03_release_manifest_and_package_cleanup.md`; do not execute it as the default entrypoint without checking the Batch 05 manifest.
+
 ## 1. 任务目标
 
 生成可验证的 MANIFEST、FINAL_AUDIT_REPORT、最终 zip 验收。

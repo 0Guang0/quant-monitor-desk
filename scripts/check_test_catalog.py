@@ -501,6 +501,83 @@ CURATED: dict[str, dict] = {
             "guard may be broken."
         ),
     },
+    "tests/test_execution_index_protocol.py": {
+        "purpose": "Plan 协议 v4：EXECUTION_INDEX 解析、manifest 生成与 validate_plan_freeze v4 门禁",
+        "type": "policy-contract",
+        "verifies": {
+            "docs": [
+                ".trellis/spec/guides/complex-task-planning-protocol.md",
+                ".trellis/spec/guides/templates/EXECUTION_INDEX.md",
+            ],
+            "specs": [],
+            "rules": ["docs/implementation_tasks/GLOBAL_TASK_TEMPLATE.md"],
+        },
+        "command": "uv run python -m pytest tests/test_execution_index_protocol.py -q",
+        "failure_meaning": (
+            "v4 frozen task card + index manifest drift; Execute/Audit SSOT gate broken."
+        ),
+        "evidence_required": "pytest output",
+    },
+    "tests/test_round3g_sandbox_clean_write_rehearsal.py": {
+        "purpose": "Round 3G R3G-01 sandbox rehearsal contract fail-closed gates",
+        "type": "policy-contract",
+        "verifies": {
+            "docs": [
+                "docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_01_SANDBOX_CLEAN_WRITE_REHEARSAL.md",
+            ],
+            "specs": ["specs/contracts/sandbox_clean_write_contract.yaml"],
+            "rules": ["docs/implementation_tasks/GLOBAL_TESTING_POLICY.md"],
+        },
+        "command": "uv run python -m pytest tests/test_round3g_sandbox_clean_write_rehearsal.py -q",
+        "failure_meaning": (
+            "R3G-01 rehearsal contract blocks production mutation or report fields drift."
+        ),
+    },
+    "tests/test_round3g_pre_production_adversarial_audit.py": {
+        "purpose": "Round 3G R3G-02 adversarial audit decision enum and block_if gates",
+        "type": "policy-contract",
+        "verifies": {
+            "docs": [
+                "docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_02_PRE_PRODUCTION_ADVERSARIAL_AUDIT.md",
+            ],
+            "specs": ["specs/contracts/sandbox_clean_write_contract.yaml"],
+            "rules": ["docs/implementation_tasks/GLOBAL_TESTING_POLICY.md"],
+        },
+        "command": "uv run python -m pytest tests/test_round3g_pre_production_adversarial_audit.py -q",
+        "failure_meaning": (
+            "R3G-02 audit contract fails to reject reference runtime import or production write."
+        ),
+    },
+    "tests/test_round3g_limited_production_clean_write.py": {
+        "purpose": "Round 3G R3G-03 limited entry requires user approval and blocks agent write",
+        "type": "policy-contract",
+        "verifies": {
+            "docs": [
+                "docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_03_LIMITED_PRODUCTION_CLEAN_WRITE.md",
+            ],
+            "specs": ["specs/contracts/sandbox_clean_write_contract.yaml"],
+            "rules": ["docs/implementation_tasks/GLOBAL_TESTING_POLICY.md"],
+        },
+        "command": "uv run python -m pytest tests/test_round3g_limited_production_clean_write.py -q",
+        "failure_meaning": (
+            "R3G-03 limited clean-write contract allows agent-triggered or unapproved entry."
+        ),
+    },
+    "tests/test_round3g_limited_production_rollback.py": {
+        "purpose": "Round 3G R3G-03 rollback dry-run and QMD gate contract",
+        "type": "policy-contract",
+        "verifies": {
+            "docs": [
+                "docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_03_LIMITED_PRODUCTION_CLEAN_WRITE.md",
+            ],
+            "specs": ["specs/contracts/sandbox_clean_write_contract.yaml"],
+            "rules": ["docs/implementation_tasks/GLOBAL_TESTING_POLICY.md"],
+        },
+        "command": "uv run python -m pytest tests/test_round3g_limited_production_rollback.py -q",
+        "failure_meaning": (
+            "R3G-03 rollback contract missing dry-run requirement or WriteManager gate."
+        ),
+    },
 }
 
 
