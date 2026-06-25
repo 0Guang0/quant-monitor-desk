@@ -176,6 +176,30 @@ CURATED: dict[str, dict] = {
         "failure_meaning": "Resource limits no longer enforced; batch jobs may exceed safe bounds.",
         "evidence_required": "pytest output",
     },
+    "tests/test_production_equivalent_smoke_budget.py": {
+        "purpose": "Bounded production-equivalent smoke threshold artifact (R3F-HYG-06)",
+        "type": "policy-contract",
+        "verifies": {
+            "docs": ["docs/ops/performance_limits.md"],
+            "specs": ["specs/contracts/production_equivalent_smoke_budget.yaml"],
+            "rules": [],
+        },
+        "command": "uv run python -m pytest tests/test_production_equivalent_smoke_budget.py -q",
+        "failure_meaning": "Perf smoke budget thresholds missing or mis-evaluated.",
+        "evidence_required": "pytest output + smoke budget JSON artifact",
+    },
+    "tests/test_layer1_sandbox_bootstrap.py": {
+        "purpose": "Layer1 ingestion sandbox bootstrap PR-R2b (R3F-HYG-07)",
+        "type": "runtime-contract",
+        "verifies": {
+            "docs": ["docs/architecture/layer1_ingestion_refactor_rollback_plan.md"],
+            "specs": [],
+            "rules": [],
+        },
+        "command": "uv run python -m pytest tests/test_layer1_sandbox_bootstrap.py -q",
+        "failure_meaning": "Phase3/4 evidence sandbox bootstrap regressed; ingestion split rollback risk.",
+        "evidence_required": "pytest output",
+    },
     "tests/test_source_route_planner.py": {
         "purpose": "Source route planner READY gate and routing semantics",
         "type": "runtime-contract",

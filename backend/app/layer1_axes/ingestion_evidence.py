@@ -4,16 +4,14 @@ from __future__ import annotations
 
 import hashlib
 import json
-import shutil
 from dataclasses import asdict
 from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
-import duckdb
 from backend.app import config as app_config
 from backend.app.datasources.service import DataSourceService, build_staged_fixture_service
-from backend.app.db.migrate import apply_migrations
+from backend.app.layer1_axes.evidence_sandbox import resolve_task_sandbox_db
 from backend.app.layer1_axes.ingestion import (
     FRED_PRIMARY_DEFERRED_NOTE,
     FROZEN_STAGED_INDICATOR,
@@ -23,8 +21,14 @@ from backend.app.layer1_axes.ingestion import (
     Layer1ObservationIngestionService,
     MicroFetchResult,
 )
-from backend.app.layer1_axes.evidence_sandbox import resolve_task_sandbox_db
 from backend.app.layer1_axes.ingestion_inventory import _relative_to_project
+from backend.app.layer1_axes.sandbox_bootstrap import (
+    PHASE3_SANDBOX_DIRNAME,
+    PHASE4_SANDBOX_DIRNAME,
+    prepare_phase3_sandbox,
+    prepare_phase4_data_root,
+    prepare_phase4_fallback_sandbox,
+)
 from backend.app.ops.layer1_evidence.formatters import (
     format_phase2_no_mutation_md,
     format_phase2_route_preview_md,
@@ -48,8 +52,6 @@ ROUTE_PREVIEW_MD = "phase2_route_preview_matrix.md"
 NO_MUTATION_MD = "phase2_no_mutation_proof.md"
 PHASE3_EVIDENCE_JSON = "phase3_micro_fetch_evidence.json"
 PHASE3_NO_CLEAN_WRITE_MD = "phase3_no_clean_write_proof.md"
-PHASE3_SANDBOX_DIRNAME = ".phase3-micro-fetch-sandbox"
-PHASE4_SANDBOX_DIRNAME = ".phase4-clean-write-sandbox"
 PHASE4_EVIDENCE_JSON = "phase4_clean_write_and_snapshot_evidence.json"
 PHASE4_INVENTORY_DELTA_MD = "phase4_inventory_delta.md"
 
@@ -253,22 +255,11 @@ def capture_task_phase3_evidence(
     datasource: DataSourceService | None = None,
 ) -> dict[str, Any]:
     """Write task execute-evidence for Phase 3 using an isolated fresh sandbox."""
-    from backend.app.layer1_axes.ingestion_inventory import TARGET_DB_RELATIVE
-
     out = Path(evidence_dir)
     _load_phase2_gate(out)
-    sandbox_base = out / PHASE3_SANDBOX_DIRNAME
-    if sandbox_base.exists():
-        shutil.rmtree(sandbox_base)
-    phase3_db = sandbox_base / TARGET_DB_RELATIVE
-    phase3_data_root = sandbox_base / "data"
-    phase3_db.parent.mkdir(parents=True, exist_ok=True)
-    phase3_data_root.mkdir(parents=True, exist_ok=True)
-    con = duckdb.connect(str(phase3_db))
-    try:
-        apply_migrations(con)
-    finally:
-        con.close()
+    layout = prepare_phase3_sandbox(out)
+    phase3_db = layout.db_path
+    phase3_data_root = layout.data_root
 
     fixture_path = app_config.PROJECT_ROOT / MACRO_FIXTURE_RELATIVE
     resolved_datasource = datasource or build_staged_fixture_service(
@@ -435,25 +426,21 @@ def capture_task_phase4_evidence(
 
     targets = resolve_phase1_target_paths(data_root=data_root, db_path=db_path)
     sandbox_db = out / SANDBOX_BASELINE_DIRNAME / TARGET_DB_RELATIVE
-    sandbox_base = out / PHASE4_SANDBOX_DIRNAME
-    if sandbox_base.exists():
-        shutil.rmtree(sandbox_base)
-    fallback_db = sandbox_base / TARGET_DB_RELATIVE
+    fallback_layout = prepare_phase4_fallback_sandbox(out)
     resolved = resolve_task_sandbox_db(
         evidence_dir=out,
         sandbox_db=sandbox_db,
         target_db=targets.target_db,
         target_db_exists=targets.target_db_exists,
         copy_sandbox_db=copy_sandbox_db,
-        fallback_sandbox_db=fallback_db,
+        fallback_sandbox_db=fallback_layout.db_path,
         fallback_strategy="fresh_phase4_sandbox_fallback",
     )
     inspect_db = resolved.inspect_db
     db_capture_strategy = resolved.db_capture_strategy
 
     fixture_path = app_config.PROJECT_ROOT / MACRO_FIXTURE_RELATIVE
-    phase4_data_root = out / PHASE4_SANDBOX_DIRNAME / "data"
-    phase4_data_root.mkdir(parents=True, exist_ok=True)
+    phase4_data_root = prepare_phase4_data_root(out)
     resolved_datasource = datasource or build_staged_fixture_service(
         data_root=phase4_data_root,
         fixture_path=fixture_path,

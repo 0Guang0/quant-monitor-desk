@@ -36,6 +36,14 @@ specs/contracts/resource_limits.yaml:
         - tests/test_layer2_sensor_loader.py::test_crossAssetSnapshotBuilder_resourceGuardBlocksBatchBuild
       negative_required: true
 
+specs/contracts/production_equivalent_smoke_budget.yaml:
+  requirements:
+    PERF_SMOKE_BUDGET:
+      text: "Production-equivalent smoke metrics must stay within bounded thresholds"
+      tests:
+        - tests/test_production_equivalent_smoke_budget.py
+      negative_required: true
+
 specs/contracts/layer1_axis_contract.yaml:
   requirements:
     LAYER1_AXIS_LOADER:
