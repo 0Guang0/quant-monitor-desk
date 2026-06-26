@@ -43,9 +43,19 @@ def _build_data_parser(sub: argparse._SubParsersAction) -> None:
     init_p.add_argument("--db", type=str, default=None)
     init_p.add_argument("--format", choices=["json", "text"], default="json")
 
-    health = data_sub.add_parser("health", help="Read-only health placeholder (Phase C)")
-    health.add_argument("--domain", default=None, dest="data_domain")
+    health = data_sub.add_parser("health", help="Read-only data health profile (market_bar_p0)")
+    health.add_argument("--domain", required=True, dest="data_domain")
+    health.add_argument("--profile", required=True)
+    health.add_argument("--evidence-dir", default=None, dest="evidence_dir")
+    health.add_argument("--db-path", default=None, dest="db_path")
+    health.add_argument("--start", default=None)
+    health.add_argument("--end", default=None)
+    health.add_argument("--max-rows", type=int, default=1000)
     health.add_argument("--format", choices=["json", "text"], default="json")
+    health.add_argument("--allow-network", action="store_true")
+    health.add_argument("--clean-write", action="store_true")
+    health.add_argument("--full-market-scan", action="store_true")
+    health.add_argument("--full-history", action="store_true")
 
 
 def _run_data(args: argparse.Namespace) -> int:
@@ -73,7 +83,23 @@ def _run_data(args: argparse.Namespace) -> int:
             db = Path(args.db) if args.db else None
             payload = data_commands.init_basic(dry_run=args.dry_run, db_path=db)
         elif args.data_command == "health":
-            payload = data_commands.health_check(data_domain=args.data_domain)
+            from pathlib import Path
+
+            evidence = Path(args.evidence_dir) if args.evidence_dir else None
+            db = Path(args.db_path) if args.db_path else None
+            payload = data_commands.health_check(
+                data_domain=args.data_domain,
+                profile=args.profile,
+                evidence_dir=evidence,
+                db_path=db,
+                start=args.start,
+                end=args.end,
+                max_rows=args.max_rows,
+                allow_network=args.allow_network,
+                clean_write=args.clean_write,
+                full_market_scan=args.full_market_scan,
+                full_history=args.full_history,
+            )
         else:
             raise CliFailure(
                 error_code="CAPABILITY_MISSING",

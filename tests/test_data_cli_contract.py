@@ -75,6 +75,27 @@ def test_cliFailure_mustExposeErrorCodeAndDocsAnchor() -> None:
     assert "docs_anchor" in guide or "ERROR_CODE" in guide.upper()
 
 
+def test_dataCliContract_healthCommandDocumented() -> None:
+    """覆盖范围：qmd data health 命令契约
+    测试对象：data_cli_contract.yaml commands['qmd data health']
+    目的/目标：AC-7 — health 段含 canonical 参数与只读约束
+    验证点：required_args 含 domain/profile；side_effects_allowed=false；must_use runner
+    失败含义：CLI 契约漂移导致运维参数与实现不一致
+    """
+    contract = _load_contract()
+    health = contract["commands"]["qmd data health"]
+    assert health["side_effects_allowed"] is False
+    assert "domain" in health.get("required_args", [])
+    assert "profile" in health.get("required_args", [])
+    assert "run_data_health_profile" in health.get("must_use", [])
+    assert "evidence-dir" in health.get("optional_args", [])
+    forbidden = health.get("forbidden_args", [])
+    assert "allow-network" in forbidden
+    assert "full-market-scan" in forbidden
+    assert "full-history" in forbidden
+    assert "clean-write" in forbidden
+
+
 def test_productionCli_notYetImplemented_documentedInTask2() -> None:
     """覆盖范围：生产等价 CLI 尚未实现的文档追溯
     测试对象：round2-6-routing-service-gate 任务 MASTER 与 implement.jsonl

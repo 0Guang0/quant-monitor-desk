@@ -64,29 +64,37 @@ Conflict **resolution** stays in `SourceConflictValidator` / `ReconcileJob`. Dat
 
 ## 5. CLI contract (design)
 
-### 5.1 Command shape
+### 5.1 Command shape (R3FR-06 canonical)
 
 ```bash
 qmd data health \
   --domain market_bar_1d \
-  --db data/duckdb/quant_monitor.duckdb \
-  --start 2024-01-01 \
-  --end 2024-12-31 \
+  --profile market_bar_p0 \
+  --evidence-dir tests/fixtures/data_health/good_bundle \
   --format json
 ```
 
-### 5.2 Arguments
+Optional read-only DB override:
+
+```bash
+qmd data health --db-path data/duckdb/quant_monitor.duckdb --domain market_bar_1d --profile market_bar_p0 --evidence-dir <path>
+```
+
+### 5.2 Arguments (canonical — frozen §6.3)
 
 | Argument | Required | Default | Behavior |
 | -------- | -------- | ------- | -------- |
-| `--domain` | Yes | — | Must match a key in `data_quality_rules.yaml` `ops_cli_profiles` |
-| `--db` | No | `$QMD_DATA_ROOT/duckdb/quant_monitor.duckdb` or `data/duckdb/quant_monitor.duckdb` | Read-only DuckDB path (JQ2PTrade-style override) |
-| `--start` / `--end` | No | domain default window | Inclusive date window; must respect `resource_limits.yaml` scan caps |
-| `--format` | No | `text` | `text` or `json` |
-| `--output` | No | stdout | Optional file; parent dir must exist |
-| `--profile` | No | `QMD_RESOURCE_PROFILE` or `eco` | Resource profile for connection manager |
-| `--rule-set` | No | domain default from contract | Explicit `rule_set_id` override |
-| `--include-conflicts` | No | false | Include read-only conflict summary |
+| `--domain` | Yes | — | `market_bar_1d` (maps to `ops_cli_profiles`) |
+| `--profile` | Yes | — | `market_bar_p0` (not `--rule-set`) |
+| `--evidence-dir` | Yes* | — | Evidence bundle root (`good_bundle` in tests) |
+| `--db-path` | No | — | Optional read-only DuckDB (not `--db`) |
+| `--start` / `--end` | No | — | Inclusive date window on bar rows |
+| `--max-rows` | No | 1000 | Cap report detail rows |
+| `--format` | No | `json` | `json` or `text` |
+
+\* Required for supported profiles in the R3FR-02+06 vertical slice.
+
+Legacy design note: older drafts used `--db` and `--rule-set`; implementation uses `--db-path` and `--profile`.
 
 ### 5.3 Forbidden arguments (v1 design)
 
@@ -104,30 +112,33 @@ qmd data health \
 
 Optional `--write-report` may be designed in a later sub-batch only after explicit user approval and migration for persisted health snapshots.
 
-## 6. Report model (JSON)
+## 6. Report model (JSON — R3FR-06 §5)
+
+CLI JSON envelope (authoritative for `qmd data health`):
 
 ```json
 {
-  "status": "PASS|WARN|FAIL",
-  "generated_at": "2026-06-22T00:00:00Z",
-  "mode": "read_only",
+  "command": "health",
+  "dry_run": true,
+  "side_effects_allowed": false,
   "domain": "market_bar_1d",
-  "db": { "path": "...", "read_only_open": true },
-  "window": { "start": "2024-01-01", "end": "2024-12-31" },
-  "rule_set_id": "market_bar_p0",
-  "checked_rows": 0,
-  "summary": { "failed": 0, "warning": 0, "passed": 0 },
-  "findings": [],
-  "conflicts": null,
-  "warnings": [],
-  "errors": [],
-  "provenance": {
-    "run_id": null,
-    "source_ids": [],
-    "data_path": "data/duckdb/quant_monitor.duckdb"
-  }
+  "profile": "market_bar_p0",
+  "status": "PASS",
+  "rules_run": [],
+  "issue_counts_by_severity": {},
+  "row_count_checked": 0,
+  "window": { "start": "", "end": "" },
+  "source_ids": [],
+  "content_hash_coverage": {},
+  "schema_hash_coverage": {},
+  "limitations": [],
+  "report_path": null
 }
 ```
+
+`report_path` is optional. Internal `DataHealthReport` checks remain available for C-20 staged profiles; CLI maps to the envelope above.
+
+Legacy design shape (superseded for CLI output):
 
 Each finding item:
 

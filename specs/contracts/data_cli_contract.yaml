@@ -11,7 +11,23 @@ commands:
     optional_args: [start, end, since, dry-run]
     must_use: [ResourceGuard, SourceRoutePlan, idempotency_key, fetch_log]
   qmd data health:
+    required_args: [domain, profile]
+    optional_args:
+      - evidence-dir
+      - db-path
+      - start
+      - end
+      - max-rows
+      - format
     side_effects_allowed: false
+    default_mode: read_only
+    must_use: [run_data_health_profile]
+    forbidden_args:
+      - allow-network
+      - clean-write
+      - full-market-scan
+      - full-history
+    output: DataHealthCliEnvelope
   qmd data route-preview:
     side_effects_allowed: false
     output: SourceRoutePlan
@@ -23,6 +39,14 @@ rules:
 required_tests:
   - tests/test_data_cli_contract.py::test_syncDryRunDoesNotWrite
   - tests/test_data_cli_contract.py::test_routePreviewContract_isReadOnly
+  - tests/test_data_cli_contract.py::test_dataCliContract_healthCommandDocumented
   - tests/test_qmd_data_cli.py::test_qmdData_syncWithoutDryRun_failsClosed
   - tests/test_qmd_data_cli.py::test_initDb_syncRegistry_oneLiner
   - tests/test_qmd_data_cli.py::test_packaging_consoleScripts_smoke
+  - tests/test_qmd_data_cli.py::test_qmdData_health_supportedProfile_notPlaceholder
+  - tests/test_qmd_data_cli.py::test_qmdData_health_jsonRequiredFields
+  - tests/test_qmd_data_cli.py::test_qmdData_health_invalidProfile_documentedError
+  - tests/test_qmd_data_cli.py::test_qmdData_health_invokesProfileRunner
+  - tests/test_qmd_data_cli.py::test_qmdData_health_noSideEffects
+  - tests/test_qmd_data_cli.py::test_qmdData_health_rejectsLiveCleanWriteFullScan
+  - tests/test_qmd_data_cli.py::test_qmdData_health_defaultWindow_boundedRowCount
