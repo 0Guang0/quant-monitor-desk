@@ -527,7 +527,9 @@ providers:
       - openbb_provider_reference
     source_type: aggregator
     license_type: public_web
-    license_or_terms: Architecture-only placeholder; no runtime adapter.
+    license_or_terms:
+      Architecture-only placeholder; OpenBB providers/ reference is AGPL-3.0 source
+      but metadata-only adoption (no runtime copy or dependency).
     allowed_domains:
       - provider_metadata_only
     enabled_by_default: false

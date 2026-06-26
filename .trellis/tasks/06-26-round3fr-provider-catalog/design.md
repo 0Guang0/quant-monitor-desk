@@ -24,7 +24,7 @@ providers:
 | baostock                  | [baostock]                  | sandbox_candidate        |
 | akshare                   | [akshare]                   | active                   |
 | cninfo                    | [cninfo]                    | sandbox_candidate        |
-| yahoo_finance             | [yahoo_finance]             | proposed_disabled_source |
+| yahoo_finance             | [yahoo_finance]             | active（catalog SSOT；capability 无显式 status；posture 仍 validation_only + 默认关闭） |
 | tdx_pytdx                 | [tdx_pytdx]                 | proposed_disabled_source |
 | fred                      | [fred]                      | proposed_disabled_source |
 | us_treasury … web_search  | 各单源                      | proposed_disabled_source |

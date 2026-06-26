@@ -5,7 +5,10 @@
 
 from __future__ import annotations
 
+import pytest
+
 from backend.app.datasources.provider_catalog import (
+    ProviderCatalogError,
     load_provider_catalog,
     provider_for_source,
 )
@@ -330,3 +333,81 @@ def test_defaultYaml_registryStillLoads() -> None:
     reg.load()
     assert reg.get("openbb_provider_reference").source_id == "openbb_provider_reference"
     assert reg.get("qmt_xqshare").source_id == "qmt_xqshare"
+
+
+def test_loadProviderCatalog_outsideRoot_raises(tmp_path, monkeypatch) -> None:
+    """覆盖范围：catalog 路径须在项目根内
+    测试对象：load_provider_catalog（PROJECT_ROOT 外路径）
+    目的/目标：防通过符号链接或绝对路径加载仓外 catalog YAML
+    验证点：pytest.raises(ProviderCatalogError, match=project root)
+    失败含义：仓外 catalog 可驱动 posture 元数据，供应链风险
+    """
+    import backend.app.datasources.provider_catalog as catalog_mod
+    import backend.app.datasources.source_registry as registry_mod
+
+    fake_project_root = tmp_path / "project"
+    fake_project_root.mkdir()
+    outside = tmp_path / "outside" / "outside.yaml"
+    outside.parent.mkdir()
+    outside.write_text("version: x\nproviders: []\n", encoding="utf-8")
+    monkeypatch.setattr(catalog_mod, "PROJECT_ROOT", fake_project_root)
+    monkeypatch.setattr(registry_mod, "PROJECT_ROOT", fake_project_root)
+    with pytest.raises(ProviderCatalogError, match="project root"):
+        load_provider_catalog(outside)
+
+
+def test_loadProviderCatalog_invalidShape_raises(tmp_path, monkeypatch) -> None:
+    """覆盖范围：catalog 文档根结构与 providers 列表校验
+    测试对象：load_provider_catalog 对畸形 YAML 的 fail-fast
+    目的/目标：非 dict 根或非 list providers 立即抛 ProviderCatalogError
+    验证点：两条畸形 fixture 均 raises ProviderCatalogError
+    失败含义：畸形 catalog 被静默接受，下游读取 posture 不确定
+    """
+    import backend.app.datasources.provider_catalog as catalog_mod
+    import backend.app.datasources.source_registry as registry_mod
+
+    fake_root = tmp_path / "project"
+    fake_root.mkdir()
+    bad_root = fake_root / "bad_root.yaml"
+    bad_root.write_text("not-a-mapping\n", encoding="utf-8")
+    bad_providers = fake_root / "bad_providers.yaml"
+    bad_providers.write_text("version: x\nproviders: not-a-list\n", encoding="utf-8")
+    monkeypatch.setattr(catalog_mod, "PROJECT_ROOT", fake_root)
+    monkeypatch.setattr(registry_mod, "PROJECT_ROOT", fake_root)
+    with pytest.raises(ProviderCatalogError, match="mapping"):
+        load_provider_catalog(bad_root)
+    with pytest.raises(ProviderCatalogError, match="list"):
+        load_provider_catalog(bad_providers)
+
+
+def test_runtimeSourceCopy_notAllowed_allProviders() -> None:
+    """覆盖范围：全量 provider 禁止 runtime 源码复制
+    测试对象：provider_catalog.yaml 全部 providers 的 runtime_source_copy_allowed
+    目的/目标：25 源均显式 runtime_source_copy_allowed=false，含 openbb 参考项
+    验证点：任一 provider 该字段非 False 则失败
+    失败含义：catalog 误标允许复制参考项目 runtime，AGPL/合规风险
+    """
+    violations: list[str] = []
+    for entry in _catalog_providers():
+        if entry.get("runtime_source_copy_allowed") is not False:
+            violations.append(entry.get("provider_id", "<unknown>"))
+    assert violations == [], f"runtime_source_copy_allowed must be false: {violations}"
+
+
+def test_catalogTypes_matchSourceRegistry() -> None:
+    """覆盖范围：catalog 与 registry 的 source_type/license_type 逐源对齐
+    测试对象：provider_catalog.yaml 与 source_registry.yaml 交叉字段
+    目的/目标：catalog enum 字段与 registry SSOT 零漂移
+    验证点：25 源 source_type 与 license_type 均相等
+    失败含义：catalog 与 registry 类型标注分叉，schema sync 会失败
+    """
+    registry = _registry_by_id()
+    catalog_map = _catalog_source_to_provider()
+    mismatches: list[str] = []
+    for sid, reg in registry.items():
+        cat = catalog_map[sid]
+        if cat.get("source_type") != reg.get("source_type"):
+            mismatches.append(f"{sid}: source_type")
+        if cat.get("license_type") != reg.get("license_type"):
+            mismatches.append(f"{sid}: license_type")
+    assert mismatches == [], f"catalog/registry type drift: {mismatches}"

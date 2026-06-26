@@ -7,6 +7,10 @@ from typing import Any
 
 import yaml
 from backend.app.config import PROJECT_ROOT
+from backend.app.datasources.source_registry import (
+    InvalidRegistryError,
+    _resolve_registry_path,
+)
 
 DEFAULT_CATALOG_PATH = PROJECT_ROOT / "specs/datasource_registry/provider_catalog.yaml"
 
@@ -18,10 +22,10 @@ class ProviderCatalogError(ValueError):
 def load_provider_catalog(path: Path | None = None) -> dict[str, Any]:
     """Load provider catalog YAML; returns parsed document root."""
     yaml_path = path or DEFAULT_CATALOG_PATH
-    resolved = yaml_path.resolve()
-    root = PROJECT_ROOT.resolve()
-    if not resolved.is_relative_to(root):
-        raise ProviderCatalogError(f"catalog path must be under project root, got: {yaml_path}")
+    try:
+        resolved = _resolve_registry_path(yaml_path)
+    except InvalidRegistryError as exc:
+        raise ProviderCatalogError(str(exc).replace("registry path", "catalog path", 1)) from exc
     raw = yaml.safe_load(resolved.read_text(encoding="utf-8")) or {}
     if not isinstance(raw, dict):
         raise ProviderCatalogError("provider catalog root must be a mapping")

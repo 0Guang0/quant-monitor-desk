@@ -1,0 +1,2 @@
+ERROR: collected 0 items / Tier A subset had failures before merge gate
+(pre-9.6: provider catalog suite not green; full pytest not captured)
