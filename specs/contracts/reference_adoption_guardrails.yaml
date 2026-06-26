@@ -174,7 +174,9 @@ required_tests:
   - tests/test_reference_adoption_guardrails.py::test_noSilentFallbackCopied
   - tests/test_reference_adoption_guardrails.py::test_noReferenceProjectRuntimeImport
   - tests/test_reference_adoption_guardrails.py::test_noOpenbbRuntimeCopyIntroduced
-  - tests/test_reference_adoption_guardrails.py::test_jq2ptradeExecPatternNotCopied
+  - tests/test_reference_adoption_guardrails.py::test_jq2ptradeSchedulerHookNotCopied
+  - tests/test_reference_adoption_guardrails.py::test_jq2ptradeCompileExecPatternNotCopied
+  - tests/test_reference_adoption_guardrails.py::test_r3fr04Round4BacktestPlanningClosure
   - tests/test_reference_adoption_guardrails.py::test_noAgentTriggeredWritePatterns
   - tests/test_reference_adoption_guardrails.py::test_noEasyxtHardcodedTableInDataHealth
   - tests/test_reference_adoption_guardrails.py::test_batch3frCardsDoNotRequireCentralInventory

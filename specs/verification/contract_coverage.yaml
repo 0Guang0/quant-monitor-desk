@@ -117,13 +117,39 @@ specs/contracts/backup_recovery_contract.yaml:
   waiver: "No dedicated runtime tests yet; covered by ops docs and manual checklist"
 
 specs/contracts/backtest_contract.yaml:
-  waiver: "Round 4 scope; not yet implemented in runtime tests"
+  requirements:
+    R3FR04_PLANNING:
+      text: "R3FR-04 reference adoption paths and guardrails"
+      tests:
+        - tests/test_reference_adoption_guardrails.py::test_r3fr04Round4BacktestPlanningClosure
+      negative_required: false
 
 specs/contracts/backtest_metric_contract.yaml:
-  waiver: "Round 4 scope; not yet implemented in runtime tests"
+  requirements:
+    R3FR04_METRICS:
+      text: "EasyXT-informed metric grouping and no-action boundaries"
+      tests:
+        - tests/test_reference_adoption_guardrails.py::test_r3fr04Round4BacktestPlanningClosure
+      negative_required: false
 
 specs/contracts/backtest_reproducibility_contract.yaml:
-  waiver: "Round 4 scope; not yet implemented in runtime tests"
+  requirements:
+    R3FR04_REPRO:
+      text: "Evidence-bound reproducibility manifests"
+      tests:
+        - tests/test_reference_adoption_guardrails.py::test_r3fr04Round4BacktestPlanningClosure
+      negative_required: false
+
+specs/contracts/review_sandbox_contract.yaml:
+  requirements:
+    R3FR04_SANDBOX:
+      text: "JQ2PTrade deny-list aligned forbidden API surface and static-analysis-first posture"
+      tests:
+        - tests/test_reference_adoption_guardrails.py::test_r3fr04Round4BacktestPlanningClosure
+        - tests/test_reference_adoption_guardrails.py::test_jq2ptradeCompileExecPatternNotCopied
+        - tests/test_reference_adoption_guardrails.py::test_jq2ptradeSchedulerHookNotCopied
+        - tests/test_staged_pilot.py
+      negative_required: true
 
 specs/contracts/agent_contract.yaml:
   waiver: "Round 4 scope; partial coverage via api_security_contract tests"
@@ -188,14 +214,6 @@ specs/contracts/reference_adoption_guardrails.yaml:
 
 specs/contracts/release_cleanup_allowlist.yaml:
   waiver: "Release cleanup allowlist validated at release task time"
-
-specs/contracts/review_sandbox_contract.yaml:
-  requirements:
-    REVIEW_SANDBOX:
-      text: "Review sandbox contract and staged pilot boundaries"
-      tests:
-        - tests/test_staged_pilot.py
-      negative_required: true
 
 specs/contracts/runtime_flow_contract.yaml:
   waiver: "Runtime flow contract covered by integration smoke tests indirectly"

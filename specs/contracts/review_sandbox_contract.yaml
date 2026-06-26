@@ -2,6 +2,10 @@ version: review_sandbox_contract_v1
 status: draft_round2_6
 owner: review_security
 purpose: "Allow optional read-only strategy/evidence review without executing trading code."
+static_analysis_only: true
+execution_mode_note: >
+  First Round4 vertical slice (Batch A) is static analysis only. Any runtime
+  execution requires explicit REVIEW-SBX-001 approval in a later batch.
 allowed_api:
   - get_history
   - get_price
@@ -18,6 +22,14 @@ forbidden_api:
   - place_order
   - buy
   - sell
+  - get_open_orders
+  - get_portfolio
+  - get_positions
+  - get_orders
+  - get_trades
+  - run_daily
+  - run_weekly
+  - run_monthly
 forbidden_runtime_access:
   - os
   - sys
@@ -27,11 +39,13 @@ forbidden_runtime_access:
   - network
   - arbitrary_import
 rules:
-  - imported strategy snippets are scanned by AST before any execution
-  - default mode is static analysis only
+  - default mode is static analysis only; no compile/exec or arbitrary strategy runtime in Batch A
+  - imported strategy snippets are scanned by AST; runtime execution deferred to REVIEW-SBX-001
   - any detected order-like API is an action_semantics_violation
   - no sandbox output may become a trading recommendation
-required_tests:
+required_tests_deferred_round4:
   - tests/test_review_sandbox_api.py::test_orderApiRejected
   - tests/test_review_sandbox_api.py::test_forbiddenImportRejected
-  - tests/test_reference_adoption_guardrails.py::test_jq2ptradeExecPatternNotCopied
+required_tests:
+  - tests/test_reference_adoption_guardrails.py::test_jq2ptradeCompileExecPatternNotCopied
+  - tests/test_reference_adoption_guardrails.py::test_jq2ptradeSchedulerHookNotCopied

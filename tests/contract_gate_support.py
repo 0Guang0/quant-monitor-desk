@@ -171,6 +171,42 @@ def scan_sys_path_mutation_with_reference_dir(
     return violations
 
 
+def scan_strategy_exec_patterns(
+    *,
+    scan_roots: tuple[Path, ...] = GUARDRAIL_SCAN_ROOTS,
+) -> list[str]:
+    """Detect JQ2PTrade-style compile(...,'exec') / exec(...) Call nodes in guardrail roots."""
+    violations: list[str] = []
+
+    def _compile_uses_exec_mode(node: ast.Call) -> bool:
+        if not (isinstance(node.func, ast.Name) and node.func.id == "compile"):
+            return False
+        for arg in node.args[1:]:
+            if isinstance(arg, ast.Constant) and arg.value == "exec":
+                return True
+        for kw in node.keywords:
+            if kw.arg == "mode" and isinstance(kw.value, ast.Constant) and kw.value.value == "exec":
+                return True
+        return False
+
+    for root in scan_roots:
+        if not root.is_dir():
+            continue
+        for py_file in root.rglob("*.py"):
+            if "tests" in py_file.parts:
+                continue
+            tree = ast.parse(py_file.read_text(encoding="utf-8"))
+            rel = py_file.relative_to(PROJECT_ROOT)
+            for node in ast.walk(tree):
+                if not isinstance(node, ast.Call):
+                    continue
+                if isinstance(node.func, ast.Name) and node.func.id == "exec":
+                    violations.append(f"{rel}: exec(...) call")
+                elif _compile_uses_exec_mode(node):
+                    violations.append(f"{rel}: compile(..., 'exec') pattern")
+    return violations
+
+
 def platform_key() -> str:
     plat = platform.system().lower()
     if plat == "windows":

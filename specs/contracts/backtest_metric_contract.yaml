@@ -43,6 +43,30 @@ rules:
   - strategy sandbox metrics require REVIEW-SBX-001 approval and NoActionSemanticGuard
   - every metric row must include run_id, event_id, horizon, metric_name, metric_value, sample_size, quality_flags_json
   - every report must include limitations and no_action_semantics=true
-required_tests:
+required_tests_deferred_round4:
   - tests/test_backtest_metric_contract.py::test_requiredMetricSchemaStable
   - tests/test_backtest_review_lifecycle.py::test_reportHasLimitationsAndNoActionSemantics
+reference_adoption:
+  policy: >
+    Metric names and grouping adapt EasyXT performance.py ideas into QMD-owned
+    review series only; no strategy sandbox metrics without REVIEW-SBX-001 approval.
+  attribution_required: true
+  allowed_reference_paths:
+    easyxt:
+      - 参考项目/EasyXT/easyxt_backtest/performance.py
+      - 参考项目/EasyXT/easyxt_backtest/portfolio_daily_result.py
+      - 参考项目/EasyXT/easyxt_backtest/core/backtest_core.py
+  metric_groups:
+    return: [forward_return, benchmark_return, excess_return]
+    risk: [max_drawdown, realized_volatility, data_quality_failure_rate]
+    risk_adjusted:
+      - sharpe_ratio
+      - calmar_ratio
+      - win_rate
+      - profit_loss_ratio
+  batch_b_deferred_metrics_note: >
+    Sharpe/Calmar/win-rate/profit-loss ratio are Round4 Batch B targets computed
+    from QMD-owned review series only; not required in Batch A vertical slice.
+  forbidden_reference_semantics:
+    - trading_recommendation_metrics
+    - broker_commission_as_live_readiness

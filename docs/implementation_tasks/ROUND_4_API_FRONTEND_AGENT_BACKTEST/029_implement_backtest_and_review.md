@@ -23,7 +23,9 @@
 
 ## 4. 相关代码 / 输出文件
 
-- `backend/backtest/`
+> **Superseded paths:** canonical Round4 execution uses `backend/app/review/**` per `B04_05_backtest_review_runtime.md §4`. The loose `backend/backtest/` path below is historical input only.
+
+- `backend/app/review/` (canonical — see B04_05)
 - `tests/test_backtest_review.py`
 
 ## 5. 现有模式 / 参考
@@ -75,6 +77,8 @@
 - 测试命名建议：`functionName_condition_expectedBehavior`。
 
 ## 11. 验收命令
+
+> **Superseded:** use acceptance commands in `B04_05_backtest_review_runtime.md §8`. The command block below is historical loose-card input only.
 
 本任务涉及 API / Agent / 通知 / 回测。验收命令：
 

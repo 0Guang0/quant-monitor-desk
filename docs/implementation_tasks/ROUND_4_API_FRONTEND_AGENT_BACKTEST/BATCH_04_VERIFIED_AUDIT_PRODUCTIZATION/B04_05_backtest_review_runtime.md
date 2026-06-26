@@ -13,6 +13,27 @@ Move backtest/review from docs/schema-only capability to the first executable re
 
 This task is not complete if it only adds registry/contract scaffolding.
 
+```yaml
+reference_project:
+  path:
+    - 参考项目/JQ2PTrade/api_mapping.json
+    - 参考项目/JQ2PTrade/ptrade_local/engine/data_loader.py
+    - 参考项目/JQ2PTrade/ptrade_local/engine/api.py
+    - 参考项目/JQ2PTrade/ptrade_local/engine/context.py
+    - 参考项目/JQ2PTrade/ptrade_local/engine/backtester.py
+    - 参考项目/JQ2PTrade/ptrade_local/engine/report.py
+    - 参考项目/JQ2PTrade/ptrade_local/run_backtest.py
+    - 参考项目/EasyXT/easyxt_backtest/performance.py
+    - 参考项目/EasyXT/easyxt_backtest/portfolio_daily_result.py
+    - 参考项目/EasyXT/easyxt_backtest/core/backtest_core.py
+  license: MIT / project-local reference; verify before runtime adoption
+  allowed_use: architecture_only
+  direct_copy_allowed: false
+  attribution_required: true
+```
+
+Round4 implementers must record MIT reference attribution in report artifact metadata when adapting ideas from the paths above.
+
 ---
 
 ## 2. Required QMD inputs
@@ -146,7 +167,37 @@ If final names differ, the PR must document the mapping.
 
 ---
 
-## 5. Implementation plan as vertical slices
+## 5. Round4 required batch structure
+
+Round4 backtest/review must fit **at most three implementation batches** to full stable production shape. Do not split into metric-only or registry-only micro-slices.
+
+### Batch A — read-only vertical slice
+
+**Owns:** scenario registry, bounded frozen loader, no-action guard, first read-only review runner, deterministic report artifact.
+
+**Maps to slices:** B04_05-A, B04_05-B, B04_05-C, B04_05-D.
+
+**Not done if:** the first batch is only contracts/schemas, or loader can run with no evidence refs, or runner executes user strategy code.
+
+The first batch must run end-to-end against a bounded QMD evidence dataset.
+
+### Batch B — production-complete supported scope
+
+**Owns:** event sets, expanded metrics, evidence-chain review scenarios, reproducibility manifests, read-only API binding.
+
+**Maps to slices:** B04_05-E plus deferred scenario types from `backtest_contract.yaml`.
+
+**Not done if:** API exposes a shell route with fake success data, or metrics exist without a runnable review scenario.
+
+### Batch C — hardening / regression
+
+**Owns:** ResourceGuard limits, reproducibility drift tests, report limitations enforcement, security/auth boundary regression.
+
+**Not done if:** only happy-path tests exist, or report can omit limitations / `no_action_semantics`.
+
+---
+
+## 6. Implementation plan as vertical slices
 
 These are issue-style tracer bullets. Each completed slice must be independently testable.
 
@@ -163,6 +214,8 @@ These are issue-style tracer bullets. Each completed slice must be independently
 - Raw source IDs and source_fetch_id/content_hash/schema_hash are preserved.
 - Tests reject broad universe, full history, missing caps, missing evidence refs, and `.SH -> .SS` style identity mutation.
 
+**Not done if:** loader can run with no evidence refs or unbounded universe.
+
 ### Slice B04_05-B — No-action guard
 
 **Blocked by:** Slice B04_05-A can run on bounded evidence.
@@ -175,6 +228,8 @@ These are issue-style tracer bullets. Each completed slice must be independently
 - No PTrade compatibility namespace is exposed.
 - No broker/account/order/position API can be called.
 - Tests cover order/action/scheduler names plus user-output action terms.
+
+**Not done if:** report/API can emit buy/sell/add/reduce/order/position instructions.
 
 ### Slice B04_05-C — First read-only review runner
 
@@ -189,6 +244,8 @@ These are issue-style tracer bullets. Each completed slice must be independently
 - Unsupported scenario types return `DEFERRED_BACKTEST_TYPE`.
 - ResourceGuard rejects over-budget runs.
 
+**Not done if:** only scenario registry exists or runner executes user code.
+
 ### Slice B04_05-D — Report artifact and metrics
 
 **Blocked by:** Slice B04_05-C.
@@ -202,6 +259,8 @@ These are issue-style tracer bullets. Each completed slice must be independently
 - Same input evidence produces the same report hash.
 - Report never claims live trading readiness.
 
+**Not done if:** metric-only micro-slice exists without a runnable review scenario.
+
 ### Slice B04_05-E — Read-only API binding
 
 **Blocked by:** B04_01 source/readiness API and Slice B04_05-D.
@@ -214,9 +273,11 @@ These are issue-style tracer bullets. Each completed slice must be independently
 - Route cannot trigger write/fetch outside the approved bounded review runner.
 - Tests cover success, deferred scenario type, forbidden action, over-budget, missing evidence, and auth failure.
 
+**Not done if:** API exposes shell route with fake success data.
+
 ---
 
-## 6. Forbidden scope
+## 7. Forbidden scope
 
 - No execution instructions.
 - No broker/account/order/portfolio action API.
@@ -229,7 +290,7 @@ These are issue-style tracer bullets. Each completed slice must be independently
 
 ---
 
-## 7. Tests / gates
+## 8. Tests / gates
 
 Required commands:
 
@@ -252,6 +313,6 @@ Test expectations:
 
 ---
 
-## 8. Done criteria
+## 9. Done criteria
 
 B04_05 is done only when at least one backtest/review type has QMD-owned runtime, tests, and a report artifact. Blank-engine design, registry-only scaffolding, metric-only micro-slices, copied reference runtime, or arbitrary strategy execution are not acceptable.

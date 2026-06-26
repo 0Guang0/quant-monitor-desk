@@ -1,5 +1,15 @@
 version: backtest_reproducibility_contract_v1
 purpose: Prevent look-ahead bias and make backtest/review runs reproducible.
+reference_adoption:
+  policy: >
+    Reproducibility manifests bind QMD evidence refs and parameter hashes;
+    adapt JQ2PTrade deterministic loader/report separation without copying
+    reference DB paths or strategy execution.
+  attribution_required: true
+  allowed_reference_paths:
+    jq2ptrade:
+      - 参考项目/JQ2PTrade/ptrade_local/engine/data_loader.py
+      - 参考项目/JQ2PTrade/ptrade_local/engine/report.py
 required_artifacts:
   frozen_dataset_manifest:
     fields:
@@ -7,6 +17,7 @@ required_artifacts:
       - created_at
       - as_of_cutoff
       - included_fetch_ids
+      - input_evidence_ids
       - content_hashes
       - exclusion_reason_if_any
   parameter_snapshot:

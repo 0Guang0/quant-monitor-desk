@@ -1,0 +1,30 @@
+{
+  "id": "round3fr-backtest-adoption-plan",
+  "name": "round3fr-backtest-adoption-plan",
+  "title": "R3FR-04: JQ2PTrade/EasyXT backtest adoption plan",
+  "description": "",
+  "status": "completed",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "Guang",
+  "assignee": "Guang",
+  "createdAt": "2026-06-26",
+  "completedAt": null,
+  "branch": "docs/round4-reference-backtest",
+  "base_branch": "docs/round4-reference-backtest",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "task_track": "debt-lite",
+    "playbook_id": "R3FR-04",
+    "manifest_id": "BATCH_3FR-C04"
+  }
+}

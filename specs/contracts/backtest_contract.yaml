@@ -47,18 +47,44 @@ reference_adoption:
     mature local references exist. It should adapt read-only data loader,
     lifecycle, report, metric, and API deny-list ideas from approved reference
     projects into QMD-owned code and contracts.
+  attribution_required: true
   allowed_reference_paths:
     jq2ptrade:
-      - 参考项目/JQ2PTrade/ptrade_local/engine/data_loader.py
-      - 参考项目/JQ2PTrade/ptrade_local/engine/report.py
       - 参考项目/JQ2PTrade/api_mapping.json
+      - 参考项目/JQ2PTrade/ptrade_local/engine/data_loader.py
+      - 参考项目/JQ2PTrade/ptrade_local/engine/api.py
+      - 参考项目/JQ2PTrade/ptrade_local/engine/context.py
+      - 参考项目/JQ2PTrade/ptrade_local/engine/backtester.py
+      - 参考项目/JQ2PTrade/ptrade_local/engine/report.py
+      - 参考项目/JQ2PTrade/ptrade_local/run_backtest.py
     easyxt:
-      - 参考项目/EasyXT/easyxt_backtest/
+      - 参考项目/EasyXT/easyxt_backtest/performance.py
+      - 参考项目/EasyXT/easyxt_backtest/portfolio_daily_result.py
+      - 参考项目/EasyXT/easyxt_backtest/core/backtest_core.py
   forbidden_reference_semantics:
     - portfolio_action_api_surface
     - external_account_control
     - arbitrary_strategy_runtime
     - agent_metric_mutation
+    - compile_exec_strategy_runtime
+    - backtrader_cerebro_first_slice_dependency
+    - hardcoded_reference_db_paths
+forbidden_api_names:
+  - order
+  - order_value
+  - order_target
+  - order_target_value
+  - cancel_order
+  - get_open_orders
+  - get_portfolio
+  - get_positions
+  - get_orders
+  - get_trades
+  - run_daily
+  - run_weekly
+  - run_monthly
+cross_reference_contracts:
+  - specs/contracts/review_sandbox_contract.yaml
 
 guardrails:
   no_action_semantics: true

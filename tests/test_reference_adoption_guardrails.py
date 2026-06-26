@@ -10,10 +10,12 @@ from tests.contract_gate_support import (
     FORBIDDEN_REFERENCE_IMPORT_ROOTS,
     FORBIDDEN_TRADING_DEF_NAMES,
     PROJECT_ROOT,
+    load_yaml,
     markdown_paths_missing_phrase,
     scan_forbidden_function_defs,
     scan_forbidden_import_roots,
     scan_guardrail_roots_for_patterns,
+    scan_strategy_exec_patterns,
     scan_sys_path_mutation_with_reference_dir,
 )
 
@@ -145,7 +147,9 @@ def test_r3fr01GuardrailsYamlContract() -> None:
         "tests/test_reference_adoption_guardrails.py::test_noSilentFallbackCopied",
         "tests/test_reference_adoption_guardrails.py::test_noReferenceProjectRuntimeImport",
         "tests/test_reference_adoption_guardrails.py::test_noOpenbbRuntimeCopyIntroduced",
-        "tests/test_reference_adoption_guardrails.py::test_jq2ptradeExecPatternNotCopied",
+        "tests/test_reference_adoption_guardrails.py::test_jq2ptradeSchedulerHookNotCopied",
+        "tests/test_reference_adoption_guardrails.py::test_jq2ptradeCompileExecPatternNotCopied",
+        "tests/test_reference_adoption_guardrails.py::test_r3fr04Round4BacktestPlanningClosure",
         "tests/test_reference_adoption_guardrails.py::test_noAgentTriggeredWritePatterns",
         "tests/test_reference_adoption_guardrails.py::test_noEasyxtHardcodedTableInDataHealth",
         "tests/test_reference_adoption_guardrails.py::test_batch3frCardsDoNotRequireCentralInventory",
@@ -185,7 +189,7 @@ def test_noOpenbbRuntimeCopyIntroduced() -> None:
     assert violations == [], f"OpenBB runtime copy patterns: {violations}"
 
 
-def test_jq2ptradeExecPatternNotCopied() -> None:
+def test_jq2ptradeSchedulerHookNotCopied() -> None:
     """覆盖范围：禁止从 JQ2PTrade 复制策略调度/执行钩子
     测试对象：forbidden_adoption.scheduler_or_execution_hook
     目的/目标：QMD 只做 read-only loader/review，不引入 run_daily 等执行语义
@@ -394,3 +398,132 @@ def test_r3frAdaptingCardsDeclareReferenceProject() -> None:
         if "reference_project:" not in text or "allowed_use:" not in text:
             missing.append(str(card.relative_to(PROJECT_ROOT)))
     assert missing == [], f"adapting cards missing reference_project block: {missing}"
+
+
+_R3FR04_JQ2PTRADE_PATHS = (
+    "参考项目/JQ2PTrade/api_mapping.json",
+    "参考项目/JQ2PTrade/ptrade_local/engine/data_loader.py",
+    "参考项目/JQ2PTrade/ptrade_local/engine/api.py",
+    "参考项目/JQ2PTrade/ptrade_local/engine/context.py",
+    "参考项目/JQ2PTrade/ptrade_local/engine/backtester.py",
+    "参考项目/JQ2PTrade/ptrade_local/engine/report.py",
+    "参考项目/JQ2PTrade/ptrade_local/run_backtest.py",
+)
+
+_R3FR04_EASYXT_PATHS = (
+    "参考项目/EasyXT/easyxt_backtest/performance.py",
+    "参考项目/EasyXT/easyxt_backtest/portfolio_daily_result.py",
+    "参考项目/EasyXT/easyxt_backtest/core/backtest_core.py",
+)
+
+_R3FR04_FORBIDDEN_APIS = (
+    "order",
+    "order_value",
+    "order_target",
+    "order_target_value",
+    "cancel_order",
+    "get_open_orders",
+    "get_portfolio",
+    "get_positions",
+    "get_orders",
+    "get_trades",
+    "run_daily",
+    "run_weekly",
+    "run_monthly",
+)
+
+_R3FR04_ROUND4_TARGET_REL = (
+    "docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/"
+    "BATCH_04_VERIFIED_AUDIT_PRODUCTIZATION/B04_05_backtest_review_runtime.md",
+    "docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/"
+    "BATCH_04_VERIFIED_AUDIT_PRODUCTIZATION/BATCH_04_TASK_CARD_MANIFEST.md",
+    "docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/"
+    "BATCH_04_VERIFIED_AUDIT_PRODUCTIZATION/BATCH_04_HARDENING_RULES.md",
+)
+
+
+def _slice_has_not_done(text: str, slice_id: str) -> bool:
+    marker = f"### Slice {slice_id}"
+    start = text.find(marker)
+    if start < 0:
+        return False
+    nxt = text.find("### Slice ", start + len(marker))
+    block = text[start:nxt] if nxt >= 0 else text[start:]
+    return "**Not done if:**" in block
+
+
+def test_jq2ptradeCompileExecPatternNotCopied() -> None:
+    """覆盖范围：backend/scripts 源码中不得出现「编译并执行任意策略」的 JQ2PTrade 模式
+    测试对象：scan_strategy_exec_patterns（backend/app 与 scripts）
+    目的/目标：回测复盘必须是只读 review，不能把用户策略代码 compile+exec 跑起来
+    验证点：AST 扫描 compile(...,'exec') 与 exec(...) 调用列表为空
+    失败含义：Round4 可能照搬 JQ2PTrade 策略执行引擎，突破 no-action 边界
+    """
+    violations = scan_strategy_exec_patterns()
+    assert violations == [], f"forbidden strategy exec patterns: {violations}"
+
+
+def test_r3fr04Round4BacktestPlanningClosure() -> None:
+    """覆盖范围：R3FR-04 完成后 Round4 回测/复盘规划是否可直接派发实现
+    测试对象：B04_05、Batch04 manifest/hardening 与 backtest/review 四份契约 YAML
+    目的/目标：Round4 不能再是空白引擎设计；须写清三批上限、切片未完成条件、参考路径与 attribution
+    验证点：Batch A/B/C、九参考路径、五切片各含 Not done if、manifest/hardening 同步、forbidden_api 完整
+    失败含义：执行 agent 仍可能从零设计回测引擎，或跳过 evidence 绑定与 no-action deny-list
+    """
+    b04_path = PROJECT_ROOT / _R3FR04_ROUND4_TARGET_REL[0]
+    text = b04_path.read_text(encoding="utf-8")
+    for needle in (
+        "Batch A",
+        "Batch B",
+        "Batch C",
+        "at most three implementation batches",
+        "reference_project:",
+        "attribution_required: true",
+    ):
+        assert needle in text, f"B04_05 missing R3FR-04 planning marker: {needle}"
+    for path in _R3FR04_JQ2PTRADE_PATHS + _R3FR04_EASYXT_PATHS:
+        assert path in text, f"B04_05 missing reference path: {path}"
+    for slice_id in ("B04_05-A", "B04_05-B", "B04_05-C", "B04_05-D", "B04_05-E"):
+        assert slice_id in text, f"B04_05 missing slice {slice_id}"
+        assert _slice_has_not_done(text, slice_id), f"B04_05 slice {slice_id} missing Not done if"
+
+    manifest = (PROJECT_ROOT / _R3FR04_ROUND4_TARGET_REL[1]).read_text(encoding="utf-8")
+    hardening = (PROJECT_ROOT / _R3FR04_ROUND4_TARGET_REL[2]).read_text(encoding="utf-8")
+    for doc_name, body in (("manifest", manifest), ("hardening", hardening)):
+        for needle in ("Batch A", "Batch B", "Batch C", "B04_05-A", "**Not done if:**"):
+            assert needle in body, f"BATCH_04 {doc_name} missing R3FR-04 sync marker: {needle}"
+
+    backtest = load_yaml(PROJECT_ROOT / "specs/contracts/backtest_contract.yaml")
+    ref = backtest.get("reference_adoption") or {}
+    assert ref.get("attribution_required") is True, "backtest_contract missing attribution_required"
+    jq_paths = tuple(ref.get("allowed_reference_paths", {}).get("jq2ptrade") or [])
+    for path in _R3FR04_JQ2PTRADE_PATHS:
+        assert path in jq_paths, f"backtest_contract missing jq2ptrade path: {path}"
+    forbidden_names = set(backtest.get("forbidden_api_names") or [])
+    assert forbidden_names >= set(_R3FR04_FORBIDDEN_APIS), "backtest_contract forbidden_api_names incomplete"
+
+    metric = load_yaml(PROJECT_ROOT / "specs/contracts/backtest_metric_contract.yaml")
+    assert "reference_adoption" in metric, "backtest_metric_contract missing reference_adoption"
+    assert metric.get("reference_adoption", {}).get("attribution_required") is True
+    easyxt = (metric.get("reference_adoption") or {}).get("allowed_reference_paths", {}).get(
+        "easyxt"
+    ) or []
+    for path in _R3FR04_EASYXT_PATHS:
+        assert path in easyxt, f"backtest_metric_contract missing easyxt path: {path}"
+    risk_adj = (metric.get("reference_adoption") or {}).get("metric_groups", {}).get(
+        "risk_adjusted"
+    ) or []
+    assert risk_adj, "backtest_metric_contract missing Batch B risk_adjusted metric targets"
+
+    repro = load_yaml(PROJECT_ROOT / "specs/contracts/backtest_reproducibility_contract.yaml")
+    assert "reference_adoption" in repro, "backtest_reproducibility_contract missing reference_adoption"
+    assert repro.get("reference_adoption", {}).get("attribution_required") is True
+    assert "input_evidence_ids" in repro.get("required_artifacts", {}).get(
+        "frozen_dataset_manifest", {}
+    ).get("fields", []), "repro contract missing evidence binding field"
+
+    sandbox = load_yaml(PROJECT_ROOT / "specs/contracts/review_sandbox_contract.yaml")
+    assert sandbox.get("static_analysis_only") is True, "review_sandbox must be static_analysis_only in first slice"
+    forbidden = set(sandbox.get("forbidden_api") or [])
+    missing_apis = [name for name in _R3FR04_FORBIDDEN_APIS if name not in forbidden]
+    assert missing_apis == [], f"review_sandbox missing forbidden APIs: {missing_apis}"

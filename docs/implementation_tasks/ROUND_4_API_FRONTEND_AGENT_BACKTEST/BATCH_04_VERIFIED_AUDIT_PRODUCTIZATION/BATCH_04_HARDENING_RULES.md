@@ -42,12 +42,19 @@ If a Batch 04 implementer wants to design backtest, Agent artifact, or dashboard
 
 ## 6. Backtest/review boundary
 
-Batch 04 backtest/review must adapt, not reinvent:
+Batch 04 backtest/review must adapt, not reinvent (R3FR-04 / B04_05 are the execution SSOT):
 
-- JQ2PTrade MiniPTrade DuckDB loader shape
-- JQ2PTrade report builder shape
-- JQ2PTrade `api_mapping.json` allow/deny pattern
-- EasyXT backtest/performance report ideas, after forbidden-symbol review
+- JQ2PTrade `DataBundle`, bounded loader, daily replay loop shape, report separation, `api_mapping.json` deny-list
+- EasyXT metric grouping (return / risk / risk-adjusted), daily result shape, analyzer boundary (architecture only)
+- QMD evidence refs (`input_evidence_ids`), deterministic report hash, `no_action_semantics: true`, MIT attribution in report metadata
+
+**Three implementation batches to full stable scope:**
+
+1. **Batch A — read-only vertical slice:** B04_05-A..D (scenario registry, frozen loader, no-action guard, runner, report artifact).
+2. **Batch B — production-complete scope:** B04_05-E, event sets, evidence-chain review, reproducibility manifests, expanded metrics (Sharpe, Calmar, win-rate, profit/loss ratio from QMD-owned series).
+3. **Batch C — hardening/regression:** ResourceGuard caps, reproducibility drift tests, report limitations enforcement, API auth boundaries.
+
+Each slice **B04_05-A** through **B04_05-E** must satisfy its **Not done if:** condition in `B04_05_backtest_review_runtime.md`.
 
 Forbidden:
 
@@ -84,4 +91,4 @@ Required first vertical slices:
 - Notification/report: one source/data-health/report event transformed into persisted report/notification state with dedup/cooldown tests.
 - Backtest/review: one executable read-only review scenario producing a bounded report artifact.
 
-Each module may use at most two follow-up batches after this card: one to complete the production-stable supported scope and one for hardening/regression/release gates.
+Each Round4 module uses **at most three implementation batches total** to reach full production-stable supported scope: the canonical card’s first vertical slice counts as batch 1, plus at most two follow-up batches (production-complete scope, then hardening/regression).

@@ -16,7 +16,23 @@
 | `B04_02_agent_policy_runtime.md`               | Round 4.2 track | `VR-AGENT-001`, loose `025`, loose `030`           | runtime agent tool policy plus one policy-guarded read-only tool                                                      | Agent/UI artifacts must evaluate TradingAgents / TradingAgents-astock / agents-for-openbb before from-scratch design        |
 | `B04_03_frontend_error_boundary_and_routes.md` | Round 4.3 track | `VR-FE-001`, `VR-FE-002`, loose `026`, loose `027` | frontend shell plus one API-bound dashboard/readiness page; deferred states only for non-owned pages                  | Dashboard widgets/artifacts should evaluate agents-for-openbb examples where relevant                                       |
 | `B04_04_notification_report_runtime.md`        | Round 4.4 track | `VR-NOTIF-001`, loose `028`                        | one event → report/notification_log runtime flow with dedup/cooldown                                                  | Report/artifact format should reuse established QMD evidence and reference artifact patterns where suitable                 |
-| `B04_05_backtest_review_runtime.md`            | Round 4.5 track | `VR-BT-001`, loose `029`, 3F-R `R3FR-04`           | one executable read-only review scenario and report artifact                                                          | Must adapt JQ2PTrade MiniPTrade DuckDB loader/report lifecycle and evaluate EasyXT backtest metrics; no blank engine design |
+| `B04_05_backtest_review_runtime.md`            | Round 4.5 track | `VR-BT-001`, loose `029`, 3F-R `R3FR-04`           | one executable read-only review scenario and report artifact                                                          | R3FR-04 rewrite complete: JQ2PTrade/EasyXT paths, Batch A/B/C, slices A–E with not-done; see card §5–§6 |
+
+---
+
+## 1.1 B04_05 backtest/review reference-adoption dispatch (R3FR-04)
+
+Execution entrypoint: `B04_05_backtest_review_runtime.md` only. `PRODUCTION_COMPLETION_VERTICAL_SLICE_PLAN.md` is coverage map only.
+
+**Three implementation batches (full stable shape):**
+
+1. **Batch A — read-only vertical slice:** B04_05-A..D (loader, no-action guard, runner, report).
+2. **Batch B — production-complete scope:** B04_05-E, event sets, evidence-chain review, reproducibility, expanded metrics.
+3. **Batch C — hardening/regression:** ResourceGuard limits, reproducibility drift, report limitations, auth boundaries.
+
+Each slice **B04_05-A** through **B04_05-E** carries an explicit **Not done if:** line in the execution card. Do not close a slice without its tests.
+
+**Not done if:** Round4 backtest is planned as a blank engine, metric-only micro-slices, or more than three batches to stable scope.
 
 ---
 
