@@ -1,0 +1,31 @@
+{"file": ".trellis/tasks/06-27-06-27-round3fr-cleanup-rehome/frozen/R3FR_07_LEGACY_WRAPPER_CLEANUP_AND_REDIRECTS.md", "reason": "extract: Execute SSOT frozen task card | for: Boot slot 1"}
+{"file": ".trellis/tasks/06-27-06-27-round3fr-cleanup-rehome/EXECUTION_INDEX.md", "reason": "extract: Execute/Audit manifest index | for: Boot slot 2"}
+{"file": ".trellis/tasks/06-27-06-27-round3fr-cleanup-rehome/context_pack.json", "reason": "extract: authority graph routing | for: Boot slot 3"}
+{"file": ".cursor/skills/trellis-execute/SKILL.md", "reason": "extract: Phase 0 boot | for: §9.0 Boot"}
+{"file": "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md", "reason": "extract: scope boundaries | for: §9.0"}
+{"file": "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md", "reason": "extract: 五字段 TDD | for: §10"}
+{"file": "docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md", "reason": "extract: 无 live fetch / 无界扫描 | for: §9.0"}
+{"file": "MIGRATION_MAP.md", "reason": "extract: docs vs backend 边界 | for: §9.0"}
+{"file": "docs/implementation_tasks/ROUND_3_REFERENCE_ADOPTION_REFACTOR/BATCH_3FR_REFERENCE_ADOPTION_REFACTOR/BATCH_3FR_HARDENING_RULES.md", "reason": "extract: §9 cleanup boundary | for: §8"}
+{"file": "docs/implementation_tasks/ROUND_3_REFERENCE_ADOPTION_REFACTOR/BATCH_3FR_REFERENCE_ADOPTION_REFACTOR/BATCH_3FR_COORDINATOR_PLAYBOOK.md", "reason": "extract: §2 文件锁 · §3 合并顺序 | for: §9.0"}
+{"file": "docs/implementation_tasks/ROUND_3_REFERENCE_ADOPTION_REFACTOR/BATCH_3FR_REFERENCE_ADOPTION_REFACTOR/BATCH_3FR_TASK_CARD_MANIFEST.md", "reason": "extract: R3FR DONE 行 | for: §9.1"}
+{"file": "docs/implementation_tasks/ROUND_3_REFERENCE_ADOPTION_REFACTOR/README.md", "reason": "extract: §3 过时叙事修正 | for: AC-07-01"}
+{"file": "docs/implementation_tasks/ROUND_3_REFERENCE_ADOPTION_REFACTOR/BATCH_3FR_REFERENCE_ADOPTION_REFACTOR/README.md", "reason": "extract: §1 表 placeholder 列 | for: AC-07-01"}
+{"file": "docs/implementation_tasks/README.md", "reason": "extract: §执行顺序 item 9→10 | for: AC-07-03"}
+{"file": "docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md", "reason": "extract: 勿误关 DEFERRED | for: §8"}
+{"file": "docs/implementation_tasks/PRODUCTION_COMPLETION_VERTICAL_SLICE_PLAN.md", "reason": "extract: 地图不是工单 | for: §9.6"}
+{"file": "PROJECT_IMPLEMENTATION_ROADMAP.md", "reason": "extract: §3.6 条件 A | for: AC-07-03"}
+{"file": "docs/ROUND3_HANDOFF.md", "reason": "extract: 3F-R CLOSED 节 | for: AC-07-03"}
+{"file": "ROUND3_BATCH_IMPLEMENTATION_MAP.md", "reason": "extract: checkpoint 行 | for: AC-07-07"}
+{"file": "MODULE_COMPLETION_RATING.md", "reason": "extract: provider catalog 评级 | for: AC-07-05"}
+{"file": "docs/ops/data_health_cli.md", "reason": "extract: CLI 行为与 envelope | for: §9.3"}
+{"file": "specs/contracts/data_cli_contract.yaml", "reason": "extract: `must_use: run_data_health_profile` | for: §9.3"}
+{"file": "specs/contracts/data_quality_rules.yaml", "reason": "extract: `ops_cli_profiles` | for: §9.2/9.3"}
+{"file": "specs/contracts/reference_adoption_guardrails.yaml", "reason": "extract: no central inventory | for: §9.6"}
+{"file": "docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/README.md", "reason": "extract: §3 前置条件 | for: AC-07-04"}
+{"file": "docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/BATCH_3G_TASK_CARD_MANIFEST.md", "reason": "extract: 3G 卡结构 | for: AC-07-04"}
+{"file": "docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/BATCH_3G_COORDINATOR_PLAYBOOK.md", "reason": "extract: §0 门禁措辞 | for: AC-07-04"}
+{"file": ".trellis/tasks/06-27-06-27-round3fr-cleanup-rehome/research/integration-ledger.md", "reason": "extract: 允许/禁止文件 | for: §9.0"}
+{"file": ".trellis/tasks/archive/2026-06/06-26-round3fr-data-health-cli/research/execute-evidence-summary.md", "reason": "extract: R3FR-02+06 已 stronger | for: §9.2"}
+{"file": ".trellis/tasks/archive/2026-06/06-26-round3fr-tdx-provider/research/execute-evidence-summary.md", "reason": "extract: R3FR-03 已 stronger | for: §9.4"}
+{"file": ".trellis/tasks/archive/2026-06/06-26-round3fr-provider-catalog/research/execute-evidence-summary.md", "reason": "extract: R3FR-05 已 stronger | for: §9.5"}

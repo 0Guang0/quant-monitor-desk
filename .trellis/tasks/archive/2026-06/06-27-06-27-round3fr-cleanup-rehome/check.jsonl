@@ -1,0 +1,6 @@
+{"file": ".trellis/tasks/06-27-06-27-round3fr-cleanup-rehome/frozen/R3FR_07_LEGACY_WRAPPER_CLEANUP_AND_REDIRECTS.md", "reason": "extract: spec scope | for: A1 trellis-check"}
+{"file": ".trellis/tasks/06-27-06-27-round3fr-cleanup-rehome/EXECUTION_INDEX.md", "reason": "extract: manifest trace | for: A1"}
+{"file": "specs/contracts/data_cli_contract.yaml", "reason": "extract: `must_use: run_data_health_profile` | for: §9.3"}
+{"file": "specs/contracts/data_quality_rules.yaml", "reason": "extract: `ops_cli_profiles` | for: §9.2/9.3"}
+{"file": "specs/contracts/reference_adoption_guardrails.yaml", "reason": "extract: no central inventory | for: §9.6"}
+{"file": "docs/implementation_tasks/ROUND_3_REFERENCE_ADOPTION_REFACTOR/BATCH_3FR_REFERENCE_ADOPTION_REFACTOR/R3FR_01_REFERENCE_INVENTORY_AND_LICENSE_MATRIX.md", "reason": "extract: redirect 卡对照 | for: A1 audit-only"}

@@ -1,0 +1,2 @@
+# §9.6 RED — loop/catalog gap before CURATED r3fr07 entry; loop_maintain would fail until catalog curated
+# repaired in audit unified fix (check_test_catalog.py CURATED)

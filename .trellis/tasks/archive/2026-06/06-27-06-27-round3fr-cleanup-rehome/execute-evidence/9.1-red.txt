@@ -1,0 +1,84 @@
+FF..F                                                                    [100%]
+================================== FAILURES ===================================
+___________ test_round3frParentReadme_noStaleHealthCheckPlaceholder ___________
+
+    def test_round3frParentReadme_noStaleHealthCheckPlaceholder() -> None:
+        """覆盖范围：Round 3F-R 父 README 规划叙事（AC-07-01）
+        测试对象：ROUND_3_REFERENCE_ADOPTION_REFACTOR/README.md §3
+        目的/目标：规划文档不得仍声称 health_check 返回 not_implemented_phase_c
+        验证点：无 still returns / CLI placeholder 等过时措辞
+        失败含义：执行者会误判 CLI 仍为 placeholder，重复 R3FR-06 工作
+        """
+>       _assert_no_stale_health_placeholder(_PARENT_README)
+
+tests\test_r3fr07_legacy_wrapper_cleanup.py:55: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('C:/Users/Guang/Desktop/quant-monitor-desk/docs/implementation_tasks/ROUND_3_REFERENCE_ADOPTION_REFACTOR/README.md')
+
+    def _assert_no_stale_health_placeholder(path: Path) -> None:
+        body = path.read_text(encoding="utf-8")
+        for pattern in (_STALE_HEALTH_PLACEHOLDER, _STALE_CLI_PLACEHOLDER_WHEEL):
+            match = pattern.search(body)
+>           assert match is None, (
+                f"{path.relative_to(PROJECT_ROOT)} still claims health_check placeholder: "
+                f"{match.group(0) if match else ''}"
+            )
+E           AssertionError: docs\implementation_tasks\ROUND_3_REFERENCE_ADOPTION_REFACTOR\README.md still claims health_check placeholder: still returns `not_implemented_phase_c`
+E           assert <re.Match object; span=(3726, 3765), match='still returns `not_implemented_phase_c`'> is None
+
+tests\test_r3fr07_legacy_wrapper_cleanup.py:42: AssertionError
+___________ test_round3frBatchReadme_noStaleHealthCheckPlaceholder ____________
+
+    def test_round3frBatchReadme_noStaleHealthCheckPlaceholder() -> None:
+        """覆盖范围：Batch 3F-R README 表与 done 口径（AC-07-01）
+        测试对象：BATCH_3FR_REFERENCE_ADOPTION_REFACTOR/README.md
+        目的/目标：批次入口不得把 qmd data health 仍标为 placeholder 现状
+        验证点：无 stale placeholder 措辞；done 口径与 R3FR-06 闭环一致
+        失败含义：批次 manifest 与 runtime 脱节，阻塞 3G 前置判断
+        """
+>       _assert_no_stale_health_placeholder(_BATCH_README)
+
+tests\test_r3fr07_legacy_wrapper_cleanup.py:67: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('C:/Users/Guang/Desktop/quant-monitor-desk/docs/implementation_tasks/ROUND_3_REFERENCE_ADOPTION_REFACTOR/BATCH_3FR_REFERENCE_ADOPTION_REFACTOR/README.md')
+
+    def _assert_no_stale_health_placeholder(path: Path) -> None:
+        body = path.read_text(encoding="utf-8")
+        for pattern in (_STALE_HEALTH_PLACEHOLDER, _STALE_CLI_PLACEHOLDER_WHEEL):
+            match = pattern.search(body)
+>           assert match is None, (
+                f"{path.relative_to(PROJECT_ROOT)} still claims health_check placeholder: "
+                f"{match.group(0) if match else ''}"
+            )
+E           AssertionError: docs\implementation_tasks\ROUND_3_REFERENCE_ADOPTION_REFACTOR\BATCH_3FR_REFERENCE_ADOPTION_REFACTOR\README.md still claims health_check placeholder: CLI `not_implemented_phase_c` placeholder
+E           assert <re.Match object; span=(3905, 3946), match='CLI `not_implemented_phase_c` placeholder'> is None
+
+tests\test_r3fr07_legacy_wrapper_cleanup.py:42: AssertionError
+__________________ test_batch3gReadme_preconditionsSatisfied __________________
+
+    def test_batch3gReadme_preconditionsSatisfied() -> None:
+        """覆盖范围：Batch 3G README 前置条件（AC-07-04）
+        测试对象：BATCH_3G_SANDBOX_CLEAN_WRITE/README.md §3
+        目的/目标：3G 前置引用已完成的 3F-R 产出，不以「被 3F-R 阻塞」为唯一表述
+        验证点：含 3F-R complete/satisfied；引用 data health / provider catalog 等闭环
+        失败含义：3G 仍显示 blocked-only，执行者不敢开工
+        """
+        readme = (
+            PROJECT_ROOT
+            / "docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE"
+            / "BATCH_3G_SANDBOX_CLEAN_WRITE/README.md"
+        )
+        body = readme.read_text(encoding="utf-8")
+        lowered = body.lower()
+        assert "3f-r" in lowered
+        assert "complete" in lowered or "satisfied" in lowered or "closed" in lowered
+>       assert "run_data_health_profile" in lowered or "market_bar_p0" in lowered
+E       AssertionError: assert ('run_data_health_profile' in '# batch 3g — sandbox clean write and limited production entry\n\n> **canonical status:** future batch package created... source of truth, but execution plans should be generated from this folder plus `project_implementation_roadmap.md`.\n' or 'market_bar_p0' in '# batch 3g — sandbox clean write and limited production entry\n\n> **canonical status:** future batch package created... source of truth, but execution plans should be generated from this folder plus `project_implementation_roadmap.md`.\n')
+
+tests\test_r3fr07_legacy_wrapper_cleanup.py:180: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_r3fr07_legacy_wrapper_cleanup.py::test_round3frParentReadme_noStaleHealthCheckPlaceholder
+FAILED tests/test_r3fr07_legacy_wrapper_cleanup.py::test_round3frBatchReadme_noStaleHealthCheckPlaceholder
+FAILED tests/test_r3fr07_legacy_wrapper_cleanup.py::test_batch3gReadme_preconditionsSatisfied

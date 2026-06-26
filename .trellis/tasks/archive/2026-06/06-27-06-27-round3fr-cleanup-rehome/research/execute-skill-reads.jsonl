@@ -1,0 +1,7 @@
+{"skill": "trellis-execute", "phase": "boot", "path": ".cursor/skills/trellis-execute/SKILL.md"}
+{"skill": "gitnexus-impact", "phase": "boot", "path": "research/gitnexus-execute-summary.md"}
+{"skill": "test-driven-development", "phase": "RED", "path": ".claude/skills/tdd/SKILL.md"}
+{"skill": "testing-guidelines", "phase": "GREEN", "path": ".claude/skills/testing-guidelines/SKILL.md"}
+{"skill": "karpathy-guidelines", "phase": "GREEN", "path": "AGENTS.md"}
+{"skill": "incremental-implementation", "phase": "SLICE", "path": ".agents/skills/incremental-implementation/SKILL.md"}
+{"skill": "ponytail", "phase": "GREEN", "path": ".cursor/rules/ponytail.mdc"}
