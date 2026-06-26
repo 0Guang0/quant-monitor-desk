@@ -627,6 +627,19 @@ CURATED: dict[str, dict] = {
             "R3G-03 rollback contract missing dry-run requirement or WriteManager gate."
         ),
     },
+    "tests/test_data_health_easyxt_profiles.py": {
+        "purpose": "R3FR-02 market_bar_p0 profile engine and rule ID closure",
+        "type": "runtime-contract",
+        "verifies": {
+            "docs": ["docs/ops/data_health_cli.md"],
+            "specs": ["specs/contracts/data_quality_rules.yaml"],
+            "rules": ["docs/implementation_tasks/GLOBAL_TESTING_POLICY.md"],
+        },
+        "command": "uv run python -m pytest tests/test_data_health_easyxt_profiles.py -q",
+        "failure_meaning": (
+            "market_bar_p0 profile incomplete, rule ID drift, or CLI/runtime disconnect."
+        ),
+    },
 }
 
 

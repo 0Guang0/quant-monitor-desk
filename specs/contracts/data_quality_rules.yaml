@@ -22,12 +22,13 @@ ops_cli_profiles:
     rule_set_id: market_bar_p0
     default_window_days: 90
     rules:
-      - MISSING_PRIMARY_KEY
+      - MISSING_TRADING_DAY
+      - MISSING_REQUIRED_OHLCV_FIELD
+      - NON_POSITIVE_PRICE
+      - INVALID_OHLC
+      - EXTREME_RETURN
+      - VOLUME_OUTLIER
       - DUPLICATE_PRIMARY_KEY
-      - INVALID_PRICE_RANGE
-      - NEGATIVE_PRICE
-      - INVALID_VOLUME
-      - STALE_DATA
       - INSUFFICIENT_HISTORY
       - MISSING_SOURCE_USED
     tables:
@@ -75,6 +76,30 @@ common_rules:
   - id: INSUFFICIENT_HISTORY
     severity: warning
 market_bar_rules:
+  - id: MISSING_TRADING_DAY
+    condition: expected trading day absent from bars (no official calendar → warn)
+    severity: warning
+  - id: MISSING_REQUIRED_OHLCV_FIELD
+    condition: open/high/low/close/volume null or missing
+    severity: failed
+  - id: NON_POSITIVE_PRICE
+    condition: any OHLC field <= 0
+    severity: failed
+  - id: INVALID_OHLC
+    condition: high < low or OHLC relation invalid
+    severity: failed
+  - id: EXTREME_RETURN
+    condition: day-over-day absolute return above threshold
+    severity: warning
+  - id: VOLUME_OUTLIER
+    condition: volume exceeds median ratio threshold
+    severity: warning
+  - id: DUPLICATE_PRIMARY_KEY
+    condition: duplicate symbol|trade_date
+    severity: failed
+  - id: MISSING_SOURCE_USED
+    condition: lineage entry missing source_used
+    severity: failed
   - id: INVALID_PRICE_RANGE
     condition: high < low
     severity: failed

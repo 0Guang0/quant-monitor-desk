@@ -182,3 +182,160 @@ def test_stagingE2eRunbook_documentsNoDefaultLive() -> None:
     assert "qmd-init-db --sync-registry" in text
     assert "test_qmd_data_cli.py" in text
     assert "source_health_snapshot" in text
+
+
+def test_qmdData_health_supportedProfile_notPlaceholder(
+    registry_yaml_fixture: Path, monkeypatch, tmp_path
+) -> None:
+    """覆盖范围：qmd data health 支持 profile 非 placeholder
+    测试对象：backend.app.cli.main health 子命令
+    目的/目标：AC-4 — 不得返回 not_implemented_phase_c
+    验证点：exit 0；JSON 无 placeholder status
+    失败含义：CLI message-only 假完成
+    """
+    bundle = PROJECT_ROOT / "tests/fixtures/data_health/good_bundle"
+    proc = _run_qmd_data(
+        "health",
+        "--domain",
+        "market_bar_1d",
+        "--profile",
+        "market_bar_p0",
+        "--evidence-dir",
+        str(bundle),
+        "--format",
+        "json",
+    )
+    assert proc.returncode == 0, proc.stderr
+    payload = json.loads(proc.stdout)
+    assert payload.get("status") != "not_implemented_phase_c"
+    assert payload["profile"] == "market_bar_p0"
+    assert payload["domain"] == "market_bar_1d"
+
+
+def test_qmdData_health_invalidProfile_documentedError(tmp_path: Path) -> None:
+    """覆盖范围：未知 profile fail-closed
+    测试对象：data_commands.health_check
+    目的/目标：无效 profile 返回文档化错误
+    验证点：CliFailure 含 docs_anchor
+    失败含义：未知 profile 静默通过
+    """
+    bundle = PROJECT_ROOT / "tests/fixtures/data_health/good_bundle"
+    with pytest.raises(CliFailure) as exc:
+        data_commands.health_check(
+            data_domain="market_bar_1d",
+            profile="unknown_profile_xyz",
+            evidence_dir=bundle,
+        )
+    assert exc.value.docs_anchor.startswith("docs/")
+    assert exc.value.error_code == "CAPABILITY_MISSING"
+
+
+def test_qmdData_health_invokesProfileRunner() -> None:
+    """覆盖范围：CLI 调用 profile runner
+    测试对象：data_commands.health_check
+    目的/目标：rules_run 覆盖九 rule 闭包
+    验证点：rules_run 集合等于 market_bar_p0 九 rule ID
+    失败含义：CLI 未接全量 profile engine
+    """
+    from backend.app.ops.data_health_profiles import MARKET_BAR_P0_RULE_IDS
+
+    bundle = PROJECT_ROOT / "tests/fixtures/data_health/good_bundle"
+    payload = data_commands.health_check(
+        data_domain="market_bar_1d",
+        profile="market_bar_p0",
+        evidence_dir=bundle,
+    )
+    assert isinstance(payload.get("rules_run"), list)
+    assert set(payload["rules_run"]) == set(MARKET_BAR_P0_RULE_IDS)
+
+
+def test_qmdData_health_noSideEffects() -> None:
+    """覆盖范围：health 无副作用
+    测试对象：health_check 输出信封
+    目的/目标：side_effects_allowed=false；dry_run=true
+    验证点：信封字段语义
+    失败含义：健康检查触发写库或抓取
+    """
+    bundle = PROJECT_ROOT / "tests/fixtures/data_health/good_bundle"
+    payload = data_commands.health_check(
+        data_domain="market_bar_1d",
+        profile="market_bar_p0",
+        evidence_dir=bundle,
+    )
+    assert payload["dry_run"] is True
+    assert payload["side_effects_allowed"] is False
+
+
+def test_qmdData_health_jsonRequiredFields() -> None:
+    """覆盖范围：JSON 信封 R3FR-06 §5
+    测试对象：health_check CLI 输出
+    目的/目标：AC-5 — 必填字段齐全
+    验证点：command/domain/profile/status/rules_run/issue_counts/window/source_ids/hash_coverage/limitations
+    失败含义：自动化无法消费健康报告
+    """
+    bundle = PROJECT_ROOT / "tests/fixtures/data_health/good_bundle"
+    payload = data_commands.health_check(
+        data_domain="market_bar_1d",
+        profile="market_bar_p0",
+        evidence_dir=bundle,
+    )
+    for key in (
+        "command",
+        "dry_run",
+        "side_effects_allowed",
+        "domain",
+        "profile",
+        "status",
+        "rules_run",
+        "issue_counts_by_severity",
+        "row_count_checked",
+        "window",
+        "source_ids",
+        "content_hash_coverage",
+        "schema_hash_coverage",
+        "limitations",
+    ):
+        assert key in payload, f"missing key: {key}"
+    assert payload["command"] == "health"
+
+
+def test_qmdData_health_defaultWindow_boundedRowCount() -> None:
+    """覆盖范围：无 --start/--end 默认窗口
+    测试对象：health_check 信封 row_count_checked
+    目的/目标：AC-6 — 默认扫描有界（default_window_days + max_rows）
+    验证点：row_count_checked ≤ max_rows；window 非空
+    失败含义：无窗口时无界扫描
+    """
+    bundle = PROJECT_ROOT / "tests/fixtures/data_health/good_bundle"
+    max_rows = 100
+    payload = data_commands.health_check(
+        data_domain="market_bar_1d",
+        profile="market_bar_p0",
+        evidence_dir=bundle,
+        max_rows=max_rows,
+    )
+    assert payload["row_count_checked"] <= max_rows
+    assert payload["window"]["start"] or payload["window"]["end"]
+
+
+def test_qmdData_health_rejectsLiveCleanWriteFullScan() -> None:
+    """覆盖范围：禁止 live/clean/full 扫描
+    测试对象：health_check forbidden flags
+    目的/目标：AC-6 fail-closed
+    验证点：allow-network/clean-write/full-market/full-history 均 CliFailure
+    失败含义：危险操作可从 health 路径启用
+    """
+    bundle = PROJECT_ROOT / "tests/fixtures/data_health/good_bundle"
+    base = dict(
+        data_domain="market_bar_1d",
+        profile="market_bar_p0",
+        evidence_dir=bundle,
+    )
+    for flag, kwargs in (
+        ("allow_network", {"allow_network": True}),
+        ("clean_write", {"clean_write": True}),
+        ("full_market_scan", {"full_market_scan": True}),
+        ("full_history", {"full_history": True}),
+    ):
+        with pytest.raises(CliFailure, match="not allowed|forbidden"):
+            data_commands.health_check(**base, **kwargs)

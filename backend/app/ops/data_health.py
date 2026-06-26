@@ -257,9 +257,11 @@ def evidence_dir_within_project(evidence_dir: Path) -> bool:
 
 
 def _resolve_payload_path(raw_path: str, *, evidence_dir: Path) -> Path | None:
-    """Evidence-local path first, then staged_pilot project-relative resolver."""
+    """Evidence-local path first; project-relative fallback requires PROJECT_ROOT containment."""
     local = (evidence_dir / raw_path).resolve()
-    resolved = local if local.is_file() else _resolve_evidence_path(raw_path)
+    if local.is_file():
+        return local
+    resolved = _resolve_evidence_path(raw_path)
     if not resolved.is_file():
         return None
     try:
@@ -345,28 +347,40 @@ def require_evidence_bundle(evidence_dir: Path) -> EvidenceBundle:
     return bundle
 
 
-def check_daily_bars(
+# Shared daily-bar OHLCV scans — C-20 check_daily_bars + R3FR-02 market_bar_p0 profiles.
+_OHLCV_FIELDS = ("open", "high", "low", "close", "volume")
+_EXTREME_RETURN_RATIO = 0.5
+_VOLUME_OUTLIER_RATIO = 10.0
+
+
+def bar_row_key(row: dict[str, Any]) -> str:
+    symbol = row.get("symbol") or row.get("code")
+    trade_date = row.get("trade_date") or row.get("date")
+    return f"{symbol}|{trade_date}"
+
+
+def check_insufficient_history_bars(
     bars: list[dict[str, Any]],
     *,
-    domain: str = "cn_equity_daily_bar",
-    source_id: str | None = "baostock",
+    domain: str,
+    source_id: str | None = None,
     min_history: int = _MIN_DAILY_BAR_HISTORY,
+    empty_rule_id: str = "INSUFFICIENT_HISTORY",
 ) -> list[DataHealthCheckResult]:
-    checks: list[DataHealthCheckResult] = []
     if not bars:
-        checks.append(
+        return [
             _fail_check(
-                "EMPTY_RESPONSE",
+                empty_rule_id,
                 domain=domain,
-                message="no daily bar rows",
+                message="no daily bar rows"
+                if empty_rule_id == "EMPTY_RESPONSE"
+                else f"expected at least {min_history} bars, got 0",
                 source_id=source_id,
                 row_count=0,
             )
-        )
-        return checks
-
+        ]
     if len(bars) < min_history:
-        checks.append(
+        return [
             _fail_check(
                 "INSUFFICIENT_HISTORY",
                 domain=domain,
@@ -374,74 +388,304 @@ def check_daily_bars(
                 source_id=source_id,
                 row_count=len(bars),
             )
-        )
+        ]
+    return []
 
-    seen_keys: set[str] = set()
+
+def check_duplicate_bar_keys(
+    bars: list[dict[str, Any]],
+    *,
+    domain: str,
+    source_id: str | None = None,
+) -> list[DataHealthCheckResult]:
+    seen: set[str] = set()
     for row in bars:
-        symbol = row.get("symbol") or row.get("code")
-        trade_date = row.get("trade_date") or row.get("date")
-        row_key = f"{symbol}|{trade_date}"
-        if row_key in seen_keys:
-            checks.append(
+        key = bar_row_key(row)
+        if key in seen:
+            return [
                 _fail_check(
                     "DUPLICATE_PRIMARY_KEY",
                     domain=domain,
-                    message=f"duplicate bar key {row_key}",
+                    message=f"duplicate bar key {key}",
                     source_id=source_id,
                     row_count=len(bars),
                 )
-            )
-            break
-        seen_keys.add(row_key)
+            ]
+        seen.add(key)
+    return []
 
+
+def check_missing_ohlcv_fields(
+    bars: list[dict[str, Any]],
+    *,
+    domain: str,
+    source_id: str | None = None,
+) -> list[DataHealthCheckResult]:
+    for row in bars:
+        key = bar_row_key(row)
+        for field in _OHLCV_FIELDS:
+            if row.get(field) is None:
+                return [
+                    _fail_check(
+                        "MISSING_REQUIRED_OHLCV_FIELD",
+                        domain=domain,
+                        message=f"missing {field} for {key}",
+                        source_id=source_id,
+                        row_count=len(bars),
+                    )
+                ]
+    return []
+
+
+def check_non_positive_ohlcv_prices(
+    bars: list[dict[str, Any]],
+    *,
+    domain: str,
+    source_id: str | None = None,
+    include_volume: bool = True,
+) -> list[DataHealthCheckResult]:
+    price_fields: tuple[str, ...] = (
+        _OHLCV_FIELDS if include_volume else ("open", "high", "low", "close")
+    )
+    for row in bars:
+        key = bar_row_key(row)
+        for field in price_fields:
+            value = row.get(field)
+            if value is None:
+                continue
+            try:
+                if float(value) <= 0:
+                    return [
+                        _fail_check(
+                            "NON_POSITIVE_PRICE",
+                            domain=domain,
+                            message=f"non-positive {field} for {key}",
+                            source_id=source_id,
+                            row_count=len(bars),
+                        )
+                    ]
+            except (TypeError, ValueError):
+                return [
+                    _fail_check(
+                        "NON_POSITIVE_PRICE",
+                        domain=domain,
+                        message=f"invalid numeric {field} for {key}",
+                        source_id=source_id,
+                        row_count=len(bars),
+                    )
+                ]
+    return []
+
+
+def check_negative_bar_volume(
+    bars: list[dict[str, Any]],
+    *,
+    domain: str,
+    source_id: str | None = None,
+    rule_id: str = "NEGATIVE_VOLUME",
+) -> list[DataHealthCheckResult]:
+    for row in bars:
+        volume = row.get("volume")
+        if volume is None:
+            continue
+        key = bar_row_key(row)
+        try:
+            if float(volume) < 0:
+                return [
+                    _fail_check(
+                        rule_id,
+                        domain=domain,
+                        message=f"negative volume for {key}",
+                        source_id=source_id,
+                        row_count=len(bars),
+                    )
+                ]
+        except (TypeError, ValueError):
+            pass
+    return []
+
+
+def check_invalid_ohlc_relations(
+    bars: list[dict[str, Any]],
+    *,
+    domain: str,
+    source_id: str | None = None,
+) -> list[DataHealthCheckResult]:
+    for row in bars:
+        key = bar_row_key(row)
         open_px = row.get("open")
         high = row.get("high")
         low = row.get("low")
         close = row.get("close")
-        if None not in (open_px, high, low, close):
-            try:
-                o, h, lo, c = float(open_px), float(high), float(low), float(close)
-            except (TypeError, ValueError):
-                o = h = lo = c = -1.0
-            if h < max(o, c, lo) or lo > min(o, c, h) or h < lo:
-                checks.append(
-                    _fail_check(
-                        "INVALID_OHLC",
-                        domain=domain,
-                        message=f"invalid OHLC for {row_key}",
-                        source_id=source_id,
-                        row_count=len(bars),
-                    )
+        if None in (open_px, high, low, close):
+            continue
+        try:
+            o, h, lo, c = float(open_px), float(high), float(low), float(close)
+        except (TypeError, ValueError):
+            return [
+                _fail_check(
+                    "INVALID_OHLC",
+                    domain=domain,
+                    message=f"invalid OHLC numeric values for {key}",
+                    source_id=source_id,
+                    row_count=len(bars),
                 )
-                break
+            ]
+        if h < max(o, c, lo) or lo > min(o, c, h) or h < lo:
+            return [
+                _fail_check(
+                    "INVALID_OHLC",
+                    domain=domain,
+                    message=f"invalid OHLC relation for {key}",
+                    source_id=source_id,
+                    row_count=len(bars),
+                )
+            ]
+    return []
 
-        volume = row.get("volume")
-        if volume is not None:
-            try:
-                if float(volume) < 0:
-                    checks.append(
-                        _fail_check(
-                            "NEGATIVE_VOLUME",
-                            domain=domain,
-                            message=f"negative volume for {row_key}",
-                            source_id=source_id,
-                            row_count=len(bars),
-                        )
+
+def check_extreme_bar_returns(
+    bars: list[dict[str, Any]],
+    *,
+    domain: str,
+    source_id: str | None = None,
+) -> list[DataHealthCheckResult]:
+    sorted_bars = sorted(
+        bars,
+        key=lambda r: str(r.get("trade_date") or r.get("date") or ""),
+    )
+    prev_close: float | None = None
+    for row in sorted_bars:
+        close = row.get("close")
+        if close is None:
+            continue
+        try:
+            c = float(close)
+        except (TypeError, ValueError):
+            continue
+        if prev_close is not None and prev_close > 0:
+            ratio = abs(c - prev_close) / prev_close
+            if ratio > _EXTREME_RETURN_RATIO:
+                key = bar_row_key(row)
+                return [
+                    _warn_check(
+                        "EXTREME_RETURN",
+                        domain=domain,
+                        message=f"extreme return {ratio:.2%} for {key}",
+                        source_id=source_id,
                     )
-                    break
-            except (TypeError, ValueError):
-                pass
+                ]
+        prev_close = c
+    return []
 
-    if not checks:
-        checks.append(
-            _pass_check(
-                "INVALID_OHLC",
-                domain=domain,
-                message="daily bar OHLC/volume/history checks passed",
-                source_id=source_id,
-            )
+
+def check_volume_outliers(
+    bars: list[dict[str, Any]],
+    *,
+    domain: str,
+    source_id: str | None = None,
+) -> list[DataHealthCheckResult]:
+    volumes: list[float] = []
+    for row in bars:
+        vol = row.get("volume")
+        if vol is None:
+            continue
+        try:
+            volumes.append(float(vol))
+        except (TypeError, ValueError):
+            continue
+    if len(volumes) < 2:
+        return []
+    sorted_vols = sorted(volumes)
+    median = sorted_vols[len(sorted_vols) // 2]
+    if median <= 0:
+        return []
+    for row in bars:
+        vol = row.get("volume")
+        if vol is None:
+            continue
+        try:
+            v = float(vol)
+        except (TypeError, ValueError):
+            continue
+        if v > median * _VOLUME_OUTLIER_RATIO:
+            key = bar_row_key(row)
+            return [
+                _warn_check(
+                    "VOLUME_OUTLIER",
+                    domain=domain,
+                    message=f"volume outlier {v} vs median {median} for {key}",
+                    source_id=source_id,
+                )
+            ]
+    return []
+
+
+def run_profile_ohlcv_rules(
+    bars: list[dict[str, Any]],
+    *,
+    domain: str,
+    source_id: str | None = None,
+    min_history: int = _MIN_DAILY_BAR_HISTORY,
+) -> list[DataHealthCheckResult]:
+    """Orchestrate profile OHLCV checks (null fields → prices → OHLC → outliers)."""
+    if not bars:
+        return check_insufficient_history_bars(
+            bars, domain=domain, source_id=source_id, min_history=min_history
         )
+    checks: list[DataHealthCheckResult] = []
+    for fn, kwargs in (
+        (check_insufficient_history_bars, {"min_history": min_history}),
+        (check_duplicate_bar_keys, {}),
+        (check_missing_ohlcv_fields, {}),
+        (check_non_positive_ohlcv_prices, {"include_volume": True}),
+        (check_invalid_ohlc_relations, {}),
+        (check_extreme_bar_returns, {}),
+        (check_volume_outliers, {}),
+    ):
+        found = fn(bars, domain=domain, source_id=source_id, **kwargs)
+        if found:
+            checks.extend(found)
+            if found[0].status == "FAIL":
+                return checks
     return checks
+
+
+def check_daily_bars(
+    bars: list[dict[str, Any]],
+    *,
+    domain: str = "cn_equity_daily_bar",
+    source_id: str | None = "baostock",
+    min_history: int = _MIN_DAILY_BAR_HISTORY,
+) -> list[DataHealthCheckResult]:
+    checks = check_insufficient_history_bars(
+        bars,
+        domain=domain,
+        source_id=source_id,
+        min_history=min_history,
+        empty_rule_id="EMPTY_RESPONSE",
+    )
+    if checks:
+        return checks
+    checks.extend(check_duplicate_bar_keys(bars, domain=domain, source_id=source_id))
+    if checks:
+        return checks
+    checks.extend(check_invalid_ohlc_relations(bars, domain=domain, source_id=source_id))
+    if checks:
+        return checks
+    checks.extend(
+        check_negative_bar_volume(bars, domain=domain, source_id=source_id)
+    )
+    if checks:
+        return checks
+    return [
+        _pass_check(
+            "INVALID_OHLC",
+            domain=domain,
+            message="daily bar OHLC/volume/history checks passed",
+            source_id=source_id,
+        )
+    ]
 
 
 def check_metadata_rows(

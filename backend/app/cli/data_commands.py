@@ -129,16 +129,99 @@ def init_basic(*, dry_run: bool = True, db_path: Path | None = None) -> dict[str
     return payload
 
 
-def health_check(*, data_domain: str | None = None) -> dict[str, Any]:
-    return {
-        "command": "health",
-        "dry_run": True,
-        "side_effects_allowed": False,
-        "data_domain": data_domain,
-        "status": "not_implemented_phase_c",
-        "message": "read-only health checks ship in Batch 6 Phase C; use qmd-ops db-inspect for v1",
-        "docs_anchor": "docs/ops/data_health_cli.md",
+_HEALTH_FORBIDDEN_FLAGS: tuple[tuple[str, str], ...] = (
+    ("allow_network", "live fetch not allowed for qmd data health"),
+    ("clean_write", "clean write not allowed for read-only health"),
+    ("full_market_scan", "full-market scan forbidden; use bounded window"),
+    ("full_history", "full-history default scan forbidden; set --start/--end"),
+)
+
+
+def health_check(
+    *,
+    data_domain: str,
+    profile: str,
+    evidence_dir: Path | None = None,
+    db_path: Path | None = None,
+    start: str | None = None,
+    end: str | None = None,
+    max_rows: int = 1000,
+    allow_network: bool = False,
+    clean_write: bool = False,
+    full_market_scan: bool = False,
+    full_history: bool = False,
+) -> dict[str, Any]:
+    from backend.app.ops.data_health import DataHealthLoadError
+    from backend.app.ops.data_health_profiles import (
+        DataHealthIngestLimitError,
+        UnsupportedProfileError,
+        cli_envelope_from_report,
+        run_data_health_profile,
+    )
+
+    flag_values = {
+        "allow_network": allow_network,
+        "clean_write": clean_write,
+        "full_market_scan": full_market_scan,
+        "full_history": full_history,
     }
+    for flag, message in _HEALTH_FORBIDDEN_FLAGS:
+        if flag_values[flag]:
+            raise CliFailure(
+                error_code="CAPABILITY_MISSING",
+                message=message,
+                docs_anchor="docs/ops/data_health_cli.md",
+            )
+    if not data_domain or not profile:
+        raise CliFailure(
+            error_code="INVALID_INPUT",
+            message="--domain and --profile are required",
+            docs_anchor="docs/ops/data_health_cli.md",
+        )
+    if evidence_dir is None:
+        raise CliFailure(
+            error_code="INVALID_INPUT",
+            message="--evidence-dir required for supported profiles in this slice",
+            docs_anchor="docs/ops/data_health_cli.md",
+        )
+
+    try:
+        report, limitations, hash_coverage, window = run_data_health_profile(
+            profile_id=profile,
+            domain=data_domain,
+            evidence_path=evidence_dir,
+            db_path=db_path,
+            start_date=start,
+            end_date=end,
+            max_rows=max_rows,
+        )
+    except UnsupportedProfileError as exc:
+        raise CliFailure(
+            error_code="CAPABILITY_MISSING",
+            message=str(exc),
+            docs_anchor="docs/ops/data_health_cli.md",
+        ) from exc
+    except (DataHealthLoadError, DataHealthIngestLimitError) as exc:
+        raise CliFailure(
+            error_code="INVALID_INPUT",
+            message=str(exc),
+            docs_anchor="docs/ops/data_health_cli.md",
+        ) from exc
+
+    source_ids: list[str] = []
+    for check in report.checks:
+        if check.source_id and check.source_id not in source_ids:
+            source_ids.append(check.source_id)
+
+    return cli_envelope_from_report(
+        report,
+        domain=data_domain,
+        profile=profile,
+        window=window,
+        source_ids=source_ids,
+        limitations=limitations,
+        content_hash_coverage=hash_coverage,
+    )
 
 
 def emit_payload(payload: dict[str, Any], *, fmt: str = "json") -> str:
