@@ -1,0 +1,543 @@
+version: provider_catalog_v1
+updated_for: r3fr05_openbb_architecture_reference
+rules:
+  registry_alignment:
+    every source_registry source_id must appear in exactly one provider
+    entry
+  schema_enum_alignment: source_type and license_type must match schema.sql CHECK
+providers:
+  - provider_id: qmt_xtdata
+    source_ids:
+      - qmt_xtdata
+    source_type: broker_terminal
+    license_type: user_local_authorized
+    license_or_terms: 正式启用前必须由用户确认本机 QMT 授权和账号环境。
+    allowed_domains:
+      - cn_equity_realtime
+      - cn_equity_minute_bar
+      - cn_equity_daily_bar
+    enabled_by_default: false
+    status: active
+    production_default_candidate: false
+    production_default_enabled: false
+    requires_user_authorization: true
+    requires_local_client: true
+    validation_only: false
+    max_default_symbols_or_series: 0
+    max_default_window_days: 0
+    reference_architecture: ""
+    runtime_source_copy_allowed: false
+  - provider_id: baostock
+    source_ids:
+      - baostock
+    source_type: public_market_data
+    license_type: public_free
+    license_or_terms:
+      适合作为 A 股历史日线与基础财务第一阶段主源之一。Batch 01 SP3 v3 staged expand sample
+      (merge 1a099e8d); sandbox_candidate readiness.
+    allowed_domains:
+      - cn_equity_daily_bar
+      - cn_equity_basic_financial
+    enabled_by_default: true
+    status: sandbox_candidate
+    production_default_candidate: true
+    production_default_enabled: false
+    requires_user_authorization: false
+    requires_local_client: false
+    validation_only: false
+    max_default_symbols_or_series: 0
+    max_default_window_days: 0
+    reference_architecture: ""
+    runtime_source_copy_allowed: false
+  - provider_id: akshare
+    source_ids:
+      - akshare
+    source_type: aggregator
+    license_type: public_free_aggregator
+    license_or_terms:
+      聚合源只能带 source_used 与 quality_flags；不得作为唯一事实源。Batch 01 SP3 v3 validation-only
+      re-defer (R3-PROMPT14-AKSHARE-VAL-01 open).
+    allowed_domains:
+      - cn_equity_daily_bar
+      - cn_index
+      - sector_board
+      - macro_supplementary
+    enabled_by_default: true
+    status: active
+    production_default_candidate: false
+    production_default_enabled: false
+    requires_user_authorization: false
+    requires_local_client: false
+    validation_only: true
+    max_default_symbols_or_series: 0
+    max_default_window_days: 0
+    reference_architecture: ""
+    runtime_source_copy_allowed: false
+  - provider_id: cninfo
+    source_ids:
+      - cninfo
+    source_type: filing_announcement
+    license_type: public_official
+    license_or_terms:
+      公告和财报 PDF 原文优先来源。Batch 01 SP3 v3 metadata expand sample (merge
+      1a099e8d); sandbox_candidate readiness.
+    allowed_domains:
+      - cn_filings
+      - cn_announcements
+      - cn_pdf_reports
+    enabled_by_default: true
+    status: sandbox_candidate
+    production_default_candidate: true
+    production_default_enabled: false
+    requires_user_authorization: false
+    requires_local_client: false
+    validation_only: false
+    max_default_symbols_or_series: 0
+    max_default_window_days: 0
+    reference_architecture: ""
+    runtime_source_copy_allowed: false
+  - provider_id: yahoo_finance
+    source_ids:
+      - yahoo_finance
+    source_type: public_market_data
+    license_type: public_terms_sensitive
+    license_or_terms: 仅作研究/补充验证；生产不可作为唯一主源。
+    allowed_domains:
+      - us_equity_daily_bar
+      - etf_daily_bar
+      - us_option_chain
+      - global_asset_reference
+    enabled_by_default: false
+    status: active
+    production_default_candidate: false
+    production_default_enabled: false
+    requires_user_authorization: false
+    requires_local_client: false
+    validation_only: true
+    max_default_symbols_or_series: 0
+    max_default_window_days: 0
+    reference_architecture: ""
+    runtime_source_copy_allowed: false
+  - provider_id: tdx_pytdx
+    source_ids:
+      - tdx_pytdx
+    source_type: public_market_data
+    license_type: public_free
+    license_or_terms:
+      Batch 01 B01-TDX mocked PROBE_PASS_RAW_ONLY; live PROBE_REDEFERRED;
+      018C disabled-by-default validation-only probe.
+    allowed_domains:
+      - security_list
+      - cn_equity_daily_bar
+      - cn_index_daily_bar
+    enabled_by_default: false
+    status: proposed_disabled_source
+    production_default_candidate: false
+    production_default_enabled: false
+    requires_user_authorization: false
+    requires_local_client: true
+    validation_only: true
+    max_default_symbols_or_series: 0
+    max_default_window_days: 0
+    reference_architecture: ""
+    runtime_source_copy_allowed: false
+  - provider_id: fred
+    source_ids:
+      - fred
+    source_type: vendor_api
+    license_type: public_official
+    license_or_terms:
+      Batch 01 B01-FRED sandbox-candidate (merge 9ae91648); disabled-by-default;
+      FRED-only sandbox evidence recorded; live pri
+    allowed_domains:
+      - macro_series
+    enabled_by_default: false
+    status: sandbox_candidate
+    production_default_candidate: false
+    production_default_enabled: false
+    requires_user_authorization: true
+    requires_local_client: false
+    validation_only: false
+    max_default_symbols_or_series: 0
+    max_default_window_days: 0
+    reference_architecture: ""
+    runtime_source_copy_allowed: false
+  - provider_id: us_treasury
+    source_ids:
+      - us_treasury
+    source_type: official_api
+    license_type: public_official
+    license_or_terms: 美国国债收益率曲线与通胀预期官方主源；新增 adapter 前默认禁用，启用后可作为利率曲线 primary。
+    allowed_domains:
+      - us_treasury_yield_curve
+      - inflation_expectation
+    enabled_by_default: false
+    status: proposed_disabled_source
+    production_default_candidate: false
+    production_default_enabled: false
+    requires_user_authorization: false
+    requires_local_client: false
+    validation_only: false
+    max_default_symbols_or_series: 0
+    max_default_window_days: 0
+    reference_architecture: ""
+    runtime_source_copy_allowed: false
+  - provider_id: sec_edgar
+    source_ids:
+      - sec_edgar
+    source_type: official_api
+    license_type: public_official
+    license_or_terms:
+      美国上市公司披露与 Form 4 内部人交易官方主源；必须带 User-Agent/contact 标识并保存 filing
+      accession 与 content_hash。
+    allowed_domains:
+      - us_filings
+      - us_insider_form4
+    enabled_by_default: false
+    status: proposed_disabled_source
+    production_default_candidate: false
+    production_default_enabled: false
+    requires_user_authorization: false
+    requires_local_client: false
+    validation_only: false
+    max_default_symbols_or_series: 0
+    max_default_window_days: 0
+    reference_architecture: ""
+    runtime_source_copy_allowed: false
+  - provider_id: cftc_cot
+    source_ids:
+      - cftc_cot
+    source_type: official_api
+    license_type: public_official
+    license_or_terms: 期货持仓方向与 smart-money 仓位的官方周频主源；不得当作实时仓位。
+    allowed_domains:
+      - cot_positioning
+    enabled_by_default: false
+    status: proposed_disabled_source
+    production_default_candidate: false
+    production_default_enabled: false
+    requires_user_authorization: false
+    requires_local_client: false
+    validation_only: false
+    max_default_symbols_or_series: 0
+    max_default_window_days: 0
+    reference_architecture: ""
+    runtime_source_copy_allowed: false
+  - provider_id: bis
+    source_ids:
+      - bis
+    source_type: official_api
+    license_type: public_official
+    license_or_terms: 全球央行政策利率、信贷/GDP 缺口等官方/准官方宏观源；用于 Layer 1 regime 与风险背景。
+    allowed_domains:
+      - central_bank_policy
+      - credit_gap
+    enabled_by_default: false
+    status: proposed_disabled_source
+    production_default_candidate: false
+    production_default_enabled: false
+    requires_user_authorization: false
+    requires_local_client: false
+    validation_only: false
+    max_default_symbols_or_series: 0
+    max_default_window_days: 0
+    reference_architecture: ""
+    runtime_source_copy_allowed: false
+  - provider_id: world_bank
+    source_ids:
+      - world_bank
+    source_type: official_api
+    license_type: public_official
+    license_or_terms: GDP、人口、贸易等低频发展指标主源；适合长期背景变量，不适合实时信号。
+    allowed_domains:
+      - development_indicator
+      - global_macro_reference
+    enabled_by_default: false
+    status: proposed_disabled_source
+    production_default_candidate: false
+    production_default_enabled: false
+    requires_user_authorization: false
+    requires_local_client: false
+    validation_only: false
+    max_default_symbols_or_series: 0
+    max_default_window_days: 0
+    reference_architecture: ""
+    runtime_source_copy_allowed: false
+  - provider_id: deribit
+    source_ids:
+      - deribit
+    source_type: vendor_api
+    license_type: public_terms_sensitive
+    license_or_terms: 加密期货 term structure、期权 IV 与衍生品行情主源候选；只读 market-data，禁止交易/账户能力。
+    allowed_domains:
+      - crypto_derivatives
+      - crypto_futures_term_structure
+      - crypto_options_surface
+    enabled_by_default: false
+    status: proposed_disabled_source
+    production_default_candidate: false
+    production_default_enabled: false
+    requires_user_authorization: false
+    requires_local_client: false
+    validation_only: false
+    max_default_symbols_or_series: 0
+    max_default_window_days: 0
+    reference_architecture: ""
+    runtime_source_copy_allowed: false
+  - provider_id: coingecko
+    source_ids:
+      - coingecko
+    source_type: public_market_data
+    license_type: public_terms_sensitive
+    license_or_terms: 加密现货价格、市值、币种/交易所映射聚合源；用于验证/补充，不替代交易所成交主源。
+    allowed_domains:
+      - crypto_spot_market
+      - crypto_asset_reference
+    enabled_by_default: false
+    status: proposed_disabled_source
+    production_default_candidate: false
+    production_default_enabled: false
+    requires_user_authorization: false
+    requires_local_client: false
+    validation_only: true
+    max_default_symbols_or_series: 0
+    max_default_window_days: 0
+    reference_architecture: ""
+    runtime_source_copy_allowed: false
+  - provider_id: kalshi
+    source_ids:
+      - kalshi
+    source_type: vendor_api
+    license_type: public_terms_sensitive
+    license_or_terms: 美国监管二元事件合约概率主源候选；价格只代表交易概率，不得作为事实结果源。
+    allowed_domains:
+      - regulated_event_contract
+      - prediction_market_probability
+    enabled_by_default: false
+    status: proposed_disabled_source
+    production_default_candidate: false
+    production_default_enabled: false
+    requires_user_authorization: false
+    requires_local_client: false
+    validation_only: false
+    max_default_symbols_or_series: 0
+    max_default_window_days: 0
+    reference_architecture: ""
+    runtime_source_copy_allowed: false
+  - provider_id: polymarket
+    source_ids:
+      - polymarket
+    source_type: vendor_api
+    license_type: public_terms_sensitive
+    license_or_terms: 预测市场合约、事件概率与流动性补充源；必须记录 liquidity、volume、spread 与 resolution_source。
+    allowed_domains:
+      - prediction_market_probability
+      - event_market_contract
+    enabled_by_default: false
+    status: proposed_disabled_source
+    production_default_candidate: false
+    production_default_enabled: false
+    requires_user_authorization: false
+    requires_local_client: false
+    validation_only: true
+    max_default_symbols_or_series: 0
+    max_default_window_days: 0
+    reference_architecture: ""
+    runtime_source_copy_allowed: false
+  - provider_id: stooq
+    source_ids:
+      - stooq
+    source_type: public_market_data
+    license_type: public_free
+    license_or_terms: 全球股票/ETF/外汇/商品历史行情低频验证源；不承担实时生产主源。
+    allowed_domains:
+      - global_market_daily_bar
+      - fx_daily_bar
+      - commodity_daily_bar
+    enabled_by_default: false
+    status: proposed_disabled_source
+    production_default_candidate: false
+    production_default_enabled: false
+    requires_user_authorization: false
+    requires_local_client: false
+    validation_only: true
+    max_default_symbols_or_series: 0
+    max_default_window_days: 0
+    reference_architecture: ""
+    runtime_source_copy_allowed: false
+  - provider_id: alpha_vantage
+    source_ids:
+      - alpha_vantage
+    source_type: vendor_api
+    license_type: public_terms_sensitive
+    license_or_terms: 美股/ETF/期权链、外汇、商品与经济指标的文档化 API 候选；需要 API key，启用前不得替代官方/交易所源。
+    allowed_domains:
+      - us_equity_daily_bar
+      - etf_daily_bar
+      - us_option_chain
+      - macro_series
+      - fx_daily_bar
+      - commodity_daily_bar
+      - crypto_spot_market
+    enabled_by_default: false
+    status: proposed_disabled_source
+    production_default_candidate: false
+    production_default_enabled: false
+    requires_user_authorization: true
+    requires_local_client: false
+    validation_only: false
+    max_default_symbols_or_series: 0
+    max_default_window_days: 0
+    reference_architecture: ""
+    runtime_source_copy_allowed: false
+  - provider_id: mootdx
+    source_ids:
+      - mootdx
+    source_type: public_market_data
+    license_type: public_free
+    license_or_terms:
+      通达信兼容 A 股行情验证源候选；与 tdx_pytdx 同属 TDX-compatible 路线，默认禁用，不得 silent
+      fallback。
+    allowed_domains:
+      - security_list
+      - cn_equity_daily_bar
+      - cn_index_daily_bar
+    enabled_by_default: false
+    status: proposed_disabled_source
+    production_default_candidate: false
+    production_default_enabled: false
+    requires_user_authorization: false
+    requires_local_client: false
+    validation_only: true
+    max_default_symbols_or_series: 0
+    max_default_window_days: 0
+    reference_architecture: ""
+    runtime_source_copy_allowed: false
+  - provider_id: eastmoney
+    source_ids:
+      - eastmoney
+    source_type: public_market_data
+    license_type: public_terms_sensitive
+    license_or_terms: A 股行情、板块、资金流与公告备份验证源；资金流等口径差异字段必须分源保存。
+    allowed_domains:
+      - cn_equity_daily_bar
+      - cn_index
+      - sector_board
+      - capital_flow
+      - cn_announcements
+    enabled_by_default: false
+    status: proposed_disabled_source
+    production_default_candidate: false
+    production_default_enabled: false
+    requires_user_authorization: false
+    requires_local_client: false
+    validation_only: true
+    max_default_symbols_or_series: 0
+    max_default_window_days: 0
+    reference_architecture: ""
+    runtime_source_copy_allowed: false
+  - provider_id: sina_finance
+    source_ids:
+      - sina_finance
+    source_type: public_market_data
+    license_type: public_terms_sensitive
+    license_or_terms: A 股行情兜底/轻量校验源；只用于低频验证或失败诊断，不进入主值接管。
+    allowed_domains:
+      - cn_equity_daily_bar
+      - cn_equity_realtime
+      - cn_index_daily_bar
+    enabled_by_default: false
+    status: proposed_disabled_source
+    production_default_candidate: false
+    production_default_enabled: false
+    requires_user_authorization: false
+    requires_local_client: false
+    validation_only: true
+    max_default_symbols_or_series: 0
+    max_default_window_days: 0
+    reference_architecture: ""
+    runtime_source_copy_allowed: false
+  - provider_id: ths_ifind
+    source_ids:
+      - ths_ifind
+    source_type: vendor_api
+    license_type: user_local_authorized
+    license_or_terms: 概念、题材、研报与资金流候选源；只有明确商业授权后才能启用，免费网页端不得作为生产主源。
+    allowed_domains:
+      - concept_theme
+      - research_report
+      - capital_flow
+    enabled_by_default: false
+    status: proposed_disabled_source
+    production_default_candidate: false
+    production_default_enabled: false
+    requires_user_authorization: true
+    requires_local_client: false
+    validation_only: true
+    max_default_symbols_or_series: 0
+    max_default_window_days: 0
+    reference_architecture: ""
+    runtime_source_copy_allowed: false
+  - provider_id: web_search
+    source_ids:
+      - web_search
+    source_type: aggregator
+    license_type: public_web
+    license_or_terms: VIX、CDS、事件解释和网页证据补充；只能进入 evidence/manual_review，不得直接写 clean 表。
+    allowed_domains:
+      - supplemental_web_evidence
+      - vix_cds_supplement
+      - event_resolution_evidence
+    enabled_by_default: false
+    status: proposed_disabled_source
+    production_default_candidate: false
+    production_default_enabled: false
+    requires_user_authorization: false
+    requires_local_client: false
+    validation_only: true
+    max_default_symbols_or_series: 0
+    max_default_window_days: 0
+    reference_architecture: ""
+    runtime_source_copy_allowed: false
+  - provider_id: qmt_xqshare
+    source_ids:
+      - qmt_xqshare
+    source_type: broker_terminal
+    license_type: user_local_authorized
+    license_or_terms:
+      Remote QMT/xqshare host; requires XQSHARE_REMOTE_HOST/PORT and
+      explicit user authorization.
+    allowed_domains:
+      - cn_equity_realtime
+      - cn_equity_minute_bar
+      - cn_equity_daily_bar
+    enabled_by_default: false
+    status: proposed_disabled_source
+    production_default_candidate: false
+    production_default_enabled: false
+    requires_user_authorization: true
+    requires_local_client: true
+    validation_only: true
+    max_default_symbols_or_series: 0
+    max_default_window_days: 0
+    reference_architecture: ""
+    runtime_source_copy_allowed: false
+  - provider_id: openbb_provider_reference
+    source_ids:
+      - openbb_provider_reference
+    source_type: aggregator
+    license_type: public_web
+    license_or_terms: Architecture-only placeholder; no runtime adapter.
+    allowed_domains:
+      - provider_metadata_only
+    enabled_by_default: false
+    status: proposed_disabled_source
+    production_default_candidate: false
+    production_default_enabled: false
+    requires_user_authorization: false
+    requires_local_client: false
+    validation_only: true
+    max_default_symbols_or_series: 0
+    max_default_window_days: 0
+    reference_architecture: openbb_provider_architecture
+    runtime_source_copy_allowed: false

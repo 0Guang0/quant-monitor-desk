@@ -364,6 +364,34 @@ sources:
     rate_limit_policy: manual_review_cache
     requires_user_setup: false
     notes: VIX、CDS、事件解释和网页证据补充；只能进入 evidence/manual_review，不得直接写 clean 表。
+  - source_id: qmt_xqshare
+    source_name: QMT xqshare remote terminal
+    source_type: broker_terminal
+    license_type: user_local_authorized
+    enabled_by_default: false
+    trust_level: 75
+    allowed_domains:
+      - cn_equity_realtime
+      - cn_equity_minute_bar
+      - cn_equity_daily_bar
+    default_role: Validation
+    validation_only: true
+    rate_limit_policy: remote_terminal
+    requires_user_setup: true
+    notes: Remote QMT/xqshare host; requires XQSHARE_REMOTE_HOST/PORT and explicit user authorization.
+  - source_id: openbb_provider_reference
+    source_name: OpenBB provider architecture reference (metadata only)
+    source_type: aggregator
+    license_type: public_web
+    enabled_by_default: false
+    trust_level: 0
+    allowed_domains:
+      - provider_metadata_only
+    default_role: Validation
+    validation_only: true
+    rate_limit_policy: none
+    requires_user_setup: false
+    notes: Architecture-only placeholder; no runtime adapter.
 domain_roles:
   cn_equity_daily_bar:
     primary: baostock
@@ -717,6 +745,15 @@ domain_roles:
     domain_enabled_by_default: false
     disabled_until_configured: true
     expected_error_before_user_setup: DISABLED_SOURCE
+  provider_metadata_only:
+    primary: openbb_provider_reference
+    validation: []
+    fallback_policy: []
+    requires_source_enabled: true
+    domain_enabled_by_default: false
+    disabled_until_configured: true
+    expected_error_before_user_setup: DISABLED_SOURCE
+    notes: Architecture-only OpenBB provider catalog reference; no fetch adapter.
 tests:
   - test_disabledPrimaryDomain_returnsDisabledSource
   - test_fallbackDisabledByDefault_isSkippedUntilConfigured

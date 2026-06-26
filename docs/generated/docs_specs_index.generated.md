@@ -397,6 +397,7 @@ Used with MIGRATION_MAP.md for machine omission checks (`check_docs_specs_indexe
 - `specs/contracts/sync_job_contract.yaml`
 - `specs/contracts/user_input_privacy_contract.yaml`
 - `specs/contracts/write_contract.yaml`
+- `specs/datasource_registry/provider_catalog.yaml`
 - `specs/datasource_registry/source_capabilities.yaml`
 - `specs/datasource_registry/source_registry.yaml`
 - `specs/frontend/page_contracts.yaml`

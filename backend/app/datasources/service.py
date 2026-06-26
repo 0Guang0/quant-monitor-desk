@@ -322,6 +322,7 @@ def _default_operation(data_domain: str) -> str:
         "us_option_chain": "fetch_us_option_chain_validation",
         "us_treasury_yield_curve": "fetch_yield_curve",
         "vix_cds_supplement": "fetch_vix_cds_supplement",
+        "provider_metadata_only": "describe_architecture_reference",
     }
     return defaults.get(data_domain, "fetch_daily_bar")
 

@@ -184,3 +184,4 @@ required_tests:
   - tests/test_reference_adoption_guardrails.py::test_productionCompletionPlanIsCoverageMapOnly
   - tests/test_reference_adoption_guardrails.py::test_r3fr01DownstreamCardsGovernanceBoundaries
   - tests/test_reference_adoption_guardrails.py::test_r3frAdaptingCardsDeclareReferenceProject
+  - tests/test_reference_adoption_guardrails.py::test_r3fr05ProviderCatalogClosure
