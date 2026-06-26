@@ -1,8 +1,8 @@
 # Batch 3G — Sandbox Clean Write and Limited Production Entry
 
-> **Canonical status:** future batch package created during 3F-R planning cleanup.  
-> **Roadmap:** `PROJECT_IMPLEMENTATION_ROADMAP.md` → Round 3G.  
-> **Blocked by:** Round 3F-R Reference Adoption Refactor, unless every open 3F-R item has an ADR with owner, deferred phase, and closure gate.
+> **Canonical status:** Round 3G batch package — **preconditions satisfied** (Batch 3F-R CLOSED, condition A).  
+> **Roadmap:** `PROJECT_IMPLEMENTATION_ROADMAP.md` → Round 3G — **current next executable entrypoint**.  
+> **3F-R deliverables consumed:** `run_data_health_profile` / `market_bar_p0`, `provider_catalog.yaml`, TDX delegate boundaries (R3FR-02..06).
 
 ---
 
@@ -42,11 +42,11 @@ Batch package support files:
 
 Before any `R3G-*` work starts:
 
-1. Round 3F-R must be complete or explicitly deferred by ADR.
-2. `qmd data health` must have a real read-only supported-profile path; no stale placeholder.
-3. EasyXT-style OHLCV/data-integrity profiles must cover the write candidate domains or be deferred by ADR.
+1. Round 3F-R is **complete** (condition A satisfied @ R3FR-07).
+2. `qmd data health` uses `run_data_health_profile` for supported read-only profiles (R3FR-06).
+3. EasyXT-style OHLCV/data-integrity profiles (`market_bar_p0`) cover write candidate domains or are deferred by ADR.
 4. TDX must remain disabled/raw-only and must not participate in first clean-write candidates.
-5. Provider catalog must identify auth/cost/terms/quality role for write candidate sources or explicitly defer non-candidate sources.
+5. Provider catalog (`provider_catalog.yaml`, R3FR-05) identifies auth/cost/terms/quality role for write candidate sources or explicitly defers non-candidate sources.
 6. No live source is enabled by default.
 7. No production write occurs in R3G.1 or R3G.2.
 

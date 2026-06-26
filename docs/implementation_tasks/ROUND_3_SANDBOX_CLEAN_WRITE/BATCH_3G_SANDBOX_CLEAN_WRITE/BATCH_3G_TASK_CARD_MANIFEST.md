@@ -6,6 +6,12 @@
 
 ---
 
+## 0. Preconditions (satisfied @ R3FR-07)
+
+Batch 3F-R is **closed**. Condition A for Round 3G is satisfied: `qmd data health` read-only runtime (`run_data_health_profile`), provider catalog SSOT, and TDX probe boundaries are in place. See `ROUND_3_REFERENCE_ADOPTION_REFACTOR/BATCH_3FR_REFERENCE_ADOPTION_REFACTOR/README.md`.
+
+---
+
 ## 1. Canonical Batch 3G cards
 
 | Task ID  | Card                                         | Scope                                                                                | Primary gates                                                                                   | Reference-adoption details location |

@@ -60,6 +60,22 @@ def test_initBasic_defaultsToDryRun() -> None:
     assert init_cmd.get("default_mode") == "dry_run"
 
 
+def test_initBasic_opsDesignDocLinked() -> None:
+    """覆盖范围：init-basic ops 设计文档（A7-006）
+    测试对象：data_cli_contract.yaml docs_anchor 与 docs/ops/data_init_basic_cli.md
+    目的/目标：init 写库路径有对等 ops 设计文档
+    验证点：契约 docs_anchor 存在且文件含 dry_run 默认与 writer 边界
+    失败含义：operator 无 init 写库权威说明
+    """
+    contract = _load_contract()
+    anchor = contract["commands"]["qmd data init-basic"]["docs_anchor"]
+    doc_path = PROJECT_ROOT / anchor
+    assert doc_path.is_file(), f"missing ops doc: {anchor}"
+    body = doc_path.read_text(encoding="utf-8").lower()
+    assert "dry_run" in body or "dry-run" in body
+    assert "connectionmanager" in body.replace("_", "") or "writer" in body
+
+
 def test_cliFailure_mustExposeErrorCodeAndDocsAnchor() -> None:
     """覆盖范围：CLI 失败时的错误码与文档锚点
     测试对象：data_cli_contract.yaml rules 与 docs/ops/ERROR_CODE_GUIDE.md

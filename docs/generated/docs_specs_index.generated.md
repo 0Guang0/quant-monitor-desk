@@ -276,6 +276,7 @@ Used with MIGRATION_MAP.md for machine omission checks (`check_docs_specs_indexe
 - `docs/ops/config_secret_policy.md`
 - `docs/ops/daily_weekly_monthly_checklist.md`
 - `docs/ops/data_health_cli.md`
+- `docs/ops/data_init_basic_cli.md`
 - `docs/ops/data_sync_command_matrix.md`
 - `docs/ops/data_sync_quick_reference.md`
 - `docs/ops/db_inspect_cli.md`

@@ -14,7 +14,10 @@ from typing import Any
 
 import yaml
 
+import duckdb
+
 from backend.app.config import PROJECT_ROOT
+from backend.app.db.connection import ConnectionManager
 from backend.app.ops.data_health import (
     DataHealthLoadError,
     DataHealthReport,
@@ -34,6 +37,7 @@ _SUPPORTED_PROFILES: frozenset[str] = frozenset({"market_bar_p0"})
 _SUPPORTED_DOMAINS: frozenset[str] = frozenset({"market_bar_1d"})
 _DEFAULT_MAX_ROWS = 1000
 _MIN_HISTORY = 2
+_SCHEMA_HASH_DB_ROW_LIMIT = 100
 _RULES_PATH = PROJECT_ROOT / "specs" / "contracts" / "data_quality_rules.yaml"
 
 
@@ -53,23 +57,77 @@ def _default_window_days() -> int:
     return int(domain_cfg.get("default_window_days") or 90)
 
 
-def _profile_limitations(db_path: Path | None) -> list[str]:
+def _schema_hash_coverage_from_db(db_path: Path) -> dict[str, list[str]]:
+    """Read-only bounded fetch_log schema_hash scan (R3FR-07 repair A7-002/003)."""
+    if not db_path.is_file():
+        return {}
+    coverage: dict[str, list[str]] = {}
+    try:
+        cm = ConnectionManager(db_path)
+        with cm.reader() as con:
+            tables = {
+                str(row[0])
+                for row in con.execute(
+                    "SELECT table_name FROM information_schema.tables "
+                    "WHERE table_schema = 'main'"
+                ).fetchall()
+            }
+            if "fetch_log" not in tables:
+                return {}
+            rows = con.execute(
+                """
+                SELECT schema_hash, raw_file_paths
+                FROM fetch_log
+                WHERE schema_hash IS NOT NULL AND schema_hash != ''
+                LIMIT ?
+                """,
+                [_SCHEMA_HASH_DB_ROW_LIMIT],
+            ).fetchall()
+        for schema_hash, raw_paths in rows:
+            key = str(schema_hash)
+            paths: list[str] = []
+            if raw_paths:
+                text = str(raw_paths).strip()
+                if text.startswith("["):
+                    try:
+                        parsed = json.loads(text)
+                        if isinstance(parsed, list):
+                            paths = [str(path) for path in parsed]
+                    except json.JSONDecodeError:
+                        paths = [text]
+                else:
+                    paths = [text]
+            coverage.setdefault(key, []).extend(paths)
+    except (OSError, duckdb.Error):
+        return {}
+    return coverage
+
+
+def _profile_limitations(
+    db_path: Path | None,
+    *,
+    db_opened: bool = False,
+    has_schema_rows: bool = False,
+) -> list[str]:
     limitations = [
         "read-only profile scan; no live fetch or production writes",
-        "schema_hash_coverage not computed in this slice",
         "text CLI format is debug-oriented; use --format json for automation",
     ]
     if db_path is None:
         limitations.append(
-            "db-path not set; no DB domain scan — use qmd ops db-inspect for metadata"
+            "db-path not set; evidence-only scan — use qmd ops db-inspect for metadata"
         )
     elif not db_path.is_file():
         limitations.append(
             "db-path provided but file missing; evidence-only scan performed"
         )
-    else:
+    elif db_opened and has_schema_rows:
         limitations.append(
-            "db-path provided but not scanned in this slice; evidence-only rules only"
+            "db-path read-only schema_hash scan from fetch_log (bounded)"
+        )
+    elif db_opened:
+        limitations.append(
+            "db-path opened read-only; fetch_log has no schema_hash rows"
         )
     return limitations
 
@@ -177,7 +235,13 @@ def run_data_health_profile(
     start_date: str | None,
     end_date: str | None,
     max_rows: int,
-) -> tuple[DataHealthReport, list[str], dict[str, list[str]], dict[str, str | None]]:
+) -> tuple[
+    DataHealthReport,
+    list[str],
+    dict[str, list[str]],
+    dict[str, list[str]],
+    dict[str, str | None],
+]:
     """Single profile-runner boundary for market_bar_p0 (read-only)."""
     if profile_id not in _SUPPORTED_PROFILES:
         raise UnsupportedProfileError(f"unsupported profile: {profile_id!r}")
@@ -186,7 +250,16 @@ def run_data_health_profile(
     if evidence_path is None:
         raise DataHealthLoadError("evidence_path required for market_bar_p0 in this slice")
 
-    limitations = _profile_limitations(db_path)
+    schema_coverage: dict[str, list[str]] = {}
+    db_opened = False
+    if db_path is not None and db_path.is_file():
+        schema_coverage = _schema_hash_coverage_from_db(db_path)
+        db_opened = True
+    limitations = _profile_limitations(
+        db_path,
+        db_opened=db_opened,
+        has_schema_rows=bool(schema_coverage),
+    )
     cap = max_rows if max_rows > 0 else _DEFAULT_MAX_ROWS
     evidence_dir = Path(evidence_path)
     bars, source_id, entries = _bars_from_evidence(evidence_dir, max_rows=cap)
@@ -211,7 +284,7 @@ def run_data_health_profile(
             *limitations,
             "content_hash_coverage empty — manifest entries lack content_hash",
         ]
-    return report, limitations, hash_coverage, window
+    return report, limitations, hash_coverage, schema_coverage, window
 
 
 def cli_envelope_from_report(

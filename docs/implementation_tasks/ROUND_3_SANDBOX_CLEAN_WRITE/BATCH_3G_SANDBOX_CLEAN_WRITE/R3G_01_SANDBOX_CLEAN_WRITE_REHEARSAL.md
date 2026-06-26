@@ -2,7 +2,7 @@
 
 > **Batch:** Batch 3G — Sandbox Clean Write and Limited Production Entry  
 > **Roadmap segment:** Round 3G.1  
-> **Status:** future task, blocked by Round 3F-R unless every open 3F-R item has ADR deferral.  
+> **Status:** future task; **preconditions satisfied** @ R3FR-07 (Batch 3F-R closed).  
 > **Execution posture:** sandbox only; no production mutation; no live source default enablement.
 
 ---

@@ -125,9 +125,9 @@ Seven branches merged to `master` @ **`376e30e6`** via `integration/round3-batch
 **Coordinator:** `BATCH_3V_COORDINATOR_PLAYBOOK.md` · `docs/quality/coordination/BATCH_3V_ZERO_OPEN_CLOSURE_POLICY.md`  
 **Coverage index:** `docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md` §8
 
-## Round 3 Batch 3F-R — **NEAR CLOSE on master** (2026-06-27)
+## Round 3 Batch 3F-R — **CLOSED** (2026-06-27)
 
-Batch 3F-R reference adoption refactor; entrypoint: `ROUND_3_REFERENCE_ADOPTION_REFACTOR/BATCH_3FR_REFERENCE_ADOPTION_REFACTOR/README.md`.
+Batch 3F-R reference adoption refactor; historical entrypoint: `ROUND_3_REFERENCE_ADOPTION_REFACTOR/BATCH_3FR_REFERENCE_ADOPTION_REFACTOR/README.md`.
 
 | Playbook ID | Branch / commit                                         | Task cards        | Status   |
 | ----------- | ------------------------------------------------------- | ----------------- | -------- |
@@ -136,10 +136,9 @@ Batch 3F-R reference adoption refactor; entrypoint: `ROUND_3_REFERENCE_ADOPTION_
 | R3FR-02+06  | `refactor/round3fr-data-health-cli` merged @ `ecf64f06` | data health + CLI | **DONE** |
 | R3FR-03     | `refactor/round3fr-tdx-provider` merged @ `22086d59`    | TDX provider      | **DONE** |
 | R3FR-05     | `feature/round3fr-provider-catalog` merged @ `6c1a0d37` | provider catalog  | **DONE** |
+| R3FR-07     | `chore/round3fr-cleanup-rehome`                         | legacy cleanup    | **DONE** |
 
-**Remaining 3F-R track:** `R3FR-07` legacy wrapper cleanup/rehome (`chore/round3fr-cleanup-rehome`).
-
-**Next batch gate after 3F-R close or ADR defer:** Round **3G** sandbox clean-write rehearsal.
+**Next batch gate:** Round **3G** sandbox clean-write rehearsal — **current executable entrypoint**.
 
 ## Round 3 start checklist
 

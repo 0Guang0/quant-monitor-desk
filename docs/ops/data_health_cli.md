@@ -30,20 +30,20 @@ python scripts/qmd_ops.py data-health
 
 ## 2. Reference adoption boundary
 
-| Reference pattern | Source | Adopt | Do not adopt |
-| ----------------- | ------ | ----- | ------------ |
-| Integrity categories: missing trading days, field quality, price-relation, outliers | [EasyXT](https://github.com/quant-king299/EasyXT) | Map categories to `data_quality_rules.yaml` rule IDs per domain; PASS/WARN/FAIL summary | Hardcoded `stock_daily` table, string-concatenated SQL, automatic source fallback, QMT auto-login |
-| Local DB path override and repeatable CLI runs | [JQ2PTrade](https://github.com/quant-king299/JQ2PTrade) | `--db` / `--duckdb-path`-style override; `--domain` + `--format json` for automation | Backtest engine, strategy conversion, PTrade/JoinQuant order APIs |
-| Operator-readable status and troubleshooting flow | EasyXT + `docs/ops/TROUBLESHOOTING.md` | Text mode with meaning + next-step hints; `error_code` + `docs_anchor` on failures | Trading-platform tutorial content |
+| Reference pattern                                                                   | Source                                                  | Adopt                                                                                   | Do not adopt                                                                                      |
+| ----------------------------------------------------------------------------------- | ------------------------------------------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Integrity categories: missing trading days, field quality, price-relation, outliers | [EasyXT](https://github.com/quant-king299/EasyXT)       | Map categories to `data_quality_rules.yaml` rule IDs per domain; PASS/WARN/FAIL summary | Hardcoded `stock_daily` table, string-concatenated SQL, automatic source fallback, QMT auto-login |
+| Local DB path override and repeatable CLI runs                                      | [JQ2PTrade](https://github.com/quant-king299/JQ2PTrade) | `--db` / `--duckdb-path`-style override; `--domain` + `--format json` for automation    | Backtest engine, strategy conversion, PTrade/JoinQuant order APIs                                 |
+| Operator-readable status and troubleshooting flow                                   | EasyXT + `docs/ops/TROUBLESHOOTING.md`                  | Text mode with meaning + next-step hints; `error_code` + `docs_anchor` on failures      | Trading-platform tutorial content                                                                 |
 
 Adoption rule: borrow check **categories** and local CLI ergonomics only. Rules, tables, and severities come from QMD contracts—not external schemas.
 
 ## 3. Relationship to `qmd ops db-inspect`
 
-| Tool | Question | Default mode | Phase |
-| ---- | -------- | ------------ | ----- |
-| `qmd ops db-inspect` | Does the DB exist, open read-only, and expose metadata/evidence row counts? | read-only | Round 3 Batch 1 (Phase A) |
-| `qmd data health` | Do domain rows satisfy `data_quality_rules.yaml` for the requested window? | read-only | Batch 6 (Phase C) |
+| Tool                 | Question                                                                    | Default mode | Phase                     |
+| -------------------- | --------------------------------------------------------------------------- | ------------ | ------------------------- |
+| `qmd ops db-inspect` | Does the DB exist, open read-only, and expose metadata/evidence row counts? | read-only    | Round 3 Batch 1 (Phase A) |
+| `qmd data health`    | Do domain rows satisfy `data_quality_rules.yaml` for the requested window?  | read-only    | Batch 6 (Phase C)         |
 
 `db-inspect` must not silently grow into data-health checks. Operators run `db-inspect` first for presence/evidence, then `data health` for domain rules.
 
@@ -51,14 +51,14 @@ Adoption rule: borrow check **categories** and local CLI ergonomics only. Rules,
 
 Each category maps to existing validator contracts—not EasyXT table names.
 
-| Category | Example rule IDs | QMD tables (indicative) |
-| -------- | ---------------- | ----------------------- |
-| Calendar completeness | `STALE_DATA`, `INSUFFICIENT_HISTORY` + domain extensions | `security_bar_1d`, layer tables per `--domain` |
-| Field / schema quality | `MISSING_REQUIRED_FIELD`, `SCHEMA_DRIFT`, `INVALID_ENUM` | staging or clean tables per domain |
-| Price relation | `INVALID_PRICE_RANGE`, `NEGATIVE_PRICE`, `INVALID_VOLUME` | `security_bar_1d` |
-| Duplicate keys | `DUPLICATE_PRIMARY_KEY`, `MISSING_PRIMARY_KEY` | domain primary keys |
-| Source lineage | `MISSING_SOURCE_USED`, `FALLBACK_WITHOUT_REASON` | `fetch_log`, `validation_report`, layer1 tables |
-| Conflict awareness | read-only summary from `source_conflict` | `source_conflict`, `manual_review_queue` |
+| Category               | Example rule IDs                                          | QMD tables (indicative)                         |
+| ---------------------- | --------------------------------------------------------- | ----------------------------------------------- |
+| Calendar completeness  | `STALE_DATA`, `INSUFFICIENT_HISTORY` + domain extensions  | `security_bar_1d`, layer tables per `--domain`  |
+| Field / schema quality | `MISSING_REQUIRED_FIELD`, `SCHEMA_DRIFT`, `INVALID_ENUM`  | staging or clean tables per domain              |
+| Price relation         | `INVALID_PRICE_RANGE`, `NEGATIVE_PRICE`, `INVALID_VOLUME` | `security_bar_1d`                               |
+| Duplicate keys         | `DUPLICATE_PRIMARY_KEY`, `MISSING_PRIMARY_KEY`            | domain primary keys                             |
+| Source lineage         | `MISSING_SOURCE_USED`, `FALLBACK_WITHOUT_REASON`          | `fetch_log`, `validation_report`, layer1 tables |
+| Conflict awareness     | read-only summary from `source_conflict`                  | `source_conflict`, `manual_review_queue`        |
 
 Conflict **resolution** stays in `SourceConflictValidator` / `ReconcileJob`. Data health CLI may **report** open conflicts but must not auto-reconcile or write.
 
@@ -74,7 +74,7 @@ qmd data health \
   --format json
 ```
 
-Optional read-only DB override:
+Optional read-only DB override (bounded `fetch_log.schema_hash` scan when file exists; domain rules remain evidence-driven):
 
 ```bash
 qmd data health --db-path data/duckdb/quant_monitor.duckdb --domain market_bar_1d --profile market_bar_p0 --evidence-dir <path>
@@ -82,15 +82,15 @@ qmd data health --db-path data/duckdb/quant_monitor.duckdb --domain market_bar_1
 
 ### 5.2 Arguments (canonical — frozen §6.3)
 
-| Argument | Required | Default | Behavior |
-| -------- | -------- | ------- | -------- |
-| `--domain` | Yes | — | `market_bar_1d` (maps to `ops_cli_profiles`) |
-| `--profile` | Yes | — | `market_bar_p0` (not `--rule-set`) |
-| `--evidence-dir` | Yes* | — | Evidence bundle root (`good_bundle` in tests) |
-| `--db-path` | No | — | Optional read-only DuckDB (not `--db`) |
-| `--start` / `--end` | No | — | Inclusive date window on bar rows |
-| `--max-rows` | No | 1000 | Cap report detail rows |
-| `--format` | No | `json` | `json` or `text` |
+| Argument            | Required | Default | Behavior                                                                                        |
+| ------------------- | -------- | ------- | ----------------------------------------------------------------------------------------------- |
+| `--domain`          | Yes      | —       | `market_bar_1d` (maps to `ops_cli_profiles`)                                                    |
+| `--profile`         | Yes      | —       | `market_bar_p0` (not `--rule-set`)                                                              |
+| `--evidence-dir`    | Yes\*    | —       | Evidence bundle root (`good_bundle` in tests)                                                   |
+| `--db-path`         | No       | —       | Optional read-only DuckDB; bounded `fetch_log.schema_hash` coverage in envelope when rows exist |
+| `--start` / `--end` | No       | —       | Inclusive date window on bar rows                                                               |
+| `--max-rows`        | No       | 1000    | Cap report detail rows                                                                          |
+| `--format`          | No       | `json`  | `json` or `text`                                                                                |
 
 \* Required for supported profiles in the R3FR-02+06 vertical slice.
 
@@ -173,21 +173,21 @@ Next: run user-authorized staging fetch or narrow --start/--end.
 
 ## 8. Implementation locations (future)
 
-| Artifact | Path |
-| -------- | ---- |
-| Backend service | `backend/app/ops/data_health.py` |
-| CLI wrapper | `scripts/qmd_ops.py` or `backend/app/cli/main.py` |
-| Tests | `tests/test_ops_data_health.py` |
-| Design doc | `docs/ops/data_health_cli.md` (this file) |
-| Machine rules | `specs/contracts/data_quality_rules.yaml` |
+| Artifact        | Path                                              |
+| --------------- | ------------------------------------------------- |
+| Backend service | `backend/app/ops/data_health.py`                  |
+| CLI wrapper     | `scripts/qmd_ops.py` or `backend/app/cli/main.py` |
+| Tests           | `tests/test_ops_data_health.py`                   |
+| Design doc      | `docs/ops/data_health_cli.md` (this file)         |
+| Machine rules   | `specs/contracts/data_quality_rules.yaml`         |
 
 ## 9. Phase plan
 
-| Phase | When | Scope |
-| ----- | ---- | ----- |
-| Phase A | Round 3 Batch 1 | `qmd ops db-inspect` only (no domain rules) |
-| Phase C | Batch 6 | `qmd data health` read-only checks from `ops_cli_profiles` |
-| Later | After migration design | optional persisted health snapshot write mode |
+| Phase   | When                   | Scope                                                      |
+| ------- | ---------------------- | ---------------------------------------------------------- |
+| Phase A | Round 3 Batch 1        | `qmd ops db-inspect` only (no domain rules)                |
+| Phase C | Batch 6                | `qmd data health` read-only checks from `ops_cli_profiles` |
+| Later   | After migration design | optional persisted health snapshot write mode              |
 
 ## 10. Trellis trace
 

@@ -151,6 +151,10 @@ def health_check(
     full_market_scan: bool = False,
     full_history: bool = False,
 ) -> dict[str, Any]:
+    """``qmd data health`` CLI entry — delegates to ``run_data_health_profile`` (R3FR-06).
+
+    Canonical read-only runner: ``backend.app.ops.data_health_profiles``.
+    """
     from backend.app.ops.data_health import DataHealthLoadError
     from backend.app.ops.data_health_profiles import (
         DataHealthIngestLimitError,
@@ -186,7 +190,7 @@ def health_check(
         )
 
     try:
-        report, limitations, hash_coverage, window = run_data_health_profile(
+        report, limitations, hash_coverage, schema_coverage, window = run_data_health_profile(
             profile_id=profile,
             domain=data_domain,
             evidence_path=evidence_dir,
@@ -221,6 +225,7 @@ def health_check(
         source_ids=source_ids,
         limitations=limitations,
         content_hash_coverage=hash_coverage,
+        schema_hash_coverage=schema_coverage,
     )
 
 

@@ -127,14 +127,16 @@ def test_dataHealthDailyBar_duplicateKey_fails() -> None:
 
 def test_dataHealthDailyBar_negativeVolume_fails() -> None:
     """覆盖范围：日 K 负成交量
-    测试对象：daily bar volume rule
-    目的/目标：NEGATIVE_VOLUME 可被检出
-    验证点：checks 含 NEGATIVE_VOLUME 且 status FAIL
+    测试对象：daily bar volume rule via shared OHLCV orchestrator
+    目的/目标：非正 volume 可被检出（与 profile OHLCV 轨一致）
+    验证点：checks 含 NON_POSITIVE_PRICE 且 status FAIL
     失败含义：非法成交量通过检查
     """
     bars = [dict(_GOOD_BAR, volume=-1), dict(_GOOD_BAR, trade_date="2024-01-03")]
     checks = check_daily_bars(bars)
-    assert any(c.rule_id == "NEGATIVE_VOLUME" and c.status == "FAIL" for c in checks)
+    assert any(
+        c.rule_id == "NON_POSITIVE_PRICE" and c.status == "FAIL" for c in checks
+    )
 
 
 def test_dataHealthDailyBar_insufficientHistory_fails() -> None:

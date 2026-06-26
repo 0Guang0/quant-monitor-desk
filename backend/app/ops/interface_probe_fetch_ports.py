@@ -1,4 +1,9 @@
-"""Sandbox fetch ports for 018C data-interface probe."""
+"""Sandbox fetch ports for 018C data-interface probe.
+
+TDX probe boundary: ``TdxPytdxProbeFetchPort`` is a thin delegate to QMD-owned
+``TdxPytdxFetchPort`` (``backend.app.datasources.fetch_ports.tdx_pytdx_port``).
+Do not grow TDX download logic here (R3FR-03 canonical provider).
+"""
 
 from __future__ import annotations
 
@@ -21,6 +26,8 @@ SINA_DAILY_VENDOR_API = "stock_zh_a_daily"
 
 @dataclass(frozen=True)
 class AkshareSinaDailyValidationFetchPort:
+    """018C sandbox validation-only; triggers live akshare network — not a default CLI path."""
+
     symbols: Sequence[str]
     max_rows: int
 

@@ -793,6 +793,24 @@ tests/test_r3f_br_backfill_reconcile_closure.py:
       - docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/BATCH_3F_HARDENING_RULES.md
     specs:
       - specs/contracts/sync_job_contract.yaml
+tests/test_r3fr07_legacy_wrapper_cleanup.py:
+  command: uv run python -m pytest tests/test_r3fr07_legacy_wrapper_cleanup.py -q
+  failure_meaning:
+    Regression in test_r3fr07_legacy_wrapper_cleanup; inspect purpose
+    and linked authorities.
+  purpose: R3FR-07 legacy wrapper cleanup — doc redirect and batch-close guardrails.
+  type: runtime-contract
+  verifies:
+    docs:
+      - docs/implementation_tasks/ROUND_3_REFERENCE_ADOPTION_REFACTOR/BATCH_3FR_REFERENCE_ADOPTION_REFACTOR/R3FR_07_LEGACY_WRAPPER_CLEANUP_AND_REDIRECTS.md
+      - docs/implementation_tasks/ROUND_3_REFERENCE_ADOPTION_REFACTOR/BATCH_3FR_REFERENCE_ADOPTION_REFACTOR/BATCH_3FR_TASK_CARD_MANIFEST.md
+      - docs/ops/data_health_cli.md
+      - docs/ops/data_init_basic_cli.md
+    rules:
+      - docs/implementation_tasks/ROUND_3_REFERENCE_ADOPTION_REFACTOR/BATCH_3FR_REFERENCE_ADOPTION_REFACTOR/BATCH_3FR_HARDENING_RULES.md
+    specs:
+      - specs/contracts/data_cli_contract.yaml
+      - specs/contracts/reference_adoption_guardrails.yaml
 tests/test_r3h_adapter_evidence_matrix.py:
   command: uv run python -m pytest tests/test_r3h_adapter_evidence_matrix.py -q
   failure_meaning:

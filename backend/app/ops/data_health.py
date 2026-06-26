@@ -658,26 +658,25 @@ def check_daily_bars(
     source_id: str | None = "baostock",
     min_history: int = _MIN_DAILY_BAR_HISTORY,
 ) -> list[DataHealthCheckResult]:
-    checks = check_insufficient_history_bars(
-        bars,
-        domain=domain,
-        source_id=source_id,
-        min_history=min_history,
-        empty_rule_id="EMPTY_RESPONSE",
+    """Evidence-path daily bar OHLCV shim (C-20).
+
+    Canonical read-only profile runtime: ``run_data_health_profile`` /
+    ``market_bar_p0`` in ``backend.app.ops.data_health_profiles``.
+    Retained for staged evidence bundle scans only; do not add new rules here.
+    """
+    if not bars:
+        return check_insufficient_history_bars(
+            bars,
+            domain=domain,
+            source_id=source_id,
+            min_history=min_history,
+            empty_rule_id="EMPTY_RESPONSE",
+        )
+    ohlcv = run_profile_ohlcv_rules(
+        bars, domain=domain, source_id=source_id, min_history=min_history
     )
-    if checks:
-        return checks
-    checks.extend(check_duplicate_bar_keys(bars, domain=domain, source_id=source_id))
-    if checks:
-        return checks
-    checks.extend(check_invalid_ohlc_relations(bars, domain=domain, source_id=source_id))
-    if checks:
-        return checks
-    checks.extend(
-        check_negative_bar_volume(bars, domain=domain, source_id=source_id)
-    )
-    if checks:
-        return checks
+    if ohlcv:
+        return ohlcv
     return [
         _pass_check(
             "INVALID_OHLC",
@@ -1351,8 +1350,32 @@ def _evaluate_rollup_gate(
     )
 
 
-def _checks_source_readiness_rollup(evidence_dir: Path) -> list[DataHealthCheckResult]:
+# ponytail: staged caps bound rollup recursion; upgrade path = explicit cycle detection graph
+_ROLLUP_MAX_DEPTH = 8
+
+
+def _rollup_overall_status(checks: list[DataHealthCheckResult]) -> OverallStatus:
+    if any(c.status == "FAIL" for c in checks):
+        return "FAIL"
+    if any(c.status == "BLOCKED" for c in checks):
+        return "BLOCKED"
+    if any(c.status == "WARN" for c in checks):
+        return "WARN"
+    return "PASS"
+
+
+def _checks_source_readiness_rollup(
+    evidence_dir: Path, *, _depth: int = 0
+) -> list[DataHealthCheckResult]:
     domain = "source_readiness_rollup"
+    if _depth > _ROLLUP_MAX_DEPTH:
+        return [
+            _fail_check(
+                "ROLLUP_DEPTH_EXCEEDED",
+                domain=domain,
+                message=f"rollup nesting exceeded max depth ({_ROLLUP_MAX_DEPTH})",
+            )
+        ]
     rollup = _read_profile_json(evidence_dir, ("rollup_manifest.json",))
     if rollup is None:
         return [
@@ -1378,6 +1401,34 @@ def _checks_source_readiness_rollup(evidence_dir: Path) -> list[DataHealthCheckR
                     evidence_path=str(rel_path),
                 )
             )
+            continue
+        if str(profile_name) == "source_readiness_rollup":
+            nested = _checks_source_readiness_rollup(sub_dir, _depth=_depth + 1)
+            sub_status = _rollup_overall_status(nested)
+            rollup_severity = (
+                "INFO"
+                if sub_status == "PASS"
+                else "FAIL"
+                if sub_status == "FAIL"
+                else "WARN"
+            )
+            checks.append(
+                DataHealthCheckResult(
+                    rule_id=f"ROLLUP_{profile_name}",
+                    severity=rollup_severity,
+                    status=(
+                        "PASS"
+                        if sub_status == "PASS"
+                        else sub_status  # type: ignore[arg-type]
+                    ),
+                    source_id=None,
+                    domain=domain,
+                    evidence_path=str(rel_path),
+                    row_count=len(nested),
+                    message=f"{profile_name} overall={sub_status}",
+                )
+            )
+            checks.extend(nested)
             continue
         sub_report = service.check_evidence_dir(sub_dir, profile=str(profile_name))
         rollup_severity = (

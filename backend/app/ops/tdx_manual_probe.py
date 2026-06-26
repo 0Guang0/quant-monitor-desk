@@ -1,4 +1,9 @@
-"""TDX manual probe — mocked CI path + opt-in live path (Batch 01 B01-TDX)."""
+"""TDX manual probe — mocked CI path + opt-in live path (Batch 01 B01-TDX).
+
+Probe orchestration only. TDX fetch implementation lives in
+``TdxPytdxFetchPort`` (R3FR-03); ``TdxPytdxProbeFetchPort`` in
+``interface_probe_fetch_ports`` is the thin delegate boundary.
+"""
 
 from __future__ import annotations
 

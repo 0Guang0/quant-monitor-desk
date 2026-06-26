@@ -640,6 +640,29 @@ CURATED: dict[str, dict] = {
             "market_bar_p0 profile incomplete, rule ID drift, or CLI/runtime disconnect."
         ),
     },
+    "tests/test_r3fr07_legacy_wrapper_cleanup.py": {
+        "purpose": "R3FR-07 legacy wrapper cleanup — doc redirect and batch-close guardrails.",
+        "type": "runtime-contract",
+        "verifies": {
+            "docs": [
+                "docs/implementation_tasks/ROUND_3_REFERENCE_ADOPTION_REFACTOR/BATCH_3FR_REFERENCE_ADOPTION_REFACTOR/R3FR_07_LEGACY_WRAPPER_CLEANUP_AND_REDIRECTS.md",
+                "docs/implementation_tasks/ROUND_3_REFERENCE_ADOPTION_REFACTOR/BATCH_3FR_REFERENCE_ADOPTION_REFACTOR/BATCH_3FR_TASK_CARD_MANIFEST.md",
+                "docs/ops/data_health_cli.md",
+                "docs/ops/data_init_basic_cli.md",
+            ],
+            "specs": [
+                "specs/contracts/data_cli_contract.yaml",
+                "specs/contracts/reference_adoption_guardrails.yaml",
+            ],
+            "rules": [
+                "docs/implementation_tasks/ROUND_3_REFERENCE_ADOPTION_REFACTOR/BATCH_3FR_REFERENCE_ADOPTION_REFACTOR/BATCH_3FR_HARDENING_RULES.md",
+            ],
+        },
+        "command": "uv run python -m pytest tests/test_r3fr07_legacy_wrapper_cleanup.py -q",
+        "failure_meaning": (
+            "Regression in test_r3fr07_legacy_wrapper_cleanup; inspect purpose and linked authorities."
+        ),
+    },
 }
 
 

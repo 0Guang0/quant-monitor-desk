@@ -6,6 +6,7 @@ commands:
   qmd data init-basic:
     default_mode: dry_run
     writes_allowed_when_confirmed: [schema, registry]
+    docs_anchor: docs/ops/data_init_basic_cli.md
   qmd data sync:
     required_args: [domain]
     optional_args: [start, end, since, dry-run]

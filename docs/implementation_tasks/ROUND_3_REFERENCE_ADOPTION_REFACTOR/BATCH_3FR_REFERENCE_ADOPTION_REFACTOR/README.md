@@ -1,8 +1,8 @@
 # Batch 3F-R — Mature Reference Adoption Refactor
 
-> **Canonical entrypoint:** this file.  
-> **Placement:** after Batch 3F completion and before Round 3G sandbox clean-write rehearsal.  
-> **Primary goal:** replace or harden thin self-built modules with adapted, licensed, mature reference project logic while preserving QMD governance gates.
+> **Canonical status:** **CLOSED** (R3FR-01..07 complete).  
+> **Placement:** completed between Batch 3F and Round 3G.  
+> **Next batch:** `ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/README.md`.
 
 ---
 
@@ -40,8 +40,8 @@ Required in this batch:
 | `R3FR-03` | `R3FR_03_TDX_PROVIDER_REFACTOR.md`                | pytdx provider refactor behind QMD authorization gates                                           | `TdxPytdxProbeFetchPort` and future TDX adapter internals                                                                         | EasyXT `easy_xt/realtime_data/providers/tdx_provider.py` |
 | `R3FR-04` | `R3FR_04_JQ2PTRADE_BACKTEST_ADOPTION_PLAN.md`     | Round4 backtest avoids from-scratch engine                                                       | Round4 `029`, `B04_05` planning                                                                                                   | JQ2PTrade `ptrade_local/**`, `api_mapping.json`          |
 | `R3FR-05` | `R3FR_05_PROVIDER_CATALOG_OPENBB_REFERENCE.md`    | provider catalog and optional extras contract                                                    | ad hoc provider/plugin planning                                                                                                   | OpenBB provider structure, no source copy                |
-| `R3FR-06` | `R3FR_06_QMD_DATA_HEALTH_CLI_RUNTIME.md`          | `qmd data health` connects to real read-only profiles                                            | CLI `not_implemented_phase_c` placeholder                                                                                         | EasyXT report shape + QMD data health                    |
-| `R3FR-07` | `R3FR_07_LEGACY_WRAPPER_CLEANUP_AND_REDIRECTS.md` | retire thin wrappers after parity tests; batch-folder rehome plan                                | loose unfinished cards and thin wrappers                                                                                          | QMD tests + task-local reference adoption rules          |
+| `R3FR-06` | `R3FR_06_QMD_DATA_HEALTH_CLI_RUNTIME.md`          | **Done** — `qmd data health` → `run_data_health_profile` read-only runtime                       | ~~CLI placeholder~~ (closed @ `ecf64f06`)                                                                                         | EasyXT report shape + QMD data health                    |
+| `R3FR-07` | `R3FR_07_LEGACY_WRAPPER_CLEANUP_AND_REDIRECTS.md` | **Done** — legacy wrapper redirect docs + 3F-R batch close                                       | loose cards and thin wrapper docstrings                                                                                           | QMD tests + task-local reference adoption rules          |
 
 ---
 
@@ -57,11 +57,11 @@ Required in this batch:
 
 ## 3. Done criteria
 
-Batch 3F-R is done when:
+Batch 3F-R is **closed** when (all satisfied):
 
-- `PROJECT_IMPLEMENTATION_ROADMAP.md` names 3F-R as the first executable entrypoint until this batch closes.
+- `PROJECT_IMPLEMENTATION_ROADMAP.md` names Round 3G as the next executable entrypoint.
 - Reference adoption rules require executable details to live inside the relevant task card and distinguish direct adaptation vs architecture-only reference.
-- `qmd data health` no longer reports `not_implemented_phase_c` for the supported read-only profiles.
+- `qmd data health` uses `run_data_health_profile` for supported read-only profiles (R3FR-06 @ `ecf64f06`).
 - EasyXT-derived OHLCV/calendar/data-integrity checks are represented in QMD profile modules and tests.
 - TDX provider internals are separated from probe orchestration and cannot default-enable live/raw fetch.
 - Round4 backtest cards explicitly require JQ2PTrade/EasyXT adaptation rather than from-scratch engine design.

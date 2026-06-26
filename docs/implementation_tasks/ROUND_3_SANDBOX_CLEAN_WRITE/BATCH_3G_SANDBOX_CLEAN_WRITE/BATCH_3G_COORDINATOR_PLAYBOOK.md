@@ -4,7 +4,7 @@
 
 Coordinate Batch 3G from this folder only. README is the entrypoint; each Task ID has its own executable card.
 
-Batch 3G must not start unless Round 3F-R is complete or every open 3F-R item has an ADR with owner, deferred phase, and closure gate.
+Batch 3G may start because Round 3F-R is **closed** (roadmap condition A). If 3F-R were incomplete, entry would require ADR defer per open item — that path does not apply after R3FR-07.
 
 ## 1. Dispatch tracks
 

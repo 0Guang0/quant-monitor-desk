@@ -29,13 +29,13 @@ Loose historical task cards may remain temporarily, but they must be treated as 
 
 ## 2. Current canonical packages
 
-| Batch      | Canonical folder                                                              | Status                                  |
-| ---------- | ----------------------------------------------------------------------------- | --------------------------------------- |
-| Batch 3F   | `ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/`             | completed, historical/evidence input    |
-| Batch 3F-R | `ROUND_3_REFERENCE_ADOPTION_REFACTOR/BATCH_3FR_REFERENCE_ADOPTION_REFACTOR/`  | current executable package              |
-| Batch 3G   | `ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/`                   | future package, blocked by 3F-R         |
-| Batch 04   | `ROUND_4_API_FRONTEND_AGENT_BACKTEST/BATCH_04_VERIFIED_AUDIT_PRODUCTIZATION/` | future canonical productization package |
-| Batch 05   | `ROUND_5_INTEGRATION_RELEASE/BATCH_05_VERIFIED_AUDIT_SECURITY_RELEASE/`       | future canonical release package        |
+| Batch      | Canonical folder                                                              | Status                                                      |
+| ---------- | ----------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| Batch 3F   | `ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/`             | completed, historical/evidence input                        |
+| Batch 3F-R | `ROUND_3_REFERENCE_ADOPTION_REFACTOR/BATCH_3FR_REFERENCE_ADOPTION_REFACTOR/`  | **closed** @ R3FR-07; historical/evidence input             |
+| Batch 3G   | `ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/`                   | **current** executable package (3F-R condition A satisfied) |
+| Batch 04   | `ROUND_4_API_FRONTEND_AGENT_BACKTEST/BATCH_04_VERIFIED_AUDIT_PRODUCTIZATION/` | future canonical productization package                     |
+| Batch 05   | `ROUND_5_INTEGRATION_RELEASE/BATCH_05_VERIFIED_AUDIT_SECURITY_RELEASE/`       | future canonical release package                            |
 
 ---
 

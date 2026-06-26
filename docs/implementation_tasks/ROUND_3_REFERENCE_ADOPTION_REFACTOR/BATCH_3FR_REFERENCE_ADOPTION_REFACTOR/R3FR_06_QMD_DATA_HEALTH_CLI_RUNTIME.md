@@ -1,5 +1,9 @@
 # R3FR-06 — `qmd data health` Runtime
 
+> **Status:** **Done** (merged @ `ecf64f06`); historical narrative below preserved for traceability.  
+> **Canonical runtime:** `run_data_health_profile` in `backend.app.ops.data_health_profiles`.  
+> **Do not re-implement:** this card is completed; redirect/cleanup notes live in R3FR-07.
+
 > **Batch:** Batch 3F-R — Mature Reference Adoption Refactor  
 > **Module movement:** Data CLI health must move from placeholder to real read-only profile runtime for supported profiles.  
 > **Execution posture:** read-only; no live fetch; no clean write.

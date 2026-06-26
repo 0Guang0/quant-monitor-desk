@@ -6,7 +6,7 @@
 >
 > Scope rule: `docs/` and `specs/` are design/contract inputs only. Runtime implementation must land in `backend/`, `frontend/`, `scripts/`, `configs/`, `tests/`, or other implementation paths already mapped by `MIGRATION_MAP.md`.
 >
-> Current checkpoint (2026-06-27): Mainline **`master`** @ **`6c1a0d37`** (post R3FR-03 + R3FR-05 merges). **Active — Round 3F-R:** only `R3FR-07` cleanup remains before 3G. Forward planning SSOT is `PROJECT_IMPLEMENTATION_ROADMAP.md`; this map is historical evidence/index only.
+> Current checkpoint (2026-06-27): Mainline post R3FR-07. **Batch 3F-R CLOSED**; **active next batch: Round 3G** (`BATCH_3G_SANDBOX_CLEAN_WRITE/`). Forward planning SSOT is `PROJECT_IMPLEMENTATION_ROADMAP.md`; this map is historical evidence/index only.
 >
 > Planning correction (2026-06-26): this historical map must not be read as Round4 admission authority. Canonical forward order is 3F-R → 3G → **3H** → Batch04 → Batch05. Batch3H is mandatory before Round4: every target source must be `READY_WITH_EVIDENCE` or `ADR_DISABLED_OUT_OF_SCOPE`; vague proposed-disabled source rows block Round4 through `BLOCK_ROUND4_DATA_ENTRY_INCOMPLETE`.
 

@@ -255,7 +255,7 @@ def test_profile_runner_goodEvidence_passes() -> None:
     验证点：overall_status 非 BLOCKED；checks 非空
     失败含义：runner 未接线或证据加载失败
     """
-    report, _, _, _ = run_data_health_profile(
+    report, _, _, _, _ = run_data_health_profile(
         profile_id="market_bar_p0",
         domain="market_bar_1d",
         evidence_path=_GOOD_BUNDLE,
@@ -279,7 +279,7 @@ def test_evidence_bundle_loadsBars() -> None:
     验证点：checks 中至少一条 row_count ≥ 2
     失败含义：evidence 解析未加载 bars.json
     """
-    report, _, _, _ = run_data_health_profile(
+    report, _, _, _, _ = run_data_health_profile(
         profile_id="market_bar_p0",
         domain="market_bar_1d",
         evidence_path=_GOOD_BUNDLE,
@@ -331,7 +331,7 @@ def test_missing_sourceUsed_onBadManifest(tmp_path: Path) -> None:
         json.dumps(manifest), encoding="utf-8"
     )
 
-    report, _, _, _ = run_data_health_profile(
+    report, _, _, _, _ = run_data_health_profile(
         profile_id="market_bar_p0",
         domain="market_bar_1d",
         evidence_path=evidence,
@@ -384,6 +384,53 @@ def test_malformedBarJson_raisesLoadError(tmp_path: Path) -> None:
             end_date=None,
             max_rows=50,
         )
+
+
+def test_profileRunner_dbPath_populatesSchemaHashCoverage(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, registry_yaml_fixture: Path
+) -> None:
+    """覆盖范围：db-path 只读 schema_hash 扫描（A7-002/003）
+    测试对象：run_data_health_profile + fetch_log
+    目的/目标：提供 db-path 时 envelope 可含 bounded schema_hash_coverage
+    验证点：schema_hash_coverage 非空；limitations 声明只读扫描
+    失败含义：db-path 参数无实际 lineage 价值
+    """
+    from backend.app.cli import data_commands
+    from backend.app.db.connection import ConnectionManager
+
+    data_root = tmp_path / "data"
+    data_root.mkdir()
+    monkeypatch.setenv("QMD_DATA_ROOT", str(data_root))
+    db_path = data_root / "duckdb" / "quant_monitor.duckdb"
+    data_commands.init_basic(dry_run=False, db_path=db_path)
+    cm = ConnectionManager(db_path)
+    with cm.writer() as con:
+        con.execute(
+            """
+            INSERT INTO fetch_log (
+                fetch_id, source_id, data_domain, schema_hash, raw_file_paths, status
+            ) VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            [
+                "fetch-schema-1",
+                "baostock",
+                "market_bar_1d",
+                "sha256-schema-test",
+                '["raw/bars.json"]',
+                "SUCCESS",
+            ],
+        )
+    _, limitations, _, schema_coverage, _ = run_data_health_profile(
+        profile_id="market_bar_p0",
+        domain="market_bar_1d",
+        evidence_path=_GOOD_BUNDLE,
+        db_path=db_path,
+        start_date=None,
+        end_date=None,
+        max_rows=50,
+    )
+    assert schema_coverage.get("sha256-schema-test") == ["raw/bars.json"]
+    assert any("schema_hash" in item.lower() for item in limitations)
 
 
 def test_dataHealthProfiles_attributionPresent() -> None:

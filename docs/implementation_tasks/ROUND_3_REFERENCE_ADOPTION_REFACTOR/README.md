@@ -1,8 +1,8 @@
 # Round 3F-R — Reference Adoption Refactor
 
-> **Canonical status:** post-3F / pre-3G planning package.  
-> **Reason:** Batch 3F is complete and green, but several thin self-built modules now need controlled replacement or hardening using mature reference projects before sandbox clean-write rehearsal.  
-> **Executable batch entrypoint:** `BATCH_3FR_REFERENCE_ADOPTION_REFACTOR/README.md`.
+> **Canonical status:** **CLOSED** (Batch 3F-R complete @ R3FR-07). Next entry: Round 3G.  
+> **Reason:** Batch 3F-R replaced or hardened thin wrappers (data health, CLI, TDX, provider catalog) with tested QMD-owned implementations.  
+> **Historical entrypoint:** `BATCH_3FR_REFERENCE_ADOPTION_REFACTOR/README.md` (manifest + redirect notes only).
 
 ---
 
@@ -47,9 +47,9 @@ The anti-overengineering rule applies here: each module must be planned to reach
 
 3F-R targets existing thin wheels that are already present after 3F:
 
-1. `backend/app/ops/data_health.py` daily bar checks are too thin compared with EasyXT integrity checks.
-2. `backend/app/cli/data_commands.py::health_check` still returns `not_implemented_phase_c`, even though Batch 3F has completed.
-3. `backend/app/ops/interface_probe_fetch_ports.py::TdxPytdxProbeFetchPort` should not grow into a self-written TDX downloader; TDX connection/provider details should be adapted from EasyXT or another vetted pytdx provider while keeping QMD authorization and caps.
+1. ~~`backend/app/ops/data_health.py` daily bar checks~~ — **Done (R3FR-02):** `market_bar_p0` profile + shared OHLCV rules; evidence-path `check_daily_bars` remains a compatibility shim with redirect docstring.
+2. ~~`backend/app/cli/data_commands.py::health_check` placeholder~~ — **Done (R3FR-06):** `qmd data health` delegates to `run_data_health_profile` read-only runtime.
+3. ~~`TdxPytdxProbeFetchPort` self-written downloader risk~~ — **Done (R3FR-03):** thin delegate to `TdxPytdxFetchPort`; probe orchestration stays in `tdx_manual_probe`.
 4. Round4 backtest task cards must stop implying a from-scratch backtest engine; they must explicitly adapt JQ2PTrade MiniPTrade local DuckDB lifecycle and selected EasyXT performance/report ideas.
 5. Provider/plugin planning must stop being ad hoc; create a QMD provider catalog inspired by OpenBB provider metadata, without copying AGPL source.
 
