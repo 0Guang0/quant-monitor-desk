@@ -1,18 +1,24 @@
-# R3FR-01: Reference rules and license gate
+# R3FR-01: Reference rules and license gate (re-execution)
 
 ## Goal
 
-把参考项目采纳规则固化到 `reference_adoption_guardrails.yaml`，用 pytest 机读验收；不新建中央 `reference_adoption_inventory.md` 执行依赖。
+重跑参考项目治理：护栏契约、生产补齐覆盖地图边界、下游任务卡可执行性、规划文件业务口径与静态机读验收；**不修改 runtime 代码**，不新建中央 executable inventory。
 
-## Acceptance Criteria
+## Acceptance Criteria (slices A–E)
 
-- [x] `reference_adoption_guardrails.yaml`：`status=active_round3fr`，含完整 `license_gate` + `completion_rules` + `required_tests`
-- [x] `tests/test_reference_adoption_guardrails.py` 覆盖 R3FR-01 §5 + 对抗审计补强（scripts 扫描、AST trading def、任务卡 `reference_project`）
-- [x] `README.md` / `PROJECT_IMPLEMENTATION_ROADMAP.md` / `MODULE_COMPLETION_RATING.md` 交叉引用护栏 SSOT
-- [x] R3FR-02..07 采纳卡含 `reference_project:` 块
+- [x] **A** `reference_adoption_guardrails.yaml`：任务卡本地执行、`PRODUCTION_COMPLETION_VERTICAL_SLICE_PLAN.md` 仅为覆盖地图、禁止 runtime import 等 P0 模式
+- [x] **B** `PRODUCTION_COMPLETION_VERTICAL_SLICE_PLAN.md` 首屏边界说明完整
+- [x] **C** R3G/R3H/Batch04/Batch05 与 `029` 松散卡 redirect 审计通过
+- [x] **D** `PROJECT_IMPLEMENTATION_ROADMAP.md`、`MODULE_COMPLETION_RATING.md`、`docs/implementation_tasks/README.md` 含「地图不是工单；任务卡才是工单」
+- [x] **E** `tests/test_reference_adoption_guardrails.py`（含新增 planning/redirect 用例）+ docs index + `loop_maintain.py` 全绿
+
+## Evidence
+
+- 护栏测试：`uv run pytest tests/test_reference_adoption_guardrails.py -q`
+- 文档索引：`uv run pytest tests/test_documentation_index.py tests/test_docs_specs_indexed.py -q`
+- Loop：`uv run python scripts/loop_maintain.py`
 
 ## Notes
 
-- 分支：`chore/round3fr-reference-rules-license-gate`
-- 源路由边界仍由 `test_module_boundaries` / datasource contracts 覆盖，不在本批重复
-- 下一批：R3FR-02 + R3FR-06（data health + CLI 垂直切片）
+- 下一批入口：**R3FR-02 + R3FR-06**（data health 垂直切片）
+- SSOT：`specs/contracts/reference_adoption_guardrails.yaml`

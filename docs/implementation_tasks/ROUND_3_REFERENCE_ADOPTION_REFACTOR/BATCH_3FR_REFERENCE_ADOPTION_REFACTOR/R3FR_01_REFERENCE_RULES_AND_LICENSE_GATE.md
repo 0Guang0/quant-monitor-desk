@@ -1,7 +1,7 @@
 # R3FR-01 — Reference Governance Re-execution Plan
 
 > **Batch:** Batch 3F-R — Mature Reference Adoption Refactor  
-> **Status:** rewritten after production-completion planning audit; execute this card again before downstream reference-adoption work.  
+> **Status:** re-execution complete (slices A–E); merge before downstream reference-adoption code work.  
 > **Execution posture:** docs/contracts/tests planning gate only; no runtime fetch; no clean write; no source enablement.  
 > **Business purpose:** make sure QMD can borrow mature ideas from reference projects without creating legal risk, unsafe trading behavior, or another confusing “central plan” that execution agents blindly follow.
 
@@ -100,10 +100,10 @@ The executor must complete these slices in order. Each slice is independently re
 
 **Acceptance criteria:**
 
-- [ ] `specs/contracts/reference_adoption_guardrails.yaml` says executable reference details must stay task-card-local.
-- [ ] It says `PRODUCTION_COMPLETION_VERTICAL_SLICE_PLAN.md` is a coverage/navigation supplement, not a standalone execution card.
-- [ ] It says downstream tasks may cite the production plan only as a coverage checklist.
-- [ ] It still blocks runtime import from `参考项目/**`, OpenBB runtime copy, JQ2PTrade execution hooks, trading/action APIs, auto-login, silent fallback, and Agent-triggered writes.
+- [x] `specs/contracts/reference_adoption_guardrails.yaml` says executable reference details must stay task-card-local.
+- [x] It says `PRODUCTION_COMPLETION_VERTICAL_SLICE_PLAN.md` is a coverage/navigation supplement, not a standalone execution card.
+- [x] It says downstream tasks may cite the production plan only as a coverage checklist.
+- [x] It still blocks runtime import from `参考项目/**`, OpenBB runtime copy, JQ2PTrade execution hooks, trading/action APIs, auto-login, silent fallback, and Agent-triggered writes.
 
 **Blocked by:** None - can start immediately.
 
@@ -119,10 +119,10 @@ The executor must complete these slices in order. Each slice is independently re
 
 **Acceptance criteria:**
 
-- [ ] The file states in plain language that it is a navigation/coverage checklist.
-- [ ] It states that implementation agents must execute from the owning canonical task card.
-- [ ] It states that a slice in this plan is not executable until the owning task card contains local reference-adoption details and acceptance criteria.
-- [ ] It preserves the to-issues-style slice breakdown as planning material.
+- [x] The file states in plain language that it is a navigation/coverage checklist.
+- [x] It states that implementation agents must execute from the owning canonical task card.
+- [x] It states that a slice in this plan is not executable until the owning task card contains local reference-adoption details and acceptance criteria.
+- [x] It preserves the to-issues-style slice breakdown as planning material.
 
 **Blocked by:** Slice R3FR-01-A.
 
@@ -138,11 +138,11 @@ The executor must complete these slices in order. Each slice is independently re
 
 **Acceptance criteria:**
 
-- [ ] R3G cards still contain local EasyXT/JQ2PTrade/OpenBB rewrite details and do not depend on a central inventory.
-- [ ] R3H source cards still contain local provider/reference boundaries and per-source completion conditions.
-- [ ] Batch04 cards that use reference projects point to local executable cards, especially B04_02, B04_03, B04_04, and B04_05.
-- [ ] Batch05 cards treat missing production work as release blockers/limitations, not as features to implement silently during release.
-- [ ] Historical loose cards such as `029_implement_backtest_and_review.md` clearly redirect to canonical Batch04 cards and cannot be used as standalone execution entrypoints.
+- [x] R3G cards still contain local EasyXT/JQ2PTrade/OpenBB rewrite details and do not depend on a central inventory.
+- [x] R3H source cards still contain local provider/reference boundaries and per-source completion conditions.
+- [x] Batch04 cards that use reference projects point to local executable cards, especially B04_02, B04_03, B04_04, and B04_05.
+- [x] Batch05 cards treat missing production work as release blockers/limitations, not as features to implement silently during release.
+- [x] Historical loose cards such as `029_implement_backtest_and_review.md` clearly redirect to canonical Batch04 cards and cannot be used as standalone execution entrypoints.
 
 **Blocked by:** Slice R3FR-01-B.
 
@@ -158,11 +158,11 @@ The executor must complete these slices in order. Each slice is independently re
 
 **Acceptance criteria:**
 
-- [ ] `PROJECT_IMPLEMENTATION_ROADMAP.md` explains that the production-completion plan is a checklist/map, not a task replacement.
-- [ ] `MODULE_COMPLETION_RATING.md` explains that modules can be upgraded only with working slices and proof, not docs alone.
-- [ ] `docs/implementation_tasks/README.md` points readers to the production-completion plan as coverage aid while preserving task-card-local execution.
-- [ ] Wording is understandable to a non-engineering stakeholder: “地图不是工单；任务卡才是工单”.
-- [ ] No planning file claims that Round1/Round2/Round3 are already full production-grade.
+- [x] `PROJECT_IMPLEMENTATION_ROADMAP.md` explains that the production-completion plan is a checklist/map, not a task replacement.
+- [x] `MODULE_COMPLETION_RATING.md` explains that modules can be upgraded only with working slices and proof, not docs alone.
+- [x] `docs/implementation_tasks/README.md` points readers to the production-completion plan as coverage aid while preserving task-card-local execution.
+- [x] Wording is understandable to a non-engineering stakeholder: “地图不是工单；任务卡才是工单”.
+- [x] No planning file claims that Round1/Round2/Round3 are already full production-grade.
 
 **Blocked by:** Slice R3FR-01-C.
 
@@ -178,11 +178,11 @@ The executor must complete these slices in order. Each slice is independently re
 
 **Acceptance criteria:**
 
-- [ ] `tests/test_reference_adoption_guardrails.py` or an equivalent static check verifies the guardrail contract.
-- [ ] Checks cover both forbidden central `reference_adoption_inventory.md` and the new production-completion plan boundary.
-- [ ] Checks cover local `reference_project:` declarations for adapting task cards.
-- [ ] `docs/generated/docs_specs_index.generated.md` includes new planning files or is regenerated.
-- [ ] If tests cannot run because of environment issues, the executor records the exact error and performs static search review.
+- [x] `tests/test_reference_adoption_guardrails.py` or an equivalent static check verifies the guardrail contract.
+- [x] Checks cover both forbidden central `reference_adoption_inventory.md` and the new production-completion plan boundary.
+- [x] Checks cover local `reference_project:` declarations for adapting task cards.
+- [x] `docs/generated/docs_specs_index.generated.md` includes new planning files or is regenerated.
+- [x] If tests cannot run because of environment issues, the executor records the exact error and performs static search review.
 
 **Blocked by:** Slice R3FR-01-D.
 

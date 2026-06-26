@@ -67,6 +67,8 @@ For every module or major feature after this file lands:
 
 `docs/implementation_tasks/PRODUCTION_COMPLETION_VERTICAL_SLICE_PLAN.md` is the current coverage map for modules that are implemented but not yet `R6_FULL_PRODUCTION_STABLE`. It helps readers see the remaining production path, but it is not a standalone execution card. In simple terms: it is the map, not the work order. Execution still happens from the owning task card.
 
+通俗说：**地图不是工单；任务卡才是工单。**
+
 Additional module rows discovered by code audit and not fully represented in the snapshot above:
 
 | Module                                  | Current rating              | Evidence                                                                                      | Required next movement                                                                                                                                                   |

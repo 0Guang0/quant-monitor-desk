@@ -11,7 +11,7 @@
 
 Turn integration and resource-limit checks into bounded, repeatable release gates after Round 3F-R / 3G / Round4 artifacts are stable enough to test.
 
-This task must not implement missing product features. If a dependency artifact is missing, the smoke gate should skip/fail with explicit reason according to contract, not create the feature.
+This task must not implement missing product features. If a product capability is missing, record it as a release blocker or manifest limitation; if a dependency artifact is missing, the smoke gate should skip/fail with explicit reason according to contract, not create the feature.
 
 ---
 

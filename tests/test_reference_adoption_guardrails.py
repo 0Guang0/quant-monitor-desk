@@ -10,6 +10,7 @@ from tests.contract_gate_support import (
     FORBIDDEN_REFERENCE_IMPORT_ROOTS,
     FORBIDDEN_TRADING_DEF_NAMES,
     PROJECT_ROOT,
+    markdown_paths_missing_phrase,
     scan_forbidden_function_defs,
     scan_forbidden_import_roots,
     scan_guardrail_roots_for_patterns,
@@ -19,6 +20,27 @@ from tests.contract_gate_support import (
 GUARDRAILS = PROJECT_ROOT / "specs/contracts/reference_adoption_guardrails.yaml"
 
 _GUARDRAILS = yaml.safe_load(GUARDRAILS.read_text(encoding="utf-8")) or {}
+
+_R3FR01_DOWNSTREAM_REL = (
+    "docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_01_SANDBOX_CLEAN_WRITE_REHEARSAL.md",
+    "docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_02_PRE_PRODUCTION_ADVERSARIAL_AUDIT.md",
+    "docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_03_LIMITED_PRODUCTION_CLEAN_WRITE.md",
+    "docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/R3H_01_OFFICIAL_MACRO_DISCLOSURE_ADAPTERS.md",
+    "docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/R3H_02_MARKET_DATA_ADAPTERS.md",
+    "docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/R3H_03_CN_MARKET_ADAPTERS.md",
+    "docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/R3H_04_PREDICTION_AND_WEB_EVIDENCE_ADAPTERS.md",
+    "docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/R3H_05_LAYER_BINDING_AND_PRODUCTION_ENTRY_AUDIT.md",
+    "docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/BATCH_04_VERIFIED_AUDIT_PRODUCTIZATION/B04_01_api_runtime_security.md",
+    "docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/BATCH_04_VERIFIED_AUDIT_PRODUCTIZATION/B04_02_agent_policy_runtime.md",
+    "docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/BATCH_04_VERIFIED_AUDIT_PRODUCTIZATION/B04_03_frontend_error_boundary_and_routes.md",
+    "docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/BATCH_04_VERIFIED_AUDIT_PRODUCTIZATION/B04_04_notification_report_runtime.md",
+    "docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/BATCH_04_VERIFIED_AUDIT_PRODUCTIZATION/B04_05_backtest_review_runtime.md",
+    "docs/implementation_tasks/ROUND_5_INTEGRATION_RELEASE/BATCH_05_VERIFIED_AUDIT_SECURITY_RELEASE/B05_01_security_ci_release_gate.md",
+    "docs/implementation_tasks/ROUND_5_INTEGRATION_RELEASE/BATCH_05_VERIFIED_AUDIT_SECURITY_RELEASE/B05_02_integration_and_resource_smoke.md",
+    "docs/implementation_tasks/ROUND_5_INTEGRATION_RELEASE/BATCH_05_VERIFIED_AUDIT_SECURITY_RELEASE/B05_03_release_manifest_and_package_cleanup.md",
+)
+
+_LOOSE_ROUND4_GLOB = "0[2-3][0-9]_*.md"
 
 
 def _forbidden_examples(category: str) -> tuple[str, ...]:
@@ -82,6 +104,10 @@ def test_r3fr01GuardrailsYamlContract() -> None:
     assert rules.get("separate_reference_inventory_may_exist_only_as_non_executable_index") is True
     assert rules.get("planning_map_may_exist_only_as_non_executable_coverage_map") is True
     assert rules.get("planning_map_must_not_replace_task_card_local_details") is True
+    assert rules.get("production_completion_coverage_map_file") == (
+        "docs/implementation_tasks/PRODUCTION_COMPLETION_VERTICAL_SLICE_PLAN.md"
+    )
+    assert rules.get("downstream_may_cite_production_plan_only_as_coverage_checklist") is True
     assert rules.get("batch3fr_separate_reference_inventory_allowed") is False
     assert rules.get("batch3g_separate_reference_inventory_allowed") is False
     assert _GUARDRAILS.get("status") == "active_round3fr"
@@ -110,6 +136,24 @@ def test_r3fr01GuardrailsYamlContract() -> None:
     assert completion.get("first_batch_must_be_vertical_slice") is True
     assert completion.get("rating_authority_file") == "MODULE_COMPLETION_RATING.md"
     assert completion.get("design_docs_remain_complete_product_targets") is True
+
+    listed = set(_GUARDRAILS.get("required_tests") or [])
+    assert listed == {
+        "tests/test_reference_adoption_guardrails.py::test_r3fr01GuardrailsYamlContract",
+        "tests/test_reference_adoption_guardrails.py::test_noTradingApiCopied",
+        "tests/test_reference_adoption_guardrails.py::test_noAutoLoginCopied",
+        "tests/test_reference_adoption_guardrails.py::test_noSilentFallbackCopied",
+        "tests/test_reference_adoption_guardrails.py::test_noReferenceProjectRuntimeImport",
+        "tests/test_reference_adoption_guardrails.py::test_noOpenbbRuntimeCopyIntroduced",
+        "tests/test_reference_adoption_guardrails.py::test_jq2ptradeExecPatternNotCopied",
+        "tests/test_reference_adoption_guardrails.py::test_noAgentTriggeredWritePatterns",
+        "tests/test_reference_adoption_guardrails.py::test_noEasyxtHardcodedTableInDataHealth",
+        "tests/test_reference_adoption_guardrails.py::test_batch3frCardsDoNotRequireCentralInventory",
+        "tests/test_reference_adoption_guardrails.py::test_r3fr01PlanningWordingAndLooseCardRedirects",
+        "tests/test_reference_adoption_guardrails.py::test_productionCompletionPlanIsCoverageMapOnly",
+        "tests/test_reference_adoption_guardrails.py::test_r3fr01DownstreamCardsGovernanceBoundaries",
+        "tests/test_reference_adoption_guardrails.py::test_r3frAdaptingCardsDeclareReferenceProject",
+    }
 
 
 def test_noReferenceProjectRuntimeImport() -> None:
@@ -224,6 +268,93 @@ def test_batch3frCardsDoNotRequireCentralInventory() -> None:
     assert offenders == [], f"3F-R cards treat central inventory as execution SSOT: {offenders}"
 
 
+def test_r3fr01PlanningWordingAndLooseCardRedirects() -> None:
+    """覆盖范围：R3FR-01-C/D 规划口径与松散卡 redirect
+    测试对象：MODULE_COMPLETION_RATING、implementation_tasks/README、ROADMAP、029 松散卡
+    目的/目标：地图不是工单；松散 Round4 卡不得作为独立执行入口
+    验证点：三份规划文件含「地图不是工单」；029 含 do not implement / B04_05 / coverage map
+    失败含义：执行者可能误用覆盖地图或松散卡当中央工单
+    """
+    planning_paths = (
+        PROJECT_ROOT / "MODULE_COMPLETION_RATING.md",
+        PROJECT_ROOT / "docs/implementation_tasks/README.md",
+        PROJECT_ROOT / "PROJECT_IMPLEMENTATION_ROADMAP.md",
+    )
+    assert markdown_paths_missing_phrase("地图不是工单", planning_paths) == []
+
+    loose_dir = PROJECT_ROOT / "docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST"
+    for card in sorted(loose_dir.glob(_LOOSE_ROUND4_GLOB)):
+        body = card.read_text(encoding="utf-8").lower()
+        assert "historical input notice" in body, card.name
+        assert "do not implement" in body, card.name
+        assert "batch_04_verified_audit_productization" in body, card.name
+
+    loose = loose_dir / "029_implement_backtest_and_review.md"
+    body = loose.read_text(encoding="utf-8").lower()
+    for needle in ("b04_05_backtest_review_runtime.md", "coverage map"):
+        assert needle in body, f"029 redirect missing: {needle}"
+
+
+def test_r3fr01DownstreamCardsGovernanceBoundaries() -> None:
+    """覆盖范围：R3FR-01 §5 下游 canonical 任务卡治理边界
+    测试对象：R3G/R3H/B04/B05 共 16 张任务卡
+    目的/目标：不得把中央 inventory 或覆盖地图当执行 SSOT；参考采纳卡须含禁止项
+    验证点：inventory/plan 正向依赖为零；含参考项目卡有 Forbidden；B05 含 release blocker 口径
+    失败含义：下游派发可能绕过任务卡本地细则或把发布批当功能后门
+    """
+    inventory_name = "reference_adoption_inventory.md"
+    plan_token = "production_completion_vertical_slice_plan.md"
+    inventory_positive = re.compile(
+        r"(must read|execution dependency|depends on|required read|ssot:\s*.*inventory)",
+        re.IGNORECASE,
+    )
+    plan_ok = (
+        "coverage map",
+        "coverage checklist",
+        "coverage only",
+        "not the execution",
+        "not a standalone",
+        "navigation",
+        "only as a coverage",
+    )
+    offenders: list[str] = []
+    for rel in _R3FR01_DOWNSTREAM_REL:
+        path = PROJECT_ROOT / rel
+        text = path.read_text(encoding="utf-8")
+        lower = text.lower()
+        for line in text.splitlines():
+            line_lower = line.lower()
+            if inventory_name in line_lower and not any(
+                t in line_lower for t in ("must not", "do not create", "forbidden", "cannot")
+            ):
+                if inventory_positive.search(line):
+                    offenders.append(f"{rel}: inventory SSOT — {line.strip()}")
+            if plan_token in line_lower and not any(ok in line_lower for ok in plan_ok):
+                offenders.append(f"{rel}: production plan without coverage boundary — {line.strip()}")
+        if "参考项目" in text and not any(
+            token in lower
+            for token in (
+                "forbidden",
+                "must not",
+                "target qmd",
+                "## 4. target",
+                "target files",
+                "qmd-owned target",
+            )
+        ):
+            offenders.append(f"{rel}: missing reference forbidden/target boundary")
+        if rel.startswith("docs/implementation_tasks/ROUND_5_"):
+            release_posture = (
+                "release blocker",
+                "manifest limitation",
+                "known_limitations",
+                "must not implement missing product",
+            )
+            if not any(token in lower for token in release_posture):
+                offenders.append(f"{rel}: missing release blocker/limitation posture")
+    assert offenders == [], f"downstream governance gaps: {offenders}"
+
+
 def test_productionCompletionPlanIsCoverageMapOnly() -> None:
     """覆盖范围：新增生产补齐总计划不得成为中央执行工单
     测试对象：PRODUCTION_COMPLETION_VERTICAL_SLICE_PLAN.md 顶部边界说明
@@ -237,6 +368,11 @@ def test_productionCompletionPlanIsCoverageMapOnly() -> None:
     assert "not a standalone execution task card" in text
     assert "owning canonical task card" in text
     assert "must not replace task-card-local reference-adoption details" in text
+    assert "## 1. When a slice becomes executable (checklist only)" in text
+    marker3 = "## 3. Production-incomplete module inventory"
+    section2 = text.split(marker3, 1)[0].split("## 2.", 1)[-1]
+    assert "backend/app/" not in section2, "§2 must not list implementation target paths"
+    assert "**Not done if:**" not in section2, "§2 must not carry executable not-done lists"
 
 
 def test_r3frAdaptingCardsDeclareReferenceProject() -> None:

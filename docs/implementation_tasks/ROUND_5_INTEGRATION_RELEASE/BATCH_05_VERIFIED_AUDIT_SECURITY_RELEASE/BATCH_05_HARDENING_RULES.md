@@ -38,10 +38,11 @@ Integration/resource tests must be bounded:
 Docs consistency checks must respect the new hierarchy:
 
 ```text
-PROJECT_IMPLEMENTATION_ROADMAP.md = forward planning SSOT
+PROJECT_IMPLEMENTATION_ROADMAP.md = forward planning navigation (not a standalone execution task card)
+docs/implementation_tasks/PRODUCTION_COMPLETION_VERTICAL_SLICE_PLAN.md = coverage map only (地图不是工单)
 docs/implementation_tasks/README.md = task inventory / entrypoint index
 batch folders = canonical execution packages
-loose task cards = historical inputs unless marked active
+loose task cards = historical inputs unless marked active; do not implement directly
 ```
 
 ## 5. Release manifest boundary

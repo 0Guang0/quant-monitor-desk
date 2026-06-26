@@ -1,6 +1,6 @@
 # 024_implement_fastapi_routes 实现 FastAPI 路由
 
-> **Historical input notice:** canonical Round4 execution now starts from `BATCH_04_VERIFIED_AUDIT_PRODUCTIZATION/README.md`. This loose card remains source material for `B04_01_api_runtime_security.md`; do not execute it as the default entrypoint without checking the Batch 04 manifest.
+> **Historical input notice:** do not implement this loose card directly. Canonical Round4 execution starts from `BATCH_04_VERIFIED_AUDIT_PRODUCTIZATION/README.md` and `BATCH_04_VERIFIED_AUDIT_PRODUCTIZATION/B04_01_api_runtime_security.md`. This file is source material only.
 
 ## 1. 任务目标
 

@@ -28,7 +28,6 @@ reference_project:
   license: MIT / project-local reference; verify before runtime adoption
   allowed_use: architecture_only
   qmd_target_files:
-    - docs/implementation_tasks/PRODUCTION_COMPLETION_VERTICAL_SLICE_PLAN.md
     - docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/BATCH_04_VERIFIED_AUDIT_PRODUCTIZATION/B04_05_backtest_review_runtime.md
     - specs/contracts/backtest_contract.yaml
     - specs/contracts/backtest_metric_contract.yaml
@@ -122,7 +121,7 @@ From EasyXT backtest:
 
 ## 3. Directly executable Round4 landing plan
 
-Round4 B04_05 must be implemented as issue-style vertical slices, also summarized in `docs/implementation_tasks/PRODUCTION_COMPLETION_VERTICAL_SLICE_PLAN.md`.
+Round4 B04_05 must be implemented as issue-style vertical slices defined in this card and `B04_05_backtest_review_runtime.md`. `PRODUCTION_COMPLETION_VERTICAL_SLICE_PLAN.md` may be used only as a coverage checklist, not as an execution source.
 
 ### Slice B04_05-A — Frozen loader
 
@@ -171,7 +170,6 @@ Round4 B04_05 must be implemented as issue-style vertical slices, also summarize
 Update:
 
 ```text
-docs/implementation_tasks/PRODUCTION_COMPLETION_VERTICAL_SLICE_PLAN.md
 docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/BATCH_04_VERIFIED_AUDIT_PRODUCTIZATION/B04_05_backtest_review_runtime.md
 docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/BATCH_04_VERIFIED_AUDIT_PRODUCTIZATION/BATCH_04_TASK_CARD_MANIFEST.md
 docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/BATCH_04_VERIFIED_AUDIT_PRODUCTIZATION/BATCH_04_HARDENING_RULES.md

@@ -1,6 +1,6 @@
 # 027_implement_frontend_layer_pages 实现前端 Layer 页面数据绑定
 
-> **Historical input notice:** canonical Round4 execution now starts from `BATCH_04_VERIFIED_AUDIT_PRODUCTIZATION/README.md`. This loose card remains source material for `B04_03_frontend_error_boundary_and_routes.md`; do not execute it as the default entrypoint without checking the Batch 04 manifest.
+> **Historical input notice:** do not implement this loose card directly. Canonical Round4 execution starts from `BATCH_04_VERIFIED_AUDIT_PRODUCTIZATION/README.md` and `BATCH_04_VERIFIED_AUDIT_PRODUCTIZATION/B04_03_frontend_error_boundary_and_routes.md`. This file is source material only.
 
 ## 1. 任务目标
 

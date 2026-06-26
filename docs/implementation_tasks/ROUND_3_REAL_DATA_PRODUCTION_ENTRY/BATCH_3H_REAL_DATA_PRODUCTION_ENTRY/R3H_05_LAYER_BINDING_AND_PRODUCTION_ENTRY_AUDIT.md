@@ -6,12 +6,15 @@ Run the final Round3 admission gate before Round4. This task must verify that al
 
 This card must not implement missing adapters. If an adapter or gate is missing, this card blocks Round4 or requires an ADR that narrows the product promise.
 
+`PRODUCTION_COMPLETION_VERTICAL_SLICE_PLAN.md` is only a coverage checklist for gap visibility; audit conclusions and evidence remain in this card and R3H-01..04 outputs.
+
 ---
 
 ## 2. QMD files to read
 
 ```text
 PROJECT_IMPLEMENTATION_ROADMAP.md
+docs/implementation_tasks/PRODUCTION_COMPLETION_VERTICAL_SLICE_PLAN.md  # coverage checklist only
 MODULE_COMPLETION_RATING.md
 docs/modules/data_sources.md
 docs/modules/source_route_plan.md

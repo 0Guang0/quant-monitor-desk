@@ -189,3 +189,12 @@ def trellis_task_dir(slug: str) -> Path:
     if archived.is_dir():
         return archived
     raise FileNotFoundError(f"Trellis task not found (active or archive): {slug}")
+
+
+def markdown_paths_missing_phrase(phrase: str, paths: tuple[Path, ...]) -> list[str]:
+    """Return repo-relative markdown paths whose body lacks phrase."""
+    return [
+        str(path.relative_to(PROJECT_ROOT))
+        for path in paths
+        if path.is_file() and phrase not in path.read_text(encoding="utf-8")
+    ]

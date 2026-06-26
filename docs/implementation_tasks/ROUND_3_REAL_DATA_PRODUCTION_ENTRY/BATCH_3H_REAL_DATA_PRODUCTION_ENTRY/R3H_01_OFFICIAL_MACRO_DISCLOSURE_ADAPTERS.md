@@ -48,7 +48,7 @@ tests/test_catalog.yaml
 Reference tree:
 
 ```text
-C:\Users\Guang\Desktop\quant-monitor-desk\参考项目
+参考项目/
 ```
 
 Use OpenBB provider structure only for architecture ideas:

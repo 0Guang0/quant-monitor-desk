@@ -21,29 +21,31 @@ Execute / Audit
 - Plan agent 在冻结前必须加固活任务卡，并产出 `EXECUTION_INDEX.md` + `AUDIT.plan.md`；`task.py freeze-task-card` 生成 `frozen/*.md`。
 - Execute 读取 **frozen 任务卡 + EXECUTION_INDEX.md**（及 `implement.jsonl` 列出的 §3 原文）；Audit 读取 **AUDIT.plan.md + EXECUTION_INDEX.md §5**。
 - v3 遗留：Plan 仍可将上下文归并进 `MASTER.plan.md`；Execute 读 MASTER + implement.jsonl。
-- `docs/` 与 `specs/` 是设计文档、契约、定义、规则、计划、验收与治理资料目录，不是运行时代码目录，也不是功能实现地址。
+- `MIGRATION_MAP.md` 为**全部任务**（Plan / Execute / Audit / Repair）共同必读，用于定位设计文档、契约、规则与实现目录；不得把 `docs/` / `specs/` 当作代码落点。
 
 ## 3. Plan 阶段共同必读上下文
 
-| 路径                                                         | Plan 使用原因                                                                                                                                     |
-| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `README.md`                                                  | 项目入口、docs/specs 非实现地址边界、旧口径禁止恢复、MANIFEST 角色说明                                                                            |
-| `MIGRATION_MAP.md`                                           | 当前项目地图；定位模块设计文档、契约、规则、实现目录入口；Plan 冻结前回查遗漏                                                                     |
-| `ROUND*_BATCH_IMPLEMENTATION_MAP.md`                         | 当前 Round 批次切片与索引入口；例如 Round3 使用 `ROUND3_BATCH_IMPLEMENTATION_MAP.md`，后续 Round 可改写为 `ROUND4_BATCH_IMPLEMENTATION_MAP.md`    |
-| `PROJECT_IMPLEMENTATION_ROADMAP.md`                          | Round 3D/3E 及后续 Round 的前向实施规划 SSOT；Plan 冻结 3D/3E 任务前必须核对 roadmap 批次与 gate，不得从 staged 证据推断生产就绪                  |
-| `docs/INDEX.md`                                              | 文档导航入口                                                                                                                                      |
-| `docs/implementation_tasks/README.md`                        | 原始任务顺序、全局规则、任务库存                                                                                                                  |
-| `docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md` | 未闭合项到原始执行任务卡的覆盖索引；Plan 必须用它把 registry 中目标批次相关 ID 映射进 MASTER/AUDIT AC、evidence、closeout 或 explicit re-deferral |
-| `docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md`        | 原始任务执行边界；供 Plan 归并到 MASTER                                                                                                           |
-| `docs/implementation_tasks/GLOBAL_TESTING_POLICY.md`         | 测试策略与命名约束；供 Plan 归并到 MASTER/AUDIT                                                                                                   |
-| `docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md`        | 资源限制与低占用要求；供 Plan 归并到 MASTER §10                                                                                                   |
-| `docs/implementation_tasks/GLOBAL_TASK_TEMPLATE.md`          | 原始任务结构、验收命令、阶段化验收要求                                                                                                            |
-| `specs/contracts/runtime_versions.md`                        | Python/Node/npm/锁文件与验收命令权威；若执行会用到则进入 implement/audit manifest                                                                 |
-| `docs/quality/staged_acceptance_policy.md`                   | docs-only/backend/frontend/release 分层验收策略                                                                                                   |
-| `docs/quality/PENDING_USER_DECISIONS.md`                     | 用户已拍板 D-01 至 D-12；Plan 不得让执行者重复询问                                                                                                |
-| `docs/AUDIT_DEFERRED_REGISTRY.md`                            | 延后项与 resolved gate 的权威登记                                                                                                                 |
-| `docs/RESOLVED_ISSUES_REGISTRY.md`                           | 已解决问题登记，避免重复修复或误判仍 OPEN                                                                                                         |
-| `docs/UNRESOLVED_ISSUES_REGISTRY.md`                         | 未解决问题登记，避免遗漏后续必须处理项                                                                                                            |
+| 路径                                                                     | Plan 使用原因                                                                                                                                     |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `README.md`                                                              | 项目入口、docs/specs 非实现地址边界、旧口径禁止恢复、MANIFEST 角色说明                                                                            |
+| `MIGRATION_MAP.md`                                                       | **全部任务**必读；定位模块设计文档、契约、规则、实现目录入口；Plan 冻结前回查遗漏                                                                 |
+| `ROUND*_BATCH_IMPLEMENTATION_MAP.md`                                     | 当前 Round 批次切片与索引入口；例如 Round3 使用 `ROUND3_BATCH_IMPLEMENTATION_MAP.md`，后续 Round 可改写为 `ROUND4_BATCH_IMPLEMENTATION_MAP.md`    |
+| `PROJECT_IMPLEMENTATION_ROADMAP.md`                                      | 前向施工导航（地图不是工单）；Plan 冻结前核对批次与 gate，不得从 staged 证据推断生产就绪                                                          |
+| `docs/implementation_tasks/PRODUCTION_COMPLETION_VERTICAL_SLICE_PLAN.md` | **仅覆盖地图**；检查未达 R6 的模块缺口，不可替代 owning 任务卡执行                                                                                |
+| `specs/contracts/reference_adoption_guardrails.yaml`                     | 参考采纳全局护栏 SSOT；任务卡本地 `reference_project:` 块为执行细节来源                                                                           |
+| `docs/INDEX.md`                                                          | 文档导航入口                                                                                                                                      |
+| `docs/implementation_tasks/README.md`                                    | 原始任务顺序、全局规则、任务库存                                                                                                                  |
+| `docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md`             | 未闭合项到原始执行任务卡的覆盖索引；Plan 必须用它把 registry 中目标批次相关 ID 映射进 MASTER/AUDIT AC、evidence、closeout 或 explicit re-deferral |
+| `docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md`                    | 原始任务执行边界；供 Plan 归并到 MASTER                                                                                                           |
+| `docs/implementation_tasks/GLOBAL_TESTING_POLICY.md`                     | 测试策略与命名约束；供 Plan 归并到 MASTER/AUDIT                                                                                                   |
+| `docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md`                    | 资源限制与低占用要求；供 Plan 归并到 MASTER §10                                                                                                   |
+| `docs/implementation_tasks/GLOBAL_TASK_TEMPLATE.md`                      | 原始任务结构、验收命令、阶段化验收要求                                                                                                            |
+| `specs/contracts/runtime_versions.md`                                    | Python/Node/npm/锁文件与验收命令权威；若执行会用到则进入 implement/audit manifest                                                                 |
+| `docs/quality/staged_acceptance_policy.md`                               | docs-only/backend/frontend/release 分层验收策略                                                                                                   |
+| `docs/quality/PENDING_USER_DECISIONS.md`                                 | 用户已拍板 D-01 至 D-12；Plan 不得让执行者重复询问                                                                                                |
+| `docs/AUDIT_DEFERRED_REGISTRY.md`                                        | 延后项与 resolved gate 的权威登记                                                                                                                 |
+| `docs/RESOLVED_ISSUES_REGISTRY.md`                                       | 已解决问题登记，避免重复修复或误判仍 OPEN                                                                                                         |
+| `docs/UNRESOLVED_ISSUES_REGISTRY.md`                                     | 未解决问题登记，避免遗漏后续必须处理项                                                                                                            |
 
 ## 4. Trellis 详细计划路径索引
 

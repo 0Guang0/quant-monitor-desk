@@ -17,6 +17,8 @@ structure_rules:
   separate_reference_inventory_may_exist_only_as_non_executable_index: true
   planning_map_may_exist_only_as_non_executable_coverage_map: true
   planning_map_must_not_replace_task_card_local_details: true
+  production_completion_coverage_map_file: docs/implementation_tasks/PRODUCTION_COMPLETION_VERTICAL_SLICE_PLAN.md
+  downstream_may_cite_production_plan_only_as_coverage_checklist: true
   batch3fr_separate_reference_inventory_allowed: false
   batch3g_separate_reference_inventory_allowed: false
   batch3g_canonical_cards:
@@ -174,8 +176,9 @@ required_tests:
   - tests/test_reference_adoption_guardrails.py::test_noOpenbbRuntimeCopyIntroduced
   - tests/test_reference_adoption_guardrails.py::test_jq2ptradeExecPatternNotCopied
   - tests/test_reference_adoption_guardrails.py::test_noAgentTriggeredWritePatterns
+  - tests/test_reference_adoption_guardrails.py::test_noEasyxtHardcodedTableInDataHealth
   - tests/test_reference_adoption_guardrails.py::test_batch3frCardsDoNotRequireCentralInventory
+  - tests/test_reference_adoption_guardrails.py::test_r3fr01PlanningWordingAndLooseCardRedirects
+  - tests/test_reference_adoption_guardrails.py::test_productionCompletionPlanIsCoverageMapOnly
+  - tests/test_reference_adoption_guardrails.py::test_r3fr01DownstreamCardsGovernanceBoundaries
   - tests/test_reference_adoption_guardrails.py::test_r3frAdaptingCardsDeclareReferenceProject
-  - tests/test_round3g_sandbox_clean_write_rehearsal.py
-  - tests/test_round3g_pre_production_adversarial_audit.py
-  - tests/test_round3g_limited_production_clean_write.py
