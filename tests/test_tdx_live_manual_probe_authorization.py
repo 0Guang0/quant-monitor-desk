@@ -7,11 +7,11 @@ from pathlib import Path
 import pytest
 from backend.app.datasources.adapters.fetch_port import PortError
 from backend.app.datasources.fetch_result import FetchRequest
+from backend.app.datasources.normalizers.tdx import parse_index_instrument
 from backend.app.ops.interface_probe_fetch_ports import TdxPytdxProbeFetchPort
 from backend.app.ops.tdx_live_manual_probe_gate import (
     TdxLiveManualProbeAuthorizationError,
     TdxLiveManualProbeRequest,
-    parse_index_instrument,
     validate_tdx_live_manual_probe_authorization,
 )
 
@@ -41,7 +41,7 @@ def test_tdxProbeFetchPort_blocksWithoutAuthorization() -> None:
     验证点：抛出 PortError 且消息含 fetch blocked
     失败含义：无授权文件也能触发探针拉取，实盘门禁形同虚设
     """
-    port = TdxPytdxProbeFetchPort(("sh.600519",), 10)
+    port = TdxPytdxProbeFetchPort(("sh.600519",), 3)
     with pytest.raises(PortError, match="fetch blocked"):
         port.fetch_payload(
             FetchRequest(
@@ -68,7 +68,7 @@ def test_validateTdxLiveManualProbe_missingFile_blocks() -> None:
         operation="fetch_daily_bar",
         symbols_or_markets=("sh.600519",),
         date_window="recent 5 trading days",
-        max_rows=10,
+        max_rows=3,
         authorization_evidence="docs/quality/tdx_pytdx_live_manual_probe_authorization_2099-01-01.md",
         tdx_host="127.0.0.1",
         tdx_port=7709,
@@ -93,7 +93,7 @@ def test_validateTdxLiveManualProbe_validFile_passes(tmp_path: Path) -> None:
         operation="fetch_daily_bar",
         symbols_or_markets=("sh.600519",),
         date_window="recent 5 trading days",
-        max_rows=10,
+        max_rows=3,
         authorization_evidence=str(auth),
         tdx_host="127.0.0.1",
         tdx_port=7709,
@@ -117,13 +117,38 @@ def test_validateTdxLiveManualProbe_hostPortMismatch_blocks(tmp_path: Path) -> N
         operation="fetch_daily_bar",
         symbols_or_markets=("sh.600519",),
         date_window="recent 5 trading days",
-        max_rows=10,
+        max_rows=3,
         authorization_evidence=str(auth),
         tdx_host="10.0.0.1",
         tdx_port=7709,
         authorized_session_id="sess-planning-test-001",
     )
     with pytest.raises(TdxLiveManualProbeAuthorizationError, match="host/port"):
+        validate_tdx_live_manual_probe_authorization(req)
+
+
+def test_validateTdxLiveManualProbe_sessionIdMismatch_blocks(tmp_path: Path) -> None:
+    """覆盖范围：authorized_session_id 与授权文件登记不一致
+    测试对象：validate_tdx_live_manual_probe_authorization 会话绑定
+    目的/目标：A8-G2 — session_id 错误时必须拒绝
+    验证点：抛出 TdxLiveManualProbeAuthorizationError 且消息含 authorized_session_id
+    失败含义：授权可跨会话复用，探针范围失控
+    """
+    auth = tmp_path / "tdx_pytdx_live_manual_probe_authorization_2026-06-22.md"
+    auth.write_text(_sample_auth_text(session_id="sess-planning-test-001"), encoding="utf-8")
+    req = TdxLiveManualProbeRequest(
+        source_id="tdx_pytdx",
+        data_domain="cn_equity_daily_bar",
+        operation="fetch_daily_bar",
+        symbols_or_markets=("sh.600519",),
+        date_window="recent 5 trading days",
+        max_rows=3,
+        authorization_evidence=str(auth),
+        tdx_host="127.0.0.1",
+        tdx_port=7709,
+        authorized_session_id="wrong-session-id",
+    )
+    with pytest.raises(TdxLiveManualProbeAuthorizationError, match="authorized_session_id"):
         validate_tdx_live_manual_probe_authorization(req)
 
 
@@ -135,3 +160,4 @@ def test_parseIndexInstrument_000001SH() -> None:
     失败含义：上证指数等标的无法正确映射，探针请求参数错误
     """
     assert parse_index_instrument("000001.SH") == (1, "000001")
+

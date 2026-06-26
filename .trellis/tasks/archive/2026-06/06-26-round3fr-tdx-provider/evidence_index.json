@@ -1,0 +1,16 @@
+{
+  "execute": {
+    "9.0": "execute-evidence/9.0-green.txt",
+    "9.1": "execute-evidence/9.1-green.txt",
+    "9.2": "execute-evidence/9.2-green.txt",
+    "9.3": "execute-evidence/9.3-green.txt",
+    "9.4": "execute-evidence/9.4-green.txt",
+    "9.5": "execute-evidence/9.5-green.txt",
+    "9.6": "execute-evidence/9.6-green.txt",
+    "9.7": "execute-evidence/9.7-green.txt"
+  },
+  "audit": {
+    "plan_adversarial": "research/adversarial-plan-audit.report.md",
+    "integration_audit": "research/integration-audit.md"
+  }
+}

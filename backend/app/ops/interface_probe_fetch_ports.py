@@ -9,7 +9,9 @@ from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
 
 from backend.app.datasources.adapters.fetch_port import FetchPayload, PortError
+from backend.app.datasources.fetch_ports.tdx_pytdx_port import TdxPytdxFetchPort
 from backend.app.datasources.fetch_result import FetchRequest
+from backend.app.ops.tdx_live_manual_probe_gate import TdxPytdxAuthorization
 from backend.app.ops.fetch_port_common import recent_window_start
 from backend.app.ops.live_pilot_fetch_ports import _akshare_hist_symbol, _run_akshare_call
 
@@ -68,51 +70,30 @@ class AkshareSinaDailyValidationFetchPort:
 
 @dataclass(frozen=True)
 class TdxPytdxProbeFetchPort:
+    """Thin delegate to QMD-owned TdxPytdxFetchPort (R3FR-03)."""
+
     symbols: Sequence[str]
     max_rows: int
     host: str | None = None
     port: int | None = None
+    authorization: TdxPytdxAuthorization | None = None
     authorization_verified: bool = False
+    remaining_network_calls: int | None = None
 
     def fetch_payload(self, req: FetchRequest) -> FetchPayload:
-        if not self.authorization_verified or not self.host or self.port is None:
+        if self.authorization is None:
             raise PortError(
                 "USER_AUTH_REQUIRED",
                 "tdx_pytdx fetch blocked: use run_tdx_live_manual_probe after "
                 "tdx_live_manual_probe_gate.validate_tdx_live_manual_probe_authorization",
             )
-        try:
-            from pytdx.hq import TdxHq_API
-        except ImportError as exc:
-            raise PortError("DISABLED_SOURCE", f"pytdx not installed: {exc}") from exc
-
-        symbol = req.instrument_id or (self.symbols[0] if self.symbols else "")
-        if symbol.lower().startswith(("sh.", "sz.")):
-            market, code = (1, symbol[3:]) if symbol.lower().startswith("sh.") else (0, symbol[3:])
-        else:
-            from backend.app.ops.tdx_live_manual_probe_gate import parse_index_instrument
-
-            market, code = parse_index_instrument(symbol)
-        api = TdxHq_API()
-        if not api.connect(self.host, self.port):
-            raise PortError("NETWORK_ERROR", "tdx_pytdx probe could not connect")
-        try:
-            bars = api.get_security_bars(9, market, code, 0, self.max_rows)
-        finally:
-            api.disconnect()
-        if not bars:
-            raise PortError("EMPTY_RESPONSE", "tdx_pytdx returned no daily bars")
-        content = json.dumps(
-            {
-                "symbol": symbol,
-                "source": "tdx_pytdx",
-                "upstream": f"tdx_hq_host:{self.host}:{self.port}",
-                "rows": list(bars)[-self.max_rows :],
-            },
-            ensure_ascii=False,
-            default=str,
-        ).encode("utf-8")
-        return FetchPayload(content=content, file_type="json", row_count=len(bars))
+        port = TdxPytdxFetchPort(
+            self.symbols,
+            self.max_rows,
+            authorization=self.authorization,
+            remaining_network_calls=self.remaining_network_calls,
+        )
+        return port.fetch_payload(req)
 
 
 def content_hash_bytes(data: bytes) -> str:

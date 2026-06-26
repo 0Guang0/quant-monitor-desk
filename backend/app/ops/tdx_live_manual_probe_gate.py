@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import inspect
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -29,7 +30,7 @@ APPROVED_PROBE_ENVELOPES: frozenset[tuple[str, str, str, tuple[str, ...], str, i
             "fetch_daily_bar",
             ("sh.600519",),
             "recent 5 trading days",
-            10,
+            3,
         ),
         (
             "tdx_pytdx",
@@ -37,7 +38,7 @@ APPROVED_PROBE_ENVELOPES: frozenset[tuple[str, str, str, tuple[str, ...], str, i
             "fetch_index_daily_bar",
             ("000001.SH",),
             "recent 5 trading days",
-            10,
+            3,
         ),
     }
 )
@@ -55,8 +56,37 @@ FORBIDDEN_LIVE_ENTRYPOINTS = frozenset(
     {
         "backend.app.ops.interface_probe.run_interface_probe",
         "backend.app.ops.interface_probe_fetch_ports.TdxPytdxProbeFetchPort",
+        "backend.app.datasources.fetch_ports.tdx_pytdx_port.TdxPytdxFetchPort",
     }
 )
+
+APPROVED_LIVE_ORCHESTRATION_MARKERS = frozenset(
+    {
+        "backend.app.ops.tdx_manual_probe.run_tdx_live_manual_probe",
+        "backend.app.ops.tdx_manual_probe._run_probe_bundle",
+        "backend.app.ops.tdx_manual_probe._run_single_probe",
+    }
+)
+
+_GATE_ISSUED = object()
+
+
+@dataclass(frozen=True)
+class TdxPytdxAuthorization:
+    """Live authorization — gate_token must be issued via issue_tdx_live_authorization_after_gate."""
+
+    verified: bool
+    host: str
+    port: int
+    gate_token: object | None = None
+
+    def is_gate_issued(self) -> bool:
+        return self.verified and is_gate_issued_token(self.gate_token)
+
+
+def is_gate_issued_token(token: object | None) -> bool:
+    """Return True only for tokens issued by this gate module."""
+    return token is _GATE_ISSUED
 
 
 class TdxLiveManualProbeAuthorizationError(RuntimeError):
@@ -78,6 +108,60 @@ class TdxLiveManualProbeRequest:
     raw_only: bool = True
     write_target: str = "sandbox"
     allow_clean_write: bool = False
+
+
+def assert_live_entrypoint_not_forbidden(caller_fqn: str) -> None:
+    """Reject direct live invocation from forbidden entrypoints (R3FR-03 §9.4)."""
+    if caller_fqn in FORBIDDEN_LIVE_ENTRYPOINTS:
+        raise TdxLiveManualProbeAuthorizationError(
+            f"forbidden live entrypoint: {caller_fqn}; "
+            "use run_tdx_live_manual_probe after gate authorization"
+        )
+
+
+def _frame_class_fqn(frame_info: inspect.FrameInfo) -> str | None:
+    local_self = frame_info.frame.f_locals.get("self")
+    if local_self is not None:
+        cls = local_self.__class__
+        return f"{cls.__module__}.{cls.__qualname__}"
+    module = frame_info.frame.f_globals.get("__name__", "")
+    if module:
+        return f"{module}.{frame_info.function}"
+    return None
+
+
+def enforce_live_entrypoint_stack() -> None:
+    """Fail-closed stack walk — reject forbidden live entrypoints without orchestration."""
+    stack_fqns = [
+        fqn for fi in inspect.stack()[1:] if (fqn := _frame_class_fqn(fi)) is not None
+    ]
+    has_approved_orchestration = any(
+        marker in fqn for fqn in stack_fqns for marker in APPROVED_LIVE_ORCHESTRATION_MARKERS
+    )
+    for fqn in stack_fqns:
+        if fqn not in FORBIDDEN_LIVE_ENTRYPOINTS:
+            continue
+        if has_approved_orchestration and fqn.endswith(
+            (
+                "TdxPytdxProbeFetchPort",
+                "TdxPytdxFetchPort",
+            )
+        ):
+            continue
+        assert_live_entrypoint_not_forbidden(fqn)
+
+
+def issue_tdx_live_authorization_after_gate(
+    request: TdxLiveManualProbeRequest,
+) -> TdxPytdxAuthorization:
+    """Issue live authorization only after validate_tdx_live_manual_probe_authorization passes."""
+    validate_tdx_live_manual_probe_authorization(request)
+    return TdxPytdxAuthorization(
+        verified=True,
+        host=request.tdx_host,
+        port=request.tdx_port,
+        gate_token=_GATE_ISSUED,
+    )
 
 
 def _resolve_authorization_path(path: str) -> Path:
@@ -174,9 +258,6 @@ def validate_runtime_host_port_matches_authorization(
 
 def parse_index_instrument(instrument_id: str) -> tuple[int, str]:
     """Map QMD index id (e.g. 000001.SH) to pytdx (market, code)."""
-    normalized = instrument_id.strip().upper()
-    if normalized.endswith(".SH"):
-        return 1, normalized[:-3]
-    if normalized.endswith(".SZ"):
-        return 0, normalized[:-3]
-    raise ValueError(f"unsupported index instrument_id: {instrument_id!r}")
+    from backend.app.datasources.normalizers.tdx import parse_index_instrument as _parse
+
+    return _parse(instrument_id)

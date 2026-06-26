@@ -1,0 +1,193 @@
+{
+  "task": "06-26-round3fr-tdx-provider",
+  "modules": ["datasources", "ops"],
+  "source_authorities": [
+    {
+      "type": "design",
+      "path": "docs/modules/data_sources.md",
+      "reason": "datasources design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/modules/datasource_service.md",
+      "reason": "datasources design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/modules/source_route_plan.md",
+      "reason": "datasources design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/modules/source_capability_registry.md",
+      "reason": "datasources design authority"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/datasource_service_contract.yaml",
+      "reason": "datasources contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/source_route_contract.yaml",
+      "reason": "datasources contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/source_capability_contract.yaml",
+      "reason": "datasources contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/platform_source_matrix.yaml",
+      "reason": "datasources contract"
+    },
+    {
+      "type": "policy",
+      "path": "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md",
+      "reason": "datasources rule"
+    },
+    {
+      "type": "policy",
+      "path": "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md",
+      "reason": "datasources rule"
+    },
+    {
+      "type": "task-card",
+      "path": "docs/implementation_tasks/ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3X_data_source_routing_blockers.md",
+      "reason": "datasources implementation task"
+    },
+    {
+      "type": "design",
+      "path": "docs/modules/ops_and_performance.md",
+      "reason": "ops design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/ops/verification_commands.md",
+      "reason": "ops design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/ops/performance_limits.md",
+      "reason": "ops design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/ops/staging_data_e2e_runbook.md",
+      "reason": "ops design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/quality/production_live_pilot_policy.md",
+      "reason": "ops design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/quality/BATCH3_STAGED_DOWNSTREAM_GATE.md",
+      "reason": "ops design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/ROUND3_HANDOFF.md",
+      "reason": "ops design authority"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/ops_health_check_contract.yaml",
+      "reason": "ops contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/ops_db_inspect_contract.yaml",
+      "reason": "ops contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/review_sandbox_contract.yaml",
+      "reason": "ops contract"
+    },
+    {
+      "type": "task-card",
+      "path": "docs/implementation_tasks/ROUND_3_REFERENCE_LANDING/R3D_018C_live_manual_probe_plan.md",
+      "reason": "ops implementation task"
+    }
+  ],
+  "tests": [
+    {
+      "path": "tests/test_datasource_service.py",
+      "purpose": "Round2.6 Phase B/C — DataSourceService boundary and fetch facade tests."
+    },
+    {
+      "path": "tests/test_source_registry.py",
+      "purpose": "Source registry loader, DB sync, and schema enum compatibility tests (Batch A / data source expansion)."
+    },
+    {
+      "path": "tests/test_source_route_planner.py",
+      "purpose": "Source route planner READY gate and routing semantics"
+    },
+    {
+      "path": "tests/test_source_capabilities.py",
+      "purpose": "Round2.6 Phase B/C — source capability and adapter domain contract tests."
+    },
+    {
+      "path": "tests/test_platform_source_matrix.py",
+      "purpose": "Round2.6 Phase C — platform source matrix tests (production planner)."
+    },
+    {
+      "path": "tests/test_r3x_data_source_routing_blockers.py",
+      "purpose": "R3X data-source routing blocker tests (ADV-A2 cluster)."
+    },
+    {
+      "path": "tests/test_staged_pilot.py",
+      "purpose": "Staged pilot sandbox boundaries; does not open production-live"
+    },
+    {
+      "path": "tests/test_ops_db_inspector.py",
+      "purpose": "Ops DB inspector tests (Round 3 Batch 1)."
+    },
+    {
+      "path": "tests/test_ops_interface_probe.py",
+      "purpose": "Ops interface_probe + mutation_proof wiring tests (OP-06)."
+    },
+    {
+      "path": "tests/test_interface_probe_018c.py",
+      "purpose": "018C low-cost data-interface probe tests."
+    },
+    {
+      "path": "tests/test_production_gate.py",
+      "purpose": "ADV-A5-002: production_gate.py smoke tests."
+    },
+    {
+      "path": "tests/test_round3_verification_command_matrix.py",
+      "purpose": "Round 3 verification command matrix — doc index and gate-test discoverability."
+    },
+    {
+      "path": "tests/test_round3_audit_registry_alignment.py",
+      "purpose": "Round 3 Batch 2.5 / Batch 2.75 audit follow-up 文档对齐测试。"
+    },
+    {
+      "path": "tests/test_unresolved_item_task_coverage.py",
+      "purpose": "确保未闭合项不会在 Plan 阶段因只读原始任务卡而遗漏。"
+    },
+    {
+      "path": "tests/test_batch3_staged_downstream_gate.py",
+      "purpose": "确保 Batch 3 只能 staged-only，不得被误读为 production-live readiness"
+    },
+    {
+      "path": "tests/test_qmd_data_cli.py",
+      "purpose": "B3F-CLI — qmd data CLI, packaging, init_db --sync-registry (R3F-CLI-01..05)."
+    }
+  ],
+  "forbidden_claims": [
+    "bypass route readiness gate",
+    "production-live ready",
+    "live production ingestion"
+  ],
+  "required_evidence": [
+    "context_pack.json",
+    "loop_manifest.json",
+    "evidence_index.json",
+    "audit_matrix.json"
+  ]
+}
