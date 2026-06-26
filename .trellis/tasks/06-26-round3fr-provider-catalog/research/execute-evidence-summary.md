@@ -10,4 +10,4 @@
 | 9.5  | guardrails closure 缺    | `pytest -k r3fr05` 绿                     | `research/execute-evidence/9.5-{red,green}.txt` |
 | 9.6  | 子集/全库                | Tier A + 全库 `pytest -q` 绿              | `research/execute-evidence/9.6-{red,green}.txt` + `9.6-green-full.txt` |
 
-分支：`feature/round3fr-provider-catalog`（audit repair commit on top of `ac924819`）。
+分支：`feature/round3fr-provider-catalog` @ `7baa21c3`（repair 后含 9.1–9.6 证据）。
