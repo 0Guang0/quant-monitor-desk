@@ -19,7 +19,7 @@ This directory contains **project-specific** backend conventions derived from th
 | [Error Handling](./error-handling.md) | Error types, redaction, gate failures | Filled |
 | [Quality Guidelines](./quality-guidelines.md) | Ruff, pytest, coverage, forbidden patterns | Filled |
 | [Datasource Adapters](./datasource-adapters.md) | FetchPort, skeleton base, factory contracts | Filled |
-| [Datasource Routing Service](./datasource-routing-service.md) | CapabilityRegistry, RoutePlanner, DataSourceService, sync service path | Filled (Round 2.6) |
+| [Datasource Routing Service](./datasource-routing-service.md) | CapabilityRegistry, RoutePlanner, DataSourceService, provider catalog SSOT (R3FR-05), sync service path | Filled (Round 2.6 + R3FR-05) |
 | [Logging Guidelines](./logging-guidelines.md) | Structured logging, redaction on persisted errors | Partial (Batch D) |
 
 ---

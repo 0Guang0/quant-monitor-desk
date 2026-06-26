@@ -119,6 +119,7 @@ def test_defaultOperation_mapsEveryDomainRoleDomain() -> None:
         "us_option_chain": "fetch_us_option_chain_validation",
         "us_treasury_yield_curve": "fetch_yield_curve",
         "vix_cds_supplement": "fetch_vix_cds_supplement",
+        "provider_metadata_only": "describe_architecture_reference",
     }
     missing = sorted(set(_domain_roles_keys()) - set(expected.keys()))
     assert missing == [], f"test table missing domain_roles keys: {missing}"

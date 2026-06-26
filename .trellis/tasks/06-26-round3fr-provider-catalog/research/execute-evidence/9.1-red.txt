@@ -1,0 +1,2 @@
+ERROR: file or directory not found: tests/test_provider_catalog.py
+(pre-9.1: no catalog contract tests; RequiredFields/Enums gate absent)

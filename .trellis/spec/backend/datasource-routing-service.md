@@ -109,6 +109,90 @@ raise ResourceGuardBlockedError(message, decision=decision)
 
 ---
 
+## Scenario: Provider catalog metadata (R3FR-05)
+
+### 1. Scope / Trigger
+
+- Changes to `specs/datasource_registry/provider_catalog.yaml`
+- Changes to `backend/app/datasources/provider_catalog.py`
+- Contract fields `provider_catalog_path` in `specs/contracts/*_contract.yaml`
+- **Not in scope:** wiring catalog into `DataSourceService.fetch` (deferred Round3G)
+
+### 2. Signatures
+
+```python
+def load_provider_catalog(path: Path | None = None) -> dict[str, Any]: ...
+
+def provider_for_source(
+    source_id: str, catalog: dict[str, Any] | None = None
+) -> dict[str, Any] | None: ...
+```
+
+SSOT path: `specs/datasource_registry/provider_catalog.yaml` (`version: provider_catalog_v1`, 25 providers, 1:1 with `source_registry.yaml`).
+
+### 3. Contracts
+
+| Field / rule | Constraint |
+| ------------ | ---------- |
+| `runtime_source_copy_allowed` | Must be `false` for every provider (incl. `openbb_provider_reference`) |
+| `openbb_provider_reference` | `reference_architecture: openbb_provider_architecture`; `status: proposed_disabled_source` |
+| Proposed external sources | `enabled_by_default` and `production_default_enabled` both `false` |
+| `enabled_by_default` | Catalog must not be looser than `source_registry` for the same `source_id` |
+| Path resolution | Catalog YAML must resolve under `PROJECT_ROOT` via `_resolve_registry_path` (shared with registry loader) |
+
+### 4. Validation & Error Matrix
+
+| Condition | Behavior |
+| --------- | -------- |
+| Path outside project root | `ProviderCatalogError` (from `InvalidRegistryError` via `_resolve_registry_path`) |
+| Root not a mapping | `ProviderCatalogError("provider catalog root must be a mapping")` |
+| `providers` not a list | `ProviderCatalogError("providers must be a list")` |
+| Unknown `source_id` in `provider_for_source` | Returns `None` |
+
+### 5. Good / Base / Bad Cases
+
+**Good:** Read-only `load_provider_catalog()` in tests or future admission layer; contract YAML points at SSOT path.
+
+**Base:** `provider_for_source("baostock", catalog)` returns the baostock provider entry.
+
+**Bad:** Copy OpenBB provider runtime into repo; set `runtime_source_copy_allowed: true`; enable proposed external sources in production defaults.
+
+### 6. Tests Required
+
+| Focus | Assertion points |
+| ----- | ---------------- |
+| Coverage | 25 registry sources each have exactly one catalog mapping |
+| Enums | `source_type` / `license_type` match registry and schema CHECK sets |
+| Posture | fred auth + disabled; local terminals disabled by default |
+| Loader | Negative path + invalid YAML shape raise `ProviderCatalogError` |
+| Guardrails | `test_r3fr05ProviderCatalogClosure` in reference adoption guardrails |
+
+Primary module: `tests/test_provider_catalog.py`.
+
+### 7. Wrong vs Correct
+
+#### Wrong
+
+```python
+# Ad-hoc path without project-root guard
+raw = yaml.safe_load(Path("/tmp/evil.yaml").read_text())
+
+# Loosen default enablement vs registry
+# catalog.enabled_by_default=True while registry.enabled_by_default=False
+```
+
+#### Correct
+
+```python
+from backend.app.datasources.provider_catalog import load_provider_catalog, provider_for_source
+
+doc = load_provider_catalog()
+entry = provider_for_source("openbb_provider_reference", doc)
+assert entry["runtime_source_copy_allowed"] is False
+```
+
+---
+
 ## Test helpers
 
 - `tests/service_path_support.py`: `production_route_planner()`, `plan_route()`, `patch_create_test_adapter_for_staging()` — use instead of duplicate contract planners.

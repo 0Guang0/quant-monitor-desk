@@ -157,6 +157,7 @@ def test_r3fr01GuardrailsYamlContract() -> None:
         "tests/test_reference_adoption_guardrails.py::test_productionCompletionPlanIsCoverageMapOnly",
         "tests/test_reference_adoption_guardrails.py::test_r3fr01DownstreamCardsGovernanceBoundaries",
         "tests/test_reference_adoption_guardrails.py::test_r3frAdaptingCardsDeclareReferenceProject",
+        "tests/test_reference_adoption_guardrails.py::test_r3fr05ProviderCatalogClosure",
     }
 
 
@@ -527,3 +528,43 @@ def test_r3fr04Round4BacktestPlanningClosure() -> None:
     forbidden = set(sandbox.get("forbidden_api") or [])
     missing_apis = [name for name in _R3FR04_FORBIDDEN_APIS if name not in forbidden]
     assert missing_apis == [], f"review_sandbox missing forbidden APIs: {missing_apis}"
+
+
+_R3FR05_CARD_REL = (
+    "docs/implementation_tasks/ROUND_3_REFERENCE_ADOPTION_REFACTOR/"
+    "BATCH_3FR_REFERENCE_ADOPTION_REFACTOR/R3FR_05_PROVIDER_CATALOG_OPENBB_REFERENCE.md"
+)
+_R3FR05_CATALOG_REL = "specs/datasource_registry/provider_catalog.yaml"
+
+
+def test_r3fr05ProviderCatalogClosure() -> None:
+    """覆盖范围：R3FR-05 provider catalog 任务闭环与护栏登记
+    测试对象：R3FR-05 任务卡、provider_catalog.yaml、reference_adoption_guardrails.yaml
+    目的/目标：catalog SSOT 存在、OpenBB architecture_only、guardrails 登记 closure 测试
+    验证点：任务卡 qmd_target_files、catalog 25 providers、guardrails required_tests 含本测试
+    失败含义：R3FR-05 交付不可审计或 OpenBB catalog 路径/护栏未闭环
+    """
+    card = (PROJECT_ROOT / _R3FR05_CARD_REL).read_text(encoding="utf-8")
+    for needle in (
+        "reference_project:",
+        "allowed_use: architecture_only",
+        "provider_catalog.yaml",
+        "no_openbb_runtime_source_copy",
+        "openbb_provider_reference",
+    ):
+        assert needle in card, f"R3FR-05 card missing marker: {needle}"
+
+    catalog_path = PROJECT_ROOT / _R3FR05_CATALOG_REL
+    assert catalog_path.is_file(), "provider catalog SSOT missing"
+    catalog = load_yaml(catalog_path)
+    providers = catalog.get("providers") or []
+    assert len(providers) == 25
+
+    openbb = next(p for p in providers if p.get("provider_id") == "openbb_provider_reference")
+    assert openbb.get("runtime_source_copy_allowed") is False
+
+    listed = set(_GUARDRAILS.get("required_tests") or [])
+    assert "tests/test_reference_adoption_guardrails.py::test_r3fr05ProviderCatalogClosure" in listed
+
+    openbb_adoption = (_GUARDRAILS.get("allowed_adoption") or {}).get("openbb_provider_architecture") or {}
+    assert "architecture_only_provider_catalog_pattern" in (openbb_adoption.get("allowed_as") or [])

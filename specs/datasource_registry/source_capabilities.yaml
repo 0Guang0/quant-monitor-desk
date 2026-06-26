@@ -1258,6 +1258,18 @@ sources:
             requires_auth: true
             enabled_by_default: false
             production_default: false
+  openbb_provider_reference:
+    status: proposed_disabled_source
+    domains:
+      provider_metadata_only:
+        operations:
+          describe_architecture_reference:
+            frequency: on_demand
+            output: metadata_only
+            requires_auth: false
+            enabled_by_default: false
+            production_default: false
+            notes: Architecture-only OpenBB provider layout reference; no fetch adapter.
   web_search:
     status: proposed_disabled_source
     domains:

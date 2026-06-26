@@ -754,6 +754,16 @@ tests/test_project_scaffold.py:
     docs: []
     rules: []
     specs: []
+tests/test_provider_catalog.py:
+  command: uv run python -m pytest tests/test_provider_catalog.py -q
+  failure_meaning: Regression in test_provider_catalog; inspect purpose and linked
+    authorities.
+  purpose: Provider catalog contract tests (R3FR-05).
+  type: contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
 tests/test_qmd_data_cli.py:
   command: uv run python -m pytest tests/test_qmd_data_cli.py -q
   failure_meaning: Regression in test_qmd_data_cli; inspect purpose and linked authorities.

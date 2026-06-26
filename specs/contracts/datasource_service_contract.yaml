@@ -1,6 +1,7 @@
 version: datasource_service_contract_v1
 status: draft_round2_6
 owner: data_sources
+provider_catalog_path: specs/datasource_registry/provider_catalog.yaml
 purpose: "Provide a single fetch facade so Orchestrator/API/Agent do not directly use adapter factory."
 facade: DataSourceService
 public_methods:

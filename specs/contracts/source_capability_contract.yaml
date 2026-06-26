@@ -1,6 +1,7 @@
 version: source_capability_contract_v1
 status: draft_round2_6
 owner: data_sources
+provider_catalog_path: specs/datasource_registry/provider_catalog.yaml
 purpose: "Define machine-checkable source/domain/operation capability declarations before adapter fetch."
 required_top_level_keys: [version, sources, validation]
 source_rules:
