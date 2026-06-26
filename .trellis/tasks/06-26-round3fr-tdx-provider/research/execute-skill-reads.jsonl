@@ -1,0 +1,5 @@
+{"skill": "test-driven-development", "phase": "9.x", "at": "2026-06-26", "path": ".claude/skills/tdd/SKILL.md"}
+{"skill": "incremental-implementation", "phase": "9.x-green", "at": "2026-06-26", "path": ".agents/skills/incremental-implementation/SKILL.md"}
+{"skill": "karpathy-guidelines", "phase": "9.x", "at": "2026-06-26"}
+{"skill": "testing-guidelines", "phase": "9.x", "at": "2026-06-26", "path": ".claude/skills/testing-guidelines/SKILL.md"}
+{"skill": "gitnexus-impact-analysis", "phase": "boot", "at": "2026-06-26", "path": ".claude/skills/gitnexus/gitnexus-impact-analysis/SKILL.md"}

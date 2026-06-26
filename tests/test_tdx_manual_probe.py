@@ -333,16 +333,16 @@ def test_tdx_caps_maxTotalRows_aggregateValidation(tmp_path: Path) -> None:
 def test_tdx04_equityIndexTargets_respectWindowAndRowCaps() -> None:
     """覆盖范围：equity/index probe target 窗口与行数 cap
     测试对象：TDX_PROBE_TARGETS equity + index 条目
-    目的/目标：P04 018C 较小 cap：5 trading days / max_rows=10
-    验证点：window_label 含 5 trading days；max_rows <= 10
-    失败含义：addendum 默认 cap 泄漏到执行目标
+    目的/目标：R3FR-03 SSOT cap：5 trading days / max_rows=3
+    验证点：window_label 含 5 trading days；max_rows <= 3
+    失败含义：018C 旧 cap=10 泄漏到执行目标
     """
     equity = next(t for t in TDX_PROBE_TARGETS if t.operation == "fetch_daily_bar")
     index = next(t for t in TDX_PROBE_TARGETS if t.operation == "fetch_index_daily_bar")
     assert "5 trading days" in equity.window_label
     assert "5 trading days" in index.window_label
-    assert equity.max_rows <= 10
-    assert index.max_rows <= 10
+    assert equity.max_rows <= 3
+    assert index.max_rows <= 3
 
 
 def test_tdx02_mockedEquity_rawRecordHasAsOf(tmp_path: Path) -> None:

@@ -35,7 +35,7 @@ DEFAULT_EVIDENCE_DIR = PROJECT_ROOT / ".trellis/tasks/round3-tdx-manual-probe/ex
 DEFAULT_PRODUCTION_DB = DATA_ROOT / "duckdb" / "quant_monitor.duckdb"
 
 SECURITY_LIST_CAP = 20
-EQUITY_INDEX_CAP = 10
+EQUITY_INDEX_CAP = 3
 MAX_NETWORK_CALLS = 5
 
 TDX_PROBE_PASS_RAW_ONLY = "TDX_PROBE_PASS_RAW_ONLY"
@@ -488,6 +488,26 @@ def run_tdx_live_manual_probe(
 ) -> dict[str, Any]:
     """Opt-in live probe — requires authorization MD + matching host/port."""
     auth_path = Path(authorization_evidence or DEFAULT_AUTH_PATH)
+    if max_network_calls <= 0:
+        status = TDX_PROBE_FAIL_VALIDATION
+        return {
+            "overall_status": status,
+            "live_attempted": True,
+            "authorization_present": auth_path.is_file(),
+            "raw_records": [
+                {
+                    "probe_id": "probe-tdx-cap-guard",
+                    "status": status,
+                    "failure_reason": f"max_network_calls={max_network_calls} exceeded",
+                }
+            ],
+            "comparison": build_comparison_report([]),
+            "registry_closeout": decide_registry_closeout(
+                [], live_attempted=True, overall_status=status
+            ),
+            "network_calls": 0,
+            "failure_reason": f"max_network_calls={max_network_calls} exceeded",
+        }
     auth_block = _check_live_authorization(
         authorization_evidence=auth_path,
         tdx_host=tdx_host,

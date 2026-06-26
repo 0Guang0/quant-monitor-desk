@@ -1,0 +1,7 @@
+{"file": ".trellis/tasks/06-26-round3fr-tdx-provider/frozen/R3FR_03_TDX_PROVIDER_REFACTOR.md", "reason": "extract: spec scope | for: A1 trellis-check"}
+{"file": ".trellis/tasks/06-26-round3fr-tdx-provider/EXECUTION_INDEX.md", "reason": "extract: manifest trace | for: A1"}
+{"file": "specs/contracts/runtime_versions.md", "reason": "extract: Boot | for: manifest"}
+{"file": "specs/contracts/reference_adoption_guardrails.yaml", "reason": "extract: 9.7 | for: manifest"}
+{"file": "docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md", "reason": "extract: B01-C03 | for: A1 audit-only"}
+{"file": "MIGRATION_MAP.md", "reason": "extract: 路径导航 | for: A1 audit-only"}
+{"file": "docs/implementation_tasks/TASK_INPUT_CONTEXT_INDEX.md", "reason": "extract: 追溯 | for: A1 audit-only"}

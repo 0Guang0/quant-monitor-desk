@@ -9,8 +9,10 @@ from backend.app.datasources.adapters.fetch_port import PortError
 from backend.app.datasources.fetch_result import FetchRequest
 from backend.app.ops.interface_probe_fetch_ports import TdxPytdxProbeFetchPort
 from backend.app.ops.tdx_live_manual_probe_gate import (
+    FORBIDDEN_LIVE_ENTRYPOINTS,
     TdxLiveManualProbeAuthorizationError,
     TdxLiveManualProbeRequest,
+    assert_live_entrypoint_not_forbidden,
     parse_index_instrument,
     validate_tdx_live_manual_probe_authorization,
 )
@@ -41,7 +43,7 @@ def test_tdxProbeFetchPort_blocksWithoutAuthorization() -> None:
     验证点：抛出 PortError 且消息含 fetch blocked
     失败含义：无授权文件也能触发探针拉取，实盘门禁形同虚设
     """
-    port = TdxPytdxProbeFetchPort(("sh.600519",), 10)
+    port = TdxPytdxProbeFetchPort(("sh.600519",), 3)
     with pytest.raises(PortError, match="fetch blocked"):
         port.fetch_payload(
             FetchRequest(
@@ -68,7 +70,7 @@ def test_validateTdxLiveManualProbe_missingFile_blocks() -> None:
         operation="fetch_daily_bar",
         symbols_or_markets=("sh.600519",),
         date_window="recent 5 trading days",
-        max_rows=10,
+        max_rows=3,
         authorization_evidence="docs/quality/tdx_pytdx_live_manual_probe_authorization_2099-01-01.md",
         tdx_host="127.0.0.1",
         tdx_port=7709,
@@ -93,7 +95,7 @@ def test_validateTdxLiveManualProbe_validFile_passes(tmp_path: Path) -> None:
         operation="fetch_daily_bar",
         symbols_or_markets=("sh.600519",),
         date_window="recent 5 trading days",
-        max_rows=10,
+        max_rows=3,
         authorization_evidence=str(auth),
         tdx_host="127.0.0.1",
         tdx_port=7709,
@@ -117,7 +119,7 @@ def test_validateTdxLiveManualProbe_hostPortMismatch_blocks(tmp_path: Path) -> N
         operation="fetch_daily_bar",
         symbols_or_markets=("sh.600519",),
         date_window="recent 5 trading days",
-        max_rows=10,
+        max_rows=3,
         authorization_evidence=str(auth),
         tdx_host="10.0.0.1",
         tdx_port=7709,
@@ -135,3 +137,16 @@ def test_parseIndexInstrument_000001SH() -> None:
     失败含义：上证指数等标的无法正确映射，探针请求参数错误
     """
     assert parse_index_instrument("000001.SH") == (1, "000001")
+
+
+def test_tdxLiveGate_forbiddenDirectPortInvocation() -> None:
+    """覆盖范围：FORBIDDEN_LIVE_ENTRYPOINTS 含新 port FQN
+    测试对象：FORBIDDEN_LIVE_ENTRYPOINTS + assert_live_entrypoint_not_forbidden
+    目的/目标：AC-TDX-02 — 禁止直调 TdxPytdxFetchPort 绕过 live gate
+    验证点：port FQN 在集合中；assert 对 forbidden FQN 抛错
+    失败含义：FORBIDDEN_LIVE_ENTRYPOINTS 未 enforce，直调 port 无门禁
+    """
+    port_fqn = "backend.app.datasources.fetch_ports.tdx_pytdx_port.TdxPytdxFetchPort"
+    assert port_fqn in FORBIDDEN_LIVE_ENTRYPOINTS
+    with pytest.raises(TdxLiveManualProbeAuthorizationError, match="forbidden live entrypoint"):
+        assert_live_entrypoint_not_forbidden(port_fqn)

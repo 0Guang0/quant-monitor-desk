@@ -29,7 +29,7 @@ APPROVED_PROBE_ENVELOPES: frozenset[tuple[str, str, str, tuple[str, ...], str, i
             "fetch_daily_bar",
             ("sh.600519",),
             "recent 5 trading days",
-            10,
+            3,
         ),
         (
             "tdx_pytdx",
@@ -37,7 +37,7 @@ APPROVED_PROBE_ENVELOPES: frozenset[tuple[str, str, str, tuple[str, ...], str, i
             "fetch_index_daily_bar",
             ("000001.SH",),
             "recent 5 trading days",
-            10,
+            3,
         ),
     }
 )
@@ -55,8 +55,18 @@ FORBIDDEN_LIVE_ENTRYPOINTS = frozenset(
     {
         "backend.app.ops.interface_probe.run_interface_probe",
         "backend.app.ops.interface_probe_fetch_ports.TdxPytdxProbeFetchPort",
+        "backend.app.datasources.fetch_ports.tdx_pytdx_port.TdxPytdxFetchPort",
     }
 )
+
+
+def assert_live_entrypoint_not_forbidden(caller_fqn: str) -> None:
+    """Reject direct live invocation from forbidden entrypoints (R3FR-03 §9.4)."""
+    if caller_fqn in FORBIDDEN_LIVE_ENTRYPOINTS:
+        raise TdxLiveManualProbeAuthorizationError(
+            f"forbidden live entrypoint: {caller_fqn}; "
+            "use run_tdx_live_manual_probe after gate authorization"
+        )
 
 
 class TdxLiveManualProbeAuthorizationError(RuntimeError):

@@ -235,11 +235,14 @@ def test_portErrorStatus_doesNotDriftFromFetchStatusFailures() -> None:
         "SCHEMA_DRIFT",
         "EMPTY_RESPONSE",
         "NOT_PUBLISHED_YET",
+        "DISABLED_SOURCE",
+        "USER_AUTH_REQUIRED",
         "FAILED",
     }
 
     assert set(PortErrorStatus.__args__) == expected_port_statuses
-    assert expected_port_statuses.issubset(set(CONTRACT_STATUSES))
+    port_layer_only = {"USER_AUTH_REQUIRED"}
+    assert (expected_port_statuses - port_layer_only).issubset(set(CONTRACT_STATUSES))
 
 
 def test_fetchLogWriter_redactsSensitiveErrorMessage(tmp_path, migrated_con):

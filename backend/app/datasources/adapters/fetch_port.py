@@ -15,6 +15,8 @@ PortErrorStatus = Literal[
     "SCHEMA_DRIFT",
     "EMPTY_RESPONSE",
     "NOT_PUBLISHED_YET",
+    "DISABLED_SOURCE",
+    "USER_AUTH_REQUIRED",
     "FAILED",
 ]
 

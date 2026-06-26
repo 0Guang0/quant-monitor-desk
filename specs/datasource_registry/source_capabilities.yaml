@@ -338,6 +338,13 @@ sources:
     status: proposed_disabled_source
     batch01_probe_decision: PROBE_PASS_RAW_ONLY
     notes: Batch 01 B01-TDX mocked raw-only probe; live PROBE_REDEFERRED; validation-only candidate.
+    resource_caps:
+      security_list_max_rows: 20
+      equity_daily_bar_max_symbols: 3
+      index_daily_bar_max_symbols: 3
+      max_network_calls: 5
+      minute_bars_enabled: false
+      full_market_scan_enabled: false
     domains:
       security_list:
         operations:

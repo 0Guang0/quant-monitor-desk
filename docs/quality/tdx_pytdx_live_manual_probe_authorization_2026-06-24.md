@@ -22,27 +22,27 @@ This probe does not close Eastmoney stock_zh_a_hist / R3-B2.75-REQ2-EM.
 
 ## Per-request declaration (§4)
 
-| # | probe_id | source_id | data_domain | operation | symbol / market | window | max_rows |
-| - | -------- | --------- | ----------- | --------- | --------------- | ------ | -------- |
-| 1 | probe-tdx-security-list | tdx_pytdx | security_list | fetch_security_list | sh | max_rows=20 per market | 20 |
-| 2 | probe-tdx-equity-daily | tdx_pytdx | cn_equity_daily_bar | fetch_daily_bar | sh.600519 | recent 5 trading days | 10 |
-| 3 | probe-tdx-index-daily | tdx_pytdx | cn_index_daily_bar | fetch_index_daily_bar | 000001.SH | recent 5 trading days | 10 |
+| #   | probe_id                | source_id | data_domain         | operation             | symbol / market | window                 | max_rows |
+| --- | ----------------------- | --------- | ------------------- | --------------------- | --------------- | ---------------------- | -------- |
+| 1   | probe-tdx-security-list | tdx_pytdx | security_list       | fetch_security_list   | sh              | max_rows=20 per market | 20       |
+| 2   | probe-tdx-equity-daily  | tdx_pytdx | cn_equity_daily_bar | fetch_daily_bar       | sh.600519       | recent 5 trading days  | 3        |
+| 3   | probe-tdx-index-daily   | tdx_pytdx | cn_index_daily_bar  | fetch_index_daily_bar | 000001.SH       | recent 5 trading days  | 3        |
 
-**Caps (018C wins):** 5 trading days · equity/index max_rows=10 · security list max_rows=20 · max 5 network calls · total rows ≤ 40.
+**Caps (R3FR-03 SSOT):** 5 trading days · equity/index max_rows=**3** · security list max_rows=20 · max 5 network calls · total rows ≤ 40. Supersedes 018C equity/index max_rows=10 for provider port envelope.
 
 ## TDX 行情主机
 
 > **BLK-TDX-04：** 下列 `host` / `port` 须由用户在执行 live 探针前填写。占位值不能用于实际网络连接。
 
-| host | port | provided_by | provided_on | reachability_note | reference_only_default | user_attestation |
-| ---- | ---- | ----------- | ----------- | ----------------- | ---------------------- | ---------------- |
-| __USER_FILL_HOST__ | 0 | project owner | 2026-06-24 | **待用户填写可达 TDX HQ 主机与端口** | false | bounded read-only probe OK once host confirmed |
+| host               | port | provided_by   | provided_on | reachability_note                    | reference_only_default | user_attestation                               |
+| ------------------ | ---- | ------------- | ----------- | ------------------------------------ | ---------------------- | ---------------------------------------------- |
+| **USER_FILL_HOST** | 0    | project owner | 2026-06-24  | **待用户填写可达 TDX HQ 主机与端口** | false                  | bounded read-only probe OK once host confirmed |
 
 ## Global controls
 
-| Control | Value |
-| ------- | ----- |
-| raw_only | true |
-| write_target | sandbox |
-| allow_clean_write | false |
-| allow_production_clean_write | false |
+| Control                      | Value   |
+| ---------------------------- | ------- |
+| raw_only                     | true    |
+| write_target                 | sandbox |
+| allow_clean_write            | false   |
+| allow_production_clean_write | false   |
