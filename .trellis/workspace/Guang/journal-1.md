@@ -366,3 +366,36 @@ R3FR-03: TDX port/normalizer refactor + audit repair (gate-only live auth, stack
 ### Next Steps
 
 - None - task complete
+
+## Session 12: R3FR-07 finish-work
+
+**Date**: 2026-06-27
+**Task**: R3FR-07 finish-work
+**Branch**: `master`
+
+### Summary
+
+Batch 3F-R CLOSED @ R3FR-07; Round 3G unlocked; audit PASS; merged to master.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash       | Message       |
+| ---------- | ------------- |
+| `6134b5b3` | (see git log) |
+| `e88791d1` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
