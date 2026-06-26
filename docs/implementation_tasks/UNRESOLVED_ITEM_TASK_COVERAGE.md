@@ -139,6 +139,8 @@
 
 ## 5. Round4 unresolved / deferred items
 
+All Round4 rows are blocked by R3H-05 until `PASS_ROUND4_REAL_DATA_READY` or `WARN_ROUND4_ALLOWED_WITH_NARROWED_SCOPE_ADR`. No Round4 task may consume or present vague proposed-disabled source state; API/frontend/Agent/backtest must use Round3H final decisions and evidence.
+
 | ID                                         | 当前阶段 / owner       | 原始任务入口                                                                                                                                            | Plan 阶段必须纳入的处理                                                      |
 | ------------------------------------------ | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
 | `R2-GAP-2`                                 | Round4 task 024        | `ROUND_4_API_FRONTEND_AGENT_BACKTEST/024_implement_fastapi_routes.md`                                                                                   | source capability list HTTP API 或 documented deferral to agent/tool layer。 |
@@ -157,6 +159,8 @@
 | `R4-FE-3`                                  | Round4 task 027        | `ROUND_4_API_FRONTEND_AGENT_BACKTEST/027_implement_frontend_layer_pages.md`                                                                             | Layer 1–5 dashboard pages。                                                  |
 
 ## 6. Round5+ unresolved / deferred items
+
+Round5 rows must preserve Round3H source posture (`READY_WITH_EVIDENCE`, `ADR_DISABLED_OUT_OF_SCOPE`, `DISABLED_SOURCE`), source limitation, and route/evidence status in release outputs. They must fail or disclose missing source admission rather than implement adapters in release hardening.
 
 | ID          | 当前阶段 / owner | 原始任务入口                                                                                                                                     | Plan 阶段必须纳入的处理                             |
 | ----------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------- |

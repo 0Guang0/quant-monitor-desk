@@ -18,6 +18,8 @@
 
 ## Boundary
 
-This batch may depend on artifacts from Round 3F performance budget and Round4 API/frontend work, but it should not implement those features. It turns security/release checks into CI gates.
+This batch may depend on artifacts from Round 3F performance budget, Round3G clean write, Round3H real-data source admission, and Round4 API/frontend work, but it should not implement those features. It turns security/release checks into CI gates.
 
-Batch 05 must not become a cleanup bucket for unfinished product capabilities. If a Round3G/Round4 capability is absent, Batch 05 should fail or document the limitation in the release manifest with owner, phase, and closure test; it should not add a new feature micro-slice.
+Batch 05 must not become a cleanup bucket for unfinished product capabilities. If a Round3H/Round3G/Round4 capability is absent, Batch 05 should fail or document the limitation in the release manifest with owner, phase, and closure test; it should not add a new feature micro-slice.
+
+Release output must preserve Round3H source posture exactly: `READY_WITH_EVIDENCE`, `ADR_DISABLED_OUT_OF_SCOPE`, `DISABLED_SOURCE`, source limitation, and route/evidence status. Batch05 must not convert missing source adapters into release-ready claims.

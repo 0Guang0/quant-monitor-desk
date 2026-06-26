@@ -768,6 +768,44 @@ tests/test_r3f_br_backfill_reconcile_closure.py:
       - docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/BATCH_3F_HARDENING_RULES.md
     specs:
       - specs/contracts/sync_job_contract.yaml
+tests/test_r3h_adapter_evidence_matrix.py:
+  command: uv run python -m pytest tests/test_r3h_adapter_evidence_matrix.py -q
+  failure_meaning:
+    R3H audit template missing adapter/evidence fields; Round4 gate
+    incomplete.
+  purpose: Round 3H adapter evidence-matrix planning gate
+  type: policy-contract
+  verifies:
+    docs:
+      - docs/quality/round3h_real_data_production_entry_audit.md
+    rules:
+      - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
+    specs: []
+tests/test_r3h_layer_binding_audit.py:
+  command: uv run python -m pytest tests/test_r3h_layer_binding_audit.py -q
+  failure_meaning:
+    R3H layer binding or Round4 admission outcomes undefined in planning
+    docs.
+  purpose: Round 3H Layer1-5 binding and Round4 admission planning gate
+  type: policy-contract
+  verifies:
+    docs:
+      - docs/quality/round3h_real_data_production_entry_audit.md
+    rules:
+      - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
+    specs: []
+tests/test_r3h_source_final_decisions.py:
+  command: uv run python -m pytest tests/test_r3h_source_final_decisions.py -q
+  failure_meaning: R3H task cards omit target sources or final-decision semantics.
+  purpose: Round 3H source final-decision planning gate across R3H task cards
+  type: policy-contract
+  verifies:
+    docs:
+      - docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/README.md
+    rules:
+      - docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md
+    specs:
+      - specs/datasource_registry/source_registry.yaml
 tests/test_r3x_data_source_routing_blockers.py:
   command:
     uv run python -m pytest tests/test_r3x_data_source_routing_blockers.py
@@ -844,14 +882,16 @@ tests/test_real_data_staged_pilot_v3.py:
 tests/test_reference_adoption_guardrails.py:
   command: uv run python -m pytest tests/test_reference_adoption_guardrails.py -q
   failure_meaning:
-    Regression in test_reference_adoption_guardrails; inspect purpose
-    and linked authorities.
-  purpose: Reference adoption guardrails — static scans for forbidden copied patterns.
-  type: runtime-contract
+    Reference adoption guardrails fail-closed; backend/scripts must
+    not copy forbidden trading, login, fallback, or reference-project runtime patterns.
+  purpose: Reference adoption guardrails — static scans for forbidden copied patterns
+  type: policy-negative
   verifies:
     docs: []
-    rules: []
-    specs: []
+    rules:
+      - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
+    specs:
+      - specs/contracts/reference_adoption_guardrails.yaml
 tests/test_resource_guard.py:
   command: uv run python -m pytest tests/test_resource_guard.py -q
   evidence_required: pytest output

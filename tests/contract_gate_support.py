@@ -14,6 +14,13 @@ import yaml
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SERVICE_CONTRACT = PROJECT_ROOT / "specs/contracts/datasource_service_contract.yaml"
 BACKEND_APP = PROJECT_ROOT / "backend" / "app"
+GUARDRAIL_SCAN_ROOTS = (BACKEND_APP, PROJECT_ROOT / "scripts")
+FORBIDDEN_REFERENCE_IMPORT_ROOTS = frozenset(
+    {"openbb", "EasyXT", "JQ2PTrade", "TradingAgents", "agents_for_openbb"}
+)
+FORBIDDEN_TRADING_DEF_NAMES = frozenset(
+    {"order", "buy", "sell", "order_value", "order_target", "order_target_value", "cancel_order"}
+)
 
 ALLOWED_ADAPTER_FACTORY_PATHS = {
     PROJECT_ROOT / "backend" / "app" / "datasources" / "adapters" / "__init__.py",
@@ -93,6 +100,74 @@ def scan_backend_python_for_patterns(
         if hits:
             rel = py_file.relative_to(PROJECT_ROOT)
             violations.append(f"{rel}: forbidden pattern(s) {hits}")
+    return violations
+
+
+def scan_guardrail_roots_for_patterns(patterns: tuple[str, ...]) -> list[str]:
+    """backend/app + scripts — ponytail: reuse single-root scanner twice."""
+    violations: list[str] = []
+    for root in GUARDRAIL_SCAN_ROOTS:
+        violations.extend(scan_backend_python_for_patterns(patterns, root=root))
+    return violations
+
+
+def scan_forbidden_function_defs(
+    names: frozenset[str],
+    *,
+    roots: tuple[Path, ...] = GUARDRAIL_SCAN_ROOTS,
+) -> list[str]:
+    violations: list[str] = []
+    for root in roots:
+        if not root.is_dir():
+            continue
+        for py_file in root.rglob("*.py"):
+            if "tests" in py_file.parts:
+                continue
+            tree = ast.parse(py_file.read_text(encoding="utf-8"))
+            for node in ast.walk(tree):
+                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name in names:
+                    rel = py_file.relative_to(PROJECT_ROOT)
+                    violations.append(f"{rel}: forbidden def {node.name}()")
+    return violations
+
+
+def scan_forbidden_import_roots(
+    roots: frozenset[str],
+    *,
+    scan_roots: tuple[Path, ...] = GUARDRAIL_SCAN_ROOTS,
+) -> list[str]:
+    violations: list[str] = []
+    for root in scan_roots:
+        if not root.is_dir():
+            continue
+        for py_file in root.rglob("*.py"):
+            if "tests" in py_file.parts:
+                continue
+            for imp in collect_imports(py_file):
+                top = imp.split(".", 1)[0]
+                if top in roots:
+                    rel = py_file.relative_to(PROJECT_ROOT)
+                    violations.append(f"{rel}: forbidden import root {top}")
+    return violations
+
+
+def scan_sys_path_mutation_with_reference_dir(
+    *,
+    scan_roots: tuple[Path, ...] = GUARDRAIL_SCAN_ROOTS,
+) -> list[str]:
+    violations: list[str] = []
+    for root in scan_roots:
+        if not root.is_dir():
+            continue
+        for py_file in root.rglob("*.py"):
+            if "tests" in py_file.parts:
+                continue
+            text = py_file.read_text(encoding="utf-8")
+            if "参考项目" not in text:
+                continue
+            if "sys.path.insert" in text or "sys.path.append" in text:
+                rel = py_file.relative_to(PROJECT_ROOT)
+                violations.append(f"{rel}: sys.path mutation with 参考项目")
     return violations
 
 

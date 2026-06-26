@@ -348,6 +348,7 @@ Used with MIGRATION_MAP.md for machine omission checks (`check_docs_specs_indexe
 - `docs/quality/production_live_pilot_policy.md`
 - `docs/quality/prompt14_user_authorization_2026-06-22.md`
 - `docs/quality/quant_monitor_desk_verified_audit_report_2026-06-25_v3_INDEX.md`
+- `docs/quality/round3h_real_data_production_entry_audit.md`
 - `docs/quality/self_check_and_audit.md`
 - `docs/quality/staged_acceptance_policy.md`
 - `docs/quality/tdx_pytdx_live_manual_probe_authorization_2026-06-24.md`

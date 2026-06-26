@@ -238,6 +238,8 @@ Non-blocking for read-only audit; **Wave C merge closed α-3 / β-2 rows** (2026
 
 ## DEFERRED — Round 4 (API / frontend / notifications)
 
+Round4 rows are productization work and remain blocked by R3H-05. They do not authorize wrapping vague proposed-disabled source shells. Batch04 may start only after `PASS_ROUND4_REAL_DATA_READY` or `WARN_ROUND4_ALLOWED_WITH_NARROWED_SCOPE_ADR`; `BLOCK_ROUND4_DATA_ENTRY_INCOMPLETE` blocks these rows.
+
 | ID            | Item                                                                                 | Resolution phase | Task hook         | Blocks 017? | Closure test / evidence                          |
 | ------------- | ------------------------------------------------------------------------------------ | ---------------- | ----------------- | ----------- | ------------------------------------------------ |
 | R2-GAP-2      | No source capability list HTTP API                                                   | **Round 4**      | task **024**      | No          | `GET /api/sources` or documented deferral to 025 |
@@ -261,6 +263,8 @@ Non-blocking for read-only audit; **Wave C merge closed α-3 / β-2 rows** (2026
 ---
 
 ## DEFERRED — Round 5+
+
+Round5 release/security rows must carry Round3H source posture forward (`READY_WITH_EVIDENCE`, `ADR_DISABLED_OUT_OF_SCOPE`, `DISABLED_SOURCE`, source limitation, route/evidence status). Round5 must not implement missing source adapters or hide incomplete source admission.
 
 | ID        | Item                        | Resolution phase | Task hook           | Blocks 017? | Closure test / evidence |
 | --------- | --------------------------- | ---------------- | ------------------- | ----------- | ----------------------- |

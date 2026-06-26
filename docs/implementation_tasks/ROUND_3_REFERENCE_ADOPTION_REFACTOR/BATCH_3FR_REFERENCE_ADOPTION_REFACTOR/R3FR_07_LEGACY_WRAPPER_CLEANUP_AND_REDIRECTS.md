@@ -10,6 +10,19 @@
 
 Close Batch 3F-R by removing stale task paths, wrappers, and placeholder narratives that would let future work continue tiny self-built slices. Cleanup happens only after R3FR-02/R3FR-03/R3FR-05/R3FR-06 replacement tests pass.
 
+```yaml
+reference_project:
+  path: n/a
+  license: n/a
+  allowed_use: forbidden_until_review
+  qmd_target_files: []
+  direct_copy_allowed: false
+  rewrite_required: []
+  forbidden_semantics:
+    - new_runtime_adoption_during_cleanup
+  attribution_required: false
+```
+
 ---
 
 ## 2. Cleanup targets

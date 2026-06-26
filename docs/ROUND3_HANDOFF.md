@@ -106,6 +106,8 @@ Seven branches merged to `master` @ **`376e30e6`** via `integration/round3-batch
 
 **Next gate:** **Round 3F** (Batch6 data governance). No production-live or production clean-write claims until Round 3G.
 
+**Forward planning correction (2026-06-26):** Round3 now continues through 3F-R → 3G → **3H Real Data Production Entry** before Round4. Round4 productization is blocked until R3H-05 returns `PASS_ROUND4_REAL_DATA_READY` or `WARN_ROUND4_ALLOWED_WITH_NARROWED_SCOPE_ADR`; `BLOCK_ROUND4_DATA_ENTRY_INCOMPLETE` means API/frontend/Agent/backtest work must not wrap proposed-disabled source shells. Every target source must be `READY_WITH_EVIDENCE` or `ADR_DISABLED_OUT_OF_SCOPE`.
+
 ## Round 3 Batch 3V — **DONE on master** (2026-06-25)
 
 `master` @ `2aeb6f0`（FF from integration `af081770` + test/registry post-merge `2aeb6f0`）。Registry §7.3 batch closed。

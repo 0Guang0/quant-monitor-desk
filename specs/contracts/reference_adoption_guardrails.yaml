@@ -1,5 +1,5 @@
 version: reference_adoption_guardrails_v2
-status: draft_round3g
+status: active_round3fr
 owner: architecture_security
 purpose: >
   Permit scoped, audited adaptation from mature reference projects while blocking
@@ -19,6 +19,32 @@ structure_rules:
     - docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_01_SANDBOX_CLEAN_WRITE_REHEARSAL.md
     - docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_02_PRE_PRODUCTION_ADVERSARIAL_AUDIT.md
     - docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_03_LIMITED_PRODUCTION_CLEAN_WRITE.md
+
+completion_rules:
+  max_implementation_batches_to_full_stable: 3
+  first_batch_must_be_vertical_slice: true
+  rating_authority_file: MODULE_COMPLETION_RATING.md
+  design_docs_remain_complete_product_targets: true
+
+license_gate:
+  required_task_card_fields:
+    - reference_project.path
+    - reference_project.license
+    - reference_project.allowed_use
+    - reference_project.qmd_target_files
+    - reference_project.direct_copy_allowed
+    - reference_project.rewrite_required
+    - reference_project.forbidden_semantics
+    - reference_project.attribution_required
+  allowed_use_values:
+    - direct_adaptation
+    - architecture_only
+    - forbidden_until_review
+  rules:
+    - mit_or_apache_may_be_directly_adapted_only_when_card_names_source_and_target_paths
+    - agpl_is_architecture_only_unless_separate_legal_decision
+    - unknown_license_forbids_runtime_adoption
+    - runtime_code_must_be_qmd_owned
 
 allowed_adoption:
   easyxt_data_quality_rules:
@@ -77,6 +103,9 @@ allowed_adoption:
 forbidden_adoption:
   runtime_import_from_reference_project:
     examples:
+      - 参考项目
+      - sys.path.insert
+      - sys.path.append
       - import_from_reference_project_runtime
       - sys_path_insert_reference_project
     severity: P0
@@ -87,6 +116,8 @@ forbidden_adoption:
       - order_target
       - order_target_value
       - cancel_order
+      - buy
+      - sell
       - get_open_orders
       - get_portfolio
       - get_positions
@@ -131,10 +162,16 @@ round3g_rules:
   - TradingAgents, TradingAgents-astock, and agents-for-openbb have no active Round3G use.
 
 required_tests:
+  - tests/test_reference_adoption_guardrails.py::test_r3fr01GuardrailsYamlContract
   - tests/test_reference_adoption_guardrails.py::test_noTradingApiCopied
   - tests/test_reference_adoption_guardrails.py::test_noAutoLoginCopied
   - tests/test_reference_adoption_guardrails.py::test_noSilentFallbackCopied
+  - tests/test_reference_adoption_guardrails.py::test_noReferenceProjectRuntimeImport
+  - tests/test_reference_adoption_guardrails.py::test_noOpenbbRuntimeCopyIntroduced
   - tests/test_reference_adoption_guardrails.py::test_jq2ptradeExecPatternNotCopied
+  - tests/test_reference_adoption_guardrails.py::test_noAgentTriggeredWritePatterns
+  - tests/test_reference_adoption_guardrails.py::test_batch3frCardsDoNotRequireCentralInventory
+  - tests/test_reference_adoption_guardrails.py::test_r3frAdaptingCardsDeclareReferenceProject
   - tests/test_round3g_sandbox_clean_write_rehearsal.py
   - tests/test_round3g_pre_production_adversarial_audit.py
   - tests/test_round3g_limited_production_clean_write.py

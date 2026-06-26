@@ -7,33 +7,36 @@
 > Scope rule: `docs/` and `specs/` are design/contract inputs only. Runtime implementation must land in `backend/`, `frontend/`, `scripts/`, `configs/`, `tests/`, or other implementation paths already mapped by `MIGRATION_MAP.md`.
 >
 > Current checkpoint (2026-06-25): Mainline **`master`** @ **`2aeb6f0`** (post Batch 3V verified audit cleanup). **Active — Round 3F / Wave E:** Batch6 data governance / migration / CLI / source-health / lineage closure. Forward planning SSOT is now `PROJECT_IMPLEMENTATION_ROADMAP.md`; this map is historical evidence/index only. **Done + archived:** Wave A/B/C/D and Batch 3V. Hard constraint: `R3-B2.75-REQ2-EM` **DEFERRED**; `B2.5-O-05` live FRED primary **RE-DEFERRED Batch 6** (sandbox evidence recorded only). Residual hygiene is centralized into `PROJECT_IMPLEMENTATION_ROADMAP.md` Round 3F and `docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/`.
+>
+> Planning correction (2026-06-26): this historical map must not be read as Round4 admission authority. Canonical forward order is 3F-R → 3G → **3H** → Batch04 → Batch05. Batch3H is mandatory before Round4: every target source must be `READY_WITH_EVIDENCE` or `ADR_DISABLED_OUT_OF_SCOPE`; vague proposed-disabled source rows block Round4 through `BLOCK_ROUND4_DATA_ENTRY_INCOMPLETE`.
 
 ## 0. Mandatory inputs before planning any Round 3 batch
 
 These files are **Plan-stage inputs**. Plan must read them, reconcile them, and fold the relevant parts into `.trellis/tasks/**/MASTER.plan.md` Source Context Index and `AUDIT.plan.md` Audit Source Trace. Execute / Audit / Repair must not treat this list as their default read manifest.
 
-| Input                                                               | Why it is mandatory                                                                                                    |
-| ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `MIGRATION_MAP.md`                                                  | Project-level map and implementation-directory boundary.                                                               |
-| `docs/implementation_tasks/TASK_INPUT_CONTEXT_INDEX.md`             | Plan-only context bridge and Trellis archive pointers.                                                                 |
-| `docs/AUDIT_DEFERRED_REGISTRY.md`                                   | Authoritative registry for OPEN / DEFERRED / RESOLVED audit items.                                                     |
-| `docs/UNRESOLVED_ISSUES_REGISTRY.md`                                | Operator-facing unresolved/deferred split.                                                                             |
-| `docs/RESOLVED_ISSUES_REGISTRY.md`                                  | Prevents reopening items that are already closed.                                                                      |
-| `docs/ROUND3_HANDOFF.md`                                            | Round 3 entry handoff and start checklist.                                                                             |
-| `docs/implementation_tasks/ROUND3_EARLY_CLOSE_PLAN.md`              | Round 3 early ops and deferral closeout plan.                                                                          |
-| `docs/implementation_tasks/ROUND_3_MODELING_LAYERS/README.md`       | Declares formal Round 3 tasks `017`-`023` and the unnumbered DB inspect CLI boundary.                                  |
-| `.trellis/spec/guides/complex-task-planning-protocol.md`            | Trellis complex-task planning, batching, Execute, Audit, Repair, and Phase 8D Repair/Debt Lite rules.                  |
-| `.trellis/spec/guides/round3-repair-debt-worktree-plan.md`          | Round 3 branch/worktree split plan for staged mainline plus parallel debt repair.                                      |
-| `docs/implementation_tasks/ROUND_3_REFERENCE_LANDING/README.md`     | External-reference landing task index with project URLs, round/batch ownership, branchability, and source-input rules. |
-| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/*.md`           | Per-branch startup prompts for independent Round 3 sessions; see §2.5 for the active/future index.                     |
-| `docs/implementation_tasks/ROUND_3_REVIEW/019_plan_audit_review.md` | Read-only review task card for `review/round3-019-plan-audit`.                                                         |
-| `docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md`               | Global execution boundaries that Plan must fold into MASTER.                                                           |
-| `docs/implementation_tasks/GLOBAL_TESTING_POLICY.md`                | Testing policy and semantic assertion requirements.                                                                    |
-| `docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md`               | ResourceGuard / eco-mode constraints for every batch.                                                                  |
-| `docs/quality/staged_acceptance_policy.md`                          | Stage-specific acceptance and partial-delivery rules.                                                                  |
-| `docs/quality/production_live_pilot_policy.md`                      | Batch 2.75 live-pilot authorization, sandbox, evidence, and no-mutation controls.                                      |
-| `docs/quality/PENDING_USER_DECISIONS.md`                            | User-confirmed D-01 through D-12 decisions that Plan must not reopen.                                                  |
-| `specs/contracts/runtime_versions.md`                               | Runtime, lockfile, and acceptance-command authority.                                                                   |
+| Input                                                                    | Why it is mandatory                                                                                                     |
+| ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| `MIGRATION_MAP.md`                                                       | Project-level map and implementation-directory boundary.                                                                |
+| `docs/implementation_tasks/TASK_INPUT_CONTEXT_INDEX.md`                  | Plan-only context bridge and Trellis archive pointers.                                                                  |
+| `docs/AUDIT_DEFERRED_REGISTRY.md`                                        | Authoritative registry for OPEN / DEFERRED / RESOLVED audit items.                                                      |
+| `docs/UNRESOLVED_ISSUES_REGISTRY.md`                                     | Operator-facing unresolved/deferred split.                                                                              |
+| `docs/RESOLVED_ISSUES_REGISTRY.md`                                       | Prevents reopening items that are already closed.                                                                       |
+| `docs/ROUND3_HANDOFF.md`                                                 | Round 3 entry handoff and start checklist.                                                                              |
+| `docs/implementation_tasks/ROUND3_EARLY_CLOSE_PLAN.md`                   | Round 3 early ops and deferral closeout plan.                                                                           |
+| `docs/implementation_tasks/ROUND_3_MODELING_LAYERS/README.md`            | Declares formal Round 3 tasks `017`-`023` and the unnumbered DB inspect CLI boundary.                                   |
+| `.trellis/spec/guides/complex-task-planning-protocol.md`                 | Trellis complex-task planning, batching, Execute, Audit, Repair, and Phase 8D Repair/Debt Lite rules.                   |
+| `.trellis/spec/guides/round3-repair-debt-worktree-plan.md`               | Round 3 branch/worktree split plan for staged mainline plus parallel debt repair.                                       |
+| `docs/implementation_tasks/ROUND_3_REFERENCE_LANDING/README.md`          | External-reference landing task index with project URLs, round/batch ownership, branchability, and source-input rules.  |
+| `docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/README.md` | Canonical Round 3H gate: all target sources must be `READY_WITH_EVIDENCE` or `ADR_DISABLED_OUT_OF_SCOPE` before Round4. |
+| `docs/implementation_tasks/ROUND_3_PARALLEL_PROMPTS/*.md`                | Per-branch startup prompts for independent Round 3 sessions; see §2.5 for the active/future index.                      |
+| `docs/implementation_tasks/ROUND_3_REVIEW/019_plan_audit_review.md`      | Read-only review task card for `review/round3-019-plan-audit`.                                                          |
+| `docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md`                    | Global execution boundaries that Plan must fold into MASTER.                                                            |
+| `docs/implementation_tasks/GLOBAL_TESTING_POLICY.md`                     | Testing policy and semantic assertion requirements.                                                                     |
+| `docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md`                    | ResourceGuard / eco-mode constraints for every batch.                                                                   |
+| `docs/quality/staged_acceptance_policy.md`                               | Stage-specific acceptance and partial-delivery rules.                                                                   |
+| `docs/quality/production_live_pilot_policy.md`                           | Batch 2.75 live-pilot authorization, sandbox, evidence, and no-mutation controls.                                       |
+| `docs/quality/PENDING_USER_DECISIONS.md`                                 | User-confirmed D-01 through D-12 decisions that Plan must not reopen.                                                   |
+| `specs/contracts/runtime_versions.md`                                    | Runtime, lockfile, and acceptance-command authority.                                                                    |
 
 ## 1. ID convention used by this file
 
@@ -310,6 +313,8 @@ Canonical pytest commands for merge review and parallel debt branches live in `d
 | `R3-B6-021-O-02`                 | 同上；`tests/test_layer3_snapshot_builder.py` · A8 G7                                                                                 | Batch 6：强化确定性重建测，除 `parameter_hash`/`latest_price` 外断言完整 `IndustryChainDailySnapshotRow` tuple（及约定 lineage 字段）。       | 021 主会话对抗复核残余；不阻塞 021 staged 闭环。   |
 
 **Final closeout rule:** before entering Round4 planning, every Batch 6 item must be either `RESOLVED` with implementation/test evidence or explicitly re-deferred in `docs/AUDIT_DEFERRED_REGISTRY.md` and `docs/UNRESOLVED_ISSUES_REGISTRY.md`.
+
+**Round4 admission correction:** Batch 6 closeout is not sufficient for Round4. After 3F-R and 3G, Batch3H must close every target source in `source_registry.yaml` / `source_capabilities.yaml` to `READY_WITH_EVIDENCE` or `ADR_DISABLED_OUT_OF_SCOPE`; otherwise R3H-05 returns `BLOCK_ROUND4_DATA_ENTRY_INCOMPLETE`.
 
 **Round4 cross-reference only:** `R3-B25-FE-BUNDLE-BUDGET` remains tied to `R3-B25-HYG-02` / Round4 task 027. Round3 Map 只保留交叉引用，不把前端 Vitest 扩展或 bundle budget gate 作为 Batch 3–6 建模实施项。
 

@@ -10,6 +10,24 @@
 
 Refactor existing TDX/pytdx probe code so provider lifecycle, connection attempts, request caps, error mapping, and raw evidence output are separated from probe orchestration. This must complete the disabled/raw-only provider shape in this batch; do not split it into repeated “add one host/add one status” tasks.
 
+```yaml
+reference_project:
+  path: 参考项目/EasyXT/easy_xt/realtime_data/providers/tdx_provider.py
+  license: MIT
+  allowed_use: direct_adaptation
+  qmd_target_files:
+    - backend/app/ops/tdx_pytdx_port.py
+    - backend/app/ops/interface_probe_fetch_ports.py
+  direct_copy_allowed: false
+  rewrite_required:
+    - remove_runtime_import_from_reference_project
+    - remove_auto_server_scan_default
+  forbidden_semantics:
+    - production_primary
+    - auto_login
+  attribution_required: true
+```
+
 ---
 
 ## 2. Reference source file

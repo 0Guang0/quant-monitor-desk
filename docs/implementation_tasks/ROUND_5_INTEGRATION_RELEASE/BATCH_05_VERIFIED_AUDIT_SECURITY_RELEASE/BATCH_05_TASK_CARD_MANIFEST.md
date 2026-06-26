@@ -40,14 +40,14 @@ Do not delete the loose `031`–`036` cards until path references are audited an
 ## 4. Required execution order
 
 1. `B05_01` security/release CI gate.
-2. `B05_02` integration/resource smoke after Round3F-R, 3G, and Round4 artifacts stabilize enough to test.
+2. `B05_02` integration/resource smoke after Round3F-R, 3G, 3H, and Round4 artifacts stabilize enough to test.
 3. `B05_03` release manifest/package cleanup last.
 
 ---
 
 ## 5. Anti-overengineering release rule
 
-Batch 05 is not a product feature batch. It must not create new API/frontend/Agent/backtest/data-source capabilities to compensate for incomplete Round3G/Round4 work. If a required capability is missing, Batch 05 must fail the release gate or list it explicitly in the release manifest with owner, phase, and closure test.
+Batch 05 is not a product feature batch. It must not create new API/frontend/Agent/backtest/data-source capabilities to compensate for incomplete Round3H/Round3G/Round4 work. If a required capability is missing, Batch 05 must fail the release gate or list it explicitly in the release manifest with owner, phase, closure test, source limitation, and route/evidence status.
 
 ---
 
@@ -57,7 +57,7 @@ Batch 05 is complete only when:
 
 - security CI gates exist and are documented;
 - integration smoke/resource-limit tests are bounded and runnable;
-- release manifest includes production posture, source posture, and unresolved/deferred item status;
+- release manifest includes production posture, source posture, unresolved/deferred item status, and Round3H source final decisions: `READY_WITH_EVIDENCE`, `ADR_DISABLED_OUT_OF_SCOPE`, or `DISABLED_SOURCE`;
 - final package cleanup does not delete historical evidence without redirect;
 - root roadmap and implementation README agree on canonical entrypoints;
 - no Round5 card is being used as a backdoor product-feature implementation batch.

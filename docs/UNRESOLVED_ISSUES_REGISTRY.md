@@ -92,6 +92,8 @@
 
 ---
 
+Round4 unresolved rows are gated by Batch3H. They may be implemented only after R3H-05 returns `PASS_ROUND4_REAL_DATA_READY` or `WARN_ROUND4_ALLOWED_WITH_NARROWED_SCOPE_ADR`; `BLOCK_ROUND4_DATA_ENTRY_INCOMPLETE` means Round4 must not expose vague proposed-disabled source readiness.
+
 | ID            | State    | Blocks 017? | Problem / gap / risk                                            | Evidence / source                  | Resolution / closure test                                               |
 | ------------- | -------- | ----------: | --------------------------------------------------------------- | ---------------------------------- | ----------------------------------------------------------------------- |
 | R2-GAP-2      | DEFERRED |          No | No source capability list HTTP API.                             | `docs/AUDIT_DEFERRED_REGISTRY.md`. | Round4 task 024: `GET /api/sources` or documented deferral to task 025. |
@@ -115,6 +117,8 @@
 ---
 
 ## Round5+ unresolved / deferred items
+
+Round5 release/security rows must preserve Round3H source final decisions (`READY_WITH_EVIDENCE`, `ADR_DISABLED_OUT_OF_SCOPE`, `DISABLED_SOURCE`) plus source limitation and route/evidence status. They must not implement missing source adapters.
 
 | ID        | State    | Blocks 017? | Problem / gap / risk                        | Evidence / source                  | Resolution / closure test      |
 | --------- | -------- | ----------: | ------------------------------------------- | ---------------------------------- | ------------------------------ |

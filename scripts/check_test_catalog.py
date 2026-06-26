@@ -468,6 +468,55 @@ CURATED: dict[str, dict] = {
         "command": "uv run python -m pytest tests/test_real_data_staged_pilot_v3.py -q",
         "failure_meaning": "v3 staged pilot may bypass WL caps or claim production-live readiness.",
     },
+    "tests/test_reference_adoption_guardrails.py": {
+        "purpose": "Reference adoption guardrails — static scans for forbidden copied patterns",
+        "type": "policy-negative",
+        "verifies": {
+            "docs": [],
+            "specs": ["specs/contracts/reference_adoption_guardrails.yaml"],
+            "rules": ["docs/implementation_tasks/GLOBAL_TESTING_POLICY.md"],
+        },
+        "command": "uv run python -m pytest tests/test_reference_adoption_guardrails.py -q",
+        "failure_meaning": (
+            "Reference adoption guardrails fail-closed; backend/scripts must not copy "
+            "forbidden trading, login, fallback, or reference-project runtime patterns."
+        ),
+    },
+    "tests/test_r3h_adapter_evidence_matrix.py": {
+        "purpose": "Round 3H adapter evidence-matrix planning gate",
+        "type": "policy-contract",
+        "verifies": {
+            "docs": ["docs/quality/round3h_real_data_production_entry_audit.md"],
+            "specs": [],
+            "rules": ["docs/implementation_tasks/GLOBAL_TESTING_POLICY.md"],
+        },
+        "command": "uv run python -m pytest tests/test_r3h_adapter_evidence_matrix.py -q",
+        "failure_meaning": "R3H audit template missing adapter/evidence fields; Round4 gate incomplete.",
+    },
+    "tests/test_r3h_layer_binding_audit.py": {
+        "purpose": "Round 3H Layer1-5 binding and Round4 admission planning gate",
+        "type": "policy-contract",
+        "verifies": {
+            "docs": ["docs/quality/round3h_real_data_production_entry_audit.md"],
+            "specs": [],
+            "rules": ["docs/implementation_tasks/GLOBAL_TESTING_POLICY.md"],
+        },
+        "command": "uv run python -m pytest tests/test_r3h_layer_binding_audit.py -q",
+        "failure_meaning": "R3H layer binding or Round4 admission outcomes undefined in planning docs.",
+    },
+    "tests/test_r3h_source_final_decisions.py": {
+        "purpose": "Round 3H source final-decision planning gate across R3H task cards",
+        "type": "policy-contract",
+        "verifies": {
+            "docs": [
+                "docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/README.md",
+            ],
+            "specs": ["specs/datasource_registry/source_registry.yaml"],
+            "rules": ["docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"],
+        },
+        "command": "uv run python -m pytest tests/test_r3h_source_final_decisions.py -q",
+        "failure_meaning": "R3H task cards omit target sources or final-decision semantics.",
+    },
     "tests/test_docstring_quadruple_coverage.py": {
         "purpose": "Gate — every test_* carries five-field Chinese docstring per hygiene plan",
         "type": "runtime-contract",

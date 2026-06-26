@@ -6,6 +6,8 @@ Coordinate Round4 productization work from the canonical Batch 04 folder. Loose 
 
 Batch 04 may implement API, Agent, frontend, notifications/reports, and read-only backtest/review runtime. It must not introduce production writes or execution semantics.
 
+Batch 04 cannot dispatch while R3H-05 is `BLOCK_ROUND4_DATA_ENTRY_INCOMPLETE`. Dispatch is allowed only after R3H-05 returns `PASS_ROUND4_REAL_DATA_READY` or `WARN_ROUND4_ALLOWED_WITH_NARROWED_SCOPE_ADR`.
+
 ## 1. Dispatch tracks
 
 | Track                       | Card                                           | Suggested branch                             | Can run in parallel?                                                                      |

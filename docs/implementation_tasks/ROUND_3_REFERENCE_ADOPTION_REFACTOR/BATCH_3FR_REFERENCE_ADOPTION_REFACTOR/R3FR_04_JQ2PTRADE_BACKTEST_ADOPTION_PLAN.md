@@ -10,6 +10,24 @@
 
 Rewrite Round4 backtest/review task cards so the first implementation batch delivers a working read-only review/backtest vertical slice, and the full stable shape is reached within at most three implementation batches. Do not allow “add one metric per task” micro-slicing.
 
+```yaml
+reference_project:
+  path: 参考项目/JQ2PTrade/ptrade_local/engine/data_loader.py
+  license: MIT
+  allowed_use: architecture_only
+  qmd_target_files:
+    - docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/**
+  direct_copy_allowed: false
+  rewrite_required:
+    - exclude_execution_style_api_names
+    - replace_console_reporting_with_structured_evidence
+  forbidden_semantics:
+    - order
+    - order_value
+    - run_daily
+  attribution_required: true
+```
+
 ---
 
 ## 2. Reference source files

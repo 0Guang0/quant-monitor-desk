@@ -11,7 +11,7 @@
 
 Create a release manifest and package cleanup path that accurately represents project readiness without deleting historical evidence, overstating production status, or hiding unresolved/deferred items.
 
-This task is the release truth layer. It must block or disclose missing Round3G/Round4 capabilities; it must not implement them.
+This task is the release truth layer. It must block or disclose missing Round3H/Round3G/Round4 capabilities; it must not implement them.
 
 ---
 
@@ -28,6 +28,9 @@ docs/implementation_tasks/ROUND_5_INTEGRATION_RELEASE/034_implement_docs_consist
 docs/implementation_tasks/ROUND_5_INTEGRATION_RELEASE/035_implement_final_package_cleanup.md
 docs/implementation_tasks/ROUND_5_INTEGRATION_RELEASE/036_create_final_release_manifest.md
 docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md
+docs/quality/round3h_real_data_production_entry_audit.md
+docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/README.md
+docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/R3H_05_LAYER_BINDING_AND_PRODUCTION_ENTRY_AUDIT.md
 specs/verification/contract_coverage.yaml
 specs/contracts/sandbox_clean_write_contract.yaml
 specs/contracts/reference_adoption_guardrails.yaml
@@ -80,6 +83,11 @@ reference_adoption_status: ""
 allowed_sources: []
 forbidden_default_sources: []
 source_enablement_posture: {}
+round3h_admission_decision: ""
+source_final_decisions: []
+source_limitations: []
+route_evidence_status: {}
+r3h_audit_artifact: ""
 clean_write_posture: {}
 security_gate_status: {}
 integration_resource_smoke_status: {}
@@ -119,7 +127,8 @@ operator_runbooks: []
    - If a runbook is absent, list as limitation or create a narrow pointer doc; do not invent completed operational proof.
 
 5. **Readiness posture**
-   - If Round3G/Round4/3F-R items are incomplete, list them in `known_limitations` or `open_deferred_items` with owner/phase/closure test.
+   - If Round3H/Round3G/Round4/3F-R items are incomplete, list them in `known_limitations` or `open_deferred_items` with owner/phase/closure test.
+   - Source readiness must be represented only as `READY_WITH_EVIDENCE`, `ADR_DISABLED_OUT_OF_SCOPE`, or `DISABLED_SOURCE`, with source limitation and route/evidence status carried forward from the R3H audit.
    - Do not claim production-live or clean-write readiness without matching gates.
 
 ---
@@ -151,6 +160,7 @@ Test expectations:
 
 - manifest schema validates;
 - manifest production/source/write posture matches roadmap and gate files;
+- manifest carries Round3H source final decisions, source limitation, and route/evidence status without inventing source readiness;
 - unresolved/deferred items are not hidden;
 - package cleanup preserves formal tasks and evidence;
 - docs consistency check recognizes canonical batch-folder hierarchy;

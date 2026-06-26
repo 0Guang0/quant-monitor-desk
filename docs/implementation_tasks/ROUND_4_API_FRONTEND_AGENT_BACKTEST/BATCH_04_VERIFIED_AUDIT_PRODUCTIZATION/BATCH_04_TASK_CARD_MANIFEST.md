@@ -2,6 +2,7 @@
 
 > **Canonical batch folder:** `docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/BATCH_04_VERIFIED_AUDIT_PRODUCTIZATION/`  
 > **Roadmap:** `PROJECT_IMPLEMENTATION_ROADMAP.md` → Round 4.  
+> **Round3H gate:** Batch04 cannot start until R3H-05 returns `PASS_ROUND4_REAL_DATA_READY` or `WARN_ROUND4_ALLOWED_WITH_NARROWED_SCOPE_ADR`; `BLOCK_ROUND4_DATA_ENTRY_INCOMPLETE` blocks this manifest.  
 > **Global reference rule:** `PROJECT_IMPLEMENTATION_ROADMAP.md` §1.4 applies to backtest, Agent, UI artifact, and provider-facing work.  
 > **Historical input cards:** loose `024`–`030` files remain source material, not the default execution entrypoint.
 

@@ -1,6 +1,7 @@
 # Batch 04 — Verified Audit Productization Gaps
 
 > Roadmap: `PROJECT_IMPLEMENTATION_ROADMAP.md` → Round 4, with global reference-adoption rule §1.4.  
+> Gate: Batch04 cannot start until R3H-05 returns `PASS_ROUND4_REAL_DATA_READY` or `WARN_ROUND4_ALLOWED_WITH_NARROWED_SCOPE_ADR`; `BLOCK_ROUND4_DATA_ENTRY_INCOMPLETE` blocks all Batch04 productization.  
 > Scope: API, frontend, Agent, notification/report, and backtest/review findings from verified audit.  
 > Production posture: read-only/productization first; no direct DB write by Agent/UI; no trading action semantics.  
 > Canonical batch package: this folder. Loose `024`–`030` cards are historical inputs unless explicitly referenced by a Batch 04 card.

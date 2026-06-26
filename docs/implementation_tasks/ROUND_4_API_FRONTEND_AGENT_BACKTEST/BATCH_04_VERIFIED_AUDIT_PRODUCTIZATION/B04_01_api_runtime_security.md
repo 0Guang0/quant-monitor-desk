@@ -3,6 +3,7 @@
 > **Batch:** Batch 04 — Verified Audit Productization  
 > **Owns:** `VR-API-001`, loose historical card `024_implement_fastapi_routes.md`  
 > **Roadmap:** Round 4.1 track.  
+> **Round3H gate:** this task is blocked until R3H-05 returns `PASS_ROUND4_REAL_DATA_READY` or `WARN_ROUND4_ALLOWED_WITH_NARROWED_SCOPE_ADR`; it must not expose vague proposed-disabled source shells while R3H-05 is `BLOCK_ROUND4_DATA_ENTRY_INCOMPLETE`.  
 > **Execution posture:** read-only API vertical slice; no write endpoint; no free SQL.
 
 ---
@@ -76,7 +77,7 @@ If file names differ, the PR must document the mapping in the task result.
 3. **Endpoint**
    - Add `GET /api/sources` or equivalent route.
    - Route must call QMD service/registry/capability code, not parse YAML directly in route handler except through an approved loader.
-   - Route must include active, sandbox-candidate, and proposed-disabled sources so operators can see disabled posture without triggering fetch.
+   - Route must expose only R3H-closed source posture: `READY_WITH_EVIDENCE` entries and `ADR_DISABLED_OUT_OF_SCOPE` / `DISABLED_SOURCE` limitation entries. It must not present vague proposed-disabled sources as productizable readiness.
    - Route must return bounded, schema-validated response.
 
 4. **Response fields**
@@ -88,7 +89,7 @@ If file names differ, the PR must document the mapping in the task result.
      - `domains`
      - `capabilities`
      - `route_status`
-     - `status` such as `active`, `sandbox_candidate`, or `proposed_disabled_source`
+     - `final_decision` / `status` such as `READY_WITH_EVIDENCE`, `ADR_DISABLED_OUT_OF_SCOPE`, or `DISABLED_SOURCE`
      - `enabled_by_default`
      - `production_default_candidate`
      - `production_default_enabled`
@@ -97,6 +98,9 @@ If file names differ, the PR must document the mapping in the task result.
      - `limits`
      - `limitations`
      - `evidence_or_contract_refs`
+     - `route_evidence_status`
+     - `source_limitation`
+     - `r3h_audit_ref`
    - Do not expose secrets, credential paths, raw tokens, or local absolute paths.
 
 5. **Pagination and budget**
@@ -141,7 +145,7 @@ Test expectations:
 - free SQL parameter is rejected;
 - production startup fails if auth is disabled or token missing;
 - response includes `source_type`, `license_type`, source status, and production posture fields and does not leak secrets;
-- proposed-disabled sources are visible as disabled/readiness entries but do not become fetchable;
+- sources are visible only with R3H final-decision posture; `ADR_DISABLED_OUT_OF_SCOPE` / `DISABLED_SOURCE` entries remain non-fetchable and carry `source_limitation` plus `route_evidence_status`;
 - endpoint does not perform source fetch or DB write.
 
 ---

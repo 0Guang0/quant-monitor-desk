@@ -18,6 +18,25 @@ market_bar_1d / market_bar_p0
 
 The first implementation batch for this module already exists historically as minimal data health. Therefore this next batch must complete the main promised read-only health scope for supported profiles, not add one more isolated metric.
 
+```yaml
+reference_project:
+  path: 参考项目/EasyXT/data_manager/data_integrity_checker.py
+  license: MIT
+  allowed_use: direct_adaptation
+  qmd_target_files:
+    - backend/app/ops/data_health_profiles/**
+    - backend/app/ops/data_health.py
+  direct_copy_allowed: false
+  rewrite_required:
+    - remove_runtime_import_from_reference_project
+    - remove_interpolated_sql
+    - remove_hardcoded_table_names
+  forbidden_semantics:
+    - auto_login
+    - production_clean_write
+  attribution_required: true
+```
+
 ---
 
 ## 2. Reference source files

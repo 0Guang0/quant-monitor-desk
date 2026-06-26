@@ -8,6 +8,8 @@ specs/contracts/source_route_contract.yaml:
       tests:
         - tests/test_batch275_live_pilot_gate.py
         - tests/test_source_route_planner.py
+        - tests/test_r3h_source_final_decisions.py
+        - tests/test_r3h_adapter_evidence_matrix.py
       negative_required: true
 
 specs/contracts/write_contract.yaml:
@@ -74,6 +76,8 @@ specs/contracts/layer5_evidence_contract.yaml:
       text: "Layer5 evidence foundation chain metadata"
       tests:
         - tests/test_layer5_evidence_foundation.py
+        - tests/test_r3h_adapter_evidence_matrix.py
+        - tests/test_r3h_layer_binding_audit.py
       negative_required: false
 
 specs/contracts/api_security_contract.yaml:
@@ -180,7 +184,7 @@ specs/contracts/reference_adoption_guardrails.yaml:
       text: "Reference adoption guardrails"
       tests:
         - tests/test_reference_adoption_guardrails.py
-      negative_required: false
+      negative_required: true
 
 specs/contracts/release_cleanup_allowlist.yaml:
   waiver: "Release cleanup allowlist validated at release task time"
@@ -215,6 +219,8 @@ specs/contracts/source_capability_contract.yaml:
       tests:
         - tests/test_source_capabilities.py
         - tests/test_source_registry.py
+        - tests/test_r3h_source_final_decisions.py
+        - tests/test_r3h_adapter_evidence_matrix.py
       negative_required: false
 
 specs/contracts/spec_migrator_contract.yaml:

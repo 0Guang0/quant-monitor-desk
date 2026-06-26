@@ -12,6 +12,23 @@ Create the provider catalog shape needed before Round 3G and Round4 provider-fac
 
 This task must complete the catalog contract and all active/proposed source entries in one batch. Do not split provider catalog work into repeated tiny “add one field” tasks.
 
+```yaml
+reference_project:
+  path: 参考项目/OpenBB/openbb_platform/providers/
+  license: AGPL-3.0
+  allowed_use: architecture_only
+  qmd_target_files:
+    - specs/contracts/provider_catalog.yaml
+  direct_copy_allowed: false
+  rewrite_required:
+    - no_openbb_runtime_source_copy
+    - no_openbb_provider_class_copy
+  forbidden_semantics:
+    - copied_provider_fetcher_class
+    - openbb_runtime_dependency
+  attribution_required: false
+```
+
 ---
 
 ## 2. Reference source paths

@@ -17,6 +17,7 @@
 - 不能默认 live production 抓取。
 - 不能因为 registry 里新增了数据源，就认为 adapter 已实现或数据源已可生产启用。
 - 不能把 `参考项目/**` 的源码直接当成本项目 runtime。
+- 参考采纳规则以 `specs/contracts/reference_adoption_guardrails.yaml` 为 SSOT；`license_gate` 要求各采纳任务卡含 `reference_project:` 块（R3FR-01 已机读验收）。
 
 后续的主线不再重开旧 Round3，而是按下面这些 canonical 批次文件夹继续：
 

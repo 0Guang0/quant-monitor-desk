@@ -10,6 +10,22 @@
 
 Replace `not_implemented_phase_c` in `qmd data health` with a real read-only execution path backed by R3FR-02 profiles. This task closes the CLI/runtime part in the same batch as the engine refactor; it must not become another placeholder layer.
 
+```yaml
+reference_project:
+  path: 参考项目/EasyXT/data_manager/data_integrity_checker.py
+  license: MIT
+  allowed_use: direct_adaptation
+  qmd_target_files:
+    - backend/app/cli/data_commands.py
+  direct_copy_allowed: false
+  rewrite_required:
+    - remove_runtime_import_from_reference_project
+  forbidden_semantics:
+    - production_clean_write
+    - live_fetch_default
+  attribution_required: true
+```
+
 ---
 
 ## 2. Dependency
