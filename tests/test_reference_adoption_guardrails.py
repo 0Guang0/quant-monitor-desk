@@ -80,6 +80,8 @@ def test_r3fr01GuardrailsYamlContract() -> None:
     assert rules.get("one_task_id_one_task_card") is True
     assert rules.get("executable_reference_details_must_be_task_card_local") is True
     assert rules.get("separate_reference_inventory_may_exist_only_as_non_executable_index") is True
+    assert rules.get("planning_map_may_exist_only_as_non_executable_coverage_map") is True
+    assert rules.get("planning_map_must_not_replace_task_card_local_details") is True
     assert rules.get("batch3fr_separate_reference_inventory_allowed") is False
     assert rules.get("batch3g_separate_reference_inventory_allowed") is False
     assert _GUARDRAILS.get("status") == "active_round3fr"
@@ -220,6 +222,21 @@ def test_batch3frCardsDoNotRequireCentralInventory() -> None:
         body = redirect.read_text(encoding="utf-8").lower()
         assert "do not implement" in body or "redirected" in body
     assert offenders == [], f"3F-R cards treat central inventory as execution SSOT: {offenders}"
+
+
+def test_productionCompletionPlanIsCoverageMapOnly() -> None:
+    """覆盖范围：新增生产补齐总计划不得成为中央执行工单
+    测试对象：PRODUCTION_COMPLETION_VERTICAL_SLICE_PLAN.md 顶部边界说明
+    目的/目标：确保总计划只是覆盖地图，具体执行仍回到 owning task card
+    验证点：文件明确包含 coverage map、not a standalone execution task card、owning canonical task card
+    失败含义：执行者可能绕过具体任务卡，回到中央 inventory 风险
+    """
+    path = PROJECT_ROOT / "docs/implementation_tasks/PRODUCTION_COMPLETION_VERTICAL_SLICE_PLAN.md"
+    text = path.read_text(encoding="utf-8")
+    assert "coverage map" in text
+    assert "not a standalone execution task card" in text
+    assert "owning canonical task card" in text
+    assert "must not replace task-card-local reference-adoption details" in text
 
 
 def test_r3frAdaptingCardsDeclareReferenceProject() -> None:

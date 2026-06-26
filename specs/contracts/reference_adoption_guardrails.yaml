@@ -7,12 +7,16 @@ purpose: >
   adoption. Execution details belong in the concrete task card that uses the
   reference source; Batch 3F-R and Batch 3G must not move executable adoption
   details into a separate inventory file that execution agents must chase.
+  Production-completion plans may exist only as coverage/navigation maps; they
+  must not replace task-card-local executable reference details.
 
 structure_rules:
   task_card_local_reference_details: true
   one_task_id_one_task_card: true
   executable_reference_details_must_be_task_card_local: true
   separate_reference_inventory_may_exist_only_as_non_executable_index: true
+  planning_map_may_exist_only_as_non_executable_coverage_map: true
+  planning_map_must_not_replace_task_card_local_details: true
   batch3fr_separate_reference_inventory_allowed: false
   batch3g_separate_reference_inventory_allowed: false
   batch3g_canonical_cards:

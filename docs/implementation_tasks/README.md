@@ -26,6 +26,7 @@
 
 - 根目录 `MODULE_COMPLETION_RATING.md` 是当前实现完成度快照，只能用于规划、任务卡与审计；设计文档、契约、架构设计、规则定义仍描述完整成品形态，不在其中标注当前完成度。
 - 参考项目采纳全局护栏 SSOT：`specs/contracts/reference_adoption_guardrails.yaml`（`license_gate` / `completion_rules` / 禁止 runtime import `参考项目/**`）；执行细节必须在具体任务卡 `reference_project:` 块，禁止中央 executable inventory。
+- `PRODUCTION_COMPLETION_VERTICAL_SLICE_PLAN.md` 只是覆盖地图，用来检查哪些模块还没到完整生产级；它不是工单。真正执行时，仍以对应 batch 的具体任务卡为准。通俗说：地图告诉你哪里还没修，任务卡告诉你怎么修。
 - 每个模块或重大功能最多用三个实施批次达到完整生产可用稳定形态：第一批至少交付真实最小垂直闭环，第二批完成声明范围的生产可用主体，第三批只允许做硬化、回归、发布 gate。
 - 已有部分实现的模块，其下一个实施批次必须直接补齐主承诺范围，不能继续拆成“加一个指标/加一个字段/加一个 guard/加一个 registry note”的微切片。
 - 任务卡必须写明本批次要推动的完成度变化；若不能推动，必须说明为什么这是硬化/回归批而非功能批。

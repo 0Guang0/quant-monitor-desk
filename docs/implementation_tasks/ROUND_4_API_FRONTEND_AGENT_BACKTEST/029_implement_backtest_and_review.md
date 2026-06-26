@@ -1,6 +1,6 @@
 # 029_implement_backtest_and_review 实现回测与复盘
 
-> **Historical input notice:** canonical Round4 execution now starts from `BATCH_04_VERIFIED_AUDIT_PRODUCTIZATION/README.md`. This loose card remains source material for `B04_05_backtest_review_runtime.md`; future execution must also read roadmap §1.4 and 3F-R `R3FR_04_JQ2PTRADE_BACKTEST_ADOPTION_PLAN.md` before implementation.
+> **Historical input notice:** do not implement this loose card directly. Canonical Round4 execution starts from `BATCH_04_VERIFIED_AUDIT_PRODUCTIZATION/README.md` and `BATCH_04_VERIFIED_AUDIT_PRODUCTIZATION/B04_05_backtest_review_runtime.md`. This file is source material only. Before implementation, execution must follow rewritten `R3FR_01_REFERENCE_RULES_AND_LICENSE_GATE.md`, `R3FR_04_JQ2PTRADE_BACKTEST_ADOPTION_PLAN.md`, and the B04_05 local vertical slices. `PRODUCTION_COMPLETION_VERTICAL_SLICE_PLAN.md` is only a coverage map, not the execution card.
 
 ## 1. 任务目标
 

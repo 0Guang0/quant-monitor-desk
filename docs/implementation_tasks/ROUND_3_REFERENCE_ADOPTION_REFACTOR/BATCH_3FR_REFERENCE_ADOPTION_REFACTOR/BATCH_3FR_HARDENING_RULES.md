@@ -134,7 +134,7 @@ Do not remove old wrappers until:
 
 ## 10. No central executable reference inventory
 
-Executable reference-adoption details must stay local to the task card that uses the reference source. Batch 3F-R must not create or require `docs/architecture/reference_adoption_inventory.md` as another execution dependency.
+Executable reference-adoption details must stay local to the task card that uses the reference source. Batch 3F-R must not create or require `docs/architecture/reference_adoption_inventory.md` as another execution dependency. `docs/implementation_tasks/PRODUCTION_COMPLETION_VERTICAL_SLICE_PLAN.md` is also only a coverage/navigation map; it must not replace the owning task card's local implementation instructions.
 
 Allowed:
 

@@ -40,6 +40,7 @@ docs/implementation_tasks/ROUND_5_INTEGRATION_RELEASE/BATCH_05_VERIFIED_AUDIT_SE
 ```text
 PROJECT_IMPLEMENTATION_ROADMAP.md
 MODULE_COMPLETION_RATING.md
+docs/implementation_tasks/PRODUCTION_COMPLETION_VERTICAL_SLICE_PLAN.md  # 覆盖地图，不是工单；执行仍以具体任务卡为准
 docs/quality/待修复清单.md
 docs/implementation_tasks/README.md
 docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md

@@ -44,6 +44,7 @@ Used with MIGRATION_MAP.md for machine omission checks (`check_docs_specs_indexe
 - `docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md`
 - `docs/implementation_tasks/GLOBAL_TASK_TEMPLATE.md`
 - `docs/implementation_tasks/GLOBAL_TESTING_POLICY.md`
+- `docs/implementation_tasks/PRODUCTION_COMPLETION_VERTICAL_SLICE_PLAN.md`
 - `docs/implementation_tasks/README.md`
 - `docs/implementation_tasks/ROUND3_EARLY_CLOSE_PLAN.md`
 - `docs/implementation_tasks/ROUND_0_PROJECT_SCAFFOLD/000_global_execution_rules.md`

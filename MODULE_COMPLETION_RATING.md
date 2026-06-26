@@ -63,6 +63,25 @@ For every module or major feature after this file lands:
 
 ---
 
+## 3.1 Production-completion coverage supplement
+
+`docs/implementation_tasks/PRODUCTION_COMPLETION_VERTICAL_SLICE_PLAN.md` is the current coverage map for modules that are implemented but not yet `R6_FULL_PRODUCTION_STABLE`. It helps readers see the remaining production path, but it is not a standalone execution card. In simple terms: it is the map, not the work order. Execution still happens from the owning task card.
+
+Additional module rows discovered by code audit and not fully represented in the snapshot above:
+
+| Module                                  | Current rating              | Evidence                                                                                      | Required next movement                                                                                                                                                   |
+| --------------------------------------- | --------------------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| ResourceGuard / performance budget      | `R3_STAGED_FIXTURE_CLOSED`  | `backend/app/core/resource_guard.py`, ResourceGuard tests, production-equivalent budget tests | R3H/Batch04/Batch05 must prove ResourceGuard is enforced across every real adapter, API, review, and sync smoke path.                                                    |
+| Provider catalog / auth-license posture | `R1_SCAFFOLD`               | reference-adoption guardrails and source/provider planning                                    | R3FR-05 and R3H must create QMD-owned provider catalog, license/auth gate, source coverage tests, and final source posture; OpenBB remains architecture-only.            |
+| Source conflict validator               | `R2_MINIMAL_VERTICAL_SLICE` | `backend/app/validators/source_conflict.py`, source conflict tests                            | R3H/R3G must bind conflict reports to each ready source/domain before clean-write or production-readiness claims.                                                        |
+| Data quality validator profiles         | `R2_MINIMAL_VERTICAL_SLICE` | `backend/app/validators/data_quality.py`, `backend/app/ops/data_health.py`, v2 tests          | R3FR-02/R3FR-06 must close EasyXT-style profile rules plus packaged `qmd data health`; placeholder CLI output is not complete.                                           |
+| Data sync orchestration                 | `R3_STAGED_FIXTURE_CLOSED`  | `backend/app/sync/orchestrator.py`, sync jobs/pipeline/runners tests                          | After R3H/R3G, Batch05 must run bounded production-equivalent sync smoke through `DataSourceService`; full-load remains deferred unless separately scoped.               |
+| Backtest/review metrics                 | `R0_NOT_STARTED`            | contracts/planning only; JQ2PTrade/EasyXT source audit now captured                           | B04_05 must implement QMD-owned frozen loader, no-action guard, read-only runner, report artifact, metrics, and API binding; no blank engine or metric-only micro-slice. |
+
+No module may move to `R6_FULL_PRODUCTION_STABLE` based on docs, registry rows, staged fixtures, or one sample adapter alone. The required closure is an executable vertical slice plus tests, evidence/lineage binding where applicable, ResourceGuard/security posture, and release-manifest representation. If that cannot be delivered, the correct outcome is ADR-narrowed scope plus release limitation.
+
+---
+
 ## 4. Planning consequences
 
 - Design/contract files remain complete-product targets.

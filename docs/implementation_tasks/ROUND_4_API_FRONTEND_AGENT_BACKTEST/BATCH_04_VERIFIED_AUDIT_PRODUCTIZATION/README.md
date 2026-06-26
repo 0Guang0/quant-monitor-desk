@@ -27,7 +27,7 @@
 - Agent runtime policy must exist before exposing Agent endpoints, and `B04_02` must include at least one policy-guarded read-only tool so the first Agent batch is not policy-only.
 - Notification/report schema/runtime should not block API source list work, but `B04_04` must implement one event → report/notification_log flow rather than schema-only migration.
 - Backtest/review is read-only and must not output execution instructions; `B04_05` must implement at least one executable read-only review scenario.
-- Backtest/review must first read roadmap §1.4 and 3F-R `R3FR-04`, then adapt JQ2PTrade MiniPTrade DuckDB loader/report lifecycle and EasyXT performance/report ideas behind QMD no-action semantics.
+- Backtest/review must first read roadmap §1.4, rewritten 3F-R `R3FR-01`, and `R3FR-04`; `docs/implementation_tasks/PRODUCTION_COMPLETION_VERTICAL_SLICE_PLAN.md` may be used only as a coverage map. Actual execution must follow B04_05's local vertical slices while adapting JQ2PTrade MiniPTrade DuckDB loader/report lifecycle and EasyXT performance/report ideas behind QMD no-action semantics.
 - Agent/UI artifact work must first evaluate TradingAgents / TradingAgents-astock / agents-for-openbb as reference material, or write an ADR explaining why adaptation is not viable.
 
 ## 3. Anti-overengineering closure rule
