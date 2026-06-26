@@ -125,6 +125,20 @@ Seven branches merged to `master` @ **`376e30e6`** via `integration/round3-batch
 **Coordinator:** `BATCH_3V_COORDINATOR_PLAYBOOK.md` · `docs/quality/coordination/BATCH_3V_ZERO_OPEN_CLOSURE_POLICY.md`  
 **Coverage index:** `docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md` §8
 
+## Round 3 Batch 3F-R — **IN PROGRESS on master** (2026-06-26)
+
+Batch 3F-R reference adoption refactor; entrypoint: `ROUND_3_REFERENCE_ADOPTION_REFACTOR/BATCH_3FR_REFERENCE_ADOPTION_REFACTOR/README.md`.
+
+| Playbook ID | Branch / commit                                  | Task cards        | Status                   |
+| ----------- | ------------------------------------------------ | ----------------- | ------------------------ |
+| R3FR-01     | `81032e72`                                       | reference gate    | **DONE**                 |
+| R3FR-04     | `e572ca9c`                                       | backtest plan     | **DONE**                 |
+| R3FR-02+06  | `refactor/round3fr-data-health-cli` @ `ecf64f06` | data health + CLI | **DONE** (merge pending) |
+
+**Next 3F-R tracks:** `R3FR-03` (TDX provider), `R3FR-05` (provider catalog), then `R3FR-07` cleanup.
+
+**Next batch gate after 3F-R close or ADR defer:** Round **3G** sandbox clean-write rehearsal.
+
 ## Round 3 start checklist
 
 0. **Registry clean** — [`AUDIT_DEFERRED_REGISTRY.md`](AUDIT_DEFERRED_REGISTRY.md): no OPEN rows (verified post PR #15)

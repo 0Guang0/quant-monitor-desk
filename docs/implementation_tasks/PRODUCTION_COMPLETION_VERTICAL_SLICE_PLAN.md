@@ -54,8 +54,8 @@ The following modules have meaningful implementation but are not yet full produc
 | DataSourceService / sync facade                | production fetch facade exists                                   | real production fetch requires injected source-specific ports and FileRegistry; many ports absent | R3H + sync smoke                    |
 | Vendor adapters/provider fetch ports           | skeleton adapters for only a subset                              | most target sources lack real fetch port/auth/replay/evidence                                     | R3H-01 to R3H-04                    |
 | Source conflict validator                      | pure conflict validator exists                                   | must be wired to each ready source/domain before write/readiness claims                           | R3H + R3G                           |
-| Data quality validator / data health           | read-only service exists; CLI path split                         | `qmd data health` packaged command still placeholder; EasyXT-style profiles incomplete            | R3FR-02 + R3FR-06                   |
-| `qmd data` CLI                                 | route-preview/sync-plan/init-basic exist                         | health and limited production write operator flows incomplete                                     | R3FR-06 + R3G                       |
+| Data quality validator / data health           | `market_bar_p0` profile + packaged CLI closed @ `ecf64f06`       | broader profile catalog and production-entry binding still needed                                 | R3G + R3H + Batch05                 |
+| `qmd data` CLI                                 | route-preview/sync-plan/init-basic + real health command         | limited production write operator flows incomplete                                                | R3G                                 |
 | Sync orchestration                             | incremental/backfill/reconcile runners exist; full-load deferred | production-equivalent source/service integration and release smoke incomplete                     | R3G/R3H + Batch05                   |
 | Layer1 axes                                    | staged macro/evidence ingestion exists                           | real official/macro source binding missing for production-entry scope                             | R3H-01 + R3H-05                     |
 | Layer2 sensors                                 | staged fixture sensors/snapshots exist                           | real cross-asset source binding and source conflict evidence missing                              | R3H-02/03 + R3H-05                  |
@@ -102,12 +102,12 @@ The following modules have meaningful implementation but are not yet full produc
 
 **Acceptance criteria:**
 
-- [ ] `qmd data health` no longer returns `not_implemented_phase_c`.
-- [ ] The packaged CLI calls `DataHealthService` or a successor service boundary.
-- [ ] Profiles produce structured checks with source/domain/evidence path/row count/message.
-- [ ] Output supports JSON and text.
-- [ ] No production DB mutation or source fetch happens during health checks.
-- [ ] Tests cover pass, warn, fail, blocked, missing evidence, stale data, OHLC relation violation, and unknown profile.
+- [x] `qmd data health` no longer returns `not_implemented_phase_c`.
+- [x] The packaged CLI calls `DataHealthService` or a successor service boundary.
+- [x] Profiles produce structured checks with source/domain/evidence path/row count/message.
+- [x] Output supports JSON and text.
+- [x] No production DB mutation or source fetch happens during health checks.
+- [x] Tests cover pass, warn, fail, blocked, missing evidence, stale data, OHLC relation violation, and unknown profile.
 
 ---
 
