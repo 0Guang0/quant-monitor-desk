@@ -6,7 +6,7 @@
 >
 > Scope rule: `docs/` and `specs/` are design/contract inputs only. Runtime implementation must land in `backend/`, `frontend/`, `scripts/`, `configs/`, `tests/`, or other implementation paths already mapped by `MIGRATION_MAP.md`.
 >
-> Current checkpoint (2026-06-25): Mainline **`master`** @ **`2aeb6f0`** (post Batch 3V verified audit cleanup). **Active — Round 3F / Wave E:** Batch6 data governance / migration / CLI / source-health / lineage closure. **3F-R progress:** `R3FR-05` provider catalog merged on `feature/round3fr-provider-catalog` @ `ac924819` (audit repair pending mainline merge). Forward planning SSOT is now `PROJECT_IMPLEMENTATION_ROADMAP.md`; this map is historical evidence/index only.
+> Current checkpoint (2026-06-27): Mainline **`master`** @ **`6c1a0d37`** (post R3FR-03 + R3FR-05 merges). **Active — Round 3F-R:** only `R3FR-07` cleanup remains before 3G. Forward planning SSOT is `PROJECT_IMPLEMENTATION_ROADMAP.md`; this map is historical evidence/index only.
 >
 > Planning correction (2026-06-26): this historical map must not be read as Round4 admission authority. Canonical forward order is 3F-R → 3G → **3H** → Batch04 → Batch05. Batch3H is mandatory before Round4: every target source must be `READY_WITH_EVIDENCE` or `ADR_DISABLED_OUT_OF_SCOPE`; vague proposed-disabled source rows block Round4 through `BLOCK_ROUND4_DATA_ENTRY_INCOMPLETE`.
 

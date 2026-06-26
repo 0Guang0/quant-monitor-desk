@@ -756,7 +756,8 @@ tests/test_project_scaffold.py:
     specs: []
 tests/test_provider_catalog.py:
   command: uv run python -m pytest tests/test_provider_catalog.py -q
-  failure_meaning: Regression in test_provider_catalog; inspect purpose and linked
+  failure_meaning:
+    Regression in test_provider_catalog; inspect purpose and linked
     authorities.
   purpose: Provider catalog contract tests (R3FR-05).
   type: contract

@@ -1,8 +1,0 @@
-{"file": ".trellis/tasks/06-26-round3fr-provider-catalog/AUDIT.plan.md", "reason": "extract: Audit SSOT | for: A1-A8 boot"}
-{"file": ".trellis/tasks/06-26-round3fr-provider-catalog/frozen/R3FR_05_PROVIDER_CATALOG_OPENBB_REFERENCE.md", "reason": "extract: frozen task card trace | for: A5 scope"}
-{"file": ".trellis/tasks/06-26-round3fr-provider-catalog/EXECUTION_INDEX.md", "reason": "extract: manifest index | for: A1/A5/A8"}
-{"file": "specs/schema/schema.sql", "reason": "extract: CHECK enums | for: AC-2"}
-{"file": "backend/app/db/migrations/009_status_check_constraints.sql", "reason": "extract: CHECK enums | for: AC-2"}
-{"file": "specs/contracts/source_capability_contract.yaml", "reason": "extract: AC-7 编辑目标 | for: 9.4"}
-{"file": "specs/contracts/datasource_service_contract.yaml", "reason": "extract: AC-7 编辑目标 | for: 9.4"}
-{"file": "specs/contracts/reference_adoption_guardrails.yaml", "reason": "extract: OpenBB + required_tests | for: 9.5"}

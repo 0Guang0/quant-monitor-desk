@@ -1,1 +1,0 @@
-ERROR: file or directory not found: tests/test_provider_catalog.py

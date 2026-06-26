@@ -1,5 +1,0 @@
-{"file": ".trellis/tasks/06-26-round3fr-provider-catalog/frozen/R3FR_05_PROVIDER_CATALOG_OPENBB_REFERENCE.md", "reason": "extract: spec scope | for: A1 trellis-check"}
-{"file": ".trellis/tasks/06-26-round3fr-provider-catalog/EXECUTION_INDEX.md", "reason": "extract: manifest trace | for: A1"}
-{"file": "specs/contracts/source_capability_contract.yaml", "reason": "extract: AC-7 编辑目标 | for: 9.4"}
-{"file": "specs/contracts/datasource_service_contract.yaml", "reason": "extract: AC-7 编辑目标 | for: 9.4"}
-{"file": "specs/contracts/reference_adoption_guardrails.yaml", "reason": "extract: OpenBB + required_tests | for: 9.5"}
