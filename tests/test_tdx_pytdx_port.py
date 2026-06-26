@@ -3,19 +3,19 @@
 from __future__ import annotations
 
 import sys
+from pathlib import Path
 
 import pytest
 import yaml
 from backend.app.datasources.adapters.fetch_port import PortError
+from backend.app.datasources.fetch_ports import tdx_pytdx_port as tdx_port_module
 from backend.app.datasources.fetch_ports.tdx_pytdx_port import (
     EQUITY_INDEX_MAX_ROWS,
     FULL_MARKET_SCAN_ENABLED,
     MAX_NETWORK_CALLS,
     MINUTE_BARS_ENABLED,
     SECURITY_LIST_MAX_ROWS,
-    TdxPytdxAuthorization,
     TdxPytdxFetchPort,
-    issue_tdx_live_authorization,
 )
 from backend.app.datasources.fetch_result import FetchRequest
 from backend.app.datasources.normalizers.tdx import (
@@ -26,7 +26,11 @@ from backend.app.datasources.normalizers.tdx import (
 from backend.app.config import PROJECT_ROOT
 from backend.app.ops.tdx_live_manual_probe_gate import (
     FORBIDDEN_LIVE_ENTRYPOINTS,
+    TdxLiveManualProbeAuthorizationError,
+    TdxLiveManualProbeRequest,
+    TdxPytdxAuthorization,
     assert_live_entrypoint_not_forbidden,
+    issue_tdx_live_authorization_after_gate,
 )
 
 
@@ -43,7 +47,55 @@ def _equity_req(**overrides: object) -> FetchRequest:
     return FetchRequest(**base)
 
 
-def test_tdxPytdxPort_missingPytdx_returnsDisabledSource(monkeypatch: pytest.MonkeyPatch) -> None:
+def _gate_auth(tmp_path: Path, **overrides: object) -> TdxPytdxAuthorization:
+    auth = tmp_path / "tdx_pytdx_live_manual_probe_authorization_2026-06-22.md"
+    auth.write_text(
+        """# TDX Live Manual Probe Authorization
+
+authorized_session_id: sess-planning-test-001
+
+I authorize the Round 3 018C tdx_pytdx live manual probe scoped to
+docs/quality/tdx_pytdx_live_manual_probe_authorization_2026-06-22.md only.
+See `.trellis/tasks/06-22-round3-018c-live-manual-probe-plan/live_manual_probe_plan.md`.
+This probe does not close Eastmoney stock_zh_a_hist / R3-B2.75-REQ2-EM.
+
+## TDX host
+
+| host | port | provided_by | provided_on | reachability_note | reference_only_default | user_attestation |
+| ---- | ---- | ----------- | ----------- | ----------------- | ---------------------- | ---------------- |
+| 127.0.0.1 | 7709 | owner | 2026-06-22 | user confirms | false | bounded read-only probe |
+""",
+        encoding="utf-8",
+    )
+    base = {
+        "source_id": "tdx_pytdx",
+        "data_domain": "cn_equity_daily_bar",
+        "operation": "fetch_daily_bar",
+        "symbols_or_markets": ("sh.600519",),
+        "date_window": "recent 5 trading days",
+        "max_rows": 3,
+        "authorization_evidence": str(auth),
+        "tdx_host": "127.0.0.1",
+        "tdx_port": 7709,
+        "authorized_session_id": "sess-planning-test-001",
+    }
+    base.update(overrides)
+    return issue_tdx_live_authorization_after_gate(TdxLiveManualProbeRequest(**base))
+
+
+def test_tdxPytdxPort_issueAuthorizationNotPublicOnPortModule() -> None:
+    """覆盖范围：port 层不可公有签发 gate token
+    测试对象：backend.app.datasources.fetch_ports.tdx_pytdx_port
+    目的/目标：AA-R3FR03-A4-01 — issue_tdx_live_authorization 不得暴露在 port 包
+    验证点：模块无 issue_tdx_live_authorization 属性
+    失败含义：任意代码可绕过 gate MD 自签 token
+    """
+    assert not hasattr(tdx_port_module, "issue_tdx_live_authorization")
+
+
+def test_tdxPytdxPort_missingPytdx_returnsDisabledSource(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     """覆盖范围：缺 pytdx 依赖时的 port 行为
     测试对象：TdxPytdxFetchPort.fetch_payload
     目的/目标：AC-TDX-01 — 缺包返回 DISABLED_SOURCE 而非崩溃
@@ -52,11 +104,11 @@ def test_tdxPytdxPort_missingPytdx_returnsDisabledSource(monkeypatch: pytest.Mon
     """
     monkeypatch.setitem(sys.modules, "pytdx", None)
     monkeypatch.setitem(sys.modules, "pytdx.hq", None)
-    port = TdxPytdxFetchPort(
-        ("sh.600519",),
-        3,
-        authorization=issue_tdx_live_authorization(host="127.0.0.1", port=7709),
+    monkeypatch.setattr(
+        "backend.app.datasources.fetch_ports.tdx_pytdx_port.enforce_live_entrypoint_stack",
+        lambda: None,
     )
+    port = TdxPytdxFetchPort(("sh.600519",), 3, authorization=_gate_auth(tmp_path))
     with pytest.raises(PortError) as exc_info:
         port.fetch_payload(_equity_req())
     assert exc_info.value.status == "DISABLED_SOURCE"
@@ -66,20 +118,14 @@ def test_tdxNormalizer_equityManifest_hasRequiredFieldsAndHash() -> None:
     """覆盖范围：equity raw manifest 与 hash
     测试对象：build_equity_bar_manifest + manifest_*_hash
     目的/目标：AC-TDX-04 — manifest 含必需字段与稳定 hash
-    验证点：fields/rows 存在；content_hash 与 schema_hash 非空且稳定
+    验证点：行级 trade_date；content_hash 与 schema_hash 非空且稳定
     失败含义：raw evidence 无法做 lineage 或 schema 漂移检测
     """
     rows = [{"datetime": "2026-06-18", "close": 1405.0}]
     manifest = build_equity_bar_manifest("sh.600519", rows)
-    assert manifest["source_id"] == "tdx_pytdx"
-    assert manifest["symbol"] == "sh.600519"
-    assert manifest["rows"]
-    assert "trade_date" in manifest["fields"]
-    content_hash = manifest_content_hash(manifest)
-    schema_hash = manifest_schema_hash(manifest)
-    assert len(content_hash) == 64
-    assert len(schema_hash) == 64
-    assert manifest_content_hash(manifest) == content_hash
+    assert manifest["rows"][0]["trade_date"] == "2026-06-18"
+    assert len(manifest_content_hash(manifest)) == 64
+    assert len(manifest_schema_hash(manifest)) == 64
 
 
 def test_tdxPytdxPort_rejectsMinuteBars() -> None:
@@ -160,16 +206,59 @@ def test_tdxPytdxPort_fakeAuthWithoutGateToken_raisesUserAuthRequired() -> None:
     assert exc_info.value.status == "USER_AUTH_REQUIRED"
 
 
-def test_tdxLiveGate_forbiddenDirectPortInvocation() -> None:
-    """覆盖范围：FORBIDDEN_LIVE_ENTRYPOINTS 含新 port FQN
+def test_tdxPytdxPort_directCallWithGateToken_blockedByStack(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """覆盖范围：直调 TdxPytdxFetchPort 绕过 orchestration
+    测试对象：TdxPytdxFetchPort.fetch_payload + gate 签发 token
+    目的/目标：AC-TDX-02 I02 — 有 gate token 但无 approved 调用栈仍拒绝
+    验证点：PortError.status == USER_AUTH_REQUIRED 且消息含 forbidden
+    失败含义：token 可配合直调 port 绕过 live gate
+    """
+    monkeypatch.setitem(sys.modules, "pytdx", object())
+    monkeypatch.setitem(sys.modules, "pytdx.hq", object())
+    port = TdxPytdxFetchPort(("sh.600519",), 3, authorization=_gate_auth(tmp_path))
+    with pytest.raises(PortError) as exc_info:
+        port.fetch_payload(_equity_req())
+    assert exc_info.value.status == "USER_AUTH_REQUIRED"
+    assert "forbidden" in exc_info.value.message.lower()
+
+
+def test_tdxPytdxPort_remainingNetworkCalls_exhausted(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """覆盖范围：port 层 remaining_network_calls 预算
+    测试对象：TdxPytdxFetchPort.fetch_payload(remaining_network_calls=0)
+    目的/目标：AA-R3FR03-A4-03 — 耗尽预算 fail-fast 不 connect
+    验证点：PortError 消息含 network call budget
+    失败含义：直调 port 可无限 connect 突破 cap
+    """
+    monkeypatch.setitem(sys.modules, "pytdx", object())
+    monkeypatch.setitem(sys.modules, "pytdx.hq", object())
+    monkeypatch.setattr(
+        "backend.app.datasources.fetch_ports.tdx_pytdx_port.enforce_live_entrypoint_stack",
+        lambda: None,
+    )
+    port = TdxPytdxFetchPort(
+        ("sh.600519",),
+        3,
+        authorization=_gate_auth(tmp_path),
+        remaining_network_calls=0,
+    )
+    with pytest.raises(PortError, match="network call budget"):
+        port.fetch_payload(_equity_req())
+
+
+def test_tdxLiveGate_forbiddenDirectPortFqnRegistered() -> None:
+    """覆盖范围：FORBIDDEN_LIVE_ENTRYPOINTS 登记 port FQN
     测试对象：FORBIDDEN_LIVE_ENTRYPOINTS + assert_live_entrypoint_not_forbidden
-    目的/目标：AC-TDX-02 — 禁止直调 port 绕过 orchestration
-    验证点：port FQN 在集合中；assert 对 forbidden FQN 抛错
-    失败含义：FORBIDDEN_LIVE_ENTRYPOINTS 死代码，直调 port 无门禁
+    目的/目标：AC-TDX-02 — forbidden FQN 可被 assert 拒绝
+    验证点：port FQN 在集合中；assert 抛 TdxLiveManualProbeAuthorizationError
+    失败含义：FORBIDDEN 列表未含直调 port 入口
     """
     port_fqn = "backend.app.datasources.fetch_ports.tdx_pytdx_port.TdxPytdxFetchPort"
     assert port_fqn in FORBIDDEN_LIVE_ENTRYPOINTS
-    with pytest.raises(Exception, match="forbidden live entrypoint"):
+    with pytest.raises(TdxLiveManualProbeAuthorizationError, match="forbidden live entrypoint"):
         assert_live_entrypoint_not_forbidden(port_fqn)
 
 

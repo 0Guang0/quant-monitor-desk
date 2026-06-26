@@ -23,6 +23,7 @@ from backend.app.ops.tdx_live_manual_probe_gate import (
     MAX_TOTAL_ROWS,
     TdxLiveManualProbeAuthorizationError,
     TdxLiveManualProbeRequest,
+    issue_tdx_live_authorization_after_gate,
     validate_tdx_live_manual_probe_authorization,
 )
 from backend.app.storage.raw_store import RawStore
@@ -197,13 +198,30 @@ def _resolve_live_port(
     *,
     host: str,
     port: int,
+    authorization_evidence: Path,
+    authorized_session_id: str,
+    remaining_network_calls: int | None = None,
 ) -> FetchPort:
+    request = TdxLiveManualProbeRequest(
+        source_id="tdx_pytdx",
+        data_domain=target.data_domain,
+        operation=target.operation,
+        symbols_or_markets=(target.instrument_id,),
+        date_window=target.window_label,
+        max_rows=target.max_rows,
+        authorization_evidence=str(authorization_evidence),
+        tdx_host=host,
+        tdx_port=port,
+        authorized_session_id=authorized_session_id,
+    )
+    authorization = issue_tdx_live_authorization_after_gate(request)
     return TdxPytdxProbeFetchPort(
         (target.instrument_id,),
         target.max_rows,
         host=host,
         port=port,
-        authorization_verified=True,
+        authorization=authorization,
+        remaining_network_calls=remaining_network_calls,
     )
 
 
@@ -490,23 +508,25 @@ def run_tdx_live_manual_probe(
     auth_path = Path(authorization_evidence or DEFAULT_AUTH_PATH)
     if max_network_calls <= 0:
         status = TDX_PROBE_FAIL_VALIDATION
+        invalid_reason = f"max_network_calls={max_network_calls} is invalid (must be positive)"
         return {
             "overall_status": status,
             "live_attempted": True,
             "authorization_present": auth_path.is_file(),
             "raw_records": [
                 {
-                    "probe_id": "probe-tdx-cap-guard",
+                    "probe_id": target.probe_id,
                     "status": status,
-                    "failure_reason": f"max_network_calls={max_network_calls} exceeded",
+                    "failure_reason": invalid_reason,
                 }
+                for target in TDX_PROBE_TARGETS
             ],
             "comparison": build_comparison_report([]),
             "registry_closeout": decide_registry_closeout(
                 [], live_attempted=True, overall_status=status
             ),
             "network_calls": 0,
-            "failure_reason": f"max_network_calls={max_network_calls} exceeded",
+            "failure_reason": invalid_reason,
         }
     auth_block = _check_live_authorization(
         authorization_evidence=auth_path,
@@ -578,7 +598,14 @@ def _run_probe_bundle(
                     }
                 )
                 continue
-            port = _resolve_live_port(target, host=tdx_host, port=tdx_port)
+            port = _resolve_live_port(
+                target,
+                host=tdx_host,
+                port=tdx_port,
+                authorization_evidence=authorization_evidence or DEFAULT_AUTH_PATH,
+                authorized_session_id=authorized_session_id,
+                remaining_network_calls=max_network_calls - network_calls,
+            )
             network_calls += 1
         else:
             port = (fetch_ports or {}).get(target.probe_id) or _resolve_mock_port(target)

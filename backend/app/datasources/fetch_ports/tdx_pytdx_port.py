@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 from backend.app.datasources.adapters.fetch_port import FetchPayload, PortError
@@ -20,8 +20,14 @@ from backend.app.datasources.normalizers.tdx import (
     build_security_list_manifest,
     manifest_content_hash,
     manifest_schema_hash,
+    parse_index_instrument,
 )
-from backend.app.ops.tdx_live_manual_probe_gate import parse_index_instrument
+from backend.app.ops.tdx_live_manual_probe_gate import (
+    TdxLiveManualProbeAuthorizationError,
+    TdxPytdxAuthorization,
+    enforce_live_entrypoint_stack,
+    is_gate_issued_token,
+)
 
 # R3FR-03 caps SSOT (frozen §5.1)
 SECURITY_LIST_MAX_ROWS = 20
@@ -34,28 +40,6 @@ SUPPORTED_DOMAINS = frozenset(
     {"security_list", "cn_equity_daily_bar", "cn_index_daily_bar"}
 )
 FULL_MARKET_MARKERS = frozenset({"*", "__FULL_MARKET__", "__SCAN_ALL__"})
-
-_GATE_ISSUED = object()
-
-
-@dataclass(frozen=True)
-class TdxPytdxAuthorization:
-    """Live authorization — gate_token must be issued via issue_tdx_live_authorization."""
-
-    verified: bool
-    host: str
-    port: int
-    gate_token: object | None = None
-
-    def is_gate_issued(self) -> bool:
-        return self.verified and self.gate_token is _GATE_ISSUED
-
-
-def issue_tdx_live_authorization(*, host: str, port: int) -> TdxPytdxAuthorization:
-    """Issue authorization only after tdx_live_manual_probe_gate passes."""
-    return TdxPytdxAuthorization(
-        verified=True, host=host, port=port, gate_token=_GATE_ISSUED
-    )
 
 
 def _parse_equity_symbol(symbol: str) -> tuple[int, str]:
@@ -111,13 +95,15 @@ def _reject_over_cap(*, data_domain: str, max_rows: int) -> None:
         )
 
 
-@dataclass(frozen=True)
+@dataclass
 class TdxPytdxFetchPort:
     """QMD-owned disabled/raw-only TDX fetch port."""
 
     symbols: Sequence[str]
     max_rows: int
     authorization: TdxPytdxAuthorization | None = None
+    remaining_network_calls: int | None = None
+    _network_calls_consumed: int = field(default=0, init=False, repr=False)
 
     def fetch_payload(self, req: FetchRequest) -> FetchPayload:
         _reject_unsupported_domain(req)
@@ -125,12 +111,26 @@ class TdxPytdxFetchPort:
         _reject_over_cap(data_domain=req.data_domain, max_rows=self.max_rows)
 
         auth = self.authorization
-        if auth is None or not auth.is_gate_issued():
+        if auth is None or not is_gate_issued_token(auth.gate_token):
             raise PortError(
                 "USER_AUTH_REQUIRED",
                 "tdx_pytdx fetch blocked: use run_tdx_live_manual_probe after "
                 "tdx_live_manual_probe_gate.validate_tdx_live_manual_probe_authorization",
             )
+
+        try:
+            enforce_live_entrypoint_stack()
+        except TdxLiveManualProbeAuthorizationError as exc:
+            raise PortError("USER_AUTH_REQUIRED", str(exc)) from exc
+
+        if self.remaining_network_calls is not None:
+            if self.remaining_network_calls <= 0:
+                raise PortError(
+                    "FAILED",
+                    f"tdx_pytdx network call budget exhausted (remaining={self.remaining_network_calls})",
+                )
+            self.remaining_network_calls -= 1
+            self._network_calls_consumed += 1
 
         try:
             from pytdx.hq import TdxHq_API
@@ -166,6 +166,7 @@ class TdxPytdxFetchPort:
             market_code = 1 if market_label.lower().startswith("sh") else 0
             rows = list(api.get_security_list(market_code, 0) or [])[: self.max_rows]
             manifest = build_security_list_manifest(market_label, rows)
+            manifest["content_hash"] = manifest_content_hash(manifest)
             return manifest, len(rows)
 
         if domain == "cn_equity_daily_bar":

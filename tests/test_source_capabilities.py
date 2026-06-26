@@ -240,6 +240,21 @@ def test_proposedDisabledSource_tdxPytdx_notEnabledByDefault() -> None:
             assert op.get("enabled_by_default") is False
 
 
+def test_capabilityRegistry_rejectsTdxPytdxProposedDisabledSource() -> None:
+    """覆盖范围：tdx_pytdx 提议禁用源运行时拒绝
+    测试对象：SourceCapabilityRegistry.assert_source_domain_operation（tdx_pytdx）
+    目的/目标：A8-G1 — 未审批 TDX 源 fetch_daily_bar 应 OperationDisabledError
+    验证点：tdx_pytdx + cn_equity_daily_bar + fetch_daily_bar 时 pytest.raises(OperationDisabledError)
+    失败含义：提议禁用 TDX 仍可通过 registry 断言被调度
+    """
+    reg = SourceCapabilityRegistry()
+    reg.load()
+    with pytest.raises(OperationDisabledError):
+        reg.assert_source_domain_operation(
+            "tdx_pytdx", "cn_equity_daily_bar", "fetch_daily_bar"
+        )
+
+
 def test_capabilityRegistry_rejectsProposedDisabledSource() -> None:
     """覆盖范围：提议禁用源在运行时的拒绝逻辑
     测试对象：SourceCapabilityRegistry.assert_source_domain_operation（qmt_xqshare）

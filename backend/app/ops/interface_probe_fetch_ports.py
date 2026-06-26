@@ -9,12 +9,9 @@ from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
 
 from backend.app.datasources.adapters.fetch_port import FetchPayload, PortError
-from backend.app.datasources.fetch_ports.tdx_pytdx_port import (
-    TdxPytdxAuthorization,
-    TdxPytdxFetchPort,
-    issue_tdx_live_authorization,
-)
+from backend.app.datasources.fetch_ports.tdx_pytdx_port import TdxPytdxFetchPort
 from backend.app.datasources.fetch_result import FetchRequest
+from backend.app.ops.tdx_live_manual_probe_gate import TdxPytdxAuthorization
 from backend.app.ops.fetch_port_common import recent_window_start
 from backend.app.ops.live_pilot_fetch_ports import _akshare_hist_symbol, _run_akshare_call
 
@@ -79,16 +76,22 @@ class TdxPytdxProbeFetchPort:
     max_rows: int
     host: str | None = None
     port: int | None = None
+    authorization: TdxPytdxAuthorization | None = None
     authorization_verified: bool = False
+    remaining_network_calls: int | None = None
 
     def fetch_payload(self, req: FetchRequest) -> FetchPayload:
-        authorization: TdxPytdxAuthorization | None = None
-        if self.authorization_verified and self.host and self.port is not None:
-            authorization = issue_tdx_live_authorization(host=self.host, port=self.port)
+        if self.authorization is None:
+            raise PortError(
+                "USER_AUTH_REQUIRED",
+                "tdx_pytdx fetch blocked: use run_tdx_live_manual_probe after "
+                "tdx_live_manual_probe_gate.validate_tdx_live_manual_probe_authorization",
+            )
         port = TdxPytdxFetchPort(
             self.symbols,
             self.max_rows,
-            authorization=authorization,
+            authorization=self.authorization,
+            remaining_network_calls=self.remaining_network_calls,
         )
         return port.fetch_payload(req)
 

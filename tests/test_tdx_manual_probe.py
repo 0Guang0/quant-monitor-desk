@@ -299,7 +299,7 @@ def test_tdx_caps_maxNetworkCalls_blocksExcessLiveFetches(tmp_path: Path) -> Non
     )
     assert result["network_calls"] == 0
     assert any(
-        "max_network_calls" in (r.get("failure_reason") or "")
+        "invalid (must be positive)" in (r.get("failure_reason") or "")
         for r in result["raw_records"]
     )
 

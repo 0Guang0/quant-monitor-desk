@@ -7,13 +7,11 @@ from pathlib import Path
 import pytest
 from backend.app.datasources.adapters.fetch_port import PortError
 from backend.app.datasources.fetch_result import FetchRequest
+from backend.app.datasources.normalizers.tdx import parse_index_instrument
 from backend.app.ops.interface_probe_fetch_ports import TdxPytdxProbeFetchPort
 from backend.app.ops.tdx_live_manual_probe_gate import (
-    FORBIDDEN_LIVE_ENTRYPOINTS,
     TdxLiveManualProbeAuthorizationError,
     TdxLiveManualProbeRequest,
-    assert_live_entrypoint_not_forbidden,
-    parse_index_instrument,
     validate_tdx_live_manual_probe_authorization,
 )
 
@@ -129,6 +127,31 @@ def test_validateTdxLiveManualProbe_hostPortMismatch_blocks(tmp_path: Path) -> N
         validate_tdx_live_manual_probe_authorization(req)
 
 
+def test_validateTdxLiveManualProbe_sessionIdMismatch_blocks(tmp_path: Path) -> None:
+    """覆盖范围：authorized_session_id 与授权文件登记不一致
+    测试对象：validate_tdx_live_manual_probe_authorization 会话绑定
+    目的/目标：A8-G2 — session_id 错误时必须拒绝
+    验证点：抛出 TdxLiveManualProbeAuthorizationError 且消息含 authorized_session_id
+    失败含义：授权可跨会话复用，探针范围失控
+    """
+    auth = tmp_path / "tdx_pytdx_live_manual_probe_authorization_2026-06-22.md"
+    auth.write_text(_sample_auth_text(session_id="sess-planning-test-001"), encoding="utf-8")
+    req = TdxLiveManualProbeRequest(
+        source_id="tdx_pytdx",
+        data_domain="cn_equity_daily_bar",
+        operation="fetch_daily_bar",
+        symbols_or_markets=("sh.600519",),
+        date_window="recent 5 trading days",
+        max_rows=3,
+        authorization_evidence=str(auth),
+        tdx_host="127.0.0.1",
+        tdx_port=7709,
+        authorized_session_id="wrong-session-id",
+    )
+    with pytest.raises(TdxLiveManualProbeAuthorizationError, match="authorized_session_id"):
+        validate_tdx_live_manual_probe_authorization(req)
+
+
 def test_parseIndexInstrument_000001SH() -> None:
     """覆盖范围：TDX 指数代码解析辅助函数
     测试对象：parse_index_instrument
@@ -138,15 +161,3 @@ def test_parseIndexInstrument_000001SH() -> None:
     """
     assert parse_index_instrument("000001.SH") == (1, "000001")
 
-
-def test_tdxLiveGate_forbiddenDirectPortInvocation() -> None:
-    """覆盖范围：FORBIDDEN_LIVE_ENTRYPOINTS 含新 port FQN
-    测试对象：FORBIDDEN_LIVE_ENTRYPOINTS + assert_live_entrypoint_not_forbidden
-    目的/目标：AC-TDX-02 — 禁止直调 TdxPytdxFetchPort 绕过 live gate
-    验证点：port FQN 在集合中；assert 对 forbidden FQN 抛错
-    失败含义：FORBIDDEN_LIVE_ENTRYPOINTS 未 enforce，直调 port 无门禁
-    """
-    port_fqn = "backend.app.datasources.fetch_ports.tdx_pytdx_port.TdxPytdxFetchPort"
-    assert port_fqn in FORBIDDEN_LIVE_ENTRYPOINTS
-    with pytest.raises(TdxLiveManualProbeAuthorizationError, match="forbidden live entrypoint"):
-        assert_live_entrypoint_not_forbidden(port_fqn)
