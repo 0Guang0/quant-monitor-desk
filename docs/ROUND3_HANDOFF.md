@@ -129,11 +129,11 @@ Seven branches merged to `master` @ **`376e30e6`** via `integration/round3-batch
 
 Batch 3F-R reference adoption refactor; entrypoint: `ROUND_3_REFERENCE_ADOPTION_REFACTOR/BATCH_3FR_REFERENCE_ADOPTION_REFACTOR/README.md`.
 
-| Playbook ID | Branch / commit                                  | Task cards        | Status                   |
-| ----------- | ------------------------------------------------ | ----------------- | ------------------------ |
-| R3FR-01     | `81032e72`                                       | reference gate    | **DONE**                 |
-| R3FR-04     | `e572ca9c`                                       | backtest plan     | **DONE**                 |
-| R3FR-02+06  | `refactor/round3fr-data-health-cli` @ `ecf64f06` | data health + CLI | **DONE** (merge pending) |
+| Playbook ID | Branch / commit                                         | Task cards        | Status   |
+| ----------- | ------------------------------------------------------- | ----------------- | -------- |
+| R3FR-01     | `81032e72`                                              | reference gate    | **DONE** |
+| R3FR-04     | `e572ca9c`                                              | backtest plan     | **DONE** |
+| R3FR-02+06  | `refactor/round3fr-data-health-cli` merged @ `ecf64f06` | data health + CLI | **DONE** |
 
 **Next 3F-R tracks:** `R3FR-03` (TDX provider), `R3FR-05` (provider catalog), then `R3FR-07` cleanup.
 
