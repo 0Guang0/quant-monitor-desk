@@ -431,3 +431,35 @@ Delivered sandbox clean-write rehearsal module (plan/loader/runner/report), CLI 
 ### Next Steps
 
 - None - task complete
+
+## Session 14: R3G-02 Pre-Production Adversarial Audit
+
+**Date**: 2026-06-27
+**Task**: R3G-02 Pre-Production Adversarial Audit
+**Branch**: `feature/round3g-adversarial-audit`
+
+### Summary
+
+Implemented sandbox-clean-write adversarial audit CLI and modules; five-dimension audit with P0-P3 repair closure; 59 adversarial/rehearsal tests and full pytest green.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash       | Message       |
+| ---------- | ------------- |
+| `d9e60d59` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

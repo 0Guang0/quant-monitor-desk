@@ -9,7 +9,7 @@
 <!-- @@@auto:current-status -->
 
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 13
+- **Total Sessions**: 14
 - **Last Active**: 2026-06-27
 <!-- @@@/auto:current-status -->
 
@@ -21,7 +21,7 @@
 
 | File           | Lines | Status |
 | -------------- | ----- | ------ |
-| `journal-1.md` | ~434  | Active |
+| `journal-1.md` | ~466  | Active |
 
 <!-- @@@/auto:active-documents -->
 
@@ -33,6 +33,7 @@
 
 | #   | Date       | Title                                                | Commits                                                                     | Branch                                                  |
 | --- | ---------- | ---------------------------------------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------- |
+| 14  | 2026-06-27 | R3G-02 Pre-Production Adversarial Audit              | `d9e60d59`                                                                  | `feature/round3g-adversarial-audit`                     |
 | 13  | 2026-06-27 | R3G-01 Sandbox Clean-Write Rehearsal                 | `4aa6a1c3`                                                                  | `feature/round3g-sandbox-rehearsal`                     |
 | 12  | 2026-06-27 | R3FR-07 finish-work                                  | `6134b5b3`, `e88791d1`                                                      | `master`                                                |
 | 11  | 2026-06-27 | R3FR-03 TDX Provider Refactor                        | `407f4aa2`, `71a41389`                                                      | `refactor/round3fr-tdx-provider`                        |
