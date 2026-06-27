@@ -205,7 +205,7 @@ def run_mock_fetch(request: FredPilotRequest) -> dict[str, Any]:
                 "error": "missing source_fetch_id",
                 "series": [],
             }
-        rows = body.get("rows") or []
+        rows = body.get("rows") or body.get("observations") or []
         for row in rows:
             row.setdefault("series_id", series_id)
         series_manifest.append(
@@ -288,7 +288,7 @@ def run_live_fetch(request: FredPilotRequest) -> dict[str, Any]:
                 "content_hash": _content_hash(payload.content),
                 "as_of_timestamp": body.get("as_of_timestamp"),
                 "retrieved_at": body.get("retrieved_at"),
-                "rows": body.get("rows") or [],
+                "rows": body.get("rows") or body.get("observations") or [],
             }
         )
 

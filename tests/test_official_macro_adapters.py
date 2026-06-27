@@ -13,6 +13,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
 from backend.app.config import PROJECT_ROOT
 
 _LIVE_FRED = (
@@ -119,3 +120,205 @@ def test_evidence_contract_stagingRows_observationDateEndToEnd(tmp_path: Path) -
     assert len(vix) == 1
     assert {r.trade_date for r in dgs10} == {"2026-06-25", "2026-06-24"}
     assert vix[0].trade_date == "2026-06-25"
+
+
+_FRED_REPLAY = (
+    PROJECT_ROOT / "tests/fixtures/replay/official_macro/fred/dgs10_replay_bundle.json"
+)
+
+
+def _fred_macro_req(**overrides: object):
+    from backend.app.datasources.fetch_result import FetchRequest
+
+    base = {
+        "run_id": "r3h01-fred-port",
+        "source_id": "fred",
+        "data_domain": "macro_series",
+        "instrument_id": "DGS10",
+    }
+    base.update(overrides)
+    return FetchRequest(**base)
+
+
+def test_fred_port_mockFetch_emitsOfficialMacroEvidenceV1() -> None:
+    """覆盖范围：mock FRED port 默认安全抓取
+    测试对象：create_fred_fetch_port + FredMockFetchPort.fetch_payload
+    目的/目标：port 直接产出 official_macro_evidence_v1，无需 bridge 侧车
+    验证点：schema_version、observations[].observation_date、source_fetch_id、content_hash
+    失败含义：L2 port 仍输出 legacy rows 形状，G10 与 fetch 路径分裂
+    """
+    from backend.app.datasources.fetch_ports.fred_port import create_fred_fetch_port
+    from backend.app.datasources.normalizers.official_macro import (
+        OFFICIAL_MACRO_EVIDENCE_SCHEMA_VERSION,
+    )
+
+    port = create_fred_fetch_port(series_ids=("DGS10",), max_rows=3, use_mock=True)
+    payload = port.fetch_payload(_fred_macro_req())
+    body = json.loads(payload.content.decode("utf-8"))
+    assert body["schema_version"] == OFFICIAL_MACRO_EVIDENCE_SCHEMA_VERSION
+    assert body["series_id"] == "DGS10"
+    assert body.get("source_fetch_id")
+    assert body.get("content_hash")
+    assert body.get("as_of_timestamp")
+    obs = body.get("observations") or []
+    assert obs
+    for row in obs:
+        assert row.get("observation_date")
+        assert "date" not in row
+        assert row.get("value") is not None
+
+
+def test_fred_port_p0Whitelist_rejectsUnknownSeries() -> None:
+    """覆盖范围：P0 series 白名单门禁
+    测试对象：FredMockFetchPort.fetch_payload
+    目的/目标：非白名单 series 在 port 层 fail-closed
+    验证点：UNKNOWN_SERIES 抛出 PortError
+    失败含义：任意 macro series 可被 sandbox port 拉取
+    """
+    from backend.app.datasources.adapters.fetch_port import PortError
+    from backend.app.datasources.fetch_ports.fred_port import create_fred_fetch_port
+
+    port = create_fred_fetch_port(series_ids=("UNKNOWN_SERIES",), max_rows=3, use_mock=True)
+    with pytest.raises(PortError, match="whitelist"):
+        port.fetch_payload(_fred_macro_req(instrument_id="UNKNOWN_SERIES"))
+
+
+def test_fred_port_liveWithoutApiKey_blocksUnauthorized(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """覆盖范围：未授权 live FRED fetch
+    测试对象：FredLiveFetchPort.fetch_payload
+    目的/目标：缺 FRED_API_KEY 时不得联网成功
+    验证点：PortError.status 为 USER_AUTH_REQUIRED 或 FAILED 且消息含 API key
+    失败含义：无 key 仍可 live fetch，违反 R3E hardening
+    """
+    from backend.app.datasources.adapters.fetch_port import PortError
+    from backend.app.datasources.fetch_ports.fred_port import create_fred_fetch_port
+
+    monkeypatch.delenv("FRED_API_KEY", raising=False)
+    port = create_fred_fetch_port(series_ids=("DGS10",), max_rows=3, use_mock=False)
+    with pytest.raises(PortError) as exc_info:
+        port.fetch_payload(_fred_macro_req())
+    assert exc_info.value.status in {"USER_AUTH_REQUIRED", "FAILED"}
+    assert "FRED_API_KEY" in exc_info.value.message or "api" in exc_info.value.message.lower()
+
+
+def test_fred_port_capOverflow_blocksOverMaxRows() -> None:
+    """覆盖范围：port 行数 cap 溢出
+    测试对象：FredMockFetchPort 构造 max_rows 超上限
+    目的/目标：ResourceGuard/任务卡 cap 在 port 层硬拒绝
+    验证点：max_rows 超 MAX_ROWS_PER_SERIES 时 fetch 前 PortError
+    失败含义：cap 可被 port 参数绕过导致无界 macro pull
+    """
+    from backend.app.datasources.adapters.fetch_port import PortError
+    from backend.app.datasources.fetch_ports.fred_port import (
+        MAX_ROWS_PER_SERIES,
+        create_fred_fetch_port,
+    )
+
+    port = create_fred_fetch_port(
+        series_ids=("DGS10",),
+        max_rows=MAX_ROWS_PER_SERIES + 1,
+        use_mock=True,
+    )
+    with pytest.raises(PortError, match="cap"):
+        port.fetch_payload(_fred_macro_req())
+
+
+def test_fred_port_replayFixture_observationDateCanonical() -> None:
+    """覆盖范围：replay fixture 与 normalizer 读路径
+    测试对象：tests/fixtures/replay/official_macro/fred/dgs10_replay_bundle.json
+    目的/目标：replay 使用 observation_date + schema_version，非 legacy date
+    验证点：read_fred_evidence_bundle 往返；观测行无 date 别名
+    失败含义：replay 仍依赖 legacy 字段，9.6 registry 无法登记路径
+    """
+    from backend.app.datasources.normalizers.official_macro import (
+        OFFICIAL_MACRO_EVIDENCE_SCHEMA_VERSION,
+        read_fred_evidence_bundle,
+    )
+
+    bundle = read_fred_evidence_bundle(_FRED_REPLAY)
+    assert bundle["schema_version"] == OFFICIAL_MACRO_EVIDENCE_SCHEMA_VERSION
+    assert bundle["series_id"] == "DGS10"
+    for obs in bundle["observations"]:
+        assert obs.get("observation_date")
+        assert "date" not in obs
+
+
+def test_fred_port_route_disabledByDefault_unauthorized() -> None:
+    """覆盖范围：macro_series 路由默认禁用
+    测试对象：SourceRoutePlanner + source_registry fred
+    目的/目标：enabled_by_default=false 时 route 为 DISABLED，非 READY
+    验证点：route_status=DISABLED_SOURCE；fred candidate enabled=False
+    失败含义：未配置 FRED 仍被 route 选为 production primary
+    """
+    from backend.app.datasources.capability_registry import SourceCapabilityRegistry
+    from backend.app.datasources.route_planner import SourceRoutePlanner
+    from backend.app.datasources.source_registry import SourceRegistry
+
+    registry = SourceRegistry()
+    registry.load()
+    capabilities = SourceCapabilityRegistry()
+    capabilities.load()
+    planner = SourceRoutePlanner(source_registry=registry, capability_registry=capabilities)
+    plan = planner.plan(
+        data_domain="macro_series",
+        operation="fetch_macro_series",
+        run_id="r3h01-fred-route",
+        job_id="fred-route-negative",
+    )
+    assert plan.route_status == "DISABLED_SOURCE"
+    assert plan.selected_source_id is None
+    fred = next((c for c in plan.candidates if c.source_id == "fred"), None)
+    assert fred is not None
+    assert fred.enabled is False
+
+
+def test_fred_port_route_readyWhenSourceEnabled(monkeypatch: pytest.MonkeyPatch) -> None:
+    """覆盖范围：显式启用 fred 后 route READY
+    测试对象：SourceRoutePlanner（内存 registry 覆盖 enabled）
+    目的/目标：授权配置后 macro_series 可选 fred primary
+    验证点：route_status=READY；selected_source_id=fred
+    失败含义：即使源已启用也无法 route 到官方 macro port
+    """
+    from backend.app.datasources.capability_registry import SourceCapabilityRegistry
+    from backend.app.datasources.route_planner import SourceRoutePlanner
+    from backend.app.datasources.source_registry import SourceRegistry
+
+    registry = SourceRegistry()
+    registry.load()
+    rec = registry.get("fred")
+    object.__setattr__(rec, "is_enabled", True)
+    orig_domain_roles = registry.get_domain_roles
+
+    def _macro_domain_enabled(data_domain: str):
+        binding = orig_domain_roles(data_domain)
+        if data_domain != "macro_series":
+            return binding
+        from backend.app.datasources.source_registry import DomainRoleBinding
+
+        return DomainRoleBinding(
+            primary_source_id=binding.primary_source_id,
+            validation_source_id=binding.validation_source_id,
+            fallback_policy=binding.fallback_policy,
+            domain_enabled_by_default=True,
+            fallback_source_ids=binding.fallback_source_ids,
+        )
+
+    monkeypatch.setattr(registry, "get_domain_roles", _macro_domain_enabled)
+    capabilities = SourceCapabilityRegistry()
+    capabilities.load()
+    planner = SourceRoutePlanner(source_registry=registry, capability_registry=capabilities)
+    monkeypatch.setattr(planner, "_platform_allows", lambda _sid: (True, None))
+    plan = planner.plan(
+        data_domain="macro_series",
+        operation="fetch_macro_series",
+        run_id="r3h01-fred-route-ready",
+        job_id="fred-route-positive",
+        extra_candidates=[("fred", "Primary")],
+    )
+    fred = next((c for c in plan.candidates if c.source_id == "fred"), None)
+    assert fred is not None
+    assert fred.enabled is True
+    assert plan.route_status == "READY"
+    assert plan.selected_source_id == "fred"
