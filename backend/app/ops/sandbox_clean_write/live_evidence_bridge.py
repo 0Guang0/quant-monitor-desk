@@ -7,6 +7,13 @@ from pathlib import Path
 from typing import Any
 
 from backend.app.config import PROJECT_ROOT
+from backend.app.datasources.normalizers.official_macro import (
+    OfficialMacroEvidenceError,
+    materialize_fred_evidence_from_live,
+)
+from backend.app.datasources.normalizers.official_macro import (
+    fred_observations_from_live_payload as _normalize_fred_live_observations,
+)
 
 
 class LiveEvidenceBridgeError(RuntimeError):
@@ -122,18 +129,7 @@ def materialize_baostock_promote_evidence(
 
 def fred_observations_from_live_payload(payload: dict[str, Any]) -> list[dict[str, Any]]:
     """Flatten fred_live_fetch_evidence series[].rows into loader observations."""
-    observations: list[dict[str, Any]] = []
-    for series in payload.get("series") or []:
-        series_id = str(series.get("series_id") or "")
-        for row in series.get("rows") or []:
-            observations.append(
-                {
-                    "date": str(row.get("observation_date") or row.get("date") or ""),
-                    "value": row.get("value"),
-                    "series_id": str(row.get("series_id") or series_id),
-                }
-            )
-    return observations
+    return _normalize_fred_live_observations(payload)
 
 
 def materialize_fred_promote_evidence(
@@ -141,31 +137,10 @@ def materialize_fred_promote_evidence(
     out_dir: Path | str,
 ) -> Path:
     """Write fred_evidence.json from fred sandbox live fetch evidence."""
-    live_evidence_path = _resolve_raw_path(live_evidence_path)
-    payload = json.loads(live_evidence_path.read_text(encoding="utf-8"))
-    observations = fred_observations_from_live_payload(payload)
-    if not observations:
-        raise LiveEvidenceBridgeError(f"no observations in {live_evidence_path}")
-    series_block = (payload.get("series") or [{}])[0]
-    as_of = str(
-        series_block.get("as_of_timestamp")
-        or series_block.get("retrieved_at")
-        or "2026-06-27T00:00:00Z"
-    )
-    out_dir = Path(out_dir)
-    out_dir.mkdir(parents=True, exist_ok=True)
-    evidence = {
-        "series_id": str(observations[0].get("series_id") or "DGS10"),
-        "source_id": "fred",
-        "observations": observations,
-        "source_fetch_id": str(series_block.get("source_fetch_id") or "fred-live"),
-        "content_hash": str(series_block.get("content_hash") or "fred-live-hash"),
-        "as_of_timestamp": as_of,
-        "retrieved_at": as_of,
-    }
-    (out_dir / "fred_evidence.json").write_text(
-        json.dumps(evidence, indent=2, ensure_ascii=False) + "\n",
-        encoding="utf-8",
-    )
-    _write_sandbox_rehearsal_gate_sidecars(out_dir)
-    return out_dir.resolve()
+    try:
+        return materialize_fred_evidence_from_live(
+            _resolve_raw_path(live_evidence_path),
+            out_dir,
+        )
+    except OfficialMacroEvidenceError as exc:
+        raise LiveEvidenceBridgeError(str(exc)) from exc

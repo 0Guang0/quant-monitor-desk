@@ -1132,7 +1132,7 @@ def test_LiveEvidenceBridge_fred_materializesMultiSeriesObservations(tmp_path: P
     """覆盖范围：腿 C FRED live → promote 证据桥接
     测试对象：materialize_fred_promote_evidence + staging_rows_from_bundle
     目的/目标：多 series live 证据应映射为多 instrument staging 行
-    验证点：fred_evidence 3 观测；staging 含 DGS10×2 + VIXCLS×1
+    验证点：fred_evidence 3 观测；staging 含 DGS10×2 + VIXCLS×1；无 DH sidecar
     失败含义：FRED 真网数据无法经同一 promote 链写入练习库
     """
     from backend.app.ops.sandbox_clean_write.live_evidence_bridge import (
@@ -1170,5 +1170,6 @@ def test_LiveEvidenceBridge_fred_materializesMultiSeriesObservations(tmp_path: P
     assert dgs10[0].close == 4.4
     fred_payload = json.loads((out / "fred_evidence.json").read_text(encoding="utf-8"))
     assert fred_payload.get("retrieved_at")
-    assert (out / "pilot_v2_closeout.json").is_file()
+    assert fred_payload.get("schema_version") == "official_macro_evidence_v1"
+    assert not (out / "pilot_v2_closeout.json").is_file()
 

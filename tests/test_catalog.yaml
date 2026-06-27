@@ -653,6 +653,17 @@ tests/test_observation_mapper.py:
     docs: []
     rules: []
     specs: []
+tests/test_official_macro_adapters.py:
+  command: uv run python -m pytest tests/test_official_macro_adapters.py -q
+  failure_meaning:
+    Regression in test_official_macro_adapters; inspect purpose and
+    linked authorities.
+  purpose: R3H-01 官方宏观/披露适配器测试（Batch 3H）。
+  type: runtime-contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
 tests/test_ops_data_health.py:
   command: uv run python -m pytest tests/test_ops_data_health.py -q
   failure_meaning:
@@ -1116,6 +1127,17 @@ tests/test_schema_migration.py:
     authorities.
   purpose: Foundation schema migration tests (Round 1 task 005).
   type: contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_sec_edgar_adapter.py:
+  command: uv run python -m pytest tests/test_sec_edgar_adapter.py -q
+  failure_meaning:
+    Regression in test_sec_edgar_adapter; inspect purpose and linked
+    authorities.
+  purpose: R3H-01 SEC EDGAR 披露适配器测试（Batch 3H · step 9.4）。
+  type: runtime-contract
   verifies:
     docs: []
     rules: []

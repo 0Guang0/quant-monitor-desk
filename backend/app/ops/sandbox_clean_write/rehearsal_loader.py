@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from backend.app.config import PROJECT_ROOT
+from backend.app.datasources.normalizers.official_macro import read_fred_evidence_bundle
 from backend.app.ops.sandbox_clean_write.rehearsal_plan import (
     RehearsalCandidate,
     RehearsalPlanError,
@@ -103,7 +104,7 @@ def _fred_staging_rows(
     start_date: str | None,
     end_date: str | None,
 ) -> list[StagingRow]:
-    payload = json.loads((bundle.evidence_dir / "fred_evidence.json").read_text(encoding="utf-8"))
+    payload = read_fred_evidence_bundle(bundle.evidence_dir)
     series_id = str(payload.get("series_id") or bundle.symbols_or_series[0])
     if series_id not in bundle.symbols_or_series:
         series_id = bundle.symbols_or_series[0]
@@ -111,7 +112,7 @@ def _fred_staging_rows(
     for obs in payload.get("observations") or []:
         if len(rows) >= max_rows:
             break
-        trade_date = str(obs.get("date") or obs.get("observation_date") or "")
+        trade_date = str(obs.get("observation_date") or "")
         if not trade_date or not _in_date_window(trade_date, start_date, end_date):
             continue
         inst = str(obs.get("series_id") or series_id)
