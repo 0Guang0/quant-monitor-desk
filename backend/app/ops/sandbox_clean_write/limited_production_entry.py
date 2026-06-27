@@ -38,6 +38,10 @@ from backend.app.ops.sandbox_clean_write.rehearsal_plan import (
     RehearsalCandidate,
     validate_fred_authorization,
 )
+from backend.app.ops.sandbox_clean_write.rehearsal_runner import (
+    _ensure_clean_table,
+    _ensure_validation_report,
+)
 from backend.app.ops.sandbox_clean_write.rollback_plan import (
     RollbackPlanError,
     dry_run_identify_affected_keys,
@@ -494,13 +498,8 @@ def _production_clean_write(
     with cm.writer() as con:
         apply_migrations(con)
         before_non_target = _non_target_row_count(con, candidate.target_table, candidate.symbols)
-        con.execute(
-            """
-            CREATE TABLE IF NOT EXISTS security_bar_smoke_clean AS
-            SELECT * FROM stg_foundation_smoke WHERE 1=0
-            """
-        )
-        validation_report_id = f"r3g03-{candidate.source_id}-validation"
+        _ensure_clean_table(con)
+        validation_report_id = _ensure_validation_report(con, rehearsal, run_id, dh_report)
         con.execute("DELETE FROM stg_foundation_smoke")
         con.execute(
             """
@@ -510,6 +509,17 @@ def _production_clean_write(
             """,
             [bundle_symbol, candidate.start_date, 10.0, candidate.source_id, PROMOTE_ID],
         )
+        quoted_target = _quoted_table(candidate.target_table)
+        tables = {
+            row[0]
+            for row in con.execute(
+                "SELECT table_name FROM information_schema.tables WHERE table_schema = 'main'"
+            ).fetchall()
+        }
+        if candidate.target_table not in tables:
+            con.execute(
+                f"CREATE TABLE {quoted_target} AS SELECT * FROM stg_foundation_smoke WHERE 1=0"
+            )
         gate = DbValidationGate(cm)
         wm = WriteManager(cm, gate)
         req = WriteRequest(
@@ -605,6 +615,7 @@ def run_limited_production_entry(request: PromoteRequest) -> dict[str, Any]:
         rehearsal,
         evidence_dir=evidence_subdir if evidence_subdir.is_dir() else None,
         dry_run=request.dry_run or not production_mutation_allowed,
+        cap_profile="r3g03",
     )
     route_plan = preview_route_for_candidate(rehearsal, service)
     dh_report = run_source_data_health(

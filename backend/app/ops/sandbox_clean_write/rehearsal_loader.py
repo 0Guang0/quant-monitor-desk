@@ -11,7 +11,7 @@ from backend.app.config import PROJECT_ROOT
 from backend.app.ops.sandbox_clean_write.rehearsal_plan import (
     RehearsalCandidate,
     RehearsalPlanError,
-    validate_source_caps,
+    validate_contract_source_caps,
 )
 
 FIXTURE_EVIDENCE_DIRS: dict[str, Path] = {
@@ -158,10 +158,19 @@ def load_rehearsal_bundle(
     *,
     evidence_dir: Path | None = None,
     dry_run: bool = True,
+    cap_profile: str = "r3g01",
 ) -> RehearsalDataBundle:
     """Load bounded raw/staged evidence for one rehearsal candidate."""
     try:
-        validate_source_caps(candidate)
+        validate_contract_source_caps(
+            source_id=candidate.source_id,
+            domain=candidate.domain,
+            symbols=candidate.symbols_or_series,
+            window_days=candidate.window_days,
+            metadata_only=candidate.metadata_only,
+            profile=cap_profile,
+            error_cls=RehearsalPlanError,
+        )
     except RehearsalPlanError as exc:
         raise RehearsalLoaderError(str(exc)) from exc
     path = _resolve_evidence_dir(candidate.source_id, evidence_dir, dry_run=dry_run)
