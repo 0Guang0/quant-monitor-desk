@@ -130,3 +130,107 @@ def materialize_fred_evidence_from_live(
         retrieved_at=as_of,
     )
     return write_fred_evidence_bundle(out_dir, bundle)
+
+
+def _normalize_yield_curve_row(row: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "observation_date": str(row.get("observation_date") or row.get("date") or ""),
+        "tenor": str(row.get("tenor") or ""),
+        "yield_percent": row.get("yield_percent"),
+    }
+
+
+def _normalize_inflation_expectation_row(row: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "observation_date": str(row.get("observation_date") or row.get("date") or ""),
+        "metric_name": str(row.get("metric_name") or ""),
+        "metric_value": row.get("metric_value"),
+    }
+
+
+def build_yield_curve_evidence_bundle(
+    *,
+    observations: list[dict[str, Any]],
+    source_fetch_id: str,
+    content_hash: str,
+    as_of_timestamp: str,
+    retrieved_at: str | None = None,
+    source_id: str = "us_treasury",
+) -> dict[str, Any]:
+    norm_obs = [_normalize_yield_curve_row(obs) for obs in observations]
+    if not norm_obs:
+        raise OfficialMacroEvidenceError("yield curve evidence bundle requires observations")
+    return {
+        "schema_version": OFFICIAL_MACRO_EVIDENCE_SCHEMA_VERSION,
+        "source_id": source_id,
+        "data_domain": "us_treasury_yield_curve",
+        "observations": norm_obs,
+        "source_fetch_id": source_fetch_id,
+        "content_hash": content_hash,
+        "as_of_timestamp": as_of_timestamp,
+        "retrieved_at": retrieved_at or as_of_timestamp,
+    }
+
+
+def build_inflation_expectation_evidence_bundle(
+    *,
+    observations: list[dict[str, Any]],
+    source_fetch_id: str,
+    content_hash: str,
+    as_of_timestamp: str,
+    retrieved_at: str | None = None,
+    source_id: str = "us_treasury",
+) -> dict[str, Any]:
+    norm_obs = [_normalize_inflation_expectation_row(obs) for obs in observations]
+    if not norm_obs:
+        raise OfficialMacroEvidenceError("inflation expectation evidence requires observations")
+    return {
+        "schema_version": OFFICIAL_MACRO_EVIDENCE_SCHEMA_VERSION,
+        "source_id": source_id,
+        "data_domain": "inflation_expectation",
+        "observations": norm_obs,
+        "source_fetch_id": source_fetch_id,
+        "content_hash": content_hash,
+        "as_of_timestamp": as_of_timestamp,
+        "retrieved_at": retrieved_at or as_of_timestamp,
+    }
+
+
+def read_yield_curve_evidence_bundle(path: Path | str) -> dict[str, Any]:
+    """Read yield curve replay bundle and return canonical evidence shape."""
+    evidence_path = Path(path)
+    if not evidence_path.is_file():
+        raise OfficialMacroEvidenceError(f"missing yield curve evidence: {evidence_path}")
+    payload = json.loads(evidence_path.read_text(encoding="utf-8"))
+    observations = [_normalize_yield_curve_row(obs) for obs in payload.get("observations") or []]
+    if not observations:
+        raise OfficialMacroEvidenceError("yield curve evidence bundle has no observations")
+    return build_yield_curve_evidence_bundle(
+        observations=observations,
+        source_id=str(payload.get("source_id") or "us_treasury"),
+        source_fetch_id=str(payload.get("source_fetch_id") or "treasury-unknown"),
+        content_hash=str(payload.get("content_hash") or "treasury-unknown-hash"),
+        as_of_timestamp=str(payload.get("as_of_timestamp") or payload.get("retrieved_at") or ""),
+        retrieved_at=str(payload.get("retrieved_at") or payload.get("as_of_timestamp") or ""),
+    )
+
+
+def read_inflation_expectation_evidence_bundle(path: Path | str) -> dict[str, Any]:
+    """Read inflation expectation replay bundle and return canonical evidence shape."""
+    evidence_path = Path(path)
+    if not evidence_path.is_file():
+        raise OfficialMacroEvidenceError(f"missing inflation expectation evidence: {evidence_path}")
+    payload = json.loads(evidence_path.read_text(encoding="utf-8"))
+    observations = [
+        _normalize_inflation_expectation_row(obs) for obs in payload.get("observations") or []
+    ]
+    if not observations:
+        raise OfficialMacroEvidenceError("inflation expectation bundle has no observations")
+    return build_inflation_expectation_evidence_bundle(
+        observations=observations,
+        source_id=str(payload.get("source_id") or "us_treasury"),
+        source_fetch_id=str(payload.get("source_fetch_id") or "treasury-unknown"),
+        content_hash=str(payload.get("content_hash") or "treasury-unknown-hash"),
+        as_of_timestamp=str(payload.get("as_of_timestamp") or payload.get("retrieved_at") or ""),
+        retrieved_at=str(payload.get("retrieved_at") or payload.get("as_of_timestamp") or ""),
+    )

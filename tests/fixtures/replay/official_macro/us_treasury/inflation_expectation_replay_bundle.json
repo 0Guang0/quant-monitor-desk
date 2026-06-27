@@ -1,0 +1,21 @@
+{
+  "schema_version": "official_macro_evidence_v1",
+  "source_id": "us_treasury",
+  "data_domain": "inflation_expectation",
+  "observations": [
+    {
+      "observation_date": "2026-06-25",
+      "metric_name": "breakeven_10y",
+      "metric_value": "2.15"
+    },
+    {
+      "observation_date": "2026-06-24",
+      "metric_name": "breakeven_10y",
+      "metric_value": "2.18"
+    }
+  ],
+  "source_fetch_id": "treasury-replay-inflation",
+  "content_hash": "treasury-replay-hash-inflation",
+  "as_of_timestamp": "2026-06-25T12:00:00Z",
+  "retrieved_at": "2026-06-25T12:00:00Z"
+}

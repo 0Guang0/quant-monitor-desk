@@ -1,0 +1,21 @@
+{
+  "schema_version": "official_macro_evidence_v1",
+  "source_id": "us_treasury",
+  "data_domain": "us_treasury_yield_curve",
+  "observations": [
+    {
+      "observation_date": "2026-06-25",
+      "tenor": "10Y",
+      "yield_percent": "4.25"
+    },
+    {
+      "observation_date": "2026-06-25",
+      "tenor": "2Y",
+      "yield_percent": "3.95"
+    }
+  ],
+  "source_fetch_id": "treasury-replay-yield-curve",
+  "content_hash": "treasury-replay-hash-yield",
+  "as_of_timestamp": "2026-06-25T12:00:00Z",
+  "retrieved_at": "2026-06-25T12:00:00Z"
+}

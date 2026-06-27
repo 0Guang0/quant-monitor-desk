@@ -322,3 +322,291 @@ def test_fred_port_route_readyWhenSourceEnabled(monkeypatch: pytest.MonkeyPatch)
     assert fred.enabled is True
     assert plan.route_status == "READY"
     assert plan.selected_source_id == "fred"
+
+
+_TREASURY_YIELD_REPLAY = (
+    PROJECT_ROOT
+    / "tests/fixtures/replay/official_macro/us_treasury/yield_curve_replay_bundle.json"
+)
+_TREASURY_INFLATION_REPLAY = (
+    PROJECT_ROOT
+    / "tests/fixtures/replay/official_macro/us_treasury/inflation_expectation_replay_bundle.json"
+)
+
+
+def _us_treasury_yield_req(**overrides: object):
+    from backend.app.datasources.fetch_result import FetchRequest
+
+    base = {
+        "run_id": "r3h01-us-treasury-port",
+        "source_id": "us_treasury",
+        "data_domain": "us_treasury_yield_curve",
+        "instrument_id": "10Y",
+    }
+    base.update(overrides)
+    return FetchRequest(**base)
+
+
+def _us_treasury_inflation_req(**overrides: object):
+    from backend.app.datasources.fetch_result import FetchRequest
+
+    base = {
+        "run_id": "r3h01-us-treasury-inflation",
+        "source_id": "us_treasury",
+        "data_domain": "inflation_expectation",
+        "instrument_id": "breakeven_10y",
+    }
+    base.update(overrides)
+    return FetchRequest(**base)
+
+
+def test_us_treasury_port_mockFetch_emitsYieldCurveEvidence() -> None:
+    """覆盖范围：mock US Treasury port 收益率曲线抓取
+    测试对象：create_us_treasury_fetch_port + UsTreasuryMockFetchPort.fetch_payload
+    目的/目标：port 直接产出 yield curve 证据包，字段含 observation_date/tenor/yield_percent
+    验证点：schema_version、source_fetch_id、content_hash、canonical observation_date
+    失败含义：L2 port 未交付或仍输出 legacy 形状，无法登记 READY_WITH_EVIDENCE
+    """
+    from backend.app.datasources.fetch_ports.us_treasury_port import create_us_treasury_fetch_port
+    from backend.app.datasources.normalizers.official_macro import (
+        OFFICIAL_MACRO_EVIDENCE_SCHEMA_VERSION,
+    )
+
+    port = create_us_treasury_fetch_port(
+        tenors=("10Y", "2Y"),
+        max_rows=3,
+        data_domain="us_treasury_yield_curve",
+        use_mock=True,
+    )
+    payload = port.fetch_payload(_us_treasury_yield_req())
+    body = json.loads(payload.content.decode("utf-8"))
+    assert body["schema_version"] == OFFICIAL_MACRO_EVIDENCE_SCHEMA_VERSION
+    assert body["source_id"] == "us_treasury"
+    assert body["data_domain"] == "us_treasury_yield_curve"
+    assert body.get("source_fetch_id")
+    assert body.get("content_hash")
+    assert body.get("as_of_timestamp")
+    obs = body.get("observations") or []
+    assert obs
+    for row in obs:
+        assert row.get("observation_date")
+        assert "date" not in row
+        assert row.get("tenor")
+        assert row.get("yield_percent") is not None
+
+
+def test_us_treasury_port_mockFetch_emitsInflationExpectationEvidence() -> None:
+    """覆盖范围：mock US Treasury port 通胀预期参考抓取
+    测试对象：create_us_treasury_fetch_port（inflation_expectation 域）
+    目的/目标：port 产出通胀预期证据包，字段含 metric_name/metric_value
+    验证点：data_domain==inflation_expectation；观测行 canonical observation_date
+    失败含义：通胀预期域无 port 路径，us_treasury 双域承诺未闭合
+    """
+    from backend.app.datasources.fetch_ports.us_treasury_port import create_us_treasury_fetch_port
+    from backend.app.datasources.normalizers.official_macro import (
+        OFFICIAL_MACRO_EVIDENCE_SCHEMA_VERSION,
+    )
+
+    port = create_us_treasury_fetch_port(
+        tenors=("breakeven_10y",),
+        max_rows=3,
+        data_domain="inflation_expectation",
+        use_mock=True,
+    )
+    payload = port.fetch_payload(_us_treasury_inflation_req())
+    body = json.loads(payload.content.decode("utf-8"))
+    assert body["schema_version"] == OFFICIAL_MACRO_EVIDENCE_SCHEMA_VERSION
+    assert body["data_domain"] == "inflation_expectation"
+    obs = body.get("observations") or []
+    assert obs
+    for row in obs:
+        assert row.get("observation_date")
+        assert row.get("metric_name")
+        assert row.get("metric_value") is not None
+
+
+def test_us_treasury_port_tenorWhitelist_rejectsUnknownTenor() -> None:
+    """覆盖范围：收益率曲线 tenor 白名单门禁
+    测试对象：UsTreasuryMockFetchPort.fetch_payload
+    目的/目标：非白名单 tenor 在 port 层 fail-closed
+    验证点：UNKNOWN_TENOR 抛出 PortError
+    失败含义：任意 tenor 可被 sandbox port 拉取，突破 §7 cap 语义
+    """
+    from backend.app.datasources.adapters.fetch_port import PortError
+    from backend.app.datasources.fetch_ports.us_treasury_port import create_us_treasury_fetch_port
+
+    port = create_us_treasury_fetch_port(
+        tenors=("UNKNOWN_TENOR",),
+        max_rows=3,
+        data_domain="us_treasury_yield_curve",
+        use_mock=True,
+    )
+    with pytest.raises(PortError, match="whitelist"):
+        port.fetch_payload(_us_treasury_yield_req(instrument_id="UNKNOWN_TENOR"))
+
+
+def test_us_treasury_port_capOverflow_blocksOverMaxRows() -> None:
+    """覆盖范围：port 行数 cap 溢出
+    测试对象：UsTreasuryMockFetchPort 构造 max_rows 超上限
+    目的/目标：ResourceGuard/任务卡 cap（500 rows）在 port 层硬拒绝
+    验证点：max_rows 超 MAX_ROWS 时 fetch 前 PortError
+    失败含义：cap 可被 port 参数绕过导致无界 Treasury pull
+    """
+    from backend.app.datasources.adapters.fetch_port import PortError
+    from backend.app.datasources.fetch_ports.us_treasury_port import (
+        MAX_ROWS,
+        create_us_treasury_fetch_port,
+    )
+
+    port = create_us_treasury_fetch_port(
+        tenors=("10Y",),
+        max_rows=MAX_ROWS + 1,
+        data_domain="us_treasury_yield_curve",
+        use_mock=True,
+    )
+    with pytest.raises(PortError, match="cap"):
+        port.fetch_payload(_us_treasury_yield_req())
+
+
+def test_us_treasury_port_capOverflow_blocksOverMaxTenors() -> None:
+    """覆盖范围：port tenor 数量 cap 溢出
+    测试对象：create_us_treasury_fetch_port 构造 tenors 超上限
+    目的/目标：§7 默认 20 tenors cap 在 factory 层硬拒绝
+    验证点：len(tenors) > MAX_TENORS 时构造即 PortError
+    失败含义：tenor cap 可被绕过
+    """
+    from backend.app.datasources.adapters.fetch_port import PortError
+    from backend.app.datasources.fetch_ports.us_treasury_port import (
+        MAX_TENORS,
+        create_us_treasury_fetch_port,
+    )
+
+    too_many = tuple(f"T{i}Y" for i in range(MAX_TENORS + 1))
+    with pytest.raises(PortError, match="tenor"):
+        create_us_treasury_fetch_port(
+            tenors=too_many,
+            max_rows=3,
+            data_domain="us_treasury_yield_curve",
+            use_mock=True,
+        )
+
+
+def test_us_treasury_port_replayFixture_yieldCurveObservationDateCanonical() -> None:
+    """覆盖范围：yield curve replay fixture 与 normalizer 读路径
+    测试对象：tests/fixtures/replay/official_macro/us_treasury/yield_curve_replay_bundle.json
+    目的/目标：replay 使用 observation_date + schema_version，非 legacy date
+    验证点：read_yield_curve_evidence_bundle 往返；观测行无 date 别名
+    失败含义：replay 仍依赖 legacy 字段，9.6 registry 无法登记路径
+    """
+    from backend.app.datasources.normalizers.official_macro import (
+        OFFICIAL_MACRO_EVIDENCE_SCHEMA_VERSION,
+        read_yield_curve_evidence_bundle,
+    )
+
+    bundle = read_yield_curve_evidence_bundle(_TREASURY_YIELD_REPLAY)
+    assert bundle["schema_version"] == OFFICIAL_MACRO_EVIDENCE_SCHEMA_VERSION
+    assert bundle["data_domain"] == "us_treasury_yield_curve"
+    for obs in bundle["observations"]:
+        assert obs.get("observation_date")
+        assert obs.get("tenor")
+        assert "date" not in obs
+
+
+def test_us_treasury_port_replayFixture_inflationExpectationCanonical() -> None:
+    """覆盖范围：inflation expectation replay fixture 与 normalizer 读路径
+    测试对象：tests/fixtures/replay/official_macro/us_treasury/inflation_expectation_replay_bundle.json
+    目的/目标：replay 使用 observation_date + metric_name/metric_value
+    验证点：read_inflation_expectation_evidence_bundle 往返
+    失败含义：通胀预期 replay 路径缺失，双域证据无法登记
+    """
+    from backend.app.datasources.normalizers.official_macro import (
+        OFFICIAL_MACRO_EVIDENCE_SCHEMA_VERSION,
+        read_inflation_expectation_evidence_bundle,
+    )
+
+    bundle = read_inflation_expectation_evidence_bundle(_TREASURY_INFLATION_REPLAY)
+    assert bundle["schema_version"] == OFFICIAL_MACRO_EVIDENCE_SCHEMA_VERSION
+    assert bundle["data_domain"] == "inflation_expectation"
+    for obs in bundle["observations"]:
+        assert obs.get("observation_date")
+        assert obs.get("metric_name")
+        assert "date" not in obs
+
+
+def test_us_treasury_port_route_disabledByDefault_unauthorized() -> None:
+    """覆盖范围：us_treasury_yield_curve 路由默认禁用
+    测试对象：SourceRoutePlanner + source_registry us_treasury
+    目的/目标：enabled_by_default=false 时 route 为 DISABLED，非 READY
+    验证点：route_status=DISABLED_SOURCE；us_treasury candidate enabled=False
+    失败含义：未配置 Treasury 仍被 route 选为 production primary
+    """
+    from backend.app.datasources.capability_registry import SourceCapabilityRegistry
+    from backend.app.datasources.route_planner import SourceRoutePlanner
+    from backend.app.datasources.source_registry import SourceRegistry
+
+    registry = SourceRegistry()
+    registry.load()
+    capabilities = SourceCapabilityRegistry()
+    capabilities.load()
+    planner = SourceRoutePlanner(source_registry=registry, capability_registry=capabilities)
+    plan = planner.plan(
+        data_domain="us_treasury_yield_curve",
+        operation="fetch_yield_curve",
+        run_id="r3h01-treasury-route",
+        job_id="treasury-route-negative",
+    )
+    assert plan.route_status == "DISABLED_SOURCE"
+    assert plan.selected_source_id is None
+    treasury = next((c for c in plan.candidates if c.source_id == "us_treasury"), None)
+    assert treasury is not None
+    assert treasury.enabled is False
+
+
+def test_us_treasury_port_route_readyWhenSourceEnabled(monkeypatch: pytest.MonkeyPatch) -> None:
+    """覆盖范围：显式启用 us_treasury 后 route READY
+    测试对象：SourceRoutePlanner（内存 registry 覆盖 enabled）
+    目的/目标：授权配置后 us_treasury_yield_curve 可选 us_treasury primary
+    验证点：route_status=READY；selected_source_id=us_treasury
+    失败含义：即使源已启用也无法 route 到官方 Treasury port
+    """
+    from backend.app.datasources.capability_registry import SourceCapabilityRegistry
+    from backend.app.datasources.route_planner import SourceRoutePlanner
+    from backend.app.datasources.source_registry import SourceRegistry
+
+    registry = SourceRegistry()
+    registry.load()
+    rec = registry.get("us_treasury")
+    object.__setattr__(rec, "is_enabled", True)
+    orig_domain_roles = registry.get_domain_roles
+
+    def _yield_curve_domain_enabled(data_domain: str):
+        binding = orig_domain_roles(data_domain)
+        if data_domain != "us_treasury_yield_curve":
+            return binding
+        from backend.app.datasources.source_registry import DomainRoleBinding
+
+        return DomainRoleBinding(
+            primary_source_id=binding.primary_source_id,
+            validation_source_id=binding.validation_source_id,
+            fallback_policy=binding.fallback_policy,
+            domain_enabled_by_default=True,
+            fallback_source_ids=binding.fallback_source_ids,
+        )
+
+    monkeypatch.setattr(registry, "get_domain_roles", _yield_curve_domain_enabled)
+    capabilities = SourceCapabilityRegistry()
+    capabilities.load()
+    planner = SourceRoutePlanner(source_registry=registry, capability_registry=capabilities)
+    monkeypatch.setattr(planner, "_platform_allows", lambda _sid: (True, None))
+    plan = planner.plan(
+        data_domain="us_treasury_yield_curve",
+        operation="fetch_yield_curve",
+        run_id="r3h01-treasury-route-ready",
+        job_id="treasury-route-positive",
+        extra_candidates=[("us_treasury", "Primary")],
+    )
+    treasury = next((c for c in plan.candidates if c.source_id == "us_treasury"), None)
+    assert treasury is not None
+    assert treasury.enabled is True
+    assert plan.route_status == "READY"
+    assert plan.selected_source_id == "us_treasury"
