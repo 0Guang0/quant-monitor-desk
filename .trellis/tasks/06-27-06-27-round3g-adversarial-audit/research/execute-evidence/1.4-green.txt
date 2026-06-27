@@ -1,0 +1,7 @@
+§1.4 full matrix — GREEN
+uv run pytest tests/test_round3g_pre_production_adversarial_audit.py tests/test_reference_adoption_guardrails.py -q
+......................................                                   [100%]
+38 passed
+
+uv run pytest -q
+full suite exit 0 (2026-06-27)

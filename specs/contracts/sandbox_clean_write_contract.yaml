@@ -81,6 +81,16 @@ r3g02_audit:
     - jq2ptrade_disallowed_api_surface
     - agent_triggered_write_path
     - write_manager_or_db_validation_gate_bypass
+  warning_if:
+    - incomplete_lineage_coverage
+    - synthetic_admission_flagged
+    - approximate_calendar_evidence
+    - fred_authorization_evidence_missing
+    - thin_validation_summary
+    - provider_enabled_by_default_mismatch
+    - provider_auth_posture_mismatch
+    - provider_domain_posture_mismatch
+    - zero_sandbox_clean_rows
 
 r3g03_limited_entry:
   explicit_user_approval_required: true

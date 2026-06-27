@@ -1,0 +1,12 @@
+# P1 GREEN evidence — 2026-06-27
+# Command: uv run pytest tests/test_round3g_pre_production_adversarial_audit.py -q -k "P1 or forbiddenGet or readsBar or realGuardrail or providerMetadata or metadataZero or evidenceDir"
+
+tests/test_round3g_pre_production_adversarial_audit.py::test_r3g02AdversarialAudit_readsBarEvidenceSubstance PASSED
+tests/test_round3g_pre_production_adversarial_audit.py::test_r3g02AdversarialAudit_realGuardrailScanDetectsFixture PASSED
+tests/test_round3g_pre_production_adversarial_audit.py::test_r3g02AdversarialAudit_providerMetadataChecksAuthAndCaps PASSED
+tests/test_round3g_pre_production_adversarial_audit.py::test_r3g02AdversarialAudit_forbiddenGetTradingApiBlocks PASSED
+tests/test_round3g_pre_production_adversarial_audit.py::test_r3g02AdversarialAudit_evidenceDirNotDirectoryBlocks PASSED
+tests/test_round3g_pre_production_adversarial_audit.py::test_r3g02AdversarialAudit_metadataZeroStagedBlocks PASSED
+tests/test_round3g_pre_production_adversarial_audit.py::test_r3g02AdversarialAudit_missingEvidenceDirBlocks PASSED
+
+Implementation: adversarial_audit.py — get_* from guardrails SSOT; provider_for_source + SourceRegistry reuse; _resolve_path reuse

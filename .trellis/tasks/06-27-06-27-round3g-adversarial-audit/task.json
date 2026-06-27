@@ -1,0 +1,38 @@
+{
+  "id": "06-27-round3g-adversarial-audit",
+  "name": "06-27-round3g-adversarial-audit",
+  "title": "R3G-02 Pre-Production Adversarial Audit",
+  "description": "Simple track: consume R3G-01 rehearsal evidence; emit go/no-go decision enum; audit-only no production mutation.",
+  "status": "in_progress",
+  "dev_type": "implement",
+  "scope": "round3g_adversarial_audit",
+  "package": null,
+  "priority": "P1",
+  "creator": "Guang",
+  "assignee": "Guang",
+  "createdAt": "2026-06-27",
+  "completedAt": null,
+  "branch": "feature/round3g-adversarial-audit",
+  "base_branch": "master",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "predecessor_tasks": [
+    ".trellis/tasks/archive/2026-06/06-27-06-27-round3g-sandbox-rehearsal"
+  ],
+  "relatedFiles": [
+    "docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_02_PRE_PRODUCTION_ADVERSARIAL_AUDIT.md",
+    "backend/app/ops/sandbox_clean_write/adversarial_audit.py",
+    "backend/app/ops/sandbox_clean_write/audit_decision.py",
+    "tests/test_round3g_pre_production_adversarial_audit.py"
+  ],
+  "notes": "Simple track; user-approved implement.jsonl (17 reads) + ponytail-all-code; Execute pending dispatch.",
+  "meta": {
+    "task_track": "simple",
+    "source_task_card": "docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_02_PRE_PRODUCTION_ADVERSARIAL_AUDIT.md",
+    "predecessor_commit": "4aa6a1c3"
+  }
+}

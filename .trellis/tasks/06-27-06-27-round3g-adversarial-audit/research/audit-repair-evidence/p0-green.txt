@@ -1,0 +1,8 @@
+# P0 GREEN evidence — 2026-06-27
+# Command: uv run pytest tests/test_round3g_pre_production_adversarial_audit.py (P0 subset + full module)
+
+P0 subset (4 tests): .... 4 passed in 6.83s
+
+M-P0-01: zero coverage BLOCK + partial coverage WARN — test_r3g02AdversarialAudit_zeroLineageCoverageBlocks, test_r3g02AdversarialAudit_partialLineageCoverageWarns
+M-P0-02: synthetic+PASSED BLOCK — test_r3g02AdversarialAudit_syntheticAdmissionPassedBlocks
+M-P0-03: rollback is_file BLOCK — test_r3g02AdversarialAudit_missingRollbackFileBlocks (fix: run_adversarial_audit resolves path + is_file check)

@@ -12,6 +12,8 @@ from tests.contract_gate_support import PROJECT_ROOT, load_yaml
 CONTRACT = PROJECT_ROOT / "specs/contracts/sandbox_clean_write_contract.yaml"
 FRED_AUTH = PROJECT_ROOT / ".audit-sandbox/round3g/fred_user_authorization.yaml"
 
+# ponytail: ResourceGuard autouse — tests/conftest.py::_resourceGuardOkUnlessTestOverrides
+
 
 @pytest.fixture
 def _dry_run_rehearsal_paths(tmp_path: Path) -> dict[str, Path]:
@@ -21,13 +23,6 @@ def _dry_run_rehearsal_paths(tmp_path: Path) -> dict[str, Path]:
         "evidence_dir": tmp_path / "evidence",
         "report_path": tmp_path / "report.json",
     }
-
-
-@pytest.fixture(autouse=True)
-def _rehearsal_resourceGuardOk(monkeypatch: pytest.MonkeyPatch) -> None:
-    from backend.app.core.resource_guard import Decision, ResourceGuard
-
-    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
 
 
 def _contract() -> dict:

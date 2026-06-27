@@ -1,0 +1,8 @@
+# P1 RED evidence — 2026-06-27
+# Command: uv run pytest ...P1 RED tests...
+
+tests/test_round3g_pre_production_adversarial_audit.py::test_r3g02AdversarialAudit_forbiddenGetTradingApiBlocks FAILED
+AssertionError: get_portfolio() def not detected — only order/buy/sell in FORBIDDEN_TRADING_DEF_NAMES
+
+tests/test_round3g_pre_production_adversarial_audit.py::test_r3g02Contract_warningIfIncludesApproximateCalendar FAILED
+AssertionError: r3g02_audit.warning_if missing approximate_calendar_evidence

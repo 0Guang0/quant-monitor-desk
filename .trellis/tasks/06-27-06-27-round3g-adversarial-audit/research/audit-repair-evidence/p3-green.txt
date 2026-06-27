@@ -1,0 +1,13 @@
+# P3 GREEN evidence — 2026-06-27
+# Command: uv run pytest tests/test_round3g_pre_production_adversarial_audit.py -q -k "Package_exports or serializesWithout"
+
+tests/test_round3g_pre_production_adversarial_audit.py::test_r3g02Package_exportsAuditApi PASSED
+tests/test_round3g_pre_production_adversarial_audit.py::test_r3g02AuditResult_serializesWithoutDeadEnumGuard PASSED
+tests/test_round3g_pre_production_adversarial_audit.py::test_r3g02AuditResult_serializesBlockingAndWarningReasons PASSED
+
+Implementation:
+- __init__.py exports run_adversarial_audit / AuditResult / AdversarialAuditRequest
+- audit_decision.serialize — no StrEnum dead branch; json top-level import
+- adversarial_audit reuses rehearsal_runner._resolve_path, provider_for_source, SourceRegistry
+- guardrail scan ponytail O(files) rglob comment
+- mock-boundary test docstrings aligned (A8-07)

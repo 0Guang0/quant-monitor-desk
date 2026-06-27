@@ -1,0 +1,3 @@
+{"file": "docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_02_PRE_PRODUCTION_ADVERSARIAL_AUDIT.md", "reason": "extract: done criteria §8 | for: handoff"}
+{"file": "specs/contracts/sandbox_clean_write_contract.yaml", "reason": "extract: r3g02_audit | for: AC-01"}
+{"file": "tests/test_round3g_pre_production_adversarial_audit.py", "reason": "extract: §7 test matrix | for: AC-07"}

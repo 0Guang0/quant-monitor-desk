@@ -76,6 +76,12 @@ def _build_data_parser(sub: argparse._SubParsersAction) -> None:
     rehearse.add_argument("--allow-live-fetch", action="store_true")
     rehearse.add_argument("--fred-authorization", default=None)
     rehearse.add_argument("--format", choices=["json", "text"], default="json")
+    audit = scw_sub.add_parser("audit", help="Pre-production adversarial audit (R3G-02)")
+    audit.add_argument("--rehearsal-report", required=True)
+    audit.add_argument("--sandbox-db", required=True)
+    audit.add_argument("--evidence-dir", required=True)
+    audit.add_argument("--decision-report", required=True)
+    audit.add_argument("--format", choices=["json", "text"], default="json")
 
 
 def _run_data(args: argparse.Namespace) -> int:
@@ -123,23 +129,31 @@ def _run_data(args: argparse.Namespace) -> int:
         elif args.data_command == "sandbox-clean-write":
             from pathlib import Path
 
-            if args.sandbox_clean_write_command != "rehearse":
+            if args.sandbox_clean_write_command == "rehearse":
+                fred_auth = Path(args.fred_authorization) if args.fred_authorization else None
+                payload = data_commands.sandbox_clean_write_rehearse(
+                    candidate_set=args.candidate_set,
+                    sandbox_db=Path(args.sandbox_db),
+                    evidence_dir=Path(args.evidence_dir),
+                    report=Path(args.report),
+                    no_production_mutation=args.no_production_mutation,
+                    dry_run=args.dry_run,
+                    allow_live_fetch=args.allow_live_fetch,
+                    fred_authorization=fred_auth,
+                )
+            elif args.sandbox_clean_write_command == "audit":
+                payload = data_commands.sandbox_clean_write_audit(
+                    rehearsal_report=Path(args.rehearsal_report),
+                    sandbox_db=Path(args.sandbox_db),
+                    evidence_dir=Path(args.evidence_dir),
+                    decision_report=Path(args.decision_report),
+                )
+            else:
                 raise CliFailure(
                     error_code="CAPABILITY_MISSING",
                     message=f"unknown sandbox-clean-write subcommand: {args.sandbox_clean_write_command}",
-                    docs_anchor="docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_01_SANDBOX_CLEAN_WRITE_REHEARSAL.md",
+                    docs_anchor="docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_02_PRE_PRODUCTION_ADVERSARIAL_AUDIT.md",
                 )
-            fred_auth = Path(args.fred_authorization) if args.fred_authorization else None
-            payload = data_commands.sandbox_clean_write_rehearse(
-                candidate_set=args.candidate_set,
-                sandbox_db=Path(args.sandbox_db),
-                evidence_dir=Path(args.evidence_dir),
-                report=Path(args.report),
-                no_production_mutation=args.no_production_mutation,
-                dry_run=args.dry_run,
-                allow_live_fetch=args.allow_live_fetch,
-                fred_authorization=fred_auth,
-            )
         else:
             raise CliFailure(
                 error_code="CAPABILITY_MISSING",

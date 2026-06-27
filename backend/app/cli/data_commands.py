@@ -288,3 +288,43 @@ def sandbox_clean_write_rehearse(
             message=str(exc),
             docs_anchor="docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_01_SANDBOX_CLEAN_WRITE_REHEARSAL.md",
         ) from exc
+
+
+def sandbox_clean_write_audit(
+    *,
+    rehearsal_report: Path,
+    sandbox_db: Path,
+    evidence_dir: Path,
+    decision_report: Path,
+) -> dict[str, Any]:
+    """``qmd data sandbox-clean-write audit`` — R3G-02 adversarial audit CLI."""
+    from backend.app.ops.sandbox_clean_write.adversarial_audit import (
+        AdversarialAuditRequest,
+        run_adversarial_audit,
+    )
+    from backend.app.ops.sandbox_clean_write.audit_decision import write_audit_decision
+    from backend.app.ops.sandbox_clean_write.rehearsal_runner import (
+        RehearsalRunnerError,
+        assert_sandbox_db_allowed,
+    )
+
+    try:
+        assert_sandbox_db_allowed(sandbox_db, no_production_mutation=True)
+    except RehearsalRunnerError as exc:
+        raise CliFailure(
+            error_code="INVALID_INPUT",
+            message=str(exc),
+            docs_anchor="docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_02_PRE_PRODUCTION_ADVERSARIAL_AUDIT.md",
+        ) from exc
+
+    result = run_adversarial_audit(
+        AdversarialAuditRequest(
+            rehearsal_report=rehearsal_report,
+            sandbox_db=sandbox_db,
+            evidence_dir=evidence_dir,
+        )
+    )
+    write_audit_decision(decision_report, result)
+    payload = result.serialize()
+    payload["decision_report_path"] = str(decision_report)
+    return payload
