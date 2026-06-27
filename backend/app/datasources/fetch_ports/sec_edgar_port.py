@@ -5,7 +5,6 @@ Mock-first filings + Form 4; live fetch requires SEC_EDGAR_USER_AGENT identity h
 
 from __future__ import annotations
 
-import hashlib
 import json
 import os
 import uuid
@@ -15,6 +14,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Any, Literal
 
 from backend.app.datasources.adapters.fetch_port import FetchPayload, PortError
+from backend.app.datasources.normalizers.evidence_bundle import finalize_bundle, reject_over_cap
 from backend.app.datasources.fetch_result import FetchRequest
 from backend.app.datasources.normalizers.sec_edgar import (
     build_filings_evidence_bundle,
@@ -43,26 +43,6 @@ def _sec_user_agent() -> str | None:
 def _reject_unknown_cik(cik: str) -> None:
     if cik not in CIK_WHITELIST:
         raise PortError("FAILED", f"CIK not in whitelist: {cik!r}")
-
-
-def _reject_over_cap(*, max_filings: int) -> None:
-    if max_filings <= 0 or max_filings > MAX_FILINGS:
-        raise PortError(
-            "FAILED",
-            f"requested max_filings={max_filings} exceeds cap={MAX_FILINGS}",
-        )
-
-
-def _bundle_content_hash(bundle: dict[str, Any]) -> str:
-    canonical = {k: v for k, v in bundle.items() if k != "content_hash"}
-    payload = json.dumps(canonical, ensure_ascii=False, default=str, sort_keys=True)
-    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
-
-
-def _finalize_bundle(bundle: dict[str, Any]) -> dict[str, Any]:
-    bundle = dict(bundle)
-    bundle["content_hash"] = _bundle_content_hash(bundle)
-    return bundle
 
 
 @dataclass(frozen=True)
@@ -110,7 +90,7 @@ class SecEdgarMockFetchPort:
         return rows
 
     def fetch_payload(self, req: FetchRequest) -> FetchPayload:
-        _reject_over_cap(max_filings=self.max_filings)
+        reject_over_cap(value=self.max_filings, cap=MAX_FILINGS, label="max_filings")
         cik = req.instrument_id or (self.ciks[0] if self.ciks else "")
         if not cik:
             raise PortError("FAILED", "missing CIK for SEC EDGAR mock fetch")
@@ -140,28 +120,9 @@ class SecEdgarMockFetchPort:
             )
             row_count = len(transactions)
 
-        bundle = _finalize_bundle(bundle)
+        bundle = finalize_bundle(bundle)
         content = json.dumps(bundle, ensure_ascii=False, default=str).encode("utf-8")
         return FetchPayload(content=content, file_type="json", row_count=row_count)
-
-
-@dataclass(frozen=True)
-class SecEdgarLiveFetchPort:
-    """Bounded live SEC EDGAR fetch (opt-in, requires SEC_EDGAR_USER_AGENT)."""
-
-    ciks: Sequence[str]
-    max_filings: int
-    data_domain: SecEdgarDomain
-
-    def fetch_payload(self, req: FetchRequest) -> FetchPayload:
-        agent = _sec_user_agent()
-        if not agent:
-            raise PortError(
-                "USER_AUTH_REQUIRED",
-                "SEC_EDGAR_USER_AGENT missing or lacks contact identity for live fetch",
-            )
-        # ponytail: live SEC API deferred to mock path for R3H-01; identity gate only
-        raise PortError("FAILED", "live SEC EDGAR fetch not enabled in R3H-01; use mock")
 
 
 def create_sec_edgar_fetch_port(
@@ -175,4 +136,9 @@ def create_sec_edgar_fetch_port(
         raise PortError("FAILED", f"max {MAX_CIKS} CIKs allowed, got {len(ciks)}")
     if use_mock:
         return SecEdgarMockFetchPort(ciks=ciks, max_filings=max_filings, data_domain=data_domain)
-    return SecEdgarLiveFetchPort(ciks=ciks, max_filings=max_filings, data_domain=data_domain)
+    if not _sec_user_agent():
+        raise PortError(
+            "USER_AUTH_REQUIRED",
+            "SEC_EDGAR_USER_AGENT missing or lacks contact identity for live fetch",
+        )
+    raise PortError("FAILED", "live SEC EDGAR fetch not enabled in R3H-01; use mock")

@@ -3,14 +3,47 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
+
+from backend.app.datasources.normalizers.evidence_bundle import attach_bundle_metadata
 
 OFFICIAL_MACRO_EVIDENCE_SCHEMA_VERSION = "official_macro_evidence_v1"
 
 
 class OfficialMacroEvidenceError(ValueError):
     """Fred / official-macro evidence bundle is invalid or incomplete."""
+
+
+def _read_observations_bundle(
+    path: Path | str,
+    *,
+    label: str,
+    normalize_obs: Callable[[dict[str, Any]], dict[str, Any]],
+    build_bundle: Callable[..., dict[str, Any]],
+    **build_kwargs: Any,
+) -> dict[str, Any]:
+    evidence_path = Path(path)
+    if not evidence_path.is_file():
+        raise OfficialMacroEvidenceError(f"missing {label}: {evidence_path}")
+    payload = json.loads(evidence_path.read_text(encoding="utf-8"))
+    observations = [normalize_obs(obs) for obs in payload.get("observations") or []]
+    if not observations:
+        raise OfficialMacroEvidenceError(f"{label} has no observations")
+    fetch_id = payload.get("source_fetch_id")
+    content_hash = payload.get("content_hash")
+    if not fetch_id or not content_hash:
+        raise OfficialMacroEvidenceError(f"{label} missing source_fetch_id or content_hash")
+    bundle = build_bundle(
+        observations=observations,
+        source_fetch_id=str(fetch_id),
+        content_hash=str(content_hash),
+        as_of_timestamp=str(payload.get("as_of_timestamp") or payload.get("retrieved_at") or ""),
+        retrieved_at=str(payload.get("retrieved_at") or payload.get("as_of_timestamp") or ""),
+        **build_kwargs,
+    )
+    return attach_bundle_metadata(bundle)
 
 
 def _normalize_observation(row: dict[str, Any]) -> dict[str, Any]:
@@ -70,15 +103,20 @@ def read_fred_evidence_bundle(path: Path | str) -> dict[str, Any]:
     observations = [_normalize_observation(obs) for obs in payload.get("observations") or []]
     if not observations:
         raise OfficialMacroEvidenceError("fred evidence bundle has no observations")
-    return build_fred_evidence_bundle(
+    fetch_id = payload.get("source_fetch_id")
+    content_hash = payload.get("content_hash")
+    if not fetch_id or not content_hash:
+        raise OfficialMacroEvidenceError("fred evidence missing source_fetch_id or content_hash")
+    bundle = build_fred_evidence_bundle(
         observations=observations,
         series_id=str(payload.get("series_id") or observations[0].get("series_id") or "DGS10"),
         source_id=str(payload.get("source_id") or "fred"),
-        source_fetch_id=str(payload.get("source_fetch_id") or "fred-unknown"),
-        content_hash=str(payload.get("content_hash") or "fred-unknown-hash"),
+        source_fetch_id=str(fetch_id),
+        content_hash=str(content_hash),
         as_of_timestamp=str(payload.get("as_of_timestamp") or payload.get("retrieved_at") or ""),
         retrieved_at=str(payload.get("retrieved_at") or payload.get("as_of_timestamp") or ""),
     )
+    return attach_bundle_metadata(bundle)
 
 
 def write_fred_evidence_bundle(out_dir: Path | str, bundle: dict[str, Any]) -> Path:
@@ -137,6 +175,7 @@ def _normalize_yield_curve_row(row: dict[str, Any]) -> dict[str, Any]:
         "observation_date": str(row.get("observation_date") or row.get("date") or ""),
         "tenor": str(row.get("tenor") or ""),
         "yield_percent": row.get("yield_percent"),
+        "source_used": str(row.get("source_used") or "us_treasury"),
     }
 
 
@@ -145,6 +184,7 @@ def _normalize_inflation_expectation_row(row: dict[str, Any]) -> dict[str, Any]:
         "observation_date": str(row.get("observation_date") or row.get("date") or ""),
         "metric_name": str(row.get("metric_name") or ""),
         "metric_value": row.get("metric_value"),
+        "source_used": str(row.get("source_used") or "us_treasury"),
     }
 
 
@@ -198,41 +238,23 @@ def build_inflation_expectation_evidence_bundle(
 
 def read_yield_curve_evidence_bundle(path: Path | str) -> dict[str, Any]:
     """Read yield curve replay bundle and return canonical evidence shape."""
-    evidence_path = Path(path)
-    if not evidence_path.is_file():
-        raise OfficialMacroEvidenceError(f"missing yield curve evidence: {evidence_path}")
-    payload = json.loads(evidence_path.read_text(encoding="utf-8"))
-    observations = [_normalize_yield_curve_row(obs) for obs in payload.get("observations") or []]
-    if not observations:
-        raise OfficialMacroEvidenceError("yield curve evidence bundle has no observations")
-    return build_yield_curve_evidence_bundle(
-        observations=observations,
-        source_id=str(payload.get("source_id") or "us_treasury"),
-        source_fetch_id=str(payload.get("source_fetch_id") or "treasury-unknown"),
-        content_hash=str(payload.get("content_hash") or "treasury-unknown-hash"),
-        as_of_timestamp=str(payload.get("as_of_timestamp") or payload.get("retrieved_at") or ""),
-        retrieved_at=str(payload.get("retrieved_at") or payload.get("as_of_timestamp") or ""),
+    return _read_observations_bundle(
+        path,
+        label="yield curve evidence",
+        normalize_obs=_normalize_yield_curve_row,
+        build_bundle=build_yield_curve_evidence_bundle,
+        source_id="us_treasury",
     )
 
 
 def read_inflation_expectation_evidence_bundle(path: Path | str) -> dict[str, Any]:
     """Read inflation expectation replay bundle and return canonical evidence shape."""
-    evidence_path = Path(path)
-    if not evidence_path.is_file():
-        raise OfficialMacroEvidenceError(f"missing inflation expectation evidence: {evidence_path}")
-    payload = json.loads(evidence_path.read_text(encoding="utf-8"))
-    observations = [
-        _normalize_inflation_expectation_row(obs) for obs in payload.get("observations") or []
-    ]
-    if not observations:
-        raise OfficialMacroEvidenceError("inflation expectation bundle has no observations")
-    return build_inflation_expectation_evidence_bundle(
-        observations=observations,
-        source_id=str(payload.get("source_id") or "us_treasury"),
-        source_fetch_id=str(payload.get("source_fetch_id") or "treasury-unknown"),
-        content_hash=str(payload.get("content_hash") or "treasury-unknown-hash"),
-        as_of_timestamp=str(payload.get("as_of_timestamp") or payload.get("retrieved_at") or ""),
-        retrieved_at=str(payload.get("retrieved_at") or payload.get("as_of_timestamp") or ""),
+    return _read_observations_bundle(
+        path,
+        label="inflation expectation evidence",
+        normalize_obs=_normalize_inflation_expectation_row,
+        build_bundle=build_inflation_expectation_evidence_bundle,
+        source_id="us_treasury",
     )
 
 
@@ -273,20 +295,12 @@ def build_cot_positioning_evidence_bundle(
 
 
 def read_cot_positioning_evidence_bundle(path: Path | str) -> dict[str, Any]:
-    evidence_path = Path(path)
-    if not evidence_path.is_file():
-        raise OfficialMacroEvidenceError(f"missing COT evidence: {evidence_path}")
-    payload = json.loads(evidence_path.read_text(encoding="utf-8"))
-    observations = [_normalize_cot_row(obs) for obs in payload.get("observations") or []]
-    if not observations:
-        raise OfficialMacroEvidenceError("COT evidence bundle has no observations")
-    return build_cot_positioning_evidence_bundle(
-        observations=observations,
-        source_id=str(payload.get("source_id") or "cftc_cot"),
-        source_fetch_id=str(payload.get("source_fetch_id") or "cftc-unknown"),
-        content_hash=str(payload.get("content_hash") or "cftc-unknown-hash"),
-        as_of_timestamp=str(payload.get("as_of_timestamp") or payload.get("retrieved_at") or ""),
-        retrieved_at=str(payload.get("retrieved_at") or payload.get("as_of_timestamp") or ""),
+    return _read_observations_bundle(
+        path,
+        label="COT evidence",
+        normalize_obs=_normalize_cot_row,
+        build_bundle=build_cot_positioning_evidence_bundle,
+        source_id="cftc_cot",
     )
 
 
@@ -358,38 +372,12 @@ def build_bis_credit_gap_evidence_bundle(
 
 
 def read_bis_policy_rate_evidence_bundle(path: Path | str) -> dict[str, Any]:
-    evidence_path = Path(path)
-    if not evidence_path.is_file():
-        raise OfficialMacroEvidenceError(f"missing BIS policy evidence: {evidence_path}")
-    payload = json.loads(evidence_path.read_text(encoding="utf-8"))
-    observations = [_normalize_bis_policy_row(obs) for obs in payload.get("observations") or []]
-    if not observations:
-        raise OfficialMacroEvidenceError("BIS policy evidence has no observations")
-    return build_bis_policy_rate_evidence_bundle(
-        observations=observations,
-        source_id=str(payload.get("source_id") or "bis"),
-        source_fetch_id=str(payload.get("source_fetch_id") or "bis-unknown"),
-        content_hash=str(payload.get("content_hash") or "bis-unknown-hash"),
-        as_of_timestamp=str(payload.get("as_of_timestamp") or payload.get("retrieved_at") or ""),
-        retrieved_at=str(payload.get("retrieved_at") or payload.get("as_of_timestamp") or ""),
-    )
-
-
-def read_bis_credit_gap_evidence_bundle(path: Path | str) -> dict[str, Any]:
-    evidence_path = Path(path)
-    if not evidence_path.is_file():
-        raise OfficialMacroEvidenceError(f"missing BIS credit gap evidence: {evidence_path}")
-    payload = json.loads(evidence_path.read_text(encoding="utf-8"))
-    observations = [_normalize_bis_credit_gap_row(obs) for obs in payload.get("observations") or []]
-    if not observations:
-        raise OfficialMacroEvidenceError("BIS credit gap evidence has no observations")
-    return build_bis_credit_gap_evidence_bundle(
-        observations=observations,
-        source_id=str(payload.get("source_id") or "bis"),
-        source_fetch_id=str(payload.get("source_fetch_id") or "bis-unknown"),
-        content_hash=str(payload.get("content_hash") or "bis-unknown-hash"),
-        as_of_timestamp=str(payload.get("as_of_timestamp") or payload.get("retrieved_at") or ""),
-        retrieved_at=str(payload.get("retrieved_at") or payload.get("as_of_timestamp") or ""),
+    return _read_observations_bundle(
+        path,
+        label="BIS policy evidence",
+        normalize_obs=_normalize_bis_policy_row,
+        build_bundle=build_bis_policy_rate_evidence_bundle,
+        source_id="bis",
     )
 
 
@@ -431,18 +419,14 @@ def build_world_bank_indicator_evidence_bundle(
 
 def read_world_bank_indicator_evidence_bundle(path: Path | str) -> dict[str, Any]:
     evidence_path = Path(path)
-    if not evidence_path.is_file():
-        raise OfficialMacroEvidenceError(f"missing World Bank evidence: {evidence_path}")
-    payload = json.loads(evidence_path.read_text(encoding="utf-8"))
-    observations = [_normalize_world_bank_row(obs) for obs in payload.get("observations") or []]
-    if not observations:
-        raise OfficialMacroEvidenceError("World Bank evidence has no observations")
-    return build_world_bank_indicator_evidence_bundle(
-        observations=observations,
-        source_id=str(payload.get("source_id") or "world_bank"),
-        data_domain=str(payload.get("data_domain") or "development_indicator"),
-        source_fetch_id=str(payload.get("source_fetch_id") or "wb-unknown"),
-        content_hash=str(payload.get("content_hash") or "wb-unknown-hash"),
-        as_of_timestamp=str(payload.get("as_of_timestamp") or payload.get("retrieved_at") or ""),
-        retrieved_at=str(payload.get("retrieved_at") or payload.get("as_of_timestamp") or ""),
+    payload_hint: dict[str, Any] = {}
+    if evidence_path.is_file():
+        payload_hint = json.loads(evidence_path.read_text(encoding="utf-8"))
+    return _read_observations_bundle(
+        path,
+        label="World Bank evidence",
+        normalize_obs=_normalize_world_bank_row,
+        build_bundle=build_world_bank_indicator_evidence_bundle,
+        source_id=str(payload_hint.get("source_id") or "world_bank"),
+        data_domain=str(payload_hint.get("data_domain") or "development_indicator"),
     )

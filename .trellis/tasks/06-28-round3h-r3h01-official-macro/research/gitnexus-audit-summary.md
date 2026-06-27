@@ -26,7 +26,11 @@
 | `official_macro.py` (module)          | NOT FOUND | 448 行新增；六 port + layer smoke 消费                                                                                    |
 | 六 fetch_ports                        | NOT FOUND | `backend/app/datasources/fetch_ports/{fred,us_treasury,sec_edgar,cftc_cot,bis,world_bank}_port.py`                        |
 
-**风险级别（frozen §4.3 预判）：** MEDIUM — 9.1 触及 bridge/loader；Execute 已完成且 full pytest 绿。
+## Repair pass (2026-06-28 audit-repair)
+
+- 新增 `normalizers/evidence_bundle.py`（共享 `finalize_bundle`/`reject_over_cap`）；六 port 已迁移
+- `official_macro.py`：`_read_observations_bundle` 泛型 reader；`read_bis_credit_gap` 已删
+- 建议合入前：`node .gitnexus/run.cjs analyze` 刷新索引后重跑 `impact(official_macro)` / `impact(finalize_bundle)`
 
 ## query 摘要（Audit 复跑）
 

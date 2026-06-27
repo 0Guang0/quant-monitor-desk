@@ -6,7 +6,6 @@ emits official_macro_evidence_v1 directly via normalizer SSOT.
 
 from __future__ import annotations
 
-import hashlib
 import json
 import os
 import urllib.error
@@ -19,6 +18,7 @@ from datetime import UTC, date, datetime, timedelta
 from typing import Any
 
 from backend.app.datasources.adapters.fetch_port import FetchPayload, PortError
+from backend.app.datasources.normalizers.evidence_bundle import finalize_bundle, reject_over_cap
 from backend.app.datasources.fetch_result import FetchRequest
 from backend.app.datasources.normalizers.official_macro import build_fred_evidence_bundle
 
@@ -40,26 +40,6 @@ def _fred_api_key() -> str | None:
 def _reject_unknown_series(series_id: str) -> None:
     if series_id not in P0_SERIES_WHITELIST:
         raise PortError("FAILED", f"series not in P0 whitelist: {series_id!r}")
-
-
-def _reject_over_cap(*, max_rows: int) -> None:
-    if max_rows <= 0 or max_rows > MAX_ROWS_PER_SERIES:
-        raise PortError(
-            "FAILED",
-            f"requested max_rows={max_rows} exceeds cap={MAX_ROWS_PER_SERIES}",
-        )
-
-
-def _bundle_content_hash(bundle: dict[str, Any]) -> str:
-    canonical = {k: v for k, v in bundle.items() if k != "content_hash"}
-    payload = json.dumps(canonical, ensure_ascii=False, default=str, sort_keys=True)
-    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
-
-
-def _finalize_bundle(bundle: dict[str, Any]) -> dict[str, Any]:
-    bundle = dict(bundle)
-    bundle["content_hash"] = _bundle_content_hash(bundle)
-    return bundle
 
 
 @dataclass(frozen=True)
@@ -84,7 +64,7 @@ class FredMockFetchPort:
         return observations
 
     def fetch_payload(self, req: FetchRequest) -> FetchPayload:
-        _reject_over_cap(max_rows=self.max_rows)
+        reject_over_cap(value=self.max_rows, cap=MAX_ROWS_PER_SERIES)
         series_id = req.instrument_id or (self.series_ids[0] if self.series_ids else "")
         if not series_id:
             raise PortError("FAILED", "missing series_id for FRED mock fetch")
@@ -100,7 +80,7 @@ class FredMockFetchPort:
             as_of_timestamp=retrieved_at,
             retrieved_at=retrieved_at,
         )
-        bundle = _finalize_bundle(bundle)
+        bundle = finalize_bundle(bundle)
         content = json.dumps(bundle, ensure_ascii=False, default=str).encode("utf-8")
         return FetchPayload(
             content=content,
@@ -118,7 +98,7 @@ class FredLiveFetchPort:
     date_window: str = "3y"
 
     def _window_start(self) -> date:
-        # ponytail: coarse window capped at MAX_WINDOW_DAYS; upgrade path = parse date_window label
+        # ponytail: L2 port caps window at MAX_WINDOW_DAYS; R3E pilot auth layer may apply stricter bounds
         days = min(MAX_WINDOW_DAYS, 365 * 3 if self.date_window == "3y" else MAX_WINDOW_DAYS)
         return datetime.now(UTC).date() - timedelta(days=days)
 
@@ -164,7 +144,7 @@ class FredLiveFetchPort:
         return observations
 
     def fetch_payload(self, req: FetchRequest) -> FetchPayload:
-        _reject_over_cap(max_rows=self.max_rows)
+        reject_over_cap(value=self.max_rows, cap=MAX_ROWS_PER_SERIES)
         series_id = req.instrument_id or (self.series_ids[0] if self.series_ids else "")
         if not series_id:
             raise PortError("FAILED", "missing series_id for FRED live fetch")
@@ -181,7 +161,7 @@ class FredLiveFetchPort:
             as_of_timestamp=retrieved_at,
             retrieved_at=retrieved_at,
         )
-        bundle = _finalize_bundle(bundle)
+        bundle = finalize_bundle(bundle)
         content = json.dumps(bundle, ensure_ascii=False, default=str).encode("utf-8")
         return FetchPayload(
             content=content,

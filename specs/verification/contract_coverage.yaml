@@ -242,7 +242,8 @@ specs/contracts/source_capability_contract.yaml:
         - tests/test_r3h_source_final_decisions.py
         - tests/test_r3h_adapter_evidence_matrix.py
         - tests/test_official_macro_adapters.py
-      negative_required: false
+      negative_required: true
+      notes: "R3H-01 official macro cap/unauthorized negatives in test_official_macro_adapters.py"
 
 specs/contracts/spec_migrator_contract.yaml:
   waiver: "Spec migrator tooling contract; no dedicated pytest module"

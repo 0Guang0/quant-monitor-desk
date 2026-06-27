@@ -1,0 +1,17 @@
+{
+  "schema_version": "official_macro_evidence_v1",
+  "source_id": "bis",
+  "data_domain": "credit_gap",
+  "observations": [
+    {
+      "country_code": "US",
+      "observation_date": "2025-12-31",
+      "credit_to_gdp_gap": "2.4",
+      "source_used": "bis"
+    }
+  ],
+  "source_fetch_id": "bis-replay-credit-gap",
+  "content_hash": "bis-replay-hash-credit-gap",
+  "as_of_timestamp": "2026-06-25T12:00:00Z",
+  "retrieved_at": "2026-06-25T12:00:00Z"
+}

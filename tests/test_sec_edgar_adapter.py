@@ -118,15 +118,14 @@ def test_secEdgar_port_identityHeader_missingBlocksLive(
     from backend.app.datasources.fetch_ports.sec_edgar_port import create_sec_edgar_fetch_port
 
     monkeypatch.delenv("SEC_EDGAR_USER_AGENT", raising=False)
-    port = create_sec_edgar_fetch_port(
-        ciks=("0000320193",),
-        max_filings=5,
-        data_domain="us_filings",
-        use_mock=False,
-    )
     with pytest.raises(PortError) as exc_info:
-        port.fetch_payload(_filings_req())
-    assert exc_info.value.status in {"USER_AUTH_REQUIRED", "FAILED"}
+        create_sec_edgar_fetch_port(
+            ciks=("0000320193",),
+            max_filings=5,
+            data_domain="us_filings",
+            use_mock=False,
+        )
+    assert exc_info.value.status == "USER_AUTH_REQUIRED"
     assert "user-agent" in exc_info.value.message.lower() or "identity" in exc_info.value.message.lower()
 
 
@@ -217,33 +216,70 @@ def test_secEdgar_port_replayFixture_form4Canonical() -> None:
         assert row.get("issuer_symbol")
 
 
-def test_secEdgar_port_route_disabledByDefault_unauthorized() -> None:
-    """覆盖范围：us_filings 路由默认禁用
-    测试对象：SourceRoutePlanner + source_registry sec_edgar
-    目的/目标：enabled_by_default=false 时 route 为 DISABLED，非 READY
-    验证点：route_status=DISABLED_SOURCE；sec_edgar candidate enabled=False
-    失败含义：未配置 SEC 仍被 route 选为 production primary
+def test_secEdgar_port_weakUserAgent_blocksLive(monkeypatch: pytest.MonkeyPatch) -> None:
+    """覆盖范围：SEC 弱 UA（无联系信息）自动化负例
+    测试对象：create_sec_edgar_fetch_port live 路径
+    目的/目标：A3 裸产品名 UA 不得通过身份门禁
+    验证点：PortError.status==USER_AUTH_REQUIRED
+    失败含义：弱 UA 可进入 live fetch 路径
+    """
+    from backend.app.datasources.adapters.fetch_port import PortError
+    from backend.app.datasources.fetch_ports.sec_edgar_port import create_sec_edgar_fetch_port
+
+    monkeypatch.setenv("SEC_EDGAR_USER_AGENT", "QuantMonitor/1.0")
+    with pytest.raises(PortError) as exc_info:
+        create_sec_edgar_fetch_port(
+            ciks=("0000320193",),
+            max_filings=5,
+            data_domain="us_filings",
+            use_mock=False,
+        )
+    assert exc_info.value.status == "USER_AUTH_REQUIRED"
+
+
+def test_secEdgar_port_route_form4_readyWhenSourceEnabled(monkeypatch: pytest.MonkeyPatch) -> None:
+    """覆盖范围：SEC Form4 域 route READY 正例
+    测试对象：SourceRoutePlanner us_insider_form4 域
+    目的/目标：G-07 Form4 路由测闭合
+    验证点：route_status=READY；selected_source_id=sec_edgar
+    失败含义：Form4 域无 route 正例
     """
     from backend.app.datasources.capability_registry import SourceCapabilityRegistry
     from backend.app.datasources.route_planner import SourceRoutePlanner
-    from backend.app.datasources.source_registry import SourceRegistry
+    from backend.app.datasources.source_registry import DomainRoleBinding, SourceRegistry
 
     registry = SourceRegistry()
     registry.load()
+    rec = registry.get("sec_edgar")
+    object.__setattr__(rec, "is_enabled", True)
+    orig_domain_roles = registry.get_domain_roles
+
+    def _form4_domain_enabled(data_domain: str):
+        binding = orig_domain_roles(data_domain)
+        if data_domain != "us_insider_form4":
+            return binding
+        return DomainRoleBinding(
+            primary_source_id=binding.primary_source_id,
+            validation_source_id=binding.validation_source_id,
+            fallback_policy=binding.fallback_policy,
+            domain_enabled_by_default=True,
+            fallback_source_ids=binding.fallback_source_ids,
+        )
+
+    monkeypatch.setattr(registry, "get_domain_roles", _form4_domain_enabled)
     capabilities = SourceCapabilityRegistry()
     capabilities.load()
     planner = SourceRoutePlanner(source_registry=registry, capability_registry=capabilities)
+    monkeypatch.setattr(planner, "_platform_allows", lambda _sid: (True, None))
     plan = planner.plan(
-        data_domain="us_filings",
-        operation="fetch_company_filings",
-        run_id="r3h01-sec-route",
-        job_id="sec-route-negative",
+        data_domain="us_insider_form4",
+        operation="fetch_form4_transactions",
+        run_id="r3h01-sec-form4-route",
+        job_id="sec-form4-ready",
+        extra_candidates=[("sec_edgar", "Primary")],
     )
-    assert plan.route_status == "DISABLED_SOURCE"
-    assert plan.selected_source_id is None
-    sec = next((c for c in plan.candidates if c.source_id == "sec_edgar"), None)
-    assert sec is not None
-    assert sec.enabled is False
+    assert plan.route_status == "READY"
+    assert plan.selected_source_id == "sec_edgar"
 
 
 def test_secEdgar_port_route_readyWhenSourceEnabled(monkeypatch: pytest.MonkeyPatch) -> None:

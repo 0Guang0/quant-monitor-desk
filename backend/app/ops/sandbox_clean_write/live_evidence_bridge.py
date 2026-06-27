@@ -9,10 +9,8 @@ from typing import Any
 from backend.app.config import PROJECT_ROOT
 from backend.app.datasources.normalizers.official_macro import (
     OfficialMacroEvidenceError,
+    fred_observations_from_live_payload,
     materialize_fred_evidence_from_live,
-)
-from backend.app.datasources.normalizers.official_macro import (
-    fred_observations_from_live_payload as _normalize_fred_live_observations,
 )
 
 
@@ -46,7 +44,13 @@ def _resolve_raw_path(path: str | Path) -> Path:
         candidate = PROJECT_ROOT / path
     if not candidate.is_file():
         raise LiveEvidenceBridgeError(f"raw evidence file missing: {path}")
-    return candidate.resolve()
+    resolved = candidate.resolve()
+    root = PROJECT_ROOT.resolve()
+    try:
+        resolved.relative_to(root)
+    except ValueError as exc:
+        raise LiveEvidenceBridgeError(f"path escapes project root: {path}") from exc
+    return resolved
 
 
 def baostock_rows_from_staged_raw(payload: dict[str, Any]) -> list[dict[str, Any]]:
@@ -125,11 +129,6 @@ def materialize_baostock_promote_evidence(
     )
     _write_sandbox_rehearsal_gate_sidecars(out_dir)
     return out_dir.resolve()
-
-
-def fred_observations_from_live_payload(payload: dict[str, Any]) -> list[dict[str, Any]]:
-    """Flatten fred_live_fetch_evidence series[].rows into loader observations."""
-    return _normalize_fred_live_observations(payload)
 
 
 def materialize_fred_promote_evidence(

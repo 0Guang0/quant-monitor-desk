@@ -1,2 +1,7 @@
+# R3H-01 step 9.7 GREEN — Layer smoke (audit repair re-verify)
+# timestamp: 2026-06-28T03:48:00+08:00
+# command: uv run pytest tests/test_official_macro_adapters.py -q -k "layer"
+
 ...                                                                      [100%]
-3 passed
+3 passed (layer smoke positive + missingContentHash negative)
+exit code: 0

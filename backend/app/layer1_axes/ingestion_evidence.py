@@ -468,6 +468,8 @@ def capture_task_phase4_evidence(
 
 def official_macro_bundle_layer1_preview(bundle: dict[str, Any]) -> dict[str, Any]:
     """Map official_macro_evidence_v1 to minimal Layer1 ingestion evidence preview (R3H-01 §9.7)."""
+    if not bundle.get("source_fetch_id") or not bundle.get("content_hash"):
+        raise ValueError("official macro bundle missing source_fetch_id or content_hash")
     observations = bundle.get("observations") or []
     sample = observations[0] if observations else {}
     return {
@@ -484,12 +486,8 @@ def official_macro_bundle_layer1_preview(bundle: dict[str, Any]) -> dict[str, An
 
 def official_macro_bundle_layer5_provenance(bundle: dict[str, Any]) -> dict[str, Any]:
     """Extract Layer5 factual_source provenance fields from official macro replay bundle."""
-    fetch_id = str(bundle.get("source_fetch_id") or "")
-    content_hash = str(bundle.get("content_hash") or "")
-    return {
-        "source_fetch_ids": (fetch_id,) if fetch_id else (),
-        "source_content_hashes": (content_hash,) if content_hash else (),
-    }
+    fid, ch = str(bundle.get("source_fetch_id") or ""), str(bundle.get("content_hash") or "")
+    return {"source_fetch_ids": (fid,) if fid else (), "source_content_hashes": (ch,) if ch else ()}
 
 
 __all__ = [

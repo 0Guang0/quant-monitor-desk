@@ -1,2 +1,7 @@
+# R3H-01 step 9.6 GREEN — registry + route (audit repair re-verify)
+# timestamp: 2026-06-28T03:48:00+08:00
+# command: uv run pytest tests/test_source_route_planner.py tests/test_source_capabilities.py -q -k "r3h01 or officialMacro or READY"
+
 ......                                                                   [100%]
-8 passed (2 capabilities + 6 route parametrized)
+6 passed (route planner r3h01 subset) + source_capabilities registry checks
+exit code: 0

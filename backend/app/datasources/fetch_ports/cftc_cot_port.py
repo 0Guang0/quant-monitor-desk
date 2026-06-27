@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 import uuid
 from collections.abc import Sequence
@@ -11,6 +10,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from backend.app.datasources.adapters.fetch_port import FetchPayload, PortError
+from backend.app.datasources.normalizers.evidence_bundle import finalize_bundle, reject_over_cap
 from backend.app.datasources.fetch_result import FetchRequest
 from backend.app.datasources.normalizers.official_macro import build_cot_positioning_evidence_bundle
 
@@ -22,23 +22,6 @@ MAX_ROWS = 52
 def _reject_unknown_market(market_code: str) -> None:
     if market_code not in MARKET_WHITELIST:
         raise PortError("FAILED", f"market not in whitelist: {market_code!r}")
-
-
-def _reject_over_cap(*, max_rows: int) -> None:
-    if max_rows <= 0 or max_rows > MAX_ROWS:
-        raise PortError("FAILED", f"requested max_rows={max_rows} exceeds cap={MAX_ROWS}")
-
-
-def _bundle_content_hash(bundle: dict[str, Any]) -> str:
-    canonical = {k: v for k, v in bundle.items() if k != "content_hash"}
-    payload = json.dumps(canonical, ensure_ascii=False, default=str, sort_keys=True)
-    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
-
-
-def _finalize_bundle(bundle: dict[str, Any]) -> dict[str, Any]:
-    bundle = dict(bundle)
-    bundle["content_hash"] = _bundle_content_hash(bundle)
-    return bundle
 
 
 @dataclass(frozen=True)
@@ -64,7 +47,7 @@ class CftcCotMockFetchPort:
         return rows
 
     def fetch_payload(self, req: FetchRequest) -> FetchPayload:
-        _reject_over_cap(max_rows=self.max_rows)
+        reject_over_cap(value=self.max_rows, cap=MAX_ROWS)
         market = req.instrument_id or (self.markets[0] if self.markets else "")
         if not market:
             raise PortError("FAILED", "missing market_code for CFTC COT mock fetch")
@@ -80,7 +63,7 @@ class CftcCotMockFetchPort:
             as_of_timestamp=retrieved_at,
             retrieved_at=retrieved_at,
         )
-        bundle = _finalize_bundle(bundle)
+        bundle = finalize_bundle(bundle)
         content = json.dumps(bundle, ensure_ascii=False, default=str).encode("utf-8")
         return FetchPayload(content=content, file_type="json", row_count=len(observations))
 

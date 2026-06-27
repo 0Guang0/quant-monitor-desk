@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 import uuid
 from collections.abc import Sequence
@@ -11,6 +10,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Any, Literal
 
 from backend.app.datasources.adapters.fetch_port import FetchPayload, PortError
+from backend.app.datasources.normalizers.evidence_bundle import finalize_bundle, reject_over_cap
 from backend.app.datasources.fetch_result import FetchRequest
 from backend.app.datasources.normalizers.official_macro import (
     build_bis_credit_gap_evidence_bundle,
@@ -18,7 +18,6 @@ from backend.app.datasources.normalizers.official_macro import (
 )
 
 COUNTRY_WHITELIST = frozenset({"US", "GB", "JP", "DE", "CN"})
-MAX_SERIES = 10
 MAX_COUNTRIES = 5
 MAX_ROWS = 500
 
@@ -28,23 +27,6 @@ BisDomain = Literal["central_bank_policy", "credit_gap"]
 def _reject_unknown_country(country_code: str) -> None:
     if country_code not in COUNTRY_WHITELIST:
         raise PortError("FAILED", f"country not in whitelist: {country_code!r}")
-
-
-def _reject_over_cap(*, max_rows: int) -> None:
-    if max_rows <= 0 or max_rows > MAX_ROWS:
-        raise PortError("FAILED", f"requested max_rows={max_rows} exceeds cap={MAX_ROWS}")
-
-
-def _bundle_content_hash(bundle: dict[str, Any]) -> str:
-    canonical = {k: v for k, v in bundle.items() if k != "content_hash"}
-    payload = json.dumps(canonical, ensure_ascii=False, default=str, sort_keys=True)
-    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
-
-
-def _finalize_bundle(bundle: dict[str, Any]) -> dict[str, Any]:
-    bundle = dict(bundle)
-    bundle["content_hash"] = _bundle_content_hash(bundle)
-    return bundle
 
 
 @dataclass(frozen=True)
@@ -83,7 +65,7 @@ class BisMockFetchPort:
         return rows
 
     def fetch_payload(self, req: FetchRequest) -> FetchPayload:
-        _reject_over_cap(max_rows=self.max_rows)
+        reject_over_cap(value=self.max_rows, cap=MAX_ROWS)
         country = req.instrument_id or (self.countries[0] if self.countries else "")
         if not country:
             raise PortError("FAILED", "missing country_code for BIS mock fetch")
@@ -111,7 +93,7 @@ class BisMockFetchPort:
                 retrieved_at=retrieved_at,
             )
 
-        bundle = _finalize_bundle(bundle)
+        bundle = finalize_bundle(bundle)
         content = json.dumps(bundle, ensure_ascii=False, default=str).encode("utf-8")
         return FetchPayload(content=content, file_type="json", row_count=len(observations))
 

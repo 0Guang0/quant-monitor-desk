@@ -6,7 +6,6 @@ official_macro_evidence_v1 via normalizer SSOT.
 
 from __future__ import annotations
 
-import hashlib
 import json
 import uuid
 from collections.abc import Sequence
@@ -15,6 +14,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Any, Literal
 
 from backend.app.datasources.adapters.fetch_port import FetchPayload, PortError
+from backend.app.datasources.normalizers.evidence_bundle import finalize_bundle, reject_over_cap
 from backend.app.datasources.fetch_result import FetchRequest
 from backend.app.datasources.normalizers.official_macro import (
     build_inflation_expectation_evidence_bundle,
@@ -40,26 +40,6 @@ def _reject_unknown_tenor(tenor: str, *, data_domain: TreasuryDomain) -> None:
         raise PortError("FAILED", f"metric not in whitelist: {tenor!r}")
 
 
-def _reject_over_cap(*, max_rows: int) -> None:
-    if max_rows <= 0 or max_rows > MAX_ROWS:
-        raise PortError(
-            "FAILED",
-            f"requested max_rows={max_rows} exceeds cap={MAX_ROWS}",
-        )
-
-
-def _bundle_content_hash(bundle: dict[str, Any]) -> str:
-    canonical = {k: v for k, v in bundle.items() if k != "content_hash"}
-    payload = json.dumps(canonical, ensure_ascii=False, default=str, sort_keys=True)
-    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
-
-
-def _finalize_bundle(bundle: dict[str, Any]) -> dict[str, Any]:
-    bundle = dict(bundle)
-    bundle["content_hash"] = _bundle_content_hash(bundle)
-    return bundle
-
-
 @dataclass(frozen=True)
 class UsTreasuryMockFetchPort:
     """Deterministic mock US Treasury port (no network)."""
@@ -77,6 +57,7 @@ class UsTreasuryMockFetchPort:
                     "observation_date": (today - timedelta(days=offset)).isoformat(),
                     "tenor": tenor,
                     "yield_percent": str(4.25 - offset * 0.01),
+                    "source_used": "us_treasury",
                 }
             )
         return rows
@@ -90,12 +71,13 @@ class UsTreasuryMockFetchPort:
                     "observation_date": (today - timedelta(days=30 * offset)).isoformat(),
                     "metric_name": metric_name,
                     "metric_value": str(2.15 - offset * 0.02),
+                    "source_used": "us_treasury",
                 }
             )
         return rows
 
     def fetch_payload(self, req: FetchRequest) -> FetchPayload:
-        _reject_over_cap(max_rows=self.max_rows)
+        reject_over_cap(value=self.max_rows, cap=MAX_ROWS)
         instrument = req.instrument_id or (self.tenors[0] if self.tenors else "")
         if not instrument:
             raise PortError("FAILED", "missing instrument_id for US Treasury mock fetch")
@@ -123,7 +105,7 @@ class UsTreasuryMockFetchPort:
                 retrieved_at=retrieved_at,
             )
 
-        bundle = _finalize_bundle(bundle)
+        bundle = finalize_bundle(bundle)
         content = json.dumps(bundle, ensure_ascii=False, default=str).encode("utf-8")
         return FetchPayload(
             content=content,

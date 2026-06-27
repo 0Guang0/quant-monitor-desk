@@ -325,15 +325,19 @@ sources:
         operations:
           fetch_macro_series:
             frequency: daily_or_monthly
-            fields:
+            observation_fields:
               - series_id
               - observation_date
               - value
+            bundle_fields:
+              - schema_version
               - source_fetch_id
               - content_hash
+              - schema_hash
+              - fetch_log
               - as_of_timestamp
               - retrieved_at
-              - source_used
+              - source_id
             requires_auth: true
             enabled_by_default: false
             production_default: false
@@ -472,15 +476,21 @@ sources:
         operations:
           fetch_yield_curve:
             frequency: daily
-            fields:
-              [
-                observation_date,
-                tenor,
-                yield_percent,
-                source_used,
-                source_fetch_id,
-                content_hash,
-              ]
+            observation_fields:
+              - observation_date
+              - tenor
+              - yield_percent
+              - source_used
+            bundle_fields:
+              - schema_version
+              - source_fetch_id
+              - content_hash
+              - schema_hash
+              - fetch_log
+              - as_of_timestamp
+              - retrieved_at
+              - source_id
+              - data_domain
             requires_auth: false
             enabled_by_default: false
             production_default: false
@@ -488,15 +498,21 @@ sources:
         operations:
           fetch_inflation_expectation_reference:
             frequency: daily_or_monthly
-            fields:
-              [
-                observation_date,
-                metric_name,
-                metric_value,
-                source_used,
-                source_fetch_id,
-                content_hash,
-              ]
+            observation_fields:
+              - observation_date
+              - metric_name
+              - metric_value
+              - source_used
+            bundle_fields:
+              - schema_version
+              - source_fetch_id
+              - content_hash
+              - schema_hash
+              - fetch_log
+              - as_of_timestamp
+              - retrieved_at
+              - source_id
+              - data_domain
             requires_auth: false
             enabled_by_default: false
             production_default: false
@@ -562,17 +578,24 @@ sources:
         operations:
           fetch_cot_positioning:
             frequency: weekly
-            fields:
-              [
-                market_code,
-                report_date,
-                trader_category,
-                long_contracts,
-                short_contracts,
-                spread_contracts,
-                source_used,
-                content_hash,
-              ]
+            observation_fields:
+              - market_code
+              - report_date
+              - trader_category
+              - long_contracts
+              - short_contracts
+              - spread_contracts
+              - source_used
+            bundle_fields:
+              - schema_version
+              - source_fetch_id
+              - content_hash
+              - schema_hash
+              - fetch_log
+              - as_of_timestamp
+              - retrieved_at
+              - source_id
+              - data_domain
             requires_auth: false
             enabled_by_default: false
             production_default: false
@@ -590,15 +613,22 @@ sources:
         operations:
           fetch_policy_rate:
             frequency: daily_or_monthly
-            fields:
-              [
-                country_code,
-                observation_date,
-                policy_rate,
-                frequency,
-                source_used,
-                content_hash,
-              ]
+            observation_fields:
+              - country_code
+              - observation_date
+              - policy_rate
+              - frequency
+              - source_used
+            bundle_fields:
+              - schema_version
+              - source_fetch_id
+              - content_hash
+              - schema_hash
+              - fetch_log
+              - as_of_timestamp
+              - retrieved_at
+              - source_id
+              - data_domain
             requires_auth: false
             enabled_by_default: false
             production_default: false
@@ -606,14 +636,21 @@ sources:
         operations:
           fetch_credit_to_gdp_gap:
             frequency: quarterly
-            fields:
-              [
-                country_code,
-                observation_date,
-                credit_to_gdp_gap,
-                source_used,
-                content_hash,
-              ]
+            observation_fields:
+              - country_code
+              - observation_date
+              - credit_to_gdp_gap
+              - source_used
+            bundle_fields:
+              - schema_version
+              - source_fetch_id
+              - content_hash
+              - schema_hash
+              - fetch_log
+              - as_of_timestamp
+              - retrieved_at
+              - source_id
+              - data_domain
             requires_auth: false
             enabled_by_default: false
             production_default: false
@@ -630,16 +667,23 @@ sources:
         operations:
           fetch_indicator_series:
             frequency: annual_or_quarterly
-            fields:
-              [
-                country_code,
-                indicator_id,
-                observation_date,
-                value,
-                unit,
-                source_used,
-                content_hash,
-              ]
+            observation_fields:
+              - country_code
+              - indicator_id
+              - observation_date
+              - value
+              - unit
+              - source_used
+            bundle_fields:
+              - schema_version
+              - source_fetch_id
+              - content_hash
+              - schema_hash
+              - fetch_log
+              - as_of_timestamp
+              - retrieved_at
+              - source_id
+              - data_domain
             requires_auth: false
             enabled_by_default: false
             production_default: false
