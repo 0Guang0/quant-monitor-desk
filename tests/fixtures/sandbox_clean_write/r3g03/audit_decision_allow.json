@@ -1,0 +1,17 @@
+{
+  "decision": "PASS_ALLOW_LIMITED_PROD_WRITE",
+  "blocking_reasons": [],
+  "warning_reasons": [],
+  "evidence_paths": [
+    "tests/fixtures/sandbox_clean_write/r3g01/baostock/pilot_v2_closeout.json"
+  ],
+  "production_mutation_allowed": false,
+  "source_id": "baostock",
+  "domain": "cn_equity_daily_bar",
+  "symbols": ["sh.600000"],
+  "start_date": "2026-05-01",
+  "end_date": "2026-05-30",
+  "max_rows": 100,
+  "target_table": "market_bar_clean",
+  "production_db_path": ".audit-sandbox/round3g/r3g03_promote_fixture.duckdb"
+}

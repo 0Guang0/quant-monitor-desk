@@ -361,12 +361,15 @@ Trellis 命令与 hook 细节见 `.trellis/workflow.md`；`task.py start` = Plan
 
 ### Phase 5 — 拆解、jsonl 与 Execute Skill 冻结
 
-| 顺序   | Skill                                                  | 产出                                                                                |
-| ------ | ------------------------------------------------------ | ----------------------------------------------------------------------------------- |
-| 5a     | planning-and-task-breakdown（addy）                    | MASTER §8 依赖与切片                                                                |
-| 5b     | writing-plans（Superpowers）                           | MASTER §8 逐步 + **RED/GREEN 命令与证据列**（**禁止**内嵌完整测试；放 `research/`） |
-| 5c     | trellis-before-dev                                     | MASTER §5–6；`implement.jsonl` / `check.jsonl`                                      |
-| **5d** | **doubt-driven-development**（addy，**必做**，主会话） | 对抗审查 §6–8；修订 MASTER §7/§8/§12 + **AUDIT §1/§2**；记录 **plan.freeze.md**     |
+| 顺序   | Skill                                                  | 产出                                                                                  |
+| ------ | ------------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| 5a     | planning-and-task-breakdown（addy）                    | MASTER §8 依赖与切片                                                                  |
+| 5b     | writing-plans（Superpowers）                           | MASTER §8 逐步 + **RED/GREEN 命令与证据列**（**禁止**内嵌完整测试；放 `research/`）   |
+| 5c     | trellis-before-dev                                     | MASTER §5–6；`implement.jsonl` / `check.jsonl`                                        |
+| **5d** | **doubt-driven-development**（addy，**必做**，主会话） | 对抗审查 §6–8；修订 MASTER §7/§8/§12 + **AUDIT §1/§2**；记录 **plan.freeze.md**       |
+| **5e** | **trellis-plan**（**必做**，主会话）                   | **`research/plan-consolidation.md`**；可执行结论 → 活任务卡 + INDEX §4/§3；薄 **prd** |
+
+**5e 必做（v4）：** `freeze-task-card` **之前**合并 research 草稿；Execute 不读 plan-boot/grill-me 等。机械门：`validate-plan-freeze` 检查 `plan-consolidation.md` + 薄 prd + INDEX §4。
 
 **5d 必做说明：** 冻结前 fresh-context 对抗审查（CLAIM → DOUBT → RECONCILE）。须主会话；子 agent 不可执行 5d。
 

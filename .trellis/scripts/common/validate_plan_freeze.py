@@ -18,6 +18,21 @@ from pathlib import Path
 import yaml
 
 _BOOT_MARKER = "Phase P0 complete"
+_CONSOLIDATION_MARKER = "Phase 5e complete"
+_PRD_THIN_MAX_LINES = 25
+
+# research drafts that must appear in plan-consolidation.md when present
+_CONSOLIDATION_DRAFTS = (
+    "plan-boot.md",
+    "project-overview.md",
+    "grill-me-session.md",
+    "interview-me-session.md",
+    "grill-with-docs-session.md",
+    "gitnexus-summary.md",
+    "integration-ledger.md",
+    "integration-audit.md",
+)
+_CONSOLIDATION_STATUS = re.compile(r"\b(merged|pointer|n/a)\b", re.IGNORECASE)
 
 
 def _extract_section(text: str, header_prefix: str) -> str:
@@ -305,6 +320,37 @@ def _validate_plan_freeze_template(task_dir: Path, errors: list[str]) -> None:
         )
 
 
+def _ordered_plan_phases(phases: dict | set[str]) -> list[str]:
+    keys = set(phases.keys()) if isinstance(phases, dict) else set(phases)
+    order = (
+        "boot",
+        "P0-index",
+        "1a",
+        "2a",
+        "2b",
+        "3",
+        "3.5",
+        "1b",
+        "4",
+        "5a",
+        "5b",
+        "5c",
+        "5d",
+        "5e",
+    )
+    out = [p for p in order if p in keys]
+    out.extend(sorted(keys - set(out)))
+    return out
+
+
+def plan_phase_help(repo_root: Path | None = None) -> str:
+    """CLI help for validate-plan-phase; phase ids from plan-skill-paths.yaml."""
+    if repo_root is None:
+        repo_root = _find_repo_root(Path.cwd())
+    phases = _load_plan_paths(repo_root).get("phases", {})
+    return "Plan phase id: " + ", ".join(_ordered_plan_phases(phases))
+
+
 def validate_plan_phase(task_dir: Path, phase: str, *, repo_root: Path | None = None) -> list[str]:
     """Validate one Plan phase checkpoint."""
     if repo_root is None:
@@ -314,7 +360,7 @@ def validate_plan_phase(task_dir: Path, phase: str, *, repo_root: Path | None = 
     cfg = _load_plan_paths(repo_root)
     phases = cfg.get("phases", {})
     if phase not in phases:
-        valid = ", ".join(sorted(phases.keys()))
+        valid = ", ".join(_ordered_plan_phases(phases))
         errors.append(f"Unknown plan phase {phase!r} (valid: {valid})")
         return errors
 
@@ -356,7 +402,100 @@ def validate_plan_phase(task_dir: Path, phase: str, *, repo_root: Path | None = 
 
         validate_manifest_phase_5c(task_dir, repo_root, errors)
 
+    if phase == "5e":
+        _validate_plan_consolidation_v4(task_dir, errors)
+        _validate_prd_thin_index_v4(task_dir, errors)
+        _validate_execution_index_section4_v4(task_dir, errors)
+
     return errors
+
+
+def _consolidation_table_rows(sec4: str) -> list[str]:
+    rows: list[str] = []
+    for line in sec4.splitlines():
+        if "|" not in line:
+            continue
+        stripped = line.strip()
+        if stripped.startswith("|--") or stripped.startswith("| --"):
+            continue
+        if stripped.startswith("| 来源") or stripped.startswith("| ---"):
+            continue
+        if stripped.count("|") >= 3:
+            rows.append(stripped)
+    return rows
+
+
+def _validate_plan_consolidation_v4(task_dir: Path, errors: list[str]) -> None:
+    consolidation = task_dir / "research" / "plan-consolidation.md"
+    if not consolidation.is_file():
+        errors.append("Missing research/plan-consolidation.md (Plan Phase 5e)")
+        return
+    text = consolidation.read_text(encoding="utf-8")
+    if _CONSOLIDATION_MARKER not in text:
+        errors.append(f"plan-consolidation.md must contain {_CONSOLIDATION_MARKER!r}")
+
+    research = task_dir / "research"
+    for name in _CONSOLIDATION_DRAFTS:
+        if not (research / name).is_file():
+            continue
+        if name not in text:
+            errors.append(
+                f"plan-consolidation.md must list research/{name} with merged|pointer|n/a"
+            )
+            continue
+        status_ok = any(
+            name in line and _CONSOLIDATION_STATUS.search(line)
+            for line in text.splitlines()
+        )
+        if not status_ok:
+            errors.append(
+                f"plan-consolidation.md: research/{name} missing status merged|pointer|n/a"
+            )
+
+    audit_path = research / "integration-audit.md"
+    if audit_path.is_file() and "PASS_WITH_GAPS" in audit_path.read_text(encoding="utf-8"):
+        if "Execute" not in text and "GAP" not in text.upper():
+            errors.append(
+                "integration-audit.md is PASS_WITH_GAPS but plan-consolidation.md "
+                "must list remaining Execute GAPs"
+            )
+
+
+def _validate_prd_thin_index_v4(task_dir: Path, errors: list[str]) -> None:
+    prd = task_dir / "prd.md"
+    if not prd.is_file():
+        return
+    text = prd.read_text(encoding="utf-8")
+    if "thin-index: true" in text.lower():
+        return
+    if "frozen/" in text and len(text.splitlines()) <= _PRD_THIN_MAX_LINES:
+        return
+    errors.append(
+        "prd.md must be thin index for v4 (≤25 lines with frozen/ reference, "
+        "or thin-index: true)"
+    )
+
+
+def _validate_execution_index_section4_v4(task_dir: Path, errors: list[str]) -> None:
+    index = task_dir / "EXECUTION_INDEX.md"
+    if not index.is_file():
+        return
+    text = index.read_text(encoding="utf-8")
+    sec4 = _extract_section(text, "4.")
+    if not sec4:
+        errors.append("EXECUTION_INDEX.md missing §4 已并入冻结任务卡")
+        return
+
+    research = task_dir / "research"
+    has_mergeable_drafts = any(
+        (research / name).is_file()
+        for name in _CONSOLIDATION_DRAFTS
+        if name not in ("integration-audit.md",)
+    )
+    if has_mergeable_drafts and not _consolidation_table_rows(sec4):
+        errors.append(
+            "EXECUTION_INDEX.md §4 empty but research drafts exist (Phase 5e inline registry)"
+        )
 
 
 def validate_plan_freeze_v4(task_dir: Path, repo_root: Path) -> list[str]:
@@ -397,6 +536,10 @@ def validate_plan_freeze_v4(task_dir: Path, repo_root: Path) -> list[str]:
 
     validate_execution_index_structure(task_dir, errors)
     validate_frozen_task_card(task_dir, errors)
+
+    _validate_plan_consolidation_v4(task_dir, errors)
+    _validate_prd_thin_index_v4(task_dir, errors)
+    _validate_execution_index_section4_v4(task_dir, errors)
 
     audit = task_dir / "AUDIT.plan.md"
     if not audit.is_file():

@@ -1,0 +1,16 @@
+{
+  "production_db_path": ".audit-sandbox/round3g/r3g03_promote_fixture.duckdb",
+  "target_table": "market_bar_clean",
+  "target_table_row_count": 0,
+  "affected_key_range_count": 0,
+  "target_schema_hash": "fixture-schema-hash-unset",
+  "latest_write_operation_id": null,
+  "backup_or_snapshot_pointer": null,
+  "resource_guard_decision": "ALLOW",
+  "source_id": "baostock",
+  "domain": "cn_equity_daily_bar",
+  "symbols": ["sh.600000"],
+  "start_date": "2026-05-01",
+  "end_date": "2026-05-30",
+  "max_rows": 100
+}

@@ -107,6 +107,7 @@ python .trellis/scripts/task.py validate-plan-phase .trellis/tasks/<slug> P0-ind
 python .trellis/scripts/patch_implement_from_ledger.py .trellis/tasks/<slug>
 python .trellis/scripts/task.py suggest-implement-context .trellis/tasks/<slug>
 python .trellis/scripts/task.py validate-plan-phase .trellis/tasks/<slug> 5c
+python .trellis/scripts/task.py validate-plan-phase .trellis/tasks/<slug> 5e
 python .trellis/scripts/task.py validate-plan-freeze .trellis/tasks/<slug>
 ```
 
@@ -168,6 +169,17 @@ python .trellis/scripts/task.py validate-plan-freeze .trellis/tasks/<slug>
 | [ ] | §4 已内联来源与冻结卡章节对照                         | [ ] | A6：perf 或 SKIP + 理由              |
 | [ ] | `task.py freeze-task-card` 已执行                     | [ ] | 7.pre → `gitnexus-audit-summary.md`  |
 | [ ] | `implement.jsonl` 第一条 = frozen 卡（自动生成）      | [ ] | A1/A5/A8 倒查 frozen + 索引 §3       |
+
+### 3.0e Plan consolidation（v4 · Phase 5e · `freeze-task-card` 之前）
+
+| ✓   | 检查项                                                                 |
+| --- | ---------------------------------------------------------------------- |
+| [ ] | `research/plan-consolidation.md` 存在且含 **`Phase 5e complete`**      |
+| [ ] | 表中每个已存在的 `research/*` 草稿有 `merged` / `pointer` / `n/a` 落点 |
+| [ ] | 可执行结论已写入**活任务卡**（非仅 plan-boot / grill-me）              |
+| [ ] | `EXECUTION_INDEX.md` §4 已填（有 research 草稿时不得空）               |
+| [ ] | `prd.md` 为薄索引（`thin-index: true` 或 ≤25 行且含 `frozen/`）        |
+| [ ] | `validate-plan-freeze` 含 5e 机械检查 exit 0                           |
 
 ### 3.6 validate-plan-freeze（机器门禁）
 

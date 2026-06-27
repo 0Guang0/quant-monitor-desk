@@ -147,6 +147,7 @@ uv run python .trellis/scripts/task.py create "任务标题" --slug your-slug
 | 5b       | `writing-plans`                                                        | **`EXECUTION_INDEX` §1** RED/GREEN + **§2** 验收 / Tier                                           |
 | 5c       | `trellis-before-dev`                                                   | `implement.jsonl` 草稿校对、`research/integration-ledger.md`（v3 打包地图；v4 仍可与 §3/§4 对照） |
 | 5d       | `doubt-driven-development`                                             | `research/integration-audit.md`；**`AUDIT.plan.md` §1/§2**；**`EXECUTION_INDEX` §3** manifest     |
+| **5e**   | **`trellis-plan`**                                                     | **`research/plan-consolidation.md`**；活任务卡 + INDEX §4/§3；薄 **prd**（**在 freeze 之前**）    |
 
 #### 2.2 条件 / 可选 phase（按任务启用，启用则必须 Read 并记入 plan-skill-reads）
 
@@ -169,7 +170,7 @@ uv run python .trellis/scripts/task.py create "任务标题" --slug your-slug
 | 仍在步骤 2（Plan 草稿）       | 步骤 3 起（执行索引定稿）           |
 | ----------------------------- | ----------------------------------- |
 | 活任务卡 §1–§13 加固          | 从模板补全 `EXECUTION_INDEX` 各节表 |
-| `prd.md`、`research/*` 分析稿 | `§1`/`§2` 与 frozen §9 逐步对齐     |
+| `prd.md`、`research/*` 分析稿 | **5e** 合并进活卡 + INDEX §4/§3     |
 | Phase 4 可选设计结论          | `§3` manifest 定稿（驱动 jsonl）    |
 
 ---

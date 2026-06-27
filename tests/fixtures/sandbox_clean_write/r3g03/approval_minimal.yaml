@@ -1,0 +1,17 @@
+approval_id: r3g03-fixture-minimal-20260627
+approver: fixture-coordinator
+approved_at: "2026-06-27T00:00:00Z"
+audit_decision_file: tests/fixtures/sandbox_clean_write/r3g03/audit_decision_allow.json
+source_candidates:
+  - source_id: baostock
+    domain: cn_equity_daily_bar
+    symbols: ["sh.600000"]
+    start_date: "2026-05-01"
+    end_date: "2026-05-30"
+    max_rows: 100
+    target_table: market_bar_clean
+production_db_path: .audit-sandbox/round3g/r3g03_promote_fixture.duckdb
+rollback_plan_path: tests/fixtures/sandbox_clean_write/r3g03/rollback_plan_minimal.json
+rollback_required: true
+no_agent_triggered_write: true
+no_cap_expansion: true

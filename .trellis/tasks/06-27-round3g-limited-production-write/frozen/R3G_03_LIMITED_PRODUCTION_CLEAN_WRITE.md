@@ -1,3 +1,5 @@
+<!-- FROZEN: Plan protocol v4 · do not edit · source: docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_03_LIMITED_PRODUCTION_CLEAN_WRITE.md · frozen_at: 2026-06-27T11:10:55Z -->
+
 # R3G-03 — Limited Production Clean Write
 
 > **Batch:** Batch 3G — Sandbox Clean Write and Limited Production Entry  

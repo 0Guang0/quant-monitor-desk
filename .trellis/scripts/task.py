@@ -8,7 +8,7 @@ Usage:
     python task.py add-context <dir> <file> <path> [reason] # Add jsonl entry
     python task.py validate <dir>              # Validate jsonl files
     python task.py validate-plan-freeze <dir>  # Plan freeze gate (complex tasks)
-    python task.py validate-plan-phase <dir> <phase>  # Plan phase checkpoint (v2)
+    python task.py validate-plan-phase <dir> <phase>  # Plan phase (boot…5d, 5e consolidation)
     python task.py validate-execute-handoff <dir>  # Execute §11 handoff gate
     python task.py validate-execute-boot <dir>  # Execute Phase 0 gate (E16 context-closure)
     python task.py validate-execute-step <dir> <step>  # Execute §8.x step gate
@@ -72,6 +72,7 @@ from common.plan_protocol import plan_freeze_required_before_start
 from common.validate_plan_freeze import (
     cmd_validate_plan_freeze,
     cmd_validate_plan_phase,
+    plan_phase_help,
     validate_plan_freeze,
 )
 from common.execution_index import cmd_freeze_task_card, cmd_generate_manifests
@@ -484,12 +485,12 @@ def main() -> int:
     # validate-plan-phase
     p_vphase = subparsers.add_parser(
         "validate-plan-phase",
-        help="Validate one Plan phase checkpoint (protocol v2)",
+        help="Validate one Plan phase checkpoint (see plan-skill-paths.yaml)",
     )
     p_vphase.add_argument("dir", help="Task directory")
     p_vphase.add_argument(
         "phase",
-        help="Plan phase id: boot, 1a, 2a, 2b, 3, 3.5, 1b, 4, 5a, 5b, 5c, 5d",
+        help=plan_phase_help(get_repo_root()),
     )
 
     # validate-execute-handoff

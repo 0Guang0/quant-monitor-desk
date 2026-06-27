@@ -79,6 +79,10 @@ P0i：索引完整
 | path | manifest | audience | extract | for |
 | `docs/implementation_tasks/GLOBAL_TESTING_POLICY.md` | must-read | execute | policy | Boot |
 
+## 4. 已并入冻结任务卡
+| 来源 | 并入 | 摘要 |
+| plan-boot | n/a | minimal |
+
 ## 5. Audit 追溯集
 | frozen | frozen/x.md |
 """,
@@ -89,6 +93,13 @@ P0i：索引完整
     )
     (task_dir / "plan.freeze.md").write_text(
         "## 3.\n### 3.0v4 协议 v4\n- [x] done\n### 3.0b 原计划包门禁\n",
+        encoding="utf-8",
+    )
+    (research / "plan-consolidation.md").write_text(
+        "| plan-boot.md | x | n/a |\nPhase 5e complete\n", encoding="utf-8"
+    )
+    (task_dir / "prd.md").write_text(
+        "<!-- thin-index: true -->\n# T\n\n> frozen/x.md + EXECUTION_INDEX\n",
         encoding="utf-8",
     )
     frozen = task_dir / "frozen"
@@ -201,6 +212,32 @@ def test_validateInputInventory_acceptsV4ExecutionIndex(tmp_path: Path) -> None:
     errors: list[str] = []
     validate_input_inventory(tmp_path, errors)
     assert errors == []
+
+
+def test_validatePlanFreeze_v4_rejectsMissingConsolidation(tmp_path: Path) -> None:
+    """覆盖范围：Phase 5e plan-consolidation 机械门
+    测试对象：validate_plan_freeze（v4）
+    目的/目标：缺 plan-consolidation.md 时冻结失败
+    验证点：errors 含 plan-consolidation
+    失败含义：research 草稿可散落而仍冻结
+    """
+    _v4_minimal(tmp_path)
+    (tmp_path / "research" / "plan-consolidation.md").unlink()
+    errors = validate_plan_freeze(tmp_path, _REPO)
+    assert any("plan-consolidation" in e for e in errors)
+
+
+def test_validatePlanFreeze_v4_rejectsFatPrd(tmp_path: Path) -> None:
+    """覆盖范围：v4 薄 prd 门禁
+    测试对象：validate_plan_freeze（v4）
+    目的/目标：长 prd 无 frozen/ 引用时冻结失败
+    验证点：errors 含 thin index
+    失败含义：prd 与 frozen 双 SSOT
+    """
+    _v4_minimal(tmp_path)
+    (tmp_path / "prd.md").write_text("# " + "x\n" * 40, encoding="utf-8")
+    errors = validate_plan_freeze(tmp_path, _REPO)
+    assert any("thin index" in e for e in errors)
 
 
 def test_examplePlanV4_passesValidatePlanFreeze() -> None:

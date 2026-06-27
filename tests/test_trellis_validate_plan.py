@@ -308,11 +308,35 @@ def test_loadPlanPaths_parsesPhases() -> None:
     """覆盖范围：plan-skill-paths.yaml 阶段配置加载
     测试对象：_load_plan_paths(_REPO)
     目的/目标：freeze 所需 phase 与 gitnexus-plan skill 须在配置中登记
-    验证点：phases 含 1a/1b；freeze_required_skills 含 gitnexus-plan-1a/1b
+    验证点：phases 含 1a/1b/5e；freeze_required_skills 含 gitnexus-plan-1a/1b
     失败含义：配置缺 phase 会导致 validate_plan_phase 无法路由
     """
     cfg = _load_plan_paths(_REPO)
     assert "1a" in cfg.get("phases", {})
     assert "1b" in cfg.get("phases", {})
+    assert "5e" in cfg.get("phases", {})
     assert "gitnexus-plan-1a" in cfg.get("freeze_required_skills", [])
     assert "gitnexus-plan-1b" in cfg.get("freeze_required_skills", [])
+
+
+def test_planPhaseHelp_lists5e() -> None:
+    """覆盖范围：validate-plan-phase CLI phase 列表
+    测试对象：plan_phase_help(_REPO)
+    目的/目标：CLI help 从 yaml 派生且含 5e
+    验证点：返回串含 5e
+    失败含义：新增 phase 未出现在 CLI 提示
+    """
+    from common.validate_plan_freeze import plan_phase_help
+
+    assert "5e" in plan_phase_help(_REPO)
+
+
+def test_validatePlanPhase_5e_passesExample() -> None:
+    """覆盖范围：Plan phase 5e consolidation 门禁
+    测试对象：validate_plan_phase（_example-plan-v4）
+    目的/目标：样板任务 5e 工件齐全时应零错误
+    验证点：errors == []
+    失败含义：5e 无法单独校验 consolidation
+    """
+    task = _REPO / ".trellis" / "tasks" / "_example-plan-v4"
+    assert validate_plan_phase(task, "5e", repo_root=_REPO) == []

@@ -192,10 +192,21 @@ def _write_seed_jsonl(path: Path) -> None:
     )
 
 
-def _default_prd_content(title: str, description: str | None = None) -> str:
+def _default_prd_content(
+    title: str, description: str | None = None, *, thin_index: bool = False
+) -> str:
     """Return the default PRD skeleton created with every task."""
-    goal = (description or "").strip() or "TBD."
     heading = title.strip() or "Untitled task"
+    if thin_index:
+        return f"""<!-- thin-index: true -->
+# {heading}
+
+> **Execute/Audit SSOT：** `frozen/<NNN>.md` + `EXECUTION_INDEX.md`
+
+- **范围与 AC：** frozen 正文 + `EXECUTION_INDEX` §0.1 / §2。
+- **Plan-only 溯源：** `research/plan-consolidation.md`（Phase 5e 对照表）。
+"""
+    goal = (description or "").strip() or "TBD."
     return f"""# {heading}
 
 ## Goal
@@ -325,8 +336,13 @@ def cmd_create(args: argparse.Namespace) -> int:
 
     prd_path = task_dir / "prd.md"
     if not prd_path.exists():
+        meta = task_data.get("meta") or {}
+        thin = (
+            meta.get("plan_protocol_version") == "4"
+            and meta.get("task_track", "complex") == "complex"
+        )
         prd_path.write_text(
-            _default_prd_content(args.title, args.description),
+            _default_prd_content(args.title, args.description, thin_index=thin),
             encoding="utf-8",
         )
 

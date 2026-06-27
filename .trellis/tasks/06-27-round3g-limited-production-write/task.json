@@ -1,0 +1,32 @@
+{
+  "id": "round3g-limited-production-write",
+  "name": "round3g-limited-production-write",
+  "title": "R3G-03 Limited Production Clean Write",
+  "description": "",
+  "status": "planning",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "Guang",
+  "assignee": "Guang",
+  "createdAt": "2026-06-27",
+  "completedAt": null,
+  "branch": null,
+  "base_branch": "master",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "task_track": "complex",
+    "plan_protocol_version": "4",
+    "frozen_task_card": "frozen/R3G_03_LIMITED_PRODUCTION_CLEAN_WRITE.md",
+    "frozen_at": "2026-06-27T11:10:55Z",
+    "source_task_card": "docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_03_LIMITED_PRODUCTION_CLEAN_WRITE.md"
+  }
+}

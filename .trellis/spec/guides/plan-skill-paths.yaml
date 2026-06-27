@@ -175,6 +175,13 @@ phases:
       - research/integration-audit.md
     note: "plan-manifest-audit.md optional E9 stub; integration-audit is canonical"
 
+  "5e":
+    skills: [trellis-plan]
+    artifacts:
+      - research/plan-consolidation.md
+    marker: "Phase 5e complete"
+    note: "Merge research drafts → live task card + EXECUTION_INDEX §4/§3; thin prd.md"
+
 freeze_required_skills:
   - agent-toolchain
   - trellis-plan
