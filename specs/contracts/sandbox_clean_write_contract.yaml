@@ -1,4 +1,4 @@
-version: sandbox_clean_write_contract_v1
+version: sandbox_clean_write_contract_v1_1
 status: draft_round3g
 owner: data_governance
 purpose: >
@@ -64,6 +64,7 @@ r3g01_rehearsal:
     - schema_hash_coverage
     - write_manager_operation_id
     - rollback_artifact_path
+    - data_health_summary
 
 r3g02_audit:
   production_mutation_allowed: false

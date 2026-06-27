@@ -1,0 +1,8 @@
+{"file": ".trellis/tasks/06-27-06-27-round3g-sandbox-rehearsal/frozen/R3G_01_SANDBOX_CLEAN_WRITE_REHEARSAL.md", "reason": "extract: spec scope | for: A1 trellis-check"}
+{"file": ".trellis/tasks/06-27-06-27-round3g-sandbox-rehearsal/EXECUTION_INDEX.md", "reason": "extract: manifest trace | for: A1"}
+{"file": "specs/contracts/sandbox_clean_write_contract.yaml", "reason": "extract: caps + report fields | for: AC-02,05"}
+{"file": "specs/contracts/reference_adoption_guardrails.yaml", "reason": "extract: 3G guardrails | for: 9.6"}
+{"file": "specs/contracts/data_quality_rules.yaml", "reason": "extract: DQ 规则 SSOT | for: 9.4"}
+{"file": "docs/quality/batch3f_fred_live_pilot_authorization_2026-06-25.md", "reason": "extract: 人类可读授权孪生 | for: A1 audit-only"}
+{"file": "PROJECT_IMPLEMENTATION_ROADMAP.md", "reason": "extract: Round 3G 定位 | for: A1 audit-only"}
+{"file": "MODULE_COMPLETION_RATING.md", "reason": "extract: 禁 staged 冒充 R6 | for: A1 audit-only"}

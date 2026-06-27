@@ -1,0 +1,2 @@
+FAILED tests/test_round3g_sandbox_clean_write_rehearsal.py -k RehearsalCli
+sandbox_clean_write_rehearse missing before 9.5 GREEN

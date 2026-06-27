@@ -17,7 +17,11 @@ from backend.app.datasources.fetch_result import FetchRequest
 
 
 def _fred_api_key() -> str | None:
-    return os.environ.get("FRED_API_KEY") or None
+    raw = os.environ.get("FRED_API_KEY")
+    if not raw or not str(raw).strip():
+        return None
+    # ponytail: FRED requires 32-char lowercase; normalize to avoid 400 on mixed case
+    return str(raw).strip().lower()
 
 
 @dataclass(frozen=True)

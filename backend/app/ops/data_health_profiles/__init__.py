@@ -22,6 +22,7 @@ from backend.app.ops.data_health import (
     DataHealthLoadError,
     DataHealthReport,
     _resolve_payload_path,
+    evaluate_rehearsal_closeout_gate,
     require_evidence_bundle,
 )
 from backend.app.ops.data_health_profiles.report_builder import (
@@ -277,7 +278,13 @@ def run_data_health_profile(
         min_history=_MIN_HISTORY,
         max_rows=cap,
     )
-    report = build_profile_report(checks, profile_id=profile_id)
+    gate_ready, gate_rationale = evaluate_rehearsal_closeout_gate(evidence_dir, checks)
+    report = build_profile_report(
+        checks,
+        profile_id=profile_id,
+        gate_ready=gate_ready,
+        gate_rationale=gate_rationale,
+    )
     hash_coverage = _content_hash_coverage(entries)
     if not hash_coverage:
         limitations = [

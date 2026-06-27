@@ -1,0 +1,380 @@
+{
+  "task": "06-27-06-27-round3g-sandbox-rehearsal",
+  "modules": [
+    "layer1_axes",
+    "datasources",
+    "validators",
+    "ops",
+    "db_platform",
+    "core_platform"
+  ],
+  "source_authorities": [
+    {
+      "type": "design",
+      "path": "docs/modules/layer1_global_regime_panel.md",
+      "reason": "layer1_axes design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/architecture/module_boundary_matrix.md",
+      "reason": "layer1_axes design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/architecture/04_data_architecture.md",
+      "reason": "layer1_axes design authority"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/layer1_axis_contract.yaml",
+      "reason": "layer1_axes contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/snapshot_lineage_contract.yaml",
+      "reason": "layer1_axes contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/resource_limits.yaml",
+      "reason": "layer1_axes contract"
+    },
+    {
+      "type": "policy",
+      "path": "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md",
+      "reason": "layer1_axes rule"
+    },
+    {
+      "type": "policy",
+      "path": "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md",
+      "reason": "layer1_axes rule"
+    },
+    {
+      "type": "policy",
+      "path": "docs/quality/production_live_pilot_policy.md",
+      "reason": "layer1_axes rule"
+    },
+    {
+      "type": "task-card",
+      "path": "docs/implementation_tasks/ROUND_3_MODELING_LAYERS/018A_layer1_observation_ingestion_bridge.md",
+      "reason": "layer1_axes implementation task"
+    },
+    {
+      "type": "task-card",
+      "path": "docs/implementation_tasks/ROUND_3_MODELING_LAYERS/018B_production_live_pilot_gate.md",
+      "reason": "layer1_axes implementation task"
+    },
+    {
+      "type": "design",
+      "path": "docs/modules/data_sources.md",
+      "reason": "datasources design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/modules/datasource_service.md",
+      "reason": "datasources design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/modules/source_route_plan.md",
+      "reason": "datasources design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/modules/source_capability_registry.md",
+      "reason": "datasources design authority"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/datasource_service_contract.yaml",
+      "reason": "datasources contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/source_route_contract.yaml",
+      "reason": "datasources contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/source_capability_contract.yaml",
+      "reason": "datasources contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/platform_source_matrix.yaml",
+      "reason": "datasources contract"
+    },
+    {
+      "type": "task-card",
+      "path": "docs/implementation_tasks/ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3X_data_source_routing_blockers.md",
+      "reason": "datasources implementation task"
+    },
+    {
+      "type": "design",
+      "path": "docs/modules/data_validation_and_conflict.md",
+      "reason": "validators design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/modules/data_validation_write_concurrency.md",
+      "reason": "validators design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/modules/write_manager.md",
+      "reason": "validators design authority"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/write_contract.yaml",
+      "reason": "validators contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/data_quality_rules.yaml",
+      "reason": "validators contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/source_conflict_rules.yaml",
+      "reason": "validators contract"
+    },
+    {
+      "type": "task-card",
+      "path": "docs/implementation_tasks/ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3X_db_write_validation_blockers.md",
+      "reason": "validators implementation task"
+    },
+    {
+      "type": "design",
+      "path": "docs/modules/ops_and_performance.md",
+      "reason": "ops design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/ops/verification_commands.md",
+      "reason": "ops design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/ops/performance_limits.md",
+      "reason": "ops design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/ops/staging_data_e2e_runbook.md",
+      "reason": "ops design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/quality/BATCH3_STAGED_DOWNSTREAM_GATE.md",
+      "reason": "ops design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/ROUND3_HANDOFF.md",
+      "reason": "ops design authority"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/ops_health_check_contract.yaml",
+      "reason": "ops contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/ops_db_inspect_contract.yaml",
+      "reason": "ops contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/review_sandbox_contract.yaml",
+      "reason": "ops contract"
+    },
+    {
+      "type": "task-card",
+      "path": "docs/implementation_tasks/ROUND_3_REFERENCE_LANDING/R3D_018C_live_manual_probe_plan.md",
+      "reason": "ops implementation task"
+    },
+    {
+      "type": "design",
+      "path": "docs/schema/MIGRATION_COVERAGE.md",
+      "reason": "db_platform design authority"
+    },
+    {
+      "type": "contract",
+      "path": "specs/schema/schema.sql",
+      "reason": "db_platform contract"
+    },
+    {
+      "type": "task-card",
+      "path": "docs/implementation_tasks/ROUND_1_DATA_FOUNDATION/005_create_schema_sql.md",
+      "reason": "db_platform implementation task"
+    },
+    {
+      "type": "design",
+      "path": "docs/modules/local_file_system.md",
+      "reason": "core_platform design authority"
+    }
+  ],
+  "tests": [
+    {
+      "path": "tests/test_layer1_axis_loader.py",
+      "purpose": "Layer1 axis loader registry and snapshot behavior"
+    },
+    {
+      "path": "tests/test_layer1_interpretation.py",
+      "purpose": "Layer 1 feature, interpretation, lineage, and WriteManager integration tests."
+    },
+    {
+      "path": "tests/test_layer1_ingestion_gates.py",
+      "purpose": "Layer 1 ingestion Phase 0 gate tests (Round 3 Batch 2.5 §8.1)."
+    },
+    {
+      "path": "tests/test_layer1_observation_ingestion.py",
+      "purpose": "Layer 1 observation ingestion pipeline tests (Batch 2.5 §8.2–8.5)."
+    },
+    {
+      "path": "tests/test_observation_mapper.py",
+      "purpose": "Focused tests for observation_mapper boundary paths (audit A05-P1-01 / A04-P2-01)."
+    },
+    {
+      "path": "tests/test_batch25_production_data_gate.py",
+      "purpose": "Batch 2.5 evidence is staged-only, not production-live readiness"
+    },
+    {
+      "path": "tests/test_batch275_live_pilot_gate.py",
+      "purpose": "Batch 2.75 live pilot fail-closed gate and route readiness"
+    },
+    {
+      "path": "tests/test_production_live_pilot_policy.py",
+      "purpose": "Batch 2.75 fail-closed pilot policy documentation"
+    },
+    {
+      "path": "tests/test_fred_staged_semantics.py",
+      "purpose": "FRED / macro_supplementary staged-only semantics (B2.5-O-05)"
+    },
+    {
+      "path": "tests/test_datasource_service.py",
+      "purpose": "Round2.6 Phase B/C — DataSourceService boundary and fetch facade tests."
+    },
+    {
+      "path": "tests/test_source_registry.py",
+      "purpose": "Source registry loader, DB sync, and schema enum compatibility tests (Batch A / data source expansion)."
+    },
+    {
+      "path": "tests/test_source_route_planner.py",
+      "purpose": "Source route planner READY gate and routing semantics"
+    },
+    {
+      "path": "tests/test_source_capabilities.py",
+      "purpose": "Round2.6 Phase B/C — source capability and adapter domain contract tests."
+    },
+    {
+      "path": "tests/test_platform_source_matrix.py",
+      "purpose": "Round2.6 Phase C — platform source matrix tests (production planner)."
+    },
+    {
+      "path": "tests/test_r3x_data_source_routing_blockers.py",
+      "purpose": "R3X data-source routing blocker tests (ADV-A2 cluster)."
+    },
+    {
+      "path": "tests/test_write_manager.py",
+      "purpose": "DuckDBWriteManager exclusive clean-table write path"
+    },
+    {
+      "path": "tests/test_db_validation_gate.py",
+      "purpose": "DB validation gate blocks invalid writes"
+    },
+    {
+      "path": "tests/test_data_quality_validator.py",
+      "purpose": "Data quality validator rejects invalid observations"
+    },
+    {
+      "path": "tests/test_source_conflict_validator.py",
+      "purpose": "Source conflict validator blocks conflicting primary sources"
+    },
+    {
+      "path": "tests/test_batch_c_validation_flow.py",
+      "purpose": "End-to-end Batch C validation flow tests (§8.8)."
+    },
+    {
+      "path": "tests/test_staged_pilot.py",
+      "purpose": "Staged pilot sandbox boundaries; does not open production-live"
+    },
+    {
+      "path": "tests/test_ops_db_inspector.py",
+      "purpose": "Ops DB inspector tests (Round 3 Batch 1)."
+    },
+    {
+      "path": "tests/test_ops_interface_probe.py",
+      "purpose": "Ops interface_probe + mutation_proof wiring tests (OP-06)."
+    },
+    {
+      "path": "tests/test_interface_probe_018c.py",
+      "purpose": "018C low-cost data-interface probe tests."
+    },
+    {
+      "path": "tests/test_production_gate.py",
+      "purpose": "ADV-A5-002: production_gate.py smoke tests."
+    },
+    {
+      "path": "tests/test_round3_verification_command_matrix.py",
+      "purpose": "Round 3 verification command matrix — doc index and gate-test discoverability."
+    },
+    {
+      "path": "tests/test_round3_audit_registry_alignment.py",
+      "purpose": "Round 3 Batch 2.5 / Batch 2.75 audit follow-up 文档对齐测试。"
+    },
+    {
+      "path": "tests/test_unresolved_item_task_coverage.py",
+      "purpose": "确保未闭合项不会在 Plan 阶段因只读原始任务卡而遗漏。"
+    },
+    {
+      "path": "tests/test_batch3_staged_downstream_gate.py",
+      "purpose": "确保 Batch 3 只能 staged-only，不得被误读为 production-live readiness"
+    },
+    {
+      "path": "tests/test_qmd_data_cli.py",
+      "purpose": "B3F-CLI — qmd data CLI, packaging, init_db --sync-registry (R3F-CLI-01..05)."
+    },
+    {
+      "path": "tests/test_schema_migration.py",
+      "purpose": "Foundation schema migration tests (Round 1 task 005)."
+    },
+    {
+      "path": "tests/test_schema_contract.py",
+      "purpose": "Schema contract vs migration alignment tests."
+    },
+    {
+      "path": "tests/test_sync_migration.py",
+      "purpose": "Tests for migration 006 ingestion sync tables (Batch D §8.1)."
+    },
+    {
+      "path": "tests/test_migration_coverage.py",
+      "purpose": "L3/L4/L5 建模表 migration 覆盖矩阵门禁（B3V-L5R / VR-MODEL-001 closure test）。"
+    },
+    {
+      "path": "tests/test_resource_guard.py",
+      "purpose": "ResourceGuard HARD_STOP and metrics contract"
+    },
+    {
+      "path": "tests/test_path_compat.py",
+      "purpose": "Tests for Windows long-path compatibility helpers."
+    },
+    {
+      "path": "tests/test_raw_store.py",
+      "purpose": "Raw Store and file_registry tests (Round 1 task 009)."
+    }
+  ],
+  "forbidden_claims": [
+    "production-live ready",
+    "live production ingestion",
+    "bypass route readiness gate",
+    "direct table write outside WriteManager"
+  ],
+  "required_evidence": [
+    "context_pack.json",
+    "loop_manifest.json",
+    "evidence_index.json",
+    "audit_matrix.json"
+  ]
+}

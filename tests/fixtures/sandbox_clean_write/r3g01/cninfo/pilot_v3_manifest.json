@@ -1,0 +1,31 @@
+{
+  "pilot_id": "dh2-v3-compliant",
+  "pilot_version": "v3",
+  "generated_at": "2026-06-23T18:11:44Z",
+  "whitelist_ref": "fixture-whitelist-hash",
+  "resource_caps": {
+    "baostock_max_rows": 2000,
+    "cninfo_max_rows": 500,
+    "akshare_max_rows": 1000,
+    "network_calls_max": 50
+  },
+  "fetches": [
+    {
+      "request": {
+        "source_id": "cninfo",
+        "data_domain": "cn_announcements",
+        "role": "primary"
+      },
+      "source_used": "cninfo",
+      "role": "primary",
+      "metadata_only": true,
+      "row_count": 5,
+      "fetch_result": {
+        "run_id": "v3-cninfo",
+        "content_hash": "cninfo-hash",
+        "status": "SUCCESS"
+      }
+    }
+  ],
+  "conflict_summary": { "status": "NO_CONFLICT", "checked": true }
+}

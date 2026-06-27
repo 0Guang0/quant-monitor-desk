@@ -242,3 +242,49 @@ def emit_failure(err: CliFailure, *, fmt: str = "json") -> str:
     if fmt == "json":
         return err.format_json()
     return err.format_text()
+
+
+def sandbox_clean_write_rehearse(
+    *,
+    candidate_set: str,
+    sandbox_db: Path,
+    evidence_dir: Path,
+    report: Path,
+    no_production_mutation: bool = False,
+    dry_run: bool = True,
+    allow_live_fetch: bool = False,
+    fred_authorization: Path | None = None,
+) -> dict[str, Any]:
+    """``qmd data sandbox-clean-write rehearse`` — R3G-01 sandbox rehearsal CLI."""
+    from backend.app.ops.sandbox_clean_write.rehearsal_runner import (
+        RehearsalRequest,
+        RehearsalRunnerError,
+        run_sandbox_clean_write_rehearsal,
+    )
+
+    if not no_production_mutation:
+        raise CliFailure(
+            error_code="USER_AUTH_REQUIRED",
+            message="--no-production-mutation is required for sandbox clean-write rehearsal",
+            docs_anchor="docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_01_SANDBOX_CLEAN_WRITE_REHEARSAL.md",
+            manual_confirmation_required=True,
+        )
+    try:
+        return run_sandbox_clean_write_rehearsal(
+            RehearsalRequest(
+                candidate_set=candidate_set,
+                sandbox_db=sandbox_db,
+                evidence_dir=evidence_dir,
+                report_path=report,
+                no_production_mutation=no_production_mutation,
+                dry_run=dry_run,
+                allow_live_fetch=allow_live_fetch,
+                fred_authorization=fred_authorization,
+            )
+        )
+    except RehearsalRunnerError as exc:
+        raise CliFailure(
+            error_code="INVALID_INPUT",
+            message=str(exc),
+            docs_anchor="docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_01_SANDBOX_CLEAN_WRITE_REHEARSAL.md",
+        ) from exc

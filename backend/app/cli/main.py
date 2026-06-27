@@ -57,6 +57,26 @@ def _build_data_parser(sub: argparse._SubParsersAction) -> None:
     health.add_argument("--full-market-scan", action="store_true")
     health.add_argument("--full-history", action="store_true")
 
+    scw = data_sub.add_parser(
+        "sandbox-clean-write",
+        help="Sandbox clean-write rehearsal (R3G-01)",
+    )
+    scw_sub = scw.add_subparsers(dest="sandbox_clean_write_command", required=True)
+    rehearse = scw_sub.add_parser("rehearse", help="Run capped sandbox clean-write rehearsal")
+    rehearse.add_argument("--candidate-set", required=True)
+    rehearse.add_argument("--sandbox-db", required=True)
+    rehearse.add_argument("--evidence-dir", required=True)
+    rehearse.add_argument("--report", required=True)
+    rehearse.add_argument("--no-production-mutation", action="store_true")
+    rehearse.add_argument(
+        "--dry-run",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+    )
+    rehearse.add_argument("--allow-live-fetch", action="store_true")
+    rehearse.add_argument("--fred-authorization", default=None)
+    rehearse.add_argument("--format", choices=["json", "text"], default="json")
+
 
 def _run_data(args: argparse.Namespace) -> int:
     fmt = getattr(args, "format", "json")
@@ -99,6 +119,26 @@ def _run_data(args: argparse.Namespace) -> int:
                 clean_write=args.clean_write,
                 full_market_scan=args.full_market_scan,
                 full_history=args.full_history,
+            )
+        elif args.data_command == "sandbox-clean-write":
+            from pathlib import Path
+
+            if args.sandbox_clean_write_command != "rehearse":
+                raise CliFailure(
+                    error_code="CAPABILITY_MISSING",
+                    message=f"unknown sandbox-clean-write subcommand: {args.sandbox_clean_write_command}",
+                    docs_anchor="docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_01_SANDBOX_CLEAN_WRITE_REHEARSAL.md",
+                )
+            fred_auth = Path(args.fred_authorization) if args.fred_authorization else None
+            payload = data_commands.sandbox_clean_write_rehearse(
+                candidate_set=args.candidate_set,
+                sandbox_db=Path(args.sandbox_db),
+                evidence_dir=Path(args.evidence_dir),
+                report=Path(args.report),
+                no_production_mutation=args.no_production_mutation,
+                dry_run=args.dry_run,
+                allow_live_fetch=args.allow_live_fetch,
+                fred_authorization=fred_auth,
             )
         else:
             raise CliFailure(

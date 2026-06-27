@@ -568,3 +568,68 @@ def test_r3fr05ProviderCatalogClosure() -> None:
 
     openbb_adoption = (_GUARDRAILS.get("allowed_adoption") or {}).get("openbb_provider_architecture") or {}
     assert "architecture_only_provider_catalog_pattern" in (openbb_adoption.get("allowed_as") or [])
+
+
+_R3G01_MODULE_ROOT = PROJECT_ROOT / "backend/app/ops/sandbox_clean_write"
+
+
+def test_r3g01SandboxCleanWrite_noReferenceProjectRuntimeImport() -> None:
+    """覆盖范围：R3G-01 sandbox_clean_write 无参考项目 runtime import
+    测试对象：backend/app/ops/sandbox_clean_write/**
+    目的/目标：AC-07 禁止 参考项目/** runtime import
+    验证点：scan_forbidden_import_roots 对 sandbox_clean_write 为空
+    失败含义：排练模块从参考项目直接 import
+    """
+    violations = scan_forbidden_import_roots(
+        FORBIDDEN_REFERENCE_IMPORT_ROOTS,
+        scan_roots=(_R3G01_MODULE_ROOT,),
+    )
+    assert violations == [], f"reference project imports: {violations}"
+
+
+def test_r3g01SandboxCleanWrite_noJq2ptradeTradingApiSurface() -> None:
+    """覆盖范围：R3G-01 无 JQ2PTrade 交易 API 名
+    测试对象：sandbox_clean_write/** 源码
+    目的/目标：AC-08 禁止 order/get_portfolio 等交易 API 兼容层
+    验证点：禁止函数名 AST 扫描为空
+    失败含义：排练模块暴露 JQ2PTrade 交易 API
+    """
+    violations = scan_forbidden_function_defs(
+        FORBIDDEN_TRADING_DEF_NAMES,
+        roots=(_R3G01_MODULE_ROOT,),
+    )
+    assert violations == [], f"trading API defs: {violations}"
+
+
+def test_r3g01SandboxCleanWrite_openbbArchitectureOnly() -> None:
+    """覆盖范围：OpenBB 仅架构引用
+    测试对象：sandbox_clean_write/** 源码
+    目的/目标：AC-09 无 OpenBB runtime copy 模式
+    验证点：无 openbb_platform/providers 路径与 copied fetcher 类名
+    失败含义：OpenBB runtime 源码被复制进排练模块
+    """
+    text = "\n".join(
+        p.read_text(encoding="utf-8")
+        for p in _R3G01_MODULE_ROOT.rglob("*.py")
+        if p.is_file()
+    )
+    assert "openbb_platform/providers" not in text
+    assert "OBBject" not in text
+    assert "from openbb" not in text
+
+
+def test_r3g01SandboxCleanWrite_noProductionLiveClaim() -> None:
+    """覆盖范围：排练模块不宣称 production-live
+    测试对象：rehearsal_runner + rehearsal_report
+    目的/目标：AC-14 对齐 production_live_pilot_policy
+    验证点：production_live_claim 硬编码 False；无 production_live_readiness_claim True
+    失败含义：排练误宣称 production-live ready
+    """
+    runner = (PROJECT_ROOT / "backend/app/ops/sandbox_clean_write/rehearsal_runner.py").read_text(
+        encoding="utf-8"
+    )
+    report_mod = (PROJECT_ROOT / "backend/app/ops/sandbox_clean_write/rehearsal_report.py").read_text(
+        encoding="utf-8"
+    )
+    assert "production_live_readiness_claim" not in runner
+    assert '"production_live_claim": False' in report_mod

@@ -582,6 +582,36 @@ CURATED: dict[str, dict] = {
             "R3G-01 rehearsal contract blocks production mutation or report fields drift."
         ),
     },
+    "tests/test_round3g_sandbox_rehearsal_loader.py": {
+        "purpose": "R3G-01 rehearsal loader bounded DataBundle from staged evidence",
+        "type": "unit",
+        "verifies": {
+            "docs": [
+                "docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_01_SANDBOX_CLEAN_WRITE_REHEARSAL.md",
+            ],
+            "specs": ["specs/contracts/sandbox_clean_write_contract.yaml"],
+            "rules": ["docs/implementation_tasks/GLOBAL_TESTING_POLICY.md"],
+        },
+        "command": "uv run python -m pytest tests/test_round3g_sandbox_rehearsal_loader.py -q",
+        "failure_meaning": (
+            "R3G-01 loader accepts broad universe or fails to load capped fixture bundles."
+        ),
+    },
+    "tests/test_round3g_sandbox_rehearsal_report.py": {
+        "purpose": "R3G-01 rehearsal report required fields and data_health_summary shape",
+        "type": "unit",
+        "verifies": {
+            "docs": [
+                "docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_01_SANDBOX_CLEAN_WRITE_REHEARSAL.md",
+            ],
+            "specs": ["specs/contracts/sandbox_clean_write_contract.yaml"],
+            "rules": ["docs/implementation_tasks/GLOBAL_TESTING_POLICY.md"],
+        },
+        "command": "uv run python -m pytest tests/test_round3g_sandbox_rehearsal_report.py -q",
+        "failure_meaning": (
+            "R3G-01 rehearsal report missing contract fields or DH summary counts."
+        ),
+    },
     "tests/test_round3g_pre_production_adversarial_audit.py": {
         "purpose": "Round 3G R3G-02 adversarial audit decision enum and block_if gates",
         "type": "policy-contract",

@@ -1,0 +1,12 @@
+{"file": ".trellis/tasks/06-27-06-27-round3g-sandbox-rehearsal/AUDIT.plan.md", "reason": "extract: Audit SSOT | for: A1-A8 boot"}
+{"file": ".trellis/tasks/06-27-06-27-round3g-sandbox-rehearsal/frozen/R3G_01_SANDBOX_CLEAN_WRITE_REHEARSAL.md", "reason": "extract: frozen task card trace | for: A5 scope"}
+{"file": ".trellis/tasks/06-27-06-27-round3g-sandbox-rehearsal/EXECUTION_INDEX.md", "reason": "extract: manifest index | for: A1/A5/A8"}
+{"file": "specs/contracts/sandbox_clean_write_contract.yaml", "reason": "extract: caps + report fields | for: AC-02,05"}
+{"file": "specs/contracts/reference_adoption_guardrails.yaml", "reason": "extract: 3G guardrails | for: 9.6"}
+{"file": "docs/quality/production_live_pilot_policy.md", "reason": "extract: 禁误宣称 live | for: 9.0"}
+{"file": "docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/BATCH_3G_TASK_CARD_MANIFEST.md", "reason": "extract: 3G 串行与范围 | for: 9.0"}
+{"file": "docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/BATCH_3G_HARDENING_RULES.md", "reason": "extract: 3G 边界 | for: 9.0"}
+{"file": "docs/quality/batch3f_fred_live_pilot_authorization_2026-06-25.md", "reason": "extract: 人类可读授权孪生 | for: A8"}
+{"file": "PROJECT_IMPLEMENTATION_ROADMAP.md", "reason": "extract: Round 3G 定位 | for: A1"}
+{"file": "MODULE_COMPLETION_RATING.md", "reason": "extract: 禁 staged 冒充 R6 | for: A1"}
+{"file": "MIGRATION_MAP.md", "reason": "extract: docs/specs 边界 | for: 9.0"}

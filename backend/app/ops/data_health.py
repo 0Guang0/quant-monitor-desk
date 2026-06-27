@@ -1036,6 +1036,39 @@ def _checks_from_bundle(bundle: EvidenceBundle) -> list[DataHealthCheckResult]:
     return deduped
 
 
+def evaluate_rehearsal_closeout_gate(
+    evidence_dir: Path, checks: list[DataHealthCheckResult]
+) -> tuple[bool, str]:
+    """R3G-01 rehearsal admission: closeout + validation_report_summary on evidence dir."""
+    if any(c.status == "FAIL" for c in checks):
+        return False, "FAIL checks present; sandbox clean-write gate blocked"
+    if any(c.status == "BLOCKED" for c in checks):
+        return False, "BLOCKED prerequisites; gate not ready"
+    closeout_path = evidence_dir / "pilot_v2_closeout.json"
+    validation_path = evidence_dir / "validation_report_summary.json"
+    if not closeout_path.is_file() or not validation_path.is_file():
+        return False, "staged-only profile; gate input sufficient for review only"
+    closeout = _read_json(closeout_path)
+    validation = _read_json(validation_path)
+    if not closeout.get("sandbox_clean_write_rehearsal"):
+        return (
+            False,
+            "pilot closeout has sandbox_clean_write_rehearsal=false; "
+            "gate input sufficient for review only",
+        )
+    if not validation.get("allow_clean_write"):
+        return (
+            False,
+            "staged-only: validation_report allow_clean_write=false; "
+            "structure checks may pass but clean-write not authorized",
+        )
+    return (
+        True,
+        "evidence manifests complete, no FAIL checks, "
+        "allow_clean_write authorized for sandbox rehearsal",
+    )
+
+
 def evaluate_gate(bundle: EvidenceBundle, checks: list[DataHealthCheckResult]) -> tuple[bool, str]:
     if bundle.load_error:
         return False, f"evidence load failed: {bundle.load_error}"
@@ -1486,13 +1519,18 @@ def _evaluate_profile_gate(
     if profile == "source_readiness_rollup":
         rollup = _read_profile_json(evidence_dir, ("rollup_manifest.json",)) or {}
         return _evaluate_rollup_gate(rollup, checks)
+    rehearsal_ready, rehearsal_rationale = evaluate_rehearsal_closeout_gate(
+        evidence_dir, checks
+    )
+    if rehearsal_ready:
+        return True, rehearsal_rationale
     if any(c.status == "FAIL" for c in checks):
         return False, "FAIL checks present; sandbox clean-write gate blocked"
     if any(c.status == "BLOCKED" for c in checks):
         return False, "BLOCKED prerequisites; gate not ready"
     if profile == "model_input_whitelist" and not _model_inputs_whitelist_available():
         return False, "whitelist BLOCKED until specs/model_inputs merged (B01-WL)"
-    return False, "staged-only profile; gate input sufficient for review only"
+    return False, rehearsal_rationale
 
 
 _PROFILE_CHECKERS = {
