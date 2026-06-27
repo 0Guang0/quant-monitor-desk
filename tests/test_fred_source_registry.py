@@ -34,7 +34,7 @@ def test_fredRegistry_disabledByDefault_notProductionLive() -> None:
     assert "macro_series" in (entry.get("allowed_domains") or [])
 
     cap = _fred_capability_entry()
-    assert cap.get("status") in {"sandbox_candidate", "proposed_disabled_source"}
+    assert cap.get("status") in {"sandbox_candidate", "proposed_disabled_source", "READY_WITH_EVIDENCE"}
     for domain_cfg in (cap.get("domains") or {}).values():
         for op in (domain_cfg.get("operations") or {}).values():
             assert op.get("production_default") is not True

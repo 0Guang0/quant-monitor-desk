@@ -119,7 +119,7 @@ sources:
     validation_only: false
     rate_limit_policy: polite_api_with_key
     requires_user_setup: true
-    notes: Batch 01 B01-FRED sandbox-candidate (merge 9ae91648); disabled-by-default; FRED-only sandbox evidence recorded; live primary B2.5-O-05 RE-DEFERRED Batch 6.
+    notes: Batch 01 B01-FRED sandbox-candidate (merge 9ae91648); R3H-01 READY_WITH_EVIDENCE; disabled-by-default; replay tests/fixtures/replay/official_macro/fred/; live requires FRED_API_KEY.
   - source_id: us_treasury
     source_name: US Treasury / FiscalData
     source_type: official_api
@@ -134,7 +134,7 @@ sources:
     rate_limit_policy: polite_api_with_cache
     requires_user_setup: false
     official_api: true
-    notes: 美国国债收益率曲线与通胀预期官方主源；新增 adapter 前默认禁用，启用后可作为利率曲线 primary。
+    notes: R3H-01 READY_WITH_EVIDENCE; us_treasury_port mock-first; replay tests/fixtures/replay/official_macro/us_treasury/; enabled_by_default=false.
   - source_id: sec_edgar
     source_name: SEC EDGAR data APIs
     source_type: official_api
@@ -149,7 +149,7 @@ sources:
     rate_limit_policy: sec_identity_polite_api
     requires_user_setup: false
     official_api: true
-    notes: 美国上市公司披露与 Form 4 内部人交易官方主源；必须带 User-Agent/contact 标识并保存 filing accession 与 content_hash。
+    notes: R3H-01 READY_WITH_EVIDENCE; sec_edgar_port; SEC_EDGAR_USER_AGENT required; replay tests/fixtures/replay/sec_edgar/.
   - source_id: cftc_cot
     source_name: CFTC Commitments of Traders
     source_type: official_api
@@ -163,7 +163,7 @@ sources:
     rate_limit_policy: weekly_official_release_cache
     requires_user_setup: false
     official_api: true
-    notes: 期货持仓方向与 smart-money 仓位的官方周频主源；不得当作实时仓位。
+    notes: R3H-01 READY_WITH_EVIDENCE; cftc_cot_port weekly mock-first; replay tests/fixtures/replay/official_macro/cftc_cot/.
   - source_id: bis
     source_name: Bank for International Settlements Data Portal
     source_type: official_api
@@ -178,7 +178,7 @@ sources:
     rate_limit_policy: sdmx_polite_cache
     requires_user_setup: false
     official_api: true
-    notes: 全球央行政策利率、信贷/GDP 缺口等官方/准官方宏观源；用于 Layer 1 regime 与风险背景。
+    notes: R3H-01 READY_WITH_EVIDENCE; bis_port mock-first; replay tests/fixtures/replay/official_macro/bis/.
   - source_id: world_bank
     source_name: World Bank Indicators API
     source_type: official_api
@@ -193,7 +193,7 @@ sources:
     rate_limit_policy: low_frequency_official_cache
     requires_user_setup: false
     official_api: true
-    notes: GDP、人口、贸易等低频发展指标主源；适合长期背景变量，不适合实时信号。
+    notes: R3H-01 READY_WITH_EVIDENCE; world_bank_port mock-first; replay tests/fixtures/replay/official_macro/world_bank/.
   - source_id: deribit
     source_name: Deribit public API
     source_type: vendor_api

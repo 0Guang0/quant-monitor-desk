@@ -1,0 +1,18 @@
+{
+  "schema_version": "official_macro_evidence_v1",
+  "source_id": "bis",
+  "data_domain": "central_bank_policy",
+  "observations": [
+    {
+      "country_code": "US",
+      "observation_date": "2025-09-01",
+      "policy_rate": "5.25",
+      "frequency": "monthly",
+      "source_used": "bis"
+    }
+  ],
+  "source_fetch_id": "bis-replay-policy",
+  "content_hash": "bis-replay-hash-policy",
+  "as_of_timestamp": "2025-09-01T12:00:00Z",
+  "retrieved_at": "2025-09-01T12:00:00Z"
+}

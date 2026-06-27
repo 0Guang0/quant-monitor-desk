@@ -49,16 +49,11 @@ REQUIRED_PROVIDER_FIELDS = frozenset(
 )
 
 VALID_CATALOG_STATUS = frozenset(
-    {"active", "sandbox_candidate", "proposed_disabled_source"}
+    {"active", "sandbox_candidate", "proposed_disabled_source", "READY_WITH_EVIDENCE"}
 )
 
 PROPOSED_EXTERNAL_SOURCE_IDS = frozenset(
     {
-        "us_treasury",
-        "sec_edgar",
-        "cftc_cot",
-        "bis",
-        "world_bank",
         "deribit",
         "coingecko",
         "kalshi",

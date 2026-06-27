@@ -10,6 +10,8 @@ specs/contracts/source_route_contract.yaml:
         - tests/test_source_route_planner.py
         - tests/test_r3h_source_final_decisions.py
         - tests/test_r3h_adapter_evidence_matrix.py
+        - tests/test_official_macro_adapters.py
+        - tests/test_sec_edgar_adapter.py
       negative_required: true
 
 specs/contracts/write_contract.yaml:
@@ -239,6 +241,7 @@ specs/contracts/source_capability_contract.yaml:
         - tests/test_source_registry.py
         - tests/test_r3h_source_final_decisions.py
         - tests/test_r3h_adapter_evidence_matrix.py
+        - tests/test_official_macro_adapters.py
       negative_required: false
 
 specs/contracts/spec_migrator_contract.yaml:

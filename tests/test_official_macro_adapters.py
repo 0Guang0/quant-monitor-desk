@@ -610,3 +610,424 @@ def test_us_treasury_port_route_readyWhenSourceEnabled(monkeypatch: pytest.Monke
     assert treasury.enabled is True
     assert plan.route_status == "READY"
     assert plan.selected_source_id == "us_treasury"
+
+
+_CFTC_REPLAY = (
+    PROJECT_ROOT / "tests/fixtures/replay/official_macro/cftc_cot/cot_replay_bundle.json"
+)
+_BIS_POLICY_REPLAY = (
+    PROJECT_ROOT / "tests/fixtures/replay/official_macro/bis/policy_rate_replay_bundle.json"
+)
+_WORLD_BANK_REPLAY = (
+    PROJECT_ROOT
+    / "tests/fixtures/replay/official_macro/world_bank/indicator_replay_bundle.json"
+)
+
+
+def _cftc_req(**overrides: object):
+    from backend.app.datasources.fetch_result import FetchRequest
+
+    base = {
+        "run_id": "r3h01-cftc-port",
+        "source_id": "cftc_cot",
+        "data_domain": "cot_positioning",
+        "instrument_id": "088691",
+    }
+    base.update(overrides)
+    return FetchRequest(**base)
+
+
+def _bis_policy_req(**overrides: object):
+    from backend.app.datasources.fetch_result import FetchRequest
+
+    base = {
+        "run_id": "r3h01-bis-port",
+        "source_id": "bis",
+        "data_domain": "central_bank_policy",
+        "instrument_id": "US",
+    }
+    base.update(overrides)
+    return FetchRequest(**base)
+
+
+def _world_bank_req(**overrides: object):
+    from backend.app.datasources.fetch_result import FetchRequest
+
+    base = {
+        "run_id": "r3h01-world-bank-port",
+        "source_id": "world_bank",
+        "data_domain": "development_indicator",
+        "instrument_id": "US",
+    }
+    base.update(overrides)
+    return FetchRequest(**base)
+
+
+def test_cftc_port_mockFetch_emitsCotEvidence() -> None:
+    """覆盖范围：mock CFTC COT port 周频持仓抓取
+    测试对象：create_cftc_cot_fetch_port + CftcCotMockFetchPort.fetch_payload
+    目的/目标：port 产出 COT 证据包，字段含 market_code/report_date/trader_category
+    验证点：schema_version、source_fetch_id、content_hash、canonical report_date
+    失败含义：CFTC 官方持仓源无 port 路径，无法登记 READY_WITH_EVIDENCE
+    """
+    from backend.app.datasources.fetch_ports.cftc_cot_port import create_cftc_cot_fetch_port
+    from backend.app.datasources.normalizers.official_macro import (
+        OFFICIAL_MACRO_EVIDENCE_SCHEMA_VERSION,
+    )
+
+    port = create_cftc_cot_fetch_port(markets=("088691",), max_rows=3, use_mock=True)
+    payload = port.fetch_payload(_cftc_req())
+    body = json.loads(payload.content.decode("utf-8"))
+    assert body["schema_version"] == OFFICIAL_MACRO_EVIDENCE_SCHEMA_VERSION
+    assert body["data_domain"] == "cot_positioning"
+    assert body.get("source_fetch_id")
+    assert body.get("content_hash")
+    obs = body.get("observations") or []
+    assert obs
+    for row in obs:
+        assert row.get("market_code")
+        assert row.get("report_date")
+        assert row.get("trader_category")
+
+
+def test_cftc_port_marketWhitelist_rejectsUnknown() -> None:
+    """覆盖范围：COT market 白名单门禁
+    测试对象：CftcCotMockFetchPort.fetch_payload
+    目的/目标：非白名单 market 在 port 层 fail-closed
+    验证点：UNKNOWN 抛出 PortError
+    失败含义：任意 market 可被 sandbox port 拉取
+    """
+    from backend.app.datasources.adapters.fetch_port import PortError
+    from backend.app.datasources.fetch_ports.cftc_cot_port import create_cftc_cot_fetch_port
+
+    port = create_cftc_cot_fetch_port(markets=("UNKNOWN",), max_rows=3, use_mock=True)
+    with pytest.raises(PortError, match="whitelist"):
+        port.fetch_payload(_cftc_req(instrument_id="UNKNOWN"))
+
+
+def test_cftc_port_replayFixture_canonical() -> None:
+    """覆盖范围：COT replay fixture 与 normalizer 读路径
+    测试对象：tests/fixtures/replay/official_macro/cftc_cot/cot_replay_bundle.json
+    目的/目标：replay 使用 report_date + schema_version
+    验证点：read_cot_positioning_evidence_bundle 往返
+    失败含义：COT replay 路径缺失，9.6 registry 无法登记
+    """
+    from backend.app.datasources.normalizers.official_macro import read_cot_positioning_evidence_bundle
+
+    bundle = read_cot_positioning_evidence_bundle(_CFTC_REPLAY)
+    assert bundle["data_domain"] == "cot_positioning"
+    for obs in bundle["observations"]:
+        assert obs.get("report_date")
+        assert obs.get("market_code")
+
+
+def test_cftc_port_route_disabledByDefault_unauthorized() -> None:
+    """覆盖范围：cot_positioning 路由默认禁用
+    测试对象：SourceRoutePlanner + source_registry cftc_cot
+    目的/目标：enabled_by_default=false 时 route 为 DISABLED
+    验证点：route_status=DISABLED_SOURCE
+    失败含义：未配置 CFTC 仍被 route 选为 production primary
+    """
+    from backend.app.datasources.capability_registry import SourceCapabilityRegistry
+    from backend.app.datasources.route_planner import SourceRoutePlanner
+    from backend.app.datasources.source_registry import SourceRegistry
+
+    registry = SourceRegistry()
+    registry.load()
+    capabilities = SourceCapabilityRegistry()
+    capabilities.load()
+    planner = SourceRoutePlanner(source_registry=registry, capability_registry=capabilities)
+    plan = planner.plan(
+        data_domain="cot_positioning",
+        operation="fetch_cot_positioning",
+        run_id="r3h01-cftc-route",
+        job_id="cftc-route-negative",
+    )
+    assert plan.route_status == "DISABLED_SOURCE"
+    cftc = next((c for c in plan.candidates if c.source_id == "cftc_cot"), None)
+    assert cftc is not None
+    assert cftc.enabled is False
+
+
+def test_bis_port_mockFetch_emitsPolicyRateEvidence() -> None:
+    """覆盖范围：mock BIS port 政策利率抓取
+    测试对象：create_bis_fetch_port（central_bank_policy 域）
+    目的/目标：port 产出 BIS 政策利率证据包
+    验证点：data_domain==central_bank_policy；含 policy_rate 与 observation_date
+    失败含义：BIS 政策利率域无 port 路径
+    """
+    from backend.app.datasources.fetch_ports.bis_port import create_bis_fetch_port
+    from backend.app.datasources.normalizers.official_macro import (
+        OFFICIAL_MACRO_EVIDENCE_SCHEMA_VERSION,
+    )
+
+    port = create_bis_fetch_port(
+        countries=("US",),
+        max_rows=3,
+        data_domain="central_bank_policy",
+        use_mock=True,
+    )
+    payload = port.fetch_payload(_bis_policy_req())
+    body = json.loads(payload.content.decode("utf-8"))
+    assert body["schema_version"] == OFFICIAL_MACRO_EVIDENCE_SCHEMA_VERSION
+    assert body["data_domain"] == "central_bank_policy"
+    obs = body.get("observations") or []
+    assert obs[0].get("policy_rate") is not None
+    assert obs[0].get("observation_date")
+
+
+def test_bis_port_mockFetch_emitsCreditGapEvidence() -> None:
+    """覆盖范围：mock BIS port 信贷/GDP 缺口抓取
+    测试对象：create_bis_fetch_port（credit_gap 域）
+    目的/目标：port 产出 credit gap 证据包
+    验证点：data_domain==credit_gap；含 credit_to_gdp_gap
+    失败含义：BIS credit gap 域无 port 路径
+    """
+    from backend.app.datasources.fetch_ports.bis_port import create_bis_fetch_port
+    from backend.app.datasources.fetch_result import FetchRequest
+
+    port = create_bis_fetch_port(
+        countries=("US",),
+        max_rows=3,
+        data_domain="credit_gap",
+        use_mock=True,
+    )
+    req = FetchRequest(
+        run_id="r3h01-bis-credit",
+        source_id="bis",
+        data_domain="credit_gap",
+        instrument_id="US",
+    )
+    payload = port.fetch_payload(req)
+    body = json.loads(payload.content.decode("utf-8"))
+    assert body["data_domain"] == "credit_gap"
+    assert body["observations"][0].get("credit_to_gdp_gap") is not None
+
+
+def test_bis_port_replayFixture_policyRateCanonical() -> None:
+    """覆盖范围：BIS policy replay fixture 读路径
+    测试对象：tests/fixtures/replay/official_macro/bis/policy_rate_replay_bundle.json
+    目的/目标：replay 使用 observation_date + policy_rate
+    验证点：read_bis_policy_rate_evidence_bundle 往返
+    失败含义：BIS replay 路径缺失
+    """
+    from backend.app.datasources.normalizers.official_macro import read_bis_policy_rate_evidence_bundle
+
+    bundle = read_bis_policy_rate_evidence_bundle(_BIS_POLICY_REPLAY)
+    assert bundle["data_domain"] == "central_bank_policy"
+    for obs in bundle["observations"]:
+        assert obs.get("observation_date")
+        assert obs.get("country_code")
+
+
+def test_bis_port_route_disabledByDefault_unauthorized() -> None:
+    """覆盖范围：central_bank_policy 路由默认禁用
+    测试对象：SourceRoutePlanner + source_registry bis
+    目的/目标：enabled_by_default=false 时 route 为 DISABLED
+    验证点：route_status=DISABLED_SOURCE
+    失败含义：未配置 BIS 仍被 route 选为 production primary
+    """
+    from backend.app.datasources.capability_registry import SourceCapabilityRegistry
+    from backend.app.datasources.route_planner import SourceRoutePlanner
+    from backend.app.datasources.source_registry import SourceRegistry
+
+    registry = SourceRegistry()
+    registry.load()
+    capabilities = SourceCapabilityRegistry()
+    capabilities.load()
+    planner = SourceRoutePlanner(source_registry=registry, capability_registry=capabilities)
+    plan = planner.plan(
+        data_domain="central_bank_policy",
+        operation="fetch_policy_rate",
+        run_id="r3h01-bis-route",
+        job_id="bis-route-negative",
+    )
+    assert plan.route_status == "DISABLED_SOURCE"
+
+
+def test_world_bank_port_mockFetch_emitsIndicatorEvidence() -> None:
+    """覆盖范围：mock World Bank port 发展指标抓取
+    测试对象：create_world_bank_fetch_port
+    目的/目标：port 产出 World Bank 指标证据包
+    验证点：含 indicator_id、value、observation_date
+    失败含义：World Bank 源无 port 路径
+    """
+    from backend.app.datasources.fetch_ports.world_bank_port import create_world_bank_fetch_port
+    from backend.app.datasources.normalizers.official_macro import (
+        OFFICIAL_MACRO_EVIDENCE_SCHEMA_VERSION,
+    )
+
+    port = create_world_bank_fetch_port(
+        countries=("US",),
+        indicators=("NY.GDP.MKTP.CD",),
+        max_rows=3,
+        data_domain="development_indicator",
+        use_mock=True,
+    )
+    payload = port.fetch_payload(_world_bank_req())
+    body = json.loads(payload.content.decode("utf-8"))
+    assert body["schema_version"] == OFFICIAL_MACRO_EVIDENCE_SCHEMA_VERSION
+    assert body["data_domain"] == "development_indicator"
+    obs = body.get("observations") or []
+    assert obs[0].get("indicator_id")
+    assert obs[0].get("value") is not None
+
+
+def test_world_bank_port_indicatorWhitelist_rejectsUnknown() -> None:
+    """覆盖范围：World Bank indicator 白名单门禁
+    测试对象：WorldBankMockFetchPort
+    目的/目标：非白名单 indicator 在 port 层 fail-closed
+    验证点：UNKNOWN 抛出 PortError
+    失败含义：任意 indicator 可被 sandbox port 拉取
+    """
+    from backend.app.datasources.adapters.fetch_port import PortError
+    from backend.app.datasources.fetch_ports.world_bank_port import create_world_bank_fetch_port
+
+    port = create_world_bank_fetch_port(
+        countries=("US",),
+        indicators=("UNKNOWN.IND",),
+        max_rows=3,
+        data_domain="development_indicator",
+        use_mock=True,
+    )
+    with pytest.raises(PortError, match="whitelist"):
+        port.fetch_payload(_world_bank_req())
+
+
+def test_world_bank_port_replayFixture_canonical() -> None:
+    """覆盖范围：World Bank replay fixture 读路径
+    测试对象：tests/fixtures/replay/official_macro/world_bank/indicator_replay_bundle.json
+    目的/目标：replay 使用 observation_date + indicator_id
+    验证点：read_world_bank_indicator_evidence_bundle 往返
+    失败含义：World Bank replay 路径缺失
+    """
+    from backend.app.datasources.normalizers.official_macro import (
+        read_world_bank_indicator_evidence_bundle,
+    )
+
+    bundle = read_world_bank_indicator_evidence_bundle(_WORLD_BANK_REPLAY)
+    assert bundle["data_domain"] == "development_indicator"
+    for obs in bundle["observations"]:
+        assert obs.get("observation_date")
+        assert obs.get("indicator_id")
+
+
+def test_world_bank_port_route_disabledByDefault_unauthorized() -> None:
+    """覆盖范围：development_indicator 路由默认禁用
+    测试对象：SourceRoutePlanner + source_registry world_bank
+    目的/目标：enabled_by_default=false 时 route 为 DISABLED
+    验证点：route_status=DISABLED_SOURCE
+    失败含义：未配置 World Bank 仍被 route 选为 production primary
+    """
+    from backend.app.datasources.capability_registry import SourceCapabilityRegistry
+    from backend.app.datasources.route_planner import SourceRoutePlanner
+    from backend.app.datasources.source_registry import SourceRegistry
+
+    registry = SourceRegistry()
+    registry.load()
+    capabilities = SourceCapabilityRegistry()
+    capabilities.load()
+    planner = SourceRoutePlanner(source_registry=registry, capability_registry=capabilities)
+    plan = planner.plan(
+        data_domain="development_indicator",
+        operation="fetch_indicator_series",
+        run_id="r3h01-wb-route",
+        job_id="wb-route-negative",
+    )
+    assert plan.route_status == "DISABLED_SOURCE"
+
+
+def test_layer_smoke_fredReplay_layer1IngestionPreview() -> None:
+    """覆盖范围：FRED replay → Layer1 ingestion evidence 预览
+    测试对象：official_macro_bundle_layer1_preview + fred replay bundle
+    目的/目标：官方宏观证据可被 Layer1 摄取链消费（smoke，非 R3H-05 全审计）
+    验证点：preview 含 source_fetch_id、content_hash、sample_observation_date
+    失败含义：Layer1 无法绑定官方宏观 replay 证据指纹
+    """
+    from backend.app.datasources.normalizers.official_macro import read_fred_evidence_bundle
+    from backend.app.layer1_axes.ingestion_evidence import official_macro_bundle_layer1_preview
+
+    bundle = read_fred_evidence_bundle(_FRED_REPLAY)
+    preview = official_macro_bundle_layer1_preview(bundle)
+    assert preview["source_fetch_id"]
+    assert preview["content_hash"]
+    assert preview["observation_count"] >= 1
+    assert preview["sample_observation_date"]
+
+
+def test_layer_smoke_fredReplay_layer5FactualSourceProvenance() -> None:
+    """覆盖范围：FRED replay → Layer5 factual_source 溯源字段
+    测试对象：official_macro_bundle_layer5_provenance + EvidenceFoundationValidator
+    目的/目标：replay 行具备 Layer5 契约要求的 source_fetch_id/content_hash 溯源
+    验证点：provenance 非空；factual_source 记录通过 foundation 校验
+    失败含义：官方宏观证据无法挂接 Layer5 factual_source 链
+    """
+    from datetime import date
+
+    from backend.app.datasources.normalizers.official_macro import read_fred_evidence_bundle
+    from backend.app.layer1_axes.ingestion_evidence import official_macro_bundle_layer5_provenance
+    from backend.app.layer5_evidence.foundation import EvidenceFoundationValidator
+    from backend.app.layer5_evidence.models import (
+        EvidenceFoundationRecord,
+        EvidenceKind,
+        InstrumentEvidenceRef,
+        ManualReviewState,
+        SourceProvenance,
+    )
+
+    bundle = read_fred_evidence_bundle(_FRED_REPLAY)
+    prov_fields = official_macro_bundle_layer5_provenance(bundle)
+    assert prov_fields["source_fetch_ids"]
+    assert prov_fields["source_content_hashes"]
+
+    record = EvidenceFoundationRecord(
+        evidence_id="EV-R3H01-FRED-SMOKE",
+        target_id="MACRO-DGS10",
+        target_type="macro_indicator",
+        trade_date=date(2026, 6, 25),
+        evidence_kind=EvidenceKind.FACTUAL_SOURCE,
+        evidence_summary="DGS10 official macro replay smoke",
+        need_human_review=False,
+        manual_review_state=ManualReviewState.NOT_REQUIRED,
+        created_by="r3h01_layer_smoke",
+        instrument_ref=InstrumentEvidenceRef(
+            instrument_id="MACRO-DGS10",
+            symbol="DGS10",
+            asset_type="macro_series",
+            market_id="US",
+            exchange="FRED",
+            currency="USD",
+            is_active=True,
+        ),
+        provenance=SourceProvenance(
+            source_fetch_ids=prov_fields["source_fetch_ids"],
+            source_content_hashes=prov_fields["source_content_hashes"],
+        ),
+    )
+    EvidenceFoundationValidator().validate_record(record)
+
+
+def test_layer_smoke_secEdgarReplay_layer1AndLayer5Binding() -> None:
+    """覆盖范围：SEC EDGAR filings replay → Layer1/Layer5 smoke
+    测试对象：sec_edgar filings replay + layer preview/provenance helpers
+    目的/目标：披露证据同样可产出 Layer1 预览与 Layer5 溯源（双域 smoke 之一）
+    验证点：filings 包映射后 content_hash 与 source_fetch_id 非空
+    失败含义：披露源无法进入 Layer 证据链
+    """
+    from backend.app.datasources.normalizers.sec_edgar import read_filings_evidence_bundle
+    from backend.app.layer1_axes.ingestion_evidence import (
+        official_macro_bundle_layer1_preview,
+        official_macro_bundle_layer5_provenance,
+    )
+
+    bundle = read_filings_evidence_bundle(
+        PROJECT_ROOT / "tests/fixtures/replay/sec_edgar/filings_replay_bundle.json"
+    )
+    macro_shaped = {**bundle, "observations": bundle.get("filings") or []}
+    preview = official_macro_bundle_layer1_preview(macro_shaped)
+    prov = official_macro_bundle_layer5_provenance(bundle)
+    assert preview["content_hash"]
+    assert preview["source_fetch_id"]
+    assert prov["source_fetch_ids"]
+    assert prov["source_content_hashes"]
+

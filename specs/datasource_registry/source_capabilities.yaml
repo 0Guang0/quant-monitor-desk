@@ -313,7 +313,13 @@ sources:
             requires_auth: false
             enabled_by_default: false
   fred:
-    status: sandbox_candidate
+    status: READY_WITH_EVIDENCE
+    replay_fixture_path: tests/fixtures/replay/official_macro/fred/dgs10_replay_bundle.json
+    fetch_port_path: backend/app/datasources/fetch_ports/fred_port.py
+    resource_caps:
+      max_series: 10
+      max_rows_per_series: 500
+      max_window_days: 120
     domains:
       macro_series:
         operations:
@@ -333,7 +339,7 @@ sources:
             production_default: false
             pilot_only: true
             api_key_env: FRED_API_KEY
-    notes: "FRED-only sandbox pilot (B01-FRED); does not close B2.5-O-05 live primary; macro_supplementary cannot substitute."
+    notes: "R3H-01 READY_WITH_EVIDENCE; mock-first fred_port; FRED_API_KEY for live; enabled_by_default=false; replay: tests/fixtures/replay/official_macro/fred/"
   tdx_pytdx:
     status: proposed_disabled_source
     batch01_probe_decision: PROBE_PASS_RAW_ONLY
@@ -455,7 +461,12 @@ sources:
             enabled_by_default: false
             env_required: [XQSHARE_REMOTE_HOST, XQSHARE_REMOTE_PORT]
   us_treasury:
-    status: proposed_disabled_source
+    status: READY_WITH_EVIDENCE
+    replay_fixture_path: tests/fixtures/replay/official_macro/us_treasury/yield_curve_replay_bundle.json
+    fetch_port_path: backend/app/datasources/fetch_ports/us_treasury_port.py
+    resource_caps:
+      max_tenors: 20
+      max_rows: 500
     domains:
       us_treasury_yield_curve:
         operations:
@@ -489,8 +500,14 @@ sources:
             requires_auth: false
             enabled_by_default: false
             production_default: false
+    notes: "R3H-01 READY_WITH_EVIDENCE; mock-first us_treasury_port; replay: tests/fixtures/replay/official_macro/us_treasury/"
   sec_edgar:
-    status: proposed_disabled_source
+    status: READY_WITH_EVIDENCE
+    replay_fixture_path: tests/fixtures/replay/sec_edgar/filings_replay_bundle.json
+    fetch_port_path: backend/app/datasources/fetch_ports/sec_edgar_port.py
+    resource_caps:
+      max_ciks: 5
+      max_filings: 50
     domains:
       us_filings:
         operations:
@@ -532,8 +549,14 @@ sources:
             requires_identity_header: true
             enabled_by_default: false
             production_default: false
+    notes: "R3H-01 READY_WITH_EVIDENCE; SEC_EDGAR_USER_AGENT required for live; replay: tests/fixtures/replay/sec_edgar/"
   cftc_cot:
-    status: proposed_disabled_source
+    status: READY_WITH_EVIDENCE
+    replay_fixture_path: tests/fixtures/replay/official_macro/cftc_cot/cot_replay_bundle.json
+    fetch_port_path: backend/app/datasources/fetch_ports/cftc_cot_port.py
+    resource_caps:
+      max_markets: 5
+      max_rows: 52
     domains:
       cot_positioning:
         operations:
@@ -554,8 +577,14 @@ sources:
             enabled_by_default: false
             production_default: false
             notes: "Weekly official release; not realtime positioning."
+    notes: "R3H-01 READY_WITH_EVIDENCE; mock-first cftc_cot_port; replay: tests/fixtures/replay/official_macro/cftc_cot/"
   bis:
-    status: proposed_disabled_source
+    status: READY_WITH_EVIDENCE
+    replay_fixture_path: tests/fixtures/replay/official_macro/bis/policy_rate_replay_bundle.json
+    fetch_port_path: backend/app/datasources/fetch_ports/bis_port.py
+    resource_caps:
+      max_series: 10
+      max_countries: 5
     domains:
       central_bank_policy:
         operations:
@@ -588,8 +617,14 @@ sources:
             requires_auth: false
             enabled_by_default: false
             production_default: false
+    notes: "R3H-01 READY_WITH_EVIDENCE; mock-first bis_port; replay: tests/fixtures/replay/official_macro/bis/"
   world_bank:
-    status: proposed_disabled_source
+    status: READY_WITH_EVIDENCE
+    replay_fixture_path: tests/fixtures/replay/official_macro/world_bank/indicator_replay_bundle.json
+    fetch_port_path: backend/app/datasources/fetch_ports/world_bank_port.py
+    resource_caps:
+      max_indicators: 5
+      max_countries: 5
     domains:
       development_indicator:
         operations:

@@ -1,0 +1,22 @@
+{
+  "schema_version": "sec_edgar_evidence_v1",
+  "source_id": "sec_edgar",
+  "data_domain": "us_insider_form4",
+  "transactions": [
+    {
+      "accession_number": "0000320193-25-000100",
+      "cik": "0000320193",
+      "issuer_symbol": "AAPL",
+      "owner_name": "Cook Timothy D",
+      "transaction_date": "2025-10-15",
+      "transaction_code": "S",
+      "shares": "5000",
+      "price": "225.50",
+      "source_used": "sec_edgar"
+    }
+  ],
+  "source_fetch_id": "sec-edgar-replay-form4",
+  "content_hash": "sec-edgar-replay-hash-form4",
+  "as_of_timestamp": "2025-10-15T16:00:00Z",
+  "retrieved_at": "2025-10-15T16:00:00Z"
+}

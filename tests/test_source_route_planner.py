@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
 from backend.app.datasources.capability_registry import SourceCapabilityRegistry
 from backend.app.datasources.route_planner import SourceRoutePlanner
 from backend.app.datasources.source_registry import SourceRegistry
@@ -168,3 +169,39 @@ def test_etfDailyBar_disabledSource_marksYahooSkipWhenAuthorizationMissing() -> 
     yahoo = next(c for c in plan.candidates if c.source_id == "yahoo_finance")
     assert yahoo.skip_reason is not None
     assert "user_authorization" in yahoo.skip_reason or yahoo.skip_reason.startswith("missing_env:")
+
+
+_OFFICIAL_MACRO_ROUTE_CASES: tuple[tuple[str, str, str], ...] = (
+    ("fred", "macro_series", "fetch_macro_series"),
+    ("us_treasury", "us_treasury_yield_curve", "fetch_yield_curve"),
+    ("sec_edgar", "us_filings", "fetch_company_filings"),
+    ("cftc_cot", "cot_positioning", "fetch_cot_positioning"),
+    ("bis", "central_bank_policy", "fetch_policy_rate"),
+    ("world_bank", "development_indicator", "fetch_indicator_series"),
+)
+
+
+@pytest.mark.parametrize(("source_id", "data_domain", "operation"), _OFFICIAL_MACRO_ROUTE_CASES)
+def test_r3h01_officialMacroRoute_disabledByDefault(
+    source_id: str,
+    data_domain: str,
+    operation: str,
+) -> None:
+    """覆盖范围：R3H-01 六源默认禁用路由
+    测试对象：SourceRoutePlanner.plan（各官方宏观/披露域）
+    目的/目标：enabled_by_default=false 时 route 为 DISABLED，非 READY
+    验证点：route_status=DISABLED_SOURCE；对应 candidate enabled=False
+    失败含义：未显式启用的官方源被误选为 production primary
+    """
+    planner = production_route_planner()
+    plan = planner.plan(
+        data_domain=data_domain,
+        operation=operation,
+        run_id=f"r3h01-route-{source_id}",
+        job_id=f"route-{source_id}",
+    )
+    assert plan.route_status == "DISABLED_SOURCE"
+    assert plan.selected_source_id is None
+    candidate = next((c for c in plan.candidates if c.source_id == source_id), None)
+    assert candidate is not None
+    assert candidate.enabled is False

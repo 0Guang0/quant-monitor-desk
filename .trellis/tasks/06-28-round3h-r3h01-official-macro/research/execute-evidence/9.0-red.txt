@@ -1,0 +1,7 @@
+# Step 9.0 RED — boot_test_skeleton
+# Command: uv run pytest tests/test_official_macro_adapters.py -q
+# Date: 2026-06-28
+
+ERROR: file or directory not found: tests/test_official_macro_adapters.py
+
+Exit code: 4

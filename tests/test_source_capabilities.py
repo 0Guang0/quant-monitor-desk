@@ -268,3 +268,50 @@ def test_capabilityRegistry_rejectsProposedDisabledSource() -> None:
         reg.assert_source_domain_operation(
             "qmt_xqshare", "cn_equity_realtime", "fetch_realtime_quote_remote"
         )
+
+
+R3H01_OFFICIAL_MACRO_SOURCES: tuple[str, ...] = (
+    "fred",
+    "us_treasury",
+    "sec_edgar",
+    "cftc_cot",
+    "bis",
+    "world_bank",
+)
+
+
+def test_r3h01_officialMacroSources_readyWithEvidenceStatus() -> None:
+    """覆盖范围：R3H-01 六源 registry 终态
+    测试对象：source_capabilities.yaml 中 fred/us_treasury/sec_edgar/cftc_cot/bis/world_bank
+    目的/目标：六源不得停留在 proposed_disabled_source，须 READY_WITH_EVIDENCE
+    验证点：status==READY_WITH_EVIDENCE；replay_fixture_path 非空
+    失败含义：Batch 3H 官方源仍以 vague proposed-disabled 占位
+    """
+    capabilities = load_source_capabilities()
+    sources = capabilities.get("sources") or {}
+    for source_id in R3H01_OFFICIAL_MACRO_SOURCES:
+        entry = sources.get(source_id) or {}
+        assert entry.get("status") == "READY_WITH_EVIDENCE", source_id
+        assert entry.get("replay_fixture_path"), source_id
+
+
+def test_r3h01_officialMacroSources_notProposedDisabledAtRuntime() -> None:
+    """覆盖范围：R3H-01 六源 capability registry 运行时门禁
+    测试对象：SourceCapabilityRegistry.assert_source_domain_operation
+    目的/目标：READY 源不应因 proposed_disabled_source 被整体拒绝
+    验证点：抛 OperationDisabledError 时消息为 operation disabled，非 proposed_disabled_source
+    失败含义：registry 已 READY 但 runtime 仍按 proposed-disabled 拒绝
+    """
+    reg = SourceCapabilityRegistry()
+    reg.load()
+    checks = [
+        ("fred", "macro_series", "fetch_macro_series"),
+        ("us_treasury", "us_treasury_yield_curve", "fetch_yield_curve"),
+        ("sec_edgar", "us_filings", "fetch_company_filings"),
+        ("cftc_cot", "cot_positioning", "fetch_cot_positioning"),
+        ("bis", "central_bank_policy", "fetch_policy_rate"),
+        ("world_bank", "development_indicator", "fetch_indicator_series"),
+    ]
+    for source_id, domain, operation in checks:
+        with pytest.raises(OperationDisabledError, match="disabled for"):
+            reg.assert_source_domain_operation(source_id, domain, operation)

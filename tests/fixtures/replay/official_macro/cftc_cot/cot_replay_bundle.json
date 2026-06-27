@@ -1,0 +1,20 @@
+{
+  "schema_version": "official_macro_evidence_v1",
+  "source_id": "cftc_cot",
+  "data_domain": "cot_positioning",
+  "observations": [
+    {
+      "market_code": "088691",
+      "report_date": "2025-10-28",
+      "trader_category": "Noncommercial",
+      "long_contracts": "150000",
+      "short_contracts": "120000",
+      "spread_contracts": "8000",
+      "source_used": "cftc_cot"
+    }
+  ],
+  "source_fetch_id": "cftc-replay-cot",
+  "content_hash": "cftc-replay-hash-cot",
+  "as_of_timestamp": "2025-10-28T16:00:00Z",
+  "retrieved_at": "2025-10-28T16:00:00Z"
+}

@@ -1,0 +1,29 @@
+{
+  "schema_version": "sec_edgar_evidence_v1",
+  "source_id": "sec_edgar",
+  "data_domain": "us_filings",
+  "filings": [
+    {
+      "accession_number": "0000320193-25-000079",
+      "cik": "0000320193",
+      "form_type": "10-K",
+      "filing_date": "2025-11-01",
+      "report_date": "2025-09-27",
+      "primary_document_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+      "source_used": "sec_edgar"
+    },
+    {
+      "accession_number": "0000320193-25-000056",
+      "cik": "0000320193",
+      "form_type": "10-Q",
+      "filing_date": "2025-08-01",
+      "report_date": "2025-06-28",
+      "primary_document_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000056/aapl-20250628.htm",
+      "source_used": "sec_edgar"
+    }
+  ],
+  "source_fetch_id": "sec-edgar-replay-filings",
+  "content_hash": "sec-edgar-replay-hash-filings",
+  "as_of_timestamp": "2025-11-01T12:00:00Z",
+  "retrieved_at": "2025-11-01T12:00:00Z"
+}

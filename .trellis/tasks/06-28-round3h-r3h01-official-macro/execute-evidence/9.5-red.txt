@@ -1,0 +1,2 @@
+12 tests would fail ModuleNotFoundError before port/normalizer/fixture delivery:
+cftc_cot_port, bis_port, world_bank_port + official_macro bundle builders

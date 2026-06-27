@@ -1,0 +1,19 @@
+{
+  "schema_version": "official_macro_evidence_v1",
+  "source_id": "world_bank",
+  "data_domain": "development_indicator",
+  "observations": [
+    {
+      "country_code": "US",
+      "indicator_id": "NY.GDP.MKTP.CD",
+      "observation_date": "2024-01-01",
+      "value": "27360000000000",
+      "unit": "USD",
+      "source_used": "world_bank"
+    }
+  ],
+  "source_fetch_id": "wb-replay-indicator",
+  "content_hash": "wb-replay-hash-indicator",
+  "as_of_timestamp": "2024-01-01T12:00:00Z",
+  "retrieved_at": "2024-01-01T12:00:00Z"
+}

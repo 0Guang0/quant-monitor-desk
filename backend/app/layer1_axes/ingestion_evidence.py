@@ -466,6 +466,32 @@ def capture_task_phase4_evidence(
     return payload
 
 
+def official_macro_bundle_layer1_preview(bundle: dict[str, Any]) -> dict[str, Any]:
+    """Map official_macro_evidence_v1 to minimal Layer1 ingestion evidence preview (R3H-01 §9.7)."""
+    observations = bundle.get("observations") or []
+    sample = observations[0] if observations else {}
+    return {
+        "source_id": bundle.get("source_id"),
+        "data_domain": bundle.get("data_domain") or bundle.get("series_id"),
+        "source_fetch_id": bundle.get("source_fetch_id"),
+        "content_hash": bundle.get("content_hash"),
+        "as_of_timestamp": bundle.get("as_of_timestamp"),
+        "retrieved_at": bundle.get("retrieved_at"),
+        "observation_count": len(observations),
+        "sample_observation_date": sample.get("observation_date") or sample.get("report_date"),
+    }
+
+
+def official_macro_bundle_layer5_provenance(bundle: dict[str, Any]) -> dict[str, Any]:
+    """Extract Layer5 factual_source provenance fields from official macro replay bundle."""
+    fetch_id = str(bundle.get("source_fetch_id") or "")
+    content_hash = str(bundle.get("content_hash") or "")
+    return {
+        "source_fetch_ids": (fetch_id,) if fetch_id else (),
+        "source_content_hashes": (content_hash,) if content_hash else (),
+    }
+
+
 __all__ = [
     "NO_MUTATION_MD",
     "PHASE2_MUTATION_TABLES",
@@ -489,4 +515,6 @@ __all__ = [
     "format_phase2_route_preview_md",
     "format_phase3_no_clean_write_md",
     "format_phase4_inventory_delta_md",
+    "official_macro_bundle_layer1_preview",
+    "official_macro_bundle_layer5_provenance",
 ]

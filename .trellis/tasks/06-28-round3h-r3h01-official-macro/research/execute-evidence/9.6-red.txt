@@ -1,0 +1,4 @@
+no tests collected (exit code 5)
+-k "fred or treasury or sec_edgar or cftc or bis or world_bank" matches zero tests in:
+  tests/test_source_route_planner.py
+  tests/test_source_capabilities.py

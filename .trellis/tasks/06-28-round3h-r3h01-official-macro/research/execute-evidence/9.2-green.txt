@@ -1,0 +1,15 @@
+# Step 9.2 GREEN — fred_fetch_port
+# Command: uv run pytest tests/test_official_macro_adapters.py -q -k fred_port
+# Date: 2026-06-28
+
+.......                                                                  [100%]
+7 passed
+
+Exit code: 0
+
+Implementation:
+- backend/app/datasources/fetch_ports/fred_port.py (new L2 port)
+- backend/app/ops/fred_fetch_ports.py → thin re-export
+- backend/app/ops/fred_sandbox_pilot.py → observations compat for v1 bundle
+- tests/fixtures/replay/official_macro/fred/dgs10_replay_bundle.json
+- tests/test_official_macro_adapters.py → 7 fred_port tests

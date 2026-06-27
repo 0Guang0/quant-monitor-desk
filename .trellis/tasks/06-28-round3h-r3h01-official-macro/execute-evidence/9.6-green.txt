@@ -1,0 +1,2 @@
+......                                                                   [100%]
+8 passed (2 capabilities + 6 route parametrized)

@@ -152,7 +152,7 @@ providers:
     allowed_domains:
       - macro_series
     enabled_by_default: false
-    status: sandbox_candidate
+    status: READY_WITH_EVIDENCE
     production_default_candidate: false
     production_default_enabled: false
     requires_user_authorization: true
@@ -172,7 +172,7 @@ providers:
       - us_treasury_yield_curve
       - inflation_expectation
     enabled_by_default: false
-    status: proposed_disabled_source
+    status: READY_WITH_EVIDENCE
     production_default_candidate: false
     production_default_enabled: false
     requires_user_authorization: false
@@ -194,7 +194,7 @@ providers:
       - us_filings
       - us_insider_form4
     enabled_by_default: false
-    status: proposed_disabled_source
+    status: READY_WITH_EVIDENCE
     production_default_candidate: false
     production_default_enabled: false
     requires_user_authorization: false
@@ -213,7 +213,7 @@ providers:
     allowed_domains:
       - cot_positioning
     enabled_by_default: false
-    status: proposed_disabled_source
+    status: READY_WITH_EVIDENCE
     production_default_candidate: false
     production_default_enabled: false
     requires_user_authorization: false
@@ -233,7 +233,7 @@ providers:
       - central_bank_policy
       - credit_gap
     enabled_by_default: false
-    status: proposed_disabled_source
+    status: READY_WITH_EVIDENCE
     production_default_candidate: false
     production_default_enabled: false
     requires_user_authorization: false
@@ -253,7 +253,7 @@ providers:
       - development_indicator
       - global_macro_reference
     enabled_by_default: false
-    status: proposed_disabled_source
+    status: READY_WITH_EVIDENCE
     production_default_candidate: false
     production_default_enabled: false
     requires_user_authorization: false

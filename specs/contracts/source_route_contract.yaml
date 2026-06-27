@@ -55,4 +55,5 @@ required_tests:
   - tests/test_source_route_planner.py::test_qmtDisabled_routePlanShowsSkipReason
   - tests/test_source_route_planner.py::test_noAvailableSource_hasNoSelectedSource
   - tests/test_source_route_planner.py::test_fallbackAddsQualityFlag
+  - tests/test_source_route_planner.py::test_r3h01_officialMacroRoute_disabledByDefault
   - tests/test_sync_orchestrator.py::test_plannedJobWritesRoutePlanBeforeFetching
