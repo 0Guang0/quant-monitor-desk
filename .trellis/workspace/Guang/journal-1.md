@@ -399,3 +399,35 @@ Batch 3F-R CLOSED @ R3FR-07; Round 3G unlocked; audit PASS; merged to master.
 ### Next Steps
 
 - None - task complete
+
+## Session 13: R3G-01 Sandbox Clean-Write Rehearsal
+
+**Date**: 2026-06-27
+**Task**: R3G-01 Sandbox Clean-Write Rehearsal
+**Branch**: `feature/round3g-sandbox-rehearsal`
+
+### Summary
+
+Delivered sandbox clean-write rehearsal module (plan/loader/runner/report), CLI rehearse command, DH gate admission, per-source rollback/route_plan, contract v1_1. Audit P0-P3 all CLOSED; 40 R3G tests; full pytest green.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash       | Message       |
+| ---------- | ------------- |
+| `4aa6a1c3` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

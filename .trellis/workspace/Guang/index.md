@@ -9,7 +9,7 @@
 <!-- @@@auto:current-status -->
 
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 12
+- **Total Sessions**: 13
 - **Last Active**: 2026-06-27
 <!-- @@@/auto:current-status -->
 
@@ -21,7 +21,7 @@
 
 | File           | Lines | Status |
 | -------------- | ----- | ------ |
-| `journal-1.md` | ~402  | Active |
+| `journal-1.md` | ~434  | Active |
 
 <!-- @@@/auto:active-documents -->
 
@@ -33,6 +33,7 @@
 
 | #   | Date       | Title                                                | Commits                                                                     | Branch                                                  |
 | --- | ---------- | ---------------------------------------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------- |
+| 13  | 2026-06-27 | R3G-01 Sandbox Clean-Write Rehearsal                 | `4aa6a1c3`                                                                  | `feature/round3g-sandbox-rehearsal`                     |
 | 12  | 2026-06-27 | R3FR-07 finish-work                                  | `6134b5b3`, `e88791d1`                                                      | `master`                                                |
 | 11  | 2026-06-27 | R3FR-03 TDX Provider Refactor                        | `407f4aa2`, `71a41389`                                                      | `refactor/round3fr-tdx-provider`                        |
 | 10  | 2026-06-24 | 测试卫生临时批次完成                                 | `0cc9da92`, `86d2068e`                                                      | `master`                                                |
