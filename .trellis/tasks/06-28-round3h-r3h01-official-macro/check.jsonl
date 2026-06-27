@@ -1,0 +1,10 @@
+{"file": ".trellis/tasks/06-28-round3h-r3h01-official-macro/frozen/R3H_01_OFFICIAL_MACRO_DISCLOSURE_ADAPTERS.md", "reason": "extract: spec scope | for: A1 trellis-check"}
+{"file": ".trellis/tasks/06-28-round3h-r3h01-official-macro/EXECUTION_INDEX.md", "reason": "extract: manifest trace | for: A1"}
+{"file": "specs/contracts/reference_adoption_guardrails.yaml", "reason": "extract: L1/L2 | for: 9.2"}
+{"file": "specs/contracts/layer5_evidence_contract.yaml", "reason": "extract: Layer5 smoke | for: 9.7"}
+{"file": "specs/contracts/data_quality_rules.yaml", "reason": "extract: DQ | for: 9.1"}
+{"file": "specs/contracts/source_capability_contract.yaml", "reason": "extract: port 契约 | for: 9.2"}
+{"file": "specs/contracts/source_route_contract.yaml", "reason": "extract: route | for: 9.6"}
+{"file": "specs/contracts/datasource_service_contract.yaml", "reason": "extract: DSS | for: 9.2"}
+{"file": "PROJECT_IMPLEMENTATION_ROADMAP.md", "reason": "extract: §5.0 | for: A1 audit-only"}
+{"file": "MODULE_COMPLETION_RATING.md", "reason": "extract: 完成度 | for: A1 audit-only"}

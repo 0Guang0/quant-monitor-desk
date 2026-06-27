@@ -24,6 +24,9 @@ _PRD_THIN_MAX_LINES = 25
 # research drafts that must appear in plan-consolidation.md when present
 _CONSOLIDATION_DRAFTS = (
     "plan-boot.md",
+    "brainstorm-session.md",
+    "spec-driven-development-notes.md",
+    "to-issues-slices.md",
     "project-overview.md",
     "grill-me-session.md",
     "interview-me-session.md",
@@ -33,6 +36,12 @@ _CONSOLIDATION_DRAFTS = (
     "integration-audit.md",
 )
 _CONSOLIDATION_STATUS = re.compile(r"\b(merged|pointer|n/a)\b", re.IGNORECASE)
+# Execute never reads these; pointer is only for Audit-phase trace (e.g. integration-audit).
+_POINTER_ALLOWED_DRAFTS = frozenset({"integration-audit.md"})
+_TRIAD_EXECUTE_HINT = re.compile(
+    r"(三件套|execute\s*不读|execute\s*禁止读|plan-only\s*草稿|plan\s*draft)",
+    re.IGNORECASE,
+)
 
 
 def _extract_section(text: str, header_prefix: str) -> str:
@@ -410,6 +419,16 @@ def validate_plan_phase(task_dir: Path, phase: str, *, repo_root: Path | None = 
     return errors
 
 
+def _consolidation_status_for_draft(consolidation_text: str, draft_name: str) -> str | None:
+    for line in consolidation_text.splitlines():
+        if draft_name not in line or "|" not in line:
+            continue
+        match = _CONSOLIDATION_STATUS.search(line)
+        if match:
+            return match.group(1).lower()
+    return None
+
+
 def _consolidation_table_rows(sec4: str) -> list[str]:
     rows: list[str] = []
     for line in sec4.splitlines():
@@ -435,22 +454,50 @@ def _validate_plan_consolidation_v4(task_dir: Path, errors: list[str]) -> None:
         errors.append(f"plan-consolidation.md must contain {_CONSOLIDATION_MARKER!r}")
 
     research = task_dir / "research"
+    index_path = task_dir / "EXECUTION_INDEX.md"
+    index_text = index_path.read_text(encoding="utf-8") if index_path.is_file() else ""
+    sec4 = _extract_section(index_text, "4.")
+    sec6 = _extract_section(index_text, "6.")
+    present_drafts: list[str] = []
+
     for name in _CONSOLIDATION_DRAFTS:
         if not (research / name).is_file():
             continue
+        present_drafts.append(name)
         if name not in text:
             errors.append(
                 f"plan-consolidation.md must list research/{name} with merged|pointer|n/a"
             )
             continue
-        status_ok = any(
-            name in line and _CONSOLIDATION_STATUS.search(line)
-            for line in text.splitlines()
-        )
-        if not status_ok:
+        status = _consolidation_status_for_draft(text, name)
+        if status is None:
             errors.append(
                 f"plan-consolidation.md: research/{name} missing status merged|pointer|n/a"
             )
+            continue
+        if status == "pointer" and name not in _POINTER_ALLOWED_DRAFTS:
+            errors.append(
+                f"Triad gate: research/{name} marked pointer; "
+                "merge into frozen (INDEX §4) or INDEX §3 must-read"
+            )
+        elif status == "merged" and sec4:
+            stem = name.removesuffix(".md")
+            if name not in sec4 and stem not in sec4:
+                errors.append(
+                    f"Triad gate: research/{name} merged but missing from INDEX §4"
+                )
+
+    for rel in _paths_from_jsonl(task_dir / "implement.jsonl"):
+        norm = rel.replace("\\", "/")
+        if norm.startswith("research/") or "/research/" in norm:
+            errors.append(
+                f"Triad gate: implement.jsonl must not list Plan draft {rel!r}"
+            )
+
+    if present_drafts and index_text and not _TRIAD_EXECUTE_HINT.search(f"{sec4}\n{sec6}"):
+        errors.append(
+            "Triad gate: INDEX §4 or §6 must state Execute does not read research/*"
+        )
 
     audit_path = research / "integration-audit.md"
     if audit_path.is_file() and "PASS_WITH_GAPS" in audit_path.read_text(encoding="utf-8"):

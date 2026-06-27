@@ -38,10 +38,11 @@ description: "Complex-task Plan. MUST Read when status=planning. Blocks freeze u
 ### Phase 5e（冻结前必做）
 
 1. 填 `research/plan-consolidation.md`（模板），文末 **`Phase 5e complete`**
-2. **可无损总结** → 写入**活任务卡**（`freeze-task-card` 后进 frozen）
-3. **不可精简** → `EXECUTION_INDEX` §3 `must-read`；已内联 → §4 登记
+2. **可无损总结** → 写入**活任务卡**（`freeze-task-card` 后进 frozen）+ **INDEX §4** 登记
+3. **不可精简** → `EXECUTION_INDEX` §3 `must-read`；**禁止**把路径只留在 `research/*`
 4. **`prd.md`** 压成薄索引（`thin-index: true` 或 ≤25 行且引用 `frozen/`）
 5. **禁止**把仅存在于 `research/*` 的可执行决策交付 Execute
+6. 按 `templates/research/plan-consolidation.md` 分流表 + 文末自检；`validate-plan-freeze` **Triad gate**（协议 §5e.1）
 
 ## 冻结（v4 三件套 · 仅在 5e 之后）
 

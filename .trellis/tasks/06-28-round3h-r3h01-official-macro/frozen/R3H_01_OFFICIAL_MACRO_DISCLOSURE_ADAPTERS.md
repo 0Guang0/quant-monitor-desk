@@ -1,3 +1,5 @@
+<!-- FROZEN: Plan protocol v4 · do not edit · source: docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/R3H_01_OFFICIAL_MACRO_DISCLOSURE_ADAPTERS.md · frozen_at: 2026-06-27T16:28:04Z -->
+
 # R3H-01 — Official Macro and Disclosure Adapters
 
 ## 1. Goal

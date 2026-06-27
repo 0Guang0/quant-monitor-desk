@@ -83,6 +83,8 @@ P0i：索引完整
 | 来源 | 并入 | 摘要 |
 | plan-boot | n/a | minimal |
 
+> Execute **不读** `research/*` Plan 草稿（三件套）。
+
 ## 5. Audit 追溯集
 | frozen | frozen/x.md |
 """,
@@ -238,6 +240,25 @@ def test_validatePlanFreeze_v4_rejectsFatPrd(tmp_path: Path) -> None:
     (tmp_path / "prd.md").write_text("# " + "x\n" * 40, encoding="utf-8")
     errors = validate_plan_freeze(tmp_path, _REPO)
     assert any("thin index" in e for e in errors)
+
+
+def test_validatePlanFreeze_v4_triadGate_rejectsPointerOnSpecNotes(tmp_path: Path) -> None:
+    """覆盖范围：Phase 5e.1 三件套 Triad gate
+    测试对象：validate_plan_freeze（v4）
+    目的/目标：可执行决策草稿不得标 pointer
+    验证点：errors 含 Triad gate 与 spec-driven
+    失败含义：Execute 会漏读契约映射仍被允许冻结
+    """
+    _v4_minimal(tmp_path)
+    research = tmp_path / "research"
+    (research / "spec-driven-development-notes.md").write_text("contract map\n", encoding="utf-8")
+    (research / "plan-consolidation.md").write_text(
+        "| spec-driven-development-notes.md | contract | pointer |\n"
+        "Phase 5e complete\n",
+        encoding="utf-8",
+    )
+    errors = validate_plan_freeze(tmp_path, _REPO)
+    assert any("Triad gate" in e and "spec-driven" in e for e in errors)
 
 
 def test_examplePlanV4_passesValidatePlanFreeze() -> None:

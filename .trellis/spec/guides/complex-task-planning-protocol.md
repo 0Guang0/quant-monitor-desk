@@ -369,7 +369,9 @@ Trellis 命令与 hook 细节见 `.trellis/workflow.md`；`task.py start` = Plan
 | **5d** | **doubt-driven-development**（addy，**必做**，主会话） | 对抗审查 §6–8；修订 MASTER §7/§8/§12 + **AUDIT §1/§2**；记录 **plan.freeze.md**       |
 | **5e** | **trellis-plan**（**必做**，主会话）                   | **`research/plan-consolidation.md`**；可执行结论 → 活任务卡 + INDEX §4/§3；薄 **prd** |
 
-**5e 必做（v4）：** `freeze-task-card` **之前**合并 research 草稿；Execute 不读 plan-boot/grill-me 等。机械门：`validate-plan-freeze` 检查 `plan-consolidation.md` + 薄 prd + INDEX §4。
+**5e 必做（v4）：** `freeze-task-card` **之前**合并 research 草稿；Execute 不读 plan-boot/grill-me 等。机械门：`validate-plan-freeze` 检查 `plan-consolidation.md` + 薄 prd + INDEX §4 + **三件套完备性（Triad gate）**。
+
+**5e.1 三件套完备性：** 主会话按 `templates/research/plan-consolidation.md` 分流 + 自检；机械门在 `validate-plan-freeze` → `_validate_plan_consolidation_v4`（`pointer` 禁令、`merged`→INDEX §4、`implement.jsonl` 无 `research/*`、§4/§6 写明 Execute 不读 research）。5d 审架构；5e.1 审 research→三件套遗漏。
 
 **5d 必做说明：** 冻结前 fresh-context 对抗审查（CLAIM → DOUBT → RECONCILE）。须主会话；子 agent 不可执行 5d。
 

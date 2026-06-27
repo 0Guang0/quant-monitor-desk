@@ -172,14 +172,14 @@ python .trellis/scripts/task.py validate-plan-freeze .trellis/tasks/<slug>
 
 ### 3.0e Plan consolidation（v4 · Phase 5e · `freeze-task-card` 之前）
 
-| ✓   | 检查项                                                                 |
-| --- | ---------------------------------------------------------------------- |
-| [ ] | `research/plan-consolidation.md` 存在且含 **`Phase 5e complete`**      |
-| [ ] | 表中每个已存在的 `research/*` 草稿有 `merged` / `pointer` / `n/a` 落点 |
-| [ ] | 可执行结论已写入**活任务卡**（非仅 plan-boot / grill-me）              |
-| [ ] | `EXECUTION_INDEX.md` §4 已填（有 research 草稿时不得空）               |
-| [ ] | `prd.md` 为薄索引（`thin-index: true` 或 ≤25 行且含 `frozen/`）        |
-| [ ] | `validate-plan-freeze` 含 5e 机械检查 exit 0                           |
+| ✓   | 检查项                                                                                      |
+| --- | ------------------------------------------------------------------------------------------- |
+| [ ] | `research/plan-consolidation.md` 存在且含 **`Phase 5e complete`**                           |
+| [ ] | 表中每个已存在的 `research/*` 草稿有 `merged` / `pointer` / `n/a` 落点                      |
+| [ ] | 可执行结论已写入**活任务卡**（非仅 plan-boot / grill-me）                                   |
+| [ ] | `EXECUTION_INDEX.md` §4 已填（有 research 草稿时不得空）                                    |
+| [ ] | `prd.md` 为薄索引（`thin-index: true` 或 ≤25 行且含 `frozen/`）                             |
+| [ ] | `validate-plan-freeze` exit 0（含 5e + **Triad gate**：pointer/§4/implement/不读 research） |
 
 ### 3.6 validate-plan-freeze（机器门禁）
 

@@ -30,6 +30,8 @@
 
 ## 4. 已并入冻结任务卡
 
+> Execute **不读** `research/*` Plan 草稿（三件套：frozen + 本文 + implement.jsonl）。
+
 | 来源      | 并入 | 摘要           |
 | --------- | ---- | -------------- |
 | plan-boot | —    | 样板无额外内联 |
