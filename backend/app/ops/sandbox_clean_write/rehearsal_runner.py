@@ -20,7 +20,10 @@ from backend.app.ops.data_health import DataHealthReport, DataHealthService
 from backend.app.ops.data_health_profiles import run_data_health_profile
 from backend.app.ops.mutation_proof import build_production_mutation_proof
 from backend.app.ops.mutation_proof import key_table_row_counts as _key_table_row_counts
-from backend.app.ops.sandbox_clean_write.rehearsal_loader import load_rehearsal_bundle
+from backend.app.ops.sandbox_clean_write.rehearsal_loader import (
+    load_rehearsal_bundle,
+    populate_staging_from_bundle,
+)
 from backend.app.ops.sandbox_clean_write.rehearsal_plan import (
     RehearsalCandidate,
     RehearsalPlanError,
@@ -100,7 +103,7 @@ def _run_source_data_health(
     *,
     max_rows: int = 1000,
 ):
-    if candidate.source_id == "baostock":
+    if candidate.source_id in {"baostock", "akshare", "yahoo_finance"}:
         report, *_ = run_data_health_profile(
             profile_id="market_bar_p0",
             domain="market_bar_1d",
@@ -215,7 +218,7 @@ def _sandbox_clean_write(
     *,
     sandbox_db: Path,
     candidate: RehearsalCandidate,
-    bundle_symbol: str,
+    bundle,
     run_id: str,
     dh_report: DataHealthReport,
 ) -> tuple[str, int]:
@@ -225,14 +228,14 @@ def _sandbox_clean_write(
         apply_migrations(con)
         _ensure_clean_table(con)
         validation_report_id = _ensure_validation_report(con, candidate, run_id, dh_report)
-        con.execute("DELETE FROM stg_foundation_smoke")
-        con.execute(
-            """
-            INSERT INTO stg_foundation_smoke
-            (instrument_id, trade_date, close, source_used, batch_id)
-            VALUES (?, ?, ?, ?, ?)
-            """,
-            [bundle_symbol, "2024-01-02", 10.0, candidate.source_id, REHEARSAL_ID],
+        populate_staging_from_bundle(
+            con,
+            bundle,
+            batch_id=REHEARSAL_ID,
+            max_rows=max(1, bundle.staged_row_count),
+            start_date=bundle.window_start if bundle.window_start != "unknown" else None,
+            end_date=bundle.window_end if bundle.window_end != "unknown" else None,
+            allow_window_fallback=True,
         )
         gate = DbValidationGate(cm)
         wm = WriteManager(cm, gate)
@@ -336,11 +339,10 @@ def _process_candidate(
     dh_report = _run_source_data_health(candidate, bundle.evidence_dir)
     _assert_data_health_admission(dh_report, candidate.source_id)
     dh_summary = build_data_health_summary(dh_report)
-    symbol = candidate.symbols_or_series[0]
     write_id, clean_rows = _sandbox_clean_write(
         sandbox_db=request.sandbox_db,
         candidate=candidate,
-        bundle_symbol=symbol,
+        bundle=bundle,
         run_id=run_id,
         dh_report=dh_report,
     )

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
+from datetime import date, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -18,6 +19,8 @@ FIXTURE_EVIDENCE_DIRS: dict[str, Path] = {
     "baostock": PROJECT_ROOT / "tests/fixtures/sandbox_clean_write/r3g01/baostock",
     "cninfo": PROJECT_ROOT / "tests/fixtures/sandbox_clean_write/r3g01/cninfo",
     "fred": PROJECT_ROOT / "tests/fixtures/sandbox_clean_write/r3g01/fred",
+    "akshare": PROJECT_ROOT / "tests/fixtures/sandbox_clean_write/r3g01/akshare",
+    "yahoo_finance": PROJECT_ROOT / "tests/fixtures/sandbox_clean_write/r3g01/yahoo_finance",
 }
 
 
@@ -40,6 +43,198 @@ class RehearsalDataBundle:
     evidence_dir: Path
 
 
+@dataclass(frozen=True)
+class StagingRow:
+    instrument_id: str
+    trade_date: str
+    close: float
+    source_used: str
+    batch_id: str
+
+
+def _in_date_window(trade_date: str, start_date: str | None, end_date: str | None) -> bool:
+    if start_date and trade_date < start_date:
+        return False
+    if end_date and trade_date > end_date:
+        return False
+    return True
+
+
+def _baostock_staging_rows(
+    bundle: RehearsalDataBundle,
+    *,
+    batch_id: str,
+    max_rows: int,
+    start_date: str | None,
+    end_date: str | None,
+) -> list[StagingRow]:
+    bars_path = bundle.evidence_dir / "bars.json"
+    bars = json.loads(bars_path.read_text(encoding="utf-8"))
+    if isinstance(bars, dict):
+        bars = bars.get("rows") or []
+    allowed = set(bundle.symbols_or_series)
+    rows: list[StagingRow] = []
+    for row in bars:
+        if len(rows) >= max_rows:
+            break
+        inst = str(row.get("instrument_id") or row.get("symbol") or "")
+        if inst not in allowed:
+            continue
+        trade_date = str(row.get("trade_date") or "")
+        if not trade_date or not _in_date_window(trade_date, start_date, end_date):
+            continue
+        rows.append(
+            StagingRow(
+                instrument_id=inst,
+                trade_date=trade_date,
+                close=float(row.get("close") or 0.0),
+                source_used=bundle.source_id,
+                batch_id=batch_id,
+            )
+        )
+    return rows
+
+
+def _fred_staging_rows(
+    bundle: RehearsalDataBundle,
+    *,
+    batch_id: str,
+    max_rows: int,
+    start_date: str | None,
+    end_date: str | None,
+) -> list[StagingRow]:
+    payload = json.loads((bundle.evidence_dir / "fred_evidence.json").read_text(encoding="utf-8"))
+    series_id = str(payload.get("series_id") or bundle.symbols_or_series[0])
+    if series_id not in bundle.symbols_or_series:
+        series_id = bundle.symbols_or_series[0]
+    rows: list[StagingRow] = []
+    for obs in payload.get("observations") or []:
+        if len(rows) >= max_rows:
+            break
+        trade_date = str(obs.get("date") or obs.get("observation_date") or "")
+        if not trade_date or not _in_date_window(trade_date, start_date, end_date):
+            continue
+        inst = str(obs.get("series_id") or series_id)
+        if inst not in bundle.symbols_or_series:
+            continue
+        rows.append(
+            StagingRow(
+                instrument_id=inst,
+                trade_date=trade_date,
+                close=float(obs.get("value") or 0.0),
+                source_used=bundle.source_id,
+                batch_id=batch_id,
+            )
+        )
+    return rows
+
+
+def _cninfo_staging_rows(
+    bundle: RehearsalDataBundle,
+    *,
+    batch_id: str,
+    max_rows: int,
+    start_date: str | None,
+    end_date: str | None,
+) -> list[StagingRow]:
+    # ponytail: cninfo manifest has row_count only; synthetic dates for rehearsal cap
+    manifest = json.loads(
+        (bundle.evidence_dir / "pilot_v3_manifest.json").read_text(encoding="utf-8")
+    )
+    fetches = manifest.get("fetches") or []
+    cninfo = next(
+        (f for f in fetches if (f.get("request") or {}).get("source_id") == "cninfo"),
+        None,
+    )
+    row_count = int((cninfo or {}).get("row_count") or bundle.staged_row_count or 0)
+    row_count = min(row_count, max_rows)
+    if row_count <= 0:
+        return []
+    symbols = bundle.symbols_or_series or ("cninfo",)
+    win_start = start_date or bundle.window_start
+    if win_start == "unknown":
+        win_start = "2024-01-01"
+    base = date.fromisoformat(win_start)
+    rows: list[StagingRow] = []
+    for i in range(row_count):
+        inst = symbols[i % len(symbols)]
+        trade_date = (base + timedelta(days=i)).isoformat()
+        if not _in_date_window(trade_date, start_date, end_date):
+            continue
+        rows.append(
+            StagingRow(
+                instrument_id=inst,
+                trade_date=trade_date,
+                close=float(i + 1),
+                source_used=bundle.source_id,
+                batch_id=batch_id,
+            )
+        )
+    return rows
+
+
+_STAGING_ROW_BUILDERS = {
+    "baostock": _baostock_staging_rows,
+    "akshare": _baostock_staging_rows,
+    "yahoo_finance": _baostock_staging_rows,
+    "fred": _fred_staging_rows,
+    "cninfo": _cninfo_staging_rows,
+}
+
+
+def staging_rows_from_bundle(
+    bundle: RehearsalDataBundle,
+    *,
+    batch_id: str,
+    max_rows: int,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    allow_window_fallback: bool = False,
+) -> tuple[StagingRow, ...]:
+    """Map bounded rehearsal evidence into stg_foundation_smoke row shape."""
+    builder = _STAGING_ROW_BUILDERS.get(bundle.source_id)
+    if builder is None:
+        raise RehearsalLoaderError(f"no staging row builder for source: {bundle.source_id}")
+    cap = min(max_rows, bundle.staged_row_count) if bundle.staged_row_count else max_rows
+    rows = builder(
+        bundle,
+        batch_id=batch_id,
+        max_rows=cap,
+        start_date=start_date,
+        end_date=end_date,
+    )
+    if not rows and bundle.staged_row_count > 0 and (start_date or end_date) and allow_window_fallback:
+        # ponytail: staged fixtures may predate approval window; upgrade: align evidence dates or fail-closed
+        rows = builder(
+            bundle,
+            batch_id=batch_id,
+            max_rows=cap,
+            start_date=None,
+            end_date=None,
+        )
+    if not rows and bundle.staged_row_count > 0:
+        raise RehearsalLoaderError(
+            f"evidence produced zero staging rows for {bundle.source_id} within window/cap"
+        )
+    return tuple(rows)
+
+
+def populate_staging_from_bundle(con, bundle: RehearsalDataBundle, **kwargs: Any) -> int:
+    """DELETE stg_foundation_smoke and INSERT rows from bundle evidence."""
+    rows = staging_rows_from_bundle(bundle, **kwargs)
+    con.execute("DELETE FROM stg_foundation_smoke")
+    for row in rows:
+        con.execute(
+            """
+            INSERT INTO stg_foundation_smoke
+            (instrument_id, trade_date, close, source_used, batch_id)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            [row.instrument_id, row.trade_date, row.close, row.source_used, row.batch_id],
+        )
+    return len(rows)
+
+
 def _resolve_evidence_dir(source_id: str, evidence_dir: Path | None, *, dry_run: bool) -> Path:
     if evidence_dir is not None:
         resolved = evidence_dir
@@ -57,7 +252,7 @@ def _resolve_evidence_dir(source_id: str, evidence_dir: Path | None, *, dry_run:
 
 
 def _load_baostock_bundle(path: Path, candidate: RehearsalCandidate) -> RehearsalDataBundle:
-    # ponytail: evidence row cap enforced upstream via validate_source_caps + max_rows in DH
+    # ponytail: bars.json bundle shape shared by baostock/akshare/yahoo_finance
     bars_path = path / "bars.json"
     if not bars_path.is_file():
         raise RehearsalLoaderError(f"missing bars.json in {path}")
@@ -148,6 +343,8 @@ def _load_fred_bundle(path: Path, candidate: RehearsalCandidate) -> RehearsalDat
 
 _LOADERS = {
     "baostock": _load_baostock_bundle,
+    "akshare": _load_baostock_bundle,
+    "yahoo_finance": _load_baostock_bundle,
     "cninfo": _load_cninfo_bundle,
     "fred": _load_fred_bundle,
 }

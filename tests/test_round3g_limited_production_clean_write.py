@@ -48,7 +48,10 @@ def _audit_sandbox_promote_db(tmp_path: Path) -> Path:
     """Place promote test DB under .audit-sandbox (allowed by _assert_within_data_root)."""
     db_dir = PROJECT_ROOT / ".audit-sandbox" / "round3g" / "pytest" / tmp_path.name
     db_dir.mkdir(parents=True, exist_ok=True)
-    return db_dir / "r3g03_promote_fixture.duckdb"
+    db_path = db_dir / "r3g03_promote_fixture.duckdb"
+    if db_path.is_file():
+        db_path.unlink()
+    return db_path
 
 
 @pytest.fixture
@@ -898,6 +901,179 @@ def test_BeforeProof_invalidBackupPointer_blocks() -> None:
         build_before_proof(db_path, candidate, backup_or_snapshot_pointer="")
 
 
+def test_StagingRowsFromBundle_baostock_matchesEvidenceRowCount() -> None:
+    """覆盖范围：rehearsal_loader bundle → staging 行映射
+    测试对象：staging_rows_from_bundle（baostock bars.json）
+    目的/目标：evidence 多行应全部映射为 staging 行，而非 smoke 单行
+    验证点：行数=2；close 来自 evidence（2.0/3.0）非占位 10.0
+    失败含义：promote 仍只写 smoke 占位，mass rehearsal 无真实灌数
+    """
+    from backend.app.ops.sandbox_clean_write.rehearsal_loader import (
+        load_rehearsal_bundle,
+        staging_rows_from_bundle,
+    )
+    from backend.app.ops.sandbox_clean_write.rehearsal_plan import RehearsalCandidate
+
+    evidence = PROJECT_ROOT / "tests/fixtures/sandbox_clean_write/r3g01/baostock"
+    candidate = RehearsalCandidate(
+        source_id="baostock",
+        domain="cn_equity_daily_bar",
+        operation="fetch_daily_bar",
+        symbols_or_series=("sh.600519",),
+        window_days=30,
+    )
+    bundle = load_rehearsal_bundle(
+        candidate,
+        evidence_dir=evidence,
+        dry_run=False,
+        cap_profile="r3g03",
+    )
+    rows = staging_rows_from_bundle(
+        bundle,
+        batch_id="test-batch",
+        max_rows=100,
+        start_date="2024-01-01",
+        end_date="2024-12-31",
+    )
+    assert len(rows) == 2
+    closes = sorted(r.close for r in rows)
+    assert closes == [2.0, 3.0]
+    assert all(r.source_used == "baostock" for r in rows)
+    assert all(r.instrument_id == "sh.600519" for r in rows)
+
+
+def test_PromoteRunner_execute_writesEvidenceRows_notSmokePlaceholder(
+    r3g03_artifact_paths: dict[str, Path],
+) -> None:
+    """覆盖范围：promote execute 多行 staging → clean
+    测试对象：run_limited_production_entry execute 路径
+    目的/目标：execute 写入行数/字段与 bundle evidence 一致
+    验证点：market_bar_clean 2 行；close 含 2.0/3.0；source_used=baostock
+    失败含义：execute 仍只插 1 行 close=10.0 占位
+    """
+    import yaml
+
+    from backend.app.db.connection import ConnectionManager
+    from backend.app.ops.sandbox_clean_write.limited_production_entry import (
+        PromoteRequest,
+        run_limited_production_entry,
+    )
+
+    paths = r3g03_artifact_paths
+    evidence_root = PROJECT_ROOT / "tests/fixtures/sandbox_clean_write/r3g01"
+    backup = ".audit-sandbox/round3g/pytest/pre_execute_baostock.duckdb"
+
+    raw = yaml.safe_load(paths["approval"].read_text(encoding="utf-8"))
+    raw["source_candidates"][0]["symbols"] = ["sh.600519"]
+    paths["approval"].write_text(yaml.dump(raw), encoding="utf-8")
+    audit = json.loads(paths["audit"].read_text(encoding="utf-8"))
+    audit["symbols"] = ["sh.600519"]
+    paths["audit"].write_text(json.dumps(audit, indent=2), encoding="utf-8")
+
+    before = json.loads(paths["before_proof"].read_text(encoding="utf-8"))
+    before["backup_or_snapshot_pointer"] = backup
+    before["symbols"] = ["sh.600519"]
+    paths["before_proof"].write_text(json.dumps(before, indent=2), encoding="utf-8")
+
+    from backend.app.ops.sandbox_clean_write.approval_contract import (
+        load_approval_contract,
+        validate_approval_contract,
+    )
+    from backend.app.ops.sandbox_clean_write.rollback_plan import (
+        build_rollback_plan,
+        write_rollback_plan,
+    )
+
+    contract = load_approval_contract(paths["approval"])
+    _contract, _audit, candidate = validate_approval_contract(
+        paths["approval"], paths["audit"]
+    )
+    rollback = build_rollback_plan(contract, candidate, before_proof=before)
+    write_rollback_plan(paths["rollback_plan"], rollback)
+
+    report = run_limited_production_entry(
+        PromoteRequest(
+            approval_file=paths["approval"],
+            audit_decision=paths["audit"],
+            before_proof=paths["before_proof"],
+            after_proof=paths["after_proof"],
+            rollback_plan=paths["rollback_plan"],
+            evidence_dir=evidence_root,
+            dry_run=False,
+            execute=True,
+            fred_authorization=None,
+        )
+    )
+    assert report["production_mutation_allowed"] is True
+    inserted = int(report["after_proof"]["inserted_updated_row_count"])
+    assert inserted == 2
+
+    cm = ConnectionManager(paths["prod_db"])
+    with cm.reader() as con:
+        rows = con.execute(
+            "SELECT instrument_id, trade_date, close, source_used "
+            "FROM market_bar_clean ORDER BY trade_date"
+        ).fetchall()
+    assert len(rows) == 2
+    closes = {float(r[2]) for r in rows}
+    assert closes == {2.0, 3.0}
+    assert all(r[3] == "baostock" for r in rows)
+
+
+def test_PromoteRunner_refusesCanonicalProductionDbPath(tmp_path: Path) -> None:
+    """覆盖范围：R3G-03 promote 主库路径硬拒（对齐 R3G-01 rehearsal）
+    测试对象：_assert_production_db_allowed
+    目的/目标：四件套齐全也不得写 quant_monitor.duckdb 主库
+    验证点：canonical 主库路径抛 PRODUCTION_DB_PATH_REJECTED
+    失败含义：promote 可穿透写主库
+    """
+    from backend.app.ops.sandbox_clean_write.limited_production_entry import (
+        LimitedProductionEntryError,
+        _assert_production_db_allowed,
+    )
+
+    main_db = PROJECT_ROOT / "data" / "duckdb" / "quant_monitor.duckdb"
+    with pytest.raises(LimitedProductionEntryError, match="canonical production DB"):
+        _assert_production_db_allowed(main_db, mkdir_if_missing=False)
+
+
+def test_StagingRowsFromBundle_akshare_matchesEvidenceRowCount() -> None:
+    """覆盖范围：akshare bundle → staging 行映射
+    测试对象：staging_rows_from_bundle（akshare bars.json）
+    目的/目标：用户授权 validation 源在 cap 内可映射多行 evidence
+    验证点：行数=2（sh.600000 两日 bar）
+    失败含义：akshare 纳入 mass rehearsal 后灌数失败
+    """
+    from backend.app.ops.sandbox_clean_write.rehearsal_loader import (
+        load_rehearsal_bundle,
+        staging_rows_from_bundle,
+    )
+    from backend.app.ops.sandbox_clean_write.rehearsal_plan import RehearsalCandidate
+
+    evidence = PROJECT_ROOT / "tests/fixtures/sandbox_clean_write/r3g01/akshare"
+    candidate = RehearsalCandidate(
+        source_id="akshare",
+        domain="cn_equity_daily_bar",
+        operation="fetch_daily_bar_validation",
+        symbols_or_series=("sh.600000",),
+        window_days=120,
+    )
+    bundle = load_rehearsal_bundle(
+        candidate,
+        evidence_dir=evidence,
+        dry_run=False,
+        cap_profile="r3g03",
+    )
+    rows = staging_rows_from_bundle(
+        bundle,
+        batch_id="test-ak",
+        max_rows=100,
+        allow_window_fallback=True,
+    )
+    assert len(rows) == 2
+    assert all(r.source_used == "akshare" for r in rows)
+
+
 def test_r3g03TierA_documentsRehearseAuditProdPathRegression() -> None:
     """覆盖范围：§8.1 #3 rehearse/audit 生产路径不回退
     测试对象：R3G-01/R3G-02 productionDbPathRejected 回归测
@@ -926,4 +1102,73 @@ def test_r3g03TierA_documentsRehearseAuditProdPathRegression() -> None:
         check=False,
     )
     assert proc.returncode == 0, proc.stdout + proc.stderr
+
+
+def test_LiveEvidenceBridge_baostock_materializesBarsFromStagedV2(tmp_path: Path) -> None:
+    """覆盖范围：腿 B staged pilot v2 → promote 证据桥接
+    测试对象：materialize_baostock_promote_evidence
+    目的/目标：真网 raw 数组行应落成 bars.json 供 load_rehearsal_bundle 消费
+    验证点：bars.json 2 行；close=1212.1/1168.63；含 raw_evidence_manifest.json
+    失败含义：腿 B 证据无法接入腿 A promote，ABC 接线失败
+    """
+    from backend.app.ops.sandbox_clean_write.live_evidence_bridge import (
+        materialize_baostock_promote_evidence,
+    )
+
+    staged = PROJECT_ROOT / "tests/fixtures/sandbox_clean_write/r3g01/live_wire"
+    out = tmp_path / "baostock"
+    materialize_baostock_promote_evidence(staged, out)
+    bars = json.loads((out / "bars.json").read_text(encoding="utf-8"))["rows"]
+    assert len(bars) == 2
+    closes = sorted(float(r["close"]) for r in bars)
+    assert closes == [1168.63, 1212.1]
+    assert (out / "raw_evidence_manifest.json").is_file()
+    assert (out / "pilot_v2_closeout.json").is_file()
+    closeout = json.loads((out / "pilot_v2_closeout.json").read_text(encoding="utf-8"))
+    assert closeout.get("sandbox_clean_write_rehearsal") is True
+
+
+def test_LiveEvidenceBridge_fred_materializesMultiSeriesObservations(tmp_path: Path) -> None:
+    """覆盖范围：腿 C FRED live → promote 证据桥接
+    测试对象：materialize_fred_promote_evidence + staging_rows_from_bundle
+    目的/目标：多 series live 证据应映射为多 instrument staging 行
+    验证点：fred_evidence 3 观测；staging 含 DGS10×2 + VIXCLS×1
+    失败含义：FRED 真网数据无法经同一 promote 链写入练习库
+    """
+    from backend.app.ops.sandbox_clean_write.live_evidence_bridge import (
+        materialize_fred_promote_evidence,
+    )
+    from backend.app.ops.sandbox_clean_write.rehearsal_loader import (
+        load_rehearsal_bundle,
+        staging_rows_from_bundle,
+    )
+    from backend.app.ops.sandbox_clean_write.rehearsal_plan import RehearsalCandidate
+
+    live = PROJECT_ROOT / "tests/fixtures/sandbox_clean_write/r3g01/live_wire/fred_live_fetch_evidence.json"
+    out = tmp_path / "fred"
+    materialize_fred_promote_evidence(live, out)
+    candidate = RehearsalCandidate(
+        source_id="fred",
+        domain="macro_series",
+        operation="fetch_macro_series",
+        symbols_or_series=("DGS10", "VIXCLS"),
+        window_days=120,
+    )
+    bundle = load_rehearsal_bundle(candidate, evidence_dir=out, dry_run=False, cap_profile="r3g03")
+    rows = staging_rows_from_bundle(
+        bundle,
+        batch_id="live-wire",
+        max_rows=400,
+        start_date="2026-01-01",
+        end_date="2026-12-31",
+    )
+    assert len(rows) == 3
+    dgs10 = [r for r in rows if r.instrument_id == "DGS10"]
+    vix = [r for r in rows if r.instrument_id == "VIXCLS"]
+    assert len(dgs10) == 2
+    assert len(vix) == 1
+    assert dgs10[0].close == 4.4
+    fred_payload = json.loads((out / "fred_evidence.json").read_text(encoding="utf-8"))
+    assert fred_payload.get("retrieved_at")
+    assert (out / "pilot_v2_closeout.json").is_file()
 

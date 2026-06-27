@@ -1,0 +1,35 @@
+{
+  "pilot_id": "r3e-fred-sandbox-20260625",
+  "status": "FRED_PILOT_PASS_SANDBOX_STAGING",
+  "series": [
+    {
+      "series_id": "DGS10",
+      "source_fetch_id": "fred-live-DGS10-test",
+      "content_hash": "fred-live-hash-dgs10",
+      "rows": [
+        {
+          "series_id": "DGS10",
+          "observation_date": "2026-06-25",
+          "value": "4.4"
+        },
+        {
+          "series_id": "DGS10",
+          "observation_date": "2026-06-24",
+          "value": "4.41"
+        }
+      ]
+    },
+    {
+      "series_id": "VIXCLS",
+      "source_fetch_id": "fred-live-VIXCLS-test",
+      "content_hash": "fred-live-hash-vix",
+      "rows": [
+        {
+          "series_id": "VIXCLS",
+          "observation_date": "2026-06-25",
+          "value": "17.0"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "pilot_id": "r3y-staged-pilot-v2-20260624",
+  "fetches": [
+    {
+      "pilot_request_id": "v2-baostock",
+      "fetch_result": {
+        "source_fetch_id": "v2-baostock-live",
+        "content_hash": "acc9b4654a946d2216919e1468596bc8370c6ccb25b13008ef383f4eb87c7cb0",
+        "schema_hash": "f8d92124b638b02d5c8fb0e7c01e4dbab9a8f9d9586410c87455ac4cbe3c62c1",
+        "row_count": 2,
+        "raw_file_paths": [
+          "tests/fixtures/sandbox_clean_write/r3g01/live_wire/baostock_raw.json"
+        ]
+      }
+    }
+  ],
+  "manifest_entries": []
+}

@@ -16,16 +16,16 @@
 
 本路线图按以下文件核实后重写，后续执行者必须从这些 canonical 任务卡入口开工：
 
-| 范围             | 已核实的口径文件                                                                                                      | 关键口径                                                                                                    |
-| ---------------- | --------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| 生产完成覆盖地图 | `docs/implementation_tasks/PRODUCTION_COMPLETION_VERTICAL_SLICE_PLAN.md`                                              | 只是覆盖/导航 checklist，不是 standalone execution card。                                                   |
-| 当前执行顺序     | `docs/implementation_tasks/README.md`                                                                                 | Batch 3F-R **CLOSED**；当前下一入口是 `ROUND_3_SANDBOX_CLEAN_WRITE/`（Round 3G），之后 3H、Round4、Round5。 |
-| 完成度规则       | `MODULE_COMPLETION_RATING.md`                                                                                         | 不能用 docs、registry、placeholder、staged fixture 冒充 `R6_FULL_PRODUCTION_STABLE`。                       |
-| Batch 3F-R       | `BATCH_3FR_TASK_CARD_MANIFEST.md`、`BATCH_3FR_COORDINATOR_PLAYBOOK.md`、`R3FR_01_REFERENCE_RULES_AND_LICENSE_GATE.md` | R3FR-01 必须重跑；参考项目细节必须在任务卡本地，不能放中央 inventory。                                      |
-| Batch 3G         | `BATCH_3G_TASK_CARD_MANIFEST.md`、`BATCH_3G_COORDINATOR_PLAYBOOK.md`                                                  | R3G-01 → R3G-02 → R3G-03 严格串行；不能并行。                                                               |
-| Batch 3H         | `BATCH_3H_TASK_CARD_MANIFEST.md`、`BATCH_3H_COORDINATOR_PLAYBOOK.md`                                                  | R3H-01~04 可按 source domain 并行；R3H-05 必须最后审计，不能补 adapter。                                    |
-| Batch04 / Round4 | `BATCH_04_TASK_CARD_MANIFEST.md`、`BATCH_04_COORDINATOR_PLAYBOOK.md`、`B04_05_backtest_review_runtime.md`             | Round4 必须等 R3H-05 PASS/WARN；loose 024~030 只是历史输入；API 先打底。                                    |
-| Batch05 / Round5 | `BATCH_05_TASK_CARD_MANIFEST.md`、`BATCH_05_COORDINATOR_PLAYBOOK.md`                                                  | Round5 是 security / integration / release gate，不能作为补功能后门。                                       |
+| 范围             | 已核实的口径文件                                                                                                      | 关键口径                                                                                                                                                                                                                |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 生产完成覆盖地图 | `docs/implementation_tasks/PRODUCTION_COMPLETION_VERTICAL_SLICE_PLAN.md`                                              | 只是覆盖/导航 checklist，不是 standalone execution card。                                                                                                                                                               |
+| 当前执行顺序     | `docs/implementation_tasks/README.md`                                                                                 | Batch 3F-R **CLOSED**；Batch 3G **CLOSED** @ R3G-03（2026-06-27）；**当前下一入口** `ROUND_3_REAL_DATA_PRODUCTION_ENTRY/`（Batch 3H）；mass rehearsal 见 `R3G_MASS_REHEARSAL_OPEN_GAPS.md`（debt-lite，非新 Trellis）。 |
+| 完成度规则       | `MODULE_COMPLETION_RATING.md`                                                                                         | 不能用 docs、registry、placeholder、staged fixture 冒充 `R6_FULL_PRODUCTION_STABLE`。                                                                                                                                   |
+| Batch 3F-R       | `BATCH_3FR_TASK_CARD_MANIFEST.md`、`BATCH_3FR_COORDINATOR_PLAYBOOK.md`、`R3FR_01_REFERENCE_RULES_AND_LICENSE_GATE.md` | R3FR-01 必须重跑；参考项目细节必须在任务卡本地，不能放中央 inventory。                                                                                                                                                  |
+| Batch 3G         | `BATCH_3G_TASK_CARD_MANIFEST.md`、`BATCH_3G_COORDINATOR_PLAYBOOK.md`、`R3G_MASS_REHEARSAL_OPEN_GAPS.md`               | R3G-01 → R3G-02 → R3G-03 **已完成**；`--live-wire` 为 3H 前运维证据，不是 3G 新活卡。                                                                                                                                   |
+| Batch 3H         | `BATCH_3H_TASK_CARD_MANIFEST.md`、`BATCH_3H_COORDINATOR_PLAYBOOK.md`                                                  | R3H-01~04 可按 source domain 并行；R3H-05 必须最后审计，不能补 adapter。                                                                                                                                                |
+| Batch04 / Round4 | `BATCH_04_TASK_CARD_MANIFEST.md`、`BATCH_04_COORDINATOR_PLAYBOOK.md`、`B04_05_backtest_review_runtime.md`             | Round4 必须等 R3H-05 PASS/WARN；loose 024~030 只是历史输入；API 先打底。                                                                                                                                                |
+| Batch05 / Round5 | `BATCH_05_TASK_CARD_MANIFEST.md`、`BATCH_05_COORDINATOR_PLAYBOOK.md`                                                  | Round5 是 security / integration / release gate，不能作为补功能后门。                                                                                                                                                   |
 
 如果本文件和某张 canonical 任务卡的具体执行细节冲突：**不要用路线图压过任务卡；应立即修路线图或任务卡，让二者重新闭环。**
 
@@ -76,14 +76,15 @@
 
 参考项目可以帮我们少走弯路，但不能直接变成 QMD runtime。所有 JQ2PTrade、EasyXT、OpenBB、agents-for-openbb、TradingAgents、TradingAgents-astock 相关采纳必须遵守：
 
-| 规则               | 说明                                                                                                                                |
-| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
-| 任务卡本地执行     | 参考路径、可借逻辑、禁止能力、QMD 目标文件、测试、not-done 条件，必须写在对应任务卡里。不能只写“参考某项目”。                       |
-| 覆盖地图不是工单   | `PRODUCTION_COMPLETION_VERTICAL_SLICE_PLAN.md` 只能检查有没有漏模块，不能替代任务卡。                                               |
-| 不复制危险 runtime | 不得从 `参考项目/**` runtime import，不得复制 OpenBB AGPL runtime，不得引入 JQ2PTrade/EasyXT 交易 API。                             |
-| 不引入交易动作     | 禁止 order、order_value、order_target、cancel_order、get_positions、run_daily、auto-login、broker/account/terminal control 等语义。 |
-| 不允许空壳完成     | 如果只是 policy、shell、schema、registry、单个 metric，不能算完成。                                                                 |
-| 最多三批达生产稳定 | 一个模块从首次实现到完整稳定，最多三个实施批次：第一批真实最小垂直闭环，第二批完成主承诺范围，第三批只做硬化/回归/发布 gate。       |
+| 规则                   | 说明                                                                                                                                                                                 |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 任务卡本地执行         | 参考路径、可借逻辑、禁止能力、QMD 目标文件、测试、not-done 条件，必须写在对应任务卡里。不能只写“参考某项目”。                                                                        |
+| 覆盖地图不是工单       | `PRODUCTION_COMPLETION_VERTICAL_SLICE_PLAN.md` 只能检查有没有漏模块，不能替代任务卡。                                                                                                |
+| 不复制危险 runtime     | 不得从 `参考项目/**` runtime import，不得复制 OpenBB AGPL runtime，不得引入 JQ2PTrade/EasyXT 交易 API。                                                                              |
+| 采纳阶梯（2026-06-27） | 能直拷则拷入 `backend/app/**`（L1）；不合则拷改（L2）；无合适参考再自研（L3）。`参考项目/**` 将删除，不得运行时依赖。详见 `reference_adoption_guardrails.yaml` → `adoption_ladder`。 |
+| 不引入交易动作         | 禁止 order、order_value、order_target、cancel_order、get_positions、run_daily、auto-login、broker/account/terminal control 等语义。                                                  |
+| 不允许空壳完成         | 如果只是 policy、shell、schema、registry、单个 metric，不能算完成。                                                                                                                  |
+| 最多三批达生产稳定     | 一个模块从首次实现到完整稳定，最多三个实施批次：第一批真实最小垂直闭环，第二批完成主承诺范围，第三批只做硬化/回归/发布 gate。                                                        |
 
 ---
 
@@ -94,23 +95,26 @@
   ↓
 Batch 3F-R：参考项目采纳规则重跑 + data health / provider / backtest planning 重整
   ↓
-Batch 3G：sandbox clean write → pre-production audit → limited production clean write（严格串行）
+Batch 3G：sandbox clean write → pre-production audit → limited production clean write（严格串行）【CLOSED @ R3G-03】
   ↓
-Batch 3H：全部目标数据源生产入口，四个 source 分支并行，R3H-05 最后审计
+3G 后运维（debt-lite，非新 Trellis）：mass rehearsal / `--live-wire` → 仅 pilot 库 + `.audit-sandbox` 证据
+  ↓
+Batch 3H：全部目标数据源生产入口，四个 source 分支并行，R3H-05 最后审计【当前下一入口】
   ↓
 Batch04 / Round4：API 先打底，Agent / Frontend / Notification / Backtest 产品化分支并行
   ↓
 Batch05 / Round5：Security / Integration / Release 发布门禁，确认所有模块 R6 或明确 limitation
 ```
 
-| 总批次           | 是否新执行入口       | 并行/串行                                 | 业务目标                                                                         | 进入下一批次的硬门禁                                  |
-| ---------------- | -------------------- | ----------------------------------------- | -------------------------------------------------------------------------------- | ----------------------------------------------------- |
-| 历史底座         | 否                   | 不作为新开工入口                          | 已有项目骨架、DB、registry、staged Layer、治理基础                               | 只能作为历史输入，不能把 staged 当 production。       |
-| Batch 3F-R       | **CLOSED** (R3FR-07) | R3FR-01 先；之后可分支；R3FR-07 最后      | 参考项目采纳、data health、provider catalog、TDX、Backtest planning 口径已补扎实 | 条件 A 满足 → 3G 可开。                               |
-| Batch 3G         | 是，**当前下一入口** | 严格串行                                  | 证明 clean write 可以在受控边界内安全发生                                        | R3G-02 允许 + 用户明确批准后才能 R3G-03。             |
-| Batch 3H         | 是，3G 后            | 4 个 source domain 分支并行，R3H-05 最后  | 所有目标 source 要么 READY_WITH_EVIDENCE，要么 ADR_DISABLED_OUT_OF_SCOPE         | R3H-05 输出 PASS 或 WARN_WITH_NARROWED_SCOPE_ADR。    |
-| Batch04 / Round4 | 是，3H 后            | API 先，其他产品分支按依赖并行            | 把数据/证据能力变成 API、Agent、前端、通知、回测/复盘产品闭环                    | 每个产品模块都有真实 read-only 垂直闭环。             |
-| Batch05 / Round5 | 是，Round4 后        | B05-01 先；B05-02 等产物稳定；B05-03 最后 | 做最终 security / integration / release gate                                     | 通过则 release；不通过则阻断或写 release limitation。 |
+| 总批次            | 是否新执行入口       | 并行/串行                                 | 业务目标                                                                         | 进入下一批次的硬门禁                                                     |
+| ----------------- | -------------------- | ----------------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| 历史底座          | 否                   | 不作为新开工入口                          | 已有项目骨架、DB、registry、staged Layer、治理基础                               | 只能作为历史输入，不能把 staged 当 production。                          |
+| Batch 3F-R        | **CLOSED** (R3FR-07) | R3FR-01 先；之后可分支；R3FR-07 最后      | 参考项目采纳、data health、provider catalog、TDX、Backtest planning 口径已补扎实 | 条件 A 满足 → 3G 可开。                                                  |
+| Batch 3G          | **CLOSED** (R3G-03)  | 严格串行（已完成）                        | 证明 clean write 可以在受控边界内安全发生                                        | R3G-03 已交付；mass rehearsal 索引见 `R3G_MASS_REHEARSAL_OPEN_GAPS.md`。 |
+| 3G mass rehearsal | debt-lite 运维       | 不新开 Trellis Plan                       | baostock/fred 真网经 `--live-wire` 写 **pilot 库**；主库 denylist 已证           | 暴露项 G1–G17 归入 3H 切片，**不得**默认写 `quant_monitor.duckdb`。      |
+| Batch 3H          | 是，**当前下一入口** | 4 个 source domain 分支并行，R3H-05 最后  | 所有目标 source 要么 READY_WITH_EVIDENCE，要么 ADR_DISABLED_OUT_OF_SCOPE         | R3H-05 输出 PASS 或 WARN_WITH_NARROWED_SCOPE_ADR。                       |
+| Batch04 / Round4  | 是，3H 后            | API 先，其他产品分支按依赖并行            | 把数据/证据能力变成 API、Agent、前端、通知、回测/复盘产品闭环                    | 每个产品模块都有真实 read-only 垂直闭环。                                |
+| Batch05 / Round5  | 是，Round4 后        | B05-01 先；B05-02 等产物稳定；B05-03 最后 | 做最终 security / integration / release gate                                     | 通过则 release；不通过则阻断或写 release limitation。                    |
 
 ---
 
@@ -198,6 +202,8 @@ R3FR-07：legacy wrapper cleanup（必须最后）
 
 ## 4. Batch 3G：Sandbox Clean Write 与有限生产写入
 
+> **批次状态：CLOSED**（R3G-03 @ `23429ad8` / 2026-06-27）。新开工勿再开 R3G-04 全量 Trellis；mass rehearsal 跟进见 §4.6 与 `R3G_MASS_REHEARSAL_OPEN_GAPS.md`。
+
 ### 4.1 执行入口
 
 ```text
@@ -213,6 +219,15 @@ BATCH_3G_HARDENING_RULES.md
 R3G_01_SANDBOX_CLEAN_WRITE_REHEARSAL.md
 R3G_02_PRE_PRODUCTION_ADVERSARIAL_AUDIT.md
 R3G_03_LIMITED_PRODUCTION_CLEAN_WRITE.md
+R3G_MASS_REHEARSAL_OPEN_GAPS.md
+```
+
+运维脚本（非任务卡交付物，3H 前证据用）：
+
+```text
+scripts/r3g03_isolated_pilot_dry_run.py          # --live-wire --execute
+backend/app/ops/sandbox_clean_write/live_evidence_bridge.py
+research/r3g03_mass_rehearsal_report.md
 ```
 
 ### 4.2 业务目标
@@ -228,6 +243,8 @@ R3G_03_LIMITED_PRODUCTION_CLEAN_WRITE.md
 | 1    | `R3G_01_SANDBOX_CLEAN_WRITE_REHEARSAL.md`    | 不可并行                   | 在 sandbox rehearsal 中验证 baostock daily bar、cninfo metadata、authorized FRED P0 sample 等候选路径 | sandbox DB only、WriteManager audit、DbValidationGate PASS、DataHealth PASS/WARN、before/after proof、no-mutation proof。 |
 | 2    | `R3G_02_PRE_PRODUCTION_ADVERSARIAL_AUDIT.md` | 等 R3G-01 证据完成         | 审计 R3G-01 证据，决定能否进入 limited production write                                               | 输出 `PASS_ALLOW_LIMITED_PROD_WRITE`、`WARN_ALLOW_WITH_MANUAL_APPROVAL` 或 `BLOCK_PRODUCTION_WRITE`。                     |
 | 3    | `R3G_03_LIMITED_PRODUCTION_CLEAN_WRITE.md`   | 等 R3G-02 allow + 用户批准 | 做极小范围 approved production entry                                                                  | 明确 source/domain/symbol/window/row cap、approval artifact、before/after proof、rollback dry run、audit log。            |
+
+**交付状态（2026-06-27）：** 三张活卡均已闭合；隔离库 `quant_monitor_r3g03_pilot.duckdb` + 主库 `quant_monitor.duckdb` denylist 已验证。
 
 ### 4.4 本批次主能力完成的模块
 
@@ -248,9 +265,42 @@ R3G_03_LIMITED_PRODUCTION_CLEAN_WRITE.md
 - 不能由 Agent 触发写入。
 - 没有用户明确批准 source/domain/symbol/window/row cap，不能执行 R3G-03。
 
+### 4.6 3G 后 mass rehearsal（debt-lite，不是 Batch 3G 新活卡）
+
+2026-06-27 隔离库预演证明：**抓取链（R3X/R3E）与 promote 链（R3G）可经 `live_evidence_bridge` 接到同一审批→质检→写库路径**，但仅落 **pilot 库**，不写主库。
+
+| 项                                                                       | 结论                               | 归入                          |
+| ------------------------------------------------------------------------ | ---------------------------------- | ----------------------------- |
+| 主库安全 G8                                                              | ✅ denylist + mutation proof       | 已闭合                        |
+| baostock/fred 真网→pilot G1/G10/G11                                      | ⚠️ `--live-wire` 运维切片          | R3H-02 / R3H-01（产品化接线） |
+| FRED：R3E `fred_live_fetch_evidence.json` ≠ promote `fred_evidence.json` | ⚠️ 须 bridge 物化字段与 DH sidecar | **R3H-01 `fred`**             |
+| cninfo/akshare/yahoo 仍 fixture G16                                      | ❌                                 | R3H-03 / R3X                  |
+| 同表/仅 close/无交易日 SSOT G2–G5、G17                                   | ❌                                 | Batch 3H schema + calendar    |
+| DH sidecar 补丁 G14                                                      | ⚠️ pilot 专用                      | Batch 3H 统一证据契约         |
+
+**禁止：** 把 pilot 预演数据 merge 进 `quant_monitor.duckdb`；为 mass rehearsal 重开 R3G Trellis Plan。
+
+**索引 SSOT：** `docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_MASS_REHEARSAL_OPEN_GAPS.md`（G1–G17）。
+
 ---
 
 ## 5. Batch 3H：全部目标真实数据源与 Layer1-Layer5 生产入口
+
+> **批次状态：当前下一执行入口**（3G 已 CLOSED）。
+
+### 5.0 3G 预演输入（开工 3H 前必读）
+
+Batch 3H 必须吸收 3G mass rehearsal 结论，而不是重复 pilot 脚本：
+
+| 3G 暴露项                 | 3H 落点              | 说明                                                                      |
+| ------------------------- | -------------------- | ------------------------------------------------------------------------- |
+| G10 FRED 证据分裂         | **R3H-01**           | 统一 R3E live 与 promote loader 契约；去掉 `live_evidence_bridge` sidecar |
+| G11 baostock live→promote | **R3H-03**           | 产品化 fetch→evidence→clean，非 `--live-wire`                             |
+| G2/G17 交易日窗           | **R3H-02/03**        | L2 拷改 EasyXT 日历；消除 baostock DH WARNING                             |
+| G3/G4/G6 分表/OHLCV/PK    | **R3H-05 前 schema** | 正式 clean DDL                                                            |
+| G16 三源未 live-wire      | **R3H-03/02**        | cninfo 真网+分表；akshare/yahoo validation 或 ADR                         |
+
+证据：`research/r3g03_mass_rehearsal_report.md`；门禁：**不得**因预演成功默认写主库。
 
 ### 5.1 执行入口
 
@@ -316,13 +366,13 @@ tests/test_catalog.yaml
 
 ### 5.4 原始任务卡对应关系
 
-| 分支  | 任务卡                                               | 覆盖 source                                                                                                                   | 能否并行              | 必须交付                                                                                                    |
-| ----- | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- |
-| H-A   | `R3H_01_OFFICIAL_MACRO_DISCLOSURE_ADAPTERS.md`       | `fred`, `us_treasury`, `sec_edgar`, `cftc_cot`, `bis`, `world_bank`                                                           | 可与 H-B/H-C/H-D 并行 | 每个 source adapter/gate/replay/route/evidence 或 ADR-disabled；Layer1/Layer5 绑定。                        |
-| H-B   | `R3H_02_MARKET_DATA_ADAPTERS.md`                     | `alpha_vantage`, `stooq`, `yahoo_finance`, `deribit`, `coingecko`                                                             | 可并行                | 每个 source 有 bounded fetch/evidence 或 ADR-disabled；聚合源不能 silent primary。                          |
-| H-C   | `R3H_03_CN_MARKET_ADAPTERS.md`                       | `baostock`, `akshare`, `cninfo`, `tdx_pytdx`, `mootdx`, `eastmoney`, `sina_finance`, `ths_ifind`, `qmt_xtdata`, `qmt_xqshare` | 可并行                | 中国市场源全部明确 primary/validation/authorization-disabled/ADR-disabled；QMT/iFinD/xqshare 不得默认启用。 |
-| H-D   | `R3H_04_PREDICTION_AND_WEB_EVIDENCE_ADAPTERS.md`     | `kalshi`, `polymarket`, `web_search`                                                                                          | 可并行                | 只能 probability/evidence/manual-review；不得写 factual clean table。                                       |
-| Audit | `R3H_05_LAYER_BINDING_AND_PRODUCTION_ENTRY_AUDIT.md` | 所有 source + Layer1-Layer5                                                                                                   | 必须最后              | 输出 PASS / WARN_WITH_ADR / BLOCK；不能在审计卡里补 adapter。                                               |
+| 分支  | 任务卡                                               | 覆盖 source                                                                                                                   | 能否并行              | 必须交付                                                                                                                                 |
+| ----- | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| H-A   | `R3H_01_OFFICIAL_MACRO_DISCLOSURE_ADAPTERS.md`       | `fred`, `us_treasury`, `sec_edgar`, `cftc_cot`, `bis`, `world_bank`                                                           | 可与 H-B/H-C/H-D 并行 | 每个 source adapter/gate/replay/route/evidence 或 ADR-disabled；Layer1/Layer5 绑定。**`fred` 须闭合 G10：R3E 与 promote 单一证据契约。** |
+| H-B   | `R3H_02_MARKET_DATA_ADAPTERS.md`                     | `alpha_vantage`, `stooq`, `yahoo_finance`, `deribit`, `coingecko`                                                             | 可并行                | 每个 source 有 bounded fetch/evidence 或 ADR-disabled；聚合源不能 silent primary。                                                       |
+| H-C   | `R3H_03_CN_MARKET_ADAPTERS.md`                       | `baostock`, `akshare`, `cninfo`, `tdx_pytdx`, `mootdx`, `eastmoney`, `sina_finance`, `ths_ifind`, `qmt_xtdata`, `qmt_xqshare` | 可并行                | 中国市场源全部明确 primary/validation/authorization-disabled/ADR-disabled；**吸收 G11/G16/G17：baostock/cninfo live→clean 产品化。**     |
+| H-D   | `R3H_04_PREDICTION_AND_WEB_EVIDENCE_ADAPTERS.md`     | `kalshi`, `polymarket`, `web_search`                                                                                          | 可并行                | 只能 probability/evidence/manual-review；不得写 factual clean table。                                                                    |
+| Audit | `R3H_05_LAYER_BINDING_AND_PRODUCTION_ENTRY_AUDIT.md` | 所有 source + Layer1-Layer5                                                                                                   | 必须最后              | 输出 PASS / WARN_WITH_ADR / BLOCK；不能在审计卡里补 adapter。                                                                            |
 
 ### 5.5 本批次主能力完成的模块
 
@@ -515,38 +565,38 @@ Batch05 的核心不是“主能力开发”，而是确认所有承诺模块是
 
 这张表是总闭环图。每个模块都必须在这里出现；Round5 之后不能还有“没人负责的半成品”。
 
-| 模块                                           | 当前主要缺口                                                | 主能力完成批次                                    | 最终 R6 确认批次 | 必须交付什么                                                                           |
-| ---------------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------- | ---------------- | -------------------------------------------------------------------------------------- |
-| 项目骨架 / config / test harness               | 需要 release package 与最终测试目录一致性                   | Batch05                                           | Batch05          | package check、test catalog、docs consistency、release manifest。                      |
-| DuckDB schema / migration foundation           | 需要 migration hygiene 与 drift gate                        | Batch05                                           | Batch05          | schema drift check、migration registry、release manifest。                             |
-| WriteManager + DbValidationGate                | 需要真实 clean-write 证明                                   | Batch3G                                           | Batch05          | sandbox rehearsal、limited production proof、rollback/no-mutation evidence。           |
-| RawStore / FileRegistry / fetch_log            | 需要绑定每个 in-scope source                                | Batch3H                                           | Batch05          | source_fetch_id、content_hash、schema_hash、fetch_log、replay/sandbox evidence。       |
-| ResourceGuard / performance budget             | 需要覆盖 adapter/API/review/sync 全链路                     | Batch3H + Batch04 + Batch05                       | Batch05          | 每条真实路径都有 caps、拒绝大查询、bounded integration smoke。                         |
-| Source registry / capability / route planner   | 需要所有 source 最终状态                                    | Batch3H                                           | Batch05          | READY_WITH_EVIDENCE 或 ADR_DISABLED_OUT_OF_SCOPE；route tests。                        |
-| Provider catalog / auth-license posture        | 需要覆盖 active/proposed source                             | Batch3F-R + Batch3H                               | Batch05          | provider metadata、license/auth、resource caps、release limitation。                   |
-| DataSourceService facade                       | 需要真实 source-specific ports                              | Batch3H                                           | Batch05          | API/Agent/Sync 都通过 service boundary，不直接读 YAML/DB/adapter。                     |
-| Vendor adapters / provider fetch ports         | 大量 source 仍未真实闭合                                    | Batch3H                                           | Batch05          | 每个 source adapter/evidence 或 ADR-disabled。                                         |
-| Source conflict validator                      | 需要接入真实 source/domain                                  | Batch3H + Batch3G                                 | Batch05          | conflict report 进入 write/readiness/release gate。                                    |
-| Data health engine                             | profile 不完整                                              | Batch3F-R / R3FR-02                               | Batch05          | EasyXT-style profiles、pass/warn/fail/blocked、profile-specific issue detail。         |
-| `qmd data` CLI                                 | health command 不能是 placeholder                           | Batch3F-R / R3FR-06 + Batch3G limited-write flows | Batch05          | `qmd data health` 真实 read-only 输出；limited-write operator flow 不越权。            |
-| Data quality validator profiles                | 需要 profile-level business checks                          | Batch3F-R                                         | Batch05          | OHLCV、required fields、calendar gap、stale、outlier、volume anomaly。                 |
-| Sync orchestration                             | 需要 production-equivalent smoke                            | Batch05                                           | Batch05          | incremental/backfill/reconcile/data-quality bounded smoke，经 DataSourceService。      |
-| Layer1 axes                                    | staged source 需要真实官方/宏观绑定                         | Batch3H / R3H-05                                  | Batch05          | official/macro evidence binding 或 ADR narrowed scope。                                |
-| Layer2 sensors                                 | staged fixture 需要真实 market/CN/validation source         | Batch3H / R3H-05                                  | Batch05          | cross-asset sensor real source envelope。                                              |
-| Layer3 chains                                  | staged chain 需要真实 CN/industry-chain evidence            | Batch3H / R3H-05                                  | Batch05          | chain source evidence 或 ADR narrowed scope。                                          |
-| Layer4 markets                                 | CN_A staged fixture 需要真实 market/calendar/breadth source | Batch3H / R3H-05                                  | Batch05          | market structure source binding 或 ADR narrowed scope。                                |
-| Layer5 evidence                                | 需要全链路 evidence lineage                                 | Batch3H / R3H-05                                  | Batch05          | source_fetch_id/content_hash/schema_hash/limitation chain。                            |
-| Sandbox clean write / limited production entry | 只有规划和 contract 不够                                    | Batch3G                                           | Batch05          | rehearsal → audit → limited write；或 release 禁用说明。                               |
-| API backend                                    | placeholder shell 不够                                      | Batch04 / B04-01                                  | Batch05          | authenticated read-only endpoint、pagination、budget、no free SQL、no write。          |
-| Agent layer                                    | 需要真实 policy-guarded read-only tool                      | Batch04 / B04-02                                  | Batch05          | tool policy、prompt/tool rejection、evidence-bound output、no action。                 |
-| Frontend dashboard                             | 用户会设计最终 UI，但 API-bound 产品路径要完成              | Batch04 / B04-03                                  | Batch05          | API-bound page/panel、loading/empty/error states、contract alignment。                 |
-| Notifications / reports                        | 不能只有 schema                                             | Batch04 / B04-04                                  | Batch05          | event → report/notification_log、dedup/cooldown/evidence refs。                        |
-| Backtest / review                              | 不能从零写 blank engine                                     | Batch04 / B04-05                                  | Batch05          | frozen loader、no-action guard、review runner、metrics、report artifact、API binding。 |
-| Backtest/review metrics                        | 不能 metric-only 微切片                                     | Batch04 / B04-05                                  | Batch05          | metrics 从 QMD-owned review series 计算，连到可运行 scenario。                         |
-| No-action semantics guard                      | 需要覆盖 Agent/API/review/report                            | Batch04 / B04-02 + B04-05                         | Batch05          | 交易动作语义拒绝测试、output validator。                                               |
-| Reference adoption governance                  | 需要任务卡本地化与 license/runtime guard                    | Batch3F-R / R3FR-01                               | Batch05          | 无中央 executable inventory、无 `参考项目/**` runtime import、无 unsafe copy。         |
-| Release/security packaging                     | 只有规划                                                    | Batch05                                           | Batch05          | security CI、integration smoke、manifest、package cleanup、runbooks。                  |
-| 文档/规划/任务入口一致性                       | loose cards 容易误导                                        | R3FR-01 + Batch05                                 | Batch05          | canonical entrypoints、redirect notes、docs index、release manifest 一致。             |
+| 模块                                           | 当前主要缺口                                                | 主能力完成批次                                    | 最终 R6 确认批次 | 必须交付什么                                                                                              |
+| ---------------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------- | ---------------- | --------------------------------------------------------------------------------------------------------- |
+| 项目骨架 / config / test harness               | 需要 release package 与最终测试目录一致性                   | Batch05                                           | Batch05          | package check、test catalog、docs consistency、release manifest。                                         |
+| DuckDB schema / migration foundation           | 需要 migration hygiene 与 drift gate                        | Batch05                                           | Batch05          | schema drift check、migration registry、release manifest。                                                |
+| WriteManager + DbValidationGate                | pilot/live-wire 已证；主库仍须用户签字 promote              | Batch3G（闭合）+ Batch3H（产品化）                | Batch05          | sandbox rehearsal、limited production proof、rollback/no-mutation evidence；**3H 闭合前不写主库 clean。** |
+| RawStore / FileRegistry / fetch_log            | 需要绑定每个 in-scope source                                | Batch3H                                           | Batch05          | source_fetch_id、content_hash、schema_hash、fetch_log、replay/sandbox evidence。                          |
+| ResourceGuard / performance budget             | 需要覆盖 adapter/API/review/sync 全链路                     | Batch3H + Batch04 + Batch05                       | Batch05          | 每条真实路径都有 caps、拒绝大查询、bounded integration smoke。                                            |
+| Source registry / capability / route planner   | 需要所有 source 最终状态                                    | Batch3H                                           | Batch05          | READY_WITH_EVIDENCE 或 ADR_DISABLED_OUT_OF_SCOPE；route tests。                                           |
+| Provider catalog / auth-license posture        | 需要覆盖 active/proposed source                             | Batch3F-R + Batch3H                               | Batch05          | provider metadata、license/auth、resource caps、release limitation。                                      |
+| DataSourceService facade                       | 需要真实 source-specific ports                              | Batch3H                                           | Batch05          | API/Agent/Sync 都通过 service boundary，不直接读 YAML/DB/adapter。                                        |
+| Vendor adapters / provider fetch ports         | 大量 source 仍未真实闭合                                    | Batch3H                                           | Batch05          | 每个 source adapter/evidence 或 ADR-disabled。                                                            |
+| Source conflict validator                      | 需要接入真实 source/domain                                  | Batch3H + Batch3G                                 | Batch05          | conflict report 进入 write/readiness/release gate。                                                       |
+| Data health engine                             | live 证据 DH sidecar 为 pilot 补丁（G14）                   | Batch3F-R / R3FR-02 + **Batch3H 证据契约**        | Batch05          | EasyXT-style profiles；闭合 G14 后取消 bridge sidecar。                                                   |
+| `qmd data` CLI                                 | health command 不能是 placeholder                           | Batch3F-R / R3FR-06 + Batch3G limited-write flows | Batch05          | `qmd data health` 真实 read-only 输出；limited-write operator flow 不越权。                               |
+| Data quality validator profiles                | 需要 profile-level business checks                          | Batch3F-R                                         | Batch05          | OHLCV、required fields、calendar gap、stale、outlier、volume anomaly。                                    |
+| Sync orchestration                             | 需要 production-equivalent smoke                            | Batch05                                           | Batch05          | incremental/backfill/reconcile/data-quality bounded smoke，经 DataSourceService。                         |
+| Layer1 axes                                    | staged source 需要真实官方/宏观绑定                         | Batch3H / R3H-05                                  | Batch05          | official/macro evidence binding 或 ADR narrowed scope。                                                   |
+| Layer2 sensors                                 | staged fixture 需要真实 market/CN/validation source         | Batch3H / R3H-05                                  | Batch05          | cross-asset sensor real source envelope。                                                                 |
+| Layer3 chains                                  | staged chain 需要真实 CN/industry-chain evidence            | Batch3H / R3H-05                                  | Batch05          | chain source evidence 或 ADR narrowed scope。                                                             |
+| Layer4 markets                                 | CN_A staged fixture 需要真实 market/calendar/breadth source | Batch3H / R3H-05                                  | Batch05          | market structure source binding 或 ADR narrowed scope。                                                   |
+| Layer5 evidence                                | 需要全链路 evidence lineage                                 | Batch3H / R3H-05                                  | Batch05          | source_fetch_id/content_hash/schema_hash/limitation chain。                                               |
+| Sandbox clean write / limited production entry | R3G-03 已闭合；live-wire 仅 pilot                           | Batch3G + debt-lite rehearsal                     | Batch05          | rehearsal → audit → limited write；主库写入须单独批准；或 release 禁用说明。                              |
+| API backend                                    | placeholder shell 不够                                      | Batch04 / B04-01                                  | Batch05          | authenticated read-only endpoint、pagination、budget、no free SQL、no write。                             |
+| Agent layer                                    | 需要真实 policy-guarded read-only tool                      | Batch04 / B04-02                                  | Batch05          | tool policy、prompt/tool rejection、evidence-bound output、no action。                                    |
+| Frontend dashboard                             | 用户会设计最终 UI，但 API-bound 产品路径要完成              | Batch04 / B04-03                                  | Batch05          | API-bound page/panel、loading/empty/error states、contract alignment。                                    |
+| Notifications / reports                        | 不能只有 schema                                             | Batch04 / B04-04                                  | Batch05          | event → report/notification_log、dedup/cooldown/evidence refs。                                           |
+| Backtest / review                              | 不能从零写 blank engine                                     | Batch04 / B04-05                                  | Batch05          | frozen loader、no-action guard、review runner、metrics、report artifact、API binding。                    |
+| Backtest/review metrics                        | 不能 metric-only 微切片                                     | Batch04 / B04-05                                  | Batch05          | metrics 从 QMD-owned review series 计算，连到可运行 scenario。                                            |
+| No-action semantics guard                      | 需要覆盖 Agent/API/review/report                            | Batch04 / B04-02 + B04-05                         | Batch05          | 交易动作语义拒绝测试、output validator。                                                                  |
+| Reference adoption governance                  | 需要任务卡本地化与 license/runtime guard                    | Batch3F-R / R3FR-01                               | Batch05          | 无中央 executable inventory、无 `参考项目/**` runtime import、无 unsafe copy。                            |
+| Release/security packaging                     | 只有规划                                                    | Batch05                                           | Batch05          | security CI、integration smoke、manifest、package cleanup、runbooks。                                     |
+| 文档/规划/任务入口一致性                       | loose cards 容易误导                                        | R3FR-01 + Batch05                                 | Batch05          | canonical entrypoints、redirect notes、docs index、release manifest 一致。                                |
 
 ---
 
@@ -554,26 +604,26 @@ Batch05 的核心不是“主能力开发”，而是确认所有承诺模块是
 
 所有目标 source 必须在 Batch3H 关闭，Round5 确认发布状态。
 
-| 数据源组           | Source                                                                                                                        | 主能力完成批次 | 生产级结论要求                                                                                                |
-| ------------------ | ----------------------------------------------------------------------------------------------------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------- |
-| 官方宏观/披露      | `fred`, `us_treasury`, `sec_edgar`, `cftc_cot`, `bis`, `world_bank`                                                           | R3H-01         | 每个 source adapter/gate/replay/route/evidence 或 ADR_DISABLED_OUT_OF_SCOPE；Layer1/Layer5 绑定。             |
-| 市场/加密          | `alpha_vantage`, `stooq`, `yahoo_finance`, `deribit`, `coingecko`                                                             | R3H-02         | 每个 source 有 auth/license/route/evidence；聚合/validation 源不能冒充 primary。                              |
-| 中国市场           | `baostock`, `akshare`, `cninfo`, `tdx_pytdx`, `mootdx`, `eastmoney`, `sina_finance`, `ths_ifind`, `qmt_xtdata`, `qmt_xqshare` | R3H-03         | 每个 source primary/validation/authorization-disabled/ADR-disabled 姿态明确；QMT/iFinD/xqshare 不得默认启用。 |
-| 预测市场/网页证据  | `kalshi`, `polymarket`, `web_search`                                                                                          | R3H-04         | 只能 probability/evidence/manual-review；不得写 factual clean table。                                         |
-| 全部 source 总审计 | 所有 above source                                                                                                             | R3H-05         | Round4 只能消费 R3H final decision，不得消费 proposed-disabled 假完成。                                       |
+| 数据源组           | Source                                                                                                                        | 主能力完成批次 | 生产级结论要求                                                                                                                                     |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 官方宏观/披露      | `fred`, `us_treasury`, `sec_edgar`, `cftc_cot`, `bis`, `world_bank`                                                           | R3H-01         | 每个 source adapter/gate/replay/route/evidence 或 ADR_DISABLED_OUT_OF_SCOPE；Layer1/Layer5 绑定。**`fred`：闭合 3G-G10（R3E↔promote 证据合一）。** |
+| 市场/加密          | `alpha_vantage`, `stooq`, `yahoo_finance`, `deribit`, `coingecko`                                                             | R3H-02         | 每个 source 有 auth/license/route/evidence；聚合/validation 源不能冒充 primary。                                                                   |
+| 中国市场           | `baostock`, `akshare`, `cninfo`, `tdx_pytdx`, `mootdx`, `eastmoney`, `sina_finance`, `ths_ifind`, `qmt_xtdata`, `qmt_xqshare` | R3H-03         | 每个 source primary/validation/authorization-disabled/ADR-disabled 姿态明确；QMT/iFinD/xqshare 不得默认启用。                                      |
+| 预测市场/网页证据  | `kalshi`, `polymarket`, `web_search`                                                                                          | R3H-04         | 只能 probability/evidence/manual-review；不得写 factual clean table。                                                                              |
+| 全部 source 总审计 | 所有 above source                                                                                                             | R3H-05         | Round4 只能消费 R3H final decision，不得消费 proposed-disabled 假完成。                                                                            |
 
 ---
 
 ## 10. 进入下一批次的门禁
 
-| 从哪里到哪里     | 必须满足什么                                                                                                                                       |
-| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 历史底座 → 3F-R  | 以 3F/3V/3E/3D 等已有产物作为输入；当前新开工从 3F-R canonical folder 开始。                                                                       |
-| 3F-R → 3G        | 3F-R 完成，或所有 open 3F-R 项都有 ADR defer + owner + deferred phase + closure gate；R3FR-01 必须已重跑；不得存在中央 executable inventory 风险。 |
-| 3G → 3H          | sandbox rehearsal/audit/limited write 状态清楚；写入链路没有污染生产库风险；candidate source 的写入边界清晰。                                      |
-| 3H → Round4      | R3H-05 输出 PASS 或 WARN_WITH_NARROWED_SCOPE_ADR；所有 target source 都 READY_WITH_EVIDENCE 或 ADR_DISABLED_OUT_OF_SCOPE。                         |
-| Round4 → Round5  | API、Agent、Frontend、Notification、Backtest/Review 都有真实 read-only 垂直闭环，不是 shell/schema/policy-only。                                   |
-| Round5 → Release | security CI、integration/resource smoke、release manifest、package cleanup、runbooks 全部通过；没有隐藏 blocker。                                  |
+| 从哪里到哪里     | 必须满足什么                                                                                                                                                                          |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 历史底座 → 3F-R  | 以 3F/3V/3E/3D 等已有产物作为输入；当前新开工从 3F-R canonical folder 开始。                                                                                                          |
+| 3F-R → 3G        | 3F-R 完成，或所有 open 3F-R 项都有 ADR defer + owner + deferred phase + closure gate；R3FR-01 必须已重跑；不得存在中央 executable inventory 风险。                                    |
+| 3G → 3H          | R3G-03 **CLOSED**；`R3G_MASS_REHEARSAL_OPEN_GAPS.md` 已登记 G1–G17；主库 denylist 已证；pilot `--live-wire` 证据可引用；**未闭合项必须在 3H 活卡落地，不得 merge pilot 数据进主库。** |
+| 3H → Round4      | R3H-05 输出 PASS 或 WARN_WITH_NARROWED_SCOPE_ADR；所有 target source 都 READY_WITH_EVIDENCE 或 ADR_DISABLED_OUT_OF_SCOPE。                                                            |
+| Round4 → Round5  | API、Agent、Frontend、Notification、Backtest/Review 都有真实 read-only 垂直闭环，不是 shell/schema/policy-only。                                                                      |
+| Round5 → Release | security CI、integration/resource smoke、release manifest、package cleanup、runbooks 全部通过；没有隐藏 blocker。                                                                     |
 
 ---
 

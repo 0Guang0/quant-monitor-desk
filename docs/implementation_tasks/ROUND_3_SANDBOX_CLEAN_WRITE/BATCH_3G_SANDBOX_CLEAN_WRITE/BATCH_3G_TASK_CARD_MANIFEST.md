@@ -65,3 +65,13 @@ Batch 3G cannot close unless:
 - no OpenBB runtime source copy;
 - no JQ2PTrade execution/trading API surface;
 - no Agent-triggered write path.
+
+---
+
+## 6. Post-R3G-03 mass rehearsal open gaps
+
+R3G-03 is **archived**; isolation pilot and fixture promote are delivered. Items exposed during mass rehearsal but **not** R3G-03 scope are indexed in:
+
+`R3G_MASS_REHEARSAL_OPEN_GAPS.md`
+
+Do not reopen full Trellis Plan for those items; use Batch 3H / R3X staged pilot / lightweight ops slices per that file §2.

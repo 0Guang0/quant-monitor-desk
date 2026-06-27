@@ -19,6 +19,7 @@ from backend.app.db.validation_gate import DbValidationGate
 from backend.app.db.write_manager import WriteManager, WriteRequest
 from backend.app.datasources.service import DataSourceService
 from backend.app.ops.mutation_proof import key_table_row_counts
+from backend.app.ops.staged_pilot import DEFAULT_PRODUCTION_DB
 from backend.app.ops.sandbox_clean_write.approval_contract import (
     ApprovalCandidate,
     ApprovalContractError,
@@ -33,13 +34,15 @@ from backend.app.ops.sandbox_clean_write.gates import (
     validation_status_from_dh,
 )
 from backend.app.ops.sandbox_clean_write.path_utils import resolve_sandbox_path, utc_now_iso
-from backend.app.ops.sandbox_clean_write.rehearsal_loader import load_rehearsal_bundle
+from backend.app.ops.sandbox_clean_write.rehearsal_loader import (
+    load_rehearsal_bundle,
+    populate_staging_from_bundle,
+)
 from backend.app.ops.sandbox_clean_write.rehearsal_plan import (
     RehearsalCandidate,
     validate_fred_authorization,
 )
 from backend.app.ops.sandbox_clean_write.rehearsal_runner import (
-    _ensure_clean_table,
     _ensure_validation_report,
 )
 from backend.app.ops.sandbox_clean_write.rollback_plan import (
@@ -121,8 +124,18 @@ def _assert_production_db_allowed(
     *,
     mkdir_if_missing: bool = True,
 ) -> Path:
-    """Promote target must be explicit production_db_path from approval."""
+    """Promote target must be explicit production_db_path from approval; refuse canonical main DB."""
     resolved = resolve_sandbox_path(production_db)
+    prod = DEFAULT_PRODUCTION_DB.resolve()
+    from backend.app import config as app_config
+
+    default_prod = (app_config.DATA_ROOT / "duckdb" / "quant_monitor.duckdb").resolve()
+    canonical_prod = (PROJECT_ROOT / "data" / "duckdb" / "quant_monitor.duckdb").resolve()
+    if resolved in {prod, default_prod, canonical_prod}:
+        raise LimitedProductionEntryError(
+            "canonical production DB path refused for R3G-03 promote; use isolated pilot DB",
+            code="PRODUCTION_DB_PATH_REJECTED",
+        )
     if mkdir_if_missing:
         resolved.parent.mkdir(parents=True, exist_ok=True)
     elif not resolved.is_file() and not resolved.parent.is_dir():
@@ -142,6 +155,23 @@ def _assert_within_data_root(db_path: Path) -> None:
         return
     raise LimitedProductionEntryError(
         f"production_db_path outside DATA_ROOT or .audit-sandbox: {resolved}",
+        code="PRODUCTION_DB_PATH_REJECTED",
+    )
+
+
+def _assert_validation_source_isolated_db(source_id: str, production_db: Path) -> None:
+    """validation_only contract sources may only promote to pilot or audit-sandbox DBs."""
+    from backend.app.ops.sandbox_clean_write.approval_contract import _load_contract_caps
+
+    caps = _load_contract_caps().get(source_id) or {}
+    if not caps.get("validation_only"):
+        return
+    resolved = resolve_sandbox_path(production_db)
+    audit_sandbox = (PROJECT_ROOT / ".audit-sandbox").resolve()
+    if resolved.is_relative_to(audit_sandbox) or "r3g03_pilot" in resolved.name:
+        return
+    raise LimitedProductionEntryError(
+        f"validation_only source {source_id} requires r3g03_pilot or .audit-sandbox DB",
         code="PRODUCTION_DB_PATH_REJECTED",
     )
 
@@ -436,6 +466,8 @@ def _to_rehearsal_candidate(candidate: ApprovalCandidate) -> RehearsalCandidate:
     window_days = (end - start).days + 1
     op_map = {
         "baostock": "fetch_daily_bar",
+        "akshare": "fetch_daily_bar_validation",
+        "yahoo_finance": "fetch_daily_bar_validation",
         "cninfo": "fetch_announcement_index",
         "fred": "fetch_macro_series",
     }
@@ -481,14 +513,16 @@ def _production_clean_write(
     production_db: Path,
     candidate: ApprovalCandidate,
     rehearsal: RehearsalCandidate,
-    bundle_symbol: str,
+    bundle,
     run_id: str,
     dh_report,
     dry_run: bool,
+    allow_fixture_window_fallback: bool,
 ) -> tuple[str | None, int, int]:
-    """Mirror rehearsal_runner write path on production DB — skipped when dry_run.
+    """Write bundle evidence rows through staging → WriteManager on approved DB.
 
-    ponytail: mirrored from rehearsal_runner._sandbox_clean_write; dual-maint ceiling.
+    ponytail: staging via populate_staging_from_bundle; WriteManager orchestration
+    mirrored from rehearsal_runner._sandbox_clean_write — upgrade path: gates.compose_clean_write_gates().
     """
     if dry_run:
         return None, 0, 0
@@ -498,17 +532,18 @@ def _production_clean_write(
     with cm.writer() as con:
         apply_migrations(con)
         before_non_target = _non_target_row_count(con, candidate.target_table, candidate.symbols)
-        _ensure_clean_table(con)
         validation_report_id = _ensure_validation_report(con, rehearsal, run_id, dh_report)
-        con.execute("DELETE FROM stg_foundation_smoke")
-        con.execute(
-            """
-            INSERT INTO stg_foundation_smoke
-            (instrument_id, trade_date, close, source_used, batch_id)
-            VALUES (?, ?, ?, ?, ?)
-            """,
-            [bundle_symbol, candidate.start_date, 10.0, candidate.source_id, PROMOTE_ID],
+        staged_count = populate_staging_from_bundle(
+            con,
+            bundle,
+            batch_id=PROMOTE_ID,
+            max_rows=candidate.max_rows,
+            start_date=candidate.start_date,
+            end_date=candidate.end_date,
+            allow_window_fallback=allow_fixture_window_fallback,
         )
+        if staged_count <= 0:
+            raise LimitedProductionEntryError("bundle produced zero staging rows")
         quoted_target = _quoted_table(candidate.target_table)
         tables = {
             row[0]
@@ -536,15 +571,14 @@ def _production_clean_write(
         result = wm.write(req, con=con, own_transaction=True)
         if result.status != "SUCCESS":
             raise LimitedProductionEntryError(result.error_message or "production clean write failed")
-        quoted = _quoted_table(candidate.target_table)
-        clean_count = int(con.execute(f"SELECT COUNT(*) FROM {quoted}").fetchone()[0])
+        rows_inserted = int(result.rows_inserted)
         after_non_target = _non_target_row_count(con, candidate.target_table, candidate.symbols)
         if after_non_target != before_non_target:
             raise LimitedProductionEntryError(
                 "execute mutated non-target key rows",
                 code="DRY_RUN_MUTATION",
             )
-        return result.write_id, clean_count, after_non_target
+        return result.write_id, rows_inserted, after_non_target
 
 
 def run_limited_production_entry(request: PromoteRequest) -> dict[str, Any]:
@@ -579,6 +613,20 @@ def run_limited_production_entry(request: PromoteRequest) -> dict[str, Any]:
         mkdir_if_missing=not production_mutation_allowed,
     )
     _assert_within_data_root(production_db)
+    _assert_validation_source_isolated_db(candidate.source_id, production_db)
+
+    if candidate.source_id == "fred":
+        try:
+            validate_fred_authorization(
+                request.fred_authorization,
+                series_ids=candidate.symbols,
+                require_live_credentials=bool(request.allow_live_fetch),
+            )
+        except Exception as exc:
+            raise LimitedProductionEntryError(
+                f"fred authorization failed: {exc}",
+                code="LIVE_FETCH_REJECTED",
+            ) from exc
 
     before_proof = load_before_proof(request.before_proof)
     _validate_before_proof_payload(
@@ -626,15 +674,17 @@ def run_limited_production_entry(request: PromoteRequest) -> dict[str, Any]:
     assert_data_health_admission(dh_report, candidate.source_id)
 
     run_id = f"{PROMOTE_ID}-{candidate.source_id}"
-    symbol = candidate.symbols[0]
+    evidence_is_fixture = "tests/fixtures" in str(bundle.evidence_dir).replace("\\", "/")
+    allow_fixture_window_fallback = evidence_is_fixture or not production_mutation_allowed
     write_id, clean_rows, non_target_count = _production_clean_write(
         production_db=production_db,
         candidate=candidate,
         rehearsal=rehearsal,
-        bundle_symbol=symbol,
+        bundle=bundle,
         run_id=run_id,
         dh_report=dh_report,
         dry_run=not production_mutation_allowed,
+        allow_fixture_window_fallback=allow_fixture_window_fallback,
     )
 
     fetch_cov = coverage_ratio(len(bundle.source_fetch_ids), max(1, bundle.raw_row_count))

@@ -48,6 +48,16 @@ The goal is not to broaden data coverage. The goal is to prove that raw/staged e
 
 Do not create a separate `reference_adoption_inventory.md` for this task. Put adoption decisions directly in this task card or in the concrete implementation PR notes.
 
+### Reference adoption ladder (2026-06-27)
+
+`参考项目/**` is **archive-only** and will be removed; runtime must not import or read it. When implementing R3G capabilities (DH rules, calendar gaps, loader/report shapes), follow `reference_adoption_guardrails.yaml` → `adoption_ladder`:
+
+1. **L1 direct copy** into `backend/app/**` when logic already fits QMD stack and monitor-desk positioning.
+2. **L2 copy and rewrite** when useful but DB paths, calendar, SQL, or console reporting must change.
+3. **L3 greenfield** only when no suitable reference or license/semantics forbid copy.
+
+Inspect reference files during design; **land** code only in QMD-owned paths. OpenBB remains architecture-only (no runtime provider copy). JQ2PTrade execution APIs remain forbidden.
+
 ---
 
 ## 3. Existing QMD wheel to replace or avoid
@@ -138,6 +148,9 @@ Useful parts to adapt:
 
 - `TradingCalendar.get_trading_days(start, end)` idea.
 - `TradingCalendar.get_missing_trading_days(start, end, existing_dates)` idea.
+
+**Planning note (2026-06-27):** trading-day window SSOT is **not** delivered in R3G-01/03. Target: **Batch 3H / R3H-02** ops slice; tracked as **G2** in `R3G_MASS_REHEARSAL_OPEN_GAPS.md`.
+
 - `_group_continuous_dates(...)` idea for grouping missing days into segments.
 - `detect_missing_data(...)` result shape:
   - expected trading days

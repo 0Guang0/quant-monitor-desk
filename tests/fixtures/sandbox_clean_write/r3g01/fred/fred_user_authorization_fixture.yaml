@@ -1,0 +1,11 @@
+authorization_present: true
+source_id: fred
+allow_production_clean_write: false
+max_series: 10
+max_window_days: 120
+symbols_or_series:
+  - DGS10
+  - VIXCLS
+  - BAA10Y
+  - T10Y3M
+  - SP500

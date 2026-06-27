@@ -1,0 +1,14 @@
+{
+  "data_domain": "cn_equity_daily_bar",
+  "source_id": "akshare",
+  "generated_at": "2026-06-27T12:00:00Z",
+  "manifest_entries": [
+    {
+      "source_used": "akshare",
+      "source_fetch_id": "akshare-fetch-1",
+      "content_hash": "akshare-hash-1",
+      "as_of_timestamp": "2026-06-27T12:00:00Z",
+      "relative_paths": ["bars.json"]
+    }
+  ]
+}

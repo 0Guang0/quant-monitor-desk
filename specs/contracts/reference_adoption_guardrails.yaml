@@ -10,6 +10,32 @@ purpose: >
   Production-completion plans may exist only as coverage/navigation maps; they
   must not replace task-card-local executable reference details.
 
+adoption_ladder:
+  policy_date: "2026-06-27"
+  reference_tree_retirement: >
+    参考项目/** will be removed from the repo. It must never be a runtime dependency:
+    no import, no sys.path, no runtime read of reference paths, no soft-link to
+    reference files for execution.
+  priority_order:
+    - id: L1_direct_copy
+      when: logic fits QMD stack and positioning; license and forbidden_semantics pass
+      action: copy source into qmd_owned target paths; record reference_project in task card
+    - id: L2_copy_and_rewrite
+      when: useful but mismatched db paths, calendar, sql, or evidence shape
+      action: copy then rewrite to ConnectionManager, registry, gates, structured evidence
+    - id: L3_greenfield
+      when: no suitable reference or license/semantics forbid adoption
+      action: minimal qmd_owned implementation only
+  hard_limits:
+    - must_match_qmd_stack_and_monitor_desk_positioning
+    - no_runtime_reference_project_dependency
+    - no_forced_copy_when_architecture_only_or_license_blocks
+  task_card_must_record:
+    - reference_project.path
+    - reference_project.qmd_target_files
+    - reference_project.direct_copy_allowed
+    - reference_project.rewrite_required
+
 structure_rules:
   task_card_local_reference_details: true
   one_task_id_one_task_card: true

@@ -35,6 +35,21 @@ candidate_caps:
     r3g01_max_window_days: 120
     r3g03_max_series: 10
     r3g03_max_window_days: 120
+  akshare:
+    allowed_domains: [cn_equity_daily_bar]
+    validation_only: true
+    r3g01_max_symbols: 3
+    r3g01_max_window_days: 30
+    r3g03_max_symbols: 10
+    r3g03_max_window_days: 120
+  yahoo_finance:
+    allowed_domains: [us_equity_daily_bar, etf_daily_bar]
+    validation_only: true
+    enabled_by_default: false
+    r3g01_max_symbols: 3
+    r3g01_max_window_days: 30
+    r3g03_max_symbols: 10
+    r3g03_max_window_days: 120
 
 required_qmd_gates:
   - DataSourceService

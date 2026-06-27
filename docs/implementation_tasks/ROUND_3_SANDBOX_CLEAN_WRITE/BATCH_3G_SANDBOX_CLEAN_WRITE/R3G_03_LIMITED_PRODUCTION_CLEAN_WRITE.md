@@ -353,3 +353,14 @@ R3G-03 is done only when:
 - no reference project runtime code is imported or copied unsafely;
 - no Agent/UI path can initiate or broaden the write;
 - release notes state the exact source/domain/symbol/window and limitations.
+
+---
+
+## 12. Out of scope (mass rehearsal follow-ups)
+
+The following are **not** R3G-03 deliverables; track in `R3G_MASS_REHEARSAL_OPEN_GAPS.md` with target batch:
+
+- live fetch on promote path (baostock/cninfo/FRED API → staging);
+- trading-day window SSOT (vs calendar-day cap);
+- domain split tables / full OHLCV clean DDL;
+- stress caps beyond contract (50/100 symbols).
