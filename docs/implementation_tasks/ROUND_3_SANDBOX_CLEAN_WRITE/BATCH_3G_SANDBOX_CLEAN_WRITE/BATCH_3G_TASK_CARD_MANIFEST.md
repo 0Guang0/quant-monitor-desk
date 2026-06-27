@@ -14,11 +14,11 @@ Batch 3F-R is **closed**. Condition A for Round 3G is satisfied: `qmd data healt
 
 ## 1. Canonical Batch 3G cards
 
-| Task ID  | Card                                         | Scope                                                                                | Primary gates                                                                                   | Reference-adoption details location |
-| -------- | -------------------------------------------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- | ----------------------------------- |
-| `R3G-01` | `R3G_01_SANDBOX_CLEAN_WRITE_REHEARSAL.md`    | sandbox rehearsal for baostock daily bar, cninfo metadata, authorized FRED P0 sample | sandbox DB only, WriteManager audit, DbValidationGate PASS, data-health PASS/WARN               | in the task card                    |
-| `R3G-02` | `R3G_02_PRE_PRODUCTION_ADVERSARIAL_AUDIT.md` | strict audit of R3G-01 evidence                                                      | `PASS_ALLOW_LIMITED_PROD_WRITE`, `WARN_ALLOW_WITH_MANUAL_APPROVAL`, or `BLOCK_PRODUCTION_WRITE` | in the task card                    |
-| `R3G-03` | `R3G_03_LIMITED_PRODUCTION_CLEAN_WRITE.md`   | extremely small approved production entry                                            | explicit user approval, before/after proof, rollback dry run                                    | in the task card                    |
+| Task ID  | Card                                         | Scope                                                                                | Primary gates                                                                                   | Reference-adoption details location   |
+| -------- | -------------------------------------------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- | ------------------------------------- |
+| `R3G-01` | `R3G_01_SANDBOX_CLEAN_WRITE_REHEARSAL.md`    | sandbox rehearsal for baostock daily bar, cninfo metadata, authorized FRED P0 sample | sandbox DB only, WriteManager audit, DbValidationGate PASS, data-health PASS/WARN               | in the task card                      |
+| `R3G-02` | `R3G_02_PRE_PRODUCTION_ADVERSARIAL_AUDIT.md` | strict audit of R3G-01 evidence                                                      | `PASS_ALLOW_LIMITED_PROD_WRITE`, `WARN_ALLOW_WITH_MANUAL_APPROVAL`, or `BLOCK_PRODUCTION_WRITE` | in the task card                      |
+| `R3G-03` | `R3G_03_LIMITED_PRODUCTION_CLEAN_WRITE.md`   | extremely small approved production entry                                            | explicit user approval, before/after proof, rollback dry run                                    | **Completed** @ `23429ad8` 2026-06-27 |
 
 ---
 

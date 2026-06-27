@@ -2,7 +2,7 @@
 
 > **Batch:** Batch 3G — Sandbox Clean Write and Limited Production Entry  
 > **Roadmap segment:** Round 3G.3  
-> **Status:** Plan 2026-06-27 — user authorized limited production write entry; Execute after Plan freeze + `task.py start`.  
+> **Status:** Completed 2026-06-27 @ `23429ad8` — promote CLI + audit repair; Tier B execute defer to Coordinator  
 > **Execution posture:** explicit user approval required; extreme caps; before/after proof and rollback dry run required.
 
 ---
