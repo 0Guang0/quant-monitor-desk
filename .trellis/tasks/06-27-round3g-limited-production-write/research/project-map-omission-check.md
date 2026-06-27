@@ -12,17 +12,17 @@ OK: docs/specs indexed (MIGRATION_MAP + generated index)
 
 对照 `docs/generated/project_map.generated.json` 中 `backend/app/ops/sandbox_clean_write` 与 Round 3G 相关路径：
 
-| 路径                                                              | project_map    | §3 manifest        | 结论         |
-| ----------------------------------------------------------------- | -------------- | ------------------ | ------------ |
-| `backend/app/ops/sandbox_clean_write/rehearsal_runner.py`         | 应有           | 已列               | OK           |
-| `backend/app/ops/sandbox_clean_write/adversarial_audit.py`        | 应有           | 已列（对抗审计补） | OK           |
-| `backend/app/ops/sandbox_clean_write/audit_decision.py`           | 应有           | 已列               | OK           |
-| `backend/app/ops/mutation_proof.py`                               | 应有           | 已列               | OK           |
-| `backend/app/ops/sandbox_clean_write/limited_production_entry.py` | 未存在（待建） | 活卡 §4；frozen §4 | OK（计划内） |
-| `specs/contracts/sandbox_clean_write_contract.yaml`               | 应有           | 已列               | OK           |
-| `tests/test_round3g_limited_production_clean_write.py`            | 应有           | 通过 §2 引用       | OK           |
-| `tests/test_round3g_limited_production_rollback.py`               | 应有           | 通过 §2 引用       | OK           |
-| `docs/implementation_tasks/.../R3G_03_*.md`                       | README 索引    | source_card        | OK           |
+| 路径                                                              | project_map              | §3 manifest        | 结论 |
+| ----------------------------------------------------------------- | ------------------------ | ------------------ | ---- |
+| `backend/app/ops/sandbox_clean_write/rehearsal_runner.py`         | 应有                     | 已列               | OK   |
+| `backend/app/ops/sandbox_clean_write/adversarial_audit.py`        | 应有                     | 已列（对抗审计补） | OK   |
+| `backend/app/ops/sandbox_clean_write/audit_decision.py`           | 应有                     | 已列               | OK   |
+| `backend/app/ops/mutation_proof.py`                               | 应有                     | 已列               | OK   |
+| `backend/app/ops/sandbox_clean_write/limited_production_entry.py` | 已存在（R3G-03 Execute） | 活卡 §4；frozen §4 | OK   |
+| `specs/contracts/sandbox_clean_write_contract.yaml`               | 应有                     | 已列               | OK   |
+| `tests/test_round3g_limited_production_clean_write.py`            | 应有                     | 通过 §2 引用       | OK   |
+| `tests/test_round3g_limited_production_rollback.py`               | 应有                     | 通过 §2 引用       | OK   |
+| `docs/implementation_tasks/.../R3G_03_*.md`                       | README 索引              | source_card        | OK   |
 
 ## 发现遗漏（已修复）
 

@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from backend.app.config import DATA_ROOT, PROJECT_ROOT
+from backend.app.ops.sandbox_clean_write.path_utils import resolve_sandbox_path, utc_now_iso
 from backend.app.core.resource_guard import Decision, ResourceGuard
 from backend.app.datasources.service import DataSourceService
 from backend.app.db.connection import ConnectionManager
@@ -72,20 +73,10 @@ class RehearsalRequest:
     fred_authorization: Path | None = None
 
 
-def _utc_now_iso() -> str:
-    return datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
-
-
-def _resolve_path(path: Path) -> Path:
-    if not path.is_absolute():
-        path = PROJECT_ROOT / path
-    return path.resolve()
-
-
 def assert_sandbox_db_allowed(sandbox_db: Path, *, no_production_mutation: bool) -> Path:
     if not no_production_mutation:
         raise RehearsalRunnerError("--no-production-mutation is required for R3G-01")
-    resolved = _resolve_path(sandbox_db)
+    resolved = resolve_sandbox_path(sandbox_db)
     prod = DEFAULT_PRODUCTION_DB.resolve()
     # ponytail: read DATA_ROOT at call time — tests may monkeypatch config.DATA_ROOT
     from backend.app import config as app_config
@@ -103,7 +94,12 @@ def _coverage_ratio(present: int, total: int) -> float:
     return round(min(1.0, present / total), 4)
 
 
-def _run_source_data_health(candidate: RehearsalCandidate, evidence_dir: Path):
+def _run_source_data_health(
+    candidate: RehearsalCandidate,
+    evidence_dir: Path,
+    *,
+    max_rows: int = 1000,
+):
     if candidate.source_id == "baostock":
         report, *_ = run_data_health_profile(
             profile_id="market_bar_p0",
@@ -112,7 +108,7 @@ def _run_source_data_health(candidate: RehearsalCandidate, evidence_dir: Path):
             db_path=None,
             start_date=None,
             end_date=None,
-            max_rows=1000,
+            max_rows=max_rows,
         )
         return report
     service = DataHealthService()
@@ -267,7 +263,7 @@ def _write_rollback_artifact(
 ) -> Path:
     payload = {
         "rehearsal_id": REHEARSAL_ID,
-        "generated_at": _utc_now_iso(),
+        "generated_at": utc_now_iso(),
         "write_manager_operation_id": write_id,
         "source_id": candidate.source_id,
         "domain": candidate.domain,
@@ -305,7 +301,7 @@ def _write_mutation_proof(
         "# Production DB — No Mutation Proof (R3G-01)",
         "",
         f"- **Rehearsal ID:** {REHEARSAL_ID}",
-        f"- **Generated at:** {_utc_now_iso()}",
+        f"- **Generated at:** {utc_now_iso()}",
         f"- **Production DB:** `{DEFAULT_PRODUCTION_DB}`",
         f"- **proof_status:** {proof.get('proof_status')}",
         f"- **production_mutation_allowed:** false",
@@ -393,9 +389,9 @@ def run_sandbox_clean_write_rehearsal(request: RehearsalRequest) -> dict[str, An
         request.sandbox_db,
         no_production_mutation=request.no_production_mutation,
     )
-    evidence_dir = _resolve_path(request.evidence_dir)
+    evidence_dir = resolve_sandbox_path(request.evidence_dir)
     evidence_dir.mkdir(parents=True, exist_ok=True)
-    report_path = _resolve_path(request.report_path)
+    report_path = resolve_sandbox_path(request.report_path)
 
     if request.allow_live_fetch and request.dry_run:
         raise RehearsalRunnerError("allow_live_fetch requires dry_run=false")
@@ -420,7 +416,7 @@ def run_sandbox_clean_write_rehearsal(request: RehearsalRequest) -> dict[str, An
         raise RehearsalRunnerError(f"ResourceGuard HARD_STOP: {guard_reason}")
 
     service = DataSourceService(staged_fixture_mode=request.dry_run and not request.allow_live_fetch)
-    run_id = f"{REHEARSAL_ID}-{_utc_now_iso()}"
+    run_id = f"{REHEARSAL_ID}-{utc_now_iso()}"
 
     per_source: list[dict[str, Any]] = []
     candidates = list(load_candidate_set(request.candidate_set))
@@ -452,7 +448,7 @@ def run_sandbox_clean_write_rehearsal(request: RehearsalRequest) -> dict[str, An
 
     payload = {
         "rehearsal_id": REHEARSAL_ID,
-        "generated_at": _utc_now_iso(),
+        "generated_at": utc_now_iso(),
         "candidate_set": request.candidate_set,
         "sandbox_db": str(sandbox_db),
         "production_mutation_allowed": False,

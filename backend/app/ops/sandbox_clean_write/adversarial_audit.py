@@ -26,7 +26,7 @@ from backend.app.ops.sandbox_clean_write.rehearsal_plan import (
     validate_source_caps,
 )
 from backend.app.ops.sandbox_clean_write.rehearsal_report import required_report_fields
-from backend.app.ops.sandbox_clean_write.rehearsal_runner import _resolve_path as _resolve
+from backend.app.ops.sandbox_clean_write.path_utils import resolve_sandbox_path as _resolve
 
 _CATALOG: dict[str, Any] | None = None
 _REGISTRY: SourceRegistry | None = None

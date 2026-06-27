@@ -24,6 +24,20 @@ PROVIDER_CATALOG_PATH = PROJECT_ROOT / "specs/datasource_registry/provider_catal
 R3G01_MAX_SERIES = 3
 R3G01_FRED_MAX_WINDOW_DAYS = 120
 
+_CAP_PROFILE_DEFAULTS: dict[str, dict[str, int]] = {
+    "r3g01": {
+        "max_symbols": 3,
+        "max_series": R3G01_MAX_SERIES,
+        "max_window_baostock": 30,
+        "max_window_fred": R3G01_FRED_MAX_WINDOW_DAYS,
+    },
+    "r3g03": {
+        "max_symbols": 10,
+        "max_series": 10,
+        "max_window": 120,
+    },
+}
+
 
 class RehearsalPlanError(RuntimeError):
     """Candidate set or authorization failed fail-closed gate."""
@@ -86,44 +100,68 @@ def load_candidate_set(name: str) -> tuple[RehearsalCandidate, ...]:
         raise RehearsalPlanError(f"unknown candidate set: {name!r}") from exc
 
 
-def validate_source_caps(candidate: RehearsalCandidate) -> None:
-    """Hard-reject candidates exceeding contract r3g01 caps."""
+def validate_contract_source_caps(
+    *,
+    source_id: str,
+    domain: str,
+    symbols: tuple[str, ...],
+    window_days: int,
+    metadata_only: bool,
+    profile: str,
+    error_cls: type[Exception] = RehearsalPlanError,
+) -> None:
+    """Parameterized cap validation for r3g01 (rehearse) and r3g03 (promote) profiles."""
     caps = _load_contract_caps()
-    source_caps = caps.get(candidate.source_id)
+    source_caps = caps.get(source_id)
     if source_caps is None:
-        raise RehearsalPlanError(f"source not in contract caps: {candidate.source_id}")
+        raise error_cls(f"forbidden or unknown source: {source_id}")
 
     allowed_domains = source_caps.get("allowed_domains") or []
-    if candidate.domain not in allowed_domains:
-        raise RehearsalPlanError(
-            f"domain {candidate.domain!r} not allowed for {candidate.source_id}"
-        )
+    if domain not in allowed_domains:
+        raise error_cls(f"domain {domain!r} not allowed for {source_id}")
 
-    symbol_count = len(candidate.symbols_or_series)
-    if candidate.source_id == "fred":
-        max_series = int(source_caps.get("r3g01_max_series") or R3G01_MAX_SERIES)
+    defaults = _CAP_PROFILE_DEFAULTS[profile]
+    symbol_count = len(symbols)
+    if source_id == "fred":
+        max_series_key = f"{profile}_max_series"
+        max_series = int(source_caps.get(max_series_key) or defaults["max_series"])
         if symbol_count > max_series:
-            raise RehearsalPlanError(
-                f"fred max {max_series} series, got {symbol_count}"
+            raise error_cls(f"fred max {max_series} series, got {symbol_count}")
+        if profile == "r3g01":
+            max_window = int(
+                source_caps.get("r3g01_max_window_days") or defaults["max_window_fred"]
             )
-        max_window = int(source_caps.get("r3g01_max_window_days") or R3G01_FRED_MAX_WINDOW_DAYS)
+        else:
+            max_window = int(source_caps.get("r3g03_max_window_days") or defaults["max_window"])
     else:
-        max_symbols = int(source_caps.get("r3g01_max_symbols") or 3)
+        max_symbols_key = f"{profile}_max_symbols"
+        max_symbols = int(source_caps.get(max_symbols_key) or defaults["max_symbols"])
         if symbol_count > max_symbols:
-            raise RehearsalPlanError(
-                f"{candidate.source_id} max {max_symbols} symbols, got {symbol_count}"
-            )
-        max_window = int(source_caps.get("r3g01_max_window_days") or 30)
+            raise error_cls(f"{source_id} max {max_symbols} symbols, got {symbol_count}")
+        if profile == "r3g01":
+            max_window = int(source_caps.get("r3g01_max_window_days") or defaults["max_window_baostock"])
+        else:
+            max_window = int(source_caps.get("r3g03_max_window_days") or defaults["max_window"])
 
-    if candidate.window_days > max_window:
-        raise RehearsalPlanError(
-            f"{candidate.source_id} max window {max_window}d, got {candidate.window_days}d"
-        )
+    if window_days > max_window:
+        raise error_cls(f"{source_id} max window {max_window}d, got {window_days}d")
 
-    if source_caps.get("metadata_only") is True and not candidate.metadata_only:
-        raise RehearsalPlanError(
-            f"{candidate.source_id} requires metadata_only=true per contract"
-        )
+    if source_caps.get("metadata_only") is True and not metadata_only:
+        if source_id == "cninfo":
+            raise error_cls(f"{source_id} requires metadata_only=true")
+
+
+def validate_source_caps(candidate: RehearsalCandidate) -> None:
+    """Hard-reject candidates exceeding contract r3g01 caps."""
+    validate_contract_source_caps(
+        source_id=candidate.source_id,
+        domain=candidate.domain,
+        symbols=candidate.symbols_or_series,
+        window_days=candidate.window_days,
+        metadata_only=candidate.metadata_only,
+        profile="r3g01",
+        error_cls=RehearsalPlanError,
+    )
 
 
 def validate_fred_authorization(

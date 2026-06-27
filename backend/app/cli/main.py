@@ -82,6 +82,22 @@ def _build_data_parser(sub: argparse._SubParsersAction) -> None:
     audit.add_argument("--evidence-dir", required=True)
     audit.add_argument("--decision-report", required=True)
     audit.add_argument("--format", choices=["json", "text"], default="json")
+    promote = scw_sub.add_parser("promote", help="Limited production clean-write entry (R3G-03)")
+    promote.add_argument("--approval-file", required=True)
+    promote.add_argument("--audit-decision", required=True)
+    promote.add_argument("--before-proof", required=True)
+    promote.add_argument("--after-proof", required=True)
+    promote.add_argument("--rollback-plan", required=True)
+    promote.add_argument("--evidence-dir", default=None)
+    promote.add_argument(
+        "--dry-run",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+    )
+    promote.add_argument("--execute", action="store_true")
+    promote.add_argument("--allow-live-fetch", action="store_true")
+    promote.add_argument("--fred-authorization", default=None)
+    promote.add_argument("--format", choices=["json", "text"], default="json")
 
 
 def _run_data(args: argparse.Namespace) -> int:
@@ -147,6 +163,21 @@ def _run_data(args: argparse.Namespace) -> int:
                     sandbox_db=Path(args.sandbox_db),
                     evidence_dir=Path(args.evidence_dir),
                     decision_report=Path(args.decision_report),
+                )
+            elif args.sandbox_clean_write_command == "promote":
+                evidence = Path(args.evidence_dir) if args.evidence_dir else None
+                fred_auth = Path(args.fred_authorization) if args.fred_authorization else None
+                payload = data_commands.sandbox_clean_write_promote(
+                    approval_file=Path(args.approval_file),
+                    audit_decision=Path(args.audit_decision),
+                    before_proof=Path(args.before_proof),
+                    after_proof=Path(args.after_proof),
+                    rollback_plan=Path(args.rollback_plan),
+                    evidence_dir=evidence,
+                    dry_run=args.dry_run,
+                    execute=args.execute,
+                    allow_live_fetch=args.allow_live_fetch,
+                    fred_authorization=fred_auth,
                 )
             else:
                 raise CliFailure(

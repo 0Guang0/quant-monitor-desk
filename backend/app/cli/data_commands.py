@@ -328,3 +328,76 @@ def sandbox_clean_write_audit(
     payload = result.serialize()
     payload["decision_report_path"] = str(decision_report)
     return payload
+
+
+def sandbox_clean_write_promote(
+    *,
+    approval_file: Path,
+    audit_decision: Path,
+    before_proof: Path,
+    after_proof: Path,
+    rollback_plan: Path,
+    evidence_dir: Path | None = None,
+    dry_run: bool = True,
+    execute: bool = False,
+    allow_live_fetch: bool = False,
+    fred_authorization: Path | None = None,
+) -> dict[str, Any]:
+    """``qmd data sandbox-clean-write promote`` — R3G-03 limited production entry CLI."""
+    from backend.app.ops.sandbox_clean_write.limited_production_entry import (
+        LimitedProductionEntryError,
+        PromoteRequest,
+        run_limited_production_entry,
+    )
+
+    if execute and dry_run:
+        raise CliFailure(
+            error_code="INVALID_INPUT",
+            message="--execute requires --no-dry-run",
+            docs_anchor="docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_03_LIMITED_PRODUCTION_CLEAN_WRITE.md",
+        )
+    if not approval_file.is_file():
+        raise CliFailure(
+            error_code="INVALID_INPUT",
+            message=f"missing approval file: {approval_file}",
+            docs_anchor="docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_03_LIMITED_PRODUCTION_CLEAN_WRITE.md",
+        )
+    if not audit_decision.is_file():
+        raise CliFailure(
+            error_code="INVALID_INPUT",
+            message=f"missing audit decision: {audit_decision}",
+            docs_anchor="docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_03_LIMITED_PRODUCTION_CLEAN_WRITE.md",
+        )
+    if not before_proof.is_file():
+        raise CliFailure(
+            error_code="INVALID_INPUT",
+            message=f"missing before proof: {before_proof}",
+            docs_anchor="docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_03_LIMITED_PRODUCTION_CLEAN_WRITE.md",
+        )
+    if not rollback_plan.is_file():
+        raise CliFailure(
+            error_code="INVALID_INPUT",
+            message=f"missing rollback plan: {rollback_plan}",
+            docs_anchor="docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_03_LIMITED_PRODUCTION_CLEAN_WRITE.md",
+        )
+    try:
+        return run_limited_production_entry(
+            PromoteRequest(
+                approval_file=approval_file,
+                audit_decision=audit_decision,
+                before_proof=before_proof,
+                after_proof=after_proof,
+                rollback_plan=rollback_plan,
+                evidence_dir=evidence_dir,
+                dry_run=dry_run,
+                execute=execute,
+                allow_live_fetch=allow_live_fetch,
+                fred_authorization=fred_authorization,
+            )
+        )
+    except LimitedProductionEntryError as exc:
+        raise CliFailure(
+            error_code=getattr(exc, "code", None) or "INVALID_INPUT",
+            message=str(exc),
+            docs_anchor="docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_03_LIMITED_PRODUCTION_CLEAN_WRITE.md",
+        ) from exc

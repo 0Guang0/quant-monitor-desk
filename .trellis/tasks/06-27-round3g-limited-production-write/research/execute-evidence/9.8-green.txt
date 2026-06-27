@@ -1,0 +1,2 @@
+OK: loop maintain
+full pytest exit 0 (see 9.8-full.txt)

@@ -8,12 +8,12 @@
 
 ## 1. Preconditions
 
-| Check | Command / artifact |
-| ----- | ------------------ |
-| Editable install | `uv sync --locked` |
-| DB + registry | `uv run qmd-init-db --sync-registry` |
-| Route preview (read-only) | `uv run qmd-data data route-preview --domain market_bar_1d` |
-| Sync dry-run | `uv run qmd-data data sync --domain market_bar_1d --dry-run` |
+| Check                     | Command / artifact                                           |
+| ------------------------- | ------------------------------------------------------------ |
+| Editable install          | `uv sync --locked`                                           |
+| DB + registry             | `uv run qmd-init-db --sync-registry`                         |
+| Route preview (read-only) | `uv run qmd-data data route-preview --domain market_bar_1d`  |
+| Sync dry-run              | `uv run qmd-data data sync --domain market_bar_1d --dry-run` |
 
 ## 2. Authorized live staging (opt-in only)
 
@@ -44,3 +44,23 @@ CLI failures must print `error_code`, `message`, `docs_anchor` per `docs/ops/ERR
 - No `source_health_snapshot` table creation in this runbook.
 - No `--no-dry-run` sync without separate operator approval workflow.
 - Staged evidence ≠ production-live.
+
+## 6. R3G-03 limited production promote (operator CLI)
+
+> **CLI:** `uv run qmd-data data sandbox-clean-write promote` (not `qmd`).  
+> **Default:** `--dry-run` — no production mutation unless `--execute --no-dry-run`.
+
+| Gate           | Requirement                                                                                                                                            |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Quadruple-lock | `--approval-file`, `--audit-decision`, `--before-proof`, `--rollback-plan` paths must match approval YAML `audit_decision_file` / `rollback_plan_path` |
+| Production DB  | `production_db_path` under `DATA_ROOT` or `.audit-sandbox` only                                                                                        |
+| Execute        | non-empty `backup_or_snapshot_pointer` in before_proof                                                                                                 |
+| FRED live      | `--allow-live-fetch` + `--fred-authorization` only when approval sets `live_fetch_authorized: true`                                                    |
+
+Dry-run verification:
+
+```powershell
+uv run pytest tests/test_round3g_limited_production_clean_write.py `
+  tests/test_round3g_limited_production_rollback.py `
+  tests/test_reference_adoption_guardrails.py -k r3g03 -q --basetemp=.audit-sandbox/pytest
+```

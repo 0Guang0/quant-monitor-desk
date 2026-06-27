@@ -1,0 +1,1 @@
+Boot PASS: frozen + EXECUTION_INDEX + implement.jsonl + context_pack read; PromoteEntry import OK

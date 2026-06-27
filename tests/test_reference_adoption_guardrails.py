@@ -633,3 +633,106 @@ def test_r3g01SandboxCleanWrite_noProductionLiveClaim() -> None:
     )
     assert "production_live_readiness_claim" not in runner
     assert '"production_live_claim": False' in report_mod
+
+
+_R3G03_MODULE_ROOT = PROJECT_ROOT / "backend/app/ops/sandbox_clean_write"
+
+
+def test_r3g03LimitedProduction_noReferenceProjectRuntimeImport() -> None:
+    """覆盖范围：R3G-03 promote 模块无参考项目 runtime import
+    测试对象：approval_contract + limited_production_entry + rollback_plan
+    目的/目标：AC-08 禁止 参考项目/** runtime import
+    验证点：scan_forbidden_import_roots 对 r3g03 新模块为空
+    失败含义：promote 模块从参考项目直接 import
+    """
+    from tests.contract_gate_support import FORBIDDEN_REFERENCE_IMPORT_ROOTS, scan_forbidden_import_roots
+
+    violations = scan_forbidden_import_roots(
+        FORBIDDEN_REFERENCE_IMPORT_ROOTS,
+        scan_roots=(_R3G03_MODULE_ROOT,),
+    )
+    r3g03_only = [
+        v
+        for v in violations
+        if any(
+            name in v
+            for name in (
+                "approval_contract",
+                "limited_production_entry",
+                "rollback_plan",
+            )
+        )
+    ]
+    assert r3g03_only == [], f"r3g03 reference imports: {r3g03_only}"
+
+
+def test_r3g03LimitedProduction_noJq2ptradeTradingApiSurface() -> None:
+    """覆盖范围：R3G-03 无 JQ2PTrade 交易 API 名
+    测试对象：r3g03 promote 源码
+    目的/目标：禁止 order/get_portfolio 等交易 API 兼容层
+    验证点：禁止函数名 AST 扫描对 r3g03 文件为空
+    失败含义：promote 模块暴露 JQ2PTrade 交易 API
+    """
+    from tests.contract_gate_support import FORBIDDEN_TRADING_DEF_NAMES, scan_forbidden_function_defs
+
+    r3g03_files = (
+        _R3G03_MODULE_ROOT / "approval_contract.py",
+        _R3G03_MODULE_ROOT / "limited_production_entry.py",
+        _R3G03_MODULE_ROOT / "rollback_plan.py",
+    )
+    violations = scan_forbidden_function_defs(FORBIDDEN_TRADING_DEF_NAMES, roots=r3g03_files)
+    assert violations == [], f"r3g03 trading API defs: {violations}"
+
+
+def test_r3g03LimitedProduction_openbbArchitectureOnly() -> None:
+    """覆盖范围：R3G-03 OpenBB 仅架构引用
+    测试对象：r3g03 promote 源码
+    目的/目标：无 OpenBB runtime copy 模式
+    验证点：无 openbb_platform/providers 路径
+    失败含义：OpenBB runtime 源码被复制进 promote 模块
+    """
+    text = "\n".join(
+        (_R3G03_MODULE_ROOT / name).read_text(encoding="utf-8")
+        for name in ("approval_contract.py", "limited_production_entry.py", "rollback_plan.py")
+    )
+    assert "openbb_platform/providers" not in text
+    assert "from openbb" not in text
+
+
+def test_r3g03LimitedProduction_noAgentTriggeredWriteMarker() -> None:
+    """覆盖范围：R3G-03 agent 触发写拒绝（行为测）
+    测试对象：validate_approval_contract no_agent_triggered_write
+    目的/目标：no_agent_triggered_write=false 时 fail-closed
+    验证点：篡改 approval 后抛 agent_triggered_write_path
+    失败含义：agent 可替代用户 approval 触发生产写
+    """
+    import pytest
+    import tempfile
+    from pathlib import Path
+
+    import yaml
+
+    from backend.app.ops.sandbox_clean_write.approval_contract import (
+        ApprovalContractError,
+        validate_approval_contract,
+    )
+
+    raw = yaml.safe_load(
+        (PROJECT_ROOT / "tests/fixtures/sandbox_clean_write/r3g03/approval_minimal.yaml").read_text(
+            encoding="utf-8"
+        )
+    )
+    raw["no_agent_triggered_write"] = False
+    with tempfile.TemporaryDirectory() as tmp:
+        approval_path = Path(tmp) / "approval.yaml"
+        audit_path = Path(tmp) / "audit.json"
+        audit_path.write_text(
+            (
+                PROJECT_ROOT / "tests/fixtures/sandbox_clean_write/r3g03/audit_decision_allow.json"
+            ).read_text(encoding="utf-8"),
+            encoding="utf-8",
+        )
+        raw["audit_decision_file"] = str(audit_path)
+        approval_path.write_text(yaml.dump(raw), encoding="utf-8")
+        with pytest.raises(ApprovalContractError, match="agent_triggered_write_path"):
+            validate_approval_contract(approval_path, audit_path)
