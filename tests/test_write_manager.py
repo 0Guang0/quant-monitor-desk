@@ -8,34 +8,27 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import backend.app.db.write_manager as wm_mod
 import duckdb
 import pytest
-import backend.app.db.write_manager as wm_mod
-from backend.app.db.connection import ConnectionManager
-from backend.app.db.migrate import apply_migrations
 from backend.app.db.validation_gate import (
     StubValidationGate,
     ValidationGateError,
     ValidationRejected,
 )
 from backend.app.db.write_manager import WriteManager, WriteRequest
-from tests.db_helpers import create_test_write_manager
-
-
-def _setup(tmp_path: Path) -> ConnectionManager:
-    cm = ConnectionManager(tmp_path / "t.duckdb")
-    with cm.writer() as con:
-        apply_migrations(con)
-        con.execute(
-            "INSERT INTO stg_foundation_smoke VALUES ('AAPL','2026-06-15',195.0,'qmt','b1')"
-        )
-    return cm
-
-
-def _empty_clean_table(w, table: str = "security_bar_smoke_clean") -> None:
-    w.execute(
-        f"CREATE TABLE {table} AS SELECT * FROM stg_foundation_smoke WHERE 1=0"
-    )
+from tests.db_helpers import (
+    create_test_write_manager,
+)
+from tests.db_helpers import (
+    empty_clean_table as _empty_clean_table,
+)
+from tests.db_helpers import (
+    setup_write_smoke_db as _setup,
+)
+from tests.db_helpers import (
+    write_smoke_request as _req,
+)
 
 
 def _patch_connect_calls(monkeypatch) -> list[bool]:
@@ -48,20 +41,6 @@ def _patch_connect_calls(monkeypatch) -> list[bool]:
 
     monkeypatch.setattr(wm_mod.duckdb, "connect", _tracking_connect)
     return connect_calls
-
-
-def _req(mode: str = "append_only", report: str = "stub-pass-1") -> WriteRequest:
-    return WriteRequest(
-        run_id="r1",
-        job_id="j1",
-        target_table="security_bar_smoke_clean",
-        staging_table="stg_foundation_smoke",
-        write_mode=mode,
-        primary_keys=("instrument_id", "trade_date"),
-        validation_report_id=report,
-        source_used="qmt",
-        data_domain="cn_equity_daily_bar",
-    )
 
 
 def test_assertCanWrite_stubPass_allowsWhileStubFailRejects() -> None:
