@@ -13,6 +13,7 @@ specs/contracts/source_route_contract.yaml:
         - tests/test_official_macro_adapters.py
         - tests/test_market_data_adapters.py
         - tests/test_crypto_market_adapters.py
+        - tests/test_cn_market_adapters.py
         - tests/test_sec_edgar_adapter.py
         - tests/test_prediction_market_adapters.py
         - tests/test_web_evidence_adapter.py
@@ -87,6 +88,7 @@ specs/contracts/layer5_evidence_contract.yaml:
         - tests/test_r3h_layer_binding_audit.py
         - tests/test_prediction_market_adapters.py
         - tests/test_web_evidence_adapter.py
+        - tests/test_cn_market_adapters.py
       negative_required: false
 
 specs/contracts/api_security_contract.yaml:

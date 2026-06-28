@@ -30,7 +30,7 @@ sources:
     validation_only: false
     rate_limit_policy: local_terminal
     requires_user_setup: true
-    notes: 正式启用前必须由用户确认本机 QMT 授权和账号环境。
+    notes: 正式启用前必须由用户确认本机 QMT 授权和账号环境。R3H-03 READY_WITH_EVIDENCE; qmt_xtdata_port authorization-disabled default.
   - source_id: baostock
     source_name: baostock
     source_type: public_market_data
@@ -44,7 +44,7 @@ sources:
     validation_only: false
     rate_limit_policy: polite_daily_batch
     requires_user_setup: false
-    notes: 适合作为 A 股历史日线与基础财务第一阶段主源之一。Batch 01 SP3 v3 staged expand sample (merge 1a099e8d); sandbox_candidate readiness.
+    notes: Batch 01 SP3 v3 staged expand sample (merge 1a099e8d); sandbox_candidate readiness. R3H-03 READY_WITH_EVIDENCE; baostock_port replay-first.
   - source_id: akshare
     source_name: AkShare
     source_type: aggregator
@@ -60,7 +60,7 @@ sources:
     validation_only: true
     rate_limit_policy: polite_batch_with_cache
     requires_user_setup: false
-    notes: 聚合源只能带 source_used 与 quality_flags；不得作为唯一事实源。Batch 01 SP3 v3 validation-only re-defer (R3-PROMPT14-AKSHARE-VAL-01 open).
+    notes: 聚合源只能带 source_used 与 quality_flags；不得作为唯一事实源。Batch 01 SP3 v3 validation-only re-defer (R3-PROMPT14-AKSHARE-VAL-01 open). R3H-03 READY_WITH_EVIDENCE; akshare_port validation_only permanent.
   - source_id: cninfo
     source_name: 巨潮资讯 CNINFO
     source_type: filing_announcement
@@ -75,7 +75,7 @@ sources:
     validation_only: false
     rate_limit_policy: polite_document_fetch
     requires_user_setup: false
-    notes: 公告和财报 PDF 原文优先来源。Batch 01 SP3 v3 metadata expand sample (merge 1a099e8d); sandbox_candidate readiness.
+    notes: 公告和财报 PDF 原文优先来源。Batch 01 SP3 v3 metadata expand sample (merge 1a099e8d); sandbox_candidate readiness. R3H-03 READY_WITH_EVIDENCE; cninfo_port replay-first metadata.
   - source_id: yahoo_finance
     source_name: Yahoo Finance / yfinance-compatible access
     source_type: public_market_data
@@ -105,7 +105,7 @@ sources:
     validation_only: true
     rate_limit_policy: polite_batch
     requires_user_setup: false
-    notes: Batch 01 B01-TDX mocked PROBE_PASS_RAW_ONLY; live PROBE_REDEFERRED; 018C disabled-by-default validation-only probe.
+    notes: Batch 01 B01-TDX mocked PROBE_PASS_RAW_ONLY; live PROBE_REDEFERRED; 018C disabled-by-default validation-only probe. R3H-03 READY_WITH_EVIDENCE; tdx_pytdx_port hardened.
   - source_id: fred
     source_name: Federal Reserve Economic Data (FRED)
     source_type: vendor_api
@@ -299,7 +299,7 @@ sources:
     validation_only: true
     rate_limit_policy: polite_batch
     requires_user_setup: false
-    notes: 通达信兼容 A 股行情验证源候选；与 tdx_pytdx 同属 TDX-compatible 路线，默认禁用，不得 silent fallback。
+    notes: 通达信兼容 A 股行情验证源候选；与 tdx_pytdx 同属 TDX-compatible 路线，默认禁用，不得 silent fallback。R3H-03 READY_WITH_EVIDENCE; mootdx_port mock/replay.
   - source_id: eastmoney
     source_name: 东方财富 Eastmoney
     source_type: public_market_data
@@ -316,7 +316,7 @@ sources:
     validation_only: true
     rate_limit_policy: polite_web_api_cache
     requires_user_setup: false
-    notes: A 股行情、板块、资金流与公告备份验证源；资金流等口径差异字段必须分源保存。
+    notes: A 股行情、板块、资金流与公告备份验证源；资金流等口径差异字段必须分源保存。R3H-03 READY_WITH_EVIDENCE; eastmoney_port validation.
   - source_id: sina_finance
     source_name: 新浪财经 Sina Finance
     source_type: public_market_data
@@ -331,7 +331,7 @@ sources:
     validation_only: true
     rate_limit_policy: polite_web_api_cache
     requires_user_setup: false
-    notes: A 股行情兜底/轻量校验源；只用于低频验证或失败诊断，不进入主值接管。
+    notes: A 股行情兜底/轻量校验源；只用于低频验证或失败诊断，不进入主值接管。R3H-03 READY_WITH_EVIDENCE; sina_finance_port validation.
   - source_id: ths_ifind
     source_name: 同花顺 / iFinD
     source_type: vendor_api
@@ -347,7 +347,7 @@ sources:
     rate_limit_policy: licensed_vendor_contract
     requires_user_setup: true
     auth_required: true
-    notes: 概念、题材、研报与资金流候选源；只有明确商业授权后才能启用，免费网页端不得作为生产主源。
+    notes: 概念、题材、研报与资金流候选源；只有明确商业授权后才能启用，免费网页端不得作为生产主源。R3H-03 READY_WITH_EVIDENCE; ths_ifind_port authorization-disabled default.
   - source_id: web_search
     source_name: Web Search supplemental evidence
     source_type: aggregator
@@ -377,7 +377,7 @@ sources:
     validation_only: true
     rate_limit_policy: remote_terminal
     requires_user_setup: true
-    notes: Remote QMT/xqshare host; requires XQSHARE_REMOTE_HOST/PORT and explicit user authorization.
+    notes: Remote QMT/xqshare host; requires XQSHARE_REMOTE_HOST/PORT and explicit user authorization. R3H-03 READY_WITH_EVIDENCE; qmt_xqshare_port authorization-disabled default.
   - source_id: openbb_provider_reference
     source_name: OpenBB provider architecture reference (metadata only)
     source_type: aggregator
@@ -434,7 +434,7 @@ domain_roles:
     requires_source_enabled: true
     domain_enabled_by_default: true
     disabled_until_configured: false
-    notes: Staged Layer 1 macro series (AC-P2-0 ENV-E1-DGS10); not live FRED.
+    notes: Staged Layer 1 macro series (AC-P2-0 ENV-E1-DGS10); not live FRED. yaml primary_candidate only; akshare.validation_only blocks runtime Primary routing.
   macro_series:
     primary: fred
     validation: []
@@ -472,7 +472,7 @@ domain_roles:
     requires_source_enabled: true
     domain_enabled_by_default: true
     disabled_until_configured: false
-    notes: akshare validation_only; quality_flags required on clean write.
+    notes: akshare validation_only permanent; yaml primary_candidate only — runtime Primary blocked by validation_only_cannot_be_primary.
   sector_board:
     primary: akshare
     validation: []
@@ -480,7 +480,7 @@ domain_roles:
     requires_source_enabled: true
     domain_enabled_by_default: true
     disabled_until_configured: false
-    notes: akshare validation_only; quality_flags required on clean write.
+    notes: akshare validation_only permanent; yaml primary_candidate only — runtime Primary blocked by validation_only_cannot_be_primary.
   cn_equity_realtime:
     primary: qmt_xtdata
     validation: []

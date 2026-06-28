@@ -12,6 +12,13 @@ notes:
   implementation_gap: "Current adapter supported_domains still include legacy/abstract names such as market_bar_1d and fundamental. Round2.6 implementation must reconcile adapter domains to source_registry domains or add explicit compatibility mapping tests."
 sources:
   qmt_xtdata:
+    status: READY_WITH_EVIDENCE
+    replay_fixture_path: tests/fixtures/replay/cn_market/qmt_xtdata/sh600519_daily_replay.json
+    fetch_port_path: backend/app/datasources/fetch_ports/qmt_xtdata_port.py
+    resource_caps:
+      max_symbols: 3
+      max_rows: 3
+    notes: "R3H-03 READY_WITH_EVIDENCE; qmt_xtdata_port authorization-disabled default; license_gate required."
     domains:
       cn_equity_realtime:
         operations:
@@ -70,6 +77,14 @@ sources:
             requires_local_client: true
             enabled_by_default: false
   baostock:
+    status: READY_WITH_EVIDENCE
+    replay_fixture_path: tests/fixtures/replay/cn_market/baostock/sh600519_daily_replay.json
+    fetch_port_path: backend/app/datasources/fetch_ports/baostock_port.py
+    resource_caps:
+      max_symbols: 5
+      max_rows: 500
+      max_window_days: 120
+    notes: "R3H-03 READY_WITH_EVIDENCE; baostock_port replay-first; primary cn_equity_daily_bar."
     domains:
       cn_equity_daily_bar:
         operations:
@@ -108,6 +123,13 @@ sources:
             requires_auth: false
             production_default: true
   akshare:
+    status: READY_WITH_EVIDENCE
+    replay_fixture_path: tests/fixtures/replay/cn_market/akshare/sh600519_validation_replay.json
+    fetch_port_path: backend/app/datasources/fetch_ports/akshare_port.py
+    resource_caps:
+      max_symbols: 3
+      max_rows: 200
+    notes: "R3H-03 READY_WITH_EVIDENCE; akshare_port validation_only permanent; quality_flags required."
     domains:
       cn_equity_daily_bar:
         operations:
@@ -196,6 +218,14 @@ sources:
             requires_auth: false
             notes: "聚合源只能带 source_used 与 quality_flags；不得作为唯一事实源。"
   cninfo:
+    status: READY_WITH_EVIDENCE
+    replay_fixture_path: tests/fixtures/replay/cn_market/cninfo/sh600519_filings_replay.json
+    fetch_port_path: backend/app/datasources/fetch_ports/cninfo_port.py
+    resource_caps:
+      max_issuers: 5
+      max_filings: 20
+      max_pdf_bytes: 5242880
+    notes: "R3H-03 READY_WITH_EVIDENCE; cninfo_port replay-first metadata; PDF capped."
     domains:
       cn_filings:
         operations:
@@ -350,9 +380,11 @@ sources:
             api_key_env: FRED_API_KEY
     notes: "R3H-01 READY_WITH_EVIDENCE; mock-first fred_port; FRED_API_KEY for live; enabled_by_default=false; replay: tests/fixtures/replay/official_macro/fred/"
   tdx_pytdx:
-    status: proposed_disabled_source
+    status: READY_WITH_EVIDENCE
+    replay_fixture_path: tests/fixtures/replay/cn_market/tdx/tdx_pytdx_daily_replay.json
+    fetch_port_path: backend/app/datasources/fetch_ports/tdx_pytdx_port.py
     batch01_probe_decision: PROBE_PASS_RAW_ONLY
-    notes: Batch 01 B01-TDX mocked raw-only probe; live PROBE_REDEFERRED; validation-only candidate.
+    notes: "R3H-03 READY_WITH_EVIDENCE; tdx_pytdx_port hardened; validation-only; gate required for live."
     resource_caps:
       security_list_max_rows: 20
       equity_daily_bar_max_symbols: 3
@@ -408,7 +440,13 @@ sources:
             enabled_by_default: false
             production_default: false
   qmt_xqshare:
-    status: proposed_disabled_source
+    status: READY_WITH_EVIDENCE
+    replay_fixture_path: tests/fixtures/replay/cn_market/qmt_xqshare/sh600519_daily_replay.json
+    fetch_port_path: backend/app/datasources/fetch_ports/qmt_xqshare_port.py
+    resource_caps:
+      max_symbols: 3
+      max_rows: 3
+    notes: "R3H-03 READY_WITH_EVIDENCE; qmt_xqshare_port authorization-disabled default; remote env required."
     domains:
       cn_equity_realtime:
         operations:
@@ -1157,7 +1195,14 @@ sources:
             enabled_by_default: false
             production_default: false
   mootdx:
-    status: proposed_disabled_source
+    status: READY_WITH_EVIDENCE
+    replay_fixture_path: tests/fixtures/replay/cn_market/tdx/mootdx_daily_replay.json
+    fetch_port_path: backend/app/datasources/fetch_ports/mootdx_port.py
+    resource_caps:
+      security_list_max_rows: 20
+      equity_index_max_rows: 3
+      max_network_calls: 5
+    notes: "R3H-03 READY_WITH_EVIDENCE; mootdx_port mock/replay; independent source_id from tdx_pytdx."
     domains:
       security_list:
         operations:
@@ -1206,7 +1251,13 @@ sources:
             enabled_by_default: false
             production_default: false
   eastmoney:
-    status: proposed_disabled_source
+    status: READY_WITH_EVIDENCE
+    replay_fixture_path: tests/fixtures/replay/cn_market/eastmoney/sh600519_validation_replay.json
+    fetch_port_path: backend/app/datasources/fetch_ports/eastmoney_port.py
+    resource_caps:
+      max_symbols: 3
+      max_rows: 200
+    notes: "R3H-03 READY_WITH_EVIDENCE; eastmoney_port validation; conflict_evidence required."
     domains:
       cn_equity_daily_bar:
         operations:
@@ -1299,7 +1350,13 @@ sources:
             enabled_by_default: false
             production_default: false
   sina_finance:
-    status: proposed_disabled_source
+    status: READY_WITH_EVIDENCE
+    replay_fixture_path: tests/fixtures/replay/cn_market/sina_finance/sh600519_validation_replay.json
+    fetch_port_path: backend/app/datasources/fetch_ports/sina_finance_port.py
+    resource_caps:
+      max_symbols: 3
+      max_rows: 200
+    notes: "R3H-03 READY_WITH_EVIDENCE; sina_finance_port validation; conflict_evidence required."
     domains:
       cn_equity_daily_bar:
         operations:
@@ -1360,7 +1417,12 @@ sources:
             enabled_by_default: false
             production_default: false
   ths_ifind:
-    status: proposed_disabled_source
+    status: READY_WITH_EVIDENCE
+    replay_fixture_path: tests/fixtures/replay/cn_market/ths_ifind/concept_replay.json
+    fetch_port_path: backend/app/datasources/fetch_ports/ths_ifind_port.py
+    resource_caps:
+      max_rows: 5
+    notes: "R3H-03 READY_WITH_EVIDENCE; ths_ifind_port authorization-disabled default; license_gate required."
     domains:
       concept_theme:
         operations:

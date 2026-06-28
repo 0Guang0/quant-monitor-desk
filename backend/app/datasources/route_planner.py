@@ -10,6 +10,7 @@ from typing import Any
 import yaml
 from backend.app.config import PROJECT_ROOT
 from backend.app.datasources.capability_registry import SourceCapabilityRegistry
+from backend.app.datasources.auth.license_gate import LicenseGateDecision, check_license_gate
 from backend.app.datasources.route_models import SourceRouteCandidate, SourceRoutePlan
 from backend.app.datasources.source_registry import (
     SCHEMA_CHECK_LICENSE_TYPES,
@@ -36,6 +37,9 @@ def _load_platform_matrix(path: Path) -> dict[str, Any]:
     if key not in _MATRIX_CACHE:
         _MATRIX_CACHE[key] = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     return _MATRIX_CACHE[key]
+
+
+_LICENSE_GATED_SOURCES = frozenset({"qmt_xtdata", "ths_ifind", "qmt_xqshare"})
 
 
 class SourceRoutePlanner:
@@ -74,6 +78,9 @@ class SourceRoutePlanner:
                 if not os.environ.get(env_name):
                     return False, f"missing_env:{env_name}"
             if not entry.get("default_enabled", False):
+                return False, "user_authorization_required"
+        if source_id in _LICENSE_GATED_SOURCES:
+            if check_license_gate(source_id) != LicenseGateDecision.AUTHORIZED:
                 return False, "user_authorization_required"
         if not entry.get("default_enabled", False) and entry.get("requires_user_confirmation"):
             return False, "user_authorization_required"

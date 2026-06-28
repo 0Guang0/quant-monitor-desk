@@ -17,7 +17,7 @@ providers:
       - cn_equity_minute_bar
       - cn_equity_daily_bar
     enabled_by_default: false
-    status: active
+    status: READY_WITH_EVIDENCE
     production_default_candidate: false
     production_default_enabled: false
     requires_user_authorization: true
@@ -39,7 +39,7 @@ providers:
       - cn_equity_daily_bar
       - cn_equity_basic_financial
     enabled_by_default: true
-    status: sandbox_candidate
+    status: READY_WITH_EVIDENCE
     production_default_candidate: true
     production_default_enabled: false
     requires_user_authorization: false
@@ -63,7 +63,7 @@ providers:
       - sector_board
       - macro_supplementary
     enabled_by_default: true
-    status: active
+    status: READY_WITH_EVIDENCE
     production_default_candidate: false
     production_default_enabled: false
     requires_user_authorization: false
@@ -86,7 +86,7 @@ providers:
       - cn_announcements
       - cn_pdf_reports
     enabled_by_default: true
-    status: sandbox_candidate
+    status: READY_WITH_EVIDENCE
     production_default_candidate: true
     production_default_enabled: false
     requires_user_authorization: false
@@ -131,7 +131,7 @@ providers:
       - cn_equity_daily_bar
       - cn_index_daily_bar
     enabled_by_default: false
-    status: proposed_disabled_source
+    status: READY_WITH_EVIDENCE
     production_default_candidate: false
     production_default_enabled: false
     requires_user_authorization: false
@@ -403,7 +403,7 @@ providers:
       - cn_equity_daily_bar
       - cn_index_daily_bar
     enabled_by_default: false
-    status: proposed_disabled_source
+    status: READY_WITH_EVIDENCE
     production_default_candidate: false
     production_default_enabled: false
     requires_user_authorization: false
@@ -426,7 +426,7 @@ providers:
       - capital_flow
       - cn_announcements
     enabled_by_default: false
-    status: proposed_disabled_source
+    status: READY_WITH_EVIDENCE
     production_default_candidate: false
     production_default_enabled: false
     requires_user_authorization: false
@@ -447,7 +447,7 @@ providers:
       - cn_equity_realtime
       - cn_index_daily_bar
     enabled_by_default: false
-    status: proposed_disabled_source
+    status: READY_WITH_EVIDENCE
     production_default_candidate: false
     production_default_enabled: false
     requires_user_authorization: false
@@ -468,7 +468,7 @@ providers:
       - research_report
       - capital_flow
     enabled_by_default: false
-    status: proposed_disabled_source
+    status: READY_WITH_EVIDENCE
     production_default_candidate: false
     production_default_enabled: false
     requires_user_authorization: true
@@ -512,7 +512,7 @@ providers:
       - cn_equity_minute_bar
       - cn_equity_daily_bar
     enabled_by_default: false
-    status: proposed_disabled_source
+    status: READY_WITH_EVIDENCE
     production_default_candidate: false
     production_default_enabled: false
     requires_user_authorization: true

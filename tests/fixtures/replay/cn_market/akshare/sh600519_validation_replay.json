@@ -1,0 +1,11 @@
+{
+  "schema_version": "cn_market_evidence_v1",
+  "source_id": "akshare",
+  "data_domain": "cn_equity_daily_bar",
+  "bars": [{"instrument_id": "sh.600519", "trade_date": "2024-06-25", "close": 1404.0, "source_used": "akshare"}],
+  "quality_flags": ["AGGREGATOR_VALIDATION"],
+  "source_fetch_id": "akshare-replay-600519",
+  "content_hash": "akshare-replay-hash",
+  "as_of_timestamp": "2024-06-25T15:00:00Z",
+  "retrieved_at": "2024-06-25T15:00:00Z"
+}

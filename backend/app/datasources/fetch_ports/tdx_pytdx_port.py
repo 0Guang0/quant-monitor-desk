@@ -13,6 +13,18 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from backend.app.datasources.adapters.fetch_port import FetchPayload, PortError
+from backend.app.datasources.fetch_ports.tdx_fetch_guards import (
+    EQUITY_INDEX_MAX_ROWS,
+    FULL_MARKET_SCAN_ENABLED,
+    MAX_NETWORK_CALLS,
+    MINUTE_BARS_ENABLED,
+    SECURITY_LIST_MAX_ROWS,
+    domain_cap as _domain_cap,
+    parse_equity_symbol as _parse_equity_symbol,
+    reject_full_market_scan as _reject_full_market_scan,
+    reject_over_cap as _reject_over_cap,
+    reject_unsupported_domain as _reject_unsupported_domain,
+)
 from backend.app.datasources.fetch_result import FetchRequest
 from backend.app.datasources.normalizers.tdx import (
     build_equity_bar_manifest,
@@ -28,72 +40,6 @@ from backend.app.ops.tdx_live_manual_probe_gate import (
     enforce_live_entrypoint_stack,
     is_gate_issued_token,
 )
-
-# R3FR-03 caps SSOT (frozen §5.1)
-SECURITY_LIST_MAX_ROWS = 20
-EQUITY_INDEX_MAX_ROWS = 3
-MAX_NETWORK_CALLS = 5
-MINUTE_BARS_ENABLED = False
-FULL_MARKET_SCAN_ENABLED = False
-
-SUPPORTED_DOMAINS = frozenset(
-    {"security_list", "cn_equity_daily_bar", "cn_index_daily_bar"}
-)
-FULL_MARKET_MARKERS = frozenset({"*", "__FULL_MARKET__", "__SCAN_ALL__"})
-
-
-def _parse_equity_symbol(symbol: str) -> tuple[int, str]:
-    lowered = symbol.strip().lower()
-    if lowered.startswith("sh."):
-        return 1, symbol[3:]
-    if lowered.startswith("sz."):
-        return 0, symbol[3:]
-    raise PortError("FAILED", f"unsupported equity instrument_id: {symbol!r}")
-
-
-def _domain_cap(data_domain: str) -> int:
-    if data_domain == "security_list":
-        return SECURITY_LIST_MAX_ROWS
-    if data_domain in {"cn_equity_daily_bar", "cn_index_daily_bar"}:
-        return EQUITY_INDEX_MAX_ROWS
-    return 0
-
-
-def _reject_unsupported_domain(req: FetchRequest) -> None:
-    domain = req.data_domain
-    if "minute" in domain:
-        raise PortError(
-            "FAILED",
-            f"minute bars rejected for tdx_pytdx (minute_bars_enabled={MINUTE_BARS_ENABLED})",
-        )
-    if domain not in SUPPORTED_DOMAINS:
-        raise PortError("FAILED", f"unsupported data_domain for tdx_pytdx: {domain!r}")
-
-
-def _reject_full_market_scan(req: FetchRequest) -> None:
-    if FULL_MARKET_SCAN_ENABLED:
-        return
-    instrument = (req.instrument_id or "").strip()
-    if instrument in FULL_MARKET_MARKERS:
-        raise PortError(
-            "FAILED",
-            "full market scan rejected for tdx_pytdx (full_market_scan_enabled=false)",
-        )
-    if req.data_domain != "security_list" and not instrument:
-        raise PortError(
-            "FAILED",
-            "full market scan rejected: missing instrument_id for bounded daily bar fetch",
-        )
-
-
-def _reject_over_cap(*, data_domain: str, max_rows: int) -> None:
-    cap = _domain_cap(data_domain)
-    if max_rows > cap:
-        raise PortError(
-            "FAILED",
-            f"requested max_rows={max_rows} exceeds cap={cap} for {data_domain}",
-        )
-
 
 @dataclass
 class TdxPytdxFetchPort:

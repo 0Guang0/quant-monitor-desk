@@ -1,0 +1,22 @@
+{
+  "schema_version": "cn_market_evidence_v1",
+  "source_id": "baostock",
+  "data_domain": "cn_equity_daily_bar",
+  "bars": [
+    {
+      "instrument_id": "sh.600519",
+      "trade_date": "2024-06-25",
+      "open": 1400.0,
+      "high": 1410.0,
+      "low": 1395.0,
+      "close": 1405.0,
+      "volume": 1000000,
+      "source_used": "baostock"
+    }
+  ],
+  "source_fetch_id": "baostock-replay-600519",
+  "content_hash": "baostock-replay-hash-600519",
+  "as_of_timestamp": "2024-06-25T15:00:00Z",
+  "retrieved_at": "2024-06-25T15:00:00Z",
+  "trade_date": "2024-06-25"
+}

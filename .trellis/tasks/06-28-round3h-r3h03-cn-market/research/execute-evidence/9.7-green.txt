@@ -1,0 +1,2 @@
+6 passed -k "ifind or qmt or xqshare"
+exit 0

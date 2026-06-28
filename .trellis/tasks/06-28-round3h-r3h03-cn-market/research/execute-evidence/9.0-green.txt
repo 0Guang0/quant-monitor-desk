@@ -1,0 +1,2 @@
+33 passed — boot skeleton GREEN
+exit 0

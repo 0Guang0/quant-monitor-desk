@@ -1,0 +1,51 @@
+{
+  "task": "06-28-round3h-r3h03-cn-market",
+  "modules": [],
+  "acs": [
+    {
+      "id": "AKSHARE-VAL",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "AUTH-GATED",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "BAOSTOCK",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "CNINFO",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "EM-SINA",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "LAYER-CN",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "MERGE",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "REGISTRY-10",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "TDX-FAMILY",
+      "status": "pending",
+      "repair_items": []
+    }
+  ]
+}

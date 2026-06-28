@@ -152,6 +152,19 @@ tests/test_batch_d_orchestration_flow.py:
     docs: []
     rules: []
     specs: []
+tests/test_cn_market_adapters.py:
+  command: uv run python -m pytest tests/test_cn_market_adapters.py -q
+  failure_meaning: R3H-03 CN market adapters or evidence contract regressed.
+  purpose: R3H-03 中国市场数据适配器测试（Batch 3H）。
+  type: runtime-contract
+  verifies:
+    docs: []
+    rules:
+    - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
+    specs:
+    - specs/datasource_registry/source_capabilities.yaml
+    - specs/contracts/source_route_contract.yaml
+    - specs/contracts/layer5_evidence_contract.yaml
 tests/test_config.py:
   command: uv run python -m pytest tests/test_config.py -q
   failure_meaning: Regression in test_config; inspect purpose and linked authorities.
@@ -1273,6 +1286,17 @@ tests/test_tdx_manual_probe.py:
     - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
     specs:
     - specs/datasource_registry/source_registry.yaml
+    - specs/datasource_registry/source_capabilities.yaml
+tests/test_tdx_provider_port.py:
+  command: uv run python -m pytest tests/test_tdx_provider_port.py -q
+  failure_meaning: R3H-03 mootdx/tdx provider port boot regressed.
+  purpose: R3H-03 TDX family provider port boot extension.
+  type: runtime-contract
+  verifies:
+    docs: []
+    rules:
+    - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
+    specs:
     - specs/datasource_registry/source_capabilities.yaml
 tests/test_tdx_pytdx_port.py:
   command: uv run python -m pytest tests/test_tdx_pytdx_port.py -q

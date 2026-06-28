@@ -1,0 +1,2 @@
+2 passed -k "eastmoney or sina"
+exit 0

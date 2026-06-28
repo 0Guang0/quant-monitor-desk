@@ -1,4 +1,8 @@
-"""Calendar gap rules for market_bar_p0 (R3FR-02)."""
+"""Calendar gap rules for market_bar_p0 and cn_market (R3FR-02 / R3H-03).
+
+L2 migrate missing-trading-day semantics from EasyXT smart_data_detector.TradingCalendar
+via cn_trading_calendar when calendar_authority=True.
+"""
 
 from __future__ import annotations
 
@@ -6,6 +10,10 @@ from datetime import date, timedelta
 from typing import Any
 
 from backend.app.ops.data_health import DataHealthCheckResult
+from backend.app.ops.data_health_profiles.cn_trading_calendar import (
+    get_missing_trading_days,
+    get_trading_days,
+)
 
 
 def _parse_trade_date(value: object) -> date | None:
@@ -18,7 +26,7 @@ def _parse_trade_date(value: object) -> date | None:
 
 
 def _weekdays_between(start: date, end: date) -> list[date]:
-    # ponytail: Mon–Fri proxy when no QMD official calendar artifact
+    # ponytail: Mon–Fri proxy when calendar_authority=False (market_bar_p0 legacy)
     days: list[date] = []
     current = start
     while current <= end:
@@ -35,7 +43,7 @@ def check_missing_trading_day(
     source_id: str | None = None,
     calendar_authority: bool = False,
 ) -> list[DataHealthCheckResult]:
-    """WARN when weekdays missing and no official calendar; FAIL only with authority."""
+    """WARN on weekday gaps without authority; FAIL when QMD calendar authority is set."""
     if not bars:
         return []
     dates: list[date] = []
@@ -47,8 +55,14 @@ def check_missing_trading_day(
         return []
     start, end = min(dates), max(dates)
     present = {d.isoformat() for d in dates}
-    expected = _weekdays_between(start, end)
-    missing = [d for d in expected if d.isoformat() not in present]
+    if calendar_authority:
+        expected = get_trading_days(start, end)
+        missing = [d for d in expected if d.isoformat() not in present]
+        authority_note = "official QMD CN calendar"
+    else:
+        expected = _weekdays_between(start, end)
+        missing = [d for d in expected if d.isoformat() not in present]
+        authority_note = "no official calendar"
     if not missing:
         return []
     sample = ", ".join(d.isoformat() for d in missing[:5])
@@ -63,7 +77,7 @@ def check_missing_trading_day(
                 domain=domain,
                 evidence_path=None,
                 row_count=len(bars),
-                message=f"missing trading days: {sample}{suffix}",
+                message=f"missing trading days ({authority_note}): {sample}{suffix}",
             )
         ]
     return [
@@ -76,7 +90,10 @@ def check_missing_trading_day(
             evidence_path=None,
             row_count=len(bars),
             message=(
-                f"possible missing weekdays (no official calendar): {sample}{suffix}"
+                f"possible missing weekdays ({authority_note}): {sample}{suffix}"
             ),
         )
     ]
+
+
+__all__ = ["check_missing_trading_day", "get_missing_trading_days"]

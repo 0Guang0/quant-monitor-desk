@@ -7,10 +7,16 @@ platforms:
       available_if_user_configured: true
       default_enabled: false
       requires_user_confirmation: true
+      requires_env: [QMT_XTDATA_AUTHORIZED]
     qmt_xqshare:
       available_if_user_configured: true
       default_enabled: false
-      requires_env: [XQSHARE_REMOTE_HOST, XQSHARE_REMOTE_PORT]
+      requires_env: [XQSHARE_REMOTE_HOST, XQSHARE_REMOTE_PORT, QMT_XQSHARE_AUTHORIZED]
+    ths_ifind:
+      available_if_user_configured: true
+      default_enabled: false
+      requires_user_confirmation: true
+      requires_env: [THS_IFIND_LICENSE_ARTIFACT]
     baostock:
       available_if_user_configured: true
       default_enabled: true
@@ -38,7 +44,12 @@ platforms:
     qmt_xqshare:
       available_if_user_configured: true
       default_enabled: false
-      requires_env: [XQSHARE_REMOTE_HOST, XQSHARE_REMOTE_PORT]
+      requires_env: [XQSHARE_REMOTE_HOST, XQSHARE_REMOTE_PORT, QMT_XQSHARE_AUTHORIZED]
+    ths_ifind:
+      available_if_user_configured: true
+      default_enabled: false
+      requires_user_confirmation: true
+      requires_env: [THS_IFIND_LICENSE_ARTIFACT]
     baostock:
       available_if_user_configured: true
       default_enabled: true
@@ -66,7 +77,12 @@ platforms:
     qmt_xqshare:
       available_if_user_configured: true
       default_enabled: false
-      requires_env: [XQSHARE_REMOTE_HOST, XQSHARE_REMOTE_PORT]
+      requires_env: [XQSHARE_REMOTE_HOST, XQSHARE_REMOTE_PORT, QMT_XQSHARE_AUTHORIZED]
+    ths_ifind:
+      available_if_user_configured: true
+      default_enabled: false
+      requires_user_confirmation: true
+      requires_env: [THS_IFIND_LICENSE_ARTIFACT]
     baostock:
       available_if_user_configured: true
       default_enabled: true

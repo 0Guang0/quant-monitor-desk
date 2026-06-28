@@ -1,0 +1,10 @@
+{
+  "schema_version": "cn_market_evidence_v1",
+  "source_id": "ths_ifind",
+  "data_domain": "concept_theme",
+  "filings": [{"filing_id": "ifind-1", "instrument_id": "白酒", "title": "concept", "source_used": "ths_ifind"}],
+  "source_fetch_id": "ifind-replay",
+  "content_hash": "ifind-replay-hash",
+  "as_of_timestamp": "2024-06-25T15:00:00Z",
+  "retrieved_at": "2024-06-25T15:00:00Z"
+}

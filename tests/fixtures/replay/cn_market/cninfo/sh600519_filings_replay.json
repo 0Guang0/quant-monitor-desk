@@ -1,0 +1,20 @@
+{
+  "schema_version": "cn_market_evidence_v1",
+  "source_id": "cninfo",
+  "data_domain": "cn_announcements",
+  "filings": [
+    {
+      "filing_id": "cninfo-001",
+      "instrument_id": "sh.600519",
+      "title": "2024半年度报告摘要",
+      "publish_timestamp": "2024-06-25T10:00:00Z",
+      "observation_date": "2024-06-25",
+      "source_used": "cninfo"
+    }
+  ],
+  "source_fetch_id": "cninfo-replay-600519",
+  "content_hash": "cninfo-replay-hash-600519",
+  "as_of_timestamp": "2024-06-25T10:00:00Z",
+  "retrieved_at": "2024-06-25T10:00:00Z",
+  "observation_date": "2024-06-25"
+}

@@ -1,0 +1,12 @@
+{"skill":"agent-toolchain","path":"agent-toolchain.md","phase":"boot","read_at":"2026-06-28"}
+{"skill":"trellis-plan","path":".cursor/skills/trellis-plan/SKILL.md","phase":"boot","read_at":"2026-06-28"}
+{"skill":"gitnexus-plan-1a","path":"AGENTS.md","phase":"1a","read_at":"2026-06-28"}
+{"skill":"trellis-brainstorm","path":".cursor/skills/trellis-brainstorm/SKILL.md","phase":"2a","read_at":"2026-06-28"}
+{"skill":"spec-driven-development","path":".claude/plugins/cache/addy-agent-skills/agent-skills/3a6fc6392823/skills/spec-driven-development/SKILL.md","phase":"2b","read_at":"2026-06-28"}
+{"skill":"grill-me","path":".claude/skills/grill-me/SKILL.md","phase":"3","read_at":"2026-06-28"}
+{"skill":"to-issues","path":".claude/skills/to-issues/SKILL.md","phase":"3.5","read_at":"2026-06-28"}
+{"skill":"gitnexus-plan-1b","path":"AGENTS.md","phase":"1b","read_at":"2026-06-28"}
+{"skill":"planning-and-task-breakdown","path":".claude/plugins/cache/addy-agent-skills/agent-skills/3a6fc6392823/skills/planning-and-task-breakdown/SKILL.md","phase":"5a","read_at":"2026-06-28"}
+{"skill":"writing-plans","path":".claude/plugins/cache/claude-plugins-official/superpowers/5.1.0/skills/writing-plans/SKILL.md","phase":"5b","read_at":"2026-06-28"}
+{"skill":"trellis-before-dev","path":".cursor/skills/trellis-before-dev/SKILL.md","phase":"5c","read_at":"2026-06-28"}
+{"skill":"doubt-driven-development","path":".claude/plugins/cache/addy-agent-skills/agent-skills/3a6fc6392823/skills/doubt-driven-development/SKILL.md","phase":"5d","read_at":"2026-06-28"}

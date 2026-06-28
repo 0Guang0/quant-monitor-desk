@@ -99,15 +99,15 @@ def test_unknownSourceInRegistry_mustHaveCapabilityOrProposedStatus() -> None:
 
 
 def test_proposedDisabledSource_qmtXqshare_notEnabledByDefault() -> None:
-    """覆盖范围：qmt_xqshare 提议禁用源默认策略
+    """覆盖范围：qmt_xqshare 授权门控源默认策略
     测试对象：source_capabilities.yaml 中 qmt_xqshare 条目
-    目的/目标：status=proposed_disabled_source 且所有操作 enabled_by_default=False
-    验证点：status 字段与各 operation.enabled_by_default 均为 False
-    失败含义：未审批的 QMT 共享源默认可调度，合规风险
+    目的/目标：R3H-03 READY_WITH_EVIDENCE 但所有操作 enabled_by_default=False
+    验证点：status=READY_WITH_EVIDENCE 且各 operation.enabled_by_default 均为 False
+    失败含义：未授权的 QMT 共享源默认可调度，合规风险
     """
     capabilities = load_source_capabilities()
     entry = (capabilities.get("sources") or {}).get("qmt_xqshare") or {}
-    assert entry.get("status") == "proposed_disabled_source"
+    assert entry.get("status") == "READY_WITH_EVIDENCE"
     for domain_cfg in (entry.get("domains") or {}).values():
         for op in (domain_cfg.get("operations") or {}).values():
             assert op.get("enabled_by_default") is False
@@ -226,15 +226,15 @@ def test_capabilityRegistry_resolveRegistryDomain_passthroughWhenNoAlias() -> No
 
 
 def test_proposedDisabledSource_tdxPytdx_notEnabledByDefault() -> None:
-    """覆盖范围：tdx_pytdx 提议禁用源默认策略
+    """覆盖范围：tdx_pytdx 验证源默认策略
     测试对象：source_capabilities.yaml 中 tdx_pytdx 条目
-    目的/目标：与 qmt_xqshare 同样 status=proposed_disabled_source 且操作默认关闭
-    验证点：status 与各 operation.enabled_by_default 均为 False
-    失败含义：未审批 TDX 源默认可用，生产误连本地行情
+    目的/目标：R3H-03 READY_WITH_EVIDENCE 但操作默认关闭
+    验证点：status=READY_WITH_EVIDENCE 与各 operation.enabled_by_default 均为 False
+    失败含义：未授权 TDX 源默认可用，生产误连本地行情
     """
     capabilities = load_source_capabilities()
     entry = (capabilities.get("sources") or {}).get("tdx_pytdx") or {}
-    assert entry.get("status") == "proposed_disabled_source"
+    assert entry.get("status") == "READY_WITH_EVIDENCE"
     for domain_cfg in (entry.get("domains") or {}).values():
         for op in (domain_cfg.get("operations") or {}).values():
             assert op.get("enabled_by_default") is False
@@ -386,6 +386,36 @@ def test_r3h04_predictionWebSources_readyWithEvidenceStatus() -> None:
         assert entry.get("fetch_port_path"), source_id
 
 
+R3H03_CN_SOURCES: tuple[str, ...] = (
+    "baostock",
+    "cninfo",
+    "akshare",
+    "tdx_pytdx",
+    "mootdx",
+    "eastmoney",
+    "sina_finance",
+    "ths_ifind",
+    "qmt_xtdata",
+    "qmt_xqshare",
+)
+
+
+def test_r3h03_cnMarketSources_readyWithEvidenceStatus() -> None:
+    """覆盖范围：R3H-03 十源 registry 终态
+    测试对象：source_capabilities.yaml 十源 CN 行
+    目的/目标：十源不得停留在 proposed_disabled_source，须 READY_WITH_EVIDENCE
+    验证点：status==READY_WITH_EVIDENCE；replay_fixture_path 与 fetch_port_path 非空
+    失败含义：Batch 3H CN 源仍以 vague proposed-disabled 占位
+    """
+    capabilities = load_source_capabilities()
+    sources = capabilities.get("sources") or {}
+    for source_id in R3H03_CN_SOURCES:
+        entry = sources.get(source_id) or {}
+        assert entry.get("status") == "READY_WITH_EVIDENCE", source_id
+        assert entry.get("replay_fixture_path"), source_id
+        assert entry.get("fetch_port_path"), source_id
+
+
 def test_r3h04_predictionWebSources_notProposedDisabledAtRuntime() -> None:
     """覆盖范围：R3H-04 三源 capability registry 运行时门禁
     测试对象：SourceCapabilityRegistry.assert_source_domain_operation
@@ -403,3 +433,17 @@ def test_r3h04_predictionWebSources_notProposedDisabledAtRuntime() -> None:
     for source_id, domain, operation in checks:
         with pytest.raises(OperationDisabledError, match="disabled for"):
             reg.assert_source_domain_operation(source_id, domain, operation)
+
+
+def test_r3h03_akshare_validationOnly_registryPermanent() -> None:
+    """覆盖范围：R3H-03 akshare validation_only 永久
+    测试对象：SourceRegistry akshare 行
+    目的/目标：akshare 不可升格 primary
+    验证点：validation_only is True
+    失败含义：akshare validation_only 被移除
+    """
+    from backend.app.datasources.source_registry import SourceRegistry
+
+    registry = SourceRegistry()
+    registry.load()
+    assert registry.get("akshare").validation_only is True

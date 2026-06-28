@@ -588,6 +588,32 @@ CURATED: dict[str, dict] = {
         "command": "uv run python -m pytest tests/test_no_clean_write_for_web_evidence.py -q",
         "failure_meaning": "R3H-04 source routed to clean writer or resolved factual outcomes.",
     },
+    "tests/test_cn_market_adapters.py": {
+        "purpose": "R3H-03 中国市场数据适配器测试（Batch 3H）。",
+        "type": "runtime-contract",
+        "verifies": {
+            "docs": [],
+            "specs": [
+                "specs/datasource_registry/source_capabilities.yaml",
+                "specs/contracts/source_route_contract.yaml",
+                "specs/contracts/layer5_evidence_contract.yaml",
+            ],
+            "rules": ["docs/implementation_tasks/GLOBAL_TESTING_POLICY.md"],
+        },
+        "command": "uv run python -m pytest tests/test_cn_market_adapters.py -q",
+        "failure_meaning": "R3H-03 CN market adapters or evidence contract regressed.",
+    },
+    "tests/test_tdx_provider_port.py": {
+        "purpose": "R3H-03 TDX family provider port boot extension.",
+        "type": "runtime-contract",
+        "verifies": {
+            "docs": [],
+            "specs": ["specs/datasource_registry/source_capabilities.yaml"],
+            "rules": ["docs/implementation_tasks/GLOBAL_TESTING_POLICY.md"],
+        },
+        "command": "uv run python -m pytest tests/test_tdx_provider_port.py -q",
+        "failure_meaning": "R3H-03 mootdx/tdx provider port boot regressed.",
+    },
     "tests/test_docstring_quadruple_coverage.py": {
         "purpose": "Gate — every test_* carries five-field Chinese docstring per hygiene plan",
         "type": "runtime-contract",

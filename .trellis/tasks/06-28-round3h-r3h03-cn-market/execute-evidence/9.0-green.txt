@@ -1,0 +1,1 @@
+32 passed in test_cn_market_adapters boot skeleton + 1 passed test_tdx_provider_port
