@@ -3,9 +3,8 @@
 > **Task:** B3V-L5R · `B03_01_layer5_model_schema_reconcile.md`  
 > **Branch:** `review/round3v-layer5-model-schema-reconcile`  
 > **Baseline:** post Batch 01 master · merge `376e30e6` (`R3-TASK-023`)  
-> **Status:** Execute verified 2026-06-25 — pytest + matrix refreshed  
-> **Baseline:** post Batch 01 master · merge `376e30e6` (`R3-TASK-023`)  
-> **Date:** 2026-06-25
+> **Status:** Execute verified 2026-06-28 — pytest + matrix refreshed  
+> **Date:** 2026-06-28
 
 ---
 

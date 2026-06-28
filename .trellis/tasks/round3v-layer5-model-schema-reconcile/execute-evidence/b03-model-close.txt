@@ -1,7 +1,8 @@
 B03-MODEL-CLOSE — VR-MODEL-001 matrix + docs closure
-Date: 2026-06-25
+Date: 2026-06-28
+Plan commit: 20aeef6
 Pytest: tests/test_migration_coverage.py — 6 passed
-Docs: docs/schema/MIGRATION_COVERAGE.md L3/L4/L5 sections updated
-Matrix: research/l5-reconcile-matrix.md §3 + §1 VR-MODEL-001
+Docs: docs/schema/MIGRATION_COVERAGE.md L3/L4/L5 sections aligned
+Matrix: research/l5-reconcile-matrix.md §3 + research/model-table-matrix.md
 Re-defer: R3-MODEL-L3L4-MIGRATION → Round 3F (registry_proposed_delta.yaml)
 Registry: proposed RESOLVED matrix_aligned_with_redefer (main session only)
