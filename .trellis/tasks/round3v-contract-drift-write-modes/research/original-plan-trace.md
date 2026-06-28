@@ -29,6 +29,17 @@
 | 无 production DB mutation | AC-BOUND | §10 · 只读 inspect |
 | 漂移可检测 | AC-OPS-DRIFT + AC-WRITE-SPLIT | §5.3 |
 
+## VR closure test（技术证据 · 非 registry 行）
+
+| VR | 测试 | 文件:行 |
+| -- | ---- | ------- |
+| VR-OPS-001 | `test_opsInspect_keyTables_matchContract` | `tests/test_contract_drift_ops_write.py:31` |
+| VR-OPS-001 | `test_opsInspect_deferredMapping_matchContract` | 同上 `:42` |
+| VR-WRITE-001 | `test_writeContract_implementedModes_matchWriteManager` | 同上 `:53` |
+| VR-WRITE-001 | `test_writeManager_reservedModes_rejectWithoutWrite` | 同上 `:103` |
+
+详见 `research/vr-closure-test-trace.md`。
+
 ## 引用文档
 
 | 文档 | 用途 |
@@ -39,3 +50,10 @@
 | `backend/app/db/write_manager.py` | SUPPORTED/UNSUPPORTED |
 | `docs/quality/staged_acceptance_policy.md` | 分层验收 |
 | `specs/contracts/runtime_versions.md` | runtime 锁 |
+| `docs/ops/db_inspect_cli.md` | CLI 漂移对照（`docs/modules/ops_db_inspect.md` 不存在） |
+
+## 复核（2026-06-28）
+
+- `validate-plan-freeze` → exit 0
+- `check_docs_specs_indexed.py` → exit 0
+- 详见 `research/plan-freeze-verification-20260628.md`
