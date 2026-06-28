@@ -36,6 +36,7 @@ def pytest_configure(config) -> None:
     except ImportError:
         pass
     _ensure_v2_evidence_mock_baostock()
+    _ensure_prediction_live_authorization_bootstrap()
 
 
 def _ensure_v2_evidence_mock_baostock() -> None:
@@ -44,6 +45,23 @@ def _ensure_v2_evidence_mock_baostock() -> None:
     if dest.is_file():
         return
     src = FIXTURES / "data_health" / "v2_baostock_raw.json"
+    if not src.is_file():
+        return
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_bytes(src.read_bytes())
+
+
+def _ensure_prediction_live_authorization_bootstrap() -> None:
+    """Materialize R3H-04 live-smoke auth YAML for fresh clones/worktrees."""
+    dest = (
+        PROJECT_ROOT
+        / ".audit-sandbox"
+        / "round3h"
+        / "prediction_market_live_authorization.yaml"
+    )
+    if dest.is_file():
+        return
+    src = FIXTURES / "prediction_market_live_authorization.template.yaml"
     if not src.is_file():
         return
     dest.parent.mkdir(parents=True, exist_ok=True)
