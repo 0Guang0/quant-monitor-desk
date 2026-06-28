@@ -27,6 +27,9 @@
 | **N04** | GitNexus index lag                 | `repair-evidence/N04-gitnexus-index-lag.md` → matrix §2                         | **CLOSED** |
 | **N05** | L3/L4 design SSOT split            | `repair-evidence/N05-l3l4-design-ssot-split.md` → matrix §3.1–3.2               | **CLOSED** |
 | **N06** | 对抗 checklist 未勾选              | `repair-evidence/N06-adversarial-matrix-checklist.md` → matrix §4               | **CLOSED** |
+| **N07** | zero-open-signoff 缺 foundation 行 | `repair-evidence/N07-zero-open-signoff-foundation.md` → signoff VR closure (6)    | **CLOSED** |
+| **N08** | matrix 重复 Baseline 头            | `repair-evidence/N08-duplicate-baseline-header.md` → `l5-reconcile-matrix.md`   | **CLOSED** |
+| **N09** | conftest R3G bootstrap 跨分支      | `repair-evidence/N09-conftest-r3g-bootstrap-record.md` — record only, no code   | **CLOSED** |
 
 ---
 
