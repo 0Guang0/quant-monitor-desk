@@ -16,16 +16,16 @@
 
 本路线图按以下文件核实后重写，后续执行者必须从这些 canonical 任务卡入口开工：
 
-| 范围             | 已核实的口径文件                                                                                                      | 关键口径                                                                                                                                                                                                                                                               |
-| ---------------- | --------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 生产完成覆盖地图 | `docs/implementation_tasks/PRODUCTION_COMPLETION_VERTICAL_SLICE_PLAN.md`                                              | 只是覆盖/导航 checklist，不是 standalone execution card。                                                                                                                                                                                                              |
-| 当前执行顺序     | `docs/implementation_tasks/README.md`                                                                                 | Batch 3F-R **CLOSED**；Batch 3G **CLOSED** @ R3G-03（2026-06-27）；Batch 3H **R3H-01～04 CLOSED** @ 2026-06-28；**当前下一入口 R3H-05**；开放项 SSOT 见本文 §5.0.1；mass rehearsal 见 `R3G_MASS_REHEARSAL_OPEN_GAPS.md`。                                              |
-| 完成度规则       | `MODULE_COMPLETION_RATING.md`                                                                                         | 不能用 docs、registry、placeholder、staged fixture 冒充 `R6_FULL_PRODUCTION_STABLE`。                                                                                                                                                                                  |
-| Batch 3F-R       | `BATCH_3FR_TASK_CARD_MANIFEST.md`、`BATCH_3FR_COORDINATOR_PLAYBOOK.md`、`R3FR_01_REFERENCE_RULES_AND_LICENSE_GATE.md` | R3FR-01 必须重跑；参考项目细节必须在任务卡本地，不能放中央 inventory。                                                                                                                                                                                                 |
-| Batch 3G         | `BATCH_3G_TASK_CARD_MANIFEST.md`、`BATCH_3G_COORDINATOR_PLAYBOOK.md`、`R3G_MASS_REHEARSAL_OPEN_GAPS.md`               | R3G-01 → R3G-02 → R3G-03 **已完成**；`--live-wire` 为 3H 前运维证据，不是 3G 新活卡。                                                                                                                                                                                  |
-| Batch 3H         | `BATCH_3H_TASK_CARD_MANIFEST.md`、`BATCH_3H_COORDINATOR_PLAYBOOK.md`                                                  | **R3H-01 CLOSED** @ 2026-06-28（G10 + G14 FRED 段）；**R3H-02 CLOSED** @ 2026-06-28（五源 market/crypto adapters）；**R3H-03 CLOSED** @ 2026-06-28（十源 CN market adapters）；**R3H-04 CLOSED** @ 2026-06-28（预测市场/网页证据三源）；**当前下一入口** R3H-05 终审。 |
-| Batch04 / Round4 | `BATCH_04_TASK_CARD_MANIFEST.md`、`BATCH_04_COORDINATOR_PLAYBOOK.md`、`B04_05_backtest_review_runtime.md`             | Round4 必须等 R3H-05 PASS/WARN；loose 024~030 只是历史输入；API 先打底。                                                                                                                                                                                               |
-| Batch05 / Round5 | `BATCH_05_TASK_CARD_MANIFEST.md`、`BATCH_05_COORDINATOR_PLAYBOOK.md`                                                  | Round5 是 security / integration / release gate，不能作为补功能后门。                                                                                                                                                                                                  |
+| 范围             | 已核实的口径文件                                                                                                      | 关键口径                                                                                                                                                                                                                                                            |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 生产完成覆盖地图 | `docs/implementation_tasks/PRODUCTION_COMPLETION_VERTICAL_SLICE_PLAN.md`                                              | 只是覆盖/导航 checklist，不是 standalone execution card。                                                                                                                                                                                                           |
+| 当前执行顺序     | `docs/implementation_tasks/README.md`                                                                                 | Batch 3F-R **CLOSED**；Batch 3G **CLOSED** @ R3G-03；Batch 3H **R3H-01～04 CLOSED** @ 2026-06-28；**当前下一入口：** Round4 PASS 收口波次（Batch3V → R3H-06～10 → R3H-05-GATE）；SSOT 见本文 §5.0.2–§5.0.5 与 `R3H_PASS_EXECUTION_PLAN.md`；用户裁决 @ 2026-06-28。 |
+| 完成度规则       | `MODULE_COMPLETION_RATING.md`                                                                                         | 不能用 docs、registry、placeholder、staged fixture 冒充 `R6_FULL_PRODUCTION_STABLE`。                                                                                                                                                                               |
+| Batch 3F-R       | `BATCH_3FR_TASK_CARD_MANIFEST.md`、`BATCH_3FR_COORDINATOR_PLAYBOOK.md`、`R3FR_01_REFERENCE_RULES_AND_LICENSE_GATE.md` | R3FR-01 必须重跑；参考项目细节必须在任务卡本地，不能放中央 inventory。                                                                                                                                                                                              |
+| Batch 3G         | `BATCH_3G_TASK_CARD_MANIFEST.md`、`BATCH_3G_COORDINATOR_PLAYBOOK.md`、`R3G_MASS_REHEARSAL_OPEN_GAPS.md`               | R3G-01 → R3G-02 → R3G-03 **已完成**；`--live-wire` 为 3H 前运维证据，不是 3G 新活卡。                                                                                                                                                                               |
+| Batch 3H         | `BATCH_3H_TASK_CARD_MANIFEST.md`、`BATCH_3H_COORDINATOR_PLAYBOOK.md`、`R3H_PASS_EXECUTION_PLAN.md`                    | **R3H-01～04 CLOSED** @ 2026-06-28；**PASS 收口** Wave0 Batch3V → Wave1 R3H-06 → Wave2 R3H-07/10 → Wave3 R3H-08 → Wave4 R3H-05-GATE；Round4 须 **PASS**（`web_search` 真 API 唯一延后 ADR）。                                                                       |
+| Batch04 / Round4 | `BATCH_04_TASK_CARD_MANIFEST.md`、`BATCH_04_COORDINATOR_PLAYBOOK.md`、`B04_05_backtest_review_runtime.md`             | **须 R3H-05-GATE = PASS**（§5.0.5）；`web_search` 真 API post-R4；API 先打底。                                                                                                                                                                                      |
+| Batch05 / Round5 | `BATCH_05_TASK_CARD_MANIFEST.md`、`BATCH_05_COORDINATOR_PLAYBOOK.md`                                                  | Round5 是 security / integration / release gate，不能作为补功能后门。                                                                                                                                                                                               |
 
 如果本文件和某张 canonical 任务卡的具体执行细节冲突：**不要用路线图压过任务卡；应立即修路线图或任务卡，让二者重新闭环。**
 
@@ -99,22 +99,25 @@ Batch 3G：sandbox clean write → pre-production audit → limited production c
   ↓
 3G 后运维（debt-lite，非新 Trellis）：mass rehearsal / `--live-wire` → 仅 pilot 库 + `.audit-sandbox` 证据
   ↓
-Batch 3H：全部目标数据源生产入口，R3H-01～04 **CLOSED** @ 2026-06-28；**当前下一入口 R3H-05** 终审
+Batch 3V：verified audit cleanup（Wave 0 trust 底座）【与 3H PASS 收口并行入口】
   ↓
-Batch04 / Round4：API 先打底，Agent / Frontend / Notification / Backtest 产品化分支并行
+Batch 3H PASS 收口：R3H-06 Schema → R3H-07/10 → R3H-08 Live → R3H-05-GATE（R3H-01～04 已 CLOSED）
+  ↓
+Batch04 / Round4：须 R3H-05 **PASS_ROUND4_REAL_DATA_READY**；API 先打底，产品分支并行
   ↓
 Batch05 / Round5：Security / Integration / Release 发布门禁，确认所有模块 R6 或明确 limitation
 ```
 
-| 总批次            | 是否新执行入口            | 并行/串行                                 | 业务目标                                                                         | 进入下一批次的硬门禁                                                        |
-| ----------------- | ------------------------- | ----------------------------------------- | -------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| 历史底座          | 否                        | 不作为新开工入口                          | 已有项目骨架、DB、registry、staged Layer、治理基础                               | 只能作为历史输入，不能把 staged 当 production。                             |
-| Batch 3F-R        | **CLOSED** (R3FR-07)      | R3FR-01 先；之后可分支；R3FR-07 最后      | 参考项目采纳、data health、provider catalog、TDX、Backtest planning 口径已补扎实 | 条件 A 满足 → 3G 可开。                                                     |
-| Batch 3G          | **CLOSED** (R3G-03)       | 严格串行（已完成）                        | 证明 clean write 可以在受控边界内安全发生                                        | R3G-03 已交付；mass rehearsal 索引见 `R3G_MASS_REHEARSAL_OPEN_GAPS.md`。    |
-| 3G mass rehearsal | debt-lite 运维            | 不新开 Trellis Plan                       | baostock/fred 真网经 `--live-wire` 写 **pilot 库**；主库 denylist 已证           | 暴露项 G1–G17 归入 3H 切片，**不得**默认写 `quant_monitor.duckdb`。         |
-| Batch 3H          | 是，**R3H-05 为当前入口** | R3H-01～04 **CLOSED**；R3H-05 终审最后    | 所有目标 source 要么 READY_WITH_EVIDENCE，要么 ADR_DISABLED_OUT_OF_SCOPE         | R3H-05 输出 PASS 或 WARN_WITH_NARROWED_SCOPE_ADR；§5.0.1 开放项须有矩阵行。 |
-| Batch04 / Round4  | 是，3H 后                 | API 先，其他产品分支按依赖并行            | 把数据/证据能力变成 API、Agent、前端、通知、回测/复盘产品闭环                    | 每个产品模块都有真实 read-only 垂直闭环。                                   |
-| Batch05 / Round5  | 是，Round4 后             | B05-01 先；B05-02 等产物稳定；B05-03 最后 | 做最终 security / integration / release gate                                     | 通过则 release；不通过则阻断或写 release limitation。                       |
+| 总批次            | 是否新执行入口       | 并行/串行                                 | 业务目标                                                                         | 进入下一批次的硬门禁                                                     |
+| ----------------- | -------------------- | ----------------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| 历史底座          | 否                   | 不作为新开工入口                          | 已有项目骨架、DB、registry、staged Layer、治理基础                               | 只能作为历史输入，不能把 staged 当 production。                          |
+| Batch 3F-R        | **CLOSED** (R3FR-07) | R3FR-01 先；之后可分支；R3FR-07 最后      | 参考项目采纳、data health、provider catalog、TDX、Backtest planning 口径已补扎实 | 条件 A 满足 → 3G 可开。                                                  |
+| Batch 3G          | **CLOSED** (R3G-03)  | 严格串行（已完成）                        | 证明 clean write 可以在受控边界内安全发生                                        | R3G-03 已交付；mass rehearsal 索引见 `R3G_MASS_REHEARSAL_OPEN_GAPS.md`。 |
+| 3G mass rehearsal | debt-lite 运维       | 不新开 Trellis Plan                       | baostock/fred 真网经 `--live-wire` 写 **pilot 库**；主库 denylist 已证           | 暴露项归入 **3H PASS 波次**（§5.0.3）；**不得**默认写主库。              |
+| Batch 3V          | 是，**Wave 0**       | 六卡可并行 worktree                       | VR-\* trust 底座                                                                 | Batch3V closeout。                                                       |
+| Batch 3H          | 是，**PASS 收口**    | Wave1→3 串行；Wave3 四子轨并行            | env-gated live→Tier A/B/C；schema/US cal/staged                                  | **R3H-05-GATE = PASS**（§5.0.5）；web_search 真 API 唯一 post-R4 ADR。   |
+| Batch04 / Round4  | 是，3H **PASS** 后   | API 先，其他产品分支按依赖并行            | 把数据/证据能力变成 API、Agent、前端、通知、回测/复盘产品闭环                    | 须 §5.0.5 全部满足；每个产品模块 R2 首垂直闭环。                         |
+| Batch05 / Round5  | 是，Round4 后        | B05-01 先；B05-02 等产物稳定；B05-03 最后 | 做最终 security / integration / release gate                                     | 通过则 release；不通过则阻断或写 release limitation。                    |
 
 ---
 
@@ -286,52 +289,97 @@ research/r3g03_mass_rehearsal_report.md
 
 ## 5. Batch 3H：全部目标真实数据源与 Layer1-Layer5 生产入口
 
-> **批次状态：** **R3H-01～04 CLOSED** @ 2026-06-28；**当前下一执行入口** **R3H-05** 终审（Layer1–5 + 全源 production-entry audit）。
+> **批次状态：** **R3H-01～04 CLOSED** @ 2026-06-28。  
+> **当前执行：** **Round4 PASS 收口波次**（非仅 R3H-05 文档审计）— 详见 §5.0.2–§5.0.5 与 `R3H_PASS_EXECUTION_PLAN.md`。  
+> **用户裁决 @ 2026-06-28：** Round4 须 **PASS**；`web_search` 真 API 延后至独立模块；宏观五源 + kalshi/polymarket 须 env-gated live；凡 READY 源须 live→Tier A/B/C。
 
 ### 5.0 3G 预演输入（开工 3H 前必读）
 
 Batch 3H 必须吸收 3G mass rehearsal 结论，而不是重复 pilot 脚本：
 
-| 3G 暴露项                  | 3H 落点             | 状态 / 说明                                                                                                                                                      |
-| -------------------------- | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| G10 FRED 证据分裂          | **R3H-01**          | ✅ **已闭合** @ 2026-06-28：`official_macro_evidence_v1`；R3E live→promote 经 normalizer；FRED 路径无 bridge DH sidecar                                          |
-| G14 DH sidecar（FRED 段）  | **R3H-01**          | ✅ **FRED 段已闭合**；baostock `--live-wire` 仍写 rehearsal gate sidecar → **R3H-05** 登记 release limitation                                                    |
-| G11 baostock live→promote  | **R3H-03**          | ⚠️ **部分闭合**：port + evidence READY；**产品化** fetch→evidence→clean（非 `--live-wire`）→ **R3H-05**                                                          |
-| G2/G17 交易日窗（**CN**）  | **R3H-03**          | ✅ **已闭合** @ 2026-06-28（Grill-me Q12）：`cn_trading_calendar` + `calendar_gap_rules` `calendar_authority=True`；2030 后硬编码表 → **R3H-05**                 |
-| G2 交易日窗（**US/全球**） | **R3H-02 + R3H-05** | ❌ **仍开放**：`yahoo_finance` / `stooq` / `alpha_vantage` 等仍用 **自然日窗**（`window_kind: calendar_days`）；**美股/NYSE 节假日 SSOT 未建** → **R3H-05 必审** |
-| G3/G4/G6 分表/OHLCV/PK     | **R3H-05 + schema** | ❌ **仍开放**：正式 clean DDL / 分表 / PK 策略；R3H-01～04 **禁止**实现（见各卡 §8）                                                                             |
-| G16 三源未 live-wire       | **R3H-03/02**       | ⚠️ **部分闭合**：adapter replay/mock READY；cninfo PDF capped live smoke；**真网产品化 + 分表** → **R3H-05**                                                     |
-| `web_search` 真搜索 API    | **R3H-04 + R3H-05** | ⏸ **故意延后**：port 为 **mock stub** `READY_WITH_EVIDENCE`（Grill-me Q4）；真 API 须用户 gate + ADR → **R3H-05 记 release limitation**                          |
+| 3G 暴露项                  | 3H 落点              | 状态 / 说明                                                                                                                                                      |
+| -------------------------- | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| G10 FRED 证据分裂          | **R3H-01**           | ✅ **已闭合** @ 2026-06-28：`official_macro_evidence_v1`；R3E live→promote 经 normalizer；FRED 路径无 bridge DH sidecar                                          |
+| G14 DH sidecar（FRED 段）  | **R3H-01**           | ✅ **FRED 段已闭合**；baostock `--live-wire` 仍写 rehearsal gate sidecar → **R3H-05** 登记 release limitation                                                    |
+| G11 baostock live→promote  | **R3H-03**           | ⚠️ **部分闭合**：port + evidence READY；**产品化** fetch→evidence→clean（非 `--live-wire`）→ **R3H-05**                                                          |
+| G2/G17 交易日窗（**CN**）  | **R3H-03**           | ✅ **已闭合** @ 2026-06-28（Grill-me Q12）：`cn_trading_calendar` + `calendar_gap_rules` `calendar_authority=True`；2030 后硬编码表 → **R3H-05**                 |
+| G2 交易日窗（**US/全球**） | **R3H-02 + R3H-05**  | ❌ **仍开放**：`yahoo_finance` / `stooq` / `alpha_vantage` 等仍用 **自然日窗**（`window_kind: calendar_days`）；**美股/NYSE 节假日 SSOT 未建** → **R3H-05 必审** |
+| G3/G4/G6 分表/OHLCV/PK     | **R3H-05 + schema**  | ❌ **仍开放**：正式 clean DDL / 分表 / PK 策略；R3H-01～04 **禁止**实现（见各卡 §8）                                                                             |
+| G16 三源未 live-wire       | **R3H-03/02**        | ⚠️ **部分闭合**：adapter replay/mock READY；cninfo PDF capped live smoke；**真网产品化 + 分表** → **R3H-05**                                                     |
+| `web_search` 真搜索 API    | **延后 post-Round4** | ⏸ **用户裁决 @ 2026-06-28**：独立模块 **`R3H-WEB-SEARCH`**；Round4 前 mock/replay READY + 单条 scope ADR                                                         |
 
 证据：`research/r3g03_mass_rehearsal_report.md`；门禁：**不得**因预演成功默认写主库。
 
-### 5.0.1 R3H-05 前开放项（规划 SSOT — 禁止 silent defer）
+### 5.0.1 交叉项 → PASS 收口任务（2026-06-28）
 
-> R3H-01～04 已交付 adapter/registry/replay；下列项**不得**在活卡内补实现，须在 **R3H-05** 输出 **PASS / WARN_WITH_NARROWED_SCOPE_ADR / BLOCK** 时显式闭合或写入 `release limitation`。完整清单见 `R3H_05_*.md` §3.1 · `round3h_real_data_production_entry_audit.md` §7。
+> **用户裁决：** Round4 须 **PASS**。下列项须 **CLOSED**（实现），不得仅用 WARN+ADR。波次 §5.0.3；逐源落库 `R3H_PASS_EXECUTION_PLAN.md` §2。
 
-| ID                          | 主题                                                                   | 当前状态                                       | R3H-05 必须产出                                                                                                                                |
-| --------------------------- | ---------------------------------------------------------------------- | ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| **REGISTRY-ORPHAN**         | `openbb_provider_reference`（registry 第 25 行）                       | metadata-only；无 runtime adapter              | `ADR_DISABLED_OUT_OF_SCOPE`                                                                                                                    |
-| **MAIN-DB-GATE**            | 主库 denylist；禁止 pilot merge（G8）                                  | denylist 已证 @ R3G-03                         | R3H-05 复核 + 审计注记                                                                                                                         |
-| **G14-PILOT-SIDECAR**       | baostock `--live-wire` bridge DH sidecar                               | FRED 已闭合；baostock pilot 仍 sidecar         | WARN+limitation 或 ADR                                                                                                                         |
-| **G16-LIVE-WIRE**           | cninfo/akshare/yahoo 未接 `--live-wire`                                | replay READY                                   | 逐源 limitation                                                                                                                                |
-| **CAL-US**                  | **US equity bar** 交易日历（yahoo/stooq/alpha_vantage；crypto 不适用） | 自然日窗                                       | **三选一**（§3.1.1）：① WARN+ADR ② 债务卡 ③ 收窄承诺；**禁止 silent PASS**                                                                     |
-| **CAL-CN-TAIL**             | A 股日历 2030+                                                         | ponytail 硬编码表                              | release limitation                                                                                                                             |
-| **SCHEMA-G3G4**             | G3/G4 分表/OHLCV                                                       | 未交付 DDL                                     | schema 归属或 ADR                                                                                                                              |
-| **CNINFO-DISCLOSURE-SHAPE** | G5 cninfo 公告压 bar                                                   | 预演偏离                                       | ADR 或 limitation                                                                                                                              |
-| **G6-IDEMPOTENCY**          | G6 append_only 无 PK                                                   | 隔离库可规避                                   | ADR → Batch3V                                                                                                                                  |
-| **LIVE-PROD**               | 真网→clean 产品化                                                      | replay/mock-first                              | 逐源 status + limitation                                                                                                                       |
-| **MACRO-LIVE-DEFER**        | 五源官方宏观 mock-first live                                           | 端口 READY                                     | 逐源 limitation                                                                                                                                |
-| **G13-VALIDATION-ROLE**     | validation_only 不得 primary                                           | yahoo/akshare 永久 validation                  | 矩阵 + route 测试                                                                                                                              |
-| **WEB-SEARCH-LIVE**         | `web_search` 真搜索                                                    | mock stub                                      | release limitation                                                                                                                             |
-| **KALSHI-POLY-LIVE**        | 预测市场默认真网                                                       | mock/replay default                            | limitation                                                                                                                                     |
-| **REF-ADOPT-GATE**          | 四轨参考采纳追溯 + port ladder 一致                                    | 四轨 `R3H_0x_REFERENCE_ADOPTION_AUDIT.md` 已齐 | R3H-05 §7.1 矩阵 + guardrails 测试绿                                                                                                           |
-| **STAGED-PILOT-SSOT**       | `staged_pilot` 与 `fetch_ports` 双轨                                   | 产品 SSOT=`fetch_ports/*`                      | **延后** post-R3H-05 debt-lite；R3H-05 须双路径注记：产品=`fetch_ports/*`+DH profiles；运维=`ops/staged_pilot_fetch_ports.py`+3G `--live-wire` |
-| **PILOT-OPS-CALENDAR**      | pilot 运维脚本自然日窗                                                 | 非产品 adapter                                 | limitation；与 CAL-US 分开                                                                                                                     |
+| ID                          | PASS 收口任务 | PASS 必须状态                     |
+| --------------------------- | ------------- | --------------------------------- |
+| **REGISTRY-ORPHAN**         | R3H-05E       | `ADR_DISABLED_OUT_OF_SCOPE`       |
+| **MAIN-DB-GATE**            | R3H-05E       | CLOSED + 测试绿                   |
+| **G14-PILOT-SIDECAR**       | **R3H-08A**   | CLOSED（无 bridge sidecar）       |
+| **G16-LIVE-WIRE**           | **R3H-08B**   | CLOSED                            |
+| **CAL-US**                  | **R3H-07**    | CLOSED（US 日历 L2）              |
+| **CAL-CN-TAIL**             | R3H-05C       | CLOSED + ponytail registry 注记   |
+| **SCHEMA-G3G4**             | **R3H-06**    | CLOSED                            |
+| **CNINFO-DISCLOSURE-SHAPE** | **R3H-06**    | CLOSED                            |
+| **G6-IDEMPOTENCY**          | **R3H-06**+3V | CLOSED                            |
+| **LIVE-PROD**               | **R3H-08A–D** | CLOSED（Tier A/B/C，§5.0.4）      |
+| **MACRO-LIVE-DEFER**        | **R3H-08C**   | CLOSED（env-gated 真网）          |
+| **G13-VALIDATION-ROLE**     | R3H-05B/C     | CLOSED + 测试引用                 |
+| **WEB-SEARCH-LIVE**         | **延后**      | **DEFERRED_POST_ROUND4** + 单 ADR |
+| **KALSHI-POLY-LIVE**        | **R3H-08D**   | CLOSED（env-gated→Tier C）        |
+| **REF-ADOPT-GATE**          | R3H-05E       | CLOSED                            |
+| **STAGED-PILOT-SSOT**       | **R3H-10**    | CLOSED                            |
+| **PILOT-OPS-CALENDAR**      | R3H-05E       | CLOSED（运维 limitation）         |
 
-**不进 R3H-05 默认门禁：** G7（超 cap stress，须用户签字）。
+**不进 PASS 门禁：** G7；G12（Layer1 全量指标，Round4+）。
 
-交叉引用：`R3H_05_*.md` §3.1 · `R3H_REFERENCE_ADOPTION_INDEX.md` · `R3G_MASS_REHEARSAL_OPEN_GAPS.md` §2。
+交叉引用：`R3H_PASS_EXECUTION_PLAN.md` · `R3G_MASS_REHEARSAL_OPEN_GAPS.md` §2。
+
+### 5.0.2 用户裁决（2026-06-28）
+
+| 议题                    | 裁决                                                           |
+| ----------------------- | -------------------------------------------------------------- |
+| Round4 入口             | **`PASS_ROUND4_REAL_DATA_READY`**                              |
+| `web_search` 真 API     | **延后** → Round4 后 **`R3H-WEB-SEARCH`** 独立模块             |
+| 宏观五源 + `fred`       | **env-gated 真网 live** → Tier **A**                           |
+| `kalshi` / `polymarket` | **env-gated 真网 live** → Tier **C**；禁止 factual clean write |
+| LIVE-PROD               | 24 业务源凡 READY 均须 live→§5.0.4 对应 Tier                   |
+| 主库                    | denylist + promote 批准不变                                    |
+
+### 5.0.3 Round4 前波次（Wave 0–4）
+
+**SSOT：** `R3H_PASS_EXECUTION_PLAN.md`
+
+```text
+Wave 0  Batch 3V（六卡）— 卡间并行；merge 串行
+Wave 1  R3H-06 Schema — 串行；阻塞 Wave 3
+Wave 2  R3H-07 ∥ R3H-10 — 并行
+Wave 3  R3H-08A/B/C/D — 四子轨并行；依赖 Wave 1
+Wave 4  R3H-05A..E ∥ R3H-05-GATE — 审计并行；GATE 最后 → PASS
+```
+
+### 5.0.4 三层落库（LIVE-PROD）
+
+| Tier            | 目标                                   | 适用                                 |
+| --------------- | -------------------------------------- | ------------------------------------ |
+| **A 主计算库**  | `quant_monitor.duckdb`（批准 promote） | Primary、非 validation_only READY    |
+| **B 验证库**    | `quant_monitor_r3g03_pilot.duckdb` 等  | `validation_only: true` READY        |
+| **C 证据/信号** | probability / manual_review bundle     | kalshi、polymarket、web_search(mock) |
+
+逐源表：`R3H_PASS_EXECUTION_PLAN.md` §2.1。
+
+### 5.0.5 Round4 启动条件（PASS 清单）
+
+1. Batch 3V + R3H-06～10 + R3H-08 子轨 **CLOSED**（pytest 全绿）。
+2. R3H-05-GATE → **`PASS_ROUND4_REAL_DATA_READY`**。
+3. 审计 25 行 + §7 全 **CLOSED**（`WEB-SEARCH-LIVE` = **DEFERRED_POST_ROUND4** + 单 ADR）。
+4. 每 READY 源：env-gated live + 正确 Tier 测试。
+5. Layer smoke 绿；`MAIN-DB-GATE` 复核；Batch 3H **CLOSED**。
+
+Round4 前**不要求 R6**（Round5 确认）。**不要求：** 待修复清单 Batch6 hygiene；G7；G12。
 
 ### 5.1 执行入口
 
@@ -350,6 +398,7 @@ R3H_02_MARKET_DATA_ADAPTERS.md
 R3H_03_CN_MARKET_ADAPTERS.md
 R3H_04_PREDICTION_AND_WEB_EVIDENCE_ADAPTERS.md
 R3H_05_LAYER_BINDING_AND_PRODUCTION_ENTRY_AUDIT.md
+R3H_PASS_EXECUTION_PLAN.md
 R3H_REFERENCE_ADOPTION_INDEX.md
 R3H_01_REFERENCE_ADOPTION_AUDIT.md
 R3H_02_REFERENCE_ADOPTION_AUDIT.md
@@ -368,21 +417,23 @@ R3H_04_REFERENCE_ADOPTION_AUDIT.md
 | `READY_WITH_EVIDENCE`       | 有 adapter/fetch port、auth/license、ResourceGuard、route、replay/sandbox evidence、fetch_log、content_hash、schema_hash、source_fetch_id、data health、source conflict、Layer/evidence binding。 |
 | `ADR_DISABLED_OUT_OF_SCOPE` | 当前产品不承诺这个 source；有 ADR、route reason、release limitation，不得伪装成 ready。                                                                                                           |
 
-### 5.3 并行分支安排
+### 5.3 PASS 收口分支安排（R3H-01～04 已 CLOSED）
+
+> 活卡索引：`R3H_PASS_EXECUTION_PLAN.md`。R3H-05 **仅 Wave 4 审计**，不得在 Wave 0–3 之前单独 PASS。
 
 ```text
-共享 registry / capability / route / schema enum baseline freeze
+Wave 0  Batch 3V（六卡 trust）                    【卡间并行；merge 串行】
   ↓
-并行 4 个 source domain 分支：
-  H-A：官方宏观/披露源
-  H-B：市场/加密源
-  H-C：中国市场/授权/校验源
-  H-D：预测市场/网页证据源
+Wave 1  R3H-06 Clean Schema                       【串行；阻塞 Wave 3】
   ↓
-协调合并 shared registry/capability/route/test catalog changes
+Wave 2  R3H-07 US Calendar  ∥  R3H-10 Staged SSOT 【并行】
   ↓
-R3H-05：最终 Layer1-Layer5 + source production-entry audit（必须最后）
+Wave 3  R3H-08A CN  ∥  R3H-08B validation  ∥  R3H-08C macro  ∥  R3H-08D prediction
+  ↓
+Wave 4  R3H-05A..E 审计 slice  ∥  R3H-05-GATE → PASS
 ```
+
+**历史（已完成）：** R3H-01～04 四域 adapter 并行 + coordinator merge @ 2026-06-28。
 
 共享文件包括：
 
@@ -428,15 +479,11 @@ tests/test_catalog.yaml
 
 ### 5.6 Round4 启动门禁
 
-R3H-05 只能输出：
+**用户裁决 @ 2026-06-28：** Round4 **仅**在 **`PASS_ROUND4_REAL_DATA_READY`** 后启动（非 WARN 主路径）。完整清单见 §5.0.5。
 
-```text
-PASS_ROUND4_REAL_DATA_READY
-WARN_ROUND4_ALLOWED_WITH_NARROWED_SCOPE_ADR
-BLOCK_ROUND4_DATA_ENTRY_INCOMPLETE
-```
+`WARN_ROUND4_ALLOWED_WITH_NARROWED_SCOPE_ADR` 与 `BLOCK_ROUND4_DATA_ENTRY_INCOMPLETE` 仍合法输出，但**不**满足当前项目 Round4 开工条件。
 
-Round4 只能在前两个结果后开始。WARN 必须带明确 ADR，说明哪些 source/layer/domain 被收窄；不能把未完成 source 静默留到以后。
+**唯一允许的范围 ADR：** `web_search` 真 API → **`R3H-WEB-SEARCH`**（Round4 后独立模块）；mock/replay READY 可进 Round4 API。
 
 ---
 
@@ -652,14 +699,14 @@ Batch05 的核心不是“主能力开发”，而是确认所有承诺模块是
 
 ## 10. 进入下一批次的门禁
 
-| 从哪里到哪里     | 必须满足什么                                                                                                                                                                                                                           |
-| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 历史底座 → 3F-R  | 以 3F/3V/3E/3D 等已有产物作为输入；当前新开工从 3F-R canonical folder 开始。                                                                                                                                                           |
-| 3F-R → 3G        | 3F-R 完成，或所有 open 3F-R 项都有 ADR defer + owner + deferred phase + closure gate；R3FR-01 必须已重跑；不得存在中央 executable inventory 风险。                                                                                     |
-| 3G → 3H          | R3G-03 **CLOSED**；`R3G_MASS_REHEARSAL_OPEN_GAPS.md` 已登记 G1–G17；主库 denylist 已证；pilot `--live-wire` 证据可引用；**未闭合项必须在 3H 活卡落地，不得 merge pilot 数据进主库。**                                                  |
-| 3H → Round4      | R3H-05 输出 PASS 或 WARN_WITH_NARROWED_SCOPE_ADR；所有 target source 都 READY_WITH_EVIDENCE 或 ADR_DISABLED_OUT_OF_SCOPE；**§5.0.1 开放项**（CAL-US、SCHEMA-G3G4、WEB-SEARCH-LIVE 等）须有矩阵行 + limitation/ADR，不得 silent defer。 |
-| Round4 → Round5  | API、Agent、Frontend、Notification、Backtest/Review 都有真实 read-only 垂直闭环，不是 shell/schema/policy-only。                                                                                                                       |
-| Round5 → Release | security CI、integration/resource smoke、release manifest、package cleanup、runbooks 全部通过；没有隐藏 blocker。                                                                                                                      |
+| 从哪里到哪里     | 必须满足什么                                                                                                                                                                          |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 历史底座 → 3F-R  | 以 3F/3V/3E/3D 等已有产物作为输入；当前新开工从 3F-R canonical folder 开始。                                                                                                          |
+| 3F-R → 3G        | 3F-R 完成，或所有 open 3F-R 项都有 ADR defer + owner + deferred phase + closure gate；R3FR-01 必须已重跑；不得存在中央 executable inventory 风险。                                    |
+| 3G → 3H          | R3G-03 **CLOSED**；`R3G_MASS_REHEARSAL_OPEN_GAPS.md` 已登记 G1–G17；主库 denylist 已证；pilot `--live-wire` 证据可引用；**未闭合项必须在 3H 活卡落地，不得 merge pilot 数据进主库。** |
+| 3H → Round4      | **R3H-05-GATE = PASS_ROUND4_REAL_DATA_READY**（§5.0.5）；Batch3V + R3H-06～10 + R3H-08 子轨 CLOSED；24 源 env-gated live→Tier A/B/C；**唯一** post-R4 ADR：`web_search` 真 API。      |
+| Round4 → Round5  | API、Agent、Frontend、Notification、Backtest/Review 都有真实 read-only 垂直闭环，不是 shell/schema/policy-only。                                                                      |
+| Round5 → Release | security CI、integration/resource smoke、release manifest、package cleanup、runbooks 全部通过；没有隐藏 blocker。                                                                     |
 
 ---
 

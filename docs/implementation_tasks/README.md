@@ -2,6 +2,8 @@
 
 本目录是给 Claude Code / Codex 等 AI Coding Agent 逐轮执行的正式实施任务包。它不是临时进度记录，也不是草稿目录。
 
+> **当前下一执行入口：** `ROUND_3_SANDBOX_CLEAN_WRITE/`（Batch 3F-R **CLOSED** @ R3FR-07 后的历史门禁；3G 已 CLOSED @ R3G-03，见条目 10–11；现行 PASS 波次见条目 11 与 `R3H_PASS_EXECUTION_PLAN.md`）。
+
 ## 执行顺序
 
 必须按以下顺序执行：
@@ -16,8 +18,8 @@
 8. `ROUND_3_BATCH6_DATA_GOVERNANCE/`：Round 3F Batch6 data governance（已完成；保留作历史 evidence 与 3F-R 输入）。
 9. `ROUND_3_REFERENCE_ADOPTION_REFACTOR/`：Round 3F-R reference adoption refactor（**CLOSED** @ R3FR-07；保留 manifest 与 redirect 注记）。
 10. `ROUND_3_SANDBOX_CLEAN_WRITE/`：Round 3G clean-write rehearsal；**CLOSED** @ R3G-03（2026-06-27）；mass rehearsal 索引见 `BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_MASS_REHEARSAL_OPEN_GAPS.md`（debt-lite，非新活卡）。
-11. `ROUND_3_REAL_DATA_PRODUCTION_ENTRY/`：Round 3H 全部目标 source 真实接入与生产入口闭环；**R3H-01～04 CLOSED** @ 2026-06-28；**当前下一执行入口 R3H-05** 见 `ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/README.md`；开放项 SSOT 见根目录 `PROJECT_IMPLEMENTATION_ROADMAP.md` §5.0.1。
-12. `ROUND_4_API_FRONTEND_AGENT_BACKTEST/`：API、前端、Agent、通知、回测与动作语义保护；必须等 Round 3H PASS 或 ADR narrowing 后启动。
+11. `ROUND_3_REAL_DATA_PRODUCTION_ENTRY/`：Round 3H；**R3H-01～04 CLOSED** @ 2026-06-28；**当前：PASS 收口波次**（Batch3V → R3H-06～10 → R3H-05-GATE）；SSOT 见 `R3H_PASS_EXECUTION_PLAN.md` 与路线图 §5.0.2–§5.0.5。
+12. `ROUND_4_API_FRONTEND_AGENT_BACKTEST/`：API、前端、Agent、通知、回测；**须 R3H-05-GATE = PASS** 后启动（`web_search` 真 API 除外，post-R4 模块）。
 13. `ROUND_5_INTEGRATION_RELEASE/`：集成测试、资源边界测试、文档一致性、最终包清理。
 
 每个原始任务文件都必须独立可读，供 Plan 阶段在上下文丢失时重新定位范围、边界和输入来源。
