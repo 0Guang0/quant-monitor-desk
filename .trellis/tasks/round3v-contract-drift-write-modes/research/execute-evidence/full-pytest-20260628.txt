@@ -1,0 +1,5 @@
+Full repo pytest — 2026-06-28 Execute verify
+Command: uv run pytest -q
+Result: exit 1 — 34 FAILED (all round3g sandbox/adversarial audit; missing .audit-sandbox/round3g/fred_user_authorization.yaml)
+Task scope (§6 Tier A): exit 0 — 68 passed, 1 skipped
+B3V-OPS drift/parity/reserved: 5/5 PASSED

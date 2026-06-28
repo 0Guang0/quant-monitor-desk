@@ -80,6 +80,8 @@ MUST Read `.cursor/rules/ponytail.mdc`；优先 YAML loader 删重复常量；Wr
 | ---- | ---- | --------- |
 | `B02_01_contract_drift_and_write_modes.md` | **必须读原文** · VR AC | [x] |
 | `specs/contracts/ops_db_inspect_contract.yaml` | key_tables + deferred SSOT | [x] |
+| `docs/modules/ops_db_inspect.md` | Playbook 债务；仓库无文件；SSOT=YAML+`db_inspector` | [x] |
+| `docs/ops/db_inspect_cli.md` | CLI 漂移对照；引用 inspect 契约 | [x] |
 | `specs/contracts/write_contract.yaml` | 写模式契约 | [x] |
 | `specs/contracts/runtime_versions.md` | runtime 锁 | [x] |
 | `backend/app/ops/db_inspector.py` | inspect 运行时 | [x] |
@@ -203,7 +205,8 @@ MUST Read `.cursor/rules/ponytail.mdc`；优先 YAML loader 删重复常量；Wr
 | 能力 | 成功怎么测 | 失败怎么测 | 场景 |
 | ---- | ---------- | ---------- | ---- |
 | ops 漂移 | 运行时表/deferred 与 YAML 相等 | 仅改 YAML 一行 → pytest FAIL | S1 |
-| write parity | `implemented_modes == SUPPORTED_MODES` | 契约删 `append_only` → FAIL | S2 |
+| write parity (implemented) | `implemented_modes == SUPPORTED_MODES` | 契约删 `append_only` → FAIL | S2 |
+| write parity (reserved) | `reserved_modes == UNSUPPORTED_MODES` | 契约多 reserved → FAIL | S2 |
 | reserved 拒绝 | 每 reserved `write()` 抛约定错误 | 若执行 INSERT → FAIL | S3 |
 
 ### 5.3 用例设计
@@ -213,6 +216,7 @@ MUST Read `.cursor/rules/ponytail.mdc`；优先 YAML loader 删重复常量；Wr
 | `test_contract_drift_ops_write.py` | `test_opsInspect_keyTables_matchContract` | 集合与顺序与 YAML 一致 | S1 | `pytest tests/test_contract_drift_ops_write.py::test_opsInspect_keyTables_matchContract -v` |
 | 同上 | `test_opsInspect_deferredMapping_matchContract` | deferred id + evidence_fields 一致 | S1 | `pytest …::test_opsInspect_deferredMapping_matchContract -v` |
 | 同上 | `test_writeContract_implementedModes_matchWriteManager` | implemented == SUPPORTED_MODES | S2 | `pytest …::test_writeContract_implementedModes_matchWriteManager -v` |
+| 同上 | `test_writeContract_reservedModes_matchUnsupportedModes` | reserved == UNSUPPORTED_MODES | S2 | `pytest …::test_writeContract_reservedModes_matchUnsupportedModes -v` |
 | 同上 | `test_writeManager_reservedModes_rejectWithoutWrite` | 各 reserved ValueError + 行数不变 | S3 | `pytest …::test_writeManager_reservedModes_rejectWithoutWrite -v` |
 
 ### 5.4 四层测试
@@ -302,14 +306,14 @@ MUST Read `.cursor/rules/ponytail.mdc`；优先 YAML loader 删重复常量；Wr
 | 通过 | YAML 含 implemented_modes / reserved_modes |
 | 已执行 | [x] |
 
-### 9.4 WRITE-02 — Implemented parity
+### 9.4 WRITE-02 — Implemented + reserved parity
 
 | 字段 | 内容 |
 | ---- | ---- |
 | 切片 | WRITE-02 |
-| RED / GREEN | 同 9.3 parity 命令 |
+| RED / GREEN | `uv run pytest tests/test_contract_drift_ops_write.py::test_writeContract_implementedModes_matchWriteManager tests/test_contract_drift_ops_write.py::test_writeContract_reservedModes_matchUnsupportedModes -v` |
 | 绑定 Execute Skill | test-driven-development · incremental-implementation |
-| 通过 | parity 断言与 SUPPORTED_MODES 一致 |
+| 通过 | `implemented_modes == SUPPORTED_MODES` 且 `reserved_modes == UNSUPPORTED_MODES` |
 | 已执行 | [x] |
 
 ### 9.5 WRITE-03 — Reserved reject

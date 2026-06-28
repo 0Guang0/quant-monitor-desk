@@ -184,6 +184,10 @@ key_tables:
   - instrument_registry
   - security_bar_1d
 
+future_phase_key_tables:
+  - instrument_registry
+  - security_bar_1d
+
 deferred_item_mapping:
   DB-R3-001:
     evidence_fields:

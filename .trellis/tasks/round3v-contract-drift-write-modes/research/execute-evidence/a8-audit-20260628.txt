@@ -1,0 +1,19 @@
+A8 mandatory command — Audit-A8 QA — 2026-06-28
+Worktree: quant-monitor-desk-wt-b3v-ops
+
+Command:
+uv run pytest tests/test_contract_drift_ops_write.py tests/test_ops_db_inspector.py tests/test_write_manager.py -v --basetemp=.audit-sandbox/pytest
+
+Result: exit 0
+57 passed, 1 skipped in 13.88s
+
+Drift-only:
+uv run pytest tests/test_contract_drift_ops_write.py -v --basetemp=.audit-sandbox/pytest
+5 passed in 0.64s
+
+Tests in test_contract_drift_ops_write.py:
+- test_opsInspect_keyTables_matchContract PASSED
+- test_opsInspect_deferredMapping_matchContract PASSED
+- test_writeContract_implementedModes_matchWriteManager PASSED
+- test_writeContract_reservedModes_matchUnsupportedModes PASSED
+- test_writeManager_reservedModes_rejectWithoutWrite PASSED
