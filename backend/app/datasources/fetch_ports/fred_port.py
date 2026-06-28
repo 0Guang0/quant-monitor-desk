@@ -1,7 +1,8 @@
-"""FRED official macro fetch port (R3H-01 L2).
+"""FRED official macro fetch port (R3H-01 L2 copy_and_rewrite).
 
-MIT attribution: urllib live fetch pattern adapted from R3E fred_fetch_ports (QMD-owned);
-emits official_macro_evidence_v1 directly via normalizer SSOT.
+L2 migrate from backend/app/ops/fred_fetch_ports.py; OpenBB fred provider = architecture_only.
+MIT attribution: urllib live fetch pattern (QMD-owned); no AGPL runtime.
+See R3H_01_REFERENCE_ADOPTION_AUDIT.md.
 """
 
 from __future__ import annotations

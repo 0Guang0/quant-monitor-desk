@@ -457,6 +457,8 @@ Stop and fix if:
 
 ## 14. reference_project
 
+**采纳追溯 SSOT：** `R3H_02_REFERENCE_ADOPTION_AUDIT.md`（五源矩阵；**US 日历 G2 本卡否决** → R3H-05 **CAL-US**）。Batch 索引：`R3H_REFERENCE_ADOPTION_INDEX.md`。
+
 ```yaml
 reference_project:
   path: 参考项目/OpenBB/openbb_platform/providers/

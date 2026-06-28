@@ -1,6 +1,7 @@
-"""Deribit crypto derivatives fetch port (R3H-02 L2).
+"""Deribit crypto derivatives fetch port (R3H-02 L3 greenfield).
 
-Exchange-grade crypto derivatives/options surface; no trading/account scope.
+No 1:1 upstream reference file; mock surface only — no trading/account API scope.
+See R3H_02_REFERENCE_ADOPTION_AUDIT.md.
 """
 
 from __future__ import annotations

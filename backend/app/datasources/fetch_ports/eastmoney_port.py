@@ -1,6 +1,7 @@
 """Eastmoney validation fetch port (R3H-03).
 
 L3 greenfield: no EasyXT 1:1; mock/replay + conflict_evidence vs baostock primary.
+See R3H_03_REFERENCE_ADOPTION_AUDIT.md.
 """
 
 from __future__ import annotations

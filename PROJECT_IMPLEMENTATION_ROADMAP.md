@@ -307,18 +307,31 @@ Batch 3H 必须吸收 3G mass rehearsal 结论，而不是重复 pilot 脚本：
 
 ### 5.0.1 R3H-05 前开放项（规划 SSOT — 禁止 silent defer）
 
-> R3H-01～04 已交付 adapter/registry/replay；下列项**不得**在活卡内补实现，须在 **R3H-05** 输出 **PASS / WARN_WITH_NARROWED_SCOPE_ADR / BLOCK** 时显式闭合或写入 `release limitation`。
+> R3H-01～04 已交付 adapter/registry/replay；下列项**不得**在活卡内补实现，须在 **R3H-05** 输出 **PASS / WARN_WITH_NARROWED_SCOPE_ADR / BLOCK** 时显式闭合或写入 `release limitation`。完整清单见 `R3H_05_*.md` §3.1 · `round3h_real_data_production_entry_audit.md` §7。
 
-| ID                   | 主题                                                                   | 当前状态                                                  | R3H-05 必须产出                                              |
-| -------------------- | ---------------------------------------------------------------------- | --------------------------------------------------------- | ------------------------------------------------------------ |
-| **CAL-US**           | 美股/全球权益 **交易日历 SSOT**（NYSE/Nasdaq 节假日；非 Mon–Fri 近似） | R3H-02 五源 DH 仍 `calendar_authority=false` 或自然日 cap | 审计矩阵行 + WARN/ADR 或列入 Round4 前 closure gate          |
-| **CAL-CN-TAIL**      | A 股日历 **2030 后** / 交易所权威源                                    | `cn_trading_calendar` 硬编码表（ponytail）                | release limitation 或 ADR 扩展路径                           |
-| **SCHEMA-G3G4**      | clean 表 **分表 / OHLCV / PK**（G3/G4/G6）                             | 未交付正式 DDL                                            | PASS 前须有 schema 任务归属或 ADR 收窄 Layer 写入范围        |
-| **LIVE-PROD**        | baostock/cninfo 等 **真网→clean 产品化**（非 pilot `--live-wire`）     | replay/mock-first READY                                   | 每源 `production-entry status` + limitation                  |
-| **WEB-SEARCH-LIVE**  | `web_search` **真实搜索后端**                                          | mock stub only；`web_search_evidence_port.py` L3 deferred | `release limitation`：**mock-only READY** 不等于真网搜索能力 |
-| **KALSHI-POLY-LIVE** | kalshi/polymarket **默认真网**                                         | mock/replay default；capped live smoke env-gated          | 审计证据 + limitation（404/403 环境记 `live_network_note`）  |
+| ID                          | 主题                                                                   | 当前状态                                       | R3H-05 必须产出                                                                                                                                |
+| --------------------------- | ---------------------------------------------------------------------- | ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| **REGISTRY-ORPHAN**         | `openbb_provider_reference`（registry 第 25 行）                       | metadata-only；无 runtime adapter              | `ADR_DISABLED_OUT_OF_SCOPE`                                                                                                                    |
+| **MAIN-DB-GATE**            | 主库 denylist；禁止 pilot merge（G8）                                  | denylist 已证 @ R3G-03                         | R3H-05 复核 + 审计注记                                                                                                                         |
+| **G14-PILOT-SIDECAR**       | baostock `--live-wire` bridge DH sidecar                               | FRED 已闭合；baostock pilot 仍 sidecar         | WARN+limitation 或 ADR                                                                                                                         |
+| **G16-LIVE-WIRE**           | cninfo/akshare/yahoo 未接 `--live-wire`                                | replay READY                                   | 逐源 limitation                                                                                                                                |
+| **CAL-US**                  | **US equity bar** 交易日历（yahoo/stooq/alpha_vantage；crypto 不适用） | 自然日窗                                       | **三选一**（§3.1.1）：① WARN+ADR ② 债务卡 ③ 收窄承诺；**禁止 silent PASS**                                                                     |
+| **CAL-CN-TAIL**             | A 股日历 2030+                                                         | ponytail 硬编码表                              | release limitation                                                                                                                             |
+| **SCHEMA-G3G4**             | G3/G4 分表/OHLCV                                                       | 未交付 DDL                                     | schema 归属或 ADR                                                                                                                              |
+| **CNINFO-DISCLOSURE-SHAPE** | G5 cninfo 公告压 bar                                                   | 预演偏离                                       | ADR 或 limitation                                                                                                                              |
+| **G6-IDEMPOTENCY**          | G6 append_only 无 PK                                                   | 隔离库可规避                                   | ADR → Batch3V                                                                                                                                  |
+| **LIVE-PROD**               | 真网→clean 产品化                                                      | replay/mock-first                              | 逐源 status + limitation                                                                                                                       |
+| **MACRO-LIVE-DEFER**        | 五源官方宏观 mock-first live                                           | 端口 READY                                     | 逐源 limitation                                                                                                                                |
+| **G13-VALIDATION-ROLE**     | validation_only 不得 primary                                           | yahoo/akshare 永久 validation                  | 矩阵 + route 测试                                                                                                                              |
+| **WEB-SEARCH-LIVE**         | `web_search` 真搜索                                                    | mock stub                                      | release limitation                                                                                                                             |
+| **KALSHI-POLY-LIVE**        | 预测市场默认真网                                                       | mock/replay default                            | limitation                                                                                                                                     |
+| **REF-ADOPT-GATE**          | 四轨参考采纳追溯 + port ladder 一致                                    | 四轨 `R3H_0x_REFERENCE_ADOPTION_AUDIT.md` 已齐 | R3H-05 §7.1 矩阵 + guardrails 测试绿                                                                                                           |
+| **STAGED-PILOT-SSOT**       | `staged_pilot` 与 `fetch_ports` 双轨                                   | 产品 SSOT=`fetch_ports/*`                      | **延后** post-R3H-05 debt-lite；R3H-05 须双路径注记：产品=`fetch_ports/*`+DH profiles；运维=`ops/staged_pilot_fetch_ports.py`+3G `--live-wire` |
+| **PILOT-OPS-CALENDAR**      | pilot 运维脚本自然日窗                                                 | 非产品 adapter                                 | limitation；与 CAL-US 分开                                                                                                                     |
 
-交叉引用：`R3H_05_LAYER_BINDING_AND_PRODUCTION_ENTRY_AUDIT.md` §3.1 · `R3G_MASS_REHEARSAL_OPEN_GAPS.md` §2 G2/G17 · 各轨 Trellis `research/grill-me-session.md`（Q12 CN 日历、Q4 web_search mock）。
+**不进 R3H-05 默认门禁：** G7（超 cap stress，须用户签字）。
+
+交叉引用：`R3H_05_*.md` §3.1 · `R3H_REFERENCE_ADOPTION_INDEX.md` · `R3G_MASS_REHEARSAL_OPEN_GAPS.md` §2。
 
 ### 5.1 执行入口
 
@@ -337,6 +350,11 @@ R3H_02_MARKET_DATA_ADAPTERS.md
 R3H_03_CN_MARKET_ADAPTERS.md
 R3H_04_PREDICTION_AND_WEB_EVIDENCE_ADAPTERS.md
 R3H_05_LAYER_BINDING_AND_PRODUCTION_ENTRY_AUDIT.md
+R3H_REFERENCE_ADOPTION_INDEX.md
+R3H_01_REFERENCE_ADOPTION_AUDIT.md
+R3H_02_REFERENCE_ADOPTION_AUDIT.md
+R3H_03_REFERENCE_ADOPTION_AUDIT.md
+R3H_04_REFERENCE_ADOPTION_AUDIT.md
 ```
 
 ### 5.2 业务目标
@@ -628,7 +646,7 @@ Batch05 的核心不是“主能力开发”，而是确认所有承诺模块是
 | 市场/加密          | `alpha_vantage`, `stooq`, `yahoo_finance`, `deribit`, `coingecko`                                                             | **R3H-02 CLOSED** | 五源 `READY_WITH_EVIDENCE`；yahoo `validation_only` 永久；mock-first ports + replay；Layer2/4/5 smoke。                                                 |
 | 中国市场           | `baostock`, `akshare`, `cninfo`, `tdx_pytdx`, `mootdx`, `eastmoney`, `sina_finance`, `ths_ifind`, `qmt_xtdata`, `qmt_xqshare` | **R3H-03 CLOSED** | 十源 `READY_WITH_EVIDENCE`；**CN 交易日历 G2/G17 已闭合**（Q12）；QMT/iFinD/xqshare 默认 authorization-disabled；**G11 live→clean 产品化** → R3H-05。   |
 | 预测市场/网页证据  | `kalshi`, `polymarket`, `web_search`                                                                                          | **R3H-04 CLOSED** | 三源 mock/replay-first `READY_WITH_EVIDENCE`；禁止 factual clean write；**`web_search` 真搜索 API 故意延后（mock stub）** → R3H-05 release limitation。 |
-| 全部 source 总审计 | 所有 above source                                                                                                             | R3H-05            | Round4 只能消费 R3H final decision，不得消费 proposed-disabled 假完成。                                                                                 |
+| 全部 source 总审计 | 所有 above source + `openbb_provider_reference`                                                                               | R3H-05            | **25** registry 行终态；§5.0.1 交叉项 §7 全填；Round4 只能消费 R3H final decision。                                                                     |
 
 ---
 

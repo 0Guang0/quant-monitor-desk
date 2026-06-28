@@ -2,6 +2,7 @@
 
 L2 migrate from backend/app/ops/staged_pilot_fetch_ports.py (BaostockStagedFetchPort) and
 backend/app/datasources/adapters/baostock.py skeleton field mapping; QMD cn_market_evidence_v1.
+See R3H_03_REFERENCE_ADOPTION_AUDIT.md.
 """
 
 from __future__ import annotations

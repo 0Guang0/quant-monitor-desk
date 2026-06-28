@@ -2,6 +2,7 @@
 
 L2 migrate from backend/app/datasources/adapters/akshare.py validation skeleton;
 permanent validation_only — no primary elevation.
+See R3H_03_REFERENCE_ADOPTION_AUDIT.md.
 """
 
 from __future__ import annotations

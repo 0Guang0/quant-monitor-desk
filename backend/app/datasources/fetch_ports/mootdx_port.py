@@ -3,6 +3,7 @@
 L2 extend tdx_pytdx_port (R3FR-03 MIT) — shared caps/domain guards and TDX manifest shape;
 independent source_id=mootdx; no silent fallback to tdx_pytdx.
 MIT attribution: lifecycle ideas from EasyXT tdx_provider.py via tdx_pytdx_port.
+See R3H_03_REFERENCE_ADOPTION_AUDIT.md.
 """
 
 from __future__ import annotations

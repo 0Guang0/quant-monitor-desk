@@ -4,6 +4,7 @@ reference_adoption:
   - ladder: L3_greenfield (mock stub; real search API deferred per user gate)
   - staging_shape: backend/app/evidence/manual_review_staging.py (architecture_only OpenBB widget)
 Mock stub READY; output is manual-review staging only — never clean factual tables.
+See R3H_04_REFERENCE_ADOPTION_AUDIT.md.
 """
 
 from __future__ import annotations

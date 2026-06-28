@@ -1,6 +1,8 @@
-"""SEC EDGAR disclosure fetch port (R3H-01 L2).
+"""SEC EDGAR disclosure fetch port (R3H-01 L3 greenfield).
 
-Mock-first filings + Form 4; live fetch requires SEC_EDGAR_USER_AGENT identity header.
+No 1:1 upstream reference file; SEC fair-access identity via SEC_EDGAR_USER_AGENT.
+Mock-first filings + Form 4; live fetch deferred by default.
+See R3H_01_REFERENCE_ADOPTION_AUDIT.md.
 """
 
 from __future__ import annotations

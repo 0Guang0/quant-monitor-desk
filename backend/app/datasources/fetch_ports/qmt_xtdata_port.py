@@ -1,6 +1,7 @@
 """QMT xtdata authorization-gated fetch port (R3H-03).
 
 L2 migrate from backend/app/datasources/adapters/qmt_xtdata.py skeleton; license_gate default DISABLED.
+See R3H_03_REFERENCE_ADOPTION_AUDIT.md.
 """
 
 from __future__ import annotations

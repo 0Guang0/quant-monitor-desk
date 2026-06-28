@@ -2,7 +2,7 @@
 
 > **Batch:** Round 3H Real Data Production Entry  
 > **批次状态：** **R3H-01～04 CLOSED** @ 2026-06-28；**当前下一执行入口** **R3H-05**（Layer1–5 + 全源 production-entry audit）。  
-> **开放项 SSOT：** `PROJECT_IMPLEMENTATION_ROADMAP.md` §5.0.1（CAL-US、SCHEMA-G3G4、WEB-SEARCH-LIVE 等）— R3H-05 须逐条 CLOSED / WARN+ADR / BLOCK，禁止 silent defer。  
+> **参考采纳索引：** `R3H_REFERENCE_ADOPTION_INDEX.md`（四轨 L1/L2/L3 追溯 + 延后债务）。  
 > **Purpose:** 在进入 Round4 产品化之前，把 Round3 的五层模型、真实数据接入和数据治理闭合到完整的有限生产接入级别。  
 > **Execution rule:** 本批次可以按数据域/能力域并行，但不是“选几个源试一下”。凡是已经进入 `source_registry.yaml` / `source_capabilities.yaml` 的目标 source，都必须在本批次得到明确闭环：要么完成 adapter + gate + replay + route + evidence，要么用 ADR 明确说明为什么不属于当前产品承诺范围。
 

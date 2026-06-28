@@ -105,3 +105,5 @@
 **规划主索引（本文）：** 接线新项 **G14–G17** 与 G1/G10/G11 状态更新**必须**写回本文 §2；G10 + G14（FRED）**已同步 @ R3H-01 归档（2026-06-28）**；**G2/G17（CN）已同步 @ R3H-03 归档（2026-06-28）**；G1/G11 等仍 @ 2026-06-27 基线。
 
 **运行入口：** `uv run python scripts/r3g03_isolated_pilot_dry_run.py --live-wire --execute [--refresh-live]`
+
+**运维 vs 产品日历（2026-06-28 补登）：** 上列 pilot 脚本可用**自然日窗**（非产品级交易日 SSOT）；产品 adapter 路径以 `fetch_ports/*` + `cn_trading_calendar`（CN）为准；US 日历 → R3H-05 **CAL-US** / **PILOT-OPS-CALENDAR** limitation。见 `R3H_REFERENCE_ADOPTION_INDEX.md` §3。

@@ -1,6 +1,7 @@
 """QMT xqshare remote terminal fetch port (R3H-03).
 
 L2 migrate from qmt_xtdata auth-gated pattern; user Grill-me Q8 — implemented (no ADR).
+See R3H_03_REFERENCE_ADOPTION_AUDIT.md.
 """
 
 from __future__ import annotations

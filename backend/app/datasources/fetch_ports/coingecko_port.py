@@ -1,6 +1,7 @@
-"""CoinGecko crypto spot reference fetch port (R3H-02 L2).
+"""CoinGecko crypto spot reference fetch port (R3H-02 L3 greenfield).
 
-Validation/aggregator spot reference; not exchange-grade primary.
+No 1:1 upstream reference file; mock-first aggregator validation; internal pattern for R3H-04.
+See R3H_02_REFERENCE_ADOPTION_AUDIT.md.
 """
 
 from __future__ import annotations

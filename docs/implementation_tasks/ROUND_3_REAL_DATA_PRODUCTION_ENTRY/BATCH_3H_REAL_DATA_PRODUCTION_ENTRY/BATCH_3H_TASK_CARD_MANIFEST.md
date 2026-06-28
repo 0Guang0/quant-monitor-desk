@@ -23,7 +23,7 @@
 
 **R3H-01/02 追溯注记：** **CLOSED** @ 2026-06-28；G10/G14（FRED）已闭合；R3H-02 五源 READY，**US 日历** → R3H-05 **CAL-US**。Trellis：`06-28-round3h-r3h01-official-macro` · `06-28-round3h-r3h02-market-data`。
 
-**R3H-05 当前入口：** 须对照路线图 §5.0.1 与 `R3H_05_*.md` §3.1 闭合全部开放项后方可 Round4。
+**R3H-05 当前入口：** 须对照路线图 §5.0.1（17 项交叉 ID）与 `R3H_05_*.md` §3.1 + 审计模板 §7；参考采纳见 `R3H_REFERENCE_ADOPTION_INDEX.md`。
 
 ---
 

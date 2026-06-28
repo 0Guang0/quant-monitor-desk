@@ -3,6 +3,7 @@
 MIT attribution: optional pytdx import and host-port lifecycle ideas adapted from
 EasyXT tdx_provider.py (MIT); QMD rewrite only; no runtime import from external
 reference trees; no auto server scan; no default live enablement.
+See R3H_03_REFERENCE_ADOPTION_AUDIT.md.
 """
 
 from __future__ import annotations

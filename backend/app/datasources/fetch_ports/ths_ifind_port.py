@@ -2,6 +2,7 @@
 
 L2 migrate from backend/app/datasources/adapters/qmt_xtdata.py auth-gated boundary pattern;
 default authorization-disabled via license_gate.
+See R3H_03_REFERENCE_ADOPTION_AUDIT.md.
 """
 
 from __future__ import annotations

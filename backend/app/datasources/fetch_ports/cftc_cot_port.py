@@ -1,4 +1,8 @@
-"""CFTC COT official macro fetch port (R3H-01 L2)."""
+"""CFTC COT official macro fetch port (R3H-01 L3 greenfield).
+
+No 1:1 upstream reference file; mock-first; official_macro_evidence_v1.
+See R3H_01_REFERENCE_ADOPTION_AUDIT.md.
+"""
 
 from __future__ import annotations
 

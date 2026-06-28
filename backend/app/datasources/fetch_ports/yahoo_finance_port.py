@@ -1,6 +1,7 @@
-"""Yahoo Finance validation market data fetch port (R3H-02 L2).
+"""Yahoo Finance validation market data fetch port (R3H-02 L2 copy_and_rewrite).
 
-Validation-only US equity/ETF; replay-first from tests/fixtures/replay/market_data/yahoo_finance/.
+L2 migrate from 3G fixture semantics → replay tests/fixtures/replay/market_data/yahoo_finance/.
+validation_only permanent; not OpenBB runtime copy. See R3H_02_REFERENCE_ADOPTION_AUDIT.md.
 """
 
 from __future__ import annotations

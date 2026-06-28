@@ -1,7 +1,7 @@
-"""US Treasury official macro fetch port (R3H-01 L2).
+"""US Treasury official macro fetch port (R3H-01 L3 greenfield).
 
-Mock-first yield curve + inflation expectation reference; emits
-official_macro_evidence_v1 via normalizer SSOT.
+No 1:1 upstream reference file; evidence via official_macro_evidence_v1 (same normalizer as fred).
+OpenBB providers/ = architecture_only. See R3H_01_REFERENCE_ADOPTION_AUDIT.md.
 """
 
 from __future__ import annotations

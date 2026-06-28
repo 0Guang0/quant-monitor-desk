@@ -2,6 +2,7 @@
 
 L2 migrate from backend/app/ops/staged_pilot_fetch_ports.py (CninfoMetadataStagedFetchPort) and
 backend/app/datasources/adapters/cninfo.py skeleton domains; PDF path capped at MAX_PDF_BYTES.
+See R3H_03_REFERENCE_ADOPTION_AUDIT.md.
 """
 
 from __future__ import annotations

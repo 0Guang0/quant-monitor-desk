@@ -398,6 +398,8 @@ Stop and fix if:
 
 ## 14. reference_project
 
+**采纳追溯 SSOT：** `R3H_01_REFERENCE_ADOPTION_AUDIT.md`（六源 L1/L2/L3 矩阵；五源 **L3** + `fred` **L2**）。Batch 索引：`R3H_REFERENCE_ADOPTION_INDEX.md`。
+
 ```yaml
 reference_project:
   path: 参考项目/OpenBB/openbb_platform/providers/fred/

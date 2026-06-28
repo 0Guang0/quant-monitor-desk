@@ -4,6 +4,7 @@ reference_adoption:
   - ladder: L3_greenfield (live urllib) + L2_copy_and_rewrite (mock from coingecko_port.py)
   - mock_template: backend/app/datasources/fetch_ports/coingecko_port.py
   - forbidden: factual_resolution / resolved=true semantics on resolution_source
+See R3H_04_REFERENCE_ADOPTION_AUDIT.md.
 Mock/replay-first; records liquidity/volume/spread and resolution_source URL metadata only.
 """
 

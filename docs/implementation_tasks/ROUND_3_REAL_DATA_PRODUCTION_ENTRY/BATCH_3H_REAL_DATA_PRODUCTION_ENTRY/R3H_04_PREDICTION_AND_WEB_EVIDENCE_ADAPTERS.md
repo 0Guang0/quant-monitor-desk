@@ -309,7 +309,7 @@ uv run python scripts/loop_maintain.py
 - replay fixture 存在于 `tests/fixtures/replay/prediction_market/**` 与 `web_evidence/**`。
 - `test_r3h_source_final_decisions.py` 三源段通过。
 
-**归档追溯：** Trellis `06-28-round3h-r3h04-prediction-web` · audit 零遗留。**`web_search` 真 API 故意延后**（Grill-me Q4 mock stub）→ R3H-05 §5.0.1 **WEB-SEARCH-LIVE**。
+**归档追溯：** `R3H_04_REFERENCE_ADOPTION_AUDIT.md` · Trellis `06-28-round3h-r3h04-prediction-web` · `R3H_REFERENCE_ADOPTION_INDEX.md` §1。
 
 ---
 

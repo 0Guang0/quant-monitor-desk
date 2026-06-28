@@ -1,6 +1,7 @@
-"""Stooq validation market data fetch port (R3H-02 L2).
+"""Stooq validation market data fetch port (R3H-02 L3 greenfield).
 
-Validation-only global/FX/commodity daily bar; emits market_data_evidence_v1.
+No 1:1 upstream reference file; validation-only global/FX/commodity daily bar.
+See R3H_02_REFERENCE_ADOPTION_AUDIT.md.
 """
 
 from __future__ import annotations

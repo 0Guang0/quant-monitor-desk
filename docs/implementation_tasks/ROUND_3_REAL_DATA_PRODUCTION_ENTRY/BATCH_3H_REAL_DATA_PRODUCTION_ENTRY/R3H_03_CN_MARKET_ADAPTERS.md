@@ -184,7 +184,9 @@ Per-source caps align with `source_capabilities.yaml` and `GLOBAL_RESOURCE_LIMIT
 
 **3G index:** `R3G_MASS_REHEARSAL_OPEN_GAPS.md` §2 G11, G16; **G2/G17（CN）已闭合** @ Grill-me Q12（`cn_trading_calendar` + `calendar_authority=True`）；**美股/全球交易日历不在本卡** → `PROJECT_IMPLEMENTATION_ROADMAP.md` §5.0.1 **CAL-US** → R3H-05。
 
-**归档追溯：** Trellis `06-28-round3h-r3h03-cn-market` · `research/grill-me-session.md` Q12 · `research/audit-evidence/a5.md` §5。
+**归档追溯：** `R3H_03_REFERENCE_ADOPTION_AUDIT.md` · Trellis `06-28-round3h-r3h03-cn-market` · `R3H_REFERENCE_ADOPTION_INDEX.md` §1。
+
+**STAGED-PILOT-SSOT（延后）：** 产品 fetch = `datasources/fetch_ports/*`；`ops/staged_pilot_fetch_ports.py` 仅 3G/`--live-wire` — post-R3H-05 debt-lite 收敛，见索引 §3。
 
 ### 8.1 Execute stop conditions
 

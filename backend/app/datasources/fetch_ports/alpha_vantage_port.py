@@ -1,6 +1,7 @@
-"""Alpha Vantage market data fetch port (R3H-02 L2).
+"""Alpha Vantage market data fetch port (R3H-02 L3 greenfield).
 
-Mock-first US equity/ETF daily bar + capped option chain; emits market_data_evidence_v1.
+No 1:1 upstream reference file; mock-first; market_data_evidence_v1.
+OpenBB providers/ = architecture_only. See R3H_02_REFERENCE_ADOPTION_AUDIT.md.
 """
 
 from __future__ import annotations
