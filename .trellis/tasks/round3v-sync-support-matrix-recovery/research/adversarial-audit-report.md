@@ -117,8 +117,8 @@ uv run pytest \
   tests/test_sync_orchestrator.py::test_syncJobContract_implementedTypes_matchRuntimeCallables \
   tests/test_sync_orchestrator.py::test_syncJobContract_deferredErrorYaml_parityWithRuntimeConstants \
   tests/test_sync_orchestrator.py::test_syncJob_reservedFullLoad_returnsDeferredJobTypeError \
-  tests/test_sync_orchestrator.py::test_syncJob_reservedDataQuality_returnsDeferredJobTypeError \
-  tests/test_sync_orchestrator.py::test_syncJob_reservedRevisionAudit_returnsDeferredJobTypeError \
+  tests/test_sync_orchestrator.py::test_syncJob_reservedDataQuality_completesJob \
+  tests/test_sync_orchestrator.py::test_syncJob_reservedRevisionAudit_completesJob \
   tests/test_sync_orchestrator.py::test_syncJob_incremental_crashWindow_leavesWritingWithWriteId \
   tests/test_sync_orchestrator.py::test_syncJob_incremental_recoverStuckWriting_completesWithoutDoubleWrite \
   tests/test_sync_orchestrator.py::test_syncJob_incremental_hook_rejectedOutsidePytest \

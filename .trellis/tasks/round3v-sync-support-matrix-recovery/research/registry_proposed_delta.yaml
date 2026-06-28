@@ -4,10 +4,11 @@
 D2-P1-1:
   decision: PARTIALLY_CLOSED
   rationale: >
-    sync_job_contract.yaml now splits implemented vs reserved job types.
-    run_full_load / run_data_quality / run_revision_audit return stable
-    DeferredJobTypeError (DEFERRED_JOB_TYPE, owner Round3F, docs_anchor D2-P1-1).
-    Full runner implementations remain deferred to Round 3F shared hooks.
+    sync_job_contract.yaml splits implemented vs reserved job types.
+    run_full_load returns stable DeferredJobTypeError (DEFERRED_JOB_TYPE,
+    owner Round3F, docs_anchor D2-P1-1). data_quality and revision_audit
+    implemented via R3F-SH runners (B3F merge); only full_load remains reserved.
+    Full_load runner implementation remains deferred to Round 3F.
 
 R3-PARTIAL-5:
   decision: CLOSED_BRANCH
@@ -20,10 +21,11 @@ VR-SYNC-002:
   decision: CLOSED_BRANCH
   rationale: >
     Explicit support matrix in sync_job_contract.yaml; parity test GREEN;
-    reserved types return DeferredJobTypeError not bare NotImplementedError.
+    full_load returns DeferredJobTypeError not bare NotImplementedError;
+    data_quality/revision_audit implemented (R3F-SH); matrix reflects current runtime.
 
 registry_rows_remain_open:
-  D2-P1-1: OPEN_RUNNER_IMPL
+  D2-P1-1: OPEN_FULL_LOAD_RUNNER
   R3-PARTIAL-5: CLOSED_ON_BRANCH
 
 commit_policy: proposed_only_no_direct_registry_commit

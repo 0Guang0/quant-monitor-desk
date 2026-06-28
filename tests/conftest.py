@@ -37,6 +37,8 @@ def pytest_configure(config) -> None:
         pass
     _ensure_v2_evidence_mock_baostock()
     _ensure_prediction_live_authorization_bootstrap()
+    _ensure_r3g_fred_authorization_bootstrap()
+    _ensure_audit_sandbox_pytest_basetemp()
 
 
 def _ensure_v2_evidence_mock_baostock() -> None:
@@ -66,6 +68,23 @@ def _ensure_prediction_live_authorization_bootstrap() -> None:
         return
     dest.parent.mkdir(parents=True, exist_ok=True)
     dest.write_bytes(src.read_bytes())
+
+
+def _ensure_r3g_fred_authorization_bootstrap() -> None:
+    """Materialize R3G FRED auth YAML for fresh clones/worktrees."""
+    dest = PROJECT_ROOT / ".audit-sandbox" / "round3g" / "fred_user_authorization.yaml"
+    if dest.is_file():
+        return
+    src = FIXTURES / "sandbox_clean_write" / "r3g01" / "fred" / "fred_user_authorization_fixture.yaml"
+    if not src.is_file():
+        return
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_bytes(src.read_bytes())
+
+
+def _ensure_audit_sandbox_pytest_basetemp() -> None:
+    """Pre-create shared pytest basetemp for A8 sandbox runs on fresh clones (A8-B3V-04)."""
+    (PROJECT_ROOT / ".audit-sandbox" / "pytest").mkdir(parents=True, exist_ok=True)
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
