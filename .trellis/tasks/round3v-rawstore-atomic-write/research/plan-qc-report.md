@@ -2,8 +2,8 @@
 
 > **Agent:** Plan 质检 Agent-2 · **model:** composer-2.5  
 > **Worktree:** `../quant-monitor-desk-wt-b3v-stor`  
-> **输入:** `MASTER.plan.md` · `implement.jsonl` · `vertical-slices.md` · `plan.freeze.md`  
-> **对照:** Playbook §2.5/§2.6 · §3.4 · §3.9 · §3.10 · `B02_03_rawstore_atomic_write.md`
+> **输入:** `MASTER.plan.md` · `implement.jsonl` · `vertical-slices.md` · `plan.freeze.md` · `wave0-ssot-alignment.md`  
+> **对照:** Playbook §2.5/§2.6 · §3.4 · §3.8–§3.10 · WAVE0 §5 · `B02_03_rawstore_atomic_write.md`
 
 ---
 
@@ -14,20 +14,22 @@
 | 初检发现项 | **2**（均为 advisory，非阻断） |
 | 已修复 | **0**（无需回 Plan 修文） |
 | 复检遗留 | **0** 阻断项 |
-| `validate-plan-freeze` | **exit 0**（2026-06-25，本 session 复跑确认） |
-| `check_docs_specs_indexed.py` | **exit 0** |
+| `validate-plan-freeze` | **exit 0**（2026-06-28 本 session 复跑） |
+| `check_docs_specs_indexed.py` | **exit 0**（2026-06-28） |
+| WAVE0 §5 ↔ vertical-slices | **PASS**（`wave0-ssot-alignment.md`） |
 | `BATCH_3V_SELF_CHECK.md` | **PASS_FOR_DISPATCH**（playbook 引用） |
-| **裁决** | **`PASS_FOR_EXECUTE`** |
+| **裁决** | **`PASS`** |
 
 ---
 
 ## 2. 门禁复跑
 
 ```text
+# 2026-06-28 Plan质检 session
 python .trellis/scripts/task.py validate-plan-freeze .trellis/tasks/round3v-rawstore-atomic-write
 → Plan freeze validation passed (exit 0)
 
-python scripts/check_docs_specs_indexed.py
+uv run python scripts/check_docs_specs_indexed.py
 → OK: docs/specs indexed (exit 0)
 ```
 
@@ -177,26 +179,44 @@ MASTER Source Context Index §3.1 以合并行覆盖 playbook 长表；implement
 
 ---
 
-## 12. 裁决
+## 12. 对抗性审（STOR-01..05 · VR-STOR-001 · §2.6 · WAVE0 §5）
 
-### `PASS_FOR_EXECUTE`
+| 审项 | 对抗性问题 | 证据 | 结论 |
+| --- | --- | --- | --- |
+| STOR-01 | helper 是否可独立 RED/GREEN？ | `vertical-slices.md` L7 · MASTER §9.1 · `test_writeBytesAtomic_*` | PASS |
+| STOR-02 | save 接线是否依赖 STOR-01 且不改 FileRegistry？ | MASTER §8 序 2 · §3.2 out | PASS |
+| STOR-03 | crash 测是否禁止半写目标 GREEN？ | MASTER §1.5 #6 · §5.3 `midWriteFailure` | PASS |
+| STOR-04 | 幂等是否与 STOR-03 可并行？ | vertical-slices L10 · MASTER §8 序 4 | PASS |
+| STOR-05 | 是否越权 commit registry 三件套？ | `registry_proposed_delta.yaml` · MASTER §0 Must not | PASS |
+| VR-STOR-001 | closure 路径是否 proposed-only？ | delta `commit_policy` · grill-me Q6 | PASS |
+| §2.6 | Boundary 是否抄 Must not own？ | MASTER §0 vs playbook L125–129 | PASS |
+| WAVE0 §5 | Trellis 切片是否漂移？ | `wave0-ssot-alignment.md` 5/5 一致 | PASS |
+| §3.10 零遗留 | 遗漏风险列 | 本节 §6 表 + MASTER §12 表 | PASS |
+
+**advisory（不阻断）：** worktree 无 `WAVE0_BATCH3V_TO_ISSUES_INDEX.md` 物理文件；`vertical-slices.md` 已为 Execute SSOT，主会话 merge INDEX 时可选补 implement 行。
+
+---
+
+## 13. 裁决
+
+### `PASS`
 
 **理由：**
 
-1. `validate-plan-freeze` exit 0（本 session 复跑）。  
-2. Playbook §3.4 分支必读 **100%** 覆盖；§3.9 追溯链完整。  
-3. STOR-01..05 垂直切片、AC、RED/GREEN、依赖与 `vertical-slices.md` / `B02_03` 对齐。  
+1. `validate-plan-freeze` exit 0（2026-06-28 复跑）。  
+2. Playbook §3.4 分支必读 **100%** 覆盖；§3.8 checklist 全绿；§3.9 追溯链完整。  
+3. STOR-01..05 垂直切片、AC、RED/GREEN、依赖与 `vertical-slices.md` / WAVE0 §5 / `B02_03` 对齐。  
 4. RawStore **MEDIUM** impact 已文档化，缓解策略明确（最小 diff + 全量 pytest）。  
 5. `VR-STOR-001` 严格 **proposed delta only**，无 registry 三件套 commit 越权。  
-6. §3.10 表遗漏风险列：分支项均为「无」；§3.1 advisory 两项不阻断 STOR Execute。
+6. §3.10 表遗漏风险列：分支项均为「无」；§3.1 advisory 两项不阻断 STOR Plan。
 
-**Execute 派发约束（提醒，非阻断）：**
+**派发约束（提醒）：**
 
 - 模型：`composer-2.5` only（playbook §4.1）。  
 - Boot：逐行 Read `implement.jsonl`；先读 `integration-ledger.md`。  
 - 改 symbol 前再跑 GitNexus `impact()`；若升至 HIGH/CRITICAL 停。  
-- **不得** `task.py start` 前自行 start — 待用户/协调者「计划批准」。
+- `task.py start` 须用户/协调者「计划批准」后执行。
 
 ---
 
-*质检日期：2026-06-25 · Agent-2 Plan QC · 无 Execute*
+*质检日期：2026-06-28 · Agent-2 Plan QC · 对抗性审 PASS*
