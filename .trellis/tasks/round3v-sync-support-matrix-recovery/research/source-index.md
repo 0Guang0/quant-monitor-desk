@@ -20,9 +20,9 @@
 | 任务卡 | MASTER AC | 验证链 |
 |--------|-----------|--------|
 | §2 VR-SYNC-002 | AC-SYNC-002 | §9.1–9.3 |
-| §2 VR-SYNC-001 | AC-SYNC-001 | §9.5–9.6 |
+| §2 VR-SYNC-001 | AC-SYNC-001 | §9.5–9.8（06A/B/C） |
 | §6 测试 | AC-SYNC-TEST | §5 + §10 |
-| §8 Done | AC-SYNC-CLOSE | §9.6 + registry delta |
+| §8 Done | AC-SYNC-CLOSE | §9.8 proposed delta 或 handoff |
 | Playbook §8.4 | AC-SYNC-PLAYBOOK | §10 |
 
 ### 路径纠偏

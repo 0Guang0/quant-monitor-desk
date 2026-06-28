@@ -4,10 +4,10 @@
 
 | 检查 | 结果 |
 |------|------|
-| B02_04 §5 六切片 → MASTER §8 SYNC-01..06 | PASS |
+| B02_04 §5 → MASTER §8 SYNC-BOOT..05 + 06A/B/C | PASS |
 | Playbook §3.1 + §3.5 → Source Context Index | PASS |
 | §2.5 OPS write 只读 → MASTER §0 边界 | PASS |
-| VR-SYNC-001 二选一 → §9.6 门控 | PASS |
+| VR-SYNC-001 二选一 → §9.6–9.8 门控 | PASS |
 | test_sync_runners 纠偏 → §5.1 | PASS |
 
 ## 2. 六类关键信息
@@ -29,10 +29,10 @@
 | 改 write 模式契约 | forbidden §0 |
 | production clean write | forbidden §1.5 |
 | CLI 暴露 reserved jobs | forbidden |
-| 仅 matrix 不关 VR-SYNC-001 | §9.6 强制 pytest 或 handoff |
+| 仅 matrix 不关 VR-SYNC-001 | §9.6–9.8 强制 pytest 或 handoff |
 | 削弱 test_advA3_016 目的 | 改断言不改保障 |
 | 并发改 registry | 主会话 proposed delta only |
 
 ## 4. closure
 
-**integration-audit: PASS**（Plan freeze 2026-06-25 · B3V-SYNC）
+**integration-audit: PASS**（Plan freeze 2026-06-28 · B3V-SYNC · SYNC-06A/B/C）

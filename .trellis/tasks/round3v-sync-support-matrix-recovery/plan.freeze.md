@@ -55,7 +55,8 @@
 ### 3.6 validate-plan-freeze
 
 ```text
-2026-06-25 B3V-SYNC Plan: python .trellis/scripts/task.py validate-plan-freeze .trellis/tasks/round3v-sync-support-matrix-recovery → exit 0
+2026-06-28 B3V-SYNC Plan 质检: python .trellis/scripts/task.py validate-plan-freeze .trellis/tasks/round3v-sync-support-matrix-recovery → exit 0
+（Plan 基线 1290b2e · SYNC-06A/B/C → §9.6/9.7/9.8）
 ```
 
 ## 4. Manifest Gate / Context Packing Gate
