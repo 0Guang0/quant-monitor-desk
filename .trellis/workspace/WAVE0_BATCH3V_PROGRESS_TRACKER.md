@@ -27,4 +27,4 @@
 - [x] 六路 Done + proposed registry deltas 收齐
 - [x] 主会话批 registry reconcile（`RESOLVED` VR-OPS/WRITE 复验行）
 - [x] C05→C06→C01→C02→C03→C04 merge + pytest 绿
-- [ ] `integration/round3-batch3v` → `master`（待用户确认 FF）
+- [x] `integration/round3-batch3v` → `master` @ `615a86f6`
