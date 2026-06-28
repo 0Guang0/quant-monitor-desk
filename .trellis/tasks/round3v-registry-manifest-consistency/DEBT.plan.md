@@ -12,9 +12,11 @@
 | Field | Value |
 |---|---|
 | Audit index | `docs/quality/quant_monitor_desk_verified_audit_report_2026-06-25_v3_INDEX.md` |
-| Playbook | `BATCH_3V_COORDINATOR_PLAYBOOK.md` §3.1 + §3.6 + §5.1 |
+| Playbook | `BATCH_3V_COORDINATOR_PLAYBOOK.md` §3.1 + §3.6 + §5.1 + §2.5/§2.6 |
 | Hardening | `BATCH_3V_HARDENING_RULES.md` §1–§7, §4 debt-lite TDD |
-| Phase 8D | `.trellis/spec/guides/round3-repair-debt-worktree-plan.md` §5–§8 |
+| Phase 8D | `.trellis/spec/guides/complex-task-planning-protocol.md` Phase 8D + `round3-repair-debt-worktree-plan.md` §5–§8 |
+| Wave 0 INDEX | `WAVE0_BATCH3V_TO_ISSUES_INDEX.md` §0.2 + §1（2026-06-28 粒度 quiz） |
+| Vertical slices SSOT | `research/vertical-slices.md` |
 | Base branch | `master` (post Batch 01) |
 | Target branch | `fix/round3v-registry-manifest-consistency` |
 | Owner agent | B3V-REG Execute agent |
@@ -40,13 +42,21 @@
 | `tests/test_unresolved_item_task_coverage.py` | Only if registry test expectations need sync **after** main-session close (prefer coordinator) |
 | `.trellis/tasks/round3v-registry-manifest-consistency/**` | Plan / research / execute-evidence |
 
+### Playbook §2.6 摘要（SSOT 抄录）
+
+| Owns（可写） | Must not own |
+|---|---|
+| migration 009 覆盖矩阵、manifest/doc/registry 对齐 | 无证明重写 migration 009；伪造 `FINAL_AUDIT_REPORT` |
+
+完整以任务卡 §4 + `BATCH_3V_TASK_CARD_MANIFEST.md` §3 C05 为准；上表为 playbook §2.6 摘要。
+
 ### Forbidden files / actions
 
 | Must not own | Reason |
 |---|---|
 | `validation_gate.py`, RawStore, sync runtime, `layer5_evidence/**` | Playbook §2.5 / §8.5 负向边界 |
-| 无证明重写 migration 009 | B02_05 §4 |
-| 伪造 `FINAL_AUDIT_REPORT` 内容 | Hardening §1 / B02_05 §4 |
+| 无证明重写 migration 009 | B02_05 §4 · §2.6 |
+| 伪造 `FINAL_AUDIT_REPORT` 内容 | Hardening §1 / B02_05 §4 · §2.6 |
 | 直接 commit 闭合 `UNRESOLVED` / `RESOLVED` / `AUDIT_DEFERRED` 行 | Manifest §4 — proposed delta only |
 | production DB 写入 / live fetch | Hardening §3 |
 | `layer5_evidence/**` runtime | §2.5 |
@@ -68,34 +78,53 @@
 | `docs/AUDIT_DEFERRED_REGISTRY.md` | Slice REG-02 proposed delta |
 | `docs/UNRESOLVED_ISSUES_REGISTRY.md` | Slice REG-02 proposed delta |
 | `docs/RESOLVED_ISSUES_REGISTRY.md` | Slice REG-02 proposed delta |
-| `README.md` · `MANIFEST.json` · `final_package_rules.md` · `release_cleanup_allowlist.yaml` | Slice DOC-01/02 |
-| `scripts/check_manifest_files.py` · `tests/test_manifest_files_check.py` | Slice DOC-03 |
+| `README.md` · `MANIFEST.json` · `final_package_rules.md` · `release_cleanup_allowlist.yaml` | Slice DOC-ALL |
+| `scripts/check_manifest_files.py` · `tests/test_manifest_files_check.py` | Slice DOC-ALL |
+| `WAVE0_BATCH3V_TO_ISSUES_INDEX.md` §1 | GitHub issue + 票内 checklist |
 | `tests/test_unresolved_item_task_coverage.py` | Merge gate / coordinator |
 | `docs/quality/quant_monitor_desk_verified_audit_report_2026-06-25_v3_INDEX.md` | VR 路由 |
 | `docs/schema/MIGRATION_008_PLAN.md` | REG-01 stale narrative fix |
 | `tests/test_schema_contract.py` | REG-01 closure evidence |
 | `agent-toolchain.md` · `round3-repair-debt-worktree-plan.md` Phase 8D | Boot |
 
-Research detail: `research/migration-009-coverage-matrix.md`, `research/final-audit-report-restore-or-replace.md`, `research/manifest-doc-crosscheck.md`.
+Research detail: `research/vertical-slices.md`, `research/wave0-index-ruling-refresh.md`, `research/migration-009-coverage-matrix.md`, `research/final-audit-report-restore-or-replace.md`, `research/manifest-doc-crosscheck.md`.
+
+---
+
+## GitHub issue（整卡 1 票 · WAVE0 §0.2 2026-06-28）
+
+| Issue | 标题 | 范围 |
+| ----- | ---- | ---- |
+| **REG-ISSUE-1** | `[B3V-REG] migration 009 + manifest/doc 树对齐 + checker` | `VR-REG-001` + `VR-DOC-001` 全卡 |
+
+票内 checklist 见 `research/vertical-slices.md`；**DOC-01/02/03 不拆独立 issue**。
 
 ---
 
 ## Vertical slices
 
-> **Rule:** 每行一个 `VR-*`；子步骤在 Execute 内垂直推进，禁止水平合并关账。
+> **Rule（WAVE0 §1）：** 票内竖条 REG-BOOT/01/02 + DOC-ALL；`VR-REG-001` 与 `VR-DOC-001` 同属 REG-ISSUE-1，禁止无分步证据的水平关账。  
+> **SSOT 镜像：** `research/vertical-slices.md`
 
 | Slice ID | VR-* | Source ID / AC | Allowed | Forbidden | Verification | Evidence path |
 |---|---|---|---|---|---|---|
-| **REG-01** | `VR-REG-001` | `B02-REG-01` — Build migration 009 coverage matrix; update `MIGRATION_COVERAGE.md` + `MIGRATION_008_PLAN.md` narrative to match `009_status_check_constraints.sql` and `schema.sql` | `MIGRATION_COVERAGE.md`, `MIGRATION_008_PLAN.md` (doc-only), `research/` | Rewrite 009 SQL; registry direct commit | `uv run pytest tests/test_schema_contract.py::test_schemaContract_includesStatusCheckConstraints -q`; matrix in `research/migration-009-coverage-matrix.md` updated if drift | `execute-evidence/REG-01-matrix.txt` |
-| **REG-02** | `VR-REG-001` | `B02-REG-02` — Propose registry deltas: move 009-covered CHECKs to RESOLVED; re-defer only `manual_review_queue.priority`, `fetch_log`/`manual_review_queue` `SELECT *` (A9-P3-01 subset) | `research/` proposed delta markdown only | Bulk registry rewrite commit on branch | Main session applies deltas; optional `tests/test_unresolved_item_task_coverage.py` green after coordinator | `execute-evidence/REG-02-proposed-registry-delta.md` |
-| **DOC-01** | `VR-DOC-001` | `B02-DOC-01` — **Restore-or-replace** `FINAL_AUDIT_REPORT.md` | `FINAL_AUDIT_REPORT.md` (restore from `416e74bc`) OR replace artifact + doc refs | Fake content | **Preferred restore:** byte+hash match MANIFEST; `uv run python scripts/check_manifest_files.py --verify-hash` exit 0 | `execute-evidence/DOC-01-restore.txt` |
-| **DOC-02** | `VR-DOC-001` | `B02-DOC-02` — Align README / MANIFEST / final_package_rules / allowlist with chosen closeout path | README, MANIFEST, final_package_rules, allowlist | Unreferenced removal | Grep zero stale `FINAL_AUDIT_REPORT` contradictions; `check_manifest_files.py` exit 0 | `execute-evidence/DOC-02-doc-sync.txt` |
-| **DOC-03** | `VR-DOC-001` | `B02-DOC-03` — Manifest checker TDD (RED→GREEN if extending) | `check_manifest_files.py`, `test_manifest_files_check.py` | Manifest row edits before test exists | `uv run pytest tests/test_manifest_files_check.py -q`; `uv run python scripts/check_manifest_files.py` exit 0 | `execute-evidence/DOC-03-red.txt`, `DOC-03-green.txt` |
+| **REG-BOOT** | `VR-REG-001` | 基线矩阵 — migration 009 ↔ `schema.sql` ↔ registry 现状断言 | `research/`, `009_status_check_constraints.sql`, `schema.sql`（只读对照） | Rewrite 009; registry commit | Matrix rows in `research/migration-009-coverage-matrix.md` | `research/migration-009-coverage-matrix.md` |
+| **REG-01** | `VR-REG-001` | `B02-REG-01` — Coverage matrix; update `MIGRATION_COVERAGE.md` + `MIGRATION_008_PLAN.md` | `MIGRATION_COVERAGE.md`, `MIGRATION_008_PLAN.md`, `research/` | Rewrite 009 SQL; registry direct commit | `uv run pytest tests/test_schema_contract.py::test_schemaContract_includesStatusCheckConstraints -q` | `execute-evidence/REG-01-matrix.txt` |
+| **REG-02** | `VR-REG-001` | `B02-REG-02` — Proposed registry deltas; narrow re-defer gaps | `research/`, `execute-evidence/` delta markdown only | Bulk registry rewrite commit on branch | Main session applies deltas | `execute-evidence/REG-02-proposed-registry-delta.md` |
+| **DOC-ALL** | `VR-DOC-001` | `B02-DOC-01..03` **合并** — restore/replace + doc tree + manifest checker TDD | `FINAL_AUDIT_REPORT.md`, README, MANIFEST, final_package_rules, allowlist, `check_manifest_files.py`, `test_manifest_files_check.py` | Fake content; manifest row before test | `check_manifest_files.py` exit 0; `pytest tests/test_manifest_files_check.py -q` | `execute-evidence/DOC-01-restore.txt`, `DOC-02-doc-sync.txt`, `DOC-03-red.txt`, `DOC-03-green.txt` |
+
+### DOC-ALL 票内 checklist（非独立 issue）
+
+| 子步 | 原 ID | AC |
+| ---- | ----- | -- |
+| 1 | `B02-DOC-01` | Restore `FINAL_AUDIT_REPORT.md` from `416e74bc`（preferred）或 coordinator 批准 replace |
+| 2 | `B02-DOC-02` | README / MANIFEST / rules / allowlist 与文件树一致 |
+| 3 | `B02-DOC-03` | Manifest checker TDD 绿；`--verify-hash` after restore |
 
 ### Execute order
 
 ```text
-REG-01 → REG-02 (proposed delta only) → DOC-03 (if new assertions) → DOC-01 restore → DOC-02 → full pytest
+REG-BOOT → REG-01 → REG-02 → DOC-ALL（REG-02 后可并行起步）→ uv run pytest -q
 ```
 
 TDD: touching `scripts/check_manifest_files.py` or manifest tests → RED before GREEN per hardening §4.
@@ -152,7 +181,7 @@ Detail: `research/final-audit-report-restore-or-replace.md`.
 |---|---|
 | Targeted tests | `uv run pytest tests/test_unresolved_item_task_coverage.py tests/test_manifest_files_check.py -q` |
 | Manifest | `uv run python scripts/check_manifest_files.py` → **exit 0** |
-| Docs index | `uv run python scripts/check_docs_specs_indexed.py` → exit 0 (**coordinator** if stale MIGRATION_MAP refs block) |
+| Docs index | `uv run python scripts/check_docs_specs_indexed.py` → exit 0（2026-06-28 worktree 已验证） |
 | Full suite | `uv run pytest -q` |
 | GitNexus | `impact()` before symbol edits; `detect_changes()` before commit |
 | Registry | Proposed delta file only — no direct三件套 commit |
@@ -172,16 +201,19 @@ Detail: `research/final-audit-report-restore-or-replace.md`.
 | `BATCH_3V_COORDINATOR_PLAYBOOK.md` §5.1 | §Source track | debt-lite 流水线 | 无 |
 | `BATCH_3V_HARDENING_RULES.md` | Boundary + TDD | 硬停/TDD/registry 规则 | 无 |
 | `BATCH_3V_TASK_CARD_MANIFEST.md` §3 C05 | §Source | 分支 allowed/forbidden | 无 |
-| `B02_05_*.md` | Vertical slices | 五切片映射 REG/DOC | 无 |
+| `B02_05_*.md` | Vertical slices | 四竖条 REG-BOOT/01/02 + DOC-ALL | 无 |
 | `009_status_check_constraints.sql` | REG-01 | 009 覆盖矩阵 | 无 |
 | `MIGRATION_COVERAGE.md` | REG-01 | 陈旧 PARTIAL 待修 | 无 |
 | `schema.sql` | REG-01 | CHECK 契约对照 | 无 |
 | `AUDIT_DEFERRED` / `UNRESOLVED` / `RESOLVED` | REG-02 proposed | 不直接 commit | 无 |
-| `README` / `MANIFEST` / `final_package_rules` / allowlist | DOC-01/02 | restore-or-replace 一致性 | 无 |
-| `check_manifest_files.py` / `test_manifest_files_check.py` | DOC-03 | TDD + Done exit 0 | 无 |
+| `README` / `MANIFEST` / `final_package_rules` / allowlist | DOC-ALL | restore-or-replace 一致性 | 无 |
+| `check_manifest_files.py` / `test_manifest_files_check.py` | DOC-ALL | TDD + Done exit 0 | 无 |
+| `WAVE0_BATCH3V_TO_ISSUES_INDEX.md` §1 | GitHub issue + slices | 2026-06-28 quiz 对齐 | 无 |
+| `research/vertical-slices.md` | Vertical slices SSOT | REG-BOOT/01/02 + DOC-ALL | 无 |
+| `research/wave0-index-ruling-refresh.md` | 裁决追溯 | Plan 刷新对照 | 无 |
 | `test_unresolved_item_task_coverage.py` | Merge gate | 主会话后可能需期望集更新 | 无 |
 | `quant_monitor_desk_verified_audit_report_2026-06-25_v3_INDEX.md` | §Source | VR 路由 | 无 |
-| `FINAL_AUDIT_REPORT.md` | DOC-01 专节 | 规划期 missing；restore 路径已冻结 | 无 |
+| `FINAL_AUDIT_REPORT.md` | DOC-ALL 专节 | restore 路径已冻结；Execute 已 restore | 无 |
 | `authority_graph.yaml` | — | 本切片无新 backend 包 | 无 |
 | `GLOBAL_TASK_TEMPLATE.md` | Vertical slices + Boundary | 卡片 §1–8 已展开 | 无 |
 | `BATCH_3V_SELF_CHECK.md` | Blockers | PASS_FOR_PLANNING；FINAL_AUDIT gap 已纳入 | 无 |
@@ -190,10 +222,10 @@ Detail: `research/final-audit-report-restore-or-replace.md`.
 
 ## Blockers / caveats
 
-1. **`check_docs_specs_indexed.py` exit 1** — 10 stale `MIGRATION_MAP` references to untracked Round 4/5/Batch6 task docs; **not** in B3V-REG allowed files → merge coordinator runs `loop_maintain.py --fix` or indexes docs on integration branch before Batch 3V Done.
-2. **codebase-memory MCP** — project not indexed for worktree path; GitNexus + direct file reads used; documented in research.
-3. **`FINAL_AUDIT_REPORT.md` missing** — **not** a Plan blocker (restore path validated); **is** Execute/Done blocker until DOC-01 lands.
-4. **Registry test expectations** — `test_unresolved_item_task_coverage.py` still expects `A9-P1-01` open; after main-session RESOLVED, coordinator must update `EXPECTED_UNRESOLVED_IDS` or branch will fail full gate.
+1. **Registry 主会话批闭合** — `VR-REG-001` / `VR-DOC-001` 分支侧已完成 proposed delta + Execute 证据；**主会话**须应用 `execute-evidence/REG-02-proposed-registry-delta.md` 与 `repair-evidence/registry-ready-for-coordinator.md` 后更新 `EXPECTED_UNRESOLVED_IDS`。
+2. **codebase-memory MCP** — worktree 路径未索引；GitNexus + 直读已交叉核实；见 research。
+3. **Plan 粒度刷新（2026-06-28）** — WAVE0 §0.2 整卡 1 issue；DOC-01/02/03 合并为 DOC-ALL；不影响已落地 Execute 证据路径。
+4. **`check_docs_specs_indexed.py`** — 2026-06-28 worktree 实测 **exit 0**；非 Plan 阻塞。
 
 ---
 
