@@ -30,3 +30,4 @@
 ## 纠偏
 
 - Plan 阶段不实现 registry 闭合；Execute 完成后由主会话更新 `UNRESOLVED_ITEM_TASK_COVERAGE` 与 registry 三件套。
+- Playbook §3.3 `adapters/registry.py` **仓库无此文件**；邻接 SSOT 为 `adapters/__init__.py` + `source_registry.py`（已入 MASTER/implement）。

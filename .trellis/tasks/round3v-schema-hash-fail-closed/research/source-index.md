@@ -41,6 +41,7 @@
 | `data_quality_rules.yaml` | 契约 | required | SCHEMA_DRIFT |
 | `resource_limits.yaml` | 契约 | required | 有界推导上限 |
 | `skeleton_base.py` | 接线 | required | DATA-02 |
+| `adapters/__init__.py` + `source_registry.py` | 接线 | read-only | §3.3 邻接（playbook `registry.py` 纠偏） |
 | `validation_gate.py` | 接线 | required | DATA-03 |
 | `test_db_validation_gate.py` | 测试 | required | §5.1 |
 | `test_adapter_skeletons.py` | 测试 | required | §5.1 |

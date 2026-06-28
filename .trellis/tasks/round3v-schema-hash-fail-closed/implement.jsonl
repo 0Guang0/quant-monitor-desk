@@ -22,6 +22,8 @@
 {"file": "specs/contracts/resource_limits.yaml", "reason": "extract: resource caps spirit | for: §9.2 bounded infer"}
 {"file": "docs/modules/data_validation_and_conflict.md", "reason": "extract: schema_hash gate semantics | for: §2"}
 {"file": "backend/app/datasources/adapters/skeleton_base.py", "reason": "extract: _infer_schema_hash _fetch_impl | for: §9.2 impact target"}
+{"file": "backend/app/datasources/adapters/__init__.py", "reason": "extract: adapter factory registration | for: §3.3 adjacency (playbook registry.py path纠偏)"}
+{"file": "backend/app/datasources/source_registry.py", "reason": "extract: SourceRegistry schemaless routing | for: §3.3 adjacency read-only"}
 {"file": "backend/app/datasources/adapters/fetch_port.py", "reason": "extract: FetchPayload.schema_hash | for: §9.2"}
 {"file": "backend/app/db/validation_gate.py", "reason": "extract: _schema_hash_blocks_write | for: §9.3 impact target"}
 {"file": "backend/app/datasources/fetch_log.py", "reason": "extract: schema_hash persistence | for: §9.3"}

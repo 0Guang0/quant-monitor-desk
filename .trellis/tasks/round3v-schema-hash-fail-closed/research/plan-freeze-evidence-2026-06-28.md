@@ -11,7 +11,7 @@
 | 交付物 | 路径 | 状态 |
 |--------|------|------|
 | MASTER.plan.md | `.trellis/tasks/round3v-schema-hash-fail-closed/MASTER.plan.md` | 存在；§8 DATA-01..04；§9 RED/GREEN |
-| implement.jsonl | 同目录 | 33 行；slot1=MASTER |
+| implement.jsonl | 同目录 | 36 行；slot1=MASTER；§3.3 邻接纠偏 |
 | context_pack.json | 同目录 | 存在；2026-06-28 `context_router.py` 刷新 |
 | 垂直切片 | `research/vertical-slices.md` | DATA-01..04 |
 | 追溯 | `research/original-plan-trace.md` | B02_02 + WAVE0 §4 |
@@ -50,4 +50,4 @@ python .trellis/scripts/task.py validate-plan-phase ... 5e
 
 - `WAVE0_BATCH3V_TO_ISSUES_INDEX.md` **不在** worktree 跟踪文件内（主仓 `quant-monitor-desk` 未合并路径）；垂直切片以任务目录 `vertical-slices.md` 为 Execute 入口。
 - `task.json` 状态仍为 `planning`；运行时已在 `1bc0260d` 落地 — Plan 冻结与 Execute 历史共存，需主会话决定是否 `task.py start` / 状态推进。
-- Research agent **不执行** git commit；待提交：`context_pack.json` + `research/` 更新。
+- Research agent **不执行** git commit；Plan 质检 session 已提交 MASTER/implement/plan-qc 修复。
