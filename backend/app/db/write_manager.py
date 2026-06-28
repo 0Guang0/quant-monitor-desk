@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Literal
 
 import duckdb
+import yaml
 from backend.app.db.failed_write_audit_sidecar import append_failed_write_audit
 from backend.app.db.sql_identifiers import quote_ident
 from backend.app.db.validation_gate import (
@@ -18,6 +19,24 @@ from backend.app.db.validation_gate import (
 from backend.app.util.error_redaction import redact_error_message
 
 WriteStatus = Literal["SUCCESS", "FAILED"]
+
+_WRITE_CONTRACT = (
+    Path(__file__).resolve().parents[3] / "specs/contracts/write_contract.yaml"
+)
+
+
+def _write_modes_from_contract() -> tuple[tuple[str, ...], tuple[str, ...]]:
+    raw = yaml.safe_load(_WRITE_CONTRACT.read_text(encoding="utf-8"))
+    if not isinstance(raw, dict):
+        raise ValueError("write_contract: invalid YAML root")
+    implemented = raw.get("implemented_modes")
+    reserved = raw.get("reserved_modes")
+    if not implemented or not reserved:
+        raise ValueError("write_contract: implemented_modes and reserved_modes required")
+    return tuple(str(mode) for mode in implemented), tuple(str(mode) for mode in reserved)
+
+
+_SUPPORTED_MODES, _UNSUPPORTED_MODES = _write_modes_from_contract()
 
 
 @dataclass(frozen=True)
@@ -48,12 +67,8 @@ class WriteResult:
 
 
 class WriteManager:
-    SUPPORTED_MODES = ("append_only", "upsert_by_pk")
-    UNSUPPORTED_MODES = (
-        "replace_partition",
-        "manual_patch",
-        "schema_migration",
-    )
+    SUPPORTED_MODES = _SUPPORTED_MODES
+    UNSUPPORTED_MODES = _UNSUPPORTED_MODES
     MIN_STAGING_ROWS = 1
 
     def __init__(self, conn_manager, gate) -> None:

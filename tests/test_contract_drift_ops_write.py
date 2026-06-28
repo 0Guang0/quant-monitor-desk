@@ -12,7 +12,9 @@ import yaml
 from backend.app.db.write_manager import WriteManager
 from backend.app.ops.db_inspector import (
     DEFERRED_ITEM_MAPPING,
+    FUTURE_PHASE_KEY_TABLES,
     KEY_TABLES,
+    REQUIRED_TOP_LEVEL_FIELDS,
     _deferred_mapping_from_contract,
     _key_tables_from_contract,
 )
@@ -54,6 +56,28 @@ def test_opsInspect_keyTables_rejectsEmptyContract() -> None:
         _key_tables_from_contract({})
     with pytest.raises(ValueError, match="key_tables required"):
         _key_tables_from_contract({"key_tables": []})
+
+
+def test_opsInspect_futurePhaseKeyTables_matchContract() -> None:
+    """覆盖范围：Layer5 前向表清单 future_phase_key_tables
+    测试对象：FUTURE_PHASE_KEY_TABLES vs ops_db_inspect_contract.yaml
+    目的/目标：AA-B3V-ADV-01 硬编码清单改为契约 SSOT，防 Batch5 前瞻表漂移
+    验证点：运行时 frozenset 与契约列表元素完全一致
+    失败含义：migration 门禁与 inspect 前向清单分叉，L5 表边界不可信
+    """
+    contract_tables = frozenset(_load_contract_yaml(_OPS_CONTRACT)["future_phase_key_tables"])
+    assert FUTURE_PHASE_KEY_TABLES == contract_tables
+
+
+def test_opsInspect_requiredOutputFields_matchContract() -> None:
+    """覆盖范围：inspect JSON 顶层必填字段清单
+    测试对象：REQUIRED_TOP_LEVEL_FIELDS vs ops_db_inspect_contract.yaml
+    目的/目标：A4 硬编码 required 字段改为契约 SSOT
+    验证点：运行时 tuple 与 required_output_fields 顺序、元素完全一致
+    失败含义：CLI/证据链必填字段与冻结契约不一致
+    """
+    contract_fields = tuple(_load_contract_yaml(_OPS_CONTRACT)["required_output_fields"])
+    assert REQUIRED_TOP_LEVEL_FIELDS == contract_fields
 
 
 def test_opsInspect_deferredMapping_matchContract() -> None:

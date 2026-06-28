@@ -107,9 +107,9 @@
 
 | ID | 级别 | 发现 | 处置 |
 | -- | ---- | ---- | ---- |
-| AA-B3V-ADV-01 | INFO | `FUTURE_PHASE_KEY_TABLES` 仍为 `db_inspector.py` 硬编码 frozenset | **wont-fix** — 非 VR-OPS key_tables SSOT 范围；Batch 5 前瞻清单 |
-| AA-B3V-ADV-02 | INFO | 无测断言 `write_request.write_mode` enum == `implemented_modes ∪ reserved_modes` | **wont-fix** — MASTER §5.3 冻结用例未列；当前三者一致；未来可加 hygiene 测 |
-| AA-B3V-ADV-03 | INFO | Write 路径双 SSOT（YAML + 类常量）非 loader 统一 | **accepted** — Plan 既定；parity 测为 closure test |
+| AA-B3V-ADV-01 | INFO | `FUTURE_PHASE_KEY_TABLES` 仍为 `db_inspector.py` 硬编码 frozenset | **CLOSED** — YAML `future_phase_key_tables` + loader + drift 测（2026-06-28 hygiene） |
+| AA-B3V-ADV-02 | INFO | 无测断言 `write_request.write_mode` enum == `implemented_modes ∪ reserved_modes` | **CLOSED** — `test_writeContract_writeModeEnum_matchesImplementedUnionReserved`（repair 559247e） |
+| AA-B3V-ADV-03 | INFO | Write 路径双 SSOT（YAML + 类常量）非 loader 统一 | **CLOSED** — `WriteManager` import-time YAML loader（2026-06-28 hygiene） |
 | — | — | live fetch / prod DB 写 / registry 三件套编辑 / reserved 实现 | **无新发现** |
 
 **显式声明：** 对抗性搜索未发现新的 BLOCKING 或 NON-BLOCKING OPEN。

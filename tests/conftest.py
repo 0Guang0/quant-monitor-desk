@@ -38,6 +38,7 @@ def pytest_configure(config) -> None:
     _ensure_v2_evidence_mock_baostock()
     _ensure_prediction_live_authorization_bootstrap()
     _ensure_r3g_fred_authorization_bootstrap()
+    _ensure_audit_sandbox_pytest_basetemp()
 
 
 def _ensure_v2_evidence_mock_baostock() -> None:
@@ -79,6 +80,11 @@ def _ensure_r3g_fred_authorization_bootstrap() -> None:
         return
     dest.parent.mkdir(parents=True, exist_ok=True)
     dest.write_bytes(src.read_bytes())
+
+
+def _ensure_audit_sandbox_pytest_basetemp() -> None:
+    """Pre-create shared pytest basetemp for A8 sandbox runs on fresh clones (A8-B3V-04)."""
+    (PROJECT_ROOT / ".audit-sandbox" / "pytest").mkdir(parents=True, exist_ok=True)
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
