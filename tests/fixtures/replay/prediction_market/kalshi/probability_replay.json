@@ -1,0 +1,21 @@
+{
+  "schema_version": "probability_signal_evidence_v1",
+  "source_id": "kalshi",
+  "data_domain": "prediction_market_probability",
+  "signals": [
+    {
+      "market_ticker": "KXHIGHNY-24",
+      "event_ticker": "KXHIGHNY",
+      "yes_bid": 0.42,
+      "yes_ask": 0.45,
+      "probability": 0.435,
+      "volume": 1200,
+      "liquidity": 5000,
+      "source_used": "kalshi"
+    }
+  ],
+  "source_fetch_id": "kalshi-replay-kxhighny",
+  "content_hash": "kalshi-replay-hash-kxhighny",
+  "as_of_timestamp": "2024-06-25T12:00:00Z",
+  "retrieved_at": "2024-06-25T12:00:00Z"
+}

@@ -1,0 +1,4 @@
+5 passed in 1.2s
+
+Command: uv run pytest tests/test_prediction_market_adapters.py -q -k evidence_contract
+Exit: 0 (GREEN — probability_signal_evidence_v1 contract)

@@ -1,0 +1,15 @@
+{"file": ".trellis/tasks/06-28-round3h-r3h04-prediction-web/AUDIT.plan.md", "reason": "extract: Audit SSOT | for: A1-A8 boot"}
+{"file": ".trellis/tasks/06-28-round3h-r3h04-prediction-web/frozen/R3H_04_PREDICTION_AND_WEB_EVIDENCE_ADAPTERS.md", "reason": "extract: frozen task card trace | for: A5 scope"}
+{"file": ".trellis/tasks/06-28-round3h-r3h04-prediction-web/EXECUTION_INDEX.md", "reason": "extract: manifest index | for: A1/A5/A8"}
+{"file": "PROJECT_IMPLEMENTATION_ROADMAP.md", "reason": "extract: §5.0 R3H-04 | for: 9.0"}
+{"file": "specs/contracts/layer5_evidence_contract.yaml", "reason": "extract: manual_review | for: 9.7"}
+{"file": "specs/contracts/user_input_privacy_contract.yaml", "reason": "extract: web evidence 隐私 | for: 9.4, 9.6"}
+{"file": "specs/contracts/source_route_contract.yaml", "reason": "extract: evidence-only route | for: 9.5, 9.6"}
+{"file": "specs/datasource_registry/source_registry.yaml", "reason": "extract: 三源行 | for: 9.5"}
+{"file": "specs/datasource_registry/source_capabilities.yaml", "reason": "extract: probability/web fields | for: 9.1"}
+{"file": "docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_HARDENING_RULES.md", "reason": "extract: §4 源类边界 | for: 9.0"}
+{"file": "docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_COORDINATOR_PLAYBOOK.md", "reason": "extract: registry 合并 | for: 9.5"}
+{"file": "docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_TASK_CARD_MANIFEST.md", "reason": "extract: 并行规则 | for: 9.0"}
+{"file": "docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/README.md", "reason": "extract: batch closure | for: 9.0"}
+{"file": "MIGRATION_MAP.md", "reason": "extract: 边界 | for: 9.0"}
+{"file": "MODULE_COMPLETION_RATING.md", "reason": "extract: 完成度 | for: A1"}

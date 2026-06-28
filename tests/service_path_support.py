@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import json
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+
+import pytest
 
 from backend.app.datasources.adapters.fetch_port import FetchPort, LocalFixtureFetchPort
 from backend.app.datasources.adapters.skeleton_base import SkeletonAdapterBase
@@ -22,6 +25,72 @@ def production_route_planner() -> SourceRoutePlanner:
     caps = SourceCapabilityRegistry()
     caps.load()
     return SourceRoutePlanner(source_registry=reg, capability_registry=caps)
+
+
+def enable_source_route(
+    monkeypatch: pytest.MonkeyPatch,
+    *,
+    source_id: str,
+    data_domain: str,
+) -> SourceRoutePlanner:
+    """Enable one source + domain for route planner tests (R3H-04 dedup)."""
+    from backend.app.datasources.source_registry import DomainRoleBinding
+
+    registry = SourceRegistry()
+    registry.load()
+    rec = registry.get(source_id)
+    object.__setattr__(rec, "is_enabled", True)
+    orig_domain_roles = registry.get_domain_roles
+
+    def _domain_enabled(domain: str):
+        binding = orig_domain_roles(domain)
+        if domain != data_domain:
+            return binding
+        return DomainRoleBinding(
+            primary_source_id=binding.primary_source_id,
+            validation_source_id=binding.validation_source_id,
+            fallback_policy=binding.fallback_policy,
+            domain_enabled_by_default=True,
+            fallback_source_ids=binding.fallback_source_ids,
+        )
+
+    monkeypatch.setattr(registry, "get_domain_roles", _domain_enabled)
+    capabilities = SourceCapabilityRegistry()
+    capabilities.load()
+    planner = SourceRoutePlanner(source_registry=registry, capability_registry=capabilities)
+    monkeypatch.setattr(planner, "_platform_allows", lambda _sid: (True, None))
+    return planner
+
+
+def patch_fetch_port_evidence_adapter(monkeypatch: Any, fetch_port: FetchPort) -> None:
+    """Route create_test_adapter to a fetch_port-backed probe (L3 evidence ports)."""
+
+    def fake_create_test_adapter(sid, registry, data_root, **kwargs):
+        port = kwargs.get("fetch_port") or fetch_port
+
+        class FetchPortProbeAdapter:
+            source_id = sid
+
+            def fetch(self, req, *, con, job_id=None, record_fetch_log=True):
+                from backend.app.datasources.fetch_result import FetchResult
+
+                payload = port.fetch_payload(req)
+                return FetchResult(
+                    run_id=req.run_id,
+                    source_id=sid,
+                    data_domain=req.data_domain,
+                    status="SUCCESS",
+                    row_count=payload.row_count,
+                    fetch_time=datetime.now(UTC).isoformat(),
+                    raw_file_paths=["evidence://fetch-port-probe"],
+                )
+
+        return FetchPortProbeAdapter()
+
+    monkeypatch.setattr(
+        "backend.app.datasources.adapters.create_test_adapter",
+        fake_create_test_adapter,
+    )
 
 
 def plan_route(

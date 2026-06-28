@@ -832,7 +832,13 @@ sources:
             enabled_by_default: false
             production_default: false
   kalshi:
-    status: proposed_disabled_source
+    status: READY_WITH_EVIDENCE
+    replay_fixture_path: tests/fixtures/replay/prediction_market/kalshi/probability_replay.json
+    fetch_port_path: backend/app/datasources/fetch_ports/kalshi_port.py
+    resource_caps:
+      max_markets: 5
+      max_window_days: 30
+    notes: "R3H-04 READY_WITH_EVIDENCE; kalshi_port mock/replay; probability signal only — not factual resolution."
     domains:
       regulated_event_contract:
         operations:
@@ -875,7 +881,13 @@ sources:
             production_default: false
             notes: "Probability signal only; not a factual resolution source."
   polymarket:
-    status: proposed_disabled_source
+    status: READY_WITH_EVIDENCE
+    replay_fixture_path: tests/fixtures/replay/prediction_market/polymarket/probability_replay.json
+    fetch_port_path: backend/app/datasources/fetch_ports/polymarket_port.py
+    resource_caps:
+      max_markets: 5
+      max_window_days: 30
+    notes: "R3H-04 READY_WITH_EVIDENCE; polymarket_port mock/replay; records liquidity/volume/spread/resolution_source URL metadata only."
     domains:
       prediction_market_probability:
         operations:
@@ -1413,7 +1425,13 @@ sources:
             production_default: false
             notes: Architecture-only OpenBB provider layout reference; no fetch adapter.
   web_search:
-    status: proposed_disabled_source
+    status: READY_WITH_EVIDENCE
+    replay_fixture_path: tests/fixtures/replay/web_evidence/supplemental_query_replay.json
+    fetch_port_path: backend/app/datasources/fetch_ports/web_search_evidence_port.py
+    resource_caps:
+      max_queries: 3
+      max_results: 10
+    notes: "R3H-04 READY_WITH_EVIDENCE; web_search_evidence_port mock stub; manual_review staging only — never clean write."
     domains:
       supplemental_web_evidence:
         operations:

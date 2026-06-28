@@ -314,14 +314,14 @@ providers:
       - regulated_event_contract
       - prediction_market_probability
     enabled_by_default: false
-    status: proposed_disabled_source
+    status: READY_WITH_EVIDENCE
     production_default_candidate: false
     production_default_enabled: false
     requires_user_authorization: false
     requires_local_client: false
     validation_only: false
-    max_default_symbols_or_series: 0
-    max_default_window_days: 0
+    max_default_symbols_or_series: 5
+    max_default_window_days: 30
     reference_architecture: ""
     runtime_source_copy_allowed: false
   - provider_id: polymarket
@@ -334,14 +334,14 @@ providers:
       - prediction_market_probability
       - event_market_contract
     enabled_by_default: false
-    status: proposed_disabled_source
+    status: READY_WITH_EVIDENCE
     production_default_candidate: false
     production_default_enabled: false
     requires_user_authorization: false
     requires_local_client: false
     validation_only: true
-    max_default_symbols_or_series: 0
-    max_default_window_days: 0
+    max_default_symbols_or_series: 5
+    max_default_window_days: 30
     reference_architecture: ""
     runtime_source_copy_allowed: false
   - provider_id: stooq
@@ -489,13 +489,13 @@ providers:
       - vix_cds_supplement
       - event_resolution_evidence
     enabled_by_default: false
-    status: proposed_disabled_source
+    status: READY_WITH_EVIDENCE
     production_default_candidate: false
     production_default_enabled: false
     requires_user_authorization: false
     requires_local_client: false
     validation_only: true
-    max_default_symbols_or_series: 0
+    max_default_symbols_or_series: 3
     max_default_window_days: 0
     reference_architecture: ""
     runtime_source_copy_allowed: false

@@ -124,7 +124,8 @@
     },
     "layer5_evidence": {
       "implementation": [
-        "backend/app/layer5_evidence/**"
+        "backend/app/layer5_evidence/**",
+        "backend/app/evidence/**"
       ],
       "docs": [
         "docs/modules/layer5_security_evidence.md",
@@ -148,6 +149,16 @@
           "path": "tests/test_trellis_audit_trace_authority.py",
           "purpose": "Trellis Audit Trace Authority — Batch 2.75 plan freeze gate tests.",
           "command": "uv run python -m pytest tests/test_trellis_audit_trace_authority.py -q"
+        },
+        {
+          "path": "tests/test_web_evidence_adapter.py",
+          "purpose": "R3H-04 网页证据适配器测试（Batch 3H）。",
+          "command": "uv run python -m pytest tests/test_web_evidence_adapter.py -q"
+        },
+        {
+          "path": "tests/test_no_clean_write_for_web_evidence.py",
+          "purpose": "R3H-04 三源 clean-write 负例与预测市场不得 resolve 事实。",
+          "command": "uv run python -m pytest tests/test_no_clean_write_for_web_evidence.py -q"
         }
       ],
       "forbidden_claims": [
@@ -204,6 +215,11 @@
           "path": "tests/test_r3x_data_source_routing_blockers.py",
           "purpose": "R3X data-source routing blocker tests (ADV-A2 cluster).",
           "command": "uv run python -m pytest tests/test_r3x_data_source_routing_blockers.py -q"
+        },
+        {
+          "path": "tests/test_prediction_market_adapters.py",
+          "purpose": "R3H-04 预测市场适配器测试（Batch 3H）。",
+          "command": "uv run python -m pytest tests/test_prediction_market_adapters.py -q"
         }
       ],
       "forbidden_claims": [

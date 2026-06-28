@@ -1,0 +1,17 @@
+{
+  "schema_version": "probability_signal_evidence_v1",
+  "source_id": "polymarket",
+  "data_domain": "prediction_market_probability",
+  "signals": [
+    {
+      "market_slug": "will-fed-cut-rates-2024",
+      "probability": 0.62,
+      "resolved_outcome": "YES",
+      "source_used": "polymarket"
+    }
+  ],
+  "source_fetch_id": "polymarket-adversarial-resolved",
+  "content_hash": "polymarket-adversarial-hash",
+  "as_of_timestamp": "2024-06-25T12:00:00Z",
+  "retrieved_at": "2024-06-25T12:00:00Z"
+}

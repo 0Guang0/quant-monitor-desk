@@ -514,14 +514,16 @@ def test_layer3Snapshot_nonNumericClose_rejects(tmp_path: Path) -> None:
         _build(l5_bundle_dir=bundle)
 
 
-def test_layer3Snapshot_l5BundleOutsideProjectRoot_rejects(tmp_path: Path) -> None:
+def test_layer3Snapshot_l5BundleOutsideProjectRoot_rejects() -> None:
     """覆盖范围：l5_bundle_dir 须在 PROJECT_ROOT 下（UF-1）
     测试对象：IndustryChainSnapshotBuilder.build 的 _resolve_l5_bundle_root
     目的/目标：阻止任意路径读 manifest，对齐 staged 本地信任边界
-    验证点：tmp_path（项目外）作 l5_bundle_dir → Layer3SnapshotError 含 project root
+    验证点：项目外目录作 l5_bundle_dir → Layer3SnapshotError 含 project root
     失败含义：任意可读目录可作 L5 来源，未来 CLI 切片无路径白名单
     """
-    outside = tmp_path / "outside_l5"
+    from tests.path_jail_support import path_outside_project_root
+
+    outside = path_outside_project_root(suffix="outside_l5")
     shutil.copytree(_FIXTURE_L5, outside)
     with pytest.raises(Layer3SnapshotError, match="project root"):
         _build(l5_bundle_dir=outside)

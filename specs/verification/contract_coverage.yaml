@@ -14,6 +14,9 @@ specs/contracts/source_route_contract.yaml:
         - tests/test_market_data_adapters.py
         - tests/test_crypto_market_adapters.py
         - tests/test_sec_edgar_adapter.py
+        - tests/test_prediction_market_adapters.py
+        - tests/test_web_evidence_adapter.py
+        - tests/test_no_clean_write_for_web_evidence.py
       negative_required: true
 
 specs/contracts/write_contract.yaml:
@@ -82,6 +85,8 @@ specs/contracts/layer5_evidence_contract.yaml:
         - tests/test_layer5_evidence_foundation.py
         - tests/test_r3h_adapter_evidence_matrix.py
         - tests/test_r3h_layer_binding_audit.py
+        - tests/test_prediction_market_adapters.py
+        - tests/test_web_evidence_adapter.py
       negative_required: false
 
 specs/contracts/api_security_contract.yaml:
@@ -246,6 +251,9 @@ specs/contracts/source_capability_contract.yaml:
         - tests/test_official_macro_adapters.py
         - tests/test_market_data_adapters.py
         - tests/test_crypto_market_adapters.py
+        - tests/test_prediction_market_adapters.py
+        - tests/test_web_evidence_adapter.py
+        - tests/test_no_clean_write_for_web_evidence.py
       negative_required: true
       notes: "R3H-01 official macro + R3H-02 market/crypto cap/unauthorized negatives"
 

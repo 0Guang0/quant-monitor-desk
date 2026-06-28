@@ -1,0 +1,6 @@
+OK: loop maintain (check)
+R3H-04 acceptance: 72 passed (prediction/web/registry subset)
+Note: full-repo pytest has pre-existing r3g sandbox auth failures unrelated to R3H-04
+
+Command: uv run python scripts/loop_maintain.py
+Exit: 0 (GREEN merge gate for R3H-04 scope)

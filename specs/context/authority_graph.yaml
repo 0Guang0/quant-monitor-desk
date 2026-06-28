@@ -73,6 +73,7 @@ modules:
   layer5_evidence:
     implementation:
       - backend/app/layer5_evidence/**
+      - backend/app/evidence/**
     docs:
       - docs/modules/layer5_security_evidence.md
       - docs/architecture/module_boundary_matrix.md
@@ -87,6 +88,8 @@ modules:
     tests:
       - tests/test_layer5_evidence_foundation.py
       - tests/test_trellis_audit_trace_authority.py
+      - tests/test_web_evidence_adapter.py
+      - tests/test_no_clean_write_for_web_evidence.py
     forbidden_claims:
       - production-live ready
     required_evidence:
@@ -120,6 +123,7 @@ modules:
       - tests/test_source_capabilities.py
       - tests/test_platform_source_matrix.py
       - tests/test_r3x_data_source_routing_blockers.py
+      - tests/test_prediction_market_adapters.py
     forbidden_claims:
       - bypass route readiness gate
     required_evidence:

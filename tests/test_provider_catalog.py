@@ -54,13 +54,10 @@ VALID_CATALOG_STATUS = frozenset(
 
 PROPOSED_EXTERNAL_SOURCE_IDS = frozenset(
     {
-        "kalshi",
-        "polymarket",
         "mootdx",
         "eastmoney",
         "sina_finance",
         "ths_ifind",
-        "web_search",
     }
 )
 

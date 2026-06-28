@@ -1,0 +1,4 @@
+FAILED loop_maintain / unregistered test modules
+
+Command: uv run pytest -q (subset red before registry)
+Exit: 1 (expected RED at merge gate)

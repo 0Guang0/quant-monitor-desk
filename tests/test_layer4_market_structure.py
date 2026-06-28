@@ -314,14 +314,16 @@ def test_marketBreadth_rejectsNegativeVolume(tmp_path: Path) -> None:
         _build(bundle_dir=bundle)
 
 
-def test_marketAdapter_bundleDirOutsideProject_rejects(tmp_path: Path) -> None:
+def test_marketAdapter_bundleDirOutsideProject_rejects() -> None:
     """覆盖范围：bundle_dir 须在 PROJECT_ROOT 下（信任边界）
     测试对象：MarketStructureBuilder.build 的 _resolve_bundle_root
     目的/目标：阻止任意路径读 manifest，对齐 staged 本地信任边界
     验证点：项目外目录作 bundle_dir → Layer4MarketError 含 project root
     失败含义：任意可读目录可作来源，未来 CLI 切片无路径白名单
     """
-    outside = tmp_path / "outside_l4"
+    from tests.path_jail_support import path_outside_project_root
+
+    outside = path_outside_project_root(suffix="outside_l4")
     shutil.copytree(_FIXTURE, outside)
 
     with pytest.raises(Layer4MarketError, match="project root"):

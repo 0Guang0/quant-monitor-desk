@@ -1,0 +1,22 @@
+{
+  "schema_version": "probability_signal_evidence_v1",
+  "source_id": "polymarket",
+  "data_domain": "prediction_market_probability",
+  "signals": [
+    {
+      "market_slug": "will-fed-cut-rates-2024",
+      "yes_bid": 0.61,
+      "yes_ask": 0.63,
+      "probability": 0.62,
+      "volume": 45000,
+      "liquidity": 120000,
+      "spread": 0.02,
+      "resolution_source": "https://example.com/polymarket/resolution-rules",
+      "source_used": "polymarket"
+    }
+  ],
+  "source_fetch_id": "polymarket-replay-fed-cut",
+  "content_hash": "polymarket-replay-hash-fed-cut",
+  "as_of_timestamp": "2024-06-25T12:00:00Z",
+  "retrieved_at": "2024-06-25T12:00:00Z"
+}

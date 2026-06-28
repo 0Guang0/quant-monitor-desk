@@ -1,0 +1,5 @@
+COMMAND: uv run pytest tests/test_no_clean_write_for_web_evidence.py -q
+TIMESTAMP: 2026-06-28T15:42:10.7031763+08:00
+EXIT: 0
+...............                                                          [100%]
+

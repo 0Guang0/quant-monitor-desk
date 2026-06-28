@@ -1,0 +1,4 @@
+ERROR: test_no_clean_write_for_web_evidence not found
+
+Command: uv run pytest tests/test_no_clean_write_for_web_evidence.py -q
+Exit: 1 (expected RED)

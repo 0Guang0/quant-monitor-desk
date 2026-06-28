@@ -1,0 +1,5 @@
+COMMAND: uv run pytest tests/test_prediction_market_adapters.py -q -k kalshi
+TIMESTAMP: 2026-06-28T15:42:06.9959495+08:00
+EXIT: 0
+.....                                                                    [100%]
+

@@ -361,3 +361,45 @@ def test_r3h02_marketSources_notProposedDisabledAtRuntime() -> None:
     for source_id, domain, operation in checks:
         with pytest.raises(OperationDisabledError, match="disabled for"):
             reg.assert_source_domain_operation(source_id, domain, operation)
+
+
+R3H04_PREDICTION_WEB_SOURCES: tuple[str, ...] = (
+    "kalshi",
+    "polymarket",
+    "web_search",
+)
+
+
+def test_r3h04_predictionWebSources_readyWithEvidenceStatus() -> None:
+    """覆盖范围：R3H-04 三源 registry 终态
+    测试对象：source_capabilities.yaml 中 kalshi/polymarket/web_search
+    目的/目标：三源不得停留在 proposed_disabled_source，须 READY_WITH_EVIDENCE
+    验证点：status==READY_WITH_EVIDENCE；replay_fixture_path 与 fetch_port_path 非空
+    失败含义：Batch 3H 预测/web 源仍以 vague proposed-disabled 占位
+    """
+    capabilities = load_source_capabilities()
+    sources = capabilities.get("sources") or {}
+    for source_id in R3H04_PREDICTION_WEB_SOURCES:
+        entry = sources.get(source_id) or {}
+        assert entry.get("status") == "READY_WITH_EVIDENCE", source_id
+        assert entry.get("replay_fixture_path"), source_id
+        assert entry.get("fetch_port_path"), source_id
+
+
+def test_r3h04_predictionWebSources_notProposedDisabledAtRuntime() -> None:
+    """覆盖范围：R3H-04 三源 capability registry 运行时门禁
+    测试对象：SourceCapabilityRegistry.assert_source_domain_operation
+    目的/目标：READY 源不应因 proposed_disabled_source 被整体拒绝
+    验证点：抛 OperationDisabledError 时消息为 operation disabled，非 proposed_disabled_source
+    失败含义：registry 已 READY 但 runtime 仍按 proposed-disabled 拒绝
+    """
+    reg = SourceCapabilityRegistry()
+    reg.load()
+    checks = [
+        ("kalshi", "prediction_market_probability", "fetch_regulated_probability_signal"),
+        ("polymarket", "prediction_market_probability", "fetch_prediction_market_probability"),
+        ("web_search", "supplemental_web_evidence", "fetch_supplemental_web_evidence"),
+    ]
+    for source_id, domain, operation in checks:
+        with pytest.raises(OperationDisabledError, match="disabled for"):
+            reg.assert_source_domain_operation(source_id, domain, operation)

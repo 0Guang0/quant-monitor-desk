@@ -545,6 +545,49 @@ CURATED: dict[str, dict] = {
         "command": "uv run python -m pytest tests/test_crypto_market_adapters.py -q",
         "failure_meaning": "R3H-02 crypto market adapters or evidence contract regressed.",
     },
+    "tests/test_prediction_market_adapters.py": {
+        "purpose": "R3H-04 预测市场适配器测试（Batch 3H）。",
+        "type": "runtime-contract",
+        "verifies": {
+            "docs": ["docs/modules/data_sources.md"],
+            "specs": [
+                "specs/contracts/source_capability_contract.yaml",
+                "specs/contracts/source_route_contract.yaml",
+                "specs/contracts/layer5_evidence_contract.yaml",
+            ],
+            "rules": ["docs/implementation_tasks/GLOBAL_TESTING_POLICY.md"],
+        },
+        "command": "uv run python -m pytest tests/test_prediction_market_adapters.py -q",
+        "failure_meaning": "R3H-04 prediction market adapters or probability evidence regressed.",
+    },
+    "tests/test_web_evidence_adapter.py": {
+        "purpose": "R3H-04 网页证据适配器测试（Batch 3H）。",
+        "type": "runtime-contract",
+        "verifies": {
+            "docs": ["docs/modules/data_sources.md"],
+            "specs": [
+                "specs/contracts/layer5_evidence_contract.yaml",
+                "specs/contracts/user_input_privacy_contract.yaml",
+            ],
+            "rules": ["docs/implementation_tasks/GLOBAL_TESTING_POLICY.md"],
+        },
+        "command": "uv run python -m pytest tests/test_web_evidence_adapter.py -q",
+        "failure_meaning": "R3H-04 web evidence staging or manual-review binding regressed.",
+    },
+    "tests/test_no_clean_write_for_web_evidence.py": {
+        "purpose": "R3H-04 三源 clean-write 负例与预测市场不得 resolve 事实。",
+        "type": "negative-runtime",
+        "verifies": {
+            "docs": ["docs/modules/data_sources.md"],
+            "specs": [
+                "specs/contracts/source_route_contract.yaml",
+                "specs/contracts/layer5_evidence_contract.yaml",
+            ],
+            "rules": ["docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"],
+        },
+        "command": "uv run python -m pytest tests/test_no_clean_write_for_web_evidence.py -q",
+        "failure_meaning": "R3H-04 source routed to clean writer or resolved factual outcomes.",
+    },
     "tests/test_docstring_quadruple_coverage.py": {
         "purpose": "Gate — every test_* carries five-field Chinese docstring per hygiene plan",
         "type": "runtime-contract",

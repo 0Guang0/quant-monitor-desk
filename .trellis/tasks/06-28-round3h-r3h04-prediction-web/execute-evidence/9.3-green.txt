@@ -1,0 +1,5 @@
+COMMAND: uv run pytest tests/test_prediction_market_adapters.py -q -k polymarket
+TIMESTAMP: 2026-06-28T15:42:07.7579240+08:00
+EXIT: 0
+....                                                                     [100%]
+

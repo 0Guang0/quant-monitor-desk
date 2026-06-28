@@ -1395,7 +1395,7 @@ def test_layer_smoke_missingContentHash_raises() -> None:
         official_macro_bundle_layer1_preview(corrupt)
 
 
-def test_liveEvidenceBridge_resolveRawPath_rejectsOutsideProjectRoot(tmp_path: Path) -> None:
+def test_liveEvidenceBridge_resolveRawPath_rejectsOutsideProjectRoot() -> None:
     """覆盖范围：live evidence bridge 路径 jail
     测试对象：live_evidence_bridge._resolve_raw_path
     目的/目标：A3 _resolve_raw_path PROJECT_ROOT 约束
@@ -1406,8 +1406,9 @@ def test_liveEvidenceBridge_resolveRawPath_rejectsOutsideProjectRoot(tmp_path: P
         LiveEvidenceBridgeError,
         _resolve_raw_path,
     )
+    from tests.path_jail_support import path_outside_project_root
 
-    outside = tmp_path / "outside.json"
+    outside = path_outside_project_root(suffix="outside.json")
     outside.write_text("{}", encoding="utf-8")
     with pytest.raises(LiveEvidenceBridgeError, match="escapes project root"):
         _resolve_raw_path(outside)

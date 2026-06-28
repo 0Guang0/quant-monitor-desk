@@ -337,3 +337,69 @@ def test_r3h02_marketRoute_validationOnlyPrimaryBlocked(
     assert candidate.skip_reason == "validation_only_cannot_be_primary"
     assert plan.route_status == "VALIDATION_ONLY_BLOCKED"
     assert plan.selected_source_id is None
+
+
+_R3H04_PREDICTION_ROUTE_CASES: tuple[tuple[str, str, str], ...] = (
+    ("kalshi", "prediction_market_probability", "fetch_prediction_market_probability"),
+    ("kalshi", "regulated_event_contract", "fetch_regulated_event_contracts"),
+    ("polymarket", "event_market_contract", "fetch_event_market_contracts"),
+    ("web_search", "supplemental_web_evidence", "fetch_supplemental_web_evidence"),
+    ("web_search", "vix_cds_supplement", "fetch_vix_cds_supplement"),
+)
+
+
+@pytest.mark.parametrize(("source_id", "data_domain", "operation"), _R3H04_PREDICTION_ROUTE_CASES)
+def test_r3h04_predictionWebRoute_disabledByDefault(
+    source_id: str,
+    data_domain: str,
+    operation: str,
+) -> None:
+    """覆盖范围：R3H-04 三源默认禁用路由
+    测试对象：SourceRoutePlanner.plan（预测市场/web 证据域）
+    目的/目标：enabled_by_default=false 时 route 为 DISABLED，非 READY
+    验证点：route_status=DISABLED_SOURCE；对应 candidate enabled=False
+    失败含义：未显式启用的预测/web 源被误选为 production primary
+    """
+    planner = production_route_planner()
+    plan = planner.plan(
+        data_domain=data_domain,
+        operation=operation,
+        run_id=f"r3h04-route-{source_id}",
+        job_id=f"route-{source_id}",
+    )
+    assert plan.route_status == "DISABLED_SOURCE"
+    assert plan.selected_source_id is None
+    candidate = next((c for c in plan.candidates if c.source_id == source_id), None)
+    assert candidate is not None
+    assert candidate.enabled is False
+
+
+@pytest.mark.parametrize(
+    ("source_id", "data_domain", "operation"),
+    (("polymarket", "event_market_contract", "fetch_event_market_contracts"),),
+)
+def test_r3h04_polymarketEventMarketRoute_validationOnlyPrimaryBlocked(
+    monkeypatch: pytest.MonkeyPatch,
+    source_id: str,
+    data_domain: str,
+    operation: str,
+) -> None:
+    """覆盖范围：polymarket event_market_contract yaml primary 仍被 validation_only 阻断
+    测试对象：SourceRoutePlanner.plan（event_market_contract 域）
+    目的/目标：validation_only 源不得作 Primary（对称 web_search）
+    验证点：route_status=VALIDATION_ONLY_BLOCKED；skip_reason=validation_only_cannot_be_primary
+    失败含义：polymarket 可 silent 升格 primary 并绕过 evidence-only 语义
+    """
+    from tests.service_path_support import enable_source_route
+
+    planner = enable_source_route(monkeypatch, source_id=source_id, data_domain=data_domain)
+    plan = planner.plan(
+        data_domain=data_domain,
+        operation=operation,
+        run_id=f"r3h04-valprimary-{source_id}",
+        job_id=f"valprimary-{source_id}",
+    )
+    candidate = next(c for c in plan.candidates if c.source_id == source_id)
+    assert candidate.skip_reason == "validation_only_cannot_be_primary"
+    assert plan.route_status == "VALIDATION_ONLY_BLOCKED"
+    assert plan.selected_source_id is None

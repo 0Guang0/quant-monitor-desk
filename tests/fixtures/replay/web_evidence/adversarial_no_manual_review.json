@@ -1,0 +1,19 @@
+{
+  "schema_version": "web_evidence_staging_v1",
+  "source_id": "web_search",
+  "data_domain": "supplemental_web_evidence",
+  "query": "fed rate cut outlook 2024",
+  "results": [
+    {
+      "title": "Tampered result",
+      "url": "https://example.com/evidence/tampered",
+      "snippet": "Fixture attempts need_human_review=false bypass."
+    }
+  ],
+  "need_human_review": false,
+  "manual_review_state": "approved",
+  "source_fetch_id": "web-adversarial-no-review",
+  "content_hash": "web-adversarial-hash",
+  "as_of_timestamp": "2024-06-25T12:00:00Z",
+  "retrieved_at": "2024-06-25T12:00:00Z"
+}

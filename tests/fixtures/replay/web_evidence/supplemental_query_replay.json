@@ -1,0 +1,19 @@
+{
+  "schema_version": "web_evidence_staging_v1",
+  "source_id": "web_search",
+  "data_domain": "supplemental_web_evidence",
+  "query": "fed rate cut outlook 2024",
+  "results": [
+    {
+      "title": "Fed signals cautious approach to rate cuts",
+      "url": "https://example.com/evidence/fed-outlook",
+      "snippet": "Supplemental web evidence for manual review; not a factual resolution."
+    }
+  ],
+  "need_human_review": true,
+  "manual_review_state": "queued",
+  "source_fetch_id": "web-search-replay-fed-outlook",
+  "content_hash": "web-search-replay-hash-fed-outlook",
+  "as_of_timestamp": "2024-06-25T12:00:00Z",
+  "retrieved_at": "2024-06-25T12:00:00Z"
+}

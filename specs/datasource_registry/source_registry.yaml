@@ -235,7 +235,7 @@ sources:
     validation_only: false
     rate_limit_policy: prediction_market_cache
     requires_user_setup: false
-    notes: 美国监管二元事件合约概率主源候选；价格只代表交易概率，不得作为事实结果源。
+    notes: 美国监管二元事件合约概率主源候选；价格只代表交易概率，不得作为事实结果源。R3H-04 READY_WITH_EVIDENCE; kalshi_port mock/replay probability-only.
   - source_id: polymarket
     source_name: Polymarket Gamma / CLOB APIs
     source_type: vendor_api
@@ -249,7 +249,7 @@ sources:
     validation_only: true
     rate_limit_policy: prediction_market_cache
     requires_user_setup: false
-    notes: 预测市场合约、事件概率与流动性补充源；必须记录 liquidity、volume、spread 与 resolution_source。
+    notes: 预测市场合约、事件概率与流动性补充源；必须记录 liquidity、volume、spread 与 resolution_source。R3H-04 READY_WITH_EVIDENCE; polymarket_port mock/replay probability-only.
   - source_id: stooq
     source_name: Stooq historical market data
     source_type: public_market_data
@@ -362,7 +362,7 @@ sources:
     validation_only: true
     rate_limit_policy: manual_review_cache
     requires_user_setup: false
-    notes: VIX、CDS、事件解释和网页证据补充；只能进入 evidence/manual_review，不得直接写 clean 表。
+    notes: VIX、CDS、事件解释和网页证据补充；只能进入 evidence/manual_review，不得直接写 clean 表。R3H-04 READY_WITH_EVIDENCE; validation_only=true — yaml domain_roles primary slot is nominal; route_planner blocks Primary at runtime.
   - source_id: qmt_xqshare
     source_name: QMT xqshare remote terminal
     source_type: broker_terminal
@@ -732,7 +732,7 @@ domain_roles:
     domain_enabled_by_default: false
     disabled_until_configured: true
     expected_error_before_user_setup: DISABLED_SOURCE
-    notes: Only write to evidence/manual_review staging; never clean primary tables.
+    notes: validation_only source — yaml primary slot is nominal only; route_planner enforces validation_only_cannot_be_primary at runtime. Only manual_review staging; never clean primary tables.
   vix_cds_supplement:
     primary: web_search
     validation: []
@@ -741,6 +741,7 @@ domain_roles:
     domain_enabled_by_default: false
     disabled_until_configured: true
     expected_error_before_user_setup: DISABLED_SOURCE
+    notes: validation_only source — yaml primary is nominal; route_planner blocks Primary promotion at runtime.
   event_resolution_evidence:
     primary: web_search
     validation: []
@@ -749,6 +750,7 @@ domain_roles:
     domain_enabled_by_default: false
     disabled_until_configured: true
     expected_error_before_user_setup: DISABLED_SOURCE
+    notes: validation_only source — yaml primary is nominal; route_planner blocks Primary promotion at runtime.
   provider_metadata_only:
     primary: openbb_provider_reference
     validation: []

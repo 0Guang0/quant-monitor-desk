@@ -1,0 +1,15 @@
+# Bootstrap template for fresh clones — copy to .audit-sandbox/round3h/prediction_market_live_authorization.yaml
+authorization_present: true
+scope: prediction_market_live_smoke_sandbox_only
+allow_production_clean_write: false
+skip_live_fetch_default: true
+max_markets: 1
+max_window_days: 30
+kalshi:
+  enabled: true
+  market_tickers:
+    - KXHIGHNY-24
+polymarket:
+  enabled: true
+  market_slugs:
+    - will-fed-cut-rates-2024

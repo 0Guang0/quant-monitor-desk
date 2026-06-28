@@ -1,0 +1,4 @@
+FAILED test_web_evidence_adapter
+
+Command: uv run pytest tests/test_web_evidence_adapter.py -q
+Exit: 1 (expected RED)

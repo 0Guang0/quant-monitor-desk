@@ -1,0 +1,4 @@
+FAILED -k layer
+
+Command: uv run pytest tests/test_prediction_market_adapters.py tests/test_web_evidence_adapter.py -q -k layer
+Exit: 1 (expected RED)
