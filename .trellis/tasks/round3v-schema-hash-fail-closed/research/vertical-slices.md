@@ -1,5 +1,7 @@
 # 垂直切片 — B3V-DATA (/to-issues)
 
+> **SSOT：** `docs/implementation_tasks/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/WAVE0_BATCH3V_TO_ISSUES_INDEX.md` §4（主仓；worktree 以本文件 + MASTER §8 为 Execute 入口）。
+
 | 序 | ID | 交付物 | 依赖 | AC | 允许文件 |
 |----|-----|--------|------|-----|----------|
 | 1 | DATA-01 | `data_adapter_contract.md` 结构化 schema_hash 规则 + schemaless 豁免句 | — | AC-DATA-01 | 契约 md |
