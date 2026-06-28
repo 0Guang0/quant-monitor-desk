@@ -2,14 +2,14 @@
 
 > Purpose: one file for resolved/closed issues, gates, risks, and repairs.  
 > Pair: unresolved items live in `docs/UNRESOLVED_ISSUES_REGISTRY.md`.  
-> Last reconciled: 2026-06-25 post-Batch 3V on `master` @ `2aeb6f0`.
+> Last reconciled: 2026-06-28 post-Batch 3V Wave 0 on `integration/round3-batch3v` @ `45759eea`; prior 2026-06-25 Batch 3V on `master` @ `2aeb6f0`.
 
-## Post-Batch 3V resolved (2026-06-25)
+## Post-Batch 3V resolved (2026-06-25; Wave 0 复验 2026-06-28)
 
 | ID           | Closed     | Item                                                                    | Evidence                                                                                                                                                                                                        |
 | ------------ | ---------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| VR-OPS-001   | 2026-06-25 | db-inspect contract YAML SSOT + drift test (B3V-C01)                    | merge `master` @ `2aeb6f0` · `backend/app/ops/db_inspector.py` · `specs/contracts/ops_db_inspect_contract.yaml` · `tests/test_contract_drift_ops_write.py`                                                      |
-| VR-WRITE-001 | 2026-06-25 | write_contract implemented/reserved modes parity (B3V-C01)              | merge `master` @ `2aeb6f0` · `specs/contracts/write_contract.yaml` · `tests/test_contract_drift_ops_write.py` · `tests/test_write_manager.py`                                                                   |
+| VR-OPS-001   | 2026-06-28 | db-inspect contract YAML SSOT + drift test (B3V-C01)                    | `integration/round3-batch3v` @ `45759eea` · `backend/app/ops/db_inspector.py` · `future_phase_key_tables` YAML loader · `tests/test_contract_drift_ops_write.py`                                                |
+| VR-WRITE-001 | 2026-06-28 | write_contract implemented/reserved modes parity (B3V-C01)              | `integration/round3-batch3v` @ `45759eea` · `write_manager.py` import-time YAML loader · `specs/contracts/write_contract.yaml` · `tests/test_contract_drift_ops_write.py` · enum∪reserved hygiene 测            |
 | VR-DATA-001  | 2026-06-25 | schema_hash fail-closed runtime slice (B3V-C02; partial registry)       | merge `master` @ `2aeb6f0` · `skeleton_base._infer_schema_hash` · `validation_gate.py` · `tests/test_db_validation_gate.py`; **remaining:** schemaless registry + non-skeleton paths → Round 3F (`B02-DATA-05`) |
 | VR-STOR-001  | 2026-06-25 | RawStore atomic write via `path_compat.write_bytes_atomic` (B3V-C03)    | merge `master` @ `2aeb6f0` · `backend/app/storage/path_compat.py` · `backend/app/storage/raw_store.py` · `tests/test_raw_store.py`                                                                              |
 | VR-SYNC-002  | 2026-06-25 | sync job support matrix + stable `DeferredJobTypeError` (B3V-C04)       | merge `master` @ `2aeb6f0` · `backend/app/sync/contract.py` · `specs/contracts/sync_job_contract.yaml` · `tests/test_sync_orchestrator.py` (B3V slice tests)                                                    |
