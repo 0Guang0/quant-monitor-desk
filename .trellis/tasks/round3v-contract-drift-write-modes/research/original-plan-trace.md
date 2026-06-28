@@ -36,6 +36,7 @@
 | VR-OPS-001 | `test_opsInspect_keyTables_matchContract` | `tests/test_contract_drift_ops_write.py:31` |
 | VR-OPS-001 | `test_opsInspect_deferredMapping_matchContract` | 同上 `:42` |
 | VR-WRITE-001 | `test_writeContract_implementedModes_matchWriteManager` | 同上 `:53` |
+| VR-WRITE-001 | `test_writeContract_reservedModes_matchUnsupportedModes` | 同上 `:64` |
 | VR-WRITE-001 | `test_writeManager_reservedModes_rejectWithoutWrite` | 同上 `:103` |
 
 详见 `research/vr-closure-test-trace.md`。

@@ -40,4 +40,4 @@
 
 ## Caveats / Not Found
 
-- `test_writeContract_reservedModes_matchUnsupportedModes` 在 MASTER §5.3 未逐条列出，但属于 WRITE-02 增强 parity，不削弱 VR 目的。
+- `test_writeContract_reservedModes_matchUnsupportedModes` 已入 MASTER §5.3 / §9.4（2026-06-28 Plan QC 修补）。

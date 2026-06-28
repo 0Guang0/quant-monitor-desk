@@ -11,8 +11,8 @@
 | File Path | 存在 | MASTER §3.2 | implement.jsonl | 说明 |
 | --------- | ---- | ----------- | --------------- | ---- |
 | `specs/contracts/ops_db_inspect_contract.yaml` | ✓ | [x] L82 | L18 | key_tables + deferred SSOT |
-| `docs/modules/ops_db_inspect.md` | **✗** | — | — | Playbook 债务；无模块 doc |
-| `docs/ops/db_inspect_cli.md` | ✓ | — | — | 引用 `ops_db_inspect_contract.yaml`；CLI 设计 |
+| `docs/modules/ops_db_inspect.md` | **✗** | [x] L83 | — | Playbook 债务；无模块 doc；SSOT=YAML+runtime |
+| `docs/ops/db_inspect_cli.md` | ✓ | [x] L84 | L19 | CLI 设计；引用 inspect 契约 |
 | `backend/app/ops/db_inspector.py` | ✓ | [x] L85 | L21 | YAML loader 运行时 |
 | `specs/contracts/write_contract.yaml` | ✓ | [x] L83 | L19 | implemented/reserved |
 | `backend/app/db/write_manager.py` | ✓ | [x] L86 | L22 | SUPPORTED/UNSUPPORTED |

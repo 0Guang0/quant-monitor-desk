@@ -16,6 +16,7 @@
 {"file": "docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md", "reason": "extract: caps | for: §3"}
 {"file": "docs/quality/staged_acceptance_policy.md", "reason": "extract: staged tiers | for: §0"}
 {"file": "specs/contracts/ops_db_inspect_contract.yaml", "reason": "extract: key_tables + deferred SSOT | for: §9.1-9.2"}
+{"file": "docs/ops/db_inspect_cli.md", "reason": "extract: CLI drift cross-ref | for: §3.2 playbook index"}
 {"file": "specs/contracts/write_contract.yaml", "reason": "extract: write modes contract | for: §9.3-9.5"}
 {"file": "specs/contracts/runtime_versions.md", "reason": "extract: runtime lock | for: §2.4"}
 {"file": "backend/app/ops/db_inspector.py", "reason": "extract: inspect runtime + loader target | for: §9.1-9.2"}
