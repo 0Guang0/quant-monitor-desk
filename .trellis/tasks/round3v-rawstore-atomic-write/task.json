@@ -3,7 +3,7 @@
   "name": "round3v-rawstore-atomic-write",
   "title": "B3V-STOR: RawStore Atomic Write Protection",
   "description": "Add atomic write semantics to RawStore/path_compat so raw evidence files cannot be left half-written on crash.",
-  "status": "planning",
+  "status": "in_progress",
   "dev_type": "fix",
   "scope": "raw_store_atomic_write",
   "branch": "fix/round3v-rawstore-atomic-write",
@@ -16,6 +16,8 @@
     "playbook_id": "B3V-STOR",
     "manifest_id": "B3V-C03",
     "model": "composer-2.5",
-    "owned_vr": ["VR-STOR-001"]
+    "owned_vr": [
+      "VR-STOR-001"
+    ]
   }
 }
