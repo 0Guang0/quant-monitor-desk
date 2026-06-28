@@ -3,7 +3,7 @@
   "name": "round3v-sync-support-matrix-recovery",
   "title": "B3V-C04: Sync job support matrix and crash-window recovery",
   "description": "Close VR-SYNC-002 support matrix and VR-SYNC-001 crash-window via deferred errors, contract parity, and injected recovery tests or 3F.4 handoff.",
-  "status": "planning",
+  "status": "in_progress",
   "dev_type": "fix",
   "scope": "sync_job_support_matrix",
   "branch": "fix/round3v-sync-support-matrix-recovery",

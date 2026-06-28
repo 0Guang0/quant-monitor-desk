@@ -6,6 +6,8 @@
     "9.4": "research/execute-evidence/9.4-green.txt",
     "9.5": "research/execute-evidence/9.5-green.txt",
     "9.6": "research/execute-evidence/9.6-green.txt",
+    "9.7": "research/execute-evidence/9.7-green.txt",
+    "9.8": "repair-evidence/registry-ready.md",
     "full_pytest": "research/execute-evidence/full-pytest-green.txt"
   },
   "audit": {}

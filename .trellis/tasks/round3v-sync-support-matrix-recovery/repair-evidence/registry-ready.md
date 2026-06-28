@@ -7,11 +7,11 @@
 
 源文件：`.trellis/tasks/round3v-sync-support-matrix-recovery/research/registry_proposed_delta.yaml`
 
-| Registry row | Branch decision | Coordinator action |
-|--------------|-----------------|-------------------|
-| `D2-P1-1` | `PARTIALLY_CLOSED` — matrix + deferred errors; runner impl 仍 defer Round3F | Apply delta; keep `OPEN_RUNNER_IMPL` note |
-| `R3-PARTIAL-5` | `CLOSED_BRANCH` — VR-SYNC-001 path A pytest + recovery | Close on merge |
-| `VR-SYNC-002` | `CLOSED_BRANCH` | Close on merge |
+| Registry row   | Branch decision                                                              | Coordinator action                             |
+| -------------- | ---------------------------------------------------------------------------- | ---------------------------------------------- |
+| `D2-P1-1`      | `PARTIALLY_CLOSED` — matrix + full_load deferred; dq/ra implemented (R3F-SH) | Apply delta; keep `OPEN_FULL_LOAD_RUNNER` note |
+| `R3-PARTIAL-5` | `CLOSED_BRANCH` — VR-SYNC-001 path A pytest + recovery                       | Close on merge                                 |
+| `VR-SYNC-002`  | `CLOSED_BRANCH`                                                              | Close on merge                                 |
 
 ## Excluded from branch commit
 

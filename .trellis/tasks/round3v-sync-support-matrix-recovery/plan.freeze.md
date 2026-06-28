@@ -4,27 +4,27 @@
 
 ## 1. Plan Phase
 
-| Phase | 产出 | [x] |
-|-------|------|-----|
-| P0 | plan-boot, source-index, original-plan-trace | [x] |
+| Phase | 产出                                            | [x] |
+| ----- | ----------------------------------------------- | --- |
+| P0    | plan-boot, source-index, original-plan-trace    | [x] |
 | 1a–5d | project-overview, prd, MASTER, AUDIT, manifests | [x] |
 
 ## 2. 必需文件
 
-| 文件 | [x] |
-|------|-----|
-| MASTER.plan.md | [x] |
-| AUDIT.plan.md | [x] |
+| 文件                                        | [x] |
+| ------------------------------------------- | --- |
+| MASTER.plan.md                              | [x] |
+| AUDIT.plan.md                               | [x] |
 | implement.jsonl / audit.jsonl / check.jsonl | [x] |
 
 ## 3. 冻结自检
 
 ### 3.0 双契约
 
-| 契约 | 冻结位置 |
-|------|----------|
-| 验收 | MASTER §8–§10 |
-| Audit | AUDIT §1 |
+| 契约  | 冻结位置      |
+| ----- | ------------- |
+| 验收  | MASTER §8–§10 |
+| Audit | AUDIT §1      |
 
 ### 3.0b 原计划包门禁
 
@@ -55,7 +55,8 @@
 ### 3.6 validate-plan-freeze
 
 ```text
-2026-06-25 B3V-SYNC Plan: python .trellis/scripts/task.py validate-plan-freeze .trellis/tasks/round3v-sync-support-matrix-recovery → exit 0
+2026-06-28 B3V-SYNC Plan 质检: python .trellis/scripts/task.py validate-plan-freeze .trellis/tasks/round3v-sync-support-matrix-recovery → exit 0
+（Plan 基线 1290b2e · SYNC-06A/B/C → §9.6/9.7/9.8）
 ```
 
 ## 4. Manifest Gate / Context Packing Gate

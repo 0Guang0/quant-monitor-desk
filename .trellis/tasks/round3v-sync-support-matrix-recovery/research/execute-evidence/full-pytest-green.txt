@@ -1,3 +1,11 @@
-1105 passed, 5 skipped in 210s
-3 failed (pre-existing repo docs_specs_index stale — unrelated to B3V-SYNC)
-B3V-SYNC slice tests: 7 passed
+1744 passed, 5 skipped, 34 failed in 159s
+exit 1
+
+# B3V-SYNC scope (10 slice tests): ALL PASS
+# uv run pytest tests/test_sync_orchestrator.py (B3V slice) + advA3_016: 10 passed
+
+# Full-suite failures: pre-existing worktree gap — missing
+# .audit-sandbox/round3g/fred_user_authorization.yaml (Round3G bootstrap not in conftest)
+# Failed modules: test_round3g_pre_production_adversarial_audit.py (22),
+#                 test_round3g_sandbox_clean_write_rehearsal.py (12)
+# NOT caused by B3V-SYNC changes; write_contract/WriteManager untouched.
