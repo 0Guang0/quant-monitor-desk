@@ -412,7 +412,7 @@ uv run pytest -q && uv run ruff check .
 | `validate-plan-freeze` | [x] | 2026-06-25 exit 0 | 无 |
 | authority_graph storage 域 | [x] | project-overview | 无 |
 
-**Agent-2 复检：** Plan agent 已填表；freeze 后由 Plan质检确认零遗留。
+**Agent-2 复检（2026-06-28）：** Plan质检确认 §3.10 零遗留；见 `research/plan-qc-report.md` §13 对抗性审 PASS。
 
 ---
 

@@ -1,0 +1,61 @@
+........................................................................ [  4%]
+.....ss.....................s........................................... [  8%]
+........................................................................ [ 12%]
+........................................................................ [ 16%]
+........................................................................ [ 20%]
+.................................s...................................... [ 24%]
+........................................................................ [ 28%]
+........................................................................ [ 32%]
+........................................................................ [ 37%]
+........................................................................ [ 41%]
+........................................................................ [ 45%]
+........................................................................ [ 49%]
+.......................................................................s [ 53%]
+....................................ss.................................. [ 57%]
+........................................................................ [ 61%]
+........................................................................ [ 65%]
+........................................................................ [ 69%]
+........................................................................ [ 74%]
+...................................FFFFFFFFFFF.F.F.F.FFFFF.F..FF........ [ 78%]
+.F..F....FFFFFFFF.FF.................................................... [ 82%]
+........................................................................ [ 86%]
+........................................................................ [ 90%]
+........................................................................ [ 94%]
+........................................................................ [ 98%]
+.......................                                                  [100%]
+=========================== short test summary info ===========================
+FAILED tests/test_round3g_pre_production_adversarial_audit.py::test_r3g02AdversarialAudit_zeroLineageCoverageBlocks
+FAILED tests/test_round3g_pre_production_adversarial_audit.py::test_r3g02AdversarialAudit_syntheticAdmissionPassedBlocks
+FAILED tests/test_round3g_pre_production_adversarial_audit.py::test_r3g02AdversarialAudit_partialLineageCoverageWarns
+FAILED tests/test_round3g_pre_production_adversarial_audit.py::test_r3g02AdversarialAudit_missingRollbackFileBlocks
+FAILED tests/test_round3g_pre_production_adversarial_audit.py::test_r3g02AdversarialAudit_missingDhProfileBlocks
+FAILED tests/test_round3g_pre_production_adversarial_audit.py::test_r3g02AdversarialAudit_approximateCalendarAtMostWarns
+FAILED tests/test_round3g_pre_production_adversarial_audit.py::test_r3g02AdversarialAudit_uncappedCandidateBlocks
+FAILED tests/test_round3g_pre_production_adversarial_audit.py::test_r3g02AdversarialAudit_runtimeImportScanBlocks
+FAILED tests/test_round3g_pre_production_adversarial_audit.py::test_r3g02AdversarialAudit_forbiddenTradingApiBlocks
+FAILED tests/test_round3g_pre_production_adversarial_audit.py::test_r3g02AdversarialAudit_copiedOpenbbBlocks
+FAILED tests/test_round3g_pre_production_adversarial_audit.py::test_r3g02AdversarialAudit_boundedRehearsalPasses
+FAILED tests/test_round3g_pre_production_adversarial_audit.py::test_r3g02AuditCli_writesDecisionReport
+FAILED tests/test_round3g_pre_production_adversarial_audit.py::test_r3g02AdversarialAudit_readsBarEvidenceSubstance
+FAILED tests/test_round3g_pre_production_adversarial_audit.py::test_r3g02AdversarialAudit_providerMetadataChecksAuthAndCaps
+FAILED tests/test_round3g_pre_production_adversarial_audit.py::test_r3g02AdversarialAudit_evidenceDirNotDirectoryBlocks
+FAILED tests/test_round3g_pre_production_adversarial_audit.py::test_r3g02AdversarialAudit_metadataZeroStagedBlocks
+FAILED tests/test_round3g_pre_production_adversarial_audit.py::test_r3g02AdversarialAudit_agentTriggeredWriteBlocks
+FAILED tests/test_round3g_pre_production_adversarial_audit.py::test_r3g02AdversarialAudit_strategyMetricsInSourceReportBlocks
+FAILED tests/test_round3g_pre_production_adversarial_audit.py::test_r3g02AdversarialAudit_productionMutationClaimBlocks
+FAILED tests/test_round3g_pre_production_adversarial_audit.py::test_r3g02AdversarialAudit_missingGateRationaleBlocks
+FAILED tests/test_round3g_pre_production_adversarial_audit.py::test_r3g02AdversarialAudit_missingEvidenceDirBlocks
+FAILED tests/test_round3g_pre_production_adversarial_audit.py::test_r3g02AdversarialAudit_fredAuthPostureWarnsWhenNoEvidence
+FAILED tests/test_round3g_sandbox_clean_write_rehearsal.py::test_RehearsalPlan_fredAuthorization_validArtifactPasses
+FAILED tests/test_round3g_sandbox_clean_write_rehearsal.py::test_RehearsalPlan_fredLivePathRequiresFredApiKey
+FAILED tests/test_round3g_sandbox_clean_write_rehearsal.py::test_RehearsalRunner_dryRun_composesGatesAndWritesEvidence
+FAILED tests/test_round3g_sandbox_clean_write_rehearsal.py::test_RehearsalRunner_perSourceRollbackArtifactsAreDistinct
+FAILED tests/test_round3g_sandbox_clean_write_rehearsal.py::test_RehearsalRunner_rejectsWriteWhenDataHealthGateNotReady
+FAILED tests/test_round3g_sandbox_clean_write_rehearsal.py::test_RehearsalRunner_validationStatusReflectsDataHealthNotSilentPassed
+FAILED tests/test_round3g_sandbox_clean_write_rehearsal.py::test_RehearsalRunner_perSourceDataHealthProfiles
+FAILED tests/test_round3g_sandbox_clean_write_rehearsal.py::test_RehearsalRunner_writesPerSourceRoutePlanOnDisk
+FAILED tests/test_round3g_sandbox_clean_write_rehearsal.py::test_RehearsalRunner_perSourceReportsSatisfyContractFields
+FAILED tests/test_round3g_sandbox_clean_write_rehearsal.py::test_RehearsalRunner_smokeOnlyStagingSemanticsExplicit
+FAILED tests/test_round3g_sandbox_clean_write_rehearsal.py::test_RehearsalRunner_resourceGuardHardStopBlocks
+FAILED tests/test_round3g_sandbox_clean_write_rehearsal.py::test_RehearsalRunner_rejectsWriteWhenDataHealthOverallFails
+EXIT:1
