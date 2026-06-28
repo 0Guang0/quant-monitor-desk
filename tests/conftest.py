@@ -83,7 +83,7 @@ def _ensure_r3g_fred_authorization_bootstrap() -> None:
 
 
 def _ensure_audit_sandbox_pytest_basetemp() -> None:
-    """Pre-create shared pytest basetemp for A8 sandbox runs on fresh clones."""
+    """Pre-create shared pytest basetemp for A8 sandbox runs on fresh clones (A8-B3V-04)."""
     (PROJECT_ROOT / ".audit-sandbox" / "pytest").mkdir(parents=True, exist_ok=True)
 
 
