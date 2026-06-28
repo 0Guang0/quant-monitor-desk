@@ -18,7 +18,6 @@ from backend.app.ops.db_inspector import (
 )
 from tests.db_helpers import (
     create_test_write_manager,
-    empty_clean_table,
     setup_write_smoke_db,
     write_smoke_request,
 )
@@ -109,9 +108,7 @@ def test_writeManager_reservedModes_rejectWithoutWrite(tmp_path: Path) -> None:
     失败含义：未实现模式误写或静默成功，生产写路径语义错误
     """
     reserved = tuple(_load_contract_yaml(_WRITE_CONTRACT)["reserved_modes"])
-    cm = setup_write_smoke_db(tmp_path)
-    with cm.writer() as con:
-        empty_clean_table(con)
+    cm = setup_write_smoke_db(tmp_path, with_clean_table=True)
     wm = create_test_write_manager(cm)
     with cm.writer() as con:
         before = con.execute("SELECT COUNT(*) FROM security_bar_smoke_clean").fetchone()[0]

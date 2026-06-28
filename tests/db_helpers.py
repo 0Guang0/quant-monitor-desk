@@ -15,7 +15,7 @@ def create_test_write_manager(conn_manager) -> WriteManager:
     return WriteManager(conn_manager, StubValidationGate())
 
 
-def setup_write_smoke_db(tmp_path: Path) -> ConnectionManager:
+def setup_write_smoke_db(tmp_path: Path, *, with_clean_table: bool = False) -> ConnectionManager:
     """Migrated DuckDB with stg_foundation_smoke seed row (write-manager test fixture)."""
     cm = ConnectionManager(tmp_path / "t.duckdb")
     with cm.writer() as con:
@@ -23,6 +23,8 @@ def setup_write_smoke_db(tmp_path: Path) -> ConnectionManager:
         con.execute(
             "INSERT INTO stg_foundation_smoke VALUES ('AAPL','2026-06-15',195.0,'qmt','b1')"
         )
+        if with_clean_table:
+            empty_clean_table(con)
     return cm
 
 
