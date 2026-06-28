@@ -194,29 +194,42 @@ Detail: `research/final-audit-report-restore-or-replace.md`.
 
 | 路径 | 已入 DEBT.plan | 摘要一句 | 遗漏风险 |
 |---|---|---|---|
-| `agent-toolchain.md` | §Source + Boot | GitNexus/codebase-memory 路由已读 | 无 |
+| `agent-toolchain.md` | §Source + §3.6 Boot | GitNexus/codebase-memory 路由已读 | 无 |
 | `round3-repair-debt-worktree-plan.md` Phase 8D | §Source | debt-lite 切片/merge gate 对齐 | 无 |
 | `BATCH_3V_COORDINATOR_PLAYBOOK.md` §3.1 | §Source + Boundary | 共用底座索引 | 无 |
-| `BATCH_3V_COORDINATOR_PLAYBOOK.md` §3.6 | §3.6 表 | REG 必读全文摘要 | 无 |
+| `BATCH_3V_COORDINATOR_PLAYBOOK.md` §3.6 | §3.6 表 | REG 分支必读全文（playbook 六行路径） | 无 |
 | `BATCH_3V_COORDINATOR_PLAYBOOK.md` §5.1 | §Source track | debt-lite 流水线 | 无 |
-| `BATCH_3V_HARDENING_RULES.md` | Boundary + TDD | 硬停/TDD/registry 规则 | 无 |
-| `BATCH_3V_TASK_CARD_MANIFEST.md` §3 C05 | §Source | 分支 allowed/forbidden | 无 |
-| `B02_05_*.md` | Vertical slices | 四竖条 REG-BOOT/01/02 + DOC-ALL | 无 |
-| `009_status_check_constraints.sql` | REG-01 | 009 覆盖矩阵 | 无 |
-| `MIGRATION_COVERAGE.md` | REG-01 | 陈旧 PARTIAL 待修 | 无 |
-| `schema.sql` | REG-01 | CHECK 契约对照 | 无 |
-| `AUDIT_DEFERRED` / `UNRESOLVED` / `RESOLVED` | REG-02 proposed | 不直接 commit | 无 |
-| `README` / `MANIFEST` / `final_package_rules` / allowlist | DOC-ALL | restore-or-replace 一致性 | 无 |
-| `check_manifest_files.py` / `test_manifest_files_check.py` | DOC-ALL | TDD + Done exit 0 | 无 |
-| `WAVE0_BATCH3V_TO_ISSUES_INDEX.md` §1 | GitHub issue + slices | 2026-06-28 quiz 对齐 | 无 |
+| `BATCH_3V_COORDINATOR_PLAYBOOK.md` §2.6 / §8.5 | Boundary + §未改什么 | Must not own + 负向边界 | 无 |
+| `BATCH_3V_HARDENING_RULES.md` §3–§7 | Boundary + TDD + Execute order | 硬停/TDD/§7 垂直切片 | 无 |
+| `BATCH_3V_TASK_CARD_MANIFEST.md` §3 C05 | §Source + Boundary | 分支 allowed/forbidden | 无 |
+| `B02_05_migration_registry_and_manifest_consistency.md` | Vertical slices | 五子 AC → REG-BOOT/01/02 + DOC-ALL | 无 |
+| `WAVE0_BATCH3V_TO_ISSUES_INDEX.md` §0.2 + §1 | GitHub issue + slices | 整卡 1 issue；DOC-ALL 粒度 quiz | 无 |
+| `backend/app/db/migrations/009_status_check_constraints.sql` | REG-01 | 009 覆盖矩阵源 | 无 |
+| `specs/schema/schema.sql` | §3.6 → REG-01 | CHECK 契约对照 | 无 |
+| `docs/schema/MIGRATION_COVERAGE.md` | REG-01 | 陈旧 PARTIAL 待修 | 无 |
+| `docs/schema/MIGRATION_008_PLAN.md` | REG-01 | stale narrative fix | 无 |
+| `docs/AUDIT_DEFERRED_REGISTRY.md` | REG-02 proposed | 三件套之一；不直接 commit | 无 |
+| `docs/UNRESOLVED_ISSUES_REGISTRY.md` | REG-02 proposed | 三件套之二；不直接 commit | 无 |
+| `docs/RESOLVED_ISSUES_REGISTRY.md` | REG-02 proposed | 三件套之三；不直接 commit | 无 |
+| `README.md` | DOC-ALL | restore-or-replace 叙事一致 | 无 |
+| `MANIFEST.json` | DOC-ALL | 存在性/哈希与文件树一致 | 无 |
+| `docs/quality/final_package_rules.md` | DOC-ALL | 包规则对齐 | 无 |
+| `specs/contracts/release_cleanup_allowlist.yaml` | DOC-ALL | allowlist 对齐 | 无 |
+| `FINAL_AUDIT_REPORT.md` | DOC-ALL 专节 + checklist §1 | restore `416e74bc` 路径已冻结 | 无 |
+| `scripts/check_manifest_files.py` | DOC-ALL checklist §3 | manifest gate；Done exit 0 | 无 |
+| `tests/test_manifest_files_check.py` | DOC-ALL checklist §3 | TDD RED→GREEN | 无 |
+| `tests/test_schema_contract.py` | REG-01 | schema CHECK closure 证据 | 无 |
+| `tests/test_unresolved_item_task_coverage.py` | Merge gate | 主会话闭合后期望集 | 无 |
+| `docs/quality/quant_monitor_desk_verified_audit_report_2026-06-25_v3_INDEX.md` | §Source + §3.6 | VR-REG-001 / VR-DOC-001 路由 | 无 |
 | `research/vertical-slices.md` | Vertical slices SSOT | REG-BOOT/01/02 + DOC-ALL | 无 |
-| `research/wave0-index-ruling-refresh.md` | 裁决追溯 | Plan 刷新对照 | 无 |
-| `test_unresolved_item_task_coverage.py` | Merge gate | 主会话后可能需期望集更新 | 无 |
-| `quant_monitor_desk_verified_audit_report_2026-06-25_v3_INDEX.md` | §Source | VR 路由 | 无 |
-| `FINAL_AUDIT_REPORT.md` | DOC-ALL 专节 | restore 路径已冻结；Execute 已 restore | 无 |
-| `authority_graph.yaml` | — | 本切片无新 backend 包 | 无 |
+| `research/wave0-index-ruling-refresh.md` | 裁决追溯 | 2026-06-28 粒度刷新对照 | 无 |
+| `research/migration-009-coverage-matrix.md` | REG-BOOT/01 | 矩阵已落盘 | 无 |
+| `research/final-audit-report-restore-or-replace.md` | DOC-ALL | restore 决策已落盘 | 无 |
+| `research/manifest-doc-crosscheck.md` | DOC-ALL | 工具与命令基线 | 无 |
+| `specs/context/authority_graph.yaml` | §3.10 | 本切片无新 backend 包 | 无 |
 | `GLOBAL_TASK_TEMPLATE.md` | Vertical slices + Boundary | 卡片 §1–8 已展开 | 无 |
-| `BATCH_3V_SELF_CHECK.md` | Blockers | PASS_FOR_PLANNING；FINAL_AUDIT gap 已纳入 | 无 |
+| `BATCH_3V_SELF_CHECK.md` | Blockers | PASS_FOR_DISPATCH；FINAL_AUDIT gap 已纳入 Plan | 无 |
+| `scripts/check_docs_specs_indexed.py` | Merge gate | 2026-06-28 worktree exit 0 | 无 |
 
 ---
 
