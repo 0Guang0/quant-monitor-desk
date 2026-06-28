@@ -2,10 +2,10 @@
 
 ## 1. Merge order
 
-1. Freeze registry/capability baseline and schema enum checks.
-2. Run R3H-01 through R3H-04 in parallel branches.
-3. Merge shared registry/capability/route/test catalog changes through coordinator review.
-4. Run R3H-05 as final audit and Round4 admission gate.
+1. ~~Freeze registry/capability baseline and schema enum checks.~~ **Done** @ R3H-01 boot.
+2. ~~Run R3H-01 through R3H-04 in parallel branches.~~ **CLOSED** @ 2026-06-28（双轨 P6 已 merge `master`）。
+3. ~~Merge shared registry/capability/route/test catalog changes through coordinator review.~~ **Done** @ P6（四文件冲突已协调合并）。
+4. **Run R3H-05** as final audit and Round4 admission gate — **当前入口**；开放项见 `PROJECT_IMPLEMENTATION_ROADMAP.md` §5.0.1。
 
 ## 2. Parallel ownership
 

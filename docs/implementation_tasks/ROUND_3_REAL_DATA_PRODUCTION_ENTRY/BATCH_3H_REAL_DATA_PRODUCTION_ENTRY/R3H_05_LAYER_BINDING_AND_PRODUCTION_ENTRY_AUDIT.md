@@ -1,5 +1,8 @@
 # R3H-05 — Layer Binding and Production Entry Audit
 
+> **状态：** **当前 Batch 3H 唯一执行入口**（R3H-01～04 **CLOSED** @ 2026-06-28）。  
+> **开放项 SSOT：** `PROJECT_IMPLEMENTATION_ROADMAP.md` §5.0.1 + 本卡 §3.1 — 须逐条 CLOSED / WARN+ADR / BLOCK 后方可 Round4。
+
 ## 1. Goal
 
 Run the final Round3 admission gate before Round4. This task must verify that all target sources from R3H-01 through R3H-04 are closed and that Layer1–5 have real-data/evidence bindings for the declared production-entry envelope.
@@ -94,6 +97,21 @@ Layer1/2/3/4/5 binding, if applicable
 production-entry status
 release limitation, if any
 ```
+
+### 3.1 Cross-cutting open items（审计必查 — 对照路线图 §5.0.1）
+
+R3H-05 **不得实现**下列项；须在 audit matrix 或 `round3h_real_data_production_entry_audit.md` 中逐条 **CLOSED / WARN+ADR / BLOCK**：
+
+| ID                   | 检查项                                   | 证据 / 通过标准                                                                                                        |
+| -------------------- | ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| **CAL-US**           | 美股/全球权益交易日历（非 Mon–Fri 近似） | `calendar_gap_rules` / market_bar DH 对 US 域是否仍 `calendar_authority=false`；若仍开放 → `release limitation` 或 ADR |
+| **CAL-CN-TAIL**      | A 股日历 2030+ / 交易所权威              | `cn_trading_calendar.py` ponytail 注释 + 审计注记                                                                      |
+| **SCHEMA-G3G4**      | G3/G4/G6 clean DDL / 分表 / PK           | 须有 schema 任务归属或 ADR 收窄；R3H-01 §8 禁止本卡实现                                                                |
+| **LIVE-PROD**        | baostock/cninfo 等真网→clean 产品化      | 每源 `production-entry status`；区分 replay READY vs live 产品承诺                                                     |
+| **WEB-SEARCH-LIVE**  | `web_search` 真实搜索 API                | registry READY **≠** 真网；须记 **mock stub deferred**（Grill-me Q4；`web_search_evidence_port.py` L3）                |
+| **KALSHI-POLY-LIVE** | 预测市场默认真网                         | mock/replay default；live smoke env-gated；limitation 若仅结构证据                                                     |
+
+权威索引：`PROJECT_IMPLEMENTATION_ROADMAP.md` §5.0.1。
 
 ---
 

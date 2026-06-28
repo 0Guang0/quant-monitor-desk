@@ -33,18 +33,18 @@ Each listed source must end as `READY_WITH_EVIDENCE` or `ADR_DISABLED_OUT_OF_SCO
 | 期权链/衍生品默认全量扫描                   | ResourceGuard 硬 cap；§7 表                                       |
 | G16 yahoo 仍 fixture                        | §9.4 replay 迁 `tests/fixtures/replay/market_data/yahoo_finance/` |
 
-| grill 锁定项      | 决定                                                                     |
-| ----------------- | ------------------------------------------------------------------------ |
-| 3G yahoo fixture  | **≠** READY；须 fetch port + route + evidence                            |
-| 主库              | **禁止**写 `quant_monitor.duckdb`                                        |
-| yahoo 角色        | **永久 validation-only**（除非书面 ADR 改 registry，本卡不做）           |
-| alpha_vantage     | Primary 候选；`ALPHA_VANTAGE_API_KEY` + route 未授权 DISABLED            |
-| stooq / coingecko | validation/aggregator；不得 silent primary                               |
-| deribit           | 交易所级 crypto 衍生品；**禁止**账户/交易语义                            |
-| 五源终态          | READY_WITH_EVIDENCE **或** ADR_DISABLED（禁止含糊 defer）                |
-| Layer             | §9.7 L2/L4/L5 smoke only；**禁止** R3H-05                                |
-| G2 交易日窗       | ponytail：自然日 `MAX_WINDOW_DAYS` + evidence 标注；完整日历 R3H-03      |
-| 切片顺序          | 9.1 契约 → 9.2 AV → 9.3 stooq → 9.4 yahoo → 9.5 crypto → 9.6 → 9.7 → 9.8 |
+| grill 锁定项      | 决定                                                                                                                                                               |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 3G yahoo fixture  | **≠** READY；须 fetch port + route + evidence                                                                                                                      |
+| 主库              | **禁止**写 `quant_monitor.duckdb`                                                                                                                                  |
+| yahoo 角色        | **永久 validation-only**（除非书面 ADR 改 registry，本卡不做）                                                                                                     |
+| alpha_vantage     | Primary 候选；`ALPHA_VANTAGE_API_KEY` + route 未授权 DISABLED                                                                                                      |
+| stooq / coingecko | validation/aggregator；不得 silent primary                                                                                                                         |
+| deribit           | 交易所级 crypto 衍生品；**禁止**账户/交易语义                                                                                                                      |
+| 五源终态          | READY_WITH_EVIDENCE **或** ADR_DISABLED（禁止含糊 defer）                                                                                                          |
+| Layer             | §9.7 L2/L4/L5 smoke only；**禁止** R3H-05                                                                                                                          |
+| G2 交易日窗       | ponytail：自然日 `MAX_WINDOW_DAYS` + `window_kind: calendar_days`；**CN 完整日历 → R3H-03（Q12 已闭合）**；**US 节假日 SSOT → R3H-05**（路线图 §5.0.1 **CAL-US**） |
+| 切片顺序          | 9.1 契约 → 9.2 AV → 9.3 stooq → 9.4 yahoo → 9.5 crypto → 9.6 → 9.7 → 9.8                                                                                           |
 
 ### 2.8 Plan vs Execute gates
 
@@ -274,7 +274,7 @@ Per-source caps align with `source_capabilities.yaml` and `GLOBAL_RESOURCE_LIMIT
 - No full-history daily pull.
 - No minute-level default.
 - No full option-chain scan by default.
-- ponytail: window caps use **calendar days** until TradingCalendar SSOT lands (G2 → R3H-03); evidence must record `window_kind: calendar_days`.
+- ponytail: window caps use **calendar days** for **US/global** sources until NYSE/Nasdaq SSOT lands → R3H-05 §5.0.1 **CAL-US**；**CN 日历已闭合 @ R3H-03**（Q12）。Evidence must record `window_kind: calendar_days` where applicable.
 
 ---
 
@@ -297,7 +297,9 @@ Per-source caps align with `source_capabilities.yaml` and `GLOBAL_RESOURCE_LIMIT
 - Block validation-only sources from primary route selection (existing R3X tests must stay green).
 - Preserve G13 semantics: validation-only 源不得冒充 primary clean-write 主值（pilot 隔离库除外）。
 
-**3G mass rehearsal index:** `R3G_MASS_REHEARSAL_OPEN_GAPS.md` §2 G2, G13, G16 (yahoo fixture/live).
+**3G mass rehearsal index:** `R3G_MASS_REHEARSAL_OPEN_GAPS.md` §2 G2, G13, G16 (yahoo fixture/live) — **G2（US）仍开放** → R3H-05 **CAL-US**。
+
+**归档追溯：** Trellis `06-28-round3h-r3h02-market-data` · 五源 `READY_WITH_EVIDENCE` · yahoo 永久 `validation_only`。
 
 ### 8.1 Execute stop conditions
 

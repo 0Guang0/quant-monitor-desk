@@ -17,6 +17,14 @@
 | `R3H-04` | `R3H_04_PREDICTION_AND_WEB_EVIDENCE_ADAPTERS.md`     | `kalshi`, `polymarket`, `web_search`                                                                                          | Probability/web evidence sources move from generic web risk to typed probability/evidence/manual-review outputs                       | Every listed source has an executable evidence/probability path or ADR-disabled status; none writes clean factual tables                |
 | `R3H-05` | `R3H_05_LAYER_BINDING_AND_PRODUCTION_ENTRY_AUDIT.md` | All above sources plus Layer1–5 declared production-entry envelope                                                            | Layer1–5 and data governance close real-data entry before Round4                                                                      | Round4 is blocked unless all target sources are implemented or ADR-disabled and layer/evidence gates pass                               |
 
+**R3H-04 追溯注记（`web_search`）：** 真搜索 API **故意延后**；Execute 交付为 **mock stub** `READY_WITH_EVIDENCE`（Grill-me Q4）。R3H-05 须记 `release limitation`，不得将 mock-only 误判为真网搜索能力。见 `PROJECT_IMPLEMENTATION_ROADMAP.md` §5.0.1 **WEB-SEARCH-LIVE**。
+
+**R3H-03 追溯注记（交易日历）：** **CN G2/G17 已闭合** @ Grill-me Q12（`cn_trading_calendar`）；**美股日历未在本卡** → 路线图 §5.0.1 **CAL-US** → R3H-05。
+
+**R3H-01/02 追溯注记：** **CLOSED** @ 2026-06-28；G10/G14（FRED）已闭合；R3H-02 五源 READY，**US 日历** → R3H-05 **CAL-US**。Trellis：`06-28-round3h-r3h01-official-macro` · `06-28-round3h-r3h02-market-data`。
+
+**R3H-05 当前入口：** 须对照路线图 §5.0.1 与 `R3H_05_*.md` §3.1 闭合全部开放项后方可 Round4。
+
 ---
 
 ## 2. Cross-task constraints

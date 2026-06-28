@@ -1,6 +1,8 @@
 # Batch 3H — Real Data Production Entry
 
 > **Batch:** Round 3H Real Data Production Entry  
+> **批次状态：** **R3H-01～04 CLOSED** @ 2026-06-28；**当前下一执行入口** **R3H-05**（Layer1–5 + 全源 production-entry audit）。  
+> **开放项 SSOT：** `PROJECT_IMPLEMENTATION_ROADMAP.md` §5.0.1（CAL-US、SCHEMA-G3G4、WEB-SEARCH-LIVE 等）— R3H-05 须逐条 CLOSED / WARN+ADR / BLOCK，禁止 silent defer。  
 > **Purpose:** 在进入 Round4 产品化之前，把 Round3 的五层模型、真实数据接入和数据治理闭合到完整的有限生产接入级别。  
 > **Execution rule:** 本批次可以按数据域/能力域并行，但不是“选几个源试一下”。凡是已经进入 `source_registry.yaml` / `source_capabilities.yaml` 的目标 source，都必须在本批次得到明确闭环：要么完成 adapter + gate + replay + route + evidence，要么用 ADR 明确说明为什么不属于当前产品承诺范围。
 
@@ -65,13 +67,13 @@ web_search
 
 ## 3. Task cards
 
-| Task ID  | Active card                                          | Required source coverage                                                                                                      | Parallel rule                                                                     |
-| -------- | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| `R3H-01` | `R3H_01_OFFICIAL_MACRO_DISCLOSURE_ADAPTERS.md`       | `fred`, `us_treasury`, `sec_edgar`, `cftc_cot`, `bis`, `world_bank`                                                           | 可独立分支；只拥有官方低频/披露 adapter 与 Layer1/Layer5 low-frequency binding    |
-| `R3H-02` | `R3H_02_MARKET_DATA_ADAPTERS.md`                     | `alpha_vantage`, `stooq`, `yahoo_finance`, `deribit`, `coingecko`                                                             | 可独立分支；只拥有跨资产/美股/ETF/期权/加密行情 adapter 与 route tests            |
-| `R3H-03` | `R3H_03_CN_MARKET_ADAPTERS.md`                       | `baostock`, `akshare`, `cninfo`, `tdx_pytdx`, `mootdx`, `eastmoney`, `sina_finance`, `ths_ifind`, `qmt_xtdata`, `qmt_xqshare` | 可独立分支；必须明确 Primary/Validation/authorized-disabled，不得 silent fallback |
-| `R3H-04` | `R3H_04_PREDICTION_AND_WEB_EVIDENCE_ADAPTERS.md`     | `kalshi`, `polymarket`, `web_search`                                                                                          | 可独立分支；输出只能是 probability/evidence/manual_review，不得 clean-write 主值  |
-| `R3H-05` | `R3H_05_LAYER_BINDING_AND_PRODUCTION_ENTRY_AUDIT.md` | 汇总所有 source 与 Layer1–5 真实数据绑定                                                                                      | 必须最后；不得替前四张卡补实现，只做验收、阻断或 ADR 收窄                         |
+| Task ID  | Active card                                          | Required source coverage                                                                                                      | Parallel rule / 状态                                                        |
+| -------- | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| `R3H-01` | `R3H_01_OFFICIAL_MACRO_DISCLOSURE_ADAPTERS.md`       | `fred`, `us_treasury`, `sec_edgar`, `cftc_cot`, `bis`, `world_bank`                                                           | **CLOSED** @ 2026-06-28；六源 READY；G10 + G14（FRED）已闭合                |
+| `R3H-02` | `R3H_02_MARKET_DATA_ADAPTERS.md`                     | `alpha_vantage`, `stooq`, `yahoo_finance`, `deribit`, `coingecko`                                                             | **CLOSED** @ 2026-06-28；五源 READY；**US 日历** → R3H-05 §5.0.1 **CAL-US** |
+| `R3H-03` | `R3H_03_CN_MARKET_ADAPTERS.md`                       | `baostock`, `akshare`, `cninfo`, `tdx_pytdx`, `mootdx`, `eastmoney`, `sina_finance`, `ths_ifind`, `qmt_xtdata`, `qmt_xqshare` | **CLOSED** @ 2026-06-28；十源 READY；**CN G2/G17 日历已闭合**（Q12）        |
+| `R3H-04` | `R3H_04_PREDICTION_AND_WEB_EVIDENCE_ADAPTERS.md`     | `kalshi`, `polymarket`, `web_search`                                                                                          | **CLOSED** @ 2026-06-28；**web_search mock stub**（真 API 延后）            |
+| `R3H-05` | `R3H_05_LAYER_BINDING_AND_PRODUCTION_ENTRY_AUDIT.md` | 汇总所有 source 与 Layer1–5 真实数据绑定                                                                                      | **当前入口**；须闭合 §5.0.1 开放项后 Round4 门禁                            |
 
 ---
 

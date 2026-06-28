@@ -45,7 +45,7 @@ Each listed source must end as `READY_WITH_EVIDENCE` or `ADR_DISABLED_OUT_OF_SCO
 
 ### 2.8 Plan vs Execute gates
 
-1. **Batch 3G CLOSED** does not substitute for R3H-01 closure; G10/G14 remain open until §9.1–9.2 pass.
+1. **Batch 3G CLOSED** does not substitute for R3H-01 closure; G10/G14 **已闭合** @ 2026-06-28（Trellis `06-28-round3h-r3h01-official-macro`）。
 2. **No main DB writes** in this task; sandbox/replay/`.audit-sandbox` only unless a future Batch 3H gate explicitly authorizes `quant_monitor.duckdb`.
 3. **Coordinator review** required before merging shared registry/capability/route files (see §9.6 manifest table).
 4. **R3H-05 is forbidden** in this branch; Layer work is §9.7 smoke only.
@@ -264,7 +264,9 @@ Per-source caps must align with `source_capabilities.yaml` and `GLOBAL_RESOURCE_
 - Record per-source final status in registry notes and route tests.
 - Use L2 copy-and-rewrite per `reference_adoption_guardrails.yaml` when moving ops fetch code into `datasources/fetch_ports/`.
 
-**3G mass rehearsal index:** `R3G_MASS_REHEARSAL_OPEN_GAPS.md` §2 G10, G14.
+**3G mass rehearsal index:** `R3G_MASS_REHEARSAL_OPEN_GAPS.md` §2 G10, G14 — **已闭合** @ 2026-06-28。
+
+**归档追溯：** Trellis `06-28-round3h-r3h01-official-macro` · `official_macro_evidence_v1` SSOT · audit 零遗留。
 
 ### 8.1 Execute stop conditions
 

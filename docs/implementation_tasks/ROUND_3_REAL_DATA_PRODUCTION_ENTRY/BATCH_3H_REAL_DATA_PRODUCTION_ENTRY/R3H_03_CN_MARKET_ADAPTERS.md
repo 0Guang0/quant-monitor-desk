@@ -149,14 +149,14 @@ Minimum role expectations:
 
 Per-source caps align with `source_capabilities.yaml` and `GLOBAL_RESOURCE_LIMITS.md`. Production-entry defaults:
 
-| Source                       | Cap dimension              | Default cap (production-entry)        |
-| ---------------------------- | -------------------------- | ------------------------------------- |
-| `baostock`                   | symbols / rows / window    | 5 symbols / 500 rows / 120 days       |
-| `cninfo`                     | filings / PDF bytes        | 5 issuers / 20 filings / 5 MB each    |
-| `akshare`                    | symbols / rows             | 3 symbols / 200 rows (validation)   |
-| `tdx_pytdx` / `mootdx`       | symbols / rows / net calls | 20 list rows / 3 bars / 5 calls       |
-| `eastmoney` / `sina_finance` | symbols / rows             | 3 symbols / 200 rows                  |
-| `ths_ifind`                  | concepts / reports         | disabled-by-default; 5 rows if auth   |
+| Source                       | Cap dimension              | Default cap (production-entry)         |
+| ---------------------------- | -------------------------- | -------------------------------------- |
+| `baostock`                   | symbols / rows / window    | 5 symbols / 500 rows / 120 days        |
+| `cninfo`                     | filings / PDF bytes        | 5 issuers / 20 filings / 5 MB each     |
+| `akshare`                    | symbols / rows             | 3 symbols / 200 rows (validation)      |
+| `tdx_pytdx` / `mootdx`       | symbols / rows / net calls | 20 list rows / 3 bars / 5 calls        |
+| `eastmoney` / `sina_finance` | symbols / rows             | 3 symbols / 200 rows                   |
+| `ths_ifind`                  | concepts / reports         | disabled-by-default; 5 rows if auth    |
 | `qmt_xtdata` / `qmt_xqshare` | symbols / minute bars      | disabled-by-default; no minute default |
 
 - No full-market scan, full-history pull, or minute-level default.
@@ -182,7 +182,9 @@ Per-source caps align with `source_capabilities.yaml` and `GLOBAL_RESOURCE_LIMIT
 - Migrate staged pilot fetch (`ops/staged_pilot_fetch_ports.py`) patterns into `datasources/fetch_ports/*` per `reference_adoption_guardrails.yaml`.
 - Record per-source final status in registry + coordinator manifest (§9.8).
 
-**3G index:** `R3G_MASS_REHEARSAL_OPEN_GAPS.md` §2 G11, G16; G2/G17 trading calendar may partial here or hand off R3H-05 (**须用户确认**，见 grill-me Q12).
+**3G index:** `R3G_MASS_REHEARSAL_OPEN_GAPS.md` §2 G11, G16; **G2/G17（CN）已闭合** @ Grill-me Q12（`cn_trading_calendar` + `calendar_authority=True`）；**美股/全球交易日历不在本卡** → `PROJECT_IMPLEMENTATION_ROADMAP.md` §5.0.1 **CAL-US** → R3H-05。
+
+**归档追溯：** Trellis `06-28-round3h-r3h03-cn-market` · `research/grill-me-session.md` Q12 · `research/audit-evidence/a5.md` §5。
 
 ### 8.1 Execute stop conditions
 
@@ -274,10 +276,10 @@ Forbidden: auto-login, full-market scan, hardcoded DB/table, SQL interpolation, 
 
 ## 15. Execute Skill freeze
 
-| Skill                       | 本任务 | 绑定 Step |
-| --------------------------- | ------ | --------- |
-| test-driven-development     | 必做   | 每 §9.x   |
-| karpathy-guidelines         | 必做   | 每步      |
-| testing-guidelines          | 必做   | 每步      |
-| incremental-implementation  | 必做   | 每 GREEN  |
-| gitnexus-impact-analysis    | 必做   | 改符号前  |
+| Skill                      | 本任务 | 绑定 Step |
+| -------------------------- | ------ | --------- |
+| test-driven-development    | 必做   | 每 §9.x   |
+| karpathy-guidelines        | 必做   | 每步      |
+| testing-guidelines         | 必做   | 每步      |
+| incremental-implementation | 必做   | 每 GREEN  |
+| gitnexus-impact-analysis   | 必做   | 改符号前  |
