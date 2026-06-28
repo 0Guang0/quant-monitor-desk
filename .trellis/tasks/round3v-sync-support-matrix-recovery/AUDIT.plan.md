@@ -30,7 +30,7 @@
 | 维 | 本任务 | 命令 | 通过 |
 |----|--------|------|------|
 | A3 | 必做 | diff 无 `write_contract` / WriteManager 写模式语义变更 | 零写模式契约改动 |
-| A5 | 必做 | VR-SYNC-002 关闭；VR-SYNC-001 pytest **或** handoff | 二选一证据 |
+| A5 | 必做 | VR-SYNC-002 关闭；VR-SYNC-001 pytest（§9.7）**或** handoff（§9.8） | 二选一证据 |
 | A6 | **SKIP** — 无 hot path SLA | — | 记录 SKIP |
 | A8 | 必做 | Playbook §8.4 pytest 子集 + 全量 `pytest -q` | exit 0 |
 
