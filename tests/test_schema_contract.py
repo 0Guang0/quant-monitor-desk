@@ -121,6 +121,32 @@ CHECK_CONTRACT_TABLES = (
 )
 
 
+CLEAN_DOMAIN_TABLES = (
+    "instrument_registry",
+    "security_bar_1d",
+    "cn_announcement_clean",
+)
+
+
+def test_cleanDomainMigration013Columns_existInSchemaContract() -> None:
+    """覆盖范围：013 clean 域表与 schema.sql 契约列对齐
+    测试对象：instrument_registry、security_bar_1d、cn_announcement_clean
+    目的/目标：R3H-06 迁移列须全部登记在 schema 契约
+    验证点：每张表的 mig_cols 非空且为 contract_cols 子集
+    失败含义：clean 域 DDL 与契约漂移，Wave 3 写路径无 SSOT
+    """
+    schema_text = SCHEMA_SQL.read_text(encoding="utf-8")
+    migration_text = (MIGRATIONS / "013_clean_domain_tables.sql").read_text(encoding="utf-8")
+    for table in CLEAN_DOMAIN_TABLES:
+        mig_cols = _table_columns(migration_text, table)
+        assert mig_cols, f"{table} missing from 013 migration"
+        contract_cols = _table_columns(schema_text, table)
+        assert contract_cols, f"{table} missing from schema.sql"
+        assert mig_cols.issubset(contract_cols), (
+            f"{table}: migration columns missing from schema.sql: {mig_cols - contract_cols}"
+        )
+
+
 def test_schemaContract_includesStatusCheckConstraints() -> None:
     """覆盖范围：schema.sql 中状态类 CHECK 约束
     测试对象：CHECK_CONTRACT_TABLES 各表的 CREATE TABLE 定义体

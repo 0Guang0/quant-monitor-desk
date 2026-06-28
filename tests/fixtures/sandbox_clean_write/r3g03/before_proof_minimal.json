@@ -1,6 +1,6 @@
 {
   "production_db_path": ".audit-sandbox/round3g/r3g03_promote_fixture.duckdb",
-  "target_table": "market_bar_clean",
+  "target_table": "security_bar_1d",
   "target_table_row_count": 0,
   "affected_key_range_count": 0,
   "target_schema_hash": "fixture-schema-hash-unset",

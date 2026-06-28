@@ -1,0 +1,28 @@
+{
+  "execute": {
+    "9.0-boot": "execute-evidence/9.0-green.txt",
+    "9.1-bar_ddl": "execute-evidence/9.1-green.txt",
+    "9.2-disclosure_ddl": "execute-evidence/9.2-green.txt",
+    "9.3-stg_bar_ohlcv": "execute-evidence/9.3-green.txt",
+    "9.4-stg_disclosure": "execute-evidence/9.4-green.txt",
+    "9.5-domain_router": "execute-evidence/9.5-green.txt",
+    "9.6-cninfo_shape": "execute-evidence/9.6-green.txt",
+    "9.7-idempotency": "execute-evidence/9.7-green.txt",
+    "9.8-pilot_compat": "execute-evidence/9.8-green.txt",
+    "9.9-docs_coverage": "execute-evidence/9.9-green.txt",
+    "9.10-merge_gate": "execute-evidence/9.10-full.txt"
+  },
+  "audit": {
+    "repair-ledger": "research/audit-repair-ledger.md",
+    "repair-summary": "research/audit-repair-summary.md",
+    "a1": "research/audit-a1-report.md",
+    "a2": "research/audit-a2-report.md",
+    "a3": "research/audit-a3-report.md",
+    "a4": "research/audit-a4-report.md",
+    "a5": "research/audit-a5-report.md",
+    "a6": "research/audit-a6-report.md",
+    "a7": "research/audit-a7-report.md",
+    "a8": "research/audit-a8-report.md",
+    "rollup": "audit.report.md"
+  }
+}

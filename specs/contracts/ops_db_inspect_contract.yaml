@@ -8,21 +8,21 @@ reference_landing:
   task_card: docs/implementation_tasks/ROUND_3_REFERENCE_LANDING/R3D_ops_db_data_health_reference.md
   branch: debt/r3-ops-inspect-data-health-references
   external_projects:
-  - name: EasyXT
-    url: https://github.com/quant-king299/EasyXT
-    adopted: metadata-only inspect; integrity categories deferred to docs/ops/data_health_cli.md
-    rejected: trading APIs, auto-login, hardcoded stock_daily schema, silent fallback
-  - name: JQ2PTrade
-    url: https://github.com/quant-king299/JQ2PTrade
-    adopted: --db local path override (v1_arguments.db)
-    rejected: PTrade/JoinQuant strategy conversion, order APIs, backtest loop
-  - name: ptqmt-site
-    url: https://github.com/quant-king299/ptqmt-site
-    adopted: local-only disclosure via docs/ops/ops_report_cli.md
-    rejected: online site runtime dependency
+    - name: EasyXT
+      url: https://github.com/quant-king299/EasyXT
+      adopted: metadata-only inspect; integrity categories deferred to docs/ops/data_health_cli.md
+      rejected: trading APIs, auto-login, hardcoded stock_daily schema, silent fallback
+    - name: JQ2PTrade
+      url: https://github.com/quant-king299/JQ2PTrade
+      adopted: --db local path override (v1_arguments.db)
+      rejected: PTrade/JoinQuant strategy conversion, order APIs, backtest loop
+    - name: ptqmt-site
+      url: https://github.com/quant-king299/ptqmt-site
+      adopted: local-only disclosure via docs/ops/ops_report_cli.md
+      rejected: online site runtime dependency
   related_design_docs:
-  - docs/ops/data_health_cli.md
-  - docs/ops/ops_report_cli.md
+    - docs/ops/data_health_cli.md
+    - docs/ops/ops_report_cli.md
 
 command:
   final: qmd ops db-inspect
@@ -183,10 +183,9 @@ key_tables:
   - axis_snapshot_lineage
   - instrument_registry
   - security_bar_1d
+  - cn_announcement_clean
 
-future_phase_key_tables:
-  - instrument_registry
-  - security_bar_1d
+future_phase_key_tables: []
 
 deferred_item_mapping:
   DB-R3-001:

@@ -3,7 +3,7 @@
   "dry_run_only": true,
   "identify_only": true,
   "production_db_path": ".audit-sandbox/round3g/r3g03_promote_fixture.duckdb",
-  "target_table": "market_bar_clean",
+  "target_table": "security_bar_1d",
   "affected_keys": [
     {
       "symbol": "sh.600000",

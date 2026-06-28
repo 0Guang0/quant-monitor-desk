@@ -19,6 +19,8 @@ from backend.app.db.validation_gate import (
 from backend.app.db.write_manager import WriteManager, WriteRequest
 from tests.db_helpers import (
     create_test_write_manager,
+    insert_smoke_clean_row,
+    insert_stg_foundation_smoke_row,
 )
 from tests.db_helpers import (
     empty_clean_table as _empty_clean_table,
@@ -259,14 +261,10 @@ def test_write_upsertByPk_pureNewRow_reportsZeroUpdated(tmp_path: Path) -> None:
     cm = _setup(tmp_path)
     with cm.writer() as w:
         _empty_clean_table(w)
-        w.execute(
-            "INSERT INTO security_bar_smoke_clean VALUES ('MSFT','2026-06-14',100.0,'qmt','b0')"
-        )
-        w.execute(
-            "INSERT INTO security_bar_smoke_clean VALUES ('GOOG','2026-06-13',200.0,'qmt','b0')"
-        )
+        insert_smoke_clean_row(w, "MSFT", "2026-06-14", 100.0, batch_id="b0")
+        insert_smoke_clean_row(w, "GOOG", "2026-06-13", 200.0, batch_id="b0")
         w.execute("DELETE FROM stg_foundation_smoke")
-        w.execute("INSERT INTO stg_foundation_smoke VALUES ('NVDA','2026-06-16',300.0,'qmt','b2')")
+        insert_stg_foundation_smoke_row(w, "NVDA", "2026-06-16", 300.0, batch_id="b2")
     res = create_test_write_manager(cm).write(_req(mode="upsert_by_pk"))
     assert res.status == "SUCCESS"
     assert res.rows_updated == 0
@@ -319,15 +317,21 @@ def test_write_upsertByPk_duplicateStagingPk_raises(tmp_path: Path) -> None:
             SELECT * FROM stg_foundation_smoke WHERE 1=0
             """
         )
-        w.execute("INSERT INTO stg_upsert_dup VALUES ('AAPL','2026-06-15',195.0,'qmt','b1')")
-        w.execute("INSERT INTO stg_upsert_dup VALUES ('AAPL','2026-06-15',196.0,'qmt','b2')")
+        _OHLCV_INSERT = """
+            INSERT INTO {table} (
+                instrument_id, trade_date, open, high, low, close, pre_close, volume, amount,
+                adjustment_type, source_used, batch_id, quality_flags, created_at
+            ) VALUES ('AAPL', '2026-06-15', ?, ?, ?, ?, NULL, NULL, NULL, 'none', 'qmt', ?, NULL, CURRENT_TIMESTAMP)
+        """
+        w.execute(_OHLCV_INSERT.format(table="stg_upsert_dup"), [195.0, 195.0, 195.0, 195.0, "b1"])
+        w.execute(_OHLCV_INSERT.format(table="stg_upsert_dup"), [196.0, 196.0, 196.0, 196.0, "b2"])
     dup_req = WriteRequest(
         run_id="r1",
         job_id="j1",
         target_table="security_bar_smoke_clean",
         staging_table="stg_upsert_dup",
         write_mode="upsert_by_pk",
-        primary_keys=("instrument_id", "trade_date"),
+        primary_keys=("instrument_id", "trade_date", "adjustment_type"),
         validation_report_id="stub-pass-1",
         source_used="qmt",
         data_domain="cn_equity_daily_bar",
@@ -365,7 +369,7 @@ def test_write_upsertByPk_mixedNewAndExisting_reportsCorrectCounts(tmp_path: Pat
     cm = _setup(tmp_path)
     with cm.writer() as w:
         w.execute("CREATE TABLE security_bar_smoke_clean AS SELECT * FROM stg_foundation_smoke")
-        w.execute("INSERT INTO stg_foundation_smoke VALUES ('MSFT','2026-06-15',120.0,'qmt','b2')")
+        insert_stg_foundation_smoke_row(w, "MSFT", "2026-06-15", 120.0, batch_id="b2")
         w.execute("UPDATE stg_foundation_smoke SET close=200.0 WHERE instrument_id='AAPL'")
     res = create_test_write_manager(cm).write(_req(mode="upsert_by_pk"))
     assert res.status == "SUCCESS"
@@ -421,7 +425,7 @@ def test_write_ownTransactionFalse_stubFail_doesNotRollbackOuterTxn(tmp_path: Pa
     with cm.writer() as w:
         _empty_clean_table(w)
         w.execute("BEGIN")
-        w.execute("INSERT INTO stg_foundation_smoke VALUES ('MSFT','2026-06-16',120.0,'qmt','b2')")
+        insert_stg_foundation_smoke_row(w, "MSFT", "2026-06-16", 120.0, batch_id="b2")
         res = create_test_write_manager(cm).write(
             _req(report="stub-fail-1"), con=w, own_transaction=False
         )

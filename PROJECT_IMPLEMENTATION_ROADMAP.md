@@ -272,14 +272,14 @@ research/r3g03_mass_rehearsal_report.md
 
 2026-06-27 隔离库预演证明：**抓取链（R3X/R3E）与 promote 链（R3G）可经 `live_evidence_bridge` 接到同一审批→质检→写库路径**，但仅落 **pilot 库**，不写主库。
 
-| 项                                     | 结论                                                     | 归入                                   |
-| -------------------------------------- | -------------------------------------------------------- | -------------------------------------- |
-| 主库安全 G8                            | ✅ denylist + mutation proof                             | 已闭合                                 |
-| FRED 证据分裂 G10                      | ✅ `official_macro_evidence_v1` SSOT                     | **已闭合 @ R3H-01（2026-06-28）**      |
-| baostock/fred 真网→pilot G1/G11        | ⚠️ `--live-wire` 运维切片                                | R3H-02 / R3H-03（产品化接线）          |
-| cninfo/akshare/yahoo 仍 fixture G16    | ❌                                                       | R3H-03 / R3X                           |
-| 同表/仅 close/无交易日 SSOT G2–G5、G17 | ⚠️ **CN G2/G17 已闭合 @ R3H-03**；US 日历 + G3–G5 仍开放 | Batch 3H schema + calendar（§5.0.1）   |
-| DH sidecar 补丁 G14                    | ⚠️ FRED 已闭合；baostock pilot 仍写 sidecar              | **R3H-01（FRED）** + R3H-03/05（余量） |
+| 项                                     | 结论                                                                       | 归入                                   |
+| -------------------------------------- | -------------------------------------------------------------------------- | -------------------------------------- |
+| 主库安全 G8                            | ✅ denylist + mutation proof                                               | 已闭合                                 |
+| FRED 证据分裂 G10                      | ✅ `official_macro_evidence_v1` SSOT                                       | **已闭合 @ R3H-01（2026-06-28）**      |
+| baostock/fred 真网→pilot G1/G11        | ⚠️ `--live-wire` 运维切片                                                  | R3H-02 / R3H-03（产品化接线）          |
+| cninfo/akshare/yahoo 仍 fixture G16    | ❌                                                                         | R3H-03 / R3X                           |
+| 同表/仅 close/无交易日 SSOT G2–G5、G17 | ⚠️ **CN G2/G17 已闭合 @ R3H-03**；**G3–G6 已闭合 @ R3H-06**；US 日历仍开放 | Batch 3H schema + calendar（§5.0.1）   |
+| DH sidecar 补丁 G14                    | ⚠️ FRED 已闭合；baostock pilot 仍写 sidecar                                | **R3H-01（FRED）** + R3H-03/05（余量） |
 
 **禁止：** 把 pilot 预演数据 merge 进 `quant_monitor.duckdb`；为 mass rehearsal 重开 R3G Trellis Plan。
 
@@ -304,7 +304,7 @@ Batch 3H 必须吸收 3G mass rehearsal 结论，而不是重复 pilot 脚本：
 | G11 baostock live→promote  | **R3H-03**           | ⚠️ **部分闭合**：port + evidence READY；**产品化** fetch→evidence→clean（非 `--live-wire`）→ **R3H-05**                                                          |
 | G2/G17 交易日窗（**CN**）  | **R3H-03**           | ✅ **已闭合** @ 2026-06-28（Grill-me Q12）：`cn_trading_calendar` + `calendar_gap_rules` `calendar_authority=True`；2030 后硬编码表 → **R3H-05**                 |
 | G2 交易日窗（**US/全球**） | **R3H-02 + R3H-05**  | ❌ **仍开放**：`yahoo_finance` / `stooq` / `alpha_vantage` 等仍用 **自然日窗**（`window_kind: calendar_days`）；**美股/NYSE 节假日 SSOT 未建** → **R3H-05 必审** |
-| G3/G4/G6 分表/OHLCV/PK     | **R3H-05 + schema**  | ❌ **仍开放**：正式 clean DDL / 分表 / PK 策略；R3H-01～04 **禁止**实现（见各卡 §8）                                                                             |
+| G3/G4/G6 分表/OHLCV/PK     | **R3H-06**           | ✅ **已闭合** @ 2026-06-29：migration 013/014 + 三域分表 + `upsert_by_pk`；R3H-01～04 **禁止**实现（见各卡 §8）                                                  |
 | G16 三源未 live-wire       | **R3H-03/02**        | ⚠️ **部分闭合**：adapter replay/mock READY；cninfo PDF capped live smoke；**真网产品化 + 分表** → **R3H-05**                                                     |
 | `web_search` 真搜索 API    | **延后 post-Round4** | ⏸ **用户裁决 @ 2026-06-28**：独立模块 **`R3H-WEB-SEARCH`**；Round4 前 mock/replay READY + 单条 scope ADR                                                         |
 

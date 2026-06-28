@@ -1,0 +1,2 @@
+12 passed (tests/test_r3h06_clean_schema.py -q)
+Resume 2026-06-29: boot module loads

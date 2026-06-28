@@ -9,7 +9,7 @@ source_candidates:
     start_date: "2026-05-01"
     end_date: "2026-05-30"
     max_rows: 100
-    target_table: market_bar_clean
+    target_table: security_bar_1d
 production_db_path: .audit-sandbox/round3g/r3g03_promote_fixture.duckdb
 rollback_plan_path: tests/fixtures/sandbox_clean_write/r3g03/rollback_plan_minimal.json
 rollback_required: true

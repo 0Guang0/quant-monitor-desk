@@ -1,0 +1,13 @@
+{"skill":"agent-toolchain","path":"agent-toolchain.md","phase":"boot"}
+{"skill":"trellis-plan","path":".cursor/skills/trellis-plan/SKILL.md","phase":"boot"}
+{"skill":"gitnexus-plan-1a","path":"AGENTS.md","phase":"1a"}
+{"skill":"trellis-brainstorm","path":".cursor/skills/trellis-brainstorm/SKILL.md","phase":"2a"}
+{"skill":"spec-driven-development","path":".claude/plugins/cache/addy-agent-skills/agent-skills/3a6fc6392823/skills/spec-driven-development/SKILL.md","phase":"2b"}
+{"skill":"grill-me","path":".claude/skills/grill-me/SKILL.md","phase":"3"}
+{"skill":"to-issues","path":".claude/skills/to-issues/SKILL.md","phase":"3.5"}
+{"skill":"gitnexus-plan-1b","path":"AGENTS.md","phase":"1b"}
+{"skill":"planning-and-task-breakdown","path":".claude/plugins/cache/addy-agent-skills/agent-skills/3a6fc6392823/skills/planning-and-task-breakdown/SKILL.md","phase":"5a"}
+{"skill":"writing-plans","path":".claude/plugins/cache/claude-plugins-official/superpowers/5.1.0/skills/writing-plans/SKILL.md","phase":"5b"}
+{"skill":"trellis-before-dev","path":".cursor/skills/trellis-before-dev/SKILL.md","phase":"5c"}
+{"skill":"doubt-driven-development","path":".claude/plugins/cache/addy-agent-skills/agent-skills/3a6fc6392823/skills/doubt-driven-development/SKILL.md","phase":"5d"}
+{"skill":"trellis-plan","path":".cursor/skills/trellis-plan/SKILL.md","phase":"5e"}

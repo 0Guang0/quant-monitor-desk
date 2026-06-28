@@ -6,7 +6,6 @@ from pathlib import Path
 
 import duckdb
 from backend.app.db.migrate import MIGRATIONS_DIR, apply_migrations
-from backend.app.ops.db_inspector import FUTURE_PHASE_KEY_TABLES
 
 LAYER1_AXIS_TABLES = frozenset(
     {
@@ -44,15 +43,25 @@ L4_DESIGNED_TABLES = frozenset(
     }
 )
 
-L5_DEFERRED_MIGRATION_TABLES = frozenset(
+L5_DEFERRED_MIGRATION_TABLES = frozenset()
+
+L5_MIGRATED_TABLES = frozenset(
     {
         "instrument_registry",
         "security_bar_1d",
     }
 )
 
+CLEAN_DOMAIN_MIGRATED_TABLES = frozenset(
+    {
+        "cn_announcement_clean",
+        "stg_disclosure_smoke",
+        "stg_axis_observation_smoke",
+    }
+)
+
 MODELING_TABLES_WITHOUT_MIGRATION = (
-    L3_DESIGNED_TABLES | L4_DESIGNED_TABLES | L5_DEFERRED_MIGRATION_TABLES
+    L3_DESIGNED_TABLES | L4_DESIGNED_TABLES
 )
 
 
@@ -88,16 +97,29 @@ def test_migrationCoverage_l4DesignedTables_haveNoMigration() -> None:
 
 
 def test_migrationCoverage_l5DeferredTables_haveNoMigration() -> None:
-    """覆盖范围：第五层 instrument/bar 设计表 vs migration 011 边界
-    测试对象：backend/app/db/migrations/*.sql 与 FUTURE_PHASE_KEY_TABLES
-    目的/目标：L5 关键表须与 db_inspector 前向清单一致地保持未迁移
-    验证点：L5_DEFERRED_MIGRATION_TABLES == FUTURE_PHASE_KEY_TABLES；表名不在 migration SQL
-    失败含义：Layer5 表被标为 N/A 却已有 DDL，或 KEY_TABLES 前向清单漂移
+    """覆盖范围：第五层 instrument/bar 设计表 vs migration 013（R3H-06）
+    测试对象：backend/app/db/migrations/*.sql
+    目的/目标：L5 bar 表由 013 落地后不再标 deferred
+    验证点：L5_MIGRATED_TABLES 出现在 migration SQL；L5_DEFERRED 为空
+    失败含义：L5 迁移与矩阵文档不一致
     """
-    assert L5_DEFERRED_MIGRATION_TABLES == FUTURE_PHASE_KEY_TABLES
+    assert not L5_DEFERRED_MIGRATION_TABLES
     migration_text = _all_migration_sql_text()
-    for table in L5_DEFERRED_MIGRATION_TABLES:
-        assert table not in migration_text, f"{table} found in migration SQL"
+    for table in L5_MIGRATED_TABLES:
+        assert table in migration_text, f"{table} missing from migration SQL"
+
+
+def test_migrationCoverage_l5MigratedTables_existAfter013() -> None:
+    """覆盖范围：013 后 L5 bar 表存在于 DuckDB
+    测试对象：apply_migrations 表清单
+    目的/目标：instrument_registry、security_bar_1d 可回归断言
+    验证点：L5_MIGRATED_TABLES ⊆ tables
+    失败含义：013 未应用或表名漂移
+    """
+    con = duckdb.connect(":memory:")
+    apply_migrations(con)
+    tables = {row[0] for row in con.execute("SHOW TABLES").fetchall()}
+    assert L5_MIGRATED_TABLES.issubset(tables)
 
 
 def test_migrationCoverage_l1AxisTables_existAfterMigration011() -> None:
@@ -127,6 +149,19 @@ def test_migrationCoverage_futurePhaseTables_absentAfterFullMigrate() -> None:
     tables = {row[0] for row in con.execute("SHOW TABLES").fetchall()}
     overlap = MODELING_TABLES_WITHOUT_MIGRATION.intersection(tables)
     assert not overlap, f"unexpected modeling tables migrated: {sorted(overlap)}"
+
+
+def test_migrationCoverage_cleanDomainTables_existAfter013() -> None:
+    """覆盖范围：013 clean 域 disclosure/macro 表存在
+    测试对象：apply_migrations 表清单
+    目的/目标：R3H-06 三域 DDL 矩阵与 DuckDB 一致
+    验证点：CLEAN_DOMAIN_MIGRATED_TABLES ⊆ tables
+    失败含义：disclosure/macro clean 表缺失则 promote 路由无落盘表
+    """
+    con = duckdb.connect(":memory:")
+    apply_migrations(con)
+    tables = {row[0] for row in con.execute("SHOW TABLES").fetchall()}
+    assert CLEAN_DOMAIN_MIGRATED_TABLES.issubset(tables)
 
 
 def test_migrationCoverage_matrixDocPath_exists() -> None:

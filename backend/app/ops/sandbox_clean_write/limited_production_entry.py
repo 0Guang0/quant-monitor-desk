@@ -34,9 +34,13 @@ from backend.app.ops.sandbox_clean_write.gates import (
     validation_status_from_dh,
 )
 from backend.app.ops.sandbox_clean_write.path_utils import resolve_sandbox_path, utc_now_iso
+from backend.app.ops.sandbox_clean_write.clean_write_targets import (
+    METADATA_DOMAINS,
+    resolve_clean_write_target,
+)
 from backend.app.ops.sandbox_clean_write.rehearsal_loader import (
     load_rehearsal_bundle,
-    populate_staging_from_bundle,
+    populate_staging_for_target,
 )
 from backend.app.ops.sandbox_clean_write.rehearsal_plan import (
     RehearsalCandidate,
@@ -215,6 +219,22 @@ def _target_table_row_count(con, table: str) -> int:
     return int(con.execute(f"SELECT COUNT(*) FROM {quoted}").fetchone()[0])
 
 
+_NON_TARGET_KEY_BY_TABLE = {
+    "security_bar_1d": "instrument_id",
+    "cn_announcement_clean": "instrument_id",
+    "axis_observation": "indicator_id",
+}
+
+
+def _non_target_key_column(table: str) -> str:
+    col = _NON_TARGET_KEY_BY_TABLE.get(table)
+    if col is None:
+        raise LimitedProductionEntryError(
+            f"unsupported target table for non-target row count: {table!r}"
+        )
+    return col
+
+
 def _non_target_row_count(con, table: str, approved_symbols: tuple[str, ...]) -> int:
     """Count rows in target table outside approved symbol set (execute after-proof)."""
     tables = {
@@ -228,8 +248,9 @@ def _non_target_row_count(con, table: str, approved_symbols: tuple[str, ...]) ->
     quoted = _quoted_table(table)
     if not approved_symbols:
         return int(con.execute(f"SELECT COUNT(*) FROM {quoted}").fetchone()[0])
+    key_col = _non_target_key_column(table)
     placeholders = ", ".join("?" for _ in approved_symbols)
-    sql = f"SELECT COUNT(*) FROM {quoted} WHERE instrument_id NOT IN ({placeholders})"
+    sql = f"SELECT COUNT(*) FROM {quoted} WHERE {key_col} NOT IN ({placeholders})"
     return int(con.execute(sql, list(approved_symbols)).fetchone()[0])
 
 
@@ -531,39 +552,40 @@ def _production_clean_write(
     cm = ConnectionManager(production_db)
     with cm.writer() as con:
         apply_migrations(con)
+        write_target = resolve_clean_write_target(candidate.domain)
+        if candidate.target_table != write_target.target_table:
+            raise LimitedProductionEntryError(
+                f"target_table {candidate.target_table!r} != domain router "
+                f"{write_target.target_table!r}"
+            )
         before_non_target = _non_target_row_count(con, candidate.target_table, candidate.symbols)
+        before_bar_rows = 0
+        if candidate.domain in METADATA_DOMAINS:
+            before_bar_rows = int(
+                con.execute("SELECT COUNT(*) FROM security_bar_1d").fetchone()[0]
+            )
         validation_report_id = _ensure_validation_report(con, rehearsal, run_id, dh_report)
-        staged_count = populate_staging_from_bundle(
-            con,
-            bundle,
-            batch_id=PROMOTE_ID,
-            max_rows=candidate.max_rows,
-            start_date=candidate.start_date,
-            end_date=candidate.end_date,
-            allow_window_fallback=allow_fixture_window_fallback,
+        populate_kwargs = {
+            "batch_id": PROMOTE_ID,
+            "max_rows": candidate.max_rows,
+            "start_date": candidate.start_date,
+            "end_date": candidate.end_date,
+            "allow_window_fallback": allow_fixture_window_fallback,
+        }
+        staged_count = populate_staging_for_target(
+            con, bundle, write_target.staging_table, **populate_kwargs
         )
         if staged_count <= 0:
             raise LimitedProductionEntryError("bundle produced zero staging rows")
-        quoted_target = _quoted_table(candidate.target_table)
-        tables = {
-            row[0]
-            for row in con.execute(
-                "SELECT table_name FROM information_schema.tables WHERE table_schema = 'main'"
-            ).fetchall()
-        }
-        if candidate.target_table not in tables:
-            con.execute(
-                f"CREATE TABLE {quoted_target} AS SELECT * FROM stg_foundation_smoke WHERE 1=0"
-            )
         gate = DbValidationGate(cm)
         wm = WriteManager(cm, gate)
         req = WriteRequest(
             run_id=run_id,
             job_id="r3g03-clean-write",
-            target_table=candidate.target_table,
-            staging_table="stg_foundation_smoke",
-            write_mode="append_only",
-            primary_keys=("instrument_id", "trade_date"),
+            target_table=write_target.target_table,
+            staging_table=write_target.staging_table,
+            write_mode=write_target.write_mode,
+            primary_keys=write_target.primary_keys,
             validation_report_id=validation_report_id,
             source_used=candidate.source_id,
             data_domain=candidate.domain,
@@ -571,13 +593,22 @@ def _production_clean_write(
         result = wm.write(req, con=con, own_transaction=True)
         if result.status != "SUCCESS":
             raise LimitedProductionEntryError(result.error_message or "production clean write failed")
-        rows_inserted = int(result.rows_inserted)
+        rows_inserted = int(result.rows_inserted) + int(result.rows_updated)
         after_non_target = _non_target_row_count(con, candidate.target_table, candidate.symbols)
         if after_non_target != before_non_target:
             raise LimitedProductionEntryError(
                 "execute mutated non-target key rows",
                 code="DRY_RUN_MUTATION",
             )
+        if candidate.domain in METADATA_DOMAINS:
+            after_bar_rows = int(
+                con.execute("SELECT COUNT(*) FROM security_bar_1d").fetchone()[0]
+            )
+            if after_bar_rows != before_bar_rows:
+                raise LimitedProductionEntryError(
+                    "cninfo promote mutated security_bar_1d",
+                    code="DRY_RUN_MUTATION",
+                )
         return result.write_id, rows_inserted, after_non_target
 
 

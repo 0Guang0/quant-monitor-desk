@@ -205,7 +205,7 @@ def _write_pilot_artifacts(spec: dict) -> Path:
         "start_date": WINDOW_START,
         "end_date": WINDOW_END,
         "max_rows": spec["max_rows"],
-        "target_table": "market_bar_clean",
+        "target_table": "security_bar_1d",
     }
     if spec["metadata_only"]:
         candidate_body["metadata_only"] = True
@@ -236,7 +236,7 @@ def _write_pilot_artifacts(spec: dict) -> Path:
         "start_date": WINDOW_START,
         "end_date": WINDOW_END,
         "max_rows": spec["max_rows"],
-        "target_table": "market_bar_clean",
+        "target_table": "security_bar_1d",
         "production_db_path": db_rel,
     }
 

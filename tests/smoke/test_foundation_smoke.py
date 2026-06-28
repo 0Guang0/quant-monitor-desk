@@ -11,7 +11,7 @@ from backend.app.db.migrate import apply_migrations
 from backend.app.db.write_manager import WriteRequest
 from backend.app.storage.file_registry import FileRegistry
 from backend.app.storage.raw_store import RawStore
-from tests.db_helpers import create_test_write_manager
+from tests.db_helpers import create_test_write_manager, insert_stg_foundation_smoke_row
 
 FOUNDATION_TABLES = {
     "schema_version",
@@ -74,7 +74,7 @@ def test_foundation_endToEnd_writesCleanAndAudits(tmp_path: Path, monkeypatch) -
         )
 
     with cm.writer() as w:
-        w.execute("INSERT INTO stg_foundation_smoke VALUES ('AAPL','2026-06-15',195.0,'qmt','b1')")
+        insert_stg_foundation_smoke_row(w, "AAPL", "2026-06-15", 195.0)
         w.execute(
             "CREATE TABLE security_bar_smoke_clean AS SELECT * FROM stg_foundation_smoke WHERE 1=0"
         )
@@ -85,7 +85,7 @@ def test_foundation_endToEnd_writesCleanAndAudits(tmp_path: Path, monkeypatch) -
             target_table="security_bar_smoke_clean",
             staging_table="stg_foundation_smoke",
             write_mode="append_only",
-            primary_keys=("instrument_id", "trade_date"),
+            primary_keys=("instrument_id", "trade_date", "adjustment_type"),
             validation_report_id="stub-pass-1",
             source_used="qmt",
             data_domain="cn_equity_daily_bar",

@@ -86,18 +86,21 @@ def test_evidence_contract_writeReadRoundTrip_fixturePreservesFields(tmp_path: P
 
 
 def test_evidence_contract_stagingRows_observationDateEndToEnd(tmp_path: Path) -> None:
-    """覆盖范围：live → promote → rehearsal staging 行
-    测试对象：materialize_fred_promote_evidence + staging_rows_from_bundle
-    目的/目标：observation_date 从 live 经 normalizer 到 staging trade_date，无需字段重命名
-    验证点：3 行 staging；DGS10×2 + VIXCLS×1；trade_date 来自 observation_date
-    失败含义：FRED 官方宏观证据无法贯通 promote 预演链，G10/G14 仍开放
+    """覆盖范围：live → promote → macro staging 行
+    测试对象：materialize_fred_promote_evidence + populate_macro_from_bundle
+    目的/目标：observation_date 从 live 经 normalizer 到 axis_observation staging
+    验证点：3 行 staging；DGS10×2 + VIXCLS×1；as_of 来自 observation_date
+    失败含义：FRED 官方宏观证据无法贯通 R3H-06 macro clean 链，G10/G14 仍开放
     """
+    import duckdb
+
+    from backend.app.db.migrate import apply_migrations
     from backend.app.ops.sandbox_clean_write.live_evidence_bridge import (
         materialize_fred_promote_evidence,
     )
     from backend.app.ops.sandbox_clean_write.rehearsal_loader import (
         load_rehearsal_bundle,
-        staging_rows_from_bundle,
+        populate_macro_from_bundle,
     )
     from backend.app.ops.sandbox_clean_write.rehearsal_plan import RehearsalCandidate
 
@@ -111,20 +114,36 @@ def test_evidence_contract_stagingRows_observationDateEndToEnd(tmp_path: Path) -
         window_days=120,
     )
     bundle = load_rehearsal_bundle(candidate, evidence_dir=out, dry_run=False, cap_profile="r3g03")
-    rows = staging_rows_from_bundle(
+    con = duckdb.connect(":memory:")
+    apply_migrations(con)
+    count = populate_macro_from_bundle(
+        con,
         bundle,
         batch_id="evidence-contract",
         max_rows=400,
         start_date="2026-01-01",
         end_date="2026-12-31",
     )
-    assert len(rows) == 3
-    dgs10 = [r for r in rows if r.instrument_id == "DGS10"]
-    vix = [r for r in rows if r.instrument_id == "VIXCLS"]
+    assert count == 3
+    payload = json.loads((out / "fred_evidence.json").read_text(encoding="utf-8"))
+    observations = payload.get("observations") or []
+    rows = con.execute(
+        "SELECT indicator_id, CAST(publish_timestamp AS DATE), raw_value "
+        "FROM stg_axis_observation_smoke"
+    ).fetchall()
+    dgs10 = [r for r in rows if r[0] == "DGS10"]
+    vix = [r for r in rows if r[0] == "VIXCLS"]
     assert len(dgs10) == 2
     assert len(vix) == 1
-    assert {r.trade_date for r in dgs10} == {"2026-06-25", "2026-06-24"}
-    assert vix[0].trade_date == "2026-06-25"
+    for indicator_id, pub_date, raw_value in rows:
+        pub_str = str(pub_date)
+        matched = any(
+            str(obs.get("series_id")) == indicator_id
+            and str(obs.get("observation_date") or obs.get("date")) == pub_str
+            and float(obs.get("value") or 0) == float(raw_value)
+            for obs in observations
+        )
+        assert matched, f"no evidence row for {indicator_id} {pub_str} {raw_value}"
 
 
 _FRED_REPLAY = (

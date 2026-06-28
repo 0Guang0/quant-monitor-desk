@@ -1,0 +1,56 @@
+{
+  "task": "06-29-round3h-r3h06-clean-schema",
+  "modules": [],
+  "acs": [
+    {
+      "id": "CNINFO-NO-BAR",
+      "status": "done",
+      "repair_items": []
+    },
+    {
+      "id": "CNINFO-SHAPE",
+      "status": "done",
+      "repair_items": []
+    },
+    {
+      "id": "DOCS",
+      "status": "done",
+      "repair_items": []
+    },
+    {
+      "id": "G6-IDEMPOTENCY",
+      "status": "done",
+      "repair_items": []
+    },
+    {
+      "id": "MERGE",
+      "status": "done",
+      "repair_items": []
+    },
+    {
+      "id": "PILOT-COMPAT",
+      "status": "done",
+      "repair_items": []
+    },
+    {
+      "id": "SCHEMA-G3-ROUTER",
+      "status": "done",
+      "repair_items": []
+    },
+    {
+      "id": "SCHEMA-G3G4-BAR",
+      "status": "done",
+      "repair_items": []
+    },
+    {
+      "id": "SCHEMA-G4-OHLCV",
+      "status": "done",
+      "repair_items": []
+    },
+    {
+      "id": "STG-DISCLOSURE",
+      "status": "done",
+      "repair_items": []
+    }
+  ]
+}

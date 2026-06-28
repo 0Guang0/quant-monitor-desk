@@ -50,7 +50,7 @@ def _deferred_mapping_from_contract(
 
 def _future_phase_key_tables_from_contract(raw: dict[str, Any]) -> frozenset[str]:
     tables = raw.get("future_phase_key_tables")
-    if not tables:
+    if tables is None:
         raise ValueError("ops_db_inspect_contract: future_phase_key_tables required")
     names = frozenset(str(name) for name in tables)
     for name in names:
@@ -74,7 +74,7 @@ DEFERRED_ITEM_MAPPING: tuple[tuple[str, tuple[str, ...]], ...] = _deferred_mappi
 FUTURE_PHASE_KEY_TABLES: frozenset[str] = _future_phase_key_tables_from_contract(_contract)
 REQUIRED_TOP_LEVEL_FIELDS: tuple[str, ...] = _required_top_level_fields_from_contract(_contract)
 
-# Layer 5 tables — listed for forward inventory; no migration until Batch 5 (023).
+# Layer 5 tables — instrument_registry / security_bar_1d migrated @ 013 (R3H-06).
 
 EMPTY_EVIDENCE: dict[str, Any] = {
     "latest_fetch": {

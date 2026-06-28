@@ -20,9 +20,13 @@ from backend.app.ops.data_health import DataHealthReport, DataHealthService
 from backend.app.ops.data_health_profiles import run_data_health_profile
 from backend.app.ops.mutation_proof import build_production_mutation_proof
 from backend.app.ops.mutation_proof import key_table_row_counts as _key_table_row_counts
+from backend.app.ops.sandbox_clean_write.clean_write_targets import (
+    BAR_DOMAINS,
+    resolve_clean_write_target,
+)
 from backend.app.ops.sandbox_clean_write.rehearsal_loader import (
     load_rehearsal_bundle,
-    populate_staging_from_bundle,
+    populate_staging_for_target,
 )
 from backend.app.ops.sandbox_clean_write.rehearsal_plan import (
     RehearsalCandidate,
@@ -177,6 +181,8 @@ def _ensure_validation_report(
     candidate: RehearsalCandidate,
     run_id: str,
     dh_report: DataHealthReport,
+    *,
+    staging_table: str = "stg_foundation_smoke",
 ) -> str:
     validation_report_id = _validation_report_id_for_source(candidate.source_id)
     db_status = _db_validation_status_from_dh(dh_report)
@@ -196,7 +202,7 @@ def _ensure_validation_report(
             run_id,
             "r3g01-clean-write",
             candidate.domain,
-            "stg_foundation_smoke",
+            staging_table,
             candidate.source_id,
             db_status,
             1,
@@ -224,28 +230,46 @@ def _sandbox_clean_write(
 ) -> tuple[str, int]:
     sandbox_db.parent.mkdir(parents=True, exist_ok=True)
     cm = ConnectionManager(sandbox_db)
+    write_target = resolve_clean_write_target(candidate.domain)
+    # ponytail: r3g01 bar rehearsal keeps legacy smoke CTAS; promote uses security_bar_1d
+    if candidate.domain in BAR_DOMAINS:
+        target_table = "security_bar_smoke_clean"
+        staging_table = "stg_foundation_smoke"
+        write_mode = "append_only"
+        primary_keys = ("instrument_id", "trade_date", "adjustment_type")
+    else:
+        target_table = write_target.target_table
+        staging_table = write_target.staging_table
+        write_mode = write_target.write_mode
+        primary_keys = write_target.primary_keys
     with cm.writer() as con:
         apply_migrations(con)
-        _ensure_clean_table(con)
-        validation_report_id = _ensure_validation_report(con, candidate, run_id, dh_report)
-        populate_staging_from_bundle(
-            con,
-            bundle,
-            batch_id=REHEARSAL_ID,
-            max_rows=max(1, bundle.staged_row_count),
-            start_date=bundle.window_start if bundle.window_start != "unknown" else None,
-            end_date=bundle.window_end if bundle.window_end != "unknown" else None,
-            allow_window_fallback=True,
+        if candidate.domain in BAR_DOMAINS:
+            _ensure_clean_table(con)
+        validation_report_id = _ensure_validation_report(
+            con, candidate, run_id, dh_report, staging_table=staging_table
         )
+        populate_kwargs = {
+            "batch_id": REHEARSAL_ID,
+            "max_rows": max(1, bundle.staged_row_count),
+            "start_date": bundle.window_start if bundle.window_start != "unknown" else None,
+            "end_date": bundle.window_end if bundle.window_end != "unknown" else None,
+            "allow_window_fallback": True,
+        }
+        staged_count = populate_staging_for_target(
+            con, bundle, staging_table, **populate_kwargs
+        )
+        if staged_count <= 0:
+            raise RehearsalRunnerError(f"bundle produced zero staging rows for {candidate.source_id}")
         gate = DbValidationGate(cm)
         wm = WriteManager(cm, gate)
         req = WriteRequest(
             run_id=run_id,
             job_id="r3g01-clean-write",
-            target_table="security_bar_smoke_clean",
-            staging_table="stg_foundation_smoke",
-            write_mode="append_only",
-            primary_keys=("instrument_id", "trade_date"),
+            target_table=target_table,
+            staging_table=staging_table,
+            write_mode=write_mode,
+            primary_keys=primary_keys,
             validation_report_id=validation_report_id,
             source_used=candidate.source_id,
             data_domain=candidate.domain,
@@ -253,7 +277,7 @@ def _sandbox_clean_write(
         result = wm.write(req, con=con, own_transaction=True)
         if result.status != "SUCCESS":
             raise RehearsalRunnerError(result.error_message or "sandbox clean write failed")
-        clean_count = con.execute("SELECT COUNT(*) FROM security_bar_smoke_clean").fetchone()[0]
+        clean_count = con.execute(f"SELECT COUNT(*) FROM {target_table}").fetchone()[0]
         return result.write_id, int(clean_count)
 
 
@@ -263,6 +287,7 @@ def _write_rollback_artifact(
     write_id: str,
     candidate: RehearsalCandidate,
     sandbox_db: Path,
+    target_table: str,
 ) -> Path:
     payload = {
         "rehearsal_id": REHEARSAL_ID,
@@ -271,7 +296,7 @@ def _write_rollback_artifact(
         "source_id": candidate.source_id,
         "domain": candidate.domain,
         "sandbox_db": str(sandbox_db),
-        "rollback_plan": "DELETE FROM security_bar_smoke_clean WHERE batch_id = ?",
+        "rollback_plan": f"DELETE FROM {target_table} WHERE batch_id = ?",
         "rollback_params": [REHEARSAL_ID],
         "dry_run_note": "sandbox rehearsal rollback artifact for audit only",
     }
@@ -346,11 +371,18 @@ def _process_candidate(
         run_id=run_id,
         dh_report=dh_report,
     )
+    write_target = resolve_clean_write_target(candidate.domain)
+    target_table = (
+        "security_bar_smoke_clean"
+        if candidate.domain in BAR_DOMAINS
+        else write_target.target_table
+    )
     rollback_path = _write_rollback_artifact(
         request.evidence_dir,
         write_id=write_id,
         candidate=candidate,
         sandbox_db=request.sandbox_db,
+        target_table=target_table,
     )
     fetch_cov = _coverage_ratio(len(bundle.source_fetch_ids), max(1, bundle.raw_row_count))
     content_cov = _coverage_ratio(len(bundle.content_hashes), max(1, bundle.raw_row_count))

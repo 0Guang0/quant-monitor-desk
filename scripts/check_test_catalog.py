@@ -482,6 +482,19 @@ CURATED: dict[str, dict] = {
             "forbidden trading, login, fallback, or reference-project runtime patterns."
         ),
     },
+    "tests/test_r3h06_clean_schema.py": {
+        "purpose": "R3H-06 Wave 1 clean domain DDL, OHLCV staging, cninfo shape, domain router, G6 idempotency",
+        "type": "contract",
+        "verifies": {
+            "docs": [
+                "docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/R3H_06_CLEAN_SCHEMA.md",
+            ],
+            "specs": ["specs/schema/schema.sql"],
+            "rules": ["docs/implementation_tasks/GLOBAL_TESTING_POLICY.md"],
+        },
+        "command": "uv run python -m pytest tests/test_r3h06_clean_schema.py -q",
+        "failure_meaning": "R3H-06 clean schema DDL/routing/idempotency regression; inspect frozen card AC.",
+    },
     "tests/test_r3h_adapter_evidence_matrix.py": {
         "purpose": "Round 3H adapter evidence-matrix planning gate",
         "type": "policy-contract",

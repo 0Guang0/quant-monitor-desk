@@ -1,6 +1,6 @@
 # Schema vs Migration Coverage Matrix
 
-> **Last verified:** 2026-06-25 · **Baseline:** `master` @ migrations `001`–`012` · B3F-MIG reconcile
+> **Last verified:** 2026-06-29 · **Baseline:** `master` @ migrations `001`–`014` · R3H-06 clean domain
 > **Purpose:** Clarify which `specs/schema/schema.sql` objects are implemented vs deferred (closes audit A2-P2-01).
 
 ## Legend
@@ -14,29 +14,29 @@
 
 ## Core ingestion (Round 2)
 
-| Object                   | Migration | Status   | Notes                                                                                                          |
-| ------------------------ | --------- | -------- | -------------------------------------------------------------------------------------------------------------- |
-| `schema_version`         | 001       | DONE     |                                                                                                                |
+| Object                   | Migration     | Status   | Notes                                                                                                                 |
+| ------------------------ | ------------- | -------- | --------------------------------------------------------------------------------------------------------------------- |
+| `schema_version`         | 001           | DONE     |                                                                                                                       |
 | `source_registry`        | 004, 009, 012 | PARTIAL  | `source_type` / `license_type` CHECK via 009; `registry_generation` / `removed_from_yaml_at` via **012** (R3F-MIG-04) |
-| `fetch_log`              | 004, 009, 012 | PARTIAL  | `status` CHECK via 009; explicit-column rebuild via **012** (R3F-MIG-03)                                       |
-| `file_registry`          | 001/004   | DONE     | `content_hash` UNIQUE                                                                                          |
-| `data_sync_job`          | 006, 007  | DONE     | Status CHECK via 007 rebuild                                                                                   |
-| `job_event_log`          | 006, 007  | DONE     | old/new status CHECK                                                                                           |
-| `validation_report`      | 005       | DONE     | Status CHECK                                                                                                   |
-| `data_quality_log`       | 005       | DONE     |                                                                                                                |
-| `source_conflict`        | 005, 009  | DONE     | `severity` / `reconcile_status` CHECK via 009                                                                  |
-| `write_audit_log`        | 001, 007  | PARTIAL  | Extra audit columns in design not all migrated                                                                 |
-| `resource_guard_log`     | 003       | DONE     |                                                                                                                |
-| `manual_review_queue`    | 005, 009, 012 | PARTIAL  | `status` / `source_object_type` CHECK via 009; `priority` app-layer (R2-RISK-4, ADR-002); explicit rebuild **012** |
-| `source_health_snapshot` | —         | DEFERRED | D2-P2-1                                                                                                        |
+| `fetch_log`              | 004, 009, 012 | PARTIAL  | `status` CHECK via 009; explicit-column rebuild via **012** (R3F-MIG-03)                                              |
+| `file_registry`          | 001/004       | DONE     | `content_hash` UNIQUE                                                                                                 |
+| `data_sync_job`          | 006, 007      | DONE     | Status CHECK via 007 rebuild                                                                                          |
+| `job_event_log`          | 006, 007      | DONE     | old/new status CHECK                                                                                                  |
+| `validation_report`      | 005           | DONE     | Status CHECK                                                                                                          |
+| `data_quality_log`       | 005           | DONE     |                                                                                                                       |
+| `source_conflict`        | 005, 009      | DONE     | `severity` / `reconcile_status` CHECK via 009                                                                         |
+| `write_audit_log`        | 001, 007      | PARTIAL  | Extra audit columns in design not all migrated                                                                        |
+| `resource_guard_log`     | 003           | DONE     |                                                                                                                       |
+| `manual_review_queue`    | 005, 009, 012 | PARTIAL  | `status` / `source_object_type` CHECK via 009; `priority` app-layer (R2-RISK-4, ADR-002); explicit rebuild **012**    |
+| `source_health_snapshot` | —             | DEFERRED | D2-P2-1                                                                                                               |
 
 ## Modeling / backtest (Round 3+)
 
-| Object                                               | Migration | Status             | Notes                                                          |
-| ---------------------------------------------------- | --------- | ------------------ | -------------------------------------------------------------- |
-| `axis_registry` … `axis_snapshot_lineage` (7 tables) | 011       | DONE               | Authoritative for Layer 1; `schema.sql` sync **DEFERRED O-02** |
-| `instrument_registry`, `security_bar_1d`             | —         | DEFERRED — Layer 5 | Staged runtime only; `FUTURE_PHASE_KEY_TABLES`; Round 3F owner |
-| `backtest_*`, `alert_event`                          | —         | N/A — Round 4/5    |                                                                |
+| Object                                               | Migration | Status          | Notes                                                          |
+| ---------------------------------------------------- | --------- | --------------- | -------------------------------------------------------------- |
+| `axis_registry` … `axis_snapshot_lineage` (7 tables) | 011       | DONE            | Authoritative for Layer 1; `schema.sql` sync **DEFERRED O-02** |
+| `instrument_registry`, `security_bar_1d`             | 013       | DONE            | R3H-06 Wave 1; PK on bar includes `adjustment_type`            |
+| `backtest_*`, `alert_event`                          | —         | N/A — Round 4/5 |                                                                |
 
 ## Round 3 Layer 3 — industry chain (designed, no migration)
 
@@ -71,17 +71,19 @@
 
 ## Round 3 Layer 5 — security evidence (partial design in schema.sql)
 
-> **SSOT split:** `specs/schema/schema.sql` lists `instrument_registry`, `security_bar_1d`; module doc uses `security_bar_daily` naming — **neither migrated**.  
-> **Staged runtime:** `backend/app/layer5_evidence/` — not production DB path.
+> **SSOT split:** `specs/schema/schema.sql` lists `instrument_registry`, `security_bar_1d`, `cn_announcement_clean`; module doc uses `security_bar_daily` naming for runtime model — bar tables **migrated @ 013**.  
+> **Staged runtime:** `backend/app/layer5_evidence/` — pilot/sandbox promote path only; **not** default `quant_monitor.duckdb`.
 
-| Object                                                     | Migration | Status            | Notes                                            |
-| ---------------------------------------------------------- | --------- | ----------------- | ------------------------------------------------ |
-| `instrument_registry`                                      | —         | DEFERRED          | Staged validator; `KEY_TABLES` forward inventory |
-| `security_bar_1d` (`schema.sql`)                           | —         | DEFERRED          | Design name in `schema.sql`                      |
-| `security_bar_daily` (module doc)                          | —         | DEFERRED          | Runtime model name; naming drift vs schema       |
-| `futures_bar_daily`, `options_chain_snapshot`              | —         | DEFERRED          | 023 full scope                                   |
-| `financial_statement_snapshot`, `valuation_snapshot`       | —         | DEFERRED          | 023 full scope                                   |
-| `event_registry`, `evidence_chain`, `stock_model_evidence` | —         | DEFERRED / staged | In-memory chain only for `evidence_chain`        |
+| Object                                                     | Migration | Status            | Notes                                                           |
+| ---------------------------------------------------------- | --------- | ----------------- | --------------------------------------------------------------- |
+| `instrument_registry`                                      | 013       | DONE              | R3H-06; PK `instrument_id`                                      |
+| `security_bar_1d` (`schema.sql`)                           | 013, 014  | DONE              | OHLCV + PK; **014** rebuilds `stg_foundation_smoke` parity      |
+| `cn_announcement_clean`                                    | 013       | DONE              | cninfo metadata clean; `content_status` default `metadata_only` |
+| `stg_disclosure_smoke`                                     | 013       | DONE              | cninfo promote staging                                          |
+| `security_bar_daily` (module doc)                          | —         | DEFERRED          | Runtime model name; naming drift vs schema                      |
+| `futures_bar_daily`, `options_chain_snapshot`              | —         | DEFERRED          | 023 full scope                                                  |
+| `financial_statement_snapshot`, `valuation_snapshot`       | —         | DEFERRED          | 023 full scope                                                  |
+| `event_registry`, `evidence_chain`, `stock_model_evidence` | —         | DEFERRED / staged | In-memory chain only for `evidence_chain`                       |
 
 ## Round 3 Layer 1 (migration 011)
 
@@ -100,13 +102,20 @@
 
 Cross-reference: `docs/schema/MIGRATION_008_PLAN.md`, `docs/AUDIT_DEFERRED_REGISTRY.md`.
 
+## Round 3H clean domain (migrations 013–014 · R3H-06)
+
+| Migration | Objects                                                                                                                 | Rollback                                                                                                                                                                                        |
+| --------- | ----------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **013**   | `instrument_registry`, `security_bar_1d`, `cn_announcement_clean`, `stg_disclosure_smoke`, `stg_axis_observation_smoke` | **No down migration.** Pilot/sandbox rollback: restore pre-promote DuckDB snapshot (`backup_or_snapshot_pointer` in R3G-03 before proof); do not `DROP` on shared audit DB without coordinator. |
+| **014**   | Rebuild `stg_foundation_smoke` with OHLCV + `adjustment_type` PK                                                        | **No down migration.** Staging-only; re-apply migrations on fresh test DB.                                                                                                                      |
+
 **Migration 009 vs 008 narrative (ADV-A6-003 / R4):** Migration **007** rebuilt sync job tables with CHECK constraints; **008** (`008_lineage_version_fields.sql`) lineage columns; **009** applied `status` CHECK constraints on ingestion tables; **010** enforced non-null `rule_set_id` / `rule_version` on validation lineage with explicit-column rebuild (no `SELECT *` replay); **012** (Round 3F / R3F-MIG) adds `registry_generation` / `removed_from_yaml_at`, explicit-column rebuild for `fetch_log` / `manual_review_queue`, and documents `priority` app-layer-only per ADR-002.
 
 ## Round 3F routing (R3F-MIG-05)
 
-| Bucket | Items | Owner / evidence |
-| ------ | ----- | ---------------- |
-| **009-resolved** | `fetch_log.status`, `source_registry` enum CHECKs, `manual_review_queue.status`/`source_object_type`, `source_conflict` severity/reconcile | `009_status_check_constraints.sql`; `test_schemaContract_includesStatusCheckConstraints` |
-| **3F-open → closed** | `registry_generation` / `removed_from_yaml_at` (D2-P3-1); `fetch_log`/`manual_review_queue` explicit rebuild (A9-P3-01 subset) | **012**; `tests/test_round3f_migration_residuals.py` |
-| **App-layer / wont-fix DB CHECK** | `manual_review_queue.priority` (R2-RISK-4) | ADR-002 §App-layer-only columns |
-| **Deferred** | `source_health_snapshot` table (D2-P2-1) | B3F-SH owns table semantics — **not** B3F-MIG |
+| Bucket                            | Items                                                                                                                                      | Owner / evidence                                                                         |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
+| **009-resolved**                  | `fetch_log.status`, `source_registry` enum CHECKs, `manual_review_queue.status`/`source_object_type`, `source_conflict` severity/reconcile | `009_status_check_constraints.sql`; `test_schemaContract_includesStatusCheckConstraints` |
+| **3F-open → closed**              | `registry_generation` / `removed_from_yaml_at` (D2-P3-1); `fetch_log`/`manual_review_queue` explicit rebuild (A9-P3-01 subset)             | **012**; `tests/test_round3f_migration_residuals.py`                                     |
+| **App-layer / wont-fix DB CHECK** | `manual_review_queue.priority` (R2-RISK-4)                                                                                                 | ADR-002 §App-layer-only columns                                                          |
+| **Deferred**                      | `source_health_snapshot` table (D2-P2-1)                                                                                                   | B3F-SH owns table semantics — **not** B3F-MIG                                            |

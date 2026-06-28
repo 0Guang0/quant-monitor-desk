@@ -154,6 +154,7 @@ class WriteManager:
         if req.write_mode == "append_only":
             return [f"INSERT INTO {target} ({col_sql}) SELECT {col_sql} FROM {staging}"]
         if req.write_mode == "upsert_by_pk":
+            # ponytail: DELETE…EXISTS scans target per PK match; upgrade: MERGE + index (Wave 3 scale)
             pk_join = " AND ".join(f"{target}.{col} = {staging}.{col}" for col in primary_keys)
             return [
                 f"DELETE FROM {target} WHERE EXISTS (SELECT 1 FROM {staging} WHERE {pk_join})",

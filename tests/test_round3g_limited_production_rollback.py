@@ -118,23 +118,18 @@ def test_RollbackPlan_nonTargetRowsUnchangedOnDryRunIdentify(tmp_path: Path) -> 
     cm = ConnectionManager(db_path)
     with cm.writer() as con:
         apply_migrations(con)
+        con.execute("DELETE FROM security_bar_1d")
         con.execute(
             """
-            CREATE TABLE IF NOT EXISTS market_bar_clean (
-                instrument_id VARCHAR,
-                trade_date DATE,
-                close DOUBLE
-            )
+            INSERT INTO security_bar_1d (
+                instrument_id, trade_date, open, high, low, close, pre_close, volume, amount,
+                adjustment_type, source_used, batch_id, quality_flags, created_at
+            ) VALUES
+            ('sh.600000', '2026-05-01', 10.0, 10.0, 10.0, 10.0, NULL, NULL, NULL, 'none', 'test', 'b0', NULL, CURRENT_TIMESTAMP),
+            ('sz.000001', '2026-05-01', 11.0, 11.0, 11.0, 11.0, NULL, NULL, NULL, 'none', 'test', 'b0', NULL, CURRENT_TIMESTAMP)
             """
         )
-        con.execute("DELETE FROM market_bar_clean")
-        con.execute(
-            "INSERT INTO market_bar_clean VALUES ('sh.600000', '2026-05-01', 10.0)"
-        )
-        con.execute(
-            "INSERT INTO market_bar_clean VALUES ('sz.000001', '2026-05-01', 11.0)"
-        )
-        before_count = con.execute("SELECT COUNT(*) FROM market_bar_clean").fetchone()[0]
+        before_count = con.execute("SELECT COUNT(*) FROM security_bar_1d").fetchone()[0]
 
     contract = load_approval_contract(APPROVAL_FIXTURE)
     candidate = contract.source_candidates[0]
@@ -143,7 +138,7 @@ def test_RollbackPlan_nonTargetRowsUnchangedOnDryRunIdentify(tmp_path: Path) -> 
     assert len(keys) == 1
 
     with cm.reader() as con:
-        after_count = con.execute("SELECT COUNT(*) FROM market_bar_clean").fetchone()[0]
+        after_count = con.execute("SELECT COUNT(*) FROM security_bar_1d").fetchone()[0]
     assert after_count == before_count == 2
 
 

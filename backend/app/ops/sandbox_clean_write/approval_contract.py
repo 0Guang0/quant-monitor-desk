@@ -117,16 +117,44 @@ def _window_days(start: str, end: str) -> int:
     return (end_d - start_d).days + 1
 
 
+_R3G03_MAX_ROWS_CEILING = 1200  # 10 symbols × 120 window_days (contract caps)
+
+
+def _validate_r3g03_max_rows(
+    *,
+    max_rows: int,
+    symbol_count: int,
+    window_days: int,
+) -> None:
+    # ponytail: 4× slack for sparse calendars / adjustment_type; upgrade: yaml r3g03_max_rows
+    theoretical = max(1, symbol_count) * max(1, window_days)
+    soft_cap = theoretical * 4
+    if max_rows > soft_cap:
+        raise ApprovalContractError(
+            f"max_rows {max_rows} exceeds symbols×window×4 cap ({soft_cap})"
+        )
+    if max_rows > _R3G03_MAX_ROWS_CEILING:
+        raise ApprovalContractError(
+            f"max_rows {max_rows} exceeds r3g03 ceiling {_R3G03_MAX_ROWS_CEILING}"
+        )
+
+
 def validate_r3g03_source_caps(candidate: ApprovalCandidate) -> None:
     """Hard-reject candidates exceeding contract r3g03 caps."""
+    window_days = _window_days(candidate.start_date, candidate.end_date)
     validate_contract_source_caps(
         source_id=candidate.source_id,
         domain=candidate.domain,
         symbols=candidate.symbols,
-        window_days=_window_days(candidate.start_date, candidate.end_date),
+        window_days=window_days,
         metadata_only=candidate.metadata_only,
         profile="r3g03",
         error_cls=ApprovalContractError,
+    )
+    _validate_r3g03_max_rows(
+        max_rows=candidate.max_rows,
+        symbol_count=len(candidate.symbols),
+        window_days=window_days,
     )
 
 

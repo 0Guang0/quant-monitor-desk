@@ -36,6 +36,8 @@ ALL_MIGRATION_VERSIONS = frozenset(
         "010_lineage_not_null",
         "011_layer1_tables",
         "012_migration_residuals",
+        "013_clean_domain_tables",
+        "014_stg_bar_ohlcv",
     }
 )
 

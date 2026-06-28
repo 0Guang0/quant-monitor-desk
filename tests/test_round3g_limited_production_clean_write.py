@@ -225,6 +225,32 @@ def test_ApprovalContract_approvalAuditMismatch_blocks(tmp_path: Path) -> None:
         validate_approval_contract(approval_path, audit_path)
 
 
+def test_ApprovalContract_maxRowsExceedsSymbolWindowCap_blocks(tmp_path: Path) -> None:
+    """覆盖范围：max_rows 与 symbol×window 硬顶（A6-NB-4）
+    测试对象：validate_r3g03_source_caps
+    目的/目标：approval 不得将 max_rows 设为远超窗口行数
+    验证点：1 symbol × 30d、max_rows=200 抛 cap 错误
+    失败含义：超大 max_rows 可绕过 bounded promote 契约
+    """
+    from backend.app.ops.sandbox_clean_write.approval_contract import (
+        ApprovalCandidate,
+        ApprovalContractError,
+        validate_r3g03_source_caps,
+    )
+
+    candidate = ApprovalCandidate(
+        source_id="baostock",
+        domain="cn_equity_daily_bar",
+        symbols=("sh.600519",),
+        start_date="2026-05-01",
+        end_date="2026-05-30",
+        max_rows=200,
+        target_table="security_bar_1d",
+    )
+    with pytest.raises(ApprovalContractError, match="symbols×window×4"):
+        validate_r3g03_source_caps(candidate)
+
+
 def test_ApprovalContract_capExpansion_blocks(tmp_path: Path) -> None:
     """覆盖范围：block_if cap_expansion
     测试对象：validate_r3g03_source_caps
@@ -246,7 +272,7 @@ def test_ApprovalContract_capExpansion_blocks(tmp_path: Path) -> None:
         start_date="2026-05-01",
         end_date="2026-05-30",
         max_rows=100,
-        target_table="market_bar_clean",
+        target_table="security_bar_1d",
     )
     with pytest.raises(ApprovalContractError, match="max 10 symbols"):
         validate_r3g03_source_caps(candidate)
@@ -297,7 +323,7 @@ def test_BeforeProof_buildsRequiredFields(tmp_path: Path) -> None:
         start_date="2026-05-01",
         end_date="2026-05-30",
         max_rows=100,
-        target_table="market_bar_clean",
+        target_table="security_bar_1d",
     )
     db_path = PROJECT_ROOT / ".audit-sandbox/round3g/pytest/before_proof_prod.duckdb"
     db_path.parent.mkdir(parents=True, exist_ok=True)
@@ -384,7 +410,7 @@ def test_PromoteRunner_forbiddenSource_blocks(tmp_path: Path) -> None:
         start_date="2026-05-01",
         end_date="2026-05-30",
         max_rows=10,
-        target_table="market_bar_clean",
+        target_table="security_bar_1d",
     )
     with pytest.raises(ApprovalContractError, match="forbidden or unknown source"):
         validate_r3g03_source_caps(candidate)
@@ -423,7 +449,7 @@ def test_AfterProof_buildsRequiredFields() -> None:
         start_date="2026-05-01",
         end_date="2026-05-30",
         max_rows=100,
-        target_table="market_bar_clean",
+        target_table="security_bar_1d",
     )
     before = {"target_table_row_count": 0, "production_db_path": "/tmp/x.duckdb"}
     after = build_after_proof(
@@ -645,7 +671,7 @@ def test_ApprovalContract_windowCapExpansion_blocks() -> None:
         start_date="2026-01-01",
         end_date="2026-05-01",
         max_rows=100,
-        target_table="market_bar_clean",
+        target_table="security_bar_1d",
     )
     with pytest.raises(ApprovalContractError, match="max window"):
         validate_r3g03_source_caps(candidate)
@@ -894,7 +920,7 @@ def test_BeforeProof_invalidBackupPointer_blocks() -> None:
         start_date="2026-05-01",
         end_date="2026-05-30",
         max_rows=100,
-        target_table="market_bar_clean",
+        target_table="security_bar_1d",
     )
     db_path = PROJECT_ROOT / ".audit-sandbox/round3g/pytest/backup_ptr.duckdb"
     with pytest.raises(LimitedProductionEntryError, match="backup_or_snapshot_pointer"):
@@ -948,7 +974,7 @@ def test_PromoteRunner_execute_writesEvidenceRows_notSmokePlaceholder(
     """覆盖范围：promote execute 多行 staging → clean
     测试对象：run_limited_production_entry execute 路径
     目的/目标：execute 写入行数/字段与 bundle evidence 一致
-    验证点：market_bar_clean 2 行；close 含 2.0/3.0；source_used=baostock
+    验证点：security_bar_1d 2 行；close 含 2.0/3.0；source_used=baostock
     失败含义：execute 仍只插 1 行 close=10.0 占位
     """
     import yaml
@@ -1011,13 +1037,16 @@ def test_PromoteRunner_execute_writesEvidenceRows_notSmokePlaceholder(
     cm = ConnectionManager(paths["prod_db"])
     with cm.reader() as con:
         rows = con.execute(
-            "SELECT instrument_id, trade_date, close, source_used "
-            "FROM market_bar_clean ORDER BY trade_date"
+            "SELECT instrument_id, trade_date, open, high, low, close, volume, amount, source_used "
+            "FROM security_bar_1d ORDER BY trade_date"
         ).fetchall()
     assert len(rows) == 2
-    closes = {float(r[2]) for r in rows}
+    closes = {float(r[5]) for r in rows}
     assert closes == {2.0, 3.0}
-    assert all(r[3] == "baostock" for r in rows)
+    assert all(r[8] == "baostock" for r in rows)
+    for row in rows:
+        assert row[2] is not None and row[3] is not None and row[4] is not None
+        assert row[6] is not None
 
 
 def test_PromoteRunner_refusesCanonicalProductionDbPath(tmp_path: Path) -> None:
@@ -1129,18 +1158,21 @@ def test_LiveEvidenceBridge_baostock_materializesBarsFromStagedV2(tmp_path: Path
 
 
 def test_LiveEvidenceBridge_fred_materializesMultiSeriesObservations(tmp_path: Path) -> None:
-    """覆盖范围：腿 C FRED live → promote 证据桥接
-    测试对象：materialize_fred_promote_evidence + staging_rows_from_bundle
-    目的/目标：多 series live 证据应映射为多 instrument staging 行
-    验证点：fred_evidence 3 观测；staging 含 DGS10×2 + VIXCLS×1；无 DH sidecar
-    失败含义：FRED 真网数据无法经同一 promote 链写入练习库
+    """覆盖范围：腿 C FRED live → macro staging 证据桥接
+    测试对象：materialize_fred_promote_evidence + populate_macro_from_bundle
+    目的/目标：多 series live 证据应映射为 axis_observation 形 staging 行
+    验证点：fred_evidence 3 观测；staging 含 DGS10×2 + VIXCLS×1；indicator_id 正确
+    失败含义：FRED 真网数据无法经 R3H-06 macro clean 路径写入练习库
     """
+    import duckdb
+
+    from backend.app.db.migrate import apply_migrations
     from backend.app.ops.sandbox_clean_write.live_evidence_bridge import (
         materialize_fred_promote_evidence,
     )
     from backend.app.ops.sandbox_clean_write.rehearsal_loader import (
         load_rehearsal_bundle,
-        staging_rows_from_bundle,
+        populate_macro_from_bundle,
     )
     from backend.app.ops.sandbox_clean_write.rehearsal_plan import RehearsalCandidate
 
@@ -1155,19 +1187,25 @@ def test_LiveEvidenceBridge_fred_materializesMultiSeriesObservations(tmp_path: P
         window_days=120,
     )
     bundle = load_rehearsal_bundle(candidate, evidence_dir=out, dry_run=False, cap_profile="r3g03")
-    rows = staging_rows_from_bundle(
+    con = duckdb.connect(":memory:")
+    apply_migrations(con)
+    count = populate_macro_from_bundle(
+        con,
         bundle,
         batch_id="live-wire",
         max_rows=400,
         start_date="2026-01-01",
         end_date="2026-12-31",
     )
-    assert len(rows) == 3
-    dgs10 = [r for r in rows if r.instrument_id == "DGS10"]
-    vix = [r for r in rows if r.instrument_id == "VIXCLS"]
+    assert count == 3
+    rows = con.execute(
+        "SELECT indicator_id, raw_value FROM stg_axis_observation_smoke ORDER BY indicator_id, raw_value"
+    ).fetchall()
+    dgs10 = [r for r in rows if r[0] == "DGS10"]
+    vix = [r for r in rows if r[0] == "VIXCLS"]
     assert len(dgs10) == 2
     assert len(vix) == 1
-    assert dgs10[0].close == 4.4
+    assert float(dgs10[0][1]) == 4.4
     fred_payload = json.loads((out / "fred_evidence.json").read_text(encoding="utf-8"))
     assert fred_payload.get("retrieved_at")
     assert fred_payload.get("schema_version") == "official_macro_evidence_v1"

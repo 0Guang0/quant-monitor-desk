@@ -448,9 +448,9 @@ def test_dbValidationGate_writeManagerIntegration_rejectsFailed(tmp_path: Path) 
     cm = _setup(tmp_path)
     with cm.writer() as con:
         con.execute("CREATE TABLE target_clean AS SELECT * FROM stg_foundation_smoke WHERE 1=0")
-        con.execute(
-            "INSERT INTO stg_foundation_smoke VALUES ('AAPL','2026-06-15',195.0,'qmt','b1')"
-        )
+        from tests.db_helpers import insert_stg_foundation_smoke_row
+
+        insert_stg_foundation_smoke_row(con, "AAPL", "2026-06-15", 195.0)
     _insert_report(
         cm,
         "vr-fail-2",

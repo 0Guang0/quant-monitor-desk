@@ -82,20 +82,20 @@ Round4  Batch04（B04-01 先，余者并行）
 
 ---
 
-## 4. 各波次任务卡（规划 ID — 活卡待建）
+## 4. 各波次任务卡（规划 ID）
 
-| 波次 | ID                 | 拥有                                           | 并行                 | 闭合 §5.0.1 ID                           |
-| ---- | ------------------ | ---------------------------------------------- | -------------------- | ---------------------------------------- |
-| 0    | Batch3V B3V-01..06 | VR-\* trust                                    | ✅ Done @ 2026-06-28 | G6 部分、schema_hash                     |
-| 1    | **R3H-06**         | 域分表、OHLCV、cninfo disclosure 形、PK/upsert | 单轨                 | SCHEMA-G3G4, CNINFO-DISCLOSURE-SHAPE, G6 |
-| 2a   | **R3H-07**         | US TradingCalendar L2                          | 与 2b 并行           | CAL-US                                   |
-| 2b   | **R3H-10**         | fetch_ports SSOT；staged 仅 rehearsal          | 与 2a 并行           | STAGED-PILOT-SSOT                        |
-| 3a   | **R3H-08A**        | CN primary live→A；G14 sidecar 去除            | 与 3b/c/d 并行       | G14, G11, LIVE-PROD(CN primary)          |
-| 3b   | **R3H-08B**        | validation 源 live→B；G16 wire                 | 并行                 | G16, LIVE-PROD(validation)               |
-| 3c   | **R3H-08C**        | 宏观五源 + fred env-gated live→A               | 并行                 | MACRO-LIVE-DEFER, LIVE-PROD(macro)       |
-| 3d   | **R3H-08D**        | kalshi/polymarket env-gated live→C             | 并行                 | KALSHI-POLY-LIVE                         |
-| 4    | **R3H-05A..E**     | 分轨审计 slice                                 | A–E 并行             | REF-ADOPT, G13, REGISTRY-ORPHAN, …       |
-| 4    | **R3H-05-GATE**    | 合并 audit + **PASS** 裁决                     | **串行最后**         | 全部 §7                                  |
+| 波次 | ID                 | 拥有                                           | 并行                 | 闭合 §5.0.1 ID                           | 活卡 / Trellis                               |
+| ---- | ------------------ | ---------------------------------------------- | -------------------- | ---------------------------------------- | -------------------------------------------- |
+| 0    | Batch3V B3V-01..06 | VR-\* trust                                    | ✅ Done @ 2026-06-28 | G6 部分、schema_hash                     | CLOSED                                       |
+| 1    | **R3H-06**         | 域分表、OHLCV、cninfo disclosure 形、PK/upsert | 单轨                 | SCHEMA-G3G4, CNINFO-DISCLOSURE-SHAPE, G6 | `R3H_06_CLEAN_SCHEMA.md` · Plan @ 2026-06-29 |
+| 2a   | **R3H-07**         | US TradingCalendar L2                          | 与 2b 并行           | CAL-US                                   | 待建                                         |
+| 2b   | **R3H-10**         | fetch_ports SSOT；staged 仅 rehearsal          | 与 2a 并行           | STAGED-PILOT-SSOT                        | 待建                                         |
+| 3a   | **R3H-08A**        | CN primary live→A；G14 sidecar 去除            | 与 3b/c/d 并行       | G14, G11, LIVE-PROD(CN primary)          | 待建                                         |
+| 3b   | **R3H-08B**        | validation 源 live→B；G16 wire                 | 并行                 | G16, LIVE-PROD(validation)               | 待建                                         |
+| 3c   | **R3H-08C**        | 宏观五源 + fred env-gated live→A               | 并行                 | MACRO-LIVE-DEFER, LIVE-PROD(macro)       | 待建                                         |
+| 3d   | **R3H-08D**        | kalshi/polymarket env-gated live→C             | 并行                 | KALSHI-POLY-LIVE                         | 待建                                         |
+| 4    | **R3H-05A..E**     | 分轨审计 slice                                 | A–E 并行             | REF-ADOPT, G13, REGISTRY-ORPHAN, …       | `R3H_05_*.md`                                |
+| 4    | **R3H-05-GATE**    | 合并 audit + **PASS** 裁决                     | **串行最后**         | 全部 §7                                  | Wave 4 最后                                  |
 
 ---
 

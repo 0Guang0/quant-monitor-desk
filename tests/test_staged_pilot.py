@@ -1174,8 +1174,9 @@ def test_mutationProof_mutationDetectedWhenNonKeyTableRowCountChanges(
     con.execute(
         """
         INSERT INTO stg_foundation_smoke (
-            instrument_id, trade_date, close, source_used, batch_id
-        ) VALUES ('sh.600519', DATE '2026-06-01', 1.0, 'test', 'batch-1')
+            instrument_id, trade_date, open, high, low, close, pre_close, volume, amount,
+            adjustment_type, source_used, batch_id, quality_flags, created_at
+        ) VALUES ('sh.600519', DATE '2026-06-01', 1.0, 1.0, 1.0, 1.0, NULL, NULL, NULL, 'none', 'test', 'batch-1', NULL, CURRENT_TIMESTAMP)
         """
     )
     con.close()
