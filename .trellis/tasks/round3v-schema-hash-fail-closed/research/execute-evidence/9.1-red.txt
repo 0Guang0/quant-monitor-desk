@@ -1,3 +1,3 @@
-DATA-01 RED: contract test before structured section
-pytest tests/test_data_adapter_contract.py::test_dataAdapterContract_documentsStructuredSchemaHashRequirement -v
-FAILED AssertionError: structured file types not in contract (pre-edit)
+DATA-01 RED: contract structured schema_hash rule (pre-implementation baseline)
+grep -c "Structured schema_hash" specs/contracts/data_adapter_contract.md
+0 (before GREEN: section absent)

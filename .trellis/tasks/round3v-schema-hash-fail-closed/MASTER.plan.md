@@ -82,6 +82,7 @@ MUST Read `.cursor/rules/ponytail.mdc`；复用 `_shape` JSON 指纹；CSV stdli
 | `data_adapter_contract.md` | 结构化 schema_hash | [x] |
 | `skeleton_base.py` | infer + fetch | [x] |
 | `validation_gate.py` | fail-closed | [x] |
+| `adapters/__init__.py` + `source_registry.py` | adapter 注册邻接（playbook `registry.py` 路径纠偏） | [x] |
 | `data_quality_rules.yaml` | SCHEMA_DRIFT | [x] |
 | `write_contract.yaml` | schema_hash_changed | [x] |
 | `resource_limits.yaml` | 有界读取 | [x] |
@@ -112,6 +113,7 @@ MUST Read `.cursor/rules/ponytail.mdc`；复用 `_shape` JSON 指纹；CSV stdli
 
 - 无 live fetch；无 production clean write；无全文件扫描
 - **不 Execute registry 闭合**（B02-DATA-05 → 主会话）
+- **未改什么（Playbook §8.2）：** db-inspect 契约、WriteManager 模式表、RawStore、sync 矩阵、registry 行、Layer5 runtime。
 
 ### 1.5 停止条件
 

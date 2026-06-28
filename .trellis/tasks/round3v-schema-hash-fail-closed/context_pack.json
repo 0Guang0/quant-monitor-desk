@@ -102,6 +102,11 @@
       "reason": "db_platform design authority"
     },
     {
+      "type": "design",
+      "path": "docs/schema/MIGRATION_COVERAGE.md",
+      "reason": "db_platform design authority"
+    },
+    {
       "type": "contract",
       "path": "specs/schema/schema.sql",
       "reason": "db_platform contract"
@@ -119,7 +124,7 @@
     },
     {
       "path": "tests/test_source_registry.py",
-      "purpose": "Source registry loader and DB sync tests (Batch A)."
+      "purpose": "Source registry loader, DB sync, and schema enum compatibility tests (Batch A / data source expansion)."
     },
     {
       "path": "tests/test_source_route_planner.py",
@@ -136,6 +141,10 @@
     {
       "path": "tests/test_r3x_data_source_routing_blockers.py",
       "purpose": "R3X data-source routing blocker tests (ADV-A2 cluster)."
+    },
+    {
+      "path": "tests/test_prediction_market_adapters.py",
+      "purpose": "R3H-04 预测市场适配器测试（Batch 3H）。"
     },
     {
       "path": "tests/test_write_manager.py",
@@ -168,6 +177,10 @@
     {
       "path": "tests/test_sync_migration.py",
       "purpose": "Tests for migration 006 ingestion sync tables (Batch D §8.1)."
+    },
+    {
+      "path": "tests/test_migration_coverage.py",
+      "purpose": "L3/L4/L5 建模表 migration 覆盖矩阵门禁（B3V-L5R / VR-MODEL-001 closure test）。"
     },
     {
       "path": "tests/test_adapter_skeletons.py",

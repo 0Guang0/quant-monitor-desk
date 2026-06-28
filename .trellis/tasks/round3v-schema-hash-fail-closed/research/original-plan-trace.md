@@ -1,8 +1,11 @@
 # 原计划追溯 — B3V-C02 / VR-DATA-001
 
+> **垂直切片 SSOT：** `WAVE0_BATCH3V_TO_ISSUES_INDEX.md` §4（B3V-C02 · B3V-DATA）— 与 `research/vertical-slices.md` / MASTER §8 对齐。
+
 | 任务卡 | Manifest | Playbook | MASTER AC | 验证链 |
 |--------|----------|----------|-----------|--------|
 | `B02_02_schema_hash_fail_closed.md` | `B3V-C02` | B3V-DATA §3.3 | AC-DATA-01..05 | §8 DATA-01..04 → §9 → §6 |
+| `WAVE0_BATCH3V_TO_ISSUES_INDEX.md` §4 | `B3V-C02` | Wave 0 INDEX | 同左 | DATA-01..04 竖条 |
 
 ## 切片映射
 
@@ -27,3 +30,4 @@
 ## 纠偏
 
 - Plan 阶段不实现 registry 闭合；Execute 完成后由主会话更新 `UNRESOLVED_ITEM_TASK_COVERAGE` 与 registry 三件套。
+- Playbook §3.3 `adapters/registry.py` **仓库无此文件**；邻接 SSOT 为 `adapters/__init__.py` + `source_registry.py`（已入 MASTER/implement）。

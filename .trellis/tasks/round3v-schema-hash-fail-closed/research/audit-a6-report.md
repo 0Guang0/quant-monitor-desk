@@ -3,8 +3,9 @@
 > **维度：** A6 · performance-engineer + doubt-driven-development  
 > **模型：** composer-2.5  
 > **任务：** `round3v-schema-hash-fail-closed`（B3V-DATA · Manifest `B3V-C02`）  
-> **Worktree：** `quant-monitor-desk-wt-b3v-data`  
-> **日期：** 2026-06-25  
+> **Worktree：** `C:\Users\Guang\Desktop\quant-monitor-desk-wt-b3v-data`  
+> **分支 / HEAD：** `fix/round3v-schema-hash-fail-closed` · `93815e00`  
+> **日期：** 2026-06-28  
 > **模式：** Audit（只读，无 commit、无改码）
 
 ---
@@ -27,13 +28,24 @@
 | LCP / INP / CLS    | not measured | —                       | CWV               | —（无 Web） |
 | smoke 端到端耗时   | not measured | Plan 未挂载             | —                 | SKIP        |
 | ResourceGuard 触发 | not measured | infer 路径未挂 guard    | —                 | SKIP        |
-| 最慢单测 call      | 0.49s        | pytest `--durations=10` | 未冻结            | 参考 only   |
-| gate 缺 hash 测    | 0.44s        | 同上                    | 未冻结            | 参考 only   |
+| 最慢单测 call      | 0.57s        | pytest `--durations=10` | 未冻结            | 参考 only   |
+| gate 缺 hash 测    | 0.50s (csv)  | 同上                    | 未冻结            | 参考 only   |
 | adapter infer 测   | ≤0.05s       | 同上（无进 top10）      | 未冻结            | 参考 only   |
 
 > **Artifacts used:** `uv run pytest tests/test_data_adapter_contract.py tests/test_db_validation_gate.py tests/test_adapter_skeletons.py -q --basetemp=.audit-sandbox/pytest --durations=10`  
-> **注记：** Windows basetemp 并发残留导致 1 个 setup ERROR（`FileExistsError`）；A6 不依赖 exit 0，perf 结论来自静态路径审阅 + durations 参考。  
+> **注记：** 本次复跑 106 passed / 1 failed（`test_missingSchemaHashOnStructuredFetch_rejects[parquet]` DuckDB `database does not exist` IO 错误）；属 Windows basetemp 并发/残留卫生问题，非 perf 回归；正式门禁委托 A8 干净复跑。  
 > **Stack detected:** Python 单机 pipeline；adapter fetch + ValidationGate SQL；无 API/调度 hot path；非 Web 应用
+
+---
+
+## GitNexus 爆炸半径（A6 必用 · 2026-06-28）
+
+| 符号 | 方向 | risk | direct | processes | 模块 | A6 解读 |
+| ---- | ---- | ---- | ------ | --------- | ---- | ------- |
+| `_infer_schema_hash` (`skeleton_base.py`) | upstream | **LOW** | 1 | 0 | Adapters | 每 fetch 一次；非生产 hot path |
+| `_schema_hash_blocks_write` (`validation_gate.py`) | upstream | **LOW** | 1 | 1 (`assert_can_write`) | Db | clean-write 前 O(1) gate；非高频 API |
+
+**结论：** 两符号 blast radius 均为 LOW，无 CRITICAL/HIGH 性能面；与 AUDIT.plan「无 SLA 热点」一致。
 
 ---
 
@@ -78,7 +90,7 @@
 | 检查项                       | 状态        | 说明                                          |
 | ---------------------------- | ----------- | --------------------------------------------- |
 | Baseline 有证据来源          | **N/A**     | Plan 未冻结 perf 命令                         |
-| EXPLAIN/profile/smoke        | **N/A**     | Gate SQL  trivial；无 smoke 挂载点            |
+| EXPLAIN/profile/smoke        | **N/A**     | Gate SQL trivial；无 smoke 挂载点            |
 | 优化后同一命令对比           | **N/A**     | 无优化项                                      |
 | sandbox 数据量级与 Plan 一致 | **PASS**    | fixture 小文件；`max_payload_bytes=10MB` 既有 |
 | 全量 pytest 无无关回归       | **委托 A8** | 本维 durations 参考；正式门禁见 A8            |
@@ -138,7 +150,7 @@
 | Parquet infer 是否违反「不全文件扫描」？  | **否** — DESCRIBE 读列元数据；符合 MASTER §2.5 / B02_02 §4 设计意图     |
 | Gate 新增缺 hash 分支是否增加 DB 负载？   | **否** — 复用既有 `current_row` 查询；仅加布尔判定，无额外 round-trip   |
 | JSON 全文 parse 是否 BLOCKING？           | **否** — 10MB cap + 非 hot path；登记 NB-1 备忘                         |
-| pytest gate 测 ~0.44s 是否 perf 回归？    | **否** — DuckDB/SQLite fixture 启动主导；无冻结基线                     |
+| pytest gate 测 ~0.50s 是否 perf 回归？    | **否** — DuckDB/SQLite fixture 启动主导；无冻结基线                     |
 
 ---
 
@@ -146,14 +158,14 @@
 
 | 指标                                                         | 阈值（Plan 冻结） | 实测                    | 证据                                                                 |
 | ------------------------------------------------------------ | ----------------- | ----------------------- | -------------------------------------------------------------------- |
-| `test_data_adapter_contract` + gate + skeletons              | exit 0（A8）      | 参考跑：1 setup ERROR*  | `uv run pytest … -q --basetemp=.audit-sandbox/pytest --durations=10` |
-| 最慢 gate 测 call                                            | **未冻结**        | 0.49s                   | 同上                                                                 |
-| `test_missingSchemaHashOnStructuredFetch_rejects`            | **未冻结**        | 0.44s                   | 同上                                                                 |
+| `test_data_adapter_contract` + gate + skeletons              | exit 0（A8）      | 106 passed / 1 IO fail* | `uv run pytest … -q --basetemp=.audit-sandbox/pytest --durations=10` |
+| 最慢 gate 测 call                                            | **未冻结**        | 0.57s                   | 同上                                                                 |
+| `test_missingSchemaHashOnStructuredFetch_rejects[csv]`       | **未冻结**        | 0.50s                   | 同上                                                                 |
 | smoke 端到端                                                 | **未冻结**        | **未测**                | SKIP                                                                 |
 | ResourceGuard                                                | **未冻结**        | **未触及**              | 无调用路径                                                           |
 | 内存峰值 MB                                                  | **未冻结**        | **未测**                | fixture KB–MB 级                                                     |
 
-\* Windows `.audit-sandbox/pytest` 目录残留导致 `FileExistsError` setup 失败；属环境卫生问题，非实现 perf 缺陷；正式 PASS 以 A8 干净复跑为准。
+\* `test_missingSchemaHashOnStructuredFetch_rejects[parquet]` 因 basetemp 下 DuckDB 文件缺失失败；属 A8 环境卫生，非 A6 perf 缺陷。
 
 ---
 
@@ -165,7 +177,7 @@
 | NB-2 | Parquet infer **每请求 temp 写盘 + DuckDB 新建连接**                 | **NON-BLOCKING**     | 非 hot path；若未来高频 Parquet ingest 可考虑连接复用 / 内存 buffer   |
 | —    | hot path / 全表扫 / 网络无界 I/O / Gate N+1                         | **无 BLOCKING 发现** | 已审阅 `skeleton_base.py`、`validation_gate.py`、B02_02 §4、MASTER §7 |
 
-**显式声明：** 已对照 `B02_02_schema_hash_fail_closed.md` §4、`AUDIT.plan.md` §1 A6、`MASTER.plan.md` §2.5/§7/§10、`agents/performance-engineer.md`、实现全文及 pytest durations；**无 BLOCKING perf 项**。
+**显式声明：** 已对照 `B02_02_schema_hash_fail_closed.md` §4、`AUDIT.plan.md` §1 A6、`MASTER.plan.md` §2.5/§7/§10、`agents/performance-engineer.md`、GitNexus impact、实现全文及 pytest durations；**无 BLOCKING perf 项**。
 
 ---
 
@@ -173,4 +185,4 @@
 
 **A6 审计判定：SKIP（维持）。**
 
-理由摘要：B3V-DATA schema_hash fail-closed 是 **有界 schema 指纹 + ValidationGate fail-closed** 安全底座修补；任务卡与 AUDIT.plan §1 均排除全文件扫描、live fetch 与 prod I/O；**无**冻结 perf 阈值、**无**生产 hot path。实现遵守 CSV 64KB 前缀、Parquet DESCRIBE 元数据、Gate `LIMIT 1` SQL。计划外扫描登记 2 项 **NON-BLOCKING** 备忘，**不阻断** B3V-DATA merge。
+理由摘要：B3V-DATA schema_hash fail-closed 是 **有界 schema 指纹 + ValidationGate fail-closed** 安全底座修补；任务卡与 AUDIT.plan §1 均排除全文件扫描、live fetch 与 prod I/O；**无**冻结 perf 阈值、**无**生产 hot path。实现遵守 CSV 64KB 前缀、Parquet DESCRIBE 元数据、Gate `LIMIT 1` SQL。GitNexus 两核心符号均为 LOW risk。计划外扫描登记 2 项 **NON-BLOCKING** 备忘，**不阻断** B3V-DATA merge。

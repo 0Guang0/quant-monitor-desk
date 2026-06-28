@@ -3,7 +3,7 @@
   "name": "round3v-schema-hash-fail-closed",
   "title": "B3V-DATA: VR-DATA-001 schema_hash fail-closed",
   "description": "Structured JSON/CSV/Parquet SUCCESS results must carry trustworthy schema_hash; ValidationGate fail-closed when missing or drifted.",
-  "status": "planning",
+  "status": "in_progress",
   "dev_type": "fix",
   "scope": "schema_hash_fail_closed",
   "branch": "fix/round3v-schema-hash-fail-closed",
@@ -16,7 +16,9 @@
     "playbook_id": "B3V-DATA",
     "manifest_id": "B3V-C02",
     "model": "composer-2.5",
-    "owned_vr": ["VR-DATA-001"],
+    "owned_vr": [
+      "VR-DATA-001"
+    ],
     "predecessor_tasks": [
       "docs/implementation_tasks/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/B02_02_schema_hash_fail_closed.md"
     ]
