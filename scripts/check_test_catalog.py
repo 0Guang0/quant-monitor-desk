@@ -517,6 +517,34 @@ CURATED: dict[str, dict] = {
         "command": "uv run python -m pytest tests/test_r3h_source_final_decisions.py -q",
         "failure_meaning": "R3H task cards omit target sources or final-decision semantics.",
     },
+    "tests/test_market_data_adapters.py": {
+        "purpose": "R3H-02 跨资产/US 市场数据适配器测试（Batch 3H）。",
+        "type": "runtime-contract",
+        "verifies": {
+            "docs": [],
+            "specs": [
+                "specs/datasource_registry/source_capabilities.yaml",
+                "specs/contracts/source_route_contract.yaml",
+            ],
+            "rules": ["docs/implementation_tasks/GLOBAL_TESTING_POLICY.md"],
+        },
+        "command": "uv run python -m pytest tests/test_market_data_adapters.py -q",
+        "failure_meaning": "R3H-02 market data adapters or evidence contract regressed.",
+    },
+    "tests/test_crypto_market_adapters.py": {
+        "purpose": "R3H-02 加密市场数据适配器测试（Batch 3H）。",
+        "type": "runtime-contract",
+        "verifies": {
+            "docs": [],
+            "specs": [
+                "specs/datasource_registry/source_capabilities.yaml",
+                "specs/contracts/source_route_contract.yaml",
+            ],
+            "rules": ["docs/implementation_tasks/GLOBAL_TESTING_POLICY.md"],
+        },
+        "command": "uv run python -m pytest tests/test_crypto_market_adapters.py -q",
+        "failure_meaning": "R3H-02 crypto market adapters or evidence contract regressed.",
+    },
     "tests/test_docstring_quadruple_coverage.py": {
         "purpose": "Gate — every test_* carries five-field Chinese docstring per hygiene plan",
         "type": "runtime-contract",

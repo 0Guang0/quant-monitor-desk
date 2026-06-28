@@ -1,0 +1,18 @@
+{
+  "schema_version": "crypto_market_evidence_v1",
+  "source_id": "coingecko",
+  "data_domain": "crypto_spot_market",
+  "instruments": [
+    {
+      "asset_id": "bitcoin",
+      "symbol": "btc",
+      "price_usd": 62000.5,
+      "volume_24h_usd": 15000000000,
+      "source_used": "coingecko"
+    }
+  ],
+  "source_fetch_id": "coingecko-replay-btc",
+  "content_hash": "coingecko-replay-hash-btc",
+  "as_of_timestamp": "2024-06-25T12:00:00Z",
+  "retrieved_at": "2024-06-25T12:00:00Z"
+}

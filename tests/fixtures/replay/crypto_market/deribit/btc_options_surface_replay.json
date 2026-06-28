@@ -1,0 +1,19 @@
+{
+  "schema_version": "crypto_market_evidence_v1",
+  "source_id": "deribit",
+  "data_domain": "crypto_options_surface",
+  "instruments": [
+    {
+      "instrument_name": "BTC-28JUN24-65000-C",
+      "expiration_timestamp": 1719580800,
+      "strike": 65000,
+      "option_type": "call",
+      "mark_iv": 0.52,
+      "source_used": "deribit"
+    }
+  ],
+  "source_fetch_id": "deribit-replay-btc-surface",
+  "content_hash": "deribit-replay-hash-btc",
+  "as_of_timestamp": "2024-06-25T12:00:00Z",
+  "retrieved_at": "2024-06-25T12:00:00Z"
+}

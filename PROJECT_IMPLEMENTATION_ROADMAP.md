@@ -23,7 +23,7 @@
 | 完成度规则       | `MODULE_COMPLETION_RATING.md`                                                                                         | 不能用 docs、registry、placeholder、staged fixture 冒充 `R6_FULL_PRODUCTION_STABLE`。                                                                                                                                   |
 | Batch 3F-R       | `BATCH_3FR_TASK_CARD_MANIFEST.md`、`BATCH_3FR_COORDINATOR_PLAYBOOK.md`、`R3FR_01_REFERENCE_RULES_AND_LICENSE_GATE.md` | R3FR-01 必须重跑；参考项目细节必须在任务卡本地，不能放中央 inventory。                                                                                                                                                  |
 | Batch 3G         | `BATCH_3G_TASK_CARD_MANIFEST.md`、`BATCH_3G_COORDINATOR_PLAYBOOK.md`、`R3G_MASS_REHEARSAL_OPEN_GAPS.md`               | R3G-01 → R3G-02 → R3G-03 **已完成**；`--live-wire` 为 3H 前运维证据，不是 3G 新活卡。                                                                                                                                   |
-| Batch 3H         | `BATCH_3H_TASK_CARD_MANIFEST.md`、`BATCH_3H_COORDINATOR_PLAYBOOK.md`                                                  | **R3H-01 CLOSED** @ 2026-06-28（G10 + G14 FRED 段）；**当前下一入口** R3H-02~04 并行 + R3H-05 终审。                                                                                                                    |
+| Batch 3H         | `BATCH_3H_TASK_CARD_MANIFEST.md`、`BATCH_3H_COORDINATOR_PLAYBOOK.md`                                                  | **R3H-01 CLOSED** @ 2026-06-28（G10 + G14 FRED 段）；**R3H-02 CLOSED** @ 2026-06-28（五源 market/crypto adapters）；**当前下一入口** R3H-03~04 并行 + R3H-05 终审。                                                     |
 | Batch04 / Round4 | `BATCH_04_TASK_CARD_MANIFEST.md`、`BATCH_04_COORDINATOR_PLAYBOOK.md`、`B04_05_backtest_review_runtime.md`             | Round4 必须等 R3H-05 PASS/WARN；loose 024~030 只是历史输入；API 先打底。                                                                                                                                                |
 | Batch05 / Round5 | `BATCH_05_TASK_CARD_MANIFEST.md`、`BATCH_05_COORDINATOR_PLAYBOOK.md`                                                  | Round5 是 security / integration / release gate，不能作为补功能后门。                                                                                                                                                   |
 
@@ -286,7 +286,7 @@ research/r3g03_mass_rehearsal_report.md
 
 ## 5. Batch 3H：全部目标真实数据源与 Layer1-Layer5 生产入口
 
-> **批次状态：当前下一执行入口**（3G 已 CLOSED；**R3H-01 CLOSED** @ 2026-06-28）。
+> **批次状态：当前下一执行入口**（3G 已 CLOSED；**R3H-01 CLOSED** @ 2026-06-28；**R3H-02 CLOSED** @ 2026-06-28）。
 
 ### 5.0 3G 预演输入（开工 3H 前必读）
 
@@ -608,7 +608,7 @@ Batch05 的核心不是“主能力开发”，而是确认所有承诺模块是
 | 数据源组           | Source                                                                                                                        | 主能力完成批次    | 生产级结论要求                                                                                                |
 | ------------------ | ----------------------------------------------------------------------------------------------------------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------- |
 | 官方宏观/披露      | `fred`, `us_treasury`, `sec_edgar`, `cftc_cot`, `bis`, `world_bank`                                                           | **R3H-01 CLOSED** | 六源 `READY_WITH_EVIDENCE` 或 ADR；Layer1/Layer5 smoke。**G10 已闭合**；五源 mock-first live 待后续卡扩展。   |
-| 市场/加密          | `alpha_vantage`, `stooq`, `yahoo_finance`, `deribit`, `coingecko`                                                             | R3H-02            | 每个 source 有 auth/license/route/evidence；聚合/validation 源不能冒充 primary。                              |
+| 市场/加密          | `alpha_vantage`, `stooq`, `yahoo_finance`, `deribit`, `coingecko`                                                             | **R3H-02 CLOSED** | 五源 `READY_WITH_EVIDENCE`；yahoo `validation_only` 永久；mock-first ports + replay；Layer2/4/5 smoke。       |
 | 中国市场           | `baostock`, `akshare`, `cninfo`, `tdx_pytdx`, `mootdx`, `eastmoney`, `sina_finance`, `ths_ifind`, `qmt_xtdata`, `qmt_xqshare` | R3H-03            | 每个 source primary/validation/authorization-disabled/ADR-disabled 姿态明确；QMT/iFinD/xqshare 不得默认启用。 |
 | 预测市场/网页证据  | `kalshi`, `polymarket`, `web_search`                                                                                          | R3H-04            | 只能 probability/evidence/manual-review；不得写 factual clean table。                                         |
 | 全部 source 总审计 | 所有 above source                                                                                                             | R3H-05            | Round4 只能消费 R3H final decision，不得消费 proposed-disabled 假完成。                                       |

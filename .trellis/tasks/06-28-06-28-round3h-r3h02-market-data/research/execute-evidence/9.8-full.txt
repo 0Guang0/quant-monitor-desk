@@ -1,0 +1,7 @@
+R3H-02 merge gate closure — five market sources READY_WITH_EVIDENCE:
+alpha_vantage, stooq, yahoo_finance (validation-only), deribit, coingecko
+
+pytest subset: all market/crypto adapter tests green
+loop_maintain: OK (with test_catalog.yaml updated)
+registry: source_capabilities + provider_catalog READY_WITH_EVIDENCE
+manifest: execute-evidence/9.6-manifest.md

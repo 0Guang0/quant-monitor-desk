@@ -194,6 +194,18 @@ tests/test_contract_drift_ops_write.py:
     specs:
       - specs/contracts/ops_db_inspect_contract.yaml
       - specs/contracts/write_contract.yaml
+tests/test_crypto_market_adapters.py:
+  command: uv run python -m pytest tests/test_crypto_market_adapters.py -q
+  failure_meaning: R3H-02 crypto market adapters or evidence contract regressed.
+  purpose: R3H-02 加密市场数据适配器测试（Batch 3H）。
+  type: runtime-contract
+  verifies:
+    docs: []
+    rules:
+      - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
+    specs:
+      - specs/datasource_registry/source_capabilities.yaml
+      - specs/contracts/source_route_contract.yaml
 tests/test_data_adapter_contract.py:
   command: uv run python -m pytest tests/test_data_adapter_contract.py -q
   failure_meaning:
@@ -607,6 +619,18 @@ tests/test_manifest_protocol.py:
     docs: []
     rules: []
     specs: []
+tests/test_market_data_adapters.py:
+  command: uv run python -m pytest tests/test_market_data_adapters.py -q
+  failure_meaning: R3H-02 market data adapters or evidence contract regressed.
+  purpose: R3H-02 跨资产/US 市场数据适配器测试（Batch 3H）。
+  type: runtime-contract
+  verifies:
+    docs: []
+    rules:
+      - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
+    specs:
+      - specs/datasource_registry/source_capabilities.yaml
+      - specs/contracts/source_route_contract.yaml
 tests/test_migration_coverage.py:
   command: uv run python -m pytest tests/test_migration_coverage.py -q
   failure_meaning:

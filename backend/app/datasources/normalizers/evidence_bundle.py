@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from datetime import UTC, datetime
 from typing import Any
 
 from backend.app.datasources.adapters.fetch_port import PortError
@@ -64,3 +65,30 @@ def reject_over_cap(*, value: int, cap: int, label: str = "max_rows") -> None:
         raise PortError("FAILED", f"invalid {label}={value}; must be positive")
     if value > cap:
         raise PortError("FAILED", f"requested {label}={value} exceeds cap={cap}")
+
+
+def reject_window_span_over_cap(
+    *,
+    start_time: str | None,
+    end_time: str | None,
+    cap: int,
+    label: str = "max_window_days",
+) -> None:
+    """Reject explicit fetch windows wider than the declared calendar-day cap."""
+    if not start_time or not end_time:
+        return
+    start = datetime.fromisoformat(start_time.replace("Z", "+00:00")).astimezone(UTC).date()
+    end = datetime.fromisoformat(end_time.replace("Z", "+00:00")).astimezone(UTC).date()
+    span_days = abs((end - start).days)
+    reject_over_cap(value=span_days, cap=cap, label=label)
+
+
+def bundle_layer5_provenance(bundle: dict[str, Any]) -> dict[str, Any]:
+    """Extract Layer5 factual_source provenance fields from an evidence bundle."""
+    fid = str(bundle.get("source_fetch_id") or "")
+    ch = str(bundle.get("content_hash") or "")
+    return {
+        "source_fetch_ids": (fid,) if fid else (),
+        "source_content_hashes": (ch,) if ch else (),
+        "source_used": str(bundle.get("source_id") or ""),
+    }

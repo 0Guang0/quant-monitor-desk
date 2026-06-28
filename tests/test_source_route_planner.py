@@ -149,26 +149,26 @@ def test_capabilityMissing_routeStatusCapabilityMissing() -> None:
     assert plan.selected_source_id is None
 
 
-def test_etfDailyBar_disabledSource_marksYahooSkipWhenAuthorizationMissing() -> None:
-    """覆盖范围：ETF 日线校验域需用户授权
+def test_etfDailyBar_disabledSource_marksAlphaVantageSkipWhenAuthorizationMissing() -> None:
+    """覆盖范围：ETF 日线域需用户授权
     测试对象：SourceRoutePlanner.plan（etf_daily_bar）
-    目的/目标：缺授权的环境变量时 yahoo 等候选应标明 skip_reason
-    验证点：route_status=DISABLED_SOURCE；yahoo skip_reason 含 user_authorization 或 missing_env
+    目的/目标：缺 API key 时 alpha_vantage primary 应标明 skip_reason
+    验证点：route_status=DISABLED_SOURCE；alpha_vantage skip_reason 含 user_authorization 或 missing_env
     失败含义：未授权外部源被静默选中，合规与计费风险
     """
     planner = production_route_planner()
     plan = planner.plan(
         data_domain="etf_daily_bar",
-        operation="fetch_etf_daily_bar_validation",
+        operation="fetch_etf_daily_bar",
         run_id="run-auth",
         job_id="job-auth",
     )
     assert plan.route_status == "DISABLED_SOURCE"
     assert "DOMAIN_DISABLED_BY_DEFAULT" in plan.quality_flags
     assert plan.selected_source_id is None
-    yahoo = next(c for c in plan.candidates if c.source_id == "yahoo_finance")
-    assert yahoo.skip_reason is not None
-    assert "user_authorization" in yahoo.skip_reason or yahoo.skip_reason.startswith("missing_env:")
+    av = next(c for c in plan.candidates if c.source_id == "alpha_vantage")
+    assert av.skip_reason is not None
+    assert av.enabled is False
 
 
 _OFFICIAL_MACRO_ROUTE_CASES: tuple[tuple[str, str, str], ...] = (
@@ -205,3 +205,135 @@ def test_r3h01_officialMacroRoute_disabledByDefault(
     candidate = next((c for c in plan.candidates if c.source_id == source_id), None)
     assert candidate is not None
     assert candidate.enabled is False
+
+
+_R3H02_MARKET_ROUTE_PRIMARY_CASES: tuple[tuple[str, str, str], ...] = (
+    ("alpha_vantage", "us_equity_daily_bar", "fetch_us_daily_bar"),
+    ("alpha_vantage", "etf_daily_bar", "fetch_etf_daily_bar"),
+    ("alpha_vantage", "fx_daily_bar", "fetch_fx_daily_bar"),
+    ("alpha_vantage", "commodity_daily_bar", "fetch_commodity_daily_bar"),
+    ("deribit", "crypto_options_surface", "fetch_options_surface"),
+)
+
+_R3H02_MARKET_ROUTE_VALIDATION_PRIMARY_CASES: tuple[tuple[str, str, str], ...] = (
+    ("stooq", "global_market_daily_bar", "fetch_global_daily_bar"),
+    ("yahoo_finance", "global_asset_reference", "fetch_global_asset_reference"),
+    ("coingecko", "crypto_asset_reference", "fetch_crypto_asset_reference"),
+)
+
+_R3H02_MARKET_ROUTE_VALIDATION_EXTRA_CASES: tuple[tuple[str, str, str], ...] = (
+    ("stooq", "global_market_daily_bar", "fetch_global_daily_bar"),
+    ("yahoo_finance", "etf_daily_bar", "fetch_etf_daily_bar_validation"),
+    ("coingecko", "crypto_spot_market", "fetch_spot_market_reference"),
+)
+
+
+@pytest.mark.parametrize(("source_id", "data_domain", "operation"), _R3H02_MARKET_ROUTE_PRIMARY_CASES)
+def test_r3h02_marketRoute_disabledByDefault(
+    source_id: str,
+    data_domain: str,
+    operation: str,
+) -> None:
+    """覆盖范围：R3H-02 域 primary 源默认禁用路由
+    测试对象：SourceRoutePlanner.plan（各市场/加密域 primary 绑定）
+    目的/目标：enabled_by_default=false 时 route 为 DISABLED，非 READY
+    验证点：route_status=DISABLED_SOURCE；对应 candidate enabled=False
+    失败含义：未显式启用的市场源被误选为 production primary
+    """
+    planner = production_route_planner()
+    plan = planner.plan(
+        data_domain=data_domain,
+        operation=operation,
+        run_id=f"r3h02-route-{source_id}",
+        job_id=f"route-{source_id}",
+    )
+    assert plan.route_status == "DISABLED_SOURCE"
+    assert plan.selected_source_id is None
+    candidate = next((c for c in plan.candidates if c.source_id == source_id), None)
+    assert candidate is not None
+    assert candidate.enabled is False
+
+
+@pytest.mark.parametrize(
+    ("source_id", "data_domain", "operation"),
+    _R3H02_MARKET_ROUTE_VALIDATION_EXTRA_CASES,
+)
+def test_r3h02_marketRoute_validationOnlyDisabledByDefault(
+    source_id: str,
+    data_domain: str,
+    operation: str,
+) -> None:
+    """覆盖范围：R3H-02 validation-only 源默认禁用（extra_candidates 路径）
+    测试对象：SourceRoutePlanner.plan + validation-only 源显式候选
+    目的/目标：enabled_by_default=false 的 validation-only 源不得 READY
+    验证点：route_status=DISABLED_SOURCE；candidate skip_reason=source_disabled_by_default
+    失败含义：validation-only 源未启用即可路由
+    """
+    planner = production_route_planner()
+    plan = planner.plan(
+        data_domain=data_domain,
+        operation=operation,
+        run_id=f"r3h02-route-{source_id}",
+        job_id=f"route-{source_id}",
+        extra_candidates=[(source_id, "Primary")],
+    )
+    assert plan.route_status == "DISABLED_SOURCE"
+    assert plan.selected_source_id is None
+    candidate = next((c for c in plan.candidates if c.source_id == source_id), None)
+    assert candidate is not None
+    assert candidate.enabled is False
+    assert candidate.skip_reason is not None
+
+
+@pytest.mark.parametrize(
+    ("source_id", "data_domain", "operation"),
+    _R3H02_MARKET_ROUTE_VALIDATION_PRIMARY_CASES,
+)
+def test_r3h02_marketRoute_validationOnlyPrimaryBlocked(
+    monkeypatch: pytest.MonkeyPatch,
+    source_id: str,
+    data_domain: str,
+    operation: str,
+) -> None:
+    """覆盖范围：validation-only 源作 yaml primary 时路由 fail-closed
+    测试对象：SourceRoutePlanner.plan（stooq/yahoo/coingecko 域绑定，域与源已启用）
+    目的/目标：yaml primary 仍为 validation-only 的域须 VALIDATION_ONLY_BLOCKED
+    验证点：route_status=VALIDATION_ONLY_BLOCKED；skip_reason=validation_only_cannot_be_primary
+    失败含义：validation-only 源 silent 升格 primary
+    """
+    from backend.app.datasources.capability_registry import SourceCapabilityRegistry
+    from backend.app.datasources.source_registry import DomainRoleBinding, SourceRegistry
+
+    registry = SourceRegistry()
+    registry.load()
+    rec = registry.get(source_id)
+    object.__setattr__(rec, "is_enabled", True)
+    orig_domain_roles = registry.get_domain_roles
+
+    def _domain_enabled(domain: str):
+        binding = orig_domain_roles(domain)
+        if domain != data_domain:
+            return binding
+        return DomainRoleBinding(
+            primary_source_id=binding.primary_source_id,
+            validation_source_id=binding.validation_source_id,
+            fallback_policy=binding.fallback_policy,
+            domain_enabled_by_default=True,
+            fallback_source_ids=binding.fallback_source_ids,
+        )
+
+    monkeypatch.setattr(registry, "get_domain_roles", _domain_enabled)
+    capabilities = SourceCapabilityRegistry()
+    capabilities.load()
+    planner = SourceRoutePlanner(source_registry=registry, capability_registry=capabilities)
+    monkeypatch.setattr(planner, "_platform_allows", lambda _sid: (True, None))
+    plan = planner.plan(
+        data_domain=data_domain,
+        operation=operation,
+        run_id=f"r3h02-valprimary-{source_id}",
+        job_id=f"valprimary-{source_id}",
+    )
+    candidate = next(c for c in plan.candidates if c.source_id == source_id)
+    assert candidate.skip_reason == "validation_only_cannot_be_primary"
+    assert plan.route_status == "VALIDATION_ONLY_BLOCKED"
+    assert plan.selected_source_id is None

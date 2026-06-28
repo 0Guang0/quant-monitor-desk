@@ -239,22 +239,39 @@ sources:
             requires_auth: false
             must_write_file_registry: true
   yahoo_finance:
+    status: READY_WITH_EVIDENCE
+    replay_fixture_path: tests/fixtures/replay/market_data/yahoo_finance/aapl_validation_replay.json
+    fetch_port_path: backend/app/datasources/fetch_ports/yahoo_finance_port.py
+    resource_caps:
+      max_symbols: 3
+      max_window_days: 120
+    notes: "R3H-02 READY_WITH_EVIDENCE; validation-only permanent; yahoo_finance_port replay-first; option_chain deferred to alpha_vantage."
     domains:
       us_equity_daily_bar:
         operations:
           fetch_us_daily_bar_validation:
             frequency: daily
-            fields:
-              [
-                instrument_id,
-                trade_date,
-                open,
-                high,
-                low,
-                close,
-                volume,
-                source_used,
-              ]
+            observation_fields:
+              - instrument_id
+              - trade_date
+              - open
+              - high
+              - low
+              - close
+              - volume
+              - source_used
+            bundle_fields:
+              - schema_version
+              - source_id
+              - data_domain
+              - bars
+              - source_fetch_id
+              - content_hash
+              - as_of_timestamp
+              - retrieved_at
+              - window_kind
+              - schema_hash
+              - fetch_log
             requires_auth: false
             enabled_by_default: false
             notes: "研究/辅助源；生产关键路径默认禁用直到用户确认。"
@@ -262,41 +279,29 @@ sources:
         operations:
           fetch_etf_daily_bar_validation:
             frequency: daily
-            fields:
-              [
-                instrument_id,
-                trade_date,
-                open,
-                high,
-                low,
-                close,
-                volume,
-                source_used,
-              ]
+            observation_fields:
+              - instrument_id
+              - trade_date
+              - open
+              - high
+              - low
+              - close
+              - volume
+              - source_used
+            bundle_fields:
+              - schema_version
+              - source_id
+              - data_domain
+              - bars
+              - source_fetch_id
+              - content_hash
+              - as_of_timestamp
+              - retrieved_at
+              - window_kind
+              - schema_hash
+              - fetch_log
             requires_auth: false
             enabled_by_default: false
-      us_option_chain:
-        operations:
-          fetch_us_option_chain_validation:
-            frequency: daily_or_intraday
-            fields:
-              [
-                instrument_id,
-                expiration_date,
-                strike,
-                option_type,
-                bid,
-                ask,
-                last_price,
-                implied_volatility,
-                open_interest,
-                volume,
-                source_used,
-              ]
-            requires_auth: false
-            enabled_by_default: false
-            production_default: false
-            notes: "Yahoo/yfinance-compatible option chain is validation-only; do not use as production OPRA replacement."
       global_asset_reference:
         operations:
           fetch_global_asset_reference:
@@ -705,7 +710,13 @@ sources:
             enabled_by_default: false
             production_default: false
   deribit:
-    status: proposed_disabled_source
+    status: READY_WITH_EVIDENCE
+    replay_fixture_path: tests/fixtures/replay/crypto_market/deribit/btc_options_surface_replay.json
+    fetch_port_path: backend/app/datasources/fetch_ports/deribit_port.py
+    resource_caps:
+      max_instruments: 5
+      max_surface_rows: 50
+    notes: "R3H-02 READY_WITH_EVIDENCE; deribit_port mock-first; no trading/account scope."
     domains:
       crypto_derivatives:
         operations:
@@ -747,42 +758,58 @@ sources:
         operations:
           fetch_options_surface:
             frequency: intraday_or_realtime
-            fields:
-              [
-                instrument_name,
-                expiration_timestamp,
-                strike,
-                option_type,
-                mark_iv,
-                bid_iv,
-                ask_iv,
-                delta,
-                gamma,
-                theta,
-                vega,
-                source_used,
-              ]
+            observation_fields:
+              - instrument_name
+              - expiration_timestamp
+              - strike
+              - option_type
+              - mark_iv
+              - source_used
+            bundle_fields:
+              - schema_version
+              - source_id
+              - data_domain
+              - instruments
+              - source_fetch_id
+              - content_hash
+              - as_of_timestamp
+              - retrieved_at
+              - schema_hash
+              - fetch_log
             requires_auth: false
             enabled_by_default: false
             production_default: false
             no_trading_or_account_scope: true
   coingecko:
-    status: proposed_disabled_source
+    status: READY_WITH_EVIDENCE
+    replay_fixture_path: tests/fixtures/replay/crypto_market/coingecko/btc_spot_replay.json
+    fetch_port_path: backend/app/datasources/fetch_ports/coingecko_port.py
+    resource_caps:
+      max_assets: 10
+    notes: "R3H-02 READY_WITH_EVIDENCE; coingecko_port validation/aggregator; not exchange-grade primary."
     domains:
       crypto_spot_market:
         operations:
           fetch_spot_market_reference:
             frequency: daily_or_intraday
-            fields:
-              [
-                asset_id,
-                symbol,
-                price_usd,
-                market_cap_usd,
-                volume_24h_usd,
-                source_used,
-                content_hash,
-              ]
+            observation_fields:
+              - asset_id
+              - symbol
+              - price_usd
+              - market_cap_usd
+              - volume_24h_usd
+              - source_used
+            bundle_fields:
+              - schema_version
+              - source_id
+              - data_domain
+              - instruments
+              - source_fetch_id
+              - content_hash
+              - as_of_timestamp
+              - retrieved_at
+              - schema_hash
+              - fetch_log
             requires_auth: false
             enabled_by_default: false
             production_default: false
@@ -892,24 +919,40 @@ sources:
             enabled_by_default: false
             production_default: false
   stooq:
-    status: proposed_disabled_source
+    status: READY_WITH_EVIDENCE
+    replay_fixture_path: tests/fixtures/replay/market_data/stooq/global_daily_replay.json
+    fetch_port_path: backend/app/datasources/fetch_ports/stooq_port.py
+    resource_caps:
+      max_symbols: 5
+      max_rows: 500
+      max_window_days: 120
+    notes: "R3H-02 READY_WITH_EVIDENCE; stooq_port validation-only; not silent primary for exchange-grade domains."
     domains:
       global_market_daily_bar:
         operations:
           fetch_global_daily_bar:
             frequency: daily
-            fields:
-              [
-                instrument_id,
-                trade_date,
-                open,
-                high,
-                low,
-                close,
-                volume,
-                source_used,
-                content_hash,
-              ]
+            observation_fields:
+              - instrument_id
+              - trade_date
+              - open
+              - high
+              - low
+              - close
+              - volume
+              - source_used
+            bundle_fields:
+              - schema_version
+              - source_id
+              - data_domain
+              - bars
+              - source_fetch_id
+              - content_hash
+              - as_of_timestamp
+              - retrieved_at
+              - window_kind
+              - schema_hash
+              - fetch_log
             requires_auth: false
             enabled_by_default: false
             production_default: false
@@ -951,24 +994,41 @@ sources:
             enabled_by_default: false
             production_default: false
   alpha_vantage:
-    status: proposed_disabled_source
+    status: READY_WITH_EVIDENCE
+    replay_fixture_path: tests/fixtures/replay/market_data/alpha_vantage/aapl_daily_replay.json
+    fetch_port_path: backend/app/datasources/fetch_ports/alpha_vantage_port.py
+    resource_caps:
+      max_symbols: 5
+      max_rows: 500
+      max_window_days: 120
+      max_option_strikes: 20
+    notes: "R3H-02 READY_WITH_EVIDENCE; alpha_vantage_port mock-first; ALPHA_VANTAGE_API_KEY for live."
     domains:
       us_equity_daily_bar:
         operations:
           fetch_us_daily_bar:
             frequency: daily
-            fields:
-              [
-                instrument_id,
-                trade_date,
-                open,
-                high,
-                low,
-                close,
-                volume,
-                source_used,
-                content_hash,
-              ]
+            observation_fields:
+              - instrument_id
+              - trade_date
+              - open
+              - high
+              - low
+              - close
+              - volume
+              - source_used
+            bundle_fields:
+              - schema_version
+              - source_id
+              - data_domain
+              - bars
+              - source_fetch_id
+              - content_hash
+              - as_of_timestamp
+              - retrieved_at
+              - window_kind
+              - schema_hash
+              - fetch_log
             requires_auth: true
             api_key_env: ALPHA_VANTAGE_API_KEY
             enabled_by_default: false
@@ -997,24 +1057,27 @@ sources:
         operations:
           fetch_us_option_chain:
             frequency: daily_or_intraday
-            fields:
-              [
-                instrument_id,
-                expiration_date,
-                strike,
-                option_type,
-                bid,
-                ask,
-                last_price,
-                implied_volatility,
-                delta,
-                gamma,
-                theta,
-                vega,
-                open_interest,
-                volume,
-                source_used,
-              ]
+            observation_fields:
+              - instrument_id
+              - expiration_date
+              - strike
+              - option_type
+              - bid
+              - ask
+              - implied_volatility
+              - source_used
+            bundle_fields:
+              - schema_version
+              - source_id
+              - data_domain
+              - option_chain
+              - source_fetch_id
+              - content_hash
+              - as_of_timestamp
+              - retrieved_at
+              - window_kind
+              - schema_hash
+              - fetch_log
             requires_auth: true
             api_key_env: ALPHA_VANTAGE_API_KEY
             enabled_by_default: false

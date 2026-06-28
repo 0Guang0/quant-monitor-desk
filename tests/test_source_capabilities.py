@@ -315,3 +315,49 @@ def test_r3h01_officialMacroSources_notProposedDisabledAtRuntime() -> None:
     for source_id, domain, operation in checks:
         with pytest.raises(OperationDisabledError, match="disabled for"):
             reg.assert_source_domain_operation(source_id, domain, operation)
+
+
+R3H02_MARKET_SOURCES: tuple[str, ...] = (
+    "alpha_vantage",
+    "stooq",
+    "yahoo_finance",
+    "deribit",
+    "coingecko",
+)
+
+
+def test_r3h02_marketSources_readyWithEvidenceStatus() -> None:
+    """覆盖范围：R3H-02 五源 registry 终态
+    测试对象：source_capabilities.yaml 中 alpha_vantage/stooq/yahoo_finance/deribit/coingecko
+    目的/目标：五源不得停留在 proposed_disabled_source，须 READY_WITH_EVIDENCE
+    验证点：status==READY_WITH_EVIDENCE；replay_fixture_path 非空
+    失败含义：Batch 3H 市场源仍以 vague proposed-disabled 占位
+    """
+    capabilities = load_source_capabilities()
+    sources = capabilities.get("sources") or {}
+    for source_id in R3H02_MARKET_SOURCES:
+        entry = sources.get(source_id) or {}
+        assert entry.get("status") == "READY_WITH_EVIDENCE", source_id
+        assert entry.get("replay_fixture_path"), source_id
+        assert entry.get("fetch_port_path"), source_id
+
+
+def test_r3h02_marketSources_notProposedDisabledAtRuntime() -> None:
+    """覆盖范围：R3H-02 五源 capability registry 运行时门禁
+    测试对象：SourceCapabilityRegistry.assert_source_domain_operation
+    目的/目标：READY 源不应因 proposed_disabled_source 被整体拒绝
+    验证点：抛 OperationDisabledError 时消息为 operation disabled，非 proposed_disabled_source
+    失败含义：registry 已 READY 但 runtime 仍按 proposed-disabled 拒绝
+    """
+    reg = SourceCapabilityRegistry()
+    reg.load()
+    checks = [
+        ("alpha_vantage", "us_equity_daily_bar", "fetch_us_daily_bar"),
+        ("stooq", "global_market_daily_bar", "fetch_global_daily_bar"),
+        ("yahoo_finance", "us_equity_daily_bar", "fetch_us_daily_bar_validation"),
+        ("deribit", "crypto_options_surface", "fetch_options_surface"),
+        ("coingecko", "crypto_spot_market", "fetch_spot_market_reference"),
+    ]
+    for source_id, domain, operation in checks:
+        with pytest.raises(OperationDisabledError, match="disabled for"):
+            reg.assert_source_domain_operation(source_id, domain, operation)

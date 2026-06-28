@@ -54,18 +54,13 @@ VALID_CATALOG_STATUS = frozenset(
 
 PROPOSED_EXTERNAL_SOURCE_IDS = frozenset(
     {
-        "deribit",
-        "coingecko",
         "kalshi",
         "polymarket",
-        "stooq",
-        "alpha_vantage",
         "mootdx",
         "eastmoney",
         "sina_finance",
         "ths_ifind",
         "web_search",
-        "yahoo_finance",
     }
 )
 

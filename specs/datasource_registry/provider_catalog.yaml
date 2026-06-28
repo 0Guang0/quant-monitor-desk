@@ -108,7 +108,7 @@ providers:
       - us_option_chain
       - global_asset_reference
     enabled_by_default: false
-    status: active
+    status: READY_WITH_EVIDENCE
     production_default_candidate: false
     production_default_enabled: false
     requires_user_authorization: false
@@ -274,7 +274,7 @@ providers:
       - crypto_futures_term_structure
       - crypto_options_surface
     enabled_by_default: false
-    status: proposed_disabled_source
+    status: READY_WITH_EVIDENCE
     production_default_candidate: false
     production_default_enabled: false
     requires_user_authorization: false
@@ -294,7 +294,7 @@ providers:
       - crypto_spot_market
       - crypto_asset_reference
     enabled_by_default: false
-    status: proposed_disabled_source
+    status: READY_WITH_EVIDENCE
     production_default_candidate: false
     production_default_enabled: false
     requires_user_authorization: false
@@ -355,7 +355,7 @@ providers:
       - fx_daily_bar
       - commodity_daily_bar
     enabled_by_default: false
-    status: proposed_disabled_source
+    status: READY_WITH_EVIDENCE
     production_default_candidate: false
     production_default_enabled: false
     requires_user_authorization: false
@@ -380,7 +380,7 @@ providers:
       - commodity_daily_bar
       - crypto_spot_market
     enabled_by_default: false
-    status: proposed_disabled_source
+    status: READY_WITH_EVIDENCE
     production_default_candidate: false
     production_default_enabled: false
     requires_user_authorization: true

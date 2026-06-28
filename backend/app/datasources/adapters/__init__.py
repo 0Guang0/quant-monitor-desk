@@ -11,7 +11,7 @@ from backend.app.datasources.adapters.fetch_port import FetchPort, StubFetchPort
 from backend.app.datasources.adapters.qmt_xtdata import QmtXtdataAdapter
 from backend.app.datasources.adapters.skeleton_base import SkeletonAdapterBase
 from backend.app.datasources.adapters.tdx_pytdx import TdxPytdxAdapter
-from backend.app.datasources.adapters.yahoo_finance import YahooFinanceAdapter
+from backend.app.datasources.adapters.yahoo_finance import YahooFinanceAdapter, create_yahoo_finance_fetch_port
 from backend.app.datasources.base_adapter import BaseDataAdapter
 from backend.app.datasources.exceptions import (
     AdapterConfigurationError,
@@ -59,6 +59,13 @@ def _build_adapter(
     if max_payload_bytes is not None:
         kwargs["max_payload_bytes"] = max_payload_bytes
     return adapter_cls(**kwargs)
+
+
+def create_fetch_port_for_source(source_id: str) -> FetchPort:
+    """Return the default mock-first L2 fetch port for R3H-02 market sources."""
+    if source_id == "yahoo_finance":
+        return create_yahoo_finance_fetch_port(symbols=("AAPL",), max_rows=500)
+    raise AdapterNotSupportedError(source_id, ("yahoo_finance",))
 
 
 def create_adapter(
@@ -120,5 +127,7 @@ __all__ = [
     "AdapterConfigurationError",
     "AdapterNotSupportedError",
     "create_adapter",
+    "create_fetch_port_for_source",
     "create_test_adapter",
+    "create_yahoo_finance_fetch_port",
 ]
