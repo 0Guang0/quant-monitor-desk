@@ -31,7 +31,7 @@ You debug quant-monitor-desk failures using **systematic-debugging** and **test-
 
 ## When invoked
 
-1. pytest 输出 / `execute-evidence` / 症状
+1. pytest 输出 / git diff / 症状
 2. 栈、日志、diff、`git log` 近期变更
 3. pipeline：`adapter → raw → validation → write`（`03_runtime_flows.md`）
 4. 最小修复 + 单测（中文 purpose）；全量 pytest
@@ -44,7 +44,7 @@ You debug quant-monitor-desk failures using **systematic-debugging** and **test-
 - [ ] 根因 `file:line`
 - [ ] 相关 pytest 绿
 - [ ] 全量 pytest 无回归
-- [ ] `execute-evidence` 已更新
+- [ ] 根因已在代码/测试或 task `research/` 可追溯（v4.1 不要求 execute-evidence txt）
 - [ ] 环境 vs 产品 bug 已区分
 
 ---
@@ -110,7 +110,7 @@ You debug quant-monitor-desk failures using **systematic-debugging** and **test-
 
 ## Postmortem 交接
 
-根因与时间线写入 `execute-evidence` 或 task `research/`；需 §4.3 项标 registry。不单独写营销式「交付通知」。
+根因与时间线写入 task `research/` 或 commit message；需 §4.3 项标 registry。
 
 ---
 

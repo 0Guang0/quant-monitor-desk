@@ -17,17 +17,20 @@
 
 ## 0.1 Trace Authority Set（必填 · 写入 `audit.jsonl`）
 
-| 类别                | 文件                                                          | 用途                   |
-| ------------------- | ------------------------------------------------------------- | ---------------------- |
-| 原始任务卡          | `{{docs/implementation_tasks/.../NNN_task.md}}`               | scope / AC / Red Flags |
-| task README         | `docs/implementation_tasks/README.md`                         | 入口合规               |
-| task input index    | `docs/implementation_tasks/TASK_INPUT_CONTEXT_INDEX.md`       | 必读上下文             |
-| unresolved coverage | `docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md`  | 未闭合项               |
-| project map         | `MIGRATION_MAP.md`                                            | docs/specs 边界        |
-| round map           | `{{ROUND*_BATCH_IMPLEMENTATION_MAP.md}}`                      | batch / out-of-scope   |
-| source-index        | `EXECUTION_INDEX.md`（v4）或 `research/source-index.md`（v3） | 血缘 + manifest        |
-| omission-check      | `research/project-map-omission-check.md`                      | 地图倒查               |
-| integration-ledger  | `research/integration-ledger.md`                              | context packing        |
+| 类别                | 文件                                                         | 用途                   |
+| ------------------- | ------------------------------------------------------------ | ---------------------- |
+| 原始任务卡          | `{{docs/implementation_tasks/.../NNN_task.md}}`              | scope / AC / Red Flags |
+| task README         | `docs/implementation_tasks/README.md`                        | 入口合规               |
+| task input index    | `docs/implementation_tasks/TASK_INPUT_CONTEXT_INDEX.md`      | 必读上下文             |
+| unresolved coverage | `docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md` | 未闭合项               |
+| project map         | `MIGRATION_MAP.md`                                           | docs/specs 边界        |
+| round map           | `{{ROUND*_BATCH_IMPLEMENTATION_MAP.md}}`                     | batch / out-of-scope   |
+| entry               | `research/00-EXECUTION-ENTRY.md`                             | v4.1 AC/约束/§5.1 地图 |
+| slices              | `research/to-issues-slices.md`                               | 切片 AC · 建议测试     |
+| external-index      | `research/EXTERNAL-INDEX.md` §A                              | 包外必读               |
+| execution-index     | `EXECUTION_INDEX.md`                                         | §1/§2/§5 索引          |
+| omission-check      | `research/project-map-omission-check.md`                     | 地图倒查               |
+| integration-ledger  | `research/integration-ledger.md`                             | context packing        |
 
 缺失或未解释差异 → A1/A5 列入 `audit.report.md` §4.3。
 
@@ -36,7 +39,7 @@
 ## 1. 本任务验证覆写（仅差异行 · 留空则用 registry 默认）
 
 > 验证类型：`static` | `read-only` | `review-only` | `trace-ac` | `pytest-isolated` | `cli-sandbox`  
-> 写库/CLI 用 **audit-sandbox**；正交于 Execute §10（A5 抽检除外）。
+> 写库/CLI 用 **audit-sandbox**；正交于 Execute INDEX §2.1（A5 抽检除外）。
 
 | 维  | 本任务        | 命令 / 检查（仅任务专属）                                     | 环境          | 通过条件 | 已执行 |
 | --- | ------------- | ------------------------------------------------------------- | ------------- | -------- | ------ |
@@ -60,4 +63,4 @@
 - [ ] 7.pre → `gitnexus-audit-summary.md`
 - [ ] 按 `audit-skill-paths.yaml` 派发 A1–A8 → `audit.report.md`
 - [ ] 汇总各维 `result` / `evidence` → `audit_matrix.json`（模板：`.trellis/spec/guides/templates/audit_matrix.json`）
-- [ ] PASS / PASS_WITH_FIXES / FAIL
+- [ ] PASS / FAIL（任维 fail 或 findings 非空 → FAIL → REPAIR.plan）

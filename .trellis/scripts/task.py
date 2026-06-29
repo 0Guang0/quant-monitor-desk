@@ -10,7 +10,7 @@ Usage:
     python task.py validate-plan-freeze <dir>  # Plan freeze gate (complex tasks)
     python task.py validate-plan-phase <dir> <phase>  # Plan phase (boot…5d, 5e consolidation)
     python task.py validate-execute-handoff <dir>  # Execute §11 handoff gate
-    python task.py validate-execute-boot <dir>  # Execute Phase 0 gate (E16 context-closure)
+    python task.py validate-execute-boot <dir>  # Execute Phase 0 (E16 legacy v4; v4.1 exempt)
     python task.py validate-execute-step <dir> <step>  # Execute §8.x step gate
     python task.py suggest-implement-context <dir>  # Plan 5c manifest suggestions (E12)
     python task.py list-context <dir>          # List jsonl entries
@@ -501,7 +501,7 @@ def main() -> int:
 
     # validate-execute-boot
     p_vboot = subparsers.add_parser(
-        "validate-execute-boot", help="Validate Execute Phase 0 (E16 context-closure)"
+        "validate-execute-boot", help="Validate Execute Phase 0 (E16 legacy v4; v4.1 exempt)"
     )
     p_vboot.add_argument("dir", help="Task directory")
 

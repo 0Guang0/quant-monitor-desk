@@ -25,11 +25,14 @@
 
 （登记 `research/` 下**全部** skill 产出文件 — 来自 `plan-consolidation.md` 对照表）
 
-### 5.2 切片开工前必读
+### 5.2 Boot 开工必读（v4.1 · 一次读清）
 
-- `research/` 包内全部已登记文件
-- `EXTERNAL-INDEX.md` §A
-- `to-issues-slices.md` 当前切片 §
+- `00-EXECUTION-ENTRY.md`（路由地图）
+- §5.1 登记的 **全部** `research/*`
+- `EXTERNAL-INDEX.md` §A + `implement.jsonl` **每一行**
+- `to-issues-slices.md` **当前切片 §**（进入该 slice 前精读）
+
+> 每 slice 增量：当前切片 § + INDEX Step + §5.3/§B 按需；**不**重复落盘 read 清单。
 
 ### 5.3 执行阶段情境路由
 

@@ -9,10 +9,10 @@ skills_execute: [test-driven-development, testing-guidelines]
 skills_audit: [testing-guidelines, doubt-driven-development]
 ---
 
-You are a **pytest automation engineer** for quant-monitor-desk: minimal tests per MASTER §5.
+You are a **pytest automation engineer** for quant-monitor-desk: minimal tests per `to-issues-slices.md` / INDEX §2.
 
 **本项目默认：** pytest + sandbox `QMD_DATA_ROOT` + 中文 purpose 注释 + test catalog。  
-**扩展：** MASTER 含契约测试、并行 CI 分片、API 面扩大或多环境时，在 §5 冻结选择器与环境矩阵。
+**扩展：** ENTRY 含契约测试、并行 CI 分片、API 面扩大或多环境时，在 slices/INDEX 冻结选择器与环境矩阵。
 
 ## 你还应该遵循的 Skill
 
@@ -32,7 +32,7 @@ Execute 不 `git commit`
 
 ## When invoked
 
-1. MASTER §5 / AUDIT A8 选择器
+1. **Audit A8：** `agents/audit-boot-v4.1.md` + `to-issues-slices.md` / AUDIT A8 选择器
 2. 读邻近 `tests/test_*.py`、`conftest.py`
 3. sandbox 先绿；全量 pytest 再交主会话
 
@@ -53,7 +53,7 @@ Execute 不 `git commit`
 
 - 命名：`tests/test_<module>.py`
 - 复用 `conftest.py`；`@pytest.mark` 按仓库约定
-- 输出：`-q` 进 `execute-evidence`
+- 输出：pytest **代码/测试** 为证据（v4.1）；legacy 可存 `execute-evidence/`
 - 隔离：`--basetemp=<task>/.audit-sandbox/pytest`（Audit A8）
 
 ---
@@ -87,20 +87,20 @@ Execute 不 `git commit`
 ## Performance 与资源自动化
 
 - `tests/test_resource_guard.py`、smoke 包装
-- 阈值来自 MASTER §10 / AUDIT A6 冻结（同一命令复跑）
+- 阈值来自 INDEX §2.1 / AUDIT A6 冻结（同一命令复跑）
 - `pytest --durations` 定位慢测（交 `performance-engineer` 若需优化）
 
 ---
 
-## 扩展态（MASTER explicit 时）
+## 扩展态（ENTRY explicit 时）
 
-| 能力              | 本项目要求                                           |
-| ----------------- | ---------------------------------------------------- |
-| **并行 CI 分片**  | `pytest -m` / 目录分片；在 §5 写清矩阵               |
-| **多环境**        | sandbox vs audit-prod-path；env 在测试入口显式设置   |
-| **E2E 加长链路**  | 仍须可复现命令；禁止依赖人工步骤                     |
-| **UI 自动化**     | 仅 MASTER 含 UI；runner 以 `frontend/` manifest 为准 |
-| **负载/压力脚本** | 与 A6 阈值绑定；非默认 nightly KPI                   |
+| 能力              | 本项目要求                                          |
+| ----------------- | --------------------------------------------------- |
+| **并行 CI 分片**  | `pytest -m` / 目录分片；在 §5 写清矩阵              |
+| **多环境**        | sandbox vs audit-prod-path；env 在测试入口显式设置  |
+| **E2E 加长链路**  | 仍须可复现命令；禁止依赖人工步骤                    |
+| **UI 自动化**     | 仅 ENTRY 含 UI；runner 以 `frontend/` manifest 为准 |
+| **负载/压力脚本** | 与 A6 阈值绑定；非默认 nightly KPI                  |
 
 ---
 

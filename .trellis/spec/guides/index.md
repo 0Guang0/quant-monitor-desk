@@ -22,15 +22,18 @@ These guides help you **ask the right questions before coding**.
 | Guide                                                                 | Purpose                                                                | When to Use                       |
 | --------------------------------------------------------------------- | ---------------------------------------------------------------------- | --------------------------------- |
 | [Complex Task Planning Protocol](./complex-task-planning-protocol.md) | Plan 流程（Execute **6** / Audit **7** / Repair **8** / Finish **9**） | Plan 启动                         |
-| [MASTER 模板](./templates/MASTER.plan.md)                             | **Execute** 入口（§8 证据、§9 四层、§10 Tier）                         | 建任务                            |
+| [**Audit Coverage Model**](../../agents/audit-coverage-model.md)      | 两条链·三类缺口（Audit SSOT）                                          | Phase 7                           |
+| [**Audit Boot v4.1**](../../agents/audit-boot-v4.1.md)                | Audit 读序 SSOT                                                        | Phase 7                           |
+| [**Repair Boot v4.1**](../../agents/repair-boot-v4.1.md)              | Repair 读序 SSOT                                                       | Phase 8                           |
 | [**AUDIT 模板**](./templates/AUDIT.plan.md)                           | **Audit** 任务可变项（Trace + §1 覆写）                                | Plan 冻结                         |
 | [audit.report 模板](./templates/audit.report.md)                      | Audit 产出 + §4.3 修复项                                               | Phase 7                           |
-| [Repair 模板](./templates/REPAIR.plan.md)                             | Audit 后修复                                                           | PASS_WITH_FIXES                   |
+| [Repair 模板](./templates/REPAIR.plan.md)                             | Audit 后修复                                                           | FAIL（findings 非空）             |
+| [Findings SSOT](../../agents/audit-finding-schema.md)                 | P0–P3 双表 · 有 finding 即维 FAIL                                      | A1–A8 关账                        |
 | [repair-skill-registry.md](./repair-skill-registry.md)                | Repair 候选 Skill                                                      | 填 REPAIR.plan                    |
 | [plan.freeze 模板](./templates/plan.freeze.md)                        | Plan 冻结自检 + **§3.0 双契约 one-pager**                              | start 前                          |
-| [Execute Skill 词典](./execute-skill-registry.md)                     | 填 MASTER §12                                                          | Plan                              |
+| [Execute Skill 词典](./execute-skill-registry.md)                     | Plan 冻结 Execute skill 栈（v4.1）                                     | Plan                              |
 | [**Audit Skill 路径**](./audit-skill-paths.yaml)                      | A1–A8 派发 + skill 冻结                                                | Audit                             |
-| [**Audit Skill 词典**](./audit-skill-registry.md)                     | 填 AUDIT **§2** 任务行                                                 | Plan                              |
+| [**Audit Skill 词典**](./audit-skill-registry.md)                     | 填 AUDIT **§1** 任务行 + Boot v4.1                                     | Plan                              |
 | [Code Reuse Thinking Guide](./code-reuse-thinking-guide.md)           | Identify patterns and reduce duplication                               | When you notice repeated patterns |
 | [Cross-Layer Thinking Guide](./cross-layer-thinking-guide.md)         | Think through data flow across layers                                  | Features spanning multiple layers |
 

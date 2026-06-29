@@ -1,4 +1,4 @@
-"""Validate Execute handoff to Audit — v4 primary; legacy v3 in_progress shim."""
+"""Validate Execute handoff to Audit — v4.1 code-first; legacy v4/v3 evidence files."""
 
 from __future__ import annotations
 
@@ -44,8 +44,8 @@ def _parse_legacy_executed_steps(master_text: str) -> list[str]:
     return [s for s in _marked_steps_in_section(section8 or master_text) if s.startswith("8.")]
 
 
-def _discover_v4_executed_steps(task_dir: Path) -> list[str]:
-    """Steps with red+green evidence pairs (SSOT for handoff)."""
+def _discover_v4_executed_steps_from_evidence(task_dir: Path) -> list[str]:
+    """Legacy v4: steps with red+green evidence pairs."""
     evidence = task_dir / "research" / "execute-evidence"
     if not evidence.is_dir():
         return []
@@ -59,6 +59,83 @@ def _discover_v4_executed_steps(task_dir: Path) -> list[str]:
         },
         key=lambda s: tuple(int(p) for p in s.split(".")),
     )
+
+
+def _discover_v41_executed_steps(task_dir: Path) -> list[str]:
+    """v4.1: frozen §9 [x] markers (code is evidence; no txt files)."""
+    from .plan_protocol import frozen_task_card_path
+
+    card = frozen_task_card_path(task_dir)
+    if card and card.is_file():
+        steps = _parse_v4_executed_steps(card.read_text(encoding="utf-8"))
+        if steps:
+            return steps
+    index = task_dir / "EXECUTION_INDEX.md"
+    if index.is_file():
+        return _marked_steps_in_section(index.read_text(encoding="utf-8"))
+    return []
+
+
+def validate_execute_step(task_dir: Path, step: str, *, repo_root: Path | None = None) -> list[str]:
+    """Validate one §9.x (v4) or §8.x (legacy) step RED/GREEN evidence files."""
+    _ = repo_root
+    errors: list[str] = []
+    if not re.fullmatch(r"\d+\.\d+", step):
+        errors.append(f"Invalid step id: {step!r} (expected e.g. 8.0 or 9.0)")
+        return errors
+
+    evidence_dir = task_dir / "research" / "execute-evidence"
+    red_path = evidence_dir / f"{step}-red.txt"
+    green_path = evidence_dir / f"{step}-green.txt"
+
+    if not red_path.is_file():
+        errors.append(f"Missing RED evidence: research/execute-evidence/{step}-red.txt")
+    elif not _FAIL_RE.search(red_path.read_text(encoding="utf-8")):
+        errors.append(f"{step}-red.txt must contain FAIL/ERROR signal (TDD RED phase)")
+
+    if not green_path.is_file():
+        errors.append(f"Missing GREEN evidence: research/execute-evidence/{step}-green.txt")
+    elif not _PASS_RE.search(green_path.read_text(encoding="utf-8")):
+        errors.append(f"{step}-green.txt must contain PASS/exit 0 signal (TDD GREEN phase)")
+
+    return errors
+
+
+def _append_legacy_execute_handoff_boot_errors(
+    task_dir: Path, repo_root: Path, errors: list[str]
+) -> None:
+    gnxs = task_dir / "research" / "gitnexus-execute-summary.md"
+    if not gnxs.is_file():
+        errors.append("Missing research/gitnexus-execute-summary.md (Phase 0a GitNexus)")
+
+    reads_path = task_dir / "research" / "execute-skill-reads.jsonl"
+    if not reads_path.is_file():
+        errors.append("Missing research/execute-skill-reads.jsonl (skill Read audit log)")
+    else:
+        rows = _load_skill_reads(task_dir)
+        if not rows:
+            errors.append("execute-skill-reads.jsonl has no valid JSON lines")
+        read_skills = _skills_from_reads(rows)
+        for skill in _required_handoff_skills(repo_root):
+            if skill not in read_skills:
+                errors.append(f"execute-skill-reads.jsonl missing required skill: {skill}")
+
+    evidence_md = list(task_dir.glob("research/*evidence*.md"))
+    evidence_dir = task_dir / "research" / "execute-evidence"
+    if not evidence_md and not evidence_dir.is_dir():
+        errors.append(
+            "Missing Execute evidence: research/*evidence*.md or research/execute-evidence/"
+        )
+
+    skill_eval = task_dir / "research" / "execute-skill-evaluation.md"
+    if not skill_eval.is_file():
+        errors.append("Missing research/execute-skill-evaluation.md (§12 skill evaluation)")
+    elif reads_path.is_file():
+        eval_text = skill_eval.read_text(encoding="utf-8")
+        if "execute-skill-reads.jsonl" not in eval_text and "skill-reads" not in eval_text:
+            errors.append(
+                "execute-skill-evaluation.md must reference execute-skill-reads.jsonl"
+            )
 
 
 def _load_skill_reads(task_dir: Path) -> list[dict]:
@@ -101,66 +178,48 @@ def _skills_from_reads(reads: list[dict]) -> set[str]:
     return {str(r.get("skill", "")).strip() for r in reads if r.get("skill")}
 
 
-def validate_execute_step(task_dir: Path, step: str, *, repo_root: Path | None = None) -> list[str]:
-    """Validate one §9.x (v4) or §8.x (legacy) step RED/GREEN evidence files."""
-    _ = repo_root
-    errors: list[str] = []
-    if not re.fullmatch(r"\d+\.\d+", step):
-        errors.append(f"Invalid step id: {step!r} (expected e.g. 8.0 or 9.0)")
-        return errors
-
-    evidence_dir = task_dir / "research" / "execute-evidence"
-    red_path = evidence_dir / f"{step}-red.txt"
-    green_path = evidence_dir / f"{step}-green.txt"
-
-    if not red_path.is_file():
-        errors.append(f"Missing RED evidence: research/execute-evidence/{step}-red.txt")
-    elif not _FAIL_RE.search(red_path.read_text(encoding="utf-8")):
-        errors.append(f"{step}-red.txt must contain FAIL/ERROR signal (TDD RED phase)")
-
-    if not green_path.is_file():
-        errors.append(f"Missing GREEN evidence: research/execute-evidence/{step}-green.txt")
-    elif not _PASS_RE.search(green_path.read_text(encoding="utf-8")):
-        errors.append(f"{step}-green.txt must contain PASS/exit 0 signal (TDD GREEN phase)")
-
-    return errors
-
-
-def _append_execute_handoff_boot_errors(
-    task_dir: Path, repo_root: Path, errors: list[str]
-) -> None:
-    gnxs = task_dir / "research" / "gitnexus-execute-summary.md"
-    if not gnxs.is_file():
-        errors.append("Missing research/gitnexus-execute-summary.md (Phase 0a GitNexus)")
-
-    reads_path = task_dir / "research" / "execute-skill-reads.jsonl"
-    if not reads_path.is_file():
-        errors.append("Missing research/execute-skill-reads.jsonl (skill Read audit log)")
-    else:
-        reads = _load_skill_reads(task_dir)
-        if not reads:
-            errors.append("execute-skill-reads.jsonl has no valid JSON lines")
-        read_skills = _skills_from_reads(reads)
-        for skill in _required_handoff_skills(repo_root):
-            if skill not in read_skills:
-                errors.append(f"execute-skill-reads.jsonl missing required skill: {skill}")
-
-    evidence_md = list(task_dir.glob("research/*evidence*.md"))
-    evidence_dir = task_dir / "research" / "execute-evidence"
-    if not evidence_md and not evidence_dir.is_dir():
+def _validate_v41_handoff(task_dir: Path, repo_root: Path, errors: list[str]) -> None:
+    """v4.1: INDEX/frozen [x] + manifest amend; evidence = code/tests only."""
+    steps = _discover_v41_executed_steps(task_dir)
+    if not steps:
         errors.append(
-            "Missing Execute evidence: research/*evidence*.md or research/execute-evidence/"
+            "v4.1 handoff: no executed steps ([x] in frozen §9 or EXECUTION_INDEX §1)"
         )
+    from .manifest_protocol import validate_execute_boot, validate_manifest_amend_chain
 
-    skill_eval = task_dir / "research" / "execute-skill-evaluation.md"
-    if not skill_eval.is_file():
-        errors.append("Missing research/execute-skill-evaluation.md (§12 skill evaluation)")
-    elif reads_path.is_file():
-        eval_text = skill_eval.read_text(encoding="utf-8")
-        if "execute-skill-reads.jsonl" not in eval_text and "skill-reads" not in eval_text:
-            errors.append(
-                "execute-skill-evaluation.md must reference execute-skill-reads.jsonl"
-            )
+    validate_execute_boot(task_dir, errors)
+    validate_manifest_amend_chain(task_dir, errors)
+    _validate_loop_handoff(task_dir, repo_root, errors)
+
+
+def _validate_v4_handoff(task_dir: Path, repo_root: Path, errors: list[str]) -> None:
+    from .plan_protocol import is_execution_bundle_v41
+
+    if is_execution_bundle_v41(task_dir):
+        _validate_v41_handoff(task_dir, repo_root, errors)
+        return
+
+    _append_legacy_execute_handoff_boot_errors(task_dir, repo_root, errors)
+    for step in _discover_v4_executed_steps_from_evidence(task_dir):
+        errors.extend(validate_execute_step(task_dir, step, repo_root=repo_root))
+    from .manifest_protocol import validate_execute_boot, validate_manifest_amend_chain
+
+    validate_execute_boot(task_dir, errors)
+    validate_manifest_amend_chain(task_dir, errors)
+    _validate_loop_handoff(task_dir, repo_root, errors)
+
+
+def _validate_legacy_handoff(task_dir: Path, repo_root: Path, errors: list[str]) -> None:
+    _append_legacy_execute_handoff_boot_errors(task_dir, repo_root, errors)
+    master = task_dir / "MASTER.plan.md"
+    text = master.read_text(encoding="utf-8")
+    for step in _parse_legacy_executed_steps(text):
+        errors.extend(validate_execute_step(task_dir, step, repo_root=repo_root))
+    from .manifest_protocol import validate_execute_boot, validate_manifest_amend_chain
+
+    validate_execute_boot(task_dir, errors)
+    validate_manifest_amend_chain(task_dir, errors)
+    _validate_loop_handoff(task_dir, repo_root, errors)
 
 
 def _validate_loop_handoff(task_dir: Path, repo_root: Path, errors: list[str]) -> None:
@@ -181,30 +240,6 @@ def _validate_loop_handoff(task_dir: Path, repo_root: Path, errors: list[str]) -
         errors.append("missing evidence_index.json (loop handoff)")
     if not (task_dir / "loop_manifest.json").is_file():
         errors.append("missing loop_manifest.json (loop handoff)")
-
-
-def _validate_v4_handoff(task_dir: Path, repo_root: Path, errors: list[str]) -> None:
-    _append_execute_handoff_boot_errors(task_dir, repo_root, errors)
-    for step in _discover_v4_executed_steps(task_dir):
-        errors.extend(validate_execute_step(task_dir, step, repo_root=repo_root))
-    from .manifest_protocol import validate_execute_boot, validate_manifest_amend_chain
-
-    validate_execute_boot(task_dir, errors)
-    validate_manifest_amend_chain(task_dir, errors)
-    _validate_loop_handoff(task_dir, repo_root, errors)
-
-
-def _validate_legacy_handoff(task_dir: Path, repo_root: Path, errors: list[str]) -> None:
-    _append_execute_handoff_boot_errors(task_dir, repo_root, errors)
-    master = task_dir / "MASTER.plan.md"
-    text = master.read_text(encoding="utf-8")
-    for step in _parse_legacy_executed_steps(text):
-        errors.extend(validate_execute_step(task_dir, step, repo_root=repo_root))
-    from .manifest_protocol import validate_execute_boot, validate_manifest_amend_chain
-
-    validate_execute_boot(task_dir, errors)
-    validate_manifest_amend_chain(task_dir, errors)
-    _validate_loop_handoff(task_dir, repo_root, errors)
 
 
 def validate_execute_handoff(task_dir: Path, repo_root: Path | None = None) -> list[str]:

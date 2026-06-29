@@ -208,7 +208,7 @@ Details: [GLOBAL_TESTING_POLICY.md §8](../../../docs/implementation_tasks/GLOBA
 - Sandbox: `QMD_DATA_ROOT=<task>/.audit-sandbox/data`; Audit A8: `--basetemp=.audit-sandbox/pytest`.
 - New module: `uv run python scripts/loop_maintain.py --fix` (test catalog).
 - Audit A8: each original Red Flag → test | explicit defer | §4.3.
-- Evidence: pytest output in `execute-evidence/`; not self-reported PASS.
+- Evidence: **代码 + 测试 + `uv run pytest -q`**（v4.1）；legacy 任务可另存 `execute-evidence/` txt
 
 ## 10. Goal-Driven Execution
 

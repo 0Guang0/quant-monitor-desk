@@ -2,8 +2,7 @@
 name: trellis-implement
 description: >-
   Runs one Trellis Execute slice per dispatch. MUST Read trellis-execute and
-  principles.md first. RED uses test-driven-development; SLICE uses
-  incremental-implementation. Scope unclear triggers grill-gate block. No commit.
+  principles.md first. RED/GREEN via /test-driven-development; evidence = code/tests only.
 tools: Read, Write, Edit, Bash, Glob, Grep
 ---
 
@@ -15,24 +14,25 @@ tools: Read, Write, Edit, Bash, Glob, Grep
 
 1. `.cursor/skills/trellis-execute/SKILL.md`
 2. `.cursor/skills/trellis-execute/principles.md`
-3. `.cursor/skills/trellis-execute/reference.md`
-4. 澄清门：`.trellis/spec/guides/grill-gate.md`
+3. `.cursor/skills/trellis-execute/reference.md`（**必做**相位）
+4. `agent-toolchain.md` §Execute — 条件 skill
+5. `.cursor/rules/project-global.mdc`
 
-**禁止：** Matt `/implement` · 自创 RED/GREEN · commit/push/merge · 再派 `trellis-implement` / `trellis-check`
+**禁止：** commit/push/merge · 再派子 agent · 写 execute-evidence txt / execute-skill-reads.jsonl
 
 ## Context
 
 `<!-- trellis-hook-injected -->` → 直接执行 SSOT。
 
-否则：`Active task: <path>` → Read `implement.jsonl` 每一行 + frozen + ENTRY/INDEX。
+否则：`Active task: <path>` → ENTRY + research + 路由表 + 当前切片 §。
 
 ## 执行
 
-一个 slice：`impact()` → RED → [DEBUG?] → GREEN → SLICE → 证据`
+一个 slice：`impact()` → Read **`/test-driven-development`** → RED → [DEBUG?] → GREEN → SLICE → INDEX `[x]`
 
-scope 不清 → **grill-gate block**（对话问用户；解除前不进 RED）。
+scope 不清 → **grill-gate block**。
 
-**完成条件：** `-red.txt` + `-green.txt` · `uv run pytest -q` 全绿 · `execute-skill-reads.jsonl` 含本 slice 已 Read skill · 测试 **目的/目标** 未改写。
+**完成条件：** 代码/测试 · `uv run pytest -q` 全绿 · 测试 **目的/目标** 未改写。
 
 ## 回报
 
@@ -41,15 +41,11 @@ scope 不清 → **grill-gate block**（对话问用户；解除前不进 RED）
 
 ### Step
 
-- 9.x — red: `...-red.txt` · green: `...-green.txt`
+- 9.x — done
 
 ### Files
 
 - `path` — reason
-
-### Skills read
-
-- （对照 execute-skill-paths.yaml）
 
 ### Verify
 

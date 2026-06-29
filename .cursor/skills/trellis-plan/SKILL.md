@@ -1,6 +1,6 @@
 ---
 name: trellis-plan
-description: "Complex-task Plan v4.1. MUST Read when status=planning. Execution Bundle: skill outputs in research/ + 5e package + validate-plan-freeze."
+description: "Complex-task Plan v4.1. MUST Read when status=planning. Execution Bundle in research/ + 5e package + validate-plan-freeze."
 ---
 
 # Trellis Plan（v4.1 · Execution Bundle）
@@ -52,6 +52,8 @@ description: "Complex-task Plan v4.1. MUST Read when status=planning. Execution 
 4. `EXECUTION_PLAN.md` — 仅 GAP + 指向 ENTRY
 5. `task.json` `meta.execute_entry` = `research/00-EXECUTION-ENTRY.md`
 6. `task.json` `meta.plan_protocol_version` = `"4.1"`（新任务）
+
+**5e 收尾：** `plan-consolidation.md` 标记 **`Phase 5e complete`**；机械自检 ENTRY §5.1 = 全部 `research/*.md`（除 plan-boot）、§5.2 = §5.1 + EXTERNAL §A。缺口覆盖 → **Audit**（`agents/audit-coverage-model.md`），**非** Execute 填表。
 
 **禁止：** 将 `to-issues-slices.md` 全文抄入 `frozen/`。
 

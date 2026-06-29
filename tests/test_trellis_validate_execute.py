@@ -1,7 +1,4 @@
-"""Trellis Execute 协议 v2 校验器测试（v4 单轨 handoff）。
-
-覆盖范围：validate_execute_step、validate_execute_handoff 与 v4 步骤解析的 RED/GREEN 证据门禁。
-"""
+"""Trellis Execute handoff 校验器测试（v4.1 代码优先；legacy 仍验 txt 证据）。"""
 
 from __future__ import annotations
 
@@ -36,7 +33,7 @@ def _write_v4_task(task_dir: Path, steps_done: list[str], *, complex_track: bool
     (frozen / "card.md").write_text("## 9. 实现步骤\n" + "\n".join(blocks), encoding="utf-8")
 
 
-def _boot_artifacts(task_dir: Path, *, steps: list[str]) -> None:
+def _legacy_boot_artifacts(task_dir: Path, *, steps: list[str]) -> None:
     research = task_dir / "research"
     research.mkdir(parents=True, exist_ok=True)
     (research / "context-closure.md").write_text(
@@ -71,11 +68,11 @@ def _boot_artifacts(task_dir: Path, *, steps: list[str]) -> None:
 
 
 def test_validateExecuteStep_requiresFailSignal(tmp_path: Path) -> None:
-    """覆盖范围：单步 Execute RED 证据须含失败信号
+    """覆盖范围：legacy 单步 RED 证据须含失败信号
     测试对象：validate_execute_step（8.1，RED 仅 all good）
-    目的/目标：TDD RED 阶段必须留下 FAIL/ERROR 痕迹，禁止假 RED
+    目的/目标：legacy handoff 仍要求 TDD RED txt 含 FAIL/ERROR
     验证点：errors 中任一条含 FAIL/ERROR
-    失败含义：无失败信号的 RED 会让 handoff 误判已走 TDD
+    失败含义：无失败信号的 RED 会让 legacy handoff 误判已走 TDD
     """
     ev = tmp_path / "research" / "execute-evidence"
     ev.mkdir(parents=True)
@@ -86,11 +83,11 @@ def test_validateExecuteStep_requiresFailSignal(tmp_path: Path) -> None:
 
 
 def test_validateExecuteStep_passesWithEvidence(tmp_path: Path) -> None:
-    """覆盖范围：合规 RED/GREEN 证据的单步校验
-    测试对象：validate_execute_step（8.1，含 ModuleNotFoundError 与 exit 码）
-    目的/目标：标准 TDD 证据文件应零错误通过
+    """覆盖范围：legacy 合规 RED/GREEN txt
+    测试对象：validate_execute_step（8.1）
+    目的/目标：legacy 证据文件应零错误通过
     验证点：validate_execute_step(tmp_path, '8.1') == []
-    失败含义：合法证据被拒会阻断 Execute 进度门禁
+    失败含义：legacy 合法证据被拒会阻断 handoff
     """
     ev = tmp_path / "research" / "execute-evidence"
     ev.mkdir(parents=True)
@@ -99,116 +96,12 @@ def test_validateExecuteStep_passesWithEvidence(tmp_path: Path) -> None:
     assert validate_execute_step(tmp_path, "8.1") == []
 
 
-def test_validateExecuteHandoff_failsWithoutGitnexusSummary(tmp_path: Path) -> None:
-    """覆盖范围：handoff 缺 gitnexus-execute-summary
-    测试对象：validate_execute_handoff（v4 + 9.0 证据，无 summary）
-    目的/目标：Execute handoff 必须要求 GitNexus 执行摘要
-    验证点：errors 含 gitnexus-execute-summary
-    失败含义：无摘要 handoff 会导致审计无法追溯影响面
-    """
-    _write_v4_task(tmp_path, ["9.0"])
-    ev = tmp_path / "research" / "execute-evidence"
-    ev.mkdir(parents=True)
-    (ev / "9.0-red.txt").write_text("ERROR\n", encoding="utf-8")
-    (ev / "9.0-green.txt").write_text("passed\n", encoding="utf-8")
-    errors = validate_execute_handoff(tmp_path, _REPO)
-    assert any("gitnexus-execute-summary" in e for e in errors)
-
-
-def test_validateExecuteHandoff_passesWithFullArtifacts(tmp_path: Path) -> None:
-    """覆盖范围：完整 Execute 工件下的 handoff
-    测试对象：validate_execute_handoff（v4 + boot 工件 + 9.0/9.1 证据）
-    目的/目标：simple 轨道任务齐备时应零错误 handoff
+def test_validateExecuteHandoff_v41PassesWithFrozenMarkedSteps(tmp_path: Path) -> None:
+    """覆盖范围：v4.1 handoff 仅要求 frozen [x]
+    测试对象：validate_execute_handoff（4.1 + frozen 9.0 [x]）
+    目的/目标：v4.1 不要求 txt/jsonl/summary 工件
     验证点：errors == []
-    失败含义：全量工件仍失败说明 handoff 规则回归
-    """
-    _write_v4_task(tmp_path, ["9.0", "9.1"])
-    _boot_artifacts(tmp_path, steps=["9.0", "9.1"])
-    errors = validate_execute_handoff(tmp_path, _REPO)
-    assert errors == []
-
-
-def test_validateExecuteHandoff_rejectsLegacyMasterOnly(tmp_path: Path) -> None:
-    """覆盖范围：活跃 v3 planning 任务 handoff 拒绝
-    测试对象：validate_execute_handoff（MASTER + task.json，非 in_progress v3）
-    目的/目标：planning 态 legacy 不得 handoff
-    验证点：errors 含 v4/archive 要求
-    失败含义：planning legacy 可 handoff 会破坏单轨
-    """
-    (tmp_path / "task.json").write_text(
-        json.dumps({"meta": {"plan_protocol_version": "3", "task_track": "simple"}}),
-        encoding="utf-8",
-    )
-    (tmp_path / "MASTER.plan.md").write_text("## 8.\n", encoding="utf-8")
-    errors = validate_execute_handoff(tmp_path, _REPO)
-    assert any("v4" in e.lower() or "archive" in e.lower() for e in errors)
-
-
-def test_validateExecuteHandoff_allowsLegacyInProgress(tmp_path: Path) -> None:
-    """覆盖范围：in_progress 显式 v3 可走 legacy handoff shim
-    测试对象：validate_execute_handoff（plan_protocol_version=3 + MASTER + 证据）
-    目的/目标：在途 round3v 任务可完成 handoff 直至迁移
-    验证点：齐备工件时 errors == []
-    失败含义：在途 v3 被误杀无法交 Audit
-    """
-    (tmp_path / "task.json").write_text(
-        json.dumps(
-            {
-                "meta": {"plan_protocol_version": "3", "task_track": "simple"},
-                "status": "in_progress",
-            }
-        ),
-        encoding="utf-8",
-    )
-    (tmp_path / "MASTER.plan.md").write_text(
-        "## 8.\n### 8.0 step\n| 已执行 | [x] |\n", encoding="utf-8"
-    )
-    _boot_artifacts(tmp_path, steps=["8.0"])
-    errors = validate_execute_handoff(tmp_path, _REPO)
-    assert errors == []
-
-
-def test_validateExecuteHandoff_loopTaskRequiresEvidenceIndex(tmp_path: Path) -> None:
-    """覆盖范围：complex 轨道 handoff 的 loop P3 证据链
-    测试对象：validate_execute_handoff（v4 complex，缺 evidence_index.json）
-    目的/目标：仅有 context_pack/loop_manifest 不足，须 evidence_index
-    验证点：errors 含 evidence_index
-    失败含义：loop 单轨 handoff 缺口会导致 AC 证据无法机械索引
-    """
-    _write_v4_task(tmp_path, ["9.0"], complex_track=True)
-    _boot_artifacts(tmp_path, steps=["9.0"])
-    (tmp_path / "context_pack.json").write_text(
-        json.dumps({"source_authorities": [], "tests": [], "modules": []}),
-        encoding="utf-8",
-    )
-    (tmp_path / "loop_manifest.json").write_text(
-        json.dumps({"acs": [], "modules": []}),
-        encoding="utf-8",
-    )
-    errors = validate_execute_handoff(tmp_path, _REPO)
-    assert any("evidence_index" in e for e in errors)
-
-
-def test_validateExecuteStep_acceptsV4StepId(tmp_path: Path) -> None:
-    """覆盖范围：v4 步骤号 9.x
-    测试对象：validate_execute_step（9.0）
-    目的/目标：handoff 须校验 frozen §9 步骤证据
-    验证点：合规 9.0 证据零错误
-    失败含义：仅认 8.x 会导致 v4 Execute 无法 handoff
-    """
-    ev = tmp_path / "research" / "execute-evidence"
-    ev.mkdir(parents=True)
-    (ev / "9.0-red.txt").write_text("ERROR: expected fail\n", encoding="utf-8")
-    (ev / "9.0-green.txt").write_text("passed\nexit 0\n", encoding="utf-8")
-    assert validate_execute_step(tmp_path, "9.0") == []
-
-
-def test_validateExecuteHandoff_v41UsesFrozenCard(tmp_path: Path) -> None:
-    """覆盖范围：v4.1 handoff
-    测试对象：validate_execute_handoff + frozen §9 已执行
-    目的/目标：v4.1 与 v4 一样从 frozen 卡解析 9.x 并校验证据
-    验证点：齐备工件时 errors == []
-    失败含义：v4.1 handoff 被跳过会导致 Execute 无法交 Audit
+    失败含义：v4.1 仍强制 prose 证据会阻断代码优先 handoff
     """
     (tmp_path / "task.json").write_text(
         json.dumps(
@@ -232,30 +125,115 @@ def test_validateExecuteHandoff_v41UsesFrozenCard(tmp_path: Path) -> None:
         "## 9. 实现步骤\n### 9.0 boot\n| 已执行 | [x] |\n",
         encoding="utf-8",
     )
-    _boot_artifacts(tmp_path, steps=["9.0"])
+    assert validate_execute_handoff(tmp_path, _REPO) == []
+
+
+def test_validateExecuteHandoff_v41FailsWithoutMarkedSteps(tmp_path: Path) -> None:
+    """覆盖范围：v4.1 handoff 无 [x] 步
+    测试对象：validate_execute_handoff（4.1，frozen 全未勾）
+    目的/目标：handoff 须至少一步已执行标记
+    验证点：errors 含 executed steps
+    失败含义：空 handoff 会误交 Audit
+    """
+    (tmp_path / "task.json").write_text(
+        json.dumps({"meta": {"plan_protocol_version": "4.1", "task_track": "simple"}}),
+        encoding="utf-8",
+    )
+    (tmp_path / "EXECUTION_INDEX.md").write_text("## 1.\n", encoding="utf-8")
+    frozen = tmp_path / "frozen"
+    frozen.mkdir()
+    (frozen / "card.md").write_text(
+        "## 9.\n### 9.0 boot\n| 已执行 | [ ] |\n",
+        encoding="utf-8",
+    )
     errors = validate_execute_handoff(tmp_path, _REPO)
-    assert errors == []
+    assert any("executed steps" in e for e in errors)
 
 
-def test_validateExecuteHandoff_v4UsesFrozenCard(tmp_path: Path) -> None:
-    """覆盖范围：v4 handoff
-    测试对象：validate_execute_handoff + frozen §9 已执行
-    目的/目标：v4 从 frozen 卡解析 9.x 并校验证据
-    验证点：齐备工件时 errors == []
-    失败含义：v4 handoff 被短路跳过会导致无法交 Audit
+def test_validateExecuteHandoff_legacyRequiresGitnexusSummary(tmp_path: Path) -> None:
+    """覆盖范围：legacy v4 handoff 仍要 gitnexus summary
+    测试对象：validate_execute_handoff（v4 + 9.0 证据，无 summary）
+    目的/目标：非 4.1 任务保持旧门禁
+    验证点：errors 含 gitnexus-execute-summary
+    失败含义：legacy 路径被误放宽
     """
     _write_v4_task(tmp_path, ["9.0"])
-    _boot_artifacts(tmp_path, steps=["9.0"])
+    ev = tmp_path / "research" / "execute-evidence"
+    ev.mkdir(parents=True)
+    (ev / "9.0-red.txt").write_text("ERROR\n", encoding="utf-8")
+    (ev / "9.0-green.txt").write_text("passed\n", encoding="utf-8")
     errors = validate_execute_handoff(tmp_path, _REPO)
-    assert errors == []
+    assert any("gitnexus-execute-summary" in e for e in errors)
+
+
+def test_validateExecuteHandoff_legacyPassesWithFullArtifacts(tmp_path: Path) -> None:
+    """覆盖范围：legacy v4 完整工件 handoff
+    测试对象：validate_execute_handoff（v4 + boot 工件 + 9.0/9.1 证据）
+    目的/目标：legacy 齐备时应零错误
+    验证点：errors == []
+    失败含义：legacy handoff 回归
+    """
+    _write_v4_task(tmp_path, ["9.0", "9.1"])
+    _legacy_boot_artifacts(tmp_path, steps=["9.0", "9.1"])
+    assert validate_execute_handoff(tmp_path, _REPO) == []
+
+
+def test_validateExecuteHandoff_rejectsLegacyMasterOnly(tmp_path: Path) -> None:
+    """覆盖范围：活跃 v3 planning 任务 handoff 拒绝
+    测试对象：validate_execute_handoff（MASTER + task.json planning v3）
+    目的/目标：planning legacy 不得 handoff
+    验证点：errors 含 v4/archive 要求
+    失败含义：planning legacy 可 handoff 会破坏单轨
+    """
+    (tmp_path / "task.json").write_text(
+        json.dumps({"meta": {"plan_protocol_version": "3", "task_track": "simple"}}),
+        encoding="utf-8",
+    )
+    (tmp_path / "MASTER.plan.md").write_text("## 8.\n", encoding="utf-8")
+    errors = validate_execute_handoff(tmp_path, _REPO)
+    assert any("v4" in e.lower() or "archive" in e.lower() for e in errors)
+
+
+def test_validateExecuteHandoff_loopTaskRequiresEvidenceIndex(tmp_path: Path) -> None:
+    """覆盖范围：v4.1 complex 轨道 loop handoff
+    测试对象：validate_execute_handoff（4.1 complex，缺 evidence_index）
+    目的/目标：loop 单轨仍须 evidence_index
+    验证点：errors 含 evidence_index
+    失败含义：loop handoff 缺口会导致 AC 无法机械索引
+    """
+    (tmp_path / "task.json").write_text(
+        json.dumps(
+            {
+                "meta": {
+                    "plan_protocol_version": "4.1",
+                    "task_track": "complex",
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    (tmp_path / "EXECUTION_INDEX.md").write_text("## 1.\n### 9.0 x\n| 已执行 | [x] |\n", encoding="utf-8")
+    frozen = tmp_path / "frozen"
+    frozen.mkdir()
+    (frozen / "card.md").write_text("## 9.\n### 9.0 x\n| 已执行 | [x] |\n", encoding="utf-8")
+    (tmp_path / "context_pack.json").write_text(
+        json.dumps({"source_authorities": [], "tests": [], "modules": []}),
+        encoding="utf-8",
+    )
+    (tmp_path / "loop_manifest.json").write_text(
+        json.dumps({"acs": [], "modules": []}),
+        encoding="utf-8",
+    )
+    errors = validate_execute_handoff(tmp_path, _REPO)
+    assert any("evidence_index" in e for e in errors)
 
 
 def test_parseV4ExecutedSteps_findsMarkedSteps() -> None:
     """覆盖范围：frozen §9 已执行解析
     测试对象：_parse_v4_executed_steps
-    目的/目标：仅 [x] 的 9.x 进入 handoff 校验列表
+    目的/目标：仅 [x] 的 9.x 进入解析列表
     验证点：9.0 勾选、9.1 未勾选 → ['9.0']
-    失败含义：v4 步骤与证据文件脱节
+    失败含义：步骤与 handoff 脱节
     """
     text = "## 9.\n### 9.0 x\n| 已执行 | [x] |\n\n### 9.1 y\n| 已执行 | [ ] |\n"
     assert _parse_v4_executed_steps(text) == ["9.0"]

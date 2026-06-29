@@ -1,43 +1,44 @@
 # Audit Report — {{slug}}
 
+> Findings SSOT：`agents/audit-finding-schema.md` · 各维 `research/audit-a{n}-report.md`
+
 ## 1. 元信息
 
-| 字段 | 值 |
-|------|-----|
-| GitNexus 刷新 | {{7.pre 时间}} |
-| 摘要文件 | research/gitnexus-audit-summary.md |
+| 字段          | 值                                 |
+| ------------- | ---------------------------------- |
+| GitNexus 刷新 | {{7.pre 时间}}                     |
+| 摘要文件      | research/gitnexus-audit-summary.md |
 
 ---
 
-## 2. 维度验证汇总（来自 AUDIT.plan §2 · 7.0）
+## 2. 维度裁决汇总
 
-| 维 | 验证命令/检查 | 环境 | 隔离 | 结果 | 证据 |
-|----|---------------|------|------|------|------|
-| A1 | | local | 无写 | | |
-| A2 | | — | — | | |
-| A3 | | local | 无写 | | |
-| A4 | | — | — | | |
-| A5 | | local / audit-sandbox | | | |
-| A6 | | audit-sandbox | | | |
-| A7 | | audit-sandbox | | | |
-| A8 | | audit-sandbox | | | |
+| 维  | 报告 | 裁决               | 证据路径                    |
+| --- | ---- | ------------------ | --------------------------- |
+| A1  |      | pass / fail        | research/audit-a1-report.md |
+| A2  |      | pass / fail        | research/audit-a2-report.md |
+| A3  |      | pass / fail        | research/audit-a3-report.md |
+| A4  |      | pass / fail        | research/audit-a4-report.md |
+| A5  |      | pass / fail        | research/audit-a5-report.md |
+| A6  |      | pass / fail / skip | research/audit-a6-report.md |
+| A7  |      | pass / fail        | research/audit-a7-report.md |
+| A8  |      | pass / fail        | research/audit-a8-report.md |
 
-### Execute §10 证据索引（只读引用 · 非 Audit 复跑结论）
+**规则：** 任维 `fail` 或下方 §4.3 非空 → 总裁决 **FAIL**。禁止 `PASS_WITH_FIXES` / `PASS_WITH_GAPS`。
+
+### Execute INDEX §2.1 证据索引（只读引用 · 非 Audit 复跑结论）
 
 | Tier | Execute 证据路径/摘要 |
-|------|----------------------|
-| | |
+| ---- | --------------------- |
+|      |                       |
 
 ---
 
-## 3. 分维度详情（A1–A8 写入）
+## 3. 分维度详情（引用各维报告 §维度证据）
+
+> 全文见 `research/audit-a{n}-report.md`；本节可摘要，**findings 以各维 §计划内/§计划外 为准**。
 
 ### 3.1 A1 · Spec
-
-| 检查项 | 结果 | 证据 |
-|--------|------|------|
-
-GitNexus query 摘要：{{…}}
 
 ### 3.2 A2 · 过度工程
 
@@ -47,46 +48,46 @@ GitNexus query 摘要：{{…}}
 
 ### 3.5 A5 · 完成情况
 
-| AC# | 追溯链 | 分数 | 备注 |
-|-----|--------|------|------|
-
 ### 3.6 A6 · 性能
 
 ### 3.7 A7 · 运维
 
 ### 3.8 A8 · 测试缺口
 
-| 补测/Red Flag | 结果 | 证据 |
-|---------------|------|------|
-
 ---
 
 ## 4. 风险与结论（A9 · 主会话）
 
+### 4.1 Findings 合并（→ `research/audit-repair-ledger.md`）
+
+从 A1–A8 报告 **§计划内问题** + **§计划外发现** 去重合并，表头：
+
+| ID  | P   | 维度 | 标题 | 锚点 | 根因 | 修复方案 | 验证 |
+| --- | --- | ---- | ---- | ---- | ---- | -------- | ---- |
+
 ### 4.2 结论
 
-- [ ] **PASS** — 无 §4.3 → Phase 9
-- [ ] **PASS_WITH_FIXES** → REPAIR.plan → Phase 8
-- [ ] **FAIL**
+- [ ] **PASS** — 全维 pass/skip 且 §4.1 仅占位行 → Phase 9
+- [ ] **FAIL** — 任维 fail 或 §4.1 有 finding → REPAIR.plan → Phase 8
 
 ### 4.3 修复项（→ REPAIR.plan §1）
 
-| ID | 维度 | 问题 | 根因修复（非兜底） | 优先级 |
-|----|------|------|-------------------|--------|
+与 §4.1 同 ID；Repair 按 P0→P1→P2→P3 关账（`project-global.mdc` §无遗留）。
 
-### 4.4 Deferred（须用户批准）
+### 4.4 阶段外置（须绑任务 ID + 进度文档）
 
-| ID | 问题 | 理由 | 后续任务 |
+| ID | 问题 | 绑定阶段/任务 | 依赖 | 登记位置 |
 
 ---
 
 ## 5. Repair 复验（Phase 8 后）
 
-| 项 | 结果 | 证据 |
-|----|------|------|
-| §4.3 全部关闭 | | |
-| **MASTER §10** Tier 复跑（Repair 回归门禁） | | |
+| 项                                          | 结果 | 证据 |
+| ------------------------------------------- | ---- | ---- |
+| §4.3 全部关闭或 §4.4 已登记                 |      |      |
+| **INDEX §2.1** Tier 复跑（Repair 回归门禁） |      |      |
+| `uv run pytest -q` exit 0                   |      |      |
 
-> Repair **复跑 MASTER §10**，不重跑 AUDIT §2 全矩阵（除非用户要求复 Audit）。
+> Repair **复跑 EXECUTION_INDEX §2.1 Tier** + `uv run pytest -q`，不重跑 AUDIT §1 全矩阵（除非用户要求复 Audit）。
 
 **复验 PASS → Phase 9 Finish**

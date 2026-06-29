@@ -24,55 +24,49 @@ If you're using Codex or another agent-capable tool, additional project-scoped h
 
 Managed by Trellis. Edits outside this block are preserved; edits inside may be overwritten by a future `trellis update`.
 
-## Plan gate (complex tasks: v4/v4.1 `EXECUTION_INDEX` + frozen card)
+## Plan gate (complex tasks · v4.1 only)
 
 When authoring or freezing a complex task plan (`status=planning`):
 
-**Protocol v4 / v4.1** (`EXECUTION_INDEX.md` + `frozen/*.md`; v4.1 adds `research/00-EXECUTION-ENTRY.md`):
+1. **MUST Read first:** `agent-toolchain.md` + `.cursor/skills/trellis-plan/SKILL.md` — complete **Phase P0 Boot** (including **P0o** `docs/implementation_tasks/`).
+2. Follow **Phases 1a→5e** in `complex-task-planning-protocol.md` §4.
+3. Set `meta.plan_protocol_version: "4.1"` · `meta.execute_entry` → ENTRY.
+4. Before `task.py start`: `validate-plan-freeze` exit 0 · `plan.freeze.md` §3 全勾。
 
-1. **MUST Read first:** `agent-toolchain.md`（根目录）+ `.cursor/skills/trellis-plan/SKILL.md` — complete **Phase P0 Boot** (including **P0o** `docs/implementation_tasks/`).
-2. Follow **Phases 1a→5d** in `complex-task-planning-protocol.md` §4；`EXECUTION_INDEX.md` 为唯一人工索引（§1 步骤、§2 AC、§3 manifest）。
-3. Produce `research/original-plan-trace.md` mapping `NNN_*.md` → `EXECUTION_INDEX` §2 AC.
-4. Before `task.py start`: `python .trellis/scripts/task.py validate-plan-freeze <task-dir>` exit 0.
-5. Optional per phase: `python .trellis/scripts/task.py validate-plan-phase <task-dir> <phase>`.
+**Legacy v3/v4.0** — 只读 `templates/plan.freeze.legacy-v3-v40.md` · `tasks/archive/`；**不得**新建活跃 MASTER。
 
-**Legacy v3**（仅 `tasks/archive/` 只读，或 `in_progress` + `plan_protocol_version: "3"` 在途 shim）:
-
-1. 新任务 **不得** 新建 `MASTER.plan.md`；须迁移 v4 或移入 `tasks/archive/`。
-2. 在途 v3：`validate-plan-freeze` 拒绝；`validate-execute-handoff` 允许 legacy shim。
-3. 归档 v3：`validate-plan-freeze` / `validate-plan-phase` / handoff **全跳过**（只读）。
-
-## Execute gate (complex tasks in progress)
+## Execute gate (complex tasks · v4.1)
 
 When the active task status is `in_progress`:
 
-**Protocol v4 / v4.1** — SSOT: `frozen/*.md` + `implement.jsonl` (slot 1 = frozen; slot 2 = ENTRY or INDEX):
+1. **MUST Read first:** `agent-toolchain.md` + `.cursor/skills/trellis-execute/SKILL.md` + **`reference.md`** + `principles.md` + **`project-global.mdc`** — Phase 0 Boot.
+2. **读清 Execution Bundle：** ENTRY（路由地图）+ §5.1 全部 `research/*` + 路由表（`EXTERNAL-INDEX.md` §A + `implement.jsonl` 每一行）+ 当前切片 §。
+3. **直接执行：** INDEX §1 逐步 · **必做** Read `/test-driven-development`（见 `reference.md`）→ 代码/测试 → `[x]`；**条件 skill** 见 `agent-toolchain.md` §Execute（总表 + 细则）；**不**写 handoff 长文、txt、jsonl。
+4. **收尾：** 对抗性自检（发现缺口先修，不落盘表）→ `validate-execute-handoff` → 交 Audit（勿 `finish-work` 直到 Audit PASS）。
 
-1. **MUST Read first:** `agent-toolchain.md` + `.cursor/skills/trellis-execute/SKILL.md` + `principles.md` — Phase 0 Boot.
-2. **MUST Read `implement.jsonl` every line**; do not skip by summarizing the frozen task card.
-3. Read frozen card §9 / `EXECUTION_INDEX` §1 state machine; skill table in `execute-skill-paths.yaml`.
-4. Execute **one §9.x step at a time**: `test-driven-development` RED → `execute-evidence/{step}-red.txt` → GREEN → `{step}-green.txt` → SLICE (`incremental-implementation`) → `[x]`.
+**Legacy v3** — `MASTER.plan.md` only · 见上 Plan gate legacy 说明。
 
-**Legacy v3**（`in_progress` + `MASTER.plan.md` only）:
+## Audit gate (complex tasks with `AUDIT.plan.md` · v4.1)
 
-1. Same boot; **MUST Read `implement.jsonl` every line** + MASTER §0.1 / §12.
-2. Execute **one §8.x step at a time** (evidence paths as MASTER §8).
-3. Optional: `validate-execute-step <task-dir> 8.x`
-4. Before Audit: `validate-execute-handoff`; no `finish-work` until Audit PASS.
+1. **MUST Read first:** `agent-toolchain.md` + `agents/audit-boot-v4.1.md` + `agents/audit-coverage-model.md` + `.trellis/spec/guides/audit-skill-paths.yaml` + 任务 `AUDIT.plan.md` + `audit.jsonl` + ENTRY + §5.1 全部 `research/*` + INDEX §3/§5 相关行。
+2. **文档仅建上下文**；验证 **只信代码 + 跑测 + 独立复验**，不信任何文档自述。
+3. 确认 `meta.plan_protocol_version: "4.1"`；7.pre → `gitnexus-audit-summary.md` 后再派发 A1–A8。
+4. 按 `audit-skill-paths.yaml` 派发 A1–A8；各维读 `agents/` 对应模板 + `agents/audit-finding-schema.md`.
+5. 产出 `audit.report.md` + 各维 `research/audit-a{n}-report.md`；PASS 前勿 `finish-work`。
 
-## Audit gate (complex tasks with `AUDIT.plan.md`)
+## Repair gate (Audit FAIL · v4.1)
 
-1. **MUST Read first:** `agent-toolchain.md`（根目录）+ `.trellis/spec/guides/audit-skill-paths.yaml` + 任务 `AUDIT.plan.md` + `audit.jsonl`.
-2. 按 `audit-skill-paths.yaml` 派发 A1–A8；各维读 `agents/` 对应模板（skill 另 Read；派发者指定 model）。
-3. 产出 `audit.report.md`；PASS 前勿 `finish-work`。
+1. **MUST Read first:** `agents/repair-boot-v4.1.md` + `REPAIR.plan.md` + `research/audit-repair-ledger.md`.
+2. 修根因；ledger 每项 disposition ∈ {已修复, 阶段外置}（`project-global.mdc` §无遗留）。
+3. 收尾复验：**INDEX §2.1** + `uv run pytest -q` exit 0 → 更新 audit.report §5。
 
 ## Loop engineering context (Trellis complex-task layer)
 
 Complex tasks (`meta.task_track: "complex"`, or v4 `EXECUTION_INDEX.md`+`frozen/`) use machine-readable routing — **do not ask the user for docs/specs paths**.
 
 1. Plan freeze: `validate-plan-freeze` auto-runs `context_router` if `context_pack.json` missing
-2. Execute: **MUST Read `implement.jsonl` every line** before business code (`task.py current` → task dir); v4.1 slot 2 = `research/00-EXECUTION-ENTRY.md`; slot 3 = `context_pack.json`
-3. Handoff gates: `validate-execute-handoff` → `check_task_evidence.py`
+2. Execute (v4.1): Boot 读 ENTRY + research + 路由表（§A + `implement.jsonl` 每行）→ `/test-driven-development` per slice → 代码/测试即证据；**不写** txt/jsonl
+3. Handoff gates: `validate-execute-handoff`（v4.1：`[x]` + complex 时 `context_pack.json` · `loop_manifest.json` · `evidence_index.json` · `check_task_evidence`；legacy：仍验 txt）
 4. Repo CI: `check_test_catalog.py`, `check_verification_matrix.py`, `check_docs_specs_indexed.py`, `generate_project_map.py --check`, `check_active_master_tasks.py`
 5. `debt-lite` / simple tasks: set `meta.task_track: "debt-lite"` or `"simple"` — loop not required
 6. **New test module:** `uv run python scripts/loop_maintain.py --fix` (or `check_test_catalog.py --write-defaults`)

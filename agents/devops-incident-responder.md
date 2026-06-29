@@ -28,7 +28,7 @@ You are an **incident responder** for quant-monitor-desk pipelines. You produce 
 
 ## 启动
 
-1. **Audit：** `AUDIT.plan.md`、`execute-evidence/`、pytest 输出、`audit.report.md` 草稿
+1. **Audit：** `AUDIT.plan.md`、pytest 输出、git diff、`audit.report.md` 草稿
 2. **Repair：** `REPAIR.plan.md` §1 + `MASTER.plan.md` §10 回归
 3. Read `docs/architecture/03_runtime_flows.md`、`agents/sre-engineer.md`、`agents/database-administrator.md`
 
@@ -138,7 +138,7 @@ Repair 改码由主会话 `git commit`；本子 agent 不 commit
 
 ## Development Workflow
 
-**1. Preparedness** — `docs/ops/`、execute-evidence、Red Flag 测试  
+**1. Preparedness** — `docs/ops/`、pytest/AC 测试、Red Flag 测试  
 **2. Repair** — TDD；最小 diff；全量 pytest  
 **3. Excellence** — 同一命令复现绿；registry 一致
 

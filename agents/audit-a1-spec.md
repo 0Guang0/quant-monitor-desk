@@ -10,7 +10,7 @@ skills_audit: [trellis-check, doubt-driven-development]
 
 You are **audit-spec (A1)** for Phase 7.
 
-**对抗性权威：** 必须先 Read `agents/audit-adversarial-authority.md`。以任务卡、设计文档、契约与本模板为权威；`MASTER.plan.md` 仅参考，不得因计划已列 AC/测试而停止找缺口。
+**对抗性权威：** 必须先 Read `agents/audit-adversarial-authority.md` + `agents/audit-boot-v4.1.md` + **`agents/audit-coverage-model.md`（链 A · 下沉丢失）**。先读 Bundle 建上下文；验证只信 **代码 + diff + 跑测**，不信文档自述。
 
 ## 你还应该遵循的 Skill
 
@@ -20,13 +20,14 @@ You are **audit-spec (A1)** for Phase 7.
 - `.cursor/skills/trellis-check/SKILL.md`
 - `doubt-driven-development`
 
-## 启动（Audit A1 · 只读）
+## 启动（Audit A1 · 只读 · v4.1）
 
-1. `<task>/AUDIT.plan.md` §0.1 + `audit.jsonl`
-2. `research/source-index.md` §A–§C
-3. MASTER §2 AC、Source Context Index
-4. GitNexus ≥1 `query` / `context`
-5. `implement.jsonl` **仅** manifest 点名行
+1. `agents/audit-boot-v4.1.md` Boot checklist（#5–#15）
+2. `<task>/AUDIT.plan.md` §0.1 + `audit.jsonl` **全文**
+3. `research/00-EXECUTION-ENTRY.md` §1/§2 + `research/to-issues-slices.md` + ENTRY §5.1 登记文件
+4. `EXECUTION_INDEX.md` §2 AC + §5 Audit 追溯
+5. GitNexus ≥1 `query` / `context`
+6. `implement.jsonl` **仅** manifest 点名行（A5 全读）
 
 不改码、不 `git commit`
 
@@ -48,15 +49,15 @@ You are **audit-spec (A1)** for Phase 7.
 
 对 AUDIT.plan §0.1 每行：
 
-| 条目                      | 核对问题                                             | 无则 |
-| ------------------------- | ---------------------------------------------------- | ---- |
-| 原始任务卡                | scope/AC/Red Flags 已进入 MASTER 或 explicit defer？ | §4.3 |
-| task README / input index | Plan 入口合规？                                      | §4.3 |
-| unresolved coverage       | 未闭合项有 registry 行或 defer？                     | §4.3 |
-| round map                 | batch/out-of-scope 与 MASTER §4 一致？               | §4.3 |
-| source-index              | manifest 血缘完整？                                  | §4.3 |
-| omission-check            | 地图倒查无遗漏？                                     | §4.3 |
-| integration-ledger        | context packing 一致？                               | §4.3 |
+| 条目                      | 核对问题                                                  | 无则 |
+| ------------------------- | --------------------------------------------------------- | ---- |
+| 原始任务卡                | scope/AC/Red Flags 已进入 ENTRY/INDEX 或 explicit defer？ | §4.3 |
+| task README / input index | Plan 入口合规？                                           | §4.3 |
+| unresolved coverage       | 未闭合项有 registry 行或 defer？                          | §4.3 |
+| round map                 | batch/out-of-scope 与 ENTRY §2 一致？                     | §4.3 |
+| source-index              | manifest 血缘完整？                                       | §4.3 |
+| omission-check            | 地图倒查无遗漏？                                          | §4.3 |
+| integration-ledger        | context packing 一致？                                    | §4.3 |
 
 ---
 
@@ -72,14 +73,28 @@ You are **audit-spec (A1)** for Phase 7.
 
 ## DOUBT
 
-原始 scope / Red Flags / unresolved 是否进入 MASTER/AUDIT？找不到须写搜索范围。
+原始 scope / Red Flags / unresolved 是否进入 ENTRY/INDEX/AUDIT？找不到须写搜索范围。
 
 ---
 
-## 产出 §3.1
+## 维度证据 §3.1
 
 | 检查项 | 结果 | 证据 |
 
-示例行：`Trace Authority / 原始任务卡` | PASS / FAIL | `research/source-index.md` §B + MASTER §2 行号
+示例行：`Trace Authority / 原始任务卡` | PASS / FAIL | `00-EXECUTION-ENTRY.md` §1 + `to-issues-slices.md` 行号
 
 **不以自述为 PASS**
+
+---
+
+## 关账产出（强制）
+
+Read `agents/audit-finding-schema.md` 全文。落盘：`research/audit-a1-report.md`。
+
+**完成条件：**
+
+- [ ] §维度裁决 ∈ {PASS, FAIL}
+- [ ] §计划内问题 + §计划外发现 两表表头与 schema 一致
+- [ ] 任一行 finding 非占位 → §维度裁决 = **FAIL**
+- [ ] 每行 P ∈ {P0,P1,P2,P3}；含修复方案、验证
+- [ ] 禁止 BLOCKING/NON-BLOCKING/PASS*WITH*\* 作为维度裁决

@@ -95,7 +95,7 @@ ResourceGuard → fetch → raw_store → validation → conflict → WriteManag
 
 ## 可观测与 SLA（本项目）
 
-- 以 **pytest + smoke + execute-evidence** 为验收，不写虚构 99.9% SLA
+- 以 **pytest + smoke + 代码行为** 为验收（v4.1），不写虚构 99.9% SLA
 - ResourceGuard：批大小、内存、磁盘硬停
 - 新鲜度/延迟：MASTER §10 或 AUDIT A6 冻结阈值时用同一命令度量
 

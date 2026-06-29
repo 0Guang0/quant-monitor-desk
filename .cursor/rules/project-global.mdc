@@ -1,0 +1,115 @@
+---
+description: quant-monitor-desk 项目全局规则（输出语言 · 工程契约 · 查代码 · 无遗留 · grill-me · 开工前）
+alwaysApply: true
+---
+
+## 输出语言
+
+- 回复与文档：**中文**（通俗、小白能懂、业务视角）
+- 代码、路径、专业术语：可用 **English**
+
+## 工程契约（全程）
+
+**Leading words**：`ponytail` · `test-driven-development` · `五字段` · GitNexus · `grill-me`
+
+| 约束 | 要求 | 细则 SSOT |
+|------|------|-----------|
+| **ponytail** | 不破坏功能、不简化功能、不破坏流程/机制前提下写**最简**代码；测试代码同样遵守（中文注释除外） | 本节 **ponytail 细则** |
+| **正式代码 TDD** | 正式代码：**先** RED 再 GREEN；测试代码**不**套 TDD 在自己身上 | `/test-driven-development` |
+| **测试质量** | 所有测试 Read `/testing-guidelines`；覆盖须**足够**（能证明本步目的） | `testing-guidelines` |
+| **代码风格** | 所有代码（含测试）Read `/karpathy-guidelines` | `karpathy-guidelines` |
+| **五字段** | 每个 `test_*` 须有 docstring：覆盖范围、测试对象、目的/目标、验证点、失败含义 | `testing-guidelines` §9.1 |
+
+**禁止**：为让测试绿而改 **目的/目标**（可改测试实现，不可改证明什么）。
+
+### ponytail（细则）
+
+在 **不破坏功能、不简化功能、不破坏流程/机制** 的前提下，写 **最简** 能工作的代码。
+
+- 先复用仓库已有 helper/模式，再写新代码
+- 禁止为未请求需求加抽象、依赖、样板
+- 测试同样 ponytail：只断言本步 **目的/目标** 所需行为，不堆无关 case
+- 有意简化须 `ponytail:` 注释并写明天花板与升级路径；**无限延后**：无 owner、无截止、无下一步的「以后再说」
+
+### 禁止捷径（Execute / 修复 / 收尾）
+
+1. **绕过根因**：包一层/吞异常/假数据/只修表象，且未 `ponytail:` 标注天花板与还债路径
+2. **假完成**：为通过检查而改测试目的、缩验证、跳过约定 pytest
+3. **假澄清**：未走 grill-gate 对话即假设用户意图
+4. **分级遗留**：命中本节 **§无遗留** 禁止项（PASS 捷径、无绑定延后、ledger 未关账）；**真修**：共享处一次 guard，根因一处修（ponytail）
+
+### 遇到时怎么做
+
+- **有意简化**：`ponytail:` + 明确不做什么 + 升级路径
+- **现在做不了**：grill-gate 问用户；写 blocker / owner / 下一步
+- **无遗留**（修复/收尾时）：Read 本节 **§无遗留** 逐步关账
+
+## 查代码
+
+1. **GitNexus** 优先：`query` / `context` / 改 symbol 前 `impact`
+2. 不够再 `grep` / Read 深挖  
+**禁止**未查就猜接口或行为。
+
+## 无遗留（修复/收尾）
+
+**Leading word — 无遗留：** 源报告每一条 finding 在 ledger 里**有且只有一种** disposition，且 **`uv run pytest -q` 全绿**，方可宣称修复完成。
+
+### 适用
+
+审计、评审、自检、DEBUG 收尾，或任何按清单修复的 pass。输入含 findings / 问题项 / 建议 / 待改进即适用。
+
+### 步骤
+
+1. **建 ledger** — 打开**源报告正文**（非摘要、非 agent 转述），每条 finding 一行：原文定位 · 标签 · disposition · 证据。  
+   标签含 P0–P3、BLOCKING/NON-BLOCKING、high/medium/low、可优化、待改进、计划外发现、弱点、建议后续、边界遗漏、错误处理、可选观察等**任何分级**；标签只影响排序，不决定是否进 ledger。
+
+2. **逐项 disposition（仅两种）**  
+   - **已修复**：根因已消除，有约定验证或代码/测试证据。  
+   - **阶段外置**：客观上依赖后续阶段交付物；须写清绑定的阶段/任务 ID、依赖、承接，并登记进度文档。  
+   **禁止**第三种状态：「以后再说」、低优先级先放、NON-BLOCKING 默认过、摘要 PASS 就不开报告。
+
+3. **执行修复** — 全程遵守工程契约；改 symbol 前 `impact()`。
+
+4. **验证** — `uv run pytest -q` 全绿（exit 0）。
+
+### 关账完成条件（全部满足才算通过）
+
+- [ ] Ledger 覆盖源报告每一条 finding（正文 0 条则 ledger 为空并注明「正文已核实，0 项」）
+- [ ] 每行 disposition ∈ {已修复, 阶段外置}，无空项、无待定
+- [ ] 已修复项根因已消除，非表象 patch
+- [ ] 阶段外置项已绑定任务 ID 并登记进度文档
+- [ ] `uv run pytest -q` exit 0
+- [ ] 未因摘要 PASS / PASS with xxx / NON-BLOCKING / 不阻塞 跳过步骤 1–4
+
+### 与摘要 PASS 的关系
+
+| 报告写法 | 要求 |
+|----------|------|
+| PASS | 仍须打开正文建 ledger |
+| PASS with xxx | xxx 每条进 ledger |
+| NON-BLOCKING / 不阻塞 / low / 可优化 | 仍须进 ledger 并选 disposition |
+| 仅 agent 口头「没问题」 | 无效；以源报告文件为准 |
+
+**禁止**：只修高优先级其余「以后再说」且无阶段绑定；用低优先级/优化项/NON-BLOCKING 无限搁置。
+
+## grill-me（澄清门）
+
+**何时必须停**：任务目标、价值、完成条件、规则约束、范围边界、架构触点——**任一说不清**；或任何不确定、需用户取舍的事项。
+
+**怎么做**：Read `/grill-me`，**在对话里问用户**；收到明确回复后再执行。
+
+**禁止**：
+
+- 猜测、替用户下判断
+- 用 `/grill-me` **走流程**（伪 session、自问自答、「用户认为…」）
+
+> Execute 任务另有 grill-gate block；全局规则与此一致：**不清楚就问，问清再做。**
+
+## 开工前完成条件
+
+开始写码/改码前，须能**逐项复述**（说不清 → grill-me，block）：
+
+- 要做什么、为什么做、做到什么算完成（AC）
+- 规则约束、实现范围与边界、关键架构触点
+
+复述通过 → 方可进入实现。

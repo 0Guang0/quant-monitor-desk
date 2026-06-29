@@ -90,6 +90,14 @@
 | --- | -------------------------------------------------------------------------------------------------------------- |
 | [ ] | `plan-spec*.md` / `plan-task*.md` 无未勾选的 Open Questions **或** 已有 `research/*-session.md` / ADR 记录决策 |
 
+### 3.0e Execution Bundle 机械自检（Plan · 必做）
+
+| ✓   | 检查项                                                                          |
+| --- | ------------------------------------------------------------------------------- |
+| [ ] | ENTRY §5.1 = 磁盘 `research/*.md`（除 plan-boot）∪ consolidation 对照表 done 行 |
+| [ ] | ENTRY §5.2 名单 = §5.1 + EXTERNAL §A + 当前切片 §                               |
+| [ ] | `plan-consolidation.md` 含 **Phase 5e complete**                                |
+
 ### 3.1 AUDIT.plan.md
 
 - [ ] §1 A1–A8 + A9 主会话；§2 无 `{{}}`

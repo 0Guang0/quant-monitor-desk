@@ -56,7 +56,7 @@ AC、边界、完成条件、架构二选一、用户授权 — 说不清且 fro
 
 - 只在对话问；**不** 新建 `research/*-session.md`
 - block 解除前：禁止 RED、禁止生产代码
-- 用户回复后：回报或 `execute-skill-reads.jsonl` 备注即可
+- 用户回复后：对话回报即可（**不**写 `execute-skill-reads.jsonl`）
 
 **完成条件：** 能复述当前 slice AC；无未决阻塞点。
 

@@ -1,8 +1,8 @@
 # Agent 工具路由（场景 · 全员必读）
 
-> 不按角色列全表。角色**必做**见：  
-> `plan-skill-paths.yaml` · `execute-skill-paths.yaml` · `audit-skill-paths.yaml`  
-> 任务上下文见活动任务目录 `implement.jsonl` / `audit.jsonl`。
+> **路径：** 仓库根 `agent-toolchain.md`  
+> 角色**必做 skill 路径**见：`plan-skill-paths.yaml` · **`execute-skill-paths.yaml`（Execute 必做）** · `audit-skill-paths.yaml`  
+> **Execute 必做相位/TDD 分轨：** `.cursor/skills/trellis-execute/reference.md` + `principles.md`（不在本文件重复）
 
 ## GitNexus MCP（按场景）
 
@@ -28,27 +28,99 @@
 
 ## Skill 歧义（相似项选一）
 
-| 场景                   | 用                                                         | 不用                           |
-| ---------------------- | ---------------------------------------------------------- | ------------------------------ |
-| Plan 质问需求          | `grill-me` 等 + **grill-gate**（block 后再写 session）     | 未问用户就写 session           |
-| Plan 垂直切片          | `to-issues` + `planning-and-task-breakdown`                | 手写 MASTER §8 无切片          |
-| Execute 先写失败测试   | `test-driven-development`                                  | 先写实现                       |
-| Execute 实现与测试规范 | `karpathy-guidelines` + `testing-guidelines`               | 自创风格                       |
-| Execute 需求不明       | `grill-me` + **grill-gate**（block 问用户）                | 猜 scope · 写 session 自问自答 |
-| Execute 验规范         | **等 Audit A1**                                            | `trellis-check`                |
-| Audit 对抗性质疑       | 各维 `doubt-driven-development`（冻结在 audit-agent 模板） | 只走 happy path                |
+| 场景                   | 用                                                            | 不用                           |
+| ---------------------- | ------------------------------------------------------------- | ------------------------------ |
+| Plan 质问需求          | `grill-me` 等 + **grill-gate**（block 后再写 session）        | 未问用户就写 session           |
+| Plan 垂直切片          | `to-issues` + `planning-and-task-breakdown`                   | 手写 MASTER §8 无切片          |
+| Execute 先写失败测试   | **`/test-driven-development`**（必做 · 见 execute reference） | 先写实现                       |
+| Execute 实现与测试规范 | `karpathy-guidelines` + `testing-guidelines`（必做）          | 自创风格                       |
+| Execute 需求不明       | `grill-me` + **grill-gate**（条件 · 见下表）                  | 猜 scope · 写 session 自问自答 |
+| Execute 验规范         | **等 Audit A1**                                               | `trellis-check`                |
+| Audit 对抗性质疑       | 各维 `doubt-driven-development`（冻结在 audit-agent 模板）    | 只走 happy path                |
+
+---
+
+## Execute — 条件 skill（SSOT · 触发才 Read）
+
+> **Execute 必做**（Boot/RED/GREEN/SLICE 相位、TDD 分轨、karpathy/testing）→  
+> `.cursor/skills/trellis-execute/reference.md` + `principles.md` + `execute-skill-paths.yaml`
+
+| Skill                               | 相位      | 路径（磁盘 · 权威见 yaml）                                  | 触发                                                         | 完成条件                                     |
+| ----------------------------------- | --------- | ----------------------------------------------------------- | ------------------------------------------------------------ | -------------------------------------------- |
+| `grill-me`                          | Boot      | `.claude/skills/grill-me/SKILL.md`                          | scope/AC/边界说不清 → **grill-gate**                         | 用户回复后解除 block                         |
+| `systematic-debugging`              | DEBUG     | Superpowers `systematic-debugging/SKILL.md`                 | RED 意外 PASS · GREEN 仍 FAIL · 同错 ≥2 轮 · 栈与 INDEX 不符 | 根因已写明 → 回到 `/test-driven-development` |
+| `diagnosing-bugs`                   | DEBUG     | `.claude/skills/diagnosing-bugs/SKILL.md`                   | systematic 后仍卡住                                          | 同上                                         |
+| `gitnexus-debugging`                | DEBUG     | `gitnexus-debugging` skill                                  | DEBUG 链末栈/调用仍不明                                      | 同上                                         |
+| `source-driven-development`         | GREEN     | `.agents/skills/source-driven-development/SKILL.md`         | 外部 API/契约/SDK · `specs/contracts` 新字段                 | 实现与契约一致                               |
+| `deprecation-and-migration`         | GREEN     | `.agents/skills/deprecation-and-migration/SKILL.md`         | deprecate/remove/migrate/双轨 · 破坏性 API                   | 旧路径 fail-closed 或显式可用                |
+| `observability-and-instrumentation` | SLICE     | `.agents/skills/observability-and-instrumentation/SKILL.md` | ops/写路径/pipeline · AC 要 log/metric/trace                 | 变更路径有可检索信号                         |
+| `shipping-and-launch`               | pre-merge | `.agents/skills/shipping-and-launch/SKILL.md`               | Audit PASS 后 merge/PR 前（主会话）                          | 不替代 handoff/Audit                         |
+
+### 条件 skill 细则（触发才 Read · 证据在代码/测试 · 不写 jsonl）
+
+#### DEBUG
+
+**触发：** RED 意外 PASS · GREEN 后仍 FAIL · 同错修 ≥2 轮 · 栈与 INDEX 不符
+
+**顺序：** `systematic-debugging` → `diagnosing-bugs` → `gitnexus-debugging` → 回到 RED（仍按 `/test-driven-development`）
+
+**完成条件：** 根因已写明；继续 RED/GREEN（不写 jsonl 落盘）。
+
+#### source-driven-development
+
+**GREEN 前 Read：** 外部 API/契约/SDK 语义；`specs/contracts` 新字段；adapter 与第三方对齐。
+
+**不必：** 纯内部 refactor、仅改测试/注释。
+
+**完成条件：** 实现与契约/文档引用一致（证据在代码与测试中）。
+
+#### deprecation-and-migration
+
+**GREEN 前 Read：** deprecate/remove/rename/migrate/双轨；public API 破坏性变更；registry tombstone。
+
+**完成条件：** 旧路径显式可用或 fail-closed；迁移步骤在代码/测试可验证。
+
+#### observability-and-instrumentation
+
+**SLICE 前 Read：** ops/写路径/pipeline；AC 要求 log/metric/trace；`backend/app/ops/` 等。
+
+**完成条件：** 变更路径有可检索信号；无无引用全局指标。
+
+#### shipping-and-launch（pre-merge）
+
+**主会话；** handoff 绿 + Audit PASS 后、merge/PR 前可选 Read。
+
+**完成条件：** 不替代 handoff 门禁与 Audit 关账。
+
+---
+
+## Loop engineering（complex 轨道 · 与 Execute/Audit 对齐）
+
+> **判定：** `task.json` → `meta.task_track: complex`（v4/v4.1 三件套默认 complex）· 详见 `AGENTS.md` §Loop engineering · `complex-task-planning-protocol.md` §0 Loop
+
+| 阶段                | 产物                                             | 门禁                                               |
+| ------------------- | ------------------------------------------------ | -------------------------------------------------- |
+| **Plan freeze**     | `context_pack.json` · `loop_manifest.json`       | `validate-plan-freeze` 自动 `context_router`       |
+| **Execute 中**      | 新测/新 docs/specs/backend 包                    | `loop_maintain.py --fix` · `authority_graph.yaml`  |
+| **Execute handoff** | `evidence_index.json`（索引 execute/audit 证据） | `validate-execute-handoff` → `check_task_evidence` |
+| **Audit 关账**      | `audit_matrix.json` · ledger                     | A7/A9 更新 loop_manifest AC 状态                   |
+
+**v4.1 不变：** loop 管 **路由/索引/AC 机械关账**；Execute **不写** execute-evidence txt / skill-reads jsonl。
+
+---
 
 ## Trellis CLI（常用）
 
 | 场景              | 命令                                                              |
 | ----------------- | ----------------------------------------------------------------- |
 | Plan 冻结         | `python .trellis/scripts/task.py validate-plan-freeze <task-dir>` |
-| Execute 步进      | `validate-execute-step` / `validate-execute-handoff`              |
+| Execute handoff   | `validate-execute-handoff`（v4.1：代码/测试 + `[x]`）             |
 | 刷新 context_pack | `uv run python scripts/context_router.py --task <task-dir>`       |
 | 地图/catalog 过期 | `uv run python scripts/loop_maintain.py`（`--fix` 写回）          |
 
 ## 读本文件之后
 
-- **Plan** → `trellis-plan` skill + `plan-skill-paths.yaml`
-- **Execute** → `implement.jsonl` 每条 + `trellis-execute` + `execute-skill-paths.yaml`
-- **Audit** → `AUDIT.plan.md` + `audit-skill-paths.yaml` + 本维 `agents/*.md`
+- **Plan** → `trellis-plan` + `plan-skill-paths.yaml`
+- **Execute 必做** → `trellis-execute/reference.md` + `principles.md` + `execute-skill-paths.yaml`
+- **Execute 条件** → 本文件 **§Execute — 条件 skill**
+- **Audit** → `AUDIT.plan.md` + `audit-skill-paths.yaml` + `agents/*.md`

@@ -215,7 +215,7 @@ phases:
       - research/plan-consolidation.md
       - EXECUTION_PLAN.md
     marker: "Phase 5e complete"
-    note: "打包 Execution Bundle；frozen/INDEX 变薄指针"
+    note: "打包 Execution Bundle；ENTRY §5.1/§5.2 机械自检"
 
 freeze_required_skills_v41:
   - agent-toolchain

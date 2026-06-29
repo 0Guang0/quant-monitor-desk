@@ -1,58 +1,44 @@
-# trellis-execute — 条件 skill
+# trellis-execute — 必做 skill 与相位（Execute SSOT）
 
-> [principles.md](principles.md) · [SKILL.md](SKILL.md) · 路径：`.trellis/spec/guides/execute-skill-paths.yaml`
-
-## 相位总表
-
-| Phase     | 必做 Read                                                                | 条件（触发则必 Read）                                                            |
-| --------- | ------------------------------------------------------------------------ | -------------------------------------------------------------------------------- |
-| Boot      | `agent-toolchain` · `trellis-execute` · `principles` · `impact()`        | `grill-me` + **[grill-gate](../../../.trellis/spec/guides/grill-gate.md) block** |
-| RED       | `test-driven-development` · `karpathy-guidelines` · `testing-guidelines` | —                                                                                |
-| DEBUG     | —                                                                        | `systematic-debugging` → `diagnosing-bugs` → `gitnexus-debugging`                |
-| GREEN     | `karpathy-guidelines` · `testing-guidelines`                             | `source-driven-development` · `deprecation-and-migration`                        |
-| SLICE     | `incremental-implementation`                                             | `observability-and-instrumentation`                                              |
-| pre-merge | —                                                                        | `shipping-and-launch`（主会话）                                                  |
-
-**`/implement` 禁止** · **`incremental-implementation` SLICE 必做** · **`trellis-implement` 子 agent 不 commit**（见 SKILL.md）
+> **条件 skill（触发才 Read）：** [`agent-toolchain.md`](../../agent-toolchain.md) §Execute — 条件 skill  
+> **工程契约：** [project-global.mdc](../../rules/project-global.mdc) · [principles.md](principles.md)  
+> **磁盘路径：** `.trellis/spec/guides/execute-skill-paths.yaml`
 
 ---
 
-## DEBUG
+## 必做 — 相位总表
 
-**触发：** RED 意外 PASS · GREEN 后仍 FAIL · 同错修 ≥2 轮 · 栈与 INDEX 不符
+| Phase     | 必做 Read                                                                                         | 条件（触发则 Read · 见 agent-toolchain）                          |
+| --------- | ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Boot      | `agent-toolchain` · `trellis-execute/SKILL.md` · `principles` · `project-global.mdc` · `impact()` | `grill-me` + **grill-gate** block                                 |
+| RED       | **`/test-driven-development`** · `karpathy-guidelines` · `testing-guidelines`                     | —                                                                 |
+| DEBUG     | —                                                                                                 | `systematic-debugging` → `diagnosing-bugs` → `gitnexus-debugging` |
+| GREEN     | **`/test-driven-development`** · `karpathy-guidelines` · `testing-guidelines`                     | `source-driven-development` · `deprecation-and-migration`         |
+| SLICE     | `incremental-implementation`                                                                      | `observability-and-instrumentation`                               |
+| pre-merge | —                                                                                                 | `shipping-and-launch`（主会话）                                   |
 
-**顺序：** `systematic-debugging` → `diagnosing-bugs` → `gitnexus-debugging` → 回到 RED
-
-**完成条件：** 根因已写明；`execute-skill-reads.jsonl` 含已 Read 的 DEBUG skill。
-
----
-
-## source-driven-development
-
-**GREEN 前 Read：** 外部 API/契约/SDK 语义；`specs/contracts` 新字段；adapter 与第三方对齐。
-
-**不必：** 纯内部 refactor、仅改测试/注释。
-
-**完成条件：** 实现或 `-green.txt` 含可追溯文档引用。
+**禁止：** `/implement` · `trellis-implement` 不 commit · 未走 RED/GREEN 勾 `[x]`
 
 ---
 
-## deprecation-and-migration
+## 必做 — skill 路径（与 yaml 对齐）
 
-**GREEN 前 Read：** deprecate/remove/rename/migrate/双轨；public API 破坏性变更；registry tombstone。
+| Skill                        | 相位        | 路径                                                   |
+| ---------------------------- | ----------- | ------------------------------------------------------ |
+| `/test-driven-development`   | RED / GREEN | `execute-skill-paths.yaml` → `test-driven-development` |
+| `karpathy-guidelines`        | RED / GREEN | 见 yaml                                                |
+| `testing-guidelines`         | RED / GREEN | `.cursor/skills/testing-guidelines/SKILL.md`           |
+| `incremental-implementation` | SLICE       | 见 yaml                                                |
+| `trellis-execute`            | Boot        | `.cursor/skills/trellis-execute/SKILL.md`              |
+| `trellis-execute-principles` | Boot        | `.cursor/skills/trellis-execute/principles.md`         |
+| `project-global`             | Boot        | `.cursor/rules/project-global.mdc`                     |
+| `agent-toolchain`            | Boot        | `agent-toolchain.md`                                   |
+| `gitnexus-impact`            | Boot        | MCP `impact()`（见 AGENTS.md）                         |
 
-**完成条件：** 旧路径显式可用或失败关闭；green 证据写迁移步骤。
+TDD 分轨 · karpathy/testing 步骤 → [principles.md](principles.md)。
 
 ---
 
-## observability-and-instrumentation
+## 条件 skill
 
-**SLICE 前 Read：** ops/写路径/pipeline；AC 要求 log/metric/trace；`backend/app/ops/` 等。
-
-**完成条件：** 变更路径有可检索信号；无无引用全局指标。
-
----
-
-## shipping-and-launch (pre-merge)
-
-主会话；handoff 绿 + Audit PASS 后、merge/PR 前可选。**不替代** handoff 与 Audit。
+**不在此文件展开** — 触发/完成条件见 [`agent-toolchain.md`](../../agent-toolchain.md) §Execute — 条件 skill（总表 + **细则**）。

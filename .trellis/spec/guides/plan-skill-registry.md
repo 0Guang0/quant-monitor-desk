@@ -8,11 +8,12 @@
 
 ## 0. 与 Execute / Audit 的关系
 
-| 阶段        | 入口 Skill      | 冻结位置              | 机器门禁                 |
-| ----------- | --------------- | --------------------- | ------------------------ |
-| **Plan**    | trellis-plan    | plan.freeze.md §1、§3 | validate-plan-freeze     |
-| **Execute** | trellis-execute | MASTER §12            | validate-execute-handoff |
-| **Audit**   | —               | AUDIT.plan §1/§2      | Audit A1–A8              |
+| 阶段        | 入口 Skill       | 冻结位置                                | 机器门禁                 |
+| ----------- | ---------------- | --------------------------------------- | ------------------------ |
+| **Plan**    | trellis-plan     | plan.freeze.md §1、§3                   | validate-plan-freeze     |
+| **Execute** | trellis-execute  | `execute-skill-paths.yaml` + ENTRY §5.2 | validate-execute-handoff |
+| **Audit**   | audit-boot-v4.1  | AUDIT.plan §1 + coverage-model          | Audit A1–A8              |
+| **Repair**  | repair-boot-v4.1 | REPAIR.plan + INDEX §2.1                | pytest + audit.report §5 |
 
 Plan **不读** execute-skill-registry；Execute **不读** 本文。
 

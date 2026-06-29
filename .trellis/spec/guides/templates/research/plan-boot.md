@@ -10,7 +10,7 @@
 
 {{前置 Batch、DECISIONS 引用}}
 
-## 预期 AC 草稿（→ MASTER §2）
+## 预期 AC 草稿（→ `to-issues-slices.md` / ENTRY §1）
 
 | #   | 预期结果 |
 | --- | -------- |

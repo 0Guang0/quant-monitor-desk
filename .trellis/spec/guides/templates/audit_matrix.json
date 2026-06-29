@@ -1,43 +1,44 @@
 {
+  "_comment": "result per dimension: pass | fail | skip | fail_then_fixed. Any fail or findings → final FAIL. SSOT: agents/audit-finding-schema.md",
   "dimensions": {
     "A1": {
       "result": "pass",
-      "evidence": "research/audit-sections/A1.md",
+      "evidence": "research/audit-a1-report.md",
       "agent": "audit-a1-spec"
     },
     "A2": {
       "result": "pass",
-      "evidence": "research/audit-sections/A2.md",
+      "evidence": "research/audit-a2-report.md",
       "agent": "audit-a2-ponytail"
     },
     "A3": {
       "result": "pass",
-      "evidence": "research/audit-sections/A3.md",
+      "evidence": "research/audit-a3-report.md",
       "agent": "security-auditor"
     },
     "A4": {
       "result": "pass",
-      "evidence": "research/audit-sections/A4.md",
+      "evidence": "research/audit-a4-report.md",
       "agent": "code-reviewer"
     },
     "A5": {
       "result": "pass",
-      "evidence": "research/audit-sections/A5.md",
+      "evidence": "research/audit-a5-report.md",
       "agent": "audit-a5-completion"
     },
     "A6": {
       "result": "skip",
-      "evidence": "AUDIT.plan.md §1",
+      "evidence": "research/audit-a6-report.md",
       "agent": "performance-engineer"
     },
     "A7": {
       "result": "pass",
-      "evidence": "research/audit-sections/A7.md",
+      "evidence": "research/audit-a7-report.md",
       "agent": "database-administrator"
     },
     "A8": {
       "result": "pass",
-      "evidence": "research/audit-sections/A8.md",
+      "evidence": "research/audit-a8-report.md",
       "agent": "qa-expert"
     }
   },

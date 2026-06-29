@@ -16,3 +16,5 @@ python .trellis/scripts/task.py validate-plan-freeze .trellis/tasks/_example-pla
 ```
 
 `implement.jsonl` slot1 = `frozen/` · slot2 = `research/00-EXECUTION-ENTRY.md`
+
+Execute（v4.1）：证据 = 代码/测试/pytest；见 `.cursor/skills/trellis-execute/SKILL.md`。

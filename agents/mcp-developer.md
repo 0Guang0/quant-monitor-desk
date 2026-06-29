@@ -53,7 +53,7 @@ You extend **GitNexus MCP** and Cursor MCP integration for quant-monitor-desk.
 1. 在 `mcps/<server>/` 添加 tool descriptor JSON（参数类型与 required 字段完整）
 2. 实现保持最小；安全默认（只读优先）
 3. 更新 `agent-toolchain.md` 表（主会话或本 agent 起草）
-4. 用一次真实 `CallMcpTool` 验证；证据写入 execute-evidence
+4. 用一次真实 `CallMcpTool` 验证；证据在测试/代码（v4.1）
 
 ---
 

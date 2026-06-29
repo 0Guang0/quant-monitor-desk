@@ -12,12 +12,14 @@
 | source_card   | `docs/implementation_tasks/GLOBAL_TASK_TEMPLATE.md` |
 | frozen_card   | `frozen/GLOBAL_TASK_TEMPLATE.md`                    |
 
-## 1. 步骤与证据（Execute）
+## 1. 步骤（Execute · v4.1）
 
-| Step | 任务卡锚点 | RED 命令 | GREEN 命令 | 证据路径                               |
-| ---- | ---------- | -------- | ---------- | -------------------------------------- |
-| 9.0  | Boot       | `true`   | `true`     | `execute-evidence/9.0-{red,green}.txt` |
-| 9.1  | EX-01      | 见切片   | 见切片     | `execute-evidence/9.1-{red,green}.txt` |
+| Step | 任务卡锚点 | RED    | GREEN  | 完成              |
+| ---- | ---------- | ------ | ------ | ----------------- |
+| 9.0  | Boot       | 见切片 | 见切片 | `[x]` + 代码/测试 |
+| 9.1  | EX-01      | 见切片 | 见切片 | `[x]` + 代码/测试 |
+
+> 证据 = 代码/测试/pytest；不写 execute-evidence txt。
 
 ## 2. AC ↔ 测试 / 验收
 
@@ -31,7 +33,7 @@
 | ---------------------------------------------------- | --------- | -------- | -------------- | --------- |
 | `docs/implementation_tasks/GLOBAL_TESTING_POLICY.md` | must-read | execute  | test semantics | §9.0 Boot |
 
-> v4.1：slot2 = `research/00-EXECUTION-ENTRY.md`；包内 `research/*` 由 ENTRY §5.2 路由。
+> v4.1：slot2 = `research/00-EXECUTION-ENTRY.md`；包内 `research/*` 由 ENTRY §5.1 路由。
 
 ## 4. 已并入冻结任务卡
 

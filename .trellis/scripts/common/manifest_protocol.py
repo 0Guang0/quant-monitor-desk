@@ -1059,7 +1059,11 @@ def validate_manifest_freeze(task_dir: Path, repo_root: Path, errors: list[str])
 
 
 def validate_execute_boot(task_dir: Path, errors: list[str]) -> None:
-    """E16: Execute Phase 0 — context-closure only (no execute-boot self-attestation)."""
+    """E16: v4.1 — no prose closure artifact; legacy v4 may still require context-closure."""
+    from .plan_protocol import is_execution_bundle_v41
+
+    if is_execution_bundle_v41(task_dir):
+        return
     closure = task_dir / "research" / "context-closure.md"
     if not closure.is_file():
         errors.append(
