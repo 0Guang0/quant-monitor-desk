@@ -104,6 +104,69 @@ def sync_plan(
     }
 
 
+def live_fetch(
+    *,
+    source_id: str,
+    data_domain: str,
+    operation: str | None = None,
+    instrument_id: str | None = None,
+    dry_run: bool = True,
+) -> dict[str, Any]:
+    """``qmd data live-fetch`` — product live route preview + optional fetch (R3H-08 S08-05)."""
+    from backend.app.datasources.product_live_gate import (
+        ProductLiveGateError,
+        assert_product_live_allowed,
+    )
+    from backend.app.datasources.product_live_ports import create_product_live_fetch_port
+    from backend.app.datasources.fetch_result import FetchRequest
+
+    op = operation or _default_operation(data_domain)
+    try:
+        assert_product_live_allowed(source_id=source_id, operation=op)
+    except ProductLiveGateError as exc:
+        raise CliFailure(
+            error_code=exc.code,
+            message=str(exc),
+            docs_anchor="docs/decisions/ADR-027-r3h08-product-live-env-gate.md",
+        ) from exc
+
+    service = _service()
+    plan = service.preview_route(data_domain=data_domain, operation=op)
+    guard_decision, guard_reason = service.check_resource_guard()
+    payload: dict[str, Any] = {
+        "command": "live-fetch",
+        "dry_run": dry_run,
+        "product_live": True,
+        "source_id": source_id,
+        "data_domain": data_domain,
+        "operation": op,
+        "route_status": plan.route_status,
+        "selected_source_id": plan.selected_source_id,
+        "resource_guard_decision": guard_decision.value,
+        "resource_guard_reason": guard_reason,
+    }
+    if dry_run:
+        payload["message"] = "dry-run only; set dry_run=false for product live fetch"
+        return payload
+
+    port = create_product_live_fetch_port(
+        source_id=source_id,
+        data_domain=data_domain,
+        operation=op,
+    )
+    req = FetchRequest(
+        run_id="qmd-live-fetch",
+        source_id=source_id,
+        data_domain=data_domain,
+        instrument_id=instrument_id,
+    )
+    body = port.fetch_payload(req)
+    payload["row_count"] = body.row_count
+    payload["file_type"] = body.file_type
+    payload["message"] = "product live fetch completed via DataSourceService gold path port"
+    return payload
+
+
 def init_basic(*, dry_run: bool = True, db_path: Path | None = None) -> dict[str, Any]:
     target = db_path or (DATA_ROOT / "duckdb" / "quant_monitor.duckdb")
     payload: dict[str, Any] = {

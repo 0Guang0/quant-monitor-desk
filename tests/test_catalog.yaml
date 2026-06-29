@@ -902,6 +902,17 @@ tests/test_r3h06_clean_schema.py:
       - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
     specs:
       - specs/schema/schema.sql
+tests/test_r3h08_live_productization.py:
+  command: uv run python -m pytest tests/test_r3h08_live_productization.py -q
+  failure_meaning:
+    Regression in test_r3h08_live_productization; inspect purpose and
+    linked authorities.
+  purpose: R3H-08 Wave 2 live productization tracer bullets (S08-BOOT+).
+  type: runtime-contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
 tests/test_r3h_adapter_evidence_matrix.py:
   command: uv run python -m pytest tests/test_r3h_adapter_evidence_matrix.py -q
   failure_meaning:

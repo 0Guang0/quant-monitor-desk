@@ -97,7 +97,28 @@ class BaostockMockFetchPort:
         return FetchPayload(content=content, file_type="json", row_count=len(bars))
 
 
-def create_baostock_fetch_port(*, symbols: Sequence[str], max_rows: int):
+@dataclass(frozen=True)
+class BaostockProductLiveFetchPort:
+    """Product live baostock port (not rehearsal) — replay-first for CI; network via baostock SDK."""
+
+    symbols: Sequence[str]
+    max_rows: int
+    replay_path: Path = REPLAY_FIXTURE
+
+    def fetch_payload(self, req: FetchRequest) -> FetchPayload:
+        # ponytail: product live uses replay fixture in CI; upgrade = cn_rehearsal BaostockLiveFetchPort network path
+        if self.replay_path.is_file():
+            return BaostockMockFetchPort(
+                symbols=self.symbols, max_rows=self.max_rows, replay_path=self.replay_path
+            ).fetch_payload(req)
+        from backend.app.datasources.fetch_ports.cn_rehearsal_live_ports import BaostockLiveFetchPort
+
+        return BaostockLiveFetchPort(symbols=self.symbols, max_rows=self.max_rows).fetch_payload(req)
+
+
+def create_baostock_fetch_port(*, symbols: Sequence[str], max_rows: int, use_mock: bool = True):
     if len(symbols) > MAX_SYMBOLS:
         raise PortError("FAILED", f"max {MAX_SYMBOLS} symbols allowed, got {len(symbols)}")
-    return BaostockMockFetchPort(symbols=symbols, max_rows=max_rows)
+    if use_mock:
+        return BaostockMockFetchPort(symbols=symbols, max_rows=max_rows)
+    return BaostockProductLiveFetchPort(symbols=symbols, max_rows=max_rows)

@@ -82,6 +82,24 @@ class WorldBankMockFetchPort:
         return FetchPayload(content=content, file_type="json", row_count=len(observations))
 
 
+@dataclass(frozen=True)
+class WorldBankLiveFetchPort:
+    """Product live World Bank port — ponytail: delegates to mock until WB API wired."""
+
+    countries: Sequence[str]
+    indicators: Sequence[str]
+    max_rows: int
+    data_domain: WorldBankDomain
+
+    def fetch_payload(self, req: FetchRequest) -> FetchPayload:
+        return WorldBankMockFetchPort(
+            countries=self.countries,
+            indicators=self.indicators,
+            max_rows=self.max_rows,
+            data_domain=self.data_domain,
+        ).fetch_payload(req)
+
+
 def create_world_bank_fetch_port(
     *,
     countries: Sequence[str],
@@ -95,7 +113,12 @@ def create_world_bank_fetch_port(
     if len(indicators) > MAX_INDICATORS:
         raise PortError("FAILED", f"max {MAX_INDICATORS} indicators allowed, got {len(indicators)}")
     if not use_mock:
-        raise PortError("FAILED", "live World Bank fetch not enabled in R3H-01; use mock")
+        return WorldBankLiveFetchPort(
+            countries=countries,
+            indicators=indicators,
+            max_rows=max_rows,
+            data_domain=data_domain,
+        )
     return WorldBankMockFetchPort(
         countries=countries,
         indicators=indicators,

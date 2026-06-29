@@ -91,9 +91,17 @@ class PolymarketLiveFetchPort:
     max_markets: int
 
     def _live_market(self, market_slug: str) -> dict[str, Any]:
-        from backend.app.ops.prediction_market_live_smoke import validate_live_smoke_gate
+        from backend.app.datasources.product_live_gate import (
+            assert_product_live_allowed,
+            is_product_live_fetch_allowed,
+        )
 
-        validate_live_smoke_gate(source_id="polymarket")
+        if is_product_live_fetch_allowed():
+            assert_product_live_allowed(source_id="polymarket", operation="fetch")
+        else:
+            from backend.app.ops.prediction_market_live_smoke import validate_live_smoke_gate
+
+            validate_live_smoke_gate(source_id="polymarket")
         params = urllib.parse.urlencode({"slug": market_slug, "limit": 1})
         url = f"{POLYMARKET_API_BASE}/markets?{params}"
         request = urllib.request.Request(url, headers={"Accept": "application/json"}, method="GET")

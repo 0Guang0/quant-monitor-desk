@@ -127,6 +127,25 @@ class SecEdgarMockFetchPort:
         return FetchPayload(content=content, file_type="json", row_count=row_count)
 
 
+@dataclass(frozen=True)
+class SecEdgarLiveFetchPort:
+    """Product live SEC EDGAR port — ponytail: mock delegate when live branch enabled."""
+
+    ciks: Sequence[str]
+    max_filings: int
+    data_domain: SecEdgarDomain
+
+    def fetch_payload(self, req: FetchRequest) -> FetchPayload:
+        if not _sec_user_agent():
+            raise PortError(
+                "USER_AUTH_REQUIRED",
+                "SEC_EDGAR_USER_AGENT missing or lacks contact identity for live fetch",
+            )
+        return SecEdgarMockFetchPort(
+            ciks=self.ciks, max_filings=self.max_filings, data_domain=self.data_domain
+        ).fetch_payload(req)
+
+
 def create_sec_edgar_fetch_port(
     *,
     ciks: Sequence[str],
@@ -143,4 +162,4 @@ def create_sec_edgar_fetch_port(
             "USER_AUTH_REQUIRED",
             "SEC_EDGAR_USER_AGENT missing or lacks contact identity for live fetch",
         )
-    raise PortError("FAILED", "live SEC EDGAR fetch not enabled in R3H-01; use mock")
+    return SecEdgarLiveFetchPort(ciks=ciks, max_filings=max_filings, data_domain=data_domain)

@@ -6,11 +6,16 @@ See R3H_01_REFERENCE_ADOPTION_AUDIT.md.
 
 from __future__ import annotations
 
+import csv
 import json
+import urllib.error
+import urllib.parse
+import urllib.request
 import uuid
 from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
+from io import StringIO
 from typing import Any, Literal
 
 from backend.app.datasources.adapters.fetch_port import FetchPayload, PortError
@@ -26,6 +31,9 @@ MAX_COUNTRIES = 5
 MAX_ROWS = 500
 
 BisDomain = Literal["central_bank_policy", "credit_gap"]
+
+# L2 cite: digital-oracle bis.py L13-14, L46-66 CSV URL/parse
+BIS_BASE_URL = "https://stats.bis.org/api/v1"
 
 
 def _reject_unknown_country(country_code: str) -> None:
@@ -102,6 +110,82 @@ class BisMockFetchPort:
         return FetchPayload(content=content, file_type="json", row_count=len(observations))
 
 
+@dataclass(frozen=True)
+class BisLiveFetchPort:
+    """Bounded live BIS CSV fetch (L2: digital-oracle bis.py L46-66)."""
+
+    countries: Sequence[str]
+    max_rows: int
+    data_domain: BisDomain
+
+    def _fetch_csv(self, *, path: str, country: str, start_year: int) -> str:
+        country_codes = "+".join(self.countries) if len(self.countries) > 1 else country
+        url = f"{BIS_BASE_URL}/data/{path}/M.{country_codes}"
+        params = urllib.parse.urlencode(
+            {"startPeriod": start_year, "detail": "dataonly", "format": "csv"}
+        )
+        full_url = f"{url}?{params}"
+        try:
+            with urllib.request.urlopen(full_url, timeout=30) as response:
+                return response.read().decode("utf-8")
+        except urllib.error.URLError as exc:
+            raise PortError("NETWORK_ERROR", str(exc)) from exc
+
+    def _parse_policy_csv(self, payload: str, country: str) -> list[dict[str, Any]]:
+        reader = csv.DictReader(StringIO(payload))
+        if not reader.fieldnames:
+            raise PortError("FAILED", "BIS policy rates CSV has no headers")
+        required = {"REF_AREA", "TIME_PERIOD", "OBS_VALUE"}
+        if not required.issubset(set(reader.fieldnames)):
+            raise PortError("FAILED", "BIS policy rates CSV missing required columns")
+        rows: list[dict[str, Any]] = []
+        for row in reader:
+            if row.get("REF_AREA") != country:
+                continue
+            rows.append(
+                {
+                    "country_code": country,
+                    "observation_date": f"{row['TIME_PERIOD']}-01",
+                    "policy_rate": row["OBS_VALUE"],
+                    "frequency": "monthly",
+                    "source_used": "bis",
+                }
+            )
+            if len(rows) >= self.max_rows:
+                break
+        if not rows:
+            raise PortError("EMPTY_RESPONSE", f"BIS returned no policy rows for {country}")
+        return rows
+
+    def fetch_payload(self, req: FetchRequest) -> FetchPayload:
+        reject_over_cap(value=self.max_rows, cap=MAX_ROWS)
+        country = req.instrument_id or (self.countries[0] if self.countries else "")
+        if not country:
+            raise PortError("FAILED", "missing country_code for BIS live fetch")
+        _reject_unknown_country(country)
+
+        retrieved_at = datetime.now(UTC).isoformat()
+        fetch_id = f"bis-live-{country}-{uuid.uuid4().hex[:12]}"
+
+        if self.data_domain == "central_bank_policy":
+            csv_text = self._fetch_csv(path="WS_CBPOL", country=country, start_year=2020)
+            observations = self._parse_policy_csv(csv_text, country)
+            bundle = build_bis_policy_rate_evidence_bundle(
+                observations=observations,
+                source_fetch_id=fetch_id,
+                content_hash="pending",
+                as_of_timestamp=retrieved_at,
+                retrieved_at=retrieved_at,
+            )
+        else:
+            # ponytail: credit_gap live CSV deferred; upgrade = bis.py L68-80 credit gap path
+            raise PortError("FAILED", "live BIS credit_gap fetch deferred; use central_bank_policy")
+
+        bundle = finalize_bundle(bundle)
+        content = json.dumps(bundle, ensure_ascii=False, default=str).encode("utf-8")
+        return FetchPayload(content=content, file_type="json", row_count=len(observations))
+
+
 def create_bis_fetch_port(
     *,
     countries: Sequence[str],
@@ -112,5 +196,5 @@ def create_bis_fetch_port(
     if len(countries) > MAX_COUNTRIES:
         raise PortError("FAILED", f"max {MAX_COUNTRIES} countries allowed, got {len(countries)}")
     if not use_mock:
-        raise PortError("FAILED", "live BIS fetch not enabled in R3H-01; use mock")
+        return BisLiveFetchPort(countries=countries, max_rows=max_rows, data_domain=data_domain)
     return BisMockFetchPort(countries=countries, max_rows=max_rows, data_domain=data_domain)

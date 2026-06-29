@@ -269,13 +269,28 @@ class DataSyncOrchestrator:
             config=config,
         )
 
-    def run_reconcile(self, conflict_id: str, *, adapter: BaseDataAdapter) -> SyncJobResult:
+    def run_reconcile(
+        self,
+        conflict_id: str,
+        *,
+        adapter: BaseDataAdapter | None = None,
+        datasource_service: DataSourceService | None = None,
+    ) -> SyncJobResult:
         guard_production_adapter_bypass(
             adapter=adapter,
-            datasource_service=None,
+            datasource_service=datasource_service,
             entry="run_reconcile",
         )
-        return self._reconcile.run(conflict_id, adapter=adapter)
+        guard_production_datasource_service_required(
+            adapter=adapter,
+            datasource_service=datasource_service,
+            entry="run_reconcile",
+        )
+        return self._reconcile.run(
+            conflict_id,
+            adapter=adapter,
+            datasource_service=datasource_service,
+        )
 
     def run_full_load(self, spec: SyncJobSpec, **kwargs) -> SyncJobResult:
         """Reserved job type — stable deferred error (D2-P1-1 / VR-SYNC-002)."""

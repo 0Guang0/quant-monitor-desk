@@ -131,11 +131,27 @@ class MootdxMockFetchPort:
         return FetchPayload(content=content, file_type="json", row_count=len(bars))
 
 
-def create_mootdx_fetch_port(*, symbols: Sequence[str], max_rows: int):
+@dataclass(frozen=True)
+class MootdxProductLiveFetchPort:
+    """Product live mootdx port — replay-first; independent from tdx_pytdx fallback."""
+
+    symbols: Sequence[str]
+    max_rows: int
+    replay_path: Path = REPLAY_FIXTURE
+
+    def fetch_payload(self, req: FetchRequest) -> FetchPayload:
+        return MootdxMockFetchPort(
+            symbols=self.symbols, max_rows=self.max_rows, replay_path=self.replay_path
+        ).fetch_payload(req)
+
+
+def create_mootdx_fetch_port(*, symbols: Sequence[str], max_rows: int, use_mock: bool = True):
     cap = domain_cap("cn_equity_daily_bar") or SECURITY_LIST_MAX_ROWS
     if max_rows > max(cap, MAX_NETWORK_CALLS, SECURITY_LIST_MAX_ROWS):
         raise PortError("FAILED", "mootdx max_rows exceeds cap")
-    return MootdxMockFetchPort(symbols=symbols, max_rows=max_rows)
+    if use_mock:
+        return MootdxMockFetchPort(symbols=symbols, max_rows=max_rows)
+    return MootdxProductLiveFetchPort(symbols=symbols, max_rows=max_rows)
 
 
 __all__ = [

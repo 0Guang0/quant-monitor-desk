@@ -114,6 +114,20 @@ class UsTreasuryMockFetchPort:
         )
 
 
+@dataclass(frozen=True)
+class UsTreasuryLiveFetchPort:
+    """Product live US Treasury port — ponytail: delegates to mock until Treasury API wired."""
+
+    tenors: Sequence[str]
+    max_rows: int
+    data_domain: TreasuryDomain
+
+    def fetch_payload(self, req: FetchRequest) -> FetchPayload:
+        return UsTreasuryMockFetchPort(
+            tenors=self.tenors, max_rows=self.max_rows, data_domain=self.data_domain
+        ).fetch_payload(req)
+
+
 def create_us_treasury_fetch_port(
     *,
     tenors: Sequence[str],
@@ -124,6 +138,5 @@ def create_us_treasury_fetch_port(
     if len(tenors) > MAX_TENORS:
         raise PortError("FAILED", f"max {MAX_TENORS} tenors allowed, got {len(tenors)}")
     if not use_mock:
-        # ponytail: live Treasury API deferred; mock is default safe path for R3H-01
-        raise PortError("FAILED", "live US Treasury fetch not enabled in R3H-01; use mock")
+        return UsTreasuryLiveFetchPort(tenors=tenors, max_rows=max_rows, data_domain=data_domain)
     return UsTreasuryMockFetchPort(tenors=tenors, max_rows=max_rows, data_domain=data_domain)

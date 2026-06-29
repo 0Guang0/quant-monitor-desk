@@ -1,0 +1,5 @@
+{
+  "task": "06-29-round3h-r3h08-live-productization",
+  "acs": [],
+  "modules": ["datasources", "ops", "sync_orchestrator"]
+}

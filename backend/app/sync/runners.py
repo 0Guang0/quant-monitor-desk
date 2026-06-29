@@ -869,12 +869,14 @@ class ReconcileJobRunner:
         self._jobs = jobs
         self._conflict_validator = SourceConflictValidator()
 
-    def run(self, conflict_id: str, *, adapter: BaseDataAdapter) -> SyncJobResult:
+    def run(self, conflict_id: str, *, adapter: BaseDataAdapter | None = None, datasource_service=None) -> SyncJobResult:
         guard_production_adapter_bypass(
             adapter=adapter,
-            datasource_service=None,
+            datasource_service=datasource_service,
             entry="ReconcileJobRunner.run",
         )
+        if adapter is None and datasource_service is None:
+            raise ValueError("reconcile requires adapter= or datasource_service=")
         cm = self._jobs.connection_manager
         with cm.writer() as con:
             row = con.execute(
@@ -918,8 +920,8 @@ class ReconcileJobRunner:
             job_type="reconcile",
             data_domain=data_domain,
             market_id=resolved_market_id,
-            source_id=adapter.source_id,
-            adapter_id=adapter.source_id,
+            source_id=adapter.source_id if adapter is not None else primary_source,
+            adapter_id=adapter.source_id if adapter is not None else primary_source,
             date_start=None,
             date_end=None,
             instrument_id=instrument_id,
@@ -927,13 +929,14 @@ class ReconcileJobRunner:
             trigger_reason=None,
         )
         job_id = self._jobs.create_job(spec)
+        reconcile_source = adapter.source_id if adapter is not None else primary_source
         self._jobs.transition(job_id, "PLANNED")
         self._jobs.transition(
             job_id,
             "WAITING_RECONCILE",
             message=f"conflict {conflict_id}",
             payload_json=build_event_payload(
-                source_id=adapter.source_id,
+                source_id=reconcile_source,
                 decision="reconcile_start",
             ),
         )
@@ -942,13 +945,16 @@ class ReconcileJobRunner:
         compare_table = f"stg_reconcile_{conflict_id[:8]}"
         req = FetchRequest(
             run_id=spec.run_id,
-            source_id=adapter.source_id,
+            source_id=adapter.source_id if adapter is not None else primary_source,
             data_domain=data_domain,
             market_id=resolved_market_id,
             instrument_id=instrument_id,
         )
         with cm.writer() as con:
-            fetch_result = adapter.fetch(req, con=con, job_id=job_id)
+            if datasource_service is not None:
+                fetch_result = datasource_service.fetch(req, con=con, job_id=job_id)
+            else:
+                fetch_result = adapter.fetch(req, con=con, job_id=job_id)
             if fetch_result.status != "SUCCESS" or not fetch_result.staging_table:
                 self._conflict_validator.record_unresolved_reconcile(
                     con,
@@ -962,7 +968,7 @@ class ReconcileJobRunner:
                     con=con,
                     message="reconcile re-fetch failed",
                     payload_json=build_event_payload(
-                        source_id=adapter.source_id,
+                        source_id=reconcile_source,
                         error_code=fetch_result.status,
                         retry_count=fetch_result.retry_count,
                         decision="reconcile_fetch_failed",
@@ -1018,7 +1024,7 @@ class ReconcileJobRunner:
                         con=con,
                         message="unresolved after reconcile",
                         payload_json=build_event_payload(
-                            source_id=adapter.source_id,
+                            source_id=reconcile_source,
                             decision="reconcile_manual_review",
                         ),
                     )
@@ -1039,7 +1045,7 @@ class ReconcileJobRunner:
                     "READY_TO_WRITE",
                     con=con,
                     payload_json=build_event_payload(
-                        source_id=adapter.source_id,
+                        source_id=reconcile_source,
                         decision="reconcile_resolved",
                     ),
                 )

@@ -105,9 +105,17 @@ class KalshiLiveFetchPort:
     max_markets: int
 
     def _live_market(self, market_ticker: str) -> dict[str, Any]:
-        from backend.app.ops.prediction_market_live_smoke import validate_live_smoke_gate
+        from backend.app.datasources.product_live_gate import (
+            assert_product_live_allowed,
+            is_product_live_fetch_allowed,
+        )
 
-        validate_live_smoke_gate(source_id="kalshi")
+        if is_product_live_fetch_allowed():
+            assert_product_live_allowed(source_id="kalshi", operation="fetch")
+        else:
+            from backend.app.ops.prediction_market_live_smoke import validate_live_smoke_gate
+
+            validate_live_smoke_gate(source_id="kalshi")
         url = f"{KALSHI_API_BASE}/markets/{urllib.parse.quote(market_ticker, safe='')}"
         headers: dict[str, str] = {"Accept": "application/json"}
         api_key = _kalshi_api_key()

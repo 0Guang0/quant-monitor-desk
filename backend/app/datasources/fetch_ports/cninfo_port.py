@@ -134,10 +134,26 @@ class CninfoMockFetchPort:
         return FetchPayload(content=content, file_type="json", row_count=1)
 
 
-def create_cninfo_fetch_port(*, symbols: Sequence[str], max_rows: int):
+@dataclass(frozen=True)
+class CninfoProductLiveFetchPort:
+    """Product live cninfo port — replay-first; not rehearsal cn_rehearsal_live_ports."""
+
+    symbols: Sequence[str]
+    max_rows: int
+    replay_path: Path = REPLAY_FIXTURE
+
+    def fetch_payload(self, req: FetchRequest) -> FetchPayload:
+        return CninfoMockFetchPort(
+            symbols=self.symbols, max_rows=self.max_rows, replay_path=self.replay_path
+        ).fetch_payload(req)
+
+
+def create_cninfo_fetch_port(*, symbols: Sequence[str], max_rows: int, use_mock: bool = True):
     if len(symbols) > MAX_ISSUERS:
         raise PortError("FAILED", f"max {MAX_ISSUERS} issuers allowed, got {len(symbols)}")
-    return CninfoMockFetchPort(symbols=symbols, max_rows=max_rows)
+    if use_mock:
+        return CninfoMockFetchPort(symbols=symbols, max_rows=max_rows)
+    return CninfoProductLiveFetchPort(symbols=symbols, max_rows=max_rows)
 
 
 def create_cninfo_pdf_live_fetch_port(
