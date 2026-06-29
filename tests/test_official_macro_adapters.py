@@ -221,6 +221,7 @@ def test_fred_port_liveWithoutApiKey_blocksUnauthorized(
     from backend.app.datasources.adapters.fetch_port import PortError
     from backend.app.datasources.fetch_ports.fred_port import create_fred_fetch_port
 
+    monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
     monkeypatch.delenv("FRED_API_KEY", raising=False)
     port = create_fred_fetch_port(series_ids=("DGS10",), max_rows=3, use_mock=False)
     with pytest.raises(PortError) as exc_info:

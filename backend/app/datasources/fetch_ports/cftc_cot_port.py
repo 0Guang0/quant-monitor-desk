@@ -72,20 +72,13 @@ class CftcCotMockFetchPort:
         return FetchPayload(content=content, file_type="json", row_count=len(observations))
 
 
-@dataclass(frozen=True)
-class CftcCotLiveFetchPort:
-    """Product live CFTC COT port — ponytail: delegates to mock until CFTC bulk API wired."""
-
-    markets: Sequence[str]
-    max_rows: int
-
-    def fetch_payload(self, req: FetchRequest) -> FetchPayload:
-        return CftcCotMockFetchPort(markets=self.markets, max_rows=self.max_rows).fetch_payload(req)
-
-
 def create_cftc_cot_fetch_port(*, markets: Sequence[str], max_rows: int, use_mock: bool = True):
     if len(markets) > MAX_MARKETS:
         raise PortError("FAILED", f"max {MAX_MARKETS} markets allowed, got {len(markets)}")
     if use_mock:
         return CftcCotMockFetchPort(markets=markets, max_rows=max_rows)
-    return CftcCotLiveFetchPort(markets=markets, max_rows=max_rows)
+    from backend.app.datasources.product_live_gate import gate_live_fetch_port
+
+    gate_live_fetch_port(source_id="cftc_cot")
+    # ponytail: live branch delegates to mock until CFTC bulk API wired
+    return CftcCotMockFetchPort(markets=markets, max_rows=max_rows)

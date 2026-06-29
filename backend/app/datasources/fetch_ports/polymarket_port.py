@@ -83,65 +83,87 @@ class PolymarketMockFetchPort:
         )
 
 
+def _fetch_live_polymarket_market(market_slug: str) -> dict[str, Any]:
+    """Bounded Polymarket gamma API fetch (network only; caller applies gate)."""
+    params = urllib.parse.urlencode({"slug": market_slug, "limit": 1})
+    url = f"{POLYMARKET_API_BASE}/markets?{params}"
+    request = urllib.request.Request(url, headers={"Accept": "application/json"}, method="GET")
+    try:
+        # ponytail: live urllib capped read; no auth header — env+YAML gate only for smoke
+        with urllib.request.urlopen(request, timeout=30) as response:
+            raw = json.loads(
+                read_bounded_http_body(response, label="Polymarket response").decode("utf-8")
+            )
+    except urllib.error.URLError as exc:
+        raise PortError("NETWORK_ERROR", str(exc)) from exc
+    except json.JSONDecodeError as exc:
+        raise PortError("FAILED", f"invalid Polymarket JSON: {exc}") from exc
+
+    markets = raw if isinstance(raw, list) else raw.get("markets") or []
+    if not markets:
+        raise PortError("EMPTY_RESPONSE", f"Polymarket returned no market for slug {market_slug!r}")
+    market = markets[0]
+    outcome_prices = market.get("outcomePrices") or []
+    try:
+        yes_price = float(outcome_prices[0]) if outcome_prices else None
+    except (TypeError, ValueError, IndexError):
+        yes_price = None
+    spread = market.get("spread")
+    try:
+        spread_f = float(spread) if spread is not None else None
+    except (TypeError, ValueError):
+        spread_f = None
+    resolution_source = market.get("resolutionSource")
+    return {
+        "market_slug": market.get("slug") or market_slug,
+        "yes_bid": yes_price,
+        "yes_ask": yes_price,
+        "probability": yes_price,
+        "volume": market.get("volume"),
+        "liquidity": market.get("liquidity"),
+        "spread": spread_f,
+        "resolution_source": str(resolution_source) if resolution_source else None,
+        "source_used": "polymarket",
+    }
+
+
+def fetch_polymarket_smoke_live_payload(market_slug: str) -> FetchPayload:
+    """Ops smoke entry — uses smoke env gate, not product live gate."""
+    _reject_unknown_market(market_slug)
+    signal = _fetch_live_polymarket_market(market_slug)
+    if signal.get("probability") is None:
+        raise PortError(
+            "EMPTY_RESPONSE", f"Polymarket returned no probability for {market_slug}"
+        )
+    req = FetchRequest(
+        run_id="r3h04-polymarket-live-smoke",
+        source_id="polymarket",
+        data_domain="prediction_market_probability",
+        instrument_id=market_slug,
+    )
+    return build_probability_market_fetch_payload(
+        req,
+        max_markets=1,
+        max_markets_cap=MAX_MARKETS,
+        max_window_days=MAX_WINDOW_DAYS,
+        instruments=(market_slug,),
+        source_id="polymarket",
+        fetch_id_prefix="polymarket-live-smoke",
+        resolve_instrument=lambda _req, _inst: market_slug,
+        build_signals=lambda _slug: [signal],
+        live=True,
+    )
+
+
 @dataclass(frozen=True)
 class PolymarketLiveFetchPort:
-    """Bounded live Polymarket gamma API fetch (opt-in via prediction_market_live_smoke gate)."""
+    """Bounded live Polymarket gamma API fetch (product live via ProductLiveGate only)."""
 
     market_slugs: Sequence[str]
     max_markets: int
 
     def _live_market(self, market_slug: str) -> dict[str, Any]:
-        from backend.app.datasources.product_live_gate import (
-            assert_product_live_allowed,
-            is_product_live_fetch_allowed,
-        )
-
-        if is_product_live_fetch_allowed():
-            assert_product_live_allowed(source_id="polymarket", operation="fetch")
-        else:
-            from backend.app.ops.prediction_market_live_smoke import validate_live_smoke_gate
-
-            validate_live_smoke_gate(source_id="polymarket")
-        params = urllib.parse.urlencode({"slug": market_slug, "limit": 1})
-        url = f"{POLYMARKET_API_BASE}/markets?{params}"
-        request = urllib.request.Request(url, headers={"Accept": "application/json"}, method="GET")
-        try:
-            # ponytail: live urllib capped read; no auth header — env+YAML gate only
-            with urllib.request.urlopen(request, timeout=30) as response:
-                raw = json.loads(
-                    read_bounded_http_body(response, label="Polymarket response").decode("utf-8")
-                )
-        except urllib.error.URLError as exc:
-            raise PortError("NETWORK_ERROR", str(exc)) from exc
-        except json.JSONDecodeError as exc:
-            raise PortError("FAILED", f"invalid Polymarket JSON: {exc}") from exc
-
-        markets = raw if isinstance(raw, list) else raw.get("markets") or []
-        if not markets:
-            raise PortError("EMPTY_RESPONSE", f"Polymarket returned no market for slug {market_slug!r}")
-        market = markets[0]
-        outcome_prices = market.get("outcomePrices") or []
-        try:
-            yes_price = float(outcome_prices[0]) if outcome_prices else None
-        except (TypeError, ValueError, IndexError):
-            yes_price = None
-        spread = market.get("spread")
-        try:
-            spread_f = float(spread) if spread is not None else None
-        except (TypeError, ValueError):
-            spread_f = None
-        resolution_source = market.get("resolutionSource")
-        return {
-            "market_slug": market.get("slug") or market_slug,
-            "yes_bid": yes_price,
-            "yes_ask": yes_price,
-            "probability": yes_price,
-            "volume": market.get("volume"),
-            "liquidity": market.get("liquidity"),
-            "spread": spread_f,
-            "resolution_source": str(resolution_source) if resolution_source else None,
-            "source_used": "polymarket",
-        }
+        return _fetch_live_polymarket_market(market_slug)
 
     def fetch_payload(self, req: FetchRequest) -> FetchPayload:
         market_slug = _resolve_instrument(req, self.market_slugs)
@@ -174,4 +196,7 @@ def create_polymarket_fetch_port(
         raise PortError("FAILED", f"max {MAX_MARKETS} markets allowed, got {len(market_slugs)}")
     if use_mock:
         return PolymarketMockFetchPort(market_slugs=market_slugs, max_markets=max_markets)
+    from backend.app.datasources.product_live_gate import gate_live_fetch_port
+
+    gate_live_fetch_port(source_id="polymarket")
     return PolymarketLiveFetchPort(market_slugs=market_slugs, max_markets=max_markets)

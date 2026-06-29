@@ -910,9 +910,11 @@ tests/test_r3h08_live_productization.py:
   purpose: R3H-08 Wave 2 live productization tracer bullets (S08-BOOT+).
   type: runtime-contract
   verifies:
-    docs: []
+    docs:
+      - docs/decisions/ADR-027-r3h08-product-live-env-gate.md
     rules: []
-    specs: []
+    specs:
+      - specs/contracts/reference_adoption_guardrails.yaml
 tests/test_r3h_adapter_evidence_matrix.py:
   command: uv run python -m pytest tests/test_r3h_adapter_evidence_matrix.py -q
   failure_meaning:

@@ -113,12 +113,12 @@ def live_fetch(
     dry_run: bool = True,
 ) -> dict[str, Any]:
     """``qmd data live-fetch`` — product live route preview + optional fetch (R3H-08 S08-05)."""
+    from backend.app.datasources.fetch_result import FetchRequest
     from backend.app.datasources.product_live_gate import (
         ProductLiveGateError,
         assert_product_live_allowed,
     )
-    from backend.app.datasources.product_live_ports import create_product_live_fetch_port
-    from backend.app.datasources.fetch_result import FetchRequest
+    from backend.app.datasources.product_live_ports import build_product_live_service
 
     op = operation or _default_operation(data_domain)
     try:
@@ -130,9 +130,9 @@ def live_fetch(
             docs_anchor="docs/decisions/ADR-027-r3h08-product-live-env-gate.md",
         ) from exc
 
-    service = _service()
-    plan = service.preview_route(data_domain=data_domain, operation=op)
-    guard_decision, guard_reason = service.check_resource_guard()
+    preview_service = _service()
+    plan = preview_service.preview_route(data_domain=data_domain, operation=op)
+    guard_decision, guard_reason = preview_service.check_resource_guard()
     payload: dict[str, Any] = {
         "command": "live-fetch",
         "dry_run": dry_run,
@@ -149,21 +149,38 @@ def live_fetch(
         payload["message"] = "dry-run only; set dry_run=false for product live fetch"
         return payload
 
-    port = create_product_live_fetch_port(
+    if guard_decision.value != "OK":
+        raise CliFailure(
+            error_code="RESOURCE_GUARD_PAUSED",
+            message=guard_reason or "resource guard paused",
+            docs_anchor="docs/ops/ERROR_CODE_GUIDE.md#resource-guard-paused",
+            retryable=True,
+        )
+    if plan.route_status != "READY":
+        raise error_for_route_status(
+            plan.route_status,
+            detail=f"live-fetch blocked for domain={data_domain!r}",
+        )
+
+    live_service = build_product_live_service(
         source_id=source_id,
         data_domain=data_domain,
+        data_root=DATA_ROOT / "raw",
         operation=op,
     )
+    db = DATA_ROOT / "duckdb" / "quant_monitor.duckdb"
+    cm = ConnectionManager(db_path=db)
     req = FetchRequest(
         run_id="qmd-live-fetch",
         source_id=source_id,
         data_domain=data_domain,
         instrument_id=instrument_id,
     )
-    body = port.fetch_payload(req)
-    payload["row_count"] = body.row_count
-    payload["file_type"] = body.file_type
-    payload["message"] = "product live fetch completed via DataSourceService gold path port"
+    with cm.writer() as con:
+        result = live_service.fetch(req, con=con, job_id="qmd-live-fetch", operation=op)
+    payload["row_count"] = result.row_count
+    payload["fetch_status"] = result.status
+    payload["message"] = "product live fetch completed via DataSourceService gold path"
     return payload
 
 

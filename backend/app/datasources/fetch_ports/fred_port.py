@@ -182,4 +182,7 @@ def create_fred_fetch_port(
         raise PortError("FAILED", f"max {MAX_SERIES} series allowed, got {len(series_ids)}")
     if use_mock:
         return FredMockFetchPort(series_ids=series_ids, max_rows=max_rows, date_window=date_window)
+    from backend.app.datasources.product_live_gate import gate_live_fetch_port
+
+    gate_live_fetch_port(source_id="fred")
     return FredLiveFetchPort(series_ids=series_ids, max_rows=max_rows, date_window=date_window)

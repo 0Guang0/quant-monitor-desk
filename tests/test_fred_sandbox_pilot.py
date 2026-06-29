@@ -308,7 +308,10 @@ def test_b250o05_reDeferred_closureRowClosed() -> None:
     not os.environ.get("FRED_API_KEY"),
     reason="FRED_API_KEY absent — live fetch opt-in skipped",
 )
-def test_fredLiveFetch_authorized_respectsCaps(tmp_path: Path) -> None:
+def test_fredLiveFetch_authorized_respectsCaps(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """覆盖范围：授权 live FRED fetch（FRED-07 opt-in）
     测试对象：fred_sandbox_pilot.run_live_fetch
     目的/目标：有 authorization.yaml + FRED_API_KEY 时 cap 内 sandbox 写
@@ -319,6 +322,7 @@ def test_fredLiveFetch_authorized_respectsCaps(tmp_path: Path) -> None:
     if not auth_path.is_file():
         pytest.skip("authorization.yaml not present in execute-evidence")
 
+    monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
     result = run_live_fetch(
         FredPilotRequest(
             series_ids=("DGS10",),

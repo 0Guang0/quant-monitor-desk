@@ -469,44 +469,40 @@ def test_kalshi_port_liveWithoutOptIn_blocksUnauthorized(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """覆盖范围：未 opt-in 的 Kalshi live fetch
-    测试对象：KalshiLiveFetchPort.fetch_payload + prediction_market_live_smoke gate
-    目的/目标：缺 KALSHI_LIVE_SMOKE 时 live 路径 fail-closed
-    验证点：PredictionMarketLiveSmokeError 或 PortError；不得 silent 联网
+    测试对象：create_kalshi_fetch_port(use_mock=False) + ProductLiveGate
+    目的/目标：缺 QMD_ALLOW_LIVE_FETCH 时产品 live 路径 fail-closed
+    验证点：ProductLiveGateError code=LIVE_FETCH_REJECTED；不得 silent 联网
     失败含义：无用户 gate 仍可 capped live fetch，违反 R3H-04 §2.8
     """
     from backend.app.datasources.fetch_ports.kalshi_port import create_kalshi_fetch_port
-    from backend.app.ops.prediction_market_live_smoke import PredictionMarketLiveSmokeError
+    from backend.app.datasources.product_live_gate import ProductLiveGateError
 
-    monkeypatch.delenv("KALSHI_LIVE_SMOKE", raising=False)
-    port = create_kalshi_fetch_port(
-        market_tickers=("KXHIGHNY-24",), max_markets=1, use_mock=False
-    )
-    with pytest.raises(PredictionMarketLiveSmokeError):
-        port.fetch_payload(
-            _prediction_req("kalshi", "prediction_market_probability", "KXHIGHNY-24")
+    monkeypatch.delenv("QMD_ALLOW_LIVE_FETCH", raising=False)
+    with pytest.raises(ProductLiveGateError) as exc_info:
+        create_kalshi_fetch_port(
+            market_tickers=("KXHIGHNY-24",), max_markets=1, use_mock=False
         )
+    assert exc_info.value.code == "LIVE_FETCH_REJECTED"
 
 
 def test_polymarket_port_liveWithoutOptIn_blocksUnauthorized(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """覆盖范围：未 opt-in 的 Polymarket live fetch
-    测试对象：PolymarketLiveFetchPort.fetch_payload + prediction_market_live_smoke gate
-    目的/目标：缺 POLYMARKET_LIVE_SMOKE 时 live 路径 fail-closed
-    验证点：PredictionMarketLiveSmokeError
+    测试对象：create_polymarket_fetch_port(use_mock=False) + ProductLiveGate
+    目的/目标：缺 QMD_ALLOW_LIVE_FETCH 时产品 live 路径 fail-closed
+    验证点：ProductLiveGateError code=LIVE_FETCH_REJECTED
     失败含义：无用户 gate 仍可 capped live fetch
     """
     from backend.app.datasources.fetch_ports.polymarket_port import create_polymarket_fetch_port
-    from backend.app.ops.prediction_market_live_smoke import PredictionMarketLiveSmokeError
+    from backend.app.datasources.product_live_gate import ProductLiveGateError
 
-    monkeypatch.delenv("POLYMARKET_LIVE_SMOKE", raising=False)
-    port = create_polymarket_fetch_port(
-        market_slugs=("will-fed-cut-rates-2024",), max_markets=1, use_mock=False
-    )
-    with pytest.raises(PredictionMarketLiveSmokeError):
-        port.fetch_payload(
-            _prediction_req("polymarket", "prediction_market_probability", "will-fed-cut-rates-2024")
+    monkeypatch.delenv("QMD_ALLOW_LIVE_FETCH", raising=False)
+    with pytest.raises(ProductLiveGateError) as exc_info:
+        create_polymarket_fetch_port(
+            market_slugs=("will-fed-cut-rates-2024",), max_markets=1, use_mock=False
         )
+    assert exc_info.value.code == "LIVE_FETCH_REJECTED"
 
 
 def test_kalshi_liveSmoke_authorizationYamlPresent() -> None:

@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import os
 
+from backend.app.core.resource_guard import Decision, ResourceGuard
+
 PRODUCT_LIVE_FETCH_ENV = "QMD_ALLOW_LIVE_FETCH"
 
 
@@ -36,3 +38,18 @@ def assert_product_live_allowed(*, source_id: str, operation: str = "fetch") -> 
         ),
         code="LIVE_FETCH_REJECTED",
     )
+
+
+def gate_live_fetch_port(*, source_id: str, operation: str = "fetch") -> None:
+    """ADR-027 fail-closed chain: env opt-in + ResourceGuard before live port use."""
+    assert_product_live_allowed(source_id=source_id, operation=operation)
+    decision, reason = ResourceGuard().check()
+    if decision in (Decision.PAUSE, Decision.HARD_STOP):
+        raise ProductLiveGateError(
+            (
+                f"product live {operation} blocked for {source_id!r}: "
+                f"resource guard {decision.value}"
+                + (f" ({reason})" if reason else "")
+            ),
+            code="RESOURCE_GUARD_PAUSED",
+        )

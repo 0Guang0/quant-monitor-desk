@@ -172,6 +172,7 @@ def test_alpha_vantage_port_liveWithoutApiKey_blocksUnauthorized(
     from backend.app.datasources.adapters.fetch_port import PortError
     from backend.app.datasources.fetch_ports.alpha_vantage_port import create_alpha_vantage_fetch_port
 
+    monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
     monkeypatch.delenv("ALPHA_VANTAGE_API_KEY", raising=False)
     port = create_alpha_vantage_fetch_port(symbols=("AAPL",), max_rows=3, use_mock=False)
     with pytest.raises(PortError) as exc_info:

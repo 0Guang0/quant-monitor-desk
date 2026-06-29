@@ -133,3 +133,46 @@ class TdxPytdxFetchPort:
             return manifest, len(rows)
 
         raise PortError("FAILED", f"unsupported operation for domain {domain!r}")
+
+
+@dataclass(frozen=True)
+class TdxPytdxMockFetchPort:
+    """Validation-only mock TDX port (product live Tier B replay path)."""
+
+    symbols: Sequence[str]
+    max_rows: int
+
+    def fetch_payload(self, req: FetchRequest) -> FetchPayload:
+        from backend.app.datasources.fetch_ports.cn_validation_mock import (
+            cn_validation_mock_fetch_payload,
+        )
+
+        return cn_validation_mock_fetch_payload(
+            req,
+            source_id="tdx_pytdx",
+            symbols=self.symbols,
+            max_rows=self.max_rows,
+            max_rows_cap=EQUITY_INDEX_MAX_ROWS,
+            max_symbols_cap=5,
+            symbol_whitelist=frozenset({"sh.600519", "sz.000001"}),
+            bar_ohlcv=(1399.0, 1408.0, 1394.0, 1404.0, 900_000),
+        )
+
+
+def create_tdx_pytdx_fetch_port(
+    *,
+    symbols: Sequence[str],
+    max_rows: int,
+    use_mock: bool = True,
+    authorization: TdxPytdxAuthorization | None = None,
+):
+    if use_mock:
+        return TdxPytdxMockFetchPort(symbols=symbols, max_rows=max_rows)
+    from backend.app.datasources.product_live_gate import gate_live_fetch_port
+
+    gate_live_fetch_port(source_id="tdx_pytdx")
+    return TdxPytdxFetchPort(
+        symbols=symbols,
+        max_rows=max_rows,
+        authorization=authorization,
+    )

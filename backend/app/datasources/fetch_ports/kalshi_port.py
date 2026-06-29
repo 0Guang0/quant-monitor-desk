@@ -97,61 +97,81 @@ class KalshiMockFetchPort:
         )
 
 
+def _fetch_live_kalshi_market(market_ticker: str) -> dict[str, Any]:
+    """Bounded Kalshi API fetch (network only; caller applies gate)."""
+    url = f"{KALSHI_API_BASE}/markets/{urllib.parse.quote(market_ticker, safe='')}"
+    headers: dict[str, str] = {"Accept": "application/json"}
+    api_key = _kalshi_api_key()
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
+    request = urllib.request.Request(url, headers=headers, method="GET")
+    try:
+        # ponytail: live urllib capped read; upgrade path = dedicated client with retries
+        with urllib.request.urlopen(request, timeout=30) as response:
+            raw = json.loads(read_bounded_http_body(response, label="Kalshi response").decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        if exc.code in (401, 403):
+            raise PortError("USER_AUTH_REQUIRED", f"Kalshi auth failed: {exc}") from exc
+        raise PortError("NETWORK_ERROR", str(exc)) from exc
+    except urllib.error.URLError as exc:
+        raise PortError("NETWORK_ERROR", str(exc)) from exc
+    except json.JSONDecodeError as exc:
+        raise PortError("FAILED", f"invalid Kalshi JSON: {exc}") from exc
+
+    market = raw.get("market") or raw
+    yes_bid = _cents_to_probability(market.get("yes_bid"))
+    yes_ask = _cents_to_probability(market.get("yes_ask"))
+    last_price = _cents_to_probability(market.get("last_price"))
+    probability = last_price
+    if probability is None and yes_bid is not None and yes_ask is not None:
+        probability = round((yes_bid + yes_ask) / 2.0, 4)
+    return {
+        "market_ticker": market.get("ticker") or market_ticker,
+        "event_ticker": market.get("event_ticker"),
+        "yes_bid": yes_bid,
+        "yes_ask": yes_ask,
+        "probability": probability,
+        "volume": market.get("volume"),
+        "liquidity": market.get("open_interest"),
+        "source_used": "kalshi",
+    }
+
+
+def fetch_kalshi_smoke_live_payload(market_ticker: str) -> FetchPayload:
+    """Ops smoke entry — uses smoke env gate, not product live gate."""
+    _reject_unknown_market(market_ticker)
+    signal = _fetch_live_kalshi_market(market_ticker)
+    if signal.get("probability") is None:
+        raise PortError("EMPTY_RESPONSE", f"Kalshi returned no probability for {market_ticker}")
+    req = FetchRequest(
+        run_id="r3h04-kalshi-live-smoke",
+        source_id="kalshi",
+        data_domain="prediction_market_probability",
+        instrument_id=market_ticker,
+    )
+    return build_probability_market_fetch_payload(
+        req,
+        max_markets=1,
+        max_markets_cap=MAX_MARKETS,
+        max_window_days=MAX_WINDOW_DAYS,
+        instruments=(market_ticker,),
+        source_id="kalshi",
+        fetch_id_prefix="kalshi-live-smoke",
+        resolve_instrument=lambda _req, _inst: market_ticker,
+        build_signals=lambda _ticker: [signal],
+        live=True,
+    )
+
+
 @dataclass(frozen=True)
 class KalshiLiveFetchPort:
-    """Bounded live Kalshi API fetch (opt-in via prediction_market_live_smoke gate)."""
+    """Bounded live Kalshi API fetch (product live via ProductLiveGate only)."""
 
     market_tickers: Sequence[str]
     max_markets: int
 
     def _live_market(self, market_ticker: str) -> dict[str, Any]:
-        from backend.app.datasources.product_live_gate import (
-            assert_product_live_allowed,
-            is_product_live_fetch_allowed,
-        )
-
-        if is_product_live_fetch_allowed():
-            assert_product_live_allowed(source_id="kalshi", operation="fetch")
-        else:
-            from backend.app.ops.prediction_market_live_smoke import validate_live_smoke_gate
-
-            validate_live_smoke_gate(source_id="kalshi")
-        url = f"{KALSHI_API_BASE}/markets/{urllib.parse.quote(market_ticker, safe='')}"
-        headers: dict[str, str] = {"Accept": "application/json"}
-        api_key = _kalshi_api_key()
-        if api_key:
-            headers["Authorization"] = f"Bearer {api_key}"
-        request = urllib.request.Request(url, headers=headers, method="GET")
-        try:
-            # ponytail: live urllib capped read; upgrade path = dedicated client with retries
-            with urllib.request.urlopen(request, timeout=30) as response:
-                raw = json.loads(read_bounded_http_body(response, label="Kalshi response").decode("utf-8"))
-        except urllib.error.HTTPError as exc:
-            if exc.code in (401, 403):
-                raise PortError("USER_AUTH_REQUIRED", f"Kalshi auth failed: {exc}") from exc
-            raise PortError("NETWORK_ERROR", str(exc)) from exc
-        except urllib.error.URLError as exc:
-            raise PortError("NETWORK_ERROR", str(exc)) from exc
-        except json.JSONDecodeError as exc:
-            raise PortError("FAILED", f"invalid Kalshi JSON: {exc}") from exc
-
-        market = raw.get("market") or raw
-        yes_bid = _cents_to_probability(market.get("yes_bid"))
-        yes_ask = _cents_to_probability(market.get("yes_ask"))
-        last_price = _cents_to_probability(market.get("last_price"))
-        probability = last_price
-        if probability is None and yes_bid is not None and yes_ask is not None:
-            probability = round((yes_bid + yes_ask) / 2.0, 4)
-        return {
-            "market_ticker": market.get("ticker") or market_ticker,
-            "event_ticker": market.get("event_ticker"),
-            "yes_bid": yes_bid,
-            "yes_ask": yes_ask,
-            "probability": probability,
-            "volume": market.get("volume"),
-            "liquidity": market.get("open_interest"),
-            "source_used": "kalshi",
-        }
+        return _fetch_live_kalshi_market(market_ticker)
 
     def fetch_payload(self, req: FetchRequest) -> FetchPayload:
         market_ticker = _resolve_instrument(req, self.market_tickers)
@@ -182,4 +202,7 @@ def create_kalshi_fetch_port(
         raise PortError("FAILED", f"max {MAX_MARKETS} markets allowed, got {len(market_tickers)}")
     if use_mock:
         return KalshiMockFetchPort(market_tickers=market_tickers, max_markets=max_markets)
+    from backend.app.datasources.product_live_gate import gate_live_fetch_port
+
+    gate_live_fetch_port(source_id="kalshi")
     return KalshiLiveFetchPort(market_tickers=market_tickers, max_markets=max_markets)

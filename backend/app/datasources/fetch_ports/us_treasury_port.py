@@ -114,20 +114,6 @@ class UsTreasuryMockFetchPort:
         )
 
 
-@dataclass(frozen=True)
-class UsTreasuryLiveFetchPort:
-    """Product live US Treasury port — ponytail: delegates to mock until Treasury API wired."""
-
-    tenors: Sequence[str]
-    max_rows: int
-    data_domain: TreasuryDomain
-
-    def fetch_payload(self, req: FetchRequest) -> FetchPayload:
-        return UsTreasuryMockFetchPort(
-            tenors=self.tenors, max_rows=self.max_rows, data_domain=self.data_domain
-        ).fetch_payload(req)
-
-
 def create_us_treasury_fetch_port(
     *,
     tenors: Sequence[str],
@@ -137,6 +123,10 @@ def create_us_treasury_fetch_port(
 ):
     if len(tenors) > MAX_TENORS:
         raise PortError("FAILED", f"max {MAX_TENORS} tenors allowed, got {len(tenors)}")
-    if not use_mock:
-        return UsTreasuryLiveFetchPort(tenors=tenors, max_rows=max_rows, data_domain=data_domain)
+    if use_mock:
+        return UsTreasuryMockFetchPort(tenors=tenors, max_rows=max_rows, data_domain=data_domain)
+    from backend.app.datasources.product_live_gate import gate_live_fetch_port
+
+    gate_live_fetch_port(source_id="us_treasury")
+    # ponytail: live branch delegates to mock until Treasury API wired
     return UsTreasuryMockFetchPort(tenors=tenors, max_rows=max_rows, data_domain=data_domain)

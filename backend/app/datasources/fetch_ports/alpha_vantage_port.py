@@ -199,6 +199,9 @@ def create_alpha_vantage_fetch_port(
             max_rows=max_rows,
             max_option_strikes=max_option_strikes,
         )
+    from backend.app.datasources.product_live_gate import gate_live_fetch_port
+
+    gate_live_fetch_port(source_id="alpha_vantage")
     return AlphaVantageLiveFetchPort(
         symbols=symbols,
         max_rows=max_rows,

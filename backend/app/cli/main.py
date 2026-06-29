@@ -34,6 +34,21 @@ def _build_data_parser(sub: argparse._SubParsersAction) -> None:
     )
     sync.add_argument("--format", choices=["json", "text"], default="json")
 
+    live_fetch = data_sub.add_parser(
+        "live-fetch",
+        help="Product live fetch (default dry-run · R3H-08 S08-05)",
+    )
+    live_fetch.add_argument("--source-id", required=True, dest="source_id")
+    live_fetch.add_argument("--domain", required=True, dest="data_domain")
+    live_fetch.add_argument("--operation", default=None)
+    live_fetch.add_argument("--instrument-id", default=None, dest="instrument_id")
+    live_fetch.add_argument(
+        "--dry-run",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+    )
+    live_fetch.add_argument("--format", choices=["json", "text"], default="json")
+
     init_p = data_sub.add_parser("init-basic", help="Initialize schema (default dry-run)")
     init_p.add_argument(
         "--dry-run",
@@ -118,6 +133,14 @@ def _run_data(args: argparse.Namespace) -> int:
                 start=args.start,
                 end=args.end,
                 since=args.since,
+            )
+        elif args.data_command == "live-fetch":
+            payload = data_commands.live_fetch(
+                source_id=args.source_id,
+                data_domain=args.data_domain,
+                operation=args.operation,
+                instrument_id=args.instrument_id,
+                dry_run=args.dry_run,
             )
         elif args.data_command == "init-basic":
             from pathlib import Path

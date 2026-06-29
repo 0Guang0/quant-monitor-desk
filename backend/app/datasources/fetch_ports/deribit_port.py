@@ -148,4 +148,7 @@ def create_deribit_fetch_port(
         raise PortError("FAILED", f"max {MAX_INSTRUMENTS} instruments allowed, got {len(instruments)}")
     if use_mock:
         return DeribitMockFetchPort(instruments=instruments, max_surface_rows=max_surface_rows)
+    from backend.app.datasources.product_live_gate import gate_live_fetch_port
+
+    gate_live_fetch_port(source_id="deribit")
     return DeribitLiveFetchPort(instruments=instruments, max_surface_rows=max_surface_rows)

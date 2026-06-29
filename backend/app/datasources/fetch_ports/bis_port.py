@@ -196,5 +196,8 @@ def create_bis_fetch_port(
     if len(countries) > MAX_COUNTRIES:
         raise PortError("FAILED", f"max {MAX_COUNTRIES} countries allowed, got {len(countries)}")
     if not use_mock:
+        from backend.app.datasources.product_live_gate import gate_live_fetch_port
+
+        gate_live_fetch_port(source_id="bis")
         return BisLiveFetchPort(countries=countries, max_rows=max_rows, data_domain=data_domain)
     return BisMockFetchPort(countries=countries, max_rows=max_rows, data_domain=data_domain)

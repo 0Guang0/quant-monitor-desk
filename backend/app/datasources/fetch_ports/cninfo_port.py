@@ -143,9 +143,17 @@ class CninfoProductLiveFetchPort:
     replay_path: Path = REPLAY_FIXTURE
 
     def fetch_payload(self, req: FetchRequest) -> FetchPayload:
-        return CninfoMockFetchPort(
-            symbols=self.symbols, max_rows=self.max_rows, replay_path=self.replay_path
-        ).fetch_payload(req)
+        from backend.app.datasources.fetch_ports.cn_product_live_replay import (
+            replay_first_fetch_payload,
+        )
+
+        return replay_first_fetch_payload(
+            CninfoMockFetchPort,
+            symbols=self.symbols,
+            max_rows=self.max_rows,
+            replay_path=self.replay_path,
+            req=req,
+        )
 
 
 def create_cninfo_fetch_port(*, symbols: Sequence[str], max_rows: int, use_mock: bool = True):
@@ -153,6 +161,9 @@ def create_cninfo_fetch_port(*, symbols: Sequence[str], max_rows: int, use_mock:
         raise PortError("FAILED", f"max {MAX_ISSUERS} issuers allowed, got {len(symbols)}")
     if use_mock:
         return CninfoMockFetchPort(symbols=symbols, max_rows=max_rows)
+    from backend.app.datasources.product_live_gate import gate_live_fetch_port
+
+    gate_live_fetch_port(source_id="cninfo")
     return CninfoProductLiveFetchPort(symbols=symbols, max_rows=max_rows)
 
 

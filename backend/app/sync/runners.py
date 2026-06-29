@@ -74,6 +74,27 @@ def guard_production_datasource_service_required(
     )
 
 
+def guard_reconcile_product_live_service(
+    *,
+    datasource_service: Any | None,
+    entry: str,
+) -> None:
+    """Fail-closed when production reconcile injects ungated custom fetch_port (ADR-027)."""
+    if datasource_service is None:
+        return
+    if sync_adapter_bypass_allowed():
+        return
+    fetch_port = getattr(datasource_service, "_fetch_port", None)
+    if fetch_port is None:
+        return
+    if getattr(datasource_service, "product_live_mode", False):
+        return
+    raise ValueError(
+        f"{entry}: reconcile datasource_service with injected fetch_port must be built via "
+        "build_product_live_service (product_live_mode=True)"
+    )
+
+
 def guard_runner_direct_adapter_bypass(
     *,
     adapter: BaseDataAdapter | None,
@@ -872,6 +893,10 @@ class ReconcileJobRunner:
     def run(self, conflict_id: str, *, adapter: BaseDataAdapter | None = None, datasource_service=None) -> SyncJobResult:
         guard_production_adapter_bypass(
             adapter=adapter,
+            datasource_service=datasource_service,
+            entry="ReconcileJobRunner.run",
+        )
+        guard_reconcile_product_live_service(
             datasource_service=datasource_service,
             entry="ReconcileJobRunner.run",
         )

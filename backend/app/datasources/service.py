@@ -51,6 +51,7 @@ class DataSourceService:
         file_registry_factory: Callable[[], FileRegistry | None] | None = None,
         job_events: SyncJobStateMachine | None = None,
         staged_fixture_mode: bool = False,
+        product_live_mode: bool = False,
     ) -> None:
         self._source_registry = source_registry or SourceRegistry()
         if not self._source_registry.is_loaded():
@@ -71,10 +72,15 @@ class DataSourceService:
         self._fixture_mode = staged_fixture_mode or (
             fetch_port is not None and file_registry_factory is None
         )
+        self._product_live_mode = product_live_mode
 
     @property
     def staged_fixture_mode(self) -> bool:
         return self._fixture_mode
+
+    @property
+    def product_live_mode(self) -> bool:
+        return self._product_live_mode
 
     def preview_route(
         self,
