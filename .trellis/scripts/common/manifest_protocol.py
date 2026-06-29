@@ -433,9 +433,9 @@ def validate_section9_in_implement(
     task_dir: Path, repo_root: Path, errors: list[str]
 ) -> None:
     """E3: §9/§10 tests and gate scripts in implement (MASTER v3 or EXECUTION_INDEX v4)."""
-    from .plan_protocol import plan_protocol_version
+    from .plan_protocol import is_plan_protocol_v4
 
-    if plan_protocol_version(task_dir) == "4":
+    if is_plan_protocol_v4(task_dir):
         idx = task_dir / "EXECUTION_INDEX.md"
         if not idx.is_file():
             return
@@ -513,8 +513,9 @@ def validate_predecessor_inherit(
 
 def validate_check_subset_implement(task_dir: Path, errors: list[str]) -> None:
     """E14: check.jsonl spec paths should be subset of implement (except audit-only)."""
+    if not _manifest_protocol_enabled(task_dir):
+        return
     impl = impl_paths_set(task_dir)
-    return
     check_entries = load_jsonl_entries(task_dir / "check.jsonl")
     for entry in check_entries:
         p = path_from_entry(entry)
@@ -774,9 +775,9 @@ def parse_integration_ledger(ledger_path: Path) -> list[dict]:
 
 def validate_input_inventory(task_dir: Path, errors: list[str]) -> None:
     """V1 / P0i: v4 EXECUTION_INDEX, source-index §C, or legacy input-inventory."""
-    from .plan_protocol import plan_protocol_version
+    from .plan_protocol import is_plan_protocol_v4
 
-    if plan_protocol_version(task_dir) == "4":
+    if is_plan_protocol_v4(task_dir):
         idx = task_dir / "EXECUTION_INDEX.md"
         if not idx.is_file():
             errors.append("V1: Missing EXECUTION_INDEX.md (v4 P0i index)")
@@ -1019,9 +1020,29 @@ def validate_manifest_phase_p0i(
     validate_input_inventory(task_dir, errors)
 
 
+def validate_manifest_freeze_v4(task_dir: Path, repo_root: Path, errors: list[str]) -> None:
+    """v4 freeze: INDEX/frozen-aware manifest checks (no MASTER)."""
+    from .plan_protocol import is_plan_protocol_v4
+
+    if not is_plan_protocol_v4(task_dir):
+        return
+    validate_trace_implement_sync(task_dir, repo_root, errors)
+    validate_section9_in_implement(task_dir, repo_root, errors)
+    validate_predecessor_inherit(task_dir, repo_root, errors)
+    validate_check_subset_implement(task_dir, errors)
+    validate_module_spec_refs(task_dir, repo_root, errors)
+    validate_plan_manifest_audit(task_dir, errors)
+    validate_freeze_manifest_gate(task_dir, errors)
+    validate_implement_negative_list(task_dir, errors)
+    validate_integration_protocol_freeze(task_dir, repo_root, errors)
+
+
 def validate_manifest_freeze(task_dir: Path, repo_root: Path, errors: list[str]) -> None:
-    """E1–E15 + V1–V6 bundle for validate-plan-freeze."""
+    """E1–E15 + V1–V6 bundle for validate-plan-freeze (archive / legacy MASTER only)."""
     if not _manifest_protocol_enabled(task_dir):
+        return
+    master = task_dir / "MASTER.plan.md"
+    if not master.is_file():
         return
     validate_master_no_short_boot_list(task_dir, errors)
     validate_trace_implement_sync(task_dir, repo_root, errors)

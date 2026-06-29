@@ -5,36 +5,63 @@
 > **Execute agent（v3 遗留）** — `MASTER.plan.md` + `implement.jsonl`  
 > **Audit 编排器** — `AUDIT.plan.md` + `EXECUTION_INDEX.md` §5 + `audit.jsonl`  
 > **定位**：Trellis 管任务状态、hooks、验收门；**本协议管 Plan 阶段**流程、产出物、Skill 注册表。  
-> **语言**：计划与验收用中文；代码标识符、命令、路径保持英文。
+> **语言**：计划与验收用中文；代码标识符、命令、路径保持英文。  
+> **活跃路径（2026-06-29）**：新复杂任务仅 v4/v4.1（`EXECUTION_INDEX.md` + `frozen/`）。`MASTER.plan.md` 仅 `tasks/archive/` 只读，或 `in_progress`/`planning` + 显式 `plan_protocol_version`/`manifest_protocol_version: "3"` 在途 shim；不得新建活跃 MASTER。
 
 ---
 
 ## 0. 文档分工（必读）
 
-| 文档                            | 谁读              | 放什么                                                 |
-| ------------------------------- | ----------------- | ------------------------------------------------------ |
-| **本文**                        | Plan agent        | 流程、产出物、冻结合并、Plan DoD、Skill 注册表         |
-| **`frozen/*.md`**（v4）         | Execute + Audit   | 加固后的冻结任务卡（正文 SSOT）                        |
-| **`EXECUTION_INDEX.md`**（v4）  | Execute + Audit   | 唯一索引：步骤/证据、必读原文 manifest、Audit 追溯     |
-| **`MASTER.plan.md`**（v3 遗留） | Execute（旧任务） | §8 步骤+证据、§9 四层测试、§10 Tier、§12 Execute Skill |
-| **`AUDIT.plan.md`**             | Audit agent       | §1 覆写 + §2 维度验证矩阵                              |
-| **`audit.jsonl`**               | Audit hook        | 自动生成；第一条 = AUDIT.plan.md                       |
-| **`implement.jsonl`**           | Execute hook      | 自动生成；第一条 = frozen 任务卡                       |
-| **`check.jsonl`**               | A1 audit-spec     | 自动生成；spec 子集                                    |
-| **`plan.freeze.md`**            | Plan              | 冻结自检（含 §3.0v4）                                  |
-| 活任务卡 `docs/.../NNN_*.md`    | Plan（加固）      | 冻结前编辑；Execute **不读**活卡                       |
+| 文档                            | 谁读                   | 放什么                                                                       |
+| ------------------------------- | ---------------------- | ---------------------------------------------------------------------------- |
+| **本文**                        | Plan agent             | 流程、产出物、冻结合并、Plan DoD、Skill 注册表                               |
+| **`frozen/*.md`**（v4）         | Execute + Audit        | 加固后的冻结任务卡（正文 SSOT）                                              |
+| **`EXECUTION_INDEX.md`**（v4）  | Execute + Audit        | 唯一索引：步骤/证据、必读原文 manifest、Audit 追溯                           |
+| **`MASTER.plan.md`**（v3 遗留） | Execute（旧任务）      | §8 步骤+证据、§9 四层测试、§10 Tier、§12 Execute Skill                       |
+| **`AUDIT.plan.md`**             | Audit agent            | §1 覆写 + §2 维度验证矩阵                                                    |
+| **`audit.jsonl`**               | Audit hook             | 自动生成；第一条 = AUDIT.plan.md                                             |
+| **`implement.jsonl`**           | Execute hook           | 自动生成；第一条 = frozen 任务卡                                             |
+| **`check.jsonl`**               | A1 audit-spec          | 自动生成；spec 子集                                                          |
+| **`plan.freeze.md`**            | Plan                   | 冻结自检（**§3.0v4.1**；legacy 见 `templates/plan.freeze.legacy-v3-v40.md`） |
+| 活任务卡 `docs/.../NNN_*.md`    | Plan + Execute §A 必读 | Wave 名片；不迁入 `research/`                                                |
 
 **原则（v4）：** Execute → **frozen 卡 + EXECUTION_INDEX**；Audit → **AUDIT.plan.md + EXECUTION_INDEX §5**；`task.py freeze-task-card` 生成冻结快照；`generate-manifests` 从索引 §3 写 jsonl。
+
+### 0.0.1 Plan 协议 v4.1（Execution Bundle · 2026-06 起新复杂任务默认）
+
+`task.json` `meta.plan_protocol_version: "4.1"`（新任务推荐；v4.0 任务可保留 `"4"`）。
+
+| 文档                                 | 谁读             | 放什么                                                                       |
+| ------------------------------------ | ---------------- | ---------------------------------------------------------------------------- |
+| **`research/00-EXECUTION-ENTRY.md`** | Execute **首读** | 路由地图 · 目的/约束汇总 · 包内文件表 · §5.2 必读 · §5.3 情境路由 · ADR 索引 |
+| **`research/*`（skill 产出）**       | Execute          | **freeze 后仍读原文**；结构跟 `plan-skill-outputs.yaml` / 各 SKILL.md        |
+| **`research/EXTERNAL-INDEX.md`**     | Execute          | §A 开工必读（外部）· §B 情境 · §C 源码字典                                   |
+| **`EXECUTION_PLAN.md`**（任务根）    | Execute          | 仅 GAP + 指向 ENTRY                                                          |
+| **`frozen/*.md`**                    | Execute + Audit  | **v4.1 薄指针**（`freeze-task-card` 自动生成）；规格在 ENTRY + `research/`   |
+| **`EXECUTION_INDEX.md`**             | Execute + Audit  | §0 步骤/证据指针 · §3 包路径 · §5 Audit 追溯                                 |
+| **活卡 `docs/.../NNN_*.md`**         | Execute §A 必读  | Wave 名片；**不迁入** `research/`                                            |
+| **`docs/decisions/ADR-*.md`**        | Execute          | 架构决策；ENTRY §4 + `docs/decisions/README.md` 索引                         |
+
+**Skill 注册（v4.1 必做，取代 writing-plans）：**  
+**必做：** GitNexus **1a+1b**（`project-overview.md` · `gitnexus-summary.md`）· **trellis-research** · `to-issues` · `planning-and-task-breakdown` · `spec-driven-development` · `context-engineering` · `doubt-driven-development` · `documentation-and-adrs`  
+**可选澄清（需求不明或有疑问时）：** `trellis-brainstorm` · `grill-me` · `interview-me` · `idea-refine` — **必须用其访问用户**，决策写入 `research/*-session.md` 或 `docs/decisions/ADR-*.md`  
+产出契约：`.trellis/spec/guides/plan-skill-outputs.yaml` · 路径：`.trellis/spec/guides/plan-skill-paths.yaml`
+
+**三条硬规则：**
+
+1. **单一 SSOT：** 切片 AC 只在 `to-issues-slices.md`；`frozen`/`EXECUTION_INDEX` **只指针，不复制**正文。
+2. **双层索引：** 包内 = ENTRY；包外 = EXTERNAL-INDEX §A/B/C。
+3. **必读 vs 情境：** 开工前 = `research/` 全部登记文件 + EXTERNAL §A + 当前切片 §；执行中 = §5.3 / §B / §C。
 
 ### 0.0 Plan 协议 v4（冻结三件套 · 2026-06 起默认）
 
 `task.json` `meta.plan_protocol_version: "4"`（`task.py create` 默认）。
 
-| 阶段       | 产出                                                                       |
-| ---------- | -------------------------------------------------------------------------- |
-| Plan P0–5d | 加固 **仓库活任务卡**；草稿可写 `research/*`（Execute 不读）               |
-| 冻结 5b    | `EXECUTION_INDEX.md` + `frozen/<NNN>.md` + `AUDIT.plan.md`                 |
-| 冻结命令   | `task.py freeze-task-card` → `generate-manifests` → `validate-plan-freeze` |
+| 阶段       | 产出                                                                                  |
+| ---------- | ------------------------------------------------------------------------------------- |
+| Plan P0–5e | 活卡摘要 + **`research/` Execution Bundle**（skill 产出；freeze 后 Execute **仍读**） |
+| 冻结 6     | 薄 `EXECUTION_INDEX.md` + 薄 `frozen/<NNN>.md` + `AUDIT.plan.md`                      |
+| 冻结命令   | `task.py freeze-task-card` → `generate-manifests` → `validate-plan-freeze`            |
 
 **内联规则：** 设计/契约/规则/架构中 **可无损总结** 的并入冻结任务卡 §5–§8；**不可精简** 的仅列 `EXECUTION_INDEX.md` §3（`manifest=must-read`）。
 
@@ -61,7 +88,7 @@
 **Plan 产出（冻结前必存在 · v4）：**
 
 - `EXECUTION_INDEX.md` — 唯一 Execute/Audit 索引（模板 `templates/EXECUTION_INDEX.md`）
-- `frozen/<NNN>_*.md` — `task.py freeze-task-card` 从活任务卡复制并加固
+- `frozen/<NNN>_*.md` — **v4.1：** `freeze-task-card` 写薄指针；**v4.0：** 从活卡复制全文
 - `AUDIT.plan.md` — §2 维度矩阵
 - `research/plan-boot.md` — P0 摘要（Plan-only，非 Execute 三件套）
 - `context_pack.json` — `context_router.py --task <dir>`
@@ -86,7 +113,7 @@
 
 **祖父条款：** 2026-06-18 前已归档任务若无 `plan-manifest-audit.md`，视为历史交付。**新任务与重新 Plan 的任务**须在 `task.json` `meta.manifest_protocol_version: "1"` 启用 E1–E20 门禁。
 
-**Loop engineering（Trellis 复杂任务内置层）：** 有 `MASTER.plan.md` 且 `meta.task_track` 不为 `debt-lite`/`simple` 时，**强制** loop 四件套；`validate-plan-freeze` 自动 `context_router`。日常维护：`uv run python scripts/loop_maintain.py --fix`（catalog + 生成索引 + authority_graph 包缺口检查）。
+**Loop engineering（Trellis 复杂任务内置层）：** `meta.task_track: complex` 或 v4 三件套（`EXECUTION_INDEX.md` + `frozen/`）时强制 loop 四件套；`validate-plan-freeze` 自动 `context_router`。活跃 `MASTER.plan.md` 须带显式 v3 meta 或归档。日常维护：`uv run python scripts/loop_maintain.py --fix`。
 
 ---
 
@@ -273,12 +300,13 @@ Plan 阶段 **同时冻结两套契约**；Execute 侧 **§2.8 与 MASTER §8–
 Phase 0  建任务（task.py create）
 Phase 1a 项目轻量概览（GitNexus → research/project-overview.md，≤1 页）
 Phase 2  需求与规格（trellis-brainstorm → spec-driven-development；条件 domain-modeling）
-Phase 3  质疑补洞（grill-me 或 interview-me，必须二选一；更强替代 grill-with-docs）
+Phase 3  可选澄清（需求不明时：grill-me / interview-me / idea-refine / trellis-brainstorm → research/*-session.md 或 ADR）
 Phase 3.5 需求垂直切片（to-issues → 切片工单列表）
 Phase 1b 需求聚焦代码分析（GitNexus → research/gitnexus-summary.md，锚定需求）
 Phase 4  技术设计（brainstorming 和/或 api-and-interface-design；条件性，跳过须书面理由）
-Phase 5  拆解 + 计划（planning-and-task-breakdown → writing-plans → trellis-before-dev → doubt-driven-development）
-Phase 5b 冻结合并 MASTER + AUDIT.plan.md + plan.freeze + jsonl（implement / check / audit）
+Phase 5  加固（planning-and-task-breakdown → spec-driven-development → context-engineering → doubt-driven-development → documentation-and-adrs）
+Phase 5e 打包 Execution Bundle（00-EXECUTION-ENTRY + EXTERNAL-INDEX + plan-consolidation + EXECUTION_PLAN）
+Phase 6  冻结薄三件套 + validate-plan-freeze
 Phase 6  Execute：6.pre GitNexus → MASTER + implement.jsonl；§0.1 门控
 Phase 7  Audit：7.pre GitNexus → **7.pre.1 Trace Authority Presence Check** → A1–A8 子 agent → **A9 主会话** → audit.report
 Phase 8  Repair（若有 §4.3；REPAIR.plan.md + 必要 skill → 复验 §10）
@@ -321,14 +349,14 @@ Trellis 命令与 hook 细节见 `.trellis/workflow.md`；`task.py start` = Plan
 
 - `grill-me`（mattpocock）或 `interview-me`（addy）→ MASTER §3 边界、§7 Red Flags
 - **更强替代：** `grill-with-docs`（mattpocock）——当项目已有领域模型（`CONTEXT.md`/`ADR`）时，以模型为锚点质问计划，产出同上 + 更新 `CONTEXT.md`/`ADR`
-- **硬门禁：** Phase 3 必须产出质疑记录（`research/grill-me-session.md` 或等价），此项在 `plan.freeze.md` 中检查
+- **可选澄清（需求不明或有疑问时）：** 须用 grill-me / interview-me / idea-refine / trellis-brainstorm；决策写入 `research/*-session.md` 或 ADR（**非**每任务必做）
 
 ### Phase 3.5 — 需求垂直切片（新 · to-issues）
 
 - **Skill：** `to-issues`（mattpocock）
 - **产出：** 垂直切片工单列表（每个切片 = 贯穿所有层的完整通路 + AC + 显式依赖声明）
 - **核心价值：** 在技术设计之前，将每个功能需求拆成可独立 demo 的垂直切片，显式声明切片间依赖。防止"执行阶段只设计了一小部分"——每个切片如果不可独立 demo，说明不完整
-- **产出流向：** 切片工单列表 → 反哺 Phase 5a `planning-and-task-breakdown` 生成 MASTER §8 步骤
+- **产出流向：** `research/to-issues-slices.md`（结构跟 to-issues SKILL + Trellis RED/GREEN/证据扩展）
 
 ### Phase 1b — 需求聚焦代码分析
 
@@ -359,7 +387,25 @@ Trellis 命令与 hook 细节见 `.trellis/workflow.md`；`task.py start` = Plan
 
 **prototype 触发条件：** 设计中有高风险不确定项（数据模型是否正确？状态机逻辑是否合理？）需要可丢弃原型验证时启用。
 
-### Phase 5 — 拆解、jsonl 与 Execute Skill 冻结
+### Phase 5 — Skill 加固与 Execute Bundle（v4.1）
+
+| 顺序     | Skill                       | 产出（**结构跟 SKILL.md**；文件名见 `plan-skill-outputs.yaml`）                   |
+| -------- | --------------------------- | --------------------------------------------------------------------------------- |
+| 5a       | planning-and-task-breakdown | `research/plan-task-breakdown.md` — Plan Document Template                        |
+| 5a'      | spec-driven-development     | `research/plan-spec.md` — Spec 六要素模板                                         |
+| 5b       | context-engineering         | `research/plan-context.md` — 层次/PROJECT CONTEXT/情境路由                        |
+| 5c       | doubt-driven-development    | `research/plan-doubt-review.md` — Doubt cycle                                     |
+| 5c'      | documentation-and-adrs      | `docs/decisions/ADR-NNN-*.md` + ENTRY §4                                          |
+| 1–4 条件 | trellis-research            | `research/<topic>.md` · `reference-adoption-*.md`                                 |
+| **5e**   | **trellis-plan**            | **00-EXECUTION-ENTRY** · **EXTERNAL-INDEX** · plan-consolidation · EXECUTION_PLAN |
+
+**v4.1 废止：** `writing-plans`（新任务不得使用）；切片 AC/证据由 **to-issues** + `to-issues-slices.md` 承载。
+
+**5e 必做（v4.1）：** 打包 Execution Bundle；`frozen`/`EXECUTION_INDEX` **薄指针**；`validate-plan-freeze` 检查 ENTRY §5.1 登记全部 `research/*.md`、EXTERNAL §A/B/C、ADR 索引。
+
+**5e 必做（v4 遗留）：** 见下文 MASTER §8 路径；仅 `meta.plan_protocol_version: "4"` 任务。
+
+### Phase 5 — 拆解、jsonl 与 Execute Skill 冻结（v4.0 遗留）
 
 | 顺序   | Skill                                                  | 产出                                                                                  |
 | ------ | ------------------------------------------------------ | ------------------------------------------------------------------------------------- |

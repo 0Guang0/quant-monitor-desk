@@ -18,22 +18,29 @@ Plan **不读** execute-skill-registry；Execute **不读** 本文。
 
 ---
 
-## 1. Plan 默认必做栈（Phase 0–5d）
+## 1. Plan 默认必做栈
+
+### v4.1（新复杂任务 · `plan_protocol_version: "4.1"`）
 
 ```text
 trellis-plan (P0 boot)
-→ GitNexus 1a (轻量概览) → project-overview.md
-→ trellis-brainstorm (2a) + spec-driven-development (2b)
-→ [条件] domain-modeling
-→ grill-me OR interview-me OR grill-with-docs (3, 必须选一)
-→ to-issues (3.5, 垂直切片)
-→ GitNexus 1b (需求聚焦深度分析) → gitnexus-summary.md
-→ brainstorming / api-and-interface-design (4, 条件)
-→ [条件] codebase-design / prototype
-→ planning-and-task-breakdown (5a)
-→ writing-plans (5b)
-→ trellis-before-dev (5c)
-→ doubt-driven-development (5d, 主会话必做)
+→ … Phase 1–4 同 v4 …
+→ to-issues (3.5) → research/to-issues-slices.md
+→ planning-and-task-breakdown (5a) → research/（Plan Document Template）
+→ spec-driven-development (5a') → research/（Spec 模板）
+→ context-engineering (5b) → research/plan-context.md
+→ doubt-driven-development (5c) → research/plan-doubt-review.md
+→ documentation-and-adrs (5c') → docs/decisions/ADR-*.md
+→ [条件] trellis-research (1–4) → research/<topic>.md
+→ trellis-plan (5e) → 00-EXECUTION-ENTRY + EXTERNAL-INDEX + plan-consolidation
+```
+
+**废止：** `writing-plans`（由 to-issues 承载切片 AC/证据）
+
+### v4.0 遗留栈
+
+```text
+… → planning-and-task-breakdown (5a) → writing-plans (5b) → trellis-before-dev (5c) → doubt-driven-development (5d)
 ```
 
 ---

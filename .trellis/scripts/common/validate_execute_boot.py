@@ -5,15 +5,22 @@ from __future__ import annotations
 from pathlib import Path
 
 from .manifest_protocol import validate_execute_boot, validate_manifest_amend_chain
+from .plan_protocol import is_plan_protocol_v4
+from .task_archive import is_active_legacy_v3, is_archived_task, legacy_handoff_error
 
 
 def validate_execute_boot_gate(task_dir: Path, repo_root: Path | None = None) -> list[str]:
+    from .paths import get_repo_root
+
     if repo_root is None:
-        repo_root = task_dir
-        while repo_root.name and not (repo_root / ".trellis").is_dir():
-            if repo_root.parent == repo_root:
-                break
-            repo_root = repo_root.parent
+        repo_root = get_repo_root()
+
+    if is_archived_task(task_dir):
+        return []
+    if is_active_legacy_v3(task_dir) and not is_plan_protocol_v4(task_dir):
+        return [legacy_handoff_error()]
+    if not is_plan_protocol_v4(task_dir):
+        return []
 
     errors: list[str] = []
     validate_execute_boot(task_dir, errors)

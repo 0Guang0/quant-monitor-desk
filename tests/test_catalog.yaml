@@ -1369,6 +1369,17 @@ tests/test_sync_runners.py:
     rules: []
     specs:
       - specs/contracts/sync_job_contract.yaml
+tests/test_task_archive_gates.py:
+  command: uv run python -m pytest tests/test_task_archive_gates.py -q
+  failure_meaning:
+    Regression in test_task_archive_gates; inspect purpose and linked
+    authorities.
+  purpose: task_archive 与单轨门禁边界测试。
+  type: policy-contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
 tests/test_tdx_live_manual_probe_authorization.py:
   command:
     uv run python -m pytest tests/test_tdx_live_manual_probe_authorization.py

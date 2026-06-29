@@ -9,6 +9,8 @@ from typing import Any
 
 import yaml
 
+import re
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
 AUTHORITY_GRAPH_PATH = REPO_ROOT / "specs/context/authority_graph.yaml"
 TEST_CATALOG_PATH = REPO_ROOT / "tests/test_catalog.yaml"
@@ -19,17 +21,29 @@ GLOBAL_RULES = [
     "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md",
 ]
 
-REQUIRED_CATALOG_FIELDS = (
-    "purpose",
-    "type",
-    "verifies",
-    "command",
-    "failure_meaning",
-)
+_REPO_PATH_PREFIXES = ("backend/", "tests/", "scripts/", "docs/", "specs/")
 
 
 def repo_relative(path: Path) -> str:
     return path.resolve().relative_to(REPO_ROOT).as_posix()
+
+
+def _trellis_common(submod: str):
+    """Load .trellis/scripts/common/*.py without sys.path mutation (guardrail-safe)."""
+    import importlib.util
+
+    mod_path = REPO_ROOT / ".trellis" / "scripts" / "common" / f"{submod}.py"
+    spec = importlib.util.spec_from_file_location(f"_trellis_{submod}", mod_path)
+    if spec is None or spec.loader is None:
+        raise ImportError(mod_path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def extract_md_section(text: str, header_prefix: str) -> str:
+    """Delegate to Trellis md_utils (single implementation)."""
+    return _trellis_common("md_utils").extract_md_section(text, header_prefix)
 
 
 def path_exists(rel: str) -> bool:
@@ -110,7 +124,9 @@ def infer_test_type(rel: str, purpose: str) -> str:
         return "smoke"
     if "audit" in lowered or "registry" in lowered or "manifest" in lowered:
         return "protocol"
-    if "e2e" in lowered or "integration" in lowered or "flow" in lowered:
+    if "e2e" in lowered or "integration" in lowered:
+        return "integration"
+    if "/integration/" in rel.replace("\\", "/"):
         return "integration"
     return "runtime-contract"
 
@@ -127,25 +143,59 @@ def default_catalog_entry(rel: str) -> dict[str, Any]:
     }
 
 
-def infer_task_touched_paths(task_dir: Path) -> list[str]:
-    """Repo-relative paths referenced in MASTER.plan.md and implement.jsonl."""
+def normalize_ac_id(raw: str) -> str:
+    """Canonical AC id (AC-BOOT, AC-01, …)."""
+    token = str(raw).strip().upper()
+    if not token:
+        return token
+    if token.startswith("AC-"):
+        return token
+    if token.startswith("AC"):
+        rest = token[2:].lstrip("-")
+        return f"AC-{rest}" if rest else "AC"
+    return f"AC-{token}"
+
+
+def _scan_repo_paths_in_text(text: str) -> list[str]:
     paths: list[str] = []
+    for m in re.finditer(r"`((?:backend|tests|scripts|docs|specs)/[^`]+)`", text):
+        paths.append(m.group(1).rstrip(".,;:").replace("\\", "/"))
+    for token in _REPO_PATH_PREFIXES:
+        start = 0
+        while True:
+            idx = text.find(token, start)
+            if idx < 0:
+                break
+            end = idx
+            while end < len(text) and text[end] not in (" ", "`", ")", "\n", "|", '"', "'"):
+                end += 1
+            candidate = text[idx:end].rstrip(".,;:").replace("\\", "/")
+            if candidate.count("/") >= 1:
+                paths.append(candidate)
+            start = end
+    return paths
+
+
+def infer_task_touched_paths(task_dir: Path) -> list[str]:
+    """Repo-relative paths referenced in plan artifacts and implement.jsonl."""
+    paths: list[str] = []
+    for rel in (
+        "EXECUTION_INDEX.md",
+        "EXECUTION_PLAN.md",
+        "research/00-EXECUTION-ENTRY.md",
+        "research/to-issues-slices.md",
+        "research/EXTERNAL-INDEX.md",
+    ):
+        doc = task_dir / rel
+        if doc.is_file():
+            paths.extend(_scan_repo_paths_in_text(doc.read_text(encoding="utf-8")))
     master = task_dir / "MASTER.plan.md"
     if master.is_file():
-        text = master.read_text(encoding="utf-8")
-        for token in ("backend/", "tests/", "scripts/", "docs/", "specs/"):
-            start = 0
-            while True:
-                idx = text.find(token, start)
-                if idx < 0:
-                    break
-                end = idx
-                while end < len(text) and text[end] not in (" ", "`", ")", "\n", "|", '"', "'"):
-                    end += 1
-                candidate = text[idx:end].rstrip(".,;:")
-                if candidate.count("/") >= 1:
-                    paths.append(candidate)
-                start = end
+        paths.extend(_scan_repo_paths_in_text(master.read_text(encoding="utf-8")))
+    frozen_dir = task_dir / "frozen"
+    if frozen_dir.is_dir():
+        for md in frozen_dir.glob("*.md"):
+            paths.extend(_scan_repo_paths_in_text(md.read_text(encoding="utf-8")))
     impl = task_dir / "implement.jsonl"
     if impl.is_file():
         for line in impl.read_text(encoding="utf-8").splitlines():
@@ -183,7 +233,7 @@ def authority_graph_coverage_gaps(task_dir: Path) -> list[str]:
         return []
     gaps: list[str] = []
     for rel in infer_task_touched_paths(task_dir):
-        if not rel.startswith(("backend/", "scripts/")):
+        if not rel.startswith("backend/"):
             continue
         if not modules_for_paths([rel], graph):
             gaps.append(rel)
@@ -191,27 +241,19 @@ def authority_graph_coverage_gaps(task_dir: Path) -> list[str]:
 
 
 def task_track(task_dir: Path) -> str:
-    """Trellis task track: complex (MASTER+loop) | debt-lite | simple."""
+    """Trellis task track: complex (v4 + loop) | debt-lite | simple."""
     task_json = task_dir / "task.json"
     meta = load_json(task_json).get("meta") or {} if task_json.is_file() else {}
     track = str(meta.get("task_track", "")).lower()
     if track in ("complex", "debt-lite", "simple"):
         return track
-    if (task_dir / "EXECUTION_INDEX.md").is_file() and any(
-        (task_dir / "frozen").glob("*.md")
-    ):
-        return "complex"
-    if (task_dir / "MASTER.plan.md").is_file():
+    if _trellis_common("plan_protocol").is_plan_protocol_v4(task_dir):
         return "complex"
     return "simple"
 
 
 def loop_required(task_dir: Path) -> bool:
     return task_track(task_dir) == "complex"
-
-
-def loop_engineering_enabled(task_dir: Path) -> bool:
-    return loop_required(task_dir)
 
 
 def discover_unmapped_backend_packages() -> list[str]:
@@ -234,69 +276,62 @@ def discover_unmapped_backend_packages() -> list[str]:
 
 
 def _ac_ids_from_plan_text(text: str) -> list[str]:
-    import re
-
     section = (
         text.split("## 2.", 1)[1].split("## 3.", 1)[0] if "## 2." in text else text
     )
     header = re.compile(r"^###\s+AC[-\s]?([A-Z0-9._-]+)", re.I | re.M)
     table = re.compile(r"\|\s*AC[-\s]?([A-Z0-9._-]+)\s*\|", re.I)
-    ids = sorted(set(header.findall(section)) | set(table.findall(section)))
+    ids = sorted({normalize_ac_id(x) for x in header.findall(section)} | {normalize_ac_id(x) for x in table.findall(section)})
     if ids:
         return ids
-    dotted = sorted(set(re.findall(r"\bAC-[A-Z0-9._-]+\b", text, re.I)))
+    dotted = sorted({normalize_ac_id(x) for x in re.findall(r"\bAC-[A-Z0-9._-]+\b", text, re.I)})
     return dotted
 
 
-def extract_master_ac_ids(task_dir: Path) -> list[str]:
-    master = task_dir / "MASTER.plan.md"
-    if master.is_file():
-        return _ac_ids_from_plan_text(master.read_text(encoding="utf-8"))
-
-    extra: list[Path] = []
-    frozen_dir = task_dir / "frozen"
-    if frozen_dir.is_dir():
-        extra.extend(sorted(frozen_dir.glob("*.md")))
+def extract_plan_ac_ids(task_dir: Path) -> list[str]:
     idx = task_dir / "EXECUTION_INDEX.md"
     if idx.is_file():
-        extra.append(idx)
-    for candidate in extra:
-        ids = _ac_ids_from_plan_text(candidate.read_text(encoding="utf-8"))
+        ids = _ac_ids_from_plan_text(idx.read_text(encoding="utf-8"))
         if ids:
             return ids
+    frozen_dir = task_dir / "frozen"
+    if frozen_dir.is_dir():
+        for md in sorted(frozen_dir.glob("*.md")):
+            ids = _ac_ids_from_plan_text(md.read_text(encoding="utf-8"))
+            if ids:
+                return ids
     return []
 
 
+def _patch_manifest_acs(manifest: dict, ac_ids: list[str], modules: list | None) -> dict:
+    by_id = {
+        normalize_ac_id(str(item.get("id"))): item
+        for item in manifest.get("acs") or []
+        if item.get("id")
+    }
+    for ac_id in ac_ids:
+        by_id.setdefault(ac_id, {"id": ac_id, "status": "pending", "repair_items": []})
+    manifest["acs"] = [by_id[k] for k in sorted(by_id)]
+    manifest["modules"] = modules or manifest.get("modules") or []
+    return manifest
+
+
 def write_loop_evidence_stubs(task_dir: Path, pack: dict[str, Any]) -> tuple[Path, Path]:
-    """ponytail: minimal loop_manifest + evidence_index stubs; enrich during Execute."""
     manifest_path = task_dir / "loop_manifest.json"
     evidence_path = task_dir / "evidence_index.json"
-    if not manifest_path.is_file():
-        acs = [{"id": ac_id, "status": "pending", "repair_items": []} for ac_id in extract_master_ac_ids(task_dir)]
-        manifest_path.write_text(
-            json.dumps(
-                {"task": task_dir.name, "modules": pack.get("modules") or [], "acs": acs},
-                indent=2,
-                ensure_ascii=False,
-            )
-            + "\n",
-            encoding="utf-8",
-        )
+    ac_ids = extract_plan_ac_ids(task_dir)
+    modules = pack.get("modules") or []
+    base = load_json(manifest_path) if manifest_path.is_file() else {"task": task_dir.name, "acs": []}
+    manifest_path.write_text(
+        json.dumps(_patch_manifest_acs(base, ac_ids, modules), indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
     if not evidence_path.is_file():
         evidence_path.write_text(
             json.dumps({"execute": {}, "audit": {}}, indent=2, ensure_ascii=False) + "\n",
             encoding="utf-8",
         )
     return manifest_path, evidence_path
-
-
-def find_repo_root(start: Path) -> Path:
-    current = start.resolve()
-    while current.name and not (current / ".trellis").is_dir():
-        if current.parent == current:
-            break
-        current = current.parent
-    return current
 
 
 def glob_match(pattern: str, rel: str) -> bool:

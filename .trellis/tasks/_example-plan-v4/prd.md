@@ -1,8 +1,5 @@
 <!-- thin-index: true -->
 
-# Plan v4 参考
+# PRD — v4.1 样板（薄索引）
 
-> **Execute/Audit SSOT：** `frozen/GLOBAL_TASK_TEMPLATE.md` + `EXECUTION_INDEX.md`
-
-- **范围与 AC：** 见 frozen + `EXECUTION_INDEX` §2。
-- **Plan-only：** `research/plan-consolidation.md`。
+> Execute：`research/00-EXECUTION-ENTRY.md` · frozen：`frozen/GLOBAL_TASK_TEMPLATE.md`

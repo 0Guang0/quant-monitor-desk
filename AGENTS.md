@@ -24,11 +24,11 @@ If you're using Codex or another agent-capable tool, additional project-scoped h
 
 Managed by Trellis. Edits outside this block are preserved; edits inside may be overwritten by a future `trellis update`.
 
-## Plan gate (complex tasks: v4 `EXECUTION_INDEX` + frozen card, or legacy `MASTER.plan.md`)
+## Plan gate (complex tasks: v4/v4.1 `EXECUTION_INDEX` + frozen card)
 
 When authoring or freezing a complex task plan (`status=planning`):
 
-**Protocol v4** (`meta.plan_protocol_version: "4"` or `EXECUTION_INDEX.md` + `frozen/*.md`):
+**Protocol v4 / v4.1** (`EXECUTION_INDEX.md` + `frozen/*.md`; v4.1 adds `research/00-EXECUTION-ENTRY.md`):
 
 1. **MUST Read first:** `agent-toolchain.md`（根目录）+ `.cursor/skills/trellis-plan/SKILL.md` — complete **Phase P0 Boot** (including **P0o** `docs/implementation_tasks/`).
 2. Follow **Phases 1a→5d** in `complex-task-planning-protocol.md` §4；`EXECUTION_INDEX.md` 为唯一人工索引（§1 步骤、§2 AC、§3 manifest）。
@@ -36,21 +36,21 @@ When authoring or freezing a complex task plan (`status=planning`):
 4. Before `task.py start`: `python .trellis/scripts/task.py validate-plan-freeze <task-dir>` exit 0.
 5. Optional per phase: `python .trellis/scripts/task.py validate-plan-phase <task-dir> <phase>`.
 
-**Legacy v3** (`MASTER.plan.md`, explicit `plan_protocol_version: "3"`):
+**Legacy v3**（仅 `tasks/archive/` 只读，或 `in_progress` + `plan_protocol_version: "3"` 在途 shim）:
 
-1. Same boot as v4; freeze into **MASTER §8–§12** instead of frozen card.
-2. `research/original-plan-trace.md` maps `NNN_*.md` → MASTER §2 AC.
-3. Same `validate-plan-freeze` / `validate-plan-phase` before `start`.
+1. 新任务 **不得** 新建 `MASTER.plan.md`；须迁移 v4 或移入 `tasks/archive/`。
+2. 在途 v3：`validate-plan-freeze` 拒绝；`validate-execute-handoff` 允许 legacy shim。
+3. 归档 v3：`validate-plan-freeze` / `validate-plan-phase` / handoff **全跳过**（只读）。
 
 ## Execute gate (complex tasks in progress)
 
 When the active task status is `in_progress`:
 
-**Protocol v4** — SSOT: `frozen/*.md` + `implement.jsonl` (slot 1 = frozen card):
+**Protocol v4 / v4.1** — SSOT: `frozen/*.md` + `implement.jsonl` (slot 1 = frozen; slot 2 = ENTRY or INDEX):
 
 1. **MUST Read first:** `agent-toolchain.md` + `.cursor/skills/trellis-execute/SKILL.md` — Phase 0 Boot.
 2. **MUST Read `implement.jsonl` every line**; do not skip by summarizing the frozen task card.
-3. Read frozen card §9 state machine; skill table in `execute-skill-paths.yaml`.
+3. Read frozen card §9 / `EXECUTION_INDEX` §1 state machine; skill table in `execute-skill-paths.yaml`.
 4. Execute **one §9.x step at a time**: TDD RED → `execute-evidence/{step}-red.txt` → GREEN → `{step}-green.txt` → `[x]`.
 5. After each GREEN: **incremental-implementation**; full pytest before next step.
 6. GitNexus **`impact()`** before edits; **`detect_changes()`** before commit.
@@ -58,7 +58,7 @@ When the active task status is `in_progress`:
 8. Before Audit: `validate-execute-handoff <task-dir>`.
 9. Do **not** `finish-work` until Audit PASS.
 
-**Legacy v3** (`MASTER.plan.md`):
+**Legacy v3**（`in_progress` + `MASTER.plan.md` only）:
 
 1. Same boot; **MUST Read `implement.jsonl` every line** + MASTER §0.1 / §12.
 2. Execute **one §8.x step at a time** (evidence paths as MASTER §8).
@@ -73,13 +73,13 @@ When the active task status is `in_progress`:
 
 ## Loop engineering context (Trellis complex-task layer)
 
-Complex tasks (`meta.task_track: "complex"`, default when `EXECUTION_INDEX.md`+`frozen/` or `MASTER.plan.md` exists) use machine-readable routing — **do not ask the user for docs/specs paths**.
+Complex tasks (`meta.task_track: "complex"`, or v4 `EXECUTION_INDEX.md`+`frozen/`) use machine-readable routing — **do not ask the user for docs/specs paths**.
 
 1. Plan freeze: `validate-plan-freeze` auto-runs `context_router` if `context_pack.json` missing
-2. Execute: **MUST Read `implement.jsonl` every line** before business code (`task.py current` → task dir); slot 2 is often `context_pack.json`
+2. Execute: **MUST Read `implement.jsonl` every line** before business code (`task.py current` → task dir); v4.1 slot 2 = `research/00-EXECUTION-ENTRY.md`; slot 3 = `context_pack.json`
 3. Handoff gates: `validate-execute-handoff` → `check_task_evidence.py`
-4. Repo CI: `check_test_catalog.py`, `check_verification_matrix.py`, `check_docs_specs_indexed.py`, `generate_project_map.py --check`
-5. `debt-lite` / no-MASTER tasks: set `meta.task_track: "debt-lite"` or `"simple"` — loop not required
+4. Repo CI: `check_test_catalog.py`, `check_verification_matrix.py`, `check_docs_specs_indexed.py`, `generate_project_map.py --check`, `check_active_master_tasks.py`
+5. `debt-lite` / simple tasks: set `meta.task_track: "debt-lite"` or `"simple"` — loop not required
 6. **New test module:** `uv run python scripts/loop_maintain.py --fix` (or `check_test_catalog.py --write-defaults`)
 7. **New docs/specs file:** same `loop_maintain.py --fix` (refreshes `docs/generated/docs_specs_index.generated.md`)
 8. **New backend package:** extend `specs/context/authority_graph.yaml` — `loop_maintain.py` reports unmapped `backend/app/*`

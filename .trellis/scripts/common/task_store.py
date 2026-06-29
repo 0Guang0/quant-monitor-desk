@@ -328,7 +328,8 @@ def cmd_create(args: argparse.Namespace) -> int:
         "notes": "",
         "meta": {
             "task_track": "complex",
-            "plan_protocol_version": "4",
+            "plan_protocol_version": "4.1",
+            "execute_entry": "research/00-EXECUTION-ENTRY.md",
         },
     }
 
@@ -338,7 +339,7 @@ def cmd_create(args: argparse.Namespace) -> int:
     if not prd_path.exists():
         meta = task_data.get("meta") or {}
         thin = (
-            meta.get("plan_protocol_version") == "4"
+            meta.get("plan_protocol_version") in ("4", "4.1")
             and meta.get("task_track", "complex") == "complex"
         )
         prd_path.write_text(

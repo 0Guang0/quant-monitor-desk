@@ -459,7 +459,7 @@ def main() -> int:
 
     # validate-plan-freeze
     p_vfreeze = subparsers.add_parser(
-        "validate-plan-freeze", help="Validate MASTER/AUDIT/plan.freeze before start"
+        "validate-plan-freeze", help="Validate EXECUTION_INDEX/frozen/plan.freeze before start"
     )
     p_vfreeze.add_argument("dir", help="Task directory")
     p_vfreeze.add_argument(

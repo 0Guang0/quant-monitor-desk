@@ -272,32 +272,69 @@ def get_agent_context(repo_root: str, task_dir: str, agent_type: str) -> str:
     return "\n\n".join(context_parts)
 
 
+def _task_dir_path(repo_root: str, task_dir: str) -> Path:
+    p = Path(task_dir)
+    if p.is_absolute():
+        return p
+    return Path(repo_root) / task_dir
+
+
+def _implement_plan_mode(repo_root: str, task_dir: str) -> str:
+    """v4 | v3-archive | v3-active | none"""
+    scripts = Path(repo_root) / ".trellis" / "scripts"
+    if str(scripts) not in sys.path:
+        sys.path.insert(0, str(scripts))
+    from common.plan_protocol import is_plan_protocol_v4
+    from common.task_archive import is_archived_task, is_active_legacy_v3
+
+    td = _task_dir_path(repo_root, task_dir)
+    if is_plan_protocol_v4(td) and (td / "EXECUTION_INDEX.md").is_file():
+        return "v4"
+    if (td / "MASTER.plan.md").is_file() and (is_archived_task(td) or is_active_legacy_v3(td)):
+        return "v3"
+    return "none"
+
+
 def get_implement_context(repo_root: str, task_dir: str) -> str:
     """
     Complete context for Implement Agent
 
     Read order:
-    1. All files in implement.jsonl (spec/research manifests)
-    2. MASTER.plan.md (complex tasks — always when present)
-    3. prd.md (requirements)
-    4. design.md if present (technical design)
-    5. implement.md if present (execution plan index)
+    1. All files in implement.jsonl
+    2. v4: ENTRY + EXECUTION_INDEX + frozen card | v3 archive/legacy: MASTER.plan.md
+    3. prd.md, design.md, implement.md
     """
     context_parts = []
-
-    # 1. Read implement.jsonl
     base_context = get_agent_context(repo_root, task_dir, "implement")
     if base_context:
         context_parts.append(base_context)
 
-    master_content = read_file_content(repo_root, f"{task_dir}/MASTER.plan.md")
-    if master_content:
-        context_parts.append(
-            f"=== {task_dir}/MASTER.plan.md (Execute contract — §0.1 + §8 step protocol + §12) ===\n"
-            f"{master_content}"
-        )
+    td = _task_dir_path(repo_root, task_dir)
+    mode = _implement_plan_mode(repo_root, task_dir)
+    if mode == "v4":
+        for rel, label in (
+            ("research/00-EXECUTION-ENTRY.md", "Execute bundle entry"),
+            ("EXECUTION_INDEX.md", "EXECUTION_INDEX"),
+        ):
+            content = read_file_content(repo_root, f"{task_dir}/{rel}")
+            if content:
+                context_parts.append(f"=== {task_dir}/{rel} ({label}) ===\n{content}")
+        frozen = sorted((td / "frozen").glob("*.md"))
+        if frozen:
+            rel = frozen[0].relative_to(Path(repo_root) / task_dir).as_posix()
+            content = read_file_content(repo_root, f"{task_dir}/{rel}")
+            if content:
+                context_parts.append(
+                    f"=== {task_dir}/{rel} (frozen task card — §9 steps) ===\n{content}"
+                )
+    elif mode == "v3":
+        master_content = read_file_content(repo_root, f"{task_dir}/MASTER.plan.md")
+        if master_content:
+            context_parts.append(
+                f"=== {task_dir}/MASTER.plan.md (legacy v3 — archive/in_progress only) ===\n"
+                f"{master_content}"
+            )
 
-    # 2. Requirements document
     prd_content = read_file_content(repo_root, f"{task_dir}/prd.md")
     if prd_content:
         context_parts.append(f"=== {task_dir}/prd.md (Requirements) ===\n{prd_content}")
@@ -356,18 +393,23 @@ def get_finish_context(repo_root: str, task_dir: str) -> str:
 
 
 
-def build_implement_prompt(original_prompt: str, context: str) -> str:
+def build_implement_prompt(original_prompt: str, context: str, *, plan_mode: str = "v4") -> str:
     """Build complete prompt for Implement"""
-    step_protocol = """
-## Execute Step Protocol (MASTER complex tasks)
+    if plan_mode == "v3":
+        step_protocol = """
+## Execute Step Protocol (legacy v3 MASTER — archive or in_progress only)
 
-1. Work **one MASTER §8.x step at a time** — RED command (must FAIL) → save RED evidence → GREEN (must PASS) → save GREEN evidence → mark [x].
-2. Read MASTER §12 Skill row for each step before coding.
-3. Follow User Rules listed in MASTER §12: karpathy-guidelines, testing-guidelines.
-4. Run GitNexus `impact()` before editing any function/class/method.
-5. Do **not** run trellis-check; Audit replaces check for complex tasks.
-6. Before reporting handoff: `python .trellis/scripts/task.py validate-execute-handoff <task-dir>`.
-7. Do **not** paste/implement entire §8 test files in one pass — vertical slices only.
+1. Work **one MASTER §8.x step at a time** — RED → GREEN evidence per step.
+2. Before handoff: `python .trellis/scripts/task.py validate-execute-handoff <task-dir>`.
+"""
+    else:
+        step_protocol = """
+## Execute Step Protocol (v4 / v4.1)
+
+1. Work **one frozen §9.x step at a time** — RED (must FAIL) → GREEN (must PASS) → evidence files.
+2. SSOT: frozen task card + `research/00-EXECUTION-ENTRY.md` (v4.1) or `EXECUTION_INDEX.md`.
+3. Run GitNexus `impact()` before editing symbols.
+4. Before handoff: `python .trellis/scripts/task.py validate-execute-handoff <task-dir>`.
 """
     return f"""<!-- trellis-hook-injected -->
 # Implement Agent Task
@@ -393,7 +435,7 @@ All the information you need has been prepared for you:
 ## Workflow
 
 1. **Understand specs** - All dev specs are injected above, understand them
-2. **Understand task artifacts** - MASTER §0.1 + **current §8 step only**; prd.md for AC
+2. **Understand task artifacts** — v4: frozen §9 + ENTRY/INDEX; legacy v3: MASTER §8 only
 3. **Implement feature** - RED → GREEN → evidence per step
 4. **Self-check** - Lint/tests per step; validate-execute-handoff before handoff
 
@@ -744,8 +786,9 @@ def main():
     # Get context and build prompt based on subagent type
     if subagent_type == AGENT_IMPLEMENT:
         assert task_dir is not None  # validated above
+        mode = _implement_plan_mode(repo_root, task_dir)
         context = get_implement_context(repo_root, task_dir)
-        new_prompt = build_implement_prompt(original_prompt, context)
+        new_prompt = build_implement_prompt(original_prompt, context, plan_mode=mode)
     elif subagent_type == AGENT_CHECK:
         assert task_dir is not None  # validated above
         if is_finish_phase:

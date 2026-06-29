@@ -25,6 +25,7 @@
   "notes": "Playbook B01-SP3; Execute blocked until specs/model_inputs/** merged from B01-WL.",
   "meta": {
     "task_track": "complex",
+    "plan_protocol_version": "3",
     "manifest_protocol_version": "3",
     "playbook_id": "B01-SP3",
     "manifest_id": "B01-C04",

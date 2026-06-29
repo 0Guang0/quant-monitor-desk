@@ -1,39 +1,48 @@
 # Plan Consolidation — {{任务标题}}
 
-> **Phase 5e complete** · Execute **不读**本表以外的 `research/*` Plan 草稿
+> **Phase 5e complete** · **v4.1 Execution Bundle**  
+> Execute 日常读 `research/00-EXECUTION-ENTRY.md` + 包内 skill 产出；**不**依赖本表以外的 Plan 草稿。
 
-## 5e 完备性（分流 + 自检）
+## 5e 完备性（v4.1）
 
-| 内容类型                  | 落点                                       | Execute 读法 |
-| ------------------------- | ------------------------------------------ | ------------ |
-| 可无损精简的可执行结论    | 活任务卡 → `frozen/*.md`；**INDEX §4**     | frozen       |
-| 不可精简 / 精简必丢信息   | **INDEX §3** `must-read`（仓库原文）       | 原文         |
-| Plan 过程记录、已无新结论 | `n/a`                                      | 不读         |
-| 仅 Audit 追溯             | `pointer`（**仅** `integration-audit.md`） | 不读         |
+| 内容类型                                            | 落点                                      | Execute 读法          |
+| --------------------------------------------------- | ----------------------------------------- | --------------------- |
+| Skill 产出（to-issues / 5a–5c' / trellis-research） | `research/*.md`                           | **freeze 后仍读原文** |
+| 总路由                                              | `research/00-EXECUTION-ENTRY.md` §5.1–5.3 | 入口                  |
+| 外部路径                                            | `research/EXTERNAL-INDEX.md`              | §A 必读 · §B/C 情境   |
+| ADR                                                 | `docs/decisions/` + ENTRY §4              | 外部必读              |
+| 活卡摘要                                            | `frozen/*.md`                             | 薄指针，不复制 slices |
+| 步骤/证据指针                                       | `EXECUTION_INDEX.md` §0/§3                | 薄索引                |
+| Plan 过程-only                                      | `research/plan-boot.md` 等                | Execute **不读**      |
 
-**禁止：** 含决策的草稿标 `pointer`；`implement.jsonl` 出现 `research/*`。
+**禁止：** 将 `to-issues-slices.md` 全文 merged 进 frozen；`implement.jsonl` 禁止仅指向未登记的 `research/*`。
 
-冻结前自问：Execute **只读** frozen + INDEX + implement.jsonl 能否跑 §9？不能 → 补 frozen 或 INDEX §3。
+冻结前自问：ENTRY §5.1 是否列出**全部**将纳入 §5.2 必读的 `research/*.md`？
 
 ```bash
 python .trellis/scripts/task.py validate-plan-phase <task-dir> 5e
 python .trellis/scripts/task.py validate-plan-freeze <task-dir>
 ```
 
-## 对照表
+## Skill 产出对照表（登记 ENTRY §5.1）
 
-| 来源                                        | 结论类型      | 落点                          | 状态    |
-| ------------------------------------------- | ------------- | ----------------------------- | ------- |
-| `research/plan-boot.md`                     | 边界/授权     | frozen §2 / §8                | merged  |
-| `research/brainstorm-session.md`            | 方案否决/采纳 | frozen §1                     | merged  |
-| `research/spec-driven-development-notes.md` | 契约→测试映射 | frozen §5 + INDEX §2          | merged  |
-| `research/project-overview.md`              | 基线/模块     | frozen §4                     | merged  |
-| `research/grill-me-session.md`              | 决策 Q&A      | frozen §1/§8/§9               | merged  |
-| `research/gitnexus-summary.md`              | impact/风险   | frozen §4                     | merged  |
-| `research/to-issues-slices.md`              | S0–Sn 依赖    | INDEX §0.1/§1；frozen §9 首段 | merged  |
-| `research/integration-ledger.md`            | 内联 vs §3    | INDEX §3/§4 规则              | n/a     |
-| `research/integration-audit.md`             | 对抗/GAP      | frozen §10；Audit 可读        | pointer |
+| Skill                       | 产出路径                             | 结构自检（SKILL.md）         | 状态 |
+| --------------------------- | ------------------------------------ | ---------------------------- | ---- |
+| to-issues                   | `research/to-issues-slices.md`       | issue-template + 依赖图      |      |
+| planning-and-task-breakdown | `research/`                          | Plan Document Template       |      |
+| spec-driven-development     | `research/`                          | Spec 六要素                  |      |
+| context-engineering         | `research/plan-context.md`           | PROJECT CONTEXT + 情境路由   |      |
+| doubt-driven-development    | `research/plan-doubt-review.md`      | Doubt cycle                  |      |
+| documentation-and-adrs      | `docs/decisions/ADR-*.md`            | ADR Template                 |      |
+| trellis-research            | `research/`                          | trellis-research File Format |      |
+| （可选）旁路基线            | `research/bypass-baseline-matrix.md` | —                            |      |
 
-**Execute GAP（若有）：** {{仅 Execute 阶段交付项；勿把 Plan 可内联决策留在此处}}
+## 打包产出
+
+| 文件                             | 状态 |
+| -------------------------------- | ---- |
+| `research/00-EXECUTION-ENTRY.md` |      |
+| `research/EXTERNAL-INDEX.md`     |      |
+| `EXECUTION_PLAN.md`              |      |
 
 **Phase 5e complete**

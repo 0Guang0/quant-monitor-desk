@@ -1,5 +1,6 @@
 {"file": ".trellis/tasks/_example-plan-v4/frozen/GLOBAL_TASK_TEMPLATE.md", "reason": "extract: Execute SSOT frozen task card | for: Boot slot 1"}
-{"file": ".trellis/tasks/_example-plan-v4/EXECUTION_INDEX.md", "reason": "extract: Execute/Audit manifest index | for: Boot slot 2"}
+{"file": ".trellis/tasks/_example-plan-v4/research/00-EXECUTION-ENTRY.md", "reason": "extract: Execute bundle entry | for: Boot slot 2"}
 {"file": ".trellis/tasks/_example-plan-v4/context_pack.json", "reason": "extract: authority graph routing | for: Boot slot 3"}
 {"file": ".cursor/skills/trellis-execute/SKILL.md", "reason": "extract: Phase 0 boot | for: §9.0 Boot"}
 {"file": "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md", "reason": "extract: test semantics | for: §9.0 Boot"}
+{"file": "tests/test_execution_index_protocol.py", "reason": "extract: AC test | for: EXECUTION_INDEX §2"}

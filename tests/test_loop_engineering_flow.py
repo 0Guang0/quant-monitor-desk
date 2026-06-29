@@ -31,9 +31,11 @@ from loop_engineering_common import (  # noqa: E402
     deprecated_loop_meta_errors,
     discover_test_modules,
     discover_unmapped_backend_packages,
+    infer_task_touched_paths,
     load_authority_graph,
     loop_required,
     modules_for_paths,
+    normalize_ac_id,
     path_exists,
     task_track,
     write_loop_evidence_stubs,
@@ -73,8 +75,25 @@ _LOOP_GENERATED_PATHS = (
 )
 
 
-def _restore_loop_generated_files() -> None:
-    """ponytail: pre-commit pytest must not leave hook-owned files dirty."""
+def _snapshot_loop_generated_files() -> dict[str, str]:
+    snap: dict[str, str] = {}
+    for rel in _LOOP_GENERATED_PATHS:
+        path = PROJECT_ROOT / rel
+        snap[rel] = path.read_text(encoding="utf-8") if path.is_file() else ""
+    return snap
+
+
+def _restore_loop_generated_files(snapshot: dict[str, str] | None = None) -> None:
+    """Restore loop-generated artifacts; snapshot avoids reverting to stale git HEAD."""
+    if snapshot is not None:
+        for rel, content in snapshot.items():
+            path = PROJECT_ROOT / rel
+            if content:
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(content, encoding="utf-8")
+            elif path.is_file():
+                path.unlink()
+        return
     subprocess.run(
         ["git", "checkout", "--", *_LOOP_GENERATED_PATHS],
         cwd=PROJECT_ROOT,
@@ -189,12 +208,12 @@ def test_contextRouter_cli_taskFlag_writesContextPack() -> None:
 
 def test_writeLoopEvidenceStubs_createsManifestAndIndex(tmp_path: Path) -> None:
     """覆盖范围：loop 证据桩文件生成
-    测试对象：write_loop_evidence_stubs（含 MASTER §2 AC 的临时任务）
+    测试对象：write_loop_evidence_stubs（含 EXECUTION_INDEX §2 AC 的临时任务）
     目的/目标：context_router 须为 loop 任务写出 loop_manifest 与 evidence_index 初稿
     验证点：两文件均存在；manifest.acs 含 019-01/019-02 类 AC id
     失败含义：无证据桩会导致 P3 evidence 门禁无法 bootstrap
     """
-    (tmp_path / "MASTER.plan.md").write_text(
+    (tmp_path / "EXECUTION_INDEX.md").write_text(
         "## 2. AC\n### AC-019-01\n| AC-019-02 | desc |\n",
         encoding="utf-8",
     )
@@ -207,14 +226,17 @@ def test_writeLoopEvidenceStubs_createsManifestAndIndex(tmp_path: Path) -> None:
     assert "019-01" in ac_ids or "AC-019-01" in ac_ids or "019-02" in ac_ids
 
 
-def test_taskTrack_complexWhenMasterWithoutMeta(tmp_path: Path) -> None:
+def test_taskTrack_complexWhenV4IndexWithoutMeta(tmp_path: Path) -> None:
     """覆盖范围：无 task.json 时 task_track 默认推断
-    测试对象：task_track、loop_required（仅 MASTER.plan.md）
-    目的/目标：有 MASTER 无 meta 时默认 complex 且须走 loop
+    测试对象：task_track、loop_required（EXECUTION_INDEX + frozen）
+    目的/目标：有 v4 三件套无 meta 时默认 complex 且须走 loop
     验证点：task_track=='complex'；loop_required 为 True
     失败含义：默认轨道错误会导致 simple 任务误套 loop 或反之
     """
-    (tmp_path / "MASTER.plan.md").write_text("# master\n", encoding="utf-8")
+    (tmp_path / "EXECUTION_INDEX.md").write_text("## 1.\n| step |\n", encoding="utf-8")
+    frozen = tmp_path / "frozen"
+    frozen.mkdir()
+    (frozen / "card.md").write_text("## 9.\n", encoding="utf-8")
     assert task_track(tmp_path) == "complex"
     assert loop_required(tmp_path) is True
 
@@ -226,7 +248,6 @@ def test_taskTrack_debtLiteSkipsLoop(tmp_path: Path) -> None:
     验证点：task_track=='debt-lite'；loop_required 为 False
     失败含义：debt-lite 仍要求 loop 会增加 Repair 切片摩擦
     """
-    (tmp_path / "MASTER.plan.md").write_text("# master\n", encoding="utf-8")
     (tmp_path / "task.json").write_text(
         '{"meta":{"task_track":"debt-lite"}}',
         encoding="utf-8",
@@ -250,13 +271,13 @@ def test_deprecatedLoopMeta_errorsOnOldFlags(tmp_path: Path) -> None:
 
 
 def test_authorityGraphCoverageGaps_detectsUnknownBackendPath(tmp_path: Path) -> None:
-    """覆盖范围：MASTER 引用未收录 backend 路径的缺口检测
+    """覆盖范围：计划工件引用未收录 backend 路径的缺口检测
     测试对象：authority_graph_coverage_gaps
     目的/目标：R3 freeze warning 须能发现新模块未扩 authority_graph
     验证点：gaps 含 backend/app/brand_new_module/foo.py
     失败含义：缺口未检出会导致 agent 上下文缺少新包映射
     """
-    (tmp_path / "MASTER.plan.md").write_text(
+    (tmp_path / "EXECUTION_INDEX.md").write_text(
         "touch backend/app/brand_new_module/foo.py\n", encoding="utf-8"
     )
     gaps = authority_graph_coverage_gaps(tmp_path)
@@ -282,13 +303,14 @@ def test_loopMaintain_fix_writesCatalogAndMaps() -> None:
     """
     from loop_engineering_common import TEST_CATALOG_PATH
 
+    snap = _snapshot_loop_generated_files()
     result = _run_script("loop_maintain.py", "--fix")
     try:
         assert result.returncode == 0, result.stderr + result.stdout
         assert TEST_CATALOG_PATH.is_file()
         assert (PROJECT_ROOT / "docs/generated/docs_specs_index.generated.md").is_file()
     finally:
-        _restore_loop_generated_files()
+        _restore_loop_generated_files(snap)
 
 
 def test_loopMaintain_check_passesWhenRepoFresh() -> None:
@@ -310,6 +332,7 @@ def test_generateProjectMap_writesDocsSpecsIndex() -> None:
     失败含义：索引未生成会导致 docs 门禁与 agent 路由缺条目
     """
     index_path = PROJECT_ROOT / "docs/generated/docs_specs_index.generated.md"
+    snap = _snapshot_loop_generated_files()
     gen = _run_script("generate_project_map.py")
     try:
         assert gen.returncode == 0, gen.stderr
@@ -317,7 +340,7 @@ def test_generateProjectMap_writesDocsSpecsIndex() -> None:
         text = index_path.read_text(encoding="utf-8")
         assert "docs/ops/user_intervention_policy.md" in text
     finally:
-        _restore_loop_generated_files()
+        _restore_loop_generated_files(snap)
 
 
 def test_testCatalog_coversEveryDiscoveredTestModule() -> None:
@@ -414,6 +437,7 @@ def test_generateProjectMap_writesAndCheckPasses() -> None:
     md_path = PROJECT_ROOT / "docs/generated/project_map.generated.md"
     json_path = PROJECT_ROOT / "docs/generated/project_map.generated.json"
     index_path = PROJECT_ROOT / "docs/generated/docs_specs_index.generated.md"
+    snap = _snapshot_loop_generated_files()
     gen = _run_script("generate_project_map.py")
     try:
         assert gen.returncode == 0, gen.stderr
@@ -425,7 +449,7 @@ def test_generateProjectMap_writesAndCheckPasses() -> None:
         check = _run_script("generate_project_map.py", "--check")
         assert check.returncode == 0, check.stderr
     finally:
-        _restore_loop_generated_files()
+        _restore_loop_generated_files(snap)
 
 
 def test_collectModuleAuthorities_layer2_includesForbiddenClaims() -> None:
@@ -439,3 +463,58 @@ def test_collectModuleAuthorities_layer2_includesForbiddenClaims() -> None:
     bundle = collect_module_authorities("layer2_sensors", graph)
     claims = " ".join(bundle["forbidden_claims"]).lower()
     assert "production-live" in claims
+
+
+def test_normalizeAcId_canonicalizesTableCaptures() -> None:
+    """覆盖范围：AC ID 规范化
+    测试对象：normalize_ac_id
+    目的/目标：EXECUTION_INDEX 表格捕获 BOOT/01 须统一为 AC-BOOT/AC-01
+    验证点：normalize 输出带 AC- 前缀
+    失败含义：loop_manifest 与 matrix AC 集合永久分叉
+    """
+    assert normalize_ac_id("BOOT") == "AC-BOOT"
+    assert normalize_ac_id("AC-01") == "AC-01"
+    assert normalize_ac_id("01") == "AC-01"
+
+
+def test_inferTaskTouchedPaths_readsExecutionIndex(tmp_path: Path) -> None:
+    """覆盖范围：v4 任务路径推断
+    测试对象：infer_task_touched_paths
+    目的/目标：EXECUTION_INDEX §3 路径应进入 touched_paths
+    验证点：含 GLOBAL_TESTING_POLICY 路径
+    失败含义：v4.1 context_pack 长期为空包
+    """
+    idx = tmp_path / "EXECUTION_INDEX.md"
+    idx.write_text(
+        "## 3.\n| `docs/implementation_tasks/GLOBAL_TESTING_POLICY.md` | must-read |\n",
+        encoding="utf-8",
+    )
+    paths = infer_task_touched_paths(tmp_path)
+    assert "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md" in paths
+
+
+def test_taskEvidence_rejectsEmptyManifestAcs(tmp_path: Path) -> None:
+    """覆盖范围：空 loop_manifest.acs 不得绕过 AC 校验
+    测试对象：check_task_evidence
+    目的/目标：有 plan AC 但 manifest acs=[] 须 fail-closed
+    验证点：errors 含 loop_manifest has no AC entries
+    失败含义：handoff 假绿
+    """
+    from check_task_evidence import check_task_evidence  # noqa: E402
+
+    tmp_path.mkdir(parents=True, exist_ok=True)
+    (tmp_path / "task.json").write_text(
+        '{"meta":{"task_track":"complex"},"status":"in_progress"}', encoding="utf-8"
+    )
+    (tmp_path / "EXECUTION_INDEX.md").write_text(
+        "## 2.\n| AC-BOOT | pytest |\n## 3.\n", encoding="utf-8"
+    )
+    (tmp_path / "frozen").mkdir()
+    (tmp_path / "frozen" / "card.md").write_text("## 9.\n", encoding="utf-8")
+    (tmp_path / "context_pack.json").write_text(
+        '{"modules":["datasources"],"source_authorities":[],"tests":[]}', encoding="utf-8"
+    )
+    (tmp_path / "loop_manifest.json").write_text('{"acs":[]}', encoding="utf-8")
+    (tmp_path / "evidence_index.json").write_text("{}", encoding="utf-8")
+    errors = check_task_evidence(tmp_path)
+    assert any("no AC entries" in e for e in errors)

@@ -38,8 +38,9 @@ def _docs_specs_files() -> list[str]:
 
 def _build_project_map() -> dict:
     graph = load_authority_graph()
-    catalog = load_test_catalog()
+    rating_ssot = graph.get("rating_ssot")
     modules: dict = {}
+    catalog = load_test_catalog()
     for name, cfg in (graph.get("modules") or {}).items():
         tests = []
         for rel in cfg.get("tests") or []:
@@ -52,14 +53,17 @@ def _build_project_map() -> dict:
                 }
             )
         modules[name] = {
+            "module_ids": cfg.get("module_ids") or [],
             "implementation": cfg.get("implementation") or [],
             "docs": cfg.get("docs") or [],
             "contracts": cfg.get("contracts") or [],
             "rules": cfg.get("rules") or [],
+            "implementation_tasks": cfg.get("implementation_tasks") or [],
+            "required_evidence": cfg.get("required_evidence") or [],
             "tests": tests,
             "forbidden_claims": cfg.get("forbidden_claims") or [],
         }
-    return {"version": "1", "modules": modules}
+    return {"version": "2", "rating_ssot": rating_ssot, "rating_index": graph.get("rating_index") or {}, "modules": modules}
 
 
 def _render_project_map_md(payload: dict) -> str:
@@ -69,11 +73,20 @@ def _render_project_map_md(payload: dict) -> str:
         "Do not edit by hand. Regenerate with `uv run python scripts/generate_project_map.py`.",
         "",
     ]
+    if payload.get("rating_ssot"):
+        lines.append(f"Rating SSOT: `{payload['rating_ssot']}`")
+        lines.append("")
     for name, cfg in payload.get("modules", {}).items():
         lines.append(f"## {name}")
+        if cfg.get("module_ids"):
+            lines.append(f"- module_ids: {', '.join(cfg['module_ids'])}")
         lines.append(f"- implementation: {', '.join(cfg.get('implementation') or [])}")
         lines.append(f"- docs: {len(cfg.get('docs') or [])}")
         lines.append(f"- contracts: {len(cfg.get('contracts') or [])}")
+        if cfg.get("implementation_tasks"):
+            lines.append(f"- implementation_tasks: {len(cfg['implementation_tasks'])}")
+        if cfg.get("required_evidence"):
+            lines.append(f"- required_evidence: {', '.join(cfg['required_evidence'])}")
         lines.append(f"- tests: {len(cfg.get('tests') or [])}")
         if cfg.get("forbidden_claims"):
             lines.append(f"- forbidden: {', '.join(cfg['forbidden_claims'])}")

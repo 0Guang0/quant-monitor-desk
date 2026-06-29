@@ -14,7 +14,10 @@ def run_maintain(*, fix: bool) -> tuple[list[str], list[str]]:
     errors: list[str] = []
     warnings: list[str] = []
 
+    from check_active_master_tasks import check_active_master_tasks
+    from check_contract_coverage import check_coverage
     from check_test_catalog import build_catalog, check_catalog, write_catalog
+    from check_verification_matrix import check_matrix
 
     if fix:
         write_catalog(build_catalog())
@@ -22,6 +25,12 @@ def run_maintain(*, fix: bool) -> tuple[list[str], list[str]]:
     else:
         for err in check_catalog():
             errors.append(f"test_catalog: {err}")
+        for err in check_matrix():
+            errors.append(f"verification_matrix: {err}")
+        for err in check_coverage():
+            errors.append(f"contract_coverage: {err}")
+        for err in check_active_master_tasks():
+            errors.append(f"active_master_tasks: {err}")
 
     from generate_project_map import _build_project_map, _docs_specs_files, _stale_errors, _write_all
 

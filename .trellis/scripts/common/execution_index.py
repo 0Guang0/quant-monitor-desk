@@ -9,10 +9,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from .plan_protocol import (
+    execution_entry_rel,
     execution_index_path,
     execution_index_rel,
     execute_ssot_rel,
     frozen_task_card_path,
+    is_execution_bundle_v41,
+    is_plan_protocol_v4,
     load_task_json,
     plan_protocol_version,
 )
@@ -107,8 +110,8 @@ def _jsonl_line(path: str, reason: str) -> str:
 def generate_manifests(task_dir: Path, repo_root: Path) -> list[str]:
     """Write implement.jsonl, audit.jsonl, check.jsonl from EXECUTION_INDEX §3. Returns errors."""
     errors: list[str] = []
-    if plan_protocol_version(task_dir) != "4":
-        return ["plan_protocol_version is not 4; use legacy manifests"]
+    if not is_plan_protocol_v4(task_dir):
+        return ["plan_protocol_version is not v4; use legacy manifests"]
 
     index_path = execution_index_path(task_dir)
     if not index_path.is_file():
@@ -125,9 +128,19 @@ def generate_manifests(task_dir: Path, repo_root: Path) -> list[str]:
     index_text = index_path.read_text(encoding="utf-8")
     rows = parse_manifest_rows(index_text)
 
+    if is_execution_bundle_v41(task_dir):
+        entry_rel = execution_entry_rel(task_dir, repo_root)
+        if not entry_rel:
+            return ["missing research/00-EXECUTION-ENTRY.md (v4.1 execute_entry)"]
+        slot2_rel = entry_rel
+        slot2_reason = "extract: Execute bundle entry | for: Boot slot 2"
+    else:
+        slot2_rel = index_rel
+        slot2_reason = "extract: Execute/Audit manifest index | for: Boot slot 2"
+
     implement: list[str] = [
         _jsonl_line(frozen_rel, "extract: Execute SSOT frozen task card | for: Boot slot 1"),
-        _jsonl_line(index_rel, "extract: Execute/Audit manifest index | for: Boot slot 2"),
+        _jsonl_line(slot2_rel, slot2_reason),
     ]
     pack_rel = execution_index_rel(task_dir, repo_root)
     pack = task_dir / "context_pack.json"
@@ -163,6 +176,8 @@ def generate_manifests(task_dir: Path, repo_root: Path) -> list[str]:
     seen_audit: set[str] = set()
     seen_check: set[str] = set()
 
+    _pytest_ac = re.compile(r"(?:pytest\s+)?tests/[a-zA-Z0-9_./-]+\.py")
+
     def add_unique(bucket: list[str], seen: set[str], path: str, reason: str) -> None:
         norm = path.replace("\\", "/")
         if norm in seen:
@@ -190,10 +205,52 @@ def generate_manifests(task_dir: Path, repo_root: Path) -> list[str]:
         elif _manifest_for_execute(manifest) and "specs/contracts" in path:
             add_unique(check, seen_check, path, reason)
 
+    for m in _pytest_ac.finditer(index_text):
+        test_path = m.group(0).replace("pytest ", "").strip()
+        if (repo_root / test_path).is_file():
+            add_unique(
+                implement,
+                seen_impl,
+                test_path,
+                "extract: AC test | for: EXECUTION_INDEX §2",
+            )
+
     (task_dir / "implement.jsonl").write_text("\n".join(implement) + "\n", encoding="utf-8")
     (task_dir / "audit.jsonl").write_text("\n".join(audit) + "\n", encoding="utf-8")
     (task_dir / "check.jsonl").write_text("\n".join(check) + "\n", encoding="utf-8")
     return errors
+
+
+def _extract_md_title(text: str, fallback: str) -> str:
+    for line in text.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("# "):
+            return stripped[2:].strip()
+    return fallback
+
+
+def _build_v41_thin_frozen_body(
+    *,
+    source_rel: str,
+    entry_rel: str,
+    stamp: str,
+    title: str,
+) -> str:
+    """v4.1: audit snapshot + pointers only; specs live in ENTRY + research/."""
+    return (
+        f"<!-- FROZEN: Plan protocol v4.1 · thin pointer · source: {source_rel} · "
+        f"frozen_at: {stamp} -->\n\n"
+        f"# FROZEN — {title}\n\n"
+        f"> **Execute SSOT：** `{entry_rel}`  \n"
+        f"> **活卡（冻结时点）：** `{source_rel}`  \n"
+        f"> **禁止：** 在此复制 `to-issues-slices.md` 或 `research/` 包正文\n\n"
+        "## 8. 边界 / 停止条件\n\n"
+        f"见 `{entry_rel}` §2 与活卡「不在范围」；偏离铁律即停。\n\n"
+        "## 9. 实现步骤\n\n"
+        "切片 AC 与步骤：`research/to-issues-slices.md`；RED/GREEN 与证据：`EXECUTION_INDEX.md` §1。\n\n"
+        "### 9.0 Boot\n\n"
+        f"先 Read `{entry_rel}` §5.2 + `EXTERNAL-INDEX.md` §A，再按 `to-issues-slices.md` 当前切片 § 执行。\n"
+    )
 
 
 def freeze_task_card(
@@ -202,9 +259,10 @@ def freeze_task_card(
     *,
     source_rel: str | None = None,
 ) -> list[str]:
-    """Copy repo task card into frozen/ with freeze header. Returns errors."""
+    """Copy repo task card into frozen/ (v4.0) or write thin pointer (v4.1)."""
     errors: list[str] = []
     meta = load_task_json(task_dir).get("meta") or {}
+    v41 = is_execution_bundle_v41(task_dir)
     src = (source_rel or meta.get("source_task_card") or "").strip()
     if not src:
         index_path = execution_index_path(task_dir)
@@ -226,20 +284,38 @@ def freeze_task_card(
     frozen_dir.mkdir(parents=True, exist_ok=True)
     dest_name = source.name
     dest = frozen_dir / dest_name
-    body = source.read_text(encoding="utf-8")
     stamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-    header = (
-        f"<!-- FROZEN: Plan protocol v4 · do not edit · source: {src} · frozen_at: {stamp} -->\n\n"
-    )
-    if "FROZEN:" not in body[:200]:
-        body = header + body
+    if v41:
+        entry_rel = str(meta.get("execute_entry", "")).strip() or "research/00-EXECUTION-ENTRY.md"
+        entry_path = task_dir / entry_rel
+        if not entry_path.is_file():
+            return [f"missing {entry_rel} (v4.1 requires ENTRY before freeze-task-card)"]
+        title = _extract_md_title(source.read_text(encoding="utf-8"), dest_name.removesuffix(".md"))
+        body = _build_v41_thin_frozen_body(
+            source_rel=src.replace("\\", "/"),
+            entry_rel=entry_rel,
+            stamp=stamp,
+            title=title,
+        )
+    else:
+        body = source.read_text(encoding="utf-8")
+        header = (
+            f"<!-- FROZEN: Plan protocol v4 · do not edit · source: {src} · "
+            f"frozen_at: {stamp} -->\n\n"
+        )
+        if "FROZEN:" not in body[:200]:
+            body = header + body
     dest.write_text(body, encoding="utf-8")
 
     data = load_task_json(task_dir)
     data.setdefault("meta", {})["frozen_task_card"] = f"frozen/{dest_name}"
     data["meta"]["frozen_at"] = stamp
     data["meta"]["source_task_card"] = src.replace("\\", "/")
-    data["meta"]["plan_protocol_version"] = "4"
+    if v41:
+        data["meta"]["plan_protocol_version"] = "4.1"
+        data["meta"].setdefault("execute_entry", "research/00-EXECUTION-ENTRY.md")
+    elif plan_protocol_version(task_dir) != "4.1":
+        data["meta"]["plan_protocol_version"] = "4"
     (task_dir / "task.json").write_text(
         json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
     )
@@ -267,11 +343,20 @@ def validate_execution_index_structure(task_dir: Path, errors: list[str]) -> Non
 
 
 def validate_frozen_task_card(task_dir: Path, errors: list[str]) -> None:
+    from .plan_protocol import is_execution_bundle_v41, load_task_json
+
     card = frozen_task_card_path(task_dir)
     if not card:
         errors.append("missing frozen/*.md (v4 frozen task card)")
         return
     text = card.read_text(encoding="utf-8")
+    if is_execution_bundle_v41(task_dir):
+        entry = str((load_task_json(task_dir).get("meta") or {}).get("execute_entry", "")).strip()
+        entry = entry or "research/00-EXECUTION-ENTRY.md"
+        if entry not in text and "00-EXECUTION-ENTRY" not in text:
+            errors.append(f"v4.1 frozen card must point to Execute entry ({entry})")
+        if "thin pointer" not in text.lower() and "薄指针" not in text:
+            errors.append("v4.1 frozen card must be thin pointer (re-run freeze-task-card)")
     if "## 9." not in text and "实现步骤" not in text:
         errors.append("frozen task card missing §9 实现步骤")
     if "停止条件" not in text and "## 8." not in text:

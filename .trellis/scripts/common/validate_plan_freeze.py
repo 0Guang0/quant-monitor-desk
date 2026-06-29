@@ -44,23 +44,7 @@ _TRIAD_EXECUTE_HINT = re.compile(
 )
 
 
-def _extract_section(text: str, header_prefix: str) -> str:
-    lines = text.splitlines()
-    start: int | None = None
-    end = len(lines)
-    prefix = f"## {header_prefix}"
-    for i, line in enumerate(lines):
-        stripped = line.strip()
-        if start is None and stripped.startswith(prefix):
-            start = i
-            continue
-        if start is not None and stripped.startswith("## ") and not stripped.startswith(prefix):
-            end = i
-            break
-    if start is None:
-        return ""
-    return "\n".join(lines[start:end])
-
+from .md_utils import extract_md_section as _extract_section
 
 def _load_plan_paths(repo_root: Path) -> dict:
     path = repo_root / ".trellis/spec/guides/plan-skill-paths.yaml"
@@ -73,7 +57,10 @@ def _load_plan_paths(repo_root: Path) -> dict:
 
     out: dict = {
         "phases": {},
-        "freeze_required_skills": raw.get("freeze_required_skills") or [],
+        "freeze_required_skills": raw.get("freeze_required_skills")
+        or raw.get("freeze_required_skills_v40_legacy")
+        or [],
+        "freeze_required_skills_v41": raw.get("freeze_required_skills_v41") or [],
         "freeze_phase3_one_of": raw.get("freeze_phase3_one_of") or [],
         "boot_marker": raw.get("boot_marker") or _BOOT_MARKER,
     }
@@ -122,23 +109,6 @@ def _first_jsonl_file(jsonl_path: Path) -> str | None:
     return paths[0] if paths else None
 
 
-def _master_analysis_waiver(task_dir: Path) -> bool:
-    master = task_dir / "MASTER.plan.md"
-    if not master.is_file():
-        return False
-    text = master.read_text(encoding="utf-8")
-    return bool(re.search(r"analysis_waiver\s*\|\s*`?true`?", text, re.I))
-
-
-def _find_repo_root(task_dir: Path) -> Path:
-    repo_root = task_dir
-    while repo_root.name and not (repo_root / ".trellis").is_dir():
-        if repo_root.parent == repo_root:
-            break
-        repo_root = repo_root.parent
-    return repo_root
-
-
 def _path_exists(task_dir: Path, repo_root: Path, rel: str) -> bool:
     norm = rel.replace("\\", "/")
     if norm.startswith((".trellis/", ".cursor/")):
@@ -153,168 +123,13 @@ def _path_exists(task_dir: Path, repo_root: Path, rel: str) -> bool:
     return (task_dir / norm).is_file() or (task_dir / norm).is_dir()
 
 
-def _is_original_task_card(path: str) -> bool:
-    norm = path.replace("\\", "/")
-    return norm.startswith("docs/implementation_tasks/") and bool(
-        re.search(r"/\d{3}[A-Z]?_", norm)
-    )
-
-
-def _strict_source_context_enabled(task_dir: Path) -> bool:
-    data_path = task_dir / "task.json"
-    if not data_path.is_file():
-        return False
-    try:
-        data = json.loads(data_path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError:
-        return False
-    meta = data.get("meta") or {}
-    return str(meta.get("context_bridge_version", "")) == "1"
-
-
-def _master_allows_original_task_cards(master_text: str) -> bool:
-    return "must read original" in master_text or "必须读原文" in master_text
-
-
-def _extract_subsection(text: str, heading_marker: str) -> str:
-    """Block under ### 1.5 … until next ### or ##."""
-    lines = text.splitlines()
-    start: int | None = None
-    for i, line in enumerate(lines):
-        if heading_marker in line and line.strip().startswith("#"):
-            start = i
-            break
-    if start is None:
-        return ""
-    end = len(lines)
-    for j in range(start + 1, len(lines)):
-        s = lines[j].strip()
-        if s.startswith("## ") or (s.startswith("### ") and heading_marker not in s):
-            end = j
-            break
-    return "\n".join(lines[start:end])
-
-
-def _validate_stop_conditions(master_text: str, errors: list[str]) -> None:
-    """§1.5: examples 1–4 are not enough; need row #≥5 or explicit 自定义."""
-    sec = _extract_section(master_text, "1.5") or _extract_subsection(master_text, "1.5")
-    if not sec:
-        return
-    has_custom = bool(re.search(r"\|\s*5\+?\s*\|", sec)) or "自定义" in sec
-    numbered = re.findall(r"^\|\s*(\d+)\s*\|", sec, re.MULTILINE)
-    has_fifth = any(int(n) >= 5 for n in numbered if n.isdigit())
-    if not (has_custom or has_fifth):
-        errors.append(
-            "MASTER §1.5: add ≥1 custom stop condition (row #≥5 or 自定义 column); "
-            "examples 1–4 alone are insufficient"
-        )
-
-
 def _manifest_protocol_enabled_v4(task_dir: Path) -> bool:
-    from .plan_protocol import load_task_json, plan_protocol_version
+    from .plan_protocol import is_plan_protocol_v4, load_task_json
 
-    if plan_protocol_version(task_dir) == "4":
-        ver = str((load_task_json(task_dir).get("meta") or {}).get("manifest_protocol_version", ""))
-        return ver in ("1", "2", "3", "4", "")
-    return False
-
-
-def _validate_original_plan_artifacts(task_dir: Path, errors: list[str]) -> None:
-    from .plan_protocol import plan_protocol_version
-
-    if plan_protocol_version(task_dir) == "4":
-        if not (task_dir / "EXECUTION_INDEX.md").is_file():
-            errors.append("Missing EXECUTION_INDEX.md (v4 index)")
-        boot = task_dir / "research" / "plan-boot.md"
-        if boot.is_file():
-            boot_text = boot.read_text(encoding="utf-8")
-            if "原计划已读" not in boot_text and "原计划" not in boot_text:
-                errors.append("plan-boot.md must document original plan read (原计划已读)")
-        return
-
-    source = task_dir / "research" / "source-index.md"
-    trace = task_dir / "research" / "original-plan-trace.md"
-    if not source.is_file() and not trace.is_file():
-        errors.append(
-            "Missing research/source-index.md (or legacy original-plan-trace.md)"
-        )
-
-    boot = task_dir / "research" / "plan-boot.md"
-    if boot.is_file():
-        boot_text = boot.read_text(encoding="utf-8")
-        if "原计划已读" not in boot_text and "原计划" not in boot_text:
-            errors.append("plan-boot.md must document original plan read (原计划已读)")
-
-    master = task_dir / "MASTER.plan.md"
-    if master.is_file():
-        text = master.read_text(encoding="utf-8")
-        if "原计划" not in text and "source-index" not in text.lower():
-            errors.append(
-                "MASTER.plan.md missing original plan linkage (原计划 / source-index)"
-            )
-        if "### 1.6" not in text and "§1.6" not in text and "### 1.3" not in text:
-            errors.append("MASTER.plan.md missing §1.6 original plan merge table")
-        if "### 1.5" not in text and "停止条件" not in text:
-            errors.append("MASTER.plan.md missing §1.5 stop conditions (停止条件)")
-        else:
-            _validate_stop_conditions(text, errors)
-        if "### 5.1" in text or "测试契约" in text:
-            for label in ("测试文件路径", "测试目的", "成功怎么测", "失败怎么测"):
-                if label not in text:
-                    errors.append(f"MASTER §5 test contract missing: {label}")
-        if _strict_source_context_enabled(task_dir) and "Source Context Index" not in text:
-            if "source-index" not in text.lower():
-                errors.append("MASTER.plan.md missing source-index linkage")
-
-
-def _validate_implement_jsonl_manifest(task_dir: Path, repo_root: Path, errors: list[str]) -> None:
-    impl_jsonl = task_dir / "implement.jsonl"
-    if not impl_jsonl.is_file():
-        return
-
-    paths = _paths_from_jsonl(impl_jsonl)
-    if not paths:
-        errors.append("implement.jsonl has no readable file/path entries")
-        return
-
-    first = paths[0].replace("\\", "/")
-    if "MASTER.plan.md" not in first:
-        errors.append(f"implement.jsonl first entry must be MASTER.plan.md (got {first!r})")
-
-    master = task_dir / "MASTER.plan.md"
-    master_text = master.read_text(encoding="utf-8") if master.is_file() else ""
-    allow_original = _master_allows_original_task_cards(master_text)
-
-    for rel in paths:
-        norm = rel.replace("\\", "/")
-        if _strict_source_context_enabled(task_dir) and _is_original_task_card(norm) and not allow_original:
-            errors.append(
-                f"implement.jsonl references original task card without explicit MASTER must-read marker: {norm}"
-            )
-        if not _path_exists(task_dir, repo_root, norm):
-            errors.append(f"implement.jsonl references missing file: {norm}")
-
-
-def _validate_audit_manifest(task_dir: Path, repo_root: Path, errors: list[str]) -> None:
-    audit_plan = task_dir / "AUDIT.plan.md"
-    audit_text = audit_plan.read_text(encoding="utf-8") if audit_plan.is_file() else ""
-    if _strict_source_context_enabled(task_dir) and audit_plan.is_file() and "Audit Source Trace" not in audit_text:
-        errors.append("AUDIT.plan.md missing Audit Source Trace")
-
-    for manifest_name in ("audit.jsonl", "check.jsonl"):
-        manifest = task_dir / manifest_name
-        if not manifest.is_file():
-            continue
-        paths = _paths_from_jsonl(manifest)
-        allow_original = "must read original" in audit_text or "必须读原文" in audit_text
-        for rel in paths:
-            norm = rel.replace("\\", "/")
-            if _strict_source_context_enabled(task_dir) and _is_original_task_card(norm) and not allow_original:
-                errors.append(
-                    f"{manifest_name} references original task card without explicit AUDIT.plan must-read marker: {norm}"
-                )
-            if not _path_exists(task_dir, repo_root, norm):
-                errors.append(f"{manifest_name} references missing file: {norm}")
+    if not is_plan_protocol_v4(task_dir):
+        return False
+    ver = str((load_task_json(task_dir).get("meta") or {}).get("manifest_protocol_version", ""))
+    return ver != "0"
 
 
 def _validate_plan_freeze_template(task_dir: Path, errors: list[str]) -> None:
@@ -354,16 +169,29 @@ def _ordered_plan_phases(phases: dict | set[str]) -> list[str]:
 
 def plan_phase_help(repo_root: Path | None = None) -> str:
     """CLI help for validate-plan-phase; phase ids from plan-skill-paths.yaml."""
+    from .paths import get_repo_root
+
     if repo_root is None:
-        repo_root = _find_repo_root(Path.cwd())
+        repo_root = get_repo_root()
     phases = _load_plan_paths(repo_root).get("phases", {})
     return "Plan phase id: " + ", ".join(_ordered_plan_phases(phases))
 
 
 def validate_plan_phase(task_dir: Path, phase: str, *, repo_root: Path | None = None) -> list[str]:
     """Validate one Plan phase checkpoint."""
+    from .paths import get_repo_root
+    from .plan_protocol import is_plan_protocol_v4
+    from .task_archive import is_active_legacy_v3, is_archived_task, legacy_freeze_error
+
     if repo_root is None:
-        repo_root = _find_repo_root(task_dir)
+        repo_root = get_repo_root()
+
+    if is_archived_task(task_dir):
+        return []
+    if is_active_legacy_v3(task_dir):
+        return [legacy_freeze_error()]
+    if phase == "5e" and not is_plan_protocol_v4(task_dir):
+        return ["plan phase 5e requires protocol v4/v4.1 (EXECUTION_INDEX.md + frozen/)"]
 
     errors: list[str] = []
     cfg = _load_plan_paths(repo_root)
@@ -412,9 +240,14 @@ def validate_plan_phase(task_dir: Path, phase: str, *, repo_root: Path | None = 
         validate_manifest_phase_5c(task_dir, repo_root, errors)
 
     if phase == "5e":
+        from .plan_protocol import is_execution_bundle_v41
+
+        if is_execution_bundle_v41(task_dir):
+            _validate_execution_bundle_v41(task_dir, errors, repo_root=repo_root)
         _validate_plan_consolidation_v4(task_dir, errors)
         _validate_prd_thin_index_v4(task_dir, errors)
-        _validate_execution_index_section4_v4(task_dir, errors)
+        if not is_execution_bundle_v41(task_dir):
+            _validate_execution_index_section4_v4(task_dir, errors)
 
     return errors
 
@@ -444,7 +277,158 @@ def _consolidation_table_rows(sec4: str) -> list[str]:
     return rows
 
 
+_V41_ENTRY_REL = "research/00-EXECUTION-ENTRY.md"
+_V41_EXTERNAL_REL = "research/EXTERNAL-INDEX.md"
+_V41_PLAN_ROOT = "EXECUTION_PLAN.md"
+_V41_GITNEXUS_ARTIFACTS = ("project-overview.md", "gitnexus-summary.md")
+_V41_CLARIFICATION_ARTIFACTS = (
+    "grill-me-session.md",
+    "interview-me-session.md",
+    "grill-with-docs-session.md",
+    "idea-refine-session.md",
+    "brainstorm-session.md",
+)
+_V41_BUNDLE_CORE = frozenset(
+    {
+        "plan-boot.md",
+        "00-EXECUTION-ENTRY.md",
+        "EXTERNAL-INDEX.md",
+        "plan-consolidation.md",
+        "project-overview.md",
+        "gitnexus-summary.md",
+    }
+)
+_V41_PLAN_ONLY = frozenset({"plan-boot.md", "integration-audit.md", "plan-manifest-audit.md"})
+_V41_PHASE5E_SKILL_GATE = frozenset(
+    {"gitnexus-plan-1a", "gitnexus-plan-1b", "trellis-research"}
+)
+_OPEN_QUESTION_UNCHECKED = re.compile(r"^\s*-\s*\[\s\]", re.MULTILINE)
+
+
+def _freeze_required_skills(cfg: dict, *, v41: bool) -> list[str]:
+    key = "freeze_required_skills_v41" if v41 else "freeze_required_skills"
+    return list(dict.fromkeys(cfg.get(key) or []))
+
+
+def _validate_execution_bundle_v41(
+    task_dir: Path, errors: list[str], *, repo_root: Path | None = None
+) -> None:
+    """v4.1 mechanical gate: ENTRY / EXTERNAL / ADR / GitNexus / trellis-research."""
+    from .plan_protocol import execution_entry_rel, load_task_json
+
+    if repo_root is None:
+        from .paths import get_repo_root
+
+        repo_root = get_repo_root()
+
+    meta = load_task_json(task_dir).get("meta") or {}
+    entry_meta = str(meta.get("execute_entry", "")).strip() or _V41_ENTRY_REL
+    if entry_meta != _V41_ENTRY_REL:
+        errors.append(
+            f"task.json meta.execute_entry must be {_V41_ENTRY_REL!r} "
+            f"(got {entry_meta!r})"
+        )
+
+    entry_path = task_dir / entry_meta.replace("\\", "/")
+    if not entry_path.is_file():
+        errors.append(f"Missing {_V41_ENTRY_REL} (v4.1 Execute entry)")
+        return
+    entry_text = entry_path.read_text(encoding="utf-8")
+
+    external_path = task_dir / _V41_EXTERNAL_REL
+    if not external_path.is_file():
+        errors.append(f"Missing {_V41_EXTERNAL_REL} (v4.1 external index)")
+    else:
+        ext_text = external_path.read_text(encoding="utf-8")
+        for sec in ("§A", "§B", "§C"):
+            if sec not in ext_text:
+                errors.append(f"EXTERNAL-INDEX.md missing section marker {sec}")
+
+    if not (task_dir / _V41_PLAN_ROOT).is_file():
+        errors.append(f"Missing {_V41_PLAN_ROOT} (v4.1 thin plan root)")
+
+    sec4 = _extract_section(entry_text, "4.")
+    if not sec4:
+        errors.append("00-EXECUTION-ENTRY.md missing §4 ADR index")
+    elif "ADR" not in sec4 and "docs/decisions" not in sec4:
+        errors.append("00-EXECUTION-ENTRY.md §4 must reference ADR(s) or docs/decisions")
+
+    if not re.search(r"5\.2", entry_text):
+        errors.append("00-EXECUTION-ENTRY.md missing §5.2 开工必读")
+    if not re.search(r"5\.3", entry_text):
+        errors.append("00-EXECUTION-ENTRY.md missing §5.3 情境路由")
+    if not re.search(r"5\.1", entry_text):
+        errors.append("00-EXECUTION-ENTRY.md missing §5.1 文件地图")
+
+    research = task_dir / "research"
+    for name in sorted(p.name for p in research.glob("*.md")):
+        if name in _V41_BUNDLE_CORE or name in _V41_PLAN_ONLY:
+            continue
+        if name not in entry_text:
+            errors.append(f"00-EXECUTION-ENTRY.md §5.1 must list research/{name}")
+
+    for artifact in _V41_GITNEXUS_ARTIFACTS:
+        if not (research / artifact).is_file():
+            errors.append(f"Missing research/{artifact} (GitNexus required)")
+
+    has_trellis_research = bool(list(research.glob("reference-adoption-*.md")))
+    if not has_trellis_research:
+        for path in research.glob("*.md"):
+            if path.name in _V41_BUNDLE_CORE or path.name.startswith("plan-"):
+                continue
+            if path.name.endswith("-session.md"):
+                continue
+            has_trellis_research = True
+            break
+    if not has_trellis_research:
+        errors.append(
+            "Missing trellis-research output "
+            "(research/reference-adoption-*.md or research/<topic>.md)"
+        )
+
+    reads = _load_skill_reads(task_dir)
+    read_skills = _skills_from_reads(reads)
+    for skill in sorted(_V41_PHASE5E_SKILL_GATE):
+        if skill not in read_skills:
+            errors.append(f"plan-skill-reads.jsonl missing required skill: {skill}")
+
+    _validate_ambiguity_resolution_v41(task_dir, errors)
+
+    entry_rel = execution_entry_rel(task_dir, repo_root)
+    impl = task_dir / "implement.jsonl"
+    if impl.is_file() and entry_rel:
+        paths = _paths_from_jsonl(impl)
+        if len(paths) >= 2 and entry_rel not in paths[1].replace("\\", "/"):
+            errors.append(
+                f"implement.jsonl slot 2 must be {entry_rel!r} (v4.1 Execute entry)"
+            )
+
+
+def _validate_ambiguity_resolution_v41(task_dir: Path, errors: list[str]) -> None:
+    """Open Questions with unchecked items require a clarification artifact or ADR."""
+    research = task_dir / "research"
+    open_text = ""
+    for pattern in ("plan-spec*.md", "plan-task*.md", "plan-implementation*.md"):
+        for path in research.glob(pattern):
+            open_text += path.read_text(encoding="utf-8") + "\n"
+    if "Open Questions" not in open_text and "开放问题" not in open_text:
+        return
+    if not _OPEN_QUESTION_UNCHECKED.search(open_text):
+        return
+    has_clarification = any((research / name).is_file() for name in _V41_CLARIFICATION_ARTIFACTS)
+    entry = task_dir / _V41_ENTRY_REL
+    has_adr = entry.is_file() and "docs/decisions" in entry.read_text(encoding="utf-8")
+    if not has_clarification and not has_adr:
+        errors.append(
+            "Unresolved Open Questions: use grill-me / interview-me / idea-refine / "
+            "trellis-brainstorm and write research/*-session.md or ADR"
+        )
+
+
 def _validate_plan_consolidation_v4(task_dir: Path, errors: list[str]) -> None:
+    from .plan_protocol import is_execution_bundle_v41
+
+    v41 = is_execution_bundle_v41(task_dir)
     consolidation = task_dir / "research" / "plan-consolidation.md"
     if not consolidation.is_file():
         errors.append("Missing research/plan-consolidation.md (Plan Phase 5e)")
@@ -460,41 +444,56 @@ def _validate_plan_consolidation_v4(task_dir: Path, errors: list[str]) -> None:
     sec6 = _extract_section(index_text, "6.")
     present_drafts: list[str] = []
 
-    for name in _CONSOLIDATION_DRAFTS:
-        if not (research / name).is_file():
-            continue
-        present_drafts.append(name)
-        if name not in text:
-            errors.append(
-                f"plan-consolidation.md must list research/{name} with merged|pointer|n/a"
-            )
-            continue
-        status = _consolidation_status_for_draft(text, name)
-        if status is None:
-            errors.append(
-                f"plan-consolidation.md: research/{name} missing status merged|pointer|n/a"
-            )
-            continue
-        if status == "pointer" and name not in _POINTER_ALLOWED_DRAFTS:
-            errors.append(
-                f"Triad gate: research/{name} marked pointer; "
-                "merge into frozen (INDEX §4) or INDEX §3 must-read"
-            )
-        elif status == "merged" and sec4:
-            stem = name.removesuffix(".md")
-            if name not in sec4 and stem not in sec4:
+    if v41:
+        skip_self = _V41_BUNDLE_CORE | {"plan-consolidation.md"} | _V41_PLAN_ONLY
+        for path in sorted(research.glob("*.md")):
+            name = path.name
+            if name in skip_self:
+                continue
+            if name not in text and name.removesuffix(".md") not in text:
                 errors.append(
-                    f"Triad gate: research/{name} merged but missing from INDEX §4"
+                    f"plan-consolidation.md must register research/{name} (v4.1 bundle)"
                 )
+    else:
+        for name in _CONSOLIDATION_DRAFTS:
+            if not (research / name).is_file():
+                continue
+            present_drafts.append(name)
+            if name not in text:
+                errors.append(
+                    f"plan-consolidation.md must list research/{name} with merged|pointer|n/a"
+                )
+                continue
+            status = _consolidation_status_for_draft(text, name)
+            if status is None:
+                errors.append(
+                    f"plan-consolidation.md: research/{name} missing status merged|pointer|n/a"
+                )
+                continue
+            if status == "pointer" and name not in _POINTER_ALLOWED_DRAFTS:
+                errors.append(
+                    f"Triad gate: research/{name} marked pointer; "
+                    "merge into frozen (INDEX §4) or INDEX §3 must-read"
+                )
+            elif status == "merged" and sec4:
+                stem = name.removesuffix(".md")
+                if name not in sec4 and stem not in sec4:
+                    errors.append(
+                        f"Triad gate: research/{name} merged but missing from INDEX §4"
+                    )
 
     for rel in _paths_from_jsonl(task_dir / "implement.jsonl"):
         norm = rel.replace("\\", "/")
-        if norm.startswith("research/") or "/research/" in norm:
+        if not v41 and (
+            norm.startswith("research/") or "/research/" in norm
+        ):
             errors.append(
                 f"Triad gate: implement.jsonl must not list Plan draft {rel!r}"
             )
 
-    if present_drafts and index_text and not _TRIAD_EXECUTE_HINT.search(f"{sec4}\n{sec6}"):
+    if not v41 and present_drafts and index_text and not _TRIAD_EXECUTE_HINT.search(
+        f"{sec4}\n{sec6}"
+    ):
         errors.append(
             "Triad gate: INDEX §4 or §6 must state Execute does not read research/*"
         )
@@ -553,11 +552,18 @@ def validate_plan_freeze_v4(task_dir: Path, repo_root: Path) -> list[str]:
         validate_frozen_task_card,
         validate_manifests_match_index,
     )
-    from .plan_protocol import execute_ssot_rel, plan_protocol_version
+    from .plan_protocol import (
+        execute_ssot_rel,
+        is_execution_bundle_v41,
+        is_plan_protocol_v4,
+        plan_protocol_version,
+    )
 
     errors: list[str] = []
-    if plan_protocol_version(task_dir) != "4":
+    if not is_plan_protocol_v4(task_dir):
         return ["internal: validate_plan_freeze_v4 called for non-v4 task"]
+
+    v41 = is_execution_bundle_v41(task_dir)
 
     cfg = _load_plan_paths(repo_root)
     boot_marker = cfg.get("boot_marker", _BOOT_MARKER)
@@ -574,19 +580,28 @@ def validate_plan_freeze_v4(task_dir: Path, repo_root: Path) -> list[str]:
     else:
         reads = _load_skill_reads(task_dir)
         read_skills = _skills_from_reads(reads)
-        for skill in cfg.get("freeze_required_skills", []):
+        if v41:
+            required = _freeze_required_skills(cfg, v41=True)
+        else:
+            required = _freeze_required_skills(cfg, v41=False)
+            one_of = cfg.get("freeze_phase3_one_of", [])
+            if one_of and not read_skills.intersection(set(one_of)):
+                errors.append(
+                    f"plan-skill-reads.jsonl missing Phase 3 skill (one of {one_of})"
+                )
+        for skill in required:
             if skill not in read_skills:
                 errors.append(f"plan-skill-reads.jsonl missing required skill: {skill}")
-        one_of = cfg.get("freeze_phase3_one_of", [])
-        if one_of and not read_skills.intersection(set(one_of)):
-            errors.append(f"plan-skill-reads.jsonl missing Phase 3 skill (one of {one_of})")
 
     validate_execution_index_structure(task_dir, errors)
     validate_frozen_task_card(task_dir, errors)
 
+    if v41:
+        _validate_execution_bundle_v41(task_dir, errors, repo_root=repo_root)
     _validate_plan_consolidation_v4(task_dir, errors)
     _validate_prd_thin_index_v4(task_dir, errors)
-    _validate_execution_index_section4_v4(task_dir, errors)
+    if not v41:
+        _validate_execution_index_section4_v4(task_dir, errors)
 
     audit = task_dir / "AUDIT.plan.md"
     if not audit.is_file():
@@ -595,15 +610,26 @@ def validate_plan_freeze_v4(task_dir: Path, repo_root: Path) -> list[str]:
         audit_text = audit.read_text(encoding="utf-8")
         if re.search(r"\{\{[^}]+\}\}", audit_text):
             errors.append("AUDIT.plan.md has unresolved {{placeholders}}")
-        if "EXECUTION_INDEX" not in audit_text and "execution_index" not in audit_text.lower():
-            errors.append("AUDIT.plan.md must reference EXECUTION_INDEX.md (v4 trace)")
+        trace_ok = (
+            "EXECUTION_INDEX" in audit_text
+            or "execution_index" in audit_text.lower()
+            or (v41 and "00-EXECUTION-ENTRY" in audit_text)
+        )
+        if not trace_ok:
+            errors.append(
+                "AUDIT.plan.md must reference EXECUTION_INDEX.md or "
+                "00-EXECUTION-ENTRY.md (v4 trace)"
+            )
 
     freeze = task_dir / "plan.freeze.md"
     if not freeze.is_file():
         errors.append("plan.freeze.md missing (required for v4 freeze)")
     else:
         freeze_text = freeze.read_text(encoding="utf-8")
-        if "3.0v4" not in freeze_text and "协议 v4" not in freeze_text:
+        if v41:
+            if "3.0v4.1" not in freeze_text and "协议 v4.1" not in freeze_text:
+                errors.append("plan.freeze.md missing §3.0v4.1 v4.1 freeze checklist")
+        elif "3.0v4" not in freeze_text and "协议 v4" not in freeze_text:
             errors.append("plan.freeze.md missing §3.0v4 v4 freeze checklist")
         sec3 = _extract_section(freeze_text, "3.")
         if sec3 and re.search(r"- \[ \]", sec3):
@@ -634,18 +660,10 @@ def validate_plan_freeze_v4(task_dir: Path, repo_root: Path) -> list[str]:
 
     _validate_plan_freeze_template(task_dir, errors)
 
-    from .manifest_protocol import (
-        validate_check_subset_implement,
-        validate_implement_negative_list,
-        validate_plan_manifest_audit,
-        validate_trace_implement_sync,
-    )
+    from .manifest_protocol import validate_manifest_freeze_v4
 
     if _manifest_protocol_enabled_v4(task_dir):
-        validate_trace_implement_sync(task_dir, repo_root, errors)
-        validate_check_subset_implement(task_dir, errors)
-        validate_implement_negative_list(task_dir, errors)
-        validate_plan_manifest_audit(task_dir, errors)
+        validate_manifest_freeze_v4(task_dir, repo_root, errors)
 
     errors.extend(_deprecated_loop_meta_errors(task_dir, repo_root))
     _validate_loop_engineering_freeze_v4(task_dir, repo_root, errors)
@@ -664,8 +682,9 @@ def _validate_loop_engineering_freeze_v4(
         sys.path.insert(0, str(scripts))
     try:
         from context_router import generate_task_loop_artifacts
-        from loop_engineering_common import loop_required, validate_context_pack
-    except ImportError:
+        from loop_engineering_common import infer_task_touched_paths, loop_required, validate_context_pack
+    except ImportError as exc:
+        errors.append(f"loop_engineering import failed: {exc}")
         return
     if not loop_required(task_dir):
         return
@@ -678,14 +697,20 @@ def _validate_loop_engineering_freeze_v4(
             pack = json.loads(pack_path.read_text(encoding="utf-8"))
             for err in validate_context_pack(pack):
                 errors.append(err)
+            if not (pack.get("modules") or pack.get("source_authorities")):
+                touched = infer_task_touched_paths(task_dir)
+                if any(p.startswith(("backend/", "scripts/")) for p in touched):
+                    errors.append(
+                        "context_pack.json has empty modules/source_authorities "
+                        "(re-run context_router --task)"
+                    )
         except json.JSONDecodeError:
             errors.append("context_pack.json is invalid JSON")
     impl = task_dir / "implement.jsonl"
     if impl.is_file():
         paths = _paths_from_jsonl(impl)
-        if len(paths) >= 3 and "context_pack.json" not in paths[2] and "context_pack.json" not in paths[1]:
-            if "context_pack.json" not in paths:
-                errors.append("implement.jsonl must include context_pack.json (v4 slot 3)")
+        if not any(p.endswith("context_pack.json") for p in paths):
+            errors.append("implement.jsonl must include context_pack.json (v4 slot 3)")
         if not any("trellis-execute" in p for p in paths[:5]):
             errors.append(
                 "implement.jsonl must include trellis-execute/SKILL.md (v4 boot)"
@@ -694,148 +719,56 @@ def _validate_loop_engineering_freeze_v4(
 
 def validate_plan_freeze(task_dir: Path, repo_root: Path | None = None) -> list[str]:
     """Return validation errors; empty list means pass."""
+    from .paths import get_repo_root
+    from .plan_protocol import is_plan_protocol_v4, load_task_json
+    from .task_archive import (
+        has_task_plan_artifacts,
+        is_active_legacy_v3,
+        is_archived_task,
+        legacy_freeze_error,
+    )
+
     if repo_root is None:
-        repo_root = _find_repo_root(task_dir)
+        repo_root = get_repo_root()
 
-    from .plan_protocol import plan_protocol_version
+    if is_archived_task(task_dir):
+        return []
 
-    if plan_protocol_version(task_dir) == "4":
+    if not (task_dir / "task.json").is_file():
+        if has_task_plan_artifacts(task_dir):
+            return ["missing task.json (required when plan artifacts present)"]
+        return []
+
+    meta = load_task_json(task_dir).get("meta") or {}
+    track = str(meta.get("task_track", "")).lower()
+    if track in ("debt-lite", "simple") and not is_plan_protocol_v4(task_dir):
+        return []
+
+    if is_plan_protocol_v4(task_dir):
         return validate_plan_freeze_v4(task_dir, repo_root)
 
-    errors: list[str] = []
-    master = task_dir / "MASTER.plan.md"
-    if not master.is_file():
-        if (task_dir / "task.json").is_file():
-            errors.append("MASTER.plan.md missing (complex task requires MASTER)")
-        return errors
+    if is_active_legacy_v3(task_dir):
+        return [legacy_freeze_error()]
 
-    cfg = _load_plan_paths(repo_root)
-    boot_marker = cfg.get("boot_marker", _BOOT_MARKER)
-    waiver = _master_analysis_waiver(task_dir)
-
-    boot = task_dir / "research" / "plan-boot.md"
-    if not boot.is_file():
-        errors.append("Missing research/plan-boot.md (Plan Phase P0 boot)")
-    elif boot_marker not in boot.read_text(encoding="utf-8"):
-        errors.append(f"plan-boot.md must contain {boot_marker!r}")
-
-    if not waiver:
-        ov = task_dir / "research" / "project-overview.md"
-        if not ov.is_file():
-            errors.append("Missing research/project-overview.md (Plan Phase 1a)")
-
-        gnx = task_dir / "research" / "gitnexus-summary.md"
-        if not gnx.is_file():
-            errors.append("Missing research/gitnexus-summary.md (Plan Phase 1b)")
-
-    reads_path = task_dir / "research" / "plan-skill-reads.jsonl"
-    if not reads_path.is_file():
-        errors.append("Missing research/plan-skill-reads.jsonl (Plan skill Read audit log)")
-    else:
-        reads = _load_skill_reads(task_dir)
-        if not reads:
-            errors.append("plan-skill-reads.jsonl has no valid JSON lines")
-        read_skills = _skills_from_reads(reads)
-        for skill in cfg.get("freeze_required_skills", []):
-            if skill not in read_skills:
-                errors.append(f"plan-skill-reads.jsonl missing required skill: {skill}")
-        one_of = cfg.get("freeze_phase3_one_of", [])
-        if one_of and not read_skills.intersection(set(one_of)):
-            errors.append(f"plan-skill-reads.jsonl missing Phase 3 skill (one of {one_of})")
-
-    text = master.read_text(encoding="utf-8")
-    placeholders = re.findall(r"\{\{[^}]+\}\}", text)
-    if placeholders:
-        uniq = sorted(set(placeholders))[:8]
-        errors.append(f"MASTER.plan.md unresolved placeholders: {uniq}")
-
-    section9 = _extract_section(text, "9.")
-    section8 = _extract_section(text, "8.")
-    section_steps = section9 or section8
-    # Legacy plans put Execute steps in §8 and testing tiers in §9; prefer the block with RED/GREEN gates.
-    if section9 and not (
-        "RED 命令" in section9 or "RED/GREEN" in section9 or "RED / GREEN" in section9
-    ):
-        if section8 and ("RED 命令" in section8 or "RED/GREEN" in section8):
-            section_steps = section8
-    if section_steps:
-        legacy = "TDD 全文" in section_steps or "legacy-execute-evidence" in text
-        if not legacy:
-            has_step_gates = (
-                ("RED 命令" in section_steps and "GREEN 命令" in section_steps)
-                or "RED / GREEN" in section_steps
-                or "RED/GREEN" in section_steps
-            )
-            if not has_step_gates:
-                errors.append(
-                    "MASTER §9 missing RED/GREEN commands (RED 命令+GREEN 命令 or RED/GREEN column)"
-                )
-            test_defs = re.findall(r"def test_\w+", section_steps)
-            if len(test_defs) > 2:
-                errors.append(
-                    f"MASTER steps embed {len(test_defs)} test functions; "
-                    "move bodies to research/ (max 2 tracer examples in MASTER)"
-                )
-        elif not list(task_dir.glob("research/*evidence*.md")):
-            errors.append("Legacy MASTER steps (TDD 全文): require research/*evidence*.md for Execute")
-
-    section9 = _extract_section(text, "9.")
-    if section9:
-        plan_skills = (
-            "writing-plans",
-            "to-issues",
-            "planning-and-task-breakdown",
-            "trellis-plan",
-            "doubt-driven-development",
+    meta = load_task_json(task_dir).get("meta") or {}
+    if str(meta.get("plan_protocol_version", "")).strip() == "3":
+        has_v4 = (task_dir / "EXECUTION_INDEX.md").is_file() and any(
+            (task_dir / "frozen").glob("*.md")
         )
-        for m in re.finditer(r"绑定 Execute Skill\s*\|([^|\n]+)", section9):
-            cell = m.group(1)
-            for skill in plan_skills:
-                if skill in cell:
-                    errors.append(f"MASTER §9 binds Plan-only skill in Execute column: {skill}")
-
-    section_slices = _extract_section(text, "8.")
-    if section_slices and ("垂直切片" in section_slices or "SLICE-" in section_slices):
-        if "交付物" not in section_slices and "完标准" not in section_slices:
-            errors.append("MASTER §8 vertical slices missing 交付物/完标准 column")
-
-    audit = task_dir / "AUDIT.plan.md"
-    if audit.is_file():
-        audit_text = audit.read_text(encoding="utf-8")
-        if re.search(r"\{\{[^}]+\}\}", audit_text):
-            errors.append("AUDIT.plan.md has unresolved {{placeholders}}")
-
-    freeze = task_dir / "plan.freeze.md"
-    if not freeze.is_file():
-        errors.append("plan.freeze.md missing (required when MASTER.plan.md exists)")
-    else:
-        sec3 = _extract_section(freeze.read_text(encoding="utf-8"), "3.")
-        if sec3 and re.search(r"- \[ \]", sec3):
-            errors.append("plan.freeze.md §3 has unchecked items")
-
-    _validate_original_plan_artifacts(task_dir, errors)
-    _validate_implement_jsonl_manifest(task_dir, repo_root, errors)
-    _validate_audit_manifest(task_dir, repo_root, errors)
-    _validate_plan_freeze_template(task_dir, errors)
-
-    from .manifest_protocol import validate_manifest_freeze
-
-    validate_manifest_freeze(task_dir, repo_root, errors)
-    errors.extend(_deprecated_loop_meta_errors(task_dir, repo_root))
-    _validate_loop_engineering_freeze(task_dir, repo_root, errors)
-    _validate_repo_loop_gates(repo_root, errors)
-    return errors
+        if has_v4:
+            return [
+                "plan_protocol_version 3 conflicts with EXECUTION_INDEX.md + frozen/ "
+                "(set meta to 4/4.1 or archive v3)"
+            ]
+    return []
 
 
 def validate_plan_freeze_warnings(task_dir: Path, repo_root: Path) -> list[str]:
     """Non-blocking freeze warnings (authority_graph gaps, etc.)."""
     warnings: list[str] = []
-    from .plan_protocol import plan_protocol_version
+    from .plan_protocol import is_plan_protocol_v4
 
-    has_plan = (task_dir / "MASTER.plan.md").is_file() or (
-        plan_protocol_version(task_dir) == "4"
-        and (task_dir / "EXECUTION_INDEX.md").is_file()
-    )
+    has_plan = is_plan_protocol_v4(task_dir) and (task_dir / "EXECUTION_INDEX.md").is_file()
     if not has_plan:
         return warnings
     scripts = repo_root / "scripts"
@@ -843,7 +776,8 @@ def validate_plan_freeze_warnings(task_dir: Path, repo_root: Path) -> list[str]:
         sys.path.insert(0, str(scripts))
     try:
         from loop_engineering_common import authority_graph_coverage_gaps, loop_required
-    except ImportError:
+    except ImportError as exc:
+        warnings.append(f"loop_engineering import failed: {exc}")
         return warnings
     if not loop_required(task_dir):
         return warnings
@@ -858,8 +792,8 @@ def _deprecated_loop_meta_errors(task_dir: Path, repo_root: Path) -> list[str]:
         sys.path.insert(0, str(scripts))
     try:
         from loop_engineering_common import deprecated_loop_meta_errors
-    except ImportError:
-        return []
+    except ImportError as exc:
+        return [f"loop_engineering import failed: {exc}"]
     return deprecated_loop_meta_errors(task_dir)
 
 
@@ -872,7 +806,8 @@ def _validate_repo_loop_gates(repo_root: Path, errors: list[str]) -> None:
         from check_docs_specs_indexed import check_migration_map_coverage
         from check_test_catalog import check_catalog
         from check_verification_matrix import check_matrix
-    except ImportError:
+    except ImportError as exc:
+        errors.append(f"loop_engineering import failed: {exc}")
         return
     for err in check_catalog():
         errors.append(f"repo test_catalog: {err}")
@@ -880,54 +815,6 @@ def _validate_repo_loop_gates(repo_root: Path, errors: list[str]) -> None:
         errors.append(f"repo verification_matrix: {err}")
     for err in check_migration_map_coverage():
         errors.append(f"repo docs_specs_index: {err}")
-
-
-def _validate_loop_engineering_freeze(task_dir: Path, repo_root: Path, errors: list[str]) -> None:
-    """Complex tasks (task_track=complex): auto-generate + validate loop artifacts."""
-    if not (repo_root / "specs/context/authority_graph.yaml").is_file():
-        return
-    if not (task_dir / "MASTER.plan.md").is_file():
-        return
-    scripts = repo_root / "scripts"
-    if str(scripts) not in sys.path:
-        sys.path.insert(0, str(scripts))
-    try:
-        from context_router import generate_task_loop_artifacts
-        from loop_engineering_common import loop_required, loop_engineering_enabled, validate_context_pack
-    except ImportError:
-        return
-
-    if not loop_required(task_dir):
-        return
-
-    pack_path = task_dir / "context_pack.json"
-    if not pack_path.is_file():
-        for err in generate_task_loop_artifacts(task_dir):
-            errors.append(f"context_router: {err}")
-        if not pack_path.is_file():
-            errors.append("missing context_pack.json after context_router")
-            return
-
-    try:
-        pack = json.loads(pack_path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError:
-        errors.append("context_pack.json is invalid JSON")
-        return
-    for err in validate_context_pack(pack):
-        errors.append(err)
-    impl = task_dir / "implement.jsonl"
-    if impl.is_file():
-        paths = _paths_from_jsonl(impl)
-        loop_on = loop_engineering_enabled(task_dir)
-        if loop_on and len(paths) >= 2 and "context_pack.json" not in paths[1]:
-            errors.append(
-                "implement.jsonl slot 2 must be context_pack.json when loop engineering is enabled"
-            )
-        if len(paths) >= 2 and loop_on and "trellis-execute" not in paths[2]:
-            if not any("trellis-execute" in p for p in paths[:4]):
-                errors.append(
-                    "implement.jsonl must include trellis-execute/SKILL.md within first 4 entries"
-                )
 
 
 def cmd_validate_plan_freeze(args) -> int:

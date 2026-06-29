@@ -1,0 +1,147 @@
+# Plan v4.1 — Execution Bundle：Skill 产出契约
+# 文件名不固定；结构必须严格遵循对应 SKILL.md 模板章节。
+# 5e 打包时将所有产出登记进 research/00-EXECUTION-ENTRY.md §5.1 与 plan-consolidation 对照表。
+
+version: plan_skill_outputs_v41
+
+meta:
+  plan_protocol: "4.1"
+  supersedes_for_new_tasks: writing-plans
+  execute_entry: research/00-EXECUTION-ENTRY.md
+  external_index: research/EXTERNAL-INDEX.md
+  thin_plan: EXECUTION_PLAN.md
+
+skills:
+  to-issues:
+    path: .claude/skills/to-issues/SKILL.md
+    phase: "3.5"
+    required: true
+    output:
+      location: research/
+      filename: to-issues-slices.md
+      structure_from_skill:
+        - "垂直切片规则（vertical-slice-rules）"
+        - "issue-template：What to build · Acceptance criteria · Blocked by"
+      trellis_extensions:
+        - "切片总表 + 依赖图"
+        - "每切片：Execute Step · 建议测试 · RED/GREEN 证据路径"
+      optional_companion:
+        filename: bypass-baseline-matrix.md
+        when: "任务涉入口/旁路/多 fetch 路径"
+
+  planning-and-task-breakdown:
+    path: .agents/skills/planning-and-task-breakdown/SKILL.md
+    phase: 5a
+    required: true
+    output:
+      location: research/
+      filename_pattern: "plan-task-breakdown.md | plan-implementation.md"
+      structure_from_skill:
+        - "Plan Document Template：Overview · Architecture Decisions · Task List · Checkpoints · Risks · Open Questions"
+        - "每个 Task：Description · Acceptance criteria · Verification · Dependencies · Files likely touched · Estimated scope"
+
+  spec-driven-development:
+    path: .agents/skills/spec-driven-development/SKILL.md
+    phase: "5a'"
+    required: true
+    output:
+      location: research/
+      filename_pattern: "plan-spec.md | spec-*.md"
+      structure_from_skill:
+        - "Spec template：Objective · Tech Stack · Commands · Project Structure · Code Style · Testing Strategy · Boundaries · Success Criteria · Open Questions"
+        - "ASSUMPTIONS 块（Phase Specify）"
+
+  context-engineering:
+    path: .agents/skills/context-engineering/SKILL.md
+    phase: 5b
+    required: true
+    output:
+      location: research/
+      filename_pattern: plan-context.md
+      structure_from_skill:
+        - "Context Hierarchy L1–L5 对本任务的映射"
+        - "PROJECT CONTEXT 块（可复制给 Execute agent）"
+        - "按切片/模块的 Level 3 源码表"
+        - "开工必读 vs 执行情境路由（与 00-EXECUTION-ENTRY §5.2/§5.3 对齐）"
+
+  doubt-driven-development:
+    path: .agents/skills/doubt-driven-development/SKILL.md
+    phase: 5c
+    required: true
+    output:
+      location: research/
+      filename_pattern: plan-doubt-review.md
+      structure_from_skill:
+        - "Doubt cycle checklist（CLAIM · EXTRACT · DOUBT · RECONCILE · STOP）"
+        - "每个非平凡决策一轮；发现分类 actionable/trade-off/noise"
+
+  documentation-and-adrs:
+    path: .agents/skills/documentation-and-adrs/SKILL.md
+    phase: "5c'"
+    required: true
+    output:
+      location: docs/decisions/
+      filename_pattern: "ADR-NNN-<slug>.md"
+      structure_from_skill:
+        - "ADR Template：Status · Date · Context · Decision · Alternatives Considered · Consequences"
+      index_in:
+        - research/00-EXECUTION-ENTRY.md §4
+        - docs/decisions/README.md
+
+  trellis-research:
+    path: .cursor/agents/trellis-research.md
+    phase: "1-4"
+    required: true
+    output:
+      location: research/
+      filename_pattern: "<topic-slug>.md | reference-adoption-<topic>.md"
+      structure_from_skill:
+        - "trellis-research File Format：Query · Scope · Date · Findings · Caveats"
+      reference_adoption:
+        rule: "参考项目结论必须引用实际源码路径；禁止 README 为权威"
+        suggested_slug: reference-adoption-<task-topic>.md
+
+  trellis-plan:
+    path: .cursor/skills/trellis-plan/SKILL.md
+    phase: 5e
+    required: true
+    output:
+      location: research/
+      files:
+        - 00-EXECUTION-ENTRY.md
+        - EXTERNAL-INDEX.md
+        - plan-consolidation.md
+      task_root:
+        - EXECUTION_PLAN.md
+
+packaging_5e:
+  entry_sections_required:
+    - "§1 目的/价值/完成条件（跨文件汇总）"
+    - "§2 约束/规则（含出处指针）"
+    - "§3 验证命令"
+    - "§4 ADR 索引"
+    - "§5.1 包内文件地图（登记全部 research/*.md）"
+    - "§5.2 切片开工前必读"
+    - "§5.3 执行阶段情境路由"
+  external_index_sections:
+    - "§A 切片开工前必读（外部）"
+    - "§B 执行情境路由（外部）"
+    - "§C 源码/测试字典"
+
+freeze_v41:
+  frozen: "薄指针快照（freeze-task-card 自动生成）；Execute 规格见 research/00-EXECUTION-ENTRY"
+  frozen_must_not: "复制 to-issues-slices 全文或活卡全文"
+  execution_index: "§0 步骤表 + §3 manifest + §5 Audit 追溯"
+  implement_jsonl:
+    slot1: frozen/*.md
+    slot2: research/00-EXECUTION-ENTRY.md
+
+hard_rules:
+  - single_ssot_slices: "切片 AC 只在 to-issues-slices.md"
+  - no_duplicate_frozen: "frozen/INDEX 只指针，不复制包内正文"
+  - skill_structure_not_filename: "产出结构以 SKILL.md 为准；文件名可不同但须登记"
+  - gitnexus_required: "Phase 1a+1b 必做；产出 project-overview.md + gitnexus-summary.md"
+  - trellis_research_required: "必做；产出 reference-adoption-*.md 或 research/<topic>.md"
+  - clarification_when_ambiguous: >
+      需求不明或用户未说清时，必须用 trellis-brainstorm / grill-me / interview-me /
+      idea-refine 访问用户；决策写入 research/*-session.md 或 docs/decisions/ADR-*.md

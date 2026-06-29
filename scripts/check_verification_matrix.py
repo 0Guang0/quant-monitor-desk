@@ -10,6 +10,7 @@ from pathlib import Path
 from loop_engineering_common import (
     FEATURE_MATRIX_PATH,
     REPO_ROOT,
+    extract_md_section,
     load_feature_matrix,
     load_test_catalog,
     path_exists,
@@ -24,24 +25,7 @@ SENSITIVE_KEYWORDS = (
     "write",
     "negative",
 )
-
-
-def _extract_section(text: str, header_prefix: str) -> str:
-    lines = text.splitlines()
-    start: int | None = None
-    end = len(lines)
-    prefix = f"## {header_prefix}"
-    for i, line in enumerate(lines):
-        stripped = line.strip()
-        if start is None and stripped.startswith(prefix):
-            start = i
-            continue
-        if start is not None and stripped.startswith("## ") and not stripped.startswith(prefix):
-            end = i
-            break
-    if start is None:
-        return ""
-    return "\n".join(lines[start:end])
+_TEST_MODULE = re.compile(r"tests/test_[a-zA-Z0-9_]+\.py")
 
 
 def _pytest_targets_exist(target: str) -> bool:
@@ -60,18 +44,37 @@ def _catalog_has_test(catalog: dict, target: str) -> bool:
     return module in catalog
 
 
-def _master_section9_10_tests() -> set[str]:
+def _tests_in_plan_text(text: str, *, index: bool) -> set[str]:
+    if index:
+        scope = extract_md_section(text, "1.") + "\n" + extract_md_section(text, "2.")
+    else:
+        scope = extract_md_section(text, "9.") + "\n" + extract_md_section(text, "10.")
+    if not scope.strip():
+        return set()
+    return set(_TEST_MODULE.findall(scope))
+
+
+def _task_plan_section_tests() -> set[str]:
     tests: set[str] = set()
     tasks_root = REPO_ROOT / ".trellis/tasks"
     if not tasks_root.is_dir():
         return tests
-    pattern = re.compile(r"tests/test_[a-zA-Z0-9_]+\.py")
-    for master in tasks_root.rglob("MASTER.plan.md"):
-        text = master.read_text(encoding="utf-8")
-        scope = _extract_section(text, "9.") + "\n" + _extract_section(text, "10.")
-        if not scope.strip():
+    for index in tasks_root.rglob("EXECUTION_INDEX.md"):
+        if "/archive/" in index.as_posix().replace("\\", "/"):
             continue
-        tests.update(pattern.findall(scope))
+        tests |= _tests_in_plan_text(index.read_text(encoding="utf-8"), index=True)
+    for frozen in tasks_root.rglob("frozen/*.md"):
+        if "/archive/" in frozen.as_posix().replace("\\", "/"):
+            continue
+        tests |= _tests_in_plan_text(frozen.read_text(encoding="utf-8"), index=False)
+    for master in tasks_root.rglob("MASTER.plan.md"):
+        rel = master.as_posix().replace("\\", "/")
+        if "/archive/" in rel or "/tasks/archive/" in rel:
+            continue
+        text = master.read_text(encoding="utf-8")
+        scope = extract_md_section(text, "9.") + "\n" + extract_md_section(text, "10.")
+        if scope.strip():
+            tests |= set(_TEST_MODULE.findall(scope))
     return tests
 
 
@@ -114,9 +117,11 @@ def check_matrix() -> list[str]:
                     f"{feature_id}/{ac_id}: sensitive AC requires negative test or audit_check"
                 )
 
-    for module in _master_section9_10_tests():
+    for module in _task_plan_section_tests():
         if module not in catalog:
-            errors.append(f"MASTER §9/§10 references test not in test_catalog: {module}")
+            errors.append(
+                f"task plan (INDEX §1–2 / frozen §9–10) references test not in test_catalog: {module}"
+            )
 
     return errors
 

@@ -11,13 +11,12 @@
   "worktree_path": "../quant-monitor-desk-wt-b3v-stor",
   "meta": {
     "task_track": "complex",
+    "plan_protocol_version": "3",
     "manifest_protocol_version": "3",
     "context_bridge_version": "1",
     "playbook_id": "B3V-STOR",
     "manifest_id": "B3V-C03",
     "model": "composer-2.5",
-    "owned_vr": [
-      "VR-STOR-001"
-    ]
+    "owned_vr": ["VR-STOR-001"]
   }
 }

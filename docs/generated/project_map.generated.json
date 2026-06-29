@@ -1,14 +1,92 @@
 {
-  "version": "1",
+  "version": "2",
+  "rating_ssot": "MODULE_COMPLETION_RATING.md",
+  "rating_index": {
+    "A1": "project_scaffold",
+    "A2": "db_platform",
+    "A3": "core_platform",
+    "A4": "core_platform",
+    "A5": "core_platform",
+    "A6": "project_scaffold",
+    "A7": "project_scaffold",
+    "B1": "validators",
+    "B2": "validators",
+    "B3": "validators",
+    "C1": "datasources",
+    "C2": "datasources",
+    "C3": "datasources",
+    "C4": "datasources",
+    "D1": "sync_orchestrator",
+    "D2": "sync_orchestrator",
+    "D3": "sync_orchestrator",
+    "D4": "source_health",
+    "E1": "ops",
+    "E2": "ops",
+    "E3": "ops",
+    "E4": "ops",
+    "E5": "ops",
+    "E6": "governance",
+    "E7": "notifications",
+    "F0": "ops",
+    "G1": "layer1_axes",
+    "G2": "layer2_sensors",
+    "G3": "layer3_chains",
+    "G4": "layer4_markets",
+    "G5": "layer5_evidence",
+    "G6": "layer5_evidence",
+    "H1": "etl",
+    "I1": "api_platform",
+    "I2": "agents",
+    "I3": "frontend_platform",
+    "I4": "notifications",
+    "I5": "backtest_review",
+    "I6": "backtest_review",
+    "I7": "backtest_review",
+    "I8": "api_platform",
+    "J1": "governance",
+    "J2": "agents",
+    "J3": "governance",
+    "J4": "governance",
+    "J5": "datasources",
+    "J6": "governance",
+    "J7": "privacy_boundary",
+    "K1": "model_inputs",
+    "K2": "layer1_axes",
+    "K3": "layer3_chains"
+  },
   "modules": {
-    "layer1_axes": {
-      "implementation": [
-        "backend/app/layer1_axes/**"
+    "project_scaffold": {
+      "module_ids": ["A1", "A6", "A7"],
+      "implementation": ["tests/**", "pyproject.toml", "uv.lock"],
+      "docs": [
+        "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md",
+        "docs/architecture/06_deployment_and_local_ops.md"
       ],
+      "contracts": [
+        "specs/contracts/spec_migrator_contract.yaml",
+        "specs/contracts/dependency_extras_contract.yaml",
+        "specs/contracts/platform_source_matrix.yaml"
+      ],
+      "rules": ["docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"],
+      "implementation_tasks": [],
+      "required_evidence": ["context_pack.json", "loop_manifest.json"],
+      "tests": [
+        {
+          "path": "tests/test_dependency_extras_contract.py",
+          "purpose": "Round2.6 Phase B — dependency extras contract tests.",
+          "command": "uv run python -m pytest tests/test_dependency_extras_contract.py -q"
+        }
+      ],
+      "forbidden_claims": []
+    },
+    "layer1_axes": {
+      "module_ids": ["G1", "K2"],
+      "implementation": ["backend/app/layer1_axes/**"],
       "docs": [
         "docs/modules/layer1_global_regime_panel.md",
         "docs/architecture/module_boundary_matrix.md",
-        "docs/architecture/04_data_architecture.md"
+        "docs/architecture/04_data_architecture.md",
+        "specs/layer1_axes/restructured_axes_v1_1/README.md"
       ],
       "contracts": [
         "specs/contracts/layer1_axis_contract.yaml",
@@ -19,6 +97,16 @@
         "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md",
         "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md",
         "docs/quality/production_live_pilot_policy.md"
+      ],
+      "implementation_tasks": [
+        "docs/implementation_tasks/ROUND_3_MODELING_LAYERS/018A_layer1_observation_ingestion_bridge.md",
+        "docs/implementation_tasks/ROUND_3_MODELING_LAYERS/018B_production_live_pilot_gate.md"
+      ],
+      "required_evidence": [
+        "context_pack.json",
+        "loop_manifest.json",
+        "evidence_index.json",
+        "audit_matrix.json"
       ],
       "tests": [
         {
@@ -67,15 +155,11 @@
           "command": "uv run python -m pytest tests/test_fred_staged_semantics.py -q"
         }
       ],
-      "forbidden_claims": [
-        "production-live ready",
-        "live production ingestion"
-      ]
+      "forbidden_claims": ["production-live ready", "live production ingestion"]
     },
     "layer2_sensors": {
-      "implementation": [
-        "backend/app/layer2_sensors/**"
-      ],
+      "module_ids": ["G2"],
+      "implementation": ["backend/app/layer2_sensors/**"],
       "docs": [
         "docs/modules/layer2_cross_asset_sensor.md",
         "docs/architecture/module_boundary_matrix.md"
@@ -89,6 +173,15 @@
         "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md",
         "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md",
         "docs/quality/BATCH3_STAGED_DOWNSTREAM_GATE.md"
+      ],
+      "implementation_tasks": [
+        "docs/implementation_tasks/ROUND_3_MODELING_LAYERS/019_implement_layer2_cross_asset_sensor.md"
+      ],
+      "required_evidence": [
+        "context_pack.json",
+        "loop_manifest.json",
+        "evidence_index.json",
+        "audit_matrix.json"
       ],
       "tests": [
         {
@@ -117,12 +210,10 @@
           "command": "uv run python -m pytest tests/test_resource_guard.py -q"
         }
       ],
-      "forbidden_claims": [
-        "production-live ready",
-        "live production ingestion"
-      ]
+      "forbidden_claims": ["production-live ready", "live production ingestion"]
     },
     "layer5_evidence": {
+      "module_ids": ["G5", "G6"],
       "implementation": [
         "backend/app/layer5_evidence/**",
         "backend/app/evidence/**"
@@ -138,6 +229,15 @@
       "rules": [
         "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md",
         "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md"
+      ],
+      "implementation_tasks": [
+        "docs/implementation_tasks/ROUND_3_MODELING_LAYERS/023A_layer5_evidence_foundation.md"
+      ],
+      "required_evidence": [
+        "context_pack.json",
+        "loop_manifest.json",
+        "evidence_index.json",
+        "audit_matrix.json"
       ],
       "tests": [
         {
@@ -161,29 +261,40 @@
           "command": "uv run python -m pytest tests/test_no_clean_write_for_web_evidence.py -q"
         }
       ],
-      "forbidden_claims": [
-        "production-live ready"
-      ]
+      "forbidden_claims": ["production-live ready"]
     },
     "datasources": {
-      "implementation": [
-        "backend/app/datasources/**"
-      ],
+      "module_ids": ["C1", "C2", "C3", "C4", "J5"],
+      "implementation": ["backend/app/datasources/**"],
       "docs": [
         "docs/modules/data_sources.md",
         "docs/modules/datasource_service.md",
         "docs/modules/source_route_plan.md",
-        "docs/modules/source_capability_registry.md"
+        "docs/modules/source_capability_registry.md",
+        "docs/modules/qmt_xtdata_adapter.md"
       ],
       "contracts": [
         "specs/contracts/datasource_service_contract.yaml",
         "specs/contracts/source_route_contract.yaml",
         "specs/contracts/source_capability_contract.yaml",
-        "specs/contracts/platform_source_matrix.yaml"
+        "specs/contracts/platform_source_matrix.yaml",
+        "specs/contracts/data_adapter_contract.md",
+        "specs/datasource_registry/provider_catalog.yaml",
+        "specs/datasource_registry/source_registry.yaml",
+        "specs/datasource_registry/source_capabilities.yaml"
       ],
       "rules": [
         "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md",
         "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md"
+      ],
+      "implementation_tasks": [
+        "docs/implementation_tasks/ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3X_data_source_routing_blockers.md"
+      ],
+      "required_evidence": [
+        "context_pack.json",
+        "loop_manifest.json",
+        "evidence_index.json",
+        "audit_matrix.json"
       ],
       "tests": [
         {
@@ -222,11 +333,10 @@
           "command": "uv run python -m pytest tests/test_prediction_market_adapters.py -q"
         }
       ],
-      "forbidden_claims": [
-        "bypass route readiness gate"
-      ]
+      "forbidden_claims": ["bypass route readiness gate"]
     },
     "validators": {
+      "module_ids": ["B1", "B2", "B3"],
       "implementation": [
         "backend/app/validators/**",
         "backend/app/db/validation_gate.py",
@@ -235,7 +345,8 @@
       "docs": [
         "docs/modules/data_validation_and_conflict.md",
         "docs/modules/data_validation_write_concurrency.md",
-        "docs/modules/write_manager.md"
+        "docs/modules/write_manager.md",
+        "docs/ops/lock_and_concurrency_policy.md"
       ],
       "contracts": [
         "specs/contracts/write_contract.yaml",
@@ -245,6 +356,15 @@
       "rules": [
         "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md",
         "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md"
+      ],
+      "implementation_tasks": [
+        "docs/implementation_tasks/ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3X_db_write_validation_blockers.md"
+      ],
+      "required_evidence": [
+        "context_pack.json",
+        "loop_manifest.json",
+        "evidence_index.json",
+        "audit_matrix.json"
       ],
       "tests": [
         {
@@ -273,11 +393,10 @@
           "command": "uv run python -m pytest tests/test_batch_c_validation_flow.py -q"
         }
       ],
-      "forbidden_claims": [
-        "direct table write outside WriteManager"
-      ]
+      "forbidden_claims": ["direct table write outside WriteManager"]
     },
     "ops": {
+      "module_ids": ["E1", "E2", "E3", "E4", "E5", "F0"],
       "implementation": [
         "backend/app/ops/**",
         "backend/app/cli/**",
@@ -294,18 +413,34 @@
         "docs/ops/verification_commands.md",
         "docs/ops/performance_limits.md",
         "docs/ops/staging_data_e2e_runbook.md",
+        "docs/ops/data_health_cli.md",
+        "docs/ops/db_inspect_cli.md",
+        "docs/ops/data_sync_quick_reference.md",
+        "docs/ops/data_sync_command_matrix.md",
         "docs/quality/production_live_pilot_policy.md",
-        "docs/quality/BATCH3_STAGED_DOWNSTREAM_GATE.md",
-        "docs/ROUND3_HANDOFF.md"
+        "docs/quality/BATCH3_STAGED_DOWNSTREAM_GATE.md"
       ],
       "contracts": [
         "specs/contracts/ops_health_check_contract.yaml",
         "specs/contracts/ops_db_inspect_contract.yaml",
-        "specs/contracts/review_sandbox_contract.yaml"
+        "specs/contracts/review_sandbox_contract.yaml",
+        "specs/contracts/sandbox_clean_write_contract.yaml",
+        "specs/contracts/data_cli_contract.yaml",
+        "specs/contracts/production_equivalent_smoke_budget.yaml"
       ],
       "rules": [
         "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md",
-        "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md"
+        "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md",
+        "docs/ops/idempotency_retry_dlq_policy.md"
+      ],
+      "implementation_tasks": [
+        "docs/implementation_tasks/ROUND_3_REFERENCE_LANDING/R3D_018C_live_manual_probe_plan.md"
+      ],
+      "required_evidence": [
+        "context_pack.json",
+        "loop_manifest.json",
+        "evidence_index.json",
+        "audit_matrix.json"
       ],
       "tests": [
         {
@@ -357,22 +492,47 @@
           "path": "tests/test_qmd_data_cli.py",
           "purpose": "B3F-CLI — qmd data CLI, packaging, init_db --sync-registry (R3F-CLI-01..05).",
           "command": "uv run python -m pytest tests/test_qmd_data_cli.py -q"
+        },
+        {
+          "path": "tests/test_ops_data_health.py",
+          "purpose": "Tests for read-only ops data health (C-20).",
+          "command": "uv run python -m pytest tests/test_ops_data_health.py -q"
         }
       ],
-      "forbidden_claims": [
-        "production-live ready",
-        "live production ingestion"
-      ]
+      "forbidden_claims": ["production-live ready", "live production ingestion"]
+    },
+    "source_health": {
+      "module_ids": ["D4"],
+      "implementation": [
+        "backend/app/ops/source_health_writer.py",
+        "backend/app/ops/b3f_sh_registry_guard.py"
+      ],
+      "docs": [
+        "docs/modules/data_sources.md",
+        "docs/decisions/ADR-024-source-health-snapshot-boundary.md"
+      ],
+      "contracts": ["specs/contracts/ops_health_check_contract.yaml"],
+      "rules": ["docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"],
+      "implementation_tasks": [],
+      "required_evidence": ["context_pack.json", "loop_manifest.json"],
+      "tests": [
+        {
+          "path": "tests/test_source_health_snapshot.py",
+          "purpose": "Batch 3F B3F-SH source_health_snapshot writer and rollup persist (R3F-SH-01/04)",
+          "command": "uv run python -m pytest tests/test_source_health_snapshot.py -q"
+        }
+      ],
+      "forbidden_claims": ["DH2 creates source_health_snapshot DDL"]
     },
     "db_platform": {
-      "implementation": [
-        "backend/app/db/**",
-        "scripts/init_db.py"
-      ],
+      "module_ids": ["A2"],
+      "implementation": ["backend/app/db/**", "scripts/init_db.py"],
       "docs": [
         "docs/modules/write_manager.md",
         "docs/architecture/04_data_architecture.md",
-        "docs/schema/MIGRATION_COVERAGE.md"
+        "docs/schema/MIGRATION_COVERAGE.md",
+        "docs/schema/MIGRATION_008_PLAN.md",
+        "docs/ops/migration_recovery_policy.md"
       ],
       "contracts": [
         "specs/schema/schema.sql",
@@ -381,6 +541,14 @@
       "rules": [
         "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md",
         "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md"
+      ],
+      "implementation_tasks": [
+        "docs/implementation_tasks/ROUND_1_DATA_FOUNDATION/005_create_schema_sql.md"
+      ],
+      "required_evidence": [
+        "context_pack.json",
+        "loop_manifest.json",
+        "evidence_index.json"
       ],
       "tests": [
         {
@@ -407,19 +575,29 @@
       "forbidden_claims": []
     },
     "sync_orchestrator": {
-      "implementation": [
-        "backend/app/sync/**"
-      ],
+      "module_ids": ["D1", "D2", "D3"],
+      "implementation": ["backend/app/sync/**"],
       "docs": [
         "docs/modules/data_sync_orchestrator.md",
-        "docs/architecture/module_boundary_matrix.md"
+        "docs/architecture/module_boundary_matrix.md",
+        "docs/ops/data_sync_quick_reference.md"
       ],
       "contracts": [
-        "specs/contracts/write_contract.yaml"
+        "specs/contracts/write_contract.yaml",
+        "specs/contracts/sync_job_contract.yaml"
       ],
       "rules": [
         "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md",
-        "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md"
+        "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md",
+        "docs/ops/idempotency_retry_dlq_policy.md"
+      ],
+      "implementation_tasks": [
+        "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/014_implement_data_sync_orchestrator.md"
+      ],
+      "required_evidence": [
+        "context_pack.json",
+        "loop_manifest.json",
+        "evidence_index.json"
       ],
       "tests": [
         {
@@ -441,6 +619,7 @@
       "forbidden_claims": []
     },
     "core_platform": {
+      "module_ids": ["A3", "A4", "A5"],
       "implementation": [
         "backend/app/core/**",
         "backend/app/storage/**",
@@ -448,7 +627,8 @@
       ],
       "docs": [
         "docs/modules/local_file_system.md",
-        "docs/architecture/module_boundary_matrix.md"
+        "docs/architecture/module_boundary_matrix.md",
+        "docs/ops/performance_limits.md"
       ],
       "contracts": [
         "specs/contracts/resource_limits.yaml",
@@ -457,6 +637,12 @@
       "rules": [
         "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md",
         "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md"
+      ],
+      "implementation_tasks": [],
+      "required_evidence": [
+        "context_pack.json",
+        "loop_manifest.json",
+        "evidence_index.json"
       ],
       "tests": [
         {
@@ -473,96 +659,291 @@
           "path": "tests/test_raw_store.py",
           "purpose": "Raw Store and file_registry tests (Round 1 task 009).",
           "command": "uv run python -m pytest tests/test_raw_store.py -q"
+        },
+        {
+          "path": "tests/test_snapshot_lineage_kernel.py",
+          "purpose": "覆盖范围：core/snapshot_lineage 共享内核；测试对象：校验与 DB tuple 映射；目的：三层层 lineage 去重后行为不变。",
+          "command": "uv run python -m pytest tests/test_snapshot_lineage_kernel.py -q"
         }
       ],
       "forbidden_claims": []
     },
-    "layer3_chains": {
-      "implementation": [
-        "backend/app/layer3_chains/**"
-      ],
+    "model_inputs": {
+      "module_ids": ["K1"],
+      "implementation": ["specs/model_inputs/**"],
       "docs": [
-        "docs/modules/layer3_industry_shock_anchor.md"
+        "docs/quality/model_input_readiness_matrix.md",
+        "specs/model_inputs/README.md"
       ],
       "contracts": [
-        "specs/contracts/snapshot_lineage_contract.yaml"
+        "specs/model_inputs/layer1_source_whitelist.yaml",
+        "specs/model_inputs/layer2_source_whitelist.yaml",
+        "specs/model_inputs/layer3_anchor_source_plan.yaml",
+        "specs/model_inputs/layer4_market_source_plan.yaml",
+        "specs/model_inputs/layer5_instrument_source_plan.yaml"
       ],
       "rules": [
-        "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"
+        "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md",
+        "docs/quality/BATCH3_STAGED_DOWNSTREAM_GATE.md"
       ],
-      "tests": [],
+      "implementation_tasks": [],
+      "required_evidence": ["context_pack.json", "loop_manifest.json"],
+      "tests": [
+        {
+          "path": "tests/test_model_input_whitelist.py",
+          "purpose": "Round 3D — 五层模型输入白名单语义契约测试。",
+          "command": "uv run python -m pytest tests/test_model_input_whitelist.py -q"
+        }
+      ],
+      "forbidden_claims": [
+        "production-live ready",
+        "runtime fetch from whitelist package alone"
+      ]
+    },
+    "layer3_chains": {
+      "module_ids": ["G3", "K3"],
+      "implementation": ["backend/app/layer3_chains/**"],
+      "docs": [
+        "docs/modules/layer3_industry_shock_anchor.md",
+        "specs/layer3_global_industry_chains/layer3_global_industry_chains_v1_2/README.md",
+        "docs/ops/layer3_config_health_check.md"
+      ],
+      "contracts": [
+        "specs/contracts/snapshot_lineage_contract.yaml",
+        "specs/contracts/layer3_loader_contract.yaml"
+      ],
+      "rules": ["docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"],
+      "implementation_tasks": [
+        "docs/implementation_tasks/ROUND_3_MODELING_LAYERS/README.md"
+      ],
+      "required_evidence": ["context_pack.json", "loop_manifest.json"],
+      "tests": [
+        {
+          "path": "tests/test_layer3_loader.py",
+          "purpose": "Layer 3 industry chain staged loader tests (020 Execute).",
+          "command": "uv run python -m pytest tests/test_layer3_loader.py -q"
+        },
+        {
+          "path": "tests/test_layer3_snapshot_builder.py",
+          "purpose": "Layer 3 industry-chain snapshot builder tests (Round 3 task 021).",
+          "command": "uv run python -m pytest tests/test_layer3_snapshot_builder.py -q"
+        }
+      ],
       "forbidden_claims": []
     },
     "layer4_markets": {
-      "implementation": [
-        "backend/app/layer4_markets/**"
-      ],
-      "docs": [
-        "docs/modules/layer4_market_structure.md"
-      ],
+      "module_ids": ["G4"],
+      "implementation": ["backend/app/layer4_markets/**"],
+      "docs": ["docs/modules/layer4_market_structure.md"],
       "contracts": [
-        "specs/contracts/snapshot_lineage_contract.yaml"
+        "specs/contracts/snapshot_lineage_contract.yaml",
+        "specs/contracts/layer4_market_contract.yaml"
       ],
-      "rules": [
-        "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"
+      "rules": ["docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"],
+      "implementation_tasks": [
+        "docs/implementation_tasks/ROUND_3_MODELING_LAYERS/README.md"
       ],
-      "tests": [],
+      "required_evidence": ["context_pack.json", "loop_manifest.json"],
+      "tests": [
+        {
+          "path": "tests/test_layer4_market_structure.py",
+          "purpose": "Layer 4 market structure staged snapshot tests (Round 3 task 022).",
+          "command": "uv run python -m pytest tests/test_layer4_market_structure.py -q"
+        }
+      ],
       "forbidden_claims": []
     },
     "api_platform": {
-      "implementation": [
-        "backend/app/api/**"
-      ],
+      "module_ids": ["I1", "I8"],
+      "implementation": ["backend/app/api/**"],
       "docs": [
         "docs/modules/fastapi_backend.md",
-        "docs/modules/fastapi_and_frontend.md"
+        "docs/modules/fastapi_and_frontend.md",
+        "docs/api/fastapi_routes.md",
+        "specs/api/openapi_contract.md"
       ],
-      "contracts": [],
+      "contracts": [
+        "specs/contracts/api_security_contract.yaml",
+        "specs/contracts/diagnostics_api_contract.yaml"
+      ],
       "rules": [
-        "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"
+        "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md",
+        "docs/ops/frontend_security_policy.md"
       ],
-      "tests": [],
+      "implementation_tasks": [
+        "docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/README.md"
+      ],
+      "required_evidence": ["context_pack.json"],
+      "tests": [
+        {
+          "path": "tests/test_api_security_contract.py",
+          "purpose": "API security contract fail-closed guardrails",
+          "command": "uv run python -m pytest tests/test_api_security_contract.py -q"
+        }
+      ],
       "forbidden_claims": []
     },
     "agents": {
-      "implementation": [
-        "backend/app/agents/**"
-      ],
+      "module_ids": ["I2", "J2"],
+      "implementation": ["backend/app/agents/**"],
       "docs": [
-        "docs/modules/agent_module.md"
+        "docs/modules/agent_module.md",
+        "docs/api/agent_tool_contracts.md",
+        "docs/ops/agent_security_policy.md",
+        "docs/ops/agent_workflow_boundaries.md"
       ],
-      "contracts": [],
+      "contracts": ["specs/contracts/agent_contract.yaml"],
       "rules": [
-        "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"
+        "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md",
+        "docs/adr/ADR-0002-agent-readonly-boundary.md"
       ],
-      "tests": [],
+      "implementation_tasks": [
+        "docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/README.md"
+      ],
+      "required_evidence": ["context_pack.json"],
+      "tests": [
+        {
+          "path": "tests/test_reference_adoption_guardrails.py",
+          "purpose": "Reference adoption guardrails — static scans for forbidden copied patterns",
+          "command": "uv run python -m pytest tests/test_reference_adoption_guardrails.py -q"
+        }
+      ],
+      "forbidden_claims": []
+    },
+    "frontend_platform": {
+      "module_ids": ["I3"],
+      "implementation": ["frontend/**"],
+      "docs": [
+        "docs/modules/frontend_dashboard.md",
+        "docs/modules/fastapi_and_frontend.md",
+        "docs/ops/frontend_security_policy.md"
+      ],
+      "contracts": [
+        "specs/frontend/page_contracts.yaml",
+        "specs/contracts/user_input_privacy_contract.yaml"
+      ],
+      "rules": ["docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"],
+      "implementation_tasks": [],
+      "required_evidence": ["context_pack.json"],
+      "tests": [
+        {
+          "path": "frontend/src/App.test.tsx",
+          "purpose": "",
+          "command": "uv run python -m pytest frontend/src/App.test.tsx -q"
+        },
+        {
+          "path": "frontend/src/App.shell.test.tsx",
+          "purpose": "",
+          "command": "uv run python -m pytest frontend/src/App.shell.test.tsx -q"
+        }
+      ],
       "forbidden_claims": []
     },
     "notifications": {
+      "module_ids": ["I4", "E7"],
+      "implementation": ["backend/app/notifications/**"],
+      "docs": [
+        "docs/modules/notification_and_reports.md",
+        "docs/ops/ops_report_cli.md"
+      ],
+      "contracts": ["specs/contracts/notification_report_contract.yaml"],
+      "rules": ["docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"],
+      "implementation_tasks": [],
+      "required_evidence": ["context_pack.json"],
+      "tests": [],
+      "forbidden_claims": []
+    },
+    "backtest_review": {
+      "module_ids": ["I5", "I6", "I7"],
+      "implementation": [],
+      "docs": [
+        "docs/modules/backtest_and_review.md",
+        "docs/modules/backtest_review_lifecycle.md",
+        "docs/modules/review_sandbox_api.md"
+      ],
+      "contracts": [
+        "specs/contracts/backtest_contract.yaml",
+        "specs/contracts/backtest_metric_contract.yaml",
+        "specs/contracts/backtest_reproducibility_contract.yaml",
+        "specs/contracts/review_sandbox_contract.yaml"
+      ],
+      "rules": [
+        "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md",
+        "PROJECT_IMPLEMENTATION_ROADMAP.md"
+      ],
+      "implementation_tasks": [
+        "docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/README.md"
+      ],
+      "required_evidence": ["context_pack.json"],
+      "tests": [],
+      "forbidden_claims": []
+    },
+    "governance": {
+      "module_ids": ["J1", "J3", "J4", "J6", "E6"],
       "implementation": [
-        "backend/app/notifications/**"
+        "scripts/check_doc_links.py",
+        "scripts/loop_maintain.py",
+        "scripts/generate_project_map.py"
       ],
       "docs": [
-        "docs/modules/notification_and_reports.md"
+        "docs/ops/backup_and_recovery.md",
+        "docs/ops/logs_health_audit.md",
+        "docs/quality/final_package_rules.md",
+        "MIGRATION_MAP.md"
       ],
-      "contracts": [],
+      "contracts": [
+        "specs/contracts/reference_adoption_guardrails.yaml",
+        "specs/contracts/release_cleanup_allowlist.yaml",
+        "specs/contracts/log_audit_contract.yaml",
+        "specs/contracts/backup_recovery_contract.yaml",
+        "specs/contracts/module_boundary_contract.yaml"
+      ],
       "rules": [
-        "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"
+        "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md",
+        "docs/ops/config_secret_policy.md"
       ],
+      "implementation_tasks": [],
+      "required_evidence": ["context_pack.json", "release_manifest.json"],
+      "tests": [
+        {
+          "path": "tests/test_reference_adoption_guardrails.py",
+          "purpose": "Reference adoption guardrails — static scans for forbidden copied patterns",
+          "command": "uv run python -m pytest tests/test_reference_adoption_guardrails.py -q"
+        },
+        {
+          "path": "tests/test_round3_audit_registry_alignment.py",
+          "purpose": "Round 3 Batch 2.5 / Batch 2.75 audit follow-up 文档对齐测试。",
+          "command": "uv run python -m pytest tests/test_round3_audit_registry_alignment.py -q"
+        }
+      ],
+      "forbidden_claims": []
+    },
+    "privacy_boundary": {
+      "module_ids": ["J7"],
+      "implementation": [],
+      "docs": [
+        "docs/ops/privacy_data_flow.md",
+        "docs/ops/privacy_retention_policy.md",
+        "docs/ops/frontend_security_policy.md"
+      ],
+      "contracts": [
+        "specs/contracts/user_input_privacy_contract.yaml",
+        "specs/contracts/api_security_contract.yaml"
+      ],
+      "rules": ["docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"],
+      "implementation_tasks": [],
+      "required_evidence": ["context_pack.json"],
       "tests": [],
       "forbidden_claims": []
     },
     "etl": {
-      "implementation": [
-        "backend/app/etl/**"
-      ],
-      "docs": [
-        "docs/modules/duckdb_and_parquet.md"
-      ],
+      "module_ids": ["H1"],
+      "implementation": ["backend/app/etl/**"],
+      "docs": ["docs/modules/duckdb_and_parquet.md"],
       "contracts": [],
-      "rules": [
-        "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"
-      ],
+      "rules": ["docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"],
+      "implementation_tasks": [],
+      "required_evidence": ["context_pack.json"],
       "tests": [
         {
           "path": "tests/test_duckdb_connection.py",

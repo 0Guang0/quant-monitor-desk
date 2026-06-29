@@ -9,11 +9,11 @@ import sys
 from pathlib import Path
 
 from loop_engineering_common import (
-    find_repo_root,
-    extract_master_ac_ids,
+    extract_plan_ac_ids,
+    infer_task_touched_paths,
     load_json,
     loop_required,
-    path_exists,
+    normalize_ac_id,
     repo_relative,
     validate_context_pack,
 )
@@ -22,17 +22,8 @@ from loop_engineering_common import (
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
-def _extract_master_ac_ids(task_dir: Path) -> list[str]:
-    return extract_master_ac_ids(task_dir)
-
 def _read_json(path: Path) -> dict:
-    if not path.is_file():
-        return {}
-    try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError:
-        return {}
-    return data if isinstance(data, dict) else {}
+    return load_json(path) if path.is_file() else {}
 
 
 def _audit_final_from_report(task_dir: Path) -> str | None:
@@ -46,29 +37,64 @@ def _audit_final_from_report(task_dir: Path) -> str | None:
     return None
 
 
-def check_task_evidence(task_dir: Path) -> list[str]:
+def _evidence_path_exists(task_dir: Path, repo_root: Path, rel: str) -> bool:
+    norm = rel.replace("\\", "/")
+    if norm.startswith("..") or "/../" in norm:
+        return False
+    local = (task_dir / norm).resolve()
+    try:
+        local.relative_to(task_dir.resolve())
+        if local.is_file():
+            return True
+    except ValueError:
+        pass
+    root = (repo_root / norm).resolve()
+    try:
+        root.relative_to(repo_root.resolve())
+        return root.is_file()
+    except ValueError:
+        return False
+
+
+def check_task_evidence(task_dir: Path, *, repo_root: Path | None = None) -> list[str]:
     errors: list[str] = []
     if not loop_required(task_dir):
         return []
+    if repo_root is None:
+        repo_root = REPO_ROOT
 
     context_pack_path = task_dir / "context_pack.json"
     if not context_pack_path.is_file():
-        if (task_dir / "MASTER.plan.md").is_file():
-            errors.append("missing context_pack.json")
+        errors.append("missing context_pack.json")
     else:
         pack = _read_json(context_pack_path)
         errors.extend(validate_context_pack(pack))
+        if not (pack.get("modules") or pack.get("source_authorities")):
+            if any(
+                p.startswith(("backend/", "scripts/"))
+                for p in infer_task_touched_paths(task_dir)
+            ):
+                errors.append("context_pack.json has empty modules and source_authorities")
 
     loop_manifest = _read_json(task_dir / "loop_manifest.json")
     evidence_index = _read_json(task_dir / "evidence_index.json")
     audit_matrix = _read_json(task_dir / "audit_matrix.json")
 
-    master_acs = _extract_master_ac_ids(task_dir)
-    manifest_acs = {str(item.get("id")) for item in loop_manifest.get("acs") or [] if item.get("id")}
-    if master_acs and loop_manifest and manifest_acs:
-        missing = sorted(set(master_acs) - manifest_acs)
-        if missing:
-            errors.append(f"loop_manifest missing MASTER §2 AC ids: {missing}")
+    plan_acs = [normalize_ac_id(a) for a in extract_plan_ac_ids(task_dir)]
+    manifest_acs = {
+        normalize_ac_id(str(item.get("id")))
+        for item in loop_manifest.get("acs") or []
+        if item.get("id")
+    }
+    if plan_acs and loop_manifest:
+        if not manifest_acs:
+            errors.append(
+                "loop_manifest has no AC entries (expected EXECUTION_INDEX §2 AC ids)"
+            )
+        else:
+            missing = sorted(set(plan_acs) - manifest_acs)
+            if missing:
+                errors.append(f"loop_manifest missing plan AC ids: {missing}")
 
     def _walk_evidence(node: object, prefix: str = "") -> None:
         if isinstance(node, dict):
@@ -80,8 +106,7 @@ def check_task_evidence(task_dir: Path) -> list[str]:
         elif isinstance(node, str):
             rel = node.replace("\\", "/")
             if rel.endswith((".txt", ".md", ".json", ".jsonl")):
-                candidate = task_dir / rel
-                if not candidate.is_file() and not path_exists(rel):
+                if not _evidence_path_exists(task_dir, repo_root, rel):
                     errors.append(f"evidence_index missing file at {prefix}: {rel}")
 
     if evidence_index:

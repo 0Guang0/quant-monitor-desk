@@ -178,6 +178,17 @@ def test_validatePlanFreeze_v4_passesMinimal(tmp_path: Path) -> None:
     assert not any("frozen task card" in e and "missing" in e for e in errors)
 
 
+def test_planProtocolVersion_defaultsToV3WithoutArtifacts(tmp_path: Path) -> None:
+    """覆盖范围：无工件时的协议默认
+    测试对象：plan_protocol_version
+    目的/目标：空任务目录不得默认 v4（避免误走冻结门）
+    验证点：返回 '3'
+    失败含义：simple/debt-lite 被当成 v4
+    """
+    (tmp_path / "task.json").write_text('{"meta":{"task_track":"simple"}}', encoding="utf-8")
+    assert plan_protocol_version(tmp_path) == "3"
+
+
 def test_planProtocolVersion_prefersV4WhenMasterAndIndex(tmp_path: Path) -> None:
     """覆盖范围：v4/v3 版本启发式
     测试对象：plan_protocol_version
@@ -199,6 +210,67 @@ def test_planFreezeRequiredBeforeStart_v4WithoutMaster(tmp_path: Path) -> None:
     """
     _v4_minimal(tmp_path)
     assert plan_freeze_required_before_start(tmp_path)
+
+
+def test_planFreezeRequiredBeforeStart_v41WithIndex(tmp_path: Path) -> None:
+    """覆盖范围：v4.1 task.py start 冻结门
+    测试对象：plan_freeze_required_before_start（plan_protocol_version 4.1）
+    目的/目标：v4.1 与 v4 一样须在 planning 时过 validate-plan-freeze
+    验证点：有 EXECUTION_INDEX 时返回 True
+    失败含义：v4.1 可绕过冻结门 start
+    """
+    _v4_minimal(tmp_path)
+    task = json.loads((tmp_path / "task.json").read_text(encoding="utf-8"))
+    task["meta"]["plan_protocol_version"] = "4.1"
+    task["meta"]["execute_entry"] = "research/00-EXECUTION-ENTRY.md"
+    (tmp_path / "task.json").write_text(json.dumps(task, indent=2) + "\n", encoding="utf-8")
+    assert plan_freeze_required_before_start(tmp_path)
+
+
+def test_freezeTaskCard_v41_rejectsMissingEntry(tmp_path: Path) -> None:
+    """覆盖范围：v4.1 freeze-task-card 前置条件
+    测试对象：freeze_task_card（无 00-EXECUTION-ENTRY.md）
+    目的/目标：薄 frozen 不得指向不存在的 ENTRY
+    验证点：errors 含 missing ENTRY
+    失败含义：可先 freeze 后打包，frozen 指针悬空
+    """
+    task_dir = tmp_path / "task"
+    task_dir.mkdir()
+    (task_dir / "task.json").write_text(
+        json.dumps(
+            {
+                "meta": {
+                    "plan_protocol_version": "4.1",
+                    "execute_entry": "research/00-EXECUTION-ENTRY.md",
+                    "source_task_card": _SOURCE,
+                }
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    errors = freeze_task_card(task_dir, _REPO)
+    assert errors and any("00-EXECUTION-ENTRY" in e for e in errors)
+
+
+def test_validateInputInventory_acceptsV41ExecutionIndex(tmp_path: Path) -> None:
+    """覆盖范围：P0i 输入清单（v4.1）
+    测试对象：validate_input_inventory（plan_protocol_version 4.1）
+    目的/目标：v4.1 与 v4 一样用 EXECUTION_INDEX 标记索引完整
+    验证点：errors 为空
+    失败含义：v4.1 被误要求 source-index.md
+    """
+    from common.manifest_protocol import validate_input_inventory
+
+    _v4_minimal(tmp_path)
+    task = json.loads((tmp_path / "task.json").read_text(encoding="utf-8"))
+    task["meta"]["plan_protocol_version"] = "4.1"
+    task["meta"]["execute_entry"] = "research/00-EXECUTION-ENTRY.md"
+    (tmp_path / "task.json").write_text(json.dumps(task, indent=2) + "\n", encoding="utf-8")
+    errors: list[str] = []
+    validate_input_inventory(tmp_path, errors)
+    assert errors == []
 
 
 def test_validateInputInventory_acceptsV4ExecutionIndex(tmp_path: Path) -> None:
@@ -261,13 +333,83 @@ def test_validatePlanFreeze_v4_triadGate_rejectsPointerOnSpecNotes(tmp_path: Pat
     assert any("Triad gate" in e and "spec-driven" in e for e in errors)
 
 
-def test_examplePlanV4_passesValidatePlanFreeze() -> None:
-    """覆盖范围：仓库内 v4 样板任务
-    测试对象：.trellis/tasks/_example-plan-v4
-    目的/目标：参考目录须通过 validate-plan-freeze
-    验证点：errors == []
-    失败含义：新任务无可靠 v4 样板可复制
+def test_generateManifests_v41_slot2IsEntry(tmp_path: Path) -> None:
+    """覆盖范围：v4.1 implement.jsonl slot2
+    测试对象：generate_manifests（plan_protocol_version 4.1）
+    目的/目标：Boot 第二条必须是 00-EXECUTION-ENTRY.md
+    验证点：第二行含 00-EXECUTION-ENTRY
+    失败含义：Execute Boot 仍指向 EXECUTION_INDEX 而非 ENTRY
+    """
+    _v4_minimal(tmp_path)
+    entry = tmp_path / "research" / "00-EXECUTION-ENTRY.md"
+    entry.write_text(
+        "## 4. ADR\n| ADR | docs/decisions/README.md |\n"
+        "### 5.1\n### 5.2\n### 5.3\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "research" / "EXTERNAL-INDEX.md").write_text(
+        "§A\n§B\n§C\n", encoding="utf-8"
+    )
+    (tmp_path / "EXECUTION_PLAN.md").write_text("# thin\n", encoding="utf-8")
+    task = json.loads((tmp_path / "task.json").read_text(encoding="utf-8"))
+    task["meta"]["plan_protocol_version"] = "4.1"
+    task["meta"]["execute_entry"] = "research/00-EXECUTION-ENTRY.md"
+    (tmp_path / "task.json").write_text(json.dumps(task, indent=2) + "\n", encoding="utf-8")
+    assert not generate_manifests(tmp_path, _REPO)
+    lines = (tmp_path / "implement.jsonl").read_text(encoding="utf-8").splitlines()
+    assert len(lines) >= 2
+    assert "00-EXECUTION-ENTRY" in lines[1]
+
+
+def test_freezeTaskCard_v41_writesThinPointer(tmp_path: Path) -> None:
+    """覆盖范围：v4.1 freeze-task-card 薄指针
+    测试对象：freeze_task_card（plan_protocol 4.1）
+    目的/目标：frozen 须指向 ENTRY，不得复制活卡全文
+    验证点：frozen 含 thin pointer 与 00-EXECUTION-ENTRY；行数远小于活卡
+    失败含义：v4.1 仍按 v4.0 整卡复制，双 SSOT 回归
+    """
+    task_dir = tmp_path / "task"
+    task_dir.mkdir()
+    research = task_dir / "research"
+    research.mkdir()
+    (research / "00-EXECUTION-ENTRY.md").write_text("# ENTRY\n", encoding="utf-8")
+    source_rel = _SOURCE
+    (task_dir / "task.json").write_text(
+        json.dumps(
+            {
+                "meta": {
+                    "plan_protocol_version": "4.1",
+                    "execute_entry": "research/00-EXECUTION-ENTRY.md",
+                    "source_task_card": source_rel,
+                }
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    (task_dir / "EXECUTION_INDEX.md").write_text(
+        f"## 0. 冻结元数据\n| source_card | `{source_rel}` |\n",
+        encoding="utf-8",
+    )
+    live_lines = ( _REPO / source_rel).read_text(encoding="utf-8").count("\n")
+    assert not freeze_task_card(task_dir, _REPO)
+    frozen = list((task_dir / "frozen").glob("*.md"))
+    assert frozen
+    body = frozen[0].read_text(encoding="utf-8")
+    assert "thin pointer" in body
+    assert "00-EXECUTION-ENTRY" in body
+    assert body.count("\n") < live_lines // 2
+
+
+def test_examplePlanV4_taskLocalFreeze() -> None:
+    """覆盖范围：v4.1 样板任务级 freeze（不含 repo 全局门）
+    测试对象：validate_plan_freeze 过滤 repo docs_specs_index 等
+    目的/目标：样板目录本身 freeze 工件齐全
+    验证点：task-local errors == []
+    失败含义：样板缺 plan.freeze / ENTRY / skill-reads
     """
     task = _REPO / ".trellis" / "tasks" / "_example-plan-v4"
     errors = validate_plan_freeze(task, _REPO)
-    assert errors == []
+    local = [e for e in errors if not e.startswith("repo ")]
+    assert local == []

@@ -13,7 +13,9 @@ from loop_engineering_common import (
     collect_module_authorities,
     infer_task_touched_paths,
     load_authority_graph,
+    load_json,
     load_test_catalog,
+    loop_required,
     modules_for_paths,
     repo_relative,
     validate_context_pack,
@@ -107,6 +109,26 @@ def _render_router_section_d() -> str:
     )
 
 
+def _is_v41_task(task_dir: Path) -> bool:
+    meta = load_json(task_dir / "task.json").get("meta") or {}
+    if str(meta.get("plan_protocol_version", "")).strip() == "4.1":
+        return True
+    return (task_dir / "research" / "00-EXECUTION-ENTRY.md").is_file()
+
+
+def _upsert_entry_section_d(task_dir: Path) -> Path | None:
+    entry = task_dir / "research" / "00-EXECUTION-ENTRY.md"
+    if not entry.is_file():
+        return None
+    text = entry.read_text(encoding="utf-8")
+    section_d = _render_router_section_d()
+    start_marker = "## D."
+    if start_marker in text:
+        return entry
+    entry.write_text(text.rstrip() + "\n\n" + section_d, encoding="utf-8")
+    return entry
+
+
 def _upsert_source_index_section_d(task_dir: Path) -> Path | None:
     research = task_dir / "research"
     md_path = research / "source-index.md"
@@ -133,7 +155,9 @@ def write_context_outputs(task_dir: Path, pack: dict) -> tuple[Path, Path | None
     task_dir.mkdir(parents=True, exist_ok=True)
     pack_path = task_dir / "context_pack.json"
     pack_path.write_text(json.dumps(pack, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    md_path = _upsert_source_index_section_d(task_dir)
+    md_path = _upsert_entry_section_d(task_dir) if _is_v41_task(task_dir) else None
+    if md_path is None:
+        md_path = _upsert_source_index_section_d(task_dir)
     return pack_path, md_path
 
 
@@ -184,6 +208,12 @@ def generate_task_loop_artifacts(task_dir: Path) -> list[str]:
     errors = validate_context_pack(pack)
     if errors:
         return errors
+    if loop_required(task_dir) and touched and not modules and not pack.get("source_authorities"):
+        if any(p.startswith(("backend/", "scripts/")) for p in touched):
+            return [
+                "context_pack would be empty for complex task "
+                "(add backend/tests paths to EXECUTION_INDEX or implement.jsonl)"
+            ]
     write_context_outputs(task_dir, pack)
     from loop_engineering_common import write_loop_evidence_stubs
 

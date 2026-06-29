@@ -122,7 +122,7 @@ _DEFAULT_REASONS: dict[str, tuple[str, str]] = {
     ),
     "backend/app/util/error_redaction.py": (
         "error message redaction policy",
-        "MASTER §7 / §8",
+        "AC trace / §8 wiring",
     ),
     "tests/test_write_manager.py": (
         "§9.2 Tier B write_audit with job_id regression",
