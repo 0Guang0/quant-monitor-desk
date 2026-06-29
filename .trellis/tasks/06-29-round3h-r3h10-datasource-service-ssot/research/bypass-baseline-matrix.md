@@ -1,7 +1,7 @@
 # R3H-10 BOOT — 入口旁路基线矩阵
 
 > **切片：** S10-BOOT  
-> **日期：** 2026-06-29 规划 · **Execute 复核：** 2026-06-29（`interface_probe.py` 仍直连 `interface_probe_fetch_ports`；`data_commands._service()` 经 service；`runners.guard_*` 在位）  
+> **Execute 复核：** 2026-06-29 CLOSED（interface_probe 委托 service；契约 active；STAGED-PILOT-SSOT CLOSED）  
 > **用途：** S10-01～05 的 RED 引用 SSOT
 
 ---
@@ -24,20 +24,21 @@
 
 ## 矩阵
 
-| #   | 入口                                                             | 模块   | 当前                                        | 风险         | 切片            |
-| --- | ---------------------------------------------------------------- | ------ | ------------------------------------------- | ------------ | --------------- |
-| 1   | `DataSyncOrchestrator.run_incremental(..., datasource_service=)` | D1, C2 | ✅                                          | —            | 保持            |
-| 2   | `run_incremental(..., adapter=)` 无 service                      | D1     | ❌ 生产 fail-closed                         | 已测         | S10-01 复核     |
-| 3   | `run_backfill` / `run_reconcile` 同上                            | D1     | ❌ 生产 fail-closed                         | 已测         | S10-01 复核     |
-| 4   | `qmd data route-preview`                                         | E1, C2 | ✅ `_service()`                             | 低           | S10-02          |
-| 5   | `qmd data sync-plan`                                             | E1, C2 | ✅ 经 route_preview                         | 低           | S10-02          |
-| 6   | `run_staged_pilot_raw_only`                                      | E4     | ⚠️ service + SSOT `cn_rehearsal_live_ports` | 低（已收敛） | CLOSED          |
-| 7   | `run_live_pilot_raw_only`                                        | E4     | ⚠️ service + SSOT re-export                 | 低           | CLOSED          |
-| 8   | `run_interface_probe`                                            | E4     | ✅ 委托 `DataSourceService.fetch`           | 低           | CLOSED (S10-04) |
-| 9   | `Layer1ObservationIngestionService` + fixture service            | G1     | ⚠️ staged 合法                              | 文档边界     | S10-03          |
-| 10  | `sandbox_clean_write` gates                                      | E5     | ✅ `DataSourceService`                      | —            | 不动            |
-| 11  | `datasource_service_contract.yaml`                               | C2     | **active** (S10-02)                         | —            | CLOSED          |
-| 12  | `STAGED-PILOT-SSOT` audit 行                                     | 登记   | **CLOSED** (S10-05)                         | —            | CLOSED          |
+| #   | 入口                                                              | 模块   | 当前                                        | 风险         | 切片            |
+| --- | ----------------------------------------------------------------- | ------ | ------------------------------------------- | ------------ | --------------- |
+| 1   | `DataSyncOrchestrator.run_incremental(..., datasource_service=)`  | D1, C2 | ✅                                          | —            | 保持            |
+| 2   | `run_incremental(..., adapter=)` 无 service                       | D1     | ❌ 生产 fail-closed                         | 已测         | S10-01 复核     |
+| 3   | `run_backfill` + `datasource_service=` / adapter guard            | D1, C2 | ✅ fail-closed                              | 已测         | S10-01 CLOSED   |
+| 3b  | `run_reconcile` adapter guard；`datasource_service=` defer R3H-08 | D1     | ✅ adapter fail-closed                      | ADR-025      | deferred        |
+| 4   | `qmd data route-preview`                                          | E1, C2 | ✅ `_service()`                             | 低           | S10-02          |
+| 5   | `qmd data sync-plan`                                              | E1, C2 | ✅ 经 route_preview                         | 低           | S10-02          |
+| 6   | `run_staged_pilot_raw_only`                                       | E4     | ⚠️ service + SSOT `cn_rehearsal_live_ports` | 低（已收敛） | CLOSED          |
+| 7   | `run_live_pilot_raw_only`                                         | E4     | ⚠️ service + SSOT re-export                 | 低           | CLOSED          |
+| 8   | `run_interface_probe`                                             | E4     | ✅ 委托 `DataSourceService.fetch`           | 低           | CLOSED (S10-04) |
+| 9   | `Layer1ObservationIngestionService` + fixture service             | G1     | ⚠️ staged 合法                              | 文档边界     | S10-03          |
+| 10  | `sandbox_clean_write` gates                                       | E5     | ✅ `DataSourceService`                      | —            | 不动            |
+| 11  | `datasource_service_contract.yaml`                                | C2     | **active** (S10-02)                         | —            | CLOSED          |
+| 12  | `STAGED-PILOT-SSOT` audit 行                                      | 登记   | **CLOSED** (S10-05)                         | —            | CLOSED          |
 
 ---
 

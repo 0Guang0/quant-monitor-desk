@@ -102,21 +102,22 @@ def test_r3h10_interfaceProbeFetchDelegatesThroughDataSourceService(
     """覆盖范围：interface_probe 网络 fetch 经 DataSourceService（S10-04）
     测试对象：run_single_probe → _fetch_payload_via_service
     目的/目标：probe 不得 silent bypass C2 facade 直调 port.fetch_payload
-    验证点：DataSourceService.fetch 被调用一次；记录含 rehearsal_only
+    验证点：port.fetch_payload 未调用；record rehearsal_only 且 status=SUCCESS 且 row_count≥1
     失败含义：probe 仍直连 fetch_ports，旁路 route/guard/fetch_log 链
     """
     from backend.app.datasources.adapters.fetch_port import FetchPayload
     from backend.app.datasources.fetch_result import FetchResult
     from backend.app.ops.interface_probe import PROBE_TARGETS, run_single_probe
 
-    calls: list[str] = []
+    port_calls: list[str] = []
 
     class _SpyService:
         def __init__(self, **kwargs):
             pass
 
         def fetch(self, req, *, con, job_id=None, operation=None):
-            calls.append("fetch")
+            raw = tmp_path / "raw.json"
+            raw.write_text('{"rows":[{"x":1}]}', encoding="utf-8")
             return FetchResult(
                 run_id=req.run_id,
                 source_id=req.source_id,
@@ -124,21 +125,41 @@ def test_r3h10_interfaceProbeFetchDelegatesThroughDataSourceService(
                 status="SUCCESS",
                 row_count=1,
                 fetch_time="2026-06-29T00:00:00Z",
-                raw_file_paths=[str(tmp_path / "raw.json")],
+                raw_file_paths=[str(raw)],
             )
 
-    (tmp_path / "raw.json").write_text('{"rows":[]}', encoding="utf-8")
+    class _SpyPort:
+        def fetch_payload(self, req):
+            port_calls.append("fetch_payload")
+            return FetchPayload(content=b"{}", file_type="json", row_count=0)
+
     monkeypatch.setattr("backend.app.ops.interface_probe.DataSourceService", _SpyService)
     monkeypatch.setattr(
         "backend.app.ops.interface_probe._resolve_fetch_port",
-        lambda target: type("P", (), {"fetch_payload": lambda s, r: FetchPayload(content=b"{}", file_type="json", row_count=0)})(),
+        lambda target: _SpyPort(),
     )
 
     target = next(t for t in PROBE_TARGETS if t.operation == "fetch_daily_bar_sina_validation")
     record = run_single_probe(target, sandbox_root=tmp_path / "sandbox")
-    assert calls == ["fetch"]
+    assert port_calls == []
     assert record.get("rehearsal_only") is True
-    assert record["status"] in {"SUCCESS", "FAILED"}
+    assert record["status"] == "SUCCESS"
+    assert record.get("row_count", 0) >= 1
+
+
+def test_r3h10_interfaceProbeRunSingleProbeUsesFetchViaServiceHelper() -> None:
+    """覆盖范围：run_single_probe 成功路径源码守卫（S10-04 负向回归）
+    测试对象：backend.app.ops.interface_probe.run_single_probe 源码
+    目的/目标：移除 _fetch_payload_via_service 时本测应 RED（源码级守门）
+    验证点：run_single_probe 源码含 _fetch_payload_via_service 调用
+    失败含义：probe 可改回 port.fetch_payload 直连而不被测试发现
+    """
+    import inspect
+
+    from backend.app.ops import interface_probe
+
+    src = inspect.getsource(interface_probe.run_single_probe)
+    assert "_fetch_payload_via_service" in src
 
 
 def test_runInterfaceProbe_writesEvidence(tmp_path: Path, monkeypatch) -> None:
@@ -151,6 +172,10 @@ def test_runInterfaceProbe_writesEvidence(tmp_path: Path, monkeypatch) -> None:
     from backend.app.datasources.fetch_result import FetchResult
 
     monkeypatch.setattr("backend.app.ops.interface_probe._safe_key_table_row_counts", lambda _p: {})
+    monkeypatch.setattr(
+        "backend.app.ops.interface_probe.build_route_matrix",
+        lambda: {"generated_at": "2026-06-29T00:00:00Z", "routes": []},
+    )
 
     class _OkService:
         def __init__(self, **kwargs):

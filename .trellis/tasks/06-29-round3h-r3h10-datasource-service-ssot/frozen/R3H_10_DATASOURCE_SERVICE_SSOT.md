@@ -14,6 +14,8 @@
 
 切片 AC 与步骤：`research/to-issues-slices.md`；RED/GREEN 与证据：`EXECUTION_INDEX.md` §1。
 
+**Reconcile defer：** ADR-025 §Reconcile defer · `research/source-index.md` · `test_r3h10S10_01_reconcile_adapterBypassFailClosedPerAdr025`。
+
 ### 9.0 Boot
 
 先 Read `research/00-EXECUTION-ENTRY.md` §5.2 + `EXTERNAL-INDEX.md` §A，再按 `to-issues-slices.md` 当前切片 § 执行。

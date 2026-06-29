@@ -2,9 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import UTC, date, datetime, timedelta
+from backend.app.datasources.fetch_window import recent_window_start
 
-
-def recent_window_start(*, calendar_days: int = 14) -> date:
-    """Return UTC calendar start date for recent-window fetches."""
-    return datetime.now(UTC).date() - timedelta(days=calendar_days)
+__all__ = ["recent_window_start"]

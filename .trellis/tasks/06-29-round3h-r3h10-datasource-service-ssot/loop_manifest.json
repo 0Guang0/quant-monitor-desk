@@ -9,38 +9,38 @@
   ],
   "acs": [
     {
-      "id": "AC-01",
-      "status": "pending",
+      "id": "AC-BOOT",
+      "status": "closed",
       "repair_items": []
     },
     {
+      "id": "AC-01",
+      "status": "closed",
+      "repair_items": ["A1-F01/O5 deferred reconcile → R3H-08 per ADR-025"]
+    },
+    {
       "id": "AC-02",
-      "status": "pending",
+      "status": "closed",
       "repair_items": []
     },
     {
       "id": "AC-03",
-      "status": "pending",
+      "status": "closed",
       "repair_items": []
     },
     {
       "id": "AC-04",
-      "status": "pending",
+      "status": "closed",
       "repair_items": []
     },
     {
       "id": "AC-05",
-      "status": "pending",
-      "repair_items": []
-    },
-    {
-      "id": "AC-BOOT",
-      "status": "pending",
+      "status": "closed",
       "repair_items": []
     },
     {
       "id": "AC-CLOSE",
-      "status": "pending",
+      "status": "closed",
       "repair_items": []
     }
   ]

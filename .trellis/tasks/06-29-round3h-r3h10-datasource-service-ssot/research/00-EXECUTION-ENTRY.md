@@ -76,6 +76,8 @@ python .trellis/scripts/task.py validate-plan-freeze .trellis/tasks/06-29-round3
 | `gitnexus-execute-summary.md` | trellis-execute             | Phase 0a impact 摘要           |
 | `execute-skill-evaluation.md` | trellis-execute             | §12 skill 评估                 |
 | `gitnexus-audit-summary.md`   | trellis-execute / Audit     | Phase 7 detect_changes 摘要    |
+| `audit-repair-ledger.md`      | Audit repair                | 八路修复台账                   |
+| `source-index.md`             | trellis-check / A1          | Trace Authority 补位           |
 
 ### 5.2 切片开工前必读（硬门禁）
 
@@ -83,7 +85,7 @@ python .trellis/scripts/task.py validate-plan-freeze .trellis/tasks/06-29-round3
 
 #### A. `research/` 包内（全部已登记文件 — 见 §5.1）
 
-1. `00-EXECUTION-ENTRY.md` … `gitnexus-audit-summary.md`（**共 14 份**，不含 `plan-boot.md`）
+1. `00-EXECUTION-ENTRY.md` … `source-index.md`（**共 16 份**，不含 `plan-boot.md`）
 
 #### B. `EXTERNAL-INDEX.md` §A 所列包外文档（全部）
 

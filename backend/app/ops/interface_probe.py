@@ -8,20 +8,18 @@ after ``tdx_live_manual_probe_gate.validate_tdx_live_manual_probe_authorization`
 
 from __future__ import annotations
 
-from backend.app.ops.rehearsal_boundary import REHEARSAL_DISCLAIMER, REHEARSAL_ONLY
-
 import json
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from backend.app.ops.rehearsal_boundary import REHEARSAL_DISCLAIMER, REHEARSAL_ONLY
+
 from backend.app.config import DATA_ROOT, PROJECT_ROOT
 from backend.app.datasources.adapters.fetch_port import FetchPayload, FetchPort, PortError, StubFetchPort
-from backend.app.datasources.capability_registry import SourceCapabilityRegistry
 from backend.app.datasources.fetch_result import FetchRequest
-from backend.app.datasources.route_planner import SourceRoutePlanner
-from backend.app.datasources.source_registry import SourceRegistry
+from backend.app.datasources.service import DataSourceService
 from backend.app.ops.db_inspector import KEY_TABLES
 from backend.app.ops.interface_probe_fetch_ports import (
     EASTMONEY_HIST_VENDOR_API,
@@ -120,14 +118,10 @@ def _safe_key_table_row_counts(db_path: Path) -> dict[str, int | None]:
 
 
 def build_route_matrix() -> dict[str, Any]:
-    registry = SourceRegistry()
-    registry.load()
-    capabilities = SourceCapabilityRegistry()
-    capabilities.load()
-    planner = SourceRoutePlanner(
-        source_registry=registry,
-        capability_registry=capabilities,
-    )
+    # ponytail: single DataSourceService loads registries once (C2 SSOT for route evidence)
+    service = DataSourceService(staged_fixture_mode=True)
+    registry = service._source_registry
+    planner = service._route_planner
     rows = []
     for target in PROBE_TARGETS:
         plan = planner.plan(
@@ -167,7 +161,11 @@ def _fetch_payload_via_service(
     target: ProbeTarget,
     sandbox_root: Path,
 ) -> FetchPayload:
-    """Delegate network fetch through DataSourceService (C2 SSOT, R3H-10 S10-04)."""
+    """Delegate network fetch through DataSourceService (C2 SSOT, R3H-10 S10-04).
+
+    ponytail: per-probe ephemeral duckdb + migration; PROBE_TARGETS bounded (~4);
+    upgrade path = shared sandbox helper (bind R3H-08C probe hardening).
+    """
     sandbox_root.mkdir(parents=True, exist_ok=True)
     service = DataSourceService(
         fetch_port=port,

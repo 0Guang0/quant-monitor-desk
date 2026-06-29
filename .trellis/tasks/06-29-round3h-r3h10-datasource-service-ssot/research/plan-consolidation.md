@@ -5,18 +5,18 @@
 
 ## Skill 产出对照表（→ ENTRY §5.1）
 
-| Skill                       | 产出路径                                                                                                           | 状态 |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------ | ---- |
-| to-issues                   | `to-issues-slices.md` · `bypass-baseline-matrix.md`                                                                | done |
-| planning-and-task-breakdown | `plan-task-sizing.md`                                                                                              | done |
-| spec-driven-development     | `plan-spec-gap.md`                                                                                                 | done |
-| context-engineering         | `plan-context-pack.md`                                                                                             | done |
-| doubt-driven-development    | `plan-doubt-review.md`                                                                                             | done |
-| documentation-and-adrs      | `docs/decisions/ADR-025-*.md`                                                                                      | done |
-| trellis-research            | `reference-adoption-r3h10.md`                                                                                      | done |
-| gitnexus 1a/1b              | `project-overview.md` · `gitnexus-summary.md`                                                                      | done |
-| trellis-plan 5e             | `00-EXECUTION-ENTRY.md` · `EXTERNAL-INDEX.md` · `EXECUTION_PLAN.md`                                                | done |
-| trellis-execute             | `context-closure.md` · `gitnexus-execute-summary.md` · `execute-skill-evaluation.md` · `gitnexus-audit-summary.md` | done |
+| Skill                       | 产出路径                                                                                                                                                          | 状态 |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---- |
+| to-issues                   | `to-issues-slices.md` · `bypass-baseline-matrix.md`                                                                                                               | done |
+| planning-and-task-breakdown | `plan-task-sizing.md`                                                                                                                                             | done |
+| spec-driven-development     | `plan-spec-gap.md`                                                                                                                                                | done |
+| context-engineering         | `plan-context-pack.md`                                                                                                                                            | done |
+| doubt-driven-development    | `plan-doubt-review.md`                                                                                                                                            | done |
+| documentation-and-adrs      | `docs/decisions/ADR-025-*.md`                                                                                                                                     | done |
+| trellis-research            | `reference-adoption-r3h10.md`                                                                                                                                     | done |
+| gitnexus 1a/1b              | `project-overview.md` · `gitnexus-summary.md`                                                                                                                     | done |
+| trellis-plan 5e             | `00-EXECUTION-ENTRY.md` · `EXTERNAL-INDEX.md` · `EXECUTION_PLAN.md`                                                                                               | done |
+| trellis-execute             | `context-closure.md` · `gitnexus-execute-summary.md` · `execute-skill-evaluation.md` · `gitnexus-audit-summary.md` · `audit-repair-ledger.md` · `source-index.md` | done |
 
 ## 5e 分流
 

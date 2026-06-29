@@ -235,13 +235,14 @@ def test_r3h10_rehearsalScriptsDoNotClaimProductLiveReady() -> None:
     验证点：REHEARSAL_ONLY is True；PRODUCT_LIVE_READY is False；脚本 description 含 REHEARSAL_ONLY
     失败含义：rehearsal 入口可被误读为 R3H-08 产品 live 替身
     """
-    from backend.app.ops import live_pilot, rehearsal_boundary, staged_pilot
+    from backend.app.ops import interface_probe, live_pilot, rehearsal_boundary, staged_pilot
 
     script = _read(PROJECT_ROOT / "scripts/run_staged_pilot.py")
     assert rehearsal_boundary.REHEARSAL_ONLY is True
     assert rehearsal_boundary.PRODUCT_LIVE_READY is False
     assert "REHEARSAL_ONLY" in (staged_pilot.__doc__ or "")
     assert "REHEARSAL_ONLY" in (live_pilot.__doc__ or "")
+    assert interface_probe.REHEARSAL_ONLY is True
     assert "REHEARSAL_ONLY" in script
 
 

@@ -11,11 +11,12 @@ import re
 from collections.abc import Callable, Iterator, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, date, datetime
 from typing import TypeVar
 
 from backend.app.datasources.adapters.fetch_port import FetchPayload, PortError
 from backend.app.datasources.fetch_result import FetchRequest
+from backend.app.datasources.fetch_window import recent_window_start
 
 _T = TypeVar("_T")
 
@@ -76,8 +77,6 @@ def _run_akshare_call(fn: Callable[[], _T]) -> _T:
     combined = "; ".join(errors)
     raise PortError("NETWORK_ERROR", f"{combined}; {_PROXY_HINT}")
 
-
-from backend.app.ops.fetch_port_common import recent_window_start
 
 _DATE_WINDOW_RE = re.compile(
     r"^recent\s+(\d+)\s+(trading|calendar)\s+days$",

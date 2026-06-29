@@ -4,7 +4,7 @@
 > **波次定位：** `PROJECT_IMPLEMENTATION_ROADMAP.md` §3.2–§3.3 · `R3H_PASS_EXECUTION_PLAN.md` §3 Wave 1  
 > **执行纪律：** **单主会话默认串行** — **必须先 CLOSED `R3H-10`，再开工 `R3H-07`**；禁止 Wave 1 内并行两轨（多 agent 须主会话显式批准）。  
 > **模块轨：** 一轨一主 Module ID 评级一跳 — `R3H-10` → **C2**（+E4）`R3→R4`；`R3H-07` → **G4**（+C3 日历语义）`R3→R4`。  
-> **状态：** Wave 1 **OPEN** @ 2026-06-29
+> **状态：** Wave 1 **1a CLOSED · 1b OPEN（R3H-07）** @ 2026-06-29
 
 ---
 
@@ -79,6 +79,17 @@ Execute 入口：`.trellis/tasks/06-29-round3h-r3h10-datasource-service-ssot/res
 **Blocked by:** R3H-06 CLOSED
 
 **Out of scope:** R3H-08 真网 live；registry 主会话 CLOSED（本票只交 proposed delta）
+
+### 1.1 R3H-10 阶段外置（绑定 Wave 2 · 非本票 AC）
+
+| 项                                                           | 绑定                                | 说明                                               |
+| ------------------------------------------------------------ | ----------------------------------- | -------------------------------------------------- |
+| `run_reconcile` + `datasource_service=` 金路径               | **R3H-08A–D**                       | ADR-025 §Reconcile defer；今日 adapter fail-closed |
+| `cn_rehearsal_live_ports` → `ops.fetch_port_common` 依赖倒置 | ~~R3H-08B~~ **R3H-10 repair fixed** | `fetch_window.py`                                  |
+| `interface_probe.build_route_matrix` 不经 service            | **R3H-08C**                         | probe/CLI 路由预览统一                             |
+| 双 guard 合并                                                | tech-debt                           | 可选；adapter vs service 语义分离有意保留          |
+
+台账：`research/audit-repair-ledger.md` §Wave 2 承接表。
 ```
 
 ---

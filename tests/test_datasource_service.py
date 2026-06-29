@@ -113,15 +113,28 @@ def test_datasourceServiceContract_statusIsActive() -> None:
 
 
 def test_datasourceServiceContract_requiredTestsIncludeR3h10Gate() -> None:
-    """覆盖范围：契约 required_tests 含 R3H-10 升格 gate
+    """覆盖范围：契约 required_tests 含 R3H-10 行为门禁用例
     测试对象：datasource_service_contract.yaml required_tests
-    目的/目标：机器可读绑定 active 契约与 S10-02 gate 测试
-    验证点：含 test_datasourceServiceContract_statusIsActive
-    失败含义：升格 gate 未登记，后续回归可删 gate 而不触发契约扫描
+    目的/目标：机器可读绑定 active 契约与 S10-01/03/04/05 gate 测试
+    验证点：含 status gate 与 r3h10 关键行为测名
+    失败含义：升格 gate 或行为测未登记，后续回归可删而不触发契约扫描
     """
     contract = load_yaml(SERVICE_CONTRACT)
-    required = contract.get("required_tests") or []
-    assert "tests/test_datasource_service.py::test_datasourceServiceContract_statusIsActive" in required
+    required = set(contract.get("required_tests") or [])
+    for name in (
+        "tests/test_datasource_service.py::test_datasourceServiceContract_statusIsActive",
+        "tests/test_sync_orchestrator.py::test_r3h10S10_01_incremental_requiresDatasourceServiceInProductionProfile",
+        "tests/test_sync_orchestrator.py::test_r3h10S10_01_backfill_requiresDatasourceServiceInProductionProfile",
+        "tests/test_interface_probe_018c.py::test_r3h10_interfaceProbeFetchDelegatesThroughDataSourceService",
+        "tests/test_staged_pilot.py::test_stagedPilot_stagedFetchPortsShareProductFetchPortModule",
+        "tests/test_staged_pilot.py::test_livePilot_liveFetchPortsShareProductFetchPortModule",
+        "tests/test_production_live_pilot_policy.py::test_r3h10_rehearsalScriptsDoNotClaimProductLiveReady",
+        "tests/test_sync_orchestrator.py::test_r3h10S10_01_reconcile_adapterBypassFailClosedPerAdr025",
+        "tests/test_production_live_pilot_policy.py::test_r3h10_rehearsalScriptsDoNotClaimProductLiveReady",
+        "tests/test_interface_probe_018c.py::test_r3h10_interfaceProbeRunSingleProbeUsesFetchViaServiceHelper",
+        "tests/test_staged_pilot.py::test_r3h10_cnRehearsalLivePorts_stagedAliasesShareLiveClassObjects",
+    ):
+        assert name in required
 
 
 def test_serviceFetch_runtimeGateOrder(tmp_path: Path, monkeypatch) -> None:

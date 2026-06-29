@@ -16,3 +16,5 @@
 ## Audit sign-off
 
 Human/agent review: CRITICAL surface covered by fail-closed guards + rehearsal boundaries + contract active gate.
+
+**detect_changes 落盘：** `research/gitnexus-detect-changes-evidence.txt`（compare vs master · 22 symbols · 19 processes · CRITICAL）

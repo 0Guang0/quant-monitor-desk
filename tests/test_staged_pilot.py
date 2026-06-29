@@ -649,6 +649,20 @@ def test_livePilot_liveFetchPortsShareProductFetchPortModule() -> None:
     assert port.__class__.__module__.startswith("backend.app.datasources.fetch_ports")
 
 
+def test_r3h10_cnRehearsalLivePorts_stagedAliasesShareLiveClassObjects() -> None:
+    """覆盖范围：staged/live 别名共享同一 FetchPort 类对象（S10-05）
+    测试对象：cn_rehearsal_live_ports 模块级 staged 别名
+    目的/目标：双轨收敛为 class identity，而非仅 __module__ 前缀代理
+    验证点：BaostockStagedFetchPort is BaostockLiveFetchPort 等三对
+    失败含义：staged/live 再次分叉为不同类实现
+    """
+    from backend.app.datasources.fetch_ports import cn_rehearsal_live_ports as ports
+
+    assert ports.BaostockStagedFetchPort is ports.BaostockLiveFetchPort
+    assert ports.AkshareEquityStagedFetchPort is ports.AkshareEquityLiveFetchPort
+    assert ports.CninfoMetadataStagedFetchPort is ports.CninfoRehearsalMetadataFetchPort
+
+
 def test_stagedPilot_evidencePathsPreferProjectRelative(tmp_path: Path) -> None:
     """覆盖范围：证据 JSON 路径相对化
     测试对象：_evidence_relative_path

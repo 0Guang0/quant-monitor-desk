@@ -6,6 +6,7 @@ import os
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from typing import Any
 
 from backend.app.datasources.base_adapter import BaseDataAdapter
 from backend.app.datasources.fetch_result import FetchRequest, FetchResult
@@ -35,14 +36,14 @@ PostWritePreCompleteHook = Callable[[str, str], None]
 
 def sync_adapter_bypass_allowed() -> bool:
     """Test-only: pytest permits direct adapter= on sync entry."""
-    # ponytail: PYTEST_CURRENT_TEST only; no production env escape hatch (AA-02)
+    # ponytail: PYTEST_CURRENT_TEST only; QMD_SYNC_ALLOW_ADAPTER removed (AA-02 / A3-06)
     return bool(os.getenv("PYTEST_CURRENT_TEST"))
 
 
 def guard_production_adapter_bypass(
     *,
     adapter: BaseDataAdapter | None,
-    datasource_service,
+    datasource_service: Any | None,
     entry: str,
 ) -> None:
     """Fail-closed when production profile passes adapter= without DataSourceService."""
@@ -59,7 +60,7 @@ def guard_production_adapter_bypass(
 def guard_production_datasource_service_required(
     *,
     adapter: BaseDataAdapter | None,
-    datasource_service,
+    datasource_service: Any | None,
     entry: str,
 ) -> None:
     """Fail-closed when production profile omits datasource_service= (ADR-025)."""

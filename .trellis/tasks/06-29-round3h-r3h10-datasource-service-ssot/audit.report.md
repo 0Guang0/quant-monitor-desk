@@ -1,46 +1,60 @@
 # Audit Report — R3H-10 DataSourceService SSOT (A9 主会话汇总)
 
-> **日期：** 2026-06-29 · **分支：** `feature/round3h-r3h10-datasource-service-ssot`  
-> **总裁决：** **PASS**（八路 composer-2.5 初检 FAIL 项已主会话修复并复验）
+> **日期：** 2026-06-29 · **分支：** `feature/round3h-r3h10-datasource-service-ssot` @ `b70c600e`+repair  
+> **总裁决：** **PASS**  
+> **全量台账：** `research/audit-repair-ledger.md`（八路 + O1–O7 + A6 可选观察；无未绑定 deferred）
 
 ## 维度裁决
 
-| 维  | 初检 | 修复后   | 摘要                                                                               |
-| --- | ---- | -------- | ---------------------------------------------------------------------------------- |
-| A1  | FAIL | **PASS** | ADR-025 §Reconcile defer 明确 S10-01 范围；incremental/backfill fail-closed 对齐   |
-| A2  | PASS | **PASS** | 薄 shim + 单 guard                                                                 |
-| A3  | PASS | **PASS** | fail-closed / rehearsal 边界                                                       |
-| A4  | PASS | **PASS** | 错误语义 + 五字段测                                                                |
-| A5  | FAIL | **PASS** | `validate-plan-freeze` exit 0；WAVE1 AC [x]；CLOSE pytest 证据                     |
-| A6  | SKIP | **SKIP** | 无 perf SLO；全量 pytest ~196s                                                     |
-| A7  | FAIL | **PASS** | bundle 登记 + `gitnexus-audit-summary.md`                                          |
-| A8  | FAIL | **PASS** | live_pilot REHEARSAL docstring；live SSOT 对称测；reconcile defer 非 silent bypass |
+| 维  | 结论          | 摘要                                                       |
+| --- | ------------- | ---------------------------------------------------------- |
+| A1  | **PASS**      | ADR-025 §Reconcile defer；规格/实现/切片一致               |
+| A2  | **PASS**      | 净减行；ponytail 合规                                      |
+| A3  | **PASS**      | fail-closed；sandbox ops 已登记 §9.1                       |
+| A4  | **PASS**      | 五字段测；probe 强断言 outcome-first                       |
+| A5  | **PASS**      | freeze/handoff/WAVE1/CLOSE 证据齐                          |
+| A6  | **SKIP→PASS** | 无 perf SLO；pytest ~193s 哨兵（见 §3.6）                  |
+| A7  | **PASS**      | GitNexus 摘要 + detect_changes 落盘 + loop_manifest closed |
+| A8  | **PASS**      | B1/B2/N1–N5 已 fix；required_tests 扩面；源码守卫测        |
 
-## §4.3 修复项
+## §3.6 A6 性能（SKIP → PASS）
 
-| ID    | 级别 | 处理                                                                    |
-| ----- | ---- | ----------------------------------------------------------------------- |
-| AR-01 | P0   | `validate-plan-freeze` — 登记 Execute/Audit bundle 文件 — **已修复**    |
-| AR-02 | P0   | `live_pilot.py` REHEARSAL_ONLY 模块 docstring + 测扩展 — **已修复**     |
-| AR-03 | P0   | `test_livePilot_liveFetchPortsShareProductFetchPortModule` — **已修复** |
-| AR-04 | P0   | ADR-025 reconcile explicit defer — **已修复**                           |
-| AR-05 | P2   | `bypass-baseline-matrix.md` OPEN § → CLOSED 历史 — **已修复**           |
-| AR-06 | P2   | `gitnexus-audit-summary.md` — **已修复**                                |
+| 项               | 内容                                                                  |
+| ---------------- | --------------------------------------------------------------------- |
+| SKIP 理由        | 本 Wave 无独立 perf SLO / smoke budget                                |
+| 回归哨兵         | `uv run pytest -q` exit 0 ~193s（3 skipped）                          |
+| 证据             | `research/execute-evidence/9.0-green.txt` · `9.close-pytest-full.txt` |
+| Scope            | 未扩张；Out of scope 未变（R3H-08 live / migration / Round4 API）     |
+| 计划外 perf 扫描 | interface_probe→service 路径无阻塞红旗                                |
 
-## 阶段外置（绑定后续）
+### A6 可选观察（绑定 R3H-08C，非阻塞）
 
-| 项                                                                | 绑定                      | 说明                                                             |
-| ----------------------------------------------------------------- | ------------------------- | ---------------------------------------------------------------- |
-| `run_reconcile` `datasource_service=` 金路径                      | R3H-08 / Wave 2 Sync 切片 | ADR-025 §Reconcile defer；今日 production 仍 adapter fail-closed |
-| `cn_rehearsal_live_ports` → `ops.fetch_port_common` 依赖          | R3H-08                    | A4 F-02；非 R3H-10 阻塞                                          |
-| `interface_probe.build_route_matrix` 不经 `service.preview_route` | 文档/后续                 | P3                                                               |
+| 观察                                            | 绑定                |
+| ----------------------------------------------- | ------------------- |
+| probe 每 target 独立 duckdb+migration           | R3H-08C 共享 helper |
+| run_interface_probe 读全库 bytes 做 no-mutation | 低频 ops；可接受    |
+| raw 双写 sandbox                                | bounded rows        |
+| build_route_matrix 与 fetch 各 load registry    | probe 非热点        |
+| pytest mock 不测真网延迟                        | 设计如此            |
+
+## O1–O7 计划外发现
+
+| ID  | 级别         | 状态                                         |
+| --- | ------------ | -------------------------------------------- |
+| O1  | BLOCKING     | **fixed** — bundle 登记                      |
+| O2  | BLOCKING     | **fixed** — Wave1 1a CLOSED                  |
+| O3  | NON-BLOCKING | **fixed** — bypass CLOSED 段                 |
+| O4  | NON-BLOCKING | **fixed** — pytest 摘要证据                  |
+| O5  | NON-BLOCKING | **deferred** — R3H-08 · ADR §Reconcile defer |
+| O6  | NON-BLOCKING | **fixed** — evidence_index                   |
+| O7  | NON-BLOCKING | **fixed** — integration-audit PASS           |
 
 ## 验证
 
-- `python .trellis/scripts/task.py validate-plan-freeze` → exit 0
-- `python .trellis/scripts/task.py validate-execute-handoff` → exit 0
-- `uv run pytest -q` → exit 0（`research/execute-evidence/9.close-pytest-full.txt`）
+- `validate-plan-freeze` → exit 0
+- `validate-execute-handoff` → Execute 步 exit 0；Audit 关账后 `audit_matrix` PASS 与 `in_progress` 并存 → **finish-work 待执行**（非 repair 缺口）
+- `uv run pytest -q` → exit 0（repair 轮 ~216s）
 
 ## 下游
 
-**R3H-07 Plan/Execute 已解锁**（R3H-10 CLOSED + STAGED-PILOT-SSOT CLOSED + Audit PASS）。
+**R3H-07 Plan/Execute 已解锁。**

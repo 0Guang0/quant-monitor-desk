@@ -1041,9 +1041,9 @@ def test_r3ySync001_reconcile_rejectsAdapterBypassInProductionProfile(
 ) -> None:
     """覆盖范围：生产环境下冲突调和禁止直接注入 adapter 旁路
     测试对象：DataSyncOrchestrator.run_reconcile(conflict_id, adapter=X)
-    目的/目标：生产配置下调和也必须经 DataSourceService，与增量/回补守卫一致
+    目的/目标：reconcile 生产 profile adapter fail-closed（ADR-025 §Reconcile defer；金路径 datasource_service= 属 R3H-08）
     验证点：预插 source_conflict 后抛 ValueError match DataSourceService
-    失败含义：调和可绕过服务层，三条主路径的守卫规则不一致
+    失败含义：调和可绕过 adapter 旁路守卫
     """
     from datetime import UTC, datetime
 
@@ -1257,6 +1257,53 @@ def test_r3h10S10_01_backfill_requiresDatasourceServiceInProductionProfile(
     )
     with pytest.raises(ValueError, match="datasource_service="):
         orch.run_backfill(spec, clean_table="clean_r3h10")
+
+
+def test_r3h10S10_01_reconcile_adapterBypassFailClosedPerAdr025(
+    tmp_path, monkeypatch
+) -> None:
+    """覆盖范围：reconcile 生产 profile adapter 旁路 fail-closed（ADR-025 §Reconcile defer）
+    测试对象：DataSyncOrchestrator.run_reconcile(conflict_id, adapter=X)
+    目的/目标：reconcile 无 datasource_service= 金路径时仍须 adapter fail-closed，非 silent bypass
+    验证点：与 test_r3ySync001_reconcile_* 一致抛 ValueError match DataSourceService
+    失败含义：reconcile 生产 profile 可直注 adapter，旁路守卫失效
+    """
+    import pytest
+    from datetime import UTC, datetime
+
+    _simulate_production_profile(monkeypatch)
+    orch = _orchestrator(tmp_path)
+    conflict_id = "conflict-r3h10-rc"
+    with orch._cm.writer() as con:
+        con.execute(
+            """
+            INSERT INTO source_conflict (
+                conflict_id, run_id, job_id, data_domain, market_id,
+                field_name, primary_source, primary_value,
+                competing_source, competing_value, normalized_diff,
+                severity, reconcile_status, manual_review_required, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            [
+                conflict_id,
+                "run-r3h10-rc",
+                "job-r3h10-rc",
+                "market_bar_1d",
+                "CN_A",
+                "close",
+                "baostock",
+                "100",
+                "qmt_xtdata",
+                "150",
+                "0.5",
+                "severe",
+                "UNRESOLVED",
+                True,
+                datetime.now(UTC),
+            ],
+        )
+    with pytest.raises(ValueError, match="DataSourceService"):
+        orch.run_reconcile(conflict_id, adapter=_BackfillCountAdapter())
 
 
 def _reserved_job_spec(job_type: str, *, job_id: str = "job-reserved") -> SyncJobSpec:

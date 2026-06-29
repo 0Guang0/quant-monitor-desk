@@ -142,4 +142,14 @@ Future implementation must add tests that prove:
 | `DataSourceService` → `datasources/fetch_ports/*`                                              | **Product fetch SSOT**      | Yes (when authorized)                     |
 | `ops/staged_pilot_*`, `ops/live_pilot_*`, `scripts/run_staged_pilot.py`, `ops/interface_probe` | **Rehearsal-only** evidence | **No** — must not substitute product live |
 
-Rehearsal modules carry `REHEARSAL_ONLY` (`backend.app.ops.rehearsal_boundary`). They are sandbox/staged evidence paths only and are **not** on the Sync orchestrator default import chain.
+Rehearsal modules carry `REHEARSAL_ONLY` in module docstring or import `backend.app.ops.rehearsal_boundary` (`staged_pilot`, `interface_probe`; `live_pilot` docstring). They are sandbox/staged evidence paths only and are **not** on the Sync orchestrator default import chain.
+
+### 9.1 Sandbox-gated ops fetch（非 forbidden_direct_callers 扫描面）
+
+| Module                                | Role                       | Product live? |
+| ------------------------------------- | -------------------------- | ------------- |
+| `ops/prediction_market_live_smoke.py` | Env-gated sandbox smoke    | **No**        |
+| `ops/fred_sandbox_pilot.py`           | FRED sandbox rehearsal     | **No**        |
+| `ops/tdx_manual_probe.py`             | TDX manual validation only | **No**        |
+
+登记目的：审计可见性；R3H-08 产品化时评估是否经 `DataSourceService` 或保持 rehearsal 例外。

@@ -1,0 +1,30 @@
+# GitNexus detect_changes — R3H-10 Audit closeout @ 2026-06-29
+
+Command: detect_changes({ scope: "compare", base_ref: "master" })
+Repo: quant-monitor-desk
+
+## Summary
+- changed_symbols: 22
+- affected_processes: 19
+- changed_files: 58
+- risk_level: CRITICAL
+
+## Mitigation (test + guards)
+- test_r3h10S10_01_* / test_r3ySync001_*
+- test_r3h10_interfaceProbeFetchDelegatesThroughDataSourceService
+- test_stagedPilot_stagedFetchPortsShareProductFetchPortModule
+- test_livePilot_liveFetchPortsShareProductFetchPortModule
+- uv run pytest -q exit 0
+
+## Notable changed symbols
+- guard_production_datasource_service_required (runners.py)
+- DataSyncOrchestrator.run_backfill / run_incremental (orchestrator.py)
+- run_single_probe / _fetch_payload_via_service (interface_probe.py)
+- cn_rehearsal_live_ports SSOT + staged/live shims
+
+## Affected process groups (sample)
+- Run_interface_probe → run_single_probe
+- Run_full_staged_pilot
+- Main → run_staged_pilot script chain
+
+Full MCP JSON archived in Audit session; re-run before next CRITICAL edit.
