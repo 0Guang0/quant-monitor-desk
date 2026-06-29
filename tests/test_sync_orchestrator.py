@@ -1197,6 +1197,68 @@ def test_r3ySync001_privateIncrementalRunner_rejectsAdapterBypassInProductionPro
         )
 
 
+def test_r3h10S10_01_incremental_requiresDatasourceServiceInProductionProfile(
+    tmp_path, monkeypatch
+) -> None:
+    """覆盖范围：生产环境下增量同步未注入 DataSourceService 且无 adapter 时 fail-closed
+    测试对象：DataSyncOrchestrator.run_incremental(spec) 无 adapter 无 datasource_service
+    目的/目标：ADR-025 — 禁止隐式默认 service；须显式 datasource_service= 金路径
+    验证点：抛 ValueError match datasource_service=
+    失败含义：生产可省略 service 仍进入 runner，与 C2 SSOT 和 adapter 旁路守卫不对称
+    """
+    import pytest
+
+    _simulate_production_profile(monkeypatch)
+    orch = _orchestrator(tmp_path)
+    spec = SyncJobSpec(
+        run_id="run-r3h10-inc",
+        job_id="job-r3h10-inc",
+        job_type="incremental",
+        data_domain="market_bar_1d",
+        market_id="CN_A",
+        source_id="baostock",
+        adapter_id=None,
+        date_start=None,
+        date_end=None,
+        instrument_id=None,
+        partition_key=None,
+        trigger_reason=None,
+    )
+    with pytest.raises(ValueError, match="datasource_service="):
+        orch.run_incremental(spec, clean_table="clean_r3h10")
+
+
+def test_r3h10S10_01_backfill_requiresDatasourceServiceInProductionProfile(
+    tmp_path, monkeypatch
+) -> None:
+    """覆盖范围：生产环境下回补未注入 DataSourceService 且无 adapter 时 fail-closed
+    测试对象：DataSyncOrchestrator.run_backfill(spec) 无 adapter 无 datasource_service
+    目的/目标：ADR-025 — 回补与增量对称，禁止省略 datasource_service=
+    验证点：抛 ValueError match datasource_service=
+    失败含义：回补可隐式进入 runner 后才报错，混淆 missing service 与 fetch 失败
+    """
+    import pytest
+
+    _simulate_production_profile(monkeypatch)
+    orch = _orchestrator(tmp_path)
+    spec = SyncJobSpec(
+        run_id="run-r3h10-bf",
+        job_id="job-r3h10-bf",
+        job_type="backfill",
+        data_domain="market_bar_1d",
+        market_id="CN_A",
+        source_id="baostock",
+        adapter_id=None,
+        date_start=date(2026, 1, 1),
+        date_end=date(2026, 1, 15),
+        instrument_id=None,
+        partition_key=None,
+        trigger_reason="eco_catchup",
+    )
+    with pytest.raises(ValueError, match="datasource_service="):
+        orch.run_backfill(spec, clean_table="clean_r3h10")
+
+
 def _reserved_job_spec(job_type: str, *, job_id: str = "job-reserved") -> SyncJobSpec:
     return SyncJobSpec(
         run_id="run-reserved",

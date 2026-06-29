@@ -2,9 +2,13 @@
 
 Not authorized for TDX live manual probe. Use ``run_tdx_live_manual_probe`` (future)
 after ``tdx_live_manual_probe_gate.validate_tdx_live_manual_probe_authorization``.
+
+``REHEARSAL_ONLY`` — not R3H-08 product live SSOT (R3H-10 S10-03).
 """
 
 from __future__ import annotations
+
+from backend.app.ops.rehearsal_boundary import REHEARSAL_DISCLAIMER, REHEARSAL_ONLY
 
 import json
 from dataclasses import dataclass
@@ -13,7 +17,7 @@ from pathlib import Path
 from typing import Any
 
 from backend.app.config import DATA_ROOT, PROJECT_ROOT
-from backend.app.datasources.adapters.fetch_port import FetchPort, PortError, StubFetchPort
+from backend.app.datasources.adapters.fetch_port import FetchPayload, FetchPort, PortError, StubFetchPort
 from backend.app.datasources.capability_registry import SourceCapabilityRegistry
 from backend.app.datasources.fetch_result import FetchRequest
 from backend.app.datasources.route_planner import SourceRoutePlanner
@@ -27,6 +31,9 @@ from backend.app.ops.interface_probe_fetch_ports import (
     content_hash_bytes,
 )
 from backend.app.ops.mutation_proof import key_table_row_counts
+from backend.app.datasources.service import DataSourceService
+from backend.app.db.connection import ConnectionManager
+from backend.app.db.migrate import apply_migrations
 from backend.app.storage.raw_store import RawStore
 
 DEFAULT_PRODUCTION_DB = DATA_ROOT / "duckdb" / "quant_monitor.duckdb"
@@ -153,6 +160,42 @@ def _resolve_fetch_port(target: ProbeTarget) -> FetchPort:
     return StubFetchPort(payload=b"{}")
 
 
+def _fetch_payload_via_service(
+    *,
+    port: FetchPort,
+    req: FetchRequest,
+    target: ProbeTarget,
+    sandbox_root: Path,
+) -> FetchPayload:
+    """Delegate network fetch through DataSourceService (C2 SSOT, R3H-10 S10-04)."""
+    sandbox_root.mkdir(parents=True, exist_ok=True)
+    service = DataSourceService(
+        fetch_port=port,
+        staged_fixture_mode=True,
+        data_root=sandbox_root,
+    )
+    probe_db = sandbox_root / ".interface-probe-fetch.duckdb"
+    cm = ConnectionManager(probe_db)
+    with cm.writer() as con:
+        apply_migrations(con)
+        result = service.fetch(
+            req,
+            con=con,
+            job_id=f"018c-{target.probe_id}",
+            operation=target.operation,
+        )
+    if result.status != "SUCCESS":
+        raise PortError(result.status, result.error_message or "service fetch failed")
+    if not result.raw_file_paths:
+        raise PortError("EMPTY_RESPONSE", "service fetch returned no raw paths")
+    content = Path(result.raw_file_paths[0]).read_bytes()
+    return FetchPayload(
+        content=content,
+        file_type="json",
+        row_count=result.row_count,
+    )
+
+
 def run_single_probe(
     target: ProbeTarget,
     *,
@@ -174,6 +217,8 @@ def run_single_probe(
         "operation": target.operation,
         "vendor_api": target.vendor_api,
         "upstream": target.upstream,
+        "rehearsal_only": REHEARSAL_ONLY,
+        "rehearsal_disclaimer": REHEARSAL_DISCLAIMER,
         "params": {
             "instrument_id": target.instrument_id,
             "window_label": target.window_label,
@@ -194,7 +239,12 @@ def run_single_probe(
         )
         return record
     try:
-        payload = port.fetch_payload(req)
+        payload = _fetch_payload_via_service(
+            port=port,
+            req=req,
+            target=target,
+            sandbox_root=sandbox_root,
+        )
     except PortError as exc:
         record.update(
             {"status": "FAILED", "failure_reason": exc.message, "port_status": exc.status}

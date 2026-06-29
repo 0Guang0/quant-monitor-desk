@@ -96,6 +96,51 @@ def test_decision_doesNotCloseRequest2() -> None:
     assert d["does_not_unblock_production_live_readiness"]
 
 
+def test_r3h10_interfaceProbeFetchDelegatesThroughDataSourceService(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """覆盖范围：interface_probe 网络 fetch 经 DataSourceService（S10-04）
+    测试对象：run_single_probe → _fetch_payload_via_service
+    目的/目标：probe 不得 silent bypass C2 facade 直调 port.fetch_payload
+    验证点：DataSourceService.fetch 被调用一次；记录含 rehearsal_only
+    失败含义：probe 仍直连 fetch_ports，旁路 route/guard/fetch_log 链
+    """
+    from backend.app.datasources.adapters.fetch_port import FetchPayload
+    from backend.app.datasources.fetch_result import FetchResult
+    from backend.app.ops.interface_probe import PROBE_TARGETS, run_single_probe
+
+    calls: list[str] = []
+
+    class _SpyService:
+        def __init__(self, **kwargs):
+            pass
+
+        def fetch(self, req, *, con, job_id=None, operation=None):
+            calls.append("fetch")
+            return FetchResult(
+                run_id=req.run_id,
+                source_id=req.source_id,
+                data_domain=req.data_domain,
+                status="SUCCESS",
+                row_count=1,
+                fetch_time="2026-06-29T00:00:00Z",
+                raw_file_paths=[str(tmp_path / "raw.json")],
+            )
+
+    (tmp_path / "raw.json").write_text('{"rows":[]}', encoding="utf-8")
+    monkeypatch.setattr("backend.app.ops.interface_probe.DataSourceService", _SpyService)
+    monkeypatch.setattr(
+        "backend.app.ops.interface_probe._resolve_fetch_port",
+        lambda target: type("P", (), {"fetch_payload": lambda s, r: FetchPayload(content=b"{}", file_type="json", row_count=0)})(),
+    )
+
+    target = next(t for t in PROBE_TARGETS if t.operation == "fetch_daily_bar_sina_validation")
+    record = run_single_probe(target, sandbox_root=tmp_path / "sandbox")
+    assert calls == ["fetch"]
+    assert record.get("rehearsal_only") is True
+    assert record["status"] in {"SUCCESS", "FAILED"}
+
+
 def test_runInterfaceProbe_writesEvidence(tmp_path: Path, monkeypatch) -> None:
     """覆盖范围：run_interface_probe 端到端证据落盘
     测试对象：run_interface_probe
@@ -103,16 +148,33 @@ def test_runInterfaceProbe_writesEvidence(tmp_path: Path, monkeypatch) -> None:
     验证点：interface_probe_decision.md 文件存在
     失败含义：探针无审计证据，018C 手工复核无法追溯
     """
+    from backend.app.datasources.fetch_result import FetchResult
+
     monkeypatch.setattr("backend.app.ops.interface_probe._safe_key_table_row_counts", lambda _p: {})
 
-    class Ok:
-        def fetch_payload(self, req):
-            return FetchPayload(content=b"{}", file_type="json", row_count=0)
+    class _OkService:
+        def __init__(self, **kwargs):
+            pass
 
+        def fetch(self, req, *, con, job_id=None, operation=None):
+            raw = tmp_path / "probe-raw.json"
+            raw.write_text("{}", encoding="utf-8")
+            return FetchResult(
+                run_id=req.run_id,
+                source_id=req.source_id,
+                data_domain=req.data_domain,
+                status="SUCCESS",
+                row_count=1,
+                fetch_time="2026-06-29T00:00:00Z",
+                raw_file_paths=[str(raw)],
+            )
+
+    monkeypatch.setattr("backend.app.ops.interface_probe.DataSourceService", _OkService)
     monkeypatch.setattr(
         "backend.app.ops.interface_probe._resolve_fetch_port",
-        lambda t: Ok() if t.operation == SIDECAR_SINA_OPERATION else StubFetchPort(payload=b"{}"),
+        lambda t: StubFetchPort(payload=b"{}"),
     )
+
     db = tmp_path / "db.duckdb"
     db.write_bytes(b"x")
     ev = tmp_path / "evidence"

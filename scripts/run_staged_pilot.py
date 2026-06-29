@@ -1,4 +1,4 @@
-"""Thin CLI wrapper for PROMPT_14 staged real-data pilot."""
+"""Thin CLI wrapper for PROMPT_14 staged real-data pilot (REHEARSAL_ONLY)."""
 
 from __future__ import annotations
 
@@ -6,6 +6,7 @@ import argparse
 from pathlib import Path
 
 from backend.app.config import PROJECT_ROOT
+from backend.app.ops.rehearsal_boundary import REHEARSAL_DISCLAIMER
 from backend.app.ops.staged_pilot import (
     DEFAULT_SANDBOX_ROOT,
     run_full_staged_pilot,
@@ -13,7 +14,9 @@ from backend.app.ops.staged_pilot import (
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Run R3X staged real-data pilot (bounded)")
+    parser = argparse.ArgumentParser(
+        description=f"Run R3X staged real-data pilot (bounded; {REHEARSAL_DISCLAIMER})"
+    )
     parser.add_argument(
         "--evidence-dir",
         type=Path,

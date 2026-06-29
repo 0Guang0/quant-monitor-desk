@@ -101,6 +101,29 @@ def test_serviceBuildsRouteBeforeFetch() -> None:
     ]
 
 
+def test_datasourceServiceContract_statusIsActive() -> None:
+    """覆盖范围：DataSourceService 契约 status 升格（R3H-10 S10-02）
+    测试对象：specs/contracts/datasource_service_contract.yaml status 字段
+    目的/目标：C2 SSOT 契约须为 active，禁止长期 draft 漂移
+    验证点：status == active
+    失败含义：契约仍为 draft，审计无法认定 DataSourceService 为产品 fetch SSOT
+    """
+    contract = load_yaml(SERVICE_CONTRACT)
+    assert contract.get("status") == "active"
+
+
+def test_datasourceServiceContract_requiredTestsIncludeR3h10Gate() -> None:
+    """覆盖范围：契约 required_tests 含 R3H-10 升格 gate
+    测试对象：datasource_service_contract.yaml required_tests
+    目的/目标：机器可读绑定 active 契约与 S10-02 gate 测试
+    验证点：含 test_datasourceServiceContract_statusIsActive
+    失败含义：升格 gate 未登记，后续回归可删 gate 而不触发契约扫描
+    """
+    contract = load_yaml(SERVICE_CONTRACT)
+    required = contract.get("required_tests") or []
+    assert "tests/test_datasource_service.py::test_datasourceServiceContract_statusIsActive" in required
+
+
 def test_serviceFetch_runtimeGateOrder(tmp_path: Path, monkeypatch) -> None:
     """覆盖范围：运行时 fetch 闸门实际执行顺序
     测试对象：DataSourceService.fetch（monkeypatch guard/adapter）

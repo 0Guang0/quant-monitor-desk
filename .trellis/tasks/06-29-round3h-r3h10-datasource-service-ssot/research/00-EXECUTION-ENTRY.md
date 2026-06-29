@@ -72,6 +72,10 @@ python .trellis/scripts/task.py validate-plan-freeze .trellis/tasks/06-29-round3
 | `plan-doubt-review.md`        | doubt-driven-development    | 对抗审查                       |
 | `reference-adoption-r3h10.md` | trellis-research            | 参考采纳调研                   |
 | `plan-consolidation.md`       | trellis-plan 5e             | 分流 · 对照表                  |
+| `context-closure.md`          | trellis-execute             | Execute E16 upstream/wiring    |
+| `gitnexus-execute-summary.md` | trellis-execute             | Phase 0a impact 摘要           |
+| `execute-skill-evaluation.md` | trellis-execute             | §12 skill 评估                 |
+| `gitnexus-audit-summary.md`   | trellis-execute / Audit     | Phase 7 detect_changes 摘要    |
 
 ### 5.2 切片开工前必读（硬门禁）
 
@@ -79,7 +83,7 @@ python .trellis/scripts/task.py validate-plan-freeze .trellis/tasks/06-29-round3
 
 #### A. `research/` 包内（全部已登记文件 — 见 §5.1）
 
-1. `00-EXECUTION-ENTRY.md` … `plan-consolidation.md`（**共 10 份**，不含 `plan-boot.md`）
+1. `00-EXECUTION-ENTRY.md` … `gitnexus-audit-summary.md`（**共 14 份**，不含 `plan-boot.md`）
 
 #### B. `EXTERNAL-INDEX.md` §A 所列包外文档（全部）
 

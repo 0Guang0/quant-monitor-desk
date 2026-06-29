@@ -210,3 +210,49 @@ def test_stagedPilotModuleAlignsWithProductionLivePolicyControls() -> None:
         assert request.write_target == "sandbox"
         assert request.allow_clean_write is False
         assert request.dry_run is True
+
+
+def test_r3h10_policyDocumentsRehearsalVsProductFetchSsot() -> None:
+    """覆盖范围：R3H-10 rehearsal 与产品 fetch 硬边界文档（S10-03）
+    测试对象：production_live_pilot_policy.md §9 · datasource_service.md §7
+    目的/目标：审计员可区分 rehearsal 证据与 DataSourceService 产品金路径
+    验证点：policy 含 REHEARSAL_ONLY / product fetch SSOT；datasource_service 含 rehearsal-only 列表
+    失败含义：文档未写清边界，R3H-08 可能误用 staged pilot 充当产品 live
+    """
+    policy = _read(POLICY)
+    ds_doc = _read(PROJECT_ROOT / "docs/modules/datasource_service.md")
+    assert "Rehearsal vs product fetch SSOT" in policy
+    assert "REHEARSAL_ONLY" in policy
+    assert "DataSourceService" in policy
+    assert "Rehearsal vs product live" in ds_doc
+    assert "interface_probe" in ds_doc
+
+
+def test_r3h10_rehearsalScriptsDoNotClaimProductLiveReady() -> None:
+    """覆盖范围：rehearsal 入口不声称 product-live ready（S10-03）
+    测试对象：rehearsal_boundary · staged_pilot · run_staged_pilot.py
+    目的/目标：rehearsal 模块显式 REHEARSAL_ONLY，且 PRODUCT_LIVE_READY 为 False
+    验证点：REHEARSAL_ONLY is True；PRODUCT_LIVE_READY is False；脚本 description 含 REHEARSAL_ONLY
+    失败含义：rehearsal 入口可被误读为 R3H-08 产品 live 替身
+    """
+    from backend.app.ops import live_pilot, rehearsal_boundary, staged_pilot
+
+    script = _read(PROJECT_ROOT / "scripts/run_staged_pilot.py")
+    assert rehearsal_boundary.REHEARSAL_ONLY is True
+    assert rehearsal_boundary.PRODUCT_LIVE_READY is False
+    assert "REHEARSAL_ONLY" in (staged_pilot.__doc__ or "")
+    assert "REHEARSAL_ONLY" in (live_pilot.__doc__ or "")
+    assert "REHEARSAL_ONLY" in script
+
+
+def test_r3h10_syncOrchestratorDefaultChainExcludesStagedPilot() -> None:
+    """覆盖范围：sync orchestrator 默认 import 链不含 staged pilot（S10-03）
+    测试对象：backend.app.sync.orchestrator 模块源码
+    目的/目标：产品 Sync 路径与 rehearsal 模块解耦
+    验证点：orchestrator.py 不含 staged_pilot / live_pilot  import
+    失败含义：编排器默认链耦合 rehearsal，产品路径边界模糊
+    """
+    orch_path = PROJECT_ROOT / "backend/app/sync/orchestrator.py"
+    text = orch_path.read_text(encoding="utf-8")
+    assert "staged_pilot" not in text
+    assert "live_pilot" not in text

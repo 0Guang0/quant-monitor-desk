@@ -134,3 +134,12 @@ Future implementation must add tests that prove:
 - Sandbox target is enforced.
 - Production DB row counts are unchanged.
 - No fixture/staged fallback satisfies live pilot evidence.
+
+## 9. Rehearsal vs product fetch SSOT (R3H-10)
+
+| Path                                                                                           | Role                        | R3H-08 product live?                      |
+| ---------------------------------------------------------------------------------------------- | --------------------------- | ----------------------------------------- |
+| `DataSourceService` → `datasources/fetch_ports/*`                                              | **Product fetch SSOT**      | Yes (when authorized)                     |
+| `ops/staged_pilot_*`, `ops/live_pilot_*`, `scripts/run_staged_pilot.py`, `ops/interface_probe` | **Rehearsal-only** evidence | **No** — must not substitute product live |
+
+Rehearsal modules carry `REHEARSAL_ONLY` (`backend.app.ops.rehearsal_boundary`). They are sandbox/staged evidence paths only and are **not** on the Sync orchestrator default import chain.

@@ -1,4 +1,7 @@
-"""Batch 2.75 controlled live pilot orchestration (fail-closed, sandbox-first)."""
+"""Batch 2.75 controlled live pilot orchestration (fail-closed, sandbox-first).
+
+``REHEARSAL_ONLY`` — not R3H-08 product live SSOT; see ``backend.app.ops.rehearsal_boundary``.
+"""
 
 from __future__ import annotations
 

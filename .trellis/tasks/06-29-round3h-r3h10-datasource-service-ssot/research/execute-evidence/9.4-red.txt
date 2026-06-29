@@ -1,0 +1,2 @@
+S10-04 RED: interface_probe.run_single_probe called port.fetch_payload directly (bypass DataSourceService).
+Expected FAIL before refactor.

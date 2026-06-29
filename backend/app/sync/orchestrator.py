@@ -18,6 +18,7 @@ from backend.app.sync.runners import (
     QualityJobRunner,
     ReconcileJobRunner,
     guard_production_adapter_bypass,
+    guard_production_datasource_service_required,
 )
 
 
@@ -186,6 +187,11 @@ class DataSyncOrchestrator:
             datasource_service=datasource_service,
             entry="run_incremental",
         )
+        guard_production_datasource_service_required(
+            adapter=adapter,
+            datasource_service=datasource_service,
+            entry="run_incremental",
+        )
         fetch_callable = None
         if datasource_service is not None:
             jobs = self._jobs
@@ -226,6 +232,11 @@ class DataSyncOrchestrator:
         required_fields: tuple[str, ...] = ("close", "source_used"),
     ) -> list[SyncJobResult]:
         guard_production_adapter_bypass(
+            adapter=adapter,
+            datasource_service=datasource_service,
+            entry="run_backfill",
+        )
+        guard_production_datasource_service_required(
             adapter=adapter,
             datasource_service=datasource_service,
             entry="run_backfill",

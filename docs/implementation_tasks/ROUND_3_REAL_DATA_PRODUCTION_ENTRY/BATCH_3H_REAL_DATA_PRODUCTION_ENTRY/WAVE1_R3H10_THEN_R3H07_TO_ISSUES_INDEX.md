@@ -45,12 +45,12 @@ R3H-07 美股日历最终体现在：拉数窗口 + Layer4 市场结构
 
 ### Acceptance criteria
 
-- [ ] `STAGED-PILOT-SSOT` = **CLOSED**（registry / UNRESOLVED 无矛盾）
-- [ ] Sync orchestrator 金路径 fetch **仅** 经 `DataSourceService`（负向：直接 adapter 调用 RED）
-- [ ] `qmd data` route-preview / sync-plan **仅** 经 service boundary（`E1` 对齐）
-- [ ] Live pilot / interface probe：**rehearsal-only** 或显式委托 service；产品 live 留给 `R3H-08`
-- [ ] `tests/test_datasource_service.py` + 新增 bypass 负向测 **GREEN**
-- [ ] **禁止** 无测试证明即删 pilot 模块；**禁止** Round4 前用 pilot 脚本冒充 08 产品路径
+- [x] `STAGED-PILOT-SSOT` = **CLOSED**（registry / UNRESOLVED 无矛盾）
+- [x] Sync orchestrator 金路径 fetch **仅** 经 `DataSourceService`（负向：直接 adapter 调用 RED；reconcile `adapter=` defer ADR-025）
+- [x] `qmd data` route-preview / sync-plan **仅** 经 service boundary（`E1` 对齐）
+- [x] Live pilot / interface probe：**rehearsal-only** 或显式委托 service；产品 live 留给 `R3H-08`
+- [x] `tests/test_datasource_service.py` + 新增 bypass 负向测 **GREEN**
+- [x] **禁止** 无测试证明即删 pilot 模块；**禁止** Round4 前用 pilot 脚本冒充 08 产品路径
 
 ### Blocked by
 
@@ -142,10 +142,10 @@ Execute 入口：`.trellis/tasks/06-29-round3h-r3h10-datasource-service-ssot/res
 
 ```text
 [ ] 本 INDEX + PASS 计划 §3 Wave 1 已 commit
-[ ] 开工 R3H-10：Trellis Plan 冻结 validate-plan-freeze exit 0
-[ ] R3H-10 Execute：S10-BOOT..CLOSE 逐切片 RED→GREEN
-[ ] R3H-10 Audit PASS → merge master → 更新 C2/E4 rating 证据
-[ ] 显式门控：在 R3H-10 CLOSED 证据落盘前，禁止 R3H-07 worktree
+[x] 开工 R3H-10：Trellis Plan 冻结 validate-plan-freeze exit 0
+[x] R3H-10 Execute：S10-BOOT..CLOSE 逐切片 RED→GREEN
+[x] R3H-10 Audit PASS → merge master → 更新 C2/E4 rating 证据（audit.report.md @ 2026-06-29）
+[x] 显式门控：R3H-10 CLOSED 证据落盘 — 允许 R3H-07 Plan/Execute
 [ ] 开工 R3H-07：blocked-by R3H-10 写入 Plan
 [ ] R3H-07 Execute → Audit PASS → merge
 [ ] Wave 1 Done：记入 R3H_PASS_EXECUTION_PLAN §3 状态表

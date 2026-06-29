@@ -1,0 +1,18 @@
+S10-02 (Step 9.2) — GREEN evidence
+Date: 2026-06-29
+Branch: feature/round3h-r3h10-datasource-service-ssot
+
+## Implementation
+- specs/contracts/datasource_service_contract.yaml: status active + required_tests gate
+- backend/app/cli/data_commands.py: sync_plan product_live=False
+- tests/test_datasource_service.py: contract status + required_tests gate
+- tests/test_qmd_data_cli.py: assert product_live on sync_plan
+
+## pytest
+Slice: test_datasource_service (contract) + test_data_cli_contract + sync dry-run → pass
+Full: uv run pytest -q → exit 0 (see session log)
+
+## AC
+[x] qmd data route-preview/sync-plan via _service() (unchanged)
+[x] datasource_service_contract.yaml status active
+[x] sync-plan declares non product live (dry_run + product_live=False)

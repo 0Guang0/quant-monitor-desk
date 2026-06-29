@@ -93,6 +93,7 @@ def sync_plan(
     return {
         "command": "sync",
         "dry_run": True,
+        "product_live": False,
         "data_domain": data_domain,
         "operation": op,
         "window": {"start": start, "end": end, "since": since},

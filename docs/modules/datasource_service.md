@@ -33,14 +33,20 @@ class DataSourceService:
 
 ## 5. 与已有实现的关系
 
-| 当前实现 | Round2.6 后续变化 |
-|---|---|
-| `backend/app/datasources/adapters/create_adapter` | 保留，但生产路径只由 DataSourceService 调用 |
-| `backend/app/sync/runners.py` 接收 adapter | 后续改为接收 service 或 fetch callable |
-| `tests/test_vendor_fetch_e2e.py` 直接构造 fixture adapter | 保留为旧路径证据；新增 service-path E2E |
+| 当前实现                                                  | Round2.6 后续变化                           |
+| --------------------------------------------------------- | ------------------------------------------- |
+| `backend/app/datasources/adapters/create_adapter`         | 保留，但生产路径只由 DataSourceService 调用 |
+| `backend/app/sync/runners.py` 接收 adapter                | 后续改为接收 service 或 fetch callable      |
+| `tests/test_vendor_fetch_e2e.py` 直接构造 fixture adapter | 保留为旧路径证据；新增 service-path E2E     |
 
 ## 6. 验收
 
 ```bash
 python -m pytest tests/test_datasource_service.py tests/test_sync_orchestrator.py tests/test_vendor_fetch_e2e.py -q
 ```
+
+## 7. Rehearsal vs product live (R3H-10)
+
+- **Product fetch SSOT:** `DataSourceService.fetch()` / `preview_route()` with `datasources/fetch_ports/*` (contract `status: active`).
+- **Rehearsal-only (not product live):** `ops/staged_pilot_*`, `ops/live_pilot_*`, `scripts/run_staged_pilot.py`, `ops/interface_probe`, CLI `--live-wire` rehearsal flags.
+- Rehearsal paths may inject `FetchPort` for bounded evidence but must **not** be cited as R3H-08 product live readiness.

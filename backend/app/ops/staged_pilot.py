@@ -1,6 +1,11 @@
-"""Round 3 PROMPT_14 staged real-data pilot orchestration (fail-closed, sandbox-first)."""
+"""Round 3 PROMPT_14 staged real-data pilot orchestration (fail-closed, sandbox-first).
+
+``REHEARSAL_ONLY`` — not product live SSOT; see ``backend.app.ops.rehearsal_boundary``.
+"""
 
 from __future__ import annotations
+
+from backend.app.ops.rehearsal_boundary import REHEARSAL_DISCLAIMER, REHEARSAL_ONLY
 
 import hashlib
 import json
@@ -1221,6 +1226,8 @@ def run_full_staged_pilot(
         "generated_at": _utc_now_iso(),
         "outcome": outcome.value,
         "run_mode": "staged_only",
+        "rehearsal_only": REHEARSAL_ONLY,
+        "rehearsal_disclaimer": REHEARSAL_DISCLAIMER,
         "production_live_readiness_claim": False,
         "skip_live_fetch": skip_live_fetch,
         "mutation_proof_status": mutation_status,

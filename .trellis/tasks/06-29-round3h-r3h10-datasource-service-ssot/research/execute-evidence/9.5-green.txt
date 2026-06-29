@@ -1,0 +1,3 @@
+S10-05 GREEN: SSOT cn_rehearsal_live_ports.py; ops shims re-export.
+STAGED-PILOT-SSOT CLOSED in round3h_real_data_production_entry_audit.md.
+uv run pytest -q exit 0.

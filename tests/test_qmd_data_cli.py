@@ -75,6 +75,7 @@ def test_qmdData_sync_defaultDryRun_printsPlan(monkeypatch) -> None:
     )
     payload = data_commands.sync_plan(data_domain="market_bar_1d", dry_run=True)
     assert payload["dry_run"] is True
+    assert payload.get("product_live") is False
 
 
 def test_qmdData_syncWithoutDryRun_failsClosed() -> None:

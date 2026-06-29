@@ -56,6 +56,23 @@ def guard_production_adapter_bypass(
     )
 
 
+def guard_production_datasource_service_required(
+    *,
+    adapter: BaseDataAdapter | None,
+    datasource_service,
+    entry: str,
+) -> None:
+    """Fail-closed when production profile omits datasource_service= (ADR-025)."""
+    if datasource_service is not None or adapter is not None:
+        return
+    if sync_adapter_bypass_allowed():
+        return
+    raise ValueError(
+        f"{entry}: datasource_service= is required in production; "
+        "pass DataSourceService explicitly on the sync gold path"
+    )
+
+
 def guard_runner_direct_adapter_bypass(
     *,
     adapter: BaseDataAdapter | None,

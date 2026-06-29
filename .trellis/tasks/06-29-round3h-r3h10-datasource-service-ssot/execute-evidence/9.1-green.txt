@@ -1,0 +1,20 @@
+S10-01 (Step 9.1) — GREEN evidence
+Date: 2026-06-29
+Branch: feature/round3h-r3h10-datasource-service-ssot
+
+## Implementation
+- backend/app/sync/runners.py: guard_production_datasource_service_required (ADR-025)
+- backend/app/sync/orchestrator.py: call guard on run_incremental / run_backfill
+- tests/test_sync_orchestrator.py: test_r3h10S10_01_* (incremental + backfill)
+
+## pytest
+Command: uv run pytest -q
+Exit: 0 (~198s)
+
+Slice tests:
+uv run pytest tests/test_sync_orchestrator.py -k "r3h10S10_01 or r3ySync001" -q → 8 passed
+
+## AC
+[x] test_r3ySync001_* still green
+[x] production profile without datasource_service= and without adapter= fail-closed at orchestrator with datasource_service= message
+[x] guard_production_adapter_bypass unchanged (PYTEST_CURRENT_TEST only bypass)

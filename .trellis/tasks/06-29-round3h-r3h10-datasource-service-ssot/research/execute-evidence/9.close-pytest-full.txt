@@ -1,0 +1,10 @@
+# S10-CLOSE — full suite (Audit repair @ 2026-06-29)
+
+Command: uv run pytest -q
+Exit: 0
+Elapsed: ~196s
+Summary: 3 skipped, remainder passed (dots to 100%)
+
+Repair delta in this run:
+- test_r3h10_rehearsalScriptsDoNotClaimProductLiveReady (live_pilot __doc__)
+- test_livePilot_liveFetchPortsShareProductFetchPortModule (live SSOT symmetry)

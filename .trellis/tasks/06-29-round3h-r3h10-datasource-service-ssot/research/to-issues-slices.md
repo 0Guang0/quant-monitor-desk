@@ -81,7 +81,9 @@ S10-BOOT
 
 ### What to build
 
-生产语义下，**Incremental / Backfill / Reconcile** 三条 runner 仅接受 `datasource_service` 提供的 fetch（或由其绑定的 `fetch_callable`），`adapter=` 仅在 pytest 测试钩下允许；与 `datasource_service_contract.yaml` 的 `forbidden_direct_callers` 一致。
+生产语义下，**Incremental / Backfill** 两条 runner 仅接受 `datasource_service` 提供的 fetch（或由其绑定的 `fetch_callable`），`adapter=` 仅在 pytest 测试钩下允许；与 `datasource_service_contract.yaml` 的 `forbidden_direct_callers` 一致。
+
+**Reconcile（R3H-10 范围外）：** `run_reconcile` 仍 `adapter=` 形参；生产 profile 经 `guard_production_adapter_bypass` fail-closed（`test_r3ySync001_reconcile_*`）。`datasource_service=` 金路径 **defer** → Wave 2 / R3H-08 或专用 reconcile 切片（ADR-025 §Reconcile defer）。
 
 ### 端到端行为
 

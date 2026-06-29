@@ -3,7 +3,7 @@
   "name": "round3h-r3h10-datasource-service-ssot",
   "title": "R3H-10 DataSourceService SSOT (Wave 1a)",
   "description": "Wave 1a PASS: C2+E4 R3→R4; STAGED-PILOT-SSOT; Sync/CLI/rehearsal unified via DataSourceService; blocked before R3H-07",
-  "status": "planning",
+  "status": "in_progress",
   "dev_type": null,
   "scope": null,
   "package": null,

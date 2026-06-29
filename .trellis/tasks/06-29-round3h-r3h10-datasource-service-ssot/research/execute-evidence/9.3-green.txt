@@ -1,0 +1,17 @@
+S10-03 (Step 9.3) — GREEN evidence
+Date: 2026-06-29
+
+## Deliverables
+- backend/app/ops/rehearsal_boundary.py (REHEARSAL_ONLY)
+- docs/quality/production_live_pilot_policy.md §9
+- docs/modules/datasource_service.md §7
+- live_pilot.py module docstring REHEARSAL_ONLY
+
+## pytest（原始输出 @ Audit 复验）
+Command: uv run pytest tests/test_production_live_pilot_policy.py -k r3h10 -q
+Exit: 0
+
+```
+...                                                                      [100%]
+```
+3 passed, deselected remainder.

@@ -16,13 +16,19 @@ Reference analysis (`reference-adoption-r3h10.md`) flags EasyXT `auto_data_updat
 
 ## Decision
 
-1. **Production semantics:** `DataSyncOrchestrator.run_incremental` / `run_backfill` / `run_reconcile` **must not** auto-construct a default `DataSourceService` when `datasource_service=` is omitted.
+1. **Production semantics:** `DataSyncOrchestrator.run_incremental` / `run_backfill` **must not** auto-construct a default `DataSourceService` when `datasource_service=` is omitted. **`run_reconcile`** remains adapter-shaped in R3H-10 (see §Reconcile defer).
 2. **Required caller contract:** operators and scripts must pass `datasource_service=` explicitly on the production gold path (as in `tests/test_vendor_fetch_e2e.py`).
 3. **Failure mode:** fail-closed with a clear, testable error distinguishing:
    - missing `datasource_service=` (this ADR), vs
    - `adapter=` bypass without service (existing R3Y guard).
 4. **Tests:** extend `tests/test_sync_orchestrator.py` (or equivalent) so production-profile calls without `datasource_service=` and without `adapter=` RED→GREEN per S10-01.
 5. **Out of scope:** changing pytest-only `adapter=` hooks guarded by `sync_adapter_bypass_allowed()`.
+
+### Reconcile defer (R3H-10 closure)
+
+- **R3H-10 S10-01 delivered:** `guard_production_datasource_service_required` on `run_incremental` / `run_backfill` only.
+- **`run_reconcile(conflict_id, *, adapter=)`** keeps mandatory `adapter=`; production profile **fail-closed** via `guard_production_adapter_bypass` (`test_r3ySync001_reconcile_*`).
+- **`datasource_service=` gold path for reconcile** is **deferred** to a post-R3H-10 sync slice (bound: Wave 2 / R3H-08 product live prep or dedicated reconcile-service follow-up). Not a silent bypass: reconcile without service **cannot run** in production today.
 
 ## Alternatives Considered
 

@@ -105,25 +105,25 @@ Every source row must carry these fields in the completed audit:
 
 Every ID must be `CLOSED`, `WARN+ADR`, or `BLOCK`. Empty or `PENDING` → **BLOCK_ROUND4_DATA_ENTRY_INCOMPLETE**.
 
-| ID                      | 3G    | Status                | Evidence / ADR path                                        | release_limitation    |
-| ----------------------- | ----- | --------------------- | ---------------------------------------------------------- | --------------------- |
-| REGISTRY-ORPHAN         | —     | PENDING_R3H_EXECUTION | `openbb_provider_reference` matrix row                     | TBD                   |
-| MAIN-DB-GATE            | G8    | PENDING_R3H_EXECUTION | canonical DB denylist / no pilot merge                     | TBD                   |
-| G14-PILOT-SIDECAR       | G14   | PENDING_R3H_EXECUTION | `live_evidence_bridge` baostock sidecar                    | TBD                   |
-| G16-LIVE-WIRE           | G16   | PENDING_R3H_EXECUTION | cninfo/akshare/yahoo live-wire vs replay                   | TBD                   |
-| CAL-US                  | G2    | PENDING_R3H_EXECUTION | US equity bar: yahoo/stooq/alpha_vantage only              | TBD                   |
-| CAL-CN-TAIL             | G17   | PENDING_R3H_EXECUTION | `cn_trading_calendar` 2030+ ponytail                       | TBD                   |
-| SCHEMA-G3G4             | G3G4  | **CLOSED** @ R3H-06   | migration 013/014 + `test_r3h06_clean_schema` bar/OHLCV 测 | none — pilot 三域分表 |
-| CNINFO-DISCLOSURE-SHAPE | G5    | **CLOSED** @ R3H-06   | `cn_announcement_clean` §6.1 + cninfo promote 负向测       | none                  |
-| G6-IDEMPOTENCY          | G6    | **CLOSED** @ R3H-06   | `upsert_by_pk` + baostock/cninfo/fred 重复 promote 测      | none                  |
-| LIVE-PROD               | G1G11 | PENDING_R3H_EXECUTION | per-source live→clean productization                       | TBD                   |
-| MACRO-LIVE-DEFER        | —     | PENDING_R3H_EXECUTION | us_treasury/sec_edgar/cftc/bis/world_bank mock-first live  | TBD                   |
-| G13-VALIDATION-ROLE     | G13   | PENDING_R3H_EXECUTION | yahoo/akshare validation_only + route tests                | TBD                   |
-| WEB-SEARCH-LIVE         | —     | PENDING_R3H_EXECUTION | web_search mock stub deferred                              | TBD                   |
-| KALSHI-POLY-LIVE        | —     | PENDING_R3H_EXECUTION | kalshi/polymarket mock/replay default                      | TBD                   |
-| REF-ADOPT-GATE          | —     | PENDING_R3H_EXECUTION | `R3H_REFERENCE_ADOPTION_INDEX.md` + 四轨追溯               | TBD                   |
-| STAGED-PILOT-SSOT       | —     | PENDING_R3H_EXECUTION | fetch_ports SSOT; staged pilot defer post-R3H-05           | TBD                   |
-| PILOT-OPS-CALENDAR      | G2    | PENDING_R3H_EXECUTION | pilot 脚本自然日 vs 产品 CAL-US                            | TBD                   |
+| ID                      | 3G    | Status                | Evidence / ADR path                                                                        | release_limitation                                                                          |
+| ----------------------- | ----- | --------------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
+| REGISTRY-ORPHAN         | —     | PENDING_R3H_EXECUTION | `openbb_provider_reference` matrix row                                                     | TBD                                                                                         |
+| MAIN-DB-GATE            | G8    | PENDING_R3H_EXECUTION | canonical DB denylist / no pilot merge                                                     | TBD                                                                                         |
+| G14-PILOT-SIDECAR       | G14   | PENDING_R3H_EXECUTION | `live_evidence_bridge` baostock sidecar                                                    | TBD                                                                                         |
+| G16-LIVE-WIRE           | G16   | PENDING_R3H_EXECUTION | cninfo/akshare/yahoo live-wire vs replay                                                   | TBD                                                                                         |
+| CAL-US                  | G2    | PENDING_R3H_EXECUTION | US equity bar: yahoo/stooq/alpha_vantage only                                              | TBD                                                                                         |
+| CAL-CN-TAIL             | G17   | PENDING_R3H_EXECUTION | `cn_trading_calendar` 2030+ ponytail                                                       | TBD                                                                                         |
+| SCHEMA-G3G4             | G3G4  | **CLOSED** @ R3H-06   | migration 013/014 + `test_r3h06_clean_schema` bar/OHLCV 测                                 | none — pilot 三域分表                                                                       |
+| CNINFO-DISCLOSURE-SHAPE | G5    | **CLOSED** @ R3H-06   | `cn_announcement_clean` §6.1 + cninfo promote 负向测                                       | none                                                                                        |
+| G6-IDEMPOTENCY          | G6    | **CLOSED** @ R3H-06   | `upsert_by_pk` + baostock/cninfo/fred 重复 promote 测                                      | none                                                                                        |
+| LIVE-PROD               | G1G11 | PENDING_R3H_EXECUTION | per-source live→clean productization                                                       | TBD                                                                                         |
+| MACRO-LIVE-DEFER        | —     | PENDING_R3H_EXECUTION | us_treasury/sec_edgar/cftc/bis/world_bank mock-first live                                  | TBD                                                                                         |
+| G13-VALIDATION-ROLE     | G13   | PENDING_R3H_EXECUTION | yahoo/akshare validation_only + route tests                                                | TBD                                                                                         |
+| WEB-SEARCH-LIVE         | —     | PENDING_R3H_EXECUTION | web_search mock stub deferred                                                              | TBD                                                                                         |
+| KALSHI-POLY-LIVE        | —     | PENDING_R3H_EXECUTION | kalshi/polymarket mock/replay default                                                      | TBD                                                                                         |
+| REF-ADOPT-GATE          | —     | PENDING_R3H_EXECUTION | `R3H_REFERENCE_ADOPTION_INDEX.md` + 四轨追溯                                               | TBD                                                                                         |
+| STAGED-PILOT-SSOT       | —     | CLOSED                | R3H-10: ops fetch_ports thin-delegate to `datasources/fetch_ports/cn_rehearsal_live_ports` | `.trellis/tasks/06-29-round3h-r3h10-datasource-service-ssot/execute-evidence/9.5-green.txt` |
+| PILOT-OPS-CALENDAR      | G2    | PENDING_R3H_EXECUTION | pilot 脚本自然日 vs 产品 CAL-US                                                            | TBD                                                                                         |
 
 ### 7.1 REF-ADOPT per-source ladder（对照四轨追溯 MD — Execute 时逐行 CLOSED）
 

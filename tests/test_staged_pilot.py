@@ -426,7 +426,7 @@ def test_stagedPilot_cninfoFetchPayloadAttributesVendorApi() -> None:
     )
 
     with patch(
-        "backend.app.ops.staged_pilot_fetch_ports._run_akshare_call",
+        "backend.app.datasources.fetch_ports.cn_rehearsal_live_ports._run_akshare_call",
         return_value=_FakeFrame([{"公告标题": "test", "公告时间": "2026-06-01"}]),
     ), patch.dict("sys.modules", {"akshare": object()}):
         payload = port.fetch_payload(req)
@@ -596,50 +596,57 @@ def test_stagedPilot_runFullPilot_closeoutIncludesNarrative(tmp_path: Path) -> N
     assert "conflict_check_status" in closeout
 
 
-def test_stagedPilot_stagedFetchPortsUseStagedClassNames() -> None:
-    """覆盖范围：staged fetch port 命名与 live pilot 区分
-    测试对象：create_staged_fetch_port
-    目的/目标：ADV-POST14-A-015 — baostock/akshare/cninfo 须实例化 *StagedFetchPort 类
-    验证点：三路 create_staged_fetch_port 分别返回 Baostock/AkshareEquity/CninfoMetadata StagedFetchPort
-    失败含义：staged fetch port 混用 LiveFetchPort 类名，证据与 live pilot 不可区分
+def test_stagedPilot_stagedFetchPortsShareProductFetchPortModule() -> None:
+    """覆盖范围：staged fetch port 与产品 fetch_ports SSOT 同模块（R3H-10 S10-05）
+    测试对象：create_staged_fetch_port 返回类所在模块
+    目的/目标：消除 ops 双实现；rehearsal port 类须来自 datasources.fetch_ports
+    验证点：Baostock/Akshare/Cninfo staged port 的 __module__ 含 datasources.fetch_ports
+    失败含义：staged pilot 仍维护独立 fetch 实现，与 C2 SSOT 漂移
     """
-    from backend.app.ops.staged_pilot_fetch_ports import (
-        AkshareEquityStagedFetchPort,
-        BaostockStagedFetchPort,
-        CninfoMetadataStagedFetchPort,
-        create_staged_fetch_port,
-    )
+    from backend.app.ops.staged_pilot_fetch_ports import create_staged_fetch_port
 
-    assert isinstance(
-        create_staged_fetch_port(
-            source_id="baostock",
-            operation="fetch_daily_bar",
-            symbols_or_indicators=("sh.600519",),
-            max_rows=10,
-            date_window="recent 10 trading days",
-        ),
-        BaostockStagedFetchPort,
+    ssot_prefix = "backend.app.datasources.fetch_ports"
+    baostock = create_staged_fetch_port(
+        source_id="baostock",
+        operation="fetch_daily_bar",
+        symbols_or_indicators=("sh.600519",),
+        max_rows=10,
+        date_window="recent 10 trading days",
     )
-    assert isinstance(
-        create_staged_fetch_port(
-            source_id="akshare",
-            operation="fetch_daily_bar_validation",
-            symbols_or_indicators=("sh.600519",),
-            max_rows=10,
-            date_window="recent 10 trading days",
-        ),
-        AkshareEquityStagedFetchPort,
+    akshare = create_staged_fetch_port(
+        source_id="akshare",
+        operation="fetch_daily_bar_validation",
+        symbols_or_indicators=("sh.600519",),
+        max_rows=10,
+        date_window="recent 10 trading days",
     )
-    assert isinstance(
-        create_staged_fetch_port(
-            source_id="cninfo",
-            operation="fetch_announcement_index",
-            symbols_or_indicators=("sh.600519",),
-            max_rows=10,
-            date_window="recent 14 calendar days",
-        ),
-        CninfoMetadataStagedFetchPort,
+    cninfo = create_staged_fetch_port(
+        source_id="cninfo",
+        operation="fetch_announcement_index",
+        symbols_or_indicators=("sh.600519",),
+        max_rows=10,
+        date_window="recent 14 calendar days",
     )
+    for port in (baostock, akshare, cninfo):
+        assert port.__class__.__module__.startswith(ssot_prefix)
+
+
+def test_livePilot_liveFetchPortsShareProductFetchPortModule() -> None:
+    """覆盖范围：live fetch port 与 staged 对称 SSOT（R3H-10 S10-05）
+    测试对象：create_live_fetch_port 返回类所在模块
+    目的/目标：live 轨 shim 不得漂移回 ops 双实现
+    验证点：baostock live port 的 __module__ 含 datasources.fetch_ports
+    失败含义：live pilot 与产品 fetch_ports SSOT 再次分叉
+    """
+    from backend.app.ops.live_pilot_fetch_ports import create_live_fetch_port
+
+    port = create_live_fetch_port(
+        source_id="baostock",
+        operation="fetch_daily_bar",
+        symbols_or_indicators=("sh.600519",),
+        max_rows=10,
+    )
+    assert port.__class__.__module__.startswith("backend.app.datasources.fetch_ports")
 
 
 def test_stagedPilot_evidencePathsPreferProjectRelative(tmp_path: Path) -> None:
