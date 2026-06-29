@@ -1,0 +1,4 @@
+# S01-WATERMARK — 2026-06-30 Repair close
+cd C:\Users\Guang\Desktop\quant-monitor-desk-wt-dcp01
+uv run pytest tests/test_baostock_incremental_watermark.py -q
+# exit 0 — 6 passed (caught-up + clean_table allowlist added in repair)

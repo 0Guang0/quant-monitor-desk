@@ -234,6 +234,16 @@ class _PipelineMixin:
                 ),
                 con=con,
             )
+        fallback_expected = primary_keys + required_fields + ("batch_id", "source_id")
+        try:
+            describe_rows = con.execute(f"DESCRIBE {staging_table}").fetchall()
+            expected_columns = (
+                tuple(str(row[0]) for row in describe_rows)
+                if describe_rows
+                else fallback_expected
+            )
+        except Exception:
+            expected_columns = fallback_expected
         return self._validation.validate_staging(
             con,
             quality_request=DataQualityRequest(
@@ -246,7 +256,7 @@ class _PipelineMixin:
                 required_fields=required_fields,
                 rule_set_id=_DEFAULT_QUALITY_RULE_SET,
             ),
-            expected_columns=primary_keys + required_fields + ("batch_id", "source_id"),
+            expected_columns=expected_columns,
             timestamp_fields=("trade_date",),
             conflict_request=conflict_request,
             conflict_staging_table=conflict_staging_table,
@@ -416,13 +426,34 @@ class IncrementalJobRunner(_PipelineMixin):
         )
         job_id = self._jobs.create_job(spec)
         self._jobs.transition(job_id, "PLANNED")
-        req = FetchRequest(
-            run_id=spec.run_id,
-            source_id=spec.source_id,
-            data_domain=spec.data_domain,
-            market_id=spec.market_id,
-            instrument_id=spec.instrument_id,
-        )
+        req_kwargs: dict[str, object] = {
+            "run_id": spec.run_id,
+            "source_id": spec.source_id,
+            "data_domain": spec.data_domain,
+            "market_id": spec.market_id,
+            "instrument_id": spec.instrument_id,
+        }
+        # L2 (R3-DCP-01): inject spec.date_start/end → FetchRequest (orchestrator gold path)
+        if spec.date_start is not None:
+            req_kwargs["start_time"] = spec.date_start.isoformat()
+        if spec.date_end is not None:
+            req_kwargs["end_time"] = spec.date_end.isoformat()
+        if (
+            spec.date_start is not None
+            and spec.date_end is not None
+            and spec.date_start > spec.date_end
+        ):
+            self._jobs.transition(
+                job_id,
+                "SKIPPED",
+                message="caught-up: empty incremental window",
+            )
+            return SyncJobResult(
+                job_id=job_id,
+                status="SKIPPED",
+                message="caught-up: empty incremental window",
+            )
+        req = FetchRequest(**req_kwargs)
         cm = self._jobs.connection_manager
         try:
             fetch_result = _fetch_with_guard(

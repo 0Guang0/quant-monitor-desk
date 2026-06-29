@@ -11,7 +11,7 @@ import json
 import uuid
 from collections.abc import Sequence
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
 from backend.app.config import PROJECT_ROOT
@@ -23,8 +23,8 @@ from backend.app.datasources.normalizers.cn_market import (
 )
 from backend.app.datasources.normalizers.evidence_bundle import (
     finalize_bundle,
+    parse_fetch_window_date,
     reject_over_cap,
-    reject_window_span_over_cap,
 )
 
 MAX_SYMBOLS = 5
@@ -35,6 +35,29 @@ SYMBOL_WHITELIST = frozenset({"sh.600519", "sz.000001", "sh.601318"})
 REPLAY_FIXTURE = (
     PROJECT_ROOT / "tests/fixtures/replay/cn_market/baostock/sh600519_daily_replay.json"
 )
+
+
+# L2 (R3-DCP-01): replay bar filter per FetchRequest window — see reference-adoption-dcp01.md §B
+def _filter_bars_by_window(
+    bars: list[dict],
+    *,
+    start_time: str | None,
+    end_time: str | None,
+) -> list[dict]:
+    start = parse_fetch_window_date(start_time)
+    end = parse_fetch_window_date(end_time)
+    if start is None or end is None:
+        return bars
+    # ponytail: caught-up empty windows (start > end) return no bars; min/max only tolerates reversed ISO inputs
+    if start > end:
+        return []
+    lo, hi = start, end
+    filtered: list[dict] = []
+    for bar in bars:
+        trade = parse_fetch_window_date(str(bar.get("trade_date") or ""))
+        if trade is not None and lo <= trade <= hi:
+            filtered.append(bar)
+    return filtered
 
 
 def _reject_unknown_symbol(symbol: str) -> None:
@@ -50,11 +73,12 @@ class BaostockMockFetchPort:
 
     def fetch_payload(self, req: FetchRequest) -> FetchPayload:
         reject_over_cap(value=self.max_rows, cap=MAX_ROWS)
-        reject_window_span_over_cap(
-            start_time=req.start_time,
-            end_time=req.end_time,
-            cap=MAX_WINDOW_DAYS,
-        )
+        if req.start_time and req.end_time:
+            start = parse_fetch_window_date(req.start_time)
+            end = parse_fetch_window_date(req.end_time)
+            if start is not None and end is not None:
+                span_days = abs((end - start).days) + 1
+                reject_over_cap(value=span_days, cap=MAX_WINDOW_DAYS, label="max_window_days")
         if len(self.symbols) > MAX_SYMBOLS:
             raise PortError("FAILED", f"max {MAX_SYMBOLS} symbols allowed")
         symbol = req.instrument_id or (self.symbols[0] if self.symbols else "")
@@ -64,8 +88,14 @@ class BaostockMockFetchPort:
 
         if self.replay_path.is_file():
             bundle = read_cn_market_evidence_bundle(self.replay_path)
+            bars = _filter_bars_by_window(
+                list(bundle.get("bars") or []),
+                start_time=req.start_time,
+                end_time=req.end_time,
+            )
+            bundle = {**bundle, "bars": bars}
             content = json.dumps(bundle, ensure_ascii=False, default=str).encode("utf-8")
-            return FetchPayload(content=content, file_type="json", row_count=len(bundle.get("bars") or []))
+            return FetchPayload(content=content, file_type="json", row_count=len(bars))
 
         retrieved_at = datetime.now(UTC).isoformat()
         fetch_id = f"baostock-mock-{symbol}-{uuid.uuid4().hex[:12]}"

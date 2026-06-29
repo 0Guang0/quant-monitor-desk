@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from datetime import date
 from pathlib import Path
 from typing import Any
 
@@ -66,7 +67,16 @@ def sync_plan(
     end: str | None = None,
     since: str | None = None,
     series_ids: tuple[str, ...] | None = None,
+    instrument_id: str | None = None,
 ) -> dict[str, Any]:
+    if data_domain == "cn_equity_daily_bar":
+        return sync_baostock_incremental(
+            dry_run=dry_run,
+            instrument_id=instrument_id,
+            end=end,
+            since=since,
+            empty_table_lookback_days=30,
+        )
     op = operation or _default_operation(data_domain)
     if dry_run:
         if data_domain == "macro_series" and source_id == "fred":
@@ -262,6 +272,193 @@ def _sync_fred_macro_incremental(
         "overall_status": report.overall_status,
         "message": message,
     }
+
+
+def _parse_sync_date(value: str, *, field: str) -> date:
+    try:
+        return date.fromisoformat(value[:10])
+    except ValueError as exc:
+        raise CliFailure(
+            error_code="INVALID_INPUT",
+            message=f"invalid {field} date: {value!r}",
+            docs_anchor="docs/ops/data_sync_quick_reference.md",
+        ) from exc
+
+
+def _require_baostock_sync_operator_or_sandbox(data_root: Path) -> None:
+    if ".audit-sandbox" not in str(data_root.resolve()):
+        raise CliFailure(
+            error_code="USER_AUTH_REQUIRED",
+            message=(
+                "qmd data sync without --dry-run requires explicit operator "
+                "confirmation or QMD_DATA_ROOT under .audit-sandbox"
+            ),
+            docs_anchor="docs/ops/data_sync_quick_reference.md",
+            manual_confirmation_required=True,
+        )
+
+
+def sync_baostock_incremental(
+    *,
+    dry_run: bool = True,
+    instrument_id: str | None = None,
+    end: str | None = None,
+    since: str | None = None,
+    empty_table_lookback_days: int = 30,
+) -> dict[str, Any]:
+    """``qmd data sync --domain cn_equity_daily_bar`` — watermark + orchestrator gold path."""
+    from datetime import UTC, date, datetime
+
+    import uuid
+
+    from backend.app.datasources.fetch_ports.baostock_port import create_baostock_fetch_port
+    from backend.app.ops.sandbox_clean_write.clean_write_targets import resolve_clean_write_target
+    from backend.app.ops.sandbox_clean_write.rehearsal_runner import (
+        RehearsalRunnerError,
+        assert_sandbox_db_allowed,
+    )
+    from backend.app.sync.jobs import SyncJobSpec
+    from backend.app.sync.orchestrator import DataSyncOrchestrator
+    from backend.app.sync.watermark import (
+        IncrementalWindow,
+        compute_incremental_window,
+        incremental_window_is_empty,
+        read_bar_trade_date_watermark,
+    )
+
+    data_domain = "cn_equity_daily_bar"
+    op = "fetch_daily_bar"
+    preview = route_preview(data_domain=data_domain, operation=op)
+    guard_decision, guard_reason = ResourceGuard().check()
+    symbol = instrument_id or "sh.600519"
+    db = DATA_ROOT / "duckdb" / "quant_monitor.duckdb"
+
+    if end is not None:
+        end_date = _parse_sync_date(end, field="end")
+    else:
+        end_date = datetime.now(UTC).date()
+
+    watermark: date | None = None
+    if db.is_file():
+        with ConnectionManager(db_path=db).reader() as con:
+            watermark = read_bar_trade_date_watermark(con, instrument_id=symbol)
+
+    try:
+        window = compute_incremental_window(
+            watermark,
+            end=end_date,
+            empty_table_lookback_days=empty_table_lookback_days,
+        )
+    except ValueError as exc:
+        raise CliFailure(
+            error_code="INVALID_INPUT",
+            message=str(exc),
+            docs_anchor="docs/ops/data_sync_quick_reference.md",
+        ) from exc
+
+    if since is not None:
+        since_date = _parse_sync_date(since, field="since")
+        window = IncrementalWindow(
+            date_start=since_date,
+            date_end=window.date_end,
+            watermark=window.watermark,
+        )
+
+    target = resolve_clean_write_target(data_domain)
+    caught_up = incremental_window_is_empty(window)
+    payload: dict[str, Any] = {
+        "command": "sync",
+        "dry_run": dry_run,
+        "product_live": False,
+        "data_domain": data_domain,
+        "operation": op,
+        "instrument_id": symbol,
+        "watermark": watermark.isoformat() if watermark else None,
+        "window": {
+            "date_start": window.date_start.isoformat(),
+            "date_end": window.date_end.isoformat(),
+            "since": since,
+            "end": end,
+        },
+        "route_status": preview["route_status"],
+        "selected_source_id": preview["selected_source_id"],
+        "resource_guard_decision": guard_decision.value,
+        "clean_table": target.target_table,
+        "write_mode": target.write_mode,
+        "caught_up": caught_up,
+    }
+    if dry_run:
+        payload["message"] = "dry-run only; watermark window computed, no fetch or DB writes"
+        return payload
+
+    _require_baostock_sync_operator_or_sandbox(DATA_ROOT)
+    try:
+        assert_sandbox_db_allowed(db, no_production_mutation=True)
+    except RehearsalRunnerError as exc:
+        raise CliFailure(
+            error_code="INVALID_INPUT",
+            message=str(exc),
+            docs_anchor="docs/ops/data_sync_quick_reference.md",
+        ) from exc
+
+    if guard_decision.value != "OK":
+        raise CliFailure(
+            error_code="RESOURCE_GUARD_PAUSED",
+            message=guard_reason or "resource guard paused",
+            docs_anchor="docs/ops/ERROR_CODE_GUIDE.md#resource-guard-paused",
+            retryable=True,
+        )
+    if preview["route_status"] != "READY":
+        raise error_for_route_status(
+            preview["route_status"],
+            detail=f"sync blocked for domain={data_domain!r}",
+        )
+
+    if caught_up:
+        payload["job_status"] = "COMPLETED"
+        payload["message"] = "caught-up: empty incremental window; no fetch or DB writes"
+        return payload
+
+    db.parent.mkdir(parents=True, exist_ok=True)
+    cm = ConnectionManager(db_path=db)
+    with cm.writer() as con:
+        apply_migrations(con)
+
+    port = create_baostock_fetch_port(symbols=(symbol,), max_rows=500, use_mock=True)
+    raw_root = DATA_ROOT / "raw"
+    raw_root.mkdir(parents=True, exist_ok=True)
+    orch = DataSyncOrchestrator(cm)
+    service = DataSourceService(
+        data_root=raw_root,
+        fetch_port=port,
+        job_events=orch._jobs,
+    )
+    job_id = f"qmd-baostock-sync-{uuid.uuid4().hex[:10]}"
+    spec = SyncJobSpec(
+        run_id=job_id,
+        job_id=job_id,
+        job_type="incremental",
+        data_domain=data_domain,
+        market_id="CN_A",
+        source_id="baostock",
+        adapter_id="baostock",
+        date_start=window.date_start,
+        date_end=window.date_end,
+        instrument_id=symbol,
+        partition_key=None,
+        trigger_reason="qmd_data_sync",
+    )
+    result = orch.run_incremental(
+        spec,
+        datasource_service=service,
+        clean_table=target.target_table,
+        write_mode=target.write_mode,
+        primary_keys=target.primary_keys,
+    )
+    payload["job_status"] = result.status
+    payload["job_id"] = result.job_id
+    payload["message"] = "baostock incremental sync completed via DataSourceService gold path"
+    return payload
 
 
 def live_fetch(

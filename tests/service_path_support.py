@@ -217,11 +217,96 @@ def patch_create_test_adapter_for_staging(
     )
 
 
+def patch_baostock_replay_staging_adapter(
+    monkeypatch: Any,
+    *,
+    staging_table: str,
+    registry: SourceRegistry,
+    raw_root: Path,
+    fetch_port: FetchPort,
+) -> None:
+    """Route create_test_adapter to baostock replay evidence staging adapter."""
+    from backend.app.datasources.adapters import create_test_adapter as original_factory
+
+    staging_cls = make_baostock_replay_staging_adapter_class(staging_table)
+
+    def factory(source_id: str, reg: SourceRegistry, data_root: Path, **kwargs: Any):
+        if source_id == "baostock":
+            port = kwargs.get("fetch_port") or fetch_port
+            return staging_cls(
+                registry,
+                raw_store=RawStore(raw_root),
+                fetch_port=port,
+            )
+        return original_factory(source_id, reg, data_root, **kwargs)
+
+    monkeypatch.setattr(
+        "backend.app.datasources.adapters.create_test_adapter",
+        factory,
+    )
+
+
 def write_bar_fixture(path: Path) -> None:
     path.write_text(
         json.dumps([{"symbol": "000001", "close": 10.5, "trade_date": "2026-06-15"}]),
         encoding="utf-8",
     )
+
+
+def ensure_baostock_incremental_staging(con: Any, stg_name: str) -> None:
+    """Bar staging with adjustment_type for security_bar_1d upsert PK."""
+    con.execute(
+        f"""
+        CREATE TABLE IF NOT EXISTS {stg_name} (
+            instrument_id VARCHAR, trade_date VARCHAR, adjustment_type VARCHAR,
+            close DOUBLE, source_used VARCHAR, batch_id VARCHAR, source_id VARCHAR
+        )
+        """
+    )
+
+
+def make_baostock_replay_staging_adapter_class(
+    staging_table: str,
+    *,
+    supported_domains: frozenset[str] | None = None,
+) -> type[SkeletonAdapterBase]:
+    """Staging adapter that materializes cn_market evidence bars after fetch."""
+    domains = supported_domains or frozenset({"cn_equity_daily_bar"})
+
+    class BaostockReplayStagingAdapter(SkeletonAdapterBase):
+        source_id = "baostock"
+        supported_domains = domains
+
+        def fetch(self, req, *, con, job_id=None, record_fetch_log: bool = True):
+            from backend.app.datasources.fetch_result import FetchResult
+
+            result = super().fetch(req, con=con, job_id=job_id, record_fetch_log=record_fetch_log)
+            if result.status != "SUCCESS":
+                return result
+            payload = self._fetch_port.fetch_payload(req)
+            bundle = json.loads(payload.content.decode("utf-8"))
+            bars = bundle.get("bars") or []
+            con.execute(f"DELETE FROM {staging_table}")
+            for bar in bars:
+                con.execute(
+                    f"""
+                    INSERT INTO {staging_table} VALUES (?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    [
+                        str(bar.get("instrument_id") or req.instrument_id or ""),
+                        str(bar.get("trade_date") or ""),
+                        "none",
+                        float(bar.get("close") or 0.0),
+                        str(bar.get("source_used") or "baostock"),
+                        "v1",
+                        "baostock",
+                    ],
+                )
+            if not bars:
+                return result.model_copy(update={"row_count": 0, "status": "EMPTY_RESPONSE"})
+            return result.model_copy(update={"staging_table": staging_table, "row_count": len(bars)})
+
+    return BaostockReplayStagingAdapter
 
 
 def make_fixture_port(path: Path) -> LocalFixtureFetchPort:

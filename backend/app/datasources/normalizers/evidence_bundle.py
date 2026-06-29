@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from typing import Any
 
 from backend.app.datasources.adapters.fetch_port import PortError
@@ -58,6 +58,19 @@ def finalize_bundle(bundle: dict[str, Any]) -> dict[str, Any]:
         bundle["fetch_log"] = build_fetch_log(source_fetch_id=fetch_id, source_id=source_id)
     bundle["content_hash"] = bundle_content_hash(bundle)
     return bundle
+
+
+def parse_fetch_window_date(value: str | None) -> date | None:
+    """Parse FetchRequest start_time/end_time to calendar date (ISO / Z suffix)."""
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00")).date()
+    except ValueError:
+        try:
+            return date.fromisoformat(value[:10])
+        except ValueError:
+            return None
 
 
 def reject_over_cap(*, value: int, cap: int, label: str = "max_rows") -> None:

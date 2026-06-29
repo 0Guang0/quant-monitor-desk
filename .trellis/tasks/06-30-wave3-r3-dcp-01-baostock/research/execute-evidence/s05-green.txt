@@ -1,0 +1,14 @@
+# S05-CLI — 2026-06-30 Repair close
+cd C:\Users\Guang\Desktop\quant-monitor-desk-wt-dcp01
+uv run pytest tests/test_qmd_data_sync_baostock.py -q
+# exit 0 — 10 passed (dry-run no side effect, sandbox gate, instrument-id CLI, caught-up audit)
+
+# Repair tier + full suite
+uv run pytest tests/test_baostock_incremental_watermark.py tests/test_baostock_incremental_e2e.py tests/test_qmd_data_sync_baostock.py tests/test_sync_runners.py tests/test_baostock_adapter_staging.py -q
+# exit 0 — 24 passed
+
+uv run pytest -q
+# exit 0 — full suite green (2026-06-30)
+
+python .trellis/scripts/task.py validate-repair-close .trellis/tasks/06-30-wave3-r3-dcp-01-baostock
+# exit 0 — validate-repair-close: OK

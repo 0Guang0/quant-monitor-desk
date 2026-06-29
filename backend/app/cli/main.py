@@ -20,13 +20,25 @@ def _build_data_parser(sub: argparse._SubParsersAction) -> None:
     rp.add_argument("--use-fallback", action="store_true")
     rp.add_argument("--format", choices=["json", "text"], default="json")
 
-    sync = data_sub.add_parser("sync", help="Sync job (default dry-run)")
-    sync.add_argument("--domain", required=True, dest="data_domain", help="e.g. macro_series, market_bar_1d")
+    sync = data_sub.add_parser(
+        "sync",
+        help=(
+            "Sync job (default dry-run). cn_equity_daily_bar: baostock watermark; "
+            "macro_series with --source-id fred: macro incremental."
+        ),
+    )
+    sync.add_argument(
+        "--domain",
+        required=True,
+        dest="data_domain",
+        help="e.g. cn_equity_daily_bar, macro_series",
+    )
     sync.add_argument("--source-id", default=None, dest="source_id")
     sync.add_argument("--operation", default=None)
     sync.add_argument("--start", default=None)
     sync.add_argument("--end", default=None)
     sync.add_argument("--since", default=None)
+    sync.add_argument("--instrument-id", default=None, dest="instrument_id")
     sync.add_argument(
         "--dry-run",
         action=argparse.BooleanOptionalAction,
@@ -135,6 +147,7 @@ def _run_data(args: argparse.Namespace) -> int:
                 start=args.start,
                 end=args.end,
                 since=args.since,
+                instrument_id=args.instrument_id,
             )
         elif args.data_command == "live-fetch":
             payload = data_commands.live_fetch(

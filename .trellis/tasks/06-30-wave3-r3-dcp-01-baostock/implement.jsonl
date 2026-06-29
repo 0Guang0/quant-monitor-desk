@@ -1,0 +1,7 @@
+{"file": "DEBT.plan.md", "reason": "Execute Boot SSOT：垂直切片 S01–S06"}
+{"file": "research/reference-adoption-dcp01.md", "reason": "L1/L2/L3 采纳决策与源码对照"}
+{"file": "research/architecture-dcp01.md", "reason": "watermark API 与端到端数据流"}
+{"file": "research/plan-boot.md", "reason": "六项上下文复述"}
+{"file": "docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/R3_DCP_01_BAOSTOCK_INCREMENTAL.md", "reason": "活卡 AC"}
+{"file": "docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/R3_DCP_TO_ISSUES_INDEX.md", "reason": "INDEX §1 切片映射"}
+{"file": "_tmp-wave3-dcp-parallel/00-MAIN-SESSION-COORDINATOR.md", "reason": "共享文件锁 §4 与轨 A/B 分工"}

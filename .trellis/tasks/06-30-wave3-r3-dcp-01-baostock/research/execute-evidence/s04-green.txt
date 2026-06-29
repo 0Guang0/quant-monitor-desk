@@ -1,0 +1,4 @@
+# S04-IDEMPOTENT — 2026-06-30 Repair close
+cd C:\Users\Guang\Desktop\quant-monitor-desk-wt-dcp01
+uv run pytest tests/test_baostock_incremental_e2e.py::test_baostockIncremental_repeatRun_noRowGrowth -q
+# exit 0 — 1 passed
