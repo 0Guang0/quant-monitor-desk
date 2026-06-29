@@ -278,11 +278,11 @@ Round4  B04-01 先 · 产品只读
 | **Wave Done** | `qmd data`/sync 可重复跑试点增量；E2 inspect smoke 绿                 |
 | **下游**      | Wave 4 扩展 + 五轴                                                    |
 
-| #   | 规划 ID       | 模块   | 交付                                              |
-| --- | ------------- | ------ | ------------------------------------------------- |
-| 3a  | **R3-DCP-01** | D1, E1 | baostock：watermark + incremental CLI             |
-| 3b  | **R3-DCP-02** | D1, E1 | fred：宏观序列增量                                |
-| 3c  | **R3-DCP-03** | E2, F0 | 写后 row count / max(trade_date) / health profile |
+| #   | 规划 ID       | 模块   | 交付                                                                |
+| --- | ------------- | ------ | ------------------------------------------------------------------- |
+| 3a  | **R3-DCP-01** | D1, E1 | baostock：watermark + incremental CLI                               |
+| 3b  | **R3-DCP-02** | D1, E1 | fred：宏观序列增量 · Repair PASS @ `5d8d7b0`；P7 承接 RB-12 catalog |
+| 3c  | **R3-DCP-03** | E2, F0 | 写后 row count / max(trade_date) / health profile                   |
 
 ### 3.5 Wave 4 — 后端加厚（含五轴 PASS 硬门禁）
 
@@ -330,16 +330,16 @@ Round4  B04-01 先 · 产品只读
 | 5a–5e | **R3H-05A..E**  | registry / Layer / adopt / orphan / limitation |
 | 5f    | **R3H-05-GATE** | 合并裁决 → **PASS**                            |
 
-### 3.7 Round3 状态看板（2026-06-29）
+### 3.7 Round3 状态看板（2026-06-30）
 
-| 波次                                     | 状态      |
-| ---------------------------------------- | --------- |
-| 历史 + Wave 0（3V）+ R3H-01～04 + R3H-06 | ✅ CLOSED |
-| Wave 1（R3H-07, R3H-10）                 | 🔴 OPEN   |
-| Wave 2（R3H-08A–D）                      | 🔴 OPEN   |
-| Wave 3（R3-DCP-01..03）                  | 🔴 OPEN   |
-| Wave 4（R3-DCP-05..10 + **五轴全绿**）   | 🔴 OPEN   |
-| Wave 5（R3H-05 + GATE）                  | 🔴 OPEN   |
+| 波次                                     | 状态                                    |
+| ---------------------------------------- | --------------------------------------- |
+| 历史 + Wave 0（3V）+ R3H-01～04 + R3H-06 | ✅ CLOSED                               |
+| Wave 1（R3H-07, R3H-10）                 | ✅ CLOSED @ 2026-06-29                  |
+| Wave 2（R3H-08A–D）                      | ✅ CLOSED @ 2026-06-29                  |
+| Wave 3（R3-DCP-01..03）                  | 🔄 IN_PROGRESS（双轨协调 @ 2026-06-30） |
+| Wave 4（R3-DCP-05..10 + **五轴全绿**）   | 🔴 OPEN                                 |
+| Wave 5（R3H-05 + GATE）                  | 🔴 OPEN                                 |
 
 ### 3.8 `/to-issues` 索引文件（随开工增补）
 
@@ -347,7 +347,7 @@ Round4  B04-01 先 · 产品只读
 | -------- | -------------------------------------------------------------------- |
 | Wave 1   | `docs/implementation_tasks/.../WAVE1_R3H07_R3H10_TO_ISSUES_INDEX.md` |
 | Wave 2   | `.../WAVE2_R3H08_TO_ISSUES_INDEX.md`                                 |
-| Wave 3–4 | `.../R3_DCP_TO_ISSUES_INDEX.md`                                      |
+| Wave 3–4 | `.../R3_DCP_TO_ISSUES_INDEX.md` ✅ @ 2026-06-30                      |
 | Wave 5   | `R3H_05_LAYER_BINDING_AND_PRODUCTION_ENTRY_AUDIT.md` + slices        |
 
 每 INDEX 须含：Wave 门控表、What to build、Acceptance criteria、Blocked by、Vertical slices 表、Issue 骨架（复制 GitHub）。

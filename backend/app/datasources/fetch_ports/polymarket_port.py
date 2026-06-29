@@ -30,7 +30,7 @@ MAX_WINDOW_DAYS = 30
 POLYMARKET_API_BASE = "https://gamma-api.polymarket.com"
 
 MARKET_WHITELIST = frozenset(
-    {"will-fed-cut-rates-2024", "will-btc-above-100k-2024"}
+    {"will-fed-cut-rates-2024", "will-btc-above-100k-2024", "kraken-ipo-in-2025"}
 )
 
 
@@ -85,25 +85,46 @@ class PolymarketMockFetchPort:
 
 def _fetch_live_polymarket_market(market_slug: str) -> dict[str, Any]:
     """Bounded Polymarket gamma API fetch (network only; caller applies gate)."""
-    params = urllib.parse.urlencode({"slug": market_slug, "limit": 1})
-    url = f"{POLYMARKET_API_BASE}/markets?{params}"
-    request = urllib.request.Request(url, headers={"Accept": "application/json"}, method="GET")
+    url = f"{POLYMARKET_API_BASE}/markets/slug/{urllib.parse.quote(market_slug, safe='')}"
+    request = urllib.request.Request(
+        url,
+        headers={
+            "Accept": "application/json",
+            # ponytail: gamma API 403 without UA; upgrade path = dedicated client + retries
+            "User-Agent": "QuantMonitorDesk/1.0 (polymarket-fetch)",
+        },
+        method="GET",
+    )
     try:
         # ponytail: live urllib capped read; no auth header — env+YAML gate only for smoke
         with urllib.request.urlopen(request, timeout=30) as response:
             raw = json.loads(
                 read_bounded_http_body(response, label="Polymarket response").decode("utf-8")
             )
+    except urllib.error.HTTPError as exc:
+        if exc.code in (401, 403):
+            raise PortError("USER_AUTH_REQUIRED", f"Polymarket access denied: {exc}") from exc
+        raise PortError("NETWORK_ERROR", str(exc)) from exc
     except urllib.error.URLError as exc:
         raise PortError("NETWORK_ERROR", str(exc)) from exc
     except json.JSONDecodeError as exc:
         raise PortError("FAILED", f"invalid Polymarket JSON: {exc}") from exc
 
-    markets = raw if isinstance(raw, list) else raw.get("markets") or []
+    if isinstance(raw, list):
+        markets = raw
+    elif isinstance(raw, dict) and raw.get("slug"):
+        markets = [raw]
+    else:
+        markets = raw.get("markets") or []
     if not markets:
         raise PortError("EMPTY_RESPONSE", f"Polymarket returned no market for slug {market_slug!r}")
     market = markets[0]
     outcome_prices = market.get("outcomePrices") or []
+    if isinstance(outcome_prices, str):
+        try:
+            outcome_prices = json.loads(outcome_prices)
+        except json.JSONDecodeError:
+            outcome_prices = []
     try:
         yes_price = float(outcome_prices[0]) if outcome_prices else None
     except (TypeError, ValueError, IndexError):

@@ -333,6 +333,17 @@ def sync_baostock_incremental(
     symbol = instrument_id or "sh.600519"
     db = DATA_ROOT / "duckdb" / "quant_monitor.duckdb"
 
+    if not dry_run:
+        _require_baostock_sync_operator_or_sandbox(DATA_ROOT)
+        try:
+            assert_sandbox_db_allowed(db, no_production_mutation=True)
+        except RehearsalRunnerError as exc:
+            raise CliFailure(
+                error_code="INVALID_INPUT",
+                message=str(exc),
+                docs_anchor="docs/ops/data_sync_quick_reference.md",
+            ) from exc
+
     if end is not None:
         end_date = _parse_sync_date(end, field="end")
     else:
@@ -390,16 +401,6 @@ def sync_baostock_incremental(
     if dry_run:
         payload["message"] = "dry-run only; watermark window computed, no fetch or DB writes"
         return payload
-
-    _require_baostock_sync_operator_or_sandbox(DATA_ROOT)
-    try:
-        assert_sandbox_db_allowed(db, no_production_mutation=True)
-    except RehearsalRunnerError as exc:
-        raise CliFailure(
-            error_code="INVALID_INPUT",
-            message=str(exc),
-            docs_anchor="docs/ops/data_sync_quick_reference.md",
-        ) from exc
 
     if guard_decision.value != "OK":
         raise CliFailure(

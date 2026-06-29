@@ -24,15 +24,15 @@
 
 > 波次编号与根目录路线图 §3 对齐。旧 PASS 文档「Wave 1 = R3H-06」已归档 — R3H-06 归入 **历史**。
 
-| Wave   | Task ID       | Active card                         | Module ID          | 评级移动 | 并行              | INDEX                  |
-| ------ | ------------- | ----------------------------------- | ------------------ | -------- | ----------------- | ---------------------- |
-| **1a** | **R3H-10**    | `R3H_10_DATASOURCE_SERVICE_SSOT.md` | **C2**, E4         | R3→R4    | **串行先**        | `WAVE1_...INDEX.md` §1 |
-| **1b** | **R3H-07**    | `R3H_07_US_TRADING_CALENDAR.md`     | **G4**, C3         | R3→R4    | **blocked by 10** | `WAVE1_...INDEX.md` §2 |
-| 2a–d   | R3H-08A–D     | （待建）                            | C3, A3, B\*, G6    | R3→R4    | 四轨可并行        | 待建 WAVE2 INDEX       |
-| 3      | R3-DCP-01..03 | PASS §4                             | D1, E1, E2         | R3→R4    | 01∥02             | 待建 R3_DCP INDEX      |
-| 4      | R3-DCP-05..10 | PASS §4                             | G1, G2, G4, G5, D1 | R3→R4    | 部分并行          | 待建；**五轴全绿**     |
-| 5a–e   | R3H-05A..E    | `R3H_05_*.md`                       | 全表               | 审计     | A–E 并行          | 活卡                   |
-| 5f     | R3H-05-GATE   | 同上                                | 全表               | PASS     | **串行最后**      | 活卡                   |
+| Wave   | Task ID       | Active card                         | Module ID          | 评级移动 | 并行              | INDEX                          |
+| ------ | ------------- | ----------------------------------- | ------------------ | -------- | ----------------- | ------------------------------ |
+| **1a** | **R3H-10**    | `R3H_10_DATASOURCE_SERVICE_SSOT.md` | **C2**, E4         | R3→R4    | **串行先**        | `WAVE1_...INDEX.md` §1         |
+| **1b** | **R3H-07**    | `R3H_07_US_TRADING_CALENDAR.md`     | **G4**, C3         | R3→R4    | **blocked by 10** | `WAVE1_...INDEX.md` §2         |
+| 2a–d   | R3H-08A–D     | （待建）                            | C3, A3, B\*, G6    | R3→R4    | 四轨可并行        | 待建 WAVE2 INDEX               |
+| 3      | R3-DCP-01..03 | PASS §4                             | D1, E1, E2         | R3→R4    | 01∥02             | `R3_DCP_TO_ISSUES_INDEX.md` 🔄 |
+| 4      | R3-DCP-05..10 | PASS §4                             | G1, G2, G4, G5, D1 | R3→R4    | 部分并行          | 待建；**五轴全绿**             |
+| 5a–e   | R3H-05A..E    | `R3H_05_*.md`                       | 全表               | 审计     | A–E 并行          | 活卡                           |
+| 5f     | R3H-05-GATE   | 同上                                | 全表               | PASS     | **串行最后**      | 活卡                           |
 
 **当前 Execute 入口：** 仅 **R3H-10**。R3H-07 在 R3H-10 Audit PASS 前 **禁止** Plan/Execute。
 

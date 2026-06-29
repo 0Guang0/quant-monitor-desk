@@ -542,7 +542,7 @@ def test_kalshi_liveSmoke_envGated_writesEvidenceToAuditSandbox(
     monkeypatch.setenv("KALSHI_LIVE_SMOKE", "1")
     out = tmp_path / "kalshi_live_smoke_evidence.json"
     evidence_path = run_kalshi_live_smoke(
-        market_ticker="KXHIGHNY-24",
+        market_ticker="KXFED-27APR-T4.25",
         evidence_path=out,
     )
     record = json.loads(evidence_path.read_text(encoding="utf-8"))
@@ -572,7 +572,7 @@ def test_polymarket_liveSmoke_envGated_writesEvidenceToAuditSandbox(
     monkeypatch.setenv("POLYMARKET_LIVE_SMOKE", "1")
     out = tmp_path / "polymarket_live_smoke_evidence.json"
     evidence_path = run_polymarket_live_smoke(
-        market_slug="will-fed-cut-rates-2024",
+        market_slug="kraken-ipo-in-2025",
         evidence_path=out,
     )
     record = json.loads(evidence_path.read_text(encoding="utf-8"))

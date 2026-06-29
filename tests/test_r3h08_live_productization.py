@@ -192,7 +192,7 @@ def test_r3h08_08c_productLivePort_liveBranchWithEnv(
     if source_id == "fred":
         monkeypatch.setenv("FRED_API_KEY", "a" * 32)
 
-        def _mock_obs(self, series_id: str):
+        def _mock_obs(self, series_id: str, start=None):
             from datetime import UTC, datetime, timedelta
 
             today = datetime.now(UTC).date()
@@ -241,7 +241,7 @@ def test_r3h08_08c_serviceGoldPath_stagedFixtureModeFalse(
     monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
     monkeypatch.setenv("FRED_API_KEY", "a" * 32)
 
-    def _mock_obs(self, series_id: str):
+    def _mock_obs(self, series_id: str, start=None):
         from datetime import UTC, datetime
 
         today = datetime.now(UTC).date()

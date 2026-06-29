@@ -30,7 +30,7 @@ MAX_MARKETS = 5
 MAX_WINDOW_DAYS = 30
 KALSHI_API_BASE = "https://api.elections.kalshi.com/trade-api/v2"
 
-MARKET_WHITELIST = frozenset({"KXHIGHNY-24", "KXFED-24"})
+MARKET_WHITELIST = frozenset({"KXHIGHNY-24", "KXFED-24", "KXFED-27APR-T4.25"})
 
 
 def _reject_unknown_market(market_ticker: str) -> None:
@@ -50,6 +50,15 @@ def _cents_to_probability(cents: Any) -> float | None:
         return None
     try:
         return round(float(cents) / 100.0, 4)
+    except (TypeError, ValueError):
+        return None
+
+
+def _dollars_to_probability(dollars: Any) -> float | None:
+    if dollars is None:
+        return None
+    try:
+        return round(float(dollars), 4)
     except (TypeError, ValueError):
         return None
 
@@ -119,9 +128,15 @@ def _fetch_live_kalshi_market(market_ticker: str) -> dict[str, Any]:
         raise PortError("FAILED", f"invalid Kalshi JSON: {exc}") from exc
 
     market = raw.get("market") or raw
-    yes_bid = _cents_to_probability(market.get("yes_bid"))
-    yes_ask = _cents_to_probability(market.get("yes_ask"))
-    last_price = _cents_to_probability(market.get("last_price"))
+    yes_bid = _cents_to_probability(market.get("yes_bid")) or _dollars_to_probability(
+        market.get("yes_bid_dollars")
+    )
+    yes_ask = _cents_to_probability(market.get("yes_ask")) or _dollars_to_probability(
+        market.get("yes_ask_dollars")
+    )
+    last_price = _cents_to_probability(market.get("last_price")) or _dollars_to_probability(
+        market.get("last_price_dollars")
+    )
     probability = last_price
     if probability is None and yes_bid is not None and yes_ask is not None:
         probability = round((yes_bid + yes_ask) / 2.0, 4)
