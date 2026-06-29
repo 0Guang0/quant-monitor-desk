@@ -1,0 +1,51 @@
+{
+  "dimensions": {
+    "A1": {
+      "result": "fail_then_fixed",
+      "evidence": "research/audit-a1-report.md",
+      "agent": "audit-a1-spec"
+    },
+    "A2": {
+      "result": "fail_then_fixed",
+      "evidence": "research/audit-a2-report.md",
+      "agent": "audit-a2-ponytail"
+    },
+    "A3": {
+      "result": "fail_then_fixed",
+      "evidence": "research/audit-a3-report.md",
+      "agent": "architect-reviewer"
+    },
+    "A4": {
+      "result": "fail_then_fixed",
+      "evidence": "research/audit-a4-report.md",
+      "agent": "security-auditor"
+    },
+    "A5": {
+      "result": "fail_then_fixed",
+      "evidence": "research/audit-a5-report.md",
+      "agent": "audit-a5-completion"
+    },
+    "A6": {
+      "result": "skip",
+      "evidence": "research/audit-a6-report.md",
+      "agent": "performance-engineer"
+    },
+    "A7": {
+      "result": "pass",
+      "evidence": "research/audit-a7-report.md",
+      "agent": "database-administrator"
+    },
+    "A8": {
+      "result": "fail_then_fixed",
+      "evidence": "research/audit-a8-report.md",
+      "agent": "qa-expert"
+    }
+  },
+  "orthogonal_checks": {
+    "spec_scope": "pass",
+    "security": "pass",
+    "test_gap": "pass",
+    "prod_hash": "pass"
+  },
+  "final": "PASS"
+}

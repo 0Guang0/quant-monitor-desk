@@ -48,7 +48,7 @@
 | 组件              | 路径                                           | BOOT 状态                                     |
 | ----------------- | ---------------------------------------------- | --------------------------------------------- |
 | `ProductLiveGate` | `backend/app/datasources/product_live_gate.py` | **已建** · `QMD_ALLOW_LIVE_FETCH` fail-closed |
-| `LiveTierRouter`  | `backend/app/datasources/live_tier_router.py`  | **未建** · defer S08-01+                      |
+| `LiveTierRouter`  | `backend/app/datasources/live_tier_router.py`  | **已建** · `resolve_live_tier` PASS §2.1      |
 
 ## 参考 cite（BOOT 铁律 B）
 

@@ -35,6 +35,19 @@
 | reconcile/probe service | sync/probe 测                                                           | S08-05     |
 | **Execute 双铁律 A+B**  | `execute-parity-contract.md`；主会话同流程 + §7/§D 参考源码 Read + cite | 全切片     |
 
+## 2.1 Tier 复验矩阵（Audit basetemp）
+
+| Tier / 主题          | pytest 选择器 / 模块                                                                                                                 | 期望                                                |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------- |
+| 全模块（Audit 必跑） | `tests/test_r3h08_live_productization.py -q --basetemp=.trellis/tasks/06-29-round3h-r3h08-live-productization/.audit-sandbox/pytest` | exit 0                                              |
+| Tier B 九源          | `-k 08b_tierB`                                                                                                                       | 每源 gate 拒绝 `LIVE_FETCH_REJECTED` + opt-in fetch |
+| Tier C               | `-k 08d`                                                                                                                             | gate + `fetch_payload` + ResourceGuard              |
+| probe 追溯           | `tests/test_interface_probe_018c.py` + `test_r3h08_05_probeTracer_linksInterfaceProbeServicePath`                                    | `DataSourceService` 金路径                          |
+| CLI live-fetch       | `test_r3h08_05_qmdDataLiveFetch_cliSubprocessDryRun`                                                                                 | 子进程 JSON `dry_run=true`                          |
+| 全仓回归             | `uv run pytest -q`                                                                                                                   | exit 0                                              |
+
+**audit-sandbox basetemp 路径：** `.trellis/tasks/06-29-round3h-r3h08-live-productization/.audit-sandbox/pytest`（目录须存在；Repair RB-02 bootstrap）
+
 ## 3. 必须读原文
 
 见 `research/EXTERNAL-INDEX.md` §A
