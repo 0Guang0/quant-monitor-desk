@@ -9,8 +9,8 @@
 <!-- @@@auto:current-status -->
 
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 15
-- **Last Active**: 2026-06-29
+- **Total Sessions**: 16
+- **Last Active**: 2026-06-30
 <!-- @@@/auto:current-status -->
 
 ---
@@ -21,7 +21,7 @@
 
 | File           | Lines | Status |
 | -------------- | ----- | ------ |
-| `journal-1.md` | ~523  | Active |
+| `journal-1.md` | ~558  | Active |
 
 <!-- @@@/auto:active-documents -->
 
@@ -33,6 +33,7 @@
 
 | #   | Date       | Title                                                | Commits                                                                     | Branch                                                  |
 | --- | ---------- | ---------------------------------------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------- |
+| 16  | 2026-06-30 | R3H-08 finish-work                                   | `2f75a035`, `c53ef734`, `27c7dbf0`, `10023520`                              | `master`                                                |
 | 15  | 2026-06-29 | R3H-07 US Trading Calendar CAL-US closure            | `94ccd326`, `8602a8eb`                                                      | `master`                                                |
 | 14  | 2026-06-27 | R3G-02 Pre-Production Adversarial Audit              | `d9e60d59`                                                                  | `feature/round3g-adversarial-audit`                     |
 | 13  | 2026-06-27 | R3G-01 Sandbox Clean-Write Rehearsal                 | `4aa6a1c3`                                                                  | `feature/round3g-sandbox-rehearsal`                     |
