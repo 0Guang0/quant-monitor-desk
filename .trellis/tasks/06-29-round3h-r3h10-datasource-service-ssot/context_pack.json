@@ -1,0 +1,407 @@
+{
+  "task": "06-29-round3h-r3h10-datasource-service-ssot",
+  "modules": [
+    "project_scaffold",
+    "layer1_axes",
+    "datasources",
+    "ops",
+    "sync_orchestrator"
+  ],
+  "source_authorities": [
+    {
+      "type": "design",
+      "path": "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md",
+      "reason": "project_scaffold design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/architecture/06_deployment_and_local_ops.md",
+      "reason": "project_scaffold design authority"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/spec_migrator_contract.yaml",
+      "reason": "project_scaffold contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/dependency_extras_contract.yaml",
+      "reason": "project_scaffold contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/platform_source_matrix.yaml",
+      "reason": "project_scaffold contract"
+    },
+    {
+      "type": "policy",
+      "path": "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md",
+      "reason": "project_scaffold rule"
+    },
+    {
+      "type": "design",
+      "path": "docs/modules/layer1_global_regime_panel.md",
+      "reason": "layer1_axes design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/architecture/module_boundary_matrix.md",
+      "reason": "layer1_axes design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/architecture/04_data_architecture.md",
+      "reason": "layer1_axes design authority"
+    },
+    {
+      "type": "design",
+      "path": "specs/layer1_axes/restructured_axes_v1_1/README.md",
+      "reason": "layer1_axes design authority"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/layer1_axis_contract.yaml",
+      "reason": "layer1_axes contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/snapshot_lineage_contract.yaml",
+      "reason": "layer1_axes contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/resource_limits.yaml",
+      "reason": "layer1_axes contract"
+    },
+    {
+      "type": "policy",
+      "path": "docs/quality/production_live_pilot_policy.md",
+      "reason": "layer1_axes rule"
+    },
+    {
+      "type": "task-card",
+      "path": "docs/implementation_tasks/ROUND_3_MODELING_LAYERS/018A_layer1_observation_ingestion_bridge.md",
+      "reason": "layer1_axes implementation task"
+    },
+    {
+      "type": "task-card",
+      "path": "docs/implementation_tasks/ROUND_3_MODELING_LAYERS/018B_production_live_pilot_gate.md",
+      "reason": "layer1_axes implementation task"
+    },
+    {
+      "type": "design",
+      "path": "docs/modules/data_sources.md",
+      "reason": "datasources design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/modules/datasource_service.md",
+      "reason": "datasources design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/modules/source_route_plan.md",
+      "reason": "datasources design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/modules/source_capability_registry.md",
+      "reason": "datasources design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/modules/qmt_xtdata_adapter.md",
+      "reason": "datasources design authority"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/datasource_service_contract.yaml",
+      "reason": "datasources contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/source_route_contract.yaml",
+      "reason": "datasources contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/source_capability_contract.yaml",
+      "reason": "datasources contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/data_adapter_contract.md",
+      "reason": "datasources contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/datasource_registry/provider_catalog.yaml",
+      "reason": "datasources contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/datasource_registry/source_registry.yaml",
+      "reason": "datasources contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/datasource_registry/source_capabilities.yaml",
+      "reason": "datasources contract"
+    },
+    {
+      "type": "task-card",
+      "path": "docs/implementation_tasks/ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3X_data_source_routing_blockers.md",
+      "reason": "datasources implementation task"
+    },
+    {
+      "type": "design",
+      "path": "docs/modules/ops_and_performance.md",
+      "reason": "ops design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/ops/verification_commands.md",
+      "reason": "ops design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/ops/performance_limits.md",
+      "reason": "ops design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/ops/staging_data_e2e_runbook.md",
+      "reason": "ops design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/ops/data_health_cli.md",
+      "reason": "ops design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/ops/db_inspect_cli.md",
+      "reason": "ops design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/ops/data_sync_quick_reference.md",
+      "reason": "ops design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/ops/data_sync_command_matrix.md",
+      "reason": "ops design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/quality/BATCH3_STAGED_DOWNSTREAM_GATE.md",
+      "reason": "ops design authority"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/ops_health_check_contract.yaml",
+      "reason": "ops contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/ops_db_inspect_contract.yaml",
+      "reason": "ops contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/review_sandbox_contract.yaml",
+      "reason": "ops contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/sandbox_clean_write_contract.yaml",
+      "reason": "ops contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/data_cli_contract.yaml",
+      "reason": "ops contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/production_equivalent_smoke_budget.yaml",
+      "reason": "ops contract"
+    },
+    {
+      "type": "policy",
+      "path": "docs/ops/idempotency_retry_dlq_policy.md",
+      "reason": "ops rule"
+    },
+    {
+      "type": "task-card",
+      "path": "docs/implementation_tasks/ROUND_3_REFERENCE_LANDING/R3D_018C_live_manual_probe_plan.md",
+      "reason": "ops implementation task"
+    },
+    {
+      "type": "design",
+      "path": "docs/modules/data_sync_orchestrator.md",
+      "reason": "sync_orchestrator design authority"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/write_contract.yaml",
+      "reason": "sync_orchestrator contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/sync_job_contract.yaml",
+      "reason": "sync_orchestrator contract"
+    },
+    {
+      "type": "task-card",
+      "path": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/014_implement_data_sync_orchestrator.md",
+      "reason": "sync_orchestrator implementation task"
+    }
+  ],
+  "tests": [
+    {
+      "path": "tests/test_dependency_extras_contract.py",
+      "purpose": "Round2.6 Phase B — dependency extras contract tests."
+    },
+    {
+      "path": "tests/test_layer1_axis_loader.py",
+      "purpose": "Layer1 axis loader registry and snapshot behavior"
+    },
+    {
+      "path": "tests/test_layer1_interpretation.py",
+      "purpose": "Layer 1 feature, interpretation, lineage, and WriteManager integration tests."
+    },
+    {
+      "path": "tests/test_layer1_ingestion_gates.py",
+      "purpose": "Layer 1 ingestion Phase 0 gate tests (Round 3 Batch 2.5 §8.1)."
+    },
+    {
+      "path": "tests/test_layer1_observation_ingestion.py",
+      "purpose": "Layer 1 observation ingestion pipeline tests (Batch 2.5 §8.2–8.5)."
+    },
+    {
+      "path": "tests/test_observation_mapper.py",
+      "purpose": "Focused tests for observation_mapper boundary paths (audit A05-P1-01 / A04-P2-01)."
+    },
+    {
+      "path": "tests/test_batch25_production_data_gate.py",
+      "purpose": "Batch 2.5 evidence is staged-only, not production-live readiness"
+    },
+    {
+      "path": "tests/test_batch275_live_pilot_gate.py",
+      "purpose": "Batch 2.75 live pilot fail-closed gate and route readiness"
+    },
+    {
+      "path": "tests/test_production_live_pilot_policy.py",
+      "purpose": "Batch 2.75 fail-closed pilot policy documentation"
+    },
+    {
+      "path": "tests/test_fred_staged_semantics.py",
+      "purpose": "FRED / macro_supplementary staged-only semantics (B2.5-O-05)"
+    },
+    {
+      "path": "tests/test_datasource_service.py",
+      "purpose": "Round2.6 Phase B/C — DataSourceService boundary and fetch facade tests."
+    },
+    {
+      "path": "tests/test_source_registry.py",
+      "purpose": "Source registry loader, DB sync, and schema enum compatibility tests (Batch A / data source expansion)."
+    },
+    {
+      "path": "tests/test_source_route_planner.py",
+      "purpose": "Source route planner READY gate and routing semantics"
+    },
+    {
+      "path": "tests/test_source_capabilities.py",
+      "purpose": "Round2.6 Phase B/C — source capability and adapter domain contract tests."
+    },
+    {
+      "path": "tests/test_platform_source_matrix.py",
+      "purpose": "Round2.6 Phase C — platform source matrix tests (production planner)."
+    },
+    {
+      "path": "tests/test_r3x_data_source_routing_blockers.py",
+      "purpose": "R3X data-source routing blocker tests (ADV-A2 cluster)."
+    },
+    {
+      "path": "tests/test_prediction_market_adapters.py",
+      "purpose": "R3H-04 预测市场适配器测试（Batch 3H）。"
+    },
+    {
+      "path": "tests/test_staged_pilot.py",
+      "purpose": "Staged pilot sandbox boundaries; does not open production-live"
+    },
+    {
+      "path": "tests/test_ops_db_inspector.py",
+      "purpose": "Ops DB inspector tests (Round 3 Batch 1)."
+    },
+    {
+      "path": "tests/test_ops_interface_probe.py",
+      "purpose": "Ops interface_probe + mutation_proof wiring tests (OP-06)."
+    },
+    {
+      "path": "tests/test_interface_probe_018c.py",
+      "purpose": "018C low-cost data-interface probe tests."
+    },
+    {
+      "path": "tests/test_production_gate.py",
+      "purpose": "ADV-A5-002: production_gate.py smoke tests."
+    },
+    {
+      "path": "tests/test_round3_verification_command_matrix.py",
+      "purpose": "Round 3 verification command matrix — doc index and gate-test discoverability."
+    },
+    {
+      "path": "tests/test_round3_audit_registry_alignment.py",
+      "purpose": "Round 3 Batch 2.5 / Batch 2.75 audit follow-up 文档对齐测试。"
+    },
+    {
+      "path": "tests/test_unresolved_item_task_coverage.py",
+      "purpose": "确保未闭合项不会在 Plan 阶段因只读原始任务卡而遗漏。"
+    },
+    {
+      "path": "tests/test_batch3_staged_downstream_gate.py",
+      "purpose": "确保 Batch 3 只能 staged-only，不得被误读为 production-live readiness"
+    },
+    {
+      "path": "tests/test_qmd_data_cli.py",
+      "purpose": "B3F-CLI — qmd data CLI, packaging, init_db --sync-registry (R3F-CLI-01..05)."
+    },
+    {
+      "path": "tests/test_ops_data_health.py",
+      "purpose": "Tests for read-only ops data health (C-20)."
+    },
+    {
+      "path": "tests/test_sync_orchestrator.py",
+      "purpose": "Tests for DataSyncOrchestrator core (Batch D §8.3)."
+    },
+    {
+      "path": "tests/test_sync_jobs.py",
+      "purpose": "Tests for SyncJob state machine (Batch D §8.2)."
+    },
+    {
+      "path": "tests/test_sync_pipeline_contract.py",
+      "purpose": "Pipeline seam contract tests (Round2 re-audit A7-02)."
+    },
+    {
+      "path": "tests/test_data_cli_contract.py",
+      "purpose": "Round2.6 Phase B — data CLI contract tests (design/contract level)."
+    },
+    {
+      "path": "tests/test_vendor_fetch_e2e.py",
+      "purpose": "Vendor fixture E2E through real orchestrator path (Round2 audit P1-03)."
+    }
+  ],
+  "forbidden_claims": [
+    "production-live ready",
+    "live production ingestion",
+    "bypass route readiness gate"
+  ],
+  "required_evidence": [
+    "context_pack.json",
+    "loop_manifest.json",
+    "evidence_index.json",
+    "audit_matrix.json"
+  ]
+}

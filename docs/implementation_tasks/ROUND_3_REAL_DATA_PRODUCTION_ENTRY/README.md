@@ -1,13 +1,15 @@
 # Round 3H — Real Data Production Entry
 
-Round 3H 是 Round4 产品化之前的数据接入闭环批次。
+Round 3H 在 Round4 **之前**闭合数据面、增量运维、**五轴 Layer1（PASS 前全绿）** 与生产接入审计。
 
-它的目标不是继续新增 registry note，也不是只做 proposed-disabled source 文档，而是把 Round3 的核心承诺收束为：五层模型能接真实数据、数据源能经过 adapter/auth/license/ResourceGuard/route/replay/data-health/evidence gate，并且至少达到有限生产接入级别。
-
-Canonical execution entrypoint:
+**Canonical entrypoint:**
 
 ```text
 docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/README.md
 ```
 
-Round4 不应在本批次前启动，除非明确 ADR 收窄 Round3 的真实数据生产接入承诺。
+**当前下一执行（写死）：** `R3H-10` → `R3H-07` 串行 — `WAVE1_R3H10_THEN_R3H07_TO_ISSUES_INDEX.md`
+
+**总施工图：** 根目录 `PROJECT_IMPLEMENTATION_ROADMAP.md`（模块轨道版）
+
+Round4 **仅**在 `PASS_ROUND4_REAL_DATA_READY` 后启动（含五轴 G12 全绿）。

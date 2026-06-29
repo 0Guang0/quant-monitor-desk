@@ -1,50 +1,45 @@
 {
-  "task": "06-22-round3-019-layer2-sensor",
+  "task": "06-29-round3h-r3h10-datasource-service-ssot",
   "modules": [
     "project_scaffold",
     "layer1_axes",
-    "layer2_sensors",
+    "datasources",
     "ops",
-    "governance"
+    "sync_orchestrator"
   ],
   "acs": [
     {
-      "id": "AC-019-1",
+      "id": "AC-01",
       "status": "pending",
       "repair_items": []
     },
     {
-      "id": "AC-019-2",
+      "id": "AC-02",
       "status": "pending",
       "repair_items": []
     },
     {
-      "id": "AC-019-3",
+      "id": "AC-03",
       "status": "pending",
       "repair_items": []
     },
     {
-      "id": "AC-019-4",
+      "id": "AC-04",
       "status": "pending",
       "repair_items": []
     },
     {
-      "id": "AC-019-5",
+      "id": "AC-05",
       "status": "pending",
       "repair_items": []
     },
     {
-      "id": "AC-019-6",
+      "id": "AC-BOOT",
       "status": "pending",
       "repair_items": []
     },
     {
-      "id": "AC-019-7",
-      "status": "pending",
-      "repair_items": []
-    },
-    {
-      "id": "AC-019-8",
+      "id": "AC-CLOSE",
       "status": "pending",
       "repair_items": []
     }

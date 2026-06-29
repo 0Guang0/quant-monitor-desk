@@ -1,0 +1,6 @@
+{"file": ".trellis/tasks/06-29-round3h-r3h10-datasource-service-ssot/frozen/R3H_10_DATASOURCE_SERVICE_SSOT.md", "reason": "extract: Execute SSOT frozen task card | for: Boot slot 1"}
+{"file": ".trellis/tasks/06-29-round3h-r3h10-datasource-service-ssot/research/00-EXECUTION-ENTRY.md", "reason": "extract: Execute bundle entry | for: Boot slot 2"}
+{"file": ".trellis/tasks/06-29-round3h-r3h10-datasource-service-ssot/context_pack.json", "reason": "extract: authority graph routing | for: Boot slot 3"}
+{"file": ".cursor/skills/trellis-execute/SKILL.md", "reason": "extract: Phase 0 boot | for: §9.0 Boot"}
+{"file": "docs/decisions/ADR-025-r3h10-sync-fail-closed-datasource-service.md", "reason": "extract: fail-closed 决策 | for: S10-01"}
+{"file": "docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/R3H_10_DATASOURCE_SERVICE_SSOT.md", "reason": "extract: 活卡 §1 业务目标 | for: BOOT"}

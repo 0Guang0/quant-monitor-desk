@@ -1,103 +1,122 @@
-# Batch 3H — Real Data Production Entry
+# Batch 3H — Real Data Production Entry（模块轨 PASS 收口）
 
 > **Batch:** Round 3H Real Data Production Entry  
-> **批次状态：** **R3H-01～04 CLOSED** @ 2026-06-28；**当前下一执行入口** **R3H-05**（Layer1–5 + 全源 production-entry audit）。  
-> **参考采纳索引：** `R3H_REFERENCE_ADOPTION_INDEX.md`（四轨 L1/L2/L3 追溯 + 延后债务）。  
-> **Purpose:** 在进入 Round4 产品化之前，把 Round3 的五层模型、真实数据接入和数据治理闭合到完整的有限生产接入级别。  
-> **Execution rule:** 本批次可以按数据域/能力域并行，但不是“选几个源试一下”。凡是已经进入 `source_registry.yaml` / `source_capabilities.yaml` 的目标 source，都必须在本批次得到明确闭环：要么完成 adapter + gate + replay + route + evidence，要么用 ADR 明确说明为什么不属于当前产品承诺范围。
+> **总施工图：** 根目录 `PROJECT_IMPLEMENTATION_ROADMAP.md`（模块轨道版）  
+> **PASS 协调索引：** `R3H_PASS_EXECUTION_PLAN.md`  
+> **批次状态：** R3H-01～04、R3H-06、Batch 3V — **CLOSED** @ 2026-06-29  
+> **当前下一执行入口（写死）：** **`R3H-10` → `R3H-07` 串行** — 见 `WAVE1_R3H10_THEN_R3H07_TO_ISSUES_INDEX.md`  
+> **参考采纳索引：** `R3H_REFERENCE_ADOPTION_INDEX.md`  
+> **Purpose:** Round4 产品化之前，闭合数据面、增量运维、**五轴 Layer1（PASS 前全绿）** 与生产接入审计；**不是** Round4 API/前端工作。
 
 ---
 
-## 1. 为什么必须有 Batch 3H
+## 1. 执行纪律（反平铺）
 
-当前 registry 已新增很多 proposed-disabled source。如果直接进入 Round4，API/前端/Agent 只能展示“尚未接入”的 source readiness，而不能基于真实生产数据工作。
-
-Round3 的目标不是停在 proposed-disabled，也不是只做 baostock/cninfo/FRED 小样本 clean-write 彩排。Round3 必须把五层模型、真实数据接入、数据治理做到可以支撑产品化的完整生产接入基础。
-
-所以 Batch 3H 的规则是：**全部目标 source 必须闭环，不允许只完成一组 adapter。**
-
-对每个 source，闭环只能是以下两种之一：
-
-1. **实现完成：** adapter/fetch port、auth/license gate、ResourceGuard、SourceRoutePlan、route tests、replay fixture/sandbox sample、fetch_log/content_hash/schema_hash/source_fetch_id、data health/source conflict/Layer evidence 都具备。
-2. **范围收窄：** 有 ADR 明确说明该 source 不属于当前 Round3 产品承诺范围，且 registry/route/release manifest 都保持 `DISABLED_SOURCE` / not-ready，不得假装完成。
+| 规则                | 说明                                                              |
+| ------------------- | ----------------------------------------------------------------- |
+| **模块轨**          | 一活卡 = 一主 **Module ID** + 明确 **评级一跳**（如 C2：`R3→R4`） |
+| **Wave = 依赖门禁** | 不是「每个模块挖一点」；Wave 内按 INDEX **竖切** 关账             |
+| **Wave 1 串行**     | **R3H-10 CLOSED 后** 才允许 R3H-07                                |
+| **地图不是工单**    | `PRODUCTION_COMPLETION_VERTICAL_SLICE_PLAN.md` 只查漏             |
+| **三批法则**        | `MODULE_COMPLETION_RATING.md` §2 — 禁止 registry 单行微切片       |
 
 ---
 
-## 2. Batch 3H 必须覆盖的 source
-
-### 2.1 既有 source 也必须收口
+## 2. Round3 PASS 波次（活轨）
 
 ```text
-qmt_xtdata
-baostock
-akshare
-cninfo
-yahoo_finance
-tdx_pytdx
-fred
-qmt_xqshare
+[✅] 历史：3F-R · 3G · Batch 3V · R3H-01～04 · R3H-06
+  ↓
+Wave 1  R3H-10 → R3H-07（串行）           ← 当前
+  ↓
+Wave 2  R3H-08A / 08B / 08C / 08D（24 源 live）
+  ↓
+Wave 3  R3-DCP-01..03（baostock+fred 增量 + 写后抽检）
+  ↓
+Wave 4  R3-DCP-05..10（Tier A 增量扩展 + 五轴全绿 + L2/L4 最小）
+  ↓
+Wave 5  R3H-05A..E → R3H-05-GATE（PASS）
+  ↓
+Round4  BATCH_04（须 PASS_ROUND4_REAL_DATA_READY）
 ```
 
-这些不能因为早期已有 skeleton/staged/probe 就跳过。Batch 3H 必须明确它们是 production-entry READY、validation-only READY、authorized-disabled，还是 ADR 排除。
+| Wave  | 规划 ID             | 主模块          | `/to-issues` INDEX                                   |
+| ----- | ------------------- | --------------- | ---------------------------------------------------- |
+| —     | R3H-01～04          | C3, …           | 各活卡（**CLOSED**）                                 |
+| —     | R3H-06              | B1, A2          | `R3H_06_CLEAN_SCHEMA.md`（**CLOSED**）               |
+| **1** | **R3H-10 → R3H-07** | **C2, E4 → G4** | **`WAVE1_R3H10_THEN_R3H07_TO_ISSUES_INDEX.md`**      |
+| 2     | R3H-08A–D           | C3, A3, B\*, G6 | 待建 `WAVE2_R3H08_TO_ISSUES_INDEX.md`                |
+| 3–4   | R3-DCP-\*           | D1, E1, G1, …   | 待建 `R3_DCP_TO_ISSUES_INDEX.md`                     |
+| 5     | R3H-05 + GATE       | 全表            | `R3H_05_LAYER_BINDING_AND_PRODUCTION_ENTRY_AUDIT.md` |
 
-### 2.2 新增 proposed-disabled source 必须全部处理
+---
+
+## 3. 任务卡清单
+
+### 3.1 已 CLOSED（历史，勿作当前入口）
+
+| Task ID | Active card                                      | 状态                    |
+| ------- | ------------------------------------------------ | ----------------------- |
+| R3H-01  | `R3H_01_OFFICIAL_MACRO_DISCLOSURE_ADAPTERS.md`   | CLOSED @ 2026-06-28     |
+| R3H-02  | `R3H_02_MARKET_DATA_ADAPTERS.md`                 | CLOSED；CAL-US → R3H-07 |
+| R3H-03  | `R3H_03_CN_MARKET_ADAPTERS.md`                   | CLOSED；CN 日历 Q12     |
+| R3H-04  | `R3H_04_PREDICTION_AND_WEB_EVIDENCE_ADAPTERS.md` | CLOSED；web_search mock |
+| R3H-06  | `R3H_06_CLEAN_SCHEMA.md`                         | CLOSED @ 2026-06-29     |
+
+### 3.2 活轨（按 Wave 顺序）
+
+| Task ID    | Active card                                          | Wave | Module    | 评级移动    |
+| ---------- | ---------------------------------------------------- | ---- | --------- | ----------- |
+| **R3H-10** | `R3H_10_DATASOURCE_SERVICE_SSOT.md`（**待建**）      | 1    | C2, E4    | R3→R4       |
+| **R3H-07** | `R3H_07_US_TRADING_CALENDAR.md`（**待建**）          | 1    | G4, C3    | R3→R4       |
+| R3H-08A–D  | 待建                                                 | 2    | C3, A3, … | R3→R4       |
+| R3-DCP-\*  | PASS 计划 §4                                         | 3–4  | D1, G1, … | 见路线图 §3 |
+| R3H-05     | `R3H_05_LAYER_BINDING_AND_PRODUCTION_ENTRY_AUDIT.md` | 5    | 全表      | GATE only   |
+
+**R3H-05 不是当前 Execute 入口** — 仅 Wave 5 审计；不得在 Wave 1–4 前单独 PASS。
+
+---
+
+## 4. 用户裁决（Round4 前有效）
+
+| 议题              | 裁决                            |
+| ----------------- | ------------------------------- |
+| Round4 入口       | `PASS_ROUND4_REAL_DATA_READY`   |
+| web_search 真 API | post-Round4（`R3H-WEB-SEARCH`） |
+| 24 源 live        | Wave 2 env-gated → Tier A/B/C   |
+| 五轴 G12          | **Wave 4 PASS 前 pytest 全绿**  |
+| 增量试点源        | baostock + fred（Wave 3）       |
+
+---
+
+## 5. Batch-level gates（Batch 3H CLOSED 当且仅当）
+
+1. Wave 1–5 全部 **CLOSED** + `R3H-05-GATE` = **PASS**。
+2. `MODULE_COMPLETION_RATING.md` PASS 阻塞模块达标（含 **G1 五轴**）。
+3. 每 READY 源：live 证据 + 正确 Tier（`R3H_PASS_EXECUTION_PLAN.md` §2.1）。
+4. Round4 manifest 可开工；**不在此批次做** I 组 API/前端。
+
+---
+
+## 6. Forbidden scope
+
+- 不做全市场 / 全历史 / 默认分钟线全量。
+- 不把 prediction market 写 clean factual 表。
+- 不让 `web_search` 真 API 在本批次冒充 READY。
+- 不让 Agent 触发写入。
+- Wave 1 **禁止** R3H-07 与 R3H-10 并行（除非主会话多 agent 显式调度）。
+- 禁止「只改 registry 一行」冒充模块完成。
+
+---
+
+## 7. 关联文件
 
 ```text
-us_treasury
-sec_edgar
-cftc_cot
-bis
-world_bank
-deribit
-coingecko
-kalshi
-polymarket
-stooq
-alpha_vantage
-mootdx
-eastmoney
-sina_finance
-ths_ifind
-web_search
+PROJECT_IMPLEMENTATION_ROADMAP.md
+MODULE_COMPLETION_RATING.md
+BATCH_3H_TASK_CARD_MANIFEST.md
+BATCH_3H_COORDINATOR_PLAYBOOK.md
+R3H_PASS_EXECUTION_PLAN.md
+WAVE1_R3H10_THEN_R3H07_TO_ISSUES_INDEX.md
+R3G_MASS_REHEARSAL_OPEN_GAPS.md
 ```
-
-它们不能继续只停留在 proposed-disabled 文档层。每个 source 都必须有具体 adapter/gate/replay/route/evidence 结论，或 ADR 收窄范围。
-
----
-
-## 3. Task cards
-
-| Task ID  | Active card                                          | Required source coverage                                                                                                      | Parallel rule / 状态                                                        |
-| -------- | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| `R3H-01` | `R3H_01_OFFICIAL_MACRO_DISCLOSURE_ADAPTERS.md`       | `fred`, `us_treasury`, `sec_edgar`, `cftc_cot`, `bis`, `world_bank`                                                           | **CLOSED** @ 2026-06-28；六源 READY；G10 + G14（FRED）已闭合                |
-| `R3H-02` | `R3H_02_MARKET_DATA_ADAPTERS.md`                     | `alpha_vantage`, `stooq`, `yahoo_finance`, `deribit`, `coingecko`                                                             | **CLOSED** @ 2026-06-28；五源 READY；**US 日历** → R3H-05 §5.0.1 **CAL-US** |
-| `R3H-03` | `R3H_03_CN_MARKET_ADAPTERS.md`                       | `baostock`, `akshare`, `cninfo`, `tdx_pytdx`, `mootdx`, `eastmoney`, `sina_finance`, `ths_ifind`, `qmt_xtdata`, `qmt_xqshare` | **CLOSED** @ 2026-06-28；十源 READY；**CN G2/G17 日历已闭合**（Q12）        |
-| `R3H-04` | `R3H_04_PREDICTION_AND_WEB_EVIDENCE_ADAPTERS.md`     | `kalshi`, `polymarket`, `web_search`                                                                                          | **CLOSED** @ 2026-06-28；**web_search mock stub**（真 API 延后）            |
-| `R3H-05` | `R3H_05_LAYER_BINDING_AND_PRODUCTION_ENTRY_AUDIT.md` | 汇总所有 source 与 Layer1–5 真实数据绑定                                                                                      | **当前入口**；须闭合 §5.0.1 开放项后 Round4 门禁                            |
-
----
-
-## 4. Batch-level gates
-
-Batch 3H 不算完成，除非：
-
-- registry/capability 中每个目标 source 都有 adapter/gate/replay/route/evidence 结论。
-- 每个被启用或可调度的 source 都有 READY route 和 negative route test。
-- 每个不能启用的 source 都有明确 DISABLED route reason、auth/license/ADR 说明和 release limitation。
-- 五层模型至少覆盖声明范围内的真实数据/evidence 路径，不再只靠 staged fixture。
-- DataSourceService / SourceRoutePlanner / provider ports 不再只是 facade/skeleton。
-- Clean-write 入口只允许 capped production entry，不允许全市场/全历史/分钟线默认。
-- Round4 只能在 R3H-05 PASS 或 ADR 收窄 Round3 生产接入承诺后启动。
-
----
-
-## 5. Forbidden scope
-
-- 不做全市场。
-- 不做全历史。
-- 不默认分钟线/期权链全量。
-- 不默认启用 QMT/TDX/Yahoo/商业终端。
-- 不把 prediction market 当事实结果源。
-- 不让 `web_search` 写 clean table。
-- 不复制 `参考项目/**` runtime source。
-- 不把 adapter 启用拆成“只加一个字段/只加一个 registry note”的新微批次。

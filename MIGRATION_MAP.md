@@ -90,17 +90,18 @@
 
 ### 4.3 ADR 与决策记录
 
-| 路径                                                                        | 用途                                                 |
-| --------------------------------------------------------------------------- | ---------------------------------------------------- |
-| `docs/adr/ADR-0001-use-duckdb-local-first.md`                               | DuckDB local-first 决策                              |
-| `docs/adr/ADR-0002-agent-readonly-boundary.md`                              | Agent 只读边界决策                                   |
-| `docs/adr/ADR-0003-layer1-standardization-only.md`                          | Layer 1 标准化范围决策                               |
-| `docs/adr/ADR-0004-layer3-shock-anchor-model.md`                            | Layer 3 shock-anchor 模型决策                        |
-| `docs/adr/ADR-0005-primary-validation-fallback-source-model.md`             | Primary / Validation / FallbackPolicy 数据源角色决策 |
-| `docs/decisions/README.md`                                                  | 新决策目录入口                                       |
-| `docs/decisions/ADR-001-ingestion-validation-write-transaction-boundary.md` | ingestion / validation / write transaction 边界      |
-| `docs/decisions/ADR-002-db-check-vs-app-validation.md`                      | DB CHECK 与应用层 validation 分工                    |
-| `docs/decisions/ADR-003-implementation-path-mapping.md`                     | 实现路径映射决策                                     |
+| 路径                                                                        | 用途                                                          |
+| --------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| `docs/adr/ADR-0001-use-duckdb-local-first.md`                               | DuckDB local-first 决策                                       |
+| `docs/adr/ADR-0002-agent-readonly-boundary.md`                              | Agent 只读边界决策                                            |
+| `docs/adr/ADR-0003-layer1-standardization-only.md`                          | Layer 1 标准化范围决策                                        |
+| `docs/adr/ADR-0004-layer3-shock-anchor-model.md`                            | Layer 3 shock-anchor 模型决策                                 |
+| `docs/adr/ADR-0005-primary-validation-fallback-source-model.md`             | Primary / Validation / FallbackPolicy 数据源角色决策          |
+| `docs/decisions/README.md`                                                  | 新决策目录入口                                                |
+| `docs/decisions/ADR-001-ingestion-validation-write-transaction-boundary.md` | ingestion / validation / write transaction 边界               |
+| `docs/decisions/ADR-002-db-check-vs-app-validation.md`                      | DB CHECK 与应用层 validation 分工                             |
+| `docs/decisions/ADR-003-implementation-path-mapping.md`                     | 实现路径映射决策                                              |
+| `docs/decisions/ADR-025-r3h10-sync-fail-closed-datasource-service.md`       | R3H-10 Sync 生产路径 fail-closed（须注入 datasource_service） |
 
 ### 4.4 模块设计文档 `docs/modules/`
 
@@ -277,6 +278,9 @@
 | `docs/implementation_tasks/PRODUCTION_COMPLETION_VERTICAL_SLICE_PLAN.md`                                                                          | 生产补齐**覆盖地图**（非 standalone 工单）                                                               |
 | `docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/README.md`                                                    | Batch 3G sandbox clean-write（3F-R 后）                                                                  |
 | `docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/README.md`                                      | Batch 3H 真实源生产入口（3G 后）                                                                         |
+| `docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/WAVE1_R3H10_THEN_R3H07_TO_ISSUES_INDEX.md`      | Wave 1 串行门控索引（R3H-10 → R3H-07）                                                                   |
+| `docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/R3H_10_DATASOURCE_SERVICE_SSOT.md`              | R3H-10 DataSourceService SSOT 活卡（C2+E4）                                                              |
+| `docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/R3H_07_US_TRADING_CALENDAR.md`                  | R3H-07 US 交易日历活卡（G4+C3）                                                                          |
 | `docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/024_implement_fastapi_routes.md`                                                   | FastAPI routes 实施任务                                                                                  |
 | `docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/025_implement_agent_tool_layer.md`                                                 | Agent tool layer 实施任务                                                                                |
 | `docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/026_implement_frontend_shell.md`                                                   | Frontend shell 实施任务                                                                                  |

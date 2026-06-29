@@ -16,20 +16,20 @@
 
 ## 2. R3H-05 必审交叉项
 
-| ID                     | 主题                                                                                                                                     |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| **REF-ADOPT-GATE**     | 四轨追溯文件存在；25 源 port 头注释 ladder 与矩阵一致；`test_reference_adoption_guardrails` 绿                                           |
-| **STAGED-PILOT-SSOT**  | 产品 fetch SSOT = `datasources/fetch_ports/*`；`ops/staged_pilot_fetch_ports.py` 仅 3G rehearsal / `--live-wire` — **延后收敛**（见 §3） |
-| **PILOT-OPS-CALENDAR** | `r3g03_isolated_pilot_dry_run.py` 等运维脚本可用自然日窗 — **非** 产品 adapter 承诺；R3H-05 limitation                                   |
+| ID                     | 主题                                                                                                                                                      |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **REF-ADOPT-GATE**     | 四轨追溯文件存在；25 源 port 头注释 ladder 与矩阵一致；`test_reference_adoption_guardrails` 绿                                                            |
+| **STAGED-PILOT-SSOT**  | 产品 fetch SSOT = `datasources/fetch_ports/*`；`ops/staged_pilot_fetch_ports` 双轨收敛 → **R3H-10 Wave 1**（S10-05 / S10-CLOSE）；rehearsal 边界见 S10-03 |
+| **PILOT-OPS-CALENDAR** | `r3g03_isolated_pilot_dry_run.py` 等运维脚本可用自然日窗 — **非** 产品 adapter 承诺；R3H-05 limitation                                                    |
 
 ## 3. 延后 / 债务（不在 R3H-01～04 重做）
 
-| ID                     | 内容                                                         | 负责阶段                                        |
-| ---------------------- | ------------------------------------------------------------ | ----------------------------------------------- |
-| **STAGED-PILOT-SSOT**  | `staged_pilot` 薄封装委托 `fetch_ports` 或 deprecate；消双轨 | debt-lite **post-R3H-05**（Round4 并行可选）    |
-| **CAL-US**             | US equity 交易日历 EasyXT L2                                 | R3H-05 WARN+ADR 或后续 schema/calendar 切片     |
-| **MACRO-LIVE-DEFER**   | 官方宏观五源 live                                            | R3H-05 limitation                               |
-| **PILOT-OPS-CALENDAR** | pilot 脚本自然日                                             | 文档 limitation；不阻塞 Round4 若产品路径已登记 |
+| ID                        | 内容                         | 负责阶段                                                                              |
+| ------------------------- | ---------------------------- | ------------------------------------------------------------------------------------- |
+| ~~**STAGED-PILOT-SSOT**~~ | ~~post-R3H-05~~              | **已前移至 R3H-10**（活卡 `R3H_10` · Trellis `research/reference-adoption-r3h10.md`） |
+| **CAL-US**                | US equity 交易日历 EasyXT L2 | R3H-05 WARN+ADR 或后续 schema/calendar 切片                                           |
+| **MACRO-LIVE-DEFER**      | 官方宏观五源 live            | R3H-05 limitation                                                                     |
+| **PILOT-OPS-CALENDAR**    | pilot 脚本自然日             | 文档 limitation；不阻塞 Round4 若产品路径已登记                                       |
 
 ## 4. Batch 3G 摘要（已完成）
 
