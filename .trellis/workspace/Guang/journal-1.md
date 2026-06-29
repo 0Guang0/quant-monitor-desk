@@ -487,3 +487,36 @@ Delivered capped production promote path with quadruple-lock approval, dry_run d
 ### Status
 
 [OK] **Completed**
+
+## Session 15: R3H-07 US Trading Calendar CAL-US closure
+
+**Date**: 2026-06-29
+**Task**: R3H-07 US Trading Calendar CAL-US closure
+**Branch**: `master`
+
+### Summary
+
+Delivered us_trading_calendar SSOT, trading_sessions on US ports, ADR-026 span cap, Layer4 holiday reject. A9 Audit FAIL→Repair 23/23 closed, CAL-US registry CLOSED, task archived.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash       | Message       |
+| ---------- | ------------- |
+| `94ccd326` | (see git log) |
+| `8602a8eb` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
