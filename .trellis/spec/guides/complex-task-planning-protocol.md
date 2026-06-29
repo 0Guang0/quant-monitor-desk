@@ -349,7 +349,7 @@ Trellis 命令与 hook 细节见 `.trellis/workflow.md`；`task.py start` = Plan
 
 - `grill-me`（mattpocock）或 `interview-me`（addy）→ MASTER §3 边界、§7 Red Flags
 - **更强替代：** `grill-with-docs`（mattpocock）——当项目已有领域模型（`CONTEXT.md`/`ADR`）时，以模型为锚点质问计划，产出同上 + 更新 `CONTEXT.md`/`ADR`
-- **可选澄清（需求不明或有疑问时）：** 须用 grill-me / interview-me / idea-refine / trellis-brainstorm；决策写入 `research/*-session.md` 或 ADR（**非**每任务必做）
+- **可选澄清（需求不明或有疑问时）：** 须用 grill-me / interview-me / idea-refine / trellis-brainstorm；**先 [grill-gate](grill-gate.md) block 问用户**，再写 `research/*-session.md` 或 ADR（**非**每任务必做）
 
 ### Phase 3.5 — 需求垂直切片（新 · to-issues）
 

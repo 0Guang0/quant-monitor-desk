@@ -38,6 +38,7 @@ skills:
     path: .cursor/skills/trellis-brainstorm/SKILL.md
     phase: "2a"
     default_role: 可选
+    trigger_ref: .trellis/spec/guides/grill-gate.md
     note: "需求不明时；决策写入 prd.md 或 research/brainstorm-session.md"
 
   spec-driven-development:
@@ -54,17 +55,20 @@ skills:
     path: .claude/skills/grill-me/SKILL.md
     phase: "3"
     default_role: 可选
-    note: "需求不明或有疑问时；决策写入 research/grill-me-session.md 或 ADR"
+    trigger_ref: .trellis/spec/guides/grill-gate.md
+    note: "需求不明；block 问用户后再写 research/grill-me-session.md"
 
   interview-me:
     path: .agents/skills/interview-me/SKILL.md
     phase: "3"
     default_role: 可选
+    trigger_ref: .trellis/spec/guides/grill-gate.md
 
   idea-refine:
     path: .agents/skills/idea-refine/SKILL.md
     phase: "3"
     default_role: 可选
+    trigger_ref: .trellis/spec/guides/grill-gate.md
     note: "决策写入 research/idea-refine-session.md 或 ADR"
 
   grill-with-docs:

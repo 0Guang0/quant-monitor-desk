@@ -10,7 +10,7 @@ description: "Complex-task Plan v4.1. MUST Read when status=planning. Execution 
 
 ## 必读（按序）
 
-1. 本文件 + **`agent-toolchain.md`** + `.trellis/spec/guides/plan-skill-paths.yaml` + **`plan-skill-outputs.yaml`**
+1. 本文件 + **`agent-toolchain.md`** + `.trellis/spec/guides/plan-skill-paths.yaml` + **`plan-skill-outputs.yaml`** + **`grill-gate.md`**（`.trellis/spec/guides/`）
 2. 模板：`templates/research/00-EXECUTION-ENTRY.template.md` · `EXTERNAL-INDEX.template.md` · `plan-consolidation.md`
 3. 样板：`.trellis/tasks/06-29-round3h-r3h10-datasource-service-ssot/`（v4.1 试点）
 4. `docs/implementation_tasks/`（P0 原计划包）
@@ -27,18 +27,18 @@ description: "Complex-task Plan v4.1. MUST Read when status=planning. Execution 
 
 ## Plan 加固 Skill（v4.1 · 必做）
 
-| Phase      | Skill                            | 产出（结构跟 SKILL.md，文件名登记 §5.1）                                                                        |
-| ---------- | -------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| **3.5**    | **to-issues**                    | `research/to-issues-slices.md`（+ 可选 `bypass-baseline-matrix.md`）                                            |
-| **5a**     | **planning-and-task-breakdown**  | `research/plan-task-breakdown.md`（或等价）                                                                     |
-| **5a'**    | **spec-driven-development**      | `research/plan-spec.md`（或等价）                                                                               |
-| **5b**     | **context-engineering**          | `research/plan-context.md`                                                                                      |
-| **5c**     | **doubt-driven-development**     | `research/plan-doubt-review.md`                                                                                 |
-| **5c'**    | **documentation-and-adrs**       | `docs/decisions/ADR-NNN-*.md` + ENTRY §4                                                                        |
-| **1–4**    | **trellis-research**（**必做**） | `research/<topic>.md` · `reference-adoption-*.md`                                                               |
-| **2a / 3** | **澄清类（可选）**               | 需求不明时：`trellis-brainstorm` · `grill-me` · `interview-me` · `idea-refine` → `research/*-session.md` 或 ADR |
+| Phase      | Skill                            | 产出（结构跟 SKILL.md，文件名登记 §5.1）                                                |
+| ---------- | -------------------------------- | --------------------------------------------------------------------------------------- |
+| **3.5**    | **to-issues**                    | `research/to-issues-slices.md`（+ 可选 `bypass-baseline-matrix.md`）                    |
+| **5a**     | **planning-and-task-breakdown**  | `research/plan-task-breakdown.md`（或等价）                                             |
+| **5a'**    | **spec-driven-development**      | `research/plan-spec.md`（或等价）                                                       |
+| **5b**     | **context-engineering**          | `research/plan-context.md`                                                              |
+| **5c**     | **doubt-driven-development**     | `research/plan-doubt-review.md`                                                         |
+| **5c'**    | **documentation-and-adrs**       | `docs/decisions/ADR-NNN-*.md` + ENTRY §4                                                |
+| **1–4**    | **trellis-research**（**必做**） | `research/<topic>.md` · `reference-adoption-*.md`                                       |
+| **2a / 3** | **澄清类（可选）**               | 需求不明：`grill-me` 等 → 先 **grill-gate** block 问用户 → 再写 `research/*-session.md` |
 
-**铁律：** 任何信息不明确或用户未说清 → **必须用澄清类 skill 访问用户**；决策写入 `research/` 或 `docs/decisions/ADR-*.md`。
+**铁律：** 信息不明确 → **grill-gate** block（对话问用户）；**禁止** 用 session 文件代替用户回复。见 `.trellis/spec/guides/grill-gate.md`。
 
 **必做（v4.1 freeze）：** GitNexus **1a+1b** + **trellis-research** + 上表加固 skill。
 

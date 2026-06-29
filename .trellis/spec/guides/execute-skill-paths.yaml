@@ -1,5 +1,7 @@
-# Execute Skill 路径 — Plan 可复制进 MASTER §12「路径」列
-# Execute agent Read 工具必须使用本表路径（禁止读同名错误 skill）
+# Execute Skill 路径 — v4 Execute agent MUST Read 本表路径
+# 工程契约：.cursor/skills/trellis-execute/principles.md
+# 条件 skill：.cursor/skills/trellis-execute/reference.md
+# 澄清门：.trellis/spec/guides/grill-gate.md
 
 version: "1"
 
@@ -15,36 +17,84 @@ skills:
     phase: boot
     default_role: 必做
 
+  trellis-execute-principles:
+    path: .cursor/skills/trellis-execute/principles.md
+    phase: boot
+    default_role: 必做
+    note: "ponytail · test-driven-development · 五字段 · grill-gate · 全量 pytest"
+
   test-driven-development:
     path: .claude/plugins/cache/addy-agent-skills/agent-skills/3a6fc6392823/skills/test-driven-development/SKILL.md
     phase: RED
     default_role: 必做
     fallback: .claude/skills/tdd/SKILL.md
 
+  karpathy-guidelines:
+    path: .cursor/plugins/cache/karpathy-skills/andrej-karpathy-skills/2c606141936f1eeef17fa3043a72095b4765b9c2/skills/karpathy-guidelines/SKILL.md
+    phase: RED
+    default_role: 必做
+    note: "RED 写测试 + GREEN 写正式代码均遵守"
+
+  testing-guidelines:
+    path: .cursor/skills/testing-guidelines/SKILL.md
+    phase: RED
+    default_role: 必做
+    note: "五字段 docstring；RED 写测 + GREEN 确认覆盖"
+
   incremental-implementation:
     path: .claude/plugins/cache/addy-agent-skills/agent-skills/3a6fc6392823/skills/incremental-implementation/SKILL.md
     phase: SLICE
     default_role: 必做
+    fallback: .agents/skills/incremental-implementation/SKILL.md
 
   source-driven-development:
-    path: .claude/plugins/cache/addy-agent-skills/agent-skills/3a6fc6392823/skills/source-driven-development/SKILL.md
+    path: .agents/skills/source-driven-development/SKILL.md
     phase: GREEN
     default_role: 条件
+    trigger_ref: .cursor/skills/trellis-execute/reference.md#source-driven-development
+
+  deprecation-and-migration:
+    path: .agents/skills/deprecation-and-migration/SKILL.md
+    phase: GREEN
+    default_role: 条件
+    trigger_ref: .cursor/skills/trellis-execute/reference.md#deprecation-and-migration
+
+  observability-and-instrumentation:
+    path: .agents/skills/observability-and-instrumentation/SKILL.md
+    phase: SLICE
+    default_role: 条件
+    trigger_ref: .cursor/skills/trellis-execute/reference.md#observability-and-instrumentation
 
   systematic-debugging:
     path: .claude/plugins/cache/claude-plugins-official/superpowers/5.1.0/skills/systematic-debugging/SKILL.md
     phase: DEBUG
     default_role: 条件
+    fallback: .agents/skills/debugging-and-error-recovery/SKILL.md
+    trigger_ref: .cursor/skills/trellis-execute/reference.md#systematic-debugging--diagnosing-bugsdebug
+    note: "DEBUG 首选；仍卡住见 diagnosing-bugs"
 
-  karpathy-guidelines:
-    path: .cursor/plugins/cache/karpathy-skills/andrej-karpathy-skills/2c606141936f1eeef17fa3043a72095b4765b9c2/skills/karpathy-guidelines/SKILL.md
-    phase: GREEN
-    default_role: 必做
+  diagnosing-bugs:
+    path: .claude/skills/diagnosing-bugs/SKILL.md
+    phase: DEBUG
+    default_role: 条件
+    fallback: .agents/skills/debugging-and-error-recovery/SKILL.md
+    trigger_ref: .cursor/skills/trellis-execute/reference.md#systematic-debugging--diagnosing-bugsdebug
+    note: "systematic-debugging 后仍卡住；再不行 gitnexus-debugging"
 
-  testing-guidelines:
-    path: .cursor/skills/testing-guidelines/SKILL.md
-    phase: GREEN
-    default_role: 必做
+  shipping-and-launch:
+    path: .agents/skills/shipping-and-launch/SKILL.md
+    phase: pre-merge
+    default_role: 条件
+    trigger_ref: .cursor/skills/trellis-execute/reference.md#shipping-and-launch-pre-merge
+    note: "主会话；handoff 绿之后、merge/PR 之前；不替代 Audit"
+
+  grill-me:
+    path: .claude/skills/grill-me/SKILL.md
+    phase: boot
+    default_role: 条件
+    fallback: .claude/skills/grilling/SKILL.md
+    trigger_ref: .trellis/spec/guides/grill-gate.md
+    note: "scope 不清；须 grill-gate block 对话问用户"
 
   gitnexus-impact:
     path: AGENTS.md
@@ -55,10 +105,13 @@ skills:
 boot_required_reads:
   - agent-toolchain
   - trellis-execute
+  - trellis-execute-principles
   - gitnexus-impact
 
 red_required_reads:
   - test-driven-development
+  - karpathy-guidelines
+  - testing-guidelines
 
 green_required_reads:
   - karpathy-guidelines
@@ -72,3 +125,19 @@ handoff_required_skills:
   - incremental-implementation
   - karpathy-guidelines
   - testing-guidelines
+
+conditional_reads:
+  source-driven-development:
+    when: "外部 API/契约语义；见 reference.md#source-driven-development"
+  deprecation-and-migration:
+    when: "删除/迁移/双轨；见 reference.md#deprecation-and-migration"
+  observability-and-instrumentation:
+    when: "ops/pipeline/写路径可观测性；见 reference.md#observability-and-instrumentation"
+  systematic-debugging:
+    when: "RED/GREEN 异常；DEBUG 首选；见 reference.md#systematic-debugging--diagnosing-bugsdebug"
+  diagnosing-bugs:
+    when: "systematic-debugging 后仍卡住；见 reference.md#systematic-debugging--diagnosing-bugsdebug"
+  shipping-and-launch:
+    when: "handoff 绿后 merge/PR 前；主会话；见 reference.md"
+  grill-me:
+    when: "scope 不清；须 grill-gate block；见 .trellis/spec/guides/grill-gate.md"

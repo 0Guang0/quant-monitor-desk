@@ -48,15 +48,10 @@ When the active task status is `in_progress`:
 
 **Protocol v4 / v4.1** — SSOT: `frozen/*.md` + `implement.jsonl` (slot 1 = frozen; slot 2 = ENTRY or INDEX):
 
-1. **MUST Read first:** `agent-toolchain.md` + `.cursor/skills/trellis-execute/SKILL.md` — Phase 0 Boot.
+1. **MUST Read first:** `agent-toolchain.md` + `.cursor/skills/trellis-execute/SKILL.md` + `principles.md` — Phase 0 Boot.
 2. **MUST Read `implement.jsonl` every line**; do not skip by summarizing the frozen task card.
 3. Read frozen card §9 / `EXECUTION_INDEX` §1 state machine; skill table in `execute-skill-paths.yaml`.
-4. Execute **one §9.x step at a time**: TDD RED → `execute-evidence/{step}-red.txt` → GREEN → `{step}-green.txt` → `[x]`.
-5. After each GREEN: **incremental-implementation**; full pytest before next step.
-6. GitNexus **`impact()`** before edits; **`detect_changes()`** before commit.
-7. Optional: `validate-execute-step <task-dir> 9.x`
-8. Before Audit: `validate-execute-handoff <task-dir>`.
-9. Do **not** `finish-work` until Audit PASS.
+4. Execute **one §9.x step at a time**: `test-driven-development` RED → `execute-evidence/{step}-red.txt` → GREEN → `{step}-green.txt` → SLICE (`incremental-implementation`) → `[x]`.
 
 **Legacy v3**（`in_progress` + `MASTER.plan.md` only）:
 

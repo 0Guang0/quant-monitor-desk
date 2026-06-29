@@ -1,47 +1,101 @@
 ---
 name: trellis-execute
-description: "Complex-task Execute. MUST Read after task.py start. Blocks code until Phase 0 boot passes."
+description: >-
+  Executes Trellis complex tasks one slice at a time with RED/GREEN evidence.
+  Use when in_progress, after task.py start, on EXECUTION_INDEX or frozen steps,
+  or dispatching trellis-implement. RED reads test-driven-development; SLICE
+  reads incremental-implementation; scope unclear triggers grill-gate block.
 ---
 
-# Trellis Execute（v4 / v4.1）
+# Trellis Execute
 
-> **读者：Execute**  
-> **v4.1：** `research/00-EXECUTION-ENTRY.md` + 包内 skill 产出 + `EXTERNAL-INDEX.md` §A；`frozen`/`EXECUTION_INDEX` 为薄指针  
-> **v4.0 遗留：** `frozen/*.md` + `EXECUTION_INDEX.md` 全文
+**Leading word — slice：** 一次只完成 INDEX §1 的一个 Step。
 
-## Phase 0 Boot
+| 层级       | 文件                                            |
+| ---------- | ----------------------------------------------- |
+| 工程契约   | [principles.md](principles.md)                  |
+| 条件 skill | [reference.md](reference.md)                    |
+| 澄清门     | `.trellis/spec/guides/grill-gate.md`            |
+| 路径表     | `.trellis/spec/guides/execute-skill-paths.yaml` |
 
-| #      | 动作                                                                     | 产出         |
-| ------ | ------------------------------------------------------------------------ | ------------ |
-| 0a     | GitNexus `impact()`（改 symbol 前）                                      | —            |
-| 0b-v41 | Read `research/00-EXECUTION-ENTRY.md` → 完成 **§5.2 开工必读** checklist | —            |
-| 0b-v41 | Read `to-issues-slices.md` **当前切片** §                                | —            |
-| 0b-v40 | Read frozen + EXECUTION_INDEX + implement **每条**                       | —            |
-| 0c     | Read `implement.jsonl` slot2（通常 ENTRY）                               | —            |
-| 0d     | append `execute-skill-reads.jsonl`                                       | 首行本 skill |
+**SSOT：** `frozen/*.md` + `EXECUTION_INDEX.md` + `implement.jsonl` · v4.1：`research/00-EXECUTION-ENTRY.md`
 
-执行中：按 ENTRY **§5.3** / `EXTERNAL-INDEX` §B/C 情境路由打开源码与契约。
+---
 
-`validate-execute-boot <task-dir>` → exit 0（`context-closure.md`）。
+## Phase 0 Boot（任务级一次）
 
-## 门控速查（v4）
+| #   | 动作                                                         | 完成条件                                            |
+| --- | ------------------------------------------------------------ | --------------------------------------------------- |
+| 0a  | Read `agent-toolchain.md` + 本 skill + `principles.md`       | 能复述当前 slice AC 与边界                          |
+| 0b  | Read `implement.jsonl` 每一行；v4.1：ENTRY §5.2 + 当前切片 § | 无盲区；有盲区 → **grill-gate block**               |
+| 0c  | GitNexus `impact()` 扫将改 symbol                            | blast radius 已记录                                 |
+| 0d  | append `execute-skill-reads.jsonl`                           | 含 `trellis-execute` · `trellis-execute-principles` |
+| 0e  | `validate-execute-boot <task-dir>`                           | exit 0                                              |
 
-| 项   | 规则                                                                                    |
-| ---- | --------------------------------------------------------------------------------------- |
-| 逐步 | **EXECUTION_INDEX §1** Step ↔ 冻结卡 §9.x；证据 `execute-evidence/{step}-red/green.txt` |
-| 测试 | 冻结卡 §10；注释对齐 purpose（**不可改 purpose**）                                      |
-| 验收 | 索引 §2 Tier；B/C = **prod-path**（`QMD_DATA_ROOT=data`）                               |
-| 过线 | RED FAIL + GREEN PASS + 证据 + `[x]`                                                    |
-| 交接 | `validate-execute-handoff` → Audit；**勿** finish-work                                  |
+---
 
-## 每步
+## 每 slice
 
-1. **RED** — `test-driven-development` → `{step}-red.txt`
-2. **GREEN** — `karpathy-guidelines` + `testing-guidelines` → `{step}-green.txt`
-3. **SLICE** — `incremental-implementation`；全库 `pytest -q` → 0
+```text
+impact() → RED → [DEBUG?] → GREEN → SLICE → 证据 + [x]
+```
 
-改 symbol 前：`impact()`。Skill 表以冻结任务卡 **§14 Execute Skill 冻结** 为准。
+### RED — Read `test-driven-development`
+
+1. Read `test-driven-development`
+2. Read `testing-guidelines` + `karpathy-guidelines`；写/改 `test_*` + 五字段 docstring
+3. INDEX **RED 命令** → **必须 FAIL**
+4. `execute-evidence/{step}-red.txt`
+
+**完成条件：** RED 失败 + 证据在盘。禁止写正式实现。
+
+### DEBUG（条件）
+
+触发：RED 意外 PASS · GREEN 后仍 FAIL · 同错修 2 轮 · 栈与 INDEX 不符
+
+→ [reference.md §DEBUG](reference.md#debug) → 回到 RED
+
+**完成条件：** 根因已写明；`execute-skill-reads.jsonl` 含 DEBUG skill；再跑 RED。
+
+### GREEN — `test-driven-development` 的 GREEN 步
+
+1. Read `karpathy-guidelines` + `testing-guidelines`
+2. **ponytail** 最小正式代码使 RED 变绿
+3. 触发则必 Read：[reference.md](reference.md) 条件节
+4. **GREEN 命令** → **必须 PASS**
+5. `execute-evidence/{step}-green.txt`
+
+**完成条件：** GREEN PASS；已触发条件 skill 已 Read。
+
+### SLICE — Read `incremental-implementation`
+
+1. Read `incremental-implementation`
+2. 触发则必 Read：`observability-and-instrumentation`
+3. `uv run pytest -q` → exit 0
+4. 勾 `[x]`；`execute-skill-reads.jsonl` 追加本步 skill
+
+**完成条件：** 全库 pytest 绿；测试 **目的/目标** 未为通过而改写。
+
+改 symbol 前：`impact()`。
+
+---
 
 ## 收尾
 
-索引 §2 + 冻结卡 §11 → `execute-skill-evaluation.md` → `validate-execute-handoff` → Audit。
+| #   | 动作                          | 完成条件       |
+| --- | ----------------------------- | -------------- |
+| H1  | `execute-skill-evaluation.md` | 存在           |
+| H2  | `validate-execute-handoff`    | exit 0         |
+| H3  | Audit A1–A8                   | 勿 finish-work |
+
+pre-merge（主会话）：handoff 绿 + Audit PASS 后可选 `shipping-and-launch` → [reference.md](reference.md#shipping-and-launch-pre-merge)
+
+---
+
+## trellis-implement
+
+子 agent：`.cursor/agents/trellis-implement.md` — 与本 skill 一致；不 commit。
+
+## 禁止
+
+多 step 一批 · 无 RED/GREEN 勾 `[x]` · 先正式代码后 `test-driven-development` · 改测试目的换绿 · 跳过已触发条件 skill · Matt `/implement` · **grill-gate 未解除就写码**
