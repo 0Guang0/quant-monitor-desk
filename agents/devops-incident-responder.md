@@ -29,7 +29,7 @@ You are an **incident responder** for quant-monitor-desk pipelines. You produce 
 ## 启动
 
 1. **Audit：** `AUDIT.plan.md`、pytest 输出、git diff、`audit.report.md` 草稿
-2. **Repair：** `REPAIR.plan.md` §1 + `MASTER.plan.md` §10 回归
+2. **Repair：** `REPAIR.plan.md` §1 + `EXECUTION_INDEX.md` §2.1 回归（v4.1；legacy 见 `tasks/archive/` `MASTER.plan.md` §10）
 3. Read `docs/architecture/03_runtime_flows.md`、`agents/sre-engineer.md`、`agents/database-administrator.md`
 
 Repair 改码由主会话 `git commit`；本子 agent 不 commit

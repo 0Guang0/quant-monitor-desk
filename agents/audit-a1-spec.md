@@ -97,4 +97,5 @@ Read `agents/audit-finding-schema.md` 全文。落盘：`research/audit-a1-repor
 - [ ] §计划内问题 + §计划外发现 两表表头与 schema 一致
 - [ ] 任一行 finding 非占位 → §维度裁决 = **FAIL**
 - [ ] 每行 P ∈ {P0,P1,P2,P3}；含修复方案、验证
+- [ ] findings 表 P 列仅 P0–P3；**禁止** NON-BLOCKING/信息性/BLOCKING（见 `audit-finding-schema.md` L77）
 - [ ] 禁止 BLOCKING/NON-BLOCKING/PASS*WITH*\* 作为维度裁决

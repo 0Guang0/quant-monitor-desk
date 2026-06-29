@@ -63,9 +63,14 @@ alwaysApply: true
 1. **建 ledger** — 打开**源报告正文**（非摘要、非 agent 转述），每条 finding 一行：原文定位 · 标签 · disposition · 证据。  
    标签含 P0–P3、BLOCKING/NON-BLOCKING、high/medium/low、可优化、待改进、计划外发现、弱点、建议后续、边界遗漏、错误处理、可选观察等**任何分级**；标签只影响排序，不决定是否进 ledger。
 
-2. **逐项 disposition（仅两种）**  
-   - **已修复**：根因已消除，有约定验证或代码/测试证据。  
-   - **阶段外置**：客观上依赖后续阶段交付物；须写清绑定的阶段/任务 ID、依赖、承接，并登记进度文档。  
+2. **逐项 disposition**
+   - **A9 建账（仅两种）：** **待修复**（本票 Repair 承接）· **阶段外置**（绑阶段/任务 ID；**同日**登记文档，见下）
+   - **Repair 关账（仅两种）：** **已修复**（根因已消除 + 验证证据）· **阶段外置**（不变）
+   - **待修复 → 已修复**：根因修复并验证后改列
+   - **阶段外置** 须 **文档化**（禁止口头 defer）— **仅登记以下两份**（finish-work 后仍读）：
+     1. `docs/quality/待修复清单.md` — 新增开放行（ID · 问题 · 清理阶段/owner · 任务挂钩 · 阻塞什么 · 关闭条件）
+     2. `PROJECT_IMPLEMENTATION_ROADMAP.md` — 新增承接行（绑定阶段/任务 ID · 依赖 · 承接）
+     ledger `登记位置` 列写清上述两路径；`audit.report.md` §4.4 同步
    **禁止**第三种状态：「以后再说」、低优先级先放、NON-BLOCKING 默认过、摘要 PASS 就不开报告。
 
 3. **执行修复** — 全程遵守工程契约；改 symbol 前 `impact()`。
@@ -75,9 +80,9 @@ alwaysApply: true
 ### 关账完成条件（全部满足才算通过）
 
 - [ ] Ledger 覆盖源报告每一条 finding（正文 0 条则 ledger 为空并注明「正文已核实，0 项」）
-- [ ] 每行 disposition ∈ {已修复, 阶段外置}，无空项、无待定
+- [ ] 每行 disposition ∈ {已修复, 阶段外置}，**无待修复**、无空项、无待定
 - [ ] 已修复项根因已消除，非表象 patch
-- [ ] 阶段外置项已绑定任务 ID 并登记进度文档
+- [ ] 阶段外置项已绑定任务 ID；**`docs/quality/待修复清单.md`** + **`PROJECT_IMPLEMENTATION_ROADMAP.md`** 已登记；`audit.report.md` §4.4 与 ledger `登记位置` 可核对
 - [ ] `uv run pytest -q` exit 0
 - [ ] 未因摘要 PASS / PASS with xxx / NON-BLOCKING / 不阻塞 跳过步骤 1–4
 

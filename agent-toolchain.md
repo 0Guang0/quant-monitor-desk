@@ -98,12 +98,12 @@
 
 > **判定：** `task.json` → `meta.task_track: complex`（v4/v4.1 三件套默认 complex）· 详见 `AGENTS.md` §Loop engineering · `complex-task-planning-protocol.md` §0 Loop
 
-| 阶段                | 产物                                             | 门禁                                               |
-| ------------------- | ------------------------------------------------ | -------------------------------------------------- |
-| **Plan freeze**     | `context_pack.json` · `loop_manifest.json`       | `validate-plan-freeze` 自动 `context_router`       |
-| **Execute 中**      | 新测/新 docs/specs/backend 包                    | `loop_maintain.py --fix` · `authority_graph.yaml`  |
-| **Execute handoff** | `evidence_index.json`（索引 execute/audit 证据） | `validate-execute-handoff` → `check_task_evidence` |
-| **Audit 关账**      | `audit_matrix.json` · ledger                     | A7/A9 更新 loop_manifest AC 状态                   |
+| 阶段                | 产物                                             | 门禁                                                       |
+| ------------------- | ------------------------------------------------ | ---------------------------------------------------------- |
+| **Plan freeze**     | `context_pack.json` · `loop_manifest.json`       | `validate-plan-freeze` 自动 `context_router`               |
+| **Execute 中**      | 新测/新 docs/specs/backend 包                    | `loop_maintain.py --fix` · `authority_graph.yaml`          |
+| **Execute handoff** | `evidence_index.json`（索引 execute/audit 证据） | `validate-execute-handoff` → `check_task_evidence`         |
+| **Audit 关账**      | `audit_matrix.json` · ledger                     | `validate-audit-handoff` exit 0 · A7/A9 更新 loop_manifest |
 
 **v4.1 不变：** loop 管 **路由/索引/AC 机械关账**；Execute **不写** execute-evidence txt / skill-reads jsonl。
 
@@ -115,6 +115,8 @@
 | ----------------- | ----------------------------------------------------------------- |
 | Plan 冻结         | `python .trellis/scripts/task.py validate-plan-freeze <task-dir>` |
 | Execute handoff   | `validate-execute-handoff`（v4.1：代码/测试 + `[x]`）             |
+| Audit A9 handoff  | `validate-audit-handoff`（A9 建账：ledger **待修复/阶段外置**）   |
+| Repair 关账       | `validate-repair-close`（**已修复/阶段外置**；无待修复）          |
 | 刷新 context_pack | `uv run python scripts/context_router.py --task <task-dir>`       |
 | 地图/catalog 过期 | `uv run python scripts/loop_maintain.py`（`--fix` 写回）          |
 
@@ -123,4 +125,4 @@
 - **Plan** → `trellis-plan` + `plan-skill-paths.yaml`
 - **Execute 必做** → `trellis-execute/reference.md` + `principles.md` + `execute-skill-paths.yaml`
 - **Execute 条件** → 本文件 **§Execute — 条件 skill**
-- **Audit** → `AUDIT.plan.md` + `audit-skill-paths.yaml` + `agents/*.md`
+- **Audit** → `agents/audit-boot-v4.1.md` §A9 + `audit-skill-paths.yaml` + `validate-audit-handoff`

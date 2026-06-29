@@ -16,21 +16,25 @@
 ## Repair 规则
 
 1. **修根因**，禁止 wrapper/假绿/静默降级
-2. 每项 finding → ledger disposition ∈ {已修复, 阶段外置}
-3. 证据 = 代码 + pytest，不写 handoff 长文
+2. A9 建账：每项 disposition ∈ {**待修复**, **阶段外置**}
+3. 关账：无 **待修复** 残留；每项 disposition ∈ {**已修复**, **阶段外置**}
+4. **阶段外置**：关账前在 **`docs/quality/待修复清单.md`** + **`PROJECT_IMPLEMENTATION_ROADMAP.md`** 各新增一行；`audit.report.md` §4.4 与 ledger `登记位置` 一致
+5. 证据 = 代码 + pytest，不写 handoff 长文
 
 ## 收尾复验（必做）
 
 ```bash
 uv run pytest -q   # exit 0
+python .trellis/scripts/task.py validate-repair-close <task-dir>   # exit 0
 # + INDEX §2.1 Tier（与 REPAIR.plan 一致）
 # 触 backend/docs/specs/authority_graph 时：uv run python scripts/loop_maintain.py
 ```
 
-更新 `audit.report.md` §5 · `research/audit-repair-ledger.md`。
+更新 `audit.report.md` §5 · `research/audit-repair-ledger.md`（**无待修复**；每条 disposition ∈ {已修复, 阶段外置}）。
 
 ## Boot 完成条件
 
-- [ ] §4.3 / ledger 每项有 disposition
+- [ ] §4.3 / ledger 每项 disposition ∈ {已修复, 阶段外置}；**无** 待修复
+- [ ] 凡 **阶段外置**：`docs/quality/待修复清单.md` + `PROJECT_IMPLEMENTATION_ROADMAP.md` 已新增行；§4.4 / ledger `登记位置` 可 diff 核对
 - [ ] INDEX §2.1 + pytest 全绿
 - [ ] 未改测试 purpose/目标换绿

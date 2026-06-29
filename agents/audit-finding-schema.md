@@ -28,6 +28,8 @@
 
 仅允许：**PASS** | **FAIL** | **SKIP**（仅 A6 且 AUDIT.plan §1/§2 已冻结 SKIP）。
 
+**总裁决** 仅 **A9 主会话** 写入 `audit.report.md` §4.2 — 单维报告 **禁止** 写「总裁决」。
+
 | 条件                                                            | 裁决                                         |
 | --------------------------------------------------------------- | -------------------------------------------- |
 | §计划内 + §计划外 两表均为占位行（无 finding）且 checklist 满足 | **PASS**                                     |
@@ -93,7 +95,16 @@
 
 ## A9 主会话合并
 
-1. 读 A1–A8 §计划内 + §计划外 → `audit.report.md` §4.1 · `research/audit-repair-ledger.md`
+步骤与门禁：`agents/audit-boot-v4.1.md` §A9 合并。
+
+1. 读 A1–A8 §计划内 + §计划外 **全文** → `audit.report.md` §4.1 · `research/audit-repair-ledger.md`（模板：`.trellis/spec/guides/templates/audit-repair-ledger.md`）
 2. `audit_matrix.json`：`pass` | `fail` | `skip` | `fail_then_fixed`
 3. 任维 `fail` 或 §4.1 非占位 → **FAIL** → REPAIR.plan
-4. Repair 复验：`EXECUTION_INDEX.md` §2.1 Tier + `uv run pytest -q` exit 0
+4. `python .trellis/scripts/task.py validate-audit-handoff <task-dir>` **exit 0**
+5. Repair 复验：`validate-repair-close` exit 0 + `EXECUTION_INDEX.md` §2.1 Tier + `uv run pytest -q` exit 0
+
+**legacy 范例：** `tasks/archive/` 内 `NON-BLOCKING` / `fixed` / `deferred` 台账 **勿模仿**。
+
+**disposition：** A9 建账 **待修复** | **阶段外置** → Repair 关账 **已修复** | **阶段外置**（`project-global.mdc` §无遗留）。
+
+**阶段外置：** 须登记 **`docs/quality/待修复清单.md`** + **`PROJECT_IMPLEMENTATION_ROADMAP.md`**（两份必登；finish-work 后仍读）。

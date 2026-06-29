@@ -6,7 +6,6 @@ import argparse
 import os
 from pathlib import Path
 
-from backend.app.config import DATA_ROOT
 from backend.app.datasources.source_registry import SourceRegistry
 from backend.app.db.connection import ConnectionManager
 from backend.app.db.migrate import apply_migrations
@@ -21,9 +20,8 @@ def main(argv: list[str] | None = None) -> int:
         help="Path to source_registry YAML (default: specs/.../source_registry.yaml)",
     )
     args = parser.parse_args(argv)
-    data_root = os.environ.get("QMD_DATA_ROOT", "data")
-    os.environ["QMD_DATA_ROOT"] = data_root
-    db_path = DATA_ROOT / "duckdb" / "quant_monitor.duckdb"
+    data_root = Path(os.environ.setdefault("QMD_DATA_ROOT", "data"))
+    db_path = data_root / "duckdb" / "quant_monitor.duckdb"
     db_path.parent.mkdir(parents=True, exist_ok=True)
     cm = ConnectionManager(db_path)
     with cm.writer() as con:

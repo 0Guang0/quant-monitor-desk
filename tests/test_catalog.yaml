@@ -1473,6 +1473,28 @@ tests/test_unresolved_item_task_coverage.py:
     docs: []
     rules: []
     specs: []
+tests/test_us_trading_calendar.py:
+  command: uv run python -m pytest tests/test_us_trading_calendar.py -q
+  failure_meaning:
+    Regression in test_us_trading_calendar; inspect purpose and linked
+    authorities.
+  purpose: R3H-07 US trading calendar SSOT tests (CAL-US).
+  type: runtime-contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_validate_audit_handoff.py:
+  command: uv run python -m pytest tests/test_validate_audit_handoff.py -q
+  failure_meaning:
+    Regression in test_validate_audit_handoff; inspect purpose and
+    linked authorities.
+  purpose: Audit A9 / Repair close 校验器测试。
+  type: protocol
+  verifies:
+    docs: []
+    rules: []
+    specs: []
 tests/test_vendor_fetch_e2e.py:
   command: uv run python -m pytest tests/test_vendor_fetch_e2e.py -q
   failure_meaning:

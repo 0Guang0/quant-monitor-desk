@@ -97,7 +97,8 @@
 
 ## 5. A9 / Repair / Finish
 
-- A9 主会话：合并 A1–A8 `research/audit-a{n}-report.md` §计划内 + §计划外 → `audit.report.md` §4.1 / `research/audit-repair-ledger.md`
-- **PASS** — 全维 pass/skip 且 findings 合并表仅占位 → Phase 9
-- **FAIL** — 任维 fail 或 findings 非空 → REPAIR.plan → Phase 8（**禁止** PASS_WITH_FIXES）
-- Repair 关账：`project-global.mdc` §无遗留 + `uv run pytest -q` 全绿
+- A9 主会话：**`agents/audit-boot-v4.1.md` §A9 合并**（六步表）→ `audit.report.md` §4.1 / `research/audit-repair-ledger.md`（模板：`.trellis/spec/guides/templates/audit-repair-ledger.md`）
+- **门禁：** `python .trellis/scripts/task.py validate-audit-handoff <task-dir>` exit 0
+- **PASS** — 全维 pass/skip 且 §4.1 仅占位 → Phase 9
+- **FAIL** — 任维 fail 或 §4.1 有 finding → REPAIR.plan → Phase 8（**禁止** PASS_WITH_FIXES）
+- Repair 关账：`project-global.mdc` §无遗留 + `validate-repair-close` + `uv run pytest -q` 全绿

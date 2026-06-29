@@ -68,6 +68,10 @@ boot_required_reads:
 orchestrator_reads:
   - .trellis/spec/guides/templates/AUDIT.plan.md
 
+  - .trellis/spec/guides/templates/audit-repair-ledger.md
+
+  - agents/audit-boot-v4.1.md
+
   - audit.jsonl
 
   - research/00-EXECUTION-ENTRY.md

@@ -57,7 +57,7 @@ When the active task status is `in_progress`:
 ## Repair gate (Audit FAIL · v4.1)
 
 1. **MUST Read first:** `agents/repair-boot-v4.1.md` + `REPAIR.plan.md` + `research/audit-repair-ledger.md`.
-2. 修根因；ledger 每项 disposition ∈ {已修复, 阶段外置}（`project-global.mdc` §无遗留）。
+2. 修根因；ledger：**A9** {待修复, 阶段外置} → **关账** {已修复, 阶段外置}；**阶段外置** 须登记 `docs/quality/待修复清单.md` + `PROJECT_IMPLEMENTATION_ROADMAP.md`。
 3. 收尾复验：**INDEX §2.1** + `uv run pytest -q` exit 0 → 更新 audit.report §5。
 
 ## Loop engineering context (Trellis complex-task layer)

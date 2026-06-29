@@ -687,30 +687,20 @@ def test_reconcileJob_afterReconcile_resolvesOrManualReview(tmp_path) -> None:
 
 
 def test_syncRegistry_cli_syncsYamlToDb(tmp_path, registry_yaml_fixture, monkeypatch) -> None:
-    """覆盖范围：CLI 脚本把 YAML 数据源注册表同步进 DuckDB
-    测试对象：sync_registry 子进程入口
+    """覆盖范围：sync_registry CLI 把 YAML 数据源注册表同步进 DuckDB
+    测试对象：scripts.sync_registry.main（pyproject qmd-sync-registry 入口）
     目的/目标：运维跑同步脚本后，数据库里应有与 YAML 一致的数据源登记
-    验证点：returncode=0；source_registry COUNT≥1
+    验证点：main exit 0；source_registry COUNT≥1
     失败含义：注册表文件和库不同步，路由和能力判断会读错配置
     """
-    import os
-    import subprocess
+    from scripts.sync_registry import main as sync_registry_main
 
     data_root = tmp_path / "data"
     data_root.mkdir()
     (data_root / "duckdb").mkdir()
     monkeypatch.setenv("QMD_DATA_ROOT", str(data_root))
-    project_root = Path(__file__).resolve().parents[1]
-    env = os.environ.copy()
-    proc = subprocess.run(
-        ["uv", "run", "qmd-sync-registry", "--yaml", str(registry_yaml_fixture)],
-        cwd=str(project_root),
-        env=env,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    assert proc.returncode == 0, proc.stderr
+    rc = sync_registry_main(["--yaml", str(registry_yaml_fixture)])
+    assert rc == 0
     db = data_root / "duckdb" / "quant_monitor.duckdb"
     cm = ConnectionManager(db)
     with cm.reader() as con:

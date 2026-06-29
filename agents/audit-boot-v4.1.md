@@ -76,6 +76,17 @@
 - [ ] `gitnexus-audit-summary.md` 已产出（7.pre）
 - [ ] 未以「frozen 已够」跳过 ENTRY §5.1 登记文（Audit 读全包建上下文；验证只信代码+跑测）
 
-## A9 合并
+## A9 合并（主会话 · 禁止口头总裁决）
 
-读 A1–A8 `research/audit-a{n}-report.md` → `audit.report.md` §4.1 · `audit_matrix.json` · `research/audit-repair-ledger.md`（schema 见 `audit-finding-schema.md`）。
+> **Leading word — A9：** A1–A8 落盘后 **只信全文两表**，不信子 agent 摘要。总裁决 **仅** 写入 `audit.report.md` §4.2。
+
+| #   | 动作                                                                                                    | 完成条件                                                                                          |
+| --- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| 1   | Read **全文** `research/audit-a1-report.md` … `audit-a8-report.md` 的 **§计划内问题** + **§计划外发现** | 每份两表已读；非占位行已抄录 ID 清单                                                              |
+| 2   | 写 `audit.report.md` §2 维表 + §4.1 findings 合并表                                                     | 计划内+计划外 **每一非占位 ID** 在 §4.1 有行                                                      |
+| 3   | 写 `research/audit-repair-ledger.md`（模板：`.trellis/spec/guides/templates/audit-repair-ledger.md`）   | 同 ID 全集；disposition = **待修复** 或 **阶段外置**（后者须预填绑定任务 + 依赖/承接 + 登记位置） |
+| 4   | 写 `audit_matrix.json`                                                                                  | 各维 `pass`/`fail`/`skip` 与报告 §维度裁决一致                                                    |
+| 5   | §4.2 总裁决：**任维 fail 或 §4.1 非占位 → FAIL**                                                        | 勾选 §4.2；**禁止**在对话里先报 PASS/FAIL                                                         |
+| 6   | `python .trellis/scripts/task.py validate-audit-handoff <task-dir>`                                     | **exit 0**                                                                                        |
+
+**禁止：** 只 grep `§维度裁决` 汇总 · 单维报告写「总裁决」· 照抄 `tasks/archive/` 台账用词。

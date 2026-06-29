@@ -454,7 +454,7 @@ Trellis 命令与 hook 细节见 `.trellis/workflow.md`；`task.py start` = Plan
 | **7.pre.1** | **主会话**         | Trace Authority Presence Check；缺失 → 退回 Plan，**不派发** A1–A8（缺口内容审计 → A1–A8 + `audit-coverage-model.md`） |
 | 7.0         | 主会话             | 汇总各维 `research/audit-a{n}-report.md` §维度裁决 + INDEX §2.1 证据索引（只读）→ audit.report §2                      |
 | 7.1–7.8     | **A1–A8 子 agent** | Boot v4.1 + 执行 **AUDIT.plan §1** 本维验证 + GitNexus/CodeGraph → `research/audit-a{n}-report.md`                     |
-| **7.9 A9**  | **主会话**         | 合并 §计划内/§计划外 → audit.report §4.1 / `audit-repair-ledger`（**非子 agent**）                                     |
+| **7.9 A9**  | **主会话**         | 合并 §计划内/§计划外 → audit.report §4.1 / `audit-repair-ledger`；`validate-audit-handoff` exit 0                      |
 | 7.out       | 主会话             | PASS（无 findings）→ Phase 9；FAIL → 写 **REPAIR.plan.md** → Phase 8                                                   |
 
 ### Phase 8 — Repair
@@ -463,7 +463,7 @@ Trellis 命令与 hook 细节见 `.trellis/workflow.md`；`task.py start` = Plan
 - **输入：** audit.report §4.3 + **REPAIR.plan.md**（主会话 Audit 后编写）
 - **执行：** 主会话或 `repair-agent`；Skill 见 REPAIR.plan §2（systematic-debugging + TDD + verification 等）
 - **原则：** §2.6 修根因；Deferred 仅 §4.4
-- **产出：** audit.report §5 复验 **INDEX §2.1** + `uv run pytest -q` → Phase 9
+- **产出：** audit.report §5 复验 **INDEX §2.1** + `validate-repair-close` + `uv run pytest -q` → Phase 9
 
 ### Phase 8D — Repair/Debt Lite Worktree Track（已审计/已登记问题）
 
@@ -632,14 +632,15 @@ audit.report §5 PASS + 无未关 §4.3 → trellis-update-spec → archive → 
 
 #### 6.1.1 implement.jsonl 槽位（权威顺序）
 
-| 序号 | 文件                                      | 条件                                    |
-| ---- | ----------------------------------------- | --------------------------------------- |
-| 1    | `MASTER.plan.md`                          | 始终                                    |
-| 2    | `context_pack.json`                       | `task_track=complex`（默认：有 MASTER） |
-| 3    | `.cursor/skills/trellis-execute/SKILL.md` | 始终（复杂任务 Execute）                |
-| 4+   | 任务接线 docs/specs/code                  | `integration-ledger` / MASTER §6        |
+| 序号 | v4.1 活跃                                 | v3 legacy                                 |
+| ---- | ----------------------------------------- | ----------------------------------------- |
+| 1    | `frozen/*.md`（任务卡）                   | `MASTER.plan.md`                          |
+| 2    | `research/00-EXECUTION-ENTRY.md`          | `context_pack.json`                       |
+| 3    | `context_pack.json`                       | `.cursor/skills/trellis-execute/SKILL.md` |
+| 4    | `.cursor/skills/trellis-execute/SKILL.md` | 任务接线 docs/specs/code                  |
+| 5+   | 任务接线 docs/specs/code                  | —                                         |
 
-> `validate-plan-freeze` 在缺 pack 时自动调用 `context_router.py --task`。
+> v4.1：**无** `MASTER.plan.md`。`validate-plan-freeze` 在缺 pack 时自动调用 `context_router.py --task`。
 
 #### 6.1.2 项目地图分工
 

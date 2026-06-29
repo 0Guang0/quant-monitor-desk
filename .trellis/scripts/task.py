@@ -10,6 +10,8 @@ Usage:
     python task.py validate-plan-freeze <dir>  # Plan freeze gate (complex tasks)
     python task.py validate-plan-phase <dir> <phase>  # Plan phase (boot…5d, 5e consolidation)
     python task.py validate-execute-handoff <dir>  # Execute §11 handoff gate
+    python task.py validate-audit-handoff <dir>    # Audit A9 handoff gate
+    python task.py validate-repair-close <dir>     # Repair 关账 gate
     python task.py validate-execute-boot <dir>  # Execute Phase 0 (E16 legacy v4; v4.1 exempt)
     python task.py validate-execute-step <dir> <step>  # Execute §8.x step gate
     python task.py suggest-implement-context <dir>  # Plan 5c manifest suggestions (E12)
@@ -79,6 +81,10 @@ from common.execution_index import cmd_freeze_task_card, cmd_generate_manifests
 from common.validate_execute_handoff import (
     cmd_validate_execute_handoff,
     cmd_validate_execute_step,
+)
+from common.validate_audit_handoff import (
+    cmd_validate_audit_handoff,
+    cmd_validate_repair_close,
 )
 from common.validate_execute_boot import cmd_validate_execute_boot
 from common.manifest_commands import cmd_suggest_implement_context
@@ -499,6 +505,18 @@ def main() -> int:
     )
     p_vhandoff.add_argument("dir", help="Task directory")
 
+    # validate-audit-handoff
+    p_vaudit = subparsers.add_parser(
+        "validate-audit-handoff", help="Validate Audit A9 handoff to Repair"
+    )
+    p_vaudit.add_argument("dir", help="Task directory")
+
+    # validate-repair-close
+    p_vrepair = subparsers.add_parser(
+        "validate-repair-close", help="Validate Repair close (ledger dispositions)"
+    )
+    p_vrepair.add_argument("dir", help="Task directory")
+
     # validate-execute-boot
     p_vboot = subparsers.add_parser(
         "validate-execute-boot", help="Validate Execute Phase 0 (E16 legacy v4; v4.1 exempt)"
@@ -602,6 +620,8 @@ def main() -> int:
         "generate-manifests": cmd_generate_manifests,
         "validate-plan-phase": cmd_validate_plan_phase,
         "validate-execute-handoff": cmd_validate_execute_handoff,
+        "validate-audit-handoff": cmd_validate_audit_handoff,
+        "validate-repair-close": cmd_validate_repair_close,
         "validate-execute-boot": cmd_validate_execute_boot,
         "validate-execute-step": cmd_validate_execute_step,
         "suggest-implement-context": cmd_suggest_implement_context,
