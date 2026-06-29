@@ -14,9 +14,9 @@ from pathlib import Path
 
 import pytest
 
-from tests.contract_gate_support import PROJECT_ROOT
+from tests.contract_gate_support import PROJECT_ROOT, trellis_task_dir
 
-TASK_ROOT = PROJECT_ROOT / ".trellis/tasks/06-29-round3h-r3h08-live-productization"
+TASK_ROOT = trellis_task_dir("06-29-round3h-r3h08-live-productization")
 BASELINE_MATRIX = TASK_ROOT / "research/live-tier-baseline-matrix.md"
 
 LIVE_PROD_24_SOURCES = frozenset(
