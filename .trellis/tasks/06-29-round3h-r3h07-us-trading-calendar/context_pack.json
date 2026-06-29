@@ -296,6 +296,10 @@
     {
       "path": "tests/test_market_data_adapters.py",
       "purpose": "R3H-02 跨资产/US 市场数据适配器测试（Batch 3H）。"
+    },
+    {
+      "path": "tests/test_us_trading_calendar.py",
+      "purpose": "R3H-07 US trading calendar SSOT — is_trading_day, window_kind, service fetch, holiday negative."
     }
   ],
   "forbidden_claims": [

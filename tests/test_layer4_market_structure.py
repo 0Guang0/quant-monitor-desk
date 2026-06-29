@@ -328,3 +328,73 @@ def test_marketAdapter_bundleDirOutsideProject_rejects() -> None:
 
     with pytest.raises(Layer4MarketError, match="project root"):
         _build(bundle_dir=outside)
+
+
+_US_AS_OF = datetime(2024, 11, 29, 21, 0, tzinfo=UTC)
+_US_TRADE_DATE = date(2024, 11, 29)
+
+
+def _build_us(
+    *,
+    bundle_dir: Path = _FIXTURE,
+    trade_date: date = _US_TRADE_DATE,
+    as_of: datetime = _US_AS_OF,
+) -> object:
+    return MarketStructureBuilder().build(
+        market_id="US_EQ",
+        trade_date=trade_date,
+        as_of=as_of,
+        bundle_dir=bundle_dir,
+    )
+
+
+def test_layer4_usEquity_buildRejectsNonTradingHoliday() -> None:
+    """覆盖范围：US_EQ 在感恩节（非交易日）的 Layer4 拒绝
+    测试对象：MarketStructureBuilder.build + us_trading_calendar SSOT
+    目的/目标：S07-03 G4 与 C3 共用 US 日历；假日不得 build
+    验证点：trade_date=2024-11-28 → Layer4MarketError 含 non-trading
+    失败含义：US 假日仍可产出市场结构快照，CAL-US G4 未闭合
+    """
+    with pytest.raises(Layer4MarketError, match="non-trading"):
+        _build_us(trade_date=date(2024, 11, 28))
+
+
+def test_layer4_usEquity_buildAllowsTradingDay(tmp_path: Path) -> None:
+    """覆盖范围：US_EQ 在普通交易日的 Layer4 通过
+    测试对象：MarketStructureBuilder.build（US_EQ staged fixture 行）
+    目的/目标：S07-03 对称 CN 非交易日测 — 交易日应通过
+    验证点：2024-11-29 build 成功；breadth_row.market_id == US_EQ
+    失败含义：US 交易日被误拒或 fixture 路径未接线
+    """
+    bundle = _copy_bundle(tmp_path)
+    calendar_path = bundle / "calendar.json"
+    cal_rows = json.loads(calendar_path.read_text(encoding="utf-8"))
+    cal_rows.append(
+        {
+            "market_id": "US_EQ",
+            "trade_date": _US_TRADE_DATE.isoformat(),
+            "is_trading_day": True,
+            "session_type": "regular",
+            "timezone": "America/New_York",
+            "source": "staged_fixture",
+            "quality_flag": "ok",
+            "as_of_timestamp": "2024-11-29T21:00:00+00:00",
+        }
+    )
+    calendar_path.write_text(json.dumps(cal_rows, indent=2), encoding="utf-8")
+
+    breadth_path = bundle / "breadth.json"
+    breadth = json.loads(breadth_path.read_text(encoding="utf-8"))
+    breadth.update(
+        {
+            "market_id": "US_EQ",
+            "trade_date": _US_TRADE_DATE.isoformat(),
+            "as_of_timestamp": "2024-11-29T21:00:00+00:00",
+        }
+    )
+    breadth_path.write_text(json.dumps(breadth, indent=2), encoding="utf-8")
+
+    result = _build_us(bundle_dir=bundle)
+    assert result.breadth_row.market_id == "US_EQ"
+    assert result.breadth_row.trade_date == _US_TRADE_DATE
+

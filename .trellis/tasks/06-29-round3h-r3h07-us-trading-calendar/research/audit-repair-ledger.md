@@ -1,0 +1,30 @@
+# Audit Repair Ledger — R3H-07 US Trading Calendar
+
+> **SSOT：** `agents/audit-finding-schema.md` · **来源：** A1–A8 §计划内 + §计划外（A9 合并，保 ID）
+> **Repair 关账：** 2026-06-29 · 23/23 已修复 · 0 阶段外置
+
+| ID        | P   | 维度 | 标题                                            | disposition | 绑定任务 | 依赖/承接                                                       | 登记位置                                                                       |
+| --------- | --- | ---- | ----------------------------------------------- | ----------- | -------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| A1-P2-01  | P2  | A1   | 核心 SSOT 交付物未纳入 git 变更集               | 已修复      | —        | —                                                               | `git diff 231b5798 --stat` 含 SSOT 两文件                                      |
+| A1-P2-02  | P2  | A1   | ADR-026 显式窗口 span 仍按自然日计界            | 已修复      | —        | reject_fetch_window_span_over_cap + recent_trading_window_start | `pytest -k explicitWindowSpan`                                                 |
+| A1-P3-01  | P3  | A1   | 全量 pytest 单点失败（sync_registry CLI）       | 已修复      | —        | —                                                               | `uv run pytest -q` exit 0                                                      |
+| A2-P2-01  | P2  | A2   | `recent_trading_window_start` 死代码            | 已修复      | —        | 接入 span cap（非删除）                                         | `rg recent_trading_window_start backend`                                       |
+| A2-P2-02  | P2  | A2   | 三 port US mock + window_kind 拷贝粘贴          | 已修复      | —        | us_equity_window_kind + mock_us_equity_daily_bars               | `pytest -k windowKindTradingSessions`                                          |
+| A2-P3-03  | P3  | A2   | mock 路径二次 filter_us_trading_day_bars        | 已修复      | —        | 合并至 mock helper                                              | fetch_payload 无二次 filter                                                    |
+| A2-P2-04  | P2  | A2   | BOOT 测与 S07-02 测重复                         | 已修复      | —        | \_US_EQUITY_SOURCE_CASES 单测                                   | 净减重复测                                                                     |
+| A2-P2-05  | P2  | A2   | StagedUSEquityMarketAdapter 空壳重复            | 已修复      | —        | StagedFixtureMarketAdapter                                      | `pytest -k usEquity`                                                           |
+| A2-P2-06  | P2  | A2   | DataSourceService 金路径测手工接线膨胀          | 已修复      | —        | enable_source_route                                             | `pytest -k datasourceService`                                                  |
+| A5-P1-001 | P1  | A5   | 核心 SSOT 与专项测未纳入 git 交付               | 已修复      | —        | 同 A1-P2-01                                                     | 同 A1-P2-01                                                                    |
+| A5-P2-001 | P2  | A5   | AC-CLOSE：CAL-US registry 仍为 PENDING          | 已修复      | —        | —                                                               | `rg 'CAL-US.*CLOSED' docs/quality/round3h_real_data_production_entry_audit.md` |
+| A5-P3-001 | P3  | A5   | get_missing_trading_days 无行为测               | 已修复      | —        | test_usTradingCalendar_getMissingTradingDays_thanksgivingWeek   | `pytest -k getMissingTradingDays`                                              |
+| A5-P3-002 | P3  | A5   | stooq 假日 bar 过滤无专用负向测                 | 已修复      | —        | test_stooqFinance_fetchPayload_excludesHolidayBars              | `pytest -k stooqFinance_fetchPayload_excludesHolidayBars`                      |
+| A7-P2-01  | P2  | A7   | detect_changes 与 git 真值未覆盖 untracked SSOT | 已修复      | —        | 同 A1-P2-01                                                     | `detect_changes({scope:'compare',base_ref:'231b5798'})` changed_count=9        |
+| A7-P2-02  | P2  | A7   | Audit 时点 impact 无法锚定任务变更符号          | 已修复      | —        | git add + `node .gitnexus/run.cjs analyze` exit 0               | analyze 14704 nodes；MCP impact 待主会话 commit 后复验                         |
+| A7-P3-01  | P3  | A7   | context_pack.json tests[] 未登记新模块测        | 已修复      | —        | —                                                               | `context_pack.json` tests[] 含 `test_us_trading_calendar.py`                   |
+| A7-P3-02  | P3  | A7   | loop_manifest.json AC 状态全为 pending          | 已修复      | —        | —                                                               | `loop_manifest.json` 全 AC `closed`                                            |
+| A8-P1-001 | P1  | A8   | S07-01 SSOT 模块未纳入 git 证据链               | 已修复      | —        | 同 A1-P2-01                                                     | 同 A1-P2-01                                                                    |
+| A8-P1-002 | P1  | A8   | S07 专项测文件未纳入 git 证据链                 | 已修复      | —        | 同 A1-P2-01                                                     | 同 A1-P2-01                                                                    |
+| A8-P2-001 | P2  | A8   | CAL-US registry 仍为 PENDING                    | 已修复      | —        | 同 A5-P2-001                                                    | 同 A5-P2-001                                                                   |
+| A8-P2-002 | P2  | A8   | 全量 pytest 未绿（AC-04）                       | 已修复      | —        | 同 A1-P3-01                                                     | 同 A1-P3-01                                                                    |
+| A8-P2-003 | P2  | A8   | 新 backend 包未登记 authority_graph             | 已修复      | —        | —                                                               | `uv run python scripts/loop_maintain.py` exit 0                                |
+| A8-P3-001 | P3  | A8   | GitNexus 索引未含新 SSOT                        | 已修复      | —        | git add + analyze                                               | `node .gitnexus/run.cjs analyze` exit 0 · 14704 nodes                          |

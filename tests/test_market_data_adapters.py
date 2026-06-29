@@ -95,7 +95,7 @@ def test_evidence_contract_replayFixture_tradeDateCanonical() -> None:
     assert bundle["schema_version"] == MARKET_DATA_EVIDENCE_SCHEMA_VERSION
     assert bundle["source_id"] == "alpha_vantage"
     assert bundle["source_fetch_id"] == "av-replay-aapl"
-    assert bundle.get("window_kind") == "calendar_days"
+    assert bundle.get("window_kind") == "trading_sessions"
     assert bundle["bars"][0]["trade_date"] == "2024-01-02"
     for bar in bundle["bars"]:
         assert bar.get("trade_date")
@@ -109,19 +109,19 @@ def test_evidence_contract_replayFixture_tradeDateCanonical() -> None:
         (_YAHOO_REPLAY, "yahoo_finance"),
     ],
 )
-def test_evidence_contract_replayFixture_windowKindCalendarDays(
+def test_evidence_contract_replayFixture_windowKindTradingSessions(
     replay_path: Path, source_id: str
 ) -> None:
     """覆盖范围：stooq/yahoo replay bundle window_kind 契约
     测试对象：market_data replay fixtures + read_daily_bar_evidence_bundle
-    目的/目标：R3H02-R-22 ponytail evidence contract — window_kind 必须为 calendar_days
-    验证点：bundle.window_kind == calendar_days；source_id 与 fixture 一致
-    失败含义：window_kind 漂移导致 Layer2/ResourceGuard 窗口语义不可信
+    目的/目标：R3H07 CAL-US — US equity replay window_kind 必须为 trading_sessions
+    验证点：bundle.window_kind == trading_sessions；source_id 与 fixture 一致
+    失败含义：window_kind 仍为 calendar_days，C3/G4 窗口语义不可信
     """
     from backend.app.datasources.normalizers.market_data import read_daily_bar_evidence_bundle
 
     bundle = read_daily_bar_evidence_bundle(replay_path)
-    assert bundle.get("window_kind") == "calendar_days"
+    assert bundle.get("window_kind") == "trading_sessions"
     assert bundle["source_id"] == source_id
 
 
@@ -341,21 +341,23 @@ def test_alpha_vantage_port_capOverflow_blocksOverMaxSymbols() -> None:
 
 
 def test_alpha_vantage_port_windowSpan_blocksOverMaxWindowDays() -> None:
-    """覆盖范围：Alpha Vantage fetch 窗口天数 cap
+    """覆盖范围：Alpha Vantage US equity fetch trading-session 窗口 cap
     测试对象：AlphaVantageMockFetchPort.fetch_payload start/end 跨度
-    目的/目标：§7 max_window_days=120 在 fetch 入口 reject_over_cap
-    验证点：121 日历日窗口触发 PortError 且消息含 cap
-    失败含义：window cap 未接线，可拉取超窗历史
+    目的/目标：ADR-026 max_window_days=120 按 trading sessions 在 US equity 入口 reject
+    验证点：跨度含 >120 交易日时 PortError 且消息含 cap
+    失败含义：US equity window cap 仍按自然日计界，可拉取超窗历史
     """
     from backend.app.datasources.adapters.fetch_port import PortError
     from backend.app.datasources.fetch_ports.alpha_vantage_port import (
         MAX_WINDOW_DAYS,
         create_alpha_vantage_fetch_port,
     )
+    from backend.app.ops.data_health_profiles.us_trading_calendar import get_trading_days
 
     port = create_alpha_vantage_fetch_port(symbols=("AAPL",), max_rows=3, use_mock=True)
-    end = datetime.now(UTC).date()
-    start = end - timedelta(days=MAX_WINDOW_DAYS + 1)
+    end = date(2024, 6, 14)
+    start = date(2023, 10, 1)
+    assert len(get_trading_days(start, end)) > MAX_WINDOW_DAYS
     req = _market_req(
         "alpha_vantage",
         "us_equity_daily_bar",

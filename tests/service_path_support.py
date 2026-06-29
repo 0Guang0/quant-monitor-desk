@@ -32,6 +32,7 @@ def enable_source_route(
     *,
     source_id: str,
     data_domain: str,
+    primary_source_id: str | None = None,
 ) -> SourceRoutePlanner:
     """Enable one source + domain for route planner tests (R3H-04 dedup)."""
     from backend.app.datasources.source_registry import DomainRoleBinding
@@ -47,7 +48,7 @@ def enable_source_route(
         if domain != data_domain:
             return binding
         return DomainRoleBinding(
-            primary_source_id=binding.primary_source_id,
+            primary_source_id=primary_source_id or binding.primary_source_id,
             validation_source_id=binding.validation_source_id,
             fallback_policy=binding.fallback_policy,
             domain_enabled_by_default=True,

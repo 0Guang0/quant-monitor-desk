@@ -15,10 +15,15 @@ from typing import Any
 
 from backend.app.datasources.adapters.fetch_port import FetchPayload, PortError
 from backend.app.datasources.fetch_result import FetchRequest
+from backend.app.datasources.fetch_window import (
+    is_us_equity_bar_fetch,
+    mock_us_equity_daily_bars,
+    reject_fetch_window_span_over_cap,
+    us_equity_window_kind,
+)
 from backend.app.datasources.normalizers.evidence_bundle import (
     finalize_bundle,
     reject_over_cap,
-    reject_window_span_over_cap,
 )
 from backend.app.datasources.normalizers.market_data import build_daily_bar_evidence_bundle
 
@@ -41,7 +46,13 @@ class StooqMockFetchPort:
     symbols: Sequence[str]
     max_rows: int
 
-    def _mock_bars(self, symbol: str) -> list[dict[str, Any]]:
+    def _mock_bars(self, symbol: str, *, data_domain: str) -> list[dict[str, Any]]:
+        if is_us_equity_bar_fetch(data_domain=data_domain, instrument_id=symbol):
+            return mock_us_equity_daily_bars(
+                symbol=symbol,
+                count=min(self.max_rows, 3),
+                source_used="stooq",
+            )
         today = datetime.now(UTC).date()
         bars: list[dict[str, Any]] = []
         for offset in range(min(self.max_rows, 3)):
@@ -61,20 +72,23 @@ class StooqMockFetchPort:
 
     def fetch_payload(self, req: FetchRequest) -> FetchPayload:
         reject_over_cap(value=self.max_rows, cap=MAX_ROWS, label="max_rows")
-        reject_window_span_over_cap(
-            start_time=req.start_time,
-            end_time=req.end_time,
-            cap=MAX_WINDOW_DAYS,
-        )
         symbol = req.instrument_id or (self.symbols[0] if self.symbols else "")
         if not symbol:
             raise PortError("FAILED", "missing instrument_id for Stooq mock fetch")
         _reject_unknown_symbol(symbol)
+        domain = req.data_domain or "global_market_daily_bar"
+        reject_fetch_window_span_over_cap(
+            start_time=req.start_time,
+            end_time=req.end_time,
+            cap=MAX_WINDOW_DAYS,
+            data_domain=domain,
+            instrument_id=symbol,
+        )
 
         retrieved_at = datetime.now(UTC).isoformat()
         fetch_id = f"stooq-mock-{symbol}-{uuid.uuid4().hex[:12]}"
-        domain = req.data_domain or "global_market_daily_bar"
-        bars = self._mock_bars(symbol)
+        bars = self._mock_bars(symbol, data_domain=domain)
+        window_kind = us_equity_window_kind(data_domain=domain, instrument_id=symbol)
         bundle = build_daily_bar_evidence_bundle(
             bars=bars,
             data_domain=domain,
@@ -83,6 +97,7 @@ class StooqMockFetchPort:
             content_hash="pending",
             as_of_timestamp=retrieved_at,
             retrieved_at=retrieved_at,
+            window_kind=window_kind,
         )
         bundle = finalize_bundle(bundle)
         content = json.dumps(bundle, ensure_ascii=False, default=str).encode("utf-8")

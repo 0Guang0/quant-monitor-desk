@@ -136,16 +136,24 @@ def seed_registry_rows() -> tuple[MarketRegistryRow, ...]:
     return REGISTRY_SEEDS
 
 
-class StagedCNAMarketAdapter:
-    """Staged fixture adapter for CN_A market structure rows."""
+class StagedFixtureMarketAdapter:
+    """Staged fixture adapter for CN_A / US_EQ market structure rows."""
 
-    market_id = "CN_A"
+    def __init__(self, market_id: str) -> None:
+        self.market_id = market_id
 
     def load_calendar(self, bundle_dir: Path) -> tuple[MarketCalendarRow, ...]:
         return _load_calendar_rows(bundle_dir)
 
     def load_breadth(self, bundle_dir: Path, trade_date: date) -> MarketBreadthSnapshotRow:
         return _load_breadth_row(bundle_dir, trade_date)
+
+
+class StagedCNAMarketAdapter(StagedFixtureMarketAdapter):
+    """Staged fixture adapter for CN_A market structure rows."""
+
+    def __init__(self) -> None:
+        super().__init__("CN_A")
 
 
 class MarketStructureBuilder:
@@ -161,6 +169,7 @@ class MarketStructureBuilder:
         self._rule_version = rule_version
         self._code_version = code_version
         self._cna_adapter = StagedCNAMarketAdapter()
+        self._us_eq_adapter = StagedFixtureMarketAdapter("US_EQ")
 
     def build(
         self,
@@ -179,7 +188,15 @@ class MarketStructureBuilder:
         if market_id not in {row.market_id for row in registry_rows}:
             raise Layer4MarketError(f"unknown market_id {market_id!r}")
 
-        adapter = _adapter_for_market(market_id, self._cna_adapter)
+        if market_id == "US_EQ":
+            from backend.app.ops.data_health_profiles.us_trading_calendar import is_trading_day
+
+            if not is_trading_day(trade_date):
+                raise Layer4MarketError(
+                    f"snapshot blocked on non-trading day for {market_id!r} {trade_date}"
+                )
+
+        adapter = _adapter_for_market(market_id, self._cna_adapter, self._us_eq_adapter)
         calendar_rows = adapter.load_calendar(root)
         breadth_row = adapter.load_breadth(root, trade_date)
 
@@ -253,11 +270,17 @@ def collect_result_field_names(result: MarketStructureBuildResult) -> set[str]:
     return names
 
 
-def _adapter_for_market(market_id: str, cna: StagedCNAMarketAdapter) -> StagedCNAMarketAdapter:
+def _adapter_for_market(
+    market_id: str,
+    cna: StagedCNAMarketAdapter,
+    us_eq: StagedFixtureMarketAdapter,
+) -> StagedCNAMarketAdapter | StagedFixtureMarketAdapter:
     if market_id == "CN_A":
         return cna
+    if market_id == "US_EQ":
+        return us_eq
     raise Layer4MarketError(
-        f"no staged adapter for market_id {market_id!r}; only CN_A fixture is bundled"
+        f"no staged adapter for market_id {market_id!r}; only CN_A and US_EQ fixtures are bundled"
     )
 
 

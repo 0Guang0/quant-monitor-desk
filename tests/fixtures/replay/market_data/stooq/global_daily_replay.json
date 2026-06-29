@@ -18,5 +18,5 @@
   "content_hash": "stooq-replay-hash-global",
   "as_of_timestamp": "2024-01-02T16:00:00Z",
   "retrieved_at": "2024-01-02T16:00:00Z",
-  "window_kind": "calendar_days"
+  "window_kind": "trading_sessions"
 }

@@ -15,13 +15,33 @@
 
 ## 1. 步骤与证据（Execute）
 
-| Step | 切片     | RED    | GREEN  | 证据路径                               |
-| ---- | -------- | ------ | ------ | -------------------------------------- |
-| 9.0  | S07-BOOT | 见切片 | 见切片 | `execute-evidence/9.0-{red,green}.txt` |
-| 9.1  | S07-01   | 见切片 | 见切片 | `execute-evidence/9.1-{red,green}.txt` |
-| 9.2  | S07-02   | 见切片 | 见切片 | `execute-evidence/9.2-{red,green}.txt` |
-| 9.3  | S07-03   | 见切片 | 见切片 | `execute-evidence/9.3-{red,green}.txt` |
-| 9.4  | S07-04   | 见切片 | 见切片 | `execute-evidence/9.4-{red,green}.txt` |
+| Step | 切片     | RED    | GREEN  | 证据路径                               | 完成  |
+| ---- | -------- | ------ | ------ | -------------------------------------- | ----- |
+| 9.0  | S07-BOOT | 见切片 | 见切片 | `execute-evidence/9.0-{red,green}.txt` | `[x]` |
+| 9.1  | S07-01   | 见切片 | 见切片 | `execute-evidence/9.1-{red,green}.txt` | `[x]` |
+| 9.2  | S07-02   | 见切片 | 见切片 | `execute-evidence/9.2-{red,green}.txt` | `[x]` |
+| 9.3  | S07-03   | 见切片 | 见切片 | `execute-evidence/9.3-{red,green}.txt` | `[x]` |
+| 9.4  | S07-04   | 见切片 | 见切片 | `execute-evidence/9.4-{red,green}.txt` | `[x]` |
+
+### 9.0
+
+| 已执行 | [x] |
+
+### 9.1
+
+| 已执行 | [x] |
+
+### 9.2
+
+| 已执行 | [x] |
+
+### 9.3
+
+| 已执行 | [x] |
+
+### 9.4
+
+| 已执行 | [x] |
 
 ## 2. AC ↔ 测试 / 验收
 

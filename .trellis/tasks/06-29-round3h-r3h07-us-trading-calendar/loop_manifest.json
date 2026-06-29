@@ -2,58 +2,53 @@
   "task": "06-29-round3h-r3h07-us-trading-calendar",
   "acs": [
     {
+      "id": "AC-BOOT",
+      "status": "closed",
+      "repair_items": []
+    },
+    {
       "id": "AC-01",
-      "status": "pending",
+      "status": "closed",
       "repair_items": []
     },
     {
       "id": "AC-02",
-      "status": "pending",
+      "status": "closed",
       "repair_items": []
     },
     {
       "id": "AC-03",
-      "status": "pending",
+      "status": "closed",
       "repair_items": []
     },
     {
       "id": "AC-04",
-      "status": "pending",
-      "repair_items": []
-    },
-    {
-      "id": "AC-BOOT",
-      "status": "pending",
+      "status": "closed",
       "repair_items": []
     },
     {
       "id": "AC-BOUND",
-      "status": "pending",
+      "status": "closed",
       "repair_items": []
     },
     {
       "id": "AC-CLOSE",
-      "status": "pending",
+      "status": "closed",
       "repair_items": []
     },
     {
       "id": "AC-CN-REG",
-      "status": "pending",
-      "repair_items": []
-    },
-    {
-      "id": "AC-ID",
-      "status": "pending",
+      "status": "closed",
       "repair_items": []
     },
     {
       "id": "AC-NO-DDL",
-      "status": "pending",
+      "status": "closed",
       "repair_items": []
     },
     {
       "id": "AC-SVC",
-      "status": "pending",
+      "status": "closed",
       "repair_items": []
     }
   ],
