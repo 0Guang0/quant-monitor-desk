@@ -39,6 +39,7 @@ Used with MIGRATION_MAP.md for machine omission checks (`check_docs_specs_indexe
 - `docs/decisions/ADR-003-implementation-path-mapping.md`
 - `docs/decisions/ADR-024-source-health-snapshot-boundary.md`
 - `docs/decisions/ADR-025-r3h10-sync-fail-closed-datasource-service.md`
+- `docs/decisions/ADR-026-r3h07-us-trading-calendar-ssot.md`
 - `docs/decisions/README.md`
 - `docs/implementation_tasks/BATCH_FOLDER_REHOME_PLAN.md`
 - `docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md`

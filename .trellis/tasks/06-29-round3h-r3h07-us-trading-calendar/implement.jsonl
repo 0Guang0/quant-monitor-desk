@@ -1,0 +1,9 @@
+{"file": ".trellis/tasks/06-29-round3h-r3h07-us-trading-calendar/frozen/R3H_07_US_TRADING_CALENDAR.md", "reason": "extract: Execute SSOT frozen task card | for: Boot slot 1"}
+{"file": ".trellis/tasks/06-29-round3h-r3h07-us-trading-calendar/research/00-EXECUTION-ENTRY.md", "reason": "extract: Execute bundle entry | for: Boot slot 2"}
+{"file": ".trellis/tasks/06-29-round3h-r3h07-us-trading-calendar/context_pack.json", "reason": "extract: authority graph routing | for: Boot slot 3"}
+{"file": ".cursor/skills/trellis-execute/SKILL.md", "reason": "extract: Phase 0 boot | for: §9.0 Boot"}
+{"file": "docs/decisions/ADR-026-r3h07-us-trading-calendar-ssot.md", "reason": "extract: S07-01..04 | for: manifest"}
+{"file": "docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/R3H_07_US_TRADING_CALENDAR.md", "reason": "extract: BOOT | for: manifest"}
+{"file": "docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/WAVE1_R3H10_THEN_R3H07_TO_ISSUES_INDEX.md", "reason": "extract: AC 对照 | for: manifest"}
+{"file": "tests/test_layer4_market_structure.py", "reason": "extract: AC test | for: EXECUTION_INDEX §2"}
+{"file": "tests/test_cn_market_adapters.py", "reason": "extract: AC test | for: EXECUTION_INDEX §2"}
