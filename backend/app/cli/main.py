@@ -21,7 +21,8 @@ def _build_data_parser(sub: argparse._SubParsersAction) -> None:
     rp.add_argument("--format", choices=["json", "text"], default="json")
 
     sync = data_sub.add_parser("sync", help="Sync job (default dry-run)")
-    sync.add_argument("--domain", required=True, dest="data_domain")
+    sync.add_argument("--domain", required=True, dest="data_domain", help="e.g. macro_series, market_bar_1d")
+    sync.add_argument("--source-id", default=None, dest="source_id")
     sync.add_argument("--operation", default=None)
     sync.add_argument("--start", default=None)
     sync.add_argument("--end", default=None)
@@ -128,6 +129,7 @@ def _run_data(args: argparse.Namespace) -> int:
         elif args.data_command == "sync":
             payload = data_commands.sync_plan(
                 data_domain=args.data_domain,
+                source_id=getattr(args, "source_id", None),
                 operation=args.operation,
                 dry_run=args.dry_run,
                 start=args.start,

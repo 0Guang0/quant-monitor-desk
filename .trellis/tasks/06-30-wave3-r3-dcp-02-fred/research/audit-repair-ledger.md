@@ -1,0 +1,22 @@
+# Audit Repair Ledger — R3-DCP-02
+
+> **A9 建账：** 2026-06-30 · **Repair 关账：** 2026-06-30
+
+| ID | 源 finding | P | 问题摘要 | disposition | 证据 |
+|----|------------|---|----------|-------------|------|
+| RB-01 | A1-P1-002 | P1 | port/CLI 缺 reference-adoption cite | 已修复 | `fred_incremental_run.py` L1–6 · `_macro_incremental_validation_patch` · `data_commands._sync_fred_macro_incremental` docstring |
+| RB-02 | A1-P1-003 · A3-P1-001 · A5-P1-02 | P1 | canonical DB 无 assert_sandbox | 已修复 | `data_commands.py` `assert_sandbox_db_allowed` · `test_fredIncrementalCli_execute_rejectsCanonicalDb` |
+| RB-03 | A4-P1-001 | P1 | 部分 series 失败仍报 completed | 已修复 | `FredIncrementalRunReport.overall_status` · CLI `SYNC_PARTIAL_FAILURE` · `test_fredIncremental_partialFailure_*` |
+| RB-04 | A4-P2-001 | P2 | JSON 解析未包装 | 已修复 | `fred_incremental_run.py` JSONDecodeError → FAILED · `test_fredStagingAdapter_invalidJson_*` |
+| RB-05 | A4-P2-002 | P2 | 缺省 value 静默 0.0 | 已修复 | skip empty value · `test_fredStaging_skipsObservationsWithoutValue` |
+| RB-06 | A4-P2-003 · A4-P3-001 | P2/P3 | TypeError 吞掉 / total_rows max | 已修复 | removed bare TypeError catch · `total_rows += row_count` |
+| RB-07 | A2-P2-001 · A2-P2-003 | P2 | service 重复构建 / dry-run 重复装配 | 已修复 | hoist `build_fred_incremental_service` · `build_fred_incremental_preview_service` |
+| RB-08 | A2-P2-002 · A2-P3-001 · A2-P3-002 | P2/P3 | 测试 duplicate helper / fixture | 已修复 | `fred_macro_incremental_support.py` · `fred_incremental_e2e_ctx` fixture |
+| RB-09 | A5-P2-01 · A8-P2-001 | P2 | live_smoke 断言与 docstring 不一致 | 已修复 | assert `COMPLETED` \| `EMPTY_RESPONSE` only |
+| RB-10 | A8-P3-001 · A8-P3-002 · A8-P3-003 | P3 | CLI help / EMPTY_RESPONSE / multi-series 测缺口 | 已修复 | help `macro_series` · empty_response + multi_series + canonical CLI tests |
+| RB-11 | A1-P2-001 | P2 | check/implement jsonl 占位 | 已修复 | `check.jsonl` · `implement.jsonl` 无 `_example` |
+| RB-12 | A1-P1-001 · A5-P1-01 | P1 | test_catalog 未登记 | 阶段外置 | 主会话 P7 `loop_maintain --fix` |
+| RB-13 | A3-P2-001 | P2 | registry disabled bypass | 已修复 | `enabled_fred_source_registry` + `_load_fred_incremental_route_bundle` ponytail 注释 |
+| RB-14 | A1-P2-002 | P2 | 7.pre gitnexus 摘要 | 已修复 | `research/gitnexus-audit-summary.md` |
+| RB-15 | A1-P3-001 | P3 | 活卡 §4 CLI 旗标漂移 | 阶段外置 | 主会话更新活卡 |
+| RB-16 | A5-P2-02 | P2 | 未 commit | 已修复 | Repair commit on `feature/wave3-r3-dcp-02-fred` |

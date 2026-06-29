@@ -59,24 +59,116 @@ def route_preview(
 def sync_plan(
     *,
     data_domain: str,
+    source_id: str | None = None,
     operation: str | None = None,
     dry_run: bool = True,
     start: str | None = None,
     end: str | None = None,
     since: str | None = None,
+    series_ids: tuple[str, ...] | None = None,
 ) -> dict[str, Any]:
-    if not dry_run:
-        raise CliFailure(
-            error_code="USER_AUTH_REQUIRED",
-            message=(
-                "qmd data sync without --dry-run requires explicit operator "
-                "confirmation (not enabled by default)"
-            ),
-            docs_anchor="docs/ops/data_sync_quick_reference.md",
-            manual_confirmation_required=True,
-        )
     op = operation or _default_operation(data_domain)
-    preview = route_preview(data_domain=data_domain, operation=op)
+    if dry_run:
+        if data_domain == "macro_series" and source_id == "fred":
+            from backend.app.ops.fred_incremental_run import build_fred_incremental_preview_service
+
+            preview_svc = build_fred_incremental_preview_service()
+            plan = preview_svc.preview_route(data_domain=data_domain, operation=op)
+            guard_decision, guard_reason = ResourceGuard().check()
+            preview = {
+                "route_status": plan.route_status,
+                "selected_source_id": plan.selected_source_id,
+            }
+        else:
+            preview = route_preview(data_domain=data_domain, operation=op)
+            guard_decision, guard_reason = ResourceGuard().check()
+        if guard_decision.value != "OK":
+            raise CliFailure(
+                error_code="RESOURCE_GUARD_PAUSED",
+                message=guard_reason or "resource guard paused",
+                docs_anchor="docs/ops/ERROR_CODE_GUIDE.md#resource-guard-paused",
+                retryable=True,
+            )
+        if preview["route_status"] != "READY":
+            raise error_for_route_status(
+                preview["route_status"],
+                detail=f"sync dry-run blocked for domain={data_domain!r}",
+            )
+        payload: dict[str, Any] = {
+            "command": "sync",
+            "dry_run": True,
+            "product_live": False,
+            "data_domain": data_domain,
+            "operation": op,
+            "window": {"start": start, "end": end, "since": since},
+            "route_status": preview["route_status"],
+            "selected_source_id": preview["selected_source_id"],
+            "resource_guard_decision": guard_decision.value,
+            "message": "dry-run only; no fetch or DB writes performed",
+        }
+        if source_id is not None:
+            payload["source_id"] = source_id
+        return payload
+
+    if data_domain == "macro_series" and source_id == "fred":
+        return _sync_fred_macro_incremental(
+            operation=op,
+            since=since,
+            series_ids=series_ids,
+        )
+
+    raise CliFailure(
+        error_code="USER_AUTH_REQUIRED",
+        message=(
+            "qmd data sync without --dry-run requires explicit operator "
+            "confirmation (not enabled by default)"
+        ),
+        docs_anchor="docs/ops/data_sync_quick_reference.md",
+        manual_confirmation_required=True,
+    )
+
+
+def _sync_fred_macro_incremental(
+    *,
+    operation: str,
+    since: str | None,
+    series_ids: tuple[str, ...] | None,
+) -> dict[str, Any]:
+    """Execute fred macro incremental via gold path (R3-DCP-02 S02-05).
+
+    L1: DataSourceService + run_incremental (reference-adoption-dcp02.md §2).
+    L2: --source-id fred + watermark since map (execute-reference-read-evidence.md R1).
+    forbidden: EasyXT silent fallback (reference-adoption-dcp02.md §0).
+    """
+    import os
+
+    from backend.app.datasources.fetch_ports.fred_port import P0_SERIES_WHITELIST, create_fred_fetch_port
+    from backend.app.datasources.product_live_gate import (
+        ProductLiveGateError,
+        assert_product_live_allowed,
+    )
+    from backend.app.ops.fred_incremental_run import (
+        build_fred_incremental_service,
+        run_fred_macro_incremental,
+    )
+    from backend.app.ops.fred_incremental_watermark import (
+        read_since_dates_for_series,
+    )
+    from backend.app.ops.sandbox_clean_write.rehearsal_runner import (
+        RehearsalRunnerError,
+        assert_sandbox_db_allowed,
+    )
+    from backend.app.sync.orchestrator import DataSyncOrchestrator
+
+    try:
+        assert_product_live_allowed(source_id="fred", operation=operation)
+    except ProductLiveGateError as exc:
+        raise CliFailure(
+            error_code=exc.code,
+            message=str(exc),
+            docs_anchor="docs/decisions/ADR-027-r3h08-product-live-env-gate.md",
+        ) from exc
+
     guard_decision, guard_reason = ResourceGuard().check()
     if guard_decision.value != "OK":
         raise CliFailure(
@@ -85,22 +177,90 @@ def sync_plan(
             docs_anchor="docs/ops/ERROR_CODE_GUIDE.md#resource-guard-paused",
             retryable=True,
         )
-    if preview["route_status"] != "READY":
-        raise error_for_route_status(
-            preview["route_status"],
-            detail=f"sync dry-run blocked for domain={data_domain!r}",
+
+    selected = series_ids or tuple(sorted(P0_SERIES_WHITELIST))[:1]
+    use_mock = os.environ.get("QMD_FRED_INCREMENTAL_USE_MOCK", "0") != "0"
+    if not use_mock and not os.environ.get("FRED_API_KEY"):
+        raise CliFailure(
+            error_code="USER_AUTH_REQUIRED",
+            message="FRED_API_KEY missing for live fred incremental sync",
+            docs_anchor="docs/ops/ERROR_CODE_GUIDE.md#user-auth-required",
         )
+
+    from backend.app.config import PROJECT_ROOT, _path_env
+
+    data_root = _path_env("QMD_DATA_ROOT", PROJECT_ROOT / "data")
+    db = data_root / "duckdb" / "quant_monitor.duckdb"
+    try:
+        assert_sandbox_db_allowed(db, no_production_mutation=True)
+    except RehearsalRunnerError as exc:
+        raise CliFailure(
+            error_code="INVALID_INPUT",
+            message=str(exc),
+            docs_anchor="docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/R3_DCP_02_FRED_INCREMENTAL.md",
+        ) from exc
+    db.parent.mkdir(parents=True, exist_ok=True)
+    cm = ConnectionManager(db_path=db)
+    with cm.writer() as con:
+        apply_migrations(con)
+        since_map = read_since_dates_for_series(con, selected)
+    if since:
+        since_map = {sid: since for sid in selected}
+
+    raw_root = data_root / "raw"
+    raw_root.mkdir(parents=True, exist_ok=True)
+    port = create_fred_fetch_port(
+        series_ids=selected,
+        max_rows=3,
+        use_mock=use_mock,
+    )
+    orch = DataSyncOrchestrator(cm)
+    service = build_fred_incremental_service(
+        data_root=raw_root,
+        fetch_port=port,
+        since_by_series=since_map,
+        job_events=orch._jobs,
+    )
+    report = run_fred_macro_incremental(
+        orch,
+        service=service,
+        series_ids=selected,
+        use_mock=use_mock,
+    )
+    if report.overall_status == "PARTIAL_FAILURE":
+        failed = [r for r in report.series_results if r["status"] not in {"COMPLETED", "EMPTY_RESPONSE"}]
+        raise CliFailure(
+            error_code="SYNC_PARTIAL_FAILURE",
+            message=f"fred macro incremental partial failure: {failed}",
+            docs_anchor="docs/ops/ERROR_CODE_GUIDE.md#sync-partial-failure",
+            retryable=True,
+        )
+    if report.overall_status == "FAILED":
+        raise CliFailure(
+            error_code="SYNC_FAILED",
+            message=f"fred macro incremental failed: {list(report.series_results)}",
+            docs_anchor="docs/ops/ERROR_CODE_GUIDE.md#sync-failed",
+            retryable=True,
+        )
+    message = (
+        "fred macro incremental sync completed"
+        if report.overall_status == "COMPLETED"
+        else "fred macro incremental sync completed (no new observations)"
+    )
     return {
         "command": "sync",
-        "dry_run": True,
-        "product_live": False,
-        "data_domain": data_domain,
-        "operation": op,
-        "window": {"start": start, "end": end, "since": since},
-        "route_status": preview["route_status"],
-        "selected_source_id": preview["selected_source_id"],
+        "dry_run": False,
+        "product_live": not use_mock,
+        "data_domain": "macro_series",
+        "source_id": "fred",
+        "operation": operation,
+        "series_ids": list(selected),
+        "since_by_series": since_map,
         "resource_guard_decision": guard_decision.value,
-        "message": "dry-run only; no fetch or DB writes performed",
+        "series_results": list(report.series_results),
+        "total_rows_written": report.total_rows_written,
+        "overall_status": report.overall_status,
+        "message": message,
     }
 
 

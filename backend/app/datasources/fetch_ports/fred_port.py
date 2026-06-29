@@ -51,18 +51,27 @@ class FredMockFetchPort:
     max_rows: int
     date_window: str = "3y"
 
-    def _mock_observations(self, series_id: str) -> list[dict[str, Any]]:
+    def _mock_observations(self, series_id: str, *, start: date | None = None) -> list[dict[str, Any]]:
         today = datetime.now(UTC).date()
         observations: list[dict[str, Any]] = []
         for offset in range(min(self.max_rows, 3)):
+            obs_date = today - timedelta(days=30 * offset)
+            if start is not None and obs_date < start:
+                continue
             observations.append(
                 {
                     "series_id": series_id,
-                    "observation_date": (today - timedelta(days=30 * offset)).isoformat(),
+                    "observation_date": obs_date.isoformat(),
                     "value": str(4.25 - offset * 0.01),
                 }
             )
         return observations
+
+    def _resolve_observation_start(self, req: FetchRequest) -> date | None:
+        if req.start_time:
+            return date.fromisoformat(req.start_time[:10])
+        days = min(MAX_WINDOW_DAYS, 365 * 3 if self.date_window == "3y" else MAX_WINDOW_DAYS)
+        return datetime.now(UTC).date() - timedelta(days=days)
 
     def fetch_payload(self, req: FetchRequest) -> FetchPayload:
         reject_over_cap(value=self.max_rows, cap=MAX_ROWS_PER_SERIES)
@@ -73,8 +82,12 @@ class FredMockFetchPort:
 
         retrieved_at = datetime.now(UTC).isoformat()
         fetch_id = f"fred-mock-{series_id}-{uuid.uuid4().hex[:12]}"
+        start = self._resolve_observation_start(req)
+        observations = self._mock_observations(series_id, start=start)
+        if not observations:
+            raise PortError("EMPTY_RESPONSE", f"no mock observations on/after {start}")
         bundle = build_fred_evidence_bundle(
-            observations=self._mock_observations(series_id),
+            observations=observations,
             series_id=series_id,
             source_fetch_id=fetch_id,
             content_hash="pending",
@@ -103,18 +116,23 @@ class FredLiveFetchPort:
         days = min(MAX_WINDOW_DAYS, 365 * 3 if self.date_window == "3y" else MAX_WINDOW_DAYS)
         return datetime.now(UTC).date() - timedelta(days=days)
 
-    def _live_observations(self, series_id: str) -> list[dict[str, Any]]:
+    def _resolve_observation_start(self, req: FetchRequest) -> date:
+        if req.start_time:
+            return date.fromisoformat(req.start_time[:10])
+        return self._window_start()
+
+    def _live_observations(self, series_id: str, start: date | None = None) -> list[dict[str, Any]]:
         api_key = _fred_api_key()
         if not api_key:
             raise PortError("USER_AUTH_REQUIRED", "FRED_API_KEY missing for live fetch")
 
-        start = self._window_start()
+        window_start = start if start is not None else self._window_start()
         params = urllib.parse.urlencode(
             {
                 "series_id": series_id,
                 "api_key": api_key,
                 "file_type": "json",
-                "observation_start": start.isoformat(),
+                "observation_start": window_start.isoformat(),
                 "sort_order": "desc",
                 "limit": self.max_rows,
             }
@@ -151,7 +169,8 @@ class FredLiveFetchPort:
             raise PortError("FAILED", "missing series_id for FRED live fetch")
         _reject_unknown_series(series_id)
 
-        observations = self._live_observations(series_id)
+        start = self._resolve_observation_start(req)
+        observations = self._live_observations(series_id, start)
         retrieved_at = datetime.now(UTC).isoformat()
         fetch_id = f"fred-live-{series_id}-{uuid.uuid4().hex[:12]}"
         bundle = build_fred_evidence_bundle(
