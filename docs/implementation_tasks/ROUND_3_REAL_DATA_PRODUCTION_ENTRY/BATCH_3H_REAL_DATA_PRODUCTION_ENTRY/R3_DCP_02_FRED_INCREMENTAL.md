@@ -23,13 +23,13 @@
 
 ## 3. 约束
 
-| 约束 | 要求 |
-| ---- | ---- |
-| 金路径 | 同 DCP-01 |
-| 授权 | `FRED_API_KEY` + `QMD_ALLOW_LIVE_FETCH`；`USER_AUTH_REQUIRED` 负例 |
-| 数据根 | 隔离库；禁止 canonical 主库 silent write |
-| watermark | 序列/观测日语义须与 macro clean PK 对齐（非盲目抄 trade_date） |
-| Registry | 仅 `fred` 相关行 |
+| 约束      | 要求                                                               |
+| --------- | ------------------------------------------------------------------ |
+| 金路径    | 同 DCP-01                                                          |
+| 授权      | `FRED_API_KEY` + `QMD_ALLOW_LIVE_FETCH`；`USER_AUTH_REQUIRED` 负例 |
+| 数据根    | 隔离库；禁止 canonical 主库 silent write                           |
+| watermark | 序列/观测日语义须与 macro clean PK 对齐（非盲目抄 trade_date）     |
+| Registry  | 仅 `fred` 相关行                                                   |
 
 ---
 
@@ -57,18 +57,18 @@ tests/test_*fred* / tests/test_*macro*incremental*
 
 ## 5. Acceptance criteria
 
-- [ ] fred watermark 单测（空表 / 有观测 / 多 series）
-- [ ] replay + env-gated live smoke（隔离库）
-- [ ] 幂等：重复跑不增行
-- [ ] `research/reference-adoption-dcp02.md` L1/L2/L3
-- [ ] Audit + Repair 关账
-- [ ] `uv run pytest -q` exit 0
+- [x] fred watermark 单测（空表 / 有观测 / 多 series）
+- [x] replay + env-gated live smoke（隔离库）
+- [x] 幂等：重复跑不增行
+- [x] `research/reference-adoption-dcp02.md` L1/L2/L3
+- [x] Audit + Repair 关账
+- [x] `uv run pytest -q` exit 0
 
 ---
 
 ## 6. Done
 
-同 DCP-01 模式；DCP-02 CLOSED 可独立于 DCP-01 宣告（DCP-03 仅需其一）。
+**✅ CLOSED @ 2026-06-30** — merge `5d8d7b0f` · P7 post-merge `bb3ce99c` · Trellis 归档 `06-30-wave3-r3-dcp-02-fred`（DCP-03 仅需 01/02 其一 PASS，两轨均已闭合）。
 
 ---
 

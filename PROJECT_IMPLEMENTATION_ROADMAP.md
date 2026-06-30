@@ -4,16 +4,15 @@
 > **定位：** 根目录总施工图 — 以 **51 个 Module ID**（`MODULE_COMPLETION_RATING.md` §3）为行，串联评级、波次、任务卡与门禁。  
 > **通俗解释：** 本文件回答「每个模块现在几级、还差几批、在哪一轮闭合」；**任务卡才是工单**，`PRODUCTION_COMPLETION_VERTICAL_SLICE_PLAN.md` 只是覆盖地图。  
 > **上一版备份：** `PROJECT_IMPLEMENTATION_ROADMAP.legacy-20260629.md`（Wave 平铺叙事、§5.0.6 等仍可查）  
-> **进度复核：** `git log` @ 2026-06-29 — Batch3V、R3H-01～04、R3H-06 **CLOSED** @ master；活轨见 §3。
+> **进度复核：** `git log` @ 2026-06-30 — Wave 1–2 **CLOSED**；Wave 3 DCP-01/02 **CLOSED** @ `5dc71c0b`/`5d8d7b0f`；活轨见 §3。
 
 ### 当前下一入口
 
-| 优先级 | 任务       | 模块   | 说明                                                      |
-| ------ | ---------- | ------ | --------------------------------------------------------- |
-| P0     | **R3H-10** | C2, E4 | DataSourceService SSOT；**CLOSED 后**才解锁 R3H-07        |
-| P0     | R3H-07     | G4, C3 | US 交易日历（与 10 并行图节点，但串行门控见 Wave1 INDEX） |
+| 优先级 | 任务          | 模块   | 说明                                            |
+| ------ | ------------- | ------ | ----------------------------------------------- |
+| P0     | **R3-DCP-03** | E2, F0 | 写后抽检（row count / max date / health smoke） |
 
-索引：`docs/implementation_tasks/.../WAVE1_R3H10_THEN_R3H07_TO_ISSUES_INDEX.md`
+索引：`docs/implementation_tasks/.../R3_DCP_TO_ISSUES_INDEX.md` §3
 
 ---
 
@@ -278,11 +277,11 @@ Round4  B04-01 先 · 产品只读
 | **Wave Done** | `qmd data`/sync 可重复跑试点增量；E2 inspect smoke 绿                 |
 | **下游**      | Wave 4 扩展 + 五轴                                                    |
 
-| #   | 规划 ID       | 模块   | 交付                                                                |
-| --- | ------------- | ------ | ------------------------------------------------------------------- |
-| 3a  | **R3-DCP-01** | D1, E1 | baostock：watermark + incremental CLI                               |
-| 3b  | **R3-DCP-02** | D1, E1 | fred：宏观序列增量 · Repair PASS @ `5d8d7b0`；P7 承接 RB-12 catalog |
-| 3c  | **R3-DCP-03** | E2, F0 | 写后 row count / max(trade_date) / health profile                   |
+| #   | 规划 ID       | 模块   | 交付                                                               |
+| --- | ------------- | ------ | ------------------------------------------------------------------ |
+| 3a  | **R3-DCP-01** | D1, E1 | baostock：watermark + incremental CLI · **✅ CLOSED** @ `5dc71c0b` |
+| 3b  | **R3-DCP-02** | D1, E1 | fred：宏观序列增量 · **✅ CLOSED** @ `5d8d7b0f` · P7 `bb3ce99c`    |
+| 3c  | **R3-DCP-03** | E2, F0 | 写后 row count / max(trade_date) / health profile · **当前**       |
 
 ### 3.5 Wave 4 — 后端加厚（含五轴 PASS 硬门禁）
 
@@ -332,14 +331,14 @@ Round4  B04-01 先 · 产品只读
 
 ### 3.7 Round3 状态看板（2026-06-30）
 
-| 波次                                     | 状态                                    |
-| ---------------------------------------- | --------------------------------------- |
-| 历史 + Wave 0（3V）+ R3H-01～04 + R3H-06 | ✅ CLOSED                               |
-| Wave 1（R3H-07, R3H-10）                 | ✅ CLOSED @ 2026-06-29                  |
-| Wave 2（R3H-08A–D）                      | ✅ CLOSED @ 2026-06-29                  |
-| Wave 3（R3-DCP-01..03）                  | 🔄 IN_PROGRESS（双轨协调 @ 2026-06-30） |
-| Wave 4（R3-DCP-05..10 + **五轴全绿**）   | 🔴 OPEN                                 |
-| Wave 5（R3H-05 + GATE）                  | 🔴 OPEN                                 |
+| 波次                                     | 状态                                                             |
+| ---------------------------------------- | ---------------------------------------------------------------- |
+| 历史 + Wave 0（3V）+ R3H-01～04 + R3H-06 | ✅ CLOSED                                                        |
+| Wave 1（R3H-07, R3H-10）                 | ✅ CLOSED @ 2026-06-29                                           |
+| Wave 2（R3H-08A–D）                      | ✅ CLOSED @ 2026-06-29                                           |
+| Wave 3（R3-DCP-01..03）                  | 🔄 IN_PROGRESS（**01/02 ✅ CLOSED** @ 2026-06-30 · **03 当前**） |
+| Wave 4（R3-DCP-05..10 + **五轴全绿**）   | 🔴 OPEN                                                          |
+| Wave 5（R3H-05 + GATE）                  | 🔴 OPEN                                                          |
 
 ### 3.8 `/to-issues` 索引文件（随开工增补）
 

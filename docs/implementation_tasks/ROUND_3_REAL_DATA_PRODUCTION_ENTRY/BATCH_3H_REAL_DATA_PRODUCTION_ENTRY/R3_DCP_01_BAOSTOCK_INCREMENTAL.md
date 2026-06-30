@@ -24,13 +24,13 @@
 
 ## 3. 约束
 
-| 约束 | 要求 |
-| ---- | ---- |
-| 金路径 | `DataSourceService.fetch` + `DataSyncOrchestrator.run_incremental` |
-| 数据根 | 默认 `QMD_DATA_ROOT` 隔离库；**禁止** silent 写 canonical `data/duckdb/` |
-| Schema | R3H-06 clean 表 + upsert PK；**无新 migration** |
-| Registry | 仅 touch `baostock` 相关行；合并由主会话排队 |
-| 参考项目 | Plan 须 L1/L2/L3 标注（见 INDEX §5） |
+| 约束     | 要求                                                                     |
+| -------- | ------------------------------------------------------------------------ |
+| 金路径   | `DataSourceService.fetch` + `DataSyncOrchestrator.run_incremental`       |
+| 数据根   | 默认 `QMD_DATA_ROOT` 隔离库；**禁止** silent 写 canonical `data/duckdb/` |
+| Schema   | R3H-06 clean 表 + upsert PK；**无新 migration**                          |
+| Registry | 仅 touch `baostock` 相关行；合并由主会话排队                             |
+| 参考项目 | Plan 须 L1/L2/L3 标注（见 INDEX §5）                                     |
 
 ---
 
@@ -61,19 +61,19 @@ tests/test_*baostock* / tests/test_*incremental*（本轨新增）
 
 ## 5. Acceptance criteria
 
-- [ ] watermark 单测：空表 / 有数据 / 边界日
-- [ ] incremental 集成测：replay 或 env-gated live（隔离库）
-- [ ] 重复跑任务行数不增（写库幂等）
-- [ ] CLI help + dry-run 可审计
-- [ ] Plan 调研 `research/reference-adoption-dcp01.md` 含 L1/L2/L3 表
-- [ ] Audit A1–A8 各维报告 + Repair ledger 关账
-- [ ] `uv run pytest -q` exit 0
+- [x] watermark 单测：空表 / 有数据 / 边界日
+- [x] incremental 集成测：replay 或 env-gated live（隔离库）
+- [x] 重复跑任务行数不增（写库幂等）
+- [x] CLI help + dry-run 可审计
+- [x] Plan 调研 `research/reference-adoption-dcp01.md` 含 L1/L2/L3 表
+- [x] Audit A1–A8 各维报告 + Repair ledger 关账
+- [x] `uv run pytest -q` exit 0
 
 ---
 
 ## 6. Done
 
-活卡 §5 全勾 + 主会话 merge 轨 A + `R3H_PASS_EXECUTION_PLAN` Wave 3 行可标 DCP-01 CLOSED。
+**✅ CLOSED @ 2026-06-30** — merge `5dc71c0b` · P7 post-merge `bb3ce99c` · Trellis 归档 `06-30-wave3-r3-dcp-01-baostock`。
 
 ---
 

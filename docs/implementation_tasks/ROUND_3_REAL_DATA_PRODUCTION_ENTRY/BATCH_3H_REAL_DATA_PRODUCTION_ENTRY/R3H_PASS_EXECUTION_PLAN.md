@@ -3,7 +3,7 @@
 > **Authority：** 用户裁决 @ 2026-06-28；**模块轨 SSOT：** `PROJECT_IMPLEMENTATION_ROADMAP.md` §3、§6.1。  
 > **前提：** R3H-01～04、R3H-06、Batch 3V — **CLOSED**。  
 > **Round4 门禁：** `PASS_ROUND4_REAL_DATA_READY`（**五轴 G12 全绿**为硬门禁 @ 2026-06-29）。  
-> **当前下一入口（写死）：** **`R3H-10` → `R3H-07` 串行** — `WAVE1_R3H10_THEN_R3H07_TO_ISSUES_INDEX.md`  
+> **当前下一入口（写死）：** **R3-DCP-03** 写后抽检 — `R3_DCP_TO_ISSUES_INDEX.md` §3  
 > **不是工单替代：** 各轨 Trellis Plan/Execute/Audit；本文件为协调索引。
 
 ---
@@ -68,11 +68,11 @@
 ```text
 [✅] 历史  Batch 3V · R3H-01～04 · R3H-06
   ↓
-Wave 1  R3H-10 → R3H-07（串行）                    【1a CLOSED · 1b 当前】
+Wave 1  R3H-10 → R3H-07（串行）                    【CLOSED @ 2026-06-29】
   ↓
 Wave 2  R3H-08A / 08B / 08C / 08D（24 源 live）    【CLOSED @ 2026-06-29】
   ↓
-Wave 3  R3-DCP-01..03（baostock+fred 增量）        【IN_PROGRESS @ 2026-06-30】
+Wave 3  R3-DCP-01..03（baostock+fred 增量）        【01/02 CLOSED · 03 当前 @ 2026-06-30】
   ↓
 Wave 4  R3-DCP-05..10（五轴全绿 + 后端加厚）       【OPEN】
   ↓
@@ -83,14 +83,14 @@ Round4  B04-01 先
 
 ### 3.1 波次状态表
 
-| Wave | 内容                         | 状态 @ 2026-06-29                             |
-| ---- | ---------------------------- | --------------------------------------------- |
-| 历史 | 3V, R3H-01～04, R3H-06       | ✅ CLOSED                                     |
-| 1    | R3H-10 → R3H-07              | ✅ CLOSED @ 2026-06-29                        |
-| 2    | R3H-08A–D                    | ✅ CLOSED @ 2026-06-29                        |
-| 3    | R3-DCP-01..03                | 🔄 IN_PROGRESS（双轨 DCP-01∥02 @ 2026-06-30） |
-| 4    | R3-DCP-05..10 + **G12 五轴** | 🔴 OPEN                                       |
-| 5    | R3H-05 + GATE                | 🔴 OPEN                                       |
+| Wave | 内容                         | 状态 @ 2026-06-30                                   |
+| ---- | ---------------------------- | --------------------------------------------------- |
+| 历史 | 3V, R3H-01～04, R3H-06       | ✅ CLOSED                                           |
+| 1    | R3H-10 → R3H-07              | ✅ CLOSED @ 2026-06-29                              |
+| 2    | R3H-08A–D                    | ✅ CLOSED @ 2026-06-29                              |
+| 3    | R3-DCP-01..03                | 🔄 IN_PROGRESS（**01/02 ✅ CLOSED** · **03 当前**） |
+| 4    | R3-DCP-05..10 + **G12 五轴** | 🔴 OPEN                                             |
+| 5    | R3H-05 + GATE                | 🔴 OPEN                                             |
 
 ---
 
