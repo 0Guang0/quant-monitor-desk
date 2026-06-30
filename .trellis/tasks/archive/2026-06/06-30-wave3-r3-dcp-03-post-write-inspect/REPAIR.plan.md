@@ -5,13 +5,13 @@
 
 ## 修复顺序（根因优先）
 
-| 序 | ID | 修复 |
-| --- | --- | --- |
-| 1 | **A1-P1-001** | `build_evidence_bundle_from_fetch_log`：manifest `relative_paths` → `["bars.json"]`（已写 `rows`）；`test_postWriteHealth` 断言 `overall_status in {"PASS","WARN"}` |
-| 2 | **A2-P2-01** | 新建 `tests/incremental_baostock_support.py`；`test_baostock_incremental_e2e.py` + `post_write_inspect_support.py` import 共享 bootstrap |
-| 3 | **A2-P2-02** | 新建 `tests/support/qmd_ops_cli.py`；`test_ops_db_inspector.py` + `test_incremental_post_write_inspect.py` 共用 |
-| 4 | **A5-P2-01** | DEBT S01 验证 `-k postWriteInspect`；更新 `s01-green.txt`；`--collect-only -k inspect` 仅 1 测或改模块名 |
-| 5 | **A5-P3-01** | 补 `research/execute-evidence/s01-red.txt` `s02-red.txt` `s03-red.txt`（RED 失败摘要 + 命令） |
+| 序  | ID            | 修复                                                                                                                                                                |
+| --- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **A1-P1-001** | `build_evidence_bundle_from_fetch_log`：manifest `relative_paths` → `["bars.json"]`（已写 `rows`）；`test_postWriteHealth` 断言 `overall_status in {"PASS","WARN"}` |
+| 2   | **A2-P2-01**  | 新建 `tests/incremental_baostock_support.py`；`test_baostock_incremental_e2e.py` + `post_write_inspect_support.py` import 共享 bootstrap                            |
+| 3   | **A2-P2-02**  | 新建 `tests/support/qmd_ops_cli.py`；`test_ops_db_inspector.py` + `test_incremental_post_write_inspect.py` 共用                                                     |
+| 4   | **A5-P2-01**  | DEBT S01 验证 `-k postWriteInspect`；更新 `s01-green.txt`；`--collect-only -k inspect` 仅 1 测或改模块名                                                            |
+| 5   | **A5-P3-01**  | 补 `research/execute-evidence/s01-red.txt` `s02-red.txt` `s03-red.txt`（RED 失败摘要 + 命令）                                                                       |
 
 ## allowed files（Repair 扩展）
 

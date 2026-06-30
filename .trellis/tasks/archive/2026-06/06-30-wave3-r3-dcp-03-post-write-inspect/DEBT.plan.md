@@ -63,11 +63,11 @@ specs/datasource_registry/**          # 本轨不碰 registry 三件套
 
 ## Vertical slices（Execute 阶段 · 共 3 片）
 
-| Slice | Source ID | AC | Allowed files | Forbidden files | Verification | Evidence |
-| ----- | --------- | --- | ------------- | --------------- | ------------ | -------- |
-| **S01-POST-INCR-INSPECT** | 活卡 §5 · INDEX §3 | 2× incremental 后 **`DbInspector` 报告** `security_bar_1d.row_count` 稳定（非仅 SQL COUNT）；`max(trade_date)` read-only SQL | `tests/test_incremental_post_write_inspect.py` | sync/port | `uv run pytest tests/test_incremental_post_write_inspect.py -k postWriteInspect -q` | `research/execute-evidence/s01-green.txt` |
-| **S02-HEALTH-PROFILE** | 活卡 §5 | 2× incremental 后：从 `fetch_log.raw_file_paths` 经测试 helper 组 **evidence bundle** → `run_data_health_profile(market_bar_p0, db_path=同库)` 无未处理异常；**禁止**仅用 `good_bundle` 夹具跳过 incremental 会话 | 同上 + 可选 `post_write_inspect_support.py` | 新 profile 模块；改 `good_bundle` | `uv run pytest tests/test_incremental_post_write_inspect.py -k health -q` | `s02-green.txt` |
-| **S03-CLI-SMOKE** | 活卡 §5 | `qmd_ops db-inspect --format json` exit 0；JSON 含 `security_bar_1d` | 同上 | 新 CLI 实现 | `uv run pytest tests/test_incremental_post_write_inspect.py -k cli -q` | `s03-green.txt` |
+| Slice                     | Source ID          | AC                                                                                                                                                                                                                | Allowed files                                  | Forbidden files                   | Verification                                                                        | Evidence                                  |
+| ------------------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- | --------------------------------- | ----------------------------------------------------------------------------------- | ----------------------------------------- |
+| **S01-POST-INCR-INSPECT** | 活卡 §5 · INDEX §3 | 2× incremental 后 **`DbInspector` 报告** `security_bar_1d.row_count` 稳定（非仅 SQL COUNT）；`max(trade_date)` read-only SQL                                                                                      | `tests/test_incremental_post_write_inspect.py` | sync/port                         | `uv run pytest tests/test_incremental_post_write_inspect.py -k postWriteInspect -q` | `research/execute-evidence/s01-green.txt` |
+| **S02-HEALTH-PROFILE**    | 活卡 §5            | 2× incremental 后：从 `fetch_log.raw_file_paths` 经测试 helper 组 **evidence bundle** → `run_data_health_profile(market_bar_p0, db_path=同库)` 无未处理异常；**禁止**仅用 `good_bundle` 夹具跳过 incremental 会话 | 同上 + 可选 `post_write_inspect_support.py`    | 新 profile 模块；改 `good_bundle` | `uv run pytest tests/test_incremental_post_write_inspect.py -k health -q`           | `s02-green.txt`                           |
+| **S03-CLI-SMOKE**         | 活卡 §5            | `qmd_ops db-inspect --format json` exit 0；JSON 含 `security_bar_1d`                                                                                                                                              | 同上                                           | 新 CLI 实现                       | `uv run pytest tests/test_incremental_post_write_inspect.py -k cli -q`              | `s03-green.txt`                           |
 
 > Plan 阶段 **P1 调研 + P2 Plan-Audit** 由主会话完成，不计入上表。
 
@@ -85,12 +85,12 @@ S01 → S02 → S03（可同文件 TDD 递进）
 
 ## Merge gate
 
-| 检查 | 命令 |
-| ---- | ---- |
-| 靶向测试 | `uv run pytest tests/test_incremental_post_write_inspect.py -q` |
-| 全量 | `uv run pytest -q` exit 0 |
-| Loop maintain | `uv run python scripts/loop_maintain.py`（新测登记后） |
-| GitNexus | 改 symbol 前 `impact()`；提交前 `detect_changes()` |
+| 检查          | 命令                                                            |
+| ------------- | --------------------------------------------------------------- |
+| 靶向测试      | `uv run pytest tests/test_incremental_post_write_inspect.py -q` |
+| 全量          | `uv run pytest -q` exit 0                                       |
+| Loop maintain | `uv run python scripts/loop_maintain.py`（新测登记后）          |
+| GitNexus      | 改 symbol 前 `impact()`；提交前 `detect_changes()`              |
 
 ---
 
