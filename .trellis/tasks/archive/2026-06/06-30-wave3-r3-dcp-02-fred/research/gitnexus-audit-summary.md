@@ -9,9 +9,9 @@
 
 ## 查询记录
 
-| 查询 | 结果 |
-|------|------|
-| `context(run_incremental)` | 金路径 OK |
+| 查询                                        | 结果                               |
+| ------------------------------------------- | ---------------------------------- |
+| `context(run_incremental)`                  | 金路径 OK                          |
 | `sync_plan` / `assert_product_live_allowed` | 索引 stale；A7 以 CLI 独立复验为准 |
 
 ## Repair 前建议
