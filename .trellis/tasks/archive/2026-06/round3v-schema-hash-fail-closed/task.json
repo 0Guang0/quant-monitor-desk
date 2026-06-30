@@ -1,0 +1,26 @@
+{
+  "id": "round3v-schema-hash-fail-closed",
+  "name": "round3v-schema-hash-fail-closed",
+  "title": "B3V-DATA: VR-DATA-001 schema_hash fail-closed",
+  "description": "Structured JSON/CSV/Parquet SUCCESS results must carry trustworthy schema_hash; ValidationGate fail-closed when missing or drifted.",
+  "status": "completed",
+  "dev_type": "fix",
+  "scope": "schema_hash_fail_closed",
+  "branch": "fix/round3v-schema-hash-fail-closed",
+  "base_branch": "master",
+  "worktree_path": "../quant-monitor-desk-wt-b3v-data",
+  "meta": {
+    "task_track": "complex",
+    "plan_protocol_version": "3",
+    "manifest_protocol_version": "3",
+    "context_bridge_version": "1",
+    "playbook_id": "B3V-DATA",
+    "manifest_id": "B3V-C02",
+    "model": "composer-2.5",
+    "owned_vr": ["VR-DATA-001"],
+    "predecessor_tasks": [
+      "docs/implementation_tasks/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/B02_02_schema_hash_fail_closed.md"
+    ]
+  },
+  "completedAt": "2026-06-30"
+}

@@ -1,0 +1,32 @@
+{
+  "id": "round3h-r3h06-clean-schema",
+  "name": "round3h-r3h06-clean-schema",
+  "title": "R3H-06 Clean Schema (Wave 1)",
+  "description": "Wave 1 PASS收口: domain clean DDL, OHLCV, cninfo disclosure shape, PK/upsert; closes SCHEMA-G3G4, CNINFO-DISCLOSURE-SHAPE, G6",
+  "status": "completed",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P0",
+  "creator": "Guang",
+  "assignee": "Guang",
+  "createdAt": "2026-06-29",
+  "completedAt": "2026-06-30",
+  "branch": "feature/round3h-r3h06-clean-schema",
+  "base_branch": "master",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "task_track": "complex",
+    "plan_protocol_version": "4",
+    "frozen_task_card": "frozen/R3H_06_CLEAN_SCHEMA.md",
+    "source_task_card": "docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/R3H_06_CLEAN_SCHEMA.md",
+    "frozen_at": "2026-06-28T17:37:56Z"
+  }
+}

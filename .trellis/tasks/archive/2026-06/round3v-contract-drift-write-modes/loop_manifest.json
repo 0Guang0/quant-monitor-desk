@@ -1,0 +1,31 @@
+{
+  "task": "round3v-contract-drift-write-modes",
+  "modules": ["validators", "ops", "db_platform"],
+  "acs": [
+    {
+      "id": "BOUND",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "EVIDENCE",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "OPS-DRIFT",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "WRITE-RESERVED",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "WRITE-SPLIT",
+      "status": "pending",
+      "repair_items": []
+    }
+  ]
+}

@@ -1,0 +1,83 @@
+{
+  "task": "round3v-rawstore-atomic-write",
+  "modules": ["sync_orchestrator", "core_platform"],
+  "source_authorities": [
+    {
+      "type": "design",
+      "path": "docs/modules/data_sync_orchestrator.md",
+      "reason": "sync_orchestrator design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/architecture/module_boundary_matrix.md",
+      "reason": "sync_orchestrator design authority"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/write_contract.yaml",
+      "reason": "sync_orchestrator contract"
+    },
+    {
+      "type": "policy",
+      "path": "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md",
+      "reason": "sync_orchestrator rule"
+    },
+    {
+      "type": "policy",
+      "path": "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md",
+      "reason": "sync_orchestrator rule"
+    },
+    {
+      "type": "task-card",
+      "path": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/014_implement_data_sync_orchestrator.md",
+      "reason": "sync_orchestrator implementation task"
+    },
+    {
+      "type": "design",
+      "path": "docs/modules/local_file_system.md",
+      "reason": "core_platform design authority"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/resource_limits.yaml",
+      "reason": "core_platform contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/snapshot_lineage_contract.yaml",
+      "reason": "core_platform contract"
+    }
+  ],
+  "tests": [
+    {
+      "path": "tests/test_sync_orchestrator.py",
+      "purpose": "Tests for DataSyncOrchestrator core (Batch D §8.3)."
+    },
+    {
+      "path": "tests/test_sync_jobs.py",
+      "purpose": "Tests for SyncJob state machine (Batch D §8.2)."
+    },
+    {
+      "path": "tests/test_sync_pipeline_contract.py",
+      "purpose": "Pipeline seam contract tests (Round2 re-audit A7-02)."
+    },
+    {
+      "path": "tests/test_resource_guard.py",
+      "purpose": "ResourceGuard HARD_STOP and metrics contract"
+    },
+    {
+      "path": "tests/test_path_compat.py",
+      "purpose": "Tests for Windows long-path compatibility helpers."
+    },
+    {
+      "path": "tests/test_raw_store.py",
+      "purpose": "Raw Store and file_registry tests (Round 1 task 009)."
+    }
+  ],
+  "forbidden_claims": [],
+  "required_evidence": [
+    "context_pack.json",
+    "loop_manifest.json",
+    "evidence_index.json"
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "id": "round3v-sync-support-matrix-recovery",
+  "name": "round3v-sync-support-matrix-recovery",
+  "title": "B3V-C04: Sync job support matrix and crash-window recovery",
+  "description": "Close VR-SYNC-002 support matrix and VR-SYNC-001 crash-window via deferred errors, contract parity, and injected recovery tests or 3F.4 handoff.",
+  "status": "completed",
+  "dev_type": "fix",
+  "scope": "sync_job_support_matrix",
+  "branch": "fix/round3v-sync-support-matrix-recovery",
+  "base_branch": "master",
+  "worktree_path": "../quant-monitor-desk-wt-b3v-sync",
+  "meta": {
+    "task_track": "complex",
+    "plan_protocol_version": "3",
+    "manifest_protocol_version": "3",
+    "context_bridge_version": "1",
+    "playbook_id": "B3V-SYNC",
+    "manifest_id": "B3V-C04",
+    "model": "composer-2.5",
+    "predecessor_tasks": [
+      "docs/implementation_tasks/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/B02_04_sync_job_support_and_recovery.md"
+    ],
+    "merge_after": ["B3V-OPS"],
+    "read_only_dependencies": [
+      "specs/contracts/write_contract.yaml",
+      "backend/app/db/write_manager.py"
+    ]
+  },
+  "completedAt": "2026-06-30"
+}
