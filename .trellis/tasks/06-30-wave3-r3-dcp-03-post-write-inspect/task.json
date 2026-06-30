@@ -1,0 +1,31 @@
+{
+  "id": "wave3-r3-dcp-03-post-write-inspect",
+  "name": "wave3-r3-dcp-03-post-write-inspect",
+  "title": "R3-DCP-03 post-write inspect",
+  "description": "Wave 3c E2+F0 post-incremental inspect smoke",
+  "status": "completed",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P1",
+  "creator": "Guang",
+  "assignee": "Guang",
+  "createdAt": "2026-06-30",
+  "completedAt": "2026-06-30",
+  "branch": "feature/wave3-r3-dcp-03-post-write-inspect",
+  "base_branch": "master",
+  "worktree_path": "../quant-monitor-desk-wt-dcp03",
+  "commit": "eff49343",
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "Wave 3 轨 C · debt-lite · 依赖 DCP-01/02 CLOSED",
+  "meta": {
+    "task_track": "debt-lite",
+    "plan_protocol_version": "8d",
+    "source_task_card": "docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/R3_DCP_03_POST_WRITE_INSPECT.md",
+    "wave_index": "docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/R3_DCP_TO_ISSUES_INDEX.md"
+  }
+}

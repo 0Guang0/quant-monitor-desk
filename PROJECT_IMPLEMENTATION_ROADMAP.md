@@ -4,13 +4,13 @@
 > **定位：** 根目录总施工图 — 以 **51 个 Module ID**（`MODULE_COMPLETION_RATING.md` §3）为行，串联评级、波次、任务卡与门禁。  
 > **通俗解释：** 本文件回答「每个模块现在几级、还差几批、在哪一轮闭合」；**任务卡才是工单**，`PRODUCTION_COMPLETION_VERTICAL_SLICE_PLAN.md` 只是覆盖地图。  
 > **上一版备份：** `PROJECT_IMPLEMENTATION_ROADMAP.legacy-20260629.md`（Wave 平铺叙事、§5.0.6 等仍可查）  
-> **进度复核：** `git log` @ 2026-06-30 — Wave 1–2 **CLOSED**；Wave 3 DCP-01/02 **CLOSED** @ `5dc71c0b`/`5d8d7b0f`；活轨见 §3。
+> **进度复核：** `git log` @ 2026-06-30 — Wave 1–3 **CLOSED**；Wave 3 DCP-03 merge `eff49343`；活轨见 §3（**Wave 4**）。
 
 ### 当前下一入口
 
-| 优先级 | 任务          | 模块   | 说明                                            |
-| ------ | ------------- | ------ | ----------------------------------------------- |
-| P0     | **R3-DCP-03** | E2, F0 | 写后抽检（row count / max date / health smoke） |
+| 优先级 | 任务                       | 模块        | 说明                             |
+| ------ | -------------------------- | ----------- | -------------------------------- |
+| P0     | **Wave 4** `R3-DCP-05..10` | G12, C3, B1 | Tier A 扩展 + 五轴全绿（硬门禁） |
 
 索引：`docs/implementation_tasks/.../R3_DCP_TO_ISSUES_INDEX.md` §3
 
@@ -277,11 +277,11 @@ Round4  B04-01 先 · 产品只读
 | **Wave Done** | `qmd data`/sync 可重复跑试点增量；E2 inspect smoke 绿                 |
 | **下游**      | Wave 4 扩展 + 五轴                                                    |
 
-| #   | 规划 ID       | 模块   | 交付                                                               |
-| --- | ------------- | ------ | ------------------------------------------------------------------ |
-| 3a  | **R3-DCP-01** | D1, E1 | baostock：watermark + incremental CLI · **✅ CLOSED** @ `5dc71c0b` |
-| 3b  | **R3-DCP-02** | D1, E1 | fred：宏观序列增量 · **✅ CLOSED** @ `5d8d7b0f` · P7 `bb3ce99c`    |
-| 3c  | **R3-DCP-03** | E2, F0 | 写后 row count / max(trade_date) / health profile · **当前**       |
+| #   | 规划 ID       | 模块   | 交付                                                                           |
+| --- | ------------- | ------ | ------------------------------------------------------------------------------ |
+| 3a  | **R3-DCP-01** | D1, E1 | baostock：watermark + incremental CLI · **✅ CLOSED** @ `5dc71c0b`             |
+| 3b  | **R3-DCP-02** | D1, E1 | fred：宏观序列增量 · **✅ CLOSED** @ `5d8d7b0f` · P7 `bb3ce99c`                |
+| 3c  | **R3-DCP-03** | E2, F0 | 写后 row count / max(trade_date) / health profile · **✅ CLOSED** @ `eff49343` |
 
 ### 3.5 Wave 4 — 后端加厚（含五轴 PASS 硬门禁）
 
@@ -331,14 +331,14 @@ Round4  B04-01 先 · 产品只读
 
 ### 3.7 Round3 状态看板（2026-06-30）
 
-| 波次                                     | 状态                                                             |
-| ---------------------------------------- | ---------------------------------------------------------------- |
-| 历史 + Wave 0（3V）+ R3H-01～04 + R3H-06 | ✅ CLOSED                                                        |
-| Wave 1（R3H-07, R3H-10）                 | ✅ CLOSED @ 2026-06-29                                           |
-| Wave 2（R3H-08A–D）                      | ✅ CLOSED @ 2026-06-29                                           |
-| Wave 3（R3-DCP-01..03）                  | 🔄 IN_PROGRESS（**01/02 ✅ CLOSED** @ 2026-06-30 · **03 当前**） |
-| Wave 4（R3-DCP-05..10 + **五轴全绿**）   | 🔴 OPEN                                                          |
-| Wave 5（R3H-05 + GATE）                  | 🔴 OPEN                                                          |
+| 波次                                     | 状态                                                 |
+| ---------------------------------------- | ---------------------------------------------------- |
+| 历史 + Wave 0（3V）+ R3H-01～04 + R3H-06 | ✅ CLOSED                                            |
+| Wave 1（R3H-07, R3H-10）                 | ✅ CLOSED @ 2026-06-29                               |
+| Wave 2（R3H-08A–D）                      | ✅ CLOSED @ 2026-06-29                               |
+| Wave 3（R3-DCP-01..03）                  | ✅ **CLOSED** @ 2026-06-30（`eff49343` 收尾 DCP-03） |
+| Wave 4（R3-DCP-05..10 + **五轴全绿**）   | 🔴 OPEN                                              |
+| Wave 5（R3H-05 + GATE）                  | 🔴 OPEN                                              |
 
 ### 3.8 `/to-issues` 索引文件（随开工增补）
 
@@ -473,22 +473,22 @@ Round5 **不补功能**。
 
 ## 7. 旧 Wave / 批次 → 模块 ID 映射
 
-| 旧轨          | 状态   | 主要模块          | 新波次             |
-| ------------- | ------ | ----------------- | ------------------ |
-| Batch 3F-R    | CLOSED | J1,F0,C4,E1       | 历史               |
-| Batch 3G      | CLOSED | B1,E5             | 历史               |
-| Batch 3V      | CLOSED | A3,B1,G5,C1…      | 历史 (= 旧 Wave 0) |
-| R3H-01～04    | CLOSED | C3,A3,G\*         | 历史               |
-| R3H-06        | CLOSED | B1,A2             | 历史 (= 旧 Wave 1) |
-| R3H-07        | OPEN   | G4,C3             | **Wave 1**         |
-| R3H-10        | OPEN   | C2,E4             | **Wave 1**         |
-| R3H-08A–D     | OPEN   | C3,A3,B\*,G6      | **Wave 2**         |
-| R3-DCP-01..03 | OPEN   | D1,E1,E2          | **Wave 3**         |
-| R3-DCP-05..10 | OPEN   | D1,G1,K2,G2,G4,G5 | **Wave 4**         |
-| R3H-05 + GATE | OPEN   | 全表              | **Wave 5**         |
-| B04-\*        | 未开工 | I1–I8,J2,J7       | Round4             |
-| B05-\*        | 未开工 | J3,A1…            | Round5             |
-| Batch6        | 未开工 | D2,D3,D4,H1       | §5.2               |
+| 旧轨          | 状态   | 主要模块          | 新波次                  |
+| ------------- | ------ | ----------------- | ----------------------- |
+| Batch 3F-R    | CLOSED | J1,F0,C4,E1       | 历史                    |
+| Batch 3G      | CLOSED | B1,E5             | 历史                    |
+| Batch 3V      | CLOSED | A3,B1,G5,C1…      | 历史 (= 旧 Wave 0)      |
+| R3H-01～04    | CLOSED | C3,A3,G\*         | 历史                    |
+| R3H-06        | CLOSED | B1,A2             | 历史 (= 旧 Wave 1)      |
+| R3H-07        | OPEN   | G4,C3             | **Wave 1**              |
+| R3H-10        | OPEN   | C2,E4             | **Wave 1**              |
+| R3H-08A–D     | OPEN   | C3,A3,B\*,G6      | **Wave 2**              |
+| R3-DCP-01..03 | CLOSED | D1,E1,E2,F0       | **Wave 3** @ 2026-06-30 |
+| R3-DCP-05..10 | OPEN   | D1,G1,K2,G2,G4,G5 | **Wave 4**              |
+| R3H-05 + GATE | OPEN   | 全表              | **Wave 5**              |
+| B04-\*        | 未开工 | I1–I8,J2,J7       | Round4                  |
+| B05-\*        | 未开工 | J3,A1…            | Round5                  |
+| Batch6        | 未开工 | D2,D3,D4,H1       | §5.2                    |
 
 ---
 
