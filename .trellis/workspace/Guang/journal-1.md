@@ -555,3 +555,38 @@ R3H-08 Wave 2 live productization: Plan v4.1 Execute, A1-A8 audit FAIL then Repa
 ### Next Steps
 
 - None - task complete
+
+## Session 17: Wave3 P7 closeout: DCP-01/02 archive
+
+**Date**: 2026-06-30
+**Task**: Wave3 P7 closeout: DCP-01/02 archive
+**Branch**: `master`
+
+### Summary
+
+P7 coordinator: closed DCP-01/02 live cards and roadmap; archived wave3 DCP tasks, r3h06, and stale batch3v folders; fixed handoff path regression test.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash       | Message       |
+| ---------- | ------------- |
+| `5dc71c0b` | (see git log) |
+| `5d8d7b0f` | (see git log) |
+| `bb3ce99c` | (see git log) |
+| `055d8542` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
