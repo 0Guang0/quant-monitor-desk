@@ -117,7 +117,7 @@ def test_r3fBr03_r3Partial5_regressionGuard_noReopenInUnresolved() -> None:
     """
     unresolved = _read(UNRESOLVED)
     handoff = PROJECT_ROOT / (
-        ".trellis/tasks/round3v-sync-support-matrix-recovery/repair-evidence/"
+        ".trellis/tasks/archive/2026-06/round3v-sync-support-matrix-recovery/repair-evidence/"
         "sync-crash-window-runbook.md"
     )
 
