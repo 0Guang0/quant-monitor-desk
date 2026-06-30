@@ -9,11 +9,11 @@
 
 ## impact: IncrementalJobRunner (upstream)
 
-| 项 | 值 |
-|----|-----|
-| risk | **LOW** |
-| d=1 | `DataSyncOrchestrator.__init__` 接线 |
-| d=2 | orchestrator 构造链 |
+| 项       | 值                                                                      |
+| -------- | ----------------------------------------------------------------------- |
+| risk     | **LOW**                                                                 |
+| d=1      | `DataSyncOrchestrator.__init__` 接线                                    |
+| d=2      | orchestrator 构造链                                                     |
 | 计划改动 | `run()` 内 `FetchRequest` 增加 `start_time/end_time` from `spec.date_*` |
 
 ## impact: read_bar_trade_date_watermark (新建)

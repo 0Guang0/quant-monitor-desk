@@ -18,14 +18,14 @@
 
 ### 3. 约束
 
-| 约束 | 要求 |
-|------|------|
-| 金路径 | `DataSourceService.fetch` + `DataSyncOrchestrator.run_incremental`；生产禁止 `adapter=` bypass |
-| 数据根 | 默认 `QMD_DATA_ROOT` 隔离库；**禁止** silent 写 canonical `data/duckdb/` |
-| Schema | R3H-06 `security_bar_1d` + `upsert_by_pk`；**无新 migration** |
-| Registry | 仅 touch `baostock` 相关行；合并由主会话排队 |
-| 并行 | 轨 A 拥有 `watermark*.py` + baostock 切片；**禁止**改 `fred_port` / 轨 B 文件 |
-| 参考项目 | Plan 须 L1/L2/L3（见 `reference-adoption-dcp01.md`） |
+| 约束     | 要求                                                                                           |
+| -------- | ---------------------------------------------------------------------------------------------- |
+| 金路径   | `DataSourceService.fetch` + `DataSyncOrchestrator.run_incremental`；生产禁止 `adapter=` bypass |
+| 数据根   | 默认 `QMD_DATA_ROOT` 隔离库；**禁止** silent 写 canonical `data/duckdb/`                       |
+| Schema   | R3H-06 `security_bar_1d` + `upsert_by_pk`；**无新 migration**                                  |
+| Registry | 仅 touch `baostock` 相关行；合并由主会话排队                                                   |
+| 并行     | 轨 A 拥有 `watermark*.py` + baostock 切片；**禁止**改 `fred_port` / 轨 B 文件                  |
+| 参考项目 | Plan 须 L1/L2/L3（见 `reference-adoption-dcp01.md`）                                           |
 
 ### 4. 相关设计
 
@@ -67,22 +67,22 @@ qmd data sync --data-domain cn_equity_daily_bar …
 
 ## 必读清单（阶段 0）
 
-| # | 文件 | 状态 |
-|---|------|------|
-| 1 | `agent-toolchain.md` | ✅ |
-| 2 | `.trellis/spec/guides/complex-task-planning-protocol.md` Phase 8D | ✅ |
-| 3 | `R3_DCP_TO_ISSUES_INDEX.md` §1 + 活卡 `R3_DCP_01_BAOSTOCK_INCREMENTAL.md` | ✅ |
-| 4 | `_tmp-wave3-dcp-parallel/BRANCH-DCP-01.md` | ✅ |
-| 5 | `docs/modules/data_sync_orchestrator.md` §13.4.2 | ✅ |
-| 6 | `docs/generated/project_map.generated.md` → sync / datasources 簇 | ✅ |
-| 7 | `backend/app/sync/orchestrator.py` · `runners.py` | ✅ |
-| 8 | `backend/app/datasources/fetch_ports/baostock_port.py` | ✅ |
-| 9 | `backend/app/ops/sandbox_clean_write/clean_write_targets.py` | ✅ |
-| 10 | R3H-10 归档 `reference-adoption-r3h10.md` + `EXECUTION_INDEX.md` | ✅ |
-| 11 | R3H-03 归档 `reference-adoption-audit.md`（baostock L2 先例） | ✅ |
-| 12 | R3G 归档 `plan-boot.md`（limited production 边界，非 watermark 实现） | ✅ |
-| 13 | `BATCH_3H_COORDINATOR_PLAYBOOK.md` §5 | ✅ |
-| 14 | GitNexus `query` watermark/incremental/sync | ✅ |
+| #   | 文件                                                                      | 状态 |
+| --- | ------------------------------------------------------------------------- | ---- |
+| 1   | `agent-toolchain.md`                                                      | ✅   |
+| 2   | `.trellis/spec/guides/complex-task-planning-protocol.md` Phase 8D         | ✅   |
+| 3   | `R3_DCP_TO_ISSUES_INDEX.md` §1 + 活卡 `R3_DCP_01_BAOSTOCK_INCREMENTAL.md` | ✅   |
+| 4   | `_tmp-wave3-dcp-parallel/BRANCH-DCP-01.md`                                | ✅   |
+| 5   | `docs/modules/data_sync_orchestrator.md` §13.4.2                          | ✅   |
+| 6   | `docs/generated/project_map.generated.md` → sync / datasources 簇         | ✅   |
+| 7   | `backend/app/sync/orchestrator.py` · `runners.py`                         | ✅   |
+| 8   | `backend/app/datasources/fetch_ports/baostock_port.py`                    | ✅   |
+| 9   | `backend/app/ops/sandbox_clean_write/clean_write_targets.py`              | ✅   |
+| 10  | R3H-10 归档 `reference-adoption-r3h10.md` + `EXECUTION_INDEX.md`          | ✅   |
+| 11  | R3H-03 归档 `reference-adoption-audit.md`（baostock L2 先例）             | ✅   |
+| 12  | R3G 归档 `plan-boot.md`（limited production 边界，非 watermark 实现）     | ✅   |
+| 13  | `BATCH_3H_COORDINATOR_PLAYBOOK.md` §5                                     | ✅   |
+| 14  | GitNexus `query` watermark/incremental/sync                               | ✅   |
 
 ---
 

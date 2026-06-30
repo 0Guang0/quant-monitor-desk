@@ -2,16 +2,16 @@
 
 > **追溯：** 活卡 `R3_DCP_01_BAOSTOCK_INCREMENTAL.md` · `DEBT.plan.md` · `research/reference-adoption-dcp01.md`
 
-| 维度 | 状态 | 范围 / 理由 |
-|------|------|-------------|
-| **A1 正确性** | 必做 | watermark 空/有/边界；incremental 窗 `max+1`；upsert 幂等；`security_bar_1d` PK 不重复；隔离库路径 |
-| **A2 可读性** | 必做 | `watermark.py` API 命名；CLI help；L2 attribution 注释（staged_pilot / orchestrator 先例） |
-| **A3 架构** | 必做 | 金路径 `DataSourceService` + `run_incremental`；无 `adapter=` 生产 bypass；轨 A/B 文件锁遵守；`watermark` 模块归属轨 A |
-| **A4 安全** | 必做 | `QMD_DATA_ROOT` 隔离；禁止 canonical 主库 silent 写；live env gate；`ResourceGuard` 在 CLI 真跑路径 |
-| **A5 测试** | 必做 | 五字段 docstring；RED→GREEN 证据；`test_baostock_incremental_*` + CLI 契约测 |
-| **A6 性能** | **SKIP** | 单源 whitelist ≤5 symbols、replay/隔离库；无批量全市场增量；无 perf SLA |
-| **A7 GitNexus** | 必做 | 改 `run_incremental`/`IncrementalJobRunner`/`watermark` 前 impact；`detect_changes` 与切片 scope 对齐 |
-| **A8 证据** | 必做 | `research/execute-evidence/s0*-*.txt`；pytest 日志；`loop_maintain`；Audit 不信文档自述 |
+| 维度            | 状态     | 范围 / 理由                                                                                                            |
+| --------------- | -------- | ---------------------------------------------------------------------------------------------------------------------- |
+| **A1 正确性**   | 必做     | watermark 空/有/边界；incremental 窗 `max+1`；upsert 幂等；`security_bar_1d` PK 不重复；隔离库路径                     |
+| **A2 可读性**   | 必做     | `watermark.py` API 命名；CLI help；L2 attribution 注释（staged_pilot / orchestrator 先例）                             |
+| **A3 架构**     | 必做     | 金路径 `DataSourceService` + `run_incremental`；无 `adapter=` 生产 bypass；轨 A/B 文件锁遵守；`watermark` 模块归属轨 A |
+| **A4 安全**     | 必做     | `QMD_DATA_ROOT` 隔离；禁止 canonical 主库 silent 写；live env gate；`ResourceGuard` 在 CLI 真跑路径                    |
+| **A5 测试**     | 必做     | 五字段 docstring；RED→GREEN 证据；`test_baostock_incremental_*` + CLI 契约测                                           |
+| **A6 性能**     | **SKIP** | 单源 whitelist ≤5 symbols、replay/隔离库；无批量全市场增量；无 perf SLA                                                |
+| **A7 GitNexus** | 必做     | 改 `run_incremental`/`IncrementalJobRunner`/`watermark` 前 impact；`detect_changes` 与切片 scope 对齐                  |
+| **A8 证据**     | 必做     | `research/execute-evidence/s0*-*.txt`；pytest 日志；`loop_maintain`；Audit 不信文档自述                                |
 
 ---
 

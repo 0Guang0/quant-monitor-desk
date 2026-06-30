@@ -9,10 +9,10 @@
 
 ## 查询记录
 
-| 查询 | 结果 |
-|------|------|
+| 查询                                       | 结果                                              |
+| ------------------------------------------ | ------------------------------------------------- |
 | `run_incremental` / `DataSyncOrchestrator` | 金路径在 orchestrator；runner date 注入为增量切片 |
-| `sync_baostock_incremental` | 未索引（CLI 新函数） |
+| `sync_baostock_incremental`                | 未索引（CLI 新函数）                              |
 
 ## Repair 前建议
 

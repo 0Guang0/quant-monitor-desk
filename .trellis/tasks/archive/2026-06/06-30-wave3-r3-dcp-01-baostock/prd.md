@@ -22,12 +22,12 @@
 
 ## 约束摘要
 
-| 项 | 要求 |
-|----|------|
+| 项     | 要求                                                               |
+| ------ | ------------------------------------------------------------------ |
 | 金路径 | `DataSourceService.fetch` + `DataSyncOrchestrator.run_incremental` |
-| 数据根 | `QMD_DATA_ROOT` 隔离库；禁止 silent 写 canonical 主库 |
-| Schema | R3H-06 `security_bar_1d` + upsert；无新 migration |
-| 并行 | 轨 A 拥有 watermark + baostock；禁止改 fred |
+| 数据根 | `QMD_DATA_ROOT` 隔离库；禁止 silent 写 canonical 主库              |
+| Schema | R3H-06 `security_bar_1d` + upsert；无新 migration                  |
+| 并行   | 轨 A 拥有 watermark + baostock；禁止改 fred                        |
 
 ---
 
@@ -45,16 +45,16 @@
 
 ## Plan 交付物（本阶段）
 
-| 产物 | 路径 | 状态 |
-|------|------|------|
-| 上下文复述 | `research/plan-boot.md` | ✅ |
-| L1/L2/L3 调研 | `research/reference-adoption-dcp01.md` | ✅ |
-| 架构方案 | `research/architecture-dcp01.md` | ✅ |
-| 切片计划 | `DEBT.plan.md` | ✅ |
-| 审计矩阵 | `AUDIT.plan.md` | ✅ |
-| Grill-me | `research/grill-me-session.md` | ✅ 无未决 |
-| Plan 对抗审计 | `research/plan-adversarial-audit.md` | ✅ |
-| PRD（本文件） | `prd.md` | ✅ |
+| 产物          | 路径                                   | 状态      |
+| ------------- | -------------------------------------- | --------- |
+| 上下文复述    | `research/plan-boot.md`                | ✅        |
+| L1/L2/L3 调研 | `research/reference-adoption-dcp01.md` | ✅        |
+| 架构方案      | `research/architecture-dcp01.md`       | ✅        |
+| 切片计划      | `DEBT.plan.md`                         | ✅        |
+| 审计矩阵      | `AUDIT.plan.md`                        | ✅        |
+| Grill-me      | `research/grill-me-session.md`         | ✅ 无未决 |
+| Plan 对抗审计 | `research/plan-adversarial-audit.md`   | ✅        |
+| PRD（本文件） | `prd.md`                               | ✅        |
 
 ---
 
