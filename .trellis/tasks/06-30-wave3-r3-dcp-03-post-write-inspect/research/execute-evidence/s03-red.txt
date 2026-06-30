@@ -1,0 +1,11 @@
+# S03 RED — qmd_ops db-inspect CLI JSON smoke (pre-Execute)
+
+Command (Execute RED before implementation):
+  uv run pytest tests/test_incremental_post_write_inspect.py -k cli -q
+
+Expected RED:
+  ERROR: file or directory not found (module tests/test_incremental_post_write_inspect.py absent)
+
+GREEN evidence: research/execute-evidence/s03-green.txt
+
+Repair note: S03 passed at Execute GREEN; Repair deduplicated CLI helper via tests/support/qmd_ops_cli.py (A2-P2-02).

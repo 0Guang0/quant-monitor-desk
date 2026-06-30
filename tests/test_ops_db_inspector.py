@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 import json
-import subprocess
-import sys
 from pathlib import Path
 
 import duckdb
@@ -16,7 +14,7 @@ from backend.app.ops.db_inspector import (
     DbInspector,
 )
 
-_PROJECT_ROOT = Path(__file__).resolve().parents[1]
+from tests.support.qmd_ops_cli import parse_cli_json, run_qmd_db_inspect_cli
 
 
 def _init_db(db_path: Path) -> None:
@@ -51,16 +49,6 @@ def _write_files(directory: Path, count: int, *, prefix: str = "file", suffix: s
     directory.mkdir(parents=True, exist_ok=True)
     for i in range(count):
         (directory / f"{prefix}-{i}{suffix}").write_text("x", encoding="utf-8")
-
-
-def _run_qmd_db_inspect_cli(*args: str) -> subprocess.CompletedProcess[str]:
-    cmd = [sys.executable, str(_PROJECT_ROOT / "scripts" / "qmd_ops.py"), "db-inspect", *args]
-    return subprocess.run(cmd, capture_output=True, text=True, check=False, cwd=_PROJECT_ROOT)
-
-
-def _parse_cli_json(result: subprocess.CompletedProcess[str]) -> dict:
-    assert result.returncode == 0, result.stderr
-    return json.loads(result.stdout)
 
 
 def test_dbInspect_missingDb_returnsFail(tmp_path: Path) -> None:
@@ -328,8 +316,8 @@ def test_qmdOps_cli_subdirScan_respectsContractLimit(
     data_root = tmp_path / "data"
     _write_files(data_root / subdir, 110)
 
-    payload = _parse_cli_json(
-        _run_qmd_db_inspect_cli(
+    payload = parse_cli_json(
+        run_qmd_db_inspect_cli(
             "--db",
             str(db),
             "--data-root",
@@ -389,8 +377,8 @@ def test_qmdOps_cli_limitHardCapsAtContractMaximum(tmp_path: Path) -> None:
     data_root = tmp_path / "data"
     _write_files(data_root / "raw", 110, prefix="sample", suffix=".csv")
 
-    payload = _parse_cli_json(
-        _run_qmd_db_inspect_cli(
+    payload = parse_cli_json(
+        run_qmd_db_inspect_cli(
             "--db",
             str(db),
             "--data-root",
@@ -416,8 +404,8 @@ def test_qmdOps_cli_invokesSameInspector(tmp_path: Path) -> None:
     _init_db(db)
     data_root = tmp_path / "data"
     data_root.mkdir()
-    payload = _parse_cli_json(
-        _run_qmd_db_inspect_cli(
+    payload = parse_cli_json(
+        run_qmd_db_inspect_cli(
             "--db",
             str(db),
             "--data-root",
@@ -463,7 +451,7 @@ def test_qmdOps_cli_rejectsForbiddenSqlFlag() -> None:
     验证点：returncode != 0
     失败含义：运维 CLI 可执行任意 SQL，只读承诺被破坏
     """
-    result = _run_qmd_db_inspect_cli("--sql", "SELECT 1")
+    result = run_qmd_db_inspect_cli("--sql", "SELECT 1")
     assert result.returncode != 0
 
 
@@ -474,7 +462,7 @@ def test_qmdOps_cli_rejectsForbiddenEnableQmtFlag() -> None:
     验证点：returncode != 0
     失败含义：巡检命令可意外拉起重型 QMT 依赖，违背 extras 策略
     """
-    result = _run_qmd_db_inspect_cli("--enable-qmt")
+    result = run_qmd_db_inspect_cli("--enable-qmt")
     assert result.returncode != 0
 
 
@@ -509,8 +497,8 @@ def test_qmdOps_cli_jsonRoundTripsStrictly(tmp_path: Path) -> None:
     _init_db(db)
     data_root = tmp_path / "data"
     data_root.mkdir()
-    payload = _parse_cli_json(
-        _run_qmd_db_inspect_cli(
+    payload = parse_cli_json(
+        run_qmd_db_inspect_cli(
             "--db",
             str(db),
             "--data-root",

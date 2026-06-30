@@ -1,0 +1,11 @@
+# S01 RED — post-write DbInspector row_count stable (pre-Repair baseline)
+
+Command:
+  uv run pytest tests/test_incremental_post_write_inspect.py -k postWriteInspect -q
+
+Phase: Execute S01 (test existed before Repair; RED was implicit module absence during Plan)
+
+Pre-Repair audit note (A5-P2-01):
+  DEBT S01 used `-k inspect` which matched 3 tests (filename substring), not slice-isolated S01.
+
+Repair fix: DEBT S01 verification → `-k postWriteInspect` (1 test).

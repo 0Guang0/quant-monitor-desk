@@ -1,0 +1,17 @@
+# S02 RED — incremental fetch_log → evidence bundle → market_bar_p0 health
+
+Command (would fail before A1-P1-001 fix):
+  uv run pytest tests/test_incremental_post_write_inspect.py -k health -q
+
+Observed failure (audit A1 independent probe, pre-Repair):
+  overall_status FAIL
+  DataHealthCheckResult(rule_id='INSUFFICIENT_HISTORY', status='FAIL',
+    message='expected at least 2 bars, got 0')
+
+Root cause:
+  build_evidence_bundle_from_fetch_log manifest relative_paths pointed to raw cn_market JSON
+  (`bars` key) while _equity_bar_rows only reads `rows`; bars.json not referenced.
+
+RED→GREEN path:
+  manifest relative_paths → ["bars.json"]; merge clean-table OHLCV rows for post-write context;
+  test_postWriteHealth asserts overall_status in {PASS, WARN}.
