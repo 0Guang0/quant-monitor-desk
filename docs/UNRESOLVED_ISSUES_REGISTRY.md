@@ -2,7 +2,7 @@
 
 > Purpose: one file for all current unresolved, deferred, open, risk, gap, and improvement items.  
 > Source of truth relationship: this file is the readable unresolved split of `docs/AUDIT_DEFERRED_REGISTRY.md`. If files conflict, update both in the same change and keep this file as the operator-facing unresolved list.  
-> Last reconciled: 2026-07-02 Wave 4 DCP-05 baostock live gate 关账；prior 2026-07-01 @ `93b2c82`（§2.5 最终关账 + live 验收脚本入库）。
+> Last reconciled: 2026-07-02 Wave 4 R3-DCP-05 全票关账 @ `c2258363`；prior 2026-07-01 @ `93b2c82`（§2.5 最终关账 + live 验收脚本入库）。
 
 ## Current Round 3 entry status
 

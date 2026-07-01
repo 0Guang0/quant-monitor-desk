@@ -4,7 +4,7 @@
 > **定位：** 根目录总施工图 — 以 **51 个 Module ID**（`MODULE_COMPLETION_RATING.md` §3）为行，串联评级、波次、任务卡与门禁。  
 > **通俗解释：** 本文件回答「每个模块现在几级、还差几批、在哪一轮闭合」；**任务卡才是工单**，`PRODUCTION_COMPLETION_VERTICAL_SLICE_PLAN.md` 只是覆盖地图。  
 > **上一版备份：** `PROJECT_IMPLEMENTATION_ROADMAP.legacy-20260629.md`（Wave 平铺叙事、§5.0.6 等仍可查）  
-> **进度复核：** `git log` @ 2026-06-30 — Wave 1–3 **CLOSED**；Wave 3 DCP-03 merge `eff49343`；活轨见 §3（**Wave 4**）。
+> **进度复核：** `git log` @ 2026-07-02 — Wave 1–3 **CLOSED**；Wave 4 **`R3-DCP-05` CLOSED** @ `c2258363`；**`R3-DCP-06..10` OPEN**；活轨见 §3。
 
 ### 当前下一入口
 
@@ -304,14 +304,14 @@ Round4  B04-01 先 · 产品只读
 - [ ] ResourceGuard / 有界窗口遵守 `resource_limits.yaml`
 - [ ] `MODULE_COMPLETION_RATING` **G1: R3→R4**，**K2** 行与轴一一对应
 
-| #   | 规划 ID       | 模块   | 交付                                                |
-| --- | ------------- | ------ | --------------------------------------------------- |
-| 4a  | **R3-DCP-05** | D1, E1 | 增量 watermark 扩展至 **全部 Tier A 主源**          |
-| 4b  | **R3-DCP-06** | G1, K2 | **五轴全绿（G12）** — PASS 阻塞项                   |
-| 4c  | **R3-DCP-07** | G2     | 一条 cross-asset 传感器绑真市况源                   |
-| 4d  | **R3-DCP-08** | G4     | 市场结构 + Wave 1 US 日历                           |
-| 4e  | **R3-DCP-09** | D1     | 有界 backfill（cap 分片；**非**无上限 FullLoad）    |
-| 4f  | **R3-DCP-10** | G5, A3 | source_fetch_id / content_hash / schema_hash 绑真源 |
+| #   | 规划 ID       | 模块   | 交付                                                                    |
+| --- | ------------- | ------ | ----------------------------------------------------------------------- |
+| 4a  | **R3-DCP-05** | D1, E1 | 增量 watermark 扩展至 **全部 Tier A 主源** · **✅ CLOSED** @ `c2258363` |
+| 4b  | **R3-DCP-06** | G1, K2 | **五轴全绿（G12）** — PASS 阻塞项                                       |
+| 4c  | **R3-DCP-07** | G2     | 一条 cross-asset 传感器绑真市况源                                       |
+| 4d  | **R3-DCP-08** | G4     | 市场结构 + Wave 1 US 日历                                               |
+| 4e  | **R3-DCP-09** | D1     | 有界 backfill（cap 分片；**非**无上限 FullLoad）                        |
+| 4f  | **R3-DCP-10** | G5, A3 | source_fetch_id / content_hash / schema_hash 绑真源                     |
 
 **仍归 Batch6（不挡 PASS）：** D2 任务级幂等、无 cap FullLoad、24 源 production cron 矩阵、H1 Parquet、D4 migration。
 
@@ -322,7 +322,7 @@ Round4  B04-01 先 · 产品只读
 
 | 规划 ID / 活卡                 | 承接的 live 验收缺口                                                                                                                         | 台账 ID                                                                        |
 | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| **R3-DCP-05**                  | baostock 产品 `qmd data sync` 真网（去 `use_mock=True` 硬编码）；Tier A 全源增量；东财/校验源口径 SSOT（与 mock port 张力）                  | `ACC-BAOSTOCK-NO-LIVE` · `ACC-EASTMONEY-TAXONOMY-001`                          |
+| **R3-DCP-05**                  | ~~baostock 真网 + Tier A 全源增量~~ **✅ CLOSED** @ `c2258363`；东财口径 **部分**（registry notes，REQ2 仍 §4）                              | `ACC-BAOSTOCK-NO-LIVE` ✅ · `ACC-EASTMONEY-TAXONOMY-001` 部分                  |
 | **R3-DCP-05**（ponytail 承接） | mootdx dry-run `selected_source_id` 与生产路由不一致；runtime `validation_only` 提升待 registry reconcile                                    | `ACC-MOOTDX-DRYRUN-ROUTE-001` · 关账条件见 `待修复清单.md` §4                  |
 | **R3-DCP-06**                  | L1–5 端到端 `production_live` 全链（五轴 G12 硬门禁；非 staged_fixture_only）                                                                | `ACC-LAYER-E2E-LIVE-001`                                                       |
 | **R3-DCP-09**                  | 有界 backfill；**连网验收 CI**：`--run-network` batch275 子集 + `wave3_live_production_acceptance.py` nightly；`WAVE3-ACC-OPT-01` quick 分层 | `ACC-LIVE-NETWORK-CI-001` · `ACC-LIVE-ACCEPT-NIGHTLY-001` · `WAVE3-ACC-OPT-01` |
@@ -348,14 +348,14 @@ Round4  B04-01 先 · 产品只读
 
 ### 3.7 Round3 状态看板（2026-06-30）
 
-| 波次                                     | 状态                                                 |
-| ---------------------------------------- | ---------------------------------------------------- |
-| 历史 + Wave 0（3V）+ R3H-01～04 + R3H-06 | ✅ CLOSED                                            |
-| Wave 1（R3H-07, R3H-10）                 | ✅ CLOSED @ 2026-06-29                               |
-| Wave 2（R3H-08A–D）                      | ✅ CLOSED @ 2026-06-29                               |
-| Wave 3（R3-DCP-01..03）                  | ✅ **CLOSED** @ 2026-06-30（`eff49343` 收尾 DCP-03） |
-| Wave 4（R3-DCP-05..10 + **五轴全绿**）   | 🔴 OPEN                                              |
-| Wave 5（R3H-05 + GATE）                  | 🔴 OPEN                                              |
+| 波次                                                      | 状态                                                 |
+| --------------------------------------------------------- | ---------------------------------------------------- |
+| 历史 + Wave 0（3V）+ R3H-01～04 + R3H-06                  | ✅ CLOSED                                            |
+| Wave 1（R3H-07, R3H-10）                                  | ✅ CLOSED @ 2026-06-29                               |
+| Wave 2（R3H-08A–D）                                       | ✅ CLOSED @ 2026-06-29                               |
+| Wave 3（R3-DCP-01..03）                                   | ✅ **CLOSED** @ 2026-06-30（`eff49343` 收尾 DCP-03） |
+| Wave 4（**R3-DCP-05** ✅ · **R3-DCP-06..10** + 五轴全绿） | 🔴 OPEN（DCP-05 @ `c2258363`）                       |
+| Wave 5（R3H-05 + GATE）                                   | 🔴 OPEN                                              |
 
 ### 3.7.1 Wave 3 隔离生产验收（2026-07-01）
 
@@ -490,7 +490,7 @@ Round5 **不补功能**。
 1. Batch 3V + R3H-06 + R3H-01～04 — **CLOSED** ✅
 2. Wave 1–2：R3H-07、R3H-10、R3H-08A–D — **CLOSED**
 3. Wave 3：R3-DCP-01..03 — **CLOSED**（baostock + fred 增量产品路径）
-4. Wave 4：R3-DCP-05..10 — **CLOSED**
+4. Wave 4：**R3-DCP-05** ✅ @ `c2258363`；**R3-DCP-06..10** + §3.5.1 五轴 — **OPEN**
 5. **G12 五轴：** §3.5.1 清单 **全部满足** — **硬门禁**
 6. R3H-05-GATE → **`PASS_ROUND4_REAL_DATA_READY`**
 7. 24 源 env-gated live→正确 Tier；`web_search` 真 API = **DEFERRED_POST_ROUND4** + 单 ADR
@@ -522,7 +522,8 @@ Round5 **不补功能**。
 | R3H-10        | CLOSED | C2,E4             | **Wave 1** @ 2026-06-29 |
 | R3H-08A–D     | CLOSED | C3,A3,B\*,G6      | **Wave 2** @ 2026-06-29 |
 | R3-DCP-01..03 | CLOSED | D1,E1,E2,F0       | **Wave 3** @ 2026-06-30 |
-| R3-DCP-05..10 | OPEN   | D1,G1,K2,G2,G4,G5 | **Wave 4**              |
+| R3-DCP-05     | CLOSED | D1,E1             | **Wave 4** @ `c2258363` |
+| R3-DCP-06..10 | OPEN   | D1,G1,K2,G2,G4,G5 | **Wave 4**              |
 | R3H-05 + GATE | OPEN   | 全表              | **Wave 5**              |
 | B04-\*        | 未开工 | I1–I8,J2,J7       | Round4                  |
 | B05-\*        | 未开工 | J3,A1…            | Round5                  |

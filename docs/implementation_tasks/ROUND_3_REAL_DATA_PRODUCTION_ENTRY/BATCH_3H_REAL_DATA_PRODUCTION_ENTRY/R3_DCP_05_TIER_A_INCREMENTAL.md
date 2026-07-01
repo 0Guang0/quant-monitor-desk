@@ -5,7 +5,8 @@
 > **Trellis：** `.trellis/tasks/wave4-r3-dcp-05-tier-a/` · Plan v4.1  
 > **Module：** D1 Sync · E1 `qmd data` CLI · A2 schema（migration 015）  
 > **评级：** D1/E1/C3 `R4→R5`；A2 批/3 +1  
-> **用户裁决（2026-07-02）：** **11/11 Tier A 源必须 clean 表 upsert**，禁止 staging-only ponytail。
+> **用户裁决（2026-07-02）：** **11/11 Tier A 源必须 clean 表 upsert**，禁止 staging-only ponytail。  
+> **状态：** **✅ CLOSED** @ `c2258363`（Execute S00–S13 · Audit/Repair · 活卡 §5）
 
 ---
 
