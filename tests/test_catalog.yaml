@@ -20,6 +20,30 @@ tests/test_adapter_skeletons.py:
     docs: []
     rules: []
     specs: []
+tests/test_alpha_vantage_incremental_e2e.py:
+  command: uv run python -m pytest tests/test_alpha_vantage_incremental_e2e.py -q
+  failure_meaning:
+    Regression in test_alpha_vantage_incremental_e2e; inspect purpose
+    and linked authorities.
+  purpose: R3-DCP-05 S10 — Alpha Vantage bar incremental e2e tests.
+  type: integration
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_alpha_vantage_incremental_watermark.py:
+  command:
+    uv run python -m pytest tests/test_alpha_vantage_incremental_watermark.py
+    -q
+  failure_meaning:
+    Regression in test_alpha_vantage_incremental_watermark; inspect
+    purpose and linked authorities.
+  purpose: R3-DCP-05 S10 — Alpha Vantage bar incremental watermark tests.
+  type: runtime-contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
 tests/test_api_security_contract.py:
   command: uv run python -m pytest tests/test_api_security_contract.py -q
   failure_meaning: API security contract drifted; unsafe endpoints may open.
@@ -238,6 +262,28 @@ tests/test_cn_market_adapters.py:
       - specs/datasource_registry/source_capabilities.yaml
       - specs/contracts/source_route_contract.yaml
       - specs/contracts/layer5_evidence_contract.yaml
+tests/test_cninfo_incremental_e2e.py:
+  command: uv run python -m pytest tests/test_cninfo_incremental_e2e.py -q
+  failure_meaning:
+    Regression in test_cninfo_incremental_e2e; inspect purpose and
+    linked authorities.
+  purpose: R3-DCP-05 S07 — CNINFO metadata incremental e2e tests.
+  type: integration
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_cninfo_incremental_watermark.py:
+  command: uv run python -m pytest tests/test_cninfo_incremental_watermark.py -q
+  failure_meaning:
+    Regression in test_cninfo_incremental_watermark; inspect purpose
+    and linked authorities.
+  purpose: R3-DCP-05 S07 — CNINFO metadata incremental watermark tests.
+  type: runtime-contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
 tests/test_config.py:
   command: uv run python -m pytest tests/test_config.py -q
   failure_meaning: Regression in test_config; inspect purpose and linked authorities.
@@ -376,6 +422,28 @@ tests/test_dependency_extras_contract.py:
     and linked authorities.
   purpose: Round2.6 Phase B — dependency extras contract tests.
   type: contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_deribit_incremental_e2e.py:
+  command: uv run python -m pytest tests/test_deribit_incremental_e2e.py -q
+  failure_meaning:
+    Regression in test_deribit_incremental_e2e; inspect purpose and
+    linked authorities.
+  purpose: R3-DCP-05 S11 — Deribit crypto incremental e2e tests.
+  type: integration
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_deribit_incremental_watermark.py:
+  command: uv run python -m pytest tests/test_deribit_incremental_watermark.py -q
+  failure_meaning:
+    Regression in test_deribit_incremental_watermark; inspect purpose
+    and linked authorities.
+  purpose: R3-DCP-05 S11 — Deribit crypto incremental watermark tests.
+  type: runtime-contract
   verifies:
     docs: []
     rules: []
@@ -1375,6 +1443,28 @@ tests/test_sec_edgar_adapter.py:
     Regression in test_sec_edgar_adapter; inspect purpose and linked
     authorities.
   purpose: R3H-01 SEC EDGAR 披露适配器测试（Batch 3H · step 9.4）。
+  type: runtime-contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_sec_edgar_incremental_e2e.py:
+  command: uv run python -m pytest tests/test_sec_edgar_incremental_e2e.py -q
+  failure_meaning:
+    Regression in test_sec_edgar_incremental_e2e; inspect purpose and
+    linked authorities.
+  purpose: R3-DCP-05 S09 — SEC EDGAR incremental e2e tests.
+  type: integration
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_sec_edgar_incremental_watermark.py:
+  command: uv run python -m pytest tests/test_sec_edgar_incremental_watermark.py -q
+  failure_meaning:
+    Regression in test_sec_edgar_incremental_watermark; inspect purpose
+    and linked authorities.
+  purpose: R3-DCP-05 S09 — SEC EDGAR incremental watermark tests.
   type: runtime-contract
   verifies:
     docs: []

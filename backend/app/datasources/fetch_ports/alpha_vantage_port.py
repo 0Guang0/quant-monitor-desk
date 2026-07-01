@@ -12,8 +12,10 @@ import uuid
 from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 from typing import Any
 
+from backend.app.config import PROJECT_ROOT
 from backend.app.datasources.adapters.fetch_port import FetchPayload, PortError
 from backend.app.datasources.fetch_result import FetchRequest
 from backend.app.datasources.fetch_window import (
@@ -29,6 +31,7 @@ from backend.app.datasources.normalizers.evidence_bundle import (
 from backend.app.datasources.normalizers.market_data import (
     MARKET_DATA_EVIDENCE_SCHEMA_VERSION,
     build_daily_bar_evidence_bundle,
+    read_daily_bar_evidence_bundle,
 )
 
 MAX_SYMBOLS = 5
@@ -37,6 +40,32 @@ MAX_WINDOW_DAYS = 120
 MAX_OPTION_STRIKES = 20
 
 SYMBOL_WHITELIST = frozenset({"AAPL", "MSFT", "SPY", "QQQ", "GOOGL"})
+
+REPLAY_FIXTURE = (
+    PROJECT_ROOT / "tests/fixtures/replay/market_data/alpha_vantage/aapl_daily_replay.json"
+)
+
+
+def _filter_bars_by_window(
+    bars: list[dict[str, Any]],
+    *,
+    start_time: str | None,
+    end_time: str | None,
+) -> list[dict[str, Any]]:
+    from backend.app.datasources.normalizers.evidence_bundle import parse_fetch_window_date
+
+    start = parse_fetch_window_date(start_time)
+    end = parse_fetch_window_date(end_time)
+    if start is None or end is None:
+        return bars
+    if start > end:
+        return []
+    filtered: list[dict[str, Any]] = []
+    for bar in bars:
+        trade = parse_fetch_window_date(str(bar.get("trade_date") or ""))
+        if trade is not None and start <= trade <= end:
+            filtered.append(bar)
+    return filtered
 
 
 def _alpha_vantage_api_key() -> str | None:
@@ -105,6 +134,7 @@ class AlphaVantageMockFetchPort:
     symbols: Sequence[str]
     max_rows: int
     max_option_strikes: int = MAX_OPTION_STRIKES
+    replay_path: Path = REPLAY_FIXTURE
 
     def fetch_payload(self, req: FetchRequest) -> FetchPayload:
         reject_over_cap(value=self.max_rows, cap=MAX_ROWS, label="max_rows")
@@ -145,20 +175,63 @@ class AlphaVantageMockFetchPort:
             bundle = finalize_bundle(bundle)
             row_count = len(rows)
         else:
-            bars = _mock_daily_bars(symbol, self.max_rows, data_domain=domain)
-            window_kind = us_equity_window_kind(data_domain=domain, instrument_id=symbol)
-            bundle = build_daily_bar_evidence_bundle(
-                bars=bars,
-                data_domain=domain,
-                source_id="alpha_vantage",
-                source_fetch_id=fetch_id,
-                content_hash="pending",
-                as_of_timestamp=retrieved_at,
-                retrieved_at=retrieved_at,
-                window_kind=window_kind,
+            use_replay_window = (
+                self.replay_path.is_file()
+                and domain == "us_equity_daily_bar"
+                and req.start_time
+                and req.end_time
             )
+            if use_replay_window:
+                bundle = read_daily_bar_evidence_bundle(self.replay_path)
+                bars = _filter_bars_by_window(
+                    list(bundle.get("bars") or []),
+                    start_time=req.start_time,
+                    end_time=req.end_time,
+                )
+                if not bars:
+                    # ponytail: replay fixture may not cover arbitrary windows; fall back to mock
+                    bars = _mock_daily_bars(symbol, self.max_rows, data_domain=domain)
+                    window_kind = us_equity_window_kind(data_domain=domain, instrument_id=symbol)
+                    bundle = build_daily_bar_evidence_bundle(
+                        bars=bars,
+                        data_domain=domain,
+                        source_id="alpha_vantage",
+                        source_fetch_id=fetch_id,
+                        content_hash="pending",
+                        as_of_timestamp=retrieved_at,
+                        retrieved_at=retrieved_at,
+                        window_kind=window_kind,
+                    )
+                    row_count = len(bars)
+                else:
+                    bundle = build_daily_bar_evidence_bundle(
+                        bars=bars,
+                        data_domain=domain,
+                        source_id="alpha_vantage",
+                        source_fetch_id=str(bundle.get("source_fetch_id") or fetch_id),
+                        content_hash=str(bundle.get("content_hash") or "pending"),
+                        as_of_timestamp=str(bundle.get("as_of_timestamp") or retrieved_at),
+                        retrieved_at=str(bundle.get("retrieved_at") or retrieved_at),
+                        window_kind=us_equity_window_kind(data_domain=domain, instrument_id=symbol),
+                    )
+                    row_count = len(bars)
+            else:
+                bars = _mock_daily_bars(symbol, self.max_rows, data_domain=domain)
+                window_kind = us_equity_window_kind(data_domain=domain, instrument_id=symbol)
+                bundle = build_daily_bar_evidence_bundle(
+                    bars=bars,
+                    data_domain=domain,
+                    source_id="alpha_vantage",
+                    source_fetch_id=fetch_id,
+                    content_hash="pending",
+                    as_of_timestamp=retrieved_at,
+                    retrieved_at=retrieved_at,
+                    window_kind=window_kind,
+                )
+                row_count = len(bars)
+
+        if domain != "us_option_chain":
             bundle = finalize_bundle(bundle)
-            row_count = len(bars)
 
         content = json.dumps(bundle, ensure_ascii=False, default=str).encode("utf-8")
         return FetchPayload(content=content, file_type="json", row_count=row_count)
