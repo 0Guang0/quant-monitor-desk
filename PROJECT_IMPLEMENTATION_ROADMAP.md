@@ -362,11 +362,11 @@ Round4  B04-01 先 · 产品只读
 > **脚本：** `scripts/wave3_isolated_production_acceptance.py`  
 > **证据：** 可重跑 `uv run python scripts/wave3_isolated_production_acceptance.py` → `.audit-sandbox/wave3-acceptance-<run_id>/`（gitignore）；参考跑 11/11 PASS  
 > **承接（可选优化）：** `WAVE3-ACC-OPT-01` — 验收 quick profile · 见 `待修复清单.md` §4  
-> **Live 连网验收（2026-07-01）：** `scripts/wave3_live_production_acceptance.py` · 承接路由见 §3.5.2 · `待修复清单.md` §8  
+> **Live 连网验收（2026-07-01）：** `scripts/wave3_live_production_acceptance.py`（入库 @ `93b2c82`）· 承接路由见 §3.5.2 · `待修复清单.md` §8  
 > **Wave 4 前须先闭环：** `待修复清单.md` §2.5 — **已清空 2026-07-01**（`LIVE-PILOT-DB-001` · `LIVE-BAOSTOCK-SYNC-SILENT-001` 见 §1）
 > **结论摘要：** Wave 1–3 **隔离/机制验收通过**；Wave 4 prep **§1 共 30 项**经 pytest 复验已关；**§2.5 阻断项已关**；**正式 PASS** 仍待 Wave 4 `R3-DCP-06` 五轴 + Wave 5 `R3H-05-GATE`。
 
-### 3.7.2 台账复验摘要（2026-07-01 @ `af56e0d`）
+### 3.7.2 台账复验摘要（2026-07-01 @ `93b2c82`）
 
 | 类别       | 数量 | 核实方式                                     | 结论                                                                     |
 | ---------- | ---- | -------------------------------------------- | ------------------------------------------------------------------------ |

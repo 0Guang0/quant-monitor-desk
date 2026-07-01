@@ -2,7 +2,7 @@
 
 > Purpose: one file for resolved/closed issues, gates, risks, and repairs.  
 > Pair: unresolved items live in `docs/UNRESOLVED_ISSUES_REGISTRY.md`.  
-> Last reconciled: 2026-07-01 台账复验 @ `af56e0d`（pytest + 代码对抗项）；prior @ post-`8e6b1e91`.
+> Last reconciled: 2026-07-01 台账复验 @ `93b2c82`（§2.5 最终关账 + live 验收脚本入库）；prior @ `af56e0d`。
 
 ## Wave 4 prep blockers resolved (2026-07-01)
 

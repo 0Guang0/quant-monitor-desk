@@ -2,9 +2,11 @@
 
 > **Authority:** Wave 3 闭合后的独立验收 SSOT（不替代 Wave 4 `R3-DCP-06` 五轴 PASS 硬门禁）。  
 > **日期:** 2026-07-01  
-> **基准 commit:** `master` @ `8e6b1e91`（Wave 4 prep P0–P2）+ 对抗性 repair 补丁  
-> **验收脚本:** `scripts/wave3_isolated_production_acceptance.py`  
-> **最终证据:** 可重跑脚本产出 `.audit-sandbox/wave3-acceptance-<run_id>/acceptance_evidence.json`（本地 gitignore；参考跑 `20260701T115401Z` 11/11 PASS）  
+> **基准 commit:** `master` @ `93b2c82`（Wave 4 prep §2.5 最终关账 + live 验收脚本入库）；prior `8e6b1e91`（P0–P2）· `af56e0d`（台账复验）  
+> **隔离验收脚本:** `scripts/wave3_isolated_production_acceptance.py`  
+> **连网 live 验收脚本:** `scripts/wave3_live_production_acceptance.py`（入库 @ `93b2c82`；参考 run `20260701T140102Z`）  
+> **最终证据:** 隔离 — `.audit-sandbox/wave3-acceptance-<run_id>/acceptance_evidence.json`（本地 gitignore；参考跑 `20260701T115401Z` 11/11 PASS）  
+> **连网证据:** `.audit-sandbox/wave3-live-acceptance-<run_id>/live_acceptance_evidence.json`（gitignore；参考 `20260701T140102Z`）  
 > **主库污染:** **否** — `canonical_main_db` SHA256/mtime 验收前后一致
 
 ---
@@ -140,13 +142,15 @@
 
 ## 7. Wave 4 前卫生清理结论
 
-| 类别                   | 动作                                                            | 状态                  |
-| ---------------------- | --------------------------------------------------------------- | --------------------- |
-| 验收暴露 BLOCKING/HIGH | sandbox guard + migration 路径                                  | **已修**              |
-| **P0–P2（15 项）**     | registry · ops 文档 · Layer3 · HYG · perf CI · ADR 闭包         | **已修** @ 2026-07-01 |
-| 僵尸 Trellis 任务      | 11 目录归档 + 证据路径修复                                      | **已完成**            |
-| Batch 6 P3 lineage     | `ADV-R3X-LINEAGE-001` / `R3Y-LINEAGE-VR-001`                    | **阶段外置** §2       |
-| 可重跑验收             | `uv run python scripts/wave3_isolated_production_acceptance.py` | **随时可复验**        |
+| 类别                   | 动作                                                            | 状态                     |
+| ---------------------- | --------------------------------------------------------------- | ------------------------ |
+| 验收暴露 BLOCKING/HIGH | sandbox guard + migration 路径                                  | **已修**                 |
+| **P0–P2（15 项）**     | registry · ops 文档 · Layer3 · HYG · perf CI · ADR 闭包         | **已修** @ 2026-07-01    |
+| **§2.5 阻断（2 项）**  | `LIVE-PILOT-DB-001` · `LIVE-BAOSTOCK-SYNC-SILENT-001`           | **已修** @ `93b2c82`     |
+| 僵尸 Trellis 任务      | 11 目录归档 + 证据路径修复                                      | **已完成**               |
+| Batch 6 P3 lineage     | `ADV-R3X-LINEAGE-001` / `R3Y-LINEAGE-VR-001`                    | **阶段外置** §2          |
+| 可重跑验收             | `uv run python scripts/wave3_isolated_production_acceptance.py` | **随时可复验**           |
+| 连网 live 验收（可选） | `uv run python scripts/wave3_live_production_acceptance.py`     | **已入库**；CI 待 DCP-09 |
 
 ---
 
@@ -160,11 +164,12 @@
 
 ## 9. 证据索引
 
-| 产物               | 路径                                                                        |
-| ------------------ | --------------------------------------------------------------------------- |
-| 最终验收 JSON      | `.audit-sandbox/wave3-acceptance-20260701T115401Z/acceptance_evidence.json` |
-| prod-equiv 预算    | `.audit-sandbox/wave3-acceptance-20260701T115401Z/prod_equiv_budget.json`   |
-| 早期失败跑（对比） | `.audit-sandbox/wave3-acceptance-20260701T113150Z/`、`113735Z/`             |
-| 待修复台账         | `docs/quality/待修复清单.md`                                                |
-| 模块评级           | `MODULE_COMPLETION_RATING.md`                                               |
-| 路线图             | `PROJECT_IMPLEMENTATION_ROADMAP.md` §3.7–3.7.1                              |
+| 产物                | 路径                                                                                  |
+| ------------------- | ------------------------------------------------------------------------------------- |
+| 最终验收 JSON       | `.audit-sandbox/wave3-acceptance-20260701T115401Z/acceptance_evidence.json`           |
+| prod-equiv 预算     | `.audit-sandbox/wave3-acceptance-20260701T115401Z/prod_equiv_budget.json`             |
+| 早期失败跑（对比）  | `.audit-sandbox/wave3-acceptance-20260701T113150Z/`、`113735Z/`                       |
+| 待修复台账          | `docs/quality/待修复清单.md`                                                          |
+| 模块评级            | `MODULE_COMPLETION_RATING.md`                                                         |
+| 路线图              | `PROJECT_IMPLEMENTATION_ROADMAP.md` §3.7–3.7.1                                        |
+| 连网 live 验收 JSON | `.audit-sandbox/wave3-live-acceptance-20260701T140102Z/live_acceptance_evidence.json` |
