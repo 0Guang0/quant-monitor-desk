@@ -38,6 +38,7 @@ ALL_MIGRATION_VERSIONS = frozenset(
         "012_migration_residuals",
         "013_clean_domain_tables",
         "014_stg_bar_ohlcv",
+        "015_dcp05_tier_a_clean",
     }
 )
 

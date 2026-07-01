@@ -57,6 +57,10 @@ CLEAN_DOMAIN_MIGRATED_TABLES = frozenset(
         "cn_announcement_clean",
         "stg_disclosure_smoke",
         "stg_axis_observation_smoke",
+        "us_disclosure_clean",
+        "stg_us_disclosure_smoke",
+        "crypto_derivative_clean",
+        "stg_crypto_derivative_smoke",
     }
 )
 

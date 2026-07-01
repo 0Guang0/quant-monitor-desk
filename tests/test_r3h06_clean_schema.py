@@ -743,7 +743,7 @@ def test_domain_router_unknownDomain_raises() -> None:
     )
 
     with pytest.raises(CleanWriteTargetError, match="no clean write target"):
-        resolve_clean_write_target("us_equity_daily_bar")
+        resolve_clean_write_target("not_a_registered_domain")
 
 
 def test_disclosure_pdfFileId_requiresFileRegistry(tmp_path: Path) -> None:

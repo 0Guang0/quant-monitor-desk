@@ -4,10 +4,33 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-BAR_DOMAINS = frozenset({"cn_equity_daily_bar"})
-# ponytail: yahoo_finance → us_equity_daily_bar deferred Wave 3 (not registered here)
+BAR_DOMAINS = frozenset(
+    {
+        "cn_equity_daily_bar",
+        "us_equity_daily_bar",
+        "etf_daily_bar",
+        "fx_daily_bar",
+        "commodity_daily_bar",
+    }
+)
 METADATA_DOMAINS = frozenset({"cn_announcements", "cn_filings", "cn_pdf_reports"})
-MACRO_DOMAINS = frozenset({"macro_series"})
+US_DISCLOSURE_DOMAINS = frozenset({"us_filings", "us_insider_form4"})
+CRYPTO_DOMAINS = frozenset(
+    {
+        "crypto_derivatives",
+        "crypto_futures_term_structure",
+        "crypto_options_surface",
+    }
+)
+MACRO_DOMAINS = frozenset(
+    {
+        "macro_series",
+        "us_treasury_yield_curve",
+        "central_bank_policy",
+        "development_indicator",
+        "cot_positioning",
+    }
+)
 
 
 class CleanWriteTargetError(ValueError):
@@ -37,6 +60,20 @@ def resolve_clean_write_target(domain: str) -> CleanWriteTarget:
             staging_table="stg_disclosure_smoke",
             write_mode="upsert_by_pk",
             primary_keys=("announcement_id",),
+        )
+    if domain in US_DISCLOSURE_DOMAINS:
+        return CleanWriteTarget(
+            target_table="us_disclosure_clean",
+            staging_table="stg_us_disclosure_smoke",
+            write_mode="upsert_by_pk",
+            primary_keys=("accession_number",),
+        )
+    if domain in CRYPTO_DOMAINS:
+        return CleanWriteTarget(
+            target_table="crypto_derivative_clean",
+            staging_table="stg_crypto_derivative_smoke",
+            write_mode="upsert_by_pk",
+            primary_keys=("instrument_name", "as_of_timestamp", "data_domain"),
         )
     if domain in MACRO_DOMAINS:
         return CleanWriteTarget(

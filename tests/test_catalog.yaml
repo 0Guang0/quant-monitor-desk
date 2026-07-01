@@ -1554,6 +1554,17 @@ tests/test_tdx_pytdx_port.py:
     docs: []
     rules: []
     specs: []
+tests/test_tierA_incremental_registry.py:
+  command: uv run python -m pytest tests/test_tierA_incremental_registry.py -q
+  failure_meaning:
+    Regression in test_tierA_incremental_registry; inspect purpose
+    and linked authorities.
+  purpose: R3-DCP-05 S00 — Tier A incremental registry + ADR-028 clean routing.
+  type: protocol
+  verifies:
+    docs: []
+    rules: []
+    specs: []
 tests/test_trellis_audit_trace_authority.py:
   command: uv run python -m pytest tests/test_trellis_audit_trace_authority.py -q
   failure_meaning:
