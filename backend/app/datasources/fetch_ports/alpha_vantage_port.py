@@ -189,7 +189,8 @@ class AlphaVantageMockFetchPort:
                     end_time=req.end_time,
                 )
                 if not bars:
-                    # ponytail: replay fixture may not cover arbitrary windows; fall back to mock
+                    # ponytail: replay fixture may not cover arbitrary windows; fall back to mock.
+                    # Upgrade: widen aapl_daily_replay.json or restrict replay to incremental ops only.
                     bars = _mock_daily_bars(symbol, self.max_rows, data_domain=domain)
                     window_kind = us_equity_window_kind(data_domain=domain, instrument_id=symbol)
                     bundle = build_daily_bar_evidence_bundle(
