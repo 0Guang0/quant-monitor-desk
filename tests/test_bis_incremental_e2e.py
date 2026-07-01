@@ -14,7 +14,7 @@ from backend.app.ops.bis_incremental_run import (
     create_bis_incremental_port,
     run_bis_incremental,
 )
-from backend.app.ops.bis_incremental_watermark import (
+from backend.app.ops.bis_incremental_run import (
     DATA_DOMAIN,
     DEFAULT_COUNTRIES,
     SOURCE_ID,
@@ -62,7 +62,11 @@ def test_bisIncremental_e2e_replay_writesAxisObservation(
         count = con.execute(
             "SELECT COUNT(*) FROM axis_observation WHERE indicator_id = 'US'"
         ).fetchone()[0]
-    assert count >= 1
+        assert count >= 1
+        row = con.execute(
+            "SELECT raw_value FROM axis_observation WHERE indicator_id = 'US' LIMIT 1"
+        ).fetchone()
+    assert row is not None and float(row[0]) == 5.25
 
 
 def test_bisIncremental_idempotent_secondRun_rowCountStable(

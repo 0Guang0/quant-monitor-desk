@@ -15,13 +15,22 @@ from tests.contract_gate_support import PROJECT_ROOT
 from tests.service_path_support import enable_source_route
 
 
-def test_fredIncrementalCli_dryRun_includesSourceId() -> None:
+def test_fredIncrementalCli_dryRun_includesSourceId(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     """覆盖范围：CLI dry-run 旗标契约
     测试对象：sync_plan --domain macro_series --source-id fred
     目的/目标：dry-run 返回 route 预览且含 source_id
     验证点：dry_run==True；data_domain==macro_series；source_id==fred
     失败含义：CLI 旗标与 Plan audit F4 修复后契约不一致
     """
+    from backend.app.cli import data_commands
+
+    data_root = tmp_path / ".audit-sandbox" / "wave3-accept" / "data"
+    data_root.mkdir(parents=True)
+    monkeypatch.setenv("QMD_DATA_ROOT", str(data_root))
+    monkeypatch.setattr(data_commands, "DATA_ROOT", data_root)
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
     payload = sync_plan(
         data_domain="macro_series",
         source_id="fred",

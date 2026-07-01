@@ -12,14 +12,18 @@ from typing import Any
 
 from backend.app.datasources.adapters.fetch_port import FetchPort, PortError
 from backend.app.datasources.adapters.skeleton_base import SkeletonAdapterBase, _utc_now_iso
-from backend.app.datasources.fetch_result import FetchRequest, FetchResult
+from backend.app.datasources.fetch_result import FetchResult
 from backend.app.datasources.service import DataSourceService
+from backend.app.ops.macro_incremental_common import (
+    MacroIncrementalFetchProxy,
+    incremental_validation_patch_factory,
+    load_incremental_route_bundle,
+)
 from backend.app.ops.sandbox_clean_write.clean_write_targets import resolve_clean_write_target
 from backend.app.ops.sec_edgar_incremental_watermark import STAGING_TABLE, read_since_date_for_cik
 from backend.app.storage.raw_store import RawStore
 from backend.app.sync.jobs import SyncJobSpec
 from backend.app.sync.orchestrator import DataSyncOrchestrator
-from backend.app.validators.data_quality import DataQualityRequest
 
 US_DISCLOSURE_STAGING_COLUMNS = (
     "accession_number",
@@ -155,53 +159,12 @@ def _make_sec_edgar_staging_adapter_class():
 
 @contextmanager
 def _sec_edgar_incremental_validation_patch():
-    from backend.app.sync.runners import _DEFAULT_QUALITY_RULE_SET, _PipelineMixin
-
-    original = _PipelineMixin._validate_staging
-
-    def _us_disclosure_validate_staging(
-        self,
-        con,
-        *,
-        spec: SyncJobSpec,
-        job_id: str,
-        staging_table: str,
-        conflict_staging_table: str | None,
-        primary_keys: tuple[str, ...],
-        required_fields: tuple[str, ...],
+    with incremental_validation_patch_factory(
+        US_DISCLOSURE_STAGING_COLUMNS,
+        ("filing_date", "report_date"),
+        label="sec_edgar",
     ):
-        if conflict_staging_table is not None:
-            raise ValueError("sec_edgar incremental does not use conflict staging")
-        self._jobs.emit_custom_event(
-            job_id,
-            event_type="CONFLICT_CHECK_SKIPPED",
-            message="sec_edgar incremental: conflict validation skipped",
-            payload_json='{"decision":"conflict_check_skipped"}',
-            con=con,
-        )
-        return self._validation.validate_staging(
-            con,
-            quality_request=DataQualityRequest(
-                run_id=spec.run_id,
-                job_id=job_id,
-                data_domain=spec.data_domain,
-                source_id=spec.source_id,
-                staging_table=staging_table,
-                primary_keys=primary_keys,
-                required_fields=required_fields,
-                rule_set_id=_DEFAULT_QUALITY_RULE_SET,
-            ),
-            expected_columns=US_DISCLOSURE_STAGING_COLUMNS,
-            timestamp_fields=("filing_date", "report_date"),
-            conflict_request=None,
-            conflict_staging_table=None,
-        )
-
-    _PipelineMixin._validate_staging = _us_disclosure_validate_staging
-    try:
         yield
-    finally:
-        _PipelineMixin._validate_staging = original
 
 
 @contextmanager
@@ -224,39 +187,10 @@ def _sec_edgar_staging_adapter_patch(fetch_port: FetchPort):
         adapters_mod.create_test_adapter = original
 
 
-class SecEdgarIncrementalFetchProxy:
-    def __init__(self, inner: DataSourceService, since_by_cik: dict[str, str]) -> None:
-        self._inner = inner
-        self._since = since_by_cik
-
-    def __getattr__(self, name: str):
-        return getattr(self._inner, name)
-
-    def fetch(self, req: FetchRequest, **kwargs):
-        since = self._since.get(req.instrument_id or "")
-        if since:
-            req = req.model_copy(update={"start_time": since})
-        kwargs["operation"] = "fetch_filings"
-        return self._inner.fetch(req, **kwargs)
-
-
 @dataclass(frozen=True)
 class SecEdgarIncrementalRunReport:
     cik_results: tuple[dict[str, Any], ...]
     overall_status: str
-
-
-def _load_sec_edgar_route_bundle(source_registry=None):
-    from backend.app.datasources.capability_registry import SourceCapabilityRegistry
-    from backend.app.datasources.route_planner import SourceRoutePlanner
-    from backend.app.ops.sec_edgar_incremental_watermark import enabled_sec_edgar_source_registry
-
-    registry = source_registry or enabled_sec_edgar_source_registry()
-    caps = SourceCapabilityRegistry()
-    caps.load()
-    planner = SourceRoutePlanner(source_registry=registry, capability_registry=caps)
-    planner._platform_allows = lambda _sid: (True, None)
-    return registry, caps, planner
 
 
 def build_sec_edgar_incremental_service(
@@ -266,8 +200,12 @@ def build_sec_edgar_incremental_service(
     since_by_cik: dict[str, str],
     job_events=None,
     source_registry=None,
-) -> SecEdgarIncrementalFetchProxy:
-    registry, caps, planner = _load_sec_edgar_route_bundle(source_registry)
+) -> MacroIncrementalFetchProxy:
+    registry, caps, planner = load_incremental_route_bundle(
+        source_id="sec_edgar",
+        data_domain="us_filings",
+        source_registry=source_registry,
+    )
     inner = DataSourceService(
         data_root=data_root,
         fetch_port=fetch_port,
@@ -277,7 +215,7 @@ def build_sec_edgar_incremental_service(
         capability_registry=caps,
         route_planner=planner,
     )
-    return SecEdgarIncrementalFetchProxy(inner, since_by_cik)
+    return MacroIncrementalFetchProxy(inner, since_by_cik, operation="fetch_filings")
 
 
 def _display_status(result) -> str:
@@ -292,7 +230,7 @@ def _display_status(result) -> str:
 def run_sec_edgar_incremental(
     orch: DataSyncOrchestrator,
     *,
-    service: SecEdgarIncrementalFetchProxy,
+    service: MacroIncrementalFetchProxy,
     ciks: tuple[str, ...] = (_DEFAULT_CIK,),
     source_registry=None,
 ) -> SecEdgarIncrementalRunReport:

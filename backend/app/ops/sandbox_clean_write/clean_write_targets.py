@@ -26,8 +26,11 @@ MACRO_DOMAINS = frozenset(
     {
         "macro_series",
         "us_treasury_yield_curve",
+        "inflation_expectation",
         "central_bank_policy",
+        "credit_gap",
         "development_indicator",
+        "global_macro_reference",
         "cot_positioning",
     }
 )

@@ -13,7 +13,7 @@
 
 - 完整运维手册：`docs/ops/ops_and_performance_v1_2.md`
 - 自检与审计清单：`docs/quality/self_check_and_audit.md`
-- 数据同步速查：`docs/ops/data_sync_quick_reference.md`
+- 数据同步速查：`docs/ops/data_sync_quick_reference.md`（含 **Tier A 11 源** `--source-id` 增量 CLI · R3-DCP-05）
 - 错误码与排障：`docs/ops/ERROR_CODE_GUIDE.md`、`docs/ops/TROUBLESHOOTING.md`
 - qmt_xqshare 可选远程源：`docs/ops/qmt_xqshare_setup.md`
 

@@ -17,14 +17,21 @@ from backend.app.ops.macro_incremental_common import (
     MacroIncrementalSourceConfig,
     build_axis_observation_row,
     build_macro_incremental_service,
+    compute_since_date,
+    enabled_source_registry,
+    read_observation_date_watermark,
+    read_since_dates_for_instruments,
     run_macro_incremental,
 )
-from backend.app.ops.us_treasury_incremental_watermark import (
-    DATA_DOMAIN,
-    DEFAULT_TENORS,
-    SOURCE_ID,
-)
 from backend.app.sync.orchestrator import DataSyncOrchestrator
+
+SOURCE_ID = "us_treasury"
+DATA_DOMAIN = "us_treasury_yield_curve"
+DEFAULT_TENORS = ("10Y",)
+
+
+def enabled_us_treasury_source_registry():
+    return enabled_source_registry(source_id=SOURCE_ID, data_domain=DATA_DOMAIN)
 
 
 def _reject_unknown_tenor(tenor: str) -> None:

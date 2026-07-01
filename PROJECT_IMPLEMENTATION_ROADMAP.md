@@ -320,16 +320,17 @@ Round4  B04-01 先 · 产品只读
 > **证据：** `scripts/wave3_live_production_acceptance.py` · `待修复清单.md` §8  
 > **须先闭环（非 Wave 4 规划）：** ~~§2.5 `LIVE-PILOT-DB-001` · `LIVE-BAOSTOCK-SYNC-SILENT-001`~~ **已关 2026-07-01**（见 `待修复清单.md` §1）
 
-| 规划 ID / 活卡              | 承接的 live 验收缺口                                                                                                                         | 台账 ID                                                                        |
-| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| **R3-DCP-05**               | baostock 产品 `qmd data sync` 真网（去 `use_mock=True` 硬编码）；Tier A 全源增量；东财/校验源口径 SSOT（与 mock port 张力）                  | `ACC-BAOSTOCK-NO-LIVE` · `ACC-EASTMONEY-TAXONOMY-001`                          |
-| **R3-DCP-06**               | L1–5 端到端 `production_live` 全链（五轴 G12 硬门禁；非 staged_fixture_only）                                                                | `ACC-LAYER-E2E-LIVE-001`                                                       |
-| **R3-DCP-09**               | 有界 backfill；**连网验收 CI**：`--run-network` batch275 子集 + `wave3_live_production_acceptance.py` nightly；`WAVE3-ACC-OPT-01` quick 分层 | `ACC-LIVE-NETWORK-CI-001` · `ACC-LIVE-ACCEPT-NIGHTLY-001` · `WAVE3-ACC-OPT-01` |
-| **R3-DCP-10**               | G5 绑真源（content_hash / schema_hash）— 与 live 全链同一 Wave 4 波次                                                                        | `ACC-LAYER-E2E-LIVE-001`（G5 子集）                                            |
-| **Wave 5 `R3H-05-GATE`**    | Layer 绑定终态审计；`PASS_ROUND4_REAL_DATA_READY`                                                                                            | `ACC-LAYER-E2E-LIVE-001`（审计门）                                             |
-| **Batch 6 `R3F-LIN-01/02`** | L3/L4 lineage · L2 VR binding 全量持久化                                                                                                     | `ADV-R3X-LINEAGE-001` · `R3Y-LINEAGE-VR-001`                                   |
-| **Batch 6 `R3F-SH-06`**     | FRED **live primary** 关账（≠ DCP-02 增量 live）                                                                                             | `B2.5-O-05` §3 硬约束                                                          |
-| **政策（非修复）**          | akshare `macro_supplementary` pilot 第 3 路 `DISABLED_SOURCE`                                                                                | `AKSHARE-MACRO-PILOT-POLICY` §3                                                |
+| 规划 ID / 活卡                 | 承接的 live 验收缺口                                                                                                                         | 台账 ID                                                                        |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| **R3-DCP-05**                  | baostock 产品 `qmd data sync` 真网（去 `use_mock=True` 硬编码）；Tier A 全源增量；东财/校验源口径 SSOT（与 mock port 张力）                  | `ACC-BAOSTOCK-NO-LIVE` · `ACC-EASTMONEY-TAXONOMY-001`                          |
+| **R3-DCP-05**（ponytail 承接） | mootdx dry-run `selected_source_id` 与生产路由不一致；runtime `validation_only` 提升待 registry reconcile                                    | `ACC-MOOTDX-DRYRUN-ROUTE-001` · 关账条件见 `待修复清单.md` §4                  |
+| **R3-DCP-06**                  | L1–5 端到端 `production_live` 全链（五轴 G12 硬门禁；非 staged_fixture_only）                                                                | `ACC-LAYER-E2E-LIVE-001`                                                       |
+| **R3-DCP-09**                  | 有界 backfill；**连网验收 CI**：`--run-network` batch275 子集 + `wave3_live_production_acceptance.py` nightly；`WAVE3-ACC-OPT-01` quick 分层 | `ACC-LIVE-NETWORK-CI-001` · `ACC-LIVE-ACCEPT-NIGHTLY-001` · `WAVE3-ACC-OPT-01` |
+| **R3-DCP-10**                  | G5 绑真源（content_hash / schema_hash）— 与 live 全链同一 Wave 4 波次                                                                        | `ACC-LAYER-E2E-LIVE-001`（G5 子集）                                            |
+| **Wave 5 `R3H-05-GATE`**       | Layer 绑定终态审计；`PASS_ROUND4_REAL_DATA_READY`                                                                                            | `ACC-LAYER-E2E-LIVE-001`（审计门）                                             |
+| **Batch 6 `R3F-LIN-01/02`**    | L3/L4 lineage · L2 VR binding 全量持久化                                                                                                     | `ADV-R3X-LINEAGE-001` · `R3Y-LINEAGE-VR-001`                                   |
+| **Batch 6 `R3F-SH-06`**        | FRED **live primary** 关账（≠ DCP-02 增量 live）                                                                                             | `B2.5-O-05` §3 硬约束                                                          |
+| **政策（非修复）**             | akshare `macro_supplementary` pilot 第 3 路 `DISABLED_SOURCE`                                                                                | `AKSHARE-MACRO-PILOT-POLICY` §3                                                |
 
 ### 3.6 Wave 5 — PASS 审计
 

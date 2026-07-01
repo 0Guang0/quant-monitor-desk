@@ -54,17 +54,17 @@ qmd data sync --source-id <tier_a> [--domain ...] [--no-dry-run]
 
 ## 5. Acceptance criteria
 
-- [ ] migration 015 应用；`test_schema_migration` / `test_migration_coverage` 绿
-- [ ] `clean_write_targets` 覆盖 11 源 canonical incremental domain（见 ADR-028 矩阵）
-- [ ] baostock：`QMD_ALLOW_LIVE_FETCH=1` 时 sync `use_mock=False`；`ACC-BAOSTOCK-NO-LIVE` 关
-- [ ] 11 源各有 watermark 单测 + replay 增量 e2e **写 clean** 测
-- [ ] 11 源 `qmd data sync`（或等价）dry-run 可审计
-- [ ] `research/reference-adoption-dcp05.md` 含参考项目 L1/L2/L3（非仓内代码）
-- [ ] 东财/校验口径 SSOT 文档/registry 更新（不关 REQ2-EM）
-- [ ] Plan v4.1 包齐；`validate-plan-freeze` exit 0
-- [ ] `uv run pytest -q` exit 0
+- [x] migration 015 应用；`test_schema_migration` / `test_migration_coverage` 绿
+- [x] `clean_write_targets` 覆盖 11 源 canonical incremental domain（见 ADR-028 矩阵）
+- [x] baostock：`QMD_ALLOW_LIVE_FETCH=1` 时 sync `use_mock=False`；`ACC-BAOSTOCK-NO-LIVE` 关
+- [x] 11 源各有 watermark 单测 + replay 增量 e2e **写 clean** 测
+- [x] 11 源 `qmd data sync`（或等价）dry-run 可审计
+- [x] `research/reference-adoption-dcp05.md` 含参考项目 L1/L2/L3（非仓内代码）
+- [x] 东财/校验口径 SSOT 文档/registry 更新（不关 REQ2-EM）
+- [x] Plan v4.1 包齐；`validate-plan-freeze` exit 0
+- [x] `uv run pytest -q` exit 0
 
----
+> **AC 勾选证据（契约关账顺序 · 2026-07-02）：** 下列门禁均在本节 `[x]` 之前或同日跑绿：`uv run pytest -q` exit 0 · `python .trellis/scripts/task.py validate-plan-freeze .trellis/tasks/wave4-r3-dcp-05-tier-a` exit 0 · `validate-repair-close` exit 0。详见 `.trellis/tasks/wave4-r3-dcp-05-tier-a/research/contract-compliance-evidence.md`。
 
 ## 6. 非目标
 

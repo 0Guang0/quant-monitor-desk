@@ -69,6 +69,20 @@ def sync_plan(
     series_ids: tuple[str, ...] | None = None,
     instrument_id: str | None = None,
 ) -> dict[str, Any]:
+    if source_id is not None:
+        from backend.app.cli.tier_a_sync_router import sync_tier_a_by_source_id
+
+        return sync_tier_a_by_source_id(
+            source_id=source_id,
+            dry_run=dry_run,
+            data_domain=data_domain,
+            operation=operation,
+            instrument_id=instrument_id,
+            end=end,
+            since=since,
+            series_ids=series_ids,
+            start=start,
+        )
     if data_domain == "cn_equity_daily_bar":
         return sync_baostock_incremental(
             dry_run=dry_run,
@@ -79,19 +93,8 @@ def sync_plan(
         )
     op = operation or _default_operation(data_domain)
     if dry_run:
-        if data_domain == "macro_series" and source_id == "fred":
-            from backend.app.ops.fred_incremental_run import build_fred_incremental_preview_service
-
-            preview_svc = build_fred_incremental_preview_service()
-            plan = preview_svc.preview_route(data_domain=data_domain, operation=op)
-            guard_decision, guard_reason = ResourceGuard().check()
-            preview = {
-                "route_status": plan.route_status,
-                "selected_source_id": plan.selected_source_id,
-            }
-        else:
-            preview = route_preview(data_domain=data_domain, operation=op)
-            guard_decision, guard_reason = ResourceGuard().check()
+        preview = route_preview(data_domain=data_domain, operation=op)
+        guard_decision, guard_reason = ResourceGuard().check()
         if guard_decision.value != "OK":
             raise CliFailure(
                 error_code="RESOURCE_GUARD_PAUSED",
@@ -347,7 +350,14 @@ def sync_baostock_incremental(
     data_root = _path_env("QMD_DATA_ROOT", PROJECT_ROOT / "data")
     db = data_root / "duckdb" / "quant_monitor.duckdb"
 
-    if not dry_run:
+    if dry_run:
+        from backend.app.cli.tier_a_sync_router import (
+            _require_audit_sandbox_data_root,
+            _sandbox_db_readable,
+        )
+
+        _require_audit_sandbox_data_root(data_root)
+    else:
         _require_baostock_sync_operator_or_sandbox(data_root)
         try:
             assert_sandbox_db_allowed(
@@ -366,7 +376,13 @@ def sync_baostock_incremental(
         end_date = datetime.now(UTC).date()
 
     watermark: date | None = None
-    if db.is_file():
+    if dry_run:
+        from backend.app.cli.tier_a_sync_router import _sandbox_db_readable
+
+        db_readable = _sandbox_db_readable(data_root)
+    else:
+        db_readable = db.is_file()
+    if db_readable and db.is_file():
         with ConnectionManager(db_path=db).reader() as con:
             watermark = read_bar_trade_date_watermark(con, instrument_id=symbol)
 
@@ -398,6 +414,7 @@ def sync_baostock_incremental(
     payload: dict[str, Any] = {
         "command": "sync",
         "dry_run": dry_run,
+        "source_id": "baostock",
         "product_live": product_live,
         "data_domain": data_domain,
         "operation": op,
@@ -416,10 +433,6 @@ def sync_baostock_incremental(
         "write_mode": target.write_mode,
         "caught_up": caught_up,
     }
-    if dry_run:
-        payload["message"] = "dry-run only; watermark window computed, no fetch or DB writes"
-        return payload
-
     if guard_decision.value != "OK":
         raise CliFailure(
             error_code="RESOURCE_GUARD_PAUSED",
@@ -432,6 +445,9 @@ def sync_baostock_incremental(
             preview["route_status"],
             detail=f"sync blocked for domain={data_domain!r}",
         )
+    if dry_run:
+        payload["message"] = "dry-run only; watermark window computed, no fetch or DB writes"
+        return payload
 
     if caught_up:
         payload["job_status"] = "COMPLETED"
@@ -483,6 +499,206 @@ def sync_baostock_incremental(
             retryable=run_result.status in {"FAILED_RETRYABLE", "FAILED_FINAL"},
         )
     payload["message"] = "baostock incremental sync completed via DataSourceService gold path"
+    return payload
+
+
+def sync_mootdx_incremental(
+    *,
+    dry_run: bool = True,
+    instrument_id: str | None = None,
+    end: str | None = None,
+    since: str | None = None,
+    empty_table_lookback_days: int = 30,
+) -> dict[str, Any]:
+    """``qmd data sync --source-id mootdx`` — watermark + orchestrator gold path."""
+    from datetime import UTC, date, datetime
+
+    from backend.app.ops.mootdx_incremental_run import (
+        build_mootdx_incremental_service,
+        resolve_mootdx_incremental_use_mock,
+        run_mootdx_bar_incremental,
+    )
+    from backend.app.ops.sandbox_clean_write.clean_write_targets import resolve_clean_write_target
+    from backend.app.ops.sandbox_clean_write.rehearsal_runner import (
+        RehearsalRunnerError,
+        assert_sandbox_db_allowed,
+    )
+    from backend.app.sync.orchestrator import DataSyncOrchestrator
+    from backend.app.sync.watermark import (
+        IncrementalWindow,
+        compute_incremental_window,
+        incremental_window_is_empty,
+        read_bar_trade_date_watermark,
+    )
+
+    data_domain = "cn_equity_daily_bar"
+    op = "fetch_daily_bar"
+    from backend.app.datasources.service import DataSourceService
+    from backend.app.ops.macro_incremental_common import enabled_source_registry
+
+    mootdx_registry = enabled_source_registry(source_id="mootdx", data_domain=data_domain)
+    # ponytail: explicit --source-id mootdx incremental (S08) elevates validation source for clean write;
+    # upgrade path: registry reconcile mootdx primary when product bar path graduates from validation.
+    # dry-run: JSON may show production selected_source_id≠mootdx (ACC-MOOTDX-DRYRUN-ROUTE-001); live path fail-closed.
+    object.__setattr__(mootdx_registry.get("mootdx"), "validation_only", False)
+    preview_svc = DataSourceService(
+        staged_fixture_mode=False, source_registry=mootdx_registry
+    )
+    plan = preview_svc.preview_route(data_domain=data_domain, operation=op)
+    guard_decision, guard_reason = ResourceGuard().check()
+    preview = {
+        "route_status": plan.route_status,
+        "selected_source_id": plan.selected_source_id,
+    }
+    from backend.app.config import PROJECT_ROOT, _path_env
+
+    symbol = instrument_id or "sh.600519"
+    data_root = _path_env("QMD_DATA_ROOT", PROJECT_ROOT / "data")
+    db = data_root / "duckdb" / "quant_monitor.duckdb"
+
+    if dry_run:
+        from backend.app.cli.tier_a_sync_router import (
+            _require_audit_sandbox_data_root,
+            _sandbox_db_readable,
+        )
+
+        _require_audit_sandbox_data_root(data_root)
+    else:
+        _require_baostock_sync_operator_or_sandbox(data_root)
+        try:
+            assert_sandbox_db_allowed(
+                db, no_production_mutation=True, allow_isolated_data_root=True
+            )
+        except RehearsalRunnerError as exc:
+            raise CliFailure(
+                error_code="INVALID_INPUT",
+                message=str(exc),
+                docs_anchor="docs/ops/data_sync_quick_reference.md",
+            ) from exc
+        if preview["selected_source_id"] != "mootdx":
+            raise CliFailure(
+                error_code="INVALID_INPUT",
+                message=(
+                    "mootdx incremental sync requires mootdx as routed primary; "
+                    f"got {preview['selected_source_id']!r}"
+                ),
+                docs_anchor="docs/ops/data_sync_quick_reference.md",
+            )
+
+    end_date = _parse_sync_date(end, field="end") if end else datetime.now(UTC).date()
+    watermark: date | None = None
+    if dry_run:
+        from backend.app.cli.tier_a_sync_router import _sandbox_db_readable
+
+        db_readable = _sandbox_db_readable(data_root)
+    else:
+        db_readable = db.is_file()
+    if db_readable and db.is_file():
+        with ConnectionManager(db_path=db).reader() as con:
+            watermark = read_bar_trade_date_watermark(con, instrument_id=symbol)
+
+    try:
+        window = compute_incremental_window(
+            watermark,
+            end=end_date,
+            empty_table_lookback_days=empty_table_lookback_days,
+        )
+    except ValueError as exc:
+        raise CliFailure(
+            error_code="INVALID_INPUT",
+            message=str(exc),
+            docs_anchor="docs/ops/data_sync_quick_reference.md",
+        ) from exc
+
+    if since is not None:
+        since_date = _parse_sync_date(since, field="since")
+        window = IncrementalWindow(
+            date_start=since_date,
+            date_end=window.date_end,
+            watermark=window.watermark,
+        )
+
+    use_mock = resolve_mootdx_incremental_use_mock()
+    product_live = not use_mock
+    target = resolve_clean_write_target(data_domain)
+    caught_up = incremental_window_is_empty(window)
+    payload: dict[str, Any] = {
+        "command": "sync",
+        "dry_run": dry_run,
+        "source_id": "mootdx",
+        "product_live": product_live,
+        "data_domain": data_domain,
+        "operation": op,
+        "instrument_id": symbol,
+        "watermark": watermark.isoformat() if watermark else None,
+        "window": {
+            "date_start": window.date_start.isoformat(),
+            "date_end": window.date_end.isoformat(),
+            "since": since,
+            "end": end,
+        },
+        "route_status": preview["route_status"],
+        "selected_source_id": preview["selected_source_id"],
+        "resource_guard_decision": guard_decision.value,
+        "clean_table": target.target_table,
+        "write_mode": target.write_mode,
+        "caught_up": caught_up,
+    }
+    if guard_decision.value != "OK":
+        raise CliFailure(
+            error_code="RESOURCE_GUARD_PAUSED",
+            message=guard_reason or "resource guard paused",
+            docs_anchor="docs/ops/ERROR_CODE_GUIDE.md#resource-guard-paused",
+            retryable=True,
+        )
+    if preview["route_status"] != "READY":
+        raise error_for_route_status(
+            preview["route_status"],
+            detail=f"sync blocked for domain={data_domain!r}",
+        )
+    if dry_run:
+        payload["message"] = "dry-run only; watermark window computed, no fetch or DB writes"
+        return payload
+
+    if caught_up:
+        payload["job_status"] = "COMPLETED"
+        payload["message"] = "caught-up: empty incremental window; no fetch or DB writes"
+        return payload
+
+    db.parent.mkdir(parents=True, exist_ok=True)
+    cm = ConnectionManager(db_path=db)
+    with cm.writer() as con:
+        apply_migrations(con)
+
+    raw_root = data_root / "raw"
+    raw_root.mkdir(parents=True, exist_ok=True)
+    orch = DataSyncOrchestrator(cm)
+    service = build_mootdx_incremental_service(
+        data_root=raw_root,
+        symbol=symbol,
+        job_events=orch._jobs,
+        use_mock=use_mock,
+    )
+    run_result = run_mootdx_bar_incremental(
+        orch,
+        service=service,
+        window=window,
+        symbol=symbol,
+        product_live=product_live,
+    )
+    payload["job_status"] = run_result.status
+    payload["job_id"] = run_result.job_id
+    if run_result.status != "COMPLETED":
+        raise CliFailure(
+            error_code="SYNC_FAILED",
+            message=(
+                f"mootdx incremental sync failed: job_id={run_result.job_id} "
+                f"status={run_result.status} message={run_result.message!r}"
+            ),
+            docs_anchor="docs/ops/ERROR_CODE_GUIDE.md#sync-failed",
+            retryable=run_result.status in {"FAILED_RETRYABLE", "FAILED_FINAL"},
+        )
+    payload["message"] = "mootdx incremental sync completed via DataSourceService gold path"
     return payload
 
 

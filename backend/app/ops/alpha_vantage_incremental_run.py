@@ -135,40 +135,9 @@ def _alpha_vantage_staging_adapter_patch(fetch_port: FetchPort):
 
 
 def enabled_alpha_vantage_source_registry():
-    from backend.app.datasources.source_registry import DomainRoleBinding, SourceRegistry
+    from backend.app.ops.macro_incremental_common import enabled_source_registry
 
-    registry = SourceRegistry()
-    registry.load()
-    rec = registry.get("alpha_vantage")
-    object.__setattr__(rec, "is_enabled", True)
-    orig = registry.get_domain_roles
-
-    def _domain_enabled(domain: str):
-        binding = orig(domain)
-        if domain != "us_equity_daily_bar":
-            return binding
-        return DomainRoleBinding(
-            primary_source_id="alpha_vantage",
-            validation_source_id=binding.validation_source_id,
-            fallback_policy=binding.fallback_policy,
-            domain_enabled_by_default=True,
-            fallback_source_ids=binding.fallback_source_ids,
-        )
-
-    registry.get_domain_roles = _domain_enabled  # type: ignore[method-assign]
-    return registry
-
-
-def _load_alpha_vantage_route_bundle(source_registry=None):
-    from backend.app.datasources.capability_registry import SourceCapabilityRegistry
-    from backend.app.datasources.route_planner import SourceRoutePlanner
-
-    registry = source_registry or enabled_alpha_vantage_source_registry()
-    caps = SourceCapabilityRegistry()
-    caps.load()
-    planner = SourceRoutePlanner(source_registry=registry, capability_registry=caps)
-    planner._platform_allows = lambda _sid: (True, None)
-    return registry, caps, planner
+    return enabled_source_registry(source_id="alpha_vantage", data_domain="us_equity_daily_bar")
 
 
 def build_alpha_vantage_incremental_service(
@@ -178,7 +147,13 @@ def build_alpha_vantage_incremental_service(
     job_events=None,
     source_registry=None,
 ) -> DataSourceService:
-    registry, caps, planner = _load_alpha_vantage_route_bundle(source_registry)
+    from backend.app.ops.macro_incremental_common import load_incremental_route_bundle
+
+    registry, caps, planner = load_incremental_route_bundle(
+        source_id="alpha_vantage",
+        data_domain="us_equity_daily_bar",
+        source_registry=source_registry,
+    )
     return DataSourceService(
         data_root=data_root,
         fetch_port=fetch_port,

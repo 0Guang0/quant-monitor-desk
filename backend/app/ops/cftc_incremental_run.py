@@ -10,21 +10,34 @@ from backend.app.datasources.fetch_ports.cftc_cot_port import (
     MARKET_WHITELIST,
     create_cftc_cot_fetch_port,
 )
-from backend.app.ops.cftc_incremental_watermark import (
-    DATA_DOMAIN,
-    DEFAULT_MARKETS,
-    SOURCE_ID,
-    WEEKLY_ADVANCE_DAYS,
-)
 from backend.app.ops.macro_incremental_common import (
     MacroIncrementalFetchProxy,
     MacroIncrementalRunReport,
     MacroIncrementalSourceConfig,
     build_axis_observation_row,
     build_macro_incremental_service,
+    compute_since_date,
+    enabled_source_registry,
+    read_observation_date_watermark,
+    read_since_dates_for_instruments,
     run_macro_incremental,
 )
 from backend.app.sync.orchestrator import DataSyncOrchestrator
+
+SOURCE_ID = "cftc_cot"
+DATA_DOMAIN = "cot_positioning"
+DEFAULT_MARKETS = ("088691",)
+WEEKLY_ADVANCE_DAYS = 7
+
+
+def enabled_cftc_source_registry():
+    return enabled_source_registry(source_id=SOURCE_ID, data_domain=DATA_DOMAIN)
+
+
+def read_since_dates_for_markets(con, market_codes, **kwargs):
+    return read_since_dates_for_instruments(
+        con, market_codes, advance_days=WEEKLY_ADVANCE_DAYS, **kwargs
+    )
 
 
 def _reject_unknown_market(market: str) -> None:

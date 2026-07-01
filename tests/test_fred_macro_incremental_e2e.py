@@ -14,6 +14,7 @@ from backend.app.ops.fred_incremental_run import (
     macro_staging_rows_from_bundle,
     run_fred_macro_incremental,
 )
+from backend.app.ops.macro_incremental_common import STAGING_TABLE
 from tests.fred_macro_incremental_support import (
     fred_incremental_e2e_ctx,
     insert_axis_observation,
@@ -27,7 +28,7 @@ def test_fredIncremental_e2e_replay_writesAxisObservation(
     """覆盖范围：mock port + run_incremental 写 axis_observation
     测试对象：run_fred_macro_incremental + DataSourceService 金路径
     目的/目标：replay 经 orchestrator 完成 validate + upsert
-    验证点：status==COMPLETED；axis_observation 行数>=1；无 baostock 旁路
+    验证点：status==COMPLETED；axis_observation 行数>=1；raw_value==4.25；staging 表在 promote 后仍保留行（orchestrator 不 TRUNCATE）
     失败含义：fred 增量无法走 Sync 金路径写 macro clean
     """
     ctx = fred_incremental_e2e_ctx
@@ -41,7 +42,14 @@ def test_fredIncremental_e2e_replay_writesAxisObservation(
     assert report.series_results[0]["status"] == "COMPLETED"
     with ctx["cm"].writer() as con:
         count = con.execute("SELECT COUNT(*) FROM axis_observation").fetchone()[0]
-    assert count >= 1
+        assert count >= 1
+        row = con.execute(
+            "SELECT raw_value FROM axis_observation WHERE indicator_id = 'DGS10' LIMIT 1"
+        ).fetchone()
+        staging_count = con.execute(f"SELECT COUNT(*) FROM {STAGING_TABLE}").fetchone()[0]
+    assert row is not None and float(row[0]) == 4.25
+    # A4-P2-04: macro_incremental_common DELETE 仅在下次 fetch 入口；promote 后 staging 残留可观测
+    assert staging_count >= 1
 
 
 def test_fredIncremental_idempotent_secondRun_rowCountStable(

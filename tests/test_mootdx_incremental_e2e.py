@@ -169,3 +169,39 @@ def test_mootdxIncremental_repeatRun_noRowGrowth(tmp_path: Path, monkeypatch) ->
     assert r1.status == "COMPLETED"
     assert r2.status == "COMPLETED"
     assert count == 2
+
+
+def test_mootdxIncremental_emptyResponse_whenWatermarkCurrent(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """覆盖范围：水位已追平时增量 sync 不写新行
+    测试对象：run_mootdx_bar_incremental + caught-up window
+    目的/目标：watermark==end 时 orchestrator SKIPPED，security_bar_1d 行数不变
+    验证点：status==SKIPPED；行数保持 seed 的 1 行
+    失败含义：追平后仍 fetch/write，bar 增量语义错误
+    """
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    cm = bootstrap_db(tmp_path)
+    with cm.writer() as con:
+        seed_watermark_row(con, FIXTURE_DATE.isoformat())
+        before = con.execute(
+            "SELECT COUNT(*) FROM security_bar_1d WHERE instrument_id = ?", [SYMBOL]
+        ).fetchone()[0]
+    window = compute_incremental_window(FIXTURE_DATE, end=FIXTURE_DATE)
+    raw_root = tmp_path / "raw"
+    raw_root.mkdir()
+    service, orch = build_service(cm, raw_root)
+    result = run_mootdx_bar_incremental(
+        orch,
+        service=service,
+        window=window,
+        symbol=SYMBOL,
+        product_live=False,
+        job_id="job-mootdx-empty-1",
+    )
+    assert result.status == "SKIPPED"
+    with cm.reader() as con:
+        after = con.execute(
+            "SELECT COUNT(*) FROM security_bar_1d WHERE instrument_id = ?", [SYMBOL]
+        ).fetchone()[0]
+    assert after == before

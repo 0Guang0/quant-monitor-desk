@@ -10,16 +10,32 @@ from backend.app.datasources.fetch_ports.bis_port import (
     COUNTRY_WHITELIST,
     create_bis_fetch_port,
 )
-from backend.app.ops.bis_incremental_watermark import DATA_DOMAIN, DEFAULT_COUNTRIES, SOURCE_ID
 from backend.app.ops.macro_incremental_common import (
     MacroIncrementalFetchProxy,
     MacroIncrementalRunReport,
     MacroIncrementalSourceConfig,
     build_axis_observation_row,
     build_macro_incremental_service,
+    compute_since_date,
+    enabled_source_registry,
+    read_observation_date_watermark,
+    read_since_dates_for_instruments,
     run_macro_incremental,
 )
 from backend.app.sync.orchestrator import DataSyncOrchestrator
+
+SOURCE_ID = "bis"
+DATA_DOMAIN = "central_bank_policy"
+DEFAULT_COUNTRIES = ("US",)
+
+
+def enabled_bis_source_registry():
+    return enabled_source_registry(source_id=SOURCE_ID, data_domain=DATA_DOMAIN)
+
+
+def watermark_start_year(since_iso: str) -> int:
+    """L2: digital-oracle bis.py startPeriod from macro watermark year."""
+    return int(since_iso[:4])
 
 
 def _reject_unknown_country(country: str) -> None:

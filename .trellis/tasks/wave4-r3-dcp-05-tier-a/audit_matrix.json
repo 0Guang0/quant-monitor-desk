@@ -1,0 +1,49 @@
+{
+  "task": "wave4-r3-dcp-05-tier-a",
+  "audited_at": "2026-07-02",
+  "dimensions": {
+    "A1": {
+      "result": "fail",
+      "evidence": "research/audit-a1-report.md",
+      "agent": "audit-a1-spec"
+    },
+    "A2": {
+      "result": "fail",
+      "evidence": "research/audit-a2-report.md",
+      "agent": "audit-a2-ponytail"
+    },
+    "A3": {
+      "result": "fail",
+      "evidence": "research/audit-a3-report.md",
+      "agent": "security-auditor"
+    },
+    "A4": {
+      "result": "fail",
+      "evidence": "research/audit-a4-report.md",
+      "agent": "code-reviewer"
+    },
+    "A5": {
+      "result": "fail",
+      "evidence": "research/audit-a5-report.md",
+      "agent": "audit-a5-completion"
+    },
+    "A6": {
+      "result": "fail",
+      "evidence": "research/audit-a6-report.md",
+      "agent": "audit-a6-registry"
+    },
+    "A7": {
+      "result": "fail",
+      "evidence": "research/audit-a7-report.md",
+      "agent": "audit-a7-ops"
+    },
+    "A8": {
+      "result": "fail",
+      "evidence": "research/audit-a8-report.md",
+      "agent": "qa-expert"
+    }
+  },
+  "finding_count": 29,
+  "repair_closed_at": "2026-07-02",
+  "final": "PASS"
+}

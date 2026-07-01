@@ -2,7 +2,14 @@
 
 > Purpose: one file for resolved/closed issues, gates, risks, and repairs.  
 > Pair: unresolved items live in `docs/UNRESOLVED_ISSUES_REGISTRY.md`.  
-> Last reconciled: 2026-07-01 台账复验 @ `93b2c82`（§2.5 最终关账 + live 验收脚本入库）；prior @ `af56e0d`。
+> Last reconciled: 2026-07-02 Wave 4 DCP-05 baostock live gate 关账；prior 2026-07-01 @ `93b2c82`（§2.5 最终关账 + live 验收脚本入库）。
+
+## Wave 4 DCP-05 resolved (2026-07-02)
+
+| ID                     | Closed     | Item                                                                                            | Evidence                                                                                                                                                                                                                              |
+| ---------------------- | ---------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ACC-BAOSTOCK-NO-LIVE   | 2026-07-02 | 产品 `qmd data sync` baostock `QMD_ALLOW_LIVE_FETCH=1` → `product_live=true` / `use_mock=False` | Wave 4 `R3-DCP-05` S01 · `resolve_baostock_incremental_use_mock` · `tests/test_qmd_data_sync_baostock.py::test_qmdData_syncBaostock_liveOptIn_setsProductLive` · `test_baostockIncremental_resolveUseMock_liveOptIn` · ADR-027 隔离库 |
+| LIVE-BAOSTOCK-SYNC-001 | 2026-07-02 | §8 真网验收：产品 sync 硬编码 `use_mock=True`                                                   | 同 **ACC-BAOSTOCK-NO-LIVE** · `待修复清单.md` §1 迁入 · `R3-DCP-05` S13 registry/docs 关账                                                                                                                                            |
 
 ## Wave 4 prep blockers resolved (2026-07-01)
 

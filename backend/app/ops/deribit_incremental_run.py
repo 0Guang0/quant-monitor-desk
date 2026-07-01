@@ -15,11 +15,14 @@ from backend.app.datasources.adapters.skeleton_base import SkeletonAdapterBase, 
 from backend.app.datasources.fetch_result import FetchRequest, FetchResult
 from backend.app.datasources.service import DataSourceService
 from backend.app.ops.deribit_incremental_watermark import STAGING_TABLE, read_since_date_for_instrument
+from backend.app.ops.macro_incremental_common import (
+    incremental_validation_patch_factory,
+    load_incremental_route_bundle,
+)
 from backend.app.ops.sandbox_clean_write.clean_write_targets import resolve_clean_write_target
 from backend.app.storage.raw_store import RawStore
 from backend.app.sync.jobs import SyncJobSpec
 from backend.app.sync.orchestrator import DataSyncOrchestrator
-from backend.app.validators.data_quality import DataQualityRequest
 
 CRYPTO_STAGING_COLUMNS = (
     "instrument_name",
@@ -162,53 +165,12 @@ def _make_deribit_staging_adapter_class():
 
 @contextmanager
 def _deribit_incremental_validation_patch():
-    from backend.app.sync.runners import _DEFAULT_QUALITY_RULE_SET, _PipelineMixin
-
-    original = _PipelineMixin._validate_staging
-
-    def _crypto_validate_staging(
-        self,
-        con,
-        *,
-        spec: SyncJobSpec,
-        job_id: str,
-        staging_table: str,
-        conflict_staging_table: str | None,
-        primary_keys: tuple[str, ...],
-        required_fields: tuple[str, ...],
+    with incremental_validation_patch_factory(
+        CRYPTO_STAGING_COLUMNS,
+        ("as_of_timestamp",),
+        label="deribit",
     ):
-        if conflict_staging_table is not None:
-            raise ValueError("deribit incremental does not use conflict staging")
-        self._jobs.emit_custom_event(
-            job_id,
-            event_type="CONFLICT_CHECK_SKIPPED",
-            message="deribit incremental: conflict validation skipped",
-            payload_json='{"decision":"conflict_check_skipped"}',
-            con=con,
-        )
-        return self._validation.validate_staging(
-            con,
-            quality_request=DataQualityRequest(
-                run_id=spec.run_id,
-                job_id=job_id,
-                data_domain=spec.data_domain,
-                source_id=spec.source_id,
-                staging_table=staging_table,
-                primary_keys=primary_keys,
-                required_fields=required_fields,
-                rule_set_id=_DEFAULT_QUALITY_RULE_SET,
-            ),
-            expected_columns=CRYPTO_STAGING_COLUMNS,
-            timestamp_fields=("as_of_timestamp",),
-            conflict_request=None,
-            conflict_staging_table=None,
-        )
-
-    _PipelineMixin._validate_staging = _crypto_validate_staging
-    try:
         yield
-    finally:
-        _PipelineMixin._validate_staging = original
 
 
 @contextmanager
@@ -253,19 +215,6 @@ class DeribitIncrementalRunReport:
     overall_status: str
 
 
-def _load_deribit_route_bundle(source_registry=None):
-    from backend.app.datasources.capability_registry import SourceCapabilityRegistry
-    from backend.app.datasources.route_planner import SourceRoutePlanner
-    from backend.app.ops.deribit_incremental_watermark import enabled_deribit_source_registry
-
-    registry = source_registry or enabled_deribit_source_registry()
-    caps = SourceCapabilityRegistry()
-    caps.load()
-    planner = SourceRoutePlanner(source_registry=registry, capability_registry=caps)
-    planner._platform_allows = lambda _sid: (True, None)
-    return registry, caps, planner
-
-
 def build_deribit_incremental_service(
     *,
     data_root: Path,
@@ -274,7 +223,11 @@ def build_deribit_incremental_service(
     job_events=None,
     source_registry=None,
 ) -> DeribitIncrementalFetchProxy:
-    registry, caps, planner = _load_deribit_route_bundle(source_registry)
+    registry, caps, planner = load_incremental_route_bundle(
+        source_id="deribit",
+        data_domain="crypto_options_surface",
+        source_registry=source_registry,
+    )
     inner = DataSourceService(
         data_root=data_root,
         fetch_port=fetch_port,

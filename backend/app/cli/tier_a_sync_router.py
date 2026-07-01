@@ -1,0 +1,447 @@
+"""Tier A incremental sync CLI router (R3-DCP-05 S12)."""
+
+from __future__ import annotations
+
+from datetime import UTC, date, datetime
+from typing import Any
+
+from backend.app.cli.errors import CliFailure, error_for_route_status
+from backend.app.core.resource_guard import ResourceGuard
+from backend.app.db.connection import ConnectionManager
+from backend.app.ops.sandbox_clean_write.clean_write_targets import resolve_clean_write_target
+from backend.app.sync.incremental_source_registry import (
+    UnknownTierAIncrementalSourceError,
+    resolve_tier_a_incremental,
+)
+from backend.app.sync.watermark import compute_incremental_window, read_bar_trade_date_watermark
+
+
+def _data_root_and_db():
+    from backend.app.config import PROJECT_ROOT, _path_env
+
+    data_root = _path_env("QMD_DATA_ROOT", PROJECT_ROOT / "data")
+    db = data_root / "duckdb" / "quant_monitor.duckdb"
+    return data_root, db
+
+
+def _require_audit_sandbox_data_root(data_root) -> None:
+    from pathlib import Path
+
+    resolved = Path(data_root)
+    if ".audit-sandbox" not in resolved.as_posix():
+        raise CliFailure(
+            error_code="INVALID_INPUT",
+            message="Tier A sync requires QMD_DATA_ROOT under .audit-sandbox",
+            docs_anchor="docs/ops/data_sync_quick_reference.md",
+        )
+    if "user-live" in resolved.parts:
+        raise CliFailure(
+            error_code="INVALID_INPUT",
+            message="user-live audit path refused for Tier A sync dry-run",
+            docs_anchor="docs/ops/data_sync_quick_reference.md",
+        )
+
+
+def _sandbox_db_readable(data_root) -> bool:
+    from pathlib import Path
+
+    return ".audit-sandbox" in Path(data_root).as_posix()
+
+
+def _parse_end(end: str | None) -> date:
+    from backend.app.cli.data_commands import _parse_sync_date
+
+    if end is not None:
+        return _parse_sync_date(end, field="end")
+    return datetime.now(UTC).date()
+
+
+def _tier_a_route_preview(
+    *,
+    source_id: str,
+    data_domain: str,
+    operation: str,
+):
+    from backend.app.datasources.service import DataSourceService
+    from backend.app.datasources.source_registry import SourceRegistry
+
+    registry = SourceRegistry()
+    registry.load()
+    service = DataSourceService(staged_fixture_mode=False, source_registry=registry)
+    plan = service.preview_route(data_domain=data_domain, operation=operation)
+    guard_decision, guard_reason = ResourceGuard().check()
+    return plan, guard_decision, guard_reason
+
+
+def _dry_run_shell(
+    *,
+    source_id: str,
+    data_domain: str,
+    operation: str,
+    clean_table: str,
+    write_mode: str,
+    extra: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    plan, guard_decision, guard_reason = _tier_a_route_preview(
+        source_id=source_id,
+        data_domain=data_domain,
+        operation=operation,
+    )
+    if guard_decision.value != "OK":
+        raise CliFailure(
+            error_code="RESOURCE_GUARD_PAUSED",
+            message=guard_reason or "resource guard paused",
+            docs_anchor="docs/ops/ERROR_CODE_GUIDE.md#resource-guard-paused",
+            retryable=True,
+        )
+    route_status = plan.route_status
+    selected_source_id = plan.selected_source_id or source_id
+    if route_status != "READY":
+        raise error_for_route_status(
+            route_status,
+            detail=f"sync dry-run blocked for source_id={source_id!r}",
+        )
+    message = "dry-run only; watermark/window computed, no fetch or DB writes"
+    payload: dict[str, Any] = {
+        "command": "sync",
+        "dry_run": True,
+        "source_id": source_id,
+        "data_domain": data_domain,
+        "operation": operation,
+        "route_status": route_status,
+        "selected_source_id": selected_source_id,
+        "resource_guard_decision": guard_decision.value,
+        "clean_table": clean_table,
+        "write_mode": write_mode,
+        "message": message,
+    }
+    if extra:
+        payload.update(extra)
+    return payload
+
+
+def _macro_dry_run(
+    *,
+    source_id: str,
+    data_domain: str,
+    operation: str,
+    instrument_ids: tuple[str, ...],
+    advance_days: int = 1,
+    end: str | None = None,
+) -> dict[str, Any]:
+    from backend.app.ops.macro_incremental_common import (
+        compute_since_date,
+        read_since_dates_for_instruments,
+    )
+
+    data_root, db = _data_root_and_db()
+    if _sandbox_db_readable(data_root) and db.is_file():
+        with ConnectionManager(db_path=db).reader() as con:
+            since_map = read_since_dates_for_instruments(
+                con, instrument_ids, advance_days=advance_days
+            )
+    else:
+        since_map = {
+            iid: compute_since_date(None, advance_days=advance_days).isoformat()
+            for iid in instrument_ids
+        }
+    target = resolve_clean_write_target(data_domain)
+    return _dry_run_shell(
+        source_id=source_id,
+        data_domain=data_domain,
+        operation=operation,
+        clean_table=target.target_table,
+        write_mode=target.write_mode,
+        extra={
+            "since_by_instrument": since_map,
+            "window": {"end": end, "since_by_instrument": since_map},
+        },
+    )
+
+
+def _bar_dry_run(
+    *,
+    source_id: str,
+    data_domain: str,
+    instrument_id: str,
+    end: str | None,
+    empty_table_lookback_days: int = 30,
+) -> dict[str, Any]:
+    from backend.app.sync.watermark import incremental_window_is_empty
+
+    end_date = _parse_end(end)
+    data_root, db = _data_root_and_db()
+    watermark: date | None = None
+    if _sandbox_db_readable(data_root) and db.is_file():
+        with ConnectionManager(db_path=db).reader() as con:
+            watermark = read_bar_trade_date_watermark(con, instrument_id=instrument_id)
+    window = compute_incremental_window(
+        watermark, end=end_date, empty_table_lookback_days=empty_table_lookback_days
+    )
+    target = resolve_clean_write_target(data_domain)
+    return _dry_run_shell(
+        source_id=source_id,
+        data_domain=data_domain,
+        operation="fetch_daily_bar",
+        clean_table=target.target_table,
+        write_mode=target.write_mode,
+        extra={
+            "instrument_id": instrument_id,
+            "watermark": watermark.isoformat() if watermark else None,
+            "window": {
+                "date_start": window.date_start.isoformat(),
+                "date_end": window.date_end.isoformat(),
+                "end": end,
+            },
+            "caught_up": incremental_window_is_empty(window),
+        },
+    )
+
+
+def sync_tier_a_by_source_id(
+    *,
+    source_id: str,
+    dry_run: bool = True,
+    data_domain: str | None = None,
+    operation: str | None = None,
+    instrument_id: str | None = None,
+    end: str | None = None,
+    since: str | None = None,
+    series_ids: tuple[str, ...] | None = None,
+    start: str | None = None,
+) -> dict[str, Any]:
+    """Route ``qmd data sync --source-id`` to Tier A incremental handlers (ADR-028)."""
+    try:
+        entry = resolve_tier_a_incremental(source_id)
+    except UnknownTierAIncrementalSourceError as exc:
+        raise CliFailure(
+            error_code="INVALID_INPUT",
+            message=str(exc),
+            docs_anchor="docs/ops/data_sync_quick_reference.md",
+        ) from exc
+
+    if data_domain is not None and data_domain != entry.canonical_domain:
+        raise CliFailure(
+            error_code="INVALID_INPUT",
+            message=(
+                f"domain mismatch for source_id={source_id!r}: "
+                f"got {data_domain!r}, expected {entry.canonical_domain!r}"
+            ),
+            docs_anchor="docs/ops/data_sync_quick_reference.md",
+        )
+
+    canonical = entry.canonical_domain
+    from backend.app.cli import data_commands
+
+    if dry_run:
+        data_root, _ = _data_root_and_db()
+        _require_audit_sandbox_data_root(data_root)
+
+    if not dry_run:
+        if source_id == "baostock":
+            return data_commands.sync_baostock_incremental(
+                dry_run=False,
+                instrument_id=instrument_id,
+                end=end,
+                since=since,
+            )
+        if source_id == "mootdx":
+            return data_commands.sync_mootdx_incremental(
+                dry_run=False,
+                instrument_id=instrument_id,
+                end=end,
+                since=since,
+            )
+        if source_id == "fred":
+            return data_commands._sync_fred_macro_incremental(
+                operation=operation or "fetch_macro_series",
+                since=since,
+                series_ids=series_ids,
+            )
+        raise CliFailure(
+            error_code="USER_AUTH_REQUIRED",
+            message=(
+                f"qmd data sync --source-id {source_id!r} without --dry-run "
+                "requires sandbox path; only baostock, mootdx, fred wired in S12"
+            ),
+            docs_anchor="docs/ops/data_sync_quick_reference.md",
+            manual_confirmation_required=True,
+        )
+
+    if source_id == "baostock":
+        return data_commands.sync_baostock_incremental(
+            dry_run=True,
+            instrument_id=instrument_id,
+            end=end,
+            since=since,
+        )
+    if source_id == "mootdx":
+        return data_commands.sync_mootdx_incremental(
+            dry_run=True,
+            instrument_id=instrument_id,
+            end=end,
+            since=since,
+        )
+    if source_id == "fred":
+        from backend.app.datasources.fetch_ports.fred_port import P0_SERIES_WHITELIST
+        from backend.app.ops.fred_incremental_run import build_fred_incremental_preview_service
+        from backend.app.ops.fred_incremental_watermark import read_since_dates_for_series
+
+        op = operation or "fetch_macro_series"
+        selected = series_ids or tuple(sorted(P0_SERIES_WHITELIST))[:1]
+        preview_svc = build_fred_incremental_preview_service()
+        plan = preview_svc.preview_route(data_domain=canonical, operation=op)
+        guard_decision, guard_reason = ResourceGuard().check()
+        if guard_decision.value != "OK":
+            raise CliFailure(
+                error_code="RESOURCE_GUARD_PAUSED",
+                message=guard_reason or "resource guard paused",
+                docs_anchor="docs/ops/ERROR_CODE_GUIDE.md#resource-guard-paused",
+                retryable=True,
+            )
+        if plan.route_status != "READY":
+            raise error_for_route_status(
+                plan.route_status,
+                detail=f"sync dry-run blocked for source_id={source_id!r}",
+            )
+        since_map: dict[str, str] = {}
+        data_root, db = _data_root_and_db()
+        if _sandbox_db_readable(data_root) and db.is_file():
+            with ConnectionManager(db_path=db).reader() as con:
+                since_map = read_since_dates_for_series(con, selected)
+        if since:
+            since_map = {sid: since for sid in selected}
+        target = resolve_clean_write_target(canonical)
+        return {
+            "command": "sync",
+            "dry_run": True,
+            "source_id": source_id,
+            "data_domain": canonical,
+            "operation": op,
+            "series_ids": list(selected),
+            "since_by_series": since_map,
+            "route_status": plan.route_status,
+            "selected_source_id": plan.selected_source_id,
+            "resource_guard_decision": guard_decision.value,
+            "clean_table": target.target_table,
+            "write_mode": target.write_mode,
+            "message": "dry-run only; no fetch or DB writes performed",
+        }
+    if source_id == "us_treasury":
+        from backend.app.ops.us_treasury_incremental_run import DEFAULT_TENORS
+
+        return _macro_dry_run(
+            source_id=source_id,
+            data_domain=canonical,
+            operation="fetch_yield_curve",
+            instrument_ids=DEFAULT_TENORS,
+            end=end,
+        )
+    if source_id == "bis":
+        from backend.app.ops.bis_incremental_run import DEFAULT_COUNTRIES
+
+        return _macro_dry_run(
+            source_id=source_id,
+            data_domain=canonical,
+            operation="fetch_policy_rate",
+            instrument_ids=DEFAULT_COUNTRIES,
+            end=end,
+        )
+    if source_id == "world_bank":
+        from backend.app.ops.world_bank_incremental_run import (
+            DEFAULT_COUNTRIES,
+            DEFAULT_INDICATOR,
+        )
+
+        return _macro_dry_run(
+            source_id=source_id,
+            data_domain=canonical,
+            operation="fetch_development_indicator",
+            instrument_ids=(f"{DEFAULT_COUNTRIES[0]}:{DEFAULT_INDICATOR}",),
+            end=end,
+        )
+    if source_id == "cftc_cot":
+        from backend.app.ops.cftc_incremental_run import DEFAULT_MARKETS
+
+        return _macro_dry_run(
+            source_id=source_id,
+            data_domain=canonical,
+            operation="fetch_cot_report",
+            instrument_ids=DEFAULT_MARKETS,
+            advance_days=7,
+            end=end,
+        )
+    if source_id == "alpha_vantage":
+        symbol = instrument_id or "AAPL"
+        return _bar_dry_run(
+            source_id=source_id,
+            data_domain=canonical,
+            instrument_id=symbol,
+            end=end,
+        )
+    if source_id == "cninfo":
+        from backend.app.ops.cninfo_incremental_watermark import read_since_date_for_instrument
+
+        symbol = instrument_id or "sh.600519"
+        data_root, db = _data_root_and_db()
+        since_date = None
+        if _sandbox_db_readable(data_root) and db.is_file():
+            with ConnectionManager(db_path=db).reader() as con:
+                since_date = read_since_date_for_instrument(con, symbol)
+        target = resolve_clean_write_target(canonical)
+        return _dry_run_shell(
+            source_id=source_id,
+            data_domain=canonical,
+            operation="fetch_announcement_index",
+            clean_table=target.target_table,
+            write_mode=target.write_mode,
+            extra={
+                "instrument_id": symbol,
+                "window": {"since": since_date, "end": end},
+            },
+        )
+    if source_id == "sec_edgar":
+        from backend.app.ops.sec_edgar_incremental_watermark import read_since_date_for_cik
+
+        cik = instrument_id or "0000320193"
+        data_root, db = _data_root_and_db()
+        since_date = None
+        if _sandbox_db_readable(data_root) and db.is_file():
+            with ConnectionManager(db_path=db).reader() as con:
+                since_date = read_since_date_for_cik(con, cik)
+        target = resolve_clean_write_target(canonical)
+        return _dry_run_shell(
+            source_id=source_id,
+            data_domain=canonical,
+            operation="fetch_company_filings",
+            clean_table=target.target_table,
+            write_mode=target.write_mode,
+            extra={"cik": cik, "window": {"since": since_date, "end": end}},
+        )
+    if source_id == "deribit":
+        from backend.app.ops.deribit_incremental_watermark import read_since_date_for_instrument
+
+        instrument = instrument_id or "BTC-28JUN24-65000-C"
+        data_root, db = _data_root_and_db()
+        since_date = None
+        if _sandbox_db_readable(data_root) and db.is_file():
+            with ConnectionManager(db_path=db).reader() as con:
+                since_date = read_since_date_for_instrument(con, instrument)
+        target = resolve_clean_write_target(canonical)
+        return _dry_run_shell(
+            source_id=source_id,
+            data_domain=canonical,
+            operation="fetch_options_surface",
+            clean_table=target.target_table,
+            write_mode=target.write_mode,
+            extra={
+                "instrument_name": instrument,
+                "window": {"since": since_date, "end": end},
+            },
+        )
+
+    raise CliFailure(
+        error_code="INVALID_INPUT",
+        message=f"no Tier A sync handler for source_id={source_id!r}",
+        docs_anchor="docs/ops/data_sync_quick_reference.md",
+    )

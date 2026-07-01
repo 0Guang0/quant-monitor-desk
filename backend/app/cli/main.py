@@ -23,8 +23,8 @@ def _build_data_parser(sub: argparse._SubParsersAction) -> None:
     sync = data_sub.add_parser(
         "sync",
         help=(
-            "Sync job (default dry-run). cn_equity_daily_bar: baostock watermark; "
-            "macro_series with --source-id fred: macro incremental."
+            "Sync job (default dry-run). Tier A: --source-id <id> (11 sources, ADR-028). "
+            "Legacy: --domain cn_equity_daily_bar (baostock) or macro_series --source-id fred."
         ),
     )
     sync.add_argument(

@@ -12,16 +12,14 @@ from backend.app.ops.macro_incremental_common import (
     read_observation_date_watermark,
 )
 from backend.app.ops.world_bank_incremental_run import (
-    build_world_bank_incremental_service,
-    create_world_bank_incremental_port,
-    run_world_bank_incremental,
-)
-from backend.app.ops.world_bank_incremental_watermark import (
     DATA_DOMAIN,
     DEFAULT_COUNTRIES,
     SOURCE_ID,
     clean_indicator_id,
     enabled_world_bank_source_registry,
+    build_world_bank_incremental_service,
+    create_world_bank_incremental_port,
+    run_world_bank_incremental,
 )
 from tests.macro_incremental_support import build_macro_e2e_ctx, insert_axis_observation
 
@@ -78,7 +76,12 @@ def test_worldBankIncremental_e2e_replay_writesAxisObservation(
             "SELECT COUNT(*) FROM axis_observation WHERE indicator_id = ?",
             [indicator],
         ).fetchone()[0]
-    assert count >= 1
+        assert count >= 1
+        row = con.execute(
+            "SELECT raw_value FROM axis_observation WHERE indicator_id = ? LIMIT 1",
+            [indicator],
+        ).fetchone()
+    assert row is not None and float(row[0]) == 1e13
 
 
 def test_worldBankIncremental_idempotent_secondRun_rowCountStable(
@@ -103,3 +106,35 @@ def test_worldBankIncremental_idempotent_secondRun_rowCountStable(
         second = con.execute("SELECT COUNT(*) FROM axis_observation").fetchone()[0]
     assert first == second
     assert first >= 1
+
+
+def test_worldBankIncremental_emptyResponse_whenWatermarkCurrent(
+    world_bank_incremental_e2e_ctx: dict[str, Any],
+) -> None:
+    """覆盖范围：水位已最新时 replay 返回 EMPTY_RESPONSE
+    测试对象：world_bank staging adapter + run_world_bank_incremental
+    目的/目标：since 之后无新观测时不写假行
+    验证点：status==EMPTY_RESPONSE；axis_observation 行数不变
+    失败含义：水位追上仍拉取或写入，增量语义错误
+    """
+    ctx = world_bank_incremental_e2e_ctx
+    today = datetime.now(UTC).date()
+    indicator = clean_indicator_id("US")
+    with ctx["cm"].writer() as con:
+        insert_axis_observation(
+            con,
+            observation_id="obs-wb-seed",
+            indicator_id=indicator,
+            obs_date=today,
+        )
+        before = con.execute("SELECT COUNT(*) FROM axis_observation").fetchone()[0]
+    report = run_world_bank_incremental(
+        ctx["orch"],
+        service=ctx["service"],
+        countries=DEFAULT_COUNTRIES,
+        source_registry=ctx["registry"],
+    )
+    assert report.instrument_results[0]["status"] == "EMPTY_RESPONSE"
+    with ctx["cm"].writer() as con:
+        after = con.execute("SELECT COUNT(*) FROM axis_observation").fetchone()[0]
+    assert after == before

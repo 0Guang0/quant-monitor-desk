@@ -168,6 +168,24 @@ def test_migrationCoverage_cleanDomainTables_existAfter013() -> None:
     assert CLEAN_DOMAIN_MIGRATED_TABLES.issubset(tables)
 
 
+def test_migrationCoverage_dcp05TierAClean_existsAfter015() -> None:
+    """覆盖范围：015 DCP-05 Tier A clean 扩展表
+    测试对象：apply_migrations + schema_version
+    目的/目标：015_dcp05_tier_a_clean 落地 us_disclosure / crypto_derivative clean
+    验证点：version_id 含 015；us_disclosure_clean 与 crypto_derivative_clean 存在
+    失败含义：S00 015 未应用则 disclosure/crypto Tier A 增量无落盘表
+    """
+    con = duckdb.connect(":memory:")
+    apply_migrations(con)
+    tables = {row[0] for row in con.execute("SHOW TABLES").fetchall()}
+    versions = {row[0] for row in con.execute("SELECT version_id FROM schema_version").fetchall()}
+    assert "015_dcp05_tier_a_clean" in versions
+    assert "us_disclosure_clean" in tables
+    assert "crypto_derivative_clean" in tables
+    assert "stg_us_disclosure_smoke" in tables
+    assert "stg_crypto_derivative_smoke" in tables
+
+
 def test_migrationCoverage_matrixDocPath_exists() -> None:
     """覆盖范围：VR-MODEL-001 矩阵 SSOT 文件可达
     测试对象：.trellis/tasks/archive/2026-07/round3v-layer5-model-schema-reconcile/research/l5-reconcile-matrix.md

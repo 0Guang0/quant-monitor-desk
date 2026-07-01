@@ -2,6 +2,37 @@
 
 本页是面向用户/运维的一页式数据同步入口。它不替代 implementation tasks；它把安全运行命令、dry-run、ResourceGuard、SourceRoutePlan 和错误排障放在一起。
 
+## Tier A 增量 sync（R3-DCP-05 · ADR-028）
+
+11 个 Tier A 源统一经 `--source-id` 路由；默认 **dry-run** 输出可审计 JSON（watermark / clean 表 / 窗参数）。
+
+```bash
+# 示例：dry-run 审计（不写库）
+qmd data sync --source-id baostock --domain cn_equity_daily_bar --end 2024-06-30 --dry-run
+qmd data sync --source-id fred --domain macro_series --dry-run
+qmd data sync --source-id mootdx --domain cn_equity_daily_bar --end 2024-06-30 --dry-run
+
+# 真跑须隔离 QMD_DATA_ROOT（.audit-sandbox）+ 源级 live gate；见 ADR-027
+```
+
+| source_id                                    | canonical domain       | clean 表                |
+| -------------------------------------------- | ---------------------- | ----------------------- |
+| baostock, mootdx                             | cn_equity_daily_bar    | security_bar_1d         |
+| alpha_vantage                                | us_equity_daily_bar    | security_bar_1d         |
+| fred, us_treasury, bis, world_bank, cftc_cot | 各 macro domain        | axis_observation        |
+| cninfo                                       | cn_announcements       | cn_announcement_clean   |
+| sec_edgar                                    | us_filings             | us_disclosure_clean     |
+| deribit                                      | crypto_options_surface | crypto_derivative_clean |
+
+SSOT：`backend/app/sync/incremental_source_registry.py` · `docs/decisions/ADR-028-dcp05-tier-a-clean-domain-extension.md`
+
+### ACC-EASTMONEY-TAXONOMY-001（口径 SSOT · 不关 REQ2-EM）
+
+- **问题：** `eastmoney_port` 产品 mock 与 akshare `stock_zh_a_hist`（`push2his.eastmoney.com`）真网口径并存。
+- **本票边界：** DCP-05 仅登记文档/registry 注释；**不**关闭 `R3-B2.75-REQ2-EM` 硬约束。
+- **运维读法：** validation 用 akshare/eastmoney 对照；产品 bar 增量主路径为 **baostock/mootdx**（`--source-id`）。
+- 台账：`docs/quality/待修复清单.md` · Wave 4 `R3-DCP-05`/`08`
+
 ## 推荐命令形态（设计稿）
 
 ```bash

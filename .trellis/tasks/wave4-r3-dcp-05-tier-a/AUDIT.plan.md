@@ -2,6 +2,19 @@
 
 > **追溯：** `EXECUTION_INDEX.md` §5 · `research/00-EXECUTION-ENTRY.md`
 
+## §0.1 Trace Authority Set
+
+| 类别              | 文件                                                                  | 用途                   |
+| ----------------- | --------------------------------------------------------------------- | ---------------------- |
+| 活卡              | `frozen/R3_DCP_05_TIER_A_INCREMENTAL.md` · EXTERNAL-INDEX §A 包外路径 | scope / AC / §3 约束   |
+| ADR-028           | `docs/decisions/ADR-028-dcp05-tier-a-clean-domain-extension.md`       | 11/11 clean 矩阵       |
+| Execute 入口      | `research/00-EXECUTION-ENTRY.md`                                      | 路由地图 · §2 约束     |
+| 执行索引          | `EXECUTION_INDEX.md`                                                  | 切片血缘 · manifest    |
+| integration-audit | `research/integration-audit.md`                                       | Plan 期对抗 · GAP 路由 |
+| 包外必读          | `research/EXTERNAL-INDEX.md` §A                                       | 开工必读 SSOT 超集     |
+
+---
+
 ## §1 覆写
 
 - **任务：** Wave 4 R3-DCP-05 Tier A incremental + 11/11 clean

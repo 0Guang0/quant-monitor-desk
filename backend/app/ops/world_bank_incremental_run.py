@@ -17,16 +17,26 @@ from backend.app.ops.macro_incremental_common import (
     MacroIncrementalSourceConfig,
     build_axis_observation_row,
     build_macro_incremental_service,
+    compute_since_date,
+    enabled_source_registry,
+    read_observation_date_watermark,
+    read_since_dates_for_instruments,
     run_macro_incremental,
 )
-from backend.app.ops.world_bank_incremental_watermark import (
-    DATA_DOMAIN,
-    DEFAULT_COUNTRIES,
-    DEFAULT_INDICATOR,
-    SOURCE_ID,
-    clean_indicator_id,
-)
 from backend.app.sync.orchestrator import DataSyncOrchestrator
+
+SOURCE_ID = "world_bank"
+DATA_DOMAIN = "development_indicator"
+DEFAULT_COUNTRIES = ("US",)
+DEFAULT_INDICATOR = "NY.GDP.MKTP.CD"
+
+
+def clean_indicator_id(country_code: str, *, indicator_id: str = DEFAULT_INDICATOR) -> str:
+    return f"{country_code}|{indicator_id}"
+
+
+def enabled_world_bank_source_registry():
+    return enabled_source_registry(source_id=SOURCE_ID, data_domain=DATA_DOMAIN)
 
 _WB_INDICATORS = (DEFAULT_INDICATOR,)
 

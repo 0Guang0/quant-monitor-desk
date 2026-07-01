@@ -44,28 +44,9 @@ def compute_since_date(
 
 
 def enabled_deribit_source_registry():
-    from backend.app.datasources.source_registry import DomainRoleBinding, SourceRegistry
+    from backend.app.ops.macro_incremental_common import enabled_source_registry
 
-    registry = SourceRegistry()
-    registry.load()
-    rec = registry.get("deribit")
-    object.__setattr__(rec, "is_enabled", True)
-    orig = registry.get_domain_roles
-
-    def _domain_enabled(domain: str):
-        binding = orig(domain)
-        if domain != "crypto_options_surface":
-            return binding
-        return DomainRoleBinding(
-            primary_source_id="deribit",
-            validation_source_id=binding.validation_source_id,
-            fallback_policy=binding.fallback_policy,
-            domain_enabled_by_default=True,
-            fallback_source_ids=binding.fallback_source_ids,
-        )
-
-    registry.get_domain_roles = _domain_enabled  # type: ignore[method-assign]
-    return registry
+    return enabled_source_registry(source_id="deribit", data_domain="crypto_options_surface")
 
 
 def read_since_date_for_instrument(

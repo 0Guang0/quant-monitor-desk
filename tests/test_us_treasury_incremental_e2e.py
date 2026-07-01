@@ -8,16 +8,14 @@ from typing import Any
 import pytest
 
 from backend.app.ops.us_treasury_incremental_run import (
-    build_us_treasury_incremental_service,
-    create_us_treasury_incremental_port,
-    run_us_treasury_incremental,
-)
-from backend.app.ops.us_treasury_incremental_watermark import (
     DEFAULT_TENORS,
     DATA_DOMAIN,
     SOURCE_ID,
+    build_us_treasury_incremental_service,
+    create_us_treasury_incremental_port,
     enabled_us_treasury_source_registry,
     read_since_dates_for_instruments,
+    run_us_treasury_incremental,
 )
 
 from tests.macro_incremental_support import build_macro_e2e_ctx, insert_axis_observation
@@ -62,7 +60,11 @@ def test_usTreasuryIncremental_e2e_replay_writesAxisObservation(
         count = con.execute(
             "SELECT COUNT(*) FROM axis_observation WHERE indicator_id = '10Y'"
         ).fetchone()[0]
-    assert count >= 1
+        assert count >= 1
+        row = con.execute(
+            "SELECT raw_value FROM axis_observation WHERE indicator_id = '10Y' LIMIT 1"
+        ).fetchone()
+    assert row is not None and float(row[0]) == 4.25
 
 
 def test_usTreasuryIncremental_idempotent_secondRun_rowCountStable(

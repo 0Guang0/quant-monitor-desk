@@ -8,17 +8,15 @@ from typing import Any
 import pytest
 
 from backend.app.ops.cftc_incremental_run import (
-    build_cftc_incremental_service,
-    create_cftc_incremental_port,
-    run_cftc_incremental,
-)
-from backend.app.ops.cftc_incremental_watermark import (
     DATA_DOMAIN,
     DEFAULT_MARKETS,
     SOURCE_ID,
     WEEKLY_ADVANCE_DAYS,
     enabled_cftc_source_registry,
     read_since_dates_for_markets,
+    build_cftc_incremental_service,
+    create_cftc_incremental_port,
+    run_cftc_incremental,
 )
 from tests.macro_incremental_support import build_macro_e2e_ctx, insert_axis_observation
 
@@ -60,7 +58,35 @@ def test_cftcIncremental_e2e_replay_writesAxisObservation(
         count = con.execute(
             "SELECT COUNT(*) FROM axis_observation WHERE indicator_id = '088691'"
         ).fetchone()[0]
-    assert count >= 1
+        assert count >= 1
+        row = con.execute(
+            "SELECT raw_value FROM axis_observation WHERE indicator_id = '088691' LIMIT 1"
+        ).fetchone()
+    assert row is not None and float(row[0]) == 20000.0
+
+
+def test_cftcIncremental_idempotent_secondRun_rowCountStable(
+    cftc_incremental_e2e_ctx: dict[str, Any],
+) -> None:
+    """覆盖范围：连续两次增量跑 row count 不增
+    测试对象：run_cftc_incremental 幂等 upsert
+    目的/目标：重复跑 observation_id PK upsert 不重复插入
+    验证点：两次 COMPLETED 后 COUNT(*) 相等
+    失败含义：幂等失败，生产重复跑会膨胀行数
+    """
+    ctx = cftc_incremental_e2e_ctx
+    run_cftc_incremental(
+        ctx["orch"], service=ctx["service"], source_registry=ctx["registry"]
+    )
+    with ctx["cm"].writer() as con:
+        first = con.execute("SELECT COUNT(*) FROM axis_observation").fetchone()[0]
+    run_cftc_incremental(
+        ctx["orch"], service=ctx["service"], source_registry=ctx["registry"]
+    )
+    with ctx["cm"].writer() as con:
+        second = con.execute("SELECT COUNT(*) FROM axis_observation").fetchone()[0]
+    assert first == second
+    assert first >= 1
 
 
 def test_cftcIncremental_weeklyWatermark_advancesSevenDays() -> None:

@@ -2,7 +2,7 @@
 
 **Single source of truth** for open issues, intentional deferrals, and resolved audit items.
 
-> Last reconciled: 2026-07-01 台账复验 @ `93b2c82`（§2.5 最终关账 + live 验收脚本入库）；prior @ `af56e0d`。
+> Last reconciled: 2026-07-02 Wave 4 DCP-05 baostock live gate 关账；prior 2026-07-01 @ `93b2c82`（§2.5 最终关账 + live 验收脚本入库）。
 
 **Batch 2.5 audit 待修复台账（含合理延期清理阶段）:** [`docs/quality/ROUND3_BATCH25_PENDING_FIX_REGISTRY.md`](quality/ROUND3_BATCH25_PENDING_FIX_REGISTRY.md)  
 **待修复清单（全项目 SSOT）:** [`docs/quality/待修复清单.md`](quality/待修复清单.md)  

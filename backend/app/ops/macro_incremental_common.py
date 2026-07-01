@@ -148,13 +148,18 @@ def build_axis_observation_row(
 
 
 @contextmanager
-def macro_incremental_validation_patch():
-    """L1 run_incremental validate path for macro domains."""
+def incremental_validation_patch_factory(
+    expected_columns: tuple[str, ...],
+    timestamp_fields: tuple[str, ...],
+    *,
+    label: str = "incremental",
+):
+    """Patch run_incremental validate_staging for domain-specific staging columns."""
     from backend.app.sync.runners import _DEFAULT_QUALITY_RULE_SET, _PipelineMixin
 
     original = _PipelineMixin._validate_staging
 
-    def _macro_validate_staging(
+    def _patched_validate_staging(
         self,
         con,
         *,
@@ -166,11 +171,11 @@ def macro_incremental_validation_patch():
         required_fields: tuple[str, ...],
     ):
         if conflict_staging_table is not None:
-            raise ValueError("macro incremental does not use conflict staging")
+            raise ValueError(f"{label} incremental does not use conflict staging")
         self._jobs.emit_custom_event(
             job_id,
             event_type="CONFLICT_CHECK_SKIPPED",
-            message="macro incremental: conflict validation skipped",
+            message=f"{label} incremental: conflict validation skipped",
             payload_json='{"decision":"conflict_check_skipped"}',
             con=con,
         )
@@ -186,17 +191,28 @@ def macro_incremental_validation_patch():
                 required_fields=required_fields,
                 rule_set_id=_DEFAULT_QUALITY_RULE_SET,
             ),
-            expected_columns=AXIS_OBSERVATION_DDL_COLUMNS,
-            timestamp_fields=("as_of_timestamp", "publish_timestamp", "fetch_time"),
+            expected_columns=expected_columns,
+            timestamp_fields=timestamp_fields,
             conflict_request=None,
             conflict_staging_table=None,
         )
 
-    _PipelineMixin._validate_staging = _macro_validate_staging
+    _PipelineMixin._validate_staging = _patched_validate_staging
     try:
         yield
     finally:
         _PipelineMixin._validate_staging = original
+
+
+@contextmanager
+def macro_incremental_validation_patch():
+    """L1 run_incremental validate path for macro domains."""
+    with incremental_validation_patch_factory(
+        AXIS_OBSERVATION_DDL_COLUMNS,
+        ("as_of_timestamp", "publish_timestamp", "fetch_time"),
+        label="macro",
+    ):
+        yield
 
 
 def _make_macro_staging_adapter_class(
@@ -351,7 +367,7 @@ class MacroIncrementalSourceConfig:
     indicator_resolver: Callable[[str], str] | None = None
 
 
-def _load_incremental_route_bundle(*, source_id: str, data_domain: str, source_registry=None):
+def load_incremental_route_bundle(*, source_id: str, data_domain: str, source_registry=None):
     from backend.app.datasources.capability_registry import SourceCapabilityRegistry
     from backend.app.datasources.route_planner import SourceRoutePlanner
 
@@ -374,7 +390,7 @@ def build_macro_incremental_service(
     job_events=None,
     source_registry=None,
 ) -> MacroIncrementalFetchProxy:
-    registry, caps, planner = _load_incremental_route_bundle(
+    registry, caps, planner = load_incremental_route_bundle(
         source_id=config.source_id,
         data_domain=config.data_domain,
         source_registry=source_registry,

@@ -1062,6 +1062,28 @@ tests/test_qmd_data_sync_baostock.py:
     docs: []
     rules: []
     specs: []
+tests/test_qmd_data_sync_mootdx.py:
+  command: uv run python -m pytest tests/test_qmd_data_sync_mootdx.py -q
+  failure_meaning:
+    Regression in test_qmd_data_sync_mootdx; inspect purpose and linked
+    authorities.
+  purpose: R3-DCP-05 S08 — qmd data sync mootdx incremental CLI tests.
+  type: runtime-contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_qmd_data_sync_tier_a_router.py:
+  command: uv run python -m pytest tests/test_qmd_data_sync_tier_a_router.py -q
+  failure_meaning:
+    Regression in test_qmd_data_sync_tier_a_router; inspect purpose
+    and linked authorities.
+  purpose: R3-DCP-05 S12 — Tier A unified `qmd data sync --source-id` router tests.
+  type: runtime-contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
 tests/test_r3f_br_backfill_reconcile_closure.py:
   command:
     uv run python -m pytest tests/test_r3f_br_backfill_reconcile_closure.py
@@ -1809,6 +1831,19 @@ tests/test_world_bank_incremental_e2e.py:
     and linked authorities.
   purpose: DCP-05 S05 — World Bank incremental e2e tests.
   type: integration
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_world_bank_incremental_watermark.py:
+  command:
+    uv run python -m pytest tests/test_world_bank_incremental_watermark.py
+    -q
+  failure_meaning:
+    Regression in test_world_bank_incremental_watermark; inspect purpose
+    and linked authorities.
+  purpose: DCP-05 S05 — World Bank incremental watermark unit tests.
+  type: runtime-contract
   verifies:
     docs: []
     rules: []

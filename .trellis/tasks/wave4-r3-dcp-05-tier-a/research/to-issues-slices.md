@@ -18,8 +18,9 @@
 
 ```text
 S00 (migration 015 + clean targets + incremental registry)
-  → S01 (baostock live) ∥ S02–S07 (macro×5 + fred regress) ∥ S08 (cninfo) ∥ S09 (mootdx)
-  → S10 (sec_edgar) ∥ S11 (alpha_vantage) ∥ S12 (deribit)
+  → S01 (baostock live) ∥ S02–S06 (macro×5 + fred regress) ∥ S07 (cninfo) ∥ S08 (mootdx)
+  → S09 (sec_edgar) ∥ S10 (alpha_vantage) ∥ S11 (deribit)
+  → S12 (CLI router — qmd data sync --source-id 11 源)
   → S13 (registry + eastmoney SSOT + catalog)
 ```
 

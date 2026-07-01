@@ -44,7 +44,7 @@ sources:
     validation_only: false
     rate_limit_policy: polite_daily_batch
     requires_user_setup: false
-    notes: Batch 01 SP3 v3 staged expand sample (merge 1a099e8d); sandbox_candidate readiness. R3H-03 READY_WITH_EVIDENCE; baostock_port replay-first.
+    notes: "Batch 01 SP3 v3 staged expand sample (merge 1a099e8d); sandbox_candidate readiness. R3H-03 READY_WITH_EVIDENCE; baostock_port replay-first. DCP-05: qmd data sync --source-id baostock -> security_bar_1d clean (ADR-028)."
   - source_id: akshare
     source_name: AkShare
     source_type: aggregator
@@ -75,7 +75,7 @@ sources:
     validation_only: false
     rate_limit_policy: polite_document_fetch
     requires_user_setup: false
-    notes: 公告和财报 PDF 原文优先来源。Batch 01 SP3 v3 metadata expand sample (merge 1a099e8d); sandbox_candidate readiness. R3H-03 READY_WITH_EVIDENCE; cninfo_port replay-first metadata.
+    notes: "公告和财报 PDF 原文优先来源。Batch 01 SP3 v3 metadata expand sample (merge 1a099e8d); sandbox_candidate readiness. R3H-03 READY_WITH_EVIDENCE; cninfo_port replay-first metadata. DCP-05: qmd data sync --source-id cninfo -> cn_announcement_clean (ADR-028)."
   - source_id: yahoo_finance
     source_name: Yahoo Finance / yfinance-compatible access
     source_type: public_market_data
@@ -118,7 +118,7 @@ sources:
     validation_only: false
     rate_limit_policy: polite_api_with_key
     requires_user_setup: true
-    notes: Batch 01 B01-FRED sandbox-candidate (merge 9ae91648); R3H-01 READY_WITH_EVIDENCE; disabled-by-default; replay tests/fixtures/replay/official_macro/fred/; live requires FRED_API_KEY.
+    notes: "Batch 01 B01-FRED sandbox-candidate (merge 9ae91648); R3H-01 READY_WITH_EVIDENCE; disabled-by-default; replay tests/fixtures/replay/official_macro/fred/; live requires FRED_API_KEY. DCP-05: qmd data sync --source-id fred -> axis_observation clean (ADR-028)."
   - source_id: us_treasury
     source_name: US Treasury / FiscalData
     source_type: official_api
@@ -133,7 +133,7 @@ sources:
     rate_limit_policy: polite_api_with_cache
     requires_user_setup: false
     official_api: true
-    notes: R3H-01 READY_WITH_EVIDENCE; us_treasury_port mock-first; replay tests/fixtures/replay/official_macro/us_treasury/; enabled_by_default=false.
+    notes: "R3H-01 READY_WITH_EVIDENCE; us_treasury_port mock-first; replay tests/fixtures/replay/official_macro/us_treasury/; enabled_by_default=false. DCP-05: qmd data sync --source-id us_treasury -> axis_observation clean (ADR-028)."
   - source_id: sec_edgar
     source_name: SEC EDGAR data APIs
     source_type: official_api
@@ -148,7 +148,7 @@ sources:
     rate_limit_policy: sec_identity_polite_api
     requires_user_setup: false
     official_api: true
-    notes: R3H-01 READY_WITH_EVIDENCE; sec_edgar_port; SEC_EDGAR_USER_AGENT required; replay tests/fixtures/replay/sec_edgar/.
+    notes: "R3H-01 READY_WITH_EVIDENCE; sec_edgar_port; SEC_EDGAR_USER_AGENT required; replay tests/fixtures/replay/sec_edgar/. DCP-05: qmd data sync --source-id sec_edgar -> us_disclosure_clean (ADR-028)."
   - source_id: cftc_cot
     source_name: CFTC Commitments of Traders
     source_type: official_api
@@ -162,7 +162,7 @@ sources:
     rate_limit_policy: weekly_official_release_cache
     requires_user_setup: false
     official_api: true
-    notes: R3H-01 READY_WITH_EVIDENCE; cftc_cot_port weekly mock-first; replay tests/fixtures/replay/official_macro/cftc_cot/.
+    notes: "R3H-01 READY_WITH_EVIDENCE; cftc_cot_port weekly mock-first; replay tests/fixtures/replay/official_macro/cftc_cot/. DCP-05: qmd data sync --source-id cftc_cot -> axis_observation clean (ADR-028)."
   - source_id: bis
     source_name: Bank for International Settlements Data Portal
     source_type: official_api
@@ -177,7 +177,7 @@ sources:
     rate_limit_policy: sdmx_polite_cache
     requires_user_setup: false
     official_api: true
-    notes: R3H-01 READY_WITH_EVIDENCE; bis_port mock-first; replay tests/fixtures/replay/official_macro/bis/.
+    notes: "R3H-01 READY_WITH_EVIDENCE; bis_port mock-first; replay tests/fixtures/replay/official_macro/bis/. DCP-05: qmd data sync --source-id bis -> axis_observation clean (ADR-028)."
   - source_id: world_bank
     source_name: World Bank Indicators API
     source_type: official_api
@@ -192,7 +192,7 @@ sources:
     rate_limit_policy: low_frequency_official_cache
     requires_user_setup: false
     official_api: true
-    notes: R3H-01 READY_WITH_EVIDENCE; world_bank_port mock-first; replay tests/fixtures/replay/official_macro/world_bank/.
+    notes: "R3H-01 READY_WITH_EVIDENCE; world_bank_port mock-first; replay tests/fixtures/replay/official_macro/world_bank/. DCP-05: qmd data sync --source-id world_bank -> axis_observation clean (ADR-028)."
   - source_id: deribit
     source_name: Deribit public API
     source_type: vendor_api
@@ -207,7 +207,7 @@ sources:
     validation_only: false
     rate_limit_policy: exchange_api_with_cache
     requires_user_setup: false
-    notes: 加密期货 term structure、期权 IV 与衍生品行情主源候选；只读 market-data，禁止交易/账户能力。R3H-02 READY_WITH_EVIDENCE; deribit_port mock-first.
+    notes: "加密期货 term structure、期权 IV 与衍生品行情主源候选；只读 market-data，禁止交易/账户能力。R3H-02 READY_WITH_EVIDENCE; deribit_port mock-first. DCP-05: qmd data sync --source-id deribit -> crypto_derivative_clean (ADR-028)."
   - source_id: coingecko
     source_name: CoinGecko API
     source_type: public_market_data
@@ -284,7 +284,7 @@ sources:
     rate_limit_policy: api_key_rate_limited_cache
     requires_user_setup: true
     auth_required: true
-    notes: 美股/ETF/期权链、外汇、商品与经济指标的文档化 API 候选；需要 API key，启用前不得替代官方/交易所源。R3H-02 READY_WITH_EVIDENCE; alpha_vantage_port mock-first.
+    notes: "美股/ETF/期权链、外汇、商品与经济指标的文档化 API 候选；需要 API key，启用前不得替代官方/交易所源。R3H-02 READY_WITH_EVIDENCE; alpha_vantage_port mock-first. DCP-05: qmd data sync --source-id alpha_vantage -> security_bar_1d clean (ADR-028)."
   - source_id: mootdx
     source_name: mootdx / TDX compatible market data
     source_type: public_market_data
@@ -299,7 +299,7 @@ sources:
     validation_only: true
     rate_limit_policy: polite_batch
     requires_user_setup: false
-    notes: 通达信兼容 A 股行情验证源候选；与 tdx_pytdx 同属 TDX-compatible 路线，默认禁用，不得 silent fallback。R3H-03 READY_WITH_EVIDENCE; mootdx_port mock/replay.
+    notes: "通达信兼容 A 股行情验证源候选；与 tdx_pytdx 同属 TDX-compatible 路线，默认禁用，不得 silent fallback。R3H-03 READY_WITH_EVIDENCE; mootdx_port mock/replay. DCP-05: qmd data sync --source-id mootdx -> security_bar_1d clean (ADR-028)."
   - source_id: eastmoney
     source_name: 东方财富 Eastmoney
     source_type: public_market_data
@@ -316,7 +316,7 @@ sources:
     validation_only: true
     rate_limit_policy: polite_web_api_cache
     requires_user_setup: false
-    notes: A 股行情、板块、资金流与公告备份验证源；资金流等口径差异字段必须分源保存。R3H-03 READY_WITH_EVIDENCE; eastmoney_port validation.
+    notes: "A 股行情、板块、资金流与公告备份验证源；资金流等口径差异字段必须分源保存。R3H-03 READY_WITH_EVIDENCE; eastmoney_port validation-only. ACC-EASTMONEY-TAXONOMY-001: bar incremental via baostock/mootdx; does not close R3-B2.75-REQ2-EM; cross-ref docs/quality/待修复清单.md §4 · docs/ops/data_sync_quick_reference.md."
   - source_id: sina_finance
     source_name: 新浪财经 Sina Finance
     source_type: public_market_data

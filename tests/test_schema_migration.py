@@ -91,8 +91,8 @@ def test_appliedVersions_emptyDb_returnsEmptySet() -> None:
 def test_appliedVersions_afterMigration_containsFoundation() -> None:
     """覆盖范围：全量迁移后的版本集合
     测试对象：applied_versions 在 apply_migrations 之后
-    目的/目标：当前仓库应登记 001–012 全部已实现迁移 ID
-    验证点：返回集合等于 001_foundation 至 012_migration_residuals 共 12 项
+    目的/目标：当前仓库应登记 001–015 全部已实现迁移 ID
+    验证点：返回集合等于 001_foundation 至 015_dcp05_tier_a_clean
     失败含义：版本登记与磁盘迁移文件不一致，升级路径不可追踪
     """
     con = duckdb.connect(":memory:")
