@@ -21,7 +21,11 @@ from backend.app.datasources.normalizers.cn_market import (
     build_cn_market_evidence_bundle,
     read_cn_market_evidence_bundle,
 )
-from backend.app.datasources.normalizers.evidence_bundle import finalize_bundle, reject_over_cap
+from backend.app.datasources.normalizers.evidence_bundle import (
+    finalize_bundle,
+    parse_fetch_window_date,
+    reject_over_cap,
+)
 
 MAX_ISSUERS = 5
 MAX_FILINGS = 20
@@ -32,6 +36,26 @@ SYMBOL_WHITELIST = frozenset({"sh.600519", "sz.000001"})
 REPLAY_FIXTURE = (
     PROJECT_ROOT / "tests/fixtures/replay/cn_market/cninfo/sh600519_filings_replay.json"
 )
+
+
+def _filter_filings_by_window(
+    filings: list[dict],
+    *,
+    start_time: str | None,
+    end_time: str | None,
+) -> list[dict]:
+    start = parse_fetch_window_date(start_time)
+    end = parse_fetch_window_date(end_time)
+    if start is None or end is None:
+        return filings
+    if start > end:
+        return []
+    filtered: list[dict] = []
+    for row in filings:
+        obs = parse_fetch_window_date(str(row.get("observation_date") or row.get("publish_timestamp") or ""))
+        if obs is not None and start <= obs <= end:
+            filtered.append(row)
+    return filtered
 
 
 @dataclass(frozen=True)
@@ -58,12 +82,14 @@ class CninfoMockFetchPort:
 
         if self.replay_path.is_file():
             bundle = read_cn_market_evidence_bundle(self.replay_path)
-            content = json.dumps(bundle, ensure_ascii=False, default=str).encode("utf-8")
-            return FetchPayload(
-                content=content,
-                file_type="json",
-                row_count=len(bundle.get("filings") or []),
+            filings = _filter_filings_by_window(
+                list(bundle.get("filings") or []),
+                start_time=req.start_time,
+                end_time=req.end_time,
             )
+            bundle = {**bundle, "filings": filings}
+            content = json.dumps(bundle, ensure_ascii=False, default=str).encode("utf-8")
+            return FetchPayload(content=content, file_type="json", row_count=len(filings))
 
         retrieved_at = datetime.now(UTC).isoformat()
         fetch_id = f"cninfo-mock-{symbol}-{uuid.uuid4().hex[:12]}"

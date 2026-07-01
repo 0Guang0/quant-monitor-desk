@@ -13,14 +13,21 @@ import uuid
 from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 from typing import Any, Literal
 
+from backend.app.config import PROJECT_ROOT
 from backend.app.datasources.adapters.fetch_port import FetchPayload, PortError
-from backend.app.datasources.normalizers.evidence_bundle import finalize_bundle, reject_over_cap
 from backend.app.datasources.fetch_result import FetchRequest
+from backend.app.datasources.normalizers.evidence_bundle import (
+    finalize_bundle,
+    parse_fetch_window_date,
+    reject_over_cap,
+)
 from backend.app.datasources.normalizers.sec_edgar import (
     build_filings_evidence_bundle,
     build_form4_evidence_bundle,
+    read_filings_evidence_bundle,
 )
 
 # R3H-01 caps SSOT (frozen §7 production-entry defaults)
@@ -29,6 +36,30 @@ MAX_CIKS = 5
 MAX_FILINGS = 50
 
 SecEdgarDomain = Literal["us_filings", "us_insider_form4"]
+
+FILINGS_REPLAY_FIXTURE = (
+    PROJECT_ROOT / "tests/fixtures/replay/sec_edgar/filings_replay_bundle.json"
+)
+
+
+def _filter_filings_by_window(
+    filings: list[dict[str, Any]],
+    *,
+    start_time: str | None,
+    end_time: str | None,
+) -> list[dict[str, Any]]:
+    start = parse_fetch_window_date(start_time)
+    end = parse_fetch_window_date(end_time)
+    if start is None or end is None:
+        return filings
+    if start > end:
+        return []
+    filtered: list[dict[str, Any]] = []
+    for row in filings:
+        filed = parse_fetch_window_date(str(row.get("filing_date") or ""))
+        if filed is not None and start <= filed <= end:
+            filtered.append(row)
+    return filtered
 
 
 def _sec_user_agent() -> str | None:
@@ -54,6 +85,7 @@ class SecEdgarMockFetchPort:
     ciks: Sequence[str]
     max_filings: int
     data_domain: SecEdgarDomain
+    replay_path: Path = FILINGS_REPLAY_FIXTURE
 
     def _mock_filings(self, cik: str) -> list[dict[str, Any]]:
         today = datetime.now(UTC).date()
@@ -101,7 +133,22 @@ class SecEdgarMockFetchPort:
         retrieved_at = datetime.now(UTC).isoformat()
         fetch_id = f"sec-edgar-mock-{cik}-{uuid.uuid4().hex[:12]}"
 
-        if self.data_domain == "us_filings":
+        if self.data_domain == "us_filings" and self.replay_path.is_file():
+            bundle = read_filings_evidence_bundle(self.replay_path)
+            filings = _filter_filings_by_window(
+                list(bundle.get("filings") or []),
+                start_time=req.start_time,
+                end_time=req.end_time,
+            )
+            bundle = build_filings_evidence_bundle(
+                filings=filings,
+                source_fetch_id=str(bundle.get("source_fetch_id") or fetch_id),
+                content_hash=str(bundle.get("content_hash") or "pending"),
+                as_of_timestamp=str(bundle.get("as_of_timestamp") or retrieved_at),
+                retrieved_at=str(bundle.get("retrieved_at") or retrieved_at),
+            )
+            row_count = len(filings)
+        elif self.data_domain == "us_filings":
             filings = self._mock_filings(cik)
             bundle = build_filings_evidence_bundle(
                 filings=filings,
