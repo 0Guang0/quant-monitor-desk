@@ -315,6 +315,22 @@ Round4  B04-01 先 · 产品只读
 
 **仍归 Batch6（不挡 PASS）：** D2 任务级幂等、无 cap FullLoad、24 源 production cron 矩阵、H1 Parquet、D4 migration。
 
+#### 3.5.2 Live 生产验收承接（2026-07-01 · Wave 4+ 路由）
+
+> **证据：** `scripts/wave3_live_production_acceptance.py` · `待修复清单.md` §8  
+> **须先闭环（非 Wave 4 规划）：** ~~§2.5 `LIVE-PILOT-DB-001` · `LIVE-BAOSTOCK-SYNC-SILENT-001`~~ **已关 2026-07-01**（见 `待修复清单.md` §1）
+
+| 规划 ID / 活卡              | 承接的 live 验收缺口                                                                                                                         | 台账 ID                                                                        |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| **R3-DCP-05**               | baostock 产品 `qmd data sync` 真网（去 `use_mock=True` 硬编码）；Tier A 全源增量；东财/校验源口径 SSOT（与 mock port 张力）                  | `ACC-BAOSTOCK-NO-LIVE` · `ACC-EASTMONEY-TAXONOMY-001`                          |
+| **R3-DCP-06**               | L1–5 端到端 `production_live` 全链（五轴 G12 硬门禁；非 staged_fixture_only）                                                                | `ACC-LAYER-E2E-LIVE-001`                                                       |
+| **R3-DCP-09**               | 有界 backfill；**连网验收 CI**：`--run-network` batch275 子集 + `wave3_live_production_acceptance.py` nightly；`WAVE3-ACC-OPT-01` quick 分层 | `ACC-LIVE-NETWORK-CI-001` · `ACC-LIVE-ACCEPT-NIGHTLY-001` · `WAVE3-ACC-OPT-01` |
+| **R3-DCP-10**               | G5 绑真源（content_hash / schema_hash）— 与 live 全链同一 Wave 4 波次                                                                        | `ACC-LAYER-E2E-LIVE-001`（G5 子集）                                            |
+| **Wave 5 `R3H-05-GATE`**    | Layer 绑定终态审计；`PASS_ROUND4_REAL_DATA_READY`                                                                                            | `ACC-LAYER-E2E-LIVE-001`（审计门）                                             |
+| **Batch 6 `R3F-LIN-01/02`** | L3/L4 lineage · L2 VR binding 全量持久化                                                                                                     | `ADV-R3X-LINEAGE-001` · `R3Y-LINEAGE-VR-001`                                   |
+| **Batch 6 `R3F-SH-06`**     | FRED **live primary** 关账（≠ DCP-02 增量 live）                                                                                             | `B2.5-O-05` §3 硬约束                                                          |
+| **政策（非修复）**          | akshare `macro_supplementary` pilot 第 3 路 `DISABLED_SOURCE`                                                                                | `AKSHARE-MACRO-PILOT-POLICY` §3                                                |
+
 ### 3.6 Wave 5 — PASS 审计
 
 | 项            | 内容                                                |
@@ -346,7 +362,20 @@ Round4  B04-01 先 · 产品只读
 > **脚本：** `scripts/wave3_isolated_production_acceptance.py`  
 > **证据：** 可重跑 `uv run python scripts/wave3_isolated_production_acceptance.py` → `.audit-sandbox/wave3-acceptance-<run_id>/`（gitignore）；参考跑 11/11 PASS  
 > **承接（可选优化）：** `WAVE3-ACC-OPT-01` — 验收 quick profile · 见 `待修复清单.md` §4  
-> **结论摘要：** Wave 1–3 **代码链路验收通过**；**P0–P2 卫生 15 项已关账**（见 `待修复清单.md` §1）；**正式 PASS** 仍待 Wave 4 `R3-DCP-06` 五轴 + Wave 5 `R3H-05-GATE`。
+> **Live 连网验收（2026-07-01）：** `scripts/wave3_live_production_acceptance.py` · 承接路由见 §3.5.2 · `待修复清单.md` §8  
+> **Wave 4 前须先闭环：** `待修复清单.md` §2.5 — **已清空 2026-07-01**（`LIVE-PILOT-DB-001` · `LIVE-BAOSTOCK-SYNC-SILENT-001` 见 §1）
+> **结论摘要：** Wave 1–3 **隔离/机制验收通过**；Wave 4 prep **§1 共 30 项**经 pytest 复验已关；**§2.5 阻断项已关**；**正式 PASS** 仍待 Wave 4 `R3-DCP-06` 五轴 + Wave 5 `R3H-05-GATE`。
+
+### 3.7.2 台账复验摘要（2026-07-01 @ `af56e0d`）
+
+| 类别       | 数量 | 核实方式                                     | 结论                                                                     |
+| ---------- | ---- | -------------------------------------------- | ------------------------------------------------------------------------ |
+| §1 已关闭  | 30   | 定向 pytest + 代码路径                       | **维持已关**（含 `LIVE-PILOT-DB-001` · `LIVE-BAOSTOCK-SYNC-SILENT-001`） |
+| §2.5 阻断  | 0    | `--run-network` + baostock CliFailure 测     | **已关 2026-07-01**                                                      |
+| §4 Wave 4+ | 6    | 读码：无 `--quick`/nightly/真网 product sync | **仍 OPEN** — 合法延后至 DCP-05/06/09                                    |
+| §3 硬约束  | 5    | 政策/registry                                | **刻意 DEFERRED** — 不得误关                                             |
+
+---
 
 ### 3.8 `/to-issues` 索引文件（随开工增补）
 

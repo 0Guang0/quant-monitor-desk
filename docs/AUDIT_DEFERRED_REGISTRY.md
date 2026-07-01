@@ -2,7 +2,7 @@
 
 **Single source of truth** for open issues, intentional deferrals, and resolved audit items.
 
-> Last reconciled: 2026-07-01 Wave 4 prep adversarial repair on `master` @ post-`8e6b1e91`; prior Wave 4 prep hygiene on workspace atop `893e6e2b`.
+> Last reconciled: 2026-07-01 台账复验 @ `af56e0d`（pytest + 代码对抗项）；prior @ post-`8e6b1e91`.
 
 **Batch 2.5 audit 待修复台账（含合理延期清理阶段）:** [`docs/quality/ROUND3_BATCH25_PENDING_FIX_REGISTRY.md`](quality/ROUND3_BATCH25_PENDING_FIX_REGISTRY.md)  
 **待修复清单（全项目 SSOT）:** [`docs/quality/待修复清单.md`](quality/待修复清单.md)  
@@ -298,21 +298,24 @@ Does **not** block finish-work or 017; documented per audit A9 synthesis — mus
 
 ## RESOLVED — Wave 4 prep hygiene (2026-07-01)
 
-| ID                    | Item                                              | Evidence                                                                                                               |
-| --------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| R2-GAP-1              | `init_db --sync-registry` CI one-liner            | `scripts/init_db.py` · `tests/test_qmd_data_cli.py` · `docs/ops/data_sync_quick_reference.md`                          |
-| R3-AUDIT-DEF-01       | db_inspector YAML SSOT + drift tests              | `tests/test_contract_drift_ops_write.py`                                                                               |
-| R3-B25-PERF-BUDGET-01 | Authoritative perf-budget CI artifact             | `scripts/ci_perf_budget_artifact.py` · `.github/workflows/ci.yml` · `tests/test_production_equivalent_smoke_budget.py` |
-| R3-B25-HYG-03         | production-equivalent benchmark artifact (alias)  | same as `R3-B25-PERF-BUDGET-01`                                                                                        |
-| D3-P1-2               | C901 write-path — ADR wont-fix                    | `docs/decisions/ADR-003-c901-write-path-complexity.md` · `tests/test_batch6_wave4_prep_closure.py`                     |
-| A9-P2-01              | `manual_review_queue.priority` app-layer ADR-002  | `docs/decisions/ADR-002-db-check-vs-app-validation.md` · `tests/test_round3f_migration_residuals.py`                   |
-| R2-RISK-4             | App-layer-only `priority` documented + tested     | same as `A9-P2-01`                                                                                                     |
-| R3-B6-021-O-01        | Layer3 malformed `bars[]` fail-closed             | `snapshot_builder.py` · `test_layer3Snapshot_malformedBarElement_rejects`                                              |
-| R3-B6-021-O-02        | Deterministic rebuild full row tuple              | `test_layer3Snapshot_deterministicRebuild_sameInputsSameHash`                                                          |
-| R3Y-TEST-DEPTH-001    | Lineage cluster runtime-strong depth (AUD-07 L05) | `tests/test_batch6_wave4_prep_closure.py` · `--collect-only` on four lineage anchor tests                              |
-| WAVE-B-HYG-02         | Four SSOT `Last reconciled` normalize equality    | `test_r3yRegistrySlice_alpha2LastReconciled`                                                                           |
-| WAVE-B-HYG-03         | `QMD_SYNC_ALLOW_ADAPTER` ops escape hatch         | `docs/architecture/06_deployment_and_local_ops.md`                                                                     |
-| ACC-SANDBOX-GUARD-001 | Isolated fred/baostock sync sandbox guard         | `assert_sandbox_db_allowed(..., allow_isolated_data_root)` · `test_sandboxDbAllowed_*` · denies `user-live`            |
+| ID                        | Item                                              | Evidence                                                                                                               |
+| ------------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| R2-GAP-1                  | `init_db --sync-registry` CI one-liner            | `scripts/init_db.py` · `tests/test_qmd_data_cli.py` · `docs/ops/data_sync_quick_reference.md`                          |
+| R3-AUDIT-DEF-01           | db_inspector YAML SSOT + drift tests              | `tests/test_contract_drift_ops_write.py`                                                                               |
+| R3-B25-PERF-BUDGET-01     | Authoritative perf-budget CI artifact             | `scripts/ci_perf_budget_artifact.py` · `.github/workflows/ci.yml` · `tests/test_production_equivalent_smoke_budget.py` |
+| R3-B25-HYG-03             | production-equivalent benchmark artifact (alias)  | same as `R3-B25-PERF-BUDGET-01`                                                                                        |
+| D3-P1-2                   | C901 write-path — ADR wont-fix                    | `docs/decisions/ADR-003-c901-write-path-complexity.md` · `tests/test_batch6_wave4_prep_closure.py`                     |
+| A9-P2-01                  | `manual_review_queue.priority` app-layer ADR-002  | `docs/decisions/ADR-002-db-check-vs-app-validation.md` · `tests/test_round3f_migration_residuals.py`                   |
+| R2-RISK-4                 | App-layer-only `priority` documented + tested     | same as `A9-P2-01`                                                                                                     |
+| R3-B6-021-O-01            | Layer3 malformed `bars[]` fail-closed             | `snapshot_builder.py` · `test_layer3Snapshot_malformedBarElement_rejects`                                              |
+| R3-B6-021-O-02            | Deterministic rebuild full row tuple              | `test_layer3Snapshot_deterministicRebuild_sameInputsSameHash`                                                          |
+| R3Y-TEST-DEPTH-001        | Lineage cluster runtime-strong depth (AUD-07 L05) | `tests/test_batch6_wave4_prep_closure.py` · `--collect-only` on four lineage anchor tests                              |
+| WAVE-B-HYG-01             | Four SSOT `Last reconciled` normalize equality    | `test_r3yRegistrySlice_alpha2LastReconciled` · 复验 2026-07-01 exit 0                                                  |
+| WAVE-B-HYG-02             | Four SSOT `Last reconciled` normalize equality    | `test_r3yRegistrySlice_alpha2LastReconciled`                                                                           |
+| WAVE-B-HYG-03             | `QMD_SYNC_ALLOW_ADAPTER` ops escape hatch         | `docs/architecture/06_deployment_and_local_ops.md`                                                                     |
+| ACC-SANDBOX-GUARD-001     | Isolated fred/baostock sync sandbox guard         | `assert_sandbox_db_allowed(..., allow_isolated_data_root)` · `test_sandboxDbAllowed_*` · denies `user-live`            |
+| ACC-MIGRATION-MATRIX-PATH | migration coverage archive path                   | `docs/schema/MIGRATION_COVERAGE.md` · archive `round3v-layer5-model-schema-reconcile`                                  |
+| ACC-REGISTRY-CROSS-001    | Registry cross-check depth                        | `tests/test_batch6_wave4_prep_closure.py` · `collect_pytest_node_id`                                                   |
 
 ---
 

@@ -73,6 +73,54 @@ def _phase3_evidence_with_hitl(tmp_path: Path, label: str) -> Path:
     return out
 
 
+def test_livePilot_phase3RawValidationReport_populatesRuleContract() -> None:
+    """覆盖范围：phase3 raw-only validation_report stub INSERT
+    测试对象：live_pilot_phase3._ensure_raw_file_registry_validation_report
+    目的/目标：migration 010 要求 rule_set_id/rule_version NOT NULL，stub INSERT 须对齐 rule_contract
+    验证点：INSERT 后行存在且 rule_set_id、rule_version 等于 default_quality_rule_contract()；
+            quality_flags=staged_raw_metadata_only 且 can_write_clean=False
+    失败含义：缺 rule 列或 gate 语义错误导致 live pilot phase3 写库失败
+    """
+    import duckdb
+
+    from backend.app.db.migrate import apply_migrations
+    from backend.app.ops.live_pilot import LivePilotRequest
+    from backend.app.ops.live_pilot_phase3 import (
+        RAW_FILE_REGISTRY_VALIDATION_REPORT_ID,
+        _ensure_raw_file_registry_validation_report,
+    )
+    from backend.app.ops.staged_pilot import STAGED_RAW_METADATA_QUALITY_FLAG
+    from backend.app.validators.rule_contract import default_quality_rule_contract
+
+    con = duckdb.connect(":memory:")
+    apply_migrations(con)
+    request = LivePilotRequest(
+        source_id="baostock",
+        data_domain="cn_equity_daily_bar",
+        operation="fetch_daily_bar",
+        symbols_or_indicators=("sh.600519",),
+        date_window="recent 5 trading days",
+        max_rows=10,
+        authorization_evidence="docs/quality/prompt14_user_authorization_batch275.md",
+        raw_only=True,
+    )
+    _ensure_raw_file_registry_validation_report(con, request, "run-phase3-unit")
+    rule_set_id, rule_version = default_quality_rule_contract()
+    row = con.execute(
+        """
+        SELECT rule_set_id, rule_version, quality_flags, can_write_clean
+        FROM validation_report
+        WHERE validation_report_id = ?
+        """,
+        [RAW_FILE_REGISTRY_VALIDATION_REPORT_ID],
+    ).fetchone()
+    assert row is not None
+    assert row[0] == rule_set_id
+    assert row[1] == rule_version
+    assert row[2] == STAGED_RAW_METADATA_QUALITY_FLAG
+    assert row[3] is False
+
+
 def test_livePilot_phaseMinus1_registryReconciliationRequired() -> None:
     """覆盖范围：Batch 2.75 Phase -1 是否完成五 ID registry 对账与读档证据
     测试对象：execute-evidence/phase_minus1_reconciliation.md、phase-1-registry-read.txt 及三份 registry
@@ -548,6 +596,99 @@ def test_livePilot_phase3_routeNotReady_stopsBeforeFetch(
     assert fetch_port_called["value"] is False
 
 
+def test_livePilot_phase3_akshareMacroDisabled_stopsBeforeFetch(tmp_path: Path) -> None:
+    """覆盖范围：akshare macro_supplementary 在 DISABLED_SOURCE 时 fail-closed
+    测试对象：run_live_pilot_raw_only 对 approved 第 3 路 macro 请求
+    目的/目标：政策要求 DISABLED_SOURCE 停止 pilot，不得借 staged_fixture 旁路 fetch
+    验证点：pytest.raises(LivePilotRouteNotReadyError, match=DISABLED_SOURCE)；fetch_port 未构建
+    失败含义：macro 旁路破坏 production_live_pilot_policy §4 与 AKSHARE-MACRO-PILOT-POLICY
+    """
+    from backend.app.ops.live_pilot import (
+        LivePilotRouteNotReadyError,
+        approved_pilot_requests,
+        run_live_pilot_raw_only,
+    )
+
+    macro_request = approved_pilot_requests()[2]
+    out = _phase3_evidence_with_hitl(tmp_path, "macro route gate")
+    fetch_port_called = {"value": False}
+
+    def _unexpected_fetch_port(**_kwargs):
+        fetch_port_called["value"] = True
+        raise AssertionError("fetch port must not be built for DISABLED_SOURCE macro route")
+
+    with (
+        patch(
+            "backend.app.ops.live_pilot_phase3.preview_live_pilot",
+            return_value={"explicit_source_route_status": "DISABLED_SOURCE"},
+        ),
+        patch(
+            "backend.app.ops.live_pilot_fetch_ports.create_live_fetch_port",
+            side_effect=_unexpected_fetch_port,
+        ),
+    ):
+        with pytest.raises(LivePilotRouteNotReadyError, match="DISABLED_SOURCE"):
+            run_live_pilot_raw_only(
+                replace(macro_request, dry_run=False),
+                sandbox_root=tmp_path / "sandbox",
+                evidence_dir=out,
+            )
+
+    assert fetch_port_called["value"] is False
+
+
+def test_livePilot_phase3_sandboxPathOutsideRaisesAuthorizationError(tmp_path: Path) -> None:
+    """覆盖范围：raw 证据路径越界时抛授权错误而非 NameError
+    测试对象：run_live_pilot_raw_only 在 fetch 返回 sandbox 外路径时
+    目的/目标：路径校验 fail-closed 且异常类型可审计
+    验证点：pytest.raises(LivePilotAuthorizationError, match=outside sandbox)
+    失败含义：未 import 或错误类型导致运维看到 NameError 而非授权失败
+    """
+    from backend.app.datasources.fetch_result import FetchResult
+    from backend.app.ops.live_pilot import (
+        LivePilotAuthorizationError,
+        approved_pilot_requests,
+        run_live_pilot_raw_only,
+    )
+
+    out = _phase3_evidence_with_hitl(tmp_path, "sandbox path gate")
+    outside = tmp_path / "outside" / "evil.json"
+    outside.parent.mkdir(parents=True)
+    outside.write_text("{}", encoding="utf-8")
+
+    fake_result = FetchResult(
+        run_id="pilot-req-live",
+        source_id="baostock",
+        data_domain="cn_equity_daily_bar",
+        status="SUCCESS",
+        row_count=1,
+        fetch_time="2026-01-01T00:00:00+00:00",
+        raw_file_paths=[str(outside)],
+        content_hash="abc",
+    )
+
+    with (
+        patch(
+            "backend.app.ops.live_pilot_phase3.preview_live_pilot",
+            return_value={"explicit_source_route_status": "READY"},
+        ),
+        patch(
+            "backend.app.ops.live_pilot_fetch_ports.create_live_fetch_port",
+            return_value=object(),
+        ),
+        patch(
+            "backend.app.ops.live_pilot_phase3.DataSourceService.fetch",
+            return_value=fake_result,
+        ),
+    ):
+        with pytest.raises(LivePilotAuthorizationError, match="outside sandbox"):
+            run_live_pilot_raw_only(
+                replace(approved_pilot_requests()[0], dry_run=False),
+                sandbox_root=tmp_path / "sandbox",
+                evidence_dir=out,
+            )
+
+
 def test_livePilot_phase3_resourceGuardHardStop_stopsBeforeFetch(tmp_path: Path) -> None:
     """覆盖范围：ResourceGuard HARD_STOP 是否在 fetch port 构建前终止
     测试对象：run_live_pilot_raw_only 当 preview 抛 ResourceGuard HARD_STOP 时
@@ -691,8 +832,9 @@ def test_livePilot_phase3_repeatExecution_isRerunSafe(tmp_path: Path) -> None:
 def test_livePilot_phase3RawOnly_threeRequestsLive(tmp_path: Path) -> None:
     """覆盖范围：三路授权请求的 sandbox live raw-only 微拉取（需外网）
     测试对象：capture_phase3_raw_evidence 与 execute-evidence HITL 文件
-    目的/目标：真实网络下三路 SUCCESS 且 raw 文件落在 sandbox、生产 DB 不变
-    验证点：三 fetch status SUCCESS、row_count>0、有 content_hash；mutation_proof 两 True；raw 路径在 sandbox 下；标记 network/slow
+    目的/目标：baostock 与 akshare validation 真网 SUCCESS；macro DISABLED_SOURCE 政策性失败
+    验证点：前两路 SUCCESS、row_count>0、content_hash；第 3 路 FAILED 且 error 含 DISABLED；
+            mutation_proof 两 True；raw 路径在 sandbox 下；标记 network/slow
     失败含义：live micro-fetch 不能成功或污染生产路径，Batch 2.75 Request 1 证据无效
     """
     from backend.app.ops.live_pilot import (
@@ -709,19 +851,25 @@ def test_livePilot_phase3RawOnly_threeRequestsLive(tmp_path: Path) -> None:
         hitl_src.read_text(encoding="utf-8"),
         encoding="utf-8",
     )
+    requests = approved_pilot_requests()
     result = capture_phase3_raw_evidence(
-        requests=approved_pilot_requests(),
+        requests=requests,
         sandbox_root=sandbox,
         evidence_dir=out,
     )
     assert len(result["fetches"]) == 3
-    for item in result["fetches"]:
-        assert item["fetch_result"]["status"] == "SUCCESS"
-        assert item["fetch_result"]["row_count"] > 0
-        assert item["fetch_result"]["content_hash"]
+    for index, item in enumerate(result["fetches"]):
+        req = requests[index]
         proof = item["production_mutation_proof"]
         assert proof["db_hash_unchanged"] is True
         assert proof["row_counts_unchanged"] is True
+        if req.data_domain == "macro_supplementary":
+            assert item["fetch_result"]["status"] == "FAILED"
+            assert "DISABLED" in item["fetch_result"]["error_message"]
+            continue
+        assert item["fetch_result"]["status"] == "SUCCESS"
+        assert item["fetch_result"]["row_count"] > 0
+        assert item["fetch_result"]["content_hash"]
         for path in item["fetch_result"]["raw_file_paths"]:
             assert str(sandbox.resolve()) in str(Path(path).resolve())
 

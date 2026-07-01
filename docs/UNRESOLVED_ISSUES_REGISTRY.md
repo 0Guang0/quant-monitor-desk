@@ -2,7 +2,7 @@
 
 > Purpose: one file for all current unresolved, deferred, open, risk, gap, and improvement items.  
 > Source of truth relationship: this file is the readable unresolved split of `docs/AUDIT_DEFERRED_REGISTRY.md`. If files conflict, update both in the same change and keep this file as the operator-facing unresolved list.  
-> Last reconciled: 2026-07-01 Wave 4 prep adversarial repair on `master` @ post-`8e6b1e91`; prior Wave 4 prep hygiene on workspace atop `893e6e2b`.
+> Last reconciled: 2026-07-01 台账复验 @ `af56e0d`（pytest + 代码对抗项）；prior @ post-`8e6b1e91`.
 
 ## Current Round 3 entry status
 

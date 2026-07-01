@@ -674,7 +674,20 @@ class _StagedPilotValidationGate(DbValidationGate):
         )
 
 
-def _ensure_raw_validation_report(con, request: StagedPilotRequest, run_id: str) -> None:
+StagedPilotValidationGate = _StagedPilotValidationGate
+
+
+def insert_raw_metadata_validation_report(
+    con,
+    *,
+    validation_report_id: str,
+    run_id: str,
+    data_domain: str,
+    source_id: str,
+    rule_set_id: str,
+    rule_version: str,
+    needs_manual_review: bool = False,
+) -> None:
     con.execute(
         """
         INSERT OR REPLACE INTO validation_report (
@@ -685,12 +698,12 @@ def _ensure_raw_validation_report(con, request: StagedPilotRequest, run_id: str)
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         [
-            STAGED_RAW_VALIDATION_REPORT_ID,
+            validation_report_id,
             run_id,
             "register",
-            request.data_domain,
+            data_domain,
             "stg_file_registry",
-            request.source_id,
+            source_id,
             "PASSED",
             0,
             0,
@@ -698,11 +711,24 @@ def _ensure_raw_validation_report(con, request: StagedPilotRequest, run_id: str)
             STAGED_RAW_METADATA_QUALITY_FLAG,
             None,
             False,
-            True if request.source_id == "akshare" else False,
-            STAGED_RAW_RULE_SET_ID,
-            STAGED_RAW_RULE_SET_ID,
+            needs_manual_review,
+            rule_set_id,
+            rule_version,
             datetime.now(UTC),
         ],
+    )
+
+
+def _ensure_raw_validation_report(con, request: StagedPilotRequest, run_id: str) -> None:
+    insert_raw_metadata_validation_report(
+        con,
+        validation_report_id=STAGED_RAW_VALIDATION_REPORT_ID,
+        run_id=run_id,
+        data_domain=request.data_domain,
+        source_id=request.source_id,
+        rule_set_id=STAGED_RAW_RULE_SET_ID,
+        rule_version=STAGED_RAW_RULE_SET_ID,
+        needs_manual_review=request.source_id == "akshare",
     )
 
 

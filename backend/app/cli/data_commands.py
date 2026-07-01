@@ -473,6 +473,27 @@ def sync_baostock_incremental(
     )
     payload["job_status"] = result.status
     payload["job_id"] = result.job_id
+    if result.status == "MANUAL_REVIEW_REQUIRED":
+        raise CliFailure(
+            error_code="SYNC_FAILED",
+            message=(
+                f"baostock incremental sync requires manual review: job_id={result.job_id} "
+                f"status={result.status} message={result.message!r}"
+            ),
+            docs_anchor="docs/ops/ERROR_CODE_GUIDE.md#sync-failed",
+            retryable=False,
+            manual_confirmation_required=True,
+        )
+    if result.status != "COMPLETED":
+        raise CliFailure(
+            error_code="SYNC_FAILED",
+            message=(
+                f"baostock incremental sync failed: job_id={result.job_id} "
+                f"status={result.status} message={result.message!r}"
+            ),
+            docs_anchor="docs/ops/ERROR_CODE_GUIDE.md#sync-failed",
+            retryable=result.status in {"FAILED_RETRYABLE", "FAILED_FINAL"},
+        )
     payload["message"] = "baostock incremental sync completed via DataSourceService gold path"
     return payload
 

@@ -77,7 +77,10 @@ class DbValidationGate:
 
     _SCHEMA_APPROVED_MODES = frozenset({"manual_patch", "schema_migration"})
     _SYNTHETIC_QUALITY_MARKERS = frozenset(
-        {"raw_file_registry_metadata_only", "synthetic_migrated_schema_only"}
+        {
+            "raw_file_registry_metadata_only",  # legacy rows; new inserts use staged_raw_metadata_only
+            "synthetic_migrated_schema_only",
+        }
     )
     _STRUCTURED_FILE_TYPES = frozenset({"json", "csv", "parquet"})
     _STRUCTURED_PATH_SUFFIXES = (".json", ".csv", ".parquet")

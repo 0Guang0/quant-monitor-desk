@@ -62,6 +62,63 @@ def test_qmdData_syncBaostock_dryRun_noDbFileCreated(monkeypatch, tmp_path: Path
     assert not db.exists()
 
 
+def test_qmdData_syncBaostock_nonDryRun_failedFinalRaisesCliFailure(
+    monkeypatch, tmp_path: Path
+) -> None:
+    """覆盖范围：cn_equity replay 真跑无 bar 时 CLI fail-closed
+    测试对象：sync_baostock_incremental dry_run=False + 空窗 replay
+    目的/目标：orchestrator 返回 FAILED_FINAL 时须抛 CliFailure(SYNC_FAILED)，不得 exit 0
+    验证点：end=1999-12-31（fixture 仅 2024-06-25）pytest.raises(CliFailure) 且 error_code==SYNC_FAILED
+    失败含义：sync 失败仍 exit 0，运维误判增量成功
+    """
+    data_root = _sandbox_data_root(tmp_path)
+    data_root.mkdir(parents=True)
+    monkeypatch.setenv("QMD_DATA_ROOT", str(data_root))
+    monkeypatch.setattr(data_commands, "DATA_ROOT", data_root)
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    with pytest.raises(CliFailure) as exc_info:
+        data_commands.sync_baostock_incremental(
+            dry_run=False,
+            instrument_id="sh.600519",
+            end="1999-12-31",
+            empty_table_lookback_days=30,
+        )
+    err = exc_info.value
+    assert err.error_code == "SYNC_FAILED"
+    assert err.retryable is True
+    assert "FAILED_FINAL" in err.message
+
+
+def test_qmdData_syncBaostock_failedFinal_cliExitNonZero(monkeypatch, tmp_path: Path, capsys) -> None:
+    """覆盖范围：sync 失败时 CLI main 退出码非 0
+    测试对象：main.main data sync 路径在 orchestrator FAILED_FINAL 时
+    目的/目标：运维通过 exit code 识别 sync 失败，不得 silent success
+    验证点：rc != 0；stderr 含 SYNC_FAILED
+    失败含义：函数层抛错但 CLI 仍 exit 0，违背 LIVE-BAOSTOCK-SYNC-SILENT-001
+    """
+    data_root = _sandbox_data_root(tmp_path)
+    data_root.mkdir(parents=True)
+    monkeypatch.setenv("QMD_DATA_ROOT", str(data_root))
+    monkeypatch.setattr(data_commands, "DATA_ROOT", data_root)
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    rc = main.main(
+        [
+            "data",
+            "sync",
+            "--domain",
+            "cn_equity_daily_bar",
+            "--no-dry-run",
+            "--instrument-id",
+            "sh.600519",
+            "--end",
+            "1999-12-31",
+        ]
+    )
+    assert rc != 0
+    err = capsys.readouterr().err
+    assert "SYNC_FAILED" in err
+
+
 def test_qmdData_syncBaostock_nonDryRun_replaySmoke(monkeypatch, tmp_path: Path) -> None:
     """覆盖范围：cn_equity_daily_bar sync replay 真跑 smoke
     测试对象：sync_baostock_incremental dry_run=False（.audit-sandbox 隔离库）

@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 import uuid
 from dataclasses import replace
-from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -14,7 +13,6 @@ from backend.app.core.resource_guard import Decision
 from backend.app.datasources.service import DataSourceService
 from backend.app.datasources.source_registry import SourceRegistry
 from backend.app.db.connection import ConnectionManager
-from backend.app.db.validation_gate import DbValidationGate
 from backend.app.db.write_manager import WriteManager
 from backend.app.ops.live_pilot_auth import (
     _pilot_request_to_dict,
@@ -43,13 +41,19 @@ from backend.app.ops.live_pilot_phase2 import (
     require_hitl_confirmation,
 )
 from backend.app.ops.live_pilot_types import (
+    LivePilotAuthorizationError,
     LivePilotFixtureForbiddenError,
     LivePilotRequest,
     LivePilotRouteNotReadyError,
 )
 from backend.app.ops.live_pilot_phase1 import _utc_now_iso
 from backend.app.ops.mutation_proof import key_table_row_counts as _key_table_row_counts
+from backend.app.ops.staged_pilot import (
+    StagedPilotValidationGate,
+    insert_raw_metadata_validation_report,
+)
 from backend.app.storage.file_registry import FileRegistry
+from backend.app.validators.rule_contract import default_quality_rule_contract
 
 
 def _assert_live_fetch_port(fetch_port: object) -> None:
@@ -108,32 +112,16 @@ RAW_FILE_REGISTRY_VALIDATION_REPORT_ID = "batch275-live-pilot-raw-file-registry"
 def _ensure_raw_file_registry_validation_report(
     con, request: LivePilotRequest, run_id: str
 ) -> None:
-    con.execute(
-        """
-        INSERT OR REPLACE INTO validation_report (
-            validation_report_id, run_id, job_id, data_domain, staging_table,
-            source_id, status, checked_rows, failed_rows, warning_rows,
-            quality_flags, stale_reason, can_write_clean, needs_manual_review,
-            created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-        [
-            RAW_FILE_REGISTRY_VALIDATION_REPORT_ID,
-            run_id,
-            "register",
-            request.data_domain,
-            "stg_file_registry",
-            request.source_id,
-            "PASSED",
-            0,
-            0,
-            0,
-            "raw_file_registry_metadata_only",
-            None,
-            True,
-            False,
-            datetime.now(UTC),
-        ],
+    rule_set_id, rule_version = default_quality_rule_contract()
+    insert_raw_metadata_validation_report(
+        con,
+        validation_report_id=RAW_FILE_REGISTRY_VALIDATION_REPORT_ID,
+        run_id=run_id,
+        data_domain=request.data_domain,
+        source_id=request.source_id,
+        rule_set_id=rule_set_id,
+        rule_version=rule_version,
+        needs_manual_review=False,
     )
 
 
@@ -147,8 +135,6 @@ def run_live_pilot_raw_only(
     """Sandbox raw-only live fetch for one authorized request (HITL + route gate)."""
     assert_pilot_ready_before_fetch(request)
     hitl_path = require_hitl_confirmation(evidence_dir=evidence_dir)
-    if not request.raw_only:
-        raise LivePilotAuthorizationError("live pilot first pass requires raw_only=true")
 
     preview = preview_live_pilot(
         replace(request, dry_run=True),
@@ -179,7 +165,7 @@ def run_live_pilot_raw_only(
     registry = SourceRegistry()
     registry.load()
     cm = ConnectionManager(sandbox_db, profile="eco")
-    write_manager = WriteManager(cm, DbValidationGate(cm))
+    write_manager = WriteManager(cm, StagedPilotValidationGate(cm))
     file_registry = _InlineConnectionFileRegistry(
         cm,
         write_manager,

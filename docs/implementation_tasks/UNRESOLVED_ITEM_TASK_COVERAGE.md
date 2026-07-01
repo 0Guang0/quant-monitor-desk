@@ -1,6 +1,6 @@
 # Unresolved Item → 原始执行任务覆盖索引
 
-> Last reconciled: 2026-07-01 Wave 4 prep adversarial repair on `master` @ post-`8e6b1e91`; prior Wave 4 prep hygiene on workspace atop `893e6e2b`.  
+> Last reconciled: 2026-07-01 台账复验 @ `af56e0d`（pytest + 代码对抗项）；prior @ post-`8e6b1e91`.  
 > 用途：防止 Plan 阶段只读取 `docs/implementation_tasks/**` 原始任务卡而漏掉 `docs/UNRESOLVED_ISSUES_REGISTRY.md` / `docs/AUDIT_DEFERRED_REGISTRY.md` 中仍未闭合的项目。  
 > 规则：新建 MASTER/AUDIT/REPAIR plan 前，必须先读取本文件、当前 registry、目标任务卡，并把本表中目标批次相关 ID 逐项映射到 AC、evidence、closeout 或 explicit re-deferral。若 registry 状态变化，本文件必须同步更新。
 
