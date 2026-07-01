@@ -10,7 +10,7 @@ import json
 import uuid
 from collections.abc import Sequence
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from typing import Any, Literal
 
 from backend.app.datasources.adapters.fetch_port import FetchPayload, PortError
@@ -48,13 +48,16 @@ class UsTreasuryMockFetchPort:
     max_rows: int
     data_domain: TreasuryDomain
 
-    def _mock_yield_curve_rows(self, tenor: str) -> list[dict[str, Any]]:
+    def _mock_yield_curve_rows(self, tenor: str, *, start: date | None = None) -> list[dict[str, Any]]:
         today = datetime.now(UTC).date()
         rows: list[dict[str, Any]] = []
         for offset in range(min(self.max_rows, 3)):
+            obs_date = today - timedelta(days=offset)
+            if start is not None and obs_date < start:
+                continue
             rows.append(
                 {
-                    "observation_date": (today - timedelta(days=offset)).isoformat(),
+                    "observation_date": obs_date.isoformat(),
                     "tenor": tenor,
                     "yield_percent": str(4.25 - offset * 0.01),
                     "source_used": "us_treasury",
@@ -62,19 +65,27 @@ class UsTreasuryMockFetchPort:
             )
         return rows
 
-    def _mock_inflation_rows(self, metric_name: str) -> list[dict[str, Any]]:
+    def _mock_inflation_rows(self, metric_name: str, *, start: date | None = None) -> list[dict[str, Any]]:
         today = datetime.now(UTC).date()
         rows: list[dict[str, Any]] = []
         for offset in range(min(self.max_rows, 3)):
+            obs_date = today - timedelta(days=30 * offset)
+            if start is not None and obs_date < start:
+                continue
             rows.append(
                 {
-                    "observation_date": (today - timedelta(days=30 * offset)).isoformat(),
+                    "observation_date": obs_date.isoformat(),
                     "metric_name": metric_name,
                     "metric_value": str(2.15 - offset * 0.02),
                     "source_used": "us_treasury",
                 }
             )
         return rows
+
+    def _resolve_start(self, req: FetchRequest) -> date | None:
+        if req.start_time:
+            return date.fromisoformat(req.start_time[:10])
+        return None
 
     def fetch_payload(self, req: FetchRequest) -> FetchPayload:
         reject_over_cap(value=self.max_rows, cap=MAX_ROWS)
@@ -85,9 +96,12 @@ class UsTreasuryMockFetchPort:
 
         retrieved_at = datetime.now(UTC).isoformat()
         fetch_id = f"treasury-mock-{instrument}-{uuid.uuid4().hex[:12]}"
+        start = self._resolve_start(req)
 
         if self.data_domain == "us_treasury_yield_curve":
-            observations = self._mock_yield_curve_rows(instrument)
+            observations = self._mock_yield_curve_rows(instrument, start=start)
+            if not observations:
+                raise PortError("EMPTY_RESPONSE", f"no mock observations on/after {start}")
             bundle = build_yield_curve_evidence_bundle(
                 observations=observations,
                 source_fetch_id=fetch_id,
@@ -96,7 +110,9 @@ class UsTreasuryMockFetchPort:
                 retrieved_at=retrieved_at,
             )
         else:
-            observations = self._mock_inflation_rows(instrument)
+            observations = self._mock_inflation_rows(instrument, start=start)
+            if not observations:
+                raise PortError("EMPTY_RESPONSE", f"no mock observations on/after {start}")
             bundle = build_inflation_expectation_evidence_bundle(
                 observations=observations,
                 source_fetch_id=fetch_id,

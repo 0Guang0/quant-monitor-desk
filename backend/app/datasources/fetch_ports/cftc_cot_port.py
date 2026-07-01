@@ -10,7 +10,7 @@ import json
 import uuid
 from collections.abc import Sequence
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from typing import Any
 
 from backend.app.datasources.adapters.fetch_port import FetchPayload, PortError
@@ -33,14 +33,17 @@ class CftcCotMockFetchPort:
     markets: Sequence[str]
     max_rows: int
 
-    def _mock_rows(self, market_code: str) -> list[dict[str, Any]]:
+    def _mock_rows(self, market_code: str, *, start: date | None = None) -> list[dict[str, Any]]:
         today = datetime.now(UTC).date()
         rows: list[dict[str, Any]] = []
         for offset in range(min(self.max_rows, 3)):
+            obs_date = today - timedelta(days=7 * offset)
+            if start is not None and obs_date < start:
+                continue
             rows.append(
                 {
                     "market_code": market_code,
-                    "report_date": (today - timedelta(days=7 * offset)).isoformat(),
+                    "report_date": obs_date.isoformat(),
                     "trader_category": "Noncommercial",
                     "long_contracts": str(100000 - offset * 1000),
                     "short_contracts": str(80000 + offset * 500),
@@ -49,6 +52,11 @@ class CftcCotMockFetchPort:
                 }
             )
         return rows
+
+    def _resolve_start(self, req: FetchRequest) -> date | None:
+        if req.start_time:
+            return date.fromisoformat(req.start_time[:10])
+        return None
 
     def fetch_payload(self, req: FetchRequest) -> FetchPayload:
         reject_over_cap(value=self.max_rows, cap=MAX_ROWS)
@@ -59,7 +67,10 @@ class CftcCotMockFetchPort:
 
         retrieved_at = datetime.now(UTC).isoformat()
         fetch_id = f"cftc-mock-{market}-{uuid.uuid4().hex[:12]}"
-        observations = self._mock_rows(market)
+        start = self._resolve_start(req)
+        observations = self._mock_rows(market, start=start)
+        if not observations:
+            raise PortError("EMPTY_RESPONSE", f"no mock observations on/after {start}")
         bundle = build_cot_positioning_evidence_bundle(
             observations=observations,
             source_fetch_id=fetch_id,
