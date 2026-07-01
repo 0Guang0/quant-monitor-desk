@@ -34,6 +34,7 @@ from backend.app.datasources.normalizers.cn_market import (
     build_cn_market_evidence_bundle,
     read_cn_market_evidence_bundle,
 )
+from backend.app.datasources.fetch_ports.baostock_port import _filter_bars_by_window
 from backend.app.datasources.normalizers.evidence_bundle import finalize_bundle
 from backend.app.datasources.normalizers.tdx import (
     build_equity_bar_manifest,
@@ -78,8 +79,14 @@ class MootdxMockFetchPort:
 
         if self.replay_path.is_file() and domain == "cn_equity_daily_bar":
             bundle = read_cn_market_evidence_bundle(self.replay_path)
+            bars = _filter_bars_by_window(
+                list(bundle.get("bars") or []),
+                start_time=req.start_time,
+                end_time=req.end_time,
+            )
+            bundle = {**bundle, "bars": bars}
             content = json.dumps(bundle, ensure_ascii=False, default=str).encode("utf-8")
-            return FetchPayload(content=content, file_type="json", row_count=len(bundle.get("bars") or []))
+            return FetchPayload(content=content, file_type="json", row_count=len(bars))
 
         symbol = req.instrument_id or (self.symbols[0] if self.symbols else "")
         if not symbol and domain != "security_list":

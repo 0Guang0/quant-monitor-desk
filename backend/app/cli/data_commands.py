@@ -319,15 +319,16 @@ def sync_baostock_incremental(
     """``qmd data sync --domain cn_equity_daily_bar`` — watermark + orchestrator gold path."""
     from datetime import UTC, date, datetime
 
-    import uuid
-
-    from backend.app.datasources.fetch_ports.baostock_port import create_baostock_fetch_port
+    from backend.app.ops.baostock_incremental_run import (
+        build_baostock_incremental_service,
+        resolve_baostock_incremental_use_mock,
+        run_baostock_bar_incremental,
+    )
     from backend.app.ops.sandbox_clean_write.clean_write_targets import resolve_clean_write_target
     from backend.app.ops.sandbox_clean_write.rehearsal_runner import (
         RehearsalRunnerError,
         assert_sandbox_db_allowed,
     )
-    from backend.app.sync.jobs import SyncJobSpec
     from backend.app.sync.orchestrator import DataSyncOrchestrator
     from backend.app.sync.watermark import (
         IncrementalWindow,
@@ -390,12 +391,14 @@ def sync_baostock_incremental(
             watermark=window.watermark,
         )
 
+    use_mock = resolve_baostock_incremental_use_mock()
+    product_live = not use_mock
     target = resolve_clean_write_target(data_domain)
     caught_up = incremental_window_is_empty(window)
     payload: dict[str, Any] = {
         "command": "sync",
         "dry_run": dry_run,
-        "product_live": False,
+        "product_live": product_live,
         "data_domain": data_domain,
         "operation": op,
         "instrument_id": symbol,
@@ -440,59 +443,44 @@ def sync_baostock_incremental(
     with cm.writer() as con:
         apply_migrations(con)
 
-    port = create_baostock_fetch_port(symbols=(symbol,), max_rows=500, use_mock=True)
     raw_root = data_root / "raw"
     raw_root.mkdir(parents=True, exist_ok=True)
     orch = DataSyncOrchestrator(cm)
-    service = DataSourceService(
+    service = build_baostock_incremental_service(
         data_root=raw_root,
-        fetch_port=port,
+        symbol=symbol,
         job_events=orch._jobs,
+        use_mock=use_mock,
     )
-    job_id = f"qmd-baostock-sync-{uuid.uuid4().hex[:10]}"
-    spec = SyncJobSpec(
-        run_id=job_id,
-        job_id=job_id,
-        job_type="incremental",
-        data_domain=data_domain,
-        market_id="CN_A",
-        source_id="baostock",
-        adapter_id="baostock",
-        date_start=window.date_start,
-        date_end=window.date_end,
-        instrument_id=symbol,
-        partition_key=None,
-        trigger_reason="qmd_data_sync",
+    run_result = run_baostock_bar_incremental(
+        orch,
+        service=service,
+        window=window,
+        symbol=symbol,
+        product_live=product_live,
     )
-    result = orch.run_incremental(
-        spec,
-        datasource_service=service,
-        clean_table=target.target_table,
-        write_mode=target.write_mode,
-        primary_keys=target.primary_keys,
-    )
-    payload["job_status"] = result.status
-    payload["job_id"] = result.job_id
-    if result.status == "MANUAL_REVIEW_REQUIRED":
+    payload["job_status"] = run_result.status
+    payload["job_id"] = run_result.job_id
+    if run_result.status == "MANUAL_REVIEW_REQUIRED":
         raise CliFailure(
             error_code="SYNC_FAILED",
             message=(
-                f"baostock incremental sync requires manual review: job_id={result.job_id} "
-                f"status={result.status} message={result.message!r}"
+                f"baostock incremental sync requires manual review: job_id={run_result.job_id} "
+                f"status={run_result.status} message={run_result.message!r}"
             ),
             docs_anchor="docs/ops/ERROR_CODE_GUIDE.md#sync-failed",
             retryable=False,
             manual_confirmation_required=True,
         )
-    if result.status != "COMPLETED":
+    if run_result.status != "COMPLETED":
         raise CliFailure(
             error_code="SYNC_FAILED",
             message=(
-                f"baostock incremental sync failed: job_id={result.job_id} "
-                f"status={result.status} message={result.message!r}"
+                f"baostock incremental sync failed: job_id={run_result.job_id} "
+                f"status={run_result.status} message={run_result.message!r}"
             ),
             docs_anchor="docs/ops/ERROR_CODE_GUIDE.md#sync-failed",
-            retryable=result.status in {"FAILED_RETRYABLE", "FAILED_FINAL"},
+            retryable=run_result.status in {"FAILED_RETRYABLE", "FAILED_FINAL"},
         )
     payload["message"] = "baostock incremental sync completed via DataSourceService gold path"
     return payload

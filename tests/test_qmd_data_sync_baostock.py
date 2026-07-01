@@ -323,3 +323,52 @@ def test_qmdData_syncCli_instrumentIdPassedToSyncPlan(monkeypatch, tmp_path: Pat
     assert rc == 0
     out = capsys.readouterr().out
     assert '"instrument_id": "sz.000001"' in out
+
+
+def test_qmdData_syncBaostock_dryRun_productLiveFalseByDefault(monkeypatch, tmp_path: Path) -> None:
+    """覆盖范围：默认 dry-run 未 opt-in live
+    测试对象：sync_baostock_incremental dry_run=True 无 QMD_ALLOW_LIVE_FETCH
+    目的/目标：fail-closed 默认 product_live=false（ACC-BAOSTOCK-NO-LIVE 关账前提）
+    验证点：payload product_live is False
+    失败含义：未 opt-in 即标 live 会误导运维
+    """
+    data_root = _sandbox_data_root(tmp_path)
+    data_root.mkdir(parents=True)
+    monkeypatch.delenv("QMD_ALLOW_LIVE_FETCH", raising=False)
+    monkeypatch.setenv("QMD_DATA_ROOT", str(data_root))
+    monkeypatch.setattr(data_commands, "DATA_ROOT", data_root)
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    payload = data_commands.sync_baostock_incremental(dry_run=True, end="2024-06-30")
+    assert payload["product_live"] is False
+
+
+def test_qmdData_syncBaostock_liveOptIn_setsProductLive(monkeypatch, tmp_path: Path) -> None:
+    """覆盖范围：QMD_ALLOW_LIVE_FETCH=1 时 baostock sync 标 product_live
+    测试对象：sync_baostock_incremental dry_run=True + env opt-in
+    目的/目标：关 ACC-BAOSTOCK-NO-LIVE — live gate 接线后 payload 应 product_live=true
+    验证点：product_live is True；仍 dry-run 不写库
+    失败含义：env opt-in 未反映到 sync 审计字段则 live 路径不可运维
+    """
+    data_root = _sandbox_data_root(tmp_path)
+    data_root.mkdir(parents=True)
+    monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
+    monkeypatch.setenv("QMD_DATA_ROOT", str(data_root))
+    monkeypatch.setattr(data_commands, "DATA_ROOT", data_root)
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    payload = data_commands.sync_baostock_incremental(dry_run=True, end="2024-06-30")
+    assert payload["product_live"] is True
+
+
+def test_baostockIncremental_resolveUseMock_liveOptIn(monkeypatch) -> None:
+    """覆盖范围：baostock incremental use_mock 解析
+    测试对象：resolve_baostock_incremental_use_mock
+    目的/目标：QMD_ALLOW_LIVE_FETCH=1 → use_mock=False
+    验证点：resolve 返回 False；未设 env 返回 True
+    失败含义：live port 永不启用则 ACC-BAOSTOCK-NO-LIVE 未关
+    """
+    from backend.app.ops.baostock_incremental_run import resolve_baostock_incremental_use_mock
+
+    monkeypatch.delenv("QMD_ALLOW_LIVE_FETCH", raising=False)
+    assert resolve_baostock_incremental_use_mock() is True
+    monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
+    assert resolve_baostock_incremental_use_mock() is False
