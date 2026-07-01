@@ -14,7 +14,7 @@ import urllib.request
 import uuid
 from collections.abc import Sequence
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from io import StringIO
 from typing import Any, Literal
 
@@ -47,14 +47,17 @@ class BisMockFetchPort:
     max_rows: int
     data_domain: BisDomain
 
-    def _mock_policy_rows(self, country_code: str) -> list[dict[str, Any]]:
+    def _mock_policy_rows(self, country_code: str, *, start: date | None = None) -> list[dict[str, Any]]:
         today = datetime.now(UTC).date()
         rows: list[dict[str, Any]] = []
         for offset in range(min(self.max_rows, 2)):
+            obs_date = today - timedelta(days=30 * offset)
+            if start is not None and obs_date < start:
+                continue
             rows.append(
                 {
                     "country_code": country_code,
-                    "observation_date": (today - timedelta(days=30 * offset)).isoformat(),
+                    "observation_date": obs_date.isoformat(),
                     "policy_rate": str(5.25 - offset * 0.25),
                     "frequency": "monthly",
                     "source_used": "bis",
@@ -76,6 +79,11 @@ class BisMockFetchPort:
             )
         return rows
 
+    def _resolve_start(self, req: FetchRequest) -> date | None:
+        if req.start_time:
+            return date.fromisoformat(req.start_time[:10])
+        return None
+
     def fetch_payload(self, req: FetchRequest) -> FetchPayload:
         reject_over_cap(value=self.max_rows, cap=MAX_ROWS)
         country = req.instrument_id or (self.countries[0] if self.countries else "")
@@ -85,9 +93,12 @@ class BisMockFetchPort:
 
         retrieved_at = datetime.now(UTC).isoformat()
         fetch_id = f"bis-mock-{country}-{uuid.uuid4().hex[:12]}"
+        start = self._resolve_start(req)
 
         if self.data_domain == "central_bank_policy":
-            observations = self._mock_policy_rows(country)
+            observations = self._mock_policy_rows(country, start=start)
+            if not observations:
+                raise PortError("EMPTY_RESPONSE", f"no mock observations on/after {start}")
             bundle = build_bis_policy_rate_evidence_bundle(
                 observations=observations,
                 source_fetch_id=fetch_id,
@@ -157,6 +168,11 @@ class BisLiveFetchPort:
             raise PortError("EMPTY_RESPONSE", f"BIS returned no policy rows for {country}")
         return rows
 
+    def _resolve_start_year(self, req: FetchRequest) -> int:
+        if req.start_time:
+            return int(req.start_time[:4])
+        return datetime.now(UTC).date().year - 5
+
     def fetch_payload(self, req: FetchRequest) -> FetchPayload:
         reject_over_cap(value=self.max_rows, cap=MAX_ROWS)
         country = req.instrument_id or (self.countries[0] if self.countries else "")
@@ -166,9 +182,10 @@ class BisLiveFetchPort:
 
         retrieved_at = datetime.now(UTC).isoformat()
         fetch_id = f"bis-live-{country}-{uuid.uuid4().hex[:12]}"
+        start_year = self._resolve_start_year(req)
 
         if self.data_domain == "central_bank_policy":
-            csv_text = self._fetch_csv(path="WS_CBPOL", country=country, start_year=2020)
+            csv_text = self._fetch_csv(path="WS_CBPOL", country=country, start_year=start_year)
             observations = self._parse_policy_csv(csv_text, country)
             bundle = build_bis_policy_rate_evidence_bundle(
                 observations=observations,
