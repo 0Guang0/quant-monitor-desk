@@ -51,10 +51,10 @@ def test_fredIncrementalCli_execute_rejectsCanonicalDb(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """覆盖范围：真跑禁止写 canonical 主库
-    测试对象：sync_plan dry_run=False 无 QMD_DATA_ROOT 隔离
-    目的/目标：assert_sandbox_db_allowed fail-closed
-    验证点：CliFailure error_code == INVALID_INPUT；message 含 production DB refused
-    失败含义：CLI 可 silent 写 data/duckdb/quant_monitor.duckdb
+    测试对象：sync_plan dry_run=False 无 audit-sandbox QMD_DATA_ROOT
+    目的/目标：operator/sandbox 双门禁 fail-closed，不得 silent 写 data/duckdb
+    验证点：CliFailure 为 USER_AUTH_REQUIRED 或 INVALID_INPUT；后者须含 production DB refused
+    失败含义：CLI 可 silent 写 canonical quant_monitor.duckdb
     """
     monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
     monkeypatch.setenv("QMD_FRED_INCREMENTAL_USE_MOCK", "1")
@@ -65,8 +65,33 @@ def test_fredIncrementalCli_execute_rejectsCanonicalDb(
     )
     with pytest.raises(CliFailure) as exc_info:
         sync_plan(data_domain="macro_series", source_id="fred", dry_run=False)
+    assert exc_info.value.error_code in {"INVALID_INPUT", "USER_AUTH_REQUIRED"}
+    if exc_info.value.error_code == "INVALID_INPUT":
+        assert "production DB path refused" in exc_info.value.message
+
+
+def test_fredIncrementalCli_execute_rejectsUserLiveAuditPath(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """覆盖范围：fred 真跑拒绝 user-live 类生产 audit 路径
+    测试对象：sync_plan dry_run=False + QMD_DATA_ROOT=.audit-sandbox/user-live
+    目的/目标：与 baostock 一致；user-live 不得被增量 sync 写入
+    验证点：CliFailure INVALID_INPUT 且 message 含 user-live
+    失败含义：类生产路径可被 fred 增量污染
+    """
+    monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
+    monkeypatch.setenv("QMD_FRED_INCREMENTAL_USE_MOCK", "1")
+    user_live = tmp_path / ".audit-sandbox" / "user-live"
+    user_live.mkdir(parents=True)
+    monkeypatch.setenv("QMD_DATA_ROOT", str(user_live))
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    enable_source_route(
+        monkeypatch, source_id="fred", data_domain="macro_series", primary_source_id="fred"
+    )
+    with pytest.raises(CliFailure) as exc_info:
+        sync_plan(data_domain="macro_series", source_id="fred", dry_run=False)
     assert exc_info.value.error_code == "INVALID_INPUT"
-    assert "production DB path refused" in exc_info.value.message
+    assert "user-live" in exc_info.value.message
 
 
 def test_sandboxDbAllowed_permitsAuditSandboxDataRootAtImport(
@@ -99,6 +124,33 @@ def test_sandboxDbAllowed_permitsAuditSandboxDataRootAtImport(
         assert_sandbox_db_allowed(canonical, no_production_mutation=True)
 
 
+def test_sandboxDbAllowed_rejectsUserLiveEvenWithIsolatedFlag(
+    tmp_path: Path,
+) -> None:
+    """覆盖范围：allow_isolated_data_root 仍拒绝 user-live 类生产路径
+    测试对象：assert_sandbox_db_allowed
+    目的/目标：运维 user-live 树不得被 fred/baostock 增量 sync 写入
+    验证点：.audit-sandbox/user-live 下 db → RehearsalRunnerError
+    失败含义：类生产路径可被增量 sync 污染，与 ACC-USER-LIVE-PATH 文档矛盾
+    """
+    from backend.app.ops.sandbox_clean_write.rehearsal_runner import (
+        RehearsalRunnerError,
+        assert_sandbox_db_allowed,
+    )
+
+    user_live_db = (
+        tmp_path / ".audit-sandbox" / "user-live" / "duckdb" / "quant_monitor.duckdb"
+    )
+    user_live_db.parent.mkdir(parents=True, exist_ok=True)
+    user_live_db.write_bytes(b"")
+    with pytest.raises(RehearsalRunnerError, match="user-live"):
+        assert_sandbox_db_allowed(
+            user_live_db,
+            no_production_mutation=True,
+            allow_isolated_data_root=True,
+        )
+
+
 def test_fredIncrementalCli_execute_mockInTest(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -110,8 +162,9 @@ def test_fredIncrementalCli_execute_mockInTest(
     """
     monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
     monkeypatch.setenv("QMD_FRED_INCREMENTAL_USE_MOCK", "1")
-    monkeypatch.setenv("QMD_DATA_ROOT", str(tmp_path / "data"))
-    (tmp_path / "data").mkdir(parents=True, exist_ok=True)
+    audit_data = tmp_path / ".audit-sandbox" / "wave3-accept" / "data"
+    audit_data.mkdir(parents=True, exist_ok=True)
+    monkeypatch.setenv("QMD_DATA_ROOT", str(audit_data))
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
     enable_source_route(
         monkeypatch, source_id="fred", data_domain="macro_series", primary_source_id="fred"

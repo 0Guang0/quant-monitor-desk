@@ -2,9 +2,9 @@
 
 > **Authority:** Wave 3 闭合后的独立验收 SSOT（不替代 Wave 4 `R3-DCP-06` 五轴 PASS 硬门禁）。  
 > **日期:** 2026-07-01  
-> **基准 commit:** 工作区未提交修复（`assert_sandbox_db_allowed` v3 + 归档路径对齐） atop `893e6e2b`  
+> **基准 commit:** `master` @ `8e6b1e91`（Wave 4 prep P0–P2）+ 对抗性 repair 补丁  
 > **验收脚本:** `scripts/wave3_isolated_production_acceptance.py`  
-> **最终证据:** `.audit-sandbox/wave3-acceptance-20260701T115401Z/acceptance_evidence.json`  
+> **最终证据:** 可重跑脚本产出 `.audit-sandbox/wave3-acceptance-<run_id>/acceptance_evidence.json`（本地 gitignore；参考跑 `20260701T115401Z` 11/11 PASS）  
 > **主库污染:** **否** — `canonical_main_db` SHA256/mtime 验收前后一致
 
 ---
@@ -115,11 +115,11 @@
 
 > 完整台账：`docs/quality/待修复清单.md` §2–§3、§6。
 
-### 6.1 不阻塞 Wave 4 主线（Batch 6 hygiene）
+### 6.1 不阻塞 Wave 4 主线（Batch 6 hygiene · P3 lineage）
 
-- `R3Y-TEST-DEPTH-001` — closed-claim 反证深度
-- `R3-B6-021-O-01` / `O-02` — Layer3 manifest / rebuild 断言
-- `ADV-R3X-LINEAGE-001` / `R3Y-LINEAGE-VR-001` — L3/L4 / L2 VR lineage
+> **2026-07-01 更新：** `R3Y-TEST-DEPTH-001` · `R3-B6-021-O-01` / `O-02` 已在 Wave 4 prep P0–P2 关账（见 §7 与 `待修复清单.md` §1）。下列 **P3 lineage 大项**仍 open：
+
+- `ADV-R3X-LINEAGE-001` / `R3Y-LINEAGE-VR-001` — L3/L4 / L2 VR lineage 全量持久化
 
 ### 6.2 硬约束（不得误关）
 
@@ -152,10 +152,9 @@
 
 ## 8. 建议下一步
 
-1. **合并本票代码修复**（`rehearsal_runner.py`、`data_commands.py`、测试与 migration 路径）并 commit。
-2. **开工 Wave 4** — 从 `R3_DCP_TO_ISSUES_INDEX.md` 活卡增补 DCP-05..10（主会话 Plan 门控）。
-3. **CI** — 可选将 `wave3_isolated_production_acceptance.py` 纳入 nightly（仅 audit-sandbox，禁止默认 DATA_ROOT）。
-4. **勿** 用本次隔离验收替代 DCP-06 五轴或 R3H-05-GATE。
+1. **开工 Wave 4** — 从 `R3_DCP_TO_ISSUES_INDEX.md` 活卡增补 DCP-05..10（主会话 Plan 门控）。
+2. **CI** — `ci_perf_budget_artifact.py` 已接入 `.github/workflows/ci.yml`；可选将 `wave3_isolated_production_acceptance.py` 纳入 nightly。
+3. **勿** 用本次隔离验收替代 DCP-06 五轴或 R3H-05-GATE。
 
 ---
 

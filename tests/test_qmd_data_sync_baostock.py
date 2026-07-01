@@ -15,7 +15,7 @@ from backend.app.db.migrate import apply_migrations
 
 
 def _sandbox_data_root(tmp_path: Path) -> Path:
-    return tmp_path / ".audit-sandbox" / "user-live"
+    return tmp_path / ".audit-sandbox" / "wave3-accept" / "data"
 
 
 def test_qmdData_syncBaostock_dryRun_includesWatermarkWindow(monkeypatch, tmp_path: Path) -> None:

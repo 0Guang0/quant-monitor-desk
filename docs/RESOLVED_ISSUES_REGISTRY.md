@@ -2,7 +2,7 @@
 
 > Purpose: one file for resolved/closed issues, gates, risks, and repairs.  
 > Pair: unresolved items live in `docs/UNRESOLVED_ISSUES_REGISTRY.md`.  
-> Last reconciled: 2026-07-01 Wave 4 prep hygiene on workspace atop `893e6e2b`; prior 2026-06-25 post-Batch 3V on `master` @ `2aeb6f0`.
+> Last reconciled: 2026-07-01 Wave 4 prep adversarial repair on `master` @ post-`8e6b1e91`; prior Wave 4 prep hygiene on workspace atop `893e6e2b`.
 
 ## Wave 4 prep hygiene resolved (2026-07-01)
 

@@ -92,9 +92,14 @@ def assert_sandbox_db_allowed(
     canonical_prod = (PROJECT_ROOT / "data" / "duckdb" / "quant_monitor.duckdb").resolve()
     if (
         allow_isolated_data_root
-        and ".audit-sandbox" in str(resolved)
+        and any(p in {".audit-sandbox", "audit-sandbox"} for p in resolved.parts)
         and resolved != canonical_prod
     ):
+        # ponytail: deny operator "类生产" user-live tree; wave3-acceptance-* only
+        if "user-live" in resolved.parts:
+            raise RehearsalRunnerError(
+                "user-live audit path refused for isolated data-root sync"
+            )
         return resolved
     prod = DEFAULT_PRODUCTION_DB.resolve()
     from backend.app import config as app_config

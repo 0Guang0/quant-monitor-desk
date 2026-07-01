@@ -201,6 +201,7 @@ def _sync_fred_macro_incremental(
 
     data_root = _path_env("QMD_DATA_ROOT", PROJECT_ROOT / "data")
     db = data_root / "duckdb" / "quant_monitor.duckdb"
+    _require_baostock_sync_operator_or_sandbox(data_root)
     try:
         assert_sandbox_db_allowed(
             db, no_production_mutation=True, allow_isolated_data_root=True
@@ -332,15 +333,18 @@ def sync_baostock_incremental(
     op = "fetch_daily_bar"
     preview = route_preview(data_domain=data_domain, operation=op)
     guard_decision, guard_reason = ResourceGuard().check()
+    from backend.app.config import PROJECT_ROOT, _path_env
+
     symbol = instrument_id or "sh.600519"
-    db = DATA_ROOT / "duckdb" / "quant_monitor.duckdb"
+    data_root = _path_env("QMD_DATA_ROOT", PROJECT_ROOT / "data")
+    db = data_root / "duckdb" / "quant_monitor.duckdb"
 
     if not dry_run:
-        _require_baostock_sync_operator_or_sandbox(DATA_ROOT)
+        _require_baostock_sync_operator_or_sandbox(data_root)
         try:
             assert_sandbox_db_allowed(
-            db, no_production_mutation=True, allow_isolated_data_root=True
-        )
+                db, no_production_mutation=True, allow_isolated_data_root=True
+            )
         except RehearsalRunnerError as exc:
             raise CliFailure(
                 error_code="INVALID_INPUT",
@@ -430,7 +434,7 @@ def sync_baostock_incremental(
         apply_migrations(con)
 
     port = create_baostock_fetch_port(symbols=(symbol,), max_rows=500, use_mock=True)
-    raw_root = DATA_ROOT / "raw"
+    raw_root = data_root / "raw"
     raw_root.mkdir(parents=True, exist_ok=True)
     orch = DataSyncOrchestrator(cm)
     service = DataSourceService(

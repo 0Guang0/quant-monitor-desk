@@ -87,7 +87,7 @@ def main() -> int:
     }
 
     steps: list[tuple[str, list[str], dict[str, str] | None]] = [
-        ("production_gate", [sys.executable, "scripts/production_gate.py"], None),
+        ("production_gate", [sys.executable, "scripts/production_gate.py"], base_env),
         (
             "init_db",
             [sys.executable, "scripts/init_db.py"],

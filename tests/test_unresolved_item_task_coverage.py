@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from tests.contract_gate_support import PROJECT_ROOT
 
 COVERAGE = PROJECT_ROOT / "docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md"
@@ -378,6 +380,49 @@ def test_wave4PrepR3AuditDef01_closedInResolvedNotOpen() -> None:
     assert "R3-AUDIT-DEF-01" in coverage
     assert "CLOSED" in coverage.split("R3-AUDIT-DEF-01", maxsplit=1)[1][:220]
     assert "| R3-AUDIT-DEF-01       | DEFERRED" not in unresolved
+
+
+@pytest.mark.parametrize(
+    "item_id",
+    (
+        "D3-P1-2",
+        "A9-P2-01",
+        "R2-RISK-4",
+        "R3-B25-PERF-BUDGET-01",
+        "R3-B25-HYG-03",
+        "R3Y-TEST-DEPTH-001",
+    ),
+)
+def test_wave4PrepClosed_inResolvedNotDeferred(item_id: str) -> None:
+    """覆盖范围：Wave 4 prep 其余闭合项 registry 交叉一致性
+    测试对象：RESOLVED、UNRESOLVED、COVERAGE registries
+    目的/目标：REQ-004 — COVERAGE §3/§4 与 RESOLVED 同步，无 DEFERRED 漂移
+    验证点：item_id 在 RESOLVED 与 COVERAGE 含 CLOSED；UNRESOLVED 无 DEFERRED 行
+    失败含义：Plan 索引仍标 Batch6 hygiene 开放，会重复开债
+    """
+    resolved = _read(RESOLVED)
+    unresolved = _read(UNRESOLVED)
+    coverage = _read(COVERAGE)
+
+    assert item_id in resolved
+    assert item_id in coverage
+    assert "CLOSED" in coverage.split(item_id, maxsplit=1)[1][:240]
+    assert f"| {item_id}" not in unresolved or f"| {item_id} | DEFERRED" not in unresolved
+
+
+def test_wave4PrepSection10_lineageOnlyStillDeferred() -> None:
+    """覆盖范围：COVERAGE §10 仅保留 P3 lineage 大项为 DEFERRED 叙事
+    测试对象：UNRESOLVED_ITEM_TASK_COVERAGE.md §10
+    目的/目标：CR-003 — 已关 R3-B6-021 / R3Y-TEST-DEPTH 不得与 lineage 混标 registry DEFERRED
+    验证点：§10 含 ADV-R3X / R3Y-LINEAGE；含 CLOSED Wave 4 prep 说明；不含「registry DEFERRED」旧句
+    失败含义：§10 与 §7 矛盾，Wave 4 前卫生结论不可信
+    """
+    text = _read(COVERAGE)
+    section = text.split("## 10. Round 3D", 1)[1].split("## 9.", 1)[0]
+    assert "ADV-R3X-LINEAGE-001" in section
+    assert "R3Y-LINEAGE-VR-001" in section
+    assert "CLOSED" in section and "Wave 4 prep" in section
+    assert "registry DEFERRED" not in section
 
 
 def test_r3yOpenItems_ownerBranchesInCoverageSection45() -> None:

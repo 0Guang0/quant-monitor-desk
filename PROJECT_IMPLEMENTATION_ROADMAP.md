@@ -344,7 +344,8 @@ Round4  B04-01 先 · 产品只读
 
 > **报告 SSOT：** `WAVE3_PRODUCTION_ACCEPTANCE_REPORT.md`（隔离库 · 主库零污染）  
 > **脚本：** `scripts/wave3_isolated_production_acceptance.py`  
-> **证据：** `.audit-sandbox/wave3-acceptance-20260701T122*`（P0–P2 关账后复验）— **11/11 PASS**  
+> **证据：** 可重跑 `uv run python scripts/wave3_isolated_production_acceptance.py` → `.audit-sandbox/wave3-acceptance-<run_id>/`（gitignore）；参考跑 11/11 PASS  
+> **承接（可选优化）：** `WAVE3-ACC-OPT-01` — 验收 quick profile · 见 `待修复清单.md` §4  
 > **结论摘要：** Wave 1–3 **代码链路验收通过**；**P0–P2 卫生 15 项已关账**（见 `待修复清单.md` §1）；**正式 PASS** 仍待 Wave 4 `R3-DCP-06` 五轴 + Wave 5 `R3H-05-GATE`。
 
 ### 3.8 `/to-issues` 索引文件（随开工增补）

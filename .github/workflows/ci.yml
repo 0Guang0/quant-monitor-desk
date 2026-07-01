@@ -30,6 +30,10 @@ jobs:
         env:
           QMD_DATA_ROOT: .audit-sandbox/data
         run: python scripts/ci_ingestion_smoke.py
+      - name: Perf budget artifact (bounded audit-sandbox)
+        env:
+          QMD_DATA_ROOT: .audit-sandbox/r3b275-audit
+        run: python scripts/ci_perf_budget_artifact.py
       - name: Block WriteManager imports in datasources
         run: |
           if grep -riE 'WriteManager|write_manager' backend/app/datasources/ 2>/dev/null; then

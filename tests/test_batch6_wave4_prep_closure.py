@@ -3,11 +3,27 @@
 from __future__ import annotations
 
 import importlib.util
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
+
+def _collect_node_id(node_id: str) -> None:
+    proc = subprocess.run(
+        [sys.executable, "-m", "pytest", node_id, "--collect-only"],
+        cwd=str(PROJECT_ROOT),
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    combined = f"{proc.stdout}\n{proc.stderr}"
+    assert proc.returncode == 0, (
+        f"pytest --collect-only failed for {node_id!r}:\n{combined}"
+    )
 
 _LINEAGE_RUNTIME_STRONG = (
     "tests/test_layer3_snapshot_builder.py::test_layer3Snapshot_malformedBarElement_rejects",
@@ -30,12 +46,13 @@ def test_r3yTestDepth_lineageClusterRuntimeStrongPresent() -> None:
         assert path.is_file(), f"missing {rel_path}"
         text = path.read_text(encoding="utf-8")
         assert f"def {func_name}" in text, f"missing {func_name} in {rel_path}"
+        _collect_node_id(node_id)
 
 
 def test_d3p12_c901WontFixAdrDocumentsHotPath() -> None:
-    """覆盖范围：D3-P1-2 C901 债务的 ADR 闭包
+    """覆盖范围：D3-P1-2 C901 债务的 ADR 闭包（非复杂度消除）
     测试对象：docs/decisions/ADR-003-c901-write-path-complexity.md
-    目的/目标：复杂函数以 ADR wont-fix 闭合，非静默遗留
+    目的/目标：复杂函数以 ADR wont-fix 闭合，非静默遗留；本测不证明 ruff C901 清零
     验证点：ADR 存在且点名 _validate_domain_roles 与 _execute_write
     失败含义：D3-P1-2 无文档化 disposition，审计无法判断是债还是决策
     """

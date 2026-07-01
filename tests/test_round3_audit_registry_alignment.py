@@ -71,6 +71,59 @@ def test_hyg03_perfBudgetClosedInResolved() -> None:
     assert "ci_perf_budget_artifact" in resolved
 
 
+WAVE4_PREP_CLOSED_IDS = (
+    "R2-GAP-1",
+    "R3-AUDIT-DEF-01",
+    "R3-B25-PERF-BUDGET-01",
+    "R3-B25-HYG-03",
+    "D3-P1-2",
+    "A9-P2-01",
+    "R2-RISK-4",
+    "R3-B6-021-O-01",
+    "R3-B6-021-O-02",
+    "R3Y-TEST-DEPTH-001",
+)
+
+
+def test_wave4PrepClosed_traceableInAuditDeferredResolved() -> None:
+    """覆盖范围：Wave 4 prep 已闭合项在 AUDIT_DEFERRED RESOLVED 段可追溯
+    测试对象：RESOLVED_ISSUES_REGISTRY、AUDIT_DEFERRED_REGISTRY §Wave 4 prep
+    目的/目标：CR-001 — CLOSED 项不得仅在三件套 RESOLVED，AUDIT_DEFERRED 仍留 DEFERRED 行
+    验证点：十项 ID 均在 RESOLVED；均在 AUDIT_DEFERRED Wave 4 prep RESOLVED 段
+    失败含义：registry 双轨真相，Plan agent 会误读为仍 DEFERRED
+    """
+    resolved = _read(RESOLVED)
+    audit = _read(AUDIT_DEFERRED)
+    wave4_section = audit.split("## RESOLVED — Wave 4 prep hygiene", 1)[1].split("\n---\n", 1)[0]
+
+    for item_id in WAVE4_PREP_CLOSED_IDS:
+        assert item_id in resolved, item_id
+        assert item_id in wave4_section, item_id
+
+
+def test_wave4PrepClosed_notInAuditDeferredOpsOrBatch275Tables() -> None:
+    """覆盖范围：已闭合项不得仍出现在 AUDIT_DEFERRED 活跃 DEFERRED 表
+    测试对象：AUDIT_DEFERRED Round 3 ops / Batch 2.75 / PROMPT_18 / Batch1 audit 段
+    目的/目标：CR-001 — 从 DEFERRED 表删除已迁 RESOLVED 的行
+    验证点：十项 ID 在四个 DEFERRED 段内无 | ID | 表行
+    失败含义：审计仍把已交付项当开放债重复派工
+    """
+    audit = _read(AUDIT_DEFERRED)
+    deferred_chunks = []
+    for header in (
+        "## DEFERRED — Round 3 ops",
+        "## DEFERRED — Round 3 Batch 2.75",
+        "## DEFERRED — Round 3 PROMPT_18 R3Y follow-ups",
+        "## DEFERRED — Round 3 Batch 1 audit",
+    ):
+        if header in audit:
+            deferred_chunks.append(audit.split(header, 1)[1].split("\n## ", 1)[0])
+
+    combined = "\n".join(deferred_chunks)
+    for item_id in WAVE4_PREP_CLOSED_IDS:
+        assert f"| {item_id}" not in combined, item_id
+
+
 def test_task019_requiresBatch3StagedOnlyDownstreamGate() -> None:
     """覆盖范围：019 任务卡对 Batch 3 staged-only 下游门禁的前置引用
     测试对象：019_implement_layer2_cross_asset_sensor.md
