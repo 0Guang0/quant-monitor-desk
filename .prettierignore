@@ -1,0 +1,2 @@
+# ponytail: Trellis archive evidence YAML are hand-authored fragments, not Prettier-safe.
+.trellis/tasks/archive/**/*.yaml

@@ -1,0 +1,46 @@
+{
+  "akshare_symbols": ["CN_A", "sh.600000", "sz.000001", "sh.601318"],
+  "baostock_symbols": ["CN_A", "sh.600000", "sz.000001", "sh.601318"],
+  "cninfo_symbols": ["sh.600000", "sz.000001", "sh.601318"],
+  "full_history_backfill": false,
+  "full_market_scan": false,
+  "max_network_calls_per_run": 50,
+  "max_rows_akshare": 1000,
+  "max_rows_baostock": 2000,
+  "max_rows_cninfo": 500,
+  "max_symbols_akshare": 10,
+  "max_symbols_baostock": 20,
+  "max_symbols_cninfo": 20,
+  "max_trade_days": 120,
+  "min_trade_days": 30,
+  "model_driven": true,
+  "pilot_id": "r3e-staged-pilot-v3-20260625",
+  "production_clean_write": false,
+  "sandbox_root": ".audit-sandbox/r3e-staged-pilot-v3",
+  "whitelist_ref": {
+    "aggregate_sha256": "b6b21936af0e1b2794a640080469640c451a2cfb00421db185463d02fc8a428a",
+    "files": [
+      {
+        "path": "specs/model_inputs/layer1_source_whitelist.yaml",
+        "sha256": "db3c63bdd3eb252d5dba4c5eb56827ea6dc50c5cfce9ff5f595ca8bde8784b26"
+      },
+      {
+        "path": "specs/model_inputs/layer2_source_whitelist.yaml",
+        "sha256": "c2954a89b3645873dd2f57c63e11a46a54f7071747b7f7463f11180f5f9206d3"
+      },
+      {
+        "path": "specs/model_inputs/layer3_anchor_source_plan.yaml",
+        "sha256": "3a671441bf375d2a12c969a026f6fcab9f478815dec712e98dbb43857550bd1f"
+      },
+      {
+        "path": "specs/model_inputs/layer4_market_source_plan.yaml",
+        "sha256": "6a756c76ab89c85ac5e426d504b8e2dd48a21ee673ad5f6832a373ef956600cb"
+      },
+      {
+        "path": "specs/model_inputs/layer5_instrument_source_plan.yaml",
+        "sha256": "c71b1ef113f74226f7027d3b3102b186761b1a809e4bff9c0a2e4014b068dc7a"
+      }
+    ],
+    "whitelist_root": "specs/model_inputs"
+  }
+}

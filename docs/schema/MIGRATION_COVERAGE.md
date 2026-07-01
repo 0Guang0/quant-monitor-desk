@@ -41,7 +41,7 @@
 ## Round 3 Layer 3 — industry chain (designed, no migration)
 
 > **SSOT:** `docs/modules/layer3_industry_shock_anchor.md` — **not** in `specs/schema/schema.sql` (design split).  
-> **Closure test:** `tests/test_migration_coverage.py` · **Reconcile matrix:** `.trellis/tasks/round3v-layer5-model-schema-reconcile/research/l5-reconcile-matrix.md` §3.1
+> **Closure test:** `tests/test_migration_coverage.py` · **Reconcile matrix:** `.trellis/tasks/archive/2026-07/round3v-layer5-model-schema-reconcile/research/l5-reconcile-matrix.md` §3.1
 
 | Object                          | Migration | Status   | Notes                          |
 | ------------------------------- | --------- | -------- | ------------------------------ |

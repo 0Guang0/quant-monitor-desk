@@ -55,21 +55,20 @@ def test_batch25ClosedItems_areResolvedAndNotStillOpen() -> None:
     assert ".audit-sandboxpytest-*/" in gitignore
 
 
-def test_hyg03_keepsOnlyPerformanceBudgetGapOpen() -> None:
-    """覆盖范围：R3-B25-HYG-03 性能预算缺口是否仍为唯一开放 hygiene 叙事
-    测试对象：UNRESOLVED_ISSUES_REGISTRY.md 中 HYG-03 段落
-    目的/目标：测试分层补齐后，开放项叙事应只追生产级性能基准缺口
-    验证点：含 R3-B25-HYG-03、test tier 已补、A08-P2-01/02、production-equivalent benchmark、performance-budget artifact；不含「无 test tier / 新 A6 benchmark」
-    失败含义：HYG-03 叙事陈旧，协调人不知道只剩性能基准证据缺口
+def test_hyg03_perfBudgetClosedInResolved() -> None:
+    """覆盖范围：R3-B25-HYG-03 / R3-B25-PERF-BUDGET-01 在 Wave 4 prep 后应已闭合
+    测试对象：RESOLVED_ISSUES_REGISTRY、UNRESOLVED_ISSUES_REGISTRY
+    目的/目标：perf budget CI artifact 交付后不得仍标 UNRESOLVED DEFERRED
+    验证点：两 ID 在 RESOLVED；UNRESOLVED 无 HYG-03 DEFERRED 行；RESOLVED 含 ci_perf_budget_artifact
+    失败含义：性能基准债叙事陈旧，协调人仍会重复开 Batch6 perf 切片
     """
+    resolved = _read(RESOLVED)
     unresolved = _read(UNRESOLVED)
 
-    assert "R3-B25-HYG-03" in unresolved
-    assert "test tier 已补" in unresolved
-    assert "A08-P2-01 / A08-P2-02" in unresolved
-    assert "production-equivalent benchmark" in unresolved
-    assert "performance-budget artifact" in unresolved
-    assert "无 test tier / 新 A6 benchmark" not in unresolved
+    for item_id in ("R3-B25-HYG-03", "R3-B25-PERF-BUDGET-01"):
+        assert item_id in resolved
+    assert "| R3-B25-HYG-03 | DEFERRED" not in unresolved
+    assert "ci_perf_budget_artifact" in resolved
 
 
 def test_task019_requiresBatch3StagedOnlyDownstreamGate() -> None:
@@ -363,27 +362,29 @@ def test_post14R2Risk3_failClosedModesDocumented() -> None:
         assert token in resolved
 
 
-_RECONCILED_TOKENS = (
-    "2026-06-25",
-    "Batch 3V",
-    "2aeb6f0",
-    "post-Batch 3V",
-    "master",
-)
+_RECONCILED_LINE_PREFIX = "> Last reconciled:"
+
+
+def _extract_last_reconciled_line(text: str) -> str:
+    for line in text.splitlines():
+        if line.startswith(_RECONCILED_LINE_PREFIX):
+            return " ".join(line.split())
+    raise AssertionError(f"missing {_RECONCILED_LINE_PREFIX!r} line")
 
 
 def test_r3yRegistrySlice_alpha2LastReconciled() -> None:
-    """覆盖范围：Batch 3V 合并后四份 SSOT 的对账戳一致性
+    """覆盖范围：四份 SSOT 的 Last reconciled 行 normalize 后完全一致
     测试对象：UNRESOLVED、RESOLVED、AUDIT_DEFERRED、UNRESOLVED_ITEM_TASK_COVERAGE
-    目的/目标：Last reconciled 块含同一组 mandatory tokens，防止措辞漂移
-    验证点：四份文档均含 2026-06-25、Batch 3V、2aeb6f0、post-Batch 3V、master
+    目的/目标：WAVE-B-HYG-02 — 子串匹配升级为整行相等，防措辞漂移
+    验证点：四份文档提取的 Last reconciled 行 normalize 后相同
     失败含义：对账戳不一致，并行 slice 无法判断 registry 是否同一次 reconcile
     """
     coverage = PROJECT_ROOT / "docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md"
-    for path in (UNRESOLVED, RESOLVED, AUDIT_DEFERRED, coverage):
-        text = _read(path)
-        for token in _RECONCILED_TOKENS:
-            assert token in text, f"missing {token!r} in {path.name} Last reconciled block"
+    paths = (UNRESOLVED, RESOLVED, AUDIT_DEFERRED, coverage)
+    lines = [_extract_last_reconciled_line(_read(path)) for path in paths]
+    canonical = lines[0]
+    for path, line in zip(paths[1:], lines[1:], strict=True):
+        assert line == canonical, f"{path.name} reconciled line drift:\n  got: {line}\n  exp: {canonical}"
 
 
 def test_r3yAdvLineageDefer_registrySSOTWithOwner021() -> None:

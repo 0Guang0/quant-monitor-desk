@@ -31,7 +31,7 @@ MAX_ROWS_PER_SERIES = 100
 MAX_NETWORK_CALLS_PER_RUN = 10
 DEFAULT_SANDBOX_ROOT = PROJECT_ROOT / ".audit-sandbox/r3e-fred-sandbox"
 DEFAULT_AUTHORIZATION_REL = (
-    ".trellis/tasks/round3-fred-authorized-sandbox-pilot/execute-evidence/authorization.yaml"
+    ".trellis/tasks/archive/2026-07/round3-fred-authorized-sandbox-pilot/execute-evidence/authorization.yaml"
 )
 
 

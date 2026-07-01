@@ -69,6 +69,36 @@ def test_fredIncrementalCli_execute_rejectsCanonicalDb(
     assert "production DB path refused" in exc_info.value.message
 
 
+def test_sandboxDbAllowed_permitsAuditSandboxDataRootAtImport(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """覆盖范围：QMD_DATA_ROOT 指向 .audit-sandbox 隔离库
+    测试对象：assert_sandbox_db_allowed
+    目的/目标：隔离验收/增量 sync 不得因 DATA_ROOT==目标库而误拒
+    验证点：audit-sandbox 下 db 路径 allow；canonical data/ 仍 refuse
+    失败含义：Wave3 隔离库真跑 fred/baostock 增量被错误 fail-closed
+    """
+    from backend.app import config as app_config
+    from backend.app.ops.sandbox_clean_write.rehearsal_runner import (
+        RehearsalRunnerError,
+        assert_sandbox_db_allowed,
+    )
+
+    audit_data = tmp_path / ".audit-sandbox" / "wave3-accept" / "data"
+    audit_db = audit_data / "duckdb" / "quant_monitor.duckdb"
+    audit_db.parent.mkdir(parents=True, exist_ok=True)
+    audit_db.write_bytes(b"")
+    monkeypatch.setattr(app_config, "DATA_ROOT", audit_data)
+    allowed = assert_sandbox_db_allowed(
+        audit_db, no_production_mutation=True, allow_isolated_data_root=True
+    )
+    assert allowed == audit_db.resolve()
+
+    canonical = app_config.PROJECT_ROOT / "data" / "duckdb" / "quant_monitor.duckdb"
+    with pytest.raises(RehearsalRunnerError, match="production DB path refused"):
+        assert_sandbox_db_allowed(canonical, no_production_mutation=True)
+
+
 def test_fredIncrementalCli_execute_mockInTest(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

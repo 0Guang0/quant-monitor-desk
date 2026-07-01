@@ -1,0 +1,38 @@
+{
+  "pilot_id": "r3e-fred-sandbox-20260625",
+  "status": "FRED_PILOT_PASS_RAW_ONLY",
+  "source_id": "fred",
+  "data_domain": "macro_series",
+  "operation": "fetch_macro_series",
+  "dry_run": true,
+  "write_target": "sandbox",
+  "production_clean_write": false,
+  "network_calls": 1,
+  "series": [
+    {
+      "series_id": "DGS10",
+      "source_fetch_id": "fred-mock-DGS10-d6dc97fa6672",
+      "content_hash": "3bdb59f0fb4dbbc8dd3eb40b0c25b812b09e8b6f68636807b3a1924cc9537915",
+      "as_of_timestamp": "2026-06-24T16:51:35.961763+00:00",
+      "retrieved_at": "2026-06-24T16:51:35.961763+00:00",
+      "rows": [
+        {
+          "series_id": "DGS10",
+          "observation_date": "2026-06-24",
+          "value": "4.25"
+        },
+        {
+          "series_id": "DGS10",
+          "observation_date": "2026-05-25",
+          "value": "4.24"
+        },
+        {
+          "series_id": "DGS10",
+          "observation_date": "2026-04-25",
+          "value": "4.23"
+        }
+      ]
+    }
+  ],
+  "manifest_path": ".trellis\\tasks\\round3-fred-authorized-sandbox-pilot\\execute-evidence\\fred_raw_manifest.json"
+}

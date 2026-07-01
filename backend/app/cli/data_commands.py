@@ -202,7 +202,9 @@ def _sync_fred_macro_incremental(
     data_root = _path_env("QMD_DATA_ROOT", PROJECT_ROOT / "data")
     db = data_root / "duckdb" / "quant_monitor.duckdb"
     try:
-        assert_sandbox_db_allowed(db, no_production_mutation=True)
+        assert_sandbox_db_allowed(
+            db, no_production_mutation=True, allow_isolated_data_root=True
+        )
     except RehearsalRunnerError as exc:
         raise CliFailure(
             error_code="INVALID_INPUT",
@@ -336,7 +338,9 @@ def sync_baostock_incremental(
     if not dry_run:
         _require_baostock_sync_operator_or_sandbox(DATA_ROOT)
         try:
-            assert_sandbox_db_allowed(db, no_production_mutation=True)
+            assert_sandbox_db_allowed(
+            db, no_production_mutation=True, allow_isolated_data_root=True
+        )
         except RehearsalRunnerError as exc:
             raise CliFailure(
                 error_code="INVALID_INPUT",

@@ -2,7 +2,28 @@
 
 > Purpose: one file for resolved/closed issues, gates, risks, and repairs.  
 > Pair: unresolved items live in `docs/UNRESOLVED_ISSUES_REGISTRY.md`.  
-> Last reconciled: 2026-06-28 post-Batch 3V Wave 0 on `integration/round3-batch3v` @ `45759eea`; prior 2026-06-25 Batch 3V on `master` @ `2aeb6f0`.
+> Last reconciled: 2026-07-01 Wave 4 prep hygiene on workspace atop `893e6e2b`; prior 2026-06-25 post-Batch 3V on `master` @ `2aeb6f0`.
+
+## Wave 4 prep hygiene resolved (2026-07-01)
+
+| ID                    | Closed     | Item                                                       | Evidence                                                                                                                                              |
+| --------------------- | ---------- | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R3-AUDIT-DEF-01       | 2026-07-01 | db-inspect contract YAML runtime SSOT + drift tests        | `backend/app/ops/db_inspector.py` · `tests/test_contract_drift_ops_write.py`                                                                          |
+| R2-GAP-1              | 2026-07-01 | `init_db --sync-registry` CI one-liner                     | `scripts/init_db.py` · `tests/test_qmd_data_cli.py` · `docs/ops/data_sync_quick_reference.md`                                                         |
+| R3-B25-PERF-BUDGET-01 | 2026-07-01 | Authoritative perf-budget CI artifact                      | `scripts/ci_perf_budget_artifact.py` · `specs/contracts/production_equivalent_smoke_budget.yaml` · `tests/test_production_equivalent_smoke_budget.py` |
+| R3-B25-HYG-03         | 2026-07-01 | Alias — production-equivalent benchmark artifact refreshed | same as `R3-B25-PERF-BUDGET-01`                                                                                                                       |
+| D3-P1-2               | 2026-07-01 | C901 on write-path hot functions — ADR wont-fix            | `docs/decisions/ADR-003-c901-write-path-complexity.md` · `tests/test_batch6_wave4_prep_closure.py`                                                    |
+| A9-P2-01              | 2026-07-01 | `manual_review_queue.priority` app-layer by ADR-002        | `docs/decisions/ADR-002-db-check-vs-app-validation.md` · `tests/test_round3f_migration_residuals.py`                                                  |
+| R2-RISK-4             | 2026-07-01 | App-layer-only `priority` documented + tested              | same as `A9-P2-01`                                                                                                                                    |
+| R3-B6-021-O-01        | 2026-07-01 | Layer3 malformed `bars[]` fail-closed                      | `snapshot_builder.py` · `test_layer3Snapshot_malformedBarElement_rejects`                                                                             |
+| R3-B6-021-O-02        | 2026-07-01 | Deterministic rebuild full row tuple                       | `test_layer3Snapshot_deterministicRebuild_sameInputsSameHash`                                                                                         |
+| R3Y-TEST-DEPTH-001    | 2026-07-01 | Lineage cluster runtime-strong depth (AUD-07 L05 scope)    | `tests/test_batch6_wave4_prep_closure.py` · lineage cluster tests                                                                                     |
+| WAVE-B-HYG-02         | 2026-07-01 | Four SSOT `Last reconciled` normalize equality             | `test_r3yRegistrySlice_alpha2LastReconciled`                                                                                                          |
+| WAVE-B-HYG-03         | 2026-07-01 | `QMD_SYNC_ALLOW_ADAPTER` ops escape hatch documented       | `docs/architecture/06_deployment_and_local_ops.md`                                                                                                    |
+| ACC-FLAKE-OBS-001     | 2026-07-01 | phase4 evidence test `QMD_DATA_ROOT` isolation             | `tests/test_layer1_observation_ingestion.py`                                                                                                          |
+| ACC-USER-LIVE-PATH    | 2026-07-01 | Local `DATA_ROOT` vs canonical prod path documented        | `docs/architecture/06_deployment_and_local_ops.md`                                                                                                    |
+| B3H-README-LAG        | 2026-07-01 | BATCH_3H README aligned to Wave 4 entry                    | `docs/implementation_tasks/.../BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/README.md`                                                                         |
+| MCR-LAG               | 2026-07-01 | MODULE_COMPLETION_RATING Pass D aligned                    | `MODULE_COMPLETION_RATING.md`                                                                                                                         |
 
 ## Post-Batch 3V resolved (2026-06-25; Wave 0 复验 2026-06-28)
 
@@ -25,15 +46,15 @@
 
 ## Post-Batch 01 resolved (2026-06-25)
 
-| ID           | Closed     | Item                                            | Evidence                                                                                                                                                                                                           |
-| ------------ | ---------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| R3-TASK-023  | 2026-06-25 | Full Layer5 evidence chain (`023b` / Wave D)    | merge `376e30e6` · `backend/app/layer5_evidence/evidence_chain.py` · `tests/test_layer5_evidence_chain.py` · `docs/adr/ADR-023-layer5-conflict-review-path.md` · `.trellis/tasks/round3-023b-evidence-chain-full/` |
-| R3D-B01-WL   | 2026-06-25 | Model input whitelist (Batch 3D.2 / B01-C01)    | merge `b09a3ca6` · `specs/model_inputs/**` · `docs/quality/model_input_readiness_matrix.md` · `tests/test_model_input_whitelist.py`                                                                                |
-| R3D-B01-LIN  | 2026-06-25 | Lineage & Layer3 hygiene (Batch 3D.3 / B01-LIN) | merge `06bcfde1` · debt-lite lineage/L3 hygiene tests                                                                                                                                                              |
-| R3E-B01-FRED | 2026-06-25 | FRED authorized sandbox pilot (3E.1 / B01-C02)  | merge `9ae91648` · registry三件套 `fred` · `tests/test_fred_sandbox_pilot.py` · FRED-only sandbox closeout; **does not** close live `B2.5-O-05` primary                                                            |
-| R3E-B01-TDX  | 2026-06-25 | TDX manual probe (3E.2 / B01-C03)               | merge `01ad6a07` · `tests/test_tdx_manual_probe.py` · mocked `PROBE_PASS_RAW_ONLY` · live `PROBE_REDEFERRED`                                                                                                       |
-| R3E-B01-SP3  | 2026-06-25 | Staged pilot v3 (3E.3 / B01-C04)                | merge `1a099e8d` · `tests/test_real_data_staged_pilot_v3.py` · proposed delta reconciled                                                                                                                           |
-| R3E-B01-DH2  | 2026-06-25 | Read-only data health v2 (3E.4 / B01-C05)       | merge `dd5fda5f` · `tests/test_data_health_v2.py` · read-only profiles; not production-ready                                                                                                                       |
+| ID           | Closed     | Item                                            | Evidence                                                                                                                                                                                                                                    |
+| ------------ | ---------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R3-TASK-023  | 2026-06-25 | Full Layer5 evidence chain (`023b` / Wave D)    | merge `376e30e6` · `backend/app/layer5_evidence/evidence_chain.py` · `tests/test_layer5_evidence_chain.py` · `docs/adr/ADR-023-layer5-conflict-review-path.md` · archived `.trellis/tasks/archive/2026-07/round3-023b-evidence-chain-full/` |
+| R3D-B01-WL   | 2026-06-25 | Model input whitelist (Batch 3D.2 / B01-C01)    | merge `b09a3ca6` · `specs/model_inputs/**` · `docs/quality/model_input_readiness_matrix.md` · `tests/test_model_input_whitelist.py`                                                                                                         |
+| R3D-B01-LIN  | 2026-06-25 | Lineage & Layer3 hygiene (Batch 3D.3 / B01-LIN) | merge `06bcfde1` · debt-lite lineage/L3 hygiene tests                                                                                                                                                                                       |
+| R3E-B01-FRED | 2026-06-25 | FRED authorized sandbox pilot (3E.1 / B01-C02)  | merge `9ae91648` · registry三件套 `fred` · `tests/test_fred_sandbox_pilot.py` · FRED-only sandbox closeout; **does not** close live `B2.5-O-05` primary                                                                                     |
+| R3E-B01-TDX  | 2026-06-25 | TDX manual probe (3E.2 / B01-C03)               | merge `01ad6a07` · `tests/test_tdx_manual_probe.py` · mocked `PROBE_PASS_RAW_ONLY` · live `PROBE_REDEFERRED`                                                                                                                                |
+| R3E-B01-SP3  | 2026-06-25 | Staged pilot v3 (3E.3 / B01-C04)                | merge `1a099e8d` · `tests/test_real_data_staged_pilot_v3.py` · proposed delta reconciled                                                                                                                                                    |
+| R3E-B01-DH2  | 2026-06-25 | Read-only data health v2 (3E.4 / B01-C05)       | merge `dd5fda5f` · `tests/test_data_health_v2.py` · read-only profiles; not production-ready                                                                                                                                                |
 
 ## Post-Wave C resolved (2026-06-24)
 

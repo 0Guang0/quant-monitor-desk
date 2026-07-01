@@ -14,6 +14,18 @@ qmd data health --domain market_bar_1d
 
 当前阶段这些是设计目标；现有脚本仍以 `scripts/init_db.py`、`scripts/sync_registry.py`、`scripts/production_equivalent_smoke.py` 为准。
 
+**已实现的 CI one-liner（R2-GAP-1）：**
+
+```bash
+uv run python scripts/init_db.py --sync-registry
+```
+
+**Perf budget 门禁（R3-B25-PERF-BUDGET-01）：**
+
+```bash
+uv run python scripts/ci_perf_budget_artifact.py
+```
+
 ## 安全规则
 
 1. 所有可能写数据的命令必须支持 `--dry-run`。

@@ -17,6 +17,30 @@
 - 错误码与排障：`docs/ops/ERROR_CODE_GUIDE.md`、`docs/ops/TROUBLESHOOTING.md`
 - qmt_xqshare 可选远程源：`docs/ops/qmt_xqshare_setup.md`
 
+## 本地数据根与生产路径（ACC-USER-LIVE-PATH）
+
+- **Canonical 生产 DuckDB 路径（护栏拒绝写入）：** `<PROJECT_ROOT>/data/duckdb/quant_monitor.duckdb`
+- **`QMD_DATA_ROOT`：** 可指向任意隔离目录（如 `.audit-sandbox/user-live`）；验收/排练须使用 `.audit-sandbox/wave3-acceptance-*` 等显式隔离树
+- **勿混淆：** `DATA_ROOT` 在 audit-sandbox 下 ≠「已授权生产 live」；R3G 排练仍拒绝 `DEFAULT_PRODUCTION_DB` 路径
+
+## 运维逃生口（WAVE-B-HYG-03）
+
+- **`QMD_SYNC_ALLOW_ADAPTER=1`：** 仅紧急运维；绕过 sync orchestrator 的 adapter 旁路 guard。**不得**作为 Wave 4 PASS 或 production-live 依据；部署检查须确认未在生产环境默认开启
+
+## CI 一键初始化（R2-GAP-1）
+
+```bash
+uv run python scripts/init_db.py --sync-registry
+```
+
+## CI perf budget（R3-B25-PERF-BUDGET-01）
+
+```bash
+uv run python scripts/ci_perf_budget_artifact.py
+```
+
+产物：`.audit-sandbox/r3b275-audit/production_equivalent_smoke_budget.json`（隔离库 · 不授权 live 源）
+
 ## Round2.6 部署补充：平台矩阵与 optional extras
 
 默认部署仍为 local-first / eco mode。新增真实数据源、远程 QMT、回测、Agent 或 docs site 能力时，必须遵守：
@@ -29,12 +53,12 @@
 
 平台边界摘要：
 
-| Source | Windows | macOS/Linux | Default |
-|---|---|---|---|
-| `baostock` | 可用 | 可用 | enabled |
-| `akshare` | 可用 | 可用 | validation / controlled |
-| `qmt_xtdata` | 用户本机授权后可用 | 不默认可用 | disabled |
-| `qmt_xqshare` | 配置远程 host/port 后可选 | 配置远程 host/port 后可选 | disabled |
-| `yahoo_finance` | 可选验证源 | 可选验证源 | disabled |
+| Source          | Windows                   | macOS/Linux               | Default                 |
+| --------------- | ------------------------- | ------------------------- | ----------------------- |
+| `baostock`      | 可用                      | 可用                      | enabled                 |
+| `akshare`       | 可用                      | 可用                      | validation / controlled |
+| `qmt_xtdata`    | 用户本机授权后可用        | 不默认可用                | disabled                |
+| `qmt_xqshare`   | 配置远程 host/port 后可选 | 配置远程 host/port 后可选 | disabled                |
+| `yahoo_finance` | 可选验证源                | 可选验证源                | disabled                |
 
 Phase A 不修改依赖文件、不新增外部服务、不启用任何远程源。

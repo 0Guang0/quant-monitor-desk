@@ -37,7 +37,7 @@ DEFAULT_AUTH_PATH = (
     PROJECT_ROOT / "docs/quality/tdx_pytdx_live_manual_probe_authorization_2026-06-24.md"
 )
 DEFAULT_SANDBOX_ROOT = PROJECT_ROOT / ".audit-sandbox/tdx-pytdx-live-manual-probe"
-DEFAULT_EVIDENCE_DIR = PROJECT_ROOT / ".trellis/tasks/round3-tdx-manual-probe/execute-evidence"
+DEFAULT_EVIDENCE_DIR = PROJECT_ROOT / ".trellis/tasks/archive/2026-07/round3-tdx-manual-probe/execute-evidence"
 DEFAULT_PRODUCTION_DB = DATA_ROOT / "duckdb" / "quant_monitor.duckdb"
 
 SECURITY_LIST_CAP = 20

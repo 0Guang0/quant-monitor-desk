@@ -36,6 +36,7 @@ Used with MIGRATION_MAP.md for machine omission checks (`check_docs_specs_indexe
 - `docs/architecture/module_boundary_matrix.md`
 - `docs/decisions/ADR-001-ingestion-validation-write-transaction-boundary.md`
 - `docs/decisions/ADR-002-db-check-vs-app-validation.md`
+- `docs/decisions/ADR-003-c901-write-path-complexity.md`
 - `docs/decisions/ADR-003-implementation-path-mapping.md`
 - `docs/decisions/ADR-024-source-health-snapshot-boundary.md`
 - `docs/decisions/ADR-025-r3h10-sync-fail-closed-datasource-service.md`

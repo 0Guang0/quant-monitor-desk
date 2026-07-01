@@ -1,0 +1,13 @@
+{
+  "id": "round3v-layer5-model-schema-reconcile",
+  "name": "round3v-layer5-model-schema-reconcile",
+  "title": "Batch 3V Layer5 model schema reconcile (debt-lite)",
+  "description": "Layer5 evidence chain schema/hash reconcile evidence for Batch 3V.",
+  "status": "completed",
+  "completedAt": "2026-07-01",
+  "notes": "Debt-lite evidence; scope partial; Wave 4 R3-DCP-10 owns production bind; archived 2026-07-01",
+  "meta": {
+    "task_track": "debt-lite",
+    "deferred_to": "R3-DCP-10"
+  }
+}

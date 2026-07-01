@@ -19,7 +19,6 @@ TASK_README = PROJECT_ROOT / "docs/implementation_tasks/README.md"
 EXPECTED_UNRESOLVED_IDS = {
     "R2.6-IMPL-6",
     "R2.6-IMPL-8",
-    "R3-AUDIT-DEF-01",
     "R3-AUDIT-DEF-02",
     "R3-B2.75-01",
     "R3-PARTIAL-1",
@@ -29,22 +28,17 @@ EXPECTED_UNRESOLVED_IDS = {
     "D2-P1-3",
     "D2-P2-1",
     "D2-P2-2",
-    "R2-GAP-1",
     "D2-P3-1",
     "D7-P1-1",
     "D7-P2-2",
-    "D3-P1-2",
-    "A9-P2-01",
     "A9-P3-01",
     "R2-RISK-1",
     "R2-RISK-2",
-    "R2-RISK-4",
     "R2-HYG-4",
     "R2-HYG-5",
     "B2.5-O-05",
     "R3-B25-HYG-01",
     "R3-B25-HYG-02",
-    "R3-B25-HYG-03",
     "R2-GAP-2",
     "R4-API-SEC-3",
     "R4-API-SEC-4",
@@ -63,7 +57,6 @@ EXPECTED_UNRESOLVED_IDS = {
     "R4-FE-2",
     "R4-FE-3",
     "R3-PROMPT14-AKSHARE-VAL-01",
-    "R3Y-TEST-DEPTH-001",
     "ADV-R3X-LINEAGE-001",
     "R3Y-LINEAGE-VR-001",
     "R2-RISK-5",
@@ -351,6 +344,40 @@ def test_batch3vMigration009Check_closedInResolvedNotOpen() -> None:
     for item_id in ("A9-P1-01", "A9-P2-02", "B2.5-O-06"):
         assert item_id in resolved
         assert f"| {item_id}" not in unresolved or f"| {item_id}              | DEFERRED" not in unresolved
+
+
+def test_wave4PrepR2Gap1_closedInResolvedNotOpen() -> None:
+    """覆盖范围：R2-GAP-1 init_db --sync-registry 在 Wave 4 prep 后应已闭合
+    测试对象：RESOLVED、UNRESOLVED、COVERAGE registries
+    目的/目标：CI one-liner 已文档化+测试，不得仍标 DEFERRED
+    验证点：R2-GAP-1 在 RESOLVED 与 COVERAGE CLOSED；UNRESOLVED 无 DEFERRED 行
+    失败含义：init 卫生债仍标开放，Wave 4 会重复开 R3F-CLI-03
+    """
+    resolved = _read(RESOLVED)
+    unresolved = _read(UNRESOLVED)
+    coverage = _read(COVERAGE)
+
+    assert "R2-GAP-1" in resolved
+    assert "R2-GAP-1" in coverage
+    assert "CLOSED" in coverage.split("R2-GAP-1", maxsplit=1)[1][:220]
+    assert "| R2-GAP-1              | DEFERRED" not in unresolved
+
+
+def test_wave4PrepR3AuditDef01_closedInResolvedNotOpen() -> None:
+    """覆盖范围：R3-AUDIT-DEF-01 contract SSOT 在 Wave 4 prep 后应已闭合
+    测试对象：RESOLVED、UNRESOLVED、COVERAGE registries
+    目的/目标：db_inspector YAML loader + drift test 已交付
+    验证点：R3-AUDIT-DEF-01 在 RESOLVED 与 COVERAGE CLOSED；UNRESOLVED 无 DEFERRED 行
+    失败含义：inspect 契约漂移债仍标开放，会重开 B3V-C01
+    """
+    resolved = _read(RESOLVED)
+    unresolved = _read(UNRESOLVED)
+    coverage = _read(COVERAGE)
+
+    assert "R3-AUDIT-DEF-01" in resolved
+    assert "R3-AUDIT-DEF-01" in coverage
+    assert "CLOSED" in coverage.split("R3-AUDIT-DEF-01", maxsplit=1)[1][:220]
+    assert "| R3-AUDIT-DEF-01       | DEFERRED" not in unresolved
 
 
 def test_r3yOpenItems_ownerBranchesInCoverageSection45() -> None:

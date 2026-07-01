@@ -1,0 +1,13 @@
+{
+  "id": "round3v-registry-manifest-consistency",
+  "name": "round3v-registry-manifest-consistency",
+  "title": "Batch 3V registry manifest consistency (verify-only)",
+  "description": "Registry/docs alignment evidence for Wave 0 Batch 3V closeout.",
+  "status": "completed",
+  "completedAt": "2026-07-01",
+  "notes": "Verify-only debt-lite; Batch 3V CLOSED; proposed delta for main-session merge; archived 2026-07-01",
+  "meta": {
+    "task_track": "debt-lite",
+    "superseded_by": "round3f-registry-batch-closeout"
+  }
+}

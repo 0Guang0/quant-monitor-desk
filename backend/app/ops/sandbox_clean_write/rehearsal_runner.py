@@ -80,17 +80,27 @@ class RehearsalRequest:
     fred_authorization: Path | None = None
 
 
-def assert_sandbox_db_allowed(sandbox_db: Path, *, no_production_mutation: bool) -> Path:
+def assert_sandbox_db_allowed(
+    sandbox_db: Path,
+    *,
+    no_production_mutation: bool,
+    allow_isolated_data_root: bool = False,
+) -> Path:
     if not no_production_mutation:
         raise RehearsalRunnerError("--no-production-mutation is required for R3G-01")
     resolved = resolve_sandbox_path(sandbox_db)
+    canonical_prod = (PROJECT_ROOT / "data" / "duckdb" / "quant_monitor.duckdb").resolve()
+    if (
+        allow_isolated_data_root
+        and ".audit-sandbox" in str(resolved)
+        and resolved != canonical_prod
+    ):
+        return resolved
     prod = DEFAULT_PRODUCTION_DB.resolve()
-    # ponytail: read DATA_ROOT at call time — tests may monkeypatch config.DATA_ROOT
     from backend.app import config as app_config
 
-    default_prod = (app_config.DATA_ROOT / "duckdb" / "quant_monitor.duckdb").resolve()
-    canonical_prod = (PROJECT_ROOT / "data" / "duckdb" / "quant_monitor.duckdb").resolve()
-    if resolved in {prod, default_prod, canonical_prod}:
+    default_at_data_root = (app_config.DATA_ROOT / "duckdb" / "quant_monitor.duckdb").resolve()
+    if resolved in {prod, canonical_prod, default_at_data_root}:
         raise RehearsalRunnerError("production DB path refused for sandbox rehearsal")
     return resolved
 

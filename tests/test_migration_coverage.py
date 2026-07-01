@@ -166,7 +166,7 @@ def test_migrationCoverage_cleanDomainTables_existAfter013() -> None:
 
 def test_migrationCoverage_matrixDocPath_exists() -> None:
     """覆盖范围：VR-MODEL-001 矩阵 SSOT 文件可达
-    测试对象：.trellis/tasks/round3v-layer5-model-schema-reconcile/research/l5-reconcile-matrix.md
+    测试对象：.trellis/tasks/archive/2026-07/round3v-layer5-model-schema-reconcile/research/l5-reconcile-matrix.md
     目的/目标：closure test 须能指向落盘矩阵，防止仅 pytest 过关无文档
     验证点：矩阵文件存在且含 VR-MODEL-001 与 VR-L5-001 关键字
     失败含义：registry proposed delta 引用的矩阵路径断裂
@@ -174,7 +174,7 @@ def test_migrationCoverage_matrixDocPath_exists() -> None:
     repo_root = Path(__file__).resolve().parents[1]
     matrix = (
         repo_root
-        / ".trellis/tasks/round3v-layer5-model-schema-reconcile/research/l5-reconcile-matrix.md"
+        / ".trellis/tasks/archive/2026-07/round3v-layer5-model-schema-reconcile/research/l5-reconcile-matrix.md"
     )
     assert matrix.is_file()
     text = matrix.read_text(encoding="utf-8")

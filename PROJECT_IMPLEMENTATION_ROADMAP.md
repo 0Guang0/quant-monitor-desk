@@ -340,6 +340,13 @@ Round4  B04-01 先 · 产品只读
 | Wave 4（R3-DCP-05..10 + **五轴全绿**）   | 🔴 OPEN                                              |
 | Wave 5（R3H-05 + GATE）                  | 🔴 OPEN                                              |
 
+### 3.7.1 Wave 3 隔离生产验收（2026-07-01）
+
+> **报告 SSOT：** `WAVE3_PRODUCTION_ACCEPTANCE_REPORT.md`（隔离库 · 主库零污染）  
+> **脚本：** `scripts/wave3_isolated_production_acceptance.py`  
+> **证据：** `.audit-sandbox/wave3-acceptance-20260701T122*`（P0–P2 关账后复验）— **11/11 PASS**  
+> **结论摘要：** Wave 1–3 **代码链路验收通过**；**P0–P2 卫生 15 项已关账**（见 `待修复清单.md` §1）；**正式 PASS** 仍待 Wave 4 `R3-DCP-06` 五轴 + Wave 5 `R3H-05-GATE`。
+
 ### 3.8 `/to-issues` 索引文件（随开工增补）
 
 | 波次     | 建议路径（主会话创建）                                               |
@@ -480,9 +487,9 @@ Round5 **不补功能**。
 | Batch 3V      | CLOSED | A3,B1,G5,C1…      | 历史 (= 旧 Wave 0)      |
 | R3H-01～04    | CLOSED | C3,A3,G\*         | 历史                    |
 | R3H-06        | CLOSED | B1,A2             | 历史 (= 旧 Wave 1)      |
-| R3H-07        | OPEN   | G4,C3             | **Wave 1**              |
-| R3H-10        | OPEN   | C2,E4             | **Wave 1**              |
-| R3H-08A–D     | OPEN   | C3,A3,B\*,G6      | **Wave 2**              |
+| R3H-07        | CLOSED | G4,C3             | **Wave 1** @ 2026-06-29 |
+| R3H-10        | CLOSED | C2,E4             | **Wave 1** @ 2026-06-29 |
+| R3H-08A–D     | CLOSED | C3,A3,B\*,G6      | **Wave 2** @ 2026-06-29 |
 | R3-DCP-01..03 | CLOSED | D1,E1,E2,F0       | **Wave 3** @ 2026-06-30 |
 | R3-DCP-05..10 | OPEN   | D1,G1,K2,G2,G4,G5 | **Wave 4**              |
 | R3H-05 + GATE | OPEN   | 全表              | **Wave 5**              |

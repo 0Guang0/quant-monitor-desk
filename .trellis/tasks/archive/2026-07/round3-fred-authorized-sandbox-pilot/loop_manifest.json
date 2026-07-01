@@ -1,0 +1,41 @@
+{
+  "task": "round3-fred-authorized-sandbox-pilot",
+  "modules": ["layer1_axes", "datasources", "ops"],
+  "acs": [
+    {
+      "id": "FRED-01",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "FRED-02",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "FRED-03",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "FRED-04",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "FRED-05",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "FRED-06",
+      "status": "pending",
+      "repair_items": []
+    },
+    {
+      "id": "FRED-07",
+      "status": "pending",
+      "repair_items": []
+    }
+  ]
+}

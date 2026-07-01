@@ -265,7 +265,7 @@ def test_tdx06_registryProposedDelta_yamlExists() -> None:
 
     path = (
         PROJECT_ROOT
-        / ".trellis/tasks/round3-tdx-manual-probe/research/registry_proposed_delta.yaml"
+        / ".trellis/tasks/archive/2026-07/round3-tdx-manual-probe/research/registry_proposed_delta.yaml"
     )
     assert path.is_file(), "registry_proposed_delta.yaml must exist for TDX-06"
     data = yaml.safe_load(path.read_text(encoding="utf-8"))

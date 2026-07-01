@@ -22,6 +22,10 @@ from backend.app.ops.fred_sandbox_pilot import (
 )
 from tests.contract_gate_support import PROJECT_ROOT
 
+_FRED_PILOT_TASK_ROOT = (
+    PROJECT_ROOT / ".trellis/tasks/archive/2026-07/round3-fred-authorized-sandbox-pilot"
+)
+
 
 def test_fredRoutePreview_whitelistedSeries_sandboxOnly() -> None:
     """覆盖范围：P0 FRED series 路由预览
@@ -242,11 +246,7 @@ def test_fred07_liveFetch_closureClosedSkipOptIn_withoutApiKey() -> None:
     验证点：closure 文档含 CLOSED-SKIP-OPT-IN；authorization 存在；无 key 时 live 须 FAIL_AUTH
     失败含义：可选 live 切片被标 OPEN 会阻塞 Audit 零遗留
     """
-    closure_doc = (
-        PROJECT_ROOT
-        / ".trellis/tasks/round3-fred-authorized-sandbox-pilot/research"
-        / "b01-fred-audit-closures.md"
-    )
+    closure_doc = _FRED_PILOT_TASK_ROOT / "research" / "b01-fred-audit-closures.md"
     assert closure_doc.is_file()
     closure_text = closure_doc.read_text(encoding="utf-8")
     assert "FRED-07" in closure_text
@@ -277,11 +277,7 @@ def test_b250o05_reDeferred_closureRowClosed() -> None:
     验证点：closure 行含 Batch 6、RE-DEFERRED、closure test 锚点；b2_5_o_05_closed=false
     失败含义：缺书面 re-defer 会导致 registry 与 pilot 证据脱节
     """
-    closure_doc = (
-        PROJECT_ROOT
-        / ".trellis/tasks/round3-fred-authorized-sandbox-pilot/research"
-        / "b01-fred-audit-closures.md"
-    )
+    closure_doc = _FRED_PILOT_TASK_ROOT / "research" / "b01-fred-audit-closures.md"
     text = closure_doc.read_text(encoding="utf-8")
     for token in (
         "B2.5-O-05",
@@ -294,7 +290,7 @@ def test_b250o05_reDeferred_closureRowClosed() -> None:
         assert token in text
     assert "| OPEN |" not in text
 
-    task_root = PROJECT_ROOT / ".trellis/tasks/round3-fred-authorized-sandbox-pilot"
+    task_root = _FRED_PILOT_TASK_ROOT
     closeout_path = task_root / "execute-evidence/fred_pilot_closeout.json"
 
     closeout = json.loads(closeout_path.read_text(encoding="utf-8"))

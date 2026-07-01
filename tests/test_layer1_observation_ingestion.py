@@ -1805,6 +1805,8 @@ def test_layer1Ingestion_phase4_taskEvidenceArtifacts(tmp_path: Path, monkeypatc
     out = tmp_path / "evidence"
     data_root = tmp_path / "data"
     data_root.mkdir()
+    # ACC-FLAKE-OBS-001: isolate DATA_ROOT so parallel/full-suite runs do not share state.
+    monkeypatch.setenv("QMD_DATA_ROOT", str(data_root))
     db = tmp_path / "db.duckdb"
     _init_db(db)
     inventory = capture_phase1_inventory(db, data_root, evidence_dir=out)
