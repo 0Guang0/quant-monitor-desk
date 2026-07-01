@@ -289,7 +289,8 @@ def _parse_sync_date(value: str, *, field: str) -> date:
 
 
 def _require_baostock_sync_operator_or_sandbox(data_root: Path) -> None:
-    if ".audit-sandbox" not in str(data_root.resolve()):
+    resolved = data_root.resolve()
+    if not any(p in {".audit-sandbox", "audit-sandbox"} for p in resolved.parts):
         raise CliFailure(
             error_code="USER_AUTH_REQUIRED",
             message=(
@@ -298,6 +299,12 @@ def _require_baostock_sync_operator_or_sandbox(data_root: Path) -> None:
             ),
             docs_anchor="docs/ops/data_sync_quick_reference.md",
             manual_confirmation_required=True,
+        )
+    if "user-live" in resolved.parts:
+        raise CliFailure(
+            error_code="INVALID_INPUT",
+            message="user-live audit path refused for sync without --dry-run",
+            docs_anchor="docs/ops/data_sync_quick_reference.md",
         )
 
 

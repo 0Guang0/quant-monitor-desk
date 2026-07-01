@@ -234,3 +234,23 @@ def markdown_paths_missing_phrase(phrase: str, paths: tuple[Path, ...]) -> list[
         for path in paths
         if path.is_file() and phrase not in path.read_text(encoding="utf-8")
     ]
+
+
+def collect_pytest_node_id(node_id: str) -> None:
+    """Fail if pytest cannot collect a single node id (registry closure evidence)."""
+    import subprocess
+    import sys
+
+    proc = subprocess.run(
+        [sys.executable, "-m", "pytest", node_id, "--collect-only"],
+        cwd=str(PROJECT_ROOT),
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    combined = f"{proc.stdout}\n{proc.stderr}"
+    assert proc.returncode == 0, (
+        f"pytest --collect-only failed for {node_id!r}:\n{combined}"
+    )
+    test_name = node_id.split("::", 1)[-1]
+    assert test_name in combined, node_id

@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import subprocess
-import sys
 from pathlib import Path
 
 import pytest
@@ -13,7 +11,8 @@ from backend.app.layer3_chains.snapshot_builder import (
     _bar_for_trade_date,
 )
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
+from tests.contract_gate_support import PROJECT_ROOT, collect_pytest_node_id
+
 _ARCHIVE_2026_06 = PROJECT_ROOT / ".trellis" / "tasks" / "archive" / "2026-06"
 TASK_DIR = _ARCHIVE_2026_06 / "round3f-batch6-lineage-layer3-closure"
 MANIFEST_PATH = TASK_DIR / "research" / "closure-evidence-manifest.yaml"
@@ -27,29 +26,6 @@ _EXPECTED_ROADMAP_IDS = (
     "R3F-LIN-01",
     "R3F-LIN-01-l3",
 )
-
-
-def _collect_node_id(node_id: str) -> None:
-    """Run pytest --collect-only for a single node id; fail if not collectible."""
-    proc = subprocess.run(
-        [
-            sys.executable,
-            "-m",
-            "pytest",
-            node_id,
-            "--collect-only",
-        ],
-        cwd=str(PROJECT_ROOT),
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    combined = f"{proc.stdout}\n{proc.stderr}"
-    assert proc.returncode == 0, (
-        f"pytest --collect-only failed for {node_id!r}:\n{combined}"
-    )
-    test_name = node_id.split("::", 1)[-1]
-    assert test_name in combined, node_id
 
 
 def test_b3fLin_closureEvidenceManifest_listsAllRoadmapIds() -> None:
@@ -123,4 +99,4 @@ def test_b3fLin_closureTests_mapToCollectibleNodes() -> None:
     assert closure_tests, "closure_tests empty"
     for roadmap_id, node_id in closure_tests.items():
         assert isinstance(node_id, str) and "::" in node_id, roadmap_id
-        _collect_node_id(node_id)
+        collect_pytest_node_id(node_id)

@@ -130,6 +130,7 @@ def main() -> int:
                 "tests/test_round3_verification_command_matrix.py",
                 "tests/test_unresolved_item_task_coverage.py",
                 "tests/test_round3_audit_registry_alignment.py",
+                "tests/test_batch6_wave4_prep_closure.py",
                 "tests/test_production_live_pilot_policy.py",
                 "-q",
                 "--tb=no",

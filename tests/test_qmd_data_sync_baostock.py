@@ -125,6 +125,23 @@ def test_qmdData_syncBaostock_operatorAuthRequired(monkeypatch, tmp_path: Path) 
         data_commands.sync_baostock_incremental(dry_run=False, end="2024-06-25")
 
 
+def test_qmdData_syncBaostock_rejectsUserLiveAuditPath(monkeypatch, tmp_path: Path) -> None:
+    """覆盖范围：baostock 真跑拒绝 user-live 类生产 audit 路径
+    测试对象：sync_baostock_incremental dry_run=False
+    目的/目标：与 fred/sandbox guard 一致；user-live 不得被增量 sync 写入
+    验证点：QMD_DATA_ROOT=.audit-sandbox/user-live → CliFailure INVALID_INPUT
+    失败含义：类生产路径可被 baostock 增量污染
+    """
+    data_root = tmp_path / ".audit-sandbox" / "user-live"
+    data_root.mkdir(parents=True)
+    monkeypatch.setenv("QMD_DATA_ROOT", str(data_root))
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    with pytest.raises(CliFailure) as exc_info:
+        data_commands.sync_baostock_incremental(dry_run=False, end="2024-06-25")
+    assert exc_info.value.error_code == "INVALID_INPUT"
+    assert "user-live" in exc_info.value.message
+
+
 def test_qmdData_syncBaostock_invalidInputDates(monkeypatch, tmp_path: Path) -> None:
     """覆盖范围：非法 CLI 日期输入
     测试对象：sync_baostock_incremental 日期解析

@@ -3,27 +3,11 @@
 from __future__ import annotations
 
 import importlib.util
-import subprocess
-import sys
 from pathlib import Path
 
 import pytest
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-
-
-def _collect_node_id(node_id: str) -> None:
-    proc = subprocess.run(
-        [sys.executable, "-m", "pytest", node_id, "--collect-only"],
-        cwd=str(PROJECT_ROOT),
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    combined = f"{proc.stdout}\n{proc.stderr}"
-    assert proc.returncode == 0, (
-        f"pytest --collect-only failed for {node_id!r}:\n{combined}"
-    )
+from tests.contract_gate_support import PROJECT_ROOT, collect_pytest_node_id
 
 _LINEAGE_RUNTIME_STRONG = (
     "tests/test_layer3_snapshot_builder.py::test_layer3Snapshot_malformedBarElement_rejects",
@@ -34,10 +18,10 @@ _LINEAGE_RUNTIME_STRONG = (
 
 
 def test_r3yTestDepth_lineageClusterRuntimeStrongPresent() -> None:
-    """覆盖范围：lineage 簇 runtime-strong 反证测试是否登记
+    """覆盖范围：lineage 簇 runtime-strong 反证测试是否登记且可收集
     测试对象：R3Y-TEST-DEPTH-001 要求的 lineage 簇 pytest 锚点
     目的/目标：closed-claim 反证深度在 lineage 簇有可执行 runtime-strong 测
-    验证点：四个锚定 test node id 对应的源文件与 def 名均存在
+    验证点：四锚点源文件/def 存在；各 node id pytest --collect-only 成功
     失败含义：AUD-07 lineage 深度债未闭合，Wave 4 前 hygiene 回退
     """
     for node_id in _LINEAGE_RUNTIME_STRONG:
@@ -46,7 +30,7 @@ def test_r3yTestDepth_lineageClusterRuntimeStrongPresent() -> None:
         assert path.is_file(), f"missing {rel_path}"
         text = path.read_text(encoding="utf-8")
         assert f"def {func_name}" in text, f"missing {func_name} in {rel_path}"
-        _collect_node_id(node_id)
+        collect_pytest_node_id(node_id)
 
 
 def test_d3p12_c901WontFixAdrDocumentsHotPath() -> None:

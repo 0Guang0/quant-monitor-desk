@@ -407,7 +407,8 @@ def test_wave4PrepClosed_inResolvedNotDeferred(item_id: str) -> None:
     assert item_id in resolved
     assert item_id in coverage
     assert "CLOSED" in coverage.split(item_id, maxsplit=1)[1][:240]
-    assert f"| {item_id}" not in unresolved or f"| {item_id} | DEFERRED" not in unresolved
+    assert f"| {item_id} | DEFERRED" not in unresolved
+    assert f"| {item_id} | OPEN" not in unresolved
 
 
 def test_wave4PrepSection10_lineageOnlyStillDeferred() -> None:

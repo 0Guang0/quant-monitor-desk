@@ -85,6 +85,12 @@ WAVE4_PREP_CLOSED_IDS = (
 )
 
 
+def _deferred_table_has_id(chunk: str, item_id: str) -> bool:
+    return any(
+        line.lstrip().startswith(f"| {item_id} |") for line in chunk.splitlines()
+    )
+
+
 def test_wave4PrepClosed_traceableInAuditDeferredResolved() -> None:
     """覆盖范围：Wave 4 prep 已闭合项在 AUDIT_DEFERRED RESOLVED 段可追溯
     测试对象：RESOLVED_ISSUES_REGISTRY、AUDIT_DEFERRED_REGISTRY §Wave 4 prep
@@ -121,7 +127,7 @@ def test_wave4PrepClosed_notInAuditDeferredOpsOrBatch275Tables() -> None:
 
     combined = "\n".join(deferred_chunks)
     for item_id in WAVE4_PREP_CLOSED_IDS:
-        assert f"| {item_id}" not in combined, item_id
+        assert not _deferred_table_has_id(combined, item_id), item_id
 
 
 def test_task019_requiresBatch3StagedOnlyDownstreamGate() -> None:
