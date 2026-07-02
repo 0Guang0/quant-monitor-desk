@@ -1,0 +1,100 @@
+# R3-DCP-08 Registry Proposed Delta (COORDINATOR-QUEUED)
+
+> **Owner:** Wave 4 main session · B3F-REG policy  
+> **Task:** R3-DCP-08 S08-REG-MOOTDX / S08-REG-EM  
+> **Rule:** 并行 agent **不得** 直接改 registry 三件套；本文件供 merge coordinator apply
+
+---
+
+## ACC-MOOTDX-DRYRUN-ROUTE-001
+
+### source_registry.yaml — `mootdx` entry
+
+```yaml
+# delta (proposed)
+- source_id: mootdx
+  default_role: Primary          # was: Validation
+  validation_only: false         # was: true — explicit --source-id mootdx clean write path
+  notes: >-
+    ... existing ...
+    ACC-MOOTDX-DRYRUN-ROUTE-001 CLOSED @ R3-DCP-08:
+    explicit --source-id mootdx → effective primary for cn_equity_daily_bar;
+    domain default primary remains baostock for product sync without --source-id.
+    Dry-run JSON selected_source_id MUST be mootdx when --source-id mootdx.
+```
+
+### source_capabilities.yaml — `mootdx` entry
+
+```yaml
+# delta (proposed)
+notes: >-
+  ... existing ...
+  R3-DCP-08: validation_only=false in registry for explicit sync;
+  dry-run route overlay aligns selected_source_id with CLI --source-id.
+```
+
+### domain_roles.cn_equity_daily_bar
+
+```yaml
+# unchanged primary
+primary: baostock
+validation:
+  - akshare
+  - mootdx   # ADD — document mootdx as validation + explicit-sync primary
+# ADD notes field (if supported) or registry header comment:
+# explicit_source_primary:
+#   mootdx: when CLI --source-id mootdx (ADR-033 dual-primary)
+```
+
+### Runtime (Execute S08-REG-MOOTDX — after registry apply)
+
+- Remove `object.__setattr__(..., "validation_only", False)` hack in `sync_mootdx_incremental` when registry reflects `validation_only: false`.
+- Dry-run branch: ensure preview uses mootdx-scoped registry so `selected_source_id == "mootdx"`.
+
+### Verification
+
+```bash
+uv run pytest tests/test_qmd_data_sync_tier_a_router.py -k mootdx -q
+# new: dry-run JSON selected_source_id == mootdx
+```
+
+---
+
+## ACC-EASTMONEY-TAXONOMY-001 (partial — 不关 REQ2-EM)
+
+### source_registry.yaml — `eastmoney` entry
+
+```yaml
+notes: >-
+  ... existing ACC-EASTMONEY pointer ...
+  R3-DCP-08 taxonomy SSOT:
+  - cn_equity_daily_bar incremental product path: baostock (primary) / mootdx (explicit)
+  - eastmoney: validation-only for bar hist; sector_board + capital_flow separate domains
+  - does NOT close R3-B2.75-REQ2-EM (akshare stock_zh_a_hist live unreachable)
+```
+
+### source_capabilities.yaml — `eastmoney` entry
+
+```yaml
+notes: >-
+  ... append ...
+  Product bar path: NOT eastmoney (see baostock/mootdx).
+  Validation domains: cn_index, sector_board, capital_flow — do not conflate with bar hist taxonomy.
+```
+
+### docs/ops/data_sync_quick_reference.md
+
+- Add § **Eastmoney taxonomy (ACC-EASTMONEY-TAXONOMY-001)** if not complete: mock replay vs REQ2 hist live boundary.
+
+### Explicit non-goals
+
+- **Do NOT** enable eastmoney hist live
+- **Do NOT** mark REQ2-EM resolved
+
+---
+
+## Merge gate
+
+- [x] Coordinator applies YAML on `master` after DCP-08 Execute PR merge (applied @ R3-DCP-08 Repair worktree)
+- [x] `tests/test_registry_*.py` / cross-ref tests green
+- [x] `待修复清单.md` §4 rows updated to RESOLVED (partial for EM)

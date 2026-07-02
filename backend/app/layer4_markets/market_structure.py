@@ -22,6 +22,8 @@ STAGED_LAYER4_BUNDLE_DIR = PROJECT_ROOT / "tests" / "fixtures" / "layer4_staged_
 
 _RULE_VERSION = "layer4_market_staged_v1"
 _CODE_VERSION = "layer4-staged-v1"
+_CLEAN_RULE_VERSION = "layer4_market_tier_a_clean_v1"
+_CLEAN_CODE_VERSION = "layer4-tier-a-clean-v1"
 
 # ponytail: explicit frozensets for AC-022-7 boundary test; upgrade path: contract yaml loader
 FORBIDDEN_LAYER5_HISTORY_FIELDS = frozenset(
@@ -179,11 +181,9 @@ class MarketStructureBuilder:
         as_of: datetime,
         bundle_dir: Path | None = None,
         upstream_snapshot_ids: tuple[str, ...] = (),
+        source_mode: str = "staged_fixture_only",
+        clean_con=None,
     ) -> MarketStructureBuildResult:
-        root = _resolve_bundle_root(bundle_dir)
-        manifest = _read_manifest(root)
-        fetch_ids, content_hashes = _manifest_provenance(manifest)
-
         registry_rows = seed_registry_rows()
         if market_id not in {row.market_id for row in registry_rows}:
             raise Layer4MarketError(f"unknown market_id {market_id!r}")
@@ -196,27 +196,110 @@ class MarketStructureBuilder:
                     f"snapshot blocked on non-trading day for {market_id!r} {trade_date}"
                 )
 
+        if source_mode == "tier_a_clean":
+            return self._build_tier_a_clean(
+                market_id=market_id,
+                trade_date=trade_date,
+                as_of=as_of,
+                clean_con=clean_con,
+                registry_rows=registry_rows,
+                upstream_snapshot_ids=upstream_snapshot_ids,
+            )
+
+        if source_mode != "staged_fixture_only":
+            raise Layer4MarketError(
+                f"source_mode {source_mode!r} is not supported; "
+                "use staged_fixture_only or tier_a_clean"
+            )
+
+        root = _resolve_bundle_root(bundle_dir)
+        manifest = _read_manifest(root)
+        fetch_ids, content_hashes = _manifest_provenance(manifest)
+
         adapter = _adapter_for_market(market_id, self._cna_adapter, self._us_eq_adapter)
         calendar_rows = adapter.load_calendar(root)
         breadth_row = adapter.load_breadth(root, trade_date)
 
-        if not any(
-            row.market_id == market_id and row.trade_date == trade_date for row in calendar_rows
-        ):
-            raise Layer4MarketError(
-                f"no calendar row for market_id={market_id!r} trade_date={trade_date}"
-            )
-
-        calendar_for_day = next(
-            row
-            for row in calendar_rows
-            if row.market_id == market_id and row.trade_date == trade_date
+        return self._finalize_market_build(
+            market_id=market_id,
+            trade_date=trade_date,
+            as_of=as_of,
+            registry_rows=registry_rows,
+            calendar_rows=calendar_rows,
+            breadth_row=breadth_row,
+            source_dataset_ids=(f"staged:layer4_market:{market_id}",),
+            fetch_ids=fetch_ids,
+            content_hashes=content_hashes,
+            rule_version=self._rule_version,
+            code_version=self._code_version,
+            upstream_snapshot_ids=upstream_snapshot_ids,
         )
-        if not calendar_for_day.is_trading_day:
-            raise Layer4MarketError(
-                f"snapshot blocked on non-trading day for {market_id!r} {trade_date}"
-            )
 
+    def _build_tier_a_clean(
+        self,
+        *,
+        market_id: str,
+        trade_date: date,
+        as_of: datetime,
+        clean_con,
+        registry_rows: tuple[MarketRegistryRow, ...],
+        upstream_snapshot_ids: tuple[str, ...],
+    ) -> MarketStructureBuildResult:
+        if market_id != "US_EQ":
+            raise Layer4MarketError(
+                f"tier_a_clean source_mode only supports US_EQ in this ticket, got {market_id!r}"
+            )
+        if clean_con is None:
+            raise Layer4MarketError("tier_a_clean build requires clean_con duckdb connection")
+
+        from backend.app.layer4_markets.clean_read import (
+            USEquityCleanMarketAdapter,
+            collect_clean_lineage_provenance,
+        )
+
+        adapter = USEquityCleanMarketAdapter(clean_con)
+        calendar_rows = adapter.load_calendar(trade_date, as_of)
+        breadth_row = adapter.load_breadth(trade_date, as_of)
+
+        source_dataset_ids, fetch_ids, content_hashes = collect_clean_lineage_provenance(
+            clean_con,
+            market_id=market_id,
+            trade_date=trade_date,
+        )
+        return self._finalize_market_build(
+            market_id=market_id,
+            trade_date=trade_date,
+            as_of=as_of,
+            registry_rows=registry_rows,
+            calendar_rows=calendar_rows,
+            breadth_row=breadth_row,
+            source_dataset_ids=source_dataset_ids,
+            fetch_ids=fetch_ids,
+            content_hashes=content_hashes,
+            rule_version=_CLEAN_RULE_VERSION,
+            code_version=_CLEAN_CODE_VERSION,
+            upstream_snapshot_ids=upstream_snapshot_ids,
+        )
+
+    def _finalize_market_build(
+        self,
+        *,
+        market_id: str,
+        trade_date: date,
+        as_of: datetime,
+        registry_rows: tuple[MarketRegistryRow, ...],
+        calendar_rows: tuple[MarketCalendarRow, ...],
+        breadth_row: MarketBreadthSnapshotRow,
+        source_dataset_ids: tuple[str, ...],
+        fetch_ids: tuple[str, ...],
+        content_hashes: tuple[str, ...],
+        rule_version: str,
+        code_version: str,
+        upstream_snapshot_ids: tuple[str, ...],
+    ) -> MarketStructureBuildResult:
+        calendar_for_day = _calendar_for_day(
+            calendar_rows, market_id=market_id, trade_date=trade_date
+        )
         _reject_future_observation(
             as_of=as_of,
             market_id=market_id,
@@ -233,7 +316,7 @@ class MarketStructureBuilder:
         window_start = min(calendar_for_day.as_of_timestamp, breadth_row.as_of_timestamp)
         window_end = max(calendar_for_day.as_of_timestamp, breadth_row.as_of_timestamp)
         param_hash = Layer4LineageBuilder.parameter_hash_for(
-            rule_version=self._rule_version,
+            rule_version=rule_version,
             inputs=(market_id, trade_date.isoformat(), str(breadth_row.advancers)),
         )
         lineage = self._lineage_builder.build(
@@ -242,12 +325,12 @@ class MarketStructureBuilder:
             as_of=as_of,
             input_window_start=window_start,
             input_window_end=window_end,
-            source_dataset_ids=(f"staged:layer4_market:{market_id}",),
+            source_dataset_ids=source_dataset_ids,
             source_fetch_ids=fetch_ids,
             source_content_hashes=content_hashes,
-            rule_version=self._rule_version,
+            rule_version=rule_version,
             parameter_hash=param_hash,
-            code_version=self._code_version,
+            code_version=code_version,
             upstream_snapshot_ids=upstream_snapshot_ids,
         )
 
@@ -268,6 +351,26 @@ def collect_result_field_names(result: MarketStructureBuildResult) -> set[str]:
     for field in fields(result.lineage_envelope):
         names.add(field.name)
     return names
+
+
+def _calendar_for_day(
+    calendar_rows: tuple[MarketCalendarRow, ...],
+    *,
+    market_id: str,
+    trade_date: date,
+) -> MarketCalendarRow:
+    if not any(row.market_id == market_id and row.trade_date == trade_date for row in calendar_rows):
+        raise Layer4MarketError(
+            f"no calendar row for market_id={market_id!r} trade_date={trade_date}"
+        )
+    calendar_for_day = next(
+        row for row in calendar_rows if row.market_id == market_id and row.trade_date == trade_date
+    )
+    if not calendar_for_day.is_trading_day:
+        raise Layer4MarketError(
+            f"snapshot blocked on non-trading day for {market_id!r} {trade_date}"
+        )
+    return calendar_for_day
 
 
 def _adapter_for_market(

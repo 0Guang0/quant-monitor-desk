@@ -537,10 +537,6 @@ def sync_mootdx_incremental(
     from backend.app.ops.macro_incremental_common import enabled_source_registry
 
     mootdx_registry = enabled_source_registry(source_id="mootdx", data_domain=data_domain)
-    # ponytail: explicit --source-id mootdx incremental (S08) elevates validation source for clean write;
-    # upgrade path: registry reconcile mootdx primary when product bar path graduates from validation.
-    # dry-run: JSON may show production selected_source_id≠mootdx (ACC-MOOTDX-DRYRUN-ROUTE-001); live path fail-closed.
-    object.__setattr__(mootdx_registry.get("mootdx"), "validation_only", False)
     preview_svc = DataSourceService(
         staged_fixture_mode=False, source_registry=mootdx_registry
     )

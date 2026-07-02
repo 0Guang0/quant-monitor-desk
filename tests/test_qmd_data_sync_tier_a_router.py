@@ -74,18 +74,8 @@ def _enable_source_registry(
 
 
 def _patch_mootdx_registry_validation_only(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Test-only: clear mootdx validation_only until A3-P1-001 registry reconcile."""
-    from backend.app.ops import macro_incremental_common as mic
-
-    real_enabled = mic.enabled_source_registry
-
-    def _enabled(*, source_id: str, data_domain: str):
-        registry = real_enabled(source_id=source_id, data_domain=data_domain)
-        if source_id == "mootdx":
-            object.__setattr__(registry.get("mootdx"), "validation_only", False)
-        return registry
-
-    monkeypatch.setattr(mic, "enabled_source_registry", _enabled)
+    """Deprecated: registry validation_only=false @ R3-DCP-08 Repair; kept as no-op for call-site compat."""
+    del monkeypatch
 
 
 @pytest.fixture
@@ -267,6 +257,22 @@ def test_tierASyncRouter_dryRun_userLivePath_failClosed(
         sync_tier_a_by_source_id(source_id="fred", dry_run=True, end="2024-06-30")
     assert exc_info.value.error_code == "INVALID_INPUT"
     assert "user-live" in exc_info.value.message
+
+
+def test_tierASyncRouter_dryRun_mootdx_selectedSourceId_aligned(
+    sandbox_env: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """覆盖范围：mootdx dry-run JSON selected_source_id 对齐 CLI --source-id
+    测试对象：sync_tier_a_by_source_id source_id=mootdx dry_run=True
+    目的/目标：关 ACC-MOOTDX-DRYRUN-ROUTE-001 — dry-run 审计 JSON 须 selected_source_id=mootdx
+    验证点：selected_source_id==mootdx；source_id==mootdx；dry_run is True
+    失败含义：运维 dry-run 仍显示 baostock primary，explicit mootdx 路由不可审计
+    """
+    _enable_source_registry(monkeypatch, "mootdx", "cn_equity_daily_bar")
+    payload = sync_tier_a_by_source_id(source_id="mootdx", dry_run=True, end="2024-06-30")
+    assert payload["source_id"] == "mootdx"
+    assert payload["selected_source_id"] == "mootdx"
+    assert payload["dry_run"] is True
 
 
 def test_tierASyncRouter_dryRun_baostock_resourceGuardPaused_failClosed(

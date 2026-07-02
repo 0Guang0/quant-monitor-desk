@@ -408,7 +408,7 @@ providers:
     production_default_enabled: false
     requires_user_authorization: false
     requires_local_client: false
-    validation_only: true
+    validation_only: false
     max_default_symbols_or_series: 0
     max_default_window_days: 0
     reference_architecture: ""

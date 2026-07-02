@@ -295,11 +295,11 @@ sources:
       - security_list
       - cn_equity_daily_bar
       - cn_index_daily_bar
-    default_role: Validation
-    validation_only: true
+    default_role: Primary
+    validation_only: false
     rate_limit_policy: polite_batch
     requires_user_setup: false
-    notes: "通达信兼容 A 股行情验证源候选；与 tdx_pytdx 同属 TDX-compatible 路线，默认禁用，不得 silent fallback。R3H-03 READY_WITH_EVIDENCE; mootdx_port mock/replay. DCP-05: qmd data sync --source-id mootdx -> security_bar_1d clean (ADR-028)."
+    notes: "通达信兼容 A 股行情验证源候选；与 tdx_pytdx 同属 TDX-compatible 路线，默认禁用，不得 silent fallback。R3H-03 READY_WITH_EVIDENCE; mootdx_port mock/replay. DCP-05: qmd data sync --source-id mootdx -> security_bar_1d clean (ADR-028). ACC-MOOTDX-DRYRUN-ROUTE-001 CLOSED @ R3-DCP-08: explicit --source-id mootdx → effective primary for cn_equity_daily_bar; domain default primary remains baostock for product sync without --source-id. Dry-run JSON selected_source_id MUST be mootdx when --source-id mootdx."
   - source_id: eastmoney
     source_name: 东方财富 Eastmoney
     source_type: public_market_data
@@ -316,7 +316,7 @@ sources:
     validation_only: true
     rate_limit_policy: polite_web_api_cache
     requires_user_setup: false
-    notes: "A 股行情、板块、资金流与公告备份验证源；资金流等口径差异字段必须分源保存。R3H-03 READY_WITH_EVIDENCE; eastmoney_port validation-only. ACC-EASTMONEY-TAXONOMY-001: bar incremental via baostock/mootdx; does not close R3-B2.75-REQ2-EM; cross-ref docs/quality/待修复清单.md §4 · docs/ops/data_sync_quick_reference.md."
+    notes: "A 股行情、板块、资金流与公告备份验证源；资金流等口径差异字段必须分源保存。R3H-03 READY_WITH_EVIDENCE; eastmoney_port validation-only. ACC-EASTMONEY-TAXONOMY-001: bar incremental via baostock/mootdx; does not close R3-B2.75-REQ2-EM; cross-ref docs/quality/待修复清单.md §4 · docs/ops/data_sync_quick_reference.md. R3-DCP-08 taxonomy SSOT: cn_equity_daily_bar incremental product path baostock (primary) / mootdx (explicit); eastmoney validation-only for bar hist; sector_board + capital_flow separate domains."
   - source_id: sina_finance
     source_name: 新浪财经 Sina Finance
     source_type: public_market_data
@@ -396,6 +396,7 @@ domain_roles:
     primary: baostock
     validation:
       - akshare
+      - mootdx
     fallback_policy:
       - qmt_xtdata
     requires_source_enabled: true

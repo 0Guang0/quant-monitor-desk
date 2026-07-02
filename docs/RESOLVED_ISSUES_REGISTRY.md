@@ -2,7 +2,13 @@
 
 > Purpose: one file for resolved/closed issues, gates, risks, and repairs.  
 > Pair: unresolved items live in `docs/UNRESOLVED_ISSUES_REGISTRY.md`.  
-> Last reconciled: 2026-07-02 Wave 4 R3-DCP-05 全票关账 @ `c2258363`；prior 2026-07-01 @ `93b2c82`（§2.5 最终关账 + live 验收脚本入库）。
+> Last reconciled: 2026-07-02 Wave 4 R3-DCP-08 Repair 关账；prior R3-DCP-05 @ `c2258363`；prior 2026-07-01 @ `93b2c82`.
+
+## Wave 4 DCP-08 resolved (2026-07-02)
+
+| ID | Closed | Item | Evidence |
+| --- | --- | --- | --- |
+| ACC-MOOTDX-DRYRUN-ROUTE-001 | 2026-07-02 | mootdx dry-run `selected_source_id` 与 `--source-id mootdx` 对齐；去掉 runtime `validation_only` hack | `source_registry.yaml` mootdx `validation_only: false` · `data_commands.py` 无 `__setattr__` · `test_tierASyncRouter_dryRun_mootdx_selectedSourceId_aligned` · ADR-033 |
 
 ## Wave 4 DCP-05 resolved (2026-07-02)
 

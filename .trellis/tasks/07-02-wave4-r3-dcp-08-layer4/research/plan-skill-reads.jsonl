@@ -1,0 +1,11 @@
+{"skill": "agent-toolchain", "path": "agent-toolchain.md", "phase": "boot"}
+{"skill": "trellis-plan", "path": ".cursor/skills/trellis-plan/SKILL.md", "phase": "boot"}
+{"skill": "gitnexus-plan-1a", "path": "AGENTS.md", "phase": "1a"}
+{"skill": "gitnexus-plan-1b", "path": "AGENTS.md", "phase": "1b"}
+{"skill": "trellis-research", "path": ".cursor/agents/trellis-research.md", "phase": "1-4"}
+{"skill": "to-issues", "path": ".claude/skills/to-issues/SKILL.md", "phase": "3.5"}
+{"skill": "planning-and-task-breakdown", "path": ".agents/skills/planning-and-task-breakdown/SKILL.md", "phase": "5a"}
+{"skill": "spec-driven-development", "path": ".agents/skills/spec-driven-development/SKILL.md", "phase": "5a-prime"}
+{"skill": "context-engineering", "path": ".agents/skills/context-engineering/SKILL.md", "phase": "5b"}
+{"skill": "doubt-driven-development", "path": ".agents/skills/doubt-driven-development/SKILL.md", "phase": "5c"}
+{"skill": "documentation-and-adrs", "path": ".agents/skills/documentation-and-adrs/SKILL.md", "phase": "5c-prime", "artifact": "docs/decisions/ADR-033-dcp08-layer4-us-eq-clean-read.md"}
