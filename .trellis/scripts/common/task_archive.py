@@ -11,12 +11,11 @@ LEGACY_V3_MSG = (
 
 
 def is_archived_task(task_dir: Path) -> bool:
-    try:
-        parts = task_dir.resolve().parts
-        i = parts.index("tasks")
-        return i + 1 < len(parts) and parts[i + 1] == "archive"
-    except ValueError:
-        return False
+    parts = task_dir.resolve().parts
+    for i, part in enumerate(parts):
+        if part == "tasks" and i + 1 < len(parts) and parts[i + 1] == "archive":
+            return True
+    return False
 
 
 def has_task_plan_artifacts(task_dir: Path) -> bool:

@@ -166,15 +166,14 @@ def test_qmdData_syncBaostock_refusesCanonicalDbPath(monkeypatch, tmp_path: Path
         data_commands.sync_baostock_incremental(dry_run=False, end="2024-06-25")
 
 
-def test_qmdData_syncBaostock_operatorAuthRequired(monkeypatch, tmp_path: Path) -> None:
+def test_qmdData_syncBaostock_operatorAuthRequired(monkeypatch, non_sandbox_data_root: Path) -> None:
     """覆盖范围：cn_equity 真跑 operator / sandbox 双门禁
     测试对象：sync_baostock_incremental dry_run=False
     目的/目标：非 .audit-sandbox 的 DATA_ROOT 须 USER_AUTH_REQUIRED
     验证点：tmp_path 直设（无 .audit-sandbox）抛 CliFailure
     失败含义：cn_equity 绕过 operator 确认会破坏 R3F-CLI-01 契约
     """
-    data_root = tmp_path / "data"
-    data_root.mkdir()
+    data_root = non_sandbox_data_root
     monkeypatch.setenv("QMD_DATA_ROOT", str(data_root))
     monkeypatch.setattr(data_commands, "DATA_ROOT", data_root)
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))

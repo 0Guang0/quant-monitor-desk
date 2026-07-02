@@ -12,6 +12,7 @@ Evidence: ``.audit-sandbox/wave3-live-acceptance-<run_id>/live_acceptance_eviden
 
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 import os
@@ -97,10 +98,45 @@ def _step_python(name: str, fn) -> dict[str, object]:
         }
 
 
-def main() -> int:
-    from backend.app.config import DATA_ROOT as CONFIG_DATA_ROOT
+def _parse_fail_on_severity(raw: str | None) -> frozenset[str]:
+    if not raw:
+        return frozenset()
+    return frozenset(part.strip().upper() for part in raw.split(",") if part.strip())
 
-    canonical_main = (CONFIG_DATA_ROOT / "duckdb" / "quant_monitor.duckdb").resolve()
+
+def _count_severity_gate_violations(
+    findings: list[dict[str, object]],
+    plan_alignment: list[dict[str, object]],
+    *,
+    fail_on: frozenset[str],
+) -> int:
+    if not fail_on:
+        return 0
+    hits = 0
+    for item in findings:
+        severity = str(item.get("severity", "")).upper()
+        if severity in fail_on:
+            hits += 1
+    for item in plan_alignment:
+        severity = str(item.get("severity", "")).upper()
+        if severity == "EXPECTED_DEFER":
+            continue
+        if severity in fail_on:
+            hits += 1
+    return hits
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="Wave 1–3 live-network production acceptance")
+    parser.add_argument(
+        "--fail-on-severity",
+        default=None,
+        help="Comma severities that fail the run (e.g. HIGH,CRITICAL). EXPECTED_DEFER ignored.",
+    )
+    args = parser.parse_args(argv)
+    fail_on = _parse_fail_on_severity(args.fail_on_severity)
+
+    canonical_main = (PROJECT_ROOT / "data" / "duckdb" / "quant_monitor.duckdb").resolve()
     ACCEPT_ROOT.mkdir(parents=True, exist_ok=True)
     ISOLATED_ROOT.mkdir(parents=True, exist_ok=True)
 
@@ -387,6 +423,24 @@ def main() -> int:
             },
         ]
     )
+
+    severity_gate_hits = _count_severity_gate_violations(
+        report["findings"],
+        report["plan_alignment"],
+        fail_on=fail_on,
+    )
+    if severity_gate_hits:
+        failed += severity_gate_hits
+        report["findings"].append(
+            {
+                "id": "LIVE-ACC-SEVERITY-GATE",
+                "severity": "CRITICAL",
+                "message": (
+                    f"fail-on-severity gate: {severity_gate_hits} item(s) "
+                    f"matched {sorted(fail_on)}"
+                ),
+            }
+        )
 
     report["steps"] = step_results
     report["canonical_main_db_after"] = _fingerprint(canonical_main)

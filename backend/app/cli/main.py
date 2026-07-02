@@ -47,6 +47,24 @@ def _build_data_parser(sub: argparse._SubParsersAction) -> None:
     )
     sync.add_argument("--format", choices=["json", "text"], default="json")
 
+    backfill = data_sub.add_parser(
+        "backfill",
+        help="Bounded historical backfill (R3-DCP-09 · default dry-run)",
+    )
+    backfill.add_argument("--domain", required=True, dest="data_domain")
+    backfill.add_argument("--source-id", required=True, dest="source_id")
+    backfill.add_argument("--start", required=True)
+    backfill.add_argument("--end", required=True)
+    backfill.add_argument("--instrument-id", default=None, dest="instrument_id")
+    backfill.add_argument("--max-shards", type=int, default=None, dest="max_shards")
+    backfill.add_argument("--truncate-to-cap", action="store_true")
+    backfill.add_argument(
+        "--dry-run",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+    )
+    backfill.add_argument("--format", choices=["json", "text"], default="json")
+
     live_fetch = data_sub.add_parser(
         "live-fetch",
         help="Product live fetch (default dry-run · R3H-08 S08-05)",
@@ -147,6 +165,17 @@ def _run_data(args: argparse.Namespace) -> int:
                 start=args.start,
                 end=args.end,
                 since=args.since,
+                instrument_id=args.instrument_id,
+            )
+        elif args.data_command == "backfill":
+            payload = data_commands.backfill_plan(
+                data_domain=args.data_domain,
+                source_id=args.source_id,
+                start=args.start,
+                end=args.end,
+                max_shards=args.max_shards,
+                truncate_to_cap=args.truncate_to_cap,
+                dry_run=args.dry_run,
                 instrument_id=args.instrument_id,
             )
         elif args.data_command == "live-fetch":

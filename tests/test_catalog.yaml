@@ -238,6 +238,28 @@ tests/test_bis_incremental_e2e.py:
     docs: []
     rules: []
     specs: []
+tests/test_bounded_backfill_cap.py:
+  command: uv run python -m pytest tests/test_bounded_backfill_cap.py -q
+  failure_meaning: Backfill cap fail-closed or truncate semantics broken.
+  purpose: R3-DCP-09 bounded backfill cap contract; fail-closed when exceeding max_shards.
+  type: policy-contract
+  verifies:
+    docs:
+      - docs/decisions/ADR-030-bounded-backfill-cap-and-ci-nightly.md
+    rules: []
+    specs:
+      - specs/contracts/bounded_backfill_cap.yaml
+tests/test_bounded_backfill_cli_e2e.py:
+  command: uv run python -m pytest tests/test_bounded_backfill_cli_e2e.py -q
+  failure_meaning:
+    Regression in test_bounded_backfill_cli_e2e; inspect purpose and
+    linked authorities.
+  purpose: R3-DCP-09 bounded backfill CLI replay e2e.
+  type: integration
+  verifies:
+    docs: []
+    rules: []
+    specs: []
 tests/test_cftc_incremental_e2e.py:
   command: uv run python -m pytest tests/test_cftc_incremental_e2e.py -q
   failure_meaning:
@@ -1004,6 +1026,17 @@ tests/test_mootdx_incremental_e2e.py:
     docs: []
     rules: []
     specs: []
+tests/test_nightly_ci_manifest.py:
+  command: uv run python -m pytest tests/test_nightly_ci_manifest.py -q
+  failure_meaning:
+    Regression in test_nightly_ci_manifest; inspect purpose and linked
+    authorities.
+  purpose: R3-DCP-09 nightly CI manifest tests.
+  type: protocol
+  verifies:
+    docs: []
+    rules: []
+    specs: []
 tests/test_no_clean_write_for_web_evidence.py:
   command: uv run python -m pytest tests/test_no_clean_write_for_web_evidence.py -q
   failure_meaning: R3H-04 source routed to clean writer or resolved factual outcomes.
@@ -1167,6 +1200,17 @@ tests/test_provider_catalog.py:
     docs: []
     rules: []
     specs: []
+tests/test_qmd_data_backfill_cli.py:
+  command: uv run python -m pytest tests/test_qmd_data_backfill_cli.py -q
+  failure_meaning:
+    Regression in test_qmd_data_backfill_cli; inspect purpose and linked
+    authorities.
+  purpose: R3-DCP-09 qmd data backfill CLI tests.
+  type: runtime-contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
 tests/test_qmd_data_cli.py:
   command: uv run python -m pytest tests/test_qmd_data_cli.py -q
   failure_meaning: Regression in test_qmd_data_cli; inspect purpose and linked authorities.
@@ -1205,6 +1249,17 @@ tests/test_qmd_data_sync_tier_a_router.py:
     and linked authorities.
   purpose: R3-DCP-05 S12 — Tier A unified `qmd data sync --source-id` router tests.
   type: runtime-contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_r3_dcp09_registry_closure.py:
+  command: uv run python -m pytest tests/test_r3_dcp09_registry_closure.py -q
+  failure_meaning:
+    Regression in test_r3_dcp09_registry_closure; inspect purpose and
+    linked authorities.
+  purpose: R3-DCP-09 registry closure guards.
+  type: protocol
   verifies:
     docs: []
     rules: []
@@ -1932,6 +1987,32 @@ tests/test_vendor_fetch_e2e.py:
     authorities.
   purpose: Vendor fixture E2E through real orchestrator path (Round2 audit P1-03).
   type: protocol
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_wave3_isolated_acceptance_quick_profile.py:
+  command:
+    uv run python -m pytest tests/test_wave3_isolated_acceptance_quick_profile.py
+    -q
+  failure_meaning:
+    Regression in test_wave3_isolated_acceptance_quick_profile; inspect
+    purpose and linked authorities.
+  purpose: R3-DCP-09 wave3 isolated acceptance quick profile tests.
+  type: runtime-contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_wave3_live_acceptance_findings_gate.py:
+  command:
+    uv run python -m pytest tests/test_wave3_live_acceptance_findings_gate.py
+    -q
+  failure_meaning:
+    Regression in test_wave3_live_acceptance_findings_gate; inspect
+    purpose and linked authorities.
+  purpose: R3-DCP-09 wave3 live acceptance findings severity gate tests.
+  type: policy-contract
   verifies:
     docs: []
     rules: []

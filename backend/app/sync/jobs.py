@@ -9,6 +9,9 @@ from __future__ import annotations
 import uuid
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
+from pathlib import Path
+
+import yaml
 
 from backend.app.db.connection import ConnectionManager
 from backend.app.sync.event_payload import build_event_payload
@@ -45,6 +48,31 @@ TERMINAL_STATUSES: frozenset[str] = frozenset(
 )
 
 ECO_MAX_BACKFILL_DAYS_PER_TASK = 31
+DEFAULT_MAX_BACKFILL_SHARDS = 3
+ABSOLUTE_MAX_BACKFILL_SHARDS = 12
+_BOUNDED_BACKFILL_CAP_PATH = (
+    Path(__file__).resolve().parents[3] / "specs" / "contracts" / "bounded_backfill_cap.yaml"
+)
+
+
+class BackfillShardCapExceededError(ValueError):
+    """Raised when a backfill window exceeds max_shards without truncate_to_cap."""
+
+
+def load_bounded_backfill_cap() -> dict:
+    raw = yaml.safe_load(_BOUNDED_BACKFILL_CAP_PATH.read_text(encoding="utf-8")) or {}
+    return raw
+
+
+def _apply_bounded_cap_ssot() -> None:
+    global ECO_MAX_BACKFILL_DAYS_PER_TASK, DEFAULT_MAX_BACKFILL_SHARDS, ABSOLUTE_MAX_BACKFILL_SHARDS
+    caps = load_bounded_backfill_cap().get("caps") or {}
+    ECO_MAX_BACKFILL_DAYS_PER_TASK = int(caps.get("eco_max_backfill_days_per_task", 31))
+    DEFAULT_MAX_BACKFILL_SHARDS = int(caps.get("default_max_backfill_shards", 3))
+    ABSOLUTE_MAX_BACKFILL_SHARDS = int(caps.get("absolute_max_backfill_shards", 12))
+
+
+_apply_bounded_cap_ssot()
 
 # docs/modules/data_sync_orchestrator.md §13.4.3 + eco default (MASTER §6.3)
 BACKFILL_TRIGGER_REASONS: frozenset[str] = frozenset(
@@ -133,18 +161,41 @@ def plan_backfill_shards(
     date_end: date,
     *,
     max_days: int = ECO_MAX_BACKFILL_DAYS_PER_TASK,
+    max_shards: int | None = None,
+    truncate_to_cap: bool = False,
 ) -> list[tuple[str, date, date]]:
     if date_end < date_start:
         raise ValueError("date_end must be on or after date_start")
+    effective_end = date_end
+    if max_shards is not None:
+        if max_shards < 1:
+            raise ValueError("max_shards must be at least 1")
+        cap_end = date_start + timedelta(days=max_shards * max_days - 1)
+        if date_end > cap_end:
+            if truncate_to_cap:
+                effective_end = cap_end
+            else:
+                raise BackfillShardCapExceededError(
+                    f"backfill window exceeds max_shards={max_shards}; "
+                    "use truncate_to_cap or reduce date range"
+                )
     shards: list[tuple[str, date, date]] = []
     cursor = date_start
     index = 0
-    while cursor <= date_end:
-        shard_end = min(cursor + timedelta(days=max_days - 1), date_end)
+    while cursor <= effective_end:
+        shard_end = min(cursor + timedelta(days=max_days - 1), effective_end)
         task_id = f"task-{index:04d}"
         shards.append((task_id, cursor, shard_end))
         cursor = shard_end + timedelta(days=1)
         index += 1
+    if max_shards is not None and len(shards) > max_shards:
+        if truncate_to_cap:
+            shards = shards[:max_shards]
+        else:
+            raise BackfillShardCapExceededError(
+                f"backfill window exceeds max_shards={max_shards}; "
+                "use truncate_to_cap or reduce date range"
+            )
     return shards
 
 

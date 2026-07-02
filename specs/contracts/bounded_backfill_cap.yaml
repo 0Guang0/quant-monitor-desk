@@ -1,0 +1,13 @@
+# Bounded backfill invocation cap (R3-DCP-09 / ADR-030).
+# Does not authorize unbounded FullLoad or production cron backfill.
+
+version: v1
+name: bounded_backfill_cap
+owner: r3-dcp-09
+closure_command: >-
+  uv run python -m pytest tests/test_bounded_backfill_cap.py -q
+caps:
+  eco_max_backfill_days_per_task: 31
+  default_max_backfill_shards: 3
+  absolute_max_backfill_shards: 12
+truncate_flag: --truncate-to-cap

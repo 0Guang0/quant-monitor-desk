@@ -54,6 +54,16 @@ specs/contracts/production_equivalent_smoke_budget.yaml:
         - tests/test_production_equivalent_smoke_budget.py
       negative_required: true
 
+specs/contracts/bounded_backfill_cap.yaml:
+  requirements:
+    BOUNDED_BACKFILL_CAP:
+      text: "Backfill invocation must respect per-shard and per-run shard caps"
+      tests:
+        - tests/test_bounded_backfill_cap.py
+        - tests/test_bounded_backfill_cli_e2e.py
+        - tests/test_qmd_data_backfill_cli.py
+      negative_required: true
+
 specs/contracts/layer1_axis_contract.yaml:
   requirements:
     LAYER1_AXIS_LOADER:

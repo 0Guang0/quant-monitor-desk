@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import warnings
 from pathlib import Path
 
@@ -85,6 +86,49 @@ def _ensure_r3g_fred_authorization_bootstrap() -> None:
 def _ensure_audit_sandbox_pytest_basetemp() -> None:
     """Pre-create shared pytest basetemp for A8 sandbox runs on fresh clones (A8-B3V-04)."""
     (PROJECT_ROOT / ".audit-sandbox" / "pytest").mkdir(parents=True, exist_ok=True)
+
+
+def _patch_path_for_windows_long_paths() -> None:
+    """A8 basetemp under deep .audit-sandbox paths exceeds MAX_PATH on Windows."""
+    if os.name != "nt":
+        return
+    from backend.app.storage.path_compat import (
+        needs_extended_path,
+        to_extended_path,
+    )
+
+    _orig_is_file = Path.is_file
+    _orig_exists = Path.exists
+    _orig_read_text = Path.read_text
+    _orig_read_bytes = Path.read_bytes
+
+    def _is_file(self, follow_symlinks: bool = True) -> bool:
+        if needs_extended_path(self):
+            return _orig_is_file(to_extended_path(self), follow_symlinks=follow_symlinks)
+        return _orig_is_file(self, follow_symlinks=follow_symlinks)
+
+    def _exists(self, follow_symlinks: bool = True) -> bool:
+        if needs_extended_path(self):
+            return _orig_exists(to_extended_path(self), follow_symlinks=follow_symlinks)
+        return _orig_exists(self, follow_symlinks=follow_symlinks)
+
+    def _read_text(self, encoding: str | None = None, errors: str | None = None) -> str:
+        if needs_extended_path(self):
+            return _orig_read_text(to_extended_path(self), encoding=encoding, errors=errors)
+        return _orig_read_text(self, encoding=encoding, errors=errors)
+
+    def _read_bytes(self) -> bytes:
+        if needs_extended_path(self):
+            return _orig_read_bytes(to_extended_path(self))
+        return _orig_read_bytes(self)
+
+    Path.is_file = _is_file  # type: ignore[method-assign]
+    Path.exists = _exists  # type: ignore[method-assign]
+    Path.read_text = _read_text  # type: ignore[method-assign]
+    Path.read_bytes = _read_bytes  # type: ignore[method-assign]
+
+
+_patch_path_for_windows_long_paths()
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
@@ -312,6 +356,14 @@ def empty_response_result():
 def raw_data_root(tmp_path):
     root = tmp_path / "data"
     root.mkdir()
+    return root
+
+
+@pytest.fixture
+def non_sandbox_data_root(tmp_path: Path) -> Path:
+    """QMD_DATA_ROOT without `.audit-sandbox` in resolved parts (A8 basetemp safe)."""
+    root = PROJECT_ROOT / ".pytest-non-sandbox-data" / f"case-{id(tmp_path)}"
+    root.mkdir(parents=True, exist_ok=True)
     return root
 
 

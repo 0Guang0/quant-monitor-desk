@@ -2,7 +2,7 @@
 
 > Purpose: one file for resolved/closed issues, gates, risks, and repairs.  
 > Pair: unresolved items live in `docs/UNRESOLVED_ISSUES_REGISTRY.md`.  
-> Last reconciled: 2026-07-02 Wave 4 merge 协调（R3-DCP-07/08 合入 master；registry 三件套 + L2/L4 clean）；prior R3-DCP-05 @ `c2258363`；prior 2026-07-01 @ `93b2c82`。
+> Last reconciled: 2026-07-02 Wave 4 merge 协调（R3-DCP-07/08/09 合入 master）；prior R3-DCP-05 @ `c2258363`；prior 2026-07-01 @ `93b2c82`。
 
 ## Wave 4 DCP-08 resolved (2026-07-02)
 

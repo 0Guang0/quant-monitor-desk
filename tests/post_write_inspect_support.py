@@ -9,6 +9,7 @@ from typing import Any
 
 from backend.app.core.resource_guard import Decision, ResourceGuard
 from backend.app.db.connection import ConnectionManager
+from backend.app.storage.path_compat import is_file
 from backend.app.sync.orchestrator import DataSyncOrchestrator
 from backend.app.sync.watermark import compute_incremental_window, read_bar_trade_date_watermark
 
@@ -159,11 +160,13 @@ def build_evidence_bundle_from_fetch_log(
 
     for idx, raw_path in enumerate(raw_paths):
         src = Path(raw_path)
-        if not src.is_file():
+        if not is_file(src):
             raise FileNotFoundError(f"raw file missing: {raw_path}")
         rel_name = f"raw_{idx}.json"
-        shutil.copy2(src, bundle_dir / rel_name)
-        payload = json.loads(src.read_text(encoding="utf-8"))
+        from backend.app.storage.path_compat import read_bytes, write_bytes
+
+        write_bytes(bundle_dir / rel_name, read_bytes(src))
+        payload = json.loads(read_bytes(src).decode("utf-8"))
         all_rows.extend(_rows_from_cn_market_payload(payload))
 
     instrument_ids = {key[0] for key in (_row_key(row) for row in all_rows)} or {SYMBOL}

@@ -30,7 +30,26 @@ _PROXY_HINT = (
 @contextmanager
 def _bypass_system_proxy() -> Iterator[None]:
     """Use direct connections for CN domestic endpoints (ignore Windows proxy)."""
+    import os
+    import urllib.request
+
     import requests
+
+    proxy_keys = (
+        "HTTP_PROXY",
+        "HTTPS_PROXY",
+        "http_proxy",
+        "https_proxy",
+        "ALL_PROXY",
+        "all_proxy",
+    )
+    saved = {key: os.environ.pop(key, None) for key in proxy_keys}
+    saved_no_proxy = os.environ.get("NO_PROXY")
+    domestic = "eastmoney.com,push2.eastmoney.com,82.push2.eastmoney.com,sina.com.cn"
+    if saved_no_proxy:
+        os.environ["NO_PROXY"] = f"{saved_no_proxy},{domestic}"
+    else:
+        os.environ["NO_PROXY"] = domestic
 
     original_request = requests.api.request
     original_get = requests.get
@@ -50,32 +69,34 @@ def _bypass_system_proxy() -> Iterator[None]:
     requests.get = lambda url, **kwargs: _direct_request("GET", url, **kwargs)
     requests.post = lambda url, **kwargs: _direct_request("POST", url, **kwargs)
     requests.Session.__init__ = _direct_session_init
+    original_getproxies = urllib.request.getproxies
+    urllib.request.getproxies = lambda: {}
     try:
         yield
     finally:
+        urllib.request.getproxies = original_getproxies
         requests.api.request = original_request
         requests.get = original_get
         requests.post = original_post
         requests.Session.__init__ = original_session_init
+        for key, value in saved.items():
+            if value is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = value
+        if saved_no_proxy is None:
+            os.environ.pop("NO_PROXY", None)
+        else:
+            os.environ["NO_PROXY"] = saved_no_proxy
 
 
 def _run_akshare_call(fn: Callable[[], _T]) -> _T:
-    """Try system proxy first, then direct — either path may work depending on Clash rules."""
-    errors: list[str] = []
-
-    try:
-        return fn()
-    except Exception as proxy_exc:
-        errors.append(f"proxy: {proxy_exc}")
-
+    """CN domestic vendors: direct only (system proxy often breaks eastmoney/sina)."""
     try:
         with _bypass_system_proxy():
             return fn()
     except Exception as direct_exc:
-        errors.append(f"direct: {direct_exc}")
-
-    combined = "; ".join(errors)
-    raise PortError("NETWORK_ERROR", f"{combined}; {_PROXY_HINT}")
+        raise PortError("NETWORK_ERROR", f"direct: {direct_exc}; {_PROXY_HINT}")
 
 
 _DATE_WINDOW_RE = re.compile(
