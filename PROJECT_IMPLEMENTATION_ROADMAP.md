@@ -4,13 +4,13 @@
 > **定位：** 根目录总施工图 — 以 **51 个 Module ID**（`MODULE_COMPLETION_RATING.md` §3）为行，串联评级、波次、任务卡与门禁。  
 > **通俗解释：** 本文件回答「每个模块现在几级、还差几批、在哪一轮闭合」；**任务卡才是工单**，`PRODUCTION_COMPLETION_VERTICAL_SLICE_PLAN.md` 只是覆盖地图。  
 > **上一版备份：** `PROJECT_IMPLEMENTATION_ROADMAP.legacy-20260629.md`（Wave 平铺叙事、§5.0.6 等仍可查）  
-> **进度复核：** `git log` @ 2026-07-02 — Wave 1–3 **CLOSED**；Wave 4 **`R3-DCP-05` CLOSED** @ `c2258363`；**`R3-DCP-06..10` OPEN**；活轨见 §3。
+> **进度复核：** `git log` @ 2026-07-02 — Wave 1–3 **CLOSED**；Wave 4 **`R3-DCP-05` CLOSED** @ `c2258363` · **`R3-DCP-06` CLOSED** @ `6c6cdd73`；**`R3-DCP-07..10` OPEN**；活轨见 §3。
 
 ### 当前下一入口
 
-| 优先级 | 任务                       | 模块        | 说明                             |
-| ------ | -------------------------- | ----------- | -------------------------------- |
-| P0     | **Wave 4** `R3-DCP-05..10` | G12, C3, B1 | Tier A 扩展 + 五轴全绿（硬门禁） |
+| 优先级 | 任务                       | 模块  | 说明                                       |
+| ------ | -------------------------- | ----- | ------------------------------------------ |
+| P0     | **Wave 4** `R3-DCP-07..10` | G2–G5 | cross-asset / 市场结构 / backfill / 证据链 |
 
 索引：`docs/implementation_tasks/.../R3_DCP_TO_ISSUES_INDEX.md` §3
 
@@ -170,17 +170,17 @@
 
 ### 2.F Modeling（G1–G6, K1–K3）
 
-| ID  | 模块                  | 当前 | 批/3 | PASS 阻塞 | 下一移动                       |
-| --- | --------------------- | ---- | ---- | --------- | ------------------------------ |
-| G1  | Layer1 axes           | R3   | 2/3  | **是**    | **R3-DCP-06：五轴全绿 → R4**   |
-| G2  | Layer2 sensors        | R3   | 2/3  | **是**    | R3-DCP-07 最小竖切             |
-| G3  | Layer3 chains         | R3   | 1/3  | —         | Round4 初（非 PASS 硬门禁）    |
-| G4  | Layer4 markets        | R3   | 1/3  | **是**    | **R3H-07** + R3-DCP-08         |
-| G5  | Layer5 evidence       | R2   | 2/3  | **是**    | R3-DCP-10 + R3H-05             |
-| G6  | Manual review         | R2   | 1/3  | **是**    | R3H-08D                        |
-| K1  | Model input whitelist | R3   | 1/3  | **是**    | 五轴消费行对齐                 |
-| K2  | Layer1 五轴 spec      | R3   | 1/3  | **是**    | **G1 子范围；五轴各至少 1 测** |
-| K3  | Layer3 registries     | R3   | 1/3  | —         | G3 子范围                      |
+| ID  | 模块                  | 当前 | 批/3 | PASS 阻塞 | 下一移动                                     |
+| --- | --------------------- | ---- | ---- | --------- | -------------------------------------------- |
+| G1  | Layer1 axes           | R3   | 2/3  | **是**    | **R3-DCP-06 CLOSED** @ `6c6cdd73`（L1 子集） |
+| G2  | Layer2 sensors        | R3   | 2/3  | **是**    | R3-DCP-07 最小竖切                           |
+| G3  | Layer3 chains         | R3   | 1/3  | —         | Round4 初（非 PASS 硬门禁）                  |
+| G4  | Layer4 markets        | R3   | 1/3  | **是**    | **R3H-07** + R3-DCP-08                       |
+| G5  | Layer5 evidence       | R2   | 2/3  | **是**    | R3-DCP-10 + R3H-05                           |
+| G6  | Manual review         | R2   | 1/3  | **是**    | R3H-08D                                      |
+| K1  | Model input whitelist | R3   | 1/3  | **是**    | 五轴消费行对齐                               |
+| K2  | Layer1 五轴 spec      | R3   | 1/3  | **是**    | **G1 子范围；五轴各至少 1 测**               |
+| K3  | Layer3 registries     | R3   | 1/3  | —         | G3 子范围                                    |
 
 ### 2.G–I 其余模块
 
@@ -304,14 +304,14 @@ Round4  B04-01 先 · 产品只读
 - [x] ResourceGuard / 有界窗口遵守 `resource_limits.yaml`
 - [x] `MODULE_COMPLETION_RATING` **G1: R3→R4**，**K2** 行与轴一一对应
 
-| #   | 规划 ID       | 模块   | 交付                                                                                                         |
-| --- | ------------- | ------ | ------------------------------------------------------------------------------------------------------------ |
-| 4a  | **R3-DCP-05** | D1, E1 | 增量 watermark 扩展至 **全部 Tier A 主源** · **✅ CLOSED** @ `c2258363`                                      |
-| 4b  | **R3-DCP-06** | G1, K2 | **五轴全绿（G12）** — PASS 阻塞项 · **Execute DONE** @ `feature/wave4-r3-dcp-06-five-axis-clean`（待 Audit） |
-| 4c  | **R3-DCP-07** | G2     | 一条 cross-asset 传感器绑真市况源                                                                            |
-| 4d  | **R3-DCP-08** | G4     | 市场结构 + Wave 1 US 日历                                                                                    |
-| 4e  | **R3-DCP-09** | D1     | 有界 backfill（cap 分片；**非**无上限 FullLoad）                                                             |
-| 4f  | **R3-DCP-10** | G5, A3 | source_fetch_id / content_hash / schema_hash 绑真源                                                          |
+| #   | 规划 ID       | 模块   | 交付                                                                                            |
+| --- | ------------- | ------ | ----------------------------------------------------------------------------------------------- |
+| 4a  | **R3-DCP-05** | D1, E1 | 增量 watermark 扩展至 **全部 Tier A 主源** · **✅ CLOSED** @ `c2258363`                         |
+| 4b  | **R3-DCP-06** | G1, K2 | **五轴全绿（G12）** — PASS 阻塞项 · **✅ CLOSED** @ `6c6cdd73`（L1 子集；L3–L5 → DCP-07/08/10） |
+| 4c  | **R3-DCP-07** | G2     | 一条 cross-asset 传感器绑真市况源                                                               |
+| 4d  | **R3-DCP-08** | G4     | 市场结构 + Wave 1 US 日历                                                                       |
+| 4e  | **R3-DCP-09** | D1     | 有界 backfill（cap 分片；**非**无上限 FullLoad）                                                |
+| 4f  | **R3-DCP-10** | G5, A3 | source_fetch_id / content_hash / schema_hash 绑真源                                             |
 
 **仍归 Batch6（不挡 PASS）：** D2 任务级幂等、无 cap FullLoad、24 源 production cron 矩阵、H1 Parquet、D4 migration。
 
@@ -348,14 +348,14 @@ Round4  B04-01 先 · 产品只读
 
 ### 3.7 Round3 状态看板（2026-06-30）
 
-| 波次                                                      | 状态                                                 |
-| --------------------------------------------------------- | ---------------------------------------------------- |
-| 历史 + Wave 0（3V）+ R3H-01～04 + R3H-06                  | ✅ CLOSED                                            |
-| Wave 1（R3H-07, R3H-10）                                  | ✅ CLOSED @ 2026-06-29                               |
-| Wave 2（R3H-08A–D）                                       | ✅ CLOSED @ 2026-06-29                               |
-| Wave 3（R3-DCP-01..03）                                   | ✅ **CLOSED** @ 2026-06-30（`eff49343` 收尾 DCP-03） |
-| Wave 4（**R3-DCP-05** ✅ · **R3-DCP-06..10** + 五轴全绿） | 🔴 OPEN（DCP-05 @ `c2258363`）                       |
-| Wave 5（R3H-05 + GATE）                                   | 🔴 OPEN                                              |
+| 波次                                              | 状态                                                 |
+| ------------------------------------------------- | ---------------------------------------------------- |
+| 历史 + Wave 0（3V）+ R3H-01～04 + R3H-06          | ✅ CLOSED                                            |
+| Wave 1（R3H-07, R3H-10）                          | ✅ CLOSED @ 2026-06-29                               |
+| Wave 2（R3H-08A–D）                               | ✅ CLOSED @ 2026-06-29                               |
+| Wave 3（R3-DCP-01..03）                           | ✅ **CLOSED** @ 2026-06-30（`eff49343` 收尾 DCP-03） |
+| Wave 4（**R3-DCP-05/06** ✅ · **R3-DCP-07..10**） | 🔴 OPEN（DCP-05 @ `c2258363` · DCP-06 @ `6c6cdd73`） |
+| Wave 5（R3H-05 + GATE）                           | 🔴 OPEN                                              |
 
 ### 3.7.1 Wave 3 隔离生产验收（2026-07-01）
 
@@ -365,7 +365,7 @@ Round4  B04-01 先 · 产品只读
 > **承接（可选优化）：** `WAVE3-ACC-OPT-01` — 验收 quick profile · 见 `待修复清单.md` §4  
 > **Live 连网验收（2026-07-01）：** `scripts/wave3_live_production_acceptance.py`（入库 @ `93b2c82`）· 承接路由见 §3.5.2 · `待修复清单.md` §8  
 > **Wave 4 前须先闭环：** `待修复清单.md` §2.5 — **已清空 2026-07-01**（`LIVE-PILOT-DB-001` · `LIVE-BAOSTOCK-SYNC-SILENT-001` 见 §1）
-> **结论摘要：** Wave 1–3 **隔离/机制验收通过**；Wave 4 prep **§1 共 30 项**经 pytest 复验已关；**§2.5 阻断项已关**；**正式 PASS** 仍待 Wave 4 `R3-DCP-06` 五轴 + Wave 5 `R3H-05-GATE`。
+> **结论摘要：** Wave 1–3 **隔离/机制验收通过**；Wave 4 prep **§1 共 30 项**经 pytest 复验已关；**§2.5 阻断项已关**；**G12 五轴 L1 子集** @ `6c6cdd73` ✅；**正式 PASS** 仍待 Wave 4 `R3-DCP-07..10` + Wave 5 `R3H-05-GATE`。
 
 ### 3.7.2 台账复验摘要（2026-07-01 @ `93b2c82`）
 
@@ -490,8 +490,8 @@ Round5 **不补功能**。
 1. Batch 3V + R3H-06 + R3H-01～04 — **CLOSED** ✅
 2. Wave 1–2：R3H-07、R3H-10、R3H-08A–D — **CLOSED**
 3. Wave 3：R3-DCP-01..03 — **CLOSED**（baostock + fred 增量产品路径）
-4. Wave 4：**R3-DCP-05** ✅ @ `c2258363`；**R3-DCP-06** Execute DONE（五轴 clean e2e + §3.5.1）；**R3-DCP-07..10** — **OPEN**
-5. **G12 五轴：** §3.5.1 清单 **全部满足** — **硬门禁**
+4. Wave 4：**R3-DCP-05** ✅ @ `c2258363`；**R3-DCP-06** ✅ @ `6c6cdd73`（五轴 clean e2e + §3.5.1 L1 子集）；**R3-DCP-07..10** — **OPEN**
+5. **G12 五轴 L1 子集：** §3.5.1 清单 **全部满足** @ `6c6cdd73` — **硬门禁已关**
 6. R3H-05-GATE → **`PASS_ROUND4_REAL_DATA_READY`**
 7. 24 源 env-gated live→正确 Tier；`web_search` 真 API = **DEFERRED_POST_ROUND4** + 单 ADR
 8. `MAIN-DB-GATE` 绿；Layer1–5 smoke 绿（**G12 五轴算在 Layer1**）
@@ -511,23 +511,24 @@ Round5 **不补功能**。
 
 ## 7. 旧 Wave / 批次 → 模块 ID 映射
 
-| 旧轨          | 状态   | 主要模块          | 新波次                  |
-| ------------- | ------ | ----------------- | ----------------------- |
-| Batch 3F-R    | CLOSED | J1,F0,C4,E1       | 历史                    |
-| Batch 3G      | CLOSED | B1,E5             | 历史                    |
-| Batch 3V      | CLOSED | A3,B1,G5,C1…      | 历史 (= 旧 Wave 0)      |
-| R3H-01～04    | CLOSED | C3,A3,G\*         | 历史                    |
-| R3H-06        | CLOSED | B1,A2             | 历史 (= 旧 Wave 1)      |
-| R3H-07        | CLOSED | G4,C3             | **Wave 1** @ 2026-06-29 |
-| R3H-10        | CLOSED | C2,E4             | **Wave 1** @ 2026-06-29 |
-| R3H-08A–D     | CLOSED | C3,A3,B\*,G6      | **Wave 2** @ 2026-06-29 |
-| R3-DCP-01..03 | CLOSED | D1,E1,E2,F0       | **Wave 3** @ 2026-06-30 |
-| R3-DCP-05     | CLOSED | D1,E1             | **Wave 4** @ `c2258363` |
-| R3-DCP-06..10 | OPEN   | D1,G1,K2,G2,G4,G5 | **Wave 4**              |
-| R3H-05 + GATE | OPEN   | 全表              | **Wave 5**              |
-| B04-\*        | 未开工 | I1–I8,J2,J7       | Round4                  |
-| B05-\*        | 未开工 | J3,A1…            | Round5                  |
-| Batch6        | 未开工 | D2,D3,D4,H1       | §5.2                    |
+| 旧轨          | 状态   | 主要模块     | 新波次                  |
+| ------------- | ------ | ------------ | ----------------------- |
+| Batch 3F-R    | CLOSED | J1,F0,C4,E1  | 历史                    |
+| Batch 3G      | CLOSED | B1,E5        | 历史                    |
+| Batch 3V      | CLOSED | A3,B1,G5,C1… | 历史 (= 旧 Wave 0)      |
+| R3H-01～04    | CLOSED | C3,A3,G\*    | 历史                    |
+| R3H-06        | CLOSED | B1,A2        | 历史 (= 旧 Wave 1)      |
+| R3H-07        | CLOSED | G4,C3        | **Wave 1** @ 2026-06-29 |
+| R3H-10        | CLOSED | C2,E4        | **Wave 1** @ 2026-06-29 |
+| R3H-08A–D     | CLOSED | C3,A3,B\*,G6 | **Wave 2** @ 2026-06-29 |
+| R3-DCP-01..03 | CLOSED | D1,E1,E2,F0  | **Wave 3** @ 2026-06-30 |
+| R3-DCP-05     | CLOSED | D1,E1        | **Wave 4** @ `c2258363` |
+| R3-DCP-06     | CLOSED | G1,K2        | **Wave 4** @ `6c6cdd73` |
+| R3-DCP-07..10 | OPEN   | G2,G4,G5,D1  | **Wave 4**              |
+| R3H-05 + GATE | OPEN   | 全表         | **Wave 5**              |
+| B04-\*        | 未开工 | I1–I8,J2,J7  | Round4                  |
+| B05-\*        | 未开工 | J3,A1…       | Round5                  |
+| Batch6        | 未开工 | D2,D3,D4,H1  | §5.2                    |
 
 ---
 

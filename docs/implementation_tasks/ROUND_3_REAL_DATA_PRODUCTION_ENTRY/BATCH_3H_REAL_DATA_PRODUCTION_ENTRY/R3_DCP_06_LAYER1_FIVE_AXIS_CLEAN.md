@@ -6,7 +6,7 @@
 > **Module：** G1 Layer1 axes · K2 五轴 spec · K1 model input whitelist · A4 ResourceGuard  
 > **评级：** G1/K2 `R3→R4`（PASS 硬门禁）  
 > **前置：** R3-DCP-05 ✅ CLOSED @ `c2258363`（Tier A clean 增量输入）  
-> **状态：** **Execute DONE** — 待 Audit（`feature/wave4-r3-dcp-06-five-axis-clean`）
+> **状态：** **CLOSED** @ `6c6cdd73`（merge `master` · Trellis archived `2026-07`）
 
 ---
 
