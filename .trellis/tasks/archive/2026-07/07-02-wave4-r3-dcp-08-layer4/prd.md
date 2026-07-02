@@ -1,4 +1,5 @@
 <!-- thin-index: true -->
+
 # Wave4 R3-DCP-08 Layer4 market structure
 
 > **Execute/Audit SSOT：** `frozen/<NNN>.md` + `EXECUTION_INDEX.md`

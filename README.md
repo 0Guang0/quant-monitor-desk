@@ -116,17 +116,17 @@ item ID / task ID → source document → acceptance criterion → code/test evi
 
 ### 当前关键索引入口
 
-| 场景                           | 入口                                                                         |
-| ------------------------------ | ---------------------------------------------------------------------------- |
-| **活规划 / 下一批工单**        | `PROJECT_IMPLEMENTATION_ROADMAP.md` §3 · `docs/implementation_tasks/README.md` |
-| **模块完成度（Pass E）**       | `MODULE_COMPLETION_RATING.md` §3                                             |
-| 全项目模块定位                 | `MIGRATION_MAP.md`                                                           |
-| 普通文档导航                   | `docs/INDEX.md`                                                              |
-| Plan 上下文桥                  | `docs/implementation_tasks/TASK_INPUT_CONTEXT_INDEX.md`                      |
-| Round3 六批次上下文索引（历史） | `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND3_BATCH_IMPLEMENTATION_MAP.md` |
+| 场景                                | 入口                                                                                                                                                                                  |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **活规划 / 下一批工单**             | `PROJECT_IMPLEMENTATION_ROADMAP.md` §3 · `docs/implementation_tasks/README.md`                                                                                                        |
+| **模块完成度（Pass E）**            | `MODULE_COMPLETION_RATING.md` §3                                                                                                                                                      |
+| 全项目模块定位                      | `MIGRATION_MAP.md`                                                                                                                                                                    |
+| 普通文档导航                        | `docs/INDEX.md`                                                                                                                                                                       |
+| Plan 上下文桥                       | `docs/implementation_tasks/TASK_INPUT_CONTEXT_INDEX.md`                                                                                                                               |
+| Round3 六批次上下文索引（历史）     | `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND3_BATCH_IMPLEMENTATION_MAP.md`                                                                                  |
 | R3H PASS 逐源表 / Wave 叙事（历史） | `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/R3H_PASS_EXECUTION_PLAN.archived-20260702.md` |
-| Round3 DB inspect CLI 冻结设计 | `docs/ops/db_inspect_cli.md`、`specs/contracts/ops_db_inspect_contract.yaml` |
-| Trellis 复杂任务协议           | `.trellis/spec/guides/complex-task-planning-protocol.md`                     |
+| Round3 DB inspect CLI 冻结设计      | `docs/ops/db_inspect_cli.md`、`specs/contracts/ops_db_inspect_contract.yaml`                                                                                                          |
+| Trellis 复杂任务协议                | `.trellis/spec/guides/complex-task-planning-protocol.md`                                                                                                                              |
 
 ## 3. 旧口径禁止恢复
 
@@ -177,12 +177,12 @@ cd frontend && npm ci && npm run typecheck && npm run build
 
 **新开工** 以 **模块闭环队列 v2** 为准（`PROJECT_IMPLEMENTATION_ROADMAP.md` §3）：
 
-| 优先级 | 票 ID | 业务一句话 |
-| ------ | ----- | ---------- |
-| **P0** | **M-DATA-03** | 11 主源真网增量→写库→巡检（隔离库） |
-| **P0** | **M-G1-03** | 五轴按设计完整落地（真链，非仅 seed） |
-| **P1** | **M-G2-FULL** / **M-G4-FULL** / **M-G5-FULL** | Layer2/4/5 按设计权威完整落地 |
-| **P0** | **M-PASS-01** | `PASS_ROUND4_REAL_DATA_READY`（末位门禁） |
+| 优先级 | 票 ID                                         | 业务一句话                                |
+| ------ | --------------------------------------------- | ----------------------------------------- |
+| **P0** | **M-DATA-03**                                 | 11 主源真网增量→写库→巡检（隔离库）       |
+| **P0** | **M-G1-03**                                   | 五轴按设计完整落地（真链，非仅 seed）     |
+| **P1** | **M-G2-FULL** / **M-G4-FULL** / **M-G5-FULL** | Layer2/4/5 按设计权威完整落地             |
+| **P0** | **M-PASS-01**                                 | `PASS_ROUND4_REAL_DATA_READY`（末位门禁） |
 
 Round4 产品面（B04）须在 **M-PASS-01** 通过后开工。每个新票 Plan 冻结前仍须读全局契约（`GLOBAL_*.md`）及该票列出的设计/契约；前端页面布局、视觉风格、交互方式在正式实现前必须由用户确认（D-08）。
 

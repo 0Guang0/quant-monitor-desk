@@ -34,10 +34,10 @@ Batch C does not cover:
 
 The following are expected to be already complete before Batch C implementation:
 
-| Item | Expected state |
-|------|----------------|
-| `validation: "null"` string | rejected; YAML null remains allowed |
-| `FetchLogWriter._parse_timestamp()` | raises domain error for invalid timestamp |
+| Item                                    | Expected state                               |
+| --------------------------------------- | -------------------------------------------- |
+| `validation: "null"` string             | rejected; YAML null remains allowed          |
+| `FetchLogWriter._parse_timestamp()`     | raises domain error for invalid timestamp    |
 | `SourceRegistry.sync_to_db()` atomicity | caller-owned transaction strategy documented |
 
 If any is not true, stop and repair before continuing Batch C.
@@ -46,16 +46,16 @@ If any is not true, stop and repair before continuing Batch C.
 
 ## 3. Batch C implementation status
 
-| Item | Status | Evidence |
-|------|--------|----------|
-| migration 005 | EXECUTE_DONE | `.trellis/tasks/06-17-round2-batch-c-validation-conflict/execute-evidence/8.1-green.txt` |
-| DataQualityValidator | EXECUTE_DONE | `.trellis/tasks/06-17-round2-batch-c-validation-conflict/execute-evidence/8.3-green.txt`, `8.4-green.txt` |
-| SourceConflictValidator | EXECUTE_DONE | `.trellis/tasks/06-17-round2-batch-c-validation-conflict/execute-evidence/8.5-green.txt`, `8.6-green.txt` |
-| DbValidationGate | EXECUTE_DONE | `.trellis/tasks/06-17-round2-batch-c-validation-conflict/execute-evidence/8.2-green.txt` |
-| SUCCESS evidence/staging validation | EXECUTE_DONE | `.trellis/tasks/06-17-round2-batch-c-validation-conflict/execute-evidence/8.4-green.txt` |
-| FetchStatus/PortErrorStatus alignment | EXECUTE_DONE | `.trellis/tasks/06-17-round2-batch-c-validation-conflict/execute-evidence/8.7-green.txt` |
-| error redaction | EXECUTE_DONE | `.trellis/tasks/06-17-round2-batch-c-validation-conflict/execute-evidence/8.7-green.txt` |
-| docs/status update | EXECUTE_DONE | `.trellis/tasks/06-17-round2-batch-c-validation-conflict/execute-evidence/8.9-docs.txt` |
+| Item                                  | Status       | Evidence                                                                                                  |
+| ------------------------------------- | ------------ | --------------------------------------------------------------------------------------------------------- |
+| migration 005                         | EXECUTE_DONE | `.trellis/tasks/06-17-round2-batch-c-validation-conflict/execute-evidence/8.1-green.txt`                  |
+| DataQualityValidator                  | EXECUTE_DONE | `.trellis/tasks/06-17-round2-batch-c-validation-conflict/execute-evidence/8.3-green.txt`, `8.4-green.txt` |
+| SourceConflictValidator               | EXECUTE_DONE | `.trellis/tasks/06-17-round2-batch-c-validation-conflict/execute-evidence/8.5-green.txt`, `8.6-green.txt` |
+| DbValidationGate                      | EXECUTE_DONE | `.trellis/tasks/06-17-round2-batch-c-validation-conflict/execute-evidence/8.2-green.txt`                  |
+| SUCCESS evidence/staging validation   | EXECUTE_DONE | `.trellis/tasks/06-17-round2-batch-c-validation-conflict/execute-evidence/8.4-green.txt`                  |
+| FetchStatus/PortErrorStatus alignment | EXECUTE_DONE | `.trellis/tasks/06-17-round2-batch-c-validation-conflict/execute-evidence/8.7-green.txt`                  |
+| error redaction                       | EXECUTE_DONE | `.trellis/tasks/06-17-round2-batch-c-validation-conflict/execute-evidence/8.7-green.txt`                  |
+| docs/status update                    | EXECUTE_DONE | `.trellis/tasks/06-17-round2-batch-c-validation-conflict/execute-evidence/8.9-docs.txt`                   |
 
 Migration caveat: DuckDB cannot safely `ALTER TABLE ADD CONSTRAINT` onto already
 applied migration 004 tables. Batch C therefore creates the new validation/
@@ -67,15 +67,15 @@ conflict/manual-review tables with inline constraints in migration 005, while
 
 ## 4. Deferred items
 
-| Item | Stage | Reason |
-|------|-------|--------|
-| DataSyncOrchestrator | Batch D / Round 3 | Batch C only creates validation/gate primitives |
-| ResourceGuard WARN/PAUSE/HARD_STOP orchestration | Batch D / Round 3 | Requires orchestrator |
-| real vendor FetchPorts | Batch D+ | Batch C only aligns status/redaction |
-| API/frontend production UI | Round 4 | Explicit non-goal |
-| Agent sandbox | Round 5 | Explicit non-goal |
-| Release manifest / FINAL_AUDIT | Round 5 | Explicit non-goal |
-| CodeQL/action pin/SBOM/full security CI | Batch D / Round 5 | Explicit non-goal |
+| Item                                             | Stage             | Reason                                          |
+| ------------------------------------------------ | ----------------- | ----------------------------------------------- |
+| DataSyncOrchestrator                             | Batch D / Round 3 | Batch C only creates validation/gate primitives |
+| ResourceGuard WARN/PAUSE/HARD_STOP orchestration | Batch D / Round 3 | Requires orchestrator                           |
+| real vendor FetchPorts                           | Batch D+          | Batch C only aligns status/redaction            |
+| API/frontend production UI                       | Round 4           | Explicit non-goal                               |
+| Agent sandbox                                    | Round 5           | Explicit non-goal                               |
+| Release manifest / FINAL_AUDIT                   | Round 5           | Explicit non-goal                               |
+| CodeQL/action pin/SBOM/full security CI          | Batch D / Round 5 | Explicit non-goal                               |
 
 ---
 

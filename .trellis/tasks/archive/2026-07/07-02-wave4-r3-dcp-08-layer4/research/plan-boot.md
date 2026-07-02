@@ -4,13 +4,13 @@
 
 ## 活卡 §1–§3 摘要（Wave 级 · 不迁入 research 全文）
 
-| 维度 | 内容 |
-|------|------|
-| **Goal** | Layer4 **一个** P0 `market_id` 从 Tier A clean + 真日历读入 → market structure snapshot → pytest 绿 |
-| **价值** | Wave 4 G4 最小竖切；承接 `ACC-EASTMONEY-TAXONOMY-001`（部分）、`ACC-MOOTDX-DRYRUN-ROUTE-001`、`ACC-LAYER-E2E-LIVE-001` L4 子集 |
-| **约束** | 输入 SSOT = Tier A clean + `TradingCalendar`（R3H-07 US）；禁止 staged 冒充 PASS；**不关** `R3-B2.75-REQ2-EM`；registry 改动主会话 merge |
-| **前置** | R3H-07 ✅ · R3-DCP-05 ✅ · R3-DCP-06 ✅ |
-| **Plan 定案** | P0 `market_id` = **`US_EQ`**（见 `plan-doubt-review.md` Cycle 1 · ADR-033） |
+| 维度          | 内容                                                                                                                                     |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| **Goal**      | Layer4 **一个** P0 `market_id` 从 Tier A clean + 真日历读入 → market structure snapshot → pytest 绿                                      |
+| **价值**      | Wave 4 G4 最小竖切；承接 `ACC-EASTMONEY-TAXONOMY-001`（部分）、`ACC-MOOTDX-DRYRUN-ROUTE-001`、`ACC-LAYER-E2E-LIVE-001` L4 子集           |
+| **约束**      | 输入 SSOT = Tier A clean + `TradingCalendar`（R3H-07 US）；禁止 staged 冒充 PASS；**不关** `R3-B2.75-REQ2-EM`；registry 改动主会话 merge |
+| **前置**      | R3H-07 ✅ · R3-DCP-05 ✅ · R3-DCP-06 ✅                                                                                                  |
+| **Plan 定案** | P0 `market_id` = **`US_EQ`**（见 `plan-doubt-review.md` Cycle 1 · ADR-033）                                                              |
 
 ## P0 必读完成
 

@@ -7,13 +7,13 @@
 
 ## Blockers addressed
 
-| ID | Fix |
-| --- | --- |
+| ID         | Fix                                                                                                                                    |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | ADV-A1-003 | `DbValidationGate` enforces `schema_hash_changed` via `SCHEMA_DRIFT` quality flag + `fetch_log` vs `file_registry` baseline comparison |
-| ADV-A1-004 | `register_staged_file_registry_rows` validates path containment under `data_root` |
-| ADV-A1-005 | `WriteManager` appends FAILED audit to `data/logs/failed_write_audit.ndjson` when `own_transaction=False` |
-| ADV-A3-001 | `BackfillShardRunner` blocks clean write on `SEVERE_CONFLICT` → `WAITING_RECONCILE` |
-| ADV-A3-003 | Backfill persists `conflict_report_id` on `data_sync_job` |
+| ADV-A1-004 | `register_staged_file_registry_rows` validates path containment under `data_root`                                                      |
+| ADV-A1-005 | `WriteManager` appends FAILED audit to `data/logs/failed_write_audit.ndjson` when `own_transaction=False`                              |
+| ADV-A3-001 | `BackfillShardRunner` blocks clean write on `SEVERE_CONFLICT` → `WAITING_RECONCILE`                                                    |
+| ADV-A3-003 | Backfill persists `conflict_report_id` on `data_sync_job`                                                                              |
 
 ## Changed files
 
@@ -51,12 +51,12 @@ Combined gate run (2026-06-22): **99 passed, 1 skipped**
 
 ## Current batch evidence
 
-| Branch artifact | Status |
-| --- | --- |
-| `feature/round3-019-layer2-sensor` | Not re-verified in this worktree; prior `merge_gate_report.md` cites staged-only + no production DB mutation |
-| `feature/round3-023a-evidence-foundation` | `MISSING_CURRENT_BATCH_EVIDENCE` in this session (branch not checked out) |
-| `review/round3-019-plan-audit` | `docs/implementation_tasks/ROUND_3_REVIEW/019_plan_audit_report.md` on disk |
-| `debt/r3b275-018c-live-manual-probe-plan` | Merged at base `8961691a` (PROMPT_10) |
+| Branch artifact                           | Status                                                                                                       |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `feature/round3-019-layer2-sensor`        | Not re-verified in this worktree; prior `merge_gate_report.md` cites staged-only + no production DB mutation |
+| `feature/round3-023a-evidence-foundation` | `MISSING_CURRENT_BATCH_EVIDENCE` in this session (branch not checked out)                                    |
+| `review/round3-019-plan-audit`            | `docs/implementation_tasks/ROUND_3_REVIEW/019_plan_audit_report.md` on disk                                  |
+| `debt/r3b275-018c-live-manual-probe-plan` | Merged at base `8961691a` (PROMPT_10)                                                                        |
 
 ## Remaining deferred (out of scope)
 

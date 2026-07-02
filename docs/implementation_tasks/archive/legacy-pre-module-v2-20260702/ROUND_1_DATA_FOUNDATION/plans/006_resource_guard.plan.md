@@ -53,11 +53,11 @@ class ResourceGuard:
 
 判定口径取自 `resource_limits.yaml` 的 `system_thresholds` 与 `project_size_thresholds`：
 
-| 信号 | WARN | PAUSE | HARD_STOP |
-|------|------|-------|-----------|
-| available_memory_gb | < 4 | < 2 | < 1 |
-| disk_free_gb | < 30 | < 20 | < 10 |
-| project_size_gb | > 15 | > 25 | > 40 |
+| 信号                | WARN | PAUSE | HARD_STOP |
+| ------------------- | ---- | ----- | --------- |
+| available_memory_gb | < 4  | < 2   | < 1       |
+| disk_free_gb        | < 30 | < 20  | < 10      |
+| project_size_gb     | > 15 | > 25  | > 40      |
 
 任一信号命中更严重档位即采用该档（取最严重）。
 
@@ -170,20 +170,20 @@ Commit: `feat(core): add ResourceGuard with eco/normal/batch thresholds (task 00
 
 ### 审计修复与实现缺口
 
-| 项 | 问题 | 修复 |
-|----|------|------|
-| 缺口 | `process_rss_mb` 采集但未参与判定 | `evaluate(..., profile_limits=)` 增加 RSS 信号；`check()` 传入当前 profile 阈值 |
-| 缺口 | `_dir_size_gb` 跟随 symlink 可能误判或慢 | `rglob(..., follow_symlinks=False)` |
-| 测试 | `Decision.WARN` 未覆盖 | 新增 WARN / project_size / RSS 边界测试 |
-| 测试 | OK 路径是否误写 guard log 未验证 | 新增 `test_check_okDecision_doesNotWriteGuardLog`（mock 健康 snapshot） |
+| 项   | 问题                                     | 修复                                                                            |
+| ---- | ---------------------------------------- | ------------------------------------------------------------------------------- |
+| 缺口 | `process_rss_mb` 采集但未参与判定        | `evaluate(..., profile_limits=)` 增加 RSS 信号；`check()` 传入当前 profile 阈值 |
+| 缺口 | `_dir_size_gb` 跟随 symlink 可能误判或慢 | `rglob(..., follow_symlinks=False)`                                             |
+| 测试 | `Decision.WARN` 未覆盖                   | 新增 WARN / project_size / RSS 边界测试                                         |
+| 测试 | OK 路径是否误写 guard log 未验证         | 新增 `test_check_okDecision_doesNotWriteGuardLog`（mock 健康 snapshot）         |
 
 ### 测试缺口补充
 
-| 测试 | 证明什么 |
-|------|----------|
-| `test_evaluate_warnMemory_returnsWarn` | 内存 3.5GB → `WARN` |
-| `test_evaluate_largeProject_returnsPause` | 项目目录 30GB → `PAUSE` |
-| `test_evaluate_highRss_returnsPause` | RSS 超 warn 阈值 → `WARN` |
+| 测试                                         | 证明什么                       |
+| -------------------------------------------- | ------------------------------ |
+| `test_evaluate_warnMemory_returnsWarn`       | 内存 3.5GB → `WARN`            |
+| `test_evaluate_largeProject_returnsPause`    | 项目目录 30GB → `PAUSE`        |
+| `test_evaluate_highRss_returnsPause`         | RSS 超 warn 阈值 → `WARN`      |
 | `test_check_okDecision_doesNotWriteGuardLog` | OK 时不写 `resource_guard_log` |
 
 ### 当前测试规模
@@ -194,20 +194,20 @@ Commit: `feat(core): add ResourceGuard with eco/normal/batch thresholds (task 00
 
 ## 评估报告跟进（二次修复）
 
-| 评估项 | 修复 |
-|--------|------|
+| 评估项                       | 修复                                                       |
+| ---------------------------- | ---------------------------------------------------------- |
 | guard_log 靠 autocommit 巧合 | `check()` 非 OK 落库改为显式 `BEGIN` → `INSERT` → `COMMIT` |
 
 ---
 
 ## 评估报告跟进（三次修复）
 
-| 评估项 | 修复 |
-|--------|------|
-| **P1** 缺 `RESOURCE_GUARD_PAUSED` 输出 | `format_pause_event()` + PAUSE/HARD_STOP 时 `print(..., file=sys.stderr)` |
-| **P0** guard_log INSERT 失败事务悬挂 | `check()` 落库包裹 try/except + ROLLBACK |
-| 测试命名 `test_evaluate_highRss_returnsPause` 误导 | 重命名为 `test_evaluate_rssAboveWarnNotPause_returnsWarn` |
-| HARD_STOP / 边界值 / sentinel 无测试 | 新增 4 个测试 |
+| 评估项                                             | 修复                                                                      |
+| -------------------------------------------------- | ------------------------------------------------------------------------- |
+| **P1** 缺 `RESOURCE_GUARD_PAUSED` 输出             | `format_pause_event()` + PAUSE/HARD_STOP 时 `print(..., file=sys.stderr)` |
+| **P0** guard_log INSERT 失败事务悬挂               | `check()` 落库包裹 try/except + ROLLBACK                                  |
+| 测试命名 `test_evaluate_highRss_returnsPause` 误导 | 重命名为 `test_evaluate_rssAboveWarnNotPause_returnsWarn`                 |
+| HARD_STOP / 边界值 / sentinel 无测试               | 新增 4 个测试                                                             |
 
 ### Round 1 范围说明（非 bug）
 
@@ -221,12 +221,12 @@ Commit: `feat(core): add ResourceGuard with eco/normal/batch thresholds (task 00
 
 ## 评估报告跟进（PR #1 review / 四次修复）
 
-| # | 级别 | 问题 | 状态 |
-|---|------|------|------|
-| 1 | **P0** | `rglob(follow_symlinks=False)` 在 py>=3.11 崩溃 | ✅ `os.walk` |
-| 2 | P1 | WARN 写 guard_log 无测试 | ✅ |
-| 3 | P3 | `ResourceSnapshot` 非负性未断言 | ✅ |
-| 4 | — | 真实 `snapshot()` 集成测试 | ✅ |
+| #   | 级别   | 问题                                            | 状态         |
+| --- | ------ | ----------------------------------------------- | ------------ |
+| 1   | **P0** | `rglob(follow_symlinks=False)` 在 py>=3.11 崩溃 | ✅ `os.walk` |
+| 2   | P1     | WARN 写 guard_log 无测试                        | ✅           |
+| 3   | P3     | `ResourceSnapshot` 非负性未断言                 | ✅           |
+| 4   | —      | 真实 `snapshot()` 集成测试                      | ✅           |
 
 ### 当前测试规模（四次修复后）
 

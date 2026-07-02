@@ -4,9 +4,9 @@
 
 ## L4 subset scope
 
-| market_id | source_mode | clean inputs | snapshot |
-|-----------|-------------|--------------|----------|
-| US_EQ | tier_a_clean | security_bar_1d + us_trading_calendar SSOT | market_breadth_snapshot |
+| market_id | source_mode  | clean inputs                               | snapshot                |
+| --------- | ------------ | ------------------------------------------ | ----------------------- |
+| US_EQ     | tier_a_clean | security_bar_1d + us_trading_calendar SSOT | market_breadth_snapshot |
 
 ## Evidence chain
 

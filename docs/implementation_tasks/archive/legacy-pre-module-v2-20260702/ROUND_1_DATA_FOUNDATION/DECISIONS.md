@@ -8,12 +8,12 @@
 
 **决策：统一使用 `backend/app/*`，与 Round 0 骨架一致。**
 
-| 模块 | 路径 |
-|------|------|
-| DuckDB 连接与写入 | `backend/app/db/` |
-| 资源保护 | `backend/app/core/` |
-| 原始文件与索引 | `backend/app/storage/` |
-| CLI 入口 | `scripts/`（仓库根目录，与 Round 0 一致） |
+| 模块              | 路径                                      |
+| ----------------- | ----------------------------------------- |
+| DuckDB 连接与写入 | `backend/app/db/`                         |
+| 资源保护          | `backend/app/core/`                       |
+| 原始文件与索引    | `backend/app/storage/`                    |
+| CLI 入口          | `scripts/`（仓库根目录，与 Round 0 一致） |
 
 不再使用 `backend/db/`、`backend/core/`、`backend/storage/` 等与 `app/` 平级的旧路径字面量。
 
@@ -44,12 +44,12 @@ Round 1 **支持的 write_mode**：
 
 Round 1 migration `001_foundation.sql` 仅包含：
 
-| 表名 | 用途 |
-|------|------|
-| `schema_version` | 记录已应用的 migration |
-| `file_registry` | 本地文件索引（Raw Store 写入目标） |
-| `write_audit_log` | WriteManager 审计 |
-| `resource_guard_log` | ResourceGuard 触发记录 |
+| 表名                   | 用途                                                   |
+| ---------------------- | ------------------------------------------------------ |
+| `schema_version`       | 记录已应用的 migration                                 |
+| `file_registry`        | 本地文件索引（Raw Store 写入目标）                     |
+| `write_audit_log`      | WriteManager 审计                                      |
+| `resource_guard_log`   | ResourceGuard 触发记录                                 |
 | `stg_foundation_smoke` | Round 1 smoke 用 staging 表（列结构与 smoke 场景对齐） |
 
 完整 Layer / 行情 / snapshot 表在 Round 2 及以后通过后续 migration 追加。
@@ -72,9 +72,9 @@ Round 1 migration `001_foundation.sql` 仅包含：
 
 **决策：Round 1 允许新增以下运行时依赖（实现阶段写入 `pyproject.toml`）；Round 0 已引入 fastapi / uvicorn / pydantic / pyyaml，本节为 Round 1 增量：**
 
-| 包 | 用途 |
-|----|------|
-| `duckdb` | 本地 DuckDB 引擎 |
+| 包       | 用途                                 |
+| -------- | ------------------------------------ |
+| `duckdb` | 本地 DuckDB 引擎                     |
 | `psutil` | ResourceGuard 读取内存/磁盘/进程 RSS |
 
 不引入 Polars/Pandas 作为 Round 1 写入路径依赖；校验与 ETL heavy 逻辑仍留后续 Round。

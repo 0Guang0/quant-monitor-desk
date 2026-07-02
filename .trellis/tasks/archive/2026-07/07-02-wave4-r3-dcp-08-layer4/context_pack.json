@@ -346,10 +346,7 @@
       "purpose": "R3-DCP-05 S12 — Tier A unified `qmd data sync --source-id` router tests."
     }
   ],
-  "forbidden_claims": [
-    "production-live ready",
-    "live production ingestion"
-  ],
+  "forbidden_claims": ["production-live ready", "live production ingestion"],
   "required_evidence": [
     "context_pack.json",
     "loop_manifest.json",

@@ -17,11 +17,11 @@
 
 ## Vertical slices
 
-| Slice | Source ID | AC | Allowed files | Forbidden files | Verification | Evidence |
-| ----- | --------- | -- | ------------- | --------------- | ------------ | -------- |
-| S1 | D-CI | Round 3 command matrix current in `verification_commands.md` | `docs/ops/verification_commands.md` | backend runtime | `test_verificationCommandsDoc_*` | this plan |
-| S2 | D-CI | Staged/live gate tests discoverable | `tests/test_round3_verification_command_matrix.py` | network-default CI | matrix test green | merge report |
-| S3 | D-CI | Batch map points to command matrix | `ROUND3_BATCH_IMPLEMENTATION_MAP.md` | unrelated sections | doc link check | merge report |
+| Slice | Source ID | AC                                                           | Allowed files                                      | Forbidden files    | Verification                     | Evidence     |
+| ----- | --------- | ------------------------------------------------------------ | -------------------------------------------------- | ------------------ | -------------------------------- | ------------ |
+| S1    | D-CI      | Round 3 command matrix current in `verification_commands.md` | `docs/ops/verification_commands.md`                | backend runtime    | `test_verificationCommandsDoc_*` | this plan    |
+| S2    | D-CI      | Staged/live gate tests discoverable                          | `tests/test_round3_verification_command_matrix.py` | network-default CI | matrix test green                | merge report |
+| S3    | D-CI      | Batch map points to command matrix                           | `ROUND3_BATCH_IMPLEMENTATION_MAP.md`               | unrelated sections | doc link check                   | merge report |
 
 ## Merge gate
 

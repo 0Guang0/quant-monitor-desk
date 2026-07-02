@@ -18,12 +18,12 @@
 
 ## Pre-flight（分支 / gate）
 
-| Check | Status | Evidence |
-| ----- | ------ | -------- |
-| `R3-B3-STAGED-DOWNSTREAM-GATE` CLOSED | ✅ | `docs/quality/BATCH3_STAGED_DOWNSTREAM_GATE.md` §Gate status |
-| `019_plan_audit_review.md` exists | ✅ | `docs/implementation_tasks/ROUND_3_REVIEW/019_plan_audit_review.md` |
-| 019 plan artifacts available | ✅ | `.trellis/tasks/06-22-round3-019-layer2-sensor/MASTER.plan.md`, `AUDIT.plan.md` |
-| Review worktree created | ✅ | `review/round3-019-plan-audit` @ `76ea3471` |
+| Check                                 | Status | Evidence                                                                        |
+| ------------------------------------- | ------ | ------------------------------------------------------------------------------- |
+| `R3-B3-STAGED-DOWNSTREAM-GATE` CLOSED | ✅     | `docs/quality/BATCH3_STAGED_DOWNSTREAM_GATE.md` §Gate status                    |
+| `019_plan_audit_review.md` exists     | ✅     | `docs/implementation_tasks/ROUND_3_REVIEW/019_plan_audit_review.md`             |
+| 019 plan artifacts available          | ✅     | `.trellis/tasks/06-22-round3-019-layer2-sensor/MASTER.plan.md`, `AUDIT.plan.md` |
+| Review worktree created               | ✅     | `review/round3-019-plan-audit` @ `76ea3471`                                     |
 
 ---
 
@@ -64,17 +64,17 @@
 
 ## Blocker checklist (PROMPT §4)
 
-| # | Criterion | Result | Evidence |
-| - | --------- | ------ | -------- |
-| 1 | 019 声称 production-live readiness | **PASS** | `MASTER.plan.md` §0 标题与 §16 八条 staged 限制；`sensor_loader.py` L72–77 拒绝 `mode != staged_fixture_only`；`merge_gate_report.md` 明确无 production DB mutation |
-| 2 | `tdx_pytdx` 作生产源或 Primary | **PASS** | `ALLOWED_PRIMARY_SOURCES = {"staged_fixture"}`（`sensor_loader.py` L53）；`observation.py` L79–81 拒绝 `source == "tdx_pytdx"`；`test_stagedSource_rejectsTdxPytdx_viaBuilder` |
-| 3 | 默认 live FRED / 外部 vendor 写入 | **PASS** | 无 fetch/orchestrator 集成；registry `primary_source` 仅 `staged_fixture`；`B2.5-O-05` / `R3-B2.75-REQ2-EM` 在 MASTER §16 显式引用 |
-| 4 | Eastmoney hist 静默 fallback 至 TDX/Sina/QMT/xqshare | **PASS** | 019 未实现 CrossAssetFetcher / route planner；无 fallback 路由代码；fixture-only 输入 |
-| 5 | 缺少 `double_count_guard` 语义 | **PASS** | `double_count_guard.py` + registry 校验；`test_doubleCountGuard_*`, `test_vixAxisInput_*`, `test_noAcceptedChannel_notModelEligible` |
-| 6 | 缺少 no-future-data 测试 | **PASS** | `reject_future_observation` 覆盖 trade_time / as_of_timestamp / fetch_time；`test_snapshotRejectsFuture*`；`test_incrementalRebuildPreservesAsOfBoundary` |
-| 7 | 绕过 WriteManager / ResourceGuard | **PASS** | `Layer2SnapshotWriter`, `Layer2ObservationWriter`, `Layer2RollEventWriter`, `CrossAssetRegistryWriter` 均经 WriteManager；`assert_resource_guard_allows` 于 snapshot/observation writer |
-| 8 | 修改 Layer3/4/5 runtime 越界 | **PASS** | MASTER §1 非目标列出 Layer3/4/5、FastAPI；diff 仅 `backend/app/layer2_sensors/`；`guard_layer2_writeback` 防止回写 Layer1 |
-| 9 | 019 与 023A 同时写 `snapshot_lineage_contract.yaml` | **PASS** | `git diff master...feature/round3-019-layer2-sensor -- specs/contracts/snapshot_lineage_contract.yaml` 为空；MASTER §0「023A lineage 对接」明确只读 contract、写 `axis_snapshot_lineage` |
+| #   | Criterion                                            | Result   | Evidence                                                                                                                                                                                 |
+| --- | ---------------------------------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | 019 声称 production-live readiness                   | **PASS** | `MASTER.plan.md` §0 标题与 §16 八条 staged 限制；`sensor_loader.py` L72–77 拒绝 `mode != staged_fixture_only`；`merge_gate_report.md` 明确无 production DB mutation                      |
+| 2   | `tdx_pytdx` 作生产源或 Primary                       | **PASS** | `ALLOWED_PRIMARY_SOURCES = {"staged_fixture"}`（`sensor_loader.py` L53）；`observation.py` L79–81 拒绝 `source == "tdx_pytdx"`；`test_stagedSource_rejectsTdxPytdx_viaBuilder`           |
+| 3   | 默认 live FRED / 外部 vendor 写入                    | **PASS** | 无 fetch/orchestrator 集成；registry `primary_source` 仅 `staged_fixture`；`B2.5-O-05` / `R3-B2.75-REQ2-EM` 在 MASTER §16 显式引用                                                       |
+| 4   | Eastmoney hist 静默 fallback 至 TDX/Sina/QMT/xqshare | **PASS** | 019 未实现 CrossAssetFetcher / route planner；无 fallback 路由代码；fixture-only 输入                                                                                                    |
+| 5   | 缺少 `double_count_guard` 语义                       | **PASS** | `double_count_guard.py` + registry 校验；`test_doubleCountGuard_*`, `test_vixAxisInput_*`, `test_noAcceptedChannel_notModelEligible`                                                     |
+| 6   | 缺少 no-future-data 测试                             | **PASS** | `reject_future_observation` 覆盖 trade_time / as_of_timestamp / fetch_time；`test_snapshotRejectsFuture*`；`test_incrementalRebuildPreservesAsOfBoundary`                                |
+| 7   | 绕过 WriteManager / ResourceGuard                    | **PASS** | `Layer2SnapshotWriter`, `Layer2ObservationWriter`, `Layer2RollEventWriter`, `CrossAssetRegistryWriter` 均经 WriteManager；`assert_resource_guard_allows` 于 snapshot/observation writer  |
+| 8   | 修改 Layer3/4/5 runtime 越界                         | **PASS** | MASTER §1 非目标列出 Layer3/4/5、FastAPI；diff 仅 `backend/app/layer2_sensors/`；`guard_layer2_writeback` 防止回写 Layer1                                                                |
+| 9   | 019 与 023A 同时写 `snapshot_lineage_contract.yaml`  | **PASS** | `git diff master...feature/round3-019-layer2-sensor -- specs/contracts/snapshot_lineage_contract.yaml` 为空；MASTER §0「023A lineage 对接」明确只读 contract、写 `axis_snapshot_lineage` |
 
 **阻塞项：0**
 
@@ -132,19 +132,19 @@ _无_
 
 ### Non-blockers（应在合并前或合并时处理）
 
-| ID | Finding | Location | Required fix |
-| -- | ------- | -------- | ------------ |
-| F-019-R01 | `AUDIT.plan.md` §阻塞级检查全部为 `[ ]`，与 §8 已执行 / merge_gate PASS 不一致 | `.trellis/tasks/06-22-round3-019-layer2-sensor/AUDIT.plan.md` L26–32 | 实现分支将六项勾选为 `[x]` 或附 audit 执行日期 |
-| F-019-R02 | 模块 doc §7 描述完整抓取流水线，MASTER 明确 defer DQ/conflict 全流水线 | `docs/modules/layer2_cross_asset_sensor.md` §7 vs MASTER §1 非目标 | 在 MASTER §1 或 `merge_gate_report.md` Deferred 中交叉引用模块 §12 任务拆分序号，避免 020+ 误跳过 |
-| F-019-R03 | Fixture `FRED:VIXCLS` instrument_id 可能被误读为 live FRED primary | `tests/fixtures/layer2_cross_asset_registry_fixture.yaml` L10 | 增加 YAML 注释或 AUDIT 注记：`primary_source=staged_fixture` 为准 |
+| ID        | Finding                                                                        | Location                                                             | Required fix                                                                                      |
+| --------- | ------------------------------------------------------------------------------ | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| F-019-R01 | `AUDIT.plan.md` §阻塞级检查全部为 `[ ]`，与 §8 已执行 / merge_gate PASS 不一致 | `.trellis/tasks/06-22-round3-019-layer2-sensor/AUDIT.plan.md` L26–32 | 实现分支将六项勾选为 `[x]` 或附 audit 执行日期                                                    |
+| F-019-R02 | 模块 doc §7 描述完整抓取流水线，MASTER 明确 defer DQ/conflict 全流水线         | `docs/modules/layer2_cross_asset_sensor.md` §7 vs MASTER §1 非目标   | 在 MASTER §1 或 `merge_gate_report.md` Deferred 中交叉引用模块 §12 任务拆分序号，避免 020+ 误跳过 |
+| F-019-R03 | Fixture `FRED:VIXCLS` instrument_id 可能被误读为 live FRED primary             | `tests/fixtures/layer2_cross_asset_registry_fixture.yaml` L10        | 增加 YAML 注释或 AUDIT 注记：`primary_source=staged_fixture` 为准                                 |
 
 ### Suggestions
 
-| ID | Suggestion | Rationale |
-| -- | ---------- | --------- |
-| S-019-01 | 合并后由 023A 分支统一演进 `snapshot_lineage_contract.yaml`；019 保持只读 | 避免并行 contract drift |
-| S-019-02 | 下一 slice（fetcher / API）须新开任务卡并重新过 Batch3 gate | 019 范围已正确收窄为 staged skeleton |
-| S-019-03 | `R3-B2.75-01` 在 MASTER 引用；registry 主表为 `BLOCK-R3-002` 别名——保持二者同步即可 | 命名别名，非语义冲突 |
+| ID       | Suggestion                                                                          | Rationale                            |
+| -------- | ----------------------------------------------------------------------------------- | ------------------------------------ |
+| S-019-01 | 合并后由 023A 分支统一演进 `snapshot_lineage_contract.yaml`；019 保持只读           | 避免并行 contract drift              |
+| S-019-02 | 下一 slice（fetcher / API）须新开任务卡并重新过 Batch3 gate                         | 019 范围已正确收窄为 staged skeleton |
+| S-019-03 | `R3-B2.75-01` 在 MASTER 引用；registry 主表为 `BLOCK-R3-002` 别名——保持二者同步即可 | 命名别名，非语义冲突                 |
 
 ---
 
@@ -170,12 +170,12 @@ validate-execute-handoff                      → PASSED
 
 ## Proceed / fix / decision
 
-| Question | Answer |
-| -------- | ------ |
-| **019 是否可继续？** | **是** — staged-only Layer2 sensor skeleton 可合并至 `integration/round3` |
-| **是否必须修复阻塞项？** | **否** — 无阻塞项 |
-| **是否需要用户决策？** | **否** — 除非用户希望将 scope 扩展至 live fetch / production migration / FastAPI（均超出本任务非目标） |
-| **合并前建议** | 在 `feature/round3-019-layer2-sensor` 上完成 F-019-R01（AUDIT 清单勾选） |
+| Question                 | Answer                                                                                                 |
+| ------------------------ | ------------------------------------------------------------------------------------------------------ |
+| **019 是否可继续？**     | **是** — staged-only Layer2 sensor skeleton 可合并至 `integration/round3`                              |
+| **是否必须修复阻塞项？** | **否** — 无阻塞项                                                                                      |
+| **是否需要用户决策？**   | **否** — 除非用户希望将 scope 扩展至 live fetch / production migration / FastAPI（均超出本任务非目标） |
+| **合并前建议**           | 在 `feature/round3-019-layer2-sensor` 上完成 F-019-R01（AUDIT 清单勾选）                               |
 
 ---
 

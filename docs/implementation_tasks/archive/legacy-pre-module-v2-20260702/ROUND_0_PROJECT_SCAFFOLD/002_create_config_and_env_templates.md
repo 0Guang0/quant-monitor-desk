@@ -18,6 +18,7 @@
 - `specs/contracts/runtime_versions.md`
 - `docs/quality/staged_acceptance_policy.md`
 - `docs/ops/config_secret_policy.md`
+
 ## 4. 相关代码 / 输出文件
 
 - .env.example
@@ -73,6 +74,7 @@
 - 测试命名建议：`functionName_condition_expectedBehavior`。
 
 ## 11. 验收命令
+
 本任务为项目骨架/配置/测试基线任务。验收命令：
 
 ```bash
@@ -127,4 +129,4 @@ uv run python -m compileall backend scripts tests
 
 ### 用户决策补充：D-03
 
-用户已拍板：Secret 第一版使用 .env.local，只提交 .env.example；.env/.env.local/*.secret/*.key 必须 gitignore；prod 必须做 secret 启动检查和 CI secret scan。
+用户已拍板：Secret 第一版使用 .env.local，只提交 .env.example；.env/.env.local/_.secret/_.key 必须 gitignore；prod 必须做 secret 启动检查和 CI secret scan。

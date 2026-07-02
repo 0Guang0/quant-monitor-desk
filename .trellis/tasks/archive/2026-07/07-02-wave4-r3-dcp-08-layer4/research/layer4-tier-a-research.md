@@ -23,10 +23,10 @@
 
 ## 推荐 Execute 触点
 
-| 新/改模块 | 职责 |
-|-----------|------|
-| `layer4_markets/clean_read.py` | 从 DuckDB `security_bar_1d` 读 US bar + 聚合 breadth |
-| `USEquityCleanMarketAdapter` | `load_calendar` / `load_breadth` 走 clean + calendar SSOT |
-| `MarketStructureBuilder.build(..., source_mode="tier_a_clean")` | 新入口；staged 路径不变 |
-| `tests/layer4_clean_e2e_support.py` | bootstrap sandbox DB + seed replay bars |
-| `tests/test_layer4_us_equity_clean_e2e.py` | 主 AC 证据 |
+| 新/改模块                                                       | 职责                                                      |
+| --------------------------------------------------------------- | --------------------------------------------------------- |
+| `layer4_markets/clean_read.py`                                  | 从 DuckDB `security_bar_1d` 读 US bar + 聚合 breadth      |
+| `USEquityCleanMarketAdapter`                                    | `load_calendar` / `load_breadth` 走 clean + calendar SSOT |
+| `MarketStructureBuilder.build(..., source_mode="tier_a_clean")` | 新入口；staged 路径不变                                   |
+| `tests/layer4_clean_e2e_support.py`                             | bootstrap sandbox DB + seed replay bars                   |
+| `tests/test_layer4_us_equity_clean_e2e.py`                      | 主 AC 证据                                                |

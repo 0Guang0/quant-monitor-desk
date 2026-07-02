@@ -136,12 +136,12 @@ Commit: `test(smoke): add foundation end-to-end smoke test (task 010)`
 
 ### hardening 后 smoke 增强
 
-| 增强 | 说明 |
-|------|------|
-| 断言 `002_registry_hardening` | 确认 hardening migration 已应用 |
-| ResourceGuard WARN 路径 | mock 低内存 WARN snapshot + `con` 连接，断言写 1 条 `resource_guard_log` |
-| reader 生命周期 | 注册/count 查询后显式 `close()`，避免与 writer 配置冲突 |
-| 失败路径 | 仍断言 stub-fail rollback + 1 条 FAILED 审计（原 plan 已有，保持） |
+| 增强                          | 说明                                                                     |
+| ----------------------------- | ------------------------------------------------------------------------ |
+| 断言 `002_registry_hardening` | 确认 hardening migration 已应用                                          |
+| ResourceGuard WARN 路径       | mock 低内存 WARN snapshot + `con` 连接，断言写 1 条 `resource_guard_log` |
+| reader 生命周期               | 注册/count 查询后显式 `close()`，避免与 writer 配置冲突                  |
+| 失败路径                      | 仍断言 stub-fail rollback + 1 条 FAILED 审计（原 plan 已有，保持）       |
 
 ### 全量验收状态（hardening 后）
 
@@ -162,7 +162,7 @@ pytest -q && ruff check . && python -m compileall backend scripts
 
 ## 评估报告跟进（三次修复）
 
-| 评估项 | 修复 |
-|--------|------|
-| smoke 使用 `with cm.reader()` | 随 007 reader context manager 更新 |
-| 全量测试 | **93/93** 通过（Round 0：26 + Round 1：67） |
+| 评估项                        | 修复                                        |
+| ----------------------------- | ------------------------------------------- |
+| smoke 使用 `with cm.reader()` | 随 007 reader context manager 更新          |
+| 全量测试                      | **93/93** 通过（Round 0：26 + Round 1：67） |

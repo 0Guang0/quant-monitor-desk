@@ -4,10 +4,10 @@ Engineering skills (`to-issues`, `triage`, `to-prd`, `qa`) use **one workflow** 
 
 ## Primary surfaces
 
-| Surface | Where | Tooling |
-| ------- | ----- | ------- |
-| **GitHub** | `https://github.com/0Guang0/quant-monitor-desk` issues (+ external PRs) | `gh` CLI |
-| **Local markdown** | `.scratch/<feature-slug>/` | read/write files in repo |
+| Surface            | Where                                                                   | Tooling                  |
+| ------------------ | ----------------------------------------------------------------------- | ------------------------ |
+| **GitHub**         | `https://github.com/0Guang0/quant-monitor-desk` issues (+ external PRs) | `gh` CLI                 |
+| **Local markdown** | `.scratch/<feature-slug>/`                                              | read/write files in repo |
 
 **Repo:** infer from `git remote -v` — `origin` → `0Guang0/quant-monitor-desk`.
 
@@ -51,7 +51,7 @@ GitHub shares one number space for issues and PRs — resolve with `gh pr view N
 
 ## Explicitly not the default tracker
 
-| System | Path | Note |
-| ------ | ---- | ---- |
-| Trellis complex tasks | `.trellis/tasks/` | Use Trellis skills/commands when user asks for complex task flow |
+| System                    | Path                         | Note                                                                                                  |
+| ------------------------- | ---------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Trellis complex tasks     | `.trellis/tasks/`            | Use Trellis skills/commands when user asks for complex task flow                                      |
 | Implementation task cards | `docs/implementation_tasks/` | Planning SSOT (`PROJECT_IMPLEMENTATION_ROADMAP.md`); not auto-created by `to-issues` unless user asks |

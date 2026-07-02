@@ -8,25 +8,25 @@
 
 ## 2. 分支
 
-| Field | Value |
-| ----- | ----- |
-| Branch | `fix/round3-ponytail-pilot-prep-bucket-a` |
-| Base | `master` @ `d1a15e4b` |
-| Worktree | `../quant-monitor-desk-wt-fix-r3-ponytail-pilot-prep` |
-| Merge target | `master`（协调者） |
+| Field        | Value                                                 |
+| ------------ | ----------------------------------------------------- |
+| Branch       | `fix/round3-ponytail-pilot-prep-bucket-a`             |
+| Base         | `master` @ `d1a15e4b`                                 |
+| Worktree     | `../quant-monitor-desk-wt-fix-r3-ponytail-pilot-prep` |
+| Merge target | `master`（协调者）                                    |
 
 ## 3. 必须闭合项（桶 A）
 
-| ID | 来源 | 最小修复目标 |
-| -- | ---- | ------------ |
-| DS-01 | ponytail scan | fetch_log **单点写入**（service 为 owner；adapter 默认不写 DB） |
-| DS-02 | ponytail scan | `create_adapter` / `create_test_adapter` 去重（ponytail：单 `_build_adapter`） |
-| DS-03 | ponytail scan | production `fetch()` 不得隐式 `create_test_adapter`；test 路径仅显式 DI / fixture mode |
-| SC-02 | ponytail scan | `staged_evidence` WriteManager 旁路：契约测试 + 最小 runtime gate（`phase=` 或等价） |
+| ID    | 来源          | 最小修复目标                                                                                 |
+| ----- | ------------- | -------------------------------------------------------------------------------------------- |
+| DS-01 | ponytail scan | fetch_log **单点写入**（service 为 owner；adapter 默认不写 DB）                              |
+| DS-02 | ponytail scan | `create_adapter` / `create_test_adapter` 去重（ponytail：单 `_build_adapter`）               |
+| DS-03 | ponytail scan | production `fetch()` 不得隐式 `create_test_adapter`；test 路径仅显式 DI / fixture mode       |
+| SC-02 | ponytail scan | `staged_evidence` WriteManager 旁路：契约测试 + 最小 runtime gate（`phase=` 或等价）         |
 | OP-02 | ponytail scan | `interface_probe` 不得 import `live_pilot` 私有符号；抽 `ops/mutation_proof.py`（≤必要 LOC） |
-| SY-04 | ponytail scan | sync fetch 与 ResourceGuard 统一 `_fetch_with_guard`（ponytail：一处 helper） |
-| VA-03 | ponytail scan | `as_text(None)` 语义统一（不返回字面量 `"None"`） |
-| DB-03 | ponytail scan | 若 `assert_can_write` / `assert_can_write_with` 仍镜像：合并为单入口（仅当 RED 证明仍重复） |
+| SY-04 | ponytail scan | sync fetch 与 ResourceGuard 统一 `_fetch_with_guard`（ponytail：一处 helper）                |
+| VA-03 | ponytail scan | `as_text(None)` 语义统一（不返回字面量 `"None"`）                                            |
+| DB-03 | ponytail scan | 若 `assert_can_write` / `assert_can_write_with` 仍镜像：合并为单入口（仅当 RED 证明仍重复）  |
 
 已 CLOSED 项：先 RED 验证；若已绿则标 **ALREADY_CLOSED** + 回归测试，禁止重复大改。
 

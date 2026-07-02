@@ -41,30 +41,30 @@ No network fetch was performed in this slice. Borrowable ideas are taken from `R
 
 ## External reference → QMD landing map
 
-| # | Borrowable idea (source) | QMD landing target | Decision |
-| - | ------------------------ | ------------------ | -------- |
-| 1 | Data integrity categories: missing trading days, field quality, price-relation, outliers (EasyXT) | `docs/ops/data_health_cli.md` §4; `specs/contracts/data_quality_rules.yaml` `ops_cli_profiles` | **ADOPT** — Phase C / Batch 6; contract-driven via existing `DataQualityValidator` rules |
-| 2 | Operator troubleshooting / monitor-style PASS-WARN-FAIL status (EasyXT) | `docs/ops/data_health_cli.md` §6; reuse `ops_db_inspect_contract.yaml` `status_enum` | **ADOPT** — shared ops status vocabulary |
-| 3 | QMT/xqshare ecosystem operator wording without auto-enable (EasyXT) | `docs/ops/db_inspect_cli.md` §2–§3; forbidden flags in contract | **ALREADY LANDED** — reinforce cross-ref only |
-| 4 | Hardcoded `stock_daily` / single-table DuckDB assumptions (EasyXT) | `docs/ops/data_health_cli.md` §2 boundary; contract `key_tables` from QMD schema | **REJECT** — QMD uses `security_bar_1d` + registry tables |
-| 5 | Trading APIs, auto-login, GUI, silent fallback (EasyXT) | `GLOBAL_EXECUTION_RULES.md` Round2.6 red lines | **REJECT** |
-| 6 | `--duckdb-path` / explicit local DB override (JQ2PTrade) | `specs/contracts/ops_db_inspect_contract.yaml` `--db`; `data_health_cli.md` `--db` | **ALREADY LANDED** for db-inspect; extend to data-health design |
-| 7 | Local CLI ergonomics, repeatable validation runs (JQ2PTrade) | `docs/ops/data_health_cli.md` §5 CLI contract | **ADOPT** |
-| 8 | mapping-first / `api_mapping.json` pattern (JQ2PTrade) | `docs/modules/source_capability_registry.md` (existing); not duplicated in ops CLI | **DEFER** — source registry domain, not ops health CLI |
-| 9 | MiniPTrade lifecycle + context + report builder (JQ2PTrade) | `docs/modules/backtest_review_lifecycle.md` (existing) | **REJECT** for ops/data-health — backtest-only |
-| 10 | PTrade/JoinQuant strategy conversion, order APIs (JQ2PTrade) | — | **REJECT** |
-| 11 | Local-only / browser-side privacy disclosure (ptqmt-site) | `docs/ops/ops_report_cli.md` §2; cross-ref `privacy_data_flow.md` | **ADOPT** |
-| 12 | Offline/static operator report organization (ptqmt-site) | `docs/ops/ops_report_cli.md` §4–§5 | **ADOPT** — Phase E after JSON evidence stabilizes |
-| 13 | Online site shape as runtime dependency (ptqmt-site) | — | **REJECT** |
+| #   | Borrowable idea (source)                                                                          | QMD landing target                                                                             | Decision                                                                                 |
+| --- | ------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| 1   | Data integrity categories: missing trading days, field quality, price-relation, outliers (EasyXT) | `docs/ops/data_health_cli.md` §4; `specs/contracts/data_quality_rules.yaml` `ops_cli_profiles` | **ADOPT** — Phase C / Batch 6; contract-driven via existing `DataQualityValidator` rules |
+| 2   | Operator troubleshooting / monitor-style PASS-WARN-FAIL status (EasyXT)                           | `docs/ops/data_health_cli.md` §6; reuse `ops_db_inspect_contract.yaml` `status_enum`           | **ADOPT** — shared ops status vocabulary                                                 |
+| 3   | QMT/xqshare ecosystem operator wording without auto-enable (EasyXT)                               | `docs/ops/db_inspect_cli.md` §2–§3; forbidden flags in contract                                | **ALREADY LANDED** — reinforce cross-ref only                                            |
+| 4   | Hardcoded `stock_daily` / single-table DuckDB assumptions (EasyXT)                                | `docs/ops/data_health_cli.md` §2 boundary; contract `key_tables` from QMD schema               | **REJECT** — QMD uses `security_bar_1d` + registry tables                                |
+| 5   | Trading APIs, auto-login, GUI, silent fallback (EasyXT)                                           | `GLOBAL_EXECUTION_RULES.md` Round2.6 red lines                                                 | **REJECT**                                                                               |
+| 6   | `--duckdb-path` / explicit local DB override (JQ2PTrade)                                          | `specs/contracts/ops_db_inspect_contract.yaml` `--db`; `data_health_cli.md` `--db`             | **ALREADY LANDED** for db-inspect; extend to data-health design                          |
+| 7   | Local CLI ergonomics, repeatable validation runs (JQ2PTrade)                                      | `docs/ops/data_health_cli.md` §5 CLI contract                                                  | **ADOPT**                                                                                |
+| 8   | mapping-first / `api_mapping.json` pattern (JQ2PTrade)                                            | `docs/modules/source_capability_registry.md` (existing); not duplicated in ops CLI             | **DEFER** — source registry domain, not ops health CLI                                   |
+| 9   | MiniPTrade lifecycle + context + report builder (JQ2PTrade)                                       | `docs/modules/backtest_review_lifecycle.md` (existing)                                         | **REJECT** for ops/data-health — backtest-only                                           |
+| 10  | PTrade/JoinQuant strategy conversion, order APIs (JQ2PTrade)                                      | —                                                                                              | **REJECT**                                                                               |
+| 11  | Local-only / browser-side privacy disclosure (ptqmt-site)                                         | `docs/ops/ops_report_cli.md` §2; cross-ref `privacy_data_flow.md`                              | **ADOPT**                                                                                |
+| 12  | Offline/static operator report organization (ptqmt-site)                                          | `docs/ops/ops_report_cli.md` §4–§5                                                             | **ADOPT** — Phase E after JSON evidence stabilizes                                       |
+| 13  | Online site shape as runtime dependency (ptqmt-site)                                              | —                                                                                              | **REJECT**                                                                               |
 
 ## Vertical slices
 
-| Slice | Source ID | AC | Allowed files | Verification | Evidence |
-| ----- | --------- | -- | ------------- | ------------ | -------- |
-| S1 | `R3-REF-OPS-DB-DATA-HEALTH` | DEBT.plan with Source Context Index + reference map | `.trellis/tasks/debt-r3-ops-inspect-data-health-references/DEBT.plan.md` | manual review | this file |
-| S2 | `R3-REF-OPS-DB-DATA-HEALTH` | `data_health_cli.md` design frozen as Batch 6 input | `docs/ops/data_health_cli.md` | `check_doc_links.py` | merge report |
-| S3 | `R3-REF-OPS-DB-DATA-HEALTH` | `ops_report_cli.md` design frozen as Round 5 input | `docs/ops/ops_report_cli.md` | `check_doc_links.py` | merge report |
-| S4 | `R3-REF-OPS-DB-DATA-HEALTH` | Contract cross-refs + ops profile in `data_quality_rules.yaml` | `specs/contracts/ops_db_inspect_contract.yaml`, `data_quality_rules.yaml`, `db_inspect_cli.md` | registry tests | merge report |
+| Slice | Source ID                   | AC                                                             | Allowed files                                                                                  | Verification         | Evidence     |
+| ----- | --------------------------- | -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | -------------------- | ------------ |
+| S1    | `R3-REF-OPS-DB-DATA-HEALTH` | DEBT.plan with Source Context Index + reference map            | `.trellis/tasks/debt-r3-ops-inspect-data-health-references/DEBT.plan.md`                       | manual review        | this file    |
+| S2    | `R3-REF-OPS-DB-DATA-HEALTH` | `data_health_cli.md` design frozen as Batch 6 input            | `docs/ops/data_health_cli.md`                                                                  | `check_doc_links.py` | merge report |
+| S3    | `R3-REF-OPS-DB-DATA-HEALTH` | `ops_report_cli.md` design frozen as Round 5 input             | `docs/ops/ops_report_cli.md`                                                                   | `check_doc_links.py` | merge report |
+| S4    | `R3-REF-OPS-DB-DATA-HEALTH` | Contract cross-refs + ops profile in `data_quality_rules.yaml` | `specs/contracts/ops_db_inspect_contract.yaml`, `data_quality_rules.yaml`, `db_inspect_cli.md` | registry tests       | merge report |
 
 ## Merge gate
 

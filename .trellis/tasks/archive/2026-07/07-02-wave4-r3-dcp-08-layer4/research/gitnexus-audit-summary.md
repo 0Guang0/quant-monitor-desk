@@ -4,13 +4,13 @@
 
 ## 新符号触点
 
-| 符号 | 路径 | 角色 |
-|------|------|------|
-| `USEquityCleanMarketAdapter` | `backend/app/layer4_markets/clean_read.py` | US_EQ clean read adapter |
-| `aggregate_breadth_from_bars` | `clean_read.py` | Tier A bar → breadth |
-| `_fetch_clean_bar_rows` | `clean_read.py` | 单次 SQL 复用（Repair A2） |
-| `_finalize_market_build` | `market_structure.py` | staged/clean 共享 lineage finalize |
-| `sync_mootdx_incremental` | `data_commands.py` | mootdx 显式路由（registry SSOT，无 runtime hack） |
+| 符号                          | 路径                                       | 角色                                              |
+| ----------------------------- | ------------------------------------------ | ------------------------------------------------- |
+| `USEquityCleanMarketAdapter`  | `backend/app/layer4_markets/clean_read.py` | US_EQ clean read adapter                          |
+| `aggregate_breadth_from_bars` | `clean_read.py`                            | Tier A bar → breadth                              |
+| `_fetch_clean_bar_rows`       | `clean_read.py`                            | 单次 SQL 复用（Repair A2）                        |
+| `_finalize_market_build`      | `market_structure.py`                      | staged/clean 共享 lineage finalize                |
+| `sync_mootdx_incremental`     | `data_commands.py`                         | mootdx 显式路由（registry SSOT，无 runtime hack） |
 
 ## 调用链（业务视角）
 

@@ -18,6 +18,7 @@
 - `specs/contracts/runtime_versions.md`
 - `docs/quality/staged_acceptance_policy.md`
 - `docs/ops/privacy_retention_policy.md`
+
 ## 4. 相关代码 / 输出文件
 
 - `backend/storage/raw_store.py`
@@ -73,6 +74,7 @@
 - 测试命名建议：`functionName_condition_expectedBehavior`。
 
 ## 11. 验收命令
+
 本任务为后端实现任务。验收命令：
 
 ```bash

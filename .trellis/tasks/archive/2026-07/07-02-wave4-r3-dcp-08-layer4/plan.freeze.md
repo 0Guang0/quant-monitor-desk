@@ -4,19 +4,19 @@
 
 ## 1. Plan Skill 执行记录
 
-| Phase | 产出 | 状态 |
-|-------|------|------|
-| P0 | plan-boot.md, EXECUTION_INDEX | [x] |
-| 1a/1b | project-overview.md, gitnexus-summary.md | [x] |
-| 1–4 | reference-adoption-dcp08.md, layer4-tier-a-research.md | [x] |
-| 3.5 | to-issues-slices.md S08-BOOT..CLOSE | [x] |
-| 5a | plan-task-breakdown.md | [x] |
-| 5a' | plan-spec.md | [x] |
-| 5b | plan-context.md | [x] |
-| 5c | plan-doubt-review.md | [x] |
-| 5c' | ADR-033 | [x] |
-| 5d | integration-audit.md | [x] |
-| 5e | plan-consolidation.md **Phase 5e complete** | [x] |
+| Phase | 产出                                                   | 状态 |
+| ----- | ------------------------------------------------------ | ---- |
+| P0    | plan-boot.md, EXECUTION_INDEX                          | [x]  |
+| 1a/1b | project-overview.md, gitnexus-summary.md               | [x]  |
+| 1–4   | reference-adoption-dcp08.md, layer4-tier-a-research.md | [x]  |
+| 3.5   | to-issues-slices.md S08-BOOT..CLOSE                    | [x]  |
+| 5a    | plan-task-breakdown.md                                 | [x]  |
+| 5a'   | plan-spec.md                                           | [x]  |
+| 5b    | plan-context.md                                        | [x]  |
+| 5c    | plan-doubt-review.md                                   | [x]  |
+| 5c'   | ADR-033                                                | [x]  |
+| 5d    | integration-audit.md                                   | [x]  |
+| 5e    | plan-consolidation.md **Phase 5e complete**            | [x]  |
 
 ## 2. 5d / 对抗性结论
 

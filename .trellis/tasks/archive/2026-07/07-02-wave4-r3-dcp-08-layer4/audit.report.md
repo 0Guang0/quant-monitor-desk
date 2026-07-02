@@ -4,38 +4,38 @@
 
 ## 1. 元信息
 
-| 字段 | 值 |
-| --- | --- |
-| 分支 | `feature/wave4-r3-dcp-08-layer4` |
-| GitNexus 摘要 | `research/gitnexus-audit-summary.md` |
-| 派发纪律 | A1–A8 一维一 agent |
-| pytest（Repair 复验） | `uv run pytest -q` exit **0** |
+| 字段                  | 值                                   |
+| --------------------- | ------------------------------------ |
+| 分支                  | `feature/wave4-r3-dcp-08-layer4`     |
+| GitNexus 摘要         | `research/gitnexus-audit-summary.md` |
+| 派发纪律              | A1–A8 一维一 agent                   |
+| pytest（Repair 复验） | `uv run pytest -q` exit **0**        |
 
 ---
 
 ## 2. 维度裁决汇总
 
-| 维 | 报告 | 初审计 | findings |
-| --- | --- | --- | --- |
-| A1 | `research/audit-a1-report.md` | fail | 6 |
-| A2 | `research/audit-a2-report.md` | fail | 2 |
-| A3 | `research/audit-a3-report.md` | fail | 2 |
-| A4 | `research/audit-a4-report.md` | fail | 9 |
-| A5 | `research/audit-a5-report.md` | fail | 2 |
-| A6 | `research/audit-a6-report.md` | fail | 3 |
-| A7 | `research/audit-a7-report.md` | pass | 0 |
-| A8 | `research/audit-a8-report.md` | fail | 5 |
+| 维  | 报告                          | 初审计 | findings |
+| --- | ----------------------------- | ------ | -------- |
+| A1  | `research/audit-a1-report.md` | fail   | 6        |
+| A2  | `research/audit-a2-report.md` | fail   | 2        |
+| A3  | `research/audit-a3-report.md` | fail   | 2        |
+| A4  | `research/audit-a4-report.md` | fail   | 9        |
+| A5  | `research/audit-a5-report.md` | fail   | 2        |
+| A6  | `research/audit-a6-report.md` | fail   | 3        |
+| A7  | `research/audit-a7-report.md` | pass   | 0        |
+| A8  | `research/audit-a8-report.md` | fail   | 5        |
 
 **合计：** 29 findings · Repair 后 29/29 已修复
 
 ### INDEX §2.1 证据索引（Repair 复验）
 
-| Tier | 证据 |
-| --- | --- |
-| US_EQ clean e2e | `uv run pytest tests/test_layer4_us_equity_clean_e2e.py -q` exit 0 |
-| Layer4 clean read | `uv run pytest tests/test_layer4_clean_read.py -q` exit 0 |
-| mootdx dry-run | `uv run pytest tests/test_qmd_data_sync_tier_a_router.py -k mootdx -q` exit 0 |
-| 全量 | `uv run pytest -q` exit 0 |
+| Tier              | 证据                                                                          |
+| ----------------- | ----------------------------------------------------------------------------- |
+| US_EQ clean e2e   | `uv run pytest tests/test_layer4_us_equity_clean_e2e.py -q` exit 0            |
+| Layer4 clean read | `uv run pytest tests/test_layer4_clean_read.py -q` exit 0                     |
+| mootdx dry-run    | `uv run pytest tests/test_qmd_data_sync_tier_a_router.py -k mootdx -q` exit 0 |
+| 全量              | `uv run pytest -q` exit 0                                                     |
 
 ---
 
@@ -98,10 +98,10 @@ tier_a_clean 负向、future 闸、eastmoney taxonomy pytest、无 monkeypatch m
 
 ## 5. Repair 复验
 
-| 项 | 结果 | 证据 |
-| --- | --- | --- |
-| §4.3 全部关闭 | **PASS** | ledger 29 行 disposition=已修复 |
-| §4.4 阶段外置 | **0** | — |
-| INDEX §2.1 Tier 复跑 | **PASS** | e2e + clean_read + mootdx + 全量 pytest |
-| `uv run pytest -q` exit 0 | **PASS** | 2026-07-02 |
-| `validate-repair-close` | **PASS** | 2026-07-02 |
+| 项                        | 结果     | 证据                                    |
+| ------------------------- | -------- | --------------------------------------- |
+| §4.3 全部关闭             | **PASS** | ledger 29 行 disposition=已修复         |
+| §4.4 阶段外置             | **0**    | —                                       |
+| INDEX §2.1 Tier 复跑      | **PASS** | e2e + clean_read + mootdx + 全量 pytest |
+| `uv run pytest -q` exit 0 | **PASS** | 2026-07-02                              |
+| `validate-repair-close`   | **PASS** | 2026-07-02                              |

@@ -17,38 +17,38 @@
 
 AUDIT.plan §2 冻结 A7 要点：**sandbox 隔离**。对照 DCP-08 引入/修改的 DB 触达面：
 
-| 路径 | 角色 |
-| ---- | ---- |
-| `backend/app/layer4_markets/clean_read.py` | Tier A clean 只读 SQL（注入 `con`） |
+| 路径                                             | 角色                                              |
+| ------------------------------------------------ | ------------------------------------------------- |
+| `backend/app/layer4_markets/clean_read.py`       | Tier A clean 只读 SQL（注入 `con`）               |
 | `backend/app/layer4_markets/market_structure.py` | `tier_a_clean` 分支；`clean_con` 必填 fail-closed |
-| `backend/app/cli/data_commands.py` | mootdx dry-run JSON 预览（无 DB 写） |
-| `tests/layer4_clean_e2e_support.py` | 共享 `bootstrap_layer4_clean_db` |
-| `tests/test_layer4_clean_read.py` | S08-READ / ADAPTER 单测 |
-| `tests/test_layer4_us_equity_clean_e2e.py` | S08-E2E |
-| `tests/test_layer4_market_structure.py` | 022 回归（staged fixture；预存） |
+| `backend/app/cli/data_commands.py`               | mootdx dry-run JSON 预览（无 DB 写）              |
+| `tests/layer4_clean_e2e_support.py`              | 共享 `bootstrap_layer4_clean_db`                  |
+| `tests/test_layer4_clean_read.py`                | S08-READ / ADAPTER 单测                           |
+| `tests/test_layer4_us_equity_clean_e2e.py`       | S08-E2E                                           |
+| `tests/test_layer4_market_structure.py`          | 022 回归（staged fixture；预存）                  |
 
 ### 1. GitNexus 追溯
 
-| 查询 | 结果 |
-| ---- | ---- |
-| `context(apply_migrations)` | 22 上游调用方；含 `init_db.main`、`_ensure_sandbox_db`、pytest bootstrap；每 migration 事务 BEGIN/COMMIT/ROLLBACK |
-| `context(ConnectionManager)` | 生产路径经 `db_path` 注入；Layer4 clean 测试显式 `tmp_path/layer4_clean.duckdb` |
-| `impact(apply_migrations)` | CRITICAL 半径（共享 migration SSOT；本票未改 migrate.py） |
-| `detect_changes(worktree=wt-dcp08, scope=all)` | 7 文件变更；新符号（`USEquityCleanMarketAdapter` 等）**未入索引**（未 commit）— 以 grep + 跑测为准 |
-| `query(layer4 tier_a_clean)` | 无 DCP-08 新符号（索引滞后）；已用 `context(ConnectionManager)` + 文件级 grep 补全 |
+| 查询                                           | 结果                                                                                                              |
+| ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `context(apply_migrations)`                    | 22 上游调用方；含 `init_db.main`、`_ensure_sandbox_db`、pytest bootstrap；每 migration 事务 BEGIN/COMMIT/ROLLBACK |
+| `context(ConnectionManager)`                   | 生产路径经 `db_path` 注入；Layer4 clean 测试显式 `tmp_path/layer4_clean.duckdb`                                   |
+| `impact(apply_migrations)`                     | CRITICAL 半径（共享 migration SSOT；本票未改 migrate.py）                                                         |
+| `detect_changes(worktree=wt-dcp08, scope=all)` | 7 文件变更；新符号（`USEquityCleanMarketAdapter` 等）**未入索引**（未 commit）— 以 grep + 跑测为准                |
+| `query(layer4 tier_a_clean)`                   | 无 DCP-08 新符号（索引滞后）；已用 `context(ConnectionManager)` + 文件级 grep 补全                                |
 
 ### 2. Grep：DB 污染面（DCP-08 范围）
 
-| 文件 | `ConnectionManager` / `DATA_ROOT` / `quant_monitor` / `QMD_DATA_ROOT` | 判定 |
-| ---- | --------------------------------------------------------------------- | ---- |
-| `clean_read.py` | **0** | 纯 SQL + 注入 `con`；无默认库 |
-| `market_structure.py` | 仅错误文案含 `duckdb` | 不打开连接 |
-| `layer4_clean_e2e_support.py` | `ConnectionManager(db_path=tmp_path/"layer4_clean.duckdb")` | 显式 tmp_path |
-| `test_layer4_clean_read.py` | 经 bootstrap | 3/4 测 `tmp_path`；1 测无 DB（SSOT calendar） |
-| `test_layer4_us_equity_clean_e2e.py` | 经 bootstrap | 1/1 `tmp_path` |
-| `test_layer4_market_structure.py` | `_MUTATION_ROOT = PROJECT_ROOT/.audit-sandbox/layer4_market_mutations` | 文件 fixture 变异；**非** canonical DuckDB |
-| `data_commands.py` diff | 仅改 preview dict | 无 DB I/O |
-| DCP-08 全范围 | **0** 条硬编码 `quant_monitor.duckdb` / `data/duckdb/` | — |
+| 文件                                 | `ConnectionManager` / `DATA_ROOT` / `quant_monitor` / `QMD_DATA_ROOT`  | 判定                                          |
+| ------------------------------------ | ---------------------------------------------------------------------- | --------------------------------------------- |
+| `clean_read.py`                      | **0**                                                                  | 纯 SQL + 注入 `con`；无默认库                 |
+| `market_structure.py`                | 仅错误文案含 `duckdb`                                                  | 不打开连接                                    |
+| `layer4_clean_e2e_support.py`        | `ConnectionManager(db_path=tmp_path/"layer4_clean.duckdb")`            | 显式 tmp_path                                 |
+| `test_layer4_clean_read.py`          | 经 bootstrap                                                           | 3/4 测 `tmp_path`；1 测无 DB（SSOT calendar） |
+| `test_layer4_us_equity_clean_e2e.py` | 经 bootstrap                                                           | 1/1 `tmp_path`                                |
+| `test_layer4_market_structure.py`    | `_MUTATION_ROOT = PROJECT_ROOT/.audit-sandbox/layer4_market_mutations` | 文件 fixture 变异；**非** canonical DuckDB    |
+| `data_commands.py` diff              | 仅改 preview dict                                                      | 无 DB I/O                                     |
+| DCP-08 全范围                        | **0** 条硬编码 `quant_monitor.duckdb` / `data/duckdb/`                 | —                                             |
 
 ### 3. `bootstrap_layer4_clean_db` 写面
 
@@ -63,11 +63,11 @@ tmp_path/layer4_clean.duckdb.write.lock ← ConnectionManager 写锁
 
 ### 4. `tmp_path` 覆盖率（DCP-08 新增测）
 
-| 模块 | 测数 | 需 DB | `tmp_path` |
-| ---- | ---- | ----- | ---------- |
-| `test_layer4_clean_read.py` | 4 | 3 | 3/3 |
-| `test_layer4_us_equity_clean_e2e.py` | 1 | 1 | 1/1 |
-| **DCP-08 新增合计** | **5** | **4** | **4/4** |
+| 模块                                 | 测数  | 需 DB | `tmp_path` |
+| ------------------------------------ | ----- | ----- | ---------- |
+| `test_layer4_clean_read.py`          | 4     | 3     | 3/3        |
+| `test_layer4_us_equity_clean_e2e.py` | 1     | 1     | 1/1        |
+| **DCP-08 新增合计**                  | **5** | **4** | **4/4**    |
 
 022 回归 `test_layer4_market_structure.py`：18 测，DB 无关（staged YAML/JSON fixture + `_MUTATION_ROOT` 文件沙箱）。
 
@@ -75,15 +75,15 @@ tmp_path/layer4_clean.duckdb.write.lock ← ConnectionManager 写锁
 
 **环境：** `<task>/.audit-sandbox/`，`QMD_DATA_ROOT=<task>/.audit-sandbox/data`
 
-| 步骤 | 命令 | exit | 关键证据 |
-| ---- | ---- | ---- | -------- |
-| 1 首次 init | `QMD_DATA_ROOT=.../data uv run python scripts/init_db.py` | 0 | `applied` 15 项（001→015）；DB 在 sandbox 内 |
-| 2 二次 init | 同上 | 0 | `applied none (up to date)` |
-| 3 schema 快照 | `a7_schema_check.py` | 0 | `migration_count=15`；`last=015_dcp05_tier_a_clean`；`table_count=30` |
-| 4 kill 中途 | `a7_kill_scenario.py`（terminate @0.3s） | kill=1 | 进程被终止；无 stderr 污染 |
-| 5 kill 后重跑 | `init_db.py` | 0 | 补跑 002→015；`post_recovery_migration_count=15` |
-| 6 恢复后再 init | `init_db.py` | 0 | `applied none (up to date)` |
-| 7 canonical 库 | `Test-Path data/duckdb/quant_monitor.duckdb` | — | **不存在**（主库零污染） |
+| 步骤            | 命令                                                      | exit   | 关键证据                                                              |
+| --------------- | --------------------------------------------------------- | ------ | --------------------------------------------------------------------- |
+| 1 首次 init     | `QMD_DATA_ROOT=.../data uv run python scripts/init_db.py` | 0      | `applied` 15 项（001→015）；DB 在 sandbox 内                          |
+| 2 二次 init     | 同上                                                      | 0      | `applied none (up to date)`                                           |
+| 3 schema 快照   | `a7_schema_check.py`                                      | 0      | `migration_count=15`；`last=015_dcp05_tier_a_clean`；`table_count=30` |
+| 4 kill 中途     | `a7_kill_scenario.py`（terminate @0.3s）                  | kill=1 | 进程被终止；无 stderr 污染                                            |
+| 5 kill 后重跑   | `init_db.py`                                              | 0      | 补跑 002→015；`post_recovery_migration_count=15`                      |
+| 6 恢复后再 init | `init_db.py`                                              | 0      | `applied none (up to date)`                                           |
+| 7 canonical 库  | `Test-Path data/duckdb/quant_monitor.duckdb`              | —      | **不存在**（主库零污染）                                              |
 
 **DOUBT 核对：**
 
@@ -99,9 +99,9 @@ uv run pytest tests/test_layer4_clean_read.py \
   --basetemp=<task>/.audit-sandbox/pytest
 ```
 
-| exit | 结果 |
-| ---- | ---- |
-| 0 | 22 passed |
+| exit | 结果      |
+| ---- | --------- |
+| 0    | 22 passed |
 
 ### 7. 基础设施观察（非 DCP-08 引入 · 不进 findings）
 

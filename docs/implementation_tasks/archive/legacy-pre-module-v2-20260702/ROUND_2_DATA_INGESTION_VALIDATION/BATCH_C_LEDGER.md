@@ -6,10 +6,10 @@
 
 ## C-C0 — 已关闭
 
-| ID | 项 | 状态 | 说明 |
-|----|-----|------|------|
-| C-C0-1 | `validation: "null"` 字符串 | **FIXED** | 仅接受 YAML `null`；字符串 `"null"` → `InvalidRegistryError` |
-| C-C0-3 | `FetchLogWriter._parse_timestamp` | **FIXED** | 坏 timestamp → `FetchLogValidationError` |
+| ID     | 项                                | 状态      | 说明                                                         |
+| ------ | --------------------------------- | --------- | ------------------------------------------------------------ |
+| C-C0-1 | `validation: "null"` 字符串       | **FIXED** | 仅接受 YAML `null`；字符串 `"null"` → `InvalidRegistryError` |
+| C-C0-3 | `FetchLogWriter._parse_timestamp` | **FIXED** | 坏 timestamp → `FetchLogValidationError`                     |
 
 ---
 
@@ -23,10 +23,10 @@
 
 ## C-C2 — fetch_log DB CHECK
 
-| 项 | 阶段 | 内容 |
-|----|------|------|
-| validation 表约束 | Batch C migration 005 | 新表内联约束 |
-| `fetch_log` 004 表 CHECK | Batch D+（defer） | 已应用 migration 不可 ALTER；**Batch D 仅 app 层**（MASTER §6.7） |
+| 项                       | 阶段                  | 内容                                                              |
+| ------------------------ | --------------------- | ----------------------------------------------------------------- |
+| validation 表约束        | Batch C migration 005 | 新表内联约束                                                      |
+| `fetch_log` 004 表 CHECK | Batch D+（defer）     | 已应用 migration 不可 ALTER；**Batch D 仅 app 层**（MASTER §6.7） |
 
 ---
 

@@ -2,25 +2,25 @@
 
 ## Scope
 
-| Field | Value |
-| ----- | ----- |
-| Branch | `debt/round3-ponytail-low-touch` |
-| Base | `master` @ b200e03c |
-| Worktree | `quant-monitor-desk-wt-debt-r3-ponytail-low-touch` |
+| Field     | Value                                                                             |
+| --------- | --------------------------------------------------------------------------------- |
+| Branch    | `debt/round3-ponytail-low-touch`                                                  |
+| Base      | `master` @ b200e03c                                                               |
+| Worktree  | `quant-monitor-desk-wt-debt-r3-ponytail-low-touch`                                |
 | Authority | `PONYTAIL_MODULE_SCAN_20260622.md` §4.7–4.8, `R3X_ponytail_low_touch_bucket_c.md` |
 
 ## Items closed
 
-| ID | Action |
-| -- | ------ |
-| VA-01 | Removed `data_quality.py` thin wrappers; direct `common` helpers |
-| VA-02 | Removed `source_conflict.py` thin wrappers; inlined `as_text(x) or ""` |
-| VA-07 | Documented YAML/Python `rule_id` dual track in `rule_contract.py` |
-| VA-08 | Removed dead `quote_ident` side effect in `_table_exists` |
-| SC-03 | `resource_guard.evaluate()` → `_ThresholdSignal` data-driven loop |
-| SC-04 | Added `get_resource_profile` valid/invalid tests in `test_config.py` |
+| ID    | Action                                                                    |
+| ----- | ------------------------------------------------------------------------- |
+| VA-01 | Removed `data_quality.py` thin wrappers; direct `common` helpers          |
+| VA-02 | Removed `source_conflict.py` thin wrappers; inlined `as_text(x) or ""`    |
+| VA-07 | Documented YAML/Python `rule_id` dual track in `rule_contract.py`         |
+| VA-08 | Removed dead `quote_ident` side effect in `_table_exists`                 |
+| SC-03 | `resource_guard.evaluate()` → `_ThresholdSignal` data-driven loop         |
+| SC-04 | Added `get_resource_profile` valid/invalid tests in `test_config.py`      |
 | SC-05 | Kept `error_redaction.py` (live imports in db/sync/datasources); doc only |
-| SC-06 | `api_limits` uses `config.CONFIGS_ROOT` single source |
+| SC-06 | `api_limits` uses `config.CONFIGS_ROOT` single source                     |
 
 ## Changed files (in-scope)
 
@@ -41,11 +41,11 @@
 
 ## Tests
 
-| Command | Result |
-| ------- | ------ |
-| `pytest tests/test_data_quality_validator.py tests/test_source_conflict_validator.py tests/test_resource_guard.py tests/test_config.py -q` | PASS |
-| `pytest tests/test_api_security_contract.py -q` | PASS (SC-06) |
-| `pytest -q` (full) | PASS |
+| Command                                                                                                                                    | Result       |
+| ------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| `pytest tests/test_data_quality_validator.py tests/test_source_conflict_validator.py tests/test_resource_guard.py tests/test_config.py -q` | PASS         |
+| `pytest tests/test_api_security_contract.py -q`                                                                                            | PASS (SC-06) |
+| `pytest -q` (full)                                                                                                                         | PASS         |
 
 Evidence: `execute-evidence/targeted-pytest-green.txt`, `full-pytest-green.txt`, per-item `*-red.txt` / `*-green.txt`.
 

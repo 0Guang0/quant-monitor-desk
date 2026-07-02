@@ -153,27 +153,27 @@ Commit: `feat(storage): add RawStore and file_registry via WriteManager (task 00
 
 ### 审计修复（P0 / P1）
 
-| 项 | 问题 | 修复 |
-|----|------|------|
-| P0 | `source`/`data_domain`/`as_of` 可路径穿越 | `_safe_segment()` + `resolve()` + `is_relative_to(data_root)` |
-| P0 | `FileRegistry.register()` 分两次 `writer()`，staging 竞态 | staging + `WriteManager.write(con=con)` 在同一 `writer()` 会话内完成 |
-| P1 | dedup 在 writer 外查询，TOCTOU | `content_hash` 查重移入 `writer()` 内；DB 层 `UNIQUE INDEX`（见 005 的 `002` migration） |
-| P1 | 无原始文件大小上限，DoS 风险 | `MAX_RAW_FILE_BYTES = 256MB`，超限 `ValueError` |
-| 缺口 | `file_type` 任意扩展名 | 仅允许 `json`/`csv`/`parquet` 白名单 |
-| 缺口 | `stg_file_registry` 运行时 DDL | 改由 `002_registry_hardening.sql` 迁移创建 |
+| 项   | 问题                                                      | 修复                                                                                     |
+| ---- | --------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| P0   | `source`/`data_domain`/`as_of` 可路径穿越                 | `_safe_segment()` + `resolve()` + `is_relative_to(data_root)`                            |
+| P0   | `FileRegistry.register()` 分两次 `writer()`，staging 竞态 | staging + `WriteManager.write(con=con)` 在同一 `writer()` 会话内完成                     |
+| P1   | dedup 在 writer 外查询，TOCTOU                            | `content_hash` 查重移入 `writer()` 内；DB 层 `UNIQUE INDEX`（见 005 的 `002` migration） |
+| P1   | 无原始文件大小上限，DoS 风险                              | `MAX_RAW_FILE_BYTES = 256MB`，超限 `ValueError`                                          |
+| 缺口 | `file_type` 任意扩展名                                    | 仅允许 `json`/`csv`/`parquet` 白名单                                                     |
+| 缺口 | `stg_file_registry` 运行时 DDL                            | 改由 `002_registry_hardening.sql` 迁移创建                                               |
 
 ### 测试缺口补充
 
-| 测试 | 证明什么 |
-|------|----------|
-| `test_save_pathLayout_matchesConvention` | 路径 `raw/{source}/{domain}/{as_of}/{hash}.ext` |
-| `test_save_fileIdFormat_isHashPrefixPlusSource` | `file_id = hash[:16] + source` |
-| `test_save_pathTraversal_raises` | `source='..'` 拒绝 |
-| `test_save_unsupportedFileType_raises` | 非白名单 file_type 拒绝 |
-| `test_save_oversizedContent_raises` | 超 256MB 拒绝 |
-| `test_register_writesAuditLog` | 注册写 `write_audit_log` |
-| `test_exists_whenHashPresent_returnsTrue` | `exists()` API |
-| `test_register_duplicateHash_returnsSameFileId` | 重复注册返回同一 `file_id` 且仅 1 行 |
+| 测试                                            | 证明什么                                        |
+| ----------------------------------------------- | ----------------------------------------------- |
+| `test_save_pathLayout_matchesConvention`        | 路径 `raw/{source}/{domain}/{as_of}/{hash}.ext` |
+| `test_save_fileIdFormat_isHashPrefixPlusSource` | `file_id = hash[:16] + source`                  |
+| `test_save_pathTraversal_raises`                | `source='..'` 拒绝                              |
+| `test_save_unsupportedFileType_raises`          | 非白名单 file_type 拒绝                         |
+| `test_save_oversizedContent_raises`             | 超 256MB 拒绝                                   |
+| `test_register_writesAuditLog`                  | 注册写 `write_audit_log`                        |
+| `test_exists_whenHashPresent_returnsTrue`       | `exists()` API                                  |
+| `test_register_duplicateHash_returnsSameFileId` | 重复注册返回同一 `file_id` 且仅 1 行            |
 
 ### 当前测试规模
 
@@ -183,21 +183,21 @@ Commit: `feat(storage): add RawStore and file_registry via WriteManager (task 00
 
 ## 评估报告跟进（二次修复）
 
-| 评估项 | 修复 |
-|--------|------|
-| `exists()` 半死代码 | 抽取 `_lookup_by_content_hash()`；`exists()` 与 `register()` 共用 |
+| 评估项                         | 修复                                                                                                         |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| `exists()` 半死代码            | 抽取 `_lookup_by_content_hash()`；`exists()` 与 `register()` 共用                                            |
 | staging 与 merge 跨 autocommit | `register()` 外层显式 `BEGIN`；`WriteManager.write(..., own_transaction=False)` 与 staging 同事务后 `COMMIT` |
 
 ---
 
 ## 评估报告跟进（三次修复）
 
-| 评估项 | 修复 |
-|--------|------|
-| **P0** FAILED write 路径 double ROLLBACK | 移除内联 ROLLBACK；`except RuntimeError: raise` 与 `except Exception: ROLLBACK` 分离 |
-| **P1** `as_of_timestamp` 误用 `now` | `SavedFile` 增加 `as_of`；`_parse_as_of_timestamp()` 写入 DB |
-| register 失败 / as_of 语义无测试 | `test_register_whenWriteFails_raisesRuntimeError`、`test_register_asOfTimestamp_matchesAsOfArgument` |
-| `reader()` 泄漏 | 随 007 context manager 一并修复 |
+| 评估项                                   | 修复                                                                                                 |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| **P0** FAILED write 路径 double ROLLBACK | 移除内联 ROLLBACK；`except RuntimeError: raise` 与 `except Exception: ROLLBACK` 分离                 |
+| **P1** `as_of_timestamp` 误用 `now`      | `SavedFile` 增加 `as_of`；`_parse_as_of_timestamp()` 写入 DB                                         |
+| register 失败 / as_of 语义无测试         | `test_register_whenWriteFails_raisesRuntimeError`、`test_register_asOfTimestamp_matchesAsOfArgument` |
+| `reader()` 泄漏                          | 随 007 context manager 一并修复                                                                      |
 
 ### 当前测试规模（三次修复后）
 
@@ -207,8 +207,8 @@ Commit: `feat(storage): add RawStore and file_registry via WriteManager (task 00
 
 ## 评估报告跟进（PR #1 review / 四次修复）
 
-| # | 级别 | 问题 | 状态 |
-|---|------|------|------|
-| 1 | **P0** | 与 008 联动：`own_transaction=False` 事务边界 | ✅ |
-| 2 | P1 | `_parse_as_of_timestamp` ISO 分支不一致 | ✅ 简化为 YYYY-MM-DD |
-| 3 | P3 | stub validation id 缺 Round 1 注释 | ✅ |
+| #   | 级别   | 问题                                          | 状态                 |
+| --- | ------ | --------------------------------------------- | -------------------- |
+| 1   | **P0** | 与 008 联动：`own_transaction=False` 事务边界 | ✅                   |
+| 2   | P1     | `_parse_as_of_timestamp` ISO 分支不一致       | ✅ 简化为 YYYY-MM-DD |
+| 3   | P3     | stub validation id 缺 Round 1 注释            | ✅                   |

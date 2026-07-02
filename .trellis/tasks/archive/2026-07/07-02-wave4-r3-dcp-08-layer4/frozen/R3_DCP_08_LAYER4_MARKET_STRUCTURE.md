@@ -32,7 +32,7 @@
 
 | 已执行 | [x] |
 
-### 9.3 S08-REG-*
+### 9.3 S08-REG-\*
 
 `registry_proposed_delta.yaml` + mootdx dry-run `selected_source_id` test + eastmoney taxonomy notes
 

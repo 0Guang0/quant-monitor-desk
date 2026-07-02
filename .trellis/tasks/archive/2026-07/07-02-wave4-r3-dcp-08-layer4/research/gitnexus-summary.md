@@ -4,13 +4,13 @@
 
 ## Impact 目标符号
 
-| Symbol | 文件 | 预期风险 |
-|--------|------|----------|
-| `MarketStructureBuilder.build` | `market_structure.py` | **MEDIUM** — 022 全量测 + 新 clean e2e |
-| `StagedFixtureMarketAdapter` | `market_structure.py` | **LOW** — 保留 staged 路径，不删 |
-| `is_trading_day` | `us_trading_calendar.py` | **LOW** — 只读 SSOT，US_EQ 已接线 |
-| `sync_mootdx_incremental` | `data_commands.py` | **MEDIUM** — dry-run JSON 对齐（S08-REG-MOOTDX） |
-| `enabled_source_registry` | `macro_incremental_common.py` | **LOW** — registry overlay 复用 |
+| Symbol                         | 文件                          | 预期风险                                         |
+| ------------------------------ | ----------------------------- | ------------------------------------------------ |
+| `MarketStructureBuilder.build` | `market_structure.py`         | **MEDIUM** — 022 全量测 + 新 clean e2e           |
+| `StagedFixtureMarketAdapter`   | `market_structure.py`         | **LOW** — 保留 staged 路径，不删                 |
+| `is_trading_day`               | `us_trading_calendar.py`      | **LOW** — 只读 SSOT，US_EQ 已接线                |
+| `sync_mootdx_incremental`      | `data_commands.py`            | **MEDIUM** — dry-run JSON 对齐（S08-REG-MOOTDX） |
+| `enabled_source_registry`      | `macro_incremental_common.py` | **LOW** — registry overlay 复用                  |
 
 ## 直接调用方（blast radius）
 

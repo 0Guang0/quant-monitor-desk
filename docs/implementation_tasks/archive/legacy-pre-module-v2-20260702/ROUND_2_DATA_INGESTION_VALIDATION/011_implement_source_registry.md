@@ -17,6 +17,7 @@
 - `docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md`
 - `specs/contracts/runtime_versions.md`
 - `docs/quality/staged_acceptance_policy.md`
+
 ## 4. 相关代码 / 输出文件
 
 - `backend/sources/source_registry.py`
@@ -71,6 +72,7 @@
 - 测试命名建议：`functionName_condition_expectedBehavior`。
 
 ## 11. 验收命令
+
 本任务为后端实现任务。验收命令：
 
 ```bash
@@ -112,7 +114,6 @@ uv run python -m compileall backend scripts tests
 ### 用户决策补充：D-11
 
 用户已拍板：QMT 第一版默认禁用，用户确认本机授权与配置后再启用。
-
 
 ## 15. 数据源默认禁用与 domain gating 补充要求
 

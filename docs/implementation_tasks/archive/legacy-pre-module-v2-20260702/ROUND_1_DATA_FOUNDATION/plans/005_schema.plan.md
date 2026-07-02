@@ -155,6 +155,7 @@ Expected: FAIL（`ModuleNotFoundError: backend.app.db.migrate`）
 ### Step 3: 写 `001_foundation.sql`（上方表清单）与 `migrate.py`
 
 `migrate.py` 要点：
+
 - `applied_versions`：先查 `schema_version` 是否存在（`information_schema` 或 try/except），不存在返回空集。
 - `apply_migrations`：排序 `*.sql` → 跳过已应用 → `con.execute(sql)` → INSERT `schema_version` 行（含 sha256 checksum，`applied_by='init_db'`）。
 
@@ -212,19 +213,19 @@ Commit: `feat(db): add foundation schema migration runner (task 005)`
 
 ### 审计修复（P0 / P1）
 
-| 项 | 问题 | 修复 |
-|----|------|------|
-| P1 | migration 只记 checksum、不校验，SQL 被改后静默漂移 | `verify_applied_checksums()` + `MigrationChecksumError` |
-| P1 | 单条 migration 非事务，崩溃可能漏记 version | 每条 migration `BEGIN` → DDL + INSERT version → `COMMIT` |
-| P1 | `init_db.py` 直连 DuckDB，绕过写锁 | 改走 `ConnectionManager.writer()`（与 007 联动） |
-| P1 | `file_registry` 无 DB 级去重 | 新增 `002_registry_hardening.sql`：`UNIQUE INDEX(content_hash)` + `stg_file_registry` 表 |
+| 项  | 问题                                                | 修复                                                                                     |
+| --- | --------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| P1  | migration 只记 checksum、不校验，SQL 被改后静默漂移 | `verify_applied_checksums()` + `MigrationChecksumError`                                  |
+| P1  | 单条 migration 非事务，崩溃可能漏记 version         | 每条 migration `BEGIN` → DDL + INSERT version → `COMMIT`                                 |
+| P1  | `init_db.py` 直连 DuckDB，绕过写锁                  | 改走 `ConnectionManager.writer()`（与 007 联动）                                         |
+| P1  | `file_registry` 无 DB 级去重                        | 新增 `002_registry_hardening.sql`：`UNIQUE INDEX(content_hash)` + `stg_file_registry` 表 |
 
 ### 测试缺口补充
 
-| 测试 | 证明什么 |
-|------|----------|
+| 测试                                                     | 证明什么                                                         |
+| -------------------------------------------------------- | ---------------------------------------------------------------- |
 | `test_appliedVersions_afterMigration_containsFoundation` | 迁移后 version 集合含 `001_foundation`、`002_registry_hardening` |
-| `test_applyMigrations_modifiedFile_raisesChecksumError` | 库内 checksum 与文件不一致时 fail-fast |
+| `test_applyMigrations_modifiedFile_raisesChecksumError`  | 库内 checksum 与文件不一致时 fail-fast                           |
 
 ### 当前测试规模
 
@@ -237,8 +238,8 @@ Commit: `feat(db): add foundation schema migration runner (task 005)`
 
 > 来源：Round 0/1 多维度评估报告（review 双轴 + subagent）。本节记录评估发现的问题及修复，避免后续会话重复处理。
 
-| 评估项 | 修复 |
-|--------|------|
+| 评估项              | 修复                                                                                                                       |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------- |
 | checksum 测试假阳性 | `test_applyMigrations_modifiedFile_raisesChecksumError` 改为 copy 真实 migrations 目录后篡改 SQL 文件，runner 真正读到变更 |
 
 ### 当前测试规模（二次修复后）
@@ -249,10 +250,10 @@ Commit: `feat(db): add foundation schema migration runner (task 005)`
 
 ## 评估报告跟进（三次修复）
 
-| 评估项 | 修复 |
-|--------|------|
+| 评估项                          | 修复                                                            |
+| ------------------------------- | --------------------------------------------------------------- |
 | migration 坏 SQL 失败路径无测试 | `test_applyMigrations_badSqlInFile_raisesAndLeavesNoVersionRow` |
-| 已应用 migration 文件被删无测试 | `test_applyMigrations_missingAppliedFile_raisesChecksumError` |
+| 已应用 migration 文件被删无测试 | `test_applyMigrations_missingAppliedFile_raisesChecksumError`   |
 
 ### 当前测试规模（三次修复后）
 

@@ -10,33 +10,33 @@
 
 ## 1. 审计范围与对抗命题
 
-| 命题 | 对抗问题 | 结论 |
-|------|----------|------|
-| 文档矩阵漂移 | 只改 doc 不测，或只测不改 doc，合并后命令失效？ | **否** — `test_round3_verification_command_matrix.py` 双向断言 |
-| staged ≠ live 误读 | 读者会把 gate 测试绿当成 production-live 开放？ | **否** — doc + 测试均含 `does not open production-live` |
-| 网络默认 CI | Batch 2.75 live pilot 被默认 CI 拉起？ | **否** — doc 标注 `not default Round 3 CI` + `network` |
-| 越界 runtime | 借 CI 分支改 orchestrator / ResourceGuard？ | **否** — diff 仅 tests/docs/task evidence |
-| 矩阵遗漏 | PROMPT_05 列出的 gate 未入矩阵？ | **否** — 7 gate + doc links + matrix self-test |
+| 命题               | 对抗问题                                        | 结论                                                           |
+| ------------------ | ----------------------------------------------- | -------------------------------------------------------------- |
+| 文档矩阵漂移       | 只改 doc 不测，或只测不改 doc，合并后命令失效？ | **否** — `test_round3_verification_command_matrix.py` 双向断言 |
+| staged ≠ live 误读 | 读者会把 gate 测试绿当成 production-live 开放？ | **否** — doc + 测试均含 `does not open production-live`        |
+| 网络默认 CI        | Batch 2.75 live pilot 被默认 CI 拉起？          | **否** — doc 标注 `not default Round 3 CI` + `network`         |
+| 越界 runtime       | 借 CI 分支改 orchestrator / ResourceGuard？     | **否** — diff 仅 tests/docs/task evidence                      |
+| 矩阵遗漏           | PROMPT_05 列出的 gate 未入矩阵？                | **否** — 7 gate + doc links + matrix self-test                 |
 
 ---
 
 ## 2. 计划外发现
 
-| ID | 严重度 | 发现 | 处置 |
-|---|---|---|---|
-| — | — | 已对抗搜索；无计划外 runtime 路径或 scope 越界 | 显式声明：无 BLOCKING |
+| ID  | 严重度 | 发现                                           | 处置                  |
+| --- | ------ | ---------------------------------------------- | --------------------- |
+| —   | —      | 已对抗搜索；无计划外 runtime 路径或 scope 越界 | 显式声明：无 BLOCKING |
 
 ---
 
 ## 3. §8.8 验证摘要
 
-| 命令 | 结果 |
-|------|------|
-| `uv sync --locked` | PASS |
-| `uv run pytest tests/test_round3_verification_command_matrix.py -q` | PASS (5) |
-| PROMPT_05 gate bundle (8 modules) | PASS (65 passed, 2 skipped) |
-| `uv run python scripts/check_doc_links.py` | PASS (310 md files) |
-| `uv run ruff check tests/test_round3_verification_command_matrix.py` | PASS（E501 已修） |
+| 命令                                                                 | 结果                        |
+| -------------------------------------------------------------------- | --------------------------- |
+| `uv sync --locked`                                                   | PASS                        |
+| `uv run pytest tests/test_round3_verification_command_matrix.py -q`  | PASS (5)                    |
+| PROMPT_05 gate bundle (8 modules)                                    | PASS (65 passed, 2 skipped) |
+| `uv run python scripts/check_doc_links.py`                           | PASS (310 md files)         |
+| `uv run ruff check tests/test_round3_verification_command_matrix.py` | PASS（E501 已修）           |
 
 **环境备注：** 本机可用内存 ~1.45GB 时全量 `pytest -q` 会因 ResourceGuard `HARD_STOP` 失败 layer1/layer2 子集；属环境约束，非本分支 diff。主会话 / CI 节点内存充足时应全绿；本切片 DEBT merge gate 不要求全量 pytest。
 

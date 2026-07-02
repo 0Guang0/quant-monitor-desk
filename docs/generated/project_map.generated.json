@@ -56,16 +56,8 @@
   },
   "modules": {
     "project_scaffold": {
-      "module_ids": [
-        "A1",
-        "A6",
-        "A7"
-      ],
-      "implementation": [
-        "tests/**",
-        "pyproject.toml",
-        "uv.lock"
-      ],
+      "module_ids": ["A1", "A6", "A7"],
+      "implementation": ["tests/**", "pyproject.toml", "uv.lock"],
       "docs": [
         "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md",
         "docs/architecture/06_deployment_and_local_ops.md"
@@ -75,14 +67,9 @@
         "specs/contracts/dependency_extras_contract.yaml",
         "specs/contracts/platform_source_matrix.yaml"
       ],
-      "rules": [
-        "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"
-      ],
+      "rules": ["docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"],
       "implementation_tasks": [],
-      "required_evidence": [
-        "context_pack.json",
-        "loop_manifest.json"
-      ],
+      "required_evidence": ["context_pack.json", "loop_manifest.json"],
       "tests": [
         {
           "path": "tests/test_dependency_extras_contract.py",
@@ -93,13 +80,8 @@
       "forbidden_claims": []
     },
     "layer1_axes": {
-      "module_ids": [
-        "G1",
-        "K2"
-      ],
-      "implementation": [
-        "backend/app/layer1_axes/**"
-      ],
+      "module_ids": ["G1", "K2"],
+      "implementation": ["backend/app/layer1_axes/**"],
       "docs": [
         "docs/modules/layer1_global_regime_panel.md",
         "docs/architecture/module_boundary_matrix.md",
@@ -173,18 +155,11 @@
           "command": "uv run python -m pytest tests/test_fred_staged_semantics.py -q"
         }
       ],
-      "forbidden_claims": [
-        "production-live ready",
-        "live production ingestion"
-      ]
+      "forbidden_claims": ["production-live ready", "live production ingestion"]
     },
     "layer2_sensors": {
-      "module_ids": [
-        "G2"
-      ],
-      "implementation": [
-        "backend/app/layer2_sensors/**"
-      ],
+      "module_ids": ["G2"],
+      "implementation": ["backend/app/layer2_sensors/**"],
       "docs": [
         "docs/modules/layer2_cross_asset_sensor.md",
         "docs/architecture/module_boundary_matrix.md"
@@ -235,16 +210,10 @@
           "command": "uv run python -m pytest tests/test_resource_guard.py -q"
         }
       ],
-      "forbidden_claims": [
-        "production-live ready",
-        "live production ingestion"
-      ]
+      "forbidden_claims": ["production-live ready", "live production ingestion"]
     },
     "layer5_evidence": {
-      "module_ids": [
-        "G5",
-        "G6"
-      ],
+      "module_ids": ["G5", "G6"],
       "implementation": [
         "backend/app/layer5_evidence/**",
         "backend/app/evidence/**"
@@ -292,21 +261,11 @@
           "command": "uv run python -m pytest tests/test_no_clean_write_for_web_evidence.py -q"
         }
       ],
-      "forbidden_claims": [
-        "production-live ready"
-      ]
+      "forbidden_claims": ["production-live ready"]
     },
     "datasources": {
-      "module_ids": [
-        "C1",
-        "C2",
-        "C3",
-        "C4",
-        "J5"
-      ],
-      "implementation": [
-        "backend/app/datasources/**"
-      ],
+      "module_ids": ["C1", "C2", "C3", "C4", "J5"],
+      "implementation": ["backend/app/datasources/**"],
       "docs": [
         "docs/modules/data_sources.md",
         "docs/modules/datasource_service.md",
@@ -374,16 +333,10 @@
           "command": "uv run python -m pytest tests/test_prediction_market_adapters.py -q"
         }
       ],
-      "forbidden_claims": [
-        "bypass route readiness gate"
-      ]
+      "forbidden_claims": ["bypass route readiness gate"]
     },
     "validators": {
-      "module_ids": [
-        "B1",
-        "B2",
-        "B3"
-      ],
+      "module_ids": ["B1", "B2", "B3"],
       "implementation": [
         "backend/app/validators/**",
         "backend/app/db/validation_gate.py",
@@ -440,19 +393,10 @@
           "command": "uv run python -m pytest tests/test_batch_c_validation_flow.py -q"
         }
       ],
-      "forbidden_claims": [
-        "direct table write outside WriteManager"
-      ]
+      "forbidden_claims": ["direct table write outside WriteManager"]
     },
     "ops": {
-      "module_ids": [
-        "E1",
-        "E2",
-        "E3",
-        "E4",
-        "E5",
-        "F0"
-      ],
+      "module_ids": ["E1", "E2", "E3", "E4", "E5", "F0"],
       "implementation": [
         "backend/app/ops/**",
         "backend/app/cli/**",
@@ -555,15 +499,10 @@
           "command": "uv run python -m pytest tests/test_ops_data_health.py -q"
         }
       ],
-      "forbidden_claims": [
-        "production-live ready",
-        "live production ingestion"
-      ]
+      "forbidden_claims": ["production-live ready", "live production ingestion"]
     },
     "source_health": {
-      "module_ids": [
-        "D4"
-      ],
+      "module_ids": ["D4"],
       "implementation": [
         "backend/app/ops/source_health_writer.py",
         "backend/app/ops/b3f_sh_registry_guard.py"
@@ -572,17 +511,10 @@
         "docs/modules/data_sources.md",
         "docs/decisions/ADR-024-source-health-snapshot-boundary.md"
       ],
-      "contracts": [
-        "specs/contracts/ops_health_check_contract.yaml"
-      ],
-      "rules": [
-        "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"
-      ],
+      "contracts": ["specs/contracts/ops_health_check_contract.yaml"],
+      "rules": ["docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"],
       "implementation_tasks": [],
-      "required_evidence": [
-        "context_pack.json",
-        "loop_manifest.json"
-      ],
+      "required_evidence": ["context_pack.json", "loop_manifest.json"],
       "tests": [
         {
           "path": "tests/test_source_health_snapshot.py",
@@ -590,18 +522,11 @@
           "command": "uv run python -m pytest tests/test_source_health_snapshot.py -q"
         }
       ],
-      "forbidden_claims": [
-        "DH2 creates source_health_snapshot DDL"
-      ]
+      "forbidden_claims": ["DH2 creates source_health_snapshot DDL"]
     },
     "db_platform": {
-      "module_ids": [
-        "A2"
-      ],
-      "implementation": [
-        "backend/app/db/**",
-        "scripts/init_db.py"
-      ],
+      "module_ids": ["A2"],
+      "implementation": ["backend/app/db/**", "scripts/init_db.py"],
       "docs": [
         "docs/modules/write_manager.md",
         "docs/architecture/04_data_architecture.md",
@@ -650,14 +575,8 @@
       "forbidden_claims": []
     },
     "sync_orchestrator": {
-      "module_ids": [
-        "D1",
-        "D2",
-        "D3"
-      ],
-      "implementation": [
-        "backend/app/sync/**"
-      ],
+      "module_ids": ["D1", "D2", "D3"],
+      "implementation": ["backend/app/sync/**"],
       "docs": [
         "docs/modules/data_sync_orchestrator.md",
         "docs/architecture/module_boundary_matrix.md",
@@ -701,11 +620,7 @@
       "forbidden_claims": []
     },
     "core_platform": {
-      "module_ids": [
-        "A3",
-        "A4",
-        "A5"
-      ],
+      "module_ids": ["A3", "A4", "A5"],
       "implementation": [
         "backend/app/core/**",
         "backend/app/storage/**",
@@ -755,12 +670,8 @@
       "forbidden_claims": []
     },
     "model_inputs": {
-      "module_ids": [
-        "K1"
-      ],
-      "implementation": [
-        "specs/model_inputs/**"
-      ],
+      "module_ids": ["K1"],
+      "implementation": ["specs/model_inputs/**"],
       "docs": [
         "docs/quality/model_input_readiness_matrix.md",
         "specs/model_inputs/README.md"
@@ -777,10 +688,7 @@
         "docs/quality/BATCH3_STAGED_DOWNSTREAM_GATE.md"
       ],
       "implementation_tasks": [],
-      "required_evidence": [
-        "context_pack.json",
-        "loop_manifest.json"
-      ],
+      "required_evidence": ["context_pack.json", "loop_manifest.json"],
       "tests": [
         {
           "path": "tests/test_model_input_whitelist.py",
@@ -794,13 +702,8 @@
       ]
     },
     "layer3_chains": {
-      "module_ids": [
-        "G3",
-        "K3"
-      ],
-      "implementation": [
-        "backend/app/layer3_chains/**"
-      ],
+      "module_ids": ["G3", "K3"],
+      "implementation": ["backend/app/layer3_chains/**"],
       "docs": [
         "docs/modules/layer3_industry_shock_anchor.md",
         "specs/layer3_global_industry_chains/layer3_global_industry_chains_v1_2/README.md",
@@ -810,16 +713,11 @@
         "specs/contracts/snapshot_lineage_contract.yaml",
         "specs/contracts/layer3_loader_contract.yaml"
       ],
-      "rules": [
-        "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"
-      ],
+      "rules": ["docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"],
       "implementation_tasks": [
         "docs/implementation_tasks/ROUND_3_MODELING_LAYERS/README.md"
       ],
-      "required_evidence": [
-        "context_pack.json",
-        "loop_manifest.json"
-      ],
+      "required_evidence": ["context_pack.json", "loop_manifest.json"],
       "tests": [
         {
           "path": "tests/test_layer3_loader.py",
@@ -835,29 +733,18 @@
       "forbidden_claims": []
     },
     "layer4_markets": {
-      "module_ids": [
-        "G4"
-      ],
-      "implementation": [
-        "backend/app/layer4_markets/**"
-      ],
-      "docs": [
-        "docs/modules/layer4_market_structure.md"
-      ],
+      "module_ids": ["G4"],
+      "implementation": ["backend/app/layer4_markets/**"],
+      "docs": ["docs/modules/layer4_market_structure.md"],
       "contracts": [
         "specs/contracts/snapshot_lineage_contract.yaml",
         "specs/contracts/layer4_market_contract.yaml"
       ],
-      "rules": [
-        "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"
-      ],
+      "rules": ["docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"],
       "implementation_tasks": [
         "docs/implementation_tasks/ROUND_3_MODELING_LAYERS/README.md"
       ],
-      "required_evidence": [
-        "context_pack.json",
-        "loop_manifest.json"
-      ],
+      "required_evidence": ["context_pack.json", "loop_manifest.json"],
       "tests": [
         {
           "path": "tests/test_layer4_market_structure.py",
@@ -868,13 +755,8 @@
       "forbidden_claims": []
     },
     "api_platform": {
-      "module_ids": [
-        "I1",
-        "I8"
-      ],
-      "implementation": [
-        "backend/app/api/**"
-      ],
+      "module_ids": ["I1", "I8"],
+      "implementation": ["backend/app/api/**"],
       "docs": [
         "docs/modules/fastapi_backend.md",
         "docs/modules/fastapi_and_frontend.md",
@@ -892,9 +774,7 @@
       "implementation_tasks": [
         "docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/README.md"
       ],
-      "required_evidence": [
-        "context_pack.json"
-      ],
+      "required_evidence": ["context_pack.json"],
       "tests": [
         {
           "path": "tests/test_api_security_contract.py",
@@ -905,22 +785,15 @@
       "forbidden_claims": []
     },
     "agents": {
-      "module_ids": [
-        "I2",
-        "J2"
-      ],
-      "implementation": [
-        "backend/app/agents/**"
-      ],
+      "module_ids": ["I2", "J2"],
+      "implementation": ["backend/app/agents/**"],
       "docs": [
         "docs/modules/agent_module.md",
         "docs/api/agent_tool_contracts.md",
         "docs/ops/agent_security_policy.md",
         "docs/ops/agent_workflow_boundaries.md"
       ],
-      "contracts": [
-        "specs/contracts/agent_contract.yaml"
-      ],
+      "contracts": ["specs/contracts/agent_contract.yaml"],
       "rules": [
         "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md",
         "docs/adr/ADR-0002-agent-readonly-boundary.md"
@@ -928,9 +801,7 @@
       "implementation_tasks": [
         "docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/README.md"
       ],
-      "required_evidence": [
-        "context_pack.json"
-      ],
+      "required_evidence": ["context_pack.json"],
       "tests": [
         {
           "path": "tests/test_reference_adoption_guardrails.py",
@@ -941,12 +812,8 @@
       "forbidden_claims": []
     },
     "frontend_platform": {
-      "module_ids": [
-        "I3"
-      ],
-      "implementation": [
-        "frontend/**"
-      ],
+      "module_ids": ["I3"],
+      "implementation": ["frontend/**"],
       "docs": [
         "docs/modules/frontend_dashboard.md",
         "docs/modules/fastapi_and_frontend.md",
@@ -956,13 +823,9 @@
         "specs/frontend/page_contracts.yaml",
         "specs/contracts/user_input_privacy_contract.yaml"
       ],
-      "rules": [
-        "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"
-      ],
+      "rules": ["docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"],
       "implementation_tasks": [],
-      "required_evidence": [
-        "context_pack.json"
-      ],
+      "required_evidence": ["context_pack.json"],
       "tests": [
         {
           "path": "frontend/src/App.test.tsx",
@@ -978,36 +841,21 @@
       "forbidden_claims": []
     },
     "notifications": {
-      "module_ids": [
-        "I4",
-        "E7"
-      ],
-      "implementation": [
-        "backend/app/notifications/**"
-      ],
+      "module_ids": ["I4", "E7"],
+      "implementation": ["backend/app/notifications/**"],
       "docs": [
         "docs/modules/notification_and_reports.md",
         "docs/ops/ops_report_cli.md"
       ],
-      "contracts": [
-        "specs/contracts/notification_report_contract.yaml"
-      ],
-      "rules": [
-        "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"
-      ],
+      "contracts": ["specs/contracts/notification_report_contract.yaml"],
+      "rules": ["docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"],
       "implementation_tasks": [],
-      "required_evidence": [
-        "context_pack.json"
-      ],
+      "required_evidence": ["context_pack.json"],
       "tests": [],
       "forbidden_claims": []
     },
     "backtest_review": {
-      "module_ids": [
-        "I5",
-        "I6",
-        "I7"
-      ],
+      "module_ids": ["I5", "I6", "I7"],
       "implementation": [],
       "docs": [
         "docs/modules/backtest_and_review.md",
@@ -1027,20 +875,12 @@
       "implementation_tasks": [
         "docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/README.md"
       ],
-      "required_evidence": [
-        "context_pack.json"
-      ],
+      "required_evidence": ["context_pack.json"],
       "tests": [],
       "forbidden_claims": []
     },
     "governance": {
-      "module_ids": [
-        "J1",
-        "J3",
-        "J4",
-        "J6",
-        "E6"
-      ],
+      "module_ids": ["J1", "J3", "J4", "J6", "E6"],
       "implementation": [
         "scripts/check_doc_links.py",
         "scripts/loop_maintain.py",
@@ -1064,10 +904,7 @@
         "docs/ops/config_secret_policy.md"
       ],
       "implementation_tasks": [],
-      "required_evidence": [
-        "context_pack.json",
-        "release_manifest.json"
-      ],
+      "required_evidence": ["context_pack.json", "release_manifest.json"],
       "tests": [
         {
           "path": "tests/test_reference_adoption_guardrails.py",
@@ -1083,9 +920,7 @@
       "forbidden_claims": []
     },
     "privacy_boundary": {
-      "module_ids": [
-        "J7"
-      ],
+      "module_ids": ["J7"],
       "implementation": [],
       "docs": [
         "docs/ops/privacy_data_flow.md",
@@ -1096,34 +931,20 @@
         "specs/contracts/user_input_privacy_contract.yaml",
         "specs/contracts/api_security_contract.yaml"
       ],
-      "rules": [
-        "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"
-      ],
+      "rules": ["docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"],
       "implementation_tasks": [],
-      "required_evidence": [
-        "context_pack.json"
-      ],
+      "required_evidence": ["context_pack.json"],
       "tests": [],
       "forbidden_claims": []
     },
     "etl": {
-      "module_ids": [
-        "H1"
-      ],
-      "implementation": [
-        "backend/app/etl/**"
-      ],
-      "docs": [
-        "docs/modules/duckdb_and_parquet.md"
-      ],
+      "module_ids": ["H1"],
+      "implementation": ["backend/app/etl/**"],
+      "docs": ["docs/modules/duckdb_and_parquet.md"],
       "contracts": [],
-      "rules": [
-        "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"
-      ],
+      "rules": ["docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md"],
       "implementation_tasks": [],
-      "required_evidence": [
-        "context_pack.json"
-      ],
+      "required_evidence": ["context_pack.json"],
       "tests": [
         {
           "path": "tests/test_duckdb_connection.py",
