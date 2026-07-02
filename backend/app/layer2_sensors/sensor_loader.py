@@ -20,6 +20,11 @@ from backend.app.layer2_sensors.schema_ddl import ensure_layer2_staging_tables
 STAGED_REGISTRY_FIXTURE = (
     PROJECT_ROOT / "tests" / "fixtures" / "layer2_cross_asset_registry_fixture.yaml"
 )
+CLEAN_REPLAY_REGISTRY_FIXTURE = (
+    PROJECT_ROOT / "tests" / "fixtures" / "layer2_cross_asset_registry_clean_replay.yaml"
+)
+
+P0_CLEAN_REPLAY_ASSET_IDS = frozenset({"L2-VIX"})
 
 CONTRACT_ASSET_GROUPS = frozenset(
     {
@@ -50,7 +55,8 @@ CONTRACT_REQUIRED_REGISTRY_FIELDS = (
     "double_count_guard",
 )
 
-ALLOWED_PRIMARY_SOURCES = frozenset({"staged_fixture"})
+ALLOWED_PRIMARY_SOURCES_STAGED = frozenset({"staged_fixture"})
+ALLOWED_PRIMARY_SOURCES_CLEAN_REPLAY = frozenset({"fred", "staged_fixture"})
 
 
 class CrossAssetRegistryLoadError(ValueError):
@@ -70,11 +76,16 @@ class CrossAssetRegistryLoader:
             raise CrossAssetRegistryLoadError("registry root must be a mapping")
 
         mode = str(raw.get("mode", ""))
-        if mode != "staged_fixture_only":
+        if mode not in ("staged_fixture_only", "production_clean_replay"):
             raise CrossAssetRegistryLoadError(
-                f"registry mode {mode!r} is not staged_fixture_only; "
-                "production-live registry load is forbidden on 019"
+                f"registry mode {mode!r} is not allowed; "
+                "only staged_fixture_only or production_clean_replay on 019/DCP-07"
             )
+        allowed_primary = (
+            ALLOWED_PRIMARY_SOURCES_CLEAN_REPLAY
+            if mode == "production_clean_replay"
+            else ALLOWED_PRIMARY_SOURCES_STAGED
+        )
 
         version = str(raw.get("version", "unknown"))
         assets_raw = raw.get("assets")
@@ -85,7 +96,7 @@ class CrossAssetRegistryLoader:
         for item in assets_raw:
             if not isinstance(item, dict):
                 raise CrossAssetRegistryLoadError("each asset entry must be a mapping")
-            entries.append(_parse_asset(item))
+            entries.append(_parse_asset(item, mode=mode, allowed_primary=allowed_primary))
 
         validate_registry_double_count_rules(entries)
         _assert_contract_fields(entries)
@@ -174,7 +185,12 @@ class CrossAssetRegistryWriter:
         return self._wm.write(req, con=con)
 
 
-def _parse_asset(item: dict[str, Any]) -> CrossAssetRegistryEntry:
+def _parse_asset(
+    item: dict[str, Any],
+    *,
+    mode: str,
+    allowed_primary: frozenset[str],
+) -> CrossAssetRegistryEntry:
     asset_id = str(item.get("asset_id", "")).strip()
     if not asset_id:
         raise CrossAssetRegistryLoadError("asset entry missing asset_id")
@@ -190,10 +206,15 @@ def _parse_asset(item: dict[str, Any]) -> CrossAssetRegistryEntry:
         raise CrossAssetRegistryLoadError(
             f"asset {asset_id!r} primary_source must not be empty/none in staged registry"
         )
-    if primary_source not in ALLOWED_PRIMARY_SOURCES:
+    if primary_source not in allowed_primary:
         raise CrossAssetRegistryLoadError(
-            f"asset {asset_id!r} primary_source {primary_source!r} not allowed on 019 staged path"
+            f"asset {asset_id!r} primary_source {primary_source!r} not allowed for mode {mode!r}"
         )
+    if mode == "production_clean_replay" and primary_source == "fred":
+        if asset_id not in P0_CLEAN_REPLAY_ASSET_IDS:
+            raise CrossAssetRegistryLoadError(
+                f"asset {asset_id!r} primary_source fred is P0-whitelist only (L2-VIX)"
+            )
 
     return CrossAssetRegistryEntry(
         asset_id=asset_id,

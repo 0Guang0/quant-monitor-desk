@@ -39,6 +39,7 @@ from backend.app.layer2_sensors.lineage import (
 from backend.app.layer2_sensors.models import Layer2LineageEnvelope
 from backend.app.layer2_sensors.observation import reject_future_observation
 from backend.app.layer2_sensors.schema_ddl import ensure_layer2_staging_tables
+from tests.layer2_e2e_support import insert_layer2_validation_report, layer2_cm
 from backend.app.layer2_sensors.sensor_loader import STAGED_REGISTRY_FIXTURE
 
 AS_OF = datetime(2026, 6, 15, 16, 0, tzinfo=UTC)
@@ -69,13 +70,6 @@ def _staged_asset(asset_id: str, *, registry=None):
     reg = registry if registry is not None else _staged_registry()
     return next(a for a in reg.assets if a.asset_id == asset_id)
 
-
-def _layer2_cm(tmp_path: Path, name: str) -> ConnectionManager:
-    cm = ConnectionManager(tmp_path / name)
-    with cm.writer() as con:
-        apply_migrations(con)
-        ensure_layer2_staging_tables(con)
-    return cm
 
 
 def _obs(
@@ -109,45 +103,6 @@ def _obs(
     )
 
 
-def _insert_validation_report(
-    cm: ConnectionManager,
-    report_id: str,
-    *,
-    fetch_ids: list[str] | None = None,
-    content_hashes: list[str] | None = None,
-) -> None:
-    fetch_ids = fetch_ids if fetch_ids is not None else ["fetch-l2-wm"]
-    content_hashes = content_hashes if content_hashes is not None else ["hash-l2-wm"]
-    with cm.writer() as con:
-        con.execute(
-            """
-            INSERT INTO validation_report (
-                validation_report_id, run_id, data_domain, source_id,
-                status, checked_rows, failed_rows, warning_rows,
-                can_write_clean, needs_manual_review,
-                rule_set_id, rule_version,
-                source_fetch_ids_json, source_content_hashes_json
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            [
-                report_id,
-                "run-layer2",
-                "layer2_cross_asset_daily",
-                "staged_fixture",
-                "PASSED",
-                1,
-                0,
-                0,
-                True,
-                False,
-                "layer2_v1",
-                "layer2_sensor_staged_v1",
-                json.dumps(fetch_ids),
-                json.dumps(content_hashes),
-            ],
-        )
-
-
 def test_layer2Snapshot_lineageIncludesFetchIdsAndHashes(tmp_path: Path) -> None:
     """覆盖范围：WM 写入后 DB lineage 行含 VR 一致的 fetch/hash
     测试对象：Layer2SnapshotWriter.write_daily_snapshot → axis_snapshot_lineage
@@ -155,8 +110,8 @@ def test_layer2Snapshot_lineageIncludesFetchIdsAndHashes(tmp_path: Path) -> None
     验证点：DB source_fetch_ids/content_hashes JSON 与 VR 及 envelope 一致
     失败含义：WM 路径 lineage 与 validation_report 漂移，staged 测试可绿而生产可写合成 ID
     """
-    cm = _layer2_cm(tmp_path, "layer2_lineage_db.duckdb")
-    _insert_validation_report(
+    cm = layer2_cm(tmp_path, "layer2_lineage_db.duckdb")
+    insert_layer2_validation_report(
         cm,
         "vr-layer2-lin",
         fetch_ids=["fetch-l2-wm"],
@@ -203,8 +158,8 @@ def test_layer2Snapshot_lineageVrMismatch_rejects(tmp_path: Path) -> None:
     验证点：VR fetch-A / envelope fetch-B → Layer2LineageError 含 source_fetch_ids
     失败含义：合成 fetch id 可冒充 VR，WriteManager gate 仅校验 report 存在
     """
-    cm = _layer2_cm(tmp_path, "layer2_vr_mismatch.duckdb")
-    _insert_validation_report(cm, "vr-mismatch", fetch_ids=["fetch-A"], content_hashes=["hash-A"])
+    cm = layer2_cm(tmp_path, "layer2_vr_mismatch.duckdb")
+    insert_layer2_validation_report(cm, "vr-mismatch", fetch_ids=["fetch-A"], content_hashes=["hash-A"])
 
     copper = _staged_asset("L2-COPPER")
     snap, lineage, roll = CrossAssetSnapshotBuilder().build_daily_snapshots(
@@ -231,8 +186,8 @@ def test_layer2Snapshot_lineageVrHashOnlyMismatch_rejects(tmp_path: Path) -> Non
     验证点：VR fetch-A/hash-A、envelope fetch-A/hash-B → Layer2LineageError 含 source_content_hashes
     失败含义：仅 hash 漂移可绕过 VR 绑定，与 fetch-id 负向测形成盲区
     """
-    cm = _layer2_cm(tmp_path, "layer2_vr_hash_mismatch.duckdb")
-    _insert_validation_report(
+    cm = layer2_cm(tmp_path, "layer2_vr_hash_mismatch.duckdb")
+    insert_layer2_validation_report(
         cm, "vr-hash-mismatch", fetch_ids=["fetch-A"], content_hashes=["hash-A"]
     )
 
@@ -326,11 +281,11 @@ def test_crossAssetRegistryLoader_stagedFixture_loadsAxisInputAssets() -> None:
 
 
 def test_crossAssetRegistryLoader_rejectsNonStagedMode(tmp_path: Path) -> None:
-    """覆盖范围：非 staged 模式注册表拒收
+    """覆盖范围：非允许模式注册表拒收
     测试对象：CrossAssetRegistryLoader.load（production_live YAML）
-    目的/目标：Layer2 当前仅允许 staged_fixture_only，防误用线上配置
-    验证点：pytest.raises(Exception, match=staged_fixture_only)
-    失败含义：production_live 注册表仍可加载，Batch3 双闸失效
+    目的/目标：production_live 抛错；允许 staged_fixture_only 与 production_clean_replay
+    验证点：bad yaml raises staged_fixture_only；STAGED_REGISTRY_FIXTURE mode 正确
+    失败含义：生产模式配置被误当作 staged/clean replay 加载
     """
     bad = tmp_path / "bad_registry.yaml"
     bad.write_text(
@@ -675,7 +630,7 @@ def test_layer2RollEvent_rejectsMissingValidationReport(tmp_path: Path) -> None:
     验证点：res.status=FAILED；cross_asset_roll_event 无 SUCCESS 行
     失败含义：缺失 VR 仍可写 roll，与 DbValidationGate 契约断裂
     """
-    cm = _layer2_cm(tmp_path, "layer2_roll_missing_vr.duckdb")
+    cm = layer2_cm(tmp_path, "layer2_roll_missing_vr.duckdb")
     roll = FuturesRollHandler().detect_roll(
         asset_id="L2-HG-MAIN",
         roll_date=TRADE_DATE,
@@ -698,8 +653,8 @@ def test_futuresRollEvent_persistedViaWriteManager(tmp_path: Path) -> None:
     验证点：res.status=SUCCESS；DB 行 roll_event 与合约对
     失败含义：换月事件仅内存存在，复盘无法查历史 roll
     """
-    cm = _layer2_cm(tmp_path, "layer2_roll.duckdb")
-    _insert_validation_report(cm, "vr-roll-1")
+    cm = layer2_cm(tmp_path, "layer2_roll.duckdb")
+    insert_layer2_validation_report(cm, "vr-roll-1")
 
     roll = FuturesRollHandler().detect_roll(
         asset_id="L2-HG-MAIN",
@@ -880,8 +835,8 @@ def test_layer2Snapshot_writeWithRollEvent_persistsAllTables(tmp_path: Path) -> 
     验证点：roll_row=1；snap active_contract=HGF26
     失败含义：换月与日快照不同步持久化，DB 状态不一致
     """
-    cm = _layer2_cm(tmp_path, "layer2_roll_snap.duckdb")
-    _insert_validation_report(
+    cm = layer2_cm(tmp_path, "layer2_roll_snap.duckdb")
+    insert_layer2_validation_report(
         cm,
         "vr-roll-snap",
         fetch_ids=["fetch-roll-snap"],
@@ -920,8 +875,8 @@ def test_layer2Observation_writeViaWriteManager(tmp_path: Path) -> None:
     验证点：result.status == SUCCESS
     失败含义：主路径观测无法落库，Layer2 管道中断
     """
-    cm = _layer2_cm(tmp_path, "layer2_obs_wm.duckdb")
-    _insert_validation_report(cm, "vr-layer2-obs-1")
+    cm = layer2_cm(tmp_path, "layer2_obs_wm.duckdb")
+    insert_layer2_validation_report(cm, "vr-layer2-obs-1")
 
     copper = _staged_asset("L2-COPPER")
     result = Layer2ObservationWriter(cm).write_observations(
@@ -959,8 +914,8 @@ def test_layer2Snapshot_writeViaWriteManager(tmp_path: Path) -> None:
     验证点：snap_res/lin_res.status=SUCCESS；DB lineage layer_id=layer2；fetch/hash JSON 非空
     失败含义：快照或血缘单独失败，staging 表不完整或 provenance 未入库
     """
-    cm = _layer2_cm(tmp_path, "layer2_wm.duckdb")
-    _insert_validation_report(cm, "vr-layer2-1")
+    cm = layer2_cm(tmp_path, "layer2_wm.duckdb")
+    insert_layer2_validation_report(cm, "vr-layer2-1")
 
     copper = _staged_asset("L2-COPPER")
     snap, lineage, roll = CrossAssetSnapshotBuilder().build_daily_snapshots(
@@ -999,8 +954,8 @@ def test_layer2Registry_syncViaWriteManager(tmp_path: Path) -> None:
     验证点：res.status=SUCCESS；count==len(assets)
     失败含义：YAML 注册表与 DB 副本不一致，运行时读到过期元数据
     """
-    cm = _layer2_cm(tmp_path, "layer2_reg.duckdb")
-    _insert_validation_report(cm, "vr-reg-1")
+    cm = layer2_cm(tmp_path, "layer2_reg.duckdb")
+    insert_layer2_validation_report(cm, "vr-reg-1")
     loaded = _staged_registry()
     res = CrossAssetRegistryWriter(cm).sync_registry(
         loaded.assets, validation_report_id="vr-reg-1"
@@ -1014,9 +969,9 @@ def test_layer2Registry_syncViaWriteManager(tmp_path: Path) -> None:
 def test_layer2Loader_defaultRejectsProductionLiveMode(tmp_path: Path) -> None:
     """覆盖范围：默认 loader 拒绝 production_live
     测试对象：CrossAssetRegistryLoader.load（production_live 与 staged fixture 对照）
-    目的/目标：production_live 抛错；STAGED_REGISTRY_FIXTURE 仍为 staged_fixture_only
-    验证点：bad yaml raises staged_fixture_only；fixture mode 正确
-    失败含义：生产模式配置被误当作 staged 加载
+    目的/目标：production_live 抛错；允许 staged_fixture_only 与 production_clean_replay
+    验证点：bad yaml raises staged_fixture_only；STAGED_REGISTRY_FIXTURE mode 正确
+    失败含义：生产模式配置被误当作 staged/clean replay 加载
     """
     bad = tmp_path / "production_live.yaml"
     bad.write_text(

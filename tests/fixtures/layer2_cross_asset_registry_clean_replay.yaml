@@ -1,0 +1,19 @@
+version: layer2_cross_asset_registry_clean_replay_v1
+mode: production_clean_replay
+assets:
+  - asset_id: L2-VIX
+    display_name: VIX
+    display_name_cn: 波动率指数
+    asset_group: Volatility
+    asset_type: index
+    market: US
+    instrument_id: FRED:VIXCLS
+    layer5_instrument_id: L5-VIXCLS
+    primary_source: fred
+    validation_source: none
+    fallback_policy: none
+    mapped_axis: RISK_APPETITE
+    is_axis_input: true
+    display_only: true
+    eligible_for_model: false
+    double_count_guard: layer1_axis_input_display_only
