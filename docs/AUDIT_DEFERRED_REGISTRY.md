@@ -2,7 +2,7 @@
 
 **Single source of truth** for open issues, intentional deferrals, and resolved audit items.
 
-> Last reconciled: 2026-07-02 Wave 4 merge 协调（R3-DCP-07/08/09 合入 master）；prior R3-DCP-05 @ `c2258363`；prior 2026-07-01 @ `93b2c82`。
+> Last reconciled: 2026-07-02 Wave 4 四轨 merge 完成（R3-DCP-07/08/09/10 合入 master）；prior R3-DCP-05 @ `c2258363`；prior 2026-07-01 @ `93b2c82`。
 
 **Batch 2.5 audit 待修复台账（含合理延期清理阶段）:** [`docs/quality/ROUND3_BATCH25_PENDING_FIX_REGISTRY.md`](quality/ROUND3_BATCH25_PENDING_FIX_REGISTRY.md)  
 **待修复清单（全项目 SSOT）:** [`docs/quality/待修复清单.md`](quality/待修复清单.md)  

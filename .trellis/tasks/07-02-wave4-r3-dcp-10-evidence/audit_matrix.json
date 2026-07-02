@@ -1,0 +1,14 @@
+{
+  "task_slug": "07-02-wave4-r3-dcp-10-evidence",
+  "plan_protocol_version": "4.1",
+  "dimensions": {
+    "A1": { "result": "fail_then_fixed", "findings": 4 },
+    "A2": { "result": "fail_then_fixed", "findings": 1 },
+    "A3": { "result": "pass", "findings": 0 },
+    "A4": { "result": "fail_then_fixed", "findings": 4 },
+    "A5": { "result": "pass", "findings": 0 },
+    "A6": { "result": "skip", "findings": 0 },
+    "A7": { "result": "pass", "findings": 0 },
+    "A8": { "result": "fail_then_fixed", "findings": 5 }
+  }
+}

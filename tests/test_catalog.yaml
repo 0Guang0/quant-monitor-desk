@@ -935,6 +935,30 @@ tests/test_layer5_evidence_foundation.py:
     docs: []
     rules: []
     specs: []
+tests/test_layer5_mootdx_bar_clean_e2e.py:
+  command: uv run python -m pytest tests/test_layer5_mootdx_bar_clean_e2e.py -q
+  failure_meaning:
+    Regression in test_layer5_mootdx_bar_clean_e2e; inspect purpose
+    and linked authorities.
+  purpose:
+    R3-DCP-10 S02 — mootdx incremental → security_bar_1d → Layer5 provenance
+    e2e。
+  type: integration
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_layer5_provenance_bridge.py:
+  command: uv run python -m pytest tests/test_layer5_provenance_bridge.py -q
+  failure_meaning:
+    Regression in test_layer5_provenance_bridge; inspect purpose and
+    linked authorities.
+  purpose: R3-DCP-10 S01 — fetch bundle → Layer5 SourceProvenance 映射桥。
+  type: runtime-contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
 tests/test_loop_engineering_flow.py:
   command: uv run python -m pytest tests/test_loop_engineering_flow.py -q
   failure_meaning:
