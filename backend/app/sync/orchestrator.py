@@ -243,15 +243,14 @@ class DataSyncOrchestrator:
         )
         fetch_callable = None
         if datasource_service is not None:
-            jobs = self._jobs
 
             def _service_fetch(req, con, job_id, operation=None):
+                # BackfillShardRunner.begin_fetching already guard-checks and PLANNED→FETCHING.
                 return datasource_service.fetch(
                     req,
                     con=con,
                     job_id=job_id,
                     operation=operation,
-                    on_enter_fetching=lambda: jobs.transition(job_id, "FETCHING", con=con),
                 )
 
             fetch_callable = _service_fetch

@@ -202,10 +202,13 @@ def run_live_pilot_raw_only(
         DEFAULT_PRODUCTION_DB.read_bytes() if DEFAULT_PRODUCTION_DB.is_file() else None
     )
 
+    from backend.app.storage.path_compat import is_relative_to_data_root
+
     raw_paths = [str(Path(p).resolve()) for p in result.raw_file_paths]
     sandbox_resolved = sandbox_root.resolve()
     for path in raw_paths:
-        if not Path(path).resolve().is_relative_to(sandbox_resolved):
+        resolved_path = Path(path).resolve()
+        if not is_relative_to_data_root(resolved_path, sandbox_resolved):
             raise LivePilotAuthorizationError(f"raw evidence path outside sandbox: {path}")
 
     try:

@@ -44,6 +44,7 @@ Used with MIGRATION_MAP.md for machine omission checks (`check_docs_specs_indexe
 - `docs/decisions/ADR-027-r3h08-product-live-env-gate.md`
 - `docs/decisions/ADR-028-dcp05-tier-a-clean-domain-extension.md`
 - `docs/decisions/ADR-029-dcp06-layer1-five-axis-clean-read.md`
+- `docs/decisions/ADR-030-bounded-backfill-cap-and-ci-nightly.md`
 - `docs/decisions/README.md`
 - `docs/implementation_tasks/BATCH_FOLDER_REHOME_PLAN.md`
 - `docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md`
@@ -184,6 +185,7 @@ Used with MIGRATION_MAP.md for machine omission checks (`check_docs_specs_indexe
 - `docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/R3_DCP_03_POST_WRITE_INSPECT.md`
 - `docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/R3_DCP_05_TIER_A_INCREMENTAL.md`
 - `docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/R3_DCP_06_LAYER1_FIVE_AXIS_CLEAN.md`
+- `docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/R3_DCP_09_BOUNDED_BACKFILL_CI.md`
 - `docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/R3_DCP_TO_ISSUES_INDEX.md`
 - `docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/README.md`
 - `docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/WAVE1_R3H10_THEN_R3H07_TO_ISSUES_INDEX.md`
@@ -313,6 +315,7 @@ Used with MIGRATION_MAP.md for machine omission checks (`check_docs_specs_indexe
 - `docs/ops/lock_and_concurrency_policy.md`
 - `docs/ops/logs_health_audit.md`
 - `docs/ops/migration_recovery_policy.md`
+- `docs/ops/nightly_ci.md`
 - `docs/ops/ops_and_performance_v1_2.md`
 - `docs/ops/ops_report_cli.md`
 - `docs/ops/performance_limits.md`
@@ -391,6 +394,7 @@ Used with MIGRATION_MAP.md for machine omission checks (`check_docs_specs_indexe
 - `specs/contracts/backtest_metric_contract.yaml`
 - `specs/contracts/backtest_reproducibility_contract.yaml`
 - `specs/contracts/backup_recovery_contract.yaml`
+- `specs/contracts/bounded_backfill_cap.yaml`
 - `specs/contracts/data_adapter_contract.md`
 - `specs/contracts/data_cli_contract.yaml`
 - `specs/contracts/data_quality_rules.yaml`

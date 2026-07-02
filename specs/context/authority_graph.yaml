@@ -369,6 +369,7 @@ modules:
     contracts:
       - specs/contracts/write_contract.yaml
       - specs/contracts/sync_job_contract.yaml
+      - specs/contracts/bounded_backfill_cap.yaml
     rules:
       - docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md
       - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md

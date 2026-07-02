@@ -91,9 +91,66 @@ def run_baostock_bar_incremental(
     )
 
 
+@dataclass(frozen=True)
+class BaostockBackfillRunResult:
+    job_id: str
+    statuses: tuple[str, ...]
+    shard_count: int
+    product_live: bool
+
+
+def run_baostock_bar_backfill(
+    orch: DataSyncOrchestrator,
+    *,
+    service: DataSourceService,
+    date_start: date,
+    date_end: date,
+    symbol: str,
+    product_live: bool,
+    trigger_reason: str = "manual_request",
+    job_id: str | None = None,
+) -> BaostockBackfillRunResult:
+    """Run bounded baostock backfill via orchestrator gold path."""
+    from backend.app.sync.jobs import plan_backfill_shards
+
+    data_domain = "cn_equity_daily_bar"
+    target = resolve_clean_write_target(data_domain)
+    resolved_job_id = job_id or f"qmd-baostock-backfill-{uuid.uuid4().hex[:10]}"
+    spec = SyncJobSpec(
+        run_id=resolved_job_id,
+        job_id=resolved_job_id,
+        job_type="backfill",
+        data_domain=data_domain,
+        market_id="CN_A",
+        source_id="baostock",
+        adapter_id="baostock",
+        date_start=date_start,
+        date_end=date_end,
+        instrument_id=symbol,
+        partition_key=None,
+        trigger_reason=trigger_reason,
+    )
+    shards = plan_backfill_shards(date_start, date_end)
+    results = orch.run_backfill(
+        spec,
+        datasource_service=service,
+        clean_table=target.target_table,
+        write_mode=target.write_mode,
+        primary_keys=target.primary_keys,
+    )
+    return BaostockBackfillRunResult(
+        job_id=resolved_job_id,
+        statuses=tuple(r.status for r in results),
+        shard_count=len(shards),
+        product_live=product_live,
+    )
+
+
 __all__ = [
+    "BaostockBackfillRunResult",
     "BaostockIncrementalRunResult",
     "build_baostock_incremental_service",
     "resolve_baostock_incremental_use_mock",
+    "run_baostock_bar_backfill",
     "run_baostock_bar_incremental",
 ]

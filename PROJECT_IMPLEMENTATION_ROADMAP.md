@@ -310,7 +310,7 @@ Round4  B04-01 先 · 产品只读
 | 4b  | **R3-DCP-06** | G1, K2 | **五轴全绿（G12）** — PASS 阻塞项 · **✅ CLOSED** @ `6c6cdd73`（L1 子集；L3–L5 → DCP-07/08/10） |
 | 4c  | **R3-DCP-07** | G2     | 一条 cross-asset 传感器绑真市况源                                                               |
 | 4d  | **R3-DCP-08** | G4     | 市场结构 + Wave 1 US 日历                                                                       |
-| 4e  | **R3-DCP-09** | D1     | 有界 backfill（cap 分片；**非**无上限 FullLoad）                                                |
+| 4e  | **R3-DCP-09** | D1     | 有界 backfill（cap 分片；**非**无上限 FullLoad）· **✅ CLOSED** @ `feature/wave4-r3-dcp-09-backfill-ci` |
 | 4f  | **R3-DCP-10** | G5, A3 | source_fetch_id / content_hash / schema_hash 绑真源                                             |
 
 **仍归 Batch6（不挡 PASS）：** D2 任务级幂等、无 cap FullLoad、24 源 production cron 矩阵、H1 Parquet、D4 migration。
@@ -325,7 +325,8 @@ Round4  B04-01 先 · 产品只读
 | **R3-DCP-05**                  | ~~baostock 真网 + Tier A 全源增量~~ **✅ CLOSED** @ `c2258363`；东财口径 **部分**（registry notes，REQ2 仍 §4）                              | `ACC-BAOSTOCK-NO-LIVE` ✅ · `ACC-EASTMONEY-TAXONOMY-001` 部分                  |
 | **R3-DCP-05**（ponytail 承接） | mootdx dry-run `selected_source_id` 与生产路由不一致；runtime `validation_only` 提升待 registry reconcile                                    | `ACC-MOOTDX-DRYRUN-ROUTE-001` · 关账条件见 `待修复清单.md` §4                  |
 | **R3-DCP-06**                  | **L1 五轴 clean replay 子集**（G12 硬门禁；非 L1–L5 full `production_live` 全链）                                                            | `ACC-LAYER-E2E-LIVE-001`（L1 ✅ · L3–L5 → DCP-07/08/10 + R3H-05-GATE）         |
-| **R3-DCP-09**                  | 有界 backfill；**连网验收 CI**：`--run-network` batch275 子集 + `wave3_live_production_acceptance.py` nightly；`WAVE3-ACC-OPT-01` quick 分层 | `ACC-LIVE-NETWORK-CI-001` · `ACC-LIVE-ACCEPT-NIGHTLY-001` · `WAVE3-ACC-OPT-01` |
+| **R3-DCP-09**                  | 有界 backfill；**连网验收 CI**：`--run-network` batch275 子集 + `wave3_live_production_acceptance.py` nightly；`WAVE3-ACC-OPT-01` quick 分层 · **✅ CLOSED** | `ACC-LIVE-NETWORK-CI-001` ✅ · `ACC-LIVE-ACCEPT-NIGHTLY-001` ✅ · `WAVE3-ACC-OPT-01` ✅ · `LIVE-NETWORK-GATE-001` ✅ |
+| **R3-DCP-09**（Repair 阶段外置） | akshare eastmoney 本地审计网络 / ponytail dedup / quick perf gate / registry 硬化                                                          | `ACC-LIVE-NETWORK-AKSHARE-ENV` open · ledger 阶段外置行                                                                              |
 | **R3-DCP-10**                  | G5 绑真源（content_hash / schema_hash）— 与 live 全链同一 Wave 4 波次                                                                        | `ACC-LAYER-E2E-LIVE-001`（G5 子集）                                            |
 | **Wave 5 `R3H-05-GATE`**       | Layer 绑定终态审计；`PASS_ROUND4_REAL_DATA_READY`                                                                                            | `ACC-LAYER-E2E-LIVE-001`（审计门）                                             |
 | **Batch 6 `R3F-LIN-01/02`**    | L3/L4 lineage · L2 VR binding 全量持久化                                                                                                     | `ADV-R3X-LINEAGE-001` · `R3Y-LINEAGE-VR-001`                                   |

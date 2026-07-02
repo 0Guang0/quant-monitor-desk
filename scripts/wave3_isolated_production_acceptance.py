@@ -6,6 +6,7 @@ Writes evidence JSON under .audit-sandbox/wave3-acceptance-<run_id>/.
 
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 import os
@@ -63,10 +64,126 @@ def _run(
     }
 
 
-def main() -> int:
-    from backend.app.config import DATA_ROOT as CONFIG_DATA_ROOT
+def _build_steps(*, quick: bool) -> list[tuple[str, list[str]]]:
+    steps: list[tuple[str, list[str]]] = [
+        ("production_gate", [sys.executable, "scripts/production_gate.py"]),
+        ("init_db", [sys.executable, "scripts/init_db.py"]),
+        (
+            "sync_registry",
+            [
+                sys.executable,
+                "scripts/sync_registry.py",
+                "--yaml",
+                str(PROJECT_ROOT / "specs/datasource_registry/source_registry.yaml"),
+            ],
+        ),
+    ]
+    if not quick:
+        steps.append(("pytest_full", [sys.executable, "-m", "pytest", "-q", "--tb=no"]))
+    steps.extend(
+        [
+            (
+                "prod_equiv_smoke",
+                [
+                    sys.executable,
+                    "scripts/production_equivalent_smoke.py",
+                    "--use-service-path",
+                    "--data-root",
+                    str(ACCEPT_ROOT / "prod-equiv-nested"),
+                    "--write-artifact",
+                    str(ACCEPT_ROOT / "prod_equiv_budget.json"),
+                ],
+            ),
+            (
+                "round3_gate_matrix",
+                [
+                    sys.executable,
+                    "-m",
+                    "pytest",
+                    "tests/test_round3_verification_command_matrix.py",
+                    "tests/test_unresolved_item_task_coverage.py",
+                    "tests/test_round3_audit_registry_alignment.py",
+                    "tests/test_batch6_wave4_prep_closure.py",
+                    "tests/test_production_live_pilot_policy.py",
+                    "-q",
+                    "--tb=no",
+                ],
+            ),
+            (
+                "wave3_dcp_tests",
+                [
+                    sys.executable,
+                    "-m",
+                    "pytest",
+                    "tests/test_baostock_incremental_watermark.py",
+                    "tests/test_baostock_incremental_e2e.py",
+                    "tests/test_fred_macro_incremental_watermark.py",
+                    "tests/test_fred_macro_incremental_e2e.py",
+                    "tests/test_fred_macro_incremental_cli.py",
+                    "tests/test_incremental_post_write_inspect.py",
+                    "tests/test_qmd_data_cli.py",
+                    "-q",
+                    "--tb=no",
+                ],
+            ),
+            (
+                "qmd_route_preview",
+                [
+                    sys.executable,
+                    "-m",
+                    "backend.app.cli.main",
+                    "data",
+                    "route-preview",
+                    "--domain",
+                    "cn_equity_daily_bar",
+                    "--operation",
+                    "fetch_daily_bar",
+                ],
+            ),
+            (
+                "qmd_baostock_sync_dry_run",
+                [
+                    sys.executable,
+                    "-m",
+                    "backend.app.cli.main",
+                    "data",
+                    "sync",
+                    "--domain",
+                    "cn_equity_daily_bar",
+                    "--dry-run",
+                ],
+            ),
+            (
+                "qmd_fred_sync_execute_mock",
+                [
+                    sys.executable,
+                    "-m",
+                    "backend.app.cli.main",
+                    "data",
+                    "sync",
+                    "--domain",
+                    "macro_series",
+                    "--source-id",
+                    "fred",
+                    "--no-dry-run",
+                ],
+            ),
+            ("loop_maintain_check", [sys.executable, "scripts/loop_maintain.py"]),
+        ]
+    )
+    return steps
 
-    canonical_main = (CONFIG_DATA_ROOT / "duckdb" / "quant_monitor.duckdb").resolve()
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="Wave 1–3 isolated production acceptance")
+    parser.add_argument(
+        "--quick",
+        action="store_true",
+        help="Skip pytest_full (~200s); WAVE3-ACC-OPT-01 quick profile",
+    )
+    args = parser.parse_args(argv)
+
+    canonical_main = (PROJECT_ROOT / "data" / "duckdb" / "quant_monitor.duckdb").resolve()
     ACCEPT_ROOT.mkdir(parents=True, exist_ok=True)
     isolated_root = ACCEPT_ROOT / "data"
     isolated_root.mkdir(parents=True, exist_ok=True)
@@ -79,6 +196,7 @@ def main() -> int:
 
     report: dict[str, object] = {
         "run_id": RUN_ID,
+        "profile": "quick" if args.quick else "full",
         "accept_root": str(ACCEPT_ROOT),
         "isolated_data_root": str(isolated_root),
         "canonical_main_db_before": _fingerprint(canonical_main),
@@ -86,131 +204,12 @@ def main() -> int:
         "findings": [],
     }
 
-    steps: list[tuple[str, list[str], dict[str, str] | None]] = [
-        ("production_gate", [sys.executable, "scripts/production_gate.py"], base_env),
-        (
-            "init_db",
-            [sys.executable, "scripts/init_db.py"],
-            base_env,
-        ),
-        (
-            "sync_registry",
-            [
-                sys.executable,
-                "scripts/sync_registry.py",
-                "--yaml",
-                str(PROJECT_ROOT / "specs/datasource_registry/source_registry.yaml"),
-            ],
-            base_env,
-        ),
-        (
-            "pytest_full",
-            [sys.executable, "-m", "pytest", "-q", "--tb=no"],
-            base_env,
-        ),
-        (
-            "prod_equiv_smoke",
-            [
-                sys.executable,
-                "scripts/production_equivalent_smoke.py",
-                "--use-service-path",
-                "--data-root",
-                str(ACCEPT_ROOT / "prod-equiv-nested"),
-                "--write-artifact",
-                str(ACCEPT_ROOT / "prod_equiv_budget.json"),
-            ],
-            base_env,
-        ),
-        (
-            "round3_gate_matrix",
-            [
-                sys.executable,
-                "-m",
-                "pytest",
-                "tests/test_round3_verification_command_matrix.py",
-                "tests/test_unresolved_item_task_coverage.py",
-                "tests/test_round3_audit_registry_alignment.py",
-                "tests/test_batch6_wave4_prep_closure.py",
-                "tests/test_production_live_pilot_policy.py",
-                "-q",
-                "--tb=no",
-            ],
-            base_env,
-        ),
-        (
-            "wave3_dcp_tests",
-            [
-                sys.executable,
-                "-m",
-                "pytest",
-                "tests/test_baostock_incremental_watermark.py",
-                "tests/test_baostock_incremental_e2e.py",
-                "tests/test_fred_macro_incremental_watermark.py",
-                "tests/test_fred_macro_incremental_e2e.py",
-                "tests/test_fred_macro_incremental_cli.py",
-                "tests/test_incremental_post_write_inspect.py",
-                "tests/test_qmd_data_cli.py",
-                "-q",
-                "--tb=no",
-            ],
-            base_env,
-        ),
-        (
-            "qmd_route_preview",
-            [
-                sys.executable,
-                "-m",
-                "backend.app.cli.main",
-                "data",
-                "route-preview",
-                "--domain",
-                "cn_equity_daily_bar",
-                "--operation",
-                "fetch_daily_bar",
-            ],
-            base_env,
-        ),
-        (
-            "qmd_baostock_sync_dry_run",
-            [
-                sys.executable,
-                "-m",
-                "backend.app.cli.main",
-                "data",
-                "sync",
-                "--domain",
-                "cn_equity_daily_bar",
-                "--dry-run",
-            ],
-            base_env,
-        ),
-        (
-            "qmd_fred_sync_execute_mock",
-            [
-                sys.executable,
-                "-m",
-                "backend.app.cli.main",
-                "data",
-                "sync",
-                "--domain",
-                "macro_series",
-                "--source-id",
-                "fred",
-                "--no-dry-run",
-            ],
-            base_env,
-        ),
-        (
-            "loop_maintain_check",
-            [sys.executable, "scripts/loop_maintain.py"],
-            base_env,
-        ),
-    ]
+    steps = _build_steps(quick=args.quick)
 
     step_results: list[dict[str, object]] = []
     failed = 0
-    for name, cmd, env in steps:
-        result = _run(name, cmd, env=env or base_env)
+    for name, cmd in steps:
+        result = _run(name, cmd, env=base_env)
         step_results.append(result)
         if not result["pass"]:
             failed += 1

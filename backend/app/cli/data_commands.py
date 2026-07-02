@@ -502,6 +502,191 @@ def sync_baostock_incremental(
     return payload
 
 
+def backfill_plan(
+    *,
+    data_domain: str,
+    source_id: str,
+    start: str,
+    end: str,
+    max_shards: int | None = None,
+    truncate_to_cap: bool = False,
+    dry_run: bool = True,
+    instrument_id: str | None = None,
+) -> dict[str, Any]:
+    """``qmd data backfill`` — bounded shard plan + orchestrator gold path (R3-DCP-09)."""
+    from backend.app.config import PROJECT_ROOT, _path_env
+    from backend.app.ops.baostock_incremental_run import (
+        build_baostock_incremental_service,
+        resolve_baostock_incremental_use_mock,
+        run_baostock_bar_backfill,
+    )
+    from backend.app.ops.sandbox_clean_write.clean_write_targets import resolve_clean_write_target
+    from backend.app.ops.sandbox_clean_write.rehearsal_runner import (
+        RehearsalRunnerError,
+        assert_sandbox_db_allowed,
+    )
+    from backend.app.sync.jobs import (
+        ABSOLUTE_MAX_BACKFILL_SHARDS,
+        BackfillShardCapExceededError,
+        DEFAULT_MAX_BACKFILL_SHARDS,
+        plan_backfill_shards,
+    )
+    from backend.app.sync.orchestrator import DataSyncOrchestrator
+
+    if data_domain != "cn_equity_daily_bar" or source_id != "baostock":
+        raise CliFailure(
+            error_code="CAPABILITY_MISSING",
+            message=(
+                f"backfill pilot supports cn_equity_daily_bar + baostock only; "
+                f"got domain={data_domain!r} source_id={source_id!r}"
+            ),
+            docs_anchor="docs/decisions/ADR-030-bounded-backfill-cap-and-ci-nightly.md",
+        )
+
+    resolved_max = DEFAULT_MAX_BACKFILL_SHARDS if max_shards is None else max_shards
+    if resolved_max < 1 or resolved_max > ABSOLUTE_MAX_BACKFILL_SHARDS:
+        raise CliFailure(
+            error_code="INVALID_INPUT",
+            message=(
+                f"max_shards must be between 1 and {ABSOLUTE_MAX_BACKFILL_SHARDS}; "
+                f"got {resolved_max}"
+            ),
+            docs_anchor="docs/decisions/ADR-030-bounded-backfill-cap-and-ci-nightly.md",
+        )
+
+    date_start = _parse_sync_date(start, field="start")
+    date_end = _parse_sync_date(end, field="end")
+    if date_end < date_start:
+        raise CliFailure(
+            error_code="INVALID_INPUT",
+            message="end must be on or after start",
+            docs_anchor="docs/ops/data_sync_quick_reference.md",
+        )
+
+    try:
+        shards = plan_backfill_shards(
+            date_start,
+            date_end,
+            max_shards=resolved_max,
+            truncate_to_cap=truncate_to_cap,
+        )
+    except BackfillShardCapExceededError as exc:
+        raise CliFailure(
+            error_code="BACKFILL_CAP_EXCEEDED",
+            message=str(exc),
+            docs_anchor="docs/decisions/ADR-030-bounded-backfill-cap-and-ci-nightly.md",
+            retryable=False,
+        ) from exc
+
+    effective_end = shards[-1][2] if shards else date_end
+    op = "fetch_daily_bar"
+    preview = route_preview(data_domain=data_domain, operation=op)
+    guard_decision, guard_reason = ResourceGuard().check()
+    symbol = instrument_id or "sh.600519"
+    data_root = _path_env("QMD_DATA_ROOT", PROJECT_ROOT / "data")
+    db = data_root / "duckdb" / "quant_monitor.duckdb"
+    use_mock = resolve_baostock_incremental_use_mock()
+    product_live = not use_mock
+    target = resolve_clean_write_target(data_domain)
+
+    shard_plan = [
+        {"task_id": task_id, "date_start": s.isoformat(), "date_end": e.isoformat()}
+        for task_id, s, e in shards
+    ]
+    payload: dict[str, Any] = {
+        "command": "backfill",
+        "dry_run": dry_run,
+        "source_id": source_id,
+        "product_live": product_live,
+        "data_domain": data_domain,
+        "operation": op,
+        "instrument_id": symbol,
+        "window": {
+            "date_start": date_start.isoformat(),
+            "date_end": date_end.isoformat(),
+            "effective_date_end": effective_end.isoformat(),
+        },
+        "max_shards": resolved_max,
+        "truncate_to_cap": truncate_to_cap,
+        "shard_count": len(shards),
+        "shards": shard_plan,
+        "route_status": preview["route_status"],
+        "selected_source_id": preview["selected_source_id"],
+        "resource_guard_decision": guard_decision.value,
+        "clean_table": target.target_table,
+        "write_mode": target.write_mode,
+    }
+
+    if guard_decision.value != "OK":
+        raise CliFailure(
+            error_code="RESOURCE_GUARD_PAUSED",
+            message=guard_reason or "resource guard paused",
+            docs_anchor="docs/ops/ERROR_CODE_GUIDE.md#resource-guard-paused",
+            retryable=True,
+        )
+    if preview["route_status"] != "READY":
+        raise error_for_route_status(
+            preview["route_status"],
+            detail=f"backfill blocked for domain={data_domain!r}",
+        )
+
+    if dry_run:
+        from backend.app.cli.tier_a_sync_router import _require_audit_sandbox_data_root
+
+        _require_audit_sandbox_data_root(data_root)
+        payload["message"] = "dry-run only; shard plan computed, no fetch or DB writes"
+        return payload
+
+    _require_baostock_sync_operator_or_sandbox(data_root)
+    try:
+        assert_sandbox_db_allowed(db, no_production_mutation=True, allow_isolated_data_root=True)
+    except RehearsalRunnerError as exc:
+        raise CliFailure(
+            error_code="INVALID_INPUT",
+            message=str(exc),
+            docs_anchor="docs/ops/data_sync_quick_reference.md",
+        ) from exc
+
+    db.parent.mkdir(parents=True, exist_ok=True)
+    cm = ConnectionManager(db_path=db)
+    with cm.writer() as con:
+        apply_migrations(con)
+
+    raw_root = data_root / "raw"
+    raw_root.mkdir(parents=True, exist_ok=True)
+    orch = DataSyncOrchestrator(cm)
+    service = build_baostock_incremental_service(
+        data_root=raw_root,
+        symbol=symbol,
+        job_events=orch._jobs,
+        use_mock=use_mock,
+    )
+    run_result = run_baostock_bar_backfill(
+        orch,
+        service=service,
+        date_start=date_start,
+        date_end=effective_end,
+        symbol=symbol,
+        product_live=product_live,
+    )
+    payload["job_id"] = run_result.job_id
+    payload["shard_results"] = list(run_result.statuses)
+    final_status = run_result.statuses[-1] if run_result.statuses else "FAILED_RETRYABLE"
+    payload["job_status"] = final_status
+    if final_status not in {"COMPLETED", "PLANNED"}:
+        raise CliFailure(
+            error_code="SYNC_FAILED",
+            message=(
+                f"baostock backfill failed: job_id={run_result.job_id} "
+                f"statuses={list(run_result.statuses)}"
+            ),
+            docs_anchor="docs/ops/ERROR_CODE_GUIDE.md#sync-failed",
+            retryable=final_status in {"FAILED_RETRYABLE", "FAILED_FINAL"},
+        )
+    payload["message"] = "baostock backfill completed via DataSourceService gold path"
+    return payload
+
+
 def sync_mootdx_incremental(
     *,
     dry_run: bool = True,

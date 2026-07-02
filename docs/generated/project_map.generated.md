@@ -94,7 +94,7 @@ Rating SSOT: `MODULE_COMPLETION_RATING.md`
 - module_ids: D1, D2, D3
 - implementation: backend/app/sync/**
 - docs: 3
-- contracts: 2
+- contracts: 3
 - implementation_tasks: 1
 - required_evidence: context_pack.json, loop_manifest.json, evidence_index.json
 - tests: 3

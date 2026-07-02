@@ -60,16 +60,18 @@ def _task_plan_section_tests() -> set[str]:
     if not tasks_root.is_dir():
         return tests
     for index in tasks_root.rglob("EXECUTION_INDEX.md"):
-        if "/archive/" in index.as_posix().replace("\\", "/"):
+        rel = index.as_posix().replace("\\", "/")
+        if "/archive/" in rel or ".audit-sandbox" in rel:
             continue
         tests |= _tests_in_plan_text(index.read_text(encoding="utf-8"), index=True)
     for frozen in tasks_root.rglob("frozen/*.md"):
-        if "/archive/" in frozen.as_posix().replace("\\", "/"):
+        rel = frozen.as_posix().replace("\\", "/")
+        if "/archive/" in rel or ".audit-sandbox" in rel:
             continue
         tests |= _tests_in_plan_text(frozen.read_text(encoding="utf-8"), index=False)
     for master in tasks_root.rglob("MASTER.plan.md"):
         rel = master.as_posix().replace("\\", "/")
-        if "/archive/" in rel or "/tasks/archive/" in rel:
+        if "/archive/" in rel or "/tasks/archive/" in rel or ".audit-sandbox" in rel:
             continue
         text = master.read_text(encoding="utf-8")
         scope = extract_md_section(text, "9.") + "\n" + extract_md_section(text, "10.")

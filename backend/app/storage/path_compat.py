@@ -79,6 +79,10 @@ def is_file(path: Path) -> bool:
     return to_extended_path(path).is_file()
 
 
+def read_text(path: Path, *, encoding: str = "utf-8") -> str:
+    return to_extended_path(path).read_text(encoding=encoding)
+
+
 def is_relative_to_data_root(path: Path, data_root: Path) -> bool:
     """Path containment check that tolerates Windows extended-path prefixes."""
     resolved = Path(_path_text(path))
