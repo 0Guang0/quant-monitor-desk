@@ -1,0 +1,18 @@
+S02-CREDIT-STRESS GREEN evidence
+Date: 2026-07-02
+Slice: test_layer1_credit_stress_clean_e2e.py
+
+Command:
+  uv run pytest tests/test_layer1_credit_stress_clean_e2e.py -q
+
+Result:
+  .                                                                        [100%]
+  1 passed
+
+Assertions proven:
+  - CRD.CS1.BAA10Y ← DB BAA10Y via read_macro_clean_observations
+  - source_used == fred (non-fixture)
+  - AxisFeatureEngine: z_score computed, not insufficient_history
+  - AxisInterpretationEngine: interpretation row for CRD.CS1.BAA10Y
+
+Production code changed: none (S00 reader reused; clean_observation_reader.py untouched)
