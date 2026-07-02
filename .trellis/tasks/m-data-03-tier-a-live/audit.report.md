@@ -32,14 +32,14 @@
 
 ### Execute INDEX §2.1 证据索引（A5 独立复验）
 
-| Tier                  | 证据                                                                                                                                |
-| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| 全量                  | `uv run pytest -q` exit 0                                                                                                           |
-| S00 harness           | `uv run pytest tests/test_tier_a_live_harness.py -q` exit 0                                                                         |
-| S-MERGE               | `uv run python scripts/loop_maintain.py` exit 0                                                                                     |
-| CLI exit 2            | `uv run python scripts/tier_a_live_acceptance.py --source-id fred`（无 `QMD_ALLOW_LIVE_FETCH`）exit 2                               |
-| §2.1 Tier 表          | **缺失**（见 A1-P2-002）                                                                                                            |
-| 11/11 live acceptance | Execute `l4`（2026-07-02）+ post-Repair **exit 0**（`doubt-repair-v5-20260703` · 2026-07-03）见 `l4-tier-a-live-accept-evidence.md` |
+| Tier                  | 证据                                                                                                                                 |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| 全量                  | `uv run pytest -q` exit 0                                                                                                            |
+| S00 harness           | `uv run pytest tests/test_tier_a_live_harness.py -q` exit 0                                                                          |
+| S-MERGE               | `uv run python scripts/loop_maintain.py` exit 0                                                                                      |
+| CLI exit 2            | `uv run python scripts/tier_a_live_acceptance.py --source-id fred`（无 `QMD_ALLOW_LIVE_FETCH`）exit 2                                |
+| §2.1 Tier 表          | `EXECUTION_INDEX.md` §2.1（harness · 全量 · loop · handoff · live 11/11）                                                            |
+| 11/11 live acceptance | post-Repair **exit 0**（`doubt-final-20260703` · 2026-07-03）· `l4-tier-a-live-accept-evidence.md` · `research/doubt-live-final.log` |
 
 ---
 

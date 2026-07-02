@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import os
 from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
+
+from backend.app.core.resource_guard import Decision, ResourceGuard
 
 from backend.app.ops.tier_a_live_acceptance import (
     ensure_isolated_db,
@@ -136,11 +139,11 @@ def test_runSourceLiveAcceptance_mockSync_returnsPass(
     isolated_live_data_root: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """覆盖范围：run_source_live_acceptance 集成
+    """覆盖范围：run_source_live_acceptance outcome 包装（绕过 dispatch/F0）
     测试对象：run_source_live_acceptance
-    目的/目标：acceptance 层包装 dispatch outcome 为 pass
+    目的/目标：mock dispatch outcome 时 acceptance 层正确映射为 pass
     验证点：status==pass；detail 含 sync/inspect 摘要
-    失败含义：CLI exit 0 路径无自动化覆盖
+    失败含义：CLI exit 0 包装逻辑无回归；注：本测不覆盖 F0，见 f0Path/f0Fail 用例
     """
     monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
 
@@ -162,6 +165,116 @@ def test_runSourceLiveAcceptance_mockSync_returnsPass(
     assert result.status == "pass"
     assert "sync=COMPLETED" in result.detail
     assert "inspect=PASS" in result.detail
+
+
+def test_runSourceLiveAcceptance_f0Path_exercisesHealthWithMockSync(
+    isolated_live_data_root: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """覆盖范围：run_source_live_acceptance F0 接入路径
+    测试对象：run_source_live_acceptance + _run_f0_data_health
+    目的/目标：mock sync 时仍执行真实 F0；SKIP 不阻断 pass
+    验证点：status==pass；detail 含 health=SKIP（live incremental 证据格式）
+    失败含义：F0 未接入 acceptance 或被 mock dispatch 绕过
+    """
+    monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
+    ensure_isolated_db(isolated_live_data_root)
+    db_path = acceptance_db_path(isolated_live_data_root)
+
+    def _mock_sync(_source_id: str, _data_root: Path) -> str:
+        import duckdb
+
+        con = duckdb.connect(str(db_path))
+        try:
+            insert_axis_observation(
+                con,
+                observation_id="f0-path-obs",
+                indicator_id="DGS10",
+                obs_date=datetime.now(UTC).date(),
+            )
+        finally:
+            con.close()
+        return "COMPLETED"
+
+    monkeypatch.setattr(
+        "backend.app.ops.tier_a_live_incremental_dispatch._run_live_sync",
+        _mock_sync,
+    )
+    raw_dir = isolated_live_data_root / "raw" / "fred" / "2026-07-03"
+    raw_dir.mkdir(parents=True, exist_ok=True)
+    (raw_dir / "abc123.json").write_text('{"series_id":"DGS10"}', encoding="utf-8")
+    result = run_source_live_acceptance("fred", data_root=isolated_live_data_root)
+    assert result.status == "pass"
+    assert "health=SKIP" in result.detail
+
+
+def test_runSourceLiveAcceptance_f0Fail_blocksPass(
+    isolated_live_data_root: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """覆盖范围：F0 data health FAIL 阻断 acceptance
+    测试对象：run_source_live_acceptance + _run_f0_data_health
+    目的/目标：有 raw 证据且 F0 返回 FAIL 时不得 pass
+    验证点：status==fail；detail 含 data-health FAIL
+    失败含义：坏 raw 证据仍 exit 0，违背活卡 AC#4 fail-closed
+    """
+    monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
+
+    def _mock_incremental(_source_id: str, _data_root: Path) -> LiveIncrementalOutcome:
+        return LiveIncrementalOutcome(
+            source_id="fred",
+            sync_status="COMPLETED",
+            inspect_status="PASS",
+            clean_table="axis_observation",
+            clean_row_count=2,
+            detail="mock sync for f0 fail test",
+        )
+
+    def _fail_f0(_source_id: str, *, data_root: Path, db_path: Path) -> tuple[str, str]:
+        return "FAIL", "simulated data-health blocker"
+
+    monkeypatch.setattr(
+        "backend.app.ops.tier_a_live_incremental_dispatch.run_tier_a_live_incremental",
+        _mock_incremental,
+    )
+    monkeypatch.setattr(
+        "backend.app.ops.tier_a_live_acceptance._run_f0_data_health",
+        _fail_f0,
+    )
+    result = run_source_live_acceptance("fred", data_root=isolated_live_data_root)
+    assert result.status == "fail"
+    assert "data-health FAIL" in result.detail
+
+
+def test_runSourceLiveAcceptance_plannedWithZeroCleanFails(
+    isolated_live_data_root: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """覆盖范围：PLANNED + 零 clean 行不得 pass acceptance
+    测试对象：run_source_live_acceptance
+    目的/目标：PASS_SYNC_STATUSES 含 PLANNED 时仍须 clean/raw 证据
+    验证点：status==fail；detail 提及 PLANNED 或 empty
+    失败含义：未落库 sync 被误标 pass
+    """
+    monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
+
+    def _mock_incremental(_source_id: str, _data_root: Path) -> LiveIncrementalOutcome:
+        return LiveIncrementalOutcome(
+            source_id="fred",
+            sync_status="PLANNED",
+            inspect_status="PASS",
+            clean_table="axis_observation",
+            clean_row_count=0,
+            detail="mock planned with no rows",
+        )
+
+    monkeypatch.setattr(
+        "backend.app.ops.tier_a_live_incremental_dispatch.run_tier_a_live_incremental",
+        _mock_incremental,
+    )
+    result = run_source_live_acceptance("fred", data_root=isolated_live_data_root)
+    assert result.status == "fail"
+    assert "PLANNED" in result.detail or "empty" in result.detail.lower()
 
 
 def test_runTierALiveIncremental_dataRootSplit_inspectUsesParamNotEnv(
@@ -222,10 +335,10 @@ def test_runTierALiveSandbox_dbInspectorNonFail_afterMockSync(
     isolated_live_data_root: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """覆盖范围：E2 DbInspector + F0 边界（ADR-034 §4 non-blocker）
+    """覆盖范围：E2 DbInspector 非 FAIL（ADR-034 §4 non-blocker）
     测试对象：run_tier_a_live_incremental + DbInspector
-    目的/目标：验收路径至少断言 E2 inspect 非 FAIL；ponytail: F0 profile 由 R-OPS 接入 acceptance
-    验证点：inspect_status != FAIL；axis_observation 表存在
+    目的/目标：mock sync 后 inspect 须执行且非 FAIL；F0 由 acceptance 层单独覆盖
+    验证点：inspect_status != FAIL；sync_status==EMPTY_RESPONSE；passed is True
     失败含义：sync 后坏库仍被标 pass，或 inspect 未执行
     """
     monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
@@ -294,6 +407,25 @@ def test_deribitSinceReader_acceptsDataDomainKwarg() -> None:
     assert "read_cninfo_since_date" in source
 
 
+def test_runF0DataHealth_skipsWhenNoRawEvidence(
+    isolated_live_data_root: Path,
+) -> None:
+    """覆盖范围：无 raw 证据时 F0 SKIP
+    测试对象：_run_f0_data_health
+    目的/目标：fresh sandbox 无 raw 时 SKIP 不 FAIL
+    验证点：status==SKIP；detail 含 caught-up inspect-only
+    失败含义：无证据时 F0 误阻断 acceptance
+    """
+    from backend.app.ops.tier_a_live_acceptance import _run_f0_data_health
+
+    db_path = ensure_isolated_db(isolated_live_data_root)
+    status, detail = _run_f0_data_health(
+        "fred", data_root=isolated_live_data_root, db_path=db_path
+    )
+    assert status == "SKIP"
+    assert "caught-up inspect-only" in detail
+
+
 def test_runF0DataHealth_skipsFredLiveIncrementalEvidence(
     isolated_live_data_root: Path,
 ) -> None:
@@ -306,7 +438,7 @@ def test_runF0DataHealth_skipsFredLiveIncrementalEvidence(
     from backend.app.ops.tier_a_live_acceptance import _run_f0_data_health
 
     raw_dir = isolated_live_data_root / "raw" / "fred" / "2026-07-03"
-    raw_dir.mkdir(parents=True)
+    raw_dir.mkdir(parents=True, exist_ok=True)
     (raw_dir / "abc123.json").write_text('{"series_id":"DGS10"}', encoding="utf-8")
     db_path = ensure_isolated_db(isolated_live_data_root)
     status, detail = _run_f0_data_health(
@@ -314,3 +446,30 @@ def test_runF0DataHealth_skipsFredLiveIncrementalEvidence(
     )
     assert status == "SKIP"
     assert "partial F0 skipped" in detail
+
+
+@pytest.mark.network
+@pytest.mark.skipif(
+    not os.environ.get("FRED_API_KEY"),
+    reason="network dispatch requires FRED_API_KEY",
+)
+def test_runTierALiveIncremental_fredLiveNetwork_realDispatch(
+    isolated_live_data_root: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """覆盖范围：S-ACCEPT 真实派发链（无 mock sync）
+    测试对象：run_tier_a_live_incremental("fred", sandbox)
+    目的/目标：真网 fred quick 路径 sync→inspect 可复验
+    验证点：sync_status∈PASS_SYNC_STATUSES；inspect_status∈{PASS,WARN}；不 mock _run_live_sync
+    失败含义：派发链仅 mock 集成，真网回归不可复验
+    """
+    from backend.app.ops.tier_a_live_status import PASS_SYNC_STATUSES
+
+    monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    ensure_isolated_db(isolated_live_data_root)
+    outcome = run_tier_a_live_incremental("fred", isolated_live_data_root)
+    assert outcome.source_id == "fred"
+    assert outcome.sync_status in PASS_SYNC_STATUSES
+    assert outcome.inspect_status in {"PASS", "WARN"}
+    assert outcome.clean_table == "axis_observation"

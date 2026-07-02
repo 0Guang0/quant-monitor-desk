@@ -42,13 +42,13 @@
 
 ### 2.1 Tier 复验（Repair / Audit 关账）
 
-| Tier                   | 命令                                                                                                                                   | 用途                                                        |
-| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| harness                | `uv run pytest tests/test_tier_a_live_harness.py tests/test_tier_a_live_dispatch.py -q`                                                | S00-INFRA + dispatch 集成                                   |
-| 全量                   | `uv run pytest -q`                                                                                                                     | PASS 门槛                                                   |
-| loop                   | `uv run python scripts/loop_maintain.py`                                                                                               | S-MERGE registry 三件套                                     |
-| handoff                | `python .trellis/scripts/task.py validate-execute-handoff .trellis/tasks/m-data-03-tier-a-live`                                        | Trellis v4.1 关账                                           |
-| live 11/11 post-Repair | `QMD_ALLOW_LIVE_FETCH=1 uv run python scripts/tier_a_live_acceptance.py --data-root .audit-sandbox/m-data-03/doubt-repair-v5-20260703` | **exit 0** · 11/11 pass（R-DOUBT-CODE · D-01 · 2026-07-03） |
+| Tier                   | 命令                                                                                                                               | 用途                                                         |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| harness                | `uv run pytest tests/test_tier_a_live_harness.py tests/test_tier_a_live_dispatch.py -q`                                            | S00-INFRA + dispatch 集成                                    |
+| 全量                   | `uv run pytest -q`                                                                                                                 | PASS 门槛                                                    |
+| loop                   | `uv run python scripts/loop_maintain.py`                                                                                           | S-MERGE registry 三件套                                      |
+| handoff                | `python .trellis/scripts/task.py validate-execute-handoff .trellis/tasks/m-data-03-tier-a-live`                                    | Trellis v4.1 关账                                            |
+| live 11/11 post-Repair | `QMD_ALLOW_LIVE_FETCH=1 uv run python scripts/tier_a_live_acceptance.py --data-root .audit-sandbox/m-data-03/doubt-final-20260703` | **exit 0** · 11/11 pass（R-FINAL-CLOSE · D-01 · 2026-07-03） |
 
 ## 3. 必须读原文（manifest · 索引完整）
 

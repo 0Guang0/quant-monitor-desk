@@ -146,11 +146,68 @@ def _normalize_bar_sync_status(status: str, message: str | None) -> str:
     return status
 
 
+def _macro_live_runner(
+    *,
+    source_id: str,
+    port_factory: Callable[..., Any],
+    since_reader: Callable,
+    instrument_ids: tuple[str, ...],
+    service_builder: Callable,
+    registry_factory: Callable,
+    runner: Callable,
+    runner_kwargs: dict[str, Any],
+) -> Callable[[Path], str]:
+    return lambda dr: _run_macro_live(
+        dr,
+        source_id=source_id,
+        port_factory=port_factory,
+        since_reader=since_reader,
+        instrument_ids=instrument_ids,
+        service_builder=service_builder,
+        registry_factory=registry_factory,
+        runner=runner,
+        runner_kwargs=runner_kwargs,
+    )
+
+
+def _port_live_runner(
+    *,
+    source_id: str,
+    operation: str,
+    port_factory: Callable[..., Any],
+    port_kwargs: dict[str, Any],
+    since_reader: Callable,
+    instrument_ids: tuple[str, ...],
+    service_builder: Callable,
+    service_extra: dict[str, Any],
+    registry_factory: Callable,
+    runner: Callable,
+    runner_kwargs: dict[str, Any],
+    resolve_live_instruments: Callable[[Any], tuple[str, ...]] | None = None,
+) -> Callable[[Path], str]:
+    return lambda dr: _run_port_live(
+        dr,
+        source_id=source_id,
+        operation=operation,
+        port_factory=port_factory,
+        port_kwargs=port_kwargs,
+        since_reader=since_reader,
+        instrument_ids=instrument_ids,
+        service_builder=service_builder,
+        service_extra=service_extra,
+        registry_factory=registry_factory,
+        runner=runner,
+        runner_kwargs=runner_kwargs,
+        resolve_live_instruments=resolve_live_instruments,
+    )
+
+
 def _sync_bar_live(data_root: Path, *, source_id: str) -> str:
     """Bar Tier A live sync via ops runners (not CLI router)."""
     from datetime import UTC, datetime
 
     from backend.app.datasources.product_live_gate import assert_product_live_allowed
+    from backend.app.datasources.service import DataSourceService
     from backend.app.sync.orchestrator import DataSyncOrchestrator
     from backend.app.sync.watermark import (
         compute_incremental_window,
@@ -175,67 +232,39 @@ def _sync_bar_live(data_root: Path, *, source_id: str) -> str:
     orch = DataSyncOrchestrator(cm)
     raw = raw_root / source_id
     raw.mkdir(parents=True, exist_ok=True)
+    registry, planner = _bar_live_route_planner(source_id)
+
     if source_id == "baostock":
         from backend.app.datasources.fetch_ports.baostock_port import create_baostock_fetch_port
-        from backend.app.datasources.service import DataSourceService
         from backend.app.ops.baostock_incremental_run import run_baostock_bar_incremental
 
-        registry, planner = _bar_live_route_planner(source_id)
         port = create_baostock_fetch_port(symbols=(symbol,), max_rows=500, use_mock=False)
-        service = DataSourceService(
-            data_root=raw,
-            fetch_port=port,
-            job_events=orch._jobs,
-            source_registry=registry,
-            route_planner=planner,
-            product_live_mode=True,
-        )
-        result = run_baostock_bar_incremental(
-            orch,
-            service=service,
-            window=window,
-            symbol=symbol,
-            product_live=True,
-        )
-        return _normalize_bar_sync_status(result.status, result.message)
-    if source_id == "mootdx":
-        from backend.app.ops.mootdx_incremental_run import build_mootdx_incremental_service
+        runner = run_baostock_bar_incremental
+    elif source_id == "mootdx":
+        from backend.app.datasources.fetch_ports.mootdx_port import create_mootdx_fetch_port
+        from backend.app.ops.mootdx_incremental_run import MOOTDX_MAX_ROWS, run_mootdx_bar_incremental
 
-        # ponytail: no mootdx adapter; e2e uses baostock-routed adapter + mootdx fetch port
-        service = build_mootdx_incremental_service(
-            data_root=raw, symbol=symbol, job_events=orch._jobs, use_mock=False
-        )
-        # ponytail: no mootdx adapter module; gold path uses baostock adapter + mootdx fetch port
-        from backend.app.ops.sandbox_clean_write.clean_write_targets import resolve_clean_write_target
-        from backend.app.sync.jobs import SyncJobSpec
+        port = create_mootdx_fetch_port(symbols=(symbol,), max_rows=MOOTDX_MAX_ROWS, use_mock=False)
+        runner = run_mootdx_bar_incremental
+    else:
+        raise ValueError(f"unsupported bar live source: {source_id!r}")
 
-        target = resolve_clean_write_target("cn_equity_daily_bar")
-        job_id = f"qmd-mootdx-sync-live-{symbol.replace('.', '-')}"
-        spec = SyncJobSpec(
-            run_id=job_id,
-            job_id=job_id,
-            job_type="incremental",
-            data_domain="cn_equity_daily_bar",
-            market_id="CN_A",
-            source_id="mootdx",
-            adapter_id="baostock",
-            date_start=window.date_start,
-            date_end=window.date_end,
-            instrument_id=symbol,
-            partition_key=None,
-            trigger_reason="mootdx_bar_incremental",
-        )
-        inc_result = orch.run_incremental(
-            spec,
-            datasource_service=service,
-            clean_table=target.target_table,
-            write_mode=target.write_mode,
-            primary_keys=target.primary_keys,
-        )
-        result_status = inc_result.status
-        result_message = inc_result.message
-        return _normalize_bar_sync_status(result_status, result_message)
-    raise ValueError(f"unsupported bar live source: {source_id!r}")
+    service = DataSourceService(
+        data_root=raw,
+        fetch_port=port,
+        job_events=orch._jobs,
+        source_registry=registry,
+        route_planner=planner,
+        product_live_mode=True,
+    )
+    result = runner(
+        orch,
+        service=service,
+        window=window,
+        symbol=symbol,
+        product_live=True,
+    )
+    return _normalize_bar_sync_status(result.status, result.message)
 
 
 def _sync_fred_live(data_root: Path) -> str:
@@ -353,8 +382,7 @@ def _live_sync_registry() -> dict[str, Callable[[Path], str]]:
         run_us_treasury_incremental,
     )
 
-    registry["us_treasury"] = lambda dr: _run_macro_live(
-        dr,
+    registry["us_treasury"] = _macro_live_runner(
         source_id="us_treasury",
         port_factory=create_us_treasury_incremental_port,
         since_reader=read_since_dates_for_instruments,
@@ -373,8 +401,7 @@ def _live_sync_registry() -> dict[str, Callable[[Path], str]]:
         run_bis_incremental,
     )
 
-    registry["bis"] = lambda dr: _run_macro_live(
-        dr,
+    registry["bis"] = _macro_live_runner(
         source_id="bis",
         port_factory=create_bis_incremental_port,
         since_reader=read_since_dates_for_instruments,
@@ -393,8 +420,7 @@ def _live_sync_registry() -> dict[str, Callable[[Path], str]]:
         run_world_bank_incremental,
     )
 
-    registry["world_bank"] = lambda dr: _run_macro_live(
-        dr,
+    registry["world_bank"] = _macro_live_runner(
         source_id="world_bank",
         port_factory=create_world_bank_incremental_port,
         since_reader=read_since_dates_for_instruments,
@@ -414,8 +440,7 @@ def _live_sync_registry() -> dict[str, Callable[[Path], str]]:
         run_cftc_incremental,
     )
 
-    registry["cftc_cot"] = lambda dr: _run_macro_live(
-        dr,
+    registry["cftc_cot"] = _macro_live_runner(
         source_id="cftc_cot",
         port_factory=create_cftc_incremental_port,
         since_reader=read_since_dates_for_markets,
@@ -438,8 +463,7 @@ def _live_sync_registry() -> dict[str, Callable[[Path], str]]:
     )
 
     ciks = (_DEFAULT_CIK,)
-    registry["sec_edgar"] = lambda dr: _run_port_live(
-        dr,
+    registry["sec_edgar"] = _port_live_runner(
         source_id="sec_edgar",
         operation="fetch_filings",
         port_factory=create_sec_edgar_fetch_port,
@@ -462,8 +486,7 @@ def _live_sync_registry() -> dict[str, Callable[[Path], str]]:
     )
 
     av_symbols = (_DEFAULT_SYMBOL,)
-    registry["alpha_vantage"] = lambda dr: _run_port_live(
-        dr,
+    registry["alpha_vantage"] = _port_live_runner(
         source_id="alpha_vantage",
         operation="fetch_daily_bar",
         port_factory=create_alpha_vantage_fetch_port,
@@ -492,8 +515,7 @@ def _live_sync_registry() -> dict[str, Callable[[Path], str]]:
             con, instrument, data_domain="crypto_options_surface"
         )
 
-    registry["deribit"] = lambda dr: _run_port_live(
-        dr,
+    registry["deribit"] = _port_live_runner(
         source_id="deribit",
         operation="fetch_options_surface",
         port_factory=create_deribit_fetch_port,
@@ -520,8 +542,7 @@ def _live_sync_registry() -> dict[str, Callable[[Path], str]]:
     )
 
     cn_symbols = (CN_SYMBOL,)
-    registry["cninfo"] = lambda dr: _run_port_live(
-        dr,
+    registry["cninfo"] = _port_live_runner(
         source_id="cninfo",
         operation="fetch_announcements",
         port_factory=create_cninfo_fetch_port,

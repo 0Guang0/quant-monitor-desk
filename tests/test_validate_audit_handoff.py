@@ -126,3 +126,13 @@ def test_validateRepairClose_acceptsFixed(tmp_path: Path) -> None:
     失败含义：合法关账 ledger 被误拒。"""
     _write_ledger(tmp_path, "| A1-P2-01 | P2 | A1 | t | 已修复 | — | pytest | ok |")
     assert validate_repair_close(tmp_path, _REPO) == []
+
+
+def test_validateRepairClose_mData03SpotChecks_pass() -> None:
+    """覆盖范围：M-DATA-03 D-05 validate_repair_close spot-checks。
+    测试对象：validate_repair_close（真实任务目录）。
+    目的/目标：关账 gate 除 disposition 外校验代码/证据锚点。
+    验证点：m-data-03-tier-a-live errors 为空。
+    失败含义：D-05 gate 仅扫 ledger，Repair 关账可假完成。"""
+    task_dir = _REPO / ".trellis" / "tasks" / "m-data-03-tier-a-live"
+    assert validate_repair_close(task_dir, _REPO) == []

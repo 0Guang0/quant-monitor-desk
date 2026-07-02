@@ -66,11 +66,12 @@ tier_a_live_acceptance.py [--source-id ID] [--quick] [--data-root PATH]
 
 S-ACCEPT **已接入** partial F0（`run_source_live_acceptance` → `_run_f0_data_health`），**不是**完整 `qmd data health --profile …` CLI 矩阵：
 
-| 条件                                       | 行为                                                                                                                                                       |
-| ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 有 latest raw evidence dir                 | bar 源：`run_data_health_profile(profile_id=market_bar_p0, …)`；其余：`DataHealthService().check_evidence_dir`（`fred_sandbox_pilot` / `staged_pilot_v3`） |
-| 无 raw evidence（caught-up）               | 返回 **`SKIP`**（`no raw evidence; caught-up inspect-only gate`）；**不**阻断 acceptance                                                                   |
-| health `FAIL` / `BLOCKED` / gate not ready | → source **fail**；CLI exit 1                                                                                                                              |
+| 条件                                                     | 行为                                                                                                                                                       |
+| -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 有 latest raw evidence dir                               | bar 源：`run_data_health_profile(profile_id=market_bar_p0, …)`；其余：`DataHealthService().check_evidence_dir`（`fred_sandbox_pilot` / `staged_pilot_v3`） |
+| 无 raw evidence（caught-up）                             | 返回 **`SKIP`**（`no raw evidence; caught-up inspect-only gate`）；**不**阻断 acceptance                                                                   |
+| gate not ready（`sandbox_clean_write_gate_ready=false`） | 返回 **`SKIP`**（`partial F0 gate not ready`）；**不**阻断 acceptance（E2 inspect 仍为权威门）                                                             |
+| health `FAIL` / `BLOCKED`                                | → source **fail**；CLI exit 1                                                                                                                              |
 
 - **E2** `DbInspector.inspect()` 仍是 post-write schema/clean P0 blocker 主门
 - **SKIP** 路径：sync + inspect 绿即可 pass；语义 = caught-up 无新 raw 时仅靠 sync/inspect 门

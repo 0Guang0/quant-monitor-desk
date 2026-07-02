@@ -1,8 +1,9 @@
 # M-DATA-03 S-ACCEPT — live acceptance evidence
 
-> **Date:** 2026-07-03  
-> **Sandbox (post-Repair · doubt close):** `.audit-sandbox/m-data-03/doubt-repair-v5-20260703`  
-> **Command:** `QMD_ALLOW_LIVE_FETCH=1 uv run python scripts/tier_a_live_acceptance.py --data-root .audit-sandbox/m-data-03/doubt-repair-v5-20260703`
+> **Date:** 2026-07-03 (R-FINAL-CLOSE)  
+> **Sandbox (post-Repair · doubt close):** `.audit-sandbox/m-data-03/doubt-final-20260703`  
+> **Command:** `QMD_ALLOW_LIVE_FETCH=1 uv run python scripts/tier_a_live_acceptance.py --data-root .audit-sandbox/m-data-03/doubt-final-20260703`  
+> **Log:** `research/doubt-live-final.log`（redacted）
 
 ## Result
 
@@ -12,21 +13,23 @@
 | `uv run pytest` harness+dispatch  | exit 0（29 passed, 1 skipped）       |
 | Main DB pollution                 | **none** (isolated `m-data-03` path) |
 
-## Per-source (post-Repair · R-DOUBT-CODE · 2026-07-03)
+## Per-source (post-Repair · R-FINAL-CLOSE · 2026-07-03)
 
-| source_id     | status   |
-| ------------- | -------- |
-| alpha_vantage | **pass** |
-| baostock      | **pass** |
-| bis           | **pass** |
-| cninfo        | **pass** |
-| cftc_cot      | **pass** |
-| deribit       | **pass** |
-| fred          | **pass** |
-| mootdx        | **pass** |
-| sec_edgar     | **pass** |
-| us_treasury   | **pass** |
-| world_bank    | **pass** |
+| source_id     | status   | sync           | inspect | health |
+| ------------- | -------- | -------------- | ------- | ------ |
+| alpha_vantage | **pass** | COMPLETED      | PASS    | SKIP   |
+| baostock      | **pass** | EMPTY_RESPONSE | PASS    | SKIP   |
+| bis           | **pass** | COMPLETED      | PASS    | SKIP   |
+| cninfo        | **pass** | EMPTY_RESPONSE | PASS    | SKIP   |
+| cftc_cot      | **pass** | COMPLETED      | PASS    | SKIP   |
+| deribit       | **pass** | COMPLETED      | PASS    | SKIP   |
+| fred          | **pass** | COMPLETED      | PASS    | SKIP   |
+| mootdx        | **pass** | EMPTY_RESPONSE | PASS    | SKIP   |
+| sec_edgar     | **pass** | EMPTY_RESPONSE | PASS    | SKIP   |
+| us_treasury   | **pass** | COMPLETED      | PASS    | SKIP   |
+| world_bank    | **pass** | COMPLETED      | PASS    | SKIP   |
+
+## Per-source (prior · R-DOUBT-CODE · 2026-07-03)
 
 ## Prior run (Execute · 2026-07-02)
 

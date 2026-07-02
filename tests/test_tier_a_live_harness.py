@@ -19,8 +19,12 @@ from backend.app.ops.tier_a_live_acceptance import (
     is_canonical_main_data_root,
     is_canonical_main_db_path,
     run_acceptance,
+    run_source_live_acceptance,
     select_source_ids,
     validate_live_acceptance_env,
+)
+from backend.app.ops.tier_a_live_incremental_dispatch import (
+    LiveIncrementalOutcome,
 )
 from tests.contract_gate_support import PROJECT_ROOT as TEST_PROJECT_ROOT
 
@@ -343,6 +347,43 @@ def test_tierALiveOps_mainDbFingerprintUnchangedAfterSandbox(
     before = main_db.stat()
     monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
     ensure_isolated_db(isolated_live_data_root)
+    after = main_db.stat()
+    assert after.st_size == before.st_size
+    assert after.st_mtime_ns == before.st_mtime_ns
+
+
+def test_tierALiveOps_mainDbFingerprintUnchangedAfterMockAcceptance(
+    isolated_live_data_root: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """覆盖范围：完整 acceptance 路径后主库零污染
+    测试对象：run_source_live_acceptance + canonical main DB
+    目的/目标：mock sync acceptance 不得改变主库文件指纹
+    验证点：主库存在时 stat 前后 size/mtime_ns 一致
+    失败含义：acceptance/dispatch 路径误写主库
+    """
+    main_db = PROJECT_ROOT / "data" / "duckdb" / "quant_monitor.duckdb"
+    if not main_db.is_file():
+        pytest.skip("canonical main DB absent on this host")
+    before = main_db.stat()
+    monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
+
+    def _mock_incremental(_source_id: str, _data_root: Path) -> LiveIncrementalOutcome:
+        return LiveIncrementalOutcome(
+            source_id="fred",
+            sync_status="COMPLETED",
+            inspect_status="PASS",
+            clean_table="axis_observation",
+            clean_row_count=2,
+            detail="mock acceptance for main-db guard",
+        )
+
+    monkeypatch.setattr(
+        "backend.app.ops.tier_a_live_incremental_dispatch.run_tier_a_live_incremental",
+        _mock_incremental,
+    )
+    result = run_source_live_acceptance("fred", data_root=isolated_live_data_root)
+    assert result.status == "pass"
     after = main_db.stat()
     assert after.st_size == before.st_size
     assert after.st_mtime_ns == before.st_mtime_ns

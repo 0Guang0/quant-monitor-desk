@@ -1041,6 +1041,17 @@ tests/test_module_boundaries.py:
     rules: []
     specs:
       - specs/contracts/module_boundary_contract.yaml
+tests/test_mootdx_adapter_staging.py:
+  command: uv run python -m pytest tests/test_mootdx_adapter_staging.py -q
+  failure_meaning:
+    Regression in test_mootdx_adapter_staging; inspect purpose and
+    linked authorities.
+  purpose: R3-DCP-01 — MootdxAdapter staging path tests.
+  type: runtime-contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
 tests/test_mootdx_incremental_e2e.py:
   command: uv run python -m pytest tests/test_mootdx_incremental_e2e.py -q
   failure_meaning:

@@ -1232,6 +1232,21 @@ sources:
             requires_auth: false
             enabled_by_default: false
             production_default: false
+      cn_equity_basic_financial:
+        operations:
+          fetch_basic_financial:
+            frequency: quarterly_or_annual
+            fields:
+              [
+                instrument_id,
+                report_period,
+                metric_name,
+                metric_value,
+                source_used,
+              ]
+            requires_auth: false
+            enabled_by_default: false
+            production_default: false
       cn_index_daily_bar:
         operations:
           fetch_index_daily_bar:

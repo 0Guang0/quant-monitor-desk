@@ -8,8 +8,9 @@ from typing import Any
 import pytest
 
 from backend.app.datasources.adapters.fetch_port import PortError
-from backend.app.datasources.fetch_ports.fred_port import FredMockFetchPort
+from backend.app.datasources.fetch_ports.fred_port import FredMockFetchPort, create_fred_fetch_port
 from backend.app.datasources.fetch_result import FetchRequest
+from backend.app.datasources.product_live_gate import ProductLiveGateError
 from backend.app.ops.fred_incremental_run import (
     macro_staging_rows_from_bundle,
     run_fred_macro_incremental,
@@ -82,6 +83,19 @@ def test_fredIncremental_idempotent_secondRun_rowCountStable(
         second = con.execute("SELECT COUNT(*) FROM axis_observation").fetchone()[0]
     assert first == second
     assert first >= 1
+
+
+def test_fredLive_noSilentFallbackWhenGateClosed(monkeypatch: pytest.MonkeyPatch) -> None:
+    """覆盖范围：无 QMD_ALLOW_LIVE_FETCH 时 fred live port 阻断
+    测试对象：create_fred_fetch_port(use_mock=False)
+    目的/目标：EasyXT forbidden — live 被拒时不得静默退回 mock port
+    验证点：抛 ProductLiveGateError · LIVE_FETCH_REJECTED
+    失败含义：fred live 路径渗入 silent fallback
+    """
+    monkeypatch.delenv("QMD_ALLOW_LIVE_FETCH", raising=False)
+    with pytest.raises(ProductLiveGateError) as exc_info:
+        create_fred_fetch_port(series_ids=("DGS10",), max_rows=3, use_mock=False)
+    assert exc_info.value.code == "LIVE_FETCH_REJECTED"
 
 
 @pytest.mark.network

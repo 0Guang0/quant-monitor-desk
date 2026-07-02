@@ -268,7 +268,7 @@ def run_source_live_acceptance(source_id: str, *, data_root: Path) -> SourceAcce
             status="fail",
             detail=f"sync failed: {outcome.detail}",
         )
-    if outcome.sync_status == "COMPLETED" and outcome.clean_row_count < 1:
+    if outcome.sync_status in {"COMPLETED", "PLANNED"} and outcome.clean_row_count < 1:
         raw_dir = resolved / "raw" / source_id
         fred_raw = resolved / "raw"
         has_raw = (raw_dir.is_dir() and any(raw_dir.rglob("*"))) or (
@@ -278,7 +278,10 @@ def run_source_live_acceptance(source_id: str, *, data_root: Path) -> SourceAcce
             return SourceAcceptanceResult(
                 source_id=source_id,
                 status="fail",
-                detail=f"COMPLETED but {outcome.clean_table} empty: {outcome.detail}",
+                detail=(
+                    f"{outcome.sync_status} but {outcome.clean_table} empty: "
+                    f"{outcome.detail}"
+                ),
             )
     return SourceAcceptanceResult(
         source_id=source_id,

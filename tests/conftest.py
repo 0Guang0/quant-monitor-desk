@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import inspect
 import os
+import uuid
 import warnings
 from pathlib import Path
 
@@ -377,7 +378,7 @@ def isolated_live_data_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> 
         PROJECT_ROOT
         / ".audit-sandbox"
         / M_DATA_03_SANDBOX_SEGMENT
-        / f"pytest-{id(tmp_path)}"
+        / f"pytest-{tmp_path.name}-{uuid.uuid4().hex[:8]}"
     )
     root.mkdir(parents=True, exist_ok=True)
     resolved = assert_isolated_live_data_root(root)
