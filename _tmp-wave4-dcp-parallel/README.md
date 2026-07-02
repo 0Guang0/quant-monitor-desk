@@ -36,7 +36,9 @@ Plan → Plan 对抗审计 → Plan Repair → Execute → Execute Audit (A1–A
 - 每轨阶段 gate：`validate-plan-freeze` / `validate-execute-handoff`
 - 四轨全 CLOSED 后更新 `R3_DCP_TO_ISSUES_INDEX.md` · `待修复清单.md`
 
-**四轨 merge 已完成**（2026-07-02）— master @ `2c5647b5` · 下一入口 **Wave 5 `R3H-05-GATE`**
+**四轨 merge 已完成**（2026-07-02）— master @ `e0e2c00c`（含 Windows conftest 修复）· 下一入口 **Wave 5 `R3H-05-GATE`**
+
+**收尾**（2026-07-02）：四 feature 分支已删 · 四 worktree 已移除 · 主仓仅 `master`
 
 | 轨     | Plan | Plan Audit | Plan Repair | Execute | Audit | Repair | Merge         |
 | ------ | ---- | ---------- | ----------- | ------- | ----- | ------ | ------------- |
