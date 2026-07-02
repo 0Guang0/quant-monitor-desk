@@ -21,7 +21,9 @@ from tests.incremental_mootdx_support import (
     SYMBOL,
     bootstrap_db,
     build_service,
+    fetch_security_bar_row,
     incremental_spec,
+    run_mootdx_replay_incremental,
     seed_watermark_row,
 )
 
@@ -33,32 +35,12 @@ def test_mootdxIncremental_e2e_writesSecurityBar1d(tmp_path: Path, monkeypatch) 
     验证点：COMPLETED；clean 表含 fixture trade_date 行且 source_used=mootdx
     失败含义：mootdx 增量链断则 DCP-05 bar 源无法落库
     """
-    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
-    cm = bootstrap_db(tmp_path)
-    with cm.writer() as con:
-        seed_watermark_row(con, "2024-06-24")
-        wm = read_bar_trade_date_watermark(con, instrument_id=SYMBOL)
-    window = compute_incremental_window(wm, end=FIXTURE_DATE)
-    raw_root = tmp_path / "raw"
-    raw_root.mkdir()
-    service, orch = build_service(cm, raw_root)
-    spec = incremental_spec(window, job_id="job-mootdx-e2e-1")
-    result = orch.run_incremental(
-        spec,
-        datasource_service=service,
-        clean_table="security_bar_1d",
-        write_mode="upsert_by_pk",
-        primary_keys=("instrument_id", "trade_date", "adjustment_type"),
+    cm, _data_root, result = run_mootdx_replay_incremental(
+        tmp_path, monkeypatch, job_id="job-mootdx-e2e-1"
     )
     assert result.status == "COMPLETED"
     with cm.reader() as con:
-        row = con.execute(
-            """
-            SELECT trade_date, close, source_used FROM security_bar_1d
-            WHERE instrument_id = ? AND trade_date = ?
-            """,
-            [SYMBOL, FIXTURE_DATE.isoformat()],
-        ).fetchone()
+        row = fetch_security_bar_row(con, FIXTURE_DATE.isoformat())
     assert row is not None
     assert float(row[1]) == 1405.0
     assert row[2] == "mootdx"

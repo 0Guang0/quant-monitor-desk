@@ -1,0 +1,9 @@
+{"file": ".trellis/tasks/07-02-wave4-r3-dcp-10-evidence/frozen/R3_DCP_10_LAYER5_EVIDENCE_BINDING.md", "reason": "extract: Execute SSOT frozen task card | for: Boot slot 1"}
+{"file": ".trellis/tasks/07-02-wave4-r3-dcp-10-evidence/research/00-EXECUTION-ENTRY.md", "reason": "extract: Execute bundle entry | for: Boot slot 2"}
+{"file": ".trellis/tasks/07-02-wave4-r3-dcp-10-evidence/context_pack.json", "reason": "extract: authority graph routing | for: Boot slot 3"}
+{"file": ".cursor/skills/trellis-execute/SKILL.md", "reason": "extract: Phase 0 boot | for: §9.0 Boot"}
+{"file": "docs/decisions/ADR-031-dcp10-layer5-evidence-provenance-binding.md", "reason": "extract: context | for: manifest"}
+{"file": "docs/modules/layer5_security_evidence.md", "reason": "extract: context | for: manifest"}
+{"file": "scripts/loop_maintain.py", "reason": "extract: context | for: manifest"}
+{"file": "tests/test_layer5_evidence_foundation.py", "reason": "extract: AC test | for: EXECUTION_INDEX §2"}
+{"file": "tests/test_mootdx_incremental_e2e.py", "reason": "extract: AC test | for: EXECUTION_INDEX §2"}

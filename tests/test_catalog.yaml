@@ -1,7 +1,6 @@
 tests/smoke/test_foundation_smoke.py:
   command: uv run python -m pytest tests/smoke/test_foundation_smoke.py -q
-  failure_meaning:
-    Regression in test_foundation_smoke; inspect purpose and linked
+  failure_meaning: Regression in test_foundation_smoke; inspect purpose and linked
     authorities.
   purpose: Foundation end-to-end smoke tests (Round 1 task 010).
   type: smoke
@@ -11,8 +10,7 @@ tests/smoke/test_foundation_smoke.py:
     specs: []
 tests/test_adapter_skeletons.py:
   command: uv run python -m pytest tests/test_adapter_skeletons.py -q
-  failure_meaning:
-    Regression in test_adapter_skeletons; inspect purpose and linked
+  failure_meaning: Regression in test_adapter_skeletons; inspect purpose and linked
     authorities.
   purpose: Round 2 Batch B — adapter skeleton tests.
   type: runtime-contract
@@ -22,8 +20,7 @@ tests/test_adapter_skeletons.py:
     specs: []
 tests/test_alpha_vantage_incremental_e2e.py:
   command: uv run python -m pytest tests/test_alpha_vantage_incremental_e2e.py -q
-  failure_meaning:
-    Regression in test_alpha_vantage_incremental_e2e; inspect purpose
+  failure_meaning: Regression in test_alpha_vantage_incremental_e2e; inspect purpose
     and linked authorities.
   purpose: R3-DCP-05 S10 — Alpha Vantage bar incremental e2e tests.
   type: integration
@@ -32,11 +29,9 @@ tests/test_alpha_vantage_incremental_e2e.py:
     rules: []
     specs: []
 tests/test_alpha_vantage_incremental_watermark.py:
-  command:
-    uv run python -m pytest tests/test_alpha_vantage_incremental_watermark.py
+  command: uv run python -m pytest tests/test_alpha_vantage_incremental_watermark.py
     -q
-  failure_meaning:
-    Regression in test_alpha_vantage_incremental_watermark; inspect
+  failure_meaning: Regression in test_alpha_vantage_incremental_watermark; inspect
     purpose and linked authorities.
   purpose: R3-DCP-05 S10 — Alpha Vantage bar incremental watermark tests.
   type: runtime-contract
@@ -53,7 +48,7 @@ tests/test_api_security_contract.py:
     docs: []
     rules: []
     specs:
-      - specs/contracts/api_security_contract.yaml
+    - specs/contracts/api_security_contract.yaml
 tests/test_audit_fixes.py:
   command: uv run python -m pytest tests/test_audit_fixes.py -q
   failure_meaning: Regression in test_audit_fixes; inspect purpose and linked authorities.
@@ -65,8 +60,7 @@ tests/test_audit_fixes.py:
     specs: []
 tests/test_audit_remediation.py:
   command: uv run python -m pytest tests/test_audit_remediation.py -q
-  failure_meaning:
-    Regression in test_audit_remediation; inspect purpose and linked
+  failure_meaning: Regression in test_audit_remediation; inspect purpose and linked
     authorities.
   purpose: Round2 ABCD adversarial audit remediation tests.
   type: protocol
@@ -82,10 +76,10 @@ tests/test_b3f_quality_runners.py:
   type: runtime-contract
   verifies:
     docs:
-      - docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/014_implement_data_sync_orchestrator.md
+    - docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/014_implement_data_sync_orchestrator.md
     rules: []
     specs:
-      - specs/contracts/sync_job_contract.yaml
+    - specs/contracts/sync_job_contract.yaml
 tests/test_b3f_sh_hard_constraints.py:
   command: uv run python -m pytest tests/test_b3f_sh_hard_constraints.py -q
   evidence_required: pytest output
@@ -94,12 +88,12 @@ tests/test_b3f_sh_hard_constraints.py:
   type: policy-contract
   verifies:
     docs:
-      - docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/BATCH_3F_HARDENING_RULES.md
+    - docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/BATCH_3F_HARDENING_RULES.md
     rules:
-      - docs/UNRESOLVED_ISSUES_REGISTRY.md
+    - docs/UNRESOLVED_ISSUES_REGISTRY.md
     specs:
-      - specs/datasource_registry/source_registry.yaml
-      - specs/datasource_registry/source_capabilities.yaml
+    - specs/datasource_registry/source_registry.yaml
+    - specs/datasource_registry/source_capabilities.yaml
 tests/test_backend_smoke.py:
   command: uv run python -m pytest tests/test_backend_smoke.py -q
   failure_meaning: Regression in test_backend_smoke; inspect purpose and linked authorities.
@@ -111,8 +105,7 @@ tests/test_backend_smoke.py:
     specs: []
 tests/test_baostock_adapter_staging.py:
   command: uv run python -m pytest tests/test_baostock_adapter_staging.py -q
-  failure_meaning:
-    Regression in test_baostock_adapter_staging; inspect purpose and
+  failure_meaning: Regression in test_baostock_adapter_staging; inspect purpose and
     linked authorities.
   purpose: R3-DCP-01 — BaostockAdapter staging path tests.
   type: runtime-contract
@@ -122,8 +115,7 @@ tests/test_baostock_adapter_staging.py:
     specs: []
 tests/test_baostock_incremental_e2e.py:
   command: uv run python -m pytest tests/test_baostock_incremental_e2e.py -q
-  failure_meaning:
-    Regression in test_baostock_incremental_e2e; inspect purpose and
+  failure_meaning: Regression in test_baostock_incremental_e2e; inspect purpose and
     linked authorities.
   purpose: R3-DCP-01 baostock incremental E2E — service path + security_bar_1d.
   type: integration
@@ -133,8 +125,7 @@ tests/test_baostock_incremental_e2e.py:
     specs: []
 tests/test_baostock_incremental_watermark.py:
   command: uv run python -m pytest tests/test_baostock_incremental_watermark.py -q
-  failure_meaning:
-    Regression in test_baostock_incremental_watermark; inspect purpose
+  failure_meaning: Regression in test_baostock_incremental_watermark; inspect purpose
     and linked authorities.
   purpose: R3-DCP-01 baostock incremental watermark unit tests.
   type: runtime-contract
@@ -150,14 +141,13 @@ tests/test_batch25_production_data_gate.py:
   type: policy-contract
   verifies:
     docs:
-      - docs/quality/production_live_pilot_policy.md
-      - docs/ROUND3_HANDOFF.md
+    - docs/quality/production_live_pilot_policy.md
+    - docs/ROUND3_HANDOFF.md
     rules:
-      - docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md
+    - docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md
     specs: []
 tests/test_batch275_live_pilot_gate.py:
-  command:
-    uv run python -m pytest tests/test_batch275_live_pilot_gate.py -q -m "not
+  command: uv run python -m pytest tests/test_batch275_live_pilot_gate.py -q -m "not
     network"
   evidence_required: pytest output
   failure_meaning: Live pilot gate no longer fail-closed on route/auth preconditions.
@@ -165,39 +155,37 @@ tests/test_batch275_live_pilot_gate.py:
   type: policy-contract
   verifies:
     docs:
-      - docs/quality/production_live_pilot_policy.md
-      - docs/modules/source_route_plan.md
+    - docs/quality/production_live_pilot_policy.md
+    - docs/modules/source_route_plan.md
     rules:
-      - docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md
+    - docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md
     specs:
-      - specs/contracts/source_route_contract.yaml
+    - specs/contracts/source_route_contract.yaml
 tests/test_batch3_staged_downstream_gate.py:
   command: uv run python -m pytest tests/test_batch3_staged_downstream_gate.py -q
   evidence_required: pytest output + doc link check
-  failure_meaning:
-    Batch 3 gate language or references drifted; downstream agent may
+  failure_meaning: Batch 3 gate language or references drifted; downstream agent may
     wrongly assume live production readiness.
   protected_claims:
     forbidden:
-      - production-live ready
-      - live production ingestion
+    - production-live ready
+    - live production ingestion
     required:
-      - staged-only
-      - does not open production-live
+    - staged-only
+    - does not open production-live
   purpose: 确保 Batch 3 只能 staged-only，不得被误读为 production-live readiness
   type: policy-contract
   verifies:
     docs:
-      - docs/quality/BATCH3_STAGED_DOWNSTREAM_GATE.md
-      - docs/quality/production_live_pilot_policy.md
-      - docs/ROUND3_HANDOFF.md
+    - docs/quality/BATCH3_STAGED_DOWNSTREAM_GATE.md
+    - docs/quality/production_live_pilot_policy.md
+    - docs/ROUND3_HANDOFF.md
     rules:
-      - docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md
+    - docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md
     specs: []
 tests/test_batch6_wave4_prep_closure.py:
   command: uv run python -m pytest tests/test_batch6_wave4_prep_closure.py -q
-  failure_meaning:
-    Regression in test_batch6_wave4_prep_closure; inspect purpose and
+  failure_meaning: Regression in test_batch6_wave4_prep_closure; inspect purpose and
     linked authorities.
   purpose: Wave 4 prep hygiene closure tests (P0–P2 batch).
   type: runtime-contract
@@ -207,8 +195,7 @@ tests/test_batch6_wave4_prep_closure.py:
     specs: []
 tests/test_batch_c_validation_flow.py:
   command: uv run python -m pytest tests/test_batch_c_validation_flow.py -q
-  failure_meaning:
-    Regression in test_batch_c_validation_flow; inspect purpose and
+  failure_meaning: Regression in test_batch_c_validation_flow; inspect purpose and
     linked authorities.
   purpose: End-to-end Batch C validation flow tests (§8.8).
   type: integration
@@ -218,8 +205,7 @@ tests/test_batch_c_validation_flow.py:
     specs: []
 tests/test_batch_d_orchestration_flow.py:
   command: uv run python -m pytest tests/test_batch_d_orchestration_flow.py -q
-  failure_meaning:
-    Regression in test_batch_d_orchestration_flow; inspect purpose
+  failure_meaning: Regression in test_batch_d_orchestration_flow; inspect purpose
     and linked authorities.
   purpose: Batch D incremental orchestration E2E (§8.5).
   type: integration
@@ -229,8 +215,7 @@ tests/test_batch_d_orchestration_flow.py:
     specs: []
 tests/test_bis_incremental_e2e.py:
   command: uv run python -m pytest tests/test_bis_incremental_e2e.py -q
-  failure_meaning:
-    Regression in test_bis_incremental_e2e; inspect purpose and linked
+  failure_meaning: Regression in test_bis_incremental_e2e; inspect purpose and linked
     authorities.
   purpose: DCP-05 S04 — BIS incremental e2e tests.
   type: integration
@@ -240,8 +225,7 @@ tests/test_bis_incremental_e2e.py:
     specs: []
 tests/test_cftc_incremental_e2e.py:
   command: uv run python -m pytest tests/test_cftc_incremental_e2e.py -q
-  failure_meaning:
-    Regression in test_cftc_incremental_e2e; inspect purpose and linked
+  failure_meaning: Regression in test_cftc_incremental_e2e; inspect purpose and linked
     authorities.
   purpose: DCP-05 S06 — CFTC incremental e2e tests.
   type: integration
@@ -257,15 +241,14 @@ tests/test_cn_market_adapters.py:
   verifies:
     docs: []
     rules:
-      - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
+    - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
     specs:
-      - specs/datasource_registry/source_capabilities.yaml
-      - specs/contracts/source_route_contract.yaml
-      - specs/contracts/layer5_evidence_contract.yaml
+    - specs/datasource_registry/source_capabilities.yaml
+    - specs/contracts/source_route_contract.yaml
+    - specs/contracts/layer5_evidence_contract.yaml
 tests/test_cninfo_incremental_e2e.py:
   command: uv run python -m pytest tests/test_cninfo_incremental_e2e.py -q
-  failure_meaning:
-    Regression in test_cninfo_incremental_e2e; inspect purpose and
+  failure_meaning: Regression in test_cninfo_incremental_e2e; inspect purpose and
     linked authorities.
   purpose: R3-DCP-05 S07 — CNINFO metadata incremental e2e tests.
   type: integration
@@ -275,8 +258,7 @@ tests/test_cninfo_incremental_e2e.py:
     specs: []
 tests/test_cninfo_incremental_watermark.py:
   command: uv run python -m pytest tests/test_cninfo_incremental_watermark.py -q
-  failure_meaning:
-    Regression in test_cninfo_incremental_watermark; inspect purpose
+  failure_meaning: Regression in test_cninfo_incremental_watermark; inspect purpose
     and linked authorities.
   purpose: R3-DCP-05 S07 — CNINFO metadata incremental watermark tests.
   type: runtime-contract
@@ -295,8 +277,7 @@ tests/test_config.py:
     specs: []
 tests/test_config_templates.py:
   command: uv run python -m pytest tests/test_config_templates.py -q
-  failure_meaning:
-    Regression in test_config_templates; inspect purpose and linked
+  failure_meaning: Regression in test_config_templates; inspect purpose and linked
     authorities.
   purpose: Verify config templates and eco defaults (Round 0 task 002).
   type: runtime-contract
@@ -306,19 +287,17 @@ tests/test_config_templates.py:
     specs: []
 tests/test_contract_drift_ops_write.py:
   command: uv run python -m pytest tests/test_contract_drift_ops_write.py -q
-  failure_meaning:
-    Regression in test_contract_drift_ops_write; inspect purpose and
+  failure_meaning: Regression in test_contract_drift_ops_write; inspect purpose and
     linked authorities.
-  purpose:
-    Contract drift tests — ops db-inspect YAML SSOT and WriteManager parity
+  purpose: Contract drift tests — ops db-inspect YAML SSOT and WriteManager parity
     (B3V-C01).
   type: contract
   verifies:
     docs: []
     rules: []
     specs:
-      - specs/contracts/ops_db_inspect_contract.yaml
-      - specs/contracts/write_contract.yaml
+    - specs/contracts/ops_db_inspect_contract.yaml
+    - specs/contracts/write_contract.yaml
 tests/test_crypto_market_adapters.py:
   command: uv run python -m pytest tests/test_crypto_market_adapters.py -q
   failure_meaning: R3H-02 crypto market adapters or evidence contract regressed.
@@ -327,14 +306,13 @@ tests/test_crypto_market_adapters.py:
   verifies:
     docs: []
     rules:
-      - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
+    - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
     specs:
-      - specs/datasource_registry/source_capabilities.yaml
-      - specs/contracts/source_route_contract.yaml
+    - specs/datasource_registry/source_capabilities.yaml
+    - specs/contracts/source_route_contract.yaml
 tests/test_data_adapter_contract.py:
   command: uv run python -m pytest tests/test_data_adapter_contract.py -q
-  failure_meaning:
-    Regression in test_data_adapter_contract; inspect purpose and linked
+  failure_meaning: Regression in test_data_adapter_contract; inspect purpose and linked
     authorities.
   purpose: Data adapter contract and fetch_log tests (Batch A).
   type: contract
@@ -344,8 +322,7 @@ tests/test_data_adapter_contract.py:
     specs: []
 tests/test_data_cli_contract.py:
   command: uv run python -m pytest tests/test_data_cli_contract.py -q
-  failure_meaning:
-    Regression in test_data_cli_contract; inspect purpose and linked
+  failure_meaning: Regression in test_data_cli_contract; inspect purpose and linked
     authorities.
   purpose: Round2.6 Phase B — data CLI contract tests (design/contract level).
   type: contract
@@ -355,32 +332,30 @@ tests/test_data_cli_contract.py:
     specs: []
 tests/test_data_health_easyxt_profiles.py:
   command: uv run python -m pytest tests/test_data_health_easyxt_profiles.py -q
-  failure_meaning:
-    market_bar_p0 profile incomplete, rule ID drift, or CLI/runtime
+  failure_meaning: market_bar_p0 profile incomplete, rule ID drift, or CLI/runtime
     disconnect.
   purpose: R3FR-02 market_bar_p0 profile engine and rule ID closure
   type: runtime-contract
   verifies:
     docs:
-      - docs/ops/data_health_cli.md
+    - docs/ops/data_health_cli.md
     rules:
-      - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
+    - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
     specs:
-      - specs/contracts/data_quality_rules.yaml
+    - specs/contracts/data_quality_rules.yaml
 tests/test_data_health_v2.py:
   command: uv run python -m pytest tests/test_data_health_v2.py -q
   evidence_required: pytest output
-  failure_meaning:
-    v2 profile semantics drifted; missing WL may PASS or production-primary
+  failure_meaning: v2 profile semantics drifted; missing WL may PASS or production-primary
     may slip through.
-  purpose: "Read-only data health v2 profiles (B01-DH2): whitelist BLOCKED, FRED/TDX/SP3/rollup/gate"
+  purpose: 'Read-only data health v2 profiles (B01-DH2): whitelist BLOCKED, FRED/TDX/SP3/rollup/gate'
   type: runtime-contract
   verifies:
     docs:
-      - docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/R3E_readonly_data_health_v2.md
-      - docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/BATCH_01_MODEL_SOURCE_READINESS/BATCH_01_HARDENING_RULES.md
+    - docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/R3E_readonly_data_health_v2.md
+    - docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/BATCH_01_MODEL_SOURCE_READINESS/BATCH_01_HARDENING_RULES.md
     rules:
-      - docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md
+    - docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md
     specs: []
 tests/test_data_quality_validator.py:
   command: uv run python -m pytest tests/test_data_quality_validator.py -q
@@ -391,11 +366,10 @@ tests/test_data_quality_validator.py:
     docs: []
     rules: []
     specs:
-      - specs/contracts/data_quality_rules.yaml
+    - specs/contracts/data_quality_rules.yaml
 tests/test_datasource_service.py:
   command: uv run python -m pytest tests/test_datasource_service.py -q
-  failure_meaning:
-    Regression in test_datasource_service; inspect purpose and linked
+  failure_meaning: Regression in test_datasource_service; inspect purpose and linked
     authorities.
   purpose: Round2.6 Phase B/C — DataSourceService boundary and fetch facade tests.
   type: runtime-contract
@@ -411,14 +385,13 @@ tests/test_db_validation_gate.py:
   type: negative-runtime
   verifies:
     docs:
-      - docs/modules/data_validation_write_concurrency.md
+    - docs/modules/data_validation_write_concurrency.md
     rules: []
     specs:
-      - specs/contracts/write_contract.yaml
+    - specs/contracts/write_contract.yaml
 tests/test_dependency_extras_contract.py:
   command: uv run python -m pytest tests/test_dependency_extras_contract.py -q
-  failure_meaning:
-    Regression in test_dependency_extras_contract; inspect purpose
+  failure_meaning: Regression in test_dependency_extras_contract; inspect purpose
     and linked authorities.
   purpose: Round2.6 Phase B — dependency extras contract tests.
   type: contract
@@ -428,8 +401,7 @@ tests/test_dependency_extras_contract.py:
     specs: []
 tests/test_deribit_incremental_e2e.py:
   command: uv run python -m pytest tests/test_deribit_incremental_e2e.py -q
-  failure_meaning:
-    Regression in test_deribit_incremental_e2e; inspect purpose and
+  failure_meaning: Regression in test_deribit_incremental_e2e; inspect purpose and
     linked authorities.
   purpose: R3-DCP-05 S11 — Deribit crypto incremental e2e tests.
   type: integration
@@ -439,8 +411,7 @@ tests/test_deribit_incremental_e2e.py:
     specs: []
 tests/test_deribit_incremental_watermark.py:
   command: uv run python -m pytest tests/test_deribit_incremental_watermark.py -q
-  failure_meaning:
-    Regression in test_deribit_incremental_watermark; inspect purpose
+  failure_meaning: Regression in test_deribit_incremental_watermark; inspect purpose
     and linked authorities.
   purpose: R3-DCP-05 S11 — Deribit crypto incremental watermark tests.
   type: runtime-contract
@@ -450,8 +421,7 @@ tests/test_deribit_incremental_watermark.py:
     specs: []
 tests/test_docs_specs_indexed.py:
   command: uv run python -m pytest tests/test_docs_specs_indexed.py -q
-  failure_meaning:
-    Regression in test_docs_specs_indexed; inspect purpose and linked
+  failure_meaning: Regression in test_docs_specs_indexed; inspect purpose and linked
     authorities.
   purpose: 对抗性审计：docs/specs 是否被 MIGRATION_MAP 与 authority_graph 索引。
   type: runtime-contract
@@ -461,21 +431,19 @@ tests/test_docs_specs_indexed.py:
     specs: []
 tests/test_docstring_quadruple_coverage.py:
   command: uv run python -m pytest tests/test_docstring_quadruple_coverage.py -q
-  failure_meaning:
-    Test self-description contract broke; docstring hygiene regresses
+  failure_meaning: Test self-description contract broke; docstring hygiene regresses
     silently.
   purpose: Gate — every test_* carries five-field Chinese docstring per hygiene plan
   type: runtime-contract
   verifies:
     docs:
-      - docs/quality/ROUND3_TEST_DOCSTRING_HYGIENE_PLAN.md
+    - docs/quality/ROUND3_TEST_DOCSTRING_HYGIENE_PLAN.md
     rules:
-      - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
+    - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
     specs: []
 tests/test_documentation_index.py:
   command: uv run python -m pytest tests/test_documentation_index.py -q
-  failure_meaning:
-    Regression in test_documentation_index; inspect purpose and linked
+  failure_meaning: Regression in test_documentation_index; inspect purpose and linked
     authorities.
   purpose: Verify documentation index (Round 0 task 004).
   type: runtime-contract
@@ -485,8 +453,7 @@ tests/test_documentation_index.py:
     specs: []
 tests/test_duckdb_connection.py:
   command: uv run python -m pytest tests/test_duckdb_connection.py -q
-  failure_meaning:
-    Regression in test_duckdb_connection; inspect purpose and linked
+  failure_meaning: Regression in test_duckdb_connection; inspect purpose and linked
     authorities.
   purpose: DuckDB connection manager tests (Round 1 task 007).
   type: runtime-contract
@@ -497,17 +464,16 @@ tests/test_duckdb_connection.py:
 tests/test_execution_index_protocol.py:
   command: uv run python -m pytest tests/test_execution_index_protocol.py -q
   evidence_required: pytest output
-  failure_meaning:
-    v4 frozen task card + index manifest drift; Execute/Audit SSOT
+  failure_meaning: v4 frozen task card + index manifest drift; Execute/Audit SSOT
     gate broken.
   purpose: Plan 协议 v4：EXECUTION_INDEX 解析、manifest 生成与 validate_plan_freeze v4 门禁
   type: policy-contract
   verifies:
     docs:
-      - .trellis/spec/guides/complex-task-planning-protocol.md
-      - .trellis/spec/guides/templates/EXECUTION_INDEX.md
+    - .trellis/spec/guides/complex-task-planning-protocol.md
+    - .trellis/spec/guides/templates/EXECUTION_INDEX.md
     rules:
-      - docs/implementation_tasks/GLOBAL_TASK_TEMPLATE.md
+    - docs/implementation_tasks/GLOBAL_TASK_TEMPLATE.md
     specs: []
 tests/test_fred_live_primary_closeout.py:
   command: uv run python -m pytest tests/test_fred_live_primary_closeout.py -q
@@ -517,16 +483,15 @@ tests/test_fred_live_primary_closeout.py:
   type: policy-contract
   verifies:
     docs:
-      - docs/quality/batch3f_fred_live_pilot_authorization_2026-06-25.md
-      - docs/quality/production_live_pilot_policy.md
+    - docs/quality/batch3f_fred_live_pilot_authorization_2026-06-25.md
+    - docs/quality/production_live_pilot_policy.md
     rules:
-      - docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/BATCH_3F_HARDENING_RULES.md
+    - docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/BATCH_3F_HARDENING_RULES.md
     specs:
-      - specs/contracts/datasource_service_contract.yaml
+    - specs/contracts/datasource_service_contract.yaml
 tests/test_fred_macro_incremental_cli.py:
   command: uv run python -m pytest tests/test_fred_macro_incremental_cli.py -q
-  failure_meaning:
-    Regression in test_fred_macro_incremental_cli; inspect purpose
+  failure_meaning: Regression in test_fred_macro_incremental_cli; inspect purpose
     and linked authorities.
   purpose: R3-DCP-02 S02-05 — fred macro incremental CLI tests.
   type: runtime-contract
@@ -536,8 +501,7 @@ tests/test_fred_macro_incremental_cli.py:
     specs: []
 tests/test_fred_macro_incremental_e2e.py:
   command: uv run python -m pytest tests/test_fred_macro_incremental_e2e.py -q
-  failure_meaning:
-    Regression in test_fred_macro_incremental_e2e; inspect purpose
+  failure_meaning: Regression in test_fred_macro_incremental_e2e; inspect purpose
     and linked authorities.
   purpose: R3-DCP-02 S02-03/04 — fred macro incremental e2e tests.
   type: integration
@@ -547,8 +511,7 @@ tests/test_fred_macro_incremental_e2e.py:
     specs: []
 tests/test_fred_macro_incremental_port.py:
   command: uv run python -m pytest tests/test_fred_macro_incremental_port.py -q
-  failure_meaning:
-    Regression in test_fred_macro_incremental_port; inspect purpose
+  failure_meaning: Regression in test_fred_macro_incremental_port; inspect purpose
     and linked authorities.
   purpose: R3-DCP-02 S02-02 — fred_port incremental window tests.
   type: runtime-contract
@@ -557,11 +520,9 @@ tests/test_fred_macro_incremental_port.py:
     rules: []
     specs: []
 tests/test_fred_macro_incremental_watermark.py:
-  command:
-    uv run python -m pytest tests/test_fred_macro_incremental_watermark.py
+  command: uv run python -m pytest tests/test_fred_macro_incremental_watermark.py
     -q
-  failure_meaning:
-    Regression in test_fred_macro_incremental_watermark; inspect purpose
+  failure_meaning: Regression in test_fred_macro_incremental_watermark; inspect purpose
     and linked authorities.
   purpose: R3-DCP-02 S02-01 — fred macro incremental watermark unit tests.
   type: runtime-contract
@@ -572,33 +533,31 @@ tests/test_fred_macro_incremental_watermark.py:
 tests/test_fred_sandbox_pilot.py:
   command: uv run python -m pytest tests/test_fred_sandbox_pilot.py -q
   evidence_required: pytest output
-  failure_meaning:
-    FRED pilot route/fetch/health/closeout broken; B2.5-O-05 evidence
+  failure_meaning: FRED pilot route/fetch/health/closeout broken; B2.5-O-05 evidence
     gap.
   purpose: FRED-only sandbox pilot orchestration (B01-FRED FRED-02..07)
   type: runtime-contract
   verifies:
     docs:
-      - docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/R3E_fred_authorized_sandbox_pilot.md
+    - docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/R3E_fred_authorized_sandbox_pilot.md
     rules:
-      - docs/quality/production_live_pilot_policy.md
+    - docs/quality/production_live_pilot_policy.md
     specs:
-      - specs/contracts/datasource_service_contract.yaml
+    - specs/contracts/datasource_service_contract.yaml
 tests/test_fred_source_registry.py:
   command: uv run python -m pytest tests/test_fred_source_registry.py -q
   evidence_required: pytest output
-  failure_meaning:
-    FRED registry row missing or production-live; unauthorized FRED
+  failure_meaning: FRED registry row missing or production-live; unauthorized FRED
     routing risk.
   purpose: FRED sandbox/disabled-by-default registry guard (B01-FRED FRED-01)
   type: policy-contract
   verifies:
     docs: []
     rules:
-      - docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/BATCH_01_MODEL_SOURCE_READINESS/BATCH_01_HARDENING_RULES.md
+    - docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/BATCH_01_MODEL_SOURCE_READINESS/BATCH_01_HARDENING_RULES.md
     specs:
-      - specs/datasource_registry/source_registry.yaml
-      - specs/datasource_registry/source_capabilities.yaml
+    - specs/datasource_registry/source_registry.yaml
+    - specs/datasource_registry/source_capabilities.yaml
 tests/test_fred_staged_semantics.py:
   command: uv run python -m pytest tests/test_fred_staged_semantics.py -q
   evidence_required: pytest output
@@ -607,15 +566,14 @@ tests/test_fred_staged_semantics.py:
   type: policy-contract
   verifies:
     docs:
-      - docs/quality/production_live_pilot_policy.md
-      - docs/ROUND3_HANDOFF.md
+    - docs/quality/production_live_pilot_policy.md
+    - docs/ROUND3_HANDOFF.md
     rules:
-      - docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md
+    - docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md
     specs: []
 tests/test_global_execution_rules.py:
   command: uv run python -m pytest tests/test_global_execution_rules.py -q
-  failure_meaning:
-    Regression in test_global_execution_rules; inspect purpose and
+  failure_meaning: Regression in test_global_execution_rules; inspect purpose and
     linked authorities.
   purpose: Verify global execution rule files exist (Round 0 task 000).
   type: runtime-contract
@@ -625,8 +583,7 @@ tests/test_global_execution_rules.py:
     specs: []
 tests/test_incremental_post_write_inspect.py:
   command: uv run python -m pytest tests/test_incremental_post_write_inspect.py -q
-  failure_meaning:
-    Regression in test_incremental_post_write_inspect; inspect purpose
+  failure_meaning: Regression in test_incremental_post_write_inspect; inspect purpose
     and linked authorities.
   purpose: R3-DCP-03 — post-write inspect after 2× baostock incremental.
   type: runtime-contract
@@ -636,8 +593,7 @@ tests/test_incremental_post_write_inspect.py:
     specs: []
 tests/test_ingestion_validation_migration.py:
   command: uv run python -m pytest tests/test_ingestion_validation_migration.py -q
-  failure_meaning:
-    Regression in test_ingestion_validation_migration; inspect purpose
+  failure_meaning: Regression in test_ingestion_validation_migration; inspect purpose
     and linked authorities.
   purpose: Tests for migration 005 ingestion validation tables (Batch C §8.1).
   type: runtime-contract
@@ -647,8 +603,7 @@ tests/test_ingestion_validation_migration.py:
     specs: []
 tests/test_interface_probe_018c.py:
   command: uv run python -m pytest tests/test_interface_probe_018c.py -q
-  failure_meaning:
-    Regression in test_interface_probe_018c; inspect purpose and linked
+  failure_meaning: Regression in test_interface_probe_018c; inspect purpose and linked
     authorities.
   purpose: 018C low-cost data-interface probe tests.
   type: runtime-contract
@@ -664,14 +619,13 @@ tests/test_layer1_axis_loader.py:
   type: runtime-contract
   verifies:
     docs:
-      - docs/modules/layer1_global_regime_panel.md
+    - docs/modules/layer1_global_regime_panel.md
     rules: []
     specs:
-      - specs/contracts/layer1_axis_contract.yaml
+    - specs/contracts/layer1_axis_contract.yaml
 tests/test_layer1_clean_reader.py:
   command: uv run python -m pytest tests/test_layer1_clean_reader.py -q
-  failure_meaning:
-    Regression in test_layer1_clean_reader; inspect purpose and linked
+  failure_meaning: Regression in test_layer1_clean_reader; inspect purpose and linked
     authorities.
   purpose: S00 — Layer1CleanObservationReader contract tests.
   type: contract
@@ -681,8 +635,7 @@ tests/test_layer1_clean_reader.py:
     specs: []
 tests/test_layer1_credit_stress_clean_e2e.py:
   command: uv run python -m pytest tests/test_layer1_credit_stress_clean_e2e.py -q
-  failure_meaning:
-    Regression in test_layer1_credit_stress_clean_e2e; inspect purpose
+  failure_meaning: Regression in test_layer1_credit_stress_clean_e2e; inspect purpose
     and linked authorities.
   purpose: S02 — CREDIT_STRESS CRD.CS1.BAA10Y clean read e2e.
   type: integration
@@ -692,8 +645,7 @@ tests/test_layer1_credit_stress_clean_e2e.py:
     specs: []
 tests/test_layer1_environment_clean_e2e.py:
   command: uv run python -m pytest tests/test_layer1_environment_clean_e2e.py -q
-  failure_meaning:
-    Regression in test_layer1_environment_clean_e2e; inspect purpose
+  failure_meaning: Regression in test_layer1_environment_clean_e2e; inspect purpose
     and linked authorities.
   purpose: S01 — ENVIRONMENT axis Tier A clean read → feature → interpretation e2e.
   type: integration
@@ -702,11 +654,9 @@ tests/test_layer1_environment_clean_e2e.py:
     rules: []
     specs: []
 tests/test_layer1_five_axis_panel_clean_smoke.py:
-  command:
-    uv run python -m pytest tests/test_layer1_five_axis_panel_clean_smoke.py
+  command: uv run python -m pytest tests/test_layer1_five_axis_panel_clean_smoke.py
     -q
-  failure_meaning:
-    Regression in test_layer1_five_axis_panel_clean_smoke; inspect
+  failure_meaning: Regression in test_layer1_five_axis_panel_clean_smoke; inspect
     purpose and linked authorities.
   purpose: S06 — G12 五轴 Tier A clean panel 集成 smoke + K1 对齐 + ResourceGuard.
   type: smoke
@@ -716,8 +666,7 @@ tests/test_layer1_five_axis_panel_clean_smoke.py:
     specs: []
 tests/test_layer1_ingestion_gates.py:
   command: uv run python -m pytest tests/test_layer1_ingestion_gates.py -q
-  failure_meaning:
-    Regression in test_layer1_ingestion_gates; inspect purpose and
+  failure_meaning: Regression in test_layer1_ingestion_gates; inspect purpose and
     linked authorities.
   purpose: Layer 1 ingestion Phase 0 gate tests (Round 3 Batch 2.5 §8.1).
   type: policy-contract
@@ -727,11 +676,9 @@ tests/test_layer1_ingestion_gates.py:
     specs: []
 tests/test_layer1_interpretation.py:
   command: uv run python -m pytest tests/test_layer1_interpretation.py -q
-  failure_meaning:
-    Regression in test_layer1_interpretation; inspect purpose and linked
+  failure_meaning: Regression in test_layer1_interpretation; inspect purpose and linked
     authorities.
-  purpose:
-    Layer 1 feature, interpretation, lineage, and WriteManager integration
+  purpose: Layer 1 feature, interpretation, lineage, and WriteManager integration
     tests.
   type: integration
   verifies:
@@ -740,8 +687,7 @@ tests/test_layer1_interpretation.py:
     specs: []
 tests/test_layer1_liquidity_clean_e2e.py:
   command: uv run python -m pytest tests/test_layer1_liquidity_clean_e2e.py -q
-  failure_meaning:
-    Regression in test_layer1_liquidity_clean_e2e; inspect purpose
+  failure_meaning: Regression in test_layer1_liquidity_clean_e2e; inspect purpose
     and linked authorities.
   purpose: S04 — Liquidity axis clean read e2e (ADR-029 ponytail).
   type: integration
@@ -751,8 +697,7 @@ tests/test_layer1_liquidity_clean_e2e.py:
     specs: []
 tests/test_layer1_observation_ingestion.py:
   command: uv run python -m pytest tests/test_layer1_observation_ingestion.py -q
-  failure_meaning:
-    Regression in test_layer1_observation_ingestion; inspect purpose
+  failure_meaning: Regression in test_layer1_observation_ingestion; inspect purpose
     and linked authorities.
   purpose: Layer 1 observation ingestion pipeline tests (Batch 2.5 §8.2–8.5).
   type: runtime-contract
@@ -762,8 +707,7 @@ tests/test_layer1_observation_ingestion.py:
     specs: []
 tests/test_layer1_risk_appetite_clean_e2e.py:
   command: uv run python -m pytest tests/test_layer1_risk_appetite_clean_e2e.py -q
-  failure_meaning:
-    Regression in test_layer1_risk_appetite_clean_e2e; inspect purpose
+  failure_meaning: Regression in test_layer1_risk_appetite_clean_e2e; inspect purpose
     and linked authorities.
   purpose: S03 — RISK_APPETITE axis Tier A clean read → feature → interpretation e2e.
   type: integration
@@ -774,20 +718,18 @@ tests/test_layer1_risk_appetite_clean_e2e.py:
 tests/test_layer1_sandbox_bootstrap.py:
   command: uv run python -m pytest tests/test_layer1_sandbox_bootstrap.py -q
   evidence_required: pytest output
-  failure_meaning:
-    Phase3/4 evidence sandbox bootstrap regressed; ingestion split
+  failure_meaning: Phase3/4 evidence sandbox bootstrap regressed; ingestion split
     rollback risk.
   purpose: Layer1 ingestion sandbox bootstrap PR-R2b (R3F-HYG-07)
   type: runtime-contract
   verifies:
     docs:
-      - docs/architecture/layer1_ingestion_refactor_rollback_plan.md
+    - docs/architecture/layer1_ingestion_refactor_rollback_plan.md
     rules: []
     specs: []
 tests/test_layer1_sentiment_clean_e2e.py:
   command: uv run python -m pytest tests/test_layer1_sentiment_clean_e2e.py -q
-  failure_meaning:
-    Regression in test_layer1_sentiment_clean_e2e; inspect purpose
+  failure_meaning: Regression in test_layer1_sentiment_clean_e2e; inspect purpose
     and linked authorities.
   purpose: S05 — SENTIMENT axis Tier A clean read e2e (COT LF net).
   type: integration
@@ -803,12 +745,12 @@ tests/test_layer2_sensor_loader.py:
   type: runtime-contract
   verifies:
     docs:
-      - docs/modules/layer2_cross_asset_sensor.md
+    - docs/modules/layer2_cross_asset_sensor.md
     rules: []
     specs:
-      - specs/contracts/layer2_sensor_contract.yaml
-      - specs/contracts/snapshot_lineage_contract.yaml
-      - specs/contracts/resource_limits.yaml
+    - specs/contracts/layer2_sensor_contract.yaml
+    - specs/contracts/snapshot_lineage_contract.yaml
+    - specs/contracts/resource_limits.yaml
 tests/test_layer3_loader.py:
   command: uv run python -m pytest tests/test_layer3_loader.py -q
   evidence_required: pytest output
@@ -817,14 +759,13 @@ tests/test_layer3_loader.py:
   type: runtime-contract
   verifies:
     docs:
-      - docs/modules/layer3_industry_shock_anchor.md
+    - docs/modules/layer3_industry_shock_anchor.md
     rules: []
     specs:
-      - specs/contracts/layer3_loader_contract.yaml
+    - specs/contracts/layer3_loader_contract.yaml
 tests/test_layer3_snapshot_builder.py:
   command: uv run python -m pytest tests/test_layer3_snapshot_builder.py -q
-  failure_meaning:
-    Regression in test_layer3_snapshot_builder; inspect purpose and
+  failure_meaning: Regression in test_layer3_snapshot_builder; inspect purpose and
     linked authorities.
   purpose: Layer 3 industry-chain snapshot builder tests (Round 3 task 021).
   type: runtime-contract
@@ -840,15 +781,14 @@ tests/test_layer4_market_structure.py:
   type: runtime-contract
   verifies:
     docs:
-      - docs/modules/layer4_market_structure.md
+    - docs/modules/layer4_market_structure.md
     rules: []
     specs:
-      - specs/contracts/layer4_market_contract.yaml
-      - specs/contracts/snapshot_lineage_contract.yaml
+    - specs/contracts/layer4_market_contract.yaml
+    - specs/contracts/snapshot_lineage_contract.yaml
 tests/test_layer5_evidence_chain.py:
   command: uv run python -m pytest tests/test_layer5_evidence_chain.py -q
-  failure_meaning:
-    Regression in test_layer5_evidence_chain; inspect purpose and linked
+  failure_meaning: Regression in test_layer5_evidence_chain; inspect purpose and linked
     authorities.
   purpose: 第五层完整证据链 staged 测试（Round 3 Batch 5B / 023b Execute）。
   type: policy-contract
@@ -858,8 +798,7 @@ tests/test_layer5_evidence_chain.py:
     specs: []
 tests/test_layer5_evidence_foundation.py:
   command: uv run python -m pytest tests/test_layer5_evidence_foundation.py -q
-  failure_meaning:
-    Regression in test_layer5_evidence_foundation; inspect purpose
+  failure_meaning: Regression in test_layer5_evidence_foundation; inspect purpose
     and linked authorities.
   purpose: Tests for Layer 5 evidence foundation (Round 3 Batch 5A / 023A).
   type: runtime-contract
@@ -867,13 +806,32 @@ tests/test_layer5_evidence_foundation.py:
     docs: []
     rules: []
     specs: []
+tests/test_layer5_mootdx_bar_clean_e2e.py:
+  command: uv run python -m pytest tests/test_layer5_mootdx_bar_clean_e2e.py -q
+  failure_meaning: Regression in test_layer5_mootdx_bar_clean_e2e; inspect purpose
+    and linked authorities.
+  purpose: R3-DCP-10 S02 — mootdx incremental → security_bar_1d → Layer5 provenance
+    e2e。
+  type: integration
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_layer5_provenance_bridge.py:
+  command: uv run python -m pytest tests/test_layer5_provenance_bridge.py -q
+  failure_meaning: Regression in test_layer5_provenance_bridge; inspect purpose and
+    linked authorities.
+  purpose: R3-DCP-10 S01 — fetch bundle → Layer5 SourceProvenance 映射桥。
+  type: runtime-contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
 tests/test_loop_engineering_flow.py:
   command: uv run python -m pytest tests/test_loop_engineering_flow.py -q
-  failure_meaning:
-    Regression in test_loop_engineering_flow; inspect purpose and linked
+  failure_meaning: Regression in test_loop_engineering_flow; inspect purpose and linked
     authorities.
-  purpose:
-    Loop engineering task-flow refactor — gate script and machine-readable
+  purpose: Loop engineering task-flow refactor — gate script and machine-readable
     config tests.
   type: policy-contract
   verifies:
@@ -882,8 +840,7 @@ tests/test_loop_engineering_flow.py:
     specs: []
 tests/test_manifest_files_check.py:
   command: uv run python -m pytest tests/test_manifest_files_check.py -q
-  failure_meaning:
-    Regression in test_manifest_files_check; inspect purpose and linked
+  failure_meaning: Regression in test_manifest_files_check; inspect purpose and linked
     authorities.
   purpose: MANIFEST.json 文件存在性对抗性审计测试。
   type: protocol
@@ -893,8 +850,7 @@ tests/test_manifest_files_check.py:
     specs: []
 tests/test_manifest_protocol.py:
   command: uv run python -m pytest tests/test_manifest_protocol.py -q
-  failure_meaning:
-    Regression in test_manifest_protocol; inspect purpose and linked
+  failure_meaning: Regression in test_manifest_protocol; inspect purpose and linked
     authorities.
   purpose: Tests for Trellis manifest protocol (E1–E20).
   type: protocol
@@ -910,14 +866,13 @@ tests/test_market_data_adapters.py:
   verifies:
     docs: []
     rules:
-      - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
+    - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
     specs:
-      - specs/datasource_registry/source_capabilities.yaml
-      - specs/contracts/source_route_contract.yaml
+    - specs/datasource_registry/source_capabilities.yaml
+    - specs/contracts/source_route_contract.yaml
 tests/test_migration_coverage.py:
   command: uv run python -m pytest tests/test_migration_coverage.py -q
-  failure_meaning:
-    Regression in test_migration_coverage; inspect purpose and linked
+  failure_meaning: Regression in test_migration_coverage; inspect purpose and linked
     authorities.
   purpose: L3/L4/L5 建模表 migration 覆盖矩阵门禁（B3V-L5R / VR-MODEL-001 closure test）。
   type: runtime-contract
@@ -927,8 +882,7 @@ tests/test_migration_coverage.py:
     specs: []
 tests/test_model_input_whitelist.py:
   command: uv run python -m pytest tests/test_model_input_whitelist.py -q
-  failure_meaning:
-    Regression in test_model_input_whitelist; inspect purpose and linked
+  failure_meaning: Regression in test_model_input_whitelist; inspect purpose and linked
     authorities.
   purpose: Round 3D — 五层模型输入白名单语义契约测试。
   type: runtime-contract
@@ -943,14 +897,13 @@ tests/test_module_boundaries.py:
   type: policy-contract
   verifies:
     docs:
-      - docs/architecture/module_boundary_matrix.md
+    - docs/architecture/module_boundary_matrix.md
     rules: []
     specs:
-      - specs/contracts/module_boundary_contract.yaml
+    - specs/contracts/module_boundary_contract.yaml
 tests/test_mootdx_incremental_e2e.py:
   command: uv run python -m pytest tests/test_mootdx_incremental_e2e.py -q
-  failure_meaning:
-    Regression in test_mootdx_incremental_e2e; inspect purpose and
+  failure_meaning: Regression in test_mootdx_incremental_e2e; inspect purpose and
     linked authorities.
   purpose: R3-DCP-05 mootdx incremental E2E — service path + security_bar_1d.
   type: integration
@@ -965,19 +918,17 @@ tests/test_no_clean_write_for_web_evidence.py:
   type: negative-runtime
   verifies:
     docs:
-      - docs/modules/data_sources.md
+    - docs/modules/data_sources.md
     rules:
-      - docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md
+    - docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md
     specs:
-      - specs/contracts/source_route_contract.yaml
-      - specs/contracts/layer5_evidence_contract.yaml
+    - specs/contracts/source_route_contract.yaml
+    - specs/contracts/layer5_evidence_contract.yaml
 tests/test_observation_mapper.py:
   command: uv run python -m pytest tests/test_observation_mapper.py -q
-  failure_meaning:
-    Regression in test_observation_mapper; inspect purpose and linked
+  failure_meaning: Regression in test_observation_mapper; inspect purpose and linked
     authorities.
-  purpose:
-    Focused tests for observation_mapper boundary paths (audit A05-P1-01 /
+  purpose: Focused tests for observation_mapper boundary paths (audit A05-P1-01 /
     A04-P2-01).
   type: protocol
   verifies:
@@ -986,8 +937,7 @@ tests/test_observation_mapper.py:
     specs: []
 tests/test_official_macro_adapters.py:
   command: uv run python -m pytest tests/test_official_macro_adapters.py -q
-  failure_meaning:
-    Regression in test_official_macro_adapters; inspect purpose and
+  failure_meaning: Regression in test_official_macro_adapters; inspect purpose and
     linked authorities.
   purpose: R3H-01 官方宏观/披露适配器测试（Batch 3H）。
   type: runtime-contract
@@ -997,8 +947,7 @@ tests/test_official_macro_adapters.py:
     specs: []
 tests/test_ops_data_health.py:
   command: uv run python -m pytest tests/test_ops_data_health.py -q
-  failure_meaning:
-    Regression in test_ops_data_health; inspect purpose and linked
+  failure_meaning: Regression in test_ops_data_health; inspect purpose and linked
     authorities.
   purpose: Tests for read-only ops data health (C-20).
   type: runtime-contract
@@ -1008,8 +957,7 @@ tests/test_ops_data_health.py:
     specs: []
 tests/test_ops_db_inspector.py:
   command: uv run python -m pytest tests/test_ops_db_inspector.py -q
-  failure_meaning:
-    Regression in test_ops_db_inspector; inspect purpose and linked
+  failure_meaning: Regression in test_ops_db_inspector; inspect purpose and linked
     authorities.
   purpose: Ops DB inspector tests (Round 3 Batch 1).
   type: runtime-contract
@@ -1019,8 +967,7 @@ tests/test_ops_db_inspector.py:
     specs: []
 tests/test_ops_interface_probe.py:
   command: uv run python -m pytest tests/test_ops_interface_probe.py -q
-  failure_meaning:
-    Regression in test_ops_interface_probe; inspect purpose and linked
+  failure_meaning: Regression in test_ops_interface_probe; inspect purpose and linked
     authorities.
   purpose: Ops interface_probe + mutation_proof wiring tests (OP-06).
   type: runtime-contract
@@ -1039,8 +986,7 @@ tests/test_path_compat.py:
     specs: []
 tests/test_platform_source_matrix.py:
   command: uv run python -m pytest tests/test_platform_source_matrix.py -q
-  failure_meaning:
-    Regression in test_platform_source_matrix; inspect purpose and
+  failure_meaning: Regression in test_platform_source_matrix; inspect purpose and
     linked authorities.
   purpose: Round2.6 Phase C — platform source matrix tests (production planner).
   type: runtime-contract
@@ -1055,16 +1001,15 @@ tests/test_prediction_market_adapters.py:
   type: runtime-contract
   verifies:
     docs:
-      - docs/modules/data_sources.md
+    - docs/modules/data_sources.md
     rules:
-      - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
+    - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
     specs:
-      - specs/contracts/source_capability_contract.yaml
-      - specs/contracts/source_route_contract.yaml
-      - specs/contracts/layer5_evidence_contract.yaml
+    - specs/contracts/source_capability_contract.yaml
+    - specs/contracts/source_route_contract.yaml
+    - specs/contracts/layer5_evidence_contract.yaml
 tests/test_production_equivalent_smoke_budget.py:
-  command:
-    uv run python -m pytest tests/test_production_equivalent_smoke_budget.py
+  command: uv run python -m pytest tests/test_production_equivalent_smoke_budget.py
     -q
   evidence_required: pytest output + smoke budget JSON artifact
   failure_meaning: Perf smoke budget thresholds missing or mis-evaluated.
@@ -1072,16 +1017,15 @@ tests/test_production_equivalent_smoke_budget.py:
   type: policy-contract
   verifies:
     docs:
-      - docs/ops/performance_limits.md
+    - docs/ops/performance_limits.md
     rules: []
     specs:
-      - specs/contracts/production_equivalent_smoke_budget.yaml
+    - specs/contracts/production_equivalent_smoke_budget.yaml
 tests/test_production_gate.py:
   command: uv run python -m pytest tests/test_production_gate.py -q
-  failure_meaning:
-    Regression in test_production_gate; inspect purpose and linked
+  failure_meaning: Regression in test_production_gate; inspect purpose and linked
     authorities.
-  purpose: "ADV-A5-002: production_gate.py smoke tests."
+  purpose: 'ADV-A5-002: production_gate.py smoke tests.'
   type: policy-contract
   verifies:
     docs: []
@@ -1095,14 +1039,13 @@ tests/test_production_live_pilot_policy.py:
   type: policy-contract
   verifies:
     docs:
-      - docs/quality/production_live_pilot_policy.md
+    - docs/quality/production_live_pilot_policy.md
     rules:
-      - docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md
+    - docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md
     specs: []
 tests/test_project_scaffold.py:
   command: uv run python -m pytest tests/test_project_scaffold.py -q
-  failure_meaning:
-    Regression in test_project_scaffold; inspect purpose and linked
+  failure_meaning: Regression in test_project_scaffold; inspect purpose and linked
     authorities.
   purpose: Verify project scaffold directories (Round 0 task 001).
   type: runtime-contract
@@ -1112,8 +1055,7 @@ tests/test_project_scaffold.py:
     specs: []
 tests/test_provider_catalog.py:
   command: uv run python -m pytest tests/test_provider_catalog.py -q
-  failure_meaning:
-    Regression in test_provider_catalog; inspect purpose and linked
+  failure_meaning: Regression in test_provider_catalog; inspect purpose and linked
     authorities.
   purpose: Provider catalog contract tests (R3FR-05).
   type: contract
@@ -1132,8 +1074,7 @@ tests/test_qmd_data_cli.py:
     specs: []
 tests/test_qmd_data_sync_baostock.py:
   command: uv run python -m pytest tests/test_qmd_data_sync_baostock.py -q
-  failure_meaning:
-    Regression in test_qmd_data_sync_baostock; inspect purpose and
+  failure_meaning: Regression in test_qmd_data_sync_baostock; inspect purpose and
     linked authorities.
   purpose: R3-DCP-01 — qmd data sync baostock incremental CLI tests.
   type: runtime-contract
@@ -1143,8 +1084,7 @@ tests/test_qmd_data_sync_baostock.py:
     specs: []
 tests/test_qmd_data_sync_mootdx.py:
   command: uv run python -m pytest tests/test_qmd_data_sync_mootdx.py -q
-  failure_meaning:
-    Regression in test_qmd_data_sync_mootdx; inspect purpose and linked
+  failure_meaning: Regression in test_qmd_data_sync_mootdx; inspect purpose and linked
     authorities.
   purpose: R3-DCP-05 S08 — qmd data sync mootdx incremental CLI tests.
   type: runtime-contract
@@ -1154,8 +1094,7 @@ tests/test_qmd_data_sync_mootdx.py:
     specs: []
 tests/test_qmd_data_sync_tier_a_router.py:
   command: uv run python -m pytest tests/test_qmd_data_sync_tier_a_router.py -q
-  failure_meaning:
-    Regression in test_qmd_data_sync_tier_a_router; inspect purpose
+  failure_meaning: Regression in test_qmd_data_sync_tier_a_router; inspect purpose
     and linked authorities.
   purpose: R3-DCP-05 S12 — Tier A unified `qmd data sync --source-id` router tests.
   type: runtime-contract
@@ -1164,96 +1103,88 @@ tests/test_qmd_data_sync_tier_a_router.py:
     rules: []
     specs: []
 tests/test_r3f_br_backfill_reconcile_closure.py:
-  command:
-    uv run python -m pytest tests/test_r3f_br_backfill_reconcile_closure.py
+  command: uv run python -m pytest tests/test_r3f_br_backfill_reconcile_closure.py
     -q
-  failure_meaning:
-    Regression in test_r3f_br_backfill_reconcile_closure; inspect purpose
+  failure_meaning: Regression in test_r3f_br_backfill_reconcile_closure; inspect purpose
     and linked authorities.
   purpose: R3F-BR-01..05 closure guards (Batch 3F.4 backfill/reconcile parity).
   type: runtime-contract
   verifies:
     docs:
-      - docs/adr/ADR-023-layer5-conflict-review-path.md
-      - docs/AUDIT_DEFERRED_REGISTRY.md
-      - docs/UNRESOLVED_ISSUES_REGISTRY.md
-      - docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/BATCH_3F_COORDINATOR_PLAYBOOK.md
+    - docs/adr/ADR-023-layer5-conflict-review-path.md
+    - docs/AUDIT_DEFERRED_REGISTRY.md
+    - docs/UNRESOLVED_ISSUES_REGISTRY.md
+    - docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/BATCH_3F_COORDINATOR_PLAYBOOK.md
     rules:
-      - docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/BATCH_3F_HARDENING_RULES.md
+    - docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/BATCH_3F_HARDENING_RULES.md
     specs:
-      - specs/contracts/sync_job_contract.yaml
+    - specs/contracts/sync_job_contract.yaml
 tests/test_r3fr07_legacy_wrapper_cleanup.py:
   command: uv run python -m pytest tests/test_r3fr07_legacy_wrapper_cleanup.py -q
-  failure_meaning:
-    Regression in test_r3fr07_legacy_wrapper_cleanup; inspect purpose
+  failure_meaning: Regression in test_r3fr07_legacy_wrapper_cleanup; inspect purpose
     and linked authorities.
   purpose: R3FR-07 legacy wrapper cleanup — doc redirect and batch-close guardrails.
   type: runtime-contract
   verifies:
     docs:
-      - docs/implementation_tasks/ROUND_3_REFERENCE_ADOPTION_REFACTOR/BATCH_3FR_REFERENCE_ADOPTION_REFACTOR/R3FR_07_LEGACY_WRAPPER_CLEANUP_AND_REDIRECTS.md
-      - docs/implementation_tasks/ROUND_3_REFERENCE_ADOPTION_REFACTOR/BATCH_3FR_REFERENCE_ADOPTION_REFACTOR/BATCH_3FR_TASK_CARD_MANIFEST.md
-      - docs/ops/data_health_cli.md
-      - docs/ops/data_init_basic_cli.md
+    - docs/implementation_tasks/ROUND_3_REFERENCE_ADOPTION_REFACTOR/BATCH_3FR_REFERENCE_ADOPTION_REFACTOR/R3FR_07_LEGACY_WRAPPER_CLEANUP_AND_REDIRECTS.md
+    - docs/implementation_tasks/ROUND_3_REFERENCE_ADOPTION_REFACTOR/BATCH_3FR_REFERENCE_ADOPTION_REFACTOR/BATCH_3FR_TASK_CARD_MANIFEST.md
+    - docs/ops/data_health_cli.md
+    - docs/ops/data_init_basic_cli.md
     rules:
-      - docs/implementation_tasks/ROUND_3_REFERENCE_ADOPTION_REFACTOR/BATCH_3FR_REFERENCE_ADOPTION_REFACTOR/BATCH_3FR_HARDENING_RULES.md
+    - docs/implementation_tasks/ROUND_3_REFERENCE_ADOPTION_REFACTOR/BATCH_3FR_REFERENCE_ADOPTION_REFACTOR/BATCH_3FR_HARDENING_RULES.md
     specs:
-      - specs/contracts/data_cli_contract.yaml
-      - specs/contracts/reference_adoption_guardrails.yaml
+    - specs/contracts/data_cli_contract.yaml
+    - specs/contracts/reference_adoption_guardrails.yaml
 tests/test_r3h06_clean_schema.py:
   command: uv run python -m pytest tests/test_r3h06_clean_schema.py -q
-  failure_meaning:
-    R3H-06 clean schema DDL/routing/idempotency regression; inspect
+  failure_meaning: R3H-06 clean schema DDL/routing/idempotency regression; inspect
     frozen card AC.
-  purpose:
-    R3H-06 Wave 1 clean domain DDL, OHLCV staging, cninfo shape, domain router,
+  purpose: R3H-06 Wave 1 clean domain DDL, OHLCV staging, cninfo shape, domain router,
     G6 idempotency
   type: contract
   verifies:
     docs:
-      - docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/R3H_06_CLEAN_SCHEMA.md
+    - docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/R3H_06_CLEAN_SCHEMA.md
     rules:
-      - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
+    - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
     specs:
-      - specs/schema/schema.sql
+    - specs/schema/schema.sql
 tests/test_r3h08_live_productization.py:
   command: uv run python -m pytest tests/test_r3h08_live_productization.py -q
-  failure_meaning:
-    Regression in test_r3h08_live_productization; inspect purpose and
+  failure_meaning: Regression in test_r3h08_live_productization; inspect purpose and
     linked authorities.
   purpose: R3H-08 Wave 2 live productization tracer bullets (S08-BOOT+).
   type: runtime-contract
   verifies:
     docs:
-      - docs/decisions/ADR-027-r3h08-product-live-env-gate.md
+    - docs/decisions/ADR-027-r3h08-product-live-env-gate.md
     rules: []
     specs:
-      - specs/contracts/reference_adoption_guardrails.yaml
+    - specs/contracts/reference_adoption_guardrails.yaml
 tests/test_r3h_adapter_evidence_matrix.py:
   command: uv run python -m pytest tests/test_r3h_adapter_evidence_matrix.py -q
-  failure_meaning:
-    R3H audit template missing adapter/evidence fields; Round4 gate
+  failure_meaning: R3H audit template missing adapter/evidence fields; Round4 gate
     incomplete.
   purpose: Round 3H adapter evidence-matrix planning gate
   type: policy-contract
   verifies:
     docs:
-      - docs/quality/round3h_real_data_production_entry_audit.md
+    - docs/quality/round3h_real_data_production_entry_audit.md
     rules:
-      - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
+    - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
     specs: []
 tests/test_r3h_layer_binding_audit.py:
   command: uv run python -m pytest tests/test_r3h_layer_binding_audit.py -q
-  failure_meaning:
-    R3H layer binding or Round4 admission outcomes undefined in planning
+  failure_meaning: R3H layer binding or Round4 admission outcomes undefined in planning
     docs.
   purpose: Round 3H Layer1-5 binding and Round4 admission planning gate
   type: policy-contract
   verifies:
     docs:
-      - docs/quality/round3h_real_data_production_entry_audit.md
+    - docs/quality/round3h_real_data_production_entry_audit.md
     rules:
-      - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
+    - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
     specs: []
 tests/test_r3h_source_final_decisions.py:
   command: uv run python -m pytest tests/test_r3h_source_final_decisions.py -q
@@ -1262,17 +1193,15 @@ tests/test_r3h_source_final_decisions.py:
   type: policy-contract
   verifies:
     docs:
-      - docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/README.md
+    - docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/README.md
     rules:
-      - docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md
+    - docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md
     specs:
-      - specs/datasource_registry/source_registry.yaml
+    - specs/datasource_registry/source_registry.yaml
 tests/test_r3x_data_source_routing_blockers.py:
-  command:
-    uv run python -m pytest tests/test_r3x_data_source_routing_blockers.py
+  command: uv run python -m pytest tests/test_r3x_data_source_routing_blockers.py
     -q
-  failure_meaning:
-    Regression in test_r3x_data_source_routing_blockers; inspect purpose
+  failure_meaning: Regression in test_r3x_data_source_routing_blockers; inspect purpose
     and linked authorities.
   purpose: R3X data-source routing blocker tests (ADV-A2 cluster).
   type: runtime-contract
@@ -1281,11 +1210,9 @@ tests/test_r3x_data_source_routing_blockers.py:
     rules: []
     specs: []
 tests/test_r3x_ponytail_pilot_prep_bucket_a.py:
-  command:
-    uv run python -m pytest tests/test_r3x_ponytail_pilot_prep_bucket_a.py
+  command: uv run python -m pytest tests/test_r3x_ponytail_pilot_prep_bucket_a.py
     -q
-  failure_meaning:
-    Regression in test_r3x_ponytail_pilot_prep_bucket_a; inspect purpose
+  failure_meaning: Regression in test_r3x_ponytail_pilot_prep_bucket_a; inspect purpose
     and linked authorities.
   purpose: R3X ponytail pilot-prep bucket A umbrella regression tests (PROMPT_16).
   type: runtime-contract
@@ -1294,11 +1221,9 @@ tests/test_r3x_ponytail_pilot_prep_bucket_a.py:
     rules: []
     specs: []
 tests/test_r3x_ponytail_structural_bucket_b.py:
-  command:
-    uv run python -m pytest tests/test_r3x_ponytail_structural_bucket_b.py
+  command: uv run python -m pytest tests/test_r3x_ponytail_structural_bucket_b.py
     -q
-  failure_meaning:
-    Regression in test_r3x_ponytail_structural_bucket_b; inspect purpose
+  failure_meaning: Regression in test_r3x_ponytail_structural_bucket_b; inspect purpose
     and linked authorities.
   purpose: 覆盖范围：Slice 4 Bucket B 结构性 ponytail 回归；测试对象：ADV-POST14-B 映射项；目的：合并门禁关键路径绿。
   type: runtime-contract
@@ -1308,8 +1233,7 @@ tests/test_r3x_ponytail_structural_bucket_b.py:
     specs: []
 tests/test_r3x_residual_open_items_closure.py:
   command: uv run python -m pytest tests/test_r3x_residual_open_items_closure.py -q
-  failure_meaning:
-    Regression in test_r3x_residual_open_items_closure; inspect purpose
+  failure_meaning: Regression in test_r3x_residual_open_items_closure; inspect purpose
     and linked authorities.
   purpose: R3X residual open-items closure regression umbrella (PROMPT_15).
   type: runtime-contract
@@ -1333,45 +1257,42 @@ tests/test_real_data_staged_pilot_v3.py:
   type: policy-contract
   verifies:
     docs:
-      - docs/quality/production_live_pilot_policy.md
-      - docs/quality/staged_acceptance_policy.md
+    - docs/quality/production_live_pilot_policy.md
+    - docs/quality/staged_acceptance_policy.md
     rules:
-      - docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md
+    - docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md
     specs:
-      - specs/model_inputs/README.md
-      - specs/contracts/source_conflict_rules.yaml
+    - specs/model_inputs/README.md
+    - specs/contracts/source_conflict_rules.yaml
 tests/test_reference_adoption_guardrails.py:
   command: uv run python -m pytest tests/test_reference_adoption_guardrails.py -q
-  failure_meaning:
-    Reference adoption guardrails fail-closed; backend/scripts must
+  failure_meaning: Reference adoption guardrails fail-closed; backend/scripts must
     not copy forbidden trading, login, fallback, or reference-project runtime patterns.
   purpose: Reference adoption guardrails — static scans for forbidden copied patterns
   type: policy-negative
   verifies:
     docs: []
     rules:
-      - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
+    - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
     specs:
-      - specs/contracts/reference_adoption_guardrails.yaml
+    - specs/contracts/reference_adoption_guardrails.yaml
 tests/test_resource_guard.py:
   command: uv run python -m pytest tests/test_resource_guard.py -q
   evidence_required: pytest output
-  failure_meaning:
-    Resource limits no longer enforced; batch jobs may exceed safe
+  failure_meaning: Resource limits no longer enforced; batch jobs may exceed safe
     bounds.
   purpose: ResourceGuard HARD_STOP and metrics contract
   type: negative-runtime
   verifies:
     docs:
-      - docs/ops/performance_limits.md
+    - docs/ops/performance_limits.md
     rules:
-      - docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md
+    - docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md
     specs:
-      - specs/contracts/resource_limits.yaml
+    - specs/contracts/resource_limits.yaml
 tests/test_round3_audit_registry_alignment.py:
   command: uv run python -m pytest tests/test_round3_audit_registry_alignment.py -q
-  failure_meaning:
-    Regression in test_round3_audit_registry_alignment; inspect purpose
+  failure_meaning: Regression in test_round3_audit_registry_alignment; inspect purpose
     and linked authorities.
   purpose: Round 3 Batch 2.5 / Batch 2.75 audit follow-up 文档对齐测试。
   type: protocol
@@ -1380,11 +1301,9 @@ tests/test_round3_audit_registry_alignment.py:
     rules: []
     specs: []
 tests/test_round3_verification_command_matrix.py:
-  command:
-    uv run python -m pytest tests/test_round3_verification_command_matrix.py
+  command: uv run python -m pytest tests/test_round3_verification_command_matrix.py
     -q
-  failure_meaning:
-    Regression in test_round3_verification_command_matrix; inspect
+  failure_meaning: Regression in test_round3_verification_command_matrix; inspect
     purpose and linked authorities.
   purpose: Round 3 verification command matrix — doc index and gate-test discoverability.
   type: policy-contract
@@ -1393,8 +1312,7 @@ tests/test_round3_verification_command_matrix.py:
     rules: []
     specs: []
 tests/test_round3f_lineage_layer3_registry_closure.py:
-  command:
-    uv run python -m pytest tests/test_round3f_lineage_layer3_registry_closure.py
+  command: uv run python -m pytest tests/test_round3f_lineage_layer3_registry_closure.py
     -q
   evidence_required: pytest output
   failure_meaning: B3F-LIN closure gate broken; registry evidence chain invalid.
@@ -1402,124 +1320,111 @@ tests/test_round3f_lineage_layer3_registry_closure.py:
   type: runtime-contract
   verifies:
     docs:
-      - docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/BATCH_3F_COORDINATOR_PLAYBOOK.md
+    - docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/BATCH_3F_COORDINATOR_PLAYBOOK.md
     rules: []
     specs:
-      - specs/contracts/snapshot_lineage_contract.yaml
+    - specs/contracts/snapshot_lineage_contract.yaml
 tests/test_round3f_migration_residuals.py:
   command: uv run python -m pytest tests/test_round3f_migration_residuals.py -q
   evidence_required: pytest output
-  failure_meaning:
-    Migration 012 residuals or 009 verify-only guard regressed; registry
+  failure_meaning: Migration 012 residuals or 009 verify-only guard regressed; registry
     D2-P3-1 gap reopens.
   purpose: Round 3F B3F-MIG migration residuals (R3F-MIG-01..06)
   type: contract
   verifies:
     docs:
-      - docs/schema/MIGRATION_COVERAGE.md
-      - docs/schema/MIGRATION_008_PLAN.md
-      - docs/decisions/ADR-002-db-check-vs-app-validation.md
+    - docs/schema/MIGRATION_COVERAGE.md
+    - docs/schema/MIGRATION_008_PLAN.md
+    - docs/decisions/ADR-002-db-check-vs-app-validation.md
     rules: []
     specs:
-      - specs/schema/schema.sql
+    - specs/schema/schema.sql
 tests/test_round3g_limited_production_clean_write.py:
-  command:
-    uv run python -m pytest tests/test_round3g_limited_production_clean_write.py
+  command: uv run python -m pytest tests/test_round3g_limited_production_clean_write.py
     -q
-  failure_meaning:
-    R3G-03 limited clean-write contract allows agent-triggered or unapproved
+  failure_meaning: R3G-03 limited clean-write contract allows agent-triggered or unapproved
     entry.
   purpose: Round 3G R3G-03 limited entry requires user approval and blocks agent write
   type: policy-contract
   verifies:
     docs:
-      - docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_03_LIMITED_PRODUCTION_CLEAN_WRITE.md
+    - docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_03_LIMITED_PRODUCTION_CLEAN_WRITE.md
     rules:
-      - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
+    - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
     specs:
-      - specs/contracts/sandbox_clean_write_contract.yaml
+    - specs/contracts/sandbox_clean_write_contract.yaml
 tests/test_round3g_limited_production_rollback.py:
-  command:
-    uv run python -m pytest tests/test_round3g_limited_production_rollback.py
+  command: uv run python -m pytest tests/test_round3g_limited_production_rollback.py
     -q
-  failure_meaning:
-    R3G-03 rollback contract missing dry-run requirement or WriteManager
+  failure_meaning: R3G-03 rollback contract missing dry-run requirement or WriteManager
     gate.
   purpose: Round 3G R3G-03 rollback dry-run and QMD gate contract
   type: policy-contract
   verifies:
     docs:
-      - docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_03_LIMITED_PRODUCTION_CLEAN_WRITE.md
+    - docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_03_LIMITED_PRODUCTION_CLEAN_WRITE.md
     rules:
-      - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
+    - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
     specs:
-      - specs/contracts/sandbox_clean_write_contract.yaml
+    - specs/contracts/sandbox_clean_write_contract.yaml
 tests/test_round3g_pre_production_adversarial_audit.py:
-  command:
-    uv run python -m pytest tests/test_round3g_pre_production_adversarial_audit.py
+  command: uv run python -m pytest tests/test_round3g_pre_production_adversarial_audit.py
     -q
-  failure_meaning:
-    R3G-02 audit contract fails to reject reference runtime import
+  failure_meaning: R3G-02 audit contract fails to reject reference runtime import
     or production write.
   purpose: Round 3G R3G-02 adversarial audit decision enum and block_if gates
   type: policy-contract
   verifies:
     docs:
-      - docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_02_PRE_PRODUCTION_ADVERSARIAL_AUDIT.md
+    - docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_02_PRE_PRODUCTION_ADVERSARIAL_AUDIT.md
     rules:
-      - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
+    - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
     specs:
-      - specs/contracts/sandbox_clean_write_contract.yaml
+    - specs/contracts/sandbox_clean_write_contract.yaml
 tests/test_round3g_sandbox_clean_write_rehearsal.py:
-  command:
-    uv run python -m pytest tests/test_round3g_sandbox_clean_write_rehearsal.py
+  command: uv run python -m pytest tests/test_round3g_sandbox_clean_write_rehearsal.py
     -q
-  failure_meaning:
-    R3G-01 rehearsal contract blocks production mutation or report
+  failure_meaning: R3G-01 rehearsal contract blocks production mutation or report
     fields drift.
   purpose: Round 3G R3G-01 sandbox rehearsal contract fail-closed gates
   type: policy-contract
   verifies:
     docs:
-      - docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_01_SANDBOX_CLEAN_WRITE_REHEARSAL.md
+    - docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_01_SANDBOX_CLEAN_WRITE_REHEARSAL.md
     rules:
-      - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
+    - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
     specs:
-      - specs/contracts/sandbox_clean_write_contract.yaml
+    - specs/contracts/sandbox_clean_write_contract.yaml
 tests/test_round3g_sandbox_rehearsal_loader.py:
-  command:
-    uv run python -m pytest tests/test_round3g_sandbox_rehearsal_loader.py
+  command: uv run python -m pytest tests/test_round3g_sandbox_rehearsal_loader.py
     -q
-  failure_meaning:
-    R3G-01 loader accepts broad universe or fails to load capped fixture
+  failure_meaning: R3G-01 loader accepts broad universe or fails to load capped fixture
     bundles.
   purpose: R3G-01 rehearsal loader bounded DataBundle from staged evidence
   type: unit
   verifies:
     docs:
-      - docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_01_SANDBOX_CLEAN_WRITE_REHEARSAL.md
+    - docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_01_SANDBOX_CLEAN_WRITE_REHEARSAL.md
     rules:
-      - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
+    - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
     specs:
-      - specs/contracts/sandbox_clean_write_contract.yaml
+    - specs/contracts/sandbox_clean_write_contract.yaml
 tests/test_round3g_sandbox_rehearsal_report.py:
-  command:
-    uv run python -m pytest tests/test_round3g_sandbox_rehearsal_report.py
+  command: uv run python -m pytest tests/test_round3g_sandbox_rehearsal_report.py
     -q
   failure_meaning: R3G-01 rehearsal report missing contract fields or DH summary counts.
   purpose: R3G-01 rehearsal report required fields and data_health_summary shape
   type: unit
   verifies:
     docs:
-      - docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_01_SANDBOX_CLEAN_WRITE_REHEARSAL.md
+    - docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_01_SANDBOX_CLEAN_WRITE_REHEARSAL.md
     rules:
-      - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
+    - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
     specs:
-      - specs/contracts/sandbox_clean_write_contract.yaml
+    - specs/contracts/sandbox_clean_write_contract.yaml
 tests/test_schema_contract.py:
   command: uv run python -m pytest tests/test_schema_contract.py -q
-  failure_meaning:
-    Regression in test_schema_contract; inspect purpose and linked
+  failure_meaning: Regression in test_schema_contract; inspect purpose and linked
     authorities.
   purpose: Schema contract vs migration alignment tests.
   type: contract
@@ -1529,8 +1434,7 @@ tests/test_schema_contract.py:
     specs: []
 tests/test_schema_migration.py:
   command: uv run python -m pytest tests/test_schema_migration.py -q
-  failure_meaning:
-    Regression in test_schema_migration; inspect purpose and linked
+  failure_meaning: Regression in test_schema_migration; inspect purpose and linked
     authorities.
   purpose: Foundation schema migration tests (Round 1 task 005).
   type: contract
@@ -1540,8 +1444,7 @@ tests/test_schema_migration.py:
     specs: []
 tests/test_sec_edgar_adapter.py:
   command: uv run python -m pytest tests/test_sec_edgar_adapter.py -q
-  failure_meaning:
-    Regression in test_sec_edgar_adapter; inspect purpose and linked
+  failure_meaning: Regression in test_sec_edgar_adapter; inspect purpose and linked
     authorities.
   purpose: R3H-01 SEC EDGAR 披露适配器测试（Batch 3H · step 9.4）。
   type: runtime-contract
@@ -1551,8 +1454,7 @@ tests/test_sec_edgar_adapter.py:
     specs: []
 tests/test_sec_edgar_incremental_e2e.py:
   command: uv run python -m pytest tests/test_sec_edgar_incremental_e2e.py -q
-  failure_meaning:
-    Regression in test_sec_edgar_incremental_e2e; inspect purpose and
+  failure_meaning: Regression in test_sec_edgar_incremental_e2e; inspect purpose and
     linked authorities.
   purpose: R3-DCP-05 S09 — SEC EDGAR incremental e2e tests.
   type: integration
@@ -1562,8 +1464,7 @@ tests/test_sec_edgar_incremental_e2e.py:
     specs: []
 tests/test_sec_edgar_incremental_watermark.py:
   command: uv run python -m pytest tests/test_sec_edgar_incremental_watermark.py -q
-  failure_meaning:
-    Regression in test_sec_edgar_incremental_watermark; inspect purpose
+  failure_meaning: Regression in test_sec_edgar_incremental_watermark; inspect purpose
     and linked authorities.
   purpose: R3-DCP-05 S09 — SEC EDGAR incremental watermark tests.
   type: runtime-contract
@@ -1573,8 +1474,7 @@ tests/test_sec_edgar_incremental_watermark.py:
     specs: []
 tests/test_snapshot_lineage_kernel.py:
   command: uv run python -m pytest tests/test_snapshot_lineage_kernel.py -q
-  failure_meaning:
-    Regression in test_snapshot_lineage_kernel; inspect purpose and
+  failure_meaning: Regression in test_snapshot_lineage_kernel; inspect purpose and
     linked authorities.
   purpose: 覆盖范围：core/snapshot_lineage 共享内核；测试对象：校验与 DB tuple 映射；目的：三层层 lineage 去重后行为不变。
   type: runtime-contract
@@ -1584,8 +1484,7 @@ tests/test_snapshot_lineage_kernel.py:
     specs: []
 tests/test_source_capabilities.py:
   command: uv run python -m pytest tests/test_source_capabilities.py -q
-  failure_meaning:
-    Regression in test_source_capabilities; inspect purpose and linked
+  failure_meaning: Regression in test_source_capabilities; inspect purpose and linked
     authorities.
   purpose: Round2.6 Phase B/C — source capability and adapter domain contract tests.
   type: contract
@@ -1602,29 +1501,26 @@ tests/test_source_conflict_validator.py:
     docs: []
     rules: []
     specs:
-      - specs/contracts/source_conflict_rules.yaml
+    - specs/contracts/source_conflict_rules.yaml
 tests/test_source_health_snapshot.py:
   command: uv run python -m pytest tests/test_source_health_snapshot.py -q
   evidence_required: pytest output
-  failure_meaning:
-    Snapshot writer or rollup persist broken; Batch6 source health
+  failure_meaning: Snapshot writer or rollup persist broken; Batch6 source health
     tracking fails.
   purpose: Batch 3F B3F-SH source_health_snapshot writer and rollup persist (R3F-SH-01/04)
   type: runtime-contract
   verifies:
     docs:
-      - docs/decisions/ADR-024-source-health-snapshot-boundary.md
-      - docs/modules/data_sources.md
+    - docs/decisions/ADR-024-source-health-snapshot-boundary.md
+    - docs/modules/data_sources.md
     rules:
-      - docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/BATCH_3F_HARDENING_RULES.md
+    - docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/BATCH_3F_HARDENING_RULES.md
     specs: []
 tests/test_source_registry.py:
   command: uv run python -m pytest tests/test_source_registry.py -q
-  failure_meaning:
-    Regression in test_source_registry; inspect purpose and linked
+  failure_meaning: Regression in test_source_registry; inspect purpose and linked
     authorities.
-  purpose:
-    Source registry loader, DB sync, and schema enum compatibility tests (Batch
+  purpose: Source registry loader, DB sync, and schema enum compatibility tests (Batch
     A / data source expansion).
   type: protocol
   verifies:
@@ -1639,14 +1535,13 @@ tests/test_source_route_planner.py:
   type: runtime-contract
   verifies:
     docs:
-      - docs/modules/source_route_plan.md
+    - docs/modules/source_route_plan.md
     rules: []
     specs:
-      - specs/contracts/source_route_contract.yaml
+    - specs/contracts/source_route_contract.yaml
 tests/test_sql_identifiers.py:
   command: uv run python -m pytest tests/test_sql_identifiers.py -q
-  failure_meaning:
-    Regression in test_sql_identifiers; inspect purpose and linked
+  failure_meaning: Regression in test_sql_identifiers; inspect purpose and linked
     authorities.
   purpose: SQL identifier quoting tests (Round 1 task 008).
   type: runtime-contract
@@ -1661,10 +1556,10 @@ tests/test_staged_pilot.py:
   type: policy-contract
   verifies:
     docs:
-      - docs/quality/production_live_pilot_policy.md
+    - docs/quality/production_live_pilot_policy.md
     rules: []
     specs:
-      - specs/contracts/review_sandbox_contract.yaml
+    - specs/contracts/review_sandbox_contract.yaml
 tests/test_sync_jobs.py:
   command: uv run python -m pytest tests/test_sync_jobs.py -q
   failure_meaning: Regression in test_sync_jobs; inspect purpose and linked authorities.
@@ -1685,21 +1580,19 @@ tests/test_sync_migration.py:
     specs: []
 tests/test_sync_orchestrator.py:
   command: uv run python -m pytest tests/test_sync_orchestrator.py -q
-  failure_meaning:
-    Regression in test_sync_orchestrator; inspect purpose and linked
+  failure_meaning: Regression in test_sync_orchestrator; inspect purpose and linked
     authorities.
   purpose: Tests for DataSyncOrchestrator core (Batch D §8.3).
   type: runtime-contract
   verifies:
     docs:
-      - docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/BATCH_3F_COORDINATOR_PLAYBOOK.md
+    - docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/BATCH_3F_COORDINATOR_PLAYBOOK.md
     rules: []
     specs:
-      - specs/contracts/sync_job_contract.yaml
+    - specs/contracts/sync_job_contract.yaml
 tests/test_sync_pipeline_contract.py:
   command: uv run python -m pytest tests/test_sync_pipeline_contract.py -q
-  failure_meaning:
-    Regression in test_sync_pipeline_contract; inspect purpose and
+  failure_meaning: Regression in test_sync_pipeline_contract; inspect purpose and
     linked authorities.
   purpose: Pipeline seam contract tests (Round2 re-audit A7-02).
   type: contract
@@ -1714,14 +1607,13 @@ tests/test_sync_runners.py:
   type: runtime-contract
   verifies:
     docs:
-      - docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/BATCH_3F_COORDINATOR_PLAYBOOK.md
+    - docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/BATCH_3F_COORDINATOR_PLAYBOOK.md
     rules: []
     specs:
-      - specs/contracts/sync_job_contract.yaml
+    - specs/contracts/sync_job_contract.yaml
 tests/test_task_archive_gates.py:
   command: uv run python -m pytest tests/test_task_archive_gates.py -q
-  failure_meaning:
-    Regression in test_task_archive_gates; inspect purpose and linked
+  failure_meaning: Regression in test_task_archive_gates; inspect purpose and linked
     authorities.
   purpose: task_archive 与单轨门禁边界测试。
   type: policy-contract
@@ -1730,11 +1622,9 @@ tests/test_task_archive_gates.py:
     rules: []
     specs: []
 tests/test_tdx_live_manual_probe_authorization.py:
-  command:
-    uv run python -m pytest tests/test_tdx_live_manual_probe_authorization.py
+  command: uv run python -m pytest tests/test_tdx_live_manual_probe_authorization.py
     -q
-  failure_meaning:
-    Regression in test_tdx_live_manual_probe_authorization; inspect
+  failure_meaning: Regression in test_tdx_live_manual_probe_authorization; inspect
     purpose and linked authorities.
   purpose: Authorization gate tests for 018C TDX live manual probe (no network).
   type: policy-contract
@@ -1744,20 +1634,19 @@ tests/test_tdx_live_manual_probe_authorization.py:
     specs: []
 tests/test_tdx_manual_probe.py:
   command: uv run python -m pytest tests/test_tdx_manual_probe.py -q
-  failure_meaning:
-    TDX manual probe regression; validation-only/disabled-by-default
+  failure_meaning: TDX manual probe regression; validation-only/disabled-by-default
     guard may be broken.
   purpose: Batch 01 B01-TDX manual probe — mocked CI + auth-gated live (TDX-01..06)
   type: policy-contract
   verifies:
     docs:
-      - docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/R3E_tdx_manual_probe_addendum.md
-      - docs/quality/tdx_pytdx_live_manual_probe_authorization_2026-06-24.md
+    - docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/R3E_tdx_manual_probe_addendum.md
+    - docs/quality/tdx_pytdx_live_manual_probe_authorization_2026-06-24.md
     rules:
-      - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
+    - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
     specs:
-      - specs/datasource_registry/source_registry.yaml
-      - specs/datasource_registry/source_capabilities.yaml
+    - specs/datasource_registry/source_registry.yaml
+    - specs/datasource_registry/source_capabilities.yaml
 tests/test_tdx_provider_port.py:
   command: uv run python -m pytest tests/test_tdx_provider_port.py -q
   failure_meaning: R3H-03 mootdx/tdx provider port boot regressed.
@@ -1766,9 +1655,9 @@ tests/test_tdx_provider_port.py:
   verifies:
     docs: []
     rules:
-      - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
+    - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
     specs:
-      - specs/datasource_registry/source_capabilities.yaml
+    - specs/datasource_registry/source_capabilities.yaml
 tests/test_tdx_pytdx_port.py:
   command: uv run python -m pytest tests/test_tdx_pytdx_port.py -q
   failure_meaning: Regression in test_tdx_pytdx_port; inspect purpose and linked authorities.
@@ -1780,8 +1669,7 @@ tests/test_tdx_pytdx_port.py:
     specs: []
 tests/test_tierA_incremental_registry.py:
   command: uv run python -m pytest tests/test_tierA_incremental_registry.py -q
-  failure_meaning:
-    Regression in test_tierA_incremental_registry; inspect purpose
+  failure_meaning: Regression in test_tierA_incremental_registry; inspect purpose
     and linked authorities.
   purpose: R3-DCP-05 S00 — Tier A incremental registry + ADR-028 clean routing.
   type: protocol
@@ -1791,8 +1679,7 @@ tests/test_tierA_incremental_registry.py:
     specs: []
 tests/test_trellis_audit_trace_authority.py:
   command: uv run python -m pytest tests/test_trellis_audit_trace_authority.py -q
-  failure_meaning:
-    Regression in test_trellis_audit_trace_authority; inspect purpose
+  failure_meaning: Regression in test_trellis_audit_trace_authority; inspect purpose
     and linked authorities.
   purpose: Trellis Audit Trace Authority — Batch 2.75 plan freeze gate tests.
   type: policy-contract
@@ -1802,8 +1689,7 @@ tests/test_trellis_audit_trace_authority.py:
     specs: []
 tests/test_trellis_validate_execute.py:
   command: uv run python -m pytest tests/test_trellis_validate_execute.py -q
-  failure_meaning:
-    Regression in test_trellis_validate_execute; inspect purpose and
+  failure_meaning: Regression in test_trellis_validate_execute; inspect purpose and
     linked authorities.
   purpose: Tests for Trellis Execute protocol v2 validators.
   type: runtime-contract
@@ -1813,8 +1699,7 @@ tests/test_trellis_validate_execute.py:
     specs: []
 tests/test_trellis_validate_plan.py:
   command: uv run python -m pytest tests/test_trellis_validate_plan.py -q
-  failure_meaning:
-    Regression in test_trellis_validate_plan; inspect purpose and linked
+  failure_meaning: Regression in test_trellis_validate_plan; inspect purpose and linked
     authorities.
   purpose: Tests for Trellis Plan protocol v2 validators.
   type: runtime-contract
@@ -1824,8 +1709,7 @@ tests/test_trellis_validate_plan.py:
     specs: []
 tests/test_unresolved_item_task_coverage.py:
   command: uv run python -m pytest tests/test_unresolved_item_task_coverage.py -q
-  failure_meaning:
-    Regression in test_unresolved_item_task_coverage; inspect purpose
+  failure_meaning: Regression in test_unresolved_item_task_coverage; inspect purpose
     and linked authorities.
   purpose: 确保未闭合项不会在 Plan 阶段因只读原始任务卡而遗漏。
   type: runtime-contract
@@ -1835,8 +1719,7 @@ tests/test_unresolved_item_task_coverage.py:
     specs: []
 tests/test_us_trading_calendar.py:
   command: uv run python -m pytest tests/test_us_trading_calendar.py -q
-  failure_meaning:
-    Regression in test_us_trading_calendar; inspect purpose and linked
+  failure_meaning: Regression in test_us_trading_calendar; inspect purpose and linked
     authorities.
   purpose: R3H-07 US trading calendar SSOT tests (CAL-US).
   type: runtime-contract
@@ -1846,8 +1729,7 @@ tests/test_us_trading_calendar.py:
     specs: []
 tests/test_us_treasury_incremental_e2e.py:
   command: uv run python -m pytest tests/test_us_treasury_incremental_e2e.py -q
-  failure_meaning:
-    Regression in test_us_treasury_incremental_e2e; inspect purpose
+  failure_meaning: Regression in test_us_treasury_incremental_e2e; inspect purpose
     and linked authorities.
   purpose: DCP-05 S03 — US Treasury incremental e2e tests.
   type: integration
@@ -1856,11 +1738,9 @@ tests/test_us_treasury_incremental_e2e.py:
     rules: []
     specs: []
 tests/test_us_treasury_incremental_watermark.py:
-  command:
-    uv run python -m pytest tests/test_us_treasury_incremental_watermark.py
+  command: uv run python -m pytest tests/test_us_treasury_incremental_watermark.py
     -q
-  failure_meaning:
-    Regression in test_us_treasury_incremental_watermark; inspect purpose
+  failure_meaning: Regression in test_us_treasury_incremental_watermark; inspect purpose
     and linked authorities.
   purpose: DCP-05 S03 — US Treasury incremental watermark unit tests.
   type: runtime-contract
@@ -1870,8 +1750,7 @@ tests/test_us_treasury_incremental_watermark.py:
     specs: []
 tests/test_validate_audit_handoff.py:
   command: uv run python -m pytest tests/test_validate_audit_handoff.py -q
-  failure_meaning:
-    Regression in test_validate_audit_handoff; inspect purpose and
+  failure_meaning: Regression in test_validate_audit_handoff; inspect purpose and
     linked authorities.
   purpose: Audit A9 / Repair close 校验器测试。
   type: protocol
@@ -1881,8 +1760,7 @@ tests/test_validate_audit_handoff.py:
     specs: []
 tests/test_vendor_fetch_e2e.py:
   command: uv run python -m pytest tests/test_vendor_fetch_e2e.py -q
-  failure_meaning:
-    Regression in test_vendor_fetch_e2e; inspect purpose and linked
+  failure_meaning: Regression in test_vendor_fetch_e2e; inspect purpose and linked
     authorities.
   purpose: Vendor fixture E2E through real orchestrator path (Round2 audit P1-03).
   type: protocol
@@ -1897,16 +1775,15 @@ tests/test_web_evidence_adapter.py:
   type: runtime-contract
   verifies:
     docs:
-      - docs/modules/data_sources.md
+    - docs/modules/data_sources.md
     rules:
-      - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
+    - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
     specs:
-      - specs/contracts/layer5_evidence_contract.yaml
-      - specs/contracts/user_input_privacy_contract.yaml
+    - specs/contracts/layer5_evidence_contract.yaml
+    - specs/contracts/user_input_privacy_contract.yaml
 tests/test_world_bank_incremental_e2e.py:
   command: uv run python -m pytest tests/test_world_bank_incremental_e2e.py -q
-  failure_meaning:
-    Regression in test_world_bank_incremental_e2e; inspect purpose
+  failure_meaning: Regression in test_world_bank_incremental_e2e; inspect purpose
     and linked authorities.
   purpose: DCP-05 S05 — World Bank incremental e2e tests.
   type: integration
@@ -1915,11 +1792,9 @@ tests/test_world_bank_incremental_e2e.py:
     rules: []
     specs: []
 tests/test_world_bank_incremental_watermark.py:
-  command:
-    uv run python -m pytest tests/test_world_bank_incremental_watermark.py
+  command: uv run python -m pytest tests/test_world_bank_incremental_watermark.py
     -q
-  failure_meaning:
-    Regression in test_world_bank_incremental_watermark; inspect purpose
+  failure_meaning: Regression in test_world_bank_incremental_watermark; inspect purpose
     and linked authorities.
   purpose: DCP-05 S05 — World Bank incremental watermark unit tests.
   type: runtime-contract
@@ -1935,8 +1810,8 @@ tests/test_write_manager.py:
   type: negative-runtime
   verifies:
     docs:
-      - docs/modules/write_manager.md
+    - docs/modules/write_manager.md
     rules:
-      - docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md
+    - docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md
     specs:
-      - specs/contracts/write_contract.yaml
+    - specs/contracts/write_contract.yaml

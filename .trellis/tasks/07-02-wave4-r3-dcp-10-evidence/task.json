@@ -1,0 +1,33 @@
+{
+  "id": "wave4-r3-dcp-10-evidence",
+  "name": "wave4-r3-dcp-10-evidence",
+  "title": "Wave4 R3-DCP-10 Layer5 evidence binding",
+  "description": "",
+  "status": "in_progress",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P0",
+  "creator": "Guang",
+  "assignee": "Guang",
+  "createdAt": "2026-07-02",
+  "completedAt": null,
+  "branch": "feature/wave4-r3-dcp-10-evidence",
+  "base_branch": "master",
+  "worktree_path": "../quant-monitor-desk-wt-dcp10",
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "task_track": "complex",
+    "plan_protocol_version": "4.1",
+    "execute_entry": "research/00-EXECUTION-ENTRY.md",
+    "frozen_task_card": "frozen/R3_DCP_10_LAYER5_EVIDENCE_BINDING.md",
+    "frozen_at": "2026-07-02T09:22:07Z",
+    "source_task_card": "docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/R3_DCP_10_LAYER5_EVIDENCE_BINDING.md"
+  }
+}
