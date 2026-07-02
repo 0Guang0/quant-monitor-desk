@@ -847,7 +847,9 @@ tests/test_layer2_vix_clean_e2e.py:
   failure_meaning:
     Regression in test_layer2_vix_clean_e2e; inspect purpose and linked
     authorities.
-  purpose: Layer2 VIX clean e2e — ADR-032 S01 axis_observation→snapshot+lineage (fred, non-staged).
+  purpose:
+    Layer2 VIX clean e2e — ADR-032 S01 axis_observation→snapshot+lineage (fred,
+    non-staged).
   type: integration
   verifies:
     docs: []
