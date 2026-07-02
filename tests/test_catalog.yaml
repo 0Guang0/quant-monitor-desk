@@ -701,6 +701,19 @@ tests/test_layer1_environment_clean_e2e.py:
     docs: []
     rules: []
     specs: []
+tests/test_layer1_five_axis_panel_clean_smoke.py:
+  command:
+    uv run python -m pytest tests/test_layer1_five_axis_panel_clean_smoke.py
+    -q
+  failure_meaning:
+    Regression in test_layer1_five_axis_panel_clean_smoke; inspect
+    purpose and linked authorities.
+  purpose: S06 — G12 五轴 Tier A clean panel 集成 smoke + K1 对齐 + ResourceGuard.
+  type: smoke
+  verifies:
+    docs: []
+    rules: []
+    specs: []
 tests/test_layer1_ingestion_gates.py:
   command: uv run python -m pytest tests/test_layer1_ingestion_gates.py -q
   failure_meaning:

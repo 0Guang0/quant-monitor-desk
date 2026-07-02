@@ -1,0 +1,2 @@
+S06 RED — tests/test_layer1_five_axis_panel_clean_smoke.py module missing (collection exit 4)
+Expected before S06 implementation.

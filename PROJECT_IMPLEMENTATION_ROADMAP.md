@@ -298,20 +298,20 @@ Round4  B04-01 先 · 产品只读
 
 五轴 ID 以 `specs/layer1_axes/restructured_axes_v1_1/` 为准（K2）。每轴至少：
 
-- [ ] 从 **Tier A clean**（非 staged fixture）读取输入
-- [ ] 指标引擎产出可断言快照/序列
-- [ ] 专属 pytest **GREEN**（`tests/test_layer1_*` 或本轴新增测）
-- [ ] ResourceGuard / 有界窗口遵守 `resource_limits.yaml`
-- [ ] `MODULE_COMPLETION_RATING` **G1: R3→R4**，**K2** 行与轴一一对应
+- [x] 从 **Tier A clean**（非 staged fixture）读取输入
+- [x] 指标引擎产出可断言快照/序列
+- [x] 专属 pytest **GREEN**（`tests/test_layer1_*` 或本轴新增测）
+- [x] ResourceGuard / 有界窗口遵守 `resource_limits.yaml`
+- [x] `MODULE_COMPLETION_RATING` **G1: R3→R4**，**K2** 行与轴一一对应
 
-| #   | 规划 ID       | 模块   | 交付                                                                    |
-| --- | ------------- | ------ | ----------------------------------------------------------------------- |
-| 4a  | **R3-DCP-05** | D1, E1 | 增量 watermark 扩展至 **全部 Tier A 主源** · **✅ CLOSED** @ `c2258363` |
-| 4b  | **R3-DCP-06** | G1, K2 | **五轴全绿（G12）** — PASS 阻塞项                                       |
-| 4c  | **R3-DCP-07** | G2     | 一条 cross-asset 传感器绑真市况源                                       |
-| 4d  | **R3-DCP-08** | G4     | 市场结构 + Wave 1 US 日历                                               |
-| 4e  | **R3-DCP-09** | D1     | 有界 backfill（cap 分片；**非**无上限 FullLoad）                        |
-| 4f  | **R3-DCP-10** | G5, A3 | source_fetch_id / content_hash / schema_hash 绑真源                     |
+| #   | 规划 ID       | 模块   | 交付                                                                                                         |
+| --- | ------------- | ------ | ------------------------------------------------------------------------------------------------------------ |
+| 4a  | **R3-DCP-05** | D1, E1 | 增量 watermark 扩展至 **全部 Tier A 主源** · **✅ CLOSED** @ `c2258363`                                      |
+| 4b  | **R3-DCP-06** | G1, K2 | **五轴全绿（G12）** — PASS 阻塞项 · **Execute DONE** @ `feature/wave4-r3-dcp-06-five-axis-clean`（待 Audit） |
+| 4c  | **R3-DCP-07** | G2     | 一条 cross-asset 传感器绑真市况源                                                                            |
+| 4d  | **R3-DCP-08** | G4     | 市场结构 + Wave 1 US 日历                                                                                    |
+| 4e  | **R3-DCP-09** | D1     | 有界 backfill（cap 分片；**非**无上限 FullLoad）                                                             |
+| 4f  | **R3-DCP-10** | G5, A3 | source_fetch_id / content_hash / schema_hash 绑真源                                                          |
 
 **仍归 Batch6（不挡 PASS）：** D2 任务级幂等、无 cap FullLoad、24 源 production cron 矩阵、H1 Parquet、D4 migration。
 
@@ -490,7 +490,7 @@ Round5 **不补功能**。
 1. Batch 3V + R3H-06 + R3H-01～04 — **CLOSED** ✅
 2. Wave 1–2：R3H-07、R3H-10、R3H-08A–D — **CLOSED**
 3. Wave 3：R3-DCP-01..03 — **CLOSED**（baostock + fred 增量产品路径）
-4. Wave 4：**R3-DCP-05** ✅ @ `c2258363`；**R3-DCP-06..10** + §3.5.1 五轴 — **OPEN**
+4. Wave 4：**R3-DCP-05** ✅ @ `c2258363`；**R3-DCP-06** Execute DONE（五轴 clean e2e + §3.5.1）；**R3-DCP-07..10** — **OPEN**
 5. **G12 五轴：** §3.5.1 清单 **全部满足** — **硬门禁**
 6. R3H-05-GATE → **`PASS_ROUND4_REAL_DATA_READY`**
 7. 24 源 env-gated live→正确 Tier；`web_search` 真 API = **DEFERRED_POST_ROUND4** + 单 ADR

@@ -103,14 +103,14 @@ For every module or major feature after this file lands:
 
 ### 3.G Modeling layers (Layer1–5)
 
-| ID  | Module                     | Design authority                                   | Rating                      | 批/3 | Close round | Evidence                                                                                      | Required next movement                                                                                     |
-| --- | -------------------------- | -------------------------------------------------- | --------------------------- | ---- | ----------- | --------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| G1  | Layer1 axes / regime panel | `layer1_axes`, `layer1_global_regime_panel.md`     | `R3_STAGED_FIXTURE_CLOSED`  | 2/3  | R3→R4       | loader + `test_layer1_*` on **staged** fixtures; 五轴 spec（K2）齐全；**真 clean 五轴未闭合** | **Wave 4 R3-DCP-06**：五轴全绿 **R3→R4** — **PASS 硬门禁**（`PROJECT_IMPLEMENTATION_ROADMAP.md` §3.5.1）。 |
-| G2  | Layer2 cross-asset sensors | `layer2_sensors`, `layer2_cross_asset_sensor.md`   | `R3_STAGED_FIXTURE_CLOSED`  | 2/3  | R4+         | staged fixtures, snapshot writer, `test_layer2_sensor_loader.py`                              | **Wave 4 R3-DCP-07**：一条 cross-asset 传感器绑真市况源。                                                  |
-| G3  | Layer3 industry chains     | `layer3_chains`, `layer3_industry_shock_anchor.md` | `R3_STAGED_FIXTURE_CLOSED`  | 1/3  | R4+         | loader/snapshot builder; `test_layer3_loader.py`, `test_layer3_snapshot_builder.py`           | Round4 初或 ADR-narrow；**非 PASS 硬门禁**。 registries **K3**。                                           |
-| G4  | Layer4 market structure    | `layer4_markets`, `layer4_market_structure.md`     | `R3_STAGED_FIXTURE_CLOSED`  | 1/3  | R4+         | **R3H-07 CLOSED** US calendar; CN_A staged fixture; `test_layer4_market_structure.py`         | **Wave 4 R3-DCP-08**：市场结构 + US 日历绑真源。                                                           |
-| G5  | Layer5 evidence / security | `layer5_evidence`, `layer5_security_evidence.md`   | `R2_MINIMAL_VERTICAL_SLICE` | 2/3  | R3          | foundation validator, evidence chain, web-evidence no-clean-write tests                       | **Wave 4 R3-DCP-10**：source_fetch_id/content_hash/schema_hash 绑真源；R3H-05 审计。                       |
-| G6  | Manual review staging      | `backend/app/evidence/manual_review_staging.py`    | `R3_STAGED_FIXTURE_CLOSED`  | 1/3  | R3          | **R3H-08D CLOSED**: kalshi/polymarket/web_search manual-review live bundle                    | R3H-05 audit posture only; no factual clean write.                                                         |
+| ID  | Module                     | Design authority                                   | Rating                      | 批/3 | Close round | Evidence                                                                                                                         | Required next movement                                                               |
+| --- | -------------------------- | -------------------------------------------------- | --------------------------- | ---- | ----------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| G1  | Layer1 axes / regime panel | `layer1_axes`, `layer1_global_regime_panel.md`     | `R3_STAGED_FIXTURE_CLOSED`  | 2/3  | **R3→R4**   | **R3-DCP-06 Execute DONE**：五轴 P0 clean read e2e + `test_layer1_five_axis_panel_clean_smoke.py`；`clean_observation_reader.py` | Audit PASS + merge `feature/wave4-r3-dcp-06-five-axis-clean` → master。              |
+| G2  | Layer2 cross-asset sensors | `layer2_sensors`, `layer2_cross_asset_sensor.md`   | `R3_STAGED_FIXTURE_CLOSED`  | 2/3  | R4+         | staged fixtures, snapshot writer, `test_layer2_sensor_loader.py`                                                                 | **Wave 4 R3-DCP-07**：一条 cross-asset 传感器绑真市况源。                            |
+| G3  | Layer3 industry chains     | `layer3_chains`, `layer3_industry_shock_anchor.md` | `R3_STAGED_FIXTURE_CLOSED`  | 1/3  | R4+         | loader/snapshot builder; `test_layer3_loader.py`, `test_layer3_snapshot_builder.py`                                              | Round4 初或 ADR-narrow；**非 PASS 硬门禁**。 registries **K3**。                     |
+| G4  | Layer4 market structure    | `layer4_markets`, `layer4_market_structure.md`     | `R3_STAGED_FIXTURE_CLOSED`  | 1/3  | R4+         | **R3H-07 CLOSED** US calendar; CN_A staged fixture; `test_layer4_market_structure.py`                                            | **Wave 4 R3-DCP-08**：市场结构 + US 日历绑真源。                                     |
+| G5  | Layer5 evidence / security | `layer5_evidence`, `layer5_security_evidence.md`   | `R2_MINIMAL_VERTICAL_SLICE` | 2/3  | R3          | foundation validator, evidence chain, web-evidence no-clean-write tests                                                          | **Wave 4 R3-DCP-10**：source_fetch_id/content_hash/schema_hash 绑真源；R3H-05 审计。 |
+| G6  | Manual review staging      | `backend/app/evidence/manual_review_staging.py`    | `R3_STAGED_FIXTURE_CLOSED`  | 1/3  | R3          | **R3H-08D CLOSED**: kalshi/polymarket/web_search manual-review live bundle                                                       | R3H-05 audit posture only; no factual clean write.                                   |
 
 ### 3.H ETL and cold storage
 
@@ -145,11 +145,11 @@ For every module or major feature after this file lands:
 
 ### 3.K Model input governance (spec-only track)
 
-| ID  | Module                            | Design authority                                           | Rating                     | 批/3 | Close round | Evidence                                                                            | Required next movement                                                          |
-| --- | --------------------------------- | ---------------------------------------------------------- | -------------------------- | ---- | ----------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| K1  | Model input whitelist / readiness | `specs/model_inputs/**`, `model_input_readiness_matrix.md` | `R3_STAGED_FIXTURE_CLOSED` | 1/3  | R3→R4+      | YAML whitelists + `test_model_input_whitelist.py`; **spec-only — no runtime fetch** | Layer modules (G1–G5) consume rows; expand only via ADR + closure_test.         |
-| K2  | Layer1 five-axis indicator specs  | `specs/layer1_axes/restructured_axes_v1_1/**`              | `R3_STAGED_FIXTURE_CLOSED` | 1/3  | R3→R4       | per-axis indicator_spec + engineering_rules（5 axes）齐全；loader 测 staged only    | **Sub-scope of G1** — **Wave 4 R3-DCP-06**：每轴真 clean 指标引擎 + pytest 绿。 |
-| K3  | Layer3 chain registries           | `specs/layer3_global_industry_chains/**`                   | `R3_STAGED_FIXTURE_CLOSED` | 1/3  | R4+         | node/edge/anchor JSON+YAML registries                                               | **Sub-scope of G3** — loader uses staged bundle today.                          |
+| ID  | Module                            | Design authority                                           | Rating                     | 批/3 | Close round | Evidence                                                                            | Required next movement                                                  |
+| --- | --------------------------------- | ---------------------------------------------------------- | -------------------------- | ---- | ----------- | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| K1  | Model input whitelist / readiness | `specs/model_inputs/**`, `model_input_readiness_matrix.md` | `R3_STAGED_FIXTURE_CLOSED` | 1/3  | R3→R4+      | YAML whitelists + `test_model_input_whitelist.py`; **spec-only — no runtime fetch** | Layer modules (G1–G5) consume rows; expand only via ADR + closure_test. |
+| K2  | Layer1 five-axis indicator specs  | `specs/layer1_axes/restructured_axes_v1_1/**`              | `R3_STAGED_FIXTURE_CLOSED` | 1/3  | **R3→R4**   | 每轴 P0 clean replay e2e（S01–S05）+ 五轴 panel smoke                               | **Sub-scope of G1** — Audit + merge 后 G1/K2 同步 R4 边界。             |
+| K3  | Layer3 chain registries           | `specs/layer3_global_industry_chains/**`                   | `R3_STAGED_FIXTURE_CLOSED` | 1/3  | R4+         | node/edge/anchor JSON+YAML registries                                               | **Sub-scope of G3** — loader uses staged bundle today.                  |
 
 ---
 
@@ -184,12 +184,12 @@ These `docs/modules/*.md` files are **sub-documents or compat indexes** — trac
 
 ### Pass D — 2026-07-01（Wave 1–3 代码闭合 @ `893e6e2b`）
 
-| Wave / 轨  | 规划 ID        | 模块跃迁（摘要）            | 证据                                                |
-| ---------- | -------------- | --------------------------- | --------------------------------------------------- |
-| Wave 1     | R3H-10, R3H-07 | C2/E4, G4 → R4 边界         | archived `06-29-round3h-r3h10-*` · `r3h07-*`        |
-| Wave 2     | R3H-08A–D      | C3, A3, B\*, G6 live 产品化 | archived `06-29-round3h-r3h08-live-productization`  |
-| Wave 3     | R3-DCP-01..03  | D1, E1, E2, F0 → R4 边界    | `5dc71c0b` · `5d8d7b0f` · `eff49343`                |
-| **未闭合** | **R3-DCP-06**  | **G1, K2 五轴真 clean**     | staged `test_layer1_*` 绿；**PASS 硬门禁待 Wave 4** |
+| Wave / 轨  | 规划 ID        | 模块跃迁（摘要）            | 证据                                                                                |
+| ---------- | -------------- | --------------------------- | ----------------------------------------------------------------------------------- |
+| Wave 1     | R3H-10, R3H-07 | C2/E4, G4 → R4 边界         | archived `06-29-round3h-r3h10-*` · `r3h07-*`                                        |
+| Wave 2     | R3H-08A–D      | C3, A3, B\*, G6 live 产品化 | archived `06-29-round3h-r3h08-live-productization`                                  |
+| Wave 3     | R3-DCP-01..03  | D1, E1, E2, F0 → R4 边界    | `5dc71c0b` · `5d8d7b0f` · `eff49343`                                                |
+| **未闭合** | **R3-DCP-06**  | **G1, K2 五轴真 clean**     | **Execute DONE** — `test_layer1_*_clean_e2e` + panel smoke 绿；**待 Audit + merge** |
 
 ### Pass C — 2026-06-29c（`authority_graph.yaml` v2 ↔ §3 对齐）
 

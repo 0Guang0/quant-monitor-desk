@@ -1,0 +1,3 @@
+{"file": ".trellis/tasks/wave4-r3-dcp-06-five-axis-clean/AUDIT.plan.md", "reason": "extract: Audit SSOT | for: A1-A8 boot"}
+{"file": ".trellis/tasks/wave4-r3-dcp-06-five-axis-clean/frozen/R3_DCP_06_LAYER1_FIVE_AXIS_CLEAN.md", "reason": "extract: frozen task card trace | for: A5 scope"}
+{"file": ".trellis/tasks/wave4-r3-dcp-06-five-axis-clean/EXECUTION_INDEX.md", "reason": "extract: manifest index | for: A1/A5/A8"}
