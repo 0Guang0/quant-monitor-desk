@@ -1,0 +1,5 @@
+{
+  "task": "07-02-wave4-r3-dcp-07-layer2",
+  "acs": [],
+  "modules": ["project_scaffold", "layer2_sensors", "ops", "governance"]
+}

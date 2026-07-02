@@ -1,5 +1,10 @@
 """Layer 2 cross-asset sensors (Round 3 Batch 3 — staged-only)."""
 
+from backend.app.layer2_sensors.clean_observation_reader import (
+    Layer2CleanObservationFallbackForbiddenError,
+    Layer2CleanObservationReadError,
+    Layer2CleanObservationReader,
+)
 from backend.app.layer2_sensors.double_count_guard import (
     DoubleCountGuardError,
     assert_model_eligible,
@@ -25,6 +30,7 @@ from backend.app.layer2_sensors.observation_writer import Layer2ObservationWrite
 from backend.app.layer2_sensors.resource_guard_helper import ResourceGuardBlockedError
 from backend.app.layer2_sensors.roll_writer import Layer2RollEventWriter
 from backend.app.layer2_sensors.sensor_loader import (
+    CLEAN_REPLAY_REGISTRY_FIXTURE,
     CrossAssetRegistryLoader,
     CrossAssetRegistryLoadError,
     CrossAssetRegistryWriter,
@@ -35,6 +41,7 @@ from backend.app.layer2_sensors.snapshot_builder import (
 )
 
 __all__ = [
+    "CLEAN_REPLAY_REGISTRY_FIXTURE",
     "ContractLiquidity",
     "CrossAssetDailySnapshot",
     "CrossAssetLoadResult",
@@ -48,6 +55,9 @@ __all__ = [
     "DoubleCountGuardError",
     "FuturesRollError",
     "FuturesRollHandler",
+    "Layer2CleanObservationFallbackForbiddenError",
+    "Layer2CleanObservationReadError",
+    "Layer2CleanObservationReader",
     "Layer2LineageBuilder",
     "Layer2LineageEnvelope",
     "Layer2LineageError",

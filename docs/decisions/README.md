@@ -11,6 +11,7 @@
 | [ADR-027](ADR-027-r3h08-product-live-env-gate.md)                     | Product live env gate (R3H-08)                                    |
 | [ADR-028](ADR-028-dcp05-tier-a-clean-domain-extension.md)             | DCP-05 Tier A clean domain extension                              |
 | [ADR-029](ADR-029-dcp06-layer1-five-axis-clean-read.md)               | DCP-06 Layer1 five-axis clean read                                |
+| [ADR-032](ADR-032-dcp07-layer2-vix-clean-read.md)                     | DCP-07 Layer2 L2-VIX clean read (VIXCLS / axis_observation)       |
 | [ADR-033](ADR-033-dcp08-layer4-us-eq-clean-read.md)                   | DCP-08 Layer4 US_EQ clean read + registry dual-primary            |
 
 Ponytail audit equivalence: this project uses the `ponytail-review` / `code-simplification` skills as the formal simplification audit path when the standalone `ponytail` CLI is unavailable (Round2 audit P3-04).

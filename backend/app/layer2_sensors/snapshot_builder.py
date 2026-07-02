@@ -25,10 +25,11 @@ from backend.app.layer2_sensors.models import (
     Layer2LineageEnvelope,
     MainContractRollEvent,
 )
+from backend.app.layer2_sensors.clean_observation_reader import resolve_clean_db_key
 from backend.app.layer2_sensors.observation import (
     CrossAssetObservationError,
     assert_observation_asset_match,
-    assert_staged_source,
+    assert_observation_source,
     filter_observations_for_as_of,
 )
 from backend.app.layer2_sensors.resource_guard_helper import assert_resource_guard_allows
@@ -86,7 +87,7 @@ class CrossAssetSnapshotBuilder:
                 f"no observations for {registry_entry.asset_id!r} on trade_date={trade_date}"
             )
         for obs in visible:
-            assert_staged_source(registry_entry, obs)
+            assert_observation_source(registry_entry, obs)
 
         latest = max(visible, key=lambda o: o.trade_time)
         prev = _find_previous_close(visible, latest)
@@ -131,7 +132,7 @@ class CrossAssetSnapshotBuilder:
             as_of=as_of,
             input_window_start=window_start,
             input_window_end=window_end,
-            source_dataset_ids=(f"staged:cross_asset_observation:{registry_entry.asset_id}",),
+            source_dataset_ids=(_lineage_source_dataset_id(registry_entry),),
             source_fetch_ids=source_fetch_ids,
             source_content_hashes=source_content_hashes,
             rule_version=self._rule_version,
@@ -160,6 +161,13 @@ class CrossAssetSnapshotBuilder:
             active_contract=active_contract,
         )
         return snapshot, lineage, roll_event
+
+
+def _lineage_source_dataset_id(registry_entry: CrossAssetRegistryEntry) -> str:
+    if registry_entry.primary_source == "fred":
+        db_key = resolve_clean_db_key(registry_entry.instrument_id)
+        return f"fred:axis_observation:{db_key}"
+    return f"staged:cross_asset_observation:{registry_entry.asset_id}"
 
 
 def _find_previous_close(

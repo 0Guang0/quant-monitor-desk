@@ -28,6 +28,10 @@ SENSITIVE_KEYWORDS = (
 _TEST_MODULE = re.compile(r"tests/test_[a-zA-Z0-9_]+\.py")
 
 
+def _is_audit_sandbox_path(path: Path) -> bool:
+    return ".audit-sandbox" in path.parts
+
+
 def _pytest_targets_exist(target: str) -> bool:
     norm = target.replace("\\", "/")
     if "::" in norm:
@@ -68,6 +72,8 @@ def _task_plan_section_tests() -> set[str]:
             continue
         tests |= _tests_in_plan_text(frozen.read_text(encoding="utf-8"), index=False)
     for master in tasks_root.rglob("MASTER.plan.md"):
+        if _is_audit_sandbox_path(master):
+            continue
         rel = master.as_posix().replace("\\", "/")
         if "/archive/" in rel or "/tasks/archive/" in rel:
             continue

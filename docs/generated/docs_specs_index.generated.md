@@ -44,6 +44,7 @@ Used with MIGRATION_MAP.md for machine omission checks (`check_docs_specs_indexe
 - `docs/decisions/ADR-027-r3h08-product-live-env-gate.md`
 - `docs/decisions/ADR-028-dcp05-tier-a-clean-domain-extension.md`
 - `docs/decisions/ADR-029-dcp06-layer1-five-axis-clean-read.md`
+- `docs/decisions/ADR-032-dcp07-layer2-vix-clean-read.md`
 - `docs/decisions/ADR-033-dcp08-layer4-us-eq-clean-read.md`
 - `docs/decisions/README.md`
 - `docs/implementation_tasks/BATCH_FOLDER_REHOME_PLAN.md`
@@ -185,6 +186,7 @@ Used with MIGRATION_MAP.md for machine omission checks (`check_docs_specs_indexe
 - `docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/R3_DCP_03_POST_WRITE_INSPECT.md`
 - `docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/R3_DCP_05_TIER_A_INCREMENTAL.md`
 - `docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/R3_DCP_06_LAYER1_FIVE_AXIS_CLEAN.md`
+- `docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/R3_DCP_07_LAYER2_CROSS_ASSET.md`
 - `docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/R3_DCP_08_LAYER4_MARKET_STRUCTURE.md`
 - `docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/R3_DCP_TO_ISSUES_INDEX.md`
 - `docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/README.md`
