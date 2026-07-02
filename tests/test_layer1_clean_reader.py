@@ -12,6 +12,8 @@ from backend.app.layer1_axes.clean_observation_reader import (
     amihud_observations_from_bars,
     read_bar_history,
     read_macro_clean_observations,
+    resolve_bar_read_limit,
+    resolve_read_limit,
 )
 from tests.layer1_clean_e2e_support import (
     AS_OF,
@@ -90,3 +92,40 @@ def test_layer1CleanReader_amihudFromSpyBars(tmp_path) -> None:
     assert len(obs) >= 25
     assert obs[-1].indicator_id == "LIQ.B-I1.AMIHUD_ILLIQ"
     assert obs[-1].raw_value is not None and obs[-1].raw_value > 0
+
+
+def test_layer1CleanReader_macroRespectsWhitelistRowCap(tmp_path) -> None:
+    """覆盖范围：macro clean 读默认 limit 受 K1 row_cap 约束
+    测试对象：read_macro_clean_observations + resolve_read_limit
+    目的/目标：A4 — 种子行数超过 cap 时 reader 返回 ≤ whitelist row_cap
+    验证点：seed 600 行；读 ENV-E1-DGS10 len≤500；显式 limit=999 仍≤500
+    失败含义：clean 读可无界拉取，违背 resource_limits / whitelist cap
+    """
+    cm = bootstrap_layer1_clean_db(tmp_path)
+    start = date(2024, 1, 1)
+    with cm.writer() as con:
+        seed_macro_series(con, db_indicator_id="DGS10", n=600, start=start, base_value=4.0)
+        default_obs = read_macro_clean_observations(con, "ENV-E1-DGS10", as_of_end=AS_OF)
+        explicit_obs = read_macro_clean_observations(
+            con, "ENV-E1-DGS10", as_of_end=AS_OF, limit=999
+        )
+    cap = resolve_read_limit("ENV-E1-DGS10")
+    assert cap == 500
+    assert len(default_obs) <= cap
+    assert len(explicit_obs) <= cap
+
+
+def test_layer1CleanReader_barHistoryRespectsWhitelistRowCap(tmp_path) -> None:
+    """覆盖范围：bar clean 读 limit 受 K1 SPY row_cap 约束
+    测试对象：read_bar_history + resolve_bar_read_limit
+    目的/目标：A4 — 流动性 ponytail bar 历史不超过 whitelist row_cap
+    验证点：seed 400 bars；读 SPY len≤300
+    失败含义：Amihud 输入可无界膨胀，违背 A4 cap 证明
+    """
+    cm = bootstrap_layer1_clean_db(tmp_path)
+    with cm.writer() as con:
+        seed_spy_bars(con, n=400, start=date(2024, 1, 1))
+        bars = read_bar_history(con, "SPY")
+    cap = resolve_bar_read_limit("SPY")
+    assert cap == 300
+    assert len(bars) <= cap

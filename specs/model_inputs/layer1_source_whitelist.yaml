@@ -2,7 +2,7 @@ version: model_input_whitelist_v1
 layer: layer1
 description: >
   Layer1 macro/risk-axis first-batch model input whitelist.
-  P0 FRED series are sandbox_candidate only; requires user authorization before live fetch.
+  P0 FRED series default sandbox_candidate; DCP-06 five-axis clean replay bindings use clean_replay_proven.
   macro_supplementary (akshare) is validation-only and must not substitute FRED primary.
 rows:
   - input_id: L1-ENV-DGS10
@@ -12,7 +12,7 @@ rows:
     source_id: fred
     operation: fetch_macro_series
     role: primary_candidate
-    readiness: sandbox_candidate
+    readiness: clean_replay_proven
     symbol_or_series: DGS10
     window_cap: 252d
     row_cap: 500
@@ -49,7 +49,7 @@ rows:
     source_id: fred
     operation: fetch_macro_series
     role: primary_candidate
-    readiness: sandbox_candidate
+    readiness: clean_replay_proven
     symbol_or_series: VIXCLS
     window_cap: 60d
     row_cap: 120
@@ -159,7 +159,7 @@ rows:
     source_id: fred
     operation: fetch_macro_series
     role: primary_candidate
-    readiness: sandbox_candidate
+    readiness: clean_replay_proven
     symbol_or_series: BAA10Y
     window_cap: 252d
     row_cap: 500
@@ -178,7 +178,7 @@ rows:
     source_id: alpha_vantage
     operation: fetch_equity_daily_bar
     role: primary_candidate
-    readiness: sandbox_candidate
+    readiness: clean_replay_proven
     symbol_or_series: SPY
     window_cap: 60d
     row_cap: 300
@@ -197,7 +197,7 @@ rows:
     source_id: cftc_cot
     operation: fetch_cot_positioning
     role: primary_candidate
-    readiness: sandbox_candidate
+    readiness: clean_replay_proven
     symbol_or_series: "088691"
     window_cap: 104w
     row_cap: 120

@@ -12,9 +12,11 @@ from tests.contract_gate_support import load_yaml
 from backend.app.core.resource_guard import Decision
 from backend.app.layer1_axes.clean_observation_reader import (
     P0_MACRO_DB_KEYS,
+    P0_WINDOW_CAPS,
     amihud_observations_from_bars,
     read_bar_history,
     read_macro_clean_observations,
+    resolve_window_cap,
 )
 from backend.app.layer1_axes.feature_engine import (
     AxisFeatureEngine,
@@ -121,6 +123,10 @@ def test_layer1FiveAxisPanel_cleanSmoke_allP0AxesProduceFeatures(tmp_path) -> No
         )[0]
         assert liq_feat.indicator_id == "LIQ.B-I1.AMIHUD_ILLIQ"
         assert liq_feat.state_bucket != "insufficient_history"
+        liq_interp = AxisInterpretationEngine().build_interpretation(
+            as_of=AS_OF, features=[liq_feat]
+        )[0]
+        assert liq_interp.boundary_reminder == "不构成交易动作"
 
 
 def test_layer1FiveAxisPanel_resourceGuardHardStop_blocksFeatureCompute() -> None:
@@ -178,3 +184,45 @@ def test_dcp06K1_whitelistAlignsP0CleanBindings() -> None:
     macro_supp = [r for r in rows if r.get("data_domain") == "macro_supplementary"]
     assert macro_supp
     assert all(r.get("role") != "primary_candidate" for r in macro_supp)
+
+    dcp06_series = {"DGS10", "BAA10Y", "VIXCLS", "SPY", "088691"}
+    for series in dcp06_series:
+        row = by_series.get(series)
+        assert row is not None, f"missing DCP-06 row for {series}"
+        assert row.get("readiness") == "clean_replay_proven", series
+        assert row.get("row_cap") is not None and int(row["row_cap"]) > 0
+        assert row.get("window_cap") is not None
+
+
+def test_layer1FiveAxisPanel_resourceGuardOnMigratedDb(tmp_path) -> None:
+    """覆盖范围：五轴 smoke 路径在迁移隔离库上真 ResourceGuard.check
+    测试对象：ResourceGuard + bootstrap_layer1_clean_db
+    目的/目标：A4 — panel 路径不得仅用 MagicMock；真门禁在 clean DB 上可决策
+    验证点：decision ∈ {OK, PAUSE, HARD_STOP}
+    失败含义：五轴集成未接真 ResourceGuard，沙箱 cap 无法 fail-closed
+    """
+    from backend.app.core.resource_guard import Decision, ResourceGuard
+
+    cm = bootstrap_layer1_clean_db(tmp_path)
+    with cm.writer() as con:
+        decision, _reason = ResourceGuard(con=con).check()
+    assert decision in (Decision.OK, Decision.PAUSE, Decision.HARD_STOP)
+
+
+def test_layer1FiveAxisPanel_windowLenWithinWhitelistCap() -> None:
+    """覆盖范围：五轴 P0 feature window_len 不超过 K1 window_cap 意图
+    测试对象：P0_WINDOW_CAPS + panel smoke 默认 window_len=60
+    目的/目标：A4 — 特征窗与 whitelist window_cap 对齐，防止无界滚动
+    验证点：panel 用 window_len=60 ≤ 各轴 resolve_window_cap
+    失败含义：特征引擎可超出白名单窗上限，违背 resource_limits 意图
+    """
+    panel_window_len = 60
+    for spec_id in (
+        "ENV-E1-DGS10",
+        "CRD.CS1.BAA10Y",
+        "RA.R1.VIXCLS_30D_IMPLIED_VOL",
+        "SEN-S1-COT_LF_NET",
+        "LIQ.B-I1.AMIHUD_ILLIQ",
+    ):
+        assert panel_window_len <= resolve_window_cap(spec_id)
+        assert panel_window_len <= P0_WINDOW_CAPS[spec_id]

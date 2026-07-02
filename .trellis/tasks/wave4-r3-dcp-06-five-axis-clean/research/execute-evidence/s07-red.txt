@@ -1,0 +1,7 @@
+S07 RED — expected failures before repair implementation:
+- test_layer1FiveAxisPanel_cleanSmoke: LIQ missing AxisInterpretationEngine assert
+- test_dcp06K1_whitelistAlignsP0CleanBindings: readiness still sandbox_candidate
+- test_layer1_p0_dcp06_cleanReplayProven: module/test missing
+- test_layer1CleanReader_macroRespectsWhitelistRowCap: missing
+- test_layer1FiveAxisPanel_resourceGuardOnMigratedDb: missing
+- test_layer1FiveAxisPanel_windowLenWithinWhitelistCap: missing

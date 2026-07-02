@@ -27,6 +27,45 @@ P0_BAR_BINDING: dict[str, str] = {
     "LIQ.B-I1.AMIHUD_ILLIQ": "SPY",
 }
 
+# ponytail: mirror K1 whitelist row_cap/window_cap numbers; upgrade: load YAML at runtime
+P0_ROW_CAPS: dict[str, int] = {
+    "ENV-E1-DGS10": 500,
+    "CRD.CS1.BAA10Y": 500,
+    "RA.R1.VIXCLS_30D_IMPLIED_VOL": 120,
+    "SEN-S1-COT_LF_NET": 120,
+    "LIQ.B-I1.AMIHUD_ILLIQ": 300,
+}
+
+P0_WINDOW_CAPS: dict[str, int] = {
+    "ENV-E1-DGS10": 252,
+    "CRD.CS1.BAA10Y": 252,
+    "RA.R1.VIXCLS_30D_IMPLIED_VOL": 60,
+    "SEN-S1-COT_LF_NET": 104,
+    "LIQ.B-I1.AMIHUD_ILLIQ": 60,
+}
+
+
+def resolve_read_limit(spec_indicator_id: str, *, requested: int | None = None) -> int:
+    cap = P0_ROW_CAPS.get(spec_indicator_id, 500)
+    if requested is None:
+        return cap
+    return min(requested, cap)
+
+
+def resolve_window_cap(spec_indicator_id: str) -> int:
+    return P0_WINDOW_CAPS.get(spec_indicator_id, 252)
+
+
+def resolve_bar_read_limit(instrument_id: str, *, requested: int | None = None) -> int:
+    spec_id = next(
+        (sid for sid, sym in P0_BAR_BINDING.items() if sym == instrument_id),
+        None,
+    )
+    cap = P0_ROW_CAPS.get(spec_id, 300) if spec_id else 300
+    if requested is None:
+        return cap
+    return min(requested, cap)
+
 
 class CleanObservationReadError(LookupError):
     """Clean table has no usable rows for the requested P0 indicator."""
@@ -77,10 +116,11 @@ def read_macro_clean_observations(
     spec_indicator_id: str,
     *,
     as_of_end: datetime | None = None,
-    limit: int = 500,
+    limit: int | None = None,
 ) -> list[AxisObservation]:
     """Load macro/COT rows from axis_observation; fail-closed if empty."""
     db_key = resolve_macro_db_key(spec_indicator_id)
+    effective_limit = resolve_read_limit(spec_indicator_id, requested=limit)
     params: list[object] = [db_key]
     sql = """
         SELECT indicator_id, as_of_timestamp, publish_timestamp, raw_value,
@@ -92,7 +132,7 @@ def read_macro_clean_observations(
         sql += " AND publish_timestamp <= ?"
         params.append(as_of_end)
     sql += " ORDER BY publish_timestamp ASC LIMIT ?"
-    params.append(limit)
+    params.append(effective_limit)
     rows = con.execute(sql, params).fetchall()
     if not rows:
         raise CleanObservationReadError(
@@ -129,9 +169,10 @@ def read_bar_history(
     con,
     instrument_id: str,
     *,
-    limit: int = 300,
+    limit: int | None = None,
 ) -> list[dict[str, object]]:
     """Return ascending bar dicts from security_bar_1d."""
+    effective_limit = resolve_bar_read_limit(instrument_id, requested=limit)
     rows = con.execute(
         """
         SELECT trade_date, open, high, low, close, volume, source_used
@@ -140,7 +181,7 @@ def read_bar_history(
         ORDER BY trade_date ASC
         LIMIT ?
         """,
-        [instrument_id, limit],
+        [instrument_id, effective_limit],
     ).fetchall()
     if not rows:
         raise CleanObservationReadError(
