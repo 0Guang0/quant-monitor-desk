@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import inspect
 import os
 import warnings
 from pathlib import Path
@@ -109,11 +110,13 @@ def _patch_path_for_windows_long_paths() -> None:
     _orig_exists = Path.exists
     _orig_read_text = Path.read_text
     _orig_read_bytes = Path.read_bytes
+    _is_file_accepts_follow = "follow_symlinks" in inspect.signature(_orig_is_file).parameters
 
     def _is_file(self, follow_symlinks: bool = True) -> bool:
-        if needs_extended_path(self):
-            return _orig_is_file(to_extended_path(self), follow_symlinks=follow_symlinks)
-        return _orig_is_file(self, follow_symlinks=follow_symlinks)
+        target = to_extended_path(self) if needs_extended_path(self) else self
+        if _is_file_accepts_follow:
+            return _orig_is_file(target, follow_symlinks=follow_symlinks)
+        return _orig_is_file(target)
 
     def _exists(self, follow_symlinks: bool = True) -> bool:
         if needs_extended_path(self):
