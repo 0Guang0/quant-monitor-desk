@@ -1,0 +1,11 @@
+S02-CREDIT-STRESS RED evidence
+Date: 2026-07-02
+Slice: test_layer1_credit_stress_clean_e2e.py
+
+Pre-implementation (module absent):
+  uv run pytest tests/test_layer1_credit_stress_clean_e2e.py -q
+  → ERROR: file or directory not found: tests/test_layer1_credit_stress_clean_e2e.py
+
+RED confirmed: no S02 e2e module; CRD.CS1.BAA10Y vertical unproven.
+
+Reference evidence: research/execute-reference-read-evidence-s02-credit.md
