@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 
 from tests.contract_gate_support import PROJECT_ROOT
+from tests.repo_paths import repo_relative
 
 INDEX_PATH = PROJECT_ROOT / "docs/INDEX.md"
 LINK_PATTERN = re.compile(r"\[[^\]]*\]\(([^)]+)\)")
@@ -60,7 +61,10 @@ def test_docsIndex_relativeLinks_resolveToExistingFiles() -> None:
         path_part = link.split("#", 1)[0]
         if not path_part:
             continue
-        target = (INDEX_PATH.parent / path_part).resolve()
+        if path_part.startswith("../"):
+            target = (INDEX_PATH.parent / path_part).resolve()
+        else:
+            target = repo_relative(f"docs/{path_part}")
         if not target.exists():
             broken.append(link)
     assert not broken, f"broken INDEX.md links: {broken}"

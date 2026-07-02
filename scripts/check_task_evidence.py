@@ -48,7 +48,9 @@ def _evidence_path_exists(task_dir: Path, repo_root: Path, rel: str) -> bool:
             return True
     except ValueError:
         pass
-    root = (repo_root / norm).resolve()
+    from repo_path_resolve import resolve_repo_path
+
+    root = resolve_repo_path(norm).resolve()
     try:
         root.relative_to(repo_root.resolve())
         return root.is_file()

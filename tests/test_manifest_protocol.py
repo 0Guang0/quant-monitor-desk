@@ -10,6 +10,7 @@ import sys
 from pathlib import Path
 
 from tests.contract_gate_support import PROJECT_ROOT
+from tests.repo_paths import repo_relative
 
 REPO = PROJECT_ROOT
 SCRIPTS = REPO / ".trellis" / "scripts"
@@ -150,7 +151,7 @@ def test_implement_jsonl_paths_exist():
             resolved = _resolve_task_artifact(rel)
             assert resolved is not None and resolved.is_file(), rel
             continue
-        assert (REPO / rel).is_file(), rel
+        assert repo_relative(rel).is_file(), rel
 
 
 def test_batch_d_v3_artifacts():

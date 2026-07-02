@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 from tests.contract_gate_support import PROJECT_ROOT, load_yaml
+from tests.repo_paths import repo_relative
 
 CONTRACT = PROJECT_ROOT / "specs/contracts/sandbox_clean_write_contract.yaml"
 FRED_AUTH = PROJECT_ROOT / ".audit-sandbox/round3g/fred_user_authorization.yaml"
@@ -62,7 +63,7 @@ def test_r3g01TaskCard_linkedFromContract() -> None:
     失败含义：Execute 无法从契约路由到 R3G-01 实施说明
     """
     rel = _contract()["canonical_task_cards"]["R3G-01"]
-    card = PROJECT_ROOT / rel
+    card = repo_relative(rel)
     assert card.is_file(), f"missing task card: {rel}"
     assert "sandbox_clean_write_contract.yaml" in card.read_text(encoding="utf-8")
 

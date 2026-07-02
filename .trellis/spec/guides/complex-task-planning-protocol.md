@@ -77,7 +77,7 @@
 
 1. `docs/implementation_tasks/README.md`
 2. `docs/implementation_tasks/TASK_INPUT_CONTEXT_INDEX.md`（Plan-only 上下文桥）
-3. 当前 Round 批次地图：优先读取仓库根目录的 `ROUND*_BATCH_IMPLEMENTATION_MAP.md`（例如 `ROUND3_BATCH_IMPLEMENTATION_MAP.md`；后续 Round 可改写为 `ROUND4_BATCH_IMPLEMENTATION_MAP.md`）。该文件是 Plan 阶段的**批次切片与索引权威入口**：先用它确认当前 Batch / Item IDs / Plan source bundle / MASTER-AUDIT trace requirement / manifest policy，再决定哪些原始任务卡与输入文件需要读取。若当前 Round 没有 batch map，Plan 必须在 `research/plan-boot.md` 记录缺失，并退回 `docs/implementation_tasks/README.md` + 当前 Round README。
+3. 当前 Round 批次地图（**历史 Round**）：正文在 `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND3_BATCH_IMPLEMENTATION_MAP.md`（根目录 `ROUND3_BATCH_IMPLEMENTATION_MAP.md` 仅为 redirect）。**活规划**以 `PROJECT_IMPLEMENTATION_ROADMAP.md` §3 模块票为准，禁止按旧地图新开 Wave/DCP 完整流程。若 Plan 仍须读历史批次索引，用归档路径；新 Round 可新建 `ROUND4_BATCH_IMPLEMENTATION_MAP.md`。若无 batch map，Plan 必须在 `research/plan-boot.md` 记录缺失，并退回 `docs/implementation_tasks/README.md` + 当前 Round README。
 4. `MIGRATION_MAP.md`（**可选人类全量导航**；机器遗漏检查见 `uv run python scripts/check_docs_specs_indexed.py`）
 5. `docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md`
 6. `docs/implementation_tasks/GLOBAL_TESTING_POLICY.md`

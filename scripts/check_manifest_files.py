@@ -36,7 +36,9 @@ def check_manifest(
         if not rel:
             errors.append("manifest entry missing path")
             continue
-        path = REPO_ROOT / rel
+        from repo_path_resolve import resolve_repo_path
+
+        path = resolve_repo_path(rel)
         if not path.is_file():
             errors.append(f"missing file: {rel}")
             continue

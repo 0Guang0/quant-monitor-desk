@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 from tests.contract_gate_support import PROJECT_ROOT
+from tests.repo_paths import impl_task
 
 AUDIT_TEMPLATE = PROJECT_ROOT / "docs/quality/round3h_real_data_production_entry_audit.md"
-TASK_ROOT = (
-    PROJECT_ROOT
-    / "docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY"
-    / "BATCH_3H_REAL_DATA_PRODUCTION_ENTRY"
+TASK_ROOT = impl_task(
+    "ROUND_3_REAL_DATA_PRODUCTION_ENTRY",
+    "BATCH_3H_REAL_DATA_PRODUCTION_ENTRY",
 )
 
 REQUIRED_AUDIT_FIELDS = {

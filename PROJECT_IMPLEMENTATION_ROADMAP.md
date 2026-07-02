@@ -1,18 +1,24 @@
 # QMD 项目实施总路线图（模块轨道版）
 
-> **版本：** 2026-06-29（模块轨道重写；用户裁决：五轴 PASS 前全绿）  
-> **定位：** 根目录总施工图 — 以 **51 个 Module ID**（`MODULE_COMPLETION_RATING.md` §3）为行，串联评级、波次、任务卡与门禁。  
-> **通俗解释：** 本文件回答「每个模块现在几级、还差几批、在哪一轮闭合」；**任务卡才是工单**，`PRODUCTION_COMPLETION_VERTICAL_SLICE_PLAN.md` 只是覆盖地图。  
-> **上一版备份：** `PROJECT_IMPLEMENTATION_ROADMAP.legacy-20260629.md`（Wave 平铺叙事、§5.0.6 等仍可查）  
-> **进度复核：** `git log` @ 2026-07-02 — Wave 1–3 **CLOSED**；Wave 4 **`R3-DCP-05` CLOSED** @ `c2258363` · **`R3-DCP-06` CLOSED** @ `6c6cdd73`；**`R3-DCP-07..10` OPEN**；活轨见 §3。
+> **版本：** 2026-07-02（规划 SSOT 收敛；`R3H_PASS_EXECUTION_PLAN.md` **已归档**）  
+> **定位：** 根目录**唯一活规划** — 以 **51 个 Module ID** 为行；完成度以 **`MODULE_COMPLETION_RATING.md` Pass E** 为准（代码+测试，非任务卡自述）。  
+> **通俗解释：** 本文件回答「下一步做什么业务、关哪个模块、怎样算做完」；**新任务卡才是工单**；历史 Wave 叙事见 legacy / 归档。  
+> **上一版备份：** `docs/archive/planning/PROJECT_IMPLEMENTATION_ROADMAP.legacy-20260629.md` · `R3H_PASS_EXECUTION_PLAN.archived-20260702.md`  
+> **进度复核：** `git log` @ 2026-07-02 — 历史 Wave 1–4 代码已 merge；**模块 Rating 多数未达任务卡声称的 R4** — 见 `MODULE_COMPLETION_RATING.md` §0。  
+> **重构：** §3 **模块闭环队列 v2** 已按用户 grill-gate @ 2026-07-02 生效；§3L 为历史 Wave 编排（只读）。
 
-### 当前下一入口
+### 当前下一入口（v2 · 用户确认 @ 2026-07-02）
 
-| 优先级 | 任务                       | 模块  | 说明                                       |
-| ------ | -------------------------- | ----- | ------------------------------------------ |
-| P0     | **Wave 4** `R3-DCP-07..10` | G2–G5 | cross-asset / 市场结构 / backfill / 证据链 |
+| 优先级 | 票 ID | 业务一句话 | 开工前 |
+| ------ | ----- | ---------- | ------ |
+| **P0** | **M-DATA-03** | 11 主源真网增量→写库→巡检（隔离库） | §0.3.3：先 grill-me 确认拿不到 KEY/付费资格的源 → ADR |
+| **P0** | **M-G1-03** | 五轴按设计完整落地（真链，非仅 seed） | 依赖 M-DATA-03 至少宏观/行情 clean 输入就绪 |
+| **P1** | **M-G2-FULL** | Layer2 九组资产按 `layer2_cross_asset_sensor.md` 完整落地 | 单 **Plan→Execute** 流程内多 worktree/串行切片；**统一** A1–A8 Audit |
+| **P1** | **M-G4-FULL** | Layer4 各 `market_id` 按 `layer4_market_structure.md` 完整落地 | 同上；可与 G2/G5 **并行**（不同 graph 节点） |
+| **P1** | **M-G5-FULL** | Layer5 证据链按 `layer5_security_evidence.md` 完整落地 | 同上 |
+| **P0** | **M-PASS-01** | `PASS_ROUND4_REAL_DATA_READY`（真实代码+真跑，见 §6.1） | **末位**：前述阻塞模块 MCR Rating 诚实 + 清单全绿 |
 
-索引：`docs/implementation_tasks/.../R3_DCP_TO_ISSUES_INDEX.md` §3
+活评级：`MODULE_COMPLETION_RATING.md` · 工程契约：`全局规则.txt` · 历史 Wave：§3L / `R3H_PASS_EXECUTION_PLAN.archived-20260702.md`
 
 ---
 
@@ -23,29 +29,79 @@
 | 完成度运营快照                   | `MODULE_COMPLETION_RATING.md` §3          |
 | 机器索引                         | `specs/context/authority_graph.yaml` v2   |
 | 项目地图                         | `docs/generated/project_map.generated.md` |
-| Round3 PASS 协调（Tier / 24 源） | `R3H_PASS_EXECUTION_PLAN.md`              |
+| Tier A/B/C 落库逐源表（只读）    | `R3H_PASS_EXECUTION_PLAN.archived-20260702.md` §2.1 |
 | Round4 产品范围                  | `BATCH_04_TASK_CARD_MANIFEST.md`          |
 | DataSync 五类 job / 写库         | 本文 **§5.1**                             |
 | Wave 0 `/to-issues` 范例         | `WAVE0_BATCH3V_TO_ISSUES_INDEX.md`        |
-| Round3 活轨 `/to-issues` 索引    | 本文 **§3.6**（随波次开工增补）           |
+| Round3 活轨 `/to-issues` 索引    | 本文 **§3.7** · `docs/implementation_tasks/README.md` |
 
 ### 0.1 用户裁决（有效）
 
 | 议题                   | 裁决                                                      |
 | ---------------------- | --------------------------------------------------------- |
-| Round4 入口            | **`PASS_ROUND4_REAL_DATA_READY`**（非 WARN 主路径）       |
+| **PASS 判定**          | **真实代码 + 真实运行**（§0.3.1）；非任务 CLOSED / 文档勾选 |
+| **模块 scope**         | 设计权威 **完整落地**；单流程多切片 + 统一 Audit（§0.3.2） |
+| **11 源真网**          | M-DATA-03 硬要求；无资格 → ADR+占位（§0.3.3）            |
+| Round4 入口            | **`PASS_ROUND4_REAL_DATA_READY`** = **M-PASS-01**（§6.1 v2） |
 | `web_search` 真 API    | **post-Round4** 独立模块（`R3H-WEB-SEARCH` / J5）         |
-| 真网 live              | env-gated → Tier A/B/C（`R3H_PASS_EXECUTION_PLAN.md` §2） |
+| 真网 live              | env-gated → Tier A/B/C（归档 §2.1；新票写入模块闭环 AC） |
 | 后端优先               | **Round3 闭合数据面 + 五轴 + 增量** 后再开 Round4 产品    |
 | **Layer1 五轴（G12）** | **PASS 前必须 pytest 全绿**（非 Round4+ 可选项）          |
-| R3-DCP 增量试点源      | **baostock + fred**（见 §3.3 白话说明）                   |
+| R3-DCP 增量试点源      | **历史**；新票 **M-DATA-03** 覆盖 11 源真网（§0.3.3）   |
+
+### 0.3 用户 grill-gate @ 2026-07-02（规划约束 · 有效）
+
+#### 0.3.1 PASS 门禁 `PASS_ROUND4_REAL_DATA_READY`
+
+| 项 | 裁决 |
+| -- | ---- |
+| **名称** | 可继续叫 `PASS_ROUND4_REAL_DATA_READY` |
+| **过关定义** | **M-PASS-01 清单逐项真绿** + **`MODULE_COMPLETION_RATING.md` 阻塞模块无「R3 假完成」** |
+| **判定依据** | **真实代码 + 真实运行**（隔离库/受控 env）；**禁止**任务卡 CLOSED、文档勾选、tmp DB seed 冒充 |
+| **与旧 Wave 关系** | Wave 1–4 CLOSED **不自动算 PASS**；仅作历史证据索引 |
+
+#### 0.3.2 模块落地范围（G2 / G4 / 全体建模）
+
+| 项 | 裁决 |
+| -- | ---- |
+| **范围** | **设计权威完整落地** — `docs/modules/`、`specs/contracts/`、`specs/layer*` 等规定的**成品形态**即为交付标准，**禁止**「只做 P0 子集却宣称模块 CLOSED」 |
+| **G2** | `layer2_cross_asset_sensor.md` §2 **九组资产**全覆盖（非「多加一个 VIX」） |
+| **G4** | `layer4_market_structure.md` §2 各 `market_id`（含 CN_A / US_EQ / HK_EQ …）按设计落地 |
+| **G5** | `layer5_security_evidence.md` §2–3 第一阶段资产域 + 证据链完整落地（非「单 mootdx 样本」） |
+| **拆法** | **允许**在一个 **Plan→Execute 完整流程**内：多执行者 **并行 worktree** 或 **串行分批**，全部做完后 **统一 A1–A8 Audit** |
+| **禁止** | 把**同一模块的完整成品**拆成多张独立「完整流程任务」（每张都 Plan/Audit/Repair）— 过去 Wave/DCP 教训 |
+| **允许** | 单流程内分阶段；阶段间可插 **单次对抗性审计 agent**；**不得**每阶段各走一遍完整 8 维 Audit |
+
+#### 0.3.3 数据管道 M-DATA-03（11 源 Tier A）
+
+| 项 | 裁决 |
+| -- | ---- |
+| **PASS 硬要求** | **11/11** 源须 **逻辑完整实现**；能真网的必须 **真连网 → 增量 sync → 写 clean → 巡检通过** |
+| **验收环境** | **隔离库**（`.audit-sandbox` / 专用 `DATA_ROOT`）；**禁止污染主库**、不可逆破坏 |
+| **拿不到资格的源** | **开工前** grill-me 与用户确认（API KEY、付费通道、地域限制等）→ **ADR** 登记「当前无法真网」 |
+| **ADR 源仍须** | replay/逻辑测绿 + **配置占位**（env/secret 槽位）；用户日后填入 KEY/开通资格后 **无需再开发** 即可真跑 |
+| **不得** | 无 ADR 的无限延后；无占位的「以后接真网」 |
+
+**Tier A 十一源（开工前资格核对用）：** `fred` `us_treasury` `sec_edgar` `cftc_cot` `bis` `world_bank` `alpha_vantage` `deribit` `baostock` `cninfo` `mootdx` — 资格矩阵在 **M-DATA-03 Plan 冻结前**产出 `research/tier-a-live-eligibility.md`。
+
+#### 0.3.4 源资格确认（用户 @ 2026-07-02）
+
+| 源组 | 结论 |
+| ---- | ---- |
+| `fred` | **能** — `FRED_API_KEY` 可提供 → **须真网** |
+| `alpha_vantage` | **能** — API Key 可提供 → **须真网** |
+| `deribit` | **能** — **须真网** |
+| `baostock` / `cninfo` / `mootdx` | **均能** — **须真网** |
+| `us_treasury` / `sec_edgar` / `cftc_cot` / `bis` / `world_bank` | **同意**公开 API 默认无须 KEY → **五源均须真网** |
+
+**ADR 例外（当前）：** **无** — M-DATA-03 按 **11/11 真网** 验收；Plan 冻结时写入 `research/tier-a-live-eligibility.md` 固化本表。
 
 ### 0.2 已核实 canonical 入口
 
 | 范围          | 文件夹 / 文件                                                         |
 | ------------- | --------------------------------------------------------------------- |
 | Batch 3V      | `BATCH_3V_VERIFIED_AUDIT_CLEANUP/` — **CLOSED**                       |
-| Batch 3H PASS | `BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/` + `R3H_PASS_EXECUTION_PLAN.md` |
+| Batch 3H PASS | `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/`（历史） |
 | Round4        | `BATCH_04_VERIFIED_AUDIT_PRODUCTIZATION/`                             |
 | Round5        | `BATCH_05_VERIFIED_AUDIT_SECURITY_RELEASE/`                           |
 
@@ -94,13 +150,13 @@
 | 不引入交易动作     | 禁止 order/broker/terminal 语义                             |
 | 最多三批达 R6      | 同 §1.2                                                     |
 
-### 1.5 Trellis / debt-lite 路由
+### 1.5 Trellis 路由（v2）
 
-| 类型                | 适用                                                                             |
-| ------------------- | -------------------------------------------------------------------------------- |
-| **complex Trellis** | R3H-08 四子轨、R3H-05-GATE、Round4 B04                                           |
-| **debt-lite**       | R3-DCP 小项、Batch6 卫生                                                         |
-| Plan 冻结前         | 须 `/to-issues` 垂直切片（`.trellis` + `WAVE0_BATCH3V_TO_ISSUES_INDEX.md` 格式） |
+| 类型                | 适用                                                                 |
+| ------------------- | -------------------------------------------------------------------- |
+| **complex Trellis** | **§3 活票**（M-DATA-03、M-G*-FULL、M-PASS-01）、Round4 B04          |
+| **debt-lite**       | Batch6 卫生、已 CLOSED 票的小修补（**不得**承接模块完整成品）         |
+| Plan 冻结前         | 活票须 `/to-issues` 垂直切片（§3.6）；**一模块成品 = 一 complex 票** |
 
 ### 1.6 并行与合并
 
@@ -109,78 +165,110 @@
 - **schema DDL：** R3H-06 已封板；新 DDL → Batch6/B05 门禁。
 - **改符号前** `impact()`；**提交前** `detect_changes()`。
 
+### 1.7 完整流程任务规则（用户裁决 @ 2026-07-02）
+
+通俗说：**一个大模块要做满设计书，开「一张大单」；单子里可以多人、多阶段干活，最后统一验收。**
+
+| 允许 | 禁止 |
+| ---- | ---- |
+| 一个 Trellis **complex** 票覆盖 **G2 全模块** 或 **G4 全模块** | 把 G2 拆成 DCP-07、DCP-07b、DCP-07c… 每张独立 Plan/Audit/Repair |
+| 票内 `/to-issues` 竖切：S01…Sn 并行或串行 | 每竖切单独 freeze 一张「完整流程任务」 |
+| 全部 Execute 完后 **一次** A1–A8 | 每完成一个资产/市场就 full Audit |
+| 阶段间 **可选** 单次对抗性审计（check agent） | 用阶段外置把「成品范围」削成 P0 子集且不写 ADR |
+
+**关账时：** `MODULE_COMPLETION_RATING.md` 对应模块 **Rating 必须跃迁**（或 ADR 收窄设计权威并同步改文档）— 与 §0.3.1 一致。
+
+### 1.8 模块 → 活票归属（一模块一完整流程）
+
+> **规则：** 同一 **Module ID 的完整成品**只归属 **一张** §3 complex 票；票内可多批次（S01…Sn），**禁止**再开第二张完整流程票。  
+> **子范围**（K2⊂G1、I8⊂I1）随父模块票闭合，不单独 freeze Plan。
+
+| 活票 | 主模块（Rating 跃迁） | 同票闭合的关联模块 | 设计权威 |
+| ---- | --------------------- | ------------------ | -------- |
+| **M-DATA-03** | C3, D1, E1 → R4 真网 scope | E2, F0, B2 post-write | Tier A §0.3.3 · archived §2.1 |
+| **M-G1-03** | G1 → R4 | K1, K2, A5 | `layer1_global_regime_panel.md` · `specs/layer1_axes/` |
+| **M-G2-FULL** | G2 → R4 | — | `layer2_cross_asset_sensor.md` §2 九组 |
+| **M-G4-FULL** | G4 → R4 | — | `layer4_market_structure.md` §2 各 market |
+| **M-G5-FULL** | G5 → R4 | A3 provenance 绑真源 | `layer5_security_evidence.md` §2–3 |
+| **M-PASS-01** | 门禁清单绿 | C1, C4, B3, G6, A3/A4 终态审计 | 本文 §6.1.1 |
+| **Batch6** | D2, D3, D4, H1, A6 | 不挡 PASS | §5.2 |
+| **Round4 B04** | I1–I8, J2 | PASS 后 | `BATCH_04_TASK_CARD_MANIFEST.md` |
+| **Batch05** | 全体 R6 确认 | A1, A2, A7, E3, E6, J3 | §5.3 |
+
+**历史 CLOSED**（R3H-07/10、R3H-08、R3-DCP-*）：只读证据，**不得**作为新开工路由；未达设计成品 scope 的竖切 → 记入 MCR **Milestone** 列，由上表活票承接余量。
+
 ---
 
 ## 2. 模块轨道总表（51 Module ID）
 
-> 当前 Rx / 批/3 来自 `MODULE_COMPLETION_RATING.md` §3 @ 2026-06-29。  
-> **PASS 阻塞列：** 进 Round4 前须达标的模块（含 **G1+K2 五轴全绿**）。
+> 当前 Rx / 批/3 来自 `MODULE_COMPLETION_RATING.md` §3 @ Pass E。  
+> **活票列：** 模块完整成品的 **唯一** 完整流程归属（§1.8）；历史 R3H/DCP ID 仅作 Milestone 证据。
 
 ### 2.A Platform（A1–A7）
 
-| ID  | 模块               | 当前 | 批/3 | 闭合轮次 | PASS 阻塞 | 下一移动 / 任务                |
-| --- | ------------------ | ---- | ---- | -------- | --------- | ------------------------------ |
-| A1  | Project scaffold   | R3   | 2/3  | R5       | —         | Batch05                        |
-| A2  | DuckDB schema      | R3   | 2/3  | R5       | —         | R3H-06 ✅；Batch05 drift       |
-| A3  | Storage / evidence | R3   | 2/3  | R3→R5    | **是**    | R3H-08：每 READY 源 fetch 证据 |
-| A4  | ResourceGuard      | R3   | 2/3  | R3→R5    | **是**    | R3H-08 全路径 cap              |
-| A5  | Snapshot lineage   | R3   | 2/3  | R4→R5    | —         | G12 快照绑定时                 |
-| A6  | Spec migrator      | R1   | 0/3  | Batch6   | —         | Batch6 或 ADR                  |
-| A7  | Platform matrix    | R2   | 1/3  | R5       | —         | Batch05                        |
+| ID  | 模块               | 当前 | 批/3 | PASS 阻塞 | 活票 / 归属                    |
+| --- | ------------------ | ---- | ---- | --------- | ------------------------------ |
+| A1  | Project scaffold   | R3   | 2/3  | —         | Batch05                        |
+| A2  | DuckDB schema      | R3   | 2/3  | —         | Batch05                        |
+| A3  | Storage / evidence | R3   | 2/3  | **是**    | **M-G5-FULL** + **M-PASS-01**  |
+| A4  | ResourceGuard      | R3   | 2/3  | **是**    | **M-G1-03** / **M-PASS-01**    |
+| A5  | Snapshot lineage   | R3   | 2/3  | —         | **M-G1-03**                    |
+| A6  | Spec migrator      | R1   | 0/3  | —         | Batch6                         |
+| A7  | Platform matrix    | R2   | 1/3  | —         | Batch05                        |
 
 ### 2.B Write path（B1–B3）
 
-| ID  | 模块                | 当前  | 批/3 | PASS 阻塞 | 下一移动                   |
-| --- | ------------------- | ----- | ---- | --------- | -------------------------- |
-| B1  | WriteManager + gate | R4    | 2/3  | —         | R3H-06 ✅；R3H-08 主库路径 |
-| B2  | Data quality        | R3    | 2/3  | **是**    | R3H-08 按源 profile        |
-| B3  | Source conflict     | R2→R3 | 2/3  | **是**    | R3H-08 live outcome        |
+| ID  | 模块                | 当前  | 批/3 | PASS 阻塞 | 活票 / 归属        |
+| --- | ------------------- | ----- | ---- | --------- | ------------------ |
+| B1  | WriteManager + gate | R4    | 2/3  | —         | Batch05 manifest   |
+| B2  | Data quality        | R3    | 2/3  | **是**    | **M-DATA-03**      |
+| B3  | Source conflict     | R2→R3 | 2/3  | **是**    | **M-PASS-01**      |
 
 ### 2.C Data sources（C1–C4, J5）
 
-| ID  | 模块                | 当前 | 批/3 | PASS 阻塞 | 下一移动                  |
-| --- | ------------------- | ---- | ---- | --------- | ------------------------- |
-| C1  | Registry / route    | R3   | 2/3  | **是**    | R3H-05：25 行终态         |
-| C2  | DataSourceService   | R3   | 2/3  | **是**    | **R3H-10**                |
-| C3  | Adapters / ports    | R3   | 2/3  | **是**    | R3H-01～04 ✅；**R3H-08** |
-| C4  | Provider catalog    | R2   | 2/3  | **是**    | R3H-05 posture            |
-| J5  | web_search live API | R3   | 1/3  | —         | **DEFERRED post-R4**      |
+| ID  | 模块                | 当前 | 批/3 | PASS 阻塞 | 活票 / 归属           |
+| --- | ------------------- | ---- | ---- | --------- | --------------------- |
+| C1  | Registry / route    | R3   | 2/3  | **是**    | **M-PASS-01**         |
+| C2  | DataSourceService   | R4   | 2/3  | **是**    | 历史 CLOSED；PASS 审计 |
+| C3  | Adapters / ports    | R3   | 2/3  | **是**    | **M-DATA-03**         |
+| C4  | Provider catalog    | R2   | 2/3  | **是**    | **M-PASS-01**         |
+| J5  | web_search live API | R3   | 1/3  | —         | post-Round4 ADR       |
 
 ### 2.D Sync（D1–D4）
 
-| ID  | 模块                 | 当前 | 批/3 | PASS 阻塞 | 下一移动                      |
-| --- | -------------------- | ---- | ---- | --------- | ----------------------------- |
-| D1  | Sync orchestration   | R3   | 2/3  | **是**    | R3-DCP watermark；R3H-08 demo |
-| D2  | Task idempotency     | R1   | 0/3  | —         | Batch6（不挡 PASS）           |
-| D3  | Scheduler / cron     | R0   | 0/3  | —         | Round4 壳调 CLI；矩阵 Batch6  |
-| D4  | Source health writer | R2   | 1/3  | —         | Batch6 migration              |
+| ID  | 模块                 | 当前 | 批/3 | PASS 阻塞 | 活票 / 归属      |
+| --- | -------------------- | ---- | ---- | --------- | ---------------- |
+| D1  | Sync orchestration   | R4   | 3/3  | **是**    | **M-DATA-03** 真网验收 |
+| D2  | Task idempotency     | R1   | 0/3  | —         | Batch6           |
+| D3  | Scheduler / cron     | R0   | 0/3  | —         | Round4 壳 / Batch6 |
+| D4  | Source health writer | R2   | 1/3  | —         | Batch6           |
 
 ### 2.E Ops（E1–E7, F0）
 
-| ID  | 模块                | 当前 | 批/3    | PASS 阻塞 | 下一移动           |
+| ID  | 模块                | 当前 | 批/3    | PASS 阻塞 | 活票 / 归属        |
 | --- | ------------------- | ---- | ------- | --------- | ------------------ |
-| E1  | `qmd data` CLI      | R3   | 2/3     | **是**    | R3-DCP incremental |
-| E2  | DB inspect          | R3   | 2/3     | **是**    | R3-DCP 写后抽检    |
+| E1  | `qmd data` CLI      | R4   | 2/3     | **是**    | **M-DATA-03**      |
+| E2  | DB inspect          | R4   | 2/3     | **是**    | **M-DATA-03**      |
 | E3  | Production gate     | R2   | 1/3     | —         | Batch05            |
-| E4  | Live / staged pilot | R4   | 2/3     | **是**    | R3H-10 收敛        |
-| E5  | Sandbox clean write | R5   | **3/3** | —         | **批次已满**       |
+| E4  | Live / staged pilot | R4   | 2/3     | **是**    | **M-PASS-01** 收敛 |
+| E5  | Sandbox clean write | R5   | **3/3** | —         | 批次已满           |
 | E6  | Backup / recovery   | R1   | 1/3     | —         | Batch05            |
-| E7  | Ops report CLI      | R0   | 0/3     | —         | B04_04 或 ADR      |
-| F0  | Data health engine  | R3   | 2/3     | **是**    | R3H-08 admission   |
+| E7  | Ops report CLI      | R0   | 0/3     | —         | B04_04 / ADR       |
+| F0  | Data health engine  | R4   | 2/3     | **是**    | **M-DATA-03**      |
 
 ### 2.F Modeling（G1–G6, K1–K3）
 
-| ID  | 模块                  | 当前 | 批/3 | PASS 阻塞 | 下一移动                                     |
-| --- | --------------------- | ---- | ---- | --------- | -------------------------------------------- |
-| G1  | Layer1 axes           | R3   | 2/3  | **是**    | **R3-DCP-06 CLOSED** @ `6c6cdd73`（L1 子集） |
-| G2  | Layer2 sensors        | R3   | 2/3  | **是**    | R3-DCP-07 最小竖切                           |
-| G3  | Layer3 chains         | R3   | 1/3  | —         | Round4 初（非 PASS 硬门禁）                  |
-| G4  | Layer4 markets        | R3   | 1/3  | **是**    | **R3H-07** + R3-DCP-08                       |
-| G5  | Layer5 evidence       | R2   | 2/3  | **是**    | R3-DCP-10 + R3H-05                           |
-| G6  | Manual review         | R2   | 1/3  | **是**    | R3H-08D                                      |
-| K1  | Model input whitelist | R3   | 1/3  | **是**    | 五轴消费行对齐                               |
-| K2  | Layer1 五轴 spec      | R3   | 1/3  | **是**    | **G1 子范围；五轴各至少 1 测**               |
-| K3  | Layer3 registries     | R3   | 1/3  | —         | G3 子范围                                    |
+| ID  | 模块                  | 当前 | 批/3 | PASS 阻塞 | 活票 / 归属                          |
+| --- | --------------------- | ---- | ---- | --------- | ------------------------------------ |
+| G1  | Layer1 axes           | R3   | 2/3  | **是**    | **M-G1-03**                          |
+| G2  | Layer2 sensors        | R3   | 2/3  | **是**    | **M-G2-FULL**                        |
+| G3  | Layer3 chains         | R3   | 1/3  | —         | Round4 初（非 PASS 硬门禁）            |
+| G4  | Layer4 markets        | R3   | 2/3  | **是**    | **M-G4-FULL**                        |
+| G5  | Layer5 evidence       | R2   | 2/3  | **是**    | **M-G5-FULL**                        |
+| G6  | Manual review         | R3   | 1/3  | **是**    | **M-PASS-01**                        |
+| K1  | Model input whitelist | R3   | 2/3  | **是**    | **M-G1-03**（G1 子范围）             |
+| K2  | Layer1 五轴 spec      | R3   | 1/3  | **是**    | **M-G1-03**（G1 子范围）             |
+| K3  | Layer3 registries     | R3   | 1/3  | —         | G3 子范围                            |
 
 ### 2.G–I 其余模块
 
@@ -199,202 +287,110 @@
 
 ---
 
-## 3. Round3 闭合波次（模块轨 + `/to-issues`）
+## 3. 模块闭环队列 v2（生效 @ 2026-07-02）
 
-> **格式：** 对齐 `WAVE0_BATCH3V_TO_ISSUES_INDEX.md` — 每波 **Wave 目标 / 并行 / merge / Done / 下游**；任务用 **tracer-bullet 垂直切片**，非按层横切。  
-> **策略：** 先后端（数据 + 建模 + 审计），Round4 只做只读产品。
+> **取代：** 旧 Wave 1–5 水平切分（见 **§3L**）作为**新开工**路由；历史 CLOSED 票只读作证据。  
+> **用户裁决：** §0.3 — PASS = 真代码+真跑；模块 = 设计权威完整落地；11 源 = 真网硬要求（ADR 例外）。
 
-### 3.0 总览
+### 3.0 队列总览
 
 ```text
-[✅] 历史：Round0–2 · 3F-R · 3G · 3V · R3H-01～04 · R3H-06
+M-DATA-03   11 源真网增量（隔离库验收）     ← 开工前 grill-me 源资格 → ADR
   ↓
-Wave 1  地基（R3H-07 ∥ R3H-10）                    2 任务 · 并行
+M-G1-03     五轴完整落地（真链，非 seed）
   ↓
-Wave 2  24 源真网产品化（R3H-08A/B/C/D）             4 任务 · 并行
+M-G2-FULL ∥ M-G4-FULL ∥ M-G5-FULL   各一张 complex 票；票内多切片；统一 A1–A8
   ↓
-Wave 3  增量试点（baostock + fred + 写后抽检）       3 任务 · 部分并行
+M-PASS-01   PASS_ROUND4_REAL_DATA_READY（§6.1 v2）
   ↓
-Wave 4  后端加厚（五轴全绿 + 增量扩展 + L2/L4 最小）  6 任务 · 部分并行
-  ↓
-Wave 5  PASS 审计（R3H-05A..E ∥ → GATE 串行）        6 任务
-  ↓
-Round4  B04-01 先 · 产品只读
+Round4 B04-*  只读产品
 ```
 
-### 3.1 白话：baostock + fred「试点」≠ 只做俩源
+| 票 ID | 类型 | Module | Rating 目标 | 设计权威 |
+| ----- | ---- | ------ | ----------- | -------- |
+| **M-DATA-03** | complex | C3,D1,E1,E2,F0,B2 | C3/E1/D1 **R3→R4**（真网 scope） | `R3H_PASS_EXECUTION_PLAN.archived-20260702.md` §2.1 Tier A |
+| **M-G1-03** | complex | G1,K1,K2 | G1 **R3→R4** | `specs/layer1_axes/` · `layer1_axes.md` |
+| **M-G2-FULL** | complex | G2 | G2 **R3→R4**（九组） | `docs/modules/layer2_cross_asset_sensor.md` §2 |
+| **M-G4-FULL** | complex | G4 | G4 **R3→R4**（各 market_id） | `docs/modules/layer4_market_structure.md` §2 |
+| **M-G5-FULL** | complex | G5, A3 | G5 **R2→R4** | `docs/modules/layer5_security_evidence.md` §2–3 |
+| **M-PASS-01** | complex | C1,C4,B3,G6,E4 + 门禁 | 清单绿 + MCR 无假完成 | 本文 §6.1.1 |
 
-| 层次                   | 做什么                                     | 哪些源                                   | 哪一波                        |
-| ---------------------- | ------------------------------------------ | ---------------------------------------- | ----------------------------- |
-| **真网 live 产品化**   | 真网拉 → 质检 → 写对库（A/B/C）            | **24 个 READY 源**（web_search 仅 mock） | **Wave 2**                    |
-| **日常增量 watermark** | 读库最后一天 → 只拉新增 → CLI 可重复跑     | 先 **baostock + fred**，再扩 Tier A      | **Wave 3 → 4**                |
-| **五轴指标 G12**       | 五轴都从 **真 clean** 算出指标 + pytest 绿 | 依赖 Wave 2–4 数据                       | **Wave 4**（**PASS 硬门禁**） |
+### 3.1 M-DATA-03 — 11 源 Tier A 真网
 
-### 3.2 Wave 1 — 地基
+| 项 | 内容 |
+| -- | ---- |
+| **业务目标** | 每源：**真连网 → incremental sync → clean 写库 → inspect/health 绿** |
+| **开工前** | grill-me → `research/tier-a-live-eligibility.md`（能真跑 / ADR 暂不能） |
+| **ADR 源** | 逻辑+占位+replay 测绿；**不得**缺实现 |
+| **验收** | 隔离 `DATA_ROOT` / `.audit-sandbox`；**零主库污染** |
+| **切片建议** | S0 资格矩阵 · S1–S11 按源并行 worktree · Sn 统一 merge + 隔离验收脚本 |
+| **禁止** | 全 mock e2e 冒充 CLOSED；「3 真跑 + 8 replay SLA」作 PASS 主路径 |
 
-| 项            | 内容                                                                                     |
-| ------------- | ---------------------------------------------------------------------------------------- |
-| **Wave 目标** | US 交易日历 + DataSourceService 唯一入口                                                 |
-| **并行**      | R3H-07 与 R3H-10 **可同时 Execute**（不同 graph 节点：`layer4_markets` / `datasources`） |
-| **串行**      | 阻塞 Wave 2 全轨开工（尤其 08B 日历语义）                                                |
-| **Wave Done** | 两轨 pytest 绿 + audit 零遗留                                                            |
-| **下游**      | Wave 2 R3H-08                                                                            |
+**十一源：** `fred` `us_treasury` `sec_edgar` `cftc_cot` `bis` `world_bank` `alpha_vantage` `deribit` `baostock` `cninfo` `mootdx`
 
-| #   | 规划 ID    | 模块   | Trellis | 交付要点                                         |
-| --- | ---------- | ------ | ------- | ------------------------------------------------ |
-| 1a  | **R3H-07** | G4, C3 | complex | US TradingCalendar L2；关闭 CAL-US               |
-| 1b  | **R3H-10** | C2, E4 | complex | API/Sync/Agent **不得 bypass** DataSourceService |
+### 3.2 M-G1-03 — Layer1 五轴完整
 
-**`/to-issues` 切片（规划）：** 每轨 Plan 冻结前产出 `research/to-issues-slices.md`（S0 BOOT → Sn MERGE）。
+| 项 | 内容 |
+| -- | ---- |
+| **范围** | 五轴按 `restructured_axes_v1_1` **完整**指标与输入契约（非 L1 子集冒充全模块） |
+| **AC 底线** | 每轴：`sync→clean→指标引擎→pytest` **同库真链**（或 ADR 源 replay + 其余真网输入） |
+| **依赖** | M-DATA-03 宏观/行情 clean 就绪 |
+| **禁止** | tmp DB seed 单独支撑 R4 |
 
-### 3.3 Wave 2 — 24 源真网产品化（PASS 核心）
+### 3.3 M-G2-FULL — Layer2 九组资产
 
-| 项            | 内容                                                                         |
-| ------------- | ---------------------------------------------------------------------------- |
-| **Wave 目标** | 凡 READY 源：env-gated live → 正确 Tier（`R3H_PASS_EXECUTION_PLAN.md` §2.1） |
-| **并行**      | 08A / 08B / 08C / 08D **四 worktree**                                        |
-| **依赖**      | Wave 1 Done；**R3H-06** schema ✅                                            |
-| **禁止**      | `--live-wire` 运维脚本冒充产品路径；pilot 数据 silent merge 主库             |
-| **Wave Done** | 四轨 CLOSED + 全量 pytest 绿                                                 |
-| **下游**      | Wave 3、4                                                                    |
+| 项 | 内容 |
+| -- | ---- |
+| **范围** | `layer2_cross_asset_sensor.md` §2 **九组** sensors 全覆盖 |
+| **流程** | **一张** complex 票 · 内部分 S01…S09（可并行 worktree）· **一次** A1–A8 |
+| **AC** | 每组至少一条真市况输入 → `axis_observation` 可断言 |
+| **禁止** | DCP-07 式「单 VIX 传感器」单独关 G2 模块 |
 
-| #   | 规划 ID     | Tier | 源组（摘要）              | 模块           |
-| --- | ----------- | ---- | ------------------------- | -------------- |
-| 2a  | **R3H-08A** | A    | baostock, cninfo, mootdx… | C3, A3, B1, E1 |
-| 2b  | **R3H-08B** | B    | yahoo, akshare, stooq…    | C3, B2, B3     |
-| 2c  | **R3H-08C** | A    | fred + 宏观五源           | C3, A3         |
-| 2d  | **R3H-08D** | C    | kalshi, polymarket        | C3, G6         |
+### 3.4 M-G4-FULL — Layer4 多市场
 
-**唯一延后：** `web_search` **真 API** → post-Round4（mock/replay 本波闭合）。
+| 项 | 内容 |
+| -- | ---- |
+| **范围** | `layer4_market_structure.md` §2 各 `market_id`（CN_A / US_EQ / HK_EQ …） |
+| **流程** | 同 G2：单票多切片 · 统一 Audit |
+| **依赖** | M-DATA-03 对应行情源；Wave 1 US 日历（**已 CLOSED**） |
 
-### 3.4 Wave 3 — 增量试点（R3-DCP）
+### 3.5 M-G5-FULL — Layer5 证据链
 
-| 项            | 内容                                                                  |
-| ------------- | --------------------------------------------------------------------- |
-| **Wave 目标** | **baostock + fred** 走通「读库水位 → 只拉新增 → 写库 → 抽检」产品路径 |
-| **并行**      | DCP-01（baostock）∥ DCP-02（fred）；DCP-03 依赖 01/02 至少一轨        |
-| **协议**      | **debt-lite**（`.trellis` Phase 8D slice plan）                       |
-| **Wave Done** | `qmd data`/sync 可重复跑试点增量；E2 inspect smoke 绿                 |
-| **下游**      | Wave 4 扩展 + 五轴                                                    |
+| 项 | 内容 |
+| -- | ---- |
+| **范围** | `layer5_security_evidence.md` 第一阶段资产域（股/ETF/期货/期权等）+ `evidence_chain` 可追溯 |
+| **流程** | **一张** complex 票 · 多资产类切片 · **一次** A1–A8 |
+| **AC** | 至少一条 **真网 sync→clean→Layer5** 全链（非仅 mootdx 单样本）；provenance 字段可断言 |
+| **禁止** | DCP-10 式「单 mootdx bar」单独关 G5 模块 |
 
-| #   | 规划 ID       | 模块   | 交付                                                                           |
-| --- | ------------- | ------ | ------------------------------------------------------------------------------ |
-| 3a  | **R3-DCP-01** | D1, E1 | baostock：watermark + incremental CLI · **✅ CLOSED** @ `5dc71c0b`             |
-| 3b  | **R3-DCP-02** | D1, E1 | fred：宏观序列增量 · **✅ CLOSED** @ `5d8d7b0f` · P7 `bb3ce99c`                |
-| 3c  | **R3-DCP-03** | E2, F0 | 写后 row count / max(trade_date) / health profile · **✅ CLOSED** @ `eff49343` |
+### 3.6 M-PASS-01 — Round3→Round4 门禁
 
-### 3.5 Wave 4 — 后端加厚（含五轴 PASS 硬门禁）
+见 **§6.1.1**。末位执行；**不得**在 §3 各活票未诚实关账前宣称 PASS。内含原 Wave5 `R3H-05A..E` + `R3H-05-GATE`（**单票**内切片，非独立完整流程）。
 
-| 项            | 内容                                                                                        |
-| ------------- | ------------------------------------------------------------------------------------------- |
-| **Wave 目标** | Tier A 增量扩展 + **G12 五轴 pytest 全绿** + L2/L4 最小竖切 + G5 绑真源                     |
-| **用户裁决**  | **五轴必须在 R3H-05-GATE 之前全绿** — 不得 WARN 收窄为「三轴先 PASS」                       |
-| **并行**      | DCP-05 按源并行；DCP-06 五轴可五 worktree（同 `layer1_axes` 需文件锁协调）；DCP-07 ∥ DCP-08 |
-| **依赖**      | Wave 2 数据入库；Wave 3 试点逻辑可复制                                                      |
-| **Wave Done** | 见 §3.5.1 五轴验收清单 **全部 [x]**                                                         |
-| **下游**      | Wave 5 审计                                                                                 |
+### 3.7 v2 `/to-issues` 索引（随 Plan 冻结增补）
 
-#### 3.5.1 G12 五轴 PASS 验收清单（硬门禁）
-
-五轴 ID 以 `specs/layer1_axes/restructured_axes_v1_1/` 为准（K2）。每轴至少：
-
-- [x] 从 **Tier A clean**（非 staged fixture）读取输入
-- [x] 指标引擎产出可断言快照/序列
-- [x] 专属 pytest **GREEN**（`tests/test_layer1_*` 或本轴新增测）
-- [x] ResourceGuard / 有界窗口遵守 `resource_limits.yaml`
-- [x] `MODULE_COMPLETION_RATING` **G1: R3→R4**，**K2** 行与轴一一对应
-
-| #   | 规划 ID       | 模块   | 交付                                                                                                    |
-| --- | ------------- | ------ | ------------------------------------------------------------------------------------------------------- |
-| 4a  | **R3-DCP-05** | D1, E1 | 增量 watermark 扩展至 **全部 Tier A 主源** · **✅ CLOSED** @ `c2258363`                                 |
-| 4b  | **R3-DCP-06** | G1, K2 | **五轴全绿（G12）** — PASS 阻塞项 · **✅ CLOSED** @ `6c6cdd73`（L1 子集；L3–L5 → DCP-07/08/10）         |
-| 4c  | **R3-DCP-07** | G2     | 一条 cross-asset 传感器绑真市况源                                                                       |
-| 4d  | **R3-DCP-08** | G4     | 市场结构 + Wave 1 US 日历                                                                               |
-| 4e  | **R3-DCP-09** | D1     | 有界 backfill（cap 分片；**非**无上限 FullLoad）· **✅ CLOSED** @ `feature/wave4-r3-dcp-09-backfill-ci` |
-| 4f  | **R3-DCP-10** | G5, A3 | source_fetch_id / content_hash / schema_hash 绑真源                                                     |
-
-**仍归 Batch6（不挡 PASS）：** D2 任务级幂等、无 cap FullLoad、24 源 production cron 矩阵、H1 Parquet、D4 migration。
-
-#### 3.5.2 Live 生产验收承接（2026-07-01 · Wave 4+ 路由）
-
-> **证据：** `scripts/wave3_live_production_acceptance.py` · `待修复清单.md` §8  
-> **须先闭环（非 Wave 4 规划）：** ~~§2.5 `LIVE-PILOT-DB-001` · `LIVE-BAOSTOCK-SYNC-SILENT-001`~~ **已关 2026-07-01**（见 `待修复清单.md` §1）
-
-| 规划 ID / 活卡                   | 承接的 live 验收缺口                                                                                                                                         | 台账 ID                                                                                                              |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
-| **R3-DCP-05**                    | ~~baostock 真网 + Tier A 全源增量~~ **✅ CLOSED** @ `c2258363`；东财口径 **部分**（registry notes，REQ2 仍 §4）                                              | `ACC-BAOSTOCK-NO-LIVE` ✅ · `ACC-EASTMONEY-TAXONOMY-001` 部分                                                        |
-| **R3-DCP-06**                    | **L1 五轴 clean replay 子集**（G12 硬门禁；非 L1–L5 full `production_live` 全链）                                                                            | `ACC-LAYER-E2E-LIVE-001`（L1 ✅ · L3–L4 全链 → R3H-05-GATE）                                                         |
-| **R3-DCP-07**                    | **L2-VIX cross-asset clean replay 子集**（G2；单 P0 传感器 `axis_observation`/VIXCLS）                                                                       | `ACC-LAYER-E2E-LIVE-001`（L2 ✅ · L3–L4 全链 → R3H-05-GATE）                                                         |
-| **R3-DCP-09**                    | 有界 backfill；**连网验收 CI**：`--run-network` batch275 子集 + `wave3_live_production_acceptance.py` nightly；`WAVE3-ACC-OPT-01` quick 分层 · **✅ CLOSED** | `ACC-LIVE-NETWORK-CI-001` ✅ · `ACC-LIVE-ACCEPT-NIGHTLY-001` ✅ · `WAVE3-ACC-OPT-01` ✅ · `LIVE-NETWORK-GATE-001` ✅ |
-| **R3-DCP-09**（Repair 阶段外置） | akshare eastmoney 本地审计网络 / ponytail dedup / quick perf gate / registry 硬化                                                                            | `ACC-LIVE-NETWORK-AKSHARE-ENV` open · ledger 阶段外置行                                                              |
-| **R3-DCP-10**                    | ~~G5 绑真源（mootdx bar → Layer5 provenance）~~ **✅ G5 子集 CLOSED** @ R3-DCP-10；L3–L4 production_live 全链仍 open                                         | `ACC-LAYER-E2E-LIVE-001`（G5 ✅ · L3–L4 全链 → R3H-05-GATE）                                                         |
-| **Wave 5 `R3H-05-GATE`**         | Layer 绑定终态审计；`PASS_ROUND4_REAL_DATA_READY`                                                                                                            | `ACC-LAYER-E2E-LIVE-001`（审计门）                                                                                   |
-| **Batch 6 `R3F-LIN-01/02`**      | L3/L4 lineage · L2 VR binding 全量持久化                                                                                                                     | `ADV-R3X-LINEAGE-001` · `R3Y-LINEAGE-VR-001`                                                                         |
-| **Batch 6 `R3F-SH-06`**          | FRED **live primary** 关账（≠ DCP-02 增量 live）                                                                                                             | `B2.5-O-05` §3 硬约束                                                                                                |
-| **政策（非修复）**               | akshare `macro_supplementary` pilot 第 3 路 `DISABLED_SOURCE`                                                                                                | `AKSHARE-MACRO-PILOT-POLICY` §3                                                                                      |
-
-### 3.6 Wave 5 — PASS 审计
-
-| 项            | 内容                                                |
-| ------------- | --------------------------------------------------- |
-| **Wave 目标** | `PASS_ROUND4_REAL_DATA_READY`                       |
-| **并行**      | R3H-05A..E 五片 **可并行**                          |
-| **串行**      | **R3H-05-GATE 必须最后**                            |
-| **Wave Done** | §6.1 清单全满足 + `round3h_*_audit.md` 25 行 CLOSED |
-
-| #     | 规划 ID         | 范围                                           |
-| ----- | --------------- | ---------------------------------------------- |
-| 5a–5e | **R3H-05A..E**  | registry / Layer / adopt / orphan / limitation |
-| 5f    | **R3H-05-GATE** | 合并裁决 → **PASS**                            |
-
-### 3.7 Round3 状态看板（2026-06-30）
-
-| 波次                                              | 状态                                                 |
-| ------------------------------------------------- | ---------------------------------------------------- |
-| 历史 + Wave 0（3V）+ R3H-01～04 + R3H-06          | ✅ CLOSED                                            |
-| Wave 1（R3H-07, R3H-10）                          | ✅ CLOSED @ 2026-06-29                               |
-| Wave 2（R3H-08A–D）                               | ✅ CLOSED @ 2026-06-29                               |
-| Wave 3（R3-DCP-01..03）                           | ✅ **CLOSED** @ 2026-06-30（`eff49343` 收尾 DCP-03） |
-| Wave 4（**R3-DCP-05/06** ✅ · **R3-DCP-07..10**） | 🔴 OPEN（DCP-05 @ `c2258363` · DCP-06 @ `6c6cdd73`） |
-| Wave 5（R3H-05 + GATE）                           | 🔴 OPEN                                              |
-
-### 3.7.1 Wave 3 隔离生产验收（2026-07-01）
-
-> **报告 SSOT：** `WAVE3_PRODUCTION_ACCEPTANCE_REPORT.md`（隔离库 · 主库零污染）  
-> **脚本：** `scripts/wave3_isolated_production_acceptance.py`  
-> **证据：** 可重跑 `uv run python scripts/wave3_isolated_production_acceptance.py` → `.audit-sandbox/wave3-acceptance-<run_id>/`（gitignore）；参考跑 11/11 PASS  
-> **承接（可选优化）：** `WAVE3-ACC-OPT-01` — 验收 quick profile · 见 `待修复清单.md` §4  
-> **Live 连网验收（2026-07-01）：** `scripts/wave3_live_production_acceptance.py`（入库 @ `93b2c82`）· 承接路由见 §3.5.2 · `待修复清单.md` §8  
-> **Wave 4 前须先闭环：** `待修复清单.md` §2.5 — **已清空 2026-07-01**（`LIVE-PILOT-DB-001` · `LIVE-BAOSTOCK-SYNC-SILENT-001` 见 §1）
-> **结论摘要：** Wave 1–3 **隔离/机制验收通过**；Wave 4 prep **§1 共 30 项**经 pytest 复验已关；**§2.5 阻断项已关**；**G12 五轴 L1 子集** @ `6c6cdd73` ✅；**正式 PASS** 仍待 Wave 4 `R3-DCP-07..10` + Wave 5 `R3H-05-GATE`。
-
-### 3.7.2 台账复验摘要（2026-07-01 @ `93b2c82`）
-
-| 类别       | 数量 | 核实方式                                     | 结论                                                                     |
-| ---------- | ---- | -------------------------------------------- | ------------------------------------------------------------------------ |
-| §1 已关闭  | 30   | 定向 pytest + 代码路径                       | **维持已关**（含 `LIVE-PILOT-DB-001` · `LIVE-BAOSTOCK-SYNC-SILENT-001`） |
-| §2.5 阻断  | 0    | `--run-network` + baostock CliFailure 测     | **已关 2026-07-01**                                                      |
-| §4 Wave 4+ | 6    | 读码：无 `--quick`/nightly/真网 product sync | **仍 OPEN** — 合法延后至 DCP-05/06/09                                    |
-| §3 硬约束  | 5    | 政策/registry                                | **刻意 DEFERRED** — 不得误关                                             |
+| 票 | 建议路径 |
+| -- | -------- |
+| M-DATA-03 | `docs/implementation_tasks/M_DATA_03_TIER_A_LIVE/M_DATA_03_TO_ISSUES_INDEX.md` |
+| M-G1-03 | `.../M_G1_03_TO_ISSUES_INDEX.md` |
+| M-G2-FULL | `.../M_G2_FULL_TO_ISSUES_INDEX.md` |
+| M-G4-FULL | `.../M_G4_FULL_TO_ISSUES_INDEX.md` |
+| M-G5-FULL | `.../M_G5_FULL_TO_ISSUES_INDEX.md` |
+| M-PASS-01 | `.../M_PASS_01_TO_ISSUES_INDEX.md` |
 
 ---
 
-### 3.8 `/to-issues` 索引文件（随开工增补）
+## 3L. 历史 Wave / DCP（只读 · 禁止新开工）
 
-| 波次     | 建议路径（主会话创建）                                               |
-| -------- | -------------------------------------------------------------------- |
-| Wave 1   | `docs/implementation_tasks/.../WAVE1_R3H07_R3H10_TO_ISSUES_INDEX.md` |
-| Wave 2   | `.../WAVE2_R3H08_TO_ISSUES_INDEX.md`                                 |
-| Wave 3–4 | `.../R3_DCP_TO_ISSUES_INDEX.md` ✅ @ 2026-06-30                      |
-| Wave 5   | `R3H_05_LAYER_BINDING_AND_PRODUCTION_ENTRY_AUDIT.md` + slices        |
-
-每 INDEX 须含：Wave 门控表、What to build、Acceptance criteria、Blocked by、Vertical slices 表、Issue 骨架（复制 GitHub）。
+> **2026-07-02 起：** 不得再按 Wave 1–5 或 R3-DCP-07/08/10 **单独** freeze 完整流程任务。  
+> CLOSED 证据与旧 `/to-issues` 索引 → **附录 C** · `R3_DCP_TO_ISSUES_INDEX.md`（只读）。
 
 ---
+
 
 ## 4. Round4 产品波次（I 组）
 
-> **前置：** §6.1 `PASS_ROUND4_REAL_DATA_READY`（**含五轴全绿**）  
+> **前置：** **M-PASS-01** / §6.1.1 `PASS_ROUND4_REAL_DATA_READY`  
 > **SSOT：** `BATCH_04_TASK_CARD_MANIFEST.md`  
 > **边界：** 只读 API / Agent / 前端 / 通知 / 回测；**禁止**新 fetch/sync 引擎、全历史灌库、五轴引擎重写。
 
@@ -405,7 +401,7 @@ B04_01 API + I8 diagnostics — 最先
   ↓
 并行：B04_02 Agent · B04_03 Frontend · B04_04 Notification · B04_05 Backtest
   ↓
-可选：D3 调度壳 — cron 只调用 §3 已闭合 CLI（无新 fetch）
+可选：D3 调度壳 — cron 只调用 **M-DATA-03** 已验收的 CLI（无新 fetch）
 ```
 
 ### 4.2 产品模块三批模板
@@ -422,7 +418,7 @@ B04_01 API + I8 diagnostics — 最先
 
 - 新 Incremental/Backfill **引擎**（消费 Round3 入口）
 - FullLoad、RevisionAudit 产品、任务级幂等 store
-- **五轴指标引擎**（Round3 已闭合；Round4 只读暴露）
+- **五轴指标引擎**（**M-G1-03** 闭合后 Round4 只读暴露）
 - `web_search` 真 API（J5）
 
 ---
@@ -433,19 +429,19 @@ B04_01 API + I8 diagnostics — 最先
 
 #### 5.1.1 五类 Sync Job
 
-| Job           | Round3 要求                                       | Batch6 / Round5           |
-| ------------- | ------------------------------------------------- | ------------------------- |
-| Incremental   | Wave 3 试点 + Wave 4 扩 Tier A；**PASS 须可演示** | 全源 watermark 自动化余量 |
-| Backfill      | Wave 4 有界分片（DCP-09）                         | broad backfill / CLI      |
+| Job           | PASS 前（活票）                         | Batch6 / Round5           |
+| ------------- | --------------------------------------- | ------------------------- |
+| Incremental   | **M-DATA-03** 11 源真网（隔离库）       | 24 源 cron 自动化余量     |
+| Backfill      | 历史 DCP-09 有界分片 ✅；扩面归 Batch6   | broad backfill / CLI      |
 | FullLoad      | **不要求 PASS**                                   | D2-P1-1                   |
 | RevisionAudit | 不要求 PASS                                       | D2-P1-1 产品              |
 | Reconcile     | Round2 部分                                       | D2-P2-2                   |
 
 #### 5.1.2 配套能力
 
-| 能力                          | 闭合阶段                 |
-| ----------------------------- | ------------------------ |
-| watermark 读库算窗            | Wave 3–4（试点→Tier A）  |
+| 能力                          | 闭合阶段                          |
+| ----------------------------- | --------------------------------- |
+| watermark 读库算窗            | 历史 DCP-01/02 ✅；**M-DATA-03** 真网验收 |
 | 写库 upsert_by_pk             | **R3H-06 CLOSED**        |
 | 任务级 idempotency_key        | Batch6                   |
 | `quant_monitor.sync` 生产 CLI | Batch6；Round4 D3 只包装 |
@@ -486,18 +482,53 @@ Round5 **不补功能**。
 
 ## 6. 门禁
 
-### 6.1 Round3 → Round4（PASS 清单）
+### 6.1 Round3 → Round4（PASS 清单 · v2 @ 2026-07-02）
+
+> **名称：** `PASS_ROUND4_REAL_DATA_READY`（不变）  
+> **过关：** **M-PASS-01** 执行 + 下列清单在 **真实代码 + 真实运行** 下逐项绿（§0.3.1）。  
+> **历史 Wave CLOSED** 仅作索引，**不自动满足**本清单。
+
+#### 6.1.1 硬门禁（须真绿）
+
+| # | 项 | 验收标准 |
+| - | -- | -------- |
+| 1 | **M-DATA-03** | 11 源逻辑完整；非 ADR 源：**隔离库**真网 incremental→clean→inspect 绿；ADR 源：占位+replay 绿且 ADR 登记 |
+| 2 | **M-G1-03** | 五轴完整 scope；每轴真链或 ADR 允许的受控 replay+真网输入组合 |
+| 3 | **M-G2-FULL** | 九组资产按设计权威落地；G2 **R3→R4**（MCR） |
+| 4 | **M-G4-FULL** | 各 `market_id` 按设计落地；G4 **R3→R4**（MCR） |
+| 5 | **M-G5-FULL** | Layer5 设计 scope 落地；G5 **R2→R4**（MCR） |
+| 6 | **G12 五轴 pytest** | `tests/test_layer1_*` 等 **GREEN**（不得仅 L1 子集冒充 PASS） |
+| 7 | **MCR 诚实** | 阻塞模块无「任务 CLOSED 但 Rating 仍 R3 假完成」 |
+| 8 | **主库闸** | `MAIN-DB-GATE` 绿；验收全程 **不污染主库** |
+| 9 | **M-PASS-01 审计** | registry / Layer 绑定终态（含原 R3H-05A..E + GATE，**单票内**） |
+
+#### 6.1.2 历史已 CLOSED（证据索引 · 非充分条件）
+
+1. Batch 3V + R3H-06 + R3H-01～04 ✅  
+2. Wave 1–2：R3H-07、R3H-10、R3H-08A–D ✅  
+3. Wave 3：R3-DCP-01..03 ✅  
+4. Wave 4 子集里程碑：R3-DCP-05/06/09 ✅；DCP-07/08/10 代码 merge **≠** 模块成品 → **M-G2/G4/G5-FULL** 承接  
+5. `web_search` 真 API → **DEFERRED post-Round4**（单 ADR）
+
+#### 6.1.3 不要求（不变）
+
+R6、Batch6 全集、24 源全自动 cron、G3 链全真网。
+
+#### 6.1.4 旧版清单（§6.1 legacy · 2026-06-30 前）
+
+<details>
+<summary>点击展开 — 仅供对照历史文档，不再作开工 SSOT</summary>
 
 1. Batch 3V + R3H-06 + R3H-01～04 — **CLOSED** ✅
-2. Wave 1–2：R3H-07、R3H-10、R3H-08A–D — **CLOSED**
-3. Wave 3：R3-DCP-01..03 — **CLOSED**（baostock + fred 增量产品路径）
-4. Wave 4：**R3-DCP-05** ✅ @ `c2258363`；**R3-DCP-06** ✅ @ `6c6cdd73`（五轴 clean e2e + §3.5.1 L1 子集）；**R3-DCP-07..10** — **OPEN**
-5. **G12 五轴 L1 子集：** §3.5.1 清单 **全部满足** @ `6c6cdd73` — **硬门禁已关**
-6. R3H-05-GATE → **`PASS_ROUND4_REAL_DATA_READY`**
-7. 24 源 env-gated live→正确 Tier；`web_search` 真 API = **DEFERRED_POST_ROUND4** + 单 ADR
-8. `MAIN-DB-GATE` 绿；Layer1–5 smoke 绿（**G12 五轴算在 Layer1**）
+2. Wave 1–2 — **CLOSED** ✅
+3. Wave 3 — **CLOSED** ✅
+4. Wave 4：DCP-05/06 ✅；DCP-07..10 OPEN
+5. G12 L1 子集 @ `6c6cdd73`
+6. R3H-05-GATE
+7. 24 源 env-gated Tier
+8. MAIN-DB-GATE + Layer smoke
 
-**不要求：** R6、Batch6 全集、24 源全自动 cron、G3 链全真网。
+</details>
 
 ### 6.2 Round4 → Round5
 
@@ -510,35 +541,28 @@ Round5 **不补功能**。
 
 ---
 
-## 7. 旧 Wave / 批次 → 模块 ID 映射
+## 7. 历史批次 → 活票承接（只读索引）
 
-| 旧轨          | 状态   | 主要模块     | 新波次                  |
-| ------------- | ------ | ------------ | ----------------------- |
-| Batch 3F-R    | CLOSED | J1,F0,C4,E1  | 历史                    |
-| Batch 3G      | CLOSED | B1,E5        | 历史                    |
-| Batch 3V      | CLOSED | A3,B1,G5,C1… | 历史 (= 旧 Wave 0)      |
-| R3H-01～04    | CLOSED | C3,A3,G\*    | 历史                    |
-| R3H-06        | CLOSED | B1,A2        | 历史 (= 旧 Wave 1)      |
-| R3H-07        | CLOSED | G4,C3        | **Wave 1** @ 2026-06-29 |
-| R3H-10        | CLOSED | C2,E4        | **Wave 1** @ 2026-06-29 |
-| R3H-08A–D     | CLOSED | C3,A3,B\*,G6 | **Wave 2** @ 2026-06-29 |
-| R3-DCP-01..03 | CLOSED | D1,E1,E2,F0  | **Wave 3** @ 2026-06-30 |
-| R3-DCP-05     | CLOSED | D1,E1        | **Wave 4** @ `c2258363` |
-| R3-DCP-06     | CLOSED | G1,K2        | **Wave 4** @ `6c6cdd73` |
-| R3-DCP-07..10 | OPEN   | G2,G4,G5,D1  | **Wave 4**              |
-| R3H-05 + GATE | OPEN   | 全表         | **Wave 5**              |
-| B04-\*        | 未开工 | I1–I8,J2,J7  | Round4                  |
-| B05-\*        | 未开工 | J3,A1…       | Round5                  |
-| Batch6        | 未开工 | D2,D3,D4,H1  | §5.2                    |
+| 旧轨 | 状态 | 主要模块 | **v2 活票承接**（完整成品） |
+| ---- | ---- | -------- | --------------------------- |
+| Batch 3V · R3H-01～06 | CLOSED | 底座 | 证据 only |
+| R3H-07 · R3H-10 | CLOSED | G4 日历, C2 | **M-G4-FULL** 余量 |
+| R3H-08A–D | CLOSED | C3 24源 live | **M-DATA-03** 真网验收余量 |
+| R3-DCP-01..03 | CLOSED | D1,E1,E2 | **M-DATA-03** |
+| R3-DCP-05/06/09 | CLOSED | D1,G1,D1 | Milestone only → **M-DATA-03** / **M-G1-03** |
+| R3-DCP-07/08/10 | CLOSED* | G2,G4,G5 子集 | **M-G2/G4/G5-FULL**（*子集≠模块关账） |
+| R3H-05 + GATE | — | 全表审计 | **M-PASS-01**（单票，禁止独立 Wave5 流程） |
+| B04-* | 未开工 | I 组 | Round4（PASS 后） |
+| B05-* · Batch6 | 未开工 | 发布/还债 | §5.2–5.3 |
 
 ---
 
 ## 8. 全局施工顺序（模块视角）
 
 ```text
-历史底座（Round0–2 · 3F-R · 3G · 3V · R3H-01～04 · R3H-06）
+历史底座（Round0–2 · 3V · R3H-01～06 · Wave 1–4 子集 CLOSED）
   ↓
-Round3 Wave 1–5（§3）— 数据 · 增量 · 五轴 · PASS
+§3 模块闭环队列 v2（M-DATA-03 → M-G1 → M-G2∥G4∥G5 → M-PASS-01）
   ↓
 Round4 Batch04 — 只读产品（API 先）
   ↓
@@ -549,23 +573,23 @@ Round5 Batch05 — R6 / limitation 发布裁判
 
 | 阶段   | 业务目标                | 硬门禁         |
 | ------ | ----------------------- | -------------- |
-| Round3 | 后端管道 + **五轴全绿** | PASS §6.1      |
+| Round3 | 数据真网 + 建模完整落地 | PASS **§6.1.1** |
 | Round4 | 用户可见只读产品        | B04 验收       |
 | Round5 | 安全 / 集成 / manifest  | 无隐藏 blocker |
 
 ---
 
-## 9. 执行者开工检查清单
+## 9. 执行者开工检查清单（v2）
 
-1. 任务卡是否标明 **Module ID** + 评级移动（如 `G1: R3→R4`）？
-2. 是否从 canonical batch folder 开工？
-3. Plan 冻结前是否 **`/to-issues`** 垂直切片（§3.8）？
+1. 是否 **§3 活票**之一？同一模块完整成品 **不得**另开第二张 complex 票（§1.7–§1.8）。
+2. 任务卡是否标明 **Module ID** + **Rating 跃迁**（或写明 milestone-only）？
+3. Plan 冻结前 **`/to-issues`** 垂直切片（§3.7）？票内多切片 **统一** A1–A8。
 4. 并行是否撞 registry 三件套或同节点文件锁？
-5. R3H-08 / R3H-05-GATE 是否 **complex Trellis**？R3-DCP 是否 **debt-lite slice**？
+5. 是否 **complex Trellis**（§3 活票）？**禁止**用 debt-lite 承接 G/C/D/E 模块完整成品。
 6. 改符号前 `impact()`；提交前 `detect_changes()`；触达 backend/docs/specs 跑 `loop_maintain.py`。
-7. Round4 是否只读、是否绕过 DataSourceService？
-8. PASS 前是否核对 **§3.5.1 五轴清单**？
-9. FullLoad / watermark / 幂等是否先读 **§5.1**？
+7. 数据/建模验收是否在 **隔离库**（§0.3.3）？Round4 是否只读、是否绕过 DataSourceService？
+8. PASS 前是否核对 **§6.1.1** 全表 + MCR 无假完成？
+9. Sync job / 写库闸是否先读 **§5.1**？
 
 ---
 
@@ -573,15 +597,34 @@ Round5 Batch05 — R6 / limitation 发布裁判
 
 Round5 后仅两类状态：`R6_FULL_PRODUCTION_STABLE` 或 `ADR_DISABLED_OUT_OF_SCOPE` / release limitation。
 
-不允许：「差不多」「registry 有了就算完成」「Round5 顺手补管道」「三轴先 PASS 五轴后补」。
+不允许：「差不多」「registry 有了就算完成」「Round5 顺手补管道」「三轴先 PASS 五轴后补」「DCP-07 关 G2」「再开 Wave 5 独立完整流程」。
 
 ---
 
 ## 附录 A. 历史叙事索引
 
-Wave 平铺细节、3F-R/3G 任务卡路径、§9 数据源表、原 §5.0.6 完整表格 → **`PROJECT_IMPLEMENTATION_ROADMAP.legacy-20260629.md`**。
+Wave 平铺细节、3F-R/3G 任务卡路径、原 §5.0.6 完整表格 → **`docs/archive/planning/PROJECT_IMPLEMENTATION_ROADMAP.legacy-20260629.md`**。
 
-## 附录 B. 与 `MODULE_COMPLETION_RATING.md` 对齐说明
+## 附录 B. 与 `MODULE_COMPLETION_RATING.md` 对齐
 
 - 51 ID 与 `authority_graph.yaml` v2 `rating_index` **无冲突**。
-- **G12 / 五轴 PASS 门禁**以本文 §3.5.1、§6.1 为准；若 rating 文件仍写「G12 Round4+ 非 PASS」，以**本路线图用户裁决**覆盖规划语义（rating 表可在下一 reconcile 同步 `Required next movement` 列）。
+- **活票 / PASS** 以本文 **§3 · §6.1.1 · §1.8** 为准；MCR **Required next movement** 列须指向 §3 活票，**禁止**再写 R3H-08 / DCP-07 等为下一完整流程。
+
+## 附录 C. 历史 CLOSED 证据（只读 · 非开工 SSOT）
+
+| 旧 ID | 状态 | 模块子集 | Milestone 要点 | v2 承接 |
+| ----- | ---- | -------- | -------------- | ------- |
+| R3H-07/10 | CLOSED | G4 日历, C2 | US 日历 · bypass 守卫 | M-G4-FULL / M-PASS-01 |
+| R3H-08A–D | CLOSED | C3,A3,B*,G6 | 24 源 env-gated live | M-DATA-03 真网余量 |
+| R3-DCP-01..03 | CLOSED | D1,E1,E2,F0 | baostock+fred 增量试点 | M-DATA-03 |
+| R3-DCP-05 | CLOSED | D1,E1,C3 | 11 源 replay incremental | M-DATA-03 **真网** |
+| R3-DCP-06 | CLOSED | G1,K2 | L1 五轴 P0 clean read | **M-G1-03 完整** |
+| R3-DCP-07 | CLOSED | G2 | **仅** L2-VIX | **M-G2-FULL 九组** |
+| R3-DCP-08 | CLOSED | G4 | **仅** US_EQ | **M-G4-FULL 全 market** |
+| R3-DCP-09 | CLOSED | D1 | 有界 backfill + CI | Batch6 扩面 |
+| R3-DCP-10 | CLOSED | G5,A3 | **仅** mootdx provenance | **M-G5-FULL** |
+| R3H-05A..E | — | 全表 | 审计切片 | **M-PASS-01 单票内** |
+
+**旧 `/to-issues` 索引：** `R3_DCP_TO_ISSUES_INDEX.md` · `WAVE0_BATCH3V_TO_ISSUES_INDEX.md`（格式范例仍有效；**路由**须改 §3.7 活票路径）。
+
+**隔离验收脚本（仍可复跑）：** `scripts/wave3_isolated_production_acceptance.py` · `scripts/wave3_live_production_acceptance.py` · 报告 `docs/quality/acceptance/WAVE3_PRODUCTION_ACCEPTANCE_REPORT.md`。

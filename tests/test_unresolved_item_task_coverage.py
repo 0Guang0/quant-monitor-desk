@@ -11,6 +11,7 @@ from pathlib import Path
 import pytest
 
 from tests.contract_gate_support import PROJECT_ROOT
+from tests.repo_paths import impl_task
 
 COVERAGE = PROJECT_ROOT / "docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md"
 UNRESOLVED = PROJECT_ROOT / "docs/UNRESOLVED_ISSUES_REGISTRY.md"
@@ -454,7 +455,7 @@ def test_taskCardsMentionMappedUnresolvedIds() -> None:
     """
     missing: dict[str, list[str]] = {}
     for relative_path, expected_ids in TASK_CARD_EXPECTATIONS.items():
-        path = PROJECT_ROOT / "docs/implementation_tasks" / relative_path
+        path = impl_task(*Path(relative_path).parts)
         text = _read(path)
         not_found = sorted(item_id for item_id in expected_ids if item_id not in text)
         if not_found:

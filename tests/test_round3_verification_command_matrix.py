@@ -11,7 +11,7 @@ from pathlib import Path
 from tests.contract_gate_support import PROJECT_ROOT
 
 VERIFICATION_COMMANDS = PROJECT_ROOT / "docs/ops/verification_commands.md"
-ROUND3_MAP = PROJECT_ROOT / "ROUND3_BATCH_IMPLEMENTATION_MAP.md"
+from tests.repo_paths import ROUND3_BATCH_IMPLEMENTATION_MAP as ROUND3_MAP
 
 # Canonical Round 3 gate hygiene commands (PROMPT_05 + staged/live guards).
 ROUND3_GATE_COMMANDS: tuple[tuple[str, str, str], ...] = (

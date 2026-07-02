@@ -11,11 +11,9 @@ from pathlib import Path
 from tests.contract_gate_support import PROJECT_ROOT
 
 GATE_DOC = PROJECT_ROOT / "docs/quality/BATCH3_STAGED_DOWNSTREAM_GATE.md"
-TASK_019 = (
-    PROJECT_ROOT
-    / "docs/implementation_tasks/ROUND_3_MODELING_LAYERS/019_implement_layer2_cross_asset_sensor.md"
-)
-ROUND3_MAP = PROJECT_ROOT / "ROUND3_BATCH_IMPLEMENTATION_MAP.md"
+from tests.repo_paths import ROUND3_BATCH_IMPLEMENTATION_MAP as ROUND3_MAP, impl_task
+
+TASK_019 = impl_task("ROUND_3_MODELING_LAYERS", "019_implement_layer2_cross_asset_sensor.md")
 HANDOFF = PROJECT_ROOT / "docs/ROUND3_HANDOFF.md"
 
 

@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 
 from tests.contract_gate_support import PROJECT_ROOT
+from tests.repo_paths import ROUND3_BATCH_IMPLEMENTATION_MAP, impl_task, repo_relative
 
 TASK_DIR = PROJECT_ROOT / ".trellis/tasks/archive/2026-06/06-21-round3-batch2-75-live-pilot"
 AUDIT_JSONL = TASK_DIR / "audit.jsonl"
@@ -43,7 +44,7 @@ def test_auditJsonl_includesTraceAuthorityFiles() -> None:
     paths = _audit_jsonl_paths()
     for required in REQUIRED_AUDIT_PATHS:
         assert required in paths, f"audit.jsonl missing trace authority: {required}"
-        assert (PROJECT_ROOT / required).is_file(), f"missing on disk: {required}"
+        assert repo_relative(required).is_file(), f"missing on disk: {required}"
 
 
 def test_auditPlan_assignsA1A5A8SourceTraceDuties() -> None:
@@ -113,11 +114,7 @@ def test_followup018C_documentsExternalReferencesAndBoundaries() -> None:
     验证点：含列出的 GitHub 链接；SourceRegistry→fetch port→raw evidence 链路；No default enablement of tdx_pytdx；No silent fallback；stock_zh_a_daily 不能闭合 Batch 2.75 Request 2
     失败含义：018C 边界不清，可能被误用为闭合 live pilot Request 2 的捷径
     """
-    task = (
-        PROJECT_ROOT
-        / "docs/implementation_tasks/ROUND_3_MODELING_LAYERS"
-        / "018C_tdx_pytdx_low_cost_probe.md"
-    )
+    task = impl_task("ROUND_3_MODELING_LAYERS", "018C_tdx_pytdx_low_cost_probe.md")
     text = task.read_text(encoding="utf-8")
 
     for marker in (
@@ -145,7 +142,7 @@ def test_round3Map_tracksFollowup018C() -> None:
     验证点：含 R3-B2.75-FOLLOWUP-DATA-INTERFACE-PROBE、018C_tdx_pytdx_low_cost_probe.md、cannot close Batch 2.75 Request 2、Batch 2.75 follow-up
     失败含义：地图未登记 018C，协调人不知道 probe 与 live pilot 的边界
     """
-    text = (PROJECT_ROOT / "ROUND3_BATCH_IMPLEMENTATION_MAP.md").read_text(encoding="utf-8")
+    text = ROUND3_BATCH_IMPLEMENTATION_MAP.read_text(encoding="utf-8")
     assert "R3-B2.75-FOLLOWUP-DATA-INTERFACE-PROBE" in text
     assert "018C_tdx_pytdx_low_cost_probe.md" in text
     assert "cannot close Batch 2.75 Request 2" in text

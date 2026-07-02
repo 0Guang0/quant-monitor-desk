@@ -1,0 +1,33 @@
+{
+  "id": "wave4-r3-dcp-08-layer4",
+  "name": "wave4-r3-dcp-08-layer4",
+  "title": "Wave4 R3-DCP-08 Layer4 market structure",
+  "description": "",
+  "status": "completed",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P0",
+  "creator": "Guang",
+  "assignee": "Guang",
+  "createdAt": "2026-07-02",
+  "completedAt": "2026-07-02",
+  "branch": "feature/wave4-r3-dcp-08-layer4",
+  "base_branch": "master",
+  "worktree_path": "../quant-monitor-desk-wt-dcp08",
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "task_track": "complex",
+    "plan_protocol_version": "4.1",
+    "execute_entry": "research/00-EXECUTION-ENTRY.md",
+    "frozen_task_card": "frozen/R3_DCP_08_LAYER4_MARKET_STRUCTURE.md",
+    "frozen_at": "2026-07-02T09:23:09Z",
+    "source_task_card": "docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/R3_DCP_08_LAYER4_MARKET_STRUCTURE.md"
+  }
+}

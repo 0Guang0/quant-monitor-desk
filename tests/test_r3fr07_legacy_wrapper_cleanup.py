@@ -9,34 +9,29 @@ from pathlib import Path
 import pytest
 
 from tests.contract_gate_support import PROJECT_ROOT
+from tests.repo_paths import ROUND3_BATCH_IMPLEMENTATION_MAP, impl_task
 
-_PARENT_README = (
-    PROJECT_ROOT
-    / "docs/implementation_tasks/ROUND_3_REFERENCE_ADOPTION_REFACTOR/README.md"
-)
-_BATCH_README = (
-    PROJECT_ROOT
-    / "docs/implementation_tasks/ROUND_3_REFERENCE_ADOPTION_REFACTOR"
-    / "BATCH_3FR_REFERENCE_ADOPTION_REFACTOR/README.md"
+_PARENT_README = impl_task("ROUND_3_REFERENCE_ADOPTION_REFACTOR", "README.md")
+_BATCH_README = impl_task(
+    "ROUND_3_REFERENCE_ADOPTION_REFACTOR",
+    "BATCH_3FR_REFERENCE_ADOPTION_REFACTOR",
+    "README.md",
 )
 _IMPL_README = PROJECT_ROOT / "docs/implementation_tasks/README.md"
-_INVENTORY_REDIRECT = (
-    PROJECT_ROOT
-    / "docs/implementation_tasks/ROUND_3_REFERENCE_ADOPTION_REFACTOR"
-    / "BATCH_3FR_REFERENCE_ADOPTION_REFACTOR"
-    / "R3FR_01_REFERENCE_INVENTORY_AND_LICENSE_MATRIX.md"
+_INVENTORY_REDIRECT = impl_task(
+    "ROUND_3_REFERENCE_ADOPTION_REFACTOR",
+    "BATCH_3FR_REFERENCE_ADOPTION_REFACTOR",
+    "R3FR_01_REFERENCE_INVENTORY_AND_LICENSE_MATRIX.md",
 )
-_R3FR_06_CARD = (
-    PROJECT_ROOT
-    / "docs/implementation_tasks/ROUND_3_REFERENCE_ADOPTION_REFACTOR"
-    / "BATCH_3FR_REFERENCE_ADOPTION_REFACTOR"
-    / "R3FR_06_QMD_DATA_HEALTH_CLI_RUNTIME.md"
+_R3FR_06_CARD = impl_task(
+    "ROUND_3_REFERENCE_ADOPTION_REFACTOR",
+    "BATCH_3FR_REFERENCE_ADOPTION_REFACTOR",
+    "R3FR_06_QMD_DATA_HEALTH_CLI_RUNTIME.md",
 )
-_BATCH_MANIFEST = (
-    PROJECT_ROOT
-    / "docs/implementation_tasks/ROUND_3_REFERENCE_ADOPTION_REFACTOR"
-    / "BATCH_3FR_REFERENCE_ADOPTION_REFACTOR"
-    / "BATCH_3FR_TASK_CARD_MANIFEST.md"
+_BATCH_MANIFEST = impl_task(
+    "ROUND_3_REFERENCE_ADOPTION_REFACTOR",
+    "BATCH_3FR_REFERENCE_ADOPTION_REFACTOR",
+    "BATCH_3FR_TASK_CARD_MANIFEST.md",
 )
 _GOOD_BUNDLE = PROJECT_ROOT / "tests/fixtures/data_health/good_bundle"
 
@@ -110,19 +105,27 @@ def test_round3frBatchReadme_taskTable_r3fr06And07Done() -> None:
 
 def test_round3frImplReadme_item9ClosedAnd3gNext() -> None:
     """覆盖范围：implementation_tasks 执行顺序（G3 / AC-07-03）
-    测试对象：docs/implementation_tasks/README.md 条目 9–10
-    目的/目标：条目 9 标明 CLOSED @ R3FR-07；条目 10 为 3G 下一入口
-    验证点：条目 9 含 CLOSED @ R3FR-07；当前下一执行入口后为 ROUND_3_SANDBOX_CLEAN_WRITE
-    失败含义：全局执行顺序仍指向活跃 3F-R 或 3G 入口模糊
+    测试对象：docs/implementation_tasks/README.md 与 legacy 归档包
+    目的/目标：活 README 指向归档；3F-R 在归档内仍标 CLOSED；3G 任务卡仍可解析
+    验证点：活 README 含 legacy 归档路径；batch README 含 R3FR-07 Done；3G 卡存在
+    失败含义：根目录收敛后执行顺序与 3F-R/3G 证据链断裂
     """
     body = _IMPL_README.read_text(encoding="utf-8")
-    item9 = body.split("9. `ROUND_3_REFERENCE_ADOPTION_REFACTOR/`", 1)[-1].split(
-        "10.", 1
-    )[0]
-    assert "closed" in item9.lower()
-    assert "r3fr-07" in item9.lower()
-    assert "当前下一执行入口" in body
-    assert "ROUND_3_SANDBOX_CLEAN_WRITE" in body.split("当前下一执行入口", 1)[-1]
+    assert "archive/legacy-pre-module-v2-20260702" in body
+
+    batch_section = _BATCH_README.read_text(encoding="utf-8")
+    assert re.search(
+        r"\|\s*`R3FR-07`\s*\|[^|]*\|\s*\*\*Done\*\*",
+        batch_section,
+        re.IGNORECASE,
+    ), "R3FR-07 Done row missing from archived batch README"
+
+    sandbox_card = impl_task(
+        "ROUND_3_SANDBOX_CLEAN_WRITE",
+        "BATCH_3G_SANDBOX_CLEAN_WRITE",
+        "R3G_01_SANDBOX_CLEAN_WRITE_REHEARSAL.md",
+    )
+    assert sandbox_card.is_file(), "archived R3G-01 task card must remain resolvable"
 
 
 def test_r3fr06Card_hasRedirectHeader() -> None:
@@ -300,10 +303,10 @@ def test_batch3gReadme_preconditionsSatisfied() -> None:
     验证点：含 3F-R complete/satisfied；引用 data health / provider catalog 等闭环
     失败含义：3G 仍显示 blocked-only，执行者不敢开工
     """
-    readme = (
-        PROJECT_ROOT
-        / "docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE"
-        / "BATCH_3G_SANDBOX_CLEAN_WRITE/README.md"
+    readme = impl_task(
+        "ROUND_3_SANDBOX_CLEAN_WRITE",
+        "BATCH_3G_SANDBOX_CLEAN_WRITE",
+        "README.md",
     )
     body = readme.read_text(encoding="utf-8")
     lowered = body.lower()
@@ -321,10 +324,10 @@ def test_batch3gCoordinator_preconditionWording() -> None:
     验证点：§0 含 3F-R complete/closed 与 3G 启动条件
     失败含义：coordinator 仍只写 blocked，派工口径与 roadmap 不一致
     """
-    playbook = (
-        PROJECT_ROOT
-        / "docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE"
-        / "BATCH_3G_SANDBOX_CLEAN_WRITE/BATCH_3G_COORDINATOR_PLAYBOOK.md"
+    playbook = impl_task(
+        "ROUND_3_SANDBOX_CLEAN_WRITE",
+        "BATCH_3G_SANDBOX_CLEAN_WRITE",
+        "BATCH_3G_COORDINATOR_PLAYBOOK.md",
     )
     body = playbook.read_text(encoding="utf-8").lower()
     assert "3f-r" in body
@@ -356,7 +359,7 @@ def test_batchImplementationMap_checkpointPost3fr07() -> None:
     验证点：checkpoint 含 3F-R CLOSED；不再写 only R3FR-07 remains
     失败含义：历史地图仍显示 3F-R active，与 roadmap/handoff 冲突
     """
-    body = (PROJECT_ROOT / "ROUND3_BATCH_IMPLEMENTATION_MAP.md").read_text(
+    body = ROUND3_BATCH_IMPLEMENTATION_MAP.read_text(
         encoding="utf-8"
     )
     lowered = body.lower()

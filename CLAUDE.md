@@ -48,3 +48,17 @@ This project is indexed by GitNexus as **quant-monitor-desk** (6263 symbols, 102
 | Index, status, clean, wiki CLI commands      | `.claude/skills/gitnexus/gitnexus-cli/SKILL.md`             |
 
 <!-- gitnexus:end -->
+
+## Agent skills
+
+### Issue tracker
+
+GitHub Issues + local `.scratch/` dual-write (same triage flow); external PRs are a triage surface. Trellis is not the default for these skills. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default five-role vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: root `CONTEXT.md` (lazy) + `docs/adr/`. See `docs/agents/domain.md`.

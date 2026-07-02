@@ -26,14 +26,13 @@ from backend.app.sync.runners import (
     ReconcileJobRunner,
 )
 
+from tests.repo_paths import impl_task
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-PLAYBOOK = (
-    PROJECT_ROOT
-    / "docs"
-    / "implementation_tasks"
-    / "ROUND_3_BATCH6_DATA_GOVERNANCE"
-    / "BATCH_3F_BATCH6_DATA_GOVERNANCE"
-    / "BATCH_3F_COORDINATOR_PLAYBOOK.md"
+PLAYBOOK = impl_task(
+    "ROUND_3_BATCH6_DATA_GOVERNANCE",
+    "BATCH_3F_BATCH6_DATA_GOVERNANCE",
+    "BATCH_3F_COORDINATOR_PLAYBOOK.md",
 )
 CONTEXT_CLOSURE = (
     PROJECT_ROOT

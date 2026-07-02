@@ -10,6 +10,7 @@ import duckdb
 import pytest
 
 from backend.app.db.migrate import MIGRATIONS_DIR, apply_migrations
+from tests.repo_paths import impl_task
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_SQL = PROJECT_ROOT / "specs/schema/schema.sql"
@@ -888,7 +889,7 @@ def test_pilotCompat_implementationPaths_zeroMarketBarClean() -> None:
         PROJECT_ROOT / "scripts",
         PROJECT_ROOT / "tests",
         PROJECT_ROOT / "specs",
-        PROJECT_ROOT / "docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY",
+        impl_task("ROUND_3_REAL_DATA_PRODUCTION_ENTRY"),
     )
     needle = "market_bar_clean"
     self_test = Path(__file__).resolve()

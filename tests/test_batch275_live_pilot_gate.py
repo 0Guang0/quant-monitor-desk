@@ -14,6 +14,7 @@ from unittest.mock import patch
 
 import pytest
 from tests.contract_gate_support import PROJECT_ROOT, trellis_task_dir
+from tests.repo_paths import ROUND3_BATCH_IMPLEMENTATION_MAP
 
 BATCH275_TASK_SLUG = "06-21-round3-batch2-75-live-pilot"
 TASK_DIR = trellis_task_dir(BATCH275_TASK_SLUG)
@@ -145,7 +146,7 @@ def test_livePilot_phaseMinus1_registryReconciliationRequired() -> None:
         rel = registry_path.relative_to(PROJECT_ROOT).as_posix()
         assert rel in read_log, f"registry read log must include {rel}"
 
-    round3_map = _read(PROJECT_ROOT / "ROUND3_BATCH_IMPLEMENTATION_MAP.md")
+    round3_map = _read(ROUND3_BATCH_IMPLEMENTATION_MAP)
     assert "R3-B2.75-PROD-LIVE-PILOT" in round3_map
     assert "Batch 2.75" in round3_map
 
