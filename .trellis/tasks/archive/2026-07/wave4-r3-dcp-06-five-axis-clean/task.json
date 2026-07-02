@@ -3,7 +3,7 @@
   "name": "wave4-r3-dcp-06-five-axis-clean",
   "title": "R3-DCP-06 Layer1 five-axis clean read + G12 PASS",
   "description": "Wave 4 DCP-06: prove G12 five axes read Tier A clean inputs (not staged_fixture_only); per-axis replay e2e; close ACC-LAYER-E2E-LIVE-001 L1 subset.",
-  "status": "in_progress",
+  "status": "completed",
   "priority": "P0",
   "creator": "Guang",
   "assignee": "Guang",
@@ -21,5 +21,6 @@
     "user_decision": "2026-06-29: 五轴必须在 R3H-05-GATE 之前 pytest 全绿（PASS 硬门禁）",
     "frozen_task_card": "frozen/R3_DCP_06_LAYER1_FIVE_AXIS_CLEAN.md",
     "frozen_at": "2026-07-02T03:21:55Z"
-  }
+  },
+  "completedAt": "2026-07-02"
 }

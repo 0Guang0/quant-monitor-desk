@@ -15,9 +15,9 @@
 
 ## 对照 Plan / ADR-029
 
-| 锚点 | clean 表 | DB key | tier_a source | S01 验证 |
-|------|----------|--------|---------------|----------|
-| ENVIRONMENT | axis_observation | DGS10 | fred | `ENV-E1-DGS10` e2e replay |
+| 锚点        | clean 表         | DB key | tier_a source | S01 验证                  |
+| ----------- | ---------------- | ------ | ------------- | ------------------------- |
+| ENVIRONMENT | axis_observation | DGS10  | fred          | `ENV-E1-DGS10` e2e replay |
 
 ## 仓内复用（非参考 L 梯）
 
