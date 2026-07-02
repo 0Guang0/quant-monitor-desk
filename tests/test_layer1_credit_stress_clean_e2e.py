@@ -67,3 +67,4 @@ def test_layer1CreditStress_cleanReadToFeatureAndInterpretation(tmp_path) -> Non
     assert interp.summary_sentence
     assert "买入" not in interp.summary_sentence
     assert "卖出" not in interp.summary_sentence
+    assert interp.boundary_reminder == "不构成交易动作"

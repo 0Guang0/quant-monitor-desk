@@ -19,9 +19,32 @@
 | 1    | S00     | `research/execute-evidence/s00-{red,green}.txt` |
 | 2    | S01–S05 | `s01-` … `s05-`                                 |
 | 3    | S06     | `s06-`                                          |
-| 4    | Audit   | `research/audit-a*-report.md`                   |
+| 4    | S07     | `s07-` · `research/audit-repair-ledger.md`      |
+| 5    | Audit   | `research/audit-a*-report.md`                   |
 
 切片 AC SSOT：`research/to-issues-slices.md`
+
+## 2.1 复验命令（Repair / Audit 关账）
+
+```bash
+# DCP-06 范围子集
+uv run pytest \
+  tests/test_layer1_clean_reader.py \
+  tests/test_layer1_environment_clean_e2e.py \
+  tests/test_layer1_credit_stress_clean_e2e.py \
+  tests/test_layer1_risk_appetite_clean_e2e.py \
+  tests/test_layer1_liquidity_clean_e2e.py \
+  tests/test_layer1_sentiment_clean_e2e.py \
+  tests/test_layer1_five_axis_panel_clean_smoke.py \
+  tests/test_model_input_whitelist.py::test_layer1_p0_dcp06_cleanReplayProven \
+  -q
+
+# 全量（PASS 门槛）
+uv run pytest -q
+
+# loop 维护
+uv run python scripts/loop_maintain.py --fix
+```
 
 ## 2. AC ↔ 测试
 

@@ -1,0 +1,5 @@
+S00-CORE-READER RED evidence @ 2026-07-02
+Command: uv run pytest tests/test_layer1_clean_reader.py -q
+EXIT_CODE=1 (pre-implementation)
+FAILED: test_layer1CleanReader_macro_readsSpecIndicatorFromCleanTable — ModuleNotFoundError: clean_observation_reader
+Note: RED captured before S00 green path landed clean_observation_reader.py

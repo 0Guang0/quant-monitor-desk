@@ -13,14 +13,14 @@
 
 ## 六类检查（Plan 期）
 
-| 类   | 状态           | 备注                           |
-| ---- | -------------- | ------------------------------ |
-| 契约 | PASS           | ADR-029 + layer1_axis_contract |
-| 测试 | GAP            | 六组 clean e2e 待 Execute      |
-| 安全 | PASS           | forbidden EasyXT fallback      |
-| 架构 | PASS_WITH_GAPS | 新 reader 模块                 |
-| 文档 | PASS           | Plan 包齐                      |
-| 运维 | PASS           | 台账 L1 子集在 S06             |
+| 类   | 状态 | 备注                                                          |
+| ---- | ---- | ------------------------------------------------------------- |
+| 契约 | PASS | ADR-029 + layer1_axis_contract                                |
+| 测试 | PASS | 六组 clean e2e + S00 reader 15 测 + S07 Repair                |
+| 安全 | PASS | P0 allowlist + forbidden prefix + source_switched fail-closed |
+| 架构 | PASS | clean_observation_reader 并行 staged 桥                       |
+| 文档 | PASS | Plan 包齐 + S07 Repair 追溯已补                               |
+| 运维 | PASS | 台账 L1 子集在 S06/S07                                        |
 
 ## adversarial（对抗性审计）
 
@@ -33,12 +33,12 @@
 
 ## doc-gap
 
-| GAP                            | 路由               |
-| ------------------------------ | ------------------ |
-| `Layer1CleanObservationReader` | Execute S00        |
-| 五轴 clean e2e 测              | Execute S01–S05    |
-| K1 readiness 更新              | Execute S06 主会话 |
-| tiingo 流动性主路径            | 阶段外置 Batch 6+  |
+| GAP                            | 路由                      |
+| ------------------------------ | ------------------------- |
+| `Layer1CleanObservationReader` | ✅ S00 + Repair allowlist |
+| 五轴 clean e2e 测              | ✅ S01–S05                |
+| K1 readiness 更新              | ✅ S06 主会话             |
+| tiingo 流动性主路径            | 阶段外置 Batch 6+         |
 
 ## 对齐检查
 
@@ -48,4 +48,4 @@
 | DCP-05 前置   | ✅ ADR-028               |
 | 待修复清单    | ✅ ACC-LAYER-E2E L1 子集 |
 
-**Phase 5d complete · PASS_WITH_GAPS**
+**Phase 5d complete · PASS**（Execute + S07 Repair 关账 @ 2026-07-02）

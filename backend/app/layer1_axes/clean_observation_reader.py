@@ -15,6 +15,17 @@ from backend.app.layer1_axes.models import AxisObservation
 
 FORBIDDEN_FALLBACK_SOURCE_PREFIXES = ("staged_fixture", "macro_supplementary")
 
+# ADR-029 P0 tier-A source allowlist (spec indicator_id → source_used)
+P0_ALLOWED_SOURCE_BY_SPEC: dict[str, str] = {
+    "ENV-E1-DGS10": "fred",
+    "CRD.CS1.BAA10Y": "fred",
+    "RA.R1.VIXCLS_30D_IMPLIED_VOL": "fred",
+    "SEN-S1-COT_LF_NET": "cftc_cot",
+    "LIQ.B-I1.AMIHUD_ILLIQ": "alpha_vantage",
+}
+
+P0_BAR_ALLOWED_SOURCE = "alpha_vantage"
+
 # spec indicator_id → axis_observation.indicator_id (Tier A clean key)
 P0_MACRO_DB_KEYS: dict[str, str] = {
     "ENV-E1-DGS10": "DGS10",
@@ -82,6 +93,17 @@ def resolve_macro_db_key(spec_indicator_id: str) -> str:
     return key
 
 
+def _assert_clean_source_used(source_used: str, *, expected_source: str) -> None:
+    if any(source_used.startswith(p) for p in FORBIDDEN_FALLBACK_SOURCE_PREFIXES):
+        raise CleanObservationFallbackForbiddenError(
+            f"refusing non-clean source_used for Layer1 clean read: {source_used!r}"
+        )
+    if source_used != expected_source:
+        raise CleanObservationFallbackForbiddenError(
+            f"refusing non-Tier-A source_used {source_used!r}; expected {expected_source!r}"
+        )
+
+
 def _row_to_observation(
     *,
     spec_indicator_id: str,
@@ -93,9 +115,13 @@ def _row_to_observation(
     source_switched: bool,
     quality_flags: str | None,
 ) -> AxisObservation:
-    if any(source_used.startswith(p) for p in FORBIDDEN_FALLBACK_SOURCE_PREFIXES):
+    expected = P0_ALLOWED_SOURCE_BY_SPEC.get(spec_indicator_id)
+    if expected is None:
+        raise KeyError(f"no P0 source allowlist for spec indicator: {spec_indicator_id!r}")
+    _assert_clean_source_used(source_used, expected_source=expected)
+    if source_switched:
         raise CleanObservationFallbackForbiddenError(
-            f"refusing non-clean source_used for Layer1 clean read: {source_used!r}"
+            f"refusing source_switched row for Layer1 clean read: {spec_indicator_id!r}"
         )
     flags: tuple[str, ...] = ()
     if quality_flags:
@@ -190,10 +216,7 @@ def read_bar_history(
     bars: list[dict[str, object]] = []
     for row in rows:
         source_used = str(row[6] or "")
-        if any(source_used.startswith(p) for p in FORBIDDEN_FALLBACK_SOURCE_PREFIXES):
-            raise CleanObservationFallbackForbiddenError(
-                f"refusing non-clean bar source_used: {source_used!r}"
-            )
+        _assert_clean_source_used(source_used, expected_source=P0_BAR_ALLOWED_SOURCE)
         bars.append(
             {
                 "trade_date": str(row[0]),
@@ -219,7 +242,12 @@ def amihud_observations_from_bars(
         raise KeyError(spec_indicator_id)
     observations: list[AxisObservation] = []
     prev_close: float | None = None
+    expected_source = P0_ALLOWED_SOURCE_BY_SPEC[spec_indicator_id]
     for bar in bars:
+        _assert_clean_source_used(
+            str(bar.get("source_used") or ""),
+            expected_source=expected_source,
+        )
         close = bar.get("close")
         volume = bar.get("volume")
         high = bar.get("high")
@@ -245,7 +273,7 @@ def amihud_observations_from_bars(
                 as_of_timestamp=as_of,
                 publish_timestamp=pub,
                 raw_value=amihud,
-                source_used=str(bar.get("source_used") or "alpha_vantage"),
+                source_used=expected_source,
             )
         )
         prev_close = close_f

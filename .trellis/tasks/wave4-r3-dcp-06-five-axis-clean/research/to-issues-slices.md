@@ -26,15 +26,16 @@ S00 (clean observation reader + bar→Amihud helper + no-fallback guard)
 
 ## 切片总表
 
-| Slice                 | What to build                                                          | Acceptance criteria                                               | Blocked by | 测试 / 证据                                           |
-| --------------------- | ---------------------------------------------------------------------- | ----------------------------------------------------------------- | ---------- | ----------------------------------------------------- |
-| **S00-CORE-READER**   | `Layer1CleanObservationReader`（macro + bar）；禁止 EasyXT 式 fallback | clean 有种子 → 返回 `AxisObservation` 序列；无 silent 换源        | —          | test*layer1CleanReader*\*（Execute 新建）             |
-| **S01-ENVIRONMENT**   | ENV-E1-DGS10 从 axis_observation replay e2e                            | 非 fixture 读；特征/解释可断言                                    | S00        | test_layer1_environment_clean_e2e                     |
-| **S02-CREDIT-STRESS** | CRD.CS1.BAA10Y clean e2e                                               | 同上                                                              | S00        | test_layer1_credit_stress_clean_e2e                   |
-| **S03-RISK-APPETITE** | RA.R1.VIXCLS_30D_IMPLIED_VOL clean e2e                                 | 同上                                                              | S00        | test_layer1_risk_appetite_clean_e2e                   |
-| **S04-LIQUIDITY**     | LIQ.B-I1.AMIHUD from security_bar_1d（ADR-029 ponytail）               | bar clean 种子 → Amihud 特征绿；文档 tiingo 天花板                | S00        | test_layer1_liquidity_clean_e2e                       |
-| **S05-SENTIMENT**     | SEN-S1-COT_LF_NET from cftc axis_observation                           | COT clean e2e 绿                                                  | S00        | test_layer1_sentiment_clean_e2e                       |
-| **S06-INTEGRATION**   | 五轴 panel smoke；K1 对齐；台账 L1 子集关账                            | §3.5.1 全 [x]；ACC-LAYER-E2E-LIVE-001 L1 部分；L3–L5 阶段外置登记 | S01–S05    | test_layer1_five_axis_panel_clean_smoke + 全量 pytest |
+| Slice                 | What to build                                                           | Acceptance criteria                                               | Blocked by  | 测试 / 证据                                            |
+| --------------------- | ----------------------------------------------------------------------- | ----------------------------------------------------------------- | ----------- | ------------------------------------------------------ |
+| **S00-CORE-READER**   | `Layer1CleanObservationReader`（macro + bar）；禁止 EasyXT 式 fallback  | clean 有种子 → 返回 `AxisObservation` 序列；无 silent 换源        | —           | test*layer1CleanReader*\*（Execute 新建）              |
+| **S01-ENVIRONMENT**   | ENV-E1-DGS10 从 axis_observation replay e2e                             | 非 fixture 读；特征/解释可断言                                    | S00         | test_layer1_environment_clean_e2e                      |
+| **S02-CREDIT-STRESS** | CRD.CS1.BAA10Y clean e2e                                                | 同上                                                              | S00         | test_layer1_credit_stress_clean_e2e                    |
+| **S03-RISK-APPETITE** | RA.R1.VIXCLS_30D_IMPLIED_VOL clean e2e                                  | 同上                                                              | S00         | test_layer1_risk_appetite_clean_e2e                    |
+| **S04-LIQUIDITY**     | LIQ.B-I1.AMIHUD from security_bar_1d（ADR-029 ponytail）                | bar clean 种子 → Amihud 特征绿；文档 tiingo 天花板                | S00         | test_layer1_liquidity_clean_e2e                        |
+| **S05-SENTIMENT**     | SEN-S1-COT_LF_NET from cftc axis_observation                            | COT clean e2e 绿                                                  | S00         | test_layer1_sentiment_clean_e2e                        |
+| **S06-INTEGRATION**   | 五轴 panel smoke；K1 对齐；台账 L1 子集关账                             | §3.5.1 全 [x]；ACC-LAYER-E2E-LIVE-001 L1 部分；L3–L5 阶段外置登记 | S01–S05     | test_layer1_five_axis_panel_clean_smoke + 全量 pytest  |
+| **S07-REPAIR**        | Audit Repair：A3 trust-boundary · A4/A8 测缺口 · A1 追溯 · A5 loop 隔离 | ledger 23/23 已修复；`uv run pytest -q` 连续 2× exit 0            | S06 + Audit | `research/audit-repair-ledger.md` + panel/reader tests |
 
 ---
 

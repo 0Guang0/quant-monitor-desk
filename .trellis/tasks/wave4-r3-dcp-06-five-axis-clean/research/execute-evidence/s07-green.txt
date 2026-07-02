@@ -1,6 +1,6 @@
-S07 GREEN — uv run pytest -q exit 0
-Targeted: tests/test_layer1_five_axis_panel_clean_smoke.py (5 passed)
-         tests/test_model_input_whitelist.py (36 passed)
-         tests/test_layer1_clean_reader.py (6 passed)
-Full suite: exit 0 @ 2026-07-02
+S07 REPAIR GREEN — uv run pytest -q exit 0 (×2) @ 2026-07-02
+Repair scope: A3 allowlist/source_switched · A4 cap/ResourceGuard/boundary · A8 reader gaps · A2 COT seed dedupe · A5 loop sandbox · A1 trace
+DCP-06 subset: test_layer1_clean_reader.py (15 passed) + five_axis panel (6 passed) + axis e2e ×5
+Full suite: exit 0 (consecutive 2×)
 loop_maintain.py --fix: OK
+ledger: research/audit-repair-ledger.md — 23/23 已修复

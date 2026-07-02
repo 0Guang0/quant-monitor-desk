@@ -54,3 +54,4 @@ def test_layer1Liquidity_cleanAmihudE2e_alphaVantageBars(tmp_path) -> None:
     assert len(interp_rows) == 1
     assert interp_rows[0].indicator_id == LIQ_INDICATOR
     assert interp_rows[0].level_label == feat.state_bucket
+    assert interp_rows[0].boundary_reminder == "不构成交易动作"

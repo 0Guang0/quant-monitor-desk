@@ -2,42 +2,19 @@
 
 from __future__ import annotations
 
-from datetime import date, timedelta
+from datetime import date
 
 from backend.app.layer1_axes.clean_observation_reader import read_macro_clean_observations
 from backend.app.layer1_axes.feature_engine import AxisFeatureEngine
 from backend.app.layer1_axes.interpretation import AxisInterpretationEngine
-from tests.fred_macro_incremental_support import insert_axis_observation
-from tests.layer1_clean_e2e_support import AS_OF, bootstrap_layer1_clean_db
+from tests.layer1_clean_e2e_support import (
+    AS_OF,
+    COT_SOURCE,
+    bootstrap_layer1_clean_db,
+    seed_cot_lf_net_weekly,
+)
 
 SPEC_INDICATOR = "SEN-S1-COT_LF_NET"
-DB_MARKET_CODE = "088691"
-COT_SOURCE = "cftc_cot"
-
-
-def _seed_cot_lf_net_weekly(
-    con,
-    *,
-    n: int,
-    start: date,
-    base_value: float = 20_000.0,
-    step: float = 500.0,
-) -> None:
-    for i in range(n):
-        obs_date = start + timedelta(days=7 * i)
-        obs_id = f"{DB_MARKET_CODE}-{obs_date.isoformat()}"
-        insert_axis_observation(
-            con,
-            observation_id=obs_id,
-            indicator_id=DB_MARKET_CODE,
-            obs_date=obs_date,
-            raw_value=base_value + step * i,
-            content_hash=f"cot-hash-{i}",
-        )
-        con.execute(
-            "UPDATE axis_observation SET source_used = ?, frequency = ? WHERE observation_id = ?",
-            [COT_SOURCE, "weekly", obs_id],
-        )
 
 
 def test_layer1SentimentClean_e2e_cotLfNet_readFeatureInterpret(tmp_path) -> None:
@@ -49,7 +26,7 @@ def test_layer1SentimentClean_e2e_cotLfNet_readFeatureInterpret(tmp_path) -> Non
     """
     cm = bootstrap_layer1_clean_db(tmp_path)
     with cm.writer() as con:
-        _seed_cot_lf_net_weekly(con, n=80, start=date(2024, 6, 3))
+        seed_cot_lf_net_weekly(con, n=80, start=date(2024, 6, 3))
         observations = read_macro_clean_observations(
             con, SPEC_INDICATOR, as_of_end=AS_OF
         )

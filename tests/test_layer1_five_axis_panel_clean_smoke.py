@@ -9,7 +9,7 @@ from unittest.mock import MagicMock
 import pytest
 from tests.contract_gate_support import load_yaml
 
-from backend.app.core.resource_guard import Decision
+from backend.app.core.resource_guard import Decision, ResourceGuard
 from backend.app.layer1_axes.clean_observation_reader import (
     P0_MACRO_DB_KEYS,
     P0_WINDOW_CAPS,
@@ -23,10 +23,10 @@ from backend.app.layer1_axes.feature_engine import (
     ResourceGuardBlockedError,
 )
 from backend.app.layer1_axes.interpretation import AxisInterpretationEngine
-from tests.fred_macro_incremental_support import insert_axis_observation
 from tests.layer1_clean_e2e_support import (
     AS_OF,
     bootstrap_layer1_clean_db,
+    seed_cot_lf_net_weekly,
     seed_macro_series,
     seed_spy_bars,
 )
@@ -40,24 +40,6 @@ P0_BINDINGS: tuple[tuple[str, str, str], ...] = (
     ("RA.R1.VIXCLS_30D_IMPLIED_VOL", "VIXCLS", "fred"),
     ("SEN-S1-COT_LF_NET", "088691", "cftc_cot"),
 )
-
-
-def _seed_cot_weekly(con, *, n: int, start: date) -> None:
-    for i in range(n):
-        obs_date = start + timedelta(days=7 * i)
-        obs_id = f"088691-{obs_date.isoformat()}"
-        insert_axis_observation(
-            con,
-            observation_id=obs_id,
-            indicator_id="088691",
-            obs_date=obs_date,
-            raw_value=20_000.0 + 500.0 * i,
-            content_hash=f"cot-panel-{i}",
-        )
-        con.execute(
-            "UPDATE axis_observation SET source_used = ?, frequency = ? WHERE observation_id = ?",
-            ["cftc_cot", "weekly", obs_id],
-        )
 
 
 def _seed_all_axes(con) -> None:
@@ -80,7 +62,7 @@ def _seed_all_axes(con) -> None:
         base_value=18.0,
         step=0.1,
     )
-    _seed_cot_weekly(con, n=80, start=date(2024, 6, 3))
+    seed_cot_lf_net_weekly(con, n=80, start=date(2024, 6, 3))
     seed_spy_bars(con, n=60, start=date(2026, 1, 1))
 
 
@@ -94,6 +76,7 @@ def test_layer1FiveAxisPanel_cleanSmoke_allP0AxesProduceFeatures(tmp_path) -> No
     cm = bootstrap_layer1_clean_db(tmp_path)
     with cm.writer() as con:
         _seed_all_axes(con)
+        guard = ResourceGuard(con=con)
         macro_specs = [s for s, _, _ in P0_BINDINGS]
         for spec_id in macro_specs:
             obs = read_macro_clean_observations(con, spec_id, as_of_end=AS_OF)
@@ -102,7 +85,10 @@ def test_layer1FiveAxisPanel_cleanSmoke_allP0AxesProduceFeatures(tmp_path) -> No
             freq = "weekly" if spec_id == "SEN-S1-COT_LF_NET" else "daily"
             min_obs = 20 if freq == "weekly" else 30
             engine = AxisFeatureEngine(
-                frequency=freq, min_obs_required=min_obs, window_len=60
+                resource_guard=guard,
+                frequency=freq,
+                min_obs_required=min_obs,
+                window_len=60,
             )
             feat = engine.compute_features(
                 as_of=AS_OF, observations=[obs[-1]], history=obs
@@ -118,7 +104,9 @@ def test_layer1FiveAxisPanel_cleanSmoke_allP0AxesProduceFeatures(tmp_path) -> No
             bars, spec_indicator_id="LIQ.B-I1.AMIHUD_ILLIQ", as_of=AS_OF
         )
         assert liq_obs[-1].source_used == "alpha_vantage"
-        liq_feat = AxisFeatureEngine(min_obs_required=20, window_len=60).compute_features(
+        liq_feat = AxisFeatureEngine(
+            resource_guard=guard, min_obs_required=20, window_len=60
+        ).compute_features(
             as_of=AS_OF, observations=[liq_obs[-1]], history=liq_obs
         )[0]
         assert liq_feat.indicator_id == "LIQ.B-I1.AMIHUD_ILLIQ"
@@ -194,19 +182,60 @@ def test_dcp06K1_whitelistAlignsP0CleanBindings() -> None:
         assert row.get("window_cap") is not None
 
 
-def test_layer1FiveAxisPanel_resourceGuardOnMigratedDb(tmp_path) -> None:
-    """覆盖范围：五轴 smoke 路径在迁移隔离库上真 ResourceGuard.check
-    测试对象：ResourceGuard + bootstrap_layer1_clean_db
-    目的/目标：A4 — panel 路径不得仅用 MagicMock；真门禁在 clean DB 上可决策
-    验证点：decision ∈ {OK, PAUSE, HARD_STOP}
-    失败含义：五轴集成未接真 ResourceGuard，沙箱 cap 无法 fail-closed
+def test_layer1FiveAxisPanel_resourceGuardHardStop_blocksPanelFeatureCompute(
+    tmp_path, monkeypatch
+) -> None:
+    """覆盖范围：五轴 panel 路径上真 ResourceGuard HARD_STOP 须 fail-closed
+    测试对象：AxisFeatureEngine(resource_guard=ResourceGuard(con=con)) in panel loop
+    目的/目标：A4-P2-003 — panel 特征链接迁移库 guard，非孤立 check() 枚举断言
+    验证点：monkeypatch guard.check→HARD_STOP；panel compute_features raises ResourceGuardBlockedError
+    失败含义：资源门禁在五轴 panel 路径被绕过
     """
-    from backend.app.core.resource_guard import Decision, ResourceGuard
-
     cm = bootstrap_layer1_clean_db(tmp_path)
     with cm.writer() as con:
-        decision, _reason = ResourceGuard(con=con).check()
-    assert decision in (Decision.OK, Decision.PAUSE, Decision.HARD_STOP)
+        _seed_all_axes(con)
+        guard = ResourceGuard(con=con)
+        monkeypatch.setattr(
+            guard,
+            "check",
+            lambda: (Decision.HARD_STOP, "panel smoke cap"),
+        )
+        obs = read_macro_clean_observations(con, "ENV-E1-DGS10", as_of_end=AS_OF)
+        engine = AxisFeatureEngine(
+            resource_guard=guard, min_obs_required=5, window_len=10
+        )
+        with pytest.raises(ResourceGuardBlockedError):
+            engine.compute_features(as_of=AS_OF, observations=[obs[-1]], history=obs)
+
+
+def test_layer1FiveAxisPanel_resourceGuardOnMigratedDb(tmp_path) -> None:
+    """覆盖范围：五轴 smoke 路径在迁移隔离库上真 ResourceGuard.check
+    测试对象：ResourceGuard + bootstrap_layer1_clean_db + panel feature compute
+    目的/目标：A4 — panel 路径使用 ResourceGuard(con=con) 且 OK 时可算特征
+    验证点：decision==OK 时 compute_features 成功；非 OK 时 raises
+    失败含义：五轴集成未接真 ResourceGuard，沙箱 cap 无法 fail-closed
+    """
+    cm = bootstrap_layer1_clean_db(tmp_path)
+    with cm.writer() as con:
+        seed_macro_series(
+            con, db_indicator_id="DGS10", n=40, start=date(2026, 1, 1), base_value=4.0
+        )
+        guard = ResourceGuard(con=con)
+        decision, _reason = guard.check()
+        obs = read_macro_clean_observations(con, "ENV-E1-DGS10", as_of_end=AS_OF)
+        engine = AxisFeatureEngine(
+            resource_guard=guard, min_obs_required=30, window_len=60
+        )
+        if decision == Decision.OK:
+            feat = engine.compute_features(
+                as_of=AS_OF, observations=[obs[-1]], history=obs
+            )[0]
+            assert feat.state_bucket != "insufficient_history"
+        else:
+            with pytest.raises(ResourceGuardBlockedError):
+                engine.compute_features(
+                    as_of=AS_OF, observations=[obs[-1]], history=obs
+                )
 
 
 def test_layer1FiveAxisPanel_windowLenWithinWhitelistCap() -> None:
