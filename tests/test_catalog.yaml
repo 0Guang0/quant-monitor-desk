@@ -668,6 +668,17 @@ tests/test_layer1_axis_loader.py:
     rules: []
     specs:
       - specs/contracts/layer1_axis_contract.yaml
+tests/test_layer1_clean_reader.py:
+  command: uv run python -m pytest tests/test_layer1_clean_reader.py -q
+  failure_meaning:
+    Regression in test_layer1_clean_reader; inspect purpose and linked
+    authorities.
+  purpose: S00 — Layer1CleanObservationReader contract tests.
+  type: contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
 tests/test_layer1_ingestion_gates.py:
   command: uv run python -m pytest tests/test_layer1_ingestion_gates.py -q
   failure_meaning:
