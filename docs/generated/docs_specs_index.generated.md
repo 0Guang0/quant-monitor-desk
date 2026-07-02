@@ -54,11 +54,14 @@ Used with MIGRATION_MAP.md for machine omission checks (`check_docs_specs_indexe
 - `docs/decisions/ADR-031-dcp10-layer5-evidence-provenance-binding.md`
 - `docs/decisions/ADR-032-dcp07-layer2-vix-clean-read.md`
 - `docs/decisions/ADR-033-dcp08-layer4-us-eq-clean-read.md`
+- `docs/decisions/ADR-034-m-data-03-tier-a-live-acceptance.md`
 - `docs/decisions/README.md`
 - `docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md`
 - `docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md`
 - `docs/implementation_tasks/GLOBAL_TASK_TEMPLATE.md`
 - `docs/implementation_tasks/GLOBAL_TESTING_POLICY.md`
+- `docs/implementation_tasks/M_DATA_03_TIER_A_LIVE/M_DATA_03_TIER_A_LIVE.md`
+- `docs/implementation_tasks/M_DATA_03_TIER_A_LIVE/M_DATA_03_TO_ISSUES_INDEX.md`
 - `docs/implementation_tasks/README.md`
 - `docs/implementation_tasks/TASK_INPUT_CONTEXT_INDEX.md`
 - `docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md`

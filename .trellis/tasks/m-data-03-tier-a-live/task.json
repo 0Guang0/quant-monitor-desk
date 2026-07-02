@@ -1,0 +1,25 @@
+{
+  "id": "m-data-03-tier-a-live",
+  "name": "m-data-03-tier-a-live",
+  "title": "M-DATA-03 Tier A 11-source live incremental (isolated acceptance)",
+  "description": "Convert Tier A replay/mock e2e to isolated-sandbox live network acceptance for all 11 primary sources; bump C3/D1/E1/E2/F0/B2 to R4 live scope.",
+  "status": "in_progress",
+  "priority": "P0",
+  "creator": "Guang",
+  "assignee": "Guang",
+  "createdAt": "2026-07-02",
+  "branch": "feature/m-data-03-tier-a-live",
+  "base_branch": "master",
+  "meta": {
+    "task_track": "complex",
+    "plan_protocol_version": "4.1",
+    "execute_entry": "research/00-EXECUTION-ENTRY.md",
+    "execute_bundle": "research/",
+    "source_task_card": "docs/implementation_tasks/M_DATA_03_TIER_A_LIVE/M_DATA_03_TIER_A_LIVE.md",
+    "module_ids": ["C3", "D1", "E1", "E2", "F0", "B2"],
+    "rating_target": "R4_SANDBOX_REAL_DATA_OR_REHEARSAL",
+    "predecessor": "wave4-r3-dcp-05-tier-a",
+    "frozen_task_card": "frozen/M_DATA_03_TIER_A_LIVE.md",
+    "frozen_at": "2026-07-02T15:51:55Z"
+  }
+}

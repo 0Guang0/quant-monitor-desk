@@ -15,5 +15,6 @@
 | [ADR-031](ADR-031-dcp10-layer5-evidence-provenance-binding.md)        | DCP-10 Layer5 evidence provenance binding (mootdx bar)            |
 | [ADR-032](ADR-032-dcp07-layer2-vix-clean-read.md)                     | DCP-07 Layer2 L2-VIX clean read (VIXCLS / axis_observation)       |
 | [ADR-033](ADR-033-dcp08-layer4-us-eq-clean-read.md)                   | DCP-08 Layer4 US_EQ clean read + registry dual-primary            |
+| [ADR-034](ADR-034-m-data-03-tier-a-live-acceptance.md)                | M-DATA-03 Tier A live acceptance in isolated sandbox              |
 
 Ponytail audit equivalence: this project uses the `ponytail-review` / `code-simplification` skills as the formal simplification audit path when the standalone `ponytail` CLI is unavailable (Round2 audit P3-04).

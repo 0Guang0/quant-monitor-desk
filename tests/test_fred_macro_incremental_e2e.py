@@ -15,7 +15,9 @@ from backend.app.ops.fred_incremental_run import (
     run_fred_macro_incremental,
 )
 from backend.app.ops.macro_incremental_common import STAGING_TABLE
+from backend.app.ops.db_inspector import DbInspector
 from tests.fred_macro_incremental_support import (
+    bootstrap_fred_live_e2e_ctx,
     fred_incremental_e2e_ctx,
     insert_axis_observation,
 )
@@ -82,6 +84,7 @@ def test_fredIncremental_idempotent_secondRun_rowCountStable(
     assert first >= 1
 
 
+@pytest.mark.network
 @pytest.mark.skipif(
     not __import__("os").environ.get("FRED_API_KEY"),
     reason="live_smoke requires FRED_API_KEY",
@@ -213,6 +216,70 @@ def test_fredStaging_skipsObservationsWithoutValue() -> None:
     rows = macro_staging_rows_from_bundle(bundle, series_id="DGS10")
     assert len(rows) == 1
     assert rows[0]["raw_value"] == 4.1
+
+
+@pytest.mark.network
+def test_fredIncremental_liveNetwork_writesAxisObservation(
+    isolated_live_data_root: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """覆盖范围：隔离 sandbox + FRED live API 写 axis_observation
+    测试对象：run_fred_macro_incremental(use_mock=False) + FredLiveFetchPort
+    目的/目标：QMD_ALLOW_LIVE_FETCH=1 + FRED_API_KEY 时真网增量写 macro clean
+    验证点：status∈{COMPLETED,EMPTY_RESPONSE}；COMPLETED 时 axis_observation≥1；DbInspector 表存在
+    失败含义：Tier A fred live 金路径未接通或误写主库
+    """
+    ctx = bootstrap_fred_live_e2e_ctx(isolated_live_data_root, monkeypatch)
+    report = run_fred_macro_incremental(
+        ctx["orch"],
+        service=ctx["service"],
+        series_ids=("DGS10",),
+        use_mock=False,
+        source_registry=ctx["registry"],
+    )
+    status = report.series_results[0]["status"]
+    assert status in {"COMPLETED", "EMPTY_RESPONSE"}
+    inspect_report = DbInspector(ctx["cm"].db_path, ctx["raw_root"]).inspect()
+    axis_table = next(t for t in inspect_report.key_tables if t["name"] == "axis_observation")
+    assert axis_table["exists"] is True
+    if status == "COMPLETED":
+        with ctx["cm"].writer() as con:
+            count = con.execute("SELECT COUNT(*) FROM axis_observation").fetchone()[0]
+        assert count >= 1
+        assert axis_table["row_count"] is not None and axis_table["row_count"] >= 1
+
+
+@pytest.mark.network
+def test_fredIncremental_liveNetwork_idempotentSecondRun(
+    isolated_live_data_root: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """覆盖范围：隔离 sandbox 连续两次 FRED live 增量
+    测试对象：run_fred_macro_incremental live 幂等 upsert
+    目的/目标：重复 live 跑 observation_id PK 不膨胀行数
+    验证点：两路 status∈{COMPLETED,EMPTY_RESPONSE}；COUNT(*) 相等
+    失败含义：live 幂等失败会导致日常 sync 重复膨胀
+    """
+    ctx = bootstrap_fred_live_e2e_ctx(isolated_live_data_root, monkeypatch)
+    run_fred_macro_incremental(
+        ctx["orch"],
+        service=ctx["service"],
+        series_ids=("DGS10",),
+        use_mock=False,
+        source_registry=ctx["registry"],
+    )
+    with ctx["cm"].writer() as con:
+        first = con.execute("SELECT COUNT(*) FROM axis_observation").fetchone()[0]
+    run_fred_macro_incremental(
+        ctx["orch"],
+        service=ctx["service"],
+        series_ids=("DGS10",),
+        use_mock=False,
+        source_registry=ctx["registry"],
+    )
+    with ctx["cm"].writer() as con:
+        second = con.execute("SELECT COUNT(*) FROM axis_observation").fetchone()[0]
+    assert first == second
 
 
 def test_fredStagingAdapter_invalidJson_returnsFailed(

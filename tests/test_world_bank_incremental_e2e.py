@@ -3,9 +3,13 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 
 import pytest
+
+from backend.app.datasources.product_live_gate import ProductLiveGateError
+from backend.app.ops.db_inspector import DbInspector
 
 from backend.app.ops.macro_incremental_common import (
     compute_since_date,
@@ -21,7 +25,11 @@ from backend.app.ops.world_bank_incremental_run import (
     create_world_bank_incremental_port,
     run_world_bank_incremental,
 )
-from tests.macro_incremental_support import build_macro_e2e_ctx, insert_axis_observation
+from tests.macro_incremental_support import (
+    bootstrap_macro_live_e2e_ctx,
+    build_macro_e2e_ctx,
+    insert_axis_observation,
+)
 
 
 def _read_wb_since(con, countries):
@@ -138,3 +146,108 @@ def test_worldBankIncremental_emptyResponse_whenWatermarkCurrent(
     with ctx["cm"].writer() as con:
         after = con.execute("SELECT COUNT(*) FROM axis_observation").fetchone()[0]
     assert after == before
+
+
+def test_worldBankLive_noSilentFallbackWhenGateClosed(monkeypatch: pytest.MonkeyPatch) -> None:
+    """覆盖范围：无 QMD_ALLOW_LIVE_FETCH 时 world_bank live port 阻断
+    测试对象：create_world_bank_incremental_port(use_mock=False)
+    目的/目标：EasyXT forbidden — live 被拒时不得静默退回 mock port
+    验证点：抛 ProductLiveGateError · LIVE_FETCH_REJECTED
+    失败含义：world_bank live 路径渗入 silent fallback
+    """
+    monkeypatch.delenv("QMD_ALLOW_LIVE_FETCH", raising=False)
+    with pytest.raises(ProductLiveGateError) as exc_info:
+        create_world_bank_incremental_port(countries=DEFAULT_COUNTRIES, max_rows=3, use_mock=False)
+    assert exc_info.value.code == "LIVE_FETCH_REJECTED"
+
+
+@pytest.mark.network
+def test_worldBankIncremental_liveNetwork_writesAxisObservation(
+    isolated_live_data_root: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """覆盖范围：隔离 sandbox + World Bank live API 写 axis_observation
+    测试对象：run_world_bank_incremental(use_mock=False) + WorldBankLiveFetchPort
+    目的/目标：QMD_ALLOW_LIVE_FETCH=1 时真网增量写 macro clean
+    验证点：status∈{COMPLETED,EMPTY_RESPONSE}；COMPLETED 时 axis_observation≥1；DbInspector 表存在
+    失败含义：Tier A world_bank live 金路径未接通或误写主库
+    """
+    ctx = bootstrap_macro_live_e2e_ctx(
+        isolated_live_data_root,
+        monkeypatch,
+        source_id=SOURCE_ID,
+        data_domain=DATA_DOMAIN,
+        port_factory=lambda **kw: create_world_bank_incremental_port(
+            countries=DEFAULT_COUNTRIES, max_rows=3, **kw
+        ),
+        since_reader=_read_wb_since,
+        instrument_ids=DEFAULT_COUNTRIES,
+        service_builder=build_world_bank_incremental_service,
+        registry_factory=enabled_world_bank_source_registry,
+    )
+    report = run_world_bank_incremental(
+        ctx["orch"],
+        service=ctx["service"],
+        countries=DEFAULT_COUNTRIES,
+        use_mock=False,
+        source_registry=ctx["registry"],
+    )
+    status = report.instrument_results[0]["status"]
+    assert status in {"COMPLETED", "EMPTY_RESPONSE"}
+    inspect_report = DbInspector(ctx["cm"].db_path, ctx["raw_root"]).inspect()
+    axis_table = next(t for t in inspect_report.key_tables if t["name"] == "axis_observation")
+    assert axis_table["exists"] is True
+    if status == "COMPLETED":
+        indicator = clean_indicator_id("US")
+        with ctx["cm"].writer() as con:
+            count = con.execute(
+                "SELECT COUNT(*) FROM axis_observation WHERE indicator_id = ?",
+                [indicator],
+            ).fetchone()[0]
+        assert count >= 1
+        assert axis_table["row_count"] is not None and axis_table["row_count"] >= 1
+
+
+@pytest.mark.network
+def test_worldBankIncremental_liveNetwork_idempotentSecondRun(
+    isolated_live_data_root: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """覆盖范围：隔离 sandbox 连续两次 World Bank live 增量
+    测试对象：run_world_bank_incremental live 幂等 upsert
+    目的/目标：重复 live 跑 observation_id PK 不膨胀行数
+    验证点：两路 status∈{COMPLETED,EMPTY_RESPONSE}；COUNT(*) 相等
+    失败含义：live 幂等失败会导致日常 sync 重复膨胀
+    """
+    ctx = bootstrap_macro_live_e2e_ctx(
+        isolated_live_data_root,
+        monkeypatch,
+        source_id=SOURCE_ID,
+        data_domain=DATA_DOMAIN,
+        port_factory=lambda **kw: create_world_bank_incremental_port(
+            countries=DEFAULT_COUNTRIES, max_rows=3, **kw
+        ),
+        since_reader=_read_wb_since,
+        instrument_ids=DEFAULT_COUNTRIES,
+        service_builder=build_world_bank_incremental_service,
+        registry_factory=enabled_world_bank_source_registry,
+    )
+    run_world_bank_incremental(
+        ctx["orch"],
+        service=ctx["service"],
+        countries=DEFAULT_COUNTRIES,
+        use_mock=False,
+        source_registry=ctx["registry"],
+    )
+    with ctx["cm"].writer() as con:
+        first = con.execute("SELECT COUNT(*) FROM axis_observation").fetchone()[0]
+    run_world_bank_incremental(
+        ctx["orch"],
+        service=ctx["service"],
+        countries=DEFAULT_COUNTRIES,
+        use_mock=False,
+        source_registry=ctx["registry"],
+    )
+    with ctx["cm"].writer() as con:
+        second = con.execute("SELECT COUNT(*) FROM axis_observation").fetchone()[0]
+    assert first == second

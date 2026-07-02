@@ -1,0 +1,36 @@
+{
+  "task": "m-data-03-tier-a-live",
+  "acs": [
+    {
+      "id": "AC-CLI",
+      "status": "done",
+      "repair_items": []
+    },
+    {
+      "id": "AC-DISPATCH",
+      "status": "done",
+      "repair_items": []
+    },
+    {
+      "id": "AC-E2-INSPECT",
+      "status": "done",
+      "repair_items": []
+    },
+    {
+      "id": "AC-FULL-PYTEST",
+      "status": "done",
+      "repair_items": []
+    },
+    {
+      "id": "AC-HARNESS",
+      "status": "done",
+      "repair_items": []
+    },
+    {
+      "id": "AC-LIVE-11",
+      "status": "done",
+      "repair_items": []
+    }
+  ],
+  "modules": ["project_scaffold", "ops", "governance"]
+}

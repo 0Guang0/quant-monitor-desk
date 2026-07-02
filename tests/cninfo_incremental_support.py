@@ -21,6 +21,7 @@ from backend.app.ops.cninfo_incremental_watermark import (
     read_since_date_for_instrument,
 )
 from backend.app.sync.orchestrator import DataSyncOrchestrator
+from tests.live_incremental_support import bootstrap_acceptance_cm
 
 SYMBOL = "sh.600519"
 FIXTURE_DATE = date(2024, 6, 25)
@@ -47,6 +48,38 @@ def seed_watermark_row(con, publish_date: str) -> None:
         """,
         [f"seed-{publish_date}", SYMBOL, publish_ts],
     )
+
+
+def bootstrap_cninfo_live_e2e_ctx(
+    sandbox_root: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> dict[str, Any]:
+    """Bootstrap CNINFO product-live e2e under isolated M-DATA-03 sandbox (ADR-034)."""
+    monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    cm = bootstrap_acceptance_cm(sandbox_root)
+    raw_root = sandbox_root / "raw" / "cninfo"
+    raw_root.mkdir(parents=True, exist_ok=True)
+    port = create_cninfo_fetch_port(symbols=(SYMBOL,), max_rows=20, use_mock=False)
+    orch = DataSyncOrchestrator(cm)
+    registry = enabled_cninfo_source_registry()
+    with cm.writer() as con:
+        since = read_since_date_for_instrument(con, SYMBOL)
+    service = build_cninfo_incremental_service(
+        data_root=raw_root,
+        fetch_port=port,
+        since_by_instrument={SYMBOL: since},
+        job_events=orch._jobs,
+        source_registry=registry,
+    )
+    return {
+        "cm": cm,
+        "orch": orch,
+        "service": service,
+        "registry": registry,
+        "raw_root": raw_root,
+        "sandbox_root": sandbox_root,
+    }
 
 
 @pytest.fixture

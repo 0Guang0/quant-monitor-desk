@@ -1,0 +1,13 @@
+{"file": ".trellis/tasks/m-data-03-tier-a-live/AUDIT.plan.md", "reason": "extract: Audit SSOT | for: A1-A8 boot"}
+{"file": ".trellis/tasks/m-data-03-tier-a-live/frozen/M_DATA_03_TIER_A_LIVE.md", "reason": "extract: frozen task card trace | for: A5 scope"}
+{"file": ".trellis/tasks/m-data-03-tier-a-live/EXECUTION_INDEX.md", "reason": "extract: manifest index | for: A1/A5/A8"}
+{"file": "docs/decisions/ADR-034-m-data-03-tier-a-live-acceptance.md", "reason": "extract: S00+ | for: manifest"}
+{"file": "docs/decisions/ADR-027-product-live-fetch-gate.md", "reason": "extract: S00+ | for: manifest"}
+{"file": "docs/decisions/ADR-028-dcp05-tier-a-clean-domain-extension.md", "reason": "extract: live | for: manifest"}
+{"file": "docs/implementation_tasks/M_DATA_03_TIER_A_LIVE/M_DATA_03_TIER_A_LIVE.md", "reason": "extract: BOOT | for: manifest"}
+{"file": ".trellis/tasks/m-data-03-tier-a-live/research/plan-spec.md", "reason": "extract: S00+ | for: manifest"}
+{"file": ".trellis/tasks/m-data-03-tier-a-live/research/reference-adoption-m-data-03.md", "reason": "extract: BOOT | for: manifest"}
+{"file": "backend/app/ops/tier_a_live_acceptance.py", "reason": "extract: S00+ | for: manifest"}
+{"file": "backend/app/ops/tier_a_live_incremental_dispatch.py", "reason": "extract: S-ACCEPT | for: manifest"}
+{"file": "scripts/tier_a_live_acceptance.py", "reason": "extract: S00+ | for: manifest"}
+{"file": "tests/test_tier_a_live_dispatch.py", "reason": "extract: S-ACCEPT | for: manifest"}

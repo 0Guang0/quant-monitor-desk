@@ -31,6 +31,8 @@ FIXTURES = Path(__file__).parent / "fixtures"
 
 
 def pytest_configure(config) -> None:
+    import backend.app.config  # noqa: F401 — load PROJECT_ROOT/.env for live KEY slots
+
     try:
         from starlette.exceptions import StarletteDeprecationWarning
 
@@ -361,6 +363,27 @@ def empty_response_result():
         )
 
     return _make
+
+
+@pytest.fixture
+def isolated_live_data_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """Isolated M-DATA-03 sandbox root; rejects canonical main DB paths (ADR-034)."""
+    from backend.app.ops.tier_a_live_acceptance import (
+        M_DATA_03_SANDBOX_SEGMENT,
+        assert_isolated_live_data_root,
+    )
+
+    root = (
+        PROJECT_ROOT
+        / ".audit-sandbox"
+        / M_DATA_03_SANDBOX_SEGMENT
+        / f"pytest-{id(tmp_path)}"
+    )
+    root.mkdir(parents=True, exist_ok=True)
+    resolved = assert_isolated_live_data_root(root)
+    monkeypatch.setenv("QMD_DATA_ROOT", str(resolved))
+    monkeypatch.delenv("DATA_ROOT", raising=False)
+    return resolved
 
 
 @pytest.fixture

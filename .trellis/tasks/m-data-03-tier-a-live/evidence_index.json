@@ -1,0 +1,11 @@
+{
+  "execute": {
+    "harness": "tests/test_tier_a_live_harness.py",
+    "dispatch": "tests/test_tier_a_live_dispatch.py",
+    "acceptance_cli": "scripts/tier_a_live_acceptance.py",
+    "l4_evidence": "research/l4-tier-a-live-accept-evidence.md"
+  },
+  "audit": {
+    "repair_ledger": "research/audit-repair-ledger.md"
+  }
+}

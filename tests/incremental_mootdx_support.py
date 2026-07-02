@@ -44,6 +44,25 @@ def seed_watermark_row(con, trade_date: str) -> None:
     )
 
 
+def build_live_service(
+    cm: ConnectionManager,
+    raw_root: Path,
+    monkeypatch: Any,
+) -> tuple[DataSourceService, DataSyncOrchestrator]:
+    """Product live mootdx service (use_mock=False, ADR-027 opt-in)."""
+    from backend.app.ops.mootdx_incremental_run import build_mootdx_incremental_service
+
+    monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
+    orch = DataSyncOrchestrator(cm)
+    service = build_mootdx_incremental_service(
+        data_root=raw_root,
+        symbol=SYMBOL,
+        job_events=orch._jobs,
+        use_mock=False,
+    )
+    return service, orch
+
+
 def build_service(cm: ConnectionManager, raw_root: Path) -> tuple[DataSourceService, DataSyncOrchestrator]:
     orch = DataSyncOrchestrator(cm)
     port = create_mootdx_fetch_port(symbols=(SYMBOL,), max_rows=EQUITY_INDEX_MAX_ROWS, use_mock=True)

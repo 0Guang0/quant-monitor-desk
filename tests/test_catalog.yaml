@@ -1916,6 +1916,28 @@ tests/test_tierA_incremental_registry.py:
     docs: []
     rules: []
     specs: []
+tests/test_tier_a_live_dispatch.py:
+  command: uv run python -m pytest tests/test_tier_a_live_dispatch.py -q
+  failure_meaning:
+    Regression in test_tier_a_live_dispatch; inspect purpose and linked
+    authorities.
+  purpose: Unit tests for tier_a_live_incremental_dispatch (M-DATA-03 S-ACCEPT).
+  type: runtime-contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_tier_a_live_harness.py:
+  command: uv run python -m pytest tests/test_tier_a_live_harness.py -q
+  failure_meaning:
+    Regression in test_tier_a_live_harness; inspect purpose and linked
+    authorities.
+  purpose: Tier A live acceptance harness — S00-INFRA implements full contract.
+  type: contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
 tests/test_trellis_audit_trace_authority.py:
   command: uv run python -m pytest tests/test_trellis_audit_trace_authority.py -q
   failure_meaning:

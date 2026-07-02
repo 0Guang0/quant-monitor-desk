@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import urllib.error
+import urllib.parse
 import urllib.request
 import uuid
 from collections.abc import Sequence
@@ -108,6 +109,28 @@ class DeribitLiveFetchPort:
     instruments: Sequence[str]
     max_surface_rows: int
 
+    def _book_summary_mark_iv(self, instrument_name: str) -> float:
+        """get_instruments omits mark_iv; book summary is the minimal live IV source."""
+        encoded = urllib.parse.quote(instrument_name, safe="")
+        url = (
+            "https://www.deribit.com/api/v2/public/get_book_summary_by_instrument"
+            f"?instrument_name={encoded}"
+        )
+        try:
+            with urllib.request.urlopen(url, timeout=30) as response:
+                raw = json.loads(response.read().decode("utf-8"))
+        except urllib.error.URLError as exc:
+            raise PortError("NETWORK_ERROR", str(exc)) from exc
+        except json.JSONDecodeError as exc:
+            raise PortError("FAILED", f"invalid Deribit book summary JSON: {exc}") from exc
+        result = raw.get("result") or []
+        if not result:
+            raise PortError("EMPTY_RESPONSE", f"Deribit book summary empty for {instrument_name!r}")
+        mark_iv = result[0].get("mark_iv")
+        if mark_iv is None:
+            raise PortError("EMPTY_RESPONSE", f"Deribit book summary missing mark_iv for {instrument_name!r}")
+        return float(mark_iv)
+
     def _live_instruments(self, currency: str = "BTC") -> list[dict[str, Any]]:
         url = f"https://www.deribit.com/api/v2/public/get_instruments?currency={currency}&kind=option"
         try:
@@ -148,6 +171,10 @@ class DeribitLiveFetchPort:
         fetch_id = f"deribit-live-{name}-{uuid.uuid4().hex[:12]}"
         domain = req.data_domain or "crypto_options_surface"
         rows = self._live_instruments()
+        target = next((row for row in rows if row.get("instrument_name") == name), rows[0])
+        target_name = str(target.get("instrument_name") or name)
+        target["mark_iv"] = self._book_summary_mark_iv(target_name)
+        rows = [target]
         bundle = build_crypto_market_evidence_bundle(
             instruments=rows[: self.max_surface_rows],
             data_domain=domain,
