@@ -12,6 +12,16 @@
       "close": 1405.0,
       "volume": 500000,
       "source_used": "mootdx"
+    },
+    {
+      "instrument_id": "sh.600519",
+      "trade_date": "2024-06-26",
+      "open": 1405.0,
+      "high": 1415.0,
+      "low": 1400.0,
+      "close": 1410.0,
+      "volume": 510000,
+      "source_used": "mootdx"
     }
   ],
   "source_fetch_id": "mootdx-replay-600519",

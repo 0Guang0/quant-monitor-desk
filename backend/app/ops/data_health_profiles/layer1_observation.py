@@ -49,11 +49,23 @@ def _pass_rule(
 
 
 def _observation_has_value(obs: dict[str, Any]) -> bool:
-    for key in ("value", "yield_percent", "metric_value", "raw_value"):
+    for key in ("value", "yield_percent", "metric_value", "raw_value", "policy_rate"):
         val = obs.get(key)
         if val is not None and str(val).strip() not in {"", "."}:
             return True
+    long_c = obs.get("long_contracts")
+    short_c = obs.get("short_contracts")
+    if long_c not in (None, "", ".") and short_c not in (None, "", "."):
+        return True
     return False
+
+
+def _observation_date(obs: dict[str, Any]) -> str:
+    for key in ("observation_date", "report_date", "date"):
+        raw = obs.get(key)
+        if raw is not None and str(raw).strip():
+            return str(raw)[:10]
+    return ""
 
 
 def _warn(
@@ -115,7 +127,7 @@ def build_layer1_observation_p0_checks(
     for obs in observations:
         if not isinstance(obs, dict):
             continue
-        if not obs.get("observation_date") or not _observation_has_value(obs):
+        if not _observation_date(obs) or not _observation_has_value(obs):
             checks.append(
                 _fail(
                     "MISSING_REQUIRED_FIELD",

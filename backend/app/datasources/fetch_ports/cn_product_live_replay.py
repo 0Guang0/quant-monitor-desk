@@ -19,10 +19,14 @@ def replay_first_fetch_payload(
     max_rows: int,
     replay_path: Path,
     req: FetchRequest,
+    replay_caught_up_fallback: bool = False,
+    **mock_port_kwargs,
 ) -> FetchPayload:
     """Product live CN path: replay fixture when present, else mock synthetic bars."""
     return mock_port_cls(
         symbols=symbols,
         max_rows=max_rows,
         replay_path=replay_path,
+        replay_caught_up_fallback=replay_caught_up_fallback,
+        **mock_port_kwargs,
     ).fetch_payload(req)

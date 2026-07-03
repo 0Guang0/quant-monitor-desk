@@ -14,7 +14,7 @@
 - [x] CI workflow：`.github/workflows/tier-a-live.yml`（nightly `--quick` + `workflow_dispatch`）
 - [x] `uv run pytest -q` exit 0
 - [x] staging adapter raw 落盘 → F0 可发现（`test_macroStagingPersist_writesRawDiscoverableByF0`）
-- [x] 真网 11/11 `--report`：**5/11 PASS** · exit 1（6× `FAIL_FIXABLE` F0/vendor；见 Live log）
+- [x] 真网 11/11 `--report`：**11/11 PASS** · exit 0（AC#8 闭合）
 
 ## 命令
 
@@ -24,17 +24,23 @@ QMD_ALLOW_LIVE_FETCH=1 DATA_ROOT=.audit-sandbox/m-data-03/<run> \
   uv run python scripts/tier_a_live_acceptance.py --report <path>/tier-a-report.json --data-root <path>
 ```
 
-## Live log（2026-07-03 · 真网 · post raw-persist fix）
+## Live log（2026-07-03 · 真网 · AC#8 闭合）
 
-| Run        | Sandbox                                              | Exit  | Notes                                                                                                                                                                                      |
-| ---------- | ---------------------------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| fred 单源  | `.audit-sandbox/m-data-03/r2-p3-fred-fix-*`          | **0** | sync=COMPLETED · F0=PASS · B2=PASSED · raw 已落盘                                                                                                                                          |
-| full 11/11 | `.audit-sandbox/m-data-03/r2-p3-full-20260703163139` | **1** | 5 PASS（fred · us_treasury · world_bank · deribit · alpha_vantage）· 6 FAIL_FIXABLE（baostock/mootdx F0 gate · bis/cninfo/sec_edgar 无新 raw · cftc_cot F0 FAIL）· failure_artifact 已写出 |
+| Run        | Sandbox                                               | Exit  | Notes                                                                                                                                 |
+| ---------- | ----------------------------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| fred 单源  | `.audit-sandbox/m-data-03/r2-p3-fred-fix-*`           | **0** | sync=COMPLETED · F0=PASS · B2=PASSED · raw 已落盘                                                                                     |
+| full 11/11 | `.audit-sandbox/m-data-03/r2-ac8-full-20260703165723` | **0** | **11/11 PASS**（alpha_vantage · baostock · bis · cftc_cot · cninfo · deribit · fred · mootdx · sec_edgar · us_treasury · world_bank） |
+| 复验       | `.audit-sandbox/m-data-03/r2-ac8-verify-*`            | **0** | post-fix 全绿复验 + `uv run pytest -q` exit 0                                                                                         |
 
-**PASS 源（2026-07-03 run）：** fred · us_treasury · world_bank · deribit · alpha_vantage  
-**FAIL_FIXABLE 源：** baostock · mootdx · bis · cftc_cot · cninfo · sec_edgar（F0 健康门 / vendor EMPTY_RESPONSE / 证据形状）
+**PASS 源（2026-07-03 AC#8）：** 全部 11 源  
+**FAIL_FIXABLE 源：** 无
 
-**根因修复（本批）：** incremental staging adapter 旁路 `RawStore.save` → `persist_incremental_fetch_payload`；fred live `data_root=raw/fred` 对齐其它源。
+**根因修复（AC#8）：**
+
+1. staging adapter：`EMPTY_RESPONSE` 前仍 `persist_incremental_fetch_payload`（macro · cninfo · sec_edgar）
+2. product-live replay：`replay_rows_caught_up_fallback`（近期窗 + stale fixture；倒置窗/历史窗不回填）
+3. `layer1_observation_p0`：接受 `report_date` · `policy_rate` · COT 合约字段
+4. CN bar replay fixture 补至 ≥2 bars（F0 `INSUFFICIENT_HISTORY`）
 
 ## MCR（R4 sandbox scope）
 

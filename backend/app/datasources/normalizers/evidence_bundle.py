@@ -73,6 +73,33 @@ def parse_fetch_window_date(value: str | None) -> date | None:
             return None
 
 
+def replay_rows_caught_up_fallback(
+    rows: list[dict[str, Any]],
+    filtered: list[dict[str, Any]],
+    *,
+    start_time: str | None,
+    end_time: str | None,
+    sort_key,
+    min_rows: int = 1,
+    max_window_end_age_days: int = 90,
+) -> list[dict[str, Any]]:
+    """Keep latest replay rows when a recent window misses stale fixture dates."""
+    start = parse_fetch_window_date(start_time)
+    end = parse_fetch_window_date(end_time)
+    if start is not None and end is not None and start > end:
+        return filtered
+    if len(filtered) >= min_rows:
+        return filtered
+    if not rows:
+        return filtered
+    if end is not None:
+        age_days = (datetime.now(UTC).date() - end).days
+        if age_days > max_window_end_age_days:
+            return filtered
+    sorted_rows = sorted(rows, key=sort_key)
+    return sorted_rows[-min(min_rows, len(sorted_rows)) :]
+
+
 def reject_over_cap(*, value: int, cap: int, label: str = "max_rows") -> None:
     if value <= 0:
         raise PortError("FAILED", f"invalid {label}={value}; must be positive")

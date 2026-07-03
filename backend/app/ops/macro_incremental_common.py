@@ -292,16 +292,6 @@ def _make_macro_staging_adapter_class(
                 instrument_id=req.instrument_id or "",
                 start_date=req.start_time[:10] if req.start_time else None,
             )
-            if not rows:
-                return FetchResult(
-                    run_id=req.run_id,
-                    source_id=self.source_id,
-                    data_domain=req.data_domain,
-                    status="EMPTY_RESPONSE",
-                    row_count=0,
-                    fetch_time=fetch_time,
-                    error_message=_WATERMARK_EMPTY_MSG,
-                )
             persist_incremental_fetch_payload(
                 self,
                 payload,
@@ -312,6 +302,16 @@ def _make_macro_staging_adapter_class(
                     start_date=req.start_time[:10] if req.start_time else None,
                 ),
             )
+            if not rows:
+                return FetchResult(
+                    run_id=req.run_id,
+                    source_id=self.source_id,
+                    data_domain=req.data_domain,
+                    status="EMPTY_RESPONSE",
+                    row_count=0,
+                    fetch_time=fetch_time,
+                    error_message=_WATERMARK_EMPTY_MSG,
+                )
             con.execute(f"DELETE FROM {STAGING_TABLE}")
             col_list = ", ".join(AXIS_OBSERVATION_DDL_COLUMNS)
             placeholders = ", ".join("?" for _ in AXIS_OBSERVATION_DDL_COLUMNS)

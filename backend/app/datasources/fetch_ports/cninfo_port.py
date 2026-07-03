@@ -25,6 +25,7 @@ from backend.app.datasources.normalizers.evidence_bundle import (
     finalize_bundle,
     parse_fetch_window_date,
     reject_over_cap,
+    replay_rows_caught_up_fallback,
 )
 
 MAX_ISSUERS = 5
@@ -65,6 +66,7 @@ class CninfoMockFetchPort:
     replay_path: Path = REPLAY_FIXTURE
     pdf_bytes: int = 0
     enable_pdf_live: bool = False
+    replay_caught_up_fallback: bool = False
 
     def fetch_payload(self, req: FetchRequest) -> FetchPayload:
         reject_over_cap(value=self.max_rows, cap=MAX_FILINGS, label="max_filings")
@@ -82,10 +84,25 @@ class CninfoMockFetchPort:
 
         if self.replay_path.is_file():
             bundle = read_cn_market_evidence_bundle(self.replay_path)
-            filings = _filter_filings_by_window(
-                list(bundle.get("filings") or []),
+            all_filings = list(bundle.get("filings") or [])
+            filtered = _filter_filings_by_window(
+                all_filings,
                 start_time=req.start_time,
                 end_time=req.end_time,
+            )
+            filings = (
+                replay_rows_caught_up_fallback(
+                    all_filings,
+                    filtered,
+                    start_time=req.start_time,
+                    end_time=req.end_time,
+                    sort_key=lambda row: str(
+                        row.get("observation_date") or row.get("publish_timestamp") or ""
+                    ),
+                    min_rows=1,
+                )
+                if self.replay_caught_up_fallback
+                else filtered
             )
             bundle = {**bundle, "filings": filings}
             content = json.dumps(bundle, ensure_ascii=False, default=str).encode("utf-8")
@@ -179,6 +196,7 @@ class CninfoProductLiveFetchPort:
             max_rows=self.max_rows,
             replay_path=self.replay_path,
             req=req,
+            replay_caught_up_fallback=True,
         )
 
 

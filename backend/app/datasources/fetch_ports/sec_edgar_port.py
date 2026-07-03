@@ -23,6 +23,7 @@ from backend.app.datasources.normalizers.evidence_bundle import (
     finalize_bundle,
     parse_fetch_window_date,
     reject_over_cap,
+    replay_rows_caught_up_fallback,
 )
 from backend.app.datasources.normalizers.sec_edgar import (
     build_filings_evidence_bundle,
@@ -86,6 +87,7 @@ class SecEdgarMockFetchPort:
     max_filings: int
     data_domain: SecEdgarDomain
     replay_path: Path = FILINGS_REPLAY_FIXTURE
+    replay_caught_up_fallback: bool = False
 
     def _mock_filings(self, cik: str) -> list[dict[str, Any]]:
         today = datetime.now(UTC).date()
@@ -135,10 +137,23 @@ class SecEdgarMockFetchPort:
 
         if self.data_domain == "us_filings" and self.replay_path.is_file():
             bundle = read_filings_evidence_bundle(self.replay_path)
-            filings = _filter_filings_by_window(
-                list(bundle.get("filings") or []),
+            all_filings = list(bundle.get("filings") or [])
+            filtered = _filter_filings_by_window(
+                all_filings,
                 start_time=req.start_time,
                 end_time=req.end_time,
+            )
+            filings = (
+                replay_rows_caught_up_fallback(
+                    all_filings,
+                    filtered,
+                    start_time=req.start_time,
+                    end_time=req.end_time,
+                    sort_key=lambda row: str(row.get("filing_date") or ""),
+                    min_rows=1,
+                )
+                if self.replay_caught_up_fallback
+                else filtered
             )
             bundle = build_filings_evidence_bundle(
                 filings=filings,
@@ -194,4 +209,9 @@ def create_sec_edgar_fetch_port(
 
     gate_live_fetch_port(source_id="sec_edgar")
     # ponytail: live branch delegates to mock until EDGAR live parser wired
-    return SecEdgarMockFetchPort(ciks=ciks, max_filings=max_filings, data_domain=data_domain)
+    return SecEdgarMockFetchPort(
+        ciks=ciks,
+        max_filings=max_filings,
+        data_domain=data_domain,
+        replay_caught_up_fallback=True,
+    )
