@@ -24,6 +24,10 @@ from backend.app.datasources.fetch_result import FetchRequest, FetchResult
 from backend.app.datasources.service import DataSourceService
 from backend.app.layer1_axes.observation_contract import AXIS_OBSERVATION_DDL_COLUMNS
 from backend.app.ops.fred_incremental_watermark import STAGING_TABLE, read_since_dates_for_series
+from backend.app.ops.macro_incremental_common import (
+    incremental_evidence_as_of,
+    persist_incremental_fetch_payload,
+)
 from backend.app.ops.sandbox_clean_write.clean_write_targets import resolve_clean_write_target
 from backend.app.storage.raw_store import RawStore
 from backend.app.sync.jobs import SyncJobSpec
@@ -137,6 +141,16 @@ def _make_fred_macro_staging_adapter_class():
                     fetch_time=fetch_time,
                     error_message=_WATERMARK_EMPTY_MSG,
                 )
+            persist_incremental_fetch_payload(
+                self,
+                payload,
+                req,
+                as_of=incremental_evidence_as_of(
+                    bundle,
+                    fetch_time=fetch_time,
+                    start_date=req.start_time[:10] if req.start_time else None,
+                ),
+            )
             con.execute(f"DELETE FROM {STAGING_TABLE}")
             col_list = ", ".join(AXIS_OBSERVATION_DDL_COLUMNS)
             placeholders = ", ".join("?" for _ in AXIS_OBSERVATION_DDL_COLUMNS)

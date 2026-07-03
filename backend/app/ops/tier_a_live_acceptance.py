@@ -196,7 +196,13 @@ def ensure_isolated_db(data_root: Path) -> Path:
 
 def _raw_path_belongs_to_source(rel_posix: str, source_id: str) -> bool:
     needle = f"raw/{source_id}/"
-    return rel_posix.startswith(needle) or f"/{needle}" in rel_posix
+    legacy = f"raw/raw/{source_id}/"
+    return (
+        rel_posix.startswith(needle)
+        or f"/{needle}" in rel_posix
+        or rel_posix.startswith(legacy)
+        or f"/{legacy}" in rel_posix
+    )
 
 
 def _iter_source_raw_files(data_root: Path, source_id: str) -> list[Path]:

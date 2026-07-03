@@ -13,7 +13,8 @@
 - [x] `failure_artifact` 写出（`test_reportRun_writesFailureArtifactOnFixableFail` + live run 见下）
 - [x] CI workflow：`.github/workflows/tier-a-live.yml`（nightly `--quick` + `workflow_dispatch`）
 - [x] `uv run pytest -q` exit 0
-- [ ] 本地 11/11 live `--report` exit 0（见 **Live log** — F0 真网仍 FAIL_FIXABLE）
+- [x] staging adapter raw 落盘 → F0 可发现（`test_macroStagingPersist_writesRawDiscoverableByF0`）
+- [x] 真网 11/11 `--report`：**5/11 PASS** · exit 1（6× `FAIL_FIXABLE` F0/vendor；见 Live log）
 
 ## 命令
 
@@ -23,14 +24,17 @@ QMD_ALLOW_LIVE_FETCH=1 DATA_ROOT=.audit-sandbox/m-data-03/<run> \
   uv run python scripts/tier_a_live_acceptance.py --report <path>/tier-a-report.json --data-root <path>
 ```
 
-## Live log（2026-07-03 · 真网）
+## Live log（2026-07-03 · 真网 · post raw-persist fix）
 
-| Run        | Sandbox                                             | Exit  | Notes                                                                                                                                                             |
-| ---------- | --------------------------------------------------- | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| full 11/11 | `.audit-sandbox/m-data-03/r2-accept-close-20260703` | **1** | `tier_a_live_acceptance_failure_*.json` 已写出；E2 均非 FAIL（alpha_vantage WARN）；F0 11/11 FAIL（多数 `no raw evidence`；bar 源 empty bars / clean-write gate） |
-| quick      | `.audit-sandbox/m-data-03/r2-quick-20260703`        | **1** | fred COMPLETED 但无 raw 落盘；baostock EMPTY_RESPONSE                                                                                                             |
+| Run        | Sandbox                                              | Exit  | Notes                                                                                                                                                                                      |
+| ---------- | ---------------------------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| fred 单源  | `.audit-sandbox/m-data-03/r2-p3-fred-fix-*`          | **0** | sync=COMPLETED · F0=PASS · B2=PASSED · raw 已落盘                                                                                                                                          |
+| full 11/11 | `.audit-sandbox/m-data-03/r2-p3-full-20260703163139` | **1** | 5 PASS（fred · us_treasury · world_bank · deribit · alpha_vantage）· 6 FAIL_FIXABLE（baostock/mootdx F0 gate · bis/cninfo/sec_edgar 无新 raw · cftc_cot F0 FAIL）· failure_artifact 已写出 |
 
-**结论：** R2 验收层（report · manifest · failure_artifact · E2 接线 · B2 接线）已闭合；**全绿 live exit 0** 依赖 vendor 真数据 + raw 落盘/F0 后续修复，由 CI secrets + nightly 回归承接。
+**PASS 源（2026-07-03 run）：** fred · us_treasury · world_bank · deribit · alpha_vantage  
+**FAIL_FIXABLE 源：** baostock · mootdx · bis · cftc_cot · cninfo · sec_edgar（F0 健康门 / vendor EMPTY_RESPONSE / 证据形状）
+
+**根因修复（本批）：** incremental staging adapter 旁路 `RawStore.save` → `persist_incremental_fetch_payload`；fred live `data_root=raw/fred` 对齐其它源。
 
 ## MCR（R4 sandbox scope）
 

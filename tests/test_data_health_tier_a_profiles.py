@@ -302,6 +302,72 @@ def test_goodBundle_marketBar_stillPasses() -> None:
     assert report.overall_status not in {"FAIL", "BLOCKED"}
 
 
+def test_macroStagingPersist_writesRawDiscoverableByF0(tmp_path: Path) -> None:
+    """覆盖范围：macro staging adapter raw 落盘
+    测试对象：persist_incremental_fetch_payload + _run_f0_data_health
+    目的/目标：live incremental 后 F0 能找到 raw JSON（非 no raw evidence）
+    验证点：raw 文件存在；F0 status 非 FAIL
+    失败含义：staging 旁路仍不写 raw，验收层 F0 必败
+    """
+    import json
+    from types import SimpleNamespace
+
+    from backend.app.datasources.fetch_result import FetchRequest
+    from backend.app.ops.macro_incremental_common import persist_incremental_fetch_payload
+    from backend.app.ops.tier_a_live_acceptance import (
+        _iter_source_raw_files,
+        _run_f0_data_health,
+        ensure_isolated_db,
+    )
+    from backend.app.storage.raw_store import RawStore
+    from backend.app.datasources.adapters.skeleton_base import SkeletonAdapterBase
+
+    data_root = tmp_path / "sandbox"
+    data_root.mkdir()
+    raw_root = data_root / "raw" / "fred"
+    raw_root.mkdir(parents=True)
+    bundle = {
+        "series": [
+            {
+                "series_id": "DGS10",
+                "source_fetch_id": "persist-test",
+                "content_hash": "abc123",
+                "as_of_timestamp": "2026-07-03T12:00:00Z",
+                "retrieved_at": "2026-07-03T12:00:00Z",
+                "observations": [
+                    {"series_id": "DGS10", "observation_date": "2026-07-01", "value": "4.40"}
+                ],
+                "rows": [
+                    {"series_id": "DGS10", "observation_date": "2026-07-01", "value": "4.40"}
+                ],
+            }
+        ],
+        "source_id": "fred",
+    }
+    payload = SimpleNamespace(
+        content=json.dumps(bundle).encode("utf-8"),
+        file_type="json",
+    )
+    req = FetchRequest(
+        run_id="run-persist",
+        source_id="fred",
+        data_domain="macro_series",
+        instrument_id="DGS10",
+        start_time="2026-07-01",
+    )
+
+    class _StubAdapter(SkeletonAdapterBase):
+        source_id = "fred"
+        supported_domains = frozenset({"macro_series"})
+
+    adapter = _StubAdapter(object(), raw_store=RawStore(raw_root), fetch_port=object())
+    persist_incremental_fetch_payload(adapter, payload, req, as_of="2026-07-03")
+    assert _iter_source_raw_files(data_root, "fred")
+    db_path = ensure_isolated_db(data_root)
+    status, detail = _run_f0_data_health("fred", data_root=data_root, db_path=db_path)
+    assert status != "FAIL", detail
+
+
 def test_missingEvidence_raisesLoadError(tmp_path: Path) -> None:
     """覆盖范围：空证据目录
     测试对象：run_data_health_profile layer1

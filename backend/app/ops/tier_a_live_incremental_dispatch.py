@@ -274,7 +274,7 @@ def _sync_fred_live(data_root: Path) -> str:
     port = create_fred_fetch_port(series_ids=selected, max_rows=3, use_mock=False)
     orch = DataSyncOrchestrator(cm)
     service = build_fred_incremental_service(
-        data_root=raw_root,
+        data_root=raw_root / "fred",
         fetch_port=port,
         since_by_series=since_map,
         job_events=orch._jobs,

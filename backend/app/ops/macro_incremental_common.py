@@ -30,6 +30,39 @@ MACRO_REQUIRED_FIELDS = ("raw_value", "source_used")
 STAGING_TABLE = "stg_axis_observation_smoke"
 _SERIES_SUCCESS_STATUSES = frozenset({"COMPLETED", "EMPTY_RESPONSE"})
 _WATERMARK_EMPTY_MSG = "no observations after watermark window"
+_RAW_FILE_TYPES = frozenset({"json", "csv", "parquet"})
+
+
+def incremental_evidence_as_of(
+    bundle: dict[str, Any], *, fetch_time: str, start_date: str | None
+) -> str:
+    for key in ("as_of_timestamp", "retrieved_at", "filing_date", "report_date"):
+        raw = bundle.get(key)
+        if isinstance(raw, str) and len(raw) >= 10:
+            return raw[:10]
+    if start_date:
+        return start_date[:10]
+    return fetch_time[:10]
+
+
+def persist_incremental_fetch_payload(
+    adapter: SkeletonAdapterBase,
+    payload: Any,
+    req: FetchRequest,
+    *,
+    as_of: str,
+) -> None:
+    """Persist live fetch JSON for F0 data health (staging adapters bypass SkeletonAdapterBase.fetch)."""
+    file_type = getattr(payload, "file_type", None) or "json"
+    if file_type not in _RAW_FILE_TYPES:
+        file_type = "json"
+    adapter._raw_store.save(
+        payload.content,
+        source=adapter.source_id,
+        data_domain=req.data_domain,
+        file_type=file_type,
+        as_of=as_of,
+    )
 
 
 def read_observation_date_watermark(con, indicator_id: str) -> date | None:
@@ -269,6 +302,16 @@ def _make_macro_staging_adapter_class(
                     fetch_time=fetch_time,
                     error_message=_WATERMARK_EMPTY_MSG,
                 )
+            persist_incremental_fetch_payload(
+                self,
+                payload,
+                req,
+                as_of=incremental_evidence_as_of(
+                    bundle,
+                    fetch_time=fetch_time,
+                    start_date=req.start_time[:10] if req.start_time else None,
+                ),
+            )
             con.execute(f"DELETE FROM {STAGING_TABLE}")
             col_list = ", ".join(AXIS_OBSERVATION_DDL_COLUMNS)
             placeholders = ", ".join("?" for _ in AXIS_OBSERVATION_DDL_COLUMNS)
