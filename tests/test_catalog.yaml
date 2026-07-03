@@ -364,6 +364,16 @@ tests/test_data_health_easyxt_profiles.py:
     - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
     specs:
     - specs/contracts/data_quality_rules.yaml
+tests/test_data_health_tier_a_profiles.py:
+  command: uv run python -m pytest tests/test_data_health_tier_a_profiles.py -q
+  failure_meaning: Regression in test_data_health_tier_a_profiles; inspect purpose
+    and linked authorities.
+  purpose: M-DATA-03 S-R2-F0 — four Tier-A data health profile families.
+  type: runtime-contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
 tests/test_data_health_v2.py:
   command: uv run python -m pytest tests/test_data_health_v2.py -q
   evidence_required: pytest output

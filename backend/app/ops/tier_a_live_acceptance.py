@@ -21,7 +21,6 @@ from backend.app.datasources.product_live_gate import is_product_live_fetch_allo
 from backend.app.ops.sandbox_clean_write.path_utils import resolve_sandbox_path
 from backend.app.ops.tier_a_live_status import (
     PASS_SYNC_STATUSES,
-    _BAR_SOURCE_IDS,
     live_acceptance_mock_env_enabled,
     validate_sec_edgar_user_agent,
 )
@@ -213,41 +212,34 @@ def _run_f0_data_health(
     source_id: str, *, data_root: Path, db_path: Path
 ) -> tuple[str, str]:
     """Run F0 data health on latest raw evidence; return (status, detail)."""
-    evidence_dir = _latest_raw_evidence_dir(data_root, source_id)
-    if evidence_dir is None:
-        return "SKIP", "no raw evidence; caught-up inspect-only gate"
-
-    # ponytail: live incremental writes hash-named bundles, not fred_sandbox_pilot fred_evidence.json
-    if source_id == "fred" and not (evidence_dir / "fred_evidence.json").is_file():
-        return "SKIP", "live incremental evidence; fred_sandbox_pilot partial F0 skipped"
-
-    from backend.app.ops.data_health import DataHealthLoadError, DataHealthService
+    from backend.app.ops.data_health import DataHealthLoadError
     from backend.app.ops.data_health_profiles import run_data_health_profile
 
+    binding = source_bindings()[source_id]
+    health_domain = str(binding["health_domain"])
+    health_profile_id = str(binding["health_profile_id"])
+
+    evidence_dir = _latest_raw_evidence_dir(data_root, source_id)
+    if evidence_dir is None:
+        return "FAIL", "no raw evidence for F0 data health"
+
     try:
-        if source_id in _BAR_SOURCE_IDS:
-            report, *_ = run_data_health_profile(
-                profile_id="market_bar_p0",
-                domain="market_bar_1d",
-                evidence_path=evidence_dir,
-                db_path=db_path if db_path.is_file() else None,
-                start_date=None,
-                end_date=None,
-                max_rows=1000,
-            )
-        else:
-            profile = "staged_pilot_v3" if source_id == "cninfo" else "fred_sandbox_pilot"
-            report = DataHealthService().check_evidence_dir(evidence_dir, profile=profile)
+        report, *_ = run_data_health_profile(
+            profile_id=health_profile_id,
+            domain=health_domain,
+            evidence_path=evidence_dir,
+            db_path=db_path if db_path.is_file() else None,
+            start_date=None,
+            end_date=None,
+            max_rows=1000,
+        )
     except DataHealthLoadError as exc:
-        return "SKIP", f"partial F0 evidence unloadable: {exc}"
+        return "FAIL", f"F0 evidence unloadable: {exc}"
 
     status = str(report.overall_status)
     detail = report.gate_rationale or status
     if status in {"FAIL", "BLOCKED"}:
         return "FAIL", f"data-health {status}: {detail}"
-    if not report.sandbox_clean_write_gate_ready:
-        # ponytail: live incremental raw may not satisfy full sandbox gate; E2 inspect remains authoritative
-        return "SKIP", f"partial F0 gate not ready: {detail}"
     return status, detail
 
 
@@ -281,11 +273,11 @@ def run_source_live_acceptance(source_id: str, *, data_root: Path) -> SourceAcce
     health_status, health_detail = _run_f0_data_health(
         source_id, data_root=resolved, db_path=db_path
     )
-    if health_status == "FAIL":
+    if health_status in {"FAIL", "BLOCKED"}:
         return SourceAcceptanceResult(
             source_id=source_id,
             status="fail",
-            detail=f"data-health FAIL: {health_detail}",
+            detail=f"data-health {health_status}: {health_detail}",
         )
 
     if outcome.inspect_status == "FAIL":
@@ -411,9 +403,6 @@ def _build_fetch_block(
 
 
 def _health_status_for_manifest(health_status: str) -> str:
-    normalized = health_status.upper()
-    if normalized in {"SKIP", "SKIPPED"}:
-        return "partial"
     return health_status
 
 
@@ -493,7 +482,7 @@ def _process_source_for_report(
     outcome = run_tier_a_live_incremental(source_id, data_root)
     disposition, report_failure_class = classify_source_report_failure(outcome)
     f0_status, f0_detail = _run_f0_data_health(source_id, data_root=data_root, db_path=db_path)
-    if f0_status == "FAIL":
+    if f0_status in {"FAIL", "BLOCKED"}:
         disposition = "fail"
         report_failure_class = "FAIL_FIXABLE"
     binding = source_bindings()[source_id]

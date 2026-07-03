@@ -37,6 +37,14 @@ def _mock_outcome(source_id: str) -> LiveIncrementalOutcome:
     )
 
 
+def _mock_f0_pass(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Report tests target manifest shape; isolate from S-R2-F0 evidence requirements."""
+    monkeypatch.setattr(
+        "backend.app.ops.tier_a_live_acceptance._run_f0_data_health",
+        lambda *_a, **_k: ("PASS", "mock f0 for report test"),
+    )
+
+
 def test_reportRun_writesElevenManifests(
     isolated_live_data_root: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -64,6 +72,7 @@ def test_reportRun_writesElevenManifests(
         "backend.app.ops.tier_a_live_incremental_dispatch.run_tier_a_live_incremental",
         _mock_incremental,
     )
+    _mock_f0_pass(monkeypatch)
 
     report_path = tmp_path / "tier-a-report.json"
     exit_code = run_acceptance_report(
@@ -112,6 +121,7 @@ def test_acceptanceReport_hasContractTopLevelFields(
         "backend.app.ops.tier_a_live_acceptance.run_tier_a_live_incremental",
         _mock_incremental,
     )
+    _mock_f0_pass(monkeypatch)
 
     report_path = tmp_path / "tier-a-shape.json"
     run_acceptance_report(report_path, data_root=isolated_live_data_root)
@@ -151,6 +161,7 @@ def test_cliReportFlag_writesReportViaMain(
         "backend.app.ops.tier_a_live_acceptance.run_tier_a_live_incremental",
         _mock_incremental,
     )
+    _mock_f0_pass(monkeypatch)
 
     report_path = tmp_path / "cli-report.json"
     exit_code = main(
