@@ -35,6 +35,7 @@
 | DataSourceService    | `specs/contracts/datasource_service_contract.yaml`   |
 | Sync job             | `specs/contracts/sync_job_contract.yaml`             |
 | Data CLI             | `specs/contracts/data_cli_contract.yaml`             |
+| Live tier A evidence | `specs/contracts/live_tier_a_evidence_v1.yaml`       |
 | Ops inspect          | `specs/contracts/ops_db_inspect_contract.yaml`       |
 | Source route         | `specs/contracts/source_route_contract.yaml`         |
 | Source capability    | `specs/contracts/source_capability_contract.yaml`    |

@@ -1,143 +1,117 @@
-# M-DATA-03 执行入口 — 路由地图（Execute SSOT）
+# M-DATA-03 执行入口 — 路由地图（Plan R2 · Execute SSOT）
 
-> **角色：** 本任务 **唯一 Execute 读入口**  
-> **任务目录：** `.trellis/tasks/m-data-03-tier-a-live/`  
-> **活卡（包外）：** `docs/implementation_tasks/M_DATA_03_TIER_A_LIVE/M_DATA_03_TIER_A_LIVE.md`  
+> **唯一 Execute 读入口** · **用户口径 SSOT：** `research/plan-revision-r2.md`  
 > **协议：** Plan v4.1 · `plan-skill-outputs.yaml`
 
 ---
 
 ## 1. 目的 · 价值 · 完成条件
 
-| 维度         | 内容                                                                              |
-| ------------ | --------------------------------------------------------------------------------- |
-| **目的**     | 11 个 Tier A 源在隔离库 **真连网** incremental→clean→inspect 验收                 |
-| **价值**     | 模块 v2 首票 P0；解锁 M-G1-03；MCR C3/D1/E1/E2/F0/B2 → R4                         |
-| **前置**     | R3-DCP-05 CLOSED（replay 逻辑）；ADR-027/028                                      |
-| **完成条件** | `to-issues-slices.md` 全切片绿 · S-ACCEPT 11/11 · `uv run pytest -q` · Audit PASS |
-| **不在范围** | 新 DDL · Layer 建模 · Round4 · 主库 · Tier B/C cron                               |
+| 维度         | 内容                                                              |
+| ------------ | ----------------------------------------------------------------- |
+| **目的**     | 11 源隔离库 **R4 真网** 完整验收：统一信封 + F0 + B2 + 无 SKIP    |
+| **价值**     | M-G1-03；MCR C3/D1/E1/E2/F0/B2 → R4                               |
+| **完成条件** | `plan-revision-r2.md` §2 全满足 · `to-issues-slices.md` R2 全 [x] |
+| **不在范围** | 新 DDL · Layer · Round4 · 主库 · 阶段外置                         |
 
 ---
 
 ## 2. 约束 · 规则
 
-| 类别     | 约束                                           | 详述                                    |
-| -------- | ---------------------------------------------- | --------------------------------------- |
-| ADR-034  | 隔离 `DATA_ROOT` live 验收                     | `docs/decisions/ADR-034-*.md`           |
-| ADR-027  | `QMD_ALLOW_LIVE_FETCH` 真网闸                  | `product_live_gate.py`                  |
-| ADR-025  | Sync 必须 `datasource_service`                 | fail-closed                             |
-| ADR-028  | clean 域 migration 015                         | 只读                                    |
-| 参考采纳 | L 梯 **仅** `参考项目/**`；仓内 = **直接复用** | `reference-adoption-m-data-03.md` §0·§4 |
-| 接口契约 | live 闸 / acceptance CLI exit 码               | `plan-spec.md` Interface Contract       |
-| 主库     | 禁止 silent 写 canonical DB                    | ADR-034 · DEBT 惯例                     |
-| GitNexus | impact + detect_changes                        | `gitnexus-summary.md`                   |
-| 测试     | replay 默认绿 + network 可选 live              | `plan-spec.md`                          |
-
-### 2.1 借鉴三等级速查（≠ 上下文 L1–L5）
-
-| 等级           | 仅 `参考项目/**`         | 本票                         |
-| -------------- | ------------------------ | ---------------------------- |
-| L1 直接拷贝    | 粘贴外部源码到 qmd_owned | **0 项**                     |
-| L2 拷贝后改造  | 借鉴片段 + 必改写        | **bis 窗参数**（§2.2 清单）  |
-| L3 仅概念/架构 | 禁止粘贴参考代码         | OpenBB 三阶段、EasyXT 反例等 |
-| 仓内直接复用   | **不适用借鉴梯**         | DCP-05 全部管道代码          |
-
-详见 `reference-adoption-m-data-03.md` §0 · `plan-context.md` 命名澄清。
+| 类别     | 约束                                                 | 详述                              |
+| -------- | ---------------------------------------------------- | --------------------------------- |
+| 证据     | `live_tier_a_evidence_v1.yaml`                       | 11 源统一信封 + `source_bindings` |
+| F0/B2    | `data_quality_rules.yaml` · `data_cli_contract.yaml` | 四族 profile；禁 SKIP             |
+| 权威     | docs/specs > 参考项目 > 仓内                         | `plan-revision-r2.md`             |
+| 真网     | `QMD_ALLOW_LIVE_FETCH` + 隔离 `DATA_ROOT`            | ADR-034 · ADR-027                 |
+| 失败     | fixable 必修 · external 须 ADR                       | contract `failure_class`          |
+| GitNexus | dispatch 改前 `impact()`                             | `gitnexus-summary.md`             |
 
 ---
 
 ## 3. 验证命令
 
 ```bash
-# 默认 CI
 uv run pytest -q
-
-# 单源 live（隔离库 + key）
-export QMD_ALLOW_LIVE_FETCH=1
-export DATA_ROOT=.audit-sandbox/m-data-03
-uv run pytest tests/test_fred_macro_incremental_e2e.py -m network -q
-
-# 11/11 验收
-uv run python scripts/tier_a_live_acceptance.py --quick
-uv run python scripts/tier_a_live_acceptance.py
-
 uv run python scripts/loop_maintain.py
+QMD_ALLOW_LIVE_FETCH=1 DATA_ROOT=.audit-sandbox/m-data-03/<run> \
+  uv run python scripts/tier_a_live_acceptance.py --report /tmp/tier-a-r2.json
 ```
-
-证据（v4.1 code-first）：`EXECUTION_INDEX.md` §1 · frozen §9 `[x]` · 对应 pytest/脚本路径
 
 ---
 
 ## 4. ADR 索引
 
-| ADR                                                                                     | 标题                  | 切片                                         |
-| --------------------------------------------------------------------------------------- | --------------------- | -------------------------------------------- |
-| [ADR-034](../../../docs/decisions/ADR-034-m-data-03-tier-a-live-acceptance.md)          | 隔离库 live 验收      | **S00-INFRA** · **S-LIVE-\*** · **S-ACCEPT** |
-| [ADR-027](../../../docs/decisions/ADR-027-r3h08-product-live-env-gate.md)               | Product live env gate | 全 live 切片                                 |
-| [ADR-025](../../../docs/decisions/ADR-025-r3h10-sync-fail-closed-datasource-service.md) | Sync fail-closed      | 全片                                         |
-| [ADR-028](../../../docs/decisions/ADR-028-dcp05-tier-a-clean-domain-extension.md)       | clean 域 015          | 只读                                         |
+| ADR                                                                                        | 标题                  | 切片          |
+| ------------------------------------------------------------------------------------------ | --------------------- | ------------- |
+| [ADR-034](../../../../docs/decisions/ADR-034-m-data-03-tier-a-live-acceptance.md)          | Tier A live 隔离验收  | S-R2-ACCEPT   |
+| [ADR-027](../../../../docs/decisions/ADR-027-r3h08-product-live-env-gate.md)               | Product live env gate | 全片          |
+| [ADR-025](../../../../docs/decisions/ADR-025-r3h10-sync-fail-closed-datasource-service.md) | Sync fail-closed      | S-R2-DISPATCH |
+| [ADR-028](../../../../docs/decisions/ADR-028-dcp05-tier-a-clean-domain-extension.md)       | Clean domain          | 基线          |
+
+**契约：** `specs/contracts/live_tier_a_evidence_v1.yaml`
 
 ---
 
 ## 5. 执行包阅读规则
 
-### 5.1 包内文件地图
+### 5.1 包内文件地图（Plan 产物 only）
 
-| 文件                              | Skill                       | 摘要                                      |
-| --------------------------------- | --------------------------- | ----------------------------------------- |
-| `00-EXECUTION-ENTRY.md`           | trellis-plan 5e             | 本路由                                    |
-| `EXTERNAL-INDEX.md`               | trellis-plan 5e             | 包外 §A/B/C                               |
-| `plan-boot.md`                    | P0                          | Boot 复述                                 |
-| `tier-a-live-inventory.md`        | trellis-research            | 设计权威倒查                              |
-| `tier-a-live-eligibility.md`      | S00                         | 11 源资格矩阵                             |
-| `to-issues-slices.md`             | to-issues                   | **切片 AC SSOT**                          |
-| `plan-task-breakdown.md`          | planning-and-task-breakdown | 任务/CP                                   |
-| `plan-spec.md`                    | spec-driven-development     | 技术规格                                  |
-| `plan-context.md`                 | context-engineering         | 上下文/路由                               |
-| `plan-doubt-review.md`            | doubt-driven-development    | 怀疑审查                                  |
-| `reference-adoption-m-data-03.md` | trellis-research            | 借鉴三等级（仅参考项目）+ 仓内直接复用 §4 |
-| `parallel-dispatch-protocol.md`   | trellis-channel             | 并行派发                                  |
-| `project-overview.md`             | GitNexus 1a                 | 子系统                                    |
-| `gitnexus-summary.md`             | GitNexus 1b                 | 冲击面                                    |
-| `plan-consolidation.md`           | trellis-plan 5e             | 分流对照                                  |
+| 文件                              | Skill                       | 摘要                   |
+| --------------------------------- | --------------------------- | ---------------------- |
+| `00-EXECUTION-ENTRY.md`           | trellis-plan 5e             | 本路由                 |
+| `EXTERNAL-INDEX.md`               | trellis-plan 5e             | 包外 §A/B/C/E          |
+| `plan-revision-r2.md`             | Plan R2                     | **用户口径 · AC 锁定** |
+| `to-issues-slices.md`             | to-issues                   | **切片 AC SSOT**       |
+| `plan-spec.md`                    | spec-driven-development     | 技术规格 R2            |
+| `plan-task-breakdown.md`          | planning-and-task-breakdown | R2 任务分解            |
+| `plan-context.md`                 | context-engineering         | L1–L5 · 路由           |
+| `plan-doubt-review.md`            | doubt-driven-development    | 怀疑审查               |
+| `plan-consolidation.md`           | trellis-plan 5e             | Skill 对照             |
+| `plan-boot.md`                    | P0 Boot                     | 复述                   |
+| `reference-adoption-m-data-03.md` | trellis-research            | 借鉴梯                 |
+| `tier-a-live-inventory.md`        | trellis-research            | 11 源触点              |
+| `tier-a-live-eligibility.md`      | trellis-research            | KEY 矩阵               |
+| `project-overview.md`             | GitNexus 1a                 | 子系统                 |
+| `gitnexus-summary.md`             | GitNexus 1b                 | 冲击面                 |
+| `parallel-dispatch-protocol.md`   | Plan 并行                   | R2 派发协议            |
+| `integration-audit.md`            | Plan 5d                     | 集成审计               |
+
+**归档（非 Plan · 只读）：** `research/archive/` — `plan-r1-superseded/` · `non-plan/{audit,repair,execute}/`
 
 ### 5.2 切片开工前必读
 
 1. 本文件 §1–§4
-2. `to-issues-slices.md` 当前切片 §
-3. `reference-adoption-m-data-03.md` **§0 等级定义** + 本源 §3 行
-4. `plan-spec.md`（live 切片：Interface Contract + Official API）
-5. `tier-a-live-inventory.md` §6–§8
+2. `plan-revision-r2.md` §2（**禁止改 AC**）
+3. `to-issues-slices.md` 当前 R2 切片
+4. `live_tier_a_evidence_v1.yaml`
+5. `reference-adoption-m-data-03.md` §0 + 当前源
 6. ADR-034 · ADR-027
-7. `EXTERNAL-INDEX.md` §A · §E（live 切片）
+7. `plan-spec.md` Interface Contract
+8. `EXTERNAL-INDEX.md` §A 全表
 
-### 5.3 执行阶段情境路由
+### 5.3 执行情境路由
 
-| 情境                      | 路由                                                                               |
-| ------------------------- | ---------------------------------------------------------------------------------- |
-| 改 fetch port live        | `source-driven-development` + `plan-spec.md` Official API + `EXTERNAL-INDEX.md` §E |
-| 借鉴 L2（bis）            | `reference-adoption-m-data-03.md` §2.2 改造清单                                    |
-| 仓内 orchestrator/service | **直接复用**；`gitnexus-summary.md`；禁止标借鉴 L1                                 |
-| 并行 worktree             | `parallel-dispatch-protocol.md`                                                    |
-| inspect/health 红         | EXTERNAL-INDEX §B · F0/E2                                                          |
-| registry merge            | S-MERGE 仅 coordinator                                                             |
-
----
-
-## 6. GAP
-
-| GAP                                    | 时机                    |
-| -------------------------------------- | ----------------------- |
-| `frozen/*.md`                          | `freeze-task-card` 后   |
-| `implement.jsonl`                      | `generate-manifests` 后 |
-| `execute-reference-read-evidence-*.md` | Execute 每切片 RED 前   |
+| 情境               | 再读                                                    |
+| ------------------ | ------------------------------------------------------- |
+| S-R2-EVIDENCE      | contract `envelope` · `source_bindings`                 |
+| S-R2-F0            | `data_health_cli.md` · 四族 profile · **禁 SKIP**       |
+| S-R2-B2            | `data_validation_and_conflict.md`                       |
+| S-R2-DISPATCH      | `gitnexus-summary.md` · `parallel-dispatch-protocol.md` |
+| S-R2-CI            | `plan-spec.md` CI · workflow 模板                       |
+| S-R2-ACCEPT        | `plan-spec.md` pipeline · `--report` schema             |
+| 改 fetch port      | `EXTERNAL-INDEX.md` §E                                  |
+| FAIL_EXTERNAL      | ADR 路径 · `failure_class`                              |
+| 历史 Execute/Audit | `research/archive/non-plan/`                            |
 
 ---
 
-## 7. 当前切片指针
+## 6. Execute 顺序
 
-Plan 完成态：从 `to-issues-slices.md` § **S00-ELIGIBILITY** 起 Execute。
+`S-R2-EVIDENCE` → (`S-R2-F0` ∥ `S-R2-B2`) → `S-R2-DISPATCH` → `S-R2-ACCEPT` → `S-R2-CI`
+
+合并强制顺序见 `to-issues-slices.md` · `parallel-dispatch-protocol.md` §2。
 
 ## D. 机器路由
 
-权威数据在 **`context_pack.json`**（任务根目录）。
+`context_pack.json`（任务根目录）

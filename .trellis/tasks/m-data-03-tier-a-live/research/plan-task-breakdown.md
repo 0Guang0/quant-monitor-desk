@@ -1,80 +1,60 @@
-# M-DATA-03 Plan — Task Breakdown
+# M-DATA-03 Plan — Task Breakdown（R2）
+
+> **SSOT 切片 AC：** `to-issues-slices.md`  
+> **用户口径：** `plan-revision-r2.md` §2（不可改）
 
 ## Overview
 
-Convert 11 Tier A sources from replay-primary incremental e2e (DCP-05) to **isolated-sandbox live-network** acceptance. One complex Trellis ticket; unified A1–A8 audit at end. Module rating target: C3/D1/E1/E2/F0/B2 → R4 live scope.
+Plan R2：将 11 源 Tier A live 验收从 **partial F0 + SKIP** 升级为 **完整 R4 sandbox** — 统一证据信封、F0 四族、B2 主路径、dispatch 去重、CI。
+
+**前置基线（已交付，非本 Plan 切片）：** DCP-05 replay 增量 + R1 live harness。证据见 `research/archive/non-plan/execute/`。
 
 ## Architecture Decisions
 
-| ID  | Decision                                                         | Rationale                                             |
-| --- | ---------------------------------------------------------------- | ----------------------------------------------------- |
-| D1  | Reuse DCP-05 incremental ops/orchestrator                        | Ponytail; no rewrite                                  |
-| D2  | Live tests use `@pytest.mark.network` + skip by default          | CI green without keys; `--run-network` for acceptance |
-| D3  | ADR-034 isolated `DATA_ROOT` harness                             | Zero canonical DB pollution                           |
-| D4  | Reference L ladder only on `参考项目/**`                         | guardrails.yaml                                       |
-| D5  | OpenBB = L3 align; digital-oracle macro = L2; EasyXT = forbidden | Prior R3H-08/DCP-05 precedent                         |
-| D6  | Peak 3–4 parallel agents; registry merge coordinator             | roadmap §1.6                                          |
+| ID      | Decision                                 | Rationale                                     |
+| ------- | ---------------------------------------- | --------------------------------------------- |
+| D-R2-01 | `live_tier_a_evidence_v1` 为证据 SSOT    | 用户题8；非 staged_pilot manifest v2 产品定义 |
+| D-R2-02 | 11 源同一验收层                          | 统一信封 + 分域 `source_bindings`             |
+| D-R2-03 | F0 四族 profile；**禁 SKIP**             | 用户 F0 裁决                                  |
+| D-R2-04 | B2 `DataQualityValidator` 主路径         | 用户 B2→R4                                    |
+| D-R2-05 | dispatch 全量去重                        | 用户 D-08                                     |
+| D-R2-06 | mootdx 进 platform matrix                | 用户题10                                      |
+| D-R2-07 | CI nightly `--quick` + workflow_dispatch | 用户 CI 裁决                                  |
+| D-R2-08 | `FAIL_FIXABLE` / `FAIL_EXTERNAL` + ADR   | 用户题9                                       |
+| D-R2-09 | 无新 DDL                                 | ADR-028 封板                                  |
+| D-R2-10 | EasyXT health 模板 L2 扩展 F0            | 用户调整2                                     |
 
-## Task List
+## Task List — Plan R2 切片
 
-### Phase 0 — Plan（本阶段）
+| Task              | Description                                  | Acceptance criteria       | Verify                                  | Dependencies            |
+| ----------------- | -------------------------------------------- | ------------------------- | --------------------------------------- | ----------------------- |
+| **S-R2-EVIDENCE** | 实现 `live_tier_a_evidence_v1` manifest 落盘 | 11 源字段齐全；契约测绿   | `test_live_tier_a_evidence_contract.py` | —                       |
+| **S-R2-F0**       | 四族 `run_data_health_profile`；删 SKIP      | 每源非 FAIL/BLOCKED       | `test_data_health_*`                    | S-R2-EVIDENCE           |
+| **S-R2-B2**       | acceptance 接 `validate_table`               | 11 源按 `source_bindings` | `test_tier_a_live_b2_acceptance.py`     | S-R2-EVIDENCE           |
+| **S-R2-DISPATCH** | 去重 + mootdx matrix                         | 无平行 registry           | impact + dispatch 测                    | —                       |
+| **S-R2-ACCEPT**   | `--report` JSON + 11/11 live                 | exit 0；报告 11 行        | acceptance 脚本 + 证据 md               | S-R2-F0 · B2 · DISPATCH |
+| **S-R2-CI**       | GitHub workflow                              | nightly + manual artifact | workflow 文件                           | S-R2-ACCEPT 本地绿      |
 
-| Task | Description                             | AC                                                           | Verify                 |
-| ---- | --------------------------------------- | ------------------------------------------------------------ | ---------------------- |
-| P0   | Boot + inventory + reference research   | plan-boot.md · tier-a-live-inventory.md · reference-adoption | 文件存在               |
-| P1   | to-issues + parallel protocol           | to-issues-slices.md                                          | 15 切片                |
-| P2   | 5e bundle + ADR-034                     | ENTRY · EXTERNAL-INDEX · consolidation                       | validate-plan-phase 5e |
-| P3   | freeze-task-card + validate-plan-freeze | frozen 薄指针                                                | exit 0                 |
-
-### Phase 1 — Execute S00（串行 · 1 agent）
-
-| Task        | Description                     | AC                | Files            |
-| ----------- | ------------------------------- | ----------------- | ---------------- |
-| E-S00-ELIG  | tier-a-live-eligibility.md      | 11 源 KEY 矩阵    | research/        |
-| E-S00-INFRA | live harness + acceptance shell | harness pytest 绿 | tests/, scripts/ |
-
-### Phase 2 — Execute 2a 试点（并行 · 2 agent）
-
-| Task            | Description       | AC                       | Verify         |
-| --------------- | ----------------- | ------------------------ | -------------- |
-| E-LIVE-FRED     | fred live e2e     | axis_observation live 行 | pytest network |
-| E-LIVE-BAOSTOCK | baostock live e2e | security_bar_1d live 行  | pytest network |
-
-### Phase 3 — Execute 2b/2c（并行 · 3–4 agent）
-
-| Task             | Sources                            | Batch |
-| ---------------- | ---------------------------------- | ----- |
-| E-LIVE-MACRO     | us_treasury, bis, world_bank, cftc | 2b    |
-| E-LIVE-US-CRYPTO | sec_edgar, alpha_vantage, deribit  | 2b/2c |
-| E-LIVE-CN        | cninfo, mootdx                     | 2c    |
-
-### Phase 4 — Close（串行 · 1 coordinator）
-
-| Task     | Description             | AC                |
-| -------- | ----------------------- | ----------------- |
-| E-MERGE  | registry 三件套         | loop_maintain 绿  |
-| E-ACCEPT | 11/11 acceptance script | exit 0 隔离库     |
-| Audit    | A1–A8 一次              | audit.report PASS |
+**说明：** S-R2-LEDGER（诚实度回滚）为 Execute/Repair 动作；Plan 阶段已完成文档口径统一，不保留 Repair 产物于 Plan 包。
 
 ## Checkpoints
 
-| CP  | Gate                   |
-| --- | ---------------------- |
-| CP1 | S00-INFRA 绿 → 开 2a   |
-| CP2 | 2a 绿 → 开 2b/2c       |
-| CP3 | 全源 live 绿 → S-MERGE |
-| CP4 | S-ACCEPT 绿 → Audit    |
-| CP5 | Audit PASS → MCR 更新  |
+| CP   | 条件                          |
+| ---- | ----------------------------- |
+| CP-1 | `validate-plan-freeze` exit 0 |
+| CP-2 | S-R2-EVIDENCE 契约测绿        |
+| CP-3 | S-R2-F0 + S-R2-B2 并行完成    |
+| CP-4 | 11/11 R2 live + pytest 全绿   |
+| CP-5 | Audit PASS（Execute 后）      |
 
 ## Risks
 
-| Risk            | Mitigation                                |
-| --------------- | ----------------------------------------- |
-| API key 缺失    | eligibility 文档 + skip 非 fail；用户 env |
-| 源 rate limit   | ResourceGuard + 有界窗；重试 policy 已有  |
-| 并行 merge 冲突 | registry 仅 coordinator；按源分 worktree  |
-| 误写主库        | ADR-034 harness 硬编码隔离路径 + 负向测   |
+| Risk              | Mitigation                                           |
+| ----------------- | ---------------------------------------------------- |
+| 外部 API 不稳定   | 有限重试 → `FAIL_EXTERNAL` + ADR                     |
+| dispatch 冲击面大 | GitNexus impact 先于改码                             |
+| F0 profile 缺口   | EasyXT L2 模板对照；`data_quality_rules.yaml` 已扩展 |
 
 ## Open Questions
 
-- 无（路线图 §0.3.4 已确认 11/11 真网无 ADR）
+**无** — 用户 grill 2026-07-03 已关闭。

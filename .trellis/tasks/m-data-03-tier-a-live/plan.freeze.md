@@ -1,59 +1,81 @@
-# plan.freeze.md — M-DATA-03
+# Plan 冻结记录 — M-DATA-03 Tier A Live（R2）
 
-> **协议：** Plan v4.1
+> **协议：** Plan v4.1 · **仅 Plan 产物** · Execute/Audit/Repair 已归档
+
+---
 
 ## 1. Plan Skill 执行记录
 
-| Phase | 产出                                        | 状态 |
-| ----- | ------------------------------------------- | ---- |
-| P0    | plan-boot.md, EXECUTION_INDEX               | [x]  |
-| 1a/1b | project-overview.md, gitnexus-summary.md    | [x]  |
-| 3.5   | to-issues-slices.md S00–S-ACCEPT            | [x]  |
-| 5a    | plan-task-breakdown.md                      | [x]  |
-| 5a'   | plan-spec.md                                | [x]  |
-| 5b    | plan-context.md                             | [x]  |
-| 5c    | plan-doubt-review.md Cycle 6–10             | [x]  |
-| 5c'   | ADR-034                                     | [x]  |
-| 5d    | integration-audit.md                        | [x]  |
-| 5e    | plan-consolidation.md **Phase 5e complete** | [x]  |
+| Phase  | 产出                                              | [x] |
+| ------ | ------------------------------------------------- | --- |
+| P0     | `plan-boot.md`                                    | [x] |
+| 1a/1b  | `project-overview.md` · `gitnexus-summary.md`     | [x] |
+| 1–4    | inventory · eligibility · reference-adoption      | [x] |
+| 3.5    | `to-issues-slices.md` R2                          | [x] |
+| 5a/5a' | `plan-task-breakdown.md` · `plan-spec.md` R2      | [x] |
+| 5b/5c  | `plan-context.md` · `plan-doubt-review.md` R2     | [x] |
+| 5c'    | ADR-034 + ENTRY §4                                | [x] |
+| 5d     | `integration-audit.md`                            | [x] |
+| 5e     | ENTRY · EXTERNAL · consolidation · EXECUTION_PLAN | [x] |
+| R2     | `plan-revision-r2.md` · evidence contract         | [x] |
 
-## 2. 5d / 对抗性结论
-
-- `research/integration-audit.md` — **PASS_WITH_GAPS**
-- Execute GAP：harness 完整实现 · acceptance CLI · 9 源 live 变体 · S-ACCEPT E2/F0
+---
 
 ## 3. 冻结自检
 
-### 3.0v4.1 Execution Bundle one-pager
+### 3.0v4.1 Execution Bundle
 
-- [x] `validate-plan-phase 5e` 通过
-- [x] `meta.execute_entry` = `research/00-EXECUTION-ENTRY.md`
+| [x] | ENTRY §1–§5 · `meta.execute_entry` |
+| [x] | EXTERNAL §A/B/C |
+| [x] | `plan-consolidation.md` Phase 5e complete |
+| [x] | GitNexus + trellis-research |
+| [x] | 非 Plan 产物已归档 |
 
-### 3.0b 原计划包门禁
+### 3.0b 原计划包
 
-- [x] `M_DATA_03_TIER_A_LIVE.md` 已读
-- [x] `M_DATA_03_TO_ISSUES_INDEX.md`
-- [x] `PROJECT_IMPLEMENTATION_ROADMAP.md` M-DATA-03
+| [x] | 活卡已读 · 未迁入 research |
+| [x] | `plan-boot.md` Phase P0 complete |
+| [x] | `plan-skill-reads.jsonl` 覆盖 v4.1 |
 
 ### 3.0c 薄三件套
 
-- [x] `freeze-task-card` 已运行
-- [x] `frozen/M_DATA_03_TIER_A_LIVE.md` 薄指针
+| [x] | `frozen/M_DATA_03_TIER_A_LIVE.md` 薄指针 R2 |
+| [x] | `EXECUTION_INDEX.md` |
+| [x] | `context_pack.json` |
+
+### 3.1 AUDIT.plan.md
+
+| [x] | R2 模板就位 · 追溯 ENTRY |
+| [x] | `validate-plan-freeze` 覆盖项已跑通 |
 
 ### 3.2 jsonl
 
-- [x] `generate-manifests` 已运行
-- [x] `validate-plan-freeze` exit 0（Plan 包门禁通过；Execute 前复跑）
+| [x] | `implement.jsonl` slot1=frozen · slot2=ENTRY |
+
+```text
+Plan phase 5e validation passed
+Plan freeze validation passed (2026-07-03 Plan R2 cleanup)
+```
+
+---
 
 ## 4. Manifest Gate
 
-| [x] | `implement.jsonl` slot1 = frozen · slot2 = ENTRY · slot3 = context_pack |
-| [x] | `audit.jsonl` 第一条 = AUDIT.plan.md |
-| [x] | `integration-audit.md` Phase 5d complete |
-| [x] | `plan-skill-reads.jsonl` 覆盖 v4.1 skills |
-| [x] | ADR-034 已登记 |
+| [x] | `implement.jsonl` slot1/2 正确 |
+| [x] | `AUDIT.plan.md` R2 模板就位 |
+| [x] | `integration-audit.md` PASS |
+| [x] | `plan-skill-reads.jsonl` 完整 |
+| [x] | 用户 AC 锁定于 `plan-revision-r2.md` §2 |
 
-## 5. 批准
+---
 
-- [x] Plan 文档包完成 · `validate-plan-freeze` 门禁项已满足
-- [ ] `task.py start` → Execute（主会话触发）
+## 5. Plan 批准
+
+| [x] | Plan R2 文档包完成 |
+| [ ] | `task.py start` → Execute（用户触发）
+
+---
+
+## 6. Execute（非 Plan §3）
+
+见 `EXECUTION_INDEX.md` · 产物写入 `archive/` 而非 Plan 包

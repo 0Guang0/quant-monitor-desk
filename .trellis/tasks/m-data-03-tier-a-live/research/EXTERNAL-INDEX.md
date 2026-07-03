@@ -56,7 +56,7 @@
 
 ## §E 官方 API（source-driven-development · live RED 前必读）
 
-与 `plan-spec.md` Official API 表同步；实现须在 port 注释或 `execute-reference-read-evidence` 引用 deep link。
+**SSOT：** `plan-spec.md` §Official API（本表为薄指针，以 plan-spec 为准）。
 
 | source_id     | 权威 URL                                                                   |
 | ------------- | -------------------------------------------------------------------------- |

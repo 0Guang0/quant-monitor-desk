@@ -1,0 +1,272 @@
+version: live_tier_a_evidence_v1
+status: accepted
+owner: data_governance
+task_id: m-data-03-tier-a-live
+authoritative_docs:
+  - docs/modules/data_sources.md
+  - docs/modules/data_validation_and_conflict.md
+  - docs/ops/data_health_cli.md
+  - specs/contracts/data_adapter_contract.md
+  - specs/contracts/data_cli_contract.yaml
+  - specs/contracts/sandbox_clean_write_contract.yaml
+  - docs/decisions/ADR-034-m-data-03-tier-a-live-acceptance.md
+
+purpose: >
+  Normative evidence envelope for Tier A live incremental acceptance (11 sources).
+  SSOT for post-sync evidence layout consumed by F0 data health, B2 validation,
+  and tier_a_live_acceptance reporting. Not an extension of staged_pilot manifest
+  as product definition; field compatibility with raw_evidence_manifest_v2 is
+  documented below for implementers only.
+
+invariants:
+  - no_skip_as_pass: true
+  - isolated_data_root_only: true
+  - canonical_main_db_forbidden: true
+  - live_fetch_requires_qmd_allow_live_fetch: true
+  - failure_classes:
+      - PASS
+      - FAIL_FIXABLE
+      - FAIL_EXTERNAL
+  - fail_external_requires_adr: true
+  - retry_policy:
+      network_timeout: limited_retry_then_classify
+      fixable_technical: must_fix_before_close
+
+# Canonical failure_class vocabulary (SSOT — aliases forbidden in new code)
+failure_class_canonical:
+  report_and_cli:
+    - PASS
+    - FAIL_FIXABLE
+    - FAIL_EXTERNAL
+  manifest_acceptance_field:
+    - none
+    - fixable_technical
+    - external_environment
+  mapping:
+    PASS: none
+    FAIL_FIXABLE: fixable_technical
+    FAIL_EXTERNAL: external_environment
+  rules:
+    - CLI exit code and acceptance_report use report_and_cli values
+    - manifest acceptance.failure_class uses manifest_acceptance_field values
+    - Tests must assert via mapping table; no ad-hoc strings
+
+# ---------------------------------------------------------------------------
+# 11-source unified envelope (acceptance layer — same shape every source)
+# ---------------------------------------------------------------------------
+envelope:
+  manifest_filename: live_tier_a_evidence_manifest.json
+  schema_version: live_tier_a_evidence_v1
+  required_top_level_fields:
+    - schema_version
+    - source_id
+    - run_id
+    - job_id
+    - data_domain
+    - data_root
+    - generated_at
+    - fetch
+    - evidence
+    - acceptance
+  fetch:
+    required_fields:
+      - source_id
+      - status
+      - content_hash
+      - schema_hash
+      - row_count
+      - fetch_time
+      - as_of_timestamp
+    status_enum:
+      - SUCCESS
+      - EMPTY_RESPONSE
+      - NOT_PUBLISHED_YET
+      - DISABLED_SOURCE
+      - AUTH_FAILED
+      - RATE_LIMITED
+      - NETWORK_ERROR
+      - SCHEMA_DRIFT
+      - FAILED
+  evidence:
+    required_fields:
+      - raw_relative_paths
+      - evidence_dir_relative
+    optional_fields:
+      - staging_relative_paths
+      - vendor_api
+      - pilot_request_id
+    compatibility_note: >
+      fetch.* hash/path fields MAY align with raw_evidence_manifest_v2 entry shape
+      for implementer convenience; acceptance MUST still validate this contract.
+  acceptance:
+    required_fields:
+      - disposition
+      - failure_class
+      - e2_inspect_status
+      - f0_health_status
+      - b2_validation_status
+      - clean_table
+      - rule_set_id
+      - health_domain
+      - health_profile_id
+    disposition_enum:
+      - pass
+      - fail
+    failure_class_enum:
+      - none
+      - fixable_technical
+      - external_environment
+    forbidden:
+      - skip
+      - skipped
+      - inspect_only_without_health
+
+# ---------------------------------------------------------------------------
+# Per-source domain bindings (F0 profile + B2 rule_set + clean target)
+# ---------------------------------------------------------------------------
+source_bindings:
+  baostock:
+    data_domain: cn_equity_daily_bar
+    clean_table: security_bar_1d
+    health_domain: market_bar_1d
+    health_profile_id: market_bar_p0
+    rule_set_id: market_bar_p0
+  mootdx:
+    data_domain: cn_equity_daily_bar
+    clean_table: security_bar_1d
+    health_domain: market_bar_1d
+    health_profile_id: market_bar_p0
+    rule_set_id: market_bar_p0
+    platform_matrix_source_id: mootdx
+  alpha_vantage:
+    data_domain: us_equity_daily_bar
+    clean_table: security_bar_1d
+    health_domain: market_bar_1d
+    health_profile_id: market_bar_p0
+    rule_set_id: market_bar_p0
+  fred:
+    data_domain: macro_series
+    clean_table: axis_observation
+    health_domain: layer1_observation
+    health_profile_id: layer1_observation_p0
+    rule_set_id: layer1_p0
+    evidence_payload_kind: official_macro_evidence_v1
+  us_treasury:
+    data_domain: us_treasury_yield_curve
+    clean_table: axis_observation
+    health_domain: layer1_observation
+    health_profile_id: layer1_observation_p0
+    rule_set_id: layer1_p0
+    evidence_payload_kind: official_macro_evidence_v1
+  bis:
+    data_domain: central_bank_policy
+    clean_table: axis_observation
+    health_domain: layer1_observation
+    health_profile_id: layer1_observation_p0
+    rule_set_id: layer1_p0
+    evidence_payload_kind: official_macro_evidence_v1
+  world_bank:
+    data_domain: development_indicator
+    clean_table: axis_observation
+    health_domain: layer1_observation
+    health_profile_id: layer1_observation_p0
+    rule_set_id: layer1_p0
+    evidence_payload_kind: official_macro_evidence_v1
+  cftc_cot:
+    data_domain: cot_positioning
+    clean_table: axis_observation
+    health_domain: layer1_observation
+    health_profile_id: layer1_observation_p0
+    rule_set_id: layer1_p0
+    evidence_payload_kind: official_macro_evidence_v1
+  sec_edgar:
+    data_domain: us_filings
+    clean_table: us_disclosure_clean
+    health_domain: us_disclosure
+    health_profile_id: disclosure_p0
+    rule_set_id: disclosure_p0
+    evidence_payload_kind: disclosure_evidence_v1
+  cninfo:
+    data_domain: cn_announcements
+    clean_table: cn_announcement_clean
+    health_domain: cn_disclosure
+    health_profile_id: disclosure_p0
+    rule_set_id: disclosure_p0
+    evidence_payload_kind: disclosure_evidence_v1
+  deribit:
+    data_domain: crypto_derivatives
+    clean_table: crypto_derivative_clean
+    health_domain: crypto_derivative
+    health_profile_id: crypto_derivative_p0
+    rule_set_id: crypto_derivative_p0
+    evidence_payload_kind: crypto_derivative_evidence_v1
+
+# ---------------------------------------------------------------------------
+# Tier A live acceptance report (CLI / CI artifact)
+# ---------------------------------------------------------------------------
+acceptance_report:
+  format: json
+  command: scripts/tier_a_live_acceptance.py
+  required_top_level_fields:
+    - command
+    - schema_version
+    - data_root
+    - generated_at
+    - sources
+    - summary
+  per_source_row_fields:
+    - source_id
+    - disposition
+    - failure_class
+    - failure_detail
+    - adr_ref
+    - sync_status
+    - e2_inspect_status
+    - f0_health_status
+    - b2_validation_status
+    - health_domain
+    - health_profile_id
+    - rule_set_id
+    - clean_table
+    - evidence_manifest_path
+  summary_fields:
+    - total
+    - passed
+    - failed_fixable
+    - failed_external
+  exit_codes:
+    0: all sources PASS or FAIL_EXTERNAL with merged ADR
+    1: any FAIL_FIXABLE or FAIL_EXTERNAL without ADR
+    2: invalid environment
+  failure_artifact:
+    filename_pattern: tier_a_live_acceptance_failure_{run_id}.json
+    required_when: exit_code != 0
+    fields:
+      - command
+      - schema_version
+      - data_root
+      - generated_at
+      - exit_code
+      - sources
+      - summary
+      - first_failure_source_id
+      - failure_detail
+    ci_upload: required_on_workflow_failure
+
+reference_adoption:
+  easyxt_data_health:
+    applies_to_profiles:
+      - market_bar_p0
+      - layer1_observation_p0
+      - disclosure_p0
+      - crypto_derivative_p0
+    level: L2_copy_and_rewrite
+    note: Check categories and report orchestration only; no runtime import.
+  jq2ptrade_report_shape:
+    applies_to: acceptance_report
+    level: L3_architecture_or_concept_only
+    note: Structured JSON artifact for CI; not backtest report.py text.
+
+required_tests:
+  - tests/test_live_tier_a_evidence_contract.py
+  - tests/test_tier_a_live_acceptance_report.py

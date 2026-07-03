@@ -138,3 +138,14 @@ S00-INFRA + 11 源 e2e 结构评分 4–5；默认 CI pytest 绿；**FAIL** 因 
 | GitNexus analyze           | **PASS** | exit 0；untracked ops 文件待 commit 后复索引                                       |
 | R-DOUBT-DOCS（D-05）       | **PASS** | §2 11/11 行 post-Repair 占位；§4.1 disposition 快照对齐 §4.2                       |
 | R-DOUBT-DOCS（D-06）       | **PASS** | `plan-spec.md` F0 partial + SKIP caught-up 契约与 `tier_a_live_acceptance.py` 一致 |
+
+---
+
+## 6. Plan R2（2026-07-03 · supersede R1 Repair PASS）
+
+| 项             | 结果            | 说明                                               |
+| -------------- | --------------- | -------------------------------------------------- |
+| R1 Repair 叙事 | **superseded**  | partial F0 + SKIP 与用户 R4 口径冲突               |
+| R2 ledger      | **OPEN**        | `research/doubt-repair-ledger.md` R2-01..10 待修复 |
+| 证据契约       | **draft**       | `specs/contracts/live_tier_a_evidence_v1.yaml`     |
+| 整体 Audit     | **IN_PROGRESS** | R2 Execute 完成后重审                              |

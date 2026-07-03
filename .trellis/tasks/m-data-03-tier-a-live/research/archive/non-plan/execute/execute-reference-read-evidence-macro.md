@@ -1,5 +1,7 @@
 # Execute reference read evidence — Macro (`feature/m-data-03-macro`)
 
+> **⚠️ R1 切片名作废：** 只读参考。R2 切片为 `S-R2-*`；完整验收见 `S-R2-ACCEPT` · `plan-revision-r2.md` §2（禁止 defer / SKIP）。
+
 > Per `parallel-dispatch-protocol.md` §3 · RED before live e2e · 2026-07-03
 
 ## Agent scope

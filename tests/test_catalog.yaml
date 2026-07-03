@@ -1932,7 +1932,9 @@ tests/test_tier_a_live_dispatch.py:
   failure_meaning:
     Regression in test_tier_a_live_dispatch; inspect purpose and linked
     authorities.
-  purpose: Unit tests for tier_a_live_incremental_dispatch (M-DATA-03 S-ACCEPT).
+  purpose:
+    Unit tests for tier_a_live_incremental_dispatch (M-DATA-03 S-R2-DISPATCH
+    / ACCEPT).
   type: runtime-contract
   verifies:
     docs: []
@@ -1943,7 +1945,9 @@ tests/test_tier_a_live_harness.py:
   failure_meaning:
     Regression in test_tier_a_live_harness; inspect purpose and linked
     authorities.
-  purpose: Tier A live acceptance harness — S00-INFRA implements full contract.
+  purpose:
+    Tier A live acceptance harness — M-DATA-03 R2 S-R2-ACCEPT (replaces S00-INFRA
+    scope).
   type: contract
   verifies:
     docs: []

@@ -125,6 +125,9 @@ specs/contracts/platform_source_matrix.yaml:
         - tests/test_platform_source_matrix.py
       negative_required: false
 
+specs/contracts/live_tier_a_evidence_v1.yaml:
+  waiver: "M-DATA-03 R2 Plan contract; required_tests created at Execute S-R2-EVIDENCE + loop_maintain --fix (see to-issues-slices.md)"
+
 specs/contracts/snapshot_lineage_contract.yaml:
   requirements:
     SNAPSHOT_LINEAGE:

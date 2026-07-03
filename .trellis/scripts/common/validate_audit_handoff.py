@@ -264,8 +264,22 @@ def _spot_check_m_data_03_repair_close(
             )
 
 
+def _repair_gate_applies(task_dir: Path) -> bool:
+    """Repair close gate applies only when task is past Plan (status != planning)."""
+    task_json = task_dir / "task.json"
+    if not task_json.is_file():
+        return True
+    try:
+        data = json.loads(task_json.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return True
+    return str(data.get("status", "")).lower() != "planning"
+
+
 def validate_repair_close(task_dir: Path, repo_root: Path | None = None) -> list[str]:
     """Repair 关账 gate: disposition ∈ {已修复, 阶段外置} + M-DATA-03 code spot-checks."""
+    if not _repair_gate_applies(task_dir):
+        return []
     if repo_root is None:
         from .paths import get_repo_root
 

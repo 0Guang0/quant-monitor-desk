@@ -1,83 +1,73 @@
-# M-DATA-03 Context Engineering
+# M-DATA-03 Context Engineering（Plan R2）
 
-## 命名澄清（防 Execute 混淆）
+## 命名澄清
 
-| 术语                       | 含义                               | 本任务                               |
-| -------------------------- | ---------------------------------- | ------------------------------------ |
-| **上下文 L1–L5**（本文件） | 信息层次：规则→设计→源码→契约→切片 | 见下表                               |
-| **借鉴 L1/L2/L3**          | 仅 `参考项目/**` 外部源码采纳梯    | `reference-adoption-m-data-03.md` §0 |
-| **仓内直接复用**           | QMD 已有代码（DCP-05/R3H-08）      | **不进**借鉴 L 梯                    |
-
-**混淆禁令：** 不得写「L1 复用 orchestrator」— 应写「仓内直接复用 `sync/orchestrator.py`」。
-
----
+| 术语              | 含义                            |
+| ----------------- | ------------------------------- |
+| **上下文 L1–L5**  | 信息层次（本文件）              |
+| **借鉴 L1/L2/L3** | 仅 `参考项目/**`                |
+| **仓内直接复用**  | DCP-05/R3H 已有代码，不进借鉴梯 |
 
 ## Context Hierarchy（L1–L5）
 
-| Level       | 本任务映射                                              |
-| ----------- | ------------------------------------------------------- |
-| L1 项目意图 | `PROJECT_IMPLEMENTATION_ROADMAP.md` §3.1                |
-| L2 模块设计 | `tier-a-live-inventory.md` §2                           |
-| L3 源码触点 | §6 仓内表 + `EXTERNAL-INDEX.md` §C                      |
-| L4 契约     | ADR-025/027/028/034 · `plan-spec.md` Interface Contract |
-| L5 切片 AC  | `to-issues-slices.md`                                   |
+| Level | 映射                                                                        |
+| ----- | --------------------------------------------------------------------------- |
+| L1    | `PROJECT_IMPLEMENTATION_ROADMAP.md` §3.1 · `plan-revision-r2.md` §2         |
+| L2    | `tier-a-live-inventory.md` · `plan-spec.md`                                 |
+| L3    | `EXTERNAL-INDEX.md` §C · `gitnexus-summary.md`                              |
+| L4    | `live_tier_a_evidence_v1.yaml` · ADR-034/027/025 · `plan-spec.md` Interface |
+| L5    | `to-issues-slices.md` R2                                                    |
 
-## PROJECT CONTEXT（可复制给 Execute agent）
+## PROJECT CONTEXT
 
 ```text
-任务：M-DATA-03 — 11 源隔离库真网 incremental→clean→inspect
-仓内：DCP-05 管道直接复用（禁止标借鉴 L 梯）
-借鉴：仅 参考项目/** — 本票 0×L1 · 1×L2(bis 窗) · 余 L3/forbidden
-金路径：DataSourceService + run_incremental（ADR-025）
-真网闸：QMD_ALLOW_LIVE_FETCH=1 + gate_live_fetch_port（ADR-027）
-隔离：DATA_ROOT；禁止主库（ADR-034）
-SDD：每源 live RED 前读 plan-spec.md Official API 表
-完成：11/11 live + F0/E2 inspect 绿 + MCR R4
+任务：M-DATA-03 Plan R2 — 11 源 R4 真网完整验收
+证据：live_tier_a_evidence_v1（统一信封 + source_bindings）
+门控：F0 四族 + B2 主路径 + E2 inspect；禁止 SKIP
+dispatch：全量去重；mootdx 进 platform matrix
+失败：FAIL_FIXABLE 必修 · FAIL_EXTERNAL 须 ADR
+完成：plan-revision-r2.md §2 十条 AC
 ```
 
-## Level 3 源码表
+## Level 3 源码表（R2 触点）
 
-### 仓内直接复用（非借鉴梯）
+| 组件           | 路径                                                  |
+| -------------- | ----------------------------------------------------- |
+| Acceptance CLI | `scripts/tier_a_live_acceptance.py`                   |
+| Dispatch       | `backend/app/ops/tier_a_live_incremental_dispatch.py` |
+| F0             | `backend/app/ops/data_health/`                        |
+| B2             | `backend/app/validation/data_quality_validator.py`    |
+| E2             | `backend/app/ops/db_inspect/`                         |
+| 11 源 ops      | `backend/app/ops/*_incremental_*.py`                  |
+| Contract       | `specs/contracts/live_tier_a_evidence_v1.yaml`        |
 
-| 组件         | 路径                                             |
-| ------------ | ------------------------------------------------ |
-| Orchestrator | `sync/orchestrator.py`                           |
-| Watermark    | `sync/watermark.py`                              |
-| Service      | `datasources/service.py`                         |
-| Live gate    | `product_live_gate.py` · `product_live_ports.py` |
-| 11 源 ops    | `ops/*_incremental_*.py`                         |
-| CLI          | `cli/data_commands.py`                           |
+## 按 R2 切片必读
 
-### 按切片追加必读
+| 切片          | 必读                                                  |
+| ------------- | ----------------------------------------------------- |
+| S-R2-EVIDENCE | contract · `plan-spec.md` pipeline                    |
+| S-R2-F0       | `data_health_cli.md` · 四族 profile · EasyXT L2 模板  |
+| S-R2-B2       | `data_validation_and_conflict.md` · `source_bindings` |
+| S-R2-DISPATCH | `gitnexus-summary.md` · impact() · platform matrix    |
+| S-R2-CI       | plan-spec CI AC                                       |
+| S-R2-ACCEPT   | contract `acceptance_report` · ADR-034                |
 
-| 切片            | 仓内 + 参考                                                       |
-| --------------- | ----------------------------------------------------------------- |
-| S00-INFRA       | `product_live_gate.py` · `test_r3h08_*` · `reference-adoption` §0 |
-| S-LIVE-FRED     | `fred_port.py` · SDD FRED API · 借鉴 **L3**                       |
-| S-LIVE-BIS      | `bis_incremental_*` · 借鉴 **L2** §2.2 改造清单                   |
-| S-LIVE-BAOSTOCK | `baostock_port` · EasyXT **forbidden** 反例                       |
-| S-LIVE-\* 其余  | §C port/ops/e2e · SDD §E · 借鉴 **L3**                            |
-| S-MERGE         | registry 三件套                                                   |
-| S-ACCEPT        | `tier_a_live_acceptance.py` · inspect/health CLI                  |
-
-## 开工必读 vs 情境路由
-
-### §5.2 开工必读
+## §5.2 开工必读（→ ENTRY 对齐）
 
 1. `00-EXECUTION-ENTRY.md` §1–§4
-2. `reference-adoption-m-data-03.md` **§0 等级定义** + 本源 §3 行
+2. `plan-revision-r2.md` §2
 3. `to-issues-slices.md` 当前切片
-4. `plan-spec.md` Interface Contract + Official API（live 切片）
-5. ADR-034 · ADR-027
-6. `EXTERNAL-INDEX.md` §A · §E
+4. `live_tier_a_evidence_v1.yaml`
+5. `reference-adoption-m-data-03.md` §0
+6. ADR-034 · ADR-027
+7. `EXTERNAL-INDEX.md` §A
 
-### §5.3 情境路由
+## §5.3 情境路由（→ ENTRY 对齐）
 
-| 情境               | 读                                                       |
-| ------------------ | -------------------------------------------------------- |
-| 改 fetch port live | `source-driven-development` + plan-spec Official API     |
-| bis 宏观窗         | `reference-adoption` §2.2 **L2 改造清单**                |
-| 能否拷贝参考代码？ | §0：仅 L1/L2；本票无 L1；L2 必须改写                     |
-| 仓内 orchestrator  | **直接复用**；GitNexus impact；禁止借鉴梯标注            |
-| inspect/health 红  | `db_inspect_cli.md` · F0 引擎                            |
-| silent fallback    | EasyXT unified_data_interface forbidden + harness 负向测 |
+| 情境            | 读                                         |
+| --------------- | ------------------------------------------ |
+| 能否 SKIP F0？  | **否** — `plan-revision-r2.md` §2.3        |
+| 证据放哪？      | contract `envelope` · manifest 文件名      |
+| dispatch 改哪？ | 去重金路径；禁止平行 registry              |
+| 外部失败？      | `failure_class=external_environment` + ADR |
+| 旧 R1 证据？    | `research/archive/non-plan/execute/` 只读  |

@@ -1,25 +1,14 @@
-# EXECUTION_PLAN — M-DATA-03（GAP only）
+# EXECUTION_PLAN — M-DATA-03（Plan 薄指针）
 
-> **Execute SSOT：** `research/00-EXECUTION-ENTRY.md`  
-> **切片 SSOT：** `research/to-issues-slices.md`
+> **SSOT：** `research/00-EXECUTION-ENTRY.md` · `research/plan-revision-r2.md`
 
-## GAP（freeze 前）
+## Plan 状态
 
-| GAP                          | 负责命令                                                                              |
-| ---------------------------- | ------------------------------------------------------------------------------------- |
-| `context_pack.json`          | `uv run python scripts/context_router.py --task .trellis/tasks/m-data-03-tier-a-live` |
-| `EXECUTION_INDEX.md` §0 定稿 | Plan freeze 时                                                                        |
-| `frozen/*.md`                | `task.py freeze-task-card`                                                            |
-| `implement.jsonl`            | `task.py generate-manifests`                                                          |
-| `AUDIT.plan.md`              | freeze 后或 Execute 末                                                                |
-| Execute 代码/测试            | **不在 Plan 阶段**                                                                    |
+- Plan R2 文档包已冻结口径（`plan.freeze.md`）
+- Execute 未开始（`task.json` → `planning`）
 
-## 下一步（用户批准后）
+## Execute 顺序（摘要）
 
-```bash
-python .trellis/scripts/task.py validate-plan-phase .trellis/tasks/m-data-03-tier-a-live 5e
-python .trellis/scripts/task.py freeze-task-card .trellis/tasks/m-data-03-tier-a-live --source docs/implementation_tasks/M_DATA_03_TIER_A_LIVE/M_DATA_03_TIER_A_LIVE.md
-python .trellis/scripts/task.py generate-manifests .trellis/tasks/m-data-03-tier-a-live
-python .trellis/scripts/task.py validate-plan-freeze .trellis/tasks/m-data-03-tier-a-live
-python .trellis/scripts/task.py start .trellis/tasks/m-data-03-tier-a-live
-```
+`S-R2-EVIDENCE` → (`S-R2-F0` ∥ `S-R2-B2`) → `S-R2-DISPATCH` → `S-R2-ACCEPT` → `S-R2-CI`
+
+详见 `research/to-issues-slices.md`。

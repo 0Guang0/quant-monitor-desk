@@ -80,6 +80,27 @@ Optional read-only DB override (bounded `fetch_log.schema_hash` scan when file e
 qmd data health --db-path data/duckdb/quant_monitor.duckdb --domain market_bar_1d --profile market_bar_p0 --evidence-dir <path>
 ```
 
+### 5.1.1 M-DATA-03 R2 — four profile families（Plan R2 SSOT）
+
+Profile definitions: `specs/contracts/data_quality_rules.yaml` · bindings: `specs/contracts/live_tier_a_evidence_v1.yaml` `source_bindings`.
+
+```bash
+# market bar (baostock / mootdx / alpha_vantage)
+qmd data health --domain market_bar_1d --profile market_bar_p0 --evidence-dir <path> --db-path <duckdb>
+
+# macro observation (fred / us_treasury / bis / world_bank / cftc_cot)
+qmd data health --domain layer1_observation --profile layer1_observation_p0 --evidence-dir <path> --db-path <duckdb>
+
+# disclosure (sec_edgar → us_disclosure; cninfo → cn_disclosure)
+qmd data health --domain us_disclosure --profile disclosure_p0 --evidence-dir <path> --db-path <duckdb>
+qmd data health --domain cn_disclosure --profile disclosure_p0 --evidence-dir <path> --db-path <duckdb>
+
+# crypto derivatives (deribit)
+qmd data health --domain crypto_derivative --profile crypto_derivative_p0 --evidence-dir <path> --db-path <duckdb>
+```
+
+**Forbidden:** SKIP / inspect-only-without-health as pass (Plan R2).
+
 ### 5.2 Arguments (canonical — frozen §6.3)
 
 | Argument            | Required | Default | Behavior                                                                                        |

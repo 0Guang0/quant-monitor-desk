@@ -1,75 +1,29 @@
-<!-- FROZEN: Plan protocol v4.1 · thin pointer · source: docs/implementation_tasks/M_DATA_03_TIER_A_LIVE/M_DATA_03_TIER_A_LIVE.md · frozen_at: 2026-07-02T15:51:55Z -->
+<!-- FROZEN: Plan protocol v4.1 · thin pointer · Plan R2 @ 2026-07-03 -->
 
-# FROZEN — M-DATA-03 — 11 源 Tier A 真网增量（隔离库验收）
+# FROZEN — M-DATA-03 — 11 源 Tier A R4 真网验收（Plan R2）
 
 > **Execute SSOT：** `research/00-EXECUTION-ENTRY.md`  
-> **活卡（冻结时点）：** `docs/implementation_tasks/M_DATA_03_TIER_A_LIVE/M_DATA_03_TIER_A_LIVE.md`  
-> **禁止：** 在此复制 `to-issues-slices.md` 或 `research/` 包正文
+> **用户 AC：** `research/plan-revision-r2.md` §2  
+> **禁止：** 复制 `to-issues-slices.md` 或 research 全文
 
-## 8. 边界 / 停止条件
+## 8. 边界
 
-见 `research/00-EXECUTION-ENTRY.md` §2 与活卡「不在范围」；偏离铁律即停。
+见 ENTRY §2 · 活卡「不在范围」；**禁止 SKIP 当过关**；**禁止阶段外置**。
 
-## 9. 实现步骤
+## 9. Plan R2 切片（Execute 步骤）
 
-切片 AC 与步骤：`research/to-issues-slices.md`；RED/GREEN 与证据：`EXECUTION_INDEX.md` §1（v4.1 code-first · pytest/代码，无 txt handoff）。
+| 切片          | 说明                           |
+| ------------- | ------------------------------ |
+| S-R2-EVIDENCE | `live_tier_a_evidence_v1` 实现 |
+| S-R2-F0       | 四族 profile；无 SKIP          |
+| S-R2-B2       | validate_table 主路径          |
+| S-R2-DISPATCH | 去重 + mootdx matrix           |
+| S-R2-ACCEPT   | 11/11 live + report JSON       |
+| S-R2-CI       | nightly + workflow_dispatch    |
 
-### 9.0 S00-ELIGIBILITY
+AC 细节：`research/to-issues-slices.md`  
+证据契约：`specs/contracts/live_tier_a_evidence_v1.yaml`
 
-| 已执行 | [x] |
+## 10. R1 基线
 
-### 9.1 S00-INFRA
-
-| 已执行 | [x] |
-
-### 9.2 S-LIVE-FRED
-
-| 已执行 | [x] |
-
-### 9.3 S-LIVE-BAOSTOCK
-
-| 已执行 | [x] |
-
-### 9.4 S-LIVE-US-TREASURY
-
-| 已执行 | [x] |
-
-### 9.5 S-LIVE-BIS
-
-| 已执行 | [x] |
-
-### 9.6 S-LIVE-WORLDBANK
-
-| 已执行 | [x] |
-
-### 9.7 S-LIVE-CFTC
-
-| 已执行 | [x] |
-
-### 9.8 S-LIVE-SEC-EDGAR
-
-| 已执行 | [x] |
-
-### 9.9 S-LIVE-ALPHA-VANTAGE
-
-| 已执行 | [x] |
-
-### 9.10 S-LIVE-DERIBIT
-
-| 已执行 | [x] |
-
-### 9.11 S-LIVE-CNINFO
-
-| 已执行 | [x] |
-
-### 9.12 S-LIVE-MOOTDX
-
-| 已执行 | [x] |
-
-### 9.13 S-MERGE
-
-| 已执行 | [x] |
-
-### 9.14 S-ACCEPT
-
-| 已执行 | [x] |
+已交付 replay/live harness。非 Plan 证据：`research/archive/non-plan/execute/`。

@@ -1,7 +1,7 @@
-# Tier A Live Eligibility Matrix（M-DATA-03 S00）
+# Tier A Live Eligibility Matrix（M-DATA-03 Plan R2）
 
-> **固化自：** `PROJECT_IMPLEMENTATION_ROADMAP.md` §0.3.4 @ 2026-07-02  
-> **ADR 例外：** 无 — 11/11 须真网验收
+> **KEY 矩阵 SSOT** · 验收 AC 见 `plan-revision-r2.md` §2  
+> **固化自：** ROADMAP §0.3.4 · **ADR 例外：** 无
 
 ---
 

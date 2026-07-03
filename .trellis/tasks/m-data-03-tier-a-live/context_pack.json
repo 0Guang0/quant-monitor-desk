@@ -28,6 +28,11 @@
       "reason": "project_scaffold contract"
     },
     {
+      "type": "contract",
+      "path": "specs/contracts/live_tier_a_evidence_v1.yaml",
+      "reason": "M-DATA-03 R2 evidence envelope SSOT"
+    },
+    {
       "type": "policy",
       "path": "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md",
       "reason": "project_scaffold rule"
@@ -236,15 +241,14 @@
     },
     {
       "path": "tests/test_tier_a_live_harness.py",
-      "purpose": "Tier A live acceptance harness — S00-INFRA implements full contract."
+      "purpose": "Tier A live acceptance harness — R2 S-R2-ACCEPT / env isolation"
     }
   ],
   "forbidden_claims": ["production-live ready", "live production ingestion"],
   "required_evidence": [
     "context_pack.json",
-    "loop_manifest.json",
-    "evidence_index.json",
-    "audit_matrix.json",
-    "release_manifest.json"
+    ".trellis/tasks/m-data-03-tier-a-live/archive/execute/loop_manifest.json",
+    ".trellis/tasks/m-data-03-tier-a-live/archive/execute/evidence_index.json",
+    ".trellis/tasks/m-data-03-tier-a-live/research/archive/non-plan/execute/r2-tier-a-live-accept-evidence.md"
   ]
 }

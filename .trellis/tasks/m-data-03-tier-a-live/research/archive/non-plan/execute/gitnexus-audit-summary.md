@@ -1,5 +1,7 @@
 # GitNexus Audit Summary — M-DATA-03（7.pre）
 
+> **⚠️ R1 切片名作废：** 只读参考。R2 冲击面见 `research/gitnexus-summary.md` · 切片 `S-R2-*`。
+
 > **日期：** 2026-07-02 · A9 Boot 7.pre · 派发 A1–A8 前  
 > **分支：** `feature/m-data-03-tier-a-live` vs `master`  
 > **任务：** `.trellis/tasks/m-data-03-tier-a-live/` · Plan v4.1

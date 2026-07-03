@@ -1,93 +1,97 @@
-# M-DATA-03 Technical Spec
+# M-DATA-03 Technical Spec（Plan R2）
+
+> **SSOT：** 本文件 + `specs/contracts/live_tier_a_evidence_v1.yaml` + `research/to-issues-slices.md`  
+> **用户 AC：** `plan-revision-r2.md` §2（锁定，不得改）
 
 ## Objective
 
-Deliver **live-network** incremental sync → clean → inspect for all 11 Tier A sources in an **isolated DuckDB sandbox**, honest R4 module rating for C3/D1/E1/E2/F0/B2.
+Deliver **R4 sandbox live** acceptance for all 11 Tier A sources: unified acceptance layer, normative evidence contract, full F0 + B2 post-write gates, dispatch dedup, CI regression — **no SKIP as pass**.
+
+## Authority（优先级顺序）
+
+1. **`research/plan-revision-r2.md` §2** — 用户锁定 AC
+2. `specs/contracts/live_tier_a_evidence_v1.yaml`
+3. `docs/implementation_tasks/M_DATA_03_TIER_A_LIVE/M_DATA_03_TIER_A_LIVE.md` §5.1 R2
+4. `PROJECT_IMPLEMENTATION_ROADMAP.md` §0.3.3–0.3.4
+5. `specs/contracts/data_quality_rules.yaml`
+6. `docs/ops/data_health_cli.md` · `specs/contracts/data_cli_contract.yaml`
+7. `docs/modules/data_validation_and_conflict.md`
+8. `reference-adoption-m-data-03.md`（仅 `参考项目/**`）
 
 ## ASSUMPTIONS
 
-1. All 11 sources can reach the public internet from dev/CI runner when keys are set (roadmap §0.3.4).
-2. `FRED_API_KEY`, `ALPHA_VANTAGE_API_KEY`, and other env slots are provided for acceptance runs.
-3. DCP-05 replay logic is correct; this ticket only changes **live acceptance path**, not orchestrator contracts.
-4. No new schema migrations (015 is SSOT).
-5. **借鉴三等级仅评 `参考项目/**`；仓内 DCP-05 代码 = 直接复用，禁止标 L1/L2/L3**（见 `reference-adoption-m-data-03.md` §0·§4）。
+1. 11/11 live when keys/env available; FAIL_EXTERNAL only with merged ADR.
+2. No new DDL (ADR-028 migration 015).
+3. Isolated `DATA_ROOT` under `.audit-sandbox/m-data-03/`.
+4. Reference adoption: L2/L3 per `plan-revision-r2.md` §4; **no runtime import** from `参考项目/**`.
 
-## Tech Stack
+## failure_class（引用 contract SSOT）
 
-- Python 3.11+ · uv · pytest
-- DuckDB isolated via `DATA_ROOT` / `.audit-sandbox`
-- Existing: `DataSourceService`, `DataSyncOrchestrator`, `product_live_gate`
+见 `live_tier_a_evidence_v1.yaml` → `failure_class_canonical`。CLI/report 用 `PASS` / `FAIL_FIXABLE` / `FAIL_EXTERNAL`；manifest `acceptance.failure_class` 用 mapped 字段值。
 
-## Interface Contract（边界 API · 须稳定）
+## Retry policy（引用 contract）
 
-### `product_live_gate`（已有 · ADR-027）
+| 场景           | 行为                                                                                                   |
+| -------------- | ------------------------------------------------------------------------------------------------------ |
+| 网络超时       | 最多 **3** 次指数退避（1s · 2s · 4s），仍失败 → `FAIL_EXTERNAL`（须 ADR）或 `FAIL_FIXABLE`（本地 bug） |
+| 可修复技术错误 | 不重试；直接 `FAIL_FIXABLE`                                                                            |
+| 分类           | 按 contract `failure_class_canonical.mapping`                                                          |
 
-| 函数                                                | 输入                       | 成功   | 失败                                                |
-| --------------------------------------------------- | -------------------------- | ------ | --------------------------------------------------- |
-| `is_product_live_fetch_allowed()`                   | env `QMD_ALLOW_LIVE_FETCH` | `True` | `False`                                             |
-| `assert_product_live_allowed(source_id, operation)` | `source_id: str`           | 无返回 | `ProductLiveGateError` · `code=LIVE_FETCH_REJECTED` |
-| `gate_live_fetch_port(source_id, operation)`        | 同上                       | 无返回 | `LIVE_FETCH_REJECTED` 或 `RESOURCE_GUARD_PAUSED`    |
+## Interface Contract
 
-**边界规则：** live port 入口 **必须** 调 `gate_live_fetch_port`；禁止绕过直接 HTTP。
-
-### `run_*_incremental` ops runners（仓内 · 直接复用签名）
-
-| 参数             | 语义                                 | live 本票                              |
-| ---------------- | ------------------------------------ | -------------------------------------- |
-| `use_mock: bool` | `True`=replay/fixture · `False`=live | live 切片强制 `False`                  |
-| `service`        | `DataSourceService` 实例             | 必须 `build_product_live_service(...)` |
-| 返回             | report / dict 含 `status`            | `COMPLETED` 为成功；其余 fail-closed   |
-
-**禁止：** 为 live 新增平行 `fetch()` 旁路。
-
-### `scripts/tier_a_live_acceptance.py`（S00-INFRA 新建 · 契约）
+### `tier_a_live_acceptance.py`
 
 ```text
-tier_a_live_acceptance.py [--source-id ID] [--quick] [--data-root PATH]
+tier_a_live_acceptance.py [--source-id ID] [--quick] [--data-root PATH] [--report PATH]
 
-退出码：
-  0 — 请求范围内全部源 sync→clean→inspect(E2) 绿且 partial F0 非 FAIL（SKIP 可过）
-  1 — 任一派发源失败、inspect P0 blocker（FAIL）或 partial F0 FAIL
-  2 — 环境不合法（无 QMD_ALLOW_LIVE_FETCH / DATA_ROOT 指向主库 / 缺 KEY）
+Exit codes:
+  0 — all sources PASS or FAIL_EXTERNAL with valid ADR ref
+  1 — any FAIL_FIXABLE or FAIL_EXTERNAL without ADR
+  2 — invalid env (no QMD_ALLOW_LIVE_FETCH / main DB / missing KEY)
 
---source-id：可选；省略=11/11
---quick：试点子集（fred + baostock），供 CI nightly 分层
---data-root：必填或 env DATA_ROOT；必须 ≠ canonical main DB
+--quick — fred + baostock smoke (CI nightly)
+--report — TierALiveAcceptanceReport JSON (live_tier_a_evidence_v1 acceptance_report)
 ```
 
-**S-ACCEPT 每源链路（与 `tier_a_live_acceptance.py` / dispatch 一致）：**
+失败时额外写出 `tier_a_live_acceptance_failure_{run_id}.json`（见 contract `failure_artifact`）；CI workflow **必须** upload 该文件。
 
-1. `validate_live_acceptance_env` — env 闸 + 隔离 `DATA_ROOT` + per-source KEY 槽位
-2. `run_tier_a_live_incremental` — live sync→clean（`use_mock=False`）+ `DbInspector.inspect()`（**E2 gate**）
-3. `_run_f0_data_health` — **partial F0**（见下）；`FAIL` → exit 1
-4. 汇总 pass：sync 绿 + inspect 非 `FAIL` + F0 非 `FAIL`（`SKIP` 可过）
+### Per-source pipeline（SSOT · 与 plan-boot §5 一致）
 
-**F0 data health（partial · S-ACCEPT scope）：**
+1. `validate_live_acceptance_env`
+2. `run_tier_a_live_incremental` via **DCP-05 ops runner**（post S-R2-DISPATCH dedup）
+3. sync → clean（含于 incremental）
+4. Write `live_tier_a_evidence_manifest.json` per contract
+5. **B2** `DataQualityValidator.validate_table` on `clean_table` / `rule_set_id`
+6. **E2** `DbInspector.inspect()` — non FAIL
+7. **F0** `run_data_health_profile(health_domain, health_profile_id, ...)` — non FAIL/BLOCKED
+8. Emit per-source row in acceptance report
 
-S-ACCEPT **已接入** partial F0（`run_source_live_acceptance` → `_run_f0_data_health`），**不是**完整 `qmd data health --profile …` CLI 矩阵：
+**Forbidden:** `_run_f0_data_health` SKIP paths; `inspect_only_without_health`; `_live_sync_registry` bypass.
 
-| 条件                                                     | 行为                                                                                                                                                       |
-| -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 有 latest raw evidence dir                               | bar 源：`run_data_health_profile(profile_id=market_bar_p0, …)`；其余：`DataHealthService().check_evidence_dir`（`fred_sandbox_pilot` / `staged_pilot_v3`） |
-| 无 raw evidence（caught-up）                             | 返回 **`SKIP`**（`no raw evidence; caught-up inspect-only gate`）；**不**阻断 acceptance                                                                   |
-| gate not ready（`sandbox_clean_write_gate_ready=false`） | 返回 **`SKIP`**（`partial F0 gate not ready`）；**不**阻断 acceptance（E2 inspect 仍为权威门）                                                             |
-| health `FAIL` / `BLOCKED`                                | → source **fail**；CLI exit 1                                                                                                                              |
+### F0 profiles（per source · 与 contract `source_bindings`）
 
-- **E2** `DbInspector.inspect()` 仍是 post-write schema/clean P0 blocker 主门
-- **SKIP** 路径：sync + inspect 绿即可 pass；语义 = caught-up 无新 raw 时仅靠 sync/inspect 门
-- 完整 `qmd data health --profile …` CLI 矩阵 → **ponytail** · M-PASS nightly（本票不承诺）
+| source_id                                    | health_domain      | health_profile_id     |
+| -------------------------------------------- | ------------------ | --------------------- |
+| baostock, mootdx, alpha_vantage              | market_bar_1d      | market_bar_p0         |
+| fred, us_treasury, bis, world_bank, cftc_cot | layer1_observation | layer1_observation_p0 |
+| sec_edgar                                    | us_disclosure      | disclosure_p0         |
+| cninfo                                       | cn_disclosure      | disclosure_p0         |
+| deribit                                      | crypto_derivative  | crypto_derivative_p0  |
 
-### Live pytest 约定
+### platform_source_matrix — mootdx 行模板（S-R2-DISPATCH）
 
-| 元素                              | 契约                                  |
-| --------------------------------- | ------------------------------------- |
-| `@pytest.mark.network`            | 真网；默认 `pytest -q` **skip**       |
-| fixture `isolated_live_data_root` | S00-INFRA 提供；自动拒绝 main DB 路径 |
-| 五字段 docstring                  | 每个 `test_*` 必填                    |
+```yaml
+mootdx:
+  source_id: mootdx
+  tier: A
+  live_incremental: true
+  platform_matrix_source_id: mootdx # 与 contract source_bindings 一致
+  notes: "R2 DISPATCH — 禁止 acceptance bypass"
+```
 
-## Official API Sources（source-driven-development · RED 前必读）
+### Official API（SDD · RED 前必读）
 
-| source_id     | 权威文档（实现前 fetch）                                                   |
+| source_id     | 权威 URL                                                                   |
 | ------------- | -------------------------------------------------------------------------- |
 | fred          | https://fred.stlouisfed.org/docs/api/fred/series_observations.html         |
 | us_treasury   | https://fiscaldata.treasury.gov/api-documentation/                         |
@@ -98,61 +102,30 @@ S-ACCEPT **已接入** partial F0（`run_source_live_acceptance` → `_run_f0_da
 | alpha_vantage | https://www.alphavantage.co/documentation/                                 |
 | deribit       | https://docs.deribit.com/                                                  |
 | baostock      | http://baostock.com/baostock/index.php/Python_API文档                      |
-| cninfo        | 巨潮资讯公开接口（实现前读仓内 port 注释 + 官方说明）                      |
-| mootdx        | pytdx / 通达信协议（仓内 `mootdx_port` + R3FR 归档）                       |
+| cninfo        | 仓内 `cninfo_port.py` 头部注释                                             |
+| mootdx        | 仓内 `mootdx_port.py` + pytdx 文档                                         |
 
-**SDD 规则：** 第三方响应 **不可信** — port 内 validate 形状后再写 staging。
+`EXTERNAL-INDEX.md` §E 指向本表。
 
 ## Commands
 
 ```bash
-# Default CI (no network)
 uv run pytest -q
-
-# Live acceptance (isolated)
-export QMD_ALLOW_LIVE_FETCH=1
-export DATA_ROOT=.audit-sandbox/m-data-03
-uv run pytest tests/test_fred_macro_incremental_e2e.py -m network -q
-uv run python scripts/tier_a_live_acceptance.py --quick
-uv run python scripts/tier_a_live_acceptance.py
-
 uv run python scripts/loop_maintain.py
+QMD_ALLOW_LIVE_FETCH=1 DATA_ROOT=.audit-sandbox/m-data-03/<run> \
+  uv run python scripts/tier_a_live_acceptance.py --report /tmp/tier-a-report.json
 ```
-
-## Project Structure (touch surface)
-
-```text
-backend/app/datasources/fetch_ports/*_port.py    # live 路径（L3 绿场 / L2 改造）
-backend/app/datasources/product_live_*.py        # 仓内直接复用
-backend/app/ops/*_incremental_*.py               # use_mock=False
-tests/test_*_incremental_e2e.py                  # + network marks
-tests/test_tier_a_live_harness.py                # 含 silent-fallback 负向
-scripts/tier_a_live_acceptance.py
-tests/test_catalog.yaml                          # S-MERGE
-```
-
-## Testing Strategy
-
-| Layer                       | Policy                                                                          |
-| --------------------------- | ------------------------------------------------------------------------------- |
-| Default `pytest -q`         | replay/mock 绿；`network` skipped                                               |
-| `-m network`                | live 隔离 e2e；须 env + KEY                                                     |
-| `tier_a_live_acceptance.py` | 运营 11/11 门禁                                                                 |
-| Negative（S00-INFRA）       | 无 `QMD_ALLOW_LIVE_FETCH` fail-closed；`DATA_ROOT` 主库拒绝；无 silent fallback |
-
-## Boundaries
-
-- **In:** 11 Tier A live incremental clean + E2 inspect（S-ACCEPT）；F0 全 profile 见 ponytail 说明
-- **Out:** Layer modeling, Round4, main DB, new DDL, Tier B/C cron
 
 ## Success Criteria
 
-1. `tier-a-live-eligibility.md` 与 env 槽位一致
-2. 每源：live e2e + SDD 引用 + 借鉴等级行可核对
-3. `tier_a_live_acceptance.py` 11/11 exit 0
-4. `uv run pytest -q` exit 0
-5. Audit PASS；MCR → R4 live scope
+1. Contract `accepted` + tests per `required_tests`
+2. 11-source acceptance report + failure artifact schema stable
+3. F0 four profile families; no SKIP
+4. B2 main validator 11/11
+5. Dispatch dedup; mootdx matrix row present
+6. CI nightly + workflow_dispatch + failure artifact upload
+7. `uv run pytest -q` exit 0; MCR R4 per `plan-revision-r2.md` §2#9
 
 ## Open Questions
 
-None blocking Plan freeze.
+None — user grill closed 2026-07-03.

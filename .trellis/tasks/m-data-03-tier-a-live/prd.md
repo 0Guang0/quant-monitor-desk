@@ -1,5 +1,7 @@
 <!-- thin-index: true -->
 
-# PRD — M-DATA-03（薄索引）
+# PRD — M-DATA-03 Plan R2（薄索引）
 
-> Execute：`research/00-EXECUTION-ENTRY.md` · frozen：`frozen/M_DATA_03_TIER_A_LIVE.md`（待 freeze）· 活卡：`docs/implementation_tasks/M_DATA_03_TIER_A_LIVE/M_DATA_03_TIER_A_LIVE.md`
+> **状态：** planning · **口径：** `research/plan-revision-r2.md` §2  
+> Execute 入口：`research/00-EXECUTION-ENTRY.md` · frozen：`frozen/M_DATA_03_TIER_A_LIVE.md`  
+> 契约：`specs/contracts/live_tier_a_evidence_v1.yaml`
