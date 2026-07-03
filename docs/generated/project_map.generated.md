@@ -54,7 +54,7 @@ Rating SSOT: `MODULE_COMPLETION_RATING.md`
 
 ## validators
 - module_ids: B1, B2, B3
-- implementation: backend/app/validators/**, backend/app/db/validation_gate.py, backend/app/db/write_manager.py
+- implementation: backend/app/validators/**, backend/app/validation/**, backend/app/db/validation_gate.py, backend/app/db/write_manager.py
 - docs: 4
 - contracts: 3
 - implementation_tasks: 1

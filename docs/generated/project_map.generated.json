@@ -386,6 +386,7 @@
       ],
       "implementation": [
         "backend/app/validators/**",
+        "backend/app/validation/**",
         "backend/app/db/validation_gate.py",
         "backend/app/db/write_manager.py"
       ],
