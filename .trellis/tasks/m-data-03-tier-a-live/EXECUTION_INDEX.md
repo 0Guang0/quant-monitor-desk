@@ -14,14 +14,14 @@
 
 ## 1. R2 切片（Execute 步骤表）
 
-| Step | 切片          | Plan      |
-| ---- | ------------- | --------- |
-| R2.1 | S-R2-EVIDENCE | [x]       |
-| R2.2 | S-R2-F0       | [x]       |
-| R2.3 | S-R2-B2       | [x]       |
-| R2.4 | S-R2-DISPATCH | [x]       |
-| R2.5 | S-R2-ACCEPT   | AC 已冻结 |
-| R2.6 | S-R2-CI       | AC 已冻结 |
+| Step | 切片          | Plan |
+| ---- | ------------- | ---- |
+| R2.1 | S-R2-EVIDENCE | [x]  |
+| R2.2 | S-R2-F0       | [x]  |
+| R2.3 | S-R2-B2       | [x]  |
+| R2.4 | S-R2-DISPATCH | [x]  |
+| R2.5 | S-R2-ACCEPT   | [x]  |
+| R2.6 | S-R2-CI       | [x]  |
 
 切片 AC SSOT：`research/to-issues-slices.md`  
 用户 AC SSOT：`research/plan-revision-r2.md` §2

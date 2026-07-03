@@ -175,3 +175,98 @@ def test_cliReportFlag_writesReportViaMain(
     assert exit_code == 0
     report = json.loads(report_path.read_text(encoding="utf-8"))
     assert len(report["sources"]) == 11
+
+
+def test_reportRun_e2InspectNonFailForElevenSources(
+    isolated_live_data_root: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """覆盖范围：--report 全量 11 源 E2 inspect
+    测试对象：run_acceptance_report per-source e2_inspect_status
+    目的/目标：S-R2-ACCEPT — 每源 DbInspector.inspect 非 FAIL
+    验证点：11 行 e2_inspect_status != FAIL；manifest acceptance 同步
+    失败含义：统一验收层仍放行 E2 FAIL
+    """
+    monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
+    monkeypatch.setenv("FRED_API_KEY", "a" * 32)
+    monkeypatch.setenv("ALPHA_VANTAGE_API_KEY", "b" * 16)
+    monkeypatch.setenv("SEC_EDGAR_USER_AGENT", "contract-test@example.com")
+
+    def _mock_incremental(source_id: str, _data_root: Path) -> LiveIncrementalOutcome:
+        return _mock_outcome(source_id)
+
+    monkeypatch.setattr(
+        "backend.app.ops.tier_a_live_acceptance.run_tier_a_live_incremental",
+        _mock_incremental,
+    )
+    _mock_f0_pass(monkeypatch)
+
+    report_path = tmp_path / "tier-a-e2-report.json"
+    exit_code = run_acceptance_report(
+        report_path,
+        data_root=isolated_live_data_root,
+    )
+    assert exit_code == 0
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    for row in report["sources"]:
+        assert row["e2_inspect_status"] != "FAIL", row["source_id"]
+        manifest_path = isolated_live_data_root / row["evidence_manifest_path"]
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        assert manifest["acceptance"]["e2_inspect_status"] != "FAIL"
+
+
+def test_reportRun_writesFailureArtifactOnFixableFail(
+    isolated_live_data_root: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """覆盖范围：contract failure_artifact
+    测试对象：run_acceptance_report exit 1
+    目的/目标：FAIL_FIXABLE 时写出 tier_a_live_acceptance_failure_{run_id}.json
+    验证点：exit 1；artifact 含 exit_code/first_failure_source_id/failure_detail
+    失败含义：CI 无法在 workflow failure 时上传诊断工件
+    """
+    monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
+    monkeypatch.setenv("FRED_API_KEY", "a" * 32)
+    monkeypatch.setenv("ALPHA_VANTAGE_API_KEY", "b" * 16)
+    monkeypatch.setenv("SEC_EDGAR_USER_AGENT", "contract-test@example.com")
+
+    def _fail_incremental(source_id: str, _data_root: Path) -> LiveIncrementalOutcome:
+        outcome = _mock_outcome(source_id)
+        return LiveIncrementalOutcome(
+            source_id=source_id,
+            sync_status="FAILED",
+            inspect_status=outcome.inspect_status,
+            clean_table=outcome.clean_table,
+            clean_row_count=0,
+            detail="simulated sync failure",
+        )
+
+    monkeypatch.setattr(
+        "backend.app.ops.tier_a_live_acceptance.run_tier_a_live_incremental",
+        _fail_incremental,
+    )
+    _mock_f0_pass(monkeypatch)
+
+    report_path = tmp_path / "tier-a-fail-report.json"
+    exit_code = run_acceptance_report(
+        report_path,
+        data_root=isolated_live_data_root,
+    )
+    assert exit_code == 1
+    artifacts = list(tmp_path.glob("tier_a_live_acceptance_failure_*.json"))
+    assert len(artifacts) == 1
+    artifact = json.loads(artifacts[0].read_text(encoding="utf-8"))
+    assert artifact["exit_code"] == 1
+    assert artifact["first_failure_source_id"] is not None
+    assert artifact["failure_detail"]
+    for field in (
+        "command",
+        "schema_version",
+        "data_root",
+        "generated_at",
+        "sources",
+        "summary",
+    ):
+        assert field in artifact

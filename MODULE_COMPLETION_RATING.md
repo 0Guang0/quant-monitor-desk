@@ -22,15 +22,15 @@
 
 ### 0.1 评级分布（51 Module ID）
 
-| Rating | 数量 | 代表模块                                   |
-| ------ | ---- | ------------------------------------------ |
-| R0     | 5    | D3, E7, I2, I4, I5, I6                     |
-| R1     | 9    | A6, E6, H1, I1, I7, I8, J2, J3, J6, J7     |
-| R2     | 3    | A7, C4, G5, J4                             |
-| R3     | 18   | A1–A5, B2–B3, C1, G1–G4, G6, J1, J5, K1–K3 |
-| R4     | 9    | B1, C2, C3, D1, E1–E2, E4, F0              |
-| R5     | 1    | E5                                         |
-| R6     | 0    | —                                          |
+| Rating | 数量 | 代表模块                                |
+| ------ | ---- | --------------------------------------- |
+| R0     | 5    | D3, E7, I2, I4, I5, I6                  |
+| R1     | 9    | A6, E6, H1, I1, I7, I8, J2, J3, J6, J7  |
+| R2     | 3    | A7, C4, G5, J4                          |
+| R3     | 17   | A1–A5, B3, C1, G1–G4, G6, J1, J5, K1–K3 |
+| R4     | 10   | B1–B2, C2–C3, D1, E1–E2, E4, F0         |
+| R5     | 1    | E5                                      |
+| R6     | 0    | —                                       |
 
 ---
 
@@ -97,11 +97,11 @@ For every module or major feature after this file lands:
 
 ### 3.B Validation and write path
 
-| ID  | Module                          | Design authority                                | Rating                              | 批/3 | Milestone                                             | Close round | Evidence                                                                                                                                                                                | 活票 / 归属（§1.8）                                         |
-| --- | ------------------------------- | ----------------------------------------------- | ----------------------------------- | ---- | ----------------------------------------------------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| B1  | WriteManager + DbValidationGate | `validators`, `docs/modules/write_manager.md`   | `R4_SANDBOX_REAL_DATA_OR_REHEARSAL` | 2/3  | R3H-06 upsert · R3G sandbox promote                   | R3→R5       | `write_manager.py` · `tests/test_write_manager.py` · `test_round3g_limited_production_clean_write.py`（**仅** `.audit-sandbox`；`test_PromoteRunner_refusesCanonicalProductionDbPath`） | Batch05 main-DB posture smoke 或 manifest 声明 sandbox-only |
-| B2  | Data quality validator          | `validators`, `data_quality_rules.yaml`         | `R3_STAGED_FIXTURE_CLOSED`          | 2/3  | R3H-08 profiles · DCP-03 smoke · M-DATA-03 partial F0 | R3→R5       | `validators/data_quality.py` · `test_data_quality_validator.py` · `test_incremental_post_write_inspect.py` · acceptance partial F0（bar/cninfo/fred profiles）                          | **M-DATA-03** 11/11 live 旁路验证                           |
-| B3  | Source conflict validator       | `validators`, `data_validation_and_conflict.md` | `R3_STAGED_FIXTURE_CLOSED`          | 2/3  | R3H-08 live outcomes                                  | R3          | `validators/source_conflict.py` · `tests/test_source_conflict_validator.py`                                                                                                             | **M-PASS-01**                                               |
+| ID  | Module                          | Design authority                                | Rating                              | 批/3 | Milestone                                               | Close round | Evidence                                                                                                                                                                                | 活票 / 归属（§1.8）                                         |
+| --- | ------------------------------- | ----------------------------------------------- | ----------------------------------- | ---- | ------------------------------------------------------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| B1  | WriteManager + DbValidationGate | `validators`, `docs/modules/write_manager.md`   | `R4_SANDBOX_REAL_DATA_OR_REHEARSAL` | 2/3  | R3H-06 upsert · R3G sandbox promote                     | R3→R5       | `write_manager.py` · `tests/test_write_manager.py` · `test_round3g_limited_production_clean_write.py`（**仅** `.audit-sandbox`；`test_PromoteRunner_refusesCanonicalProductionDbPath`） | Batch05 main-DB posture smoke 或 manifest 声明 sandbox-only |
+| B2  | Data quality validator          | `validators`, `data_quality_rules.yaml`         | `R4_SANDBOX_REAL_DATA_OR_REHEARSAL` | 2/3  | R3H-08 profiles · DCP-03 · M-DATA-03 B2 main path 11/11 | R3→R5       | `validators/data_quality.py` · `test_data_quality_validator.py` · `test_tier_a_live_b2_acceptance.py` · acceptance `validate_table` per `source_bindings`                               | **M-DATA-03** 诚实 R4                                       |
+| B3  | Source conflict validator       | `validators`, `data_validation_and_conflict.md` | `R3_STAGED_FIXTURE_CLOSED`          | 2/3  | R3H-08 live outcomes                                    | R3          | `validators/source_conflict.py` · `tests/test_source_conflict_validator.py`                                                                                                             | **M-PASS-01**                                               |
 
 ### 3.C Data sources and routing
 
@@ -109,7 +109,7 @@ For every module or major feature after this file lands:
 | --- | -------------------------------------------- | ------------------------------------------ | ----------------------------------- | ---- | ----------------------------------------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
 | C1  | Source registry / capability / route planner | `datasources`, `source_route_plan.md`      | `R3_STAGED_FIXTURE_CLOSED`          | 2/3  | R3H-01～04 reconcile                                  | R3          | `source_registry.yaml` · `tests/test_source_registry.py` · `test_tierA_incremental_registry.py`                                                            | **M-PASS-01**                   |
 | C2  | DataSourceService facade                     | `datasources`, `datasource_service.md`     | `R4_SANDBOX_REAL_DATA_OR_REHEARSAL` | 2/3  | R3H-10 bypass guards                                  | R3→R4       | `datasources/service.py` · `tests/test_datasource_service.py` · `test_sync_orchestrator.py`（R3H-10 / R3Y-SYNC）                                           | 历史 CLOSED；**M-PASS-01** 审计 |
-| C3  | Vendor adapters / provider fetch ports       | `datasources`, `fetch_ports/*`             | `R4_SANDBOX_REAL_DATA_OR_REHEARSAL` | 2/3  | R3H-08 port live gate · DCP-05 · M-DATA-03 11/11 live | R3→R4       | `fetch_ports/*` · 11× `test_*_incremental_e2e.py`（默认 mock/replay）· `tier_a_live_acceptance.py` **11/11 exit 0**（`l4-tier-a-live-accept-evidence.md`） | **M-DATA-03** 诚实 R4           |
+| C3  | Vendor adapters / provider fetch ports       | `datasources`, `fetch_ports/*`             | `R4_SANDBOX_REAL_DATA_OR_REHEARSAL` | 2/3  | R3H-08 port live gate · DCP-05 · M-DATA-03 11/11 live | R3→R4       | `fetch_ports/*` · 11× `test_*_incremental_e2e.py`（默认 mock/replay）· `tier_a_live_acceptance.py` **11/11 exit 0**（`r2-tier-a-live-accept-evidence.md`） | **M-DATA-03** 诚实 R4           |
 | C4  | Provider catalog / auth-license gate         | `provider_catalog.yaml`, `license_gate.py` | `R2_MINIMAL_VERTICAL_SLICE`         | 2/3  | R3FR-05 catalog tests                                 | R3→R5       | `tests/test_provider_catalog.py` · `license_gate.py`                                                                                                       | **M-PASS-01**                   |
 
 ### 3.D Sync, scheduling, and task reliability
@@ -135,9 +135,9 @@ For every module or major feature after this file lands:
 
 ### 3.F Data health (operator profiles)
 
-| ID  | Module             | Design authority           | Rating                                         | 批/3 | Milestone                                   | Close round | Evidence                                                                                                             | 活票 / 归属（§1.8）      |
-| --- | ------------------ | -------------------------- | ---------------------------------------------- | ---- | ------------------------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------- | ------------------------ |
-| F0  | Data health engine | `ops/data_health_profiles` | `R4_SANDBOX_REAL_DATA_OR_REHEARSAL` **（窄）** | 2/3  | DCP-03 · M-DATA-03 partial F0 in acceptance | R3→R5       | `data_health_profiles/` · acceptance `_run_f0_data_health`（SKIP/FAIL 边界 pytest）· 完整 CLI 矩阵 → M-PASS ponytail | **M-DATA-03** partial F0 |
+| ID  | Module             | Design authority           | Rating                                         | 批/3 | Milestone                                     | Close round | Evidence                                                                                                                                     | 活票 / 归属（§1.8）   |
+| --- | ------------------ | -------------------------- | ---------------------------------------------- | ---- | --------------------------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- |
+| F0  | Data health engine | `ops/data_health_profiles` | `R4_SANDBOX_REAL_DATA_OR_REHEARSAL` **（窄）** | 2/3  | DCP-03 · M-DATA-03 四族 profile in acceptance | R3→R5       | `data_health_profiles/` · `test_data_health_tier_a_profiles.py` · acceptance `_run_f0_data_health` 无 SKIP · 完整 CLI 矩阵 → M-PASS ponytail | **M-DATA-03** 诚实 R4 |
 
 ### 3.G Modeling layers (Layer1–5) — Pass E 重灾区
 

@@ -179,6 +179,52 @@ def test_layer1_fredLiveSeriesPayload_notFailBlocked(tmp_path: Path) -> None:
     assert report.overall_status in {"PASS", "WARN"}
 
 
+def test_f0_nestedRawStorePath_findsEvidenceDir(tmp_path: Path) -> None:
+    """覆盖范围：RawStore 嵌套 raw/{source}/raw/{source} 路径
+    测试对象：_latest_raw_evidence_dir
+    目的/目标：live 增量落盘嵌套路径时 F0 可定位证据目录
+    验证点：返回含 JSON 的日期目录；fred 不串源
+    失败含义：live manifest/F0 误报 no raw evidence 或跨源污染
+    """
+    from backend.app.ops.tier_a_live_acceptance import (
+        _latest_raw_evidence_dir,
+        ensure_isolated_db,
+        _run_f0_data_health,
+    )
+
+    data_root = tmp_path / "sandbox"
+    nested = (
+        data_root
+        / "raw"
+        / "baostock"
+        / "raw"
+        / "baostock"
+        / "cn_equity_daily_bar"
+        / "2026-07-03"
+    )
+    nested.mkdir(parents=True)
+    payload = {
+        "schema_version": "cn_market_evidence_v1",
+        "source_id": "baostock",
+        "bars": [{"symbol": "sh.600000", "trade_date": "2026-06-15", "close": 10.5}],
+    }
+    (nested / "evidence.json").write_text(json.dumps(payload), encoding="utf-8")
+    other = data_root / "raw" / "mootdx" / "raw" / "mootdx" / "cn_equity_daily_bar" / "2026-07-03"
+    other.mkdir(parents=True)
+    (other / "other.json").write_text('{"source_id":"mootdx"}', encoding="utf-8")
+
+    evidence_dir = _latest_raw_evidence_dir(data_root, "baostock")
+    assert evidence_dir is not None
+    assert evidence_dir.name == "2026-07-03"
+    assert _latest_raw_evidence_dir(data_root, "fred") is None
+
+    db_path = ensure_isolated_db(data_root)
+    status, detail = _run_f0_data_health(
+        "baostock", data_root=data_root, db_path=db_path
+    )
+    assert "no raw evidence" not in detail.lower()
+
+
 def test_f0_noRawEvidence_returnsFail(isolated_live_data_root: Path) -> None:
     """覆盖范围：无 raw 证据 F0 路径
     测试对象：_run_f0_data_health

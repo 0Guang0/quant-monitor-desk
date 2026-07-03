@@ -1,0 +1,54 @@
+name: Tier A Live Acceptance
+
+on:
+  schedule:
+    - cron: "0 7 * * *"
+  workflow_dispatch:
+    inputs:
+      quick:
+        description: "Run fred + baostock smoke only"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tier-a-live-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  tier-a-live-acceptance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - run: pip install -e ".[dev]"
+      - name: Tier A live acceptance --report
+        id: acceptance
+        env:
+          QMD_ALLOW_LIVE_FETCH: "1"
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          ALPHA_VANTAGE_API_KEY: ${{ secrets.ALPHA_VANTAGE_API_KEY }}
+          SEC_EDGAR_USER_AGENT: ${{ secrets.SEC_EDGAR_USER_AGENT }}
+        run: |
+          RUN_ID="ci-${{ github.run_id }}"
+          DATA_ROOT=".audit-sandbox/m-data-03/${RUN_ID}"
+          mkdir -p "${DATA_ROOT}"
+          REPORT="${DATA_ROOT}/tier-a-report.json"
+          ARGS=(--report "${REPORT}" --data-root "${DATA_ROOT}")
+          if [ "${{ github.event_name }}" = "schedule" ] || [ "${{ inputs.quick }}" = "true" ]; then
+            ARGS+=(--quick)
+          fi
+          python scripts/tier_a_live_acceptance.py "${ARGS[@]}"
+      - name: Upload tier_a_live_acceptance failure artifact
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tier-a-live-failure-${{ github.run_id }}
+          path: |
+            .audit-sandbox/m-data-03/**/tier_a_live_acceptance_failure_*.json
+            .audit-sandbox/m-data-03/**/tier-a-report.json
+          if-no-files-found: warn

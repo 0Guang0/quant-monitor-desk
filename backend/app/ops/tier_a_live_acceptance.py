@@ -194,18 +194,32 @@ def ensure_isolated_db(data_root: Path) -> Path:
     return db
 
 
+def _raw_path_belongs_to_source(rel_posix: str, source_id: str) -> bool:
+    needle = f"raw/{source_id}/"
+    return rel_posix.startswith(needle) or f"/{needle}" in rel_posix
+
+
+def _iter_source_raw_files(data_root: Path, source_id: str) -> list[Path]:
+    raw_base = data_root / "raw"
+    if not raw_base.is_dir():
+        return []
+    files: list[Path] = []
+    for candidate in raw_base.rglob("*"):
+        if not candidate.is_file():
+            continue
+        rel = _relative_to_data_root(data_root, candidate).replace("\\", "/")
+        if _raw_path_belongs_to_source(rel, source_id):
+            files.append(candidate)
+    return sorted(files)
+
+
 def _latest_raw_evidence_dir(data_root: Path, source_id: str) -> Path | None:
-    raw_root = data_root / "raw" / source_id
-    if not raw_root.is_dir():
-        legacy = data_root / "raw"
-        if source_id == "fred" and legacy.is_dir():
-            return legacy
+    json_files = [
+        path for path in _iter_source_raw_files(data_root, source_id) if path.suffix == ".json"
+    ]
+    if not json_files:
         return None
-    candidates = [p for p in raw_root.rglob("*") if p.is_file() and p.suffix == ".json"]
-    if not candidates:
-        return raw_root if any(raw_root.iterdir()) else None
-    newest = max(candidates, key=lambda p: p.stat().st_mtime)
-    return newest.parent
+    return max(json_files, key=lambda path: path.stat().st_mtime).parent
 
 
 def _run_f0_data_health(
@@ -399,17 +413,12 @@ def _relative_to_data_root(data_root: Path, path: Path) -> str:
 
 
 def _collect_raw_evidence_paths(data_root: Path, source_id: str) -> tuple[Path, list[str]]:
-    raw_root = data_root / "raw" / source_id
-    if not raw_root.is_dir() and source_id == "fred":
-        legacy = data_root / "raw"
-        raw_root = legacy if legacy.is_dir() else raw_root
     evidence_dir = data_root / "evidence" / source_id
     evidence_dir.mkdir(parents=True, exist_ok=True)
-    raw_paths: list[str] = []
-    if raw_root.is_dir():
-        for candidate in sorted(raw_root.rglob("*")):
-            if candidate.is_file():
-                raw_paths.append(_relative_to_data_root(data_root, candidate))
+    raw_paths = [
+        _relative_to_data_root(data_root, path)
+        for path in _iter_source_raw_files(data_root, source_id)
+    ]
     return evidence_dir, raw_paths
 
 
@@ -565,6 +574,34 @@ def _process_source_for_report(
     return row, manifest
 
 
+def write_acceptance_failure_artifact(
+    report_path: Path | str,
+    *,
+    run_id: str,
+    report: dict[str, Any],
+    exit_code: int,
+) -> Path:
+    """Write contract failure_artifact next to the acceptance report."""
+    first_failure = next(
+        (row for row in report["sources"] if row.get("disposition") == "fail"),
+        None,
+    )
+    artifact = {
+        "command": report["command"],
+        "schema_version": report["schema_version"],
+        "data_root": report["data_root"],
+        "generated_at": report["generated_at"],
+        "exit_code": exit_code,
+        "sources": report["sources"],
+        "summary": report["summary"],
+        "first_failure_source_id": first_failure["source_id"] if first_failure else None,
+        "failure_detail": first_failure.get("failure_detail") if first_failure else None,
+    }
+    out = Path(report_path).parent / f"tier_a_live_acceptance_failure_{run_id}.json"
+    out.write_text(json.dumps(artifact, indent=2, ensure_ascii=False), encoding="utf-8")
+    return out
+
+
 def run_acceptance_report(
     report_path: Path | str,
     *,
@@ -607,11 +644,14 @@ def run_acceptance_report(
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
 
-    if summary["failed_fixable"] > 0:
-        return 1
-    if summary["failed_external"] > 0:
-        return 1
-    return 0
+    exit_code = 0
+    if summary["failed_fixable"] > 0 or summary["failed_external"] > 0:
+        exit_code = 1
+    if exit_code != 0:
+        write_acceptance_failure_artifact(
+            out, run_id=run_id, report=report, exit_code=exit_code
+        )
+    return exit_code
 
 
 __all__ = [
@@ -641,5 +681,6 @@ __all__ = [
     "select_source_ids",
     "source_bindings",
     "validate_live_acceptance_env",
+    "write_acceptance_failure_artifact",
     "write_live_tier_a_evidence_manifest",
 ]
