@@ -265,7 +265,10 @@ def _spot_check_m_data_03_repair_close(
 
 
 def _repair_gate_applies(task_dir: Path) -> bool:
-    """Repair close gate applies only when task is past Plan (status != planning)."""
+    """Repair close gate applies only when Repair ledger exists (post-Audit FAIL)."""
+    ledger = task_dir / "research" / "audit-repair-ledger.md"
+    if not ledger.is_file():
+        return False
     task_json = task_dir / "task.json"
     if not task_json.is_file():
         return True
