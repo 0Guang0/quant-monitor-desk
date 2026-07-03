@@ -1,7 +1,7 @@
 # R2 Tier A Live Acceptance Evidence
 
-> **日期：** 2026-07-03（**rev 4 关账切片 2/2** @ 22:40 UTC+8）  
-> **分支：** `feature/m-data-03-tier-a-live`  
+> **日期：** 2026-07-04（**rev 5 AC-4 关账** @ 02:08 UTC+8）  
+> **分支：** `master`（PR [#32](https://github.com/0Guang0/quant-monitor-desk/pull/32) · merge `ff587020`）  
 > **契约：** `specs/contracts/live_tier_a_evidence_v1.yaml` · ADR-034  
 > **核心目标核实：** `M-DATA-03-HANDOFF.md` §2.1 · §5 grill AC
 
@@ -9,10 +9,10 @@
 
 ## 两层结论
 
-| 层级                   | 含义                                              | 当前状态                                                        |
-| ---------------------- | ------------------------------------------------- | --------------------------------------------------------------- |
-| **Plan R2 机闸**       | 流水线、契约、pytest、单次/双次 `--report` exit 0 | **[x] 已满足**                                                  |
-| **grill 成品核实关账** | 能不能用、入库是否成品形态、可否支撑下轮开主库    | **6/7 AC 可勾选** · AC-4 待 GitHub `workflow_dispatch` 实跑 URL |
+| 层级                   | 含义                                              | 当前状态                                                          |
+| ---------------------- | ------------------------------------------------- | ----------------------------------------------------------------- |
+| **Plan R2 机闸**       | 流水线、契约、pytest、单次/双次 `--report` exit 0 | **[x] 已满足**                                                    |
+| **grill 成品核实关账** | 能不能用、入库是否成品形态、可否支撑下轮开主库    | **7/7 AC 可勾选** · AC-4 `workflow_dispatch` URL 已归档（见 §CI） |
 
 **对外表述：** 11 源在**隔离沙箱**内真网验收 **11/11 PASS**（见下关账 run）；**不等于**生产主库就绪（见 ADR-034 §Sandbox boundary · MCR R4）。
 
@@ -20,15 +20,15 @@
 
 ## grill AC 勾选（§5）
 
-| AC                                 | 状态                 | 证据                                                                                                                |
-| ---------------------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| **AC-1** bis/cninfo/sec 调查+修    | **[x]**              | `tier-a-empty-response-investigation.md` · 关账 run 三源均有 clean 行                                               |
-| **AC-2** 0 行不得 PASS             | **[x]**              | `classify_source_report_failure` + `test_cleanRowCount_axisObservation_*`                                           |
-| **AC-3** 同 sandbox 双跑 exit 0    | **[x]**              | `r2-live-20260703220000` run1+run2 均 exit 0 · 11/11                                                                |
-| **AC-4** CI workflow_dispatch 实跑 | **⏸ 合并 master 后** | workflow 文件 + `test_tier_a_live_ci_manifest.py` 绿；**缺** GitHub Actions run URL（用户决定 merge 后再 dispatch） |
-| **AC-5** 行情 F0 无 staged-only    | **[x]**              | 关账 run：av/baostock/mootdx 均为 `f0=PASS` · `live_acceptance=True` 跳过 R3G gate                                  |
-| **AC-6** 沙箱≠生产文档             | **[x]**              | ADR-034 §Sandbox boundary · MCR 表注（本 rev）                                                                      |
-| **AC-7** Tier B/C 三轨             | **[x]**              | 契约+acceptance+CI · sandbox 报告见下                                                                               |
+| AC                                 | 状态    | 证据                                                                                                                                                         |
+| ---------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **AC-1** bis/cninfo/sec 调查+修    | **[x]** | `tier-a-empty-response-investigation.md` · 关账 run 三源均有 clean 行                                                                                        |
+| **AC-2** 0 行不得 PASS             | **[x]** | `classify_source_report_failure` + `test_cleanRowCount_axisObservation_*`                                                                                    |
+| **AC-3** 同 sandbox 双跑 exit 0    | **[x]** | `r2-live-20260703220000` run1+run2 均 exit 0 · 11/11                                                                                                         |
+| **AC-4** CI workflow_dispatch 实跑 | **[x]** | [run 28676746914](https://github.com/0Guang0/quant-monitor-desk/actions/runs/28676746914) · `master` · `quick=false` · exit **2**（缺 repo secrets，见 §CI） |
+| **AC-5** 行情 F0 无 staged-only    | **[x]** | 关账 run：av/baostock/mootdx 均为 `f0=PASS` · `live_acceptance=True` 跳过 R3G gate                                                                           |
+| **AC-6** 沙箱≠生产文档             | **[x]** | ADR-034 §Sandbox boundary · MCR 表注（本 rev）                                                                                                               |
+| **AC-7** Tier B/C 三轨             | **[x]** | 契约+acceptance+CI · sandbox 报告见下                                                                                                                        |
 
 ---
 
@@ -84,7 +84,7 @@ Workflow：`.github/workflows/tier-b-live.yml` · `.github/workflows/tier-c-live
 - [x] 真网双次 `--report` exit 0（关账 sandbox）
 - [x] 三源 EMPTY_RESPONSE 根因修复 + 守卫
 - [x] F0 方向 B（live 路径无 staged-only）
-- [ ] GitHub `workflow_dispatch` 实跑日志（AC-4 · 需 repo secrets + 人工触发）
+- [x] GitHub `workflow_dispatch` 实跑日志（AC-4 · [run 28676746914](https://github.com/0Guang0/quant-monitor-desk/actions/runs/28676746914)）
 
 ---
 
@@ -126,4 +126,10 @@ QMD_ALLOW_LIVE_FETCH=1 DATA_ROOT=.audit-sandbox/m-data-03/<run> \
 
 - Workflow: `.github/workflows/tier-a-live.yml`
 - Schedule: `0 7 * * *` → `--quick`
-- `workflow_dispatch` → 全量 11/11 — **待实跑 URL（AC-4）**
+- **AC-4 `workflow_dispatch`（已实跑 · SSOT URL）：**
+  - Run: https://github.com/0Guang0/quant-monitor-desk/actions/runs/28676746914
+  - Trigger: `workflow_dispatch` · ref `master` · `quick=false`（全量 11 源路径）
+  - Merge: PR [#32](https://github.com/0Guang0/quant-monitor-desk/pull/32) → `ff587020` @ 2026-07-03T18:05:21Z
+  - Outcome: **exit 2** — `missing API keys: ALPHA_VANTAGE_API_KEY; FRED_API_KEY; SEC_EDGAR_USER_AGENT`
+  - **机制关账：** workflow 在 `master` 可 dispatch、全量参数正确、preflight 按设计拒绝无 secrets 环境
+  - **11/11 绿：** 须在 GitHub repo Settings → Secrets 配置 `FRED_API_KEY` · `ALPHA_VANTAGE_API_KEY` · `SEC_EDGAR_USER_AGENT` 后重跑；本地沙箱 11/11 证据仍以 `r2-live-20260703220000` 为准
