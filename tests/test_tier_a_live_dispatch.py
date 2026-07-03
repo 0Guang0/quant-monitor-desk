@@ -23,6 +23,27 @@ from tests.fred_macro_incremental_support import insert_axis_observation
 from tests.live_incremental_support import acceptance_db_path
 
 
+def _write_fred_macro_evidence(data_root: Path) -> None:
+    import json
+
+    raw_dir = data_root / "raw" / "fred" / "2026-07-03"
+    raw_dir.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "schema_version": "official_macro_evidence_v1",
+        "source_id": "fred",
+        "series_id": "DGS10",
+        "observations": [
+            {"series_id": "DGS10", "observation_date": "2026-07-01", "value": "4.40"},
+            {"series_id": "DGS10", "observation_date": "2026-07-02", "value": "4.41"},
+        ],
+        "source_fetch_id": "dispatch-test-fetch",
+        "content_hash": "dispatch-test-hash",
+        "as_of_timestamp": "2026-07-03T12:00:00Z",
+        "retrieved_at": "2026-07-03T12:00:00Z",
+    }
+    (raw_dir / "evidence.json").write_text(json.dumps(payload), encoding="utf-8")
+
+
 def test_extractSyncStatus_readsOverallStatusFromReport() -> None:
     """覆盖范围：sync 状态解析
     测试对象：_extract_sync_status
@@ -139,11 +160,11 @@ def test_runSourceLiveAcceptance_mockSync_returnsPass(
     isolated_live_data_root: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """覆盖范围：run_source_live_acceptance outcome 包装（绕过 dispatch/F0）
+    """覆盖范围：run_source_live_acceptance outcome 包装（含 F0）
     测试对象：run_source_live_acceptance
-    目的/目标：mock dispatch outcome 时 acceptance 层正确映射为 pass
-    验证点：status==pass；detail 含 sync/inspect 摘要
-    失败含义：CLI exit 0 包装逻辑无回归；注：本测不覆盖 F0，见 f0Path/f0Fail 用例
+    目的/目标：mock dispatch outcome + 合法 F0 证据时 acceptance 层映射为 pass
+    验证点：status==pass；detail 含 sync/inspect/health 摘要
+    失败含义：CLI exit 0 包装逻辑无回归
     """
     monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
 
@@ -161,6 +182,7 @@ def test_runSourceLiveAcceptance_mockSync_returnsPass(
         "backend.app.ops.tier_a_live_incremental_dispatch.run_tier_a_live_incremental",
         _mock_incremental,
     )
+    _write_fred_macro_evidence(isolated_live_data_root)
     result = run_source_live_acceptance("fred", data_root=isolated_live_data_root)
     assert result.status == "pass"
     assert "sync=COMPLETED" in result.detail
@@ -173,10 +195,12 @@ def test_runSourceLiveAcceptance_f0Path_exercisesHealthWithMockSync(
 ) -> None:
     """覆盖范围：run_source_live_acceptance F0 接入路径
     测试对象：run_source_live_acceptance + _run_f0_data_health
-    目的/目标：mock sync 时仍执行真实 F0；SKIP 不阻断 pass
-    验证点：status==pass；detail 含 health=SKIP（live incremental 证据格式）
-    失败含义：F0 未接入 acceptance 或被 mock dispatch 绕过
+    目的/目标：mock sync 时仍执行真实 F0；合法 macro 证据非 FAIL/BLOCKED
+    验证点：status==pass；detail 含 health=PASS 或 health=WARN
+    失败含义：F0 未接入 acceptance 或仍走 SKIP
     """
+    import json
+
     monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
     ensure_isolated_db(isolated_live_data_root)
     db_path = acceptance_db_path(isolated_live_data_root)
@@ -202,10 +226,23 @@ def test_runSourceLiveAcceptance_f0Path_exercisesHealthWithMockSync(
     )
     raw_dir = isolated_live_data_root / "raw" / "fred" / "2026-07-03"
     raw_dir.mkdir(parents=True, exist_ok=True)
-    (raw_dir / "abc123.json").write_text('{"series_id":"DGS10"}', encoding="utf-8")
+    payload = {
+        "schema_version": "official_macro_evidence_v1",
+        "source_id": "fred",
+        "series_id": "DGS10",
+        "observations": [
+            {"series_id": "DGS10", "observation_date": "2026-07-01", "value": "4.40"},
+            {"series_id": "DGS10", "observation_date": "2026-07-02", "value": "4.41"},
+        ],
+        "source_fetch_id": "f0-path-fetch",
+        "content_hash": "f0-path-hash",
+        "as_of_timestamp": "2026-07-03T12:00:00Z",
+        "retrieved_at": "2026-07-03T12:00:00Z",
+    }
+    (raw_dir / "abc123.json").write_text(json.dumps(payload), encoding="utf-8")
     result = run_source_live_acceptance("fred", data_root=isolated_live_data_root)
     assert result.status == "pass"
-    assert "health=SKIP" in result.detail
+    assert "health=PASS" in result.detail or "health=WARN" in result.detail
 
 
 def test_runSourceLiveAcceptance_f0Fail_blocksPass(
@@ -271,6 +308,10 @@ def test_runSourceLiveAcceptance_plannedWithZeroCleanFails(
     monkeypatch.setattr(
         "backend.app.ops.tier_a_live_incremental_dispatch.run_tier_a_live_incremental",
         _mock_incremental,
+    )
+    monkeypatch.setattr(
+        "backend.app.ops.tier_a_live_acceptance._run_f0_data_health",
+        lambda *_a, **_k: ("PASS", "mock f0 for planned-empty-clean test"),
     )
     result = run_source_live_acceptance("fred", data_root=isolated_live_data_root)
     assert result.status == "fail"
@@ -407,14 +448,14 @@ def test_deribitSinceReader_acceptsDataDomainKwarg() -> None:
     assert "read_cninfo_since_date" in source
 
 
-def test_runF0DataHealth_skipsWhenNoRawEvidence(
+def test_runF0DataHealth_failsWhenNoRawEvidence(
     isolated_live_data_root: Path,
 ) -> None:
-    """覆盖范围：无 raw 证据时 F0 SKIP
+    """覆盖范围：无 raw 证据时 F0 FAIL
     测试对象：_run_f0_data_health
-    目的/目标：fresh sandbox 无 raw 时 SKIP 不 FAIL
-    验证点：status==SKIP；detail 含 caught-up inspect-only
-    失败含义：无证据时 F0 误阻断 acceptance
+    目的/目标：S-R2-F0 禁 SKIP — fresh sandbox 无 raw 时 FAIL
+    验证点：status==FAIL；detail 含 no raw evidence
+    失败含义：SKIP 路径残留
     """
     from backend.app.ops.tier_a_live_acceptance import _run_f0_data_health
 
@@ -422,18 +463,18 @@ def test_runF0DataHealth_skipsWhenNoRawEvidence(
     status, detail = _run_f0_data_health(
         "fred", data_root=isolated_live_data_root, db_path=db_path
     )
-    assert status == "SKIP"
-    assert "caught-up inspect-only" in detail
+    assert status == "FAIL"
+    assert "no raw evidence" in detail.lower()
 
 
-def test_runF0DataHealth_skipsFredLiveIncrementalEvidence(
+def test_runF0DataHealth_failsOnIncompleteFredEvidence(
     isolated_live_data_root: Path,
 ) -> None:
-    """覆盖范围：fred partial F0 live 证据格式
+    """覆盖范围：fred 残缺 live 证据
     测试对象：_run_f0_data_health
-    目的/目标：live hash-named raw 无 fred_evidence.json 时 SKIP 不 FAIL
-    验证点：status==SKIP；detail 含 partial F0 skipped
-    失败含义：fresh sandbox fred sync 后 F0 误阻断 acceptance
+    目的/目标：残缺 JSON 须 FAIL 非 SKIP
+    验证点：status==FAIL
+    失败含义：partial F0 仍 SKIP
     """
     from backend.app.ops.tier_a_live_acceptance import _run_f0_data_health
 
@@ -444,8 +485,8 @@ def test_runF0DataHealth_skipsFredLiveIncrementalEvidence(
     status, detail = _run_f0_data_health(
         "fred", data_root=isolated_live_data_root, db_path=db_path
     )
-    assert status == "SKIP"
-    assert "partial F0 skipped" in detail
+    assert status == "FAIL"
+    assert detail
 
 
 @pytest.mark.network
