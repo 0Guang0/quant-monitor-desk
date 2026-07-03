@@ -382,6 +382,14 @@ def test_tierALiveOps_mainDbFingerprintUnchangedAfterMockAcceptance(
         "backend.app.ops.tier_a_live_incremental_dispatch.run_tier_a_live_incremental",
         _mock_incremental,
     )
+    monkeypatch.setattr(
+        "backend.app.ops.tier_a_live_acceptance._run_f0_data_health",
+        lambda *_a, **_k: ("PASS", "mock f0 for main-db guard"),
+    )
+    monkeypatch.setattr(
+        "backend.app.ops.tier_a_live_acceptance._run_b2_data_validation",
+        lambda *_a, **_k: ("PASS", "mock b2 for main-db guard"),
+    )
     result = run_source_live_acceptance("fred", data_root=isolated_live_data_root)
     assert result.status == "pass"
     after = main_db.stat()

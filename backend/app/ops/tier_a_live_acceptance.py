@@ -243,6 +243,26 @@ def _run_f0_data_health(
     return status, detail
 
 
+def _run_b2_data_validation(
+    source_id: str,
+    *,
+    db_path: Path,
+    run_id: str,
+    job_id: str,
+) -> tuple[str, str]:
+    """Run B2 validate_table on the source clean table per source_bindings."""
+    from backend.app.validation.data_quality_validator import run_b2_validate_table
+
+    binding = source_bindings()[source_id]
+    return run_b2_validate_table(
+        source_id,
+        binding=binding,
+        db_path=db_path,
+        run_id=run_id,
+        job_id=job_id,
+    )
+
+
 @dataclass(frozen=True)
 class SourceAcceptanceResult:
     source_id: str
@@ -280,6 +300,19 @@ def run_source_live_acceptance(source_id: str, *, data_root: Path) -> SourceAcce
             detail=f"data-health {health_status}: {health_detail}",
         )
 
+    b2_status, b2_detail = _run_b2_data_validation(
+        source_id,
+        db_path=db_path,
+        run_id=f"accept-{source_id}",
+        job_id=f"accept-{source_id}",
+    )
+    if b2_status == "FAILED":
+        return SourceAcceptanceResult(
+            source_id=source_id,
+            status="fail",
+            detail=f"b2 validation FAILED: {b2_detail}",
+        )
+
     if outcome.inspect_status == "FAIL":
         return SourceAcceptanceResult(
             source_id=source_id,
@@ -312,7 +345,8 @@ def run_source_live_acceptance(source_id: str, *, data_root: Path) -> SourceAcce
         status="pass",
         detail=(
             f"sync={outcome.sync_status} inspect={outcome.inspect_status} "
-            f"health={health_status} {outcome.clean_table}={outcome.clean_row_count}"
+            f"health={health_status} b2={b2_status} "
+            f"{outcome.clean_table}={outcome.clean_row_count}"
         ),
     )
 
@@ -485,8 +519,17 @@ def _process_source_for_report(
     if f0_status in {"FAIL", "BLOCKED"}:
         disposition = "fail"
         report_failure_class = "FAIL_FIXABLE"
-    binding = source_bindings()[source_id]
     job_id = f"{run_id}:{source_id}"
+    b2_status, b2_detail = _run_b2_data_validation(
+        source_id,
+        db_path=db_path,
+        run_id=run_id,
+        job_id=job_id,
+    )
+    if b2_status == "FAILED":
+        disposition = "fail"
+        report_failure_class = "FAIL_FIXABLE"
+    binding = source_bindings()[source_id]
     manifest = build_live_tier_a_evidence_manifest(
         source_id=source_id,
         data_root=data_root,
@@ -495,12 +538,14 @@ def _process_source_for_report(
         outcome=outcome,
         report_failure_class=report_failure_class,
         f0_health_status=f0_status,
-        b2_validation_status="pending",
+        b2_validation_status=b2_status,
     )
     manifest_path = write_live_tier_a_evidence_manifest(manifest, data_root=data_root)
     detail = outcome.detail
     if f0_detail:
         detail = f"{detail}; f0={f0_detail}"
+    if b2_detail:
+        detail = f"{detail}; b2={b2_detail}"
     row = {
         "source_id": source_id,
         "disposition": disposition,
@@ -510,7 +555,7 @@ def _process_source_for_report(
         "sync_status": outcome.sync_status,
         "e2_inspect_status": outcome.inspect_status,
         "f0_health_status": _health_status_for_manifest(f0_status),
-        "b2_validation_status": "pending",
+        "b2_validation_status": b2_status,
         "health_domain": binding["health_domain"],
         "health_profile_id": binding["health_profile_id"],
         "rule_set_id": binding["rule_set_id"],

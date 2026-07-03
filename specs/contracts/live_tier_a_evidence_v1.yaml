@@ -270,3 +270,4 @@ reference_adoption:
 required_tests:
   - tests/test_live_tier_a_evidence_contract.py
   - tests/test_tier_a_live_acceptance_report.py
+  - tests/test_tier_a_live_b2_acceptance.py

@@ -3,7 +3,7 @@
   "name": "m-data-03-tier-a-live",
   "title": "M-DATA-03 Tier A 11-source live incremental (isolated acceptance)",
   "description": "Plan R2: R4 sandbox live acceptance for 11 Tier A sources — unified evidence contract, full F0+B2, dispatch dedup, CI. No SKIP as pass.",
-  "status": "planning",
+  "status": "in_progress",
   "priority": "P0",
   "creator": "Guang",
   "assignee": "Guang",
@@ -20,11 +20,10 @@
     "rating_target": "R4_SANDBOX_REAL_DATA_OR_REHEARSAL",
     "predecessor": "wave4-r3-dcp-05-tier-a",
     "frozen_task_card": "frozen/M_DATA_03_TIER_A_LIVE.md",
-    "frozen_at": "2026-07-02T15:51:55Z",
+    "frozen_at": "2026-07-03T06:00:00Z",
     "plan_revision": "R2",
     "plan_revision_at": "2026-07-03",
     "frozen_revision": "R2",
-    "frozen_at": "2026-07-03T06:00:00Z",
     "evidence_contract": "specs/contracts/live_tier_a_evidence_v1.yaml"
   }
 }
