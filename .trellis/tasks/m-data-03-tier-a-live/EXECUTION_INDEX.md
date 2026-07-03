@@ -16,7 +16,7 @@
 
 | Step | 切片          | Plan      |
 | ---- | ------------- | --------- |
-| R2.1 | S-R2-EVIDENCE | AC 已冻结 |
+| R2.1 | S-R2-EVIDENCE | [x] |
 | R2.2 | S-R2-F0       | AC 已冻结 |
 | R2.3 | S-R2-B2       | AC 已冻结 |
 | R2.4 | S-R2-DISPATCH | AC 已冻结 |

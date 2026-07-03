@@ -2,11 +2,18 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 import os
 import sys
+import uuid
 from dataclasses import dataclass
+from datetime import UTC, datetime
+from functools import lru_cache
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
+
+import yaml
 
 from backend.app.config import DATA_ROOT, PROJECT_ROOT
 from backend.app.datasources.live_tier_router import TIER_A_SOURCES
@@ -29,6 +36,23 @@ SOURCE_API_KEY_ENV: dict[str, str] = {
     "fred": "FRED_API_KEY",
     "alpha_vantage": "ALPHA_VANTAGE_API_KEY",
     "sec_edgar": "SEC_EDGAR_USER_AGENT",
+}
+
+EVIDENCE_CONTRACT_PATH = PROJECT_ROOT / "specs/contracts/live_tier_a_evidence_v1.yaml"
+MANIFEST_FILENAME = "live_tier_a_evidence_manifest.json"
+SCHEMA_VERSION = "live_tier_a_evidence_v1"
+REPORT_FAILURE_TO_MANIFEST: dict[str, str] = {
+    "PASS": "none",
+    "FAIL_FIXABLE": "fixable_technical",
+    "FAIL_EXTERNAL": "external_environment",
+}
+_FETCH_STATUS_FROM_SYNC: dict[str, str] = {
+    "COMPLETED": "SUCCESS",
+    "OK": "SUCCESS",
+    "SUCCESS": "SUCCESS",
+    "PLANNED": "SUCCESS",
+    "EMPTY_RESPONSE": "EMPTY_RESPONSE",
+    "FAILED": "FAILED",
 }
 
 
@@ -234,10 +258,18 @@ class SourceAcceptanceResult:
     detail: str = ""
 
 
+def run_tier_a_live_incremental(source_id: str, data_root: Path) -> "LiveIncrementalOutcome":
+    """Delegate to dispatch; exposed for acceptance/report and test monkeypatch."""
+    from backend.app.ops.tier_a_live_incremental_dispatch import (
+        LiveIncrementalOutcome,
+        run_tier_a_live_incremental as _dispatch_run,
+    )
+
+    return _dispatch_run(source_id, data_root)
+
+
 def run_source_live_acceptance(source_id: str, *, data_root: Path) -> SourceAcceptanceResult:
     """Run sync→clean→inspect→data health for one Tier A source (S-ACCEPT)."""
-    from backend.app.ops.tier_a_live_incremental_dispatch import run_tier_a_live_incremental
-
     resolved = assert_isolated_live_data_root(data_root)
     os.environ["QMD_DATA_ROOT"] = str(resolved)
     db_path = ensure_isolated_db(resolved)
@@ -320,22 +352,260 @@ def run_acceptance(
     return 0
 
 
+@lru_cache(maxsize=1)
+def _load_evidence_contract() -> dict[str, Any]:
+    return yaml.safe_load(EVIDENCE_CONTRACT_PATH.read_text(encoding="utf-8")) or {}
+
+
+def source_bindings() -> dict[str, dict[str, Any]]:
+    return _load_evidence_contract()["source_bindings"]
+
+
+def manifest_failure_class(report_failure_class: str) -> str:
+    try:
+        return REPORT_FAILURE_TO_MANIFEST[report_failure_class]
+    except KeyError as exc:
+        raise ValueError(f"unknown report failure_class: {report_failure_class!r}") from exc
+
+
+def _relative_to_data_root(data_root: Path, path: Path) -> str:
+    return path.resolve().relative_to(data_root.resolve()).as_posix()
+
+
+def _collect_raw_evidence_paths(data_root: Path, source_id: str) -> tuple[Path, list[str]]:
+    raw_root = data_root / "raw" / source_id
+    if not raw_root.is_dir() and source_id == "fred":
+        legacy = data_root / "raw"
+        raw_root = legacy if legacy.is_dir() else raw_root
+    evidence_dir = data_root / "evidence" / source_id
+    evidence_dir.mkdir(parents=True, exist_ok=True)
+    raw_paths: list[str] = []
+    if raw_root.is_dir():
+        for candidate in sorted(raw_root.rglob("*")):
+            if candidate.is_file():
+                raw_paths.append(_relative_to_data_root(data_root, candidate))
+    return evidence_dir, raw_paths
+
+
+def _manifest_fetch_status(sync_status: str) -> str:
+    return _FETCH_STATUS_FROM_SYNC.get(sync_status.upper(), "FAILED")
+
+
+def _build_fetch_block(
+    source_id: str,
+    *,
+    outcome: "LiveIncrementalOutcome",
+    raw_paths: list[str],
+) -> dict[str, Any]:
+    now = datetime.now(UTC).isoformat()
+    fingerprint = "|".join(raw_paths) if raw_paths else outcome.detail
+    return {
+        "source_id": source_id,
+        "status": _manifest_fetch_status(outcome.sync_status),
+        "content_hash": hashlib.sha256(fingerprint.encode()).hexdigest(),
+        "schema_hash": hashlib.sha256(source_id.encode()).hexdigest(),
+        "row_count": outcome.clean_row_count,
+        "fetch_time": now,
+        "as_of_timestamp": now,
+    }
+
+
+def _health_status_for_manifest(health_status: str) -> str:
+    normalized = health_status.upper()
+    if normalized in {"SKIP", "SKIPPED"}:
+        return "partial"
+    return health_status
+
+
+def build_live_tier_a_evidence_manifest(
+    *,
+    source_id: str,
+    data_root: Path,
+    run_id: str,
+    job_id: str,
+    outcome: "LiveIncrementalOutcome",
+    report_failure_class: str,
+    f0_health_status: str = "pending",
+    b2_validation_status: str = "pending",
+) -> dict[str, Any]:
+    binding = source_bindings()[source_id]
+    evidence_dir, raw_paths = _collect_raw_evidence_paths(data_root, source_id)
+    disposition = "pass" if report_failure_class == "PASS" else "fail"
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "source_id": source_id,
+        "run_id": run_id,
+        "job_id": job_id,
+        "data_domain": binding["data_domain"],
+        "data_root": str(data_root.resolve()),
+        "generated_at": datetime.now(UTC).isoformat(),
+        "fetch": _build_fetch_block(source_id, outcome=outcome, raw_paths=raw_paths),
+        "evidence": {
+            "raw_relative_paths": raw_paths,
+            "evidence_dir_relative": _relative_to_data_root(data_root, evidence_dir),
+        },
+        "acceptance": {
+            "disposition": disposition,
+            "failure_class": manifest_failure_class(report_failure_class),
+            "e2_inspect_status": outcome.inspect_status,
+            "f0_health_status": _health_status_for_manifest(f0_health_status),
+            "b2_validation_status": b2_validation_status,
+            "clean_table": binding["clean_table"],
+            "rule_set_id": binding["rule_set_id"],
+            "health_domain": binding["health_domain"],
+            "health_profile_id": binding["health_profile_id"],
+        },
+    }
+
+
+def write_live_tier_a_evidence_manifest(
+    manifest: dict[str, Any], *, data_root: Path
+) -> Path:
+    evidence_rel = manifest["evidence"]["evidence_dir_relative"]
+    evidence_dir = data_root / evidence_rel
+    evidence_dir.mkdir(parents=True, exist_ok=True)
+    path = evidence_dir / MANIFEST_FILENAME
+    path.write_text(
+        json.dumps(manifest, indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    return path
+
+
+def classify_source_report_failure(
+    outcome: "LiveIncrementalOutcome",
+) -> tuple[str, str]:
+    """Return (disposition, report failure_class)."""
+    if outcome.inspect_status == "FAIL":
+        return "fail", "FAIL_FIXABLE"
+    if outcome.sync_status not in PASS_SYNC_STATUSES:
+        return "fail", "FAIL_FIXABLE"
+    return "pass", "PASS"
+
+
+def _process_source_for_report(
+    source_id: str,
+    *,
+    data_root: Path,
+    run_id: str,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    db_path = ensure_isolated_db(data_root)
+    outcome = run_tier_a_live_incremental(source_id, data_root)
+    disposition, report_failure_class = classify_source_report_failure(outcome)
+    f0_status, f0_detail = _run_f0_data_health(source_id, data_root=data_root, db_path=db_path)
+    if f0_status == "FAIL":
+        disposition = "fail"
+        report_failure_class = "FAIL_FIXABLE"
+    binding = source_bindings()[source_id]
+    job_id = f"{run_id}:{source_id}"
+    manifest = build_live_tier_a_evidence_manifest(
+        source_id=source_id,
+        data_root=data_root,
+        run_id=run_id,
+        job_id=job_id,
+        outcome=outcome,
+        report_failure_class=report_failure_class,
+        f0_health_status=f0_status,
+        b2_validation_status="pending",
+    )
+    manifest_path = write_live_tier_a_evidence_manifest(manifest, data_root=data_root)
+    detail = outcome.detail
+    if f0_detail:
+        detail = f"{detail}; f0={f0_detail}"
+    row = {
+        "source_id": source_id,
+        "disposition": disposition,
+        "failure_class": report_failure_class,
+        "failure_detail": detail,
+        "adr_ref": None,
+        "sync_status": outcome.sync_status,
+        "e2_inspect_status": outcome.inspect_status,
+        "f0_health_status": _health_status_for_manifest(f0_status),
+        "b2_validation_status": "pending",
+        "health_domain": binding["health_domain"],
+        "health_profile_id": binding["health_profile_id"],
+        "rule_set_id": binding["rule_set_id"],
+        "clean_table": binding["clean_table"],
+        "evidence_manifest_path": _relative_to_data_root(data_root, manifest_path),
+    }
+    return row, manifest
+
+
+def run_acceptance_report(
+    report_path: Path | str,
+    *,
+    source_id: str | None = None,
+    quick: bool = False,
+    data_root: Path | str | None = None,
+) -> int:
+    """Write TierALiveAcceptanceReport JSON and per-source evidence manifests."""
+    try:
+        sources = select_source_ids(source_id=source_id, quick=quick)
+        resolved_root = validate_live_acceptance_env(data_root=data_root, source_ids=sources)
+    except TierALiveEnvError as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
+
+    run_id = uuid.uuid4().hex
+    rows: list[dict[str, Any]] = []
+    summary = {"total": 0, "passed": 0, "failed_fixable": 0, "failed_external": 0}
+    for sid in sources:
+        row, _manifest = _process_source_for_report(sid, data_root=resolved_root, run_id=run_id)
+        rows.append(row)
+        summary["total"] += 1
+        failure_class = row["failure_class"]
+        if failure_class == "PASS":
+            summary["passed"] += 1
+        elif failure_class == "FAIL_FIXABLE":
+            summary["failed_fixable"] += 1
+        elif failure_class == "FAIL_EXTERNAL":
+            summary["failed_external"] += 1
+
+    report = {
+        "command": "tier_a_live_acceptance --report",
+        "schema_version": SCHEMA_VERSION,
+        "data_root": str(resolved_root),
+        "generated_at": datetime.now(UTC).isoformat(),
+        "sources": rows,
+        "summary": summary,
+    }
+    out = Path(report_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    if summary["failed_fixable"] > 0:
+        return 1
+    if summary["failed_external"] > 0:
+        return 1
+    return 0
+
+
 __all__ = [
     "DEFAULT_SANDBOX_ROOT",
+    "EVIDENCE_CONTRACT_PATH",
+    "MANIFEST_FILENAME",
     "M_DATA_03_SANDBOX_SEGMENT",
     "QUICK_SOURCE_IDS",
+    "SCHEMA_VERSION",
     "SOURCE_API_KEY_ENV",
     "SourceAcceptanceResult",
     "TierALiveEnvError",
     "assert_isolated_live_data_root",
+    "build_live_tier_a_evidence_manifest",
     "canonical_main_db_paths",
+    "classify_source_report_failure",
     "ensure_isolated_db",
     "is_canonical_main_data_root",
     "is_canonical_main_db_path",
+    "manifest_failure_class",
     "missing_api_keys_for_sources",
     "resolve_live_data_root",
     "run_acceptance",
+    "run_acceptance_report",
     "run_source_live_acceptance",
+    "run_tier_a_live_incremental",
     "select_source_ids",
+    "source_bindings",
     "validate_live_acceptance_env",
+    "write_live_tier_a_evidence_manifest",
 ]

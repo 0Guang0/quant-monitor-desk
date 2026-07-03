@@ -12,7 +12,11 @@ from __future__ import annotations
 import argparse
 import sys
 
-from backend.app.ops.tier_a_live_acceptance import TierALiveEnvError, run_acceptance
+from backend.app.ops.tier_a_live_acceptance import (
+    TierALiveEnvError,
+    run_acceptance,
+    run_acceptance_report,
+)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -28,9 +32,22 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help="Isolated DATA_ROOT (must be under .audit-sandbox/m-data-03)",
     )
+    parser.add_argument(
+        "--report",
+        default=None,
+        metavar="PATH",
+        help="Write TierALiveAcceptanceReport JSON (live_tier_a_evidence_v1)",
+    )
     args = parser.parse_args(argv)
 
     try:
+        if args.report:
+            return run_acceptance_report(
+                args.report,
+                source_id=args.source_id,
+                quick=args.quick,
+                data_root=args.data_root,
+            )
         return run_acceptance(
             source_id=args.source_id,
             quick=args.quick,

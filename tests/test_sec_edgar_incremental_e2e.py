@@ -103,6 +103,7 @@ def test_secEdgarLive_noSilentFallbackWhenGateClosed(monkeypatch: pytest.MonkeyP
     from backend.app.datasources.fetch_ports.sec_edgar_port import create_sec_edgar_fetch_port
     from backend.app.datasources.product_live_gate import ProductLiveGateError
 
+    monkeypatch.setenv("SEC_EDGAR_USER_AGENT", "gate-test@example.com")
     monkeypatch.delenv("QMD_ALLOW_LIVE_FETCH", raising=False)
     with pytest.raises(ProductLiveGateError) as exc_info:
         create_sec_edgar_fetch_port(

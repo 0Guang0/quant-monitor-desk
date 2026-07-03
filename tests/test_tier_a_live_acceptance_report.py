@@ -1,0 +1,166 @@
+"""M-DATA-03 S-R2-EVIDENCE — tier_a_live_acceptance --report tests."""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+from typing import Any
+
+import pytest
+import yaml
+
+from backend.app.datasources.live_tier_router import TIER_A_SOURCES
+from backend.app.ops.tier_a_live_acceptance import (
+    MANIFEST_FILENAME,
+    run_acceptance_report,
+)
+from backend.app.ops.tier_a_live_incremental_dispatch import LiveIncrementalOutcome
+from tests.contract_gate_support import PROJECT_ROOT
+
+EVIDENCE_CONTRACT = PROJECT_ROOT / "specs/contracts/live_tier_a_evidence_v1.yaml"
+
+
+def _load_contract() -> dict[str, Any]:
+    return yaml.safe_load(EVIDENCE_CONTRACT.read_text(encoding="utf-8")) or {}
+
+
+def _mock_outcome(source_id: str) -> LiveIncrementalOutcome:
+    bindings = _load_contract()["source_bindings"]
+    binding = bindings[source_id]
+    return LiveIncrementalOutcome(
+        source_id=source_id,
+        sync_status="COMPLETED",
+        inspect_status="PASS",
+        clean_table=binding["clean_table"],
+        clean_row_count=2,
+        detail="mock report run",
+    )
+
+
+def test_reportRun_writesElevenManifests(
+    isolated_live_data_root: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """覆盖范围：一次 --report run 落盘 11 份 manifest
+    测试对象：run_acceptance_report
+    目的/目标：全量 report 为每 Tier A 源写出 live_tier_a_evidence_manifest.json
+    验证点：11 个 manifest 文件；每行 evidence_manifest_path 指向存在文件
+    失败含义：统一验收层缺 per-source 证据工件
+    """
+    monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
+    monkeypatch.setenv("FRED_API_KEY", "a" * 32)
+    monkeypatch.setenv("ALPHA_VANTAGE_API_KEY", "b" * 16)
+    monkeypatch.setenv("SEC_EDGAR_USER_AGENT", "contract-test@example.com")
+
+    def _mock_incremental(source_id: str, _data_root: Path) -> LiveIncrementalOutcome:
+        return _mock_outcome(source_id)
+
+    monkeypatch.setattr(
+        "backend.app.ops.tier_a_live_acceptance.run_tier_a_live_incremental",
+        _mock_incremental,
+    )
+    monkeypatch.setattr(
+        "backend.app.ops.tier_a_live_incremental_dispatch.run_tier_a_live_incremental",
+        _mock_incremental,
+    )
+
+    report_path = tmp_path / "tier-a-report.json"
+    exit_code = run_acceptance_report(
+        report_path,
+        data_root=isolated_live_data_root,
+    )
+    assert exit_code == 0
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    assert len(report["sources"]) == 11
+    manifest_paths: list[Path] = []
+    for row in report["sources"]:
+        rel = row["evidence_manifest_path"]
+        manifest_path = isolated_live_data_root / rel
+        assert manifest_path.is_file(), f"missing manifest for {row['source_id']}"
+        assert manifest_path.name == MANIFEST_FILENAME
+        manifest_paths.append(manifest_path)
+    assert len(manifest_paths) == 11
+    assert frozenset(p.parent.name for p in manifest_paths) == TIER_A_SOURCES
+
+
+def test_acceptanceReport_hasContractTopLevelFields(
+    isolated_live_data_root: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """覆盖范围：acceptance_report.required_top_level_fields
+    测试对象：run_acceptance_report JSON 输出
+    目的/目标：report 工件符合 live_tier_a_evidence_v1 acceptance_report 段
+    验证点：顶层字段齐全；summary 含 total/passed/failed_* 计数
+    失败含义：CI/人工无法消费结构化验收报告
+    """
+    contract = _load_contract()
+    required_top = contract["acceptance_report"]["required_top_level_fields"]
+    per_source_fields = contract["acceptance_report"]["per_source_row_fields"]
+    summary_fields = contract["acceptance_report"]["summary_fields"]
+
+    monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
+    monkeypatch.setenv("FRED_API_KEY", "a" * 32)
+    monkeypatch.setenv("ALPHA_VANTAGE_API_KEY", "b" * 16)
+    monkeypatch.setenv("SEC_EDGAR_USER_AGENT", "contract-test@example.com")
+
+    def _mock_incremental(source_id: str, _data_root: Path) -> LiveIncrementalOutcome:
+        return _mock_outcome(source_id)
+
+    monkeypatch.setattr(
+        "backend.app.ops.tier_a_live_acceptance.run_tier_a_live_incremental",
+        _mock_incremental,
+    )
+
+    report_path = tmp_path / "tier-a-shape.json"
+    run_acceptance_report(report_path, data_root=isolated_live_data_root)
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    for field in required_top:
+        assert field in report
+    for field in summary_fields:
+        assert field in report["summary"]
+    assert report["summary"]["total"] == 11
+    for row in report["sources"]:
+        for field in per_source_fields:
+            assert field in row
+
+
+def test_cliReportFlag_writesReportViaMain(
+    isolated_live_data_root: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """覆盖范围：scripts/tier_a_live_acceptance.py --report
+    测试对象：tier_a_live_acceptance.main --report
+    目的/目标：CLI 入口可触发 report 写出并 exit 0（mock 增量）
+    验证点：main 返回 0；report 文件存在且 sources 长度 11
+    失败含义：运维/CI 无法通过 CLI 产出验收 JSON
+    """
+    from scripts.tier_a_live_acceptance import main
+
+    monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
+    monkeypatch.setenv("FRED_API_KEY", "a" * 32)
+    monkeypatch.setenv("ALPHA_VANTAGE_API_KEY", "b" * 16)
+    monkeypatch.setenv("SEC_EDGAR_USER_AGENT", "contract-test@example.com")
+
+    def _mock_incremental(source_id: str, _data_root: Path) -> LiveIncrementalOutcome:
+        return _mock_outcome(source_id)
+
+    monkeypatch.setattr(
+        "backend.app.ops.tier_a_live_acceptance.run_tier_a_live_incremental",
+        _mock_incremental,
+    )
+
+    report_path = tmp_path / "cli-report.json"
+    exit_code = main(
+        [
+            "--report",
+            str(report_path),
+            "--data-root",
+            str(isolated_live_data_root),
+        ]
+    )
+    assert exit_code == 0
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    assert len(report["sources"]) == 11
