@@ -4,7 +4,7 @@
 > **分支：** `master`（PR [#32](https://github.com/0Guang0/quant-monitor-desk/pull/32) · merge `ff587020`）  
 > **策略：** `docs/ops/config_secret_policy.md` D-03 — 公开仓库 **不在 GitHub 存 API Key**  
 > **契约：** `specs/contracts/live_tier_a_evidence_v1.yaml` · ADR-034  
-> **核心目标核实：** `M-DATA-03-HANDOFF.md` §2.1 · §5 grill AC
+> **核心目标核实：** ADR-034 §Tier B · `plan-revision-r2.md` §2 · §5 grill AC
 
 ---
 
@@ -15,7 +15,7 @@
 | **Plan R2 机闸**       | 流水线、契约、pytest、单次/双次 `--report` exit 0 | **[x] 已满足**                         |
 | **grill 成品核实关账** | 能不能用、入库是否成品形态、可否支撑下轮开主库    | **7/7 AC 可勾选** · AC-4 路径 A（§CI） |
 
-**对外表述：** 11 源在**隔离沙箱**内真网验收 **11/11 PASS**（见下关账 run）；**不等于**生产主库就绪（见 ADR-034 §Sandbox boundary · MCR R4）。
+**对外表述：** 11 源在**隔离沙箱**内真网验收 **11/11 PASS**（见下关账 run）；**不等于** R5/R6 完整发布（见 ADR-034 §Acceptance environment boundary · MCR §1.2）。
 
 ---
 
@@ -28,7 +28,7 @@
 | **AC-3** 同 sandbox 双跑 exit 0    | **[x]** | `r2-live-20260703220000` run1+run2 均 exit 0 · 11/11                                                                                                                                                                     |
 | **AC-4** CI workflow_dispatch 实跑 | **[x]** | **路径 A（本地 only）：** 沙箱 `r2-live-20260703220000` 11/11 · 历史机制 run [28676746914](https://github.com/0Guang0/quant-monitor-desk/actions/runs/28676746914) 已归档；**GitHub live workflow 已删除**（2026-07-04） |
 | **AC-5** 行情 F0 无 staged-only    | **[x]** | 关账 run：av/baostock/mootdx 均为 `f0=PASS` · `live_acceptance=True` 跳过 R3G gate                                                                                                                                       |
-| **AC-6** 沙箱≠生产文档             | **[x]** | ADR-034 §Sandbox boundary · MCR 表注（本 rev）                                                                                                                                                                           |
+| **AC-6** 沙箱≠R5/R6 文档           | **[x]** | ADR-034 §Acceptance environment boundary · MCR §1.2（本 rev）                                                                                                                                                            |
 | **AC-7** Tier B/C 三轨             | **[x]** | 契约+acceptance+CI · sandbox 报告见下                                                                                                                                                                                    |
 
 ---
@@ -63,10 +63,10 @@
 
 ## Tier B / Tier C（AC-7）
 
-| 轨     | Sandbox                                    | Exit  | Notes                                                                                                      |
-| ------ | ------------------------------------------ | ----- | ---------------------------------------------------------------------------------------------------------- |
-| Tier B | `.audit-sandbox/m-data-03/tier-b-closeout` | **0** | 6 PASS · **stooq 路径二已接受**（ADR-034）· **CN 三源条件路径二**（见 `tier-b-network-path2-evidence.md`） |
-| Tier C | `.audit-sandbox/m-data-03/tier-c-closeout` | **0** | 3 源真 HTTP · kalshi/polymarket live slug 修复后 PASS                                                      |
+| 轨     | Sandbox                                    | Exit  | Notes                                                                                                                 |
+| ------ | ------------------------------------------ | ----- | --------------------------------------------------------------------------------------------------------------------- |
+| Tier B | `.audit-sandbox/m-data-03/tier-b-closeout` | **0** | 6 PASS + 4 FAIL_EXTERNAL（stooq + CN 三源路径二已接受 · ADR-034 @ 2026-07-04）· 见 `tier-b-network-path2-evidence.md` |
+| Tier C | `.audit-sandbox/m-data-03/tier-c-closeout` | **0** | 3 源真 HTTP · kalshi/polymarket live slug 修复后 PASS                                                                 |
 
 本地 CLI：`scripts/tier_a_live_acceptance.py` · `scripts/tier_b_live_acceptance.py` · `scripts/tier_c_live_acceptance.py`（**无** GitHub Actions live workflow）
 
@@ -119,7 +119,7 @@ QMD_ALLOW_LIVE_FETCH=1 DATA_ROOT=.audit-sandbox/m-data-03/<run> \
 
 - **R4 诚实口径** = 隔离 `DATA_ROOT` 下真网 rehearsal，**非** canonical 主库写权限。
 - 过关 ≠ 可开生产主库；主库仍须 R3G promote + Batch05 posture。
-- 详见 `docs/decisions/ADR-034-m-data-03-tier-a-live-acceptance.md` §Sandbox boundary。
+- 详见 `docs/decisions/ADR-034-m-data-03-tier-a-live-acceptance.md` §Acceptance environment boundary。
 
 ---
 

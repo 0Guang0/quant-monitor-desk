@@ -1,7 +1,7 @@
 # Tier A 逐源成品核实（11 源 · 关账版）
 
 > **目的：** 能不能用、入库是否符合成品形态、下轮开主库是否还需改管道  
-> **SSOT：** `M-DATA-03-HANDOFF.md` §2.1 · §3.4.2  
+> **SSOT：** ADR-034 · `plan-revision-r2.md` §2 · §3.4.2  
 > **关账报告：** `.audit-sandbox/m-data-03/r2-live-20260703220000/tier-a-report.json`  
 > **G-07 加厚 run：** `.audit-sandbox/m-data-03/r2-thicken-wb-deribit-20260703224024/`（world_bank=2 · deribit=2 · 分报告 world_bank/deribit）  
 > **状态：** **11/11 沙箱验收 PASS** · **0 源可宣称「仅等开主库」**（R4 sandbox scope）

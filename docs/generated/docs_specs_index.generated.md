@@ -62,6 +62,8 @@ Used with MIGRATION_MAP.md for machine omission checks (`check_docs_specs_indexe
 - `docs/implementation_tasks/GLOBAL_TESTING_POLICY.md`
 - `docs/implementation_tasks/M_DATA_03_TIER_A_LIVE/M_DATA_03_TIER_A_LIVE.md`
 - `docs/implementation_tasks/M_DATA_03_TIER_A_LIVE/M_DATA_03_TO_ISSUES_INDEX.md`
+- `docs/implementation_tasks/M_G1_03_LAYER1_FULL/M_G1_03_LAYER1_FULL.md`
+- `docs/implementation_tasks/M_G1_03_LAYER1_FULL/M_G1_03_TO_ISSUES_INDEX.md`
 - `docs/implementation_tasks/README.md`
 - `docs/implementation_tasks/TASK_INPUT_CONTEXT_INDEX.md`
 - `docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md`
