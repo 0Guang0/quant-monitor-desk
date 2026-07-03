@@ -1,4 +1,4 @@
-"""M-DATA-03 AC-7 — tier-c-live workflow manifest tests."""
+"""M-DATA-03 AC-7 — Tier C local acceptance manifest (no GitHub live CI)."""
 
 from __future__ import annotations
 
@@ -6,27 +6,17 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 TIER_C_LIVE_YML = PROJECT_ROOT / ".github/workflows/tier-c-live.yml"
-FAILURE_ARTIFACT_GLOB = "tier_c_live_acceptance_failure_*.json"
-REPORT_GLOB = "tier-c-report.json"
+ACCEPTANCE_SCRIPT = PROJECT_ROOT / "scripts/tier_c_live_acceptance.py"
 
 
-def test_tier_c_live_ci_manifest_workflow_dispatch_and_artifacts() -> None:
-    """覆盖范围：tier-c-live workflow 可执行清单
-    测试对象：.github/workflows/tier-c-live.yml
-    目的/目标：AC-7 CI — workflow_dispatch、schedule --quick、failure artifact 路径
-    验证点：workflow_dispatch；schedule cron；--quick 条件；upload-artifact glob；tier-c sandbox
-    失败含义：tier-c CI 漂移无法被 pytest 捕获，关账证据与 workflow 脱节
+def test_tier_c_live_local_manifest_no_github_ci() -> None:
+    """覆盖范围：Tier C live 验收本地清单（公开仓库无 GitHub CI）
+    测试对象：workflow 缺席 · tier_c_live_acceptance 脚本
+    目的/目标：AC-7 — 契约+本地脚本；无 workflow_dispatch / cron
+    验证点：tier-c-live.yml 不存在；脚本含 --report
+    失败含义：误恢复 GitHub live workflow 或 acceptance CLI 缺失
     """
-    yml = TIER_C_LIVE_YML.read_text(encoding="utf-8")
-    assert "workflow_dispatch" in yml
-    assert "schedule:" in yml
-    assert "cron:" in yml
-    assert "--quick" in yml
-    assert "--report" in yml
-    assert "QMD_ALLOW_LIVE_FETCH" in yml
-    assert ".audit-sandbox/m-data-03" in yml
-    assert "tier-c" in yml
-    assert "upload-artifact@v4" in yml
-    assert FAILURE_ARTIFACT_GLOB in yml
-    assert REPORT_GLOB in yml
-    assert "if: failure()" in yml
+    assert not TIER_C_LIVE_YML.is_file()
+    assert ACCEPTANCE_SCRIPT.is_file()
+    text = ACCEPTANCE_SCRIPT.read_text(encoding="utf-8")
+    assert "--report" in text

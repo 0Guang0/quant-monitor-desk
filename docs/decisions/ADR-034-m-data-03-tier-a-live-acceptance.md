@@ -45,7 +45,7 @@
 
 ## Tier B FAIL_EXTERNAL bindings（2026-07-04 · 网络路径二）
 
-**证据 SSOT：** `.trellis/tasks/m-data-03-tier-a-live/research/archive/non-plan/execute/tier-b-network-path2-evidence.md`
+**证据 SSOT：** `.trellis/tasks/archive/2026-07/m-data-03-tier-a-live/research/archive/non-plan/execute/tier-b-network-path2-evidence.md`
 
 | source_id      | 路径                 | 客观原因                                                                                          | 状态                                                           |
 | -------------- | -------------------- | ------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |

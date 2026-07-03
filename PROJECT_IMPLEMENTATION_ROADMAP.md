@@ -7,16 +7,16 @@
 > **进度复核：** `git log` @ 2026-07-02 — 历史 Wave 1–4 代码已 merge；**模块 Rating 多数未达任务卡声称的 R4** — 见 `MODULE_COMPLETION_RATING.md` §0。  
 > **重构：** §3 **模块闭环队列 v2** 已按用户 grill-gate @ 2026-07-02 生效；§3L 为历史 Wave 编排（只读）。
 
-### 当前下一入口（v2 · 用户确认 @ 2026-07-02）
+### 当前下一入口（v2 · 用户确认 @ 2026-07-02 · **M-DATA-03 关账 @ 2026-07-04**）
 
-| 优先级 | 票 ID         | 业务一句话                                                     | 开工前                                                               |
-| ------ | ------------- | -------------------------------------------------------------- | -------------------------------------------------------------------- |
-| **P0** | **M-DATA-03** | 11 主源真网增量→写库→巡检（隔离库）                            | §0.3.3：先 grill-me 确认拿不到 KEY/付费资格的源 → ADR                |
-| **P0** | **M-G1-03**   | 五轴按设计完整落地（真链，非仅 seed）                          | 依赖 M-DATA-03 至少宏观/行情 clean 输入就绪                          |
-| **P1** | **M-G2-FULL** | Layer2 九组资产按 `layer2_cross_asset_sensor.md` 完整落地      | 单 **Plan→Execute** 流程内多 worktree/串行切片；**统一** A1–A8 Audit |
-| **P1** | **M-G4-FULL** | Layer4 各 `market_id` 按 `layer4_market_structure.md` 完整落地 | 同上；可与 G2/G5 **并行**（不同 graph 节点）                         |
-| **P1** | **M-G5-FULL** | Layer5 证据链按 `layer5_security_evidence.md` 完整落地         | 同上                                                                 |
-| **P0** | **M-PASS-01** | `PASS_ROUND4_REAL_DATA_READY`（真实代码+真跑，见 §6.1）        | **末位**：前述阻塞模块 MCR Rating 诚实 + 清单全绿                    |
+| 优先级 | 票 ID             | 业务一句话                                                     | 状态 / 开工前                                                        |
+| ------ | ----------------- | -------------------------------------------------------------- | -------------------------------------------------------------------- |
+| ~~P0~~ | ~~**M-DATA-03**~~ | ~~11 主源真网增量→写库→巡检（隔离库）~~                        | **CLOSED** @ 2026-07-04 · R4 沙箱 scope · 见 §3.1 · handoff rev 4.8  |
+| **P0** | **M-G1-03**       | 五轴按设计完整落地（真链，非仅 seed）                          | **下一入口** · 依赖 M-DATA-03 Tier A 沙箱 clean 输入就绪             |
+| **P1** | **M-G2-FULL**     | Layer2 九组资产按 `layer2_cross_asset_sensor.md` 完整落地      | 单 **Plan→Execute** 流程内多 worktree/串行切片；**统一** A1–A8 Audit |
+| **P1** | **M-G4-FULL**     | Layer4 各 `market_id` 按 `layer4_market_structure.md` 完整落地 | 同上；可与 G2/G5 **并行**（不同 graph 节点）                         |
+| **P1** | **M-G5-FULL**     | Layer5 证据链按 `layer5_security_evidence.md` 完整落地         | 同上                                                                 |
+| **P0** | **M-PASS-01**     | `PASS_ROUND4_REAL_DATA_READY`（真实代码+真跑，见 §6.1）        | **末位**：前述阻塞模块 MCR Rating 诚实 + 清单全绿                    |
 
 活评级：`MODULE_COMPLETION_RATING.md` · 工程契约：`全局规则.txt` · 历史 Wave：§3L / `R3H_PASS_EXECUTION_PLAN.archived-20260702.md`
 
@@ -306,37 +306,37 @@ M-PASS-01   PASS_ROUND4_REAL_DATA_READY（§6.1 v2）
 Round4 B04-*  只读产品
 ```
 
-| 票 ID         | 类型    | Module                | Rating 目标                      | 设计权威                                                   |
-| ------------- | ------- | --------------------- | -------------------------------- | ---------------------------------------------------------- |
-| **M-DATA-03** | complex | C3,D1,E1,E2,F0,B2     | C3/E1/D1 **R3→R4**（真网 scope） | `R3H_PASS_EXECUTION_PLAN.archived-20260702.md` §2.1 Tier A |
-| **M-G1-03**   | complex | G1,K1,K2              | G1 **R3→R4**                     | `specs/layer1_axes/` · `layer1_axes.md`                    |
-| **M-G2-FULL** | complex | G2                    | G2 **R3→R4**（九组）             | `docs/modules/layer2_cross_asset_sensor.md` §2             |
-| **M-G4-FULL** | complex | G4                    | G4 **R3→R4**（各 market_id）     | `docs/modules/layer4_market_structure.md` §2               |
-| **M-G5-FULL** | complex | G5, A3                | G5 **R2→R4**                     | `docs/modules/layer5_security_evidence.md` §2–3            |
-| **M-PASS-01** | complex | C1,C4,B3,G6,E4 + 门禁 | 清单绿 + MCR 无假完成            | 本文 §6.1.1                                                |
+| 票 ID         | 类型    | Module                | Rating 目标                             | 设计权威                                        |
+| ------------- | ------- | --------------------- | --------------------------------------- | ----------------------------------------------- |
+| **M-DATA-03** | complex | C3,D1,E1,E2,F0,B2     | C3/E1/D1 **R4 沙箱**（2026-07-04 关账） | `M-DATA-03-HANDOFF.md` · archived task          |
+| **M-G1-03**   | complex | G1,K1,K2              | G1 **R3→R4**                            | `specs/layer1_axes/` · `layer1_axes.md`         |
+| **M-G2-FULL** | complex | G2                    | G2 **R3→R4**（九组）                    | `docs/modules/layer2_cross_asset_sensor.md` §2  |
+| **M-G4-FULL** | complex | G4                    | G4 **R3→R4**（各 market_id）            | `docs/modules/layer4_market_structure.md` §2    |
+| **M-G5-FULL** | complex | G5, A3                | G5 **R2→R4**                            | `docs/modules/layer5_security_evidence.md` §2–3 |
+| **M-PASS-01** | complex | C1,C4,B3,G6,E4 + 门禁 | 清单绿 + MCR 无假完成                   | 本文 §6.1.1                                     |
 
-### 3.1 M-DATA-03 — 11 源 Tier A 真网
+### 3.1 M-DATA-03 — 11 源 Tier A 真网（**CLOSED @ 2026-07-04**）
 
-| 项           | 内容                                                                    |
-| ------------ | ----------------------------------------------------------------------- |
-| **业务目标** | 每源：**真连网 → incremental sync → clean 写库 → inspect/health 绿**    |
-| **开工前**   | grill-me → `research/tier-a-live-eligibility.md`（能真跑 / ADR 暂不能） |
-| **ADR 源**   | 逻辑+占位+replay 测绿；**不得**缺实现                                   |
-| **验收**     | 隔离 `DATA_ROOT` / `.audit-sandbox`；**零主库污染**                     |
-| **切片建议** | S0 资格矩阵 · S1–S11 按源并行 worktree · Sn 统一 merge + 隔离验收脚本   |
-| **禁止**     | 全 mock e2e 冒充 CLOSED；「3 真跑 + 8 replay SLA」作 PASS 主路径        |
+| 项           | 内容                                                                  |
+| ------------ | --------------------------------------------------------------------- |
+| **状态**     | **finish-work** · Trellis archived · `M-DATA-03-HANDOFF.md` rev 4.8   |
+| **业务目标** | 每源：**真连网 → incremental sync → clean 写库 → inspect/health 绿**  |
+| **验收**     | 隔离 `.audit-sandbox/m-data-03/r2-live-20260703220000` **11/11 PASS** |
+| **AC-4**     | **本地沙箱 only**；公开仓库已删 GitHub live workflow（D-03）          |
+| **诚实边界** | R4 **沙箱** scope · **≠** 生产主库就绪 · Tier B CN 条件路径二仍开放   |
+| **证据**     | `r2-tier-a-live-accept-evidence.md` · ADR-034 §Sandbox boundary       |
 
 **十一源：** `fred` `us_treasury` `sec_edgar` `cftc_cot` `bis` `world_bank` `alpha_vantage` `deribit` `baostock` `cninfo` `mootdx`
 
 ### 3.1.1 M-DATA-03 — Tier B live 外部边界（AC-7 增补 · 2026-07-04）
 
-| 项                        | 内容                                                                                                      |
-| ------------------------- | --------------------------------------------------------------------------------------------------------- |
-| **证据 SSOT**             | `.trellis/tasks/m-data-03-tier-a-live/research/archive/non-plan/execute/tier-b-network-path2-evidence.md` |
-| **stooq（路径二已接受）** | Stooq CSV 反爬 HTML；`FAIL_EXTERNAL`+ADR-034 · 台账 `M-DATA-03-STOOQ-EXTERNAL-001`                        |
-| **CN 三源（条件路径二）** | `push2his.eastmoney.com` 间歇不可达；非 Clash 7897 误路由主因 · 台账 `M-DATA-03-TIERB-CN-HIST-001`        |
-| **承接**                  | 关闭 stooq：替代源 / nightly 权威 PASS / 废弃 binding；关闭 CN：路径一复测或 baostock hist 链             |
-| **禁止**                  | 用 exit 0 掩盖 `disposition=fail`；宣称 Tier B「10/10 真网 PASS」而 CN 三源未关账                         |
+| 项                        | 内容                                                                                                                      |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| **证据 SSOT**             | `.trellis/tasks/archive/2026-07/m-data-03-tier-a-live/research/archive/non-plan/execute/tier-b-network-path2-evidence.md` |
+| **stooq（路径二已接受）** | Stooq CSV 反爬 HTML；`FAIL_EXTERNAL`+ADR-034 · 台账 `M-DATA-03-STOOQ-EXTERNAL-001`                                        |
+| **CN 三源（条件路径二）** | `push2his.eastmoney.com` 间歇不可达；非 Clash 7897 误路由主因 · 台账 `M-DATA-03-TIERB-CN-HIST-001`                        |
+| **承接**                  | 关闭 stooq：替代源 / nightly 权威 PASS / 废弃 binding；关闭 CN：路径一复测或 baostock hist 链                             |
+| **禁止**                  | 用 exit 0 掩盖 `disposition=fail`；宣称 Tier B「10/10 真网 PASS」而 CN 三源未关账                                         |
 
 | 项          | 内容                                                                               |
 | ----------- | ---------------------------------------------------------------------------------- |

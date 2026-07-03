@@ -35,6 +35,8 @@ ELIGIBILITY_DOC = (
     PROJECT_ROOT
     / ".trellis"
     / "tasks"
+    / "archive"
+    / "2026-07"
     / "m-data-03-tier-a-live"
     / "research"
     / "tier-a-live-eligibility.md"

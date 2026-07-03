@@ -4,13 +4,13 @@
 
 ## 0. 元数据
 
-| 字段              | 值                                                                |
-| ----------------- | ----------------------------------------------------------------- |
-| slug              | `m-data-03-tier-a-live`                                           |
-| protocol          | `4.1`                                                             |
-| plan_revision     | **R2** @ 2026-07-03                                               |
-| status            | **in_progress**（Execute · Audit · Repair 关账 · 待 finish-work） |
-| evidence_contract | `specs/contracts/live_tier_a_evidence_v1.yaml`                    |
+| 字段              | 值                                             |
+| ----------------- | ---------------------------------------------- |
+| slug              | `m-data-03-tier-a-live`                        |
+| protocol          | `4.1`                                          |
+| plan_revision     | **R2** @ 2026-07-03                            |
+| status            | **completed**（finish-work @ 2026-07-04）      |
+| evidence_contract | `specs/contracts/live_tier_a_evidence_v1.yaml` |
 
 ## 1. R2 切片（Execute 步骤表）
 
