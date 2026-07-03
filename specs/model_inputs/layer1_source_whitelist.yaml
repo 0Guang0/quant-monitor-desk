@@ -2,7 +2,7 @@ version: model_input_whitelist_v1
 layer: layer1
 description: >
   Layer1 macro/risk-axis first-batch model input whitelist.
-  P0 FRED series are sandbox_candidate only; requires user authorization before live fetch.
+  P0 FRED series default sandbox_candidate; DCP-06 five-axis clean replay bindings use clean_replay_proven.
   macro_supplementary (akshare) is validation-only and must not substitute FRED primary.
 rows:
   - input_id: L1-ENV-DGS10
@@ -12,7 +12,7 @@ rows:
     source_id: fred
     operation: fetch_macro_series
     role: primary_candidate
-    readiness: sandbox_candidate
+    readiness: clean_replay_proven
     symbol_or_series: DGS10
     window_cap: 252d
     row_cap: 500
@@ -49,7 +49,7 @@ rows:
     source_id: fred
     operation: fetch_macro_series
     role: primary_candidate
-    readiness: sandbox_candidate
+    readiness: clean_replay_proven
     symbol_or_series: VIXCLS
     window_cap: 60d
     row_cap: 120
@@ -151,6 +151,63 @@ rows:
       - production-live ready
     closure_test: deferred P2 slow-variable background
     notes: P2 — monthly slow variable
+
+  - input_id: L1-CRD-BAA10Y
+    layer: layer1
+    business_purpose: CRD.CS1.BAA10Y 信用利差压力锚
+    data_domain: us_macro_series
+    source_id: fred
+    operation: fetch_macro_series
+    role: primary_candidate
+    readiness: clean_replay_proven
+    symbol_or_series: BAA10Y
+    window_cap: 252d
+    row_cap: 500
+    requires_user_authorization: true
+    allowed_next_gate: raw_staging_pilot
+    forbidden_claims:
+      - production-live ready
+      - macro_supplementary substitute
+    closure_test: DCP-06 clean replay e2e; B01-FRED sandbox for live
+    notes: DCP-06 P0 credit anchor；P2 formal FRED pilot series cap expansion
+
+  - input_id: L1-LIQ-AMIHUD-SPY
+    layer: layer1
+    business_purpose: LIQ.B-I1.AMIHUD_ILLIQ 流动性 Amihud 代理（SPY bar）
+    data_domain: us_equity_daily_bar
+    source_id: alpha_vantage
+    operation: fetch_equity_daily_bar
+    role: primary_candidate
+    readiness: clean_replay_proven
+    symbol_or_series: SPY
+    window_cap: 60d
+    row_cap: 300
+    requires_user_authorization: true
+    allowed_next_gate: raw_staging_pilot
+    forbidden_claims:
+      - production-live ready
+      - tiingo primary substitute without ADR
+    closure_test: DCP-06 clean replay e2e; ponytail vs spec tiingo
+    notes: ADR-029 ponytail bar path；P2 tiingo primary reconcile in Batch 6+
+
+  - input_id: L1-SEN-COT-LF-NET
+    layer: layer1
+    business_purpose: SEN-S1-COT_LF_NET CFTC 杠杆基金净头寸
+    data_domain: cot_positioning
+    source_id: cftc_cot
+    operation: fetch_cot_positioning
+    role: primary_candidate
+    readiness: clean_replay_proven
+    symbol_or_series: "088691"
+    window_cap: 104w
+    row_cap: 120
+    requires_user_authorization: false
+    allowed_next_gate: raw_staging_pilot
+    forbidden_claims:
+      - production-live ready
+      - CNN fear_greed substitute
+    closure_test: DCP-06 clean replay e2e; cftc incremental watermark proof
+    notes: DCP-06 P0 sentiment anchor；P2 live COT pilot；market code 088691 in axis_observation
 
   - input_id: L1-MACRO-SUPP-VALIDATION
     layer: layer1

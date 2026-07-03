@@ -54,6 +54,16 @@ specs/contracts/production_equivalent_smoke_budget.yaml:
         - tests/test_production_equivalent_smoke_budget.py
       negative_required: true
 
+specs/contracts/bounded_backfill_cap.yaml:
+  requirements:
+    BOUNDED_BACKFILL_CAP:
+      text: "Backfill invocation must respect per-shard and per-run shard caps"
+      tests:
+        - tests/test_bounded_backfill_cap.py
+        - tests/test_bounded_backfill_cli_e2e.py
+        - tests/test_qmd_data_backfill_cli.py
+      negative_required: true
+
 specs/contracts/layer1_axis_contract.yaml:
   requirements:
     LAYER1_AXIS_LOADER:
@@ -113,6 +123,33 @@ specs/contracts/platform_source_matrix.yaml:
       text: "Platform source matrix alignment"
       tests:
         - tests/test_platform_source_matrix.py
+      negative_required: false
+
+specs/contracts/live_tier_a_evidence_v1.yaml:
+  requirements:
+    LIVE_TIER_A_EVIDENCE:
+      text: "Tier A live evidence manifest envelope and 11 source bindings"
+      tests:
+        - tests/test_live_tier_a_evidence_contract.py
+        - tests/test_tier_a_live_acceptance_report.py
+      negative_required: false
+
+specs/contracts/live_tier_b_evidence_v1.yaml:
+  requirements:
+    LIVE_TIER_B_EVIDENCE:
+      text: "Tier B live validation_fetch evidence manifest and 10 source bindings"
+      tests:
+        - tests/test_live_tier_b_evidence_contract.py
+        - tests/test_tier_b_live_acceptance_report.py
+      negative_required: false
+
+specs/contracts/live_tier_c_evidence_v1.yaml:
+  requirements:
+    LIVE_TIER_C_EVIDENCE:
+      text: "Tier C live validation_fetch evidence manifest and 3 source bindings"
+      tests:
+        - tests/test_live_tier_c_evidence_contract.py
+        - tests/test_tier_c_live_acceptance_report.py
       negative_required: false
 
 specs/contracts/snapshot_lineage_contract.yaml:

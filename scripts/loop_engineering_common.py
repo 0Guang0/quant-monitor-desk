@@ -47,9 +47,9 @@ def extract_md_section(text: str, header_prefix: str) -> str:
 
 
 def path_exists(rel: str) -> bool:
-    norm = rel.replace("\\", "/")
-    candidate = REPO_ROOT / norm
-    return candidate.is_file() or candidate.is_dir()
+    from repo_path_resolve import repo_path_exists
+
+    return repo_path_exists(rel)
 
 
 def load_yaml(path: Path) -> dict[str, Any]:

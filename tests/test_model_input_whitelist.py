@@ -32,6 +32,8 @@ REQUIRED_ROW_FIELDS = (
 )
 
 LAYER1_P0_SERIES = frozenset({"DGS10", "T10Y3M", "VIXCLS", "SP500", "DFII10"})
+LAYER1_B01_SANDBOX_ONLY_SERIES = frozenset({"T10Y3M", "SP500", "DFII10"})
+DCP06_CLEAN_REPLAY_PROVEN = frozenset({"DGS10", "BAA10Y", "VIXCLS", "SPY", "088691"})
 
 WHITELIST_FILES = {
     "layer1": MODEL_INPUTS / "layer1_source_whitelist.yaml",
@@ -77,10 +79,10 @@ def test_layer1_rows_have_required_fields() -> None:
 
 
 def test_layer1_p0_fred_macro_series_sandbox_candidate() -> None:
-    """覆盖范围：Layer1 P0 FRED 宏观序列
+    """覆盖范围：Layer1 B01-FRED 宏观序列（尚未 DCP-06 proven 的子集）
     测试对象：layer1_source_whitelist.yaml P0 种子行
-    目的/目标：DGS10/T10Y3M/VIXCLS/SP500/DFII10 为 fred sandbox_candidate
-    验证点：五序列存在；source_id=fred；readiness=sandbox_candidate；role=primary_candidate
+    目的/目标：T10Y3M/SP500/DFII10 仍为 fred sandbox_candidate
+    验证点：三序列存在；source_id=fred；readiness=sandbox_candidate；role=primary_candidate
     失败含义：FRED pilot 前置白名单未冻结，阻塞 B01-FRED/SP3
     """
     rows = _load_whitelist_rows("layer1")
@@ -88,13 +90,31 @@ def test_layer1_p0_fred_macro_series_sandbox_candidate() -> None:
         r
         for r in rows
         if r.get("source_id") == "fred"
-        and _series_value(r) in LAYER1_P0_SERIES
+        and _series_value(r) in LAYER1_B01_SANDBOX_ONLY_SERIES
         and r.get("readiness") == "sandbox_candidate"
     ]
     found_series = {_series_value(r) for r in fred_p0}
-    assert found_series == LAYER1_P0_SERIES
+    assert found_series == LAYER1_B01_SANDBOX_ONLY_SERIES
     assert all(r.get("role") == "primary_candidate" for r in fred_p0)
     assert all(r.get("requires_user_authorization") is True for r in fred_p0)
+
+
+def test_layer1_p0_dcp06_cleanReplayProven() -> None:
+    """覆盖范围：DCP-06 五轴 P0 clean replay 绑定行
+    测试对象：layer1_source_whitelist.yaml DCP-06 proven 行
+    目的/目标：DGS10/BAA10Y/VIXCLS/SPY/088691 readiness=clean_replay_proven 且 caps 齐全
+    验证点：五行存在；readiness；row_cap/window_cap 非空；非 production_candidate
+    失败含义：K1 与 Tier A clean replay 证据漂移，FR-6 不成立
+    """
+    rows = _load_whitelist_rows("layer1")
+    proven = [r for r in rows if _series_value(r) in DCP06_CLEAN_REPLAY_PROVEN]
+    found = {_series_value(r) for r in proven}
+    assert found == DCP06_CLEAN_REPLAY_PROVEN
+    for row in proven:
+        assert row.get("readiness") == "clean_replay_proven"
+        assert row.get("readiness") != "production_candidate"
+        assert row.get("row_cap") is not None and int(row["row_cap"]) > 0
+        assert row.get("window_cap") is not None
 
 
 def test_layer1_macro_supplementary_not_fred_primary() -> None:
@@ -139,7 +159,12 @@ def test_layer1_non_p0_indicators_deferred_or_p2() -> None:
             continue
         readiness = row.get("readiness")
         notes = str(row.get("notes") or "")
-        deferred_ok = readiness in {"deferred", "fixture_only", "staged_only"}
+        deferred_ok = readiness in {
+            "deferred",
+            "fixture_only",
+            "staged_only",
+            "clean_replay_proven",
+        }
         assert deferred_ok or "P2" in notes or row.get("role") == "deferred"
         assert readiness != "production_candidate"
 
@@ -481,7 +506,7 @@ def test_readiness_matrix_documents_layers() -> None:
     text = path.read_text(encoding="utf-8")
     for marker in ("Layer1", "Layer2", "Layer3", "Layer4", "Layer5"):
         assert marker in text, marker
-    for term in ("sandbox_candidate", "deferred", "fixture_only", "validation_only"):
+    for term in ("sandbox_candidate", "clean_replay_proven", "deferred", "fixture_only", "validation_only"):
         assert term in text, term
 
 

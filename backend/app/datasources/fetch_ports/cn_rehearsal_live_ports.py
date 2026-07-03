@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import re
+import time
 from collections.abc import Callable, Iterator, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -25,12 +26,32 @@ _PROXY_HINT = (
     "127.0.0.1:7897 and fail; set those hosts to DIRECT in Clash/V2Ray or "
     "disable system proxy for the live pilot run"
 )
+_PUSH2HIS_RETRY_DELAYS_S = (1, 2, 4)
 
 
 @contextmanager
 def _bypass_system_proxy() -> Iterator[None]:
     """Use direct connections for CN domestic endpoints (ignore Windows proxy)."""
+    import os
+    import urllib.request
+
     import requests
+
+    proxy_keys = (
+        "HTTP_PROXY",
+        "HTTPS_PROXY",
+        "http_proxy",
+        "https_proxy",
+        "ALL_PROXY",
+        "all_proxy",
+    )
+    saved = {key: os.environ.pop(key, None) for key in proxy_keys}
+    saved_no_proxy = os.environ.get("NO_PROXY")
+    domestic = "eastmoney.com,push2.eastmoney.com,82.push2.eastmoney.com,sina.com.cn"
+    if saved_no_proxy:
+        os.environ["NO_PROXY"] = f"{saved_no_proxy},{domestic}"
+    else:
+        os.environ["NO_PROXY"] = domestic
 
     original_request = requests.api.request
     original_get = requests.get
@@ -50,32 +71,48 @@ def _bypass_system_proxy() -> Iterator[None]:
     requests.get = lambda url, **kwargs: _direct_request("GET", url, **kwargs)
     requests.post = lambda url, **kwargs: _direct_request("POST", url, **kwargs)
     requests.Session.__init__ = _direct_session_init
+    original_getproxies = urllib.request.getproxies
+    urllib.request.getproxies = lambda: {}
     try:
         yield
     finally:
+        urllib.request.getproxies = original_getproxies
         requests.api.request = original_request
         requests.get = original_get
         requests.post = original_post
         requests.Session.__init__ = original_session_init
+        for key, value in saved.items():
+            if value is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = value
+        if saved_no_proxy is None:
+            os.environ.pop("NO_PROXY", None)
+        else:
+            os.environ["NO_PROXY"] = saved_no_proxy
 
 
 def _run_akshare_call(fn: Callable[[], _T]) -> _T:
-    """Try system proxy first, then direct — either path may work depending on Clash rules."""
-    errors: list[str] = []
-
-    try:
-        return fn()
-    except Exception as proxy_exc:
-        errors.append(f"proxy: {proxy_exc}")
-
+    """CN domestic vendors: direct only (system proxy often breaks eastmoney/sina)."""
     try:
         with _bypass_system_proxy():
             return fn()
     except Exception as direct_exc:
-        errors.append(f"direct: {direct_exc}")
+        raise PortError("NETWORK_ERROR", f"direct: {direct_exc}; {_PROXY_HINT}")
 
-    combined = "; ".join(errors)
-    raise PortError("NETWORK_ERROR", f"{combined}; {_PROXY_HINT}")
+
+def _run_akshare_call_with_retry(fn: Callable[[], _T]) -> _T:
+    """push2his hist: limited backoff (1s · 2s · 4s) then propagate NETWORK_ERROR."""
+    last_exc: PortError | None = None
+    for delay in (0, *_PUSH2HIS_RETRY_DELAYS_S):
+        if delay:
+            time.sleep(delay)
+        try:
+            return _run_akshare_call(fn)
+        except PortError as exc:
+            last_exc = exc
+    assert last_exc is not None
+    raise last_exc
 
 
 _DATE_WINDOW_RE = re.compile(
@@ -113,6 +150,16 @@ def _akshare_hist_symbol(raw_symbol: str) -> str:
     if "." in lowered:
         return lowered.split(".", 1)[1]
     return lowered
+
+
+def _akshare_sina_daily_symbol(raw_symbol: str) -> str:
+    """Convert sh.600519 to akshare stock_zh_a_daily symbol (e.g. sh600519)."""
+    lowered = raw_symbol.lower()
+    if lowered.startswith("sh."):
+        return f"sh{lowered[3:]}"
+    if lowered.startswith("sz."):
+        return f"sz{lowered[3:]}"
+    return lowered.replace(".", "")
 
 
 @dataclass(frozen=True)

@@ -1,0 +1,11 @@
+{"skill": "agent-toolchain", "phase": "boot", "read_at": "2026-07-02"}
+{"skill": "trellis-plan", "phase": "boot", "read_at": "2026-07-02"}
+{"skill": "gitnexus-plan-1a", "phase": "1a", "read_at": "2026-07-02", "artifact": "research/project-overview.md"}
+{"skill": "gitnexus-plan-1b", "phase": "1b", "read_at": "2026-07-02", "artifact": "research/gitnexus-summary.md"}
+{"skill": "trellis-research", "phase": "1-4", "read_at": "2026-07-02", "artifact": "research/reference-adoption-dcp10.md"}
+{"skill": "to-issues", "phase": "3.5", "read_at": "2026-07-02", "artifact": "research/to-issues-slices.md"}
+{"skill": "planning-and-task-breakdown", "phase": "5a", "read_at": "2026-07-02", "artifact": "research/plan-task-breakdown.md"}
+{"skill": "spec-driven-development", "phase": "5a'", "read_at": "2026-07-02", "artifact": "research/plan-spec.md"}
+{"skill": "context-engineering", "phase": "5b", "read_at": "2026-07-02", "artifact": "research/plan-context.md"}
+{"skill": "doubt-driven-development", "phase": "5c", "read_at": "2026-07-02", "artifact": "research/plan-doubt-review.md"}
+{"skill": "documentation-and-adrs", "phase": "5c'", "read_at": "2026-07-02", "artifact": "docs/decisions/ADR-031-dcp10-layer5-evidence-provenance-binding.md"}

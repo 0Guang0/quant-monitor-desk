@@ -1,0 +1,158 @@
+{
+  "task": "07-02-wave4-r3-dcp-09-backfill-ci",
+  "modules": ["project_scaffold", "sync_orchestrator", "governance"],
+  "source_authorities": [
+    {
+      "type": "design",
+      "path": "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md",
+      "reason": "project_scaffold design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/architecture/06_deployment_and_local_ops.md",
+      "reason": "project_scaffold design authority"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/spec_migrator_contract.yaml",
+      "reason": "project_scaffold contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/dependency_extras_contract.yaml",
+      "reason": "project_scaffold contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/platform_source_matrix.yaml",
+      "reason": "project_scaffold contract"
+    },
+    {
+      "type": "policy",
+      "path": "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md",
+      "reason": "project_scaffold rule"
+    },
+    {
+      "type": "design",
+      "path": "docs/modules/data_sync_orchestrator.md",
+      "reason": "sync_orchestrator design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/architecture/module_boundary_matrix.md",
+      "reason": "sync_orchestrator design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/ops/data_sync_quick_reference.md",
+      "reason": "sync_orchestrator design authority"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/write_contract.yaml",
+      "reason": "sync_orchestrator contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/sync_job_contract.yaml",
+      "reason": "sync_orchestrator contract"
+    },
+    {
+      "type": "policy",
+      "path": "docs/ops/idempotency_retry_dlq_policy.md",
+      "reason": "sync_orchestrator rule"
+    },
+    {
+      "type": "task-card",
+      "path": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/014_implement_data_sync_orchestrator.md",
+      "reason": "sync_orchestrator implementation task"
+    },
+    {
+      "type": "design",
+      "path": "docs/ops/backup_and_recovery.md",
+      "reason": "governance design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/ops/logs_health_audit.md",
+      "reason": "governance design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/quality/final_package_rules.md",
+      "reason": "governance design authority"
+    },
+    {
+      "type": "design",
+      "path": "MIGRATION_MAP.md",
+      "reason": "governance design authority"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/reference_adoption_guardrails.yaml",
+      "reason": "governance contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/release_cleanup_allowlist.yaml",
+      "reason": "governance contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/log_audit_contract.yaml",
+      "reason": "governance contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/backup_recovery_contract.yaml",
+      "reason": "governance contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/module_boundary_contract.yaml",
+      "reason": "governance contract"
+    },
+    {
+      "type": "policy",
+      "path": "docs/ops/config_secret_policy.md",
+      "reason": "governance rule"
+    }
+  ],
+  "tests": [
+    {
+      "path": "tests/test_dependency_extras_contract.py",
+      "purpose": "Round2.6 Phase B — dependency extras contract tests."
+    },
+    {
+      "path": "tests/test_sync_orchestrator.py",
+      "purpose": "Tests for DataSyncOrchestrator core (Batch D §8.3)."
+    },
+    {
+      "path": "tests/test_sync_jobs.py",
+      "purpose": "Tests for SyncJob state machine (Batch D §8.2)."
+    },
+    {
+      "path": "tests/test_sync_pipeline_contract.py",
+      "purpose": "Pipeline seam contract tests (Round2 re-audit A7-02)."
+    },
+    {
+      "path": "tests/test_reference_adoption_guardrails.py",
+      "purpose": "Reference adoption guardrails — static scans for forbidden copied patterns"
+    },
+    {
+      "path": "tests/test_round3_audit_registry_alignment.py",
+      "purpose": "Round 3 Batch 2.5 / Batch 2.75 audit follow-up 文档对齐测试。"
+    },
+    {
+      "path": "tests/test_production_equivalent_smoke_budget.py",
+      "purpose": "Bounded production-equivalent smoke threshold artifact (R3F-HYG-06)"
+    }
+  ],
+  "forbidden_claims": [],
+  "required_evidence": [
+    "context_pack.json",
+    "loop_manifest.json",
+    "evidence_index.json",
+    "release_manifest.json"
+  ]
+}

@@ -2,15 +2,20 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+import ast
+from datetime import UTC, date, datetime
+from pathlib import Path
 from typing import Any
 
 import pytest
 
 from backend.app.datasources.fetch_ports.bis_port import BisLiveFetchPort
 from backend.app.datasources.fetch_result import FetchRequest
+from backend.app.datasources.product_live_gate import ProductLiveGateError
+from backend.app.ops.db_inspector import DbInspector
 from backend.app.ops.bis_incremental_run import (
     build_bis_incremental_service,
+    bis_staging_rows_from_bundle,
     create_bis_incremental_port,
     run_bis_incremental,
 )
@@ -22,7 +27,11 @@ from backend.app.ops.bis_incremental_run import (
     read_since_dates_for_instruments,
     watermark_start_year,
 )
-from tests.macro_incremental_support import build_macro_e2e_ctx, insert_axis_observation
+from tests.macro_incremental_support import (
+    bootstrap_macro_live_e2e_ctx,
+    build_macro_e2e_ctx,
+    insert_axis_observation,
+)
 
 
 @pytest.fixture
@@ -89,6 +98,44 @@ def test_bisIncremental_idempotent_secondRun_rowCountStable(
     assert first >= 1
 
 
+def test_bisStagingRows_monthlySinceFilter_usesMonthGrain() -> None:
+    """覆盖范围：BIS 月频 staging 与 since 日级窗对齐
+    测试对象：bis_staging_rows_from_bundle
+    目的/目标：live 冷启动 since 在日月中段时仍保留当月观测（G-01 bis 根因）
+    验证点：start_date=2026-03-05 时保留 2026-03-01 月频行
+    失败含义：月频被日级 since 误滤光导致 EMPTY_RESPONSE
+    """
+    bundle = {
+        "source_id": "bis",
+        "content_hash": "h",
+        "schema_hash": "s",
+        "observations": [
+            {
+                "observation_date": "2026-01-01",
+                "policy_rate": 1.0,
+                "frequency": "monthly",
+                "country_code": "US",
+            },
+            {
+                "observation_date": "2026-03-01",
+                "policy_rate": 1.2,
+                "frequency": "monthly",
+                "country_code": "US",
+            },
+        ],
+    }
+    rows = bis_staging_rows_from_bundle(
+        bundle, instrument_id="US", start_date="2026-03-05"
+    )
+    assert len(rows) == 1
+    pub = rows[0]["publish_timestamp"]
+    if isinstance(pub, datetime):
+        pub_date = pub.date()
+    else:
+        pub_date = date.fromisoformat(str(pub)[:10])
+    assert pub_date == date(2026, 3, 1)
+
+
 def test_bisIncremental_emptyResponse_whenWatermarkCurrent(
     bis_incremental_e2e_ctx: dict[str, Any],
 ) -> None:
@@ -134,3 +181,137 @@ def test_bisLivePort_startPeriod_fromWatermarkStartTime() -> None:
     )
     assert port._resolve_start_year(req) == 2023
     assert watermark_start_year("2023-06-15") == 2023
+
+
+def test_bisIncremental_forbidden_noBisProviderRuntimeImport() -> None:
+    """覆盖范围：BIS L2 禁止 runtime import digital-oracle BisProvider
+    测试对象：bis_incremental_run.py · bis_port.py AST import 根
+    目的/目标：parallel-dispatch-protocol §3 — 禁止 from digital_oracle / import BisProvider
+    验证点：两模块 AST 无 digital_oracle 导入根、无 BisProvider 符号导入
+    失败含义：参考项目 runtime 渗入 Tier A live 路径
+    """
+    repo_root = Path(__file__).resolve().parents[1]
+    targets = (
+        repo_root / "backend/app/ops/bis_incremental_run.py",
+        repo_root / "backend/app/datasources/fetch_ports/bis_port.py",
+    )
+    forbidden_roots = ("digital_oracle", "digital-oracle")
+    for path in targets:
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                for alias in node.names:
+                    root = alias.name.split(".")[0]
+                    assert root not in forbidden_roots, f"{path.name}: import {alias.name}"
+                    assert alias.name != "BisProvider"
+            elif isinstance(node, ast.ImportFrom):
+                module = node.module or ""
+                root = module.split(".")[0]
+                assert root not in forbidden_roots, f"{path.name}: from {module}"
+                for alias in node.names:
+                    assert alias.name != "BisProvider", f"{path.name}: from {module} import BisProvider"
+
+
+def test_bisLive_noSilentFallbackWhenGateClosed(monkeypatch: pytest.MonkeyPatch) -> None:
+    """覆盖范围：无 QMD_ALLOW_LIVE_FETCH 时 bis live port 阻断
+    测试对象：create_bis_incremental_port(use_mock=False)
+    目的/目标：EasyXT forbidden — live 被拒时不得静默退回 mock port
+    验证点：抛 ProductLiveGateError · LIVE_FETCH_REJECTED
+    失败含义：bis live 路径渗入 silent fallback
+    """
+    monkeypatch.delenv("QMD_ALLOW_LIVE_FETCH", raising=False)
+    with pytest.raises(ProductLiveGateError) as exc_info:
+        create_bis_incremental_port(countries=DEFAULT_COUNTRIES, max_rows=3, use_mock=False)
+    assert exc_info.value.code == "LIVE_FETCH_REJECTED"
+
+
+@pytest.mark.network
+def test_bisIncremental_liveNetwork_writesAxisObservation(
+    isolated_live_data_root: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """覆盖范围：隔离 sandbox + BIS live API 写 axis_observation
+    测试对象：run_bis_incremental(use_mock=False) + BisLiveFetchPort startPeriod 窗
+    目的/目标：QMD_ALLOW_LIVE_FETCH=1 时真网增量写 macro clean（L2 窗参数）
+    验证点：status∈{COMPLETED,EMPTY_RESPONSE}；COMPLETED 时 axis_observation≥1；DbInspector 表存在
+    失败含义：Tier A bis live 金路径未接通或误写主库
+    """
+    ctx = bootstrap_macro_live_e2e_ctx(
+        isolated_live_data_root,
+        monkeypatch,
+        source_id=SOURCE_ID,
+        data_domain=DATA_DOMAIN,
+        port_factory=lambda **kw: create_bis_incremental_port(
+            countries=DEFAULT_COUNTRIES, max_rows=120, **kw
+        ),
+        since_reader=read_since_dates_for_instruments,
+        instrument_ids=DEFAULT_COUNTRIES,
+        service_builder=build_bis_incremental_service,
+        registry_factory=enabled_bis_source_registry,
+    )
+    report = run_bis_incremental(
+        ctx["orch"],
+        service=ctx["service"],
+        countries=DEFAULT_COUNTRIES,
+        use_mock=False,
+        source_registry=ctx["registry"],
+    )
+    status = report.instrument_results[0]["status"]
+    assert status in {"COMPLETED", "EMPTY_RESPONSE"}
+    inspect_report = DbInspector(ctx["cm"].db_path, ctx["raw_root"]).inspect()
+    axis_table = next(t for t in inspect_report.key_tables if t["name"] == "axis_observation")
+    assert axis_table["exists"] is True
+    if status == "COMPLETED":
+        with ctx["cm"].writer() as con:
+            count = con.execute(
+                "SELECT COUNT(*) FROM axis_observation WHERE indicator_id = 'US'"
+            ).fetchone()[0]
+        assert count >= 1
+        assert axis_table["row_count"] is not None and axis_table["row_count"] >= 1
+
+
+@pytest.mark.network
+def test_bisIncremental_liveNetwork_idempotentSecondRun(
+    isolated_live_data_root: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """覆盖范围：隔离 sandbox 连续 BIS live 增量至行数稳定
+    测试对象：run_bis_incremental live 幂等 upsert
+    目的/目标：首次有行；若第二次 EMPTY_RESPONSE 则行数不变
+    验证点：first≥1；若 status==EMPTY_RESPONSE 则 first==second
+    失败含义：live upsert 重复膨胀行数
+    """
+    ctx = bootstrap_macro_live_e2e_ctx(
+        isolated_live_data_root,
+        monkeypatch,
+        source_id=SOURCE_ID,
+        data_domain=DATA_DOMAIN,
+        port_factory=lambda **kw: create_bis_incremental_port(
+            countries=DEFAULT_COUNTRIES, max_rows=120, **kw
+        ),
+        since_reader=read_since_dates_for_instruments,
+        instrument_ids=DEFAULT_COUNTRIES,
+        service_builder=build_bis_incremental_service,
+        registry_factory=enabled_bis_source_registry,
+    )
+    run_bis_incremental(
+        ctx["orch"],
+        service=ctx["service"],
+        countries=DEFAULT_COUNTRIES,
+        use_mock=False,
+        source_registry=ctx["registry"],
+    )
+    with ctx["cm"].writer() as con:
+        first = con.execute("SELECT COUNT(*) FROM axis_observation").fetchone()[0]
+    report2 = run_bis_incremental(
+        ctx["orch"],
+        service=ctx["service"],
+        countries=DEFAULT_COUNTRIES,
+        use_mock=False,
+        source_registry=ctx["registry"],
+    )
+    with ctx["cm"].writer() as con:
+        second = con.execute("SELECT COUNT(*) FROM axis_observation").fetchone()[0]
+    assert first >= 1
+    if report2.instrument_results[0]["status"] == "EMPTY_RESPONSE":
+        assert first == second

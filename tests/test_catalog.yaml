@@ -238,6 +238,28 @@ tests/test_bis_incremental_e2e.py:
     docs: []
     rules: []
     specs: []
+tests/test_bounded_backfill_cap.py:
+  command: uv run python -m pytest tests/test_bounded_backfill_cap.py -q
+  failure_meaning: Backfill cap fail-closed or truncate semantics broken.
+  purpose: R3-DCP-09 bounded backfill cap contract; fail-closed when exceeding max_shards.
+  type: policy-contract
+  verifies:
+    docs:
+      - docs/decisions/ADR-030-bounded-backfill-cap-and-ci-nightly.md
+    rules: []
+    specs:
+      - specs/contracts/bounded_backfill_cap.yaml
+tests/test_bounded_backfill_cli_e2e.py:
+  command: uv run python -m pytest tests/test_bounded_backfill_cli_e2e.py -q
+  failure_meaning:
+    Regression in test_bounded_backfill_cli_e2e; inspect purpose and
+    linked authorities.
+  purpose: R3-DCP-09 bounded backfill CLI replay e2e.
+  type: integration
+  verifies:
+    docs: []
+    rules: []
+    specs: []
 tests/test_cftc_incremental_e2e.py:
   command: uv run python -m pytest tests/test_cftc_incremental_e2e.py -q
   failure_meaning:
@@ -367,6 +389,17 @@ tests/test_data_health_easyxt_profiles.py:
       - docs/implementation_tasks/GLOBAL_TESTING_POLICY.md
     specs:
       - specs/contracts/data_quality_rules.yaml
+tests/test_data_health_tier_a_profiles.py:
+  command: uv run python -m pytest tests/test_data_health_tier_a_profiles.py -q
+  failure_meaning:
+    Regression in test_data_health_tier_a_profiles; inspect purpose
+    and linked authorities.
+  purpose: M-DATA-03 S-R2-F0 — four Tier-A data health profile families.
+  type: runtime-contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
 tests/test_data_health_v2.py:
   command: uv run python -m pytest tests/test_data_health_v2.py -q
   evidence_required: pytest output
@@ -668,6 +701,52 @@ tests/test_layer1_axis_loader.py:
     rules: []
     specs:
       - specs/contracts/layer1_axis_contract.yaml
+tests/test_layer1_clean_reader.py:
+  command: uv run python -m pytest tests/test_layer1_clean_reader.py -q
+  failure_meaning:
+    Regression in test_layer1_clean_reader; inspect purpose and linked
+    authorities.
+  purpose: S00 — Layer1CleanObservationReader contract tests.
+  type: contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_layer1_credit_stress_clean_e2e.py:
+  command: uv run python -m pytest tests/test_layer1_credit_stress_clean_e2e.py -q
+  failure_meaning:
+    Regression in test_layer1_credit_stress_clean_e2e; inspect purpose
+    and linked authorities.
+  purpose: S02 — CREDIT_STRESS CRD.CS1.BAA10Y clean read e2e.
+  type: integration
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_layer1_environment_clean_e2e.py:
+  command: uv run python -m pytest tests/test_layer1_environment_clean_e2e.py -q
+  failure_meaning:
+    Regression in test_layer1_environment_clean_e2e; inspect purpose
+    and linked authorities.
+  purpose: S01 — ENVIRONMENT axis Tier A clean read → feature → interpretation e2e.
+  type: integration
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_layer1_five_axis_panel_clean_smoke.py:
+  command:
+    uv run python -m pytest tests/test_layer1_five_axis_panel_clean_smoke.py
+    -q
+  failure_meaning:
+    Regression in test_layer1_five_axis_panel_clean_smoke; inspect
+    purpose and linked authorities.
+  purpose: S06 — G12 五轴 Tier A clean panel 集成 smoke + K1 对齐 + ResourceGuard.
+  type: smoke
+  verifies:
+    docs: []
+    rules: []
+    specs: []
 tests/test_layer1_ingestion_gates.py:
   command: uv run python -m pytest tests/test_layer1_ingestion_gates.py -q
   failure_meaning:
@@ -692,6 +771,17 @@ tests/test_layer1_interpretation.py:
     docs: []
     rules: []
     specs: []
+tests/test_layer1_liquidity_clean_e2e.py:
+  command: uv run python -m pytest tests/test_layer1_liquidity_clean_e2e.py -q
+  failure_meaning:
+    Regression in test_layer1_liquidity_clean_e2e; inspect purpose
+    and linked authorities.
+  purpose: S04 — Liquidity axis clean read e2e (ADR-029 ponytail).
+  type: integration
+  verifies:
+    docs: []
+    rules: []
+    specs: []
 tests/test_layer1_observation_ingestion.py:
   command: uv run python -m pytest tests/test_layer1_observation_ingestion.py -q
   failure_meaning:
@@ -699,6 +789,17 @@ tests/test_layer1_observation_ingestion.py:
     and linked authorities.
   purpose: Layer 1 observation ingestion pipeline tests (Batch 2.5 §8.2–8.5).
   type: runtime-contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_layer1_risk_appetite_clean_e2e.py:
+  command: uv run python -m pytest tests/test_layer1_risk_appetite_clean_e2e.py -q
+  failure_meaning:
+    Regression in test_layer1_risk_appetite_clean_e2e; inspect purpose
+    and linked authorities.
+  purpose: S03 — RISK_APPETITE axis Tier A clean read → feature → interpretation e2e.
+  type: integration
   verifies:
     docs: []
     rules: []
@@ -716,6 +817,28 @@ tests/test_layer1_sandbox_bootstrap.py:
       - docs/architecture/layer1_ingestion_refactor_rollback_plan.md
     rules: []
     specs: []
+tests/test_layer1_sentiment_clean_e2e.py:
+  command: uv run python -m pytest tests/test_layer1_sentiment_clean_e2e.py -q
+  failure_meaning:
+    Regression in test_layer1_sentiment_clean_e2e; inspect purpose
+    and linked authorities.
+  purpose: S05 — SENTIMENT axis Tier A clean read e2e (COT LF net).
+  type: integration
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_layer2_clean_reader.py:
+  command: uv run python -m pytest tests/test_layer2_clean_reader.py -q
+  failure_meaning:
+    Regression in test_layer2_clean_reader; inspect purpose and linked
+    authorities.
+  purpose: S00 — Layer2CleanObservationReader contract tests (DCP-07).
+  type: contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
 tests/test_layer2_sensor_loader.py:
   command: uv run python -m pytest tests/test_layer2_sensor_loader.py -q
   evidence_required: pytest output
@@ -730,6 +853,19 @@ tests/test_layer2_sensor_loader.py:
       - specs/contracts/layer2_sensor_contract.yaml
       - specs/contracts/snapshot_lineage_contract.yaml
       - specs/contracts/resource_limits.yaml
+tests/test_layer2_vix_clean_e2e.py:
+  command: uv run python -m pytest tests/test_layer2_vix_clean_e2e.py -q
+  failure_meaning:
+    Regression in test_layer2_vix_clean_e2e; inspect purpose and linked
+    authorities.
+  purpose:
+    Layer2 VIX clean e2e — ADR-032 S01 axis_observation→snapshot+lineage (fred,
+    non-staged).
+  type: integration
+  verifies:
+    docs: []
+    rules: []
+    specs: []
 tests/test_layer3_loader.py:
   command: uv run python -m pytest tests/test_layer3_loader.py -q
   evidence_required: pytest output
@@ -753,6 +889,19 @@ tests/test_layer3_snapshot_builder.py:
     docs: []
     rules: []
     specs: []
+tests/test_layer4_clean_read.py:
+  command: uv run python -m pytest tests/test_layer4_clean_read.py -q
+  failure_meaning:
+    Regression in test_layer4_clean_read; inspect purpose and linked
+    authorities.
+  purpose: R3-DCP-08 S08-READ/ADAPTER — US_EQ clean breadth aggregation tests.
+  type: runtime-contract
+  verifies:
+    docs:
+      - docs/modules/layer4_market_structure.md
+    rules: []
+    specs:
+      - specs/contracts/layer4_market_contract.yaml
 tests/test_layer4_market_structure.py:
   command: uv run python -m pytest tests/test_layer4_market_structure.py -q
   evidence_required: pytest output
@@ -766,6 +915,17 @@ tests/test_layer4_market_structure.py:
     specs:
       - specs/contracts/layer4_market_contract.yaml
       - specs/contracts/snapshot_lineage_contract.yaml
+tests/test_layer4_us_equity_clean_e2e.py:
+  command: uv run python -m pytest tests/test_layer4_us_equity_clean_e2e.py -q
+  failure_meaning:
+    Regression in test_layer4_us_equity_clean_e2e; inspect purpose
+    and linked authorities.
+  purpose: US_EQ Layer4 Tier A clean e2e (Execute S08-E2E).
+  type: integration
+  verifies:
+    docs: []
+    rules: []
+    specs: []
 tests/test_layer5_evidence_chain.py:
   command: uv run python -m pytest tests/test_layer5_evidence_chain.py -q
   failure_meaning:
@@ -784,6 +944,63 @@ tests/test_layer5_evidence_foundation.py:
     and linked authorities.
   purpose: Tests for Layer 5 evidence foundation (Round 3 Batch 5A / 023A).
   type: runtime-contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_layer5_mootdx_bar_clean_e2e.py:
+  command: uv run python -m pytest tests/test_layer5_mootdx_bar_clean_e2e.py -q
+  failure_meaning:
+    Regression in test_layer5_mootdx_bar_clean_e2e; inspect purpose
+    and linked authorities.
+  purpose:
+    R3-DCP-10 S02 — mootdx incremental → security_bar_1d → Layer5 provenance
+    e2e。
+  type: integration
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_layer5_provenance_bridge.py:
+  command: uv run python -m pytest tests/test_layer5_provenance_bridge.py -q
+  failure_meaning:
+    Regression in test_layer5_provenance_bridge; inspect purpose and
+    linked authorities.
+  purpose: R3-DCP-10 S01 — fetch bundle → Layer5 SourceProvenance 映射桥。
+  type: runtime-contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_live_tier_a_evidence_contract.py:
+  command: uv run python -m pytest tests/test_live_tier_a_evidence_contract.py -q
+  failure_meaning:
+    Regression in test_live_tier_a_evidence_contract; inspect purpose
+    and linked authorities.
+  purpose: M-DATA-03 S-R2-EVIDENCE — live_tier_a_evidence_v1 contract tests.
+  type: contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_live_tier_b_evidence_contract.py:
+  command: uv run python -m pytest tests/test_live_tier_b_evidence_contract.py -q
+  failure_meaning:
+    Regression in test_live_tier_b_evidence_contract; inspect purpose
+    and linked authorities.
+  purpose: M-DATA-03 AC-7 — live_tier_b_evidence_v1 contract tests.
+  type: contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_live_tier_c_evidence_contract.py:
+  command: uv run python -m pytest tests/test_live_tier_c_evidence_contract.py -q
+  failure_meaning:
+    Regression in test_live_tier_c_evidence_contract; inspect purpose
+    and linked authorities.
+  purpose: M-DATA-03 AC-7 — live_tier_c_evidence_v1 contract tests.
+  type: contract
   verifies:
     docs: []
     rules: []
@@ -868,6 +1085,17 @@ tests/test_module_boundaries.py:
     rules: []
     specs:
       - specs/contracts/module_boundary_contract.yaml
+tests/test_mootdx_adapter_staging.py:
+  command: uv run python -m pytest tests/test_mootdx_adapter_staging.py -q
+  failure_meaning:
+    Regression in test_mootdx_adapter_staging; inspect purpose and
+    linked authorities.
+  purpose: R3-DCP-01 — MootdxAdapter staging path tests.
+  type: runtime-contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
 tests/test_mootdx_incremental_e2e.py:
   command: uv run python -m pytest tests/test_mootdx_incremental_e2e.py -q
   failure_meaning:
@@ -875,6 +1103,17 @@ tests/test_mootdx_incremental_e2e.py:
     linked authorities.
   purpose: R3-DCP-05 mootdx incremental E2E — service path + security_bar_1d.
   type: integration
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_nightly_ci_manifest.py:
+  command: uv run python -m pytest tests/test_nightly_ci_manifest.py -q
+  failure_meaning:
+    Regression in test_nightly_ci_manifest; inspect purpose and linked
+    authorities.
+  purpose: R3-DCP-09 nightly CI manifest tests.
+  type: protocol
   verifies:
     docs: []
     rules: []
@@ -1042,6 +1281,17 @@ tests/test_provider_catalog.py:
     docs: []
     rules: []
     specs: []
+tests/test_qmd_data_backfill_cli.py:
+  command: uv run python -m pytest tests/test_qmd_data_backfill_cli.py -q
+  failure_meaning:
+    Regression in test_qmd_data_backfill_cli; inspect purpose and linked
+    authorities.
+  purpose: R3-DCP-09 qmd data backfill CLI tests.
+  type: runtime-contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
 tests/test_qmd_data_cli.py:
   command: uv run python -m pytest tests/test_qmd_data_cli.py -q
   failure_meaning: Regression in test_qmd_data_cli; inspect purpose and linked authorities.
@@ -1080,6 +1330,17 @@ tests/test_qmd_data_sync_tier_a_router.py:
     and linked authorities.
   purpose: R3-DCP-05 S12 — Tier A unified `qmd data sync --source-id` router tests.
   type: runtime-contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_r3_dcp09_registry_closure.py:
+  command: uv run python -m pytest tests/test_r3_dcp09_registry_closure.py -q
+  failure_meaning:
+    Regression in test_r3_dcp09_registry_closure; inspect purpose and
+    linked authorities.
+  purpose: R3-DCP-09 registry closure guards.
+  type: protocol
   verifies:
     docs: []
     rules: []
@@ -1710,6 +1971,142 @@ tests/test_tierA_incremental_registry.py:
     docs: []
     rules: []
     specs: []
+tests/test_tier_a_live_acceptance_report.py:
+  command: uv run python -m pytest tests/test_tier_a_live_acceptance_report.py -q
+  failure_meaning:
+    Regression in test_tier_a_live_acceptance_report; inspect purpose
+    and linked authorities.
+  purpose: M-DATA-03 S-R2-EVIDENCE — tier_a_live_acceptance --report tests.
+  type: runtime-contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_tier_a_live_b2_acceptance.py:
+  command: uv run python -m pytest tests/test_tier_a_live_b2_acceptance.py -q
+  failure_meaning:
+    Regression in test_tier_a_live_b2_acceptance; inspect purpose and
+    linked authorities.
+  purpose: M-DATA-03 S-R2-B2 — tier_a_live_acceptance B2 validate_table tests.
+  type: runtime-contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_tier_a_live_ci_manifest.py:
+  command: uv run python -m pytest tests/test_tier_a_live_ci_manifest.py -q
+  failure_meaning:
+    Regression in test_tier_a_live_ci_manifest; inspect purpose and
+    linked authorities.
+  purpose: M-DATA-03 S-R2-CI — tier-a-live workflow manifest tests.
+  type: protocol
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_tier_a_live_dispatch.py:
+  command: uv run python -m pytest tests/test_tier_a_live_dispatch.py -q
+  failure_meaning:
+    Regression in test_tier_a_live_dispatch; inspect purpose and linked
+    authorities.
+  purpose:
+    Unit tests for tier_a_live_incremental_dispatch (M-DATA-03 S-R2-DISPATCH
+    / ACCEPT).
+  type: runtime-contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_tier_a_live_harness.py:
+  command: uv run python -m pytest tests/test_tier_a_live_harness.py -q
+  failure_meaning:
+    Regression in test_tier_a_live_harness; inspect purpose and linked
+    authorities.
+  purpose:
+    Tier A live acceptance harness — M-DATA-03 R2 S-R2-ACCEPT (replaces S00-INFRA
+    scope).
+  type: contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_tier_b_cn_equity_live_ports.py:
+  command: uv run python -m pytest tests/test_tier_b_cn_equity_live_ports.py -q
+  failure_meaning:
+    Regression in test_tier_b_cn_equity_live_ports; inspect purpose
+    and linked authorities.
+  purpose: Tier B CN equity live fetch ports — registry-aligned vendor seams (M-DATA-03).
+  type: protocol
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_tier_b_live_acceptance_report.py:
+  command: uv run python -m pytest tests/test_tier_b_live_acceptance_report.py -q
+  failure_meaning:
+    Regression in test_tier_b_live_acceptance_report; inspect purpose
+    and linked authorities.
+  purpose: M-DATA-03 AC-7 — tier_b_live_acceptance --report tests.
+  type: runtime-contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_tier_b_live_ci_manifest.py:
+  command: uv run python -m pytest tests/test_tier_b_live_ci_manifest.py -q
+  failure_meaning:
+    Regression in test_tier_b_live_ci_manifest; inspect purpose and
+    linked authorities.
+  purpose: M-DATA-03 AC-7 — tier-b-live workflow manifest tests.
+  type: protocol
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_tier_b_live_harness.py:
+  command: uv run python -m pytest tests/test_tier_b_live_harness.py -q
+  failure_meaning:
+    Regression in test_tier_b_live_harness; inspect purpose and linked
+    authorities.
+  purpose: Tier B live acceptance harness tests (M-DATA-03 AC-7 · validation_fetch).
+  type: runtime-contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_tier_c_live_acceptance_report.py:
+  command: uv run python -m pytest tests/test_tier_c_live_acceptance_report.py -q
+  failure_meaning:
+    Regression in test_tier_c_live_acceptance_report; inspect purpose
+    and linked authorities.
+  purpose: M-DATA-03 AC-7 — tier_c_live_acceptance --report tests.
+  type: runtime-contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_tier_c_live_ci_manifest.py:
+  command: uv run python -m pytest tests/test_tier_c_live_ci_manifest.py -q
+  failure_meaning:
+    Regression in test_tier_c_live_ci_manifest; inspect purpose and
+    linked authorities.
+  purpose: M-DATA-03 AC-7 — tier-c-live workflow manifest tests.
+  type: protocol
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_tier_c_live_harness.py:
+  command: uv run python -m pytest tests/test_tier_c_live_harness.py -q
+  failure_meaning:
+    Regression in test_tier_c_live_harness; inspect purpose and linked
+    authorities.
+  purpose: Tier C live acceptance harness tests (M-DATA-03 AC-7 · validation_fetch).
+  type: runtime-contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
 tests/test_trellis_audit_trace_authority.py:
   command: uv run python -m pytest tests/test_trellis_audit_trace_authority.py -q
   failure_meaning:
@@ -1807,6 +2204,32 @@ tests/test_vendor_fetch_e2e.py:
     authorities.
   purpose: Vendor fixture E2E through real orchestrator path (Round2 audit P1-03).
   type: protocol
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_wave3_isolated_acceptance_quick_profile.py:
+  command:
+    uv run python -m pytest tests/test_wave3_isolated_acceptance_quick_profile.py
+    -q
+  failure_meaning:
+    Regression in test_wave3_isolated_acceptance_quick_profile; inspect
+    purpose and linked authorities.
+  purpose: R3-DCP-09 wave3 isolated acceptance quick profile tests.
+  type: runtime-contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_wave3_live_acceptance_findings_gate.py:
+  command:
+    uv run python -m pytest tests/test_wave3_live_acceptance_findings_gate.py
+    -q
+  failure_meaning:
+    Regression in test_wave3_live_acceptance_findings_gate; inspect
+    purpose and linked authorities.
+  purpose: R3-DCP-09 wave3 live acceptance findings severity gate tests.
+  type: policy-contract
   verifies:
     docs: []
     rules: []

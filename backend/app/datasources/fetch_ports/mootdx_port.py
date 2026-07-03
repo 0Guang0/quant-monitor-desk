@@ -35,7 +35,7 @@ from backend.app.datasources.normalizers.cn_market import (
     read_cn_market_evidence_bundle,
 )
 from backend.app.datasources.fetch_ports.baostock_port import _filter_bars_by_window
-from backend.app.datasources.normalizers.evidence_bundle import finalize_bundle
+from backend.app.datasources.normalizers.evidence_bundle import finalize_bundle, replay_rows_caught_up_fallback
 from backend.app.datasources.normalizers.tdx import (
     build_equity_bar_manifest,
     build_security_list_manifest,
@@ -67,6 +67,7 @@ class MootdxMockFetchPort:
     symbols: Sequence[str]
     max_rows: int
     replay_path: Path = REPLAY_FIXTURE
+    replay_caught_up_fallback: bool = False
 
     def fetch_payload(self, req: FetchRequest) -> FetchPayload:
         reject_unsupported_domain(req, source_id="mootdx")
@@ -79,10 +80,23 @@ class MootdxMockFetchPort:
 
         if self.replay_path.is_file() and domain == "cn_equity_daily_bar":
             bundle = read_cn_market_evidence_bundle(self.replay_path)
-            bars = _filter_bars_by_window(
-                list(bundle.get("bars") or []),
+            all_bars = list(bundle.get("bars") or [])
+            filtered = _filter_bars_by_window(
+                all_bars,
                 start_time=req.start_time,
                 end_time=req.end_time,
+            )
+            bars = (
+                replay_rows_caught_up_fallback(
+                    all_bars,
+                    filtered,
+                    start_time=req.start_time,
+                    end_time=req.end_time,
+                    sort_key=lambda bar: str(bar.get("trade_date") or ""),
+                    min_rows=2,
+                )
+                if self.replay_caught_up_fallback
+                else filtered
             )
             bundle = {**bundle, "bars": bars}
             content = json.dumps(bundle, ensure_ascii=False, default=str).encode("utf-8")
@@ -157,6 +171,7 @@ class MootdxProductLiveFetchPort:
             max_rows=self.max_rows,
             replay_path=self.replay_path,
             req=req,
+            replay_caught_up_fallback=True,
         )
 
 

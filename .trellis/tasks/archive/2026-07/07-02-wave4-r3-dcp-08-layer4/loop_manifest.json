@@ -1,0 +1,12 @@
+{
+  "task": "07-02-wave4-r3-dcp-08-layer4",
+  "acs": [],
+  "modules": [
+    "project_scaffold",
+    "layer2_sensors",
+    "layer5_evidence",
+    "ops",
+    "layer4_markets",
+    "governance"
+  ]
+}

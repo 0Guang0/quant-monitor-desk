@@ -12,6 +12,16 @@
       "close": 1405.0,
       "volume": 1000000,
       "source_used": "baostock"
+    },
+    {
+      "instrument_id": "sh.600519",
+      "trade_date": "2024-06-26",
+      "open": 1405.0,
+      "high": 1415.0,
+      "low": 1400.0,
+      "close": 1410.0,
+      "volume": 1010000,
+      "source_used": "baostock"
     }
   ],
   "source_fetch_id": "baostock-replay-600519",

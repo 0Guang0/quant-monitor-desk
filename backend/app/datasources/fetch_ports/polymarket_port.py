@@ -30,7 +30,12 @@ MAX_WINDOW_DAYS = 30
 POLYMARKET_API_BASE = "https://gamma-api.polymarket.com"
 
 MARKET_WHITELIST = frozenset(
-    {"will-fed-cut-rates-2024", "will-btc-above-100k-2024", "kraken-ipo-in-2025"}
+    {
+        "will-fed-cut-rates-2024",
+        "will-btc-above-100k-2024",
+        "kraken-ipo-in-2025",
+        "new-rhianna-album-before-gta-vi-926",
+    }
 )
 
 

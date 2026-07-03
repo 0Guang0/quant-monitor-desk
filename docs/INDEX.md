@@ -98,13 +98,9 @@ See [`docs/api/`](api/) for FastAPI routes and agent tool documentation.
 
 ## Implementation tasks
 
-Start at [`implementation_tasks/README.md`](implementation_tasks/README.md).
+**活工单入口：** [`implementation_tasks/README.md`](implementation_tasks/README.md) · 模块闭环队列 v2：[`PROJECT_IMPLEMENTATION_ROADMAP.md`](../PROJECT_IMPLEMENTATION_ROADMAP.md) §3 · 完成度：[`MODULE_COMPLETION_RATING.md`](../MODULE_COMPLETION_RATING.md).
 
-Round 3 Batch 2.5 bridge entry: [`018A_layer1_observation_ingestion_bridge.md`](implementation_tasks/ROUND_3_MODELING_LAYERS/018A_layer1_observation_ingestion_bridge.md).
-
-Round 3 Batch 2.75 pilot entry: [`018B_production_live_pilot_gate.md`](implementation_tasks/ROUND_3_MODELING_LAYERS/018B_production_live_pilot_gate.md).
-
-Forward planning (Round 3D/3E): [`PROJECT_IMPLEMENTATION_ROADMAP.md`](../PROJECT_IMPLEMENTATION_ROADMAP.md) · Batch 01 entry: [`ROUND_3_DATA_PRODUCTION_READINESS/BATCH_01_MODEL_SOURCE_READINESS/README.md`](implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/BATCH_01_MODEL_SOURCE_READINESS/README.md).
+**历史 ROUND/Wave/DCP 任务包（只读）：** [`implementation_tasks/archive/legacy-pre-module-v2-20260702/`](implementation_tasks/archive/legacy-pre-module-v2-20260702/README.md) — 含 `ROUND3_BATCH_IMPLEMENTATION_MAP.md`、`R3H_PASS_EXECUTION_PLAN.archived-20260702.md` 等。不得再作顺序执行入口。
 
 Plan-stage inputs for turning original tasks into Trellis frozen plans:
 

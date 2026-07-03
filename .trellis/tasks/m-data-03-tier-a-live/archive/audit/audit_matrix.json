@@ -1,0 +1,49 @@
+{
+  "task": "m-data-03-tier-a-live",
+  "audited_at": "2026-07-03",
+  "dimensions": {
+    "A1": {
+      "result": "fail",
+      "evidence": "research/audit-a1-report.md",
+      "finding_count": 8
+    },
+    "A2": {
+      "result": "fail",
+      "evidence": "research/audit-a2-report.md",
+      "finding_count": 8
+    },
+    "A3": {
+      "result": "fail",
+      "evidence": "research/audit-a3-report.md",
+      "finding_count": 4
+    },
+    "A4": {
+      "result": "fail",
+      "evidence": "research/audit-a4-report.md",
+      "finding_count": 9
+    },
+    "A5": {
+      "result": "fail",
+      "evidence": "research/audit-a5-report.md",
+      "finding_count": 2
+    },
+    "A6": {
+      "result": "skip",
+      "evidence": "research/audit-a6-report.md",
+      "finding_count": 0
+    },
+    "A7": {
+      "result": "fail",
+      "evidence": "research/audit-a7-report.md",
+      "finding_count": 4
+    },
+    "A8": {
+      "result": "fail",
+      "evidence": "research/audit-a8-report.md",
+      "finding_count": 6
+    }
+  },
+  "finding_count": 41,
+  "repair_closed_at": "2026-07-03",
+  "final": "PASS"
+}

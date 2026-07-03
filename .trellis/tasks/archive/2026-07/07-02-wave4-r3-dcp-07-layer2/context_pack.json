@@ -1,0 +1,296 @@
+{
+  "task": "07-02-wave4-r3-dcp-07-layer2",
+  "modules": ["project_scaffold", "layer2_sensors", "ops", "governance"],
+  "source_authorities": [
+    {
+      "type": "design",
+      "path": "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md",
+      "reason": "project_scaffold design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/architecture/06_deployment_and_local_ops.md",
+      "reason": "project_scaffold design authority"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/spec_migrator_contract.yaml",
+      "reason": "project_scaffold contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/dependency_extras_contract.yaml",
+      "reason": "project_scaffold contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/platform_source_matrix.yaml",
+      "reason": "project_scaffold contract"
+    },
+    {
+      "type": "policy",
+      "path": "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md",
+      "reason": "project_scaffold rule"
+    },
+    {
+      "type": "design",
+      "path": "docs/modules/layer2_cross_asset_sensor.md",
+      "reason": "layer2_sensors design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/architecture/module_boundary_matrix.md",
+      "reason": "layer2_sensors design authority"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/layer2_sensor_contract.yaml",
+      "reason": "layer2_sensors contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/snapshot_lineage_contract.yaml",
+      "reason": "layer2_sensors contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/resource_limits.yaml",
+      "reason": "layer2_sensors contract"
+    },
+    {
+      "type": "policy",
+      "path": "docs/quality/BATCH3_STAGED_DOWNSTREAM_GATE.md",
+      "reason": "layer2_sensors rule"
+    },
+    {
+      "type": "task-card",
+      "path": "docs/implementation_tasks/ROUND_3_MODELING_LAYERS/019_implement_layer2_cross_asset_sensor.md",
+      "reason": "layer2_sensors implementation task"
+    },
+    {
+      "type": "design",
+      "path": "docs/modules/ops_and_performance.md",
+      "reason": "ops design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/ops/verification_commands.md",
+      "reason": "ops design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/ops/performance_limits.md",
+      "reason": "ops design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/ops/staging_data_e2e_runbook.md",
+      "reason": "ops design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/ops/data_health_cli.md",
+      "reason": "ops design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/ops/db_inspect_cli.md",
+      "reason": "ops design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/ops/data_sync_quick_reference.md",
+      "reason": "ops design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/ops/data_sync_command_matrix.md",
+      "reason": "ops design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/quality/production_live_pilot_policy.md",
+      "reason": "ops design authority"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/ops_health_check_contract.yaml",
+      "reason": "ops contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/ops_db_inspect_contract.yaml",
+      "reason": "ops contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/review_sandbox_contract.yaml",
+      "reason": "ops contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/sandbox_clean_write_contract.yaml",
+      "reason": "ops contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/data_cli_contract.yaml",
+      "reason": "ops contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/production_equivalent_smoke_budget.yaml",
+      "reason": "ops contract"
+    },
+    {
+      "type": "policy",
+      "path": "docs/ops/idempotency_retry_dlq_policy.md",
+      "reason": "ops rule"
+    },
+    {
+      "type": "task-card",
+      "path": "docs/implementation_tasks/ROUND_3_REFERENCE_LANDING/R3D_018C_live_manual_probe_plan.md",
+      "reason": "ops implementation task"
+    },
+    {
+      "type": "design",
+      "path": "docs/ops/backup_and_recovery.md",
+      "reason": "governance design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/ops/logs_health_audit.md",
+      "reason": "governance design authority"
+    },
+    {
+      "type": "design",
+      "path": "docs/quality/final_package_rules.md",
+      "reason": "governance design authority"
+    },
+    {
+      "type": "design",
+      "path": "MIGRATION_MAP.md",
+      "reason": "governance design authority"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/reference_adoption_guardrails.yaml",
+      "reason": "governance contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/release_cleanup_allowlist.yaml",
+      "reason": "governance contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/log_audit_contract.yaml",
+      "reason": "governance contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/backup_recovery_contract.yaml",
+      "reason": "governance contract"
+    },
+    {
+      "type": "contract",
+      "path": "specs/contracts/module_boundary_contract.yaml",
+      "reason": "governance contract"
+    },
+    {
+      "type": "policy",
+      "path": "docs/ops/config_secret_policy.md",
+      "reason": "governance rule"
+    }
+  ],
+  "tests": [
+    {
+      "path": "tests/test_dependency_extras_contract.py",
+      "purpose": "Round2.6 Phase B — dependency extras contract tests."
+    },
+    {
+      "path": "tests/test_layer2_sensor_loader.py",
+      "purpose": "验证 Layer2 sensor loader、snapshot、observation、lineage、ResourceGuard 行为"
+    },
+    {
+      "path": "tests/test_snapshot_lineage_kernel.py",
+      "purpose": "覆盖范围：core/snapshot_lineage 共享内核；测试对象：校验与 DB tuple 映射；目的：三层层 lineage 去重后行为不变。"
+    },
+    {
+      "path": "tests/test_batch3_staged_downstream_gate.py",
+      "purpose": "确保 Batch 3 只能 staged-only，不得被误读为 production-live readiness"
+    },
+    {
+      "path": "tests/test_batch25_production_data_gate.py",
+      "purpose": "Batch 2.5 evidence is staged-only, not production-live readiness"
+    },
+    {
+      "path": "tests/test_resource_guard.py",
+      "purpose": "ResourceGuard HARD_STOP and metrics contract"
+    },
+    {
+      "path": "tests/test_staged_pilot.py",
+      "purpose": "Staged pilot sandbox boundaries; does not open production-live"
+    },
+    {
+      "path": "tests/test_ops_db_inspector.py",
+      "purpose": "Ops DB inspector tests (Round 3 Batch 1)."
+    },
+    {
+      "path": "tests/test_ops_interface_probe.py",
+      "purpose": "Ops interface_probe + mutation_proof wiring tests (OP-06)."
+    },
+    {
+      "path": "tests/test_interface_probe_018c.py",
+      "purpose": "018C low-cost data-interface probe tests."
+    },
+    {
+      "path": "tests/test_production_gate.py",
+      "purpose": "ADV-A5-002: production_gate.py smoke tests."
+    },
+    {
+      "path": "tests/test_round3_verification_command_matrix.py",
+      "purpose": "Round 3 verification command matrix — doc index and gate-test discoverability."
+    },
+    {
+      "path": "tests/test_round3_audit_registry_alignment.py",
+      "purpose": "Round 3 Batch 2.5 / Batch 2.75 audit follow-up 文档对齐测试。"
+    },
+    {
+      "path": "tests/test_unresolved_item_task_coverage.py",
+      "purpose": "确保未闭合项不会在 Plan 阶段因只读原始任务卡而遗漏。"
+    },
+    {
+      "path": "tests/test_qmd_data_cli.py",
+      "purpose": "B3F-CLI — qmd data CLI, packaging, init_db --sync-registry (R3F-CLI-01..05)."
+    },
+    {
+      "path": "tests/test_ops_data_health.py",
+      "purpose": "Tests for read-only ops data health (C-20)."
+    },
+    {
+      "path": "tests/test_reference_adoption_guardrails.py",
+      "purpose": "Reference adoption guardrails — static scans for forbidden copied patterns"
+    },
+    {
+      "path": "tests/test_fred_macro_incremental_e2e.py",
+      "purpose": "R3-DCP-02 S02-03/04 — fred macro incremental e2e tests."
+    },
+    {
+      "path": "tests/test_layer1_risk_appetite_clean_e2e.py",
+      "purpose": "S03 — RISK_APPETITE axis Tier A clean read → feature → interpretation e2e."
+    },
+    {
+      "path": "tests/test_layer2_vix_clean_e2e.py",
+      "purpose": "Regression coverage for test_layer2_vix_clean_e2e"
+    }
+  ],
+  "forbidden_claims": ["production-live ready", "live production ingestion"],
+  "required_evidence": [
+    "context_pack.json",
+    "loop_manifest.json",
+    "evidence_index.json",
+    "audit_matrix.json",
+    "release_manifest.json"
+  ]
+}

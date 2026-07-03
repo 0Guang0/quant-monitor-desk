@@ -104,7 +104,13 @@ class StooqMockFetchPort:
         return FetchPayload(content=content, file_type="json", row_count=len(bars))
 
 
-def create_stooq_fetch_port(*, symbols: Sequence[str], max_rows: int):
+def create_stooq_fetch_port(*, symbols: Sequence[str], max_rows: int, use_mock: bool = True):
     if len(symbols) > MAX_SYMBOLS:
         raise PortError("FAILED", f"max {MAX_SYMBOLS} symbols allowed, got {len(symbols)}")
-    return StooqMockFetchPort(symbols=symbols, max_rows=max_rows)
+    if use_mock:
+        return StooqMockFetchPort(symbols=symbols, max_rows=max_rows)
+    from backend.app.datasources.fetch_ports.tier_b_validation_live import StooqLiveFetchPort
+    from backend.app.datasources.product_live_gate import gate_live_fetch_port
+
+    gate_live_fetch_port(source_id="stooq")
+    return StooqLiveFetchPort(symbols=symbols, max_rows=max_rows)

@@ -22,6 +22,7 @@ from backend.app.ops.fred_incremental_watermark import (
     read_since_dates_for_series,
 )
 from backend.app.sync.orchestrator import DataSyncOrchestrator
+from tests.live_incremental_support import bootstrap_acceptance_cm, bootstrap_port_live_e2e_ctx
 from tests.service_path_support import enable_source_route
 
 
@@ -71,6 +72,26 @@ def bootstrap_fred_incremental_db(tmp_path: Path) -> ConnectionManager:
     with cm.writer() as con:
         apply_migrations(con)
     return cm
+
+
+def bootstrap_fred_live_e2e_ctx(
+    sandbox_root: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> dict[str, Any]:
+    """Bootstrap fred live e2e under isolated M-DATA-03 sandbox (ADR-034)."""
+    return bootstrap_port_live_e2e_ctx(
+        sandbox_root,
+        monkeypatch,
+        source_id="fred",
+        data_domain="macro_series",
+        port_factory=lambda **kw: create_fred_fetch_port(
+            series_ids=("DGS10",), max_rows=3, **kw
+        ),
+        service_builder=build_fred_incremental_service,
+        registry_factory=enabled_fred_source_registry,
+        since_reader=lambda con, _ids: read_since_dates_for_series(con, ("DGS10",)),
+        env_key="FRED_API_KEY",
+    )
 
 
 @pytest.fixture

@@ -3,17 +3,17 @@
 from __future__ import annotations
 
 from tests.contract_gate_support import PROJECT_ROOT
+from tests.repo_paths import impl_task
 
 AUDIT_TEMPLATE = PROJECT_ROOT / "docs/quality/round3h_real_data_production_entry_audit.md"
-R3H05_CARD = (
-    PROJECT_ROOT
-    / "docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY"
-    / "BATCH_3H_REAL_DATA_PRODUCTION_ENTRY"
-    / "R3H_05_LAYER_BINDING_AND_PRODUCTION_ENTRY_AUDIT.md"
+R3H05_CARD = impl_task(
+    "ROUND_3_REAL_DATA_PRODUCTION_ENTRY",
+    "BATCH_3H_REAL_DATA_PRODUCTION_ENTRY",
+    "R3H_05_LAYER_BINDING_AND_PRODUCTION_ENTRY_AUDIT.md",
 )
-BATCH05_ROOT = (
-    PROJECT_ROOT
-    / "docs/implementation_tasks/ROUND_5_INTEGRATION_RELEASE/BATCH_05_VERIFIED_AUDIT_SECURITY_RELEASE"
+BATCH05_ROOT = impl_task(
+    "ROUND_5_INTEGRATION_RELEASE",
+    "BATCH_05_VERIFIED_AUDIT_SECURITY_RELEASE",
 )
 
 REQUIRED_LAYER_FIELDS = {

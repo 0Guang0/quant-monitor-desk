@@ -6,6 +6,7 @@ from pathlib import Path
 
 from backend.app.datasources.adapters.akshare import AkshareAdapter
 from backend.app.datasources.adapters.baostock import BaostockAdapter
+from backend.app.datasources.adapters.mootdx import MootdxAdapter
 from backend.app.datasources.adapters.cninfo import CninfoAdapter
 from backend.app.datasources.adapters.fetch_port import FetchPort, StubFetchPort
 from backend.app.datasources.adapters.qmt_xtdata import QmtXtdataAdapter
@@ -24,6 +25,7 @@ from backend.app.storage.raw_store import RawStore
 _ADAPTER_TYPES: dict[str, type[SkeletonAdapterBase]] = {
     "qmt_xtdata": QmtXtdataAdapter,
     "baostock": BaostockAdapter,
+    "mootdx": MootdxAdapter,
     "akshare": AkshareAdapter,
     "cninfo": CninfoAdapter,
     "yahoo_finance": YahooFinanceAdapter,
@@ -120,6 +122,7 @@ def create_test_adapter(
 __all__ = [
     "AkshareAdapter",
     "BaostockAdapter",
+    "MootdxAdapter",
     "CninfoAdapter",
     "QmtXtdataAdapter",
     "YahooFinanceAdapter",

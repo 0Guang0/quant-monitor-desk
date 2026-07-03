@@ -25,6 +25,25 @@ from backend.app.ops.data_health import (
     evaluate_rehearsal_closeout_gate,
     require_evidence_bundle,
 )
+from backend.app.ops.data_health_profiles.crypto_derivative import (
+    CRYPTO_DERIVATIVE_P0_RULE_IDS,
+    build_crypto_derivative_p0_checks,
+)
+from backend.app.ops.data_health_profiles.disclosure import (
+    DISCLOSURE_P0_RULE_IDS,
+    build_disclosure_p0_checks,
+)
+from backend.app.ops.data_health_profiles.evidence_loader import (
+    _lineage_from_bundle,
+    load_crypto_derivative_evidence,
+    load_disclosure_evidence,
+    load_layer1_evidence,
+    load_market_bar_evidence,
+)
+from backend.app.ops.data_health_profiles.layer1_observation import (
+    LAYER1_OBSERVATION_P0_RULE_IDS,
+    build_layer1_observation_p0_checks,
+)
 from backend.app.ops.data_health_profiles.report_builder import (
     MARKET_BAR_P0_RULE_IDS,
     build_market_bar_p0_checks,
@@ -34,8 +53,23 @@ from backend.app.ops.data_health_profiles.report_builder import (
 )
 from backend.app.ops.staged_pilot import _equity_bar_rows
 
-_SUPPORTED_PROFILES: frozenset[str] = frozenset({"market_bar_p0"})
-_SUPPORTED_DOMAINS: frozenset[str] = frozenset({"market_bar_1d"})
+_SUPPORTED_PROFILES: frozenset[str] = frozenset(
+    {
+        "market_bar_p0",
+        "layer1_observation_p0",
+        "disclosure_p0",
+        "crypto_derivative_p0",
+    }
+)
+_PROFILE_DOMAINS: dict[str, frozenset[str]] = {
+    "market_bar_p0": frozenset({"market_bar_1d"}),
+    "layer1_observation_p0": frozenset({"layer1_observation"}),
+    "disclosure_p0": frozenset({"us_disclosure", "cn_disclosure"}),
+    "crypto_derivative_p0": frozenset({"crypto_derivative"}),
+}
+_SUPPORTED_DOMAINS: frozenset[str] = frozenset(
+    domain for domains in _PROFILE_DOMAINS.values() for domain in domains
+)
 _DEFAULT_MAX_ROWS = 1000
 _MIN_HISTORY = 2
 _SCHEMA_HASH_DB_ROW_LIMIT = 100
@@ -196,46 +230,17 @@ def _bars_from_evidence(
     *,
     max_rows: int,
 ) -> tuple[list[dict[str, Any]], str | None, list[dict[str, Any]]]:
-    bundle = require_evidence_bundle(evidence_dir)
-    raw = bundle.raw_manifest or {}
-    source_id = str(raw.get("source_id")) if raw.get("source_id") else None
-    entries = [
-        item
-        for item in (raw.get("manifest_entries") or raw.get("fetches") or [])
-        if isinstance(item, dict)
-    ]
-    bars: list[dict[str, Any]] = []
-    for entry in entries:
-        paths = entry.get("relative_paths") or []
-        fetch_result = entry.get("fetch_result") or {}
-        paths = paths or fetch_result.get("raw_file_paths") or []
-        for rel in paths:
-            resolved = _resolve_payload_path(str(rel), evidence_dir=evidence_dir)
-            if resolved is None:
-                continue
-            try:
-                payload = json.loads(resolved.read_text(encoding="utf-8"))
-            except (OSError, json.JSONDecodeError) as exc:
-                raise DataHealthLoadError(
-                    f"invalid bar payload {rel}: {exc}"
-                ) from exc
-            bars.extend(_equity_bar_rows(payload))
-            if len(bars) > max_rows:
-                raise DataHealthIngestLimitError(
-                    f"bar ingest exceeds max_rows cap ({max_rows})"
-                )
-    return bars, source_id, entries
+    return load_market_bar_evidence(evidence_dir, max_rows=max_rows)
 
 
-def run_data_health_profile(
+def _run_market_bar_p0(
+    evidence_dir: Path,
     *,
-    profile_id: str,
-    domain: str,
-    evidence_path: Path | None,
     db_path: Path | None,
     start_date: str | None,
     end_date: str | None,
     max_rows: int,
+    live_acceptance: bool = False,
 ) -> tuple[
     DataHealthReport,
     list[str],
@@ -243,14 +248,6 @@ def run_data_health_profile(
     dict[str, list[str]],
     dict[str, str | None],
 ]:
-    """Single profile-runner boundary for market_bar_p0 (read-only)."""
-    if profile_id not in _SUPPORTED_PROFILES:
-        raise UnsupportedProfileError(f"unsupported profile: {profile_id!r}")
-    if domain not in _SUPPORTED_DOMAINS:
-        raise UnsupportedProfileError(f"unsupported domain: {domain!r}")
-    if evidence_path is None:
-        raise DataHealthLoadError("evidence_path required for market_bar_p0 in this slice")
-
     schema_coverage: dict[str, list[str]] = {}
     db_opened = False
     if db_path is not None and db_path.is_file():
@@ -262,8 +259,7 @@ def run_data_health_profile(
         has_schema_rows=bool(schema_coverage),
     )
     cap = max_rows if max_rows > 0 else _DEFAULT_MAX_ROWS
-    evidence_dir = Path(evidence_path)
-    bars, source_id, entries = _bars_from_evidence(evidence_dir, max_rows=cap)
+    bars, source_id, entries = load_market_bar_evidence(evidence_dir, max_rows=cap)
     bars, window = _apply_date_window(
         bars,
         start_date=start_date,
@@ -278,10 +274,13 @@ def run_data_health_profile(
         min_history=_MIN_HISTORY,
         max_rows=cap,
     )
-    gate_ready, gate_rationale = evaluate_rehearsal_closeout_gate(evidence_dir, checks)
+    if live_acceptance:
+        gate_ready, gate_rationale = True, ""
+    else:
+        gate_ready, gate_rationale = evaluate_rehearsal_closeout_gate(evidence_dir, checks)
     report = build_profile_report(
         checks,
-        profile_id=profile_id,
+        profile_id="market_bar_p0",
         gate_ready=gate_ready,
         gate_rationale=gate_rationale,
     )
@@ -292,6 +291,104 @@ def run_data_health_profile(
             "content_hash_coverage empty — manifest entries lack content_hash",
         ]
     return report, limitations, hash_coverage, schema_coverage, window
+
+
+def _run_layer1_observation_p0(
+    evidence_dir: Path,
+) -> tuple[
+    DataHealthReport,
+    list[str],
+    dict[str, list[str]],
+    dict[str, list[str]],
+    dict[str, str | None],
+]:
+    bundle = load_layer1_evidence(evidence_dir)
+    checks = build_layer1_observation_p0_checks(bundle)
+    report = build_profile_report(checks, profile_id="layer1_observation_p0")
+    lineage = _lineage_from_bundle(bundle)
+    limitations = ["read-only layer1_observation profile; no live fetch"]
+    return report, limitations, _content_hash_coverage(lineage), {}, {"start": "", "end": ""}
+
+
+def _run_disclosure_p0(
+    evidence_dir: Path,
+    *,
+    domain: str,
+) -> tuple[
+    DataHealthReport,
+    list[str],
+    dict[str, list[str]],
+    dict[str, list[str]],
+    dict[str, str | None],
+]:
+    payload = load_disclosure_evidence(evidence_dir, domain=domain)
+    checks = build_disclosure_p0_checks(payload, domain=domain)
+    report = build_profile_report(checks, profile_id="disclosure_p0")
+    lineage = _lineage_from_bundle(payload)
+    limitations = [f"read-only disclosure profile for {domain}"]
+    return report, limitations, _content_hash_coverage(lineage), {}, {"start": "", "end": ""}
+
+
+def _run_crypto_derivative_p0(
+    evidence_dir: Path,
+) -> tuple[
+    DataHealthReport,
+    list[str],
+    dict[str, list[str]],
+    dict[str, list[str]],
+    dict[str, str | None],
+]:
+    payload = load_crypto_derivative_evidence(evidence_dir)
+    checks = build_crypto_derivative_p0_checks(payload)
+    report = build_profile_report(checks, profile_id="crypto_derivative_p0")
+    lineage = _lineage_from_bundle(payload)
+    limitations = ["read-only crypto_derivative profile"]
+    return report, limitations, _content_hash_coverage(lineage), {}, {"start": "", "end": ""}
+
+
+def run_data_health_profile(
+    *,
+    profile_id: str,
+    domain: str,
+    evidence_path: Path | None,
+    db_path: Path | None,
+    start_date: str | None,
+    end_date: str | None,
+    max_rows: int,
+    live_acceptance: bool = False,
+) -> tuple[
+    DataHealthReport,
+    list[str],
+    dict[str, list[str]],
+    dict[str, list[str]],
+    dict[str, str | None],
+]:
+    """Read-only profile runner for Tier-A four families (M-DATA-03 S-R2-F0)."""
+    if profile_id not in _SUPPORTED_PROFILES:
+        raise UnsupportedProfileError(f"unsupported profile: {profile_id!r}")
+    allowed = _PROFILE_DOMAINS.get(profile_id, frozenset())
+    if domain not in allowed:
+        raise UnsupportedProfileError(
+            f"domain {domain!r} not valid for profile {profile_id!r}"
+        )
+    if evidence_path is None:
+        raise DataHealthLoadError(f"evidence_path required for {profile_id}")
+
+    evidence_dir = Path(evidence_path)
+    if profile_id == "market_bar_p0":
+        return _run_market_bar_p0(
+            evidence_dir,
+            db_path=db_path,
+            start_date=start_date,
+            end_date=end_date,
+            max_rows=max_rows,
+            live_acceptance=live_acceptance,
+        )
+    if profile_id == "layer1_observation_p0":
+        return _run_layer1_observation_p0(evidence_dir)
+    if profile_id == "disclosure_p0":
+        return _run_disclosure_p0(evidence_dir, domain=domain)
+    return _run_crypto_derivative_p0(evidence_dir)
 
 
 def cli_envelope_from_report(
@@ -328,7 +425,10 @@ def cli_envelope_from_report(
 
 
 __all__ = [
+    "CRYPTO_DERIVATIVE_P0_RULE_IDS",
+    "DISCLOSURE_P0_RULE_IDS",
     "DataHealthIngestLimitError",
+    "LAYER1_OBSERVATION_P0_RULE_IDS",
     "MARKET_BAR_P0_RULE_IDS",
     "UnsupportedProfileError",
     "cli_envelope_from_report",

@@ -1203,7 +1203,7 @@ sources:
       security_list_max_rows: 20
       equity_index_max_rows: 3
       max_network_calls: 5
-    notes: "R3H-03 READY_WITH_EVIDENCE; mootdx_port mock/replay; independent source_id from tdx_pytdx. DCP-05: qmd data sync --source-id mootdx -> security_bar_1d clean (ADR-028)."
+    notes: "R3H-03 READY_WITH_EVIDENCE; mootdx_port mock/replay; independent source_id from tdx_pytdx. DCP-05: qmd data sync --source-id mootdx -> security_bar_1d clean (ADR-028). R3-DCP-08: validation_only=false in registry for explicit sync; dry-run route aligns selected_source_id with CLI --source-id."
     domains:
       security_list:
         operations:
@@ -1227,6 +1227,21 @@ sources:
                 close,
                 volume,
                 amount,
+                source_used,
+              ]
+            requires_auth: false
+            enabled_by_default: false
+            production_default: false
+      cn_equity_basic_financial:
+        operations:
+          fetch_basic_financial:
+            frequency: quarterly_or_annual
+            fields:
+              [
+                instrument_id,
+                report_period,
+                metric_name,
+                metric_value,
                 source_used,
               ]
             requires_auth: false
@@ -1258,7 +1273,7 @@ sources:
     resource_caps:
       max_symbols: 3
       max_rows: 200
-    notes: "R3H-03 READY_WITH_EVIDENCE; eastmoney_port validation-only; conflict_evidence required. ACC-EASTMONEY-TAXONOMY-001: bar incremental via baostock/mootdx; does not close R3-B2.75-REQ2-EM; cross-ref docs/quality/待修复清单.md §4 · docs/ops/data_sync_quick_reference.md."
+    notes: "R3H-03 READY_WITH_EVIDENCE; eastmoney_port validation-only; conflict_evidence required. ACC-EASTMONEY-TAXONOMY-001: bar incremental via baostock/mootdx; does not close R3-B2.75-REQ2-EM; cross-ref docs/quality/待修复清单.md §4 · docs/ops/data_sync_quick_reference.md. R3-DCP-08 taxonomy SSOT: Product bar path NOT eastmoney (see baostock/mootdx). Validation domains cn_index, sector_board, capital_flow — do not conflate with bar hist taxonomy."
     domains:
       cn_equity_daily_bar:
         operations:

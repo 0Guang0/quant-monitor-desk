@@ -1,0 +1,26 @@
+{
+  "id": "wave4-r3-dcp-06-five-axis-clean",
+  "name": "wave4-r3-dcp-06-five-axis-clean",
+  "title": "R3-DCP-06 Layer1 five-axis clean read + G12 PASS",
+  "description": "Wave 4 DCP-06: prove G12 five axes read Tier A clean inputs (not staged_fixture_only); per-axis replay e2e; close ACC-LAYER-E2E-LIVE-001 L1 subset.",
+  "status": "completed",
+  "priority": "P0",
+  "creator": "Guang",
+  "assignee": "Guang",
+  "createdAt": "2026-07-02",
+  "branch": "feature/wave4-r3-dcp-06-five-axis-clean",
+  "base_branch": "master",
+  "worktree_path": "../quant-monitor-desk-wt-dcp06",
+  "meta": {
+    "task_track": "complex",
+    "plan_protocol_version": "4.1",
+    "execute_entry": "research/00-EXECUTION-ENTRY.md",
+    "execute_bundle": "research/",
+    "source_task_card": "docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/R3_DCP_06_LAYER1_FIVE_AXIS_CLEAN.md",
+    "wave_index": "docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/R3_DCP_TO_ISSUES_INDEX.md",
+    "user_decision": "2026-06-29: 五轴必须在 R3H-05-GATE 之前 pytest 全绿（PASS 硬门禁）",
+    "frozen_task_card": "frozen/R3_DCP_06_LAYER1_FIVE_AXIS_CLEAN.md",
+    "frozen_at": "2026-07-02T03:21:55Z"
+  },
+  "completedAt": "2026-07-02"
+}

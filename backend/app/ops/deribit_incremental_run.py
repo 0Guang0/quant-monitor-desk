@@ -16,8 +16,10 @@ from backend.app.datasources.fetch_result import FetchRequest, FetchResult
 from backend.app.datasources.service import DataSourceService
 from backend.app.ops.deribit_incremental_watermark import STAGING_TABLE, read_since_date_for_instrument
 from backend.app.ops.macro_incremental_common import (
+    incremental_evidence_as_of,
     incremental_validation_patch_factory,
     load_incremental_route_bundle,
+    persist_incremental_fetch_payload,
 )
 from backend.app.ops.sandbox_clean_write.clean_write_targets import resolve_clean_write_target
 from backend.app.storage.raw_store import RawStore
@@ -140,6 +142,16 @@ def _make_deribit_staging_adapter_class():
                     fetch_time=fetch_time,
                     error_message=_WATERMARK_EMPTY_MSG,
                 )
+            persist_incremental_fetch_payload(
+                self,
+                payload,
+                req,
+                as_of=incremental_evidence_as_of(
+                    bundle,
+                    fetch_time=fetch_time,
+                    start_date=req.start_time[:10] if req.start_time else None,
+                ),
+            )
             con.execute(f"DELETE FROM {STAGING_TABLE}")
             col_list = ", ".join(CRYPTO_STAGING_COLUMNS)
             placeholders = ", ".join("?" for _ in CRYPTO_STAGING_COLUMNS)

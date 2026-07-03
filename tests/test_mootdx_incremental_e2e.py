@@ -6,10 +6,13 @@ import json
 from datetime import date
 from pathlib import Path
 
+import pytest
+
 from backend.app.core.resource_guard import Decision, ResourceGuard
 from backend.app.datasources.fetch_ports.mootdx_port import create_mootdx_fetch_port
 from backend.app.datasources.fetch_ports.tdx_fetch_guards import EQUITY_INDEX_MAX_ROWS
 from backend.app.datasources.fetch_result import FetchRequest
+from backend.app.ops.db_inspector import DbInspector
 from backend.app.ops.mootdx_incremental_run import (
     build_mootdx_incremental_service,
     run_mootdx_bar_incremental,
@@ -20,10 +23,14 @@ from tests.incremental_mootdx_support import (
     FIXTURE_DATE,
     SYMBOL,
     bootstrap_db,
+    build_live_service,
     build_service,
+    fetch_security_bar_row,
     incremental_spec,
+    run_mootdx_replay_incremental,
     seed_watermark_row,
 )
+from tests.live_incremental_support import bootstrap_acceptance_cm
 
 
 def test_mootdxIncremental_e2e_writesSecurityBar1d(tmp_path: Path, monkeypatch) -> None:
@@ -33,32 +40,12 @@ def test_mootdxIncremental_e2e_writesSecurityBar1d(tmp_path: Path, monkeypatch) 
     验证点：COMPLETED；clean 表含 fixture trade_date 行且 source_used=mootdx
     失败含义：mootdx 增量链断则 DCP-05 bar 源无法落库
     """
-    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
-    cm = bootstrap_db(tmp_path)
-    with cm.writer() as con:
-        seed_watermark_row(con, "2024-06-24")
-        wm = read_bar_trade_date_watermark(con, instrument_id=SYMBOL)
-    window = compute_incremental_window(wm, end=FIXTURE_DATE)
-    raw_root = tmp_path / "raw"
-    raw_root.mkdir()
-    service, orch = build_service(cm, raw_root)
-    spec = incremental_spec(window, job_id="job-mootdx-e2e-1")
-    result = orch.run_incremental(
-        spec,
-        datasource_service=service,
-        clean_table="security_bar_1d",
-        write_mode="upsert_by_pk",
-        primary_keys=("instrument_id", "trade_date", "adjustment_type"),
+    cm, _data_root, result = run_mootdx_replay_incremental(
+        tmp_path, monkeypatch, job_id="job-mootdx-e2e-1"
     )
     assert result.status == "COMPLETED"
     with cm.reader() as con:
-        row = con.execute(
-            """
-            SELECT trade_date, close, source_used FROM security_bar_1d
-            WHERE instrument_id = ? AND trade_date = ?
-            """,
-            [SYMBOL, FIXTURE_DATE.isoformat()],
-        ).fetchone()
+        row = fetch_security_bar_row(con, FIXTURE_DATE.isoformat())
     assert row is not None
     assert float(row[1]) == 1405.0
     assert row[2] == "mootdx"
@@ -205,3 +192,102 @@ def test_mootdxIncremental_emptyResponse_whenWatermarkCurrent(
             "SELECT COUNT(*) FROM security_bar_1d WHERE instrument_id = ?", [SYMBOL]
         ).fetchone()[0]
     assert after == before
+
+
+def test_mootdxLive_noSilentFallbackWhenGateClosed(monkeypatch: pytest.MonkeyPatch) -> None:
+    """覆盖范围：无 QMD_ALLOW_LIVE_FETCH 时 mootdx live port 阻断
+    测试对象：create_mootdx_fetch_port(use_mock=False)
+    目的/目标：live 被拒时不得静默退回 mock port
+    验证点：抛 ProductLiveGateError · LIVE_FETCH_REJECTED
+    失败含义：mootdx live 路径渗入 silent fallback
+    """
+    from backend.app.datasources.fetch_ports.mootdx_port import create_mootdx_fetch_port
+    from backend.app.datasources.fetch_ports.tdx_fetch_guards import EQUITY_INDEX_MAX_ROWS
+    from backend.app.datasources.product_live_gate import ProductLiveGateError
+
+    monkeypatch.delenv("QMD_ALLOW_LIVE_FETCH", raising=False)
+    with pytest.raises(ProductLiveGateError) as exc_info:
+        create_mootdx_fetch_port(symbols=(SYMBOL,), max_rows=EQUITY_INDEX_MAX_ROWS, use_mock=False)
+    assert exc_info.value.code == "LIVE_FETCH_REJECTED"
+
+
+@pytest.mark.network
+def test_mootdxIncremental_liveNetwork_writesSecurityBar1d(
+    isolated_live_data_root: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """覆盖范围：隔离 sandbox + mootdx product live 写 security_bar_1d
+    测试对象：build_mootdx_incremental_service(use_mock=False) + run_mootdx_bar_incremental
+    目的/目标：QMD_ALLOW_LIVE_FETCH=1 时 product live 金路径落库
+    验证点：COMPLETED；clean 表含 fixture trade_date 行；DbInspector 表存在
+    失败含义：Tier A mootdx live 增量链断
+    """
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    cm = bootstrap_acceptance_cm(isolated_live_data_root)
+    with cm.writer() as con:
+        seed_watermark_row(con, "2024-06-24")
+        wm = read_bar_trade_date_watermark(con, instrument_id=SYMBOL)
+    window = compute_incremental_window(wm, end=FIXTURE_DATE)
+    raw_root = isolated_live_data_root / "raw" / "mootdx"
+    raw_root.mkdir(parents=True, exist_ok=True)
+    service, orch = build_live_service(cm, raw_root, monkeypatch)
+    result = run_mootdx_bar_incremental(
+        orch,
+        service=service,
+        window=window,
+        symbol=SYMBOL,
+        product_live=True,
+        job_id="job-mootdx-live-e2e-1",
+    )
+    assert result.status == "COMPLETED"
+    assert result.product_live is True
+    with cm.reader() as con:
+        row = con.execute(
+            """
+            SELECT trade_date, close FROM security_bar_1d
+            WHERE instrument_id = ? AND trade_date = ?
+            """,
+            [SYMBOL, FIXTURE_DATE.isoformat()],
+        ).fetchone()
+    assert row is not None
+    inspect_report = DbInspector(cm.db_path, raw_root).inspect()
+    bar_table = next(t for t in inspect_report.key_tables if t["name"] == "security_bar_1d")
+    assert bar_table["exists"] is True
+    assert bar_table["row_count"] is not None and bar_table["row_count"] >= 1
+
+
+@pytest.mark.network
+def test_mootdxIncremental_liveNetwork_idempotentSecondRun(
+    isolated_live_data_root: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """覆盖范围：隔离 sandbox 连续两次 mootdx product live 增量
+    测试对象：run_mootdx_bar_incremental 幂等 upsert
+    目的/目标：重复 live 跑同一窗不应增加 security_bar_1d 行数
+    验证点：两次 COMPLETED；行数保持 2（seed + fixture）
+    失败含义：live 幂等失败会导致日常 sync 数据膨胀
+    """
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    cm = bootstrap_acceptance_cm(isolated_live_data_root)
+    with cm.writer() as con:
+        seed_watermark_row(con, "2024-06-24")
+        wm = read_bar_trade_date_watermark(con, instrument_id=SYMBOL)
+    window = compute_incremental_window(wm, end=FIXTURE_DATE)
+    raw_root = isolated_live_data_root / "raw" / "mootdx"
+    raw_root.mkdir(parents=True, exist_ok=True)
+    service, orch = build_live_service(cm, raw_root, monkeypatch)
+    kwargs = dict(
+        service=service,
+        window=window,
+        symbol=SYMBOL,
+        product_live=True,
+    )
+    r1 = run_mootdx_bar_incremental(orch, job_id="job-mootdx-live-idem-1", **kwargs)
+    r2 = run_mootdx_bar_incremental(orch, job_id="job-mootdx-live-idem-2", **kwargs)
+    with cm.reader() as con:
+        count = con.execute(
+            "SELECT COUNT(*) FROM security_bar_1d WHERE instrument_id = ?", [SYMBOL]
+        ).fetchone()[0]
+    assert r1.status == "COMPLETED"
+    assert r2.status == "COMPLETED"
+    assert count == 2

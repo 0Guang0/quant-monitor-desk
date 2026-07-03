@@ -11,16 +11,14 @@ from pathlib import Path
 from tests.contract_gate_support import PROJECT_ROOT
 
 MIGRATION_MAP = PROJECT_ROOT / "MIGRATION_MAP.md"
-ROUND3_MAP = PROJECT_ROOT / "ROUND3_BATCH_IMPLEMENTATION_MAP.md"
-TASK_CARD = (
-    PROJECT_ROOT
-    / "docs/implementation_tasks/ROUND_3_MODELING_LAYERS/018B_production_live_pilot_gate.md"
-)
+from tests.repo_paths import ROUND3_BATCH_IMPLEMENTATION_MAP as ROUND3_MAP, impl_task
+
+TASK_CARD = impl_task("ROUND_3_MODELING_LAYERS", "018B_production_live_pilot_gate.md")
 POLICY = PROJECT_ROOT / "docs/quality/production_live_pilot_policy.md"
 AUDIT_REGISTRY = PROJECT_ROOT / "docs/AUDIT_DEFERRED_REGISTRY.md"
 UNRESOLVED_REGISTRY = PROJECT_ROOT / "docs/UNRESOLVED_ISSUES_REGISTRY.md"
 RESOLVED_REGISTRY = PROJECT_ROOT / "docs/RESOLVED_ISSUES_REGISTRY.md"
-MODELING_README = PROJECT_ROOT / "docs/implementation_tasks/ROUND_3_MODELING_LAYERS/README.md"
+MODELING_README = impl_task("ROUND_3_MODELING_LAYERS", "README.md")
 DOCS_INDEX = PROJECT_ROOT / "docs/INDEX.md"
 
 
@@ -39,18 +37,18 @@ def _read_three_registries() -> tuple[str, str, str]:
 
 
 def test_projectMap_reflectsBatch275CurrentStatus() -> None:
-    """覆盖范围：MIGRATION_MAP 是否反映 Batch 2.75 当前规划状态
+    """覆盖范围：MIGRATION_MAP 是否反映 Batch 2.75 历史证据与 v2 归档布局
     测试对象：MIGRATION_MAP.md
-    目的/目标：项目地图读者能看到 2.75 试点策略与任务卡入口
-    验证点：含 Last updated: 2026-06-23、Batch 2.75、production_live_pilot_policy.md、018B_production_live_pilot_gate.md、PILOT_FAIL_SOURCE
-    失败含义：迁移地图未更新 2.75，新人会按旧批次顺序理解优先级
+    目的/目标：项目地图读者能在归档区找到 2.75 试点策略与任务卡入口
+    验证点：含 Last updated: 2026-07-02、Batch 2.75、production_live_pilot_policy.md、归档 018B
+    失败含义：迁移地图未保留 2.75 历史指针，新人无法从归档定位 pilot 材料
     """
     text = _read(MIGRATION_MAP)
-    assert "Last updated: 2026-06-23" in text
+    assert "Last updated: 2026-07-02" in text
     assert "Batch 2.75" in text
     assert "production_live_pilot_policy.md" in text
     assert "018B_production_live_pilot_gate.md" in text
-    assert "PILOT_FAIL_SOURCE" in text
+    assert "legacy-pre-module-v2-20260702" in text
 
 
 def test_round3Map_placesBatch275_beforeBatch3() -> None:
@@ -170,8 +168,8 @@ def test_resolvedRegistry_recordsPlanningGateWithoutClosingLivePilot() -> None:
 def test_docsIndexesExposeBatch275EntryPoints() -> None:
     """覆盖范围：建模 README 与 docs INDEX 是否暴露 Batch 2.75 入口
     测试对象：ROUND_3_MODELING_LAYERS/README.md、docs/INDEX.md
-    目的/目标：文档索引能一键找到 018B 策略与相邻任务卡
-    验证点：readme 含 018B、018A、018C、019；index 含 production_live_pilot_policy 与 018B
+    目的/目标：文档索引能一键找到 018B 策略与相邻任务卡（归档或活索引）
+    验证点：readme 含 018B、018A、018C、019；index 含 production_live_pilot_policy 与 legacy 归档入口
     失败含义：索引缺入口，执行者要从散落路径手工搜 2.75 材料
     """
     readme = _read(MODELING_README)
@@ -181,7 +179,7 @@ def test_docsIndexesExposeBatch275EntryPoints() -> None:
     assert "018C_tdx_pytdx_low_cost_probe.md" in readme
     assert "`019`" in readme
     assert "production_live_pilot_policy.md" in index
-    assert "018B_production_live_pilot_gate.md" in index
+    assert "legacy-pre-module-v2-20260702" in index
 
 
 def test_policy_requiresStagedPilotConflictEvidenceChecklist() -> None:

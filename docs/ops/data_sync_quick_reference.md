@@ -29,8 +29,10 @@ SSOT：`backend/app/sync/incremental_source_registry.py` · `docs/decisions/ADR-
 ### ACC-EASTMONEY-TAXONOMY-001（口径 SSOT · 不关 REQ2-EM）
 
 - **问题：** `eastmoney_port` 产品 mock 与 akshare `stock_zh_a_hist`（`push2his.eastmoney.com`）真网口径并存。
-- **本票边界：** DCP-05 仅登记文档/registry 注释；**不**关闭 `R3-B2.75-REQ2-EM` 硬约束。
+- **本票边界：** DCP-08 登记 registry proposed delta + 本文档；**不**关闭 `R3-B2.75-REQ2-EM` 硬约束。
 - **运维读法：** validation 用 akshare/eastmoney 对照；产品 bar 增量主路径为 **baostock/mootdx**（`--source-id`）。
+- **产品 bar 路径：** `cn_equity_daily_bar` 默认 primary=baostock；explicit `--source-id mootdx` 为 effective primary（ADR-033 双轨语义）。
+- **eastmoney 域：** validation-only for bar hist；`sector_board` / `capital_flow` 为独立 domain，勿与 bar hist taxonomy 混用。
 - 台账：`docs/quality/待修复清单.md` · Wave 4 `R3-DCP-05`/`08`
 
 ## 推荐命令形态（设计稿）

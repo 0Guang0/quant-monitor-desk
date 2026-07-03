@@ -18,6 +18,8 @@ from backend.app.ops.sec_edgar_incremental_watermark import (
     read_since_date_for_cik,
 )
 from backend.app.sync.orchestrator import DataSyncOrchestrator
+from tests.live_incremental_support import bootstrap_acceptance_cm, bootstrap_port_live_e2e_ctx
+from tests.network_reachability import sec_edgar_reachable
 
 CIK = "0000320193"
 ACCESSION = "0000320193-25-000079"
@@ -42,6 +44,32 @@ def seed_watermark_row(con, filing_date: str) -> None:
         ) VALUES (?, ?, '10-K', ?, ?, 'us_filings', 'seed', 'b0', CURRENT_TIMESTAMP)
         """,
         [f"seed-{filing_date}", CIK, filing_date, filing_date],
+    )
+
+
+def bootstrap_sec_edgar_live_e2e_ctx(
+    sandbox_root: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> dict[str, Any]:
+    """Bootstrap SEC EDGAR live e2e under isolated M-DATA-03 sandbox (ADR-034)."""
+    import os
+
+    ua = os.environ.get("SEC_EDGAR_USER_AGENT", "")
+    if not sec_edgar_reachable(user_agent=ua or "reachability-probe@example.com"):
+        pytest.skip("SEC EDGAR API unreachable from this network (TLS/connectivity)")
+    return bootstrap_port_live_e2e_ctx(
+        sandbox_root,
+        monkeypatch,
+        source_id="sec_edgar",
+        data_domain="us_filings",
+        port_factory=lambda **kw: create_sec_edgar_fetch_port(
+            ciks=(CIK,), max_filings=5, data_domain="us_filings", **kw
+        ),
+        service_builder=build_sec_edgar_incremental_service,
+        registry_factory=enabled_sec_edgar_source_registry,
+        since_reader=lambda con, _ids: {CIK: read_since_date_for_cik(con, CIK)},
+        instrument_ids=(CIK,),
+        env_key="SEC_EDGAR_USER_AGENT",
     )
 
 

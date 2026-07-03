@@ -80,3 +80,21 @@ def assert_staged_source(
         raise CrossAssetObservationError(
             "tdx_pytdx cannot be used as production Layer 2 source on 019"
         )
+
+
+def assert_observation_source(
+    entry: CrossAssetRegistryEntry,
+    observation: CrossAssetObservation,
+) -> None:
+    """Enforce primary_source ↔ observation.source binding (staged vs clean replay)."""
+    assert_staged_source(entry, observation)
+    if entry.primary_source == "fred":
+        if observation.source == "staged_fixture":
+            raise CrossAssetObservationError(
+                f"staged_fixture source blocked for clean replay asset {entry.asset_id!r}"
+            )
+        if observation.source != "fred":
+            raise CrossAssetObservationError(
+                f"observation source {observation.source!r} != registry primary fred "
+                f"for {entry.asset_id!r}"
+            )

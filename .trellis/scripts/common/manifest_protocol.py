@@ -79,6 +79,31 @@ def _find_repo_root(task_dir: Path) -> Path:
     return repo_root
 
 
+def _repo_file_exists(repo_root: Path, rel: str) -> bool:
+    """Resolve archived implementation_tasks paths (2026-07-02 cleanup)."""
+    import importlib.util
+
+    mod_path = repo_root / "scripts" / "repo_path_resolve.py"
+    spec = importlib.util.spec_from_file_location("_repo_path_resolve", mod_path)
+    if spec is None or spec.loader is None:
+        return (repo_root / rel).is_file()
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod.resolve_repo_path(rel).is_file()
+
+
+def _resolve_repo_path(repo_root: Path, rel: str) -> Path:
+    import importlib.util
+
+    mod_path = repo_root / "scripts" / "repo_path_resolve.py"
+    spec = importlib.util.spec_from_file_location("_repo_path_resolve", mod_path)
+    if spec is None or spec.loader is None:
+        return repo_root / rel
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod.resolve_repo_path(rel)
+
+
 def load_jsonl_entries(path: Path) -> list[dict]:
     if not path.is_file():
         return []
@@ -339,7 +364,7 @@ def module_spec_one_hop_refs(repo_root: Path, impl_paths: set[str]) -> set[str]:
     for p in impl_paths:
         if not p.startswith("docs/modules/") or not p.endswith(".md"):
             continue
-        full = repo_root / p
+        full = _resolve_repo_path(repo_root, p)
         if not full.is_file():
             continue
         text = full.read_text(encoding="utf-8")
@@ -370,7 +395,7 @@ def suggest_implement_context(task_dir: Path, repo_root: Path | None = None) -> 
         p = _norm(path)
         if not p or p in impl or p in seen or is_negative_implement_path(p):
             return
-        if not (repo_root / p).is_file() and not p.endswith("/"):
+        if not _repo_file_exists(repo_root, p) and not p.endswith("/"):
             return
         seen.add(p)
         suggestions.append({"file": p, "reason": reason})
@@ -452,7 +477,7 @@ def validate_section9_in_implement(
         for p in needed:
             if is_negative_implement_path(p):
                 continue
-            if p not in impl and (repo_root / p).is_file():
+            if p not in impl and _repo_file_exists(repo_root, p):
                 errors.append(f"E3: EXECUTION_INDEX §2 path missing from implement.jsonl: {p}")
         _ = parse_step_section  # noqa: F841 — reserved for step-scoped E3
         return
@@ -466,7 +491,7 @@ def validate_section9_in_implement(
     for p in sorted(needed):
         if is_negative_implement_path(p):
             continue
-        if p not in impl and (repo_root / p).is_file():
+        if p not in impl and _repo_file_exists(repo_root, p):
             errors.append(f"E3: MASTER §5/§6/§9 path missing from implement.jsonl: {p}")
 
 
@@ -483,7 +508,7 @@ def validate_wiring_in_implement(
     for p in parse_master_wiring_paths(master.read_text(encoding="utf-8")):
         if p in deferred or is_negative_implement_path(p):
             continue
-        if p not in impl and (repo_root / p).is_file():
+        if p not in impl and _repo_file_exists(repo_root, p):
             errors.append(f"E8: MASTER §6 wiring path missing from implement.jsonl: {p}")
 
 
@@ -507,7 +532,7 @@ def validate_predecessor_inherit(
     pred_wiring = wiring_paths_from_predecessors(task_dir, repo_root)
     must_have = pred_wiring & (master_wiring | trace_required)
     for p in sorted(must_have):
-        if p not in impl and (repo_root / p).is_file():
+        if p not in impl and _repo_file_exists(repo_root, p):
             errors.append(f"E2: predecessor wiring path missing from implement.jsonl: {p}")
 
 
@@ -542,7 +567,7 @@ def validate_module_spec_refs(
     for ref in module_spec_one_hop_refs(repo_root, impl):
         if ref in impl or ref in deferred:
             continue
-        if (repo_root / ref).is_file():
+        if _repo_file_exists(repo_root, ref):
             errors.append(
                 f"E7: module spec 1-hop ref missing from implement.jsonl: {ref}"
             )
@@ -562,7 +587,7 @@ def validate_decisions_section32(
             r"`(docs/implementation_tasks/[^`]+/DECISIONS\.md)`", text
         )
         if m:
-            dec_path = repo_root / m.group(1)
+            dec_path = _resolve_repo_path(repo_root, m.group(1))
             if not dec_path.is_file():
                 errors.append(f"E10: MASTER cites missing DECISIONS: {m.group(1)}")
     defers = parse_master_section32_defers(text)
@@ -833,7 +858,7 @@ def validate_integration_ledger(task_dir: Path, repo_root: Path, errors: list[st
         src = row["source"]
         if not src or src.startswith("MASTER"):
             continue
-        full = repo_root / src
+        full = _resolve_repo_path(repo_root, src)
         if not full.is_file():
             continue
         if src not in impl:

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
 import sys
 from collections.abc import Callable
 from pathlib import Path
@@ -23,6 +24,13 @@ _REPAIR_DISPOSITIONS = frozenset({"已修复", "阶段外置"})
 _MATRIX_KEYS = tuple(f"A{n}" for n in range(1, 9))
 _VERDICT_TO_MATRIX = {"PASS": "pass", "FAIL": "fail", "SKIP": "skip"}
 _VALID_MATRIX_RESULTS = frozenset({"pass", "fail", "skip", "fail_then_fixed"})
+_M_DATA_03_TASK = "m-data-03-tier-a-live"
+_TIER_A_LIVE_OPS = (
+    "backend/app/ops/tier_a_live_acceptance.py",
+    "backend/app/ops/tier_a_live_incremental_dispatch.py",
+    "backend/app/ops/tier_a_live_status.py",
+    "scripts/tier_a_live_acceptance.py",
+)
 
 
 def _section(text: str, heading: str) -> str | None:
@@ -200,9 +208,109 @@ def validate_audit_handoff(task_dir: Path, repo_root: Path | None = None) -> lis
     return errors
 
 
+def _spot_check_m_data_03_repair_close(
+    task_dir: Path, repo_root: Path, errors: list[str]
+) -> None:
+    """D-05: code/evidence anchors for M-DATA-03 Repair close (not disposition-only)."""
+    if task_dir.name != _M_DATA_03_TASK:
+        return
+
+    for rel in _TIER_A_LIVE_OPS:
+        proc = subprocess.run(
+            ["git", "ls-files", "--error-unmatch", rel],
+            cwd=repo_root,
+            capture_output=True,
+            check=False,
+        )
+        if proc.returncode != 0:
+            errors.append(f"D-05 spot-check: {rel} not tracked in git")
+
+    dispatch = repo_root / "tests" / "test_tier_a_live_dispatch.py"
+    if not dispatch.is_file():
+        errors.append("D-05 spot-check: missing tests/test_tier_a_live_dispatch.py")
+    else:
+        dispatch_text = dispatch.read_text(encoding="utf-8")
+        has_network_dispatch = (
+            "@pytest.mark.network" in dispatch_text
+            and "run_tier_a_live_incremental" in dispatch_text
+        )
+        if not has_network_dispatch:
+            errors.append(
+                "D-05 spot-check: test_tier_a_live_dispatch.py must contain "
+                "@pytest.mark.network and run_tier_a_live_incremental network test"
+            )
+
+    f0_hits = 0
+    tests_dir = repo_root / "tests"
+    if tests_dir.is_dir():
+        for py in tests_dir.glob("test_*.py"):
+            try:
+                if "_run_f0_data_health" in py.read_text(encoding="utf-8"):
+                    f0_hits += 1
+            except OSError:
+                continue
+    if f0_hits < 1:
+        errors.append("D-05 spot-check: tests/ must reference _run_f0_data_health")
+
+    evidence_path: Path | None = None
+    index_path = task_dir / "evidence_index.json"
+    if index_path.is_file():
+        try:
+            index_data = json.loads(index_path.read_text(encoding="utf-8"))
+            rel = (index_data.get("execute") or {}).get("accept_evidence")
+            if rel:
+                candidate = task_dir / str(rel)
+                if candidate.is_file():
+                    evidence_path = candidate
+        except (json.JSONDecodeError, OSError):
+            pass
+    if evidence_path is None:
+        fallback = (
+            task_dir
+            / "research"
+            / "archive"
+            / "non-plan"
+            / "execute"
+            / "r2-tier-a-live-accept-evidence.md"
+        )
+        if fallback.is_file():
+            evidence_path = fallback
+    if evidence_path is None:
+        errors.append(
+            "D-05 spot-check: missing accept evidence "
+            "(evidence_index.json execute.accept_evidence or r2-tier-a-live-accept-evidence.md)"
+        )
+    else:
+        evidence_text = evidence_path.read_text(encoding="utf-8")
+        if "exit 0" not in evidence_text or "11/11" not in evidence_text:
+            errors.append(
+                "D-05 spot-check: accept evidence must reference 11/11 live and exit 0"
+            )
+
+
+def _repair_gate_applies(task_dir: Path) -> bool:
+    """Repair close gate applies only when Repair ledger exists (post-Audit FAIL)."""
+    ledger = task_dir / "research" / "audit-repair-ledger.md"
+    if not ledger.is_file():
+        return False
+    task_json = task_dir / "task.json"
+    if not task_json.is_file():
+        return True
+    try:
+        data = json.loads(task_json.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return True
+    return str(data.get("status", "")).lower() != "planning"
+
+
 def validate_repair_close(task_dir: Path, repo_root: Path | None = None) -> list[str]:
-    """Repair 关账 gate: disposition ∈ {已修复, 阶段外置}."""
-    _ = repo_root
+    """Repair 关账 gate: disposition ∈ {已修复, 阶段外置} + M-DATA-03 code spot-checks."""
+    if not _repair_gate_applies(task_dir):
+        return []
+    if repo_root is None:
+        from .paths import get_repo_root
+
+        repo_root = get_repo_root()
     ledger_path = task_dir / "research" / "audit-repair-ledger.md"
     if not ledger_path.is_file():
         return ["Missing research/audit-repair-ledger.md"]
@@ -213,6 +321,7 @@ def validate_repair_close(task_dir: Path, repo_root: Path | None = None) -> list
         phase_label="Repair 关账",
         errors=errors,
     )
+    _spot_check_m_data_03_repair_close(task_dir, repo_root, errors)
     return errors
 
 

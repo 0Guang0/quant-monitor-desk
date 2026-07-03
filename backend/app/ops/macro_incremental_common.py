@@ -30,6 +30,62 @@ MACRO_REQUIRED_FIELDS = ("raw_value", "source_used")
 STAGING_TABLE = "stg_axis_observation_smoke"
 _SERIES_SUCCESS_STATUSES = frozenset({"COMPLETED", "EMPTY_RESPONSE"})
 _WATERMARK_EMPTY_MSG = "no observations after watermark window"
+_RAW_FILE_TYPES = frozenset({"json", "csv", "parquet"})
+_NETWORK_FAILURE_MARKERS = (
+    "network_error",
+    "urlopen error",
+    "ssl",
+    "timed out",
+    "connection reset",
+    "connection refused",
+)
+
+
+def _normalize_incremental_job_status(result) -> str:
+    """Map orchestrator FAILED_FINAL to domain sync status (EMPTY_RESPONSE / NETWORK_ERROR)."""
+    status = str(getattr(result, "status", "") or "")
+    if status != "FAILED_FINAL":
+        return status
+    msg = (getattr(result, "message", None) or "").lower()
+    if msg.startswith(_WATERMARK_EMPTY_MSG.lower()) or "watermark window" in msg:
+        return "EMPTY_RESPONSE"
+    if any(marker in msg for marker in _NETWORK_FAILURE_MARKERS):
+        return "NETWORK_ERROR"
+    if "no mock observations on/after" in msg or msg == "empty_response":
+        return "EMPTY_RESPONSE"
+    return status
+
+
+def incremental_evidence_as_of(
+    bundle: dict[str, Any], *, fetch_time: str, start_date: str | None
+) -> str:
+    for key in ("as_of_timestamp", "retrieved_at", "filing_date", "report_date"):
+        raw = bundle.get(key)
+        if isinstance(raw, str) and len(raw) >= 10:
+            return raw[:10]
+    if start_date:
+        return start_date[:10]
+    return fetch_time[:10]
+
+
+def persist_incremental_fetch_payload(
+    adapter: SkeletonAdapterBase,
+    payload: Any,
+    req: FetchRequest,
+    *,
+    as_of: str,
+) -> None:
+    """Persist live fetch JSON for F0 data health (staging adapters bypass SkeletonAdapterBase.fetch)."""
+    file_type = getattr(payload, "file_type", None) or "json"
+    if file_type not in _RAW_FILE_TYPES:
+        file_type = "json"
+    adapter._raw_store.save(
+        payload.content,
+        source=adapter.source_id,
+        data_domain=req.data_domain,
+        file_type=file_type,
+        as_of=as_of,
+    )
 
 
 def read_observation_date_watermark(con, indicator_id: str) -> date | None:
@@ -62,6 +118,23 @@ def compute_since_date(
     if watermark is None:
         return ref - timedelta(days=cap_days)
     return watermark + timedelta(days=advance_days)
+
+
+def compute_bis_since_date(watermark: date | None, *, cap_days: int = MAX_WINDOW_DAYS) -> date:
+    """BIS monthly: advance to first day of month after watermark (idempotent re-fetch)."""
+    if watermark is None:
+        return compute_since_date(None, cap_days=cap_days)
+    y, m = watermark.year, watermark.month
+    if m == 12:
+        return date(y + 1, 1, 1)
+    return date(y, m + 1, 1)
+
+
+def compute_world_bank_since_date(watermark: date | None, *, cap_days: int = 365 * 10) -> date:
+    """World Bank annual: cold-start cap; watermark → next calendar year (idempotent re-fetch)."""
+    if watermark is None:
+        return compute_since_date(None, cap_days=cap_days)
+    return date(watermark.year + 1, 1, 1)
 
 
 def read_since_dates_for_instruments(
@@ -125,7 +198,8 @@ def build_axis_observation_row(
     as_of = date.fromisoformat(obs_date[:10])
     as_of_dt = datetime.combine(as_of, time(16, 0), tzinfo=UTC)
     publish_dt = datetime.combine(as_of, time(0, 0), tzinfo=UTC)
-    obs_id = str(uuid.uuid5(uuid.NAMESPACE_URL, f"{indicator_id}|{obs_date}|{content_hash}"))
+    # ponytail: PK from indicator+date only — live bundle content_hash changes per fetch
+    obs_id = str(uuid.uuid5(uuid.NAMESPACE_URL, f"{indicator_id}|{obs_date}"))
     return {
         "observation_id": obs_id,
         "indicator_id": indicator_id,
@@ -259,6 +333,16 @@ def _make_macro_staging_adapter_class(
                 instrument_id=req.instrument_id or "",
                 start_date=req.start_time[:10] if req.start_time else None,
             )
+            persist_incremental_fetch_payload(
+                self,
+                payload,
+                req,
+                as_of=incremental_evidence_as_of(
+                    bundle,
+                    fetch_time=fetch_time,
+                    start_date=req.start_time[:10] if req.start_time else None,
+                ),
+            )
             if not rows:
                 return FetchResult(
                     run_id=req.run_id,
@@ -364,6 +448,7 @@ class MacroIncrementalSourceConfig:
     staging_rows_fn: Callable[..., list[dict[str, object]]]
     validate_instrument: Callable[[str], None] | None = None
     advance_days: int = 1
+    since_date_fn: Callable[[date | None], date] | None = None
     indicator_resolver: Callable[[str], str] | None = None
 
 
@@ -410,14 +495,7 @@ def build_macro_incremental_service(
 
 
 def _instrument_display_status(result) -> str:
-    if result.status != "FAILED_FINAL":
-        return result.status
-    msg = result.message or ""
-    if msg.startswith(_WATERMARK_EMPTY_MSG):
-        return "EMPTY_RESPONSE"
-    if "no mock observations on/after" in msg or msg == "EMPTY_RESPONSE":
-        return "EMPTY_RESPONSE"
-    return result.status
+    return _normalize_incremental_job_status(result)
 
 
 def _compute_overall_status(statuses: Sequence[str]) -> str:
@@ -445,9 +523,13 @@ def run_macro_incremental(
     resolve = config.indicator_resolver or (lambda instrument_id: instrument_id)
     with cm.writer() as con:
         since_map = {
-            instrument_id: compute_since_date(
-                read_observation_date_watermark(con, resolve(instrument_id)),
-                advance_days=config.advance_days,
+            instrument_id: (
+                config.since_date_fn(read_observation_date_watermark(con, resolve(instrument_id)))
+                if config.since_date_fn is not None
+                else compute_since_date(
+                    read_observation_date_watermark(con, resolve(instrument_id)),
+                    advance_days=config.advance_days,
+                )
             ).isoformat()
             for instrument_id in instrument_ids
         }

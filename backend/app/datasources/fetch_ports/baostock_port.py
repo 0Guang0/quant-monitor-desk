@@ -25,6 +25,7 @@ from backend.app.datasources.normalizers.evidence_bundle import (
     finalize_bundle,
     parse_fetch_window_date,
     reject_over_cap,
+    replay_rows_caught_up_fallback,
 )
 
 MAX_SYMBOLS = 5
@@ -70,6 +71,7 @@ class BaostockMockFetchPort:
     symbols: Sequence[str]
     max_rows: int
     replay_path: Path = REPLAY_FIXTURE
+    replay_caught_up_fallback: bool = False
 
     def fetch_payload(self, req: FetchRequest) -> FetchPayload:
         reject_over_cap(value=self.max_rows, cap=MAX_ROWS)
@@ -88,10 +90,23 @@ class BaostockMockFetchPort:
 
         if self.replay_path.is_file():
             bundle = read_cn_market_evidence_bundle(self.replay_path)
-            bars = _filter_bars_by_window(
-                list(bundle.get("bars") or []),
+            all_bars = list(bundle.get("bars") or [])
+            filtered = _filter_bars_by_window(
+                all_bars,
                 start_time=req.start_time,
                 end_time=req.end_time,
+            )
+            bars = (
+                replay_rows_caught_up_fallback(
+                    all_bars,
+                    filtered,
+                    start_time=req.start_time,
+                    end_time=req.end_time,
+                    sort_key=lambda bar: str(bar.get("trade_date") or ""),
+                    min_rows=2,
+                )
+                if self.replay_caught_up_fallback
+                else filtered
             )
             bundle = {**bundle, "bars": bars}
             content = json.dumps(bundle, ensure_ascii=False, default=str).encode("utf-8")
@@ -146,6 +161,7 @@ class BaostockProductLiveFetchPort:
             max_rows=self.max_rows,
             replay_path=self.replay_path,
             req=req,
+            replay_caught_up_fallback=True,
         )
 
 

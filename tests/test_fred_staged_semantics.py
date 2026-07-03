@@ -12,16 +12,10 @@ from tests.contract_gate_support import PROJECT_ROOT
 POLICY = PROJECT_ROOT / "docs/quality/production_live_pilot_policy.md"
 GATE_DOC = PROJECT_ROOT / "docs/quality/BATCH3_STAGED_DOWNSTREAM_GATE.md"
 HANDOFF = PROJECT_ROOT / "docs/ROUND3_HANDOFF.md"
-ROUND3_MAP = PROJECT_ROOT / "ROUND3_BATCH_IMPLEMENTATION_MAP.md"
-TASK_018A = (
-    PROJECT_ROOT
-    / "docs/implementation_tasks/ROUND_3_MODELING_LAYERS"
-    / "018A_layer1_observation_ingestion_bridge.md"
-)
-TASK_019 = (
-    PROJECT_ROOT
-    / "docs/implementation_tasks/ROUND_3_MODELING_LAYERS/019_implement_layer2_cross_asset_sensor.md"
-)
+from tests.repo_paths import ROUND3_BATCH_IMPLEMENTATION_MAP as ROUND3_MAP, impl_task
+
+TASK_018A = impl_task("ROUND_3_MODELING_LAYERS", "018A_layer1_observation_ingestion_bridge.md")
+TASK_019 = impl_task("ROUND_3_MODELING_LAYERS", "019_implement_layer2_cross_asset_sensor.md")
 AUDIT_DEFERRED = PROJECT_ROOT / "docs/AUDIT_DEFERRED_REGISTRY.md"
 UNRESOLVED = PROJECT_ROOT / "docs/UNRESOLVED_ISSUES_REGISTRY.md"
 PENDING_FIX = PROJECT_ROOT / "docs/quality/ROUND3_BATCH25_PENDING_FIX_REGISTRY.md"

@@ -14,6 +14,7 @@ from backend.app.db.migrate import apply_migrations
 from backend.app.datasources.fetch_ports.alpha_vantage_port import create_alpha_vantage_fetch_port
 from backend.app.ops.alpha_vantage_incremental_run import build_alpha_vantage_incremental_service
 from backend.app.sync.orchestrator import DataSyncOrchestrator
+from tests.live_incremental_support import bootstrap_acceptance_cm, bootstrap_port_live_e2e_ctx
 
 SYMBOL = "AAPL"
 FIXTURE_END = date(2024, 1, 3)
@@ -38,6 +39,30 @@ def seed_watermark_row(con, trade_date: str) -> None:
         ) VALUES (?, ?, 185.0, 186.0, 184.5, 185.0, NULL, 50000, NULL, 'none', 'seed', 'b0', NULL, CURRENT_TIMESTAMP)
         """,
         [SYMBOL, trade_date],
+    )
+
+
+def bootstrap_alpha_vantage_live_e2e_ctx(
+    sandbox_root: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> dict[str, Any]:
+    """Bootstrap Alpha Vantage live e2e under isolated M-DATA-03 sandbox (ADR-034)."""
+    from backend.app.ops.alpha_vantage_incremental_run import (
+        build_alpha_vantage_incremental_service,
+        enabled_alpha_vantage_source_registry,
+    )
+
+    return bootstrap_port_live_e2e_ctx(
+        sandbox_root,
+        monkeypatch,
+        source_id="alpha_vantage",
+        data_domain="us_equity_daily_bar",
+        port_factory=lambda **kw: create_alpha_vantage_fetch_port(
+            symbols=(SYMBOL,), max_rows=500, **kw
+        ),
+        service_builder=build_alpha_vantage_incremental_service,
+        registry_factory=enabled_alpha_vantage_source_registry,
+        env_key="ALPHA_VANTAGE_API_KEY",
     )
 
 

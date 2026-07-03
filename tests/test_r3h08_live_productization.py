@@ -49,6 +49,138 @@ LIVE_PROD_24_SOURCES = frozenset(
 )
 
 
+def _stub_r3h08_live_fetch(monkeypatch: pytest.MonkeyPatch, source_id: str) -> None:
+    """Stub network for product-live contract tests (port class still live branch)."""
+    if source_id == "sec_edgar":
+        monkeypatch.setenv("SEC_EDGAR_USER_AGENT", "QMD Test contact@test.example.com")
+
+        def _mock_sec_filings(cik: str, **kwargs):
+            return [
+                {
+                    "accession_number": "0000320193-26-000001",
+                    "cik": cik,
+                    "form_type": "10-K",
+                    "filing_date": "2025-01-01",
+                    "report_date": "2025-01-01",
+                    "primary_document_url": "https://www.sec.gov/mock.htm",
+                    "source_used": "sec_edgar",
+                }
+            ]
+
+        monkeypatch.setattr(
+            "backend.app.datasources.fetch_ports.sec_edgar_port._sec_live_filings",
+            _mock_sec_filings,
+        )
+    if source_id == "world_bank":
+
+        def _mock_wb(country: str, indicator: str, **kwargs):
+            return [
+                {
+                    "country_code": country,
+                    "indicator_id": indicator,
+                    "observation_date": "2024-01-01",
+                    "value": "1",
+                    "unit": "USD",
+                    "source_used": "world_bank",
+                }
+            ]
+
+        monkeypatch.setattr(
+            "backend.app.datasources.fetch_ports.world_bank_port._wb_live_observations",
+            _mock_wb,
+        )
+    if source_id == "deribit":
+
+        def _mock_deribit_instruments(self, currency: str = "BTC"):
+            return [
+                {
+                    "instrument_name": "BTC-PERPETUAL",
+                    "expiration_timestamp": 0,
+                    "strike": None,
+                    "option_type": "call",
+                    "mark_iv": 0.5,
+                    "source_used": "deribit",
+                }
+            ]
+
+        monkeypatch.setattr(
+            "backend.app.datasources.fetch_ports.deribit_port.DeribitLiveFetchPort._live_instruments",
+            _mock_deribit_instruments,
+        )
+        monkeypatch.setattr(
+            "backend.app.datasources.fetch_ports.deribit_port.DeribitLiveFetchPort._book_summary_mark_iv",
+            lambda self, instrument_name: 0.5,
+        )
+    if source_id in {"akshare", "eastmoney", "sina_finance"}:
+
+        def _mock_cn_hist(req, *, source_id: str, symbols, max_rows: int):
+            from backend.app.datasources.fetch_ports.cn_validation_mock import (
+                cn_validation_mock_fetch_payload,
+            )
+
+            return cn_validation_mock_fetch_payload(
+                req,
+                source_id=source_id,
+                symbols=symbols,
+                max_rows=max_rows,
+                max_rows_cap=200,
+                max_symbols_cap=3,
+                symbol_whitelist=frozenset({"sh.600519", "sz.000001"}),
+                bar_ohlcv=(1399.0, 1408.0, 1394.0, 1404.0, 900_000),
+            )
+
+        def _mock_cn_sina(req, *, symbols, max_rows: int):
+            return _mock_cn_hist(
+                req, source_id="sina_finance", symbols=symbols, max_rows=max_rows
+            )
+
+        monkeypatch.setattr(
+            "backend.app.datasources.fetch_ports.tier_b_validation_live._cn_equity_live_bars_hist",
+            _mock_cn_hist,
+        )
+        monkeypatch.setattr(
+            "backend.app.datasources.fetch_ports.tier_b_validation_live._cn_equity_live_bars_sina",
+            _mock_cn_sina,
+        )
+    if source_id == "yahoo_finance":
+
+        def _mock_yahoo(self, req):
+            from backend.app.datasources.fetch_ports.yahoo_finance_port import YahooFinanceMockFetchPort
+
+            return YahooFinanceMockFetchPort(
+                symbols=self.symbols, max_rows=self.max_rows
+            ).fetch_payload(req)
+
+        monkeypatch.setattr(
+            "backend.app.datasources.fetch_ports.tier_b_validation_live.YahooFinanceLiveFetchPort.fetch_payload",
+            _mock_yahoo,
+        )
+    if source_id == "stooq":
+
+        def _mock_stooq(self, req):
+            from backend.app.datasources.fetch_ports.stooq_port import StooqMockFetchPort
+
+            return StooqMockFetchPort(symbols=self.symbols, max_rows=self.max_rows).fetch_payload(req)
+
+        monkeypatch.setattr(
+            "backend.app.datasources.fetch_ports.tier_b_validation_live.StooqLiveFetchPort.fetch_payload",
+            _mock_stooq,
+        )
+    if source_id == "coingecko":
+
+        def _mock_cg(self, req):
+            from backend.app.datasources.fetch_ports.coingecko_port import CoingeckoMockFetchPort
+
+            return CoingeckoMockFetchPort(
+                asset_ids=self.asset_ids, max_assets=self.max_assets
+            ).fetch_payload(req)
+
+        monkeypatch.setattr(
+            "backend.app.datasources.fetch_ports.tier_b_validation_live.CoingeckoLiveFetchPort.fetch_payload",
+            _mock_cg,
+        )
+
+
 def test_productLiveGate_rejectsWhenEnvNotSet(monkeypatch: pytest.MonkeyPatch) -> None:
     """覆盖范围：产品 live env gate 默认 fail-closed
     测试对象：backend.app.datasources.product_live_gate.assert_product_live_allowed
@@ -212,6 +344,7 @@ def test_r3h08_08c_productLivePort_liveBranchWithEnv(
         monkeypatch.setenv("SEC_EDGAR_USER_AGENT", "QMD Test contact@test.example.com")
     if source_id == "alpha_vantage":
         monkeypatch.setenv("ALPHA_VANTAGE_API_KEY", "test-key")
+    _stub_r3h08_live_fetch(monkeypatch, source_id)
 
     port = create_product_live_fetch_port(source_id=source_id, data_domain=data_domain)
     req = FetchRequest(
@@ -425,6 +558,7 @@ def test_r3h08_08b_yahoo_productLiveFetch_optIn(monkeypatch: pytest.MonkeyPatch)
     from backend.app.datasources.source_registry import SourceRegistry
 
     monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
+    _stub_r3h08_live_fetch(monkeypatch, "yahoo_finance")
     reg = SourceRegistry()
     reg.load()
     roles = reg.get_domain_roles("us_equity_daily_bar")
@@ -507,6 +641,7 @@ def test_r3h08_08b_tierB_productLiveFetch_optIn(
     from backend.app.datasources.product_live_ports import create_product_live_fetch_port
 
     _tier_b_auth_env(monkeypatch, source_id)
+    _stub_r3h08_live_fetch(monkeypatch, source_id)
     from backend.app.datasources.live_tier_router import resolve_live_tier
 
     assert resolve_live_tier(source_id) == "B"

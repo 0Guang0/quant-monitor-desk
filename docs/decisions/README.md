@@ -8,5 +8,13 @@
 | [ADR-024](ADR-024-source-health-snapshot-boundary.md)                 | source_health_snapshot boundary (Batch 3F)                        |
 | [ADR-025](ADR-025-r3h10-sync-fail-closed-datasource-service.md)       | Sync production fail-closed without `datasource_service` (R3H-10) |
 | [ADR-026](ADR-026-r3h07-us-trading-calendar-ssot.md)                  | US equity trading calendar SSOT — `trading_sessions` (R3H-07)     |
+| [ADR-027](ADR-027-r3h08-product-live-env-gate.md)                     | Product live env gate (R3H-08)                                    |
+| [ADR-028](ADR-028-dcp05-tier-a-clean-domain-extension.md)             | DCP-05 Tier A clean domain extension                              |
+| [ADR-029](ADR-029-dcp06-layer1-five-axis-clean-read.md)               | DCP-06 Layer1 five-axis clean read                                |
+| [ADR-030](ADR-030-bounded-backfill-cap-and-ci-nightly.md)             | Bounded backfill cap + CI nightly layering (R3-DCP-09)            |
+| [ADR-031](ADR-031-dcp10-layer5-evidence-provenance-binding.md)        | DCP-10 Layer5 evidence provenance binding (mootdx bar)            |
+| [ADR-032](ADR-032-dcp07-layer2-vix-clean-read.md)                     | DCP-07 Layer2 L2-VIX clean read (VIXCLS / axis_observation)       |
+| [ADR-033](ADR-033-dcp08-layer4-us-eq-clean-read.md)                   | DCP-08 Layer4 US_EQ clean read + registry dual-primary            |
+| [ADR-034](ADR-034-m-data-03-tier-a-live-acceptance.md)                | M-DATA-03 Tier A live acceptance in isolated sandbox              |
 
 Ponytail audit equivalence: this project uses the `ponytail-review` / `code-simplification` skills as the formal simplification audit path when the standalone `ponytail` CLI is unavailable (Round2 audit P3-04).

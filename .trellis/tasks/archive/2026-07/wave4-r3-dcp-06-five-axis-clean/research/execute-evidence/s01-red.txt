@@ -1,0 +1,9 @@
+S01 RED — tests/test_layer1_environment_clean_e2e.py absent (pre-Execute)
+
+$ uv run pytest tests/test_layer1_environment_clean_e2e.py -q
+ERROR: file or directory not found: tests/test_layer1_environment_clean_e2e.py
+
+no tests ran in 0.00s
+exit code: 4
+
+RED reason: S01 e2e module not yet authored; ENVIRONMENT clean→feature→interpretation vertical unproven.

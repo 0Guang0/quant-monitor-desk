@@ -17,15 +17,10 @@ RESOLVED = PROJECT_ROOT / "docs/RESOLVED_ISSUES_REGISTRY.md"
 ADVERSARIAL_REPORT = PROJECT_ROOT / "docs/quality/adversarial_audit_report.md"
 PONYTAIL_SCAN = PROJECT_ROOT / "docs/quality/PONYTAIL_MODULE_SCAN_20260622.md"
 DATABASE_GUIDELINES = PROJECT_ROOT / ".trellis/spec/backend/database-guidelines.md"
-ROUND3_MAP = PROJECT_ROOT / "ROUND3_BATCH_IMPLEMENTATION_MAP.md"
-TASK_018B = (
-    PROJECT_ROOT
-    / "docs/implementation_tasks/ROUND_3_MODELING_LAYERS/018B_production_live_pilot_gate.md"
-)
-TASK_019 = (
-    PROJECT_ROOT
-    / "docs/implementation_tasks/ROUND_3_MODELING_LAYERS/019_implement_layer2_cross_asset_sensor.md"
-)
+from tests.repo_paths import ROUND3_BATCH_IMPLEMENTATION_MAP as ROUND3_MAP, impl_task
+
+TASK_018B = impl_task("ROUND_3_MODELING_LAYERS", "018B_production_live_pilot_gate.md")
+TASK_019 = impl_task("ROUND_3_MODELING_LAYERS", "019_implement_layer2_cross_asset_sensor.md")
 GITIGNORE = PROJECT_ROOT / ".gitignore"
 
 

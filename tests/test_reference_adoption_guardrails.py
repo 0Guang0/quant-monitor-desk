@@ -18,6 +18,7 @@ from tests.contract_gate_support import (
     scan_strategy_exec_patterns,
     scan_sys_path_mutation_with_reference_dir,
 )
+from tests.repo_paths import impl_task, repo_relative
 
 GUARDRAILS = PROJECT_ROOT / "specs/contracts/reference_adoption_guardrails.yaml"
 
@@ -244,9 +245,9 @@ def test_batch3frCardsDoNotRequireCentralInventory() -> None:
     验证点：无正向执行依赖句式；redirect 卡须标明不可直接实现
     失败含义：3F-R 派发会回到已否决的中央 inventory 工作流
     """
-    batch_dir = PROJECT_ROOT / (
-        "docs/implementation_tasks/ROUND_3_REFERENCE_ADOPTION_REFACTOR/"
-        "BATCH_3FR_REFERENCE_ADOPTION_REFACTOR"
+    batch_dir = impl_task(
+        "ROUND_3_REFERENCE_ADOPTION_REFACTOR",
+        "BATCH_3FR_REFERENCE_ADOPTION_REFACTOR",
     )
     inventory_name = "reference_adoption_inventory.md"
     offenders: list[str] = []
@@ -282,12 +283,12 @@ def test_r3fr01PlanningWordingAndLooseCardRedirects() -> None:
     """
     planning_paths = (
         PROJECT_ROOT / "MODULE_COMPLETION_RATING.md",
-        PROJECT_ROOT / "docs/implementation_tasks/README.md",
         PROJECT_ROOT / "PROJECT_IMPLEMENTATION_ROADMAP.md",
+        PROJECT_ROOT / "MIGRATION_MAP.md",
     )
     assert markdown_paths_missing_phrase("地图不是工单", planning_paths) == []
 
-    loose_dir = PROJECT_ROOT / "docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST"
+    loose_dir = impl_task("ROUND_4_API_FRONTEND_AGENT_BACKTEST")
     for card in sorted(loose_dir.glob(_LOOSE_ROUND4_GLOB)):
         body = card.read_text(encoding="utf-8").lower()
         assert "historical input notice" in body, card.name
@@ -324,7 +325,7 @@ def test_r3fr01DownstreamCardsGovernanceBoundaries() -> None:
     )
     offenders: list[str] = []
     for rel in _R3FR01_DOWNSTREAM_REL:
-        path = PROJECT_ROOT / rel
+        path = repo_relative(rel)
         text = path.read_text(encoding="utf-8")
         lower = text.lower()
         for line in text.splitlines():
@@ -367,7 +368,7 @@ def test_productionCompletionPlanIsCoverageMapOnly() -> None:
     验证点：文件明确包含 coverage map、not a standalone execution task card、owning canonical task card
     失败含义：执行者可能绕过具体任务卡，回到中央 inventory 风险
     """
-    path = PROJECT_ROOT / "docs/implementation_tasks/PRODUCTION_COMPLETION_VERTICAL_SLICE_PLAN.md"
+    path = impl_task("PRODUCTION_COMPLETION_VERTICAL_SLICE_PLAN.md")
     text = path.read_text(encoding="utf-8")
     assert "coverage map" in text
     assert "not a standalone execution task card" in text
@@ -387,9 +388,9 @@ def test_r3frAdaptingCardsDeclareReferenceProject() -> None:
     验证点：含 参考项目 的卡必须有 reference_project: 与 allowed_use
     失败含义：执行 agent 可跳过 license 决策直接改代码
     """
-    batch_dir = PROJECT_ROOT / (
-        "docs/implementation_tasks/ROUND_3_REFERENCE_ADOPTION_REFACTOR/"
-        "BATCH_3FR_REFERENCE_ADOPTION_REFACTOR"
+    batch_dir = impl_task(
+        "ROUND_3_REFERENCE_ADOPTION_REFACTOR",
+        "BATCH_3FR_REFERENCE_ADOPTION_REFACTOR",
     )
     missing: list[str] = []
     for card in sorted(batch_dir.glob("R3FR_0[2-7]_*.md")):
@@ -471,7 +472,7 @@ def test_r3fr04Round4BacktestPlanningClosure() -> None:
     验证点：Batch A/B/C、九参考路径、五切片各含 Not done if、manifest/hardening 同步、forbidden_api 完整
     失败含义：执行 agent 仍可能从零设计回测引擎，或跳过 evidence 绑定与 no-action deny-list
     """
-    b04_path = PROJECT_ROOT / _R3FR04_ROUND4_TARGET_REL[0]
+    b04_path = repo_relative(_R3FR04_ROUND4_TARGET_REL[0])
     text = b04_path.read_text(encoding="utf-8")
     for needle in (
         "Batch A",
@@ -488,8 +489,8 @@ def test_r3fr04Round4BacktestPlanningClosure() -> None:
         assert slice_id in text, f"B04_05 missing slice {slice_id}"
         assert _slice_has_not_done(text, slice_id), f"B04_05 slice {slice_id} missing Not done if"
 
-    manifest = (PROJECT_ROOT / _R3FR04_ROUND4_TARGET_REL[1]).read_text(encoding="utf-8")
-    hardening = (PROJECT_ROOT / _R3FR04_ROUND4_TARGET_REL[2]).read_text(encoding="utf-8")
+    manifest = repo_relative(_R3FR04_ROUND4_TARGET_REL[1]).read_text(encoding="utf-8")
+    hardening = repo_relative(_R3FR04_ROUND4_TARGET_REL[2]).read_text(encoding="utf-8")
     for doc_name, body in (("manifest", manifest), ("hardening", hardening)):
         for needle in ("Batch A", "Batch B", "Batch C", "B04_05-A", "**Not done if:**"):
             assert needle in body, f"BATCH_04 {doc_name} missing R3FR-04 sync marker: {needle}"
@@ -544,7 +545,7 @@ def test_r3fr05ProviderCatalogClosure() -> None:
     验证点：任务卡 qmd_target_files、catalog 25 providers、guardrails required_tests 含本测试
     失败含义：R3FR-05 交付不可审计或 OpenBB catalog 路径/护栏未闭环
     """
-    card = (PROJECT_ROOT / _R3FR05_CARD_REL).read_text(encoding="utf-8")
+    card = repo_relative(_R3FR05_CARD_REL).read_text(encoding="utf-8")
     for needle in (
         "reference_project:",
         "allowed_use: architecture_only",

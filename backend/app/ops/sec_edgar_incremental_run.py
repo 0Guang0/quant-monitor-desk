@@ -16,11 +16,18 @@ from backend.app.datasources.fetch_result import FetchResult
 from backend.app.datasources.service import DataSourceService
 from backend.app.ops.macro_incremental_common import (
     MacroIncrementalFetchProxy,
+    _normalize_incremental_job_status,
+    incremental_evidence_as_of,
     incremental_validation_patch_factory,
     load_incremental_route_bundle,
+    persist_incremental_fetch_payload,
 )
 from backend.app.ops.sandbox_clean_write.clean_write_targets import resolve_clean_write_target
-from backend.app.ops.sec_edgar_incremental_watermark import STAGING_TABLE, read_since_date_for_cik
+from backend.app.ops.sec_edgar_incremental_watermark import (
+    STAGING_TABLE,
+    read_filing_date_watermark,
+    read_since_date_for_cik,
+)
 from backend.app.storage.raw_store import RawStore
 from backend.app.sync.jobs import SyncJobSpec
 from backend.app.sync.orchestrator import DataSyncOrchestrator
@@ -51,6 +58,7 @@ def us_disclosure_staging_rows_from_bundle(
     *,
     cik: str,
     start_date: str | None = None,
+    cold_start_fallback: bool = False,
 ) -> list[dict[str, object]]:
     now = datetime.now(UTC)
     content_hash = str(bundle.get("content_hash") or "sec-edgar-hash")
@@ -85,6 +93,10 @@ def us_disclosure_staging_rows_from_bundle(
                 "created_at": now,
             }
         )
+    if not rows and cold_start_fallback and start_date and bundle.get("filings"):
+        return us_disclosure_staging_rows_from_bundle(
+            bundle, cik=cik, start_date=None, cold_start_fallback=False
+        )[:3]
     return rows
 
 
@@ -119,10 +131,23 @@ def _make_sec_edgar_staging_adapter_class():
                     fetch_time=fetch_time,
                     error_message=f"invalid sec edgar evidence JSON: {exc}",
                 )
+            cik = req.instrument_id or _DEFAULT_CIK
+            cold_start = read_filing_date_watermark(con, cik) is None
             rows = us_disclosure_staging_rows_from_bundle(
                 bundle,
-                cik=req.instrument_id or _DEFAULT_CIK,
+                cik=cik,
                 start_date=req.start_time[:10] if req.start_time else None,
+                cold_start_fallback=cold_start,
+            )
+            persist_incremental_fetch_payload(
+                self,
+                payload,
+                req,
+                as_of=incremental_evidence_as_of(
+                    bundle,
+                    fetch_time=fetch_time,
+                    start_date=req.start_time[:10] if req.start_time else None,
+                ),
             )
             if not rows:
                 return FetchResult(
@@ -219,12 +244,7 @@ def build_sec_edgar_incremental_service(
 
 
 def _display_status(result) -> str:
-    if result.status != "FAILED_FINAL":
-        return result.status
-    msg = result.message or ""
-    if msg.startswith(_WATERMARK_EMPTY_MSG):
-        return "EMPTY_RESPONSE"
-    return result.status
+    return _normalize_incremental_job_status(result)
 
 
 def run_sec_edgar_incremental(
@@ -289,5 +309,12 @@ def run_sec_edgar_incremental(
                 }
             )
     statuses = [r["status"] for r in results]
-    overall = "COMPLETED" if all(s in {"COMPLETED", "EMPTY_RESPONSE"} for s in statuses) else "FAILED"
+    overall = (
+        "COMPLETED"
+        if all(s in {"COMPLETED", "EMPTY_RESPONSE"} for s in statuses)
+        else "NETWORK_ERROR"
+        if statuses and all(s in {"COMPLETED", "EMPTY_RESPONSE", "NETWORK_ERROR"} for s in statuses)
+        and any(s == "NETWORK_ERROR" for s in statuses)
+        else "FAILED"
+    )
     return SecEdgarIncrementalRunReport(cik_results=tuple(results), overall_status=overall)

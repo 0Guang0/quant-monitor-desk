@@ -52,6 +52,25 @@ def build_service(cm: ConnectionManager, raw_root: Path) -> tuple[DataSourceServ
     return service, orch
 
 
+def build_live_service(
+    cm: ConnectionManager,
+    raw_root: Path,
+    monkeypatch,
+) -> tuple[DataSourceService, DataSyncOrchestrator]:
+    """Product live baostock service (use_mock=False, ADR-027 opt-in)."""
+    from backend.app.ops.baostock_incremental_run import build_baostock_incremental_service
+
+    monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
+    orch = DataSyncOrchestrator(cm)
+    service = build_baostock_incremental_service(
+        data_root=raw_root,
+        symbol=SYMBOL,
+        job_events=orch._jobs,
+        use_mock=False,
+    )
+    return service, orch
+
+
 def incremental_spec(window, *, job_id: str) -> SyncJobSpec:
     return SyncJobSpec(
         run_id=job_id,

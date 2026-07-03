@@ -3,16 +3,15 @@
 from __future__ import annotations
 
 from tests.contract_gate_support import PROJECT_ROOT
+from tests.repo_paths import impl_task
 
-BATCH3H_ROOT = (
-    PROJECT_ROOT
-    / "docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY"
-    / "BATCH_3H_REAL_DATA_PRODUCTION_ENTRY"
+BATCH3H_ROOT = impl_task(
+    "ROUND_3_REAL_DATA_PRODUCTION_ENTRY",
+    "BATCH_3H_REAL_DATA_PRODUCTION_ENTRY",
 )
-ROUND4_ROOT = (
-    PROJECT_ROOT
-    / "docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST"
-    / "BATCH_04_VERIFIED_AUDIT_PRODUCTIZATION"
+ROUND4_ROOT = impl_task(
+    "ROUND_4_API_FRONTEND_AGENT_BACKTEST",
+    "BATCH_04_VERIFIED_AUDIT_PRODUCTIZATION",
 )
 
 SOURCE_GROUPS = {

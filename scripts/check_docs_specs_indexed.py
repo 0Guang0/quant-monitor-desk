@@ -68,7 +68,9 @@ def check_migration_map_coverage() -> list[str]:
         if rel in WAIVERS:
             continue
         if rel.startswith("docs/") or rel.startswith("specs/"):
-            if not (REPO_ROOT / rel).is_file():
+            from repo_path_resolve import repo_path_exists
+
+            if not repo_path_exists(rel):
                 errors.append(f"stale MIGRATION_MAP ref: {rel}")
     return errors
 

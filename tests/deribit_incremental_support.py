@@ -18,6 +18,7 @@ from backend.app.ops.deribit_incremental_watermark import (
     read_since_date_for_instrument,
 )
 from backend.app.sync.orchestrator import DataSyncOrchestrator
+from tests.live_incremental_support import bootstrap_acceptance_cm, bootstrap_port_live_e2e_ctx
 
 INSTRUMENT = "BTC-28JUN24-65000-C"
 AS_OF_DATE = date(2024, 6, 25)
@@ -31,8 +32,8 @@ def bootstrap_db(tmp_path: Path) -> ConnectionManager:
     return cm
 
 
-def seed_watermark_row(con, as_of_date: str) -> None:
-    con.execute("DELETE FROM crypto_derivative_clean WHERE instrument_name = ?", [INSTRUMENT])
+def seed_watermark_row(con, as_of_date: str, *, instrument_name: str = INSTRUMENT) -> None:
+    con.execute("DELETE FROM crypto_derivative_clean WHERE instrument_name = ?", [instrument_name])
     as_of_ts = datetime.combine(date.fromisoformat(as_of_date), datetime.min.time(), tzinfo=UTC)
     con.execute(
         """
@@ -41,8 +42,63 @@ def seed_watermark_row(con, as_of_date: str) -> None:
             source_used, batch_id, created_at
         ) VALUES (?, ?, 'crypto_options_surface', 65000, 'call', 0.50, 'seed', 'b0', CURRENT_TIMESTAMP)
         """,
-        [INSTRUMENT, as_of_ts],
+        [instrument_name, as_of_ts],
     )
+
+
+def _resolve_deribit_live_instrument(port) -> str:
+    """Pick a current instrument from live Deribit surface (expired mock names won't match)."""
+    import json
+
+    from backend.app.datasources.fetch_result import FetchRequest
+
+    req = FetchRequest(
+        run_id="deribit-live-probe",
+        source_id="deribit",
+        data_domain="crypto_options_surface",
+        instrument_id=INSTRUMENT,
+    )
+    payload = port.fetch_payload(req)
+    bundle = json.loads(payload.content.decode("utf-8"))
+    instruments = bundle.get("instruments") or []
+    if not instruments:
+        pytest.skip("Deribit live returned no instruments")
+    name = str(instruments[0].get("instrument_name") or "")
+    if not name:
+        pytest.skip("Deribit live instrument missing instrument_name")
+    return name
+
+
+def bootstrap_deribit_live_e2e_ctx(
+    sandbox_root: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> dict[str, Any]:
+    """Bootstrap Deribit live e2e under isolated M-DATA-03 sandbox (ADR-034)."""
+    monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    probe = create_deribit_fetch_port(
+        instruments=(INSTRUMENT,), max_surface_rows=50, use_mock=False
+    )
+    live_instrument = _resolve_deribit_live_instrument(probe)
+
+    def _since_reader(con, instrument_ids: tuple[str, ...]) -> dict[str, Any]:
+        inst = instrument_ids[0]
+        return {inst: read_since_date_for_instrument(con, inst)}
+
+    ctx = bootstrap_port_live_e2e_ctx(
+        sandbox_root,
+        monkeypatch,
+        source_id="deribit",
+        data_domain="crypto_derivatives",
+        port_factory=lambda **kw: create_deribit_fetch_port(
+            instruments=(live_instrument,), max_surface_rows=50, **kw
+        ),
+        service_builder=build_deribit_incremental_service,
+        registry_factory=enabled_deribit_source_registry,
+        since_reader=_since_reader,
+        instrument_ids=(live_instrument,),
+    )
+    return {**ctx, "instrument": live_instrument}
 
 
 @pytest.fixture

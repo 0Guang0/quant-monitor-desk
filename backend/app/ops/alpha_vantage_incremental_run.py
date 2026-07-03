@@ -14,6 +14,10 @@ from backend.app.datasources.adapters.fetch_port import FetchPort, PortError
 from backend.app.datasources.adapters.skeleton_base import SkeletonAdapterBase, _utc_now_iso
 from backend.app.datasources.fetch_result import FetchRequest, FetchResult
 from backend.app.datasources.service import DataSourceService
+from backend.app.ops.macro_incremental_common import (
+    incremental_evidence_as_of,
+    persist_incremental_fetch_payload,
+)
 from backend.app.ops.sandbox_clean_write.clean_write_targets import resolve_clean_write_target
 from backend.app.storage.raw_store import RawStore
 from backend.app.sync.jobs import SyncJobSpec
@@ -78,6 +82,12 @@ def _make_alpha_vantage_staging_adapter_class():
                     fetch_time=fetch_time,
                     error_message=_WATERMARK_EMPTY_MSG,
                 )
+            persist_incremental_fetch_payload(
+                self,
+                payload,
+                req,
+                as_of=str(filtered[-1].get("trade_date") or fetch_time[:10]),
+            )
             con.execute(f"DELETE FROM {_BAR_STAGING_TABLE}")
             for bar in filtered:
                 close = float(bar.get("close") or 0.0)

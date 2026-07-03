@@ -16,7 +16,7 @@ ADR_002 = PROJECT_ROOT / "docs/decisions/ADR-002-db-check-vs-app-validation.md"
 MIGRATION_COVERAGE = PROJECT_ROOT / "docs/schema/MIGRATION_COVERAGE.md"
 MIGRATION_008_PLAN = PROJECT_ROOT / "docs/schema/MIGRATION_008_PLAN.md"
 ROADMAP = PROJECT_ROOT / "PROJECT_IMPLEMENTATION_ROADMAP.md"
-ROUND3_MAP = PROJECT_ROOT / "ROUND3_BATCH_IMPLEMENTATION_MAP.md"
+from tests.repo_paths import ROUND3_BATCH_IMPLEMENTATION_MAP as ROUND3_MAP
 
 
 def test_r3fMig01_migration009_statusChecks_present_verifyOnly() -> None:

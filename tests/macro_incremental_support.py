@@ -14,6 +14,7 @@ from backend.app.db.migrate import apply_migrations
 from backend.app.ops.macro_incremental_common import MacroIncrementalFetchProxy
 from backend.app.sync.orchestrator import DataSyncOrchestrator
 from tests.fred_macro_incremental_support import insert_axis_observation
+from tests.live_incremental_support import ACCEPTANCE_DUCKDB_NAME, bootstrap_acceptance_cm
 from tests.service_path_support import enable_source_route
 
 
@@ -68,4 +69,56 @@ def build_macro_e2e_ctx(
     }
 
 
-__all__ = ["build_macro_e2e_ctx", "bootstrap_macro_incremental_db", "insert_axis_observation"]
+def bootstrap_macro_live_e2e_ctx(
+    sandbox_root: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    *,
+    source_id: str,
+    data_domain: str,
+    port_factory: Callable[..., Any],
+    since_reader: Callable,
+    instrument_ids: tuple[str, ...],
+    service_builder: Callable,
+    registry_factory: Callable,
+) -> dict[str, Any]:
+    """Bootstrap macro live e2e under isolated M-DATA-03 sandbox (ADR-034)."""
+    monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    enable_source_route(
+        monkeypatch,
+        source_id=source_id,
+        data_domain=data_domain,
+        primary_source_id=source_id,
+    )
+    cm = bootstrap_acceptance_cm(sandbox_root)
+    raw_root = sandbox_root / "raw" / source_id
+    raw_root.mkdir(parents=True, exist_ok=True)
+    port = port_factory(use_mock=False)
+    orch = DataSyncOrchestrator(cm)
+    with cm.writer() as con:
+        since_map = since_reader(con, instrument_ids)
+    registry = registry_factory()
+    service = service_builder(
+        data_root=raw_root,
+        fetch_port=port,
+        since_by_instrument=since_map,
+        job_events=orch._jobs,
+        source_registry=registry,
+    )
+    return {
+        "cm": cm,
+        "orch": orch,
+        "service": service,
+        "registry": registry,
+        "port": port,
+        "raw_root": raw_root,
+        "sandbox_root": sandbox_root,
+    }
+
+
+__all__ = [
+    "build_macro_e2e_ctx",
+    "bootstrap_macro_incremental_db",
+    "bootstrap_macro_live_e2e_ctx",
+    "insert_axis_observation",
+]

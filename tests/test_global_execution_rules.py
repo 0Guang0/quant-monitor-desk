@@ -40,4 +40,4 @@ def test_implementationTasksReadme_referencesGlobalRules_shouldLinkExecutionOrde
     """
     readme = (PROJECT_ROOT / "docs/implementation_tasks/README.md").read_text(encoding="utf-8")
     assert "GLOBAL_EXECUTION_RULES.md" in readme
-    assert "ROUND_0_PROJECT_SCAFFOLD" in readme
+    assert "archive/legacy-pre-module-v2-20260702" in readme

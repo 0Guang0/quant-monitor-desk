@@ -3,9 +3,34 @@
 > **Purpose:** operator-facing status snapshot for planning and audit only.  
 > **Not a design authority:** design documents, architecture documents, contracts, and rule definitions describe the desired complete product shape. They should not be downgraded with implementation-status labels.  
 > **Planning authority:** execution plans and task cards must use this file to avoid claiming a module is complete when only scaffold, staged fixture, or sandbox evidence exists.  
+> **Evidence rule (Pass E):** **Rating 列只信可执行代码 + pytest/vitest**；已 CLOSED 任务卡 / Plan 产物 **不**自动抬升评级；子集竖切记 **Milestone** 列，不得写入 Rating 列。  
 > **Reference adoption:** rating movements for R3FR batches must also satisfy `specs/contracts/reference_adoption_guardrails.yaml` (`license_gate`, max three batches per module).  
-> **Machine index:** `specs/context/authority_graph.yaml`（v2，`module_ids` + `rating_index`）· `docs/generated/project_map.generated.md` · `PROJECT_IMPLEMENTATION_ROADMAP.md` §5.0.6 · §8.  
-> **Last reconciled:** 2026-07-01（§3 Pass D — Wave 1–3 CLOSED @ `893e6e2b`）；**2026-06-29b** 增补 `specs/` 全量 + `docs/` 交叉核对仍有效。
+> **Machine index:** `specs/context/authority_graph.yaml`（v2，`module_ids` + `rating_index`）· `docs/generated/project_map.generated.md` · `PROJECT_IMPLEMENTATION_ROADMAP.md` §3 · §8.  
+> **Last reconciled:** **2026-07-03 M-DATA-03 关账** — Tier A 沙箱双跑 exit 0（10 PASS + sec_edgar `FAIL_EXTERNAL`/SEC TLS）· Tier B/C `product_live_gated` 关账 exit 0 · `pytest -q` + handoff exit 0；**R4 = sandbox only**
+
+---
+
+## 0. Pass E 总览（2026-07-02）
+
+| 维度                       | 结论                                                                                                                      |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| **已 CLOSED 任务 vs 模块** | Wave 4 DCP-05..10 等任务 **子集 AC 已绿**；**G1/G2/G4/K1/K2 模块 Rating 仍 R3**；**G5 仍 R2**；无建模模块因 DCP 达 **R4** |
+| **mock/replay 天花板**     | C3 十一源 e2e 默认 mock/replay；**M-DATA-03** 沙箱真网 11/11 双跑绿（诚实 R4）；Layer clean e2e 多为 tmp DB seed          |
+| **production_live**        | L2/L3/L4 **拒绝** `production_live`；L3–L4 全链在 **M-G2/G4-FULL** + **M-PASS-01** 闭合                                   |
+| **Round4 产品面**          | I1–I8 除 I3 壳外 **R0–R1**；B04 未开工                                                                                    |
+| **PASS 前硬门禁**          | **M-PASS-01**（§6.1.1）；非「Wave 4 建模已完工」                                                                          |
+
+### 0.1 评级分布（51 Module ID）
+
+| Rating | 数量 | 代表模块                                |
+| ------ | ---- | --------------------------------------- |
+| R0     | 5    | D3, E7, I2, I4, I5, I6                  |
+| R1     | 9    | A6, E6, H1, I1, I7, I8, J2, J3, J6, J7  |
+| R2     | 3    | A7, C4, G5, J4                          |
+| R3     | 17   | A1–A5, B3, C1, G1–G4, G6, J1, J5, K1–K3 |
+| R4     | 10   | B1–B2, C2–C3, D1, E1–E2, E4, F0         |
+| R5     | 1    | E5                                      |
+| R6     | 0    | —                                       |
 
 ---
 
@@ -21,6 +46,17 @@
 | `R5_LIMITED_PRODUCTION_ENTRY`       | Explicitly approved, capped production entry exists with before/after proof, rollback, and regression tests.                                                      | Production-limited only         |
 | `R6_FULL_PRODUCTION_STABLE`         | Stable production path, complete target-domain behavior, operational runbooks, monitoring, regression suite, and no open blocker for the module's promised scope. | Yes                             |
 
+### 1.1 Milestone vs Rating（Pass E 规则）
+
+| 列              | 含义                                        | 禁止                        |
+| --------------- | ------------------------------------------- | --------------------------- |
+| **Rating**      | 模块**当前**在量表上的级别（全声明 scope）  | 用任务 CLOSED 直接改 Rating |
+| **Milestone**   | 已交付的**有界竖切**（可引用 DCP/R3H ID）   | 把子集写成「模块已达 R4」   |
+| **Close round** | 模块核心能力预计在哪一轮 **R6 发布确认**    | 与 Rating 混为一谈          |
+| **批/3**        | 向 R6 已消耗的实现批次（非 Trellis 任务数） | 用审计 finding 数充批次     |
+
+**子集达标不抬升整模块的典型例：** DCP-06 五轴 P0 clean read → Milestone ✅；G1 Rating 仍 **R3**（ingestion 默认 staged；无 sync→clean→Layer1 集成测）。
+
 ---
 
 ## 2. Anti-overengineering completion rule
@@ -35,7 +71,7 @@ For every module or major feature after this file lands:
    - production-complete closure;
    - hardening/regression closure.
 5. Repeated micro-slices such as “add one metric”, “add one flag”, “add one registry note”, or “add one narrow test” without moving the module to the next rating level are treated as overengineering unless they are part of the same batch PR.
-6. Every task card must cite **`Module ID`** from §3 and the intended rating movement (e.g. `R3 → R4`).
+6. Every **new** task card must cite **Module ID** (§3) and which **rating movement** it will deliver — if only a milestone, say so explicitly.
 
 **Batch column (`批/3`):** implementation batches already spent toward `R6` for the **declared module scope** (not Trellis task count).
 
@@ -45,214 +81,211 @@ For every module or major feature after this file lands:
 
 `docs/implementation_tasks/PRODUCTION_COMPLETION_VERTICAL_SLICE_PLAN.md` remains a coverage map only — **not** a work order. 通俗说：**地图不是工单；任务卡才是工单。**
 
+> **列说明：** Evidence 仅列**可复验**代码/测试路径；`（窄）` = 能力存在但 scope 明显小于设计权威。
+
 ### 3.A Platform foundation
 
-| ID  | Module                                   | Design authority                                                                                   | Rating                      | 批/3 | Close round | Evidence (2026-07-01)                                                                          | Required next movement                                                         |
-| --- | ---------------------------------------- | -------------------------------------------------------------------------------------------------- | --------------------------- | ---- | ----------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| A1  | Project scaffold / config / test harness | `GLOBAL_TESTING_POLICY.md`, `tests/test_catalog.yaml`                                              | `R3_STAGED_FIXTURE_CLOSED`  | 2/3  | R5          | pytest catalog, config templates, loop_maintain gates                                          | Batch05 release packaging + test-catalog consistency only.                     |
-| A2  | DuckDB schema / migration foundation     | `db_platform`, `docs/schema/MIGRATION_COVERAGE.md`                                                 | `R3_STAGED_FIXTURE_CLOSED`  | 2/3  | R5          | migrations 001–014, `test_schema_migration.py`, `test_migration_coverage.py`                   | Batch05 migration hygiene + drift gate; no endless DDL slices.                 |
-| A3  | Storage / evidence primitives            | `core_platform`, `docs/modules/local_file_system.md`                                               | `R3_STAGED_FIXTURE_CLOSED`  | 2/3  | R3→R5       | **R3H-08 CLOSED** @ 2026-06-29: live fetch evidence on product path; `test_raw_store.py`       | R3-DCP-10 (G5) + R3H-05: schema_hash/content_hash bind; Batch05 lineage audit. |
-| A4  | ResourceGuard / performance budget       | `core_platform`, `docs/ops/performance_limits.md`                                                  | `R3_STAGED_FIXTURE_CLOSED`  | 2/3  | R3→R5       | **R3H-08 CLOSED** @ 2026-06-29: caps on live adapter/sync/API paths; `resource_guard.py` tests | R3-DCP-06 五轴 + Batch05: prove caps on every remaining smoke path.            |
-| A5  | Snapshot lineage kernel                  | `core_platform`, `snapshot_lineage_contract.yaml`                                                  | `R3_STAGED_FIXTURE_CLOSED`  | 2/3  | R4→R5       | `backend/app/core/snapshot_lineage.py`, `test_snapshot_lineage_kernel.py`                      | Bind to Layer snapshot builders + Batch05 regression.                          |
-| A6  | Spec migrator (offline registry tool)    | `spec_migrator_contract.yaml`                                                                      | `R1_SCAFFOLD`               | 0/3  | Batch6→R5   | contract defines dry-run migrator; **`tests/test_spec_migrator.py` 未实现**                    | Batch6 hygiene or ADR-wont-fix; runtime loaders stay strict.                   |
-| A7  | Platform matrix + dependency extras      | `platform_source_matrix.yaml`, `dependency_extras_contract.yaml`, `06_deployment_and_local_ops.md` | `R2_MINIMAL_VERTICAL_SLICE` | 1/3  | R5          | `test_dependency_extras_contract.py`; deployment matrix in architecture doc                    | Batch05: optional extras + platform posture in release manifest.               |
+| ID  | Module                                   | Design authority                                                 | Rating                      | 批/3 | Milestone（子集，非 Rating）   | Close round | Evidence（Pass E @ `68f70206`）                                                                                      | 活票 / 归属（§1.8）                            |
+| --- | ---------------------------------------- | ---------------------------------------------------------------- | --------------------------- | ---- | ------------------------------ | ----------- | -------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| A1  | Project scaffold / config / test harness | `GLOBAL_TESTING_POLICY.md`, `tests/test_catalog.yaml`            | `R3_STAGED_FIXTURE_CLOSED`  | 2/3  | loop/catalog gates             | R5          | `tests/test_loop_engineering_flow.py` · `test_project_scaffold.py` · `test_catalog.yaml`                             | Batch05                                        |
+| A2  | DuckDB schema / migration foundation     | `db_platform`, `docs/schema/MIGRATION_COVERAGE.md`               | `R3_STAGED_FIXTURE_CLOSED`  | 2/3  | mig 001–015 incl. DCP-05       | R5          | `backend/app/db/migrations/` · `tests/test_schema_migration.py` · `test_migration_coverage.py`                       | Batch05                                        |
+| A3  | Storage / evidence primitives            | `core_platform`, `docs/modules/local_file_system.md`             | `R3_STAGED_FIXTURE_CLOSED`  | 2/3  | R3H-08 staging · DCP-10 bridge | R3→R5       | `backend/app/storage/raw_store.py` · `tests/test_raw_store.py` · `tests/test_layer5_provenance_bridge.py`            | **M-G5-FULL** + **M-PASS-01**                  |
+| A4  | ResourceGuard / performance budget       | `core_platform`, `docs/ops/performance_limits.md`                | `R3_STAGED_FIXTURE_CLOSED`  | 2/3  | DCP-06 panel caps              | R3→R5       | `backend/app/core/resource_guard.py` · `tests/test_resource_guard.py` · `test_layer1_five_axis_panel_clean_smoke.py` | **M-G1-03** / **M-PASS-01**                    |
+| A5  | Snapshot lineage kernel                  | `core_platform`, `snapshot_lineage_contract.yaml`                | `R3_STAGED_FIXTURE_CLOSED`  | 2/3  | kernel unit tests              | R4→R5       | `backend/app/core/snapshot_lineage.py` · `tests/test_snapshot_lineage_kernel.py`                                     | **M-G1-03**                                    |
+| A6  | Spec migrator (offline registry tool)    | `spec_migrator_contract.yaml`                                    | `R1_SCAFFOLD`               | 0/3  | —                              | Batch6→R5   | `specs/contracts/spec_migrator_contract.yaml`；**无** `tests/test_spec_migrator.py`                                  | 实现 dry-run migrator 或 ADR-wont-fix          |
+| A7  | Platform matrix + dependency extras      | `platform_source_matrix.yaml`, `dependency_extras_contract.yaml` | `R2_MINIMAL_VERTICAL_SLICE` | 1/3  | contract tests                 | R5          | `tests/test_dependency_extras_contract.py` · `tests/test_platform_source_matrix.py`                                  | Batch05 release manifest 写入 platform posture |
 
 ### 3.B Validation and write path
 
-| ID  | Module                          | Design authority                                | Rating                              | 批/3 | Close round | Evidence                                                                                                | Required next movement                                                                   |
-| --- | ------------------------------- | ----------------------------------------------- | ----------------------------------- | ---- | ----------- | ------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| B1  | WriteManager + DbValidationGate | `validators`, `docs/modules/write_manager.md`   | `R4_SANDBOX_REAL_DATA_OR_REHEARSAL` | 2/3  | R3→R5       | `write_manager.py` upsert_by_pk + three-domain clean @ R3H-06; transaction gate tests; R3G promote path | Batch 3: main-DB posture + Batch05 integration smoke; **not** silent full-history write. |
-| B2  | Data quality validator          | `validators`, `data_quality_rules.yaml`         | `R3_STAGED_FIXTURE_CLOSED`          | 2/3  | R3→R5       | **R3H-08 CLOSED** @ 2026-06-29: profiles on live paths; `market_bar_p0` + DCP-03 inspect                | R3H-05: per-source/domain profile posture before PASS claims.                            |
-| B3  | Source conflict validator       | `validators`, `data_validation_and_conflict.md` | `R3_STAGED_FIXTURE_CLOSED`          | 2/3  | R3          | **R3H-08 CLOSED** @ 2026-06-29: live conflict outcomes; `source_conflict.py` + manual_review_queue      | R3H-05: reconcile outcomes per ready source before PASS.                                 |
+| ID  | Module                          | Design authority                                | Rating                              | 批/3 | Milestone                                               | Close round | Evidence                                                                                                                                                                                | 活票 / 归属（§1.8）                                         |
+| --- | ------------------------------- | ----------------------------------------------- | ----------------------------------- | ---- | ------------------------------------------------------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| B1  | WriteManager + DbValidationGate | `validators`, `docs/modules/write_manager.md`   | `R4_SANDBOX_REAL_DATA_OR_REHEARSAL` | 2/3  | R3H-06 upsert · R3G sandbox promote                     | R3→R5       | `write_manager.py` · `tests/test_write_manager.py` · `test_round3g_limited_production_clean_write.py`（**仅** `.audit-sandbox`；`test_PromoteRunner_refusesCanonicalProductionDbPath`） | Batch05 main-DB posture smoke 或 manifest 声明 sandbox-only |
+| B2  | Data quality validator          | `validators`, `data_quality_rules.yaml`         | `R4_SANDBOX_REAL_DATA_OR_REHEARSAL` | 2/3  | R3H-08 profiles · DCP-03 · M-DATA-03 B2 main path 11/11 | R3→R5       | `validators/data_quality.py` · `test_data_quality_validator.py` · `test_tier_a_live_b2_acceptance.py` · acceptance `validate_table` per `source_bindings`                               | **M-DATA-03** 诚实 R4                                       |
+| B3  | Source conflict validator       | `validators`, `data_validation_and_conflict.md` | `R3_STAGED_FIXTURE_CLOSED`          | 2/3  | R3H-08 live outcomes                                    | R3          | `validators/source_conflict.py` · `tests/test_source_conflict_validator.py`                                                                                                             | **M-PASS-01**                                               |
 
 ### 3.C Data sources and routing
 
-| ID  | Module                                       | Design authority                                                       | Rating                              | 批/3 | Close round | Evidence                                                                                                   | Required next movement                                                |
-| --- | -------------------------------------------- | ---------------------------------------------------------------------- | ----------------------------------- | ---- | ----------- | ---------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| C1  | Source registry / capability / route planner | `datasources`, `source_route_plan.md`, `source_capability_registry.md` | `R3_STAGED_FIXTURE_CLOSED`          | 2/3  | R3          | `source_registry.yaml`, route/capability tests, R3H-01～04 registry reconcile                              | R3H-05: 25-row final posture; no orphan registry rows.                |
-| C2  | DataSourceService facade                     | `datasources`, `datasource_service.md`                                 | `R4_SANDBOX_REAL_DATA_OR_REHEARSAL` | 2/3  | R3→R4       | **R3H-10 CLOSED** @ 2026-06-29: SSOT contract; no bypass on sync/API paths; `test_datasource_service.py`   | R3H-05 registry posture; Wave 4 DCP-05 incremental on Tier A sources. |
-| C3  | Vendor adapters / provider fetch ports       | `datasources`, `data_sources.md`, `fetch_ports/*` (29 port modules)    | `R4_SANDBOX_REAL_DATA_OR_REHEARSAL` | 2/3  | R3→R4       | **R3H-08 CLOSED** @ 2026-06-29: 24源 env-gated live→Tier A/B/C; **R3-DCP-01/02** baostock+fred incremental | Wave 4 **R3-DCP-05**: Tier A watermark 扩展；R3H-05 终态审计。        |
-| C4  | Provider catalog / auth-license gate         | `provider_catalog.yaml`, `license_gate.py`                             | `R2_MINIMAL_VERTICAL_SLICE`         | 2/3  | R3→R5       | R3FR-05 provider catalog tests @ `6c1a0d37`                                                                | R3H-05: per-source license/auth/resource posture in release manifest. |
+| ID  | Module                                       | Design authority                           | Rating                              | 批/3 | Milestone                                             | Close round | Evidence                                                                                                                                                   | 活票 / 归属（§1.8）             |
+| --- | -------------------------------------------- | ------------------------------------------ | ----------------------------------- | ---- | ----------------------------------------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| C1  | Source registry / capability / route planner | `datasources`, `source_route_plan.md`      | `R3_STAGED_FIXTURE_CLOSED`          | 2/3  | R3H-01～04 reconcile                                  | R3          | `source_registry.yaml` · `tests/test_source_registry.py` · `test_tierA_incremental_registry.py`                                                            | **M-PASS-01**                   |
+| C2  | DataSourceService facade                     | `datasources`, `datasource_service.md`     | `R4_SANDBOX_REAL_DATA_OR_REHEARSAL` | 2/3  | R3H-10 bypass guards                                  | R3→R4       | `datasources/service.py` · `tests/test_datasource_service.py` · `test_sync_orchestrator.py`（R3H-10 / R3Y-SYNC）                                           | 历史 CLOSED；**M-PASS-01** 审计 |
+| C3  | Vendor adapters / provider fetch ports       | `datasources`, `fetch_ports/*`             | `R4_SANDBOX_REAL_DATA_OR_REHEARSAL` | 2/3  | R3H-08 port live gate · DCP-05 · M-DATA-03 11/11 live | R3→R4       | `fetch_ports/*` · 11× `test_*_incremental_e2e.py`（默认 mock/replay）· `tier_a_live_acceptance.py` **11/11 exit 0**（`r2-tier-a-live-accept-evidence.md`） | **M-DATA-03** 诚实 R4           |
+| C4  | Provider catalog / auth-license gate         | `provider_catalog.yaml`, `license_gate.py` | `R2_MINIMAL_VERTICAL_SLICE`         | 2/3  | R3FR-05 catalog tests                                 | R3→R5       | `tests/test_provider_catalog.py` · `license_gate.py`                                                                                                       | **M-PASS-01**                   |
 
 ### 3.D Sync, scheduling, and task reliability
 
-| ID  | Module                         | Design authority                                             | Rating                              | 批/3 | Close round | Evidence                                                                                                      | Required next movement                                                                                                |
-| --- | ------------------------------ | ------------------------------------------------------------ | ----------------------------------- | ---- | ----------- | ------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| D1  | Data sync orchestration        | `sync_orchestrator`, `data_sync_orchestrator.md`             | `R4_SANDBOX_REAL_DATA_OR_REHEARSAL` | 2/3  | R3→R5       | **R3-DCP-01/02 CLOSED** @ 2026-06-30: baostock+fred watermark incremental; `watermark.py`, orchestrator tests | Wave 4 **R3-DCP-05** Tier A 扩展 + **R3-DCP-09** 有界 backfill；Batch6: FullLoad/idempotency edge.                    |
-| D2  | Task idempotency / retry / DLQ | `docs/ops/idempotency_retry_dlq_policy.md`                   | `R1_SCAFFOLD`                       | 0/3  | Batch6      | Policy doc only; **no** `idempotency_key` runtime in `backend/`                                               | Batch6: store/replay idempotency_key; do not block Round4 if write-level upsert suffices for PASS.                    |
-| D3  | Sync scheduler / cron product  | `data_sync_orchestrator.md` §CLI examples                    | `R0_NOT_STARTED`                    | 0/3  | R4→R5       | Design CLI (`quant_monitor.sync`); `run_full_load` deferred; **no** production cron module                    | R3: minimal manual/CLI trigger (D1); R4+: scheduler shell calling same entrypoint — **no new fetch logic in Round4**. |
-| D4  | Source health snapshot writer  | `ADR-024`, `data_sources.md` §5.8, `source_health_writer.py` | `R2_MINIMAL_VERTICAL_SLICE`         | 1/3  | Batch6      | isolated-test DDL writer + `test_source_health_snapshot.py`; **no** production migration (D2-P2-1)            | Batch6 + B3F-MIG: merge migration SQL; DH2 path must stay snapshot-free.                                              |
+| ID  | Module                         | Design authority                                 | Rating                              | 批/3    | Milestone                                       | Close round | Evidence                                                                                                  | 活票 / 归属（§1.8）                                                                                                                                    |
+| --- | ------------------------------ | ------------------------------------------------ | ----------------------------------- | ------- | ----------------------------------------------- | ----------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| D1  | Data sync orchestration        | `sync_orchestrator`, `data_sync_orchestrator.md` | `R4_SANDBOX_REAL_DATA_OR_REHEARSAL` | **3/3** | DCP-01/02/05/09 · M-DATA-03 11/11 live dispatch | R3→R5       | `sync/orchestrator.py` · `tier_a_live_incremental_dispatch.py` · live acceptance exit 0 · incremental e2e | **M-DATA-03** 隔离沙箱 R4；cninfo/world_bank/Tier B/C **product_live** 真 HTTP；sec_edgar live 已实现 · 本环境 SEC TLS→`FAIL_EXTERNAL`；**≠** 生产主库 |
+| D2  | Task idempotency / retry / DLQ | `docs/ops/idempotency_retry_dlq_policy.md`       | `R1_SCAFFOLD`                       | 0/3     | —                                               | Batch6      | 政策文档 only；**无** `idempotency_key` runtime                                                           | Batch6 store/replay 或 ADR 收窄为 write upsert 足够                                                                                                    |
+| D3  | Sync scheduler / cron product  | `data_sync_orchestrator.md` §CLI                 | `R0_NOT_STARTED`                    | 0/3     | —                                               | R4→R5       | 无 scheduler 模块；仅 `qmd data` 手动触发                                                                 | R4：scheduler shell 调 D1 同一 entrypoint                                                                                                              |
+| D4  | Source health snapshot writer  | `ADR-024`, `source_health_writer.py`             | `R2_MINIMAL_VERTICAL_SLICE`         | 1/3     | isolated writer test                            | Batch6      | `ops/source_health_writer.py` · `tests/test_source_health_snapshot.py`（`:memory:`）                      | Batch6 production migration                                                                                                                            |
 
 ### 3.E Ops, CLI, and sandbox entry
 
-| ID  | Module                                                       | Design authority                                                | Rating                              | 批/3 | Close round | Evidence                                                                                                     | Required next movement                                                                   |
-| --- | ------------------------------------------------------------ | --------------------------------------------------------------- | ----------------------------------- | ---- | ----------- | ------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
-| E1  | `qmd data` CLI (health / route / sync-plan / init / promote) | `ops`, `docs/ops/data_health_cli.md`                            | `R4_SANDBOX_REAL_DATA_OR_REHEARSAL` | 2/3  | R3→R5       | **R3-DCP-01/02 CLOSED**: `sync_baostock_incremental`, `_sync_fred_macro_incremental`; `test_qmd_data_cli.py` | Wave 4 DCP-05 Tier A incremental CLI；Batch05 operator packaging.                        |
-| E2  | Ops DB inspect + verification matrix                         | `ops`, `docs/ops/db_inspect_cli.md`                             | `R4_SANDBOX_REAL_DATA_OR_REHEARSAL` | 2/3  | R3→R5       | **R3-DCP-03 CLOSED** @ `eff49343`: post-write row count / max(trade_date) / `market_bar_p0` smoke            | Wave 4: replicate inspect pattern for Tier A tables after DCP-05.                        |
-| E3  | Production gate + equivalent smoke scripts                   | `ops`, `scripts/production_gate.py`                             | `R2_MINIMAL_VERTICAL_SLICE`         | 1/3  | R5          | `test_production_gate.py`, `production_equivalent_smoke.py`                                                  | Batch05 integration smoke owner; expand only with bounded budgets.                       |
-| E4  | Live / staged pilot runners                                  | `ops`, `production_live_pilot_policy.md`                        | `R4_SANDBOX_REAL_DATA_OR_REHEARSAL` | 2/3  | R3          | **R3H-08 CLOSED**: `ProductLiveGate` + tier routing; pilot scripts = audit input only                        | R3H-05 convergence; no new pilot feature batches.                                        |
-| E5  | Sandbox clean write / limited production entry               | `ops/sandbox_clean_write`, R3G task archive                     | `R5_LIMITED_PRODUCTION_ENTRY`       | 3/3  | R5 confirm  | R3G-01/02/03 @ `23429ad8`; promote quadruple-lock; R3H-06 clean routing                                      | Batch05 release manifest records write posture; no new feature batches unless scope ADR. |
-| E6  | Backup / recovery / disk thresholds                          | `docs/modules/ops_and_performance.md`, `backup_and_recovery.md` | `R1_SCAFFOLD`                       | 1/3  | R5          | `performance_limits.md` thresholds documented; partial cache/tmp paths; **no** automated backup runner       | Batch05: backup runbook + optional smoke; not a Round3 blocker.                          |
-| E7  | Ops report CLI                                               | `docs/ops/ops_report_cli.md`                                    | `R0_NOT_STARTED`                    | 0/3  | R4→R5       | Design only                                                                                                  | Implement with B04_04 notification/report runtime or defer with ADR.                     |
+| ID  | Module                                         | Design authority                  | Rating                              | 批/3 | Milestone                                   | Close round | Evidence                                                                                                  | 活票 / 归属（§1.8）                 |
+| --- | ---------------------------------------------- | --------------------------------- | ----------------------------------- | ---- | ------------------------------------------- | ----------- | --------------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| E1  | `qmd data` CLI                                 | `docs/ops/data_health_cli.md`     | `R4_SANDBOX_REAL_DATA_OR_REHEARSAL` | 2/3  | DCP-01/02/05 router · M-DATA-03 ops runners | R3→R5       | `cli/data_commands.py` · `tier_a_live_incremental_dispatch.py` · 11/11 live acceptance（ops runner 路径） | **M-DATA-03** 诚实 R4               |
+| E2  | Ops DB inspect + verification matrix           | `docs/ops/db_inspect_cli.md`      | `R4_SANDBOX_REAL_DATA_OR_REHEARSAL` | 2/3  | DCP-03 · M-DATA-03 E2 per-source inspect    | R3→R5       | `ops/db_inspector.py` · acceptance 11/11 inspect 非 FAIL · `test_tier_a_live_dispatch.py` 集成            | **M-DATA-03** 诚实 R4               |
+| E3  | Production gate + equivalent smoke             | `scripts/production_gate.py`      | `R2_MINIMAL_VERTICAL_SLICE`         | 1/3  | gate scripts                                | R5          | `tests/test_production_gate.py` · `test_production_equivalent_smoke_budget.py`                            | Batch05 integration smoke owner     |
+| E4  | Live / staged pilot runners                    | `production_live_pilot_policy.md` | `R4_SANDBOX_REAL_DATA_OR_REHEARSAL` | 2/3  | R3H-08 ProductLiveGate                      | R3          | `ops/live_pilot*.py` · `product_live_gate.py` · `tests/test_staged_pilot.py`                              | **M-PASS-01**                       |
+| E5  | Sandbox clean write / limited production entry | `ops/sandbox_clean_write`         | `R5_LIMITED_PRODUCTION_ENTRY`       | 3/3  | R3G quadruple-lock promote                  | R5 confirm  | `limited_production_entry.py` · `tests/test_round3g_limited_production_clean_write.py`                    | Batch05 manifest 记录 write posture |
+| E6  | Backup / recovery / disk thresholds            | `backup_and_recovery.md`          | `R1_SCAFFOLD`                       | 1/3  | —                                           | R5          | ops 文档；无 automated backup runner                                                                      | Batch05 runbook + optional smoke    |
+| E7  | Ops report CLI                                 | `docs/ops/ops_report_cli.md`      | `R0_NOT_STARTED`                    | 0/3  | —                                           | R4→R5       | design only                                                                                               | B04_04 或 ADR defer                 |
 
 ### 3.F Data health (operator profiles)
 
-| ID  | Module             | Design authority                            | Rating                              | 批/3 | Close round | Evidence                                                                                     | Required next movement                                                      |
-| --- | ------------------ | ------------------------------------------- | ----------------------------------- | ---- | ----------- | -------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| F0  | Data health engine | `ops/data_health_profiles`, EasyXT profiles | `R4_SANDBOX_REAL_DATA_OR_REHEARSAL` | 2/3  | R3→R5       | **R3-DCP-03 CLOSED**: post-incremental `market_bar_p0` profile smoke; R3H-08 admission paths | Wave 4: expand profiles for Tier A post-DCP-05; Batch05 only if ADR widens. |
+| ID  | Module             | Design authority           | Rating                                         | 批/3 | Milestone                                     | Close round | Evidence                                                                                                                                     | 活票 / 归属（§1.8）   |
+| --- | ------------------ | -------------------------- | ---------------------------------------------- | ---- | --------------------------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- |
+| F0  | Data health engine | `ops/data_health_profiles` | `R4_SANDBOX_REAL_DATA_OR_REHEARSAL` **（窄）** | 2/3  | DCP-03 · M-DATA-03 四族 profile in acceptance | R3→R5       | `data_health_profiles/` · `test_data_health_tier_a_profiles.py` · acceptance `_run_f0_data_health` 无 SKIP · 完整 CLI 矩阵 → M-PASS ponytail | **M-DATA-03** 诚实 R4 |
 
-### 3.G Modeling layers (Layer1–5)
+### 3.G Modeling layers (Layer1–5) — Pass E 重灾区
 
-| ID  | Module                     | Design authority                                   | Rating                      | 批/3 | Close round | Evidence                                                                                      | Required next movement                                                                                     |
-| --- | -------------------------- | -------------------------------------------------- | --------------------------- | ---- | ----------- | --------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| G1  | Layer1 axes / regime panel | `layer1_axes`, `layer1_global_regime_panel.md`     | `R3_STAGED_FIXTURE_CLOSED`  | 2/3  | R3→R4       | loader + `test_layer1_*` on **staged** fixtures; 五轴 spec（K2）齐全；**真 clean 五轴未闭合** | **Wave 4 R3-DCP-06**：五轴全绿 **R3→R4** — **PASS 硬门禁**（`PROJECT_IMPLEMENTATION_ROADMAP.md` §3.5.1）。 |
-| G2  | Layer2 cross-asset sensors | `layer2_sensors`, `layer2_cross_asset_sensor.md`   | `R3_STAGED_FIXTURE_CLOSED`  | 2/3  | R4+         | staged fixtures, snapshot writer, `test_layer2_sensor_loader.py`                              | **Wave 4 R3-DCP-07**：一条 cross-asset 传感器绑真市况源。                                                  |
-| G3  | Layer3 industry chains     | `layer3_chains`, `layer3_industry_shock_anchor.md` | `R3_STAGED_FIXTURE_CLOSED`  | 1/3  | R4+         | loader/snapshot builder; `test_layer3_loader.py`, `test_layer3_snapshot_builder.py`           | Round4 初或 ADR-narrow；**非 PASS 硬门禁**。 registries **K3**。                                           |
-| G4  | Layer4 market structure    | `layer4_markets`, `layer4_market_structure.md`     | `R3_STAGED_FIXTURE_CLOSED`  | 1/3  | R4+         | **R3H-07 CLOSED** US calendar; CN_A staged fixture; `test_layer4_market_structure.py`         | **Wave 4 R3-DCP-08**：市场结构 + US 日历绑真源。                                                           |
-| G5  | Layer5 evidence / security | `layer5_evidence`, `layer5_security_evidence.md`   | `R2_MINIMAL_VERTICAL_SLICE` | 2/3  | R3          | foundation validator, evidence chain, web-evidence no-clean-write tests                       | **Wave 4 R3-DCP-10**：source_fetch_id/content_hash/schema_hash 绑真源；R3H-05 审计。                       |
-| G6  | Manual review staging      | `backend/app/evidence/manual_review_staging.py`    | `R3_STAGED_FIXTURE_CLOSED`  | 1/3  | R3          | **R3H-08D CLOSED**: kalshi/polymarket/web_search manual-review live bundle                    | R3H-05 audit posture only; no factual clean write.                                                         |
+| ID  | Module                     | Design authority                               | Rating                          | 批/3 | Milestone（≠ Rating）                                           | Close round | Evidence                                                                                                                                     | 活票 / 归属（§1.8）         |
+| --- | -------------------------- | ---------------------------------------------- | ------------------------------- | ---- | --------------------------------------------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
+| G1  | Layer1 axes / regime panel | `layer1_axes`, `layer1_global_regime_panel.md` | **`R3_STAGED_FIXTURE_CLOSED`**  | 2/3  | **DCP-06**：五轴 P0 clean **读** e2e（tmp seed）                | R4→R5       | `clean_observation_reader.py` · `tests/test_layer1_*_clean_e2e.py` · `test_layer1_five_axis_panel_clean_smoke.py`；ingestion 默认 **staged** | **M-G1-03**                 |
+| G2  | Layer2 cross-asset sensors | `layer2_cross_asset_sensor.md`                 | **`R3_STAGED_FIXTURE_CLOSED`**  | 2/3  | **DCP-07**：**仅 L2-VIX** clean replay                          | R4→R5       | `sensor_loader.py`（`production_clean_replay` + fred 白名单）· `tests/test_layer2_vix_clean_e2e.py`；设计九组资产 **未**覆盖                 | **M-G2-FULL**               |
+| G3  | Layer3 industry chains     | `layer3_industry_shock_anchor.md`              | `R3_STAGED_FIXTURE_CLOSED`      | 1/3  | 021/022 staged snapshots                                        | R4+         | `loader.py` / `snapshot_builder.py` **仅** `staged_fixture_only` · `tests/test_layer3_*.py`                                                  | Round4 初（非 PASS 硬门禁） |
+| G4  | Layer4 market structure    | `layer4_market_structure.md`                   | **`R3_STAGED_FIXTURE_CLOSED`**  | 2/3  | **DCP-08**：**仅 US_EQ** `tier_a_clean`                         | R4→R5       | `market_structure.py` · `tests/test_layer4_us_equity_clean_e2e.py`；CN_A 仍 staged                                                           | **M-G4-FULL**               |
+| G5  | Layer5 evidence / security | `layer5_security_evidence.md`                  | **`R2_MINIMAL_VERTICAL_SLICE`** | 2/3  | **DCP-10**：mootdx bar→provenance（**唯一** sync→clean 全链测） | R4→R5       | `tests/test_layer5_mootdx_bar_clean_e2e.py` · `provenance.py`；foundation 测仍 `STAGED_PROVENANCE`                                           | **M-G5-FULL**               |
+| G6  | Manual review staging      | `manual_review_staging.py`                     | `R3_STAGED_FIXTURE_CLOSED`      | 1/3  | R3H-08D live bundle（**不写 clean**）                           | R3          | `tests/test_no_clean_write_for_web_evidence.py` · kalshi/polymarket replay                                                                   | **M-PASS-01**               |
+
+> **Pass E 说明：** 任务卡写「G\* `R3→R4`」= **下一批目标 / 子集里程碑**，**不是**本表 Rating 已达 R4。升到 R4 需 sandbox 真数据 rehearsal 或 clean-write 全链证明，且覆盖**声明 scope 主路径**——当前 Layer 模块未满足。
 
 ### 3.H ETL and cold storage
 
-| ID  | Module                       | Design authority               | Rating        | 批/3 | Close round | Evidence                                                     | Required next movement                                                |
-| --- | ---------------------------- | ------------------------------ | ------------- | ---- | ----------- | ------------------------------------------------------------ | --------------------------------------------------------------------- |
-| H1  | ETL / Parquet archive bridge | `etl`, `duckdb_and_parquet.md` | `R1_SCAFFOLD` | 1/3  | Batch6→R5   | `backend/app/etl/` package stub; `test_duckdb_connection.py` | Batch6: wire sync→Parquet paths per architecture; not Round4 blocker. |
+| ID  | Module                       | Design authority        | Rating        | 批/3 | Milestone | Close round | Evidence                           | 活票 / 归属（§1.8） |
+| --- | ---------------------------- | ----------------------- | ------------- | ---- | --------- | ----------- | ---------------------------------- | ------------------- |
+| H1  | ETL / Parquet archive bridge | `duckdb_and_parquet.md` | `R1_SCAFFOLD` | 1/3  | —         | Batch6→R5   | `backend/app/etl/__init__.py` stub | Batch6 sync→Parquet |
 
 ### 3.I Product surface (Round4 primary)
 
-| ID  | Module                      | Design authority                                                              | Rating           | 批/3 | Close round | Evidence                                                                                                      | Required next movement                                                       |
-| --- | --------------------------- | ----------------------------------------------------------------------------- | ---------------- | ---- | ----------- | ------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| I1  | FastAPI API backend         | `api_platform`, `fastapi_backend.md`, `openapi_contract.md`                   | `R1_SCAFFOLD`    | 0/3  | R4          | `backend/app/api/__init__.py` placeholder; `docs/api/fastapi_routes.md` route catalog                         | B04_01: first bounded read-only HTTP vertical slice (+ envelope/pagination). |
-| I2  | Agent runtime + policy      | `agents`, `agent_module.md`, `agent_tool_contracts.md`, `agent_contract.yaml` | `R0_NOT_STARTED` | 0/3  | R4          | package `__init__` only; tool contract doc complete                                                           | B04_02: policy-guarded read-only tool + forbidden-tool rejection.            |
-| I3  | Frontend dashboard          | `frontend_dashboard.md`                                                       | `R1_SCAFFOLD`    | 1/3  | R4          | `frontend/` Vite shell + `App.shell.test.tsx`; placeholder UI, no API binding                                 | B04_03 batch 2–3: API-bound page + states (layout user-owned).               |
-| I4  | Notifications / reports     | `notifications`, `notification_and_reports.md`                                | `R0_NOT_STARTED` | 0/3  | R4          | package `__init__` only                                                                                       | B04_04: one event→report/notification_log flow.                              |
-| I5  | Backtest / review runtime   | `backtest_and_review.md`, `backtest_review_lifecycle.md`                      | `R0_NOT_STARTED` | 0/3  | R4          | planning + R3FR-04 audit input                                                                                | B04_05: frozen loader, no-action guard, runner, report artifact (3 batches). |
-| I6  | Backtest / review metrics   | `backtest_metric_contract.yaml`                                               | `R0_NOT_STARTED` | 0/3  | R4          | contracts only                                                                                                | **Sub-scope of I5** — not a separate completion track.                       |
-| I7  | Review sandbox API          | `review_sandbox_api.md`, `review_sandbox_contract.yaml`                       | `R1_SCAFFOLD`    | 1/3  | R4          | contract + ops cross-ref; no HTTP server                                                                      | Close with B04_05/B04_01 read-only review endpoints.                         |
-| I8  | Diagnostics API (read-only) | `diagnostics_api_contract.yaml`, `fastapi_backend.md` §14                     | `R1_SCAFFOLD`    | 0/3  | R4          | contract lists `/api/diagnostics/*`; **no** routes implemented; **`test_api_security_contract.py` 待 B04_01** | Implement as **subset of I1** in B04_01 (registry/route/guard snapshots).    |
+| ID  | Module                      | Design authority                | Rating           | 批/3 | Milestone           | Close round | Evidence                                                       | 活票 / 归属（§1.8）      |
+| --- | --------------------------- | ------------------------------- | ---------------- | ---- | ------------------- | ----------- | -------------------------------------------------------------- | ------------------------ |
+| I1  | FastAPI API backend         | `fastapi_backend.md`            | `R1_SCAFFOLD`    | 0/3  | `/health` only      | R4          | `main.py` GET `/health` · `tests/test_backend_smoke.py`        | B04_01 首个只读 API 竖切 |
+| I2  | Agent runtime + policy      | `agent_module.md`               | `R0_NOT_STARTED` | 0/3  | —                   | R4          | `agents/__init__.py` only                                      | B04_02                   |
+| I3  | Frontend dashboard          | `frontend_dashboard.md`         | `R1_SCAFFOLD`    | 1/3  | Vite shell          | R4          | `frontend/src/App.tsx` · `App.shell.test.tsx`；**无 API 绑定** | B04_03                   |
+| I4  | Notifications / reports     | `notification_and_reports.md`   | `R0_NOT_STARTED` | 0/3  | —                   | R4          | `notifications/__init__.py` only                               | B04_04                   |
+| I5  | Backtest / review runtime   | `backtest_and_review.md`        | `R0_NOT_STARTED` | 0/3  | planning tests only | R4          | contracts only；无 `backend/app/review/`                       | B04_05                   |
+| I6  | Backtest / review metrics   | `backtest_metric_contract.yaml` | `R0_NOT_STARTED` | 0/3  | —                   | R4          | **Sub-scope of I5**                                            | 随 I5 闭合               |
+| I7  | Review sandbox API          | `review_sandbox_contract.yaml`  | `R1_SCAFFOLD`    | 1/3  | contract            | R4          | contract only                                                  | B04_05 + B04_01          |
+| I8  | Diagnostics API (read-only) | `diagnostics_api_contract.yaml` | `R1_SCAFFOLD`    | 0/3  | —                   | R4          | **零** `/api/diagnostics/*` 路由                               | B04_01 子集              |
 
 ### 3.J Governance, security, and deferred product modules
 
-| ID  | Module                             | Design authority                                         | Rating                      | 批/3 | Close round | Evidence                                                                              | Required next movement                                                  |
-| --- | ---------------------------------- | -------------------------------------------------------- | --------------------------- | ---- | ----------- | ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| J1  | Reference adoption governance      | `reference_adoption_guardrails.yaml`, R3FR-01            | `R3_STAGED_FIXTURE_CLOSED`  | 2/3  | R5          | `test_reference_adoption_guardrails.py`, R3FR-07 CLOSED                               | Batch05: no runtime import from deleted reference trees.                |
-| J2  | No-action semantics guard          | `agent_module.md` §6, B04 cards                          | `R1_SCAFFOLD`               | 1/3  | R4          | guardrail tests in reference_adoption; no runtime agent                               | B04_02 + B04_05: deny trading/broker semantics across API/Agent/review. |
-| J3  | Release / security packaging       | Batch05 cards                                            | `R1_SCAFFOLD`               | 0/3  | R5          | planning + partial CI scripts                                                         | B05-01..03 only — not a feature backlog.                                |
-| J4  | Docs / task entrypoint consistency | `MIGRATION_MAP.md`, README manifests                     | `R2_MINIMAL_VERTICAL_SLICE` | 2/3  | R5          | canonical batch folders; loose card redirects                                         | Batch05 docs consistency check + release manifest alignment.            |
-| J5  | `web_search` live API (deferred)   | `R3H-WEB-SEARCH` ADR scope                               | `R3_STAGED_FIXTURE_CLOSED`  | 1/3  | Post-R4     | mock/replay port READY @ R3H-04                                                       | **DEFERRED_POST_ROUND4** — only scope ADR before Round4.                |
-| J6  | Log audit / structured ops logging | `log_audit_contract.yaml`, `logs_health_audit.md`        | `R1_SCAFFOLD`               | 0/3  | R5          | contract + ops doc; **no** runtime log pipeline in `backend/`                         | Batch05 observability hardening or ADR-narrow to file-based audit only. |
-| J7  | User input privacy boundary        | `user_input_privacy_contract.yaml`, `privacy_*` ops docs | `R1_SCAFFOLD`               | 0/3  | R4          | contract + `frontend_security_policy.md`; **`tests/test_privacy_contract.py` 未实现** | Close with I2/I3: local-only import + save-as-evidence disclosure.      |
+| ID  | Module                             | Design authority                     | Rating                      | 批/3 | Milestone             | Close round | Evidence                                                             | 活票 / 归属（§1.8）                  |
+| --- | ---------------------------------- | ------------------------------------ | --------------------------- | ---- | --------------------- | ----------- | -------------------------------------------------------------------- | ------------------------------------ |
+| J1  | Reference adoption governance      | `reference_adoption_guardrails.yaml` | `R3_STAGED_FIXTURE_CLOSED`  | 2/3  | R3FR-07 static guards | R5          | `tests/test_reference_adoption_guardrails.py`                        | Batch05：无 reference runtime import |
+| J2  | No-action semantics guard          | `agent_module.md`                    | `R1_SCAFFOLD`               | 1/3  | static pattern tests  | R4          | guardrail tests only；无 agent runtime                               | B04_02 + B04_05                      |
+| J3  | Release / security packaging       | Batch05 cards                        | `R1_SCAFFOLD`               | 0/3  | partial CI            | R5          | `test_production_gate.py` · `.github/workflows/ci.yml`               | B05-01..03 only                      |
+| J4  | Docs / task entrypoint consistency | `MIGRATION_MAP.md`                   | `R2_MINIMAL_VERTICAL_SLICE` | 2/3  | docs index loop       | R5          | `tests/test_docs_specs_indexed.py` · `test_loop_engineering_flow.py` | Batch05 manifest alignment           |
+| J5  | `web_search` live API (deferred)   | `R3H-WEB-SEARCH` ADR                 | `R3_STAGED_FIXTURE_CLOSED`  | 1/3  | mock port only        | Post-R4     | `web_search_evidence_port.py` · `tests/test_web_evidence_adapter.py` | **DEFERRED_POST_ROUND4**             |
+| J6  | Log audit / structured ops logging | `log_audit_contract.yaml`            | `R1_SCAFFOLD`               | 0/3  | —                     | R5          | contract only；无 ndjson pipeline                                    | Batch05 observability 或 ADR         |
+| J7  | User input privacy boundary        | `user_input_privacy_contract.yaml`   | `R1_SCAFFOLD`               | 0/3  | —                     | R4          | **无** `tests/test_privacy_contract.py`                              | 随 I2/I3 闭合                        |
 
 ### 3.K Model input governance (spec-only track)
 
-| ID  | Module                            | Design authority                                           | Rating                     | 批/3 | Close round | Evidence                                                                            | Required next movement                                                          |
-| --- | --------------------------------- | ---------------------------------------------------------- | -------------------------- | ---- | ----------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| K1  | Model input whitelist / readiness | `specs/model_inputs/**`, `model_input_readiness_matrix.md` | `R3_STAGED_FIXTURE_CLOSED` | 1/3  | R3→R4+      | YAML whitelists + `test_model_input_whitelist.py`; **spec-only — no runtime fetch** | Layer modules (G1–G5) consume rows; expand only via ADR + closure_test.         |
-| K2  | Layer1 five-axis indicator specs  | `specs/layer1_axes/restructured_axes_v1_1/**`              | `R3_STAGED_FIXTURE_CLOSED` | 1/3  | R3→R4       | per-axis indicator_spec + engineering_rules（5 axes）齐全；loader 测 staged only    | **Sub-scope of G1** — **Wave 4 R3-DCP-06**：每轴真 clean 指标引擎 + pytest 绿。 |
-| K3  | Layer3 chain registries           | `specs/layer3_global_industry_chains/**`                   | `R3_STAGED_FIXTURE_CLOSED` | 1/3  | R4+         | node/edge/anchor JSON+YAML registries                                               | **Sub-scope of G3** — loader uses staged bundle today.                          |
+| ID  | Module                            | Design authority                              | Rating                         | 批/3 | Milestone                                 | Close round | Evidence                                                                  | 活票 / 归属（§1.8）      |
+| --- | --------------------------------- | --------------------------------------------- | ------------------------------ | ---- | ----------------------------------------- | ----------- | ------------------------------------------------------------------------- | ------------------------ |
+| K1  | Model input whitelist / readiness | `specs/model_inputs/**`                       | **`R3_STAGED_FIXTURE_CLOSED`** | 2/3  | DCP-06：**5/11** 行 `clean_replay_proven` | R4→R5       | `layer1_source_whitelist.yaml` · `test_layer1_p0_dcp06_cleanReplayProven` | **M-G1-03**（G1 子范围） |
+| K2  | Layer1 five-axis indicator specs  | `specs/layer1_axes/restructured_axes_v1_1/**` | **`R3_STAGED_FIXTURE_CLOSED`** | 1/3  | DCP-06：每轴 1 P0 测                      | R4→R5       | 五轴 YAML + G1 clean e2e；**非**全指标 catalog                            | **M-G1-03**（G1 子范围） |
+| K3  | Layer3 chain registries           | `specs/layer3_global_industry_chains/**`      | `R3_STAGED_FIXTURE_CLOSED`     | 1/3  | registry docs                             | R4+         | JSON/YAML registries；loader 仍 staged bundle                             | **Sub-scope of G3**      |
 
 ---
 
 ## 3.1 Design doc aliases (not separate completion tracks)
 
-These `docs/modules/*.md` files are **sub-documents or compat indexes** — track completion via the parent **Module ID** above:
-
-| Doc file                                                | Parent ID | Note                                                         |
-| ------------------------------------------------------- | --------- | ------------------------------------------------------------ |
-| `fastapi_and_frontend.md`                               | I1, I3    | compat index only                                            |
-| `data_validation_write_concurrency.md`                  | B1–B3     | compat index only                                            |
-| `source_route_plan.md`, `source_capability_registry.md` | C1        | Round2.6 split of C1                                         |
-| `datasource_service.md`                                 | C2        |                                                              |
-| `qmt_xtdata_adapter.md`                                 | C3        | single-source deep spec                                      |
-| `backtest_review_lifecycle.md`                          | I5        | lifecycle contract for I5                                    |
-| `README.md` (modules index)                             | —         | navigation only                                              |
-| `docs/api/fastapi_routes.md`                            | I1, I8    | route catalog for Round4                                     |
-| `docs/api/agent_tool_contracts.md`                      | I2        | agent tool surface                                           |
-| `docs/architecture/05_module_map.md`                    | —         | historical module index; **superseded by §3** for completion |
-| `specs/layer1_axes/restructured_axes_v1_1/**`           | K2 → G1   | per-axis specs                                               |
-| `specs/layer3_global_industry_chains/**`                | K3 → G3   | chain registries                                             |
-| `specs/model_inputs/*.yaml`                             | K1        | whitelist rows                                               |
-| `specs/frontend/page_contracts.yaml`                    | I3        | page/data-shape contract                                     |
+| Doc file                                                | Parent ID | Note                             |
+| ------------------------------------------------------- | --------- | -------------------------------- |
+| `fastapi_and_frontend.md`                               | I1, I3    | compat index only                |
+| `data_validation_write_concurrency.md`                  | B1–B3     | compat index only                |
+| `source_route_plan.md`, `source_capability_registry.md` | C1        | Round2.6 split of C1             |
+| `datasource_service.md`                                 | C2        |                                  |
+| `qmt_xtdata_adapter.md`                                 | C3        | single-source deep spec          |
+| `backtest_review_lifecycle.md`                          | I5        | lifecycle contract for I5        |
+| `README.md` (modules index)                             | —         | navigation only                  |
+| `docs/api/fastapi_routes.md`                            | I1, I8    | route catalog for Round4         |
+| `docs/api/agent_tool_contracts.md`                      | I2        | agent tool surface               |
+| `docs/architecture/05_module_map.md`                    | —         | historical; **superseded by §3** |
+| `specs/layer1_axes/restructured_axes_v1_1/**`           | K2 → G1   | per-axis specs                   |
+| `specs/layer3_global_industry_chains/**`                | K3 → G3   | chain registries                 |
+| `specs/model_inputs/*.yaml`                             | K1        | whitelist rows                   |
+| `specs/frontend/page_contracts.yaml`                    | I3        | page/data-shape contract         |
 
 ---
 
 ## 3.2 Coverage verification log
 
-### Pass A — 2026-06-29（代码 + authority_graph + `docs/modules` + `docs/ops`）
+### Pass E — 2026-07-02（四路 agent 代码审计 @ `68f70206`）
 
-（见上表 `authority_graph` / `backend/app` / `frontend/` 等行。）
+| 轨  | 范围                    | 方法          | 关键结论                                             |
+| --- | ----------------------- | ------------- | ---------------------------------------------------- |
+| E1  | A1–A7, B1–B3, C1–C4, J5 | 代码 + pytest | C3 11源 e2e 全 replay；B1 无主库写；A3 staged 为主   |
+| E2  | D1–D4, E1–E7, F0, H1    | 代码 + pytest | D1 **3/3** 批；E2/F0 **窄**；E5 唯一 R5              |
+| E3  | G1–G6, K1–K3            | 代码 + pytest | **无** G\* 模块级 R4；G5 mootdx 唯一 sync→clean 全链 |
+| E4  | I1–I8, J1–J7            | 代码 + vitest | Round4 **未开工**；与旧表一致                        |
 
-### Pass D — 2026-07-01（Wave 1–3 代码闭合 @ `893e6e2b`）
+**Wave 4 子集里程碑（已代码验证，不抬升整模块 Rating）：**
 
-| Wave / 轨  | 规划 ID        | 模块跃迁（摘要）            | 证据                                                |
-| ---------- | -------------- | --------------------------- | --------------------------------------------------- |
-| Wave 1     | R3H-10, R3H-07 | C2/E4, G4 → R4 边界         | archived `06-29-round3h-r3h10-*` · `r3h07-*`        |
-| Wave 2     | R3H-08A–D      | C3, A3, B\*, G6 live 产品化 | archived `06-29-round3h-r3h08-live-productization`  |
-| Wave 3     | R3-DCP-01..03  | D1, E1, E2, F0 → R4 边界    | `5dc71c0b` · `5d8d7b0f` · `eff49343`                |
-| **未闭合** | **R3-DCP-06**  | **G1, K2 五轴真 clean**     | staged `test_layer1_*` 绿；**PASS 硬门禁待 Wave 4** |
+| 规划 ID   | Milestone                                   | 代码锚点                                                    |
+| --------- | ------------------------------------------- | ----------------------------------------------------------- |
+| R3-DCP-05 | 11 源 incremental replay + clean upsert e2e | `tests/test_*_incremental_e2e.py` ×11                       |
+| R3-DCP-06 | L1 五轴 P0 clean read                       | `tests/test_layer1_*_clean_e2e.py`                          |
+| R3-DCP-07 | L2-VIX only（**≠ G2 成品**）                | `tests/test_layer2_vix_clean_e2e.py` → **M-G2-FULL**        |
+| R3-DCP-08 | US_EQ only（**≠ G4 成品**）                 | `tests/test_layer4_us_equity_clean_e2e.py` → **M-G4-FULL**  |
+| R3-DCP-09 | bounded backfill + nightly CI               | `tests/test_qmd_data_backfill_cli.py`                       |
+| R3-DCP-10 | mootdx→Layer5 provenance（**≠ G5 成品**）   | `tests/test_layer5_mootdx_bar_clean_e2e.py` → **M-G5-FULL** |
 
-### Pass C — 2026-06-29c（`authority_graph.yaml` v2 ↔ §3 对齐）
+### Pass D — 2026-07-01（Wave 1–3 @ `893e6e2b`）
 
-| Source                    | Result                                                                                                                        |
-| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `rating_index`            | 51 Module ID（A1–A7, B1–B3, … K1–K3）→ 22 graph nodes                                                                         |
-| 新增 graph 节点           | `project_scaffold`, `model_inputs`, `frontend_platform`, `source_health`, `backtest_review`, `governance`, `privacy_boundary` |
-| 修复                      | `layer3_chains` / `layer4_markets` tests；补全 contracts/docs/tests                                                           |
-| `generate_project_map.py` | 输出 `module_ids` + `rating_ssot`                                                                                             |
+（历史记录保留；Pass E 已覆盖 Wave 4 并修正 G/D 批/3。）
 
-### Pass B — 2026-06-29b（`specs/` 全量 79 文件 + `docs/` 排除项后）
+### Pass C — 2026-06-29c（`authority_graph.yaml` v2 ↔ §3）
 
-**扫描范围：**
+（`rating_index` 51 ID；22 graph nodes — 结构未变，Pass E 更新 **Rating 值** 与 Evidence 列。）
 
-- `specs/`：全部（contracts 39、registry 3、context 1、model_inputs 6、layer1_axes 20、layer3_chains 9、verification 2、frontend 1、api 1、schema 1）
-- `docs/`：**含** `architecture/` 14、`modules/` 26、`ops/` 28、`api/` 2、`adr/` 6、`decisions/` 5、`quality/` 59、`schema/` 2、`generated/` 3
-- **排除：** `implementation_tasks/`、`UNRESOLVED_ISSUES_REGISTRY.md`、`AUDIT_DEFERRED_REGISTRY.md`、`DEVELOPER_GUIDE.md`、`INDEX.md`、`OPERATOR_GUIDE.md`、`RESEARCHER_GUIDE.md`、`RESOLVED_ISSUES_REGISTRY.md`、`ROUND3_HANDOFF.md`、`START_HERE.md`
+### Pass B — 2026-06-29b（`specs/` + `docs/` 映射）
 
-| Source                                                | Result                                                                                                                                                                                                            |
-| ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `specs/contracts/*.yaml` + `data_adapter_contract.md` | 全部 39 契约已映射；**本次新增行：** A6 `spec_migrator`、A7 `dependency_extras`、D4 `source_health`、I8 `diagnostics_api`、J7 `user_input_privacy`                                                                |
-| `specs/model_inputs/**`                               | → **K1**（与 G1–G5 消费关系）                                                                                                                                                                                     |
-| `specs/layer1_axes/**`                                | → **K2** ⊂ **G1**                                                                                                                                                                                                 |
-| `specs/layer3_global_industry_chains/**`              | → **K3** ⊂ **G3**                                                                                                                                                                                                 |
-| `specs/datasource_registry/**`                        | → **C1** + **C4**                                                                                                                                                                                                 |
-| `specs/verification/*`                                | 验收矩阵 → 各模块 AC 引用（非独立模块）                                                                                                                                                                           |
-| `docs/architecture/*`                                 | 架构叙事；**05_module_map** 仅历史索引；边界 → **J1** `module_boundary_contract`                                                                                                                                  |
-| `docs/adr/*` + `docs/decisions/*`                     | 决策记录；**ADR-024** → **D4**；其余为横切约束不单列模块                                                                                                                                                          |
-| `docs/api/*`                                          | → **I1** / **I2**                                                                                                                                                                                                 |
-| `docs/quality/*`                                      | 审计/协调产物；**model_input_readiness_matrix.md** → **K1**；**production_live_pilot_policy** → **E4**；gate 文档（如 `BATCH3_STAGED_DOWNSTREAM_GATE`）→ 策略非模块                                               |
-| `docs/ops/*`（28 文件）                               | 已映射；**未单列模块的 ops doc → 父模块：** `lock_and_concurrency_policy`→B1；`incident_playbook`/`daily_weekly_monthly_checklist`→E6；`layer3_config_health_check`→G3；`config_secret_policy`→J3；`privacy_*`→J7 |
-| `docs/schema/*`                                       | → **A2** migration 计划                                                                                                                                                                                           |
-| `docs/generated/*`                                    | 生成索引；`docs_specs_index` 仍含已排除 guide 路径（生成器预期行为）                                                                                                                                              |
-| **契约要求但测试缺失**                                | `test_spec_migrator.py`、`test_privacy_contract.py`、`test_api_security_contract.py`（diagnostics 部分）— 已标 **R1** 且记入对应模块                                                                              |
-| `backend/app/ops/source_health_writer.py`             | 原遗漏 → **D4**                                                                                                                                                                                                   |
-
-**Intentionally not promoted to standalone modules** (track under parent or Batch6):
-
-- Per-source adapter one-pagers beyond `qmt_xtdata_adapter.md` → C3
-- Individual migration files → A2
-- Trellis / GitNexus tooling → out of product module rating
-- Frontend visual design → user-owned; I3 tracks API binding only
-- `docs/quality/audit_evidence/**` → 审计证据归档，非产品模块
-- Architecture phase plan (`09_phase_plan.md`) → 历史阶段叙事，执行以根目录 `PROJECT_IMPLEMENTATION_ROADMAP.md` 为准
+（契约→模块映射仍有效；见历史表。）
 
 ---
 
-## 3.3 Known stale artifacts to fix elsewhere (not rating SSOT)
+## 3.3 Known stale artifacts（非本文件 SSOT）
 
-| Artifact                                          | Issue                                                                          |
-| ------------------------------------------------- | ------------------------------------------------------------------------------ |
-| `PRODUCTION_COMPLETION_VERTICAL_SLICE_PLAN.md` §3 | Still says R3G must prove WriteManager — **R3G CLOSED**; use §3 **B1/E5** here |
-| `R3H_PASS_EXECUTION_PLAN.md` §3 wave diagram      | R3H-06 still shown blocking — **CLOSED** @ 2026-06-29                          |
-| `project_map.generated.md`                        | Regenerate via `loop_maintain.py --fix` after authority_graph v2               |
+| Artifact                                          | 归档 / 现行路径                                                                                                                           | 读法                                                                        |
+| ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| `R3_DCP_TO_ISSUES_INDEX.md`                       | `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/` | **只读** CLOSED 证据；下一入口 → **M-PASS-01** / 路线图 §3.7                |
+| `R3H_PASS_EXECUTION_PLAN.md`                      | 同上目录（stub）· 全文 → `R3H_PASS_EXECUTION_PLAN.archived-20260702.md`                                                                   | **已归档** @ 2026-07-02；活规划 → 根 `PROJECT_IMPLEMENTATION_ROADMAP.md` §3 |
+| `ROUND3_BATCH_IMPLEMENTATION_MAP.md`              | `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/`                                                                        | Round3 批次地图（历史）；非开工 SSOT                                        |
+| `PRODUCTION_COMPLETION_VERTICAL_SLICE_PLAN.md` §3 | 同上 archive                                                                                                                              | 覆盖地图；R3G WriteManager 叙事过时 → 用 MCR §3 **B1/E5**                   |
+| `project_map.generated.md`                        | `docs/generated/`                                                                                                                         | 需 `loop_maintain.py --fix`                                                 |
+| `.trellis/tasks/07-02-wave4-*`                    | `.trellis/tasks/archive/`                                                                                                                 | merge 后 Trellis 已批量归档                                                 |
 
 ---
 
-## 4. Planning consequences
+## 4. Planning consequences（用户裁决 @ 2026-07-02 对齐）
 
-- Design/contract files remain complete-product targets.
-- Task cards must state **Module ID** (§3) and which rating movement they deliver.
-- A batch that does not move the module at least one rating level must explain why it is a hardening/regression batch, not a feature batch.
-- No module may require more than three implementation batches to reach the complete stable shape for the declared scope.
-- **Round3 data-plane group** (Wave 1–3 **CLOSED** @ 2026-06-30): sync/live/incremental/inspect — see `PROJECT_IMPLEMENTATION_ROADMAP.md` §3.7. **Remaining PASS blockers:** **Wave 4** `R3-DCP-05..10`（含 **G1/K2 五轴 R3-DCP-06**）+ **Wave 5** `R3H-05-GATE`.
-- **Round4 product group:** **I1–I7, J2** — consume Round3 outputs read-only; do not re-implement sync/fetch/write engines.
-- No module may move to `R6_FULL_PRODUCTION_STABLE` based on docs, registry rows, staged fixtures, or one sample adapter alone. The required closure is an executable vertical slice plus tests, evidence/lineage binding where applicable, ResourceGuard/security posture, and release-manifest representation. If that cannot be delivered, the correct outcome is ADR-narrowed scope plus release limitation.
+- Design/contract files remain **complete-product targets**; Rating 列跟踪 **已证明** 的实现 scope（§0.3.2）。
+- **PASS** = `PROJECT_IMPLEMENTATION_ROADMAP.md` **§6.1 v2** + MCR 无 R3 假完成（§0.3.1）；**禁止**任务 CLOSED / tmp seed / 全 mock e2e 冒充。
+- **新票**须标明 Module ID、Rating 跃迁、设计权威路径；**milestone-only** 须在卡标题写明且不得隐含整模块升级。
+- **模块完整落地：** G2/G4 等按 `docs/modules/` **成品 scope** — 单 **Plan→Execute** 流程内多切片，**统一** A1–A8（§0.3.2 · 路线图 §1.7）。
+- **禁止**同一模块成品拆成多张独立完整流程任务；**禁止**「第二 P0 传感器」「8 源 CLI」等碎片化为新完整流程（见路线图 §1.7–§1.8）。
+- **M-DATA-03：** 11 源真网硬要求；无资格源 → ADR + 占位 + 逻辑完整（§0.3.3）。
+- **Round4 product：** I1–I7, J2 — **R0–R1**；须 **M-PASS-01** 后 B04 开工。
+- **真链最低标准（活卡 AC）：** `sync incremental → clean → Layer` **同库** e2e；隔离库验收，不污染主库。
+
+---
+
+## 5. 后续规划入口（与路线图 §3 v2 对齐 · 非任务卡）
+
+| 优先级 | 票 ID            | 模块                  | 预期 Rating / 里程碑                    |
+| ------ | ---------------- | --------------------- | --------------------------------------- |
+| **P0** | **M-DATA-03**    | C3,D1,E1,E2,F0        | 真网 scope R3→R4；开工前源资格 grill-me |
+| **P0** | **M-G1-03**      | G1,K1,K2              | G1 R3→R4 完整五轴                       |
+| **P1** | **M-G2-FULL**    | G2                    | 九组资产 R3→R4                          |
+| **P1** | **M-G4-FULL**    | G4                    | 各 market_id R3→R4                      |
+| **P1** | **M-G5-FULL**    | G5, A3                | G5 R2→R4 完整证据链                     |
+| **P0** | **M-PASS-01**    | C1,C4,B3,G6,E4 + 门禁 | `PASS_ROUND4_REAL_DATA_READY`           |
+| P3     | Round4 B04_01 起 | I1, I8                | R1→R2（PASS 后）                        |
+
+**历史 Wave 5 `R3H-05-GATE`** 并入 **M-PASS-01**；旧 §5 P2「8 源 CLI」已由 **M-DATA-03 十一源** 取代。

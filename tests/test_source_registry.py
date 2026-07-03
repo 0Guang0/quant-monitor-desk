@@ -549,3 +549,31 @@ def test_legacySourceRoles_forbiddenTopLevelKeys(registry_yaml_fixture):
         reg = SourceRegistry(p)
         with pytest.raises(LegacyRoleError, match="shadow_source"):
             reg.load()
+
+
+def test_sourceRegistry_eastmoney_accTaxonomy_notesPresent() -> None:
+    """覆盖范围：eastmoney registry taxonomy SSOT（S08-REG-EM）
+    测试对象：source_registry.yaml + source_capabilities.yaml eastmoney notes
+    目的/目标：ACC-EASTMONEY-TAXONOMY-001 内容可被 pytest 锁定，防 DCP-08 回退
+    验证点：notes 含 ACC-EASTMONEY、baostock/mootdx、不关 REQ2-EM、R3-DCP-08 taxonomy
+    失败含义：registry taxonomy 被删改，ops 与 capabilities SSOT 漂移无告警
+    """
+    reg = SourceRegistry()
+    reg.load()
+    em = reg.get("eastmoney")
+    notes = em.notes or ""
+    assert "ACC-EASTMONEY-TAXONOMY-001" in notes
+    assert "baostock" in notes and "mootdx" in notes
+    assert "R3-B2.75-REQ2-EM" in notes
+    assert "R3-DCP-08 taxonomy SSOT" in notes
+
+    from pathlib import Path
+
+    import yaml
+
+    caps_path = Path(__file__).resolve().parents[1] / "specs/datasource_registry/source_capabilities.yaml"
+    caps = yaml.safe_load(caps_path.read_text(encoding="utf-8"))
+    em_caps_notes = caps["sources"]["eastmoney"]["notes"]
+    assert "Product bar path" in em_caps_notes or "NOT eastmoney" in em_caps_notes
+    assert "sector_board" in em_caps_notes and "capital_flow" in em_caps_notes
+    assert "R3-B2.75-REQ2-EM" in em_caps_notes

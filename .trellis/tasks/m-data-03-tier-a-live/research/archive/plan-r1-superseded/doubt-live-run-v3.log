@@ -1,0 +1,26 @@
+Traceback (most recent call last):
+  File "C:\Users\Guang\Desktop\quant-monitor-desk\scripts\tier_a_live_acceptance.py", line 45, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "C:\Users\Guang\Desktop\quant-monitor-desk\scripts\tier_a_live_acceptance.py", line 34, in main
+    return run_acceptance(
+           ^^^^^^^^^^^^^^^
+  File "C:\Users\Guang\Desktop\quant-monitor-desk\backend\app\ops\tier_a_live_acceptance.py", line 302, in run_acceptance
+    outcome = run_source_live_acceptance(sid, data_root=resolved_root)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Guang\Desktop\quant-monitor-desk\backend\app\ops\tier_a_live_acceptance.py", line 242, in run_source_live_acceptance
+    health_status, health_detail = _run_f0_data_health(
+                                   ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Guang\Desktop\quant-monitor-desk\backend\app\ops\tier_a_live_acceptance.py", line 200, in _run_f0_data_health
+    report, *_ = run_data_health_profile(
+                 ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Guang\Desktop\quant-monitor-desk\backend\app\ops\data_health_profiles\__init__.py", line 266, in run_data_health_profile
+    bars, source_id, entries = _bars_from_evidence(evidence_dir, max_rows=cap)
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Guang\Desktop\quant-monitor-desk\backend\app\ops\data_health_profiles\__init__.py", line 199, in _bars_from_evidence
+    bundle = require_evidence_bundle(evidence_dir)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Guang\Desktop\quant-monitor-desk\backend\app\ops\data_health.py", line 346, in require_evidence_bundle
+    raise DataHealthLoadError(bundle.load_error)
+backend.app.ops.data_health.DataHealthLoadError: missing raw evidence manifest
+EXIT:1

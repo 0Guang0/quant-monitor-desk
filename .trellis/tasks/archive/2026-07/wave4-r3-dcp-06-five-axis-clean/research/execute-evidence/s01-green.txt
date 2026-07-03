@@ -1,0 +1,6 @@
+S01 GREEN — tests/test_layer1_environment_clean_e2e.py
+
+$ uv run pytest tests/test_layer1_environment_clean_e2e.py -q
+.                                                                        [100%]
+1 passed
+exit code: 0

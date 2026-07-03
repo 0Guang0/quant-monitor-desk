@@ -1,0 +1,5 @@
+{
+  "task": "wave4-r3-dcp-06-five-axis-clean",
+  "acs": [],
+  "modules": ["project_scaffold", "layer1_axes", "model_inputs", "governance"]
+}

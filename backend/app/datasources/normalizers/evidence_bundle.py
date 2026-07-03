@@ -73,6 +73,33 @@ def parse_fetch_window_date(value: str | None) -> date | None:
             return None
 
 
+def replay_rows_caught_up_fallback(
+    rows: list[dict[str, Any]],
+    filtered: list[dict[str, Any]],
+    *,
+    start_time: str | None,
+    end_time: str | None,
+    sort_key,
+    min_rows: int = 1,
+    max_window_end_age_days: int = 90,
+) -> list[dict[str, Any]]:
+    """Keep latest replay rows when a recent window misses stale fixture dates."""
+    start = parse_fetch_window_date(start_time)
+    end = parse_fetch_window_date(end_time)
+    if start is not None and end is not None and start > end:
+        return filtered
+    if len(filtered) >= min_rows:
+        return filtered
+    if not rows:
+        return filtered
+    if end is not None:
+        age_days = (datetime.now(UTC).date() - end).days
+        if age_days > max_window_end_age_days:
+            return filtered
+    sorted_rows = sorted(rows, key=sort_key)
+    return sorted_rows[-min(min_rows, len(sorted_rows)) :]
+
+
 def reject_over_cap(*, value: int, cap: int, label: str = "max_rows") -> None:
     if value <= 0:
         raise PortError("FAILED", f"invalid {label}={value}; must be positive")
@@ -96,12 +123,31 @@ def reject_window_span_over_cap(
     reject_over_cap(value=span_days, cap=cap, label=label)
 
 
-def bundle_layer5_provenance(bundle: dict[str, Any]) -> dict[str, Any]:
+def bundle_layer5_provenance(
+    bundle: dict[str, Any],
+    *,
+    clean_table: str = "security_bar_1d",
+) -> dict[str, Any]:
     """Extract Layer5 factual_source provenance fields from an evidence bundle."""
     fid = str(bundle.get("source_fetch_id") or "")
     ch = str(bundle.get("content_hash") or "")
+    source_id = str(bundle.get("source_id") or "")
+    data_domain = str(bundle.get("data_domain") or "")
+    schema_version_raw = bundle.get("schema_version")
+    dataset_ids: list[str] = []
+    if schema_version_raw:
+        schema_version = str(schema_version_raw)
+        schema_hash = str(bundle.get("schema_hash") or schema_hash_for_version(schema_version))
+        if schema_hash:
+            dataset_ids.append(f"schema:{schema_hash}@{schema_version}")
+        dataset_ids.append(f"version:{schema_version}")
+    if source_id and clean_table:
+        dataset_ids.append(f"clean:{clean_table}@{source_id}")
+    if data_domain:
+        dataset_ids.append(f"domain:{data_domain}")
     return {
         "source_fetch_ids": (fid,) if fid else (),
         "source_content_hashes": (ch,) if ch else (),
-        "source_used": str(bundle.get("source_id") or ""),
+        "source_used": source_id,
+        "source_dataset_ids": tuple(dataset_ids),
     }

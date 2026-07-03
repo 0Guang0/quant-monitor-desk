@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import inspect
+import os
+import uuid
 import warnings
 from pathlib import Path
 
@@ -29,6 +32,8 @@ FIXTURES = Path(__file__).parent / "fixtures"
 
 
 def pytest_configure(config) -> None:
+    import backend.app.config  # noqa: F401 — load PROJECT_ROOT/.env for live KEY slots
+
     try:
         from starlette.exceptions import StarletteDeprecationWarning
 
@@ -85,6 +90,59 @@ def _ensure_r3g_fred_authorization_bootstrap() -> None:
 def _ensure_audit_sandbox_pytest_basetemp() -> None:
     """Pre-create shared pytest basetemp for A8 sandbox runs on fresh clones (A8-B3V-04)."""
     (PROJECT_ROOT / ".audit-sandbox" / "pytest").mkdir(parents=True, exist_ok=True)
+    (
+        PROJECT_ROOT
+        / ".trellis"
+        / "tasks"
+        / "07-02-wave4-r3-dcp-10-evidence"
+        / ".audit-sandbox"
+        / "pytest"
+    ).mkdir(parents=True, exist_ok=True)
+
+
+def _patch_path_for_windows_long_paths() -> None:
+    """A8 basetemp under deep .audit-sandbox paths exceeds MAX_PATH on Windows."""
+    if os.name != "nt":
+        return
+    from backend.app.storage.path_compat import (
+        needs_extended_path,
+        to_extended_path,
+    )
+
+    _orig_is_file = Path.is_file
+    _orig_exists = Path.exists
+    _orig_read_text = Path.read_text
+    _orig_read_bytes = Path.read_bytes
+    _is_file_accepts_follow = "follow_symlinks" in inspect.signature(_orig_is_file).parameters
+
+    def _is_file(self, follow_symlinks: bool = True) -> bool:
+        target = to_extended_path(self) if needs_extended_path(self) else self
+        if _is_file_accepts_follow:
+            return _orig_is_file(target, follow_symlinks=follow_symlinks)
+        return _orig_is_file(target)
+
+    def _exists(self, follow_symlinks: bool = True) -> bool:
+        if needs_extended_path(self):
+            return _orig_exists(to_extended_path(self), follow_symlinks=follow_symlinks)
+        return _orig_exists(self, follow_symlinks=follow_symlinks)
+
+    def _read_text(self, encoding: str | None = None, errors: str | None = None) -> str:
+        if needs_extended_path(self):
+            return _orig_read_text(to_extended_path(self), encoding=encoding, errors=errors)
+        return _orig_read_text(self, encoding=encoding, errors=errors)
+
+    def _read_bytes(self) -> bytes:
+        if needs_extended_path(self):
+            return _orig_read_bytes(to_extended_path(self))
+        return _orig_read_bytes(self)
+
+    Path.is_file = _is_file  # type: ignore[method-assign]
+    Path.exists = _exists  # type: ignore[method-assign]
+    Path.read_text = _read_text  # type: ignore[method-assign]
+    Path.read_bytes = _read_bytes  # type: ignore[method-assign]
+
+
+_patch_path_for_windows_long_paths()
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
@@ -96,13 +154,38 @@ def pytest_addoption(parser: pytest.Parser) -> None:
     )
 
 
+_TIER_A_LIVE_NETWORK_TEST_MARKERS = (
+    "test_tier_a_live_",
+    "test_fred_macro_incremental_e2e",
+    "test_deribit_incremental_e2e",
+    "test_alpha_vantage_incremental_e2e",
+    "test_cninfo_incremental_e2e",
+    "test_sec_edgar_incremental_e2e",
+    "test_baostock_incremental_e2e",
+    "test_mootdx_incremental_e2e",
+    "test_bis_incremental_e2e",
+    "test_cftc_incremental_e2e",
+    "test_us_treasury_incremental_e2e",
+    "test_world_bank_incremental_e2e",
+)
+
+
+def _tier_a_live_network_test(item: pytest.Item) -> bool:
+    path = str(item.fspath)
+    return any(marker in path for marker in _TIER_A_LIVE_NETWORK_TEST_MARKERS)
+
+
 def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
     if config.getoption("--run-network"):
         return
     skip_network = pytest.mark.skip(reason="need --run-network for live vendor fetch tests")
+    live_opt_in = os.environ.get("QMD_ALLOW_LIVE_FETCH") == "1"
     for item in items:
-        if "network" in item.keywords:
-            item.add_marker(skip_network)
+        if "network" not in item.keywords:
+            continue
+        if live_opt_in and _tier_a_live_network_test(item):
+            continue
+        item.add_marker(skip_network)
 
 
 _SKIP_RESOURCE_GUARD_AUTOPATCH = frozenset(
@@ -309,9 +392,38 @@ def empty_response_result():
 
 
 @pytest.fixture
+def isolated_live_data_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """Isolated M-DATA-03 sandbox root; rejects canonical main DB paths (ADR-034)."""
+    from backend.app.ops.tier_a_live_acceptance import (
+        M_DATA_03_SANDBOX_SEGMENT,
+        assert_isolated_live_data_root,
+    )
+
+    root = (
+        PROJECT_ROOT
+        / ".audit-sandbox"
+        / M_DATA_03_SANDBOX_SEGMENT
+        / f"pytest-{tmp_path.name}-{uuid.uuid4().hex[:8]}"
+    )
+    root.mkdir(parents=True, exist_ok=True)
+    resolved = assert_isolated_live_data_root(root)
+    monkeypatch.setenv("QMD_DATA_ROOT", str(resolved))
+    monkeypatch.delenv("DATA_ROOT", raising=False)
+    return resolved
+
+
+@pytest.fixture
 def raw_data_root(tmp_path):
     root = tmp_path / "data"
     root.mkdir()
+    return root
+
+
+@pytest.fixture
+def non_sandbox_data_root(tmp_path: Path) -> Path:
+    """QMD_DATA_ROOT without `.audit-sandbox` in resolved parts (A8 basetemp safe)."""
+    root = PROJECT_ROOT / ".pytest-non-sandbox-data" / f"case-{id(tmp_path)}"
+    root.mkdir(parents=True, exist_ok=True)
     return root
 
 

@@ -21,6 +21,7 @@ from backend.app.ops.cninfo_incremental_watermark import (
     read_since_date_for_instrument,
 )
 from backend.app.sync.orchestrator import DataSyncOrchestrator
+from tests.live_incremental_support import bootstrap_acceptance_cm, bootstrap_port_live_e2e_ctx
 
 SYMBOL = "sh.600519"
 FIXTURE_DATE = date(2024, 6, 25)
@@ -46,6 +47,26 @@ def seed_watermark_row(con, publish_date: str) -> None:
         ) VALUES (?, ?, 'seed', ?, 'cn_announcements', 'seed', 'metadata_only', 'b0', CURRENT_TIMESTAMP)
         """,
         [f"seed-{publish_date}", SYMBOL, publish_ts],
+    )
+
+
+def bootstrap_cninfo_live_e2e_ctx(
+    sandbox_root: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> dict[str, Any]:
+    """Bootstrap CNINFO product-live e2e under isolated M-DATA-03 sandbox (ADR-034)."""
+    return bootstrap_port_live_e2e_ctx(
+        sandbox_root,
+        monkeypatch,
+        source_id="cninfo",
+        data_domain="cn_announcements",
+        port_factory=lambda **kw: create_cninfo_fetch_port(
+            symbols=(SYMBOL,), max_rows=20, **kw
+        ),
+        service_builder=build_cninfo_incremental_service,
+        registry_factory=enabled_cninfo_source_registry,
+        since_reader=lambda con, _ids: {SYMBOL: read_since_date_for_instrument(con, SYMBOL)},
+        instrument_ids=(SYMBOL,),
     )
 
 

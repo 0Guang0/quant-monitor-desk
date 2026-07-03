@@ -41,11 +41,17 @@ def _legacy_master_waived(task_dir: Path) -> bool:
     return str(data.get("status", "")) in ("in_progress", "planning")
 
 
+def _under_audit_sandbox(path: Path) -> bool:
+    return ".audit-sandbox" in path.resolve().parts
+
+
 def check_active_master_tasks() -> list[str]:
     errors: list[str] = []
     if not TASKS.is_dir():
         return errors
     for master in TASKS.rglob("MASTER.plan.md"):
+        if _under_audit_sandbox(master):
+            continue
         rel = master.relative_to(TASKS).as_posix()
         if rel.startswith("archive/"):
             continue

@@ -1,0 +1,36 @@
+{
+  "task": "m-data-03-tier-a-live",
+  "acs": [
+    {
+      "id": "R2.1",
+      "status": "done",
+      "repair_items": []
+    },
+    {
+      "id": "R2.2",
+      "status": "done",
+      "repair_items": []
+    },
+    {
+      "id": "R2.3",
+      "status": "done",
+      "repair_items": []
+    },
+    {
+      "id": "R2.4",
+      "status": "done",
+      "repair_items": []
+    },
+    {
+      "id": "R2.5",
+      "status": "done",
+      "repair_items": []
+    },
+    {
+      "id": "R2.6",
+      "status": "done",
+      "repair_items": []
+    }
+  ],
+  "modules": ["project_scaffold", "ops", "governance"]
+}

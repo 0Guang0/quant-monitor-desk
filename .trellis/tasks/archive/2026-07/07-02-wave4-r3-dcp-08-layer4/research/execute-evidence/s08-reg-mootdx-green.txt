@@ -1,0 +1,1 @@
+GREEN: registry_proposed_delta.yaml queued; test_tierASyncRouter_dryRun_mootdx_selectedSourceId_aligned passed

@@ -1,6 +1,6 @@
 # Unresolved Item → 原始执行任务覆盖索引
 
-> Last reconciled: 2026-07-02 Wave 4 R3-DCP-05 全票关账 @ `c2258363`；prior 2026-07-01 @ `93b2c82`（§2.5 最终关账 + live 验收脚本入库）。  
+> Last reconciled: 2026-07-02 Wave 4 四轨 merge 完成（R3-DCP-07/08/09/10 合入 master）；prior R3-DCP-05 @ `c2258363`；prior 2026-07-01 @ `93b2c82`。  
 > 用途：防止 Plan 阶段只读取 `docs/implementation_tasks/**` 原始任务卡而漏掉 `docs/UNRESOLVED_ISSUES_REGISTRY.md` / `docs/AUDIT_DEFERRED_REGISTRY.md` 中仍未闭合的项目。  
 > 规则：新建 MASTER/AUDIT/REPAIR plan 前，必须先读取本文件、当前 registry、目标任务卡，并把本表中目标批次相关 ID 逐项映射到 AC、evidence、closeout 或 explicit re-deferral。若 registry 状态变化，本文件必须同步更新。
 

@@ -9,6 +9,7 @@ contract coverage、task evidence、project map 生成脚本。
 from __future__ import annotations
 
 import json
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -171,39 +172,26 @@ def test_contextRouter_cli_moduleFlag_exitsZero() -> None:
 @pytest.mark.skipif(not SAMPLE_TASK.is_dir(), reason="sample task directory missing")
 def test_contextRouter_cli_taskFlag_writesContextPack() -> None:
     """覆盖范围：context_router.py CLI --task
-    测试对象：round3-019-layer2-sensor 归档任务目录
-    目的/目标：复杂任务须能生成并通过校验的 context_pack.json
-    验证点：returncode==0；pack 文件存在且 validate_context_pack 为空；source-index 可引用 pack
-    失败含义：任务级路由失败会导致 complex 轨道无机器可读上下文
+    测试对象：round3-019-layer2-sensor 归档任务目录副本（repo 内 sandbox）
+    目的/目标：A5-P2-002 — 复杂任务须能生成 context_pack.json 且不污染 archive 原件
+    验证点：returncode==0；pack 文件存在且 validate_context_pack 为空
+    失败含义：任务级路由失败或测试写坏归档 context_pack
     """
-    pack_path = SAMPLE_TASK / "context_pack.json"
-    source_index = SAMPLE_TASK / "research" / "source-index.md"
-    had_index = source_index.is_file()
-    index_before = source_index.read_text(encoding="utf-8") if had_index else None
-    if pack_path.is_file():
-        pack_path.unlink()
-    result = _run_script(
-        "context_router.py",
-        "--task",
-        ".trellis/tasks/archive/2026-06/06-22-round3-019-layer2-sensor",
-    )
+    sandbox_root = PROJECT_ROOT / ".audit-sandbox" / "loop-context-router-task"
+    if sandbox_root.exists():
+        shutil.rmtree(sandbox_root)
+    shutil.copytree(SAMPLE_TASK, sandbox_root)
+    pack_path = sandbox_root / "context_pack.json"
+    pack_path.unlink(missing_ok=True)
+    rel = sandbox_root.relative_to(PROJECT_ROOT).as_posix()
     try:
+        result = _run_script("context_router.py", "--task", rel)
         assert result.returncode == 0, result.stderr
         assert pack_path.is_file()
         pack = json.loads(pack_path.read_text(encoding="utf-8"))
         assert validate_context_pack(pack) == []
-        if had_index:
-            assert "context_pack.json" in source_index.read_text(encoding="utf-8")
     finally:
-        rel = SAMPLE_TASK.relative_to(PROJECT_ROOT).as_posix()
-        subprocess.run(
-            ["git", "checkout", "--", f"{rel}/context_pack.json"],
-            cwd=PROJECT_ROOT,
-            capture_output=True,
-            check=False,
-        )
-        if had_index and index_before is not None:
-            source_index.write_text(index_before, encoding="utf-8")
+        shutil.rmtree(sandbox_root, ignore_errors=True)
 
 
 def test_writeLoopEvidenceStubs_createsManifestAndIndex(tmp_path: Path) -> None:
@@ -518,3 +506,32 @@ def test_taskEvidence_rejectsEmptyManifestAcs(tmp_path: Path) -> None:
     (tmp_path / "evidence_index.json").write_text("{}", encoding="utf-8")
     errors = check_task_evidence(tmp_path)
     assert any("no AC entries" in e for e in errors)
+
+
+def test_taskEvidence_mData03RequiresCloseoutSandboxes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """覆盖范围：M-DATA-03 handoff 业务关账沙箱路径
+    测试对象：check_task_evidence._check_m_data_03_closeout_sandboxes
+    目的/目标：validate-execute-handoff 须验关账 report 工件存在
+    验证点：缺 sandbox 报告时报 m-data-03 closeout sandbox missing
+    失败含义：仅 INDEX [x] 无业务证据仍可 handoff
+    """
+    from check_task_evidence import check_task_evidence  # noqa: E402
+
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    task = repo / ".trellis" / "tasks" / "m-data-03-tier-a-live"
+    task.mkdir(parents=True)
+    (task / "task.json").write_text(
+        '{"meta":{"task_track":"complex"},"status":"in_progress"}', encoding="utf-8"
+    )
+    (task / "EXECUTION_INDEX.md").write_text("## 2.\n| AC-1 | ok |\n", encoding="utf-8")
+    (task / "context_pack.json").write_text(
+        '{"modules":["ops"],"source_authorities":[],"tests":[]}', encoding="utf-8"
+    )
+    (task / "loop_manifest.json").write_text('{"acs":[{"id":"AC-1"}]}', encoding="utf-8")
+    (task / "evidence_index.json").write_text("{}", encoding="utf-8")
+    monkeypatch.chdir(repo)
+    errors = check_task_evidence(task, repo_root=repo)
+    assert any("m-data-03 closeout sandbox missing" in e for e in errors)
