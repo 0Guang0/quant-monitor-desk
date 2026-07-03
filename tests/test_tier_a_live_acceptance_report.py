@@ -12,6 +12,9 @@ import yaml
 from backend.app.datasources.live_tier_router import TIER_A_SOURCES
 from backend.app.ops.tier_a_live_acceptance import (
     MANIFEST_FILENAME,
+    _acceptance_report_exit_code,
+    classify_source_report_failure,
+    fail_external_adr_ref,
     run_acceptance_report,
 )
 from backend.app.ops.tier_a_live_incremental_dispatch import LiveIncrementalOutcome
@@ -270,3 +273,222 @@ def test_reportRun_writesFailureArtifactOnFixableFail(
         "summary",
     ):
         assert field in artifact
+
+
+def test_reportRun_plannedWithZeroCleanFails(
+    isolated_live_data_root: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """覆盖范围：--report 路径 zero-clean/raw 守卫
+    测试对象：run_acceptance_report per-source disposition
+    目的/目标：PLANNED + 零 clean 行且无 raw 不得 pass（与 CLI 路径一致）
+    验证点：fred 行 disposition==fail；failure_class==FAIL_FIXABLE
+    失败含义：report 路径误标 pass，AC#8 假绿
+    """
+    monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
+    monkeypatch.setenv("FRED_API_KEY", "a" * 32)
+
+    def _planned_empty(_source_id: str, _data_root: Path) -> LiveIncrementalOutcome:
+        return LiveIncrementalOutcome(
+            source_id="fred",
+            sync_status="PLANNED",
+            inspect_status="PASS",
+            clean_table="axis_observation",
+            clean_row_count=0,
+            detail="mock planned with no rows",
+        )
+
+    monkeypatch.setattr(
+        "backend.app.ops.tier_a_live_acceptance.run_tier_a_live_incremental",
+        _planned_empty,
+    )
+    monkeypatch.setattr(
+        "backend.app.ops.tier_a_live_acceptance._run_f0_data_health",
+        lambda *_a, **_k: ("PASS", "mock f0 for planned-empty-clean test"),
+    )
+
+    report_path = tmp_path / "planned-empty-report.json"
+    exit_code = run_acceptance_report(
+        report_path,
+        source_id="fred",
+        data_root=isolated_live_data_root,
+    )
+    assert exit_code == 1
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    row = report["sources"][0]
+    assert row["disposition"] == "fail"
+    assert row["failure_class"] == "FAIL_FIXABLE"
+    assert "PLANNED" in row["failure_detail"] or "empty" in row["failure_detail"].lower()
+
+
+def test_classifySourceReportFailure_emptyResponseZeroCleanFails() -> None:
+    """覆盖范围：EMPTY_RESPONSE + 0 clean 不得 PASS
+    测试对象：classify_source_report_failure
+    目的/目标：G-01 守卫 — 空响应无行须 FAIL_FIXABLE
+    验证点：disposition fail；failure_class FAIL_FIXABLE
+    失败含义：0 行静默 PASS 回归
+    """
+    outcome = LiveIncrementalOutcome(
+        source_id="bis",
+        sync_status="EMPTY_RESPONSE",
+        inspect_status="PASS",
+        clean_table="axis_observation",
+        clean_row_count=0,
+        detail="sync=EMPTY_RESPONSE",
+    )
+    disposition, failure_class, adr_ref = classify_source_report_failure(outcome)
+    assert disposition == "fail"
+    assert failure_class == "FAIL_FIXABLE"
+    assert adr_ref is None
+
+
+def test_classifySourceReportFailure_emptyResponseWithCleanRowsPasses() -> None:
+    """覆盖范围：幂等二次跑 caught-up 语义
+    测试对象：classify_source_report_failure
+    目的/目标：EMPTY_RESPONSE 但库内已有 clean 行可 PASS（AC-3）
+    验证点：disposition pass；failure_class PASS
+    失败含义：二次幂等跑被误标失败
+    """
+    outcome = LiveIncrementalOutcome(
+        source_id="fred",
+        sync_status="EMPTY_RESPONSE",
+        inspect_status="PASS",
+        clean_table="axis_observation",
+        clean_row_count=3,
+        detail="caught up",
+    )
+    disposition, failure_class, adr_ref = classify_source_report_failure(outcome)
+    assert disposition == "pass"
+    assert failure_class == "PASS"
+    assert adr_ref is None
+
+
+def test_classifySourceReportFailure_mapsAllExternalSyncStatuses() -> None:
+    """覆盖范围：FAIL_EXTERNAL 分类与契约 ADR
+    测试对象：classify_source_report_failure
+    目的/目标：各外部 sync 状态映射 FAIL_EXTERNAL + 契约 adr_ref（非 report mock）
+    验证点：RATE_LIMITED/NETWORK_ERROR/NOT_PUBLISHED_YET/DISABLED_SOURCE 均带 adr
+    失败含义：外部失败分类或 ADR SSOT 不完整，属隐形技术债
+    """
+    adr = fail_external_adr_ref()
+    for sync_status in (
+        "RATE_LIMITED",
+        "NETWORK_ERROR",
+        "NOT_PUBLISHED_YET",
+        "DISABLED_SOURCE",
+    ):
+        outcome = LiveIncrementalOutcome(
+            source_id="fred",
+            sync_status=sync_status,
+            inspect_status="PASS",
+            clean_table="axis_observation",
+            clean_row_count=1,
+            detail=f"sync={sync_status}",
+        )
+        disposition, failure_class, adr_ref = classify_source_report_failure(outcome)
+        assert disposition == "fail"
+        assert failure_class == "FAIL_EXTERNAL"
+        assert adr_ref == adr
+
+
+def test_acceptanceReportExitCode_externalRowsRequireContractAdr() -> None:
+    """覆盖范围：contract exit_codes 行级 ADR 判定
+    测试对象：_acceptance_report_exit_code
+    目的/目标：FAIL_EXTERNAL 行须带契约 adr_ref 才 exit 0（无 mock sync）
+    验证点：有 adr → 0；缺 adr → 1
+    失败含义：exit 码逻辑与 fail_external_requires_adr 不一致
+    """
+    adr = fail_external_adr_ref()
+    rows_ok = [
+        {
+            "failure_class": "FAIL_EXTERNAL",
+            "adr_ref": adr,
+        }
+    ]
+    rows_bad = [{"failure_class": "FAIL_EXTERNAL", "adr_ref": None}]
+    summary_ok = {"failed_fixable": 0, "failed_external": 1}
+    summary_bad = {"failed_fixable": 0, "failed_external": 1}
+    assert _acceptance_report_exit_code(rows_ok, summary_ok) == 0
+    assert _acceptance_report_exit_code(rows_bad, summary_bad) == 1
+
+
+def test_reportRun_exit0WhenAllExternalWithAdr(
+    isolated_live_data_root: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """覆盖范围：contract exit_codes FAIL_EXTERNAL + adr_ref
+    测试对象：run_acceptance_report exit code
+    目的/目标：全源 FAIL_EXTERNAL 且 adr_ref 有效时 exit 0
+    验证点：exit 0；summary.failed_external==1；row.adr_ref==ADR-034
+    失败含义：外部失败 ADR 合并路径未实现，契约与代码漂移
+    """
+    monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
+    monkeypatch.setenv("FRED_API_KEY", "a" * 32)
+
+    def _rate_limited(_source_id: str, _data_root: Path) -> LiveIncrementalOutcome:
+        return LiveIncrementalOutcome(
+            source_id="fred",
+            sync_status="RATE_LIMITED",
+            inspect_status="PASS",
+            clean_table="axis_observation",
+            clean_row_count=0,
+            detail="vendor rate limit",
+        )
+
+    monkeypatch.setattr(
+        "backend.app.ops.tier_a_live_acceptance.run_tier_a_live_incremental",
+        _rate_limited,
+    )
+
+    report_path = tmp_path / "external-adr-report.json"
+    exit_code = run_acceptance_report(
+        report_path,
+        source_id="fred",
+        data_root=isolated_live_data_root,
+    )
+    assert exit_code == 0
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    assert report["summary"]["failed_external"] == 1
+    assert report["sources"][0]["failure_class"] == "FAIL_EXTERNAL"
+    assert report["sources"][0]["adr_ref"] == fail_external_adr_ref()
+
+
+def test_reportRun_exit1WhenExternalWithoutAdr(
+    isolated_live_data_root: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """覆盖范围：contract exit_codes FAIL_EXTERNAL 无 ADR
+    测试对象：run_acceptance_report exit code
+    目的/目标：FAIL_EXTERNAL 无 adr_ref 时 fail-closed exit 1
+    验证点：exit 1；failure artifact 写出
+    失败含义：无 ADR 的外部失败被误标 exit 0
+    """
+    monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
+    monkeypatch.setenv("FRED_API_KEY", "a" * 32)
+
+    def _classify_external_no_adr(
+        outcome: LiveIncrementalOutcome, *, data_root: Path | None = None
+    ) -> tuple[str, str, str | None]:
+        return "fail", "FAIL_EXTERNAL", None
+
+    monkeypatch.setattr(
+        "backend.app.ops.tier_a_live_acceptance.classify_source_report_failure",
+        _classify_external_no_adr,
+    )
+    monkeypatch.setattr(
+        "backend.app.ops.tier_a_live_acceptance.run_tier_a_live_incremental",
+        lambda _sid, _root: _mock_outcome("fred"),
+    )
+    _mock_f0_pass(monkeypatch)
+
+    report_path = tmp_path / "external-no-adr-report.json"
+    exit_code = run_acceptance_report(
+        report_path,
+        source_id="fred",
+        data_root=isolated_live_data_root,
+    )
+    assert exit_code == 1
+    assert list(tmp_path.glob("tier_a_live_acceptance_failure_*.json"))

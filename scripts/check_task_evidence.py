@@ -21,6 +21,14 @@ from loop_engineering_common import (
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
+M_DATA_03_CLOSEOUT_PATHS = (
+    ".audit-sandbox/m-data-03/r2-live-20260703220000/tier-a-report.json",
+    ".audit-sandbox/m-data-03/r2-live-20260703220000/tier-a-report-run2.json",
+    ".audit-sandbox/m-data-03/r2-thicken-wb-deribit-20260703224024/tier-a-report.json",
+    ".audit-sandbox/m-data-03/tier-b-closeout/tier-b-report.json",
+    ".audit-sandbox/m-data-03/tier-c-closeout/tier-c-report.json",
+)
+
 
 def _read_json(path: Path) -> dict:
     return load_json(path) if path.is_file() else {}
@@ -138,7 +146,23 @@ def check_task_evidence(task_dir: Path, *, repo_root: Path | None = None) -> lis
         if final.startswith("PASS"):
             errors.append("task.json still in_progress but audit_matrix indicates pass")
 
+    errors.extend(_check_m_data_03_closeout_sandboxes(task_dir, repo_root))
+
     return errors
+
+
+def _check_m_data_03_closeout_sandboxes(task_dir: Path, repo_root: Path) -> list[str]:
+    """M-DATA-03 grill AC: closeout sandbox reports must exist on disk."""
+    if task_dir.name != "m-data-03-tier-a-live":
+        return []
+    missing = [
+        rel
+        for rel in M_DATA_03_CLOSEOUT_PATHS
+        if not _evidence_path_exists(task_dir, repo_root, rel)
+    ]
+    if missing:
+        return [f"m-data-03 closeout sandbox missing: {missing}"]
+    return []
 
 
 def main() -> int:

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -9,6 +10,7 @@ from pathlib import Path
 import pytest
 
 from backend.app.config import PROJECT_ROOT
+from backend.app.core.resource_guard import Decision, ResourceGuard
 from backend.app.datasources.live_tier_router import TIER_A_SOURCES
 from backend.app.ops.tier_a_live_acceptance import (
     QUICK_SOURCE_IDS,
@@ -25,6 +27,7 @@ from backend.app.ops.tier_a_live_acceptance import (
 )
 from backend.app.ops.tier_a_live_incremental_dispatch import (
     LiveIncrementalOutcome,
+    run_tier_a_live_incremental,
 )
 from tests.contract_gate_support import PROJECT_ROOT as TEST_PROJECT_ROOT
 
@@ -427,38 +430,60 @@ def test_tierALiveAcceptance_exit1WhenSourceFails(
 
 
 @pytest.mark.network
-def test_tierALiveHarness_networkMarkRegistered() -> None:
-    """覆盖范围：@pytest.mark.network 约定
-    测试对象：本模块 network 标记用例
-    目的/目标：默认 pytest -q 跳过真网（须 --run-network）
-    验证点：本用例仅在网络 flag 下执行
-    失败含义：CI 默认套件误跑 live fetch
+@pytest.mark.skipif(
+    not os.environ.get("FRED_API_KEY"),
+    reason="fred live harness requires FRED_API_KEY",
+)
+def test_tierALiveHarness_fredLiveIncremental_writesRawEvidence(
+    isolated_live_data_root: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """覆盖范围：harness 真网 fred 增量链
+    测试对象：run_tier_a_live_incremental("fred", sandbox)
+    目的/目标：QMD_ALLOW_LIVE_FETCH=1 时 harness 必须真网拉取并落 raw
+    验证点：sync 过闸；raw/fred 下存在 .json；非 mock sync
+    失败含义：有 API key 仍 skip/mock，违反 Plan R2 真网要求
     """
-    pytest.skip("harness network-mark smoke; run with pytest --run-network")
+    from backend.app.ops.tier_a_live_status import PASS_SYNC_STATUSES
+
+    monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    ensure_isolated_db(isolated_live_data_root)
+    outcome = run_tier_a_live_incremental("fred", isolated_live_data_root)
+    assert outcome.source_id == "fred"
+    assert outcome.sync_status in PASS_SYNC_STATUSES
+    raw_json = list((isolated_live_data_root / "raw" / "fred").rglob("*.json"))
+    assert raw_json, "live fred sync must persist raw JSON evidence"
 
 
-def test_networkMark_skippedInDefaultPytestRun() -> None:
-    """覆盖范围：默认 CI 跳过 network 标记
+def test_networkMark_skippedWithoutLiveFetchOptIn(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """覆盖范围：无 live opt-in 时跳过 network 标记
     测试对象：tests/conftest.py pytest_collection_modifyitems
-    目的/目标：无 --run-network 时 network 用例被 skip
-    验证点：对本文件 -m network 收集结果为 skipped
+    目的/目标：未设 QMD_ALLOW_LIVE_FETCH 且无 --run-network 时 network 用例被 skip
+    验证点：收集阶段对 @network 项注入 skip 标记
     失败含义：默认 pytest -q 可能触发 live 请求
     """
-    proc = subprocess.run(
-        [
-            sys.executable,
-            "-m",
-            "pytest",
-            "tests/test_tier_a_live_harness.py::test_tierALiveHarness_networkMarkRegistered",
-            "-q",
-            "-rs",
-            "--tb=no",
-        ],
-        cwd=str(TEST_PROJECT_ROOT),
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    combined = proc.stdout + proc.stderr
-    assert proc.returncode == 0
-    assert "skipped" in combined.lower() or "SKIPPED" in combined
+    from tests.conftest import pytest_collection_modifyitems
+
+    monkeypatch.delenv("QMD_ALLOW_LIVE_FETCH", raising=False)
+
+    class _Config:
+        @staticmethod
+        def getoption(name: str) -> bool:
+            return False
+
+    class _Item:
+        keywords = {"network": True}
+
+        def __init__(self) -> None:
+            self.markers: list[pytest.Mark] = []
+
+        def add_marker(self, marker: pytest.Mark) -> None:
+            self.markers.append(marker)
+
+    item = _Item()
+    pytest_collection_modifyitems(_Config(), [item])  # type: ignore[arg-type]
+    assert item.markers
+    assert "run-network" in str(item.markers[0].kwargs.get("reason", ""))

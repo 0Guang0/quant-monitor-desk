@@ -44,7 +44,13 @@ class SinaFinanceMockFetchPort:
         )
 
 
-def create_sina_finance_fetch_port(*, symbols: Sequence[str], max_rows: int):
+def create_sina_finance_fetch_port(*, symbols: Sequence[str], max_rows: int, use_mock: bool = True):
     if len(symbols) > MAX_SYMBOLS:
         raise PortError("FAILED", f"max {MAX_SYMBOLS} symbols allowed, got {len(symbols)}")
-    return SinaFinanceMockFetchPort(symbols=symbols, max_rows=max_rows)
+    if use_mock:
+        return SinaFinanceMockFetchPort(symbols=symbols, max_rows=max_rows)
+    from backend.app.datasources.fetch_ports.tier_b_validation_live import SinaFinanceLiveFetchPort
+    from backend.app.datasources.product_live_gate import gate_live_fetch_port
+
+    gate_live_fetch_port(source_id="sina_finance")
+    return SinaFinanceLiveFetchPort(symbols=symbols, max_rows=max_rows)

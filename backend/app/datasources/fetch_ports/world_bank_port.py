@@ -7,6 +7,9 @@ See R3H_01_REFERENCE_ADOPTION_AUDIT.md.
 from __future__ import annotations
 
 import json
+import urllib.error
+import urllib.parse
+import urllib.request
 import uuid
 from collections.abc import Sequence
 from dataclasses import dataclass
@@ -27,6 +30,8 @@ MAX_COUNTRIES = 5
 MAX_ROWS = 500
 
 WorldBankDomain = Literal["development_indicator", "global_macro_reference"]
+
+WB_API_BASE = "https://api.worldbank.org/v2"
 
 
 def _reject_unknown_pair(*, country_code: str, indicator_id: str) -> None:
@@ -94,6 +99,116 @@ class WorldBankMockFetchPort:
         return FetchPayload(content=content, file_type="json", row_count=len(observations))
 
 
+def _wb_live_observations(
+    country_code: str,
+    indicator_id: str,
+    *,
+    max_rows: int,
+    start: date | None,
+) -> list[dict[str, Any]]:
+    params: dict[str, str | int] = {
+        "format": "json",
+        "per_page": max_rows,
+    }
+    if start is not None:
+        params["date"] = f"{start.year}:{datetime.now(UTC).date().year}"
+    query = urllib.parse.urlencode(params)
+    url = f"{WB_API_BASE}/country/{country_code}/indicator/{indicator_id}?{query}"
+    try:
+        with urllib.request.urlopen(url, timeout=60) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+    except urllib.error.URLError as exc:
+        raise PortError("NETWORK_ERROR", str(exc)) from exc
+    except json.JSONDecodeError as exc:
+        raise PortError("FAILED", f"invalid World Bank JSON: {exc}") from exc
+
+    if not isinstance(payload, list) or len(payload) < 2:
+        raise PortError("FAILED", "World Bank API returned unexpected envelope")
+    rows = payload[1] or []
+    observations: list[dict[str, Any]] = []
+    for row in rows[:max_rows]:
+        raw_value = row.get("value")
+        if raw_value in (None, ""):
+            continue
+        obs_date = str(row.get("date") or "")
+        if start is not None and obs_date:
+            if len(obs_date) == 4:
+                if int(obs_date) < start.year:
+                    continue
+            elif obs_date < start.isoformat():
+                continue
+        observations.append(
+            {
+                "country_code": country_code,
+                "indicator_id": indicator_id,
+                "observation_date": f"{obs_date}-01-01" if len(obs_date) == 4 else obs_date,
+                "value": str(raw_value),
+                "unit": "USD" if "GDP" in indicator_id else "count",
+                "source_used": "world_bank",
+            }
+        )
+    if not observations:
+        raise PortError("EMPTY_RESPONSE", f"World Bank returned no rows for {country_code}/{indicator_id}")
+    return observations
+
+
+@dataclass(frozen=True)
+class WorldBankLiveFetchPort:
+    """Bounded live World Bank indicator API fetch."""
+
+    countries: Sequence[str]
+    indicators: Sequence[str]
+    max_rows: int
+    data_domain: WorldBankDomain
+
+    def _resolve_start(self, req: FetchRequest) -> date | None:
+        if req.start_time:
+            return date.fromisoformat(req.start_time[:10])
+        return None
+
+    def fetch_payload(self, req: FetchRequest) -> FetchPayload:
+        reject_over_cap(value=self.max_rows, cap=MAX_ROWS)
+        country = req.instrument_id or (self.countries[0] if self.countries else "")
+        if not country:
+            raise PortError("FAILED", "missing country for World Bank live fetch")
+        start = self._resolve_start(req)
+        retrieved_at = datetime.now(UTC).isoformat()
+        fetch_id = f"wb-live-{country}-{uuid.uuid4().hex[:12]}"
+        observations: list[dict[str, Any]] = []
+        per_indicator_cap = max(1, self.max_rows // max(len(self.indicators), 1))
+        for indicator in self.indicators:
+            _reject_unknown_pair(country_code=country, indicator_id=indicator)
+            try:
+                observations.extend(
+                    _wb_live_observations(
+                        country,
+                        indicator,
+                        max_rows=per_indicator_cap,
+                        start=start,
+                    )
+                )
+            except PortError as exc:
+                if exc.status == "NETWORK_ERROR" and len(self.indicators) > 1:
+                    continue
+                raise
+            if len(observations) >= self.max_rows:
+                observations = observations[: self.max_rows]
+                break
+        if not observations:
+            raise PortError("EMPTY_RESPONSE", f"no World Bank observations for {country}")
+        bundle = build_world_bank_indicator_evidence_bundle(
+            observations=observations,
+            source_fetch_id=fetch_id,
+            content_hash="pending",
+            as_of_timestamp=retrieved_at,
+            retrieved_at=retrieved_at,
+            data_domain=self.data_domain,
+        )
+        bundle = finalize_bundle(bundle)
+        content = json.dumps(bundle, ensure_ascii=False, default=str).encode("utf-8")
+        return FetchPayload(content=content, file_type="json", row_count=len(observations))
+
+
 def create_world_bank_fetch_port(
     *,
     countries: Sequence[str],
@@ -116,8 +231,7 @@ def create_world_bank_fetch_port(
     from backend.app.datasources.product_live_gate import gate_live_fetch_port
 
     gate_live_fetch_port(source_id="world_bank")
-    # ponytail: live branch delegates to mock until WB API wired
-    return WorldBankMockFetchPort(
+    return WorldBankLiveFetchPort(
         countries=countries,
         indicators=indicators,
         max_rows=max_rows,

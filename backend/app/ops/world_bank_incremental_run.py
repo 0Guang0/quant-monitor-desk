@@ -18,6 +18,7 @@ from backend.app.ops.macro_incremental_common import (
     build_axis_observation_row,
     build_macro_incremental_service,
     compute_since_date,
+    compute_world_bank_since_date,
     enabled_source_registry,
     read_observation_date_watermark,
     read_since_dates_for_instruments,
@@ -27,8 +28,10 @@ from backend.app.sync.orchestrator import DataSyncOrchestrator
 
 SOURCE_ID = "world_bank"
 DATA_DOMAIN = "development_indicator"
-DEFAULT_COUNTRIES = ("US",)
+DEFAULT_COUNTRIES = ("US", "CN")
 DEFAULT_INDICATOR = "NY.GDP.MKTP.CD"
+SECONDARY_INDICATOR = "SP.POP.TOTL"
+_WB_INDICATORS = (DEFAULT_INDICATOR, SECONDARY_INDICATOR)
 
 
 def clean_indicator_id(country_code: str, *, indicator_id: str = DEFAULT_INDICATOR) -> str:
@@ -38,14 +41,19 @@ def clean_indicator_id(country_code: str, *, indicator_id: str = DEFAULT_INDICAT
 def enabled_world_bank_source_registry():
     return enabled_source_registry(source_id=SOURCE_ID, data_domain=DATA_DOMAIN)
 
-_WB_INDICATORS = (DEFAULT_INDICATOR,)
-
 
 def _reject_unknown_country(country: str) -> None:
     if country not in COUNTRY_WHITELIST:
         raise ValueError(f"country not in whitelist: {country!r}")
     if DEFAULT_INDICATOR not in INDICATOR_WHITELIST:
         raise ValueError(f"indicator not in whitelist: {DEFAULT_INDICATOR!r}")
+
+
+def _wb_observation_on_or_after_since(obs_date: str, start_date: str) -> bool:
+    """Annual WB indicators: compare observation year to since year."""
+    if not start_date or not obs_date:
+        return True
+    return int(obs_date[:4]) >= int(start_date[:4])
 
 
 def world_bank_staging_rows_from_bundle(
@@ -67,7 +75,7 @@ def world_bank_staging_rows_from_bundle(
     rows: list[dict[str, object]] = []
     for obs in bundle.get("observations") or []:
         obs_date = str(obs.get("observation_date") or "")
-        if not obs_date or (start_date and obs_date < start_date):
+        if not obs_date or (start_date and not _wb_observation_on_or_after_since(obs_date, start_date)):
             continue
         raw = obs.get("value")
         if raw in (None, "", "."):
@@ -99,6 +107,7 @@ _WB_CONFIG = MacroIncrementalSourceConfig(
     staging_rows_fn=world_bank_staging_rows_from_bundle,
     validate_instrument=_reject_unknown_country,
     indicator_resolver=lambda country: clean_indicator_id(country),
+    since_date_fn=compute_world_bank_since_date,
 )
 
 

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import re
+import time
 from collections.abc import Callable, Iterator, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -25,6 +26,7 @@ _PROXY_HINT = (
     "127.0.0.1:7897 and fail; set those hosts to DIRECT in Clash/V2Ray or "
     "disable system proxy for the live pilot run"
 )
+_PUSH2HIS_RETRY_DELAYS_S = (1, 2, 4)
 
 
 @contextmanager
@@ -99,6 +101,20 @@ def _run_akshare_call(fn: Callable[[], _T]) -> _T:
         raise PortError("NETWORK_ERROR", f"direct: {direct_exc}; {_PROXY_HINT}")
 
 
+def _run_akshare_call_with_retry(fn: Callable[[], _T]) -> _T:
+    """push2his hist: limited backoff (1s · 2s · 4s) then propagate NETWORK_ERROR."""
+    last_exc: PortError | None = None
+    for delay in (0, *_PUSH2HIS_RETRY_DELAYS_S):
+        if delay:
+            time.sleep(delay)
+        try:
+            return _run_akshare_call(fn)
+        except PortError as exc:
+            last_exc = exc
+    assert last_exc is not None
+    raise last_exc
+
+
 _DATE_WINDOW_RE = re.compile(
     r"^recent\s+(\d+)\s+(trading|calendar)\s+days$",
     re.IGNORECASE,
@@ -134,6 +150,16 @@ def _akshare_hist_symbol(raw_symbol: str) -> str:
     if "." in lowered:
         return lowered.split(".", 1)[1]
     return lowered
+
+
+def _akshare_sina_daily_symbol(raw_symbol: str) -> str:
+    """Convert sh.600519 to akshare stock_zh_a_daily symbol (e.g. sh600519)."""
+    lowered = raw_symbol.lower()
+    if lowered.startswith("sh."):
+        return f"sh{lowered[3:]}"
+    if lowered.startswith("sz."):
+        return f"sz{lowered[3:]}"
+    return lowered.replace(".", "")
 
 
 @dataclass(frozen=True)

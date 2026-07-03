@@ -14,7 +14,7 @@ from backend.app.db.migrate import apply_migrations
 from backend.app.datasources.fetch_ports.alpha_vantage_port import create_alpha_vantage_fetch_port
 from backend.app.ops.alpha_vantage_incremental_run import build_alpha_vantage_incremental_service
 from backend.app.sync.orchestrator import DataSyncOrchestrator
-from tests.live_incremental_support import bootstrap_acceptance_cm
+from tests.live_incremental_support import bootstrap_acceptance_cm, bootstrap_port_live_e2e_ctx
 
 SYMBOL = "AAPL"
 FIXTURE_END = date(2024, 1, 3)
@@ -47,34 +47,23 @@ def bootstrap_alpha_vantage_live_e2e_ctx(
     monkeypatch: pytest.MonkeyPatch,
 ) -> dict[str, Any]:
     """Bootstrap Alpha Vantage live e2e under isolated M-DATA-03 sandbox (ADR-034)."""
-    import os
-
-    if not os.environ.get("ALPHA_VANTAGE_API_KEY"):
-        pytest.skip("live e2e requires ALPHA_VANTAGE_API_KEY")
-    from backend.app.ops.alpha_vantage_incremental_run import enabled_alpha_vantage_source_registry
-
-    monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
-    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
-    cm = bootstrap_acceptance_cm(sandbox_root)
-    raw_root = sandbox_root / "raw" / "alpha_vantage"
-    raw_root.mkdir(parents=True, exist_ok=True)
-    port = create_alpha_vantage_fetch_port(symbols=(SYMBOL,), max_rows=500, use_mock=False)
-    orch = DataSyncOrchestrator(cm)
-    registry = enabled_alpha_vantage_source_registry()
-    service = build_alpha_vantage_incremental_service(
-        data_root=raw_root,
-        fetch_port=port,
-        job_events=orch._jobs,
-        source_registry=registry,
+    from backend.app.ops.alpha_vantage_incremental_run import (
+        build_alpha_vantage_incremental_service,
+        enabled_alpha_vantage_source_registry,
     )
-    return {
-        "cm": cm,
-        "orch": orch,
-        "service": service,
-        "registry": registry,
-        "raw_root": raw_root,
-        "sandbox_root": sandbox_root,
-    }
+
+    return bootstrap_port_live_e2e_ctx(
+        sandbox_root,
+        monkeypatch,
+        source_id="alpha_vantage",
+        data_domain="us_equity_daily_bar",
+        port_factory=lambda **kw: create_alpha_vantage_fetch_port(
+            symbols=(SYMBOL,), max_rows=500, **kw
+        ),
+        service_builder=build_alpha_vantage_incremental_service,
+        registry_factory=enabled_alpha_vantage_source_registry,
+        env_key="ALPHA_VANTAGE_API_KEY",
+    )
 
 
 @pytest.fixture

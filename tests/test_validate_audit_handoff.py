@@ -131,8 +131,8 @@ def test_validateRepairClose_acceptsFixed(tmp_path: Path) -> None:
 def test_validateRepairClose_mData03SpotChecks_pass() -> None:
     """覆盖范围：M-DATA-03 D-05 validate_repair_close spot-checks。
     测试对象：validate_repair_close（真实任务目录）。
-    目的/目标：关账 gate 除 disposition 外校验代码/证据锚点；Plan 阶段跳过。
-    验证点：m-data-03-tier-a-live errors 为空（status=planning 时 gate 不适用）。
-    失败含义：D-05 gate 仅扫 ledger，Repair 关账可假完成。"""
+    目的/目标：关账 gate 除 disposition 外校验代码/证据锚点；R2 accept_evidence 路径。
+    验证点：m-data-03-tier-a-live errors 为空（evidence_index.json → r2 证据）。
+    失败含义：D-05 gate 仍查 R1 路径，Repair 关账可假完成。"""
     task_dir = _REPO / ".trellis" / "tasks" / "m-data-03-tier-a-live"
     assert validate_repair_close(task_dir, _REPO) == []

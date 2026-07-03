@@ -70,7 +70,7 @@ def macro_staging_rows_from_bundle(
         as_of = date.fromisoformat(obs_date)
         as_of_dt = datetime.combine(as_of, time(16, 0), tzinfo=UTC)
         publish_dt = datetime.combine(as_of, time(0, 0), tzinfo=UTC)
-        obs_id = str(uuid.uuid5(uuid.NAMESPACE_URL, f"{indicator_id}|{obs_date}|{content_hash}"))
+        obs_id = str(uuid.uuid5(uuid.NAMESPACE_URL, f"{indicator_id}|{obs_date}"))
         rows.append(
             {
                 "observation_id": obs_id,

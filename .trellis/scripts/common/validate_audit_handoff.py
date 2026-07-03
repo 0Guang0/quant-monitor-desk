@@ -252,15 +252,39 @@ def _spot_check_m_data_03_repair_close(
     if f0_hits < 1:
         errors.append("D-05 spot-check: tests/ must reference _run_f0_data_health")
 
-    l4 = task_dir / "research" / "l4-tier-a-live-accept-evidence.md"
-    if not l4.is_file():
-        errors.append("D-05 spot-check: missing research/l4-tier-a-live-accept-evidence.md")
+    evidence_path: Path | None = None
+    index_path = task_dir / "evidence_index.json"
+    if index_path.is_file():
+        try:
+            index_data = json.loads(index_path.read_text(encoding="utf-8"))
+            rel = (index_data.get("execute") or {}).get("accept_evidence")
+            if rel:
+                candidate = task_dir / str(rel)
+                if candidate.is_file():
+                    evidence_path = candidate
+        except (json.JSONDecodeError, OSError):
+            pass
+    if evidence_path is None:
+        fallback = (
+            task_dir
+            / "research"
+            / "archive"
+            / "non-plan"
+            / "execute"
+            / "r2-tier-a-live-accept-evidence.md"
+        )
+        if fallback.is_file():
+            evidence_path = fallback
+    if evidence_path is None:
+        errors.append(
+            "D-05 spot-check: missing accept evidence "
+            "(evidence_index.json execute.accept_evidence or r2-tier-a-live-accept-evidence.md)"
+        )
     else:
-        l4_text = l4.read_text(encoding="utf-8")
-        if "post-Repair" not in l4_text or "exit 0" not in l4_text:
+        evidence_text = evidence_path.read_text(encoding="utf-8")
+        if "exit 0" not in evidence_text or "11/11" not in evidence_text:
             errors.append(
-                "D-05 spot-check: l4-tier-a-live-accept-evidence.md must reference "
-                "post-Repair exit 0"
+                "D-05 spot-check: accept evidence must reference 11/11 live and exit 0"
             )
 
 

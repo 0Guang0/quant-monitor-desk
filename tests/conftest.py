@@ -154,13 +154,38 @@ def pytest_addoption(parser: pytest.Parser) -> None:
     )
 
 
+_TIER_A_LIVE_NETWORK_TEST_MARKERS = (
+    "test_tier_a_live_",
+    "test_fred_macro_incremental_e2e",
+    "test_deribit_incremental_e2e",
+    "test_alpha_vantage_incremental_e2e",
+    "test_cninfo_incremental_e2e",
+    "test_sec_edgar_incremental_e2e",
+    "test_baostock_incremental_e2e",
+    "test_mootdx_incremental_e2e",
+    "test_bis_incremental_e2e",
+    "test_cftc_incremental_e2e",
+    "test_us_treasury_incremental_e2e",
+    "test_world_bank_incremental_e2e",
+)
+
+
+def _tier_a_live_network_test(item: pytest.Item) -> bool:
+    path = str(item.fspath)
+    return any(marker in path for marker in _TIER_A_LIVE_NETWORK_TEST_MARKERS)
+
+
 def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
     if config.getoption("--run-network"):
         return
     skip_network = pytest.mark.skip(reason="need --run-network for live vendor fetch tests")
+    live_opt_in = os.environ.get("QMD_ALLOW_LIVE_FETCH") == "1"
     for item in items:
-        if "network" in item.keywords:
-            item.add_marker(skip_network)
+        if "network" not in item.keywords:
+            continue
+        if live_opt_in and _tier_a_live_network_test(item):
+            continue
+        item.add_marker(skip_network)
 
 
 _SKIP_RESOURCE_GUARD_AUTOPATCH = frozenset(

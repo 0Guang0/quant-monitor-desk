@@ -328,7 +328,15 @@ Round4 B04-*  只读产品
 
 **十一源：** `fred` `us_treasury` `sec_edgar` `cftc_cot` `bis` `world_bank` `alpha_vantage` `deribit` `baostock` `cninfo` `mootdx`
 
-### 3.2 M-G1-03 — Layer1 五轴完整
+### 3.1.1 M-DATA-03 — Tier B live 外部边界（AC-7 增补 · 2026-07-04）
+
+| 项                        | 内容                                                                                                      |
+| ------------------------- | --------------------------------------------------------------------------------------------------------- |
+| **证据 SSOT**             | `.trellis/tasks/m-data-03-tier-a-live/research/archive/non-plan/execute/tier-b-network-path2-evidence.md` |
+| **stooq（路径二已接受）** | Stooq CSV 反爬 HTML；`FAIL_EXTERNAL`+ADR-034 · 台账 `M-DATA-03-STOOQ-EXTERNAL-001`                        |
+| **CN 三源（条件路径二）** | `push2his.eastmoney.com` 间歇不可达；非 Clash 7897 误路由主因 · 台账 `M-DATA-03-TIERB-CN-HIST-001`        |
+| **承接**                  | 关闭 stooq：替代源 / nightly 权威 PASS / 废弃 binding；关闭 CN：路径一复测或 baostock hist 链             |
+| **禁止**                  | 用 exit 0 掩盖 `disposition=fail`；宣称 Tier B「10/10 真网 PASS」而 CN 三源未关账                         |
 
 | 项          | 内容                                                                               |
 | ----------- | ---------------------------------------------------------------------------------- |

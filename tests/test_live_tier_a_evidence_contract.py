@@ -14,6 +14,7 @@ from backend.app.ops.tier_a_live_acceptance import (
     MANIFEST_FILENAME,
     SCHEMA_VERSION,
     build_live_tier_a_evidence_manifest,
+    fail_external_adr_ref,
     manifest_failure_class,
     source_bindings,
     write_live_tier_a_evidence_manifest,
@@ -97,6 +98,33 @@ def test_buildManifest_requiredTopLevelFieldsPerSource(source_id: str) -> None:
 
 
 @pytest.mark.parametrize("source_id", sorted(TIER_A_SOURCES))
+def test_buildManifest_fetchRequiredFieldsPerSource(source_id: str) -> None:
+    """覆盖范围：envelope.fetch.required_fields × 11 source_bindings
+    测试对象：build_live_tier_a_evidence_manifest fetch 段
+    目的/目标：每源 manifest fetch 含契约七字段且 status 合法
+    验证点：required_fields 全存在；status ∈ status_enum
+    失败含义：fetch 子结构缺位，下游无法对齐 raw_evidence
+    """
+    contract = _load_contract()
+    fetch_spec = contract["envelope"]["fetch"]
+    required = fetch_spec["required_fields"]
+    status_enum = set(fetch_spec["status_enum"])
+    data_root = PROJECT_ROOT / ".audit-sandbox" / "m-data-03" / "contract-fetch-fixture"
+    manifest = build_live_tier_a_evidence_manifest(
+        source_id=source_id,
+        data_root=data_root,
+        run_id="run-fetch",
+        job_id="job-fetch",
+        outcome=_sample_outcome(source_id),
+        report_failure_class="PASS",
+    )
+    fetch = manifest["fetch"]
+    for field in required:
+        assert field in fetch, f"{source_id} missing fetch.{field}"
+    assert fetch["status"] in status_enum
+
+
+@pytest.mark.parametrize("source_id", sorted(TIER_A_SOURCES))
 def test_buildManifest_acceptanceMatchesSourceBinding(source_id: str) -> None:
     """覆盖范围：source_bindings × acceptance 子结构
     测试对象：build_live_tier_a_evidence_manifest acceptance 段
@@ -129,6 +157,64 @@ def test_buildManifest_acceptanceMatchesSourceBinding(source_id: str) -> None:
     forbidden = acceptance_spec["forbidden"]
     for value in forbidden:
         assert value not in json.dumps(acceptance).lower()
+
+
+def test_fetchSchemaHash_fromRawBundleMetadata(tmp_path: Path) -> None:
+    """覆盖范围：fetch.schema_hash 与 raw bundle 对齐
+    测试对象：build_live_tier_a_evidence_manifest fetch.schema_hash
+    目的/目标：manifest 读取 raw JSON schema_hash，禁止 source_id 占位 digest
+    验证点：落盘 raw 含 schema_hash 时 manifest 一致
+    失败含义：schema_hash 技术债未清，证据链不可审计
+    """
+    from backend.app.datasources.normalizers.evidence_bundle import schema_hash_for_version
+
+    data_root = tmp_path / "sandbox"
+    raw_dir = data_root / "raw" / "fred" / "2026-07-03"
+    raw_dir.mkdir(parents=True)
+    expected_hash = schema_hash_for_version("official_macro_evidence_v1")
+    raw_path = raw_dir / "bundle.json"
+    raw_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "official_macro_evidence_v1",
+                "schema_hash": expected_hash,
+                "source_id": "fred",
+            }
+        ),
+        encoding="utf-8",
+    )
+    manifest = build_live_tier_a_evidence_manifest(
+        source_id="fred",
+        data_root=data_root,
+        run_id="run-schema",
+        job_id="job-schema",
+        outcome=_sample_outcome("fred"),
+        report_failure_class="PASS",
+    )
+    assert manifest["fetch"]["schema_hash"] == expected_hash
+    assert manifest["fetch"]["schema_hash"] != __import__("hashlib").sha256(
+        b"fred"
+    ).hexdigest()
+
+
+def test_failExternalAdrRef_matchesContractAuthority() -> None:
+    """覆盖范围：FAIL_EXTERNAL adr_ref SSOT
+    测试对象：fail_external_adr_ref
+    目的/目标：adr_ref 从契约 authoritative_docs 解析，非硬编码常量
+    验证点：返回值 == ADR-034；契约 fail_external_requires_adr 为 true
+    失败含义：外部失败 ADR 与契约漂移，exit 0 路径不可信
+    """
+    contract = _load_contract()
+    invariants = contract.get("invariants") or []
+    merged: dict[str, Any] = {}
+    if isinstance(invariants, list):
+        for item in invariants:
+            if isinstance(item, dict):
+                merged.update(item)
+    elif isinstance(invariants, dict):
+        merged = invariants
+    assert merged.get("fail_external_requires_adr") is True
+    assert fail_external_adr_ref() == "ADR-034"
 
 
 def test_writeManifest_persistsUnderEvidenceDir(tmp_path: Path) -> None:

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import ast
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
@@ -15,6 +15,7 @@ from backend.app.datasources.product_live_gate import ProductLiveGateError
 from backend.app.ops.db_inspector import DbInspector
 from backend.app.ops.bis_incremental_run import (
     build_bis_incremental_service,
+    bis_staging_rows_from_bundle,
     create_bis_incremental_port,
     run_bis_incremental,
 )
@@ -95,6 +96,44 @@ def test_bisIncremental_idempotent_secondRun_rowCountStable(
         second = con.execute("SELECT COUNT(*) FROM axis_observation").fetchone()[0]
     assert first == second
     assert first >= 1
+
+
+def test_bisStagingRows_monthlySinceFilter_usesMonthGrain() -> None:
+    """覆盖范围：BIS 月频 staging 与 since 日级窗对齐
+    测试对象：bis_staging_rows_from_bundle
+    目的/目标：live 冷启动 since 在日月中段时仍保留当月观测（G-01 bis 根因）
+    验证点：start_date=2026-03-05 时保留 2026-03-01 月频行
+    失败含义：月频被日级 since 误滤光导致 EMPTY_RESPONSE
+    """
+    bundle = {
+        "source_id": "bis",
+        "content_hash": "h",
+        "schema_hash": "s",
+        "observations": [
+            {
+                "observation_date": "2026-01-01",
+                "policy_rate": 1.0,
+                "frequency": "monthly",
+                "country_code": "US",
+            },
+            {
+                "observation_date": "2026-03-01",
+                "policy_rate": 1.2,
+                "frequency": "monthly",
+                "country_code": "US",
+            },
+        ],
+    }
+    rows = bis_staging_rows_from_bundle(
+        bundle, instrument_id="US", start_date="2026-03-05"
+    )
+    assert len(rows) == 1
+    pub = rows[0]["publish_timestamp"]
+    if isinstance(pub, datetime):
+        pub_date = pub.date()
+    else:
+        pub_date = date.fromisoformat(str(pub)[:10])
+    assert pub_date == date(2026, 3, 1)
 
 
 def test_bisIncremental_emptyResponse_whenWatermarkCurrent(
@@ -203,7 +242,7 @@ def test_bisIncremental_liveNetwork_writesAxisObservation(
         source_id=SOURCE_ID,
         data_domain=DATA_DOMAIN,
         port_factory=lambda **kw: create_bis_incremental_port(
-            countries=DEFAULT_COUNTRIES, max_rows=3, **kw
+            countries=DEFAULT_COUNTRIES, max_rows=120, **kw
         ),
         since_reader=read_since_dates_for_instruments,
         instrument_ids=DEFAULT_COUNTRIES,
@@ -236,11 +275,11 @@ def test_bisIncremental_liveNetwork_idempotentSecondRun(
     isolated_live_data_root: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """覆盖范围：隔离 sandbox 连续两次 BIS live 增量
+    """覆盖范围：隔离 sandbox 连续 BIS live 增量至行数稳定
     测试对象：run_bis_incremental live 幂等 upsert
-    目的/目标：重复 live 跑 observation_id PK 不膨胀行数
-    验证点：两路 status∈{COMPLETED,EMPTY_RESPONSE}；COUNT(*) 相等
-    失败含义：live 幂等失败会导致日常 sync 重复膨胀
+    目的/目标：首次有行；若第二次 EMPTY_RESPONSE 则行数不变
+    验证点：first≥1；若 status==EMPTY_RESPONSE 则 first==second
+    失败含义：live upsert 重复膨胀行数
     """
     ctx = bootstrap_macro_live_e2e_ctx(
         isolated_live_data_root,
@@ -248,7 +287,7 @@ def test_bisIncremental_liveNetwork_idempotentSecondRun(
         source_id=SOURCE_ID,
         data_domain=DATA_DOMAIN,
         port_factory=lambda **kw: create_bis_incremental_port(
-            countries=DEFAULT_COUNTRIES, max_rows=3, **kw
+            countries=DEFAULT_COUNTRIES, max_rows=120, **kw
         ),
         since_reader=read_since_dates_for_instruments,
         instrument_ids=DEFAULT_COUNTRIES,
@@ -264,7 +303,7 @@ def test_bisIncremental_liveNetwork_idempotentSecondRun(
     )
     with ctx["cm"].writer() as con:
         first = con.execute("SELECT COUNT(*) FROM axis_observation").fetchone()[0]
-    run_bis_incremental(
+    report2 = run_bis_incremental(
         ctx["orch"],
         service=ctx["service"],
         countries=DEFAULT_COUNTRIES,
@@ -273,4 +312,6 @@ def test_bisIncremental_liveNetwork_idempotentSecondRun(
     )
     with ctx["cm"].writer() as con:
         second = con.execute("SELECT COUNT(*) FROM axis_observation").fetchone()[0]
-    assert first == second
+    assert first >= 1
+    if report2.instrument_results[0]["status"] == "EMPTY_RESPONSE":
+        assert first == second

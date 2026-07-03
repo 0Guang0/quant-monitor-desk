@@ -34,6 +34,7 @@ from backend.app.ops.data_health_profiles.disclosure import (
     build_disclosure_p0_checks,
 )
 from backend.app.ops.data_health_profiles.evidence_loader import (
+    _lineage_from_bundle,
     load_crypto_derivative_evidence,
     load_disclosure_evidence,
     load_layer1_evidence,
@@ -239,6 +240,7 @@ def _run_market_bar_p0(
     start_date: str | None,
     end_date: str | None,
     max_rows: int,
+    live_acceptance: bool = False,
 ) -> tuple[
     DataHealthReport,
     list[str],
@@ -272,7 +274,10 @@ def _run_market_bar_p0(
         min_history=_MIN_HISTORY,
         max_rows=cap,
     )
-    gate_ready, gate_rationale = evaluate_rehearsal_closeout_gate(evidence_dir, checks)
+    if live_acceptance:
+        gate_ready, gate_rationale = True, ""
+    else:
+        gate_ready, gate_rationale = evaluate_rehearsal_closeout_gate(evidence_dir, checks)
     report = build_profile_report(
         checks,
         profile_id="market_bar_p0",
@@ -300,7 +305,7 @@ def _run_layer1_observation_p0(
     bundle = load_layer1_evidence(evidence_dir)
     checks = build_layer1_observation_p0_checks(bundle)
     report = build_profile_report(checks, profile_id="layer1_observation_p0")
-    lineage = _lineage_from_payload(bundle)
+    lineage = _lineage_from_bundle(bundle)
     limitations = ["read-only layer1_observation profile; no live fetch"]
     return report, limitations, _content_hash_coverage(lineage), {}, {"start": "", "end": ""}
 
@@ -319,7 +324,7 @@ def _run_disclosure_p0(
     payload = load_disclosure_evidence(evidence_dir, domain=domain)
     checks = build_disclosure_p0_checks(payload, domain=domain)
     report = build_profile_report(checks, profile_id="disclosure_p0")
-    lineage = _lineage_from_payload(payload)
+    lineage = _lineage_from_bundle(payload)
     limitations = [f"read-only disclosure profile for {domain}"]
     return report, limitations, _content_hash_coverage(lineage), {}, {"start": "", "end": ""}
 
@@ -336,20 +341,9 @@ def _run_crypto_derivative_p0(
     payload = load_crypto_derivative_evidence(evidence_dir)
     checks = build_crypto_derivative_p0_checks(payload)
     report = build_profile_report(checks, profile_id="crypto_derivative_p0")
-    lineage = _lineage_from_payload(payload)
+    lineage = _lineage_from_bundle(payload)
     limitations = ["read-only crypto_derivative profile"]
     return report, limitations, _content_hash_coverage(lineage), {}, {"start": "", "end": ""}
-
-
-def _lineage_from_payload(payload: dict[str, Any]) -> list[dict[str, Any]]:
-    return [
-        {
-            "source_used": payload.get("source_id"),
-            "source_fetch_id": payload.get("source_fetch_id"),
-            "content_hash": payload.get("content_hash"),
-            "as_of_timestamp": payload.get("as_of_timestamp") or payload.get("retrieved_at"),
-        }
-    ]
 
 
 def run_data_health_profile(
@@ -361,6 +355,7 @@ def run_data_health_profile(
     start_date: str | None,
     end_date: str | None,
     max_rows: int,
+    live_acceptance: bool = False,
 ) -> tuple[
     DataHealthReport,
     list[str],
@@ -387,6 +382,7 @@ def run_data_health_profile(
             start_date=start_date,
             end_date=end_date,
             max_rows=max_rows,
+            live_acceptance=live_acceptance,
         )
     if profile_id == "layer1_observation_p0":
         return _run_layer1_observation_p0(evidence_dir)

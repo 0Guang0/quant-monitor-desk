@@ -496,6 +496,37 @@ def test_barLiveRoutePlanner_selectsMootdxPrimary() -> None:
     assert plan.selected_source_id == "mootdx"
 
 
+def test_deribitLiveInstruments_resolvesUpToTwoFromProbe() -> None:
+    """覆盖范围：deribit live 加厚 — 多 instrument 探针
+    测试对象：_deribit_live_instruments
+    目的/目标：G-07/T-05 要求 deribit clean ≥2 行（多合约增量）
+    验证点：探针 bundle 含 ≥2 名时返回前两个不重复 instrument_name
+    失败含义：dispatch 仍只跑单合约，关账证据偏薄
+    """
+    import json
+
+    from backend.app.datasources.adapters.fetch_port import FetchPayload
+    from backend.app.ops.tier_a_live_incremental_dispatch import _deribit_live_instruments
+
+    class _ProbePort:
+        def fetch_payload(self, _req):
+            bundle = {
+                "instruments": [
+                    {"instrument_name": "BTC-OPT-A"},
+                    {"instrument_name": "BTC-OPT-B"},
+                    {"instrument_name": "BTC-OPT-C"},
+                ]
+            }
+            return FetchPayload(
+                content=json.dumps(bundle).encode("utf-8"),
+                file_type="json",
+                row_count=3,
+            )
+
+    names = _deribit_live_instruments(_ProbePort())
+    assert names == ("BTC-OPT-A", "BTC-OPT-B")
+
+
 def test_deribitSinceReader_acceptsDataDomainKwarg() -> None:
     """覆盖范围：deribit watermark 导入遮蔽回归
     测试对象：_live_sync_runner_for deribit since_reader
@@ -581,3 +612,64 @@ def test_runTierALiveIncremental_fredLiveNetwork_realDispatch(
     assert outcome.sync_status in PASS_SYNC_STATUSES
     assert outcome.inspect_status in {"PASS", "WARN"}
     assert outcome.clean_table == "axis_observation"
+
+
+def test_cleanRowCount_axisObservation_doesNotInflateFromSiblingSources(
+    tmp_path: Path,
+) -> None:
+    """覆盖范围：axis_observation 按 source_used 计数
+    测试对象：_clean_row_count
+    目的/目标：fred 不得因 bis/us_treasury 等同表行数被误标有 clean 行
+    验证点：表内仅有 bis 行时 fred 计数为 0
+    失败含义：多源共享 macro 表时验收假绿（AC-2）
+    """
+    from backend.app.ops.tier_a_live_incremental_dispatch import _clean_row_count
+    import duckdb
+
+    from backend.app.db.migrate import apply_migrations
+
+    data_root = tmp_path / "sandbox"
+    data_root.mkdir()
+    db_path = ensure_isolated_db(data_root)
+    con = duckdb.connect(str(db_path))
+    try:
+        apply_migrations(con)
+        insert_axis_observation(
+            con,
+            observation_id="bis-only-obs",
+            indicator_id="BIS:CREDIT",
+            obs_date=datetime(2026, 7, 1, tzinfo=UTC).date(),
+        )
+        con.execute(
+            "UPDATE axis_observation SET source_used = ?, source_channel_id = ? WHERE observation_id = ?",
+            ["bis", "bis", "bis-only-obs"],
+        )
+    finally:
+        con.close()
+    count, _detail = _clean_row_count(
+        db_path, "axis_observation", source_id="fred"
+    )
+    assert count == 0
+
+
+def test_clampBarIncrementalWindow_respectsBaostockPortCap() -> None:
+    """覆盖范围：baostock 增量窗超过 port cap 时钳制
+    测试对象：_clamp_bar_incremental_window
+    目的/目标：跨源共享 watermark 导致宽窗时不得 FAILED_FINAL exceeds cap
+    验证点：钳制后 span == max_window_days
+    失败含义：二次 live 跑 baostock 因窗超限失败（AC-3）
+    """
+    from datetime import date
+
+    from backend.app.ops.tier_a_live_incremental_dispatch import _clamp_bar_incremental_window
+    from backend.app.sync.watermark import IncrementalWindow
+
+    window = IncrementalWindow(
+        date_start=date(2024, 1, 1),
+        date_end=date(2026, 7, 3),
+        watermark=date(2023, 12, 31),
+    )
+    clamped = _clamp_bar_incremental_window(window, max_window_days=120)
+    assert (clamped.date_end - clamped.date_start).days + 1 == 120
+    assert clamped.date_end == window.date_end
+

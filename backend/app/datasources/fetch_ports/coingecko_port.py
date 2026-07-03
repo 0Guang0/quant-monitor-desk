@@ -69,7 +69,13 @@ class CoingeckoMockFetchPort:
         return FetchPayload(content=content, file_type="json", row_count=len(rows))
 
 
-def create_coingecko_fetch_port(*, asset_ids: Sequence[str], max_assets: int):
+def create_coingecko_fetch_port(*, asset_ids: Sequence[str], max_assets: int, use_mock: bool = True):
     if len(asset_ids) > MAX_ASSETS:
         raise PortError("FAILED", f"max {MAX_ASSETS} assets allowed, got {len(asset_ids)}")
-    return CoingeckoMockFetchPort(asset_ids=asset_ids, max_assets=max_assets)
+    if use_mock:
+        return CoingeckoMockFetchPort(asset_ids=asset_ids, max_assets=max_assets)
+    from backend.app.datasources.fetch_ports.tier_b_validation_live import CoingeckoLiveFetchPort
+    from backend.app.datasources.product_live_gate import gate_live_fetch_port
+
+    gate_live_fetch_port(source_id="coingecko")
+    return CoingeckoLiveFetchPort(asset_ids=asset_ids, max_assets=max_assets)

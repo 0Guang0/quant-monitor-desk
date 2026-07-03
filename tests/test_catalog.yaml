@@ -983,6 +983,28 @@ tests/test_live_tier_a_evidence_contract.py:
     docs: []
     rules: []
     specs: []
+tests/test_live_tier_b_evidence_contract.py:
+  command: uv run python -m pytest tests/test_live_tier_b_evidence_contract.py -q
+  failure_meaning:
+    Regression in test_live_tier_b_evidence_contract; inspect purpose
+    and linked authorities.
+  purpose: M-DATA-03 AC-7 — live_tier_b_evidence_v1 contract tests.
+  type: contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_live_tier_c_evidence_contract.py:
+  command: uv run python -m pytest tests/test_live_tier_c_evidence_contract.py -q
+  failure_meaning:
+    Regression in test_live_tier_c_evidence_contract; inspect purpose
+    and linked authorities.
+  purpose: M-DATA-03 AC-7 — live_tier_c_evidence_v1 contract tests.
+  type: contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
 tests/test_loop_engineering_flow.py:
   command: uv run python -m pytest tests/test_loop_engineering_flow.py -q
   failure_meaning:
@@ -1971,6 +1993,17 @@ tests/test_tier_a_live_b2_acceptance.py:
     docs: []
     rules: []
     specs: []
+tests/test_tier_a_live_ci_manifest.py:
+  command: uv run python -m pytest tests/test_tier_a_live_ci_manifest.py -q
+  failure_meaning:
+    Regression in test_tier_a_live_ci_manifest; inspect purpose and
+    linked authorities.
+  purpose: M-DATA-03 S-R2-CI — tier-a-live workflow manifest tests.
+  type: protocol
+  verifies:
+    docs: []
+    rules: []
+    specs: []
 tests/test_tier_a_live_dispatch.py:
   command: uv run python -m pytest tests/test_tier_a_live_dispatch.py -q
   failure_meaning:
@@ -1993,6 +2026,83 @@ tests/test_tier_a_live_harness.py:
     Tier A live acceptance harness — M-DATA-03 R2 S-R2-ACCEPT (replaces S00-INFRA
     scope).
   type: contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_tier_b_cn_equity_live_ports.py:
+  command: uv run python -m pytest tests/test_tier_b_cn_equity_live_ports.py -q
+  failure_meaning:
+    Regression in test_tier_b_cn_equity_live_ports; inspect purpose
+    and linked authorities.
+  purpose: Tier B CN equity live fetch ports — registry-aligned vendor seams (M-DATA-03).
+  type: protocol
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_tier_b_live_acceptance_report.py:
+  command: uv run python -m pytest tests/test_tier_b_live_acceptance_report.py -q
+  failure_meaning:
+    Regression in test_tier_b_live_acceptance_report; inspect purpose
+    and linked authorities.
+  purpose: M-DATA-03 AC-7 — tier_b_live_acceptance --report tests.
+  type: runtime-contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_tier_b_live_ci_manifest.py:
+  command: uv run python -m pytest tests/test_tier_b_live_ci_manifest.py -q
+  failure_meaning:
+    Regression in test_tier_b_live_ci_manifest; inspect purpose and
+    linked authorities.
+  purpose: M-DATA-03 AC-7 — tier-b-live workflow manifest tests.
+  type: protocol
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_tier_b_live_harness.py:
+  command: uv run python -m pytest tests/test_tier_b_live_harness.py -q
+  failure_meaning:
+    Regression in test_tier_b_live_harness; inspect purpose and linked
+    authorities.
+  purpose: Tier B live acceptance harness tests (M-DATA-03 AC-7 · validation_fetch).
+  type: runtime-contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_tier_c_live_acceptance_report.py:
+  command: uv run python -m pytest tests/test_tier_c_live_acceptance_report.py -q
+  failure_meaning:
+    Regression in test_tier_c_live_acceptance_report; inspect purpose
+    and linked authorities.
+  purpose: M-DATA-03 AC-7 — tier_c_live_acceptance --report tests.
+  type: runtime-contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_tier_c_live_ci_manifest.py:
+  command: uv run python -m pytest tests/test_tier_c_live_ci_manifest.py -q
+  failure_meaning:
+    Regression in test_tier_c_live_ci_manifest; inspect purpose and
+    linked authorities.
+  purpose: M-DATA-03 AC-7 — tier-c-live workflow manifest tests.
+  type: protocol
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_tier_c_live_harness.py:
+  command: uv run python -m pytest tests/test_tier_c_live_harness.py -q
+  failure_meaning:
+    Regression in test_tier_c_live_harness; inspect purpose and linked
+    authorities.
+  purpose: Tier C live acceptance harness tests (M-DATA-03 AC-7 · validation_fetch).
+  type: runtime-contract
   verifies:
     docs: []
     rules: []

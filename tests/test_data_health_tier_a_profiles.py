@@ -142,6 +142,29 @@ def test_marketBar_standaloneMarketReplay_passes(tmp_path: Path) -> None:
     assert report.overall_status not in {"FAIL", "BLOCKED"}
 
 
+def test_marketBar_liveAcceptance_skipsRehearsalCloseoutGate(tmp_path: Path) -> None:
+    """覆盖范围：F0 方向 B — live 验收不走 R3G staged-only gate
+    测试对象：run_data_health_profile market_bar_p0 live_acceptance=True
+    目的/目标：Tier A live 报告不得含 staged-only gate_rationale（AC-5）
+    验证点：gate_rationale 为空；overall_status 非 FAIL/BLOCKED
+    失败含义：行情源 F0 仍依赖彩排 closeout，与宏观源双标准
+    """
+    src = _REPLAY / "market_data/alpha_vantage/aapl_daily_replay.json"
+    evidence_dir = _copy_replay(src, tmp_path, "alpha_vantage")
+    report, *_ = run_data_health_profile(
+        profile_id="market_bar_p0",
+        domain="market_bar_1d",
+        evidence_path=evidence_dir,
+        db_path=None,
+        start_date=None,
+        end_date=None,
+        max_rows=100,
+        live_acceptance=True,
+    )
+    assert report.overall_status not in {"FAIL", "BLOCKED"}
+    assert "staged-only" not in (report.gate_rationale or "").lower()
+
+
 def test_layer1_fredLiveSeriesPayload_notFailBlocked(tmp_path: Path) -> None:
     """覆盖范围：fred live fetch 证据形状
     测试对象：load_layer1 + layer1_observation_p0

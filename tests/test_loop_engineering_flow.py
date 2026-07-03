@@ -506,3 +506,32 @@ def test_taskEvidence_rejectsEmptyManifestAcs(tmp_path: Path) -> None:
     (tmp_path / "evidence_index.json").write_text("{}", encoding="utf-8")
     errors = check_task_evidence(tmp_path)
     assert any("no AC entries" in e for e in errors)
+
+
+def test_taskEvidence_mData03RequiresCloseoutSandboxes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """覆盖范围：M-DATA-03 handoff 业务关账沙箱路径
+    测试对象：check_task_evidence._check_m_data_03_closeout_sandboxes
+    目的/目标：validate-execute-handoff 须验关账 report 工件存在
+    验证点：缺 sandbox 报告时报 m-data-03 closeout sandbox missing
+    失败含义：仅 INDEX [x] 无业务证据仍可 handoff
+    """
+    from check_task_evidence import check_task_evidence  # noqa: E402
+
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    task = repo / ".trellis" / "tasks" / "m-data-03-tier-a-live"
+    task.mkdir(parents=True)
+    (task / "task.json").write_text(
+        '{"meta":{"task_track":"complex"},"status":"in_progress"}', encoding="utf-8"
+    )
+    (task / "EXECUTION_INDEX.md").write_text("## 2.\n| AC-1 | ok |\n", encoding="utf-8")
+    (task / "context_pack.json").write_text(
+        '{"modules":["ops"],"source_authorities":[],"tests":[]}', encoding="utf-8"
+    )
+    (task / "loop_manifest.json").write_text('{"acs":[{"id":"AC-1"}]}', encoding="utf-8")
+    (task / "evidence_index.json").write_text("{}", encoding="utf-8")
+    monkeypatch.chdir(repo)
+    errors = check_task_evidence(task, repo_root=repo)
+    assert any("m-data-03 closeout sandbox missing" in e for e in errors)

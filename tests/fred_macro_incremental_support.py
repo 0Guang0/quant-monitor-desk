@@ -22,7 +22,7 @@ from backend.app.ops.fred_incremental_watermark import (
     read_since_dates_for_series,
 )
 from backend.app.sync.orchestrator import DataSyncOrchestrator
-from tests.live_incremental_support import bootstrap_acceptance_cm
+from tests.live_incremental_support import bootstrap_acceptance_cm, bootstrap_port_live_e2e_ctx
 from tests.service_path_support import enable_source_route
 
 
@@ -79,39 +79,19 @@ def bootstrap_fred_live_e2e_ctx(
     monkeypatch: pytest.MonkeyPatch,
 ) -> dict[str, Any]:
     """Bootstrap fred live e2e under isolated M-DATA-03 sandbox (ADR-034)."""
-    import os
-
-    if not os.environ.get("FRED_API_KEY"):
-        pytest.skip("live e2e requires FRED_API_KEY")
-    monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
-    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
-    enable_source_route(
-        monkeypatch, source_id="fred", data_domain="macro_series", primary_source_id="fred"
+    return bootstrap_port_live_e2e_ctx(
+        sandbox_root,
+        monkeypatch,
+        source_id="fred",
+        data_domain="macro_series",
+        port_factory=lambda **kw: create_fred_fetch_port(
+            series_ids=("DGS10",), max_rows=3, **kw
+        ),
+        service_builder=build_fred_incremental_service,
+        registry_factory=enabled_fred_source_registry,
+        since_reader=lambda con, _ids: read_since_dates_for_series(con, ("DGS10",)),
+        env_key="FRED_API_KEY",
     )
-    cm = bootstrap_acceptance_cm(sandbox_root)
-    raw_root = sandbox_root / "raw" / "fred"
-    raw_root.mkdir(parents=True, exist_ok=True)
-    port = create_fred_fetch_port(series_ids=("DGS10",), max_rows=3, use_mock=False)
-    orch = DataSyncOrchestrator(cm)
-    with cm.writer() as con:
-        since_map = read_since_dates_for_series(con, ("DGS10",))
-    registry = enabled_fred_source_registry()
-    service = build_fred_incremental_service(
-        data_root=raw_root,
-        fetch_port=port,
-        since_by_series=since_map,
-        job_events=orch._jobs,
-        source_registry=registry,
-    )
-    return {
-        "cm": cm,
-        "orch": orch,
-        "service": service,
-        "registry": registry,
-        "port": port,
-        "raw_root": raw_root,
-        "sandbox_root": sandbox_root,
-    }
 
 
 @pytest.fixture

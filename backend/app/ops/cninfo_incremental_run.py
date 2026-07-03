@@ -14,7 +14,7 @@ from backend.app.datasources.adapters.fetch_port import FetchPort, PortError
 from backend.app.datasources.adapters.skeleton_base import SkeletonAdapterBase, _utc_now_iso
 from backend.app.datasources.fetch_result import FetchRequest, FetchResult
 from backend.app.datasources.service import DataSourceService
-from backend.app.ops.cninfo_incremental_watermark import STAGING_TABLE, read_since_date_for_instrument
+from backend.app.ops.cninfo_incremental_watermark import STAGING_TABLE, read_since_date_for_instrument, read_metadata_publish_watermark
 from backend.app.ops.macro_incremental_common import (
     incremental_evidence_as_of,
     incremental_validation_patch_factory,
@@ -64,45 +64,59 @@ def cninfo_staging_rows_from_bundle(
     *,
     instrument_id: str,
     start_date: str | None = None,
+    cold_start_fallback: bool = False,
 ) -> list[dict[str, object]]:
     """Map cn_market_evidence_v1 filings → stg_disclosure_smoke rows."""
     now = datetime.now(UTC)
     content_hash = str(bundle.get("content_hash") or "cninfo-hash")
     schema_hash = str(bundle.get("schema_hash") or "cninfo-schema")
     source_fetch_id = str(bundle.get("source_fetch_id") or "cninfo-unknown")
-    rows: list[dict[str, object]] = []
-    for filing in bundle.get("filings") or []:
-        obs_date = str(filing.get("observation_date") or filing.get("publish_timestamp") or "")[:10]
-        if not obs_date:
-            continue
-        if start_date and obs_date < start_date:
-            continue
-        announcement_id = str(
-            filing.get("filing_id") or filing.get("announcement_id") or filing.get("id") or ""
-        )
-        if not announcement_id:
-            continue
-        rows.append(
-            {
-                "announcement_id": announcement_id,
-                "instrument_id": str(filing.get("instrument_id") or instrument_id),
-                "title": str(filing.get("title") or ""),
-                "publish_timestamp": _parse_publish_ts(filing.get("publish_timestamp") or obs_date),
-                "announcement_url": filing.get("url"),
-                "announcement_type": filing.get("announcement_type"),
-                "data_domain": str(bundle.get("data_domain") or "cn_announcements"),
-                "source_used": str(filing.get("source_used") or bundle.get("source_id") or "cninfo"),
-                "pdf_file_id": None,
-                "extracted_text_file_id": None,
-                "content_status": "metadata_only",
-                "batch_id": "incremental",
-                "source_fetch_id": source_fetch_id,
-                "content_hash": content_hash,
-                "schema_hash": schema_hash,
-                "quality_flags": "INCREMENTAL",
-                "created_at": now,
-            }
-        )
+    def _rows_from_filings(*, apply_since: bool) -> list[dict[str, object]]:
+        built: list[dict[str, object]] = []
+        for filing in bundle.get("filings") or []:
+            obs_date = str(
+                filing.get("observation_date") or filing.get("publish_timestamp") or ""
+            )[:10]
+            if not obs_date:
+                continue
+            if apply_since and start_date and obs_date < start_date:
+                continue
+            announcement_id = str(
+                filing.get("filing_id") or filing.get("announcement_id") or filing.get("id") or ""
+            )
+            if not announcement_id:
+                continue
+            built.append(
+                {
+                    "announcement_id": announcement_id,
+                    "instrument_id": str(filing.get("instrument_id") or instrument_id),
+                    "title": str(filing.get("title") or ""),
+                    "publish_timestamp": _parse_publish_ts(
+                        filing.get("publish_timestamp") or obs_date
+                    ),
+                    "announcement_url": filing.get("url"),
+                    "announcement_type": filing.get("announcement_type"),
+                    "data_domain": str(bundle.get("data_domain") or "cn_announcements"),
+                    "source_used": str(
+                        filing.get("source_used") or bundle.get("source_id") or "cninfo"
+                    ),
+                    "pdf_file_id": None,
+                    "extracted_text_file_id": None,
+                    "content_status": "metadata_only",
+                    "batch_id": "incremental",
+                    "source_fetch_id": source_fetch_id,
+                    "content_hash": content_hash,
+                    "schema_hash": schema_hash,
+                    "quality_flags": "INCREMENTAL",
+                    "created_at": now,
+                }
+            )
+        return built
+
+    rows = _rows_from_filings(apply_since=True)
+    if not rows and cold_start_fallback and start_date and bundle.get("filings"):
+        # ponytail: fresh sandbox only — watermark lookback may exclude replay evidence
+        rows = _rows_from_filings(apply_since=False)[:3]
     return rows
 
 
@@ -137,10 +151,13 @@ def _make_cninfo_staging_adapter_class():
                     fetch_time=fetch_time,
                     error_message=f"invalid cn market evidence JSON: {exc}",
                 )
+            instrument_id = req.instrument_id or _DEFAULT_SYMBOL
+            cold_start = read_metadata_publish_watermark(con, instrument_id) is None
             rows = cninfo_staging_rows_from_bundle(
                 bundle,
-                instrument_id=req.instrument_id or _DEFAULT_SYMBOL,
+                instrument_id=instrument_id,
                 start_date=req.start_time[:10] if req.start_time else None,
+                cold_start_fallback=cold_start,
             )
             persist_incremental_fetch_payload(
                 self,

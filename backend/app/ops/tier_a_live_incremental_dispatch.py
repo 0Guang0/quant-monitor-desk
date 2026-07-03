@@ -70,12 +70,17 @@ def _extract_sync_status(result: Any) -> str:
                 return val
         return "UNKNOWN"
     overall = getattr(result, "overall_status", None)
-    if overall:
-        return str(overall).upper()
     for attr in ("instrument_results", "series_results", "cik_results", "symbol_results"):
         items = getattr(result, attr, None)
         if items:
-            return str(items[0].get("status", "UNKNOWN")).upper()
+            statuses = [str(i.get("status", "UNKNOWN")).upper() for i in items]
+            if any(s == "NETWORK_ERROR" for s in statuses):
+                return "NETWORK_ERROR"
+            if overall:
+                return str(overall).upper()
+            return statuses[0] if statuses else "UNKNOWN"
+    if overall:
+        return str(overall).upper()
     return str(getattr(result, "status", None) or "UNKNOWN").upper()
 
 
@@ -135,6 +140,30 @@ def _normalize_bar_sync_status(status: str, message: str | None) -> str:
         # ponytail: caught-up live window may yield SUCCESS+0 rows; acceptance treats as EMPTY_RESPONSE
         return "EMPTY_RESPONSE"
     return status
+
+
+def _clamp_bar_incremental_window(window, *, max_window_days: int):
+    """Clamp bar incremental span to port cap (avoids FAILED_FINAL on cross-source watermark drift)."""
+    from datetime import timedelta
+
+    from backend.app.sync.watermark import IncrementalWindow
+
+    span = (window.date_end - window.date_start).days + 1
+    if span <= max_window_days:
+        return window
+    return IncrementalWindow(
+        date_start=window.date_end - timedelta(days=max_window_days - 1),
+        date_end=window.date_end,
+        watermark=window.watermark,
+    )
+
+
+def _bar_port_max_window_days(source_id: str) -> int | None:
+    if source_id == "baostock":
+        from backend.app.datasources.fetch_ports.baostock_port import MAX_WINDOW_DAYS
+
+        return MAX_WINDOW_DAYS
+    return None
 
 
 def _macro_live_runner(
@@ -219,6 +248,9 @@ def _sync_bar_live(data_root: Path, *, source_id: str) -> str:
     )
     if incremental_window_is_empty(window):
         return "EMPTY_RESPONSE"
+    max_window_days = _bar_port_max_window_days(source_id)
+    if max_window_days is not None:
+        window = _clamp_bar_incremental_window(window, max_window_days=max_window_days)
 
     orch = DataSyncOrchestrator(cm)
     raw = raw_root / source_id
@@ -285,7 +317,19 @@ def _sync_fred_live(data_root: Path) -> str:
     return _extract_sync_status(report)
 
 
-def _resolve_deribit_live_instrument(port) -> str:
+def _resolve_deribit_live_instruments(port, *, limit: int = 2) -> tuple[str, ...]:
+    live_list = getattr(port, "_live_instruments", None)
+    if callable(live_list):
+        names: list[str] = []
+        for item in live_list():
+            name = str(item.get("instrument_name") or "")
+            if not name or name in names:
+                continue
+            names.append(name)
+            if len(names) >= limit:
+                break
+        if names:
+            return tuple(names)
     req = FetchRequest(
         run_id="tier-a-live-deribit-probe",
         source_id="deribit",
@@ -297,10 +341,21 @@ def _resolve_deribit_live_instrument(port) -> str:
     instruments = bundle.get("instruments") or []
     if not instruments:
         raise RuntimeError("Deribit live returned no instruments")
-    name = str(instruments[0].get("instrument_name") or "")
-    if not name:
+    names = []
+    for item in instruments:
+        name = str(item.get("instrument_name") or "")
+        if not name or name in names:
+            continue
+        names.append(name)
+        if len(names) >= limit:
+            break
+    if not names:
         raise RuntimeError("Deribit live instrument missing instrument_name")
-    return name
+    return tuple(names)
+
+
+def _resolve_deribit_live_instrument(port) -> str:
+    return _resolve_deribit_live_instruments(port, limit=1)[0]
 
 
 def _run_port_live(
@@ -353,7 +408,7 @@ def _run_port_live(
 
 
 def _deribit_live_instruments(port) -> tuple[str, ...]:
-    return (_resolve_deribit_live_instrument(port),)
+    return _resolve_deribit_live_instruments(port, limit=2)
 
 
 def _live_sync_runner_for(source_id: str) -> Callable[[Path], str]:
@@ -586,8 +641,8 @@ def _clean_row_count(
                     f"SELECT COUNT(*) FROM {quoted} WHERE source_used = ?",
                     [source_id],
                 ).fetchone()
-                if row and int(row[0]) > 0:
-                    return int(row[0]), ""
+                if row is not None:
+                    return int(row[0]), "; ".join(warnings)
             except duckdb.Error as exc:
                 warnings.append(f"source_used filter on {clean_table}: {exc}")
         row = con.execute(f"SELECT COUNT(*) FROM {quoted}").fetchone()

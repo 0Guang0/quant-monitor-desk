@@ -3,7 +3,7 @@
   "name": "m-data-03-tier-a-live",
   "title": "M-DATA-03 Tier A 11-source live incremental (isolated acceptance)",
   "description": "Plan R2: R4 sandbox live acceptance for 11 Tier A sources — unified evidence contract, full F0+B2, dispatch dedup, CI. No SKIP as pass.",
-  "status": "in_progress",
+  "status": "review",
   "priority": "P0",
   "creator": "Guang",
   "assignee": "Guang",

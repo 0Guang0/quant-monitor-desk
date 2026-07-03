@@ -11,7 +11,7 @@ import json
 import uuid
 from collections.abc import Sequence
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 from backend.app.config import PROJECT_ROOT
@@ -178,6 +178,93 @@ class CninfoMockFetchPort:
 
 
 @dataclass(frozen=True)
+class CninfoLiveFetchPort:
+    """Product live cninfo port — real HTTP via cninfo disclosure API (akshare transport)."""
+
+    symbols: Sequence[str]
+    max_rows: int
+
+    def fetch_payload(self, req: FetchRequest) -> FetchPayload:
+        from backend.app.datasources.fetch_ports.cn_rehearsal_live_ports import (
+            _cninfo_numeric_symbol,
+            _run_akshare_call,
+            parse_pilot_date_window,
+        )
+
+        try:
+            import akshare as ak
+        except ImportError as exc:
+            raise PortError("FAILED", f"akshare package not installed: {exc}") from exc
+
+        reject_over_cap(value=self.max_rows, cap=MAX_FILINGS, label="max_filings")
+        symbol = req.instrument_id or (self.symbols[0] if self.symbols else "")
+        if not symbol:
+            raise PortError("FAILED", "missing instrument_id for cninfo live fetch")
+        if symbol not in SYMBOL_WHITELIST:
+            raise PortError("FAILED", f"symbol not in cninfo whitelist: {symbol!r}")
+        numeric = _cninfo_numeric_symbol(symbol)
+        if not numeric:
+            raise PortError("FAILED", f"invalid cninfo symbol: {symbol!r}")
+
+        date_window = "recent 365 calendar days"
+        start = datetime.now(UTC).date() - timedelta(days=parse_pilot_date_window(date_window))
+        end = datetime.now(UTC).date()
+
+        def _fetch_disclosure():
+            return ak.stock_zh_a_disclosure_report_cninfo(
+                symbol=numeric,
+                start_date=start.strftime("%Y%m%d"),
+                end_date=end.strftime("%Y%m%d"),
+            )
+
+        try:
+            frame = _run_akshare_call(_fetch_disclosure)
+        except PortError:
+            raise
+        except Exception as exc:
+            raise PortError("NETWORK_ERROR", str(exc)) from exc
+
+        if frame is None or frame.empty:
+            raise PortError("EMPTY_RESPONSE", "cninfo disclosure metadata returned no rows")
+
+        trimmed = frame.tail(self.max_rows)
+        retrieved_at = datetime.now(UTC).isoformat()
+        fetch_id = f"cninfo-live-{symbol}-{uuid.uuid4().hex[:12]}"
+        domain = req.data_domain or "cn_announcements"
+        filings: list[dict] = []
+        for idx, record in enumerate(trimmed.to_dict(orient="records")):
+            publish = str(
+                record.get("公告时间")
+                or record.get("publish_time")
+                or record.get("publish_timestamp")
+                or retrieved_at
+            )
+            obs_date = publish[:10] if len(publish) >= 10 else retrieved_at[:10]
+            filings.append(
+                {
+                    "filing_id": f"cninfo-live-{symbol}-{idx}",
+                    "instrument_id": symbol,
+                    "title": str(record.get("公告标题") or record.get("title") or f"公告-{idx}"),
+                    "publish_timestamp": publish,
+                    "observation_date": obs_date,
+                    "source_used": "cninfo",
+                }
+            )
+        bundle = build_cn_market_evidence_bundle(
+            filings=filings,
+            data_domain=domain,
+            source_id="cninfo",
+            source_fetch_id=fetch_id,
+            content_hash="pending",
+            as_of_timestamp=retrieved_at,
+            retrieved_at=retrieved_at,
+        )
+        bundle = finalize_bundle(bundle)
+        content = json.dumps(bundle, ensure_ascii=False, default=str).encode("utf-8")
+        return FetchPayload(content=content, file_type="json", row_count=len(filings))
+
+
+@dataclass(frozen=True)
 class CninfoProductLiveFetchPort:
     """Product live cninfo port — replay-first; not rehearsal cn_rehearsal_live_ports."""
 
@@ -208,7 +295,7 @@ def create_cninfo_fetch_port(*, symbols: Sequence[str], max_rows: int, use_mock:
     from backend.app.datasources.product_live_gate import gate_live_fetch_port
 
     gate_live_fetch_port(source_id="cninfo")
-    return CninfoProductLiveFetchPort(symbols=symbols, max_rows=max_rows)
+    return CninfoLiveFetchPort(symbols=symbols, max_rows=max_rows)
 
 
 def create_cninfo_pdf_live_fetch_port(

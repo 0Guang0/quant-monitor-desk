@@ -428,6 +428,8 @@ Used with MIGRATION_MAP.md for machine omission checks (`check_docs_specs_indexe
 - `specs/contracts/layer4_market_contract.yaml`
 - `specs/contracts/layer5_evidence_contract.yaml`
 - `specs/contracts/live_tier_a_evidence_v1.yaml`
+- `specs/contracts/live_tier_b_evidence_v1.yaml`
+- `specs/contracts/live_tier_c_evidence_v1.yaml`
 - `specs/contracts/log_audit_contract.yaml`
 - `specs/contracts/module_boundary_contract.yaml`
 - `specs/contracts/notification_report_contract.yaml`

@@ -6,19 +6,19 @@
 > **Evidence rule (Pass E):** **Rating 列只信可执行代码 + pytest/vitest**；已 CLOSED 任务卡 / Plan 产物 **不**自动抬升评级；子集竖切记 **Milestone** 列，不得写入 Rating 列。  
 > **Reference adoption:** rating movements for R3FR batches must also satisfy `specs/contracts/reference_adoption_guardrails.yaml` (`license_gate`, max three batches per module).  
 > **Machine index:** `specs/context/authority_graph.yaml`（v2，`module_ids` + `rating_index`）· `docs/generated/project_map.generated.md` · `PROJECT_IMPLEMENTATION_ROADMAP.md` §3 · §8.  
-> **Last reconciled:** **2026-07-03 M-DATA-03 close** — 11/11 live acceptance exit 0 · `uv run pytest -q` exit 0；prior Pass E @ 2026-07-02 · `68f70206`。
+> **Last reconciled:** **2026-07-03 M-DATA-03 关账** — Tier A 沙箱双跑 exit 0（10 PASS + sec_edgar `FAIL_EXTERNAL`/SEC TLS）· Tier B/C `product_live_gated` 关账 exit 0 · `pytest -q` + handoff exit 0；**R4 = sandbox only**
 
 ---
 
 ## 0. Pass E 总览（2026-07-02）
 
-| 维度                       | 结论                                                                                                                                |
-| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| **已 CLOSED 任务 vs 模块** | Wave 4 DCP-05..10 等任务 **子集 AC 已绿**；**G1/G2/G4/K1/K2 模块 Rating 仍 R3**；**G5 仍 R2**；无建模模块因 DCP 达 **R4**           |
-| **mock/replay 天花板**     | C3 十一源 e2e 默认 mock/replay；**M-DATA-03** `tier_a_live_acceptance.py` 11/11 真网绿（诚实 R4）；Layer clean e2e 多为 tmp DB seed |
-| **production_live**        | L2/L3/L4 **拒绝** `production_live`；L3–L4 全链在 **M-G2/G4-FULL** + **M-PASS-01** 闭合                                             |
-| **Round4 产品面**          | I1–I8 除 I3 壳外 **R0–R1**；B04 未开工                                                                                              |
-| **PASS 前硬门禁**          | **M-PASS-01**（§6.1.1）；非「Wave 4 建模已完工」                                                                                    |
+| 维度                       | 结论                                                                                                                      |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| **已 CLOSED 任务 vs 模块** | Wave 4 DCP-05..10 等任务 **子集 AC 已绿**；**G1/G2/G4/K1/K2 模块 Rating 仍 R3**；**G5 仍 R2**；无建模模块因 DCP 达 **R4** |
+| **mock/replay 天花板**     | C3 十一源 e2e 默认 mock/replay；**M-DATA-03** 沙箱真网 11/11 双跑绿（诚实 R4）；Layer clean e2e 多为 tmp DB seed          |
+| **production_live**        | L2/L3/L4 **拒绝** `production_live`；L3–L4 全链在 **M-G2/G4-FULL** + **M-PASS-01** 闭合                                   |
+| **Round4 产品面**          | I1–I8 除 I3 壳外 **R0–R1**；B04 未开工                                                                                    |
+| **PASS 前硬门禁**          | **M-PASS-01**（§6.1.1）；非「Wave 4 建模已完工」                                                                          |
 
 ### 0.1 评级分布（51 Module ID）
 
@@ -114,12 +114,12 @@ For every module or major feature after this file lands:
 
 ### 3.D Sync, scheduling, and task reliability
 
-| ID  | Module                         | Design authority                                 | Rating                              | 批/3    | Milestone                                       | Close round | Evidence                                                                                                        | 活票 / 归属（§1.8）                                 |
-| --- | ------------------------------ | ------------------------------------------------ | ----------------------------------- | ------- | ----------------------------------------------- | ----------- | --------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
-| D1  | Data sync orchestration        | `sync_orchestrator`, `data_sync_orchestrator.md` | `R4_SANDBOX_REAL_DATA_OR_REHEARSAL` | **3/3** | DCP-01/02/05/09 · M-DATA-03 11/11 live dispatch | R3→R5       | `sync/orchestrator.py` · `tier_a_live_incremental_dispatch.py` · 11/11 live acceptance exit 0 · incremental e2e | **M-DATA-03** 真网验收 **已绿**                     |
-| D2  | Task idempotency / retry / DLQ | `docs/ops/idempotency_retry_dlq_policy.md`       | `R1_SCAFFOLD`                       | 0/3     | —                                               | Batch6      | 政策文档 only；**无** `idempotency_key` runtime                                                                 | Batch6 store/replay 或 ADR 收窄为 write upsert 足够 |
-| D3  | Sync scheduler / cron product  | `data_sync_orchestrator.md` §CLI                 | `R0_NOT_STARTED`                    | 0/3     | —                                               | R4→R5       | 无 scheduler 模块；仅 `qmd data` 手动触发                                                                       | R4：scheduler shell 调 D1 同一 entrypoint           |
-| D4  | Source health snapshot writer  | `ADR-024`, `source_health_writer.py`             | `R2_MINIMAL_VERTICAL_SLICE`         | 1/3     | isolated writer test                            | Batch6      | `ops/source_health_writer.py` · `tests/test_source_health_snapshot.py`（`:memory:`）                            | Batch6 production migration                         |
+| ID  | Module                         | Design authority                                 | Rating                              | 批/3    | Milestone                                       | Close round | Evidence                                                                                                  | 活票 / 归属（§1.8）                                                                                                                                    |
+| --- | ------------------------------ | ------------------------------------------------ | ----------------------------------- | ------- | ----------------------------------------------- | ----------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| D1  | Data sync orchestration        | `sync_orchestrator`, `data_sync_orchestrator.md` | `R4_SANDBOX_REAL_DATA_OR_REHEARSAL` | **3/3** | DCP-01/02/05/09 · M-DATA-03 11/11 live dispatch | R3→R5       | `sync/orchestrator.py` · `tier_a_live_incremental_dispatch.py` · live acceptance exit 0 · incremental e2e | **M-DATA-03** 隔离沙箱 R4；cninfo/world_bank/Tier B/C **product_live** 真 HTTP；sec_edgar live 已实现 · 本环境 SEC TLS→`FAIL_EXTERNAL`；**≠** 生产主库 |
+| D2  | Task idempotency / retry / DLQ | `docs/ops/idempotency_retry_dlq_policy.md`       | `R1_SCAFFOLD`                       | 0/3     | —                                               | Batch6      | 政策文档 only；**无** `idempotency_key` runtime                                                           | Batch6 store/replay 或 ADR 收窄为 write upsert 足够                                                                                                    |
+| D3  | Sync scheduler / cron product  | `data_sync_orchestrator.md` §CLI                 | `R0_NOT_STARTED`                    | 0/3     | —                                               | R4→R5       | 无 scheduler 模块；仅 `qmd data` 手动触发                                                                 | R4：scheduler shell 调 D1 同一 entrypoint                                                                                                              |
+| D4  | Source health snapshot writer  | `ADR-024`, `source_health_writer.py`             | `R2_MINIMAL_VERTICAL_SLICE`         | 1/3     | isolated writer test                            | Batch6      | `ops/source_health_writer.py` · `tests/test_source_health_snapshot.py`（`:memory:`）                      | Batch6 production migration                                                                                                                            |
 
 ### 3.E Ops, CLI, and sandbox entry
 

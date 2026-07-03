@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import sys
 import uuid
 from dataclasses import dataclass
@@ -52,7 +53,24 @@ _FETCH_STATUS_FROM_SYNC: dict[str, str] = {
     "PLANNED": "SUCCESS",
     "EMPTY_RESPONSE": "EMPTY_RESPONSE",
     "FAILED": "FAILED",
+    "RATE_LIMITED": "RATE_LIMITED",
+    "NETWORK_ERROR": "NETWORK_ERROR",
+    "NOT_PUBLISHED_YET": "NOT_PUBLISHED_YET",
+    "DISABLED_SOURCE": "DISABLED_SOURCE",
+    "AUTH_FAILED": "AUTH_FAILED",
 }
+_EXTERNAL_SYNC_STATUSES = frozenset(
+    {"RATE_LIMITED", "NETWORK_ERROR", "NOT_PUBLISHED_YET", "DISABLED_SOURCE"}
+)
+
+
+def fail_external_adr_ref() -> str:
+    """ADR slug for FAIL_EXTERNAL rows — SSOT: live_tier_a_evidence_v1 authoritative_docs."""
+    for doc in _load_evidence_contract().get("authoritative_docs") or []:
+        match = re.search(r"ADR-\d+", str(doc))
+        if match:
+            return match.group(0)
+    raise RuntimeError("live_tier_a_evidence_v1: no ADR in authoritative_docs")
 
 
 class TierALiveEnvError(RuntimeError):
@@ -252,6 +270,7 @@ def _run_f0_data_health(
             start_date=None,
             end_date=None,
             max_rows=1000,
+            live_acceptance=True,
         )
     except DataHealthLoadError as exc:
         return "FAIL", f"F0 evidence unloadable: {exc}"
@@ -288,6 +307,22 @@ class SourceAcceptanceResult:
     source_id: str
     status: Literal["pass", "fail"]
     detail: str = ""
+    failure_class: str = "PASS"
+    adr_ref: str | None = None
+
+
+@dataclass(frozen=True)
+class _SourcePipelineResult:
+    source_id: str
+    outcome: "LiveIncrementalOutcome"
+    f0_status: str
+    f0_detail: str
+    b2_status: str
+    b2_detail: str
+    disposition: Literal["pass", "fail"]
+    failure_class: str
+    adr_ref: str | None
+    detail: str
 
 
 def run_tier_a_live_incremental(source_id: str, data_root: Path) -> "LiveIncrementalOutcome":
@@ -300,74 +335,153 @@ def run_tier_a_live_incremental(source_id: str, data_root: Path) -> "LiveIncreme
     return _dispatch_run(source_id, data_root)
 
 
+def _source_has_raw_evidence(data_root: Path, source_id: str) -> bool:
+    raw_dir = data_root / "raw" / source_id
+    fred_raw = data_root / "raw"
+    return (raw_dir.is_dir() and any(raw_dir.rglob("*"))) or (
+        source_id == "fred" and fred_raw.is_dir() and any(fred_raw.rglob("*"))
+    )
+
+
+def _zero_clean_failure_detail(
+    outcome: "LiveIncrementalOutcome", data_root: Path, source_id: str
+) -> str | None:
+    if outcome.sync_status in {"COMPLETED", "PLANNED"} and outcome.clean_row_count < 1:
+        if not _source_has_raw_evidence(data_root, source_id):
+            return (
+                f"{outcome.sync_status} but {outcome.clean_table} empty: "
+                f"{outcome.detail}"
+            )
+    return None
+
+
+def _compose_pass_detail(
+    outcome: "LiveIncrementalOutcome",
+    *,
+    f0_status: str,
+    b2_status: str,
+) -> str:
+    return (
+        f"sync={outcome.sync_status} inspect={outcome.inspect_status} "
+        f"health={f0_status} b2={b2_status} "
+        f"{outcome.clean_table}={outcome.clean_row_count}"
+    )
+
+
+def classify_source_report_failure(
+    outcome: "LiveIncrementalOutcome",
+    *,
+    data_root: Path | None = None,
+) -> tuple[Literal["pass", "fail"], str, str | None]:
+    """Return (disposition, report failure_class, adr_ref)."""
+    sync = outcome.sync_status.upper()
+    if outcome.inspect_status == "FAIL":
+        return "fail", "FAIL_FIXABLE", None
+    if sync in _EXTERNAL_SYNC_STATUSES:
+        return "fail", "FAIL_EXTERNAL", fail_external_adr_ref()
+    if sync not in PASS_SYNC_STATUSES:
+        return "fail", "FAIL_FIXABLE", None
+    if outcome.clean_row_count < 1:
+        if sync in _EXTERNAL_SYNC_STATUSES:
+            return "fail", "FAIL_EXTERNAL", fail_external_adr_ref()
+        return "fail", "FAIL_FIXABLE", None
+    if data_root is not None:
+        zero_clean = _zero_clean_failure_detail(outcome, data_root, outcome.source_id)
+        if zero_clean:
+            return "fail", "FAIL_FIXABLE", None
+    return "pass", "PASS", None
+
+
+def _run_source_acceptance_pipeline(
+    source_id: str,
+    *,
+    data_root: Path,
+    run_id: str,
+) -> _SourcePipelineResult:
+    """Shared sync→F0→B2→gate pipeline for CLI and --report paths."""
+    db_path = ensure_isolated_db(data_root)
+    outcome = run_tier_a_live_incremental(source_id, data_root)
+    job_id = f"{run_id}:{source_id}"
+    f0_status, f0_detail = _run_f0_data_health(
+        source_id, data_root=data_root, db_path=db_path
+    )
+    b2_status, b2_detail = _run_b2_data_validation(
+        source_id,
+        db_path=db_path,
+        run_id=run_id,
+        job_id=job_id,
+    )
+    disposition, failure_class, adr_ref = classify_source_report_failure(
+        outcome, data_root=data_root
+    )
+    if failure_class != "FAIL_EXTERNAL":
+        if f0_status in {"FAIL", "BLOCKED"}:
+            disposition = "fail"
+            failure_class = "FAIL_FIXABLE"
+            adr_ref = None
+        elif b2_status == "FAILED":
+            disposition = "fail"
+            failure_class = "FAIL_FIXABLE"
+            adr_ref = None
+
+    detail = outcome.detail
+    if disposition == "fail":
+        if failure_class == "FAIL_EXTERNAL":
+            detail = f"sync={outcome.sync_status} external: {outcome.detail}"
+        elif f0_status in {"FAIL", "BLOCKED"}:
+            detail = f"data-health {f0_status}: {f0_detail}"
+        elif b2_status == "FAILED":
+            detail = f"b2 validation FAILED: {b2_detail}"
+        elif outcome.inspect_status == "FAIL":
+            detail = f"db-inspect FAIL: {outcome.detail}"
+        elif outcome.sync_status not in PASS_SYNC_STATUSES:
+            detail = f"sync failed: {outcome.detail}"
+        else:
+            zero_clean = _zero_clean_failure_detail(outcome, data_root, source_id)
+            if zero_clean:
+                detail = zero_clean
+    else:
+        detail = _compose_pass_detail(outcome, f0_status=f0_status, b2_status=b2_status)
+
+    return _SourcePipelineResult(
+        source_id=source_id,
+        outcome=outcome,
+        f0_status=f0_status,
+        f0_detail=f0_detail,
+        b2_status=b2_status,
+        b2_detail=b2_detail,
+        disposition=disposition,
+        failure_class=failure_class,
+        adr_ref=adr_ref,
+        detail=detail,
+    )
+
+
+def _cli_status_from_pipeline(pipeline: _SourcePipelineResult) -> Literal["pass", "fail"]:
+    if pipeline.disposition == "pass":
+        return "pass"
+    if pipeline.failure_class == "FAIL_EXTERNAL" and pipeline.adr_ref:
+        return "pass"
+    return "fail"
+
+
 def run_source_live_acceptance(source_id: str, *, data_root: Path) -> SourceAcceptanceResult:
     """Run sync→clean→inspect→data health for one Tier A source (S-ACCEPT)."""
     resolved = assert_isolated_live_data_root(data_root)
     os.environ["QMD_DATA_ROOT"] = str(resolved)
-    db_path = ensure_isolated_db(resolved)
+    run_id = f"accept-{source_id}"
     try:
-        outcome = run_tier_a_live_incremental(source_id, resolved)
+        pipeline = _run_source_acceptance_pipeline(
+            source_id, data_root=resolved, run_id=run_id
+        )
     except Exception as exc:
         return SourceAcceptanceResult(source_id=source_id, status="fail", detail=str(exc))
-
-    health_status, health_detail = _run_f0_data_health(
-        source_id, data_root=resolved, db_path=db_path
-    )
-    if health_status in {"FAIL", "BLOCKED"}:
-        return SourceAcceptanceResult(
-            source_id=source_id,
-            status="fail",
-            detail=f"data-health {health_status}: {health_detail}",
-        )
-
-    b2_status, b2_detail = _run_b2_data_validation(
-        source_id,
-        db_path=db_path,
-        run_id=f"accept-{source_id}",
-        job_id=f"accept-{source_id}",
-    )
-    if b2_status == "FAILED":
-        return SourceAcceptanceResult(
-            source_id=source_id,
-            status="fail",
-            detail=f"b2 validation FAILED: {b2_detail}",
-        )
-
-    if outcome.inspect_status == "FAIL":
-        return SourceAcceptanceResult(
-            source_id=source_id,
-            status="fail",
-            detail=f"db-inspect FAIL: {outcome.detail}",
-        )
-    if outcome.sync_status not in PASS_SYNC_STATUSES:
-        return SourceAcceptanceResult(
-            source_id=source_id,
-            status="fail",
-            detail=f"sync failed: {outcome.detail}",
-        )
-    if outcome.sync_status in {"COMPLETED", "PLANNED"} and outcome.clean_row_count < 1:
-        raw_dir = resolved / "raw" / source_id
-        fred_raw = resolved / "raw"
-        has_raw = (raw_dir.is_dir() and any(raw_dir.rglob("*"))) or (
-            source_id == "fred" and fred_raw.is_dir() and any(fred_raw.rglob("*"))
-        )
-        if not has_raw:
-            return SourceAcceptanceResult(
-                source_id=source_id,
-                status="fail",
-                detail=(
-                    f"{outcome.sync_status} but {outcome.clean_table} empty: "
-                    f"{outcome.detail}"
-                ),
-            )
     return SourceAcceptanceResult(
         source_id=source_id,
-        status="pass",
-        detail=(
-            f"sync={outcome.sync_status} inspect={outcome.inspect_status} "
-            f"health={health_status} b2={b2_status} "
-            f"{outcome.clean_table}={outcome.clean_row_count}"
-        ),
+        status=_cli_status_from_pipeline(pipeline),
+        detail=pipeline.detail,
+        failure_class=pipeline.failure_class,
+        adr_ref=pipeline.adr_ref,
     )
 
 
@@ -432,19 +546,52 @@ def _manifest_fetch_status(sync_status: str) -> str:
     return _FETCH_STATUS_FROM_SYNC.get(sync_status.upper(), "FAILED")
 
 
+def _resolve_fetch_schema_hash(
+    source_id: str,
+    *,
+    data_root: Path,
+    raw_paths: list[str],
+    binding: dict[str, Any],
+) -> str:
+    """Derive fetch.schema_hash from raw bundle metadata or binding payload kind."""
+    from backend.app.datasources.normalizers.evidence_bundle import schema_hash_for_version
+
+    for rel in reversed(raw_paths):
+        path = data_root / rel.replace("/", os.sep)
+        if path.suffix != ".json" or not path.is_file():
+            continue
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            continue
+        if raw_hash := payload.get("schema_hash"):
+            return str(raw_hash)
+        if schema_version := payload.get("schema_version"):
+            return schema_hash_for_version(str(schema_version))
+    payload_kind = binding.get("evidence_payload_kind")
+    if payload_kind:
+        return schema_hash_for_version(str(payload_kind))
+    return schema_hash_for_version(str(binding.get("health_profile_id", source_id)))
+
+
 def _build_fetch_block(
     source_id: str,
     *,
+    data_root: Path,
     outcome: "LiveIncrementalOutcome",
     raw_paths: list[str],
 ) -> dict[str, Any]:
     now = datetime.now(UTC).isoformat()
     fingerprint = "|".join(raw_paths) if raw_paths else outcome.detail
+    binding = source_bindings()[source_id]
+    schema_hash = _resolve_fetch_schema_hash(
+        source_id, data_root=data_root, raw_paths=raw_paths, binding=binding
+    )
     return {
         "source_id": source_id,
         "status": _manifest_fetch_status(outcome.sync_status),
         "content_hash": hashlib.sha256(fingerprint.encode()).hexdigest(),
-        "schema_hash": hashlib.sha256(source_id.encode()).hexdigest(),
+        "schema_hash": schema_hash,
         "row_count": outcome.clean_row_count,
         "fetch_time": now,
         "as_of_timestamp": now,
@@ -477,7 +624,9 @@ def build_live_tier_a_evidence_manifest(
         "data_domain": binding["data_domain"],
         "data_root": str(data_root.resolve()),
         "generated_at": datetime.now(UTC).isoformat(),
-        "fetch": _build_fetch_block(source_id, outcome=outcome, raw_paths=raw_paths),
+        "fetch": _build_fetch_block(
+            source_id, data_root=data_root, outcome=outcome, raw_paths=raw_paths
+        ),
         "evidence": {
             "raw_relative_paths": raw_paths,
             "evidence_dir_relative": _relative_to_data_root(data_root, evidence_dir),
@@ -510,67 +659,43 @@ def write_live_tier_a_evidence_manifest(
     return path
 
 
-def classify_source_report_failure(
-    outcome: "LiveIncrementalOutcome",
-) -> tuple[str, str]:
-    """Return (disposition, report failure_class)."""
-    if outcome.inspect_status == "FAIL":
-        return "fail", "FAIL_FIXABLE"
-    if outcome.sync_status not in PASS_SYNC_STATUSES:
-        return "fail", "FAIL_FIXABLE"
-    return "pass", "PASS"
-
-
 def _process_source_for_report(
     source_id: str,
     *,
     data_root: Path,
     run_id: str,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
-    db_path = ensure_isolated_db(data_root)
-    outcome = run_tier_a_live_incremental(source_id, data_root)
-    disposition, report_failure_class = classify_source_report_failure(outcome)
-    f0_status, f0_detail = _run_f0_data_health(source_id, data_root=data_root, db_path=db_path)
-    if f0_status in {"FAIL", "BLOCKED"}:
-        disposition = "fail"
-        report_failure_class = "FAIL_FIXABLE"
-    job_id = f"{run_id}:{source_id}"
-    b2_status, b2_detail = _run_b2_data_validation(
-        source_id,
-        db_path=db_path,
-        run_id=run_id,
-        job_id=job_id,
+    pipeline = _run_source_acceptance_pipeline(
+        source_id, data_root=data_root, run_id=run_id
     )
-    if b2_status == "FAILED":
-        disposition = "fail"
-        report_failure_class = "FAIL_FIXABLE"
+    job_id = f"{run_id}:{source_id}"
     binding = source_bindings()[source_id]
     manifest = build_live_tier_a_evidence_manifest(
         source_id=source_id,
         data_root=data_root,
         run_id=run_id,
         job_id=job_id,
-        outcome=outcome,
-        report_failure_class=report_failure_class,
-        f0_health_status=f0_status,
-        b2_validation_status=b2_status,
+        outcome=pipeline.outcome,
+        report_failure_class=pipeline.failure_class,
+        f0_health_status=pipeline.f0_status,
+        b2_validation_status=pipeline.b2_status,
     )
     manifest_path = write_live_tier_a_evidence_manifest(manifest, data_root=data_root)
-    detail = outcome.detail
-    if f0_detail:
-        detail = f"{detail}; f0={f0_detail}"
-    if b2_detail:
-        detail = f"{detail}; b2={b2_detail}"
+    detail = pipeline.detail
+    if pipeline.f0_detail and pipeline.failure_class == "PASS":
+        detail = f"{detail}; f0={pipeline.f0_detail}"
+    if pipeline.b2_detail and pipeline.failure_class == "PASS":
+        detail = f"{detail}; b2={pipeline.b2_detail}"
     row = {
         "source_id": source_id,
-        "disposition": disposition,
-        "failure_class": report_failure_class,
+        "disposition": pipeline.disposition,
+        "failure_class": pipeline.failure_class,
         "failure_detail": detail,
-        "adr_ref": None,
-        "sync_status": outcome.sync_status,
-        "e2_inspect_status": outcome.inspect_status,
-        "f0_health_status": _health_status_for_manifest(f0_status),
-        "b2_validation_status": b2_status,
+        "adr_ref": pipeline.adr_ref,
+        "sync_status": pipeline.outcome.sync_status,
+        "e2_inspect_status": pipeline.outcome.inspect_status,
+        "f0_health_status": _health_status_for_manifest(pipeline.f0_status),
+        "b2_validation_status": pipeline.b2_status,
         "health_domain": binding["health_domain"],
         "health_profile_id": binding["health_profile_id"],
         "rule_set_id": binding["rule_set_id"],
@@ -578,6 +703,19 @@ def _process_source_for_report(
         "evidence_manifest_path": _relative_to_data_root(data_root, manifest_path),
     }
     return row, manifest
+
+
+def _acceptance_report_exit_code(
+    rows: list[dict[str, Any]], summary: dict[str, int]
+) -> int:
+    if summary["failed_fixable"] > 0:
+        return 1
+    if summary["failed_external"] > 0:
+        externals = [r for r in rows if r.get("failure_class") == "FAIL_EXTERNAL"]
+        if externals and all(r.get("adr_ref") for r in externals):
+            return 0
+        return 1
+    return 0
 
 
 def write_acceptance_failure_artifact(
@@ -650,9 +788,7 @@ def run_acceptance_report(
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
 
-    exit_code = 0
-    if summary["failed_fixable"] > 0 or summary["failed_external"] > 0:
-        exit_code = 1
+    exit_code = _acceptance_report_exit_code(rows, summary)
     if exit_code != 0:
         write_acceptance_failure_artifact(
             out, run_id=run_id, report=report, exit_code=exit_code

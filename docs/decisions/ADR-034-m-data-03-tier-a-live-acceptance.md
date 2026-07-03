@@ -31,6 +31,35 @@
 - MCR: C3, D1, E1, E2, F0, B2 may move to R4 when live evidence exists
 - Blocks M-G1-03 until macro/market clean inputs are live-verified
 
+## Sandbox boundary（2026-07-03 grill 关账增补）
+
+**本 ADR 验收通过的含义：**
+
+1. **环境：** 仅在用户指定的隔离 `DATA_ROOT`（典型路径 `.audit-sandbox/m-data-03/*`）内执行；**禁止**指向 canonical 生产 DuckDB。
+2. **评级：** MODULE_COMPLETION_RATING 中相关模块可标 **R4_SANDBOX_REAL_DATA_OR_REHEARSAL** — 表示「沙箱真网彩排过关」，**不是** `R5_LIMITED_PRODUCTION_ENTRY` 或主库写就绪。
+3. **幂等：** 同一 sandbox 连续 `--report` 应 exit 0；行数允许合法增量追加（如 bis 月频第二行），不得 duplicate 炸库。
+4. **CI：** nightly/quick 与 `workflow_dispatch` 全量跑使用相同 secrets gate；本地过关不替代 GitHub 实跑日志（见 execute 证据 AC-4）。
+5. **Tier B/C：** 并行契约轨同样仅 sandbox scope；`FAIL_EXTERNAL`+ADR 表示产品/外部边界，非 pipeline 假绿。
+
+**明确否定的表述：**「M-DATA-03 完成 = 可以写生产主库」。
+
+## Tier B FAIL_EXTERNAL bindings（2026-07-04 · 网络路径二）
+
+**证据 SSOT：** `.trellis/tasks/m-data-03-tier-a-live/research/archive/non-plan/execute/tier-b-network-path2-evidence.md`
+
+| source_id      | 路径                 | 客观原因                                                                                          | 状态                                                           |
+| -------------- | -------------------- | ------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| `stooq`        | **路径二（已接受）** | Stooq CSV 端点返回 HTML + JavaScript PoW 反爬；直连/系统代理/7897 均不可绕过                      | `FAIL_EXTERNAL` + 本 ADR · 台账 `M-DATA-03-STOOQ-EXTERNAL-001` |
+| `akshare`      | **条件路径二**       | `push2his.eastmoney.com` API 间歇 TLS 断开；Clash DIRECT + 代码 bypass 已就位，非 7897 误路由主因 | 缺口开放 · `M-DATA-03-TIERB-CN-HIST-001`                       |
+| `eastmoney`    | **条件路径二**       | 与 akshare 同 `stock_zh_a_hist` / push2his 链                                                     | 同上                                                           |
+| `sina_finance` | **条件路径二**       | 同上                                                                                              | 同上                                                           |
+
+**规则：**
+
+1. **stooq：** 允许 sandbox `tier_b_live_acceptance --report` 在 `FAIL_EXTERNAL`+`adr_ref=ADR-034` 下 exit 0；**不得**伪造 CSV 或 mock 过关。
+2. **CN 三源：** 在完成路径一剩余动作（关 TUN 复测、交易时段、换网、或改 baostock hist 链）前，**不得**与 stooq 同级宣称「已接受路径二」；对外不得写 Tier B「10/10 真网 PASS」。
+3. CLI exit 0 与 `disposition=pass` 不等价；`FAIL_EXTERNAL` 行须保留在报告 JSON。
+
 ## Binding slices
 
 S00-INFRA · S-LIVE-\* (all) · S-ACCEPT

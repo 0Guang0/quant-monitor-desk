@@ -61,6 +61,46 @@ def world_bank_incremental_e2e_ctx(
     )
 
 
+def test_worldBankSinceDate_advancesToNextYearAfterWatermark() -> None:
+    """覆盖范围：world_bank 年频 since 水位推进
+    测试对象：compute_world_bank_since_date
+    目的/目标：二次 live 跑不重复拉已落库年份（B-04 幂等根因）
+    验证点：watermark=2023-06-15 → since=2024-01-01
+    失败含义：年频 since 仅 +1 日导致重复 fetch 膨胀行数
+    """
+    from datetime import date
+
+    from backend.app.ops.macro_incremental_common import compute_world_bank_since_date
+
+    assert compute_world_bank_since_date(date(2023, 6, 15)) == date(2024, 1, 1)
+    assert compute_world_bank_since_date(None).year <= date.today().year
+
+
+def test_worldBankIncremental_e2e_defaultCountries_writesAtLeastTwoRows(
+    world_bank_incremental_e2e_ctx: dict[str, Any],
+) -> None:
+    """覆盖范围：Tier A 关账加厚 — 默认国家窗 ≥2 行 clean
+    测试对象：DEFAULT_COUNTRIES + run_world_bank_incremental
+    目的/目标：G-07/T-05 要求 world_bank 非单点 1 行证据
+    验证点：source_used=world_bank 的 axis_observation 行数 ≥2
+    失败含义：关账 sandbox 仍仅 1 行，无法证明多 instrument 管道
+    """
+    ctx = world_bank_incremental_e2e_ctx
+    report = run_world_bank_incremental(
+        ctx["orch"],
+        service=ctx["service"],
+        countries=DEFAULT_COUNTRIES,
+        source_registry=ctx["registry"],
+    )
+    assert report.overall_status == "COMPLETED"
+    with ctx["cm"].writer() as con:
+        count = con.execute(
+            "SELECT COUNT(*) FROM axis_observation WHERE source_used = ?",
+            [SOURCE_ID],
+        ).fetchone()[0]
+    assert count >= 2
+
+
 def test_worldBankIncremental_e2e_replay_writesAxisObservation(
     world_bank_incremental_e2e_ctx: dict[str, Any],
 ) -> None:
@@ -127,14 +167,14 @@ def test_worldBankIncremental_emptyResponse_whenWatermarkCurrent(
     """
     ctx = world_bank_incremental_e2e_ctx
     today = datetime.now(UTC).date()
-    indicator = clean_indicator_id("US")
     with ctx["cm"].writer() as con:
-        insert_axis_observation(
-            con,
-            observation_id="obs-wb-seed",
-            indicator_id=indicator,
-            obs_date=today,
-        )
+        for country in DEFAULT_COUNTRIES:
+            insert_axis_observation(
+                con,
+                observation_id=f"obs-wb-seed-{country}",
+                indicator_id=clean_indicator_id(country),
+                obs_date=today,
+            )
         before = con.execute("SELECT COUNT(*) FROM axis_observation").fetchone()[0]
     report = run_world_bank_incremental(
         ctx["orch"],
@@ -142,7 +182,7 @@ def test_worldBankIncremental_emptyResponse_whenWatermarkCurrent(
         countries=DEFAULT_COUNTRIES,
         source_registry=ctx["registry"],
     )
-    assert report.instrument_results[0]["status"] == "EMPTY_RESPONSE"
+    assert all(r["status"] == "EMPTY_RESPONSE" for r in report.instrument_results)
     with ctx["cm"].writer() as con:
         after = con.execute("SELECT COUNT(*) FROM axis_observation").fetchone()[0]
     assert after == before

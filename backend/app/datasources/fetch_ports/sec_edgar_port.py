@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import json
 import os
+import urllib.error
+import urllib.request
 import uuid
 from collections.abc import Sequence
 from dataclasses import dataclass
@@ -189,6 +191,129 @@ class SecEdgarMockFetchPort:
         return FetchPayload(content=content, file_type="json", row_count=row_count)
 
 
+def _pad_cik(cik: str) -> str:
+    return str(cik).lstrip("0").zfill(10)
+
+
+def _fetch_sec_submissions_json(cik_padded: str, *, user_agent: str) -> dict[str, Any]:
+    url = f"https://data.sec.gov/submissions/CIK{cik_padded}.json"
+    request = urllib.request.Request(
+        url,
+        headers={"User-Agent": user_agent, "Accept": "application/json"},
+        method="GET",
+    )
+    last_error: Exception | None = None
+    for _attempt in range(2):
+        try:
+            with urllib.request.urlopen(request, timeout=60) as response:
+                payload = json.loads(response.read().decode("utf-8"))
+            if isinstance(payload, dict):
+                return payload
+            raise PortError("FAILED", "SEC submissions JSON root is not an object")
+        except urllib.error.HTTPError as exc:
+            if exc.code in (401, 403):
+                raise PortError("USER_AUTH_REQUIRED", f"SEC EDGAR access denied: {exc}") from exc
+            raise PortError("NETWORK_ERROR", str(exc)) from exc
+        except urllib.error.URLError as exc:
+            last_error = exc
+            continue
+        except json.JSONDecodeError as exc:
+            raise PortError("FAILED", f"invalid SEC submissions JSON: {exc}") from exc
+    raise PortError("NETWORK_ERROR", str(last_error)) from last_error
+
+
+def _sec_live_filings(
+    cik: str,
+    *,
+    user_agent: str,
+    max_filings: int,
+    start_time: str | None,
+    end_time: str | None,
+) -> list[dict[str, Any]]:
+    padded = _pad_cik(cik)
+    raw = _fetch_sec_submissions_json(padded, user_agent=user_agent)
+    recent = (raw.get("filings") or {}).get("recent") or {}
+    accession_numbers = recent.get("accessionNumber") or []
+    filing_dates = recent.get("filingDate") or []
+    forms = recent.get("form") or []
+    primary_docs = recent.get("primaryDocument") or []
+    report_dates = recent.get("reportDate") or []
+
+    filings: list[dict[str, Any]] = []
+    for idx, accession in enumerate(accession_numbers):
+        if len(filings) >= max_filings:
+            break
+        filing_date = filing_dates[idx] if idx < len(filing_dates) else ""
+        row = {
+            "accession_number": str(accession),
+            "cik": padded,
+            "form_type": str(forms[idx]) if idx < len(forms) else "",
+            "filing_date": str(filing_date),
+            "report_date": str(report_dates[idx] if idx < len(report_dates) else filing_date),
+            "primary_document_url": (
+                f"https://www.sec.gov/Archives/edgar/data/{padded.lstrip('0')}/{str(accession).replace('-', '')}/"
+                f"{primary_docs[idx] if idx < len(primary_docs) else ''}"
+            ),
+            "source_used": "sec_edgar",
+        }
+        filings.append(row)
+    filtered = _filter_filings_by_window(filings, start_time=start_time, end_time=end_time)
+    if not filtered and filings:
+        return filings[:max_filings]
+    if not filtered:
+        raise PortError("EMPTY_RESPONSE", f"no SEC filings for CIK {cik}")
+    return filtered[:max_filings]
+
+
+@dataclass(frozen=True)
+class SecEdgarLiveFetchPort:
+    """Bounded live SEC EDGAR submissions API fetch (fair-access User-Agent required)."""
+
+    ciks: Sequence[str]
+    max_filings: int
+    data_domain: SecEdgarDomain
+
+    def fetch_payload(self, req: FetchRequest) -> FetchPayload:
+        reject_over_cap(value=self.max_filings, cap=MAX_FILINGS, label="max_filings")
+        user_agent = _sec_user_agent()
+        if not user_agent:
+            raise PortError(
+                "USER_AUTH_REQUIRED",
+                "SEC_EDGAR_USER_AGENT missing or lacks contact identity for live fetch",
+            )
+        cik = req.instrument_id or (self.ciks[0] if self.ciks else "")
+        if not cik:
+            raise PortError("FAILED", "missing CIK for SEC EDGAR live fetch")
+        _reject_unknown_cik(cik)
+
+        retrieved_at = datetime.now(UTC).isoformat()
+        fetch_id = f"sec-edgar-live-{cik}-{uuid.uuid4().hex[:12]}"
+
+        if self.data_domain == "us_filings":
+            filings = _sec_live_filings(
+                cik,
+                user_agent=user_agent,
+                max_filings=self.max_filings,
+                start_time=req.start_time,
+                end_time=req.end_time,
+            )
+            bundle = build_filings_evidence_bundle(
+                filings=filings,
+                source_fetch_id=fetch_id,
+                content_hash="pending",
+                as_of_timestamp=retrieved_at,
+                retrieved_at=retrieved_at,
+            )
+            row_count = len(filings)
+        else:
+            # ponytail: Form 4 live parser deferred; upgrade = SEC ownership XML feed
+            raise PortError("FAILED", "live SEC Form 4 fetch deferred; use us_filings domain")
+
+        bundle = finalize_bundle(bundle)
+        content = json.dumps(bundle, ensure_ascii=False, default=str).encode("utf-8")
+        return FetchPayload(content=content, file_type="json", row_count=row_count)
+
+
 def create_sec_edgar_fetch_port(
     *,
     ciks: Sequence[str],
@@ -208,10 +333,8 @@ def create_sec_edgar_fetch_port(
     from backend.app.datasources.product_live_gate import gate_live_fetch_port
 
     gate_live_fetch_port(source_id="sec_edgar")
-    # ponytail: live branch delegates to mock until EDGAR live parser wired
-    return SecEdgarMockFetchPort(
+    return SecEdgarLiveFetchPort(
         ciks=ciks,
         max_filings=max_filings,
         data_domain=data_domain,
-        replay_caught_up_fallback=True,
     )

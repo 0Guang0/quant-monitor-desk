@@ -16,6 +16,7 @@ from backend.app.ops.macro_incremental_common import (
     MacroIncrementalSourceConfig,
     build_axis_observation_row,
     build_macro_incremental_service,
+    compute_bis_since_date,
     compute_since_date,
     enabled_source_registry,
     read_observation_date_watermark,
@@ -43,6 +44,15 @@ def _reject_unknown_country(country: str) -> None:
         raise ValueError(f"country not in whitelist: {country!r}")
 
 
+def _bis_observation_on_or_after_since(
+    obs_date: str, start_date: str, *, frequency: str
+) -> bool:
+    """Monthly BIS obs use YYYY-MM compare; daily uses full ISO date."""
+    if frequency == "monthly":
+        return obs_date[:7] >= start_date[:7]
+    return obs_date >= start_date
+
+
 def bis_staging_rows_from_bundle(
     bundle: dict[str, Any],
     *,
@@ -62,7 +72,12 @@ def bis_staging_rows_from_bundle(
     rows: list[dict[str, object]] = []
     for obs in bundle.get("observations") or []:
         obs_date = str(obs.get("observation_date") or "")
-        if not obs_date or (start_date and obs_date < start_date):
+        frequency = str(obs.get("frequency") or "monthly")
+        if not obs_date:
+            continue
+        if start_date and not _bis_observation_on_or_after_since(
+            obs_date, start_date, frequency=frequency
+        ):
             continue
         raw = obs.get("policy_rate")
         if raw in (None, "", "."):
@@ -92,6 +107,7 @@ _BIS_CONFIG = MacroIncrementalSourceConfig(
     trigger_reason="bis_macro_incremental",
     staging_rows_fn=bis_staging_rows_from_bundle,
     validate_instrument=_reject_unknown_country,
+    since_date_fn=compute_bis_since_date,
 )
 
 
