@@ -389,20 +389,87 @@ def test_barLiveRoutePlanner_selectsBaostockPrimary() -> None:
     assert plan.selected_source_id == "baostock"
 
 
-def test_deribitSinceReader_acceptsDataDomainKwarg() -> None:
-    """覆盖范围：deribit watermark 导入遮蔽回归
-    测试对象：_live_sync_registry deribit since_reader
-    目的/目标：cninfo 同名函数不得遮蔽 deribit data_domain 参数
-    验证点：_deribit_since_reader 可调用且不抛 unexpected keyword
-    失败含义：deribit live dispatch 在 since 读取阶段失败
+def test_dispatchModule_hasNoParallelLiveSyncRegistry() -> None:
+    """覆盖范围：S-R2-DISPATCH 去平行 registry
+    测试对象：tier_a_live_incremental_dispatch 模块源码
+    目的/目标：禁止 _live_sync_registry 双轨旁路
+    验证点：模块源码不含 _live_sync_registry 符号
+    失败含义：dispatch 仍维护与 incremental SSOT 平行的 registry
     """
-    from backend.app.ops.tier_a_live_incremental_dispatch import _live_sync_registry
-
-    runners = _live_sync_registry()
-    assert "deribit" in runners
     import inspect
 
-    source = inspect.getsource(_live_sync_registry)
+    from backend.app.ops import tier_a_live_incremental_dispatch as dispatch_mod
+
+    source = inspect.getsource(dispatch_mod)
+    assert "_live_sync_registry" not in source
+
+
+def test_liveSyncRunnerFor_coversAllTierASources() -> None:
+    """覆盖范围：S-R2-DISPATCH 金路径 SSOT
+    测试对象：_live_sync_runner_for + iter_tier_a_incremental_sources
+    目的/目标：11 源均经 incremental registry 解析后可派发
+    验证点：每源返回 callable runner
+    失败含义：dispatch 与 incremental_source_registry 漂移
+    """
+    from backend.app.ops.tier_a_live_incremental_dispatch import _live_sync_runner_for
+    from backend.app.sync.incremental_source_registry import iter_tier_a_incremental_sources
+
+    for source_id in iter_tier_a_incremental_sources():
+        runner = _live_sync_runner_for(source_id)
+        assert callable(runner)
+
+
+def test_platformMatrix_includesMootdxOnCurrentPlatform() -> None:
+    """覆盖范围：S-R2-DISPATCH mootdx matrix
+    测试对象：platform_source_matrix.yaml
+    目的/目标：mootdx 纳入平台矩阵，bar live 无需 acceptance bypass
+    验证点：当前平台 mootdx entry 存在且 default_enabled
+    失败含义：mootdx live 仍依赖 _platform_allows ponytail
+    """
+    from tests.contract_gate_support import load_yaml, platform_key
+
+    matrix = load_yaml(
+        Path(__file__).resolve().parents[1] / "specs/contracts/platform_source_matrix.yaml"
+    )
+    entry = matrix["platforms"][platform_key()]["mootdx"]
+    assert entry["available_if_user_configured"] is True
+    assert entry["default_enabled"] is True
+
+
+def test_barLiveRoutePlanner_selectsMootdxPrimary() -> None:
+    """覆盖范围：mootdx live 路由强制 primary
+    测试对象：_bar_live_route_planner
+    目的/目标：matrix 含 mootdx 后无需 _platform_allows bypass
+    验证点：preview_route selected_source_id==mootdx；route_status==READY
+    失败含义：mootdx live 路由落到非目标源
+    """
+    from backend.app.datasources.service import DataSourceService
+    from backend.app.ops.tier_a_live_incremental_dispatch import _bar_live_route_planner
+
+    registry, planner = _bar_live_route_planner("mootdx")
+    service = DataSourceService(source_registry=registry, route_planner=planner)
+    plan = service.preview_route(
+        data_domain="cn_equity_daily_bar", operation="fetch_daily_bar"
+    )
+    assert plan.route_status == "READY"
+    assert plan.selected_source_id == "mootdx"
+
+
+def test_deribitSinceReader_acceptsDataDomainKwarg() -> None:
+    """覆盖范围：deribit watermark 导入遮蔽回归
+    测试对象：_live_sync_runner_for deribit since_reader
+    目的/目标：cninfo 同名函数不得遮蔽 deribit data_domain 参数
+    验证点：runner 可构建；dispatch 源码含 read_deribit_since_date
+    失败含义：deribit live dispatch 在 since 读取阶段失败
+    """
+    import inspect
+
+    from backend.app.ops import tier_a_live_incremental_dispatch as dispatch_mod
+    from backend.app.ops.tier_a_live_incremental_dispatch import _live_sync_runner_for
+
+    runner = _live_sync_runner_for("deribit")
+    assert callable(runner)
+    source = inspect.getsource(dispatch_mod)
     assert "read_deribit_since_date" in source
     assert "read_cninfo_since_date" in source
 

@@ -20,6 +20,9 @@ platforms:
     baostock:
       available_if_user_configured: true
       default_enabled: true
+    mootdx:
+      available_if_user_configured: true
+      default_enabled: true
     akshare:
       available_if_user_configured: true
       default_enabled: false
@@ -53,6 +56,9 @@ platforms:
     baostock:
       available_if_user_configured: true
       default_enabled: true
+    mootdx:
+      available_if_user_configured: true
+      default_enabled: true
     akshare:
       available_if_user_configured: true
       default_enabled: false
@@ -84,6 +90,9 @@ platforms:
       requires_user_confirmation: true
       requires_env: [THS_IFIND_LICENSE_ARTIFACT]
     baostock:
+      available_if_user_configured: true
+      default_enabled: true
+    mootdx:
       available_if_user_configured: true
       default_enabled: true
     akshare:

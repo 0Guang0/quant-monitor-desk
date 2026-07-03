@@ -118,7 +118,7 @@ _BAR_EMPTY_LOOKBACK_DAYS = 30
 
 
 def _bar_live_route_planner(source_id: str):
-    """Force one bar source as routed primary (isolated acceptance; not CLI preview)."""
+    """Bar Tier A live route: one source as routed primary via platform matrix."""
     from backend.app.datasources.capability_registry import SourceCapabilityRegistry
     from backend.app.datasources.route_planner import SourceRoutePlanner
     from backend.app.ops.macro_incremental_common import enabled_source_registry
@@ -127,15 +127,6 @@ def _bar_live_route_planner(source_id: str):
     caps = SourceCapabilityRegistry()
     caps.load()
     planner = SourceRoutePlanner(source_registry=registry, capability_registry=caps)
-    # ponytail: mootdx not in platform_source_matrix yet; allow target source for S-ACCEPT only
-    orig_allows = planner._platform_allows
-
-    def _allows(sid: str) -> tuple[bool, str | None]:
-        if sid == source_id:
-            return True, None
-        return orig_allows(sid)
-
-    planner._platform_allows = _allows  # type: ignore[method-assign]
     return registry, planner
 
 
@@ -365,215 +356,215 @@ def _deribit_live_instruments(port) -> tuple[str, ...]:
     return (_resolve_deribit_live_instrument(port),)
 
 
-def _live_sync_registry() -> dict[str, Callable[[Path], str]]:
+def _live_sync_runner_for(source_id: str) -> Callable[[Path], str]:
+    """Return DCP-05 live sync runner; SSOT gate is resolve_tier_a_incremental."""
+    entry = resolve_tier_a_incremental(source_id)
+    sid = entry.source_id
+
+    if sid == "baostock":
+        return lambda dr: _sync_bar_live(dr, source_id="baostock")
+    if sid == "mootdx":
+        return lambda dr: _sync_bar_live(dr, source_id="mootdx")
+    if sid == "fred":
+        return _sync_fred_live
+
     from backend.app.ops.macro_incremental_common import read_since_dates_for_instruments
 
-    registry: dict[str, Callable[[Path], str]] = {
-        "baostock": lambda dr: _sync_bar_live(dr, source_id="baostock"),
-        "mootdx": lambda dr: _sync_bar_live(dr, source_id="mootdx"),
-        "fred": _sync_fred_live,
-    }
-
-    from backend.app.ops.us_treasury_incremental_run import (
-        DEFAULT_TENORS,
-        build_us_treasury_incremental_service,
-        create_us_treasury_incremental_port,
-        enabled_us_treasury_source_registry,
-        run_us_treasury_incremental,
-    )
-
-    registry["us_treasury"] = _macro_live_runner(
-        source_id="us_treasury",
-        port_factory=create_us_treasury_incremental_port,
-        since_reader=read_since_dates_for_instruments,
-        instrument_ids=DEFAULT_TENORS,
-        service_builder=build_us_treasury_incremental_service,
-        registry_factory=enabled_us_treasury_source_registry,
-        runner=run_us_treasury_incremental,
-        runner_kwargs={"tenors": DEFAULT_TENORS, "use_mock": False},
-    )
-
-    from backend.app.ops.bis_incremental_run import (
-        DEFAULT_COUNTRIES as BIS_COUNTRIES,
-        build_bis_incremental_service,
-        create_bis_incremental_port,
-        enabled_bis_source_registry,
-        run_bis_incremental,
-    )
-
-    registry["bis"] = _macro_live_runner(
-        source_id="bis",
-        port_factory=create_bis_incremental_port,
-        since_reader=read_since_dates_for_instruments,
-        instrument_ids=BIS_COUNTRIES,
-        service_builder=build_bis_incremental_service,
-        registry_factory=enabled_bis_source_registry,
-        runner=run_bis_incremental,
-        runner_kwargs={"countries": BIS_COUNTRIES, "use_mock": False},
-    )
-
-    from backend.app.ops.world_bank_incremental_run import (
-        DEFAULT_COUNTRIES as WB_COUNTRIES,
-        build_world_bank_incremental_service,
-        create_world_bank_incremental_port,
-        enabled_world_bank_source_registry,
-        run_world_bank_incremental,
-    )
-
-    registry["world_bank"] = _macro_live_runner(
-        source_id="world_bank",
-        port_factory=create_world_bank_incremental_port,
-        since_reader=read_since_dates_for_instruments,
-        instrument_ids=WB_COUNTRIES,
-        service_builder=build_world_bank_incremental_service,
-        registry_factory=enabled_world_bank_source_registry,
-        runner=run_world_bank_incremental,
-        runner_kwargs={"countries": WB_COUNTRIES, "use_mock": False},
-    )
-
-    from backend.app.ops.cftc_incremental_run import (
-        DEFAULT_MARKETS,
-        build_cftc_incremental_service,
-        create_cftc_incremental_port,
-        enabled_cftc_source_registry,
-        read_since_dates_for_markets,
-        run_cftc_incremental,
-    )
-
-    registry["cftc_cot"] = _macro_live_runner(
-        source_id="cftc_cot",
-        port_factory=create_cftc_incremental_port,
-        since_reader=read_since_dates_for_markets,
-        instrument_ids=DEFAULT_MARKETS,
-        service_builder=build_cftc_incremental_service,
-        registry_factory=enabled_cftc_source_registry,
-        runner=run_cftc_incremental,
-        runner_kwargs={"markets": DEFAULT_MARKETS, "use_mock": False},
-    )
-
-    from backend.app.datasources.fetch_ports.sec_edgar_port import create_sec_edgar_fetch_port
-    from backend.app.ops.sec_edgar_incremental_run import (
-        _DEFAULT_CIK,
-        build_sec_edgar_incremental_service,
-        run_sec_edgar_incremental,
-    )
-    from backend.app.ops.sec_edgar_incremental_watermark import (
-        enabled_sec_edgar_source_registry,
-        read_since_date_for_cik,
-    )
-
-    ciks = (_DEFAULT_CIK,)
-    registry["sec_edgar"] = _port_live_runner(
-        source_id="sec_edgar",
-        operation="fetch_filings",
-        port_factory=create_sec_edgar_fetch_port,
-        port_kwargs={"ciks": ciks, "max_filings": 3, "data_domain": "us_filings"},
-        since_reader=read_since_date_for_cik,
-        instrument_ids=ciks,
-        service_builder=build_sec_edgar_incremental_service,
-        service_extra={},
-        registry_factory=enabled_sec_edgar_source_registry,
-        runner=run_sec_edgar_incremental,
-        runner_kwargs={"ciks": ciks},
-    )
-
-    from backend.app.datasources.fetch_ports.alpha_vantage_port import create_alpha_vantage_fetch_port
-    from backend.app.ops.alpha_vantage_incremental_run import (
-        _DEFAULT_SYMBOL,
-        build_alpha_vantage_incremental_service,
-        enabled_alpha_vantage_source_registry,
-        run_alpha_vantage_incremental,
-    )
-
-    av_symbols = (_DEFAULT_SYMBOL,)
-    registry["alpha_vantage"] = _port_live_runner(
-        source_id="alpha_vantage",
-        operation="fetch_daily_bar",
-        port_factory=create_alpha_vantage_fetch_port,
-        port_kwargs={"symbols": av_symbols, "max_rows": 3},
-        since_reader=lambda _con, _sym: None,
-        instrument_ids=av_symbols,
-        service_builder=build_alpha_vantage_incremental_service,
-        service_extra={},
-        registry_factory=enabled_alpha_vantage_source_registry,
-        runner=run_alpha_vantage_incremental,
-        runner_kwargs={"symbols": av_symbols},
-    )
-
-    from backend.app.datasources.fetch_ports.deribit_port import create_deribit_fetch_port
-    from backend.app.ops.deribit_incremental_run import (
-        build_deribit_incremental_service,
-        run_deribit_incremental,
-    )
-    from backend.app.ops.deribit_incremental_watermark import (
-        enabled_deribit_source_registry,
-        read_since_date_for_instrument as read_deribit_since_date,
-    )
-
-    def _deribit_since_reader(con, instrument: str) -> Any:
-        return read_deribit_since_date(
-            con, instrument, data_domain="crypto_options_surface"
+    if sid == "us_treasury":
+        from backend.app.ops.us_treasury_incremental_run import (
+            DEFAULT_TENORS,
+            build_us_treasury_incremental_service,
+            create_us_treasury_incremental_port,
+            enabled_us_treasury_source_registry,
+            run_us_treasury_incremental,
         )
 
-    registry["deribit"] = _port_live_runner(
-        source_id="deribit",
-        operation="fetch_options_surface",
-        port_factory=create_deribit_fetch_port,
-        port_kwargs={"instruments": (_DERIBIT_PROBE_INSTRUMENT,), "max_surface_rows": 3},
-        since_reader=_deribit_since_reader,
-        instrument_ids=(_DERIBIT_PROBE_INSTRUMENT,),
-        service_builder=build_deribit_incremental_service,
-        service_extra={},
-        registry_factory=enabled_deribit_source_registry,
-        runner=run_deribit_incremental,
-        runner_kwargs={},
-        resolve_live_instruments=_deribit_live_instruments,
-    )
+        return _macro_live_runner(
+            source_id="us_treasury",
+            port_factory=create_us_treasury_incremental_port,
+            since_reader=read_since_dates_for_instruments,
+            instrument_ids=DEFAULT_TENORS,
+            service_builder=build_us_treasury_incremental_service,
+            registry_factory=enabled_us_treasury_source_registry,
+            runner=run_us_treasury_incremental,
+            runner_kwargs={"tenors": DEFAULT_TENORS, "use_mock": False},
+        )
 
-    from backend.app.datasources.fetch_ports.cninfo_port import create_cninfo_fetch_port
-    from backend.app.ops.cninfo_incremental_run import (
-        _DEFAULT_SYMBOL as CN_SYMBOL,
-        build_cninfo_incremental_service,
-        run_cninfo_incremental,
-    )
-    from backend.app.ops.cninfo_incremental_watermark import (
-        enabled_cninfo_source_registry,
-        read_since_date_for_instrument as read_cninfo_since_date,
-    )
+    if sid == "bis":
+        from backend.app.ops.bis_incremental_run import (
+            DEFAULT_COUNTRIES as BIS_COUNTRIES,
+            build_bis_incremental_service,
+            create_bis_incremental_port,
+            enabled_bis_source_registry,
+            run_bis_incremental,
+        )
 
-    cn_symbols = (CN_SYMBOL,)
-    registry["cninfo"] = _port_live_runner(
-        source_id="cninfo",
-        operation="fetch_announcements",
-        port_factory=create_cninfo_fetch_port,
-        port_kwargs={"symbols": cn_symbols, "max_rows": 3},
-        since_reader=read_cninfo_since_date,
-        instrument_ids=cn_symbols,
-        service_builder=build_cninfo_incremental_service,
-        service_extra={},
-        registry_factory=enabled_cninfo_source_registry,
-        runner=run_cninfo_incremental,
-        runner_kwargs={"symbols": cn_symbols},
-    )
+        return _macro_live_runner(
+            source_id="bis",
+            port_factory=create_bis_incremental_port,
+            since_reader=read_since_dates_for_instruments,
+            instrument_ids=BIS_COUNTRIES,
+            service_builder=build_bis_incremental_service,
+            registry_factory=enabled_bis_source_registry,
+            runner=run_bis_incremental,
+            runner_kwargs={"countries": BIS_COUNTRIES, "use_mock": False},
+        )
 
-    return registry
+    if sid == "world_bank":
+        from backend.app.ops.world_bank_incremental_run import (
+            DEFAULT_COUNTRIES as WB_COUNTRIES,
+            build_world_bank_incremental_service,
+            create_world_bank_incremental_port,
+            enabled_world_bank_source_registry,
+            run_world_bank_incremental,
+        )
 
+        return _macro_live_runner(
+            source_id="world_bank",
+            port_factory=create_world_bank_incremental_port,
+            since_reader=read_since_dates_for_instruments,
+            instrument_ids=WB_COUNTRIES,
+            service_builder=build_world_bank_incremental_service,
+            registry_factory=enabled_world_bank_source_registry,
+            runner=run_world_bank_incremental,
+            runner_kwargs={"countries": WB_COUNTRIES, "use_mock": False},
+        )
 
-_LIVE_SYNC_RUNNERS: dict[str, Callable[[Path], str]] | None = None
+    if sid == "cftc_cot":
+        from backend.app.ops.cftc_incremental_run import (
+            DEFAULT_MARKETS,
+            build_cftc_incremental_service,
+            create_cftc_incremental_port,
+            enabled_cftc_source_registry,
+            read_since_dates_for_markets,
+            run_cftc_incremental,
+        )
 
+        return _macro_live_runner(
+            source_id="cftc_cot",
+            port_factory=create_cftc_incremental_port,
+            since_reader=read_since_dates_for_markets,
+            instrument_ids=DEFAULT_MARKETS,
+            service_builder=build_cftc_incremental_service,
+            registry_factory=enabled_cftc_source_registry,
+            runner=run_cftc_incremental,
+            runner_kwargs={"markets": DEFAULT_MARKETS, "use_mock": False},
+        )
 
-def _get_live_sync_runner(source_id: str) -> Callable[[Path], str]:
-    global _LIVE_SYNC_RUNNERS
-    if _LIVE_SYNC_RUNNERS is None:
-        _LIVE_SYNC_RUNNERS = _live_sync_registry()
-    try:
-        return _LIVE_SYNC_RUNNERS[source_id]
-    except KeyError as exc:
-        raise ValueError(f"no live dispatch for source_id={source_id!r}") from exc
+    if sid == "sec_edgar":
+        from backend.app.datasources.fetch_ports.sec_edgar_port import create_sec_edgar_fetch_port
+        from backend.app.ops.sec_edgar_incremental_run import (
+            _DEFAULT_CIK,
+            build_sec_edgar_incremental_service,
+            run_sec_edgar_incremental,
+        )
+        from backend.app.ops.sec_edgar_incremental_watermark import (
+            enabled_sec_edgar_source_registry,
+            read_since_date_for_cik,
+        )
+
+        ciks = (_DEFAULT_CIK,)
+        return _port_live_runner(
+            source_id="sec_edgar",
+            operation="fetch_filings",
+            port_factory=create_sec_edgar_fetch_port,
+            port_kwargs={"ciks": ciks, "max_filings": 3, "data_domain": "us_filings"},
+            since_reader=read_since_date_for_cik,
+            instrument_ids=ciks,
+            service_builder=build_sec_edgar_incremental_service,
+            service_extra={},
+            registry_factory=enabled_sec_edgar_source_registry,
+            runner=run_sec_edgar_incremental,
+            runner_kwargs={"ciks": ciks},
+        )
+
+    if sid == "alpha_vantage":
+        from backend.app.datasources.fetch_ports.alpha_vantage_port import create_alpha_vantage_fetch_port
+        from backend.app.ops.alpha_vantage_incremental_run import (
+            _DEFAULT_SYMBOL,
+            build_alpha_vantage_incremental_service,
+            enabled_alpha_vantage_source_registry,
+            run_alpha_vantage_incremental,
+        )
+
+        av_symbols = (_DEFAULT_SYMBOL,)
+        return _port_live_runner(
+            source_id="alpha_vantage",
+            operation="fetch_daily_bar",
+            port_factory=create_alpha_vantage_fetch_port,
+            port_kwargs={"symbols": av_symbols, "max_rows": 3},
+            since_reader=lambda _con, _sym: None,
+            instrument_ids=av_symbols,
+            service_builder=build_alpha_vantage_incremental_service,
+            service_extra={},
+            registry_factory=enabled_alpha_vantage_source_registry,
+            runner=run_alpha_vantage_incremental,
+            runner_kwargs={"symbols": av_symbols},
+        )
+
+    if sid == "deribit":
+        from backend.app.datasources.fetch_ports.deribit_port import create_deribit_fetch_port
+        from backend.app.ops.deribit_incremental_run import (
+            build_deribit_incremental_service,
+            run_deribit_incremental,
+        )
+        from backend.app.ops.deribit_incremental_watermark import (
+            enabled_deribit_source_registry,
+            read_since_date_for_instrument as read_deribit_since_date,
+        )
+
+        def _deribit_since_reader(con, instrument: str) -> Any:
+            return read_deribit_since_date(
+                con, instrument, data_domain="crypto_options_surface"
+            )
+
+        return _port_live_runner(
+            source_id="deribit",
+            operation="fetch_options_surface",
+            port_factory=create_deribit_fetch_port,
+            port_kwargs={"instruments": (_DERIBIT_PROBE_INSTRUMENT,), "max_surface_rows": 3},
+            since_reader=_deribit_since_reader,
+            instrument_ids=(_DERIBIT_PROBE_INSTRUMENT,),
+            service_builder=build_deribit_incremental_service,
+            service_extra={},
+            registry_factory=enabled_deribit_source_registry,
+            runner=run_deribit_incremental,
+            runner_kwargs={},
+            resolve_live_instruments=_deribit_live_instruments,
+        )
+
+    if sid == "cninfo":
+        from backend.app.datasources.fetch_ports.cninfo_port import create_cninfo_fetch_port
+        from backend.app.ops.cninfo_incremental_run import (
+            _DEFAULT_SYMBOL as CN_SYMBOL,
+            build_cninfo_incremental_service,
+            run_cninfo_incremental,
+        )
+        from backend.app.ops.cninfo_incremental_watermark import (
+            enabled_cninfo_source_registry,
+            read_since_date_for_instrument as read_cninfo_since_date,
+        )
+
+        cn_symbols = (CN_SYMBOL,)
+        return _port_live_runner(
+            source_id="cninfo",
+            operation="fetch_announcements",
+            port_factory=create_cninfo_fetch_port,
+            port_kwargs={"symbols": cn_symbols, "max_rows": 3},
+            since_reader=read_cninfo_since_date,
+            instrument_ids=cn_symbols,
+            service_builder=build_cninfo_incremental_service,
+            service_extra={},
+            registry_factory=enabled_cninfo_source_registry,
+            runner=run_cninfo_incremental,
+            runner_kwargs={"symbols": cn_symbols},
+        )
+
+    raise ValueError(f"no live dispatch for source_id={source_id!r}")
 
 
 def _run_live_sync(source_id: str, data_root: Path) -> str:
-    return _get_live_sync_runner(source_id)(data_root)
+    return _live_sync_runner_for(source_id)(data_root)
 
 
 def _clean_row_count(
