@@ -414,7 +414,8 @@ def _get_task_status(trellis_dir: Path, input_data: dict) -> str:
             "\nExecute-Gate: v4 — frozen §9.x RED→GREEN; validate-execute-handoff before Audit."
             if task_status == "in_progress"
             and (
-                (task_dir / "EXECUTION_INDEX.md").is_file()
+                (task_dir / "EXECUTION_PLAN.md").is_file()
+                or (task_dir / "EXECUTION_INDEX.md").is_file()
                 or (task_dir / "research" / "00-EXECUTION-ENTRY.md").is_file()
             )
             else (

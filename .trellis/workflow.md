@@ -151,12 +151,12 @@ Phase 3: Finish  → verify, update spec, commit, and wrap up
 
 **复杂任务（`EXECUTION_INDEX.md` + `frozen/`，或 legacy `MASTER.plan.md`）** 套用 [Complex Task Planning Protocol](.trellis/spec/guides/complex-task-planning-protocol.md) Phase 6–9：
 
-| Trellis                    | 复杂任务协议        | 说明（v4.1 活跃）                                                              |
-| -------------------------- | ------------------- | ------------------------------------------------------------------------------ |
-| Phase 2                    | **Phase 6 Execute** | Boot 读 ENTRY + research + 路由表；`/test-driven-development`；代码/测试即证据 |
-| （跳过 2.2 trellis-check） | **Phase 7 Audit**   | 7.pre → 7.pre.1 Trace Presence → A1–A8 → A9                                    |
-| Phase 3 前半               | **Phase 8 Repair**  | 仅当 audit.report §4.3 有项                                                    |
-| Phase 3 后半               | **Phase 9 Finish**  | update-spec → commit → finish-work                                             |
+| Trellis                    | 复杂任务协议        | 说明（v4.2 默认）                                                                                                           |
+| -------------------------- | ------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Phase 2                    | **Phase 6 Execute** | Boot 读 `EXECUTION_PLAN` + INDEX §3 + implement.jsonl（v4.1 legacy：ENTRY 包）；`/test-driven-development`；代码/测试即证据 |
+| （跳过 2.2 trellis-check） | **Phase 7 Audit**   | 7.pre → 7.pre.1 Trace Presence → A1–A8 → A9                                                                                 |
+| Phase 3 前半               | **Phase 8 Repair**  | 仅当 audit.report §4.3 有项                                                                                                 |
+| Phase 3 后半               | **Phase 9 Finish**  | update-spec → commit → finish-work                                                                                          |
 
 Legacy v3/v4.0：仍读 `MASTER.plan.md` + `execute-evidence/*.txt`（见 `plan.freeze.legacy-v3-v40.md`）。
 
@@ -249,14 +249,14 @@ Tools: `trellis-implement` / `trellis-research` are sub-agent types only (Task/A
 
 **Simple task flow:** `trellis-implement` -> `trellis-check` -> `trellis-update-spec` -> commit (Phase 3.4) -> `/trellis:finish-work`.
 
-**Complex task (v4.1 · `EXECUTION_INDEX.md` + `frozen/`):** Read `agent-toolchain.md` + `.cursor/skills/trellis-execute/SKILL.md` + **`reference.md`** + `principles.md` + `project-global.mdc` → Boot（ENTRY + research + 路由表 + implement.jsonl）→ INDEX §1 逐步 · `/test-driven-development` → 代码/测试 → `[x]` → 可选对抗性自检（不落盘）→ `validate-execute-handoff` → Audit。**不写** execute-evidence txt / execute-skill-reads.jsonl。
+**Complex task (v4.2 default · `EXECUTION_PLAN.md` + `EXECUTION_INDEX.md` + `frozen/`):** Read `agent-toolchain.md` + `.cursor/skills/trellis-execute/SKILL.md` + **`reference.md`** + `principles.md` + `project-global.mdc` → Boot（`EXECUTION_PLAN` + `EXECUTION_INDEX` + implement.jsonl）→ INDEX §1 逐步 · `/test-driven-development` → 代码/测试 → `[x]` → 可选对抗性自检（不落盘）→ `validate-execute-handoff` → Audit。**不写** execute-evidence txt / execute-skill-reads.jsonl。
 
 **Complex task (legacy v3/v4.0 · `MASTER.plan.md`):** §8.x 逐步 + `research/execute-evidence/{step}-red/green.txt` + `validate-execute-handoff`（见 legacy freeze 模板）。
 
-**Execute 逐步门禁（v4.1）：** 一次只完成 INDEX §1 当前 Step；必做 skill 见 `trellis-execute/reference.md` + yaml；条件 skill 见 `agent-toolchain.md` §Execute（总表 + 细则）。
+**Execute 逐步门禁（v4.2）：** 一次只完成 INDEX §1 当前 Step；必做 skill 见 `trellis-execute/reference.md` + yaml；条件 skill 见 `agent-toolchain.md` §Execute（总表 + 细则）。
 
 Main-session default: dispatch implement/check sub-agents (simple only for check). Sub-agent self-exemption: if already running as `trellis-implement`, do NOT spawn another `trellis-implement` or `trellis-check`; if already running as `trellis-check`, do NOT spawn another `trellis-check` or `trellis-implement`. Dispatch is main session only.
-Dispatch prompt starts with `Active task: <task path from task.py current>`. Read context: jsonl → ENTRY（v4.1）或 MASTER（legacy）→ `prd.md` → `design.md` → `implement.md`.
+Dispatch prompt starts with `Active task: <task path from task.py current>`. Read context: jsonl → `EXECUTION_PLAN.md`（v4.2）或 ENTRY（v4.1 legacy）或 MASTER（legacy v3）→ `prd.md` → `design.md` → `implement.md`.
 [/workflow-state:in_progress]
 
 <!-- Per-turn breadcrumb: shown while status='in_progress' when
@@ -267,7 +267,7 @@ Dispatch prompt starts with `Active task: <task path from task.py current>`. Rea
 [workflow-state:in_progress-inline]
 **Simple task:** `trellis-before-dev` -> edit -> `trellis-check` -> validation -> `trellis-update-spec` -> commit (Phase 3.4) -> `/trellis:finish-work`.
 
-**Complex task (v4.1):** Boot 读 ENTRY + research + 路由表 → INDEX §1 逐步 · `/test-driven-development` → `[x]` → `validate-execute-handoff` → Audit（no trellis-check).
+**Complex task (v4.2):** Boot 读 `EXECUTION_PLAN` + `EXECUTION_INDEX` + implement.jsonl → INDEX §1 逐步 · `/test-driven-development` → `[x]` → `validate-execute-handoff` → Audit（no trellis-check).
 
 **Complex task (legacy MASTER):** §8.x 逐步 + execute-evidence txt → `validate-execute-handoff` → Audit.
 
@@ -320,7 +320,7 @@ When a user request matches one of these intents inside an active task, route fi
 [codex-inline, Kilo, Antigravity, Windsurf]
 
 - Planning or unclear requirements -> `trellis-brainstorm`.
-- Before editing -> `trellis-before-dev` (complex v4.1: after Boot per `trellis-execute/SKILL.md`; legacy: optional GitNexus summary).
+- Before editing -> `trellis-before-dev` (complex v4.2: after Boot per `trellis-execute/SKILL.md`; legacy: optional GitNexus summary).
 - After editing -> **simple:** `trellis-check`. **Complex:** §11 Audit handoff, not trellis-check.
 - Repeated debugging -> `trellis-break-loop`; spec updates -> `trellis-update-spec`.
 
@@ -331,7 +331,7 @@ When a user request matches one of these intents inside an active task, route fi
 - Task creation approval is not implementation approval; implementation waits for `task.py start` after artifact review.
 - **Complex tasks (Plan v2):** MUST Read `.cursor/skills/trellis-plan/SKILL.md` first when `status=planning`; optional per phase: `task.py validate-plan-phase <dir> <phase>` (`boot`, `1a`, `2a`, `2b`, `3`, `3.5`, `1b`, `4`, `5a`, `5b`, `5c`, `5d`).
 - **Complex tasks:** `task.py validate-plan-freeze <dir>` must pass before `task.py start` (or `--force` with documented reason).
-- PRD-only is valid for lightweight tasks; complex v4.1 need Bundle + `EXECUTION_INDEX.md` + `plan.freeze.md`; legacy v3/v4.0 need `MASTER.plan.md` + `plan.freeze.md`.
+- PRD-only is valid for lightweight tasks; complex v4.2 need `EXECUTION_PLAN.md` + `EXECUTION_INDEX.md` + `plan.freeze.md`; legacy v4.1 need ENTRY bundle; legacy v3/v4.0 need `MASTER.plan.md` + `plan.freeze.md`.
 - Planning must be persisted to task artifacts; checks must run before reporting completion.
 - **Execute handoff:** `task.py validate-execute-handoff <dir>` before §11 Audit; do not finish-work until Audit PASS.
 
@@ -515,17 +515,17 @@ If `task.py start` errors with a session-identity message (no context key from h
 
 Goal: turn reviewed planning artifacts into code that passes quality checks.
 
-> **Complex tasks:** Follow [complex-task-planning-protocol.md](.trellis/spec/guides/complex-task-planning-protocol.md) Phase 6. **v4.1：** 代码/测试即证据；Skip **2.2** and Phase 3.1 `trellis-check`; Audit (Phase 7) is the quality gate.
+> **Complex tasks:** Follow [complex-task-planning-protocol.md](.trellis/spec/guides/complex-task-planning-protocol.md) Phase 6. **v4.2：** 代码/测试即证据；Skip **2.2** and Phase 3.1 `trellis-check`; Audit (Phase 7) is the quality gate.
 
 #### 2.0 Codebase refresh `[recommended · complex]`
 
-Before editing non-trivial code: GitNexus `impact()` / `query`（改 symbol 前 **必做**）。v4.1 **不强制** `research/gitnexus-execute-summary.md`；legacy v4 可仍产出该文件。
+Before editing non-trivial code: GitNexus `impact()` / `query`（改 symbol 前 **必做**）。v4.2 **不强制** `research/gitnexus-execute-summary.md`；legacy v4 可仍产出该文件。
 
 ```bash
 npx gitnexus analyze   # or project-standard GitNexus command
 ```
 
-- **v4.1 Gate:** Boot 完成（ENTRY + research + 路由表）后再写业务代码
+- **v4.2 Gate:** Boot 完成（`EXECUTION_PLAN` + INDEX + implement.jsonl）后再写业务代码
 - **Legacy Gate:** do not start §8 until 6.pre summary done (unless `analysis_waiver`)
 
 #### 2.1 Implement `[required · repeatable]`
@@ -535,13 +535,13 @@ npx gitnexus analyze   # or project-standard GitNexus command
 Spawn the implement sub-agent:
 
 - **Agent type**: `trellis-implement`
-- **Task description**: Implement per `trellis-implement.md`; **complex v4.1:** ENTRY + research + 路由表 + `/test-driven-development`; **legacy:** MASTER + execute-evidence txt
+- **Task description**: Implement per `trellis-implement.md`; **complex v4.2:** `EXECUTION_PLAN` + implement.jsonl + `/test-driven-development`; **v4.1 legacy:** ENTRY + research; **legacy v3:** MASTER + execute-evidence txt
 - **Dispatch prompt guard**: Tell the spawned agent it is already the `trellis-implement` sub-agent and must implement directly, not spawn another `trellis-implement` / `trellis-check`.
 
 The platform hook/plugin auto-handles:
 
 - Reads `implement.jsonl` and injects referenced spec/research files into the agent prompt
-- Injects `implement.jsonl` paths; **complex v4.1:** slot2 = `research/00-EXECUTION-ENTRY.md`; **legacy:** first line = `MASTER.plan.md`
+- Injects `implement.jsonl` paths; **complex v4.2:** slot2 = `EXECUTION_PLAN.md`; **v4.1 legacy:** slot2 = `research/00-EXECUTION-ENTRY.md`; **legacy v3:** first line = `MASTER.plan.md`
 
 [/Claude Code, Cursor, OpenCode, Gemini, Qoder, CodeBuddy, Copilot, Droid, Pi]
 
@@ -577,11 +577,11 @@ The platform prelude auto-handles the context load requirement:
 
 [codex-inline, Kilo, Antigravity, Windsurf]
 
-1. **Complex v4.1:** Boot per `trellis-execute/SKILL.md`; `impact()` before edits
+1. **Complex v4.2:** Boot per `trellis-execute/SKILL.md`; `impact()` before edits
 2. Load `trellis-before-dev` + `project-global.mdc`
-3. Read ENTRY + implement.jsonl（v4.1）或 MASTER（legacy）
+3. Read `EXECUTION_PLAN` + implement.jsonl（v4.2）或 ENTRY（v4.1）或 MASTER（legacy）
 4. Implement; `/test-driven-development` per slice; `uv run pytest -q`
-5. **v4.1:** `[x]` + `validate-execute-handoff` → Audit；**legacy:** §8 evidence txt
+5. **v4.2:** `[x]` + `validate-execute-handoff` → Audit；**legacy:** §8 evidence txt
 
 [/codex-inline, Kilo, Antigravity, Windsurf]
 

@@ -15,6 +15,9 @@ from pathlib import Path
 
 _REPO = Path(__file__).resolve().parents[1]
 _SCRIPTS = _REPO / ".trellis" / "scripts"
+_V41_LEGACY_EXAMPLE = (
+    _REPO / ".trellis" / "tasks" / "archive" / "2026-07" / "_example-plan-v41-legacy"
+)
 sys.path.insert(0, str(_SCRIPTS))
 
 from common.execution_index import (  # noqa: E402
@@ -26,11 +29,61 @@ from common.plan_protocol import (  # noqa: E402
     plan_freeze_required_before_start,
     plan_protocol_version,
 )
-from common.validate_plan_freeze import validate_plan_freeze  # noqa: E402
+from common.validate_plan_freeze import (  # noqa: E402
+    validate_plan_freeze,
+    validate_plan_freeze_v4,
+)
 
 _SOURCE = (
     "docs/implementation_tasks/GLOBAL_TASK_TEMPLATE.md"
 )
+
+
+def _v42_slim(task_dir: Path) -> None:
+    """v4.2 Slim Plan：仅 EXECUTION_PLAN + INDEX + AUDIT.plan（无 research/frozen）。"""
+    task_dir.mkdir(parents=True, exist_ok=True)
+    (task_dir / "task.json").write_text(
+        json.dumps(
+            {
+                "meta": {
+                    "task_track": "complex",
+                    "plan_protocol_version": "4.2",
+                    "execute_entry": "EXECUTION_PLAN.md",
+                }
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    (task_dir / "EXECUTION_PLAN.md").write_text(
+        "# Plan\n\n" + ("验收与切片正文。" * 30) + "\n",
+        encoding="utf-8",
+    )
+    (task_dir / "EXECUTION_INDEX.md").write_text(
+        """# Index
+
+## 0. 冻结元数据
+| protocol | `4.2` |
+
+## 1. 步骤
+| Step | RED | GREEN |
+| 9.0 | `true` | `true` |
+
+## 2. AC ↔ 测试 / 验收
+| AC | 测试 |
+| AC-1 | pytest |
+
+## 3. 必须读原文
+| path | manifest | audience | extract | for |
+| `docs/implementation_tasks/GLOBAL_TESTING_POLICY.md` | must-read | execute | policy | Boot |
+""",
+        encoding="utf-8",
+    )
+    (task_dir / "AUDIT.plan.md").write_text(
+        "追溯 EXECUTION_PLAN.md 与 EXECUTION_INDEX.md\n",
+        encoding="utf-8",
+    )
 
 
 def _v4_minimal(task_dir: Path) -> None:
@@ -110,6 +163,20 @@ P0i：索引完整
         "## 8. 边界\n停止条件\n| 5 | 自定义 | stop |\n## 9. 实现步骤\n### 9.0\n",
         encoding="utf-8",
     )
+
+
+def test_generateManifests_v42WithoutFrozen(tmp_path: Path) -> None:
+    """覆盖范围：v4.2 Slim generate_manifests
+    测试对象：generate_manifests（无 frozen/research）
+    目的/目标：slot1=EXECUTION_PLAN · slot2=INDEX
+    验证点：implement.jsonl 前两行路径正确
+    失败含义：Slim Plan 仍依赖 frozen 会阻断 freeze
+    """
+    _v42_slim(tmp_path)
+    assert not generate_manifests(tmp_path, _REPO)
+    lines = (tmp_path / "implement.jsonl").read_text(encoding="utf-8").splitlines()
+    assert "EXECUTION_PLAN.md" in lines[0]
+    assert "EXECUTION_INDEX.md" in lines[1]
 
 
 def test_parseManifestRows_extractsSection3() -> None:
@@ -402,14 +469,14 @@ def test_freezeTaskCard_v41_writesThinPointer(tmp_path: Path) -> None:
     assert body.count("\n") < live_lines // 2
 
 
-def test_examplePlanV4_taskLocalFreeze() -> None:
-    """覆盖范围：v4.1 样板任务级 freeze（不含 repo 全局门）
-    测试对象：validate_plan_freeze 过滤 repo docs_specs_index 等
-    目的/目标：样板目录本身 freeze 工件齐全
+def test_examplePlanV41Legacy_taskLocalFreeze() -> None:
+    """覆盖范围：v4.1 legacy 样板任务级 freeze（不含 repo 全局门）
+    测试对象：validate_plan_freeze（_example-plan-v41-legacy）
+    目的/目标：v4.1 ENTRY 包样板 freeze 工件齐全
     验证点：task-local errors == []
-    失败含义：样板缺 plan.freeze / ENTRY / skill-reads
+    失败含义：v4.1 回归样例缺 plan.freeze / ENTRY / skill-reads
     """
-    task = _REPO / ".trellis" / "tasks" / "_example-plan-v4"
-    errors = validate_plan_freeze(task, _REPO)
+    task = _V41_LEGACY_EXAMPLE
+    errors = validate_plan_freeze_v4(task, _REPO)
     local = [e for e in errors if not e.startswith("repo ")]
     assert local == []

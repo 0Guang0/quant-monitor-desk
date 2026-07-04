@@ -11,6 +11,9 @@ from pathlib import Path
 
 _REPO = Path(__file__).resolve().parents[1]
 _SCRIPTS = _REPO / ".trellis" / "scripts"
+_V41_LEGACY_EXAMPLE = (
+    _REPO / ".trellis" / "tasks" / "archive" / "2026-07" / "_example-plan-v41-legacy"
+)
 sys.path.insert(0, str(_SCRIPTS))
 
 from common.execution_index import generate_manifests  # noqa: E402
@@ -20,7 +23,7 @@ from common.validate_plan_freeze import (  # noqa: E402
     validate_plan_freeze_warnings,
     validate_plan_phase,
 )
-from test_execution_index_protocol import _v4_minimal  # noqa: E402
+from test_execution_index_protocol import _v4_minimal, _v42_slim  # noqa: E402
 
 
 def _legacy_master_only(task_dir: Path) -> None:
@@ -84,11 +87,11 @@ def test_validatePlanFreeze_skipsArchivedLegacy(tmp_path: Path) -> None:
 
 
 def test_validatePlanFreeze_passesWithArtifacts() -> None:
-    """覆盖范围：齐备 v4 Plan 工件时的 freeze 通过
-    测试对象：validate_plan_freeze（_example-plan-v4 样板任务）
+    """覆盖范围：齐备 v4.2 Slim Plan 工件时的 freeze 通过
+    测试对象：validate_plan_freeze（_example-plan-v4 · v4.2 Slim 金样）
     目的/目标：标准 complex 样板在工件齐全时应可通过 freeze（过滤 repo 级门）
     验证点：过滤 repo 前缀后 errors 为空
-    失败含义：合规 v4 任务无法 freeze 会阻断 Trellis Plan 主流程
+    失败含义：合规 v4.2 任务无法 freeze 会阻断 Trellis Plan 主流程
     """
     task = _REPO / ".trellis" / "tasks" / "_example-plan-v4"
     errors = validate_plan_freeze(task, _REPO)
@@ -236,12 +239,23 @@ def test_planPhaseHelp_lists5e() -> None:
     assert "5e" in plan_phase_help(_REPO)
 
 
-def test_validatePlanPhase_5e_passesExample() -> None:
-    """覆盖范围：Plan phase 5e consolidation 门禁
-    测试对象：validate_plan_phase（_example-plan-v4）
-    目的/目标：样板任务 5e 工件齐全时应零错误
+def test_validatePlanPhase_5e_passesExampleV41Legacy() -> None:
+    """覆盖范围：Plan phase 5e v4.1 legacy consolidation 门禁
+    测试对象：validate_plan_phase（_example-plan-v41-legacy）
+    目的/目标：v4.1 ENTRY 包样板 5e 工件齐全时应零错误
     验证点：errors == []
-    失败含义：5e 无法单独校验 consolidation
+    失败含义：v4.1 在途回归样例无法通过 5e
+    """
+    task = _V41_LEGACY_EXAMPLE
+    assert validate_plan_phase(task, "5e", repo_root=_REPO, allow_archived=True) == []
+
+
+def test_validatePlanPhase_5e_passesExamplePlanV4() -> None:
+    """覆盖范围：Plan phase 5e v4.2 Slim 门禁
+    测试对象：validate_plan_phase（_example-plan-v4 · v4.2 Slim 金样）
+    目的/目标：三份 md 齐全时应零错误
+    验证点：errors == []
+    失败含义：v4.2 金样无法通过 5e 会阻断新任务 freeze
     """
     task = _REPO / ".trellis" / "tasks" / "_example-plan-v4"
     assert validate_plan_phase(task, "5e", repo_root=_REPO) == []

@@ -1,4 +1,4 @@
-# Execute Skill 路径 — v4.1 Execute agent MUST Read 本表路径
+# Execute Skill 路径 — v4.2 默认 · v4.1 legacy 见 task.json plan_protocol_version
 # 必做相位 SSOT：.cursor/skills/trellis-execute/reference.md + principles.md
 # 条件 skill 触发 SSOT：agent-toolchain.md §Execute — 条件 skill
 # TDD：/test-driven-development（RED/GREEN 必做）

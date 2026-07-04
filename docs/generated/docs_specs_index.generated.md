@@ -56,6 +56,7 @@ Used with MIGRATION_MAP.md for machine omission checks (`check_docs_specs_indexe
 - `docs/decisions/ADR-033-dcp08-layer4-us-eq-clean-read.md`
 - `docs/decisions/ADR-034-m-data-03-tier-a-live-acceptance.md`
 - `docs/decisions/README.md`
+- `docs/ideas/m-g1-03-scope-clarification.md`
 - `docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md`
 - `docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md`
 - `docs/implementation_tasks/GLOBAL_TASK_TEMPLATE.md`

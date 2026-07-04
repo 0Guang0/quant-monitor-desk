@@ -17,20 +17,21 @@
 
 ## 0.1 Trace Authority Set（必填 · 写入 `audit.jsonl`）
 
-| 类别                | 文件                                                         | 用途                   |
-| ------------------- | ------------------------------------------------------------ | ---------------------- |
-| 原始任务卡          | `{{docs/implementation_tasks/.../NNN_task.md}}`              | scope / AC / Red Flags |
-| task README         | `docs/implementation_tasks/README.md`                        | 入口合规               |
-| task input index    | `docs/implementation_tasks/TASK_INPUT_CONTEXT_INDEX.md`      | 必读上下文             |
-| unresolved coverage | `docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md` | 未闭合项               |
-| project map         | `MIGRATION_MAP.md`                                           | docs/specs 边界        |
-| round map           | `{{ROUND*_BATCH_IMPLEMENTATION_MAP.md}}`                     | batch / out-of-scope   |
-| entry               | `research/00-EXECUTION-ENTRY.md`                             | v4.1 AC/约束/§5.1 地图 |
-| slices              | `research/to-issues-slices.md`                               | 切片 AC · 建议测试     |
-| external-index      | `research/EXTERNAL-INDEX.md` §A                              | 包外必读               |
-| execution-index     | `EXECUTION_INDEX.md`                                         | §1/§2/§5 索引          |
-| omission-check      | `research/project-map-omission-check.md`                     | 地图倒查               |
-| integration-ledger  | `research/integration-ledger.md`                             | context packing        |
+| 类别                | 文件                                                         | 用途                         |
+| ------------------- | ------------------------------------------------------------ | ---------------------------- |
+| 原始任务卡          | `{{docs/implementation_tasks/.../NNN_task.md}}`              | scope / AC / Red Flags       |
+| task README         | `docs/implementation_tasks/README.md`                        | 入口合规                     |
+| task input index    | `docs/implementation_tasks/TASK_INPUT_CONTEXT_INDEX.md`      | 必读上下文                   |
+| unresolved coverage | `docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md` | 未闭合项                     |
+| project map         | `MIGRATION_MAP.md`                                           | docs/specs 边界              |
+| round map           | `{{ROUND*_BATCH_IMPLEMENTATION_MAP.md}}`                     | batch / out-of-scope         |
+| entry               | `EXECUTION_PLAN.md`                                          | v4.2 计划正文 / AC / 约束    |
+| execution-index     | `EXECUTION_INDEX.md`                                         | §1/§2/§3/§5 索引             |
+| entry_v41           | `research/00-EXECUTION-ENTRY.md`                             | **仅 v4.1 legacy**           |
+| slices_v41          | `research/to-issues-slices.md`                               | **仅 v4.1 legacy**           |
+| external-index_v41  | `research/EXTERNAL-INDEX.md` §A                              | **仅 v4.1 legacy**           |
+| omission-check      | `research/project-map-omission-check.md`                     | 地图倒查（若 INDEX §3 登记） |
+| integration-ledger  | `research/integration-ledger.md`                             | context packing              |
 
 缺失或未解释差异 → A1/A5 列入 `audit.report.md` §4.3。
 

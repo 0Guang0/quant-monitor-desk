@@ -15,6 +15,7 @@ from .plan_protocol import (
     execute_ssot_rel,
     frozen_task_card_path,
     is_execution_bundle_v41,
+    is_execution_bundle_v42,
     is_plan_protocol_v4,
     load_task_json,
     plan_protocol_version,
@@ -116,61 +117,88 @@ def generate_manifests(task_dir: Path, repo_root: Path) -> list[str]:
     index_path = execution_index_path(task_dir)
     if not index_path.is_file():
         return ["missing EXECUTION_INDEX.md"]
-    frozen = frozen_task_card_path(task_dir)
-    if not frozen:
-        return ["missing frozen/*.md task card"]
-
-    frozen_rel = execute_ssot_rel(task_dir, repo_root)
     index_rel = execution_index_rel(task_dir, repo_root)
-    if not frozen_rel or not index_rel:
-        return ["cannot resolve frozen card or index repo-relative path"]
+    if not index_rel:
+        return ["cannot resolve EXECUTION_INDEX repo-relative path"]
 
     index_text = index_path.read_text(encoding="utf-8")
     rows = parse_manifest_rows(index_text)
 
-    if is_execution_bundle_v41(task_dir):
+    if is_execution_bundle_v42(task_dir):
         entry_rel = execution_entry_rel(task_dir, repo_root)
         if not entry_rel:
-            return ["missing research/00-EXECUTION-ENTRY.md (v4.1 execute_entry)"]
-        slot2_rel = entry_rel
-        slot2_reason = "extract: Execute bundle entry | for: Boot slot 2"
-    else:
-        slot2_rel = index_rel
-        slot2_reason = "extract: Execute/Audit manifest index | for: Boot slot 2"
-
-    implement: list[str] = [
-        _jsonl_line(frozen_rel, "extract: Execute SSOT frozen task card | for: Boot slot 1"),
-        _jsonl_line(slot2_rel, slot2_reason),
-    ]
-    pack_rel = execution_index_rel(task_dir, repo_root)
-    pack = task_dir / "context_pack.json"
-    if pack.is_file() and pack_rel:
+            return ["missing EXECUTION_PLAN.md (v4.2 execute_entry)"]
+        implement: list[str] = [
+            _jsonl_line(entry_rel, "extract: Execute plan SSOT | for: Boot slot 1"),
+            _jsonl_line(index_rel, "extract: manifest index | for: Boot slot 2"),
+        ]
         implement.append(
             _jsonl_line(
-                f".trellis/tasks/{task_dir.name}/context_pack.json",
-                "extract: authority graph routing | for: Boot slot 3",
+                ".cursor/skills/trellis-execute/SKILL.md",
+                "extract: Phase 0 boot | for: §9.0 Boot",
             )
         )
-    implement.append(
-        _jsonl_line(
-            ".cursor/skills/trellis-execute/SKILL.md",
-            "extract: Phase 0 boot | for: §9.0 Boot",
+        audit: list[str] = [
+            _jsonl_line(
+                f".trellis/tasks/{task_dir.name}/AUDIT.plan.md",
+                "extract: Audit SSOT | for: A1-A8 boot",
+            ),
+            _jsonl_line(entry_rel, "extract: Execute plan trace | for: A5 scope"),
+            _jsonl_line(index_rel, "extract: manifest index | for: A1/A5/A8"),
+        ]
+        check: list[str] = [
+            _jsonl_line(index_rel, "extract: manifest trace | for: A1"),
+        ]
+    else:
+        frozen = frozen_task_card_path(task_dir)
+        if not frozen:
+            return ["missing frozen/*.md task card"]
+        frozen_rel = execute_ssot_rel(task_dir, repo_root)
+        if not frozen_rel:
+            return ["cannot resolve frozen card repo-relative path"]
+
+        if is_execution_bundle_v41(task_dir):
+            entry_rel = execution_entry_rel(task_dir, repo_root)
+            if not entry_rel:
+                return ["missing research/00-EXECUTION-ENTRY.md (v4.1 execute_entry)"]
+            slot2_rel = entry_rel
+            slot2_reason = "extract: Execute bundle entry | for: Boot slot 2"
+        else:
+            slot2_rel = index_rel
+            slot2_reason = "extract: Execute/Audit manifest index | for: Boot slot 2"
+
+        implement = [
+            _jsonl_line(frozen_rel, "extract: Execute SSOT frozen task card | for: Boot slot 1"),
+            _jsonl_line(slot2_rel, slot2_reason),
+        ]
+        pack = task_dir / "context_pack.json"
+        if pack.is_file() and index_rel:
+            implement.append(
+                _jsonl_line(
+                    f".trellis/tasks/{task_dir.name}/context_pack.json",
+                    "extract: authority graph routing | for: Boot slot 3",
+                )
+            )
+        implement.append(
+            _jsonl_line(
+                ".cursor/skills/trellis-execute/SKILL.md",
+                "extract: Phase 0 boot | for: §9.0 Boot",
+            )
         )
-    )
 
-    audit: list[str] = [
-        _jsonl_line(
-            f".trellis/tasks/{task_dir.name}/AUDIT.plan.md",
-            "extract: Audit SSOT | for: A1-A8 boot",
-        ),
-        _jsonl_line(frozen_rel, "extract: frozen task card trace | for: A5 scope"),
-        _jsonl_line(index_rel, "extract: manifest index | for: A1/A5/A8"),
-    ]
+        audit = [
+            _jsonl_line(
+                f".trellis/tasks/{task_dir.name}/AUDIT.plan.md",
+                "extract: Audit SSOT | for: A1-A8 boot",
+            ),
+            _jsonl_line(frozen_rel, "extract: frozen task card trace | for: A5 scope"),
+            _jsonl_line(index_rel, "extract: manifest index | for: A1/A5/A8"),
+        ]
 
-    check: list[str] = [
-        _jsonl_line(frozen_rel, "extract: spec scope | for: A1 trellis-check"),
-        _jsonl_line(index_rel, "extract: manifest trace | for: A1"),
-    ]
+        check = [
+            _jsonl_line(frozen_rel, "extract: spec scope | for: A1 trellis-check"),
+            _jsonl_line(index_rel, "extract: manifest trace | for: A1"),
+        ]
 
     seen_impl: set[str] = set()
     seen_audit: set[str] = set()
@@ -229,6 +257,31 @@ def _extract_md_title(text: str, fallback: str) -> str:
     return fallback
 
 
+def _build_v42_thin_frozen_body(
+    *,
+    source_rel: str,
+    plan_rel: str,
+    stamp: str,
+    title: str,
+) -> str:
+    """v4.2: audit snapshot + pointers; specs live in EXECUTION_PLAN.md."""
+    return (
+        f"<!-- FROZEN: Plan protocol v4.2 · thin pointer · source: {source_rel} · "
+        f"frozen_at: {stamp} -->\n\n"
+        f"# FROZEN — {title}\n\n"
+        f"> **Execute SSOT：** `{plan_rel}`  \n"
+        f"> **执行索引：** `EXECUTION_INDEX.md` §3 manifest  \n"
+        f"> **活卡（冻结时点）：** `{source_rel}`  \n"
+        f"> **禁止：** 在此复制 `EXECUTION_PLAN.md` 正文\n\n"
+        "## 8. 边界 / 停止条件\n\n"
+        f"见 `{plan_rel}` 与活卡「不在范围」；偏离铁律即停。\n\n"
+        "## 9. 实现步骤\n\n"
+        "切片 AC 与步骤：见 `EXECUTION_PLAN.md`；RED/GREEN 与证据：`EXECUTION_INDEX.md` §1。\n\n"
+        "### 9.0 Boot\n\n"
+        f"先 Read `{plan_rel}` 全文 + `implement.jsonl` 每一行 + `EXECUTION_INDEX.md` §1 当前 Step。\n"
+    )
+
+
 def _build_v41_thin_frozen_body(
     *,
     source_rel: str,
@@ -259,9 +312,10 @@ def freeze_task_card(
     *,
     source_rel: str | None = None,
 ) -> list[str]:
-    """Copy repo task card into frozen/ (v4.0) or write thin pointer (v4.1)."""
+    """Copy repo task card into frozen/ (v4.0) or write thin pointer (v4.1/v4.2)."""
     errors: list[str] = []
     meta = load_task_json(task_dir).get("meta") or {}
+    v42 = is_execution_bundle_v42(task_dir)
     v41 = is_execution_bundle_v41(task_dir)
     src = (source_rel or meta.get("source_task_card") or "").strip()
     if not src:
@@ -285,7 +339,19 @@ def freeze_task_card(
     dest_name = source.name
     dest = frozen_dir / dest_name
     stamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-    if v41:
+    if v42:
+        plan_rel = str(meta.get("execute_entry", "")).strip() or "EXECUTION_PLAN.md"
+        plan_path = task_dir / plan_rel.replace("\\", "/")
+        if not plan_path.is_file():
+            return [f"missing {plan_rel} (v4.2 requires plan before freeze-task-card)"]
+        title = _extract_md_title(source.read_text(encoding="utf-8"), dest_name.removesuffix(".md"))
+        body = _build_v42_thin_frozen_body(
+            source_rel=src.replace("\\", "/"),
+            plan_rel=plan_rel,
+            stamp=stamp,
+            title=title,
+        )
+    elif v41:
         entry_rel = str(meta.get("execute_entry", "")).strip() or "research/00-EXECUTION-ENTRY.md"
         entry_path = task_dir / entry_rel
         if not entry_path.is_file():
@@ -311,10 +377,13 @@ def freeze_task_card(
     data.setdefault("meta", {})["frozen_task_card"] = f"frozen/{dest_name}"
     data["meta"]["frozen_at"] = stamp
     data["meta"]["source_task_card"] = src.replace("\\", "/")
-    if v41:
+    if v42:
+        data["meta"]["plan_protocol_version"] = "4.2"
+        data["meta"].setdefault("execute_entry", "EXECUTION_PLAN.md")
+    elif v41:
         data["meta"]["plan_protocol_version"] = "4.1"
         data["meta"].setdefault("execute_entry", "research/00-EXECUTION-ENTRY.md")
-    elif plan_protocol_version(task_dir) != "4.1":
+    elif plan_protocol_version(task_dir) not in ("4.1", "4.2"):
         data["meta"]["plan_protocol_version"] = "4"
     (task_dir / "task.json").write_text(
         json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
@@ -343,7 +412,10 @@ def validate_execution_index_structure(task_dir: Path, errors: list[str]) -> Non
 
 
 def validate_frozen_task_card(task_dir: Path, errors: list[str]) -> None:
-    from .plan_protocol import is_execution_bundle_v41, load_task_json
+    from .plan_protocol import is_execution_bundle_v41, is_execution_bundle_v42, load_task_json
+
+    if is_execution_bundle_v42(task_dir):
+        return
 
     card = frozen_task_card_path(task_dir)
     if not card:

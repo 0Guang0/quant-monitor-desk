@@ -1,11 +1,10 @@
 {
-  "title": "Plan v4.1 reference (read-only)",
+  "title": "Plan v4.2 Slim reference (read-only)",
   "status": "completed",
   "meta": {
     "task_track": "complex",
-    "plan_protocol_version": "4.1",
-    "execute_entry": "research/00-EXECUTION-ENTRY.md",
-    "execute_bundle": "research/",
+    "plan_protocol_version": "4.2",
+    "execute_entry": "EXECUTION_PLAN.md",
     "source_task_card": "docs/implementation_tasks/GLOBAL_TASK_TEMPLATE.md"
   }
 }

@@ -30,5 +30,15 @@
 
 ## Trellis 任务目录
 
-- **活任务：** 仅保留模板 `.trellis/tasks/_example-plan-v4/`（v4.1 范例）
-- **已归档：** `.trellis/tasks/archive/`（含 2026-07-02 批量归档的旧 Wave/DCP Trellis 任务）
+- **新复杂任务：** `task.py create` 默认 **Plan v4.2**（`EXECUTION_PLAN.md` + `EXECUTION_INDEX.md`）
+- **v4.2 Slim 金样（只读）：** `.trellis/tasks/_example-plan-v4/`
+- **v4.1 legacy 回归（已归档）：** `.trellis/tasks/archive/2026-07/_example-plan-v41-legacy/`
+- **已归档：** `.trellis/tasks/archive/`
+
+### Plan v4.2 与 `implementation_tasks/` 关系
+
+| 阶段      | 位置                                                             |
+| --------- | ---------------------------------------------------------------- |
+| Plan 输入 | `docs/implementation_tasks/<票>/` 活卡（薄指针）                 |
+| 计划 SSOT | `.trellis/tasks/<slug>/EXECUTION_PLAN.md` + `EXECUTION_INDEX.md` |
+| 迁入时机  | `task.py create` 后 **整文件移动** `EXECUTION_PLAN.md` 至任务根  |

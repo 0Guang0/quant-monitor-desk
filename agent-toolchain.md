@@ -28,15 +28,15 @@
 
 ## Skill 歧义（相似项选一）
 
-| 场景                   | 用                                                            | 不用                           |
-| ---------------------- | ------------------------------------------------------------- | ------------------------------ |
-| Plan 质问需求          | `grill-me` 等 + **grill-gate**（block 后再写 session）        | 未问用户就写 session           |
-| Plan 垂直切片          | `to-issues` + `planning-and-task-breakdown`                   | 手写 MASTER §8 无切片          |
-| Execute 先写失败测试   | **`/test-driven-development`**（必做 · 见 execute reference） | 先写实现                       |
-| Execute 实现与测试规范 | `karpathy-guidelines` + `testing-guidelines`（必做）          | 自创风格                       |
-| Execute 需求不明       | `grill-me` + **grill-gate**（条件 · 见下表）                  | 猜 scope · 写 session 自问自答 |
-| Execute 验规范         | **等 Audit A1**                                               | `trellis-check`                |
-| Audit 对抗性质疑       | 各维 `doubt-driven-development`（冻结在 audit-agent 模板）    | 只走 happy path                |
+| 场景                   | 用                                                               | 不用                           |
+| ---------------------- | ---------------------------------------------------------------- | ------------------------------ |
+| Plan 质问需求          | `grill-me` 等 + **grill-gate**（block 后再写 session）           | 未问用户就写 session           |
+| Plan 垂直切片          | 用户选用 `to-issues` 等 Skill → 合入 `EXECUTION_PLAN.md`（v4.2） | 手写无结构 MASTER §8           |
+| Execute 先写失败测试   | **`/test-driven-development`**（必做 · 见 execute reference）    | 先写实现                       |
+| Execute 实现与测试规范 | `karpathy-guidelines` + `testing-guidelines`（必做）             | 自创风格                       |
+| Execute 需求不明       | `grill-me` + **grill-gate**（条件 · 见下表）                     | 猜 scope · 写 session 自问自答 |
+| Execute 验规范         | **等 Audit A1**                                                  | `trellis-check`                |
+| Audit 对抗性质疑       | 各维 `doubt-driven-development`（冻结在 audit-agent 模板）       | 只走 happy path                |
 
 ---
 
@@ -96,7 +96,7 @@
 
 ## Loop engineering（complex 轨道 · 与 Execute/Audit 对齐）
 
-> **判定：** `task.json` → `meta.task_track: complex`（v4/v4.1 三件套默认 complex）· 详见 `AGENTS.md` §Loop engineering · `complex-task-planning-protocol.md` §0 Loop
+> **判定：** `task.json` → `meta.task_track: complex`（v4/v4.1/v4.2 默认 complex）
 
 | 阶段                | 产物                                             | 门禁                                                       |
 | ------------------- | ------------------------------------------------ | ---------------------------------------------------------- |
@@ -105,7 +105,7 @@
 | **Execute handoff** | `evidence_index.json`（索引 execute/audit 证据） | `validate-execute-handoff` → `check_task_evidence`         |
 | **Audit 关账**      | `audit_matrix.json` · ledger                     | `validate-audit-handoff` exit 0 · A7/A9 更新 loop_manifest |
 
-**v4.1 不变：** loop 管 **路由/索引/AC 机械关账**；Execute **不写** execute-evidence txt / skill-reads jsonl。
+**v4.2 不变：** loop 管路由/索引/AC 机械关账；Execute **不写** execute-evidence txt / skill-reads jsonl。
 
 ---
 
@@ -114,7 +114,7 @@
 | 场景              | 命令                                                              |
 | ----------------- | ----------------------------------------------------------------- |
 | Plan 冻结         | `python .trellis/scripts/task.py validate-plan-freeze <task-dir>` |
-| Execute handoff   | `validate-execute-handoff`（v4.1：代码/测试 + `[x]`）             |
+| Execute handoff   | `validate-execute-handoff`（v4.2/v4.1：代码/测试 + `[x]`）        |
 | Audit A9 handoff  | `validate-audit-handoff`（A9 建账：ledger **待修复/阶段外置**）   |
 | Repair 关账       | `validate-repair-close`（**已修复/阶段外置**；无待修复）          |
 | 刷新 context_pack | `uv run python scripts/context_router.py --task <task-dir>`       |
@@ -122,7 +122,8 @@
 
 ## 读本文件之后
 
-- **Plan** → `trellis-plan` + `plan-skill-paths.yaml`
+- **Plan** → `trellis-plan` + `plan-skill-paths.yaml`（v4.2 默认）
 - **Execute 必做** → `trellis-execute/reference.md` + `principles.md` + `execute-skill-paths.yaml`
 - **Execute 条件** → 本文件 **§Execute — 条件 skill**
-- **Audit** → `agents/audit-boot-v4.1.md` §A9 + `audit-skill-paths.yaml` + `validate-audit-handoff`
+- **Audit v4.2** → `agents/audit-boot-v4.2.md` §A9 + `audit-skill-paths.yaml` + `validate-audit-handoff`
+- **Audit v4.1 legacy** → `agents/audit-boot-v4.1.md`

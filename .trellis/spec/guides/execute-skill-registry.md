@@ -1,43 +1,36 @@
-# Execute 阶段 Skill 候选词典（v4.1）
+# Execute 阶段 Skill 候选词典（v4.2 默认 · v4.1 legacy）
 
 > **读者：Plan agent**（冻结 Execute Skill 栈时查阅）  
-> **Execute agent 不读本文** — 只认 **`execute-skill-paths.yaml`** + `trellis-execute/SKILL.md`  
-> **缺口审计** — Audit only：`agents/audit-coverage-model.md`
+> **Execute agent 不读本文** — 只认 **`execute-skill-paths.yaml`** + `trellis-execute/SKILL.md`
 
----
+## 0. 定位（v4.2）
 
-## 0. 定位（v4.1）
+| 层级                           | 内容                                                |
+| ------------------------------ | --------------------------------------------------- |
+| **本文**                       | Skill **候选词典**                                  |
+| **`trellis-execute/SKILL.md`** | Boot 读 `EXECUTION_PLAN`（v4.2）或 ENTRY 包（v4.1） |
+| **`EXECUTION_INDEX.md` §1/§2** | 步骤 · AC · Tier                                    |
 
-| 层级                                 | 内容                                                |
-| ------------------------------------ | --------------------------------------------------- |
-| **本文**                             | Skill **候选词典**                                  |
-| **`trellis-execute/SKILL.md`**       | Boot 读包 · slice 流程 · `/test-driven-development` |
-| **`reference.md` + `principles.md`** | **必做**相位 · TDD 分轨 · karpathy/testing          |
-| **`agent-toolchain.md` §Execute**    | **条件** skill 触发 SSOT                            |
-| **`project-global.mdc`**             | ponytail · 禁止捷径 · 无遗留                        |
-| **`execute-skill-paths.yaml`**       | Boot/RED/GREEN/SLICE 必读 skill 路径                |
-| **`EXECUTION_INDEX.md` §1/§2**       | 步骤 · AC · Tier                                    |
-
-**Execute 禁止：** 按本文自行 `@` skill。未在 yaml 列出 → 不得使用。
-
----
-
-## 1. v4.1 典型必做栈
+## 1. v4.2 典型必做栈
 
 ```text
-trellis-execute（Boot 读 ENTRY + research + 路由表）
-/test-driven-development（每 slice RED/GREEN · 系统化 TDD SSOT）
+trellis-execute（Boot 读 EXECUTION_PLAN + implement.jsonl + INDEX）
+/test-driven-development（每 slice RED/GREEN）
 incremental-implementation（每 slice SLICE）
 karpathy-guidelines · testing-guidelines
-reference.md + principles.md（必做相位 · 规范）
-agent-toolchain.md §Execute（条件 skill）
+reference.md + principles.md + agent-toolchain.md §Execute（条件 skill）
 ```
 
-**不在 Execute 路径：** trellis-check · ponytail-review · verification-before-completion · **audit-coverage-model** → **Audit**。
+## 2. v4.1 legacy 栈（归档/在途只读）
+
+```text
+trellis-execute（Boot 读 ENTRY + research + EXTERNAL §A + 路由表）
+…（同上 TDD 栈）
+```
 
 ---
 
-## 2. 条件 skill（均未删除 · 见 agent-toolchain.md §Execute）
+## 3. 条件 skill（见 agent-toolchain.md §Execute）
 
 | Skill                               | 绑定      | Plan 冻结建议         |
 | ----------------------------------- | --------- | --------------------- |
@@ -53,7 +46,7 @@ agent-toolchain.md §Execute（条件 skill）
 
 ---
 
-## 3. 候选 Skill 词典
+## 4. 候选 Skill 词典
 
 | Skill                                      | 典型绑定                                      | Plan 建议                   |
 | ------------------------------------------ | --------------------------------------------- | --------------------------- |

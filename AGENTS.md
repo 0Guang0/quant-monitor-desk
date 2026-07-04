@@ -24,39 +24,39 @@ If you're using Codex or another agent-capable tool, additional project-scoped h
 
 Managed by Trellis. Edits outside this block are preserved; edits inside may be overwritten by a future `trellis update`.
 
-## Plan gate (complex tasks · v4.1 only)
+## Plan gate (complex tasks · v4.2 default)
 
 When authoring or freezing a complex task plan (`status=planning`):
 
 1. **MUST Read first:** `agent-toolchain.md` + `.cursor/skills/trellis-plan/SKILL.md` — complete **Phase P0 Boot** (including **P0o** `docs/implementation_tasks/`).
-2. Follow **Phases 1a→5e** in `complex-task-planning-protocol.md` §4.
-3. Set `meta.plan_protocol_version: "4.1"` · `meta.execute_entry` → ENTRY.
-4. Before `task.py start`: `validate-plan-freeze` exit 0 · `plan.freeze.md` §3 全勾。
+2. Follow **Phases 1a→5e** in `complex-task-planning-protocol.md` §4; **user invokes skills** → merge into `EXECUTION_PLAN.md` (**no fixed repo templates**).
+3. Set `meta.plan_protocol_version: "4.2"` · `meta.execute_entry: "EXECUTION_PLAN.md"`.
+4. Before `task.py start`: `validate-plan-freeze` exit 0 · `plan.freeze.md` §3.0v4.2 全勾。
 
-**Legacy v3/v4.0** — 只读 `templates/plan.freeze.legacy-v3-v40.md` · `tasks/archive/`；**不得**新建活跃 MASTER。
+**Legacy v4.1** — `00-EXECUTION-ENTRY` bundle · `agents/audit-boot-v4.1.md` · 在途/归档只读。  
+**Legacy v3/v4.0** — `templates/plan.freeze.legacy-v3-v40.md` · `tasks/archive/`；**不得**新建活跃 MASTER。
 
-## Execute gate (complex tasks · v4.1)
+## Execute gate (complex tasks · v4.2 default)
 
 When the active task status is `in_progress`:
 
 1. **MUST Read first:** `agent-toolchain.md` + `.cursor/skills/trellis-execute/SKILL.md` + **`reference.md`** + `principles.md` + **`project-global.mdc`** — Phase 0 Boot.
-2. **读清 Execution Bundle：** ENTRY（路由地图）+ §5.1 全部 `research/*` + 路由表（`EXTERNAL-INDEX.md` §A + `implement.jsonl` 每一行）+ 当前切片 §。
-3. **直接执行：** INDEX §1 逐步 · **必做** Read `/test-driven-development`（见 `reference.md`）→ 代码/测试 → `[x]`；**条件 skill** 见 `agent-toolchain.md` §Execute（总表 + 细则）；**不**写 handoff 长文、txt、jsonl。
-4. **收尾：** 对抗性自检（发现缺口先修，不落盘表）→ `validate-execute-handoff` → 交 Audit（勿 `finish-work` 直到 Audit PASS）。
+2. **v4.2：** Read `EXECUTION_PLAN.md` + `EXECUTION_INDEX.md` + `implement.jsonl` **每一行** + INDEX §1 当前 Step。
+3. **直接执行：** INDEX §1 逐步 · **必做** Read `/test-driven-development` → 代码/测试 → `[x]`；**不写** handoff 长文、txt、jsonl。
+4. **收尾：** 对抗性自检 → `validate-execute-handoff` → 交 Audit（勿 `finish-work` 直到 Audit PASS）。
 
 **Legacy v3** — `MASTER.plan.md` only · 见上 Plan gate legacy 说明。
 
-## Audit gate (complex tasks with `AUDIT.plan.md` · v4.1)
+## Audit gate (complex tasks with `AUDIT.plan.md` · v4.2 default)
 
-1. **MUST Read first:** `agent-toolchain.md` + `agents/audit-boot-v4.1.md` + `agents/audit-coverage-model.md` + `.trellis/spec/guides/audit-skill-paths.yaml` + 任务 `AUDIT.plan.md` + `audit.jsonl` + ENTRY + §5.1 全部 `research/*` + INDEX §3/§5 相关行。
+1. **MUST Read first:** `agent-toolchain.md` + **`agents/audit-boot-v4.2.md`**（v4.1 任务改读 `audit-boot-v4.1.md`）+ `agents/audit-coverage-model.md` + `audit-skill-paths.yaml` + 任务 `AUDIT.plan.md` + `audit.jsonl` + **`EXECUTION_PLAN.md`** + INDEX §3/§5 相关行。
 2. **文档仅建上下文**；验证 **只信代码 + 跑测 + 独立复验**，不信任何文档自述。
-3. 确认 `meta.plan_protocol_version: "4.1"`；7.pre → `gitnexus-audit-summary.md` 后再派发 A1–A8。
-4. 按 `audit-skill-paths.yaml` 派发 A1–A8；各维读 `agents/` 对应模板 + `agents/audit-finding-schema.md`.
-5. 产出 `audit.report.md` + 各维 `research/audit-a{n}-report.md`；PASS 前勿 `finish-work`。
+3. 确认 `meta.plan_protocol_version`；7.pre → `gitnexus-audit-summary.md` 后再派发 A1–A8。
+4. 按 `audit-skill-paths.yaml` 派发 A1–A8；产出 `audit.report.md` + 各维 `research/audit-a{n}-report.md`；PASS 前勿 `finish-work`。
 
-## Repair gate (Audit FAIL · v4.1)
+## Repair gate (Audit FAIL · v4.2 default)
 
-1. **MUST Read first:** `agents/repair-boot-v4.1.md` + `REPAIR.plan.md` + `research/audit-repair-ledger.md`.
+1. **MUST Read first:** `agents/repair-boot-v4.2.md`（v4.1 任务用 `repair-boot-v4.1.md`）+ `REPAIR.plan.md` + `research/audit-repair-ledger.md`.
 2. 修根因；ledger：**A9** {待修复, 阶段外置} → **关账** {已修复, 阶段外置}；**阶段外置** 须登记 `docs/quality/待修复清单.md` + `PROJECT_IMPLEMENTATION_ROADMAP.md`。
 3. 收尾复验：**INDEX §2.1** + `uv run pytest -q` exit 0 → 更新 audit.report §5。
 
@@ -65,8 +65,9 @@ When the active task status is `in_progress`:
 Complex tasks (`meta.task_track: "complex"`, or v4 `EXECUTION_INDEX.md`+`frozen/`) use machine-readable routing — **do not ask the user for docs/specs paths**.
 
 1. Plan freeze: `validate-plan-freeze` auto-runs `context_router` if `context_pack.json` missing
-2. Execute (v4.1): Boot 读 ENTRY + research + 路由表（§A + `implement.jsonl` 每行）→ `/test-driven-development` per slice → 代码/测试即证据；**不写** txt/jsonl
-3. Handoff gates: `validate-execute-handoff`（v4.1：`[x]` + complex 时 `context_pack.json` · `loop_manifest.json` · `evidence_index.json` · `check_task_evidence`；legacy：仍验 txt）
+2. Execute (v4.2): Boot 读 `EXECUTION_PLAN.md` + `implement.jsonl` 每行 + INDEX §1 → `/test-driven-development` per slice → 代码/测试即证据；**不写** txt/jsonl  
+   Execute (v4.1 legacy): Boot 读 ENTRY + research + EXTERNAL §A + `implement.jsonl`
+3. Handoff gates: `validate-execute-handoff`（v4.2/v4.1：`[x]` + complex 时 loop 四件套；legacy v4/v3 仍验 txt）
 4. Repo CI: `check_test_catalog.py`, `check_verification_matrix.py`, `check_docs_specs_indexed.py`, `generate_project_map.py --check`, `check_active_master_tasks.py`
 5. `debt-lite` / simple tasks: set `meta.task_track: "debt-lite"` or `"simple"` — loop not required
 6. **New test module:** `uv run python scripts/loop_maintain.py --fix` (or `check_test_catalog.py --write-defaults`)

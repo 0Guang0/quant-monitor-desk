@@ -61,6 +61,7 @@ def _load_plan_paths(repo_root: Path) -> dict:
         or raw.get("freeze_required_skills_v40_legacy")
         or [],
         "freeze_required_skills_v41": raw.get("freeze_required_skills_v41") or [],
+        "freeze_required_skills_v42": raw.get("freeze_required_skills_v42") or [],
         "freeze_phase3_one_of": raw.get("freeze_phase3_one_of") or [],
         "boot_marker": raw.get("boot_marker") or _BOOT_MARKER,
     }
@@ -177,7 +178,13 @@ def plan_phase_help(repo_root: Path | None = None) -> str:
     return "Plan phase id: " + ", ".join(_ordered_plan_phases(phases))
 
 
-def validate_plan_phase(task_dir: Path, phase: str, *, repo_root: Path | None = None) -> list[str]:
+def validate_plan_phase(
+    task_dir: Path,
+    phase: str,
+    *,
+    repo_root: Path | None = None,
+    allow_archived: bool = False,
+) -> list[str]:
     """Validate one Plan phase checkpoint."""
     from .paths import get_repo_root
     from .plan_protocol import is_plan_protocol_v4
@@ -186,12 +193,25 @@ def validate_plan_phase(task_dir: Path, phase: str, *, repo_root: Path | None = 
     if repo_root is None:
         repo_root = get_repo_root()
 
-    if is_archived_task(task_dir):
+    if is_archived_task(task_dir) and not allow_archived:
         return []
     if is_active_legacy_v3(task_dir):
         return [legacy_freeze_error()]
     if phase == "5e" and not is_plan_protocol_v4(task_dir):
-        return ["plan phase 5e requires protocol v4/v4.1 (EXECUTION_INDEX.md + frozen/)"]
+        from .plan_protocol import is_execution_bundle_v42
+
+        if is_execution_bundle_v42(task_dir):
+            if not (task_dir / "EXECUTION_PLAN.md").is_file():
+                return ["plan phase 5e requires EXECUTION_PLAN.md (v4.2)"]
+            if not (task_dir / "EXECUTION_INDEX.md").is_file():
+                return ["plan phase 5e requires EXECUTION_INDEX.md (v4.2)"]
+        else:
+            return ["plan phase 5e requires protocol v4/v4.1/v4.2 (EXECUTION_INDEX.md + frozen/)"]
+
+    from .plan_protocol import is_execution_bundle_v42
+
+    if is_execution_bundle_v42(task_dir) and phase != "5e":
+        return []
 
     errors: list[str] = []
     cfg = _load_plan_paths(repo_root)
@@ -205,15 +225,27 @@ def validate_plan_phase(task_dir: Path, phase: str, *, repo_root: Path | None = 
     reads = _load_skill_reads(task_dir)
     read_skills = _skills_from_reads(reads)
 
-    for skill in phase_cfg.get("skills", []):
-        if skill not in read_skills:
-            errors.append(f"plan-skill-reads.jsonl missing skill for phase {phase}: {skill}")
+    if not is_execution_bundle_v42(task_dir):
+        for skill in phase_cfg.get("skills", []):
+            if skill not in read_skills:
+                errors.append(f"plan-skill-reads.jsonl missing skill for phase {phase}: {skill}")
 
-    skills_any = phase_cfg.get("skills_any", [])
-    if skills_any and not read_skills.intersection(set(skills_any)):
-        errors.append(f"plan-skill-reads.jsonl missing one of {skills_any} for phase {phase}")
+        skills_any = phase_cfg.get("skills_any", [])
+        if skills_any and not read_skills.intersection(set(skills_any)):
+            errors.append(f"plan-skill-reads.jsonl missing one of {skills_any} for phase {phase}")
 
-    for rel in phase_cfg.get("artifacts", []):
+    artifacts_to_check = phase_cfg.get("artifacts", [])
+    if phase == "5e":
+        from .plan_protocol import is_execution_bundle_v41, is_execution_bundle_v42
+
+        if is_execution_bundle_v42(task_dir):
+            artifacts_to_check = phase_cfg.get("artifacts", [])
+        elif is_execution_bundle_v41(task_dir):
+            artifacts_to_check = phase_cfg.get("legacy_v41_artifacts", [])
+        else:
+            artifacts_to_check = phase_cfg.get("artifacts", [])
+
+    for rel in artifacts_to_check:
         if not (task_dir / rel).is_file():
             errors.append(f"Phase {phase} missing artifact: {rel}")
 
@@ -240,13 +272,16 @@ def validate_plan_phase(task_dir: Path, phase: str, *, repo_root: Path | None = 
         validate_manifest_phase_5c(task_dir, repo_root, errors)
 
     if phase == "5e":
-        from .plan_protocol import is_execution_bundle_v41
+        from .plan_protocol import is_execution_bundle_v41, is_execution_bundle_v42
 
-        if is_execution_bundle_v41(task_dir):
+        if is_execution_bundle_v42(task_dir):
+            _validate_execution_bundle_v42(task_dir, errors, repo_root=repo_root)
+        elif is_execution_bundle_v41(task_dir):
             _validate_execution_bundle_v41(task_dir, errors, repo_root=repo_root)
-        _validate_plan_consolidation_v4(task_dir, errors)
+        if not is_execution_bundle_v42(task_dir):
+            _validate_plan_consolidation_v4(task_dir, errors)
         _validate_prd_thin_index_v4(task_dir, errors)
-        if not is_execution_bundle_v41(task_dir):
+        if not is_execution_bundle_v41(task_dir) and not is_execution_bundle_v42(task_dir):
             _validate_execution_index_section4_v4(task_dir, errors)
 
     return errors
@@ -277,6 +312,7 @@ def _consolidation_table_rows(sec4: str) -> list[str]:
     return rows
 
 
+_V42_PLAN_ROOT = "EXECUTION_PLAN.md"
 _V41_ENTRY_REL = "research/00-EXECUTION-ENTRY.md"
 _V41_EXTERNAL_REL = "research/EXTERNAL-INDEX.md"
 _V41_PLAN_ROOT = "EXECUTION_PLAN.md"
@@ -305,8 +341,11 @@ _V41_PHASE5E_SKILL_GATE = frozenset(
 _OPEN_QUESTION_UNCHECKED = re.compile(r"^\s*-\s*\[\s\]", re.MULTILINE)
 
 
-def _freeze_required_skills(cfg: dict, *, v41: bool) -> list[str]:
-    key = "freeze_required_skills_v41" if v41 else "freeze_required_skills"
+def _freeze_required_skills(cfg: dict, *, protocol: str) -> list[str]:
+    key = {
+        "4.2": "freeze_required_skills_v42",
+        "4.1": "freeze_required_skills_v41",
+    }.get(protocol, "freeze_required_skills")
     return list(dict.fromkeys(cfg.get(key) or []))
 
 
@@ -404,6 +443,71 @@ def _validate_execution_bundle_v41(
             )
 
 
+def _validate_execution_bundle_v42(
+    task_dir: Path, errors: list[str], *, repo_root: Path | None = None
+) -> None:
+    """v4.2: full EXECUTION_PLAN; routing lives in EXECUTION_INDEX.md §3."""
+    from .paths import get_repo_root
+    from .plan_protocol import execution_entry_rel, execution_index_rel, load_task_json
+
+    if repo_root is None:
+        repo_root = get_repo_root()
+
+    meta = load_task_json(task_dir).get("meta") or {}
+    if str(meta.get("plan_protocol_version", "")).strip() != "4.2":
+        errors.append(
+            "task.json meta.plan_protocol_version must be '4.2' (explicit; heuristic does not gate)"
+        )
+    entry_meta = str(meta.get("execute_entry", "")).strip() or _V42_PLAN_ROOT
+    if entry_meta != _V42_PLAN_ROOT:
+        errors.append(
+            f"task.json meta.execute_entry must be {_V42_PLAN_ROOT!r} (got {entry_meta!r})"
+        )
+
+    plan_path = task_dir / _V42_PLAN_ROOT
+    if not plan_path.is_file():
+        errors.append(f"Missing {_V42_PLAN_ROOT} (v4.2 execute plan SSOT)")
+    else:
+        plan_text = plan_path.read_text(encoding="utf-8")
+        if len(plan_text.strip()) < 200:
+            errors.append(
+                f"{_V42_PLAN_ROOT} too short for v4.2 (must be substantive plan)"
+            )
+        if "仅 GAP + 指向 ENTRY" in plan_text:
+            errors.append(
+                f"{_V42_PLAN_ROOT} must be v4.2 full plan, not v4.1 thin pointer"
+            )
+
+    index_path = task_dir / "EXECUTION_INDEX.md"
+    if not index_path.is_file():
+        errors.append("Missing EXECUTION_INDEX.md (v4.2 machine index)")
+    else:
+        from .execution_index import parse_manifest_rows
+
+        if not parse_manifest_rows(index_path.read_text(encoding="utf-8")):
+            errors.append(
+                "EXECUTION_INDEX.md §3 manifest table empty (v4.2 Phase 5e routing)"
+            )
+
+    audit_path = task_dir / "AUDIT.plan.md"
+    if not audit_path.is_file():
+        errors.append("Missing AUDIT.plan.md (v4.2 audit matrix)")
+
+    entry_rel = execution_entry_rel(task_dir, repo_root)
+    index_rel = execution_index_rel(task_dir, repo_root)
+    impl = task_dir / "implement.jsonl"
+    if impl.is_file() and entry_rel:
+        paths = _paths_from_jsonl(impl)
+        if len(paths) >= 1 and entry_rel not in paths[0].replace("\\", "/"):
+            errors.append(
+                f"implement.jsonl slot 1 must be {entry_rel!r} (v4.2 Execute plan)"
+            )
+        if index_rel and len(paths) >= 2 and index_rel not in paths[1].replace("\\", "/"):
+            errors.append(
+                f"implement.jsonl slot 2 must be {index_rel!r} (v4.2 manifest index)"
+            )
+
+
 def _validate_ambiguity_resolution_v41(task_dir: Path, errors: list[str]) -> None:
     """Open Questions with unchecked items require a clarification artifact or ADR."""
     research = task_dir / "research"
@@ -426,8 +530,10 @@ def _validate_ambiguity_resolution_v41(task_dir: Path, errors: list[str]) -> Non
 
 
 def _validate_plan_consolidation_v4(task_dir: Path, errors: list[str]) -> None:
-    from .plan_protocol import is_execution_bundle_v41
+    from .plan_protocol import is_execution_bundle_v41, is_execution_bundle_v42
 
+    if is_execution_bundle_v42(task_dir):
+        return
     v41 = is_execution_bundle_v41(task_dir)
     consolidation = task_dir / "research" / "plan-consolidation.md"
     if not consolidation.is_file():
@@ -555,6 +661,7 @@ def validate_plan_freeze_v4(task_dir: Path, repo_root: Path) -> list[str]:
     from .plan_protocol import (
         execute_ssot_rel,
         is_execution_bundle_v41,
+        is_execution_bundle_v42,
         is_plan_protocol_v4,
         plan_protocol_version,
     )
@@ -563,44 +670,51 @@ def validate_plan_freeze_v4(task_dir: Path, repo_root: Path) -> list[str]:
     if not is_plan_protocol_v4(task_dir):
         return ["internal: validate_plan_freeze_v4 called for non-v4 task"]
 
+    protocol = plan_protocol_version(task_dir)
+    v42 = is_execution_bundle_v42(task_dir)
     v41 = is_execution_bundle_v41(task_dir)
 
     cfg = _load_plan_paths(repo_root)
     boot_marker = cfg.get("boot_marker", _BOOT_MARKER)
 
-    boot = task_dir / "research" / "plan-boot.md"
-    if not boot.is_file():
-        errors.append("Missing research/plan-boot.md (Plan Phase P0 boot)")
-    elif boot_marker not in boot.read_text(encoding="utf-8"):
-        errors.append(f"plan-boot.md must contain {boot_marker!r}")
+    if not v42:
+        boot = task_dir / "research" / "plan-boot.md"
+        if not boot.is_file():
+            errors.append("Missing research/plan-boot.md (Plan Phase P0 boot)")
+        elif boot_marker not in boot.read_text(encoding="utf-8"):
+            errors.append(f"plan-boot.md must contain {boot_marker!r}")
 
-    reads_path = task_dir / "research" / "plan-skill-reads.jsonl"
-    if not reads_path.is_file():
-        errors.append("Missing research/plan-skill-reads.jsonl")
-    else:
-        reads = _load_skill_reads(task_dir)
-        read_skills = _skills_from_reads(reads)
-        if v41:
-            required = _freeze_required_skills(cfg, v41=True)
+        reads_path = task_dir / "research" / "plan-skill-reads.jsonl"
+        if not reads_path.is_file():
+            errors.append("Missing research/plan-skill-reads.jsonl")
         else:
-            required = _freeze_required_skills(cfg, v41=False)
-            one_of = cfg.get("freeze_phase3_one_of", [])
-            if one_of and not read_skills.intersection(set(one_of)):
-                errors.append(
-                    f"plan-skill-reads.jsonl missing Phase 3 skill (one of {one_of})"
-                )
-        for skill in required:
-            if skill not in read_skills:
-                errors.append(f"plan-skill-reads.jsonl missing required skill: {skill}")
+            reads = _load_skill_reads(task_dir)
+            read_skills = _skills_from_reads(reads)
+            if v41:
+                required = _freeze_required_skills(cfg, protocol="4.1")
+            else:
+                required = _freeze_required_skills(cfg, protocol="4")
+                one_of = cfg.get("freeze_phase3_one_of", [])
+                if one_of and not read_skills.intersection(set(one_of)):
+                    errors.append(
+                        f"plan-skill-reads.jsonl missing Phase 3 skill (one of {one_of})"
+                    )
+            for skill in required:
+                if skill not in read_skills:
+                    errors.append(f"plan-skill-reads.jsonl missing required skill: {skill}")
 
     validate_execution_index_structure(task_dir, errors)
-    validate_frozen_task_card(task_dir, errors)
+    if not v42:
+        validate_frozen_task_card(task_dir, errors)
 
-    if v41:
+    if v42:
+        _validate_execution_bundle_v42(task_dir, errors, repo_root=repo_root)
+    elif v41:
         _validate_execution_bundle_v41(task_dir, errors, repo_root=repo_root)
-    _validate_plan_consolidation_v4(task_dir, errors)
-    _validate_prd_thin_index_v4(task_dir, errors)
-    if not v41:
+    if not v42:
+        _validate_plan_consolidation_v4(task_dir, errors)
+        _validate_prd_thin_index_v4(task_dir, errors)
+    if not v41 and not v42:
         _validate_execution_index_section4_v4(task_dir, errors)
 
     audit = task_dir / "AUDIT.plan.md"
@@ -613,27 +727,29 @@ def validate_plan_freeze_v4(task_dir: Path, repo_root: Path) -> list[str]:
         trace_ok = (
             "EXECUTION_INDEX" in audit_text
             or "execution_index" in audit_text.lower()
+            or (v42 and "EXECUTION_PLAN" in audit_text)
             or (v41 and "00-EXECUTION-ENTRY" in audit_text)
         )
         if not trace_ok:
             errors.append(
                 "AUDIT.plan.md must reference EXECUTION_INDEX.md or "
-                "00-EXECUTION-ENTRY.md (v4 trace)"
+                "EXECUTION_PLAN.md (v4.2) / 00-EXECUTION-ENTRY.md (v4.1 trace)"
             )
 
     freeze = task_dir / "plan.freeze.md"
-    if not freeze.is_file():
-        errors.append("plan.freeze.md missing (required for v4 freeze)")
-    else:
-        freeze_text = freeze.read_text(encoding="utf-8")
-        if v41:
-            if "3.0v4.1" not in freeze_text and "协议 v4.1" not in freeze_text:
-                errors.append("plan.freeze.md missing §3.0v4.1 v4.1 freeze checklist")
-        elif "3.0v4" not in freeze_text and "协议 v4" not in freeze_text:
-            errors.append("plan.freeze.md missing §3.0v4 v4 freeze checklist")
-        sec3 = _extract_section(freeze_text, "3.")
-        if sec3 and re.search(r"- \[ \]", sec3):
-            errors.append("plan.freeze.md §3 has unchecked items")
+    if not v42:
+        if not freeze.is_file():
+            errors.append("plan.freeze.md missing (required for v4 freeze)")
+        else:
+            freeze_text = freeze.read_text(encoding="utf-8")
+            if v41:
+                if "3.0v4.1" not in freeze_text and "协议 v4.1" not in freeze_text:
+                    errors.append("plan.freeze.md missing §3.0v4.1 v4.1 freeze checklist")
+            elif "3.0v4" not in freeze_text and "协议 v4" not in freeze_text:
+                errors.append("plan.freeze.md missing §3.0v4 v4 freeze checklist")
+            sec3 = _extract_section(freeze_text, "3.")
+            if sec3 and re.search(r"- \[ \]", sec3):
+                errors.append("plan.freeze.md §3 has unchecked items")
 
     gen_errors = generate_manifests(task_dir, repo_root)
     errors.extend(gen_errors)
@@ -642,10 +758,11 @@ def validate_plan_freeze_v4(task_dir: Path, repo_root: Path) -> list[str]:
     impl_jsonl = task_dir / "implement.jsonl"
     if impl_jsonl.is_file():
         first = _first_jsonl_file(impl_jsonl)
-        frozen_rel = execute_ssot_rel(task_dir, repo_root)
-        if frozen_rel and first and frozen_rel not in first and "frozen/" not in (first or ""):
+        ssot_rel = execute_ssot_rel(task_dir, repo_root)
+        if ssot_rel and first and ssot_rel not in first.replace("\\", "/"):
+            label = "EXECUTION_PLAN.md" if v42 else "frozen task card"
             errors.append(
-                f"implement.jsonl first entry must be frozen task card (got {first!r})"
+                f"implement.jsonl first entry must be {label} (got {first!r})"
             )
         paths = _paths_from_jsonl(impl_jsonl)
         for rel in paths:
@@ -658,15 +775,17 @@ def validate_plan_freeze_v4(task_dir: Path, repo_root: Path) -> list[str]:
         if first and "AUDIT.plan.md" not in first:
             errors.append(f"audit.jsonl first entry must be AUDIT.plan.md (got {first!r})")
 
-    _validate_plan_freeze_template(task_dir, errors)
+    if not v42:
+        _validate_plan_freeze_template(task_dir, errors)
 
     from .manifest_protocol import validate_manifest_freeze_v4
 
-    if _manifest_protocol_enabled_v4(task_dir):
+    if _manifest_protocol_enabled_v4(task_dir) and not v42:
         validate_manifest_freeze_v4(task_dir, repo_root, errors)
 
     errors.extend(_deprecated_loop_meta_errors(task_dir, repo_root))
-    _validate_loop_engineering_freeze_v4(task_dir, repo_root, errors)
+    if not v42:
+        _validate_loop_engineering_freeze_v4(task_dir, repo_root, errors)
     _validate_repo_loop_gates(repo_root, errors)
     return errors
 

@@ -1,4 +1,4 @@
-"""Plan protocol v4/v4.1 helpers; v3 is archive-only legacy."""
+"""Plan protocol v4/v4.1/v4.2 helpers; v3 is archive-only legacy."""
 
 from __future__ import annotations
 
@@ -17,37 +17,58 @@ def load_task_json(task_dir: Path) -> dict:
 
 
 def plan_protocol_version(task_dir: Path) -> str:
-    """Return '4.1', '4' (frozen card + index), or '3' (legacy / simple default)."""
+    """Return '4.2', '4.1', '4' (frozen card + index), or '3' (legacy / simple default)."""
     meta = load_task_json(task_dir).get("meta") or {}
     explicit = str(meta.get("plan_protocol_version", "")).strip()
     if explicit == "3":
         return "3"
+    if explicit == "4.2":
+        return "4.2"
     if explicit == "4.1":
         return "4.1"
     if explicit == "4":
         return "4"
-    if (task_dir / "EXECUTION_INDEX.md").is_file() and any(
-        (task_dir / "frozen").glob("*.md")
-    ):
-        entry = task_dir / "research" / "00-EXECUTION-ENTRY.md"
-        if entry.is_file():
-            return "4.1"
-        return "4"
+    if (task_dir / "EXECUTION_INDEX.md").is_file():
+        if (task_dir / "EXECUTION_PLAN.md").is_file():
+            plan = (task_dir / "EXECUTION_PLAN.md").read_text(encoding="utf-8")
+            # ponytail: heuristic fallback only; gate uses explicit meta via is_execution_bundle_v42
+            if "仅 GAP + 指向 ENTRY" not in plan and len(plan) > 200:
+                return "4.2"
+        if any((task_dir / "frozen").glob("*.md")):
+            entry = task_dir / "research" / "00-EXECUTION-ENTRY.md"
+            if entry.is_file():
+                return "4.1"
+            return "4"
     return "3"
 
 
 def is_plan_protocol_v4(task_dir: Path) -> bool:
-    return plan_protocol_version(task_dir) in ("4", "4.1")
+    return plan_protocol_version(task_dir) in ("4", "4.1", "4.2")
+
+
+def is_execution_bundle_v42(task_dir: Path) -> bool:
+    """Gate path: explicit meta only (no heuristic)."""
+    meta = load_task_json(task_dir).get("meta") or {}
+    return str(meta.get("plan_protocol_version", "")).strip() == "4.2"
 
 
 def is_execution_bundle_v41(task_dir: Path) -> bool:
-    return plan_protocol_version(task_dir) == "4.1"
+    meta = load_task_json(task_dir).get("meta") or {}
+    explicit = str(meta.get("plan_protocol_version", "")).strip()
+    if explicit == "4.1":
+        return True
+    if explicit in ("4.2", "4"):
+        return False
+    return (task_dir / "research" / "00-EXECUTION-ENTRY.md").is_file()
 
 
 def execution_entry_rel(task_dir: Path, repo_root: Path) -> str | None:
-    """v4.1 Execute bundle entry path (repo-relative)."""
+    """v4.2/v4.1 Execute entry path (repo-relative)."""
     meta = load_task_json(task_dir).get("meta") or {}
-    rel = str(meta.get("execute_entry", "")).strip() or "research/00-EXECUTION-ENTRY.md"
+    if is_execution_bundle_v42(task_dir):
+        rel = str(meta.get("execute_entry", "")).strip() or "EXECUTION_PLAN.md"
+    else:
+        rel = str(meta.get("execute_entry", "")).strip() or "research/00-EXECUTION-ENTRY.md"
     path = task_dir / rel
     if not path.is_file():
         return None
@@ -87,7 +108,12 @@ def execution_index_path(task_dir: Path) -> Path:
 
 
 def execute_ssot_path(task_dir: Path) -> Path | None:
-    """Primary Execute human SSOT: frozen task card (v4/v4.1)."""
+    """Primary Execute human SSOT: EXECUTION_PLAN (v4.2) or frozen card (v4/v4.1)."""
+    if is_execution_bundle_v42(task_dir):
+        meta = load_task_json(task_dir).get("meta") or {}
+        rel = str(meta.get("execute_entry", "")).strip() or "EXECUTION_PLAN.md"
+        path = task_dir / rel.replace("\\", "/")
+        return path if path.is_file() else None
     if is_plan_protocol_v4(task_dir):
         return frozen_task_card_path(task_dir)
     return None

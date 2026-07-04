@@ -23,8 +23,8 @@ These guides help you **ask the right questions before coding**.
 | --------------------------------------------------------------------- | ---------------------------------------------------------------------- | --------------------------------- |
 | [Complex Task Planning Protocol](./complex-task-planning-protocol.md) | Plan 流程（Execute **6** / Audit **7** / Repair **8** / Finish **9**） | Plan 启动                         |
 | [**Audit Coverage Model**](../../agents/audit-coverage-model.md)      | 两条链·三类缺口（Audit SSOT）                                          | Phase 7                           |
-| [**Audit Boot v4.1**](../../agents/audit-boot-v4.1.md)                | Audit 读序 SSOT                                                        | Phase 7                           |
-| [**Repair Boot v4.1**](../../agents/repair-boot-v4.1.md)              | Repair 读序 SSOT                                                       | Phase 8                           |
+| [**Audit Boot v4.2**](../../agents/audit-boot-v4.2.md)                | Audit 读序 SSOT（v4.1 legacy：`audit-boot-v4.1.md`）                   | Phase 7                           |
+| [**Repair Boot v4.2**](../../agents/repair-boot-v4.2.md)              | Repair 读序 SSOT（v4.1 legacy：`repair-boot-v4.1.md`）                 | Phase 8                           |
 | [**AUDIT 模板**](./templates/AUDIT.plan.md)                           | **Audit** 任务可变项（Trace + §1 覆写）                                | Plan 冻结                         |
 | [audit.report 模板](./templates/audit.report.md)                      | Audit 产出 + §4.3 修复项                                               | Phase 7                           |
 | [Repair 模板](./templates/REPAIR.plan.md)                             | Audit 后修复                                                           | FAIL（findings 非空）             |
@@ -33,7 +33,7 @@ These guides help you **ask the right questions before coding**.
 | [plan.freeze 模板](./templates/plan.freeze.md)                        | Plan 冻结自检 + **§3.0 双契约 one-pager**                              | start 前                          |
 | [Execute Skill 词典](./execute-skill-registry.md)                     | Plan 冻结 Execute skill 栈（v4.1）                                     | Plan                              |
 | [**Audit Skill 路径**](./audit-skill-paths.yaml)                      | A1–A8 派发 + skill 冻结                                                | Audit                             |
-| [**Audit Skill 词典**](./audit-skill-registry.md)                     | 填 AUDIT **§1** 任务行 + Boot v4.1                                     | Plan                              |
+| [**Audit Skill 词典**](./audit-skill-registry.md)                     | 填 AUDIT **§1** 任务行 + Boot v4.2                                     | Plan                              |
 | [Code Reuse Thinking Guide](./code-reuse-thinking-guide.md)           | Identify patterns and reduce duplication                               | When you notice repeated patterns |
 | [Cross-Layer Thinking Guide](./cross-layer-thinking-guide.md)         | Think through data flow across layers                                  | Features spanning multiple layers |
 

@@ -1,8 +1,8 @@
 # Plan Skill 路径 — Plan agent Read 必须使用本表（禁止读错同名 skill）
 # v4.1：Execution Bundle — 产出结构见 plan-skill-outputs.yaml（文件名不固定，结构跟 SKILL.md）
 
-version: "2"
-plan_protocol_default: "4.1"
+version: "2.1"
+plan_protocol_default: "4.2"
 
 skills:
   agent-toolchain:
@@ -45,6 +45,7 @@ skills:
     path: .agents/skills/spec-driven-development/SKILL.md
     phase: "2b"
     default_role: 必做
+    note: "v4.2：用户调用后按 Skill 写/改 EXECUTION_PLAN.md；禁止强制六段式模板"
 
   domain-modeling:
     path: .claude/skills/domain-modeling/SKILL.md
@@ -79,8 +80,8 @@ skills:
   to-issues:
     path: .claude/skills/to-issues/SKILL.md
     phase: "3.5"
-    default_role: 必做
-    outputs_yaml: plan-skill-outputs.yaml#to-issues
+    default_role: 条件
+    note: "v4.2：用户选用后竖切合入 EXECUTION_PLAN；v4.1 legacy：research/to-issues-slices.md"
 
   brainstorming:
     path: .claude/plugins/cache/claude-plugins-official/superpowers/5.1.0/skills/brainstorming/SKILL.md
@@ -180,7 +181,8 @@ phases:
 
   "3.5":
     skills: [to-issues]
-    note: "垂直切片 → research/to-issues-slices.md（结构跟 to-issues SKILL + Trellis 扩展）"
+    note: "v4.2：用户选用后竖切合入 EXECUTION_PLAN（无 to-issues-slices 文件要求）；v4.1 legacy：research/to-issues-slices.md"
+    legacy_v41_required: true
 
   "4":
     skills_any:
@@ -208,14 +210,19 @@ phases:
     note: "→ docs/decisions/ADR-NNN-*.md + ENTRY §4"
 
   "5e":
-    skills: [trellis-plan]
+    skills: []
     artifacts:
+      - EXECUTION_PLAN.md
+      - EXECUTION_INDEX.md
+      - AUDIT.plan.md
+    note: "v4.2 Slim Plan：仅三份 md；jsonl 由 generate-manifests 从 INDEX §3 生成"
+    legacy_v41_artifacts:
       - research/00-EXECUTION-ENTRY.md
       - research/EXTERNAL-INDEX.md
       - research/plan-consolidation.md
       - EXECUTION_PLAN.md
-    marker: "Phase 5e complete"
-    note: "打包 Execution Bundle；ENTRY §5.1/§5.2 机械自检"
+
+freeze_required_skills_v42: []
 
 freeze_required_skills_v41:
   - agent-toolchain

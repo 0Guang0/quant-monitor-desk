@@ -60,7 +60,7 @@
 
 ### 4.1 Findings 合并（→ `research/audit-repair-ledger.md`）
 
-从 A1–A8 **§计划内 + §计划外** 去重合并（A9 六步见 `agents/audit-boot-v4.1.md`）。Ledger 模板：`.trellis/spec/guides/templates/audit-repair-ledger.md`。
+从 A1–A8 **§计划内 + §计划外** 去重合并（A9 六步见 `agents/audit-boot-v4.2.md`；v4.1：`audit-boot-v4.1.md`）。Ledger 模板：`.trellis/spec/guides/templates/audit-repair-ledger.md`。
 
 | ID  | P   | 维度 | 标题 | 锚点 | 根因 | 修复方案 | 验证 |
 | --- | --- | ---- | ---- | ---- | ---- | -------- | ---- |

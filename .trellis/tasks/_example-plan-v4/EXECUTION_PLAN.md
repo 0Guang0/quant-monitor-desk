@@ -1,17 +1,20 @@
-# EXECUTION_PLAN — Plan v4.1 样板（薄）
+# EXECUTION_PLAN — （金样占位）
 
-> **Execute SSOT：** `research/00-EXECUTION-ENTRY.md`  
-> **协议：** `plan_protocol_version: "4.1"` · `plan-skill-outputs.yaml`
+> **协议：** `plan_protocol_version: "4.2"` · `execute_entry: "EXECUTION_PLAN.md"`  
+> **用途：** 仅示范任务根文件名与位置；**非**生产计划正文。真实 complex 任务须在 Plan 阶段替换本文件全文。
 
-## GAP
+## Objective
 
-| 项                               | 说明                                      |
-| -------------------------------- | ----------------------------------------- |
-| 本文件                           | 仅 GAP + 指针；规格在 `research/` 包      |
-| `frozen/` + `EXECUTION_INDEX.md` | 薄指针；不复制 `to-issues-slices.md` 全文 |
-| `implement.jsonl`                | `generate-manifests` 后 slot2 = ENTRY     |
+（占位）
 
-## 下一步
+## Acceptance
 
-1. Read `research/00-EXECUTION-ENTRY.md` §5.2
-2. 按 `to-issues-slices.md` §1 执行样板切片
+（占位）
+
+## Steps
+
+（占位）
+
+## Boundaries
+
+（占位）

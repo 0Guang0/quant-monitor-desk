@@ -1,7 +1,8 @@
 # 执行索引 — {{任务标题}}
 
-> **读者：Execute + Audit**（唯一人工索引）  
-> **冻结任务卡：** `frozen/{{NNN}}_*.md`（Execute/Audit 正文 SSOT）  
+> **读者：Execute + Audit**（机器索引 + 步骤/证据）  
+> **v4.2 计划正文：** `EXECUTION_PLAN.md`（人读 SSOT）  
+> **冻结任务卡：** `frozen/{{NNN}}_*.md`（薄指针 → `EXECUTION_PLAN.md`）  
 > **审计矩阵：** `AUDIT.plan.md`（§2 维度验证）  
 > **机器清单：** `implement.jsonl` / `audit.jsonl` / `check.jsonl` 由 `task.py generate-manifests` 从本文 §3 自动生成
 
@@ -26,17 +27,14 @@
 
 ---
 
-## 1. 步骤（Execute · v4.1）
+## 1. 步骤（Execute · v4.2）
 
-| Step | 任务卡锚点 | RED 命令（见切片/to-issues） | GREEN 命令  | 完成标记           |
-| ---- | ---------- | ---------------------------- | ----------- | ------------------ |
-| 9.0  | Boot       | `{{red}}`                    | `{{green}}` | frozen/INDEX `[x]` |
-| 9.1  | §9.1       | 见切片                       | 见切片      | `[x]` + 代码/测试  |
+| Step | 计划内锚点 | RED 命令  | GREEN 命令  | 完成标记           |
+| ---- | ---------- | --------- | ----------- | ------------------ |
+| 9.0  | Boot       | `{{red}}` | `{{green}}` | frozen/INDEX `[x]` |
+| 9.1  | §9.1       | 见切片    | 见切片      | `[x]` + 代码/测试  |
 
-> **v4.1 证据 = 代码 + 测试 + `uv run pytest -q`**；不列 `execute-evidence/*.txt`。  
-> RED/GREEN 测试体在 `tests/`；正式流程 Read **`/test-driven-development`**（必做 · `trellis-execute/reference.md`）。  
-> **Loop（`task_track: complex`）：** Plan freeze 产出 `context_pack.json` + `loop_manifest.json`；Execute handoff 须 `evidence_index.json` + `check_task_evidence` 绿（见 `AGENTS.md` §Loop engineering）。  
-> **Legacy v4.0：** 可保留 txt 证据列（见 `plan.freeze.legacy-v3-v40.md`）。
+> **v4.2 证据 = 代码 + 测试 + `uv run pytest -q`**；切片 AC 见 `EXECUTION_PLAN.md`。
 
 ---
 
@@ -77,19 +75,22 @@
 
 ---
 
-## 5. Audit 追溯集（v4.1 · Plan 填写）
+## 5. Audit 追溯集（v4.2 · Plan 填写）
 
-| 类别                 | 文件                                                         | 用途                                  |
-| -------------------- | ------------------------------------------------------------ | ------------------------------------- |
-| Execution Bundle     | `research/00-EXECUTION-ENTRY.md`                             | §1 AC · §2 约束 · §5.1 文件地图       |
-| 切片 AC              | `research/to-issues-slices.md`                               | AC · 建议测试 · v4.1 验收=代码/测试   |
-| 包外必读             | `research/EXTERNAL-INDEX.md`                                 | §A 活卡路径等                         |
-| 活任务卡（只读对照） | `{{source_card}}`                                            | Plan 来源；Audit 对照 frozen 是否漏项 |
-| frozen SSOT          | `frozen/{{NNN}}_*.md`                                        | Execute/Audit 正文锚点（薄指针）      |
-| unresolved           | `docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md` | A1/A8                                 |
-| round map            | `{{ROUND*_BATCH_IMPLEMENTATION_MAP.md}}`                     | batch scope                           |
-| integration-audit    | `research/integration-audit.md`                              | 包整合闭环                            |
-| omission-check       | `research/project-map-omission-check.md`                     | 地图倒查                              |
+| 类别        | 文件                                                         | 用途                  |
+| ----------- | ------------------------------------------------------------ | --------------------- |
+| 计划正文    | `EXECUTION_PLAN.md`                                          | AC · 约束 · 切片/步骤 |
+| manifest    | 本文 §3                                                      | 外部必读路由          |
+| 活任务卡    | `{{source_card}}`                                            | Plan 来源对照         |
+| frozen      | `frozen/{{NNN}}_*.md`                                        | 审计锚点（薄指针）    |
+| unresolved  | `docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md` | A1/A8                 |
+| integration | `research/integration-audit.md`                              | 若 INDEX §3 登记      |
+
+### v4.1 legacy（仅归档任务保留以下行）
+
+| Execution Bundle | `research/00-EXECUTION-ENTRY.md` | legacy |
+| 切片 AC | `research/to-issues-slices.md` | legacy |
+| 包外必读 | `research/EXTERNAL-INDEX.md` | legacy |
 
 ---
 

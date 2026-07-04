@@ -1,17 +1,40 @@
-# Plan v4.1 — Execution Bundle：Skill 产出契约
-# 文件名不固定；结构必须严格遵循对应 SKILL.md 模板章节。
-# 5e 打包时将所有产出登记进 research/00-EXECUTION-ENTRY.md §5.1 与 plan-consolidation 对照表。
+# Plan Skill 产出契约 — v4.2 默认 · v4.1 legacy 见 meta.v41
+# v4.2：执行计划与索引均无固定模板；用户手动调用 Skill → 现场产出
 
-version: plan_skill_outputs_v41
+version: plan_skill_outputs
+plan_protocol_default: "4.2"
 
-meta:
+v42:
+  execute_plan:
+    path: EXECUTION_PLAN.md
+    location: task_root
+    no_fixed_template: true
+    user_invokes_skills: true
+    rule: >
+      Agent 仅在用户显式调用某 Skill 时按该 Skill 写/改计划正文；
+      禁止仓库预设章节骨架或 Skill→章节映射表。
+  skill_merge_default: EXECUTION_PLAN.md
+  execution_index:
+    path: EXECUTION_INDEX.md
+    location: task_root
+    rule: >
+      机器索引：§1 步骤/证据 · §3 manifest（外部必读路由）· §5 Audit 追溯。
+      冻结前从计划摘录路由进 §3；不再单独维护 PLAN_INDEX.md。
+  optional_research:
+    - research/plan-boot.md
+    - research/project-overview.md
+    - research/gitnexus-summary.md
+    - research/*-session.md
+    - research/reference-adoption-*.md
+
+v41_legacy:
   plan_protocol: "4.1"
   supersedes_for_new_tasks: writing-plans
   execute_entry: research/00-EXECUTION-ENTRY.md
   external_index: research/EXTERNAL-INDEX.md
   thin_plan: EXECUTION_PLAN.md
 
-skills:
+legacy_skills:
   to-issues:
     path: .claude/skills/to-issues/SKILL.md
     phase: "3.5"
@@ -105,6 +128,7 @@ skills:
     path: .cursor/skills/trellis-plan/SKILL.md
     phase: 5e
     required: true
+    note: "v4.1 legacy only — 产出 ENTRY/EXTERNAL/consolidation；v4.2 见 v42.execution_index"
     output:
       location: research/
       files:
@@ -114,7 +138,7 @@ skills:
       task_root:
         - EXECUTION_PLAN.md
 
-packaging_5e:
+packaging_5e_v41_legacy:
   entry_sections_required:
     - "§1 目的/价值/完成条件（跨文件汇总）"
     - "§2 约束/规则（含出处指针）"
@@ -136,12 +160,19 @@ freeze_v41:
     slot1: frozen/*.md
     slot2: research/00-EXECUTION-ENTRY.md
 
-hard_rules:
-  - single_ssot_slices: "切片 AC 只在 to-issues-slices.md"
+hard_rules_v42:
+  - no_execution_plan_template: "禁止 EXECUTION_PLAN 固定模板或机械 Skill→章节映射"
+  - user_invokes_skills: "Skill 由用户手动调用；禁止 Plan agent 擅自批量跑 Skill 填计划"
+  - single_ssot_plan: "执行计划正文只在 EXECUTION_PLAN.md"
+  - single_ssot_index: "路由/外部必读/切片指针只在 EXECUTION_INDEX.md（§1/§3/§5）"
+  - no_duplicate_frozen: "frozen/INDEX 只指针，不复制计划正文"
+
+hard_rules_v41:
+  - single_ssot_slices: "切片 AC 只在 to-issues-slices.md（v4.1 legacy）"
   - no_duplicate_frozen: "frozen/INDEX 只指针，不复制包内正文"
-  - skill_structure_not_filename: "产出结构以 SKILL.md 为准；文件名可不同但须登记"
-  - gitnexus_required: "Phase 1a+1b 必做；产出 project-overview.md + gitnexus-summary.md"
-  - trellis_research_required: "必做；产出 reference-adoption-*.md 或 research/<topic>.md"
-  - clarification_when_ambiguous: >
-      需求不明或用户未说清时，必须用 trellis-brainstorm / grill-me / interview-me /
-      idea-refine 访问用户；决策写入 research/*-session.md 或 docs/decisions/ADR-*.md
+  - skill_structure_not_filename: "产出结构以 SKILL.md 为准"
+  - gitnexus_required: "Phase 1a+1b 必做"
+  - trellis_research_required: "必做"
+  - clarification_when_ambiguous: "需求不明须 grill-gate 后写 session/ADR"
+
+hard_rules:

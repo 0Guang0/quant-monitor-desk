@@ -30,7 +30,7 @@
 
 **Findings SSOT：** `agents/audit-finding-schema.md`（P0–P3 双表 · 有 finding 即维 **FAIL**）
 
-**Boot SSOT（v4.1）：** `agents/audit-boot-v4.1.md` + `agents/audit-coverage-model.md`
+**Boot SSOT（v4.2）：** `agents/audit-boot-v4.2.md` + `agents/audit-coverage-model.md`（v4.1 legacy：`audit-boot-v4.1.md`）
 
 **Repair Boot SSOT（v4.1）：** `agents/repair-boot-v4.1.md`
 

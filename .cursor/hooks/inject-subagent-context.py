@@ -295,13 +295,31 @@ def _implement_plan_mode(repo_root: str, task_dir: str) -> str:
     return "none"
 
 
+def _v4_bundle_variant(repo_root: str, td: Path) -> str:
+    """v42 | v41 — branch on task.json meta, not EXECUTION_PLAN file presence alone."""
+    scripts = Path(repo_root) / ".trellis" / "scripts"
+    if str(scripts) not in sys.path:
+        sys.path.insert(0, str(scripts))
+    from common.plan_protocol import is_execution_bundle_v41, is_execution_bundle_v42
+
+    if is_execution_bundle_v42(td):
+        return "v42"
+    if is_execution_bundle_v41(td):
+        return "v41"
+    if (td / "research" / "00-EXECUTION-ENTRY.md").is_file():
+        return "v41"
+    if (td / "EXECUTION_PLAN.md").is_file():
+        return "v42"
+    return "v41"
+
+
 def get_implement_context(repo_root: str, task_dir: str) -> str:
     """
     Complete context for Implement Agent
 
     Read order:
     1. All files in implement.jsonl
-    2. v4: ENTRY + EXECUTION_INDEX + frozen card | v3 archive/legacy: MASTER.plan.md
+    2. v4.2: EXECUTION_PLAN + EXECUTION_INDEX + frozen | v4.1: ENTRY + INDEX + frozen | v3: MASTER
     3. prd.md, design.md, implement.md
     """
     context_parts = []
@@ -312,10 +330,18 @@ def get_implement_context(repo_root: str, task_dir: str) -> str:
     td = _task_dir_path(repo_root, task_dir)
     mode = _implement_plan_mode(repo_root, task_dir)
     if mode == "v4":
-        for rel, label in (
-            ("research/00-EXECUTION-ENTRY.md", "Execute bundle entry"),
-            ("EXECUTION_INDEX.md", "EXECUTION_INDEX"),
-        ):
+        variant = _v4_bundle_variant(repo_root, td)
+        if variant == "v42":
+            pairs = (
+                ("EXECUTION_PLAN.md", "Execute plan SSOT (v4.2)"),
+                ("EXECUTION_INDEX.md", "EXECUTION_INDEX"),
+            )
+        else:
+            pairs = (
+                ("research/00-EXECUTION-ENTRY.md", "Execute bundle entry (v4.1)"),
+                ("EXECUTION_INDEX.md", "EXECUTION_INDEX"),
+            )
+        for rel, label in pairs:
             content = read_file_content(repo_root, f"{task_dir}/{rel}")
             if content:
                 context_parts.append(f"=== {task_dir}/{rel} ({label}) ===\n{content}")
@@ -404,10 +430,10 @@ def build_implement_prompt(original_prompt: str, context: str, *, plan_mode: str
 """
     else:
         step_protocol = """
-## Execute Step Protocol (v4 / v4.1)
+## Execute Step Protocol (v4.2 / v4.1)
 
-1. Work **one frozen §9.x step at a time** — RED (must FAIL) → GREEN (must PASS) → evidence files.
-2. SSOT: frozen task card + `research/00-EXECUTION-ENTRY.md` (v4.1) or `EXECUTION_INDEX.md`.
+1. Work **one INDEX §1 / frozen §9.x step at a time** — RED → GREEN per `/test-driven-development`.
+2. SSOT: frozen task card + `EXECUTION_PLAN.md` (v4.2) or `research/00-EXECUTION-ENTRY.md` (v4.1) + `EXECUTION_INDEX.md`.
 3. Run GitNexus `impact()` before editing symbols.
 4. Before handoff: `python .trellis/scripts/task.py validate-execute-handoff <task-dir>`.
 """

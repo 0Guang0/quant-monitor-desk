@@ -1,4 +1,4 @@
-# Repair Boot — Plan v4.1
+# Repair Boot — Plan v4.1（legacy）
 
 > **Leading word — 无遗留：** Repair 关账须 ledger 全覆盖 + `uv run pytest -q` 全绿。
 

@@ -1,19 +1,22 @@
 # Audit Skill 路径 — 主会话 + A1–A8 派发
-
+#
 # Plan 复制任务 AUDIT.plan.md；维度派发见 agents/ 下可派发模板
+#
+# 派发纪律：复杂任务 MUST 一维一 agent，禁止单 agent 串演 A1–A8
+#
+# 协议：Plan v4.2（默认）— Boot SSOT: agents/audit-boot-v4.2.md
+#        Plan v4.1（归档/在途）— agents/audit-boot-v4.1.md
 
-# 派发纪律：复杂任务 MUST 一维一 agent（注入对应 agents/*.md 模板），禁止单 agent 串演 A1–A8
+version: "1.3"
 
-# 协议：Plan v4.1（plan_protocol_version: "4.1"）— Boot SSOT: agents/audit-boot-v4.1.md
-
-version: "1.2"
-
-# 对抗性审计权威 — 全员派发 MUST Read（ENTRY/INDEX 仅参考）
+plan_protocol_default: "4.2"
 
 audit_authority:
   preamble: agents/audit-adversarial-authority.md
 
-  boot: agents/audit-boot-v4.1.md
+  boot_v42: agents/audit-boot-v4.2.md
+
+  boot_v41: agents/audit-boot-v4.1.md
 
   finding_schema: agents/audit-finding-schema.md
 
@@ -21,7 +24,7 @@ audit_authority:
 
   tier1: [design_docs, rules_contracts]
 
-  tier2: [execution_bundle, agent_template, original_task_card]
+  tier2: [execution_plan, execution_index, agent_template, original_task_card]
 
   tier3:
     [
@@ -33,7 +36,7 @@ audit_authority:
 
   reference_only: [implement.jsonl_manifest, prior_audit_report]
 
-  assumption: "Execution Bundle 可能存在缺口；须对抗性找计划外风险"
+  assumption: "计划可能存在缺口；须对抗性找计划外风险"
 
 skills:
   agent-toolchain:
@@ -59,13 +62,37 @@ boot_required_reads:
 
   - agents/audit-adversarial-authority.md
 
+  - agents/audit-boot-v4.2.md
+
+  - agents/audit-finding-schema.md
+
+  - agents/audit-coverage-model.md
+
+boot_required_reads_v41:
+  - agent-toolchain
+
+  - agents/audit-adversarial-authority.md
+
   - agents/audit-boot-v4.1.md
 
   - agents/audit-finding-schema.md
 
   - agents/audit-coverage-model.md
 
-orchestrator_reads:
+orchestrator_reads_v42:
+  - .trellis/spec/guides/templates/AUDIT.plan.md
+
+  - .trellis/spec/guides/templates/audit-repair-ledger.md
+
+  - agents/audit-boot-v4.2.md
+
+  - audit.jsonl
+
+  - EXECUTION_PLAN.md
+
+  - EXECUTION_INDEX.md
+
+orchestrator_reads_v41:
   - .trellis/spec/guides/templates/AUDIT.plan.md
 
   - .trellis/spec/guides/templates/audit-repair-ledger.md
@@ -75,6 +102,19 @@ orchestrator_reads:
   - audit.jsonl
 
   - research/00-EXECUTION-ENTRY.md
+
+  - EXECUTION_INDEX.md
+
+orchestrator_reads:
+  - .trellis/spec/guides/templates/AUDIT.plan.md
+
+  - .trellis/spec/guides/templates/audit-repair-ledger.md
+
+  - agents/audit-boot-v4.2.md
+
+  - audit.jsonl
+
+  - EXECUTION_PLAN.md
 
   - EXECUTION_INDEX.md
 

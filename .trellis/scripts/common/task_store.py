@@ -328,8 +328,8 @@ def cmd_create(args: argparse.Namespace) -> int:
         "notes": "",
         "meta": {
             "task_track": "complex",
-            "plan_protocol_version": "4.1",
-            "execute_entry": "research/00-EXECUTION-ENTRY.md",
+            "plan_protocol_version": "4.2",
+            "execute_entry": "EXECUTION_PLAN.md",
         },
     }
 
