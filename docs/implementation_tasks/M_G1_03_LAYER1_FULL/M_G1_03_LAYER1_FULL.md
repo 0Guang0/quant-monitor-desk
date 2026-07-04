@@ -1,28 +1,28 @@
 # M-G1-03 — Layer1 五轴完整落地（真链）
 
-> **状态：OPEN · 下一入口**  
-> **Module ID：** G1 → **R4** · 同票 K1, K2, A5  
-> **依赖：** M-DATA-03 **CLOSED** @ 2026-07-04 — Tier A **R4** clean 输入（隔离库证明）  
-> **设计权威：** `docs/modules/layer1_global_regime_panel.md` · `specs/layer1_axes/restructured_axes_v1_1/`  
-> **活规划：** `PROJECT_IMPLEMENTATION_ROADMAP.md` §3.2 · §6.1.1 #2
+> **状态：Plan frozen @ 2026-07-04 · Execute 就绪（`task.py start` 后 in_progress）**  
+> **票结构：** **B** — 单票双阶段 · **P1-GATE** 未绿禁止 Phase 2  
+> **Module ID：** G1 → **R4** · K1, K2, A5  
+> **依赖：** M-DATA-03 **CLOSED** @ 2026-07-04
 
 ---
 
-## 1. 目的
+## 唯一执行 SSOT
 
-在 **M-DATA-03 已闭合的 clean 输入**上，让五轴按 `restructured_axes_v1_1` **完整**指标与输入契约真落地：`sync→clean→指标引擎→pytest` **同库真链**（非 tmp DB seed 冒充 R4）。
+**全部 AC、任务拆解、竖切、门禁、上下文加载 → 只读：**
 
-## 2. 验收底线（AC）
+[`.trellis/tasks/07-04-m-g1-03-layer1-full/EXECUTION_PLAN.md`](../../../.trellis/tasks/07-04-m-g1-03-layer1-full/EXECUTION_PLAN.md)
 
-| 项         | 标准                                                      |
-| ---------- | --------------------------------------------------------- |
-| **Rating** | G1 **MCR ≥ R4**；K1/K2 随父模块闭合                       |
-| **五轴**   | 每轴至少一条可断言真链（或 ADR 源 replay + 其余真网输入） |
-| **pytest** | `tests/test_layer1_*` 等 **GREEN**（§6.1.1 #6）           |
-| **禁止**   | L1 子集冒充全模块；任务 CLOSED 但 Rating 仍 R3            |
+本活卡仅保留票级元数据；**禁止**在此重复 Phase 1/2 任务表或 S01–S13 细节。
 
-## 3. Trellis / `/to-issues`
+---
 
-- **类型：** complex Trellis（§1.5）
-- **竖切索引：** `M_G1_03_TO_ISSUES_INDEX.md`（Plan 冻结时增补）
-- **Plan 冻结前：** 读路线图 §0.1.3 · §1.2 · `GLOBAL_*` 契约
+## 索引
+
+| 用途              | 路径                                                                                           |
+| ----------------- | ---------------------------------------------------------------------------------------------- |
+| 执行计划（SSOT）  | `.trellis/tasks/07-04-m-g1-03-layer1-full/EXECUTION_PLAN.md`                                   |
+| `/to-issues` 指针 | `M_G1_03_TO_ISSUES_INDEX.md`                                                                   |
+| 路线图            | `PROJECT_IMPLEMENTATION_ROADMAP.md` §3.2                                                       |
+| 设计权威          | `data_sync_orchestrator.md` · `module_boundary_matrix.md` · `restructured_axes_v1_1/README.md` |
+| Execute 必读索引  | `.trellis/tasks/07-04-m-g1-03-layer1-full/EXECUTION_INDEX.md` §3（[1]–[8]）· §1–§2 量化验收    |

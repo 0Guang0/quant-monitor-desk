@@ -34,13 +34,13 @@ Layer 1 不回答：
 
 # 2. 五轴清单
 
-| axis_id | 中文名 | 作用 |
-|---|---|---|
-| `ENVIRONMENT` | 环境轴 | 观察宏观流动性、利率、财政/央行资产负债表、经济环境等底层背景。 |
-| `CREDIT_STRESS` | 信用压力轴 | 观察企业信用、短端融资、系统性融资摩擦。 |
-| `RISK_APPETITE` | 风险偏好轴 | 观察期权保险费、股债风险共振、风险资产偏好。 |
-| `LIQUIDITY` | 流动性轴 | 观察微观交易摩擦、价差、冲击成本与可交易性。 |
-| `SENTIMENT` | 情绪轴 | 观察仓位、调查、期权倾斜、融资杠杆等行为/情绪变量。 |
+| axis_id         | 中文名     | 作用                                                            |
+| --------------- | ---------- | --------------------------------------------------------------- |
+| `ENVIRONMENT`   | 环境轴     | 观察宏观流动性、利率、财政/央行资产负债表、经济环境等底层背景。 |
+| `CREDIT_STRESS` | 信用压力轴 | 观察企业信用、短端融资、系统性融资摩擦。                        |
+| `RISK_APPETITE` | 风险偏好轴 | 观察期权保险费、股债风险共振、风险资产偏好。                    |
+| `LIQUIDITY`     | 流动性轴   | 观察微观交易摩擦、价差、冲击成本与可交易性。                    |
+| `SENTIMENT`     | 情绪轴     | 观察仓位、调查、期权倾斜、融资杠杆等行为/情绪变量。             |
 
 五轴的指标选择、金融语义、数据源地址、公式、禁止项、BlindSpot 和解释边界全部外置，不在本模块硬编码。
 
@@ -59,15 +59,15 @@ specs/layer1_axes/restructured_axes_v1_1/sentiment_axis/sentiment_axis_indicator
 
 # 3. 与其他模块的关系
 
-| 依赖模块 | 关系 |
-|---|---|
-| `data_sources.md` | Layer 1 指标从注册数据源读取。 |
-| `data_sync_orchestrator.md` | 由 `sync_layer1_axes` 或 `Layer1AxisUpdateJob` 调度。 |
-| `data_validation_and_conflict.md` | 每条观测写入前必须通过质量检查；多源口径冲突时进入冲突处理。 |
-| `write_manager.md` | Layer 1 表只允许通过 WriteManager 写入。 |
-| `layer2_cross_asset_sensor.md` | Layer 2 可展示与 Layer 1 相关的市场价格，但不得回写 Layer 1。 |
-| `agent_module.md` | Agent 只能基于结构化事实和解释模板生成自然语言，不直接判定状态。 |
-| `frontend_dashboard.md` | 前端展示五轴状态、指标解释、质量状态与边界提醒。 |
+| 依赖模块                          | 关系                                                             |
+| --------------------------------- | ---------------------------------------------------------------- |
+| `data_sources.md`                 | Layer 1 指标从注册数据源读取。                                   |
+| `data_sync_orchestrator.md`       | 由 `sync_layer1_axes` 或 `Layer1AxisUpdateJob` 调度。            |
+| `data_validation_and_conflict.md` | 每条观测写入前必须通过质量检查；多源口径冲突时进入冲突处理。     |
+| `write_manager.md`                | Layer 1 表只允许通过 WriteManager 写入。                         |
+| `layer2_cross_asset_sensor.md`    | Layer 2 可展示与 Layer 1 相关的市场价格，但不得回写 Layer 1。    |
+| `agent_module.md`                 | Agent 只能基于结构化事实和解释模板生成自然语言，不直接判定状态。 |
+| `frontend_dashboard.md`           | 前端展示五轴状态、指标解释、质量状态与边界提醒。                 |
 
 ---
 
@@ -119,12 +119,12 @@ axis_engineering_rules.md       给实现和运维读取的工程约束
 
 `AxisSpecLoader` 应输出 4 类对象：
 
-| 对象 | 用途 |
-|---|---|
-| `AxisDefinition` | 初始化 `axis_registry`。 |
-| `AxisIndicatorDefinition` | 初始化 `axis_indicator_registry`。 |
-| `AxisIndicatorProfile` | 初始化 `axis_indicator_profile`。 |
-| `AxisEngineeringGuardrail` | 初始化规则检查器与解释护栏。 |
+| 对象                       | 用途                               |
+| -------------------------- | ---------------------------------- |
+| `AxisDefinition`           | 初始化 `axis_registry`。           |
+| `AxisIndicatorDefinition`  | 初始化 `axis_indicator_registry`。 |
+| `AxisIndicatorProfile`     | 初始化 `axis_indicator_profile`。  |
+| `AxisEngineeringGuardrail` | 初始化规则检查器与解释护栏。       |
 
 ## 5.3 必填字段
 
@@ -357,14 +357,14 @@ invalid
 
 ## 7.3 rolling window policy
 
-| 指标频率 | 默认主窗口 | 最小样本数 | 说明 |
-|---|---:|---:|---|
-| Daily | 3Y | 500 | 主力窗口，适合日频状态。 |
-| Weekly | 5Y | 156 | 适合周频拥挤、情绪、流动性观察。 |
-| Monthly | 10Y | 60，优先 120 | 5Y 偏短，仅参考。 |
-| Quarterly | 10Y-15Y | 40，优先 60 | 5Y 不足以判断极端。 |
-| Irregular/Event | by obs_count | 30/60/120 | 视指标而定。 |
-| Long-cycle macro | expanding + regime annotation | 视指标而定 | 可用全历史，但要标注 regime break 风险。 |
+| 指标频率         |                    默认主窗口 |   最小样本数 | 说明                                     |
+| ---------------- | ----------------------------: | -----------: | ---------------------------------------- |
+| Daily            |                            3Y |          500 | 主力窗口，适合日频状态。                 |
+| Weekly           |                            5Y |          156 | 适合周频拥挤、情绪、流动性观察。         |
+| Monthly          |                           10Y | 60，优先 120 | 5Y 偏短，仅参考。                        |
+| Quarterly        |                       10Y-15Y |  40，优先 60 | 5Y 不足以判断极端。                      |
+| Irregular/Event  |                  by obs_count |    30/60/120 | 视指标而定。                             |
+| Long-cycle macro | expanding + regime annotation |   视指标而定 | 可用全历史，但要标注 regime break 风险。 |
 
 窗口不足时：
 
@@ -453,11 +453,11 @@ BLINDSPOT_NOT_OBSERVABLE
 
 解释分三层：
 
-| 层级 | 生成者 | 说明 |
-|---|---|---|
-| 状态标签 | 程序 | `level_label`、`change_label`、`quality_label`。 |
-| 模板解释 | 程序 | 根据 profile + state_bucket 生成结构化解释。 |
-| 自然语言润色 | Agent | 只能基于结构化事实润色，不得新增结论。 |
+| 层级         | 生成者 | 说明                                             |
+| ------------ | ------ | ------------------------------------------------ |
+| 状态标签     | 程序   | `level_label`、`change_label`、`quality_label`。 |
+| 模板解释     | 程序   | 根据 profile + state_bucket 生成结构化解释。     |
+| 自然语言润色 | Agent  | 只能基于结构化事实润色，不得新增结论。           |
 
 Agent 输入必须包含：
 
@@ -502,13 +502,13 @@ needs_human_review
 
 # 11. API 契约
 
-| API | 用途 |
-|---|---|
-| `GET /api/layer1/axes` | 获取五轴清单。 |
-| `GET /api/layer1/state-snapshot` | 获取五轴最新状态快照。 |
-| `GET /api/layer1/axis/{axis_id}` | 获取单轴状态和指标卡片。 |
+| API                                        | 用途                             |
+| ------------------------------------------ | -------------------------------- |
+| `GET /api/layer1/axes`                     | 获取五轴清单。                   |
+| `GET /api/layer1/state-snapshot`           | 获取五轴最新状态快照。           |
+| `GET /api/layer1/axis/{axis_id}`           | 获取单轴状态和指标卡片。         |
 | `GET /api/layer1/indicator/{indicator_id}` | 获取单指标历史、profile 与解释。 |
-| `GET /api/layer1/quality` | 获取 Layer 1 数据质量概览。 |
+| `GET /api/layer1/quality`                  | 获取 Layer 1 数据质量概览。      |
 
 所有 API 响应必须带：
 
@@ -536,15 +536,15 @@ python -m quant_monitor layer1 health-check
 
 # 13. 验收测试清单
 
-| 测试 | 预期 |
-|---|---|
-| spec 缺少 `indicator_id` | loader 拒绝初始化。 |
-| 指标历史不足 | 输出 `INSUFFICIENT_HISTORY`，不伪造 z-score。 |
-| 主源失败但 fallback 生效 | 写 `SOURCE_SWITCHED`，并保留 fallback_policy。 |
-| 使用 forbidden substitute | 阻断写入，写质量错误。 |
-| BlindSpot 指标 | 只登记，不进入 observation。 |
-| Agent 输出交易动作词 | 解释快照拒绝写入，进入人工复核。 |
-| Layer 2 值试图回写 Layer 1 | 阻断。 |
+| 测试                                | 预期                                                                                                                                                                           |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| spec 缺少 `indicator_id`            | loader 拒绝初始化。                                                                                                                                                            |
+| 指标历史不足                        | 输出 `INSUFFICIENT_HISTORY`，不伪造 z-score。                                                                                                                                  |
+| 主源失败但 fallback 生效            | 写 `SOURCE_SWITCHED`，并保留 fallback_policy。                                                                                                                                 |
+| 使用 forbidden substitute           | 阻断写入，写质量错误。                                                                                                                                                         |
+| BlindSpot / Forbidden / SHADOW 指标 | 同样走 sync→clean→特征→解读 同库管道；不得当 `primary_source`；客观不可达时诚实失败 + 边界解读（SSOT：`specs/layer1_axes/restructured_axes_v1_1/README.md` §指标全链路要求）。 |
+| Agent 输出交易动作词                | 解释快照拒绝写入，进入人工复核。                                                                                                                                               |
+| Layer 2 值试图回写 Layer 1          | 阻断。                                                                                                                                                                         |
 
 ---
 

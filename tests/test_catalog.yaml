@@ -667,6 +667,17 @@ tests/test_incremental_post_write_inspect.py:
     docs: []
     rules: []
     specs: []
+tests/test_indicator_binding_registry.py:
+  command: uv run python -m pytest tests/test_indicator_binding_registry.py -q
+  failure_meaning:
+    Regression in test_indicator_binding_registry; inspect purpose
+    and linked authorities.
+  purpose: M-G1-03 P1-02 — IndicatorBinding loader (§9.1 row schema).
+  type: contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
 tests/test_ingestion_validation_migration.py:
   command: uv run python -m pytest tests/test_ingestion_validation_migration.py -q
   failure_meaning:
@@ -734,6 +745,17 @@ tests/test_layer1_environment_clean_e2e.py:
     docs: []
     rules: []
     specs: []
+tests/test_layer1_feature_engine.py:
+  command: uv run python -m pytest tests/test_layer1_feature_engine.py -q
+  failure_meaning:
+    Regression in test_layer1_feature_engine; inspect purpose and linked
+    authorities.
+  purpose: M-G1-03 P2-08 — Layer1 feature engine publish-day deltas.
+  type: runtime-contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
 tests/test_layer1_five_axis_panel_clean_smoke.py:
   command:
     uv run python -m pytest tests/test_layer1_five_axis_panel_clean_smoke.py
@@ -743,6 +765,71 @@ tests/test_layer1_five_axis_panel_clean_smoke.py:
     purpose and linked authorities.
   purpose: S06 — G12 五轴 Tier A clean panel 集成 smoke + K1 对齐 + ResourceGuard.
   type: smoke
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_layer1_indicator_binding_cn_bar_batch.py:
+  command:
+    uv run python -m pytest tests/test_layer1_indicator_binding_cn_bar_batch.py
+    -q
+  failure_meaning:
+    Regression in test_layer1_indicator_binding_cn_bar_batch; inspect
+    purpose and linked authorities.
+  purpose: M-G1-03 P2-02 S10 — CN equity bar batch true chain.
+  type: runtime-contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_layer1_indicator_binding_cot_batch.py:
+  command:
+    uv run python -m pytest tests/test_layer1_indicator_binding_cot_batch.py
+    -q
+  failure_meaning:
+    Regression in test_layer1_indicator_binding_cot_batch; inspect
+    purpose and linked authorities.
+  purpose: M-G1-03 P2-02 S09 — COT positioning batch true chain.
+  type: runtime-contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_layer1_indicator_binding_filings_batch.py:
+  command:
+    uv run python -m pytest tests/test_layer1_indicator_binding_filings_batch.py
+    -q
+  failure_meaning:
+    Regression in test_layer1_indicator_binding_filings_batch; inspect
+    purpose and linked authorities.
+  purpose: M-G1-03 P2-02 S12 — filings batch true chain.
+  type: runtime-contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_layer1_indicator_binding_macro_batch.py:
+  command:
+    uv run python -m pytest tests/test_layer1_indicator_binding_macro_batch.py
+    -q
+  failure_meaning:
+    Regression in test_layer1_indicator_binding_macro_batch; inspect
+    purpose and linked authorities.
+  purpose: M-G1-03 P2-02 S08 — macro/policy source batch true chain.
+  type: policy-contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_layer1_indicator_binding_us_crypto_batch.py:
+  command:
+    uv run python -m pytest tests/test_layer1_indicator_binding_us_crypto_batch.py
+    -q
+  failure_meaning:
+    Regression in test_layer1_indicator_binding_us_crypto_batch; inspect
+    purpose and linked authorities.
+  purpose: M-G1-03 P2-02 S11 — US/crypto bar batch true chain.
+  type: runtime-contract
   verifies:
     docs: []
     rules: []
@@ -804,6 +891,17 @@ tests/test_layer1_risk_appetite_clean_e2e.py:
     docs: []
     rules: []
     specs: []
+tests/test_layer1_round4_read_model_shape.py:
+  command: uv run python -m pytest tests/test_layer1_round4_read_model_shape.py -q
+  failure_meaning:
+    Regression in test_layer1_round4_read_model_shape; inspect purpose
+    and linked authorities.
+  purpose: M-G1-03 P2-10 — Round4 read model column shape (no HTTP).
+  type: runtime-contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
 tests/test_layer1_sandbox_bootstrap.py:
   command: uv run python -m pytest tests/test_layer1_sandbox_bootstrap.py -q
   evidence_required: pytest output
@@ -824,6 +922,17 @@ tests/test_layer1_sentiment_clean_e2e.py:
     and linked authorities.
   purpose: S05 — SENTIMENT axis Tier A clean read e2e (COT LF net).
   type: integration
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_layer1_sync_facade.py:
+  command: uv run python -m pytest tests/test_layer1_sync_facade.py -q
+  failure_meaning:
+    Regression in test_layer1_sync_facade; inspect purpose and linked
+    authorities.
+  purpose: M-G1-03 P1-13 — layer1 sync_indicator facade seam.
+  type: runtime-contract
   verifies:
     docs: []
     rules: []
@@ -1297,6 +1406,17 @@ tests/test_qmd_data_cli.py:
   failure_meaning: Regression in test_qmd_data_cli; inspect purpose and linked authorities.
   purpose: B3F-CLI — qmd data CLI, packaging, init_db --sync-registry (R3F-CLI-01..05).
   type: protocol
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_qmd_data_full_load_cli.py:
+  command: uv run python -m pytest tests/test_qmd_data_full_load_cli.py -q
+  failure_meaning:
+    Regression in test_qmd_data_full_load_cli; inspect purpose and
+    linked authorities.
+  purpose: M-G1-03 P1-09 — qmd-data data full-load CLI.
+  type: runtime-contract
   verifies:
     docs: []
     rules: []
@@ -1847,10 +1967,52 @@ tests/test_staged_pilot.py:
     rules: []
     specs:
       - specs/contracts/review_sandbox_contract.yaml
+tests/test_sync_binding_executor.py:
+  command: uv run python -m pytest tests/test_sync_binding_executor.py -q
+  failure_meaning:
+    Regression in test_sync_binding_executor; inspect purpose and linked
+    authorities.
+  purpose: M-G1-03 P1-06′ — BindingSyncExecutor 唯一编排深度模块.
+  type: runtime-contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_sync_full_load.py:
+  command: uv run python -m pytest tests/test_sync_full_load.py -q
+  failure_meaning: Regression in test_sync_full_load; inspect purpose and linked authorities.
+  purpose: M-G1-03 P1-07 — FullLoadJobRunner §13.4.1.
+  type: runtime-contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_sync_job_contract.py:
+  command: uv run python -m pytest tests/test_sync_job_contract.py -q
+  failure_meaning:
+    Regression in test_sync_job_contract; inspect purpose and linked
+    authorities.
+  purpose: M-G1-03 P1-08 — sync_job_contract full_load implemented.
+  type: contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
 tests/test_sync_jobs.py:
   command: uv run python -m pytest tests/test_sync_jobs.py -q
   failure_meaning: Regression in test_sync_jobs; inspect purpose and linked authorities.
   purpose: Tests for SyncJob state machine (Batch D §8.2).
+  type: runtime-contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_sync_macro_mapper.py:
+  command: uv run python -m pytest tests/test_sync_macro_mapper.py -q
+  failure_meaning:
+    Regression in test_sync_macro_mapper; inspect purpose and linked
+    authorities.
+  purpose: M-G1-03 P1-06 — sync domain row mappers (pure functions).
   type: runtime-contract
   verifies:
     docs: []
@@ -1900,6 +2062,24 @@ tests/test_sync_runners.py:
     rules: []
     specs:
       - specs/contracts/sync_job_contract.yaml
+tests/test_sync_scheduler.py:
+  command: uv run python -m pytest tests/test_sync_scheduler.py -q
+  failure_meaning: Regression in test_sync_scheduler; inspect purpose and linked authorities.
+  purpose: M-G1-03 P1-16 — sync scheduler §13.6 profiles.
+  type: runtime-contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
+tests/test_sync_watermark.py:
+  command: uv run python -m pytest tests/test_sync_watermark.py -q
+  failure_meaning: Regression in test_sync_watermark; inspect purpose and linked authorities.
+  purpose: M-G1-03 P1-05 — unified sync watermark entry.
+  type: runtime-contract
+  verifies:
+    docs: []
+    rules: []
+    specs: []
 tests/test_task_archive_gates.py:
   command: uv run python -m pytest tests/test_task_archive_gates.py -q
   failure_meaning:

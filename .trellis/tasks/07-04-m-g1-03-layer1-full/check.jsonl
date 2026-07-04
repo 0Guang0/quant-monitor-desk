@@ -1,0 +1,6 @@
+{"file": ".trellis/tasks/07-04-m-g1-03-layer1-full/EXECUTION_INDEX.md", "reason": "extract: manifest trace | for: A1"}
+{"file": "specs/contracts/sync_job_contract.yaml", "reason": "extract: [4] 五 job | for: S02–S06"}
+{"file": "specs/contracts/module_boundary_contract.yaml", "reason": "extract: [4] layer* 边界 | for: S01 · S05"}
+{"file": "specs/contracts/data_cli_contract.yaml", "reason": "extract: [4] CLI 登记 | for: S03 · S06"}
+{"file": "specs/contracts/bounded_backfill_cap.yaml", "reason": "extract: [4] ADR-030 | for: S04"}
+{"file": "specs/contracts/layer1_axis_contract.yaml", "reason": "extract: [4] quality_flags | for: S13"}

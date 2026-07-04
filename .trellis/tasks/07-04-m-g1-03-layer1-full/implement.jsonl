@@ -1,0 +1,55 @@
+{"file": ".trellis/tasks/07-04-m-g1-03-layer1-full/EXECUTION_PLAN.md", "reason": "extract: Execute plan SSOT | for: Boot slot 1"}
+{"file": ".trellis/tasks/07-04-m-g1-03-layer1-full/EXECUTION_INDEX.md", "reason": "extract: manifest index | for: Boot slot 2"}
+{"file": ".cursor/skills/trellis-execute/SKILL.md", "reason": "extract: Phase 0 boot | for: §9.0 Boot"}
+{"file": "docs/implementation_tasks/M_G1_03_LAYER1_FULL/M_G1_03_LAYER1_FULL.md", "reason": "extract: [1] 活卡指针 | for: Boot"}
+{"file": "docs/implementation_tasks/M_G1_03_LAYER1_FULL/M_G1_03_TO_ISSUES_INDEX.md", "reason": "extract: [1] /to-issues 索引 | for: Boot · 派发"}
+{"file": "PROJECT_IMPLEMENTATION_ROADMAP.md", "reason": "extract: [1] 路线图 §3.2 | for: Boot"}
+{"file": "MODULE_COMPLETION_RATING.md", "reason": "extract: [1] G1/K1/K2 R3→R4 | for: Boot · P2-GATE"}
+{"file": "docs/modules/data_sync_orchestrator.md", "reason": "extract: [2] Sync §13.4–13.9 | for: Boot · S02–S06"}
+{"file": "docs/modules/layer1_global_regime_panel.md", "reason": "extract: [2] 读模型 §6.4–6.5 | for: S13"}
+{"file": "docs/architecture/module_boundary_matrix.md", "reason": "extract: [2] import 边界 | for: S01 · S05"}
+{"file": "specs/layer1_axes/restructured_axes_v1_1/README.md", "reason": "extract: [3] §指标全链路 | for: S07–S13"}
+{"file": "specs/layer1_axes/restructured_axes_v1_1/common/common_axis_rules.md", "reason": "extract: [3] §3 §9 | for: S07–S13"}
+{"file": "specs/contracts/sync_job_contract.yaml", "reason": "extract: [4] 五 job | for: S02–S06"}
+{"file": "specs/contracts/module_boundary_contract.yaml", "reason": "extract: [4] layer* 边界 | for: S01 · S05"}
+{"file": "specs/contracts/data_cli_contract.yaml", "reason": "extract: [4] CLI 登记 | for: S03 · S06"}
+{"file": "specs/contracts/bounded_backfill_cap.yaml", "reason": "extract: [4] ADR-030 | for: S04"}
+{"file": "specs/contracts/layer1_axis_contract.yaml", "reason": "extract: [4] quality_flags | for: S13"}
+{"file": "docs/decisions/ADR-034-m-data-03-tier-a-live-acceptance.md", "reason": "extract: [5] 前置 | for: Boot"}
+{"file": "docs/decisions/ADR-025-r3h10-sync-fail-closed-datasource-service.md", "reason": "extract: [5] Sync 金路径 | for: S02–S06"}
+{"file": "docs/decisions/ADR-030-bounded-backfill-cap-and-ci-nightly.md", "reason": "extract: [5] Backfill cap | for: S04"}
+{"file": "backend/app/sync/incremental_source_registry.py", "reason": "extract: [6] 11 源 | for: S08–S12"}
+{"file": "backend/app/sync/jobs.py", "reason": "extract: [6] SyncJobSpec | for: S02–S06"}
+{"file": "backend/app/cli/errors.py", "reason": "extract: [6] CliFailure | for: S03 · S06"}
+{"file": "pyproject.toml", "reason": "extract: [6] qmd-data | for: S03 · S06"}
+{"file": "docs/ops/ERROR_CODE_GUIDE.md", "reason": "extract: [7] 错误码 | for: S03 · S06"}
+{"file": "docs/ops/performance_limits.md", "reason": "extract: [7] ResourceGuard | for: S06"}
+{"file": "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md", "reason": "extract: [8] 可验证 | for: Boot"}
+{"file": "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md", "reason": "extract: [8] 五字段/TDD | for: Boot"}
+{"file": "docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md", "reason": "extract: [8] 资源限制 | for: Boot"}
+{"file": "docs/implementation_tasks/GLOBAL_TASK_TEMPLATE.md", "reason": "extract: [8] 任务模板 | for: Boot"}
+{"file": "docs/implementation_tasks/README.md", "reason": "extract: [8] 活工单目录 | for: Boot"}
+{"file": "tests/test_module_boundaries.py", "reason": "extract: AC test | for: EXECUTION_INDEX §2"}
+{"file": "tests/test_indicator_binding_registry.py", "reason": "extract: AC test | for: EXECUTION_INDEX §2"}
+{"file": "tests/test_sync_watermark.py", "reason": "extract: AC test | for: EXECUTION_INDEX §2"}
+{"file": "tests/test_sync_macro_mapper.py", "reason": "extract: AC test | for: EXECUTION_INDEX §2"}
+{"file": "tests/test_sync_binding_executor.py", "reason": "extract: AC test | for: EXECUTION_INDEX §2"}
+{"file": "tests/test_sync_full_load.py", "reason": "extract: AC test | for: EXECUTION_INDEX §2"}
+{"file": "tests/test_sync_job_contract.py", "reason": "extract: AC test | for: EXECUTION_INDEX §2"}
+{"file": "tests/test_qmd_data_full_load_cli.py", "reason": "extract: AC test | for: EXECUTION_INDEX §2"}
+{"file": "tests/test_data_cli_contract.py", "reason": "extract: AC test | for: EXECUTION_INDEX §2"}
+{"file": "tests/test_qmd_data_backfill_cli.py", "reason": "extract: AC test | for: EXECUTION_INDEX §2"}
+{"file": "tests/test_bounded_backfill_cap.py", "reason": "extract: AC test | for: EXECUTION_INDEX §2"}
+{"file": "tests/test_tier_a_live_dispatch.py", "reason": "extract: AC test | for: EXECUTION_INDEX §2"}
+{"file": "tests/test_layer1_sync_facade.py", "reason": "extract: AC test | for: EXECUTION_INDEX §2"}
+{"file": "tests/test_layer1_observation_ingestion.py", "reason": "extract: AC test | for: EXECUTION_INDEX §2"}
+{"file": "tests/test_sync_scheduler.py", "reason": "extract: AC test | for: EXECUTION_INDEX §2"}
+{"file": "tests/test_sync_orchestrator.py", "reason": "extract: AC test | for: EXECUTION_INDEX §2"}
+{"file": "tests/test_layer1_indicator_binding_macro_batch.py", "reason": "extract: AC test | for: EXECUTION_INDEX §2"}
+{"file": "tests/test_layer1_indicator_binding_cot_batch.py", "reason": "extract: AC test | for: EXECUTION_INDEX §2"}
+{"file": "tests/test_layer1_indicator_binding_cn_bar_batch.py", "reason": "extract: AC test | for: EXECUTION_INDEX §2"}
+{"file": "tests/test_layer1_indicator_binding_us_crypto_batch.py", "reason": "extract: AC test | for: EXECUTION_INDEX §2"}
+{"file": "tests/test_layer1_indicator_binding_filings_batch.py", "reason": "extract: AC test | for: EXECUTION_INDEX §2"}
+{"file": "tests/test_layer1_feature_engine.py", "reason": "extract: AC test | for: EXECUTION_INDEX §2"}
+{"file": "tests/test_layer1_interpretation.py", "reason": "extract: AC test | for: EXECUTION_INDEX §2"}
+{"file": "tests/test_layer1_round4_read_model_shape.py", "reason": "extract: AC test | for: EXECUTION_INDEX §2"}

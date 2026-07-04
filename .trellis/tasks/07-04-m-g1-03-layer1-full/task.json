@@ -1,0 +1,33 @@
+{
+  "id": "m-g1-03-layer1-full",
+  "name": "m-g1-03-layer1-full",
+  "title": "M-G1-03 Layer1 + Sync 架构解耦",
+  "description": "Layer1五轴完整落地；P1 sync子系统 + P2 62指标真链",
+  "status": "in_progress",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P0",
+  "creator": "Guang",
+  "assignee": "Guang",
+  "createdAt": "2026-07-04",
+  "completedAt": null,
+  "branch": null,
+  "base_branch": "master",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "task_track": "complex",
+    "plan_protocol_version": "4.2",
+    "execute_entry": "EXECUTION_PLAN.md",
+    "source_task_card": "docs/implementation_tasks/M_G1_03_LAYER1_FULL/M_G1_03_LAYER1_FULL.md",
+    "frozen_task_card": "frozen/M_G1_03_LAYER1_FULL.md",
+    "frozen_at": "2026-07-04T06:33:44Z"
+  }
+}

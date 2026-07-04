@@ -14,9 +14,9 @@ description: >-
 | -------------- | --------------------------------------------------------- |
 | 工程契约       | [principles.md](principles.md)                            |
 | **必做 skill** | [reference.md](reference.md) + `execute-skill-paths.yaml` |
-| **条件 skill** | [`agent-toolchain.md`](../../agent-toolchain.md) §Execute |
+| **条件 skill** | `[agent-toolchain.md](../../agent-toolchain.md)` §Execute |
 | 全局规则       | [project-global.mdc](../../rules/project-global.mdc)      |
-| **TDD**        | **`/test-driven-development`**                            |
+| **TDD**        | `**/test-driven-development`\*\*                          |
 
 **SSOT：** `frozen/*.md` + `EXECUTION_INDEX.md` + `implement.jsonl`  
 **v4.2 首读：** `EXECUTION_PLAN.md`（slot2）+ `EXECUTION_INDEX.md`
@@ -27,12 +27,12 @@ description: >-
 
 ## Phase 0 Boot（开工前 · 读清再动手）
 
-| #   | 动作                                                                                                   | 完成条件                               |
-| --- | ------------------------------------------------------------------------------------------------------ | -------------------------------------- |
-| 0a  | Read `agent-toolchain.md` + 本 skill + **`reference.md`** + `principles.md` + **`project-global.mdc`** | 必做/条件 skill 已加载                 |
-| 0b  | Read **Execute 路由**（见下表 · 按 `task.json` 协议分支）                                              | 本刀范围与 AC 已理解                   |
-| 0c  | GitNexus `impact()` 扫将改 symbol                                                                      | blast radius 已心里有数                |
-| 0d  | `validate-execute-boot <task-dir>`                                                                     | exit 0（v4.1/v4.2 免 context-closure） |
+| #   | 动作                                                                                                     | 完成条件                               |
+| --- | -------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| 0a  | Read `agent-toolchain.md` + 本 skill + `**reference.md`** + `principles.md` + `**project-global.mdc\*\*` | 必做/条件 skill 已加载                 |
+| 0b  | Read **Execute 路由**（见下表 · 按 `task.json` 协议分支）                                                | 本刀范围与 AC 已理解                   |
+| 0c  | GitNexus `impact()` 扫将改 symbol                                                                        | blast radius 已心里有数                |
+| 0d  | `validate-execute-boot <task-dir>`                                                                       | exit 0（v4.1/v4.2 免 context-closure） |
 
 ### 0b 读什么（v4.2 · 默认）
 
@@ -43,17 +43,6 @@ description: >-
 | **机器路由** | `implement.jsonl` **每一行**            | 活卡、ADR、契约 yaml、规则、参考文档等 |
 | **当前步**   | INDEX §1 当前 Step + 计划内当前切片锚点 | 本刀范围                               |
 | **追溯**     | `frozen/*.md`                           | 审计锚点 + 停止条件                    |
-
-### 0b 读什么（v4.1 legacy）
-
-| 层                 | 路径                                              |
-| ------------------ | ------------------------------------------------- |
-| **路由地图**       | `research/00-EXECUTION-ENTRY.md`                  |
-| **包内规格**       | ENTRY §5.1 登记的全部 `research/*`                |
-| **路由表（包外）** | `EXTERNAL-INDEX.md` §A + `implement.jsonl` 每一行 |
-| **当前步**         | `to-issues-slices.md` 当前切片 § + INDEX §1       |
-
-**不写**「读了哪些文件」清单；**不填** audit / bundle-gap 表。
 
 ---
 

@@ -306,14 +306,16 @@ Round4 B04-*
 
 **R4** 关账：Tier A 11/11 隔离库 live · Tier B 10/10 验收结论 · B2/C3/D1/E1/E2/F0→R4 — **ADR-034** · archived `.trellis/tasks/archive/2026-07/m-data-03-tier-a-live/` · 活卡 `M_DATA_03_TIER_A_LIVE/`（只读）。
 
-### 3.2 M-G1-03 — 五轴完整落地（**下一入口**）
+### 3.2 M-G1-03 — 五轴完整落地（**下一入口** · **单票双阶段**）
 
-| 项          | 内容                                                                               |
-| ----------- | ---------------------------------------------------------------------------------- |
-| **范围**    | 五轴按 `restructured_axes_v1_1` **完整**指标与输入契约（非 L1 子集冒充全模块）     |
-| **AC 底线** | 每轴：`sync→clean→指标引擎→pytest` **同库真链**（或 ADR 源 replay + 其余真网输入） |
-| **依赖**    | M-DATA-03 **R4** clean 输入 ✅ · 活卡 `M_G1_03_LAYER1_FULL/`                       |
-| **禁止**    | tmp DB seed 单独支撑 R4                                                            |
+| 项          | 内容                                                                                                                                                                      |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **结构**    | **票 B**：仍 `M-G1-03`；**Phase 1**（sync 解耦 + orchestrator 完整落地）→ **P1-GATE** → **Phase 2**（62 指标真链）                                                        |
+| **Phase 1** | `data_sync_orchestrator.md` 完整（含 **FullLoad**、§13.6 调度、§13.7 CLI）+ `module_boundary_matrix.md` + 指标绑定 registry；详见 `M_G1_03_LAYER1_FULL/EXECUTION_PLAN.md` |
+| **Phase 2** | **62 个 `indicator_id`** 各走 sync→clean→特征→解读 同库真链（spec README §指标全链路要求）                                                                                |
+| **SSOT**    | `docs/implementation_tasks/M_G1_03_LAYER1_FULL/EXECUTION_PLAN.md`（唯一执行计划）                                                                                         |
+| **依赖**    | M-DATA-03 **R4** clean 输入 ✅                                                                                                                                            |
+| **禁止**    | P1 未过关做 62 指标；seed；每轴 1 代表；API/前端（Round4）                                                                                                                |
 
 ### 3.3 M-G2-FULL — Layer2 九组资产
 
@@ -347,14 +349,14 @@ Round4 B04-*
 
 ### 3.7 v2 `/to-issues` 索引（随 Plan 冻结增补）
 
-| 票        | 建议路径                                                                       |
-| --------- | ------------------------------------------------------------------------------ |
-| M-DATA-03 | `docs/implementation_tasks/M_DATA_03_TIER_A_LIVE/M_DATA_03_TO_ISSUES_INDEX.md` |
-| M-G1-03   | `docs/implementation_tasks/M_G1_03_LAYER1_FULL/M_G1_03_TO_ISSUES_INDEX.md`     |
-| M-G2-FULL | `.../M_G2_FULL_TO_ISSUES_INDEX.md`                                             |
-| M-G4-FULL | `.../M_G4_FULL_TO_ISSUES_INDEX.md`                                             |
-| M-G5-FULL | `.../M_G5_FULL_TO_ISSUES_INDEX.md`                                             |
-| M-PASS-01 | `.../M_PASS_01_TO_ISSUES_INDEX.md`                                             |
+| 票        | 建议路径                                                                                                      |
+| --------- | ------------------------------------------------------------------------------------------------------------- |
+| M-DATA-03 | `docs/implementation_tasks/M_DATA_03_TIER_A_LIVE/M_DATA_03_TO_ISSUES_INDEX.md`                                |
+| M-G1-03   | `docs/implementation_tasks/M_G1_03_LAYER1_FULL/EXECUTION_PLAN.md` §7（索引指针 `M_G1_03_TO_ISSUES_INDEX.md`） |
+| M-G2-FULL | `.../M_G2_FULL_TO_ISSUES_INDEX.md`                                                                            |
+| M-G4-FULL | `.../M_G4_FULL_TO_ISSUES_INDEX.md`                                                                            |
+| M-G5-FULL | `.../M_G5_FULL_TO_ISSUES_INDEX.md`                                                                            |
+| M-PASS-01 | `.../M_PASS_01_TO_ISSUES_INDEX.md`                                                                            |
 
 ---
 
@@ -467,17 +469,17 @@ Round5 **不补功能**。
 
 #### 6.1.1 硬门禁（须真绿）
 
-| #   | 项                  | 验收标准                                                                       |
-| --- | ------------------- | ------------------------------------------------------------------------------ |
-| 1   | **M-DATA-03** ✅    | **CLOSED** @ 2026-07-04 — Tier A R4 · ADR-034（§3.1 一行摘要）                 |
-| 2   | **M-G1-03**         | G1/K1/K2 **MCR Rating ≥ R4**；五轴完整 scope；每轴 sync→clean→指标→pytest 真链 |
-| 3   | **M-G2-FULL**       | G2 **MCR Rating ≥ R4** — 九组资产按设计权威落地                                |
-| 4   | **M-G4-FULL**       | G4 **MCR Rating ≥ R4** — 各 `market_id` 按设计落地                             |
-| 5   | **M-G5-FULL**       | G5 **MCR Rating ≥ R4** — Layer5 设计 scope 落地                                |
-| 6   | **G12 五轴 pytest** | `tests/test_layer1_*` 等 **GREEN**（不得仅 L1 子集冒充 PASS）                  |
-| 7   | **MCR 诚实**        | 硬门禁模块无「R3 冒充 R4」或「任务 CLOSED 但 Rating 仍 R3」                    |
-| 8   | **主库闸**          | `MAIN-DB-GATE` 绿；验收全程 **不污染主库**                                     |
-| 9   | **M-PASS-01 审计**  | registry / Layer 绑定终态（含原 R3H-05A..E + GATE，**单票内**）                |
+| #   | 项                  | 验收标准                                                                                                        |
+| --- | ------------------- | --------------------------------------------------------------------------------------------------------------- |
+| 1   | **M-DATA-03** ✅    | **CLOSED** @ 2026-07-04 — Tier A R4 · ADR-034（§3.1 一行摘要）                                                  |
+| 2   | **M-G1-03**         | G1/K1/K2 **MCR Rating ≥ R4**；**62 指标身份** 各走 sync→clean→指标→解读 同库真链（spec README §指标全链路要求） |
+| 3   | **M-G2-FULL**       | G2 **MCR Rating ≥ R4** — 九组资产按设计权威落地                                                                 |
+| 4   | **M-G4-FULL**       | G4 **MCR Rating ≥ R4** — 各 `market_id` 按设计落地                                                              |
+| 5   | **M-G5-FULL**       | G5 **MCR Rating ≥ R4** — Layer5 设计 scope 落地                                                                 |
+| 6   | **G12 五轴 pytest** | `tests/test_layer1_*` 等 **GREEN**（不得仅 L1 子集冒充 PASS）                                                   |
+| 7   | **MCR 诚实**        | 硬门禁模块无「R3 冒充 R4」或「任务 CLOSED 但 Rating 仍 R3」                                                     |
+| 8   | **主库闸**          | `MAIN-DB-GATE` 绿；验收全程 **不污染主库**                                                                      |
+| 9   | **M-PASS-01 审计**  | registry / Layer 绑定终态（含原 R3H-05A..E + GATE，**单票内**）                                                 |
 
 #### 6.1.2 历史已 CLOSED（证据索引 · 非充分条件）
 

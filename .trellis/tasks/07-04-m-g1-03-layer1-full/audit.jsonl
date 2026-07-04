@@ -1,0 +1,10 @@
+{"file": ".trellis/tasks/07-04-m-g1-03-layer1-full/AUDIT.plan.md", "reason": "extract: Audit SSOT | for: A1-A8 boot"}
+{"file": ".trellis/tasks/07-04-m-g1-03-layer1-full/EXECUTION_PLAN.md", "reason": "extract: Execute plan trace | for: A5 scope"}
+{"file": ".trellis/tasks/07-04-m-g1-03-layer1-full/EXECUTION_INDEX.md", "reason": "extract: manifest index | for: A1/A5/A8"}
+{"file": "docs/modules/data_sync_orchestrator.md", "reason": "extract: [2] Sync §13.4–13.9 | for: Boot · S02–S06"}
+{"file": "docs/modules/layer1_global_regime_panel.md", "reason": "extract: [2] 读模型 §6.4–6.5 | for: S13"}
+{"file": "docs/architecture/module_boundary_matrix.md", "reason": "extract: [2] import 边界 | for: S01 · S05"}
+{"file": "specs/contracts/sync_job_contract.yaml", "reason": "extract: [4] 五 job | for: S02–S06"}
+{"file": "specs/contracts/module_boundary_contract.yaml", "reason": "extract: [4] layer* 边界 | for: S01 · S05"}
+{"file": "specs/contracts/layer1_axis_contract.yaml", "reason": "extract: [4] quality_flags | for: S13"}
+{"file": "docs/decisions/ADR-034-m-data-03-tier-a-live-acceptance.md", "reason": "extract: [5] 前置 | for: Boot"}
