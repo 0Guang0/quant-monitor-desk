@@ -7,11 +7,14 @@ from pathlib import Path
 from typing import Any, Literal
 
 from backend.app.config import DATA_ROOT, PROJECT_ROOT
+from backend.app.db.connection import ConnectionManager
+from backend.app.db.migrate import apply_migrations
 
 ImplementationMode = Literal["live", "mock", "replay", "dry_run", "not_implemented"]
 RouteGrade = Literal["primary", "degraded", "blocked", "not_planned"]
 WriteGrade = Literal["primary_grade_clean", "degraded_clean", "blocked", "not_written"]
 FailureClass = Literal["NONE", "BLOCKED", "FAIL_EXTERNAL", "NOT_IMPLEMENTED", "CONTRACT_VIOLATION"]
+ACCEPTANCE_DUCKDB_NAME = "quant_monitor.duckdb"
 
 REQUIRED_ACCEPTANCE_REPORT_FIELDS: tuple[str, ...] = (
     "source_id",
@@ -189,7 +192,21 @@ class SourceRouteDbAcceptanceSpine:
                 request,
                 f"canonical main data root rejected for acceptance: {resolved_root}",
             )
+        _bootstrap_acceptance_db(resolved_root)
         return AcceptanceReport.not_implemented(request)
+
+
+def _acceptance_db_path(data_root: Path) -> Path:
+    return data_root / "duckdb" / ACCEPTANCE_DUCKDB_NAME
+
+
+def _bootstrap_acceptance_db(data_root: Path) -> ConnectionManager:
+    db_path = _acceptance_db_path(data_root)
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+    cm = ConnectionManager(db_path=db_path)
+    with cm.writer() as con:
+        apply_migrations(con)
+    return cm
 
 
 def _is_canonical_main_data_root(data_root: Path) -> bool:

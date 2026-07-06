@@ -3,9 +3,11 @@ from __future__ import annotations
 from dataclasses import FrozenInstanceError
 from pathlib import Path
 
+import duckdb
 import pytest
 import yaml
 from backend.app.ops.source_route_db_acceptance import (
+    ACCEPTANCE_DUCKDB_NAME,
     REQUIRED_ACCEPTANCE_REPORT_FIELDS,
     AcceptanceReport,
     AcceptanceRequest,
@@ -87,6 +89,34 @@ def test_sourceRouteDbAcceptance_spinePreview_reportsNotImplementedHonestly(tmp_
     assert report["status"] == "FAIL"
     assert report["implementation_mode"] == "not_implemented"
     assert report["failure_class"] == "NOT_IMPLEMENTED"
+
+
+def test_sourceRouteDbAcceptance_execute_bootstrapsIsolatedAcceptanceDb(tmp_path: Path) -> None:
+    """覆盖范围：production-equivalent acceptance DB 初始化
+    测试对象：SourceRouteDbAcceptanceSpine.execute DB bootstrap 路径
+    目的/目标：验收执行必须先在隔离 data_root 建立迁移后的 DuckDB，不触碰主库
+    验证点：duckdb/quant_monitor.duckdb 创建；schema_version 有迁移记录；报告仍为 NOT_IMPLEMENTED
+    失败含义：验收 spine 没有真实 DB 语义，后续 route/fetch/write 接入会落到非生产等价环境
+    """
+    request = AcceptanceRequest.from_target("macro_series:fred:fetch_macro_series")
+    data_root = tmp_path / "acceptance-root"
+
+    report = SourceRouteDbAcceptanceSpine().execute(
+        request,
+        data_root=data_root,
+        live_authorized=False,
+    )
+
+    db_path = data_root / "duckdb" / ACCEPTANCE_DUCKDB_NAME
+    assert db_path.is_file()
+    con = duckdb.connect(str(db_path), read_only=True)
+    try:
+        migration_count = con.execute("SELECT COUNT(*) FROM schema_version").fetchone()[0]
+    finally:
+        con.close()
+    assert migration_count > 0
+    assert report.failure_class == "NOT_IMPLEMENTED"
+    assert report.status == "FAIL"
 
 
 def test_sourceRouteDbAcceptance_routePayload_primaryEvidenceFillsReportFields() -> None:

@@ -86,3 +86,4 @@ honesty_rules:
   - live is the only implementation_mode that can prove production-equivalent acceptance.
   - missing live authorization must produce BLOCKED or NOT_IMPLEMENTED, not PASS.
   - acceptance must use an isolated data_root and must not write the canonical main DB.
+  - execute must bootstrap an isolated duckdb/quant_monitor.duckdb with production migrations before downstream route/fetch/write acceptance.
