@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 from backend.app.config import DATA_ROOT, PROJECT_ROOT
 
@@ -130,6 +130,32 @@ class AcceptanceReport:
             errors=(error,),
         )
 
+    @classmethod
+    def from_route_payload(
+        cls,
+        request: AcceptanceRequest,
+        route_payload: dict[str, Any],
+    ) -> AcceptanceReport:
+        route_grade = _route_grade_from_payload(route_payload)
+        source_used = _optional_str(route_payload.get("selected_source_id"))
+        quality_flags = tuple(str(flag) for flag in route_payload.get("quality_flags") or ())
+        return cls(
+            source_id=request.source_id,
+            data_domain=request.data_domain,
+            operation=request.operation,
+            route_plan_id=_optional_str(route_payload.get("route_plan_id")),
+            route_grade=route_grade,
+            implementation_mode="not_implemented",
+            write_grade="not_written" if route_grade != "blocked" else "blocked",
+            source_used=source_used,
+            source_role=_source_role_from_payload(route_payload, source_used),
+            source_switched=_source_switched(route_payload, source_used, route_grade),
+            quality_flags=quality_flags,
+            failure_class="BLOCKED" if route_grade == "blocked" else "NOT_IMPLEMENTED",
+            status="FAIL",
+            errors=("Route evidence normalized; downstream acceptance is not implemented yet",),
+        )
+
     def to_dict(self) -> dict[str, object]:
         payload = asdict(self)
         payload["quality_flags"] = list(self.quality_flags)
@@ -172,3 +198,45 @@ def _is_canonical_main_data_root(data_root: Path) -> bool:
         return True
     canonical_db_paths = {root / "duckdb" / "quant_monitor.duckdb" for root in canonical_roots}
     return data_root / "duckdb" / "quant_monitor.duckdb" in canonical_db_paths
+
+
+def _optional_str(value: object) -> str | None:
+    if value is None:
+        return None
+    text = str(value).strip()
+    return text or None
+
+
+def _route_grade_from_payload(route_payload: dict[str, Any]) -> RouteGrade:
+    explicit = _optional_str(route_payload.get("route_grade"))
+    if explicit in {"primary", "degraded", "blocked"}:
+        return explicit  # type: ignore[return-value]
+    route_status = _optional_str(route_payload.get("route_status"))
+    quality_flags = set(str(flag) for flag in route_payload.get("quality_flags") or ())
+    if route_status != "READY":
+        return "blocked"
+    if quality_flags & {"SOURCE_FALLBACK_USED", "VALIDATION_SOURCE_USED"}:
+        return "degraded"
+    return "primary"
+
+
+def _source_role_from_payload(route_payload: dict[str, Any], source_used: str | None) -> str | None:
+    if source_used is None:
+        return None
+    for candidate in route_payload.get("candidates") or ():
+        if not isinstance(candidate, dict) or candidate.get("source_id") != source_used:
+            continue
+        role = _optional_str(candidate.get("role"))
+        if role == "FallbackPolicy":
+            return "fallback"
+        return role.lower() if role else None
+    return None
+
+
+def _source_switched(
+    route_payload: dict[str, Any],
+    source_used: str | None,
+    route_grade: RouteGrade,
+) -> bool:
+    requested = _optional_str(route_payload.get("requested_source_id"))
+    return route_grade == "degraded" or bool(requested and source_used and requested != source_used)

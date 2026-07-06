@@ -87,3 +87,83 @@ def test_sourceRouteDbAcceptance_spinePreview_reportsNotImplementedHonestly(tmp_
     assert report["status"] == "FAIL"
     assert report["implementation_mode"] == "not_implemented"
     assert report["failure_class"] == "NOT_IMPLEMENTED"
+
+
+def test_sourceRouteDbAcceptance_routePayload_primaryEvidenceFillsReportFields() -> None:
+    """覆盖范围：READY primary RoutePlan payload 转验收报告字段
+    测试对象：AcceptanceReport.from_route_payload
+    目的/目标：job_event_log 的 ROUTE_PLAN 证据应能直接进入验收报告
+    验证点：route_plan_id/route_grade/source_used/source_role/source_switched 均被规范化
+    失败含义：验收报告无法引用已持久化路由证据，SourceRoutePlan 追溯断档
+    """
+    request = AcceptanceRequest.from_target("macro_series:fred:fetch_macro_series")
+    report = AcceptanceReport.from_route_payload(
+        request,
+        {
+            "route_plan_id": "route-1",
+            "route_status": "READY",
+            "route_grade": "primary",
+            "selected_source_id": "fred",
+            "quality_flags": [],
+            "candidates": [{"source_id": "fred", "role": "Primary"}],
+        },
+    ).to_dict()
+
+    assert report["route_plan_id"] == "route-1"
+    assert report["route_grade"] == "primary"
+    assert report["source_used"] == "fred"
+    assert report["source_role"] == "primary"
+    assert report["source_switched"] is False
+    assert report["failure_class"] == "NOT_IMPLEMENTED"
+
+
+def test_sourceRouteDbAcceptance_routePayload_degradedEvidenceMarksSwitched() -> None:
+    """覆盖范围：fallback RoutePlan payload 转验收报告字段
+    测试对象：AcceptanceReport.from_route_payload
+    目的/目标：降级路由证据进入报告时必须保留 degraded 和 source_switched
+    验证点：route_grade=degraded；source_role=fallback；source_switched=True；质量标记保留
+    失败含义：fallback 路径会在验收报告里伪装成正常主源路径
+    """
+    request = AcceptanceRequest.from_target("macro_series:fred:fetch_macro_series")
+    report = AcceptanceReport.from_route_payload(
+        request,
+        {
+            "route_plan_id": "route-2",
+            "route_status": "READY",
+            "route_grade": "degraded",
+            "selected_source_id": "qmt_xtdata",
+            "requested_source_id": "fred",
+            "quality_flags": ["SOURCE_FALLBACK_USED"],
+            "candidates": [{"source_id": "qmt_xtdata", "role": "FallbackPolicy"}],
+        },
+    ).to_dict()
+
+    assert report["route_grade"] == "degraded"
+    assert report["source_used"] == "qmt_xtdata"
+    assert report["source_role"] == "fallback"
+    assert report["source_switched"] is True
+    assert report["quality_flags"] == ["SOURCE_FALLBACK_USED"]
+
+
+def test_sourceRouteDbAcceptance_routePayload_blockedEvidenceKeepsBlockedFailure() -> None:
+    """覆盖范围：blocked RoutePlan payload 转验收报告字段
+    测试对象：AcceptanceReport.from_route_payload
+    目的/目标：授权缺失或禁用路由必须在验收报告里显示 blocked，而不是 not_implemented
+    验证点：route_grade=blocked；write_grade=blocked；failure_class=BLOCKED；source_used=None
+    失败含义：外部授权或路由阻断会被误归类为实现未完成，排障方向错误
+    """
+    request = AcceptanceRequest.from_target("macro_series:fred:fetch_macro_series")
+    report = AcceptanceReport.from_route_payload(
+        request,
+        {
+            "route_plan_id": "route-3",
+            "route_status": "USER_AUTH_REQUIRED",
+            "selected_source_id": None,
+            "quality_flags": [],
+        },
+    ).to_dict()
+
+    assert report["route_grade"] == "blocked"
+    assert report["write_grade"] == "blocked"
+    assert report["failure_class"] == "BLOCKED"
+    assert report["source_used"] is None
