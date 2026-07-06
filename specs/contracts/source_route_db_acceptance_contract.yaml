@@ -1,0 +1,88 @@
+version: 1
+module: source_route_db_acceptance
+status: implementation_contract
+authoritative_task: task/task-01-source-route and DB acceptance spine
+
+interface:
+  module: SourceRouteDbAcceptanceSpine
+  methods:
+    - name: preview
+      input: AcceptanceRequest
+      output: AcceptancePreview
+    - name: execute
+      input: AcceptanceRequest
+      extra_arguments:
+        - data_root
+        - live_authorized
+      output: AcceptanceReport
+
+target_format:
+  shape: data_domain:source_id:operation
+  example: macro_series:fred:fetch_macro_series
+
+implementation_modes:
+  - live
+  - mock
+  - replay
+  - dry_run
+  - not_implemented
+
+route_grades:
+  - primary
+  - degraded
+  - blocked
+  - not_planned
+
+write_grades:
+  - primary_grade_clean
+  - degraded_clean
+  - blocked
+  - not_written
+
+failure_classes:
+  - NONE
+  - BLOCKED
+  - FAIL_EXTERNAL
+  - NOT_IMPLEMENTED
+  - CONTRACT_VIOLATION
+
+required_request_fields:
+  - data_domain
+  - source_id
+  - operation
+
+required_preview_fields:
+  - request
+  - route_grade
+  - implementation_mode
+  - status
+  - reason
+
+required_report_fields:
+  - source_id
+  - data_domain
+  - operation
+  - route_plan_id
+  - route_grade
+  - implementation_mode
+  - write_grade
+  - source_used
+  - source_role
+  - source_switched
+  - quality_flags
+  - stale_reason
+  - fallback_reason
+  - schema_hash
+  - content_hash
+  - validation_status
+  - conflict_status
+  - failure_class
+  - downstream_layer_read_status
+  - status
+  - errors
+
+honesty_rules:
+  - mock, replay, dry_run and not_implemented are report classifications, not product acceptance success.
+  - live is the only implementation_mode that can prove production-equivalent acceptance.
+  - missing live authorization must produce BLOCKED or NOT_IMPLEMENTED, not PASS.
+  - acceptance must use an isolated data_root and must not write the canonical main DB.
