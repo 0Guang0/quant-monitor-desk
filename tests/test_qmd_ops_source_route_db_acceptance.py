@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -8,14 +9,24 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
-def _run_acceptance_cli(*args: str) -> subprocess.CompletedProcess[str]:
+def _run_acceptance_cli(
+    *args: str,
+    env: dict[str, str] | None = None,
+) -> subprocess.CompletedProcess[str]:
     cmd = [
         sys.executable,
         str(PROJECT_ROOT / "scripts" / "qmd_ops.py"),
         "accept-source-route-db",
         *args,
     ]
-    return subprocess.run(cmd, capture_output=True, text=True, check=False, cwd=PROJECT_ROOT)
+    return subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        check=False,
+        cwd=PROJECT_ROOT,
+        env=env,
+    )
 
 
 def test_qmdOps_acceptSourceRouteDb_delegatesToSpineAndWritesHonestReport(
@@ -79,6 +90,38 @@ def test_qmdOps_acceptSourceRouteDb_rejectsCanonicalDataRoot(tmp_path: Path) -> 
     assert payload["route_grade"] == "blocked"
     assert payload["write_grade"] == "blocked"
     assert "canonical main data root" in payload["errors"][0]
+
+
+def test_qmdOps_acceptSourceRouteDb_allowLiveWithoutFredKeyBlocks(tmp_path: Path) -> None:
+    """覆盖范围：qmd-ops FRED macro tracer live 授权后的凭证门禁
+    测试对象：scripts/qmd_ops.py accept-source-route-db --allow-live-fetch
+    目的/目标：CLI 允许 live fetch 后仍必须要求真实 FRED_API_KEY，不能把缺凭证当成普通未实现
+    验证点：returncode==1；failure_class=BLOCKED；route evidence 保留；错误包含 FRED_API_KEY
+    失败含义：运维误以为已授权即可完成 live 验收，实际无凭证时可能产生假完成报告
+    """
+    data_root = tmp_path / "source-route-db-acceptance"
+    report_path = data_root / "reports" / "acceptance.json"
+    env = os.environ.copy()
+    env["FRED_API_KEY"] = ""
+
+    result = _run_acceptance_cli(
+        "--target",
+        "macro_series:fred:fetch_macro_series",
+        "--data-root",
+        str(data_root),
+        "--report",
+        str(report_path),
+        "--allow-live-fetch",
+        env=env,
+    )
+
+    assert result.returncode == 1, result.stderr
+    payload = json.loads(result.stdout)
+    assert payload["route_plan_id"]
+    assert payload["source_used"] == "fred"
+    assert payload["failure_class"] == "BLOCKED"
+    assert payload["write_grade"] == "blocked"
+    assert "FRED_API_KEY" in payload["errors"][0]
 
 
 def test_qmdOps_acceptSourceRouteDb_invalidTargetFailsBeforeReport(tmp_path: Path) -> None:

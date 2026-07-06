@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from dataclasses import asdict, dataclass, field, replace
 from pathlib import Path
 from typing import Any, Literal
@@ -217,6 +218,12 @@ class SourceRouteDbAcceptanceSpine:
                     route_payload,
                     "live authorization missing for macro_series:fred:fetch_macro_series",
                 )
+            if not _fred_live_credentials_available():
+                return AcceptanceReport.blocked_from_route_payload(
+                    request,
+                    route_payload,
+                    "FRED_API_KEY missing for macro_series:fred:fetch_macro_series",
+                )
             return AcceptanceReport.from_route_payload(request, route_payload)
         return AcceptanceReport.not_implemented(request)
 
@@ -253,6 +260,10 @@ def _fred_macro_route_payload(request: AcceptanceRequest) -> dict[str, Any]:
         job_id="acceptance-preview",
     )
     return plan.to_payload_dict()
+
+
+def _fred_live_credentials_available() -> bool:
+    return bool(os.environ.get("FRED_API_KEY"))
 
 
 def _is_canonical_main_data_root(data_root: Path) -> bool:

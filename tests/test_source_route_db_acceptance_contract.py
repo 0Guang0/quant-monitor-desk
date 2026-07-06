@@ -118,6 +118,34 @@ def test_sourceRouteDbAcceptance_fredMacroTracer_withoutLiveAuthorizationBlocks(
     assert "live authorization missing" in report["errors"][0]
 
 
+def test_sourceRouteDbAcceptance_fredMacroTracer_liveAuthorizedWithoutFredKeyBlocks(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """覆盖范围：FRED macro tracer 有 live 授权但缺凭证
+    测试对象：SourceRouteDbAcceptanceSpine.execute FRED_API_KEY 门禁
+    目的/目标：即使操作员允许 live fetch，缺 FRED 凭证也必须诚实阻断而不是进入未实现或假成功
+    验证点：failure_class=BLOCKED；route evidence 保留；错误说明包含 FRED_API_KEY
+    失败含义：验收可能在无真实凭证时继续推进，导致外部授权问题被误判为实现完成或普通缺口
+    """
+    monkeypatch.delenv("FRED_API_KEY", raising=False)
+    request = AcceptanceRequest.from_target("macro_series:fred:fetch_macro_series")
+
+    report = SourceRouteDbAcceptanceSpine().execute(
+        request,
+        data_root=tmp_path / "acceptance-root",
+        live_authorized=True,
+    ).to_dict()
+
+    assert report["route_plan_id"]
+    assert report["route_grade"] == "primary"
+    assert report["source_used"] == "fred"
+    assert report["failure_class"] == "BLOCKED"
+    assert report["write_grade"] == "blocked"
+    assert report["status"] == "FAIL"
+    assert "FRED_API_KEY" in report["errors"][0]
+
+
 def test_sourceRouteDbAcceptance_execute_bootstrapsIsolatedAcceptanceDb(tmp_path: Path) -> None:
     """覆盖范围：production-equivalent acceptance DB 初始化
     测试对象：SourceRouteDbAcceptanceSpine.execute DB bootstrap 路径
