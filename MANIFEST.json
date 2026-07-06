@@ -3,7 +3,7 @@
   "generated_at_utc": "2026-06-19T05:53:46+00:00",
   "root_dir": "quant_monitor_implementation_docs_v1",
   "manifest_self_policy": "exclude_self_from_file_hashes",
-  "file_count_excluding_manifest": 154,
+  "file_count_excluding_manifest": 110,
   "files": [
     {
       "path": "MIGRATION_MAP.md",
@@ -86,244 +86,24 @@
       "sha256": "1effaaeb162ea181484c48f4f7d6910ac3fbdd5bcf382bd5ee981cef31592a3d"
     },
     {
-      "path": "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md",
-      "size_bytes": 3053,
-      "sha256": "061047c0cf553af198e89433bee151171cf9e832f0523eb4da34a0d5763d2ce5"
+      "path": "rules/GLOBAL_EXECUTION_RULES.md",
+      "size_bytes": 3492,
+      "sha256": "3132ebd5d5e344f74884b365e9788e45cdd013fa7c90578fd4fd8681b4bc13d2"
     },
     {
-      "path": "docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md",
-      "size_bytes": 1404,
-      "sha256": "925d666c7c1b8bd02fcd88fe827586320c6fcc50f8f67f5784b2ae55dd5a2607"
+      "path": "rules/GLOBAL_RESOURCE_LIMITS.md",
+      "size_bytes": 1608,
+      "sha256": "b02eed03d6d4f3fca0f5835712cf4505ced03f97324eb3d796fbb013663f888e"
     },
     {
-      "path": "docs/implementation_tasks/GLOBAL_TASK_TEMPLATE.md",
-      "size_bytes": 2591,
-      "sha256": "2ac6f549721caadf8fdf5de068a4040a401a06510b14a20dfd6830c7a16b8c00"
+      "path": "rules/GLOBAL_RULES.md",
+      "size_bytes": 3492,
+      "sha256": "3132ebd5d5e344f74884b365e9788e45cdd013fa7c90578fd4fd8681b4bc13d2"
     },
     {
-      "path": "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md",
-      "size_bytes": 3022,
-      "sha256": "f0f60cedb6599e68bf0cf5da14398586c036f1c40d6ba3169a3125270a000411"
-    },
-    {
-      "path": "docs/implementation_tasks/README.md",
-      "size_bytes": 5324,
-      "sha256": "f4459f8865716872371624e1b24961b8249a77f419afe259a326cd2874a65c03"
-    },
-    {
-      "path": "docs/implementation_tasks/ROUND_0_PROJECT_SCAFFOLD/000_global_execution_rules.md",
-      "size_bytes": 3940,
-      "sha256": "c2d977264c5b28f2406e6ca5531e7b9df93b25caa6e8c92c0495226b94716f8a"
-    },
-    {
-      "path": "docs/implementation_tasks/ROUND_0_PROJECT_SCAFFOLD/001_create_project_scaffold.md",
-      "size_bytes": 3839,
-      "sha256": "09650d03cc296eb566a7feba735dc4080107fec8a7278160e1253c26aaf50f61"
-    },
-    {
-      "path": "docs/implementation_tasks/ROUND_0_PROJECT_SCAFFOLD/002_create_config_and_env_templates.md",
-      "size_bytes": 4716,
-      "sha256": "b9a5145f0b904517c34806ed686cbdc4574279fcac2c47875da1f717679975dd"
-    },
-    {
-      "path": "docs/implementation_tasks/ROUND_0_PROJECT_SCAFFOLD/003_create_testing_baseline.md",
-      "size_bytes": 3909,
-      "sha256": "38fd924d8d8ad7a3f39e4663ca6279ef72a36c1abd8d3afa7bc9280f91e02811"
-    },
-    {
-      "path": "docs/implementation_tasks/ROUND_0_PROJECT_SCAFFOLD/004_create_documentation_index.md",
-      "size_bytes": 3945,
-      "sha256": "6f726760ebec89fa3ade6d0c34efc7e0bd912e1179fe092652ab389741e2a24d"
-    },
-    {
-      "path": "docs/implementation_tasks/ROUND_0_PROJECT_SCAFFOLD/README.md",
-      "size_bytes": 337,
-      "sha256": "1f722ab0366a6b067ab3b1987ed2128e70fccc2a9dd8f9b59d4f36e9115479a8"
-    },
-    {
-      "path": "docs/implementation_tasks/ROUND_1_DATA_FOUNDATION/005_create_schema_sql.md",
-      "size_bytes": 4316,
-      "sha256": "1df9e616afc838ef95650dc79e60ac07daf19b380e449b93f2acce47784b4131"
-    },
-    {
-      "path": "docs/implementation_tasks/ROUND_1_DATA_FOUNDATION/006_implement_resource_guard.md",
-      "size_bytes": 3771,
-      "sha256": "e08982682a2e7c9d5b29736fad6be7ef36e9fcc834340dfde550f67ec2dfe366"
-    },
-    {
-      "path": "docs/implementation_tasks/ROUND_1_DATA_FOUNDATION/007_implement_duckdb_connection_manager.md",
-      "size_bytes": 4131,
-      "sha256": "b4f09da197c425748cb46b5f9127593258cd028b081950e7f8465c56f6055ab4"
-    },
-    {
-      "path": "docs/implementation_tasks/ROUND_1_DATA_FOUNDATION/008_implement_write_manager.md",
-      "size_bytes": 3738,
-      "sha256": "1aa339d7175fc02fd20e723073eb316acbcf15b4061a3dc9b9c03a2c903dad0f"
-    },
-    {
-      "path": "docs/implementation_tasks/ROUND_1_DATA_FOUNDATION/009_implement_file_registry_and_raw_store.md",
-      "size_bytes": 4375,
-      "sha256": "97962c86a74f5d4b07086f937a712a7bea9d0fa65e46cd056fa01f9d98f8b475"
-    },
-    {
-      "path": "docs/implementation_tasks/ROUND_1_DATA_FOUNDATION/010_foundation_smoke_tests.md",
-      "size_bytes": 3712,
-      "sha256": "d5fedc140088e5d498168648a55ba9cde13a9356e1d1f605b67542069f9c4432"
-    },
-    {
-      "path": "docs/implementation_tasks/ROUND_1_DATA_FOUNDATION/README.md",
-      "size_bytes": 336,
-      "sha256": "f68357b065c8c9b8f6cab1ed3ac4165c5c07fbe1e7090bd34c3ae1fdd01b5fb9"
-    },
-    {
-      "path": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/011_implement_source_registry.md",
-      "size_bytes": 4381,
-      "sha256": "bbba869dda54f0da63dcf87fef9285519621efe31ec0bce0a4aca5842703582e"
-    },
-    {
-      "path": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/012_implement_data_adapter_contract.md",
-      "size_bytes": 3778,
-      "sha256": "1aa9a2fd163c939fd357b45dd5f8f1874481c890fdb7f50f2d6f418ff492ac15"
-    },
-    {
-      "path": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/013_implement_core_adapter_skeletons.md",
-      "size_bytes": 4363,
-      "sha256": "12b6d885e2b2f2316facf59fcdb7573549797f568e6b72bdbb9c20efdf46e48c"
-    },
-    {
-      "path": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/014_implement_data_sync_orchestrator.md",
-      "size_bytes": 4273,
-      "sha256": "f91de0d7db6be8a84c66583f41516bd60d3f7497d7c55956f27fb88c42c4575f"
-    },
-    {
-      "path": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/015_implement_data_quality_validator.md",
-      "size_bytes": 4201,
-      "sha256": "c3d2c925dc2f2e7bc1d7d964c7ec81a66cdf4de11cc67cdb9d1781d6078afde1"
-    },
-    {
-      "path": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/016_implement_source_conflict_validator.md",
-      "size_bytes": 4233,
-      "sha256": "968ece838d6e78085638e7d4269a82a36bc812c73b10ac6739d479836e3b512c"
-    },
-    {
-      "path": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/README.md",
-      "size_bytes": 346,
-      "sha256": "7b8eb55acb71da2ceee49b7e404eb41de01a66db1bd19ba79bc864701bd2132c"
-    },
-    {
-      "path": "docs/implementation_tasks/ROUND_3_MODELING_LAYERS/017_implement_layer1_axis_loader.md",
-      "size_bytes": 4452,
-      "sha256": "a4d60f1fc531620a6ea820f5a2f4e1bb1535b63dc830e94a8144755cbb52dbb4"
-    },
-    {
-      "path": "docs/implementation_tasks/ROUND_3_MODELING_LAYERS/018_implement_layer1_interpretation_snapshot.md",
-      "size_bytes": 4389,
-      "sha256": "4b6bf19c61a120daefa8fcd510c38b735a8db0177e2bc65015c60dabdf9d1d07"
-    },
-    {
-      "path": "docs/implementation_tasks/ROUND_3_MODELING_LAYERS/019_implement_layer2_cross_asset_sensor.md",
-      "size_bytes": 4421,
-      "sha256": "eb4b5bd733a6661f77534eb4b13cfb754ff11ab5e57152eb6e5b6d93053da2c9"
-    },
-    {
-      "path": "docs/implementation_tasks/ROUND_3_MODELING_LAYERS/020_implement_layer3_industry_chain_loader.md",
-      "size_bytes": 4397,
-      "sha256": "426ecee29d9b6c04c675004feeedc59b8981f3f7992bd78b89043c2181ffe949"
-    },
-    {
-      "path": "docs/implementation_tasks/ROUND_3_MODELING_LAYERS/021_implement_layer3_snapshot_builder.md",
-      "size_bytes": 4349,
-      "sha256": "bbe8036e42a97e73d31e562ebe9ef63e67967276f89d866b3a8d900332a5c82c"
-    },
-    {
-      "path": "docs/implementation_tasks/ROUND_3_MODELING_LAYERS/022_implement_layer4_market_structure.md",
-      "size_bytes": 4419,
-      "sha256": "8616112def3b48b5bb769c5170729d4cd058e848e153b2cffd6435a59acd43c6"
-    },
-    {
-      "path": "docs/implementation_tasks/ROUND_3_MODELING_LAYERS/023_implement_layer5_evidence_chain.md",
-      "size_bytes": 4414,
-      "sha256": "6344d3347a418febc3bd4e93e9b26e22ef59b901210247a554d5c2ec916dd164"
-    },
-    {
-      "path": "docs/implementation_tasks/ROUND_3_MODELING_LAYERS/README.md",
-      "size_bytes": 336,
-      "sha256": "9dd718234abd323470df7af05335699a2055bc76a6f575a6c9911679dcd80999"
-    },
-    {
-      "path": "docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/024_implement_fastapi_routes.md",
-      "size_bytes": 5163,
-      "sha256": "b6a7c6365fb3290c63fb92553ed29435fb9477e69806611e446f5e4bf01389b2"
-    },
-    {
-      "path": "docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/025_implement_agent_tool_layer.md",
-      "size_bytes": 4944,
-      "sha256": "64c669e0c5aaa23c49d35c4c82400153e32f63f3568bab32dfb681178331b128"
-    },
-    {
-      "path": "docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/026_implement_frontend_shell.md",
-      "size_bytes": 4559,
-      "sha256": "ba40d580794f0a5e1b075c423653e8258b8b932c2d3c3fddbafa1c704e7ea9f3"
-    },
-    {
-      "path": "docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/027_implement_frontend_layer_pages.md",
-      "size_bytes": 4552,
-      "sha256": "62c3f4c2c2955407f474aa69460733904dcd028282eaa8d3d9c9c8ec6d8f6520"
-    },
-    {
-      "path": "docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/028_implement_reports_and_notifications.md",
-      "size_bytes": 5601,
-      "sha256": "e649a8659dba9aa05b78af3bcb6a6027f6de7a4c1b0a789242a99c3a5af0f5fd"
-    },
-    {
-      "path": "docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/029_implement_backtest_and_review.md",
-      "size_bytes": 4422,
-      "sha256": "64ec3d4be222df605ca2828a3ef05fe6f3650882c0248c0de077d0d20d67d235"
-    },
-    {
-      "path": "docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/030_implement_no_action_semantics_guard.md",
-      "size_bytes": 4064,
-      "sha256": "4773ff7027314d50f5de6d725ed6755e9bb455d00f92b54139ace6f03b3476c8"
-    },
-    {
-      "path": "docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/README.md",
-      "size_bytes": 348,
-      "sha256": "545dfa1d11166905de74a62ccf94d636bfcb0a7b81c54d07b5bb370273fe77f2"
-    },
-    {
-      "path": "docs/implementation_tasks/ROUND_5_INTEGRATION_RELEASE/031_implement_integration_smoke_tests.md",
-      "size_bytes": 3730,
-      "sha256": "30bc01275d81ad09e9d4811de8cc88f599f12fb2ebf6dd53141afaa80455c4da"
-    },
-    {
-      "path": "docs/implementation_tasks/ROUND_5_INTEGRATION_RELEASE/032_implement_resource_limit_tests.md",
-      "size_bytes": 3735,
-      "sha256": "467dc2b556b9fe7c532c0a42560c17593e601c1b9b6e1cd44cb79a54ea5eb960"
-    },
-    {
-      "path": "docs/implementation_tasks/ROUND_5_INTEGRATION_RELEASE/033_implement_security_and_boundary_tests.md",
-      "size_bytes": 3885,
-      "sha256": "7235ad44c5e44c1afc3432a695608dea1b5f83a39ce96cfa2600929a0fc47186"
-    },
-    {
-      "path": "docs/implementation_tasks/ROUND_5_INTEGRATION_RELEASE/034_implement_docs_consistency_check.md",
-      "size_bytes": 3932,
-      "sha256": "209be0873ebcaa30c33170546f97990f4bd8702ca657848e789cc688eba43e72"
-    },
-    {
-      "path": "docs/implementation_tasks/ROUND_5_INTEGRATION_RELEASE/035_implement_final_package_cleanup.md",
-      "size_bytes": 4575,
-      "sha256": "cc309793243379b2904f0b9bca9300021e113313498df75e9f7f5c98b7f25f24"
-    },
-    {
-      "path": "docs/implementation_tasks/ROUND_5_INTEGRATION_RELEASE/036_create_final_release_manifest.md",
-      "size_bytes": 5385,
-      "sha256": "bf84c25d55f14834cb235f64c23826d75e04c36ef7007e5a7335b9e85ef25b18"
-    },
-    {
-      "path": "docs/implementation_tasks/ROUND_5_INTEGRATION_RELEASE/README.md",
-      "size_bytes": 340,
-      "sha256": "ff20154037708e683e09be134583a3596b02a4942ccd504e302f0a1e915da591"
+      "path": "rules/GLOBAL_TESTING_POLICY.md",
+      "size_bytes": 5979,
+      "sha256": "4a3020494f3c5edb54a1f2b4e3c6f5967a9a6d1ab8b41e5b0d71c5e187a75885"
     },
     {
       "path": "docs/modules/agent_module.md",

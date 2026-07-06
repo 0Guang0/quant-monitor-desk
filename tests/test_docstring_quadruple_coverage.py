@@ -1,7 +1,7 @@
 """全库测试函数五字段 docstring 门禁。
 
 规范：docs/quality/ROUND3_TEST_DOCSTRING_HYGIENE_PLAN.md
-政策：docs/implementation_tasks/GLOBAL_TESTING_POLICY.md §7
+政策：rules/GLOBAL_TESTING_POLICY.md §7
 Layer1 参考模板：test_layer1Observation_fetchFailure_blocksCleanWrite、
 test_layer1MicroIngestion_phase3DoesNotWriteCleanAxisObservation
 """
