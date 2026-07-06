@@ -148,7 +148,7 @@
 | 路径                                         | 用途                                                |
 | -------------------------------------------- | --------------------------------------------------- |
 | `docs/ops/agent_security_policy.md`          | Agent 安全、只读、固定来源、抗提示注入              |
-| `docs/ops/agent_workflow_boundaries.md`      | `.cursor` / `.trellis` 信任边界与 workflow 清理     |
+| `docs/ops/agent_workflow_boundaries.md`      | `.cursor` 信任边界与已退休 workflow 清理            |
 | `docs/ops/backup_and_recovery.md`            | 备份与恢复策略                                      |
 | `docs/ops/config_secret_policy.md`           | Secret 与 `.env.local` 策略                         |
 | `docs/ops/daily_weekly_monthly_checklist.md` | 日/周/月例行检查                                    |
@@ -170,7 +170,7 @@
 | `docs/ops/qmt_xqshare_setup.md`              | 可选 qmt_xqshare 设置边界                           |
 | `docs/ops/TROUBLESHOOTING.md`                | 故障排查入口                                        |
 | `docs/ops/verification_commands.md`          | Windows / 本地验证命令                              |
-| `docs/ops/user_intervention_policy.md`       | Agent vs 用户介入边界（Loop Engineering）           |
+| `docs/ops/user_intervention_policy.md`       | Agent vs 用户介入边界                               |
 | `docs/ops/data_health_cli.md`                | 数据健康 CLI 设计                                   |
 | `docs/ops/ops_report_cli.md`                 | 运维报告 CLI 设计                                   |
 
@@ -200,16 +200,16 @@
 
 #### 4.9.1 活路径（全局契约 + v2 入口）
 
-| 路径                                                         | 用途                                                                      |
-| ------------------------------------------------------------ | ------------------------------------------------------------------------- |
-| `docs/implementation_tasks/README.md`                        | **活工单入口**；v2 模块票队列摘要                                         |
-| `PROJECT_IMPLEMENTATION_ROADMAP.md`                          | 活规划 SSOT（§3 模块闭环队列 v2）                                         |
-| `docs/implementation_tasks/TASK_INPUT_CONTEXT_INDEX.md`      | Plan 阶段上下文桥；原始任务、设计/契约与 `.trellis/tasks/**` 冻结计划追溯 |
-| `docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md`        | 全局执行规则                                                              |
-| `docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md`        | 全局资源限制                                                              |
-| `docs/implementation_tasks/GLOBAL_TASK_TEMPLATE.md`          | 任务模板                                                                  |
-| `rules/GLOBAL_TESTING_POLICY.md`                             | 全局测试政策                                                              |
-| `docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md` | 未解决项与任务卡覆盖映射（活）                                            |
+| 路径                                                         | 用途                                               |
+| ------------------------------------------------------------ | -------------------------------------------------- |
+| `docs/implementation_tasks/README.md`                        | **活工单入口**；v2 模块票队列摘要                  |
+| `PROJECT_IMPLEMENTATION_ROADMAP.md`                          | 活规划 SSOT（§3 模块闭环队列 v2）                  |
+| `docs/implementation_tasks/TASK_INPUT_CONTEXT_INDEX.md`      | 历史上下文桥；当前任务优先读路线图、模块文档与契约 |
+| `docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md`        | 全局执行规则                                       |
+| `docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md`        | 全局资源限制                                       |
+| `docs/implementation_tasks/GLOBAL_TASK_TEMPLATE.md`          | 任务模板                                           |
+| `rules/GLOBAL_TESTING_POLICY.md`                             | 全局测试政策                                       |
+| `docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md` | 未解决项与任务卡覆盖映射（活）                     |
 
 #### 4.9.2 历史归档索引（`legacy-pre-module-v2-20260702/`）
 
@@ -283,7 +283,6 @@
 | `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_REFERENCE_ADOPTION_REFACTOR/BATCH_3FR_REFERENCE_ADOPTION_REFACTOR/README.md`                                   | **历史归档** Batch 3F-R；参考采纳 refactor（CLOSED 证据）                                                |
 | `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_REFERENCE_ADOPTION_REFACTOR/BATCH_3FR_REFERENCE_ADOPTION_REFACTOR/R3FR_01_REFERENCE_RULES_AND_LICENSE_GATE.md` | R3FR-01 护栏与 license gate 重跑任务卡                                                                   |
 | `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_REFERENCE_ADOPTION_REFACTOR/BATCH_3FR_REFERENCE_ADOPTION_REFACTOR/R3FR_03_TDX_PROVIDER_REFACTOR.md`            | R3FR-03 TDX provider port；`backend/app/datasources/fetch_ports/tdx_pytdx_port.py`、`normalizers/tdx.py` |
-| `.trellis/tasks/archive/2026-06/06-26-round3fr-tdx-provider/`                                                                                                                           | R3FR-03 Trellis 执行计划（历史归档；`EXECUTION_INDEX.md` + frozen）                                      |
 | `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/README.md`                                                    | Batch 3G sandbox clean-write（3F-R 后）                                                                  |
 | `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/README.md`                                      | Batch 3H 真实源生产入口（3G 后）                                                                         |
 | `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/WAVE1_R3H10_THEN_R3H07_TO_ISSUES_INDEX.md`      | Wave 1 串行门控索引（R3H-10 → R3H-07）                                                                   |
@@ -338,7 +337,7 @@
 | `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_PARALLEL_PROMPTS/PROMPT_07_feature_round3_019_layer2_sensor.md`                      | PROMPT_07 Layer2 sensor                |
 | `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_PARALLEL_PROMPTS/PROMPT_08_feature_round3_023a_evidence_foundation.md`               | PROMPT_08 023A evidence                |
 | `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_PARALLEL_PROMPTS/PROMPT_09_review_round3_019_plan_audit.md`                          | PROMPT_09 019 plan audit               |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_PARALLEL_PROMPTS/PROMPT_10_debt_r3b275_018c_live_manual_probe_plan.md`               | PROMPT_10 018C live manual probe       |
+| Historical PROMPT_10 018C live manual probe record                                                                                                            | PROMPT_10 018C live manual probe       |
 | `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_PARALLEL_PROMPTS/PROMPT_11_review_round3_contract_architecture_adversarial_audit.md` | PROMPT_11 contract adversarial audit   |
 | `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_PARALLEL_PROMPTS/PROMPT_12_fix_round3_data_source_routing_blockers.md`               | PROMPT_12 routing blockers             |
 | `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_PARALLEL_PROMPTS/PROMPT_13_fix_round3_db_write_validation_blockers.md`               | PROMPT_13 DB write blockers            |
@@ -350,7 +349,7 @@
 | `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_PARALLEL_PROMPTS/PROMPT_19_feature_round3_real_data_staged_pilot_v2.md`              | PROMPT_19 staged pilot v2              |
 | `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_PARALLEL_PROMPTS/PROMPT_20_feature_round3_readonly_data_health_v1.md`                | PROMPT_20 readonly data health         |
 | `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_REFERENCE_LANDING/README.md`                                                         | Round 3 参考落地入口                   |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_REFERENCE_LANDING/R3D_018C_live_manual_probe_plan.md`                                | R3D 018C live manual probe plan        |
+| Historical R3D 018C live manual probe record                                                                                                                  | R3D 018C live manual probe plan        |
 | `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_REFERENCE_LANDING/R3D_018C_low_cost_source_probe.md`                                 | R3D 018C low cost probe                |
 | `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_REFERENCE_LANDING/R3D_ops_db_data_health_reference.md`                               | R3D ops DB data health 参考            |
 | `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_REFERENCE_LANDING/R4D_readonly_sql_assistant_reference.md`                           | R4D readonly SQL assistant 参考        |
@@ -370,7 +369,7 @@
 
 ### 4.12 模块闭环队列 v2（活票 · Plan 冻结时建目录）
 
-> **SSOT：** `PROJECT_IMPLEMENTATION_ROADMAP.md` §3 · `docs/implementation_tasks/README.md`。下列目录 **待建**（Plan 冻结时创建 canonical 文件夹 + Trellis complex 票）。
+> **SSOT：** `PROJECT_IMPLEMENTATION_ROADMAP.md` §3 · `docs/implementation_tasks/README.md`。下列目录 **待建**（Plan 冻结时创建 canonical 文件夹）。
 
 | 票 ID         | 优先级 | 任务卡目录（待建）                                 | `/to-issues` 索引（待建）          | 设计权威                                                                      |
 | ------------- | ------ | -------------------------------------------------- | ---------------------------------- | ----------------------------------------------------------------------------- |

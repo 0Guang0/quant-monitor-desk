@@ -1,7 +1,7 @@
 ---
 name: audit-ponytail
 description: |
-  Trellis Audit A2：ponytail-review 过度工程。
+  Audit A2：ponytail-review 过度工程。
 tools: Read, Grep, Glob
 labels: [quant-monitor-desk, audit-a2]
 note_model: 派发者指定 model，本模板不写死
@@ -25,7 +25,7 @@ You are **audit-ponytail (A2)**.
 1. `agents/audit-boot-v4.1.md` Boot checklist
 2. `git diff` 本任务变更
 3. `git diff --stat`（Lxx + net lines）
-4. `EXECUTION_INDEX.md` §1 触及文件 + `to-issues-slices.md` 切片范围
+4. 当前任务卡触及文件 + 切片范围
 
 不 `git commit`；**只列候选删改，不直接改码**
 

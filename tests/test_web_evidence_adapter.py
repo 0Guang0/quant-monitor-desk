@@ -3,7 +3,7 @@
 覆盖范围：web_search 的 fetch port、manual_review staging、证据契约与 Layer smoke。
 测试对象：backend/app/evidence/manual_review_staging.py 及 web_search_evidence_port 模块。
 目的/目标：证明 web_search 仅走 manual-review staging，need_human_review=true 且不得写 clean 表。
-验证点：test_web_evidence_adapter 全量及 -k layer 子集按 EXECUTION_INDEX §1 通过。
+验证点：test_web_evidence_adapter 全量及 -k layer 子集通过当前 pytest 验收。
 失败含义：Batch 3H R3H-04 无法在 Round4 前闭合网页证据源生产入口决策。
 """
 

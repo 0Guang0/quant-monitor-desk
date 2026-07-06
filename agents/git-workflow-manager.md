@@ -42,7 +42,7 @@ git status
 - **target branch:** repair/{{slug}}-{{slice}}
 - **allowed:** path/glob 列表
 - **forbidden:** registry 文件 / 其他 slice 核心路径
-- **verification:** pytest 选择器 / loop_maintain / smoke 命令
+- **verification:** pytest 选择器 / smoke / docs check 命令
 - **evidence:** repair-evidence/{{slice}}.txt
 - **merge gate:** 全量 pytest 绿 + registry 由 coordinator 单点合并
 ```

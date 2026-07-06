@@ -3,7 +3,7 @@
 覆盖范围：kalshi、polymarket、web_search 不得写 clean 表、不得 resolve 事实结果。
 测试对象：三源 route/bundle/staging 负例路径。
 目的/目标：证明预测价格与网页证据无法升格为 factual clean table 或事件结果判定。
-验证点：test_no_clean_write_for_web_evidence 及 -k resolve 子集按 EXECUTION_INDEX §1 通过。
+验证点：test_no_clean_write_for_web_evidence 及 -k resolve 子集通过当前 pytest 验收。
 失败含义：非事实源可 silent 写入 clean 表或将概率当事实，Round4 入口不安全。
 """
 

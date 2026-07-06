@@ -14,7 +14,6 @@ uv run python -m pytest -q --cov=backend --cov-fail-under=85 --basetemp=.audit-s
 uv run ruff check .
 uv run ruff format --check .
 uv run python scripts\production_gate.py
-uv run python scripts\check_doc_links.py
 
 # 等价（已有 .venv 时）
 .\.venv\Scripts\python.exe -m pytest -q --basetemp=.audit-sandbox\pytest-full
@@ -22,17 +21,12 @@ uv run python scripts\check_doc_links.py
 .\.venv\Scripts\ruff.exe check .
 .\.venv\Scripts\ruff.exe format --check .
 .\.venv\Scripts\python.exe scripts\production_gate.py
-.\.venv\Scripts\python.exe scripts\check_doc_links.py
 
 # Frontend
 cd frontend
 npm run typecheck
 npm run test
 cd ..
-
-# Trellis execute handoff (archived Round 2 tasks)
-.\.venv\Scripts\python.exe .trellis\scripts\task.py validate-execute-handoff .trellis\tasks\archive\2026-06\06-17-round2-batch-c-validation-conflict
-.\.venv\Scripts\python.exe .trellis\scripts\task.py validate-execute-handoff .trellis\tasks\archive\2026-06\06-18-round2-batch-d-orchestrator
 
 # GitNexus index freshness
 node .gitnexus\run.cjs status
@@ -50,7 +44,6 @@ Document/protocol gate tests for Round 3 merge review. **Staged-only** evidence 
 
 | Gate ID                         | Purpose                                            | Test module                                     |
 | ------------------------------- | -------------------------------------------------- | ----------------------------------------------- |
-| `audit-trace-authority`         | Trellis Batch 2.75 audit trace authority files     | `tests/test_trellis_audit_trace_authority.py`   |
 | `audit-registry-alignment`      | Batch 2.5 / 2.75 registry and task-card alignment  | `tests/test_round3_audit_registry_alignment.py` |
 | `unresolved-item-coverage`      | Unresolved IDs mapped before Plan                  | `tests/test_unresolved_item_task_coverage.py`   |
 | `batch25-staged-not-live`       | Batch 2.5 evidence is staged, not production-live  | `tests/test_batch25_production_data_gate.py`    |
@@ -62,7 +55,6 @@ Run the full Round 3 gate hygiene bundle (merge coordinator / PROMPT_05):
 
 ```powershell
 uv sync --locked --extra dev
-uv run python -m pytest tests/test_trellis_audit_trace_authority.py -q
 uv run python -m pytest tests/test_round3_audit_registry_alignment.py -q
 uv run python -m pytest tests/test_unresolved_item_task_coverage.py -q
 uv run python -m pytest tests/test_batch25_production_data_gate.py -q
@@ -70,7 +62,6 @@ uv run python -m pytest tests/test_production_live_pilot_policy.py -q
 uv run python -m pytest tests/test_batch3_staged_downstream_gate.py -q
 uv run python -m pytest tests/test_fred_staged_semantics.py -q
 uv run python -m pytest tests/test_round3_verification_command_matrix.py -q
-uv run python scripts/check_doc_links.py
 ```
 
 Key closure tests (must stay green before Batch 3 runtime):

@@ -1,7 +1,7 @@
 ---
 name: code-reviewer
 description: |
-  Trellis Audit A4：diff 多轴审查 + doubt-driven。只审不修。
+  Audit A4：diff 多轴审查 + doubt-driven。只审不修。
 tools: Read, Grep, Glob
 labels: [quant-monitor-desk, audit-a4, quality]
 note_model: 派发者指定 model，本模板不写死
@@ -25,7 +25,7 @@ You are a **code reviewer** for quant-monitor-desk. Review **git diff** against 
 1. `agents/audit-boot-v4.1.md` Boot checklist
 2. `audit-skill-paths.yaml` A4
 3. `git diff` / `git diff --staged`
-4. 触及包：`.trellis/spec/**/index.md` Quality 节
+4. 触及包：相邻模块文档、contracts、tests 质量约束
 
 **不** `git commit`；默认只报告
 

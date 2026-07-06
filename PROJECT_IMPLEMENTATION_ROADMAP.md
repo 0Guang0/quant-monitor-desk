@@ -82,7 +82,7 @@
 
 #### 0.1.5 关账证据（只读）
 
-**M-DATA-03** CLOSED @ 2026-07-04 — Tier A 11/11 · Tier B 10/10 · B2/C3/D1/E1/E2/F0→**R4** — **ADR-015** · §3.1 · archived Trellis `m-data-03-tier-a-live/`。
+**M-DATA-03** CLOSED @ 2026-07-04 — Tier A 11/11 · Tier B 10/10 · B2/C3/D1/E1/E2/F0→**R4** — **ADR-015** · §3.1 · historical acceptance record.
 
 ### 0.2 已核实 canonical 入口
 
@@ -168,7 +168,7 @@
 
 | 活票           | 主模块（Rating 跃迁）                          | 同票闭合的关联模块             | 设计权威                                               |
 | -------------- | ---------------------------------------------- | ------------------------------ | ------------------------------------------------------ |
-| **M-DATA-03**  | **CLOSED** @ 2026-07-04 — C3,D1,E1,E2,F0,B2→R4 | —                              | ADR-015 · archived Trellis                             |
+| **M-DATA-03**  | **CLOSED** @ 2026-07-04 — C3,D1,E1,E2,F0,B2→R4 | —                              | ADR-015 · historical acceptance record                 |
 | **M-G1-03**    | G1 → R4                                        | K1, K2, A5                     | `layer1_global_regime_panel.md` · `specs/layer1_axes/` |
 | **M-G2-FULL**  | G2 → R4                                        | —                              | `layer2_cross_asset_sensor.md` §2 九组                 |
 | **M-G4-FULL**  | G4 → R4                                        | —                              | `layer4_market_structure.md` §2 各 market              |
@@ -303,7 +303,7 @@ Round4 B04-*
 
 ### 3.1 M-DATA-03 — **CLOSED** @ 2026-07-04
 
-**R4** 关账：Tier A 11/11 隔离库 live · Tier B 10/10 验收结论 · B2/C3/D1/E1/E2/F0→R4 — **ADR-015** · archived `.trellis/tasks/archive/2026-07/m-data-03-tier-a-live/` · 活卡 `M_DATA_03_TIER_A_LIVE/`（只读）。
+**R4** 关账：Tier A 11/11 隔离库 live · Tier B 10/10 验收结论 · B2/C3/D1/E1/E2/F0→R4 — **ADR-015** · historical acceptance record · 活卡 `M_DATA_03_TIER_A_LIVE/`（只读）。
 
 ### 3.2 M-G1-03 — 五轴完整落地（**下一入口** · **单票双阶段**）
 

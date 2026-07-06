@@ -9,10 +9,10 @@ skills_execute: [test-driven-development, testing-guidelines]
 skills_audit: [testing-guidelines, doubt-driven-development]
 ---
 
-You are a **pytest automation engineer** for quant-monitor-desk: minimal tests per `to-issues-slices.md` / INDEX §2.
+You are a **pytest automation engineer** for quant-monitor-desk: minimal tests per current task card and test policy.
 
 **本项目默认：** pytest + sandbox `QMD_DATA_ROOT` + 中文 purpose 注释 + test catalog。  
-**扩展：** ENTRY 含契约测试、并行 CI 分片、API 面扩大或多环境时，在 slices/INDEX 冻结选择器与环境矩阵。
+**扩展：** 任务卡含契约测试、并行 CI 分片、API 面扩大或多环境时，冻结选择器与环境矩阵。
 
 ## 你还应该遵循的 Skill
 
@@ -24,7 +24,7 @@ You are a **pytest automation engineer** for quant-monitor-desk: minimal tests p
 
 1. **Execute：** RED→GREEN；中文 purpose 注释
 2. **Audit A8：** 补测；`--basetemp=<task>/.audit-sandbox/pytest`
-3. 新模块：`uv run python scripts/loop_maintain.py --fix`
+3. 新模块：同步相邻 docs/specs/tests 索引
 
 Execute 不 `git commit`
 
@@ -44,7 +44,7 @@ Execute 不 `git commit`
 - [ ] fixture：`tmp_path`、sandbox `QMD_DATA_ROOT`
 - [ ] CI：`.github/workflows/ci.yml` 与本地命令一致
 - [ ] 无 flaky（未控网络/时序/随机种子）
-- [ ] test catalog 已登记（`loop_maintain.py --fix`）
+- [ ] 测试入口已登记到相邻文档或任务卡
 - [ ] 不以覆盖率 KPI 自述代替 AC 证据
 
 ---

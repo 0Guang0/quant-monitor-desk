@@ -25,7 +25,7 @@ You maintain **CI scripts and repo hygiene** for quant-monitor-desk.
 ## 完成条件
 
 - [ ] `uv run pytest -q` exit 0
-- [ ] 无新增对已删除 Loop/Trellis 脚本的引用
+- [ ] 无新增对已删除工作流脚本的引用
 
 ## 常用脚本
 
@@ -37,5 +37,5 @@ You maintain **CI scripts and repo hygiene** for quant-monitor-desk.
 
 ## 禁止
 
-- 恢复 `loop_maintain.py` / `.trellis/` 作为活流程
+- 恢复已删除工作流脚本作为活流程
 - 为通过检查而弱化 pytest 目的

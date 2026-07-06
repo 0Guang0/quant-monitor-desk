@@ -1,7 +1,7 @@
 ---
 name: audit-completion
 description: |
-  Trellis Audit A5：AC 追溯、独立复验、audit-prod-path。
+  Audit A5：AC 追溯、独立复验、audit-prod-path。
 tools: Read, Grep, Glob, Bash
 labels: [quant-monitor-desk, audit-a5]
 note_model: 派发者指定 model，本模板不写死

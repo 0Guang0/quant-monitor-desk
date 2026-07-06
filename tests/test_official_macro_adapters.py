@@ -4,7 +4,7 @@
 的 fetch port、证据契约、路由与 Layer smoke。
 测试对象：backend/app/datasources/normalizers/official_macro.py 及兄弟 fetch port 模块。
 目的/目标：证明六源可在 replay-first 路径下产出合规证据并满足 route/registry 终态。
-验证点：各 step 子集（evidence_contract、fred_port、layer 等）按 EXECUTION_INDEX §1 通过。
+验证点：各 step 子集（evidence_contract、fred_port、layer 等）通过当前 pytest 验收。
 失败含义：Batch 3H R3H-01 无法在 Round4 前闭合官方源生产入口决策。
 """
 

@@ -205,7 +205,7 @@ migration note
 audit log
 ```
 
-> **L3/L4/L5 migration matrix (2026-06-25):** `docs/schema/MIGRATION_COVERAGE.md` — reconcile SSOT `.trellis/tasks/round3v-layer5-model-schema-reconcile/research/l5-reconcile-matrix.md`; closure `tests/test_migration_coverage.py`.
+> **L3/L4/L5 migration matrix (2026-06-25):** `docs/schema/MIGRATION_COVERAGE.md`; closure `tests/test_migration_coverage.py`.
 
 ---
 

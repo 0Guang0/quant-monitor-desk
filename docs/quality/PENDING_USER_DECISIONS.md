@@ -83,14 +83,14 @@ secret-like payload 不得保存原文。
 禁止无备份执行破坏性 schema change。
 ```
 
-## D-07 Trellis / Cursor 过程材料长期入库策略：已确认
+## D-07 过程材料长期入库策略：已确认
 
 **拍板结果**：每轮只保留 MASTER / AUDIT / DECISIONS；细碎 evidence 归档到 zip/artifacts；不全量长期堆在主仓库。
 
 执行规则：
 
 ```text
-保留：MASTER.plan.md、AUDIT.report.md、DECISIONS.md、关键 implement.jsonl。
+保留：任务卡、审计结论、决策记录、关键执行清单。
 细碎 red/green log、截图、临时证据、skill reads 归档到 artifacts zip。
 最终设计包和 release zip 不得保留 scratch/tmp/round progress 噪音。
 ```

@@ -8,7 +8,7 @@
 
 | 阶段      | 适用任务                | 必跑命令                                                                                                                                                                                               |
 | --------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| docs-only | 文档索引、ADR、设计说明 | `uv sync --locked && uv run python scripts/check_doc_links.py`，若脚本尚未创建则必须先创建等价 markdown link check                                                                                     |
+| docs-only | 文档索引、ADR、设计说明 | `uv sync --locked && uv run pytest tests/test_project_scaffold.py tests/test_global_execution_rules.py -q`                                                                                             |
 | scaffold  | 目录、配置、测试基线    | `uv sync --locked && uv run pytest -q tests/test_project_scaffold.py && uv run ruff check .`                                                                                                           |
 | backend   | 后端模块                | `uv sync --locked && uv run pytest -q && uv run ruff check . && uv run python -m compileall backend scripts tests`                                                                                     |
 | frontend  | 前端模块                | `uv sync --locked && uv run pytest -q tests/test_api_contracts.py && cd frontend && npm ci && npm audit --audit-level=high && npm run typecheck && npm run build`                                      |

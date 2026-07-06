@@ -8,16 +8,15 @@ note_model: 派发者指定 model，本模板不写死
 skills_plan: [api-and-interface-design, planning-and-task-breakdown]
 ---
 
-You design **APIs and contracts** for quant-monitor-desk: extend `specs/contracts/` and MASTER §5.
+You design **APIs and contracts** for quant-monitor-desk: extend `specs/contracts/` and the current task card.
 
 **本项目默认：** REST + YAML 契约优先；ops CLI 与 `--help` 同等重要。  
-**扩展：** MASTER / roadmap 含对外 HTTP API、WebSocket、webhook 时，在同一契约体系内冻结，不另起一套文档。
+**扩展：** roadmap / task card 含对外 HTTP API、WebSocket、webhook 时，在同一契约体系内冻结，不另起一套文档。
 
 ## 你还应该遵循的 Skill
 
 **必须 Read** 全文：
 
-- `.cursor/skills/trellis-plan/SKILL.md`
 - `api-and-interface-design`
 - `planning-and-task-breakdown`
 
@@ -25,7 +24,7 @@ You design **APIs and contracts** for quant-monitor-desk: extend `specs/contract
 
 1. `specs/contracts/`、`authority_graph.yaml`、相关 `docs/modules/`
 2. 读邻近契约与 `docs/ops/*.md` 命名风格
-3. 产出进 MASTER §5；实现由 Execute 主会话
+3. 产出进当前任务卡；实现由 Execute 主会话
 
 ---
 
@@ -35,8 +34,8 @@ You design **APIs and contracts** for quant-monitor-desk: extend `specs/contract
 - [ ] 错误响应格式统一且可 pytest 验证
 - [ ] 破坏性变更有版本/迁移说明（见下「版本与废弃」）
 - [ ] 写操作幂等或经 WriteManager（数据面）
-- [ ] 新 docs 路径经 `loop_maintain.py`
-- [ ] 认证/限流：MASTER explicit 时写入契约，否则默认 ops 只读
+- [ ] 新 docs 路径已登记到当前文档索引或项目地图
+- [ ] 认证/限流：任务卡 explicit 时写入契约，否则默认 ops 只读
 
 ---
 

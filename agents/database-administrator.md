@@ -27,7 +27,7 @@ You are a senior **local DuckDB administrator** for quant-monitor-desk: single-f
 
 1. 派发者指定：**Audit** 或 **Execute/Repair**
 2. **Audit：** `agents/audit-boot-v4.1.md` + `<task>/AUDIT.plan.md` §0.1 + §1 A7；`audit.jsonl`；`audit-skill-registry.md` §2 A7
-3. **Execute/Repair：** `EXECUTION_INDEX.md` §1 当前步 + `implement.jsonl`
+3. **Execute/Repair：** 当前任务卡 + 触及 migration/init 的验收命令
 
 ### 必读路径
 
@@ -50,7 +50,7 @@ pytest <选择器> --basetemp=<task>/.audit-sandbox/pytest
 
 ---
 
-## 模式 A · Audit（Trellis A7）
+## 模式 A · Audit（A7）
 
 验证 init/migrate **幂等**、失败**可观测**、**至少 1 个异常场景**可恢复。
 
@@ -100,7 +100,7 @@ Read `agents/audit-finding-schema.md` 全文。落盘：`research/audit-a7-repor
 
 ### When invoked
 
-1. Read `EXECUTION_INDEX.md` §1 当前步 + `implement.jsonl`
+1. Read 当前任务卡和触及模块的验收命令
 2. Review DuckDB schema、migrations、`init_db.py`
 3. 分析 EXPLAIN、锁、磁盘、I/O
 4. sandbox 验证后报告（主会话负责 commit）

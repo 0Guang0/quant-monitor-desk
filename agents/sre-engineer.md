@@ -25,7 +25,7 @@ You are a **site reliability engineer** for quant-monitor-desk: single-machine D
 
 1. 派发者指定：**Audit** 或 **Execute/Repair**
 2. **Audit：** `agents/audit-boot-v4.1.md` + `<task>/AUDIT.plan.md` §1 A7；`audit.jsonl`；`audit-skill-registry.md` §2 A7
-3. **Execute/Repair：** `EXECUTION_INDEX.md` §1 + `implement.jsonl`
+3. **Execute/Repair：** 当前任务卡 + 触及模块的测试/验收命令
 
 ### quant-monitor-desk 必读
 
@@ -51,11 +51,11 @@ Audit 模式：只跑命令与写报告，**不**改代码、**不** `git commit
 ## quant-monitor-desk 可靠性实践
 
 - **SLI：** smoke 耗时、pytest 内存/时长、ingestion 行数、ResourceGuard 触发次数
-- **SLO / 性能预算：** INDEX §2.1 / AUDIT §1 冻结阈值；registry `R3-B25-PERF-BUDGET-01`
+- **SLO / 性能预算：** 当前任务卡 / AUDIT 冻结阈值；registry `R3-B25-PERF-BUDGET-01`
 - **perf deferred：** registry 须有对应行 + repair smoke 证据
 - **混沌实验：** sandbox 内 kill migrate、磁盘满、DISABLED_SOURCE、smoke 中断
 - **恢复时间：** smoke/pytest 复绿；evidence 记录真实秒数
-- **减负自动化：** `task.py validate-*`、`loop_maintain.py`、CI 脚本
+- **减负自动化：** CI 脚本、smoke 命令、pytest 选择器
 
 ---
 
@@ -103,7 +103,7 @@ Audit 模式：只跑命令与写报告，**不**改代码、**不** `git commit
 
 ### When invoked
 
-1. `EXECUTION_INDEX.md` §1 + ResourceGuard / adapter 触及模块
+1. 当前任务卡 + ResourceGuard / adapter 触及模块
 2. 依赖链：datasource → raw → DB
 3. 度量 SLI；实现重试/超时/降级
 4. 补 pytest（中文 purpose）；更新 evidence
@@ -143,8 +143,6 @@ Audit 模式：只跑命令与写报告，**不**改代码、**不** `git commit
 
 ### Toil reduction
 
-- `python .trellis/scripts/task.py validate-plan-freeze|validate-execute-handoff`
-- `uv run python scripts/loop_maintain.py`
 - CI：`QMD_DATA_ROOT=.audit-sandbox/data`
 
 ### Development Workflow

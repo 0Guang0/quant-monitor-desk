@@ -45,19 +45,19 @@ Therefore the invariant is:
 
 External reference landing task: `R3-REF-OPS-DB-DATA-HEALTH` (`docs/implementation_tasks/ROUND_3_REFERENCE_LANDING/R3D_ops_db_data_health_reference.md`). Machine trace: `specs/contracts/ops_db_inspect_contract.yaml` `reference_landing`.
 
-| Reference | URL | Adopt in db-inspect v1 | Deferred to |
-| --------- | --- | ---------------------- | ----------- |
-| EasyXT data integrity / diagnostics | `https://github.com/quant-king299/EasyXT` | Metadata-only inspect; PASS/WARN/FAIL status vocabulary | `docs/ops/data_health_cli.md` for domain rules (missing days, OHLC, outliers) |
-| JQ2PTrade local DuckDB path override | `https://github.com/quant-king299/JQ2PTrade` | `--db` read-only path override | — |
-| ptqmt-site local/privacy documentation | `https://github.com/quant-king299/ptqmt-site` | — (db-inspect emits JSON only) | `docs/ops/ops_report_cli.md` for offline Markdown/HTML |
+| Reference                              | URL                                           | Adopt in db-inspect v1                                  | Deferred to                                                                   |
+| -------------------------------------- | --------------------------------------------- | ------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| EasyXT data integrity / diagnostics    | `https://github.com/quant-king299/EasyXT`     | Metadata-only inspect; PASS/WARN/FAIL status vocabulary | `docs/ops/data_health_cli.md` for domain rules (missing days, OHLC, outliers) |
+| JQ2PTrade local DuckDB path override   | `https://github.com/quant-king299/JQ2PTrade`  | `--db` read-only path override                          | —                                                                             |
+| ptqmt-site local/privacy documentation | `https://github.com/quant-king299/ptqmt-site` | — (db-inspect emits JSON only)                          | `docs/ops/ops_report_cli.md` for offline Markdown/HTML                        |
 
-| Reference pattern | Adopt | Do not adopt |
-| ----------------- | ----- | ------------ |
-| EasyXT data integrity / diagnostics | High-level check categories land in data-health design, not db-inspect v1 | Trading, order placement, GUI/QMT auto-login, hard-coded local paths, fixed single-table stock-daily assumptions, direct string-concatenated SQL |
-| JQ2PTrade local DuckDB path override | `--db` / `--duckdb-path`-style local DB override and repeatable local validation | Backtest engine, strategy conversion, PTrade simulation loop |
-| ptqmt-site local/privacy documentation | Local-only privacy language in report CLI | Online site shape or trading-platform tutorial content |
+| Reference pattern                      | Adopt                                                                            | Do not adopt                                                                                                                                     |
+| -------------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| EasyXT data integrity / diagnostics    | High-level check categories land in data-health design, not db-inspect v1        | Trading, order placement, GUI/QMT auto-login, hard-coded local paths, fixed single-table stock-daily assumptions, direct string-concatenated SQL |
+| JQ2PTrade local DuckDB path override   | `--db` / `--duckdb-path`-style local DB override and repeatable local validation | Backtest engine, strategy conversion, PTrade simulation loop                                                                                     |
+| ptqmt-site local/privacy documentation | Local-only privacy language in report CLI                                        | Online site shape or trading-platform tutorial content                                                                                           |
 
-Adoption rule: borrow inspection concepts and local-first UX only; implement through this project's contracts, schema, resource boundaries, and Trellis traceability.
+Adoption rule: borrow inspection concepts and local-first UX only; implement through this project's contracts, schema, resource boundaries, and current task traceability.
 
 ## 4. Final target shape
 
@@ -74,14 +74,14 @@ qmd ops report
 
 Only `qmd ops db-inspect` is authorized for Round 3 v1 implementation. The others are future phases and must not be silently implemented as part of v1.
 
-| Command                          | Final purpose                                                                                          | Implementation phase                                                                      |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
-| `qmd ops db-inspect`             | Read-only DB and data-root evidence inspection                                                         | Round 3 Batch 1 v1                                                                        |
-| `qmd ops env-doctor`             | Local environment, dependency, config, and install checks                                              | Round 5 / release-readiness phase                                                         |
+| Command                          | Final purpose                                                                                          | Implementation phase                                                                                                        |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
+| `qmd ops db-inspect`             | Read-only DB and data-root evidence inspection                                                         | Round 3 Batch 1 v1                                                                                                          |
+| `qmd ops env-doctor`             | Local environment, dependency, config, and install checks                                              | Round 5 / release-readiness phase                                                                                           |
 | `qmd data health`                | Domain-aware data quality checks such as missing dates, OHLC validity, duplicate keys, and as-of leaks | Batch 6 Phase C; design: `docs/ops/data_health_cli.md`; rules: `specs/contracts/data_quality_rules.yaml` `ops_cli_profiles` |
-| `qmd source probe`               | Route preview and user-authorized staging source probe                                                 | Round 3 Batch 1 extension or Round 3 Batch 6, after source authorization rules are frozen |
-| `qmd ops source-health snapshot` | Preview and later persist source health metrics                                                        | Batch 6, only after `source_health_snapshot` migration is designed                        |
-| `qmd ops report`                 | Convert JSON evidence into local Markdown / HTML report                                                | Round 5 Phase E; design: `docs/ops/ops_report_cli.md`                                     |
+| `qmd source probe`               | Route preview and user-authorized staging source probe                                                 | Round 3 Batch 1 extension or Round 3 Batch 6, after source authorization rules are frozen                                   |
+| `qmd ops source-health snapshot` | Preview and later persist source health metrics                                                        | Batch 6, only after `source_health_snapshot` migration is designed                                                          |
+| `qmd ops report`                 | Convert JSON evidence into local Markdown / HTML report                                                | Round 5 Phase E; design: `docs/ops/ops_report_cli.md`                                                                       |
 
 ## 5. Round 3 v1 scope
 
@@ -358,10 +358,10 @@ Round 3 v1 implementation must run at least:
 
 ```bash
 pytest tests/test_ops_db_inspector.py -q
-pytest tests/test_documentation_index.py tests/test_project_scaffold.py -q
+pytest tests/test_project_scaffold.py -q
 ```
 
-If packaging/CLI entry is implemented in the same Trellis batch, also run the relevant CLI smoke test.
+If packaging/CLI entry is implemented in the same task, also run the relevant CLI smoke test.
 
 ## 12. Phase plan
 
@@ -374,19 +374,19 @@ If packaging/CLI entry is implemented in the same Trellis batch, also run the re
 | Phase E / Round 5 release/reporting            | After JSON evidence shape is stable             | `qmd ops report` local Markdown/HTML report from JSON evidence                                                 | Uploading data or reports                                             |
 | Phase F / Release hardening                    | Round 5 / final packaging                       | `qmd ops env-doctor`, console script packaging, docs anchors, release manifest coverage                        | New broad dependencies without approval                               |
 
-## 13. Trellis planning requirements
+## 13. Planning requirements
 
-When Plan creates the Trellis task for `R3-EARLY-DB-INSPECT-CLI` or any batch that touches this tool:
+When a task touches this tool:
 
-1. `MASTER.plan.md` Source Context Index must include this document and `specs/contracts/ops_db_inspect_contract.yaml`.
-2. `MASTER.plan.md` must state whether the batch implements only Phase A or also a later phase.
-3. `implement.jsonl` may include this document only if Execute must read the original design. Otherwise MASTER must summarize the exact Phase A constraints.
-4. `AUDIT.plan.md` must verify no-mutation, no-network, JSON shape, and deferred item trace evidence.
+1. The task card input list must include this document and `specs/contracts/ops_db_inspect_contract.yaml`.
+2. The task card must state whether the batch implements only Phase A or also a later phase.
+3. The execution notes may include this document only if Execute must read the original design. Otherwise the task card must summarize the exact Phase A constraints.
+4. The audit plan must verify no-mutation, no-network, JSON shape, and deferred item trace evidence.
 5. Any future phase not explicitly authorized here must stay out of scope and be re-deferred.
 
 ## 14. Original execution task impact
 
-The following original task cards must treat this document as a Plan input when they are re-planned or when a new Trellis MASTER is generated:
+The following original task cards must treat this document as a planning input when they are re-planned:
 
 | Task / planning source                                                                                                           | Why this design matters                                                                        |
 | -------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
@@ -400,7 +400,7 @@ The following original task cards must treat this document as a Plan input when 
 | `docs/implementation_tasks/ROUND_5_INTEGRATION_RELEASE/035_implement_final_package_cleanup.md`                                   | Cleanup allowlist must preserve the design and contract                                        |
 | `docs/implementation_tasks/ROUND_5_INTEGRATION_RELEASE/036_create_final_release_manifest.md`                                     | Final manifest must include this design and contract once implemented/accepted                 |
 
-This does not mean Execute must always read the original task cards. Plan must fold this design into MASTER/AUDIT trace according to `docs/implementation_tasks/TASK_INPUT_CONTEXT_INDEX.md`.
+This does not mean Execute must always read the original task cards. Planning must fold this design into the current task trace according to the live roadmap and module docs.
 
 ## 15. Open decisions now closed
 

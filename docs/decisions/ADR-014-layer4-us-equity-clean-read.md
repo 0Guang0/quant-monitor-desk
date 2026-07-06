@@ -2,7 +2,7 @@
 
 **Status:** Accepted (Plan freeze 2026-07-02)  
 **Date:** 2026-07-02  
-**Context:** R3-DCP-08 · Wave 4 G4 · `.trellis/tasks/07-02-wave4-r3-dcp-08-layer4/`  
+**Context:** R3-DCP-08 · Wave 4 G4 historical task evidence
 **Numbering:** ADR-011/031 reserved on `master` for R3-DCP-09/10; ADR-013 taken by R3-DCP-07; DCP-08 takes ADR-014.
 
 ## Context

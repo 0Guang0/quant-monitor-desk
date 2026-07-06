@@ -13,7 +13,7 @@ AUTHORIZATION_FILENAME_RE = re.compile(
     r"^tdx_pytdx_live_manual_probe_authorization_\d{4}-\d{2}-\d{2}\.md$"
 )
 
-# Must match authorization_checklist.md §4 and live_manual_probe_plan.md §4
+# Must match the active TDX manual-probe authorization record.
 APPROVED_PROBE_ENVELOPES: frozenset[tuple[str, str, str, tuple[str, ...], str, int]] = frozenset(
     {
         (
@@ -73,7 +73,7 @@ _GATE_ISSUED = object()
 
 @dataclass(frozen=True)
 class TdxPytdxAuthorization:
-    """Live authorization — gate_token must be issued via issue_tdx_live_authorization_after_gate."""
+    """Live authorization issued only by the TDX manual-probe gate."""
 
     verified: bool
     host: str
@@ -183,7 +183,8 @@ def validate_tdx_live_manual_probe_authorization(request: TdxLiveManualProbeRequ
         )
     if not AUTHORIZATION_FILENAME_RE.match(auth_path.name):
         raise TdxLiveManualProbeAuthorizationError(
-            f"authorization filename must match tdx_pytdx_live_manual_probe_authorization_YYYY-MM-DD.md: "
+            "authorization filename must match "
+            "tdx_pytdx_live_manual_probe_authorization_YYYY-MM-DD.md: "
             f"{auth_path.name}"
         )
 
@@ -195,9 +196,9 @@ def validate_tdx_live_manual_probe_authorization(request: TdxLiveManualProbeRequ
                 f"authorization evidence missing required marker: {marker!r}"
             )
 
-    if "live_manual_probe_plan.md" not in auth_text:
+    if "active authorization record" not in lowered:
         raise TdxLiveManualProbeAuthorizationError(
-            "authorization evidence must cite live_manual_probe_plan.md"
+            "authorization evidence must identify the active authorization record"
         )
 
     if f"authorized_session_id: {request.authorized_session_id}" not in auth_text:

@@ -8,7 +8,7 @@
 
 ## 改造原则
 
-1. **本项目实践优先** — checklist + QMD 路径、sandbox 命令、Trellis 产出表
+1. **本项目实践优先** — checklist + QMD 路径、sandbox 命令、任务卡产出表
 2. **架构可扩展** — 写清当前默认形态（pipeline / DuckDB / layer1–5），roadmap 拆服务/API 时沿用同一套评审与关联技法
 3. **正面表述** — `note_model: 派发者指定`；不写死 model；无「与上游对比」类 meta
 4. **Skill 注入** — 「你还应该遵循的 Skill」+「启动」；派发者全文注入 subagent
@@ -34,7 +34,7 @@
 
 **Repair Boot SSOT（v4.1）：** `agents/repair-boot-v4.1.md`
 
-Audit 协调者将各维 agent 产出合并为任务根目录 `audit_matrix.json`（`result`: `pass` | `fail` | `skip` | `fail_then_fixed`；`evidence` → `research/audit-a{n}-report.md`）。各维须含 §维度裁决 + §计划内问题 + §计划外发现；矩阵字段见 `.trellis/spec/guides/templates/audit_matrix.json`。
+Audit 协调者将各维 agent 产出合并为任务根目录 `audit_matrix.json`（`result`: `pass` | `fail` | `skip` | `fail_then_fixed`；`evidence` → `research/audit-a{n}-report.md`）。各维须含 §维度裁决 + §计划内问题 + §计划外发现；矩阵字段由当前任务卡或 `agents/audit-finding-schema.md` 指定。
 
 ## 模板分类（行数 ≈ 2026-06 加厚后）
 
@@ -48,4 +48,4 @@ Audit 协调者将各维 agent 产出合并为任务根目录 `audit_matrix.json
 | Execute        | `backend-developer.md` (~113), `fastapi-developer.md` (~127), `frontend-developer.md` (~73), `cli-developer.md` (~61), `debugger.md` (~123), `refactoring-specialist.md` (~71) |
 | 工具/文档/MCP  | `tooling-engineer.md` (~83), `mcp-developer.md` (~72), `documentation-engineer.md` (~86), `readme-generator.md` (~81), `ai-writing-auditor.md` (~102)                          |
 
-Channel 运行时仍用 `.trellis/agents/check.md`、`implement.md`。
+Channel 运行时使用本目录 agent 模板；不得恢复已删除的工作流脚本作为活流程。

@@ -25,7 +25,7 @@ You are a **performance engineer** for quant-monitor-desk.
 ## 启动
 
 1. **Audit A6：** `agents/audit-boot-v4.1.md` + `AUDIT.plan.md` §1 A6（SKIP → 仅在 §3.6 注 SKIP）
-2. **Execute：** `EXECUTION_INDEX.md` §2.1 perf + `implement.jsonl`
+2. **Execute：** 当前任务卡 perf 要求 + 触及模块验收命令
 3. sandbox：`QMD_DATA_ROOT=<task>/.audit-sandbox/data`、`--basetemp=.audit-sandbox/pytest`
 
 Audit 不改码、不 `git commit`；不写生产 `data/`

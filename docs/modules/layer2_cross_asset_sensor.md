@@ -31,28 +31,28 @@ Layer 2 不回答：
 
 第一版建议覆盖：
 
-| asset_group | 示例 | 用途 |
-|---|---|---|
-| USD | DXY / 美元指数代理 | 观察美元流动性与风险偏好。 |
-| Rates | DGS10、DGS2、T10Y3M、TLT、IEF | 观察利率、期限结构与债券市场。 |
-| Metals | Gold、Silver、Copper | 观察避险、工业需求和电力/AI 约束。 |
-| Energy | WTI、Brent、Natural Gas | 观察能源价格和通胀/成本约束。 |
-| Credit ETF | HYG、LQD | 观察信用风险市场价格。 |
-| Equity ETF | SPY、QQQ、IWM、RSP | 观察权益市场广度与风格。 |
-| Volatility | VIX、VVIX、VIX futures | 观察期权保险费和风险定价。 |
-| Shipping | BDI、SCFI、油运/干散货代理 | 观察全球贸易和运输成本。 |
-| Futures | 铜、原油、天然气、黄金、股指期货 | 观察期货主力和期限结构。 |
+| asset_group | 示例                             | 用途                               |
+| ----------- | -------------------------------- | ---------------------------------- |
+| USD         | DXY / 美元指数代理               | 观察美元流动性与风险偏好。         |
+| Rates       | DGS10、DGS2、T10Y3M、TLT、IEF    | 观察利率、期限结构与债券市场。     |
+| Metals      | Gold、Silver、Copper             | 观察避险、工业需求和电力/AI 约束。 |
+| Energy      | WTI、Brent、Natural Gas          | 观察能源价格和通胀/成本约束。      |
+| Credit ETF  | HYG、LQD                         | 观察信用风险市场价格。             |
+| Equity ETF  | SPY、QQQ、IWM、RSP               | 观察权益市场广度与风格。           |
+| Volatility  | VIX、VVIX、VIX futures           | 观察期权保险费和风险定价。         |
+| Shipping    | BDI、SCFI、油运/干散货代理       | 观察全球贸易和运输成本。           |
+| Futures     | 铜、原油、天然气、黄金、股指期货 | 观察期货主力和期限结构。           |
 
 ---
 
 # 3. 与其他层的关系
 
-| 层 | 关系 |
-|---|---|
-| Layer 1 | Layer 2 可以作为旁证，但不能回写 Layer 1。 |
+| 层      | 关系                                                                                                |
+| ------- | --------------------------------------------------------------------------------------------------- |
+| Layer 1 | Layer 2 可以作为旁证，但不能回写 Layer 1。                                                          |
 | Layer 3 | 铜、能源、BDI 等既可作为 Layer 2 资产，也可被 Layer 3 引用为价格锚；数据仍由 Layer 5/Layer 2 提供。 |
-| Layer 4 | 不同市场结构页可引用 Layer 2 资产快照。 |
-| Layer 5 | 具体 ETF、期货、指数、商品合约的行情明细在 Layer 5 保存。 |
+| Layer 4 | 不同市场结构页可引用 Layer 2 资产快照。                                                             |
+| Layer 5 | 具体 ETF、期货、指数、商品合约的行情明细在 Layer 5 保存。                                           |
 
 ---
 
@@ -161,12 +161,12 @@ double_count_guard
 
 规则：
 
-| 情况 | 处理 |
-|---|---|
-| 资产已是 Layer 1 指标直接输入 | `is_axis_input=true`，默认 `display_only=true`。 |
-| 资产只是 Layer 1 旁证 | 可展示，可用于 Agent 解释，但不参与 Layer 1 计算。 |
-| 资产同时被 Layer 3 引用 | 不重复抓取，由统一 instrument_id 映射。 |
-| 资产缺少稳定数据源 | 标 `quality_flags=NO_ACCEPTED_CHANNEL`。 |
+| 情况                          | 处理                                               |
+| ----------------------------- | -------------------------------------------------- |
+| 资产已是 Layer 1 指标直接输入 | `is_axis_input=true`，默认 `display_only=true`。   |
+| 资产只是 Layer 1 旁证         | 可展示，可用于 Agent 解释，但不参与 Layer 1 计算。 |
+| 资产同时被 Layer 3 引用       | 不重复抓取，由统一 instrument_id 映射。            |
+| 资产缺少稳定数据源            | 标 `quality_flags=NO_ACCEPTED_CHANNEL`。           |
 
 ---
 
@@ -207,7 +207,7 @@ roll_date
 
 # 7. 更新流程
 
-> **Defer cross-ref (F-019-R02 / MASTER 019):** Full staging→DQ→conflict→clean pipeline below is **deferred** for Batch 3 staged gate. Implemented scope: registry load + snapshot builders + WriteManager-gated writes per `.trellis/tasks/06-22-round3-019-layer2-sensor/MASTER.plan.md` §1 非目标. Task split: **020**–**022** (Batch 4/5).
+> **Defer cross-ref (F-019-R02):** Full staging→DQ→conflict→clean pipeline below is **deferred** for Batch 3 staged gate. Implemented scope was registry load + snapshot builders + WriteManager-gated writes; task split: **020**–**022** (Batch 4/5).
 
 ```text
 1. 读取 cross_asset_registry
@@ -239,26 +239,26 @@ cross_asset_divergence
 
 示例：
 
-| signal_type | 说明 |
-|---|---|
-| `PRICE_MOVE_1D` | 单日价格显著变化。 |
-| `PRICE_MOVE_5D` | 5 日趋势显著变化。 |
-| `VOLUME_SPIKE` | 成交量放大。 |
-| `OI_SPIKE` | 期货/期权持仓变化。 |
+| signal_type              | 说明                      |
+| ------------------------ | ------------------------- |
+| `PRICE_MOVE_1D`          | 单日价格显著变化。        |
+| `PRICE_MOVE_5D`          | 5 日趋势显著变化。        |
+| `VOLUME_SPIKE`           | 成交量放大。              |
+| `OI_SPIKE`               | 期货/期权持仓变化。       |
 | `DIVERGENCE_WITH_LAYER1` | 与 Layer 1 状态出现背离。 |
-| `DIVERGENCE_WITH_LAYER3` | 与产业链锚点走势背离。 |
+| `DIVERGENCE_WITH_LAYER3` | 与产业链锚点走势背离。    |
 
 ---
 
 # 9. API 契约
 
-| API | 用途 |
-|---|---|
-| `GET /api/layer2/assets` | 获取跨资产清单。 |
-| `GET /api/layer2/sensors` | 获取最新跨资产传感器快照。 |
-| `GET /api/layer2/asset/{asset_id}` | 获取单个资产历史与状态。 |
-| `GET /api/layer2/divergence` | 获取跨资产背离清单。 |
-| `GET /api/layer2/quality` | 获取 Layer 2 数据质量。 |
+| API                                | 用途                       |
+| ---------------------------------- | -------------------------- |
+| `GET /api/layer2/assets`           | 获取跨资产清单。           |
+| `GET /api/layer2/sensors`          | 获取最新跨资产传感器快照。 |
+| `GET /api/layer2/asset/{asset_id}` | 获取单个资产历史与状态。   |
+| `GET /api/layer2/divergence`       | 获取跨资产背离清单。       |
+| `GET /api/layer2/quality`          | 获取 Layer 2 数据质量。    |
 
 响应必须包含：
 
@@ -291,13 +291,13 @@ python -m quant_monitor layer2 health-check
 
 # 11. 测试清单
 
-| 测试 | 预期 |
-|---|---|
+| 测试                              | 预期                                                   |
+| --------------------------------- | ------------------------------------------------------ |
 | VIX 同时出现在 Layer 1 和 Layer 2 | Layer 2 标 `is_axis_input=true`，不参与 Layer 1 重算。 |
-| 期货主力切换 | 写 roll_event，不 silent switch。 |
-| 商品价格缺源 | 输出 `NO_ACCEPTED_CHANNEL`。 |
-| Layer 3 引用铜价 | 通过 instrument_id 映射，不重复抓取。 |
-| 前端请求大历史 | API 强制分页和日期窗口。 |
+| 期货主力切换                      | 写 roll_event，不 silent switch。                      |
+| 商品价格缺源                      | 输出 `NO_ACCEPTED_CHANNEL`。                           |
+| Layer 3 引用铜价                  | 通过 instrument_id 映射，不重复抓取。                  |
+| 前端请求大历史                    | API 强制分页和日期窗口。                               |
 
 ---
 

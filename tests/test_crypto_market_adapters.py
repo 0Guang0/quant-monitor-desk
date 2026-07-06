@@ -3,7 +3,7 @@
 覆盖范围：deribit、coingecko 的 fetch port、crypto_market 证据契约、路由与 Layer smoke。
 测试对象：backend/app/datasources/normalizers/crypto_market.py 及 deribit/coingecko fetch port 模块。
 目的/目标：证明加密源可在 replay-first 路径下产出 crypto_market_evidence_v1 并满足 cap/route 终态。
-验证点：test_crypto_market_adapters 全量及 -k layer 子集按 EXECUTION_INDEX §1 通过。
+验证点：test_crypto_market_adapters 全量及 -k layer 子集通过当前 pytest 验收。
 失败含义：Batch 3H R3H-02 无法在 Round4 前闭合加密市场源生产入口决策。
 """
 

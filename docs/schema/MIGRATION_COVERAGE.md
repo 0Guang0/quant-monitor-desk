@@ -41,7 +41,7 @@
 ## Round 3 Layer 3 — 产业链（已设计，尚无 migration）
 
 > **SSOT：** `docs/modules/layer3_industry_shock_anchor.md` — **不在** `specs/schema/schema.sql` 中（设计拆分）。  
-> **闭合测试：** `tests/test_migration_coverage.py` · **对账矩阵：** `.trellis/tasks/archive/2026-07/round3v-layer5-model-schema-reconcile/research/l5-reconcile-matrix.md` §3.1
+> **闭合测试：** `tests/test_migration_coverage.py` · **对账矩阵：** 本文矩阵与 schema/migration 代码。
 
 | 对象                            | Migration | 状态     | 备注                           |
 | ------------------------------- | --------- | -------- | ------------------------------ |

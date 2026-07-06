@@ -23,7 +23,7 @@
 | "3 live + 8 replay SLA" as PASS        | Roadmap §3.1 explicitly forbidden           |
 | Live tests against main `data/duckdb/` | Violates MAIN-DB-GATE / user isolation rule |
 | Delete replay tests                    | Breaks keyless CI and fast PR feedback      |
-| Separate Trellis ticket per source     | Violates v2 one-module-one-ticket rule      |
+| Separate task per source               | Violates v2 one-module-one-ticket rule      |
 
 ## Consequences
 
@@ -48,7 +48,7 @@
 
 ## Tier B FAIL_EXTERNAL bindings（2026-07-04 · 网络路径二）
 
-**证据 SSOT：** `.trellis/tasks/archive/2026-07/m-data-03-tier-a-live/research/archive/non-plan/execute/tier-b-network-path2-evidence.md`
+**证据 SSOT：** Tier B network-path evidence summarized in this ADR and related quality registries.
 
 **Amendment @ 2026-07-04（用户确认 · 当前阶段）：** Tier B **沙箱关账**口径 — **10/10 源均有验收结论**（6 `PASS` + 4 `FAIL_EXTERNAL`+本 ADR）。允许写「**Tier B 沙箱验收完成**」；**禁止**写「10/10 真网 fetch SUCCESS」。后续若重构 validation_fetch / CN hist 策略，须 **修订本 ADR**（非口头 defer）。
 

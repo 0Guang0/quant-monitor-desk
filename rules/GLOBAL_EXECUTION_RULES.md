@@ -59,7 +59,7 @@
 - 通知默认前端 Notification Center，邮件可选，不启用多 webhook。
 - raw/audit/report 默认留存 1 年，并提供手动归档。
 - 破坏性 migration 用备份恢复，非破坏性 migration 可无 down SQL。
-- Trellis/Cursor 每轮只长期保留 MASTER/AUDIT/DECISIONS，细碎 evidence 归档。
+- 过程材料长期只保留任务卡、审计结论、决策记录；细碎 evidence 归档或删除。
 - 前端正式实现前必须提醒用户确认 UI 信息架构。
 - 完整标准化字段仅 Layer 1 使用。
 - 设计包只放 docs/specs/tasks，源码和测试结果以 Git commit + CI 终审。

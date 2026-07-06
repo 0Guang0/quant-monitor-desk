@@ -14,7 +14,7 @@ Behavioral guidelines to reduce common LLM testing mistakes: over-mocking, weak 
 
 - Writing or extending unit/integration tests before or after production code (TDD / RED–GREEN).
 - Reviewing AI-generated or human-written tests for semantic assertions and mock boundaries.
-- Trellis Execute (MASTER §5), Audit A8, or `execute-skill-paths.yaml` routes testing work here.
+- Current task cards, Audit A8, or `execute-skill-paths.yaml` route testing work here.
 - Refactoring brittle suites (`verify()`-only, call-order asserts) or stabilizing flaky fixtures.
 - Planning coverage gates or prioritizing high-risk modules (WriteManager, ResourceGuard, validators).
 
@@ -177,7 +177,7 @@ When tests touch ingest, snapshots, reports, agents, or backtest output:
 
 Details: [GLOBAL_TESTING_POLICY.md §8](../../../rules/GLOBAL_TESTING_POLICY.md).
 
-## 9. Trellis / quant-monitor-desk
+## 9. quant-monitor-desk
 
 **Tests are contract evidence for Execute and Audit.**
 

@@ -1,20 +1,18 @@
 # Agent 工作流边界与信任模型
 
-> 本文说明仓库中 `.cursor/`、`.trellis/` 的用途、入库策略，以及 Cursor hooks 的信任边界。  
+> 本文说明仓库中 `.cursor/` 的用途、入库策略，以及已退休工作流目录的清理口径。
 > 适用读者：新贡献者、AI agent 操作者、安全审查。
 
 ---
 
-## 1. 为何这些目录在仓库里
+## 1. 当前保留目录
 
-| 目录 | 是否入库 | 用途 |
-|------|----------|------|
-| `.trellis/` | 是（spec、tasks、scripts） | Trellis 任务编排、编码规范、工作流脚本 |
-| `.trellis/workspace/` | 视项目政策 | 开发者会话日志；可能含过程性记录 |
-| `.cursor/` | 是（hooks、skills 等） | Cursor IDE 集成：hooks、项目级 skills/rules |
-| `.cursor/hooks/` | 是 | Session 启动时注入上下文（Python 脚本） |
+| 目录             | 是否入库               | 用途                                        |
+| ---------------- | ---------------------- | ------------------------------------------- |
+| `.cursor/`       | 是（hooks、skills 等） | Cursor IDE 集成：hooks、项目级 skills/rules |
+| `.cursor/hooks/` | 是                     | Session 启动时注入上下文（Python 脚本）     |
 
-**结论：** 上述目录**有意**纳入版本控制，以支持 Trellis 多阶段任务与 Cursor agent 协作。这不是误提交的运行时垃圾；请勿在 Repair 中批量删除。
+**结论：** `.cursor/` 仍是本地 IDE 集成目录；已删除的旧工作流目录不得作为活流程恢复。
 
 ---
 
@@ -36,13 +34,13 @@
 
 ---
 
-## 3. Trellis 任务与 workspace（SEC-3）
+## 3. 已退休工作流目录（SEC-3）
 
-- **权威任务状态：** `.trellis/tasks/<slug>/`（PRD、plan、jsonl 上下文）
-- **编码规范：** `.trellis/spec/` — agent 写代码前应读取对应 package/layer 指南
-- **workspace 日志：** `.trellis/workspace/` 可能含对话摘要或调试笔记；是否 ignore 由项目政策决定，当前多数 task 元数据入库以便跨会话恢复
+- 旧工作流目录已从活流程移除。
+- 当前任务状态以 `PROJECT_IMPLEMENTATION_ROADMAP.md`、`MODULE_COMPLETION_RATING.md`、任务卡、模块文档和 contracts 为准。
+- 新代码和测试不得新增对已删除工作流目录或脚本的依赖。
 
-Agent 应优先读 `.trellis/tasks/` 与 `.trellis/spec/`，而非猜测未文档化的约定。
+Agent 应优先读路线图、模块文档、contracts、rules 和当前任务卡，而非猜测未文档化的约定。
 
 ---
 
@@ -59,11 +57,11 @@ Agent 修改代码时：
 
 - **不要**提交 `data/` 运行时产物
 - **不要**在无 impact 分析时改 `backend/app/db/connection.py` 等核心模块（见根目录 `AGENTS.md` / GitNexus 规则）
-- 文档链接变更后运行 `python scripts/check_doc_links.py`
+- 文档入口变更后运行相关 `pytest` 选择器，例如 `tests/test_project_scaffold.py` 或 `tests/test_global_execution_rules.py`
 
 ---
 
-## 5. 与 Round 2+ 的衔接
+## 5. 与历史任务的衔接
 
-- P1-5 / P2-4 结论：**文档化边界**，而非移除 `.cursor`/`.trellis`
+- 历史任务材料只作背景证据，不作当前执行入口。
 - 若未来决定 workspace 不入库，应单独 PR 更新 `.gitignore` 并在此文件记录政策变更

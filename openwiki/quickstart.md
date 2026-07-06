@@ -72,4 +72,4 @@ Do not read or document secret values. `.env` exists locally and should not be r
 
 ## Recent repository direction
 
-Recent git history inspected during this OpenWiki init includes retirement of older Trellis/Loop and implementation-task docs, initialization of the OpenWiki/agent pointers, and live-data acceptance cleanup. That matches the current code emphasis on compact authority docs, route planning, isolated live acceptance, fail-closed product live gates, and auditable incremental evidence.
+Recent git history inspected during this OpenWiki init includes retirement of older workflow and implementation-task docs, initialization of the OpenWiki/agent pointers, and live-data acceptance cleanup. That matches the current code emphasis on compact authority docs, route planning, isolated live acceptance, fail-closed product live gates, and auditable incremental evidence.

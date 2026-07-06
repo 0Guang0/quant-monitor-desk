@@ -210,7 +210,7 @@ Next: run user-authorized staging fetch or narrow --start/--end.
 | Phase C | Batch 6                | `qmd data health` read-only checks from `ops_cli_profiles` |
 | Later   | After migration design | optional persisted health snapshot write mode              |
 
-## 10. Trellis trace
+## 10. Planning trace
 
-- Plan Source Context Index must cite this doc when implementing Batch 6 data health.
+- The task input list must cite this doc when implementing Batch 6 data health.
 - External URLs: EasyXT, JQ2PTrade (see §2); ptqmt-site applies to `ops_report_cli.md` report rendering only.

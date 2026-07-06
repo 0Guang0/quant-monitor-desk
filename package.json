@@ -5,7 +5,7 @@
   "scripts": {
     "prepare": "husky",
     "typecheck": "npm run typecheck --prefix frontend",
-    "test": "python -m pytest -q"
+    "test": "uv run python -m pytest -q"
   },
   "devDependencies": {
     "husky": "^9.1.7",

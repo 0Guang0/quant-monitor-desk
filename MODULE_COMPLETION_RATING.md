@@ -108,7 +108,7 @@ For every module or major feature after this file lands:
 5. Repeated micro-slices such as “add one metric”, “add one flag”, “add one registry note”, or “add one narrow test” without moving the module to the next rating level are treated as overengineering unless they are part of the same batch PR.
 6. Every **new** task card must cite **Module ID** (§3) and which **rating movement** it will deliver — if only a milestone, say so explicitly.
 
-**Batch column (`批/3`):** implementation batches already spent toward **R6** (max 3 per §1.2); not Trellis task count. Pre-rule Wave/DCP batches still count toward the cap.
+**Batch column (`批/3`):** implementation batches already spent toward **R6** (max 3 per §1.2); not old workflow task count. Pre-rule Wave/DCP batches still count toward the cap.
 
 ---
 
@@ -252,8 +252,8 @@ For every module or major feature after this file lands:
 ## 3.2 Rating 复核说明
 
 - **本文件 §3 的 Rating / 批/3 / Close round 列** 为模块评级唯一 SSOT。
-- **Milestone / Evidence 列** 仅指向可复验 **pytest/代码** 锚点，用于支撑 Rating 判定；**不是** Trellis 关账证据。
-- 历史审计 Pass（E/D/C/B）、任务 CLOSED、ADR 关账表 → `PROJECT_IMPLEMENTATION_ROADMAP.md` · archived Trellis · `docs/decisions/ADR-*.md`。
+- **Milestone / Evidence 列** 仅指向可复验 **pytest/代码** 锚点，用于支撑 Rating 判定；**不是**旧工作流关账证据。
+- 历史审计 Pass（E/D/C/B）、任务 CLOSED、ADR 关账表 → `PROJECT_IMPLEMENTATION_ROADMAP.md` · `docs/decisions/ADR-*.md`。
 
 ---
 

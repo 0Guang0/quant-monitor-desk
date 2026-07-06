@@ -28,19 +28,19 @@
 
 Live 试点必须在任务证据中记录以下全部字段，否则 fail-closed：
 
-| 字段                     | 要求                                                |
-| ------------------------ | --------------------------------------------------- |
-| `source_id`              | 恰好一个源，除非 Trellis 计划显式命名极小 allowlist |
-| `data_domain`            | 恰好一个域                                          |
-| `operation`              | 恰好一个操作                                        |
-| `symbols_or_indicators`  | 默认一个指标/标的                                   |
-| `as_of` 或 `date_window` | 单日或短有界窗口                                    |
-| `max_rows`               | 硬行数上限；目标默认 `<= 100`                       |
-| `dry_run`                | 必须默认为 `true`                                   |
-| `raw_only`               | 首次 live 通过必须默认为 `true`                     |
-| `write_target`           | 必须默认为 `sandbox`                                |
-| `allow_clean_write`      | 必须默认为 `false`；若变更则仅 sandbox              |
-| `authorization_evidence` | 证明用户批准的人类可读路径或配置标记                |
+| 字段                     | 要求                                             |
+| ------------------------ | ------------------------------------------------ |
+| `source_id`              | 恰好一个源，除非当前任务卡显式命名极小 allowlist |
+| `data_domain`            | 恰好一个域                                       |
+| `operation`              | 恰好一个操作                                     |
+| `symbols_or_indicators`  | 默认一个指标/标的                                |
+| `as_of` 或 `date_window` | 单日或短有界窗口                                 |
+| `max_rows`               | 硬行数上限；目标默认 `<= 100`                    |
+| `dry_run`                | 必须默认为 `true`                                |
+| `raw_only`               | 首次 live 通过必须默认为 `true`                  |
+| `write_target`           | 必须默认为 `sandbox`                             |
+| `allow_clean_write`      | 必须默认为 `false`；若变更则仅 sandbox           |
+| `authorization_evidence` | 证明用户批准的人类可读路径或配置标记             |
 
 ## 4. 源限制
 

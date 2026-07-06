@@ -4,7 +4,7 @@
 证据契约、路由与 Layer smoke（yahoo 永久 validation-only）。
 测试对象：backend/app/datasources/normalizers/market_data.py 及兄弟 fetch port 模块。
 目的/目标：证明三源可在 replay-first 路径下产出 market_data_evidence_v1 并满足 route/registry 终态。
-验证点：各 step 子集（evidence_contract、alpha_vantage、stooq、yahoo、layer）按 EXECUTION_INDEX §1 通过。
+验证点：各 step 子集（evidence_contract、alpha_vantage、stooq、yahoo、layer）通过当前 pytest 验收。
 失败含义：Batch 3H R3H-02 无法在 Round4 前闭合市场源生产入口决策。
 """
 

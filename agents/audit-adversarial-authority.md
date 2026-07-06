@@ -18,14 +18,14 @@
 ### 第三级
 
 - **`frozen/*.md`**（v4.1 薄指针 + 审计锚点）
-- **`EXECUTION_INDEX.md`**（§1 步骤/证据 · §2 AC · §3 manifest · §5 Audit 追溯）
+- **当前任务卡索引**（步骤/证据、AC、manifest、Audit 追溯）
 - **`audit.jsonl` / `AUDIT.plan.md` Trace Authority**（索引与验证矩阵，非 scope 上限）
 
 ## 仅作参考（不得当作审计完备性上限）
 
 - **Execute `implement.jsonl` manifest 点名**（非行为全集）
 - **首轮 `audit.report.md`**（可被本轮推翻）
-- **`tasks/archive/` 内 v3 `MASTER.plan.md`**（历史只读；活跃任务不存在）
+- **旧任务归档材料**（历史只读；不得作为当前验收入口）
 
 **假设：** Execution Bundle 本身可能存在缺口。**先读 Bundle 建上下文**；**验证只信代码 + 跑测 + 独立复验**，不信任何文档自述。
 

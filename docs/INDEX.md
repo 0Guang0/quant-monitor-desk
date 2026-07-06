@@ -102,7 +102,7 @@ See [`docs/api/`](api/) for FastAPI routes and agent tool documentation.
 
 **历史 ROUND/Wave/DCP 任务包（只读）：** [`implementation_tasks/archive/legacy-pre-module-v2-20260702/`](implementation_tasks/archive/legacy-pre-module-v2-20260702/README.md) — 含 `ROUND3_BATCH_IMPLEMENTATION_MAP.md`、`R3H_PASS_EXECUTION_PLAN.archived-20260702.md` 等。不得再作顺序执行入口。
 
-Plan-stage inputs for turning original tasks into Trellis frozen plans:
+Plan-stage inputs for turning original tasks into current task cards:
 
 - [TASK_INPUT_CONTEXT_INDEX.md](implementation_tasks/TASK_INPUT_CONTEXT_INDEX.md)
 - [GLOBAL_EXECUTION_RULES.md](implementation_tasks/GLOBAL_EXECUTION_RULES.md)

@@ -3,7 +3,7 @@
 覆盖范围：kalshi、polymarket 的 fetch port、probability_signal 证据契约、路由与 Layer smoke。
 测试对象：backend/app/datasources/normalizers/probability_signal.py 及 kalshi/polymarket fetch port 模块。
 目的/目标：证明预测市场源可在 replay-first 路径下产出 probability_signal_evidence_v1 并满足 route/registry 终态。
-验证点：各 step 子集（evidence_contract、kalshi、polymarket、layer）按 EXECUTION_INDEX §1 通过。
+验证点：各 step 子集（evidence_contract、kalshi、polymarket、layer）通过当前 pytest 验收。
 失败含义：Batch 3H R3H-04 无法在 Round4 前闭合预测市场源生产入口决策。
 """
 

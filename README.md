@@ -41,7 +41,7 @@ quant-monitor-desk/
 
 历史规划/协调文档见 `docs/archive/` 与 `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/`（含 `ROUND3_BATCH_IMPLEMENTATION_MAP.md`、`R3H_PASS_EXECUTION_PLAN.archived-20260702.md`、旧版路线图备份）。旧 `ROUND_`\* / Wave / DCP 任务卡为**只读证据**，不得再作顺序执行入口。
 
-`docs/` 与 `specs/` 以 `MANIFEST.json` 中登记的修复包为权威口径。项目实施阶段产生的 Trellis/Batch 补充材料（如 `docs/implementation_tasks/**/plans/`、`DECISIONS.md`）不得覆盖上述权威文件。
+`docs/` 与 `specs/` 以当前模块文档、契约和 ADR 为权威口径。历史 Batch 补充材料不得覆盖上述权威文件。
 
 ## 项目地图与不可回退保护
 
@@ -67,11 +67,11 @@ quant-monitor-desk/
 
 ### 三层各自职责
 
-| 层级                        | 权威内容                                                                        | 典型路径                                                                                                                                          | 主要责任               | 不得做的事                                          |
-| --------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- | --------------------------------------------------- |
-| 第一层：设计/契约/规则/定义 | 项目真实意图、业务语义、schema、接口契约、source 角色、资源边界、用户已拍板决策 | `docs/modules/**`、`docs/ops/**`、`docs/architecture/**`、`docs/adr/**`、`docs/decisions/**`、`specs/**`、`docs/*REGISTRY.md`、`MIGRATION_MAP.md` | 提供实现依据和审计依据 | 不得当作运行时代码落点；不得被 Trellis 临时计划覆盖 |
-|                             |                                                                                 |                                                                                                                                                   |                        |                                                     |
-|                             |                                                                                 |                                                                                                                                                   |                        |                                                     |
+| 层级                        | 权威内容                                                                        | 典型路径                                                                                                                                          | 主要责任               | 不得做的事                                     |
+| --------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- | ---------------------------------------------- |
+| 第一层：设计/契约/规则/定义 | 项目真实意图、业务语义、schema、接口契约、source 角色、资源边界、用户已拍板决策 | `docs/modules/**`、`docs/ops/**`、`docs/architecture/**`、`docs/adr/**`、`docs/decisions/**`、`specs/**`、`docs/*REGISTRY.md`、`MIGRATION_MAP.md` | 提供实现依据和审计依据 | 不得当作运行时代码落点；不得被临时任务计划覆盖 |
+|                             |                                                                                 |                                                                                                                                                   |                        |                                                |
+|                             |                                                                                 |                                                                                                                                                   |                        |                                                |
 
 ### 每个 round 完成后的偏差定位方法
 
@@ -79,12 +79,12 @@ quant-monitor-desk/
 
 1. **第一层缺失**：设计文档、契约、规则、定义、schema、registry 本身是否缺内容、冲突或过时。
 2. **第二层缺失**：原始执行任务是否漏列必要输入、输出、验收命令或边界约束。
-3. **Plan 归并缺失**：Trellis `MASTER.plan.md` 是否没有把第一层/第二层关键上下文写入 Source Context Index。
+3. **Plan 归并缺失**：当前任务卡是否没有把第一层/第二层关键上下文写入输入清单。
 4. **Manifest 缺失**：`implement.jsonl` / `audit.jsonl` 是否没有列出无法无损总结、必须读原文的文件。
-5. **Execute 偏差**：执行代码是否偏离 MASTER、契约或已拍板决策。
+5. **Execute 偏差**：执行代码是否偏离当前任务卡、契约或已拍板决策。
 6. **Audit 偏差**：审计是否只看测试通过而没有核对 source trace、registry 更新和业务语义。
 
-偏差修复时，必须先标明偏差属于哪一层，再决定是修设计/契约、修原始任务、修 Trellis 计划、修 manifest，还是修代码/测试。
+偏差修复时，必须先标明偏差属于哪一层，再决定是修设计/契约、修任务卡、修 manifest，还是修代码/测试。
 
 ## 3. 旧口径禁止恢复
 
@@ -135,7 +135,7 @@ D-03 Secret 存储：第一版 .env.local；只提交 .env.example；CI 必须 s
 D-04 Notification：默认前端 Notification Center；邮件可选；不启用多 webhook。
 D-05 留存：raw/audit/report/notification 默认 1 年；提供手动归档按钮/CLI。
 D-06 Migration：破坏性变更走备份恢复；非破坏性可无 down SQL。
-D-07 Trellis/Cursor：每轮只保留 MASTER/AUDIT/DECISIONS；细碎 evidence 归档。
+D-07 过程材料：长期只保留任务卡、审计结论、决策记录；细碎 evidence 归档或删除。
 D-08 前端 UI：正式实现前必须提醒用户确认信息架构和交互，不写死 UI。
 D-09 Layer 标准化：完整标准化字段仅 Layer 1；Layer 2-5 按需局部扩展。
 D-10 设计包边界：设计包只放 docs/specs/tasks；源码和测试结果以 Git commit + CI 终审。

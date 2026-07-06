@@ -67,7 +67,7 @@ You write README sections for quant-monitor-desk with **verifiable commands only
 
 - [ ] 每条命令本地可跑或 CI 已跑
 - [ ] 路径与仓库根相对关系正确
-- [ ] `loop_maintain.py --check` 索引一致
+- [ ] 文档索引与项目地图一致
 - [ ] 无未验证 badge/KPI/百分比
 
 ---

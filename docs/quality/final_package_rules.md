@@ -79,16 +79,15 @@ docs/quality/staged_acceptance_policy.md
 
 最终清理脚本必须读取 `specs/contracts/release_cleanup_allowlist.yaml` 并先 dry-run。
 
-## 用户决策补充：Trellis/Cursor 与设计包边界
+## 用户决策补充：过程材料与设计包边界
 
 落实 D-07 与 D-10：
 
 ```text
-每轮只长期保留 MASTER.plan.md / AUDIT.report.md / DECISIONS.md / 关键 implement.jsonl。
+每轮只长期保留任务卡 / 审计结论 / 决策记录 / 关键执行清单。
 细碎 evidence、red/green log、临时截图、skill reads 应归档到 artifacts zip，不得长期堆在主仓库或最终设计包。
 设计包保持轻量，只包含 docs/specs/tasks；实现源码和测试结果通过 Git commit + CI 结果终审。
 ```
-
 
 ## MANIFEST 自校验规则
 

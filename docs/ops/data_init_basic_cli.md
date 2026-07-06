@@ -51,4 +51,4 @@ Writes allowed when confirmed (contract): `schema`, `registry` only. No fetch, n
 ## 6. Implementation location
 
 - `backend/app/cli/data_commands.py::init_basic`
-- Tests: `tests/test_qmd_data_cli.py::test_initBasic_noDryRun_syncsRegistry`, `tests/test_data_cli_contract.py`
+- Tests: `tests/test_qmd_data_cli.py::test_initBasic_noDryRun_syncsRegistry`, `tests/test_qmd_data_cli.py`

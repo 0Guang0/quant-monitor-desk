@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 import yaml
+from backend.app.config import PROJECT_ROOT
 from backend.app.datasources.adapters.fetch_port import PortError
 from backend.app.datasources.fetch_ports import tdx_pytdx_port as tdx_port_module
 from backend.app.datasources.fetch_ports.tdx_pytdx_port import (
@@ -23,7 +24,6 @@ from backend.app.datasources.normalizers.tdx import (
     manifest_content_hash,
     manifest_schema_hash,
 )
-from backend.app.config import PROJECT_ROOT
 from backend.app.ops.tdx_live_manual_probe_gate import (
     FORBIDDEN_LIVE_ENTRYPOINTS,
     TdxLiveManualProbeAuthorizationError,
@@ -54,16 +54,16 @@ def _gate_auth(tmp_path: Path, **overrides: object) -> TdxPytdxAuthorization:
 
 authorized_session_id: sess-planning-test-001
 
-I authorize the Round 3 018C tdx_pytdx live manual probe scoped to
+I authorize the tdx_pytdx live manual probe scoped to
 docs/quality/tdx_pytdx_live_manual_probe_authorization_2026-06-22.md only.
-See `.trellis/tasks/06-22-round3-018c-live-manual-probe-plan/live_manual_probe_plan.md`.
+The active authorization record is the quality document named above.
 This probe does not close Eastmoney stock_zh_a_hist / R3-B2.75-REQ2-EM.
 
 ## TDX host
 
-| host | port | provided_by | provided_on | reachability_note | reference_only_default | user_attestation |
-| ---- | ---- | ----------- | ----------- | ----------------- | ---------------------- | ---------------- |
-| 127.0.0.1 | 7709 | owner | 2026-06-22 | user confirms | false | bounded read-only probe |
+| host | port | note |
+| ---- | ---- | ---- |
+| 127.0.0.1 | 7709 | bounded read-only probe |
 """,
         encoding="utf-8",
     )

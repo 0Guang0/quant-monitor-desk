@@ -21,16 +21,16 @@ def _sample_auth_text(*, session_id: str = "sess-planning-test-001") -> str:
 
 authorized_session_id: {session_id}
 
-I authorize the Round 3 018C tdx_pytdx live manual probe scoped to
+I authorize the tdx_pytdx live manual probe scoped to
 docs/quality/tdx_pytdx_live_manual_probe_authorization_2026-06-22.md only.
-See `.trellis/tasks/06-22-round3-018c-live-manual-probe-plan/live_manual_probe_plan.md`.
+The active authorization record is the quality document named above.
 This probe does not close Eastmoney stock_zh_a_hist / R3-B2.75-REQ2-EM.
 
 ## TDX host
 
-| host | port | provided_by | provided_on | reachability_note | reference_only_default | user_attestation |
-| ---- | ---- | ----------- | ----------- | ----------------- | ---------------------- | ---------------- |
-| 127.0.0.1 | 7709 | owner | 2026-06-22 | user confirms | false | bounded read-only probe |
+| host | port | note |
+| ---- | ---- | ---- |
+| 127.0.0.1 | 7709 | bounded read-only probe |
 """
 
 

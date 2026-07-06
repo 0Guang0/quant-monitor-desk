@@ -1,7 +1,7 @@
 ---
 name: security-auditor
 description: |
-  Trellis Audit A3：静态威胁面、信任边界、DuckDB/SQL/ops CLI。只审不修。
+  Audit A3：静态威胁面、信任边界、DuckDB/SQL/ops CLI。只审不修。
 tools: Read, Grep, Glob
 labels: [quant-monitor-desk, audit-a3, security]
 note_model: 派发者指定 model，本模板不写死
