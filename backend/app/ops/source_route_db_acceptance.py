@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
+from pathlib import Path
 from typing import Literal
+
+from backend.app.config import DATA_ROOT, PROJECT_ROOT
 
 ImplementationMode = Literal["live", "mock", "replay", "dry_run", "not_implemented"]
 RouteGrade = Literal["primary", "degraded", "blocked", "not_planned"]
@@ -109,6 +112,24 @@ class AcceptanceReport:
             errors=("SourceRouteDbAcceptanceSpine execution is not implemented yet",),
         )
 
+    @classmethod
+    def contract_violation(cls, request: AcceptanceRequest, error: str) -> AcceptanceReport:
+        return cls(
+            source_id=request.source_id,
+            data_domain=request.data_domain,
+            operation=request.operation,
+            route_plan_id=None,
+            route_grade="blocked",
+            implementation_mode="not_implemented",
+            write_grade="blocked",
+            source_used=None,
+            source_role=None,
+            source_switched=False,
+            failure_class="CONTRACT_VIOLATION",
+            status="FAIL",
+            errors=(error,),
+        )
+
     def to_dict(self) -> dict[str, object]:
         payload = asdict(self)
         payload["quality_flags"] = list(self.quality_flags)
@@ -135,5 +156,19 @@ class SourceRouteDbAcceptanceSpine:
         data_root,
         live_authorized: bool,
     ) -> AcceptanceReport:
-        _ = (data_root, live_authorized)
+        _ = live_authorized
+        resolved_root = Path(data_root).expanduser().resolve()
+        if _is_canonical_main_data_root(resolved_root):
+            return AcceptanceReport.contract_violation(
+                request,
+                f"canonical main data root rejected for acceptance: {resolved_root}",
+            )
         return AcceptanceReport.not_implemented(request)
+
+
+def _is_canonical_main_data_root(data_root: Path) -> bool:
+    canonical_roots = {Path(PROJECT_ROOT / "data").resolve(), Path(DATA_ROOT).resolve()}
+    if data_root in canonical_roots:
+        return True
+    canonical_db_paths = {root / "duckdb" / "quant_monitor.duckdb" for root in canonical_roots}
+    return data_root / "duckdb" / "quant_monitor.duckdb" in canonical_db_paths

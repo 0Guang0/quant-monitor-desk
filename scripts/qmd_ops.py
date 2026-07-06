@@ -51,6 +51,29 @@ def main(argv: list[str] | None = None) -> int:
     data_parser = sub.add_parser("data", help="Data sync CLI (dry-run / route-preview)")
     data_parser.add_argument("rest", nargs=argparse.REMAINDER)
 
+    accept_parser = sub.add_parser(
+        "accept-source-route-db",
+        help="Production-equivalent source-route DB acceptance spine",
+    )
+    accept_parser.add_argument(
+        "--target",
+        required=True,
+        help="Acceptance target as data_domain:source_id:operation",
+    )
+    accept_parser.add_argument("--data-root", required=True, type=Path, help="Isolated data root")
+    accept_parser.add_argument(
+        "--report",
+        required=True,
+        type=Path,
+        help="Acceptance report JSON path",
+    )
+    accept_parser.add_argument(
+        "--allow-live-fetch",
+        action="store_true",
+        help="Authorize live external fetch attempts when implementation supports them",
+    )
+    accept_parser.add_argument("--format", choices=["json", "text"], default="json")
+
     args = parser.parse_args(argv)
     if args.command == "data":
         from backend.app.cli.main import main as data_main
@@ -59,6 +82,33 @@ def main(argv: list[str] | None = None) -> int:
         if rest and rest[0] == "--":
             rest = rest[1:]
         return data_main(["data", *rest])
+
+    if args.command == "accept-source-route-db":
+        from backend.app.ops.source_route_db_acceptance import (
+            AcceptanceRequest,
+            SourceRouteDbAcceptanceSpine,
+        )
+
+        try:
+            request = AcceptanceRequest.from_target(args.target)
+        except ValueError as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 2
+
+        report = SourceRouteDbAcceptanceSpine().execute(
+            request,
+            data_root=args.data_root,
+            live_authorized=args.allow_live_fetch,
+        )
+        payload = report.to_dict()
+        output = json.dumps(payload, indent=2)
+        args.report.parent.mkdir(parents=True, exist_ok=True)
+        args.report.write_text(output, encoding="utf-8")
+        if args.format == "json":
+            print(output)
+        else:
+            print(f"{payload['status']} {payload['failure_class']}: {', '.join(payload['errors'])}")
+        return 0 if payload["status"] == "PASS" else 1
 
     if args.command != "db-inspect":
         parser.error(f"unsupported command: {args.command}")
