@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, replace
 from pathlib import Path
 from typing import Any, Literal
 
@@ -159,6 +159,22 @@ class AcceptanceReport:
             errors=("Route evidence normalized; downstream acceptance is not implemented yet",),
         )
 
+    @classmethod
+    def blocked_from_route_payload(
+        cls,
+        request: AcceptanceRequest,
+        route_payload: dict[str, Any],
+        error: str,
+    ) -> AcceptanceReport:
+        report = cls.from_route_payload(request, route_payload)
+        return replace(
+            report,
+            write_grade="blocked",
+            failure_class="BLOCKED",
+            status="FAIL",
+            errors=(error,),
+        )
+
     def to_dict(self) -> dict[str, object]:
         payload = asdict(self)
         payload["quality_flags"] = list(self.quality_flags)
@@ -193,6 +209,15 @@ class SourceRouteDbAcceptanceSpine:
                 f"canonical main data root rejected for acceptance: {resolved_root}",
             )
         _bootstrap_acceptance_db(resolved_root)
+        if _is_fred_macro_series_request(request):
+            route_payload = _fred_macro_route_payload(request)
+            if not live_authorized:
+                return AcceptanceReport.blocked_from_route_payload(
+                    request,
+                    route_payload,
+                    "live authorization missing for macro_series:fred:fetch_macro_series",
+                )
+            return AcceptanceReport.from_route_payload(request, route_payload)
         return AcceptanceReport.not_implemented(request)
 
 
@@ -207,6 +232,27 @@ def _bootstrap_acceptance_db(data_root: Path) -> ConnectionManager:
     with cm.writer() as con:
         apply_migrations(con)
     return cm
+
+
+def _is_fred_macro_series_request(request: AcceptanceRequest) -> bool:
+    return (
+        request.data_domain == "macro_series"
+        and request.source_id == "fred"
+        and request.operation == "fetch_macro_series"
+    )
+
+
+def _fred_macro_route_payload(request: AcceptanceRequest) -> dict[str, Any]:
+    from backend.app.ops.fred_incremental_run import build_fred_incremental_preview_service
+
+    plan = build_fred_incremental_preview_service().preview_route(
+        data_domain=request.data_domain,
+        operation=request.operation,
+        market_id=request.market_id,
+        run_id="acceptance-preview",
+        job_id="acceptance-preview",
+    )
+    return plan.to_payload_dict()
 
 
 def _is_canonical_main_data_root(data_root: Path) -> bool:

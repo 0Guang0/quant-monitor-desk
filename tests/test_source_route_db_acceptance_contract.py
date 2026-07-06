@@ -78,7 +78,7 @@ def test_sourceRouteDbAcceptance_spinePreview_reportsNotImplementedHonestly(tmp_
     验证点：preview 与 execute 均为 FAIL；implementation_mode 为 not_implemented
     失败含义：未完成路径被当成产品验收成功，后续执行者会误判任务完成
     """
-    request = AcceptanceRequest.from_target("macro_series:fred:fetch_macro_series")
+    request = AcceptanceRequest.from_target("cn_equity_daily_bar:qmt:fetch_daily_bar")
     spine = SourceRouteDbAcceptanceSpine()
 
     preview = spine.preview(request).to_dict()
@@ -91,6 +91,33 @@ def test_sourceRouteDbAcceptance_spinePreview_reportsNotImplementedHonestly(tmp_
     assert report["failure_class"] == "NOT_IMPLEMENTED"
 
 
+def test_sourceRouteDbAcceptance_fredMacroTracer_withoutLiveAuthorizationBlocks(
+    tmp_path: Path,
+) -> None:
+    """覆盖范围：macro_series/fred/fetch_macro_series 验收 tracer bullet
+    测试对象：SourceRouteDbAcceptanceSpine.execute FRED route preview + live 授权门禁
+    目的/目标：FRED macro 目标必须先产生路由证据，缺 live 授权时诚实 BLOCKED
+    验证点：route_grade=primary；source_used=fred；failure_class=BLOCKED；status=FAIL
+    失败含义：acceptance spine 可能绕过授权触网，或无法说明 FRED 目标被阻断在哪一层
+    """
+    request = AcceptanceRequest.from_target("macro_series:fred:fetch_macro_series")
+
+    report = SourceRouteDbAcceptanceSpine().execute(
+        request,
+        data_root=tmp_path / "acceptance-root",
+        live_authorized=False,
+    ).to_dict()
+
+    assert report["route_plan_id"]
+    assert report["route_grade"] == "primary"
+    assert report["source_used"] == "fred"
+    assert report["source_role"] == "primary"
+    assert report["failure_class"] == "BLOCKED"
+    assert report["write_grade"] == "blocked"
+    assert report["status"] == "FAIL"
+    assert "live authorization missing" in report["errors"][0]
+
+
 def test_sourceRouteDbAcceptance_execute_bootstrapsIsolatedAcceptanceDb(tmp_path: Path) -> None:
     """覆盖范围：production-equivalent acceptance DB 初始化
     测试对象：SourceRouteDbAcceptanceSpine.execute DB bootstrap 路径
@@ -98,7 +125,7 @@ def test_sourceRouteDbAcceptance_execute_bootstrapsIsolatedAcceptanceDb(tmp_path
     验证点：duckdb/quant_monitor.duckdb 创建；schema_version 有迁移记录；报告仍为 NOT_IMPLEMENTED
     失败含义：验收 spine 没有真实 DB 语义，后续 route/fetch/write 接入会落到非生产等价环境
     """
-    request = AcceptanceRequest.from_target("macro_series:fred:fetch_macro_series")
+    request = AcceptanceRequest.from_target("cn_equity_daily_bar:qmt:fetch_daily_bar")
     data_root = tmp_path / "acceptance-root"
 
     report = SourceRouteDbAcceptanceSpine().execute(

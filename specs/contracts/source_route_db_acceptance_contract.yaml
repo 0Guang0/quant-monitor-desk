@@ -20,6 +20,9 @@ target_format:
   shape: data_domain:source_id:operation
   example: macro_series:fred:fetch_macro_series
 
+implemented_tracer_targets:
+  - macro_series:fred:fetch_macro_series
+
 implementation_modes:
   - live
   - mock

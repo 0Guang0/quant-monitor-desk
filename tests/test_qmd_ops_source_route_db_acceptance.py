@@ -21,11 +21,11 @@ def _run_acceptance_cli(*args: str) -> subprocess.CompletedProcess[str]:
 def test_qmdOps_acceptSourceRouteDb_delegatesToSpineAndWritesHonestReport(
     tmp_path: Path,
 ) -> None:
-    """覆盖范围：qmd-ops 生产等价验收入口未接真实流程时的输出
+    """覆盖范围：qmd-ops FRED macro tracer 缺 live 授权时的输出
     测试对象：scripts/qmd_ops.py accept-source-route-db
-    目的/目标：CLI 必须委托新验收 Module，并把未实现状态诚实写入报告
-    验证点：returncode==1；stdout/report 均为 not_implemented 和 NOT_IMPLEMENTED
-    失败含义：CLI 绕过 Module 或把未实现路径伪装成产品验收成功
+    目的/目标：CLI 必须委托验收 Module，并把缺 live 授权的 FRED tracer 诚实写入报告
+    验证点：returncode==1；stdout/report 均为 BLOCKED；报告包含 route_plan_id 和 fred route evidence
+    失败含义：CLI 绕过 Module、绕过授权门禁，或把 blocked tracer 伪装成产品验收成功
     """
     data_root = tmp_path / "source-route-db-acceptance"
     report_path = data_root / "reports" / "acceptance.json"
@@ -47,7 +47,11 @@ def test_qmdOps_acceptSourceRouteDb_delegatesToSpineAndWritesHonestReport(
     assert stdout_payload["source_id"] == "fred"
     assert stdout_payload["operation"] == "fetch_macro_series"
     assert stdout_payload["implementation_mode"] == "not_implemented"
-    assert stdout_payload["failure_class"] == "NOT_IMPLEMENTED"
+    assert stdout_payload["route_plan_id"]
+    assert stdout_payload["route_grade"] == "primary"
+    assert stdout_payload["source_used"] == "fred"
+    assert stdout_payload["failure_class"] == "BLOCKED"
+    assert stdout_payload["write_grade"] == "blocked"
     assert stdout_payload["status"] == "FAIL"
 
 
