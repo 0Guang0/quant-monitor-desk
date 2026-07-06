@@ -140,6 +140,43 @@ def test_sourceRouteDbAcceptance_fredMacroTracer_withoutLiveAuthorizationBlocks(
     assert "live authorization missing" in report["errors"][0]
 
 
+def test_sourceRouteDbAcceptance_fredMacroTracer_persistsRouteEvidence(
+    tmp_path: Path,
+) -> None:
+    """覆盖范围：FRED macro tracer 的 RoutePlan 持久化证据
+    测试对象：SourceRouteDbAcceptanceSpine.execute 写入 job_event_log ROUTE_PLAN
+    目的/目标：验收报告里的 route_plan_id 必须能在隔离 acceptance DB 里追溯到持久化路由事件
+    验证点：job_event_log 存在 ROUTE_PLAN；payload.route_plan_id 等于报告 route_plan_id
+    失败含义：验收报告只有内存证据，审计者无法在 acceptance DB 复盘路由选择
+    """
+    request = AcceptanceRequest.from_target("macro_series:fred:fetch_macro_series")
+    data_root = tmp_path / "acceptance-root"
+
+    report = SourceRouteDbAcceptanceSpine().execute(
+        request,
+        data_root=data_root,
+        live_authorized=False,
+    ).to_dict()
+
+    db_path = data_root / "duckdb" / ACCEPTANCE_DUCKDB_NAME
+    con = duckdb.connect(str(db_path), read_only=True)
+    try:
+        route_payloads = con.execute(
+            """
+            SELECT payload_json
+            FROM job_event_log
+            WHERE event_type = 'ROUTE_PLAN'
+            """
+        ).fetchall()
+    finally:
+        con.close()
+    assert len(route_payloads) == 1
+    payload = json.loads(route_payloads[0][0])
+    assert payload["route_plan_id"] == report["route_plan_id"]
+    assert payload["route_grade"] == "primary"
+    assert payload["selected_source_id"] == "fred"
+
+
 def test_sourceRouteDbAcceptance_fredMacroTracer_liveAuthorizedWithoutFredKeyBlocks(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

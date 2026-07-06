@@ -221,9 +221,10 @@ class SourceRouteDbAcceptanceSpine:
                 request,
                 f"canonical main data root rejected for acceptance: {resolved_root}",
             )
-        _bootstrap_acceptance_db(resolved_root)
+        cm = _bootstrap_acceptance_db(resolved_root)
         if _is_fred_macro_series_request(request):
             route_payload = _fred_macro_route_payload(request)
+            _persist_route_evidence(cm, route_payload)
             if not live_authorized:
                 return AcceptanceReport.blocked_from_route_payload(
                     request,
@@ -276,6 +277,27 @@ def _fred_macro_route_payload(request: AcceptanceRequest) -> dict[str, Any]:
 
 def _fred_live_credentials_available() -> bool:
     return bool(os.environ.get("FRED_API_KEY"))
+
+
+def _persist_route_evidence(cm: ConnectionManager, route_payload: dict[str, Any]) -> None:
+    from backend.app.sync.event_payload import build_event_payload
+
+    payload = build_event_payload(**route_payload, decision="route_plan")
+    route_status = _optional_str(route_payload.get("route_status")) or "UNKNOWN"
+    with cm.writer() as con:
+        con.execute(
+            """
+            INSERT INTO job_event_log (
+                event_id, run_id, job_id, event_type, message, payload_json, created_at
+            ) VALUES (uuid(), ?, ?, 'ROUTE_PLAN', ?, ?, CURRENT_TIMESTAMP)
+            """,
+            [
+                _optional_str(route_payload.get("run_id")),
+                _optional_str(route_payload.get("job_id")),
+                f"route_status={route_status}",
+                payload,
+            ],
+        )
 
 
 def _is_canonical_main_data_root(data_root: Path) -> bool:
