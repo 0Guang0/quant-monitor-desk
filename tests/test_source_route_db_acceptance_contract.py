@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from dataclasses import FrozenInstanceError
 from pathlib import Path
 
@@ -12,6 +13,7 @@ from backend.app.ops.source_route_db_acceptance import (
     AcceptanceReport,
     AcceptanceRequest,
     SourceRouteDbAcceptanceSpine,
+    write_acceptance_report,
 )
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -69,6 +71,26 @@ def test_sourceRouteDbAcceptance_request_isFrozenContractInput() -> None:
 
     with pytest.raises(FrozenInstanceError):
         request.source_id = "akshare"  # type: ignore[misc]
+
+
+def test_sourceRouteDbAcceptance_writeReport_persistsContractJson(tmp_path: Path) -> None:
+    """覆盖范围：验收报告 JSON artifact 写入
+    测试对象：write_acceptance_report + AcceptanceReport.to_dict
+    目的/目标：报告文件格式必须由验收 Module 统一生成，CLI 不应自己拼 JSON 契约
+    验证点：返回 JSON 与文件内容一致；JSON 包含 required report 字段和失败分类
+    失败含义：不同入口可能写出不同报告格式，审计和自动验收无法稳定读取
+    """
+    request = AcceptanceRequest.from_target("macro_series:fred:fetch_macro_series")
+    report = AcceptanceReport.not_implemented(request)
+    report_path = tmp_path / "reports" / "acceptance.json"
+
+    output = write_acceptance_report(report, report_path)
+
+    payload = json.loads(output)
+    assert report_path.read_text(encoding="utf-8") == output
+    assert set(REQUIRED_ACCEPTANCE_REPORT_FIELDS) <= set(payload)
+    assert payload["failure_class"] == "NOT_IMPLEMENTED"
+    assert payload["status"] == "FAIL"
 
 
 def test_sourceRouteDbAcceptance_spinePreview_reportsNotImplementedHonestly(tmp_path: Path) -> None:

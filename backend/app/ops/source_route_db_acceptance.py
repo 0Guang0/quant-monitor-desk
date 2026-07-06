@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 from dataclasses import asdict, dataclass, field, replace
 from pathlib import Path
@@ -40,6 +41,17 @@ REQUIRED_ACCEPTANCE_REPORT_FIELDS: tuple[str, ...] = (
     "status",
     "errors",
 )
+
+
+def acceptance_report_json(report: AcceptanceReport) -> str:
+    return json.dumps(report.to_dict(), indent=2)
+
+
+def write_acceptance_report(report: AcceptanceReport, path: Path) -> str:
+    output = acceptance_report_json(report)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(output, encoding="utf-8")
+    return output
 
 
 @dataclass(frozen=True, kw_only=True)

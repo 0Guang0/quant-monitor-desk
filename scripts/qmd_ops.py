@@ -87,6 +87,7 @@ def main(argv: list[str] | None = None) -> int:
         from backend.app.ops.source_route_db_acceptance import (
             AcceptanceRequest,
             SourceRouteDbAcceptanceSpine,
+            write_acceptance_report,
         )
 
         try:
@@ -101,9 +102,7 @@ def main(argv: list[str] | None = None) -> int:
             live_authorized=args.allow_live_fetch,
         )
         payload = report.to_dict()
-        output = json.dumps(payload, indent=2)
-        args.report.parent.mkdir(parents=True, exist_ok=True)
-        args.report.write_text(output, encoding="utf-8")
+        output = write_acceptance_report(report, args.report)
         if args.format == "json":
             print(output)
         else:
