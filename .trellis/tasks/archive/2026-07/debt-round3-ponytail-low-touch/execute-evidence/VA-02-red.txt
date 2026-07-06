@@ -1,6 +1,0 @@
-VA-02 RED — source_conflict.py thin wrappers
-
-Evidence: `_as_float`, `_as_text`, `_fetch_rows` forwarded to common without added logic
-(except `_as_text` empty-string default inlined at call sites).
-
-Status: structural debt confirmed; covered by test_source_conflict_validator.py.

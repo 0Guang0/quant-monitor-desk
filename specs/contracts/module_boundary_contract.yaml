@@ -67,6 +67,7 @@ modules:
       - backend.app.config
     must_not_import:
       - backend.app.datasources.adapters
+      - backend.app.datasources.service
   layer2_sensors:
     may_import:
       - backend.app.layer2_sensors
@@ -74,6 +75,7 @@ modules:
       - backend.app.config
     must_not_import:
       - backend.app.datasources.adapters
+      - backend.app.datasources.service
   layer3_chains:
     may_import:
       - backend.app.layer3_chains
@@ -81,6 +83,7 @@ modules:
       - backend.app.config
     must_not_import:
       - backend.app.datasources.adapters
+      - backend.app.datasources.service
   layer4_markets:
     may_import:
       - backend.app.layer4_markets
@@ -88,6 +91,7 @@ modules:
       - backend.app.config
     must_not_import:
       - backend.app.datasources.adapters
+      - backend.app.datasources.service
   layer5_evidence:
     may_import:
       - backend.app.layer5_evidence
@@ -95,6 +99,7 @@ modules:
       - backend.app.config
     must_not_import:
       - backend.app.datasources.adapters
+      - backend.app.datasources.service
 rules:
   - Round3 layer modules may consume clean snapshots and lineage, not raw vendor adapter classes
   - Direct adapter factory imports outside DataSourceService are forbidden in production code

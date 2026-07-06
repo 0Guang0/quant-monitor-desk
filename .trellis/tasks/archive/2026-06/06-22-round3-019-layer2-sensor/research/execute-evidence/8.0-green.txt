@@ -1,3 +1,0 @@
-uv run pytest tests/test_batch3_staged_downstream_gate.py -q
-2 passed
-exit_code=0

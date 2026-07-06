@@ -1,4 +1,0 @@
-S00-CORE-READER GREEN evidence @ 2026-07-02 (Repair refresh)
-Command: uv run pytest tests/test_layer1_clean_reader.py -q
-EXIT_CODE=0
-passed: 15 (macro/bar fail-closed, allowlist, source_switched, as_of_end, Amihud guards, K1 cap reconcile)

@@ -1,2 +1,0 @@
-SY-04 GREEN: runners._fetch_with_guard unified guard + fetch.
-pytest tests/test_r3x_ponytail_pilot_prep_bucket_a.py::test_sy04_fetchWithGuardUnifiesAdapterAndCallablePaths PASSED

@@ -1,4 +1,0 @@
-DATA-02 GREEN: skeleton_base infer + fetch guard
-pytest tests/test_adapter_skeletons.py::test_inferSchemaHash_csvHeader_producesStableHash tests/test_adapter_skeletons.py::test_inferSchemaHash_parquetColumns_producesHash -v
-2 passed
-exit 0

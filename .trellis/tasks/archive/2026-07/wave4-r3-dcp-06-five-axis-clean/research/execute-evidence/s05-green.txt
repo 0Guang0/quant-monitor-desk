@@ -1,5 +1,0 @@
-S05-SENTIMENT GREEN
-cmd: uv run python -m pytest tests/test_layer1_sentiment_clean_e2e.py -q
-result: 1 passed
-test: test_layer1SentimentClean_e2e_cotLfNet_readFeatureInterpret
-assertions: spec_id SEN-S1-COT_LF_NET; source_used cftc_cot; feature not insufficient_history; interpretation boundary

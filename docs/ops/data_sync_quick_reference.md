@@ -2,7 +2,7 @@
 
 本页是面向用户/运维的一页式数据同步入口。它不替代 implementation tasks；它把安全运行命令、dry-run、ResourceGuard、SourceRoutePlan 和错误排障放在一起。
 
-## Tier A 增量 sync（R3-DCP-05 · ADR-028）
+## Tier A 增量 sync（R3-DCP-05 · ADR-009）
 
 11 个 Tier A 源统一经 `--source-id` 路由；默认 **dry-run** 输出可审计 JSON（watermark / clean 表 / 窗参数）。
 
@@ -12,7 +12,7 @@ qmd data sync --source-id baostock --domain cn_equity_daily_bar --end 2024-06-30
 qmd data sync --source-id fred --domain macro_series --dry-run
 qmd data sync --source-id mootdx --domain cn_equity_daily_bar --end 2024-06-30 --dry-run
 
-# 真跑须隔离 QMD_DATA_ROOT（.audit-sandbox）+ 源级 live gate；见 ADR-027
+# 真跑须隔离 QMD_DATA_ROOT（.audit-sandbox）+ 源级 live gate；见 ADR-008
 ```
 
 | source_id                                    | canonical domain       | clean 表                |
@@ -24,14 +24,14 @@ qmd data sync --source-id mootdx --domain cn_equity_daily_bar --end 2024-06-30 -
 | sec_edgar                                    | us_filings             | us_disclosure_clean     |
 | deribit                                      | crypto_options_surface | crypto_derivative_clean |
 
-SSOT：`backend/app/sync/incremental_source_registry.py` · `docs/decisions/ADR-028-dcp05-tier-a-clean-domain-extension.md`
+SSOT：`backend/app/sync/incremental_source_registry.py` · `docs/decisions/ADR-009-tier-a-clean-domain-extension.md`
 
 ### ACC-EASTMONEY-TAXONOMY-001（口径 SSOT · 不关 REQ2-EM）
 
 - **问题：** `eastmoney_port` 产品 mock 与 akshare `stock_zh_a_hist`（`push2his.eastmoney.com`）真网口径并存。
 - **本票边界：** DCP-08 登记 registry proposed delta + 本文档；**不**关闭 `R3-B2.75-REQ2-EM` 硬约束。
 - **运维读法：** validation 用 akshare/eastmoney 对照；产品 bar 增量主路径为 **baostock/mootdx**（`--source-id`）。
-- **产品 bar 路径：** `cn_equity_daily_bar` 默认 primary=baostock；explicit `--source-id mootdx` 为 effective primary（ADR-033 双轨语义）。
+- **产品 bar 路径：** `cn_equity_daily_bar` 默认 primary=baostock；explicit `--source-id mootdx` 为 effective primary（ADR-014 双轨语义）。
 - **eastmoney 域：** validation-only for bar hist；`sector_board` / `capital_flow` 为独立 domain，勿与 bar hist taxonomy 混用。
 - 台账：`docs/quality/待修复清单.md` · Wave 4 `R3-DCP-05`/`08`
 

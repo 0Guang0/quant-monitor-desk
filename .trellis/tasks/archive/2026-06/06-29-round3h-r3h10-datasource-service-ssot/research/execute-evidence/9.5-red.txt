@@ -1,2 +1,0 @@
-S10-05 RED: ops/staged_pilot_fetch_ports duplicated cn rehearsal fetch classes outside datasources.fetch_ports.
-test_stagedPilot_stagedFetchPortsShareProductFetchPortModule would FAIL on ops module path.

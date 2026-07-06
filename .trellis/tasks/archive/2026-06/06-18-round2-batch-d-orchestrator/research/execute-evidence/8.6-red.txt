@@ -1,4 +1,0 @@
-﻿=== 8.6 RED ===
-FAILED tests/test_sync_orchestrator.py -k backfill
-AssertionError: shard exceeds 31 days
-exit 1

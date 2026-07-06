@@ -1,9 +1,0 @@
-{"phase":"audit","agent":"A1","skill":"trellis-check+doubt-driven","verdict":"PASS_WITH_FINDINGS"}
-{"phase":"audit","agent":"A2","skill":"ponytail-review+doubt-driven","verdict":"FAIL_bloat_nonblocking"}
-{"phase":"audit","agent":"A3","skill":"security-and-hardening+doubt-driven","verdict":"PASS_WITH_FIXES"}
-{"phase":"audit","agent":"A4","skill":"code-review-and-quality+doubt-driven","verdict":"PASS_WITH_FIXES"}
-{"phase":"audit","agent":"A5","skill":"verification-before-completion+doubt-driven","verdict":"PASS_WITH_FIXES"}
-{"phase":"audit","agent":"A6","skill":"SKIP","verdict":"N/A"}
-{"phase":"audit","agent":"A7","skill":"doubt-driven","verdict":"PASS_WITH_FIXES"}
-{"phase":"audit","agent":"A8","skill":"testing-guidelines+doubt-driven","verdict":"CONDITIONAL_PASS"}
-{"phase":"audit","agent":"A9","skill":"main-session","verdict":"PASS_WITH_FIXES"}

@@ -1,9 +1,0 @@
-S12-CLI-ROUTER GREEN
-timestamp: 2026-07-02
-pytest: uv run pytest tests/test_qmd_data_sync_tier_a_router.py -q → 14 passed
-full_suite: uv run pytest -q → exit 0
-artifacts:
-  - backend/app/cli/tier_a_sync_router.py
-  - backend/app/cli/data_commands.py (sync_plan + sync_mootdx_incremental)
-  - backend/app/cli/main.py (help text)
-  - tests/test_qmd_data_sync_tier_a_router.py

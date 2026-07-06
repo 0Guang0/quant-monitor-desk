@@ -1,7 +1,0 @@
-{"file": ".trellis/tasks/06-19-round2-repair-alignment/MASTER.plan.md", "reason": "【必读·第1条】Execute 唯一全文：R2.5-1..5 AC + §8 TDD"}
-{"file": "docs/quality/ROUND2_REPAIR_ALIGNMENT_TRACKER.md", "reason": "R2.5 scope + Round 3 PARTIAL / deferred tables"}
-{"file": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/ROUND2_GAPS_AND_DEVIATIONS.md", "reason": "PARTIAL items to repay in Round 3"}
-{"file": "specs/datasource_registry/source_registry.yaml", "reason": "D-11 disabled domain contract + named tests"}
-{"file": "specs/contracts/api_security_contract.yaml", "reason": "query budget single authority"}
-{"file": "backend/app/db/migrations/007_sync_constraints_audit.sql", "reason": "write_audit_log column source of truth"}
-{"file": "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md", "reason": "全局执行规则"}

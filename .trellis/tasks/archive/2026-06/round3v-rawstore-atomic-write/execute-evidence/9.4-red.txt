@@ -1,2 +1,0 @@
-STOR-04 RED — idempotency test added; behavioral pass on baseline acceptable per AC-STOR-04
-GREEN confirms no regression after atomic wire.

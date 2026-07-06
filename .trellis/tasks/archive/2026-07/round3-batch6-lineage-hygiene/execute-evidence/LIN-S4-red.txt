@@ -1,3 +1,0 @@
-LIN-S4 RED — Layer2SnapshotWriter did not bind lineage to validation_report JSON
-Expected: test_layer2Snapshot_lineageVrMismatch_rejects FAIL (write succeeds with fetch-B vs VR fetch-A)
-Observed: WM path accepted synthetic mismatch per R3Y-AUD-05

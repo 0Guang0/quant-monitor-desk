@@ -1,6 +1,0 @@
-{"file": ".trellis/tasks/06-20-round3-batch2-layer1/MASTER.plan.md", "reason": "A1 spec compliance baseline"}
-{"file": "specs/contracts/layer1_axis_contract.yaml", "reason": "A1 contract gate"}
-{"file": "specs/contracts/snapshot_lineage_contract.yaml", "reason": "A1 lineage contract gate"}
-{"file": "docs/modules/layer1_global_regime_panel.md", "reason": "A1 design authority cross-check"}
-{"file": "specs/layer1_axes/restructured_axes_v1_1/environment_axis/environment_axis_indicator_spec.yaml", "reason": "A1 axis YAML sample gate"}
-{"file": "backend/app/db/write_manager.py", "reason": "A1 write boundary gate"}

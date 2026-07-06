@@ -1,8 +1,0 @@
-{"file": ".trellis/tasks/round3-fred-authorized-sandbox-pilot/AUDIT.plan.md", "reason": "Audit single source of truth"}
-{"file": "docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/R3E_fred_authorized_sandbox_pilot.md", "reason": "extract: 原始任务卡 AC | for: A1/A5 trace"}
-{"file": "docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/BATCH_01_MODEL_SOURCE_READINESS/BATCH_01_HARDENING_RULES.md", "reason": "extract: hardening 边界 | for: A1/A3"}
-{"file": "docs/AUDIT_DEFERRED_REGISTRY.md", "reason": "extract: B2.5-O-05 | for: A5 closeout"}
-{"file": "docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md", "reason": "extract: coverage 映射 | for: A1 trace"}
-{"file": "docs/quality/production_live_pilot_policy.md", "reason": "extract: staged policy | for: A1"}
-{"file": "tests/test_fred_staged_semantics.py", "reason": "extract: B2.5-O-05 测试 | for: A8"}
-{"file": ".trellis/spec/guides/audit-skill-paths.yaml", "reason": "extract: A1–A8 路由 | for: Audit boot"}

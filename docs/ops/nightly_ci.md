@@ -1,4 +1,4 @@
-# Nightly CI — network acceptance (R3-DCP-09 / ADR-030)
+# Nightly CI — network acceptance (R3-DCP-09 / ADR-011)
 
 PR CI (`.github/workflows/ci.yml`) **does not** pass `--run-network`. Nightly owns live-network regression.
 

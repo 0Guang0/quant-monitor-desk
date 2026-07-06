@@ -1,2 +1,0 @@
-2 passed -k akshare
-exit 0

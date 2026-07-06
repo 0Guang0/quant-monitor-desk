@@ -1,6 +1,0 @@
-# g3-adv-a2 — checklist §4.3 ADV-A2
-# Command: uv run pytest tests/test_r3x_residual_open_items_closure.py -k "advA2 or defaultOperation or Cap" -q --tb=no
-
-......                                                                   [100%]
-6 passed in 2.1s
-EXIT:0

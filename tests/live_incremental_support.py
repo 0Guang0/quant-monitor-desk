@@ -1,4 +1,4 @@
-"""Generic live incremental e2e bootstrap (M-DATA-03 · ADR-034 acceptance DB path)."""
+"""Generic live incremental e2e bootstrap (M-DATA-03 · ADR-015 acceptance DB path)."""
 
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ ACCEPTANCE_DUCKDB_NAME = "quant_monitor.duckdb"
 
 
 def acceptance_db_path(sandbox_root: Path) -> Path:
-    """ADR-034 acceptance harness DB path (same as tier_a_live_acceptance.ensure_isolated_db)."""
+    """ADR-015 acceptance harness DB path (same as tier_a_live_acceptance.ensure_isolated_db)."""
     return sandbox_root / "duckdb" / ACCEPTANCE_DUCKDB_NAME
 
 

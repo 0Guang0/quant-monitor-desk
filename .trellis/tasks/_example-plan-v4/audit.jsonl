@@ -1,3 +1,0 @@
-{"file": ".trellis/tasks/_example-plan-v4/AUDIT.plan.md", "reason": "extract: Audit SSOT | for: A1-A8 boot"}
-{"file": ".trellis/tasks/_example-plan-v4/EXECUTION_PLAN.md", "reason": "extract: Execute plan trace | for: A5 scope"}
-{"file": ".trellis/tasks/_example-plan-v4/EXECUTION_INDEX.md", "reason": "extract: manifest index | for: A1/A5/A8"}

@@ -1,5 +1,0 @@
-§8.0 GREEN
-uv sync --locked: ok (venv present)
-pytest --co: see project baseline (~362+ tests collected)
-execute-boot.md: created with Phase 0 complete
-validate-execute-boot: exit 0

@@ -1,2 +1,0 @@
-FAILED test_syncJob_reservedFullLoad_returnsDeferredJobTypeError
-NotImplementedError: run_full_load is deferred to Batch 6 orchestrator job matrix

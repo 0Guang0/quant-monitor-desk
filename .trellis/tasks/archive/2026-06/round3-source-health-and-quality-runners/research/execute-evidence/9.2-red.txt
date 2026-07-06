@@ -1,3 +1,0 @@
-FAILED tests/test_b3f_quality_runners.py::test_b3fQualityRunners_revisionAudit_notDeferred
-DeferredJobTypeError: run_revision_audit
-exit 1

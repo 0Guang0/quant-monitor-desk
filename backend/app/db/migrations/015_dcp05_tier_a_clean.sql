@@ -1,4 +1,4 @@
--- Migration 015: DCP-05 Tier A clean extensions (ADR-028)
+-- Migration 015: DCP-05 Tier A clean extensions (ADR-009)
 
 CREATE TABLE IF NOT EXISTS us_disclosure_clean (
     accession_number        VARCHAR PRIMARY KEY,

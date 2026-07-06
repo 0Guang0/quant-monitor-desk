@@ -1,1 +1,0 @@
-GREEN: docs/ops/data_sync_quick_reference.md ACC-EASTMONEY taxonomy extended; REQ2-EM still open

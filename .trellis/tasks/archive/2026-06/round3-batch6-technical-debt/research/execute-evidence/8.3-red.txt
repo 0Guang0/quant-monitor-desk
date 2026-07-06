@@ -1,1 +1,0 @@
-FAIL: pytest_resource_guard exit=1 (pre-implementation smoke without --write-artifact threshold module)

@@ -1,1 +1,0 @@
-FAIL: sys.path.insert still present in scripts/sync_registry.py (D7-P2-2 smell)

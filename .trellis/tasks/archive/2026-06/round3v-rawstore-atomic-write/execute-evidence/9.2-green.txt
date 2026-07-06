@@ -1,2 +1,0 @@
-STOR-02 GREEN — save_writes + save_pathLayout regression
-Exit code: 0 — 2 passed

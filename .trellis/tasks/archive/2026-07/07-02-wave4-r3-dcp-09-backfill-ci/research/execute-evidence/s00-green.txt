@@ -1,1 +1,0 @@
-GREEN s00 bounded_backfill_cap + plan_backfill_shards max_shards

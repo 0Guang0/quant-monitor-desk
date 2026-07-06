@@ -1,7 +1,7 @@
 """Baostock bar incremental orchestration (R3-DCP-05 S01).
 
 L3: watermark window → port fetch → security_bar_1d clean (OpenBB fetcher phase align).
-ADR-027: live only when QMD_ALLOW_LIVE_FETCH opts in; default replay mock fail-closed.
+ADR-008: live only when QMD_ALLOW_LIVE_FETCH opts in; default replay mock fail-closed.
 """
 
 from __future__ import annotations
@@ -19,7 +19,7 @@ from backend.app.sync.watermark import IncrementalWindow
 
 
 def resolve_baostock_incremental_use_mock() -> bool:
-    """Return False when product live env gate opts in (ADR-027)."""
+    """Return False when product live env gate opts in (ADR-008)."""
     return not is_product_live_fetch_allowed()
 
 

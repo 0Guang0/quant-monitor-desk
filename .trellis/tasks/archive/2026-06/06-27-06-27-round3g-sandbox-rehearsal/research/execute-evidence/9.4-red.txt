@@ -1,2 +1,0 @@
-FAILED tests/test_round3g_sandbox_clean_write_rehearsal.py -k RehearsalRunner
-ModuleNotFoundError rehearsal_runner before 9.4 GREEN

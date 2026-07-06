@@ -1,1 +1,0 @@
-FAIL RED exit: 1 (registry DB-R3-001/DOC-R3-001 not yet RESOLVED)

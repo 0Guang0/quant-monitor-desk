@@ -102,7 +102,7 @@ def test_usEquityPort_explicitWindowSpan_120CalendarDaysWithinTradingSessionCap_
     instrument_id: str,
     factory_kwargs: dict[str, object],
 ) -> None:
-    """覆盖范围：US equity 显式 start/end 窗 trading-session span cap（ADR-026）
+    """覆盖范围：US equity 显式 start/end 窗 trading-session span cap（ADR-007）
     测试对象：三源 US equity fetch_payload 显式窗口校验
     目的/目标：120 自然日但 ≤120 交易日时不拒
     验证点：约 120 日历日窗 fetch 成功（无 PortError）
@@ -144,7 +144,7 @@ def test_usEquityPort_explicitWindowSpan_overMaxTradingSessions_rejected(
 ) -> None:
     """覆盖范围：US equity 显式窗超 120 交易日拒绝
     测试对象：三源 fetch_payload + reject_fetch_window_span_over_cap
-    目的/目标：ADR-026 span cap 按 trading sessions 计界
+    目的/目标：ADR-007 span cap 按 trading sessions 计界
     验证点：跨度含 >120 交易日时 PortError 且消息含 cap
     失败含义：超窗仍可拉取，recent_trading_window_start 未接入
     """
@@ -185,7 +185,7 @@ def test_usTradingCalendar_thanksgiving2024_isNonTradingDay() -> None:
 def test_usTradingCalendar_dayAfterThanksgiving2024_isTradingDay() -> None:
     """覆盖范围：感恩节次日（Black Friday 2024 NYSE 开市）
     测试对象：us_trading_calendar.is_trading_day
-    目的/目标：ADR-026 边界 — 仅假日闭市，相邻交易日仍开市
+    目的/目标：ADR-007 边界 — 仅假日闭市，相邻交易日仍开市
     验证点：date(2024, 11, 29) → True
     失败含义：假日规则过宽，误拒相邻交易日
     """

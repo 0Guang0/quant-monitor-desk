@@ -32,7 +32,7 @@ def _vix_entry():
 def test_layer2CleanReader_readsVixclsFromAxisObservation(tmp_path) -> None:
     """覆盖范围：L2-VIX P0 从 axis_observation(VIXCLS) 读入 CrossAssetObservation
     测试对象：Layer2CleanObservationReader.read_observations
-    目的/目标：ADR-032 — registry FRED:VIXCLS 映射 clean 行；source=fred 非 staged_fixture
+    目的/目标：ADR-013 — registry FRED:VIXCLS 映射 clean 行；source=fred 非 staged_fixture
     验证点：len>=30；asset_id==L2-VIX；close 可断言；source==fred
     失败含义：Layer2 无法从 Tier A macro clean 读 P0 传感器
     """

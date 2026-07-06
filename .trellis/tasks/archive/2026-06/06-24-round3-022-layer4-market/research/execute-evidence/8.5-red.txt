@@ -1,4 +1,0 @@
-# §8.5 RED
-$ uv run pytest tests/test_layer4_market_structure.py::test_marketSnapshot_lineageRequiredFieldsComplete -q
-FAILED — MarketStructureBuilder.build() not assembling lineage
-exit code: 1 (FAIL)

@@ -1,4 +1,0 @@
-{"file": ".trellis/tasks/round3v-rawstore-atomic-write/AUDIT.plan.md", "reason": "A1 spec scope baseline"}
-{"file": "docs/implementation_tasks/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/B02_03_rawstore_atomic_write.md", "reason": "A1 original task card trace"}
-{"file": "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md", "reason": "A8 testing policy"}
-{"file": "docs/implementation_tasks/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/BATCH_3V_ADVERSARIAL_AUDIT.md", "reason": "A1 vertical slice rule"}

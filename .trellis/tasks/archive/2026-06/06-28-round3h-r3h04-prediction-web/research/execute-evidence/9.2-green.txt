@@ -1,4 +1,0 @@
-8 passed in 1.5s
-
-Command: uv run pytest tests/test_prediction_market_adapters.py -q -k kalshi
-Exit: 0 (GREEN)

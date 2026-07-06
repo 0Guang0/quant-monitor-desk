@@ -1,2 +1,0 @@
-RED: tests/test_layer4_clean_read.py — ModuleNotFoundError clean_read (expected pre-impl)
-GREEN: uv run pytest tests/test_layer4_clean_read.py -q — 4 passed

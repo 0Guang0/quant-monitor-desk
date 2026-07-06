@@ -1,4 +1,0 @@
-# §8.3 GREEN — AC-022-2, AC-022-3
-$ uv run pytest tests/test_layer4_market_structure.py::test_marketCalendar_rejectsDuplicateTradeDate tests/test_layer4_market_structure.py::test_marketBreadth_requiredFieldsPresent -q
-..                                                                       [100%]
-2 passed — exit 0 (PASS)

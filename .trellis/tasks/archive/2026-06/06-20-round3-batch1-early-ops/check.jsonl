@@ -1,5 +1,0 @@
-{"file": ".trellis/tasks/06-20-round3-batch1-early-ops/AUDIT.plan.md", "reason": "A1 spec 合规"}
-{"file": "specs/contracts/ops_db_inspect_contract.yaml", "reason": "A1 contract gate"}
-{"file": "docs/ops/db_inspect_cli.md", "reason": "A3 Phase A boundary"}
-{"file": "docs/UNRESOLVED_ISSUES_REGISTRY.md", "reason": "A5 item closure trace"}
-{"file": "docs/ops/db_inspect_cli.md", "reason": "A1 Phase A scope gate"}

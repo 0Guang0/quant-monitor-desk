@@ -1,6 +1,0 @@
-{"file": ".trellis/tasks/07-02-wave4-r3-dcp-10-evidence/AUDIT.plan.md", "reason": "extract: Audit SSOT | for: A1-A8 boot"}
-{"file": ".trellis/tasks/07-02-wave4-r3-dcp-10-evidence/frozen/R3_DCP_10_LAYER5_EVIDENCE_BINDING.md", "reason": "extract: frozen task card trace | for: A5 scope"}
-{"file": ".trellis/tasks/07-02-wave4-r3-dcp-10-evidence/EXECUTION_INDEX.md", "reason": "extract: manifest index | for: A1/A5/A8"}
-{"file": "docs/decisions/ADR-031-dcp10-layer5-evidence-provenance-binding.md", "reason": "extract: context | for: manifest"}
-{"file": "docs/modules/layer5_security_evidence.md", "reason": "extract: context | for: manifest"}
-{"file": "scripts/loop_maintain.py", "reason": "extract: context | for: manifest"}

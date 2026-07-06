@@ -1,3 +1,0 @@
-FAILED tests/test_source_health_snapshot.py::test_sourceHealthSnapshot_writer_insertsRow
-Failed: RED: source_health_snapshot writer not implemented (R3F-SH-01)
-exit 1

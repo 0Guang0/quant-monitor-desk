@@ -39,7 +39,7 @@ quant-monitor-desk/
 
 **活 SSOT（新开工只看）：** `PROJECT_IMPLEMENTATION_ROADMAP.md` §3 · `MODULE_COMPLETION_RATING.md` · `docs/implementation_tasks/README.md`。
 
-历史规划/协调文档见 `docs/archive/` 与 `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/`（含 `ROUND3_BATCH_IMPLEMENTATION_MAP.md`、`R3H_PASS_EXECUTION_PLAN.archived-20260702.md`、旧版路线图备份）。旧 `ROUND_*` / Wave / DCP 任务卡为**只读证据**，不得再作顺序执行入口。
+历史规划/协调文档见 `docs/archive/` 与 `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/`（含 `ROUND3_BATCH_IMPLEMENTATION_MAP.md`、`R3H_PASS_EXECUTION_PLAN.archived-20260702.md`、旧版路线图备份）。旧 `ROUND_`\* / Wave / DCP 任务卡为**只读证据**，不得再作顺序执行入口。
 
 `docs/` 与 `specs/` 以 `MANIFEST.json` 中登记的修复包为权威口径。项目实施阶段产生的 Trellis/Batch 补充材料（如 `docs/implementation_tasks/**/plans/`、`DECISIONS.md`）不得覆盖上述权威文件。
 
@@ -57,49 +57,21 @@ quant-monitor-desk/
 
 ```text
 第一层：设计文档 / 契约 / 规则 / 定义 / registry / schema / ADR
-        ↓  Plan 阶段读取、比对、过滤、去噪、归并
-第二层：docs/implementation_tasks/** 原始执行任务
-        ↓  Plan 阶段转写为冻结的 Trellis 复杂任务计划
-第三层：.trellis/tasks/**/MASTER.plan.md + AUDIT.plan.md + REPAIR.plan.md + jsonl manifest
+        ↓
+第二层：
+        ↓  Plan 阶段转写为冻结的任务计划
+第三层：
         ↓  Execute / Audit / Repair 按冻结计划执行、审计、修复
 实现代码 / 测试 / registry 更新 / 证据产物
 ```
 
 ### 三层各自职责
 
-| 层级                        | 权威内容                                                                                                | 典型路径                                                                                                                                          | 主要责任                               | 不得做的事                                                                  |
-| --------------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- | --------------------------------------------------------------------------- |
-| 第一层：设计/契约/规则/定义 | 项目真实意图、业务语义、schema、接口契约、source 角色、资源边界、用户已拍板决策                         | `docs/modules/**`、`docs/ops/**`、`docs/architecture/**`、`docs/adr/**`、`docs/decisions/**`、`specs/**`、`docs/*REGISTRY.md`、`MIGRATION_MAP.md` | 提供实现依据和审计依据                 | 不得当作运行时代码落点；不得被 Trellis 临时计划覆盖                         |
-| 第二层：原始执行任务        | 每个 round / task 的范围、输入文件、输出文件、验收命令、边界约束                                        | `docs/implementation_tasks/**`                                                                                                                    | 帮 Plan 定位“要做什么、读什么、验什么” | 不得直接替代第一层契约；不得默认成为 Execute/Audit manifest                 |
-| 第三层：Trellis 冻结计划    | Plan 阶段过滤后形成的可执行计划、Source Context Index、Audit Source Trace、Repair 入口和 jsonl manifest | `.trellis/tasks/**/MASTER.plan.md`、`AUDIT.plan.md`、`REPAIR.plan.md`、`implement.jsonl`、`audit.jsonl` / `check.jsonl`                           | 是 Execute / Audit / Repair 的直接入口 | 不得丢失第一层/第二层关键上下文；不得把过时原始任务原文无过滤地推给 Execute |
-
-### 角色读取规则
-
-| 角色    | 必须读取                                                                                                                               | 可读取                                                     | 默认不读取                                  |
-| ------- | -------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- | ------------------------------------------- |
-| Plan    | 第一层权威来源、第二层原始任务、`MIGRATION_MAP.md`、`docs/implementation_tasks/TASK_INPUT_CONTEXT_INDEX.md`、Trellis planning protocol | 历史 `.trellis/tasks/**` 作为 trace                        | 不能只读原始任务就直接生成执行计划          |
-| Execute | 当前 Trellis `MASTER.plan.md`、`implement.jsonl` 中列出的 Execute must-read 文件                                                       | MASTER Source Context Index 标明必须读原文的设计/契约/代码 | 默认不直接读全部原始任务卡或全部 docs/specs |
-| Audit   | 当前 `AUDIT.plan.md`、`audit.jsonl` / `check.jsonl`、MASTER Source Context Index、需要核验的证据文件                                   | 被 AUDIT Source Trace 标明的原文路径                       | 默认不重新发明任务范围                      |
-| Repair  | `REPAIR.plan.md`、审计报告、失败证据、MASTER/AUDIT 中指定的上下文                                                                      | 必要时回溯第一层/第二层定位偏差来源                        | 默认不扩大修复范围                          |
-
-### Plan 阶段必须产出的追溯字段
-
-每个 Trellis `MASTER.plan.md` 必须包含 Source Context Index，至少说明：
-
-| 字段                | 含义                                                                          |
-| ------------------- | ----------------------------------------------------------------------------- |
-| Source path         | 原始来源路径，例如设计文档、契约、规则、原始任务或 registry                   |
-| Type                | design / contract / rule / schema / registry / original-task / code-reference |
-| Used by             | 哪个 deliverable、AC、测试或审计项使用它                                      |
-| Summary in plan     | 是否已被 MASTER 无损总结                                                      |
-| Must read original? | Execute/Audit 是否必须读原文                                                  |
-| Reason              | 为什么必须读、为什么已过滤、或为什么可只读总结                                |
-
-每个 `AUDIT.plan.md` 必须包含 Audit Source Trace，至少能追溯：
-
-```text
-item ID / task ID → source document → acceptance criterion → code/test evidence → registry or deferred update
-```
+| 层级                        | 权威内容                                                                        | 典型路径                                                                                                                                          | 主要责任               | 不得做的事                                          |
+| --------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- | --------------------------------------------------- |
+| 第一层：设计/契约/规则/定义 | 项目真实意图、业务语义、schema、接口契约、source 角色、资源边界、用户已拍板决策 | `docs/modules/**`、`docs/ops/**`、`docs/architecture/**`、`docs/adr/**`、`docs/decisions/**`、`specs/**`、`docs/*REGISTRY.md`、`MIGRATION_MAP.md` | 提供实现依据和审计依据 | 不得当作运行时代码落点；不得被 Trellis 临时计划覆盖 |
+|                             |                                                                                 |                                                                                                                                                   |                        |                                                     |
+|                             |                                                                                 |                                                                                                                                                   |                        |                                                     |
 
 ### 每个 round 完成后的偏差定位方法
 
@@ -113,20 +85,6 @@ item ID / task ID → source document → acceptance criterion → code/test evi
 6. **Audit 偏差**：审计是否只看测试通过而没有核对 source trace、registry 更新和业务语义。
 
 偏差修复时，必须先标明偏差属于哪一层，再决定是修设计/契约、修原始任务、修 Trellis 计划、修 manifest，还是修代码/测试。
-
-### 当前关键索引入口
-
-| 场景                                | 入口                                                                                                                                                                                  |
-| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **活规划 / 下一批工单**             | `PROJECT_IMPLEMENTATION_ROADMAP.md` §3 · `docs/implementation_tasks/README.md`                                                                                                        |
-| **模块完成度（Pass E）**            | `MODULE_COMPLETION_RATING.md` §3                                                                                                                                                      |
-| 全项目模块定位                      | `MIGRATION_MAP.md`                                                                                                                                                                    |
-| 普通文档导航                        | `docs/INDEX.md`                                                                                                                                                                       |
-| Plan 上下文桥                       | `docs/implementation_tasks/TASK_INPUT_CONTEXT_INDEX.md`                                                                                                                               |
-| Round3 六批次上下文索引（历史）     | `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND3_BATCH_IMPLEMENTATION_MAP.md`                                                                                  |
-| R3H PASS 逐源表 / Wave 叙事（历史） | `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/R3H_PASS_EXECUTION_PLAN.archived-20260702.md` |
-| Round3 DB inspect CLI 冻结设计      | `docs/ops/db_inspect_cli.md`、`specs/contracts/ops_db_inspect_contract.yaml`                                                                                                          |
-| Trellis 复杂任务协议                | `.trellis/spec/guides/complex-task-planning-protocol.md`                                                                                                                              |
 
 ## 3. 旧口径禁止恢复
 
@@ -154,10 +112,9 @@ uv run python scripts/init_db.py
 uv run pytest -q
 uv run ruff check .
 uv run python -m compileall -q backend scripts tests
-uv run python scripts/check_doc_links.py
 ```
 
-6. Install frontend:
+1. Install frontend:
 
 ```bash
 cd frontend && npm ci && npm run typecheck && npm run build
@@ -166,39 +123,6 @@ cd frontend && npm ci && npm run typecheck && npm run build
 **pip 备用路径**（仅当本机未安装 `uv` 时）：`pip install -e ".[dev]"`，须同步说明原因，不得替代 `uv.lock` 主路径。见 `specs/contracts/runtime_versions.md`。
 
 `pytest -q` 在干净 checkout 上可不预先创建 `data/duckdb/`；`init_db.py` 仍用于 prod-path CLI 与 Tier B 验收。
-
-### Agent / Trellis workflow
-
-本仓库跟踪 `.cursor/`（IDE hooks）与 `.trellis/`（任务规格与工作流脚本）。信任边界与干净 checkout 步骤见 [`docs/ops/agent_workflow_boundaries.md`](docs/ops/agent_workflow_boundaries.md)。
-
-## Implementation rounds
-
-**2026-07-02 起：** 不再按 `ROUND_0` → `ROUND_5` 顺序执行。旧 Wave/DCP 任务包已迁入 `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/`（只读证据）。
-
-**新开工** 以 **模块闭环队列 v2** 为准（`PROJECT_IMPLEMENTATION_ROADMAP.md` §3）：
-
-| 优先级 | 票 ID                                         | 业务一句话                                |
-| ------ | --------------------------------------------- | ----------------------------------------- |
-| **P0** | **M-DATA-03**                                 | 11 主源真网增量→写库→巡检（隔离库）       |
-| **P0** | **M-G1-03**                                   | 五轴按设计完整落地（真链，非仅 seed）     |
-| **P1** | **M-G2-FULL** / **M-G4-FULL** / **M-G5-FULL** | Layer2/4/5 按设计权威完整落地             |
-| **P0** | **M-PASS-01**                                 | `PASS_ROUND4_REAL_DATA_READY`（末位门禁） |
-
-Round4 产品面（B04）须在 **M-PASS-01** 通过后开工。每个新票 Plan 冻结前仍须读全局契约（`GLOBAL_*.md`）及该票列出的设计/契约；前端页面布局、视觉风格、交互方式在正式实现前必须由用户确认（D-08）。
-
-## 审计修复包（2026-06-19）
-
-本仓库已导入 `quant_monitor_implementation_docs_v1` 修复包（见 `MANIFEST.json`、`FINAL_AUDIT_REPORT.md`）。重点新增/强化：
-
-- `specs/contracts/api_security_contract.yaml` — API 分页与查询预算权威
-- `specs/contracts/runtime_versions.md` — `uv.lock` 与验收命令
-- `specs/datasource_registry/source_registry.yaml` — Primary / Validation / FallbackPolicy
-- `docs/ops/*_policy.md` — secret、migration、并发、Agent/前端安全等
-- `docs/quality/staged_acceptance_policy.md` — 分阶段验收
-
-执行角色进入实施前，必须先读 `MIGRATION_MAP.md`、`docs/implementation_tasks/GLOBAL_TASK_TEMPLATE.md`、`specs/contracts/runtime_versions.md` 与 `docs/quality/staged_acceptance_policy.md`。
-
-**修复包导入记录**：Phase 1–3 已完成（见 [`docs/quality/REPAIR_IMPORT_CODE_GAP_LEDGER.md`](docs/quality/REPAIR_IMPORT_CODE_GAP_LEDGER.md)，状态 closed）。修复包列出的部分 Round 4+ 契约测试仍待后续任务实现。
 
 ## 用户已拍板决策 D-01 至 D-12
 

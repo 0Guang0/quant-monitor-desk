@@ -1,6 +1,0 @@
-# Command: uv run pytest tests/test_sync_orchestrator.py -q
-# exit_code: 0
-
-.................................                                        [100%]
-
-EXIT:0

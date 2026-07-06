@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import re
-
 import yaml
 
 from tests.contract_gate_support import (
@@ -11,40 +9,16 @@ from tests.contract_gate_support import (
     FORBIDDEN_TRADING_DEF_NAMES,
     PROJECT_ROOT,
     load_yaml,
-    markdown_paths_missing_phrase,
     scan_forbidden_function_defs,
     scan_forbidden_import_roots,
     scan_guardrail_roots_for_patterns,
     scan_strategy_exec_patterns,
     scan_sys_path_mutation_with_reference_dir,
 )
-from tests.repo_paths import impl_task, repo_relative
 
 GUARDRAILS = PROJECT_ROOT / "specs/contracts/reference_adoption_guardrails.yaml"
 
 _GUARDRAILS = yaml.safe_load(GUARDRAILS.read_text(encoding="utf-8")) or {}
-
-_R3FR01_DOWNSTREAM_REL = (
-    "docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_01_SANDBOX_CLEAN_WRITE_REHEARSAL.md",
-    "docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_02_PRE_PRODUCTION_ADVERSARIAL_AUDIT.md",
-    "docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_03_LIMITED_PRODUCTION_CLEAN_WRITE.md",
-    "docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/R3H_01_OFFICIAL_MACRO_DISCLOSURE_ADAPTERS.md",
-    "docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/R3H_02_MARKET_DATA_ADAPTERS.md",
-    "docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/R3H_03_CN_MARKET_ADAPTERS.md",
-    "docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/R3H_04_PREDICTION_AND_WEB_EVIDENCE_ADAPTERS.md",
-    "docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/R3H_05_LAYER_BINDING_AND_PRODUCTION_ENTRY_AUDIT.md",
-    "docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/BATCH_04_VERIFIED_AUDIT_PRODUCTIZATION/B04_01_api_runtime_security.md",
-    "docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/BATCH_04_VERIFIED_AUDIT_PRODUCTIZATION/B04_02_agent_policy_runtime.md",
-    "docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/BATCH_04_VERIFIED_AUDIT_PRODUCTIZATION/B04_03_frontend_error_boundary_and_routes.md",
-    "docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/BATCH_04_VERIFIED_AUDIT_PRODUCTIZATION/B04_04_notification_report_runtime.md",
-    "docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/BATCH_04_VERIFIED_AUDIT_PRODUCTIZATION/B04_05_backtest_review_runtime.md",
-    "docs/implementation_tasks/ROUND_5_INTEGRATION_RELEASE/BATCH_05_VERIFIED_AUDIT_SECURITY_RELEASE/B05_01_security_ci_release_gate.md",
-    "docs/implementation_tasks/ROUND_5_INTEGRATION_RELEASE/BATCH_05_VERIFIED_AUDIT_SECURITY_RELEASE/B05_02_integration_and_resource_smoke.md",
-    "docs/implementation_tasks/ROUND_5_INTEGRATION_RELEASE/BATCH_05_VERIFIED_AUDIT_SECURITY_RELEASE/B05_03_release_manifest_and_package_cleanup.md",
-)
-
-_LOOSE_ROUND4_GLOB = "0[2-3][0-9]_*.md"
-
 
 def _forbidden_examples(category: str) -> tuple[str, ...]:
     block = (_GUARDRAILS.get("forbidden_adoption") or {}).get(category) or {}
@@ -107,13 +81,9 @@ def test_r3fr01GuardrailsYamlContract() -> None:
     assert rules.get("separate_reference_inventory_may_exist_only_as_non_executable_index") is True
     assert rules.get("planning_map_may_exist_only_as_non_executable_coverage_map") is True
     assert rules.get("planning_map_must_not_replace_task_card_local_details") is True
-    assert rules.get("production_completion_coverage_map_file") == (
-        "docs/implementation_tasks/PRODUCTION_COMPLETION_VERTICAL_SLICE_PLAN.md"
-    )
-    assert rules.get("downstream_may_cite_production_plan_only_as_coverage_checklist") is True
     assert rules.get("batch3fr_separate_reference_inventory_allowed") is False
     assert rules.get("batch3g_separate_reference_inventory_allowed") is False
-    assert _GUARDRAILS.get("status") == "active_round3fr"
+    assert _GUARDRAILS.get("status") == "active"
 
     gate = _GUARDRAILS.get("license_gate") or {}
     required = set(gate.get("required_task_card_fields") or [])
@@ -150,15 +120,8 @@ def test_r3fr01GuardrailsYamlContract() -> None:
         "tests/test_reference_adoption_guardrails.py::test_noOpenbbRuntimeCopyIntroduced",
         "tests/test_reference_adoption_guardrails.py::test_jq2ptradeSchedulerHookNotCopied",
         "tests/test_reference_adoption_guardrails.py::test_jq2ptradeCompileExecPatternNotCopied",
-        "tests/test_reference_adoption_guardrails.py::test_r3fr04Round4BacktestPlanningClosure",
         "tests/test_reference_adoption_guardrails.py::test_noAgentTriggeredWritePatterns",
         "tests/test_reference_adoption_guardrails.py::test_noEasyxtHardcodedTableInDataHealth",
-        "tests/test_reference_adoption_guardrails.py::test_batch3frCardsDoNotRequireCentralInventory",
-        "tests/test_reference_adoption_guardrails.py::test_r3fr01PlanningWordingAndLooseCardRedirects",
-        "tests/test_reference_adoption_guardrails.py::test_productionCompletionPlanIsCoverageMapOnly",
-        "tests/test_reference_adoption_guardrails.py::test_r3fr01DownstreamCardsGovernanceBoundaries",
-        "tests/test_reference_adoption_guardrails.py::test_r3frAdaptingCardsDeclareReferenceProject",
-        "tests/test_reference_adoption_guardrails.py::test_r3fr05ProviderCatalogClosure",
     }
 
 
@@ -238,222 +201,6 @@ def test_noEasyxtHardcodedTableInDataHealth() -> None:
     assert violations == [], f"EasyXT hardcoded table in data health: {violations}"
 
 
-def test_batch3frCardsDoNotRequireCentralInventory() -> None:
-    """覆盖范围：Batch 3F-R 任务卡不得把中央 reference inventory 列为执行依赖
-    测试对象：BATCH_3FR_REFERENCE_ADOPTION_REFACTOR/*.md
-    目的/目标：可执行采纳细节留在各任务卡本地，inventory 最多是非执行索引
-    验证点：无正向执行依赖句式；redirect 卡须标明不可直接实现
-    失败含义：3F-R 派发会回到已否决的中央 inventory 工作流
-    """
-    batch_dir = impl_task(
-        "ROUND_3_REFERENCE_ADOPTION_REFACTOR",
-        "BATCH_3FR_REFERENCE_ADOPTION_REFACTOR",
-    )
-    inventory_name = "reference_adoption_inventory.md"
-    offenders: list[str] = []
-    positive = re.compile(
-        r"(must read|execution dependency|depends on|required read|ssot:\s*.*inventory|see\s+`.*inventory)",
-        re.IGNORECASE,
-    )
-    for card in sorted(batch_dir.glob("R3FR_*.md")):
-        for line in card.read_text(encoding="utf-8").splitlines():
-            lower = line.lower()
-            if inventory_name not in lower:
-                continue
-            if any(
-                token in lower
-                for token in ("must not", "cannot", "forbidden", "no `", "do not create", "redirected")
-            ):
-                continue
-            if positive.search(line):
-                offenders.append(f"{card.relative_to(PROJECT_ROOT)}: {line.strip()}")
-    redirect = batch_dir / "R3FR_01_REFERENCE_INVENTORY_AND_LICENSE_MATRIX.md"
-    if redirect.is_file():
-        body = redirect.read_text(encoding="utf-8").lower()
-        assert "do not implement" in body or "redirected" in body
-    assert offenders == [], f"3F-R cards treat central inventory as execution SSOT: {offenders}"
-
-
-def test_r3fr01PlanningWordingAndLooseCardRedirects() -> None:
-    """覆盖范围：R3FR-01-C/D 规划口径与松散卡 redirect
-    测试对象：MODULE_COMPLETION_RATING、implementation_tasks/README、ROADMAP、029 松散卡
-    目的/目标：地图不是工单；松散 Round4 卡不得作为独立执行入口
-    验证点：三份规划文件含「地图不是工单」；029 含 do not implement / B04_05 / coverage map
-    失败含义：执行者可能误用覆盖地图或松散卡当中央工单
-    """
-    planning_paths = (
-        PROJECT_ROOT / "MODULE_COMPLETION_RATING.md",
-        PROJECT_ROOT / "PROJECT_IMPLEMENTATION_ROADMAP.md",
-        PROJECT_ROOT / "MIGRATION_MAP.md",
-    )
-    assert markdown_paths_missing_phrase("地图不是工单", planning_paths) == []
-
-    loose_dir = impl_task("ROUND_4_API_FRONTEND_AGENT_BACKTEST")
-    for card in sorted(loose_dir.glob(_LOOSE_ROUND4_GLOB)):
-        body = card.read_text(encoding="utf-8").lower()
-        assert "historical input notice" in body, card.name
-        assert "do not implement" in body, card.name
-        assert "batch_04_verified_audit_productization" in body, card.name
-
-    loose = loose_dir / "029_implement_backtest_and_review.md"
-    body = loose.read_text(encoding="utf-8").lower()
-    for needle in ("b04_05_backtest_review_runtime.md", "coverage map"):
-        assert needle in body, f"029 redirect missing: {needle}"
-
-
-def test_r3fr01DownstreamCardsGovernanceBoundaries() -> None:
-    """覆盖范围：R3FR-01 §5 下游 canonical 任务卡治理边界
-    测试对象：R3G/R3H/B04/B05 共 16 张任务卡
-    目的/目标：不得把中央 inventory 或覆盖地图当执行 SSOT；参考采纳卡须含禁止项
-    验证点：inventory/plan 正向依赖为零；含参考项目卡有 Forbidden；B05 含 release blocker 口径
-    失败含义：下游派发可能绕过任务卡本地细则或把发布批当功能后门
-    """
-    inventory_name = "reference_adoption_inventory.md"
-    plan_token = "production_completion_vertical_slice_plan.md"
-    inventory_positive = re.compile(
-        r"(must read|execution dependency|depends on|required read|ssot:\s*.*inventory)",
-        re.IGNORECASE,
-    )
-    plan_ok = (
-        "coverage map",
-        "coverage checklist",
-        "coverage only",
-        "not the execution",
-        "not a standalone",
-        "navigation",
-        "only as a coverage",
-    )
-    offenders: list[str] = []
-    for rel in _R3FR01_DOWNSTREAM_REL:
-        path = repo_relative(rel)
-        text = path.read_text(encoding="utf-8")
-        lower = text.lower()
-        for line in text.splitlines():
-            line_lower = line.lower()
-            if inventory_name in line_lower and not any(
-                t in line_lower for t in ("must not", "do not create", "forbidden", "cannot")
-            ):
-                if inventory_positive.search(line):
-                    offenders.append(f"{rel}: inventory SSOT — {line.strip()}")
-            if plan_token in line_lower and not any(ok in line_lower for ok in plan_ok):
-                offenders.append(f"{rel}: production plan without coverage boundary — {line.strip()}")
-        if "参考项目" in text and not any(
-            token in lower
-            for token in (
-                "forbidden",
-                "must not",
-                "target qmd",
-                "## 4. target",
-                "target files",
-                "qmd-owned target",
-            )
-        ):
-            offenders.append(f"{rel}: missing reference forbidden/target boundary")
-        if rel.startswith("docs/implementation_tasks/ROUND_5_"):
-            release_posture = (
-                "release blocker",
-                "manifest limitation",
-                "known_limitations",
-                "must not implement missing product",
-            )
-            if not any(token in lower for token in release_posture):
-                offenders.append(f"{rel}: missing release blocker/limitation posture")
-    assert offenders == [], f"downstream governance gaps: {offenders}"
-
-
-def test_productionCompletionPlanIsCoverageMapOnly() -> None:
-    """覆盖范围：新增生产补齐总计划不得成为中央执行工单
-    测试对象：PRODUCTION_COMPLETION_VERTICAL_SLICE_PLAN.md 顶部边界说明
-    目的/目标：确保总计划只是覆盖地图，具体执行仍回到 owning task card
-    验证点：文件明确包含 coverage map、not a standalone execution task card、owning canonical task card
-    失败含义：执行者可能绕过具体任务卡，回到中央 inventory 风险
-    """
-    path = impl_task("PRODUCTION_COMPLETION_VERTICAL_SLICE_PLAN.md")
-    text = path.read_text(encoding="utf-8")
-    assert "coverage map" in text
-    assert "not a standalone execution task card" in text
-    assert "owning canonical task card" in text
-    assert "must not replace task-card-local reference-adoption details" in text
-    assert "## 1. When a slice becomes executable (checklist only)" in text
-    marker3 = "## 3. Production-incomplete module inventory"
-    section2 = text.split(marker3, 1)[0].split("## 2.", 1)[-1]
-    assert "backend/app/" not in section2, "§2 must not list implementation target paths"
-    assert "**Not done if:**" not in section2, "§2 must not carry executable not-done lists"
-
-
-def test_r3frAdaptingCardsDeclareReferenceProject() -> None:
-    """覆盖范围：引用参考项目的 3F-R 实现卡必须含 reference_project 块
-    测试对象：R3FR_02..07 任务卡
-    目的/目标：license gate 在任务卡可解析，非仅全局 yaml 文档
-    验证点：含 参考项目 的卡必须有 reference_project: 与 allowed_use
-    失败含义：执行 agent 可跳过 license 决策直接改代码
-    """
-    batch_dir = impl_task(
-        "ROUND_3_REFERENCE_ADOPTION_REFACTOR",
-        "BATCH_3FR_REFERENCE_ADOPTION_REFACTOR",
-    )
-    missing: list[str] = []
-    for card in sorted(batch_dir.glob("R3FR_0[2-7]_*.md")):
-        text = card.read_text(encoding="utf-8")
-        if "参考项目" not in text:
-            continue
-        if "reference_project:" not in text or "allowed_use:" not in text:
-            missing.append(str(card.relative_to(PROJECT_ROOT)))
-    assert missing == [], f"adapting cards missing reference_project block: {missing}"
-
-
-_R3FR04_JQ2PTRADE_PATHS = (
-    "参考项目/JQ2PTrade/api_mapping.json",
-    "参考项目/JQ2PTrade/ptrade_local/engine/data_loader.py",
-    "参考项目/JQ2PTrade/ptrade_local/engine/api.py",
-    "参考项目/JQ2PTrade/ptrade_local/engine/context.py",
-    "参考项目/JQ2PTrade/ptrade_local/engine/backtester.py",
-    "参考项目/JQ2PTrade/ptrade_local/engine/report.py",
-    "参考项目/JQ2PTrade/ptrade_local/run_backtest.py",
-)
-
-_R3FR04_EASYXT_PATHS = (
-    "参考项目/EasyXT/easyxt_backtest/performance.py",
-    "参考项目/EasyXT/easyxt_backtest/portfolio_daily_result.py",
-    "参考项目/EasyXT/easyxt_backtest/core/backtest_core.py",
-)
-
-_R3FR04_FORBIDDEN_APIS = (
-    "order",
-    "order_value",
-    "order_target",
-    "order_target_value",
-    "cancel_order",
-    "get_open_orders",
-    "get_portfolio",
-    "get_positions",
-    "get_orders",
-    "get_trades",
-    "run_daily",
-    "run_weekly",
-    "run_monthly",
-)
-
-_R3FR04_ROUND4_TARGET_REL = (
-    "docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/"
-    "BATCH_04_VERIFIED_AUDIT_PRODUCTIZATION/B04_05_backtest_review_runtime.md",
-    "docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/"
-    "BATCH_04_VERIFIED_AUDIT_PRODUCTIZATION/BATCH_04_TASK_CARD_MANIFEST.md",
-    "docs/implementation_tasks/ROUND_4_API_FRONTEND_AGENT_BACKTEST/"
-    "BATCH_04_VERIFIED_AUDIT_PRODUCTIZATION/BATCH_04_HARDENING_RULES.md",
-)
-
-
-def _slice_has_not_done(text: str, slice_id: str) -> bool:
-    marker = f"### Slice {slice_id}"
-    start = text.find(marker)
-    if start < 0:
-        return False
-    nxt = text.find("### Slice ", start + len(marker))
-    block = text[start:nxt] if nxt >= 0 else text[start:]
-    return "**Not done if:**" in block
-
-
 def test_jq2ptradeCompileExecPatternNotCopied() -> None:
     """覆盖范围：backend/scripts 源码中不得出现「编译并执行任意策略」的 JQ2PTrade 模式
     测试对象：scan_strategy_exec_patterns（backend/app 与 scripts）
@@ -463,112 +210,6 @@ def test_jq2ptradeCompileExecPatternNotCopied() -> None:
     """
     violations = scan_strategy_exec_patterns()
     assert violations == [], f"forbidden strategy exec patterns: {violations}"
-
-
-def test_r3fr04Round4BacktestPlanningClosure() -> None:
-    """覆盖范围：R3FR-04 完成后 Round4 回测/复盘规划是否可直接派发实现
-    测试对象：B04_05、Batch04 manifest/hardening 与 backtest/review 四份契约 YAML
-    目的/目标：Round4 不能再是空白引擎设计；须写清三批上限、切片未完成条件、参考路径与 attribution
-    验证点：Batch A/B/C、九参考路径、五切片各含 Not done if、manifest/hardening 同步、forbidden_api 完整
-    失败含义：执行 agent 仍可能从零设计回测引擎，或跳过 evidence 绑定与 no-action deny-list
-    """
-    b04_path = repo_relative(_R3FR04_ROUND4_TARGET_REL[0])
-    text = b04_path.read_text(encoding="utf-8")
-    for needle in (
-        "Batch A",
-        "Batch B",
-        "Batch C",
-        "at most three implementation batches",
-        "reference_project:",
-        "attribution_required: true",
-    ):
-        assert needle in text, f"B04_05 missing R3FR-04 planning marker: {needle}"
-    for path in _R3FR04_JQ2PTRADE_PATHS + _R3FR04_EASYXT_PATHS:
-        assert path in text, f"B04_05 missing reference path: {path}"
-    for slice_id in ("B04_05-A", "B04_05-B", "B04_05-C", "B04_05-D", "B04_05-E"):
-        assert slice_id in text, f"B04_05 missing slice {slice_id}"
-        assert _slice_has_not_done(text, slice_id), f"B04_05 slice {slice_id} missing Not done if"
-
-    manifest = repo_relative(_R3FR04_ROUND4_TARGET_REL[1]).read_text(encoding="utf-8")
-    hardening = repo_relative(_R3FR04_ROUND4_TARGET_REL[2]).read_text(encoding="utf-8")
-    for doc_name, body in (("manifest", manifest), ("hardening", hardening)):
-        for needle in ("Batch A", "Batch B", "Batch C", "B04_05-A", "**Not done if:**"):
-            assert needle in body, f"BATCH_04 {doc_name} missing R3FR-04 sync marker: {needle}"
-
-    backtest = load_yaml(PROJECT_ROOT / "specs/contracts/backtest_contract.yaml")
-    ref = backtest.get("reference_adoption") or {}
-    assert ref.get("attribution_required") is True, "backtest_contract missing attribution_required"
-    jq_paths = tuple(ref.get("allowed_reference_paths", {}).get("jq2ptrade") or [])
-    for path in _R3FR04_JQ2PTRADE_PATHS:
-        assert path in jq_paths, f"backtest_contract missing jq2ptrade path: {path}"
-    forbidden_names = set(backtest.get("forbidden_api_names") or [])
-    assert forbidden_names >= set(_R3FR04_FORBIDDEN_APIS), "backtest_contract forbidden_api_names incomplete"
-
-    metric = load_yaml(PROJECT_ROOT / "specs/contracts/backtest_metric_contract.yaml")
-    assert "reference_adoption" in metric, "backtest_metric_contract missing reference_adoption"
-    assert metric.get("reference_adoption", {}).get("attribution_required") is True
-    easyxt = (metric.get("reference_adoption") or {}).get("allowed_reference_paths", {}).get(
-        "easyxt"
-    ) or []
-    for path in _R3FR04_EASYXT_PATHS:
-        assert path in easyxt, f"backtest_metric_contract missing easyxt path: {path}"
-    risk_adj = (metric.get("reference_adoption") or {}).get("metric_groups", {}).get(
-        "risk_adjusted"
-    ) or []
-    assert risk_adj, "backtest_metric_contract missing Batch B risk_adjusted metric targets"
-
-    repro = load_yaml(PROJECT_ROOT / "specs/contracts/backtest_reproducibility_contract.yaml")
-    assert "reference_adoption" in repro, "backtest_reproducibility_contract missing reference_adoption"
-    assert repro.get("reference_adoption", {}).get("attribution_required") is True
-    assert "input_evidence_ids" in repro.get("required_artifacts", {}).get(
-        "frozen_dataset_manifest", {}
-    ).get("fields", []), "repro contract missing evidence binding field"
-
-    sandbox = load_yaml(PROJECT_ROOT / "specs/contracts/review_sandbox_contract.yaml")
-    assert sandbox.get("static_analysis_only") is True, "review_sandbox must be static_analysis_only in first slice"
-    forbidden = set(sandbox.get("forbidden_api") or [])
-    missing_apis = [name for name in _R3FR04_FORBIDDEN_APIS if name not in forbidden]
-    assert missing_apis == [], f"review_sandbox missing forbidden APIs: {missing_apis}"
-
-
-_R3FR05_CARD_REL = (
-    "docs/implementation_tasks/ROUND_3_REFERENCE_ADOPTION_REFACTOR/"
-    "BATCH_3FR_REFERENCE_ADOPTION_REFACTOR/R3FR_05_PROVIDER_CATALOG_OPENBB_REFERENCE.md"
-)
-_R3FR05_CATALOG_REL = "specs/datasource_registry/provider_catalog.yaml"
-
-
-def test_r3fr05ProviderCatalogClosure() -> None:
-    """覆盖范围：R3FR-05 provider catalog 任务闭环与护栏登记
-    测试对象：R3FR-05 任务卡、provider_catalog.yaml、reference_adoption_guardrails.yaml
-    目的/目标：catalog SSOT 存在、OpenBB architecture_only、guardrails 登记 closure 测试
-    验证点：任务卡 qmd_target_files、catalog 25 providers、guardrails required_tests 含本测试
-    失败含义：R3FR-05 交付不可审计或 OpenBB catalog 路径/护栏未闭环
-    """
-    card = repo_relative(_R3FR05_CARD_REL).read_text(encoding="utf-8")
-    for needle in (
-        "reference_project:",
-        "allowed_use: architecture_only",
-        "provider_catalog.yaml",
-        "no_openbb_runtime_source_copy",
-        "openbb_provider_reference",
-    ):
-        assert needle in card, f"R3FR-05 card missing marker: {needle}"
-
-    catalog_path = PROJECT_ROOT / _R3FR05_CATALOG_REL
-    assert catalog_path.is_file(), "provider catalog SSOT missing"
-    catalog = load_yaml(catalog_path)
-    providers = catalog.get("providers") or []
-    assert len(providers) == 25
-
-    openbb = next(p for p in providers if p.get("provider_id") == "openbb_provider_reference")
-    assert openbb.get("runtime_source_copy_allowed") is False
-
-    listed = set(_GUARDRAILS.get("required_tests") or [])
-    assert "tests/test_reference_adoption_guardrails.py::test_r3fr05ProviderCatalogClosure" in listed
-
-    openbb_adoption = (_GUARDRAILS.get("allowed_adoption") or {}).get("openbb_provider_architecture") or {}
-    assert "architecture_only_provider_catalog_pattern" in (openbb_adoption.get("allowed_as") or [])
 
 
 _R3G01_MODULE_ROOT = PROJECT_ROOT / "backend/app/ops/sandbox_clean_write"

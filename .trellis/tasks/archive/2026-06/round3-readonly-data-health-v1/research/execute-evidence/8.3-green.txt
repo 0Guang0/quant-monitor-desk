@@ -1,2 +1,0 @@
-4 passed
-exit code: 0

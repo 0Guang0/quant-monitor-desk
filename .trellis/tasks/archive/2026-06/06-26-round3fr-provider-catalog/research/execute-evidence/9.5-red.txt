@@ -1,2 +1,0 @@
-FAILED tests/test_reference_adoption_guardrails.py::test_r3fr05ProviderCatalogClosure
-AssertionError: required_tests missing test_r3fr05ProviderCatalogClosure (pre-9.5)

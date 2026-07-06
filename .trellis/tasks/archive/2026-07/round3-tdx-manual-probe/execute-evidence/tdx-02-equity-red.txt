@@ -1,2 +1,0 @@
-TDX-02 RED: run_tdx_manual_probe missing — equity raw evidence not written
-TDX-02 RED: no mocked equity manifest with source_id/symbol/hash

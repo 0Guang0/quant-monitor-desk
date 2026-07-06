@@ -1,5 +1,0 @@
-{"file": ".trellis/tasks/06-16-005-schema-init/MASTER.plan.md", "reason": "审查对照：§10 验收、§12 冻结清单、DoD"}
-{"file": "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md", "reason": "测试与断言规范"}
-{"file": "docs/quality/final_package_rules.md", "reason": "最终包规则"}
-{"file": "backend/app/db/migrate.py", "reason": "审查 diff 主文件"}
-{"file": "tests/test_schema_migration.py", "reason": "审查测试是否 tautological"}

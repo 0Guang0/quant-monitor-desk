@@ -1,5 +1,0 @@
-=== 8.10 docs ===
-BATCH_D_STATUS.md
-README.md Batch D row
-DECISIONS.md §Batch D checkpoint
-plans/014_batch_d.plan.md

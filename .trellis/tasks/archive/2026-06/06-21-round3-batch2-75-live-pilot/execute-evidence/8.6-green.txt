@@ -1,2 +1,0 @@
-phase4_validation_report.json + phase4_conflict_inspect.txt + phase4_no_production_mutation_proof.md
-pytest tests/test_batch275_live_pilot_gate.py -k phase4 -q PASS

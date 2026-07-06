@@ -1,3 +1,0 @@
-FAILED tests/test_b3f_sh_hard_constraints.py::test_b3fShHardConstraints_akshareNotClosedBySidecar
-Failed: RED: no-false-close guard not implemented (R3F-SH-07)
-exit 1

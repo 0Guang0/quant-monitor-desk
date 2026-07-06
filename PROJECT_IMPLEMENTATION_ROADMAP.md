@@ -11,7 +11,7 @@
 
 | 优先级 | 票 ID             | 业务一句话                                                     | 状态 / 开工前                                                        |
 | ------ | ----------------- | -------------------------------------------------------------- | -------------------------------------------------------------------- |
-| ~~P0~~ | ~~**M-DATA-03**~~ | —                                                              | **CLOSED** @ 2026-07-04 · R4 · ADR-034 · 只读 §3.1                   |
+| ~~P0~~ | ~~**M-DATA-03**~~ | —                                                              | **CLOSED** @ 2026-07-04 · R4 · ADR-015 · 只读 §3.1                   |
 | **P0** | **M-G1-03**       | 五轴按设计完整落地（真链，非仅 seed）                          | **下一入口** · 依赖 M-DATA-03 **R4** clean 输入（隔离库证明）        |
 | **P1** | **M-G2-FULL**     | Layer2 九组资产按 `layer2_cross_asset_sensor.md` 完整落地      | 单 **Plan→Execute** 流程内多 worktree/串行切片；**统一** A1–A8 Audit |
 | **P1** | **M-G4-FULL**     | Layer4 各 `market_id` 按 `layer4_market_structure.md` 完整落地 | 同上；可与 G2/G5 **并行**（不同 graph 节点）                         |
@@ -27,8 +27,7 @@
 | 用途                          | 文件                                                  |
 | ----------------------------- | ----------------------------------------------------- |
 | 完成度运营快照                | `MODULE_COMPLETION_RATING.md` §3                      |
-| 机器索引                      | `specs/context/authority_graph.yaml` v2               |
-| 项目地图                      | `docs/generated/project_map.generated.md`             |
+| 机器索引                      | `MIGRATION_MAP.md` · `docs/modules/` · `specs/`       |
 | Tier A/B/C 落库逐源表（只读） | `R3H_PASS_EXECUTION_PLAN.archived-20260702.md` §2.1   |
 | Round4 产品范围               | `BATCH_04_TASK_CARD_MANIFEST.md`                      |
 | DataSync 五类 job / 写库      | 本文 **§5.1**                                         |
@@ -75,7 +74,7 @@
 | ----------------------- | ---------------------------------------------------- |
 | **后端优先**            | Round3 闭合数据面 + 五轴 + 增量后再开 Round4 产品    |
 | **Layer1 五轴（G12）**  | PASS 前 `tests/test_layer1_*` 等 **pytest 全绿**     |
-| **11 源真网**           | **已满足** — M-DATA-03 CLOSED @ 2026-07-04 · ADR-034 |
+| **11 源真网**           | **已满足** — M-DATA-03 CLOSED @ 2026-07-04 · ADR-015 |
 | **R3-DCP 试点**         | **历史**；由 M-DATA-03 承接                          |
 | **Round4 入口**         | **M-PASS-01** 通过后 · `BATCH_04_*`                  |
 | **`web_search` 真 API** | **post-Round4**（J5 · ADR）                          |
@@ -83,7 +82,7 @@
 
 #### 0.1.5 关账证据（只读）
 
-**M-DATA-03** CLOSED @ 2026-07-04 — Tier A 11/11 · Tier B 10/10 · B2/C3/D1/E1/E2/F0→**R4** — **ADR-034** · §3.1 · archived Trellis `m-data-03-tier-a-live/`。
+**M-DATA-03** CLOSED @ 2026-07-04 — Tier A 11/11 · Tier B 10/10 · B2/C3/D1/E1/E2/F0→**R4** — **ADR-015** · §3.1 · archived Trellis `m-data-03-tier-a-live/`。
 
 ### 0.2 已核实 canonical 入口
 
@@ -143,18 +142,18 @@
 | 不引入交易动作     | 禁止 order/broker/terminal 语义                             |
 | 最多三批达 R6      | 同 §1.2                                                     |
 
-### 1.5 Trellis 路由（v2）
+### 1.5 任务路由（v2）
 
-| 类型                | 适用                                                                   |
-| ------------------- | ---------------------------------------------------------------------- |
-| **complex Trellis** | **§3 活票**（M-G\*-FULL、M-PASS-01）、Round4 B04；M-DATA-03 **CLOSED** |
-| **debt-lite**       | Batch6 卫生、已 CLOSED 票的小修补（**不得**承接模块完整成品）          |
-| Plan 冻结前         | 活票须 `/to-issues` 垂直切片（§3.6）；**一模块成品 = 一 complex 票**   |
+| 类型         | 适用                                                        |
+| ------------ | ----------------------------------------------------------- |
+| **模块活票** | **§3 活票**（M-G\*-FULL、M-PASS-01）、Round4 B04            |
+| **小修补**   | GitHub Issues + `.scratch/`；不得冒充模块完整成品           |
+| Plan 冻结前  | 活票须 `/to-issues` 垂直切片（§3.6）；**一模块成品 = 一票** |
 
 ### 1.6 并行与合并
 
-- **worktree：** 一 agent 一 worktree；按 `authority_graph.yaml` **节点**划分。
-- **registry 三件套**（`source_registry.yaml`、`source_capabilities.yaml`、`tests/test_catalog.yaml`）— **主会话排队 merge**。
+- **worktree：** 一 agent 一 worktree；按模块边界划分，避免同文件组并行改。
+- **registry 三件套**（`source_registry.yaml`、`source_capabilities.yaml`）— **主会话排队 merge**。
 - **schema DDL：** R3H-06 已封板；新 DDL → Batch6/B05 门禁。
 - **改符号前** `impact()`；**提交前** `detect_changes()`。
 
@@ -169,7 +168,7 @@
 
 | 活票           | 主模块（Rating 跃迁）                          | 同票闭合的关联模块             | 设计权威                                               |
 | -------------- | ---------------------------------------------- | ------------------------------ | ------------------------------------------------------ |
-| **M-DATA-03**  | **CLOSED** @ 2026-07-04 — C3,D1,E1,E2,F0,B2→R4 | —                              | ADR-034 · archived Trellis                             |
+| **M-DATA-03**  | **CLOSED** @ 2026-07-04 — C3,D1,E1,E2,F0,B2→R4 | —                              | ADR-015 · archived Trellis                             |
 | **M-G1-03**    | G1 → R4                                        | K1, K2, A5                     | `layer1_global_regime_panel.md` · `specs/layer1_axes/` |
 | **M-G2-FULL**  | G2 → R4                                        | —                              | `layer2_cross_asset_sensor.md` §2 九组                 |
 | **M-G4-FULL**  | G4 → R4                                        | —                              | `layer4_market_structure.md` §2 各 market              |
@@ -293,7 +292,7 @@ Round4 B04-*
 
 | 票 ID         | 类型    | Module                | Rating 目标                      | 设计权威                                        |
 | ------------- | ------- | --------------------- | -------------------------------- | ----------------------------------------------- |
-| **M-DATA-03** | complex | C3,D1,E1,E2,F0,B2     | **CLOSED** — **R4** @ 2026-07-04 | ADR-034 · §3.1 一行摘要                         |
+| **M-DATA-03** | complex | C3,D1,E1,E2,F0,B2     | **CLOSED** — **R4** @ 2026-07-04 | ADR-015 · §3.1 一行摘要                         |
 | **M-G1-03**   | complex | G1,K1,K2              | G1 **R3→R4**                     | `specs/layer1_axes/` · `layer1_axes.md`         |
 | **M-G2-FULL** | complex | G2                    | G2 **R3→R4**（九组）             | `docs/modules/layer2_cross_asset_sensor.md` §2  |
 | **M-G4-FULL** | complex | G4                    | G4 **R3→R4**（各 market_id）     | `docs/modules/layer4_market_structure.md` §2    |
@@ -304,7 +303,7 @@ Round4 B04-*
 
 ### 3.1 M-DATA-03 — **CLOSED** @ 2026-07-04
 
-**R4** 关账：Tier A 11/11 隔离库 live · Tier B 10/10 验收结论 · B2/C3/D1/E1/E2/F0→R4 — **ADR-034** · archived `.trellis/tasks/archive/2026-07/m-data-03-tier-a-live/` · 活卡 `M_DATA_03_TIER_A_LIVE/`（只读）。
+**R4** 关账：Tier A 11/11 隔离库 live · Tier B 10/10 验收结论 · B2/C3/D1/E1/E2/F0→R4 — **ADR-015** · archived `.trellis/tasks/archive/2026-07/m-data-03-tier-a-live/` · 活卡 `M_DATA_03_TIER_A_LIVE/`（只读）。
 
 ### 3.2 M-G1-03 — 五轴完整落地（**下一入口** · **单票双阶段**）
 
@@ -471,7 +470,7 @@ Round5 **不补功能**。
 
 | #   | 项                  | 验收标准                                                                                                        |
 | --- | ------------------- | --------------------------------------------------------------------------------------------------------------- |
-| 1   | **M-DATA-03** ✅    | **CLOSED** @ 2026-07-04 — Tier A R4 · ADR-034（§3.1 一行摘要）                                                  |
+| 1   | **M-DATA-03** ✅    | **CLOSED** @ 2026-07-04 — Tier A R4 · ADR-015（§3.1 一行摘要）                                                  |
 | 2   | **M-G1-03**         | G1/K1/K2 **MCR Rating ≥ R4**；**62 指标身份** 各走 sync→clean→指标→解读 同库真链（spec README §指标全链路要求） |
 | 3   | **M-G2-FULL**       | G2 **MCR Rating ≥ R4** — 九组资产按设计权威落地                                                                 |
 | 4   | **M-G4-FULL**       | G4 **MCR Rating ≥ R4** — 各 `market_id` 按设计落地                                                              |
@@ -564,8 +563,8 @@ Round5 Batch05 — R6 / limitation 发布裁判
 2. 任务卡是否标明 **Module ID** + **Rating 跃迁**（或写明 milestone-only）？
 3. Plan 冻结前 **`/to-issues`** 垂直切片（§3.7）？票内多切片 **统一** A1–A8。
 4. 并行是否撞 registry 三件套或同节点文件锁？
-5. 是否 **complex Trellis**（§3 活票）？**禁止**用 debt-lite 承接 G/C/D/E 模块完整成品。
-6. 改符号前 `impact()`；提交前 `detect_changes()`；触达 backend/docs/specs 跑 `loop_maintain.py`。
+5. 是否 **§3 活票**之一？并行注意 registry 文件锁（`source_registry.yaml` 等由主会话 merge）。
+6. 改符号前 `impact()`；提交前 `detect_changes()`；`uv run pytest -q` 全绿。
 7. 数据/建模验收是否在 **隔离库**（§0.1.5）？Round4 是否只读、是否绕过 DataSourceService？
 8. PASS 前是否核对 **§6.1.1** 全表 + MCR 无假完成？
 9. Sync job / 写库闸是否先读 **§5.1**？
@@ -586,7 +585,7 @@ Wave 平铺细节、3F-R/3G 任务卡路径、原 §5.0.6 完整表格 → **`do
 
 ## 附录 B. 与 `MODULE_COMPLETION_RATING.md` 对齐
 
-- 51 ID 与 `authority_graph.yaml` v2 `rating_index` **无冲突**。
+- 51 ID 与 `MODULE_COMPLETION_RATING.md` **无冲突**。
 - **活票 / PASS** 以本文 **§3 · §6.1.1 · §1.8** 为准；MCR **活票 / 归属** 列须指向 §3 活票，**禁止**再写 R3H-08 / DCP-07 等为下一完整流程。
 
 ## 附录 C. 历史 CLOSED 证据（只读 · 非开工 SSOT）
@@ -604,6 +603,4 @@ Wave 平铺细节、3F-R/3G 任务卡路径、原 §5.0.6 完整表格 → **`do
 | R3-DCP-10     | CLOSED | G5,A3        | **仅** mootdx provenance | **M-G5-FULL**           |
 | R3H-05A..E    | —      | 全表         | 审计切片                 | **M-PASS-01 单票内**    |
 
-**旧 `/to-issues` 索引：** `R3_DCP_TO_ISSUES_INDEX.md` · `WAVE0_BATCH3V_TO_ISSUES_INDEX.md`（格式范例仍有效；**路由**须改 §3.7 活票路径）。
-
-**隔离验收脚本（仍可复跑）：** `scripts/wave3_isolated_production_acceptance.py` · `scripts/wave3_live_production_acceptance.py` · 报告 `docs/quality/acceptance/WAVE3_PRODUCTION_ACCEPTANCE_REPORT.md`。
+**旧 `/to-issues` 索引：** `R3_DCP_TO_ISSUES_INDEX.md` · `WAVE0_BATCH3V_TO_ISSUES_INDEX.md`（格式范例仍有效；**路由**须改 §3.7 活票路径）。历史 Wave 验收报告见 `docs/quality/acceptance/WAVE3_PRODUCTION_ACCEPTANCE_REPORT.md`（只读）。

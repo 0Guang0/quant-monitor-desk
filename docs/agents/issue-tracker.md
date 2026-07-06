@@ -1,6 +1,6 @@
 # Issue tracker: GitHub + local markdown (dual)
 
-Engineering skills (`to-issues`, `triage`, `to-prd`, `qa`) use **one workflow** that works in both places. **Trellis** (`.trellis/tasks/`, complex Plan→Execute) is **out of scope** for these skills unless the user explicitly routes there.
+Engineering skills (`to-issues`, `triage`, `to-prd`, `qa`) use **one workflow** that works in both places.
 
 ## Primary surfaces
 
@@ -53,5 +53,5 @@ GitHub shares one number space for issues and PRs — resolve with `gh pr view N
 
 | System                    | Path                         | Note                                                                                                  |
 | ------------------------- | ---------------------------- | ----------------------------------------------------------------------------------------------------- |
-| Trellis complex tasks     | `.trellis/tasks/`            | Use Trellis skills/commands when user asks for complex task flow                                      |
+| Module planning           | `docs/implementation_tasks/` | Thin task cards + `PROJECT_IMPLEMENTATION_ROADMAP.md` §3                                              |
 | Implementation task cards | `docs/implementation_tasks/` | Planning SSOT (`PROJECT_IMPLEMENTATION_ROADMAP.md`); not auto-created by `to-issues` unless user asks |

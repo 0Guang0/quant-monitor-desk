@@ -1,4 +1,0 @@
-﻿=== 8.4 RED ===
-FAILED tests/test_sync_orchestrator.py -k guard
-AssertionError: expected FAILED_RETRYABLE
-exit 1

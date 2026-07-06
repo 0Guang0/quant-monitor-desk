@@ -1,2 +1,0 @@
-RED: pytest.fail — test_dataHealthCli_readOnly_exitZero
-exit code: 1 FAILED

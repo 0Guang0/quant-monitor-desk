@@ -1,3 +1,0 @@
-{"file": ".trellis/tasks/round3-readonly-data-health-v2/AUDIT.plan.md", "reason": "extract: Audit SSOT | for: A1-A8 boot"}
-{"file": "docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/R3E_readonly_data_health_v2.md", "reason": "extract: AC trace | for: A5"}
-{"file": "docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/BATCH_01_MODEL_SOURCE_READINESS/BATCH_01_HARDENING_RULES.md", "reason": "extract: forbidden language | for: A3/A5"}

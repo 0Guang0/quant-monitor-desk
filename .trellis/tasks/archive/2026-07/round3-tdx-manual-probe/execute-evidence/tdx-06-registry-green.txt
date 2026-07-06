@@ -1,1 +1,0 @@
-TDX-06 GREEN: registry_proposed_delta.yaml; EM/AkShare rows remain OPEN; no registry commit

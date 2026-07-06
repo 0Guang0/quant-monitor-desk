@@ -1,7 +1,0 @@
-..........................s..........                                    [100%]
-============================== warnings summary ===============================
-tests\test_batch275_live_pilot_gate.py:317
-  C:\Users\Guang\Desktop\quant-monitor-desk\tests\test_batch275_live_pilot_gate.py:317: PytestUnknownMarkWarning: Unknown pytest.mark.network - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
-    @pytest.mark.network
-
--- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html

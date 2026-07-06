@@ -20,7 +20,7 @@ SPEC_INDICATOR = "SEN-S1-COT_LF_NET"
 def test_layer1SentimentClean_e2e_cotLfNet_readFeatureInterpret(tmp_path) -> None:
     """覆盖范围：情绪轴 P0 COT 杠杆基金净头寸从 Tier A clean 读到特征与解读
     测试对象：read_macro_clean_observations → AxisFeatureEngine → AxisInterpretationEngine
-    目的/目标：ADR-029 SEN-S1-COT_LF_NET 经 DB 088691 / cftc_cot 非 fixture 贯通 Layer1
+    目的/目标：ADR-010 SEN-S1-COT_LF_NET 经 DB 088691 / cftc_cot 非 fixture 贯通 Layer1
     验证点：len>=20；spec indicator_id；source_used==cftc_cot；特征非 insufficient_history；解读含边界提醒
     失败含义：COT clean 读路径未接通或仍依赖 staged/EasyXT 式换源
     """

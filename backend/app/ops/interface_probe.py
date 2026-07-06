@@ -37,7 +37,7 @@ from backend.app.storage.raw_store import RawStore
 DEFAULT_PRODUCTION_DB = DATA_ROOT / "duckdb" / "quant_monitor.duckdb"
 DEFAULT_SANDBOX_ROOT = PROJECT_ROOT / ".audit-sandbox/data-interface-probe"
 DEFAULT_EVIDENCE_DIR = (
-    PROJECT_ROOT / ".trellis/tasks/06-22-round3-018c-low-cost-probe/execute-evidence"
+    PROJECT_ROOT / "docs/archive/trellis-evidence/round3-018c-low-cost-probe/execute-evidence"
 )
 
 SIDECAR_SINA_OPERATION = "fetch_daily_bar_sina_validation"

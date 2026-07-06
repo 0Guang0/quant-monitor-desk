@@ -1,4 +1,0 @@
-# §8.3 RED
-$ uv run pytest tests/test_layer4_market_structure.py::test_marketCalendar_rejectsDuplicateTradeDate tests/test_layer4_market_structure.py::test_marketBreadth_requiredFieldsPresent -q
-FAILED — calendar/breadth loaders missing
-exit code: 1 (FAIL)

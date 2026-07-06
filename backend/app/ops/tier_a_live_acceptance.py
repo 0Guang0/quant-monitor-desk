@@ -1,4 +1,4 @@
-"""Tier A live acceptance harness (M-DATA-03 S00-INFRA · ADR-034)."""
+"""Tier A live acceptance harness (M-DATA-03 S00-INFRA · ADR-015)."""
 
 from __future__ import annotations
 
@@ -153,12 +153,12 @@ def validate_live_acceptance_env(
     """Validate env for live acceptance; raise TierALiveEnvError on failure."""
     if not is_product_live_fetch_allowed():
         raise TierALiveEnvError(
-            "QMD_ALLOW_LIVE_FETCH not set to opt-in value (ADR-027)",
+            "QMD_ALLOW_LIVE_FETCH not set to opt-in value (ADR-008)",
             code="LIVE_FETCH_NOT_OPTED_IN",
         )
     if live_acceptance_mock_env_enabled():
         raise TierALiveEnvError(
-            "QMD_FRED_INCREMENTAL_USE_MOCK forbidden in live acceptance (ADR-027/034)",
+            "QMD_FRED_INCREMENTAL_USE_MOCK forbidden in live acceptance (ADR-008/034)",
             code="MOCK_FORBIDDEN_IN_LIVE_ACCEPTANCE",
         )
     resolved_root = resolve_live_data_root(data_root)

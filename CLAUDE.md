@@ -1,10 +1,8 @@
-## Repair/Debt Lite Worktree Protocol
+## Repair / debt slices
 
-For already-audited findings, registry debt, or repair follow-ups, check `.trellis/spec/guides/complex-task-planning-protocol.md` Phase 8D before using the full complex Plan. The main session must produce a lightweight slice plan with source ID, owner, branch/worktree, allowed files, excluded files, verification, evidence path, and merge gate before implementation.
+For audited findings or registry debt: produce a lightweight slice plan (owner, branch, allowed files, verification, evidence path) before implementation.
 
-Use one worktree per agent and one branch per slice or tightly related slice group. Do not let two active branches own the same core file group. Registry reconciliation should normally be done by one merge coordinator.
-
-<!-- gitnexus:start -->
+Use one worktree per agent; do not let two active branches own the same core file group. Registry files: one merge coordinator.
 
 # GitNexus — Code Intelligence
 
@@ -47,13 +45,11 @@ This project is indexed by GitNexus as **quant-monitor-desk** (6263 symbols, 102
 | Tools, resources, schema reference           | `.claude/skills/gitnexus/gitnexus-guide/SKILL.md`           |
 | Index, status, clean, wiki CLI commands      | `.claude/skills/gitnexus/gitnexus-cli/SKILL.md`             |
 
-<!-- gitnexus:end -->
-
 ## Agent skills
 
 ### Issue tracker
 
-GitHub Issues + local `.scratch/` dual-write (same triage flow); external PRs are a triage surface. Trellis is not the default for these skills. See `docs/agents/issue-tracker.md`.
+GitHub Issues + local `.scratch/` dual-write (same triage flow); external PRs are a triage surface. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 

@@ -1,3 +1,0 @@
-18 failed — RED: Plan stub pytest.fail for all test_ops_data_health tests
-exit code: 1
-FAILED tests/test_ops_data_health.py (18 items)

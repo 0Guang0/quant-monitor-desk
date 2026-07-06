@@ -1,6 +1,0 @@
-=== 8.2 GREEN ===
-pytest tests/test_source_capabilities.py::test_adapterSupportedDomains_reconciledToCapabilityRegistryOrCompatibilityMap -q
-.                                                                        [100%]
-pytest tests/test_adapter_skeletons.py -q
-.....................................                                    [100%]
-exit code: 0

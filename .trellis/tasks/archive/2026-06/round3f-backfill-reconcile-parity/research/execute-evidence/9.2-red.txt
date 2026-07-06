@@ -1,4 +1,0 @@
-# 9.2 RED baseline (pre-implementation / TDD RED)
-ERROR: not found: no tests matched test_r3fBr02_reconcileRefetch_testsExistInAuditRemediation
-collected 0 items
-FAILED

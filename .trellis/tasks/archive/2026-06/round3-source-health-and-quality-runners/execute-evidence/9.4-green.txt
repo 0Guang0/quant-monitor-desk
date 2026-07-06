@@ -1,6 +1,0 @@
-# Command: uv run pytest tests/test_source_health_snapshot.py::test_sourceHealthSnapshot_rollupPersist_fields -q
-# exit_code: 0
-
-.                                                                        [100%]
-
-EXIT:0

@@ -1,2 +1,0 @@
-TDX-04 RED: security list cap probe absent — >20 rows silent
-TDX-04 RED: run_security_list_cap_probe not implemented

@@ -1,4 +1,0 @@
-........                                                                 [100%]
-
---- loop_maintain ---
-OK: loop maintain

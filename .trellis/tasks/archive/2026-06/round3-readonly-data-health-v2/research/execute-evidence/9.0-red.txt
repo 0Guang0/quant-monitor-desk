@@ -1,2 +1,0 @@
-RED: DH2-BASE — test_dataHealthIntegration_v2Evidence_bundle FAILED (archive path missing)
-exit code: 1 FAILED AssertionError

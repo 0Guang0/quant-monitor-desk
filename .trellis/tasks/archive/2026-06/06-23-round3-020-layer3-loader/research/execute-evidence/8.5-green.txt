@@ -1,5 +1,0 @@
-$ uv run pytest tests/test_layer3_loader.py::test_layer3Loader_crossChainMissingNode_rejects -q
-.                                                                        [100%]
-exit_code=0
-
-ponytail: cross-chain refs use shared _validate_edge_node_refs

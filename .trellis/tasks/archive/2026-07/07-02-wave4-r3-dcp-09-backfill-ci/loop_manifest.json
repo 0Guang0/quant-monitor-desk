@@ -1,5 +1,0 @@
-{
-  "task": "07-02-wave4-r3-dcp-09-backfill-ci",
-  "acs": [],
-  "modules": ["project_scaffold", "sync_orchestrator", "governance"]
-}

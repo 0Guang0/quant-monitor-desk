@@ -1,3 +1,0 @@
-=== 8.7 RED ===
-AttributeError run_reconcile
-exit: 1

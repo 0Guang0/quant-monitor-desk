@@ -1,4 +1,0 @@
-# 9.4 RED baseline (pre-implementation / TDD RED)
-ERROR: not found: no tests matched test_r3fBr04_orchestratorHandlerRegistry_coversContractMatrix + test_sync_runners.py
-collected 0 items
-FAILED

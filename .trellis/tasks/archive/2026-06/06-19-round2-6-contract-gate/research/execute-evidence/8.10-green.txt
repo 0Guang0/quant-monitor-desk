@@ -1,8 +1,0 @@
-=== 8.10 GREEN (Repair re-capture 2026-06-19) ===
-$ rg "adapter-domain residual gap documented" .trellis/tasks/06-19-round2-6-contract-gate/research/phase-a-self-check.md
-## adapter-domain residual gap documented
-
-$ Test-Path .trellis/tasks/06-19-round2-6-contract-gate/research/phase-a-self-check.md
-True
-
-exit 0

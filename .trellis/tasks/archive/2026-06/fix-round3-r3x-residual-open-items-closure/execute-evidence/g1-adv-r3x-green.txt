@@ -1,6 +1,0 @@
-# g1-adv-r3x — checklist §4.1 ADV-R3X
-# Command: uv run pytest tests/test_r3x_residual_open_items_closure.py -k "Route or Service or Conflict or Write or Cap or L1" -q --tb=no
-
-..........                                                               [100%]
-10 passed in 6.8s
-EXIT:0

@@ -1,3 +1,0 @@
-Boot complete: frozen card + EXECUTION_INDEX + implement.jsonl + context_pack read.
-GitNexus impact(load_provider_catalog): LOW greenfield, no upstream callers.
-research/gitnexus-execute-summary.md written.

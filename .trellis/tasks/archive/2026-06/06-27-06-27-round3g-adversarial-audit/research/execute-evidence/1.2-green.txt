@@ -1,3 +1,0 @@
-§1.2 adversarial_audit.py — GREEN
-uv run pytest tests/test_round3g_pre_production_adversarial_audit.py::test_r3g02AdversarialAudit_missingReportBlocks -q
-.                                                                        [100%]

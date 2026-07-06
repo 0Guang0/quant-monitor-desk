@@ -1,2 +1,0 @@
-..........................s....                                          [100%]
-OPS-01 pre-loader: test_ops_db_inspector — PASS (exit 0)

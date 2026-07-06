@@ -1,4 +1,4 @@
-"""Tier A incremental canonical domain registry (R3-DCP-05 · ADR-028)."""
+"""Tier A incremental canonical domain registry (R3-DCP-05 · ADR-009)."""
 
 from __future__ import annotations
 

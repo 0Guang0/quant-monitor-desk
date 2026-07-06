@@ -1,4 +1,0 @@
-Phase 0 complete
-uv sync --locked: OK
-pytest --co: collected items listed in 8.0-baseline.txt
-passed

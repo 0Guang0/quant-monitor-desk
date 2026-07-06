@@ -1,3 +1,0 @@
-FAILED
-unregistered test module: tests/test_market_data_adapters.py
-Exit: 1 (expected RED — pre-9.8 catalog)

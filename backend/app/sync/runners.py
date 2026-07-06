@@ -63,7 +63,7 @@ def guard_production_datasource_service_required(
     datasource_service: Any | None,
     entry: str,
 ) -> None:
-    """Fail-closed when production profile omits datasource_service= (ADR-025)."""
+    """Fail-closed when production profile omits datasource_service= (ADR-006)."""
     if datasource_service is not None or adapter is not None:
         return
     if sync_adapter_bypass_allowed():
@@ -79,7 +79,7 @@ def guard_reconcile_product_live_service(
     datasource_service: Any | None,
     entry: str,
 ) -> None:
-    """Fail-closed when production reconcile injects ungated custom fetch_port (ADR-027)."""
+    """Fail-closed when production reconcile injects ungated custom fetch_port (ADR-008)."""
     if datasource_service is None:
         return
     if sync_adapter_bypass_allowed():
@@ -611,15 +611,17 @@ class BackfillShardRunner(_PipelineMixin):
         self._begin_fetching = begin_fetching
         self._emit_event = emit_event
 
-    def _backfill_checkpoint_task_id(self, job_id: str) -> str | None:
+    def _shard_checkpoint_task_id(
+        self, job_id: str, *, complete_event_type: str = "SHARD_COMPLETE"
+    ) -> str | None:
         with self._jobs.connection_manager.reader() as con:
             row = con.execute(
                 """
                 SELECT task_id FROM job_event_log
-                WHERE job_id = ? AND event_type = 'SHARD_COMPLETE' AND task_id IS NOT NULL
+                WHERE job_id = ? AND event_type = ? AND task_id IS NOT NULL
                 ORDER BY created_at DESC LIMIT 1
                 """,
-                [job_id],
+                [job_id, complete_event_type],
             ).fetchone()
         return str(row[0]) if row else None
 
@@ -630,6 +632,11 @@ class BackfillShardRunner(_PipelineMixin):
         adapter: BaseDataAdapter | None = None,
         fetch_callable: FetchCallable | None = None,
         config: PipelineConfig,
+        shard_event_type: str = "BACKFILL_SHARD",
+        complete_event_type: str = "SHARD_COMPLETE",
+        skipped_event_type: str = "SHARD_SKIPPED",
+        partial_fail_event_type: str = "SHARD_PARTIAL_FAIL",
+        require_trigger_reason: bool = True,
     ) -> list[SyncJobResult]:
         if adapter is None and fetch_callable is None:
             raise ValueError("adapter or fetch_callable is required for backfill")
@@ -642,11 +649,17 @@ class BackfillShardRunner(_PipelineMixin):
         )
         if spec.date_start is None or spec.date_end is None:
             raise ValueError("backfill requires date_start and date_end")
-        trigger_reason = normalize_backfill_trigger_reason(spec.trigger_reason)
+        trigger_reason = (
+            normalize_backfill_trigger_reason(spec.trigger_reason)
+            if require_trigger_reason
+            else (spec.trigger_reason or "cold_start")
+        )
         shards = plan_backfill_shards(spec.date_start, spec.date_end)
         job_id = self._jobs.create_job(spec)
         self._jobs.transition(job_id, "PLANNED")
-        checkpoint_task = self._backfill_checkpoint_task_id(job_id)
+        checkpoint_task = self._shard_checkpoint_task_id(
+            job_id, complete_event_type=complete_event_type
+        )
         results: list[SyncJobResult] = []
         cm = self._jobs.connection_manager
         pipeline = config
@@ -657,7 +670,7 @@ class BackfillShardRunner(_PipelineMixin):
             self._emit_event(
                 job_id,
                 task_id=task_id,
-                event_type="BACKFILL_SHARD",
+                event_type=shard_event_type,
                 payload_json=build_event_payload(
                     source_id=spec.source_id,
                     task_id=task_id,
@@ -759,7 +772,7 @@ class BackfillShardRunner(_PipelineMixin):
                     self._emit_event(
                         job_id,
                         task_id=task_id,
-                        event_type="SHARD_SKIPPED",
+                        event_type=skipped_event_type,
                         message=f"shard {task_id} quality failed",
                         payload_json=build_event_payload(
                             source_id=spec.source_id,
@@ -810,7 +823,7 @@ class BackfillShardRunner(_PipelineMixin):
                         self._jobs.emit_custom_event(
                             job_id,
                             task_id=task_id,
-                            event_type="SHARD_SKIPPED",
+                            event_type=skipped_event_type,
                             message=f"shard {task_id} severe conflict",
                             payload_json=build_event_payload(
                                 source_id=spec.source_id,
@@ -858,7 +871,7 @@ class BackfillShardRunner(_PipelineMixin):
                     self._emit_event(
                         job_id,
                         task_id=task_id,
-                        event_type="SHARD_PARTIAL_FAIL",
+                        event_type=partial_fail_event_type,
                         message=f"shard {task_id} write failed",
                         payload_json=build_event_payload(
                             source_id=spec.source_id,
@@ -880,7 +893,7 @@ class BackfillShardRunner(_PipelineMixin):
             self._emit_event(
                 job_id,
                 task_id=task_id,
-                event_type="SHARD_COMPLETE",
+                event_type=complete_event_type,
                 message=f"shard {task_id} completed",
                 payload_json=build_event_payload(
                     source_id=spec.source_id,
@@ -914,6 +927,30 @@ class BackfillShardRunner(_PipelineMixin):
                     )
                 )
         return results
+
+
+class FullLoadJobRunner(BackfillShardRunner):
+    """§13.4.1 FullLoad — shard loop with FULL_LOAD_* checkpoint events."""
+
+    def run(
+        self,
+        spec: SyncJobSpec,
+        *,
+        adapter: BaseDataAdapter | None = None,
+        fetch_callable: FetchCallable | None = None,
+        config: PipelineConfig,
+    ) -> list[SyncJobResult]:
+        return super().run(
+            spec,
+            adapter=adapter,
+            fetch_callable=fetch_callable,
+            config=config,
+            shard_event_type="FULL_LOAD_SHARD",
+            complete_event_type="FULL_LOAD_COMPLETE",
+            skipped_event_type="FULL_LOAD_SKIPPED",
+            partial_fail_event_type="FULL_LOAD_PARTIAL_FAIL",
+            require_trigger_reason=False,
+        )
 
 
 class ReconcileJobRunner:

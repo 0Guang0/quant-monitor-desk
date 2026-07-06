@@ -1,9 +1,0 @@
-{
-  "execute": {
-    "9.0": "research/execute-evidence/9.0-green.txt",
-    "9.1": "research/execute-evidence/9.1-green.txt",
-    "9.7": "research/execute-evidence/9.7-green.txt",
-    "full_pytest": "execute-evidence/full-pytest-green.txt"
-  },
-  "audit": {}
-}

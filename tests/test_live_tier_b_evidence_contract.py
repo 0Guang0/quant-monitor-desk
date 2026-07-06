@@ -58,7 +58,7 @@ def test_liveTierBEvidenceContract_acceptanceModeValidationFetch() -> None:
     测试对象：live_tier_b_evidence_v1.yaml
     目的/目标：Tier B 轨为 validation_fetch 而非 incremental sync
     验证点：acceptance_mode == validation_fetch
-    失败含义：Tier B 误用 incremental 语义，与 ADR-027 validation_only 冲突
+    失败含义：Tier B 误用 incremental 语义，与 ADR-008 validation_only 冲突
     """
     contract = _load_contract()
     assert contract.get("acceptance_mode") == "validation_fetch"
@@ -174,7 +174,7 @@ def test_failExternalAdrRef_matchesContractAuthority() -> None:
     """覆盖范围：FAIL_EXTERNAL adr_ref SSOT
     测试对象：fail_external_adr_ref
     目的/目标：adr_ref 从契约 authoritative_docs 解析，非硬编码常量
-    验证点：返回值 == ADR-034；契约 fail_external_requires_adr 为 true
+    验证点：返回值 == ADR-015；契约 fail_external_requires_adr 为 true
     失败含义：外部失败 ADR 与契约漂移，exit 0 路径不可信
     """
     contract = _load_contract()
@@ -187,7 +187,7 @@ def test_failExternalAdrRef_matchesContractAuthority() -> None:
     elif isinstance(invariants, dict):
         merged = invariants
     assert merged.get("fail_external_requires_adr") is True
-    assert fail_external_adr_ref() == "ADR-034"
+    assert fail_external_adr_ref() == "ADR-015"
 
 
 def test_writeManifest_persistsUnderEvidenceDir(tmp_path: Path) -> None:

@@ -1,4 +1,4 @@
-"""R3-DCP-05 S00 — Tier A incremental registry + ADR-028 clean routing."""
+"""R3-DCP-05 S00 — Tier A incremental registry + ADR-009 clean routing."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ from backend.app.sync.incremental_source_registry import (
     resolve_tier_a_incremental,
 )
 
-# ADR-028 canonical domain per source_id
+# ADR-009 canonical domain per source_id
 ADR028_CANONICAL = {
     "baostock": "cn_equity_daily_bar",
     "mootdx": "cn_equity_daily_bar",
@@ -58,7 +58,7 @@ def test_tierAIncrementalRegistry_canonicalDomainMatchesAdr028(
 ) -> None:
     """覆盖范围：每源 canonical domain
     测试对象：resolve_tier_a_incremental
-    目的/目标：与 ADR-028 矩阵一致
+    目的/目标：与 ADR-009 矩阵一致
     验证点：canonical_domain 字段
     失败含义：域错位则 watermark/clean 写错表
     """

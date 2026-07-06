@@ -254,26 +254,6 @@ def test_tdx06_mockedProbe_overallPassRawOnly(tmp_path: Path) -> None:
     assert result["live_attempted"] is False
 
 
-def test_tdx06_registryProposedDelta_yamlExists() -> None:
-    """覆盖范围：TDX-06 proposed registry delta 文件
-    测试对象：research/registry_proposed_delta.yaml
-    目的/目标：主会话批处理前有 proposed delta，本分支不 commit registry
-    验证点：YAML 含 tdx_pytdx 决策且 EM/AkShare 保持 open
-    失败含义：合并协调缺少 registry 提议证据
-    """
-    from backend.app.config import PROJECT_ROOT
-
-    path = (
-        PROJECT_ROOT
-        / ".trellis/tasks/archive/2026-07/round3-tdx-manual-probe/research/registry_proposed_delta.yaml"
-    )
-    assert path.is_file(), "registry_proposed_delta.yaml must exist for TDX-06"
-    data = yaml.safe_load(path.read_text(encoding="utf-8"))
-    assert data["tdx_pytdx"]["decision"] in {"PROBE_PASS_RAW_ONLY", "PROBE_REDEFERRED"}
-    for row in ("R3-B2.75-REQ2-EM", "R3-PROMPT14-AKSHARE-VAL-01"):
-        assert data["registry_rows_remain_open"][row] == "OPEN"
-
-
 # --- P03/P04/P05/P06/P08 adversarial closure ---
 
 

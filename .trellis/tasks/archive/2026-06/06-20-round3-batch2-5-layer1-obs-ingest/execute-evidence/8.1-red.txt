@@ -1,5 +1,0 @@
-§8.1 RED
-command: uv run pytest tests/test_layer1_ingestion_gates.py -q
-exit_code: 4
-signal: ERROR: file or directory not found: tests/test_layer1_ingestion_gates.py
-(expected FAIL before gate tests created)

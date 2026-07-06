@@ -1,9 +1,0 @@
-# R3H-10 Audit Repair — full pytest evidence
-# Command: uv run pytest -q
-# Date: 2026-06-29
-# Exit: 0
-# Elapsed: ~202s
-# Branch: feature/round3h-r3h10-datasource-service-ssot (post b70c600e repair delta)
-
-Repair scope: A8 B1/B2/N1-N5, A1 reconcile defer tests, contract required_tests,
-fetch_window layer fix, audit ledger/matrix/report, bundle source-index.

@@ -1,7 +1,0 @@
-S00-SCHEMA-REGISTRY GREEN
-timestamp: 2026-07-02
-pytest: uv run pytest tests/test_tierA_incremental_registry.py tests/test_schema_migration.py tests/test_migration_coverage.py -q → 41 passed
-artifacts:
-  - backend/app/db/migrations/015_dcp05_tier_a_clean.sql
-  - backend/app/ops/sandbox_clean_write/clean_write_targets.py (ADR-028 BAR/MACRO/US_DISCLOSURE/CRYPTO)
-  - backend/app/sync/incremental_source_registry.py (11/11 Tier A)

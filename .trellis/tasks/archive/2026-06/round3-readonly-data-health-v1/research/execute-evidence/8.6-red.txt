@@ -1,2 +1,0 @@
-RED: pytest.fail — dataHealthStaleness tests (2)
-exit code: 1 FAILED

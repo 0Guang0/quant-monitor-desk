@@ -1,4 +1,0 @@
-pytest tests/test_layer5_evidence_foundation.py::test_layer5Lineage_envelopeMatchesSnapshotContractFields -q
-1 passed
-exit code: 0
-All checks passed

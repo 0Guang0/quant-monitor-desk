@@ -1,1 +1,0 @@
-[0;32mExecute handoff validation passed[0m

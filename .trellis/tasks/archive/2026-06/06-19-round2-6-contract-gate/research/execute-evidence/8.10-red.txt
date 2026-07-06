@@ -1,3 +1,0 @@
-=== 8.10 RED ===
-ERROR: not found research/phase-a-self-check.md
-exit code: 1

@@ -1,3 +1,0 @@
-=== 8.8 RED ===
-ModuleNotFoundError sync_registry
-exit: 1

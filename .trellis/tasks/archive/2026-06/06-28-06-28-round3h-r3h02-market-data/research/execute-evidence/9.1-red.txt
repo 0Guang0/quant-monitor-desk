@@ -1,3 +1,0 @@
-FAILED
-ModuleNotFoundError: market_data evidence normalizer / tests missing
-Exit: 1 (expected RED — pre-9.1)

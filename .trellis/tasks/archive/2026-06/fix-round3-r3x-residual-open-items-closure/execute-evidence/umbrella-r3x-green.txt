@@ -1,6 +1,0 @@
-# umbrella-r3x — PROMPT_15 18-case regression umbrella (pre-α-3)
-# Command: uv run pytest tests/test_r3x_residual_open_items_closure.py -k "not Prompt15" -q --tb=no
-
-..................                                                       [100%]
-18 passed in 5.6s
-EXIT:0

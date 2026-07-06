@@ -1,4 +1,0 @@
-# §9.6 GREEN — guardrails + loop
-# pytest: uv run pytest tests/test_reference_adoption_guardrails.py tests/test_loop_engineering_flow.py::test_loopMaintain_check_passesWhenRepoFresh -q
-# loop_maintain: OK
-# result: passed

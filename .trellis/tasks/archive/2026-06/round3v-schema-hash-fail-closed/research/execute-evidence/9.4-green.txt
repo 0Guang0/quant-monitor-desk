@@ -1,4 +1,0 @@
-DATA-04 GREEN: corrupt returns SCHEMA_DRIFT
-pytest tests/test_adapter_skeletons.py::test_skeletonFetch_corruptCsv_notSuccessEligible tests/test_adapter_skeletons.py::test_skeletonFetch_corruptParquet_notSuccessEligible -v
-2 passed
-exit 0

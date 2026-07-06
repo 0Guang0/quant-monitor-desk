@@ -284,6 +284,10 @@ _JOB_TYPE_TRANSITION_EXTRAS: dict[str, dict[str, frozenset[str]]] = {
         ("STAGED",): frozenset({"PLANNED", "COMPLETED"}),
         ("WRITING",): frozenset({"PLANNED", "COMPLETED"}),
     },
+    "full_load": {
+        ("STAGED",): frozenset({"PLANNED", "COMPLETED"}),
+        ("WRITING",): frozenset({"PLANNED", "COMPLETED"}),
+    },
     "reconcile": {
         ("PLANNED",): frozenset({"WAITING_RECONCILE"}),
         ("READY_TO_WRITE",): frozenset({"COMPLETED"}),

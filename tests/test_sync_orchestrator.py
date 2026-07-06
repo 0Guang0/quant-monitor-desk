@@ -557,7 +557,7 @@ def test_backfillJob_severeConflict_blocksCleanWriteAndPersistsConflictReportId(
     from datetime import date
 
     from backend.app.core.resource_guard import Decision, ResourceGuard
-    from tests.test_batch_d_orchestration_flow import (
+    from tests.support.orchestration_flow_fixtures import (
         CONFLICT_STG,
         BatchDIncrementalAdapter,
         _orch_stack,
@@ -615,7 +615,7 @@ def test_reconcileJob_severeConflict_entersWaitingReconcile(
     失败含义：严重冲突仍标完成，脏价会进入下游计算
     """
     from backend.app.core.resource_guard import Decision, ResourceGuard
-    from tests.test_batch_d_orchestration_flow import (
+    from tests.support.orchestration_flow_fixtures import (
         CLEAN_TABLE,
         CONFLICT_STG,
         BatchDIncrementalAdapter,
@@ -1031,7 +1031,7 @@ def test_r3ySync001_reconcile_rejectsAdapterBypassInProductionProfile(
 ) -> None:
     """覆盖范围：生产环境下冲突调和禁止直接注入 adapter 旁路
     测试对象：DataSyncOrchestrator.run_reconcile(conflict_id, adapter=X)
-    目的/目标：reconcile 生产 profile adapter fail-closed（ADR-025 §Reconcile defer；金路径 datasource_service= 属 R3H-08）
+    目的/目标：reconcile 生产 profile adapter fail-closed（ADR-006 §Reconcile defer；金路径 datasource_service= 属 R3H-08）
     验证点：预插 source_conflict 后抛 ValueError match DataSourceService
     失败含义：调和可绕过 adapter 旁路守卫
     """
@@ -1192,7 +1192,7 @@ def test_r3h10S10_01_incremental_requiresDatasourceServiceInProductionProfile(
 ) -> None:
     """覆盖范围：生产环境下增量同步未注入 DataSourceService 且无 adapter 时 fail-closed
     测试对象：DataSyncOrchestrator.run_incremental(spec) 无 adapter 无 datasource_service
-    目的/目标：ADR-025 — 禁止隐式默认 service；须显式 datasource_service= 金路径
+    目的/目标：ADR-006 — 禁止隐式默认 service；须显式 datasource_service= 金路径
     验证点：抛 ValueError match datasource_service=
     失败含义：生产可省略 service 仍进入 runner，与 C2 SSOT 和 adapter 旁路守卫不对称
     """
@@ -1223,7 +1223,7 @@ def test_r3h10S10_01_backfill_requiresDatasourceServiceInProductionProfile(
 ) -> None:
     """覆盖范围：生产环境下回补未注入 DataSourceService 且无 adapter 时 fail-closed
     测试对象：DataSyncOrchestrator.run_backfill(spec) 无 adapter 无 datasource_service
-    目的/目标：ADR-025 — 回补与增量对称，禁止省略 datasource_service=
+    目的/目标：ADR-006 — 回补与增量对称，禁止省略 datasource_service=
     验证点：抛 ValueError match datasource_service=
     失败含义：回补可隐式进入 runner 后才报错，混淆 missing service 与 fetch 失败
     """
@@ -1252,7 +1252,7 @@ def test_r3h10S10_01_backfill_requiresDatasourceServiceInProductionProfile(
 def test_r3h10S10_01_reconcile_adapterBypassFailClosedPerAdr025(
     tmp_path, monkeypatch
 ) -> None:
-    """覆盖范围：reconcile 生产 profile adapter 旁路 fail-closed（ADR-025 §Reconcile defer）
+    """覆盖范围：reconcile 生产 profile adapter 旁路 fail-closed（ADR-006 §Reconcile defer）
     测试对象：DataSyncOrchestrator.run_reconcile(conflict_id, adapter=X)
     目的/目标：reconcile 无 datasource_service= 金路径时仍须 adapter fail-closed，非 silent bypass
     验证点：与 test_r3ySync001_reconcile_* 一致抛 ValueError match DataSourceService
@@ -1382,21 +1382,41 @@ def test_syncJobContract_deferredErrorYaml_parityWithRuntimeConstants() -> None:
     assert deferred["docs_anchor"] == DOCS_ANCHOR_D2_P1_1
 
 
-def test_syncJob_reservedFullLoad_returnsDeferredJobTypeError(tmp_path) -> None:
-    """覆盖范围：reserved full_load 返回稳定 deferred 错误（VR-SYNC-002 / SYNC-03）
+def test_syncJob_fullLoad_completesWithShards(tmp_path, monkeypatch) -> None:
+    """覆盖范围：full_load runner 已实现（M-G1-03 / VR-SYNC-002 更新）
     测试对象：DataSyncOrchestrator.run_full_load
-    目的/目标：全量同步未实现时须抛 DeferredJobTypeError，不得裸 NotImplementedError
-    验证点：code=DEFERRED_JOB_TYPE；docs_anchor 含 D2-P1-1
-    失败含义：调用方收到 NIE 或静默成功，误以为全量同步已可用
+    目的/目标：全量同步可调度且分片完成，不再 DeferredJobTypeError
+    验证点：result 列表末项 status == COMPLETED
+    失败含义：full_load 仍 defer，P1-GATE 无法关账
     """
-    import pytest
+    from datetime import date
 
-    from backend.app.sync.contract import DeferredJobTypeError
+    from backend.app.core.resource_guard import Decision, ResourceGuard
 
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
     orch = _orchestrator(tmp_path)
-    with pytest.raises(DeferredJobTypeError) as exc_info:
-        orch.run_full_load(_reserved_job_spec("full_load"))
-    _assert_deferred_job_type_error(exc_info, job_type="full_load")
+    spec = SyncJobSpec(
+        run_id="run-reserved",
+        job_id="job-fl-orch",
+        job_type="full_load",
+        data_domain="market_bar_1d",
+        market_id="CN_A",
+        source_id="baostock",
+        adapter_id=None,
+        date_start=date(2026, 1, 1),
+        date_end=date(2026, 1, 15),
+        instrument_id=None,
+        partition_key=None,
+        trigger_reason="cold_start",
+    )
+    from tests.test_sync_full_load import _FullLoadCountAdapter
+
+    results = orch.run_full_load(
+        spec,
+        adapter=_FullLoadCountAdapter(),
+        clean_table=_FullLoadCountAdapter.CLEAN,
+    )
+    assert results[-1].status == "COMPLETED"
 
 
 def test_syncJob_reservedDataQuality_completesJob(tmp_path) -> None:

@@ -1,2 +1,0 @@
-ModuleNotFoundError: No module named 'backend.app.ops.sandbox_clean_write.limited_production_entry'
-(PromoteEntry test — pre-implementation RED)

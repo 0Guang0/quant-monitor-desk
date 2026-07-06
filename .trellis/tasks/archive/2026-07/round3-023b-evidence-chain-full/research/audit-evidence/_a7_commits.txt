@@ -1,2 +1,0 @@
-ad619101 docs(trellis): close B01-023 execute handoff metadata
-a4c59cda feat(layer5): complete B01-023 evidence chain Execute sections 9.1-9.6

@@ -11,6 +11,43 @@ commands:
     required_args: [domain]
     optional_args: [start, end, since, dry-run]
     must_use: [ResourceGuard, SourceRoutePlan, idempotency_key, fetch_log]
+  qmd data full-load:
+    required_args: [domain, source-id, start]
+    optional_args: [end, instrument-id, max-shards, truncate-to-cap, dry-run]
+    default_mode: dry_run
+    must_use:
+      [DataSyncOrchestrator.run_full_load, ResourceGuard, SourceRoutePlan]
+    docs_anchor: docs/modules/data_sync_orchestrator.md#1341-fullloadjob
+  qmd data scheduler run:
+    required_args: [profile]
+    optional_args: [dry-run]
+    default_mode: dry_run
+    must_use: [run_profile, bindings_for_source, execute_binding, ResourceGuard]
+    docs_anchor: docs/modules/data_sync_orchestrator.md#136-调度计划
+  qmd data incremental:
+    required_args: [profile]
+    optional_args: [dry-run]
+    default_mode: dry_run
+    must_use: [run_profile, execute_binding]
+    docs_anchor: docs/modules/data_sync_orchestrator.md#137-cli-设计
+  qmd data revision-audit:
+    required_args: [domain, market]
+    optional_args: [lookback-days, dry-run]
+    default_mode: dry_run
+    must_use: [DataSyncOrchestrator.run_revision_audit, ResourceGuard]
+    docs_anchor: docs/modules/data_sync_orchestrator.md#137-cli-设计
+  qmd data reconcile:
+    required_args: [conflict-id]
+    optional_args: [dry-run]
+    default_mode: dry_run
+    must_use: [DataSyncOrchestrator.run_reconcile]
+    docs_anchor: docs/modules/data_sync_orchestrator.md#137-cli-设计
+  qmd data quality-check:
+    required_args: [domain, date]
+    optional_args: [dry-run]
+    default_mode: dry_run
+    must_use: [DataSyncOrchestrator.run_data_quality, ResourceGuard]
+    docs_anchor: docs/modules/data_sync_orchestrator.md#137-cli-设计
   qmd data health:
     required_args: [domain, profile]
     optional_args:
@@ -51,3 +88,8 @@ required_tests:
   - tests/test_qmd_data_cli.py::test_qmdData_health_noSideEffects
   - tests/test_qmd_data_cli.py::test_qmdData_health_rejectsLiveCleanWriteFullScan
   - tests/test_qmd_data_cli.py::test_qmdData_health_defaultWindow_boundedRowCount
+  - tests/test_qmd_data_full_load_cli.py::test_qmdDataFullLoad_cliRegisteredInDataCliContract
+  - tests/test_qmd_data_full_load_cli.py::test_qmd_data_full_load_dry_run_json_auditable
+  - tests/test_data_cli_contract.py::test_dataCliContract_schedulerRunRegistered
+  - tests/test_data_cli_contract.py::test_dataCliContract_section137CommandsRegistered
+  - tests/test_sync_scheduler.py::test_syncScheduler_profileExpandsRegistryToExecuteBinding

@@ -1,6 +1,0 @@
-{"skill": "trellis-execute", "phase": "boot", "note": "Phase 0 Boot + §8 RED/GREEN protocol"}
-{"skill": "test-driven-development", "phase": "8.x", "note": "RED FAIL → GREEN PASS per step with evidence"}
-{"skill": "incremental-implementation", "phase": "8.x", "note": "registry → adapter → calendar/breadth → lineage → build → as_of → boundaries"}
-{"skill": "karpathy-guidelines", "phase": "green", "note": "staged-only minimal builder; clone L3 patterns"}
-{"skill": "testing-guidelines", "phase": "tests", "note": "五字段 docstring + semantic assertions"}
-{"skill": "gitnexus-impact", "phase": "pre-edit", "note": "greenfield layer4_markets; LOW risk"}

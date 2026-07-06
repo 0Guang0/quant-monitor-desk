@@ -1,2 +1,0 @@
-full pytest GREEN: uv run pytest -q --tb=no
-exit 0 — 1026 passed, 4 skipped (Tier A+B)

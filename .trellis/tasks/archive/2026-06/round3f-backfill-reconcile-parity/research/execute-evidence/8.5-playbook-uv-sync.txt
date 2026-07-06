@@ -1,4 +1,0 @@
-Resolved 67 packages in 1ms
-Checked 22 packages in 1ms
-
-exit_code=0

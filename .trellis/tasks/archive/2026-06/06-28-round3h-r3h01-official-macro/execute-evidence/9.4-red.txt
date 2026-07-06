@@ -1,4 +1,0 @@
-FFFFFFF..                                                                [100%]
-7 failed: ModuleNotFoundError backend.app.datasources.fetch_ports.sec_edgar_port
-         ModuleNotFoundError backend.app.datasources.normalizers.sec_edgar
-2 passed: route tests (disabledByDefault, readyWhenSourceEnabled)

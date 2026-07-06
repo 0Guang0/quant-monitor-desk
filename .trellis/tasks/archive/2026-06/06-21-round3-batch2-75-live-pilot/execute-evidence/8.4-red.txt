@@ -1,6 +1,0 @@
-# §8.4 Phase 2 RED evidence — 2026-06-21
-# uv run pytest tests/test_batch275_live_pilot_gate.py::test_livePilot_phase2RouteMatrix_threeRequests -q
-
-ImportError: cannot import name 'approved_pilot_requests' from 'backend.app.ops.live_pilot'
-
-exit_code=1

@@ -1,2 +1,0 @@
-FAILED tests/test_layer2_sensor_loader.py - ModuleNotFoundError layer2_sensors
-EXIT_CODE=1

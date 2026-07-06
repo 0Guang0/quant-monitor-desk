@@ -51,7 +51,7 @@ def bootstrap_sec_edgar_live_e2e_ctx(
     sandbox_root: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> dict[str, Any]:
-    """Bootstrap SEC EDGAR live e2e under isolated M-DATA-03 sandbox (ADR-034)."""
+    """Bootstrap SEC EDGAR live e2e under isolated M-DATA-03 sandbox (ADR-015)."""
     import os
 
     ua = os.environ.get("SEC_EDGAR_USER_AGENT", "")

@@ -1,2 +1,0 @@
-2 failed — loader_mode / five-table parse not implemented
-exit code: 1 — expected RED before §8.2

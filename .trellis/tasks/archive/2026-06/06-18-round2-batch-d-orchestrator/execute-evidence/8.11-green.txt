@@ -1,5 +1,0 @@
-=== 8.11 GREEN ===
-Execute handoff validation passed
-pytest_total: 326 passed (Tier C, meta/manifest excluded)
-cov: 93.80%
-exit 0

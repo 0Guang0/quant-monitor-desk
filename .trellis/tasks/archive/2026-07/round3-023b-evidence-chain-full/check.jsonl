@@ -1,5 +1,0 @@
-{"file": "specs/contracts/layer5_evidence_contract.yaml", "reason": "A1 spec diff vs chain builder"}
-{"file": "docs/modules/layer5_security_evidence.md", "reason": "A1 module authority evidence_chain"}
-{"file": "docs/quality/coordination/BATCH_01_MAIN_SESSION_COORDINATOR_PLAYBOOK.md", "reason": "A1 playbook §8.4 PASS trace"}
-{"file": "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md", "reason": "A8 semantic assertion policy"}
-{"file": ".trellis/tasks/round3-023b-evidence-chain-full/research/source-index.md", "reason": "A5 trace manifest"}

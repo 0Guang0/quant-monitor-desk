@@ -1,2 +1,0 @@
-# §9.5 RED — doc-only step; pre-edit test_roadmapAndHandoff_mark3frClosed would fail on stale NEAR CLOSE / missing CLOSED
-# no runtime pytest failure by design for narrative-only delta

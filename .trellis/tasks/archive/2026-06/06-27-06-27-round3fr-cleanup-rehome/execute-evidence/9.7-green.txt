@@ -1,4 +1,0 @@
-# §9.7 GREEN — full acceptance
-# uv run pytest -q → all passed (3 skipped)
-# uv run python scripts/loop_maintain.py → OK
-# validate-execute-handoff → PASS

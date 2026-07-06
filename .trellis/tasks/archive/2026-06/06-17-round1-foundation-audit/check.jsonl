@@ -1,8 +1,0 @@
-{"file": ".trellis/tasks/06-17-round1-foundation-audit/MASTER.plan.md", "reason": "审查对照：§10、DECISIONS"}
-{"file": "docs/implementation_tasks/ROUND_1_DATA_FOUNDATION/DECISIONS.md", "reason": "范围决策 spec"}
-{"file": "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md", "reason": "测试规范"}
-{"file": "docs/quality/final_package_rules.md", "reason": "最终包规则"}
-{"file": "backend/app/db/write_manager.py", "reason": "WriteManager 契约审查"}
-{"file": "backend/app/db/migrate.py", "reason": "migration 审查"}
-{"file": "tests/test_write_manager.py", "reason": "业务语义断言审查"}
-{"file": "tests/test_schema_migration.py", "reason": "checksum/幂等测试审查"}

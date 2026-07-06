@@ -1,6 +1,0 @@
-# Command: uv run pytest tests/test_b3f_quality_runners.py::test_b3fQualityRunners_revisionAudit_notDeferred -q
-# exit_code: 0
-
-.                                                                        [100%]
-
-EXIT:0

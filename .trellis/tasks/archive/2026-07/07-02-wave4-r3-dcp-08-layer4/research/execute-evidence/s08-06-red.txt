@@ -1,2 +1,0 @@
-RED: tests/test_layer4_us_equity_clean_e2e.py skipped / AssertionError Execute S08-E2E
-GREEN: uv run pytest tests/test_layer4_us_equity_clean_e2e.py -q — 1 passed

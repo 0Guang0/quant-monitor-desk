@@ -1,4 +1,0 @@
-=== 8.9 ingestion smoke ===
-orchestrator_smoke: ok
-ci_ingestion_smoke: ok
-exit: 0

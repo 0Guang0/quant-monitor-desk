@@ -17,7 +17,7 @@ from backend.app.sync.event_payload import SCHEMA_KEYS, parse_event_payload
 from backend.app.sync.jobs import SyncJobSpec
 from backend.app.sync.orchestrator import DataSyncOrchestrator
 from backend.app.validators.data_quality import DataQualityRequest, DataQualityValidator
-from tests.test_batch_d_orchestration_flow import (
+from tests.support.orchestration_flow_fixtures import (
     CLEAN_TABLE,
     CONFLICT_STG,
     BatchDIncrementalAdapter,

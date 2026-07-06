@@ -1,4 +1,4 @@
-"""Live tier router — PASS §2.1 source_id → Tier A/B/C (R3H-08 · ADR-027)."""
+"""Live tier router — PASS §2.1 source_id → Tier A/B/C (R3H-08 · ADR-008)."""
 
 from __future__ import annotations
 

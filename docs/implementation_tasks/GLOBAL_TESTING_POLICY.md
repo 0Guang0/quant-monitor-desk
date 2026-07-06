@@ -127,7 +127,7 @@ resourceGuard_lowDisk_shouldPauseBackfill
 
 **禁止：** 用批量脚本生成 docstring；在目的/失败含义里堆 JSON 键名或异常类名而无业务解释。
 
-**新增测试模块：** 登记 `tests/test_catalog.yaml`（`uv run python scripts/loop_maintain.py --fix`）。
+**新增测试模块：** 在 `tests/` 下新增聚焦的 `test_*.py`；提交前 `uv run pytest -q` 全绿。
 
 ## 8. Deterministic / Golden / Time-freeze 基线
 

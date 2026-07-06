@@ -1,9 +1,0 @@
-{"file": ".trellis/tasks/06-24-round3-real-data-staged-pilot-v2/AUDIT.plan.md", "reason": "Audit single source of truth"}
-{"file": ".trellis/tasks/06-24-round3-real-data-staged-pilot-v2/MASTER.plan.md", "reason": "extract: §2 AC trace | for: A5 audit-completion"}
-{"file": "docs/implementation_tasks/ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3Y_real_data_staged_pilot_v2.md", "reason": "extract: scope / evidence 清单 | for: A1 trace"}
-{"file": "docs/quality/production_live_pilot_policy.md", "reason": "extract: staged-only 约束 | for: A5 AC-SP2-08"}
-{"file": "backend/app/ops/mutation_proof.py", "reason": "extract: proof_status 语义 | for: A8 MUT-PROOF-001"}
-{"file": "backend/app/ops/staged_pilot.py", "reason": "extract: closeout gate 字段 | for: A5 / A8"}
-{"file": "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md", "reason": "extract: 语义断言 | for: A8"}
-{"file": ".trellis/tasks/06-24-round3-real-data-staged-pilot-v2/research/source-index.md", "reason": "extract: manifest 血缘 | for: A5 trace"}
-{"file": ".trellis/tasks/archive/2026-06/06-23-round3-post-r3x-strict-audit/review-evidence/R3Y-AUD-08-go-no-go.md", "reason": "extract: AUD-08 控件 | for: A5 go/no-go 对照"}

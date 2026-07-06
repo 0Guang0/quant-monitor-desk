@@ -179,7 +179,7 @@ def _sync_fred_macro_incremental(
         raise CliFailure(
             error_code=exc.code,
             message=str(exc),
-            docs_anchor="docs/decisions/ADR-027-r3h08-product-live-env-gate.md",
+            docs_anchor="docs/decisions/ADR-008-product-live-env-gate.md",
         ) from exc
 
     guard_decision, guard_reason = ResourceGuard().check()
@@ -309,6 +309,101 @@ def _require_baostock_sync_operator_or_sandbox(data_root: Path) -> None:
             message="user-live audit path refused for sync without --dry-run",
             docs_anchor="docs/ops/data_sync_quick_reference.md",
         )
+
+
+def _backfill_fred_macro_incremental(
+    *,
+    payload: dict[str, Any],
+    data_root: Path,
+    db: Path,
+    date_start: date,
+    effective_end: date,
+    series_ids: tuple[str, ...] | None,
+) -> dict[str, Any]:
+    """Execute fred macro bounded backfill in sandbox (S04)."""
+    import os
+
+    from backend.app.datasources.fetch_ports.fred_port import P0_SERIES_WHITELIST, create_fred_fetch_port
+    from backend.app.datasources.product_live_gate import (
+        ProductLiveGateError,
+        assert_product_live_allowed,
+    )
+    from backend.app.ops.fred_incremental_run import (
+        build_fred_incremental_service,
+        run_fred_macro_backfill,
+    )
+    from backend.app.ops.fred_incremental_watermark import read_since_dates_for_series
+    from backend.app.ops.sandbox_clean_write.rehearsal_runner import (
+        RehearsalRunnerError,
+        assert_sandbox_db_allowed,
+    )
+    from backend.app.sync.orchestrator import DataSyncOrchestrator
+
+    try:
+        assert_product_live_allowed(source_id="fred", operation="fetch_macro_series")
+    except ProductLiveGateError as exc:
+        raise CliFailure(
+            error_code=exc.code,
+            message=str(exc),
+            docs_anchor="docs/decisions/ADR-008-product-live-env-gate.md",
+        ) from exc
+
+    _require_baostock_sync_operator_or_sandbox(data_root)
+    try:
+        assert_sandbox_db_allowed(db, no_production_mutation=True, allow_isolated_data_root=True)
+    except RehearsalRunnerError as exc:
+        raise CliFailure(
+            error_code="INVALID_INPUT",
+            message=str(exc),
+            docs_anchor="docs/ops/data_sync_quick_reference.md",
+        ) from exc
+
+    selected = series_ids or tuple(sorted(P0_SERIES_WHITELIST))[:1]
+    use_mock = os.environ.get("QMD_FRED_INCREMENTAL_USE_MOCK", "0") != "0"
+    if not use_mock and not os.environ.get("FRED_API_KEY"):
+        raise CliFailure(
+            error_code="USER_AUTH_REQUIRED",
+            message="FRED_API_KEY missing for live fred macro backfill",
+            docs_anchor="docs/ops/ERROR_CODE_GUIDE.md#user-auth-required",
+            manual_confirmation_required=True,
+        )
+
+    db.parent.mkdir(parents=True, exist_ok=True)
+    cm = ConnectionManager(db_path=db)
+    with cm.writer() as con:
+        apply_migrations(con)
+        since_map = read_since_dates_for_series(con, selected)
+
+    raw_root = data_root / "raw" / "fred"
+    raw_root.mkdir(parents=True, exist_ok=True)
+    port = create_fred_fetch_port(series_ids=selected, max_rows=500, use_mock=use_mock)
+    orch = DataSyncOrchestrator(cm)
+    service = build_fred_incremental_service(
+        data_root=raw_root,
+        fetch_port=port,
+        since_by_series=since_map,
+        job_events=orch._jobs,
+    )
+    report = run_fred_macro_backfill(
+        orch,
+        service=service,
+        date_start=date_start,
+        date_end=effective_end,
+        series_ids=selected,
+        use_mock=use_mock,
+    )
+    payload["job_status"] = report.overall_status
+    payload["series_results"] = list(report.series_results)
+    payload["product_live"] = not use_mock
+    if report.overall_status not in {"COMPLETED", "PARTIAL_FAILURE"}:
+        raise CliFailure(
+            error_code="SYNC_FAILED",
+            message=f"fred macro backfill failed: status={report.overall_status}",
+            docs_anchor="docs/ops/ERROR_CODE_GUIDE.md#sync-failed",
+            retryable=True,
+        )
+    payload["message"] = "fred macro backfill completed via execute_binding gold path"
+    return payload
 
 
 def sync_baostock_incremental(
@@ -502,6 +597,37 @@ def sync_baostock_incremental(
     return payload
 
 
+def _tier_a_backfill_route_preview(
+    *, source_id: str, data_domain: str, operation: str
+):
+    """Route preview with runtime source enable (ADR-009 dry-run parity)."""
+    from backend.app.datasources.capability_registry import SourceCapabilityRegistry
+    from backend.app.datasources.route_planner import SourceRoutePlanner
+    from backend.app.datasources.service import DataSourceService
+    from backend.app.ops.macro_incremental_common import enabled_source_registry
+
+    if source_id == "fred" and data_domain == "macro_series":
+        from backend.app.ops.fred_incremental_run import build_fred_incremental_preview_service
+
+        preview_svc = build_fred_incremental_preview_service()
+        plan = preview_svc.preview_route(data_domain=data_domain, operation=operation)
+    else:
+        registry = enabled_source_registry(source_id=source_id, data_domain=data_domain)
+        caps = SourceCapabilityRegistry()
+        caps.load()
+        planner = SourceRoutePlanner(source_registry=registry, capability_registry=caps)
+        planner._platform_allows = lambda _sid: (True, None)
+        service = DataSourceService(
+            staged_fixture_mode=False,
+            source_registry=registry,
+            capability_registry=caps,
+            route_planner=planner,
+        )
+        plan = service.preview_route(data_domain=data_domain, operation=operation)
+    guard_decision, guard_reason = ResourceGuard().check()
+    return plan, guard_decision, guard_reason
+
+
 def backfill_plan(
     *,
     data_domain: str,
@@ -525,6 +651,10 @@ def backfill_plan(
         RehearsalRunnerError,
         assert_sandbox_db_allowed,
     )
+    from backend.app.sync.incremental_source_registry import (
+        UnknownTierAIncrementalSourceError,
+        resolve_tier_a_incremental,
+    )
     from backend.app.sync.jobs import (
         ABSOLUTE_MAX_BACKFILL_SHARDS,
         BackfillShardCapExceededError,
@@ -533,14 +663,42 @@ def backfill_plan(
     )
     from backend.app.sync.orchestrator import DataSyncOrchestrator
 
-    if data_domain != "cn_equity_daily_bar" or source_id != "baostock":
+    tier_a_operations = {
+        "cn_equity_daily_bar": "fetch_daily_bar",
+        "macro_series": "fetch_macro_series",
+        "us_treasury_yield_curve": "fetch_yield_curve",
+        "central_bank_policy": "fetch_policy_rate",
+        "development_indicator": "fetch_development_indicator",
+        "cot_positioning": "fetch_cot_report",
+        "cn_announcements": "fetch_announcement_index",
+        "us_filings": "fetch_company_filings",
+        "us_equity_daily_bar": "fetch_daily_bar",
+        "crypto_options_surface": "fetch_options_surface",
+    }
+
+    try:
+        entry = resolve_tier_a_incremental(source_id)
+    except UnknownTierAIncrementalSourceError as exc:
+        raise CliFailure(
+            error_code="INVALID_INPUT",
+            message=str(exc),
+            docs_anchor="docs/ops/data_sync_quick_reference.md",
+        ) from exc
+    if data_domain != entry.canonical_domain:
+        raise CliFailure(
+            error_code="INVALID_INPUT",
+            message=(
+                f"domain mismatch for source_id={source_id!r}: "
+                f"got {data_domain!r}, expected {entry.canonical_domain!r}"
+            ),
+            docs_anchor="docs/ops/data_sync_quick_reference.md",
+        )
+    op = tier_a_operations.get(data_domain)
+    if op is None:
         raise CliFailure(
             error_code="CAPABILITY_MISSING",
-            message=(
-                f"backfill pilot supports cn_equity_daily_bar + baostock only; "
-                f"got domain={data_domain!r} source_id={source_id!r}"
-            ),
-            docs_anchor="docs/decisions/ADR-030-bounded-backfill-cap-and-ci-nightly.md",
+            message=f"no backfill operation for data_domain={data_domain!r}",
+            docs_anchor="docs/decisions/ADR-011-bounded-backfill-cap-and-ci-nightly.md",
         )
 
     resolved_max = DEFAULT_MAX_BACKFILL_SHARDS if max_shards is None else max_shards
@@ -551,7 +709,7 @@ def backfill_plan(
                 f"max_shards must be between 1 and {ABSOLUTE_MAX_BACKFILL_SHARDS}; "
                 f"got {resolved_max}"
             ),
-            docs_anchor="docs/decisions/ADR-030-bounded-backfill-cap-and-ci-nightly.md",
+            docs_anchor="docs/decisions/ADR-011-bounded-backfill-cap-and-ci-nightly.md",
         )
 
     date_start = _parse_sync_date(start, field="start")
@@ -574,18 +732,26 @@ def backfill_plan(
         raise CliFailure(
             error_code="BACKFILL_CAP_EXCEEDED",
             message=str(exc),
-            docs_anchor="docs/decisions/ADR-030-bounded-backfill-cap-and-ci-nightly.md",
+            docs_anchor="docs/decisions/ADR-011-bounded-backfill-cap-and-ci-nightly.md",
             retryable=False,
         ) from exc
 
     effective_end = shards[-1][2] if shards else date_end
-    op = "fetch_daily_bar"
-    preview = route_preview(data_domain=data_domain, operation=op)
-    guard_decision, guard_reason = ResourceGuard().check()
-    symbol = instrument_id or "sh.600519"
+    plan, guard_decision, guard_reason = _tier_a_backfill_route_preview(
+        source_id=source_id,
+        data_domain=data_domain,
+        operation=op,
+    )
+    symbol = instrument_id or (
+        "DGS10" if data_domain == "macro_series" else "sh.600519"
+    )
     data_root = _path_env("QMD_DATA_ROOT", PROJECT_ROOT / "data")
     db = data_root / "duckdb" / "quant_monitor.duckdb"
-    use_mock = resolve_baostock_incremental_use_mock()
+    use_mock = (
+        resolve_baostock_incremental_use_mock()
+        if source_id == "baostock"
+        else True
+    )
     product_live = not use_mock
     target = resolve_clean_write_target(data_domain)
 
@@ -610,8 +776,8 @@ def backfill_plan(
         "truncate_to_cap": truncate_to_cap,
         "shard_count": len(shards),
         "shards": shard_plan,
-        "route_status": preview["route_status"],
-        "selected_source_id": preview["selected_source_id"],
+        "route_status": plan.route_status,
+        "selected_source_id": plan.selected_source_id or source_id,
         "resource_guard_decision": guard_decision.value,
         "clean_table": target.target_table,
         "write_mode": target.write_mode,
@@ -624,9 +790,9 @@ def backfill_plan(
             docs_anchor="docs/ops/ERROR_CODE_GUIDE.md#resource-guard-paused",
             retryable=True,
         )
-    if preview["route_status"] != "READY":
+    if plan.route_status != "READY":
         raise error_for_route_status(
-            preview["route_status"],
+            plan.route_status,
             detail=f"backfill blocked for domain={data_domain!r}",
         )
 
@@ -636,6 +802,28 @@ def backfill_plan(
         _require_audit_sandbox_data_root(data_root)
         payload["message"] = "dry-run only; shard plan computed, no fetch or DB writes"
         return payload
+
+    if data_domain == "macro_series" and source_id == "fred":
+        return _backfill_fred_macro_incremental(
+            payload=payload,
+            data_root=data_root,
+            db=db,
+            date_start=date_start,
+            effective_end=effective_end,
+            series_ids=(symbol,) if symbol else None,
+        )
+
+    if data_domain != "cn_equity_daily_bar" or source_id != "baostock":
+        raise CliFailure(
+            error_code="USER_AUTH_REQUIRED",
+            message=(
+                f"qmd data backfill without --dry-run for domain={data_domain!r} "
+                f"source_id={source_id!r} requires sandbox path; "
+                "only baostock bar and fred macro wired in S04"
+            ),
+            docs_anchor="docs/ops/data_sync_quick_reference.md",
+            manual_confirmation_required=True,
+        )
 
     _require_baostock_sync_operator_or_sandbox(data_root)
     try:
@@ -684,6 +872,209 @@ def backfill_plan(
             retryable=final_status in {"FAILED_RETRYABLE", "FAILED_FINAL"},
         )
     payload["message"] = "baostock backfill completed via DataSourceService gold path"
+    return payload
+
+
+def full_load_plan(
+    *,
+    data_domain: str,
+    source_id: str,
+    start: str,
+    end: str | None = None,
+    max_shards: int | None = None,
+    truncate_to_cap: bool = False,
+    dry_run: bool = True,
+    instrument_id: str | None = None,
+) -> dict[str, Any]:
+    """``qmd data full-load`` — §13.4.1 shard plan + orchestrator run_full_load gold path."""
+    import uuid
+    from datetime import UTC, datetime
+
+    from backend.app.config import PROJECT_ROOT, _path_env
+    from backend.app.ops.baostock_incremental_run import (
+        build_baostock_incremental_service,
+        resolve_baostock_incremental_use_mock,
+    )
+    from backend.app.ops.sandbox_clean_write.clean_write_targets import resolve_clean_write_target
+    from backend.app.ops.sandbox_clean_write.rehearsal_runner import (
+        RehearsalRunnerError,
+        assert_sandbox_db_allowed,
+    )
+    from backend.app.sync.jobs import (
+        ABSOLUTE_MAX_BACKFILL_SHARDS,
+        BackfillShardCapExceededError,
+        DEFAULT_MAX_BACKFILL_SHARDS,
+        SyncJobSpec,
+        plan_backfill_shards,
+    )
+    from backend.app.sync.orchestrator import DataSyncOrchestrator
+
+    if data_domain != "cn_equity_daily_bar" or source_id != "baostock":
+        raise CliFailure(
+            error_code="CAPABILITY_MISSING",
+            message=(
+                f"full-load pilot supports cn_equity_daily_bar + baostock only; "
+                f"got domain={data_domain!r} source_id={source_id!r}"
+            ),
+            docs_anchor="docs/modules/data_sync_orchestrator.md#1341-fullloadjob",
+            retryable=False,
+        )
+
+    resolved_max = DEFAULT_MAX_BACKFILL_SHARDS if max_shards is None else max_shards
+    if resolved_max < 1 or resolved_max > ABSOLUTE_MAX_BACKFILL_SHARDS:
+        raise CliFailure(
+            error_code="INVALID_INPUT",
+            message=(
+                f"max_shards must be between 1 and {ABSOLUTE_MAX_BACKFILL_SHARDS}; "
+                f"got {resolved_max}"
+            ),
+            docs_anchor="docs/modules/data_sync_orchestrator.md#1341-fullloadjob",
+        )
+
+    date_start = _parse_sync_date(start, field="start")
+    date_end = _parse_sync_date(end, field="end") if end else datetime.now(UTC).date()
+    if date_end < date_start:
+        raise CliFailure(
+            error_code="INVALID_INPUT",
+            message="end must be on or after start",
+            docs_anchor="docs/ops/data_sync_quick_reference.md",
+        )
+
+    try:
+        shards = plan_backfill_shards(
+            date_start,
+            date_end,
+            max_shards=resolved_max,
+            truncate_to_cap=truncate_to_cap,
+        )
+    except BackfillShardCapExceededError as exc:
+        raise CliFailure(
+            error_code="BACKFILL_CAP_EXCEEDED",
+            message=str(exc),
+            docs_anchor="docs/decisions/ADR-011-bounded-backfill-cap-and-ci-nightly.md",
+            retryable=False,
+        ) from exc
+
+    effective_end = shards[-1][2] if shards else date_end
+    op = "fetch_daily_bar"
+    preview = route_preview(data_domain=data_domain, operation=op)
+    guard_decision, guard_reason = ResourceGuard().check()
+    symbol = instrument_id or "sh.600519"
+    data_root = _path_env("QMD_DATA_ROOT", PROJECT_ROOT / "data")
+    db = data_root / "duckdb" / "quant_monitor.duckdb"
+    use_mock = resolve_baostock_incremental_use_mock()
+    product_live = not use_mock
+    target = resolve_clean_write_target(data_domain)
+
+    shard_plan = [
+        {"task_id": task_id, "date_start": s.isoformat(), "date_end": e.isoformat()}
+        for task_id, s, e in shards
+    ]
+    payload: dict[str, Any] = {
+        "command": "full-load",
+        "dry_run": dry_run,
+        "source_id": source_id,
+        "product_live": product_live,
+        "data_domain": data_domain,
+        "operation": op,
+        "instrument_id": symbol,
+        "window": {
+            "date_start": date_start.isoformat(),
+            "date_end": date_end.isoformat(),
+            "effective_date_end": effective_end.isoformat(),
+        },
+        "max_shards": resolved_max,
+        "truncate_to_cap": truncate_to_cap,
+        "shard_count": len(shards),
+        "shards": shard_plan,
+        "route_status": preview["route_status"],
+        "selected_source_id": preview["selected_source_id"],
+        "resource_guard_decision": guard_decision.value,
+        "clean_table": target.target_table,
+        "write_mode": target.write_mode,
+    }
+
+    if guard_decision.value != "OK":
+        raise CliFailure(
+            error_code="RESOURCE_GUARD_PAUSED",
+            message=guard_reason or "resource guard paused",
+            docs_anchor="docs/ops/ERROR_CODE_GUIDE.md#resource-guard-paused",
+            retryable=True,
+        )
+    if preview["route_status"] != "READY":
+        raise error_for_route_status(
+            preview["route_status"],
+            detail=f"full-load blocked for domain={data_domain!r}",
+        )
+
+    if dry_run:
+        from backend.app.cli.tier_a_sync_router import _require_audit_sandbox_data_root
+
+        _require_audit_sandbox_data_root(data_root)
+        payload["message"] = "dry-run only; full-load shard plan computed, no fetch or DB writes"
+        return payload
+
+    _require_baostock_sync_operator_or_sandbox(data_root)
+    try:
+        assert_sandbox_db_allowed(db, no_production_mutation=True, allow_isolated_data_root=True)
+    except RehearsalRunnerError as exc:
+        raise CliFailure(
+            error_code="INVALID_INPUT",
+            message=str(exc),
+            docs_anchor="docs/ops/data_sync_quick_reference.md",
+        ) from exc
+
+    db.parent.mkdir(parents=True, exist_ok=True)
+    cm = ConnectionManager(db_path=db)
+    with cm.writer() as con:
+        apply_migrations(con)
+
+    raw_root = data_root / "raw"
+    raw_root.mkdir(parents=True, exist_ok=True)
+    orch = DataSyncOrchestrator(cm)
+    service = build_baostock_incremental_service(
+        data_root=raw_root,
+        symbol=symbol,
+        job_events=orch._jobs,
+        use_mock=use_mock,
+    )
+    job_id = f"qmd-full-load-{uuid.uuid4().hex[:10]}"
+    spec = SyncJobSpec(
+        run_id=job_id,
+        job_id=job_id,
+        job_type="full_load",
+        data_domain=data_domain,
+        market_id="CN_A",
+        source_id=source_id,
+        adapter_id=source_id,
+        date_start=date_start,
+        date_end=effective_end,
+        instrument_id=symbol,
+        partition_key=None,
+        trigger_reason="cold_start",
+    )
+    results = orch.run_full_load(
+        spec,
+        datasource_service=service,
+        clean_table=target.target_table,
+        write_mode=target.write_mode,
+        primary_keys=target.primary_keys,
+    )
+    payload["job_id"] = job_id
+    payload["shard_results"] = [r.status for r in results]
+    final_status = results[-1].status if results else "FAILED_RETRYABLE"
+    payload["job_status"] = final_status
+    if final_status not in {"COMPLETED", "PLANNED"}:
+        raise CliFailure(
+            error_code="SYNC_FAILED",
+            message=(
+                f"full-load failed: job_id={job_id} "
+                f"statuses={[r.status for r in results]}"
+            ),
+            docs_anchor="docs/ops/ERROR_CODE_GUIDE.md#sync-failed",
+            retryable=final_status in {"FAILED_RETRYABLE", "FAILED_FINAL"},
+        )
+    payload["message"] = "full-load completed via DataSourceService gold path"
     return payload
 
 
@@ -906,7 +1297,7 @@ def live_fetch(
         raise CliFailure(
             error_code=exc.code,
             message=str(exc),
-            docs_anchor="docs/decisions/ADR-027-r3h08-product-live-env-gate.md",
+            docs_anchor="docs/decisions/ADR-008-product-live-env-gate.md",
         ) from exc
 
     preview_service = _service()
@@ -1087,6 +1478,275 @@ def health_check(
         content_hash_coverage=hash_coverage,
         schema_hash_coverage=schema_coverage,
     )
+
+
+def scheduler_run(
+    *,
+    profile: str,
+    dry_run: bool = True,
+) -> dict[str, Any]:
+    """``qmd data scheduler run`` — §13.6 profile → registry → execute_binding."""
+    from backend.app.config import PROJECT_ROOT, _path_env
+    from backend.app.db.connection import ConnectionManager
+    from backend.app.db.migrate import apply_migrations
+    from backend.app.sync.scheduler import run_profile
+
+    guard_decision, guard_reason = ResourceGuard().check()
+    if guard_decision.value != "OK" and not dry_run:
+        raise CliFailure(
+            error_code="RESOURCE_GUARD_PAUSED",
+            message=guard_reason or "resource guard paused",
+            docs_anchor="docs/ops/ERROR_CODE_GUIDE.md#resource-guard-paused",
+            retryable=True,
+        )
+
+    data_root = _path_env("QMD_DATA_ROOT", PROJECT_ROOT / "data")
+    db = data_root / "duckdb" / "quant_monitor.duckdb"
+    if dry_run:
+        from backend.app.cli.tier_a_sync_router import _require_audit_sandbox_data_root
+
+        _require_audit_sandbox_data_root(data_root)
+        cm = None
+    else:
+        _require_baostock_sync_operator_or_sandbox(data_root)
+        db.parent.mkdir(parents=True, exist_ok=True)
+        cm = ConnectionManager(db_path=db)
+        with cm.writer() as con:
+            apply_migrations(con)
+
+    try:
+        run = run_profile(profile, dry_run=dry_run, connection_manager=cm)
+    except KeyError as exc:
+        raise CliFailure(
+            error_code="INVALID_INPUT",
+            message=str(exc),
+            docs_anchor="docs/modules/data_sync_orchestrator.md#136-调度计划",
+        ) from exc
+
+    return {
+        "command": "scheduler",
+        "subcommand": "run",
+        "profile": run.profile,
+        "dry_run": run.dry_run,
+        "skipped_non_core": run.skipped_non_core,
+        "resource_guard_decision": guard_decision.value,
+        "jobs": [
+            {
+                "job_type": r.job_type,
+                "domain": r.domain,
+                "source_id": r.source_id,
+                "status": r.status,
+                "binding_ids": list(r.binding_ids),
+                "message": r.message,
+                "job_id": r.job_id,
+            }
+            for r in run.results
+        ],
+        "message": "dry-run only; profile expanded via binding registry" if dry_run else "scheduler run completed",
+    }
+
+
+def incremental_profile_plan(*, profile: str, dry_run: bool = True) -> dict[str, Any]:
+    """``qmd data incremental --profile`` — incremental jobs only from scheduler profile."""
+    payload = scheduler_run(profile=profile, dry_run=dry_run)
+    payload["command"] = "incremental"
+    payload["jobs"] = [j for j in payload["jobs"] if j["job_type"] == "incremental"]
+    return payload
+
+
+def revision_audit_plan(
+    *,
+    data_domain: str,
+    market_id: str,
+    lookback_days: int = 90,
+    dry_run: bool = True,
+) -> dict[str, Any]:
+    """``qmd data revision-audit`` — §13.7 revision audit runner."""
+    import uuid
+
+    from backend.app.config import PROJECT_ROOT, _path_env
+    from backend.app.db.connection import ConnectionManager
+    from backend.app.db.migrate import apply_migrations
+    from backend.app.sync.jobs import SyncJobSpec
+    from backend.app.sync.orchestrator import DataSyncOrchestrator
+
+    guard_decision, guard_reason = ResourceGuard().check()
+    if guard_decision.value != "OK":
+        raise CliFailure(
+            error_code="RESOURCE_GUARD_PAUSED",
+            message=guard_reason or "resource guard paused",
+            docs_anchor="docs/ops/ERROR_CODE_GUIDE.md#resource-guard-paused",
+            retryable=True,
+        )
+
+    suffix = uuid.uuid4().hex[:8]
+    payload: dict[str, Any] = {
+        "command": "revision-audit",
+        "dry_run": dry_run,
+        "data_domain": data_domain,
+        "market_id": market_id,
+        "lookback_days": lookback_days,
+        "resource_guard_decision": guard_decision.value,
+    }
+    if dry_run:
+        from backend.app.cli.tier_a_sync_router import _require_audit_sandbox_data_root
+
+        data_root = _path_env("QMD_DATA_ROOT", PROJECT_ROOT / "data")
+        _require_audit_sandbox_data_root(data_root)
+        payload["message"] = "dry-run only; revision audit plan, no DB writes"
+        return payload
+
+    data_root = _path_env("QMD_DATA_ROOT", PROJECT_ROOT / "data")
+    _require_baostock_sync_operator_or_sandbox(data_root)
+    db = data_root / "duckdb" / "quant_monitor.duckdb"
+    db.parent.mkdir(parents=True, exist_ok=True)
+    cm = ConnectionManager(db_path=db)
+    with cm.writer() as con:
+        apply_migrations(con)
+    orch = DataSyncOrchestrator(cm)
+    spec = SyncJobSpec(
+        run_id=f"rev-audit-{suffix}",
+        job_id=f"job-rev-audit-{suffix}",
+        job_type="revision_audit",
+        data_domain=data_domain,
+        market_id=market_id,
+        source_id="fred",
+        adapter_id=None,
+        date_start=None,
+        date_end=None,
+        instrument_id=None,
+        partition_key=None,
+        trigger_reason=f"revision_audit:{lookback_days}d",
+    )
+    result = orch.run_revision_audit(spec)
+    payload["job_id"] = result.job_id
+    payload["job_status"] = result.status
+    payload["message"] = result.message or "revision audit completed"
+    return payload
+
+
+def reconcile_plan(*, conflict_id: str, dry_run: bool = True) -> dict[str, Any]:
+    """``qmd data reconcile`` — §13.7 conflict reconcile."""
+    from backend.app.config import PROJECT_ROOT, _path_env
+    from backend.app.db.connection import ConnectionManager
+    from backend.app.db.migrate import apply_migrations
+    from backend.app.sync.orchestrator import DataSyncOrchestrator
+
+    if not conflict_id:
+        raise CliFailure(
+            error_code="INVALID_INPUT",
+            message="--conflict-id is required",
+            docs_anchor="docs/modules/data_sync_orchestrator.md#137-cli-设计",
+        )
+
+    data_root = _path_env("QMD_DATA_ROOT", PROJECT_ROOT / "data")
+    db = data_root / "duckdb" / "quant_monitor.duckdb"
+    payload: dict[str, Any] = {
+        "command": "reconcile",
+        "dry_run": dry_run,
+        "conflict_id": conflict_id,
+    }
+    if dry_run:
+        from backend.app.cli.tier_a_sync_router import _require_audit_sandbox_data_root
+
+        _require_audit_sandbox_data_root(data_root)
+        payload["message"] = "dry-run only; reconcile plan, no refetch"
+        return payload
+
+    _require_baostock_sync_operator_or_sandbox(data_root)
+    db.parent.mkdir(parents=True, exist_ok=True)
+    cm = ConnectionManager(db_path=db)
+    with cm.writer() as con:
+        apply_migrations(con)
+        row = con.execute(
+            "SELECT conflict_id, reconcile_status FROM source_conflict WHERE conflict_id = ?",
+            [conflict_id],
+        ).fetchone()
+    if row is None:
+        raise CliFailure(
+            error_code="INVALID_INPUT",
+            message=f"unknown conflict_id={conflict_id!r}",
+            docs_anchor="docs/modules/data_sync_orchestrator.md#137-cli-设计",
+        )
+    raise CliFailure(
+        error_code="USER_AUTH_REQUIRED",
+        message=(
+            "qmd data reconcile without --dry-run requires datasource_service= gold path; "
+            "use orchestrator API with explicit operator confirmation"
+        ),
+        docs_anchor="docs/decisions/ADR-006-sync-datasource-service-fail-closed.md",
+        manual_confirmation_required=True,
+    )
+
+
+def quality_check_plan(
+    *,
+    data_domain: str,
+    check_date: str,
+    dry_run: bool = True,
+) -> dict[str, Any]:
+    """``qmd data quality-check`` — §13.7 data quality runner."""
+    import uuid
+
+    from backend.app.config import PROJECT_ROOT, _path_env
+    from backend.app.db.connection import ConnectionManager
+    from backend.app.db.migrate import apply_migrations
+    from backend.app.sync.jobs import SyncJobSpec
+    from backend.app.sync.orchestrator import DataSyncOrchestrator
+
+    _parse_sync_date(check_date, field="date")
+    guard_decision, guard_reason = ResourceGuard().check()
+    if guard_decision.value != "OK":
+        raise CliFailure(
+            error_code="RESOURCE_GUARD_PAUSED",
+            message=guard_reason or "resource guard paused",
+            docs_anchor="docs/ops/ERROR_CODE_GUIDE.md#resource-guard-paused",
+            retryable=True,
+        )
+
+    suffix = uuid.uuid4().hex[:8]
+    payload: dict[str, Any] = {
+        "command": "quality-check",
+        "dry_run": dry_run,
+        "data_domain": data_domain,
+        "check_date": check_date,
+        "resource_guard_decision": guard_decision.value,
+    }
+    if dry_run:
+        from backend.app.cli.tier_a_sync_router import _require_audit_sandbox_data_root
+
+        data_root = _path_env("QMD_DATA_ROOT", PROJECT_ROOT / "data")
+        _require_audit_sandbox_data_root(data_root)
+        payload["message"] = "dry-run only; quality-check plan, no validation writes"
+        return payload
+
+    data_root = _path_env("QMD_DATA_ROOT", PROJECT_ROOT / "data")
+    _require_baostock_sync_operator_or_sandbox(data_root)
+    db = data_root / "duckdb" / "quant_monitor.duckdb"
+    db.parent.mkdir(parents=True, exist_ok=True)
+    cm = ConnectionManager(db_path=db)
+    with cm.writer() as con:
+        apply_migrations(con)
+    orch = DataSyncOrchestrator(cm)
+    spec = SyncJobSpec(
+        run_id=f"dq-{suffix}",
+        job_id=f"job-dq-{suffix}",
+        job_type="data_quality",
+        data_domain=data_domain,
+        market_id="GLOBAL",
+        source_id="fred",
+        adapter_id=None,
+        date_start=None,
+        date_end=None,
+        instrument_id=None,
+        partition_key=None,
+        trigger_reason=f"quality_check:{check_date}",
+    )
+    result = orch.run_data_quality(spec)
+    payload["job_id"] = result.job_id
+    payload["job_status"] = result.status
+    payload["message"] = result.message or "data quality check completed"
+    return payload
 
 
 def emit_payload(payload: dict[str, Any], *, fmt: str = "json") -> str:

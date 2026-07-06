@@ -1,4 +1,0 @@
-# S03-E2E-INCR — 2026-06-30 Repair close
-cd C:\Users\Guang\Desktop\quant-monitor-desk-wt-dcp01
-uv run pytest tests/test_baostock_incremental_e2e.py -q
-# exit 0 — 4 passed (inverted-window port filter + service path)

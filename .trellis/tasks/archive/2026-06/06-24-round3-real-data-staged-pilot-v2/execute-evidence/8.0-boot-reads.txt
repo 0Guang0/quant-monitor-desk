@@ -1,4 +1,0 @@
-Resolved 67 packages in 0.85ms
-Checked 22 packages in 0.90ms
-
-EXIT:0

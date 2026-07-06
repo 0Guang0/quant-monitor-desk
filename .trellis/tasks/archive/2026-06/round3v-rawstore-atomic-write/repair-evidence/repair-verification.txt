@@ -1,8 +1,0 @@
-B3V-STOR zero-open repair verification — 2026-06-25
-
-$ uv run pytest tests/test_raw_store.py -q
-...............................
-31 passed
-
-$ uv run ruff check backend/app/storage tests/test_raw_store.py
-All checks passed!

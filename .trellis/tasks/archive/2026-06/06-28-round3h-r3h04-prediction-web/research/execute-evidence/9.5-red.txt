@@ -1,4 +1,0 @@
-FAILED proposed_disabled_source kalshi
-
-Command: uv run pytest tests/test_source_route_planner.py tests/test_source_capabilities.py tests/test_provider_catalog.py -q -k "kalshi or polymarket or web_search"
-Exit: 1 (expected RED)

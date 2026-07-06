@@ -1,6 +1,0 @@
-SC-04 RED — test_config.py lacked get_resource_profile coverage
-
-Command (pre-fix):
-  python -m pytest tests/test_config.py -k getResourceProfile -q
-
-Result: no tests collected (0 items)

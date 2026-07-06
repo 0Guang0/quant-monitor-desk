@@ -1,5 +1,0 @@
-COMMAND: uv run pytest tests/test_source_route_planner.py tests/test_source_capabilities.py tests/test_provider_catalog.py -q -k "kalshi or polymarket or web_search"
-TIMESTAMP: 2026-06-28T15:42:09.7112932+08:00
-EXIT: 0
-.....                                                                    [100%]
-

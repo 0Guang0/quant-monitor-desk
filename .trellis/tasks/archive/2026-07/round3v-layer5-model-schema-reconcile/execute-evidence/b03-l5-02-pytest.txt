@@ -1,4 +1,0 @@
-B03-L5-02 — Layer5 evidence chain + foundation pytest
-Date: 2026-06-28
-Command: uv run pytest tests/test_layer5_evidence_chain.py tests/test_layer5_evidence_foundation.py -q
-Result: 13 passed (7 chain + 6 foundation)

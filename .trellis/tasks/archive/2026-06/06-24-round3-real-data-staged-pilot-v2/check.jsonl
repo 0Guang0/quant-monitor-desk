@@ -1,6 +1,0 @@
-{"file": "docs/implementation_tasks/ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3Y_real_data_staged_pilot_v2.md", "reason": "A1 task card scope"}
-{"file": "docs/quality/production_live_pilot_policy.md", "reason": "A1 staged-only gate"}
-{"file": "specs/contracts/source_route_contract.yaml", "reason": "A1 route contract"}
-{"file": "backend/app/ops/mutation_proof.py", "reason": "A8 proof_status adversarial"}
-{"file": "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md", "reason": "A8 semantic assertion policy"}
-{"file": ".trellis/tasks/06-24-round3-real-data-staged-pilot-v2/research/source-index.md", "reason": "A5 trace manifest"}

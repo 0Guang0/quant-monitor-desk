@@ -4,10 +4,18 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
 import yaml
 from tests.contract_gate_support import PROJECT_ROOT, load_checker_module
 
 CONTRACT_PATH = PROJECT_ROOT / "specs/contracts/module_boundary_contract.yaml"
+LAYER_MODULES = (
+    "layer1_axes",
+    "layer2_sensors",
+    "layer3_chains",
+    "layer4_markets",
+    "layer5_evidence",
+)
 
 _checker = load_checker_module()
 check_file = _checker.check_file
@@ -47,10 +55,38 @@ def test_checkModuleBoundaries_detectsForbiddenImportFixture(tmp_path: Path) -> 
     assert violations, f"expected forbidden import detection, got {violations}"
 
 
+def test_nonLayerModules_passModuleBoundaryScan() -> None:
+    """覆盖范围：layer2–5 + 非 layer 模块（排除 layer1_axes）
+    测试对象：check_paths 对 backend/app 子树
+    目的/目标：S01 阶段非 layer1 模块须保持边界全绿
+    验证点：除 layer1_axes 外扫描 violations == []
+    失败含义：收紧契约后误伤非 layer 模块，或掩盖其它层违规
+    """
+    backend = PROJECT_ROOT / "backend" / "app"
+    contract = load_contract()
+    violations = check_paths(
+        [p for p in backend.iterdir() if p.is_dir() and p.name != "layer1_axes"],
+        contract,
+    )
+    assert violations == [], f"non-layer1 boundary violations: {violations}"
+
+
+def test_layer1Axes_passesModuleBoundaryScan() -> None:
+    """覆盖范围：layer1_axes 边界全绿（P1-14 GREEN）
+    测试对象：ingestion.py · ingestion_evidence.py import 图
+    目的/目标：P1-14 后 layer1 无 datasources.service 直连
+    验证点：layer1_axes 扫描 violations == []
+    失败含义：Layer 仍直连 DataSourceService，M-G1-03 接缝失效
+    """
+    layer1 = PROJECT_ROOT / "backend" / "app" / "layer1_axes"
+    violations = check_paths([layer1])
+    assert violations == [], f"layer1_axes boundary violations: {violations}"
+
+
 def test_productionBackend_passesModuleBoundaryScan() -> None:
     """覆盖范围：当前 backend/app 全树扫描
     测试对象：check_paths([backend/app])
-    目的/目标：已合并生产代码不得存在契约禁止的跨模块导入
+    目的/目标：P1-GATE 后全树边界须全绿
     验证点：violations == []
     失败含义：仓库内已有边界破坏，layer 与 adapter 耦合扩散
     """
@@ -59,21 +95,16 @@ def test_productionBackend_passesModuleBoundaryScan() -> None:
     assert violations == [], f"production boundary violations: {violations}"
 
 
-def test_layerModules_forbidAdapterImports() -> None:
+def test_layerModules_forbidAdapterAndServiceImports() -> None:
     """覆盖范围：layer1–5 模块 must_not_import 规则
     测试对象：module_boundary_contract 各 layer 段
-    目的/目标：五层业务模块契约上禁止依赖 datasources.adapters
-    验证点：layer1_axes 至 layer5_evidence 的 forbidden 列表均含 datasources.adapters
-    失败含义：层模块可直拉 adapter，架构分层与 Batch B gate 失效
+    目的/目标：五层业务模块契约上禁止依赖 datasources.adapters 与 datasources.service
+    验证点：layer1_axes 至 layer5_evidence 的 forbidden 列表均含两项
+    失败含义：层模块可直拉 adapter/service，架构分层与 M-G1-03 gate 失效
     """
     contract = load_contract()
-    for layer in (
-        "layer1_axes",
-        "layer2_sensors",
-        "layer3_chains",
-        "layer4_markets",
-        "layer5_evidence",
-    ):
+    for layer in LAYER_MODULES:
         rules = (contract.get("modules") or {}).get(layer) or {}
         forbidden = rules.get("must_not_import") or []
         assert any("datasources.adapters" in str(r) for r in forbidden), layer
+        assert any("datasources.service" in str(r) for r in forbidden), layer

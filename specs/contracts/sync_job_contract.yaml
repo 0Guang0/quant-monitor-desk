@@ -7,8 +7,8 @@ implemented_job_types:
   - reconcile
   - data_quality
   - revision_audit
-reserved_job_types:
   - full_load
+reserved_job_types: []
 # Ops-only recovery entry (B3V path A); not a schedulable job_type — see orchestrator registry kind=utility.
 utility_operations:
   - recover_stuck_writing_job

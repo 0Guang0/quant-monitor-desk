@@ -8,11 +8,11 @@ from typing import Literal
 from backend.app.core.resource_guard import Decision, ResourceGuard, format_pause_event
 from backend.app.datasources.base_adapter import BaseDataAdapter
 from backend.app.db.connection import ConnectionManager
-from backend.app.sync.contract import raise_deferred_job_type
 from backend.app.sync.jobs import SyncJobResult, SyncJobSpec, SyncJobStateMachine
 from backend.app.sync.pipeline import SyncValidationPipeline, SyncWritePipeline
 from backend.app.sync.runners import (
     BackfillShardRunner,
+    FullLoadJobRunner,
     IncrementalJobRunner,
     PipelineConfig,
     QualityJobRunner,
@@ -38,7 +38,7 @@ ORCHESTRATOR_HANDLER_REGISTRY: dict[str, OrchestratorJobHandler] = {
     ),
     "backfill": OrchestratorJobHandler("backfill", "run_backfill", "runner", "_backfill"),
     "reconcile": OrchestratorJobHandler("reconcile", "run_reconcile", "runner", "_reconcile"),
-    "full_load": OrchestratorJobHandler("full_load", "run_full_load", "deferred"),
+    "full_load": OrchestratorJobHandler("full_load", "run_full_load", "runner", "_full_load"),
     "data_quality": OrchestratorJobHandler(
         "data_quality", "run_data_quality", "runner", "_quality"
     ),
@@ -87,6 +87,13 @@ class DataSyncOrchestrator:
             begin_fetching=self.begin_fetching,
         )
         self._backfill = BackfillShardRunner(
+            self._jobs,
+            self._validation,
+            self._write,
+            begin_fetching=self.begin_fetching,
+            emit_event=self.emit_event,
+        )
+        self._full_load = FullLoadJobRunner(
             self._jobs,
             self._validation,
             self._write,
@@ -291,9 +298,54 @@ class DataSyncOrchestrator:
             datasource_service=datasource_service,
         )
 
-    def run_full_load(self, spec: SyncJobSpec, **kwargs) -> SyncJobResult:
-        """Reserved job type — stable deferred error (D2-P1-1 / VR-SYNC-002)."""
-        raise_deferred_job_type(spec.job_type, entrypoint="run_full_load")
+    def run_full_load(
+        self,
+        spec: SyncJobSpec,
+        *,
+        adapter: BaseDataAdapter | None = None,
+        datasource_service=None,
+        clean_table: str,
+        conflict_staging_table: str | None = None,
+        write_mode: str = "append_only",
+        primary_keys: tuple[str, ...] = ("instrument_id", "trade_date"),
+        required_fields: tuple[str, ...] = ("close", "source_used"),
+    ) -> list[SyncJobResult]:
+        """FullLoad runner (§13.4.1) — shard loop with checkpoint resume."""
+        guard_production_adapter_bypass(
+            adapter=adapter,
+            datasource_service=datasource_service,
+            entry="run_full_load",
+        )
+        guard_production_datasource_service_required(
+            adapter=adapter,
+            datasource_service=datasource_service,
+            entry="run_full_load",
+        )
+        fetch_callable = None
+        if datasource_service is not None:
+
+            def _service_fetch(req, con, job_id, operation=None):
+                return datasource_service.fetch(
+                    req,
+                    con=con,
+                    job_id=job_id,
+                    operation=operation,
+                )
+
+            fetch_callable = _service_fetch
+        config = _default_pipeline_config(
+            clean_table=clean_table,
+            conflict_staging_table=conflict_staging_table,
+            write_mode=write_mode,
+            primary_keys=primary_keys,
+            required_fields=required_fields,
+        )
+        return self._full_load.run(
+            spec,
+            adapter=adapter,
+            fetch_callable=fetch_callable,
+            config=config,
+        )
 
     def run_data_quality(self, spec: SyncJobSpec, **kwargs) -> SyncJobResult:
         """Data quality runner (R3F-SH-03)."""

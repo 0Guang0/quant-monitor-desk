@@ -1,7 +1,0 @@
-# §8.0 Boot GREEN
-$ uv sync --locked
-Resolved packages — exit 0
-$ uv run pytest tests/test_layer4_market_structure.py -q
-.......                                                                  [100%]
-7 passed — exit 0 (PASS)
-ponytail: fixture bundle + test skeleton only; no extra abstraction layer.

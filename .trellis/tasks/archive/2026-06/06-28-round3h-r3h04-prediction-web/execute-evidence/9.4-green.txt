@@ -1,5 +1,0 @@
-COMMAND: uv run pytest tests/test_web_evidence_adapter.py -q
-TIMESTAMP: 2026-06-28T15:42:08.5652593+08:00
-EXIT: 0
-........                                                                 [100%]
-

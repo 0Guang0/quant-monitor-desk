@@ -1,9 +1,0 @@
-=== Tier C final gates 2026-06-18 ===
-pytest -q --cov=backend --cov-fail-under=75 (excl. trellis meta + manifest_protocol)
-Required test coverage of 75% reached. Total coverage: 93.80%
-pytest exit 0
-compileall exit 0
-production_gate: PASS
-check_doc_links: OK (114 markdown files)
-QMD_DATA_ROOT=data ci_ingestion_smoke: orchestrator_smoke: ok
-exit 0

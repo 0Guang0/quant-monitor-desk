@@ -1,3 +1,0 @@
-DH2-BASE GREEN: uv run pytest tests/test_ops_data_health.py::test_dataHealthIntegration_v2Evidence_bundle -q
-.                                                                        [100%]
-1 passed

@@ -60,30 +60,35 @@ def test_b3fQualityRunners_dataQuality_notDeferred(tmp_path) -> None:
     assert result.status == "COMPLETED"
 
 
-def test_b3fQualityRunners_fullLoad_stillDeferred(tmp_path) -> None:
-    """覆盖范围：full_load 仍为 defer，与 dq/ra 闭包分离
+def test_b3fQualityRunners_fullLoad_notDeferred(tmp_path, monkeypatch) -> None:
+    """覆盖范围：full_load job 非 defer 完成路径（M-G1-03 S03）
     测试对象：DataSyncOrchestrator.run_full_load
-    目的/目标：W-A8-05 — SH-02/03 实现不得削弱 full_load deferred 语义
-    验证点：pytest.raises(DeferredJobTypeError) 且 match run_full_load
-    失败含义：full_load 误实现，与 ADV-A3-016 / orchestrator 契约冲突
+    目的/目标：FullLoad runner 与 dq/ra 同为可调度 job
+    验证点：SyncJobResult.status == COMPLETED
+    失败含义：full_load 仍 defer，Batch6 FullLoad 矩阵未闭包
     """
-    from backend.app.sync.contract import DeferredJobTypeError
-    from backend.app.sync.jobs import SyncJobSpec
+    from backend.app.core.resource_guard import Decision, ResourceGuard
+    from tests.test_sync_full_load import _FullLoadCountAdapter
 
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
     orch = _orchestrator(tmp_path)
     spec = SyncJobSpec(
         run_id="run-b3f-fl",
         job_id="job-fl",
         job_type="full_load",
-        data_domain="macro_series",
-        market_id="GLOBAL",
-        source_id="fred",
+        data_domain="market_bar_1d",
+        market_id="CN_A",
+        source_id="baostock",
         adapter_id=None,
         date_start=date(2026, 1, 1),
-        date_end=date(2026, 1, 2),
+        date_end=date(2026, 1, 15),
         instrument_id=None,
         partition_key=None,
-        trigger_reason=None,
+        trigger_reason="cold_start",
     )
-    with pytest.raises(DeferredJobTypeError, match="run_full_load"):
-        orch.run_full_load(spec)
+    results = orch.run_full_load(
+        spec,
+        adapter=_FullLoadCountAdapter(),
+        clean_table=_FullLoadCountAdapter.CLEAN,
+    )
+    assert results[-1].status == "COMPLETED"

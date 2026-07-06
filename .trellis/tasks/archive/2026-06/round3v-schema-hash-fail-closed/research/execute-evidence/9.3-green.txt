@@ -1,4 +1,0 @@
-DATA-03 GREEN: validation_gate fail-closed
-pytest tests/test_db_validation_gate.py::test_missingSchemaHashOnStructuredFetch_rejects tests/test_db_validation_gate.py::test_schemaHashDriftWithoutApproval_rejects -v
-2 passed
-exit 0

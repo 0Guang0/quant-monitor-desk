@@ -1,3 +1,0 @@
-DB-03 GREEN: assert_can_write merged with optional con=; assert_can_write_with removed.
-pytest tests/test_r3x_ponytail_pilot_prep_bucket_a.py::test_db03_assertCanWriteSingleEntryWithOptionalCon PASSED
-pytest tests/test_db_validation_gate.py PASSED

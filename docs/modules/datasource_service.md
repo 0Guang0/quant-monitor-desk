@@ -15,8 +15,8 @@
 ## 3. 生产调用规则（R3H-10 现行）
 
 1. 生产代码只有 `DataSourceService` 可以直接调用 `create_adapter()`。
-2. **Sync 金路径：** `run_incremental` / `run_backfill` 在生产 profile 下必须显式传入 `datasource_service=`（ADR-025；`guard_production_datasource_service_required`）。禁止 `adapter=` 旁路（`guard_production_adapter_bypass`）。
-3. **`run_reconcile`：** 仍 `adapter=` 形参；生产 profile adapter 旁路 fail-closed。`datasource_service=` 金路径 **defer → R3H-08**（ADR-025 §Reconcile defer）。
+2. **Sync 金路径：** `run_incremental` / `run_backfill` 在生产 profile 下必须显式传入 `datasource_service=`（ADR-006；`guard_production_datasource_service_required`）。禁止 `adapter=` 旁路（`guard_production_adapter_bypass`）。
+3. **`run_reconcile`：** 仍 `adapter=` 形参；生产 profile adapter 旁路 fail-closed。`datasource_service=` 金路径 **defer → R3H-08**（ADR-006 §Reconcile defer）。
 4. API 只能调用 `preview_route()` 或只读 diagnostics，不得构造 adapter。
 5. Agent 不得 import adapter factory 或 vendor adapter。
 6. 测试仍可使用 `create_test_adapter()`，但必须显式说明 test-only。

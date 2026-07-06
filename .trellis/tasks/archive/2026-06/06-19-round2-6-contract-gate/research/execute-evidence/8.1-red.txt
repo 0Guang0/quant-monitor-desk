@@ -1,5 +1,0 @@
-=== 8.1 RED ===
-exit code: 4
-ERROR: not found tests/test_source_capabilities.py
-collected 0 items
-ModuleNotFoundError: No module named 'test_source_capabilities'

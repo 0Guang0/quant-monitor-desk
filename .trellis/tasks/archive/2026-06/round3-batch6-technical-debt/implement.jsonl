@@ -1,9 +1,0 @@
-{"file": ".trellis/tasks/round3-batch6-technical-debt/MASTER.plan.md", "reason": "Execute SSOT", "for": "Boot"}
-{"file": ".trellis/tasks/round3-batch6-technical-debt/context_pack.json", "reason": "loop context pack", "for": "Boot slot 2"}
-{"file": "docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/BATCH_3F_COORDINATOR_PLAYBOOK.md", "reason": "§3.1+§3.7 boundary", "for": "Plan"}
-{"file": "docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/BATCH_3F_HARDENING_RULES.md", "reason": "hardening", "for": "Plan"}
-{"file": "docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/BATCH_3F_TASK_CARD_MANIFEST.md", "reason": "manifest", "for": "Plan"}
-{"file": "docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/R3F_verified_audit_ops_perf_hygiene.md", "reason": "VR-* scope", "for": "§8"}
-{"file": "docs/architecture/layer1_ingestion_refactor_rollback_plan.md", "reason": "R2b-R2d", "for": "§8.2"}
-{"file": "PROJECT_IMPLEMENTATION_ROADMAP.md", "reason": "R3F-HYG-01..13", "for": "AC"}
-{"file": ".cursor/skills/trellis-execute/SKILL.md", "reason": "Execute boot", "for": "§8.0"}

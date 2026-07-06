@@ -1,8 +1,0 @@
-# S04-LIQUIDITY RED — 2026-07-02
-
-command: uv run pytest tests/test_layer1_liquidity_clean_e2e.py -q
-phase: RED (module absent before Execute)
-
-ERROR: file or directory not found: tests/test_layer1_liquidity_clean_e2e.py
-
-exit: 4

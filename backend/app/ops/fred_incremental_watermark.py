@@ -1,48 +1,17 @@
 """FRED macro incremental watermark reader (R3-DCP-02).
 
-ponytail: local ops module until track A exposes macro API on sync/watermark*.py.
-Upgrade path: import macro reader from sync/watermark when merged.
+Re-exports unified sync/watermark SSOT (M-G1-03 P1-05).
 """
 
 from __future__ import annotations
 
-from collections.abc import Sequence
-from datetime import UTC, date, datetime, timedelta
-
-from backend.app.datasources.fetch_ports.fred_port import MAX_WINDOW_DAYS
+from backend.app.sync.watermark import (
+    compute_since_date,
+    read_observation_date_watermark,
+    read_since_dates_for_series,
+)
 
 STAGING_TABLE = "stg_axis_observation_smoke"
-
-
-def read_observation_date_watermark(con, indicator_id: str) -> date | None:
-    """Return max observation date for one FRED series (indicator_id = series_id)."""
-    row = con.execute(
-        """
-        SELECT MAX(CAST(publish_timestamp AS DATE))
-        FROM axis_observation
-        WHERE indicator_id = ?
-        """,
-        [indicator_id],
-    ).fetchone()
-    if row is None or row[0] is None:
-        return None
-    value = row[0]
-    if isinstance(value, date):
-        return value
-    return date.fromisoformat(str(value))
-
-
-def compute_since_date(
-    watermark: date | None,
-    *,
-    cap_days: int = MAX_WINDOW_DAYS,
-    today: date | None = None,
-) -> date:
-    """Next fetch window start: watermark+1 day or capped cold-start lookback."""
-    ref = today or datetime.now(UTC).date()
-    if watermark is None:
-        return ref - timedelta(days=cap_days)
-    return watermark + timedelta(days=1)
 
 
 def enabled_fred_source_registry():
@@ -76,19 +45,10 @@ def enabled_fred_source_registry():
     return registry
 
 
-def read_since_dates_for_series(
-    con,
-    series_ids: Sequence[str],
-    *,
-    cap_days: int = MAX_WINDOW_DAYS,
-    today: date | None = None,
-) -> dict[str, str]:
-    """Per-series ISO since dates for FetchRequest.start_time injection."""
-    return {
-        series_id: compute_since_date(
-            read_observation_date_watermark(con, series_id),
-            cap_days=cap_days,
-            today=today,
-        ).isoformat()
-        for series_id in series_ids
-    }
+__all__ = [
+    "STAGING_TABLE",
+    "compute_since_date",
+    "enabled_fred_source_registry",
+    "read_observation_date_watermark",
+    "read_since_dates_for_series",
+]

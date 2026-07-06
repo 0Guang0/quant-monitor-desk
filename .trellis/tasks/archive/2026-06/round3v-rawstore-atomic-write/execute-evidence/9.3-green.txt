@@ -1,2 +1,0 @@
-STOR-03 GREEN — midWriteFailure tests
-Exit code: 0 — 2 passed

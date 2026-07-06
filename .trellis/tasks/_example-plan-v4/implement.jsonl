@@ -1,5 +1,0 @@
-{"file": ".trellis/tasks/_example-plan-v4/EXECUTION_PLAN.md", "reason": "extract: Execute plan SSOT | for: Boot slot 1"}
-{"file": ".trellis/tasks/_example-plan-v4/EXECUTION_INDEX.md", "reason": "extract: manifest index | for: Boot slot 2"}
-{"file": ".cursor/skills/trellis-execute/SKILL.md", "reason": "extract: Phase 0 boot | for: §9.0 Boot"}
-{"file": "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md", "reason": "extract: test semantics | for: §9.0 Boot"}
-{"file": "tests/test_trellis_validate_plan.py", "reason": "extract: AC test | for: AC-1"}

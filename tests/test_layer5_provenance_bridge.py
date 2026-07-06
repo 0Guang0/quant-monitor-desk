@@ -34,9 +34,9 @@ INSTRUMENT_REF = InstrumentEvidenceRef(
 
 
 def test_layer5Provenance_finalizeBundle_mapsAdr031Fields() -> None:
-    """覆盖范围：ADR-031 P0 bundle → SourceProvenance 字段映射
+    """覆盖范围：ADR-012 P0 bundle → SourceProvenance 字段映射
     测试对象：build_source_provenance_from_bundle
-    目的/目标：replay finalize bundle 的三件套与 dataset ids 可按 ADR-031 表断言
+    目的/目标：replay finalize bundle 的三件套与 dataset ids 可按 ADR-012 表断言
     验证点：fetch_id、content_hash、schema/domain/clean dataset id 与 bundle 一致
     失败含义：Layer5 无法绑真源 fetch bundle，G5 子集无法关账
     """

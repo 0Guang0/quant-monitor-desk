@@ -1,4 +1,0 @@
-FAILED -k polymarket tests
-
-Command: uv run pytest tests/test_prediction_market_adapters.py -q -k polymarket
-Exit: 1 (expected RED)

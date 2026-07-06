@@ -1,3 +1,0 @@
-FAILED
-AssertionError: status==proposed_disabled_source for market sources
-Exit: 1 (expected RED — pre-9.6 registry)

@@ -1,8 +1,0 @@
-B03-L5-CLOSE — VR-L5-001 stale close evidence
-Date: 2026-06-28
-Plan commit: 20aeef6
-Baseline commit: 376e30e6
-Pytest: tests/test_layer5_evidence_chain.py (7) + tests/test_layer5_evidence_foundation.py (6) — 13 passed
-Matrix: research/l5-reconcile-matrix.md §1 + §2
-Registry: proposed RESOLVED audit_stale_reconciled (main session only)
-Runtime: layer5_evidence/** NOT modified (playbook §8.6)

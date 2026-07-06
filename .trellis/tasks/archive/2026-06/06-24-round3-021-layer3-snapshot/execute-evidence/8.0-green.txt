@@ -1,3 +1,0 @@
-Resolved 67 packages in 1ms
-uv sync --locked: exit 0 PASS
-ponytail: boot skeleton + fixture only, no builder yet

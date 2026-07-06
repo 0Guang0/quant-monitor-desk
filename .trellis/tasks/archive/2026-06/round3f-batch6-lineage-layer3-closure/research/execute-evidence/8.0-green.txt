@@ -1,3 +1,0 @@
-passed
-exit 0
-context-closure.md present; boot reads complete

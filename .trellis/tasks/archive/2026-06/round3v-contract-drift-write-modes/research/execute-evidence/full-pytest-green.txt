@@ -1,2 +1,0 @@
-Task-scoped (§6 Tier A): 68 passed, 1 skipped — exit 0
-Full repo pytest: pre-existing failures in layer1/layer2/live_pilot (unrelated to B3V-OPS scope)

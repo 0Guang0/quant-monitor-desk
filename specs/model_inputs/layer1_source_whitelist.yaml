@@ -188,7 +188,7 @@ rows:
       - production-live ready
       - tiingo primary substitute without ADR
     closure_test: DCP-06 clean replay e2e; ponytail vs spec tiingo
-    notes: ADR-029 ponytail bar path；P2 tiingo primary reconcile in Batch 6+
+    notes: ADR-010 ponytail bar path；P2 tiingo primary reconcile in Batch 6+
 
   - input_id: L1-SEN-COT-LF-NET
     layer: layer1

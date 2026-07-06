@@ -83,7 +83,7 @@ def test_layer1CleanReader_rejectsStagedFixtureSourceUsed(tmp_path) -> None:
 def test_layer1CleanReader_amihudFromSpyBars(tmp_path) -> None:
     """覆盖范围：流动性 P0 从 security_bar_1d 推导 Amihud 序列
     测试对象：read_bar_history + amihud_observations_from_bars
-    目的/目标：ADR-029 ponytail bar 路径可产出 LIQ.B-I1.AMIHUD_ILLIQ 观测
+    目的/目标：ADR-010 ponytail bar 路径可产出 LIQ.B-I1.AMIHUD_ILLIQ 观测
     验证点：len>=25；indicator_id 正确；raw_value>0
     失败含义：流动性轴无法从 Tier A bar clean 读入
     """
@@ -141,7 +141,7 @@ def test_layer1CleanReader_rejectsAkshareSourceUsed(tmp_path) -> None:
     测试对象：read_macro_clean_observations
     目的/目标：A3-P1 — P0 正源 allowlist 拒 akshare；不得 silent 接受 macro_supplementary 语义
     验证点：seed DGS10 + source_used=akshare → pytest.raises(CleanObservationFallbackForbiddenError)
-    失败含义：非 Tier A 源混入 clean 读路径，违背 ADR-029 trust boundary
+    失败含义：非 Tier A 源混入 clean 读路径，违背 ADR-010 trust boundary
     """
     cm = bootstrap_layer1_clean_db(tmp_path)
     with cm.writer() as con:

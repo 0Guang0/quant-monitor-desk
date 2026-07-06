@@ -1,3 +1,0 @@
-﻿=== 8.5 GREEN ===
-3 passed
-exit 0

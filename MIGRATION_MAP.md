@@ -4,7 +4,7 @@
 >
 > 本文件已经从“旧设计内容 → 新文件位置”的迁移表，升级为项目级地图（Project Map）。它用于让 Claude Code / Codex / 人类维护者在实施前精准定位：某个模块的设计文档、契约、定义、规则、执行任务、运行实现目录分别在哪里。
 >
-> **与 `docs/generated/project_map.generated.*` 分工：** 本文件 = **人类 narrative** + 精选模块映射；`docs/generated/docs_specs_index.generated.md` = **机械全量** docs/specs 列表（`generate_project_map.py` 生成）；generated project map = Module ID agent 路由子集。  
+> **导航分工：** 本文件 = **人类 narrative** + 精选模块映射；`specs/` + `docs/modules/` = 契约与设计权威。  
 > **活规划 SSOT（2026-07-02 收敛）：** 根目录**仅** `PROJECT_IMPLEMENTATION_ROADMAP.md` + `MODULE_COMPLETION_RATING.md`；旧 ROUND/Wave 任务包与 `ROUND3_BATCH_IMPLEMENTATION_MAP.md` 已迁入 `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/`（只读）。
 
 ## 0. 强制边界：`docs/` 与 `specs/` 不是实现地址
@@ -31,7 +31,7 @@
 | 根目录卫生收敛 (2026-07-02) | 根目录**无** `ROUND3_BATCH_IMPLEMENTATION_MAP.md`、`PROJECT_IMPLEMENTATION_ROADMAP.legacy-20260629.md`、`research/`、`_tmp-wave4-dcp-parallel/`；历史材料已迁入 `docs/archive/` 与 `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/` | `docs/archive/README.md`、`docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/README.md`                                                                                                   |
 | 活规划 SSOT                 | **仅**根目录 `PROJECT_IMPLEMENTATION_ROADMAP.md` + `MODULE_COMPLETION_RATING.md`（模块轨道 v2；MCR Pass E @ 2026-07-02）                                                                                                                              | 路线图 §0–§3 · 附录 C；`MODULE_COMPLETION_RATING.md` §0 · §4–§5                                                                                                                                         |
 | 历史 Wave / ROUND           | Round 0–5、Wave 3/4 DCP、Batch 3V/3FR/3H 等**已归档只读**；Wave 代码已 merge，但模块 Rating 多数未达 R4（MCR Pass E：G1/G2/G4/K1/K2 仍 R3，G5 仍 R2）                                                                                                 | 归档 `legacy-pre-module-v2-20260702/`；CLOSED 证据 → 路线图**附录 C**；`docs/quality/acceptance/WAVE3_PRODUCTION_ACCEPTANCE_REPORT.md`、`docs/quality/r3g03_mass_rehearsal_*.md` 已迁入 `docs/archive/` |
-| **当前下一队列 (v2)**       | **M-DATA-03** → **M-G1-03** → **M-G2/G4/G5-FULL**（可并行）→ **M-PASS-01**（末位 `PASS_ROUND4_REAL_DATA_READY` 门禁）；任务卡 Plan 冻结时创建                                                                                                         | `docs/implementation_tasks/README.md`；路线图 §3 v2；`specs/context/authority_graph.yaml` v2                                                                                                            |
+| **当前下一队列 (v2)**       | **M-DATA-03** → **M-G1-03** → **M-G2/G4/G5-FULL**（可并行）→ **M-PASS-01**（末位 `PASS_ROUND4_REAL_DATA_READY` 门禁）；任务卡 Plan 冻结时创建                                                                                                         | `docs/implementation_tasks/README.md`；路线图 §3 v2；`MIGRATION_MAP.md`                                                                                                                                 |
 | Round4/5 产品               | I 组 I1–I8 除 I3 壳外仍 R0–R1；**须 M-PASS-01 后** B04 开工                                                                                                                                                                                           | `BATCH_04_TASK_CARD_MANIFEST.md`；历史 `ROUND_4_*` / `ROUND_5_*` 见归档 `legacy-pre-module-v2-20260702/`                                                                                                |
 
 ## 3. 仓库顶层目录地图
@@ -91,18 +91,19 @@
 
 ### 4.3 ADR 与决策记录
 
-| 路径                                                                        | 用途                                                          |
-| --------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| `docs/adr/ADR-0001-use-duckdb-local-first.md`                               | DuckDB local-first 决策                                       |
-| `docs/adr/ADR-0002-agent-readonly-boundary.md`                              | Agent 只读边界决策                                            |
-| `docs/adr/ADR-0003-layer1-standardization-only.md`                          | Layer 1 标准化范围决策                                        |
-| `docs/adr/ADR-0004-layer3-shock-anchor-model.md`                            | Layer 3 shock-anchor 模型决策                                 |
-| `docs/adr/ADR-0005-primary-validation-fallback-source-model.md`             | Primary / Validation / FallbackPolicy 数据源角色决策          |
-| `docs/decisions/README.md`                                                  | 新决策目录入口                                                |
-| `docs/decisions/ADR-001-ingestion-validation-write-transaction-boundary.md` | ingestion / validation / write transaction 边界               |
-| `docs/decisions/ADR-002-db-check-vs-app-validation.md`                      | DB CHECK 与应用层 validation 分工                             |
-| `docs/decisions/ADR-003-implementation-path-mapping.md`                     | 实现路径映射决策                                              |
-| `docs/decisions/ADR-025-r3h10-sync-fail-closed-datasource-service.md`       | R3H-10 Sync 生产路径 fail-closed（须注入 datasource_service） |
+| 路径                                                                        | 用途                                                 |
+| --------------------------------------------------------------------------- | ---------------------------------------------------- |
+| `docs/adr/ADR-0001-use-duckdb-local-first.md`                               | DuckDB local-first 决策                              |
+| `docs/adr/ADR-0002-agent-readonly-boundary.md`                              | Agent 只读边界决策                                   |
+| `docs/adr/ADR-0003-layer1-standardization-only.md`                          | Layer 1 标准化范围决策                               |
+| `docs/adr/ADR-0004-layer3-shock-anchor-model.md`                            | Layer 3 shock-anchor 模型决策                        |
+| `docs/adr/ADR-0005-primary-validation-fallback-source-model.md`             | Primary / Validation / FallbackPolicy 数据源角色决策 |
+| `docs/decisions/README.md`                                                  | 工程决策目录入口（ADR-001～015）                     |
+| `docs/decisions/ADR-001-ingestion-validation-write-transaction-boundary.md` | ingestion / validation / write transaction 边界      |
+| `docs/decisions/ADR-002-db-check-vs-app-validation.md`                      | DB CHECK 与应用层 validation 分工                    |
+| `docs/decisions/ADR-003-implementation-path-mapping.md`                     | 实现路径映射决策                                     |
+| `docs/decisions/ADR-004-write-path-complexity-ceiling.md`                   | 写入热路径 C901 复杂度不修                           |
+| `docs/decisions/ADR-006-sync-datasource-service-fail-closed.md`             | 生产 Sync 须显式 `datasource_service=`               |
 
 ### 4.4 模块设计文档 `docs/modules/`
 
@@ -494,13 +495,15 @@
 | `specs/layer3_global_industry_chains/layer3_global_industry_chains_v1_2/layer3_node_registry.json`                  | node registry                      |
 | `specs/layer3_global_industry_chains/layer3_global_industry_chains_v1_2/references/source_registry.md`              | Layer 3 reference source registry  |
 
-### 5.6 Loop Engineering 机器可读配置
+### 5.6 契约与验收索引（活）
 
-| 路径                                                  | 用途                                          |
-| ----------------------------------------------------- | --------------------------------------------- |
-| `specs/context/authority_graph.yaml`                  | 模块 → 权威 docs/contracts/rules 路由图（P0） |
-| `specs/verification/feature_verification_matrix.yaml` | 功能 AC → pytest 验证矩阵（P2）               |
-| `specs/verification/contract_coverage.yaml`           | 契约 requirement → pytest 覆盖矩阵（P2）      |
+| 路径                          | 用途                 |
+| ----------------------------- | -------------------- |
+| `specs/contracts/`            | 服务/数据契约（P0）  |
+| `docs/modules/`               | 模块设计叙述         |
+| `MODULE_COMPLETION_RATING.md` | 模块完成度与证据指针 |
+
+> 历史 Loop Engineering 配置（`authority_graph.yaml`、`test_catalog.yaml` 等）已移除；见 `docs/archive/trellis-loop-2026/`。
 
 ## 6. 模块 → 设计文档 / 契约 / 规则 / 实现目录映射
 

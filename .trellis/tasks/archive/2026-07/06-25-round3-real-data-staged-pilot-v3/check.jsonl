@@ -1,5 +1,0 @@
-{"file": ".trellis/tasks/06-25-round3-real-data-staged-pilot-v3/MASTER.plan.md", "reason": "extract: §2 AC + §3 边界 | for: A1 trellis-check"}
-{"file": "docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/R3E_real_data_staged_pilot_v3.md", "reason": "extract: forward 卡 | for: A1"}
-{"file": "docs/implementation_tasks/ROUND_3_DATA_PRODUCTION_READINESS/BATCH_01_MODEL_SOURCE_READINESS/BATCH_01_HARDENING_RULES.md", "reason": "extract: hardening | for: A1"}
-{"file": "backend/app/ops/staged_pilot.py", "reason": "extract: 实现 diff | for: A2 ponytail"}
-{"file": "tests/test_staged_pilot.py", "reason": "extract: 测试契约 | for: A8"}

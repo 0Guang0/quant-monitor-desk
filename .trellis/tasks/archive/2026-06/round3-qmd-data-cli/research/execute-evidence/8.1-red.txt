@@ -1,2 +1,0 @@
-FAILED tests/test_qmd_data_cli.py::test_initDb_syncRegistry_oneLiner - AssertionError: sync_registry rows not printed
-ModuleNotFoundError: backend.app.cli

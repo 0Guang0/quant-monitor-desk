@@ -1,1 +1,0 @@
-Phase 0 Boot reads complete: implement.jsonl (56 lines), MASTER.plan.md, context_pack.json, integration-ledger.md, ponytail.mdc, trellis-execute SKILL.

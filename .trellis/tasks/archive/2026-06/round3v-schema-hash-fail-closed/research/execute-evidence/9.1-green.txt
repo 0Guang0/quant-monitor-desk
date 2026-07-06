@@ -1,4 +1,0 @@
-DATA-01 GREEN: specs/contracts/data_adapter_contract.md structured schema_hash section
-pytest tests/test_data_adapter_contract.py::test_dataAdapterContract_documentsStructuredSchemaHashRequirement -v
-1 passed
-exit 0

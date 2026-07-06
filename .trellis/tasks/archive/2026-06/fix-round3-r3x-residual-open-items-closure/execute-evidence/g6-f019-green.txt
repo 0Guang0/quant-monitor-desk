@@ -1,7 +1,0 @@
-# g6-f019 — checklist §4.6 F-019
-# Command: uv run pytest tests/test_round3_audit_registry_alignment.py -q --tb=no (F-019 cross-ref subset)
-
-# ponytail: F-019 rows verified via registry alignment tests in g7 bundle
-# See test_round3_audit_registry_alignment.py PROMPT_15 / F-019 banner tests
-29 passed in 2.1s (registry alignment module)
-EXIT:0

@@ -1,2 +1,0 @@
-GREEN: uv run pytest -q
-status: PASS

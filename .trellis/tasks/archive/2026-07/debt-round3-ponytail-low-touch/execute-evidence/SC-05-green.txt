@@ -1,8 +1,0 @@
-SC-05 GREEN — error_redaction.py module docstring documents persistence-layer consumers.
-
-No deletion (would break forbidden-but-live import sites). Behavior unchanged.
-
-Command:
-  python -m pytest -q
-
-Result: exit 0 (full suite green)

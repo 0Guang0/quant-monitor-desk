@@ -206,7 +206,7 @@ Details: [GLOBAL_TESTING_POLICY.md §8](../../../docs/implementation_tasks/GLOBA
 
 - Do **not** change test **goal** to make green; maps to catalog `purpose` / `verifies` / `failure_meaning`.
 - Sandbox: `QMD_DATA_ROOT=<task>/.audit-sandbox/data`; Audit A8: `--basetemp=.audit-sandbox/pytest`.
-- New module: `uv run python scripts/loop_maintain.py --fix` (test catalog).
+- New test module: add a focused `test_*.py` beside related code; run `uv run pytest -q` before commit.
 - Audit A8: each original Red Flag → test | explicit defer | §4.3.
 - Evidence: **代码 + 测试 + `uv run pytest -q`**（v4.1）；legacy 任务可另存 `execute-evidence/` txt
 

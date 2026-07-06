@@ -1,4 +1,0 @@
-WL-05 RED — 2026-06-25
-uv run pytest tests/test_model_input_whitelist.py -k layer5 -q
-FFF [100%] — missing specs/model_inputs/layer5_instrument_source_plan.yaml
-CLOSURE: debt-lite slice-incremental; GREEN wl-05-green.txt

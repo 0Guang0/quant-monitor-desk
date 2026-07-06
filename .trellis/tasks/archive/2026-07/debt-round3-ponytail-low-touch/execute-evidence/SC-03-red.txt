@@ -1,6 +1,0 @@
-SC-03 RED — resource_guard.evaluate() imperative 8-way _signal_decision repetition
-
-Evidence: evaluate() contained 8 inline _signal_decision blocks (~100 LOC) before
-_threshold_signals table-driven refactor.
-
-Status: no behavioral regression test added; existing test_resource_guard.py is authority.

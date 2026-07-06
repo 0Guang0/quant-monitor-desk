@@ -1,2 +1,0 @@
-4 passed -k cninfo
-exit 0

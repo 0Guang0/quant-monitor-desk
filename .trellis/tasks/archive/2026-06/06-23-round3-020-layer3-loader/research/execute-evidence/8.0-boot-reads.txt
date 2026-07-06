@@ -1,7 +1,0 @@
-Boot reads completed:
-- trellis-execute SKILL.md
-- MASTER.plan.md (§0.3a ponytail, §8.0–8.6)
-- implement.jsonl (all 35 lines)
-- integration-ledger.md
-- ponytail.mdc — ladder YAGNI→reuse sensor_loader→min diff
-ponytail: reused sensor_loader staged_fixture_only gate pattern

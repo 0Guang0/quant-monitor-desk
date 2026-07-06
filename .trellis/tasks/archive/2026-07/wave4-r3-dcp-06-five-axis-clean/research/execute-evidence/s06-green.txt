@@ -1,3 +1,0 @@
-S06 GREEN — uv run pytest -q exit 0
-tests/test_layer1_five_axis_panel_clean_smoke.py: 3 passed
-DCP-06 axis suite: 10 passed (S00 reader + S01-S05 e2e + S06 panel)

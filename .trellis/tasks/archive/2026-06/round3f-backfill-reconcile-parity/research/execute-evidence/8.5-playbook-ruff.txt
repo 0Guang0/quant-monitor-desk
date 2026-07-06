@@ -1,4 +1,0 @@
-# Playbook §8.5 — scoped ruff (B3F-BR Tier C / Repair)
-# Command: uv run ruff check backend/app/sync/orchestrator.py tests/test_r3f_br_backfill_reconcile_closure.py tests/test_sync_runners.py
-All checks passed!
-exit_code=0

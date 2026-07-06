@@ -84,7 +84,7 @@ sources:
       max_symbols: 5
       max_rows: 500
       max_window_days: 120
-    notes: "R3H-03 READY_WITH_EVIDENCE; baostock_port replay-first; primary cn_equity_daily_bar. DCP-05: qmd data sync --source-id baostock -> security_bar_1d clean (ADR-028)."
+    notes: "R3H-03 READY_WITH_EVIDENCE; baostock_port replay-first; primary cn_equity_daily_bar. DCP-05: qmd data sync --source-id baostock -> security_bar_1d clean (ADR-009)."
     domains:
       cn_equity_daily_bar:
         operations:
@@ -225,7 +225,7 @@ sources:
       max_issuers: 5
       max_filings: 20
       max_pdf_bytes: 5242880
-    notes: "R3H-03 READY_WITH_EVIDENCE; cninfo_port replay-first metadata; PDF capped. DCP-05: qmd data sync --source-id cninfo -> cn_announcement_clean (ADR-028)."
+    notes: "R3H-03 READY_WITH_EVIDENCE; cninfo_port replay-first metadata; PDF capped. DCP-05: qmd data sync --source-id cninfo -> cn_announcement_clean (ADR-009)."
     domains:
       cn_filings:
         operations:
@@ -378,7 +378,7 @@ sources:
             production_default: false
             pilot_only: true
             api_key_env: FRED_API_KEY
-    notes: "R3H-01 READY_WITH_EVIDENCE; mock-first fred_port; FRED_API_KEY for live; enabled_by_default=false; replay: tests/fixtures/replay/official_macro/fred/. DCP-05: qmd data sync --source-id fred -> axis_observation clean (ADR-028)."
+    notes: "R3H-01 READY_WITH_EVIDENCE; mock-first fred_port; FRED_API_KEY for live; enabled_by_default=false; replay: tests/fixtures/replay/official_macro/fred/. DCP-05: qmd data sync --source-id fred -> axis_observation clean (ADR-009)."
   tdx_pytdx:
     status: READY_WITH_EVIDENCE
     replay_fixture_path: tests/fixtures/replay/cn_market/tdx/tdx_pytdx_daily_replay.json
@@ -559,7 +559,7 @@ sources:
             requires_auth: false
             enabled_by_default: false
             production_default: false
-    notes: "R3H-01 READY_WITH_EVIDENCE; mock-first us_treasury_port; replay: tests/fixtures/replay/official_macro/us_treasury/. DCP-05: qmd data sync --source-id us_treasury -> axis_observation clean (ADR-028)."
+    notes: "R3H-01 READY_WITH_EVIDENCE; mock-first us_treasury_port; replay: tests/fixtures/replay/official_macro/us_treasury/. DCP-05: qmd data sync --source-id us_treasury -> axis_observation clean (ADR-009)."
   sec_edgar:
     status: READY_WITH_EVIDENCE
     replay_fixture_path: tests/fixtures/replay/sec_edgar/filings_replay_bundle.json
@@ -608,7 +608,7 @@ sources:
             requires_identity_header: true
             enabled_by_default: false
             production_default: false
-    notes: "R3H-01 READY_WITH_EVIDENCE; SEC_EDGAR_USER_AGENT required for live; replay: tests/fixtures/replay/sec_edgar/. DCP-05: qmd data sync --source-id sec_edgar -> us_disclosure_clean (ADR-028)."
+    notes: "R3H-01 READY_WITH_EVIDENCE; SEC_EDGAR_USER_AGENT required for live; replay: tests/fixtures/replay/sec_edgar/. DCP-05: qmd data sync --source-id sec_edgar -> us_disclosure_clean (ADR-009)."
   cftc_cot:
     status: READY_WITH_EVIDENCE
     replay_fixture_path: tests/fixtures/replay/official_macro/cftc_cot/cot_replay_bundle.json
@@ -643,7 +643,7 @@ sources:
             enabled_by_default: false
             production_default: false
             notes: "Weekly official release; not realtime positioning."
-    notes: "R3H-01 READY_WITH_EVIDENCE; mock-first cftc_cot_port; replay: tests/fixtures/replay/official_macro/cftc_cot/. DCP-05: qmd data sync --source-id cftc_cot -> axis_observation clean (ADR-028)."
+    notes: "R3H-01 READY_WITH_EVIDENCE; mock-first cftc_cot_port; replay: tests/fixtures/replay/official_macro/cftc_cot/. DCP-05: qmd data sync --source-id cftc_cot -> axis_observation clean (ADR-009)."
   bis:
     status: READY_WITH_EVIDENCE
     replay_fixture_path: tests/fixtures/replay/official_macro/bis/policy_rate_replay_bundle.json
@@ -697,7 +697,7 @@ sources:
             requires_auth: false
             enabled_by_default: false
             production_default: false
-    notes: "R3H-01 READY_WITH_EVIDENCE; mock-first bis_port; replay: tests/fixtures/replay/official_macro/bis/. DCP-05: qmd data sync --source-id bis -> axis_observation clean (ADR-028)."
+    notes: "R3H-01 READY_WITH_EVIDENCE; mock-first bis_port; replay: tests/fixtures/replay/official_macro/bis/. DCP-05: qmd data sync --source-id bis -> axis_observation clean (ADR-009)."
   world_bank:
     status: READY_WITH_EVIDENCE
     replay_fixture_path: tests/fixtures/replay/official_macro/world_bank/indicator_replay_bundle.json
@@ -747,7 +747,7 @@ sources:
             requires_auth: false
             enabled_by_default: false
             production_default: false
-    notes: "R3H-01 READY_WITH_EVIDENCE; mock-first world_bank_port; replay: tests/fixtures/replay/official_macro/world_bank/. DCP-05: qmd data sync --source-id world_bank -> axis_observation clean (ADR-028)."
+    notes: "R3H-01 READY_WITH_EVIDENCE; mock-first world_bank_port; replay: tests/fixtures/replay/official_macro/world_bank/. DCP-05: qmd data sync --source-id world_bank -> axis_observation clean (ADR-009)."
   deribit:
     status: READY_WITH_EVIDENCE
     replay_fixture_path: tests/fixtures/replay/crypto_market/deribit/btc_options_surface_replay.json
@@ -755,7 +755,7 @@ sources:
     resource_caps:
       max_instruments: 5
       max_surface_rows: 50
-    notes: "R3H-02 READY_WITH_EVIDENCE; deribit_port mock-first; no trading/account scope. DCP-05: qmd data sync --source-id deribit -> crypto_derivative_clean (ADR-028)."
+    notes: "R3H-02 READY_WITH_EVIDENCE; deribit_port mock-first; no trading/account scope. DCP-05: qmd data sync --source-id deribit -> crypto_derivative_clean (ADR-009)."
     domains:
       crypto_derivatives:
         operations:
@@ -1053,7 +1053,7 @@ sources:
       max_rows: 500
       max_window_days: 120
       max_option_strikes: 20
-    notes: "R3H-02 READY_WITH_EVIDENCE; alpha_vantage_port mock-first; ALPHA_VANTAGE_API_KEY for live. DCP-05: qmd data sync --source-id alpha_vantage -> security_bar_1d clean (ADR-028)."
+    notes: "R3H-02 READY_WITH_EVIDENCE; alpha_vantage_port mock-first; ALPHA_VANTAGE_API_KEY for live. DCP-05: qmd data sync --source-id alpha_vantage -> security_bar_1d clean (ADR-009)."
     domains:
       us_equity_daily_bar:
         operations:
@@ -1203,7 +1203,7 @@ sources:
       security_list_max_rows: 20
       equity_index_max_rows: 3
       max_network_calls: 5
-    notes: "R3H-03 READY_WITH_EVIDENCE; mootdx_port mock/replay; independent source_id from tdx_pytdx. DCP-05: qmd data sync --source-id mootdx -> security_bar_1d clean (ADR-028). R3-DCP-08: validation_only=false in registry for explicit sync; dry-run route aligns selected_source_id with CLI --source-id."
+    notes: "R3H-03 READY_WITH_EVIDENCE; mootdx_port mock/replay; independent source_id from tdx_pytdx. DCP-05: qmd data sync --source-id mootdx -> security_bar_1d clean (ADR-009). R3-DCP-08: validation_only=false in registry for explicit sync; dry-run route aligns selected_source_id with CLI --source-id."
     domains:
       security_list:
         operations:

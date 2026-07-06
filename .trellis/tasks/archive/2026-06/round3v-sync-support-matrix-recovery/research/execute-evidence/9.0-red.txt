@@ -1,3 +1,0 @@
-ERROR: test_syncJobContract_implementedTypes_matchRuntimeCallables not found (SYNC-BOOT RED baseline)
-collected 0 items
-FAILED

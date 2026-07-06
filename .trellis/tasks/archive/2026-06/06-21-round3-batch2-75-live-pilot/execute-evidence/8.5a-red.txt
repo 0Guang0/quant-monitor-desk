@@ -1,4 +1,0 @@
-# §8.5a HITL RED evidence — 2026-06-21 (pre-user-confirm)
-# phase3_hitl_user_confirmation.md missing → exit 1
-
-exit_code=1

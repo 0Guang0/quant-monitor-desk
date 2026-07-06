@@ -1,9 +1,0 @@
-{
-  "task": "round3-batch6-technical-debt",
-  "modules": ["layer1_axes", "ops"],
-  "acs": [
-    { "id": "R3F-HYG-06", "status": "passed", "repair_items": [] },
-    { "id": "R3F-HYG-07", "status": "passed", "repair_items": [] },
-    { "id": "R3F-HYG-08", "status": "passed", "repair_items": [] }
-  ]
-}

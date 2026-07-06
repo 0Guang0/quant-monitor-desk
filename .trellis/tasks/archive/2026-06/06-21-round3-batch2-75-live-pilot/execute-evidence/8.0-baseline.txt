@@ -1,7 +1,0 @@
-# §8.0 Boot GREEN evidence — 2026-06-01
-# uv sync --locked && uv run pytest tests/test_production_live_pilot_policy.py tests/test_batch25_production_data_gate.py tests/test_round3_audit_registry_alignment.py -q
-
-.................                                                        [100%]
-17 passed
-
-exit_code=0

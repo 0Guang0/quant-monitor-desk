@@ -1,7 +1,0 @@
-{"file": ".trellis/tasks/06-27-round3g-limited-production-write/frozen/R3G_03_LIMITED_PRODUCTION_CLEAN_WRITE.md", "reason": "extract: spec scope | for: A1 trellis-check"}
-{"file": ".trellis/tasks/06-27-round3g-limited-production-write/EXECUTION_INDEX.md", "reason": "extract: manifest trace | for: A1"}
-{"file": "specs/contracts/sandbox_clean_write_contract.yaml", "reason": "extract: r3g03_limited_entry | for: AC-01–04"}
-{"file": "specs/contracts/reference_adoption_guardrails.yaml", "reason": "extract: Round3G guardrails | for: 9.7"}
-{"file": "specs/contracts/data_quality_rules.yaml", "reason": "extract: DQ SSOT | for: 9.4"}
-{"file": "PROJECT_IMPLEMENTATION_ROADMAP.md", "reason": "extract: Round 3G 定位 | for: A1 audit-only"}
-{"file": "MODULE_COMPLETION_RATING.md", "reason": "extract: R3G-03 完成度 | for: A1 audit-only"}

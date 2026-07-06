@@ -1,18 +1,43 @@
-"""Incremental sync watermark — bar trade_date domain (R3-DCP-01).
+"""Incremental sync watermark — unified read entry (M-G1-03 P1-05).
 
-ponytail: calendar-day window; CN trading calendar deferred to R3H-03 follow-up.
-Macro observation_date alias reserved for R3-DCP-02 (fred track).
+ponytail: calendar-day window for bars; macro uses publish_timestamp on axis_observation.
+CN trading calendar deferred to R3H-03 follow-up.
 """
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
 from typing import Any
 
 from backend.app.db.sql_identifiers import quote_ident
+from backend.app.datasources.fetch_ports.fred_port import MAX_WINDOW_DAYS
 
 _BAR_CLEAN_TABLES = frozenset({"security_bar_1d"})
+
+_BAR_WATERMARK_DOMAINS = frozenset(
+    {
+        "cn_equity_daily_bar",
+        "us_equity_daily_bar",
+        "etf_daily_bar",
+        "fx_daily_bar",
+        "commodity_daily_bar",
+    }
+)
+
+_MACRO_WATERMARK_DOMAINS = frozenset(
+    {
+        "macro_series",
+        "us_treasury_yield_curve",
+        "inflation_expectation",
+        "central_bank_policy",
+        "credit_gap",
+        "development_indicator",
+        "global_macro_reference",
+        "cot_positioning",
+    }
+)
 
 
 @dataclass(frozen=True)
@@ -42,6 +67,19 @@ def _coerce_date(value: Any) -> date | None:
     return date.fromisoformat(text)
 
 
+def read_observation_date_watermark(con, indicator_id: str) -> date | None:
+    """Return max publish date for one macro indicator in axis_observation."""
+    row = con.execute(
+        """
+        SELECT MAX(CAST(publish_timestamp AS DATE))
+        FROM axis_observation
+        WHERE indicator_id = ?
+        """,
+        [indicator_id],
+    ).fetchone()
+    return _coerce_date(row[0] if row else None)
+
+
 def read_bar_trade_date_watermark(
     con,
     *,
@@ -62,6 +100,47 @@ def read_bar_trade_date_watermark(
         params,
     ).fetchone()
     return _coerce_date(row[0] if row else None)
+
+
+def read_watermark(con, domain: str, key: str) -> date | None:
+    """Single watermark read entry for macro and bar domains."""
+    if domain in _MACRO_WATERMARK_DOMAINS:
+        return read_observation_date_watermark(con, key)
+    if domain in _BAR_WATERMARK_DOMAINS:
+        return read_bar_trade_date_watermark(con, instrument_id=key)
+    raise ValueError(f"unsupported watermark domain: {domain!r}")
+
+
+def compute_since_date(
+    watermark: date | None,
+    *,
+    cap_days: int = MAX_WINDOW_DAYS,
+    today: date | None = None,
+    advance_days: int = 1,
+) -> date:
+    """Next macro fetch window start: watermark+advance_days or capped cold-start."""
+    ref = today or datetime.now(UTC).date()
+    if watermark is None:
+        return ref - timedelta(days=cap_days)
+    return watermark + timedelta(days=advance_days)
+
+
+def read_since_dates_for_series(
+    con,
+    series_ids: Sequence[str],
+    *,
+    cap_days: int = MAX_WINDOW_DAYS,
+    today: date | None = None,
+) -> dict[str, str]:
+    """Per-series ISO since dates for FetchRequest.start_time injection."""
+    return {
+        series_id: compute_since_date(
+            read_observation_date_watermark(con, series_id),
+            cap_days=cap_days,
+            today=today,
+        ).isoformat()
+        for series_id in series_ids
+    }
 
 
 def compute_incremental_window(

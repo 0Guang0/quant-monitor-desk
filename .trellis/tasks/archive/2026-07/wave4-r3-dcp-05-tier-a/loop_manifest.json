@@ -1,5 +1,0 @@
-{
-  "task": "wave4-r3-dcp-05-tier-a",
-  "acs": [],
-  "modules": ["project_scaffold", "datasources", "db_platform", "governance"]
-}

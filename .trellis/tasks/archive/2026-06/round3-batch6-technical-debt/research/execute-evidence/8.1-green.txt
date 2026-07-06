@@ -1,3 +1,0 @@
-7 passed in 0.12s
-production_equivalent_smoke: artifact written .audit-sandbox/r3b275-audit/production_equivalent_smoke_budget.json
-status PASS

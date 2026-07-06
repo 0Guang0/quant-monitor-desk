@@ -1,1 +1,0 @@
-FAILED — RollbackPlan tests absent pre-implementation

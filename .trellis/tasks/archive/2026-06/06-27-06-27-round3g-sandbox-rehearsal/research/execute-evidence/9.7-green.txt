@@ -1,2 +1,0 @@
-3 skipped, 1362 passed
-exit=0 (full pytest after test_catalog.yaml staged via write-defaults)

@@ -1,6 +1,0 @@
-{"file": ".trellis/tasks/06-16-005-schema-init/AUDIT.plan.md", "reason": "【必读·第1条】Audit §1 Skill + §2 维度验证矩阵"}
-{"file": ".trellis/tasks/06-16-005-schema-init/MASTER.plan.md", "reason": "A5 读 §2 AC；§10 Execute 证据只读索引"}
-{"file": "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md", "reason": "A8 测试规范"}
-{"file": "docs/quality/final_package_rules.md", "reason": "A1 spec 合规"}
-{"file": "backend/app/db/migrate.py", "reason": "A1/A2/A3 审查主文件"}
-{"file": "tests/test_schema_migration.py", "reason": "A5 追溯 + A8 补测/Red Flags"}

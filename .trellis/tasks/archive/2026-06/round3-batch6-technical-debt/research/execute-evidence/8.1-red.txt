@@ -1,2 +1,0 @@
-ModuleNotFoundError: No module named 'backend.app.ops.perf_budget'
-FAILED tests/test_production_equivalent_smoke_budget.py::test_loadSmokeBudget_readsThresholdContract

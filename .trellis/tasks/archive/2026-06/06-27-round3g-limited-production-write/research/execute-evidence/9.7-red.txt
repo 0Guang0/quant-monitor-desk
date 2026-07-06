@@ -1,1 +1,0 @@
-FAILED — r3g03 guardrails tests absent pre-implementation

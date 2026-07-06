@@ -1,3 +1,0 @@
-DATA-01 RED: contract structured schema_hash rule (pre-implementation baseline)
-grep -c "Structured schema_hash" specs/contracts/data_adapter_contract.md
-0 (before GREEN: section absent)

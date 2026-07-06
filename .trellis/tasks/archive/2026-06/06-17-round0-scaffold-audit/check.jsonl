@@ -1,7 +1,0 @@
-{"file": ".trellis/tasks/06-17-round0-scaffold-audit/MASTER.plan.md", "reason": "审查对照：§10 验收、DoD"}
-{"file": "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md", "reason": "测试与断言规范"}
-{"file": "docs/quality/final_package_rules.md", "reason": "最终包规则"}
-{"file": "docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md", "reason": "执行规则合规"}
-{"file": "docs/architecture/07_project_directory_structure.md", "reason": "目录结构契约"}
-{"file": "backend/app/main.py", "reason": "审查 diff 主文件"}
-{"file": "tests/test_project_scaffold.py", "reason": "骨架测试语义断言"}

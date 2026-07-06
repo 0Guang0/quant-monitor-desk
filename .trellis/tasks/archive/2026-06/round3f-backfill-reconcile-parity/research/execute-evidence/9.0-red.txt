@@ -1,5 +1,0 @@
-# 9.0 RED baseline (pre-implementation / TDD RED)
-# Command: uv run pytest tests/test_r3f_br_backfill_reconcile_closure.py tests/test_sync_runners.py -q
-ERROR: file or directory not found: tests/test_r3f_br_backfill_reconcile_closure.py
-collected 0 items
-FAILED — closure module absent before BR-BOOT

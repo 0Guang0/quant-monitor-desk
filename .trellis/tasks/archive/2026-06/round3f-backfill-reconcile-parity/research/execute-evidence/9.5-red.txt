@@ -1,4 +1,0 @@
-# 9.5 RED baseline (pre-implementation / TDD RED)
-ERROR: not found: no tests matched playbook subset
-collected 0 items
-FAILED

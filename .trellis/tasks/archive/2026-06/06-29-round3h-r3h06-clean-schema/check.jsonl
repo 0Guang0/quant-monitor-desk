@@ -1,6 +1,0 @@
-{"file": ".trellis/tasks/06-29-round3h-r3h06-clean-schema/frozen/R3H_06_CLEAN_SCHEMA.md", "reason": "extract: spec scope | for: A1 trellis-check"}
-{"file": ".trellis/tasks/06-29-round3h-r3h06-clean-schema/EXECUTION_INDEX.md", "reason": "extract: manifest trace | for: A1"}
-{"file": "specs/contracts/sandbox_clean_write_contract.yaml", "reason": "extract: pilot 仅 `cn_announcements` | for: 9.8"}
-{"file": "PROJECT_IMPLEMENTATION_ROADMAP.md", "reason": "extract: §5.0.1 | for: A1 audit-only"}
-{"file": "MODULE_COMPLETION_RATING.md", "reason": "extract: 完成度 | for: A1 audit-only"}
-{"file": "specs/contracts/source_route_contract.yaml", "reason": "extract: context | for: manifest"}

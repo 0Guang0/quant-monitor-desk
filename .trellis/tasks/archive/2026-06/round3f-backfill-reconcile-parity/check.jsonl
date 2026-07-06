@@ -1,2 +1,0 @@
-{"file": ".trellis/tasks/round3f-backfill-reconcile-parity/MASTER.plan.md", "reason": "extract: A1 spec trace | for: trellis-check"}
-{"file": "tests/test_r3f_br_backfill_reconcile_closure.py", "reason": "extract: closure tests | for: A8"}

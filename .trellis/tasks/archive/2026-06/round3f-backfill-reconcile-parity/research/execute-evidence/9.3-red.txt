@@ -1,4 +1,0 @@
-# 9.3 RED baseline (pre-implementation / TDD RED)
-ERROR: not found: no tests matched test_r3fBr03_r3Partial5_regressionGuard_noReopenInUnresolved
-collected 0 items
-FAILED

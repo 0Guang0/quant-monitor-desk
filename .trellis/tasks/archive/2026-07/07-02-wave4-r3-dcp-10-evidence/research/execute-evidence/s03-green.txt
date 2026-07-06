@@ -1,1 +1,0 @@
-GREEN: uv run pytest -q → exit 0 (ACC-LAYER-E2E-LIVE-001 G5 subset closed)

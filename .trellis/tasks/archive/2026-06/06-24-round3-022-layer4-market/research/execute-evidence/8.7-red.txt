@@ -1,4 +1,0 @@
-# §8.7 RED
-$ uv run pytest tests/test_layer4_market_structure.py::test_marketSnapshot_noLayer5HistoryFields -q
-FAILED — boundary field scan missing
-exit code: 1 (FAIL)

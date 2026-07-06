@@ -1,4 +1,4 @@
-"""S04 — Liquidity axis clean read e2e (ADR-029 ponytail)."""
+"""S04 — Liquidity axis clean read e2e (ADR-010 ponytail)."""
 
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ LIQ_INDICATOR = "LIQ.B-I1.AMIHUD_ILLIQ"
 def test_layer1Liquidity_cleanAmihudE2e_alphaVantageBars(tmp_path) -> None:
     """覆盖范围：流动性 P0 从 security_bar_1d 经 Amihud 代理贯通特征与解读
     测试对象：read_bar_history + amihud_observations_from_bars + AxisFeatureEngine + AxisInterpretationEngine
-    目的/目标：ADR-029 ponytail（alpha_vantage bar）可产出 LIQ.B-I1.AMIHUD_ILLIQ 绿路径；非 staged_fixture
+    目的/目标：ADR-010 ponytail（alpha_vantage bar）可产出 LIQ.B-I1.AMIHUD_ILLIQ 绿路径；非 staged_fixture
     验证点：len>=25；source_used==alpha_vantage；特征非 insufficient_history；解读 1 行
     失败含义：流动性轴无法从 Tier A bar clean 贯通 Layer1 面板语义
     """

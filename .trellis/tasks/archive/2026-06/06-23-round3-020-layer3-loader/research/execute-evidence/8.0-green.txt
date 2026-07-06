@@ -1,3 +1,0 @@
-uv sync --locked exit 0
-pytest collection RED confirmed (no loader module)
-ponytail: reused sensor_loader staged_fixture_only gate pattern

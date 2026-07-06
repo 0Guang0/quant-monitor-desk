@@ -1,3 +1,0 @@
-FAILED
-ModuleNotFoundError: crypto_market normalizer / deribit_port missing
-Exit: 1 (expected RED — pre-9.5)

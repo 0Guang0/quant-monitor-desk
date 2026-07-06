@@ -210,7 +210,7 @@ def sync_tier_a_by_source_id(
     series_ids: tuple[str, ...] | None = None,
     start: str | None = None,
 ) -> dict[str, Any]:
-    """Route ``qmd data sync --source-id`` to Tier A incremental handlers (ADR-028)."""
+    """Route ``qmd data sync --source-id`` to Tier A incremental handlers (ADR-009)."""
     try:
         entry = resolve_tier_a_incremental(source_id)
     except UnknownTierAIncrementalSourceError as exc:

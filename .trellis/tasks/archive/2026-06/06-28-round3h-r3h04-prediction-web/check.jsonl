@@ -1,8 +1,0 @@
-{"file": ".trellis/tasks/06-28-round3h-r3h04-prediction-web/frozen/R3H_04_PREDICTION_AND_WEB_EVIDENCE_ADAPTERS.md", "reason": "extract: spec scope | for: A1 trellis-check"}
-{"file": ".trellis/tasks/06-28-round3h-r3h04-prediction-web/EXECUTION_INDEX.md", "reason": "extract: manifest trace | for: A1"}
-{"file": "specs/contracts/layer5_evidence_contract.yaml", "reason": "extract: manual_review | for: 9.7"}
-{"file": "specs/contracts/user_input_privacy_contract.yaml", "reason": "extract: web evidence 隐私 | for: 9.4, 9.6"}
-{"file": "specs/contracts/source_capability_contract.yaml", "reason": "extract: port 契约 | for: 9.2"}
-{"file": "specs/contracts/source_route_contract.yaml", "reason": "extract: evidence-only route | for: 9.5, 9.6"}
-{"file": "specs/contracts/datasource_service_contract.yaml", "reason": "extract: DSS.fetch | for: 9.2–9.4"}
-{"file": "MODULE_COMPLETION_RATING.md", "reason": "extract: 完成度 | for: A1 audit-only"}

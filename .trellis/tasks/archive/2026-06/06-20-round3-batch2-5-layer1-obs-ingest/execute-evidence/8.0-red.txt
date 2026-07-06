@@ -1,4 +1,0 @@
-§8.0 RED artifact gate
-command: uv run python -c "import sys; from pathlib import Path; p=Path('.trellis/tasks/06-20-round3-batch2-5-layer1-obs-ingest/research/execute-boot.md'); sys.exit(0 if p.is_file() else 1)"
-exit_code: 1
-signal: execute-boot.md missing (expected FAIL before Boot GREEN)

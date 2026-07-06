@@ -1,5 +1,0 @@
-$ uv run pytest tests/test_layer3_loader.py::test_layer3Loader_loadsStagedFixture_success tests/test_layer3_loader.py::test_layer3Loader_nonStagedMode_rejects -q
-..                                                                       [100%]
-exit_code=0
-
-ponytail: reused sensor_loader staged_fixture_only gate pattern; fixture anchors now carry source_validation_status

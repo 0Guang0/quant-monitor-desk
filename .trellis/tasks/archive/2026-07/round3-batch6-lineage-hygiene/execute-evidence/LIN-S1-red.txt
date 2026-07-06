@@ -1,3 +1,0 @@
-LIN-S1 RED — pre-fix _bar_for_trade_date used continue on non-dict bars[]
-Expected: test_layer3Snapshot_malformedBarElement_rejects FAIL (no raise, build succeeds or wrong error)
-Observed: malformed string bar skipped; valid dict bar matched — test would fail match="mapping"

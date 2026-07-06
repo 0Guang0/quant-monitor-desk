@@ -1,1 +1,0 @@
-FAILED test_qmdOps_cli_invokesSameInspector (pre-8.2 RED)

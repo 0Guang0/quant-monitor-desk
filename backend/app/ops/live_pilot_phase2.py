@@ -157,7 +157,7 @@ def _resolve_hitl_path(evidence_dir: Path | None = None) -> Path:
         return Path(evidence_dir) / HITL_CONFIRMATION_MD
     return (
         PROJECT_ROOT
-        / ".trellis/tasks/06-21-round3-batch2-75-live-pilot/execute-evidence"
+        / "docs/archive/trellis-evidence/round3-batch2-75-live-pilot/execute-evidence"
         / HITL_CONFIRMATION_MD
     )
 

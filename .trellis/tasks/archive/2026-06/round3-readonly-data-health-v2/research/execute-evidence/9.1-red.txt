@@ -1,2 +1,0 @@
-RED: DH2-01..06 — test_data_health_v2 profile tests FAILED (profiles not implemented)
-exit code: 1 FAILED AssertionError

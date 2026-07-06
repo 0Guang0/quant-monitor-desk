@@ -1,6 +1,0 @@
-LIN-S3 GREEN — ADV-R3X-LINEAGE-001 contract-scoped L3/L4 lineage
-Date: 2026-06-25
-Command: uv run pytest tests/test_layer3_snapshot_builder.py tests/test_layer4_market_structure.py tests/test_snapshot_lineage_kernel.py -q -k lineage
-Result: 12 passed
-New tests: test_layer3Lineage_rejectsEmptySourceFetchIds, test_layer3Lineage_rejectsEmptySourceContentHashes, test_marketSnapshot_lineageUpstreamFromLayer3
-Residual: production DuckDB lineage table write-back → B01-023 (re-defer)

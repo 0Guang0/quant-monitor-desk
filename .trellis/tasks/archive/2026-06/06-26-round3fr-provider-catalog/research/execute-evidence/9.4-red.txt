@@ -1,2 +1,0 @@
-FAILED tests/test_provider_catalog.py::test_provider_catalog_contractRefs
-AssertionError: provider_catalog_path missing in source_capability_contract.yaml

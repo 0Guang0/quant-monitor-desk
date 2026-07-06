@@ -1,8 +1,0 @@
-# S03 RISK_APPETITE — RED (2026-07-02)
-
-Command: uv run pytest tests/test_layer1_risk_appetite_clean_e2e.py -q
-Exit: 4
-
-ERROR: file or directory not found: tests/test_layer1_risk_appetite_clean_e2e.py
-
-Evidence: test module absent before Execute implementation.

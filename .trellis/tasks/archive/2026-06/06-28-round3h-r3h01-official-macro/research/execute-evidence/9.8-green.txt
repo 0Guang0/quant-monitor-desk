@@ -1,6 +1,0 @@
-uv run pytest -q → exit 0 (100%)
-uv run python scripts/loop_maintain.py → OK
-ruff check (R3H-01 touched files) → All checks passed
-
-Six-source closure: all READY_WITH_EVIDENCE (see execute-evidence/9.6-manifest.md)
-fred enabled_by_default=false preserved

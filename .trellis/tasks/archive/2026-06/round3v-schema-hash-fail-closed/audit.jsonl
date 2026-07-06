@@ -1,4 +1,0 @@
-{"file": ".trellis/tasks/round3v-schema-hash-fail-closed/AUDIT.plan.md", "reason": "extract: Audit SSOT | for: A1-A8 boot"}
-{"file": "docs/implementation_tasks/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/B02_02_schema_hash_fail_closed.md", "reason": "extract: AC trace | for: A5"}
-{"file": "docs/implementation_tasks/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/BATCH_3V_HARDENING_RULES.md", "reason": "extract: forbidden language | for: A3/A5"}
-{"file": "docs/implementation_tasks/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/BATCH_3V_ADVERSARIAL_AUDIT.md", "reason": "extract: B3V-AUD-05 | for: A8 negative"}

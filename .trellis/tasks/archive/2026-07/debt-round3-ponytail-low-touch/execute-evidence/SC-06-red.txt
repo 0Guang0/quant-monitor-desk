@@ -1,5 +1,0 @@
-SC-06 RED — CONFIGS_ROOT duplicated
-
-Evidence: backend/app/core/api_limits.py defined
-  CONFIGS_ROOT = PROJECT_ROOT / "configs"
-while backend/app/config.py already exposes CONFIGS_ROOT (env-aware).

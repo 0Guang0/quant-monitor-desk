@@ -1,2 +1,0 @@
-FAILED: slice 4 pre-GREEN
-EXIT:1

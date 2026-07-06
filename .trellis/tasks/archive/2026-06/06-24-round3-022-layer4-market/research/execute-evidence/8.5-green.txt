@@ -1,4 +1,0 @@
-# §8.5 GREEN — MarketStructureBuilder.build core
-$ uv run pytest tests/test_layer4_market_structure.py::test_marketSnapshot_lineageRequiredFieldsComplete -q
-.                                                                        [100%]
-1 passed — exit 0 (PASS)

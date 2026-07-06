@@ -1,3 +1,0 @@
-uv sync --locked exit 0
-validate-execute-boot passed
-boot reads: implement.jsonl + context-closure.md + gitnexus-execute-summary.md

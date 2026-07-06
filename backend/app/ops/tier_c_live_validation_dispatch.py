@@ -1,4 +1,4 @@
-"""Tier C live validation_fetch dispatch (M-DATA-03 AC-7 · ADR-027)."""
+"""Tier C live validation_fetch dispatch (M-DATA-03 AC-7 · ADR-008)."""
 
 from __future__ import annotations
 

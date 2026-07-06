@@ -1,5 +1,0 @@
-{"ts":"2026-06-30","kind":"execute-reference-read-gate","path":"_tmp-wave3-dcp-parallel/agent-prompts/EXECUTE-REFERENCE-READ-GATE.md","evidence":"research/execute-reference-read-evidence.md"}
-{"ts":"2026-06-30","kind":"skill","path":"agent-toolchain.md"}
-{"ts":"2026-06-30","kind":"skill","path":".cursor/skills/trellis-execute/SKILL.md"}
-{"ts":"2026-06-30","kind":"skill","path":".claude/skills/testing-guidelines/SKILL.md"}
-{"ts":"2026-06-30","kind":"skill","path":".claude/skills/test-driven-development/SKILL.md"}

@@ -1,2 +1,0 @@
-unregistered test module before catalog CURATED update
-FAILED test_catalog gaps

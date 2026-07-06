@@ -1,9 +1,0 @@
-{
-  "close_or_redefer": "expand_sample_after_review",
-  "generated_at": "2026-06-22T14:43:11Z",
-  "outcome": "PILOT_PASS_STAGED_RAW",
-  "pilot_id": "r3x-staged-pilot-20260622",
-  "production_live_readiness_claim": false,
-  "run_mode": "staged_only",
-  "skip_live_fetch": false
-}

@@ -46,7 +46,7 @@ def bootstrap_alpha_vantage_live_e2e_ctx(
     sandbox_root: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> dict[str, Any]:
-    """Bootstrap Alpha Vantage live e2e under isolated M-DATA-03 sandbox (ADR-034)."""
+    """Bootstrap Alpha Vantage live e2e under isolated M-DATA-03 sandbox (ADR-015)."""
     from backend.app.ops.alpha_vantage_incremental_run import (
         build_alpha_vantage_incremental_service,
         enabled_alpha_vantage_source_registry,

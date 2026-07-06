@@ -1,2 +1,0 @@
-Boot 9.0 — test_raw_store.py baseline before STOR-01 (23 tests pre-addition)
-Post STOR: 28 passed

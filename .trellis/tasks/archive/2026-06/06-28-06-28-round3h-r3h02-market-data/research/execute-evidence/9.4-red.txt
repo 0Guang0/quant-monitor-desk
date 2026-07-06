@@ -1,3 +1,0 @@
-FAILED
-ModuleNotFoundError: yahoo_finance_port missing
-Exit: 1 (expected RED — pre-9.4)

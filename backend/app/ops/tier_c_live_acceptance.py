@@ -134,12 +134,12 @@ def validate_live_acceptance_env(
     """Validate env for Tier C validation_fetch acceptance."""
     if live_acceptance_mock_env_enabled():
         raise TierCLiveEnvError(
-            "QMD_FRED_INCREMENTAL_USE_MOCK forbidden in live acceptance (ADR-027/034)",
+            "QMD_FRED_INCREMENTAL_USE_MOCK forbidden in live acceptance (ADR-008/034)",
             code="MOCK_FORBIDDEN_IN_LIVE_ACCEPTANCE",
         )
     if not is_product_live_fetch_allowed():
         raise TierCLiveEnvError(
-            "QMD_ALLOW_LIVE_FETCH not set to opt-in value (ADR-027)",
+            "QMD_ALLOW_LIVE_FETCH not set to opt-in value (ADR-008)",
             code="LIVE_FETCH_NOT_OPTED_IN",
         )
     resolved_root = resolve_live_data_root(data_root)

@@ -1,1 +1,0 @@
-GREEN: uv run pytest -q exit 0; validate-execute-handoff exit 0

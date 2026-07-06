@@ -1,3 +1,0 @@
-{"file": ".trellis/tasks/round3v-contract-drift-write-modes/AUDIT.plan.md", "reason": "extract: Audit SSOT | for: A1-A8 boot"}
-{"file": "docs/implementation_tasks/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/B02_01_contract_drift_and_write_modes.md", "reason": "extract: AC trace | for: A5"}
-{"file": "docs/implementation_tasks/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/BATCH_3V_HARDENING_RULES.md", "reason": "extract: forbidden language | for: A3/A5"}

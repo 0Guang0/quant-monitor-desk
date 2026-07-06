@@ -1,6 +1,0 @@
-# Command: uv run pytest tests/test_source_health_snapshot.py tests/test_b3f_quality_runners.py tests/test_ops_data_health.py tests/test_data_health_v2.py -q
-# exit_code: 0
-
-............................................                             [100%]
-
-EXIT:0

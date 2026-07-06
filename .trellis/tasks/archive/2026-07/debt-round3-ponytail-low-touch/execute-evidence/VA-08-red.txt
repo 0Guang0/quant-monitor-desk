@@ -1,4 +1,0 @@
-VA-08 RED — _table_exists called quote_ident(table_name) without using result
-
-Evidence: data_quality.py _table_exists invoked quote_ident side effect; lookup uses
-parameterized information_schema query on raw table_name.

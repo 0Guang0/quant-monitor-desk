@@ -1,2 +1,0 @@
-test_packaging_consoleScripts_smoke passed
-qmd-data / qmd-ops / qmd-init-db / qmd-sync-registry callable

@@ -1,3 +1,0 @@
-34 passed route/capabilities -k CN sources
-exit 0
-manifest: research/execute-evidence/9.8-manifest.md

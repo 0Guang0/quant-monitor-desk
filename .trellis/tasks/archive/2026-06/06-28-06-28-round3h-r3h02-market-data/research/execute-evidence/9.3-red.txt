@@ -1,3 +1,0 @@
-FAILED
-ModuleNotFoundError: stooq_port missing
-Exit: 1 (expected RED — pre-9.3)

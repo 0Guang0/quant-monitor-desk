@@ -344,7 +344,7 @@ def test_alpha_vantage_port_capOverflow_blocksOverMaxSymbols() -> None:
 def test_alpha_vantage_port_windowSpan_blocksOverMaxWindowDays() -> None:
     """覆盖范围：Alpha Vantage US equity fetch trading-session 窗口 cap
     测试对象：AlphaVantageMockFetchPort.fetch_payload start/end 跨度
-    目的/目标：ADR-026 max_window_days=120 按 trading sessions 在 US equity 入口 reject
+    目的/目标：ADR-007 max_window_days=120 按 trading sessions 在 US equity 入口 reject
     验证点：跨度含 >120 交易日时 PortError 且消息含 cap
     失败含义：US equity window cap 仍按自然日计界，可拉取超窗历史
     """

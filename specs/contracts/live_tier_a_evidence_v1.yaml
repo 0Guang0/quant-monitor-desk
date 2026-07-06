@@ -9,7 +9,7 @@ authoritative_docs:
   - specs/contracts/data_adapter_contract.md
   - specs/contracts/data_cli_contract.yaml
   - specs/contracts/sandbox_clean_write_contract.yaml
-  - docs/decisions/ADR-034-m-data-03-tier-a-live-acceptance.md
+  - docs/decisions/ADR-015-tier-a-live-acceptance-sandbox.md
 
 purpose: >
   Normative evidence envelope for Tier A live incremental acceptance (11 sources).

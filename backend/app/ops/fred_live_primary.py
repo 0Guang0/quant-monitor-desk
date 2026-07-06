@@ -11,7 +11,7 @@ from backend.app.ops.fred_sandbox_pilot import FredPilotAuthorizationError, load
 # SSOT path for Plan freeze + pytest (archived execute-evidence canonical copy)
 FRED_LIVE_AUTHORIZATION_DEFAULT = (
     PROJECT_ROOT
-    / ".trellis/tasks/archive/2026-06/round3-source-health-and-quality-runners/execute-evidence"
+    / "docs/archive/trellis-evidence/round3-source-health-and-quality-runners/execute-evidence"
     / "fred_live_authorization_2026-06-25.yaml"
 )
 

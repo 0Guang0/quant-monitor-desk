@@ -1,2 +1,0 @@
-RED: full pytest before test_catalog registration (5 loop engineering failures)
-exit code: 1 FAILED

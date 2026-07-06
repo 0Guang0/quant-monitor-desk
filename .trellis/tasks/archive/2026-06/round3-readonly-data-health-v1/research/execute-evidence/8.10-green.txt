@@ -1,4 +1,0 @@
-Tier A: test_ops_data_health.py 18 passed exit 0
-Tier A: ruff check passed
-Tier B note: full uv run pytest -q blocked until tests/test_catalog.yaml committed (loop engineering git checkout restore)
-C-20 slice tests: PASSED

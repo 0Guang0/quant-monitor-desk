@@ -1,3 +1,0 @@
-FAILED tests/test_ops_data_health.py::test_opsDataHealth_dh2Path_noSnapshotDdl
-Failed: RED: explicit DH2 boundary guard not implemented (R3F-SH-05)
-exit 1

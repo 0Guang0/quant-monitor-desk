@@ -25,7 +25,7 @@ This matrix summarizes what may enter **raw/staging sandbox pilot**, what remain
 | L1-RA-SP500              | SP500         | fred          | primary_candidate | sandbox_candidate   | raw_staging_pilot (auth required)                  |
 | L1-ENV-DFII10            | DFII10        | fred          | primary_candidate | sandbox_candidate   | raw_staging_pilot (auth required)                  |
 | L1-CRD-BAA10Y            | BAA10Y        | fred          | primary_candidate | clean_replay_proven | DCP-06 credit axis P0                              |
-| L1-LIQ-AMIHUD-SPY        | SPY           | alpha_vantage | primary_candidate | clean_replay_proven | DCP-06 liquidity ponytail (ADR-029)                |
+| L1-LIQ-AMIHUD-SPY        | SPY           | alpha_vantage | primary_candidate | clean_replay_proven | DCP-06 liquidity ponytail (ADR-010)                |
 | L1-SEN-COT-LF-NET        | 088691        | cftc_cot      | primary_candidate | clean_replay_proven | DCP-06 sentiment axis P0                           |
 | L1-MACRO-SUPP-VALIDATION | staged_sample | akshare       | validation_only   | sandbox_candidate   | none                                               |
 | Other ENV/RA indicators  | various       | fred          | deferred          | deferred            | none                                               |

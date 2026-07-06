@@ -12,9 +12,10 @@ from backend.app import config as app_config
 from backend.app.core.resource_guard import Decision, ResourceGuard
 from backend.app.datasources.fetch_result import FetchRequest, FetchResult
 from backend.app.datasources.route_models import SourceRoutePlan
-from backend.app.datasources.service import (
-    DataSourceService,
+from backend.app.sync.layer1_sync_facade import (
     ResourceGuardBlockedError,
+    create_default_layer1_sync_client,
+    sync_indicator,
 )
 from backend.app.db.connection import ConnectionManager
 from backend.app.db.validation_gate import DbValidationGate
@@ -240,13 +241,15 @@ class Layer1ObservationIngestionService:
         *,
         db_path: Path | str,
         data_root: Path | str | None = None,
-        datasource: DataSourceService | None = None,
+        datasource=None,
         axis_loader: AxisSpecLoader | None = None,
         allowlist: frozenset[str] | None = None,
     ) -> None:
         self._db_path = Path(db_path)
         self._data_root = Path(data_root) if data_root is not None else app_config.DATA_ROOT
-        self._datasource = datasource or DataSourceService(data_root=self._data_root)
+        self._datasource = datasource or create_default_layer1_sync_client(
+            data_root=self._data_root
+        )
         self._axis_loader = axis_loader or AxisSpecLoader()
         self._allowlist = allowlist if allowlist is not None else DEFAULT_INGESTION_ALLOWLIST
         self._axis_load: AxisLoadResult | None = None
@@ -537,7 +540,13 @@ class Layer1ObservationIngestionService:
         run_id: str | None = None,
         job_id: str | None = None,
     ) -> MicroFetchResult:
-        """Micro-fetch via DataSourceService — raw/fetch evidence only (Phase 3)."""
+        """Micro-fetch staging — sync seam dry-run then raw fetch evidence (Phase 3)."""
+        sync_indicator(
+            indicator_id,
+            "incremental",
+            dry_run=True,
+            connection_manager=self._conn_manager,
+        )
         binding, req, route_plan, resolved_run_id, resolved_job_id = (
             self._prepare_staged_route_and_request(
                 indicator_id=indicator_id,

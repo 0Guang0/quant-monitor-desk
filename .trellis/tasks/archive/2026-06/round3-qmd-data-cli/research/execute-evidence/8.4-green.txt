@@ -1,2 +1,0 @@
-sync_registry.py and ci_ingestion_smoke.py: sys.path.insert removed
-editable install + console_scripts exit 0

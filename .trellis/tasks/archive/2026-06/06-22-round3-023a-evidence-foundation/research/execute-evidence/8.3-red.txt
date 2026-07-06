@@ -1,3 +1,0 @@
-pytest tests/test_layer5_evidence_foundation.py::test_evidenceFoundation_manualReviewFlag_requiresQueuedState -q
-FAILED: DID NOT RAISE EvidenceFoundationError
-exit code: 1

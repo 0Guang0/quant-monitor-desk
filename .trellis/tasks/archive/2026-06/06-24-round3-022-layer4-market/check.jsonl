@@ -1,7 +1,0 @@
-{"file": "specs/contracts/layer4_market_contract.yaml", "reason": "A1 spec diff vs builder breadth/calendar"}
-{"file": "docs/modules/layer4_market_structure.md", "reason": "A1 module authority"}
-{"file": "docs/implementation_tasks/ROUND_3_MODELING_LAYERS/022_implement_layer4_market_structure.md", "reason": "A1 task card scope"}
-{"file": "WAVE_C_MAIN_SESSION_COORDINATOR_PLAYBOOK.md", "reason": "A1 playbook §8.2 PASS trace"}
-{"file": "docs/quality/BATCH3_STAGED_DOWNSTREAM_GATE.md", "reason": "A1 staged-only gate"}
-{"file": "docs/implementation_tasks/GLOBAL_TESTING_POLICY.md", "reason": "A8 semantic assertion policy"}
-{"file": ".trellis/tasks/06-24-round3-022-layer4-market/research/source-index.md", "reason": "A5 trace manifest"}

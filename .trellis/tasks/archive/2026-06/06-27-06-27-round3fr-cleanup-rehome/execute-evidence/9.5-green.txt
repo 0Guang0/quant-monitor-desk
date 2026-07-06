@@ -1,3 +1,0 @@
-# §9.5 GREEN — 3F-R 关门 + 3G 入口
-# pytest: uv run pytest tests/test_r3fr07_legacy_wrapper_cleanup.py::test_roadmapAndHandoff_mark3frClosed tests/test_r3fr07_legacy_wrapper_cleanup.py::test_batch3gReadme_preconditionsSatisfied -q
-# result: 2 passed

@@ -1,3 +1,0 @@
-=== 8.9 RED ===
-ERROR: Task 2 MASTER.plan.md not verified at plan start (hypothetical gate)
-exit code: 1

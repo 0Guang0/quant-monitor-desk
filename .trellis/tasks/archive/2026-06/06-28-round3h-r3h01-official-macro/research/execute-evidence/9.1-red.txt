@@ -1,9 +1,0 @@
-# Step 9.1 RED — fred_evidence_contract (updated)
-# Command: uv run pytest tests/test_official_macro_adapters.py -q -k evidence_contract
-# Date: 2026-06-28
-
-FF.                                                                      [100%]
-FAILED ... ModuleNotFoundError: No module named 'backend.app.datasources.normalizers.official_macro' (2 tests)
-1 passed (staging e2e via legacy bridge — passes before normalizer exists)
-
-Exit code: 1

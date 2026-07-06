@@ -1,2 +1,0 @@
-FAILED tests/test_provider_catalog.py::test_everyRegistrySource_hasCatalogEntry
-AssertionError: registry 源集合不等于 catalog（pre-9.2：缺 provider_catalog.yaml 25 源覆盖）

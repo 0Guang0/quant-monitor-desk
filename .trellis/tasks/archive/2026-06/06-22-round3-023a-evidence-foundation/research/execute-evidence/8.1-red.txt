@@ -1,3 +1,0 @@
-pytest tests/test_layer5_evidence_foundation.py::test_evidenceFoundation_factualRecord_requiresProvenance -q
-ERROR: EvidenceFoundationError not raised (module missing)
-exit code: 1

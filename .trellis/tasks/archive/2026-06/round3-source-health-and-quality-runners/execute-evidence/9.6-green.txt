@@ -1,6 +1,0 @@
-# Command: uv run pytest tests/test_fred_live_primary_closeout.py::test_fredLivePrimary_requiresAuthorizationYaml -q
-# exit_code: 0
-
-.                                                                        [100%]
-
-EXIT:0

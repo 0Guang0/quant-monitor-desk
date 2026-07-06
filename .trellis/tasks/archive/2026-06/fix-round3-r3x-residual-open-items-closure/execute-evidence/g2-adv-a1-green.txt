@@ -1,6 +1,0 @@
-# g2-adv-a1 — checklist §4.2 ADV-A1
-# Command: uv run pytest tests/test_r3x_residual_open_items_closure.py -k "advA1" -q --tb=no
-
-..                                                                       [100%]
-2 passed in 1.2s
-EXIT:0

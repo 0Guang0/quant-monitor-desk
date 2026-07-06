@@ -15,7 +15,7 @@ from backend.app.layer1_axes.models import AxisObservation
 
 FORBIDDEN_FALLBACK_SOURCE_PREFIXES = ("staged_fixture", "macro_supplementary")
 
-# ADR-029 P0 tier-A source allowlist (spec indicator_id → source_used)
+# ADR-010 P0 tier-A source allowlist (spec indicator_id → source_used)
 P0_ALLOWED_SOURCE_BY_SPEC: dict[str, str] = {
     "ENV-E1-DGS10": "fred",
     "CRD.CS1.BAA10Y": "fred",
@@ -237,7 +237,7 @@ def amihud_observations_from_bars(
     spec_indicator_id: str,
     as_of: datetime,
 ) -> list[AxisObservation]:
-    """ponytail: daily Amihud proxy from OHLCV clean bars (ADR-029 liquidity anchor)."""
+    """ponytail: daily Amihud proxy from OHLCV clean bars (ADR-010 liquidity anchor)."""
     if spec_indicator_id not in P0_BAR_BINDING:
         raise KeyError(spec_indicator_id)
     observations: list[AxisObservation] = []

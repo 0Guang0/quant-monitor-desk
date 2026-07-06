@@ -304,7 +304,7 @@ Does **not** block finish-work or 017; documented per audit A9 synthesis — mus
 | R3-AUDIT-DEF-01           | db_inspector YAML SSOT + drift tests              | `tests/test_contract_drift_ops_write.py`                                                                               |
 | R3-B25-PERF-BUDGET-01     | Authoritative perf-budget CI artifact             | `scripts/ci_perf_budget_artifact.py` · `.github/workflows/ci.yml` · `tests/test_production_equivalent_smoke_budget.py` |
 | R3-B25-HYG-03             | production-equivalent benchmark artifact (alias)  | same as `R3-B25-PERF-BUDGET-01`                                                                                        |
-| D3-P1-2                   | C901 write-path — ADR wont-fix                    | `docs/decisions/ADR-003-c901-write-path-complexity.md` · `tests/test_batch6_wave4_prep_closure.py`                     |
+| D3-P1-2                   | C901 write-path — ADR wont-fix                    | `docs/decisions/ADR-004-write-path-complexity-ceiling.md` · `tests/test_batch6_wave4_prep_closure.py`                  |
 | A9-P2-01                  | `manual_review_queue.priority` app-layer ADR-002  | `docs/decisions/ADR-002-db-check-vs-app-validation.md` · `tests/test_round3f_migration_residuals.py`                   |
 | R2-RISK-4                 | App-layer-only `priority` documented + tested     | same as `A9-P2-01`                                                                                                     |
 | R3-B6-021-O-01            | Layer3 malformed `bars[]` fail-closed             | `snapshot_builder.py` · `test_layer3Snapshot_malformedBarElement_rejects`                                              |

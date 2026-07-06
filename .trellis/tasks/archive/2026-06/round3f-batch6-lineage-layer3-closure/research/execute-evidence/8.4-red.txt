@@ -1,2 +1,0 @@
-FAILED test_marketSnapshot_lineageUpstreamFromLayer3
-AssertionError: upstream_snapshot_ids empty (ADV-R3X contract-scoped gap)

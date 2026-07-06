@@ -1,1 +1,0 @@
-R-C-05 green: gate allow assertions + test_batchCFlow_severeConflict_blocksCleanWrite + threshold boundary PASSED

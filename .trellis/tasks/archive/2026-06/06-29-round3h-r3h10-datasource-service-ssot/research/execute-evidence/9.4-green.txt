@@ -1,3 +1,0 @@
-S10-04 GREEN: _fetch_payload_via_service delegates to DataSourceService.fetch.
-test_r3h10_interfaceProbeFetchDelegatesThroughDataSourceService pass.
-uv run pytest -q exit 0.

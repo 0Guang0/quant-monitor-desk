@@ -78,7 +78,7 @@ def bootstrap_fred_live_e2e_ctx(
     sandbox_root: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> dict[str, Any]:
-    """Bootstrap fred live e2e under isolated M-DATA-03 sandbox (ADR-034)."""
+    """Bootstrap fred live e2e under isolated M-DATA-03 sandbox (ADR-015)."""
     return bootstrap_port_live_e2e_ctx(
         sandbox_root,
         monkeypatch,

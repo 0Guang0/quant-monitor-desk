@@ -1,3 +1,0 @@
-DH2-07 GREEN: uv run pytest tests/test_ops_data_health.py -k CliProfile -q
-..                                                                       [100%]
-2 passed

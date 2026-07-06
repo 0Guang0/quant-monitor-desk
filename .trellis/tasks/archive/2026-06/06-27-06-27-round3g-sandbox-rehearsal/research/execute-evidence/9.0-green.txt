@@ -1,2 +1,0 @@
-Boot complete — EXECUTION_INDEX §0–§6 read; sandbox only confirmed.
-exit 0

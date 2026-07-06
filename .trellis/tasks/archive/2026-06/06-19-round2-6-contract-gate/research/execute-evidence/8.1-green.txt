@@ -1,5 +1,0 @@
-=== 8.1 GREEN ===
-pytest tests/test_source_capabilities.py -q
-......                                                                   [100%]
-6 passed
-exit code: 0

@@ -3,13 +3,8 @@
   "generated_at_utc": "2026-06-19T05:53:46+00:00",
   "root_dir": "quant_monitor_implementation_docs_v1",
   "manifest_self_policy": "exclude_self_from_file_hashes",
-  "file_count_excluding_manifest": 160,
+  "file_count_excluding_manifest": 154,
   "files": [
-    {
-      "path": "FINAL_AUDIT_REPORT.md",
-      "size_bytes": 5015,
-      "sha256": "6139c8b618ffd7cc2e5f5c140622c81bfe1cf9fdbc72f50081cdd90755b297f1"
-    },
     {
       "path": "MIGRATION_MAP.md",
       "size_bytes": 3758,
@@ -19,31 +14,6 @@
       "path": "README.md",
       "size_bytes": 4290,
       "sha256": "0ec7d1f2e8a8f658848540014ffbc8de79129c06669385c1a0c722f5bb49eef6"
-    },
-    {
-      "path": "docs/adr/ADR-0001-use-duckdb-local-first.md",
-      "size_bytes": 627,
-      "sha256": "8551217ff9a855b60d5bc7df59dbe0cddb4b38f316a7acf4030a9781a7580559"
-    },
-    {
-      "path": "docs/adr/ADR-0002-agent-readonly-boundary.md",
-      "size_bytes": 586,
-      "sha256": "054353559ea36acd0e8b46a79b0ba88afb147ccc2972da324e16e61946c3fde4"
-    },
-    {
-      "path": "docs/adr/ADR-0003-layer1-standardization-only.md",
-      "size_bytes": 927,
-      "sha256": "b579da48ed48093658aeee82d02ca7c6dc2f2c81fd9184fb5275850a905d2dc4"
-    },
-    {
-      "path": "docs/adr/ADR-0004-layer3-shock-anchor-model.md",
-      "size_bytes": 630,
-      "sha256": "5e9eb5b1738c281d0f65da6ae2bd21613869b5241b5fb885552b4829fc3aeaba"
-    },
-    {
-      "path": "docs/adr/ADR-0005-primary-validation-fallback-source-model.md",
-      "size_bytes": 664,
-      "sha256": "6f791ebb9b263cfa622a0bbc49ad01fe9cd8608a83fdd16f4bc28cd3fbbfcc8d"
     },
     {
       "path": "docs/api/agent_tool_contracts.md",

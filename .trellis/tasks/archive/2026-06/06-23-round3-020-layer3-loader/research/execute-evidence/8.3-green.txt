@@ -1,7 +1,0 @@
-$ uv run pytest tests/test_layer3_loader.py -q
-..................                                                       [100%]
-exit_code=0
-
-18 passed (audit debt closure: +4 tests — invalidYaml, partialEmptyTables, invalidSourceValidationStatus, p0Anchor_needsSourceStatus)
-
-ponytail: merged edge/cross-chain node_id validation via _validate_edge_node_refs; deleted _MANIFEST_FILE_KEYS

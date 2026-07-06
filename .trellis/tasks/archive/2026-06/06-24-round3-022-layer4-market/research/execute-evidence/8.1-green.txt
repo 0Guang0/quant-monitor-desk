@@ -1,5 +1,0 @@
-# §8.1 GREEN — AC-022-1
-$ uv run pytest tests/test_layer4_market_structure.py::test_marketRegistry_uniqueMarketIds -q
-.                                                                        [100%]
-1 passed — exit 0 (PASS)
-ponytail: REGISTRY_SEEDS tuple inline; no registry DB write.

@@ -1,2 +1,0 @@
-31 passed in 26.7s
-exit 0

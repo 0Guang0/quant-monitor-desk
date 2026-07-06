@@ -1,2 +1,0 @@
-RED: test_mootdxBarClean_layer5Provenance_matchesSameRunBundle — no raw bundle / provenance mismatch
-Expected before S02 GREEN implementation.

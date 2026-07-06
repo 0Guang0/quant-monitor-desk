@@ -1,5 +1,0 @@
-{"path": "REPAIR.plan.md", "reason": "Primary repair contract; must be first entry."}
-{"path": "audit.report.md", "reason": "Audit findings to repair. Created after Audit."}
-{"path": "MASTER.plan.md", "reason": "Acceptance criteria and scope boundary."}
-{"path": "AUDIT.plan.md", "reason": "Audit dimensions and pass criteria."}
-{"path": "docs/implementation_tasks/ROUND_2_DATA_INGESTION_VALIDATION/BATCH_C_REPAIR_STATUS.md", "reason": "Repair status documentation target."}

@@ -1,2 +1,0 @@
-ModuleNotFoundError: No module named 'backend.app.layer3_chains.snapshot_builder'
-(§8.1 RED — models/snapshot_builder absent before GREEN)

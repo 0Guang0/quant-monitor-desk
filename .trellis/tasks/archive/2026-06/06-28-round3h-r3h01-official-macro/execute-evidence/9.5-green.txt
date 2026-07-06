@@ -1,7 +1,0 @@
-# R3H-01 step 9.5 GREEN — sec_edgar port (audit repair re-verify)
-# timestamp: 2026-06-28T03:48:00+08:00
-# command: uv run pytest tests/test_sec_edgar_adapter.py -q
-
-..........                                                               [100%]
-10 passed in ~2s
-exit code: 0

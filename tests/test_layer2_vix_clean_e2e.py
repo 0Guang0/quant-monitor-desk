@@ -1,4 +1,4 @@
-"""S01 — L2-VIX Tier A clean read → snapshot + lineage e2e (DCP-07 / ADR-032)."""
+"""S01 — L2-VIX Tier A clean read → snapshot + lineage e2e (DCP-07 / ADR-013)."""
 
 from __future__ import annotations
 
@@ -24,7 +24,7 @@ def test_layer2_vix_clean_e2e_reads_axis_observation_and_builds_snapshot(
 ) -> None:
     """覆盖范围：切片 S01 — L2-VIX 从 axis_observation(VIXCLS) 读 clean 并产出 snapshot+lineage
     测试对象：Layer2CleanObservationReader + CrossAssetSnapshotBuilder + Layer2SnapshotWriter
-    目的/目标：证明 P0 传感器非 staged_fixture_only；对齐 ADR-032 / to-issues S01 AC
+    目的/目标：证明 P0 传感器非 staged_fixture_only；对齐 ADR-013 / to-issues S01 AC
     验证点：snapshot.source_used==fred；lineage 含 fred clean dataset_id 与 fetch/hash；DB 行与 VR 一致
     失败含义：Layer2 仍无法从 Tier A clean 绑真市况，G2 竖切与 ACC-LAYER-E2E-LIVE-001 L2 子集不成立
     """

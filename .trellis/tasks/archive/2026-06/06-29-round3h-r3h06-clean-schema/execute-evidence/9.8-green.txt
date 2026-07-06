@@ -1,6 +1,0 @@
-rg exit 0 (expect 1 = zero matches)
-tests/test_r3h06_clean_schema.py:    目的/目标：AC-PILOT-COMPAT — 实现路径零 market_bar_clean 残留
-tests/test_r3h06_clean_schema.py:    needle = "market_bar_clean"
-tests/test_r3h06_clean_schema.py:    assert not hits, f"market_bar_clean references: {hits}"
-
-.................                                                        [100%]

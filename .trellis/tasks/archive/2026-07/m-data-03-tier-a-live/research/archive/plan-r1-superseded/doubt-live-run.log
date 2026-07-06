@@ -1,5 +1,0 @@
-baostock: baostock incremental sync failed: job_id=qmd-baostock-sync-8ef6ff46a3 status=FAILED_FINAL message="1 validation error for FetchResult\n  Value error, SUCCESS requires row_count > 0 [type=value_error, input_value={'run_id': 'qmd-baostock-... None, 'retry_count': 0}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/value_error"
-deribit: read_since_date_for_instrument() got an unexpected keyword argument 'data_domain'
-fred: data-health FAIL: data-health FAIL: FAIL checks present; sandbox clean-write gate blocked
-mootdx: mootdx incremental sync requires mootdx as routed primary; got 'akshare'
-EXIT:1

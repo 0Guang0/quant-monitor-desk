@@ -1,20 +1,21 @@
-# Architecture Decision Records
+# 架构决策记录（`docs/decisions/`）
 
-| ADR                                                                   | Title                                                             |
-| --------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| [ADR-001](ADR-001-ingestion-validation-write-transaction-boundary.md) | Ingestion validation / write transaction boundary                 |
-| [ADR-002](ADR-002-db-check-vs-app-validation.md)                      | DB CHECK vs application-layer validation                          |
-| [ADR-003](ADR-003-implementation-path-mapping.md)                     | Implementation path mapping (task docs vs code)                   |
-| [ADR-024](ADR-024-source-health-snapshot-boundary.md)                 | source_health_snapshot boundary (Batch 3F)                        |
-| [ADR-025](ADR-025-r3h10-sync-fail-closed-datasource-service.md)       | Sync production fail-closed without `datasource_service` (R3H-10) |
-| [ADR-026](ADR-026-r3h07-us-trading-calendar-ssot.md)                  | US equity trading calendar SSOT — `trading_sessions` (R3H-07)     |
-| [ADR-027](ADR-027-r3h08-product-live-env-gate.md)                     | Product live env gate (R3H-08)                                    |
-| [ADR-028](ADR-028-dcp05-tier-a-clean-domain-extension.md)             | DCP-05 Tier A clean domain extension                              |
-| [ADR-029](ADR-029-dcp06-layer1-five-axis-clean-read.md)               | DCP-06 Layer1 five-axis clean read                                |
-| [ADR-030](ADR-030-bounded-backfill-cap-and-ci-nightly.md)             | Bounded backfill cap + CI nightly layering (R3-DCP-09)            |
-| [ADR-031](ADR-031-dcp10-layer5-evidence-provenance-binding.md)        | DCP-10 Layer5 evidence provenance binding (mootdx bar)            |
-| [ADR-032](ADR-032-dcp07-layer2-vix-clean-read.md)                     | DCP-07 Layer2 L2-VIX clean read (VIXCLS / axis_observation)       |
-| [ADR-033](ADR-033-dcp08-layer4-us-eq-clean-read.md)                   | DCP-08 Layer4 US_EQ clean read + registry dual-primary            |
-| [ADR-034](ADR-034-m-data-03-tier-a-live-acceptance.md)                | M-DATA-03 Tier A live acceptance in isolated sandbox              |
+> 与 `docs/adr/ADR-0001～0005`（v1.6 设计包）编号独立；本目录从 **ADR-001** 起按主题顺序编号。
 
-Ponytail audit equivalence: this project uses the `ponytail-review` / `code-simplification` skills as the formal simplification audit path when the standalone `ponytail` CLI is unavailable (Round2 audit P3-04).
+| ADR                                                                   | 文件                                    | 主题 |
+| --------------------------------------------------------------------- | --------------------------------------- | ---- |
+| [ADR-001](ADR-001-ingestion-validation-write-transaction-boundary.md) | 接入校验与写入事务边界                  |
+| [ADR-002](ADR-002-db-check-vs-app-validation.md)                      | 数据库 CHECK 与应用层校验分工           |
+| [ADR-003](ADR-003-implementation-path-mapping.md)                     | 任务文档与代码路径映射                  |
+| [ADR-004](ADR-004-write-path-complexity-ceiling.md)                   | 写入热路径 C901 复杂度不修              |
+| [ADR-005](ADR-005-source-health-snapshot-boundary.md)                 | `source_health_snapshot` 模块边界       |
+| [ADR-006](ADR-006-sync-datasource-service-fail-closed.md)             | 生产 Sync 须显式 `datasource_service=`  |
+| [ADR-007](ADR-007-us-trading-calendar-ssot.md)                        | 美股交易日历 SSOT（`trading_sessions`） |
+| [ADR-008](ADR-008-product-live-env-gate.md)                           | 产品 Live 环境门与 Tier 路由            |
+| [ADR-009](ADR-009-tier-a-clean-domain-extension.md)                   | Tier A clean 域扩展（migration 015）    |
+| [ADR-010](ADR-010-layer1-five-axis-clean-read.md)                     | Layer1 五轴 clean read                  |
+| [ADR-011](ADR-011-bounded-backfill-cap-and-ci-nightly.md)             | 有界 backfill 上限与 CI nightly         |
+| [ADR-012](ADR-012-layer5-evidence-provenance-binding.md)              | Layer5 证据血缘绑定                     |
+| [ADR-013](ADR-013-layer2-vix-clean-read.md)                           | Layer2 VIX clean read                   |
+| [ADR-014](ADR-014-layer4-us-equity-clean-read.md)                     | Layer4 美股 clean read                  |
+| [ADR-015](ADR-015-tier-a-live-acceptance-sandbox.md)                  | Tier A 隔离沙箱 live 验收               |

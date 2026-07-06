@@ -90,14 +90,6 @@ def _ensure_r3g_fred_authorization_bootstrap() -> None:
 def _ensure_audit_sandbox_pytest_basetemp() -> None:
     """Pre-create shared pytest basetemp for A8 sandbox runs on fresh clones (A8-B3V-04)."""
     (PROJECT_ROOT / ".audit-sandbox" / "pytest").mkdir(parents=True, exist_ok=True)
-    (
-        PROJECT_ROOT
-        / ".trellis"
-        / "tasks"
-        / "07-02-wave4-r3-dcp-10-evidence"
-        / ".audit-sandbox"
-        / "pytest"
-    ).mkdir(parents=True, exist_ok=True)
 
 
 def _patch_path_for_windows_long_paths() -> None:
@@ -393,7 +385,7 @@ def empty_response_result():
 
 @pytest.fixture
 def isolated_live_data_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
-    """Isolated M-DATA-03 sandbox root; rejects canonical main DB paths (ADR-034)."""
+    """Isolated M-DATA-03 sandbox root; rejects canonical main DB paths (ADR-015)."""
     from backend.app.ops.tier_a_live_acceptance import (
         M_DATA_03_SANDBOX_SEGMENT,
         assert_isolated_live_data_root,

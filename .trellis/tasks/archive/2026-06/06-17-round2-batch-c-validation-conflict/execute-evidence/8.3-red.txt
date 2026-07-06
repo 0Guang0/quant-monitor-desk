@@ -1,9 +1,0 @@
-﻿Command: .\.venv\Scripts\python.exe -m pytest tests\test_data_quality_validator.py -q
-Exit code: 2
-Result: ERROR during collection (expected RED)
-
-Key output:
-ERROR collecting tests/test_data_quality_validator.py
-ModuleNotFoundError: No module named 'backend.app.validators.data_quality'
-
-This is the intended 8.3 RED signal before creating backend/app/validators/data_quality.py.

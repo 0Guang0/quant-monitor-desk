@@ -1,4 +1,0 @@
-S05-SENTIMENT RED
-slice: test_layer1_sentiment_clean_e2e.py (new)
-state: test module absent before Execute; S00 reader binding SEN-S1-COT_LF_NET→088691 present @ 1c683397
-expected_fail: ModuleNotFoundError / collection 0 tests until file added

@@ -1,4 +1,0 @@
-{"file": ".trellis/tasks/round3-batch6-technical-debt/AUDIT.plan.md", "reason": "extract: Audit SSOT | for: A1-A8 boot"}
-{"file": "docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/BATCH_3F_COORDINATOR_PLAYBOOK.md", "reason": "extract: §3.7 §8.6 PASS | for: A5"}
-{"file": "docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/R3F_verified_audit_ops_perf_hygiene.md", "reason": "extract: VR-PERF-001 VR-RG-001 | for: A6"}
-{"file": "docs/implementation_tasks/ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/BATCH_3F_HARDENING_RULES.md", "reason": "extract: forbidden language | for: A3/A5"}

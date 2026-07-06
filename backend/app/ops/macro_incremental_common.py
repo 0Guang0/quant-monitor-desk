@@ -24,6 +24,7 @@ from backend.app.ops.sandbox_clean_write.clean_write_targets import resolve_clea
 from backend.app.storage.raw_store import RawStore
 from backend.app.sync.jobs import SyncJobSpec
 from backend.app.sync.orchestrator import DataSyncOrchestrator
+from backend.app.sync.watermark import compute_since_date, read_observation_date_watermark
 from backend.app.validators.data_quality import DataQualityRequest
 
 MACRO_REQUIRED_FIELDS = ("raw_value", "source_used")
@@ -86,38 +87,6 @@ def persist_incremental_fetch_payload(
         file_type=file_type,
         as_of=as_of,
     )
-
-
-def read_observation_date_watermark(con, indicator_id: str) -> date | None:
-    """Return max observation date for one macro indicator."""
-    row = con.execute(
-        """
-        SELECT MAX(CAST(publish_timestamp AS DATE))
-        FROM axis_observation
-        WHERE indicator_id = ?
-        """,
-        [indicator_id],
-    ).fetchone()
-    if row is None or row[0] is None:
-        return None
-    value = row[0]
-    if isinstance(value, date):
-        return value
-    return date.fromisoformat(str(value))
-
-
-def compute_since_date(
-    watermark: date | None,
-    *,
-    cap_days: int = MAX_WINDOW_DAYS,
-    today: date | None = None,
-    advance_days: int = 1,
-) -> date:
-    """Next fetch window start: watermark+advance_days or capped cold-start lookback."""
-    ref = today or datetime.now(UTC).date()
-    if watermark is None:
-        return ref - timedelta(days=cap_days)
-    return watermark + timedelta(days=advance_days)
 
 
 def compute_bis_since_date(watermark: date | None, *, cap_days: int = MAX_WINDOW_DAYS) -> date:

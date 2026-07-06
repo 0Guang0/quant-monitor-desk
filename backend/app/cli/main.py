@@ -23,7 +23,7 @@ def _build_data_parser(sub: argparse._SubParsersAction) -> None:
     sync = data_sub.add_parser(
         "sync",
         help=(
-            "Sync job (default dry-run). Tier A: --source-id <id> (11 sources, ADR-028). "
+            "Sync job (default dry-run). Tier A: --source-id <id> (11 sources, ADR-009). "
             "Legacy: --domain cn_equity_daily_bar (baostock) or macro_series --source-id fred."
         ),
     )
@@ -65,6 +65,24 @@ def _build_data_parser(sub: argparse._SubParsersAction) -> None:
     )
     backfill.add_argument("--format", choices=["json", "text"], default="json")
 
+    full_load = data_sub.add_parser(
+        "full-load",
+        help="Full domain load with checkpoint resume (§13.4.1 · default dry-run)",
+    )
+    full_load.add_argument("--domain", required=True, dest="data_domain")
+    full_load.add_argument("--source-id", required=True, dest="source_id")
+    full_load.add_argument("--start", required=True)
+    full_load.add_argument("--end", default=None)
+    full_load.add_argument("--instrument-id", default=None, dest="instrument_id")
+    full_load.add_argument("--max-shards", type=int, default=None, dest="max_shards")
+    full_load.add_argument("--truncate-to-cap", action="store_true")
+    full_load.add_argument(
+        "--dry-run",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+    )
+    full_load.add_argument("--format", choices=["json", "text"], default="json")
+
     live_fetch = data_sub.add_parser(
         "live-fetch",
         help="Product live fetch (default dry-run · R3H-08 S08-05)",
@@ -102,6 +120,59 @@ def _build_data_parser(sub: argparse._SubParsersAction) -> None:
     health.add_argument("--clean-write", action="store_true")
     health.add_argument("--full-market-scan", action="store_true")
     health.add_argument("--full-history", action="store_true")
+
+    sched = data_sub.add_parser("scheduler", help="Built-in sync scheduler (§13.6 · default dry-run)")
+    sched_sub = sched.add_subparsers(dest="scheduler_command", required=True)
+    sched_run = sched_sub.add_parser("run", help="Run a named scheduler profile")
+    sched_run.add_argument("--profile", required=True)
+    sched_run.add_argument(
+        "--dry-run",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+    )
+    sched_run.add_argument("--format", choices=["json", "text"], default="json")
+
+    incremental = data_sub.add_parser(
+        "incremental",
+        help="Daily incremental via scheduler profile (§13.7)",
+    )
+    incremental.add_argument("--profile", required=True)
+    incremental.add_argument(
+        "--dry-run",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+    )
+    incremental.add_argument("--format", choices=["json", "text"], default="json")
+
+    rev_audit = data_sub.add_parser("revision-audit", help="Revision audit job (§13.7)")
+    rev_audit.add_argument("--domain", required=True, dest="data_domain")
+    rev_audit.add_argument("--market", required=True, dest="market_id")
+    rev_audit.add_argument("--lookback-days", type=int, default=90, dest="lookback_days")
+    rev_audit.add_argument(
+        "--dry-run",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+    )
+    rev_audit.add_argument("--format", choices=["json", "text"], default="json")
+
+    reconcile = data_sub.add_parser("reconcile", help="Conflict reconcile (§13.7)")
+    reconcile.add_argument("--conflict-id", required=True, dest="conflict_id")
+    reconcile.add_argument(
+        "--dry-run",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+    )
+    reconcile.add_argument("--format", choices=["json", "text"], default="json")
+
+    quality = data_sub.add_parser("quality-check", help="Data quality check job (§13.7)")
+    quality.add_argument("--domain", required=True, dest="data_domain")
+    quality.add_argument("--date", required=True, dest="check_date")
+    quality.add_argument(
+        "--dry-run",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+    )
+    quality.add_argument("--format", choices=["json", "text"], default="json")
 
     scw = data_sub.add_parser(
         "sandbox-clean-write",
@@ -178,6 +249,17 @@ def _run_data(args: argparse.Namespace) -> int:
                 dry_run=args.dry_run,
                 instrument_id=args.instrument_id,
             )
+        elif args.data_command == "full-load":
+            payload = data_commands.full_load_plan(
+                data_domain=args.data_domain,
+                source_id=args.source_id,
+                start=args.start,
+                end=args.end,
+                max_shards=args.max_shards,
+                truncate_to_cap=args.truncate_to_cap,
+                dry_run=args.dry_run,
+                instrument_id=args.instrument_id,
+            )
         elif args.data_command == "live-fetch":
             payload = data_commands.live_fetch(
                 source_id=args.source_id,
@@ -208,6 +290,40 @@ def _run_data(args: argparse.Namespace) -> int:
                 clean_write=args.clean_write,
                 full_market_scan=args.full_market_scan,
                 full_history=args.full_history,
+            )
+        elif args.data_command == "scheduler":
+            if args.scheduler_command != "run":
+                raise CliFailure(
+                    error_code="CAPABILITY_MISSING",
+                    message=f"unknown scheduler subcommand: {args.scheduler_command}",
+                    docs_anchor="docs/modules/data_sync_orchestrator.md#136-调度计划",
+                )
+            payload = data_commands.scheduler_run(
+                profile=args.profile,
+                dry_run=args.dry_run,
+            )
+        elif args.data_command == "incremental":
+            payload = data_commands.incremental_profile_plan(
+                profile=args.profile,
+                dry_run=args.dry_run,
+            )
+        elif args.data_command == "revision-audit":
+            payload = data_commands.revision_audit_plan(
+                data_domain=args.data_domain,
+                market_id=args.market_id,
+                lookback_days=args.lookback_days,
+                dry_run=args.dry_run,
+            )
+        elif args.data_command == "reconcile":
+            payload = data_commands.reconcile_plan(
+                conflict_id=args.conflict_id,
+                dry_run=args.dry_run,
+            )
+        elif args.data_command == "quality-check":
+            payload = data_commands.quality_check_plan(
+                data_domain=args.data_domain,
+                check_date=args.check_date,
+                dry_run=args.dry_run,
             )
         elif args.data_command == "sandbox-clean-write":
             from pathlib import Path

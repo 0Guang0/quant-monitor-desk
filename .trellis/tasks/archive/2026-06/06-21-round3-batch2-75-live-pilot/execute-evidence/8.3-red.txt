@@ -1,7 +1,0 @@
-# §8.3 Phase 1 RED evidence — 2026-06-21
-# uv run pytest tests/test_batch275_live_pilot_gate.py::test_livePilot_phase1Baseline_readOnly -q
-
-F                                                                        [100%]
-ImportError: cannot import name 'capture_phase1_baseline' from 'backend.app.ops.live_pilot'
-
-exit_code=1

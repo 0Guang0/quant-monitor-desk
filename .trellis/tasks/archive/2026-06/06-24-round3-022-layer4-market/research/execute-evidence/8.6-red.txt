@@ -1,4 +1,0 @@
-# §8.6 RED
-$ uv run pytest tests/test_layer4_market_structure.py::test_marketSnapshotRejectsFutureInput -q
-FAILED — future observation not rejected
-exit code: 1 (FAIL)

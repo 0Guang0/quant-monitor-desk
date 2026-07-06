@@ -1,3 +1,0 @@
-DATA-03 RED: gate missing hash
-pytest tests/test_db_validation_gate.py::test_missingSchemaHashOnStructuredFetch_rejects -v
-FAILED: DID NOT RAISE ValidationRejected

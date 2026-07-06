@@ -1,3 +1,0 @@
-OK: loop maintain
-R3H-03 subset: tests/test_cn_market_adapters.py 33 passed
-exit 0

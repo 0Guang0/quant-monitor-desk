@@ -1,4 +1,0 @@
-{"file":".trellis/tasks/06-19-round2-6-contract-gate/AUDIT.plan.md","reason":"【必读·第1条】Audit 维度矩阵与 skill 冻结"}
-{"file":".trellis/tasks/06-19-round2-6-contract-gate/MASTER.plan.md","reason":"A5 trace-ac 读取 §2 AC；其他维度只读范围边界"}
-{"file":".trellis/tasks/06-19-round2-6-contract-gate/check.jsonl","reason":"A1 spec audit context"}
-{"file":".trellis/tasks/06-19-round2-6-contract-gate/implement.jsonl","reason":"A5 evidence/context completeness"}

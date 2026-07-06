@@ -1,4 +1,4 @@
-# Bounded backfill invocation cap (R3-DCP-09 / ADR-030).
+# Bounded backfill invocation cap (R3-DCP-09 / ADR-011).
 # Does not authorize unbounded FullLoad or production cron backfill.
 
 version: v1

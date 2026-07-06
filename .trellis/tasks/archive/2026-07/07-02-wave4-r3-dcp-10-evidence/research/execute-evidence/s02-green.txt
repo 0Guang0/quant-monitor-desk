@@ -1,1 +1,0 @@
-GREEN: uv run pytest tests/test_layer5_mootdx_bar_clean_e2e.py -q → 1 passed

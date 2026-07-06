@@ -1,4 +1,0 @@
-=== 8.11 RED (pre-handoff) ===
-Execute handoff validation FAILED:
-  - Missing research/execute-evidence/8.11-red.txt
-exit: 1

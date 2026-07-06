@@ -1,7 +1,0 @@
-........................................................................ [ 64%]
-.......................................                                  [100%]
-
-# command (REPO_ROOT=bucket-l23-layers worktree)
-# uv run python -m pytest tests/test_layer2_sensor_loader.py tests/test_layer3_loader.py tests/test_layer3_snapshot_builder.py tests/test_snapshot_lineage_kernel.py tests/test_layer5_evidence_foundation.py tests/test_resource_guard.py -q --tb=short
-# exit_code: 0
-# passed: 111

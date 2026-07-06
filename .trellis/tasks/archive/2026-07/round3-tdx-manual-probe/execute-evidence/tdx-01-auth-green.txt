@@ -1,2 +1,0 @@
-TDX-01 GREEN: run_tdx_live_manual_probe without auth -> TDX_PROBE_FAIL_AUTH_MISSING
-placeholder host with auth MD -> TDX_PROBE_REDEFERRED (BLK-TDX-04)

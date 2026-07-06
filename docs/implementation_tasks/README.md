@@ -14,11 +14,11 @@
 | **P1** | **M-G5-FULL**     | `M_G5_FULL/`（待建）                                                  |
 | **P0** | **M-PASS-01**     | `M_PASS_01/`（待建）                                                  |
 
-**规则：** 一个模块完整成品 = **一张** complex Trellis 票 + 一个 canonical 文件夹；票内可多切片，**统一** A1–A8 Audit。见路线图 §1.7–§1.8。
+**规则：** 一个模块完整成品 = **一张**活票 + 一个 canonical 文件夹；票内可多切片。见路线图 §1.7–§1.8。
 
 ## Plan 阶段仍须读（全局契约）
 
-- `MIGRATION_MAP.md`（若存在于仓库根或本目录上级索引）
+- `MIGRATION_MAP.md`
 - `GLOBAL_EXECUTION_RULES.md` · `GLOBAL_TESTING_POLICY.md` · `GLOBAL_RESOURCE_LIMITS.md` · `GLOBAL_TASK_TEMPLATE.md`
 - `MODULE_COMPLETION_RATING.md`
 - `TASK_INPUT_CONTEXT_INDEX.md` · `UNRESOLVED_ITEM_TASK_COVERAGE.md`
@@ -26,19 +26,12 @@
 ## 历史归档
 
 - **路径：** [`archive/legacy-pre-module-v2-20260702/`](archive/legacy-pre-module-v2-20260702/README.md)
-- **含：** Round 0–5 全部历史任务卡、3H PASS 索引、Batch 3V/3G/3FR 等
+- **Trellis / Loop 遗留：** [`archive/trellis-loop-2026/`](../archive/trellis-loop-2026/)（只读，不再使用）
 
-## Trellis 任务目录
+## 任务计划存放
 
-- **新复杂任务：** `task.py create` 默认 **Plan v4.2**（`EXECUTION_PLAN.md` + `EXECUTION_INDEX.md`）
-- **v4.2 Slim 金样（只读）：** `.trellis/tasks/_example-plan-v4/`
-- **v4.1 legacy 回归（已归档）：** `.trellis/tasks/archive/2026-07/_example-plan-v41-legacy/`
-- **已归档：** `.trellis/tasks/archive/`
-
-### Plan v4.2 与 `implementation_tasks/` 关系
-
-| 阶段      | 位置                                                             |
-| --------- | ---------------------------------------------------------------- |
-| Plan 输入 | `docs/implementation_tasks/<票>/` 活卡（薄指针）                 |
-| 计划 SSOT | `.trellis/tasks/<slug>/EXECUTION_PLAN.md` + `EXECUTION_INDEX.md` |
-| 迁入时机  | `task.py create` 后 **整文件移动** `EXECUTION_PLAN.md` 至任务根  |
+| 阶段      | 位置                                             |
+| --------- | ------------------------------------------------ |
+| Plan 输入 | `docs/implementation_tasks/<票>/` 活卡（薄指针） |
+| 执行跟踪  | GitHub Issues + `.scratch/<feature-slug>/`       |
+| 迁入时机  | 用户确认开工后，在 Issues / `.scratch/` 维护 AC  |

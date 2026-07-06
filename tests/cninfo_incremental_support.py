@@ -54,7 +54,7 @@ def bootstrap_cninfo_live_e2e_ctx(
     sandbox_root: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> dict[str, Any]:
-    """Bootstrap CNINFO product-live e2e under isolated M-DATA-03 sandbox (ADR-034)."""
+    """Bootstrap CNINFO product-live e2e under isolated M-DATA-03 sandbox (ADR-015)."""
     return bootstrap_port_live_e2e_ctx(
         sandbox_root,
         monkeypatch,

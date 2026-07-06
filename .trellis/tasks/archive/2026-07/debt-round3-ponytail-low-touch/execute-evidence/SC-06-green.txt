@@ -1,6 +1,0 @@
-SC-06 GREEN — api_limits imports CONFIGS_ROOT from backend.app.config.
-
-Command:
-  python -m pytest tests/test_api_security_contract.py -q
-
-Result: exit 0 (all passed)

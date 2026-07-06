@@ -1,2 +1,0 @@
-TDX-06 RED: registry closeout negative assertions missing
-TDX-06 RED: registry_proposed_delta.yaml absent — EM/AkShare closure guard untested

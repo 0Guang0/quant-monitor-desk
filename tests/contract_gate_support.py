@@ -216,17 +216,6 @@ def platform_key() -> str:
     return "linux"
 
 
-def trellis_task_dir(slug: str) -> Path:
-    """Resolve a Trellis task directory from active tasks or archive/2026-06."""
-    active = PROJECT_ROOT / ".trellis/tasks" / slug
-    if active.is_dir():
-        return active
-    archived = PROJECT_ROOT / ".trellis/tasks/archive/2026-06" / slug
-    if archived.is_dir():
-        return archived
-    raise FileNotFoundError(f"Trellis task not found (active or archive): {slug}")
-
-
 def markdown_paths_missing_phrase(phrase: str, paths: tuple[Path, ...]) -> list[str]:
     """Return repo-relative markdown paths whose body lacks phrase."""
     return [

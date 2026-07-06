@@ -1,6 +1,0 @@
-VA-07 GREEN — rule_contract.py module docstring documents dual-track rule_id contract.
-
-Command:
-  python -m pytest tests/test_data_quality_validator.py tests/test_source_conflict_validator.py -q
-
-Result: exit 0

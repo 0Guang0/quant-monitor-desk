@@ -1,5 +1,5 @@
 version: reference_adoption_guardrails_v2
-status: active_round3fr
+status: active
 owner: architecture_security
 purpose: >
   Permit scoped, audited adaptation from mature reference projects while blocking
@@ -43,14 +43,8 @@ structure_rules:
   separate_reference_inventory_may_exist_only_as_non_executable_index: true
   planning_map_may_exist_only_as_non_executable_coverage_map: true
   planning_map_must_not_replace_task_card_local_details: true
-  production_completion_coverage_map_file: docs/implementation_tasks/PRODUCTION_COMPLETION_VERTICAL_SLICE_PLAN.md
-  downstream_may_cite_production_plan_only_as_coverage_checklist: true
   batch3fr_separate_reference_inventory_allowed: false
   batch3g_separate_reference_inventory_allowed: false
-  batch3g_canonical_cards:
-    - docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_01_SANDBOX_CLEAN_WRITE_REHEARSAL.md
-    - docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_02_PRE_PRODUCTION_ADVERSARIAL_AUDIT.md
-    - docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_03_LIMITED_PRODUCTION_CLEAN_WRITE.md
 
 completion_rules:
   max_implementation_batches_to_full_stable: 3
@@ -202,12 +196,5 @@ required_tests:
   - tests/test_reference_adoption_guardrails.py::test_noOpenbbRuntimeCopyIntroduced
   - tests/test_reference_adoption_guardrails.py::test_jq2ptradeSchedulerHookNotCopied
   - tests/test_reference_adoption_guardrails.py::test_jq2ptradeCompileExecPatternNotCopied
-  - tests/test_reference_adoption_guardrails.py::test_r3fr04Round4BacktestPlanningClosure
   - tests/test_reference_adoption_guardrails.py::test_noAgentTriggeredWritePatterns
   - tests/test_reference_adoption_guardrails.py::test_noEasyxtHardcodedTableInDataHealth
-  - tests/test_reference_adoption_guardrails.py::test_batch3frCardsDoNotRequireCentralInventory
-  - tests/test_reference_adoption_guardrails.py::test_r3fr01PlanningWordingAndLooseCardRedirects
-  - tests/test_reference_adoption_guardrails.py::test_productionCompletionPlanIsCoverageMapOnly
-  - tests/test_reference_adoption_guardrails.py::test_r3fr01DownstreamCardsGovernanceBoundaries
-  - tests/test_reference_adoption_guardrails.py::test_r3frAdaptingCardsDeclareReferenceProject
-  - tests/test_reference_adoption_guardrails.py::test_r3fr05ProviderCatalogClosure

@@ -1,7 +1,0 @@
-[0;31mExecute handoff validation FAILED:[0m
-  - Missing research/gitnexus-execute-summary.md (Phase 0a GitNexus)
-  - Missing research/execute-skill-reads.jsonl (skill Read audit log)
-  - Missing research/execute-skill-evaluation.md (搂12 skill evaluation)
-  - E16: Missing research/context-closure.md (Execute 6.pre L2 closure report)
-  - missing evidence_index.json (loop handoff)
-  - missing loop_manifest.json (loop handoff)

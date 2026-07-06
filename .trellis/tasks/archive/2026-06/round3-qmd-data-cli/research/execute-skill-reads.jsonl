@@ -1,4 +1,0 @@
-{"skill": "test-driven-development", "phase": "execute", "note": "RED/GREEN per §8.x"}
-{"skill": "incremental-implementation", "phase": "execute", "note": "full pytest after each slice"}
-{"skill": "karpathy-guidelines", "phase": "execute", "note": "minimal CLI surface"}
-{"skill": "testing-guidelines", "phase": "execute", "note": "five-field docstrings test_qmd_data_cli.py"}

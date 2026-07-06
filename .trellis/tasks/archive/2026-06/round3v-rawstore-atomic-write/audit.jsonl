@@ -1,7 +1,0 @@
-{"file": ".trellis/tasks/round3v-rawstore-atomic-write/AUDIT.plan.md", "reason": "Audit single source of truth"}
-{"file": "docs/implementation_tasks/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/B02_03_rawstore_atomic_write.md", "reason": "extract: 原始任务卡 AC | for: A1/A5 trace"}
-{"file": "docs/implementation_tasks/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/BATCH_3V_HARDENING_RULES.md", "reason": "extract: hardening 边界 | for: A1/A7"}
-{"file": "docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md", "reason": "extract: VR-STOR-001 映射 | for: A5 closeout"}
-{"file": "docs/quality/quant_monitor_desk_verified_audit_report_2026-06-25_v3_INDEX.md", "reason": "extract: VR 路由 | for: A1"}
-{"file": "tests/test_raw_store.py", "reason": "extract: crash/idempotency 测试 | for: A8"}
-{"file": ".trellis/spec/guides/audit-skill-paths.yaml", "reason": "extract: A1–A8 路由 | for: Audit boot"}

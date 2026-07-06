@@ -1,6 +1,0 @@
-# g5-adv-a5-a6 — checklist §4.5 ADV-A5 / ADV-A6
-# Command: uv run pytest tests/test_r3x_residual_open_items_closure.py -k "advA5 or advA6" -q --tb=no
-
-..                                                                       [100%]
-2 passed in 0.3s
-EXIT:0

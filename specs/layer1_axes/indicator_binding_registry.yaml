@@ -1,0 +1,838 @@
+version: indicator_binding_registry_v1
+status: phase1_skeleton
+expected_rows: 62
+bindings:
+  - indicator_id: CRD.C.SWPT_LIQUIDITY_SWAPS
+    axis_id: CREDIT_STRESS
+    primary_source: fred
+    data_domain: macro_series
+    adapter_entry: crd_c_swpt_liquidity_swaps
+    cold_start_policy: bounded_backfill
+    incremental_watermark: CRD.C.SWPT_LIQUIDITY_SWAPS
+    backfill_available: true
+    formula: null
+    cabin: VALIDATION
+    adr_id: PENDING
+    feature_outputs_expected:
+      - raw_value
+  - indicator_id: CRD.CS1.BAA10Y
+    axis_id: CREDIT_STRESS
+    primary_source: fred
+    data_domain: macro_series
+    adapter_entry: crd_cs1_baa10y
+    cold_start_policy: bounded_backfill
+    incremental_watermark: CRD.CS1.BAA10Y
+    backfill_available: true
+    formula: null
+    cabin: PRIMARY
+    adr_id: PENDING
+    feature_outputs_expected:
+      - spread
+      - z_score
+      - percentile_rank
+      - state_bucket
+      - data_lag_days
+  - indicator_id: CRD.CS1.HY_OAS
+    axis_id: CREDIT_STRESS
+    primary_source: fred
+    data_domain: macro_series
+    adapter_entry: crd_cs1_hy_oas
+    cold_start_policy: bounded_backfill
+    incremental_watermark: CRD.CS1.HY_OAS
+    backfill_available: true
+    formula: null
+    cabin: PRIMARY
+    adr_id: PENDING
+    feature_outputs_expected:
+      - raw_value
+  - indicator_id: CRD.CS2.CP_AA_FIN_90D_MINUS_TBILL_3M
+    axis_id: CREDIT_STRESS
+    primary_source: fred
+    data_domain: macro_series
+    adapter_entry: crd_cs2_cp_aa_fin_90d_minus_tbill_3m
+    cold_start_policy: bounded_backfill
+    incremental_watermark: CRD.CS2.CP_AA_FIN_90D_MINUS_TBILL_3M
+    backfill_available: true
+    formula: CS2=DCPF3M-DTB3
+    cabin: PRIMARY
+    adr_id: PENDING
+    feature_outputs_expected:
+      - cs2_spread
+      - tbill_specialness_gap
+      - tbill_default_scare_gap
+      - as_of_timestamp
+      - data_lag_trading_days
+  - indicator_id: CRD.CS3.CP_TERM_SPREAD_OF_SPREADS
+    axis_id: CREDIT_STRESS
+    primary_source: fred
+    data_domain: macro_series
+    adapter_entry: crd_cs3_cp_term_spread_of_spreads
+    cold_start_policy: bounded_backfill
+    incremental_watermark: CRD.CS3.CP_TERM_SPREAD_OF_SPREADS
+    backfill_available: true
+    formula: (DCPF3M-DTB3)-(DCPF1M-DTB4WK)
+    cabin: PRIMARY
+    adr_id: PENDING
+    feature_outputs_expected:
+      - raw_value
+  - indicator_id: CRD.CS4.REPO_DVP_AR_OO_P
+    axis_id: CREDIT_STRESS
+    primary_source: pending
+    data_domain: macro_series
+    adapter_entry: crd_cs4_repo_dvp_ar_oo_p
+    cold_start_policy: adr_deferred
+    incremental_watermark: CRD.CS4.REPO_DVP_AR_OO_P
+    backfill_available: false
+    formula: null
+    cabin: PRIMARY
+    adr_id: PENDING
+    feature_outputs_expected:
+      - raw_value
+  - indicator_id: CRD.CS4.REPO_DVP_OV_OO_P
+    axis_id: CREDIT_STRESS
+    primary_source: pending
+    data_domain: macro_series
+    adapter_entry: crd_cs4_repo_dvp_ov_oo_p
+    cold_start_policy: adr_deferred
+    incremental_watermark: CRD.CS4.REPO_DVP_OV_OO_P
+    backfill_available: false
+    formula: null
+    cabin: PRIMARY
+    adr_id: PENDING
+    feature_outputs_expected:
+      - raw_value
+  - indicator_id: CRD.CS4.REPO_TRI_AR_OO_P
+    axis_id: CREDIT_STRESS
+    primary_source: pending
+    data_domain: macro_series
+    adapter_entry: crd_cs4_repo_tri_ar_oo_p
+    cold_start_policy: adr_deferred
+    incremental_watermark: CRD.CS4.REPO_TRI_AR_OO_P
+    backfill_available: false
+    formula: null
+    cabin: PRIMARY
+    adr_id: PENDING
+    feature_outputs_expected:
+      - raw_value
+  - indicator_id: CRD.CS4.REPO_TRI_TV_T_P
+    axis_id: CREDIT_STRESS
+    primary_source: pending
+    data_domain: macro_series
+    adapter_entry: crd_cs4_repo_tri_tv_t_p
+    cold_start_policy: adr_deferred
+    incremental_watermark: CRD.CS4.REPO_TRI_TV_T_P
+    backfill_available: false
+    formula: null
+    cabin: PRIMARY
+    adr_id: PENDING
+    feature_outputs_expected:
+      - raw_value
+  - indicator_id: CRD.CS5.SLOOS_CI_TIGHTEN_LARGE_MID
+    axis_id: CREDIT_STRESS
+    primary_source: fred
+    data_domain: macro_series
+    adapter_entry: crd_cs5_sloos_ci_tighten_large_mid
+    cold_start_policy: bounded_backfill
+    incremental_watermark: CRD.CS5.SLOOS_CI_TIGHTEN_LARGE_MID
+    backfill_available: true
+    formula: null
+    cabin: VALIDATION
+    adr_id: PENDING
+    feature_outputs_expected:
+      - raw_value
+  - indicator_id: CRD.D.CS4.BILATERAL_REPO_PRIVATE_TERMS
+    axis_id: CREDIT_STRESS
+    primary_source: pending
+    data_domain: macro_series
+    adapter_entry: crd_d_cs4_bilateral_repo_private_terms
+    cold_start_policy: adr_deferred
+    incremental_watermark: CRD.D.CS4.BILATERAL_REPO_PRIVATE_TERMS
+    backfill_available: false
+    formula: null
+    cabin: BLINDSPOT
+    adr_id: PENDING
+    feature_outputs_expected:
+      - raw_value
+  - indicator_id: CRD.D.CS4.HAIRCUT_BY_COLLATERAL
+    axis_id: CREDIT_STRESS
+    primary_source: pending
+    data_domain: macro_series
+    adapter_entry: crd_d_cs4_haircut_by_collateral
+    cold_start_policy: adr_deferred
+    incremental_watermark: CRD.D.CS4.HAIRCUT_BY_COLLATERAL
+    backfill_available: false
+    formula: null
+    cabin: BLINDSPOT
+    adr_id: PENDING
+    feature_outputs_expected:
+      - raw_value
+  - indicator_id: CRD.D.OFFSHORE_DOLLAR_BASIS_HIGH_FREQ
+    axis_id: CREDIT_STRESS
+    primary_source: pending
+    data_domain: macro_series
+    adapter_entry: crd_d_offshore_dollar_basis_high_freq
+    cold_start_policy: adr_deferred
+    incremental_watermark: CRD.D.OFFSHORE_DOLLAR_BASIS_HIGH_FREQ
+    backfill_available: false
+    formula: null
+    cabin: BLINDSPOT
+    adr_id: PENDING
+    feature_outputs_expected:
+      - raw_value
+  - indicator_id: ENV-C-GDPNOW_ATLANTA
+    axis_id: ENVIRONMENT
+    primary_source: pending
+    data_domain: macro_series
+    adapter_entry: env_c_gdpnow_atlanta
+    cold_start_policy: adr_deferred
+    incremental_watermark: ENV-C-GDPNOW_ATLANTA
+    backfill_available: false
+    formula: null
+    cabin: VALIDATION
+    adr_id: PENDING
+    feature_outputs_expected:
+      - raw_value
+  - indicator_id: ENV-C-SURPRISE_IMPULSE
+    axis_id: ENVIRONMENT
+    primary_source: pending
+    data_domain: macro_series
+    adapter_entry: env_c_surprise_impulse
+    cold_start_policy: adr_deferred
+    incremental_watermark: ENV-C-SURPRISE_IMPULSE
+    backfill_available: false
+    formula: null
+    cabin: VALIDATION
+    adr_id: PENDING
+    feature_outputs_expected:
+      - raw_value
+  - indicator_id: ENV-D-DTS_OPERATING_CASH_BALANCE
+    axis_id: ENVIRONMENT
+    primary_source: pending
+    data_domain: macro_series
+    adapter_entry: env_d_dts_operating_cash_balance
+    cold_start_policy: adr_deferred
+    incremental_watermark: ENV-D-DTS_OPERATING_CASH_BALANCE
+    backfill_available: false
+    formula: null
+    cabin: BLINDSPOT
+    adr_id: PENDING
+    feature_outputs_expected:
+      - raw_value
+  - indicator_id: ENV-E0-M2_MONEY_STOCK_SA_MONTHLY
+    axis_id: ENVIRONMENT
+    primary_source: fred
+    data_domain: macro_series
+    adapter_entry: env_e0_m2_money_stock_sa_monthly
+    cold_start_policy: bounded_backfill
+    incremental_watermark: ENV-E0-M2_MONEY_STOCK_SA_MONTHLY
+    backfill_available: true
+    formula: null
+    cabin: VALIDATION
+    adr_id: PENDING
+    feature_outputs_expected:
+      - raw_value
+  - indicator_id: ENV-E0-NET_LIQ_PROXY_BN_MIXFREQ
+    axis_id: ENVIRONMENT
+    primary_source: fred
+    data_domain: macro_series
+    adapter_entry: env_e0_net_liq_proxy_bn_mixfreq
+    cold_start_policy: bounded_backfill
+    incremental_watermark: ENV-E0-NET_LIQ_PROXY_BN_MIXFREQ
+    backfill_available: true
+    formula: NET_LIQ_PROXY_BN=(WALCL-WDTGAL-WCICL)/1000-RRPONTSYD
+    cabin: PRIMARY
+    adr_id: PENDING
+    feature_outputs_expected:
+      - raw_value
+  - indicator_id: ENV-E0-RESERVE_BALANCES_WRESBAL
+    axis_id: ENVIRONMENT
+    primary_source: fred
+    data_domain: macro_series
+    adapter_entry: env_e0_reserve_balances_wresbal
+    cold_start_policy: bounded_backfill
+    incremental_watermark: ENV-E0-RESERVE_BALANCES_WRESBAL
+    backfill_available: true
+    formula: null
+    cabin: PRIMARY
+    adr_id: PENDING
+    feature_outputs_expected:
+      - raw_value
+      - z_score
+      - percentile_rank
+      - state_bucket
+      - data_lag_days
+  - indicator_id: ENV-E1-DGS10
+    axis_id: ENVIRONMENT
+    primary_source: fred
+    data_domain: macro_series
+    adapter_entry: env_e1_dgs10
+    cold_start_policy: bounded_backfill
+    incremental_watermark: ENV-E1-DGS10
+    backfill_available: true
+    formula: null
+    cabin: PRIMARY
+    adr_id: PENDING
+    feature_outputs_expected:
+      - raw_value
+  - indicator_id: ENV-E1-EFFR
+    axis_id: ENVIRONMENT
+    primary_source: us_treasury
+    data_domain: us_treasury_yield_curve
+    adapter_entry: env_e1_effr
+    cold_start_policy: bounded_backfill
+    incremental_watermark: ENV-E1-EFFR
+    backfill_available: true
+    formula: null
+    cabin: PRIMARY
+    adr_id: PENDING
+    feature_outputs_expected:
+      - raw_value
+  - indicator_id: ENV-E1-T10Y3M
+    axis_id: ENVIRONMENT
+    primary_source: fred
+    data_domain: macro_series
+    adapter_entry: env_e1_t10y3m
+    cold_start_policy: bounded_backfill
+    incremental_watermark: ENV-E1-T10Y3M
+    backfill_available: true
+    formula: null
+    cabin: PRIMARY
+    adr_id: PENDING
+    feature_outputs_expected:
+      - raw_value
+  - indicator_id: ENV-E2-ACMTP10
+    axis_id: ENVIRONMENT
+    primary_source: us_treasury
+    data_domain: us_treasury_yield_curve
+    adapter_entry: env_e2_acmtp10
+    cold_start_policy: bounded_backfill
+    incremental_watermark: ENV-E2-ACMTP10
+    backfill_available: true
+    formula: null
+    cabin: PRIMARY
+    adr_id: PENDING
+    feature_outputs_expected:
+      - raw_value
+  - indicator_id: ENV-E2-DFII10
+    axis_id: ENVIRONMENT
+    primary_source: fred
+    data_domain: macro_series
+    adapter_entry: env_e2_dfii10
+    cold_start_policy: bounded_backfill
+    incremental_watermark: ENV-E2-DFII10
+    backfill_available: true
+    formula: null
+    cabin: PRIMARY
+    adr_id: PENDING
+    feature_outputs_expected:
+      - raw_value
+  - indicator_id: ENV-E3-CPIAUCSL
+    axis_id: ENVIRONMENT
+    primary_source: fred
+    data_domain: macro_series
+    adapter_entry: env_e3_cpiaucsl
+    cold_start_policy: bounded_backfill
+    incremental_watermark: ENV-E3-CPIAUCSL
+    backfill_available: true
+    formula: null
+    cabin: PRIMARY
+    adr_id: PENDING
+    feature_outputs_expected:
+      - mom
+      - yoy
+  - indicator_id: ENV-E3-T10YIE
+    axis_id: ENVIRONMENT
+    primary_source: fred
+    data_domain: macro_series
+    adapter_entry: env_e3_t10yie
+    cold_start_policy: bounded_backfill
+    incremental_watermark: ENV-E3-T10YIE
+    backfill_available: true
+    formula: null
+    cabin: PRIMARY
+    adr_id: PENDING
+    feature_outputs_expected:
+      - raw_value
+  - indicator_id: ENV-E3-T5YIFR
+    axis_id: ENVIRONMENT
+    primary_source: fred
+    data_domain: macro_series
+    adapter_entry: env_e3_t5yifr
+    cold_start_policy: bounded_backfill
+    incremental_watermark: ENV-E3-T5YIFR
+    backfill_available: true
+    formula: null
+    cabin: PRIMARY
+    adr_id: PENDING
+    feature_outputs_expected:
+      - raw_value
+  - indicator_id: ENV-E4-CC4WSA
+    axis_id: ENVIRONMENT
+    primary_source: fred
+    data_domain: macro_series
+    adapter_entry: env_e4_cc4wsa
+    cold_start_policy: bounded_backfill
+    incremental_watermark: ENV-E4-CC4WSA
+    backfill_available: true
+    formula: null
+    cabin: PRIMARY
+    adr_id: PENDING
+    feature_outputs_expected:
+      - raw_value
+  - indicator_id: ENV-E4-IC4WSA
+    axis_id: ENVIRONMENT
+    primary_source: fred
+    data_domain: macro_series
+    adapter_entry: env_e4_ic4wsa
+    cold_start_policy: bounded_backfill
+    incremental_watermark: ENV-E4-IC4WSA
+    backfill_available: true
+    formula: null
+    cabin: PRIMARY
+    adr_id: PENDING
+    feature_outputs_expected:
+      - raw_value
+  - indicator_id: ENV-E4-SAHMREALTIME
+    axis_id: ENVIRONMENT
+    primary_source: fred
+    data_domain: macro_series
+    adapter_entry: env_e4_sahmrealtime
+    cold_start_policy: bounded_backfill
+    incremental_watermark: ENV-E4-SAHMREALTIME
+    backfill_available: true
+    formula: null
+    cabin: PRIMARY
+    adr_id: PENDING
+    feature_outputs_expected:
+      - raw_value
+  - indicator_id: ENV-E4-UNRATE
+    axis_id: ENVIRONMENT
+    primary_source: fred
+    data_domain: macro_series
+    adapter_entry: env_e4_unrate
+    cold_start_policy: bounded_backfill
+    incremental_watermark: ENV-E4-UNRATE
+    backfill_available: true
+    formula: null
+    cabin: PRIMARY
+    adr_id: PENDING
+    feature_outputs_expected:
+      - raw_value
+  - indicator_id: ENV-FORBIDDEN-WM2NS
+    axis_id: ENVIRONMENT
+    primary_source: pending
+    data_domain: macro_series
+    adapter_entry: env_forbidden_wm2ns
+    cold_start_policy: adr_deferred
+    incremental_watermark: ENV-FORBIDDEN-WM2NS
+    backfill_available: false
+    formula: null
+    cabin: FORBIDDEN
+    adr_id: PENDING
+    feature_outputs_expected:
+      - raw_value
+  - indicator_id: LIQ.B-A1.DRYUP_TRADABILITY
+    axis_id: LIQUIDITY
+    primary_source: alpha_vantage
+    data_domain: us_equity_daily_bar
+    adapter_entry: liq_b_a1_dryup_tradability
+    cold_start_policy: bounded_backfill
+    incremental_watermark: LIQ.B-A1.DRYUP_TRADABILITY
+    backfill_available: true
+    formula: null
+    cabin: PRIMARY
+    adr_id: PENDING
+    feature_outputs_expected:
+      - raw_value
+  - indicator_id: LIQ.B-I1.AMIHUD_ILLIQ
+    axis_id: LIQUIDITY
+    primary_source: alpha_vantage
+    data_domain: us_equity_daily_bar
+    adapter_entry: liq_b_i1_amihud_illiq
+    cold_start_policy: bounded_backfill
+    incremental_watermark: LIQ.B-I1.AMIHUD_ILLIQ
+    backfill_available: true
+    formula: abs(log(close_t/close_t_minus_1)) / (volume * typical_price)
+    cabin: PRIMARY
+    adr_id: PENDING
+    feature_outputs_expected:
+      - raw_value
+  - indicator_id: LIQ.B-T1.CS_SPREAD
+    axis_id: LIQUIDITY
+    primary_source: alpha_vantage
+    data_domain: us_equity_daily_bar
+    adapter_entry: liq_b_t1_cs_spread
+    cold_start_policy: bounded_backfill
+    incremental_watermark: LIQ.B-T1.CS_SPREAD
+    backfill_available: true
+    formula: null
+    cabin: PRIMARY
+    adr_id: PENDING
+    feature_outputs_expected:
+      - CS_spread_raw
+      - CS_spread_clipped
+      - CS_spread_smoothed
+      - CS_formula_variant
+  - indicator_id: LIQ.C-AGG1.PASTOR_STAMBAUGH
+    axis_id: LIQUIDITY
+    primary_source: pending
+    data_domain: macro_series
+    adapter_entry: liq_c_agg1_pastor_stambaugh
+    cold_start_policy: adr_deferred
+    incremental_watermark: LIQ.C-AGG1.PASTOR_STAMBAUGH
+    backfill_available: false
+    formula: null
+    cabin: VALIDATION
+    adr_id: PENDING
+    feature_outputs_expected:
+      - raw_value
+  - indicator_id: LIQ.D.BLINDSPOT.IMMEDIACY_RESILIENCE_TICK
+    axis_id: LIQUIDITY
+    primary_source: pending
+    data_domain: macro_series
+    adapter_entry: liq_d_blindspot_immediacy_resilience_tick
+    cold_start_policy: adr_deferred
+    incremental_watermark: LIQ.D.BLINDSPOT.IMMEDIACY_RESILIENCE_TICK
+    backfill_available: false
+    formula: null
+    cabin: BLINDSPOT
+    adr_id: PENDING
+    feature_outputs_expected:
+      - raw_value
+  - indicator_id: LIQ.D.BLINDSPOT.L2_L3_DEPTH
+    axis_id: LIQUIDITY
+    primary_source: pending
+    data_domain: macro_series
+    adapter_entry: liq_d_blindspot_l2_l3_depth
+    cold_start_policy: adr_deferred
+    incremental_watermark: LIQ.D.BLINDSPOT.L2_L3_DEPTH
+    backfill_available: false
+    formula: null
+    cabin: BLINDSPOT
+    adr_id: PENDING
+    feature_outputs_expected:
+      - raw_value
+  - indicator_id: LIQ.D.BLINDSPOT.OFF_EXCHANGE_INTERNALIZATION
+    axis_id: LIQUIDITY
+    primary_source: pending
+    data_domain: macro_series
+    adapter_entry: liq_d_blindspot_off_exchange_internalization
+    cold_start_policy: adr_deferred
+    incremental_watermark: LIQ.D.BLINDSPOT.OFF_EXCHANGE_INTERNALIZATION
+    backfill_available: false
+    formula: null
+    cabin: BLINDSPOT
+    adr_id: PENDING
+    feature_outputs_expected:
+      - raw_value
+  - indicator_id: LIQ.D.BLINDSPOT.TRUE_MARKET_IMPACT_FUNCTION
+    axis_id: LIQUIDITY
+    primary_source: pending
+    data_domain: macro_series
+    adapter_entry: liq_d_blindspot_true_market_impact_function
+    cold_start_policy: adr_deferred
+    incremental_watermark: LIQ.D.BLINDSPOT.TRUE_MARKET_IMPACT_FUNCTION
+    backfill_available: false
+    formula: null
+    cabin: BLINDSPOT
+    adr_id: PENDING
+    feature_outputs_expected:
+      - raw_value
+  - indicator_id: LIQ.SHADOW.CROSS_SOURCE_DIV
+    axis_id: LIQUIDITY
+    primary_source: pending
+    data_domain: macro_series
+    adapter_entry: liq_shadow_cross_source_div
+    cold_start_policy: adr_deferred
+    incremental_watermark: LIQ.SHADOW.CROSS_SOURCE_DIV
+    backfill_available: false
+    formula: null
+    cabin: SHADOW
+    adr_id: PENDING
+    feature_outputs_expected:
+      - price_diff_bps
+      - hl_diff_bps
+      - volume_diff_pct
+  - indicator_id: LIQ.SHADOW.ROLL_SPREAD
+    axis_id: LIQUIDITY
+    primary_source: pending
+    data_domain: macro_series
+    adapter_entry: liq_shadow_roll_spread
+    cold_start_policy: adr_deferred
+    incremental_watermark: LIQ.SHADOW.ROLL_SPREAD
+    backfill_available: false
+    formula: null
+    cabin: SHADOW
+    adr_id: PENDING
+    feature_outputs_expected:
+      - raw_value
+  - indicator_id: LIQ.SHADOW.VOLUME_SPIKE
+    axis_id: LIQUIDITY
+    primary_source: pending
+    data_domain: macro_series
+    adapter_entry: liq_shadow_volume_spike
+    cold_start_policy: adr_deferred
+    incremental_watermark: LIQ.SHADOW.VOLUME_SPIKE
+    backfill_available: false
+    formula: null
+    cabin: SHADOW
+    adr_id: PENDING
+    feature_outputs_expected:
+      - raw_value
+  - indicator_id: LIQ.SHADOW.ZERO_RETURN_LOT
+    axis_id: LIQUIDITY
+    primary_source: pending
+    data_domain: macro_series
+    adapter_entry: liq_shadow_zero_return_lot
+    cold_start_policy: adr_deferred
+    incremental_watermark: LIQ.SHADOW.ZERO_RETURN_LOT
+    backfill_available: false
+    formula: null
+    cabin: SHADOW
+    adr_id: PENDING
+    feature_outputs_expected:
+      - raw_value
+  - indicator_id: RA.R1.VIXCLS_30D_IMPLIED_VOL
+    axis_id: RISK_APPETITE
+    primary_source: fred
+    data_domain: macro_series
+    adapter_entry: ra_r1_vixcls_30d_implied_vol
+    cold_start_policy: bounded_backfill
+    incremental_watermark: RA.R1.VIXCLS_30D_IMPLIED_VOL
+    backfill_available: true
+    formula: null
+    cabin: PRIMARY
+    adr_id: PENDING
+    feature_outputs_expected:
+      - vix_level
+      - z_score
+      - percentile_rank
+      - state_bucket
+      - data_lag_days
+  - indicator_id: RA.R1.VXVCLS_3M_IMPLIED_VOL
+    axis_id: RISK_APPETITE
+    primary_source: fred
+    data_domain: macro_series
+    adapter_entry: ra_r1_vxvcls_3m_implied_vol
+    cold_start_policy: bounded_backfill
+    incremental_watermark: RA.R1.VXVCLS_3M_IMPLIED_VOL
+    backfill_available: true
+    formula: null
+    cabin: PRIMARY
+    adr_id: PENDING
+    feature_outputs_expected:
+      - term_slope
+      - term_ratio
+  - indicator_id: RA.R2.CBOE_SKEW_INDEX
+    axis_id: RISK_APPETITE
+    primary_source: pending
+    data_domain: macro_series
+    adapter_entry: ra_r2_cboe_skew_index
+    cold_start_policy: adr_deferred
+    incremental_watermark: RA.R2.CBOE_SKEW_INDEX
+    backfill_available: false
+    formula: null
+    cabin: PRIMARY
+    adr_id: PENDING
+    feature_outputs_expected:
+      - raw_value
+  - indicator_id: RA.R3.SPX_VRP_30D_VARIANCE
+    axis_id: RISK_APPETITE
+    primary_source: fred
+    data_domain: macro_series
+    adapter_entry: ra_r3_spx_vrp_30d_variance
+    cold_start_policy: bounded_backfill
+    incremental_watermark: RA.R3.SPX_VRP_30D_VARIANCE
+    backfill_available: true
+    formula: null
+    cabin: PRIMARY
+    adr_id: PENDING
+    feature_outputs_expected:
+      - vrp_var_pts_annualized
+      - implied_var_30d
+      - realized_var_30d
+      - vrp_var_30d
+  - indicator_id: RA.R4.EQ_BOND_CORR_60D
+    axis_id: RISK_APPETITE
+    primary_source: fred
+    data_domain: macro_series
+    adapter_entry: ra_r4_eq_bond_corr_60d
+    cold_start_policy: bounded_backfill
+    incremental_watermark: RA.R4.EQ_BOND_CORR_60D
+    backfill_available: true
+    formula: corr(log_returns_equity, log_returns_bond, window=60)
+    cabin: PRIMARY
+    adr_id: PENDING
+    feature_outputs_expected:
+      - raw_value
+  - indicator_id: RA.R4.EQ_BOND_CO_DRAWDOWN_RATE_60D
+    axis_id: RISK_APPETITE
+    primary_source: fred
+    data_domain: macro_series
+    adapter_entry: ra_r4_eq_bond_co_drawdown_rate_60d
+    cold_start_policy: bounded_backfill
+    incremental_watermark: RA.R4.EQ_BOND_CO_DRAWDOWN_RATE_60D
+    backfill_available: true
+    formula: mean(r_eq<0 and r_bond<0, window=60)
+    cabin: PRIMARY
+    adr_id: PENDING
+    feature_outputs_expected:
+      - raw_value
+  - indicator_id: RA.R5.ECY
+    axis_id: RISK_APPETITE
+    primary_source: pending
+    data_domain: macro_series
+    adapter_entry: ra_r5_ecy
+    cold_start_policy: adr_deferred
+    incremental_watermark: RA.R5.ECY
+    backfill_available: false
+    formula: null
+    cabin: VALIDATION
+    adr_id: PENDING
+    feature_outputs_expected:
+      - raw_value
+  - indicator_id: RA.SHADOW.VVIX_CONVEXITY
+    axis_id: RISK_APPETITE
+    primary_source: pending
+    data_domain: macro_series
+    adapter_entry: ra_shadow_vvix_convexity
+    cold_start_policy: adr_deferred
+    incremental_watermark: RA.SHADOW.VVIX_CONVEXITY
+    backfill_available: false
+    formula: null
+    cabin: SHADOW
+    adr_id: PENDING
+    feature_outputs_expected:
+      - raw_value
+  - indicator_id: SEN-D-RETAIL_BROKER_FLOW_FULL
+    axis_id: SENTIMENT
+    primary_source: pending
+    data_domain: macro_series
+    adapter_entry: sen_d_retail_broker_flow_full
+    cold_start_policy: adr_deferred
+    incremental_watermark: SEN-D-RETAIL_BROKER_FLOW_FULL
+    backfill_available: false
+    formula: null
+    cabin: BLINDSPOT
+    adr_id: PENDING
+    feature_outputs_expected:
+      - raw_value
+  - indicator_id: SEN-D-SOCIAL_MEDIA_SENTIMENT_RELIABLE
+    axis_id: SENTIMENT
+    primary_source: pending
+    data_domain: macro_series
+    adapter_entry: sen_d_social_media_sentiment_reliable
+    cold_start_policy: adr_deferred
+    incremental_watermark: SEN-D-SOCIAL_MEDIA_SENTIMENT_RELIABLE
+    backfill_available: false
+    formula: null
+    cabin: BLINDSPOT
+    adr_id: PENDING
+    feature_outputs_expected:
+      - raw_value
+  - indicator_id: SEN-D-TRUE_INTRADAY_POSITIONING
+    axis_id: SENTIMENT
+    primary_source: pending
+    data_domain: macro_series
+    adapter_entry: sen_d_true_intraday_positioning
+    cold_start_policy: adr_deferred
+    incremental_watermark: SEN-D-TRUE_INTRADAY_POSITIONING
+    backfill_available: false
+    formula: null
+    cabin: BLINDSPOT
+    adr_id: PENDING
+    feature_outputs_expected:
+      - raw_value
+  - indicator_id: SEN-S1-COT_LF_NET
+    axis_id: SENTIMENT
+    primary_source: cftc_cot
+    data_domain: cot_positioning
+    adapter_entry: sen_s1_cot_lf_net
+    cold_start_policy: incremental_only
+    incremental_watermark: SEN-S1-COT_LF_NET
+    backfill_available: false
+    formula: null
+    cabin: PRIMARY
+    adr_id: PENDING
+    feature_outputs_expected:
+      - raw_value
+  - indicator_id: SEN-S1-NAAIM_EXPOSURE
+    axis_id: SENTIMENT
+    primary_source: pending
+    data_domain: macro_series
+    adapter_entry: sen_s1_naaim_exposure
+    cold_start_policy: adr_deferred
+    incremental_watermark: SEN-S1-NAAIM_EXPOSURE
+    backfill_available: false
+    formula: null
+    cabin: PRIMARY
+    adr_id: PENDING
+    feature_outputs_expected:
+      - raw_value
+  - indicator_id: SEN-S2-PCR_EQ
+    axis_id: SENTIMENT
+    primary_source: pending
+    data_domain: macro_series
+    adapter_entry: sen_s2_pcr_eq
+    cold_start_policy: adr_deferred
+    incremental_watermark: SEN-S2-PCR_EQ
+    backfill_available: false
+    formula: PCR_raw=PutVolume/CallVolume
+    cabin: PRIMARY
+    adr_id: PENDING
+    feature_outputs_expected:
+      - PCR_raw
+      - PCR_filtered
+  - indicator_id: SEN-S3-PROJ_EQW_CAPW_SPREAD
+    axis_id: SENTIMENT
+    primary_source: alpha_vantage
+    data_domain: us_equity_daily_bar
+    adapter_entry: sen_s3_proj_eqw_capw_spread
+    cold_start_policy: bounded_backfill
+    incremental_watermark: SEN-S3-PROJ_EQW_CAPW_SPREAD
+    backfill_available: true
+    formula: ret_spread=return_adj(RSP)-return_adj(SPY)
+    cabin: PRIMARY
+    adr_id: PENDING
+    feature_outputs_expected:
+      - raw_value
+  - indicator_id: SEN-S3-TRUE_BREADTH_CONST
+    axis_id: SENTIMENT
+    primary_source: pending
+    data_domain: macro_series
+    adapter_entry: sen_s3_true_breadth_const
+    cold_start_policy: adr_deferred
+    incremental_watermark: SEN-S3-TRUE_BREADTH_CONST
+    backfill_available: false
+    formula: null
+    cabin: BLINDSPOT
+    adr_id: PENDING
+    feature_outputs_expected:
+      - raw_value
+  - indicator_id: SEN-S4-AAII_BNB
+    axis_id: SENTIMENT
+    primary_source: pending
+    data_domain: macro_series
+    adapter_entry: sen_s4_aaii_bnb
+    cold_start_policy: adr_deferred
+    incremental_watermark: SEN-S4-AAII_BNB
+    backfill_available: false
+    formula: null
+    cabin: PRIMARY
+    adr_id: PENDING
+    feature_outputs_expected:
+      - bull_bear_spread
+  - indicator_id: SEN-S5-FINRA_MARGIN
+    axis_id: SENTIMENT
+    primary_source: pending
+    data_domain: macro_series
+    adapter_entry: sen_s5_finra_margin
+    cold_start_policy: adr_deferred
+    incremental_watermark: SEN-S5-FINRA_MARGIN
+    backfill_available: false
+    formula: null
+    cabin: VALIDATION
+    adr_id: PENDING
+    feature_outputs_expected:
+      - official_fields_raw
+      - optional_mom_yoy_derived

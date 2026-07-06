@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from backend.app import config as app_config
-from backend.app.datasources.service import DataSourceService, build_staged_fixture_service
+from backend.app.sync.layer1_sync_facade import build_staged_fixture_sync_client
 from backend.app.layer1_axes.evidence_sandbox import resolve_task_sandbox_db
 from backend.app.layer1_axes.ingestion import (
     FRED_PRIMARY_DEFERRED_NOTE,
@@ -34,6 +34,10 @@ from backend.app.ops.layer1_evidence.formatters import (
     format_phase2_route_preview_md,
     format_phase3_no_clean_write_md,
     format_phase4_inventory_delta_md,
+)
+from backend.app.ops.layer1_evidence.macro_bundle import (
+    official_macro_bundle_layer1_preview,
+    official_macro_bundle_layer5_provenance,
 )
 
 _relative_path = _relative_to_project
@@ -252,7 +256,7 @@ def capture_task_phase3_evidence(
     as_of: date,
     db_path: Path | str | None = None,
     data_root: Path | str | None = None,
-    datasource: DataSourceService | None = None,
+    datasource=None,
 ) -> dict[str, Any]:
     """Write task execute-evidence for Phase 3 using an isolated fresh sandbox."""
     out = Path(evidence_dir)
@@ -262,7 +266,7 @@ def capture_task_phase3_evidence(
     phase3_data_root = layout.data_root
 
     fixture_path = app_config.PROJECT_ROOT / MACRO_FIXTURE_RELATIVE
-    resolved_datasource = datasource or build_staged_fixture_service(
+    resolved_datasource = datasource or build_staged_fixture_sync_client(
         data_root=phase3_data_root,
         fixture_path=fixture_path,
     )
@@ -406,7 +410,7 @@ def capture_task_phase4_evidence(
     as_of: date,
     db_path: Path | str | None = None,
     data_root: Path | str | None = None,
-    datasource: DataSourceService | None = None,
+    datasource=None,
 ) -> dict[str, Any]:
     """Write task execute-evidence for Phase 4 aligned with Phase 1 sandbox baseline."""
     from backend.app.layer1_axes.ingestion_inventory import (
@@ -439,9 +443,18 @@ def capture_task_phase4_evidence(
     inspect_db = resolved.inspect_db
     db_capture_strategy = resolved.db_capture_strategy
 
+    phase1_used_sandbox_copy = bool(
+        phase1_inventory
+        and (phase1_inventory.get("baseline_context") or {}).get("capture_strategy")
+        == "sandbox_copy_of_target_db"
+    )
+    if sandbox_db.is_file() and not phase1_used_sandbox_copy:
+        inspect_db = fallback_layout.db_path
+        db_capture_strategy = "fresh_phase4_sandbox_fallback"
+
     fixture_path = app_config.PROJECT_ROOT / MACRO_FIXTURE_RELATIVE
     phase4_data_root = prepare_phase4_data_root(out)
-    resolved_datasource = datasource or build_staged_fixture_service(
+    resolved_datasource = datasource or build_staged_fixture_sync_client(
         data_root=phase4_data_root,
         fixture_path=fixture_path,
     )
@@ -464,30 +477,6 @@ def capture_task_phase4_evidence(
     json_path = out / PHASE4_EVIDENCE_JSON
     json_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return payload
-
-
-def official_macro_bundle_layer1_preview(bundle: dict[str, Any]) -> dict[str, Any]:
-    """Map official_macro_evidence_v1 to minimal Layer1 ingestion evidence preview (R3H-01 §9.7)."""
-    if not bundle.get("source_fetch_id") or not bundle.get("content_hash"):
-        raise ValueError("official macro bundle missing source_fetch_id or content_hash")
-    observations = bundle.get("observations") or []
-    sample = observations[0] if observations else {}
-    return {
-        "source_id": bundle.get("source_id"),
-        "data_domain": bundle.get("data_domain") or bundle.get("series_id"),
-        "source_fetch_id": bundle.get("source_fetch_id"),
-        "content_hash": bundle.get("content_hash"),
-        "as_of_timestamp": bundle.get("as_of_timestamp"),
-        "retrieved_at": bundle.get("retrieved_at"),
-        "observation_count": len(observations),
-        "sample_observation_date": sample.get("observation_date") or sample.get("report_date"),
-    }
-
-
-def official_macro_bundle_layer5_provenance(bundle: dict[str, Any]) -> dict[str, Any]:
-    """Extract Layer5 factual_source provenance fields from official macro replay bundle."""
-    fid, ch = str(bundle.get("source_fetch_id") or ""), str(bundle.get("content_hash") or "")
-    return {"source_fetch_ids": (fid,) if fid else (), "source_content_hashes": (ch,) if ch else ()}
 
 
 __all__ = [

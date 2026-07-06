@@ -73,7 +73,7 @@ def bootstrap_deribit_live_e2e_ctx(
     sandbox_root: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> dict[str, Any]:
-    """Bootstrap Deribit live e2e under isolated M-DATA-03 sandbox (ADR-034)."""
+    """Bootstrap Deribit live e2e under isolated M-DATA-03 sandbox (ADR-015)."""
     monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
     probe = create_deribit_fetch_port(

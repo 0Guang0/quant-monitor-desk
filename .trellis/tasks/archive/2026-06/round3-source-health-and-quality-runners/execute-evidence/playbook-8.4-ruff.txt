@@ -1,7 +1,0 @@
-# Command: uv run ruff check backend/app/ops/source_health_writer.py backend/app/ops/fred_live_primary.py backend/app/ops/b3f_sh_registry_guard.py backend/app/ops/data_health.py backend/app/sync/orchestrator.py backend/app/sync/runners.py backend/app/sync/contract.py backend/app/sync/jobs.py tests/test_source_health_snapshot.py tests/test_b3f_quality_runners.py tests/test_fred_live_primary_closeout.py tests/test_b3f_sh_hard_constraints.py
-# exit_code: 0
-
-[1;32mAll checks passed![0m
-
-
-EXIT:0

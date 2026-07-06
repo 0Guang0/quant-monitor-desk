@@ -1,4 +1,0 @@
-4 passed in 1.1s
-
-Command: uv run pytest tests/test_prediction_market_adapters.py -q -k polymarket
-Exit: 0 (GREEN)

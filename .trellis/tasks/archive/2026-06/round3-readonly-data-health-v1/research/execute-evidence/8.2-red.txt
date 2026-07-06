@@ -1,2 +1,0 @@
-RED: pytest.fail — test_dataHealthLoader_missingManifest_fails
-exit code: 1 FAILED

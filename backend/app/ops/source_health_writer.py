@@ -1,4 +1,4 @@
-"""Batch6 source_health_snapshot writer — non-DH2 persist path (ADR-024)."""
+"""Batch6 source_health_snapshot writer — non-DH2 persist path (ADR-005)."""
 
 from __future__ import annotations
 
