@@ -9,6 +9,7 @@ from backend.app.ops.rehearsal_boundary import REHEARSAL_DISCLAIMER, REHEARSAL_O
 
 import hashlib
 import json
+import os
 from contextvars import ContextVar
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime
@@ -41,9 +42,7 @@ from backend.app.storage.staged_evidence import (
 )
 
 PILOT_ID = "r3x-staged-pilot-20260622"
-DEFAULT_AUTHORIZATION_PATH = (
-    PROJECT_ROOT / "docs/quality/prompt14_user_authorization_2026-06-22.md"
-)
+STAGED_PILOT_AUTHORIZATION_ENV = "QMD_STAGED_PILOT_AUTHORIZATION"
 DEFAULT_PRODUCTION_DB = DATA_ROOT / "duckdb" / "quant_monitor.duckdb"
 DEFAULT_SANDBOX_ROOT = PROJECT_ROOT / ".audit-sandbox/r3x-staged-pilot"
 
@@ -204,6 +203,22 @@ def network_call_budget_snapshot() -> dict[str, Any]:
     return _active_network_budget().to_dict()
 
 
+def _default_staged_authorization_evidence() -> str:
+    env = os.environ.get(STAGED_PILOT_AUTHORIZATION_ENV, "").strip()
+    if not env:
+        raise StagedPilotAuthorizationError(
+            f"set {STAGED_PILOT_AUTHORIZATION_ENV} to a user authorization markdown path"
+        )
+    return env
+
+
+def _assert_user_authorization_filename(auth_path: Path) -> None:
+    if "_user_authorization_" not in auth_path.name:
+        raise StagedPilotAuthorizationError(
+            f"authorization filename must match *_user_authorization_*: {auth_path.name}"
+        )
+
+
 def _resolve_authorization_path(path: str) -> Path:
     candidate = Path(path)
     if not candidate.is_absolute():
@@ -220,14 +235,7 @@ def validate_authorization(request: StagedPilotRequest) -> None:
         )
 
     auth_text = auth_path.read_text(encoding="utf-8")
-    if "prompt14_user_authorization" not in auth_path.name:
-        raise StagedPilotAuthorizationError(
-            f"authorization evidence must be prompt14 user authorization file: {auth_path.name}"
-        )
-    if not auth_path.name.startswith("prompt14_user_authorization_"):
-        raise StagedPilotAuthorizationError(
-            f"authorization filename must match prompt14_user_authorization_*: {auth_path.name}"
-        )
+    _assert_user_authorization_filename(auth_path)
     if "Approved on" not in auth_text:
         raise StagedPilotAuthorizationError("authorization evidence missing approval marker")
 
@@ -278,7 +286,7 @@ def assert_pilot_ready_before_fetch(request: StagedPilotRequest) -> None:
 
 
 def approved_pilot_requests() -> tuple[StagedPilotRequest, ...]:
-    auth = "docs/quality/prompt14_user_authorization_2026-06-22.md"
+    auth = _default_staged_authorization_evidence()
     return (
         StagedPilotRequest(
             source_id="baostock",
@@ -1385,14 +1393,7 @@ def validate_pilot_v2_authorization(request: StagedPilotRequest) -> None:
         )
 
     auth_text = auth_path.read_text(encoding="utf-8")
-    if "prompt14_user_authorization" not in auth_path.name:
-        raise StagedPilotAuthorizationError(
-            f"authorization evidence must be prompt14 user authorization file: {auth_path.name}"
-        )
-    if not auth_path.name.startswith("prompt14_user_authorization_"):
-        raise StagedPilotAuthorizationError(
-            f"authorization filename must match prompt14_user_authorization_*: {auth_path.name}"
-        )
+    _assert_user_authorization_filename(auth_path)
     if "Approved on" not in auth_text:
         raise StagedPilotAuthorizationError("authorization evidence missing approval marker")
 
@@ -1439,7 +1440,7 @@ def validate_pilot_v2_authorization(request: StagedPilotRequest) -> None:
 
 
 def approved_pilot_v2_requests() -> tuple[StagedPilotRequest, ...]:
-    auth = "docs/quality/prompt14_user_authorization_2026-06-22.md"
+    auth = _default_staged_authorization_evidence()
     return (
         StagedPilotRequest(
             source_id="baostock",
@@ -2427,10 +2428,7 @@ def validate_pilot_v3_authorization(request: StagedPilotRequest) -> None:
             f"authorization evidence missing: {request.authorization_evidence}"
         )
     auth_text = auth_path.read_text(encoding="utf-8")
-    if not auth_path.name.startswith("prompt14_user_authorization_"):
-        raise StagedPilotAuthorizationError(
-            f"authorization filename must match prompt14_user_authorization_*: {auth_path.name}"
-        )
+    _assert_user_authorization_filename(auth_path)
     if "Approved on" not in auth_text:
         raise StagedPilotAuthorizationError("authorization evidence missing approval marker")
 
@@ -2489,7 +2487,7 @@ def validate_pilot_v3_authorization(request: StagedPilotRequest) -> None:
 
 
 def approved_pilot_v3_requests() -> tuple[StagedPilotRequest, ...]:
-    auth = "docs/quality/prompt14_user_authorization_2026-06-22.md"
+    auth = _default_staged_authorization_evidence()
     baostock_symbols = pilot_v3_baostock_symbols()
     akshare_symbols = pilot_v3_akshare_symbols()
     return (

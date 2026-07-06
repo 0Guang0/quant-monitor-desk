@@ -495,18 +495,18 @@ def test_forbidden_macro_supplementary_not_fred_primary_closure() -> None:
 
 
 def test_readiness_matrix_documents_layers() -> None:
-    """覆盖范围：人类可读 readiness matrix
-    测试对象：docs/quality/model_input_readiness_matrix.md
-    目的/目标：矩阵说明 sandbox/staged/deferred 分区；非仅存在性
-    验证点：含五层标题或 layer 标记；含 sandbox_candidate 与 deferred 语义
-    失败含义：业务方无法读矩阵理解首批范围
+    """覆盖范围：模型输入白名单人类可读索引
+    测试对象：specs/model_inputs/README.md
+    目的/目标：README 说明 sandbox/staged/deferred 分区与 YAML 文件职责
+    验证点：含 layer 白名单文件表；含 sandbox_candidate 与 deferred 语义
+    失败含义：业务方无法读索引理解首批模型输入范围
     """
-    path = PROJECT_ROOT / "docs" / "quality" / "model_input_readiness_matrix.md"
-    assert path.is_file(), "model_input_readiness_matrix.md required"
+    path = PROJECT_ROOT / "specs" / "model_inputs" / "README.md"
+    assert path.is_file(), "specs/model_inputs/README.md required"
     text = path.read_text(encoding="utf-8")
-    for marker in ("Layer1", "Layer2", "Layer3", "Layer4", "Layer5"):
+    for marker in ("layer1_source_whitelist.yaml", "layer2_source_whitelist.yaml", "layer3_anchor_source_plan.yaml"):
         assert marker in text, marker
-    for term in ("sandbox_candidate", "clean_replay_proven", "deferred", "fixture_only", "validation_only"):
+    for term in ("sandbox_candidate", "deferred", "fixture_only", "validation_only"):
         assert term in text, term
 
 

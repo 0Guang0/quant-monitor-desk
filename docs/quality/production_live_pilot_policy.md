@@ -1,155 +1,155 @@
-# Production Live Pilot Policy
+# 生产 Live 试点政策
 
-> Applies to Round 3 Batch 2.75 (`R3-B2.75-PROD-LIVE-PILOT`) and any future task that attempts to touch live/production data before formal production release.
+> 适用于 Round 3 Batch 2.75（`R3-B2.75-PROD-LIVE-PILOT`）及在正式发布前触及 live/生产数据的任何未来任务。
 >
-> This policy permits a narrow live-data pilot only when it is explicitly authorized, sandbox-first, evidence-rich, and fail-closed. It does not enable production data by default.
+> 本政策仅在试点被显式授权、沙箱优先、证据充分且 fail-closed 时，允许窄范围的 live 数据试点。**不**默认启用生产数据。
 
-## 1. Policy intent
+## 1. 政策意图
 
-Production/live data is useful because it exposes source drift, missing fields, timestamp differences, vendor failures, validation gaps, conflict behavior, and lineage defects that fixture or staged data can hide.
+生产/live 数据有价值，因为它能暴露夹具或 staged 数据难以发现的：源漂移、缺字段、时间戳差异、vendor 失败、校验缺口、冲突行为与血缘缺陷。
 
-The pilot must expose those issues without polluting clean production DB state, without bypassing source authorization, and without letting staged evidence be promoted to production-live readiness.
+试点必须在不污染生产 clean DB、不绕过源授权、不让 staged 证据被提升为 production-live 就绪的前提下暴露这些问题。
 
-## 2. Default stance
+## 2. 默认立场
 
-| Control                                | Default                                             |
-| -------------------------------------- | --------------------------------------------------- |
-| Live source access                     | Disabled                                            |
-| QMT/xqshare/Yahoo/FRED                 | Disabled unless explicitly authorized for the pilot |
-| `dry_run`                              | `true`                                              |
-| `raw_only`                             | `true` for the first live pass                      |
-| `write_target`                         | `sandbox`                                           |
-| `allow_clean_write`                    | `false`                                             |
-| Production clean DB mutation           | Forbidden                                           |
-| Full-market/full-history/backfill      | Forbidden                                           |
-| Silent fallback to fixture/staged data | Forbidden                                           |
+| 控制项                     | 默认值                  |
+| -------------------------- | ----------------------- |
+| Live 源访问                | 禁用                    |
+| QMT/xqshare/Yahoo/FRED     | 禁用，除非试点显式授权  |
+| `dry_run`                  | `true`                  |
+| `raw_only`                 | 首次 live 通过为 `true` |
+| `write_target`             | `sandbox`               |
+| `allow_clean_write`        | `false`                 |
+| 生产 clean DB 变更         | 禁止                    |
+| 全市场/全历史/backfill     | 禁止                    |
+| 静默回退到夹具/staged 数据 | 禁止                    |
 
-## 3. Authorization requirements
+## 3. 授权要求
 
-A live pilot must fail closed unless the task evidence records all fields below:
+Live 试点必须在任务证据中记录以下全部字段，否则 fail-closed：
 
-| Field                    | Requirement                                                                   |
-| ------------------------ | ----------------------------------------------------------------------------- |
-| `source_id`              | Exactly one source unless the Trellis plan explicitly names a tiny allowlist. |
-| `data_domain`            | Exactly one domain.                                                           |
-| `operation`              | Exactly one operation.                                                        |
-| `symbols_or_indicators`  | One indicator/instrument by default.                                          |
-| `as_of` or `date_window` | Single date or short bounded window.                                          |
-| `max_rows`               | Hard row cap; target default `<= 100`.                                        |
-| `dry_run`                | Must default to `true`.                                                       |
-| `raw_only`               | Must default to `true` for the first live pass.                               |
-| `write_target`           | Must default to `sandbox`.                                                    |
-| `allow_clean_write`      | Must default to `false`; if changed, sandbox-only.                            |
-| `authorization_evidence` | Human-readable path or config marker proving user approval.                   |
+| 字段                     | 要求                                                |
+| ------------------------ | --------------------------------------------------- |
+| `source_id`              | 恰好一个源，除非 Trellis 计划显式命名极小 allowlist |
+| `data_domain`            | 恰好一个域                                          |
+| `operation`              | 恰好一个操作                                        |
+| `symbols_or_indicators`  | 默认一个指标/标的                                   |
+| `as_of` 或 `date_window` | 单日或短有界窗口                                    |
+| `max_rows`               | 硬行数上限；目标默认 `<= 100`                       |
+| `dry_run`                | 必须默认为 `true`                                   |
+| `raw_only`               | 首次 live 通过必须默认为 `true`                     |
+| `write_target`           | 必须默认为 `sandbox`                                |
+| `allow_clean_write`      | 必须默认为 `false`；若变更则仅 sandbox              |
+| `authorization_evidence` | 证明用户批准的人类可读路径或配置标记                |
 
-## 4. Source restrictions
+## 4. 源限制
 
-1. QMT and xqshare must remain disabled by default.
-2. Yahoo must remain auxiliary/validation-only unless a future policy changes its role.
-3. FRED primary live access for `ENV-E1-DGS10` remains deferred (`B2.5-O-05`) until a **separate** user-authorized FRED pilot records authorization evidence and sandbox/no-production-mutation proof. Batch 2.75 Request 3 (`akshare` / `macro_supplementary` / `fetch_macro_series` / `DGS10`) does **not** close `B2.5-O-05` and must not be cited as live FRED primary or production-live macro evidence.
-4. Akshare or other aggregators may be useful for small-shape pilots but must not be treated as sole authoritative production primary when the relevant source registry says otherwise. `macro_supplementary` is a **staged supplementary route** for Layer 1 bridge tests; it is not a FRED primary substitute for production release.
-5. A route/capability result of `DISABLED_SOURCE`, `CAPABILITY_MISSING`, `USER_AUTH_REQUIRED`, or ResourceGuard failure stops the pilot.
+1. QMT 与 xqshare 必须默认禁用。
+2. Yahoo 必须保持辅助/仅校验角色，除非未来政策变更其角色。
+3. FRED primary live 访问（`ENV-E1-DGS10`）仍延期（`B2.5-O-05`），直到**单独**的用户授权 FRED 试点记录授权证据与沙箱/无生产变更证明。Batch 2.75 Request 3（`akshare` / `macro_supplementary` / `fetch_macro_series` / `DGS10`）**不**闭合 `B2.5-O-05`，不得作为 live FRED primary 或 production-live 宏观证据引用。
+4. Akshare 等聚合源可用于小形态试点，但当源 registry 另有规定时不得作为唯一权威生产 Primary。`macro_supplementary` 是 Layer 1 桥接测试的 **staged 补充路由**，不是生产发布的 FRED primary 替代。
+5. 路由/能力结果为 `DISABLED_SOURCE`、`CAPABILITY_MISSING`、`USER_AUTH_REQUIRED` 或 ResourceGuard 失败时，试点必须停止。
 
-## 5. Required phase gates
+## 5. 必备阶段门禁
 
-### Phase 0 — authorization
+### Phase 0 — 授权
 
-- Record the exact source/domain/operation/window/row cap/write target.
-- Record why the selected source is appropriate for the first pilot.
-- Record user authorization evidence.
+- 记录确切的源/域/操作/窗口/行数上限/写入目标。
+- 记录为何所选源适合首次试点。
+- 记录用户授权证据。
 
-### Phase 1 — read-only baseline
+### Phase 1 — 只读基线
 
-- Capture read-only DB inventory.
-- Capture data-root inventory.
-- Capture source registry/capability status.
-- Prove no production DB mutation.
+- 捕获只读 DB 清单。
+- 捕获 data-root 清单。
+- 捕获源 registry/能力状态。
+- 证明无生产 DB 变更。
 
-### Phase 2 — dry-run route gate
+### Phase 2 — dry-run 路由门禁
 
-- Route preview happens before fetch.
-- Selected route must be `READY`.
-- No fixture/staged fallback can satisfy this phase.
+- 抓取前必须先 route preview。
+- 所选路由必须为 `READY`。
+- 夹具/staged 回退不能满足本阶段。
 
-### Phase 3 — raw-only micro-fetch
+### Phase 3 — 仅 raw 微抓取
 
-- First live fetch is raw-only.
-- Raw evidence writes only to sandbox-controlled paths or equivalent sandbox evidence stores.
-- Evidence includes source, request parameters, content hash, fetch timestamp, raw path, file registry row, and fetch log row.
-- Production clean DB remains unchanged.
+- 首次 live 抓取仅 raw。
+- Raw 证据仅写入沙箱控制路径或等价沙箱证据存储。
+- 证据含源、请求参数、内容哈希、抓取时间戳、raw 路径、`file_registry` 行、`fetch_log` 行。
+- 生产 clean DB 保持不变。
 
-### Phase 4 — sandbox validation and optional clean write
+### Phase 4 — 沙箱校验与可选 clean 写入
 
-- Validation must pass before clean write.
-- Source conflicts or severe validation failures block clean write.
-- WriteManager is the only allowed clean write boundary.
-- Clean write target is sandbox DB or isolated sandbox schema only.
-- Snapshot lineage must use real fetch IDs/content hashes.
-- Synthetic lineage is forbidden for a production/live pilot.
+- 校验通过后才能 clean 写入。
+- 源冲突或严重校验失败阻止 clean 写入。
+- WriteManager 是唯一允许的 clean 写入边界。
+- Clean 写入目标仅为沙箱 DB 或隔离沙箱 schema。
+- 快照血缘必须使用真实 fetch ID/内容哈希。
+- production/live 试点禁止合成血缘。
 
-### Phase 5 — closeout
+### Phase 5 — 结案
 
-- End with an explicit pilot state.
-- Update `docs/AUDIT_DEFERRED_REGISTRY.md` and `docs/UNRESOLVED_ISSUES_REGISTRY.md`.
-- Do not close broad Batch 6 production items from pilot evidence alone.
+- 以显式试点状态结束。
+- 更新 `docs/AUDIT_DEFERRED_REGISTRY.md` 与 `docs/UNRESOLVED_ISSUES_REGISTRY.md`。
+- 不得仅凭试点证据闭合广泛的 Batch 6 生产项。
 
-## 6. Evidence checklist
+## 6. 证据清单
 
-A closed pilot must preserve:
+已关闭试点必须保留：
 
-- Authorization evidence.
-- Source/capability snapshot.
-- Route preview JSON.
-- ResourceGuard decision.
-- DB/data-root before inventory.
-- Raw file evidence and content hash.
-- `file_registry` evidence.
-- `fetch_log` evidence.
-- Validation report.
-- Conflict report or explicit no-conflict evidence.
-- Sandbox write audit and lineage evidence, if clean write is enabled.
-- Production DB after inventory proving no mutation.
-- Registry update or explicit re-deferral.
+- 授权证据
+- 源/能力快照
+- 路由 preview JSON
+- ResourceGuard 决策
+- DB/data-root 变更前清单
+- Raw 文件证据与内容哈希
+- `file_registry` 证据
+- `fetch_log` 证据
+- 校验报告
+- 冲突报告或显式无冲突证据
+- 若启用 clean 写入：沙箱写入审计与血缘证据
+- 证明无变更的生产 DB 变更后清单
+- Registry 更新或显式 re-deferral
 
-## 7. Promotion rule
+## 7. 提升规则
 
-Passing Batch 2.75 does not mean formal production data access is open.
+通过 Batch 2.75 **不**意味着正式生产数据访问已开放。
 
-A passing pilot may allow Batch 3–5 to reference real source-shape evidence, but formal production release still belongs to Batch 6 closeout: production CLI, backfill/reconcile closure, source health, migration/check coverage, packaging, runbook, and full regression evidence.
+通过的试点可让 Batch 3–5 引用真实源形态证据，但正式发布仍属 Batch 6 结案：生产 CLI、backfill/reconcile 闭合、源健康、migration/CHECK 覆盖、打包、runbook 与全量回归证据。
 
-## 8. Verification
+## 8. 验证
 
-Planning and policy changes must be covered by:
+规划与政策变更必须由以下测试覆盖：
 
 ```bash
 pytest tests/test_production_live_pilot_policy.py tests/test_batch25_production_data_gate.py -q
 ```
 
-Future implementation must add tests that prove:
+未来实现必须增加测试证明：
 
-- No authorization means no live fetch.
-- Disabled source means no live fetch.
-- Route not `READY` means no live fetch.
-- First pass is raw-only.
-- Sandbox target is enforced.
-- Production DB row counts are unchanged.
-- No fixture/staged fallback satisfies live pilot evidence.
+- 无授权则无 live 抓取
+- 禁用源则无 live 抓取
+- 路由非 `READY` 则无 live 抓取
+- 首次通过为 raw-only
+- 强制沙箱目标
+- 生产 DB 行数不变
+- 夹具/staged 回退不能满足 live 试点证据
 
-## 9. Rehearsal vs product fetch SSOT (R3H-10)
+## 9. Rehearsal 与产品抓取 SSOT（R3H-10）
 
-| Path                                                                                           | Role                        | R3H-08 product live?                      |
-| ---------------------------------------------------------------------------------------------- | --------------------------- | ----------------------------------------- |
-| `DataSourceService` → `datasources/fetch_ports/*`                                              | **Product fetch SSOT**      | Yes (when authorized)                     |
-| `ops/staged_pilot_*`, `ops/live_pilot_*`, `scripts/run_staged_pilot.py`, `ops/interface_probe` | **Rehearsal-only** evidence | **No** — must not substitute product live |
+| 路径                                                                                           | 角色                  | R3H-08 产品 live？         |
+| ---------------------------------------------------------------------------------------------- | --------------------- | -------------------------- |
+| `DataSourceService` → `datasources/fetch_ports/*`                                              | **产品抓取 SSOT**     | 是（授权时）               |
+| `ops/staged_pilot_*`、`ops/live_pilot_*`、`scripts/run_staged_pilot.py`、`ops/interface_probe` | **仅 rehearsal** 证据 | **否** — 不得替代产品 live |
 
-Rehearsal modules carry `REHEARSAL_ONLY` in module docstring or import `backend.app.ops.rehearsal_boundary` (`staged_pilot`, `interface_probe`; `live_pilot` docstring). They are sandbox/staged evidence paths only and are **not** on the Sync orchestrator default import chain.
+Rehearsal 模块在模块 docstring 中带 `REHEARSAL_ONLY` 或导入 `backend.app.ops.rehearsal_boundary`（`staged_pilot`、`interface_probe`；`live_pilot` 为 docstring）。它们仅是沙箱/staged 证据路径，**不在** Sync orchestrator 默认导入链上。
 
-### 9.1 Sandbox-gated ops fetch（非 forbidden_direct_callers 扫描面）
+### 9.1 沙箱门禁的 ops 抓取（非 forbidden_direct_callers 扫描面）
 
-| Module                                | Role                       | Product live? |
-| ------------------------------------- | -------------------------- | ------------- |
-| `ops/prediction_market_live_smoke.py` | Env-gated sandbox smoke    | **No**        |
-| `ops/fred_sandbox_pilot.py`           | FRED sandbox rehearsal     | **No**        |
-| `ops/tdx_manual_probe.py`             | TDX manual validation only | **No**        |
+| 模块                                  | 角色                | 产品 live？ |
+| ------------------------------------- | ------------------- | ----------- |
+| `ops/prediction_market_live_smoke.py` | 环境门禁沙箱 smoke  | **否**      |
+| `ops/fred_sandbox_pilot.py`           | FRED 沙箱 rehearsal | **否**      |
+| `ops/tdx_manual_probe.py`             | 仅 TDX 手工校验     | **否**      |
 
 登记目的：审计可见性；R3H-08 产品化时评估是否经 `DataSourceService` 或保持 rehearsal 例外。

@@ -33,9 +33,7 @@ from backend.app.ops.tdx_live_manual_probe_gate import (
 )
 from backend.app.storage.raw_store import RawStore
 
-DEFAULT_AUTH_PATH = (
-    PROJECT_ROOT / "docs/quality/tdx_pytdx_live_manual_probe_authorization_2026-06-24.md"
-)
+DEFAULT_AUTH_PATH: Path | None = None
 DEFAULT_SANDBOX_ROOT = PROJECT_ROOT / ".audit-sandbox/tdx-pytdx-live-manual-probe"
 DEFAULT_EVIDENCE_DIR = (
     PROJECT_ROOT / "docs/archive/trellis-evidence/round3-tdx-manual-probe/execute-evidence"
@@ -512,7 +510,11 @@ def run_tdx_live_manual_probe(
     max_network_calls: int = MAX_NETWORK_CALLS,
 ) -> dict[str, Any]:
     """Opt-in live probe — requires authorization MD + matching host/port."""
-    auth_path = Path(authorization_evidence or DEFAULT_AUTH_PATH)
+    auth_path = Path(authorization_evidence) if authorization_evidence else DEFAULT_AUTH_PATH
+    if auth_path is None:
+        raise TdxLiveManualProbeAuthorizationError(
+            "live probe requires authorization_evidence path (no default authorization file)"
+        )
     if max_network_calls <= 0:
         status = TDX_PROBE_FAIL_VALIDATION
         invalid_reason = f"max_network_calls={max_network_calls} is invalid (must be positive)"

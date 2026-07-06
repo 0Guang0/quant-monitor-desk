@@ -15,7 +15,6 @@ from backend.app.ops.live_pilot_auth import (
     validate_authorization,
 )
 from backend.app.ops.live_pilot_constants import (
-    DEFAULT_AUTHORIZATION_PATH,
     DEFAULT_PRODUCTION_DB,
     DISABLED_PILOT_SOURCE_IDS,
     FRED_PRIMARY_DEFERRED_NOTE,

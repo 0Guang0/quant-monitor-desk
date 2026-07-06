@@ -133,7 +133,7 @@ resourceGuard_lowDisk_shouldHardStop
 4. **CI gate** — start at **current coverage minus a small margin** (e.g. −5%), not 80% on day one; raise gradually per quarter.
 5. **Prevent regression** — new code should not lower the gate without explicit approval.
 
-For **quant-monitor-desk**, prioritize (see [GLOBAL_TESTING_POLICY.md](../../../docs/implementation_tasks/GLOBAL_TESTING_POLICY.md)):
+For **quant-monitor-desk**, prioritize (see [GLOBAL_TESTING_POLICY.md](../../../rules/GLOBAL_TESTING_POLICY.md)):
 
 - WriteManager, ResourceGuard, validators, Layer loaders, fail-closed guards.
 
@@ -175,7 +175,7 @@ When tests touch ingest, snapshots, reports, agents, or backtest output:
 - Contract snapshots for API envelopes and structured JSON.
 - No real network in unit tests — mock or fixture files.
 
-Details: [GLOBAL_TESTING_POLICY.md §8](../../../docs/implementation_tasks/GLOBAL_TESTING_POLICY.md).
+Details: [GLOBAL_TESTING_POLICY.md §8](../../../rules/GLOBAL_TESTING_POLICY.md).
 
 ## 9. Trellis / quant-monitor-desk
 
@@ -183,7 +183,7 @@ Details: [GLOBAL_TESTING_POLICY.md §8](../../../docs/implementation_tasks/GLOBA
 
 ### 9.1 每个 `test_*` 五字段 docstring（新增/修改必填）
 
-**细则：** [ROUND3_TEST_DOCSTRING_HYGIENE_PLAN.md](../../../docs/quality/ROUND3_TEST_DOCSTRING_HYGIENE_PLAN.md) · 门禁 `tests/test_docstring_quadruple_coverage.py`
+**细则：** [GLOBAL_TESTING_POLICY.md §7](../../../rules/GLOBAL_TESTING_POLICY.md) · 门禁 `tests/test_docstring_quadruple_coverage.py`
 
 | 字段      | 要求                                                          |
 | --------- | ------------------------------------------------------------- |
@@ -202,7 +202,7 @@ Details: [GLOBAL_TESTING_POLICY.md §8](../../../docs/implementation_tasks/GLOBA
 # 模板 2 — 只拉 raw 不写正式观测表 → test_layer1MicroIngestion_phase3DoesNotWriteCleanAxisObservation
 ```
 
-全文见 [GLOBAL_TESTING_POLICY.md §7](../../../docs/implementation_tasks/GLOBAL_TESTING_POLICY.md)。
+全文见 [GLOBAL_TESTING_POLICY.md §7](../../../rules/GLOBAL_TESTING_POLICY.md)。
 
 - Do **not** change test **goal** to make green; maps to catalog `purpose` / `verifies` / `failure_meaning`.
 - Sandbox: `QMD_DATA_ROOT=<task>/.audit-sandbox/data`; Audit A8: `--basetemp=.audit-sandbox/pytest`.

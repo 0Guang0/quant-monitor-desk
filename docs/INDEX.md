@@ -11,7 +11,7 @@ Navigation hub for **Quant Monitor Desk**. For a compact project map see [`MIGRA
 | [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md)   | Development and Round task entry |
 | [RESEARCHER_GUIDE.md](RESEARCHER_GUIDE.md) | Layer/review research entry      |
 
-> **权威边界**：`MANIFEST.json` 登记的 docs/specs 为 2026-06-19 修复包权威口径。本索引及 `implementation_tasks/**/plans/`、`DECISIONS.md`、Batch 状态文件为**项目实施补充**，不得覆盖 MANIFEST 权威文件。口径差见 [`quality/REPAIR_IMPORT_CODE_GAP_LEDGER.md`](quality/REPAIR_IMPORT_CODE_GAP_LEDGER.md)。
+> **权威边界**：`MANIFEST.json` 登记的 docs/specs 为 2026-06-19 修复包权威口径。本索引及 `implementation_tasks/**/plans/`、`DECISIONS.md`、Batch 状态文件为**项目实施补充**，不得覆盖 MANIFEST 权威文件。
 
 ## Architecture
 
@@ -59,8 +59,7 @@ See [`docs/modules/`](modules/) — one file per implementation module (data syn
 | [config_secret_policy.md](ops/config_secret_policy.md)                     | Secret 与 `.env.local`（D-03）                       |
 | [migration_recovery_policy.md](ops/migration_recovery_policy.md)           | Migration 备份恢复（D-06）                           |
 | [privacy_retention_policy.md](ops/privacy_retention_policy.md)             | 留存与归档（D-05）                                   |
-| [schema/MIGRATION_COVERAGE.md](schema/MIGRATION_COVERAGE.md)               | Design schema vs applied migrations matrix           |
-| [schema/MIGRATION_008_PLAN.md](schema/MIGRATION_008_PLAN.md)               | Planned migration 008 DB CHECK constraints           |
+| [schema/MIGRATION_COVERAGE.md](schema/MIGRATION_COVERAGE.md)               | 设计 schema 与已应用 migrations 覆盖矩阵             |
 
 ## ADRs
 
@@ -82,14 +81,16 @@ See [`docs/modules/`](modules/) — one file per implementation module (data syn
 
 ## Quality
 
-| File                                                                                               | Topic                                 |
-| -------------------------------------------------------------------------------------------------- | ------------------------------------- |
-| [final_package_rules.md](quality/final_package_rules.md)                                           | Deliverable rules                     |
-| [self_check_and_audit.md](quality/self_check_and_audit.md)                                         | Audit checklist                       |
-| [production_live_pilot_policy.md](quality/production_live_pilot_policy.md)                         | Batch 2.75 production/live pilot gate |
-| [staged_acceptance_policy.md](quality/staged_acceptance_policy.md)                                 | 分阶段验收                            |
-| [REPAIR_IMPORT_CODE_GAP_LEDGER.md](quality/REPAIR_IMPORT_CODE_GAP_LEDGER.md)                       | 导入后代码口径差（Phase 3）           |
-| [REPAIR_IMPORT_PHASE2_NON_MANIFEST_REVIEW.md](quality/REPAIR_IMPORT_PHASE2_NON_MANIFEST_REVIEW.md) | 非 MANIFEST 文件删留审查              |
+| File                                                                       | Topic                         |
+| -------------------------------------------------------------------------- | ----------------------------- |
+| [待修复清单.md](quality/待修复清单.md)                                     | 全项目开放待修复 SSOT         |
+| [PENDING_USER_DECISIONS.md](quality/PENDING_USER_DECISIONS.md)             | 用户已拍板 D-01 至 D-12       |
+| [final_package_rules.md](quality/final_package_rules.md)                   | 最终发布包规则                |
+| [production_live_pilot_policy.md](quality/production_live_pilot_policy.md) | Batch 2.75 生产/live 试点门禁 |
+| [staged_acceptance_policy.md](quality/staged_acceptance_policy.md)         | 分阶段验收                    |
+| [KNOWN_PYTEST_SKIPS.md](quality/KNOWN_PYTEST_SKIPS.md)                     | 已知 pytest skip 登记         |
+
+**测试五字段 docstring：** [`rules/GLOBAL_TESTING_POLICY.md`](../rules/GLOBAL_TESTING_POLICY.md) §7 · 门禁 `tests/test_docstring_quadruple_coverage.py`
 
 ## API & agent contracts (narrative)
 
@@ -105,7 +106,7 @@ Plan-stage inputs for turning original tasks into Trellis frozen plans:
 
 - [TASK_INPUT_CONTEXT_INDEX.md](implementation_tasks/TASK_INPUT_CONTEXT_INDEX.md)
 - [GLOBAL_EXECUTION_RULES.md](implementation_tasks/GLOBAL_EXECUTION_RULES.md)
-- [GLOBAL_TESTING_POLICY.md](implementation_tasks/GLOBAL_TESTING_POLICY.md)
+- [GLOBAL_TESTING_POLICY.md](../rules/GLOBAL_TESTING_POLICY.md)
 - [GLOBAL_RESOURCE_LIMITS.md](implementation_tasks/GLOBAL_RESOURCE_LIMITS.md)
 - [GLOBAL_TASK_TEMPLATE.md](implementation_tasks/GLOBAL_TASK_TEMPLATE.md)
 

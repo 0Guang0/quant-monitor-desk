@@ -15,7 +15,7 @@
 3. **DH2 边界：** `backend/app/ops/data_health.py` 暴露 `DH2_FORBIDS_SNAPSHOT_DDL = True`；不得 import 写入器，不得发出 `CREATE TABLE source_health_snapshot`。
 4. **汇总持久化：** `persist_readiness_rollup()` 放在 `source_health_writer.py`；调用方传入已打开的 DuckDB 连接（非 DH2 编排路径）。证据目录须含 `rollup_manifest.json`，缺失则 fail-closed 抛 `FileNotFoundError`。
 5. **Registry 守卫（SH-07）：** `backend/app/ops/b3f_sh_registry_guard.py` 导出 `build_no_false_close_guard()` / `assert_sidecar_does_not_close_validation_rows()`。Sidecar 关账字典须保持 `R3-B2.75-REQ2-EM` 与 `R3-PROMPT14-AKSHARE-VAL-01` 为 **OPEN** — 仅由 pytest 接线（DH2 不得 import）。
-6. **FRED live 路径：** `fred_live_primary.FRED_LIVE_AUTHORIZATION_DEFAULT` 指向 execute-evidence YAML；人类可读副本为 `docs/quality/batch3f_fred_live_pilot_authorization_2026-06-25.md`（不在 research/ 重复）。
+6. **FRED live 路径：** `fred_live_primary.FRED_LIVE_AUTHORIZATION_DEFAULT` 指向归档 execute-evidence YAML（`docs/archive/trellis-evidence/round3-source-health-and-quality-runners/execute-evidence/fred_live_authorization_2026-06-25.yaml`）。
 
 ## 后果
 

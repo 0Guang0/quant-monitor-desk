@@ -7,13 +7,14 @@ Use this page before making code changes. It summarizes the source authority and
 1. `openwiki/quickstart.md` for the current map.
 2. The relevant OpenWiki page for your change area.
 3. `README.md` for project boundaries and user-approved decisions D-01 through D-12.
-4. `docs/INDEX.md` and `docs/modules/README.md` for detailed authoritative module docs.
-5. `MIGRATION_MAP.md` only when you need broad design/spec navigation.
-6. Current source and tests for final truth.
+4. `rules/` for current execution, testing, and resource-limit rules.
+5. `docs/INDEX.md` and `docs/modules/README.md` for detailed authoritative module docs.
+6. `MIGRATION_MAP.md` only when you need broad design/spec navigation.
+7. Current source and tests for final truth.
 
 ## Authority and drift
 
-The repository contains many implementation-task and roadmap documents. They are useful context, but do not treat old Round/Wave/DCP task cards as execution order. The README says active SSOTs include `PROJECT_IMPLEMENTATION_ROADMAP.md` section 3, `MODULE_COMPLETION_RATING.md`, and `docs/implementation_tasks/README.md`, while old task archives are read-only evidence.
+The repository contains roadmap, migration-map, audit, and historical task documents. They are useful context, but do not treat old Round/Wave/DCP task cards as execution order. Recent git history retired the old implementation-task tree and moved global rules to `rules/`. Use `PROJECT_IMPLEMENTATION_ROADMAP.md`, `MODULE_COMPLETION_RATING.md`, `MIGRATION_MAP.md`, `docs/INDEX.md`, `docs/modules/README.md`, `rules/`, and current source/tests as the practical starting set.
 
 When docs and source conflict, prefer current source plus machine-readable contracts under `specs/`. If changing behavior intentionally, update source, tests, and the relevant contract/docs together.
 
@@ -27,6 +28,7 @@ When docs and source conflict, prefer current source plus machine-readable contr
 - Do not silently fall back to another source. Route plans, quality flags, audit logs, or conflicts must show source switching.
 - Do not enable product live fetch without `QMD_ALLOW_LIVE_FETCH=1`, ResourceGuard OK, required credentials/authorization, and isolated acceptance data roots where applicable.
 - Do not treat agent-generated text as factual source data. Layer 5 evidence code explicitly rejects that pattern.
+- Treat `docs/api/` route descriptions as design/contract references until `backend/app/main.py` mounts matching routers.
 
 ## Where to start by change area
 
@@ -34,7 +36,7 @@ When docs and source conflict, prefer current source plus machine-readable contr
 - Source routing/capability: `backend/app/datasources/route_planner.py`, `capability_registry.py`, `source_registry.py`, `service.py`, specs under `specs/contracts/` and `specs/datasource_registry/`.
 - Live gates: `backend/app/datasources/product_live_gate.py`, `live_tier_router.py`, `backend/app/ops/tier_a_live_acceptance.py`, ADRs under `docs/decisions/`.
 - Sync orchestration: `backend/app/sync/orchestrator.py`, `jobs.py`, `pipeline.py`, `runners.py`, `scheduler.py`.
-- DB writes and schema: `backend/app/db/migrate.py`, `backend/app/db/migrations/`, `backend/app/db/write_manager.py`, `specs/schema/schema.sql`.
+- DB writes and schema: `backend/app/db/migrate.py`, `backend/app/db/migrations/`, `backend/app/db/write_manager.py`, `backend/app/db/validation_gate.py`, `specs/schema/schema.sql`.
 - Layer 1: `backend/app/layer1_axes/`, `specs/layer1_axes/`, `configs/layer1_axes.yml`.
 - Layer 2: `backend/app/layer2_sensors/`, cross-asset fixtures and tests.
 - Layer 3: `backend/app/layer3_chains/`, `specs/layer3_global_industry_chains/`.
@@ -48,6 +50,8 @@ Use targeted tests first, then broader gates. For risky backend changes, include
 
 Network/live tests require explicit operator intent. Use isolated `QMD_DATA_ROOT` values under `.audit-sandbox` for acceptance/smoke paths, never the canonical local production DB.
 
+New or changed tests should follow `rules/GLOBAL_TESTING_POLICY.md`: assert business behavior, keep external I/O mocked or fixture-based by default, include meaningful assertions, and add the required Chinese five-field test docstring format for `test_*` functions.
+
 ## Existing agent instruction files
 
-Top-level `AGENTS.md` and `CLAUDE.md` contain GitNexus and workflow guidance. This OpenWiki run adds an `## OpenWiki` section to both files so future agents start here.
+Top-level `AGENTS.md` and `CLAUDE.md` already contain the required `## OpenWiki` section pointing future agents to `openwiki/quickstart.md`.

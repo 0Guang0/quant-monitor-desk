@@ -26,13 +26,13 @@
 
 ## 2. 当前项目进度快照
 
-| 事项                        | 当前状态                                                                                                                                                                                                                                              | 主要索引                                                                                                                                                                                                |
-| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 根目录卫生收敛 (2026-07-02) | 根目录**无** `ROUND3_BATCH_IMPLEMENTATION_MAP.md`、`PROJECT_IMPLEMENTATION_ROADMAP.legacy-20260629.md`、`research/`、`_tmp-wave4-dcp-parallel/`；历史材料已迁入 `docs/archive/` 与 `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/` | `docs/archive/README.md`、`docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/README.md`                                                                                                   |
-| 活规划 SSOT                 | **仅**根目录 `PROJECT_IMPLEMENTATION_ROADMAP.md` + `MODULE_COMPLETION_RATING.md`（模块轨道 v2；MCR Pass E @ 2026-07-02）                                                                                                                              | 路线图 §0–§3 · 附录 C；`MODULE_COMPLETION_RATING.md` §0 · §4–§5                                                                                                                                         |
-| 历史 Wave / ROUND           | Round 0–5、Wave 3/4 DCP、Batch 3V/3FR/3H 等**已归档只读**；Wave 代码已 merge，但模块 Rating 多数未达 R4（MCR Pass E：G1/G2/G4/K1/K2 仍 R3，G5 仍 R2）                                                                                                 | 归档 `legacy-pre-module-v2-20260702/`；CLOSED 证据 → 路线图**附录 C**；`docs/quality/acceptance/WAVE3_PRODUCTION_ACCEPTANCE_REPORT.md`、`docs/quality/r3g03_mass_rehearsal_*.md` 已迁入 `docs/archive/` |
-| **当前下一队列 (v2)**       | **M-DATA-03** → **M-G1-03** → **M-G2/G4/G5-FULL**（可并行）→ **M-PASS-01**（末位 `PASS_ROUND4_REAL_DATA_READY` 门禁）；任务卡 Plan 冻结时创建                                                                                                         | `docs/implementation_tasks/README.md`；路线图 §3 v2；`MIGRATION_MAP.md`                                                                                                                                 |
-| Round4/5 产品               | I 组 I1–I8 除 I3 壳外仍 R0–R1；**须 M-PASS-01 后** B04 开工                                                                                                                                                                                           | `BATCH_04_TASK_CARD_MANIFEST.md`；历史 `ROUND_4_*` / `ROUND_5_*` 见归档 `legacy-pre-module-v2-20260702/`                                                                                                |
+| 事项                        | 当前状态                                                                                                                                                                                                                                              | 主要索引                                                                                                 |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| 根目录卫生收敛 (2026-07-02) | 根目录**无** `ROUND3_BATCH_IMPLEMENTATION_MAP.md`、`PROJECT_IMPLEMENTATION_ROADMAP.legacy-20260629.md`、`research/`、`_tmp-wave4-dcp-parallel/`；历史材料已迁入 `docs/archive/` 与 `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/` | `docs/archive/README.md`、`docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/README.md`    |
+| 活规划 SSOT                 | **仅**根目录 `PROJECT_IMPLEMENTATION_ROADMAP.md` + `MODULE_COMPLETION_RATING.md`（模块轨道 v2；MCR Pass E @ 2026-07-02）                                                                                                                              | 路线图 §0–§3 · 附录 C；`MODULE_COMPLETION_RATING.md` §0 · §4–§5                                          |
+| 历史 Wave / ROUND           | Round 0–5、Wave 3/4 DCP、Batch 3V/3FR/3H 等**已归档只读**；Wave 代码已 merge，但模块 Rating 多数未达 R4（MCR Pass E：G1/G2/G4/K1/K2 仍 R3，G5 仍 R2）                                                                                                 | 归档 `legacy-pre-module-v2-20260702/`；CLOSED 证据 → 路线图**附录 C**                                    |
+| **当前下一队列 (v2)**       | **M-DATA-03** → **M-G1-03** → **M-G2/G4/G5-FULL**（可并行）→ **M-PASS-01**（末位 `PASS_ROUND4_REAL_DATA_READY` 门禁）；任务卡 Plan 冻结时创建                                                                                                         | `docs/implementation_tasks/README.md`；路线图 §3 v2；`MIGRATION_MAP.md`                                  |
+| Round4/5 产品               | I 组 I1–I8 除 I3 壳外仍 R0–R1；**须 M-PASS-01 后** B04 开工                                                                                                                                                                                           | `BATCH_04_TASK_CARD_MANIFEST.md`；历史 `ROUND_4_*` / `ROUND_5_*` 见归档 `legacy-pre-module-v2-20260702/` |
 
 ## 3. 仓库顶层目录地图
 
@@ -176,37 +176,21 @@
 
 ### 4.7 质量与发布治理 `docs/quality/`
 
-| 路径                                                              | 用途                                                                             |
-| ----------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| `docs/quality/final_package_rules.md`                             | 最终发布包规则                                                                   |
-| `docs/quality/PENDING_USER_DECISIONS.md`                          | 用户已拍板 D-01 至 D-12，执行角色不得反复询问                                    |
-| `docs/quality/REPAIR_EXECUTION_SELF_CHECK.md`                     | 修复执行自检                                                                     |
-| `docs/quality/REPAIR_IMPORT_CODE_GAP_LEDGER.md`                   | 修复包导入后代码与 docs/specs 口径差台账；当前 closed                            |
-| `docs/quality/REPAIR_IMPORT_PHASE2_NON_MANIFEST_REVIEW.md`        | 非 MANIFEST 文件删留审查                                                         |
-| `docs/quality/ROUND2_REPAIR_ALIGNMENT_TRACKER.md`                 | Round2/Round2.5 修复对齐 tracker                                                 |
-| `docs/quality/self_check_and_audit.md`                            | 自检与审计清单                                                                   |
-| `docs/quality/production_live_pilot_policy.md`                    | Batch 2.75 受控生产/live 数据试点门禁；授权、sandbox、raw-only、no-mutation 规则 |
-| `docs/quality/staged_acceptance_policy.md`                        | 分阶段验收策略                                                                   |
-| `docs/quality/BATCH3_STAGED_DOWNSTREAM_GATE.md`                   | Batch 3 staged-only 下游 gate 语义                                               |
-| `docs/quality/LOOP_ENGINEERING_TASK_FLOW_REFACTOR_PLAN.md`        | Loop Engineering 任务流程改造方案                                                |
-| `docs/quality/KNOWN_PYTEST_SKIPS.md`                              | 已知 pytest skip 登记                                                            |
-| `docs/quality/PONYTAIL_MODULE_SCAN_20260622.md`                   | Ponytail 模块扫描记录                                                            |
-| `docs/quality/ROUND3_BATCH25_PENDING_FIX_REGISTRY.md`             | Batch 2.5 待修复登记                                                             |
-| `docs/quality/adversarial_audit_report.md`                        | 对抗性审计总报告                                                                 |
-| `docs/quality/adversarial_audit_post14_contract_ponytail_lane.md` | Post-14 契约 ponytail lane 审计                                                  |
-| `docs/quality/adversarial_audit_post14_master_fix_manifest.md`    | Post-14 master fix manifest 审计                                                 |
-| `docs/quality/adversarial_audit_post14_ops_data_lane.md`          | Post-14 ops/data lane 审计                                                       |
-| `docs/quality/batch275_user_authorization_2026-06-21.md`          | Batch 2.75 用户授权记录                                                          |
-| `docs/quality/prompt14_user_authorization_2026-06-22.md`          | PROMPT_14 用户授权记录                                                           |
-| `docs/quality/r3g03_mass_rehearsal_report.md`                     | R3G-03 五源 mass rehearsal 报告（原 `research/r3g03_mass_rehearsal_report.md`）  |
-| `docs/quality/r3g03_mass_rehearsal_gap_analysis.md`               | R3G-03 rehearsal 差距分析（原 `research/r3g03_mass_rehearsal_gap_analysis.md`）  |
+| 路径                                           | 用途                                                                                |
+| ---------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `docs/quality/待修复清单.md`                   | 全项目开放待修复 SSOT                                                               |
+| `docs/quality/final_package_rules.md`          | 最终发布包规则                                                                      |
+| `docs/quality/PENDING_USER_DECISIONS.md`       | 用户已拍板 D-01 至 D-12，执行角色不得反复询问                                       |
+| `docs/quality/production_live_pilot_policy.md` | Batch 2.75 受控生产/live 数据试点门禁；授权、sandbox、raw-only、no-mutation 规则    |
+| `docs/quality/staged_acceptance_policy.md`     | 分阶段验收策略                                                                      |
+| `docs/quality/KNOWN_PYTEST_SKIPS.md`           | 已知 pytest skip 登记                                                               |
+| `rules/GLOBAL_TESTING_POLICY.md` §7            | 测试五字段 docstring 规范与 CI 门禁（`tests/test_docstring_quadruple_coverage.py`） |
 
 ### 4.8 Schema 迁移说明 `docs/schema/`
 
 | 路径                                | 用途                                     |
 | ----------------------------------- | ---------------------------------------- |
 | `docs/schema/MIGRATION_COVERAGE.md` | 设计 schema 与已应用 migrations 覆盖矩阵 |
-| `docs/schema/MIGRATION_008_PLAN.md` | migration 008 DB CHECK constraints 计划  |
 
 ### 4.9 实施任务包 `docs/implementation_tasks/`
 
@@ -224,7 +208,7 @@
 | `docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md`        | 全局执行规则                                                              |
 | `docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md`        | 全局资源限制                                                              |
 | `docs/implementation_tasks/GLOBAL_TASK_TEMPLATE.md`          | 任务模板                                                                  |
-| `docs/implementation_tasks/GLOBAL_TESTING_POLICY.md`         | 全局测试政策                                                              |
+| `rules/GLOBAL_TESTING_POLICY.md`                             | 全局测试政策                                                              |
 | `docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md` | 未解决项与任务卡覆盖映射（活）                                            |
 
 #### 4.9.2 历史归档索引（`legacy-pre-module-v2-20260702/`）
@@ -383,10 +367,6 @@
 | `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/BATCH_3V_HARDENING_RULES.md`      | Batch 3V 硬化规则                        |
 | `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/BATCH_3V_SELF_CHECK.md`           | 静态自检与 dispatch 门禁                 |
 | `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/BATCH_3V_ADVERSARIAL_AUDIT.md`    | 任务卡对抗审计                           |
-| `docs/quality/coordination/BATCH_3V_COORDINATOR_PLAYBOOK_POINTER.md`                                                                                              | Playbook 索引指针                        |
-| `docs/quality/coordination/BATCH_3V_ZERO_OPEN_CLOSURE_POLICY.md`                                                                                                  | 零遗留闭合策略                           |
-| `docs/quality/coordination/BATCH_3V_PLAYBOOK_ADVERSARIAL_AUDIT.report.md`                                                                                         | Playbook 对抗审计报告                    |
-| `docs/quality/quant_monitor_desk_verified_audit_report_2026-06-25_v3_INDEX.md`                                                                                    | Verified audit v3 `VR-*` 路由索引        |
 
 ### 4.12 模块闭环队列 v2（活票 · Plan 冻结时建目录）
 
@@ -513,7 +493,7 @@
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
 | 项目总体与边界               | `docs/architecture/00_project_overview.md`、`docs/architecture/01_context_and_scope.md`、`docs/architecture/02_solution_strategy.md`       | `specs/contracts/runtime_flow_contract.yaml`                                                                                                        | `docs/START_HERE.md`、`docs/INDEX.md`、`docs/quality/PENDING_USER_DECISIONS.md`                                                                                                                                                                                                                       | 全仓库；先不要改代码                                                                           |
 | 目录结构与模块边界           | `docs/architecture/05_module_map.md`、`docs/architecture/07_project_directory_structure.md`、`docs/architecture/module_boundary_matrix.md` | `specs/contracts/module_boundary_contract.yaml`                                                                                                     | `scripts/check_module_boundaries.py`、`tests/test_module_boundaries.py`                                                                                                                                                                                                                               | `backend/app/**`、`frontend/src/**`                                                            |
-| 数据架构 / DuckDB / Parquet  | `docs/architecture/04_data_architecture.md`、`docs/modules/duckdb_and_parquet.md`                                                          | `specs/schema/schema.sql`                                                                                                                           | `docs/schema/MIGRATION_COVERAGE.md`、`docs/schema/MIGRATION_008_PLAN.md`、`tests/test_schema_contract.py`                                                                                                                                                                                             | `backend/app/db/`、`backend/app/storage/`、`data/duckdb/`、`data/parquet/`                     |
+| 数据架构 / DuckDB / Parquet  | `docs/architecture/04_data_architecture.md`、`docs/modules/duckdb_and_parquet.md`                                                          | `specs/schema/schema.sql`                                                                                                                           | `docs/schema/MIGRATION_COVERAGE.md`、`tests/test_schema_contract.py`                                                                                                                                                                                                                                  | `backend/app/db/`、`backend/app/storage/`、`data/duckdb/`、`data/parquet/`                     |
 | QMD Ops DB Inspect CLI       | `docs/ops/db_inspect_cli.md`                                                                                                               | `specs/contracts/ops_db_inspect_contract.yaml`                                                                                                      | **活票 M-DATA-03**（`PROJECT_IMPLEMENTATION_ROADMAP.md` §3.1）；**历史** `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND3_BATCH_IMPLEMENTATION_MAP.md`、`docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND3_EARLY_CLOSE_PLAN.md`、`docs/ROUND3_HANDOFF.md` | `backend/app/ops/`、`backend/app/cli/`、`scripts/`、`tests/`                                   |
 | WriteManager / 写入并发      | `docs/modules/write_manager.md`                                                                                                            | `specs/contracts/write_contract.yaml`                                                                                                               | `docs/decisions/ADR-001-ingestion-validation-write-transaction-boundary.md`、`docs/ops/lock_and_concurrency_policy.md`                                                                                                                                                                                | `backend/app/storage/`、`backend/app/db/write_manager.py`、`backend/app/db/validation_gate.py` |
 | Raw Store / 本地文件         | `docs/modules/local_file_system.md`                                                                                                        | `specs/contracts/snapshot_lineage_contract.yaml`                                                                                                    | `docs/ops/privacy_retention_policy.md`                                                                                                                                                                                                                                                                | `backend/app/storage/`、`data/raw/`、`data/files/`、`data/audit/`                              |
@@ -569,6 +549,5 @@
 | 最终发布                     | `docs/quality/final_package_rules.md`、`specs/contracts/release_cleanup_allowlist.yaml`                                                                                                | allowlist、dry-run、manifest                               |
 | Round3 批次计划（根目录）    | `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND3_BATCH_IMPLEMENTATION_MAP.md`                                                                                   | 2026-07-02 自根目录迁入；`repo_path_resolve.py` 自动路由   |
 | 历史 ROUND/Wave 任务卡       | `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_*`                                                                                                              | 只读证据；活 SSOT → `PROJECT_IMPLEMENTATION_ROADMAP.md` §3 |
-| R3G-03 mass rehearsal 报告   | `docs/quality/r3g03_mass_rehearsal_report.md`、`docs/quality/r3g03_mass_rehearsal_gap_analysis.md`                                                                                     | 原 `research/r3g03_*` 迁入 `docs/quality/`                 |
 | 模块闭环活票（v2）           | `PROJECT_IMPLEMENTATION_ROADMAP.md` §3 · `docs/implementation_tasks/M_*`（待建，见 §4.12）                                                                                             | M-DATA-03 → M-G\* → M-PASS-01 队列                         |
 | Round4 B04 产品化            | `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_4_API_FRONTEND_AGENT_BACKTEST/BATCH_04_VERIFIED_AUDIT_PRODUCTIZATION/BATCH_04_TASK_CARD_MANIFEST.md`            | **须 M-PASS-01 后**开工；I 组 I1–I8                        |

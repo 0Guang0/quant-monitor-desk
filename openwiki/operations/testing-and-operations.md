@@ -24,7 +24,7 @@ npm run test
 npm run build
 ```
 
-`docs/ops/verification_commands.md` includes a fuller Windows-oriented gate list with coverage, ruff format, production gate, DB init, registry sync, and ingestion smoke. Some entries in existing ops docs reference scripts/tests that were not present during this OpenWiki init, so confirm paths before copying commands into automation.
+`docs/ops/verification_commands.md` includes a fuller Windows-oriented gate list with coverage, ruff format, production gate, DB init, registry sync, and ingestion smoke. Confirm older docs before copying commands into automation, especially after the recent move from retired implementation-task docs to `rules/`.
 
 ## Test organization
 

@@ -1,8 +1,12 @@
 # OpenWiki Quickstart
 
-Quant Monitor Desk is a local-first quantitative monitoring console. Its stated workflow is `Trusted data -> Multi-layer modeling -> Evidence monitoring -> Agent summary -> Human review`, and the README is explicit that day-one scope is not automatic trading. The stack is Python 3.11+, FastAPI, DuckDB, Pydantic, YAML/SQL contracts, and a Vite/React/TypeScript frontend shell. See `README.md`, `pyproject.toml`, and `frontend/package.json`.
+Quant Monitor Desk is a local-first quantitative monitoring console. The product workflow in `README.md` is:
 
-Most implemented behavior today is in the backend data platform and CLI paths, not in the web UI. `backend/app/main.py` exposes a small `/health` FastAPI shell, and `frontend/src/App.tsx` is still a placeholder dashboard that says the UI must be confirmed before production. The dense runtime surface is the data-source registry/routing layer, sync orchestration, DuckDB validation/write path, operations scripts, and Layer 1-5 modeling modules.
+```text
+Trusted data -> Multi-layer modeling -> Evidence monitoring -> Agent summary -> Human review
+```
+
+The README is explicit that the first version is not an automatic trading system. The implemented system is currently strongest in the backend data platform: source registries, route planning, ingestion/sync jobs, DuckDB schema/migrations, validation gates, write auditing, resource limits, and Layer 1-5 modeling modules. The FastAPI and frontend surfaces are still small shells: `backend/app/main.py` exposes `/health`, and `frontend/src/App.tsx` is a placeholder dashboard that says production UI needs user confirmation.
 
 ## Start here by task
 
@@ -13,18 +17,19 @@ Most implemented behavior today is in the backend data platform and CLI paths, n
 - Setup, tests, CI, operations: [operations/testing-and-operations.md](operations/testing-and-operations.md)
 - Guidance for future coding agents: [agent-guide.md](agent-guide.md)
 
-Existing documentation is still important. Use `docs/START_HERE.md` as the role router, `docs/INDEX.md` as the detailed documentation index, `MIGRATION_MAP.md` as the broad design/spec map, and `docs/modules/README.md` to distinguish authoritative module docs from compatibility links.
+Existing documentation remains important. Use `docs/START_HERE.md` as the role router, `docs/INDEX.md` as the detailed documentation index, `MIGRATION_MAP.md` as the broad design/spec map, and `docs/modules/README.md` to distinguish authoritative module docs from compatibility links.
 
 ## Repository shape
 
-- `backend/app/`: Python application code. Major areas include `cli/`, `datasources/`, `db/`, `sync/`, `ops/`, `storage/`, `validation/`, and Layer 1-5 packages.
+- `backend/app/`: Python application code. Major areas include `cli/`, `datasources/`, `db/`, `sync/`, `ops/`, `storage/`, `validation/`, `validators/`, `agents/`, `notifications/`, and Layer 1-5 packages.
 - `frontend/`: Vite React shell. Current UI is placeholder only.
 - `specs/`: machine-readable contracts, schema, datasource registry specs, model-input specs, and layer specs.
-- `docs/`: architecture, module, operation, quality, decision, and implementation-task documentation.
-- `configs/`: local runtime YAML such as datasource, alert, resource limits, and Layer 1 axis config.
+- `docs/`: architecture, module, operation, quality, decision, API, schema, and registry documentation.
+- `rules/`: current global execution, testing, and resource-limit rules moved out of the retired implementation-task tree.
+- `configs/`: local runtime YAML such as datasource, alert, resource limits, QMT, market registry, and Layer 1 axis config.
 - `scripts/`: packaged and CI/ops entry scripts such as DB init, registry sync, production gate, smoke scripts, and `qmd_ops`.
-- `tests/`: large pytest suite covering adapters, sync, schema, live gates, layers, data health, CLI, resource guard, and production contracts.
-- `data/`: runtime data roots for DuckDB, raw files, parquet, cache, logs, reports. Treat as local runtime state.
+- `tests/`: broad pytest suite covering adapters, sync, schema, live gates, layers, data health, CLI, resource guard, and production contracts.
+- `data/`: local runtime state for DuckDB, raw files, parquet, cache, logs, reports, and audit artifacts. Treat it as runtime data, not source.
 
 ## First local setup
 
@@ -48,22 +53,23 @@ npm run test
 npm run build
 ```
 
-GitHub CI currently installs Python with `pip install -e ".[dev]"` before pytest/ruff/compileall and runs frontend `npm ci`, `npm audit --audit-level=high`, typecheck, tests, and build in `.github/workflows/ci.yml`. Treat the README/docs `uv` path as the project-preferred local path and the CI workflow as the current hosted implementation.
+GitHub CI currently uses `pip install -e ".[dev]"` before pytest/ruff/compileall and runs frontend `npm ci`, `npm audit --audit-level=high`, typecheck, tests, and build in `.github/workflows/ci.yml`. Treat the README/docs `uv` path as the project-preferred local path and the CI workflow as the current hosted implementation.
 
 ## Current implementation status
 
-- FastAPI: shell health app in `backend/app/main.py`; narrative API docs exist under `docs/api/`, but current route surface is small.
-- Frontend: placeholder shell in `frontend/src/App.tsx`; README decision D-08 says final UI needs user confirmation before production implementation.
-- Data platform: substantial. `backend/app/datasources/service.py`, `route_planner.py`, `sync/orchestrator.py`, `db/write_manager.py`, and migrations under `backend/app/db/migrations/` are the main runtime paths.
-- Live data: fail-closed by default. `QMD_ALLOW_LIVE_FETCH` and resource checks gate product live fetches; Tier A/B/C routing is implemented in `backend/app/datasources/live_tier_router.py`.
-- Agent behavior: read-only by design. The docs and contracts forbid direct clean-table writes, arbitrary SQL, free web fetches, and action semantics.
+- FastAPI: health shell in `backend/app/main.py`. Design docs under `docs/api/` describe intended routes, but do not assume those routes are mounted until source confirms it.
+- Frontend: placeholder shell in `frontend/src/App.tsx`. README decision D-08 says final information architecture and interactions need user confirmation before production implementation.
+- CLI: `qmd-data`, `qmd-ops`, `qmd-init-db`, and `qmd-sync-registry` are declared in `pyproject.toml`.
+- Data platform: substantial. Start with `backend/app/datasources/service.py`, `backend/app/datasources/route_planner.py`, `backend/app/sync/orchestrator.py`, `backend/app/db/write_manager.py`, `backend/app/db/validation_gate.py`, and migrations under `backend/app/db/migrations/`.
+- Live data: fail-closed by default. Product live fetch requires `QMD_ALLOW_LIVE_FETCH` opt-in, ResourceGuard approval, required authorization/credentials, and isolated acceptance roots where applicable.
+- Agent behavior: read-only by design. Docs and contracts forbid direct clean-table writes, arbitrary SQL, free web fetches, factual override by model text, and action semantics.
 
 ## Source authority rules
 
-Prefer current source and contracts over older planning material when they disagree. The root README says `docs/` and `specs/` are authoritative design/contract areas and warns that older Round/Wave/DCP task cards are read-only evidence, not execution order. `docs/modules/README.md` also marks some merged module docs as compatibility-only.
+Prefer current source and machine-readable contracts under `specs/` when older planning material conflicts. The README says `docs/` and `specs/` are design/contract areas, not runtime code locations, and warns that old Round/Wave/DCP task cards are read-only evidence. Recent git history moved active global rules to `rules/`; use that directory for current execution/testing/resource rules.
 
-Do not read or document secret values. `.env` exists but should not be read. Use `.env.example`, `docs/ops/config_secret_policy.md`, and environment variable names in source when configuration guidance is needed.
+Do not read or document secret values. `.env` exists locally and should not be read. Use `.env.example`, `docs/ops/config_secret_policy.md`, and environment variable names in source when configuration guidance is needed.
 
 ## Recent repository direction
 
-Recent git history inspected during this OpenWiki init includes cleanup of Trellis/Loop workflow docs and M-DATA-03/Tier A-B-C live acceptance work. That matches the current source emphasis on isolated live acceptance, route planning, product live gates, and incremental evidence artifacts.
+Recent git history inspected during this OpenWiki init includes retirement of older Trellis/Loop and implementation-task docs, initialization of the OpenWiki/agent pointers, and live-data acceptance cleanup. That matches the current code emphasis on compact authority docs, route planning, isolated live acceptance, fail-closed product live gates, and auditable incremental evidence.

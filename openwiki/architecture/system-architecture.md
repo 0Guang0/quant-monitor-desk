@@ -12,7 +12,7 @@ Quant Monitor Desk is organized around a local data platform with web and UI she
 
 ## Backend package map
 
-- `backend/app/config.py`: project/config roots and resource profile environment handling. It loads `.env` if present, so do not document secret values from local env files.
+- `backend/app/config.py`: project/config roots and resource profile environment handling. It loads root `.env` if present, so do not read or document secret values from local env files.
 - `backend/app/core/`: resource guard, API limits, snapshot lineage.
 - `backend/app/datasources/`: source registry, capability registry, route planning, live tier routing, product live gates, adapters, fetch ports, normalizers, provider catalog.
 - `backend/app/sync/`: orchestration, job state machine, validation/write pipelines, runners, scheduler, watermark, indicator binding.

@@ -1,6 +1,6 @@
 """DEPRECATED — 禁止用于 Round3 docstring 卫生。
 
-批量套话无审计价值；请按 docs/quality/ROUND3_TEST_DOCSTRING_HYGIENE_PLAN.md 人工润色。
+批量套话无审计价值；请按 rules/GLOBAL_TESTING_POLICY.md §7 人工润色。
 保留本文件仅供历史参考，勿在 CI/任务中调用。
 """
 

@@ -276,19 +276,9 @@
       "sha256": "ca764a8c49b3c42464c89d69af684c1813c70e60e43d4bebec052bf16c40e9ce"
     },
     {
-      "path": "docs/quality/REPAIR_EXECUTION_SELF_CHECK.md",
-      "size_bytes": 11440,
-      "sha256": "fecc2983e785ef58493d1787132aad141698a7c1531459d9e2f0257749d1950e"
-    },
-    {
       "path": "docs/quality/final_package_rules.md",
       "size_bytes": 3103,
       "sha256": "649ecd6b5d736ef6836c70364f35106670ec121f4bfc1c39035f4d890af16bfc"
-    },
-    {
-      "path": "docs/quality/self_check_and_audit.md",
-      "size_bytes": 2263,
-      "sha256": "020d570be9e6b0ac8d80d8434126b413f99f42695435553b137447c62c0173e1"
     },
     {
       "path": "docs/quality/staged_acceptance_policy.md",

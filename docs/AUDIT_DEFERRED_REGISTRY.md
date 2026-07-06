@@ -4,9 +4,7 @@
 
 > Last reconciled: 2026-07-02 Wave 4 四轨 merge 完成（R3-DCP-07/08/09/10 合入 master）；prior R3-DCP-05 @ `c2258363`；prior 2026-07-01 @ `93b2c82`。
 
-**Batch 2.5 audit 待修复台账（含合理延期清理阶段）:** [`docs/quality/ROUND3_BATCH25_PENDING_FIX_REGISTRY.md`](quality/ROUND3_BATCH25_PENDING_FIX_REGISTRY.md)  
 **待修复清单（全项目 SSOT）:** [`docs/quality/待修复清单.md`](quality/待修复清单.md)  
-**Batch 6 / 021 Layer3 待偿还台账:** [`docs/quality/ROUND3_BATCH6_021_PENDING_FIX_REGISTRY.md`](quality/ROUND3_BATCH6_021_PENDING_FIX_REGISTRY.md)  
 **ingestion 拆分回滚方案（后置）:** [`docs/architecture/layer1_ingestion_refactor_rollback_plan.md`](architecture/layer1_ingestion_refactor_rollback_plan.md)
 
 ## Resolution policy (mandatory)
@@ -22,11 +20,11 @@ Every issue MUST be in exactly one state:
 **Rules:**
 
 1. **Non-blocking ≠ abandoned.** If an item does not block task 017, it still needs `Resolution phase`, `Task hook`, and `Closure test`.
-2. **No silent drift.** Undocumented gaps are violations; add a row here (or in `ROUND2_REPAIR_ALIGNMENT_TRACKER.md` for R2.5-only) before merge.
+2. **No silent drift.** Undocumented gaps are violations; add a row here (or in `docs/quality/待修复清单.md`) before merge.
 3. **Phase names must be actionable:** prefer task IDs (`017`…`035`) or Trellis slug over vague “later”.
 4. **Registry wins on conflict** with narrative docs; update narratives to link here.
 
-**Companion docs:** `docs/UNRESOLVED_ISSUES_REGISTRY.md` (current unresolved/deferred split) · `docs/RESOLVED_ISSUES_REGISTRY.md` (closed items split) · `docs/quality/ROUND2_REPAIR_ALIGNMENT_TRACKER.md` (R2.5 + Round 4 contract tables) · `ROUND2_GAPS_AND_DEVIATIONS.md` (narrative) · `ROUND3_HANDOFF.md` (gate).
+**Companion docs:** `docs/UNRESOLVED_ISSUES_REGISTRY.md` (current unresolved/deferred split) · `docs/RESOLVED_ISSUES_REGISTRY.md` (closed items split) · `docs/quality/待修复清单.md` (open fix ledger SSOT) · `ROUND2_GAPS_AND_DEVIATIONS.md` (narrative) · `ROUND3_HANDOFF.md` (gate).
 
 ---
 

@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from backend.app.config import DATA_ROOT, PROJECT_ROOT
 
-DEFAULT_AUTHORIZATION_PATH = PROJECT_ROOT / "docs/quality/batch275_user_authorization_2026-06-21.md"
 DEFAULT_PRODUCTION_DB = DATA_ROOT / "duckdb" / "quant_monitor.duckdb"
+LIVE_PILOT_AUTHORIZATION_ENV = "QMD_LIVE_PILOT_AUTHORIZATION"
 
 PHASE1_BASELINE_JSON = "phase1_baseline_inventory.json"
 PHASE1_BASELINE_MD = "phase1_baseline_inventory.md"

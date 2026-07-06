@@ -20,7 +20,6 @@ from backend.app.ops.live_pilot_auth import (
     validate_authorization,
 )
 from backend.app.ops.live_pilot_constants import (
-    DEFAULT_AUTHORIZATION_PATH,
     DEFAULT_PRODUCTION_DB,
     DEFAULT_SANDBOX_ROOT,
     EASTMONEY_VERDICT_MD,

@@ -603,4 +603,4 @@ Wave 平铺细节、3F-R/3G 任务卡路径、原 §5.0.6 完整表格 → **`do
 | R3-DCP-10     | CLOSED | G5,A3        | **仅** mootdx provenance | **M-G5-FULL**           |
 | R3H-05A..E    | —      | 全表         | 审计切片                 | **M-PASS-01 单票内**    |
 
-**旧 `/to-issues` 索引：** `R3_DCP_TO_ISSUES_INDEX.md` · `WAVE0_BATCH3V_TO_ISSUES_INDEX.md`（格式范例仍有效；**路由**须改 §3.7 活票路径）。历史 Wave 验收报告见 `docs/quality/acceptance/WAVE3_PRODUCTION_ACCEPTANCE_REPORT.md`（只读）。
+**旧 `/to-issues` 索引：** `R3_DCP_TO_ISSUES_INDEX.md` · `WAVE0_BATCH3V_TO_ISSUES_INDEX.md`（格式范例仍有效；**路由**须改 §3.7 活票路径）。历史 Wave 验收证据见 `docs/RESOLVED_ISSUES_REGISTRY.md` 与路线图附录 C（只读）。

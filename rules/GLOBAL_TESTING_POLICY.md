@@ -85,7 +85,7 @@ resourceGuard_lowDisk_shouldPauseBackfill
 
 ## 7. 测试函数 docstring（五字段 · 新增/修改 `test_*` 必填）
 
-**权威细则与门禁：** `docs/quality/ROUND3_TEST_DOCSTRING_HYGIENE_PLAN.md` · `tests/test_docstring_quadruple_coverage.py`
+**CI 门禁：** `tests/test_docstring_quadruple_coverage.py`
 
 每个 `test_*` 函数 docstring **必须**包含以下五行（通俗中文；第三行标签写 **`目的/目标：`** 或 **`目的：`**）：
 

@@ -12,7 +12,7 @@ Runtime data is under `data/` by default, from `DATA_ROOT` in `backend/app/confi
 - `data/cache/`: temporary cache.
 - `data/logs/`, `data/audit/`, `data/reports/`: local operational artifacts.
 
-Configuration roots default to `configs/`, with contracts and specs in `specs/`. Do not treat `docs/` or `specs/` as runtime code locations.
+Configuration roots default to `configs/`, with contracts and specs in `specs/`. Do not treat `docs/` or `specs/` as runtime code locations. Current source loads the authoritative datasource registry through `SourceRegistry` from `specs/datasource_registry/source_registry.yaml`; one `scripts/init_db.py` hint still mentions `configs/sources.yaml`, which appears to be stale wording.
 
 ## Schema and migrations
 

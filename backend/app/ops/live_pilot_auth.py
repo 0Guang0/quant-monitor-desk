@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Any
 
@@ -10,8 +11,8 @@ from backend.app.datasources.source_registry import SourceNotFoundError, SourceR
 from backend.app.ops.live_pilot_constants import (
     APPROVED_PILOT_REQUESTS,
     APPROVED_PILOT_REQUEST_ENVELOPES,
-    DEFAULT_AUTHORIZATION_PATH,
     DISABLED_PILOT_SOURCE_IDS,
+    LIVE_PILOT_AUTHORIZATION_ENV,
     MAX_PILOT_ROW_CAP,
 )
 from backend.app.ops.live_pilot_types import (
@@ -20,6 +21,15 @@ from backend.app.ops.live_pilot_types import (
     LivePilotRequest,
     LivePilotRouteNotReadyError,
 )
+
+def _default_authorization_evidence() -> str:
+    env = os.environ.get(LIVE_PILOT_AUTHORIZATION_ENV, "").strip()
+    if not env:
+        raise LivePilotAuthorizationError(
+            f"set {LIVE_PILOT_AUTHORIZATION_ENV} to a user authorization markdown path"
+        )
+    return env
+
 
 def _resolve_authorization_path(path: str) -> Path:
     candidate = Path(path)
@@ -37,9 +47,9 @@ def validate_authorization(request: LivePilotRequest) -> None:
         )
 
     auth_text = auth_path.read_text(encoding="utf-8")
-    if "batch275_user_authorization" not in auth_path.name:
+    if "_user_authorization_" not in auth_path.name:
         raise LivePilotAuthorizationError(
-            f"authorization evidence must be batch275 user authorization file: {auth_path.name}"
+            f"authorization evidence must be a *_user_authorization_* markdown file: {auth_path.name}"
         )
     if "Approved on" not in auth_text:
         raise LivePilotAuthorizationError("authorization evidence missing approval marker")
@@ -88,8 +98,8 @@ def assert_pilot_ready_before_fetch(request: LivePilotRequest) -> None:
 
 
 def approved_pilot_requests() -> tuple[LivePilotRequest, ...]:
-    """Three user-authorized micro-pilot requests from batch275 authorization file."""
-    auth = "docs/quality/batch275_user_authorization_2026-06-21.md"
+    """Three user-authorized micro-pilot requests; path from QMD_LIVE_PILOT_AUTHORIZATION."""
+    auth = _default_authorization_evidence()
     return (
         LivePilotRequest(
             source_id="baostock",

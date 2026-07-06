@@ -12,7 +12,7 @@ Important command properties from source:
 - `sync` defaults to `--dry-run=True`.
 - `backfill`, `full-load`, `live-fetch`, `scheduler run`, `incremental`, and `revision-audit` also default to dry-run where applicable.
 - Non-dry-run sync is narrow. For many domains it fails with `USER_AUTH_REQUIRED` unless a specific implemented path and operator/live/sandbox gates are satisfied.
-- `macro_series` with `source_id=fred` has a live incremental path, but it requires product live opt-in, ResourceGuard OK, required credentials or mock settings, and sandbox DB checks.
+- `macro_series` with `source_id=fred` has a live incremental path, but it requires product live opt-in, ResourceGuard OK, required credentials or mock settings, and sandbox/isolated DB checks.
 
 ## Route planning
 
