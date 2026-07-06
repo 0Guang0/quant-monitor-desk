@@ -53,6 +53,10 @@ class WriteRequest:
     partition_keys: tuple[str, ...] = ()
     conflict_report_id: str | None = None
     source_role: str = "primary"
+    source_switched: bool = False
+    quality_flags: tuple[str, ...] = ()
+    stale_reason: str | None = None
+    fallback_reason: str | None = None
     allow_partial_write: bool = False
     requested_by: str = "system"
 
@@ -154,7 +158,8 @@ class WriteManager:
         if req.write_mode == "append_only":
             return [f"INSERT INTO {target} ({col_sql}) SELECT {col_sql} FROM {staging}"]
         if req.write_mode == "upsert_by_pk":
-            # ponytail: DELETE…EXISTS scans target per PK match; upgrade: MERGE + index (Wave 3 scale)
+            # ponytail: DELETE...EXISTS scans target per PK match;
+            # upgrade: MERGE + index (Wave 3 scale)
             pk_join = " AND ".join(f"{target}.{col} = {staging}.{col}" for col in primary_keys)
             return [
                 f"DELETE FROM {target} WHERE EXISTS (SELECT 1 FROM {staging} WHERE {pk_join})",
@@ -216,8 +221,9 @@ class WriteManager:
                 resolved_conflict,
                 req.source_used,
                 req.source_role,
-                False,
-                None,
+                req.source_switched,
+                # ponytail: reuse stale_reason until a fallback_reason audit column is migrated.
+                req.stale_reason or req.fallback_reason,
                 req.data_domain or None,
                 req.conflict_report_id,
                 req.requested_by,

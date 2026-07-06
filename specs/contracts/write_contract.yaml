@@ -24,7 +24,14 @@ write_request:
     job_id: string
     target_table: string
     staging_table: string
-    write_mode: [append_only, upsert_by_pk, replace_partition, manual_patch, schema_migration]
+    write_mode:
+      [
+        append_only,
+        upsert_by_pk,
+        replace_partition,
+        manual_patch,
+        schema_migration,
+      ]
     data_domain: string
     primary_keys: list[string]
     partition_keys: list[string]
@@ -32,8 +39,17 @@ write_request:
     conflict_report_id: string|null
     source_used: string
     source_role: [primary, validation, fallback, derived]
+    source_switched: boolean
+    quality_flags: list[string]
+    stale_reason: string|null
+    fallback_reason: string|null
     allow_partial_write: boolean
-    requested_by: [sync_job, backfill_job, revision_audit_job, human, snapshot_job]
+    requested_by:
+      [sync_job, backfill_job, revision_audit_job, human, snapshot_job]
+  audit_mapping:
+    source_switched: write_audit_log.source_switched
+    stale_reason: write_audit_log.stale_reason
+    fallback_reason: write_audit_log.stale_reason
 validation_gate:
   reject_if:
     - validation_status == FAILED
