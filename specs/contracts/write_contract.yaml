@@ -56,3 +56,4 @@ validation_gate:
     - source_conflict_severity == severe
     - manual_review_required == true and write_mode != manual_patch
     - schema_hash_changed == true and schema_change_approved != true
+    - degraded clean write lacks source_role validation|fallback, source_switched=true, quality_flags, and stale_reason|fallback_reason

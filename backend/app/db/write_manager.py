@@ -90,6 +90,24 @@ class WriteManager:
             raise ValueError("WriteRequest.data_domain is required")
         if req.write_mode == "upsert_by_pk" and not req.primary_keys:
             raise ValueError("upsert_by_pk requires primary_keys")
+        degraded_roles = {"validation", "fallback"}
+        has_degraded_evidence = bool(
+            req.source_role in degraded_roles
+            or req.source_switched
+            or req.quality_flags
+            or req.stale_reason
+            or req.fallback_reason
+        )
+        if not has_degraded_evidence:
+            return
+        if req.source_role not in degraded_roles:
+            raise ValueError("degraded clean write requires source_role validation or fallback")
+        if not req.source_switched:
+            raise ValueError("degraded clean write requires source_switched=True")
+        if not req.quality_flags:
+            raise ValueError("degraded clean write requires quality_flags")
+        if not (req.stale_reason or req.fallback_reason):
+            raise ValueError("degraded clean write requires stale_reason or fallback_reason")
 
     def _validated_tables(self, req: WriteRequest) -> tuple[str, str, list[str]]:
         target = quote_ident(req.target_table)
