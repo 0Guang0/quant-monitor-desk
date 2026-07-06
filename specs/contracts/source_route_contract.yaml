@@ -21,6 +21,7 @@ objects:
       - data_domain
       - operation
       - route_status
+      - route_grade
       - selected_source_id
       - candidates
       - quality_flags
@@ -32,9 +33,17 @@ objects:
       - CAPABILITY_MISSING
       - USER_AUTH_REQUIRED
       - RESOURCE_GUARD_PAUSED
+      - VALIDATION_ONLY_BLOCKED
+    route_grade_values:
+      - primary
+      - degraded
+      - blocked
 rules:
   - every fetch job must generate SourceRoutePlan before adapter construction
   - selected_source_id must be null unless route_status=READY
+  - route_grade must be primary only when route_status=READY and no fallback/validation quality flag is present
+  - route_grade must be degraded when route_status=READY and SOURCE_FALLBACK_USED or VALIDATION_SOURCE_USED is present
+  - route_grade must be blocked when route_status is not READY
   - fallback use must add quality_flags=[SOURCE_FALLBACK_USED]
   - skipped disabled sources must include disabled_reason
   - qmt_xtdata/qmt_xqshare skip must explain missing user authorization or missing env
@@ -57,3 +66,6 @@ required_tests:
   - tests/test_source_route_planner.py::test_fallbackAddsQualityFlag
   - tests/test_source_route_planner.py::test_r3h01_officialMacroRoute_disabledByDefault
   - tests/test_sync_orchestrator.py::test_plannedJobWritesRoutePlanBeforeFetching
+  - tests/test_source_route_models.py::test_sourceRoutePlan_readyPrimary_payloadIncludesPrimaryRouteGrade
+  - tests/test_source_route_models.py::test_sourceRoutePlan_readyFallback_payloadIncludesDegradedRouteGrade
+  - tests/test_source_route_models.py::test_sourceRoutePlan_blockedStatus_payloadIncludesBlockedRouteGrade

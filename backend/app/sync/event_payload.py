@@ -19,6 +19,7 @@ SCHEMA_KEYS = (
     "run_id",
     "job_id",
     "route_status",
+    "route_grade",
     "selected_source_id",
     "quality_flags",
     "candidates",

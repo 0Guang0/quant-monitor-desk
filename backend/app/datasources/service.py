@@ -12,12 +12,12 @@ from backend.app.core.resource_guard import Decision, ResourceGuard, format_paus
 from backend.app.datasources.adapters import create_adapter
 from backend.app.datasources.adapters.fetch_port import FetchPort, StubFetchPort
 from backend.app.datasources.base_adapter import BaseDataAdapter
-from backend.app.datasources.exceptions import AdapterConfigurationError
 from backend.app.datasources.capability_registry import (
     OperationDisabledError,
     SourceCapabilityRegistry,
     UnknownCapabilityError,
 )
+from backend.app.datasources.exceptions import AdapterConfigurationError
 from backend.app.datasources.fetch_log import FetchLogWriter
 from backend.app.datasources.fetch_result import FetchRequest, FetchResult
 from backend.app.datasources.route_models import SourceRoutePlan
@@ -171,6 +171,7 @@ class DataSourceService:
             blocked_plan = replace(
                 plan,
                 route_status="RESOURCE_GUARD_PAUSED",
+                route_grade=None,
                 selected_source_id=None,
             )
             if job_id:
@@ -185,7 +186,9 @@ class DataSourceService:
             and self._fetch_port is not None
             and plan.route_status in {"VALIDATION_ONLY_BLOCKED", "DISABLED_SOURCE"}
         )
-        if (plan.route_status != "READY" or plan.selected_source_id is None) and not staged_route_override:
+        if (
+            plan.route_status != "READY" or plan.selected_source_id is None
+        ) and not staged_route_override:
             result = FetchResult(
                 run_id=req.run_id,
                 source_id=req.source_id,
@@ -264,7 +267,10 @@ class DataSourceService:
         return result
 
 
-def _augment_plan_with_requested_source(plan: SourceRoutePlan, requested_source_id: str) -> SourceRoutePlan:
+def _augment_plan_with_requested_source(
+    plan: SourceRoutePlan,
+    requested_source_id: str,
+) -> SourceRoutePlan:
     if (
         plan.route_status == "READY"
         and plan.selected_source_id

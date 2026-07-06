@@ -28,10 +28,15 @@ class SourceRoutePlan:
     operation: str
     route_status: str
     selected_source_id: str | None
+    route_grade: str | None = None
     candidates: list[SourceRouteCandidate] = field(default_factory=list)
     quality_flags: list[str] = field(default_factory=list)
     requested_source_id: str | None = None
     created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
+
+    def __post_init__(self) -> None:
+        if self.route_grade is None:
+            self.route_grade = infer_route_grade(self.route_status, self.quality_flags)
 
     @classmethod
     def new_id(cls) -> str:
@@ -43,6 +48,7 @@ class SourceRoutePlan:
             "run_id": self.run_id,
             "job_id": self.job_id,
             "route_status": self.route_status,
+            "route_grade": self.route_grade,
             "selected_source_id": self.selected_source_id,
             "requested_source_id": self.requested_source_id,
             "data_domain": self.data_domain,
@@ -51,3 +57,11 @@ class SourceRoutePlan:
             "candidates": [asdict(c) for c in self.candidates],
             "created_at": self.created_at,
         }
+
+
+def infer_route_grade(route_status: str, quality_flags: list[str]) -> str:
+    if route_status != "READY":
+        return "blocked"
+    if "SOURCE_FALLBACK_USED" in quality_flags or "VALIDATION_SOURCE_USED" in quality_flags:
+        return "degraded"
+    return "primary"
