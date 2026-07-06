@@ -1,0 +1,192 @@
+#!/usr/bin/env python3
+"""Report old acceptance helper consumers for SourceRouteDbAcceptanceSpine migration."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import re
+import sys
+from dataclasses import asdict, dataclass
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+SCAN_ROOTS = ("backend", "scripts", "tests")
+SKIP_DIRS = {
+    ".audit-sandbox",
+    ".git",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".venv",
+    "__pycache__",
+    "data",
+    "frontend",
+    "node_modules",
+    "conversation_history",
+    "task",
+}
+
+
+@dataclass(frozen=True, kw_only=True)
+class ConsumerRule:
+    target: str
+    pattern: re.Pattern[str]
+    classification: str
+    replacement: str
+
+
+@dataclass(frozen=True, kw_only=True)
+class ConsumerHit:
+    target: str
+    classification: str
+    path: str
+    line: int
+    usage: str
+    replacement: str
+
+
+RULES: tuple[ConsumerRule, ...] = (
+    ConsumerRule(
+        target="scripts/production_equivalent_smoke.py",
+        pattern=re.compile(r"production_equivalent_smoke"),
+        classification="smoke_wrapper",
+        replacement="SourceRouteDbAcceptanceSpine Adapter or qmd-ops accept-source-route-db",
+    ),
+    ConsumerRule(
+        target="backend/app/ops/tier_a_live_acceptance.py",
+        pattern=re.compile(r"tier_a_live_acceptance"),
+        classification="source_specific_live_helper",
+        replacement="SourceRouteDbAcceptanceSpine internal Adapter",
+    ),
+    ConsumerRule(
+        target="tests/live_incremental_support.py",
+        pattern=re.compile(r"live_incremental_support"),
+        classification="test_helper",
+        replacement=(
+            "tests may keep helper; product acceptance must use "
+            "SourceRouteDbAcceptanceSpine"
+        ),
+    ),
+    ConsumerRule(
+        target="direct adapter acceptance path",
+        pattern=re.compile(r"\bcreate_test_adapter\s*\("),
+        classification="direct_adapter_helper",
+        replacement=(
+            "DataSourceService for product paths; unit tests may keep explicit test adapters"
+        ),
+    ),
+)
+
+
+def _iter_python_files(root: Path) -> list[Path]:
+    files: list[Path] = []
+    scan_roots = [root / name for name in SCAN_ROOTS if (root / name).is_dir()]
+    if not scan_roots:
+        scan_roots = [root]
+    for scan_root in scan_roots:
+        for dirpath, dirnames, filenames in os.walk(scan_root):
+            dirnames[:] = [name for name in dirnames if name not in SKIP_DIRS]
+            base = Path(dirpath)
+            files.extend(base / name for name in filenames if name.endswith(".py"))
+    return sorted(files)
+
+
+def _usage_kind(path: Path) -> str:
+    rel = path.relative_to(PROJECT_ROOT).as_posix()
+    if rel.startswith("tests/"):
+        return "test"
+    if rel.startswith("scripts/"):
+        return "script"
+    return "product_code"
+
+
+def _is_rule_definition(path: Path, rule: ConsumerRule) -> bool:
+    rel = path.relative_to(PROJECT_ROOT).as_posix()
+    if rel in {
+        "scripts/check_acceptance_helper_consumers.py",
+        "tests/test_acceptance_helper_consumers.py",
+    }:
+        return True
+    if rel == rule.target:
+        return True
+    if rule.classification == "direct_adapter_helper" and rel in {
+        "backend/app/datasources/adapters/__init__.py",
+        "backend/app/datasources/service.py",
+    }:
+        return True
+    return False
+
+
+def collect_consumers(root: Path = PROJECT_ROOT) -> list[ConsumerHit]:
+    hits: list[ConsumerHit] = []
+    for path in _iter_python_files(root):
+        text = path.read_text(encoding="utf-8")
+        for line_no, line in enumerate(text.splitlines(), start=1):
+            stripped = line.strip()
+            if not stripped or stripped.startswith("#"):
+                continue
+            for rule in RULES:
+                if _is_rule_definition(path, rule):
+                    continue
+                if not rule.pattern.search(line):
+                    continue
+                hits.append(
+                    ConsumerHit(
+                        target=rule.target,
+                        classification=rule.classification,
+                        path=path.relative_to(root).as_posix(),
+                        line=line_no,
+                        usage=_usage_kind(path),
+                        replacement=rule.replacement,
+                    )
+                )
+    return hits
+
+
+def build_report(root: Path = PROJECT_ROOT) -> dict[str, object]:
+    consumers = [asdict(hit) for hit in collect_consumers(root)]
+    return {
+        "status": "WARN" if consumers else "PASS",
+        "module": "SourceRouteDbAcceptanceSpine",
+        "mode": "advisory_deprecation_inventory",
+        "consumer_count": len(consumers),
+        "consumers": consumers,
+    }
+
+
+def _format_text(report: dict[str, object]) -> str:
+    lines = [
+        f"status={report['status']}",
+        f"mode={report['mode']}",
+        f"consumer_count={report['consumer_count']}",
+    ]
+    for item in report["consumers"]:
+        consumer = dict(item)
+        lines.append(
+            "{path}:{line} {classification} target={target} usage={usage}".format(**consumer)
+        )
+    return "\n".join(lines)
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--format", choices=["json", "text"], default="json")
+    parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="Return non-zero while old helper consumers remain",
+    )
+    args = parser.parse_args(argv)
+
+    report = build_report()
+    if args.format == "json":
+        print(json.dumps(report, indent=2, sort_keys=True))
+    else:
+        print(_format_text(report))
+    return 1 if args.strict and report["consumer_count"] else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
