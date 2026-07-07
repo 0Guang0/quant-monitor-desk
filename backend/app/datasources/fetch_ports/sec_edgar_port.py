@@ -9,10 +9,12 @@ from __future__ import annotations
 
 import json
 import os
+import time
 import uuid
 from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
+from itertools import islice
 from pathlib import Path
 from typing import Any, Literal
 
@@ -195,13 +197,28 @@ def _pad_cik(cik: str) -> str:
     return str(cik).lstrip("0").zfill(10)
 
 
+_SEC_HTTP_TIMEOUT = 15.0
+_SEC_HTTP_CLIENT: httpx.Client | None = None
+
+
+def _sec_http_client() -> httpx.Client:
+    global _SEC_HTTP_CLIENT
+    if _SEC_HTTP_CLIENT is None:
+        _SEC_HTTP_CLIENT = httpx.Client(timeout=_SEC_HTTP_TIMEOUT)
+    return _SEC_HTTP_CLIENT
+
+
 def _fetch_sec_submissions_json(cik_padded: str, *, user_agent: str) -> dict[str, Any]:
     url = f"https://data.sec.gov/submissions/CIK{cik_padded}.json"
     headers = {"User-Agent": user_agent, "Accept": "application/json"}
     last_error: Exception | None = None
-    for _attempt in range(3):
+    client = _sec_http_client()
+    for attempt in range(3):
         try:
-            response = httpx.get(url, headers=headers, timeout=60.0)
+            response = client.get(url, headers=headers)
+            if response.status_code == 429:
+                time.sleep(2**attempt)
+                continue
             if response.status_code in (401, 403):
                 raise PortError(
                     "USER_AUTH_REQUIRED",
@@ -220,6 +237,7 @@ def _fetch_sec_submissions_json(cik_padded: str, *, user_agent: str) -> dict[str
             raise PortError("NETWORK_ERROR", str(exc)) from exc
         except (httpx.TransportError, json.JSONDecodeError) as exc:
             last_error = exc
+            time.sleep(2**attempt)
             continue
     raise PortError("NETWORK_ERROR", str(last_error)) from last_error
 
@@ -242,9 +260,8 @@ def _sec_live_filings(
     report_dates = recent.get("reportDate") or []
 
     filings: list[dict[str, Any]] = []
-    for idx, accession in enumerate(accession_numbers):
-        if len(filings) >= max_filings:
-            break
+    cik_path = padded.lstrip("0") or "0"
+    for idx, accession in islice(enumerate(accession_numbers), max_filings):
         filing_date = filing_dates[idx] if idx < len(filing_dates) else ""
         row = {
             "accession_number": str(accession),
@@ -253,7 +270,7 @@ def _sec_live_filings(
             "filing_date": str(filing_date),
             "report_date": str(report_dates[idx] if idx < len(report_dates) else filing_date),
             "primary_document_url": (
-                f"https://www.sec.gov/Archives/edgar/data/{padded.lstrip('0')}/{str(accession).replace('-', '')}/"
+                f"https://www.sec.gov/Archives/edgar/data/{cik_path}/{str(accession).replace('-', '')}/"
                 f"{primary_docs[idx] if idx < len(primary_docs) else ''}"
             ),
             "source_used": "sec_edgar",

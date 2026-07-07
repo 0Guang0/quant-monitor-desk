@@ -59,7 +59,7 @@ def test_qmdOps_acceptSourceRouteDb_delegatesToSpineAndWritesHonestReport(
     assert stdout_payload["data_domain"] == "macro_series"
     assert stdout_payload["source_id"] == "fred"
     assert stdout_payload["operation"] == "fetch_macro_series"
-    assert stdout_payload["implementation_mode"] == "not_implemented"
+    assert stdout_payload["implementation_mode"] == "dry_run"
     assert stdout_payload["route_plan_id"]
     assert stdout_payload["route_grade"] == "primary"
     assert stdout_payload["source_used"] == "fred"

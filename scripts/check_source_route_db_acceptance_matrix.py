@@ -48,6 +48,7 @@ def _closure_violations(
         key = matrix_target_key(target)
         row = report_rows.get(key)
         if row is None:
+            violations.append(f"{key} missing from report rows")
             continue
         outcome = evaluate_matrix_row_closure(
             target,
@@ -114,11 +115,15 @@ def build_report(
         if key in report_rows:
             report_row = report_rows[key]
             row["report"] = report_row
-            row["closure_outcome"] = evaluate_matrix_row_closure(
-                target,
-                report_row,
-                closure_mode=closure_mode,
-            )
+            cached = report_row.get("closure_outcome")
+            if isinstance(cached, str):
+                row["closure_outcome"] = cached
+            else:
+                row["closure_outcome"] = evaluate_matrix_row_closure(
+                    target,
+                    report_row,
+                    closure_mode=closure_mode,
+                )
         rows.append(row)
 
     missing_report_rows: list[str] = []

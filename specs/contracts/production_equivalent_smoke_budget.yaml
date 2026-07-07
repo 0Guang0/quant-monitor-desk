@@ -1,4 +1,6 @@
 # Bounded production-equivalent smoke thresholds (Batch 3F / R3F-HYG-06).
+# Cross-ref: source-route matrix dry-run budget via scripts/production_gate.py
+#   (check_source_route_matrix_dry_run_closure) and ADR-016.
 # Does not authorize live sources or production clean write.
 
 version: v1

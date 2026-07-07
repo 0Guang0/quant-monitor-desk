@@ -10,6 +10,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 CI_DRY_MATRIX_ROOT = ROOT / ".audit-sandbox" / "source-route-db-ci-dry"
 CI_DRY_MATRIX_REPORT = CI_DRY_MATRIX_ROOT / "reports" / "source-matrix-acceptance.json"
+CI_SAMPLE_MATRIX_ROOT = ROOT / ".audit-sandbox" / "source-route-db-ci-sample"
+CI_SAMPLE_MATRIX_REPORT = CI_SAMPLE_MATRIX_ROOT / "reports" / "sample-acceptance.json"
+CI_SAMPLE_MATRIX_TARGET = "cn_equity_daily_bar:baostock:fetch_daily_bar"
 FAILURES: list[str] = []
 
 
@@ -88,8 +91,9 @@ def check_acceptance_helper_consumers_strict() -> None:
             sys.executable,
             str(ROOT / "scripts" / "check_acceptance_helper_consumers.py"),
             "--strict",
+            "--strict-seam-inventory",
         ],
-        label="acceptance helper consumers --strict",
+        label="acceptance helper consumers --strict --strict-seam-inventory",
     )
 
 
@@ -101,6 +105,27 @@ def check_source_route_matrix_static() -> None:
             "--strict",
         ],
         label="source route matrix static contract",
+    )
+
+
+def check_source_route_matrix_sample_execute() -> None:
+    """PR gate: one spine row proves execute path without 22× full matrix cost (CS-15)."""
+    CI_SAMPLE_MATRIX_ROOT.mkdir(parents=True, exist_ok=True)
+    _run_checked(
+        [
+            sys.executable,
+            str(ROOT / "scripts" / "qmd_ops.py"),
+            "accept-source-route-db",
+            "--target",
+            CI_SAMPLE_MATRIX_TARGET,
+            "--data-root",
+            str(CI_SAMPLE_MATRIX_ROOT),
+            "--report",
+            str(CI_SAMPLE_MATRIX_REPORT),
+            "--format",
+            "json",
+        ],
+        label="source route matrix sample execute",
     )
 
 
@@ -184,7 +209,7 @@ def main(argv: list[str] | None = None) -> int:
     else:
         if args.source_matrix_report is not None:
             fail("--source-matrix-report requires --live-authorized")
-        check_source_route_matrix_dry_run_closure()
+        check_source_route_matrix_sample_execute()
 
     if FAILURES:
         for item in FAILURES:

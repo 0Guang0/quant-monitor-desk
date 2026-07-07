@@ -222,7 +222,7 @@ def test_productionEquivalentSmoke_sourceRouteDbAdapterWritesBlockedReport(
     """
     import scripts.acceptance_pipeline_smoke as smoke
 
-    data_root = tmp_path / "data"
+    data_root = tmp_path / ".audit-sandbox" / "source-route-db-smoke"
     report_path = data_root / "reports" / "source_route_db_acceptance.json"
     times = iter([0.0, 1.0])
     monkeypatch.setattr(smoke.time, "perf_counter", lambda: next(times))

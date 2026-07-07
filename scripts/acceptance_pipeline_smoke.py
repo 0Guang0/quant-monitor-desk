@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """Production-equivalent smoke runbook (Round2 audit P2-06).
 
+Legacy path — prefer `uv run python scripts/qmd_ops.py accept-source-route-db`
+and ADR-016 matrix closure (scripts/production_gate.py).
+
 Uses isolated QMD_DATA_ROOT under .audit-sandbox — does not touch project DB or source tree.
 """
 

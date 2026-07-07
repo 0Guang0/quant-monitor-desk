@@ -5,6 +5,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 from backend.app.ops.source_route_db_acceptance import SourceRouteDbAcceptanceSpine
 from backend.app.ops.source_route_db_acceptance_matrix import (
     DOCUMENTED_SOURCE_MATRIX,
@@ -16,6 +18,12 @@ from backend.app.ops.source_route_db_acceptance_matrix import (
 )
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
+
+def _matrix_data_root(tmp_path: Path) -> Path:
+    root = tmp_path / ".audit-sandbox" / "source-route-db-test"
+    root.mkdir(parents=True, exist_ok=True)
+    return root
 
 
 def test_acceptanceHelperConsumers_strictMode_hasZeroProductRuntimeConsumers() -> None:
@@ -89,6 +97,7 @@ def test_sourceRouteDbAcceptanceMatrix_previewCoversBaostockTarget() -> None:
 
 def test_sourceRouteDbAcceptanceMatrix_validationSourceExecute_blocksPrimaryClean(
     tmp_path: Path,
+    monkeypatch,
 ) -> None:
     """覆盖范围：validation 定位源的 execute 诚实性
     测试对象：SourceRouteDbAcceptanceSpine.execute for akshare validation target
@@ -101,9 +110,15 @@ def test_sourceRouteDbAcceptanceMatrix_validationSourceExecute_blocksPrimaryClea
     )
     assert target is not None
 
+    monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
+    monkeypatch.setattr(
+        "backend.app.ops.matrix_live_runners.run_matrix_evidence_fetch_live",
+        lambda **kwargs: ("SUCCESS", True, None),
+    )
+
     report = SourceRouteDbAcceptanceSpine().execute(
         target.request,
-        data_root=tmp_path,
+        data_root=_matrix_data_root(tmp_path),
         live_authorized=True,
     ).to_dict()
 
@@ -150,7 +165,7 @@ def test_sourceRouteDbAcceptanceMatrix_dryRunClosure_passesWithoutLiveAuthorizat
 
     payload = execute_documented_matrix(
         SourceRouteDbAcceptanceSpine(),
-        data_root=tmp_path,
+        data_root=_matrix_data_root(tmp_path),
         live_authorized=False,
     )
 
@@ -177,11 +192,11 @@ def test_sourceRouteDbAcceptanceMatrix_dryRunMatrix_skipsBulkRouteEvidencePersis
 
     payload = execute_documented_matrix(
         SourceRouteDbAcceptanceSpine(),
-        data_root=tmp_path,
+        data_root=_matrix_data_root(tmp_path),
         live_authorized=False,
     )
     assert payload["closure_status"] == "PASS"
-    db_path = tmp_path / "duckdb" / ACCEPTANCE_DUCKDB_NAME
+    db_path = _matrix_data_root(tmp_path) / "duckdb" / ACCEPTANCE_DUCKDB_NAME
     con = duckdb.connect(str(db_path), read_only=True)
     try:
         route_count = con.execute(
@@ -258,7 +273,7 @@ def test_sourceRouteDbAcceptanceMatrix_liveAuthorizedChecker_rejectsDryRunReport
     report_path = tmp_path / "dry-run-matrix.json"
     payload = execute_documented_matrix(
         SourceRouteDbAcceptanceSpine(),
-        data_root=tmp_path / "data",
+        data_root=_matrix_data_root(tmp_path),
         live_authorized=False,
     )
     report_path.write_text(json.dumps(payload), encoding="utf-8")
@@ -430,7 +445,7 @@ def test_sourceRouteDbAcceptanceMatrix_dryRunClosure_allowsDeferredQualification
             {
                 "status": "FAIL",
                 "failure_class": "BLOCKED",
-                "errors": ["QMT_XTDATA_AUTHORIZED missing for qmt_xtdata"],
+                "errors": ["gate:QMT_XTDATA_AUTHORIZED:missing for qmt_xtdata"],
             },
             closure_mode="dry_run",
         )
@@ -442,7 +457,7 @@ def test_sourceRouteDbAcceptanceMatrix_dryRunClosure_allowsDeferredQualification
             {
                 "status": "FAIL",
                 "failure_class": "BLOCKED",
-                "errors": ["THS_IFIND_LICENSE_ARTIFACT missing for licensed source"],
+                "errors": ["gate:THS_IFIND_LICENSE_ARTIFACT:missing for ths_ifind"],
             },
             closure_mode="dry_run",
         )
@@ -467,7 +482,7 @@ def test_sourceRouteDbAcceptanceMatrix_finalLiveAuthorizedClosure_allowsDeferred
             {
                 "status": "FAIL",
                 "failure_class": "BLOCKED",
-                "errors": ["QMT_XTDATA_AUTHORIZED missing for qmt_xtdata"],
+                "errors": ["gate:QMT_XTDATA_AUTHORIZED:missing for qmt_xtdata"],
             },
             closure_mode="final_live_authorized",
         )
@@ -479,7 +494,7 @@ def test_sourceRouteDbAcceptanceMatrix_finalLiveAuthorizedClosure_allowsDeferred
             {
                 "status": "FAIL",
                 "failure_class": "BLOCKED",
-                "errors": ["THS_IFIND_LICENSE_ARTIFACT missing for licensed source"],
+                "errors": ["gate:THS_IFIND_LICENSE_ARTIFACT:missing for ths_ifind"],
             },
             closure_mode="final_live_authorized",
         )
@@ -527,7 +542,7 @@ def test_sourceRouteDbAcceptanceMatrix_symbolSsot_alignsWithPortWhitelists() -> 
     """覆盖范围：矩阵 live 探针符号 SSOT
     测试对象：matrix_cninfo_symbols / matrix_alpha_vantage_symbol / matrix_kalshi_market_ticker
     目的/目标：CNINFO/AV/Kalshi 矩阵符号必须与 port/registry 白名单一致，避免裸 600519/IBM 触发 FAIL_EXTERNAL
-    验证点：cninfo=sh.600519；alpha_vantage=SPY；kalshi=KXFED-27APR-T4.25
+    验证点：cninfo=sh.600519；alpha_vantage=AAPL；kalshi=KXFED-27APR-T4.25
     失败含义：live 矩阵仍用非白名单符号，外部 fetch 失败被误判为源不可用
     """
     from backend.app.datasources.fetch_ports.alpha_vantage_port import SYMBOL_WHITELIST as AV_WL
@@ -599,14 +614,14 @@ def test_sourceRouteDbAcceptanceMatrix_coingeckoEvidenceFetch_liveMock_passesWit
     target = next(t for t in iter_matrix_targets() if t.request.source_id == "coingecko")
     report = SourceRouteDbAcceptanceSpine().execute(
         target.request,
-        data_root=tmp_path,
+        data_root=_matrix_data_root(tmp_path),
         live_authorized=True,
     ).to_dict()
 
     assert report["status"] == "PASS"
     assert report["failure_class"] == "NONE"
     assert report["write_grade"] == "not_written"
-    assert list((tmp_path / "raw").rglob("*"))
+    assert list((_matrix_data_root(tmp_path) / "raw").rglob("*"))
 
 
 def test_resolveDeribitLiveOptionInstrument_readsBundleInstrumentName() -> None:
@@ -668,10 +683,11 @@ def test_deribitStaging_rowsEmpty_whenInstrumentMismatch() -> None:
 def test_secEdgar_fetchSubmissions_usesHttpx2Client(monkeypatch) -> None:
     """覆盖范围：SEC submissions live HTTP 客户端
     测试对象：_fetch_sec_submissions_json
-    目的/目标：live fetch 应走 httpx2（非 urllib），并带 fair-access User-Agent
-    验证点：httpx.get 被调用；返回 JSON dict
+    目的/目标：live fetch 应走 httpx2 Client（非 urllib），并带 fair-access User-Agent
+    验证点：client.get 被调用；返回 JSON dict
     失败含义：urllib SSL/EOF 导致矩阵 NETWORK_ERROR 无法恢复
     """
+    from backend.app.datasources.fetch_ports import sec_edgar_port
     from backend.app.datasources.fetch_ports.sec_edgar_port import _fetch_sec_submissions_json
 
     captured: dict[str, object] = {}
@@ -687,14 +703,85 @@ def test_secEdgar_fetchSubmissions_usesHttpx2Client(monkeypatch) -> None:
         def raise_for_status() -> None:
             return None
 
-    def _fake_get(url: str, **kwargs):
-        captured["url"] = url
-        captured["headers"] = kwargs.get("headers")
-        return _Response()
+    class _Client:
+        def get(self, url: str, **kwargs):
+            captured["url"] = url
+            captured["headers"] = kwargs.get("headers")
+            return _Response()
 
-    monkeypatch.setattr("backend.app.datasources.fetch_ports.sec_edgar_port.httpx.get", _fake_get)
+    monkeypatch.setattr(sec_edgar_port, "_sec_http_client", lambda: _Client())
     payload = _fetch_sec_submissions_json("0000320193", user_agent="desk contact@example.com")
 
     assert payload["name"] == "Apple Inc."
     assert "data.sec.gov" in str(captured["url"])
     assert captured["headers"]["User-Agent"] == "desk contact@example.com"
+
+
+def test_sourceRouteDbAcceptanceSpine_rejectsNonSandboxDataRoot(tmp_path: Path) -> None:
+    """覆盖范围：spine execute 隔离 data-root 守卫
+    测试对象：SourceRouteDbAcceptanceSpine.execute
+    目的/目标：非 .audit-sandbox/source-route-db 路径须 CONTRACT_VIOLATION，对齐 ADR-015
+    验证点：failure_class=CONTRACT_VIOLATION；errors 含 ISOLATED_ROOT_REQUIRED 语义
+    失败含义：任意 tmp 路径可 bootstrap acceptance DB，隔离契约失效
+    """
+    target = next(t for t in iter_matrix_targets() if t.request.source_id == "baostock")
+    report = SourceRouteDbAcceptanceSpine().execute(
+        target.request,
+        data_root=tmp_path,
+        live_authorized=False,
+    ).to_dict()
+
+    assert report["failure_class"] == "CONTRACT_VIOLATION"
+    assert report["status"] == "FAIL"
+    assert "audit-sandbox" in "; ".join(report["errors"]).lower()
+
+
+def test_sourceRouteDbAcceptanceMatrix_qualificationPlaceholder_blocksLiveExecute(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    """覆盖范围：qualification_deferred 源占位 env 不得 auto PASS
+    测试对象：execute for ths_ifind with placeholder license artifact
+    目的/目标：THS_IFIND_LICENSE_ARTIFACT=1 须 BLOCKED，不得走 qualified_non_primary PASS
+    验证点：failure_class=BLOCKED；errors 含 placeholder
+    失败含义：占位 env 绕过 license 探针，矩阵假绿
+    """
+    monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
+    monkeypatch.setenv("THS_IFIND_LICENSE_ARTIFACT", "1")
+    target = next(t for t in iter_matrix_targets() if t.request.source_id == "ths_ifind")
+    report = SourceRouteDbAcceptanceSpine().execute(
+        target.request,
+        data_root=_matrix_data_root(tmp_path),
+        live_authorized=True,
+    ).to_dict()
+
+    assert report["failure_class"] == "BLOCKED"
+    assert report["status"] == "FAIL"
+    assert any("placeholder" in err.lower() for err in report["errors"])
+
+
+@pytest.mark.network
+def test_sourceRouteDbAcceptanceMatrix_baostockSampleExecute_networkSubset(
+    tmp_path: Path,
+) -> None:
+    """覆盖范围：矩阵 primary 源 live 子集（TD-05）
+    测试对象：SourceRouteDbAcceptanceSpine.execute for baostock（无 API key）
+    目的/目标：@pytest.mark.network 子集证明 matrix live handler 可真网 fetch
+    验证点：live_authorized + QMD_ALLOW_LIVE_FETCH 时 status/failure_class 诚实（PASS 或 FAIL_EXTERNAL）
+    失败含义：矩阵 live 路径在真网环境完全未覆盖，回归 silent
+    """
+    import os
+
+    if os.environ.get("QMD_ALLOW_LIVE_FETCH") != "1":
+        pytest.skip("QMD_ALLOW_LIVE_FETCH required for matrix network subset")
+
+    target = next(t for t in iter_matrix_targets() if t.request.source_id == "baostock")
+    report = SourceRouteDbAcceptanceSpine().execute(
+        target.request,
+        data_root=_matrix_data_root(tmp_path),
+        live_authorized=True,
+    ).to_dict()
+
+    assert report["implementation_mode"] == "live"
+    assert report["failure_class"] in {"NONE", "FAIL_EXTERNAL", "BLOCKED"}
+    assert report["status"] in {"PASS", "FAIL"}

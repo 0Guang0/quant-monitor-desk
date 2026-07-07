@@ -22,6 +22,12 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 CONTRACT_PATH = PROJECT_ROOT / "specs/contracts/source_route_db_acceptance_contract.yaml"
 
 
+def _acceptance_data_root(tmp_path: Path) -> Path:
+    root = tmp_path / ".audit-sandbox" / "source-route-db-contract"
+    root.mkdir(parents=True, exist_ok=True)
+    return root
+
+
 def _contract() -> dict:
     return yaml.safe_load(CONTRACT_PATH.read_text(encoding="utf-8"))
 
@@ -106,7 +112,9 @@ def test_sourceRouteDbAcceptance_spinePreview_reportsNotImplementedHonestly(tmp_
     spine = SourceRouteDbAcceptanceSpine()
 
     preview = spine.preview(request).to_dict()
-    report = spine.execute(request, data_root=tmp_path, live_authorized=False).to_dict()
+    report = spine.execute(
+        request, data_root=_acceptance_data_root(tmp_path), live_authorized=False
+    ).to_dict()
 
     assert preview["status"] == "FAIL"
     assert preview["implementation_mode"] == "not_implemented"
@@ -145,7 +153,7 @@ def test_sourceRouteDbAcceptance_fredMacroTracer_withoutLiveAuthorizationBlocks(
 
     report = SourceRouteDbAcceptanceSpine().execute(
         request,
-        data_root=tmp_path / "acceptance-root",
+        data_root=_acceptance_data_root(tmp_path),
         live_authorized=False,
     ).to_dict()
 
@@ -169,7 +177,7 @@ def test_sourceRouteDbAcceptance_fredMacroTracer_persistsRouteEvidence(
     失败含义：验收报告只有内存证据，审计者无法在 acceptance DB 复盘路由选择
     """
     request = AcceptanceRequest.from_target("macro_series:fred:fetch_macro_series")
-    data_root = tmp_path / "acceptance-root"
+    data_root = _acceptance_data_root(tmp_path)
 
     report = SourceRouteDbAcceptanceSpine().execute(
         request,
@@ -211,7 +219,7 @@ def test_sourceRouteDbAcceptance_fredMacroTracer_liveAuthorizedWithoutFredKeyBlo
 
     report = SourceRouteDbAcceptanceSpine().execute(
         request,
-        data_root=tmp_path / "acceptance-root",
+        data_root=_acceptance_data_root(tmp_path),
         live_authorized=True,
     ).to_dict()
 
@@ -240,7 +248,7 @@ def test_sourceRouteDbAcceptance_fredMacroTracer_liveGateWithoutEnvBlocks(
 
     report = SourceRouteDbAcceptanceSpine().execute(
         request,
-        data_root=tmp_path / "acceptance-root",
+        data_root=_acceptance_data_root(tmp_path),
         live_authorized=True,
     ).to_dict()
 
@@ -274,7 +282,7 @@ def test_sourceRouteDbAcceptance_fredMacroTracer_liveWritesAndReadsClean(
 
     report = SourceRouteDbAcceptanceSpine().execute(
         request,
-        data_root=tmp_path / "acceptance-root",
+        data_root=_acceptance_data_root(tmp_path),
         live_authorized=True,
     ).to_dict()
 
@@ -286,7 +294,7 @@ def test_sourceRouteDbAcceptance_fredMacroTracer_liveWritesAndReadsClean(
     assert report["downstream_layer_read_status"] == "PRIMARY_GRADE_READ"
     assert report["schema_hash"]
     assert report["content_hash"]
-    db_path = tmp_path / "acceptance-root" / "duckdb" / ACCEPTANCE_DUCKDB_NAME
+    db_path = _acceptance_data_root(tmp_path) / "duckdb" / ACCEPTANCE_DUCKDB_NAME
     con = duckdb.connect(str(db_path), read_only=True)
     try:
         route_count = con.execute(
@@ -309,7 +317,7 @@ def test_sourceRouteDbAcceptance_execute_bootstrapsIsolatedAcceptanceDb(tmp_path
     失败含义：验收 spine 没有真实 DB 语义，后续 route/fetch/write 接入会落到非生产等价环境
     """
     request = AcceptanceRequest.from_target("cn_equity_daily_bar:qmt:fetch_daily_bar")
-    data_root = tmp_path / "acceptance-root"
+    data_root = _acceptance_data_root(tmp_path)
 
     report = SourceRouteDbAcceptanceSpine().execute(
         request,

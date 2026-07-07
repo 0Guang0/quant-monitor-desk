@@ -70,7 +70,7 @@ ADR-008 in `docs/decisions/ADR-008-product-live-env-gate.md` says product live f
 
 `backend/app/datasources/live_tier_router.py` maps source IDs to Tier A/B/C. Tier A currently includes `fred`, `us_treasury`, `sec_edgar`, `cftc_cot`, `bis`, `world_bank`, `alpha_vantage`, `deribit`, `baostock`, `cninfo`, and `mootdx`. Tier B contains sources such as Yahoo, AkShare, Stooq, CoinGecko, Eastmoney, Sina, TDX, iFinD, QMT, and qmt_xqshare. Tier C contains Kalshi, Polymarket, and web search.
 
-Live acceptance harnesses under `backend/app/ops/` require isolated data roots. `backend/app/ops/tier_a_live_acceptance.py` rejects canonical main DB/data roots and requires `.audit-sandbox/m-data-03` for acceptance runs.
+Live acceptance harnesses under `backend/app/ops/` require isolated data roots. Tier A/B/C legacy harnesses use `.audit-sandbox/m-data-03`. The **task-01 source-route DB acceptance spine** (ADR-016) is the authoritative 22-source matrix entry point via `qmd-ops accept-source-route-db` with data root under `.audit-sandbox/source-route-db*`. Release closure uses `scripts/production_gate.py` with `--live-authorized --source-matrix-report`.
 
 ## Network and credential handling
 
@@ -89,5 +89,10 @@ Ops live-pilot authorization evidence is now operator-supplied rather than hard-
 - `backend/app/datasources/product_live_gate.py`
 - `backend/app/datasources/live_tier_router.py`
 - `backend/app/sync/orchestrator.py`
+- `backend/app/ops/source_route_db_acceptance.py`
+- `backend/app/ops/source_route_db_acceptance_matrix.py`
+- `scripts/qmd_ops.py`
+- `scripts/production_gate.py`
+- `docs/decisions/ADR-016-source-route-matrix-honest-closure.md`
 - `backend/app/ops/tier_a_live_acceptance.py`
 - `docs/decisions/ADR-008-product-live-env-gate.md`

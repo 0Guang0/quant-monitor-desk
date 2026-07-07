@@ -30,6 +30,8 @@
 
 **Findings SSOT：** `agents/audit-finding-schema.md`（P0–P3 双表 · 有 finding 即维 **FAIL**）
 
+**Source-route acceptance SSOT（task-01 / ADR-016）：** 22 源矩阵权威入口为 `uv run python scripts/qmd_ops.py accept-source-route-db` + `scripts/production_gate.py`；legacy `production_equivalent_smoke.py` / tier harness 仅作迁移期参考，不得替代 matrix closure 关账。
+
 **Boot SSOT（v4.2）：** `agents/audit-boot-v4.2.md` + `agents/audit-coverage-model.md`（v4.1 legacy：`audit-boot-v4.1.md`）
 
 **Repair Boot SSOT（v4.1）：** `agents/repair-boot-v4.1.md`

@@ -1,0 +1,864 @@
+/simplify 复用审查报告（ff605a85..HEAD）
+范围：source_route_db_acceptance*、source_route_db_acceptance_matrix*、production_gate.py、matrix/consumer checker 脚本，对照 scripts/、backend/app/ops/、tests/conftest.py、tests/service_path_support.py 既有模式。
+
+1. 主库/隔离 data-root 守卫重复
+重复内容： backend/app/ops/source_route_db_acceptance.py 内私有 _is_canonical_main_data_root()（约 L1094–1099），在 execute() 里拒绝 canonical DB。
+
+既有模式： backend/app/ops/acceptance_isolation.py 的 is_canonical_main_data_root() / assert_isolated_live_data_root()；tests/conftest.py 的 isolated_live_data_root fixture 已用后者。
+
+建议合并： spine execute() 直接调用 acceptance_isolation，不要维护第二套 canonical 判定。
+
+严重度：高 — 隔离契约漂移会直接破坏 ADR-015 安全边界。
+
+2. Acceptance DuckDB bootstrap 重复
+重复内容： _bootstrap_acceptance_db() / _acceptance_db_path()（source_route_db_acceptance.py L316–326）：mkdir + migrate，不做 registry sync。
+
+既有模式：
+
+backend/app/ops/acceptance_isolation.py → ensure_isolated_db()（migrate + SourceRegistry.sync_to_db）
+tests/acceptance_e2e_bootstrap.py → bootstrap_acceptance_cm() / acceptance_db_path()
+建议合并： spine 改用 ensure_isolated_db() 或薄包装，与 tier_a/b/c runner 和 E2E bootstrap 对齐。
+
+严重度：高 — 缺 registry sync 可能导致 route/execute 与生产路径不一致。
+
+3. 逐源 live incremental 编排大量复制
+重复内容： _execute_baostock_matrix_live、_execute_cninfo_matrix_live、_execute_sec_edgar_matrix_live 等 8+ 个 handler（source_route_db_acceptance.py L596–912）：raw_root.mkdir → DataSyncOrchestrator(cm) → build port/service → run *_incremental → _count_clean_rows → _matrix_live_report。
+
+既有模式：
+
+backend/app/ops/tier_a_live_incremental_dispatch.py → _port_live_runner() / _live_sync_runner_for()（同 port/service/runner 组合）
+tests/acceptance_e2e_bootstrap.py → bootstrap_port_live_e2e_ctx()（通用 sandbox 引导）
+建议合并： primary matrix 源委托 tier_a_live_incremental_dispatch（或抽出共享 _port_live_runner），matrix 只保留 report 映射层。
+
+严重度：高 — 最大块重复，后续加源需改两处。
+
+4. API key / live 授权门禁 SSOT 分裂
+重复内容：
+
+source_route_db_acceptance_matrix.py → missing_gate_errors() + 每行 auth_env
+FRED 在 spine 里另写 FRED_API_KEY 检查（source_route_db_acceptance.py L250–251、L295–299）
+既有模式：
+
+backend/app/ops/tier_a_evidence_runner.py → SOURCE_API_KEY_ENV + missing_api_keys_for_sources()（含 SEC UA 校验）
+backend/app/datasources/product_live_gate.py → is_product_live_fetch_allowed()（spine 已用，但错误文案自成一套）
+建议合并： matrix auth_env 从共享 SOURCE_API_KEY_ENV（或 registry YAML）派生，FRED 走 matrix 行而非 spine 特判。
+
+严重度：中 — env 名/校验规则容易与 tier runner 不同步。
+
+5. Evidence fetch（coingecko/kalshi/qmt）路径重复
+重复内容： _execute_matrix_evidence_fetch_live()（source_route_db_acceptance.py L914–993）：create_product_live_fetch_port → PortError 分类 → RawStore.save → pass/fail report。
+
+既有模式： backend/app/ops/tier_c_live_validation_dispatch.py（create_product_live_fetch_port、PortError、_EXTERNAL_FETCH_STATUSES、RawStore）；instrument 默认在 product_live_ports.SOURCE_LIVE_DEFAULTS。
+
+建议合并： 复用 tier_c validation dispatch 或抽共享 run_evidence_fetch_acceptance()。
+
+严重度：中 — fetch 错误分类与 raw 落盘逻辑已有一份 SSOT。
+
+6. Route preview → AcceptancePreview 双实现
+重复内容：
+
+build_matrix_preview()（source_route_db_acceptance_matrix.py L448–484）
+_preview_from_route_payload()（source_route_db_acceptance.py L1102–1131）
+两者逻辑相同（gate errors → route_grade → status/reason/live_ready），matrix 还反向 import spine 私有 _route_grade_from_payload / _optional_str。
+
+建议合并： 保留单一 preview_from_route_payload(request, route_payload, missing_prerequisites=...)，matrix 只算 prerequisites。
+
+严重度：中 — 私有 helper 跨模块 import 增加耦合。
+
+7. Live 默认 instrument/symbol 常量再定义
+重复内容： matrix_cninfo_symbols()、matrix_alpha_vantage_symbol()（返回 "SPY"）、matrix_kalshi_market_ticker()、matrix_coingecko_asset_id()（source_route_db_acceptance_matrix.py L391–408）。
+
+既有模式：
+
+backend/app/datasources/product_live_ports.py → SOURCE_LIVE_DEFAULTS
+backend/app/ops/tier_c_live_validation_dispatch.py → _default_instrument_id()
+backend/app/ops/cninfo_incremental_run.py → _DEFAULT_SYMBOL = "sh.600519"
+backend/app/ops/alpha_vantage_incremental_run.py → _DEFAULT_SYMBOL = "AAPL"（与 matrix "SPY" 已分叉）
+建议合并： matrix 从 SOURCE_LIVE_DEFAULTS / 各 *_incremental_run._DEFAULT_* 读取，不再维护平行 SSOT。
+
+严重度：中 — 注释写 SSOT 但实际与 tier/incremental 常量可能不一致。
+
+8. Route preview service 工厂重复
+重复内容： preview_route_payload()（matrix L334–356）手工 load_incremental_route_bundle + DataSourceService(...).preview_route(...)。
+
+既有模式：
+
+backend/app/ops/fred_incremental_run.py → build_fred_incremental_preview_service()
+backend/app/ops/macro_incremental_common.py → load_incremental_route_bundle()（已被各 incremental_run 使用）
+tests/service_path_support.py → production_route_planner() / plan_route()（测试侧同类模式）
+建议合并： 增加 build_incremental_preview_service(source_id, data_domain)，matrix 与 FRED spine 共用。
+
+严重度：中低 — 样板不多，但 preview 参数（run_id/job_id/staged_fixture_mode）应一处定义。
+
+9. Matrix checker 对 closure 二次求值
+重复内容： scripts/check_source_route_db_acceptance_matrix.py 的 _closure_violations()（L41–62）逐行再调 evaluate_matrix_row_closure()；execute_documented_matrix() 已在 row 写入 closure_outcome，summarize_matrix_closure() 也算过汇总。
+
+既有模式： backend/app/ops/source_route_db_acceptance_matrix.py → summarize_matrix_closure() / evaluate_matrix_row_closure()（SSOT）。
+
+建议合并： checker 校验 report 内 closure_outcome 与 closure_summary，或只调用 summarize_matrix_closure() 一次。
+
+严重度：低中 — 逻辑重复，closure 规则变更时需改 checker + matrix 两处。
+
+10. PROJECT_ROOT / registry 路径本地重算
+重复内容： source_route_db_acceptance_matrix.py L13–15 用 Path(__file__).resolve().parents[3] 定 PROJECT_ROOT 和 YAML 路径；_load_yaml()（L285–289）是局部 yaml helper。
+
+既有模式：
+
+backend/app/config.py → PROJECT_ROOT（spine 已在 source_route_db_acceptance.py L11 使用）
+scripts/check_indicator_binding_matrix.py、scripts/check_module_boundaries.py 等同款 checker yaml 读取（模式一致但未抽 shared util）
+建议合并： matrix 模块 import backend.app.config.PROJECT_ROOT，registry/capabilities 路径与 config 层对齐。
+
+严重度：低 — 主要是维护性与路径深度算错风险。
+
+未进 Top 10 但值得留意
+find_matrix_target() vs find_matrix_target_by_key() 同模块双查找（低）
+resolve_matrix_deribit_live_instrument() vs tier_a_live_incremental_dispatch._resolve_deribit_live_instruments()（可并入 #3）
+scripts/check_acceptance_helper_consumers.py 的 _iter_python_files / build_report 与 check_authority_acceptance_language.py 同类 checker 骨架（低，尚未抽 shared checker util）
+scripts/production_gate.py 的 fail() / _run_checked() 与其它 gate 脚本同模式（可接受重复）
+
+
+
+
+性能审查（只读 · ff605a85..HEAD）
+范围：source route DB acceptance matrix（22 sources）、production_gate CI dry-run、SEC/Deribit port、acceptance_isolation
+实测：本地 execute_documented_matrix(..., live_authorized=False) ≈ 4.1s（warm ~3.9s）；无 live fetch。
+
+发现（按严重度，共 7 条）
+1. [HIGH] 每矩阵行重复 bootstrap DuckDB + migration 校验
+位置：backend/app/ops/source_route_db_acceptance.py:285-327（_bootstrap_acceptance_db），由 execute_documented_matrix 循环 22 次调用（source_route_db_acceptance_matrix.py:646-652）
+问题：每行新建 ConnectionManager、抢写锁、apply_migrations()（含 15 个 migration 文件的 SHA256 校验）。22 行 ≈ 22 次完整 migration 扫描 + 22 次锁周期。
+建议：在 execute_documented_matrix 入口 bootstrap 一次，把 cm 传入 spine.execute(..., cm=cm) 或矩阵级 context。
+影响：potential impact — CI dry-run 主要 I/O 热点；矩阵扩源时线性变慢。
+2. [HIGH] dry-run 仍每行写 route evidence（双写锁）
+位置：backend/app/ops/source_route_db_acceptance.py:442-443（_persist_route_evidence）
+问题：live_authorized=False 时虽早退 blocked，但已执行 preview_route_payload + DB INSERT。与 #1 叠加 ≈ 44 次 writer 锁周期/矩阵 run。
+建议：dry-run / closure_mode=="dry_run" 时跳过 _persist_route_evidence；或矩阵结束批量 INSERT。
+影响：potential impact — 多余 DuckDB 写入与锁竞争。
+3. [HIGH] 每行 uncached 重载 registry YAML
+位置：backend/app/ops/source_route_db_acceptance_matrix.py:334-356 → macro_incremental_common.py:424-434
+问题：preview_route_payload 每行 SourceRegistry().load() + SourceCapabilityRegistry().load()（各读一次 YAML），22 行 ≈ 44 次磁盘读 + parse。
+建议：矩阵 run 级缓存 (registry, caps, planner)；或 load_incremental_route_bundle 加 functools.lru_cache / 进程内单例。
+影响：potential impact — CPU + 磁盘 I/O 随源数量线性增长。
+4. [MEDIUM] closure 评估重复计算
+位置：backend/app/ops/source_route_db_acceptance_matrix.py:671-680
+问题：循环内已 evaluate_matrix_row_closure，summarize_matrix_closure 又对每行重算 + find_matrix_target_by_key 线性扫描（22×22 次比较）。
+建议：summarize_matrix_closure 只聚合已有 closure_outcome；或去掉循环内预计算，只保留 summarize 一处。
+影响：potential impact — 纯 CPU 冗余，源数增大后可见。
+5. [MEDIUM] ensure_isolated_db 每次全量 registry sync
+位置：backend/app/ops/acceptance_isolation.py:60-82
+问题：DB 已存在仍 apply_migrations + SourceRegistry().load() + sync_to_db(tombstone_missing=True)。live acceptance harness（tier B/C）每次调用都走全路径。
+建议：DB 已 migrate 且 registry 未变时 skip sync；或进程/路径级 memoize。
+影响：potential impact — live matrix 路径（非 dry-run）显著拖慢。
+6. [MEDIUM] SEC live fetch：无连接复用 + 高超时重试
+位置：backend/app/datasources/fetch_ports/sec_edgar_port.py:198-224
+问题：httpx.get() 每次新建连接；3 次重试 × timeout=60.0，失败时单 CIK 可阻塞 ≤180s；重试间无 backoff（可能打满 SEC rate limit）。
+建议：模块级 httpx.Client 复用连接；重试加指数退避；acceptance 用更短 timeout（如 15s）。
+影响：potential impact — live matrix / live acceptance 热路径阻塞风险（dry-run 不触发）。
+7. [MEDIUM] SEC submissions 全量数组扫描
+位置：backend/app/datasources/fetch_ports/sec_edgar_port.py:245-261
+问题：accessionNumber 可达数百/上千条，循环到 max_filings 才 break；每行还拼 URL 字符串。
+建议：先 zip/islice 限制到 max_filings 再构建 row dict。
+影响：potential impact — live fetch CPU/内存；acceptance 仅取 3 条时浪费明显。
+production_gate dry-run ~15s：ponytail 取舍
+可接受。
+dry-run 走真实 route preview + honest BLOCKED closure，不是 stub；~15s（含 subprocess 冷启动 + static checks + 22 源）对 CI 门禁合理。
+本地纯矩阵 ~4s，CI ~15s 差距主要来自进程 spawn 与冷缓存，属预期。
+前提：保持 live_authorized=False、不 accidentally 触发 live fetch（SEC/Deribit 网络）。
+警戒线：若矩阵 >30s 或扩源后线性恶化，优先修 #1–#3（bootstrap 一次 + YAML 缓存 + dry-run 跳过 persist），通常可减半以上耗时。
+
+
+
+Review Summary
+Verdict: REQUEST CHANGES（非功能阻塞，但有多处可删/可合并的冗余，合并后 diff 与维护面会明显变小）
+
+Overview: 22 源矩阵 spine 结构清晰，closure 语义与 CI 门禁方向正确；主要 simplification 债务集中在 重复 preview/closure 逻辑、11 个 near-copy live handler、死分支/死常量，以及 acceptance 隔离与 DB bootstrap 两套实现。
+
+高优先级（High）
+#	位置	问题	建议修复（1 句）	严重度
+1
+source_route_db_acceptance_matrix.py:517-524
+classify_matrix_execute_exception 三个分支均返回 ("CONTRACT_VIOLATION", "FAIL")，分支与 message/isinstance 检查无实际作用。
+删掉分支，改为单行常量返回，或只在确有不同分类时保留分支。
+high
+2
+source_route_db_acceptance_matrix.py:448-483 + source_route_db_acceptance.py:1102-1131
+build_matrix_preview 与 _preview_from_route_payload 逻辑几乎相同（gate → route_grade → reason/status）。
+让 build_matrix_preview 直接调用 _preview_from_route_payload(request, route_payload, missing_prerequisites=missing_gate_errors(target))。
+high
+3
+source_route_db_acceptance.py:597-911
+8 个 _execute_*_matrix_live 重复同一骨架：raw_root.mkdir → DataSyncOrchestrator → build port/service → run → _matrix_live_report。
+抽一个 _run_matrix_incremental(orchestrator_factory, run_fn, ...) 或表驱动 config（symbol/cik/tenor 等），handler 只保留源特有参数。
+high
+4
+source_route_db_acceptance_matrix.py:638-680
+execute_documented_matrix 对每行 closure 评估两次（671-675 与 677-680 的 summarize_matrix_closure），且 summarize 生成的 enriched_rows 被丢弃。
+只在一处算 closure；summarize_matrix_closure 改为纯计数 helper，或直接用已 enriched 的 rows 聚合。
+high
+5
+source_route_db_acceptance.py:1094-1099 + acceptance_isolation.py:28-37
+_is_canonical_main_data_root 与 is_canonical_main_data_root 重复；spine 未复用 assert_isolated_live_data_root 的 .audit-sandbox/<segment> 约束。
+统一从 acceptance_isolation 导入；execute/qmd_ops 在 bootstrap 前调用同一 guard。
+high
+中优先级（Medium）
+#	位置	问题	建议修复（1 句）	严重度
+6
+source_route_db_acceptance_matrix.py:385
+EVIDENCE_FETCH_MATRIX_SOURCE_IDS 仅定义、全仓库无引用（死常量）。
+删除，或在 _execute_primary_matrix_live dispatch 中用其替代硬编码三元组。
+medium
+7
+source_route_db_acceptance_matrix.py:359-374
+missing_gate_errors 已遍历 auth_env，又对 QMT/THS 硬编码相同 env 名二次检查。
+去掉 366-373 行，完全依赖 AcceptanceMatrixTarget.auth_env/requires_* 字段。
+medium
+8
+source_route_db_acceptance.py:316-326 + acceptance_isolation.py:60-82
+_bootstrap_acceptance_db 与 ensure_isolated_db 都做 mkdir+migrate，后者还 registry.sync_to_db，行为分叉易 drift。
+spine 复用 ensure_isolated_db 并包一层 ConnectionManager，或明确注释为何 spine 不同步 registry。
+medium
+9
+source_route_db_acceptance_matrix.py:654-664
+except Exception 吞掉所有异常，再 stringify 进 row；classify_matrix_execute_exception 又不区分类型。
+收窄为 ProductLiveGateError/PortError 等预期异常，其余 re-raise 或单独 FAIL bucket。
+medium
+10
+source_route_db_acceptance_matrix.py:277-282 + 425-429
+find_matrix_target 与 find_matrix_target_by_key 同一线性扫描，key 格式重复构建。
+合并为一个 lookup（dict 懒加载或 startup 索引），另一函数做 thin wrapper。
+medium
+11
+source_route_db_acceptance.py:597-911 + 638-642
+矩阵 live handler 参数无类型（matrix_target、request 等），与模块内其它函数风格不一致。
+补上 AcceptanceRequest/AcceptanceMatrixTarget/ConnectionManager/Path/dict[str, Any] 注解。
+medium
+12
+check_source_route_db_acceptance_matrix.py:41-62 + 97-117
+build_report 对同一 report 多次 evaluate_matrix_row_closure（_closure_violations 与 per-target 循环各算一遍）。
+单次遍历 rows 缓存 closure_outcome，violations 与输出共用。
+medium
+低优先级（Low）
+#	位置	问题	建议修复（1 句）	严重度
+13
+source_route_db_acceptance.py:278
+_ = live_authorized 无意义；同函数 289/311 仍使用该参数。
+删除该行。
+low
+14
+source_route_db_acceptance_matrix.py:273-274 + 391-408
+iter_matrix_targets() 仅 return DOCUMENTED_SOURCE_MATRIX；四个 SSOT helper 各返回单常量。
+调用方直接用常量/DOCUMENTED_SOURCE_MATRIX；单值 SSOT 改为模块级 MATRIX_CNINFO_SYMBOLS 等常量。
+low
+15
+source_route_db_acceptance_matrix.py:506-514 + 567
+_is_deferred_qualification_block 中 if failure_class_hint := error_text 对非空字符串恒真；evaluate_matrix_row_closure 中 manual_review_only 已在 is_non_primary_positioning 内。
+去掉 walrus 外层 if；删除冗余的 or target.positioning == "manual_review_only"。
+low
+What's Done Well
+Closure 模式拆分（dry_run / final_live_authorized）语义清楚，production_gate.py 默认 dry-run、release 显式 --source-matrix-report 的设计避免了 CI 误触 live fetch。
+validate_matrix_against_registry 把 691 行静态矩阵与 registry/capabilities 绑死，比纯文档矩阵更不容易 drift。
+check_acceptance_helper_consumers.py --strict 配合 rename，legacy seam 清理路径可机器验证。
+Verification Story
+Tests reviewed: 是 — test_source_route_db_acceptance_matrix.py、test_production_gate.py、test_acceptance_helper_consumers.py 覆盖了矩阵规模、closure 模式、gate wiring；未直接断言上述重复逻辑，故 refactor 后需跑 uv run pytest -q。
+Build verified: 否 — 只读审查，未跑测试。
+Security checked: 是（浅层）— 未见密钥入库；spine 对 canonical main DB 有 reject；隔离 guard 未完全统一到 spine 是 simplification/consistency 问题而非新漏洞。
+
+
+
+
+
+
+Source Route DB Acceptance Spine — Tech Debt 审计
+范围： ff605a85..HEAD + 工作区未提交变更
+框架： Impact / Risk / Effort (1–5) → Priority score = (Impact + Risk) × (6 − Effort)
+
+P0 — 阻断关账 / 安全边界
+TD-01
+Priority: P0
+Blocking: yes
+Category: infrastructure
+Impact/Risk/Effort: 5 / 5 / 4 → Priority score: 20
+File: backend/app/datasources/fetch_ports/sec_edgar_port.py · ADR-016 §4
+Finding: SEC EDGAR live 矩阵在部分环境仍产出 FAIL_EXTERNAL（SSL/NETWORK_ERROR）；ADR-016 明确要求不得 mock 修绿、closure 不得 PASS。
+Business risk: Slice 10 final_live_authorized 关账永久 exit 1；用户误以为「22 源已验收」而实际 SEC 链路未证明。
+Remediation phase: Phase 0 — 运维/网络（httpx 连接复用、退避、CI secrets 注入 SEC_EDGAR_USER_AGENT）→ 重跑 live 矩阵 → 再跑 release gate。
+TD-02
+Priority: P0
+Blocking: yes
+Category: architecture
+Impact/Risk/Effort: 5 / 5 / 2 → Priority score: 40
+File: backend/app/ops/source_route_db_acceptance.py · scripts/qmd_ops.py · vs acceptance_isolation.py
+Finding: Spine execute() 仅拒绝 canonical 主库（未提交变更已改用 is_canonical_main_data_root），未调用 assert_isolated_live_data_root(..., required_segment=...)；任意 /tmp/foo 均可 bootstrap acceptance DB。Tier A/B/C runner 与 ADR-015 要求 .audit-sandbox/<segment> 不一致。
+Business risk: 误指向非沙箱路径跑 live fetch，污染或混淆生产数据根；与 ADR-015 隔离契约漂移。
+Remediation phase: Phase 1 — Spine 统一 guard（qmd-ops bootstrap 前调用 assert_isolated_live_data_root 或 task-01 专用 segment）。
+P1 — 高影响架构 / 测试缺口
+TD-03
+Priority: P1
+Blocking: no（漂移时变 yes）
+Category: architecture
+Impact/Risk/Effort: 4 / 4 / 2 → Priority score: 32
+File: source_route_db_acceptance.py:_bootstrap_acceptance_db vs acceptance_isolation.py:ensure_isolated_db
+Finding: Spine bootstrap 只做 apply_migrations，不做 SourceRegistry.sync_to_db(tombstone_missing=True)；tier runner / E2E bootstrap 走完整路径，行为分叉。
+Business risk: 隔离库 route preview / clean write 与生产 registry 不一致，矩阵 PASS 不能代表生产等价。
+Remediation phase: Phase 1 — spine 复用 ensure_isolated_db + 返回 ConnectionManager。
+TD-04
+Priority: P1
+Blocking: no
+Category: infrastructure
+Impact/Risk/Effort: 4 / 3 / 2 → Priority score: 28
+File: source_route_db_acceptance_matrix.py:execute_documented_matrix（未提交）
+Finding: 已提交 HEAD 每矩阵行重复 bootstrap + dry-run 仍写 ROUTE_PLAN；未提交修复（单次 cm、dry-run persist_route_evidence=False、YAML lru_cache）尚未 merge。
+Business risk: 每个 PR 的 production_gate dry-run ~15s+，扩源线性恶化；合并前 CI 仍付 22× migration 成本。
+Remediation phase: Phase 1 — 立即 merge 未提交 perf slice + 保留 test_sourceRouteDbAcceptanceMatrix_dryRunMatrix_skipsBulkRouteEvidencePersist。
+TD-05
+Priority: P1
+Blocking: yes（对 Slice 10 final）
+Category: test
+Impact/Risk/Effort: 5 / 4 / 4 → Priority score: 20
+File: .github/workflows/source-matrix-live-acceptance.yml · tests/test_source_route_db_acceptance_matrix.py
+Finding: 全矩阵 live + 外部 fetch 无默认 CI；workflow 仅 workflow_dispatch，且未注入 FRED_API_KEY / ALPHA_VANTAGE_API_KEY / SEC_EDGAR_USER_AGENT 等。pytest 对 coingecko/kalshi 等以 monkeypatch stub 为主。
+Business risk: release gate 依赖人工跑矩阵；回归只在 dry-run BLOCKED closure 上，live 路径 breakage 可 silent 进入 main。
+Remediation phase: Phase 2 — scheduled/nightly live matrix（secrets + artifact）+ 关键源 @pytest.mark.network 子集。
+TD-06
+Priority: P1
+Blocking: no
+Category: architecture
+Impact/Risk/Effort: 4 / 4 / 3 → Priority score: 24
+File: source_route_db_acceptance.py（FRED 特判）vs source_route_db_acceptance_matrix.py（auth_env）vs tier_a_evidence_runner.py（SOURCE_API_KEY_ENV）
+Finding: FRED 在 spine 内 duplicate gate（preview L250、execute L297）；矩阵行虽有 auth_env，spine 仍走 _is_fred_macro_series_request 旁路。
+Business risk: env 名/校验规则与 tier runner 分叉，新增 key 源需改 3 处。
+Remediation phase: Phase 1 — FRED 完全走 matrix target + 共享 missing_gate_errors / SOURCE_API_KEY_ENV。
+TD-07
+Priority: P1
+Blocking: no
+Category: test
+Impact/Risk/Effort: 4 / 4 / 3 → Priority score: 24
+File: source_route_db_acceptance.py:qualified_non_primary_from_route_payload · 8 个 validation/manual_review 矩阵行
+Finding: akshare/yahoo_finance/stooq/polymarket/mootdx/eastmoney/sina_finance/web_search 在 live_authorized=True 时 仅 route preview → 自动 PASS，无 fetch/adapter 证明。
+Business risk: ADR-016 允许 closure PASS，但业务上「validation 源可路由」≠「validation fetch 可用」；adapter 回归不会被矩阵捕获。
+Remediation phase: Phase 2 — 可选 validation_fetch_probe 或 tier 子集 live 证明，与 closure 语义分层。
+P2 — 维护面 / 文档 / 重复逻辑
+TD-08
+Priority: P2
+Blocking: no
+Category: code
+Impact/Risk/Effort: 4 / 3 / 4 → Priority score: 14
+File: source_route_db_acceptance.py:597–911
+Finding: 8+ 个 _execute_*_matrix_live 近乎 copy-paste（raw_root → orchestrator → port/service → incremental → _matrix_live_report）。
+Business risk: 每增一 primary 源需改 spine + 可能 tier dispatch；fix 一处 bug 漏 sibling handler。
+Remediation phase: Phase 2 — 表驱动 config 或复用 tier_a_live_incremental_dispatch._port_live_runner。
+TD-09
+Priority: P2
+Blocking: no
+Category: code
+Impact/Risk/Effort: 3 / 4 / 3 → Priority score: 21
+File: source_route_db_acceptance.py:_execute_matrix_evidence_fetch_live vs tier_c_live_validation_dispatch.py
+Finding: coingecko/kalshi/qmt evidence fetch 路径重复 PortError 分类 + RawStore.save；instrument 默认又与 product_live_ports.SOURCE_LIVE_DEFAULTS 平行维护。
+Business risk: fetch 错误分类不一致导致 matrix vs tier-C 结论分裂。
+Remediation phase: Phase 2 — 共享 run_evidence_fetch_acceptance()。
+TD-10
+Priority: P2
+Blocking: no
+Category: code
+Impact/Risk/Effort: 3 / 4 / 2 → Priority score: 24
+File: source_route_db_acceptance_matrix.py:matrix_alpha_vantage_symbol() → "SPY" vs alpha_vantage_incremental_run.py:_DEFAULT_SYMBOL = "AAPL"
+Finding: 注释声称 SSOT，实际与 incremental run 默认符号分叉。
+Business risk: live 矩阵用 SPY，日常 incremental/e2e 用 AAPL；白名单/liquidity 指标不一致，FAIL_EXTERNAL 难归因。
+Remediation phase: Phase 1 — 单一常量自 product_live_ports 或 layer1 whitelist 导出。
+TD-11
+Priority: P2
+Blocking: no
+Category: documentation
+Impact/Risk/Effort: 3 / 3 / 1 → Priority score: 25
+File: specs/contracts/source_route_db_acceptance_contract.yaml:implemented_tracer_targets
+Finding: 契约仍写仅 macro_series:fred:fetch_macro_series 为 tracer；代码已实现 22 源矩阵 + 11 live handler。
+Business risk: 审计/新人按契约以为仅 FRED 落地，误判 Slice 10 完成度。
+Remediation phase: Phase 1 — 更新 implemented_tracer_targets / matrix_live_modes 与代码对齐。
+TD-12
+Priority: P2
+Blocking: no
+Category: architecture
+Impact/Risk/Effort: 3 / 3 / 3 → Priority score: 18
+File: ImplementationMode Literal vs spine 实际输出
+Finding: 契约列 mock|replay|dry_run|not_implemented，spine execute 从不 emit mock/replay/dry_run（仅 live + blocked/not_implemented）。
+Business risk: 报告字段语义空转；未来若需 honest dry_run 分类无 hook。
+Remediation phase: Phase 2 — 收窄契约 enum 或 spine 在 dry-run bulk 时显式 implementation_mode=dry_run。
+TD-13
+Priority: P2
+Blocking: no
+Category: architecture
+Impact/Risk/Effort: 3 / 3 / 2 → Priority score: 24
+File: source_route_db_acceptance_matrix.py:488–491 · execute_documented_matrix L636
+Finding: classify_matrix_execute_exception 恒返回 CONTRACT_VIOLATION；except Exception 吞掉所有未预期异常并 stringify 进 row。
+Business risk: 真实 FAIL_EXTERNAL/编程错误均显示为 contract 失败，排障误导；隐藏 re-raise 机会。
+Remediation phase: Phase 1 — 收窄 catch + 恢复按异常类型分类（或 fail-fast re-raise 非预期）。
+TD-14
+Priority: P2
+Blocking: no
+Category: documentation
+Impact/Risk/Effort: 3 / 2 / 2 → Priority score: 16
+File: openwiki/workflows/data-sync-and-live-gates.md · docs/ops/data_sync_command_matrix.md · agents/*.md
+Finding: 大量文档仍指向 tier_a_live_acceptance.py / production_equivalent_smoke.py 为权威入口；task-01 spine 未成为 SSOT。
+Business risk: 运维/Agent 跑错脚本，产生与 matrix closure 不兼容的报告。
+Remediation phase: Phase 1 — 文档 sweep 指向 qmd-ops accept-source-route-db + ADR-016。
+TD-15
+Priority: P2
+Blocking: no
+Category: test
+Impact/Risk/Effort: 3 / 3 / 2 → Priority score: 24
+File: scripts/check_acceptance_helper_consumers.py · contract legacy_seam_inventory
+Finding: 契约要求 script_runtime_count_must_be_zero，但 production_gate 仅 --strict（查 product_runtime）；--strict-seam-inventory 未接入 gate。acceptance_pipeline_smoke.py 仍存且引用 production_equivalent_smoke_budget.yaml。
+Business risk: legacy smoke 路径在 scripts 层仍可被误用，与「spine 唯一权威」目标冲突。
+Remediation phase: Phase 1 — gate 启用 --strict-seam-inventory 或退役 acceptance_pipeline_smoke.py。
+TD-16
+Priority: P2
+Blocking: no
+Category: code
+Impact/Risk/Effort: 3 / 3 / 3 → Priority score: 18
+File: check_source_route_db_acceptance_matrix.py · summarize_matrix_closure
+Finding: checker _closure_violations 与 build_report 循环对同一 report 多次调用 evaluate_matrix_row_closure；未提交 trust_cached 仅部分去重。
+Business risk: closure 规则变更需同步 3 处；性能随源数平方增长（22×22 key scan）。
+Remediation phase: Phase 1 — checker 只信 report 内 closure_outcome + summarize_matrix_closure 单点 SSOT。
+TD-17
+Priority: P2
+Blocking: no
+Category: architecture
+Impact/Risk/Effort: 3 / 3 / 4 → Priority score: 12
+File: backend/app/ops/tier_a_evidence_runner.py · tier_*_live_acceptance.py
+Finding: task-01 引入 spine，但 tier A/B/C live harness 仍并行存在（rename 自 tier_a_live_acceptance，逻辑未并入 spine）。
+Business risk: 双轨 acceptance 报告格式/closure 语义长期分裂；修 bug 需双份。
+Remediation phase: Phase 3 — tier runner 委托 spine adapter 或明确 deprecation timeline。
+P3 — 低优先级 / 可随 refactor 清理
+TD-18
+Priority: P3
+Blocking: no
+Category: code
+Impact/Risk/Effort: 2 / 3 / 3 → Priority score: 15
+File: sec_edgar_port.py:198–224
+Finding: httpx 无连接复用；3× retry × 60s timeout、无指数退避。
+Business risk: live 矩阵单源可阻塞 ≤180s；可能触发 SEC rate limit。
+Remediation phase: Phase 2 — 模块级 httpx.Client + acceptance 更短 timeout。
+TD-19
+Priority: P3
+Blocking: no
+Category: code
+Impact/Risk/Effort: 2 / 2 / 2 → Priority score: 16
+File: source_route_db_acceptance_matrix.py:277–282 · 425–429
+Finding: find_matrix_target / find_matrix_target_by_key 双函数线性扫描；22 源可 lazy dict index。
+Business risk: 纯维护/微性能；源数上百后可见。
+Remediation phase: Phase 2 — startup 索引 dict。
+TD-20
+Priority: P3
+Blocking: no
+Category: dependency
+Impact/Risk/Effort: 2 / 3 / 3 → Priority score: 15
+File: sec_edgar_port.py — import httpx2 as httpx
+Finding: SEC 路径依赖 httpx2 alias，与项目其它 HTTP 客户端策略未统一文档化。
+Business risk: 依赖升级/安全 patch 时漏扫此 alias。
+Remediation phase: Phase 2 — 统一 HTTP 客户端 ADR + dependabot 覆盖。
+TD-21
+Priority: P3
+Blocking: no
+Category: documentation
+Impact/Risk/Effort: 2 / 2 / 1 → Priority score: 20
+File: specs/contracts/production_equivalent_smoke_budget.yaml · scripts/ci_perf_budget_artifact.py
+Finding: perf budget 契约/工件仍命名 production_equivalent_smoke_*，与 spine 迁移不同步。
+Business risk: 性能回归门禁与 source-route matrix 无关联，指标误导。
+Remediation phase: Phase 2 — rename 或 cross-ref matrix dry-run budget。
+TD-22
+Priority: P3
+Blocking: no
+Category: code
+Impact/Risk/Effort: 2 / 2 / 2 → Priority score: 16
+File: source_route_db_acceptance.py:595–601 · _count_clean_rows
+Finding: f"SELECT COUNT(*) FROM {target.target_table}" 动态 SQL；虽来自 internal resolver，无 defense-in-depth。
+Business risk: resolver 被误配时 SQL 注入面（低概率高后果）。
+Remediation phase: Phase 2 — allowlist 校验 table 名或 parameterized identifier。
+
+
+
+
+
+
+对抗式 Code Simplification 审计
+范围： ff605a85..HEAD + 工作区未提交变更（4 个 Python 文件）
+技能应用： 五原则 + Chesterton's Fence（理解后再删/合）+ 冗余/死代码/过度抽象扫描
+
+CS-01
+Priority: P0
+Blocking: yes
+File: scripts/check_source_route_db_acceptance_matrix.py:54-56
+Finding: --live-authorized checker 在 closure_mode 匹配时无条件信任行内 closure_outcome，且未校验其是否属于合法 outcome 集合；篡改报告即可绕过 closure 重算。
+Evidence: _closure_violations 仅 isinstance(cached, str) 即采用；对比 summarize_matrix_closure（backend/app/ops/source_route_db_acceptance_matrix.py:578）有 _CLOSURE_OUTCOMES 校验。ADR-016 §3 要求 checker 基于 execute 结果判定关账，而非盲信缓存字段。
+Recommended fix: 移除 trust_cached，或仅在 closure_mode 匹配且 outcome ∈ {PASS,FAIL_EXTERNAL,FAIL_CONTRACT,FAIL} 时采用，并始终对 status/failure_class/errors 做 spot-check；增加 tampered-report 负例测试。
+CS-02
+Priority: P1
+Blocking: no
+File: backend/app/ops/source_route_db_acceptance.py:281-305
+Finding: Spine 只拒绝 canonical main data root，未调用 assert_isolated_live_data_root；与 ADR-015/tier harness 的 .audit-sandbox/<segment> 强制隔离不一致（Chesterton's Fence 被拆）。
+Evidence: execute() 仅用 is_canonical_main_data_root()；acceptance_isolation.assert_isolated_live_data_root 已存在但 spine 未用。Workflow 虽用正确路径，CLI 无约束。
+Recommended fix: 在 qmd_ops accept-source-route-db 或 spine execute 对 live 路径调用 assert_isolated_live_data_root(..., required_segment="source-route-db-...")；单测 tmp_path 可显式 opt-out。
+CS-03
+Priority: P1
+Blocking: no
+File: backend/app/ops/source_route_db_acceptance.py:325-331 vs backend/app/ops/acceptance_isolation.py:60-82
+Finding: 两套 acceptance DB bootstrap 并存：_bootstrap_acceptance_db 只跑 migration；ensure_isolated_db 还 SourceRegistry.sync_to_db。
+Evidence: execute_documented_matrix 用前者（matrix.py:620-624）；tier harness 用后者。行为分叉无文档说明。
+Recommended fix: 统一为一个 helper（ponytail：spine 委托 ensure_isolated_db 或抽 _open_acceptance_cm(sync_registry: bool)）。
+CS-04
+Priority: P1
+Blocking: no
+File: backend/app/ops/source_route_db_acceptance.py:287-305 vs 428-478
+Finding: FRED 在 matrix 中有行，但 execute 走独立 fast-path，绕过 _execute_matrix_target 的统一 gate 顺序（is_product_live_fetch_allowed、统一 error 文案）。
+Evidence: _is_fred_macro_series_request 在 find_matrix_target 之前拦截；FRED 不在 _execute_primary_matrix_live dispatch（498-511）。改 FRED 特殊分支易与 matrix 22 行语义漂移。
+Recommended fix: 将 FRED 纳入 matrix dispatch 或抽 _shared_live_gates() 供 FRED/matrix 共用；契约 YAML 注明 tracer 例外。
+CS-05
+Priority: P1
+Blocking: no
+File: backend/app/ops/source_route_db_acceptance.py:604-918
+Finding: 10 个 _execute_*_matrix_live 高度重复（raw_root.mkdir → DataSyncOrchestrator → build service → run → _count_clean_rows → _matrix_live_report），违反 DRY 与 ponytail「先复用模式」。
+Evidence: 11 处 raw_root = data_root / "raw"；8 个 handler 结构几乎相同，仅 symbol/port/window 不同。
+Recommended fix: 抽 _run_incremental_matrix_live(template: MatrixLiveSpec) 或表驱动 registry；各源只填参数 SSOT。
+CS-06
+Priority: P1
+Blocking: no
+File: backend/app/ops/source_route_db_acceptance_matrix.py:488-490
+Finding: classify_matrix_execute_exception 被简化为恒返回 CONTRACT_VIOLATION，丢弃异常类型/消息区分，属 over-simplification。
+Evidence: 未提交 diff 删除 no adapter/ValueError 等分支；参数 _exc 未使用。所有 matrix execute 异常在 closure 上不可区分。
+Recommended fix: 恢复最小有意义映射（contract vs external），或删除函数 inline 单一路径并更新 docstring。
+CS-07
+Priority: P1
+Blocking: no
+File: backend/app/ops/source_route_db_acceptance.py:525-592
+Finding: _matrix_live_report(..., evidence_fetch_ok=False|True) 用布尔旗分裂两套 pass 判定（sync status 集合、write_grade、downstream），可读性差。
+Evidence: evidence_fetch_ok=True 时接受 SUCCESS/OK 且 rows_written=0；False 时要求 rows_written>0。调用方需理解隐式契约。
+Recommended fix: 拆为 _matrix_incremental_live_report / _matrix_evidence_fetch_report，或显式 MatrixLiveKind enum。
+CS-08
+Priority: P1
+Blocking: no
+File: backend/app/datasources/fetch_ports/deribit_port.py:409-420 + 850-870
+Finding: Deribit live 矩阵对同一行做两次完整 live fetch（probe 解析 instrument + incremental sync）。
+Evidence: resolve_matrix_deribit_live_instrument() 内 port.fetch_payload 触发 _live_instruments+_book_summary_mark_iv；_execute_deribit_matrix_live 再建 port 跑 incremental。
+Recommended fix: probe 只调轻量 get_instruments API 或缓存 probe 结果传入 incremental；合并为单次 fetch 路径。
+CS-09
+Priority: P2
+Blocking: no
+File: backend/app/ops/source_route_db_acceptance_matrix.py:278-283 + 423-427
+Finding: find_matrix_target 与 find_matrix_target_by_key 重复线性扫描同一 tuple。
+Evidence: 两处均为 O(n) loop + matrix_target_key 比较；22 源规模下可接受但维护双入口易不一致。
+Recommended fix: 模块级 _MATRIX_BY_KEY: dict[str, AcceptanceMatrixTarget] 或让 find_matrix_target 委托 key 查找。
+CS-10
+Priority: P2
+Blocking: no
+File: backend/app/ops/source_route_db_acceptance_matrix.py:366-373（未提交）
+Finding: missing_gate_errors 移除 requires_local_terminal/requires_license 分支后，这两字段仅写入 checker 报告，不参与 runtime gate（潜在死字段）。
+Evidence: 未提交 diff 删除 370-377 行；AcceptanceMatrixTarget.requires_* 仍在 dataclass（34-35）和 DOCUMENTED_SOURCE_MATRIX（50,251）及 checker（113-114）出现，但 gate 只读 auth_env。
+Recommended fix: 要么恢复 requires_* → env 的 SSOT 映射并断言与 auth_env 一致；要么删除字段，避免「文档说需要 terminal 但代码不查」的 Chesterton 风险。
+CS-11
+Priority: P2
+Blocking: no
+File: backend/app/ops/source_route_db_acceptance_matrix.py:549-611
+Finding: summarize_matrix_closure 计算 enriched_rows 但 execute_documented_matrix 返回原始 rows，enrichment 路径成 dead work。
+Evidence: matrix.py:659-672 用 summary 仅取 count；rows 已在 loop 内写入 closure_outcome（653-657）。
+Recommended fix: summarize 只做聚合计数；或返回 summary["rows"] 作为 SSOT，删除 loop 内重复赋值。
+CS-12
+Priority: P2
+Blocking: no
+File: backend/app/ops/source_route_db_acceptance_matrix.py:446-457
+Finding: matrix 模块依赖 acceptance 私有符号 _preview_from_route_payload，模块边界泄漏。
+Evidence: build_matrix_preview import 并调用 _preview_from_route_payload（private by convention）。
+Recommended fix: 将 _preview_from_route_payload 升为 public preview_from_route_payload，或移入共享 acceptance_preview.py。
+CS-13
+Priority: P2
+Blocking: no
+File: backend/app/ops/source_route_db_acceptance.py:155-178
+Finding: AcceptanceReport.from_route_payload 默认 errors=("Route evidence normalized; downstream acceptance is not implemented yet",) 在 live matrix 路径经 replace() 覆盖前易误导；blocked 路径也带 implementation_mode="not_implemented"。
+Evidence: blocked_from_route_payload 继承该 implementation_mode；test_qmd_ops 期望 FRED blocked 行 implementation_mode=="not_implemented"（test_qmd_ops:62）与 implementation_mode=="live" 的 preview 语义冲突。
+Recommended fix: blocked/live 路径 factory 显式设 implementation_mode="live"；错误文案按阶段区分 preview vs execute。
+CS-14
+Priority: P2
+Blocking: no
+File: backend/app/datasources/fetch_ports/deribit_port.py:160-168
+Finding: DeribitLiveFetchPort.fetch_payload 不调用 _reject_unknown_instrument（mock 路径有），live 可接受任意 instrument_name。
+Evidence: Mock 63 行有 whitelist check；Live 166-177 直接用 API 返回。与 INSTRUMENT_WHITELIST 安全边界不一致。
+Recommended fix: live 路径在选定 target_name 后做 whitelist 校验，或文档声明 live matrix 故意放宽并仅 trust resolve helper。
+CS-15
+Priority: P2
+Blocking: no
+File: scripts/production_gate.py:107-133
+Finding: 默认 PR gate 每次跑完整 22 源 execute_documented_matrix（含 route preview + execute），CI 成本高。
+Evidence: check_source_route_matrix_dry_run_closure 调用 qmd_ops accept-source-route-db --all-documented-sources；测试亦确认每次 PR 触发（test_production_gate:40-41）。
+Recommended fix: dry-run gate 拆为 static registry check + 抽样 execute；全矩阵保留 nightly/workflow_dispatch。
+CS-16
+Priority: P2
+Blocking: no
+File: backend/app/ops/source_route_db_acceptance_matrix.py:40-266
+Finding: ~230 行 DOCUMENTED_SOURCE_MATRIX 硬编码 Python tuple，与已存在的 source_registry.yaml / capabilities YAML 形成双 SSOT。
+Evidence: validate_matrix_against_registry 校验对齐但不生成矩阵；新增源需改 Python + YAML + 测试三处。
+Recommended fix: ponytail 短期保留 tuple；中长期从 registry 生成 matrix 或反向以 YAML 为唯一源。
+CS-17
+Priority: P2
+Blocking: no
+File: backend/app/ops/source_route_db_acceptance.py:237-318 + 614-673
+Finding: 单文件 ~1173 行，混合 dataclass 契约、spine、FRED tracer、10 个 live handler、closure 辅助，职责过多。
+Evidence: diff 对该文件 +682 行；违反「50+ 行函数/多职责应拆分」简化信号。
+Recommended fix: 拆为 acceptance_models.py、acceptance_spine.py、matrix_live_handlers.py（行为不变、分 PR）。
+CS-18
+Priority: P2
+Blocking: no
+File: backend/app/ops/source_route_db_acceptance_matrix.py:614-624
+Finding: execute_documented_matrix 对 data_root 做两次 resolve/bootstrap（matrix 内 _bootstrap_acceptance_db + 每行 spine.execute 内再次 resolve）。
+Evidence: matrix 623-624 bootstrap；spine 280 Path(data_root).expanduser().resolve()；虽可通过 cm= 避免重复 migration，路径解析仍重复 22 次。
+Recommended fix: 传入已 resolve 的 Path/ConnectionManager；spine 在 cm is not None 时跳过 resolve。
+CS-19
+Priority: P3
+Blocking: no
+File: .github/workflows/source-matrix-live-acceptance.yml:36-38
+Finding: workflow 最后一步用 python scripts/production_gate.py 而非 uv run，与同文件其他步骤不一致。
+Evidence: 22-27、30-33 行用 uv run；36 行裸 python。
+Recommended fix: 统一为 uv run python scripts/production_gate.py ...。
+CS-20
+Priority: P3
+Blocking: no
+File: backend/app/ops/tier_a_evidence_runner.py:91-98
+Finding: tier 模块对 acceptance_isolation.assert_isolated_live_data_root 再包一层 assert_isolated_live_data_root，仅做 exception 类型转换，增加 indirection。
+Evidence: 三行 delegate + TierALiveEnvError wrap；tier_b/tier_c 亦有类似 re-export（session 重命名后仍保留）。
+Recommended fix: 调用方直接 import acceptance_isolation 并 map exception；或单一 tier 无关入口。
+CS-21
+Priority: P3
+Blocking: no
+File: backend/app/ops/source_route_db_acceptance_matrix.py:376-381
+Finding: is_non_primary_positioning 不含 prediction_probability（Kalshi），与 SourcePositioning 字面量全集（18-25）不一致；依赖 positioning 分支时需读者查 matrix 行定义。
+Evidence: Kalshi positioning="prediction_probability"（194）走 primary live/evidence_fetch 路径；非 bug，但命名易误判 Kalshi 为 non-primary。
+Recommended fix: 注释说明 prediction_probability 属「须 live 证明」层；或 rename 为 is_validation_only_positioning。
+做得好的地方
+ADR-016 的 dry_run / final_live_authorized 双模式 closure 语义清晰，测试覆盖充分（deferred qualification、API key BLOCKED、dry-run 冒充 live 等）。
+未提交变更：bulk matrix 共享 ConnectionManager + persist_route_evidence=live_authorized 正确减少 CI dry-run 的 22× ROUTE_PLAN 写入。
+build_matrix_preview 复用 _preview_from_route_payload 消除与 spine 的 preview 逻辑重复（方向正确，边界仍待 CS-12 收尾）。
+Verification Story
+Tests reviewed: yes — 564 行 matrix 测试 + production_gate + qmd_ops；覆盖 closure 模式、SSOT 符号、Coingecko evidence_fetch、Deribit instrument 解析；缺失 tampered closure_outcome 负例。
+Build verified: no — 本次只读审计未跑 uv run pytest -q。
+Security checked: yes — 关注 closure 报告信任链、隔离根 enforcement、Deribit whitelist 边界；无硬编码密钥。
+
+
+
+
+对抗式五轴审查报告（ff605a85..HEAD + uncommitted）
+范围： source matrix acceptance spine、production_gate、SEC live path、ADR-016 closure 语义
+假设： 实现者有错，直到测试/契约证明正确
+Verdict： REQUEST CHANGES — 3 项 P0 可致 CI/Release 假绿 或 隔离边界失效
+
+P0（Blocking: yes）
+ID: CR-01
+Priority: P0
+Blocking: yes
+Axis: correctness
+File: scripts/check_source_route_db_acceptance_matrix.py:47-57, backend/app/ops/source_route_db_acceptance_matrix.py:577-580
+Finding: --strict --live-authorized checker 在 report.closure_mode == checker.closure_mode 时直接信任 JSON 内缓存的 closure_outcome，不根据 status/failure_class 重算。
+Evidence: _closure_violations() 中 if trust_cached and isinstance(cached, str): outcome = cached。攻击/误操作场景：22 行 status=FAIL、failure_class=FAIL_EXTERNAL，但每行 closure_outcome=PASS + closure_mode=final_live_authorized + live_authorized=true → checker exit 0。
+Required fix: --strict 模式下永远调用 evaluate_matrix_row_closure()；若缓存值与重算不一致则 FAIL；禁止用缓存值决定 PASS。
+
+ID: CR-02
+Priority: P0
+Blocking: yes
+Axis: security
+File: scripts/production_gate.py:136-151 + CR-01
+Finding: Release gate（--live-authorized --source-matrix-report）完全依赖可被篡改的外部 JSON，无完整性校验（hash/签名/重算强制）。
+Evidence: production_gate 仅 subprocess 调 checker；checker 存在 CR-01 信任缓存漏洞；test_productionGate_liveAuthorizedChecksProvidedReport 用 {} 报告 + mock subprocess，未验证 checker 对坏报告的拒绝行为。
+Required fix: 与 CR-01 同修；可选增加 report 生成时嵌入 closure_digest（对 rows 的 canonical hash）并在 strict 模式校验。
+
+ID: CR-03
+Priority: P0
+Blocking: yes
+Axis: architecture
+File: backend/app/ops/source_route_db_acceptance.py:280-285, backend/app/ops/acceptance_isolation.py:39-57
+Finding: Spine execute() 仅拒绝 canonical main root，未调用 assert_isolated_live_data_root() 要求的 .audit-sandbox/<segment> 约束；与 tier A/B/C runner 隔离契约不一致。
+Evidence: 仅 is_canonical_main_data_root(resolved_root)；任意 /tmp/foo 非 canonical 路径可 bootstrap DuckDB 并跑矩阵。ADR-015 / tier runner 强制 .audit-sandbox。
+Required fix: execute() / execute_documented_matrix() / qmd_ops accept-source-route-db 在 bootstrap 前调用 assert_isolated_live_data_root(data_root, required_segment="source-route-db")（或等价 segment SSOT）。
+
+P1（Blocking: yes，除 CR-11）
+ID: CR-04
+Priority: P1
+Blocking: yes
+Axis: correctness
+File: backend/app/ops/source_route_db_acceptance.py:465-472, backend/app/ops/source_route_db_acceptance_matrix.py:366-373
+Finding: ths_ifind（licensed_validation）在 THS_IFIND_LICENSE_ARTIFACT 任意非空时跳过 gate，走 qualified_non_primary_from_route_payload() → status=PASS/failure_class=NONE，不验证 artifact 有效性。
+Evidence: _execute_matrix_target 顺序：gate_errors（仅 str(env).strip()）→ is_non_primary_positioning → 直接 PASS。ADR-016 预期无资格是「缺终端/牌照 env 的诚实 BLOCKED」；占位 env 绕过。
+Required fix: 对 qualification_deferred_sources：env 存在时须走真实 license/terminal 探针；探针失败应为 BLOCKED/FAIL，不得 auto PASS。
+
+ID: CR-05
+Priority: P1
+Blocking: yes
+Axis: correctness
+File: backend/app/ops/source_route_db_acceptance.py:458-464, 498-511
+Finding: qmt_xtdata 同理：QMT_XTDATA_AUTHORIZED=1（占位）绕过 deferred BLOCKED，进入 _execute_matrix_evidence_fetch_live；evidence fetch 成功即可 closure PASS，无需真实终端。
+Evidence: dispatch 将 qmt_xtdata 映射到 evidence fetch；missing_gate_errors 不验证 terminal 可达性。
+Required fix: local_terminal_primary 源在 env 存在时必须做 terminal 探针（或 honest FAIL）；不得仅靠 product live port 单次 fetch 冒充终端资格。
+
+ID: CR-06
+Priority: P1
+Blocking: yes
+Axis: correctness
+File: backend/app/ops/source_route_db_acceptance.py:325-331 vs acceptance_isolation.py:60-82
+Finding: _bootstrap_acceptance_db() 只做 mkdir + migrate，不做 SourceRegistry.sync_to_db()；与 ensure_isolated_db() 分叉。
+Evidence: tier runner / E2E bootstrap 同步 registry；spine 矩阵 route preview/execute 可能在 registry 漂移的 DuckDB 上跑，route_plan 与生产不一致。
+Required fix: 复用 ensure_isolated_db() 或等价单次 bootstrap + registry sync。
+
+ID: CR-07
+Priority: P1
+Blocking: yes
+Axis: correctness
+File: tests/test_source_route_db_acceptance_matrix.py（缺失）
+Finding: 无测试证明 ADR-016 核心：sec_edgar FAIL_EXTERNAL → closure_outcome=FAIL_EXTERNAL → final checker exit 1。
+Evidence: 仅有 test_secEdgar_fetchSubmissions_usesHttpx2Client（HTTP 客户端）；无 evaluate_matrix_row_closure / checker 对 SEC 网络失败的断言。ADR-016 §4 明确 SEC FAIL_EXTERNAL 应阻断关账。
+Required fix: 增加 RED 测试：合成 live 报告含 sec_edgar 行 failure_class=FAIL_EXTERNAL → --strict --live-authorized exit 1。
+
+ID: CR-08
+Priority: P1
+Blocking: yes
+Axis: correctness
+File: tests/test_source_route_db_acceptance_matrix.py（缺失）
+Finding: 无测试防 CR-01 篡改向量（ forged closure_outcome ）。
+Evidence: 现有 checker 测试用 execute 生成的诚实报告或 NOT_IMPLEMENTED 单行；未覆盖「全行 FAIL 但 closure_outcome=PASS」 adversarial case。
+Required fix: 增加测试：22 行完整报告、行状态 FAIL、closure_outcome 全 PASS → strict exit 1。
+
+ID: CR-09
+Priority: P1
+Blocking: yes
+Axis: correctness
+File: backend/app/ops/source_route_db_acceptance_matrix.py:488-491, 636-637
+Finding: classify_matrix_execute_exception() 三行均返回 ("CONTRACT_VIOLATION", "FAIL")；矩阵 execute 任意异常一律 FAIL_CONTRACT，无法诚实标记 FAIL_EXTERNAL（如 live Deribit/SEC 网络异常若逃逸到外层 catch）。
+Evidence: except Exception as exc → classify_matrix_execute_exception(exc) → closure FAIL_CONTRACT。与 ADR-016 三层分类（外部失败 vs 契约违反）不一致。
+Required fix: 按异常类型/PortError.status 映射到 FAIL_EXTERNAL vs FAIL_CONTRACT；删除死分支或实现真实分类。
+
+ID: CR-10
+Priority: P1
+Blocking: yes
+Axis: security
+File: backend/app/datasources/fetch_ports/sec_edgar_port.py:198-224
+Finding: SEC live fetch：3 次重试 × timeout=60.0，无 backoff，每次 httpx.get() 新建连接；失败时单 CIK 可阻塞 ≤180s，且易触发 SEC rate limit。
+Evidence: for _attempt in range(3): httpx.get(..., timeout=60.0) + continue on TransportError。
+Required fix: 模块级 httpx.Client 复用；指数退避；acceptance 路径更短 timeout（如 15s）；429 专门处理。
+
+ID: CR-11
+Priority: P1
+Blocking: no
+Axis: correctness
+File: .github/workflows/source-matrix-live-acceptance.yml:34-38
+Finding: Live workflow 前两步用 uv run，production_gate 用裸 python；与 CI ci.yml:28 一致但可能与 uv 环境不一致。
+Evidence: 同文件 L22-33 uv run，L36 python scripts/production_gate.py；pip install -e ".[dev]" 未必等价于 uv lock 解析。
+Required fix: 统一 uv run python scripts/production_gate.py（或全程 pip）。
+
+P2（Blocking: no）
+ID: CR-12
+Priority: P2
+Blocking: no
+Axis: correctness
+File: backend/app/ops/source_route_db_acceptance_matrix.py:471-485
+Finding: _is_deferred_qualification_block 用 env_name.lower() in error_text 子串匹配；错误信息若偶然含 env 名（如日志拼接），deferred 源可误判 closure PASS。
+Evidence: 仅子串检查，无 structured error code。
+Required fix: 使用结构化 gate error prefix（如 gate:QMT_XTDATA_AUTHORIZED:missing）或精确匹配 missing_gate_errors 输出。
+
+ID: CR-13
+Priority: P2
+Blocking: no
+Axis: performance
+File: backend/app/ops/source_route_db_acceptance_matrix.py:653-661
+Finding: execute_documented_matrix 每行算一次 evaluate_matrix_row_closure，再 summarize_matrix_closure 全量重算；enriched_rows 丢弃。
+Evidence: L653-657 与 L659-661；22 行 × 双遍 + find_matrix_target_by_key O(n²)。
+Required fix: summarize_matrix_closure 仅聚合已有 closure_outcome 计数。
+
+ID: CR-14
+Priority: P2
+Blocking: no
+Axis: architecture
+File: backend/app/ops/source_route_db_acceptance.py:498-918
+Finding: 11 个 _execute_*_matrix_live 几乎相同骨架（mkdir → Orchestrator → port/service → run → _matrix_live_report），与 tier_a_live_incremental_dispatch 重复。
+Evidence: 8+ handler 复制；commercial review 已标记 HIGH。后续修 SEC/Deribit 易漏改。
+Required fix: 表驱动或委托 tier_a_live_incremental_dispatch._port_live_runner。
+
+ID: CR-15
+Priority: P2
+Blocking: no
+Axis: architecture
+File: backend/app/ops/source_route_db_acceptance.py:247-305, backend/app/ops/source_route_db_acceptance_matrix.py:366-373
+Finding: FRED 在 spine 内单独 gate（FRED_API_KEY / _is_fred_macro_series_request），未纳入 matrix auth_env SSOT；env 规则与 tier runner SOURCE_API_KEY_ENV 易漂移。
+Evidence: matrix 行有 auth_env=("FRED_API_KEY",) 但 execute 走 spine 特判分支。
+Required fix: FRED 完全走 matrix target + missing_gate_errors，删除 spine 特判。
+
+ID: CR-16
+Priority: P2
+Blocking: no
+Axis: architecture
+File: backend/app/ops/source_route_db_acceptance_matrix.py:376-381
+Finding: local_terminal_primary、prediction_probability 未纳入 is_non_primary_positioning 文档/显式分支；读者需跨 matrix 定义 + dispatch 表推断行为。
+Evidence: QMT/Kalshi positioning 与 closure 规则无同处说明。
+Required fix: 增加 positioning→execute policy 表或 docstring SSOT。
+
+ID: CR-17
+Priority: P2
+Blocking: no
+Axis: readability
+File: backend/app/ops/source_route_db_acceptance.py:452-457
+Finding: dry-run（live_authorized=False）时所有需 key 的源错误均为「live authorization missing」，无法在报告行区分「缺 QMD_ALLOW_LIVE_FETCH」vs「缺 FRED_API_KEY」（后者被 gate 顺序遮蔽）。
+Evidence: gate 顺序 live_authorized 先于 missing_gate_errors。ADR 允许 dry_run PASS，但运维诊断信息丢失。
+Required fix: dry_run 可追加 diagnostic_errors 字段暴露真实 gate，不影响 closure。
+
+ID: CR-18
+Priority: P2
+Blocking: no
+Axis: performance
+File: backend/app/ops/source_route_db_acceptance_matrix.py:409-420
+Finding: resolve_matrix_deribit_live_instrument() 在 live 矩阵 execute 时隐式发起真网 Deribit fetch（use_mock=False），无独立 timeout/circuit breaker。
+Evidence: create_deribit_fetch_port(..., use_mock=False) + resolve_deribit_live_option_instrument(probe)。
+Required fix: 矩阵级 probe budget；失败时 honest FAIL_EXTERNAL 并测 closure 阻断。
+
+P3（Blocking: no）
+ID: CR-19
+Priority: P3
+Blocking: no
+Axis: correctness
+File: backend/app/ops/source_route_db_acceptance.py:539-543
+Finding: _matrix_live_report(evidence_fetch_ok=True) 将 sync_status in {"COMPLETED","PASS","SUCCESS","OK"} 视为 PASS，不验证 raw 内容/hash 或 downstream read。
+Evidence: coingecko/kalshi/qmt evidence 路径 rows_written=0 仍可能 PASS。
+Required fix: 至少断言 raw 文件存在 + row_count>=1（fetch 路径已有，report 层应一致）。
+
+ID: CR-20
+Priority: P3
+Blocking: no
+Axis: readability
+File: scripts/check_source_route_db_acceptance_matrix.py:51-53
+Finding: _closure_violations 对缺失 row continue，依赖 missing_report_targets 并列 FAIL；单读函数易误解为「缺行即 PASS」。
+Evidence: 两行逻辑分离。
+Required fix: 缺行直接 append closure violation，或合并为单循环 SSOT。
+
+ID: CR-21
+Priority: P3
+Blocking: no
+Axis: security
+File: scripts/production_gate.py:11-12, .gitignore（需确认）
+Finding: CI dry-run 写入 .audit-sandbox/source-route-db-ci-dry/（含 DuckDB）；git status 显示 untracked duckdb，存在误提交 acceptance 数据风险。
+Evidence: CI_DRY_MATRIX_ROOT = ROOT / ".audit-sandbox" / "source-route-db-ci-dry"。
+Required fix: 确认 .gitignore 覆盖；或 CI 用 tempfile 目录。
+
+ID: CR-22
+Priority: P3
+Blocking: no
+Axis: correctness
+File: backend/app/datasources/fetch_ports/sec_edgar_port.py:256-257
+Finding: primary_document_url 用 padded.lstrip('0') 建路径，与 _pad_cik 十位数格式不一致，极端 CIK 可能生成错误 Archives URL（404 → 假 FAIL_EXTERNAL）。
+Evidence: fetch 用 CIK{cik_padded}；URL 用 strip 后路径。
+Required fix: URL 构建与 SEC EDGAR 文档 SSOT 对齐并加单测。
+
+正向观察（简要）
+ADR-016 双模式 closure（dry_run / final_live_authorized）在 evaluate_matrix_row_closure 中有清晰实现；deferred 与 non-deferred BLOCKED 区分有单测。
+dry-run 已 persist_route_evidence=live_authorized + 单次 bootstrap cm 传入，修复了早期 22× migrate 热点。
+SEC port 强制 fair-access User-Agent（@ / contact）+ CIK whitelist，边界合理。
+is_canonical_main_data_root 已从 spine 私有实现改为 acceptance_isolation 共享（部分 commercial review 项已关）。
+建议修复优先级
+CR-01/02/08 — 阻断 release 假绿（同一 PR）
+CR-03 — 对齐 ADR-015 隔离
+CR-04/05/07 — ADR-016 诚实关账语义
+CR-10 — SEC live 路径可观测性/限流
+其余 P2/P3 按 sprint 消化
+测试缺口摘要： 缺 FAIL_EXTERNAL closure 阻断测试、缺篡改 closure_outcome 测试、缺 isolation segment 负例测试 — 与 P0/P1 一一对应。

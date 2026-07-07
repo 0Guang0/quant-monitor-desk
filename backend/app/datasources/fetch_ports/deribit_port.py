@@ -166,6 +166,7 @@ class DeribitLiveFetchPort:
         name = req.instrument_id or (self.instruments[0] if self.instruments else "")
         if not name:
             raise PortError("FAILED", "missing instrument_id for Deribit live fetch")
+        _reject_unknown_instrument(name)
 
         retrieved_at = datetime.now(UTC).isoformat()
         fetch_id = f"deribit-live-{name}-{uuid.uuid4().hex[:12]}"
@@ -187,6 +188,24 @@ class DeribitLiveFetchPort:
         bundle = finalize_bundle(bundle)
         content = json.dumps(bundle, ensure_ascii=False, default=str).encode("utf-8")
         return FetchPayload(content=content, file_type="json", row_count=len(rows))
+
+
+def resolve_deribit_live_option_name(*, currency: str = "BTC") -> str:
+    """Lightweight live probe: get_instruments only (no full fetch_payload / book summary)."""
+    url = f"https://www.deribit.com/api/v2/public/get_instruments?currency={currency}&kind=option"
+    try:
+        with urllib.request.urlopen(url, timeout=15) as response:
+            raw = json.loads(response.read().decode("utf-8"))
+    except urllib.error.URLError as exc:
+        raise PortError("NETWORK_ERROR", str(exc)) from exc
+    except json.JSONDecodeError as exc:
+        raise PortError("FAILED", f"invalid Deribit JSON: {exc}") from exc
+    result = raw.get("result") or []
+    for item in result:
+        name = str(item.get("instrument_name") or "")
+        if name:
+            return name
+    raise PortError("EMPTY_RESPONSE", "Deribit returned no option instruments")
 
 
 def resolve_deribit_live_option_instrument(port) -> str:

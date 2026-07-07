@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 import json
-import os
 from dataclasses import asdict, dataclass, field, replace
 from pathlib import Path
 from typing import Any, Literal
 
 from backend.app.db.connection import ConnectionManager
-from backend.app.ops.acceptance_isolation import is_canonical_main_data_root
+from backend.app.db.sql_identifiers import quote_ident
+from backend.app.ops.acceptance_isolation import AcceptanceIsolationError
 
 ImplementationMode = Literal["live", "mock", "replay", "dry_run", "not_implemented"]
 RouteGrade = Literal["primary", "degraded", "blocked", "not_planned"]
@@ -187,6 +187,7 @@ class AcceptanceReport:
         report = cls.from_route_payload(request, route_payload)
         return replace(
             report,
+            implementation_mode="live",
             write_grade="blocked",
             failure_class="BLOCKED",
             status="FAIL",
@@ -243,16 +244,6 @@ class SourceRouteDbAcceptanceSpine:
             preview_route_payload,
         )
 
-        if _is_fred_macro_series_request(request):
-            route_payload = _fred_macro_route_payload(request)
-            gate_errors: list[str] = []
-            if not str(os.environ.get("FRED_API_KEY", "")).strip():
-                gate_errors.append("FRED_API_KEY missing for macro_series:fred:fetch_macro_series")
-            return _preview_from_route_payload(
-                request,
-                route_payload,
-                missing_prerequisites=tuple(gate_errors),
-            )
         matrix_target = find_matrix_target(request)
         if matrix_target is not None:
             route_payload = preview_route_payload(request)
@@ -275,35 +266,21 @@ class SourceRouteDbAcceptanceSpine:
         live_authorized: bool,
         cm: ConnectionManager | None = None,
         persist_route_evidence: bool = True,
+        skip_data_root_validation: bool = False,
     ) -> AcceptanceReport:
-        resolved_root = Path(data_root).expanduser().resolve()
-        if is_canonical_main_data_root(resolved_root):
-            return AcceptanceReport.contract_violation(
-                request,
-                f"canonical main data root rejected for acceptance: {resolved_root}",
-            )
-        connection = cm if cm is not None else _bootstrap_acceptance_db(resolved_root)
-        if _is_fred_macro_series_request(request):
-            route_payload = _fred_macro_route_payload(request)
-            if persist_route_evidence:
-                _persist_route_evidence(connection, route_payload)
-            if not live_authorized:
-                return AcceptanceReport.blocked_from_route_payload(
-                    request,
-                    route_payload,
-                    "live authorization missing for macro_series:fred:fetch_macro_series",
-                )
-            if not _fred_live_credentials_available():
-                return AcceptanceReport.blocked_from_route_payload(
-                    request,
-                    route_payload,
-                    "FRED_API_KEY missing for macro_series:fred:fetch_macro_series",
-                )
-            return _execute_fred_macro_acceptance(
-                request, connection, resolved_root, route_payload
-            )
-        from backend.app.ops.source_route_db_acceptance_matrix import find_matrix_target
+        from backend.app.ops.source_route_db_acceptance_matrix import (
+            find_matrix_target,
+            resolve_matrix_data_root,
+        )
 
+        try:
+            if skip_data_root_validation:
+                resolved_root = Path(data_root).expanduser().resolve()
+            else:
+                resolved_root = resolve_matrix_data_root(data_root)
+        except AcceptanceIsolationError as exc:
+            return AcceptanceReport.contract_violation(request, str(exc))
+        connection = cm if cm is not None else _bootstrap_acceptance_db(resolved_root)
         matrix_target = find_matrix_target(request)
         if matrix_target is not None:
             return _execute_matrix_target(
@@ -328,31 +305,6 @@ def _bootstrap_acceptance_db(data_root: Path) -> ConnectionManager:
     return ConnectionManager(db_path=db_path)
 
 
-def _is_fred_macro_series_request(request: AcceptanceRequest) -> bool:
-    return (
-        request.data_domain == "macro_series"
-        and request.source_id == "fred"
-        and request.operation == "fetch_macro_series"
-    )
-
-
-def _fred_macro_route_payload(request: AcceptanceRequest) -> dict[str, Any]:
-    from backend.app.ops.fred_incremental_run import build_fred_incremental_preview_service
-
-    plan = build_fred_incremental_preview_service().preview_route(
-        data_domain=request.data_domain,
-        operation=request.operation,
-        market_id=request.market_id,
-        run_id="acceptance-preview",
-        job_id="acceptance-preview",
-    )
-    return plan.to_payload_dict()
-
-
-def _fred_live_credentials_available() -> bool:
-    return bool(os.environ.get("FRED_API_KEY"))
-
-
 def _persist_route_evidence(cm: ConnectionManager, route_payload: dict[str, Any]) -> None:
     from backend.app.sync.event_payload import build_event_payload
 
@@ -374,54 +326,6 @@ def _persist_route_evidence(cm: ConnectionManager, route_payload: dict[str, Any]
         )
 
 
-def _execute_fred_macro_acceptance(
-    request: AcceptanceRequest,
-    cm: ConnectionManager,
-    data_root: Path,
-    route_payload: dict[str, Any],
-) -> AcceptanceReport:
-    from backend.app.datasources.product_live_gate import ProductLiveGateError
-
-    try:
-        sync_report = _run_fred_macro_live_sync(cm, data_root)
-    except ProductLiveGateError as exc:
-        return AcceptanceReport.blocked_from_route_payload(request, route_payload, str(exc))
-
-    route_report = AcceptanceReport.from_route_payload(request, route_payload)
-    series = sync_report.series_results[0] if sync_report.series_results else {}
-    validation_status, conflict_status = _acceptance_job_statuses(
-        cm,
-        _optional_str(series.get("job_id")),
-    )
-    read_status, schema_hash, content_hash = _probe_fred_downstream_read(cm)
-    pass_status = (
-        route_report.route_plan_id is not None
-        and sync_report.overall_status == "COMPLETED"
-        and sync_report.total_rows_written > 0
-        and read_status == "PRIMARY_GRADE_READ"
-    )
-    errors: tuple[str, ...] = ()
-    if not pass_status:
-        errors = (
-            "FRED live acceptance did not complete fetch/write/read: "
-            f"overall_status={sync_report.overall_status}; "
-            f"series={list(sync_report.series_results)}; downstream={read_status}",
-        )
-    return replace(
-        route_report,
-        implementation_mode="live",
-        write_grade="primary_grade_clean" if sync_report.total_rows_written > 0 else "not_written",
-        schema_hash=schema_hash,
-        content_hash=content_hash,
-        validation_status=validation_status,
-        conflict_status=conflict_status,
-        failure_class="NONE" if pass_status else "FAIL_EXTERNAL",
-        downstream_layer_read_status=read_status,
-        status="PASS" if pass_status else "FAIL",
-        errors=errors,
-    )
-
-
 def _execute_matrix_target(
     request: AcceptanceRequest,
     matrix_target,
@@ -436,37 +340,63 @@ def _execute_matrix_target(
         is_product_live_fetch_allowed,
     )
     from backend.app.ops.source_route_db_acceptance_matrix import (
+        QUALIFICATION_DEFERRED_SOURCE_IDS,
         is_non_primary_positioning,
         matrix_target_key,
         missing_gate_errors,
         preview_route_payload,
+        validate_qualification_credentials,
     )
 
     route_payload = preview_route_payload(request)
     if persist_route_evidence:
         _persist_route_evidence(cm, route_payload)
     target_key = matrix_target_key(matrix_target)
+    gate_errors = missing_gate_errors(matrix_target)
     if not live_authorized:
-        return AcceptanceReport.blocked_from_route_payload(
+        blocked_errors: list[str] = [f"live authorization missing for {target_key}"]
+        if gate_errors:
+            blocked_errors.extend(f"diagnostic:{item}" for item in gate_errors)
+        report = AcceptanceReport.blocked_from_route_payload(
             request,
             route_payload,
-            f"live authorization missing for {target_key}",
+            "; ".join(blocked_errors),
         )
-    gate_errors = missing_gate_errors(matrix_target)
+        return replace(report, implementation_mode="dry_run")
     if gate_errors:
         return AcceptanceReport.blocked_from_route_payload(
             request,
             route_payload,
             "; ".join(gate_errors),
         )
-    if is_non_primary_positioning(matrix_target):
-        return AcceptanceReport.qualified_non_primary_from_route_payload(
+    qualification_errors = validate_qualification_credentials(matrix_target)
+    if qualification_errors:
+        return AcceptanceReport.blocked_from_route_payload(
             request,
             route_payload,
-            positioning=matrix_target.positioning,
-            expected_write_grade=matrix_target.expected_write_grade,
-            downstream_expectation=matrix_target.downstream_expectation,
+            "; ".join(qualification_errors),
         )
+    if is_non_primary_positioning(matrix_target):
+        if matrix_target.request.source_id in QUALIFICATION_DEFERRED_SOURCE_IDS:
+            pass
+        elif matrix_target.positioning == "validation":
+            from backend.app.ops.matrix_live_handlers import execute_validation_matrix_probe
+
+            return execute_validation_matrix_probe(
+                request,
+                matrix_target,
+                cm,
+                data_root,
+                route_payload,
+            )
+        else:
+            return AcceptanceReport.qualified_non_primary_from_route_payload(
+                request,
+                route_payload,
+                positioning=matrix_target.positioning,
+                expected_write_grade=matrix_target.expected_write_grade,
+                downstream_expectation=matrix_target.downstream_expectation,
+            )
     if not is_product_live_fetch_allowed():
         return AcceptanceReport.blocked_from_route_payload(
             request,
@@ -492,34 +422,18 @@ def _execute_primary_matrix_live(
     data_root: Path,
     route_payload: dict[str, Any],
 ) -> AcceptanceReport:
-    dispatch = {
-        "baostock": _execute_baostock_matrix_live,
-        "cninfo": _execute_cninfo_matrix_live,
-        "sec_edgar": _execute_sec_edgar_matrix_live,
-        "us_treasury": _execute_us_treasury_matrix_live,
-        "cftc_cot": _execute_cftc_matrix_live,
-        "bis": _execute_bis_matrix_live,
-        "world_bank": _execute_world_bank_matrix_live,
-        "deribit": _execute_deribit_matrix_live,
-        "alpha_vantage": _execute_alpha_vantage_matrix_live,
-        "coingecko": _execute_matrix_evidence_fetch_live,
-        "kalshi": _execute_matrix_evidence_fetch_live,
-        "qmt_xtdata": _execute_matrix_evidence_fetch_live,
-    }
-    handler = dispatch.get(request.source_id)
-    if handler is None:
-        route_report = AcceptanceReport.from_route_payload(request, route_payload)
-        return replace(
-            route_report,
-            implementation_mode="live",
-            failure_class="NOT_IMPLEMENTED",
-            status="FAIL",
-            errors=(f"live execute handler not wired for {request.source_id}",),
-        )
-    return handler(request, matrix_target, cm, data_root, route_payload)
+    from backend.app.ops.matrix_live_handlers import execute_primary_matrix_live
+
+    return execute_primary_matrix_live(
+        request,
+        matrix_target,
+        cm,
+        data_root,
+        route_payload,
+    )
 
 
-def _matrix_live_report(
+def _matrix_incremental_live_report(
     request: AcceptanceRequest,
     route_payload: dict[str, Any],
     cm: ConnectionManager,
@@ -528,39 +442,9 @@ def _matrix_live_report(
     sync_status: str,
     rows_written: int,
     job_id: str | None,
-    evidence_fetch_ok: bool = False,
 ) -> AcceptanceReport:
     route_report = AcceptanceReport.from_route_payload(request, route_payload)
     validation_status, conflict_status = _acceptance_job_statuses(cm, job_id)
-    if evidence_fetch_ok:
-        pass_status = route_report.route_plan_id is not None and sync_status in {
-            "COMPLETED",
-            "PASS",
-            "SUCCESS",
-            "OK",
-        }
-        downstream = (
-            matrix_target.downstream_expectation
-            if pass_status
-            else "NO_EVIDENCE"
-        )
-        write_grade = "not_written"
-        errors: tuple[str, ...] = ()
-        if not pass_status:
-            errors = (
-                f"evidence fetch incomplete: sync_status={sync_status}",
-            )
-        return replace(
-            route_report,
-            implementation_mode="live",
-            write_grade=write_grade,
-            validation_status=validation_status,
-            conflict_status=conflict_status,
-            failure_class="NONE" if pass_status else "FAIL_EXTERNAL",
-            downstream_layer_read_status=downstream,
-            status="PASS" if pass_status else "FAIL",
-            errors=errors,
-        )
     downstream = (
         matrix_target.downstream_expectation
         if rows_written > 0
@@ -589,412 +473,51 @@ def _matrix_live_report(
     )
 
 
+def _matrix_evidence_fetch_live_report(
+    request: AcceptanceRequest,
+    route_payload: dict[str, Any],
+    cm: ConnectionManager,
+    *,
+    matrix_target,
+    sync_status: str,
+    data_root: Path,
+) -> AcceptanceReport:
+    route_report = AcceptanceReport.from_route_payload(request, route_payload)
+    validation_status, conflict_status = _acceptance_job_statuses(cm, None)
+    raw_source = data_root / "raw" / request.source_id
+    raw_exists = raw_source.is_dir() and any(raw_source.rglob("*"))
+    pass_status = route_report.route_plan_id is not None and sync_status in {
+        "COMPLETED",
+        "PASS",
+        "SUCCESS",
+        "OK",
+    } and raw_exists
+    downstream = matrix_target.downstream_expectation if pass_status else "NO_EVIDENCE"
+    errors: tuple[str, ...] = ()
+    if not pass_status:
+        detail = f"sync_status={sync_status}; raw_exists={raw_exists}"
+        errors = (f"evidence fetch incomplete: {detail}",)
+    return replace(
+        route_report,
+        implementation_mode="live",
+        write_grade="not_written",
+        validation_status=validation_status,
+        conflict_status=conflict_status,
+        failure_class="NONE" if pass_status else "FAIL_EXTERNAL",
+        downstream_layer_read_status=downstream,
+        status="PASS" if pass_status else "FAIL",
+        errors=errors,
+    )
+
+
 def _count_clean_rows(cm: ConnectionManager, data_domain: str) -> int:
     from backend.app.ops.sandbox_clean_write.clean_write_targets import resolve_clean_write_target
 
     target = resolve_clean_write_target(data_domain)
+    table = quote_ident(target.target_table)
     with cm.writer() as con:
-        row = con.execute(f"SELECT COUNT(*) FROM {target.target_table}").fetchone()
+        row = con.execute(f"SELECT COUNT(*) FROM {table}").fetchone()
     return int(row[0]) if row else 0
-
-
-def _execute_baostock_matrix_live(request, matrix_target, cm, data_root, route_payload):
-    from datetime import date, timedelta
-
-    from backend.app.ops.baostock_incremental_run import (
-        build_baostock_incremental_service,
-        run_baostock_bar_incremental,
-    )
-    from backend.app.sync.orchestrator import DataSyncOrchestrator
-    from backend.app.sync.watermark import IncrementalWindow
-
-    raw_root = data_root / "raw"
-    raw_root.mkdir(parents=True, exist_ok=True)
-    orch = DataSyncOrchestrator(cm)
-    symbol = "sh.600519"
-    service = build_baostock_incremental_service(
-        data_root=raw_root,
-        symbol=symbol,
-        job_events=orch._jobs,
-        use_mock=False,
-    )
-    end = date.today()
-    window = IncrementalWindow(
-        date_start=end - timedelta(days=30),
-        date_end=end,
-        watermark=None,
-    )
-    result = run_baostock_bar_incremental(
-        orch,
-        service=service,
-        window=window,
-        symbol=symbol,
-        product_live=True,
-    )
-    rows = _count_clean_rows(cm, request.data_domain)
-    return _matrix_live_report(
-        request,
-        route_payload,
-        cm,
-        matrix_target=matrix_target,
-        sync_status=result.status,
-        rows_written=rows,
-        job_id=result.job_id,
-    )
-
-
-def _execute_cninfo_matrix_live(request, matrix_target, cm, data_root, route_payload):
-    from backend.app.datasources.fetch_ports.cninfo_port import create_cninfo_fetch_port
-    from backend.app.ops.cninfo_incremental_run import (
-        build_cninfo_incremental_service,
-        run_cninfo_incremental,
-    )
-    from backend.app.sync.orchestrator import DataSyncOrchestrator
-
-    raw_root = data_root / "raw"
-    raw_root.mkdir(parents=True, exist_ok=True)
-    orch = DataSyncOrchestrator(cm)
-    from backend.app.ops.source_route_db_acceptance_matrix import matrix_cninfo_symbols
-
-    symbols = matrix_cninfo_symbols()
-    port = create_cninfo_fetch_port(symbols=symbols, max_rows=3, use_mock=False)
-    service = build_cninfo_incremental_service(
-        data_root=raw_root,
-        fetch_port=port,
-        since_by_instrument={},
-        job_events=orch._jobs,
-    )
-    report = run_cninfo_incremental(orch, service=service, symbols=symbols)
-    rows = _count_clean_rows(cm, request.data_domain)
-    return _matrix_live_report(
-        request,
-        route_payload,
-        cm,
-        matrix_target=matrix_target,
-        sync_status=report.overall_status,
-        rows_written=rows,
-        job_id=_optional_str(report.instrument_results[0].get("job_id"))
-        if report.instrument_results
-        else None,
-    )
-
-
-def _execute_sec_edgar_matrix_live(request, matrix_target, cm, data_root, route_payload):
-    from backend.app.datasources.fetch_ports.sec_edgar_port import create_sec_edgar_fetch_port
-    from backend.app.ops.sec_edgar_incremental_run import (
-        build_sec_edgar_incremental_service,
-        run_sec_edgar_incremental,
-    )
-    from backend.app.sync.orchestrator import DataSyncOrchestrator
-
-    raw_root = data_root / "raw"
-    raw_root.mkdir(parents=True, exist_ok=True)
-    orch = DataSyncOrchestrator(cm)
-    port = create_sec_edgar_fetch_port(
-        ciks=("0000320193",), max_filings=3, data_domain="us_filings", use_mock=False
-    )
-    service = build_sec_edgar_incremental_service(
-        data_root=raw_root,
-        fetch_port=port,
-        since_by_cik={},
-        job_events=orch._jobs,
-    )
-    report = run_sec_edgar_incremental(orch, service=service, ciks=("0000320193",))
-    cik_result = report.cik_results[0] if report.cik_results else {}
-    return _matrix_live_report(
-        request,
-        route_payload,
-        cm,
-        matrix_target=matrix_target,
-        sync_status=str(cik_result.get("status", report.overall_status)),
-        rows_written=int(cik_result.get("clean_row_count", 0)),
-        job_id=_optional_str(cik_result.get("job_id")),
-    )
-
-
-def _execute_us_treasury_matrix_live(request, matrix_target, cm, data_root, route_payload):
-    from backend.app.ops.us_treasury_incremental_run import (
-        build_us_treasury_incremental_service,
-        create_us_treasury_incremental_port,
-        run_us_treasury_incremental,
-    )
-    from backend.app.sync.orchestrator import DataSyncOrchestrator
-
-    tenors = ("10Y",)
-    raw_root = data_root / "raw"
-    raw_root.mkdir(parents=True, exist_ok=True)
-    orch = DataSyncOrchestrator(cm)
-    port = create_us_treasury_incremental_port(tenors=tenors, use_mock=False)
-    service = build_us_treasury_incremental_service(
-        data_root=raw_root,
-        fetch_port=port,
-        since_by_instrument={tenor: "2000-01-01" for tenor in tenors},
-        job_events=orch._jobs,
-    )
-    report = run_us_treasury_incremental(
-        orch, service=service, tenors=tenors, use_mock=False
-    )
-    rows = _count_clean_rows(cm, request.data_domain)
-    return _matrix_live_report(
-        request,
-        route_payload,
-        cm,
-        matrix_target=matrix_target,
-        sync_status=report.overall_status,
-        rows_written=rows,
-        job_id=None,
-    )
-
-
-def _execute_cftc_matrix_live(request, matrix_target, cm, data_root, route_payload):
-    from backend.app.ops.cftc_incremental_run import (
-        build_cftc_incremental_service,
-        create_cftc_incremental_port,
-        run_cftc_incremental,
-    )
-    from backend.app.sync.orchestrator import DataSyncOrchestrator
-
-    markets = ("088691",)
-    raw_root = data_root / "raw"
-    raw_root.mkdir(parents=True, exist_ok=True)
-    orch = DataSyncOrchestrator(cm)
-    port = create_cftc_incremental_port(markets=markets, use_mock=False)
-    service = build_cftc_incremental_service(
-        data_root=raw_root,
-        fetch_port=port,
-        since_by_instrument={market: "2000-01-01" for market in markets},
-        job_events=orch._jobs,
-    )
-    report = run_cftc_incremental(orch, service=service, markets=markets, use_mock=False)
-    rows = _count_clean_rows(cm, request.data_domain)
-    return _matrix_live_report(
-        request,
-        route_payload,
-        cm,
-        matrix_target=matrix_target,
-        sync_status=report.overall_status,
-        rows_written=rows,
-        job_id=None,
-    )
-
-
-def _execute_bis_matrix_live(request, matrix_target, cm, data_root, route_payload):
-    from backend.app.ops.bis_incremental_run import (
-        build_bis_incremental_service,
-        create_bis_incremental_port,
-        run_bis_incremental,
-    )
-    from backend.app.sync.orchestrator import DataSyncOrchestrator
-
-    countries = ("US",)
-    raw_root = data_root / "raw"
-    raw_root.mkdir(parents=True, exist_ok=True)
-    orch = DataSyncOrchestrator(cm)
-    port = create_bis_incremental_port(countries=countries, use_mock=False)
-    service = build_bis_incremental_service(
-        data_root=raw_root,
-        fetch_port=port,
-        since_by_instrument={country: "2000-01-01" for country in countries},
-        job_events=orch._jobs,
-    )
-    report = run_bis_incremental(orch, service=service, countries=countries, use_mock=False)
-    rows = _count_clean_rows(cm, request.data_domain)
-    return _matrix_live_report(
-        request,
-        route_payload,
-        cm,
-        matrix_target=matrix_target,
-        sync_status=report.overall_status,
-        rows_written=rows,
-        job_id=None,
-    )
-
-
-def _execute_world_bank_matrix_live(request, matrix_target, cm, data_root, route_payload):
-    from backend.app.ops.world_bank_incremental_run import (
-        build_world_bank_incremental_service,
-        create_world_bank_incremental_port,
-        run_world_bank_incremental,
-    )
-    from backend.app.sync.orchestrator import DataSyncOrchestrator
-
-    countries = ("US",)
-    raw_root = data_root / "raw"
-    raw_root.mkdir(parents=True, exist_ok=True)
-    orch = DataSyncOrchestrator(cm)
-    port = create_world_bank_incremental_port(countries=countries, use_mock=False)
-    service = build_world_bank_incremental_service(
-        data_root=raw_root,
-        fetch_port=port,
-        since_by_instrument={country: "2000-01-01" for country in countries},
-        job_events=orch._jobs,
-    )
-    report = run_world_bank_incremental(
-        orch, service=service, countries=countries, use_mock=False
-    )
-    rows = _count_clean_rows(cm, request.data_domain)
-    return _matrix_live_report(
-        request,
-        route_payload,
-        cm,
-        matrix_target=matrix_target,
-        sync_status=report.overall_status,
-        rows_written=rows,
-        job_id=None,
-    )
-
-
-def _execute_deribit_matrix_live(request, matrix_target, cm, data_root, route_payload):
-    from backend.app.datasources.fetch_ports.deribit_port import create_deribit_fetch_port
-    from backend.app.ops.deribit_incremental_run import (
-        build_deribit_incremental_service,
-        run_deribit_incremental,
-    )
-    from backend.app.ops.source_route_db_acceptance_matrix import resolve_matrix_deribit_live_instrument
-    from backend.app.sync.orchestrator import DataSyncOrchestrator
-
-    raw_root = data_root / "raw"
-    raw_root.mkdir(parents=True, exist_ok=True)
-    orch = DataSyncOrchestrator(cm)
-    instrument = resolve_matrix_deribit_live_instrument()
-    port = create_deribit_fetch_port(instruments=(instrument,), max_surface_rows=3, use_mock=False)
-    service = build_deribit_incremental_service(
-        data_root=raw_root,
-        fetch_port=port,
-        since_by_instrument={instrument: "2000-01-01"},
-        job_events=orch._jobs,
-    )
-    report = run_deribit_incremental(orch, service=service, instruments=(instrument,))
-    inst_result = report.instrument_results[0] if report.instrument_results else {}
-    return _matrix_live_report(
-        request,
-        route_payload,
-        cm,
-        matrix_target=matrix_target,
-        sync_status=str(inst_result.get("status", report.overall_status)),
-        rows_written=int(inst_result.get("clean_row_count", 0)),
-        job_id=_optional_str(inst_result.get("job_id")),
-    )
-
-
-def _execute_alpha_vantage_matrix_live(request, matrix_target, cm, data_root, route_payload):
-    from backend.app.datasources.fetch_ports.alpha_vantage_port import (
-        create_alpha_vantage_fetch_port,
-    )
-    from backend.app.ops.alpha_vantage_incremental_run import (
-        build_alpha_vantage_incremental_service,
-        enabled_alpha_vantage_source_registry,
-        run_alpha_vantage_incremental,
-    )
-    from backend.app.ops.source_route_db_acceptance_matrix import matrix_alpha_vantage_symbol
-    from backend.app.sync.orchestrator import DataSyncOrchestrator
-
-    raw_root = data_root / "raw"
-    raw_root.mkdir(parents=True, exist_ok=True)
-    orch = DataSyncOrchestrator(cm)
-    symbol = matrix_alpha_vantage_symbol()
-    port = create_alpha_vantage_fetch_port(symbols=(symbol,), max_rows=3, use_mock=False)
-    service = build_alpha_vantage_incremental_service(
-        data_root=raw_root,
-        fetch_port=port,
-        job_events=orch._jobs,
-        source_registry=enabled_alpha_vantage_source_registry(),
-    )
-    report = run_alpha_vantage_incremental(orch, service=service, symbols=(symbol,))
-    rows = _count_clean_rows(cm, request.data_domain)
-    return _matrix_live_report(
-        request,
-        route_payload,
-        cm,
-        matrix_target=matrix_target,
-        sync_status=report.overall_status,
-        rows_written=rows,
-        job_id=_optional_str(report.symbol_results[0].get("job_id"))
-        if report.symbol_results
-        else None,
-    )
-
-
-def _execute_matrix_evidence_fetch_live(request, matrix_target, cm, data_root, route_payload):
-    from datetime import date
-
-    from backend.app.datasources.adapters.fetch_port import PortError
-    from backend.app.datasources.fetch_result import FetchRequest
-    from backend.app.datasources.product_live_ports import create_product_live_fetch_port
-    from backend.app.ops.source_route_db_acceptance_matrix import (
-        matrix_coingecko_asset_id,
-        matrix_kalshi_market_ticker,
-    )
-    from backend.app.storage.raw_store import RawStore
-
-    instrument_id = None
-    if request.source_id == "kalshi":
-        instrument_id = matrix_kalshi_market_ticker()
-    elif request.source_id == "coingecko":
-        instrument_id = matrix_coingecko_asset_id()
-
-    port = create_product_live_fetch_port(
-        source_id=request.source_id,
-        data_domain=request.data_domain,
-        operation=request.operation,
-    )
-    fetch_req = FetchRequest(
-        run_id="acceptance-evidence-fetch",
-        source_id=request.source_id,
-        data_domain=request.data_domain,
-        instrument_id=instrument_id,
-    )
-    try:
-        payload = port.fetch_payload(fetch_req)
-    except PortError as exc:
-        route_report = AcceptanceReport.from_route_payload(request, route_payload)
-        status = str(exc.status).upper()
-        failure_class = "FAIL_EXTERNAL"
-        if status in {"USER_AUTH_REQUIRED", "AUTH_FAILED"}:
-            failure_class = "BLOCKED"
-        return replace(
-            route_report,
-            implementation_mode="live",
-            write_grade="not_written",
-            failure_class=failure_class,
-            downstream_layer_read_status="NO_EVIDENCE",
-            status="FAIL",
-            errors=(f"evidence fetch port error: {exc.message}",),
-        )
-
-    row_count = int(payload.row_count or 0)
-    if row_count < 1:
-        route_report = AcceptanceReport.from_route_payload(request, route_payload)
-        return replace(
-            route_report,
-            implementation_mode="live",
-            write_grade="not_written",
-            failure_class="FAIL_EXTERNAL",
-            downstream_layer_read_status="NO_EVIDENCE",
-            status="FAIL",
-            errors=("evidence fetch returned zero rows",),
-        )
-
-    raw_root = data_root / "raw"
-    raw_root.mkdir(parents=True, exist_ok=True)
-    store = RawStore(raw_root)
-    store.save(
-        payload.content,
-        source=request.source_id,
-        data_domain=request.data_domain,
-        file_type=payload.file_type,
-        as_of=date.today().isoformat(),
-    )
-    return _matrix_live_report(
-        request,
-        route_payload,
-        cm,
-        matrix_target=matrix_target,
-        sync_status="SUCCESS",
-        rows_written=0,
-        job_id=None,
-        evidence_fetch_ok=True,
-    )
 
 
 def _run_fred_macro_live_sync(cm: ConnectionManager, data_root: Path):
@@ -1095,7 +618,7 @@ def _probe_fred_downstream_read(cm: ConnectionManager) -> tuple[str, str | None,
     return status, schema_hash, content_hash
 
 
-def _preview_from_route_payload(
+def preview_from_route_payload(
     request: AcceptanceRequest,
     route_payload: dict[str, Any],
     *,

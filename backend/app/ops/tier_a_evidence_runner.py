@@ -422,7 +422,17 @@ def _cli_status_from_pipeline(pipeline: _SourcePipelineResult) -> Literal["pass"
 
 def run_source_live_acceptance(source_id: str, *, data_root: Path) -> SourceAcceptanceResult:
     """Run sync→clean→inspect→data health for one Tier A source (S-ACCEPT)."""
+    from backend.app.ops.source_route_matrix_bridge import try_delegate_tier_acceptance
+
     resolved = assert_isolated_live_data_root(data_root)
+    if "source-route-db" in resolved.as_posix():
+        delegated, status, detail = try_delegate_tier_acceptance(source_id, data_root=resolved)
+        if delegated:
+            return SourceAcceptanceResult(
+                source_id=source_id,
+                status=status,
+                detail=detail or status,
+            )
     os.environ["QMD_DATA_ROOT"] = str(resolved)
     run_id = f"accept-{source_id}"
     try:

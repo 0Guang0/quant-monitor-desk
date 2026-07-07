@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from functools import lru_cache
 from pathlib import Path
 
 from backend.app.config import DATA_ROOT, PROJECT_ROOT
@@ -59,6 +60,12 @@ def assert_isolated_live_data_root(
 
 def ensure_isolated_db(data_root: Path) -> Path:
     """Create isolated DuckDB under data_root; apply migrations + registry sync."""
+    return _ensure_isolated_db_cached(str(data_root.resolve()))
+
+
+@lru_cache(maxsize=8)
+def _ensure_isolated_db_cached(resolved_data_root: str) -> Path:
+    data_root = Path(resolved_data_root)
     import duckdb
 
     from backend.app.db.connection import ConnectionManager

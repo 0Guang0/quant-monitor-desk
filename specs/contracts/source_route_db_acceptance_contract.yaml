@@ -30,7 +30,19 @@ documented_matrix_targets:
   authority: docs/modules/data_sources.md#591-总数据源扩展清单与定位
 
 implemented_tracer_targets:
-  - macro_series:fred:fetch_macro_series
+  note: FRED remains the first vertical tracer; matrix covers all 22 documented sources via execute_documented_matrix
+  matrix_primary_live_handlers:
+    - macro_series:fred:fetch_macro_series
+    - cn_equity_daily_bar:baostock:fetch_daily_bar
+    - cn_equity_daily_bar:cninfo:fetch_announcement_index
+    - us_filings:sec_edgar:fetch_company_filings
+    - us_equity_daily_bar:alpha_vantage:fetch_us_daily_bar
+    - crypto_derivatives:deribit:fetch_derivatives_instruments
+  matrix_evidence_fetch_handlers:
+    - crypto_spot_market:coingecko:fetch_spot_market_reference
+    - prediction_market_probability:kalshi:fetch_regulated_probability_signal
+    - cn_equity_daily_bar:qmt_xtdata:fetch_daily_bar
+    - concept_theme:ths_ifind:fetch_concept_theme
 
 implementation_modes:
   - live
@@ -113,7 +125,7 @@ matrix_live_modes:
     business_metaphor: 验收单 (test paper) vs 活市场 (live market) — live acceptance proves today's tradable data, not a frozen replay label
   symbol_ssot:
     cninfo: sh.600519 per cninfo_port SYMBOL_WHITELIST and product_live_ports SOURCE_LIVE_DEFAULTS
-    alpha_vantage: SPY per layer1_source_whitelist L1-LIQ-AMIHUD-SPY and alpha_vantage_port SYMBOL_WHITELIST
+    alpha_vantage: AAPL per product_live_ports SOURCE_LIVE_DEFAULTS and alpha_vantage_port SYMBOL_WHITELIST
     kalshi: KXFED-27APR-T4.25 per live_tier_c_evidence_v1 and kalshi_port MARKET_WHITELIST
     coingecko: bitcoin per coingecko_port ASSET_WHITELIST and product_live_ports SOURCE_LIVE_DEFAULTS
     deribit: active BTC option via resolve_matrix_deribit_live_instrument; replay seed BTC-28JUN24-65000-C is not the live matrix instrument_id
