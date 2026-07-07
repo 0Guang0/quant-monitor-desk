@@ -54,6 +54,10 @@ def execute_primary_matrix_live(
     data_root: Path,
     route_payload: dict[str, Any],
 ) -> AcceptanceReport:
+    from backend.app.ops.source_route_db_acceptance_matrix import (
+        EVIDENCE_FETCH_MATRIX_SOURCE_IDS,
+    )
+
     dispatch: dict[str, Callable[..., AcceptanceReport]] = {
         "baostock": execute_baostock_matrix_live,
         "cninfo": execute_cninfo_matrix_live,
@@ -65,11 +69,9 @@ def execute_primary_matrix_live(
         "deribit": execute_deribit_matrix_live,
         "alpha_vantage": execute_alpha_vantage_matrix_live,
         "fred": execute_fred_matrix_live,
-        "coingecko": execute_matrix_evidence_fetch_live,
-        "kalshi": execute_matrix_evidence_fetch_live,
-        "qmt_xtdata": execute_matrix_evidence_fetch_live,
-        "ths_ifind": execute_matrix_evidence_fetch_live,
     }
+    for source_id in EVIDENCE_FETCH_MATRIX_SOURCE_IDS:
+        dispatch[source_id] = execute_matrix_evidence_fetch_live
     handler = dispatch.get(request.source_id)
     if handler is None:
         route_report = AcceptanceReport.from_route_payload(request, route_payload)

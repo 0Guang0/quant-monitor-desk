@@ -785,3 +785,51 @@ def test_sourceRouteDbAcceptanceMatrix_baostockSampleExecute_networkSubset(
     assert report["implementation_mode"] == "live"
     assert report["failure_class"] in {"NONE", "FAIL_EXTERNAL", "BLOCKED"}
     assert report["status"] in {"PASS", "FAIL"}
+
+
+def test_sourceRouteDbAcceptanceSpine_execute_rejectsNonSandboxDataRoot(
+    tmp_path: Path,
+) -> None:
+    """覆盖范围：spine 隔离 segment 负例（CR-03 / TD-02）
+    测试对象：SourceRouteDbAcceptanceSpine.execute with /tmp 非沙箱路径
+    目的/目标：非 .audit-sandbox/source-route-db 路径须 CONTRACT_VIOLATION，不得 bootstrap DB
+    验证点：failure_class=CONTRACT_VIOLATION；errors 非空
+    失败含义：任意路径可跑矩阵，ADR-015 隔离边界失效
+    """
+    target = next(t for t in iter_matrix_targets() if t.request.source_id == "baostock")
+    bad_root = tmp_path / "not-audit-sandbox"
+    bad_root.mkdir(parents=True, exist_ok=True)
+
+    report = SourceRouteDbAcceptanceSpine().execute(
+        target.request,
+        data_root=bad_root,
+        live_authorized=False,
+    ).to_dict()
+
+    assert report["failure_class"] == "CONTRACT_VIOLATION"
+    assert report["status"] == "FAIL"
+    assert report["errors"]
+
+
+def test_sourceRouteDbAcceptanceMatrix_qmtPlaceholderEnv_blocksAutoPass(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    """覆盖范围：qualification_deferred 源占位 env 不得 auto PASS（CR-05）
+    测试对象：execute for qmt_xtdata with QMT_XTDATA_AUTHORIZED=1
+    目的/目标：占位 env 须 BLOCKED，不得进入 evidence fetch 假 PASS
+    验证点：failure_class=BLOCKED；errors 含 placeholder
+    失败含义：QMT 占位 env 绕过终端资格探针
+    """
+    monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
+    monkeypatch.setenv("QMT_XTDATA_AUTHORIZED", "1")
+    target = next(t for t in iter_matrix_targets() if t.request.source_id == "qmt_xtdata")
+    report = SourceRouteDbAcceptanceSpine().execute(
+        target.request,
+        data_root=_matrix_data_root(tmp_path),
+        live_authorized=True,
+    ).to_dict()
+
+    assert report["failure_class"] == "BLOCKED"
+    assert report["status"] == "FAIL"
+    assert any("placeholder" in err.lower() for err in report["errors"])
