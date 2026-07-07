@@ -192,6 +192,21 @@
   - `task/task-01-source-route and DB acceptance spine/findings.md`
   - `task/task-01-source-route and DB acceptance spine/progress.md`
 
+### Phase 12: Final Closure Scope Expansion
+
+- **Status:** complete for planning update
+- Actions taken:
+  - Loaded and applied `/planning-and-task-breakdown`, `/api-and-interface-design`, `/source-driven-development` and `/design-an-interface`.
+  - Re-read `PRD.md`, `task_plan.md`, `findings.md`, `progress.md` and `docs/modules/data_sources.md` section 5.9.1.
+  - Ran three read-only interface design reviews: minimal single-target spine, registry-driven batch expansion and migration-first cleanup.
+  - Chose migration-first cleanup before source-matrix expansion because old helper/smoke seams would otherwise multiply with every new data source.
+  - Updated the four task files so final task-01 closure now requires old helper / old smoke migration and cleanup, then acceptance-spine coverage for all 22 documented sources.
+- Files modified:
+  - `task/task-01-source-route and DB acceptance spine/PRD.md`
+  - `task/task-01-source-route and DB acceptance spine/task_plan.md`
+  - `task/task-01-source-route and DB acceptance spine/findings.md`
+  - `task/task-01-source-route and DB acceptance spine/progress.md`
+
 ## Test Results
 
 | Test | Input | Expected | Actual | Status |
@@ -236,6 +251,39 @@
 | Git diff whitespace | `git diff --check` | No whitespace errors in diff | Passed with CRLF warnings only | pass |
 | GitNexus final change detection | `detect_changes(scope="all")` | Affected process scope known before commit | MEDIUM risk, 1 affected process (`Execute -> _optional_str`) | pass |
 
+### Phase 13: Deribit/SEC Matrix Failures + Failure Taxonomy (2026-07-07 evening)
+
+- **Status:** complete for this slice — Deribit PASS; SEC remains FAIL_EXTERNAL; closure 21/22
+- Actions taken:
+  - Diagnosed Deribit `COMPLETED; rows_written=0` as probe-symbol mismatch (type B), not missing integration or expired-only source.
+  - Diagnosed SEC `NETWORK_ERROR` as external/SSL (type C); switched `_fetch_sec_submissions_json` to `httpx2` with retries (uncommitted).
+  - Implemented Deribit live instrument resolution (`resolve_deribit_live_option_instrument`, `resolve_matrix_deribit_live_instrument`) and matrix handler alignment (uncommitted).
+  - User clarified policy: keep `QMD_ALLOW_LIVE_FETCH=1`; QMT/iFinD missing auth is **expected** exposure of unqualified sources — do not hide.
+  - Recorded failure taxonomy and authorization map in `findings.md`.
+- Verification:
+  - Targeted tests: 7 passed, 2 skipped (deribit e2e network tests skipped).
+  - Full pytest: 3 failures in `test_cn_market_adapters.py` due to `.env` auth pollution (unrelated).
+- Files modified (uncommitted):
+  - `backend/app/datasources/fetch_ports/deribit_port.py`
+  - `backend/app/datasources/fetch_ports/sec_edgar_port.py`
+  - `backend/app/ops/source_route_db_acceptance.py`
+  - `backend/app/ops/source_route_db_acceptance_matrix.py`
+  - `specs/contracts/source_route_db_acceptance_contract.yaml`
+  - `tests/test_source_route_db_acceptance_matrix.py`
+  - `tests/deribit_incremental_support.py`
+- Live runs:
+  - Deribit single target → PASS
+  - SEC single → FAIL_EXTERNAL NETWORK_ERROR
+  - Full matrix → pass_count=21, fail_external=1 (SEC only); QMT/iFinD closure PASS
+  - Checker `--live-authorized` → exit 1 (SEC only)
+
+| Test | Input | Expected | Actual | Status |
+|------|-------|----------|--------|--------|
+| Matrix + helper tests | targeted pytest | Pass | 19 pass | pass |
+| Deribit live matrix | qmd-ops single target | PASS | PASS | pass |
+| SEC live matrix | qmd-ops single target | PASS or honest FAIL_EXTERNAL | FAIL_EXTERNAL | expected |
+| Full matrix closure | 22 sources | 21 PASS + SEC external | 21/22 | expected |
+
 ## Error Log
 
 | Timestamp | Error | Attempt | Resolution |
@@ -254,11 +302,11 @@
 
 | Question | Answer |
 |----------|--------|
-| Where am I? | The acceptance spine now connects the FRED tracer through live fetch/write/read when gates are satisfied, keeps blocked states honest when gates are missing, and the authority-language guard is clean. |
-| Where am I going? | Final step is full-suite verification, GitNexus change detection, and commit if the worktree passes. |
-| What's the goal? | Build a production-equivalent acceptance spine over existing data platform modules, not a from-scratch rewrite. |
+| Where am I? | The acceptance spine now connects the FRED tracer through live fetch/write/read when gates are satisfied, but task-01 closure has been expanded beyond FRED. |
+| Where am I going? | Next implementation work should first migrate/clean old helper and old smoke seams, then expand the spine to the full `data_sources.md` source matrix. |
+| What's the goal? | Build one production-equivalent acceptance spine over existing data platform modules, with no competing old helper/smoke product acceptance seams. |
 | What have I learned? | See `findings.md`. |
-| What have I done? | Created persistent planning files, optimized the task files, implemented and committed prior slices through review remediation, then wired the FRED acceptance spine through live fetch/write/read and cleaned the authority vocabulary drift. |
+| What have I done? | Created persistent planning files, implemented and committed prior slices through FRED live fetch/write/read, then updated final closure planning to require legacy seam cleanup plus all documented source coverage. |
 
 ---
 

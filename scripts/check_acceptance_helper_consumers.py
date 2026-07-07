@@ -27,6 +27,11 @@ SKIP_DIRS = {
     "conversation_history",
     "task",
 }
+ALLOWED_CI_SCRIPT_PATHS = frozenset(
+    {
+        "scripts/ci_perf_budget_artifact.py",
+    }
+)
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -44,13 +49,18 @@ class ConsumerHit:
     path: str
     line: int
     usage: str
+    scope: str
+    migration_action: str
     replacement: str
 
 
 RULES: tuple[ConsumerRule, ...] = (
     ConsumerRule(
         target="scripts/production_equivalent_smoke.py",
-        pattern=re.compile(r"production_equivalent_smoke"),
+        pattern=re.compile(
+            r"(?:scripts[/\\]production_equivalent_smoke(?:\.py)?"
+            r"|from\s+scripts\.production_equivalent_smoke|import\s+scripts\.production_equivalent_smoke)"
+        ),
         classification="smoke_wrapper",
         replacement="SourceRouteDbAcceptanceSpine Adapter or qmd-ops accept-source-route-db",
     ),
@@ -102,6 +112,31 @@ def _usage_kind(path: Path) -> str:
     return "product_code"
 
 
+def _consumer_scope(path: Path, usage: str) -> str:
+    rel = path.relative_to(PROJECT_ROOT).as_posix()
+    if usage == "test":
+        return "test_only"
+    if rel in ALLOWED_CI_SCRIPT_PATHS:
+        return "allowed_ci"
+    if usage == "product_code":
+        return "product_runtime"
+    return "script_runtime"
+
+
+def _migration_action(scope: str, classification: str) -> str:
+    if scope == "test_only":
+        return "keep_test_helper"
+    if scope == "allowed_ci":
+        return "keep_ci_perf_budget"
+    if classification == "smoke_wrapper":
+        return "delegate_to_spine_or_remove"
+    if classification == "source_specific_live_helper":
+        return "migrate_to_spine_adapter"
+    if classification == "direct_adapter_helper":
+        return "use_data_source_service"
+    return "migrate_to_spine"
+
+
 def _is_rule_definition(path: Path, rule: ConsumerRule) -> bool:
     rel = path.relative_to(PROJECT_ROOT).as_posix()
     if rel in {
@@ -132,13 +167,17 @@ def collect_consumers(root: Path = PROJECT_ROOT) -> list[ConsumerHit]:
                     continue
                 if not rule.pattern.search(line):
                     continue
+                usage = _usage_kind(path)
+                scope = _consumer_scope(path, usage)
                 hits.append(
                     ConsumerHit(
                         target=rule.target,
                         classification=rule.classification,
                         path=path.relative_to(root).as_posix(),
                         line=line_no,
-                        usage=_usage_kind(path),
+                        usage=usage,
+                        scope=scope,
+                        migration_action=_migration_action(scope, rule.classification),
                         replacement=rule.replacement,
                     )
                 )
@@ -147,11 +186,20 @@ def collect_consumers(root: Path = PROJECT_ROOT) -> list[ConsumerHit]:
 
 def build_report(root: Path = PROJECT_ROOT) -> dict[str, object]:
     consumers = [asdict(hit) for hit in collect_consumers(root)]
+    product_runtime = [item for item in consumers if item["scope"] == "product_runtime"]
+    script_runtime = [item for item in consumers if item["scope"] == "script_runtime"]
+    seam_inventory_status = (
+        "PASS" if not product_runtime and not script_runtime else "FAIL"
+    )
     return {
         "status": "WARN" if consumers else "PASS",
+        "strict_status": "FAIL" if product_runtime else "PASS",
+        "seam_inventory_status": seam_inventory_status,
         "module": "SourceRouteDbAcceptanceSpine",
-        "mode": "advisory_deprecation_inventory",
+        "mode": "strict_product_runtime_inventory",
         "consumer_count": len(consumers),
+        "product_runtime_count": len(product_runtime),
+        "script_runtime_count": len(script_runtime),
         "consumers": consumers,
     }
 
@@ -159,13 +207,18 @@ def build_report(root: Path = PROJECT_ROOT) -> dict[str, object]:
 def _format_text(report: dict[str, object]) -> str:
     lines = [
         f"status={report['status']}",
+        f"strict_status={report['strict_status']}",
+        f"seam_inventory_status={report['seam_inventory_status']}",
         f"mode={report['mode']}",
         f"consumer_count={report['consumer_count']}",
+        f"product_runtime_count={report['product_runtime_count']}",
+        f"script_runtime_count={report['script_runtime_count']}",
     ]
     for item in report["consumers"]:
         consumer = dict(item)
         lines.append(
-            "{path}:{line} {classification} target={target} usage={usage}".format(**consumer)
+            "{path}:{line} scope={scope} {classification} target={target} "
+            "action={migration_action}".format(**consumer)
         )
     return "\n".join(lines)
 
@@ -176,7 +229,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--strict",
         action="store_true",
-        help="Return non-zero while old helper consumers remain",
+        help="Return non-zero while product/runtime old-seam consumers remain",
+    )
+    parser.add_argument(
+        "--strict-seam-inventory",
+        action="store_true",
+        help="Return non-zero while script_runtime or product_runtime legacy seam consumers remain",
     )
     args = parser.parse_args(argv)
 
@@ -185,7 +243,9 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(report, indent=2, sort_keys=True))
     else:
         print(_format_text(report))
-    return 1 if args.strict and report["consumer_count"] else 0
+    strict_fail = bool(report["product_runtime_count"])
+    seam_inventory_fail = report["seam_inventory_status"] != "PASS"
+    return 1 if (args.strict and strict_fail) or (args.strict_seam_inventory and seam_inventory_fail) else 0
 
 
 if __name__ == "__main__":

@@ -10,9 +10,11 @@
 
 Commercial review remediation is complete as of `34990d25 test: resolve source route audit findings`. All P0/P1/P2/P3 findings from `task/audit/task-01-source-route and DB acceptance spine/review-commercial-01.txt` were resolved, adversarially rechecked, and committed with a clean worktree.
 
-Current product-spine implementation connects the FRED tracer beyond persisted route evidence into live fetch/write/downstream-read acceptance when live gates and credentials are present. Authority vocabulary findings are cleaned and the strict guard passes; remaining helper-consumer output is advisory migration inventory, not a product PASS gate.
+Current product-spine implementation connects the FRED tracer beyond persisted route evidence into live fetch/write/downstream-read acceptance when live gates and credentials are present. Authority vocabulary findings are cleaned and the strict guard passes.
 
 API/interface follow-up is complete: `preview()` and `execute()` now use the same FRED route evidence path for `macro_series:fred:fetch_macro_series`, while unsupported targets still fail honestly as `not_implemented`.
+
+User clarification on 2026-07-07 changes the final close/pass standard for this task: FRED is no longer enough to close the task. Final closure requires both legacy helper/smoke migration and cleanup, then expansion of the acceptance spine to every source in `docs/modules/data_sources.md` section 5.9.1. The order is intentional: migrate and remove old acceptance seams first, then add sources behind the single spine.
 
 ## Spec Summary
 
@@ -64,6 +66,8 @@ API/interface follow-up is complete: `preview()` and `execute()` now use the sam
 - Production-equivalent acceptance DB uses the same migrations/schema/spec/contracts as final main DB while staying physically isolated.
 - Acceptance output exposes implementation_mode, route_grade, write_grade, source_used, source_role, source_switched, quality_flags, validation/conflict status, failure class and downstream read status.
 - mock/replay/dry-run/not_implemented never count as completed product acceptance.
+- Old helper / old smoke entrypoints no longer exist as product acceptance seams: each active consumer is migrated to `SourceRouteDbAcceptanceSpine`, test-only helpers are explicitly scoped to tests, and removable wrappers are deleted.
+- Every source in `docs/modules/data_sources.md` section 5.9.1 is represented by a spine target and returns the common `AcceptanceReport` contract with honest PASS/BLOCKED/DISABLED_SOURCE/FAIL_EXTERNAL/not_implemented semantics.
 
 ## Testing Seam
 
@@ -78,6 +82,8 @@ uv run qmd-ops accept-source-route-db --data-root .audit-sandbox/source-route-db
 ```
 
 The first tracer bullet should be `macro_series` / `fred` / `fetch_macro_series`, because current code already has a formal non-dry-run FRED macro path. If credentials or live authorization are absent, the run must produce BLOCKED or FAIL_EXTERNAL, not a fake PASS.
+
+Next closure path: do not add a public method per provider and do not add an `execute_all` product seam yet. Keep `preview(request)` and `execute(request, data_root, live_authorized)` as the public Interface. Add private target specs/adapters and a CLI/report wrapper only if needed for running the full documented source matrix.
 
 ## Current Code Delta
 
@@ -114,6 +120,8 @@ The first tracer bullet should be `macro_series` / `fred` / `fetch_macro_series`
   - [x] Old helpers are classified as Adapter, test helper, smoke wrapper or removable.
   - [x] No old helper is deleted before a replacement path exists.
   - [x] No new product behavior is added to deprecated helpers except delegation to the new Module.
+  - [ ] Strict consumer inventory passes with zero product/runtime consumers of old helper or old smoke seams.
+  - [ ] Deprecated wrappers that no longer have active consumers are deleted, not left as parallel product entrypoints.
 
 ### Slice 1: Persisted RoutePlan Evidence Spine
 
@@ -178,6 +186,258 @@ The first tracer bullet should be `macro_series` / `fred` / `fetch_macro_series`
 
 Current guard state: `scripts/check_authority_acceptance_language.py --strict` returns `PASS` with 0 violations after cleaning product-state wording in `docs/modules/data_sources.md`.
 
+### Slice 7: Legacy Seam Retirement
+
+**Source-backed inputs:** `scripts/check_acceptance_helper_consumers.py`, `scripts/production_equivalent_smoke.py`, `backend/app/ops/tier_a_live_acceptance.py`, `tests/live_incremental_support.py`, `specs/contracts/source_route_db_acceptance_contract.yaml`.
+
+#### Task 7.1: Make Legacy Consumer Inventory Enforceable
+
+**Description:** Turn the current advisory helper-consumer report into a strict gate that separates product/runtime consumers from allowed test-only helpers. This is the cleanup prerequisite before adding any new source adapters.
+
+**Acceptance criteria:**
+- [ ] Strict mode fails when product/runtime code calls old helper, old smoke or direct adapter acceptance seams.
+- [ ] Strict mode allows explicitly scoped test-only helpers that cannot emit product PASS reports.
+- [ ] Output names each remaining consumer, its classification and the required migration action.
+
+**Verification:**
+- [ ] `uv run python scripts/check_acceptance_helper_consumers.py --strict`
+- [ ] `uv run python -m pytest tests/test_acceptance_helper_consumers.py -q` or the current equivalent consumer-inventory test file.
+
+**Dependencies:** Slices 0-6.
+
+**Files likely touched:**
+- `scripts/check_acceptance_helper_consumers.py`
+- `tests/test_acceptance_helper_consumers.py`
+
+**Estimated scope:** Small.
+
+#### Task 7.2: Migrate Product Runtime Consumers To The Spine
+
+**Description:** Replace remaining product/runtime use of `production_equivalent_smoke.py`, `tier_a_live_acceptance.py`, source-specific live helpers and direct adapter acceptance paths with `SourceRouteDbAcceptanceSpine.preview()` or `execute()`.
+
+**Acceptance criteria:**
+- [ ] Product acceptance calls only the spine contract from `source_route_db_acceptance_contract.yaml`.
+- [ ] Old helper paths no longer produce product PASS independently.
+- [ ] Existing CLI/runbook references point to `qmd-ops accept-source-route-db` or a wrapper that delegates to it.
+
+**Verification:**
+- [ ] `uv run python scripts/check_acceptance_helper_consumers.py --strict`
+- [ ] `uv run python -m pytest tests/test_qmd_ops_source_route_db_acceptance.py tests/test_production_equivalent_smoke_budget.py -q`
+
+**Dependencies:** Task 7.1.
+
+**Files likely touched:**
+- `scripts/production_equivalent_smoke.py`
+- `backend/app/ops/tier_a_live_acceptance.py`
+- `scripts/qmd_ops.py`
+- Related tests under `tests/`.
+
+**Estimated scope:** Medium.
+
+#### Task 7.3: Delete Or Quarantine Retired Old Seams
+
+**Description:** Delete old wrappers whose consumers are zero. If a helper remains because tests need it, rename or document it as test-only and prevent it from writing production-equivalent PASS reports.
+
+**Acceptance criteria:**
+- [ ] Strict inventory has zero product/runtime old-seam consumers.
+- [ ] Removable wrappers are deleted instead of left as parallel product entrypoints.
+- [ ] Test-only helpers cannot be invoked from product CLI, runbooks or production gate paths.
+
+**Verification:**
+- [ ] `uv run python scripts/check_acceptance_helper_consumers.py --strict`
+- [ ] `uv run python scripts/production_gate.py`
+- [ ] `uv run python -m pytest -q`
+
+**Dependencies:** Task 7.2.
+
+**Files likely touched:**
+- `scripts/production_equivalent_smoke.py`
+- `backend/app/ops/tier_a_live_acceptance.py`
+- `tests/live_incremental_support.py`
+- Tests and docs that reference retired seams.
+
+**Estimated scope:** Medium.
+
+### Slice 8: Source Matrix Contract And Target Inventory
+
+**Source-backed inputs:** `docs/modules/data_sources.md` section 5.9.1, `specs/datasource_registry/source_registry.yaml`, `specs/datasource_registry/source_capabilities.yaml`, `specs/contracts/source_route_db_acceptance_contract.yaml`.
+
+#### Task 8.1: Lock The Public Acceptance Contract
+
+**Description:** Keep the public interface at `preview(request)` and `execute(request, data_root, live_authorized)`. Add source-matrix internals behind private target specs/adapters, not provider-specific public methods.
+
+**Acceptance criteria:**
+- [ ] No public `execute_fred`, `execute_cninfo`, `execute_all` or provider-specific methods are added to `SourceRouteDbAcceptanceSpine`.
+- [ ] Matrix execution, if needed, loops over `AcceptanceRequest` and aggregates existing `AcceptanceReport` rows.
+- [ ] New report fields are additive and do not change existing FRED report semantics.
+
+**Verification:**
+- [ ] `uv run python -m pytest tests/test_source_route_db_acceptance_contract.py -q`
+- [ ] `uv run ruff check backend/app/ops/source_route_db_acceptance.py tests/test_source_route_db_acceptance_contract.py`
+
+**Dependencies:** Slice 7.
+
+**Files likely touched:**
+- `backend/app/ops/source_route_db_acceptance.py`
+- `specs/contracts/source_route_db_acceptance_contract.yaml`
+- `tests/test_source_route_db_acceptance_contract.py`
+
+**Estimated scope:** Small.
+
+#### Task 8.2: Generate The 22-Source Target Matrix From Authority Sources
+
+**Description:** Build a target inventory that reconciles the 22 human-design sources in `docs/modules/data_sources.md` with machine-readable registry/capability entries. Missing registry or capability rows are task failures, not invisible omissions.
+
+**Acceptance criteria:**
+- [ ] Matrix includes QMT / xtdata, baostock, AkShare, CNINFO, Yahoo Finance / yfinance, Alpha Vantage, Stooq, Deribit, CoinGecko, US Treasury, SEC EDGAR, CFTC COT, BIS, World Bank, FRED, Kalshi, Polymarket, mootdx / TDX compatible, 东方财富, 新浪财经, 同花顺 / iFinD and Web Search.
+- [ ] Each row records source_id, data_domain, operation, recommended positioning, auth/license requirement, expected write behavior and downstream read expectation.
+- [ ] Any doc/registry/capability mismatch is reported as `CONTRACT_VIOLATION` or a failing inventory check.
+
+**Verification:**
+- [ ] `uv run python scripts/check_source_route_db_acceptance_matrix.py --strict`
+- [ ] `uv run python -m pytest tests/test_source_route_db_acceptance_matrix.py -q`
+
+**Dependencies:** Task 8.1.
+
+**Files likely touched:**
+- `backend/app/ops/source_route_db_acceptance.py`
+- `scripts/check_source_route_db_acceptance_matrix.py`
+- `tests/test_source_route_db_acceptance_matrix.py`
+- `specs/datasource_registry/source_registry.yaml`
+- `specs/datasource_registry/source_capabilities.yaml`
+
+**Estimated scope:** Medium.
+
+#### Task 8.3: Add Preview Coverage For Every Matrix Target
+
+**Description:** Make `preview()` return route/availability evidence for every matrix target before any source-specific live execution is added.
+
+**Acceptance criteria:**
+- [ ] Every matrix target returns `AcceptancePreview` with route_grade, implementation_mode, status and reason.
+- [ ] Disabled, auth-gated, licensed and local-terminal sources say exactly what prerequisite is needed.
+- [ ] No target silently disappears from preview because an adapter is unfinished.
+
+**Verification:**
+- [ ] `uv run python -m pytest tests/test_source_route_db_acceptance_matrix.py tests/test_source_route_db_acceptance_contract.py -q`
+
+**Dependencies:** Task 8.2.
+
+**Files likely touched:**
+- `backend/app/ops/source_route_db_acceptance.py`
+- `tests/test_source_route_db_acceptance_matrix.py`
+
+**Estimated scope:** Medium.
+
+### Slice 9: Source Expansion By Business Positioning
+
+**Source-backed inputs:** `docs/modules/data_sources.md` section 5.9.1 source positioning and 5.9.2 implementation recommendations.
+
+#### Task 9.1: Official And Disclosure Primary Sources
+
+**Description:** Add live `execute()` adapters for official/low-frequency/disclosure sources whose product role is primary and whose live prerequisites are straightforward.
+
+**Sources:** CNINFO, US Treasury, SEC EDGAR, CFTC COT, BIS, World Bank, baostock.
+
+**Acceptance criteria:**
+- [ ] Each source runs through route, product fetch, raw/staging or file registry, validation/conflict, WriteManager and downstream read/evidence probe as appropriate.
+- [ ] Primary sources that write clean produce `write_grade=primary_grade_clean` only after validation passes.
+- [ ] Official/disclosure sources preserve required identifiers such as accession/content_hash/PDF hash where applicable.
+
+**Verification:**
+- [ ] Targeted pytest for each source adapter.
+- [ ] `uv run python scripts/check_source_route_db_acceptance_matrix.py --strict`
+- [ ] One isolated live acceptance run for these sources with `--allow-live-fetch` and required env gates.
+
+**Dependencies:** Slice 8.
+
+**Files likely touched:**
+- `backend/app/ops/source_route_db_acceptance.py`
+- Existing source-specific ops/fetch-port modules.
+- Source-specific tests under `tests/`.
+
+**Estimated scope:** Medium per source group; split if more than five files change.
+
+#### Task 9.2: API-Key, Market And Prediction Sources
+
+**Description:** Add live `execute()` adapters for API-key or market-data sources according to their documented positioning.
+
+**Sources:** FRED matrix variants, Alpha Vantage, Deribit, CoinGecko, Kalshi, Polymarket, Yahoo Finance / yfinance, Stooq.
+
+**Acceptance criteria:**
+- [ ] API-key sources fail closed when key/env gate is missing and run live when user-provided credentials are present.
+- [ ] Prediction market sources write probability/contract semantics only; they do not replace fact sources.
+- [ ] Validation/fallback candidates cannot write primary-grade clean unless a domain FallbackPolicy explicitly permits degraded clean.
+
+**Verification:**
+- [ ] Targeted pytest for each gated source adapter.
+- [ ] Isolated live acceptance run for this group after user has provided all relevant credentials/authorization.
+
+**Dependencies:** Slice 8.
+
+**Files likely touched:**
+- `backend/app/ops/source_route_db_acceptance.py`
+- Existing fetch-port modules for the listed sources.
+- Source-specific tests under `tests/`.
+
+**Estimated scope:** Medium per source group; split by source family if needed.
+
+#### Task 9.3: China Market Validation, Local Terminal And Manual Review Sources
+
+**Description:** Add acceptance behavior for sources whose documented positioning is validation-only, local-terminal-gated, licensed, or manual-review-only.
+
+**Sources:** QMT / xtdata, AkShare, mootdx / TDX compatible, 东方财富, 新浪财经, 同花顺 / iFinD, Web Search.
+
+**Acceptance criteria:**
+- [ ] QMT / xtdata runs live only after user confirms local authorization/client readiness; otherwise it fails closed with the exact gate reason.
+- [ ] AkShare, mootdx, 东方财富, 新浪财经 and 同花顺 / iFinD remain validation/degraded-fallback only according to policy; no silent primary clean takeover.
+- [ ] Web Search writes evidence/manual_review only and never writes clean main values.
+
+**Verification:**
+- [ ] Targeted pytest for local/auth/license/manual-review gates.
+- [ ] Isolated live acceptance run for the group after user has provided all relevant authorization.
+
+**Dependencies:** Slice 8.
+
+**Files likely touched:**
+- `backend/app/ops/source_route_db_acceptance.py`
+- Existing fetch-port modules for the listed sources.
+- Resource/license gate tests under `tests/`.
+
+**Estimated scope:** Medium per source group; split by gate type if needed.
+
+### Slice 10: Real Authorized Source-Matrix Acceptance
+
+**Source-backed inputs:** `source_route_db_acceptance_contract.yaml` required report fields, `source_registry.yaml` auth/default rules, `source_capabilities.yaml` declared operations, user-provided credentials and local authorizations.
+
+#### Task 10.1: Run The Full Matrix With User Authorization
+
+**Description:** After the user has authorized all sources and supplied required keys/local terminals/licenses, run a real production-equivalent acceptance matrix in an isolated data root. This is not a unit test and not a replay; it is the final business evidence for each source.
+
+**Acceptance criteria:**
+- [ ] The run uses `implementation_mode=live` for every source where live execution is part of its documented positioning.
+- [ ] No row passes with `mock`, `replay`, `dry_run` or `not_implemented`.
+- [ ] No row is `BLOCKED` because of missing user authorization, missing key, missing local terminal, missing license or missing env gate.
+- [ ] Each source has a concrete final row with source_id, data_domain, operation, route_grade, write_grade, validation_status, conflict_status, failure_class, downstream_layer_read_status, content_hash/schema_hash where applicable, and errors if any.
+- [ ] `FAIL_EXTERNAL` is allowed only as a recorded external outage/failure with evidence; it cannot be counted as product PASS without user approval or a successful rerun.
+
+**Verification:**
+- [ ] `uv run qmd-ops accept-source-route-db --all-documented-sources --data-root .audit-sandbox/source-route-db-full-live --report .audit-sandbox/source-route-db-full-live/reports/source-matrix-acceptance.json --allow-live-fetch --format json` or the final equivalent matrix wrapper.
+- [ ] `uv run python scripts/check_source_route_db_acceptance_matrix.py --strict --report .audit-sandbox/source-route-db-full-live/reports/source-matrix-acceptance.json`
+- [ ] `uv run python scripts/production_gate.py`
+- [ ] `uv run pytest -q`
+- [ ] `npm run test`, `npm run typecheck`, `npm run build` in `frontend/` if any frontend/report consumer changes.
+- [ ] GitNexus `detect_changes(scope="all")` before commit.
+
+**Dependencies:** Slices 7-9 complete, user authorization for all sources, all required env gates configured.
+
+**Files likely touched:**
+- `backend/app/ops/source_route_db_acceptance.py`
+- `scripts/qmd_ops.py`
+- `scripts/check_source_route_db_acceptance_matrix.py`
+- Source-matrix tests and report documentation.
+
+**Estimated scope:** Medium for runner/reporting; live execution itself is operationally high-risk and must be run as a separate final gate.
+
 ## Tiny Commit Plan
 
 Status note: commits 1-8 and 12-13 have landed in a slightly different order than originally listed. Commit 9's stable validation status taxonomy is not yet implemented as a separate product concept; Commit 10 and 11 behavior is covered through WriteManager degraded evidence tests.
@@ -204,6 +464,13 @@ Status note: commits 1-8 and 12-13 have landed in a slightly different order tha
 18. [x] Commit 18: Add a guard that checks authority docs/contracts for execution-stage vocabulary and reports violations. Landed as `1a3b1ff feat(acceptance): guard authority acceptance language`.
 19. [x] Commit 19: Run full verification and update task evidence. Landed as this planning-file sync after full pytest/hook verification.
 20. [x] Commit 20: Resolve all commercial review findings in `review-commercial-01.txt` under `/testing-guidelines`; remove remaining meta/artifact/phase/fake-RED/source-text tests and tighten exception/outcome assertions. Landed as `34990d25 test: resolve source route audit findings`.
+
+Next implementation order:
+
+1. [ ] Complete Slice 7 Tasks 7.1-7.3 before any new source adapter work.
+2. [ ] Complete Slice 8 Tasks 8.1-8.3 to lock the public contract and produce the source matrix.
+3. [ ] Complete Slice 9 Tasks 9.1-9.3 by source positioning, splitting source groups when a change would exceed about five files.
+4. [ ] Complete Slice 10 Task 10.1 with user-authorized live credentials/local terminals/licenses and record concrete results for every data source.
 
 Each commit must leave the codebase working. If a commit would touch more than about five files or mix two concerns, split it further.
 
@@ -237,6 +504,21 @@ Each commit must leave the codebase working. If a commit would touch more than a
 - [x] Any source failures classified as FAIL_EXTERNAL, blocked, or implementation gap.
 - [x] Commercial review P0/P1/P2/P3 findings resolved and rechecked.
 
+### Checkpoint E: Legacy Seam Closure
+
+- [ ] Strict helper/smoke consumer inventory passes.
+- [ ] Old product-facing helper/smoke entrypoints are either delegated and scheduled for removal, or deleted once unused.
+- [ ] No old helper can emit product acceptance PASS outside the spine.
+
+### Checkpoint F: Full Source Matrix Closure
+
+- [ ] All 22 documented sources in `docs/modules/data_sources.md` section 5.9.1 are represented in the spine target matrix.
+- [ ] Matrix report shows honest status for each source and no mock/replay/dry-run product PASS.
+- [ ] All enabled/configured live sources that are expected to write clean complete route/fetch/write/read acceptance.
+- [ ] User-authorized full live matrix run is completed in an isolated data root.
+- [ ] Final report records the concrete result for every source: PASS, FAIL_EXTERNAL with evidence, or a user-approved non-clean/manual-review outcome according to documented positioning.
+- [ ] No source remains `not_implemented`, `dry_run`, `mock`, `replay` or auth/config `BLOCKED` at final closure.
+
 ## Decisions Made
 
 | Decision | Rationale |
@@ -249,6 +531,8 @@ Each commit must leave the codebase working. If a commit would touch more than a
 | Use `SourceRouteDbAcceptanceSpine` as the external Module | A small Interface hides route/fetch/validate/write/report complexity and avoids a shallow collection of commands. |
 | Start RoutePlan persistence from `job_event_log` | Current code already emits `ROUTE_PLAN`; a dedicated route table should be added only if query/report needs justify the migration. |
 | Deprecate old acceptance helpers advisories first | Existing tests and runbooks may still use them; removal before delegation would create churn without product value. |
+| Complete old helper/smoke migration before multi-source expansion | Expanding sources while old seams still exist would multiply parallel acceptance paths and make product PASS ambiguous. |
+| Keep the public spine Interface single-target for now | Batch/source-matrix execution can loop over the same report contract; provider-specific public methods would recreate source-specific seams. |
 
 ## Risks and Mitigations
 
@@ -258,6 +542,8 @@ Each commit must leave the codebase working. If a commit would touch more than a
 | Real external sources fail due to network, auth or rate limits | High | Report FAIL_EXTERNAL or blocked honestly; do not convert to mock PASS. |
 | Schema changes needed for route/degraded audit fields | Medium | Prefer existing audit/event payloads first; add schema only with migration and contract tests. |
 | Acceptance runner becomes too broad | High | Start with one representative tracer bullet; expand only after report shape is stable. |
+| Multi-source expansion revives old helper paths | High | Make strict legacy seam cleanup the prerequisite for the source matrix work. |
+| Some documented sources need credentials, paid licenses or local terminals | High | Accept honest BLOCKED/DISABLED_SOURCE/FAIL_EXTERNAL statuses; do not require fake live PASS for unconfigured sources. |
 | Authority docs regain stage vocabulary | Medium | Add guardrail check against authority docs/contracts, excluding task execution plans and historical registries if necessary. |
 
 ## Errors Encountered

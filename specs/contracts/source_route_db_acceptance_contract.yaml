@@ -3,6 +3,11 @@ module: source_route_db_acceptance
 status: implementation_contract
 authoritative_task: task/task-01-source-route and DB acceptance spine
 
+adr_refs:
+  - docs/decisions/ADR-015-tier-a-live-acceptance-sandbox.md
+  - docs/decisions/ADR-008-product-live-env-gate.md
+  - docs/decisions/ADR-016-source-route-matrix-honest-closure.md
+
 interface:
   module: SourceRouteDbAcceptanceSpine
   methods:
@@ -19,6 +24,10 @@ interface:
 target_format:
   shape: data_domain:source_id:operation
   example: macro_series:fred:fetch_macro_series
+
+documented_matrix_targets:
+  count: 22
+  authority: docs/modules/data_sources.md#591-总数据源扩展清单与定位
 
 implemented_tracer_targets:
   - macro_series:fred:fetch_macro_series
@@ -60,6 +69,46 @@ required_preview_fields:
   - implementation_mode
   - status
   - reason
+
+optional_preview_fields:
+  - missing_prerequisites
+  - live_ready
+
+matrix_closure:
+  row_outcomes:
+    - PASS
+    - FAIL_EXTERNAL
+    - FAIL_CONTRACT
+    - FAIL
+  dry_run_success: all rows closure_outcome PASS when live_authorized=false and each row is honestly BLOCKED for missing live authorization
+  live_success: all rows closure_outcome PASS when live_authorized=true and each row matches documented positioning semantics; BLOCKED rows fail live closure except qualification_deferred sources honestly BLOCKED for missing local terminal or commercial license artifact
+  qualification_deferred_sources:
+    - qmt_xtdata
+    - ths_ifind
+  live_report_metadata: aggregated matrix report must include live_authorized=true when checked with --live-authorized
+  qualified_non_primary: validation, manual_review_only and licensed_validation may close with status PASS, failure_class NONE, write_grade blocked/not_written, and downstream expectation from matrix target
+
+matrix_live_modes:
+  incremental_clean: primary sources with clean write targets; PASS requires sync COMPLETED/PASS and rows_written > 0
+  evidence_fetch: coingecko, kalshi, qmt_xtdata; PASS requires product live port fetch SUCCESS with raw evidence persisted; write_grade=not_written; no DataSourceService adapter required
+  live_vs_replay_probe:
+    summary: live matrix probes must align with current API-visible instruments, not replay fixture names alone
+    replay_fixture: deterministic offline symbols (may include expired contracts) used only in tests/fixtures and mock ports
+    live_probe: SSOT helper or live resolution at execute time; staging filters on instrument_id must match bundle instrument_name
+    business_metaphor: 验收单 (test paper) vs 活市场 (live market) — live acceptance proves today's tradable data, not a frozen replay label
+  symbol_ssot:
+    cninfo: sh.600519 per cninfo_port SYMBOL_WHITELIST and product_live_ports SOURCE_LIVE_DEFAULTS
+    alpha_vantage: SPY per layer1_source_whitelist L1-LIQ-AMIHUD-SPY and alpha_vantage_port SYMBOL_WHITELIST
+    kalshi: KXFED-27APR-T4.25 per live_tier_c_evidence_v1 and kalshi_port MARKET_WHITELIST
+    coingecko: bitcoin per coingecko_port ASSET_WHITELIST and product_live_ports SOURCE_LIVE_DEFAULTS
+    deribit: active BTC option via resolve_matrix_deribit_live_instrument; replay seed BTC-28JUN24-65000-C is not the live matrix instrument_id
+
+legacy_seam_inventory:
+  product_runtime_count_must_be_zero: true
+  script_runtime_count_must_be_zero: true
+  allowed_scopes:
+    - test_only
+    - allowed_ci
 
 required_report_fields:
   - source_id

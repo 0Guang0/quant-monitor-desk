@@ -189,6 +189,26 @@ class DeribitLiveFetchPort:
         return FetchPayload(content=content, file_type="json", row_count=len(rows))
 
 
+def resolve_deribit_live_option_instrument(port) -> str:
+    """Resolve the active option instrument_name returned by a live Deribit fetch port."""
+    seed = port.instruments[0] if getattr(port, "instruments", None) else "BTC-28JUN24-65000-C"
+    req = FetchRequest(
+        run_id="deribit-live-probe",
+        source_id="deribit",
+        data_domain="crypto_options_surface",
+        instrument_id=seed,
+    )
+    payload = port.fetch_payload(req)
+    bundle = json.loads(payload.content.decode("utf-8"))
+    instruments = bundle.get("instruments") or []
+    if not instruments:
+        raise PortError("EMPTY_RESPONSE", "Deribit live returned no instruments")
+    name = str(instruments[0].get("instrument_name") or "")
+    if not name:
+        raise PortError("FAILED", "Deribit live instrument missing instrument_name")
+    return name
+
+
 def create_deribit_fetch_port(
     *,
     instruments: Sequence[str],

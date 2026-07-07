@@ -57,8 +57,12 @@ def main(argv: list[str] | None = None) -> int:
     )
     accept_parser.add_argument(
         "--target",
-        required=True,
         help="Acceptance target as data_domain:source_id:operation",
+    )
+    accept_parser.add_argument(
+        "--all-documented-sources",
+        action="store_true",
+        help="Run acceptance for every documented source matrix target",
     )
     accept_parser.add_argument("--data-root", required=True, type=Path, help="Isolated data root")
     accept_parser.add_argument(
@@ -89,6 +93,40 @@ def main(argv: list[str] | None = None) -> int:
             SourceRouteDbAcceptanceSpine,
             write_acceptance_report,
         )
+        from backend.app.ops.source_route_db_acceptance_matrix import execute_documented_matrix
+
+        if not args.all_documented_sources and not args.target:
+            print("error: --target or --all-documented-sources is required", file=sys.stderr)
+            return 2
+        if args.all_documented_sources and args.target:
+            print(
+                "error: --target and --all-documented-sources are mutually exclusive",
+                file=sys.stderr,
+            )
+            return 2
+
+        spine = SourceRouteDbAcceptanceSpine()
+        if args.all_documented_sources:
+            payload = execute_documented_matrix(
+                spine,
+                data_root=args.data_root,
+                live_authorized=args.allow_live_fetch,
+            )
+            output = json.dumps(payload, indent=2)
+            args.report.parent.mkdir(parents=True, exist_ok=True)
+            args.report.write_text(output, encoding="utf-8")
+            if args.format == "json":
+                print(output)
+            else:
+                print(
+                    f"matrix rows={payload['matrix_count']} "
+                    f"closure={payload['closure_status']} "
+                    f"pass={payload['pass_count']} "
+                    f"fail_external={payload['fail_external_count']} "
+                    f"fail_contract={payload['fail_contract_count']} "
+                    f"report={args.report}"
+                )
+            return 0 if payload["closure_status"] == "PASS" else 1
 
         try:
             request = AcceptanceRequest.from_target(args.target)
@@ -96,7 +134,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"error: {exc}", file=sys.stderr)
             return 2
 
-        report = SourceRouteDbAcceptanceSpine().execute(
+        report = spine.execute(
             request,
             data_root=args.data_root,
             live_authorized=args.allow_live_fetch,

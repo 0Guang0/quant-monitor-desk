@@ -47,26 +47,15 @@ def seed_watermark_row(con, as_of_date: str, *, instrument_name: str = INSTRUMEN
 
 
 def _resolve_deribit_live_instrument(port) -> str:
-    """Pick a current instrument from live Deribit surface (expired mock names won't match)."""
-    import json
+    from backend.app.datasources.adapters.fetch_port import PortError
+    from backend.app.datasources.fetch_ports.deribit_port import resolve_deribit_live_option_instrument
 
-    from backend.app.datasources.fetch_result import FetchRequest
-
-    req = FetchRequest(
-        run_id="deribit-live-probe",
-        source_id="deribit",
-        data_domain="crypto_options_surface",
-        instrument_id=INSTRUMENT,
-    )
-    payload = port.fetch_payload(req)
-    bundle = json.loads(payload.content.decode("utf-8"))
-    instruments = bundle.get("instruments") or []
-    if not instruments:
-        pytest.skip("Deribit live returned no instruments")
-    name = str(instruments[0].get("instrument_name") or "")
-    if not name:
-        pytest.skip("Deribit live instrument missing instrument_name")
-    return name
+    try:
+        return resolve_deribit_live_option_instrument(port)
+    except PortError as exc:
+        if exc.status == "EMPTY_RESPONSE":
+            pytest.skip("Deribit live returned no instruments")
+        raise
 
 
 def bootstrap_deribit_live_e2e_ctx(

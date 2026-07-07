@@ -19,6 +19,21 @@ import yaml
 
 from backend.app.config import PROJECT_ROOT
 
+_LICENSE_GATE_ENV_VARS = (
+    "QMT_XTDATA_AUTHORIZED",
+    "THS_IFIND_LICENSE_ARTIFACT",
+    "XQSHARE_REMOTE_HOST",
+    "XQSHARE_REMOTE_PORT",
+    "QMT_XQSHARE_AUTHORIZED",
+)
+
+
+def _clear_license_gate_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Isolate default-unauthorized tests from project .env authorization flags."""
+    for name in _LICENSE_GATE_ENV_VARS:
+        monkeypatch.delenv(name, raising=False)
+
+
 _BAOSTOCK_REPLAY = (
     PROJECT_ROOT / "tests/fixtures/replay/cn_market/baostock/sh600519_daily_replay.json"
 )
@@ -142,13 +157,14 @@ def test_evidence_contract_stagedPilotCninfoMetadataMigrates() -> None:
     assert filings[0]["source_used"] == "cninfo"
 
 
-def test_evidence_contract_licenseGateDefaultDisabled() -> None:
+def test_evidence_contract_licenseGateDefaultDisabled(monkeypatch: pytest.MonkeyPatch) -> None:
     """覆盖范围：license_gate 默认 DISABLED
     测试对象：check_license_gate
     目的/目标：QMT/iFinD/xqshare 无 env 时非 AUTHORIZED
     验证点：qmt_xtdata/ths_ifind/qmt_xqshare 默认非 AUTHORIZED
     失败含义：授权门默认放行
     """
+    _clear_license_gate_env(monkeypatch)
     from backend.app.datasources.auth.license_gate import LicenseGateDecision, check_license_gate
 
     for source_id in ("qmt_xtdata", "ths_ifind", "qmt_xqshare"):
@@ -601,13 +617,14 @@ def test_sina_validationOnly_blockedAsPrimaryWhenForced(
 # --- 9.7 ifind / qmt / xqshare ---
 
 
-def test_ifind_port_unauthorizedBlocksByDefault() -> None:
+def test_ifind_port_unauthorizedBlocksByDefault(monkeypatch: pytest.MonkeyPatch) -> None:
     """覆盖范围：ths_ifind 未授权负例
     测试对象：ThsIfindMockFetchPort 无 env
     目的/目标：默认 authorization-disabled
     验证点：PortError USER_AUTH_REQUIRED
     失败含义：iFinD 无授权可拉数
     """
+    _clear_license_gate_env(monkeypatch)
     from backend.app.datasources.adapters.fetch_port import PortError
     from backend.app.datasources.fetch_ports.ths_ifind_port import create_ths_ifind_fetch_port
 
@@ -632,13 +649,14 @@ def test_ifind_port_authorizedFixturePasses(monkeypatch: pytest.MonkeyPatch) -> 
     assert body["filings"]
 
 
-def test_qmt_port_unauthorizedBlocksByDefault() -> None:
+def test_qmt_port_unauthorizedBlocksByDefault(monkeypatch: pytest.MonkeyPatch) -> None:
     """覆盖范围：qmt_xtdata 未授权负例
     测试对象：QmtXtdataMockFetchPort 无 env
     目的/目标：D11 默认 disabled
     验证点：PortError USER_AUTH_REQUIRED
     失败含义：QMT 无授权可拉数
     """
+    _clear_license_gate_env(monkeypatch)
     from backend.app.datasources.adapters.fetch_port import PortError
     from backend.app.datasources.fetch_ports.qmt_xtdata_port import create_qmt_xtdata_fetch_port
 
@@ -665,13 +683,14 @@ def test_qmt_port_authorizedFixturePasses(monkeypatch: pytest.MonkeyPatch) -> No
     assert body["bars"]
 
 
-def test_xqshare_port_unauthorizedBlocksByDefault() -> None:
+def test_xqshare_port_unauthorizedBlocksByDefault(monkeypatch: pytest.MonkeyPatch) -> None:
     """覆盖范围：qmt_xqshare 未授权负例
     测试对象：QmtXqshareMockFetchPort 无 env
     目的/目标：xqshare 须三门 env + 授权
     验证点：PortError USER_AUTH_REQUIRED
     失败含义：xqshare 无授权可拉数
     """
+    _clear_license_gate_env(monkeypatch)
     from backend.app.datasources.adapters.fetch_port import PortError
     from backend.app.datasources.fetch_ports.qmt_xqshare_port import create_qmt_xqshare_fetch_port
 

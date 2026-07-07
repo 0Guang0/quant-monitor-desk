@@ -20,7 +20,7 @@ from backend.app.config import PROJECT_ROOT
 from backend.app.datasources.live_tier_router import TIER_B_SOURCES
 from backend.app.datasources.product_live_gate import is_product_live_fetch_allowed
 from backend.app.ops.sandbox_clean_write.path_utils import resolve_sandbox_path
-from backend.app.ops.tier_a_live_acceptance import (
+from backend.app.ops.acceptance_isolation import (
     canonical_main_db_paths,
     ensure_isolated_db,
     is_canonical_main_data_root,

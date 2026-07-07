@@ -108,21 +108,6 @@ downstream_layer_read_status
 
 **指标全链路验收准入：** 不要求所有源都 live SUCCESS，但必须诚实区分 live/replay/mock/not_implemented，并证明至少一条代表性链路能在 production-equivalent DB 中完成同库真链。任何 mock/replay/dry-run 成功不得作为指标全链路完成证据。
 
-## Binding slices
+**22 源矩阵关账：** 见 [ADR-016](ADR-016-source-route-matrix-honest-closure.md)（extends 本 ADR 的隔离库与诚实失败语义；非本 ADR 范围）。
 
-S00-INFRA · S-LIVE-\* (all) · S-ACCEPT
-
-## Plan R2 Amendment（2026-07-03）
-
-Supersedes R1 acceptance semantics for Execute close-out. **SSOT:** `research/plan-revision-r2.md` §2 · `specs/contracts/live_tier_a_evidence_v1.yaml`.
-
-| R2 binding    | Requirement                                                                                                           |
-| ------------- | --------------------------------------------------------------------------------------------------------------------- |
-| S-R2-EVIDENCE | `live_tier_a_evidence_v1` manifest per source                                                                         |
-| S-R2-F0       | Four profiles: `market_bar_p0`, `layer1_observation_p0`, `disclosure_p0`, `crypto_derivative_p0`; **no SKIP as pass** |
-| S-R2-B2       | `DataQualityValidator.validate_table` main path per `source_bindings`                                                 |
-| S-R2-DISPATCH | Deduped live gold path; mootdx in `platform_source_matrix.yaml`                                                       |
-| S-R2-ACCEPT   | E2 `DbInspector.inspect()` non-FAIL; unified `--report` JSON; 11/11 live                                              |
-| S-R2-CI       | nightly `--quick` + `workflow_dispatch` + failure artifacts                                                           |
-
-R1 slices remain **baseline delivered**; R2 slices are mandatory for honest **R4** close（能力落地；R5/R6 → Batch05）.
+**Tier A 11 源证据信封 SSOT：** `specs/contracts/live_tier_a_evidence_v1.yaml`（manifest / profile / failure_class；非 ADR 正文重复）。

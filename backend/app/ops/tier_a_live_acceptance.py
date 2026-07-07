@@ -16,9 +16,16 @@ from typing import Any, Literal
 
 import yaml
 
-from backend.app.config import DATA_ROOT, PROJECT_ROOT
+from backend.app.config import PROJECT_ROOT
 from backend.app.datasources.live_tier_router import TIER_A_SOURCES
 from backend.app.datasources.product_live_gate import is_product_live_fetch_allowed
+from backend.app.ops.acceptance_isolation import (
+    AcceptanceIsolationError,
+    canonical_main_db_paths,
+    ensure_isolated_db,
+    is_canonical_main_data_root,
+    is_canonical_main_db_path,
+)
 from backend.app.ops.sandbox_clean_write.path_utils import resolve_sandbox_path
 from backend.app.ops.tier_a_live_status import (
     PASS_SYNC_STATUSES,
@@ -81,41 +88,14 @@ class TierALiveEnvError(RuntimeError):
         self.code = code
 
 
-def canonical_main_db_paths() -> frozenset[Path]:
-    return frozenset(
-        {
-            (PROJECT_ROOT / "data" / "duckdb" / "quant_monitor.duckdb").resolve(),
-            (DATA_ROOT / "duckdb" / "quant_monitor.duckdb").resolve(),
-        }
-    )
-
-
-def is_canonical_main_db_path(path: Path | str) -> bool:
-    return resolve_sandbox_path(path).resolve() in canonical_main_db_paths()
-
-
-def is_canonical_main_data_root(data_root: Path | str) -> bool:
-    resolved = resolve_sandbox_path(data_root).resolve()
-    if resolved == (PROJECT_ROOT / "data").resolve():
-        return True
-    return is_canonical_main_db_path(resolved / "duckdb" / "quant_monitor.duckdb")
-
-
 def assert_isolated_live_data_root(data_root: Path | str) -> Path:
     """Reject canonical main DB paths; require `.audit-sandbox/m-data-03`."""
-    resolved = resolve_sandbox_path(data_root).resolve()
-    if is_canonical_main_db_path(resolved) or is_canonical_main_data_root(resolved):
-        raise TierALiveEnvError(
-            f"canonical main DB/data root rejected for live acceptance: {resolved}",
-            code="CANONICAL_MAIN_DB_REJECTED",
-        )
-    posix = resolved.as_posix()
-    if ".audit-sandbox" not in posix or M_DATA_03_SANDBOX_SEGMENT not in posix:
-        raise TierALiveEnvError(
-            f"DATA_ROOT must be under .audit-sandbox/{M_DATA_03_SANDBOX_SEGMENT}: {resolved}",
-            code="ISOLATED_ROOT_REQUIRED",
-        )
-    return resolved
+    from backend.app.ops.acceptance_isolation import assert_isolated_live_data_root as _assert
+
+    try:
+        return _assert(data_root, required_segment=M_DATA_03_SANDBOX_SEGMENT)
+    except AcceptanceIsolationError as exc:
+        raise TierALiveEnvError(str(exc), code=exc.code) from exc
 
 
 def resolve_live_data_root(data_root: Path | str | None = None) -> Path:
@@ -185,31 +165,6 @@ def select_source_ids(
     if quick:
         return QUICK_SOURCE_IDS
     return tuple(iter_tier_a_incremental_sources())
-
-
-def ensure_isolated_db(data_root: Path) -> Path:
-    """Create isolated DuckDB under data_root; apply migrations + registry sync."""
-    import duckdb
-
-    from backend.app.datasources.source_registry import SourceRegistry
-    from backend.app.db.connection import ConnectionManager
-    from backend.app.db.migrate import apply_migrations
-
-    db = data_root / "duckdb" / "quant_monitor.duckdb"
-    db.parent.mkdir(parents=True, exist_ok=True)
-    if not db.is_file():
-        con = duckdb.connect(str(db))
-        try:
-            apply_migrations(con)
-        finally:
-            con.close()
-    cm = ConnectionManager(db_path=db)
-    with cm.writer() as con:
-        apply_migrations(con)
-        registry = SourceRegistry()
-        registry.load()
-        registry.sync_to_db(con, tombstone_missing=True)
-    return db
 
 
 def _raw_path_belongs_to_source(rel_posix: str, source_id: str) -> bool:

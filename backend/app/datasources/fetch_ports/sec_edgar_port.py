@@ -9,14 +9,14 @@ from __future__ import annotations
 
 import json
 import os
-import urllib.error
-import urllib.request
 import uuid
 from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, Literal
+
+import httpx2 as httpx
 
 from backend.app.config import PROJECT_ROOT
 from backend.app.datasources.adapters.fetch_port import FetchPayload, PortError
@@ -197,28 +197,30 @@ def _pad_cik(cik: str) -> str:
 
 def _fetch_sec_submissions_json(cik_padded: str, *, user_agent: str) -> dict[str, Any]:
     url = f"https://data.sec.gov/submissions/CIK{cik_padded}.json"
-    request = urllib.request.Request(
-        url,
-        headers={"User-Agent": user_agent, "Accept": "application/json"},
-        method="GET",
-    )
+    headers = {"User-Agent": user_agent, "Accept": "application/json"}
     last_error: Exception | None = None
-    for _attempt in range(2):
+    for _attempt in range(3):
         try:
-            with urllib.request.urlopen(request, timeout=60) as response:
-                payload = json.loads(response.read().decode("utf-8"))
+            response = httpx.get(url, headers=headers, timeout=60.0)
+            if response.status_code in (401, 403):
+                raise PortError(
+                    "USER_AUTH_REQUIRED",
+                    f"SEC EDGAR access denied: HTTP {response.status_code}",
+                )
+            response.raise_for_status()
+            payload = response.json()
             if isinstance(payload, dict):
                 return payload
             raise PortError("FAILED", "SEC submissions JSON root is not an object")
-        except urllib.error.HTTPError as exc:
-            if exc.code in (401, 403):
+        except PortError:
+            raise
+        except httpx.HTTPStatusError as exc:
+            if exc.response.status_code in (401, 403):
                 raise PortError("USER_AUTH_REQUIRED", f"SEC EDGAR access denied: {exc}") from exc
             raise PortError("NETWORK_ERROR", str(exc)) from exc
-        except urllib.error.URLError as exc:
+        except (httpx.TransportError, json.JSONDecodeError) as exc:
             last_error = exc
             continue
-        except json.JSONDecodeError as exc:
-            raise PortError("FAILED", f"invalid SEC submissions JSON: {exc}") from exc
     raise PortError("NETWORK_ERROR", str(last_error)) from last_error
 
 

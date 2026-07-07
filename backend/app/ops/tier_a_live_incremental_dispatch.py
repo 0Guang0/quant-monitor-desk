@@ -46,9 +46,18 @@ def _assert_resource_guard_ok() -> None:
 
 
 def _bind_live_data_root(data_root: Path) -> Path:
-    from backend.app.ops.tier_a_live_acceptance import assert_isolated_live_data_root
+    from backend.app.ops.acceptance_isolation import (
+        AcceptanceIsolationError,
+        assert_isolated_live_data_root,
+    )
 
-    resolved = assert_isolated_live_data_root(data_root)
+    try:
+        resolved = assert_isolated_live_data_root(
+            data_root,
+            required_segment="m-data-03",
+        )
+    except AcceptanceIsolationError as exc:
+        raise RuntimeError(str(exc)) from exc
     os.environ["QMD_DATA_ROOT"] = str(resolved)
     return resolved
 

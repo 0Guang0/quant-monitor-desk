@@ -189,3 +189,35 @@ def test_qmdOps_acceptSourceRouteDb_invalidTargetFailsBeforeReport(tmp_path: Pat
     assert result.returncode == 2
     assert "data_domain:source_id:operation" in result.stderr
     assert not report_path.exists()
+
+
+def test_qmdOps_acceptSourceRouteDb_allDocumentedSources_writesMatrixReport(
+    tmp_path: Path,
+) -> None:
+    """覆盖范围：全矩阵验收 CLI
+    测试对象：scripts/qmd_ops.py accept-source-route-db --all-documented-sources
+    目的/目标：Slice 10 矩阵 runner 必须写出 22 行聚合结果，并以 closure 语义判定成功
+    验证点：无 live 授权时 returncode==0；matrix_count==22；closure_status==PASS
+    失败含义：全源 closure 仍要求不可能的全 status PASS，或无法产出可审计矩阵报告
+    """
+    data_root = tmp_path / "source-route-matrix"
+    report_path = data_root / "reports" / "matrix.json"
+
+    result = _run_acceptance_cli(
+        "--all-documented-sources",
+        "--data-root",
+        str(data_root),
+        "--report",
+        str(report_path),
+    )
+
+    assert result.returncode == 0, result.stderr
+    payload = json.loads(report_path.read_text(encoding="utf-8"))
+    assert payload["matrix_count"] == 22
+    assert payload["live_authorized"] is False
+    assert payload["closure_status"] == "PASS"
+    assert len(payload["rows"]) == 22
+    for row in payload["rows"]:
+        assert row["target"]
+        assert row["closure_outcome"] == "PASS"
+        assert row["failure_class"]

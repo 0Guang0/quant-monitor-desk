@@ -19,3 +19,4 @@
 | [ADR-013](ADR-013-layer2-vix-clean-read.md)                           | Layer2 VIX clean read                   |
 | [ADR-014](ADR-014-layer4-us-equity-clean-read.md)                     | Layer4 美股 clean read                  |
 | [ADR-015](ADR-015-tier-a-live-acceptance-sandbox.md)                  | Tier A 隔离沙箱 live 验收               |
+| [ADR-016](ADR-016-source-route-matrix-honest-closure.md)              | 22 源矩阵诚实关账（无资格 / 外部失败）  |

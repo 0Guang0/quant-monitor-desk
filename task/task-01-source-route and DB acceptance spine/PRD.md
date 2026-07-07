@@ -35,6 +35,8 @@ execute(request, data_root, live_authorized) -> AcceptanceReport
 6. production-equivalent acceptance DB 作为唯一成品验收主干：形态与最终主库一致，数据根隔离，不写 canonical 主库。
 7. mock/replay/dry-run/not_implemented 只能作为缺陷或剩余工程量分类，不能作为成品验收通过依据。
 8. 现有普通单元测试、临时测试库、source-specific sandbox 可保留，但不能替代 production-equivalent acceptance。
+9. 任务最终关闭标准扩大为：旧 helper / 旧 smoke 入口完成迁移并清理，且 `docs/modules/data_sources.md` 的总数据源清单全部接入 `SourceRouteDbAcceptanceSpine`，每个源都能产出同一 `AcceptanceReport` 语义。
+10. 多数据源扩展前必须先完成旧入口迁移和清理；否则旧 seam 会随新增数据源一起扩散，后续无法判断哪个入口才是成品验收标准。
 
 ## User Stories
 
@@ -121,6 +123,9 @@ execute(request, data_root, live_authorized) -> AcceptanceReport
 - 验收报告必须列出 source_id、data_domain、route_grade、implementation_mode、write_grade、source_used、source_role、source_switched、quality_flags、schema_hash、content_hash、validation_status、conflict_status、failure_class、downstream_layer_read_status。
 - implementation_mode 中 live 是唯一可证明真实链路的成功形态；mock、replay、dry_run、not_implemented 只能作为缺陷或剩余工程量分类。
 - FAIL_EXTERNAL 允许出现在报告中，但不能被写成源 fetch SUCCESS。
+- 所有数据源接入的含义是“都通过同一 spine 入口被枚举、preview、execute 并诚实报告状态”，不是要求每个外部源在未授权、未配置或商业许可缺失时都 live PASS。
+- `docs/modules/data_sources.md` 第 5.9.1 节的总数据源清单是本任务多源扩展的人工设计权威；机器可读枚举仍应来自 `specs/datasource_registry/source_registry.yaml` 和 `source_capabilities.yaml`。
+- 对 QMT / xtdata、同花顺 / iFinD、Yahoo、Alpha Vantage、FRED 等需要授权、key 或本机环境的源，缺少前置条件时必须输出 `BLOCKED`、`DISABLED_SOURCE`、`FAIL_EXTERNAL` 或等价诚实状态，不得用 replay/mock 代替 PASS。
 - 权威设计文档、架构设计、规则定义和契约不得使用执行阶段词描述最终目标。执行阶段只能出现在 task 执行计划中。
 - 普通单元测试仍允许 mock 外部 I/O，但 mock 不得进入正式业务实现，也不得作为成品验收通过依据。
 - 现有 source-specific sandbox、临时测试库和 live acceptance helper 可作为参考或局部验证基础，但不能替代 production-equivalent acceptance spine。
@@ -148,7 +153,7 @@ execute(request, data_root, live_authorized) -> AcceptanceReport
 
 - 不在本 PRD 中实现代码修改。
 - 不在本 PRD 中启用 canonical 主库写入。
-- 不在本 PRD 中要求所有外部源 live SUCCESS。
+- 不在本 PRD 中要求所有外部源 live SUCCESS；但本任务最终关闭必须让总数据源清单里的每个源都进入同一 acceptance spine，并按真实前置条件诚实报告 PASS/BLOCKED/FAIL_EXTERNAL/disabled 等状态。
 - 不在本 PRD 中引入真实交易、账户控制、自动下单、QMT 自动登录或验证码处理。
 - 不在本 PRD 中新增大型依赖或外部服务。
 - 不在本 PRD 中把 Validation 源普遍升级为 Primary。
@@ -161,7 +166,7 @@ execute(request, data_root, live_authorized) -> AcceptanceReport
 
 - 替代对象：source-specific sandbox/live helpers、pytest smoke wrappers、直接拼 route/fetch/write 的临时验收路径。
 - 替代目标：`SourceRouteDbAcceptanceSpine` 作为唯一生产等价验收 Module。
-- 迁移策略：先 advisory deprecation，不立即删除旧 helper。旧入口先作为 Adapter 委托到新 Module，直到测试、CI、文档和人工 runbook 不再直接依赖旧入口。
+- 迁移策略：先 advisory deprecation，不立即删除旧 helper。旧入口先作为 Adapter 委托到新 Module，直到测试、CI、文档和人工 runbook 不再直接依赖旧入口。多数据源扩展必须在旧入口迁移/清理之后进行。
 - 迁移工具：新增检查脚本或测试，列出仍直接调用旧 helper、直接构造 adapter 绕过 DataSourceService、或把 smoke wrapper 当 production-equivalent PASS 的位置。
 - compulsory removal 条件：所有活跃消费者已迁移，CI 和任务文档只引用新 Interface，旧入口使用量为零。
 - 禁止做法：在替代 Module 未覆盖关键用例前删除旧 helper；在旧 helper 中继续新增产品能力；用旧 helper 的 mock/replay 成功冒充新 Module 的 live 验收。
