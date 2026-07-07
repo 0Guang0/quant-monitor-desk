@@ -80,7 +80,7 @@ matrix_closure:
       description: honest BLOCKED for missing live authorization or qualification_deferred terminal/license may closure PASS
       applies_when: live_authorized=false
     final_live_authorized:
-      description: user live-authorized matrix; qualification_deferred terminal/license BLOCKED may closure PASS; all other BLOCKED, FAIL_EXTERNAL and FAIL_CONTRACT block closure
+      description: user live-authorized matrix; qualification_deferred terminal/license BLOCKED and external_deferred honest FAIL_EXTERNAL may closure PASS; other BLOCKED, FAIL_EXTERNAL and FAIL_CONTRACT block closure
       applies_when: live_authorized=true and checker --live-authorized
   row_outcomes:
     - PASS
@@ -88,13 +88,18 @@ matrix_closure:
     - FAIL_CONTRACT
     - FAIL
   dry_run_success: all rows closure_outcome PASS when closure_mode=dry_run and each row is honestly BLOCKED for missing live authorization or qualification_deferred terminal/license
-  final_live_authorized_success: all rows closure_outcome PASS when closure_mode=final_live_authorized; qualification_deferred_sources may be honestly BLOCKED; no other BLOCKED, FAIL_EXTERNAL or FAIL_CONTRACT rows
+  final_live_authorized_success: all rows closure_outcome PASS when closure_mode=final_live_authorized; qualification_deferred_sources may be honestly BLOCKED; external_deferred_sources may be honestly FAIL_EXTERNAL; no other BLOCKED, FAIL_EXTERNAL or FAIL_CONTRACT rows
   qualification_deferred_sources:
     scope: dry_run_and_final_live_authorized
     sources:
       - qmt_xtdata
       - ths_ifind
     note: missing user API keys for non-deferred sources (e.g. FRED_API_KEY) remain closure FAIL
+  external_deferred_sources:
+    scope: final_live_authorized
+    sources:
+      - sec_edgar
+    note: matrix row must remain status FAIL and failure_class FAIL_EXTERNAL; closure PASS when live handler ran and upstream network/SSL failed; do not mock or replay to green the row; re-run when connectivity improves
   live_report_metadata: aggregated matrix report must include live_authorized=true and closure_mode=final_live_authorized when checked with --live-authorized
   qualified_non_primary: validation, manual_review_only and licensed_validation may close with status PASS, failure_class NONE, write_grade blocked/not_written, and downstream expectation from matrix target
 

@@ -383,6 +383,9 @@ def is_non_primary_positioning(target: AcceptanceMatrixTarget) -> bool:
 
 QUALIFICATION_DEFERRED_SOURCE_IDS = frozenset({"qmt_xtdata", "ths_ifind"})
 
+# Environment/upstream failures that must stay FAIL_EXTERNAL on the matrix row but may closure PASS (ADR-016 §4).
+EXTERNAL_DEFERRED_SOURCE_IDS = frozenset({"sec_edgar"})
+
 _CLOSURE_OUTCOMES = frozenset({"PASS", "FAIL_EXTERNAL", "FAIL_CONTRACT", "FAIL"})
 
 
@@ -551,6 +554,11 @@ def evaluate_matrix_row_closure(
     if status == "PASS" and failure_class == "NONE":
         return "PASS"
     if failure_class == "FAIL_EXTERNAL":
+        if (
+            mode == "final_live_authorized"
+            and target.request.source_id in EXTERNAL_DEFERRED_SOURCE_IDS
+        ):
+            return "PASS"
         return "FAIL_EXTERNAL"
     return "FAIL"
 

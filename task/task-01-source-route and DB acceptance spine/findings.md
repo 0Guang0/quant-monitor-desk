@@ -263,9 +263,11 @@ Proposed matrix/contract prose (not yet written to authority docs):
 
 **双模式保留：** `dry_run`（未 live 授权）vs `final_live_authorized`（`--live-authorized`）；防 dry-run 冒充 live。
 
-**资格延期（用户确认）：** 用户已 live 授权时，QMT/iFinD 等 **qualification_deferred** 缺终端/牌照 → **预期** `BLOCKED` + closure **PASS**（ADR-016）。**除此以外**不得出现 `BLOCKED`（非延期源缺 key）、`FAIL_EXTERNAL`、`FAIL_CONTRACT`。
+**资格延期（用户确认）：** 用户已 live 授权时，QMT/iFinD 等 **qualification_deferred** 缺终端/牌照 → **预期** `BLOCKED` + closure **PASS**（ADR-016）。
 
-**Slice 10：** 待全矩阵 live 报告；当前 blocker 样例为 SEC `FAIL_EXTERNAL`（非资格延期类）。
+**环境延期（用户确认 2026-07-07）：** `sec_edgar` 等 **external_deferred** 在 live handler 已接、上游客观 `FAIL_EXTERNAL`（如 SSL EOF）→ 矩阵行仍 **FAIL/FAIL_EXTERNAL**，closure **PASS**，**不阻断 Slice 10**。
+
+**Slice 10：** 全矩阵 live 报告 + `--live-authorized` checker；允许 QMT/iFinD BLOCKED + SEC FAIL_EXTERNAL 登记延期 closure PASS。
 
 ---
 

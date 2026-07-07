@@ -8,6 +8,7 @@ from pathlib import Path
 from backend.app.ops.source_route_db_acceptance import SourceRouteDbAcceptanceSpine
 from backend.app.ops.source_route_db_acceptance_matrix import (
     DOCUMENTED_SOURCE_MATRIX,
+    evaluate_matrix_row_closure,
     find_matrix_target,
     iter_matrix_targets,
     matrix_target_key,
@@ -345,60 +346,49 @@ def test_sourceRouteDbAcceptanceMatrix_checkerRejectsForgedClosureOutcomes(
     assert any("mismatch" in item for item in payload["closure_violations"])
 
 
-def test_sourceRouteDbAcceptanceMatrix_liveClosure_blocksSecFailExternal(
-    tmp_path: Path,
-) -> None:
-    """覆盖范围：SEC FAIL_EXTERNAL 的 final live closure 语义
-    测试对象：evaluate_matrix_row_closure + checker --live-authorized
-    目的/目标：ADR-016 要求 SEC 外部失败不得 closure PASS，阻断 Slice 10 假关账
-    验证点：sec_edgar 行 failure_class=FAIL_EXTERNAL → strict checker exit 1
-    失败含义：SEC 网络/SSL 失败被误标 PASS，task-01 可假绿关账
+def test_sourceRouteDbAcceptanceMatrix_liveClosure_allowsSecFailExternalClosurePass() -> None:
+    """覆盖范围：SEC FAIL_EXTERNAL 的 external_deferred closure 语义
+    测试对象：evaluate_matrix_row_closure(final_live_authorized)
+    目的/目标：ADR-016 要求 SEC 矩阵行诚实 FAIL_EXTERNAL，但登记 external_deferred 时 closure PASS 不阻断 Slice 10
+    验证点：sec_edgar 行 failure_class=FAIL_EXTERNAL → closure_outcome=PASS；status 仍为 FAIL
+    失败含义：SEC 环境失败被 closure 误阻断关账，或矩阵行被 mock 成 PASS 假绿
     """
     sec_target = next(t for t in iter_matrix_targets() if t.request.source_id == "sec_edgar")
-    report_path = tmp_path / "sec-fail-external.json"
-    report_path.write_text(
-        json.dumps(
-            {
-                "matrix_count": 1,
-                "live_authorized": True,
-                "closure_mode": "final_live_authorized",
-                "rows": [
-                    {
-                        "target": matrix_target_key(sec_target),
-                        "status": "FAIL",
-                        "failure_class": "FAIL_EXTERNAL",
-                        "write_grade": "not_written",
-                        "closure_outcome": "FAIL_EXTERNAL",
-                        "errors": ["SSL EOF to data.sec.gov"],
-                    }
-                ],
-            }
-        ),
-        encoding="utf-8",
+    row = {
+        "status": "FAIL",
+        "failure_class": "FAIL_EXTERNAL",
+        "write_grade": "not_written",
+        "errors": ["SSL EOF to data.sec.gov"],
+    }
+    outcome = evaluate_matrix_row_closure(
+        sec_target,
+        row,
+        closure_mode="final_live_authorized",
     )
+    assert outcome == "PASS"
+    assert row["failure_class"] == "FAIL_EXTERNAL"
 
-    proc = subprocess.run(
-        [
-            sys.executable,
-            "scripts/check_source_route_db_acceptance_matrix.py",
-            "--strict",
-            "--live-authorized",
-            "--report",
-            str(report_path),
-            "--format",
-            "json",
-        ],
-        cwd=PROJECT_ROOT,
-        check=False,
-        capture_output=True,
-        text=True,
+
+def test_sourceRouteDbAcceptanceMatrix_liveClosure_blocksNonDeferredFailExternal() -> None:
+    """覆盖范围：未登记 external_deferred 的 FAIL_EXTERNAL 仍阻断 closure
+    测试对象：evaluate_matrix_row_closure(final_live_authorized)
+    目的/目标：仅 sec_edgar 等登记源可 FAIL_EXTERNAL + closure PASS；其它源仍 FAIL_EXTERNAL 阻断
+    验证点：fred 行 failure_class=FAIL_EXTERNAL → closure_outcome=FAIL_EXTERNAL
+    失败含义：任意外部失败都可 closure PASS，Slice 10 假关账
+    """
+    fred_target = next(t for t in iter_matrix_targets() if t.request.source_id == "fred")
+    row = {
+        "status": "FAIL",
+        "failure_class": "FAIL_EXTERNAL",
+        "write_grade": "not_written",
+        "errors": ["upstream timeout"],
+    }
+    outcome = evaluate_matrix_row_closure(
+        fred_target,
+        row,
+        closure_mode="final_live_authorized",
     )
-    payload = json.loads(proc.stdout)
-
-    assert proc.returncode == 1, proc.stdout + proc.stderr
-    assert payload["status"] == "FAIL"
-    assert payload["closure_violations"]
-    assert any("sec_edgar" in item for item in payload["closure_violations"])
+    assert outcome == "FAIL_EXTERNAL"
 
 
 def test_sourceRouteDbAcceptanceMatrix_liveClosure_rejectsMissingLiveAuthorizationRows() -> None:
