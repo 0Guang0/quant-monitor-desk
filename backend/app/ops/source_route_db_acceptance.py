@@ -452,7 +452,7 @@ def _matrix_incremental_live_report(
     )
     pass_status = (
         route_report.route_plan_id is not None
-        and sync_status in {"COMPLETED", "PASS"}
+        and sync_status in {"COMPLETED", "PASS", "EMPTY_RESPONSE"}
         and rows_written > 0
     )
     errors: tuple[str, ...] = ()

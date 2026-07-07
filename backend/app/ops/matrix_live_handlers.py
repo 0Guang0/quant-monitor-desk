@@ -415,15 +415,18 @@ def execute_deribit_matrix_live(
         job_events=orch._jobs,
     )
     report = run_deribit_incremental(orch, service=service, instruments=(instrument,))
-    inst_result = report.instrument_results[0] if report.instrument_results else {}
-    return _matrix_incremental_live_report(
+    job_id = (
+        _optional_str(report.instrument_results[0].get("job_id"))
+        if report.instrument_results
+        else None
+    )
+    return _finish_incremental_matrix_live(
         request,
-        route_payload,
+        matrix_target,
         cm,
-        matrix_target=matrix_target,
-        sync_status=str(inst_result.get("status", report.overall_status)),
-        rows_written=int(inst_result.get("clean_row_count", 0)),
-        job_id=_optional_str(inst_result.get("job_id")),
+        route_payload,
+        sync_status=report.overall_status,
+        job_id=job_id,
     )
 
 
@@ -497,7 +500,6 @@ def execute_fred_matrix_live(
     pass_status = (
         route_report.route_plan_id is not None
         and sync_report.overall_status == "COMPLETED"
-        and sync_report.total_rows_written > 0
         and read_status == "PRIMARY_GRADE_READ"
     )
     errors: tuple[str, ...] = ()

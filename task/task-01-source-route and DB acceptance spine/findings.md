@@ -142,6 +142,7 @@ That shape would spread correctness rules across callers and tests. It would red
 | `7448a62b` | Kept CNINFO product-live factory on the existing replay-first port to avoid external-network flake in full pytest. |
 | `1a3b1ff` | Added authority acceptance language guard and fixture tests. |
 | `34990d25` | Resolved all `review-commercial-01.txt` test-quality findings and committed the cleanup after full verification. |
+| `ad9bdb2` | Wired live fetch ports (incl. CFTC COT + US Treasury), matrix live evidence honesty checker, and ADR-016 external_deferred alignment. |
 
 ## Resources
 
@@ -227,7 +228,9 @@ Proposed matrix/contract prose (not yet written to authority docs):
 - Checker `--live-authorized`: exit 1, one violation `sec_edgar FAIL_EXTERNAL`
 - **ADR:** [ADR-016](../docs/decisions/ADR-016-source-route-matrix-honest-closure.md) — qualification deferred vs must PASS;禁止 mock 假绿
 
-### Code changes this session (uncommitted)
+### Code changes Phase 13 session (now committed in later history)
+
+> Historical note: items below were uncommitted at Phase 13 write time; subsequent commits (through `ad9bdb2`) landed Deribit resolution, matrix closure, live ports, and evidence honesty.
 
 | Area | Change |
 |------|--------|
@@ -268,6 +271,85 @@ Proposed matrix/contract prose (not yet written to authority docs):
 **环境延期（用户确认 2026-07-07）：** `sec_edgar` 等 **external_deferred** 在 live handler 已接、上游客观 `FAIL_EXTERNAL`（如 SSL EOF）→ 矩阵行仍 **FAIL/FAIL_EXTERNAL**，closure **PASS**，**不阻断 Slice 10**。
 
 **Slice 10：** 全矩阵 live 报告 + `--live-authorized` checker；允许 QMT/iFinD BLOCKED + SEC FAIL_EXTERNAL 登记延期 closure PASS。
+
+### Phase 17–19 — Live Evidence Honesty + Port Wiring + CFTC/Treasury (2026-07-07 late → 2026-07-08)
+
+**Live evidence honesty (ADR-016 complement):**
+
+- Matrix rows with `implementation_mode=live` and `status=PASS` must not use mock/replay fetch identifiers (`*-mock-*`, `*-replay-*`, etc.).
+- SSOT: `backend/app/ops/matrix_live_evidence_honesty.py`; enforced by `scripts/check_source_route_db_acceptance_matrix.py --data-root`.
+- Stale recheck of old live report had **17** honesty violations before this slice.
+
+**Current `external_deferred_sources` (closure PASS, matrix row still honest FAIL):**
+
+| source_id | Typical failure | Notes |
+|-----------|-----------------|-------|
+| `sec_edgar` | FAIL_EXTERNAL / NETWORK_ERROR | SSL/network to `data.sec.gov` |
+| `stooq` | FAIL_EXTERNAL | Geo/upstream block; no replay fallback |
+| `mootdx` | FAIL_EXTERNAL / DISABLED_SOURCE | Missing `pytdx` dependency in env |
+
+**Removed from external_deferred (must live PASS or honest non-deferred FAIL):**
+
+- `cftc_cot` — implemented; matrix **live PASS**
+- `us_treasury` — implemented; matrix **live PASS**
+
+**CFTC live upstream (source-driven-development):**
+
+- URL: `https://publicreporting.cftc.gov/resource/jun7-fc8e.json`
+- Filter: `cftc_contract_market_code='088691'` (and whitelist markets)
+- Fields: `report_date_as_yyyy_mm_dd`, `noncomm_positions_long_all`, `noncomm_positions_short_all`, `noncomm_positions_spread_all`
+- Evidence: `cftc-live-{market}-{uuid}`
+
+**US Treasury live upstream:**
+
+- URL pattern: `https://home.treasury.gov/resource-center/data-chart-center/interest-rates/daily-treasury-rates.csv/{year}/all?type=daily_treasury_yield_curve`
+- CSV column `10 Yr` maps to tenor `10Y`; requires `User-Agent` header
+- Fiscal Data API paths tried for par yield (`v2/accounting/od/*`) returned 404 in this environment; Treasury.gov CSV is the working official source
+- Evidence: `treasury-live-{tenor}-{uuid}`
+- `inflation_expectation` live deferred in port (`ponytail:`); matrix only exercises `us_treasury_yield_curve`
+
+**Latest strict-live matrix (`.audit-sandbox/source-route-db-strict-live`, 2026-07-08 post-fix):**
+
+| Metric | Value |
+|--------|-------|
+| pass_count | 22 |
+| fail_external_count | 0 |
+| closure_status | **PASS** |
+| evidence_honesty_violations | 0 |
+
+| source_id | status | failure_class | closure_outcome |
+|-----------|--------|---------------|-----------------|
+| `fred` | PASS | NONE | PASS |
+| `world_bank` | PASS | NONE | PASS |
+| `deribit` | PASS | NONE | PASS |
+| `cftc_cot` / `us_treasury` | PASS | NONE | PASS |
+| `sec_edgar` / `stooq` / `mootdx` | FAIL | FAIL_EXTERNAL | PASS (external_deferred) |
+| `qmt_xtdata` / `ths_ifind` | FAIL | BLOCKED | PASS (qualification_deferred) |
+
+**Root cause (fred / world_bank / deribit false FAIL_EXTERNAL):**
+
+- Not proxy, not missing API, not missing integration.
+- On **reused** acceptance DB with watermarks already advanced, live fetch returned **no new rows** (caught-up window). Orchestrator messages such as `FRED returned no usable rows`, `World Bank returned no rows for US/...`, `no instruments after deribit watermark window` were left as `FAILED_FINAL` instead of `EMPTY_RESPONSE`.
+- Clean tables still held valid rows (`axis_observation`, `crypto_derivative_clean`), but matrix pass logic required `sync_status=COMPLETED/PASS` only — treating idempotent re-run as external failure.
+- **Fix:** shared `_normalize_incremental_job_status` mapping + matrix `_matrix_incremental_live_report` accepts `EMPTY_RESPONSE` when clean rows exist; FRED/Deribit matrix handlers align with domain clean row counts.
+
+**Verification commands (Slice 10 evidence):**
+
+```powershell
+uv run python scripts/qmd_ops.py accept-source-route-db --all-documented-sources `
+  --data-root .audit-sandbox/source-route-db-strict-live `
+  --report .audit-sandbox/source-route-db-strict-live/reports/source-matrix-acceptance.json `
+  --allow-live-fetch
+
+uv run python scripts/check_source_route_db_acceptance_matrix.py --strict --live-authorized `
+  --report .audit-sandbox/source-route-db-strict-live/reports/source-matrix-acceptance.json `
+  --data-root .audit-sandbox/source-route-db-strict-live
+
+uv run python scripts/production_gate.py --live-authorized `
+  --source-matrix-report .audit-sandbox/source-route-db-strict-live/reports/source-matrix-acceptance.json
+
+uv run pytest -q
+```
 
 ---
 

@@ -253,12 +253,9 @@ def build_deribit_incremental_service(
 
 
 def _display_status(result) -> str:
-    if result.status != "FAILED_FINAL":
-        return result.status
-    msg = result.message or ""
-    if msg.startswith(_WATERMARK_EMPTY_MSG):
-        return "EMPTY_RESPONSE"
-    return result.status
+    from backend.app.ops.macro_incremental_common import _normalize_incremental_job_status
+
+    return _normalize_incremental_job_status(result)
 
 
 def run_deribit_incremental(
@@ -310,7 +307,7 @@ def run_deribit_incremental(
             )
             display = _display_status(result)
             row_count = 0
-            if display == "COMPLETED":
+            if display in {"COMPLETED", "EMPTY_RESPONSE"}:
                 with cm.writer() as con:
                     row_count = con.execute(
                         f"SELECT COUNT(*) FROM {target.target_table} WHERE instrument_name = ?",

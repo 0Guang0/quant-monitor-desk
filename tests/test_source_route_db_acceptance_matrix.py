@@ -717,6 +717,58 @@ def test_resolveMatrixEvidenceInstrumentId_usesSourceLiveDefaults() -> None:
     assert resolve_matrix_evidence_instrument_id("mootdx", "sz.000001") == "sz.000001"
 
 
+def test_normalizeIncrementalJobStatus_liveEmptyFetchMapsToEmptyResponse() -> None:
+    """覆盖范围：live fetch 追平空窗时的 orchestrator 状态归一
+    测试对象：macro_incremental_common._normalize_incremental_job_status
+    目的/目标：FRED/World Bank live 空响应须映射 EMPTY_RESPONSE 而非 FAILED_FINAL
+    验证点：FRED no usable rows、WB no rows for、deribit watermark window → EMPTY_RESPONSE
+    失败含义：矩阵复跑已有 sandbox 时 honest 追平被误判 FAIL_EXTERNAL
+    """
+    from types import SimpleNamespace
+
+    from backend.app.ops.macro_incremental_common import _normalize_incremental_job_status
+
+    cases = (
+        "FRED returned no usable rows for DGS10",
+        "World Bank returned no rows for US/NY.GDP.MKTP.CD",
+        "no instruments after deribit watermark window",
+    )
+    for message in cases:
+        result = SimpleNamespace(status="FAILED_FINAL", message=message)
+        assert _normalize_incremental_job_status(result) == "EMPTY_RESPONSE"
+
+
+def test_matrixIncrementalLiveReport_emptyResponseWithExistingCleanRows_passes() -> None:
+    """覆盖范围：矩阵 incremental live 报告在追平复跑时的 PASS 语义
+    测试对象：source_route_db_acceptance._matrix_incremental_live_report
+    目的/目标：sync_status=EMPTY_RESPONSE 且 clean 表已有行时须 PASS（非 FAIL_EXTERNAL）
+    验证点：status=PASS、failure_class=NONE
+    失败含义：Slice 10 在复用 acceptance DB 时 fred/world_bank/deribit 假红
+    """
+    from backend.app.ops.source_route_db_acceptance import (
+        AcceptanceRequest,
+        _matrix_incremental_live_report,
+    )
+
+    target = next(t for t in iter_matrix_targets() if t.request.source_id == "world_bank")
+    request = AcceptanceRequest(
+        data_domain=target.request.data_domain,
+        source_id=target.request.source_id,
+        operation=target.request.operation,
+    )
+    report = _matrix_incremental_live_report(
+        request,
+        {"route_plan_id": "plan-1", "selected_source_id": "world_bank", "route_grade": "primary"},
+        cm=object(),  # type: ignore[arg-type]
+        matrix_target=target,
+        sync_status="EMPTY_RESPONSE",
+        rows_written=12,
+        job_id=None,
+    )
+    assert report.status == "PASS"
+    assert report.failure_class == "NONE"
+
+
 def test_deribitLiveFetchPort_acceptsLiveResolvedInstrument(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

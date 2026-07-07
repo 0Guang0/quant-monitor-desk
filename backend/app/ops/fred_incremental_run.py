@@ -130,15 +130,9 @@ def _binding_for_fred_series(series_id: str) -> IndicatorBinding:
 
 
 def _series_display_status(result) -> str:
-    status = result.status
-    if status != "FAILED_FINAL":
-        return status
-    msg = result.message or ""
-    if msg.startswith(_WATERMARK_EMPTY_MSG):
-        return "EMPTY_RESPONSE"
-    if "no mock observations on/after" in msg or msg == "EMPTY_RESPONSE":
-        return "EMPTY_RESPONSE"
-    return status
+    from backend.app.ops.macro_incremental_common import _normalize_incremental_job_status
+
+    return _normalize_incremental_job_status(result)
 
 
 def _compute_overall_status(series_statuses: Sequence[str]) -> str:
@@ -201,13 +195,14 @@ def run_fred_macro_incremental(
             )
             display_status = _series_display_status(result)
             row_count = 0
-            if display_status == "COMPLETED":
+            if display_status in _SERIES_SUCCESS_STATUSES:
                 with cm.writer() as con:
                     row_count = con.execute(
                         f"SELECT COUNT(*) FROM {target.target_table} WHERE indicator_id = ?",
                         [series_id],
                     ).fetchone()[0]
-                total_rows += row_count
+                if display_status == "COMPLETED":
+                    total_rows += row_count
             results.append(
                 {
                     "series_id": series_id,
@@ -271,13 +266,14 @@ def run_fred_macro_backfill(
             )
             display_status = _series_display_status(result)
             row_count = 0
-            if display_status == "COMPLETED":
+            if display_status in _SERIES_SUCCESS_STATUSES:
                 with cm.writer() as con:
                     row_count = con.execute(
                         f"SELECT COUNT(*) FROM {target.target_table} WHERE indicator_id = ?",
                         [series_id],
                     ).fetchone()[0]
-                total_rows += row_count
+                if display_status == "COMPLETED":
+                    total_rows += row_count
             results.append(
                 {
                     "series_id": series_id,

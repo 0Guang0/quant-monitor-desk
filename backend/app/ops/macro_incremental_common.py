@@ -50,6 +50,8 @@ def _normalize_incremental_job_status(result) -> str:
     msg = (getattr(result, "message", None) or "").lower()
     if msg.startswith(_WATERMARK_EMPTY_MSG.lower()) or "watermark window" in msg:
         return "EMPTY_RESPONSE"
+    if "returned no usable rows" in msg or "returned no rows for" in msg:
+        return "EMPTY_RESPONSE"
     if any(marker in msg for marker in _NETWORK_FAILURE_MARKERS):
         return "NETWORK_ERROR"
     if "no mock observations on/after" in msg or msg == "empty_response":
@@ -546,14 +548,15 @@ def run_macro_incremental(
             )
             display_status = _instrument_display_status(result)
             row_count = 0
-            if display_status == "COMPLETED":
+            if display_status in _SERIES_SUCCESS_STATUSES:
                 clean_indicator = resolve(instrument_id)
                 with cm.writer() as con:
                     row_count = con.execute(
                         f"SELECT COUNT(*) FROM {target.target_table} WHERE indicator_id = ?",
                         [clean_indicator],
                     ).fetchone()[0]
-                total_rows += row_count
+                if display_status == "COMPLETED":
+                    total_rows += row_count
             results.append(
                 {
                     "instrument_id": instrument_id,

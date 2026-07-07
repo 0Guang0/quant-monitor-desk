@@ -284,6 +284,52 @@
 | SEC live matrix | qmd-ops single target | PASS or honest FAIL_EXTERNAL | FAIL_EXTERNAL | expected |
 | Full matrix closure | 22 sources | 21 PASS + SEC external | 21/22 | expected |
 
+### Phase 17 — Live Evidence Honesty (Slice A, 2026-07-07 late)
+
+- **Status:** complete
+- Actions taken:
+  - Added `backend/app/ops/matrix_live_evidence_honesty.py` as SSOT for mock/replay fetch-id detection on `implementation_mode=live` matrix rows.
+  - Extended `scripts/check_source_route_db_acceptance_matrix.py` with `--data-root` binding and `evidence_honesty_violations` enforcement.
+  - Wired `execute_documented_matrix()` to persist honesty metadata on aggregated reports; `scripts/production_gate.py` passes `--data-root` into the checker.
+  - Added `tests/test_matrix_live_evidence_honesty.py`.
+- Verification:
+  - Recheck of stale live report showed 17 honesty violations before fix; strict-live sandbox after wiring shows 0 violations for honest live rows.
+  - `uv run pytest -q` passed.
+
+### Phase 18 — Live Port Honesty + external_deferred (Slice B, 2026-07-07 late)
+
+- **Status:** complete for wired ports; environment-blocked sources remain honestly FAIL
+- Actions taken:
+  - Replaced mock/replay stand-ins with real live ports or honest FAIL for: stooq (no replay fallback), cninfo (`CninfoLiveFetchPort`), baostock, mootdx, alpha_vantage.
+  - Kept `sec_edgar`, `stooq`, `mootdx` on `EXTERNAL_DEFERRED_SOURCE_IDS` for ADR-016 closure semantics when upstream/geo/dependency blocks.
+  - Added/updated targeted tests for live factory paths and matrix closure deferred semantics.
+- Verification:
+  - Strict-live matrix: evidence honesty clean; deferred sources closure PASS while matrix row stays FAIL_EXTERNAL/BLOCKED.
+
+### Phase 19 — CFTC + US Treasury Live Wiring (2026-07-07 / 2026-07-08)
+
+- **Status:** complete — no longer `DISABLED_SOURCE`; matrix rows live PASS
+- Actions taken:
+  - **`CftcCotLiveFetchPort`:** CFTC Public Reporting API (`publicreporting.cftc.gov/resource/jun7-fc8e.json`); maps `noncomm_positions_*` → COT evidence; fetch id `cftc-live-*`.
+  - **`UsTreasuryLiveFetchPort`:** Treasury.gov daily par yield curve CSV (`daily-treasury-rates.csv/{year}/all?type=daily_treasury_yield_curve`); tenor `10Y` ↔ CSV column `10 Yr`; fetch id `treasury-live-*`.
+  - Removed `cftc_cot` and `us_treasury` from `EXTERNAL_DEFERRED_SOURCE_IDS` and `source_route_db_acceptance_contract.yaml`.
+  - `inflation_expectation` live intentionally deferred in port (`ponytail:` — matrix only exercises yield curve).
+- Verification:
+  - `uv run pytest tests/test_cftc_incremental_e2e.py tests/test_us_treasury_incremental_e2e.py -m network --run-network` — 4 passed with `QMD_ALLOW_LIVE_FETCH=1`.
+  - Full `uv run pytest -q` — exit 0.
+  - Live matrix (`.audit-sandbox/source-route-db-strict-live`): `cftc_cot` **PASS**, `us_treasury` **PASS**, raw evidence `cftc-live-088691-*`, `treasury-live-10Y-*`.
+  - Overall matrix closure still **FAIL** (19 PASS / 3 FAIL_EXTERNAL: **fred**, **world_bank**, **deribit**) — upstream/env, not unimplemented ports.
+- Commit:
+  - `ad9bdb2 feat(acceptance): wire live fetch ports and enforce matrix evidence honesty` (23 files; pre-commit full pytest passed).
+
+| Test | Input | Expected | Actual | Status |
+|------|-------|----------|--------|--------|
+| CFTC live network e2e | `test_cftcIncremental_liveNetwork_*` | COMPLETED or EMPTY_RESPONSE | passed | pass |
+| Treasury live network e2e | `test_usTreasuryIncremental_liveNetwork_*` | COMPLETED or EMPTY_RESPONSE | passed | pass |
+| Matrix row cftc_cot | strict-live sandbox | live PASS | PASS / NONE | pass |
+| Matrix row us_treasury | strict-live sandbox | live PASS | PASS / NONE | pass |
+| Full matrix closure | 22 sources | all non-deferred sources PASS | 19/22 before fix; **22/22 after fix** | pass |
+
 ### Phase 16 — Problem 3 production_gate 双层 gate（2026-07-07）
 
 - **Status:** complete
@@ -315,15 +361,46 @@
 | 2026-07-07 | First full pytest attempt timed out at 120s around 66% with no failures shown | 1 | Reran `uv run pytest -q` with a longer timeout; full backend suite passed. |
 | 2026-07-07 | Full `uv run ruff check .` failed on unrelated historical test lint issues | 1 | Kept scope discipline; verified touched Python files with targeted ruff instead of editing unrelated tests. |
 
+### Phase 20 — Slice 10 Closure: Incremental Caught-Up Semantics (2026-07-08)
+
+- **Status:** complete — task-01 Slice 10 **CLOSED**
+- **Problem:** Reused `.audit-sandbox/source-route-db-strict-live` reported **19/22** with `fred`, `world_bank`, `deribit` as FAIL_EXTERNAL despite live API connectivity and existing clean rows.
+- **Root cause:** Incremental watermark caught-up → live fetch returned no new rows; status stayed `FAILED_FINAL` instead of `EMPTY_RESPONSE`; matrix pass logic did not treat existing clean data as valid acceptance evidence on re-run.
+- **Not the cause:** Clash proxy (direct HTTP 200 to World Bank/Deribit); missing `FRED_API_KEY` (32-char key present); missing integration (fresh sandbox first run was 22/22 PASS).
+- **Fix (shared, not per-source patches):**
+  - `macro_incremental_common._normalize_incremental_job_status` — map live empty-window messages to `EMPTY_RESPONSE`
+  - `fred_incremental_run._series_display_status` / `deribit_incremental_run._display_status` — delegate to shared normalizer
+  - `source_route_db_acceptance._matrix_incremental_live_report` — `EMPTY_RESPONSE` + `rows_written > 0` → PASS
+  - `matrix_live_handlers.execute_fred_matrix_live` — pass on `COMPLETED` + downstream read without requiring new rows this run
+  - `matrix_live_handlers.execute_deribit_matrix_live` — use `_finish_incremental_matrix_live` (domain clean row count)
+- **Tests added:** `test_normalizeIncrementalJobStatus_liveEmptyFetchMapsToEmptyResponse`, `test_matrixIncrementalLiveReport_emptyResponseWithExistingCleanRows_passes`
+- **Verification:**
+
+| Command | Result |
+|---------|--------|
+| Full matrix on strict-live (reused DB) | `closure=PASS pass=22 fail_external=0` |
+| `check_source_route_db_acceptance_matrix.py --strict --live-authorized` | PASS |
+| `production_gate.py --live-authorized --source-matrix-report ...` | PASS |
+| `uv run pytest -q` | exit 0 |
+
+- **Files modified:**
+  - `backend/app/ops/macro_incremental_common.py`
+  - `backend/app/ops/fred_incremental_run.py`
+  - `backend/app/ops/deribit_incremental_run.py`
+  - `backend/app/ops/source_route_db_acceptance.py`
+  - `backend/app/ops/matrix_live_handlers.py`
+  - `tests/test_source_route_db_acceptance_matrix.py`
+  - `task/task-01-source-route and DB acceptance spine/{task_plan,findings,progress}.md`
+
 ## 5-Question Reboot Check
 
 | Question | Answer |
 |----------|--------|
-| Where am I? | The acceptance spine now connects the FRED tracer through live fetch/write/read when gates are satisfied, but task-01 closure has been expanded beyond FRED. |
-| Where am I going? | Next implementation work should first migrate/clean old helper and old smoke seams, then expand the spine to the full `data_sources.md` source matrix. |
-| What's the goal? | Build one production-equivalent acceptance spine over existing data platform modules, with no competing old helper/smoke product acceptance seams. |
-| What have I learned? | See `findings.md`. |
-| What have I done? | Created persistent planning files, implemented and committed prior slices through FRED live fetch/write/read, then updated final closure planning to require legacy seam cleanup plus all documented source coverage. |
+| Where am I? | **Slice 10 closed.** Strict-live matrix 22/22 closure PASS; production_gate live-authorized PASS; task-01 complete. |
+| Where am I going? | Out of scope for task-01: optional tier harness doc retirement, authority prose for 验收单 vs 活市场. |
+| What's the goal? | One production-equivalent acceptance spine; live PASS rows backed by real live evidence; honest deferred/qualification closure per ADR-016. **Achieved.** |
+| What have I learned? | Reused acceptance DB re-runs can false-red when caught-up incremental empty fetch is misclassified; fix at shared status + matrix pass semantics, not proxy/API. |
+| What have I done? | Phases 1–20; `ad9bdb2` live ports + Phase 20 caught-up closure fix + full verification. |
 
 ---
 

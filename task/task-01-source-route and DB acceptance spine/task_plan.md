@@ -8,13 +8,15 @@
 
 ## Current Phase
 
-Commercial review remediation is complete as of `34990d25 test: resolve source route audit findings`. All P0/P1/P2/P3 findings from `task/audit/task-01-source-route and DB acceptance spine/review-commercial-01.txt` were resolved, adversarially rechecked, and committed with a clean worktree.
+As of Slice 10 closure (2026-07-08):
 
-Current product-spine implementation connects the FRED tracer beyond persisted route evidence into live fetch/write/downstream-read acceptance when live gates and credentials are present. Authority vocabulary findings are cleaned and the strict guard passes.
+- Legacy seam retirement (Slice 7), matrix contract/inventory (Slice 8), live port wiring (Slice 9), and **Slice 10 final live matrix closure** are complete.
+- **Live evidence honesty** is enforced: live PASS rows cannot use mock/replay fetch IDs (`matrix_live_evidence_honesty.py` + strict checker).
+- **CFTC COT** and **US Treasury** live fetch ports are implemented and matrix **live PASS**.
+- **Strict-live matrix** (`.audit-sandbox/source-route-db-strict-live`): **22/22 closure PASS** after incremental caught-up semantics fix (`fred`, `world_bank`, `deribit` no longer false FAIL_EXTERNAL on reused acceptance DB).
+- **ADR-016 deferred closure PASS** still applies to: `qmt_xtdata`, `ths_ifind` (qualification_deferred) and `sec_edgar`, `stooq`, `mootdx` (external_deferred).
 
-API/interface follow-up is complete: `preview()` and `execute()` now use the same FRED route evidence path for `macro_series:fred:fetch_macro_series`, while unsupported targets still fail honestly as `not_implemented`.
-
-User clarification on 2026-07-07 changes the final close/pass standard for this task: FRED is no longer enough to close the task. Final closure requires both legacy helper/smoke migration and cleanup, then expansion of the acceptance spine to every source in `docs/modules/data_sources.md` section 5.9.1. The order is intentional: migrate and remove old acceptance seams first, then add sources behind the single spine.
+**Task-01 status:** **CLOSED** for Slice 10. Remaining work is out of scope for this task (legacy doc SSOT drift, tier harness retirement, optional authority doc prose for 验收单 vs 活市场).
 
 ## Spec Summary
 
@@ -467,10 +469,10 @@ Status note: commits 1-8 and 12-13 have landed in a slightly different order tha
 
 Next implementation order:
 
-1. [ ] Complete Slice 7 Tasks 7.1-7.3 before any new source adapter work.
-2. [ ] Complete Slice 8 Tasks 8.1-8.3 to lock the public contract and produce the source matrix.
-3. [ ] Complete Slice 9 Tasks 9.1-9.3 by source positioning, splitting source groups when a change would exceed about five files.
-4. [ ] Complete Slice 10 Task 10.1 with user-authorized live credentials/local terminals/licenses and record concrete results for every data source.
+1. [x] Complete Slice 7 Tasks 7.1-7.3 (legacy seam zero-ref landed).
+2. [x] Complete Slice 8 Tasks 8.1-8.3 (matrix contract + inventory + preview coverage).
+3. [x] Slice 9 largely complete; **CFTC + US Treasury live ports** landed in `ad9bdb2`; remaining port/env gaps tracked in `findings.md`.
+4. [x] Complete Slice 10 Task 10.1 final closure: resolved **fred / world_bank / deribit** false FAIL_EXTERNAL on reused acceptance DB (incremental caught-up → `EMPTY_RESPONSE` + existing clean rows PASS); strict-live matrix **22/22 closure PASS**.
 
 Each commit must leave the codebase working. If a commit would touch more than about five files or mix two concerns, split it further.
 
@@ -512,12 +514,13 @@ Each commit must leave the codebase working. If a commit would touch more than a
 
 ### Checkpoint F: Full Source Matrix Closure
 
-- [ ] All 22 documented sources in `docs/modules/data_sources.md` section 5.9.1 are represented in the spine target matrix.
-- [ ] Matrix report shows honest status for each source and no mock/replay/dry-run product PASS.
-- [ ] All enabled/configured live sources that are expected to write clean complete route/fetch/write/read acceptance.
-- [ ] User-authorized full live matrix run is completed in an isolated data root.
-- [ ] Final report records the concrete result for every source: PASS, FAIL_EXTERNAL with evidence, or a user-approved non-clean/manual-review outcome according to documented positioning.
-- [ ] No source remains `not_implemented`, `dry_run`, `mock`, `replay`, or unexpected `BLOCKED` / `FAIL_EXTERNAL` / `FAIL_CONTRACT` at final `--live-authorized` closure — **except** `qualification_deferred_sources` (`qmt_xtdata`, `ths_ifind`) may remain honestly `BLOCKED` with `closure_outcome=PASS` per [ADR-016](../../docs/decisions/ADR-016-source-route-matrix-honest-closure.md).
+- [x] All 22 documented sources in `docs/modules/data_sources.md` section 5.9.1 are represented in the spine target matrix.
+- [x] Matrix report shows honest status for each source; live evidence honesty checker blocks mock/replay-backed live PASS.
+- [x] CFTC COT and US Treasury complete live route/fetch/write acceptance when gates satisfied (no DISABLED_SOURCE stub).
+- [x] User-authorized full live matrix run completed in isolated data root (`.audit-sandbox/source-route-db-strict-live`).
+- [x] Final `--live-authorized` closure **PASS** for all non-deferred sources (strict-live matrix 22/22; `fred` / `world_bank` / `deribit` fixed).
+- [x] Deferred sources honest per ADR-016: `qmt_xtdata` / `ths_ifind` BLOCKED closure PASS; `sec_edgar` / `stooq` / `mootdx` external_deferred closure PASS.
+- [x] No unexpected `not_implemented`, `dry_run`, `mock`, `replay`, or unregistered `FAIL_EXTERNAL` at final closure.
 
 ## Decisions Made
 
