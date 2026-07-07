@@ -30,7 +30,7 @@ from tests.incremental_mootdx_support import (
     run_mootdx_replay_incremental,
     seed_watermark_row,
 )
-from tests.live_incremental_support import bootstrap_acceptance_cm
+from tests.acceptance_e2e_bootstrap import bootstrap_acceptance_cm
 
 
 def test_mootdxIncremental_e2e_writesSecurityBar1d(tmp_path: Path, monkeypatch) -> None:

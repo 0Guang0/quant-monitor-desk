@@ -1,4 +1,4 @@
-"""Tier A live acceptance harness (M-DATA-03 S00-INFRA · ADR-015)."""
+"""Tier A live evidence runner (M-DATA-03 S00-INFRA · ADR-015)."""
 
 from __future__ import annotations
 
@@ -21,6 +21,7 @@ from backend.app.datasources.live_tier_router import TIER_A_SOURCES
 from backend.app.datasources.product_live_gate import is_product_live_fetch_allowed
 from backend.app.ops.acceptance_isolation import (
     AcceptanceIsolationError,
+    M_DATA_03_SANDBOX_SEGMENT,
     canonical_main_db_paths,
     ensure_isolated_db,
     is_canonical_main_data_root,
@@ -34,7 +35,6 @@ from backend.app.ops.tier_a_live_status import (
 )
 from backend.app.sync.incremental_source_registry import iter_tier_a_incremental_sources
 
-M_DATA_03_SANDBOX_SEGMENT = "m-data-03"
 DEFAULT_SANDBOX_ROOT = PROJECT_ROOT / ".audit-sandbox" / M_DATA_03_SANDBOX_SEGMENT
 
 QUICK_SOURCE_IDS: tuple[str, ...] = ("fred", "baostock")
@@ -696,7 +696,7 @@ def write_acceptance_failure_artifact(
         "first_failure_source_id": first_failure["source_id"] if first_failure else None,
         "failure_detail": first_failure.get("failure_detail") if first_failure else None,
     }
-    out = Path(report_path).parent / f"tier_a_live_acceptance_failure_{run_id}.json"
+    out = Path(report_path).parent / f"tier_a_evidence_failure_{run_id}.json"
     out.write_text(json.dumps(artifact, indent=2, ensure_ascii=False), encoding="utf-8")
     return out
 
@@ -732,7 +732,7 @@ def run_acceptance_report(
             summary["failed_external"] += 1
 
     report = {
-        "command": "tier_a_live_acceptance --report",
+        "command": "tier_a_evidence_runner --report",
         "schema_version": SCHEMA_VERSION,
         "data_root": str(resolved_root),
         "generated_at": datetime.now(UTC).isoformat(),
@@ -781,3 +781,24 @@ __all__ = [
     "write_acceptance_failure_artifact",
     "write_live_tier_a_evidence_manifest",
 ]
+
+
+def main(argv: list[str] | None = None) -> int:
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Tier A live evidence acceptance report")
+    parser.add_argument("--report", required=True, type=Path, help="Output report JSON path")
+    parser.add_argument("--source-id", default=None)
+    parser.add_argument("--quick", action="store_true")
+    parser.add_argument("--data-root", type=Path, default=None)
+    args = parser.parse_args(argv)
+    return run_acceptance_report(
+        args.report,
+        source_id=args.source_id,
+        quick=args.quick,
+        data_root=args.data_root,
+    )
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

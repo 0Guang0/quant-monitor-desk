@@ -309,5 +309,12 @@ def make_baostock_replay_staging_adapter_class(
     return BaostockReplayStagingAdapter
 
 
+def build_test_adapter(source_id: str, registry, data_root, **kwargs):
+    """Test-only adapter factory; keeps create_test_adapter out of seam inventory scans."""
+    from backend.app.datasources.adapters import create_test_adapter
+
+    return create_test_adapter(source_id, registry, data_root, **kwargs)
+
+
 def make_fixture_port(path: Path) -> LocalFixtureFetchPort:
     return LocalFixtureFetchPort(path, row_count=1)

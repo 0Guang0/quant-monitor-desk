@@ -18,7 +18,7 @@ ACCEPTANCE_DUCKDB_NAME = "quant_monitor.duckdb"
 
 
 def acceptance_db_path(sandbox_root: Path) -> Path:
-    """ADR-015 acceptance harness DB path (same as tier_a_live_acceptance.ensure_isolated_db)."""
+    """ADR-015 acceptance harness DB path (same as acceptance_isolation.ensure_isolated_db)."""
     return sandbox_root / "duckdb" / ACCEPTANCE_DUCKDB_NAME
 
 

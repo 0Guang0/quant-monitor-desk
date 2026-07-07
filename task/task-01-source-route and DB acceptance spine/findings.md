@@ -253,6 +253,18 @@ Proposed matrix/contract prose (not yet written to authority docs):
 3. **Optional pytest hygiene**: `monkeypatch.delenv` in cn_market default-disabled tests (see user question).
 4. **Do not** fake QMT/iFinD authorization.
 
+### Phase 14 — Legacy seam zero-reference + closure doc reconcile (2026-07-07)
+
+**Problem 2 (done):** `task_plan.md` Checkpoint F line 520 reconciled with ADR-016 — `qualification_deferred_sources` may remain `BLOCKED` at `--live-authorized` closure with `closure_outcome=PASS`. Contract `legacy_seam_inventory` now requires `consumer_count_must_be_zero`.
+
+**Problem 1 (done):** Retired legacy seam **names** — `consumer_count=0` verified via `check_acceptance_helper_consumers.py`:
+- `live_incremental_support` → `tests/acceptance_e2e_bootstrap.py`
+- `production_equivalent_smoke` → `scripts/acceptance_pipeline_smoke.py`
+- `tier_a_live_acceptance` → `backend/app/ops/tier_a_evidence_runner.py`
+- Test `create_test_adapter(` call sites → `service_path_support.build_test_adapter`
+
+**Problem 3 (deferred — recorded, not implemented):** dry-run vs `--live-authorized` closure distinction exists in code/tests but is **not** wired into `production_gate.py` / CI as a hard final gate. Until then, manual `check_source_route_db_acceptance_matrix.py --strict --live-authorized --report` remains the operator gate.
+
 ---
 
 *Update this file after every 2 view/browser/search operations.*

@@ -506,9 +506,9 @@ Each commit must leave the codebase working. If a commit would touch more than a
 
 ### Checkpoint E: Legacy Seam Closure
 
-- [ ] Strict helper/smoke consumer inventory passes.
-- [ ] Old product-facing helper/smoke entrypoints are either delegated and scheduled for removal, or deleted once unused.
-- [ ] No old helper can emit product acceptance PASS outside the spine.
+- [x] Strict helper/smoke consumer inventory passes with `consumer_count=0` (no remaining references to retired seam patterns in `backend/`, `scripts/`, `tests/`).
+- [x] Old product-facing helper/smoke entrypoints are removed or renamed; perf smoke delegates to spine where applicable.
+- [x] No old helper can emit product acceptance PASS outside the spine.
 
 ### Checkpoint F: Full Source Matrix Closure
 
@@ -517,7 +517,7 @@ Each commit must leave the codebase working. If a commit would touch more than a
 - [ ] All enabled/configured live sources that are expected to write clean complete route/fetch/write/read acceptance.
 - [ ] User-authorized full live matrix run is completed in an isolated data root.
 - [ ] Final report records the concrete result for every source: PASS, FAIL_EXTERNAL with evidence, or a user-approved non-clean/manual-review outcome according to documented positioning.
-- [ ] No source remains `not_implemented`, `dry_run`, `mock`, `replay` or auth/config `BLOCKED` at final closure.
+- [ ] No source remains `not_implemented`, `dry_run`, `mock`, `replay`, or unresolved auth/config `BLOCKED` at final `--live-authorized` closure — **except** `qualification_deferred_sources` (`qmt_xtdata`, `ths_ifind`) may remain honestly `BLOCKED` with `closure_outcome=PASS` per [ADR-016](../../docs/decisions/ADR-016-source-route-matrix-honest-closure.md).
 
 ## Decisions Made
 

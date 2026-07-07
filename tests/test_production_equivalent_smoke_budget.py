@@ -142,7 +142,7 @@ def test_loadSmokeBudget_rejectsBadYaml(tmp_path: Path) -> None:
 def test_buildSmokeArtifact_failStatusWritableWithoutRaise() -> None:
     """覆盖范围：超阈值时 build_smoke_artifact 返回 FAIL 且不抛错
     测试对象：build_smoke_artifact
-    目的/目标：production_equivalent_smoke 可先写 FAIL artifact 再 exit 非零
+    目的/目标：acceptance_pipeline_smoke 可先写 FAIL artifact 再 exit 非零
     验证点：status FAIL；violations 非空；metrics 原样保留
     失败含义：脚本在 evaluate 抛错前无法落盘 FAIL artifact
     """
@@ -164,12 +164,12 @@ def test_productionEquivalentSmoke_main_writesFailArtifactAndExitsNonZero(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """覆盖范围：smoke 脚本超阈值时写 FAIL artifact 并以 exit 1 结束
-    测试对象：scripts.production_equivalent_smoke.main
+    测试对象：scripts.acceptance_pipeline_smoke.main
     目的/目标：VR-PERF-001 超线须落盘 FAIL 再非零退出
     验证点：main()==1；artifact status FAIL；violations 非空
     失败含义：CI nightly 超阈值无 artifact 或仍 exit 0
     """
-    import scripts.production_equivalent_smoke as smoke
+    import scripts.acceptance_pipeline_smoke as smoke
 
     data_root = tmp_path / "data"
     artifact_path = tmp_path / "budget.json"
@@ -194,7 +194,7 @@ def test_productionEquivalentSmoke_main_writesFailArtifactAndExitsNonZero(
         sys,
         "argv",
         [
-            "production_equivalent_smoke.py",
+            "acceptance_pipeline_smoke.py",
             "--use-service-path",
             "--data-root",
             str(data_root),
@@ -215,12 +215,12 @@ def test_productionEquivalentSmoke_sourceRouteDbAdapterWritesBlockedReport(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """覆盖范围：旧 smoke 入口显式请求 source-route DB 验收报告
-    测试对象：scripts.production_equivalent_smoke.main --source-route-db-target
+    测试对象：scripts.acceptance_pipeline_smoke.main --source-route-db-target
     目的/目标：兼容入口必须委托 SourceRouteDbAcceptanceSpine，不能用 smoke PASS 冒充成品验收
     验证点：main()==1；source-route 报告落盘；failure_class=BLOCKED 且含 route_plan_id
     失败含义：旧 smoke 入口仍可能绕过新验收 spine，或把 blocked tracer 包装成成功
     """
-    import scripts.production_equivalent_smoke as smoke
+    import scripts.acceptance_pipeline_smoke as smoke
 
     data_root = tmp_path / "data"
     report_path = data_root / "reports" / "source_route_db_acceptance.json"
@@ -235,7 +235,7 @@ def test_productionEquivalentSmoke_sourceRouteDbAdapterWritesBlockedReport(
         sys,
         "argv",
         [
-            "production_equivalent_smoke.py",
+            "acceptance_pipeline_smoke.py",
             "--data-root",
             str(data_root),
             "--source-route-db-target",

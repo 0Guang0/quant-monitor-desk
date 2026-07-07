@@ -5,7 +5,7 @@ version: v1
 name: production_equivalent_smoke_budget
 owner: b3f-hyg
 closure_command: >-
-  uv run python scripts/production_equivalent_smoke.py
+  uv run python scripts/acceptance_pipeline_smoke.py
   --use-service-path
   --data-root .audit-sandbox/r3b275-audit
   --write-artifact .audit-sandbox/r3b275-audit/production_equivalent_smoke_budget.json

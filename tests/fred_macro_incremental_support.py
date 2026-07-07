@@ -22,7 +22,7 @@ from backend.app.ops.fred_incremental_watermark import (
     read_since_dates_for_series,
 )
 from backend.app.sync.orchestrator import DataSyncOrchestrator
-from tests.live_incremental_support import bootstrap_acceptance_cm, bootstrap_port_live_e2e_ctx
+from tests.acceptance_e2e_bootstrap import bootstrap_acceptance_cm, bootstrap_port_live_e2e_ctx
 from tests.service_path_support import enable_source_route
 
 

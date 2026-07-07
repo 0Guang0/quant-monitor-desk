@@ -16,7 +16,7 @@ from backend.app.ops.data_health_profiles import (
     LAYER1_OBSERVATION_P0_RULE_IDS,
     run_data_health_profile,
 )
-from backend.app.ops.tier_a_live_acceptance import source_bindings
+from backend.app.ops.tier_a_evidence_runner import source_bindings
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[1]
 _RULES_PATH = _PROJECT_ROOT / "specs" / "contracts" / "data_quality_rules.yaml"
@@ -209,7 +209,7 @@ def test_f0_nestedRawStorePath_findsEvidenceDir(tmp_path: Path) -> None:
     验证点：返回含 JSON 的日期目录；fred 不串源
     失败含义：live manifest/F0 误报 no raw evidence 或跨源污染
     """
-    from backend.app.ops.tier_a_live_acceptance import (
+    from backend.app.ops.tier_a_evidence_runner import (
         _latest_raw_evidence_dir,
         ensure_isolated_db,
         _run_f0_data_health,
@@ -255,7 +255,8 @@ def test_f0_noRawEvidence_returnsFail(isolated_live_data_root: Path) -> None:
     验证点：status==FAIL；detail 含 no raw evidence
     失败含义：SKIP 路径残留
     """
-    from backend.app.ops.tier_a_live_acceptance import _run_f0_data_health, ensure_isolated_db
+    from backend.app.ops.acceptance_isolation import ensure_isolated_db
+    from backend.app.ops.tier_a_evidence_runner import _run_f0_data_health
 
     db_path = ensure_isolated_db(isolated_live_data_root)
     status, detail = _run_f0_data_health(
@@ -272,7 +273,8 @@ def test_f0_partialFredPayload_returnsFail(tmp_path: Path) -> None:
     验证点：status==FAIL
     失败含义：partial 证据被 SKIP 放过
     """
-    from backend.app.ops.tier_a_live_acceptance import _run_f0_data_health, ensure_isolated_db
+    from backend.app.ops.acceptance_isolation import ensure_isolated_db
+    from backend.app.ops.tier_a_evidence_runner import _run_f0_data_health
 
     data_root = tmp_path / "data"
     data_root.mkdir()
@@ -337,7 +339,7 @@ def test_macroStagingPersist_writesRawDiscoverableByF0(tmp_path: Path) -> None:
 
     from backend.app.datasources.fetch_result import FetchRequest
     from backend.app.ops.macro_incremental_common import persist_incremental_fetch_payload
-    from backend.app.ops.tier_a_live_acceptance import (
+    from backend.app.ops.tier_a_evidence_runner import (
         _iter_source_raw_files,
         _run_f0_data_health,
         ensure_isolated_db,

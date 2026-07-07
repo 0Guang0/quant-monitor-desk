@@ -18,7 +18,7 @@ from backend.app.ops.sec_edgar_incremental_watermark import (
     read_since_date_for_cik,
 )
 from backend.app.sync.orchestrator import DataSyncOrchestrator
-from tests.live_incremental_support import bootstrap_acceptance_cm, bootstrap_port_live_e2e_ctx
+from tests.acceptance_e2e_bootstrap import bootstrap_acceptance_cm, bootstrap_port_live_e2e_ctx
 from tests.network_reachability import sec_edgar_reachable
 
 CIK = "0000320193"

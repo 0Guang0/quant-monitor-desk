@@ -242,7 +242,7 @@ def main() -> int:
             print(f"error: {exc}", file=sys.stderr)
             return 2
         print(
-            "production_equivalent_smoke: source-route DB report written "
+            "acceptance_pipeline_smoke: source-route DB report written "
             f"{args.write_source_route_db_report.resolve()}"
         )
 
@@ -261,10 +261,10 @@ def main() -> int:
             json.dumps(artifact, indent=2, sort_keys=True) + "\n",
             encoding="utf-8",
         )
-        print(f"production_equivalent_smoke: artifact written {artifact_path}")
+        print(f"acceptance_pipeline_smoke: artifact written {artifact_path}")
         if artifact["status"] == "FAIL":
             print(
-                "production_equivalent_smoke: budget FAIL "
+                "acceptance_pipeline_smoke: budget FAIL "
                 f"violations={json.dumps(artifact['violations'])}",
                 file=sys.stderr,
             )
@@ -272,13 +272,13 @@ def main() -> int:
 
     if source_route_db_report is not None and source_route_db_report["status"] != "PASS":
         print(
-            "production_equivalent_smoke: source-route DB acceptance FAIL "
+            "acceptance_pipeline_smoke: source-route DB acceptance FAIL "
             f"failure_class={source_route_db_report['failure_class']}",
             file=sys.stderr,
         )
         return 1
 
-    print(f"production_equivalent_smoke: ALL PASS metrics={json.dumps(metrics, sort_keys=True)}")
+    print(f"acceptance_pipeline_smoke: ALL PASS metrics={json.dumps(metrics, sort_keys=True)}")
     return 0
 
 

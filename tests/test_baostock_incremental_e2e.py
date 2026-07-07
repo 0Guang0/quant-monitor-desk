@@ -24,7 +24,7 @@ from tests.incremental_baostock_support import (
     incremental_spec,
     seed_watermark_row,
 )
-from tests.live_incremental_support import bootstrap_acceptance_cm
+from tests.acceptance_e2e_bootstrap import bootstrap_acceptance_cm
 
 
 def test_baostockIncremental_e2e_writesSecurityBar1d(tmp_path: Path, monkeypatch) -> None:

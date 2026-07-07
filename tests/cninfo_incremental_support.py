@@ -21,7 +21,7 @@ from backend.app.ops.cninfo_incremental_watermark import (
     read_since_date_for_instrument,
 )
 from backend.app.sync.orchestrator import DataSyncOrchestrator
-from tests.live_incremental_support import bootstrap_acceptance_cm, bootstrap_port_live_e2e_ctx
+from tests.acceptance_e2e_bootstrap import bootstrap_acceptance_cm, bootstrap_port_live_e2e_ctx
 
 SYMBOL = "sh.600519"
 FIXTURE_DATE = date(2024, 6, 25)

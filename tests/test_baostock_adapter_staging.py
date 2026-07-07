@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from backend.app.datasources.adapters import create_test_adapter
+from tests.service_path_support import build_test_adapter
 from backend.app.datasources.fetch_ports.baostock_port import create_baostock_fetch_port
 from backend.app.datasources.fetch_result import FetchRequest
 from backend.app.datasources.source_registry import SourceRegistry
@@ -30,7 +30,7 @@ def test_baostockAdapter_fetchPortPath_populatesStaging(tmp_path: Path) -> None:
     port = create_baostock_fetch_port(symbols=(SYMBOL,), max_rows=500, use_mock=True)
     registry = SourceRegistry()
     registry.load()
-    adapter = create_test_adapter(
+    adapter = build_test_adapter(
         "baostock",
         registry,
         tmp_path / "raw",

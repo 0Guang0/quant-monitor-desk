@@ -14,7 +14,7 @@ authoritative_docs:
 purpose: >
   Normative evidence envelope for Tier A live incremental acceptance (11 sources).
   SSOT for post-sync evidence layout consumed by F0 data health, B2 validation,
-  and tier_a_live_acceptance reporting. Not an extension of staged_pilot manifest
+  and tier_a_evidence_runner reporting. Not an extension of staged_pilot manifest
   as product definition; field compatibility with raw_evidence_manifest_v2 is
   documented below for implementers only.
 
@@ -206,7 +206,7 @@ source_bindings:
 # ---------------------------------------------------------------------------
 acceptance_report:
   format: json
-  command: scripts/tier_a_live_acceptance.py
+  command: python -m backend.app.ops.tier_a_evidence_runner
   required_top_level_fields:
     - command
     - schema_version
@@ -239,7 +239,7 @@ acceptance_report:
     1: any FAIL_FIXABLE or FAIL_EXTERNAL without ADR
     2: invalid environment
   failure_artifact:
-    filename_pattern: tier_a_live_acceptance_failure_{run_id}.json
+    filename_pattern: tier_a_evidence_failure_{run_id}.json
     required_when: exit_code != 0
     fields:
       - command

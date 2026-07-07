@@ -10,7 +10,7 @@ import pytest
 import yaml
 
 from backend.app.datasources.live_tier_router import TIER_A_SOURCES
-from backend.app.ops.tier_a_live_acceptance import (
+from backend.app.ops.tier_a_evidence_runner import (
     MANIFEST_FILENAME,
     SCHEMA_VERSION,
     build_live_tier_a_evidence_manifest,

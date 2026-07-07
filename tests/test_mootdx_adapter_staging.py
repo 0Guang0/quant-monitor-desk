@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from backend.app.datasources.adapters import create_test_adapter
+from tests.service_path_support import build_test_adapter
 from backend.app.datasources.fetch_ports.mootdx_port import create_mootdx_fetch_port
 from backend.app.datasources.fetch_ports.tdx_fetch_guards import EQUITY_INDEX_MAX_ROWS
 from backend.app.datasources.fetch_result import FetchRequest
@@ -20,7 +20,7 @@ def test_mootdxAdapter_registeredInFactory() -> None:
     """覆盖范围：mootdx adapter 工厂注册
     测试对象：create_test_adapter + _ADAPTER_TYPES
     目的/目标：adapter_id=mootdx 金路径应解析到 MootdxAdapter
-    验证点：create_test_adapter("mootdx") 不抛 AdapterNotSupportedError
+    验证点：build_test_adapter("mootdx") 不抛 AdapterNotSupportedError
     失败含义：mootdx incremental 无法走真实 adapter staging
     """
     from backend.app.datasources.adapters import MootdxAdapter
@@ -28,7 +28,7 @@ def test_mootdxAdapter_registeredInFactory() -> None:
     registry = enabled_source_registry(
         source_id="mootdx", data_domain="cn_equity_daily_bar"
     )
-    adapter = create_test_adapter(
+    adapter = build_test_adapter(
         "mootdx",
         registry,
         Path("/tmp/mootdx-raw"),
@@ -57,7 +57,7 @@ def test_mootdxAdapter_fetchPortPath_populatesStaging(tmp_path: Path) -> None:
     registry = enabled_source_registry(
         source_id="mootdx", data_domain="cn_equity_daily_bar"
     )
-    adapter = create_test_adapter(
+    adapter = build_test_adapter(
         "mootdx",
         registry,
         tmp_path / "raw",

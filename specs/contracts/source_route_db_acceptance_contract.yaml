@@ -106,9 +106,12 @@ matrix_live_modes:
 legacy_seam_inventory:
   product_runtime_count_must_be_zero: true
   script_runtime_count_must_be_zero: true
-  allowed_scopes:
-    - test_only
-    - allowed_ci
+  consumer_count_must_be_zero: true
+  retired_seam_patterns:
+    - production_equivalent_smoke
+    - tier_a_live_acceptance
+    - live_incremental_support
+    - direct create_test_adapter calls outside adapters/service definition modules
 
 required_report_fields:
   - source_id

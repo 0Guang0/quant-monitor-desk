@@ -390,16 +390,16 @@ def test_createTestAdapter_defaultStubFetchPort_success(
     request_factory,
     raw_data_root,
 ):
-    """覆盖范围：create_test_adapter 默认 stub 端口
-    测试对象：create_test_adapter + 默认 StubFetchPort
+    """覆盖范围：build_test_adapter 默认 stub 端口
+    测试对象：build_test_adapter + 默认 StubFetchPort
     目的/目标：测试用工厂应零配置即可完成一次成功抓取
     验证点：fetch.status == SUCCESS
     失败含义：测试辅助工厂不可用，大量集成测试无法起步
     """
-    from backend.app.datasources.adapters import create_test_adapter
+    from tests.service_path_support import build_test_adapter
 
     con = migrated_con(tmp_path)
-    adapter = create_test_adapter("baostock", batch_b_registry, raw_data_root)
+    adapter = build_test_adapter("baostock", batch_b_registry, raw_data_root)
     req = request_factory("baostock", "cn_equity_daily_bar")
     result = adapter.fetch(req, con=con)
     assert result.status == "SUCCESS"

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Authoritative CI perf-budget artifact (R3-B25-PERF-BUDGET-01 / R3F-HYG-06).
 
-Runs bounded production_equivalent_smoke under .audit-sandbox/r3b275-audit.
+Runs bounded acceptance_pipeline_smoke under .audit-sandbox/r3b275-audit.
 Does not authorize live sources or touch canonical production DB.
 """
 
@@ -21,7 +21,7 @@ def main() -> int:
     DATA_ROOT.mkdir(parents=True, exist_ok=True)
     cmd = [
         sys.executable,
-        "scripts/production_equivalent_smoke.py",
+        "scripts/acceptance_pipeline_smoke.py",
         "--use-service-path",
         "--data-root",
         str(DATA_ROOT),

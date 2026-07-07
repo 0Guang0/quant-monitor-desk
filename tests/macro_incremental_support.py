@@ -14,7 +14,7 @@ from backend.app.db.migrate import apply_migrations
 from backend.app.ops.macro_incremental_common import MacroIncrementalFetchProxy
 from backend.app.sync.orchestrator import DataSyncOrchestrator
 from tests.fred_macro_incremental_support import insert_axis_observation
-from tests.live_incremental_support import ACCEPTANCE_DUCKDB_NAME, bootstrap_acceptance_cm
+from tests.acceptance_e2e_bootstrap import ACCEPTANCE_DUCKDB_NAME, bootstrap_acceptance_cm
 from tests.service_path_support import enable_source_route
 
 

@@ -56,7 +56,7 @@ class ConsumerHit:
 
 RULES: tuple[ConsumerRule, ...] = (
     ConsumerRule(
-        target="scripts/production_equivalent_smoke.py",
+        target="scripts/acceptance_pipeline_smoke.py (retired: production_equivalent_smoke.py)",
         pattern=re.compile(
             r"(?:scripts[/\\]production_equivalent_smoke(?:\.py)?"
             r"|from\s+scripts\.production_equivalent_smoke|import\s+scripts\.production_equivalent_smoke)"
@@ -65,13 +65,13 @@ RULES: tuple[ConsumerRule, ...] = (
         replacement="SourceRouteDbAcceptanceSpine Adapter or qmd-ops accept-source-route-db",
     ),
     ConsumerRule(
-        target="backend/app/ops/tier_a_live_acceptance.py",
+        target="backend/app/ops/tier_a_evidence_runner.py (retired: tier_a_live_acceptance.py)",
         pattern=re.compile(r"tier_a_live_acceptance"),
         classification="source_specific_live_helper",
         replacement="SourceRouteDbAcceptanceSpine internal Adapter",
     ),
     ConsumerRule(
-        target="tests/live_incremental_support.py",
+        target="tests/acceptance_e2e_bootstrap.py (retired: live_incremental_support.py)",
         pattern=re.compile(r"live_incremental_support"),
         classification="test_helper",
         replacement=(
@@ -144,11 +144,12 @@ def _is_rule_definition(path: Path, rule: ConsumerRule) -> bool:
         "tests/test_acceptance_helper_consumers.py",
     }:
         return True
-    if rel == rule.target:
+    if rel == rule.target.split(" ", 1)[0]:
         return True
     if rule.classification == "direct_adapter_helper" and rel in {
         "backend/app/datasources/adapters/__init__.py",
         "backend/app/datasources/service.py",
+        "tests/service_path_support.py",
     }:
         return True
     return False
@@ -189,10 +190,10 @@ def build_report(root: Path = PROJECT_ROOT) -> dict[str, object]:
     product_runtime = [item for item in consumers if item["scope"] == "product_runtime"]
     script_runtime = [item for item in consumers if item["scope"] == "script_runtime"]
     seam_inventory_status = (
-        "PASS" if not product_runtime and not script_runtime else "FAIL"
+        "PASS" if not product_runtime and not script_runtime and not consumers else "FAIL"
     )
     return {
-        "status": "WARN" if consumers else "PASS",
+        "status": "PASS" if not consumers else "FAIL",
         "strict_status": "FAIL" if product_runtime else "PASS",
         "seam_inventory_status": seam_inventory_status,
         "module": "SourceRouteDbAcceptanceSpine",

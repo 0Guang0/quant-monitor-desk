@@ -27,20 +27,18 @@ def test_acceptanceHelperConsumers_inventory_listsScopeAndMigrationAction() -> N
     assert proc.returncode == 0
     assert payload["strict_status"] == "PASS"
     assert payload["seam_inventory_status"] == "PASS"
+    assert payload["status"] == "PASS"
     assert payload["product_runtime_count"] == 0
     assert payload["script_runtime_count"] == 0
-    if payload["consumers"]:
-        sample = payload["consumers"][0]
-        assert "scope" in sample
-        assert "migration_action" in sample
+    assert payload["consumer_count"] == 0
 
 
 def test_acceptanceHelperConsumers_strictSeamInventory_passesForTestOnlyConsumers() -> None:
     """覆盖范围：legacy seam 清单关账
     测试对象：scripts/check_acceptance_helper_consumers.py --strict-seam-inventory
-    目的/目标：Slice 7.3 要求 product/script runtime 零 consumer；test_only/allowed_ci 可保留
-    验证点：--strict-seam-inventory 退出码 0；seam_inventory_status=PASS
-    失败含义：旧 helper 仍挂在产品/script 路径，task-01 legacy seam 未关账
+    目的/目标：Slice 7.3 要求零 legacy seam 引用（consumer_count=0）
+    验证点：--strict-seam-inventory 退出码 0；consumer_count=0
+    失败含义：旧 helper 名称仍出现在 backend/scripts/tests，task-01 legacy seam 未关账
     """
     proc = subprocess.run(
         [
@@ -59,3 +57,4 @@ def test_acceptanceHelperConsumers_strictSeamInventory_passesForTestOnlyConsumer
 
     assert proc.returncode == 0, proc.stdout + proc.stderr
     assert payload["seam_inventory_status"] == "PASS"
+    assert payload["consumer_count"] == 0

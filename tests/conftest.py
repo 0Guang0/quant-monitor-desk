@@ -362,7 +362,7 @@ def empty_response_result():
 @pytest.fixture
 def isolated_live_data_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     """Isolated M-DATA-03 sandbox root; rejects canonical main DB paths (ADR-015)."""
-    from backend.app.ops.tier_a_live_acceptance import (
+    from backend.app.ops.acceptance_isolation import (
         M_DATA_03_SANDBOX_SEGMENT,
         assert_isolated_live_data_root,
     )
@@ -374,7 +374,10 @@ def isolated_live_data_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> 
         / f"pytest-{tmp_path.name}-{uuid.uuid4().hex[:8]}"
     )
     root.mkdir(parents=True, exist_ok=True)
-    resolved = assert_isolated_live_data_root(root)
+    resolved = assert_isolated_live_data_root(
+        root,
+        required_segment=M_DATA_03_SANDBOX_SEGMENT,
+    )
     monkeypatch.setenv("QMD_DATA_ROOT", str(resolved))
     monkeypatch.delenv("DATA_ROOT", raising=False)
     return resolved

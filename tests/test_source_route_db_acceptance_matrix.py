@@ -42,6 +42,7 @@ def test_acceptanceHelperConsumers_strictMode_hasZeroProductRuntimeConsumers() -
     assert proc.returncode == 0, proc.stdout + proc.stderr
     assert payload["strict_status"] == "PASS"
     assert payload["product_runtime_count"] == 0
+    assert payload["consumer_count"] == 0
 
 
 def test_sourceRouteDbAcceptanceMatrix_hasTwentyTwoDocumentedSources() -> None:
