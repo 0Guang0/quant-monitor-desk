@@ -162,6 +162,21 @@
   - Added acceptance report validation/conflict status mapping from `data_sync_job` into stable product values such as `PASSED_PRIMARY`, `FAILED`, `MANUAL_REVIEW_REQUIRED` and `SEVERE_CONFLICT`.
   - Cleaned `docs/modules/data_sources.md` product-state wording so `check_authority_acceptance_language.py --strict` passes.
   - Confirmed existing direct-adapter/product-DataSourceService guard tests still pass; helper consumer inventory remains advisory WARN, not a hard completion gate.
+
+### Phase 10: Preview/Execute Interface Parity
+
+- **Status:** complete pending final commit
+- Actions taken:
+  - Rechecked the public `preview/execute` interface against `/api-and-interface-design` after commit `3441f0a`.
+  - Found that `execute()` supports the FRED tracer while `preview()` still returns generic `not_implemented`, which makes the public Interface harder to use consistently.
+  - Ran GitNexus impact on `SourceRouteDbAcceptanceSpine.preview`; risk LOW, 0 upstream consumers.
+- Actions completed:
+  - Reused existing `_fred_macro_route_payload` normalization for `preview()` when the request is `macro_series:fred:fetch_macro_series`.
+  - Added a focused contract test proving preview returns primary route evidence without constructing internals.
+  - Verified `uv run python -m pytest tests/test_source_route_db_acceptance_contract.py -q` passed with 15 tests.
+  - Verified touched Python files with `uv run ruff check backend/app/ops/source_route_db_acceptance.py tests/test_source_route_db_acceptance_contract.py`.
+  - Verified touched Python files compile with `uv run python -m compileall -q backend/app/ops/source_route_db_acceptance.py tests/test_source_route_db_acceptance_contract.py`.
+  - Verified full backend suite with `uv run pytest -q`.
 - Files modified:
   - `backend/app/ops/source_route_db_acceptance.py`
   - `tests/test_source_route_db_acceptance_contract.py`

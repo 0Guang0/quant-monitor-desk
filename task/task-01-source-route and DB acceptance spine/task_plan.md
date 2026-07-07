@@ -12,6 +12,8 @@ Commercial review remediation is complete as of `34990d25 test: resolve source r
 
 Current product-spine implementation connects the FRED tracer beyond persisted route evidence into live fetch/write/downstream-read acceptance when live gates and credentials are present. Authority vocabulary findings are cleaned and the strict guard passes; remaining helper-consumer output is advisory migration inventory, not a product PASS gate.
 
+API/interface follow-up is complete: `preview()` and `execute()` now use the same FRED route evidence path for `macro_series:fred:fetch_macro_series`, while unsupported targets still fail honestly as `not_implemented`.
+
 ## Spec Summary
 
 ### Objective

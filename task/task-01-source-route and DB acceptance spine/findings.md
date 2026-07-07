@@ -41,6 +41,7 @@
 - `scripts/check_authority_acceptance_language.py` now reports execution-stage vocabulary and non-live-mode-as-success claims across the active authority path set.
 - Current authority guard output is `PASS` with 0 findings after product-state wording cleanup in `docs/modules/data_sources.md`.
 - Existing Layer1 and Layer2 clean readers already reject `source_switched=True` rows (`tests/test_layer1_clean_reader.py`, `tests/test_layer2_clean_reader.py`); `SourceRouteDbAcceptanceSpine` now also runs a Layer1 downstream read probe after FRED clean write.
+- API/interface review found and fixed one small contract inconsistency after the FRED live spine landed: `execute()` supports `macro_series:fred:fetch_macro_series`, and `preview()` now reuses the existing FRED route preview path instead of returning generic `not_implemented`.
 - CNINFO product-live factory had a hook-blocking mismatch: `use_mock=False` returned the direct akshare network port even though a replay-first product-live port existed. It now returns `CninfoProductLiveFetchPort`, with regression coverage.
 - Planning catchup on 2026-07-07 completed with no output from `C:\Users\Guang\.claude\skills\planning-with-files\scripts\session-catchup.py`; no additional unsynced context was reported.
 - Commercial review file `task/audit/task-01-source-route and DB acceptance spine/review-commercial-01.txt` had no P0/P1 findings in its first block, but did contain later P1 findings around broad exceptions and meta-testing; all listed P0/P1/P2/P3 items are resolved as of `34990d25`.

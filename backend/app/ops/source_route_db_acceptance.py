@@ -201,6 +201,17 @@ class SourceRouteDbAcceptanceSpine:
     """Deep Module seam for production-equivalent source-route DB acceptance."""
 
     def preview(self, request: AcceptanceRequest) -> AcceptancePreview:
+        if _is_fred_macro_series_request(request):
+            route_payload = _fred_macro_route_payload(request)
+            route_grade = _route_grade_from_payload(route_payload)
+            route_status = _optional_str(route_payload.get("route_status")) or "UNKNOWN"
+            return AcceptancePreview(
+                request=request,
+                route_grade=route_grade,
+                implementation_mode="live",
+                status="PASS" if route_grade != "blocked" else "FAIL",
+                reason=f"route_status={route_status}",
+            )
         return AcceptancePreview(
             request=request,
             route_grade="not_planned",

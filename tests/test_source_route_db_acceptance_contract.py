@@ -115,6 +115,23 @@ def test_sourceRouteDbAcceptance_spinePreview_reportsNotImplementedHonestly(tmp_
     assert report["failure_class"] == "NOT_IMPLEMENTED"
 
 
+def test_sourceRouteDbAcceptance_fredMacroPreview_returnsRouteEvidence() -> None:
+    """覆盖范围：FRED macro tracer 的 preview 外部接口
+    测试对象：SourceRouteDbAcceptanceSpine.preview
+    目的/目标：已实现 tracer 的 preview 必须返回真实 route evidence，不再停留 generic stub
+    验证点：route_grade=primary；implementation_mode=live；status=PASS；reason 含 route_status
+    失败含义：preview/execute 契约分裂，调用方无法用 preview 判断正式验收路径是否可走
+    """
+    request = AcceptanceRequest.from_target("macro_series:fred:fetch_macro_series")
+
+    preview = SourceRouteDbAcceptanceSpine().preview(request).to_dict()
+
+    assert preview["route_grade"] == "primary"
+    assert preview["implementation_mode"] == "live"
+    assert preview["status"] == "PASS"
+    assert preview["reason"] == "route_status=READY"
+
+
 def test_sourceRouteDbAcceptance_fredMacroTracer_withoutLiveAuthorizationBlocks(
     tmp_path: Path,
 ) -> None:
