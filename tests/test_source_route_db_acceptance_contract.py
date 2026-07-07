@@ -7,6 +7,8 @@ from pathlib import Path
 import duckdb
 import pytest
 import yaml
+from backend.app.core.resource_guard import Decision, ResourceGuard
+from backend.app.datasources.fetch_ports.fred_port import FredLiveFetchPort
 from backend.app.ops.source_route_db_acceptance import (
     ACCEPTANCE_DUCKDB_NAME,
     REQUIRED_ACCEPTANCE_REPORT_FIELDS,
@@ -203,6 +205,83 @@ def test_sourceRouteDbAcceptance_fredMacroTracer_liveAuthorizedWithoutFredKeyBlo
     assert report["write_grade"] == "blocked"
     assert report["status"] == "FAIL"
     assert "FRED_API_KEY" in report["errors"][0]
+
+
+def test_sourceRouteDbAcceptance_fredMacroTracer_liveGateWithoutEnvBlocks(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """覆盖范围：FRED macro tracer 有 key 但缺 product-live 环境授权
+    测试对象：SourceRouteDbAcceptanceSpine.execute + product live gate
+    目的/目标：CLI live 授权不能替代 QMD_ALLOW_LIVE_FETCH，正式触网仍需环境门
+    验证点：failure_class=BLOCKED；错误包含 QMD_ALLOW_LIVE_FETCH；route evidence 保留
+    失败含义：验收命令可能绕过产品 live 环境门，误触发真实外部数据源
+    """
+    monkeypatch.setenv("FRED_API_KEY", "a" * 32)
+    monkeypatch.delenv("QMD_ALLOW_LIVE_FETCH", raising=False)
+    request = AcceptanceRequest.from_target("macro_series:fred:fetch_macro_series")
+
+    report = SourceRouteDbAcceptanceSpine().execute(
+        request,
+        data_root=tmp_path / "acceptance-root",
+        live_authorized=True,
+    ).to_dict()
+
+    assert report["route_plan_id"]
+    assert report["failure_class"] == "BLOCKED"
+    assert report["write_grade"] == "blocked"
+    assert report["status"] == "FAIL"
+    assert "QMD_ALLOW_LIVE_FETCH" in report["errors"][0]
+
+
+def test_sourceRouteDbAcceptance_fredMacroTracer_liveWritesAndReadsClean(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """覆盖范围：FRED macro tracer 的正式 fetch/write/downstream read 闭环
+    测试对象：SourceRouteDbAcceptanceSpine.execute live 分支
+    目的/目标：有授权和凭证时，验收 spine 必须经正式增量路径写 clean 并被 Layer1 读到
+    验证点：status=PASS；implementation_mode=live；write_grade=primary；downstream=PRIMARY_GRADE_READ
+    失败含义：验收仍停在 route evidence，无法证明 clean 写入和下游消费真实接通
+    """
+    monkeypatch.setenv("FRED_API_KEY", "a" * 32)
+    monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+
+    def _live_observations(self, series_id: str, start=None):
+        assert series_id == "DGS10"
+        return [{"series_id": series_id, "observation_date": "2026-07-01", "value": "4.25"}]
+
+    monkeypatch.setattr(FredLiveFetchPort, "_live_observations", _live_observations)
+    request = AcceptanceRequest.from_target("macro_series:fred:fetch_macro_series")
+
+    report = SourceRouteDbAcceptanceSpine().execute(
+        request,
+        data_root=tmp_path / "acceptance-root",
+        live_authorized=True,
+    ).to_dict()
+
+    assert report["status"] == "PASS"
+    assert report["implementation_mode"] == "live"
+    assert report["failure_class"] == "NONE"
+    assert report["write_grade"] == "primary_grade_clean"
+    assert report["validation_status"] == "PASSED_PRIMARY"
+    assert report["downstream_layer_read_status"] == "PRIMARY_GRADE_READ"
+    assert report["schema_hash"]
+    assert report["content_hash"]
+    db_path = tmp_path / "acceptance-root" / "duckdb" / ACCEPTANCE_DUCKDB_NAME
+    con = duckdb.connect(str(db_path), read_only=True)
+    try:
+        route_count = con.execute(
+            "SELECT COUNT(*) FROM job_event_log WHERE event_type = 'ROUTE_PLAN'"
+        ).fetchone()[0]
+        fetch_count = con.execute(
+            "SELECT COUNT(*) FROM fetch_log WHERE source_id = 'fred' AND status = 'SUCCESS'"
+        ).fetchone()[0]
+    finally:
+        con.close()
+    assert route_count >= 1
+    assert fetch_count >= 1
 
 
 def test_sourceRouteDbAcceptance_execute_bootstrapsIsolatedAcceptanceDb(tmp_path: Path) -> None:

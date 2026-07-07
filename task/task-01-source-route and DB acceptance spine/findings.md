@@ -32,17 +32,21 @@
 - `WriteRequest` now carries degraded-clean metadata: `source_switched`, `quality_flags`, `stale_reason` and `fallback_reason`.
 - `WriteManager` audit now writes `source_switched` and a stale/fallback reason into `write_audit_log`; `fallback_reason` temporarily maps into `stale_reason` until a dedicated audit column is migrated.
 - Degraded clean writes are now fail-closed unless they carry a degraded role (`validation` or `fallback`), `source_switched=True`, quality flags and a stale/fallback reason.
-- First tracer target is implemented for `macro_series:fred:fetch_macro_series`. It currently proves route evidence, live-authorization honesty and FRED credential honesty: without `--allow-live-fetch` or without `FRED_API_KEY`, it returns `BLOCKED` instead of pretending to pass.
-- Full route/fetch/write/read acceptance for the FRED tracer is not complete yet. The tracer stops after route evidence and authorization classification.
+- First tracer target is implemented for `macro_series:fred:fetch_macro_series`. It proves route evidence, live-authorization honesty, FRED credential honesty and product-live env gate honesty: missing `--allow-live-fetch`, `FRED_API_KEY` or `QMD_ALLOW_LIVE_FETCH` returns `BLOCKED` instead of pretending to pass.
+- Full route/fetch/write/read acceptance for the FRED tracer is now wired for the live path: when gates and credentials are present, the spine uses existing FRED incremental sync, writes clean into the isolated acceptance DB, probes Layer1 clean read and reports `downstream_layer_read_status`.
 - Acceptance report artifact writing is now owned by `backend.app.ops.source_route_db_acceptance.write_acceptance_report`; `qmd-ops accept-source-route-db` delegates report persistence instead of hand-building JSON.
 - FRED tracer RoutePlan evidence is now persisted into the isolated acceptance DB `job_event_log` as `ROUTE_PLAN`; the report `route_plan_id` can be traced back to the stored payload.
 - `production_equivalent_smoke.py` now has an explicit optional compatibility adapter to `SourceRouteDbAcceptanceSpine`; it does not change default smoke behavior and returns failure when the delegated acceptance report is not PASS.
 - The formal CLI path now has end-to-end evidence that report `route_plan_id` is persisted in the isolated acceptance DB `job_event_log`, not only present in stdout JSON.
 - `scripts/check_authority_acceptance_language.py` now reports execution-stage vocabulary and non-live-mode-as-success claims across the active authority path set.
-- Current authority guard output is `FAIL` with 4 remaining `execution_stage_vocabulary` findings in `docs/modules/data_sources.md`; this is an open cleanup item, not a completed acceptance condition.
-- Existing Layer1 and Layer2 clean readers already reject `source_switched=True` rows (`tests/test_layer1_clean_reader.py`, `tests/test_layer2_clean_reader.py`), but `SourceRouteDbAcceptanceSpine` still does not run a downstream read probe after clean write.
+- Current authority guard output is `PASS` with 0 findings after product-state wording cleanup in `docs/modules/data_sources.md`.
+- Existing Layer1 and Layer2 clean readers already reject `source_switched=True` rows (`tests/test_layer1_clean_reader.py`, `tests/test_layer2_clean_reader.py`); `SourceRouteDbAcceptanceSpine` now also runs a Layer1 downstream read probe after FRED clean write.
 - CNINFO product-live factory had a hook-blocking mismatch: `use_mock=False` returned the direct akshare network port even though a replay-first product-live port existed. It now returns `CninfoProductLiveFetchPort`, with regression coverage.
 - Planning catchup on 2026-07-07 completed with no output from `C:\Users\Guang\.claude\skills\planning-with-files\scripts\session-catchup.py`; no additional unsynced context was reported.
+- Commercial review file `task/audit/task-01-source-route and DB acceptance spine/review-commercial-01.txt` had no P0/P1 findings in its first block, but did contain later P1 findings around broad exceptions and meta-testing; all listed P0/P1/P2/P3 items are resolved as of `34990d25`.
+- Review remediation removed pytest cases that only protected repository artifacts, docs wording, phase placeholders, source text, imports, manifests, or other tests. Remaining tests are closer to observable production behavior per `/testing-guidelines`.
+- Adversarial recheck after remediation returned exactly `No unresolved review findings found.`
+- `conversation_history/` is a local binary session cache and is now ignored; it is not part of task evidence.
 
 ## Technical Decisions
 
@@ -118,6 +122,7 @@ That shape would spread correctness rules across callers and tests. It would red
 | `a3de1536` | Added CLI end-to-end proof that route evidence is persisted in the isolated acceptance DB. |
 | `7448a62b` | Kept CNINFO product-live factory on the existing replay-first port to avoid external-network flake in full pytest. |
 | `1a3b1ff` | Added authority acceptance language guard and fixture tests. |
+| `34990d25` | Resolved all `review-commercial-01.txt` test-quality findings and committed the cleanup after full verification. |
 
 ## Resources
 

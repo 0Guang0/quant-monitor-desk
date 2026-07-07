@@ -17,6 +17,8 @@ RouteGrade = Literal["primary", "degraded", "blocked", "not_planned"]
 WriteGrade = Literal["primary_grade_clean", "degraded_clean", "blocked", "not_written"]
 FailureClass = Literal["NONE", "BLOCKED", "FAIL_EXTERNAL", "NOT_IMPLEMENTED", "CONTRACT_VIOLATION"]
 ACCEPTANCE_DUCKDB_NAME = "quant_monitor.duckdb"
+FRED_ACCEPTANCE_SERIES_ID = "DGS10"
+FRED_ACCEPTANCE_SPEC_INDICATOR_ID = "ENV-E1-DGS10"
 
 REQUIRED_ACCEPTANCE_REPORT_FIELDS: tuple[str, ...] = (
     "source_id",
@@ -237,7 +239,7 @@ class SourceRouteDbAcceptanceSpine:
                     route_payload,
                     "FRED_API_KEY missing for macro_series:fred:fetch_macro_series",
                 )
-            return AcceptanceReport.from_route_payload(request, route_payload)
+            return _execute_fred_macro_acceptance(request, cm, resolved_root, route_payload)
         return AcceptanceReport.not_implemented(request)
 
 
@@ -298,6 +300,152 @@ def _persist_route_evidence(cm: ConnectionManager, route_payload: dict[str, Any]
                 payload,
             ],
         )
+
+
+def _execute_fred_macro_acceptance(
+    request: AcceptanceRequest,
+    cm: ConnectionManager,
+    data_root: Path,
+    route_payload: dict[str, Any],
+) -> AcceptanceReport:
+    from backend.app.datasources.product_live_gate import ProductLiveGateError
+
+    try:
+        sync_report = _run_fred_macro_live_sync(cm, data_root)
+    except ProductLiveGateError as exc:
+        return AcceptanceReport.blocked_from_route_payload(request, route_payload, str(exc))
+
+    route_report = AcceptanceReport.from_route_payload(request, route_payload)
+    series = sync_report.series_results[0] if sync_report.series_results else {}
+    validation_status, conflict_status = _acceptance_job_statuses(
+        cm,
+        _optional_str(series.get("job_id")),
+    )
+    read_status, schema_hash, content_hash = _probe_fred_downstream_read(cm)
+    pass_status = (
+        route_report.route_plan_id is not None
+        and sync_report.overall_status == "COMPLETED"
+        and sync_report.total_rows_written > 0
+        and read_status == "PRIMARY_GRADE_READ"
+    )
+    errors: tuple[str, ...] = ()
+    if not pass_status:
+        errors = (
+            "FRED live acceptance did not complete fetch/write/read: "
+            f"overall_status={sync_report.overall_status}; "
+            f"series={list(sync_report.series_results)}; downstream={read_status}",
+        )
+    return replace(
+        route_report,
+        implementation_mode="live",
+        write_grade="primary_grade_clean" if sync_report.total_rows_written > 0 else "not_written",
+        schema_hash=schema_hash,
+        content_hash=content_hash,
+        validation_status=validation_status,
+        conflict_status=conflict_status,
+        failure_class="NONE" if pass_status else "FAIL_EXTERNAL",
+        downstream_layer_read_status=read_status,
+        status="PASS" if pass_status else "FAIL",
+        errors=errors,
+    )
+
+
+def _run_fred_macro_live_sync(cm: ConnectionManager, data_root: Path):
+    from backend.app.datasources.fetch_ports.fred_port import create_fred_fetch_port
+    from backend.app.ops.fred_incremental_run import (
+        build_fred_incremental_service,
+        enabled_fred_source_registry,
+        run_fred_macro_incremental,
+    )
+    from backend.app.ops.fred_incremental_watermark import read_since_dates_for_series
+    from backend.app.sync.orchestrator import DataSyncOrchestrator
+
+    series_ids = (FRED_ACCEPTANCE_SERIES_ID,)
+    raw_root = data_root / "raw"
+    raw_root.mkdir(parents=True, exist_ok=True)
+    registry = enabled_fred_source_registry()
+    port = create_fred_fetch_port(series_ids=series_ids, max_rows=3, use_mock=False)
+    orch = DataSyncOrchestrator(cm)
+    with cm.writer() as con:
+        since_map = read_since_dates_for_series(con, series_ids)
+    service = build_fred_incremental_service(
+        data_root=raw_root,
+        fetch_port=port,
+        since_by_series=since_map,
+        job_events=orch._jobs,
+        source_registry=registry,
+    )
+    return run_fred_macro_incremental(
+        orch,
+        service=service,
+        series_ids=series_ids,
+        use_mock=False,
+        source_registry=registry,
+    )
+
+
+def _acceptance_job_statuses(
+    cm: ConnectionManager,
+    job_id: str | None,
+) -> tuple[str, str]:
+    if job_id is None:
+        return "NOT_RUN", "NOT_RUN"
+    with cm.writer() as con:
+        row = con.execute(
+            """
+            SELECT status, validation_report_id, conflict_report_id
+            FROM data_sync_job
+            WHERE job_id = ?
+            """,
+            [job_id],
+        ).fetchone()
+    if row is None:
+        return "NOT_RUN", "NOT_RUN"
+    status = str(row[0])
+    if status == "COMPLETED":
+        validation_status = "PASSED_PRIMARY" if row[1] else "NOT_RUN"
+        conflict_status = "PASSED" if row[2] else "NOT_RUN"
+    elif status == "MANUAL_REVIEW_REQUIRED":
+        validation_status = "MANUAL_REVIEW_REQUIRED"
+        conflict_status = "NOT_RUN"
+    elif status == "WAITING_RECONCILE":
+        validation_status = "PASSED_PRIMARY" if row[1] else "NOT_RUN"
+        conflict_status = "SEVERE_CONFLICT"
+    else:
+        validation_status = "FAILED"
+        conflict_status = "NOT_RUN"
+    return validation_status, conflict_status
+
+
+def _probe_fred_downstream_read(cm: ConnectionManager) -> tuple[str, str | None, str | None]:
+    from backend.app.layer1_axes.clean_observation_reader import (
+        CleanObservationFallbackForbiddenError,
+        CleanObservationReadError,
+        read_macro_clean_observations,
+    )
+
+    with cm.writer() as con:
+        row = con.execute(
+            """
+            SELECT schema_hash, content_hash
+            FROM axis_observation
+            WHERE indicator_id = ?
+            ORDER BY publish_timestamp DESC
+            LIMIT 1
+            """,
+            [FRED_ACCEPTANCE_SERIES_ID],
+        ).fetchone()
+        try:
+            read_macro_clean_observations(con, FRED_ACCEPTANCE_SPEC_INDICATOR_ID, limit=3)
+        except CleanObservationReadError:
+            status = "NO_CLEAN_ROWS"
+        except CleanObservationFallbackForbiddenError:
+            status = "DEGRADED_REJECTED"
+        else:
+            status = "PRIMARY_GRADE_READ"
+    schema_hash = _optional_str(row[0]) if row else None
+    content_hash = _optional_str(row[1]) if row else None
+    return status, schema_hash, content_hash
 
 
 def _is_canonical_main_data_root(data_root: Path) -> bool:

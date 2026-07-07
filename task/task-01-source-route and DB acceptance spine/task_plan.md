@@ -8,7 +8,9 @@
 
 ## Current Phase
 
-Phase 6 follow-up is complete for smoke adapter delegation, CLI-persisted route evidence, CNINFO product-live replay-first stabilization, and the authority-language guard. Current active work is still the unfinished product spine: connect the FRED tracer beyond persisted route evidence into real fetch/write/read/downstream-read acceptance, then clean the remaining authority vocabulary findings before strict guard enforcement.
+Commercial review remediation is complete as of `34990d25 test: resolve source route audit findings`. All P0/P1/P2/P3 findings from `task/audit/task-01-source-route and DB acceptance spine/review-commercial-01.txt` were resolved, adversarially rechecked, and committed with a clean worktree.
+
+Current product-spine implementation connects the FRED tracer beyond persisted route evidence into live fetch/write/downstream-read acceptance when live gates and credentials are present. Authority vocabulary findings are cleaned and the strict guard passes; remaining helper-consumer output is advisory migration inventory, not a product PASS gate.
 
 ## Spec Summary
 
@@ -23,7 +25,7 @@ Phase 6 follow-up is complete for smoke adapter delegation, CLI-persisted route 
 - Boundary verification: `uv run python scripts/check_module_boundaries.py`
 - Indicator binding check: `uv run python scripts/check_indicator_binding_matrix.py`
 - Product gate candidate: `uv run python scripts/production_gate.py`
-- Production-equivalent acceptance command: `qmd-ops accept-source-route-db`; current FRED tracer runs through the formal CLI/Module path and reports honest BLOCKED for missing authorization or credentials.
+- Production-equivalent acceptance command: `qmd-ops accept-source-route-db`; current FRED tracer runs through the formal CLI/Module path, reports honest BLOCKED for missing authorization/credentials/env gate, and runs live fetch/write/read when gates are satisfied.
 
 ### Product Structure
 
@@ -119,7 +121,7 @@ The first tracer bullet should be `macro_series` / `fred` / `fetch_macro_series`
 - **Acceptance criteria:**
   - [x] RoutePlan is persisted before fetch in existing DataSourceService job-event path.
   - [x] Acceptance report can point to RoutePlan evidence payloads.
-  - [ ] Missing RoutePlan blocks production-equivalent acceptance.
+  - [x] Missing RoutePlan blocks production-equivalent acceptance.
 
 ### Slice 2: Formal Fetch Entry via DataSourceService
 
@@ -127,9 +129,9 @@ The first tracer bullet should be `macro_series` / `fred` / `fetch_macro_series`
 - **User stories covered:** no adapter bypass, resource/capability/license route integrity.
 - **What to build:** Product runner paths must use DataSourceService and reject direct adapter execution outside unit-test helpers.
 - **Acceptance criteria:**
-  - [ ] Formal acceptance path cannot run by direct adapter injection.
-  - [ ] DataSourceService emits route/fetch evidence for acceptance.
-  - [ ] ResourceGuard/capability/auth failures are reported, not bypassed.
+  - [x] Formal acceptance path cannot run by direct adapter injection.
+  - [x] DataSourceService emits route/fetch evidence for acceptance.
+  - [x] ResourceGuard/capability/auth failures are reported, not bypassed.
 
 ### Slice 3: Degraded Clean Write Semantics
 
@@ -139,7 +141,7 @@ The first tracer bullet should be `macro_series` / `fred` / `fetch_macro_series`
 - **Acceptance criteria:**
   - [x] FallbackPolicy-authorized validation source writes are marked degraded.
   - [x] Unauthorized Validation source clean writes are rejected.
-  - [ ] Severe conflict and schema drift block normal clean write.
+  - [x] Severe conflict and schema drift block normal clean write.
 
 ### Slice 4: Production-Equivalent Acceptance DB
 
@@ -149,7 +151,7 @@ The first tracer bullet should be `macro_series` / `fred` / `fetch_macro_series`
 - **Acceptance criteria:**
   - [x] Acceptance DB path is isolated from canonical main DB.
   - [x] DB uses final migrations/schema/spec/contracts.
-  - [ ] Runner rejects monkeypatch-only or helper-only acceptance paths.
+  - [x] Runner rejects monkeypatch-only or helper-only acceptance paths.
   - [x] Report classifies live/replay/mock/dry_run/not_implemented honestly.
 
 ### Slice 5: Downstream Layer Read Honesty
@@ -158,9 +160,9 @@ The first tracer bullet should be `macro_series` / `fred` / `fetch_macro_series`
 - **User stories covered:** no degraded data masquerading as primary, honest NULL/fail-closed behavior.
 - **What to build:** Layer read path and acceptance report must show whether downstream consumed primary-grade clean, rejected degraded clean, downgraded it, showed it only, or returned honest NULL.
 - **Acceptance criteria:**
-  - [ ] Downstream read status appears in acceptance report.
-  - [ ] source_switched rows cannot silently participate as primary-grade inputs.
-  - [ ] Metrics that require primary-grade inputs fail closed or return honest NULL.
+  - [x] Downstream read status appears in acceptance report.
+  - [x] source_switched rows cannot silently participate as primary-grade inputs.
+  - [x] Metrics that require primary-grade inputs fail closed or return honest NULL.
 
 ### Slice 6: Authority and Contract Guardrails
 
@@ -168,11 +170,11 @@ The first tracer bullet should be `macro_series` / `fred` / `fetch_macro_series`
 - **User stories covered:** no stage vocabulary in authority docs, no mock as product completion.
 - **What to build:** Guardrails that prevent authority docs/contracts from reintroducing execution-stage vocabulary or mock/replay-as-acceptance language.
 - **Acceptance criteria:**
-  - [ ] Authority docs/contracts stay product-state-only.
-  - [ ] Execution phases only appear under task execution plans.
+  - [x] Authority docs/contracts stay product-state-only.
+  - [x] Execution phases only appear under task execution plans.
   - [x] mock/replay/dry-run cannot be described as product acceptance success.
 
-Current guard state: `scripts/check_authority_acceptance_language.py` exists and reports violations. It currently returns `FAIL` with 4 `execution_stage_vocabulary` findings in `docs/modules/data_sources.md`, so the guard is implemented but the authority-doc cleanup is not done.
+Current guard state: `scripts/check_authority_acceptance_language.py --strict` returns `PASS` with 0 violations after cleaning product-state wording in `docs/modules/data_sources.md`.
 
 ## Tiny Commit Plan
 
@@ -186,7 +188,7 @@ Status note: commits 1-8 and 12-13 have landed in a slightly different order tha
 6. [x] Commit 6: Add product-path enforcement that rejects direct adapter bypass outside tests if any gaps remain. No new code was needed in this pass; existing contract-driven guard coverage remains the enforcement point.
 7. [x] Commit 7: Add WriteManager request/audit fields for `source_switched`, `quality_flags`, `stale_reason` and `fallback_reason`. Landed as `1149e3f0 feat(db): carry degraded write audit fields`.
 8. [x] Commit 8: Add write contract tests proving degraded-clean metadata is mandatory. Landed as `efaa26cf feat(db): require degraded write evidence`.
-9. [ ] Commit 9: Add validation gate behavior for PASSED_PRIMARY, PASSED_DEGRADED, FAILED and MANUAL_REVIEW_REQUIRED or equivalent stable product statuses.
+9. [x] Commit 9: Add validation gate behavior for PASSED_PRIMARY, PASSED_DEGRADED, FAILED and MANUAL_REVIEW_REQUIRED or equivalent stable product statuses. Covered by acceptance report job-status mapping and existing validation-gate tests.
 10. [x] Commit 10: Add tests proving unauthorized Validation source cannot write clean. Covered by `efaa26cf`.
 11. [x] Commit 11: Add tests proving FallbackPolicy-authorized Validation source writes only degraded clean. Covered by `efaa26cf`.
 12. [x] Commit 12: Build production-equivalent acceptance DB bootstrap using isolated QMD_DATA_ROOT and final migrations/schema/spec/contracts behind the new Module. Landed as `8b0d3e4e feat(acceptance): bootstrap isolated acceptance db`.
@@ -196,9 +198,10 @@ Status note: commits 1-8 and 12-13 have landed in a slightly different order tha
 14. [x] Commit 14: Add acceptance report writer with implementation_mode, route_grade, write_grade and downstream_layer_read_status envelope. Landed as `c2bb15f feat(acceptance): centralize report artifact writing`.
 15. [x] Commit 15: Migrate or wrap `production_equivalent_smoke.py` as a compatibility Adapter. Landed as `bef50d1c feat(acceptance): wrap smoke source route adapter`.
 16. [x] Commit 16: Add representative end-to-end acceptance test that produces live or honest BLOCKED/FAIL_EXTERNAL output without mock success. Landed as `a3de1536 test(acceptance): verify cli route evidence persistence`.
-17. [ ] Commit 17: Update Layer read acceptance checks for degraded clean handling. Existing Layer1/Layer2 clean readers already fail-closed on `source_switched=True`; the acceptance spine still lacks a downstream read probe, so this remains open.
+17. [x] Commit 17: Update Layer read acceptance checks for degraded clean handling. The acceptance spine now probes Layer1 clean read after FRED live clean write; existing Layer1/Layer2 readers fail-closed on `source_switched=True`.
 18. [x] Commit 18: Add a guard that checks authority docs/contracts for execution-stage vocabulary and reports violations. Landed as `1a3b1ff feat(acceptance): guard authority acceptance language`.
 19. [x] Commit 19: Run full verification and update task evidence. Landed as this planning-file sync after full pytest/hook verification.
+20. [x] Commit 20: Resolve all commercial review findings in `review-commercial-01.txt` under `/testing-guidelines`; remove remaining meta/artifact/phase/fake-RED/source-text tests and tighten exception/outcome assertions. Landed as `34990d25 test: resolve source route audit findings`.
 
 Each commit must leave the codebase working. If a commit would touch more than about five files or mix two concerns, split it further.
 
@@ -207,8 +210,8 @@ Each commit must leave the codebase working. If a commit would touch more than a
 ### Checkpoint A: Route and Fetch Spine
 
 - [x] SourceRoutePlan persisted in job_event_log route event payloads, including the FRED acceptance tracer path.
-- [x] Product fetch path uses DataSourceService in the existing route/fetch spine; acceptance tracer currently stops at route evidence when live authorization is absent.
-- [ ] Direct adapter bypass cannot be used for product acceptance.
+- [x] Product fetch path uses DataSourceService in the existing route/fetch spine; acceptance tracer runs live fetch/write/read when gates are satisfied and blocks honestly otherwise.
+- [x] Direct adapter bypass cannot be used for product acceptance.
 
 ### Checkpoint B: Clean Write Semantics
 
@@ -222,13 +225,15 @@ Each commit must leave the codebase working. If a commit would touch more than a
 - [x] Acceptance report exposes required fields.
 - [x] mock/replay/dry-run/not_implemented cannot pass as product completion.
 - [x] Legacy `production_equivalent_smoke.py` can delegate to the acceptance spine and fails honestly when the spine report is not PASS.
+- [x] FRED acceptance report records downstream Layer1 read status and route/fetch evidence in the isolated DB.
 
 ### Checkpoint D: Ready for Human Review
 
 - [x] Full test commands recorded.
-- [ ] ResourceGuard status recorded.
+- [x] ResourceGuard/product-live gate status recorded for product-spine acceptance runs as BLOCKED or live PASS evidence.
 - [x] Files modified summarized.
 - [x] Any source failures classified as FAIL_EXTERNAL, blocked, or implementation gap.
+- [x] Commercial review P0/P1/P2/P3 findings resolved and rechecked.
 
 ## Decisions Made
 
