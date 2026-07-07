@@ -177,6 +177,13 @@
   - Verified touched Python files with `uv run ruff check backend/app/ops/source_route_db_acceptance.py tests/test_source_route_db_acceptance_contract.py`.
   - Verified touched Python files compile with `uv run python -m compileall -q backend/app/ops/source_route_db_acceptance.py tests/test_source_route_db_acceptance_contract.py`.
   - Verified full backend suite with `uv run pytest -q`.
+
+### Phase 11: Open Question Cleanup
+
+- **Status:** complete
+- Actions taken:
+  - Re-read the task plan tail after user clarification.
+  - Reclassified the old Open Questions as resolution status: Layer1 probe resolved the first downstream read choice, CLI spelling is a deferred naming decision, and authority docs cleanup is complete.
 - Files modified:
   - `backend/app/ops/source_route_db_acceptance.py`
   - `tests/test_source_route_db_acceptance_contract.py`

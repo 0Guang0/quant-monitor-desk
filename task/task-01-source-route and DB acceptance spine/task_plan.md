@@ -268,11 +268,11 @@ Each commit must leave the codebase working. If a commit would touch more than a
 | Acceptance tests still expected generic `NOT_IMPLEMENTED` for the new FRED tracer target | 1 | Updated generic tests to use a non-tracer target and FRED CLI tests to expect `BLOCKED` plus route evidence. |
 | CLI subprocess test removed `FRED_API_KEY`, but project config reloaded it from `.env` | 1 | Set `FRED_API_KEY` to an empty string in the subprocess env so config does not refill it and product code still treats it as missing. |
 
-## Open Questions
+## Question Resolution Status
 
-1. Which downstream Layer read should be the first acceptance consumer for degraded clean behavior?
-2. Should `qmd-ops accept-source-route-db` or `qmd-data acceptance run` be the final CLI spelling? The Interface should stay the same either way.
-3. Should `docs/modules/data_sources.md` be cleaned in this task so `check_authority_acceptance_language.py --strict` can become a hard gate?
+1. First downstream Layer read: resolved for this task with the Layer1 FRED macro clean reader probe. Layer2 already has fail-closed source-switched coverage and remains a future expansion target, not a blocker for this representative tracer bullet.
+2. Final CLI spelling: deferred product naming choice. Current supported command is `qmd-ops accept-source-route-db`; changing the spelling later should keep the `SourceRouteDbAcceptanceSpine` interface unchanged.
+3. Authority docs cleanup: resolved. `docs/modules/data_sources.md` was cleaned and `scripts/check_authority_acceptance_language.py --strict` passes with 0 violations.
 
 ## Notes
 
