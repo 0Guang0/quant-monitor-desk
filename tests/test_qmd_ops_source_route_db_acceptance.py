@@ -40,7 +40,7 @@ def test_qmdOps_acceptSourceRouteDb_delegatesToSpineAndWritesHonestReport(
     验证点：returncode==1；stdout/report 均为 BLOCKED；报告包含 route_plan_id 和 fred route evidence
     失败含义：CLI 绕过 Module、绕过授权门禁，或把 blocked tracer 伪装成产品验收成功
     """
-    data_root = tmp_path / "source-route-db-acceptance"
+    data_root = tmp_path / ".audit-sandbox" / "source-route-db-acceptance"
     report_path = data_root / "reports" / "acceptance.json"
 
     result = _run_acceptance_cli(
@@ -77,7 +77,7 @@ def test_qmdOps_acceptSourceRouteDb_persistsRouteEvidenceInAcceptanceDb(
     验证点：job_event_log.ROUTE_PLAN payload.route_plan_id 等于报告 route_plan_id
     失败含义：正式验收命令可能产出不可审计报告，无法复盘 SourceRoutePlan 选择
     """
-    data_root = tmp_path / "source-route-db-acceptance"
+    data_root = tmp_path / ".audit-sandbox" / "source-route-db-acceptance"
     report_path = data_root / "reports" / "acceptance.json"
 
     result = _run_acceptance_cli(
@@ -128,12 +128,30 @@ def test_qmdOps_acceptSourceRouteDb_rejectsCanonicalDataRoot(tmp_path: Path) -> 
         str(report_path),
     )
 
-    assert result.returncode == 1, result.stderr
-    payload = json.loads(result.stdout)
-    assert payload["failure_class"] == "CONTRACT_VIOLATION"
-    assert payload["route_grade"] == "blocked"
-    assert payload["write_grade"] == "blocked"
-    assert "canonical main data root" in payload["errors"][0]
+    assert result.returncode == 2, result.stderr
+    assert "canonical main DB" in result.stderr
+
+
+def test_qmdOps_acceptSourceRouteDb_rejectsNonSandboxDataRoot(tmp_path: Path) -> None:
+    """覆盖范围：CLI 数据根须位于 .audit-sandbox/source-route-db*
+    测试对象：scripts/qmd_ops.py accept-source-route-db --data-root
+    目的/目标：验收命令不得对任意 tmp 路径 bootstrap DuckDB，须对齐 ADR-015 隔离 segment
+    验证点：returncode==2；stderr 含 .audit-sandbox/source-route-db
+    失败含义：运维误用非沙箱路径跑 live 矩阵，污染或混淆数据根
+    """
+    report_path = tmp_path / "reports" / "acceptance.json"
+
+    result = _run_acceptance_cli(
+        "--target",
+        "macro_series:fred:fetch_macro_series",
+        "--data-root",
+        str(tmp_path / "outside-sandbox"),
+        "--report",
+        str(report_path),
+    )
+
+    assert result.returncode == 2, result.stderr
+    assert ".audit-sandbox/source-route-db" in result.stderr
 
 
 def test_qmdOps_acceptSourceRouteDb_allowLiveWithoutFredKeyBlocks(tmp_path: Path) -> None:
@@ -143,7 +161,7 @@ def test_qmdOps_acceptSourceRouteDb_allowLiveWithoutFredKeyBlocks(tmp_path: Path
     验证点：returncode==1；failure_class=BLOCKED；route evidence 保留；错误包含 FRED_API_KEY
     失败含义：运维误以为已授权即可完成 live 验收，实际无凭证时可能产生假完成报告
     """
-    data_root = tmp_path / "source-route-db-acceptance"
+    data_root = tmp_path / ".audit-sandbox" / "source-route-db-acceptance"
     report_path = data_root / "reports" / "acceptance.json"
     env = os.environ.copy()
     env["FRED_API_KEY"] = ""
@@ -181,7 +199,7 @@ def test_qmdOps_acceptSourceRouteDb_invalidTargetFailsBeforeReport(tmp_path: Pat
         "--target",
         "macro_series:fred",
         "--data-root",
-        str(tmp_path / "source-route-db-acceptance"),
+        str(tmp_path / ".audit-sandbox" / "source-route-db-acceptance"),
         "--report",
         str(report_path),
     )
@@ -200,7 +218,7 @@ def test_qmdOps_acceptSourceRouteDb_allDocumentedSources_writesMatrixReport(
     验证点：无 live 授权时 returncode==0；matrix_count==22；closure_status==PASS
     失败含义：全源 closure 仍要求不可能的全 status PASS，或无法产出可审计矩阵报告
     """
-    data_root = tmp_path / "source-route-matrix"
+    data_root = tmp_path / ".audit-sandbox" / "source-route-db-matrix"
     report_path = data_root / "reports" / "matrix.json"
 
     result = _run_acceptance_cli(

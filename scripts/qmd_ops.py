@@ -21,6 +21,22 @@ def _default_data_root() -> Path:
     return DATA_ROOT
 
 
+SOURCE_ROUTE_DB_SANDBOX_SEGMENT = "source-route-db"
+
+
+def _resolve_acceptance_data_root(data_root: Path) -> Path | int:
+    from backend.app.ops.acceptance_isolation import AcceptanceIsolationError, assert_isolated_live_data_root
+
+    try:
+        return assert_isolated_live_data_root(
+            data_root,
+            required_segment=SOURCE_ROUTE_DB_SANDBOX_SEGMENT,
+        )
+    except AcceptanceIsolationError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="QMD transitional ops CLI")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -105,11 +121,15 @@ def main(argv: list[str] | None = None) -> int:
             )
             return 2
 
+        resolved_root = _resolve_acceptance_data_root(args.data_root)
+        if isinstance(resolved_root, int):
+            return resolved_root
+
         spine = SourceRouteDbAcceptanceSpine()
         if args.all_documented_sources:
             payload = execute_documented_matrix(
                 spine,
-                data_root=args.data_root,
+                data_root=resolved_root,
                 live_authorized=args.allow_live_fetch,
             )
             output = json.dumps(payload, indent=2)
@@ -136,7 +156,7 @@ def main(argv: list[str] | None = None) -> int:
 
         report = spine.execute(
             request,
-            data_root=args.data_root,
+            data_root=resolved_root,
             live_authorized=args.allow_live_fetch,
         )
         payload = report.to_dict()

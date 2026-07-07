@@ -33,6 +33,6 @@ jobs:
             --report .audit-sandbox/source-route-db-full-live-v2/reports/source-matrix-acceptance.json
       - name: Release production gate (live report)
         run: |
-          python scripts/production_gate.py \
+          uv run python scripts/production_gate.py \
             --live-authorized \
             --source-matrix-report .audit-sandbox/source-route-db-full-live-v2/reports/source-matrix-acceptance.json

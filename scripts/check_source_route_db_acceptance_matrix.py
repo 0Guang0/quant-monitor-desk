@@ -54,6 +54,11 @@ def _closure_violations(
             row,
             closure_mode=closure_mode,  # type: ignore[arg-type]
         )
+        cached = row.get("closure_outcome")
+        if isinstance(cached, str) and cached != outcome:
+            violations.append(
+                f"{key} closure_outcome mismatch stored={cached!r} recomputed={outcome}"
+            )
         if outcome != "PASS":
             violations.append(
                 f"{key} closure_outcome={outcome} status={row.get('status')} "

@@ -8,9 +8,8 @@ from dataclasses import asdict, dataclass, field, replace
 from pathlib import Path
 from typing import Any, Literal
 
-from backend.app.config import DATA_ROOT, PROJECT_ROOT
 from backend.app.db.connection import ConnectionManager
-from backend.app.db.migrate import apply_migrations
+from backend.app.ops.acceptance_isolation import is_canonical_main_data_root
 
 ImplementationMode = Literal["live", "mock", "replay", "dry_run", "not_implemented"]
 RouteGrade = Literal["primary", "degraded", "blocked", "not_planned"]
@@ -274,18 +273,20 @@ class SourceRouteDbAcceptanceSpine:
         *,
         data_root,
         live_authorized: bool,
+        cm: ConnectionManager | None = None,
+        persist_route_evidence: bool = True,
     ) -> AcceptanceReport:
-        _ = live_authorized
         resolved_root = Path(data_root).expanduser().resolve()
-        if _is_canonical_main_data_root(resolved_root):
+        if is_canonical_main_data_root(resolved_root):
             return AcceptanceReport.contract_violation(
                 request,
                 f"canonical main data root rejected for acceptance: {resolved_root}",
             )
-        cm = _bootstrap_acceptance_db(resolved_root)
+        connection = cm if cm is not None else _bootstrap_acceptance_db(resolved_root)
         if _is_fred_macro_series_request(request):
             route_payload = _fred_macro_route_payload(request)
-            _persist_route_evidence(cm, route_payload)
+            if persist_route_evidence:
+                _persist_route_evidence(connection, route_payload)
             if not live_authorized:
                 return AcceptanceReport.blocked_from_route_payload(
                     request,
@@ -298,7 +299,9 @@ class SourceRouteDbAcceptanceSpine:
                     route_payload,
                     "FRED_API_KEY missing for macro_series:fred:fetch_macro_series",
                 )
-            return _execute_fred_macro_acceptance(request, cm, resolved_root, route_payload)
+            return _execute_fred_macro_acceptance(
+                request, connection, resolved_root, route_payload
+            )
         from backend.app.ops.source_route_db_acceptance_matrix import find_matrix_target
 
         matrix_target = find_matrix_target(request)
@@ -306,9 +309,10 @@ class SourceRouteDbAcceptanceSpine:
             return _execute_matrix_target(
                 request,
                 matrix_target,
-                cm,
+                connection,
                 resolved_root,
                 live_authorized=live_authorized,
+                persist_route_evidence=persist_route_evidence,
             )
         return AcceptanceReport.not_implemented(request)
 
@@ -318,12 +322,10 @@ def _acceptance_db_path(data_root: Path) -> Path:
 
 
 def _bootstrap_acceptance_db(data_root: Path) -> ConnectionManager:
-    db_path = _acceptance_db_path(data_root)
-    db_path.parent.mkdir(parents=True, exist_ok=True)
-    cm = ConnectionManager(db_path=db_path)
-    with cm.writer() as con:
-        apply_migrations(con)
-    return cm
+    from backend.app.ops.acceptance_isolation import ensure_isolated_db
+
+    db_path = ensure_isolated_db(data_root)
+    return ConnectionManager(db_path=db_path)
 
 
 def _is_fred_macro_series_request(request: AcceptanceRequest) -> bool:
@@ -427,6 +429,7 @@ def _execute_matrix_target(
     data_root: Path,
     *,
     live_authorized: bool,
+    persist_route_evidence: bool = True,
 ) -> AcceptanceReport:
     from backend.app.datasources.product_live_gate import (
         ProductLiveGateError,
@@ -440,7 +443,8 @@ def _execute_matrix_target(
     )
 
     route_payload = preview_route_payload(request)
-    _persist_route_evidence(cm, route_payload)
+    if persist_route_evidence:
+        _persist_route_evidence(cm, route_payload)
     target_key = matrix_target_key(matrix_target)
     if not live_authorized:
         return AcceptanceReport.blocked_from_route_payload(
@@ -1089,14 +1093,6 @@ def _probe_fred_downstream_read(cm: ConnectionManager) -> tuple[str, str | None,
     schema_hash = _optional_str(row[0]) if row else None
     content_hash = _optional_str(row[1]) if row else None
     return status, schema_hash, content_hash
-
-
-def _is_canonical_main_data_root(data_root: Path) -> bool:
-    canonical_roots = {Path(PROJECT_ROOT / "data").resolve(), Path(DATA_ROOT).resolve()}
-    if data_root in canonical_roots:
-        return True
-    canonical_db_paths = {root / "duckdb" / "quant_monitor.duckdb" for root in canonical_roots}
-    return data_root / "duckdb" / "quant_monitor.duckdb" in canonical_db_paths
 
 
 def _preview_from_route_payload(

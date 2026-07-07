@@ -3,14 +3,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
 import yaml
 
+from backend.app.config import PROJECT_ROOT
 from backend.app.ops.source_route_db_acceptance import AcceptanceRequest
 
-PROJECT_ROOT = Path(__file__).resolve().parents[3]
 REGISTRY_PATH = PROJECT_ROOT / "specs/datasource_registry/source_registry.yaml"
 CAPABILITIES_PATH = PROJECT_ROOT / "specs/datasource_registry/source_capabilities.yaml"
 
@@ -334,11 +335,10 @@ def validate_matrix_against_registry() -> list[str]:
 def preview_route_payload(request: AcceptanceRequest) -> dict[str, object]:
     """Route preview via DataSourceService for any matrix target."""
     from backend.app.datasources.service import DataSourceService
-    from backend.app.ops.macro_incremental_common import load_incremental_route_bundle
 
-    registry, caps, planner = load_incremental_route_bundle(
-        source_id=request.source_id,
-        data_domain=request.data_domain,
+    registry, caps, planner = _cached_route_preview_bundle(
+        request.source_id,
+        request.data_domain,
     )
     service = DataSourceService(
         source_registry=registry,
@@ -356,6 +356,13 @@ def preview_route_payload(request: AcceptanceRequest) -> dict[str, object]:
     return plan.to_payload_dict()
 
 
+@lru_cache(maxsize=32)
+def _cached_route_preview_bundle(source_id: str, data_domain: str):
+    from backend.app.ops.macro_incremental_common import load_incremental_route_bundle
+
+    return load_incremental_route_bundle(source_id=source_id, data_domain=data_domain)
+
+
 def missing_gate_errors(target: AcceptanceMatrixTarget) -> tuple[str, ...]:
     import os
 
@@ -363,14 +370,6 @@ def missing_gate_errors(target: AcceptanceMatrixTarget) -> tuple[str, ...]:
     for env_name in target.auth_env:
         if not str(os.environ.get(env_name, "")).strip():
             errors.append(f"{env_name} missing for {target.request.source_id}")
-    if target.requires_local_terminal and not str(
-        os.environ.get("QMT_XTDATA_AUTHORIZED", "")
-    ).strip():
-        errors.append("QMT_XTDATA_AUTHORIZED missing for local terminal source")
-    if target.requires_license and not str(
-        os.environ.get("THS_IFIND_LICENSE_ARTIFACT", "")
-    ).strip():
-        errors.append("THS_IFIND_LICENSE_ARTIFACT missing for licensed source")
     return tuple(errors)
 
 
@@ -382,10 +381,9 @@ def is_non_primary_positioning(target: AcceptanceMatrixTarget) -> bool:
     }
 
 
-EVIDENCE_FETCH_MATRIX_SOURCE_IDS = frozenset({"coingecko", "kalshi", "qmt_xtdata"})
-
-# Honest long-term qualification gaps (terminal/license); closure PASS in dry_run and final_live_authorized.
 QUALIFICATION_DEFERRED_SOURCE_IDS = frozenset({"qmt_xtdata", "ths_ifind"})
+
+_CLOSURE_OUTCOMES = frozenset({"PASS", "FAIL_EXTERNAL", "FAIL_CONTRACT", "FAIL"})
 
 
 def matrix_cninfo_symbols() -> tuple[str, ...]:
@@ -450,36 +448,12 @@ def build_matrix_preview(
     target: AcceptanceMatrixTarget,
     route_payload: dict[str, object],
 ):
-    from backend.app.ops.source_route_db_acceptance import (
-        AcceptancePreview,
-        _optional_str,
-        _route_grade_from_payload,
-    )
+    from backend.app.ops.source_route_db_acceptance import _preview_from_route_payload
 
-    gate_errors = missing_gate_errors(target)
-    route_grade = _route_grade_from_payload(route_payload)
-    route_status = _optional_str(route_payload.get("route_status")) or "UNKNOWN"
-    live_ready = not gate_errors and route_grade != "blocked"
-    if gate_errors:
-        reason = (
-            f"route_status={route_status}; "
-            f"missing_prerequisites={'; '.join(gate_errors)}"
-        )
-        status = "FAIL"
-    elif route_grade == "blocked":
-        reason = f"route_status={route_status}"
-        status = "FAIL"
-    else:
-        reason = f"route_status={route_status}"
-        status = "PASS"
-    return AcceptancePreview(
-        request=request,
-        route_grade=route_grade,
-        implementation_mode="live",
-        status=status,
-        reason=reason,
-        missing_prerequisites=gate_errors,
-        live_ready=live_ready,
+    return _preview_from_route_payload(
+        request,
+        route_payload,
+        missing_prerequisites=missing_gate_errors(target),
     )
 
 
@@ -503,19 +477,20 @@ def _is_deferred_qualification_block(
         return False
     if _is_missing_live_authorization_block(error_text):
         return False
-    if failure_class_hint := error_text:
-        for env_name in target.auth_env:
-            if env_name.lower() in failure_class_hint:
-                return True
-        if target.requires_local_terminal and "qmt_xtdata_authorized missing" in failure_class_hint:
-            return True
-        if target.requires_license and "ths_ifind_license_artifact missing" in failure_class_hint:
+    if not error_text:
+        return False
+    for env_name in target.auth_env:
+        if env_name.lower() in error_text:
             return True
     return False
 
 
 def classify_matrix_execute_exception(exc: BaseException) -> tuple[str, str]:
     """Map unexpected matrix execute failures to honest contract/implementation classes."""
+    from backend.app.datasources.adapters.fetch_port import PortError
+
+    if isinstance(exc, PortError):
+        return "FAIL_EXTERNAL", "FAIL"
     message = str(exc).lower()
     if "no adapter" in message or "no clean write target" in message:
         return "CONTRACT_VIOLATION", "FAIL"
@@ -564,7 +539,7 @@ def evaluate_matrix_row_closure(
             return "PASS"
         return "FAIL"
 
-    if is_non_primary_positioning(target) or target.positioning == "manual_review_only":
+    if is_non_primary_positioning(target):
         if (
             status == "PASS"
             and failure_class == "NONE"
@@ -585,11 +560,14 @@ def summarize_matrix_closure(
     *,
     closure_mode: MatrixClosureMode | None = None,
     live_authorized: bool | None = None,
+    trust_stored_outcomes: bool = False,
 ) -> dict[str, object]:
     mode = resolve_matrix_closure_mode(
         closure_mode=closure_mode,
         live_authorized=live_authorized,
     )
+    payload_mode = payload.get("closure_mode")
+    trust_cached = trust_stored_outcomes and payload_mode == mode
     rows = payload.get("rows")
     if not isinstance(rows, list):
         return {
@@ -603,7 +581,15 @@ def summarize_matrix_closure(
     outcomes: list[ClosureOutcome] = []
     enriched_rows: list[dict[str, object]] = []
     for row in rows:
-        if not isinstance(row, dict) or not row.get("target"):
+        if not isinstance(row, dict):
+            outcomes.append("FAIL")
+            continue
+        cached = row.get("closure_outcome")
+        if trust_cached and isinstance(cached, str) and cached in _CLOSURE_OUTCOMES:
+            outcomes.append(cached)  # type: ignore[arg-type]
+            enriched_rows.append(dict(row))
+            continue
+        if not row.get("target"):
             outcomes.append("FAIL")
             continue
         target = find_matrix_target_by_key(str(row["target"]))
@@ -641,7 +627,11 @@ def execute_documented_matrix(
     data_root,
     live_authorized: bool,
 ) -> dict[str, object]:
+    from backend.app.ops.source_route_db_acceptance import _bootstrap_acceptance_db
+
     closure_mode = resolve_matrix_closure_mode(live_authorized=live_authorized)
+    resolved_root = Path(data_root).expanduser().resolve()
+    cm = _bootstrap_acceptance_db(resolved_root)
     rows: list[dict[str, object]] = []
     for target in iter_matrix_targets():
         try:
@@ -649,6 +639,8 @@ def execute_documented_matrix(
                 target.request,
                 data_root=data_root,
                 live_authorized=live_authorized,
+                cm=cm,
+                persist_route_evidence=live_authorized,
             )
             row = report.to_dict()
         except Exception as exc:
@@ -675,8 +667,9 @@ def execute_documented_matrix(
         )
         rows.append(row_payload)
     summary = summarize_matrix_closure(
-        {"rows": rows},
+        {"rows": rows, "closure_mode": closure_mode},
         closure_mode=closure_mode,
+        trust_stored_outcomes=True,
     )
     return {
         "matrix_count": len(rows),

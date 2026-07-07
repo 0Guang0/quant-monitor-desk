@@ -160,6 +160,37 @@ def test_sourceRouteDbAcceptanceMatrix_dryRunClosure_passesWithoutLiveAuthorizat
     assert all(row["closure_outcome"] == "PASS" for row in payload["rows"])
 
 
+def test_sourceRouteDbAcceptanceMatrix_dryRunMatrix_skipsBulkRouteEvidencePersist(
+    tmp_path: Path,
+) -> None:
+    """覆盖范围：dry-run 全矩阵 bulk 执行时的 DB 写入量
+    测试对象：execute_documented_matrix(live_authorized=False)
+    目的/目标：CI dry-run 须复用单次 bootstrap 且跳过 22 次 ROUTE_PLAN 写入，避免无意义的 writer 锁竞争
+    验证点：closure 仍 PASS；job_event_log 无 ROUTE_PLAN 行
+    失败含义：production_gate 每次 PR 做 22× migration + 22× route persist，CI 矩阵 gate 过慢
+    """
+    import duckdb
+
+    from backend.app.ops.source_route_db_acceptance import ACCEPTANCE_DUCKDB_NAME
+    from backend.app.ops.source_route_db_acceptance_matrix import execute_documented_matrix
+
+    payload = execute_documented_matrix(
+        SourceRouteDbAcceptanceSpine(),
+        data_root=tmp_path,
+        live_authorized=False,
+    )
+    assert payload["closure_status"] == "PASS"
+    db_path = tmp_path / "duckdb" / ACCEPTANCE_DUCKDB_NAME
+    con = duckdb.connect(str(db_path), read_only=True)
+    try:
+        route_count = con.execute(
+            "SELECT COUNT(*) FROM job_event_log WHERE event_type = 'ROUTE_PLAN'"
+        ).fetchone()[0]
+    finally:
+        con.close()
+    assert route_count == 0
+
+
 def test_sourceRouteDbAcceptanceMatrix_checkerRejectsLiveReportWithContractFailures(
     tmp_path: Path,
 ) -> None:
@@ -253,6 +284,121 @@ def test_sourceRouteDbAcceptanceMatrix_liveAuthorizedChecker_rejectsDryRunReport
     assert checker_payload["status"] == "FAIL"
     assert checker_payload["report_metadata_violations"]
     assert checker_payload["closure_violations"]
+
+
+def test_sourceRouteDbAcceptanceMatrix_checkerRejectsForgedClosureOutcomes(
+    tmp_path: Path,
+) -> None:
+    """覆盖范围：checker 防篡改 closure_outcome 假绿
+    测试对象：check_source_route_db_acceptance_matrix.py --strict --live-authorized
+    目的/目标：即使 JSON 缓存 closure_outcome=PASS，也必须按 status/failure_class 重算
+    验证点：全行 FAIL_EXTERNAL 但 closure_outcome=PASS 时 strict exit 1 且报 mismatch/violation
+    失败含义：release gate 可被手工编辑报告绕过，CI 假绿
+    """
+    report_path = tmp_path / "forged-matrix.json"
+    rows: list[dict[str, object]] = []
+    for target in iter_matrix_targets():
+        rows.append(
+            {
+                "target": matrix_target_key(target),
+                "status": "FAIL",
+                "failure_class": "FAIL_EXTERNAL",
+                "write_grade": "not_written",
+                "closure_outcome": "PASS",
+                "errors": ["forged row"],
+            }
+        )
+    report_path.write_text(
+        json.dumps(
+            {
+                "matrix_count": 22,
+                "live_authorized": True,
+                "closure_mode": "final_live_authorized",
+                "closure_status": "PASS",
+                "rows": rows,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    proc = subprocess.run(
+        [
+            sys.executable,
+            "scripts/check_source_route_db_acceptance_matrix.py",
+            "--strict",
+            "--live-authorized",
+            "--report",
+            str(report_path),
+            "--format",
+            "json",
+        ],
+        cwd=PROJECT_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    payload = json.loads(proc.stdout)
+
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    assert payload["status"] == "FAIL"
+    assert payload["closure_violations"]
+    assert any("mismatch" in item for item in payload["closure_violations"])
+
+
+def test_sourceRouteDbAcceptanceMatrix_liveClosure_blocksSecFailExternal(
+    tmp_path: Path,
+) -> None:
+    """覆盖范围：SEC FAIL_EXTERNAL 的 final live closure 语义
+    测试对象：evaluate_matrix_row_closure + checker --live-authorized
+    目的/目标：ADR-016 要求 SEC 外部失败不得 closure PASS，阻断 Slice 10 假关账
+    验证点：sec_edgar 行 failure_class=FAIL_EXTERNAL → strict checker exit 1
+    失败含义：SEC 网络/SSL 失败被误标 PASS，task-01 可假绿关账
+    """
+    sec_target = next(t for t in iter_matrix_targets() if t.request.source_id == "sec_edgar")
+    report_path = tmp_path / "sec-fail-external.json"
+    report_path.write_text(
+        json.dumps(
+            {
+                "matrix_count": 1,
+                "live_authorized": True,
+                "closure_mode": "final_live_authorized",
+                "rows": [
+                    {
+                        "target": matrix_target_key(sec_target),
+                        "status": "FAIL",
+                        "failure_class": "FAIL_EXTERNAL",
+                        "write_grade": "not_written",
+                        "closure_outcome": "FAIL_EXTERNAL",
+                        "errors": ["SSL EOF to data.sec.gov"],
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    proc = subprocess.run(
+        [
+            sys.executable,
+            "scripts/check_source_route_db_acceptance_matrix.py",
+            "--strict",
+            "--live-authorized",
+            "--report",
+            str(report_path),
+            "--format",
+            "json",
+        ],
+        cwd=PROJECT_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    payload = json.loads(proc.stdout)
+
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    assert payload["status"] == "FAIL"
+    assert payload["closure_violations"]
+    assert any("sec_edgar" in item for item in payload["closure_violations"])
 
 
 def test_sourceRouteDbAcceptanceMatrix_liveClosure_rejectsMissingLiveAuthorizationRows() -> None:
