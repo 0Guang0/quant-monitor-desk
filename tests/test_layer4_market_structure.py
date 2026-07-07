@@ -22,6 +22,7 @@ from backend.app.layer4_markets.market_structure import (
     collect_result_field_names,
     seed_registry_rows,
 )
+from tests.layer3_snapshot_support import build_layer3_snapshot
 
 _FIXTURE = Path(__file__).resolve().parent / "fixtures" / "layer4_staged_market"
 _MUTATION_ROOT = PROJECT_ROOT / ".audit-sandbox" / "layer4_market_mutations"
@@ -192,9 +193,7 @@ def test_marketSnapshot_lineageUpstreamFromLayer3() -> None:
     验证点：传入 L3 lineage snapshot_id → envelope.upstream_snapshot_ids 原样保留
     失败含义：上游 L3 ID 未传播，跨层血缘链在 staged 路径不可审计
     """
-    from tests.test_layer3_snapshot_builder import _build as build_layer3
-
-    l3_result = build_layer3()
+    l3_result = build_layer3_snapshot()
     l3_lineage = next(e for e in l3_result.lineage_envelopes if "MSFT" in e.snapshot_id)
     result = _build(upstream_snapshot_ids=(l3_lineage.snapshot_id,))
     assert result.lineage_envelope.upstream_snapshot_ids == (l3_lineage.snapshot_id,)

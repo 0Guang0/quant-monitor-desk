@@ -2,13 +2,20 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
+import yaml
 
 from backend.app.sync.indicator_binding import (
     IndicatorBinding,
     UnknownIndicatorError,
     load_all_bindings,
     load_binding,
+)
+
+_REGISTRY = (
+    Path(__file__).resolve().parents[1] / "specs" / "layer1_axes" / "indicator_binding_registry.yaml"
 )
 
 
@@ -31,15 +38,17 @@ def test_indicatorBinding_loader_matchesSection91Columns() -> None:
     assert binding.feature_outputs_expected
 
 
-def test_indicatorBinding_loadAll_returns62Rows() -> None:
+def test_indicatorBinding_loadAll_matchesRegistryRowCount() -> None:
     """覆盖范围：indicator_binding_registry.yaml 全表
     测试对象：load_all_bindings
-    目的/目标：Phase 1 骨架须覆盖五轴全部 62 个 indicator_id
-    验证点：返回 62 条；indicator_id 无重复
+    目的/目标：loader 行数须与五轴 registry spec 动态对账，禁止硬编码魔法数
+    验证点：len(bindings)==YAML expected_rows；indicator_id 无重复
     失败含义：矩阵行数与五轴 spec 漂移，后续 sync 绑定无法展开
     """
+    spec = yaml.safe_load(_REGISTRY.read_text(encoding="utf-8")) or {}
+    expected_rows = int(spec["expected_rows"])
     bindings = load_all_bindings()
-    assert len(bindings) == 62
+    assert len(bindings) == expected_rows
     ids = [b.indicator_id for b in bindings]
     assert len(ids) == len(set(ids))
 

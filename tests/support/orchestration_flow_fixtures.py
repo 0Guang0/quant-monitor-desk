@@ -17,6 +17,35 @@ CONFLICT_STG = "stg_batch_d_conflict_peer"
 CLEAN_TABLE = "clean_batch_d_flow"
 
 
+def ensure_batch_d_staging_tables(con) -> None:
+    """Create orchestration staging tables once per test DB (fetch must not run DDL)."""
+    con.execute(
+        f"""
+        CREATE TABLE IF NOT EXISTS {STG_TABLE} (
+            instrument_id VARCHAR,
+            trade_date VARCHAR,
+            close DOUBLE,
+            source_used VARCHAR,
+            batch_id VARCHAR,
+            source_id VARCHAR
+        )
+        """
+    )
+    con.execute(
+        f"""
+        CREATE TABLE IF NOT EXISTS {CONFLICT_STG} (
+            source_id VARCHAR,
+            instrument_id VARCHAR,
+            trade_date VARCHAR,
+            close DOUBLE
+        )
+        """
+    )
+    con.execute(
+        f"CREATE TABLE IF NOT EXISTS {CLEAN_TABLE} AS SELECT * FROM {STG_TABLE} WHERE 1=0"
+    )
+
+
 class BatchDIncrementalAdapter(BaseDataAdapter):
     """Test adapter: seeds staging on fetch."""
 
@@ -29,31 +58,6 @@ class BatchDIncrementalAdapter(BaseDataAdapter):
     )
 
     def fetch(self, req: FetchRequest, *, con, job_id: str | None = None) -> FetchResult:
-        con.execute(
-            f"""
-            CREATE TABLE IF NOT EXISTS {STG_TABLE} (
-                instrument_id VARCHAR,
-                trade_date VARCHAR,
-                close DOUBLE,
-                source_used VARCHAR,
-                batch_id VARCHAR,
-                source_id VARCHAR
-            )
-            """
-        )
-        con.execute(
-            f"""
-            CREATE TABLE IF NOT EXISTS {CONFLICT_STG} (
-                source_id VARCHAR,
-                instrument_id VARCHAR,
-                trade_date VARCHAR,
-                close DOUBLE
-            )
-            """
-        )
-        con.execute(
-            f"CREATE TABLE IF NOT EXISTS {CLEAN_TABLE} AS SELECT * FROM {STG_TABLE} WHERE 1=0"
-        )
         con.execute(f"DELETE FROM {STG_TABLE}")
         con.execute(f"INSERT INTO {STG_TABLE} VALUES (?, ?, ?, ?, ?, ?)", list(self._seed_row))
         con.execute(f"DELETE FROM {CONFLICT_STG}")
@@ -82,6 +86,7 @@ def _orch_stack(
     cm = ConnectionManager(tmp_path / "batch_d.duckdb")
     with cm.writer() as con:
         apply_migrations(con)
+        ensure_batch_d_staging_tables(con)
     reg = SourceRegistry(registry_yaml_fixture)
     reg.load()
     with cm.writer() as con:

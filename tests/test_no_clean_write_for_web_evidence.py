@@ -55,9 +55,33 @@ def test_webAndPredictionDomains_fallbackPolicyNotCleanWriter(
     """
     roles = (_load_registry().get("domain_roles") or {}).get(domain) or {}
     assert roles.get("fallback_policy") == expected_fallback
-    notes = str(roles.get("notes") or "")
-    if domain.startswith("supplemental") or domain.startswith("vix") or domain.startswith("event_resolution"):
-        assert "clean" not in notes.lower() or "never clean" in notes.lower() or "manual_review" in notes.lower()
+
+
+def test_webAndPredictionDomains_runtimeRegistryAlignsFallbackPolicy() -> None:
+    """覆盖范围：runtime SourceRegistry 与 YAML fallback_policy / enabled_by_default 对齐
+    测试对象：SourceRegistry.get_domain_roles() / SourceRegistry.get()
+    目的/目标：loader 运行时读到的契约须与 registry YAML 一致
+    验证点：web/pred 域 fallback_policy；kalshi/polymarket/web_search enabled_by_default=False
+    失败含义：YAML 改了但 runtime loader 未同步，负例测的是过期契约
+    """
+    from backend.app.datasources.source_registry import SourceRegistry
+
+    registry = SourceRegistry()
+    registry.load()
+    yaml_doc = _load_registry()
+    yaml_roles = yaml_doc.get("domain_roles") or {}
+    yaml_sources = {s["source_id"]: s for s in (yaml_doc.get("sources") or [])}
+
+    for domain in ("supplemental_web_evidence", "prediction_market_probability"):
+        expected = (yaml_roles.get(domain) or {}).get("fallback_policy")
+        runtime = registry.get_domain_roles(domain)
+        assert runtime.fallback_policy == expected, domain
+
+    for source_id in ("kalshi", "polymarket", "web_search"):
+        yaml_entry = yaml_sources[source_id]
+        rec = registry.get(source_id)
+        assert yaml_entry.get("enabled_by_default") is False
+        assert rec.is_enabled is False
 
 
 @pytest.mark.parametrize(

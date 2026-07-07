@@ -98,6 +98,18 @@ def test_layer2_vix_clean_e2e_reads_axis_observation_and_builds_snapshot(
         validation_report_id="vr-layer2-vix-clean",
     )
     with wm_cm.reader() as con:
+        snap_db = con.execute(
+            """
+            SELECT asset_id, trade_date, source_used
+            FROM cross_asset_daily_snapshot
+            WHERE snapshot_id = ?
+            """,
+            [snap.snapshot_id],
+        ).fetchone()
+        assert snap_db is not None
+        assert snap_db[0] == "L2-VIX"
+        assert str(snap_db[1]) == TRADE_DATE.isoformat()
+        assert snap_db[2] == "fred"
         row = con.execute(
             """
             SELECT source_fetch_ids, source_content_hashes, layer_id

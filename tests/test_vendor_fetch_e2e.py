@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
 from backend.app.core.resource_guard import Decision, ResourceGuard
 from backend.app.storage.raw_store import RawStore
 from backend.app.sync.jobs import SyncJobSpec
@@ -81,10 +82,17 @@ def test_vendorFixtureFetch_e2eOrchestratorPath(
             "SELECT COUNT(*) FROM write_audit_log WHERE job_id = ?", ["job-vendor-e2e"]
         ).fetchone()[0]
         clean_count = con.execute(f"SELECT COUNT(*) FROM {CLEAN_TABLE}").fetchone()[0]
+        bar_row = con.execute(
+            f"SELECT instrument_id, trade_date, close FROM {CLEAN_TABLE} LIMIT 1"
+        ).fetchone()
     assert fetch_count >= 1
     assert report_count >= 1
     assert audit_count >= 1
     assert clean_count == 1
+    assert bar_row is not None
+    assert bar_row[0] == "000001"
+    assert str(bar_row[1]) == "2026-06-15"
+    assert float(bar_row[2]) == pytest.approx(10.5)
 
 
 def test_vendorFixtureFetch_e2eThroughDataSourceServicePath(tmp_path: Path, monkeypatch) -> None:
@@ -170,6 +178,13 @@ def test_vendorFixtureFetch_e2eThroughDataSourceServicePath(tmp_path: Path, monk
             "SELECT COUNT(*) FROM write_audit_log WHERE job_id = ?", [result.job_id]
         ).fetchone()[0]
         clean_count = con.execute(f"SELECT COUNT(*) FROM {CLEAN_TABLE}").fetchone()[0]
+        bar_row = con.execute(
+            f"SELECT instrument_id, trade_date, close FROM {CLEAN_TABLE} LIMIT 1"
+        ).fetchone()
     assert report_count >= 1
     assert audit_count >= 1
     assert clean_count == 1
+    assert bar_row is not None
+    assert bar_row[0] == "000001"
+    assert str(bar_row[1]) == "2026-06-15"
+    assert float(bar_row[2]) == pytest.approx(10.5)

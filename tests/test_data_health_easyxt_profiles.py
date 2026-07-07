@@ -5,7 +5,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-import yaml
 
 from backend.app.ops.data_health_profiles import MARKET_BAR_P0_RULE_IDS, run_data_health_profile
 from backend.app.ops.data_health_profiles.calendar_gap_rules import check_missing_trading_day
@@ -23,7 +22,6 @@ from backend.app.ops.data_health_profiles.report_builder import cap_check_detail
 from backend.app.ops.data_health import DataHealthCheckResult
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[1]
-_RULES_PATH = _PROJECT_ROOT / "specs" / "contracts" / "data_quality_rules.yaml"
 _GOOD_BUNDLE = _PROJECT_ROOT / "tests" / "fixtures" / "data_health" / "good_bundle"
 
 MARKET_BAR_P0_RULE_IDS_SET = frozenset(MARKET_BAR_P0_RULE_IDS)
@@ -39,20 +37,6 @@ _GOOD_BAR = {
 }
 
 
-def test_marketBarP0_ruleIdsRegisteredInContract() -> None:
-    """覆盖范围：market_bar_p0 九 rule ID 契约注册
-    测试对象：specs/contracts/data_quality_rules.yaml ops_cli_profiles
-    目的/目标：AC-1 — profile 规则 ID 与 frozen §6.1 映射一致
-    验证点：market_bar_1d.rules 集合等于九项活卡 ID
-    失败含义：规则 ID 漂移导致 profile 不完整或 CLI 假完成
-    """
-    raw = yaml.safe_load(_RULES_PATH.read_text(encoding="utf-8")) or {}
-    profile = raw["ops_cli_profiles"]["market_bar_1d"]
-    assert profile["rule_set_id"] == "market_bar_p0"
-    registered = set(profile["rules"])
-    assert registered == MARKET_BAR_P0_RULE_IDS_SET
-
-
 def test_ohlcv_emptyBars_insufficientHistory() -> None:
     """覆盖范围：空 bar 集
     测试对象：ohlcv_rules.check_insufficient_history
@@ -64,9 +48,9 @@ def test_ohlcv_emptyBars_insufficientHistory() -> None:
     assert any(c.rule_id == "INSUFFICIENT_HISTORY" and c.status == "FAIL" for c in checks)
 
 
-def test_non_positive_volume_fails() -> None:
+def test_nonPositiveVolume_fails() -> None:
     """覆盖范围：负成交量
-    测试对象：ohlcv_rules.check_non_positive_price
+    测试对象：ohlcv_rules.check_non_positive_price（volume 负值路径）
     目的/目标：负 volume 映射 NON_POSITIVE_PRICE（frozen §9.2）
     验证点：volume=-1 时 FAIL
     失败含义：负成交量静默通过
@@ -249,11 +233,11 @@ def test_capped_reportDetails_respectsMaxRows() -> None:
 
 
 def test_profile_runner_goodEvidence_passes() -> None:
-    """覆盖范围：profile runner 证据路径
-    测试对象：run_data_health_profile
-    目的/目标：AC-3 — good_bundle 可跑通 runner
-    验证点：overall_status 非 BLOCKED；checks 非空
-    失败含义：runner 未接线或证据加载失败
+    """覆盖范围：profile runner 证据路径 + market_bar_p0 rule ID 契约（G2-009 行为合并）
+    测试对象：run_data_health_profile / run_ohlcv_rules
+    目的/目标：AC-3 — good_bundle 可跑通 runner；九项活卡 rule ID 均在 checks 出现
+    验证点：overall_status 非 BLOCKED；checks 非空；MARKET_BAR_P0_RULE_IDS ⊆ rules_seen
+    失败含义：runner 未接线、证据加载失败或规则 ID 契约漂移
     """
     report, _, _, _, _ = run_data_health_profile(
         profile_id="market_bar_p0",

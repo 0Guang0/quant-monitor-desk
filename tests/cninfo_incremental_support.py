@@ -12,20 +12,19 @@ from backend.app.core.resource_guard import Decision, ResourceGuard
 from backend.app.db.connection import ConnectionManager
 from backend.app.db.migrate import apply_migrations
 from backend.app.datasources.fetch_ports.cninfo_port import create_cninfo_fetch_port
-from backend.app.ops.cninfo_incremental_run import (
-    CninfoIncrementalFetchProxy,
-    build_cninfo_incremental_service,
-)
+from backend.app.ops.cninfo_incremental_run import build_cninfo_incremental_service
 from backend.app.ops.cninfo_incremental_watermark import (
     enabled_cninfo_source_registry,
     read_since_date_for_instrument,
 )
 from backend.app.sync.orchestrator import DataSyncOrchestrator
-from tests.acceptance_e2e_bootstrap import bootstrap_acceptance_cm, bootstrap_port_live_e2e_ctx
+from tests.acceptance_e2e_bootstrap import bootstrap_port_live_e2e_ctx
 
 SYMBOL = "sh.600519"
 FIXTURE_DATE = date(2024, 6, 25)
 ANNOUNCEMENT_ID = "cninfo-001"
+FIXTURE_TITLE = "2024半年度报告摘要"
+FIXTURE_PUBLISH_DATE = "2024-06-25"
 
 
 def bootstrap_db(tmp_path: Path) -> ConnectionManager:

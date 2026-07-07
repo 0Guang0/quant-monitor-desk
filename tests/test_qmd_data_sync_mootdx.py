@@ -10,6 +10,8 @@ from backend.app.cli import data_commands, main
 from backend.app.cli.errors import CliFailure
 from backend.app.config import PROJECT_ROOT
 from backend.app.core.resource_guard import Decision, ResourceGuard
+from backend.app.db.connection import ConnectionManager
+from backend.app.db.migrate import apply_migrations
 
 
 def _sandbox_data_root(tmp_path: Path) -> Path:
@@ -112,3 +114,99 @@ def test_qmdData_syncMootdx_cliDryRun_exitZero(monkeypatch, tmp_path: Path, caps
     )
     assert rc == 0
     assert '"source_id": "mootdx"' in capsys.readouterr().out
+
+
+def test_qmdData_syncMootdx_nonDryRun_failedFinalRaisesCliFailure(
+    monkeypatch, tmp_path: Path
+) -> None:
+    """覆盖范围：mootdx replay 真跑无 bar 时 CLI fail-closed
+    测试对象：sync_mootdx_incremental dry_run=False + 空窗 replay
+    目的/目标：orchestrator 返回 FAILED_FINAL 时须抛 CliFailure(SYNC_FAILED)，不得 exit 0
+    验证点：end=1999-12-31（fixture 仅 2024-06-25）pytest.raises(CliFailure) 且 error_code==SYNC_FAILED
+    失败含义：sync 失败仍 exit 0，运维误判增量成功
+    """
+    data_root = _sandbox_data_root(tmp_path)
+    data_root.mkdir(parents=True)
+    monkeypatch.setenv("QMD_DATA_ROOT", str(data_root))
+    monkeypatch.setattr(data_commands, "DATA_ROOT", data_root)
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    with pytest.raises(CliFailure) as exc_info:
+        data_commands.sync_mootdx_incremental(
+            dry_run=False,
+            instrument_id="sh.600519",
+            end="1999-12-31",
+            empty_table_lookback_days=30,
+        )
+    err = exc_info.value
+    assert err.error_code == "SYNC_FAILED"
+    assert err.retryable is True
+    assert "FAILED_FINAL" in err.message
+
+
+def test_qmdData_syncMootdx_nonDryRun_replaySmoke(monkeypatch, tmp_path: Path) -> None:
+    """覆盖范围：mootdx sync replay 真跑 smoke
+    测试对象：sync_mootdx_incremental dry_run=False（.audit-sandbox 隔离库）
+    目的/目标：replay mock 下真跑应 COMPLETED 且写 security_bar_1d
+    验证点：job_status==COMPLETED；DB 有 sh.600519 fixture 行
+    失败含义：CLI 真跑断链则产品 sync 不可用
+    """
+    data_root = _sandbox_data_root(tmp_path)
+    data_root.mkdir(parents=True)
+    monkeypatch.setenv("QMD_DATA_ROOT", str(data_root))
+    monkeypatch.setattr(data_commands, "DATA_ROOT", data_root)
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    monkeypatch.delenv("QMD_ALLOW_LIVE_FETCH", raising=False)
+    payload = data_commands.sync_mootdx_incremental(
+        dry_run=False,
+        instrument_id="sh.600519",
+        end="2024-06-25",
+        empty_table_lookback_days=30,
+    )
+    assert payload["dry_run"] is False
+    assert payload["job_status"] == "COMPLETED"
+    db = data_root / "duckdb" / "quant_monitor.duckdb"
+    cm = ConnectionManager(db)
+    with cm.reader() as con:
+        row = con.execute(
+            """
+            SELECT COUNT(*) FROM security_bar_1d
+            WHERE instrument_id = 'sh.600519' AND trade_date = '2024-06-25'
+            """
+        ).fetchone()
+    assert row is not None and row[0] >= 1
+
+
+def test_qmdData_syncMootdx_caughtUpDryRun(monkeypatch, tmp_path: Path) -> None:
+    """覆盖范围：mootdx caught-up 水位 dry-run 审计
+    测试对象：sync_mootdx_incremental + 已有 watermark==end
+    目的/目标：已追平时 dry-run 应标 caught_up 且倒置窗可审计
+    验证点：caught_up=True；date_start > date_end
+    失败含义：追平态不可审计会导致重复拉取或误触发 fetch
+    """
+    data_root = _sandbox_data_root(tmp_path)
+    data_root.mkdir(parents=True)
+    db = data_root / "duckdb" / "quant_monitor.duckdb"
+    db.parent.mkdir(parents=True)
+    cm = ConnectionManager(db)
+    with cm.writer() as con:
+        apply_migrations(con)
+        con.execute(
+            """
+            INSERT INTO security_bar_1d (
+                instrument_id, trade_date, open, high, low, close, pre_close, volume, amount,
+                adjustment_type, source_used, batch_id, quality_flags, created_at
+            ) VALUES ('sh.600519', '2024-06-30', 1, 1, 1, 1, NULL, NULL, NULL,
+                      'none', 'seed', 'b0', NULL, CURRENT_TIMESTAMP)
+            """
+        )
+    monkeypatch.setenv("QMD_DATA_ROOT", str(data_root))
+    monkeypatch.setattr(data_commands, "DATA_ROOT", data_root)
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    payload = data_commands.sync_mootdx_incremental(
+        dry_run=True,
+        instrument_id="sh.600519",
+        end="2024-06-30",
+    )
+    assert payload["caught_up"] is True
+    assert payload["window"]["date_start"] == "2024-07-01"
+    assert payload["window"]["date_end"] == "2024-06-30"

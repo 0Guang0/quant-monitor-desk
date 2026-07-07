@@ -147,12 +147,21 @@ def test_cleanDomainMigration013Columns_existInSchemaContract() -> None:
         )
 
 
+CHECK_STATUS_FRAGMENTS = {
+    "fetch_log": "'SCHEMA_DRIFT', 'FAILED'",
+    "source_registry": "source_type IS NULL OR source_type IN",
+    "data_sync_job": "'CREATED', 'PLANNED', 'FETCHING'",
+    "source_conflict": "reconcile_status IS NULL OR reconcile_status IN",
+    "manual_review_queue": "'OPEN', 'IN_PROGRESS', 'RESOLVED', 'DISMISSED', 'CANCELLED'",
+}
+
+
 def test_schemaContract_includesStatusCheckConstraints() -> None:
     """覆盖范围：schema.sql 中状态类 CHECK 约束
     测试对象：CHECK_CONTRACT_TABLES 各表的 CREATE TABLE 定义体
-    目的/目标：契约表须声明 CHECK 约束以锁定合法状态枚举
-    验证点：每张表在 schema.sql 中存在且 DDL 体含 CHECK 关键字
-    失败含义：状态约束未写入契约，非法状态可能落库而不被文档覆盖
+    目的/目标：契约表须声明具体 CHECK 枚举片段，非仅含 CHECK 关键字
+    验证点：每张表 DDL 体含对应 status/enabled 枚举子串
+    失败含义：状态约束未写入契约或枚举漂移，非法状态可能落库
     """
     schema_text = SCHEMA_SQL.read_text(encoding="utf-8")
     for table in CHECK_CONTRACT_TABLES:
@@ -160,4 +169,8 @@ def test_schemaContract_includesStatusCheckConstraints() -> None:
         match = re.search(pattern, schema_text, re.DOTALL | re.IGNORECASE)
         assert match is not None, f"{table} missing from schema.sql"
         body = match.group(1)
-        assert "CHECK" in body, f"{table} missing CHECK constraints in schema.sql contract"
+        fragment = CHECK_STATUS_FRAGMENTS.get(table)
+        if fragment:
+            assert fragment in body, f"{table} missing CHECK fragment: {fragment!r}"
+        else:
+            assert "CHECK" in body, f"{table} missing CHECK constraints in schema.sql contract"

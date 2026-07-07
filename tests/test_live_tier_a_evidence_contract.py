@@ -41,16 +41,17 @@ def _sample_outcome(source_id: str) -> LiveIncrementalOutcome:
     )
 
 
-def test_liveTierAEvidenceContract_hasElevenSourceBindings() -> None:
+def test_liveTierAEvidenceContract_sourceBindingsMatchRouter() -> None:
     """覆盖范围：live_tier_a_evidence_v1 source_bindings
     测试对象：specs/contracts/live_tier_a_evidence_v1.yaml
-    目的/目标：契约登记 11 源且与 TIER_A_SOURCES 一致
-    验证点：len(bindings)==11；键集合等于 TIER_A_SOURCES
+    目的/目标：契约 source_bindings 键集合与 TIER_A_SOURCES 一致
+    验证点：frozenset(bindings) == TIER_A_SOURCES；每键含契约 required fields
     失败含义：验收层源清单与 live tier router 漂移
     """
+    contract = _load_contract()
     bindings = source_bindings()
-    assert len(bindings) == 11
     assert frozenset(bindings) == TIER_A_SOURCES
+    assert frozenset(bindings) == frozenset(contract["source_bindings"])
 
 
 @pytest.mark.parametrize(

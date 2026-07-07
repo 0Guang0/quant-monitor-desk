@@ -1,4 +1,7 @@
-"""参考实现采纳护栏：静态扫描 backend/scripts，禁止从外部项目照搬危险模式。"""
+"""Contract gate: reference adoption guardrails static scan (artifact-guard).
+
+CI 主责可迁至 scripts/check_*；pytest 保留契约 pattern 扫描 + 少量 runtime 行为锚点。
+"""
 
 from __future__ import annotations
 

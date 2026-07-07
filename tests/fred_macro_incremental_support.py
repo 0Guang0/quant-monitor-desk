@@ -13,16 +13,13 @@ from backend.app.db.connection import ConnectionManager
 from backend.app.db.migrate import apply_migrations
 from backend.app.datasources.fetch_ports.fred_port import create_fred_fetch_port
 from backend.app.layer1_axes.observation_contract import AXIS_OBSERVATION_DDL_COLUMNS
-from backend.app.ops.fred_incremental_run import (
-    FredIncrementalFetchProxy,
-    build_fred_incremental_service,
-)
+from backend.app.ops.fred_incremental_run import build_fred_incremental_service
 from backend.app.ops.fred_incremental_watermark import (
     enabled_fred_source_registry,
     read_since_dates_for_series,
 )
 from backend.app.sync.orchestrator import DataSyncOrchestrator
-from tests.acceptance_e2e_bootstrap import bootstrap_acceptance_cm, bootstrap_port_live_e2e_ctx
+from tests.acceptance_e2e_bootstrap import bootstrap_port_live_e2e_ctx
 from tests.service_path_support import enable_source_route
 
 
@@ -35,10 +32,11 @@ def insert_axis_observation(
     raw_value: float = 4.25,
     content_hash: str = "hash-a",
     quality_flags: str = "TEST",
+    as_of: datetime | None = None,
 ) -> None:
     publish_dt = datetime.combine(obs_date, time(0, 0), tzinfo=UTC)
     as_of_dt = datetime.combine(obs_date, time(16, 0), tzinfo=UTC)
-    now = datetime.now(UTC)
+    now = as_of or datetime(2024, 6, 30, 16, 0, tzinfo=UTC)
     row = {
         "observation_id": observation_id,
         "indicator_id": indicator_id,

@@ -381,6 +381,16 @@ def read_bis_policy_rate_evidence_bundle(path: Path | str) -> dict[str, Any]:
     )
 
 
+def read_bis_credit_gap_evidence_bundle(path: Path | str) -> dict[str, Any]:
+    return _read_observations_bundle(
+        path,
+        label="BIS credit gap evidence",
+        normalize_obs=_normalize_bis_credit_gap_row,
+        build_bundle=build_bis_credit_gap_evidence_bundle,
+        source_id="bis",
+    )
+
+
 def _normalize_world_bank_row(row: dict[str, Any]) -> dict[str, Any]:
     return {
         "country_code": str(row.get("country_code") or ""),

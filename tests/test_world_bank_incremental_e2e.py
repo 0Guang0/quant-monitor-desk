@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime, time
 from pathlib import Path
 from typing import Any
+from unittest.mock import patch
 
 import pytest
 
@@ -26,6 +27,7 @@ from backend.app.ops.world_bank_incremental_run import (
     run_world_bank_incremental,
 )
 from tests.macro_incremental_support import (
+    FIXED_TODAY,
     bootstrap_macro_live_e2e_ctx,
     build_macro_e2e_ctx,
     insert_axis_observation,
@@ -65,15 +67,19 @@ def test_worldBankSinceDate_advancesToNextYearAfterWatermark() -> None:
     """覆盖范围：world_bank 年频 since 水位推进
     测试对象：compute_world_bank_since_date
     目的/目标：二次 live 跑不重复拉已落库年份（B-04 幂等根因）
-    验证点：watermark=2023-06-15 → since=2024-01-01
+    验证点：watermark=2023-06-15 → since=2024-01-01；冷启动 since 精确值
     失败含义：年频 since 仅 +1 日导致重复 fetch 膨胀行数
     """
-    from datetime import date
+    from datetime import timedelta
 
     from backend.app.ops.macro_incremental_common import compute_world_bank_since_date
+    from backend.app.sync.watermark import compute_since_date
 
     assert compute_world_bank_since_date(date(2023, 6, 15)) == date(2024, 1, 1)
-    assert compute_world_bank_since_date(None).year <= date.today().year
+    cap_days = 365 * 10
+    assert compute_since_date(None, cap_days=cap_days, today=FIXED_TODAY) == (
+        FIXED_TODAY - timedelta(days=cap_days)
+    )
 
 
 def test_worldBankIncremental_e2e_defaultCountries_writesAtLeastTwoRows(
@@ -166,22 +172,26 @@ def test_worldBankIncremental_emptyResponse_whenWatermarkCurrent(
     失败含义：水位追上仍拉取或写入，增量语义错误
     """
     ctx = world_bank_incremental_e2e_ctx
-    today = datetime.now(UTC).date()
     with ctx["cm"].writer() as con:
         for country in DEFAULT_COUNTRIES:
             insert_axis_observation(
                 con,
                 observation_id=f"obs-wb-seed-{country}",
                 indicator_id=clean_indicator_id(country),
-                obs_date=today,
+                obs_date=FIXED_TODAY,
             )
         before = con.execute("SELECT COUNT(*) FROM axis_observation").fetchone()[0]
-    report = run_world_bank_incremental(
-        ctx["orch"],
-        service=ctx["service"],
-        countries=DEFAULT_COUNTRIES,
-        source_registry=ctx["registry"],
-    )
+    with patch(
+        "backend.app.datasources.fetch_ports.world_bank_port.datetime",
+        wraps=datetime,
+    ) as mock_dt:
+        mock_dt.now.return_value = datetime.combine(FIXED_TODAY, time(0), tzinfo=UTC)
+        report = run_world_bank_incremental(
+            ctx["orch"],
+            service=ctx["service"],
+            countries=DEFAULT_COUNTRIES,
+            source_registry=ctx["registry"],
+        )
     assert all(r["status"] == "EMPTY_RESPONSE" for r in report.instrument_results)
     with ctx["cm"].writer() as con:
         after = con.execute("SELECT COUNT(*) FROM axis_observation").fetchone()[0]

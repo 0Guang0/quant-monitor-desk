@@ -50,7 +50,7 @@ def _lineage_stub(**overrides):
     return _StubEnvelope(**base)
 
 
-def test_parameter_hash_for_is_deterministic():
+def test_parameter_hash_for_is_deterministic() -> None:
     """覆盖范围：parameter_hash_for 的稳定性
     测试对象：parameter_hash_for
     目的/目标：相同 rule_version 与 inputs 应产出相同 64 位十六进制摘要
@@ -63,7 +63,7 @@ def test_parameter_hash_for_is_deterministic():
     assert len(h1) == 64
 
 
-def test_validate_source_dataset_ids_rejects_agent_outputs():
+def test_validate_source_dataset_ids_rejects_agent_outputs() -> None:
     """覆盖范围：来源数据集标识合法性
     测试对象：validate_source_dataset_ids
     目的/目标：代理生成的伪数据集标识不得冒充事实行情来源
@@ -74,7 +74,7 @@ def test_validate_source_dataset_ids_rejects_agent_outputs():
         validate_source_dataset_ids(("agent_summary:foo",))
 
 
-def test_assert_lineage_fields_complete_requires_core_fields():
+def test_assert_lineage_fields_complete_requires_core_fields() -> None:
     """覆盖范围：血缘信封必填字段完整性
     测试对象：assert_lineage_fields_complete
     目的/目标：缺核心字段时 fail-closed，完整信封应通过
@@ -88,7 +88,7 @@ def test_assert_lineage_fields_complete_requires_core_fields():
         assert_lineage_fields_complete(env)
 
 
-def test_lineage_row_to_db_tuple_serializes_json_columns():
+def test_lineage_row_to_db_tuple_serializes_json_columns() -> None:
     """覆盖范围：血缘记录写入 DB 的 tuple 映射
     测试对象：lineage_row_to_db_tuple
     目的/目标：snapshot_id、layer_id 与 JSON 列按契约序列化

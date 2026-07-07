@@ -33,8 +33,13 @@ def enable_source_route(
     source_id: str,
     data_domain: str,
     primary_source_id: str | None = None,
+    operation: str | None = None,
 ) -> SourceRoutePlanner:
-    """Enable one source + domain for route planner tests (R3H-04 dedup)."""
+    """Enable one source + domain for route planner tests (R3H-04 dedup).
+
+    ponytail: monkeypatch registry/capability private fields; upgrade path is fixture YAML
+    with domain_enabled_by_default=True (see source_registry_valid.yaml pattern).
+    """
     from backend.app.datasources.source_registry import DomainRoleBinding
 
     registry = SourceRegistry()
@@ -58,6 +63,14 @@ def enable_source_route(
     monkeypatch.setattr(registry, "get_domain_roles", _domain_enabled)
     capabilities = SourceCapabilityRegistry()
     capabilities.load()
+    if operation:
+        sources = capabilities._raw.setdefault("sources", {})
+        entry = sources.setdefault(source_id, {})
+        domains = entry.setdefault("domains", {})
+        domain_cfg = domains.setdefault(data_domain, {})
+        ops = domain_cfg.setdefault("operations", {})
+        op_cfg = ops.setdefault(operation, {})
+        op_cfg["enabled_by_default"] = True
     planner = SourceRoutePlanner(source_registry=registry, capability_registry=capabilities)
     monkeypatch.setattr(planner, "_platform_allows", lambda _sid: (True, None))
     return planner

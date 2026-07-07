@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from datetime import date
 from pathlib import Path
 from typing import Any
 
@@ -11,11 +12,12 @@ import pytest
 from backend.app.core.resource_guard import Decision, ResourceGuard
 from backend.app.db.connection import ConnectionManager
 from backend.app.db.migrate import apply_migrations
-from backend.app.ops.macro_incremental_common import MacroIncrementalFetchProxy
 from backend.app.sync.orchestrator import DataSyncOrchestrator
 from tests.fred_macro_incremental_support import insert_axis_observation
-from tests.acceptance_e2e_bootstrap import ACCEPTANCE_DUCKDB_NAME, bootstrap_acceptance_cm
+from tests.acceptance_e2e_bootstrap import bootstrap_acceptance_cm
 from tests.service_path_support import enable_source_route
+
+FIXED_TODAY = date(2026, 6, 30)
 
 
 def bootstrap_macro_incremental_db(tmp_path: Path) -> ConnectionManager:
@@ -117,6 +119,7 @@ def bootstrap_macro_live_e2e_ctx(
 
 
 __all__ = [
+    "FIXED_TODAY",
     "build_macro_e2e_ctx",
     "bootstrap_macro_incremental_db",
     "bootstrap_macro_live_e2e_ctx",

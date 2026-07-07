@@ -14,7 +14,7 @@ from backend.app.db.migrate import apply_migrations
 from backend.app.datasources.fetch_ports.alpha_vantage_port import create_alpha_vantage_fetch_port
 from backend.app.ops.alpha_vantage_incremental_run import build_alpha_vantage_incremental_service
 from backend.app.sync.orchestrator import DataSyncOrchestrator
-from tests.acceptance_e2e_bootstrap import bootstrap_acceptance_cm, bootstrap_port_live_e2e_ctx
+from tests.acceptance_e2e_bootstrap import bootstrap_port_live_e2e_ctx
 
 SYMBOL = "AAPL"
 FIXTURE_END = date(2024, 1, 3)

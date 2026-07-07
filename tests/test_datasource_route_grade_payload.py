@@ -16,10 +16,10 @@ def test_dataSourceService_resourceGuardPausedRoutePlan_writesBlockedRouteGrade(
     tmp_path: Path,
     monkeypatch,
 ) -> None:
-    """覆盖范围：ResourceGuard 阻断后的持久化 RoutePlan 等级
+    """覆盖范围：ResourceGuard 阻断后的 route_grade 字段（事件序列与 fetch_log 见 test_serviceGuardBlocked_emitsResourceGuardPausedRoutePlan）
     测试对象：DataSourceService.fetch + job_event_log ROUTE_PLAN payload
     目的/目标：资源阻断必须把 route_grade 改为 blocked，不能沿用阻断前 READY 的 primary
-    验证点：第二条 ROUTE_PLAN route_status=RESOURCE_GUARD_PAUSED 且 route_grade=blocked
+    验证点：第二条 ROUTE_PLAN route_status=RESOURCE_GUARD_PAUSED 且 route_grade=blocked；不断言 fetch_log
     失败含义：容量阻断会在验收报告中伪装成 primary 路由，误导生产等价验收
     """
     snap = ResourceSnapshot(

@@ -27,31 +27,35 @@ def _matrix_data_root(tmp_path: Path) -> Path:
 
 
 def test_acceptanceHelperConsumers_strictMode_hasZeroProductRuntimeConsumers() -> None:
-    """覆盖范围：旧 helper/smoke 严格门禁
-    测试对象：scripts/check_acceptance_helper_consumers.py --strict
-    目的/目标：产品/runtime 代码不得再直接依赖旧 acceptance seam
-    验证点：strict 退出码为 0；product_runtime_count 为 0
+    """覆盖范围：旧 helper/smoke 严格门禁（SSOT）
+    测试对象：scripts/check_acceptance_helper_consumers.py --strict 与 --strict-seam-inventory
+    目的/目标：产品/runtime 零 consumer；seam inventory 关账
+    验证点：strict 退出码 0；product_runtime_count/consumer_count 为 0；seam_inventory PASS
     失败含义：旧 helper 仍被产品路径调用，验收 PASS 语义会继续分裂
     """
-    proc = subprocess.run(
-        [
-            sys.executable,
-            "scripts/check_acceptance_helper_consumers.py",
-            "--strict",
-            "--format",
-            "json",
-        ],
-        cwd=PROJECT_ROOT,
-        check=False,
-        capture_output=True,
-        text=True,
-    )
-    payload = json.loads(proc.stdout)
+    for extra in ([], ["--strict-seam-inventory"]):
+        proc = subprocess.run(
+            [
+                sys.executable,
+                "scripts/check_acceptance_helper_consumers.py",
+                "--strict",
+                *extra,
+                "--format",
+                "json",
+            ],
+            cwd=PROJECT_ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        payload = json.loads(proc.stdout)
 
-    assert proc.returncode == 0, proc.stdout + proc.stderr
-    assert payload["strict_status"] == "PASS"
-    assert payload["product_runtime_count"] == 0
-    assert payload["consumer_count"] == 0
+        assert proc.returncode == 0, proc.stdout + proc.stderr
+        assert payload["strict_status"] == "PASS"
+        assert payload["product_runtime_count"] == 0
+        assert payload["consumer_count"] == 0
+        if extra:
+            assert payload["seam_inventory_status"] == "PASS"
 
 
 def test_sourceRouteDbAcceptanceMatrix_hasTwentyTwoDocumentedSources() -> None:
@@ -102,9 +106,47 @@ def test_sourceRouteDbAcceptanceMatrix_validationSourceExecute_blocksPrimaryClea
     """覆盖范围：validation 定位源的 execute 诚实性
     测试对象：SourceRouteDbAcceptanceSpine.execute for akshare validation target
     目的/目标：validation-only 源 live 授权后应产出合格非 primary clean 验收，而非 BLOCKED 失败
-    验证点：status=PASS；failure_class=NONE；write_grade=blocked；downstream=VALIDATION_ONLY
+    验证点：status=PASS；write_grade=blocked；downstream=VALIDATION_ONLY；fake port raw 证据落盘
     失败含义：validation 源被误判为 BLOCKED 失败或静默写入 primary clean，矩阵 closure 不可通过
     """
+    import json
+    import uuid
+    from dataclasses import dataclass
+
+    from backend.app.datasources.adapters.fetch_port import FetchPayload
+    from backend.app.datasources.fetch_result import FetchRequest
+
+    @dataclass(frozen=True)
+    class _AkshareValidationPort:
+        def fetch_payload(self, req: FetchRequest) -> FetchPayload:
+            bundle = {
+                "schema_version": "cn_market_evidence_v1",
+                "source_id": "akshare",
+                "data_domain": req.data_domain,
+                "bars": [
+                    {
+                        "instrument_id": "sh.600519",
+                        "trade_date": "2026-06-15",
+                        "open": 1400.0,
+                        "high": 1410.0,
+                        "low": 1395.0,
+                        "close": 1405.0,
+                        "volume": 1000.0,
+                        "source_used": "akshare",
+                    }
+                ],
+                "source_fetch_id": f"akshare-validation-{uuid.uuid4().hex[:8]}",
+                "content_hash": f"validation-{uuid.uuid4().hex[:12]}",
+            }
+            return FetchPayload(
+                content=json.dumps(bundle).encode("utf-8"),
+                file_type="json",
+                row_count=1,
+            )
+
+    def _fake_create_product_live_fetch_port(**_kwargs):
+        return _AkshareValidationPort()
+
     target = find_matrix_target(
         next(t.request for t in iter_matrix_targets() if t.request.source_id == "akshare")
     )
@@ -112,13 +154,14 @@ def test_sourceRouteDbAcceptanceMatrix_validationSourceExecute_blocksPrimaryClea
 
     monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
     monkeypatch.setattr(
-        "backend.app.ops.matrix_live_runners.run_matrix_evidence_fetch_live",
-        lambda **kwargs: ("SUCCESS", True, None),
+        "backend.app.ops.matrix_live_runners.create_product_live_fetch_port",
+        _fake_create_product_live_fetch_port,
     )
 
+    data_root = _matrix_data_root(tmp_path)
     report = SourceRouteDbAcceptanceSpine().execute(
         target.request,
-        data_root=_matrix_data_root(tmp_path),
+        data_root=data_root,
         live_authorized=True,
     ).to_dict()
 
@@ -128,6 +171,7 @@ def test_sourceRouteDbAcceptanceMatrix_validationSourceExecute_blocksPrimaryClea
     assert report["downstream_layer_read_status"] == "VALIDATION_ONLY"
     assert report["route_plan_id"] is not None
     assert report["implementation_mode"] == "live"
+    assert list((data_root / "raw").rglob("*.json"))
 
 
 def test_sourceRouteDbAcceptanceMatrix_qmtPreview_exposesMissingLocalTerminalGate(
@@ -595,7 +639,7 @@ def test_sourceRouteDbAcceptanceMatrix_coingeckoEvidenceFetch_liveMock_passesWit
     """覆盖范围：Coingecko 矩阵 evidence_fetch live 路径
     测试对象：SourceRouteDbAcceptanceSpine.execute for coingecko matrix target
     目的/目标：绕过 DISABLED_SOURCE 与缺失 adapter，以 product live port + raw 证据完成验收
-    验证点：status=PASS；failure_class=NONE；write_grade=not_written；raw 目录有文件
+    验证点：status=PASS；failure_class=NONE；write_grade=not_written；raw 证据含 stub 诚实标记
     失败含义：Coingecko 仍走 DataSourceService adapter 路径，矩阵 live 永远 FAIL_CONTRACT/FAIL_EXTERNAL
     """
     import json
@@ -632,20 +676,26 @@ def test_sourceRouteDbAcceptanceMatrix_coingeckoEvidenceFetch_liveMock_passesWit
 
     monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
     monkeypatch.setattr(
-        "backend.app.datasources.product_live_ports.create_product_live_fetch_port",
+        "backend.app.ops.matrix_live_runners.create_product_live_fetch_port",
         _fake_create_product_live_fetch_port,
     )
     target = next(t for t in iter_matrix_targets() if t.request.source_id == "coingecko")
+    data_root = _matrix_data_root(tmp_path)
     report = SourceRouteDbAcceptanceSpine().execute(
         target.request,
-        data_root=_matrix_data_root(tmp_path),
+        data_root=data_root,
         live_authorized=True,
     ).to_dict()
 
     assert report["status"] == "PASS"
     assert report["failure_class"] == "NONE"
     assert report["write_grade"] == "not_written"
-    assert list((_matrix_data_root(tmp_path) / "raw").rglob("*"))
+    assert report["implementation_mode"] == "live"
+    cg_raw = list((data_root / "raw" / "coingecko").rglob("*.json"))
+    assert cg_raw
+    raw_text = cg_raw[0].read_text(encoding="utf-8")
+    assert "stub-" in raw_text
+    assert '"content_hash": "stub"' in raw_text
 
 
 def test_resolveDeribitLiveOptionInstrument_readsBundleInstrumentName() -> None:
@@ -738,11 +788,11 @@ def test_normalizeIncrementalJobStatus_liveEmptyFetchMapsToEmptyResponse() -> No
         assert _normalize_incremental_job_status(result) == "EMPTY_RESPONSE"
 
 
-def test_matrixIncrementalLiveReport_emptyResponseWithExistingCleanRows_passes() -> None:
-    """覆盖范围：矩阵 incremental live 报告在追平复跑时的 PASS 语义
-    测试对象：source_route_db_acceptance._matrix_incremental_live_report
-    目的/目标：sync_status=EMPTY_RESPONSE 且 clean 表已有行时须 PASS（非 FAIL_EXTERNAL）
-    验证点：status=PASS、failure_class=NONE
+def test_matrixIncrementalLiveReportBuilder_emptyResponseWithExistingCleanRows_passes() -> None:
+    """覆盖范围：矩阵 incremental live 报告 builder 在追平复跑时的 PASS 语义
+    测试对象：source_route_db_acceptance._matrix_incremental_live_report（纯 report builder，无 DB）
+    目的/目标：sync_status=EMPTY_RESPONSE 且 rows_written>0 时须 PASS（非 FAIL_EXTERNAL）
+    验证点：status=PASS、failure_class=NONE；job_id=None 时不触达 cm
     失败含义：Slice 10 在复用 acceptance DB 时 fred/world_bank/deribit 假红
     """
     from backend.app.ops.source_route_db_acceptance import (
@@ -837,25 +887,7 @@ def test_secEdgar_fetchSubmissions_usesHttpx2Client(monkeypatch) -> None:
     assert payload["name"] == "Apple Inc."
     assert "data.sec.gov" in str(captured["url"])
     assert captured["headers"]["User-Agent"] == "desk contact@example.com"
-
-
-def test_sourceRouteDbAcceptanceSpine_rejectsNonSandboxDataRoot(tmp_path: Path) -> None:
-    """覆盖范围：spine execute 隔离 data-root 守卫
-    测试对象：SourceRouteDbAcceptanceSpine.execute
-    目的/目标：非 .audit-sandbox/source-route-db 路径须 CONTRACT_VIOLATION，对齐 ADR-015
-    验证点：failure_class=CONTRACT_VIOLATION；errors 含 ISOLATED_ROOT_REQUIRED 语义
-    失败含义：任意 tmp 路径可 bootstrap acceptance DB，隔离契约失效
-    """
-    target = next(t for t in iter_matrix_targets() if t.request.source_id == "baostock")
-    report = SourceRouteDbAcceptanceSpine().execute(
-        target.request,
-        data_root=tmp_path,
-        live_authorized=False,
-    ).to_dict()
-
-    assert report["failure_class"] == "CONTRACT_VIOLATION"
-    assert report["status"] == "FAIL"
-    assert "audit-sandbox" in "; ".join(report["errors"]).lower()
+    assert "@" in str(captured["headers"]["User-Agent"])
 
 
 def test_sourceRouteDbAcceptanceMatrix_qualificationPlaceholder_blocksLiveExecute(

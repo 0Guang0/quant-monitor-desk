@@ -149,7 +149,7 @@ def test_compatibilityMap_doesNotEnableNewSources() -> None:
     assert set(ADAPTER_DOMAIN_COMPATIBILITY_MAP.keys()).issubset(registry_ids)
 
 
-def test_unknownCapability_rejectedBeforeFetch() -> None:
+def test_capabilityDomains_rejectLegacyAbstractDomain() -> None:
     """覆盖范围：能力清单使用的域命名规范
     测试对象：source_capabilities 全库域键集合
     目的/目标：权威能力域应使用具体业务域名，不能把旧版抽象域名当正式标准

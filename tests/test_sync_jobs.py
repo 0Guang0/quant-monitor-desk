@@ -15,6 +15,8 @@ from backend.app.sync.jobs import (
     SyncJobSpec,
     SyncJobStateMachine,
 )
+from backend.app.sync.orchestrator import DataSyncOrchestrator
+from tests.fred_macro_incremental_support import insert_axis_observation
 
 
 def _machine(tmp_path) -> SyncJobStateMachine:
@@ -168,15 +170,105 @@ def test_syncJob_createJob_idempotent(tmp_path) -> None:
     assert count == 1
 
 
+def _orchestrator(tmp_path) -> DataSyncOrchestrator:
+    db = tmp_path / "jobs-orch.duckdb"
+    cm = ConnectionManager(db_path=db)
+    with cm.writer() as con:
+        apply_migrations(con)
+    return DataSyncOrchestrator(cm)
+
+
+def test_syncJob_dataQuality_missingInstrument_failClosed(tmp_path) -> None:
+    """覆盖范围：data_quality runner 缺 instrument_id 边界
+    测试对象：DataSyncOrchestrator.run_data_quality
+    目的/目标：无标的 ID 不得静默 COMPLETED，须 fail-closed
+    验证点：result.status=FAILED_FINAL；消息含 requires instrument_id
+    失败含义：空 instrument 仍完成质检，门禁报告挂到错误标的
+    """
+    orch = _orchestrator(tmp_path)
+    result = orch.run_data_quality(
+        _base_spec(job_id="job-dq-no-inst", job_type="data_quality", instrument_id=None)
+    )
+    assert result.status == "FAILED_FINAL"
+    assert "instrument_id" in (result.message or "").lower()
+
+
+def test_syncJob_dataQuality_emptyStaging_failClosed(tmp_path) -> None:
+    """覆盖范围：data_quality runner 无 staging/clean 行边界
+    测试对象：DataSyncOrchestrator.run_data_quality
+    目的/目标：有 instrument_id 但库内无对应行时不得假绿
+    验证点：result.status=FAILED_FINAL；消息含 no staging rows
+    失败含义：空 staging 仍 COMPLETED，质量巡检失去意义
+    """
+    orch = _orchestrator(tmp_path)
+    result = orch.run_data_quality(
+        _base_spec(
+            job_id="job-dq-empty",
+            job_type="data_quality",
+            instrument_id="000001",
+            date_start=date(2026, 1, 1),
+            date_end=date(2026, 1, 31),
+        )
+    )
+    assert result.status == "FAILED_FINAL"
+    assert "no staging rows" in (result.message or "").lower()
+
+
+def test_syncJob_revisionAudit_missingInstrument_failClosed(tmp_path) -> None:
+    """覆盖范围：revision_audit runner 缺 instrument_id 边界
+    测试对象：DataSyncOrchestrator.run_revision_audit
+    目的/目标：修订审计须绑定标的，空 ID 须 fail-closed
+    验证点：result.status=FAILED_FINAL；消息含 requires instrument_id
+    失败含义：无标的修订审计仍完成，修订 diff 无法定位
+    """
+    orch = _orchestrator(tmp_path)
+    result = orch.run_revision_audit(
+        _base_spec(job_id="job-rev-no-inst", job_type="revision_audit", instrument_id=None)
+    )
+    assert result.status == "FAILED_FINAL"
+    assert "instrument_id" in (result.message or "").lower()
+
+
+def test_syncJob_revisionAudit_emptyStaging_failClosed(tmp_path) -> None:
+    """覆盖范围：revision_audit runner 无观测行边界
+    测试对象：DataSyncOrchestrator.run_revision_audit
+    目的/目标：macro 修订审计在 axis_observation 无行时须 fail-closed
+    验证点：result.status=FAILED_FINAL；消息含 no staging rows
+    失败含义：无数据修订审计仍 COMPLETED，修订链路假绿
+    """
+    orch = _orchestrator(tmp_path)
+    result = orch.run_revision_audit(
+        _base_spec(
+            job_id="job-rev-empty",
+            job_type="revision_audit",
+            data_domain="macro_series",
+            market_id="GLOBAL",
+            source_id="fred",
+            instrument_id="DGS10",
+        )
+    )
+    assert result.status == "FAILED_FINAL"
+    assert "no staging rows" in (result.message or "").lower()
+
+
 def test_syncJob_dataQuality_skeletonCompletes(tmp_path) -> None:
     """覆盖范围：数据质量类型作业的确定性骨架链路
-    测试对象：SyncJobStateMachine 对 job_type=data_quality
-    目的/目标：数据质量巡检任务能走 已规划→校验中→已完成 的最短路径
-    验证点：带 instrument_id 与日期范围的 spec 落库后 status=COMPLETED
+    测试对象：DataSyncOrchestrator.run_data_quality
+    目的/目标：有 instrument 且 clean 有行时质检任务须 COMPLETED
+    验证点：security_bar_1d 有行后 result.status=COMPLETED
     失败含义：质量巡检走不完状态机，门禁报告挂不上任务
     """
-    sm = _machine(tmp_path)
-    sm.create_job(
+    orch = _orchestrator(tmp_path)
+    with orch._cm.writer() as con:
+        con.execute(
+            """
+            INSERT INTO security_bar_1d (
+                instrument_id, trade_date, adjustment_type, close, source_used, batch_id
+            ) VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            ["000001", "2026-01-15", "none", 10.0, "baostock", "b1"],
+        )
+    result = orch.run_data_quality(
         _base_spec(
             job_id="job-dq",
             job_type="data_quality",
@@ -185,11 +277,4 @@ def test_syncJob_dataQuality_skeletonCompletes(tmp_path) -> None:
             date_end=date(2026, 1, 31),
         )
     )
-    sm.transition("job-dq", "PLANNED")
-    sm.transition("job-dq", "VALIDATING")
-    sm.transition("job-dq", "COMPLETED")
-    with sm._cm.writer() as con:
-        status = con.execute(
-            "SELECT status FROM data_sync_job WHERE job_id = ?", ["job-dq"]
-        ).fetchone()[0]
-    assert status == "COMPLETED"
+    assert result.status == "COMPLETED"

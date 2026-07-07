@@ -32,7 +32,7 @@ def test_sourceHealthSnapshot_writer_insertsRow() -> None:
         SourceHealthSnapshotRow(
             snapshot_id="snap-sh01",
             source_id="fred",
-            as_of_timestamp=datetime.now(UTC),
+            as_of_timestamp=datetime(2024, 6, 30, 12, 0, tzinfo=UTC),
             health_status="PASS",
             notes="sh-01 isolated pytest",
         )

@@ -24,10 +24,10 @@ from tests.support.orchestration_flow_fixtures import (
     _incremental_spec,
     _orch_stack,
 )
-from tests.test_sync_orchestrator import (
-    _BackfillCountAdapter,
-    _BACKFILL_3SHARD_END,
-    _BACKFILL_3SHARD_START,
+from tests.support.sync_adapters import (
+    BACKFILL_3SHARD_END as _BACKFILL_3SHARD_END,
+    BACKFILL_3SHARD_START as _BACKFILL_3SHARD_START,
+    BackfillCountAdapter as _BackfillCountAdapter,
 )
 
 
@@ -347,7 +347,9 @@ def test_runReconcile_refetchMatches_resolvesByRefetch(tmp_path: Path) -> None:
     assert status == "RESOLVED_BY_REFETCH"
 
 
-def test_jobEventLog_payloadSchema_isMachineReadable(tmp_path: Path, monkeypatch) -> None:
+def test_jobEventLog_payloadSchema_isMachineReadable(
+    tmp_path: Path, registry_yaml_fixture: Path, monkeypatch
+) -> None:
     """覆盖范围：job_event_log.payload_json 可机读 schema
     测试对象：parse_event_payload + job_event_log
     目的/目标：增量 job 事件 payload 须符合 SCHEMA_KEYS 约定
@@ -355,7 +357,7 @@ def test_jobEventLog_payloadSchema_isMachineReadable(tmp_path: Path, monkeypatch
     失败含义：事件 payload 不可机器解析，编排可观测性丧失
     """
     _patch_guard_ok(monkeypatch)
-    orch, adapter = _orch_stack(tmp_path, Path("tests/fixtures/source_registry_valid.yaml"))
+    orch, adapter = _orch_stack(tmp_path, registry_yaml_fixture)
     orch.run_incremental(
         _incremental_spec("job-payload"),
         adapter=adapter,

@@ -21,8 +21,8 @@ def _query_budget(path: Path) -> dict:
 def test_apiSecurityContract_isSingleAuthorityForQueryBudget() -> None:
     """覆盖范围：运行时 load_api_limits 与 api_security_contract 的 query_budget
     测试对象：load_api_limits 返回值
-    目的/目标：分页与 agent 行数上限必须以 api_security_contract 为唯一权威
-    验证点：default_page_size、max_page_size、agent_max_rows 与合约字段一一对应
+    目的/目标：分页与 agent 行数上限必须以 api_security_contract 为唯一权威；次级 YAML authority 指向安全合约
+    验证点：default_page_size、max_page_size、agent_max_rows 与合约字段一一对应；spec/cfg authority 与 max_page_size 对齐 loader
     失败含义：运行时限额与合约脱节，前端/API 可能读到错误分页上限
     """
     limits = load_api_limits()
@@ -30,22 +30,13 @@ def test_apiSecurityContract_isSingleAuthorityForQueryBudget() -> None:
     assert limits["default_page_size"] == int(budget["default_page_size"])
     assert limits["max_page_size"] == int(budget["max_page_size_absolute"])
     assert limits["agent_max_rows"] == int(budget["agent_tool_max_rows"])
-
-
-def test_resourceLimitsApiLimits_matchApiSecurityContract() -> None:
-    """覆盖范围：resource_limits 规格/配置与 api_security_contract 的交叉引用
-    测试对象：specs/contracts/resource_limits.yaml 与 configs/resource_limits.yaml
-    目的/目标：次级 YAML 不得自行定义 max_page_size，须指向安全合约
-    验证点：authority 字段指向 api_security_contract；两处 max_page_size 等于合约绝对上限
-    失败含义：配置层出现第二套分页上限，部署时可能覆盖安全合约
-    """
     spec = yaml.safe_load(RESOURCE_LIMITS_SPEC.read_text(encoding="utf-8")) or {}
     cfg = yaml.safe_load(RESOURCE_LIMITS_CFG.read_text(encoding="utf-8")) or {}
-    budget = _query_budget(API_SECURITY)
     expected_max = int(budget["max_page_size_absolute"])
     assert spec["api_limits"]["authority"] == "specs/contracts/api_security_contract.yaml"
     assert int(spec["api_limits"]["max_page_size"]) == expected_max
     assert int(cfg["api_limits"]["max_page_size"]) == expected_max
+    assert limits["max_page_size"] == expected_max
 
 
 def test_loadApiLimits_queryBudgetNotOverriddenByLowerPriorityYaml(tmp_path, monkeypatch) -> None:

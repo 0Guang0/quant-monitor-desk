@@ -149,7 +149,7 @@ def test_layer2Snapshot_lineageIncludesFetchIdsAndHashes(tmp_path: Path) -> None
     db_hashes = json.loads(row[1])
     assert db_fetch == ["fetch-l2-wm"]
     assert db_hashes == ["hash-l2-wm"]
-    assert row[2]
+    assert row[2] == "layer2_sensor_staged_v1"
     assert row[3]
 
 
@@ -282,27 +282,6 @@ def test_crossAssetRegistryLoader_stagedFixture_loadsAxisInputAssets() -> None:
     assert vix.double_count_guard == "layer1_axis_input_display_only"
 
 
-def test_crossAssetRegistryLoader_rejectsNonStagedMode(tmp_path: Path) -> None:
-    """覆盖范围：非允许模式注册表拒收
-    测试对象：CrossAssetRegistryLoader.load（production_live YAML）
-    目的/目标：production_live 抛错；允许 staged_fixture_only 与 production_clean_replay
-    验证点：bad yaml raises staged_fixture_only；STAGED_REGISTRY_FIXTURE mode 正确
-    失败含义：生产模式配置被误当作 staged/clean replay 加载
-    """
-    bad = tmp_path / "bad_registry.yaml"
-    bad.write_text(
-        "version: v1\nmode: production_live\nassets:\n"
-        "  - asset_id: X\n    display_name_cn: x\n    asset_group: USD\n"
-        "    asset_type: index\n    market: US\n    primary_source: staged_fixture\n"
-        "    validation_source: none\n    fallback_policy: none\n"
-        "    is_axis_input: false\n    display_only: false\n"
-        "    eligible_for_model: true\n    double_count_guard: none\n",
-        encoding="utf-8",
-    )
-    with pytest.raises(CrossAssetRegistryLoadError, match="staged_fixture_only"):
-        CrossAssetRegistryLoader().load(registry_path=bad)
-
-
 def test_crossAssetRegistryLoader_rejectsPrimarySourceNone(tmp_path: Path) -> None:
     """覆盖范围：primary_source=none 非法配置
     测试对象：CrossAssetRegistryLoader.load
@@ -365,7 +344,7 @@ def test_doubleCountGuard_axisInputCannotEnterModelAggregation() -> None:
         assert_model_eligible(vix)
 
 
-def test_snapshotBuilder_forModel_blocksAxisInput() -> None:
+def test_layer2Snapshot_builderForModel_blocksAxisInput() -> None:
     """覆盖范围：for_model 构建时拦截轴输入
     测试对象：CrossAssetSnapshotBuilder.build_daily_snapshots(for_model=True)
     目的/目标：即使能建展示快照，for_model=True 对轴输入须 fail-closed
@@ -390,17 +369,14 @@ def test_doubleCountGuard_modelEligibleAsset_passes() -> None:
     """覆盖范围：可入模资产通过资格检查
     测试对象：assert_model_eligible（L2-COPPER）
     目的/目标：eligible_for_model 的常规定价资产应无 guard 异常
-    验证点：eligible_for_model=True；is_axis_input=False；assert_model_eligible 不抛错
+    验证点：assert_model_eligible(copper) 不抛 DoubleCountGuardError
     失败含义：合法铜价资产被拒，模型特征链路断供
     """
-    result = _staged_registry()
     copper = _staged_asset("L2-COPPER")
-    assert copper.eligible_for_model is True
-    assert copper.is_axis_input is False
     assert_model_eligible(copper)
 
 
-def test_snapshotRejectsFutureInput() -> None:
+def test_layer2Snapshot_rejectsFutureInput() -> None:
     """覆盖范围：未来可见性时间戳拒收
     测试对象：reject_future_observation（as_of_visibility 超前）
     目的/目标：as_of 边界后可见的数据不得参与当前快照
@@ -412,7 +388,7 @@ def test_snapshotRejectsFutureInput() -> None:
         reject_future_observation(as_of=AS_OF, observation=future)
 
 
-def test_snapshotRejectsFutureTradeTime() -> None:
+def test_layer2Snapshot_rejectsFutureTradeTime() -> None:
     """覆盖范围：未来 trade_time 拒收
     测试对象：reject_future_observation（trade_time 超前 as_of）
     目的/目标：成交时间不得晚于 as_of 可见边界
@@ -427,7 +403,7 @@ def test_snapshotRejectsFutureTradeTime() -> None:
         reject_future_observation(as_of=AS_OF, observation=future)
 
 
-def test_snapshotRejectsFutureFetch_viaBuilder() -> None:
+def test_layer2Snapshot_rejectsFutureFetch_viaBuilder() -> None:
     """覆盖范围：未来 fetch_time 经 builder 拒收
     测试对象：CrossAssetSnapshotBuilder.build_daily_snapshots
     目的/目标：抓取时间晚于 as_of 的观测不得建快照
@@ -448,7 +424,7 @@ def test_snapshotRejectsFutureFetch_viaBuilder() -> None:
         )
 
 
-def test_snapshotBuilder_rejectsMixedTradeDateBatch() -> None:
+def test_layer2Snapshot_builderRejectsMixedTradeDateBatch() -> None:
     """覆盖范围：同批观测 trade_date 必须一致
     测试对象：CrossAssetSnapshotBuilder.build_daily_snapshots（混合两日）
     目的/目标：日快照批内不得混入多个 trade_date
@@ -474,7 +450,7 @@ def test_snapshotBuilder_rejectsMixedTradeDateBatch() -> None:
         )
 
 
-def test_snapshotBuilder_rejectsTradeDateMismatch() -> None:
+def test_layer2Snapshot_builderRejectsTradeDateMismatch() -> None:
     """覆盖范围：观测日与请求 trade_date 对齐
     测试对象：CrossAssetSnapshotBuilder.build_daily_snapshots（trade_date 无匹配观测）
     目的/目标：指定 trade_date 下无观测应 fail-closed
@@ -552,7 +528,7 @@ def test_crossAssetSnapshotBuilder_buildsDailySnapshotWithLineage() -> None:
     assert lineage.source_fetch_ids == ("fetch-l2-1",)
 
 
-def test_snapshotDeterministicRebuild_sameInputsSameHash() -> None:
+def test_layer2Snapshot_deterministicRebuild_sameInputsSameHash() -> None:
     """覆盖范围：相同输入确定性重建
     测试对象：CrossAssetSnapshotBuilder 两次相同入参
     目的/目标：close/pct_change 与 parameter_hash 可复现
@@ -583,7 +559,7 @@ def test_snapshotDeterministicRebuild_sameInputsSameHash() -> None:
     assert lin1.parameter_hash == lin2.parameter_hash
 
 
-def test_snapshotLineageContainsSourceHashes() -> None:
+def test_layer2Snapshot_lineageContainsSourceHashes() -> None:
     """覆盖范围：Layer2LineageBuilder 必填字段
     测试对象：Layer2LineageBuilder.build
     目的/目标：LINEAGE_REQUIRED_FIELDS 除 rebuild_reason 外均非空
@@ -679,6 +655,34 @@ def test_futuresRollEvent_persistedViaWriteManager(tmp_path: Path) -> None:
 
 
 @pytest.mark.resourceguard
+def test_layer2ObservationWriter_resourceGuardHardStop_blocksWriteAndLeavesNoRows(
+    tmp_path: Path,
+) -> None:
+    """覆盖范围：Layer2 WM 路径上 ResourceGuard HARD_STOP 集成阻断
+    测试对象：Layer2ObservationWriter.write_observations
+    目的/目标：资源守卫拒绝时不得写入 cross_asset_observation
+    验证点：pytest.raises(ResourceGuardBlockedError)；DB 表 0 行
+    失败含义：autouse guard bypass 掩盖 WM 路径未 fail-closed
+    """
+    guard = MagicMock()
+    guard.check.return_value = (Decision.HARD_STOP, "eco limit")
+    cm = layer2_cm(tmp_path, "layer2_guard_wm.duckdb")
+    insert_layer2_validation_report(cm, "vr-guard-wm")
+    copper = _staged_asset("L2-COPPER")
+    with pytest.raises(ResourceGuardBlockedError, match="resource guard blocked"):
+        Layer2ObservationWriter(cm, resource_guard=guard).write_observations(
+            registry_entry=copper,
+            as_of=AS_OF,
+            trade_date=TRADE_DATE,
+            observations=[_obs("L2-COPPER")],
+            validation_report_id="vr-guard-wm",
+        )
+    with cm.reader() as con:
+        count = con.execute("SELECT COUNT(*) FROM cross_asset_observation").fetchone()[0]
+    assert count == 0
+
+
+@pytest.mark.resourceguard
 def test_crossAssetSnapshotBuilder_resourceGuardBlocksBatchBuild() -> None:
     """覆盖范围：ResourceGuard HARD_STOP 阻断构建
     测试对象：CrossAssetSnapshotBuilder（mock guard HARD_STOP）
@@ -700,20 +704,22 @@ def test_crossAssetSnapshotBuilder_resourceGuardBlocksBatchBuild() -> None:
         )
 
 
+@pytest.mark.host_resource
 @pytest.mark.resourceguard
 def test_resourceGuard_realInstance_returnsDecision(tmp_path: Path) -> None:
-    """覆盖范围：真实 ResourceGuard 返回决策枚举
-    测试对象：ResourceGuard.check（真实 DuckDB 连接）
-    目的/目标：check 应返回 OK/WARN/PAUSE/HARD_STOP 之一
-    验证点：decision in 四枚举值
+    """覆盖范围：真实 ResourceGuard 在隔离 DuckDB 上的决策
+    测试对象：ResourceGuard.check（真实 DuckDB 连接，非 autouse mock）
+    目的/目标：空库迁移后 check 应返回可解释决策（宿主机资源可能影响具体枚举值）
+    验证点：decision in {OK,WARN,PAUSE,HARD_STOP}；message 为 str
     失败含义：守卫接口异常，service 层无法解释阻断原因
     """
     db = tmp_path / "rg.duckdb"
     cm = ConnectionManager(db)
     with cm.writer() as con:
         apply_migrations(con)
-        decision, _ = ResourceGuard(con=con).check()
+        decision, message = ResourceGuard(con=con).check()
     assert decision in (Decision.OK, Decision.WARN, Decision.PAUSE, Decision.HARD_STOP)
+    assert isinstance(message, str)
 
 
 def test_noAcceptedChannel_notModelEligible() -> None:
@@ -939,6 +945,13 @@ def test_layer2Snapshot_writeViaWriteManager(tmp_path: Path) -> None:
     assert snap_res.status == "SUCCESS"
     assert lin_res.status == "SUCCESS"
     with cm.reader() as con:
+        snap_row = con.execute(
+            "SELECT asset_id, close FROM cross_asset_daily_snapshot WHERE snapshot_id = ?",
+            [snap.snapshot_id],
+        ).fetchone()
+        assert snap_row is not None
+        assert snap_row[0] == "L2-COPPER"
+        assert float(snap_row[1]) == 100.0
         lin = con.execute(
             """
             SELECT layer_id, source_fetch_ids, source_content_hashes

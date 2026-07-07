@@ -13,14 +13,14 @@ from backend.app.db.connection import ConnectionManager
 from backend.app.db.migrate import apply_migrations
 from backend.app.sync.jobs import SyncJobSpec
 from backend.app.sync.orchestrator import DataSyncOrchestrator
-
-# ponytail: smallest span with ≥3 shards at ECO_MAX_BACKFILL_DAYS_PER_TASK (64d); satisfies shard/backfill assertions
-_BACKFILL_3SHARD_START = date(2026, 1, 1)
-_BACKFILL_3SHARD_END = date(2026, 3, 5)
-# ponytail: 1 shard (15d) — enough when test only needs one BACKFILL_SHARD event
-_BACKFILL_1SHARD_END = date(2026, 1, 15)
-# ponytail: 2 shards (46d) — min for _BackfillFailOnSecondAdapter (fail on 2nd fetch)
-_BACKFILL_2SHARD_END = date(2026, 2, 15)
+from tests.support.sync_adapters import (
+    BACKFILL_2SHARD_END as _BACKFILL_2SHARD_END,
+    BACKFILL_3SHARD_END as _BACKFILL_3SHARD_END,
+    BACKFILL_3SHARD_START as _BACKFILL_3SHARD_START,
+    BACKFILL_1SHARD_END as _BACKFILL_1SHARD_END,
+    BackfillCountAdapter as _BackfillCountAdapter,
+    BackfillFailOnSecondAdapter as _BackfillFailOnSecondAdapter,
+)
 
 
 def _orchestrator(tmp_path) -> DataSyncOrchestrator:
@@ -160,7 +160,6 @@ def test_orchestrator_fetchBlockedWhenGuardPaused_setsFailedRetryable(
         ).fetchone()[0]
     assert status == "FAILED_RETRYABLE"
     assert "RESOURCE_GUARD_PAUSED" in msg
-    assert status != "RESOURCE_GUARD_PAUSED"
 
 
 class _SecretLeakAdapter:
@@ -398,24 +397,29 @@ def test_backfillJob_recordsTriggerReason(tmp_path, monkeypatch) -> None:
     assert "manual_request" in row[0]
 
 
-def test_backfillJob_eachShard_callsResourceGuardBeforeFetching(tmp_path, monkeypatch) -> None:
-    """覆盖范围：每个历史回补分片抓取前都做资源检查
-    测试对象：DataSyncOrchestrator.run_backfill 分片循环
-    目的/目标：多分片连续抓取时，每一片开始前都要再看一眼机器资源
-    验证点：guard check 调用次数 ≥3（与分片数一致量级）
-    失败含义：只有第一片检查资源，后续分片可能在环境恶化时硬跑
+def test_backfillJob_secondShardGuardPause_preservesFirstShardOutcome(tmp_path, monkeypatch) -> None:
+    """覆盖范围：历史回补第 2 片前资源暂停时的分片 outcome
+    测试对象：DataSyncOrchestrator.run_backfill 分片循环 + ResourceGuard
+    目的/目标：环境恶化时第 2 片应 FAILED_RETRYABLE，已完成分片进度与 clean 行保留
+    验证点：results 含 FAILED_RETRYABLE；job_event_log 有 shard completed；clean 仅首片行；fetch_log 无第 2 片
+    失败含义：guard 暂停仍继续抓取或抹掉已完成分片，回补不可恢复
     """
-    from datetime import date
-
     from backend.app.core.resource_guard import Decision, ResourceGuard
+    from backend.app.sync.jobs import plan_backfill_shards
+    from backend.app.sync.orchestrator import DataSyncOrchestrator
 
-    calls: list[str] = []
+    begin_calls = 0
+    real_begin = DataSyncOrchestrator.begin_fetching
 
-    def _track(self):
-        calls.append("check")
-        return Decision.OK, ""
+    def _pause_before_second_shard(self, job_id: str) -> bool:
+        nonlocal begin_calls
+        begin_calls += 1
+        if begin_calls >= 2:
+            return False
+        return real_begin(self, job_id)
 
-    monkeypatch.setattr(ResourceGuard, "check", _track)
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    monkeypatch.setattr(DataSyncOrchestrator, "begin_fetching", _pause_before_second_shard)
     orch = _orchestrator(tmp_path)
     spec = SyncJobSpec(
         run_id="run-guard-bf",
@@ -431,12 +435,49 @@ def test_backfillJob_eachShard_callsResourceGuardBeforeFetching(tmp_path, monkey
         partition_key=None,
         trigger_reason="eco_catchup",
     )
-    orch.run_backfill(
+    results = orch.run_backfill(
         spec,
         adapter=_BackfillCountAdapter(),
         clean_table=_BackfillCountAdapter.CLEAN,
     )
-    assert len(calls) >= 3
+    assert any(r.status == "FAILED_RETRYABLE" for r in results)
+    shards = plan_backfill_shards(spec.date_start, spec.date_end)
+    first_task_id = shards[0][0]
+    with orch._cm.writer() as con:
+        completed = con.execute(
+            """
+            SELECT COUNT(*) FROM job_event_log
+            WHERE job_id = ? AND message LIKE '%completed%'
+            """,
+            [spec.job_id],
+        ).fetchone()[0]
+        clean_rows = con.execute(
+            f"SELECT COUNT(*) FROM {_BackfillCountAdapter.CLEAN}"
+        ).fetchone()[0]
+        fetch_log = con.execute(
+            "SELECT COUNT(*) FROM fetch_log WHERE job_id = ?",
+            [spec.job_id],
+        ).fetchone()[0]
+        blocked = con.execute(
+            """
+            SELECT COUNT(*) FROM job_event_log
+            WHERE job_id = ? AND message LIKE '%resource guard blocked%'
+            """,
+            [spec.job_id],
+        ).fetchone()[0]
+    assert completed >= 1
+    assert clean_rows == 1
+    assert fetch_log == 1
+    assert blocked >= 1
+    with orch._cm.writer() as con:
+        first_complete = con.execute(
+            """
+            SELECT COUNT(*) FROM job_event_log
+            WHERE job_id = ? AND message LIKE ?
+            """,
+            [spec.job_id, f"%{first_task_id}%completed%"],
+        ).fetchone()[0]
+    assert first_complete >= 1
 
 
 def test_backfillJob_midShardFailure_preservesCompletedTasks(tmp_path, monkeypatch) -> None:
@@ -481,68 +522,6 @@ def test_backfillJob_midShardFailure_preservesCompletedTasks(tmp_path, monkeypat
             ["job-fail-bf"],
         ).fetchone()[0]
     assert completed_tasks >= 1
-
-
-class _BackfillCountAdapter:
-    """Minimal adapter for backfill shard tests with validate+write path."""
-
-    source_id = "baostock"
-    supported_domains = frozenset({"market_bar_1d"})
-    STG = "stg_backfill"
-    CLEAN = "stg_backfill_clean"
-
-    def fetch(self, req, *, con, job_id=None):
-        from backend.app.datasources.fetch_result import FetchResult
-
-        con.execute(
-            f"""
-            CREATE TABLE IF NOT EXISTS {self.STG} (
-                instrument_id VARCHAR, trade_date VARCHAR, close DOUBLE,
-                source_used VARCHAR, batch_id VARCHAR, source_id VARCHAR
-            )
-            """
-        )
-        con.execute(
-            f"CREATE TABLE IF NOT EXISTS {self.CLEAN} AS SELECT * FROM {self.STG} WHERE 1=0"
-        )
-        con.execute(f"DELETE FROM {self.STG}")
-        con.execute(
-            f"INSERT INTO {self.STG} VALUES (?, ?, ?, ?, ?, ?)",
-            ["AAPL", "2026-06-15", 100.0, "baostock", "bf1", "baostock"],
-        )
-        return FetchResult(
-            run_id=req.run_id,
-            source_id=self.source_id,
-            data_domain=req.data_domain,
-            status="SUCCESS",
-            row_count=1,
-            fetch_time="2026-06-17T10:00:00Z",
-            staging_table=self.STG,
-            raw_file_paths=["/tmp/bf.parquet"],
-            content_hash="abc",
-            schema_hash="def",
-        )
-
-
-class _BackfillFailOnSecondAdapter(_BackfillCountAdapter):
-    def __init__(self) -> None:
-        self._calls = 0
-
-    def fetch(self, req, *, con, job_id=None):
-        from backend.app.datasources.fetch_result import FetchResult
-
-        self._calls += 1
-        if self._calls >= 2:
-            return FetchResult(
-                run_id=req.run_id,
-                source_id=self.source_id,
-                data_domain=req.data_domain,
-                status="NETWORK_ERROR",
-                row_count=0,
-                fetch_time="2026-06-17T10:00:00Z",
-                error_message="shard 2 failed",
-            )
-        return super().fetch(req, con=con, job_id=job_id)
 
 
 def test_backfillJob_severeConflict_blocksCleanWriteAndPersistsConflictReportId(
@@ -679,7 +658,7 @@ def test_reconcileJob_afterReconcile_resolvesOrManualReview(tmp_path) -> None:
                 "severe",
                 "UNRESOLVED",
                 True,
-                datetime.now(UTC),
+                datetime(2024, 6, 30, 12, 0, tzinfo=UTC),
             ],
         )
     result = orch.run_reconcile(conflict_id, adapter=_BackfillCountAdapter())
@@ -954,7 +933,7 @@ def _simulate_production_profile(monkeypatch) -> None:
     monkeypatch.delenv("QMD_SYNC_ALLOW_ADAPTER", raising=False)
 
 
-def test_r3ySync001_incremental_rejectsAdapterBypassInProductionProfile(
+def test_runIncremental_productionProfile_rejectsAdapterBypass(
     tmp_path, monkeypatch
 ) -> None:
     """覆盖范围：生产环境下增量同步禁止直接注入 adapter 旁路
@@ -989,7 +968,7 @@ def test_r3ySync001_incremental_rejectsAdapterBypassInProductionProfile(
         )
 
 
-def test_r3ySync001_backfill_rejectsAdapterBypassInProductionProfile(
+def test_runBackfill_productionProfile_rejectsAdapterBypass(
     tmp_path, monkeypatch
 ) -> None:
     """覆盖范围：生产环境下历史回补禁止直接注入 adapter 旁路
@@ -1026,7 +1005,7 @@ def test_r3ySync001_backfill_rejectsAdapterBypassInProductionProfile(
         )
 
 
-def test_r3ySync001_reconcile_rejectsAdapterBypassInProductionProfile(
+def test_runReconcile_productionProfile_rejectsAdapterBypass(
     tmp_path, monkeypatch
 ) -> None:
     """覆盖范围：生产环境下冲突调和禁止直接注入 adapter 旁路
@@ -1067,20 +1046,20 @@ def test_r3ySync001_reconcile_rejectsAdapterBypassInProductionProfile(
                 "severe",
                 "UNRESOLVED",
                 True,
-                datetime.now(UTC),
+                datetime(2024, 6, 30, 12, 0, tzinfo=UTC),
             ],
         )
     with pytest.raises(ValueError, match="DataSourceService"):
         orch.run_reconcile(conflict_id, adapter=_BackfillCountAdapter())
 
 
-def test_r3ySync001_testHookAllowsAdapterBypassUnderPytest(
+def test_runIncremental_pytestProfile_allowsAdapterBypass(
     tmp_path, monkeypatch
 ) -> None:
     """覆盖范围：pytest 会话内仍允许 adapter 测试路径
     测试对象：run_incremental(..., adapter=X) 在 PYTEST_CURRENT_TEST 存在时
     目的/目标：生产守卫只封线上配置，不应误伤现有 pytest 套件里的 adapter 测试
-    验证点：result.status 属于 COMPLETED/FAILED_FINAL/MANUAL_REVIEW_REQUIRED/WAITING_RECONCILE
+    验证点：result.status==COMPLETED；clean 表有 staging 写入行
     失败含义：测试环境也被拦死，Batch D 契约测试会全面红灯
     """
     from backend.app.core.resource_guard import Decision, ResourceGuard
@@ -1106,15 +1085,15 @@ def test_r3ySync001_testHookAllowsAdapterBypassUnderPytest(
         adapter=_BackfillCountAdapter(),
         clean_table=_BackfillCountAdapter.CLEAN,
     )
-    assert result.status in {
-        "COMPLETED",
-        "FAILED_FINAL",
-        "MANUAL_REVIEW_REQUIRED",
-        "WAITING_RECONCILE",
-    }
+    assert result.status == "COMPLETED"
+    with orch._cm.writer() as con:
+        clean_rows = con.execute(
+            f"SELECT COUNT(*) FROM {_BackfillCountAdapter.CLEAN}"
+        ).fetchone()[0]
+    assert clean_rows == 1
 
 
-def test_r3ySync001_explicitEnvDoesNotBypassProductionProfile(
+def test_runIncremental_productionProfile_rejectsAdapterBypassDespiteEnv(
     tmp_path, monkeypatch
 ) -> None:
     """覆盖范围：单独设置 QMD_SYNC_ALLOW_ADAPTER 不能恢复生产旁路
@@ -1150,7 +1129,7 @@ def test_r3ySync001_explicitEnvDoesNotBypassProductionProfile(
         )
 
 
-def test_r3ySync001_privateIncrementalRunner_rejectsAdapterBypassInProductionProfile(
+def test_incrementalRunner_productionProfile_rejectsAdapterBypass(
     tmp_path, monkeypatch
 ) -> None:
     """覆盖范围：私有增量 runner 入口同样拒绝生产 adapter 旁路
@@ -1187,7 +1166,7 @@ def test_r3ySync001_privateIncrementalRunner_rejectsAdapterBypassInProductionPro
         )
 
 
-def test_r3h10S10_01_incremental_requiresDatasourceServiceInProductionProfile(
+def test_runIncremental_productionProfile_requiresDatasourceService(
     tmp_path, monkeypatch
 ) -> None:
     """覆盖范围：生产环境下增量同步未注入 DataSourceService 且无 adapter 时 fail-closed
@@ -1218,7 +1197,7 @@ def test_r3h10S10_01_incremental_requiresDatasourceServiceInProductionProfile(
         orch.run_incremental(spec, clean_table="clean_r3h10")
 
 
-def test_r3h10S10_01_backfill_requiresDatasourceServiceInProductionProfile(
+def test_runBackfill_productionProfile_requiresDatasourceService(
     tmp_path, monkeypatch
 ) -> None:
     """覆盖范围：生产环境下回补未注入 DataSourceService 且无 adapter 时 fail-closed
@@ -1249,13 +1228,13 @@ def test_r3h10S10_01_backfill_requiresDatasourceServiceInProductionProfile(
         orch.run_backfill(spec, clean_table="clean_r3h10")
 
 
-def test_r3h10S10_01_reconcile_adapterBypassFailClosedPerAdr025(
+def test_runReconcile_productionProfile_rejectsAdapterBypassAdr025(
     tmp_path, monkeypatch
 ) -> None:
     """覆盖范围：reconcile 生产 profile adapter 旁路 fail-closed（ADR-006 §Reconcile defer）
     测试对象：DataSyncOrchestrator.run_reconcile(conflict_id, adapter=X)
     目的/目标：reconcile 无 datasource_service= 金路径时仍须 adapter fail-closed，非 silent bypass
-    验证点：与 test_r3ySync001_reconcile_* 一致抛 ValueError match DataSourceService
+    验证点：与 test_runReconcile_productionProfile_rejectsAdapterBypass 一致抛 ValueError match DataSourceService
     失败含义：reconcile 生产 profile 可直注 adapter，旁路守卫失效
     """
     import pytest
@@ -1289,7 +1268,7 @@ def test_r3h10S10_01_reconcile_adapterBypassFailClosedPerAdr025(
                 "severe",
                 "UNRESOLVED",
                 True,
-                datetime.now(UTC),
+                datetime(2024, 6, 30, 12, 0, tzinfo=UTC),
             ],
         )
     with pytest.raises(ValueError, match="DataSourceService"):
@@ -1311,75 +1290,6 @@ def _reserved_job_spec(job_type: str, *, job_id: str = "job-reserved") -> SyncJo
         partition_key=None,
         trigger_reason=None,
     )
-
-
-def test_syncJobContract_implementedTypes_matchRuntimeCallables() -> None:
-    """覆盖范围：sync job 契约与 runtime 已实现类型 parity（VR-SYNC-002 / SYNC-01）
-    测试对象：sync_job_contract.yaml · IMPLEMENTED_JOB_TYPES · DataSyncOrchestrator.run_*
-    目的/目标：契约声明的已实现 job 类型须与模块常量及可调用 run_* 方法一一对应
-    验证点：YAML implemented == IMPLEMENTED_JOB_TYPES；implemented run_* 集相等；reserved 分离
-    失败含义：调用方或 CLI 无法从契约判断哪些 job 真正可跑，矩阵与代码漂移
-    """
-    from backend.app.sync.contract import (
-        IMPLEMENTED_JOB_TYPES,
-        RESERVED_JOB_TYPES,
-        load_sync_job_contract,
-    )
-    from backend.app.sync.orchestrator import DataSyncOrchestrator
-
-    contract = load_sync_job_contract()
-    yaml_impl = frozenset(contract["implemented_job_types"])
-    yaml_reserved = frozenset(contract["reserved_job_types"])
-    assert yaml_impl == IMPLEMENTED_JOB_TYPES
-    assert yaml_reserved == RESERVED_JOB_TYPES
-    assert yaml_impl.isdisjoint(yaml_reserved)
-    run_suffixes = frozenset(
-        name[4:]
-        for name in dir(DataSyncOrchestrator)
-        if name.startswith("run_") and callable(getattr(DataSyncOrchestrator, name))
-    )
-    assert run_suffixes == IMPLEMENTED_JOB_TYPES | RESERVED_JOB_TYPES
-
-
-def _assert_deferred_job_type_error(exc_info, *, job_type: str) -> None:
-    from backend.app.sync.contract import (
-        DEFERRED_JOB_TYPE_CODE,
-        DEFERRED_OWNER,
-        DEFERRED_PHASE,
-        DOCS_ANCHOR_D2_P1_1,
-    )
-
-    err = exc_info.value
-    assert err.code == DEFERRED_JOB_TYPE_CODE
-    assert err.job_type == job_type
-    assert err.owner == DEFERRED_OWNER
-    assert err.phase == DEFERRED_PHASE
-    assert err.docs_anchor == DOCS_ANCHOR_D2_P1_1
-    assert DOCS_ANCHOR_D2_P1_1 in str(err)
-    assert DEFERRED_OWNER in str(err)
-    assert DEFERRED_PHASE in str(err)
-
-
-def test_syncJobContract_deferredErrorYaml_parityWithRuntimeConstants() -> None:
-    """覆盖范围：deferred_error 契约字段与 runtime 常量 parity（ZO-05/06）
-    测试对象：sync_job_contract.yaml deferred_error · contract.py 常量
-    目的/目标：owner/phase/code/docs_anchor 单源 YAML 与模块常量一致，防漂移
-    验证点：load_sync_job_contract() deferred_error 各字段 == DEFERRED_* 常量
-    失败含义：调用方或 registry 读到与 runtime 不一致的 deferred 元数据
-    """
-    from backend.app.sync.contract import (
-        DEFERRED_JOB_TYPE_CODE,
-        DEFERRED_OWNER,
-        DEFERRED_PHASE,
-        DOCS_ANCHOR_D2_P1_1,
-        load_sync_job_contract,
-    )
-
-    deferred = load_sync_job_contract()["deferred_error"]
-    assert deferred["code"] == DEFERRED_JOB_TYPE_CODE
-    assert deferred["owner"] == DEFERRED_OWNER
-    assert deferred["phase"] == DEFERRED_PHASE
-    assert deferred["docs_anchor"] == DOCS_ANCHOR_D2_P1_1
 
 
 def test_syncJob_fullLoad_completesWithShards(tmp_path, monkeypatch) -> None:
@@ -1422,25 +1332,73 @@ def test_syncJob_fullLoad_completesWithShards(tmp_path, monkeypatch) -> None:
 def test_syncJob_reservedDataQuality_completesJob(tmp_path) -> None:
     """覆盖范围：data_quality runner 已实现（R3F-SH-03 / VR-SYNC-002 更新）
     测试对象：DataSyncOrchestrator.run_data_quality
-    目的/目标：独立质检 job 可完成且状态为 COMPLETED
+    目的/目标：有 instrument 且 clean 有行时质检 job 可 COMPLETED
     验证点：result.status == COMPLETED
     失败含义：质检入口仍 defer 或空操作，Batch6 job 矩阵未闭包
     """
     orch = _orchestrator(tmp_path)
-    result = orch.run_data_quality(_reserved_job_spec("data_quality", job_id="job-dq-orch"))
+    with orch._cm.writer() as con:
+        con.execute(
+            """
+            INSERT INTO security_bar_1d (
+                instrument_id, trade_date, adjustment_type, close, source_used, batch_id
+            ) VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            ["000001", "2026-01-15", "none", 10.0, "baostock", "b1"],
+        )
+    result = orch.run_data_quality(
+        SyncJobSpec(
+            run_id="run-reserved",
+            job_id="job-dq-orch",
+            job_type="data_quality",
+            data_domain="market_bar_1d",
+            market_id="CN_A",
+            source_id="baostock",
+            adapter_id=None,
+            date_start=None,
+            date_end=None,
+            instrument_id="000001",
+            partition_key=None,
+            trigger_reason=None,
+        )
+    )
     assert result.status == "COMPLETED"
 
 
 def test_syncJob_reservedRevisionAudit_completesJob(tmp_path) -> None:
     """覆盖范围：revision_audit runner 已实现（R3F-SH-02 / VR-SYNC-002 更新）
     测试对象：DataSyncOrchestrator.run_revision_audit
-    目的/目标：修订审计 runner 可完成且状态为 COMPLETED
+    目的/目标：有 macro 观测行时修订审计 runner 可 COMPLETED
     验证点：result.status == COMPLETED
     失败含义：revision_audit 仍 defer，状态机可达但无法安全调用
     """
+    from datetime import date
+
+    from tests.fred_macro_incremental_support import insert_axis_observation
+
     orch = _orchestrator(tmp_path)
+    with orch._cm.writer() as con:
+        insert_axis_observation(
+            con,
+            observation_id="obs-rev-orch",
+            indicator_id="DGS10",
+            obs_date=date(2026, 6, 10),
+        )
     result = orch.run_revision_audit(
-        _reserved_job_spec("revision_audit", job_id="job-rev-orch")
+        SyncJobSpec(
+            run_id="run-reserved",
+            job_id="job-rev-orch",
+            job_type="revision_audit",
+            data_domain="macro_series",
+            market_id="GLOBAL",
+            source_id="fred",
+            adapter_id=None,
+            date_start=None,
+            date_end=None,
+            instrument_id="DGS10",
+            partition_key=None,
+            trigger_reason=None,
+        )
     )
     assert result.status == "COMPLETED"
 

@@ -199,7 +199,7 @@ def test_kalshi_port_windowSpan_blocksOverMaxWindowDays() -> None:
     )
 
     port = create_kalshi_fetch_port(market_tickers=("KXHIGHNY-24",), max_markets=1)
-    end = datetime.now(UTC).date()
+    end = date(2024, 6, 30)
     start = end - timedelta(days=MAX_WINDOW_DAYS + 1)
     req = _prediction_req(
         "kalshi",
@@ -228,7 +228,7 @@ def test_polymarket_port_windowSpan_blocksOverMaxWindowDays() -> None:
     port = create_polymarket_fetch_port(
         market_slugs=("will-fed-cut-rates-2024",), max_markets=1
     )
-    end = datetime.now(UTC).date()
+    end = date(2024, 6, 30)
     start = end - timedelta(days=MAX_WINDOW_DAYS + 1)
     req = _prediction_req(
         "polymarket",
@@ -480,22 +480,39 @@ def test_polymarket_port_liveWithoutOptIn_blocksUnauthorized(
     assert exc_info.value.code == "LIVE_FETCH_REJECTED"
 
 
-def test_kalshi_liveSmoke_authorizationYamlPresent() -> None:
-    """覆盖范围：Kalshi live smoke 授权 YAML SSOT 落盘
-    测试对象：PREDICTION_LIVE_AUTHORIZATION_DEFAULT
-    目的/目标：Tier B live smoke 须有 audit-sandbox 授权证据
-    验证点：authorization_present=true；kalshi.enabled=true
-    失败含义：live smoke 无授权样板，handoff 无法证明用户 gate
+def test_kalshi_liveSmoke_authorizationMissing_failClosed(tmp_path: Path) -> None:
+    """覆盖范围：Kalshi live smoke 缺授权 YAML 时 fail-closed
+    测试对象：load_prediction_live_authorization
+    目的/目标：与 TDX manual probe 对齐 — 缺/坏 authorization 须拒绝，非仅断言文件存在
+    验证点：缺失路径抛出 PredictionMarketLiveSmokeError 且消息含 missing
+    失败含义：live smoke 无授权仍可加载，handoff 无法证明用户 gate
     """
-    from backend.app.ops.prediction_market_live_smoke import (
-        PREDICTION_LIVE_AUTHORIZATION_DEFAULT,
+    from backend.app.datasources.prediction_market_live_smoke_gate import (
+        PredictionMarketLiveSmokeError,
         load_prediction_live_authorization,
     )
 
-    assert PREDICTION_LIVE_AUTHORIZATION_DEFAULT.is_file()
-    auth = load_prediction_live_authorization(PREDICTION_LIVE_AUTHORIZATION_DEFAULT)
-    assert auth["authorization_present"] is True
-    assert auth["kalshi"]["enabled"] is True
+    missing = tmp_path / "no_authorization.yaml"
+    with pytest.raises(PredictionMarketLiveSmokeError, match="missing"):
+        load_prediction_live_authorization(missing)
+
+
+def test_kalshi_liveSmoke_authorizationBadPayload_failClosed(tmp_path: Path) -> None:
+    """覆盖范围：Kalshi live smoke 授权 YAML 字段不合规时 fail-closed
+    测试对象：load_prediction_live_authorization
+    目的/目标：authorization_present=false 或 scope 错误须拒绝
+    验证点：抛出 PredictionMarketLiveSmokeError
+    失败含义：坏授权 YAML 被静默接受
+    """
+    from backend.app.datasources.prediction_market_live_smoke_gate import (
+        PredictionMarketLiveSmokeError,
+        load_prediction_live_authorization,
+    )
+
+    bad = tmp_path / "bad_authorization.yaml"
+    bad.write_text("authorization_present: false\n", encoding="utf-8")
+    with pytest.raises(PredictionMarketLiveSmokeError, match="authorization_present"):
+        load_prediction_live_authorization(bad)
 
 
 @pytest.mark.skipif(
@@ -573,15 +590,10 @@ def test_predictionMarket_dataSourceService_fetch_portIntegration(
         create_web_search_evidence_fetch_port,
     )
     from backend.app.datasources.fetch_result import FetchRequest
-    from backend.app.datasources.service import DataSourceService
+    from backend.app.datasources.service import DataSourceService, _default_operation
     from backend.app.db.connection import ConnectionManager
     from backend.app.db.migrate import apply_migrations
     from backend.app.evidence.manual_review_staging import WEB_EVIDENCE_STAGING_SCHEMA_VERSION
-
-    monkeypatch.setattr(
-        "backend.app.datasources.capability_registry.SourceCapabilityRegistry.assert_source_domain_operation",
-        lambda self, *_args, **_kwargs: None,
-    )
 
     cases = (
         (
@@ -614,7 +626,17 @@ def test_predictionMarket_dataSourceService_fetch_portIntegration(
         apply_migrations(con)
     for source_id, domain, port, instrument_id, expected_schema in cases:
         patch_fetch_port_evidence_adapter(monkeypatch, port)
+        planner = enable_source_route(
+            monkeypatch,
+            source_id=source_id,
+            data_domain=domain,
+            primary_source_id=source_id,
+            operation=_default_operation(domain),
+        )
         service = DataSourceService(
+            source_registry=planner._registry,
+            capability_registry=planner._capabilities,
+            route_planner=planner,
             data_root=tmp_path / "raw" / source_id,
             fetch_port=port,
             staged_fixture_mode=True,
@@ -626,7 +648,12 @@ def test_predictionMarket_dataSourceService_fetch_portIntegration(
             instrument_id=instrument_id,
         )
         with cm.writer() as con:
-            result = service.fetch(req, con=con, job_id=f"job-{source_id}")
+            result = service.fetch(
+                req,
+                con=con,
+                job_id=f"job-{source_id}",
+                operation=_default_operation(domain),
+            )
         assert result.status == "SUCCESS"
         assert result.row_count >= 1
         body = port.fetch_payload(req)

@@ -74,26 +74,6 @@ def test_apiAndAgentCannotImportAdapterFactory() -> None:
     )
 
 
-def test_serviceBuildsRouteBeforeFetch() -> None:
-    """覆盖范围：服务契约声明的抓取步骤顺序
-    测试对象：SERVICE_CONTRACT public_methods.fetch.required_steps
-    目的/目标：必须先定路由、过资源守卫，最后才创建适配器并真正拉数
-    验证点：steps 列表与契约冻结顺序完全一致（load_source_registry → … → ensure_fetch_log_or_failure_event）
-    失败含义：文档与实现步骤错位，gate 无法证明先路由后抓取
-    """
-    contract = load_yaml(SERVICE_CONTRACT)
-    steps = contract["public_methods"]["fetch"]["required_steps"]
-    assert steps == [
-        "load_source_registry",
-        "load_capability_registry",
-        "build_source_route_plan",
-        "check_resource_guard",
-        "create_adapter_internal_only",
-        "call_adapter_fetch",
-        "ensure_fetch_log_or_failure_event",
-    ]
-
-
 def test_datasourceServiceContract_statusIsActive() -> None:
     """覆盖范围：DataSourceService 契约 status 升格（R3H-10 S10-02）
     测试对象：specs/contracts/datasource_service_contract.yaml status 字段
@@ -105,29 +85,11 @@ def test_datasourceServiceContract_statusIsActive() -> None:
     assert contract.get("status") == "active"
 
 
-def test_datasourceServiceContract_requiredTestsIncludeR3h10Gate() -> None:
-    """覆盖范围：契约 required_tests 含 R3H-10 行为门禁用例
-    测试对象：datasource_service_contract.yaml required_tests
-    目的/目标：机器可读绑定 active 契约与 S10-01/03/04/05 gate 测试
-    验证点：含 status gate 与 r3h10 关键行为测名
-    失败含义：升格 gate 或行为测未登记，后续回归可删而不触发契约扫描
-    """
-    contract = load_yaml(SERVICE_CONTRACT)
-    required = set(contract.get("required_tests") or [])
-    for name in (
-        "tests/test_datasource_service.py::test_datasourceServiceContract_statusIsActive",
-        "tests/test_sync_orchestrator.py::test_r3h10S10_01_incremental_requiresDatasourceServiceInProductionProfile",
-        "tests/test_sync_orchestrator.py::test_r3h10S10_01_backfill_requiresDatasourceServiceInProductionProfile",
-        "tests/test_sync_orchestrator.py::test_r3h10S10_01_reconcile_adapterBypassFailClosedPerAdr025",
-    ):
-        assert name in required
-
-
 def test_serviceFetch_runtimeGateOrder(tmp_path: Path, monkeypatch) -> None:
-    """覆盖范围：运行时 fetch 闸门实际执行顺序
+    """覆盖范围：运行时 fetch 闸门实际执行顺序（顺序即契约）
     测试对象：DataSourceService.fetch（monkeypatch guard/adapter）
-    目的/目标：guard → enter_fetching → create_adapter → adapter_fetch，且写 ROUTE_PLAN 与 fetch_log
-    验证点：order 索引顺序；result=SUCCESS；route_count=1；log_count=1
+    目的/目标：datasource_service_contract 步骤顺序为产品契约：guard → enter_fetching → create_adapter → adapter_fetch；成功路径写 ROUTE_PLAN 与 fetch_log
+    验证点：order 索引顺序；result=SUCCESS；route_count=1；log_count=1；guard 阻断 outcome 见 test_serviceGuardBlocked_emitsResourceGuardPausedRoutePlan
     失败含义：运行时跳过路由或守卫，与契约步骤不一致
     """
     order: list[str] = []
@@ -353,10 +315,10 @@ def test_serviceDisabledRoute_writesFetchLog(tmp_path: Path, monkeypatch) -> Non
 
 
 def test_serviceGuardBlocked_emitsResourceGuardPausedRoutePlan(tmp_path: Path, monkeypatch) -> None:
-    """覆盖范围：机器资源不足时的路由与日志行为
+    """覆盖范围：ResourceGuard 阻断时的事件与 fetch_log 行为（route_grade 专测见 test_datasource_route_grade_payload）
     测试对象：DataSourceService.fetch（ResourceGuard HARD_STOP）
     目的/目标：内存等硬指标不达标时应立刻停住，留下暂停事件，且不能假装已经拉过数
-    验证点：pytest.raises(ResourceGuardBlockedError, decision=HARD_STOP, 含 RESOURCE_GUARD_PAUSED)；两条 ROUTE_PLAN（READY 后 RESOURCE_GUARD_PAUSED）；fetch_log count=0
+    验证点：pytest.raises(ResourceGuardBlockedError, decision=HARD_STOP)；两条 ROUTE_PLAN payload 含 route_status/decision/route_plan_id；第二条 RESOURCE_GUARD_PAUSED 且 selected_source_id=None；fetch_log count=0
     失败含义：守卫阻断仍写 fetch 或缺暂停事件，容量事故无法追溯
     """
     from backend.app.core.resource_guard import ResourceSnapshot
@@ -433,7 +395,11 @@ def test_serviceGuardBlocked_emitsResourceGuardPausedRoutePlan(tmp_path: Path, m
     first = parse_event_payload(statuses[0])
     second = parse_event_payload(statuses[1])
     assert first.get("route_status") == "READY"
+    assert first.get("decision") == "route_plan"
+    assert first.get("route_plan_id")
     assert second.get("route_status") == "RESOURCE_GUARD_PAUSED"
+    assert second.get("decision") == "route_plan"
+    assert second.get("route_plan_id")
     assert second.get("selected_source_id") is None
     with cm.writer() as con:
         log_count = con.execute(

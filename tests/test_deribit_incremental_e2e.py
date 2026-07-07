@@ -8,6 +8,7 @@ from typing import Any
 import pytest
 
 from backend.app.ops.deribit_incremental_run import run_deribit_incremental
+from backend.app.ops.db_inspector import DbInspector
 from tests.deribit_incremental_support import (
     AS_OF_DATE,
     INSTRUMENT,
@@ -17,7 +18,7 @@ from tests.deribit_incremental_support import (
 )
 
 
-def test_deribitIncremental_e2e_writesCryptoDerivativeClean(
+def test_deribitIncremental_replay_writesCryptoDerivativeClean(
     deribit_incremental_e2e_ctx: dict[str, Any],
 ) -> None:
     """覆盖范围：replay fixture 经服务路径增量写入 crypto_derivative_clean
@@ -144,6 +145,11 @@ def test_deribitIncremental_liveNetwork_writesCryptoDerivativeClean(
     )
     status = report.instrument_results[0]["status"]
     assert status in {"COMPLETED", "EMPTY_RESPONSE"}
+    inspect_report = DbInspector(ctx["cm"].db_path, ctx["raw_root"]).inspect()
+    clean_table = next(
+        t for t in inspect_report.key_tables if t["name"] == "crypto_derivative_clean"
+    )
+    assert clean_table["exists"] is True
     if status == "COMPLETED":
         with ctx["cm"].reader() as con:
             count = con.execute(
@@ -151,6 +157,7 @@ def test_deribitIncremental_liveNetwork_writesCryptoDerivativeClean(
                 [instrument],
             ).fetchone()[0]
         assert count >= 1
+        assert clean_table["row_count"] is not None and clean_table["row_count"] >= 1
 
 
 @pytest.mark.network

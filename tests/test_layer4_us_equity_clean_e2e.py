@@ -36,6 +36,11 @@ def test_layer4UsEquity_cleanRead_breadthSnapshot_e2e(tmp_path) -> None:
     assert result.breadth_row.trade_date == TRADE_DATE
     assert result.breadth_row.advancers == expected_adv
     assert result.breadth_row.decliners == expected_dec
+    assert len(result.calendar_rows) == 1
+    cal = result.calendar_rows[0]
+    assert cal.is_trading_day is True
+    assert cal.session_type == "regular"
+    assert cal.timezone == "America/New_York"
     assert "staged_fixture" not in result.breadth_row.source
     assert "staged_fixture" not in result.calendar_rows[0].source
     assert "security_bar_1d" in "".join(result.lineage_envelope.source_dataset_ids)

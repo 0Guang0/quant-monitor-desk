@@ -24,26 +24,10 @@ from backend.app.layer3_chains.snapshot_builder import (
     Layer3SnapshotError,
     _parse_ts,
 )
+from tests.layer3_snapshot_support import AS_OF, FIXTURE_L5, TRADE_DATE, build_layer3_snapshot
 
-_FIXTURE_L5 = Path(__file__).resolve().parent / "fixtures" / "layer3_l5_staged_bars"
 _MUTATION_ROOT = PROJECT_ROOT / ".audit-sandbox" / "layer3_l5_mutations"
-AS_OF = datetime(2026, 6, 15, 16, 0, tzinfo=UTC)
-TRADE_DATE = date(2026, 6, 14)
-
-
-def _build(
-    *,
-    l5_bundle_dir: Path = _FIXTURE_L5,
-    as_of: datetime = AS_OF,
-) -> IndustryChainSnapshotBuildResult:
-    """ponytail: shared build() for AC tests; copytree only when mutating manifest."""
-    load_result = IndustryChainLoader().load(bundle_dir=STAGED_LAYER3_BUNDLE_DIR)
-    return IndustryChainSnapshotBuilder().build(
-        load_result=load_result,
-        as_of=as_of,
-        trade_date=TRADE_DATE,
-        l5_bundle_dir=l5_bundle_dir,
-    )
+_FIXTURE_L5 = FIXTURE_L5
 
 
 def _copy_l5_bundle(tmp_path: Path) -> Path:
@@ -73,7 +57,7 @@ def test_layer3Snapshot_buildsFromStagedLoaderAndL5_success() -> None:
     验证点：至少一条快照有 latest_price；全部 as_of_timestamp 等于入参；含 MSFT 锚点
     失败含义：正常 staged 路径建不出有价快照，说明 loader+L5 拼接主路径坏了
     """
-    result = _build()
+    result = build_layer3_snapshot()
     priced = [s for s in result.snapshots if s.latest_price is not None]
     assert len(priced) >= 1
     assert all(s.as_of_timestamp == AS_OF for s in result.snapshots)
@@ -91,7 +75,7 @@ def test_layer3Snapshot_nonStagedL5Source_rejects(tmp_path: Path) -> None:
         tmp_path, lambda m: m.update({"source_mode": "production_live"})
     )
     with pytest.raises(Layer3SnapshotError, match="staged_fixture_only"):
-        _build(l5_bundle_dir=bundle)
+        build_layer3_snapshot(l5_bundle_dir=bundle)
 
 
 def test_layer3Snapshot_lineageRequiredFieldsComplete() -> None:
@@ -101,7 +85,7 @@ def test_layer3Snapshot_lineageRequiredFieldsComplete() -> None:
     验证点：LINEAGE_REQUIRED_FIELDS 逐字段非空（rebuild_reason 可空）；layer_id=layer3；hashes 非空
     失败含义：血缘缺字段仍绿，contract AC-021-2 与增量重建审计会失真
     """
-    result = _build()
+    result = build_layer3_snapshot()
     assert len(result.lineage_envelopes) >= 1
     envelope = result.lineage_envelopes[0]
     for field in LINEAGE_REQUIRED_FIELDS:
@@ -154,7 +138,7 @@ def test_snapshotRejectsFutureInput(tmp_path: Path) -> None:
         ),
     )
     with pytest.raises(Layer3SnapshotError, match="future"):
-        _build(l5_bundle_dir=bundle)
+        build_layer3_snapshot(l5_bundle_dir=bundle)
 
 
 def test_layer3Snapshot_eventOnly_skipsPriceFields() -> None:
@@ -164,7 +148,7 @@ def test_layer3Snapshot_eventOnly_skipsPriceFields() -> None:
     验证点：OPENAI 快照 latest_price、pct_change_1d 均为 None
     失败含义：event_only 被误填行情，§8.12.6 staged 子集语义错误
     """
-    result = _build()
+    result = build_layer3_snapshot()
     openai = next(s for s in result.snapshots if s.anchor_id == "OPENAI")
     assert openai.latest_price is None
     assert openai.pct_change_1d is None
@@ -177,7 +161,7 @@ def test_layer3Snapshot_eventOnly_lineageUsesAnchorDatasetId() -> None:
     验证点：OPENAI envelope 的 source_dataset_ids 含 staged:layer3_anchor:OPENAI
     失败含义：event_only 血缘标成 L5 bar 来源，溯源指纹与实际输入错位（D-1 锁定）
     """
-    result = _build()
+    result = build_layer3_snapshot()
     openai_lineage = next(
         e for e in result.lineage_envelopes if e.snapshot_id.startswith("l3-lineage-OPENAI")
     )
@@ -191,7 +175,7 @@ def test_layer3Snapshot_layer5MappingView_nonEventOnly() -> None:
     验证点：MSFT 视图 instrument_id、close、trade_date、as_of_timestamp 与 fixture 一致
     失败含义：mapping view 缺字段或错价，AC-021-5 与 Layer5 对照链断裂
     """
-    result = _build()
+    result = build_layer3_snapshot()
     msft_view = next(v for v in result.layer5_mapping_views if v.instrument_id == "L5-MSFT-US")
     assert msft_view.close == 420.5
     assert msft_view.trade_date == TRADE_DATE
@@ -207,7 +191,7 @@ def test_layer3Snapshot_missingL5Bar_rejects(tmp_path: Path) -> None:
     """
     bundle = _mutate_l5_manifest(tmp_path, lambda m: m["anchors"].pop("MSFT"))
     with pytest.raises(Layer3SnapshotError, match="MSFT"):
-        _build(l5_bundle_dir=bundle)
+        build_layer3_snapshot(l5_bundle_dir=bundle)
 
 
 def test_layer3Snapshot_tradeDateMismatch_rejects(tmp_path: Path) -> None:
@@ -222,7 +206,7 @@ def test_layer3Snapshot_tradeDateMismatch_rejects(tmp_path: Path) -> None:
         lambda m: m["anchors"]["MSFT"]["bars"][0].update({"trade_date": "2026-06-13"}),
     )
     with pytest.raises(Layer3SnapshotError, match="trade_date"):
-        _build(l5_bundle_dir=bundle)
+        build_layer3_snapshot(l5_bundle_dir=bundle)
 
 
 def test_layer3Snapshot_missingManifestHashes_rejects(tmp_path: Path) -> None:
@@ -234,7 +218,7 @@ def test_layer3Snapshot_missingManifestHashes_rejects(tmp_path: Path) -> None:
     """
     bundle = _mutate_l5_manifest(tmp_path, lambda m: m.pop("source_content_hashes"))
     with pytest.raises(Layer3SnapshotError, match="source_content_hashes"):
-        _build(l5_bundle_dir=bundle)
+        build_layer3_snapshot(l5_bundle_dir=bundle)
 
 
 def test_layer3Snapshot_malformedBarElement_rejects(tmp_path: Path) -> None:
@@ -249,7 +233,7 @@ def test_layer3Snapshot_malformedBarElement_rejects(tmp_path: Path) -> None:
         lambda m: m["anchors"]["MSFT"]["bars"].insert(0, "not-a-dict-bar"),
     )
     with pytest.raises(Layer3SnapshotError, match="mapping"):
-        _build(l5_bundle_dir=bundle)
+        build_layer3_snapshot(l5_bundle_dir=bundle)
 
 
 def test_layer3Snapshot_missingBarField_rejects(tmp_path: Path) -> None:
@@ -263,7 +247,7 @@ def test_layer3Snapshot_missingBarField_rejects(tmp_path: Path) -> None:
         tmp_path, lambda m: m["anchors"]["MSFT"]["bars"][0].pop("close")
     )
     with pytest.raises(Layer3SnapshotError, match="close"):
-        _build(l5_bundle_dir=bundle)
+        build_layer3_snapshot(l5_bundle_dir=bundle)
 
 
 def test_snapshotParseTs_rejectsNaiveTimestamp() -> None:
@@ -291,7 +275,7 @@ def test_layer3Snapshot_naiveBarTimestamp_rejects(tmp_path: Path) -> None:
         ),
     )
     with pytest.raises(Layer3SnapshotError, match="timezone-aware"):
-        _build(l5_bundle_dir=bundle)
+        build_layer3_snapshot(l5_bundle_dir=bundle)
 
 
 def test_layer3Snapshot_emptyAnchors_returnsEmpty() -> None:
@@ -329,7 +313,7 @@ def test_layer3Snapshot_missingManifestFetchIds_rejects(tmp_path: Path) -> None:
     """
     bundle = _mutate_l5_manifest(tmp_path, lambda m: m.pop("source_fetch_ids"))
     with pytest.raises(Layer3SnapshotError, match="source_fetch_ids"):
-        _build(l5_bundle_dir=bundle)
+        build_layer3_snapshot(l5_bundle_dir=bundle)
 
 
 def test_layer3Snapshot_missingL5Manifest_rejects(tmp_path: Path) -> None:
@@ -342,7 +326,7 @@ def test_layer3Snapshot_missingL5Manifest_rejects(tmp_path: Path) -> None:
     bundle = _MUTATION_ROOT / tmp_path.name / "empty"
     bundle.mkdir(parents=True, exist_ok=True)
     with pytest.raises(Layer3SnapshotError, match="missing L5 manifest"):
-        _build(l5_bundle_dir=bundle)
+        build_layer3_snapshot(l5_bundle_dir=bundle)
 
 
 def test_layer3Snapshot_invalidManifestYaml_rejects(tmp_path: Path) -> None:
@@ -355,7 +339,7 @@ def test_layer3Snapshot_invalidManifestYaml_rejects(tmp_path: Path) -> None:
     bundle = _copy_l5_bundle(tmp_path)
     (bundle / "manifest.yaml").write_text("not: valid: yaml: [", encoding="utf-8")
     with pytest.raises(Layer3SnapshotError, match="invalid yaml"):
-        _build(l5_bundle_dir=bundle)
+        build_layer3_snapshot(l5_bundle_dir=bundle)
 
 
 def test_layer3Lineage_rejectsEmptySourceFetchIds() -> None:
@@ -434,11 +418,11 @@ def test_layer3Snapshot_deterministicRebuild_sameInputsSameHash() -> None:
     """覆盖范围：同输入重复 build 的全 row tuple 与 lineage 稳定性
     测试对象：IndustryChainSnapshotBuilder.build 产出的 snapshots 与 lineage_envelopes
     目的/目标：R3-B6-021-O-02 — 同输入两次 build 全字段一致（lineage 除 generated_at）
-    验证点：两次 _build() 的 IndustryChainDailySnapshotRow 全等；lineage 约定字段全等
+    验证点：两次 build_layer3_snapshot() 的 IndustryChainDailySnapshotRow 全等；lineage 约定字段全等（generated_at 有意排除，golden manifest 登记见 tests/fixtures/layer3_staged_bundle/）
     失败含义：同输入 row/lineage 漂移，增量重建与审计对账不可复现
     """
-    result1 = _build()
-    result2 = _build()
+    result1 = build_layer3_snapshot()
+    result2 = build_layer3_snapshot()
 
     snaps1 = sorted(result1.snapshots, key=lambda s: s.anchor_id)
     snaps2 = sorted(result2.snapshots, key=lambda s: s.anchor_id)
@@ -482,7 +466,7 @@ def test_layer3Snapshot_nonNumericVolume_rejects(tmp_path: Path) -> None:
         lambda m: m["anchors"]["MSFT"]["bars"][0].update({"volume": "not-a-number"}),
     )
     with pytest.raises(Layer3SnapshotError, match="numeric"):
-        _build(l5_bundle_dir=bundle)
+        build_layer3_snapshot(l5_bundle_dir=bundle)
 
 
 def test_layer3Snapshot_missingInstrumentId_rejects(tmp_path: Path) -> None:
@@ -496,7 +480,7 @@ def test_layer3Snapshot_missingInstrumentId_rejects(tmp_path: Path) -> None:
         tmp_path, lambda m: m["anchors"]["MSFT"].pop("instrument_id")
     )
     with pytest.raises(Layer3SnapshotError, match="instrument_id"):
-        _build(l5_bundle_dir=bundle)
+        build_layer3_snapshot(l5_bundle_dir=bundle)
 
 
 def test_layer3Snapshot_nonNumericClose_rejects(tmp_path: Path) -> None:
@@ -511,7 +495,7 @@ def test_layer3Snapshot_nonNumericClose_rejects(tmp_path: Path) -> None:
         lambda m: m["anchors"]["MSFT"]["bars"][0].update({"close": "not-a-number"}),
     )
     with pytest.raises(Layer3SnapshotError, match="numeric"):
-        _build(l5_bundle_dir=bundle)
+        build_layer3_snapshot(l5_bundle_dir=bundle)
 
 
 def test_layer3Snapshot_l5BundleOutsideProjectRoot_rejects() -> None:
@@ -526,4 +510,4 @@ def test_layer3Snapshot_l5BundleOutsideProjectRoot_rejects() -> None:
     outside = path_outside_project_root(suffix="outside_l5")
     shutil.copytree(_FIXTURE_L5, outside)
     with pytest.raises(Layer3SnapshotError, match="project root"):
-        _build(l5_bundle_dir=outside)
+        build_layer3_snapshot(l5_bundle_dir=outside)

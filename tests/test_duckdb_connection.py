@@ -63,18 +63,6 @@ def test_writer_whenLockHeld_raisesWriteLockError(tmp_path: Path) -> None:
                 pass
 
 
-def test_applyPragmas_readerProfile_setsThreadsAndMemory(tmp_path: Path, monkeypatch) -> None:
-    """覆盖范围：reader 连接应用 eco profile 的线程与内存 pragma（GPT P0-3 别名）
-    测试对象：ConnectionManager.reader 的 pragma 配置
-    目的/目标：只读连接须按 profile 限制 threads 与 memory_limit
-    验证点：threads=2；memory_limit 含 1536 或等价表示
-    失败含义：reader 未受资源上限约束，大批量查询可能拖垮主机
-    """
-    db = tmp_path / "t.duckdb"
-    _init(db)
-    _assert_reader_threads_and_memory_limit(db, monkeypatch)
-
-
 def test_reader_appliesThreadsAndMemoryLimit(tmp_path: Path, monkeypatch) -> None:
     """覆盖范围：reader 连接应用 eco profile 的线程与内存 pragma
     测试对象：ConnectionManager.reader 的 pragma 配置

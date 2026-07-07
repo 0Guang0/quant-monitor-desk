@@ -93,6 +93,10 @@ def test_evidenceFoundation_recordKinds_areDistinct() -> None:
         created_by="data_quality_validator",
     )
     validator.validate_record(derived)
+    assert derived.evidence_kind == EvidenceKind.DERIVED_VALIDATION
+    assert derived.created_by == "data_quality_validator"
+    assert derived.provenance is not None
+    assert derived.provenance.source_fetch_ids
 
     agent = EvidenceFoundationRecord(
         evidence_id="EV-023A-AGENT-001",
@@ -108,6 +112,9 @@ def test_evidenceFoundation_recordKinds_areDistinct() -> None:
         provenance=None,
     )
     validator.validate_record(agent)
+    assert agent.evidence_kind == EvidenceKind.AGENT_INTERPRETATION
+    assert agent.provenance is None
+    assert agent.created_by == "agent_interpreter"
 
     with pytest.raises(EvidenceFoundationError, match="must not carry factual source provenance"):
         validator.validate_record(

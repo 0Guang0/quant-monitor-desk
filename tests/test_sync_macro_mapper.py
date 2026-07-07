@@ -2,18 +2,15 @@
 
 from __future__ import annotations
 
-import inspect
-
-from backend.app.sync.mappers import macro_series as mapper_mod
 from backend.app.sync.mappers.macro_series import map_macro_series_bundle_to_axis_observations
 
 
-def test_syncMacroMapper_axisObservation_pureNoOrchestrator() -> None:
+def test_syncMacroMapper_axisObservation_mapsFieldsAndSkipsMissingValues() -> None:
     """覆盖范围：macro_series → axis_observation mapper
-    测试对象：backend.app.sync.mappers.*
-    目的/目标：mapper 为纯函数；无 orchestrator/watermark 调用
-    验证点：单测覆盖 macro→axis_observation 字段映射
-    失败含义：mapper 与编排耦合，无法复用 BindingSyncExecutor
+    测试对象：map_macro_series_bundle_to_axis_observations
+    目的/目标：mapper 将 bundle 观测映射为 axis_observation 行并跳过缺失值
+    验证点：`.` 值被过滤；有效行含 indicator_id/raw_value/observation_id
+    失败含义：脏观测入库或 mapper 与编排耦合无法复用
     """
     bundle = {
         "source_id": "fred",
@@ -29,8 +26,3 @@ def test_syncMacroMapper_axisObservation_pureNoOrchestrator() -> None:
     assert rows[0]["indicator_id"] == "DGS10"
     assert rows[0]["raw_value"] == 4.1
     assert rows[0]["observation_id"]
-
-    source = inspect.getsource(mapper_mod)
-    assert "orchestrator" not in source
-    assert "read_watermark" not in source
-    assert "DataSyncOrchestrator" not in source

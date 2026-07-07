@@ -129,20 +129,27 @@ def test_initDb_syncRegistry_oneLiner(
     assert count >= 1
 
 
-def test_packaging_consoleScripts_smoke(monkeypatch, tmp_path) -> None:
+def test_packaging_consoleScripts_smoke() -> None:
     """覆盖范围：pyproject console_scripts 可导入
     测试对象：qmd-data / qmd-init-db / qmd-sync-registry entrypoints
     目的/目标：R3F-CLI-02/04 打包入口 smoke
-    验证点：main 符号可解析
+    验证点：entry_points 可解析且 --help 子进程 exit 0
     失败含义：editable install 后运维仍依赖手工 PYTHONPATH
     """
-    from backend.app.cli.main import main as data_main
-    from scripts.init_db import main as init_main
-    from scripts.sync_registry import main as sync_main
+    from importlib.metadata import entry_points
 
-    assert callable(data_main)
-    assert callable(init_main)
-    assert callable(sync_main)
+    scripts = {ep.name: ep.value for ep in entry_points(group="console_scripts")}
+    for name in ("qmd-data", "qmd-init-db", "qmd-sync-registry"):
+        assert name in scripts
+        module_path, _, attr = scripts[name].partition(":")
+        proc = subprocess.run(
+            [sys.executable, "-m", module_path, "--help"],
+            cwd=PROJECT_ROOT,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        assert proc.returncode == 0, proc.stderr
 
 
 def test_initBasic_noDryRun_syncsRegistry(tmp_path, monkeypatch, registry_yaml_fixture: Path) -> None:

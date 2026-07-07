@@ -92,8 +92,8 @@ def _valid_result_for_status(status: str) -> FetchResult:
 
 
 @pytest.mark.parametrize("status", CONTRACT_STATUSES)
-def test_fetchResult_allContractStatuses_areAccepted(status):
-    """覆盖范围：抓取结果模型支持的全部状态码能否正常构造
+def test_fetchResult_allContractStatuses_areAccepted(status) -> None:
+    """覆盖范围：抓取结果模型支持的全部状态码能否正常构造（Pydantic 序列化契约）
     测试对象：FetchResult（parametrize CONTRACT_STATUSES）
     目的/目标：供应商返回的各种成败状态都应能被系统识别和记录
     验证点：九种 CONTRACT_STATUSES 均可被 Pydantic 接受；r.status == 入参 status

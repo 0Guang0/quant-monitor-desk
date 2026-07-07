@@ -1,6 +1,6 @@
 """Contract drift tests — ops db-inspect YAML SSOT and WriteManager parity (B3V-C01).
 
-覆盖范围：ops_db_inspect_contract.yaml 与 write_contract.yaml 对 runtime 的漂移检测。
+Artifact-gate：YAML↔常量 parity；CI 可迁至 scripts/check_contract_drift.py 减负。
 """
 
 from __future__ import annotations

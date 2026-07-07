@@ -418,7 +418,7 @@ def test_axisFeatureEngine_shuffledHistory_sortedBeforeStats() -> None:
     hist = _history("ENV-E1-EFFR", 5)
     shuffled = list(reversed(hist))
     row = engine.compute_features(as_of=AS_OF, observations=[shuffled[-1]], history=shuffled)[0]
-    assert row.raw_delta_abs is not None
+    assert row.raw_delta_abs == pytest.approx(0.0)
 
 
 def test_snapshotLineage_missingContentHashes_rejectsSyntheticFallback() -> None:

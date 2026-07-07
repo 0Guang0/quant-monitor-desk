@@ -73,9 +73,7 @@ def _enable_source_registry(
     )
 
 
-def _patch_mootdx_registry_validation_only(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Deprecated: registry validation_only=false @ R3-DCP-08 Repair; kept as no-op for call-site compat."""
-    del monkeypatch
+# R3-DCP-08 Repair closed mootdx validation_only registry drift; no test patch needed.
 
 
 @pytest.fixture
@@ -100,8 +98,6 @@ def test_tierASyncRouter_dryRun_allSources_auditableJson(
     """
     entry = resolve_tier_a_incremental(source_id)
     _enable_source_registry(monkeypatch, source_id, entry.canonical_domain)
-    if source_id == "mootdx":
-        _patch_mootdx_registry_validation_only(monkeypatch)
     payload = sync_tier_a_by_source_id(source_id=source_id, dry_run=True, end="2024-06-30")
     assert payload["command"] == "sync"
     assert payload["dry_run"] is True
@@ -123,6 +119,21 @@ def test_tierASyncRouter_dryRun_disabledRegistry_failClosed(
     with pytest.raises(CliFailure) as exc_info:
         sync_tier_a_by_source_id(source_id="bis", dry_run=True, end="2024-06-30")
     assert exc_info.value.error_code == "DISABLED_SOURCE"
+
+
+def test_tierASyncRouter_dryRun_defaultEnabledSource_noPatch(
+    sandbox_env: Path,
+) -> None:
+    """覆盖范围：生产默认启用源 dry-run 无需 patch registry
+    测试对象：sync_tier_a_by_source_id source_id=baostock dry_run=True
+    目的/目标：与 bis/fred 禁用对照 — baostock enabled_by_default=true 应可直接 dry-run 审计
+    验证点：dry_run=True；source_id=baostock；message 含 dry-run
+    失败含义：默认启用源 dry-run 仍须 monkeypatch，掩盖生产 posture
+    """
+    payload = sync_tier_a_by_source_id(source_id="baostock", dry_run=True, end="2024-06-30")
+    assert payload["dry_run"] is True
+    assert payload["source_id"] == "baostock"
+    assert "dry-run" in payload["message"].lower()
 
 
 def test_tierASyncRouter_unknownSource_failClosed(sandbox_env: Path) -> None:
@@ -161,7 +172,7 @@ def test_tierASyncRouter_syncPlan_delegatesWhenSourceIdSet(
     验证点：mootdx dry-run 返回 source_id=mootdx
     失败含义：main 仍只认 --domain 旧路径，S12 路由未接通
     """
-    _patch_mootdx_registry_validation_only(monkeypatch)
+    _enable_source_registry(monkeypatch, "mootdx", "cn_equity_daily_bar")
     payload = data_commands.sync_plan(
         data_domain="cn_equity_daily_bar",
         source_id="mootdx",

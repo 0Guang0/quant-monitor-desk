@@ -1,6 +1,9 @@
 """生产环境数据源路由规划器测试（Round2.6 Phase C）。
 
 覆盖范围：各数据域路由状态、候选源跳过原因、fallback 质量标记与用户授权场景。
+
+分工说明（G5-025）：本模块测 SourceRoutePlanner 默认 posture（registry/capability 登记）；
+各 *_adapters.py 的 disabledByDefault / validation_only 测启用后 route 与 port 行为。两侧互补，勿删一侧。
 """
 
 from __future__ import annotations

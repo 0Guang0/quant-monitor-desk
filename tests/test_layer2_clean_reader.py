@@ -6,7 +6,8 @@ from datetime import date, timedelta
 
 import pytest
 
-from backend.app.layer1_axes.clean_observation_reader import resolve_read_limit as l1_resolve_read_limit
+from backend.app.layer1_axes.clean_observation_reader import P0_ROW_CAPS as L1_P0_ROW_CAPS
+from backend.app.layer2_sensors.clean_observation_reader import P0_ROW_CAPS as L2_P0_ROW_CAPS
 from backend.app.layer2_sensors.clean_observation_reader import (
     Layer2CleanObservationFallbackForbiddenError,
     Layer2CleanObservationReadError,
@@ -252,14 +253,12 @@ def test_layer2CleanReader_respectsAsOfEndFilter(tmp_path) -> None:
 
 def test_layer2CleanReader_rowCapMatchesLayer1Vixcls(tmp_path) -> None:
     """覆盖范围：L2-VIX row_cap 与 Layer1 VIXCLS cap 程序化对账
-    测试对象：resolve_read_limit（L2）vs Layer1 VIXCLS
+    测试对象：P0_ROW_CAPS SSOT（L2 vs L1）
     目的/目标：A4 — P0_ROW_CAPS 不得与 Layer1 RA.R1.VIXCLS_30D_IMPLIED_VOL 漂移
-    验证点：resolve_read_limit('L2-VIX') == l1_resolve_read_limit('RA.R1.VIXCLS_30D_IMPLIED_VOL')
-    失败含义：跨层 cap 不一致可导致读窗口不对称
+    验证点：L2_P0_ROW_CAPS['L2-VIX'] == L1_P0_ROW_CAPS['RA.R1.VIXCLS_30D_IMPLIED_VOL']
+    失败含义：registry cap drift — 跨层 cap 不一致可导致读窗口不对称
     """
-    assert resolve_read_limit("L2-VIX") == l1_resolve_read_limit(
-        "RA.R1.VIXCLS_30D_IMPLIED_VOL"
-    )
+    assert L2_P0_ROW_CAPS["L2-VIX"] == L1_P0_ROW_CAPS["RA.R1.VIXCLS_30D_IMPLIED_VOL"]
 
 
 def test_layer2CleanReplayRegistry_rejectsNonP0FredPrimary(tmp_path) -> None:

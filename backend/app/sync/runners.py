@@ -1159,19 +1159,54 @@ class QualityJobRunner:
         self._jobs = jobs
         self._validation = validation
 
+    def _fail_quality_job(self, job_id: str, message: str) -> SyncJobResult:
+        self._jobs.transition(job_id, "FAILED_FINAL", message=message)
+        return SyncJobResult(job_id=job_id, status="FAILED_FINAL", message=message)
+
+    def _count_rows_for_instrument(self, con, spec: SyncJobSpec) -> int:
+        """ponytail: bar→security_bar_1d; macro→axis_observation; upgrade→domain staging SSOT."""
+        instrument = spec.instrument_id
+        if not instrument:
+            return 0
+        if spec.data_domain == "market_bar_1d":
+            return con.execute(
+                "SELECT COUNT(*) FROM security_bar_1d WHERE instrument_id = ?",
+                [instrument],
+            ).fetchone()[0]
+        if spec.data_domain == "macro_series":
+            return con.execute(
+                "SELECT COUNT(*) FROM axis_observation WHERE indicator_id = ?",
+                [instrument],
+            ).fetchone()[0]
+        return 0
+
     def run_revision_audit(self, spec: SyncJobSpec) -> SyncJobResult:
         job_id = self._jobs.create_job(spec)
         self._jobs.transition(job_id, "PLANNED")
+        if not spec.instrument_id:
+            return self._fail_quality_job(job_id, "revision_audit requires instrument_id")
         self._jobs.transition(job_id, "VALIDATING", message="revision audit scan")
-        # ponytail: state-machine stub; SH-02 completes without revision diff scan yet
+        with self._jobs._cm.writer() as con:
+            row_count = self._count_rows_for_instrument(con, spec)
+        if row_count == 0:
+            return self._fail_quality_job(
+                job_id, "revision_audit: no staging rows for instrument"
+            )
         self._jobs.transition(job_id, "COMPLETED", message="revision audit complete")
         return SyncJobResult(job_id=job_id, status="COMPLETED", message="revision audit complete")
 
     def run_data_quality(self, spec: SyncJobSpec) -> SyncJobResult:
         job_id = self._jobs.create_job(spec)
         self._jobs.transition(job_id, "PLANNED")
+        if not spec.instrument_id:
+            return self._fail_quality_job(job_id, "data_quality requires instrument_id")
         self._jobs.transition(job_id, "VALIDATING", message="data quality scan")
-        # ponytail: validation pipeline hook point; SH-03 completes without clean write
+        with self._jobs._cm.writer() as con:
+            row_count = self._count_rows_for_instrument(con, spec)
+        if row_count == 0:
+            return self._fail_quality_job(
+                job_id, "data_quality: no staging rows for instrument"
+            )
         _ = self._validation
         self._jobs.transition(job_id, "COMPLETED", message="data quality complete")
         return SyncJobResult(job_id=job_id, status="COMPLETED", message="data quality complete")

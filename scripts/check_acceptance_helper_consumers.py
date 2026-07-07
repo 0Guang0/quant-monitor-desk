@@ -141,7 +141,7 @@ def _is_rule_definition(path: Path, rule: ConsumerRule) -> bool:
     rel = path.relative_to(PROJECT_ROOT).as_posix()
     if rel in {
         "scripts/check_acceptance_helper_consumers.py",
-        "tests/test_acceptance_helper_consumers.py",
+        "tests/test_source_route_db_acceptance_matrix.py",
     }:
         return True
     if rel == rule.target.split(" ", 1)[0]:

@@ -259,15 +259,15 @@ def test_sourceRouteDbAcceptance_fredMacroTracer_liveGateWithoutEnvBlocks(
     assert "QMD_ALLOW_LIVE_FETCH" in report["errors"][0]
 
 
-def test_sourceRouteDbAcceptance_fredMacroTracer_liveWritesAndReadsClean(
+def test_sourceRouteDbAcceptance_fredMacroTracer_mockedLiveObservations_writesAndReadsClean(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """覆盖范围：FRED macro tracer 的正式 fetch/write/downstream read 闭环
-    测试对象：SourceRouteDbAcceptanceSpine.execute live 分支
-    目的/目标：有授权和凭证时，验收 spine 必须经正式增量路径写 clean 并被 Layer1 读到
+    """覆盖范围：FRED macro tracer 经 mock live observations 的 fetch/write/read 闭环
+    测试对象：SourceRouteDbAcceptanceSpine.execute（monkeypatch FredLiveFetchPort._live_observations）
+    目的/目标：有授权和凭证时，验收 spine 经增量路径写 clean 并被 Layer1 读到；非真网 live
     验证点：status=PASS；implementation_mode=live；write_grade=primary；downstream=PRIMARY_GRADE_READ
-    失败含义：验收仍停在 route evidence，无法证明 clean 写入和下游消费真实接通
+    失败含义：验收仍停在 route evidence，无法证明 clean 写入和下游消费路径接通
     """
     monkeypatch.setenv("FRED_API_KEY", "a" * 32)
     monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")

@@ -125,7 +125,7 @@ def test_usEquityPort_explicitWindowSpan_120CalendarDaysWithinTradingSessionCap_
             end_time=end.isoformat(),
         )
     )
-    assert payload.row_count >= 0
+    assert payload.row_count > 0
 
 
 @pytest.mark.parametrize(

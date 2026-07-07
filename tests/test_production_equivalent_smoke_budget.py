@@ -163,9 +163,9 @@ def test_productionEquivalentSmoke_main_writesFailArtifactAndExitsNonZero(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """覆盖范围：smoke 脚本超阈值时写 FAIL artifact 并以 exit 1 结束
+    """覆盖范围：smoke 脚本超阈值时写 FAIL artifact 并以 exit 1 结束（script wiring）
     测试对象：scripts.acceptance_pipeline_smoke.main
-    目的/目标：VR-PERF-001 超线须落盘 FAIL 再非零退出
+    目的/目标：VR-PERF-001 超线须落盘 FAIL 再非零退出；真实指标边界见 test_evaluateSmokeMetrics_*
     验证点：main()==1；artifact status FAIL；violations 非空
     失败含义：CI nightly 超阈值无 artifact 或仍 exit 0
     """
@@ -214,9 +214,9 @@ def test_productionEquivalentSmoke_sourceRouteDbAdapterWritesBlockedReport(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """覆盖范围：旧 smoke 入口显式请求 source-route DB 验收报告
+    """覆盖范围：旧 smoke 入口显式请求 source-route DB 验收报告（script wiring）
     测试对象：scripts.acceptance_pipeline_smoke.main --source-route-db-target
-    目的/目标：兼容入口必须委托 SourceRouteDbAcceptanceSpine，不能用 smoke PASS 冒充成品验收
+    目的/目标：兼容入口须委托 SourceRouteDbAcceptanceSpine；perf 指标见 evaluate_smoke_metrics
     验证点：main()==1；source-route 报告落盘；failure_class=BLOCKED 且含 route_plan_id
     失败含义：旧 smoke 入口仍可能绕过新验收 spine，或把 blocked tracer 包装成成功
     """

@@ -5,7 +5,6 @@ from __future__ import annotations
 from datetime import date
 from pathlib import Path
 
-from backend.app.config import PROJECT_ROOT
 from backend.app.datasources.fetch_ports.baostock_port import create_baostock_fetch_port
 from backend.app.datasources.service import DataSourceService
 from backend.app.db.connection import ConnectionManager
@@ -13,9 +12,6 @@ from backend.app.db.migrate import apply_migrations
 from backend.app.sync.jobs import SyncJobSpec
 from backend.app.sync.orchestrator import DataSyncOrchestrator
 
-REPLAY_FIXTURE = (
-    PROJECT_ROOT / "tests/fixtures/replay/cn_market/baostock/sh600519_daily_replay.json"
-)
 SYMBOL = "sh.600519"
 FIXTURE_DATE = date(2024, 6, 25)
 

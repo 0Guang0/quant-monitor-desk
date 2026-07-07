@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, timedelta
 
 from backend.app.sync.watermark import compute_incremental_window, read_bar_trade_date_watermark
 from tests.alpha_vantage_incremental_support import SYMBOL, bootstrap_db, seed_watermark_row
@@ -21,6 +21,7 @@ def test_alphaVantageWatermark_emptyTable_returnsLookbackWindow(tmp_path) -> Non
         window = compute_incremental_window(wm, end=date(2024, 1, 3), empty_table_lookback_days=30)
     assert wm is None
     assert window.date_end == date(2024, 1, 3)
+    assert window.date_start == date(2024, 1, 3) - timedelta(days=30)
 
 
 def test_alphaVantageWatermark_withData_returnsMaxPlusOne(tmp_path) -> None:

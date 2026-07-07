@@ -10,6 +10,7 @@ from backend.app.db.migrate import apply_migrations
 from backend.app.datasources.fetch_ports.fred_port import MAX_WINDOW_DAYS
 from backend.app.ops.macro_incremental_common import (
     compute_since_date,
+    compute_world_bank_since_date,
     read_observation_date_watermark,
 )
 from backend.app.ops.world_bank_incremental_run import DEFAULT_COUNTRIES, clean_indicator_id
@@ -42,12 +43,12 @@ def test_worldBankWatermark_emptyTable_returnsCappedColdStart() -> None:
     assert wm is None
 
 
-def test_worldBankWatermark_existingObservation_returnsNextDay() -> None:
-    """覆盖范围：单 country 已有最新观测日
-    测试对象：read_observation_date_watermark + compute_since_date
-    目的/目标：有水位时 since = max(observation_date) + 1 日历日
-    验证点：watermark=2026-06-10 → since=2026-06-11
-    失败含义：重复全量拉取或漏拉新观测点
+def test_worldBankWatermark_existingObservation_returnsNextYear() -> None:
+    """覆盖范围：单 country 已有最新观测日（年频）
+    测试对象：read_observation_date_watermark + compute_world_bank_since_date
+    目的/目标：World Bank 年频水位后 since 为下一日历年 1 月 1 日
+    验证点：watermark=2026-06-10 → since=2027-01-01
+    失败含义：年频 since 用日频 +1 日会漏拉或重复全量
     """
     con = duckdb.connect(":memory:")
     apply_migrations(con)
@@ -60,5 +61,5 @@ def test_worldBankWatermark_existingObservation_returnsNextDay() -> None:
     )
     wm = read_observation_date_watermark(con, indicator)
     assert wm == date(2026, 6, 10)
-    since = compute_since_date(wm, today=date(2026, 6, 30))
-    assert since == date(2026, 6, 11)
+    since = compute_world_bank_since_date(wm)
+    assert since == date(2027, 1, 1)

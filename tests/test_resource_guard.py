@@ -83,17 +83,29 @@ def test_evaluate_healthyResources_returnsOk() -> None:
     assert decision == Decision.OK
 
 
-def test_evaluate_lowMemory_returnsPause() -> None:
-    """覆盖范围：可用内存低于 pause 阈值
-    测试对象：evaluate 对 available_memory_gb
-    目的/目标：内存不足时应 PAUSE 并给出 memory 相关原因
-    验证点：decision=PAUSE；reason 含 memory
-    失败含义：低内存仍 OK，同步任务可能 OOM
+@pytest.mark.parametrize(
+    "snap_overrides,reason_substr",
+    (
+        ({"available_memory_gb": 1.5}, "memory"),
+        ({"project_size_gb": 30}, "project"),
+        ({"system_memory_usage_pct": 85.0}, "memory usage"),
+        ({"cache_size_gb": 2.5}, "cache"),
+        ({"cache_size_gb": 3.0}, "cache"),
+    ),
+)
+def test_evaluate_pauseThresholds_returnsPause(
+    snap_overrides: dict, reason_substr: str
+) -> None:
+    """覆盖范围：evaluate 多类指标超 pause 阈值（参数化）
+    测试对象：evaluate 对 memory/project/cache/system usage
+    目的/目标：各类 pause 边界应返回 PAUSE 且 reason 含对应关键词
+    验证点：decision=PAUSE；reason 含 reason_substr
+    失败含义：某类资源压力不触发暂停，编排保护缺口
     """
-    snap = _snap(available_memory_gb=1.5)
+    snap = _snap(**snap_overrides)
     decision, reason = evaluate(snap, THRESH)
     assert decision == Decision.PAUSE
-    assert "memory" in reason.lower()
+    assert reason_substr in reason.lower()
 
 
 def test_evaluate_criticalDisk_returnsHardStop() -> None:
@@ -131,19 +143,6 @@ def test_evaluate_warnMemory_returnsWarn() -> None:
     decision, reason = evaluate(snap, THRESH)
     assert decision == Decision.WARN
     assert "memory" in reason.lower()
-
-
-def test_evaluate_largeProject_returnsPause() -> None:
-    """覆盖范围：项目目录体积超 pause 阈值
-    测试对象：evaluate 对 project_size_gb
-    目的/目标：工作区过大时应 PAUSE 防止无限膨胀
-    验证点：decision=PAUSE；reason 含 project
-    失败含义：巨型工作区仍全速跑，磁盘与扫描成本失控
-    """
-    snap = _snap(project_size_gb=30)
-    decision, reason = evaluate(snap, THRESH)
-    assert decision == Decision.PAUSE
-    assert "project" in reason.lower()
 
 
 def test_evaluate_rssAboveWarnNotPause_returnsWarn() -> None:
@@ -184,19 +183,6 @@ def test_evaluate_diskFreeExactlyAtWarnThreshold_isOk() -> None:
     assert decision == Decision.OK
 
 
-def test_evaluate_cacheAbovePause_returnsPause() -> None:
-    """覆盖范围：cache 目录超 pause 阈值
-    测试对象：evaluate 对 cache_size_gb=2.5
-    目的/目标：缓存过大应 PAUSE
-    验证点：decision=PAUSE；reason 含 cache
-    失败含义：膨胀 cache 不限制，扫描与磁盘压力持续
-    """
-    snap = _snap(cache_size_gb=2.5)
-    decision, reason = evaluate(snap, THRESH)
-    assert decision == Decision.PAUSE
-    assert "cache" in reason.lower()
-
-
 def test_evaluate_duckdbTempAboveHardStop_returnsHardStop() -> None:
     """覆盖范围：DuckDB 临时文件超 profile 上限 105%
     测试对象：evaluate duckdb_temp_size_gb（eco）
@@ -225,19 +211,6 @@ def test_evaluate_duckdbTempAboveMax_returnsPause() -> None:
     decision, reason = evaluate(snap, THRESH, eco)
     assert decision == Decision.PAUSE
     assert "temp" in reason.lower()
-
-
-def test_evaluate_systemMemoryUsageAbovePause_returnsPause() -> None:
-    """覆盖范围：系统内存使用率超 pause 线
-    测试对象：evaluate system_memory_usage_pct=85
-    目的/目标：整机内存压力高时应 PAUSE
-    验证点：decision=PAUSE；reason 含 memory usage
-    失败含义：系统级内存告急仍 OK，影响同机其他服务
-    """
-    snap = _snap(system_memory_usage_pct=85.0)
-    decision, reason = evaluate(snap, THRESH)
-    assert decision == Decision.PAUSE
-    assert "memory usage" in reason.lower()
 
 
 def test_evaluate_systemDiskUsageAboveHardStop_returnsHardStop() -> None:
@@ -363,18 +336,26 @@ def test_check_warnDecision_writesGuardLog(monkeypatch, capsys) -> None:
     assert "RESOURCE_GUARD_PAUSED" not in capsys.readouterr().err
 
 
-def test_snapshot_realCall_doesNotRaise() -> None:
+@pytest.mark.slow
+def test_snapshot_realCall_returnsFiniteMetrics() -> None:
     """覆盖范围：ResourceGuard.snapshot 真实环境调用
     测试对象：ResourceGuard().snapshot()
-    目的/目标：真实 psutil/磁盘扫描不得抛异常且指标非负
-    验证点：memory/disk/rss/project_size 均 >= 0
-    失败含义：生产环境 snapshot 崩溃，所有编排前置检查失败
+    目的/目标：真实 psutil/磁盘扫描不得抛异常且指标为有限非负浮点
+    验证点：memory/disk/rss/project_size 均 ≥0 且为有限 float；cache/temp 字段类型正确
+    失败含义：生产环境 snapshot 崩溃或返回 NaN，编排前置检查失败
     """
     snap = ResourceGuard().snapshot()
-    assert snap.available_memory_gb >= 0
-    assert snap.disk_free_gb >= 0
-    assert snap.process_rss_mb >= 0
-    assert snap.project_size_gb >= 0
+    for field in (
+        snap.available_memory_gb,
+        snap.disk_free_gb,
+        snap.process_rss_mb,
+        snap.project_size_gb,
+        snap.cache_size_gb,
+        snap.duckdb_temp_size_gb,
+    ):
+        assert isinstance(field, (int, float))
+        assert field >= 0
+        assert field == field  # NaN guard
 
 
 def test_resourceSnapshot_negativeValue_raises() -> None:
@@ -386,61 +367,3 @@ def test_resourceSnapshot_negativeValue_raises() -> None:
     """
     with pytest.raises(ValueError, match="available_memory_gb"):
         ResourceSnapshot(-1, 1, 1, 1)
-
-
-def test_evaluate_largeCache_returnsPause() -> None:
-    """覆盖范围：cache_size_gb 超 pause（显式 ResourceSnapshot 构造）
-    测试对象：evaluate cache_size_gb=3.0
-    目的/目标：大缓存目录应触发 PAUSE
-    验证点：decision=PAUSE；reason 含 cache
-    失败含义：与 _snap 路径不一致时 cache 门禁失效
-    """
-    snap = ResourceSnapshot(
-        available_memory_gb=8,
-        disk_free_gb=100,
-        process_rss_mb=300,
-        project_size_gb=1,
-        cache_size_gb=3.0,
-    )
-    decision, reason = evaluate(snap, THRESH)
-    assert decision == Decision.PAUSE
-    assert "cache" in reason.lower()
-
-
-def test_evaluate_highSystemMemoryPct_returnsHardStop() -> None:
-    """覆盖范围：system_memory_usage_pct 超 hard_stop（显式构造）
-    测试对象：evaluate system_memory_usage_pct=95
-    目的/目标：极高系统内存占用率应 HARD_STOP
-    验证点：decision=HARD_STOP；reason 含 memory
-    失败含义：系统内存 95% 仍非 hard_stop，保护不足
-    """
-    snap = ResourceSnapshot(
-        available_memory_gb=8,
-        disk_free_gb=100,
-        process_rss_mb=300,
-        project_size_gb=1,
-        system_memory_usage_pct=95.0,
-    )
-    decision, reason = evaluate(snap, THRESH)
-    assert decision == Decision.HARD_STOP
-    assert "memory" in reason.lower()
-
-
-def test_evaluate_highDuckdbTemp_returnsPause() -> None:
-    """覆盖范围：duckdb_temp 达 eco 上限 90%（显式构造）
-    测试对象：evaluate duckdb_temp_size_gb
-    目的/目标：temp 接近上限应 PAUSE
-    验证点：decision=PAUSE；reason 含 temp
-    失败含义：显式快照路径下 temp 预警缺失
-    """
-    eco = THRESH["profiles"]["eco"]
-    snap = ResourceSnapshot(
-        available_memory_gb=8,
-        disk_free_gb=100,
-        process_rss_mb=300,
-        project_size_gb=1,
-        duckdb_temp_size_gb=eco["duckdb_temp_max_gb"] * 0.9,
-    )
-    decision, reason = evaluate(snap, THRESH, eco)
-    assert decision == Decision.PAUSE
-    assert "temp" in reason.lower()

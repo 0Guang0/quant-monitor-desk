@@ -20,7 +20,7 @@ from tests.alpha_vantage_incremental_support import (
 )
 
 
-def test_alphaVantageIncremental_e2e_writesSecurityBar1d(
+def test_alphaVantageIncremental_replay_writesSecurityBar1d(
     alpha_vantage_incremental_e2e_ctx: dict[str, Any],
 ) -> None:
     """覆盖范围：replay fixture 经服务路径增量写入 security_bar_1d
@@ -64,7 +64,7 @@ def test_alphaVantageIncremental_repeatRun_noRowGrowth(
     ctx = alpha_vantage_incremental_e2e_ctx
     with ctx["cm"].writer() as con:
         seed_watermark_row(con, "2024-01-02")
-    run_alpha_vantage_incremental(
+    report1 = run_alpha_vantage_incremental(
         ctx["orch"],
         service=ctx["service"],
         end=FIXTURE_END,
@@ -74,7 +74,7 @@ def test_alphaVantageIncremental_repeatRun_noRowGrowth(
         first = con.execute(
             "SELECT COUNT(*) FROM security_bar_1d WHERE instrument_id = ?", [SYMBOL]
         ).fetchone()[0]
-    run_alpha_vantage_incremental(
+    report2 = run_alpha_vantage_incremental(
         ctx["orch"],
         service=ctx["service"],
         end=FIXTURE_END,
@@ -141,10 +141,11 @@ def test_alphaVantageIncremental_liveNetwork_writesSecurityBar1d(
     """覆盖范围：隔离 sandbox + Alpha Vantage product live 写 security_bar_1d
     测试对象：run_alpha_vantage_incremental + create_alpha_vantage_fetch_port(use_mock=False)
     目的/目标：QMD_ALLOW_LIVE_FETCH=1 + ALPHA_VANTAGE_API_KEY 时 live 金路径落库
-    验证点：status∈{COMPLETED,EMPTY_RESPONSE}；COMPLETED 时 clean≥1；DbInspector 表存在
+    验证点：status∈{COMPLETED,EMPTY_RESPONSE}；product_live_mode==True；COMPLETED 时 clean≥1 且 av-live evidence
     失败含义：Tier A alpha_vantage live 增量链断或误写主库
     """
     ctx = bootstrap_alpha_vantage_live_e2e_ctx(isolated_live_data_root, monkeypatch)
+    assert ctx["service"].product_live_mode is True
     with ctx["cm"].writer() as con:
         seed_watermark_row(con, "2024-01-02")
     report = run_alpha_vantage_incremental(
@@ -164,8 +165,14 @@ def test_alphaVantageIncremental_liveNetwork_writesSecurityBar1d(
             count = con.execute(
                 "SELECT COUNT(*) FROM security_bar_1d WHERE instrument_id = ?", [SYMBOL]
             ).fetchone()[0]
+            job_id = report.symbol_results[0]["job_id"]
+            fetch_row = con.execute(
+                "SELECT fetch_id FROM fetch_log WHERE job_id = ? ORDER BY fetch_time DESC LIMIT 1",
+                [job_id],
+            ).fetchone()
         assert count >= 1
         assert bar_table["row_count"] is not None and bar_table["row_count"] >= 1
+        assert fetch_row is not None and str(fetch_row[0]).startswith("av-live-")
 
 
 @pytest.mark.network
@@ -183,14 +190,16 @@ def test_alphaVantageIncremental_liveNetwork_idempotentSecondRun(
     with ctx["cm"].writer() as con:
         seed_watermark_row(con, "2024-01-02")
     kwargs = dict(service=ctx["service"], end=FIXTURE_END, source_registry=ctx["registry"])
-    run_alpha_vantage_incremental(ctx["orch"], **kwargs)
+    report1 = run_alpha_vantage_incremental(ctx["orch"], **kwargs)
     with ctx["cm"].writer() as con:
         first = con.execute(
             "SELECT COUNT(*) FROM security_bar_1d WHERE instrument_id = ?", [SYMBOL]
         ).fetchone()[0]
-    run_alpha_vantage_incremental(ctx["orch"], **kwargs)
+    report2 = run_alpha_vantage_incremental(ctx["orch"], **kwargs)
     with ctx["cm"].writer() as con:
         second = con.execute(
             "SELECT COUNT(*) FROM security_bar_1d WHERE instrument_id = ?", [SYMBOL]
         ).fetchone()[0]
+    assert report1.symbol_results[0]["status"] in {"COMPLETED", "EMPTY_RESPONSE"}
+    assert report2.symbol_results[0]["status"] in {"COMPLETED", "EMPTY_RESPONSE"}
     assert first == second

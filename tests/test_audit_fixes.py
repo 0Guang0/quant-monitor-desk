@@ -237,7 +237,8 @@ def test_connection_lowMemoryForcesEcoThreads(tmp_path: Path, monkeypatch) -> No
     assert "732" in mem or "768" in mem or "767" in mem
 
 
-def test_resourceGuard_largeCacheDir_completesWithinReasonableTime(tmp_path: Path) -> None:
+@pytest.mark.perf
+def test_resourceGuard_largeCacheDir_completesWithinReasonableTime(tmp_path: Path, monkeypatch) -> None:
     """覆盖范围：大 cache 目录下 ResourceGuard.check 性能
     测试对象：ResourceGuard.check
     目的/目标：数百小文件 cache 扫描须在合理时间内完成且返回合法决策
@@ -251,15 +252,11 @@ def test_resourceGuard_largeCacheDir_completesWithinReasonableTime(tmp_path: Pat
 
     import backend.app.core.resource_guard as rg_mod
 
-    original = rg_mod.DATA_ROOT
-    rg_mod.DATA_ROOT = tmp_path / "data"
-    try:
-        guard = ResourceGuard()
-        start = time.perf_counter()
-        decision, _ = guard.check()
-        elapsed = time.perf_counter() - start
-    finally:
-        rg_mod.DATA_ROOT = original
+    monkeypatch.setattr(rg_mod, "DATA_ROOT", tmp_path / "data")
+    guard = ResourceGuard()
+    start = time.perf_counter()
+    decision, _ = guard.check()
+    elapsed = time.perf_counter() - start
 
     assert decision.value in {"OK", "WARN", "PAUSE", "HARD_STOP"}
     assert elapsed < 5.0

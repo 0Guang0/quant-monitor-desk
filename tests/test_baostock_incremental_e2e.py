@@ -27,7 +27,7 @@ from tests.incremental_baostock_support import (
 from tests.acceptance_e2e_bootstrap import bootstrap_acceptance_cm
 
 
-def test_baostockIncremental_e2e_writesSecurityBar1d(tmp_path: Path, monkeypatch) -> None:
+def test_baostockIncremental_replay_writesSecurityBar1d(tmp_path: Path, monkeypatch) -> None:
     """覆盖范围：replay fixture 经服务路径增量写入 security_bar_1d
     测试对象：watermark + DataSourceService + run_incremental
     目的/目标：watermark 窗内 bar 应经金路径 upsert 到 clean 表
@@ -94,6 +94,41 @@ def test_baostockIncremental_repeatRun_noRowGrowth(tmp_path: Path, monkeypatch) 
     assert r1.status == "COMPLETED"
     assert r2.status == "COMPLETED"
     assert count == 2
+
+
+def test_baostockIncremental_emptyResponse_whenWatermarkCurrent(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """覆盖范围：水位已追平时增量 sync 不写新行
+    测试对象：run_incremental + caught-up window
+    目的/目标：watermark==end 时 orchestrator SKIPPED，security_bar_1d 行数不变
+    验证点：status==SKIPPED；行数保持 seed 的 1 行
+    失败含义：追平后仍 fetch/write，bar 增量语义错误（bar 源 caught-up 契约为 SKIPPED）
+    """
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    cm = bootstrap_db(tmp_path)
+    with cm.writer() as con:
+        seed_watermark_row(con, FIXTURE_DATE.isoformat())
+        before = con.execute(
+            "SELECT COUNT(*) FROM security_bar_1d WHERE instrument_id = ?", [SYMBOL]
+        ).fetchone()[0]
+    window = compute_incremental_window(FIXTURE_DATE, end=FIXTURE_DATE)
+    raw_root = tmp_path / "raw"
+    raw_root.mkdir()
+    service, orch = build_service(cm, raw_root)
+    result = orch.run_incremental(
+        incremental_spec(window, job_id="job-bao-empty-1"),
+        datasource_service=service,
+        clean_table="security_bar_1d",
+        write_mode="upsert_by_pk",
+        primary_keys=("instrument_id", "trade_date", "adjustment_type"),
+    )
+    assert result.status == "SKIPPED"
+    with cm.reader() as con:
+        after = con.execute(
+            "SELECT COUNT(*) FROM security_bar_1d WHERE instrument_id = ?", [SYMBOL]
+        ).fetchone()[0]
+    assert after == before
 
 
 def test_baostockPort_replayFiltersByFetchWindow() -> None:

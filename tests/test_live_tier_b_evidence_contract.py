@@ -41,16 +41,17 @@ def _sample_outcome(source_id: str) -> LiveValidationOutcome:
     )
 
 
-def test_liveTierBEvidenceContract_hasTenSourceBindings() -> None:
+def test_liveTierBEvidenceContract_sourceBindingsMatchRouter() -> None:
     """覆盖范围：live_tier_b_evidence_v1 source_bindings
     测试对象：specs/contracts/live_tier_b_evidence_v1.yaml
-    目的/目标：契约登记 10 源且与 TIER_B_SOURCES 一致
-    验证点：len(bindings)==10；键集合等于 TIER_B_SOURCES
+    目的/目标：契约 source_bindings 键集合与 TIER_B_SOURCES 一致
+    验证点：frozenset(bindings) == TIER_B_SOURCES；与契约 YAML 键集合一致
     失败含义：验收层源清单与 live tier router 漂移
     """
+    contract = _load_contract()
     bindings = source_bindings()
-    assert len(bindings) == 10
     assert frozenset(bindings) == TIER_B_SOURCES
+    assert frozenset(bindings) == frozenset(contract["source_bindings"])
 
 
 def test_liveTierBEvidenceContract_acceptanceModeValidationFetch() -> None:

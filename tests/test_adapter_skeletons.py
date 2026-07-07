@@ -654,11 +654,11 @@ def test_fetchRecordsLatencyMsWhenPayloadOmitsIt(
     stub_fetch_bytes,
     baostock_skeleton_market_only_class,
 ):
-    """覆盖范围：payload 未提供 latency 时的自动记录
+    """覆盖范围：StubFetchPort 注入已知 latency 写入 fetch_log
     测试对象：SkeletonAdapterBase.fetch(record_fetch_log=True)
-    目的/目标：即使端口未给 latency_ms，也须记录非负延迟到 result 与 log
-    验证点：result.latency_ms 非空且 ≥0；fetch_log.latency_ms 非空
-    失败含义：延迟指标缺失，性能监控与 SLO 无法统计
+    目的/目标：端口给定 latency_ms 时须原样写入 result 与 fetch_log
+    验证点：result.latency_ms==42；fetch_log.latency_ms==42
+    失败含义：延迟指标丢失或漂移，性能监控与 SLO 无法统计
     """
     from backend.app.datasources.adapters.fetch_port import StubFetchPort
 
@@ -667,14 +667,13 @@ def test_fetchRecordsLatencyMsWhenPayloadOmitsIt(
     adapter = baostock_skeleton_market_only_class(
         batch_b_registry,
         raw_store=stack["raw_store"],
-        fetch_port=StubFetchPort(payload=stub_fetch_bytes),
+        fetch_port=StubFetchPort(payload=stub_fetch_bytes, latency_ms=42),
     )
     req = request_factory("baostock", "cn_equity_daily_bar")
     result = adapter.fetch(req, con=con, record_fetch_log=True)
-    assert result.latency_ms is not None
-    assert result.latency_ms >= 0
+    assert result.latency_ms == 42
     row = con.execute("SELECT latency_ms FROM fetch_log WHERE run_id=?", [req.run_id]).fetchone()
-    assert row[0] is not None
+    assert row[0] == 42
 
 
 def test_inferSchemaHash_csvHeader_producesStableHash():

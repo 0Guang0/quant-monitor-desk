@@ -25,6 +25,14 @@ def test_resourceLimitsConfig_defaultProfileIsEco_shouldMatchContract() -> None:
         config = yaml.safe_load(f)
     with contract_path.open(encoding="utf-8") as f:
         contract = yaml.safe_load(f)
-    assert config["default_profile"] == "eco"
-    assert contract["default_profile"] == "eco"
-    assert config["profiles"]["eco"]["max_threads"] == contract["profiles"]["eco"]["max_threads"]
+    assert config["default_profile"] == contract["default_profile"] == "eco"
+    for profile_name in ("eco", "normal"):
+        assert config["profiles"][profile_name] == contract["profiles"][profile_name], profile_name
+    batch_cfg = config["profiles"]["batch"]
+    batch_contract = contract["profiles"]["batch"]
+    for key in batch_contract:
+        assert batch_cfg[key] == batch_contract[key], f"batch.{key}"
+    assert config["system_thresholds"] == contract["system_thresholds"]
+    assert config["project_size_thresholds"] == contract["project_size_thresholds"]
+    assert config["api_limits"] == contract["api_limits"]
+    assert config["actions"] == contract["actions"]

@@ -435,7 +435,7 @@ def test_stooq_port_windowSpan_blocksOverMaxWindowDays() -> None:
     from backend.app.datasources.fetch_ports.stooq_port import MAX_WINDOW_DAYS, create_stooq_fetch_port
 
     port = create_stooq_fetch_port(symbols=("AAPL.US",), max_rows=3)
-    end = datetime.now(UTC).date()
+    end = date(2024, 6, 30)
     start = end - timedelta(days=MAX_WINDOW_DAYS + 1)
     req = _market_req(
         "stooq",

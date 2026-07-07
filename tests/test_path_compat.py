@@ -17,12 +17,22 @@ from backend.app.storage.path_compat import (
 def test_needsExtendedPath_shortPath_false(tmp_path: Path) -> None:
     """覆盖范围：常规短路径不需 extended 前缀
     测试对象：needs_extended_path
-    目的/目标：未超 MAX_PATH 的 tmp_path 应返回 False
-    验证点：needs_extended_path(tmp_path) is False（仅 Windows）
-    失败含义：短路径误走 extended 长路径前缀，非 Windows 或浅目录行为异常
+    目的/目标：未超 MAX_PATH 的 tmp_path 应返回 False（全平台短路径语义）
+    验证点：needs_extended_path(tmp_path) is False
+    失败含义：短路径误走 extended 长路径前缀，path_compat 行为异常
+    """
+    assert needs_extended_path(tmp_path) is False
+
+
+def test_needsExtendedPath_shortPath_false_windowsOnly(tmp_path: Path) -> None:
+    """覆盖范围：Windows 短路径与 Linux 一致返回 False
+    测试对象：needs_extended_path on Windows
+    目的/目标：非深路径在 Windows CI 也不应误标 extended
+    验证点：needs_extended_path(tmp_path) is False
+    失败含义：Windows 浅路径误走 \\?\\ 前缀
     """
     if os.name != "nt":
-        pytest.skip("Windows-only")
+        pytest.skip("Windows-only regression anchor")
     assert needs_extended_path(tmp_path) is False
 
 

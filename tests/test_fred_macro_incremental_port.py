@@ -15,6 +15,8 @@ from backend.app.datasources.fetch_ports.fred_port import (
 )
 from backend.app.datasources.fetch_result import FetchRequest
 
+FIXED_TODAY = date(2026, 6, 30)
+
 
 def _req(**kwargs) -> FetchRequest:
     base = {
@@ -66,10 +68,14 @@ def test_fredPort_coldStart_usesCappedWindow() -> None:
     失败含义：无水位时拉无限历史，违反 cap
     """
     port = FredMockFetchPort(series_ids=("DGS10",), max_rows=3)
-    today = datetime.now(UTC).date()
-    start = port._resolve_observation_start(_req())
+    with patch(
+        "backend.app.datasources.fetch_ports.fred_port.datetime",
+        wraps=datetime,
+    ) as mock_dt:
+        mock_dt.now.return_value = datetime.combine(FIXED_TODAY, datetime.min.time(), tzinfo=UTC)
+        start = port._resolve_observation_start(_req())
     assert start is not None
-    assert (today - start).days == MAX_WINDOW_DAYS
+    assert (FIXED_TODAY - start).days == MAX_WINDOW_DAYS
 
 
 def test_fredPort_mock_filtersObservationsBeforeStart() -> None:
@@ -80,9 +86,13 @@ def test_fredPort_mock_filtersObservationsBeforeStart() -> None:
     失败含义：mock 仍返回全窗，增量语义无法在 CI 证明
     """
     port = create_fred_fetch_port(series_ids=("DGS10",), max_rows=3, use_mock=True)
-    today = datetime.now(UTC).date()
-    since = (today - timedelta(days=15)).isoformat()
-    payload = port.fetch_payload(_req(start_time=since))
+    since = (FIXED_TODAY - timedelta(days=15)).isoformat()
+    with patch(
+        "backend.app.datasources.fetch_ports.fred_port.datetime",
+        wraps=datetime,
+    ) as mock_dt:
+        mock_dt.now.return_value = datetime.combine(FIXED_TODAY, datetime.min.time(), tzinfo=UTC)
+        payload = port.fetch_payload(_req(start_time=since))
     assert payload.row_count >= 1
     import json
 
@@ -108,7 +118,17 @@ def test_fredPort_live_rejectsWithoutApiKey(monkeypatch: pytest.MonkeyPatch) -> 
         port.fetch_payload(_req())
     assert exc_info.value.status == "USER_AUTH_REQUIRED"
 
+
+def test_fredPort_live_succeedsWhenKeyPresent(monkeypatch: pytest.MonkeyPatch) -> None:
+    """覆盖范围：live 分支有 key 时可 fetch
+    测试对象：create_fred_fetch_port(use_mock=False) + patched HTTP
+    目的/目标：FRED_API_KEY 存在时 live port 不抛 USER_AUTH_REQUIRED
+    验证点：fetch_payload row_count>=1
+    失败含义：有 key 仍无法 live fetch，产品 live 路径断裂
+    """
+    monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
     monkeypatch.setenv("FRED_API_KEY", "a" * 32)
+    port = create_fred_fetch_port(series_ids=("DGS10",), max_rows=3, use_mock=False)
     with patch(
         "backend.app.datasources.fetch_ports.fred_port.FredLiveFetchPort._live_observations",
         return_value=[{"series_id": "DGS10", "observation_date": "2026-01-01", "value": "4.0"}],

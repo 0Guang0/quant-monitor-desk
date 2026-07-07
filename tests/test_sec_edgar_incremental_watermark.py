@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, timedelta
 
 import duckdb
 
 from backend.app.db.migrate import apply_migrations
+from backend.app.datasources.fetch_ports.sec_edgar_port import MAX_FILINGS
 from backend.app.ops.sec_edgar_incremental_watermark import (
     FILING_LOOKBACK_DAYS,
     compute_since_date,
@@ -27,7 +28,7 @@ def test_secEdgarWatermark_emptyTable_returnsCappedColdStart() -> None:
     apply_migrations(con)
     today = date(2026, 6, 30)
     since = compute_since_date(None, cap_days=FILING_LOOKBACK_DAYS, today=today)
-    assert since <= today
+    assert since == today - timedelta(days=min(FILING_LOOKBACK_DAYS, MAX_FILINGS))
     mapping = read_since_date_for_cik(con, CIK, today=today)
     assert mapping == since.isoformat()
 

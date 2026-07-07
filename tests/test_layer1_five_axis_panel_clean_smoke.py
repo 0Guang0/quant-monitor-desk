@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 from pathlib import Path
-from unittest.mock import MagicMock
 
 import pytest
 from tests.contract_gate_support import load_yaml
@@ -117,37 +116,12 @@ def test_layer1FiveAxisPanel_cleanSmoke_allP0AxesProduceFeatures(tmp_path) -> No
         assert liq_interp.boundary_reminder == "不构成交易动作"
 
 
-def test_layer1FiveAxisPanel_resourceGuardHardStop_blocksFeatureCompute() -> None:
-    """覆盖范围：五轴 smoke 路径上 ResourceGuard HARD_STOP 须 fail-closed
-    测试对象：AxisFeatureEngine.compute_features
-    目的/目标：A4 — eco profile 硬停止时五轴特征计算不得继续
-    验证点：pytest.raises(ResourceGuardBlockedError)
-    失败含义：资源门禁在五轴路径被绕过，可能拖垮沙箱/生产
-    """
-    guard = MagicMock()
-    guard.check.return_value = (Decision.HARD_STOP, "panel smoke cap")
-    engine = AxisFeatureEngine(
-        resource_guard=guard, min_obs_required=5, window_len=10
-    )
-    from backend.app.layer1_axes.models import AxisObservation
-
-    obs = AxisObservation(
-        indicator_id="ENV-E1-DGS10",
-        as_of_timestamp=AS_OF,
-        publish_timestamp=AS_OF - timedelta(days=1),
-        raw_value=4.0,
-        source_used="fred",
-    )
-    with pytest.raises(ResourceGuardBlockedError, match="resource guard blocked"):
-        engine.compute_features(as_of=AS_OF, observations=[obs], history=[obs])
-
-
 def test_dcp06K1_whitelistAlignsP0CleanBindings() -> None:
-    """覆盖范围：DCP-06 P0 clean 绑定与 K1 layer1_source_whitelist 行一致
+    """覆盖范围：DCP-06 P0 clean 绑定 source_id 与 K1 whitelist 对齐
     测试对象：layer1_source_whitelist.yaml + P0_MACRO_DB_KEYS
-    目的/目标：K1 行 source_id/symbol 与 runtime clean 读绑定可对账
-    验证点：DGS10/VIXCLS/BAA10Y/088691/SPY 各有匹配行；macro_supplementary 非 primary
-    失败含义：白名单与 Tier A clean 读路径漂移，下游 fetch scope 无 SSOT
+    目的/目标：K1 行 source_id 与 runtime clean 读绑定可对账（caps 见 test_dcp06Reader_capsMatchK1WhitelistYaml）
+    验证点：四 macro + SPY 行 source_id/role 匹配 P0_BINDINGS；macro_supplementary 非 primary
+    失败含义：白名单 source 与 Tier A clean 读路径漂移
     """
     doc = load_yaml(WHITELIST)
     rows = doc.get("rows") or []
@@ -172,14 +146,6 @@ def test_dcp06K1_whitelistAlignsP0CleanBindings() -> None:
     macro_supp = [r for r in rows if r.get("data_domain") == "macro_supplementary"]
     assert macro_supp
     assert all(r.get("role") != "primary_candidate" for r in macro_supp)
-
-    dcp06_series = {"DGS10", "BAA10Y", "VIXCLS", "SPY", "088691"}
-    for series in dcp06_series:
-        row = by_series.get(series)
-        assert row is not None, f"missing DCP-06 row for {series}"
-        assert row.get("readiness") == "clean_replay_proven", series
-        assert row.get("row_cap") is not None and int(row["row_cap"]) > 0
-        assert row.get("window_cap") is not None
 
 
 def test_layer1FiveAxisPanel_resourceGuardHardStop_blocksPanelFeatureCompute(
@@ -208,12 +174,12 @@ def test_layer1FiveAxisPanel_resourceGuardHardStop_blocksPanelFeatureCompute(
             engine.compute_features(as_of=AS_OF, observations=[obs[-1]], history=obs)
 
 
-def test_layer1FiveAxisPanel_resourceGuardOnMigratedDb(tmp_path) -> None:
-    """覆盖范围：五轴 smoke 路径在迁移隔离库上真 ResourceGuard.check
-    测试对象：ResourceGuard + bootstrap_layer1_clean_db + panel feature compute
-    目的/目标：A4 — panel 路径使用 ResourceGuard(con=con) 且 OK 时可算特征
-    验证点：decision==OK 时 compute_features 成功；非 OK 时 raises
-    失败含义：五轴集成未接真 ResourceGuard，沙箱 cap 无法 fail-closed
+def test_layer1FiveAxisPanel_resourceGuardOkPath_computesFeatures(tmp_path) -> None:
+    """覆盖范围：五轴 smoke 路径在迁移隔离库上真 ResourceGuard OK 路径
+    测试对象：ResourceGuard(con=con) + AxisFeatureEngine.compute_features
+    目的/目标：A4 — panel 路径 guard.check()==OK 时可算特征（HARD_STOP 见 sibling test）
+    验证点：decision==OK；compute_features 成功且 state_bucket!=insufficient_history
+    失败含义：五轴集成未接真 ResourceGuard 或 OK 路径被误阻断
     """
     cm = bootstrap_layer1_clean_db(tmp_path)
     with cm.writer() as con:
@@ -222,20 +188,15 @@ def test_layer1FiveAxisPanel_resourceGuardOnMigratedDb(tmp_path) -> None:
         )
         guard = ResourceGuard(con=con)
         decision, _reason = guard.check()
+        assert decision == Decision.OK
         obs = read_macro_clean_observations(con, "ENV-E1-DGS10", as_of_end=AS_OF)
         engine = AxisFeatureEngine(
             resource_guard=guard, min_obs_required=30, window_len=60
         )
-        if decision == Decision.OK:
-            feat = engine.compute_features(
-                as_of=AS_OF, observations=[obs[-1]], history=obs
-            )[0]
-            assert feat.state_bucket != "insufficient_history"
-        else:
-            with pytest.raises(ResourceGuardBlockedError, match="resource guard blocked"):
-                engine.compute_features(
-                    as_of=AS_OF, observations=[obs[-1]], history=obs
-                )
+        feat = engine.compute_features(
+            as_of=AS_OF, observations=[obs[-1]], history=obs
+        )[0]
+        assert feat.state_bucket != "insufficient_history"
 
 
 def test_layer1FiveAxisPanel_windowLenWithinWhitelistCap() -> None:

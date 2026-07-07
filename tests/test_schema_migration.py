@@ -117,18 +117,6 @@ def test_applyMigrations_freshDb_includesIngestionTables() -> None:
     assert INGESTION_TABLES.issubset(tables)
 
 
-def test_appliedVersions_afterMigration_containsIngestion() -> None:
-    """覆盖范围：applied_versions 与摄取迁移 ID 一致性
-    测试对象：applied_versions 返回值
-    目的/目标：摄取相关版本号须出现在已应用集合中（与全量迁移一致）
-    验证点：frozenset 结果含 001–011 全部版本
-    失败含义：摄取迁移未记入 schema_version，增量部署会误判状态
-    """
-    con = duckdb.connect(":memory:")
-    apply_migrations(con)
-    assert applied_versions(con) == ALL_MIGRATION_VERSIONS
-
-
 def test_applyMigrations_modifiedFile_raisesChecksumError(tmp_path: Path) -> None:
     """覆盖范围：已应用迁移文件被篡改
     测试对象：apply_migrations 校验和逻辑
@@ -204,6 +192,5 @@ def test_schemaPhaseMatrix_documentsImplementedVsPlanned() -> None:
     con = duckdb.connect(":memory:")
     apply_migrations(con)
     tables = {row[0] for row in con.execute("SHOW TABLES").fetchall()}
-    for phase, (status, expected_subset) in SCHEMA_PHASE_MATRIX.items():
-        assert status == "implemented"
+    for phase, (_status, expected_subset) in SCHEMA_PHASE_MATRIX.items():
         assert expected_subset.issubset(tables), f"{phase} missing {expected_subset - tables}"

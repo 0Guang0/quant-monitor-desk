@@ -46,16 +46,19 @@ def seed_us_equity_bar(
     amount: float | None = None,
     source_used: str = "alpha_vantage",
     batch_id: str | None = None,
+    created_at: datetime | None = None,
 ) -> None:
     """Insert one US equity daily bar into security_bar_1d."""
     effective_amount = amount if amount is not None else volume * close
     effective_batch = batch_id or f"batch-{instrument_id}-{trade_date.isoformat()}"
+    ts_expr = "?" if created_at is not None else "CURRENT_TIMESTAMP"
+    ts_param = [created_at] if created_at is not None else []
     con.execute(
-        """
+        f"""
         INSERT INTO security_bar_1d (
             instrument_id, trade_date, open, high, low, close, pre_close, volume, amount,
             adjustment_type, source_used, batch_id, quality_flags, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'none', ?, ?, NULL, CURRENT_TIMESTAMP)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'none', ?, ?, NULL, {ts_expr})
         """,
         [
             instrument_id,
@@ -69,6 +72,7 @@ def seed_us_equity_bar(
             effective_amount,
             source_used,
             effective_batch,
+            *ts_param,
         ],
     )
 

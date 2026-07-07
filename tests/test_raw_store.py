@@ -380,37 +380,33 @@ def test_register_validationRejected_persistsFailedAudit(tmp_path: Path) -> None
     assert audit == ("FAILED", "file_registry", "validation rejected: stub-fail-registry")
 
 
-def test_stagedEvidence_publicBypassNotExported() -> None:
-    """覆盖范围：R3Y-STAGED-REG-001 — file_registry 旁路不得为公开 API
-    测试对象：staged_evidence 模块导出面
-    目的/目标：staging 写路径须经 WriteManager；legacy 旁路仅保留为私有符号
-    验证点：register_staged_file_registry_rows 不在模块属性中；__all__ 不含该名
+def test_stagedEvidence_publicApiCannotBypassWriteManager() -> None:
+    """覆盖范围：R3Y-STAGED-REG-001 — staged 旁路不得为公开 API（__all__ + 生产 import 扫描）
+    测试对象：staged_evidence 模块导出面 + backend/app 生产代码 import 图
+    目的/目标：staging 写路径须经 WriteManager；legacy 旁路仅私有符号
+    验证点：__all__ 仅三常量；无 register_staged_file_registry_rows；生产模块不 import 该名
     失败含义：公开旁路仍可被 ops/adapter 导入，AUD-03 WriteManager 绕过未关闭
     """
+    import ast
+
     import backend.app.storage.staged_evidence as staged_mod
 
+    assert staged_mod.__all__ == (
+        "STAGED_EVIDENCE_PHASE",
+        "STAGED_FILE_REGISTRY_PARSE_STATUS",
+        "STAGED_FILE_REGISTRY_QUALITY",
+    )
     assert not hasattr(staged_mod, "register_staged_file_registry_rows")
-    assert "register_staged_file_registry_rows" not in getattr(staged_mod, "__all__", ())
-
-
-def test_stagedEvidence_noProductionReferenceToRegistryBypass() -> None:
-    """覆盖范围：R3Y-STAGED-REG-001 — 生产代码不得引用 registry 旁路符号
-    测试对象：backend/ 下除 staged_evidence.py 外的全部 .py
-    目的/目标：私有化后仅测试可 import 私有 helper；ops/staged_pilot 等须零引用
-    验证点：无文件含 register_staged_file_registry_rows 或 _register_staged_file_registry_rows
-    失败含义：生产模块仍可调用裸 INSERT 旁路，WriteManager 门禁被击穿
-    """
-    backend_root = Path(__file__).resolve().parents[1] / "backend"
-    legacy = "register_staged_file_registry_rows"
-    private = "_register_staged_file_registry_rows"
-    offenders: list[str] = []
-    for path in backend_root.rglob("*.py"):
-        if path.name == "staged_evidence.py":
+    forbidden = "register_staged_file_registry_rows"
+    backend_root = Path(__file__).resolve().parents[1] / "backend" / "app"
+    for py in backend_root.rglob("*.py"):
+        if py.name == "staged_evidence.py":
             continue
-        text = path.read_text(encoding="utf-8")
-        if legacy in text or private in text:
-            offenders.append(str(path.relative_to(backend_root.parent)))
-    assert offenders == []
+        tree = ast.parse(py.read_text(encoding="utf-8"))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ImportFrom) and node.module and "staged_evidence" in node.module:
+                for alias in node.names:
+                    assert alias.name != forbidden, f"{py}: imports forbidden {forbidden!r}"
 
 
 def test_stagedEvidence_pathEscape_rejected(tmp_path: Path) -> None:
@@ -437,7 +433,7 @@ def test_stagedEvidence_pathEscape_rejected(tmp_path: Path) -> None:
         data_domain="macro_supplementary",
         status="SUCCESS",
         row_count=1,
-        fetch_time=datetime.now(UTC).isoformat(),
+        fetch_time=datetime(2024, 6, 30, 12, 0, tzinfo=UTC).isoformat(),
         raw_file_paths=[str(evil)],
         content_hash="abc123",
         schema_hash="def456",
@@ -467,7 +463,7 @@ def test_stagedEvidence_rejectsWrongPhase() -> None:
         data_domain="macro_supplementary",
         status="SUCCESS",
         row_count=1,
-        fetch_time=datetime.now(UTC).isoformat(),
+        fetch_time=datetime(2024, 6, 30, 12, 0, tzinfo=UTC).isoformat(),
         raw_file_paths=["raw.json"],
         content_hash="hash1",
     )
@@ -504,7 +500,7 @@ def test_stagedEvidence_allowedPath_registersRow(tmp_path: Path) -> None:
         data_domain="macro_supplementary",
         status="SUCCESS",
         row_count=1,
-        fetch_time=datetime.now(UTC).isoformat(),
+        fetch_time=datetime(2024, 6, 30, 12, 0, tzinfo=UTC).isoformat(),
         raw_file_paths=[str(raw_file)],
         content_hash="abc123unique",
         schema_hash="def456",

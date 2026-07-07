@@ -11,7 +11,7 @@
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -1215,15 +1215,19 @@ def test_world_bank_port_capOverflow_blocksOverMaxIndicators() -> None:
 
 
 def test_fred_port_capOverflow_blocksOverMaxSeries() -> None:
-    """覆盖范围：FRED factory series 数量 cap
+    """覆盖范围：FRED factory series 数量 cap 与 L2 port 常量边界
     测试对象：create_fred_fetch_port series_ids 超上限
-    目的/目标：P1-03/G-05 MAX_SERIES=10 可被 CI 钉死
-    验证点：len(series_ids) > MAX_SERIES 构造即 PortError
-    失败含义：series 维 cap 无负例保护
+    目的/目标：P1-03/G-05 MAX_SERIES=10、MAX_WINDOW_DAYS=120、MAX_ROWS_PER_SERIES=500 可被 CI 钉死
+    验证点：len(series_ids) > MAX_SERIES 构造即 PortError；port 常量与 frozen cap 一致
+    失败含义：series 维 cap 无负例保护或 L2 常量漂移
     """
     from backend.app.datasources.adapters.fetch_port import PortError
+    from backend.app.datasources.fetch_ports import fred_port
     from backend.app.datasources.fetch_ports.fred_port import MAX_SERIES, create_fred_fetch_port
 
+    assert fred_port.MAX_SERIES == MAX_SERIES == 10
+    assert fred_port.MAX_WINDOW_DAYS == 120
+    assert fred_port.MAX_ROWS_PER_SERIES == 500
     too_many = tuple(f"S{i}" for i in range(MAX_SERIES + 1))
     with pytest.raises(PortError, match="series"):
         create_fred_fetch_port(series_ids=too_many, max_rows=3, use_mock=True)
@@ -1244,7 +1248,7 @@ def test_fred_port_capOverflow_rejectsNonPositiveMaxRows() -> None:
         port.fetch_payload(_fred_macro_req())
 
 
-def test_fred_port_windowStart_respectsMaxWindowDays() -> None:
+def test_fred_port_windowStart_respectsMaxWindowDays(monkeypatch) -> None:
     """覆盖范围：FRED live port 窗口天数 cap
     测试对象：FredLiveFetchPort._window_start
     目的/目标：P3-01/G-05 MAX_WINDOW_DAYS=120 边界可测
@@ -1253,8 +1257,16 @@ def test_fred_port_windowStart_respectsMaxWindowDays() -> None:
     """
     from backend.app.datasources.fetch_ports.fred_port import MAX_WINDOW_DAYS, FredLiveFetchPort
 
+    fixed_today = date(2024, 6, 30)
+
+    class _FixedDateTime:
+        @staticmethod
+        def now(tz=None):
+            return datetime(2024, 6, 30, 12, 0, tzinfo=UTC)
+
+    monkeypatch.setattr("backend.app.datasources.fetch_ports.fred_port.datetime", _FixedDateTime)
     port = FredLiveFetchPort(series_ids=("DGS10",), max_rows=3, date_window="3y")
-    earliest = datetime.now(UTC).date() - timedelta(days=MAX_WINDOW_DAYS + 1)
+    earliest = fixed_today - timedelta(days=MAX_WINDOW_DAYS + 1)
     assert port._window_start() > earliest
 
 
@@ -1363,23 +1375,15 @@ def test_bis_port_route_creditGap_readyWhenSourceEnabled(monkeypatch: pytest.Mon
 def test_bis_creditGap_replayFixture_canonical() -> None:
     """覆盖范围：BIS credit_gap replay fixture 读路径
     测试对象：tests/fixtures/replay/official_macro/bis/credit_gap_replay_bundle.json
-    目的/目标：A2 删 read_bis_credit_gap 后以通用 reader + fixture 替代
-    验证点：_read_observations_bundle 路径；含 credit_to_gdp_gap
+    目的/目标：A2 以 public read_bis_credit_gap_evidence_bundle 替代私有 normalizer 路径
+    验证点：read_bis_credit_gap_evidence_bundle 往返；含 credit_to_gdp_gap
     失败含义：credit_gap replay 死代码路径未闭合
     """
     from backend.app.datasources.normalizers.official_macro import (
-        _normalize_bis_credit_gap_row,
-        _read_observations_bundle,
-        build_bis_credit_gap_evidence_bundle,
+        read_bis_credit_gap_evidence_bundle,
     )
 
-    bundle = _read_observations_bundle(
-        _BIS_CREDIT_GAP_REPLAY,
-        label="BIS credit gap evidence",
-        normalize_obs=_normalize_bis_credit_gap_row,
-        build_bundle=build_bis_credit_gap_evidence_bundle,
-        source_id="bis",
-    )
+    bundle = read_bis_credit_gap_evidence_bundle(_BIS_CREDIT_GAP_REPLAY)
     assert bundle["data_domain"] == "credit_gap"
     assert bundle["source_fetch_id"] == "bis-replay-credit-gap"
     assert bundle["observations"][0]["credit_to_gdp_gap"] == "2.4"
@@ -1419,18 +1423,4 @@ def test_liveEvidenceBridge_resolveRawPath_rejectsOutsideProjectRoot() -> None:
     outside.write_text("{}", encoding="utf-8")
     with pytest.raises(LiveEvidenceBridgeError, match="escapes project root"):
         _resolve_raw_path(outside)
-
-
-def test_fred_liveCap_pilotAuthLayerDocumented() -> None:
-    """覆盖范围：FRED L2 port cap 与 R3E pilot 授权分层边界
-    测试对象：fred_port MAX_* 常量
-    目的/目标：A6 NB pilot vs L2 FRED cap 分层登记
-    验证点：L2 port 暴露 MAX_WINDOW_DAYS/MAX_SERIES 常量
-    失败含义：授权分层无行为锚点
-    """
-    from backend.app.datasources.fetch_ports import fred_port
-
-    assert fred_port.MAX_WINDOW_DAYS == 120
-    assert fred_port.MAX_SERIES == 10
-    assert fred_port.MAX_ROWS_PER_SERIES == 500
 

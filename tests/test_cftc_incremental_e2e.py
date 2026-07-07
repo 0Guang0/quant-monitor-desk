@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, time
 from pathlib import Path
 from typing import Any
+from unittest.mock import patch
 
 import pytest
 
@@ -23,6 +24,7 @@ from backend.app.ops.cftc_incremental_run import (
     run_cftc_incremental,
 )
 from tests.macro_incremental_support import (
+    FIXED_TODAY,
     bootstrap_macro_live_e2e_ctx,
     build_macro_e2e_ctx,
     insert_axis_observation,
@@ -132,18 +134,22 @@ def test_cftcIncremental_emptyResponse_whenWatermarkCurrent(
     失败含义：水位追上仍拉取或写入，增量语义错误
     """
     ctx = cftc_incremental_e2e_ctx
-    today = datetime.now(UTC).date()
     with ctx["cm"].writer() as con:
         insert_axis_observation(
             con,
             observation_id="obs-cftc-seed",
             indicator_id="088691",
-            obs_date=today,
+            obs_date=FIXED_TODAY,
         )
         before = con.execute("SELECT COUNT(*) FROM axis_observation").fetchone()[0]
-    report = run_cftc_incremental(
-        ctx["orch"], service=ctx["service"], source_registry=ctx["registry"]
-    )
+    with patch(
+        "backend.app.datasources.fetch_ports.cftc_cot_port.datetime",
+        wraps=datetime,
+    ) as mock_dt:
+        mock_dt.now.return_value = datetime.combine(FIXED_TODAY, time(0), tzinfo=UTC)
+        report = run_cftc_incremental(
+            ctx["orch"], service=ctx["service"], source_registry=ctx["registry"]
+        )
     assert report.instrument_results[0]["status"] == "EMPTY_RESPONSE"
     with ctx["cm"].writer() as con:
         after = con.execute("SELECT COUNT(*) FROM axis_observation").fetchone()[0]
@@ -216,7 +222,7 @@ def test_cftcIncremental_liveNetwork_idempotentSecondRun(
     """覆盖范围：隔离 sandbox 连续两次 CFTC live 增量
     测试对象：run_cftc_incremental live 幂等 upsert
     目的/目标：重复 live 跑 observation_id PK 不膨胀行数
-    验证点：两路 status∈{COMPLETED,EMPTY_RESPONSE}；COUNT(*) 相等
+    验证点：first≥1；两次 COUNT(*) 相等
     失败含义：live 幂等失败会导致日常 sync 重复膨胀
     """
     ctx = bootstrap_macro_live_e2e_ctx(
@@ -250,4 +256,5 @@ def test_cftcIncremental_liveNetwork_idempotentSecondRun(
     )
     with ctx["cm"].writer() as con:
         second = con.execute("SELECT COUNT(*) FROM axis_observation").fetchone()[0]
+    assert first >= 1
     assert first == second

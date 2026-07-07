@@ -27,7 +27,7 @@ def test_fredRegistry_disabledByDefault_notProductionLive() -> None:
     测试对象：specs/datasource_registry/source_registry.yaml · source_capabilities.yaml
     目的/目标：防止 fred 被默认可 production-live 路由
     验证点：fred 行存在、enabled_by_default=False、capability 无 production_default
-    失败含义：registry 缺口会导致未授权 FRED 被当作生产源
+    失败含义：registry YAML 为稳定契约；漂移会导致未授权 FRED 被当作生产源
     """
     entry = _fred_registry_entry()
     assert entry.get("enabled_by_default") is False

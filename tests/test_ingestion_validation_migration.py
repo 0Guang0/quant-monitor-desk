@@ -83,31 +83,49 @@ def test_initDb_doesNotModifyMigration004Checksum(validation_con) -> None:
     assert "005_ingestion_validation" in vlist
 
 
-# --- validation_report column / constraint enforcement -------------------
+# --- validation_report / source_conflict / manual_review_queue NOT NULL smoke -------
 
 
-def test_validationReport_requiredFieldsEnforced(validation_con) -> None:
-    """覆盖范围：校验报告表对必填字段的数据库层约束
-    测试对象：validation_report 表 DDL
+@pytest.mark.parametrize(
+    ("table_name", "insert_sql", "params"),
+    [
+        (
+            "validation_report",
+            "INSERT INTO validation_report (validation_report_id) VALUES (?)",
+            ["x"],
+        ),
+        (
+            "source_conflict",
+            "INSERT INTO source_conflict (conflict_id) VALUES (?)",
+            ["c-1"],
+        ),
+        (
+            "manual_review_queue",
+            "INSERT INTO manual_review_queue (review_id) VALUES (?)",
+            ["mr-1"],
+        ),
+    ],
+)
+def test_ingestionTables_requiredFieldsEnforced(
+    validation_con, table_name: str, insert_sql: str, params: list
+) -> None:
+    """覆盖范围：摄取校验相关表对必填字段的数据库层约束（参数化 smoke）
+    测试对象：{table_name} 表 DDL NOT NULL
     目的/目标：只填主键、缺其他必填列的插入必须在数据库层被拒绝
     验证点：pytest.raises(duckdb.Error, match=Constraint|NOT NULL)
-    失败含义：残缺校验报告能入库，写入门禁失去数据库层兜底
+    失败含义：残缺行入库，写入门禁失去数据库层兜底
     """
-    con = validation_con
     with pytest.raises(duckdb.Error, match="Constraint|NOT NULL"):
-        con.execute("INSERT INTO validation_report (validation_report_id) VALUES (?)", ["x"])
+        validation_con.execute(insert_sql, params)
 
 
-def test_validationReport_statusCheck_rejectsInvalidStatus(validation_con) -> None:
-    """覆盖范围：校验报告状态字段只允许约定枚举值
-    测试对象：validation_report 表 status 列 CHECK 约束
-    目的/目标：非法状态值必须在写入数据库时被拒绝，不能悄悄入库
-    验证点：status 为 BOGUS 的 INSERT 触发 duckdb.Error
-    失败含义：非法状态入库，下游写入门禁无法按契约分支处理
-    """
-    con = validation_con
-    with pytest.raises(duckdb.Error, match="Constraint|CHECK"):
-        con.execute(
+# --- CHECK constraint smoke (parametrized) ---------------------------------
+
+
+@pytest.mark.parametrize(
+    ("insert_sql", "params"),
+    [
+        (
             """
             INSERT INTO validation_report (
                 validation_report_id, run_id, data_domain, source_id,
@@ -130,7 +148,49 @@ def test_validationReport_statusCheck_rejectsInvalidStatus(validation_con) -> No
                 "p0_round_1",
                 "p0_round_1",
             ],
-        )
+        ),
+        (
+            """
+            INSERT INTO source_conflict (
+                conflict_id, run_id, data_domain, field_name,
+                primary_source, primary_value, competing_source, competing_value,
+                severity, manual_review_required
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            [
+                "c-x",
+                "r1",
+                "market_bar_1d",
+                "close",
+                "qmt",
+                "10.0",
+                "baostock",
+                "10.5",
+                "totally_wrong",
+                False,
+            ],
+        ),
+        (
+            """
+            INSERT INTO manual_review_queue (
+                review_id, source_object_type, source_object_id, priority, status
+            ) VALUES (?, ?, ?, ?, ?)
+            """,
+            ["mr-1", "not_a_valid_type", "c-1", "high", "open"],
+        ),
+    ],
+)
+def test_ingestionTables_checkConstraints_rejectInvalidEnum(
+    validation_con, insert_sql: str, params: list
+) -> None:
+    """覆盖范围：摄取校验表 CHECK 约束拒绝非法枚举（参数化 smoke）
+    测试对象：validation_report / source_conflict / manual_review_queue CHECK
+    目的/目标：非法 status/severity/source_object_type 须在写入时被拒绝
+    验证点：pytest.raises(duckdb.Error, match=Constraint|CHECK)
+    失败含义：任意枚举值入库，写入门禁与复核路由失效
+    """
+    with pytest.raises(duckdb.Error, match="Constraint|CHECK"):
+        validation_con.execute(insert_sql, params)
 
 
 def test_validationReport_validRows_accepted(validation_con) -> None:
@@ -182,18 +242,6 @@ def test_validationReport_validRows_accepted(validation_con) -> None:
 # --- source_conflict -----------------------------------------------------
 
 
-def test_sourceConflict_requiredFieldsEnforced(validation_con) -> None:
-    """覆盖范围：源冲突表对必填字段的数据库层约束
-    测试对象：source_conflict 表 DDL
-    目的/目标：只填冲突编号、缺其他必填列的插入必须失败
-    验证点：pytest.raises(duckdb.Error, match=Constraint|NOT NULL)
-    失败含义：残缺冲突记录入库，写入门禁无法判断冲突严重程度
-    """
-    con = validation_con
-    with pytest.raises(duckdb.Error, match="Constraint|NOT NULL"):
-        con.execute("INSERT INTO source_conflict (conflict_id) VALUES (?)", ["c-1"])
-
-
 def test_sourceConflict_validRow_accepted(validation_con) -> None:
     """覆盖范围：完整的多源冲突记录能否正常写入数据库
     测试对象：source_conflict INSERT
@@ -233,70 +281,7 @@ def test_sourceConflict_validRow_accepted(validation_con) -> None:
     assert cnt == 1
 
 
-def test_sourceConflict_severityCheck_rejectsInvalid(validation_con) -> None:
-    """覆盖范围：源冲突严重程度字段只允许约定枚举值
-    测试对象：source_conflict severity 列 CHECK 约束
-    目的/目标：非法严重程度值必须在数据库层被拒绝
-    验证点：severity 为 totally_wrong 的 INSERT 触发 duckdb.Error
-    失败含义：任意严重程度都能入库，严重冲突写入门禁失效
-    """
-    con = validation_con
-    with pytest.raises(duckdb.Error, match="Constraint|CHECK"):
-        con.execute(
-            """
-            INSERT INTO source_conflict (
-                conflict_id, run_id, data_domain, field_name,
-                primary_source, primary_value, competing_source, competing_value,
-                severity, manual_review_required
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            [
-                "c-x",
-                "r1",
-                "market_bar_1d",
-                "close",
-                "qmt",
-                "10.0",
-                "baostock",
-                "10.5",
-                "totally_wrong",
-                False,
-            ],
-        )
-
-
 # --- manual_review_queue -------------------------------------------------
-
-
-def test_manualReviewQueue_requiredFieldsEnforced(validation_con) -> None:
-    """覆盖范围：人工复核队列表对必填字段的数据库层约束
-    测试对象：manual_review_queue 表 DDL
-    目的/目标：只填复核编号、缺其他必填列的插入必须失败
-    验证点：pytest.raises(duckdb.Error, match=Constraint|NOT NULL)
-    失败含义：残缺复核队列项入库，运维无法追踪待审对象
-    """
-    con = validation_con
-    with pytest.raises(duckdb.Error, match="Constraint|NOT NULL"):
-        con.execute("INSERT INTO manual_review_queue (review_id) VALUES (?)", ["mr-1"])
-
-
-def test_manualReviewQueue_sourceObjectTypeCheck(validation_con) -> None:
-    """覆盖范围：人工复核队列的对象类型字段只允许约定枚举值
-    测试对象：manual_review_queue source_object_type 列 CHECK 约束
-    目的/目标：非法对象类型必须在写入数据库时被拒绝
-    验证点：source_object_type 为 not_a_valid_type 的 INSERT 触发 duckdb.Error
-    失败含义：任意对象类型入库，复核界面与路由无法正确分类
-    """
-    con = validation_con
-    with pytest.raises(duckdb.Error, match="Constraint|CHECK"):
-        con.execute(
-            """
-            INSERT INTO manual_review_queue (
-                review_id, source_object_type, source_object_id, priority, status
-            ) VALUES (?, ?, ?, ?, ?)
-            """,
-            ["mr-1", "not_a_valid_type", "c-1", "high", "open"],
-        )
 
 
 def test_manualReviewQueue_validRow_accepted(validation_con) -> None:

@@ -490,16 +490,30 @@ def test_dataHealthCli_profileFred_routes() -> None:
     assert payload["overall_status"] == "PASS"
 
 
-def test_opsDataHealth_dh2Path_noSnapshotDdl() -> None:
+def test_opsDataHealth_dh2Path_noSnapshotDdl(tmp_path: Path) -> None:
     """覆盖范围：DH2 只读路径不得建 source_health_snapshot 表
-    测试对象：backend.app.ops.data_health 只读 profile 路径
+    测试对象：DataHealthService.check_evidence_dir + DuckDB migration 基线
     目的/目标：VR-DATAHEALTH-001 — Batch01/DH2 禁止 CREATE snapshot 表
-    验证点：data_health 模块无 snapshot DDL / writer 默认接线
+    验证点：DH2 profile 跑完后 production_db_mutated=False；apply_migrations 后 DB 无 source_health_snapshot 表
     失败含义：DH2 路径误建表，违反 Batch 3F 边界
     """
-    import backend.app.ops.data_health as dh
+    from backend.app.db.connection import ConnectionManager
+    from backend.app.db.migrate import apply_migrations
+    from backend.app.ops.data_health import DataHealthService
 
-    source = Path(dh.__file__).read_text(encoding="utf-8")
-    assert dh.DH2_FORBIDS_SNAPSHOT_DDL is True
-    assert "source_health_writer" not in source
-    assert "CREATE TABLE" not in source or "source_health_snapshot" not in source
+    evidence = _V2_EVIDENCE
+    report = DataHealthService().check_evidence_dir(evidence, profile="fred_sandbox_pilot")
+    assert report.production_db_mutated is False
+    assert report.source_fetch_performed is False
+
+    db = tmp_path / "dh2.duckdb"
+    cm = ConnectionManager(db_path=db)
+    with cm.writer() as con:
+        apply_migrations(con)
+        tables = {
+            row[0]
+            for row in con.execute(
+                "SELECT table_name FROM information_schema.tables WHERE table_schema='main'"
+            ).fetchall()
+        }
+    assert "source_health_snapshot" not in tables

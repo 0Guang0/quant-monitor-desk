@@ -37,7 +37,7 @@ def test_fourProfileFamilies_registeredInContract() -> None:
     """覆盖范围：四族 profile 契约登记
     测试对象：data_quality_rules.yaml ops_cli_profiles + live_tier_a_evidence_v1
     目的/目标：S-R2-F0 AC — 四族 profile ID 在契约中可解析
-    验证点：market_bar / layer1 / disclosure / crypto 域存在；11 源 binding 含 health_profile_id
+    验证点：market_bar / layer1 / disclosure / crypto 域存在；binding 数与契约 source_bindings 一致
     失败含义：profile 族与 source_bindings 漂移，F0 无法按源路由
     """
     raw = yaml.safe_load(_RULES_PATH.read_text(encoding="utf-8")) or {}
@@ -47,7 +47,11 @@ def test_fourProfileFamilies_registeredInContract() -> None:
     assert "us_disclosure" in profiles
     assert "crypto_derivative" in profiles
     bindings = source_bindings()
-    assert len(bindings) == 11
+    contract_path = _PROJECT_ROOT / "specs" / "contracts" / "live_tier_a_evidence_v1.yaml"
+    contract_bindings = (yaml.safe_load(contract_path.read_text(encoding="utf-8")) or {}).get(
+        "source_bindings", {}
+    )
+    assert len(bindings) == len(contract_bindings)
     families = {b["health_profile_id"] for b in bindings.values()}
     assert families == {
         "market_bar_p0",
@@ -101,9 +105,9 @@ def test_profileRunner_replayFixture_notFailBlocked(
 ) -> None:
     """覆盖范围：非 market_bar 三族 replay 夹具
     测试对象：run_data_health_profile
-    目的/目标：replay 证据跑 F0 须非 FAIL/BLOCKED
-    验证点：overall_status ∉ {FAIL, BLOCKED}；rules_run 覆盖契约 rule ID
-    失败含义：profile 实现缺口或证据加载失败
+    目的/目标：replay 证据跑 F0 须产出实质检查结果且 overall 为 PASS/WARN
+    验证点：checks 非空；overall_status ∈ {PASS, WARN}；契约 rule ID 全覆盖
+    失败含义：profile 空跑 SKIP 或实现缺口导致 replay 假绿
     """
     src = _REPLAY / fixture_rel
     evidence_dir = _copy_replay(src, tmp_path, profile_id)
@@ -116,7 +120,8 @@ def test_profileRunner_replayFixture_notFailBlocked(
         end_date=None,
         max_rows=100,
     )
-    assert report.overall_status not in {"FAIL", "BLOCKED"}
+    assert len(report.checks) >= 1
+    assert report.overall_status in {"PASS", "WARN"}
     seen = {c.rule_id for c in report.checks}
     assert set(rule_ids).issubset(seen)
 
@@ -330,9 +335,9 @@ def test_goodBundle_marketBar_stillPasses() -> None:
 def test_macroStagingPersist_writesRawDiscoverableByF0(tmp_path: Path) -> None:
     """覆盖范围：macro staging adapter raw 落盘
     测试对象：persist_incremental_fetch_payload + _run_f0_data_health
-    目的/目标：live incremental 后 F0 能找到 raw JSON（非 no raw evidence）
-    验证点：raw 文件存在；F0 status 非 FAIL
-    失败含义：staging 旁路仍不写 raw，验收层 F0 必败
+    目的/目标：live incremental 后 F0 须 PASS 且能找到 raw JSON
+    验证点：raw 文件存在；F0 status==PASS
+    失败含义：staging 旁路仍不写 raw 或 F0 无法消费 persisted 证据
     """
     import json
     from types import SimpleNamespace
@@ -345,7 +350,7 @@ def test_macroStagingPersist_writesRawDiscoverableByF0(tmp_path: Path) -> None:
         ensure_isolated_db,
     )
     from backend.app.storage.raw_store import RawStore
-    from backend.app.datasources.adapters.skeleton_base import SkeletonAdapterBase
+    from tests.support.macro_staging_adapters import FredMacroStubAdapter
 
     data_root = tmp_path / "sandbox"
     data_root.mkdir()
@@ -381,16 +386,12 @@ def test_macroStagingPersist_writesRawDiscoverableByF0(tmp_path: Path) -> None:
         start_time="2026-07-01",
     )
 
-    class _StubAdapter(SkeletonAdapterBase):
-        source_id = "fred"
-        supported_domains = frozenset({"macro_series"})
-
-    adapter = _StubAdapter(object(), raw_store=RawStore(raw_root), fetch_port=object())
+    adapter = FredMacroStubAdapter(object(), raw_store=RawStore(raw_root), fetch_port=object())
     persist_incremental_fetch_payload(adapter, payload, req, as_of="2026-07-03")
     assert _iter_source_raw_files(data_root, "fred")
     db_path = ensure_isolated_db(data_root)
     status, detail = _run_f0_data_health("fred", data_root=data_root, db_path=db_path)
-    assert status != "FAIL", detail
+    assert status == "PASS", detail
 
 
 def test_missingEvidence_raisesLoadError(tmp_path: Path) -> None:

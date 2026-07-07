@@ -1,4 +1,7 @@
-"""Stable paths for archived planning artifacts (root cleanup @ 2026-07-02)."""
+"""Stable paths for archived planning artifacts (root cleanup @ 2026-07-02).
+
+ponytail: resolves via scripts/repo_path_resolve.py; upgrade path is a backend package export.
+"""
 
 from __future__ import annotations
 

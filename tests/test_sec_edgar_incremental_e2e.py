@@ -8,6 +8,7 @@ from typing import Any
 import pytest
 
 from backend.app.ops.sec_edgar_incremental_run import run_sec_edgar_incremental
+from backend.app.ops.db_inspector import DbInspector
 from tests.sec_edgar_incremental_support import (
     ACCESSION,
     CIK,
@@ -18,7 +19,7 @@ from tests.sec_edgar_incremental_support import (
 )
 
 
-def test_secEdgarIncremental_e2e_writesUsDisclosureClean(
+def test_secEdgarIncremental_replay_writesUsDisclosureClean(
     sec_edgar_incremental_e2e_ctx: dict[str, Any],
 ) -> None:
     """覆盖范围：replay fixture 经服务路径增量写入 us_disclosure_clean
@@ -134,10 +135,14 @@ def test_secEdgarIncremental_liveNetwork_writesUsDisclosureClean(
     )
     status = report.cik_results[0]["status"]
     assert status in {"COMPLETED", "EMPTY_RESPONSE"}
+    inspect_report = DbInspector(ctx["cm"].db_path, ctx["raw_root"]).inspect()
+    clean_table = next(t for t in inspect_report.key_tables if t["name"] == "us_disclosure_clean")
+    assert clean_table["exists"] is True
     if status == "COMPLETED":
         with ctx["cm"].reader() as con:
             count = con.execute("SELECT COUNT(*) FROM us_disclosure_clean WHERE cik = ?", [CIK]).fetchone()[0]
         assert count >= 1
+        assert clean_table["row_count"] is not None and clean_table["row_count"] >= 1
 
 
 @pytest.mark.network
@@ -148,7 +153,7 @@ def test_secEdgarIncremental_liveNetwork_idempotentSecondRun(
     """覆盖范围：隔离 sandbox 连续两次 SEC EDGAR live 增量
     测试对象：run_sec_edgar_incremental live 幂等 upsert
     目的/目标：重复 live 跑同一窗不应增加 us_disclosure_clean 行数
-    验证点：两路 status∈{COMPLETED,EMPTY_RESPONSE}；COUNT 相等
+    验证点：first≥1；两次 COUNT(*) 相等
     失败含义：live 幂等失败会导致日常 sync 数据膨胀
     """
     ctx = bootstrap_sec_edgar_live_e2e_ctx(isolated_live_data_root, monkeypatch)
@@ -168,4 +173,5 @@ def test_secEdgarIncremental_liveNetwork_idempotentSecondRun(
         second = con.execute(
             "SELECT COUNT(*) FROM us_disclosure_clean WHERE cik = ?", [CIK]
         ).fetchone()[0]
+    assert first >= 1
     assert first == second

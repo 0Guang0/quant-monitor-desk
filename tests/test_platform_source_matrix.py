@@ -5,34 +5,59 @@
 
 from __future__ import annotations
 
+import sys
+
+import pytest
+
 from tests.contract_gate_support import PROJECT_ROOT, load_yaml, platform_key
 from tests.service_path_support import plan_route
 
 PLATFORM_MATRIX = PROJECT_ROOT / "specs/contracts/platform_source_matrix.yaml"
 
 
-def test_qmtXtdataNonWindowsNotSchedulable() -> None:
-    """覆盖范围：qmt_xtdata 在非 Windows 平台不可调度
-    测试对象：platform_source_matrix.yaml 与 plan_route 分钟线路由
-    目的/目标：非 Windows 上 xtdata 须标记不可用且路由不得选中
-    验证点：异平台 entry available_if_user_configured/default_enabled 为 False；非 Windows 时 selected_source_id 为 None 且 qmt_xtdata 有 disabled_reason
-    失败含义：跨平台误调度 QMT 会导致运行时硬失败或静默跳过
+def test_qmtXtdata_matrixEntry_nonWindowsDisabled() -> None:
+    """覆盖范围：qmt_xtdata 在 linux/macos 矩阵条目
+    测试对象：platform_source_matrix.yaml platforms.linux/macos.qmt_xtdata
+    目的/目标：非 Windows 平台 YAML 须标记不可用
+    验证点：available_if_user_configured/default_enabled 均为 False
+    失败含义：矩阵登记允许非 Windows 调度 xtdata，与契约 rules 冲突
     """
     matrix = load_yaml(PLATFORM_MATRIX)
-    key = platform_key()
-    entry = matrix["platforms"]["linux" if key == "windows" else key]["qmt_xtdata"]
-    assert entry["available_if_user_configured"] is False
+    for platform in ("linux", "macos"):
+        entry = matrix["platforms"][platform]["qmt_xtdata"]
+        assert entry["available_if_user_configured"] is False
+        assert entry["default_enabled"] is False
+
+
+def test_qmtXtdata_matrixEntry_windowsRequiresAuth() -> None:
+    """覆盖范围：qmt_xtdata 在 Windows 矩阵条目
+    测试对象：platform_source_matrix.yaml platforms.windows.qmt_xtdata
+    目的/目标：Windows 上 xtdata 仅可在用户授权+env 后配置，默认不启用
+    验证点：available_if_user_configured 为 True；default_enabled 为 False
+    失败含义：Windows 矩阵误标默认可用，路由与合规预期漂移
+    """
+    matrix = load_yaml(PLATFORM_MATRIX)
+    entry = matrix["platforms"]["windows"]["qmt_xtdata"]
+    assert entry["available_if_user_configured"] is True
     assert entry["default_enabled"] is False
 
-    if key != "windows":
-        plan = plan_route(
-            data_domain="cn_equity_minute_bar",
-            operation="fetch_minute_bar",
-        )
-        assert plan.selected_source_id is None
-        qmt = next(c for c in plan.candidates if c.source_id == "qmt_xtdata")
-        assert qmt.enabled is False
-        assert qmt.disabled_reason is not None
+
+@pytest.mark.skipif(sys.platform == "win32", reason="plan_route non-Windows scheduling covered on linux CI")
+def test_qmtXtdataNonWindowsNotSchedulable() -> None:
+    """覆盖范围：qmt_xtdata 在非 Windows 平台不可调度
+    测试对象：plan_route 分钟线路由（非 win32 CI）
+    目的/目标：非 Windows 上路由不得选中 qmt_xtdata
+    验证点：selected_source_id 为 None；qmt_xtdata 候选 disabled 且含 disabled_reason
+    失败含义：跨平台误调度 QMT 会导致运行时硬失败或静默跳过
+    """
+    plan = plan_route(
+        data_domain="cn_equity_minute_bar",
+        operation="fetch_minute_bar",
+    )
+    assert plan.selected_source_id is None
+    qmt = next(c for c in plan.candidates if c.source_id == "qmt_xtdata")
+    assert qmt.enabled is False
+    assert qmt.disabled_reason is not None
 
 
 def test_qmtXqshareMissingEnvNotSchedulable(monkeypatch) -> None:

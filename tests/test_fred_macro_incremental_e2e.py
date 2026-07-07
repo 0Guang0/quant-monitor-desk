@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, time
 from typing import Any
+from unittest.mock import patch
 
 import pytest
 
@@ -20,13 +21,12 @@ from backend.app.ops.db_inspector import DbInspector
 from tests.fred_macro_incremental_support import (
     bootstrap_fred_live_e2e_ctx,
     fred_incremental_e2e_ctx,
-    insert_axis_observation,
 )
+from tests.macro_incremental_support import FIXED_TODAY, insert_axis_observation
 
 
-@pytest.mark.parametrize("replay", [True], ids=["replay"])
 def test_fredIncremental_e2e_replay_writesAxisObservation(
-    fred_incremental_e2e_ctx: dict[str, Any], replay: bool
+    fred_incremental_e2e_ctx: dict[str, Any],
 ) -> None:
     """覆盖范围：mock port + run_incremental 写 axis_observation
     测试对象：run_fred_macro_incremental + DataSourceService 金路径
@@ -138,21 +138,25 @@ def test_fredIncremental_emptyResponse_whenWatermarkCurrent(
     失败含义：水位追上仍拉取或写入，增量语义错误
     """
     ctx = fred_incremental_e2e_ctx
-    today = datetime.now(UTC).date()
     with ctx["cm"].writer() as con:
         insert_axis_observation(
             con,
             observation_id="obs-seed",
             indicator_id="DGS10",
-            obs_date=today,
+            obs_date=FIXED_TODAY,
         )
         before = con.execute("SELECT COUNT(*) FROM axis_observation").fetchone()[0]
-    report = run_fred_macro_incremental(
-        ctx["orch"],
-        service=ctx["service"],
-        series_ids=("DGS10",),
-        source_registry=ctx["registry"],
-    )
+    with patch(
+        "backend.app.datasources.fetch_ports.fred_port.datetime",
+        wraps=datetime,
+    ) as mock_dt:
+        mock_dt.now.return_value = datetime.combine(FIXED_TODAY, time(0), tzinfo=UTC)
+        report = run_fred_macro_incremental(
+            ctx["orch"],
+            service=ctx["service"],
+            series_ids=("DGS10",),
+            source_registry=ctx["registry"],
+        )
     assert report.series_results[0]["status"] == "EMPTY_RESPONSE"
     with ctx["cm"].writer() as con:
         after = con.execute("SELECT COUNT(*) FROM axis_observation").fetchone()[0]

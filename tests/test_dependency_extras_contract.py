@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import importlib
 import re
 from pathlib import Path
 
+import pytest
 import yaml
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -75,3 +77,17 @@ def test_datasourcesExtra_doesNotIncludeQmtByDefault() -> None:
         assert token not in default_deps, f"{item!r} must not be in default dependencies"
         if datasources_extra:
             assert token not in datasources_extra, f"{item!r} must not be in datasources extra"
+
+
+def test_defaultEnvironment_cannotImportQmtOrXtquant() -> None:
+    """覆盖范围：默认 Python 环境不含 QMT/xtquant 闭源包
+    测试对象：importlib 对 qmt、xtquant 的 import 尝试
+    目的/目标：最小安装不应默认装上本地终端闭源 SDK
+    验证点：pytest.raises(ModuleNotFoundError) 对两模块名
+    失败含义：默认环境夹带闭源依赖，CI 与无 QMT 机器无法轻量运行
+    """
+    import importlib
+
+    for module_name in ("qmt", "xtquant"):
+        with pytest.raises(ModuleNotFoundError):
+            importlib.import_module(module_name)

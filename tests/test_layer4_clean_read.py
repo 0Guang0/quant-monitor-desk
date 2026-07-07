@@ -210,10 +210,10 @@ def test_tierAClean_missingCleanCon_failClosed() -> None:
 
 
 def test_tierAClean_rejectsFutureBreadthObservation(tmp_path) -> None:
-    """覆盖范围：tier_a_clean 未来 breadth 观测拒绝
-    测试对象：MarketStructureBuilder._build_tier_a_clean
+    """覆盖范围：tier_a_clean 未来 breadth 观测拒绝（builder guard，adapter 经 stub 注入）
+    测试对象：MarketStructureBuilder._build_tier_a_clean + _finalize_market_build
     目的/目标：与 staged 022 对称，future breadth as_of 须 fail-closed
-    验证点：future breadth as_of → Layer4MarketError 含 future
+    验证点：stubbed adapter 返回 future breadth → Layer4MarketError 含 future
     失败含义：clean 路径缺 future 闸，look-ahead 可混入 snapshot
     """
     cm = bootstrap_layer4_clean_db(tmp_path)
@@ -241,3 +241,27 @@ def test_tierAClean_rejectsFutureBreadthObservation(tmp_path) -> None:
                     source_mode="tier_a_clean",
                     clean_con=con,
                 )
+
+
+def test_usEquityCleanAdapter_nullPreClose_failClosed(tmp_path) -> None:
+    """覆盖范围：真实 adapter 读入畸形 clean bar（NULL pre_close）
+    测试对象：USEquityCleanMarketAdapter.load_breadth
+    目的/目标：adapter 路径须 fail-closed，不得依赖 builder stub
+    验证点：NULL pre_close DB 行 → Layer4MarketError 含 missing pre_close
+    失败含义：adapter 放行脏 bar，tier_a_clean 路径可产出假 breadth
+    """
+    cm = bootstrap_layer4_clean_db(tmp_path)
+    with cm.writer() as con:
+        seed_us_instrument_registry(con, instruments=(("US.AAPL", "AAPL"),))
+        con.execute(
+            """
+            INSERT INTO security_bar_1d (
+                instrument_id, trade_date, open, high, low, close, pre_close, volume, amount,
+                adjustment_type, source_used, batch_id, quality_flags, created_at
+            ) VALUES (?, ?, 100, 101, 99, 100, NULL, 1000, 100000, 'none', 'alpha_vantage', 'batch-bad', NULL, CURRENT_TIMESTAMP)
+            """,
+            ["US.AAPL", TRADE_DATE.isoformat()],
+        )
+        adapter = USEquityCleanMarketAdapter(con)
+        with pytest.raises(Layer4MarketError, match="missing pre_close"):
+            adapter.load_breadth(TRADE_DATE, AS_OF)

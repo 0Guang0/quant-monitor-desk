@@ -26,6 +26,7 @@ def insert_layer2_validation_report(
     content_hashes: list[str] | None = None,
     source_id: str = "staged_fixture",
     rule_version: str = "layer2_sensor_staged_v1",
+    status: str = "PASSED",
 ) -> None:
     resolved_fetch_ids = fetch_ids if fetch_ids is not None else ["fetch-l2-wm"]
     resolved_content_hashes = (
@@ -47,7 +48,7 @@ def insert_layer2_validation_report(
                 "run-layer2",
                 "layer2_cross_asset_daily",
                 source_id,
-                "PASSED",
+                status,
                 1,
                 0,
                 0,

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -67,30 +68,62 @@ def test_productionGate_liveAuthorizedRequiresReportPath(monkeypatch: pytest.Mon
 def test_productionGate_liveAuthorizedChecksProvidedReport(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """覆盖范围：release gate live 报告校验
+    """覆盖范围：release gate live 报告校验 outcome
     测试对象：scripts.production_gate.main --live-authorized --source-matrix-report
-    目的/目标：operator 提供 live 报告时须跑 --live-authorized matrix checker
-    验证点：subprocess 含 --live-authorized 与给定报告路径；跳过 dry-run matrix 生成
-    失败含义：final 关账证据未纳入 production_gate
+    目的/目标：mock/replay 支撑的 live PASS 报告须被真实 live checker 拒绝
+    验证点：gate.main exit 1；subprocess checker 输出含 evidence_honesty_violations
+    失败含义：final 关账证据可被假 live 报告绕过 production_gate
     """
     import scripts.production_gate as gate
 
-    calls: list[list[str]] = []
+    from backend.app.ops.source_route_db_acceptance_matrix import iter_matrix_targets, matrix_target_key
+
+    data_root = tmp_path / "live-gate-sandbox"
+    raw_dir = data_root / "raw" / "alpha_vantage" / "us_equity_daily_bar" / "2026-07-07"
+    raw_dir.mkdir(parents=True)
+    raw_dir.joinpath("evidence.json").write_text(
+        json.dumps(
+            {
+                "source_id": "alpha_vantage",
+                "source_fetch_id": "av-mock-AAPL-deadbeef",
+                "bars": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+    av_target = next(t for t in iter_matrix_targets() if t.request.source_id == "alpha_vantage")
     report = tmp_path / "source-matrix-acceptance.json"
-    report.parent.mkdir(parents=True, exist_ok=True)
-    report.write_text("{}", encoding="utf-8")
+    report.write_text(
+        json.dumps(
+            {
+                "matrix_count": 22,
+                "live_authorized": True,
+                "closure_mode": "final_live_authorized",
+                "closure_status": "PASS",
+                "data_root": str(data_root),
+                "rows": [
+                    {
+                        "target": matrix_target_key(av_target),
+                        "source_id": "alpha_vantage",
+                        "status": "PASS",
+                        "implementation_mode": "live",
+                        "failure_class": "NONE",
+                        "closure_outcome": "PASS",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
 
-    def fake_run(cmd, cwd=None, capture_output=True, text=True):
-        calls.append(list(cmd))
-        return subprocess.CompletedProcess(cmd, 0, "", "")
-
-    monkeypatch.setattr(gate.subprocess, "run", fake_run)
     monkeypatch.setattr(gate, "check_no_prod_stub_validation", lambda: None)
     monkeypatch.setattr(gate, "check_workflow_permissions", lambda: None)
     monkeypatch.setattr(gate, "check_dependabot_present", lambda: None)
     monkeypatch.setattr(gate, "check_agent_contract", lambda: None)
     monkeypatch.setattr(gate, "check_resource_contract", lambda: None)
     monkeypatch.setattr(gate, "check_module_boundaries", lambda: None)
+    monkeypatch.setattr(gate, "check_acceptance_helper_consumers_strict", lambda: None)
+    monkeypatch.setattr(gate, "check_source_route_matrix_static", lambda: None)
 
     assert (
         gate.main(
@@ -100,10 +133,5 @@ def test_productionGate_liveAuthorizedChecksProvidedReport(
                 str(report),
             ]
         )
-        == 0
+        == 1
     )
-
-    flat = "\n".join(" ".join(part for part in call) for call in calls)
-    assert "--live-authorized" in flat
-    assert str(report) in flat
-    assert "accept-source-route-db" not in flat

@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, time
 from pathlib import Path
 from typing import Any
+from unittest.mock import patch
 
 import pytest
 
@@ -22,6 +23,7 @@ from backend.app.ops.us_treasury_incremental_run import (
 )
 
 from tests.macro_incremental_support import (
+    FIXED_TODAY,
     bootstrap_macro_live_e2e_ctx,
     build_macro_e2e_ctx,
     insert_axis_observation,
@@ -108,18 +110,22 @@ def test_usTreasuryIncremental_emptyResponse_whenWatermarkCurrent(
     失败含义：水位追上仍拉取或写入，增量语义错误
     """
     ctx = us_treasury_incremental_e2e_ctx
-    today = datetime.now(UTC).date()
     with ctx["cm"].writer() as con:
         insert_axis_observation(
             con,
             observation_id="obs-treasury-seed",
             indicator_id="10Y",
-            obs_date=today,
+            obs_date=FIXED_TODAY,
         )
         before = con.execute("SELECT COUNT(*) FROM axis_observation").fetchone()[0]
-    report = run_us_treasury_incremental(
-        ctx["orch"], service=ctx["service"], source_registry=ctx["registry"]
-    )
+    with patch(
+        "backend.app.datasources.fetch_ports.us_treasury_port.datetime",
+        wraps=datetime,
+    ) as mock_dt:
+        mock_dt.now.return_value = datetime.combine(FIXED_TODAY, time(0), tzinfo=UTC)
+        report = run_us_treasury_incremental(
+            ctx["orch"], service=ctx["service"], source_registry=ctx["registry"]
+        )
     assert report.instrument_results[0]["status"] == "EMPTY_RESPONSE"
     with ctx["cm"].writer() as con:
         after = con.execute("SELECT COUNT(*) FROM axis_observation").fetchone()[0]

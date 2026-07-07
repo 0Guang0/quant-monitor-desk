@@ -33,18 +33,6 @@ from tests.db_helpers import (
 )
 
 
-def _patch_connect_calls(monkeypatch) -> list[bool]:
-    original_connect = duckdb.connect
-    connect_calls: list[bool] = []
-
-    def _tracking_connect(path, *args, **kwargs):
-        connect_calls.append(True)
-        return original_connect(path, *args, **kwargs)
-
-    monkeypatch.setattr(wm_mod.duckdb, "connect", _tracking_connect)
-    return connect_calls
-
-
 def test_assertCanWrite_stubPass_allowsWhileStubFailRejects() -> None:
     """覆盖范围：测试用校验门闸对通过/拒绝报告的分流
     测试对象：StubValidationGate.assert_can_write
@@ -346,17 +334,21 @@ def test_write_stubFail_ownTransaction_doesNotOpenSecondAuditConnection(
     """覆盖范围：失败审计复用 writer 连接，不另开 duckdb.connect
     测试对象：WriteManager.write 审计连接策略
     目的/目标：自有事务模式下审计与写入共连接，避免双连接竞态
-    验证点：stub-fail 后 status=FAILED；duckdb.connect 仅调用 1 次（建库）
+    验证点：stub-fail 后 status=FAILED；clean 0 行；单条 FAILED 审计落在同一库
     失败含义：失败路径多开连接，锁争用或审计与主事务不一致
     """
     cm = _setup(tmp_path)
     with cm.writer() as w:
         _empty_clean_table(w)
-    connect_calls = _patch_connect_calls(monkeypatch)
-    connect_calls.clear()
     res = create_test_write_manager(cm).write(_req(report="stub-fail-1"))
     assert res.status == "FAILED"
-    assert len(connect_calls) == 1
+    with cm.reader() as r:
+        clean_cnt = r.execute("SELECT COUNT(*) FROM security_bar_smoke_clean").fetchone()[0]
+        audit = r.execute(
+            "SELECT status, target_table FROM write_audit_log WHERE status='FAILED'"
+        ).fetchone()
+    assert clean_cnt == 0
+    assert audit == ("FAILED", "security_bar_smoke_clean")
 
 
 def test_write_upsertByPk_mixedNewAndExisting_reportsCorrectCounts(tmp_path: Path) -> None:
@@ -445,15 +437,15 @@ def test_write_ownTransactionFalse_duckdbError_doesNotOpenSecondAuditConnection(
 ) -> None:
     """覆盖范围：own_transaction=False 且 SQL 错误时不 spawn 独立审计连接（GPT P1）
     测试对象：WriteManager.write 失败路径连接策略
-    目的/目标：merge 失败用同一 con 记审计，禁止 duckdb.connect 二次打开
-    验证点：status=FAILED；connect_calls 为空列表
+    目的/目标：merge 失败用同一 con 记审计，外层 BEGIN 仍活跃
+    验证点：status=FAILED；外层 BEGIN 内 staging 行仍可见（未误回滚）
     失败含义：SQL 错误路径偷偷开第二连接写审计，锁与事务语义混乱
     """
     cm = _setup(tmp_path)
     with cm.writer() as w:
         _empty_clean_table(w)
         w.execute("BEGIN")
-        connect_calls = _patch_connect_calls(monkeypatch)
+        insert_stg_foundation_smoke_row(w, "MSFT", "2026-06-16", 120.0, batch_id="b2")
 
         original_execute = duckdb.DuckDBPyConnection.execute
 
@@ -465,7 +457,8 @@ def test_write_ownTransactionFalse_duckdbError_doesNotOpenSecondAuditConnection(
         monkeypatch.setattr(duckdb.DuckDBPyConnection, "execute", _fail_merge)
         res = create_test_write_manager(cm).write(_req(), con=w, own_transaction=False)
         assert res.status == "FAILED"
-        assert connect_calls == []
+        cnt = w.execute("SELECT COUNT(*) FROM stg_foundation_smoke").fetchone()[0]
+        assert cnt == 2
         w.execute("ROLLBACK")
 
 

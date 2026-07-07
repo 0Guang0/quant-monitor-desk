@@ -69,7 +69,7 @@ def _patch_baostock_replay(monkeypatch, replay_path: Path) -> None:
     monkeypatch.setattr(baostock_port, "REPLAY_FIXTURE", replay_path)
 
 
-def test_bounded_backfill_cli_e2e_two_shards_shard_complete_and_idempotent(
+def test_bounded_backfill_cli_replay_e2e_two_shards_idempotent(
     monkeypatch, tmp_path: Path
 ) -> None:
     """覆盖范围：CLI backfill replay e2e 多分片

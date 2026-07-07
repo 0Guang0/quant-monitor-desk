@@ -13,6 +13,8 @@ from backend.app.ops.db_inspector import DbInspector
 from tests.cninfo_incremental_support import (
     ANNOUNCEMENT_ID,
     FIXTURE_DATE,
+    FIXTURE_PUBLISH_DATE,
+    FIXTURE_TITLE,
     SYMBOL,
     bootstrap_cninfo_live_e2e_ctx,
     cninfo_incremental_e2e_ctx,
@@ -20,7 +22,7 @@ from tests.cninfo_incremental_support import (
 )
 
 
-def test_cninfoIncremental_e2e_writesCnAnnouncementClean(
+def test_cninfoIncremental_replay_writesCnAnnouncementClean(
     cninfo_incremental_e2e_ctx: dict[str, Any],
 ) -> None:
     """覆盖范围：replay fixture 经服务路径增量写入 cn_announcement_clean
@@ -41,10 +43,16 @@ def test_cninfoIncremental_e2e_writesCnAnnouncementClean(
     assert report.instrument_results[0]["status"] == "COMPLETED"
     with ctx["cm"].reader() as con:
         row = con.execute(
-            "SELECT announcement_id FROM cn_announcement_clean WHERE announcement_id = ?",
+            """
+            SELECT title, publish_timestamp, source_used
+            FROM cn_announcement_clean WHERE announcement_id = ?
+            """,
             [ANNOUNCEMENT_ID],
         ).fetchone()
     assert row is not None
+    assert row[0] == FIXTURE_TITLE
+    assert str(row[1])[:10] == FIXTURE_PUBLISH_DATE
+    assert row[2] == "cninfo"
 
 
 def test_cninfoIncremental_repeatRun_noRowGrowth(

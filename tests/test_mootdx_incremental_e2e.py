@@ -27,13 +27,14 @@ from tests.incremental_mootdx_support import (
     build_service,
     fetch_security_bar_row,
     incremental_spec,
+    load_mootdx_raw_bundle_from_fetch_log,
     run_mootdx_replay_incremental,
     seed_watermark_row,
 )
 from tests.acceptance_e2e_bootstrap import bootstrap_acceptance_cm
 
 
-def test_mootdxIncremental_e2e_writesSecurityBar1d(tmp_path: Path, monkeypatch) -> None:
+def test_mootdxIncremental_replay_writesSecurityBar1d(tmp_path: Path, monkeypatch) -> None:
     """覆盖范围：mootdx replay fixture 经服务路径增量写入 security_bar_1d
     测试对象：watermark + DataSourceService + run_incremental
     目的/目标：watermark 窗内 bar 应经金路径 upsert 到 clean 表
@@ -163,7 +164,7 @@ def test_mootdxIncremental_emptyResponse_whenWatermarkCurrent(
 ) -> None:
     """覆盖范围：水位已追平时增量 sync 不写新行
     测试对象：run_mootdx_bar_incremental + caught-up window
-    目的/目标：watermark==end 时 orchestrator SKIPPED，security_bar_1d 行数不变
+    目的/目标：watermark==end 时 orchestrator SKIPPED（bar 源 caught-up 契约，macro 源为 EMPTY_RESPONSE）
     验证点：status==SKIPPED；行数保持 seed 的 1 行
     失败含义：追平后仍 fetch/write，bar 增量语义错误
     """

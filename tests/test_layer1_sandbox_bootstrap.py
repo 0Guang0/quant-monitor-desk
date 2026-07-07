@@ -31,7 +31,7 @@ def test_preparePhase3Sandbox_createsMigratedDbAndDataRoot(tmp_path: Path) -> No
     con = duckdb.connect(str(layout.db_path), read_only=True)
     try:
         row = con.execute("SELECT COUNT(*) FROM schema_version").fetchone()
-        assert row is not None and row[0] >= 0
+        assert row is not None and row[0] >= 1
     finally:
         con.close()
 
@@ -52,15 +52,21 @@ def test_preparePhase4FallbackSandbox_matchesRollbackPlanR2b(tmp_path: Path) -> 
 
 
 def test_bootstrapEmptyMigratedDb_idempotentOnFreshPath(tmp_path: Path) -> None:
-    """覆盖范围：空路径 bootstrap 不抛错
+    """覆盖范围：空路径 bootstrap 不抛错且 schema_version 可读
     测试对象：bootstrap_empty_migrated_db
     目的/目标：sandbox_bootstrap 为 phase2/3/4 共享最小原语
-    验证点：连续调用同一新路径成功
-    失败含义：证据捕获在 Windows deep basetemp 下间歇失败
+    验证点：DB 文件存在；schema_version COUNT(*) >= 1
+    失败含义：证据捕获在 Windows deep basetemp 下间歇失败或迁移未落地
     """
     db_path = tmp_path / "duckdb" / "quant_monitor.duckdb"
     bootstrap_empty_migrated_db(db_path)
     assert db_path.is_file()
+    con = duckdb.connect(str(db_path), read_only=True)
+    try:
+        row = con.execute("SELECT COUNT(*) FROM schema_version").fetchone()
+        assert row is not None and row[0] >= 1
+    finally:
+        con.close()
 
 
 def test_bootstrapEmptyMigratedDb_idempotentOnSamePath(tmp_path: Path) -> None:
@@ -78,7 +84,7 @@ def test_bootstrapEmptyMigratedDb_idempotentOnSamePath(tmp_path: Path) -> None:
     con = duckdb.connect(str(db_path), read_only=True)
     try:
         row = con.execute("SELECT COUNT(*) FROM schema_version").fetchone()
-        assert row is not None and row[0] >= 0
+        assert row is not None and row[0] >= 1
     finally:
         con.close()
     assert db_path.stat().st_mtime_ns >= first_mtime
@@ -102,6 +108,6 @@ def test_preparePhase3Sandbox_doublePrepareRecreatesFreshSandbox(tmp_path: Path)
     con = duckdb.connect(str(second.db_path), read_only=True)
     try:
         row = con.execute("SELECT COUNT(*) FROM schema_version").fetchone()
-        assert row is not None and row[0] >= 0
+        assert row is not None and row[0] >= 1
     finally:
         con.close()

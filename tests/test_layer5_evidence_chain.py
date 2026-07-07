@@ -221,11 +221,11 @@ class _FakeEvidenceReadPort:
         return self._bundle
 
 
-def test_evidenceReadPort_boundary() -> None:
-    """覆盖范围：EvidenceReadPort 注入边界
-    测试对象：EvidenceReadPort fake 实现
-    目的/目标：builder 通过 port 读 staged bundle，不直接 import storage
-    验证点：fake port 返回 staged dict 可驱动构建；无 port 硬依赖 storage 类
+def test_evidenceChainBuilder_buildFromPort_usesInjectedReadPort() -> None:
+    """覆盖范围：EvidenceChainBuilder.build_from_port 经注入 port 构建链
+    测试对象：EvidenceChainBuilder.build_from_port（SUT）；_FakeEvidenceReadPort 仅作 harness
+    目的/目标：SUT 通过 port 读 staged bundle，不直接 import storage
+    验证点：chain.evidence_id/upstream_snapshot_ids 与 bundle 一致；无 port 时 EvidenceChainError
     失败含义：证据链与具体存储实现耦合，无法 staged 单测
     """
     port: EvidenceReadPort = _FakeEvidenceReadPort(_MINIMAL_BUNDLE)

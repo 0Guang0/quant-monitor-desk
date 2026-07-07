@@ -18,7 +18,7 @@ from backend.app.ops.deribit_incremental_watermark import (
     read_since_date_for_instrument,
 )
 from backend.app.sync.orchestrator import DataSyncOrchestrator
-from tests.acceptance_e2e_bootstrap import bootstrap_acceptance_cm, bootstrap_port_live_e2e_ctx
+from tests.acceptance_e2e_bootstrap import bootstrap_port_live_e2e_ctx
 
 INSTRUMENT = "BTC-28JUN24-65000-C"
 AS_OF_DATE = date(2024, 6, 25)

@@ -93,7 +93,10 @@ def _ensure_audit_sandbox_pytest_basetemp() -> None:
 
 
 def _patch_path_for_windows_long_paths() -> None:
-    """A8 basetemp under deep .audit-sandbox paths exceeds MAX_PATH on Windows."""
+    """A8 basetemp under deep .audit-sandbox paths exceeds MAX_PATH on Windows.
+
+    ponytail: global Path monkeypatch; upgrade path is opt-in fixture per test module.
+    """
     if os.name != "nt":
         return
     from backend.app.storage.path_compat import (
@@ -165,7 +168,11 @@ _SKIP_RESOURCE_GUARD_AUTOPATCH = frozenset(
 def _resourceGuardOkUnlessTestOverrides(
     request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """ponytail: unit tests must not flake on host memory; guard cases patch their own check."""
+    """ponytail: unit tests default ResourceGuard=OK; integration tests patch their own check.
+
+    Skipped for test_resource_guard.py and test_foundation_smoke.py which exercise real guard.
+    Orchestrator integration tests should monkeypatch ResourceGuard when host pressure matters.
+    """
     if request.node.fspath and request.node.fspath.basename in _SKIP_RESOURCE_GUARD_AUTOPATCH:
         return
     from backend.app.core.resource_guard import Decision, ResourceGuard

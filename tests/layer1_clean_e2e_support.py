@@ -1,7 +1,13 @@
-"""Shared bootstrap for Layer1 DCP-06 clean-read e2e tests."""
+"""Shared bootstrap for Layer1 DCP-06 clean-read e2e tests.
+
+Empty-db fail-closed：见 tests/test_layer1_clean_reader.py（test_layer1CleanReader_emptyMacro_failClosedNoFallback 等）；
+各轴 e2e 依赖本模块 seed + reader 负例，不重复薄封装。
+"""
 
 from __future__ import annotations
 
+import hashlib
+import json
 from datetime import UTC, date, datetime, time, timedelta
 from pathlib import Path
 
@@ -11,7 +17,23 @@ from tests.fred_macro_incremental_support import insert_axis_observation
 
 COT_MARKET_CODE = "088691"
 COT_SOURCE = "cftc_cot"
+AS_OF = datetime(2026, 6, 20, 16, 0, tzinfo=UTC)
 
+# G2-034 golden manifest：seed 参数 + AS_OF 版本化，seed schema 变更时须更新 hash
+E2E_GOLDEN_MANIFEST = {
+    "as_of": AS_OF.isoformat(),
+    "seed_params_hash": hashlib.sha256(
+        json.dumps(
+            {
+                "macro_n": 40,
+                "bar_n": 60,
+                "cot_n": 80,
+                "cot_market": COT_MARKET_CODE,
+            },
+            sort_keys=True,
+        ).encode()
+    ).hexdigest()[:16],
+}
 
 def bootstrap_layer1_clean_db(tmp_path: Path) -> ConnectionManager:
     db = tmp_path / "layer1_clean.duckdb"
@@ -108,4 +130,3 @@ def seed_cot_lf_net_weekly(
         )
 
 
-AS_OF = datetime(2026, 6, 20, 16, 0, tzinfo=UTC)

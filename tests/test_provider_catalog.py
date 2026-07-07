@@ -84,14 +84,15 @@ def _catalog_source_to_provider() -> dict[str, dict]:
 def test_everyRegistrySource_hasCatalogEntry() -> None:
     """覆盖范围：source_registry 每个 source_id 在 catalog 中有且仅有一条 provider 映射
     测试对象：source_registry.yaml 与 provider_catalog.yaml providers 列表
-    目的/目标：25 源全覆盖，每源恰一 provider entry（1:1 主模式）
-    验证点：registry 源集合等于 catalog 源集合；len(providers)==25
+    目的/目标：registry 与 catalog 源集合动态相等，每源恰一 provider entry（1:1 主模式）
+    验证点：registry 源集合等于 catalog 源集合；len(providers)==len(registry)
     失败含义：registry 与 catalog 脱节，Round3G 无法读取统一 posture
     """
     registry_ids = {s["source_id"] for s in load_yaml(SOURCE_REGISTRY).get("sources") or []}
     catalog_map = _catalog_source_to_provider()
+    providers = _catalog_providers()
     assert set(catalog_map.keys()) == registry_ids
-    assert len(_catalog_providers()) == 25
+    assert len(providers) == len(registry_ids)
 
 
 def test_catalogRequiredFields_present() -> None:
@@ -272,12 +273,13 @@ def test_loadProviderCatalog_returnsProviders() -> None:
     """覆盖范围：只读 loader 能加载 catalog 文档
     测试对象：backend.app.datasources.provider_catalog.load_provider_catalog
     目的/目标：§9.3 loader 最小 API 可调用且返回 providers 列表
-    验证点：version 与 providers 非空
+    验证点：version 与 providers 非空；len(providers)==len(registry sources)
     失败含义：runtime 无法读取 catalog，R3G 须重复解析 YAML
     """
     doc = load_provider_catalog()
+    registry_count = len(load_yaml(SOURCE_REGISTRY).get("sources") or [])
     assert doc.get("version") == "provider_catalog_v1"
-    assert len(doc.get("providers") or []) == 25
+    assert len(doc.get("providers") or []) == registry_count
 
 
 def test_providerForSource_knownAndUnknown() -> None:

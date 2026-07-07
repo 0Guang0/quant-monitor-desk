@@ -186,20 +186,31 @@ def test_fredIncrementalCli_execute_mockInTest(
     assert payload["overall_status"] == "COMPLETED"
 
 
-def test_fredIncrementalCli_help_showsSourceIdFlag() -> None:
-    """覆盖范围：qmd data sync help 快照
-    测试对象：CLI argparse --help
-    目的/目标：操作员可见 --domain 与 --source-id（非裸 --source）
-    验证点：help 含 --source-id 与 macro_series 示例域
-    失败含义：CLI 文档与实现旗标漂移
+def test_fredIncrementalCli_syncDefinesSourceIdFlag() -> None:
+    """覆盖范围：data sync 子命令 --source-id 旗标存在
+    测试对象：CLI argparse sync 子解析器
+    目的/目标：操作员可指定 --source-id（非裸 --source）
+    验证点：sync 子命令 action 含 --source-id dest=source_id
+    失败含义：CLI 旗标与实现漂移，操作员无法指定源
     """
-    proc = subprocess.run(
-        [sys.executable, "-m", "backend.app.cli.main", "data", "sync", "--help"],
-        cwd=PROJECT_ROOT,
-        capture_output=True,
-        text=True,
-        check=False,
+    import argparse
+
+    from backend.app.cli.main import _build_data_parser
+
+    parser = argparse.ArgumentParser()
+    sub = parser.add_subparsers(dest="command")
+    _build_data_parser(sub)
+    data_parser = next(
+        action.choices["data"]
+        for action in parser._actions
+        if hasattr(action, "choices") and action.choices and "data" in action.choices
     )
-    assert proc.returncode == 0
-    assert "--source-id" in proc.stdout
-    assert "macro_series" in proc.stdout
+    sync_parser = next(
+        action.choices["sync"]
+        for action in data_parser._actions
+        if hasattr(action, "choices") and action.choices and "sync" in action.choices
+    )
+    option_dests = {
+        opt.dest for opt in sync_parser._actions if opt.dest not in {None, argparse.SUPPRESS}
+    }
+    assert "source_id" in option_dests

@@ -223,7 +223,7 @@ def test_baostock_port_windowSpan_blocksOverMaxWindowDays() -> None:
     )
 
     port = create_baostock_fetch_port(symbols=("sh.600519",), max_rows=5)
-    end = datetime.now(UTC).date()
+    end = date(2024, 6, 30)
     start = end - timedelta(days=MAX_WINDOW_DAYS + 1)
     req = _cn_req(
         "baostock",
@@ -749,7 +749,7 @@ def test_ifind_route_disabledWithoutLicense() -> None:
     """覆盖范围：ths_ifind 未授权路由 DISABLED
     测试对象：SourceRoutePlanner + concept_theme
     目的/目标：G4 iFinD 路由层 license_gate 对齐
-    验证点：route_status≠READY 或 selected≠ths_ifind
+    验证点：ths_ifind 候选 enabled=False；skip_reason 含 authorization/license
     失败含义：iFinD 无授权可获得 READY 路由
     """
     from backend.app.datasources.capability_registry import SourceCapabilityRegistry
@@ -767,7 +767,10 @@ def test_ifind_route_disabledWithoutLicense() -> None:
         run_id="r3h03-ifind-route",
         job_id="ifind-route",
     )
-    assert plan.route_status != "READY" or plan.selected_source_id != "ths_ifind"
+    ifind = next(c for c in plan.candidates if c.source_id == "ths_ifind")
+    assert ifind.enabled is False
+    lowered = (ifind.skip_reason or "").lower()
+    assert "authorization" in lowered or "license" in lowered
 
 
 def test_xqshare_route_disabledWithoutAuthorization() -> None:
@@ -821,11 +824,12 @@ R3H03_CN_SOURCES: tuple[str, ...] = (
 
 
 def test_baostock_registry_readyWithEvidenceStatus() -> None:
-    """覆盖范围：R3H-03 十源 registry 终态（baostock 代表）
+    """覆盖范围：R3H-03 十源 registry 终态登记（baostock 代表）
     测试对象：source_capabilities.yaml CN 源
-    目的/目标：十源须 READY_WITH_EVIDENCE + replay_fixture_path
-    验证点：status 与 replay_fixture_path 非空
+    目的/目标：十源须 READY_WITH_EVIDENCE + replay_fixture_path 登记完整
+    验证点：status 与 replay_fixture_path、fetch_port_path 非空
     失败含义：CN 源仍以 proposed-disabled 占位
+    ponytail: 本测仅验证 YAML 登记；port mock fetch 产出 evidence v1 由 test_baostock_port_* / service fetch 覆盖
     """
     capabilities = _load_capabilities()
     sources = capabilities.get("sources") or {}

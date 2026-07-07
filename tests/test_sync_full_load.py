@@ -8,10 +8,13 @@ from backend.app.db.connection import ConnectionManager
 from backend.app.db.migrate import apply_migrations
 from backend.app.sync.jobs import SyncJobSpec
 from backend.app.sync.orchestrator import DataSyncOrchestrator
-
-_FULL_LOAD_3SHARD_START = date(2026, 1, 1)
-_FULL_LOAD_1SHARD_END = date(2026, 1, 15)
-_FULL_LOAD_2SHARD_END = date(2026, 2, 15)
+from tests.support.sync_adapters import (
+    FULL_LOAD_2SHARD_END as _FULL_LOAD_2SHARD_END,
+    FULL_LOAD_3SHARD_START as _FULL_LOAD_3SHARD_START,
+    FULL_LOAD_1SHARD_END as _FULL_LOAD_1SHARD_END,
+    FullLoadCountAdapter as _FullLoadCountAdapter,
+    FullLoadFailOnSecondAdapter as _FullLoadFailOnSecondAdapter,
+)
 
 
 def _orchestrator(tmp_path) -> DataSyncOrchestrator:
@@ -20,67 +23,6 @@ def _orchestrator(tmp_path) -> DataSyncOrchestrator:
     with cm.writer() as con:
         apply_migrations(con)
     return DataSyncOrchestrator(cm)
-
-
-class _FullLoadCountAdapter:
-    source_id = "baostock"
-    supported_domains = frozenset({"market_bar_1d"})
-    STG = "stg_full_load"
-    CLEAN = "stg_full_load_clean"
-
-    def __init__(self) -> None:
-        self.fetch_calls = 0
-
-    def fetch(self, req, *, con, job_id=None):
-        from backend.app.datasources.fetch_result import FetchResult
-
-        self.fetch_calls += 1
-        con.execute(
-            f"""
-            CREATE TABLE IF NOT EXISTS {self.STG} (
-                instrument_id VARCHAR, trade_date VARCHAR, close DOUBLE,
-                source_used VARCHAR, batch_id VARCHAR, source_id VARCHAR
-            )
-            """
-        )
-        con.execute(
-            f"CREATE TABLE IF NOT EXISTS {self.CLEAN} AS SELECT * FROM {self.STG} WHERE 1=0"
-        )
-        con.execute(f"DELETE FROM {self.STG}")
-        con.execute(
-            f"INSERT INTO {self.STG} VALUES (?, ?, ?, ?, ?, ?)",
-            ["AAPL", "2026-06-15", 100.0, "baostock", "fl1", "baostock"],
-        )
-        return FetchResult(
-            run_id=req.run_id,
-            source_id=self.source_id,
-            data_domain=req.data_domain,
-            status="SUCCESS",
-            row_count=1,
-            fetch_time="2026-06-17T10:00:00Z",
-            staging_table=self.STG,
-            raw_file_paths=["/tmp/fl.parquet"],
-            content_hash="abc",
-            schema_hash="def",
-        )
-
-
-class _FullLoadFailOnSecondAdapter(_FullLoadCountAdapter):
-    def fetch(self, req, *, con, job_id=None):
-        if self.fetch_calls + 1 >= 2:
-            self.fetch_calls += 1
-            from backend.app.datasources.fetch_result import FetchResult
-
-            return FetchResult(
-                run_id=req.run_id,
-                source_id=self.source_id,
-                data_domain=req.data_domain,
-                status="FAILED",
-                row_count=0,
-                fetch_time="2026-06-17T10:00:00Z",
-                error_message="shard fail",
-            )
-        return super().fetch(req, con=con, job_id=job_id)
 
 
 def _full_load_spec(
@@ -128,7 +70,7 @@ def test_syncFullLoad_checkpointResume_skipsCompletedShards(tmp_path, monkeypatc
     """覆盖范围：FullLoad 断点续跑
     测试对象：FullLoadJobRunner FULL_LOAD_COMPLETE checkpoint
     目的/目标：§13.4.1 部分失败后重跑跳过已完成分片
-    验证点：续跑仅 fetch 未完成分片（fetch_calls 少于总分片数）
+    验证点：首跑留下 FULL_LOAD_COMPLETE；续跑仅 fetch 未完成分片日期范围
     失败含义：断点续跑失效，全量重建成本不可控
     """
     from backend.app.core.resource_guard import Decision, ResourceGuard
@@ -137,7 +79,8 @@ def test_syncFullLoad_checkpointResume_skipsCompletedShards(tmp_path, monkeypatc
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
     orch = _orchestrator(tmp_path)
     spec = _full_load_spec(job_id="job-fl-resume", date_end=_FULL_LOAD_2SHARD_END)
-    total_shards = len(plan_backfill_shards(spec.date_start, spec.date_end))
+    shards = plan_backfill_shards(spec.date_start, spec.date_end)
+    first_task_id, first_start, first_end = shards[0]
 
     fail_adapter = _FullLoadFailOnSecondAdapter()
     first = orch.run_full_load(
@@ -147,6 +90,17 @@ def test_syncFullLoad_checkpointResume_skipsCompletedShards(tmp_path, monkeypatc
     )
     assert any(r.status == "FAILED_RETRYABLE" for r in first)
 
+    with orch._cm.writer() as con:
+        complete_events = con.execute(
+            """
+            SELECT event_type, message FROM job_event_log
+            WHERE job_id = ? AND event_type = 'FULL_LOAD_COMPLETE'
+            """,
+            [spec.job_id],
+        ).fetchall()
+    assert len(complete_events) == 1
+    assert first_task_id in (complete_events[0][1] or "")
+
     resume_adapter = _FullLoadCountAdapter()
     second = orch.run_full_load(
         spec,
@@ -154,4 +108,9 @@ def test_syncFullLoad_checkpointResume_skipsCompletedShards(tmp_path, monkeypatc
         clean_table=_FullLoadCountAdapter.CLEAN,
     )
     assert second[-1].status == "COMPLETED"
-    assert resume_adapter.fetch_calls < total_shards
+    remaining_ranges = {
+        f"{shard_start.isoformat()}:{shard_end.isoformat()}"
+        for _, shard_start, shard_end in shards[1:]
+    }
+    assert set(resume_adapter.fetched_shard_ids) == remaining_ranges
+    assert f"{first_start.isoformat()}:{first_end.isoformat()}" not in resume_adapter.fetched_shard_ids
