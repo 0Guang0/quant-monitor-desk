@@ -8,7 +8,7 @@
 
 ## Current Phase
 
-Phase 4: Acceptance spine tracer bullet implemented through persisted route evidence, live-authorization block and FRED credential block. Next work is to connect the tracer from persisted route evidence into real fetch/write/read acceptance, or pause for review before expanding scope.
+Phase 6 follow-up is complete for smoke adapter delegation, CLI-persisted route evidence, CNINFO product-live replay-first stabilization, and the authority-language guard. Current active work is still the unfinished product spine: connect the FRED tracer beyond persisted route evidence into real fetch/write/read/downstream-read acceptance, then clean the remaining authority vocabulary findings before strict guard enforcement.
 
 ## Spec Summary
 
@@ -23,7 +23,7 @@ Phase 4: Acceptance spine tracer bullet implemented through persisted route evid
 - Boundary verification: `uv run python scripts/check_module_boundaries.py`
 - Indicator binding check: `uv run python scripts/check_indicator_binding_matrix.py`
 - Product gate candidate: `uv run python scripts/production_gate.py`
-- Production-equivalent acceptance command: to be implemented by this task; must run through formal CLI delegated to the Module Interface, not test helper internals.
+- Production-equivalent acceptance command: `qmd-ops accept-source-route-db`; current FRED tracer runs through the formal CLI/Module path and reports honest BLOCKED for missing authorization or credentials.
 
 ### Product Structure
 
@@ -170,7 +170,9 @@ The first tracer bullet should be `macro_series` / `fred` / `fetch_macro_series`
 - **Acceptance criteria:**
   - [ ] Authority docs/contracts stay product-state-only.
   - [ ] Execution phases only appear under task execution plans.
-  - [ ] mock/replay/dry-run cannot be described as product acceptance success.
+  - [x] mock/replay/dry-run cannot be described as product acceptance success.
+
+Current guard state: `scripts/check_authority_acceptance_language.py` exists and reports violations. It currently returns `FAIL` with 4 `execution_stage_vocabulary` findings in `docs/modules/data_sources.md`, so the guard is implemented but the authority-doc cleanup is not done.
 
 ## Tiny Commit Plan
 
@@ -263,6 +265,7 @@ Each commit must leave the codebase working. If a commit would touch more than a
 
 1. Which downstream Layer read should be the first acceptance consumer for degraded clean behavior?
 2. Should `qmd-ops accept-source-route-db` or `qmd-data acceptance run` be the final CLI spelling? The Interface should stay the same either way.
+3. Should `docs/modules/data_sources.md` be cleaned in this task so `check_authority_acceptance_language.py --strict` can become a hard gate?
 
 ## Notes
 
