@@ -37,9 +37,9 @@ def test_productionGate_defaultRunsSourceMatrixDryRunChecks(monkeypatch: pytest.
     flat = "\n".join(" ".join(part for part in call) for call in calls)
     assert "check_acceptance_helper_consumers.py" in flat and "--strict" in flat
     assert "check_source_route_db_acceptance_matrix.py" in flat and "--strict" in flat
-    assert "accept-source-route-db" in flat and gate.CI_SAMPLE_MATRIX_TARGET.split(":")[1] in flat
-    assert "source-route-db-ci-sample" in flat
-    assert "--all-documented-sources" not in flat
+    assert "accept-source-route-db" in flat and "--all-documented-sources" in flat
+    assert "source-route-db-ci-dry" in flat
+    assert "--target" not in flat
     assert "--allow-live-fetch" not in flat
     assert "--live-authorized" not in flat
 

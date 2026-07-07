@@ -8,6 +8,9 @@ from __future__ import annotations
 
 import json
 import os
+import urllib.error
+import urllib.parse
+import urllib.request
 import uuid
 from collections.abc import Sequence
 from dataclasses import dataclass
@@ -247,15 +250,77 @@ class AlphaVantageLiveFetchPort:
     max_option_strikes: int = MAX_OPTION_STRIKES
 
     def fetch_payload(self, req: FetchRequest) -> FetchPayload:
-        if not _alpha_vantage_api_key():
+        api_key = _alpha_vantage_api_key()
+        if not api_key:
             raise PortError("USER_AUTH_REQUIRED", "ALPHA_VANTAGE_API_KEY missing for live fetch")
-        # ponytail: live path delegates to mock until dedicated urllib wiring is needed;
-        # DSS ResourceGuard hook belongs in the live slice (see R3H-02 frozen §7).
-        return AlphaVantageMockFetchPort(
-            symbols=self.symbols,
-            max_rows=self.max_rows,
-            max_option_strikes=self.max_option_strikes,
-        ).fetch_payload(req)
+        reject_over_cap(value=self.max_rows, cap=MAX_ROWS)
+        symbol = req.instrument_id or (self.symbols[0] if self.symbols else "")
+        if not symbol:
+            raise PortError("FAILED", "missing instrument_id for Alpha Vantage live fetch")
+        _reject_unknown_symbol(symbol)
+        domain = req.data_domain or "us_equity_daily_bar"
+        reject_fetch_window_span_over_cap(
+            start_time=req.start_time,
+            end_time=req.end_time,
+            cap=MAX_WINDOW_DAYS,
+            data_domain=domain,
+            instrument_id=symbol,
+        )
+        params = urllib.parse.urlencode(
+            {
+                "function": "TIME_SERIES_DAILY",
+                "symbol": symbol,
+                "apikey": api_key,
+                "outputsize": "compact",
+            }
+        )
+        url = f"https://www.alphavantage.co/query?{params}"
+        try:
+            with urllib.request.urlopen(url, timeout=30) as response:
+                raw = json.loads(response.read().decode("utf-8"))
+        except urllib.error.URLError as exc:
+            raise PortError("NETWORK_ERROR", str(exc)) from exc
+        except json.JSONDecodeError as exc:
+            raise PortError("FAILED", f"invalid Alpha Vantage JSON: {exc}") from exc
+        if raw.get("Error Message") or raw.get("Information"):
+            detail = str(raw.get("Error Message") or raw.get("Information"))
+            if "frequency" in detail.lower() or "limit" in detail.lower():
+                raise PortError("RATE_LIMITED", detail)
+            raise PortError("FAILED", detail)
+        series = raw.get("Time Series (Daily)") or {}
+        if not isinstance(series, dict) or not series:
+            raise PortError("EMPTY_RESPONSE", f"Alpha Vantage returned no daily bars for {symbol}")
+        bars: list[dict[str, Any]] = []
+        for trade_date in sorted(series.keys(), reverse=True)[: self.max_rows]:
+            values = series[trade_date]
+            bars.append(
+                {
+                    "instrument_id": symbol,
+                    "trade_date": trade_date,
+                    "open": values.get("1. open"),
+                    "high": values.get("2. high"),
+                    "low": values.get("3. low"),
+                    "close": values.get("4. close"),
+                    "volume": values.get("5. volume"),
+                    "source_used": "alpha_vantage",
+                }
+            )
+        retrieved_at = datetime.now(UTC).isoformat()
+        fetch_id = f"av-live-{symbol}-{uuid.uuid4().hex[:12]}"
+        window_kind = us_equity_window_kind(data_domain=domain, instrument_id=symbol)
+        bundle = build_daily_bar_evidence_bundle(
+            bars=bars,
+            data_domain=domain,
+            source_id="alpha_vantage",
+            source_fetch_id=fetch_id,
+            content_hash="pending",
+            as_of_timestamp=retrieved_at,
+            retrieved_at=retrieved_at,
+            window_kind=window_kind,
+        )
+        bundle = finalize_bundle(bundle)
+        content = json.dumps(bundle, ensure_ascii=False, default=str).encode("utf-8")
+        return FetchPayload(content=content, file_type="json", row_count=len(bars))
 
 
 def create_alpha_vantage_fetch_port(

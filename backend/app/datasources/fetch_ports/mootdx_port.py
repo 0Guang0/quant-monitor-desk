@@ -153,26 +153,72 @@ class MootdxMockFetchPort:
 
 
 @dataclass(frozen=True)
-class MootdxProductLiveFetchPort:
-    """Product live mootdx port — replay-first; independent from tdx_pytdx fallback."""
+class MootdxLiveFetchPort:
+    """Product live mootdx port — pytdx network fetch; no replay fallback."""
 
     symbols: Sequence[str]
     max_rows: int
-    replay_path: Path = REPLAY_FIXTURE
 
     def fetch_payload(self, req: FetchRequest) -> FetchPayload:
-        from backend.app.datasources.fetch_ports.cn_product_live_replay import (
-            replay_first_fetch_payload,
-        )
+        reject_unsupported_domain(req, source_id="mootdx")
+        reject_full_market_scan(req, source_id="mootdx")
+        reject_over_cap(data_domain=req.data_domain, max_rows=self.max_rows, source_id="mootdx")
+        domain = req.data_domain or "cn_equity_daily_bar"
+        if domain != "cn_equity_daily_bar":
+            raise PortError("FAILED", f"unsupported data_domain for mootdx live fetch: {domain!r}")
+        symbol = req.instrument_id or (self.symbols[0] if self.symbols else "")
+        if not symbol:
+            raise PortError("FAILED", "missing instrument_id for mootdx live fetch")
+        market, code = parse_equity_symbol(symbol)
+        try:
+            from pytdx.hq import TdxHq_API
+        except ImportError as exc:
+            raise PortError("DISABLED_SOURCE", f"pytdx not installed for mootdx live: {exc}") from exc
 
-        return replay_first_fetch_payload(
-            MootdxMockFetchPort,
-            symbols=self.symbols,
-            max_rows=self.max_rows,
-            replay_path=self.replay_path,
-            req=req,
-            replay_caught_up_fallback=True,
+        api = TdxHq_API()
+        connected = False
+        for host, port in (("119.147.212.81", 7709), ("114.80.63.12", 7709)):
+            if api.connect(host, port):
+                connected = True
+                break
+        if not connected:
+            raise PortError("NETWORK_ERROR", "mootdx live could not connect to TDX servers")
+        try:
+            raw_bars = api.get_security_bars(9, market, code, 0, self.max_rows) or []
+        finally:
+            api.disconnect()
+        if not raw_bars:
+            raise PortError("EMPTY_RESPONSE", f"mootdx live returned no bars for {symbol!r}")
+
+        bars: list[dict] = []
+        for item in raw_bars[-self.max_rows :]:
+            trade_date = str(item.get("datetime") or "")[:10]
+            bars.append(
+                {
+                    "instrument_id": symbol,
+                    "trade_date": trade_date,
+                    "open": float(item.get("open") or 0.0),
+                    "high": float(item.get("high") or 0.0),
+                    "low": float(item.get("low") or 0.0),
+                    "close": float(item.get("close") or 0.0),
+                    "volume": float(item.get("vol") or 0.0),
+                    "source_used": "mootdx",
+                }
+            )
+        retrieved_at = datetime.now(UTC).isoformat()
+        fetch_id = f"mootdx-live-{symbol}-{uuid.uuid4().hex[:12]}"
+        bundle = build_cn_market_evidence_bundle(
+            bars=bars,
+            data_domain=domain,
+            source_id="mootdx",
+            source_fetch_id=fetch_id,
+            content_hash="pending",
+            as_of_timestamp=retrieved_at,
+            retrieved_at=retrieved_at,
         )
+        bundle = finalize_bundle(bundle)
+        content = json.dumps(bundle, ensure_ascii=False, default=str).encode("utf-8")
+        return FetchPayload(content=content, file_type="json", row_count=len(bars))
 
 
 def create_mootdx_fetch_port(*, symbols: Sequence[str], max_rows: int, use_mock: bool = True):
@@ -184,7 +230,7 @@ def create_mootdx_fetch_port(*, symbols: Sequence[str], max_rows: int, use_mock:
     from backend.app.datasources.product_live_gate import gate_live_fetch_port
 
     gate_live_fetch_port(source_id="mootdx")
-    return MootdxProductLiveFetchPort(symbols=symbols, max_rows=max_rows)
+    return MootdxLiveFetchPort(symbols=symbols, max_rows=max_rows)
 
 
 __all__ = [

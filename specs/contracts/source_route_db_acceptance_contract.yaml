@@ -111,7 +111,9 @@ matrix_closure:
     scope: final_live_authorized
     sources:
       - sec_edgar
-    note: matrix row must remain status FAIL and failure_class FAIL_EXTERNAL; closure PASS when live handler ran and upstream network/SSL failed; do not mock or replay to green the row; re-run when connectivity improves
+      - stooq
+      - mootdx
+    note: matrix row must remain status FAIL and failure_class FAIL_EXTERNAL (or DISABLED_SOURCE mapped to FAIL_EXTERNAL); closure PASS when live handler ran and upstream/network/geo/dependency failure is honest; do not mock or replay to green the row; re-run when connectivity or live wiring improves
   live_report_metadata: aggregated matrix report must include live_authorized=true and closure_mode=final_live_authorized when checked with --live-authorized
   qualified_non_primary: validation, manual_review_only and licensed_validation may close with status PASS, failure_class NONE, write_grade blocked/not_written, and downstream expectation from matrix target
 

@@ -143,26 +143,87 @@ class BaostockMockFetchPort:
 
 
 @dataclass(frozen=True)
-class BaostockProductLiveFetchPort:
-    """Product live baostock port — replay-first; no cn_rehearsal on product path."""
+class BaostockLiveFetchPort:
+    """Product live baostock port — real baostock API with cn_market evidence bundle."""
 
     symbols: Sequence[str]
     max_rows: int
-    replay_path: Path = REPLAY_FIXTURE
 
     def fetch_payload(self, req: FetchRequest) -> FetchPayload:
-        from backend.app.datasources.fetch_ports.cn_product_live_replay import (
-            replay_first_fetch_payload,
+        try:
+            import baostock as bs
+        except ImportError as exc:
+            raise PortError("FAILED", f"baostock package not installed: {exc}") from exc
+
+        reject_over_cap(value=self.max_rows, cap=MAX_ROWS)
+        symbol = req.instrument_id or (self.symbols[0] if self.symbols else "")
+        if not symbol:
+            raise PortError("FAILED", "missing instrument_id for baostock live fetch")
+        _reject_unknown_symbol(symbol)
+        if req.start_time and req.end_time:
+            start = parse_fetch_window_date(req.start_time)
+            end = parse_fetch_window_date(req.end_time)
+            if start is not None and end is not None:
+                span_days = abs((end - start).days) + 1
+                reject_over_cap(value=span_days, cap=MAX_WINDOW_DAYS, label="max_window_days")
+        end_date = parse_fetch_window_date(req.end_time) or datetime.now(UTC).date()
+        start_date = parse_fetch_window_date(req.start_time) or (
+            end_date - timedelta(days=MAX_WINDOW_DAYS - 1)
         )
 
-        return replay_first_fetch_payload(
-            BaostockMockFetchPort,
-            symbols=self.symbols,
-            max_rows=self.max_rows,
-            replay_path=self.replay_path,
-            req=req,
-            replay_caught_up_fallback=True,
+        login = bs.login()
+        if login.error_code != "0":
+            raise PortError("AUTH_FAILED", login.error_msg or "baostock login failed")
+        raw_rows: list[list[str]] = []
+        try:
+            rs = bs.query_history_k_data_plus(
+                symbol,
+                "date,code,open,high,low,close,volume",
+                start_date=start_date.isoformat(),
+                end_date=end_date.isoformat(),
+                frequency="d",
+                adjustflag="3",
+            )
+            while rs.error_code == "0" and rs.next():
+                raw_rows.append(rs.get_row_data())
+                if len(raw_rows) >= self.max_rows:
+                    break
+            if rs.error_code != "0" and not raw_rows:
+                raise PortError("NETWORK_ERROR", rs.error_msg or "baostock query failed")
+        finally:
+            bs.logout()
+
+        if not raw_rows:
+            raise PortError("EMPTY_RESPONSE", "baostock returned no rows")
+
+        bars: list[dict] = []
+        for row in raw_rows:
+            bars.append(
+                {
+                    "instrument_id": symbol,
+                    "trade_date": str(row[0] or ""),
+                    "open": float(row[2] or 0.0),
+                    "high": float(row[3] or 0.0),
+                    "low": float(row[4] or 0.0),
+                    "close": float(row[5] or 0.0),
+                    "volume": float(row[6] or 0.0),
+                    "source_used": "baostock",
+                }
+            )
+        retrieved_at = datetime.now(UTC).isoformat()
+        fetch_id = f"baostock-live-{symbol}-{uuid.uuid4().hex[:12]}"
+        bundle = build_cn_market_evidence_bundle(
+            bars=bars,
+            data_domain=req.data_domain or "cn_equity_daily_bar",
+            source_id="baostock",
+            source_fetch_id=fetch_id,
+            content_hash="pending",
+            as_of_timestamp=retrieved_at,
+            retrieved_at=retrieved_at,
         )
+        bundle = finalize_bundle(bundle)
+        content = json.dumps(bundle, ensure_ascii=False, default=str).encode("utf-8")
+        return FetchPayload(content=content, file_type="json", row_count=len(bars))
 
 
 def create_baostock_fetch_port(*, symbols: Sequence[str], max_rows: int, use_mock: bool = True):
@@ -173,4 +234,4 @@ def create_baostock_fetch_port(*, symbols: Sequence[str], max_rows: int, use_moc
     from backend.app.datasources.product_live_gate import gate_live_fetch_port
 
     gate_live_fetch_port(source_id="baostock")
-    return BaostockProductLiveFetchPort(symbols=symbols, max_rows=max_rows)
+    return BaostockLiveFetchPort(symbols=symbols, max_rows=max_rows)

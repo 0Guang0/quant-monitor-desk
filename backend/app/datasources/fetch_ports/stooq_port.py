@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
+from backend.app.config import PROJECT_ROOT
 from backend.app.datasources.adapters.fetch_port import FetchPayload, PortError
 from backend.app.datasources.fetch_result import FetchRequest
 from backend.app.datasources.fetch_window import (
@@ -32,6 +33,10 @@ MAX_WINDOW_DAYS = 120
 MAX_ROWS = 500
 
 SYMBOL_WHITELIST = frozenset({"AAPL.US", "EURUSD", "XAUUSD"})
+
+REPLAY_FIXTURE = (
+    PROJECT_ROOT / "tests/fixtures/replay/market_data/stooq/global_daily_replay.json"
+)
 
 
 def _reject_unknown_symbol(symbol: str) -> None:

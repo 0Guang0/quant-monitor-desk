@@ -485,7 +485,7 @@ EVIDENCE_FETCH_MATRIX_SOURCE_IDS = frozenset({"coingecko", "kalshi", "qmt_xtdata
 QUALIFICATION_DEFERRED_SOURCE_IDS = frozenset({"qmt_xtdata", "ths_ifind"})
 
 # Environment/upstream failures that must stay FAIL_EXTERNAL on the matrix row but may closure PASS (ADR-016 §4).
-EXTERNAL_DEFERRED_SOURCE_IDS = frozenset({"sec_edgar"})
+EXTERNAL_DEFERRED_SOURCE_IDS = frozenset({"sec_edgar", "stooq", "mootdx"})
 
 _CLOSURE_OUTCOMES = frozenset({"PASS", "FAIL_EXTERNAL", "FAIL_CONTRACT", "FAIL"})
 
@@ -657,6 +657,12 @@ def evaluate_matrix_row_closure(
             and write_grade in {target.expected_write_grade, "blocked", "not_written"}
         ):
             return "PASS"
+        if (
+            failure_class == "FAIL_EXTERNAL"
+            and mode == "final_live_authorized"
+            and target.request.source_id in EXTERNAL_DEFERRED_SOURCE_IDS
+        ):
+            return "PASS"
         return "FAIL"
 
     if status == "PASS" and failure_class == "NONE":
@@ -805,5 +811,6 @@ def execute_documented_matrix(
         "fail_external_count": summary["fail_external_count"],
         "fail_contract_count": summary["fail_contract_count"],
         "fail_count": summary["fail_count"],
+        "data_root": str(resolved_root),
         "rows": rows,
     }

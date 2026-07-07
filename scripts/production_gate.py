@@ -10,9 +10,6 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 CI_DRY_MATRIX_ROOT = ROOT / ".audit-sandbox" / "source-route-db-ci-dry"
 CI_DRY_MATRIX_REPORT = CI_DRY_MATRIX_ROOT / "reports" / "source-matrix-acceptance.json"
-CI_SAMPLE_MATRIX_ROOT = ROOT / ".audit-sandbox" / "source-route-db-ci-sample"
-CI_SAMPLE_MATRIX_REPORT = CI_SAMPLE_MATRIX_ROOT / "reports" / "sample-acceptance.json"
-CI_SAMPLE_MATRIX_TARGET = "cn_equity_daily_bar:baostock:fetch_daily_bar"
 FAILURES: list[str] = []
 
 
@@ -108,27 +105,6 @@ def check_source_route_matrix_static() -> None:
     )
 
 
-def check_source_route_matrix_sample_execute() -> None:
-    """PR gate: one spine row proves execute path without 22× full matrix cost (CS-15)."""
-    CI_SAMPLE_MATRIX_ROOT.mkdir(parents=True, exist_ok=True)
-    _run_checked(
-        [
-            sys.executable,
-            str(ROOT / "scripts" / "qmd_ops.py"),
-            "accept-source-route-db",
-            "--target",
-            CI_SAMPLE_MATRIX_TARGET,
-            "--data-root",
-            str(CI_SAMPLE_MATRIX_ROOT),
-            "--report",
-            str(CI_SAMPLE_MATRIX_REPORT),
-            "--format",
-            "json",
-        ],
-        label="source route matrix sample execute",
-    )
-
-
 def check_source_route_matrix_dry_run_closure() -> None:
     CI_DRY_MATRIX_ROOT.mkdir(parents=True, exist_ok=True)
     _run_checked(
@@ -163,17 +139,18 @@ def check_source_route_matrix_live_closure(report_path: Path) -> None:
     if not resolved.is_file():
         fail(f"source matrix live report not found: {resolved}")
         return
-    _run_checked(
-        [
-            sys.executable,
-            str(ROOT / "scripts" / "check_source_route_db_acceptance_matrix.py"),
-            "--strict",
-            "--live-authorized",
-            "--report",
-            str(resolved),
-        ],
-        label="source route matrix live-authorized closure",
-    )
+    data_root = resolved.parent.parent if resolved.parent.name == "reports" else None
+    cmd = [
+        sys.executable,
+        str(ROOT / "scripts" / "check_source_route_db_acceptance_matrix.py"),
+        "--strict",
+        "--live-authorized",
+        "--report",
+        str(resolved),
+    ]
+    if data_root is not None:
+        cmd.extend(["--data-root", str(data_root)])
+    _run_checked(cmd, label="source route matrix live-authorized closure")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -209,7 +186,7 @@ def main(argv: list[str] | None = None) -> int:
     else:
         if args.source_matrix_report is not None:
             fail("--source-matrix-report requires --live-authorized")
-        check_source_route_matrix_sample_execute()
+        check_source_route_matrix_dry_run_closure()
 
     if FAILURES:
         for item in FAILURES:

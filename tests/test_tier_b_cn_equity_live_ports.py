@@ -178,3 +178,47 @@ def test_eastmoneyLiveFetchPort_usesHistRetryPath(
     port = EastmoneyLiveFetchPort(symbols=("sh.600519",), max_rows=3)
     port.fetch_payload(_cn_req("eastmoney"))
     assert retry_used["v"] is True
+
+
+def test_akshareHistFetch_fallsBackToSinaDailyOnNetworkError(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """覆盖范围：AkshareLiveFetchPort hist 网络失败回退
+    测试对象：_cn_equity_live_bars_hist → _cn_equity_live_bars_sina
+    目的/目标：push2his NETWORK_ERROR 时仍能通过 akshare sina 链完成 validation fetch
+    验证点：hist 抛 NETWORK_ERROR 后 bundle source_used=akshare 且 vendor 为 sina 链
+    失败含义：矩阵 akshare/eastmoney 行因东财链单点失败而 honest FAIL_EXTERNAL
+    """
+    hist_calls = {"n": 0}
+    sina_calls = {"n": 0}
+
+    def _fail_hist(*_a: object, **_k: object) -> pd.DataFrame:
+        hist_calls["n"] += 1
+        raise ConnectionError("Remote end closed")
+
+    def _sina_daily(*_a: object, **k: object) -> pd.DataFrame:
+        sina_calls["n"] += 1
+        assert k.get("symbol") == "sh600519"
+        return _hist_frame()
+
+    monkeypatch.setattr("akshare.stock_zh_a_hist", _fail_hist)
+    monkeypatch.setattr("akshare.stock_zh_a_daily", _sina_daily)
+    def _fail_retry(_fn: Any) -> Any:
+        raise PortError("NETWORK_ERROR", "direct: Remote end closed connection without response")
+
+    monkeypatch.setattr(
+        "backend.app.datasources.fetch_ports.tier_b_validation_live._run_akshare_call_with_retry",
+        _fail_retry,
+    )
+    monkeypatch.setattr(
+        "backend.app.datasources.fetch_ports.cn_rehearsal_live_ports._run_akshare_call",
+        lambda fn: fn(),
+    )
+
+    port = AkshareLiveFetchPort(symbols=("sh.600519",), max_rows=3)
+    bundle = json.loads(port.fetch_payload(_cn_req("akshare")).content.decode("utf-8"))
+
+    assert hist_calls["n"] == 0
+    assert sina_calls["n"] == 1
+    assert bundle["bars"][0]["source_used"] == "akshare"
+    assert bundle["vendor_api"] == SIDECAR_REQUEST2_VENDOR_API

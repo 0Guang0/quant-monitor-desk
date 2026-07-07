@@ -8,6 +8,10 @@ import json
 import sys
 from pathlib import Path
 
+from backend.app.ops.matrix_live_evidence_honesty import (
+    resolve_matrix_report_data_root,
+    validate_matrix_live_evidence_honesty,
+)
 from backend.app.ops.source_route_db_acceptance_matrix import (
     DOCUMENTED_SOURCE_MATRIX,
     evaluate_matrix_row_closure,
@@ -72,6 +76,7 @@ def build_report(
     *,
     report_path: str | None = None,
     live_authorized: bool = False,
+    data_root: str | None = None,
 ) -> dict[str, object]:
     closure_mode = "final_live_authorized" if live_authorized else "dry_run"
     violations = validate_matrix_against_registry()
@@ -79,10 +84,14 @@ def build_report(
     report_rows: dict[str, dict[str, object]] = {}
     closure_violations: list[str] = []
     report_metadata_violations: list[str] = []
+    evidence_honesty_violations: list[str] = []
     closure_summary: dict[str, object] | None = None
+    report_file: Path | None = Path(report_path) if report_path else None
+    matrix_payload: dict[str, object] | None = None
 
     if report_path:
-        payload = json.loads(Path(report_path).read_text(encoding="utf-8"))
+        matrix_payload = json.loads(Path(report_path).read_text(encoding="utf-8"))
+        payload = matrix_payload
         if isinstance(payload, dict) and isinstance(payload.get("rows"), list):
             for item in payload["rows"]:
                 if isinstance(item, dict) and item.get("target"):
@@ -99,6 +108,25 @@ def build_report(
                 report_rows=report_rows,
                 closure_mode=closure_mode,
             )
+            if live_authorized and isinstance(matrix_payload, dict):
+                resolved_root = resolve_matrix_report_data_root(
+                    report_path=report_file,
+                    payload=matrix_payload,
+                    explicit_data_root=Path(data_root) if data_root else None,
+                )
+                if resolved_root is None:
+                    evidence_honesty_violations.append(
+                        "live-authorized report requires --data-root or report.data_root "
+                        "or reports/source-matrix-acceptance.json under sandbox root"
+                    )
+                elif not resolved_root.is_dir():
+                    evidence_honesty_violations.append(
+                        f"matrix data_root does not exist: {resolved_root}"
+                    )
+                else:
+                    evidence_honesty_violations.extend(
+                        validate_matrix_live_evidence_honesty(resolved_root, matrix_payload)
+                    )
 
     for target in iter_matrix_targets():
         key = matrix_target_key(target)
@@ -148,6 +176,7 @@ def build_report(
         and not unexpected_report_targets
         and not closure_violations
         and not report_metadata_violations
+        and not evidence_honesty_violations
         else "FAIL"
     )
     return {
@@ -159,9 +188,11 @@ def build_report(
         "unexpected_report_targets": unexpected_report_targets,
         "closure_violations": closure_violations,
         "report_metadata_violations": report_metadata_violations,
+        "evidence_honesty_violations": evidence_honesty_violations,
         "closure_summary": closure_summary,
         "live_authorized": live_authorized,
         "closure_mode": closure_mode if live_authorized else "dry_run",
+        "data_root": data_root,
     }
 
 
@@ -175,11 +206,17 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Evaluate report rows against live-authorized closure semantics",
     )
+    parser.add_argument(
+        "--data-root",
+        default=None,
+        help="Isolated sandbox data_root for live evidence honesty scan (--live-authorized)",
+    )
     args = parser.parse_args(argv)
 
     report = build_report(
         report_path=args.report,
         live_authorized=args.live_authorized,
+        data_root=args.data_root,
     )
     if args.format == "json":
         print(json.dumps(report, indent=2, sort_keys=True))
@@ -188,7 +225,8 @@ def main(argv: list[str] | None = None) -> int:
             f"status={report['status']} matrix_count={report['matrix_count']} "
             f"violations={len(report['violations'])} "
             f"closure_violations={len(report['closure_violations'])} "
-            f"report_metadata_violations={len(report['report_metadata_violations'])}"
+            f"report_metadata_violations={len(report['report_metadata_violations'])} "
+            f"evidence_honesty_violations={len(report['evidence_honesty_violations'])}"
         )
         for violation in report["violations"]:
             print(f"CONTRACT_VIOLATION: {violation}")
@@ -196,6 +234,8 @@ def main(argv: list[str] | None = None) -> int:
             print(f"REPORT_METADATA_VIOLATION: {violation}")
         for violation in report["closure_violations"]:
             print(f"CLOSURE_VIOLATION: {violation}")
+        for violation in report["evidence_honesty_violations"]:
+            print(f"EVIDENCE_HONESTY_VIOLATION: {violation}")
     strict_fail = report["status"] != "PASS"
     return 1 if args.strict and strict_fail else 0
 

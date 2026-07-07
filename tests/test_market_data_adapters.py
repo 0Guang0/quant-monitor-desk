@@ -400,6 +400,30 @@ def test_stooq_port_capOverflow_blocksOverMaxSymbols() -> None:
         )
 
 
+def test_stooqLiveFetchPort_doesNotFallBackToReplayOnHtmlBlock(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """覆盖范围：Stooq product live bot/geo 阻断须诚实 FAIL
+    测试对象：create_stooq_fetch_port(use_mock=False)
+    目的/目标：live 路径不得 replay fixture 假绿（ADR-016 honesty_rules）
+    验证点：HTTP 阻断时 PortError 抛出，不返回 replay source_fetch_id
+    失败含义：矩阵 stooq validation 行可用 replay 冒充 live PASS
+    """
+    from backend.app.datasources.adapters.fetch_port import PortError
+    from backend.app.datasources.fetch_ports import tier_b_validation_live as tbl
+    from backend.app.datasources.fetch_ports.stooq_port import create_stooq_fetch_port
+
+    def _blocked(_self, _req):
+        raise PortError("NETWORK_ERROR", "Stooq returned HTML instead of CSV (bot/geo block)")
+
+    monkeypatch.setattr(tbl.StooqLiveFetchPort, "fetch_payload", _blocked)
+    monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
+    port = create_stooq_fetch_port(symbols=("AAPL.US",), max_rows=3, use_mock=False)
+    req = _market_req("stooq", "global_market_daily_bar", "AAPL.US")
+    with pytest.raises(PortError, match="HTML"):
+        port.fetch_payload(req)
+
+
 def test_stooq_port_windowSpan_blocksOverMaxWindowDays() -> None:
     """覆盖范围：Stooq fetch 窗口天数 cap
     测试对象：StooqMockFetchPort.fetch_payload start/end 跨度

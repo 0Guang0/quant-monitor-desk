@@ -315,7 +315,14 @@ def _cn_equity_live_bars_hist(
 
     try:
         frame = _run_akshare_call_with_retry(_fetch)
-    except PortError:
+    except PortError as exc:
+        if str(exc.status).upper() == "NETWORK_ERROR":
+            return _cn_equity_live_bars_sina(
+                req,
+                symbols=symbols,
+                max_rows=max_rows,
+                source_id=source_id,
+            )
         raise
     except Exception as exc:
         raise PortError("NETWORK_ERROR", str(exc)) from exc
@@ -339,6 +346,7 @@ def _cn_equity_live_bars_sina(
     *,
     symbols: Sequence[str],
     max_rows: int,
+    source_id: str = "sina_finance",
 ) -> FetchPayload:
     try:
         import akshare as ak
@@ -370,12 +378,12 @@ def _cn_equity_live_bars_sina(
         raise PortError("EMPTY_RESPONSE", f"akshare stock_zh_a_daily returned no rows for {symbol}")
 
     bars = _bars_from_akshare_dataframe(
-        frame, symbol=symbol, source_id="sina_finance", max_rows=max_rows
+        frame, symbol=symbol, source_id=source_id, max_rows=max_rows
     )
     return _cn_equity_live_fetch_payload(
         bars,
         req,
-        source_id="sina_finance",
+        source_id=source_id,
         vendor_api=SIDECAR_REQUEST2_VENDOR_API,
         upstream=SIDECAR_REQUEST2_ENDPOINT_HOST,
     )

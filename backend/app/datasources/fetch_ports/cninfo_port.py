@@ -296,7 +296,7 @@ def create_cninfo_fetch_port(*, symbols: Sequence[str], max_rows: int, use_mock:
     from backend.app.datasources.product_live_gate import gate_live_fetch_port
 
     gate_live_fetch_port(source_id="cninfo")
-    return CninfoProductLiveFetchPort(symbols=symbols, max_rows=max_rows)
+    return CninfoLiveFetchPort(symbols=symbols, max_rows=max_rows)
 
 
 def create_cninfo_pdf_live_fetch_port(

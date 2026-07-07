@@ -384,6 +384,30 @@ def test_sourceRouteDbAcceptanceMatrix_liveClosure_allowsSecFailExternalClosureP
     assert row["failure_class"] == "FAIL_EXTERNAL"
 
 
+def test_sourceRouteDbAcceptanceMatrix_liveClosure_allowsDeferredValidationFailExternal(
+) -> None:
+    """覆盖范围：validation 源 external_deferred FAIL_EXTERNAL closure 语义
+    测试对象：evaluate_matrix_row_closure(final_live_authorized)
+    目的/目标：stooq geo block 等 validation 行须诚实 FAIL，但登记 external_deferred 时不阻断关账
+    验证点：stooq validation 行 failure_class=FAIL_EXTERNAL → closure_outcome=PASS；status 仍为 FAIL
+    失败含义：validation 源 replay 假绿或 geo 失败误阻断 Slice 10
+    """
+    stooq_target = next(t for t in iter_matrix_targets() if t.request.source_id == "stooq")
+    row = {
+        "status": "FAIL",
+        "failure_class": "FAIL_EXTERNAL",
+        "write_grade": "blocked",
+        "errors": ["Stooq returned HTML instead of CSV (bot/geo block)"],
+    }
+    outcome = evaluate_matrix_row_closure(
+        stooq_target,
+        row,
+        closure_mode="final_live_authorized",
+    )
+    assert outcome == "PASS"
+    assert row["status"] == "FAIL"
+
+
 def test_sourceRouteDbAcceptanceMatrix_liveClosure_blocksNonDeferredFailExternal() -> None:
     """覆盖范围：未登记 external_deferred 的 FAIL_EXTERNAL 仍阻断 closure
     测试对象：evaluate_matrix_row_closure(final_live_authorized)
@@ -678,6 +702,52 @@ def test_deribitStaging_rowsEmpty_whenInstrumentMismatch() -> None:
         instrument_name="BTC-28JUN24-65000-C",
     )
     assert rows == []
+
+
+def test_resolveMatrixEvidenceInstrumentId_usesSourceLiveDefaults() -> None:
+    """覆盖范围：矩阵 validation fetch 默认 instrument SSOT
+    测试对象：resolve_matrix_evidence_instrument_id
+    目的/目标：未显式传 instrument_id 时必须从 SOURCE_LIVE_DEFAULTS 解析 bounded probe 符号
+    验证点：mootdx → sh.600519；显式入参不被覆盖
+    失败含义：validation 探针 missing instrument_id 导致矩阵 FAIL_EXTERNAL
+    """
+    from backend.app.ops.matrix_live_runners import resolve_matrix_evidence_instrument_id
+
+    assert resolve_matrix_evidence_instrument_id("mootdx") == "sh.600519"
+    assert resolve_matrix_evidence_instrument_id("mootdx", "sz.000001") == "sz.000001"
+
+
+def test_deribitLiveFetchPort_acceptsLiveResolvedInstrument(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """覆盖范围：Deribit live 矩阵 instrument 白名单
+    测试对象：DeribitLiveFetchPort.fetch_payload
+    目的/目标：live 解析出的当前期权名不得被静态 replay whitelist 拒绝
+    验证点：mock _live_instruments/_book_summary 后 live 期权名可 fetch
+    失败含义：resolve_matrix_deribit_live_instrument 与 fetch 白名单冲突 → rows_written=0
+    """
+    import json
+
+    from backend.app.datasources.fetch_ports.deribit_port import DeribitLiveFetchPort
+    from backend.app.datasources.fetch_result import FetchRequest
+
+    active = "BTC-8JUL26-55000-C"
+    port = DeribitLiveFetchPort(instruments=(active,), max_surface_rows=3)
+    req = FetchRequest(
+        run_id="deribit-live-test",
+        source_id="deribit",
+        data_domain="crypto_options_surface",
+        instrument_id=active,
+    )
+    monkeypatch.setattr(
+        DeribitLiveFetchPort,
+        "_live_instruments",
+        lambda self: [{"instrument_name": active, "mark_iv": 0.5, "source_used": "deribit"}],
+    )
+    monkeypatch.setattr(DeribitLiveFetchPort, "_book_summary_mark_iv", lambda self, _name: 0.5)
+    payload = port.fetch_payload(req)
+    bundle = json.loads(payload.content.decode("utf-8"))
+    assert bundle["instruments"][0]["instrument_name"] == active
 
 
 def test_secEdgar_fetchSubmissions_usesHttpx2Client(monkeypatch) -> None:

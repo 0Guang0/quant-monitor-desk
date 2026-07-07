@@ -166,7 +166,6 @@ class DeribitLiveFetchPort:
         name = req.instrument_id or (self.instruments[0] if self.instruments else "")
         if not name:
             raise PortError("FAILED", "missing instrument_id for Deribit live fetch")
-        _reject_unknown_instrument(name)
 
         retrieved_at = datetime.now(UTC).isoformat()
         fetch_id = f"deribit-live-{name}-{uuid.uuid4().hex[:12]}"

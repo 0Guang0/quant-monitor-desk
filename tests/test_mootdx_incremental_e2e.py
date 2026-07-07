@@ -218,10 +218,11 @@ def test_mootdxIncremental_liveNetwork_writesSecurityBar1d(
 ) -> None:
     """覆盖范围：隔离 sandbox + mootdx product live 写 security_bar_1d
     测试对象：build_mootdx_incremental_service(use_mock=False) + run_mootdx_bar_incremental
-    目的/目标：QMD_ALLOW_LIVE_FETCH=1 时 product live 金路径落库
-    验证点：COMPLETED；clean 表含 fixture trade_date 行；DbInspector 表存在
-    失败含义：Tier A mootdx live 增量链断
+    目的/目标：QMD_ALLOW_LIVE_FETCH=1 且 pytdx 可用时 product live 金路径落库
+    验证点：COMPLETED；clean 表至少一行；raw bundle source_fetch_id 以 mootdx-live- 开头
+    失败含义：Tier A mootdx live 增量链断或仍走 replay 假绿
     """
+    pytest.importorskip("pytdx")
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
     cm = bootstrap_acceptance_cm(isolated_live_data_root)
     with cm.writer() as con:
@@ -244,16 +245,15 @@ def test_mootdxIncremental_liveNetwork_writesSecurityBar1d(
     with cm.reader() as con:
         row = con.execute(
             """
-            SELECT trade_date, close FROM security_bar_1d
-            WHERE instrument_id = ? AND trade_date = ?
+            SELECT COUNT(*) FROM security_bar_1d
+            WHERE instrument_id = ?
             """,
-            [SYMBOL, FIXTURE_DATE.isoformat()],
+            [SYMBOL],
         ).fetchone()
-    assert row is not None
-    inspect_report = DbInspector(cm.db_path, raw_root).inspect()
-    bar_table = next(t for t in inspect_report.key_tables if t["name"] == "security_bar_1d")
-    assert bar_table["exists"] is True
-    assert bar_table["row_count"] is not None and bar_table["row_count"] >= 1
+    assert row is not None and int(row[0]) >= 1
+    with cm.reader() as con:
+        bundle = load_mootdx_raw_bundle_from_fetch_log(con, "job-mootdx-live-e2e-1")
+    assert str(bundle.get("source_fetch_id", "")).startswith("mootdx-live-")
 
 
 @pytest.mark.network
@@ -264,9 +264,10 @@ def test_mootdxIncremental_liveNetwork_idempotentSecondRun(
     """覆盖范围：隔离 sandbox 连续两次 mootdx product live 增量
     测试对象：run_mootdx_bar_incremental 幂等 upsert
     目的/目标：重复 live 跑同一窗不应增加 security_bar_1d 行数
-    验证点：两次 COMPLETED；行数保持 2（seed + fixture）
+    验证点：两次 COMPLETED；第二次后行数等于第一次后行数
     失败含义：live 幂等失败会导致日常 sync 数据膨胀
     """
+    pytest.importorskip("pytdx")
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
     cm = bootstrap_acceptance_cm(isolated_live_data_root)
     with cm.writer() as con:
@@ -283,11 +284,15 @@ def test_mootdxIncremental_liveNetwork_idempotentSecondRun(
         product_live=True,
     )
     r1 = run_mootdx_bar_incremental(orch, job_id="job-mootdx-live-idem-1", **kwargs)
+    with cm.reader() as con:
+        after_first = con.execute(
+            "SELECT COUNT(*) FROM security_bar_1d WHERE instrument_id = ?", [SYMBOL]
+        ).fetchone()[0]
     r2 = run_mootdx_bar_incremental(orch, job_id="job-mootdx-live-idem-2", **kwargs)
     with cm.reader() as con:
-        count = con.execute(
+        after_second = con.execute(
             "SELECT COUNT(*) FROM security_bar_1d WHERE instrument_id = ?", [SYMBOL]
         ).fetchone()[0]
     assert r1.status == "COMPLETED"
     assert r2.status == "COMPLETED"
-    assert count == 2
+    assert after_second == after_first
