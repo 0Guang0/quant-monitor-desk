@@ -53,7 +53,8 @@ def _filter_filings_by_window(
         return []
     filtered: list[dict] = []
     for row in filings:
-        obs = parse_fetch_window_date(str(row.get("observation_date") or row.get("publish_timestamp") or ""))
+        raw_date = row.get("observation_date") or row.get("publish_timestamp") or ""
+        obs = parse_fetch_window_date(str(raw_date))
         if obs is not None and start <= obs <= end:
             filtered.append(row)
     return filtered
@@ -295,7 +296,7 @@ def create_cninfo_fetch_port(*, symbols: Sequence[str], max_rows: int, use_mock:
     from backend.app.datasources.product_live_gate import gate_live_fetch_port
 
     gate_live_fetch_port(source_id="cninfo")
-    return CninfoLiveFetchPort(symbols=symbols, max_rows=max_rows)
+    return CninfoProductLiveFetchPort(symbols=symbols, max_rows=max_rows)
 
 
 def create_cninfo_pdf_live_fetch_port(
