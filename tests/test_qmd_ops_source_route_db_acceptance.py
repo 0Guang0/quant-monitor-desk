@@ -6,6 +6,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import duckdb
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -64,6 +66,48 @@ def test_qmdOps_acceptSourceRouteDb_delegatesToSpineAndWritesHonestReport(
     assert stdout_payload["failure_class"] == "BLOCKED"
     assert stdout_payload["write_grade"] == "blocked"
     assert stdout_payload["status"] == "FAIL"
+
+
+def test_qmdOps_acceptSourceRouteDb_persistsRouteEvidenceInAcceptanceDb(
+    tmp_path: Path,
+) -> None:
+    """覆盖范围：qmd-ops FRED macro tracer 的 CLI 端到端路由证据
+    测试对象：scripts/qmd_ops.py accept-source-route-db + 隔离 acceptance DuckDB
+    目的/目标：CLI 报告里的 route_plan_id 必须能在 acceptance DB 里追溯，不只是进程内字段
+    验证点：job_event_log.ROUTE_PLAN payload.route_plan_id 等于报告 route_plan_id
+    失败含义：正式验收命令可能产出不可审计报告，无法复盘 SourceRoutePlan 选择
+    """
+    data_root = tmp_path / "source-route-db-acceptance"
+    report_path = data_root / "reports" / "acceptance.json"
+
+    result = _run_acceptance_cli(
+        "--target",
+        "macro_series:fred:fetch_macro_series",
+        "--data-root",
+        str(data_root),
+        "--report",
+        str(report_path),
+    )
+
+    assert result.returncode == 1, result.stderr
+    report_payload = json.loads(report_path.read_text(encoding="utf-8"))
+    db_path = data_root / "duckdb" / "quant_monitor.duckdb"
+    con = duckdb.connect(str(db_path), read_only=True)
+    try:
+        route_payloads = con.execute(
+            """
+            SELECT payload_json
+            FROM job_event_log
+            WHERE event_type = 'ROUTE_PLAN'
+            """
+        ).fetchall()
+    finally:
+        con.close()
+
+    assert len(route_payloads) == 1
+    route_payload = json.loads(route_payloads[0][0])
+    assert route_payload["route_plan_id"] == report_payload["route_plan_id"]
+    assert route_payload["selected_source_id"] == "fred"
 
 
 def test_qmdOps_acceptSourceRouteDb_rejectsCanonicalDataRoot(tmp_path: Path) -> None:
