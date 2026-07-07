@@ -155,6 +155,8 @@ def test_sourceRouteDbAcceptanceMatrix_dryRunClosure_passesWithoutLiveAuthorizat
 
     assert payload["matrix_count"] == 22
     assert payload["closure_status"] == "PASS"
+    assert payload["closure_mode"] == "dry_run"
+    assert payload["live_authorized"] is False
     assert all(row["closure_outcome"] == "PASS" for row in payload["rows"])
 
 
@@ -275,12 +277,12 @@ def test_sourceRouteDbAcceptanceMatrix_liveClosure_rejectsMissingLiveAuthorizati
     )
 
 
-def test_sourceRouteDbAcceptanceMatrix_liveClosure_allowsDeferredQualificationBlocked() -> None:
-    """覆盖范围：live closure 对无资格源的诚实 BLOCKED
-    测试对象：evaluate_matrix_row_closure(..., live_authorized=True)
-    目的/目标：QMT/iFinD 缺本机终端/商业牌照时 closure 仍 PASS，暴露长期不可用而非假失败
-    验证点：qmt_xtdata 与 ths_ifind 的 gate BLOCKED → closure_outcome PASS
-    失败含义：用户无法提供的资格缺口被算进 closure FAIL，矩阵无法诚实关账
+def test_sourceRouteDbAcceptanceMatrix_dryRunClosure_allowsDeferredQualificationBlocked() -> None:
+    """覆盖范围：dry_run closure 对无资格源的诚实 BLOCKED
+    测试对象：evaluate_matrix_row_closure(..., closure_mode=dry_run)
+    目的/目标：中间态 dry-run 可把 QMT/iFinD 缺终端/牌照记为 closure PASS
+    验证点：qmt_xtdata 与 ths_ifind gate BLOCKED → closure_outcome PASS（仅 dry_run）
+    失败含义：开发期矩阵无法诚实暴露长期无资格而不阻断 dry-run 关账
     """
     from backend.app.ops.source_route_db_acceptance_matrix import evaluate_matrix_row_closure
 
@@ -294,7 +296,7 @@ def test_sourceRouteDbAcceptanceMatrix_liveClosure_allowsDeferredQualificationBl
                 "failure_class": "BLOCKED",
                 "errors": ["QMT_XTDATA_AUTHORIZED missing for qmt_xtdata"],
             },
-            live_authorized=True,
+            closure_mode="dry_run",
         )
         == "PASS"
     )
@@ -306,10 +308,65 @@ def test_sourceRouteDbAcceptanceMatrix_liveClosure_allowsDeferredQualificationBl
                 "failure_class": "BLOCKED",
                 "errors": ["THS_IFIND_LICENSE_ARTIFACT missing for licensed source"],
             },
-            live_authorized=True,
+            closure_mode="dry_run",
         )
         == "PASS"
     )
+
+
+def test_sourceRouteDbAcceptanceMatrix_finalLiveAuthorizedClosure_allowsDeferredQualificationBlocked() -> None:
+    """覆盖范围：final_live_authorized closure 对无资格源的诚实 BLOCKED
+    测试对象：evaluate_matrix_row_closure(..., closure_mode=final_live_authorized)
+    目的/目标：用户已 live 授权时，QMT/iFinD 缺终端/牌照仍为预期缺口，closure 可 PASS
+    验证点：qmt_xtdata 与 ths_ifind gate BLOCKED → closure_outcome PASS
+    失败含义：预期无资格被误算进 closure FAIL，与 ADR-016 冲突
+    """
+    from backend.app.ops.source_route_db_acceptance_matrix import evaluate_matrix_row_closure
+
+    qmt = next(t for t in iter_matrix_targets() if t.request.source_id == "qmt_xtdata")
+    ifind = next(t for t in iter_matrix_targets() if t.request.source_id == "ths_ifind")
+    assert (
+        evaluate_matrix_row_closure(
+            qmt,
+            {
+                "status": "FAIL",
+                "failure_class": "BLOCKED",
+                "errors": ["QMT_XTDATA_AUTHORIZED missing for qmt_xtdata"],
+            },
+            closure_mode="final_live_authorized",
+        )
+        == "PASS"
+    )
+    assert (
+        evaluate_matrix_row_closure(
+            ifind,
+            {
+                "status": "FAIL",
+                "failure_class": "BLOCKED",
+                "errors": ["THS_IFIND_LICENSE_ARTIFACT missing for licensed source"],
+            },
+            closure_mode="final_live_authorized",
+        )
+        == "PASS"
+    )
+
+
+def test_sourceRouteDbAcceptanceMatrix_finalLiveAuthorizedClosure_rejectsUnexpectedBlocked() -> None:
+    """覆盖范围：final_live_authorized 对非资格延期源的 BLOCKED
+    测试对象：evaluate_matrix_row_closure(..., closure_mode=final_live_authorized)
+    目的/目标：除 qualification_deferred 外，缺 key/授权类 BLOCKED 仍阻断 closure
+    验证点：alpha_vantage 缺 ALPHA_VANTAGE_API_KEY → closure FAIL
+    失败含义：可配置凭证缺口被误当成预期无资格
+    """
+    from backend.app.ops.source_route_db_acceptance_matrix import evaluate_matrix_row_closure
+
+    target = next(t for t in iter_matrix_targets() if t.request.source_id == "alpha_vantage")
+    row = {
+        "status": "FAIL",
+        "failure_class": "BLOCKED",
+        "errors": ["ALPHA_VANTAGE_API_KEY missing for alpha_vantage"],
+    }
+    assert evaluate_matrix_row_closure(target, row, closure_mode="final_live_authorized") == "FAIL"
 
 
 def test_sourceRouteDbAcceptanceMatrix_liveClosure_rejectsMissingApiKeyBlocked() -> None:

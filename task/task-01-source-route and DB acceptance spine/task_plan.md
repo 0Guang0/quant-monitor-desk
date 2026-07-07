@@ -517,7 +517,7 @@ Each commit must leave the codebase working. If a commit would touch more than a
 - [ ] All enabled/configured live sources that are expected to write clean complete route/fetch/write/read acceptance.
 - [ ] User-authorized full live matrix run is completed in an isolated data root.
 - [ ] Final report records the concrete result for every source: PASS, FAIL_EXTERNAL with evidence, or a user-approved non-clean/manual-review outcome according to documented positioning.
-- [ ] No source remains `not_implemented`, `dry_run`, `mock`, `replay`, or unresolved auth/config `BLOCKED` at final `--live-authorized` closure — **except** `qualification_deferred_sources` (`qmt_xtdata`, `ths_ifind`) may remain honestly `BLOCKED` with `closure_outcome=PASS` per [ADR-016](../../docs/decisions/ADR-016-source-route-matrix-honest-closure.md).
+- [ ] No source remains `not_implemented`, `dry_run`, `mock`, `replay`, or unexpected `BLOCKED` / `FAIL_EXTERNAL` / `FAIL_CONTRACT` at final `--live-authorized` closure — **except** `qualification_deferred_sources` (`qmt_xtdata`, `ths_ifind`) may remain honestly `BLOCKED` with `closure_outcome=PASS` per [ADR-016](../../docs/decisions/ADR-016-source-route-matrix-honest-closure.md).
 
 ## Decisions Made
 

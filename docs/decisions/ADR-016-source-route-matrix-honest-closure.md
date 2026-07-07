@@ -1,6 +1,6 @@
 # ADR-016：22 源矩阵验收诚实关账（无资格暴露 · 外部失败 · 禁止假绿）
 
-- **Status:** Accepted
+- **Status:** Accepted (amended 2026-07-07)
 - **Date:** 2026-07-07
 - **Context:** Task-01 将 `SourceRouteDbAcceptanceSpine` 扩展到 `docs/modules/data_sources.md` §5.9.1 全部 22 个数据源。用户在隔离 `data_root` 下以 `QMD_ALLOW_LIVE_FETCH=1` 跑 production-equivalent 全矩阵 live 验收时，出现三类**必须诚实保留**的结果，不能与「为了 closure PASS 而 mock / 藏失败」混为一谈：
 
@@ -16,25 +16,35 @@
 
 ## Decision
 
-### 1. 三层验收结论（业务词汇）
+### 1. 两种显式 closure 模式（Slice 10 与中间态分离）
 
-| 层                        | 问什么                         | 典型行状态                         | closure 当 `live_authorized=true`                                                           |
-| ------------------------- | ------------------------------ | ---------------------------------- | ------------------------------------------------------------------------------------------- |
-| **A. 无资格（资格延期）** | 用户当前能否合法使用该源？     | `BLOCKED`（缺终端/牌照 env）       | **`closure_outcome=PASS`** — 诚实暴露无资格，不算产品假绿                                   |
-| **B. 有能力须证明**       | 有资格时，隔离库全链路是否通？ | `PASS` 或 `FAIL` / `FAIL_EXTERNAL` | 须 `PASS` 或登记的外部失败（见下）                                                          |
-| **C. 外部客观失败**       | 上游网络/限流/SSL 等？         | `FAIL_EXTERNAL`                    | **`closure_outcome=FAIL_EXTERNAL`** — 保留在报告与 checker violation 中，**禁止 mock 修绿** |
+| `closure_mode`              | 何时用                                                                    | `BLOCKED` 行 closure 规则                                                                                                              |
+| --------------------------- | ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| **`dry_run`**               | `live_authorized=false`；开发期矩阵、诚实暴露资格缺口                     | 缺 `QMD_ALLOW_LIVE_FETCH`（live authorization missing）或 `qualification_deferred_sources` 缺终端/牌照 → **PASS**；其余 BLOCKED → FAIL |
+| **`final_live_authorized`** | `--live-authorized` checker；用户已 `QMD_ALLOW_LIVE_FETCH=1` 跑 live 矩阵 | `qualification_deferred_sources` 缺终端/牌照 → **PASS**；**其他** `BLOCKED` / `FAIL_EXTERNAL` / `FAIL_CONTRACT` → 阻断 closure         |
 
-**资格延期源（当前绑定）：** `qmt_xtdata`、`ths_ifind`（`qualification_deferred_sources`）。  
-**不在此列的 `BLOCKED`**（如缺 `FRED_API_KEY`、`ALPHA_VANTAGE_API_KEY`）仍为 closure **FAIL** — 用户应提供的 API 凭证缺口不得冒充「长期无资格」。
+`qualification_deferred_sources`（`qmt_xtdata`、`ths_ifind`）在两种模式下均可把诚实 terminal/license `BLOCKED` 计为 closure PASS。**除这些预期无资格外，不得出现其它失败行。**
 
-### 2. 矩阵行 vs closure 行（禁止混淆）
+矩阵报告须带 `closure_mode`；`--live-authorized` checker 要求 `live_authorized=true` 且 `closure_mode=final_live_authorized`。
+
+### 2. 三层验收结论（业务词汇 · 矩阵行诚实度）
+
+| 层                        | 问什么                         | 典型行状态                         | `final_live_authorized` closure                      |
+| ------------------------- | ------------------------------ | ---------------------------------- | ---------------------------------------------------- |
+| **A. 无资格（资格延期）** | 用户当前能否合法使用该源？     | `BLOCKED`（缺终端/牌照 env）       | **PASS** — 诚实暴露无资格；dry_run 与 final 均适用   |
+| **B. 有能力须证明**       | 有资格时，隔离库全链路是否通？ | `PASS` 或 `FAIL` / `FAIL_EXTERNAL` | 须 `PASS` 或登记的外部失败                           |
+| **C. 外部客观失败**       | 上游网络/限流/SSL 等？         | `FAIL_EXTERNAL`                    | **`closure_outcome=FAIL_EXTERNAL`** — 禁止 mock 修绿 |
+
+**不在资格延期列的 `BLOCKED`**（如缺 `FRED_API_KEY`）在两种模式下对 final gate 均为 **FAIL**。
+
+### 3. 矩阵行 vs closure 行（禁止混淆）
 
 - **矩阵行 `status`** 必须诚实：`BLOCKED` / `FAIL` / `PASS` 如实反映单次 execute 结果。
-- **closure 行 `closure_outcome`** 是关账规则：在 `live_authorized=true` 下判断该行是否阻碍「本政策下的矩阵关账」。
+- **closure 行 `closure_outcome`** 是关账规则：在 `closure_mode=final_live_authorized` 下判断该行是否阻碍 Slice 10 关账。
 - **禁止：** 为让 `status=PASS` 而注入假数据、假授权 env、或把 live handler 改回 mock/replay。
 - **禁止：** 为让 `closure_outcome=PASS` 而把 `FAIL_EXTERNAL`（如 SEC `NETWORK_ERROR`）静默改为 `PASS` 或吞掉错误。
 
-### 3. 外部失败（以 SEC EDGAR 为当前样例）
+### 4. 外部失败（以 SEC EDGAR 为当前样例）
 
 当 `sec_edgar` live 路径在隔离库中走完整 incremental 金路径，但 `_fetch_sec_submissions_json` 因 SSL/网络失败返回 `NETWORK_ERROR`：
 
@@ -43,22 +53,22 @@
 3. **不得**在 closure 汇总里把 `FAIL_EXTERNAL` 计为 `PASS`。
 4. 环境恢复连通后须**重跑**同一矩阵命令验证；关账证据以重跑报告为准。
 
-当前实测（2026-07-07）：全矩阵 22 源中 **21 行 closure PASS + 1 行 SEC `FAIL_EXTERNAL`**；QMT/iFinD 为 `status=FAIL` + `BLOCKED` 但 `closure_outcome=PASS`。
+当前实测（2026-07-07）：用户 live 授权下，**预期** QMT/iFinD `BLOCKED` closure PASS；**SEC `FAIL_EXTERNAL` 等非资格延期失败仍阻断关账**。
 
-### 4. Live 探针：验收单 vs 活市场
+### 5. Live 探针：验收单 vs 活市场
 
 - **验收单（replay fixture）：** 测试/offline 用固定符号，可含已过期合约；仅用于 mock、`tests/fixtures`、确定性单测。
 - **活市场（live matrix）：** execute 时必须对齐 API 当前可见标的（SSOT helper 或 `resolve_*_live_instrument`）；staging 按 `instrument_id` 过滤时，不得使用与 bundle 不一致的过期 seed。
 - **Deribit：** replay seed `BTC-28JUN24-65000-C` ≠ live 矩阵 `instrument_id`；live 须 `resolve_matrix_deribit_live_instrument()`。
 
-### 5. 测试与 `.env` 隔离（pytest 卫生）
+### 6. 测试与 `.env` 隔离（pytest 卫生）
 
 - **矩阵 live / 产品路径：** 允许 `.env` 中开启 `QMD_ALLOW_LIVE_FETCH`；QMT/iFinD 无 env 时**必须** `BLOCKED`。
 - **单测「默认未授权」负例：** 须在测试开头用 `monkeypatch.delenv` 清除 `QMT_XTDATA_AUTHORIZED`、`THS_IFIND_LICENSE_ARTIFACT` 等，避免 `.env` 污染导致「默认应拦截」用例假失败。  
   实现：`tests/test_cn_market_adapters.py` → `_clear_license_gate_env()`。
 - **二者不矛盾：** 矩阵暴露真实资格状态；单测证明代码默认会拦。
 
-### 6. 关账命令与通过条件（本 ADR 口径）
+### 7. 关账命令与通过条件（本 ADR 口径）
 
 ```powershell
 # 隔离根示例
@@ -73,29 +83,32 @@ uv run python scripts/check_source_route_db_acceptance_matrix.py `
   --report .audit-sandbox/source-route-db-full-live-v2/reports/source-matrix-acceptance.json
 ```
 
-**在本 ADR 政策下，honest close 当且仅当：**
+**在本 ADR 政策下，honest close（`final_live_authorized`）当且仅当：**
 
-1. 所有**非资格延期**、**非 validation-only 定位**的主档源在 `live_authorized=true` 下 `closure_outcome=PASS`（或合法的 validation/manual_review PASS 语义）。
-2. `qualification_deferred_sources` 可为 `BLOCKED` 且 `closure_outcome=PASS`。
-3. 剩余 `FAIL_EXTERNAL` 行有完整 `errors` / `failure_class` 证据，且**未**用 mock 替代。
-4. 无 `FAIL_CONTRACT`、无「缺 live 授权却混在已授权报告里」的 metadata violation。
-5. `uv run pytest -q` 全绿（含授权门默认负例与矩阵 closure 单测）。
+1. 所有非资格延期、非 validation-only 定位的主档源 `closure_outcome=PASS`（或合法 non-primary PASS）。
+2. `qualification_deferred_sources` 可为诚实 `BLOCKED` 且 `closure_outcome=PASS`。
+3. **除上述预期无资格外**，无其它 `BLOCKED`、`FAIL_EXTERNAL`、`FAIL_CONTRACT` 行。
+4. 报告 `live_authorized=true` 且 `closure_mode=final_live_authorized`。
+5. `uv run pytest -q` 全绿。
+
+**`dry_run` closure PASS** 不能代替 final 报告；但 final 仍允许资格延期 `BLOCKED`。
 
 **明确：SEC 仍 `FAIL_EXTERNAL` 时 checker exit 1 是正确行为**，不是实现缺陷。
 
 ## Alternatives Considered
 
-| Alternative                                         | Rejected because                                                               |
-| --------------------------------------------------- | ------------------------------------------------------------------------------ |
-| 全矩阵任意 `BLOCKED` 一律 closure FAIL              | 把 QMT/iFinD「当前无资格」与「产品坏了」混为一谈；逼迫假授权或删源             |
-| 为 SEC 在 live handler 内 fallback 到 replay bundle | 违反 ADR-015「mock 不能冒充 live success」；掩盖 SSL/网络根因                  |
-| 资格延期源从矩阵删除                                | 违背 5.9.1 全覆盖；失去「源在册但无资格」的可审计状态                          |
-| closure PASS = 所有行 `status=PASS`                 | 与 validation-only、资格延期语义冲突；报告无法同时诚实又关账                   |
-| 在 CI 默认跑全矩阵 live                             | 慢、脆、依赖密钥与网络；默认 `pytest` 仍 replay/network-marked 分离（ADR-015） |
+| Alternative                                          | Rejected because                                                               |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------ |
+| 全矩阵任意 `BLOCKED` 一律 closure FAIL（final 模式） | Slice 10 要求用户全授权；dry_run 另设模式暴露无资格                            |
+| 为 SEC 在 live handler 内 fallback 到 replay bundle  | 违反 ADR-015「mock 不能冒充 live success」；掩盖 SSL/网络根因                  |
+| 资格延期源从矩阵删除                                 | 违背 5.9.1 全覆盖；失去「源在册但无资格」的可审计状态                          |
+| final 模式仍豁免 QMT/iFinD `BLOCKED`                 | 与 ADR 资格延期语义一致；仅非延期源与其它失败类阻断                            |
+| closure PASS = 所有行 `status=PASS`                  | 与 validation-only 语义冲突；报告无法同时诚实又关账                            |
+| 在 CI 默认跑全矩阵 live                              | 慢、脆、依赖密钥与网络；默认 `pytest` 仍 replay/network-marked 分离（ADR-015） |
 
 ## Consequences
 
-- **代码：** `evaluate_matrix_row_closure` 对 `QUALIFICATION_DEFERRED_SOURCE_IDS` 在 `live_authorized=true` 且 gate `BLOCKED` 时返回 `PASS`；`FAIL_EXTERNAL` 仍阻断 closure。
+- **代码：** `evaluate_matrix_row_closure` 按 `closure_mode` 分支；`qualification_deferred` 在 dry_run 与 final_live_authorized 均可 PASS；其它 `BLOCKED` / `FAIL_EXTERNAL` 阻断 final closure。
 - **契约：** `source_route_db_acceptance_contract.yaml` 已登记 `qualification_deferred_sources`、`live_vs_replay_probe`。
 - **文档：** 本 ADR 为 task-01 Slice 10 矩阵关账的权威「为什么可以 21/22 closure PASS 而 SEC 仍红」说明。
 - **运维：** 用户若日后取得 QMT/iFinD 资格，须重跑矩阵；预期该行从 `BLOCKED` 变为 live `PASS`，closure 仍 PASS。
@@ -106,7 +119,7 @@ uv run python scripts/check_source_route_db_acceptance_matrix.py `
 | 术语                                    | 含义                                                                      |
 | --------------------------------------- | ------------------------------------------------------------------------- |
 | **production-equivalent acceptance DB** | 与主库同 schema/migration 的隔离 DuckDB；不写 canonical 主库              |
-| **资格延期（qualification deferred）**  | 源在册，但用户长期无法提供终端/牌照；允许 `BLOCKED` 且 closure 通过       |
+| **资格延期（qualification deferred）**  | 源在册但缺终端/牌照；`BLOCKED` 且 closure PASS（dry_run 与 final）        |
 | **必须 PASS 的源**                      | 有资格且定位要求 live 证明的主档源；`FAIL` / `FAIL_EXTERNAL` 阻断 closure |
 | **FAIL_EXTERNAL**                       | 链路已接、上游客观失败；保留证据，禁止 mock 修绿                          |
 | **假绿**                                | `status` 或 `closure_outcome` 为 PASS，但依赖 mock、假授权或吞异常        |

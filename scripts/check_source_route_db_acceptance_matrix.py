@@ -26,15 +26,22 @@ def _report_metadata_violations(
 ) -> list[str]:
     if not live_authorized:
         return []
+    violations: list[str] = []
     if payload.get("live_authorized") is not True:
-        return ["report was not generated with live_authorized=true"]
-    return []
+        violations.append("report was not generated with live_authorized=true")
+    closure_mode = payload.get("closure_mode")
+    if closure_mode not in (None, "final_live_authorized"):
+        violations.append(
+            f"report closure_mode={closure_mode!r} incompatible with --live-authorized "
+            "(expected final_live_authorized)"
+        )
+    return violations
 
 
 def _closure_violations(
     *,
     report_rows: dict[str, dict[str, object]],
-    live_authorized: bool,
+    closure_mode: str,
 ) -> list[str]:
     violations: list[str] = []
     for target in iter_matrix_targets():
@@ -42,7 +49,11 @@ def _closure_violations(
         row = report_rows.get(key)
         if row is None:
             continue
-        outcome = evaluate_matrix_row_closure(target, row, live_authorized=live_authorized)
+        outcome = evaluate_matrix_row_closure(
+            target,
+            row,
+            closure_mode=closure_mode,  # type: ignore[arg-type]
+        )
         if outcome != "PASS":
             violations.append(
                 f"{key} closure_outcome={outcome} status={row.get('status')} "
@@ -56,6 +67,7 @@ def build_report(
     report_path: str | None = None,
     live_authorized: bool = False,
 ) -> dict[str, object]:
+    closure_mode = "final_live_authorized" if live_authorized else "dry_run"
     violations = validate_matrix_against_registry()
     rows: list[dict[str, object]] = []
     report_rows: dict[str, dict[str, object]] = {}
@@ -73,10 +85,13 @@ def build_report(
                 payload,
                 live_authorized=live_authorized,
             )
-            closure_summary = summarize_matrix_closure(payload, live_authorized=live_authorized)
+            closure_summary = summarize_matrix_closure(
+                payload,
+                closure_mode=closure_mode,
+            )
             closure_violations = _closure_violations(
                 report_rows=report_rows,
-                live_authorized=live_authorized,
+                closure_mode=closure_mode,
             )
 
     for target in iter_matrix_targets():
@@ -97,7 +112,7 @@ def build_report(
             row["closure_outcome"] = evaluate_matrix_row_closure(
                 target,
                 report_row,
-                live_authorized=live_authorized,
+                closure_mode=closure_mode,
             )
         rows.append(row)
 
@@ -136,6 +151,7 @@ def build_report(
         "report_metadata_violations": report_metadata_violations,
         "closure_summary": closure_summary,
         "live_authorized": live_authorized,
+        "closure_mode": closure_mode if live_authorized else "dry_run",
     }
 
 

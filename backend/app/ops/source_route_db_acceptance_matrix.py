@@ -384,7 +384,7 @@ def is_non_primary_positioning(target: AcceptanceMatrixTarget) -> bool:
 
 EVIDENCE_FETCH_MATRIX_SOURCE_IDS = frozenset({"coingecko", "kalshi", "qmt_xtdata"})
 
-# Sources where missing local terminal / commercial license is an honest long-term BLOCKED outcome.
+# Honest long-term qualification gaps (terminal/license); closure PASS in dry_run and final_live_authorized.
 QUALIFICATION_DEFERRED_SOURCE_IDS = frozenset({"qmt_xtdata", "ths_ifind"})
 
 
@@ -429,7 +429,20 @@ def find_matrix_target_by_key(target_key: str) -> AcceptanceMatrixTarget | None:
     return None
 
 
+MatrixClosureMode = Literal["dry_run", "final_live_authorized"]
 ClosureOutcome = Literal["PASS", "FAIL_EXTERNAL", "FAIL_CONTRACT", "FAIL"]
+
+
+def resolve_matrix_closure_mode(
+    *,
+    closure_mode: MatrixClosureMode | None = None,
+    live_authorized: bool | None = None,
+) -> MatrixClosureMode:
+    if closure_mode is not None:
+        return closure_mode
+    if live_authorized is None:
+        raise TypeError("evaluate_matrix_row_closure requires closure_mode or live_authorized")
+    return "final_live_authorized" if live_authorized else "dry_run"
 
 
 def build_matrix_preview(
@@ -485,7 +498,7 @@ def _is_deferred_qualification_block(
     target: AcceptanceMatrixTarget,
     error_text: str,
 ) -> bool:
-    """True when a source is honestly BLOCKED for missing terminal/license the user cannot supply yet."""
+    """True when terminal/license is missing on qualification_deferred sources (expected honest BLOCKED)."""
     if target.request.source_id not in QUALIFICATION_DEFERRED_SOURCE_IDS:
         return False
     if _is_missing_live_authorization_block(error_text):
@@ -515,8 +528,13 @@ def evaluate_matrix_row_closure(
     target: AcceptanceMatrixTarget,
     row: dict[str, object],
     *,
-    live_authorized: bool,
+    closure_mode: MatrixClosureMode | None = None,
+    live_authorized: bool | None = None,
 ) -> ClosureOutcome:
+    mode = resolve_matrix_closure_mode(
+        closure_mode=closure_mode,
+        live_authorized=live_authorized,
+    )
     failure_class = str(row.get("failure_class", ""))
     status = str(row.get("status", ""))
     write_grade = str(row.get("write_grade", ""))
@@ -533,8 +551,11 @@ def evaluate_matrix_row_closure(
     if failure_class == "NOT_IMPLEMENTED":
         return "FAIL_CONTRACT"
 
-    if not live_authorized:
-        if failure_class == "BLOCKED" and _is_missing_live_authorization_block(error_text):
+    if mode == "dry_run":
+        if failure_class == "BLOCKED" and (
+            _is_missing_live_authorization_block(error_text)
+            or _is_deferred_qualification_block(target, error_text)
+        ):
             return "PASS"
         return "FAIL"
 
@@ -562,8 +583,13 @@ def evaluate_matrix_row_closure(
 def summarize_matrix_closure(
     payload: dict[str, object],
     *,
-    live_authorized: bool,
+    closure_mode: MatrixClosureMode | None = None,
+    live_authorized: bool | None = None,
 ) -> dict[str, object]:
+    mode = resolve_matrix_closure_mode(
+        closure_mode=closure_mode,
+        live_authorized=live_authorized,
+    )
     rows = payload.get("rows")
     if not isinstance(rows, list):
         return {
@@ -587,7 +613,7 @@ def summarize_matrix_closure(
         outcome = evaluate_matrix_row_closure(
             target,
             row,
-            live_authorized=live_authorized,
+            closure_mode=mode,
         )
         outcomes.append(outcome)
         enriched = dict(row)
@@ -615,6 +641,7 @@ def execute_documented_matrix(
     data_root,
     live_authorized: bool,
 ) -> dict[str, object]:
+    closure_mode = resolve_matrix_closure_mode(live_authorized=live_authorized)
     rows: list[dict[str, object]] = []
     for target in iter_matrix_targets():
         try:
@@ -644,16 +671,17 @@ def execute_documented_matrix(
         row_payload["closure_outcome"] = evaluate_matrix_row_closure(
             target,
             row_payload,
-            live_authorized=live_authorized,
+            closure_mode=closure_mode,
         )
         rows.append(row_payload)
     summary = summarize_matrix_closure(
         {"rows": rows},
-        live_authorized=live_authorized,
+        closure_mode=closure_mode,
     )
     return {
         "matrix_count": len(rows),
         "live_authorized": live_authorized,
+        "closure_mode": closure_mode,
         "closure_status": summary["closure_status"],
         "pass_count": summary["pass_count"],
         "fail_external_count": summary["fail_external_count"],

@@ -255,15 +255,17 @@ Proposed matrix/contract prose (not yet written to authority docs):
 
 ### Phase 14 — Legacy seam zero-reference + closure doc reconcile (2026-07-07)
 
-**Problem 2 (done):** `task_plan.md` Checkpoint F line 520 reconciled with ADR-016 — `qualification_deferred_sources` may remain `BLOCKED` at `--live-authorized` closure with `closure_outcome=PASS`. Contract `legacy_seam_inventory` now requires `consumer_count_must_be_zero`.
+**Problem 1 (done):** `consumer_count=0`；旧 seam 重命名完成（见 commit `d5ccffe`）。
 
-**Problem 1 (done):** Retired legacy seam **names** — `consumer_count=0` verified via `check_acceptance_helper_consumers.py`:
-- `live_incremental_support` → `tests/acceptance_e2e_bootstrap.py`
-- `production_equivalent_smoke` → `scripts/acceptance_pipeline_smoke.py`
-- `tier_a_live_acceptance` → `backend/app/ops/tier_a_evidence_runner.py`
-- Test `create_test_adapter(` call sites → `service_path_support.build_test_adapter`
+**Problem 3（登记，未做）：** `production_gate.py`/CI 尚未硬接 `--live-authorized` matrix checker。
 
-**Problem 3 (deferred — recorded, not implemented):** dry-run vs `--live-authorized` closure distinction exists in code/tests but is **not** wired into `production_gate.py` / CI as a hard final gate. Until then, manual `check_source_route_db_acceptance_matrix.py --strict --live-authorized --report` remains the operator gate.
+### Phase 15 — closure 双模式 + 资格延期语义（2026-07-07）
+
+**双模式保留：** `dry_run`（未 live 授权）vs `final_live_authorized`（`--live-authorized`）；防 dry-run 冒充 live。
+
+**资格延期（用户确认）：** 用户已 live 授权时，QMT/iFinD 等 **qualification_deferred** 缺终端/牌照 → **预期** `BLOCKED` + closure **PASS**（ADR-016）。**除此以外**不得出现 `BLOCKED`（非延期源缺 key）、`FAIL_EXTERNAL`、`FAIL_CONTRACT`。
+
+**Slice 10：** 待全矩阵 live 报告；当前 blocker 样例为 SEC `FAIL_EXTERNAL`（非资格延期类）。
 
 ---
 
