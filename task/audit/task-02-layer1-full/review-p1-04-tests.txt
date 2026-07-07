@@ -1,0 +1,3 @@
+[ocr] full-scan: 7 file(s) discovered, reviewing 7 in /mnt/c/Users/Guang/Desktop/quant-monitor-desk
+[ocr] estimated cost: ~7 file(s), est. 180K input + 40K output ≈ 220K total tokens (rough; actual reported after run)
+[ocr] scan dispatch: 1 batch(es) by by-language strategy

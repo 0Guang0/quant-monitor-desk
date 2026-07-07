@@ -33,31 +33,6 @@ _POLY_ADVERSARIAL = (
 )
 
 
-def test_bootSkeleton_testModuleLoads() -> None:
-    """覆盖范围：Execute 9.0 预测市场测试模块骨架是否可加载
-    测试对象：tests/test_prediction_market_adapters.py 模块本身
-    目的/目标：确认 R3H-04 专用测试文件已登记且 pytest 可收集
-    验证点：模块 docstring 声明 kalshi/polymarket 覆盖范围
-    失败含义：Execute 无法在本模块追加预测市场适配器回归用例
-    """
-    import tests.test_prediction_market_adapters as mod
-
-    assert "kalshi" in (mod.__doc__ or "")
-    assert "polymarket" in (mod.__doc__ or "")
-
-
-def test_bootSkeleton_probabilitySignalNormalizerModuleExists() -> None:
-    """覆盖范围：Execute 9.0 probability_signal normalizer 模块可导入
-    测试对象：backend.app.datasources.normalizers.probability_signal
-    目的/目标：确认 R3H-04 证据 normalizer SSOT 已落地
-    验证点：PROBABILITY_SIGNAL_EVIDENCE_SCHEMA_VERSION 非空
-    失败含义：probability_signal_evidence_v1 normalizer 缺失，后续 port 无 SSOT
-    """
-    from backend.app.datasources.normalizers import probability_signal as mod
-
-    assert mod.PROBABILITY_SIGNAL_EVIDENCE_SCHEMA_VERSION == "probability_signal_evidence_v1"
-
-
 def test_evidence_contract_writeReadRoundTrip_fixturePreservesFields(tmp_path: Path) -> None:
     """覆盖范围：probability_signal 证据包 read/write 往返
     测试对象：write_probability_signal_evidence_bundle + read_probability_signal_evidence_bundle

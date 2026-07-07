@@ -6,16 +6,6 @@ import pytest
 from backend.app.storage.raw_store import sha256_hex
 
 
-def test_adapterPackage_importable():
-    """覆盖范围：datasources.adapters 包可导入性
-    测试对象：backend.app.datasources.adapters
-    目的/目标：适配器包须无循环依赖且可被测试/工厂加载
-    验证点：import 不抛异常
-    失败含义：适配器包损坏，所有数据源集成无法启动
-    """
-    import backend.app.datasources.adapters  # noqa: F401
-
-
 def test_skeletonAdapterBase_successWritesRawFile(
     tmp_path,
     migrated_con,

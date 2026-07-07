@@ -61,7 +61,6 @@ CREATE TABLE IF NOT EXISTS data_sync_job (
 
 ---
 
-
 ---
 
 # 13. P0 扩展：DataSyncOrchestrator 实现规格
@@ -130,18 +129,18 @@ MANUAL_REVIEW_REQUIRED
 
 ### 状态含义
 
-| 状态 | 含义 |
-|---|---|
-| `CREATED` | job 已创建但未展开任务 |
-| `PLANNED` | 已确定数据域、日期、标的、adapter |
-| `FETCHING` | 正在抓取 raw 数据 |
-| `STAGED` | 已写入 staging 或 temp parquet |
-| `VALIDATING` | 正在质量检查或冲突检查 |
-| `WAITING_RECONCILE` | 发现严重冲突，等待重抓 |
-| `READY_TO_WRITE` | 可以交给 WriteManager |
-| `WRITING` | 正在写 clean / snapshot |
-| `COMPLETED` | 完成 |
-| `MANUAL_REVIEW_REQUIRED` | 需要人工确认 |
+| 状态                     | 含义                              |
+| ------------------------ | --------------------------------- |
+| `CREATED`                | job 已创建但未展开任务            |
+| `PLANNED`                | 已确定数据域、日期、标的、adapter |
+| `FETCHING`               | 正在抓取 raw 数据                 |
+| `STAGED`                 | 已写入 staging 或 temp parquet    |
+| `VALIDATING`             | 正在质量检查或冲突检查            |
+| `WAITING_RECONCILE`      | 发现严重冲突，等待重抓            |
+| `READY_TO_WRITE`         | 可以交给 WriteManager             |
+| `WRITING`                | 正在写 clean / snapshot           |
+| `COMPLETED`              | 完成                              |
+| `MANUAL_REVIEW_REQUIRED` | 需要人工确认                      |
 
 ---
 
@@ -326,17 +325,17 @@ CREATE TABLE IF NOT EXISTS job_event_log (
 
 ## 13.6 调度计划
 
-| 任务 | 建议频率 | 说明 |
-|---|---|---|
-| CN_A daily bar | A 股收盘后 | 日线与复权 |
-| US_EQ daily bar | 美股收盘后 | 美股/ETF/锚点 |
-| Layer 1 axis | 按指标频率 | 日频、周频、月频分别调度 |
-| Layer 2 sensors | 每日 | 跨资产快照 |
-| Layer 3 config check | 每日或每次配置变更 | 校验 chain/node/edge/anchor |
-| Layer 3 daily snapshot | 每日 | 读取 Layer 5 最新行情与事件 |
-| Backfill | 按需 | 手动或系统触发 |
-| RevisionAudit | 每周/每月 | 视数据源修订风险 |
-| DuckDB backup | 每日盘后 | 写入完成后 |
+| 任务                   | 建议频率           | 说明                        |
+| ---------------------- | ------------------ | --------------------------- |
+| CN_A daily bar         | A 股收盘后         | 日线与复权                  |
+| US_EQ daily bar        | 美股收盘后         | 美股/ETF/锚点               |
+| Layer 1 axis           | 按指标频率         | 日频、周频、月频分别调度    |
+| Layer 2 sensors        | 每日               | 跨资产快照                  |
+| Layer 3 config check   | 每日或每次配置变更 | 校验 chain/node/edge/anchor |
+| Layer 3 daily snapshot | 每日               | 读取 Layer 5 最新行情与事件 |
+| Backfill               | 按需               | 手动或系统触发              |
+| RevisionAudit          | 每周/每月          | 视数据源修订风险            |
+| DuckDB backup          | 每日盘后           | 写入完成后                  |
 
 ---
 
@@ -366,17 +365,17 @@ python -m quant_monitor.sync quality-check --domain layer3 --date 2026-06-16
 
 ## 13.8 错误分类
 
-| error_type | 是否重试 | 说明 |
-|---|---:|---|
-| `NETWORK_TIMEOUT` | 是 | 网络超时 |
-| `RATE_LIMITED` | 延迟重试 | 限流 |
-| `AUTH_FAILED` | 否 | 授权失败 |
-| `SCHEMA_DRIFT` | 否 | 字段结构变化 |
-| `EMPTY_RESPONSE` | 视情况 | 可能未发布或源异常 |
-| `VALIDATION_FAILED` | 否 | 质量检查失败 |
-| `SOURCE_CONFLICT_SEVERE` | 进入 Reconcile | 多源严重冲突 |
-| `WRITE_FAILED` | 视情况 | 写入失败，需 rollback |
-| `DISK_SPACE_LOW` | 否 | 磁盘不足 |
+| error_type               |       是否重试 | 说明                  |
+| ------------------------ | -------------: | --------------------- |
+| `NETWORK_TIMEOUT`        |             是 | 网络超时              |
+| `RATE_LIMITED`           |       延迟重试 | 限流                  |
+| `AUTH_FAILED`            |             否 | 授权失败              |
+| `SCHEMA_DRIFT`           |             否 | 字段结构变化          |
+| `EMPTY_RESPONSE`         |         视情况 | 可能未发布或源异常    |
+| `VALIDATION_FAILED`      |             否 | 质量检查失败          |
+| `SOURCE_CONFLICT_SEVERE` | 进入 Reconcile | 多源严重冲突          |
+| `WRITE_FAILED`           |         视情况 | 写入失败，需 rollback |
+| `DISK_SPACE_LOW`         |             否 | 磁盘不足              |
 
 ---
 
@@ -408,35 +407,35 @@ write_audit_log
 
 ## 13.10 与其他模块关系
 
-| 模块 | 关系 |
-|---|---|
-| `data_sources.md` | 提供 adapter 与 source registry |
-| `duckdb_and_parquet.md` | 提供表结构和归档规则 |
-| `data_validation_and_conflict.md` | 校验 staging 数据 |
-| `write_manager.md` | 完成最终写入 |
-| `ops_and_performance.md` | 定义调度、备份、健康检查 |
-| `fastapi_backend.md` | 读取任务状态和数据健康 |
+| 模块                              | 关系                            |
+| --------------------------------- | ------------------------------- |
+| `data_sources.md`                 | 提供 adapter 与 source registry |
+| `duckdb_and_parquet.md`           | 提供表结构和归档规则            |
+| `data_validation_and_conflict.md` | 校验 staging 数据               |
+| `write_manager.md`                | 完成最终写入                    |
+| `ops_and_performance.md`          | 定义调度、备份、健康检查        |
+| `fastapi_backend.md`              | 读取任务状态和数据健康          |
 
 ---
 
 ## 13.11 验收测试
 
-| 测试 | 预期 |
-|---|---|
-| incremental 重复运行 | 不产生重复主键 |
-| adapter 网络失败 | job 进入 FAILED_RETRYABLE，写 error_type |
-| schema drift | 停止写入，进入人工/适配器更新 |
-| backfill 大日期范围 | 自动拆分 task |
-| source conflict severe | 创建 ReconcileJob，不写 clean |
-| WriteManager rollback | job 标记失败但 clean 表无半写入 |
-| 断点续跑 | 已完成 task 不重复写 |
-| 手动取消 | 状态为 CANCELLED，保留审计 |
+| 测试                   | 预期                                     |
+| ---------------------- | ---------------------------------------- |
+| incremental 重复运行   | 不产生重复主键                           |
+| adapter 网络失败       | job 进入 FAILED_RETRYABLE，写 error_type |
+| schema drift           | 停止写入，进入人工/适配器更新            |
+| backfill 大日期范围    | 自动拆分 task                            |
+| source conflict severe | 创建 ReconcileJob，不写 clean            |
+| WriteManager rollback  | job 标记失败但 clean 表无半写入          |
+| 断点续跑               | 已完成 task 不重复写                     |
+| 手动取消               | 状态为 CANCELLED，保留审计               |
 
 ---
 
-## 13.12 Round2.6 补充：Runner 已拆分后的下一阶段边界
+## 13.12 Runner fetch 入口正式边界
 
-Round2 re-audit closeout 已验证 `IncrementalJobRunner`、`BackfillShardRunner`、`ReconcileJobRunner`、pipeline contract、backfill validate/write 与 reconcile re-fetch。当前剩余调整不是继续拆 runner，而是把 fetch 入口从“直接传 adapter”收敛为：
+`IncrementalJobRunner`、`BackfillShardRunner`、`FullLoadJobRunner`、`ReconcileJobRunner`、pipeline contract、backfill validate/write 与 reconcile re-fetch 都必须服务同一条正式抓取入口。生产 runner 的 fetch 入口必须从“直接传 adapter”收敛为：
 
 ```text
 Sync runner
@@ -454,4 +453,4 @@ Sync runner
 - `specs/contracts/datasource_service_contract.yaml`
 - `specs/contracts/source_route_contract.yaml`
 
-Round2.6 Phase A 不改当前 orchestrator 代码；未来实现阶段才允许将 runner adapter 参数替换为 service/fetch callable。
+正式业务实现不得通过 runner 直传 adapter 绕过 `DataSourceService`、`SourceRoutePlan`、capability、ResourceGuard 或 route/audit 记录。adapter 直传只允许作为单元测试隔离外部 I/O 的测试 helper，不得出现在产品 CLI、production-equivalent acceptance、指标全链路验收或正式 clean 写入路径中。

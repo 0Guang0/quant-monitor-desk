@@ -37,7 +37,7 @@ Vite React TypeScript 看板 / Agent 日报 / 盘中提醒 / 回测复盘
 
 # 3. 技术栈选型
 
-## 3.1 当前阶段最优解
+## 3.1 默认本地优先技术栈
 
 ```text
 Python + FastAPI
@@ -94,7 +94,6 @@ Clean Standard Table
 ```
 
 ---
-
 
 ## D-01 依赖锁定决策
 

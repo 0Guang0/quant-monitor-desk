@@ -7,7 +7,6 @@ import sys
 from pathlib import Path
 
 import pytest
-import yaml
 from backend.app.ops.perf_budget import (
     build_smoke_artifact,
     evaluate_smoke_metrics,
@@ -251,15 +250,3 @@ def test_productionEquivalentSmoke_sourceRouteDbAdapterWritesBlockedReport(
     assert payload["failure_class"] == "BLOCKED"
     assert payload["status"] == "FAIL"
     assert payload["route_plan_id"]
-
-
-def test_productionEquivalentSmokeBudgetYaml_isValidYaml() -> None:
-    """覆盖范围：契约文件存在且可被 CI/脚本解析
-    测试对象：specs/contracts/production_equivalent_smoke_budget.yaml
-    目的/目标：registry 对齐测试引用的 artifact 路径有实体配置
-    验证点：yaml.safe_load 成功；closure_command 含 production_equivalent_smoke.py
-    失败含义：文档/registry 指向的 budget 契约不存在
-    """
-    raw = yaml.safe_load(BUDGET_YAML.read_text(encoding="utf-8"))
-    assert "production_equivalent_smoke.py" in str(raw.get("closure_command", ""))
-    assert float(raw["thresholds"]["elapsed_s_max"]) > 0

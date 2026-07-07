@@ -1,4 +1,4 @@
-# Source Capability Registry（Round2.6）
+# Source Capability Registry
 
 ## 1. 目的
 

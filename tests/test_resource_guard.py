@@ -240,16 +240,6 @@ def test_evaluate_systemMemoryUsageAbovePause_returnsPause() -> None:
     assert "memory usage" in reason.lower()
 
 
-def test_evaluate_systemMemoryUsageHigh_returnsPause() -> None:
-    """覆盖范围：与 test_evaluate_systemMemoryUsageAbovePause 等价委托
-    测试对象：evaluate system_memory_usage_pct 高值路径
-    目的/目标：保持回归别名，确保重构未改变高内存决策
-    验证点：委托用例通过即通过
-    失败含义：高系统内存使用率决策回归
-    """
-    test_evaluate_systemMemoryUsageAbovePause_returnsPause()
-
-
 def test_evaluate_systemDiskUsageAboveHardStop_returnsHardStop() -> None:
     """覆盖范围：系统磁盘使用率超 hard_stop
     测试对象：evaluate system_disk_usage_pct=95
@@ -261,16 +251,6 @@ def test_evaluate_systemDiskUsageAboveHardStop_returnsHardStop() -> None:
     decision, reason = evaluate(snap, THRESH)
     assert decision == Decision.HARD_STOP
     assert "disk usage" in reason.lower()
-
-
-def test_evaluate_systemDiskUsageCritical_returnsHardStop() -> None:
-    """覆盖范围：与 test_evaluate_systemDiskUsageAboveHardStop 等价委托
-    测试对象：evaluate system_disk_usage_pct 临界路径
-    目的/目标：保持回归别名，确保磁盘 hard_stop 语义稳定
-    验证点：委托用例通过即通过
-    失败含义：临界磁盘使用率 hard_stop 决策回归
-    """
-    test_evaluate_systemDiskUsageAboveHardStop_returnsHardStop()
 
 
 def test_formatPauseEvent_includesSentinelAndMetrics() -> None:

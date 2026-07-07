@@ -78,6 +78,8 @@ Network/live tests are skipped by default unless pytest receives `--run-network`
 
 Do not read `.env`. Use `.env.example`, `docs/ops/config_secret_policy.md`, and source-level environment variable names for setup. API keys and user-agent secrets must remain out of docs and logs.
 
+Ops live-pilot authorization evidence is now operator-supplied rather than hard-coded to deleted quality files. `backend/app/ops/live_pilot_auth.py` reads `QMD_LIVE_PILOT_AUTHORIZATION`, and `backend/app/ops/staged_pilot.py` reads `QMD_STAGED_PILOT_AUTHORIZATION`; both require a markdown filename containing `_user_authorization_` and an `Approved on` marker. `backend/app/ops/tdx_manual_probe.py` has no default authorization file and requires an explicit `authorization_evidence` argument.
+
 ## Source references
 
 - `backend/app/cli/main.py`

@@ -1,5 +1,5 @@
 version: diagnostics_api_contract_v1
-status: draft_round2_6
+status: draft
 owner: api_frontend
 purpose: "Read-only local diagnostics for source registry, route planning, ResourceGuard, and config paths."
 endpoints:

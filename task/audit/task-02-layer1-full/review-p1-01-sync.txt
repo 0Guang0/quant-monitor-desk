@@ -1,0 +1,587 @@
+[ocr] full-scan: 9 file(s) discovered, reviewing 9 in /mnt/c/Users/Guang/Desktop/quant-monitor-desk
+[ocr] estimated cost: ~9 file(s), est. 336K input + 50K output ≈ 387K total tokens (rough; actual reported after run)
+[ocr] scan dispatch: 1 batch(es) by by-language strategy
+[ocr]   ▶ code_search search_text=quality_flags file_patterns=[backend/app/sync/mappers/] case_sensitive=false
+[ocr]   ✔ code_search (92ms)
+[ocr]   ▶ code_search search_text=def execute_binding file_patterns=[backend/app/sync/]
+[ocr]   ✔ code_search (124ms)
+[ocr]   ▶ code_search search_text=def build_staged_fixture_service file_patterns=[backend/app/datasources/]
+[ocr]   ✔ code_search (290ms)
+[ocr]   ▶ code_search file_patterns=[backend/app/sync/orchestrator.py] use_perl_regexp=true case_sensitive=false
+[ocr]   ✔ code_search (101ms)
+[ocr]   ▶ code_search file_patterns=[backend/app/ops/macro_incremental_common.py] use_perl_regexp=true case_sensitive=false
+[ocr]   ✔ code_search (119ms)
+[ocr]   ▶ code_search search_text=class SyncJobResult|SyncJobResult file_patterns=[backend/app/sync/jobs.py] use_perl_regexp=true case_sensitive=false
+[ocr]   ✔ code_search (79ms)
+[ocr]   ▶ code_search file_patterns=[backend/] case_sensitive=true search_text=map_macro_series_bundle_to_axis_observations
+[ocr]   ▶ code_search file_patterns=[backend/app/sync/runners.py backend/app/sync/] use_perl_regexp=true case_sensitive=true
+[ocr]   ✔ code_search (377ms)
+[ocr]   ▶ code_search search_text=raw_unit file_patterns=[backend/] case_sensitive=false
+[ocr]   ✔ code_search (142ms)
+[ocr]   ▶ code_search search_text=DataSourceService file_patterns=[backend/app/] case_sensitive=true
+[ocr]   ✔ code_search (388ms)
+[ocr]   ✔ code_search (459ms)
+[ocr]   ▶ file_read file_path=backend/app/sync/binding_executor.py start_line=80 end_line=150
+[ocr]   ✔ file_read (10ms)
+[ocr]   ▶ file_read file_path=backend/app/datasources/service.py start_line=320 end_line=370
+[ocr]   ✔ file_read (18ms)
+[ocr]   ▶ file_read file_path=backend/app/sync/runners.py start_line=110 end_line=175
+[ocr]   ✔ file_read (27ms)
+[ocr]   ▶ file_read file_path=backend/app/sync/orchestrator.py start_line=77 end_line=340
+[ocr]   ✔ file_read (14ms)
+[ocr]   ▶ file_read file_path=backend/app/ops/macro_incremental_common.py start_line=230 end_line=285
+[ocr]   ✔ file_read (24ms)
+[ocr]   ▶ file_read file_path=backend/app/sync/jobs.py start_line=250 end_line=295
+[ocr]   ✔ file_read (17ms)
+[ocr]   ▶ file_read file_path=backend/app/ops/fred_incremental_run.py start_line=35 end_line=65
+[ocr]   ✔ file_read (82ms)
+[ocr]   ▶ code_search file_patterns=[backend/app/sync/jobs.py] use_perl_regexp=false search_text=def plan_backfill_shards
+[ocr]   ✔ code_search (61ms)
+[ocr]   ▶ code_search search_text=def _build_job_spec file_patterns=[backend/app/sync/binding_executor.py]
+[ocr]   ✔ code_search (44ms)
+[ocr]   ▶ file_read file_path=backend/app/sync/runners.py start_line=430 end_line=475
+[ocr]   ✔ file_read (24ms)
+[ocr]   ▶ file_read start_line=1 end_line=75 file_path=backend/app/sync/binding_executor.py
+[ocr]   ✔ file_read (20ms)
+[ocr]   ▶ file_read file_path=backend/app/datasources/service.py start_line=180 end_line=235
+[ocr]   ✔ file_read (26ms)
+[ocr]   ▶ file_read file_path=backend/app/sync/jobs.py start_line=130 end_line=190
+[ocr]   ✔ file_read (12ms)
+[ocr]   ▶ code_search search_text=def create_job file_patterns=[backend/app/sync/jobs.py] use_perl_regexp=false
+[ocr]   ✔ code_search (67ms)
+[ocr]   ▶ file_read file_path=backend/app/sync/jobs.py start_line=286 end_line=335
+[ocr]   ▶ code_search use_perl_regexp=true case_sensitive=true file_patterns=[backend/app/sync/]
+[ocr]   ✔ file_read (25ms)
+[ocr]   ✔ code_search (69ms)
+[ocr]   ▶ code_search file_patterns=[backend/app/sync/] use_perl_regexp=true case_sensitive=true
+[ocr]   ✔ code_search (40ms)
+[ocr]   ▶ file_read file_path=backend/app/datasources/service.py start_line=150 end_line=181
+[ocr]   ✔ file_read (16ms)
+[ocr]   ▶ file_read file_path=backend/app/sync/binding_executor.py start_line=143 end_line=240
+[ocr]   ✔ file_read (10ms)
+[ocr]   ▶ file_read file_path=backend/app/sync/runners.py start_line=628 end_line=929
+[ocr]   ✔ file_read (46ms)
+[ocr]   ▶ code_comment "backend/app/sync/scheduler.py"
+[ocr]   ✔ code_comment (1ms)
+[ocr]   ▶ code_comment "backend/app/sync/indicator_binding.py"
+[ocr]   ✔ code_comment (0s)
+[ocr]   ▶ code_search use_perl_regexp=false search_text=class SourceConflictValidator file_patterns=[backend/app/validators/source_conflict.py]
+[ocr]   ✔ code_search (75ms)
+[ocr]   ▶ code_search search_text=recover_stuck_writing_job|write_id file_patterns=[backend/app/sync/ backend/app/db/] case_sensitive=true
+[ocr]   ✔ code_search (73ms)
+[ocr]   ▶ code_search case_sensitive=true search_text=def transition|class SyncJobStateMachine file_patterns=[backend/app/sync/jobs.py] use_perl_regexp=true
+[ocr]   ✔ code_search (42ms)
+[ocr]   ▶ file_read end_line=150 file_path=backend/app/sync/indicator_binding.py start_line=1
+[ocr]   ▶ code_comment "backend/app/sync/mappers/macro_series.py"
+[ocr]   ✔ code_comment (0s)
+[ocr]   ✔ file_read (11ms)
+[ocr]   ▶ file_read file_path=backend/app/sync/jobs.py start_line=330 end_line=390
+[ocr]   ✔ file_read (13ms)
+[ocr]   ▶ file_read file_path=backend/app/validators/source_conflict.py start_line=107 end_line=230
+[ocr]   ✔ file_read (33ms)
+[ocr]   ▶ file_read file_path=backend/app/validators/source_conflict.py start_line=300 end_line=356
+[ocr]   ✔ file_read (16ms)
+[ocr]   ▶ file_read file_path=backend/app/sync/jobs.py start_line=390 end_line=470
+[ocr]   ✔ file_read (21ms)
+[ocr]   ▶ file_read file_path=backend/app/sync/jobs.py start_line=465 end_line=540
+[ocr]   ✔ file_read (28ms)
+[ocr]   ▶ code_comment "backend/app/sync/jobs.py"
+[ocr]   ✔ code_comment (2ms)
+[ocr]   ▶ file_read start_line=1 end_line=180
+[ocr]   ✔ file_read (124ms)
+[ocr]   ▶ code_search search_text=def quote_ident|quote_ident = file_patterns=[backend/app/**/*.py] use_perl_regexp=true
+[ocr]   ✔ code_search (307ms)
+[ocr]   ▶ file_read file_path=backend/app/sync/jobs.py start_line=538 end_line=548
+[ocr]   ✔ file_read (17ms)
+[ocr]   ▶ file_read file_path=backend/app/sync/watermark.py start_line=1 end_line=130
+[ocr]   ✔ file_read (15ms)
+[ocr]   ▶ file_read file_path=backend/app/db/sql_identifiers.py start_line=1 end_line=60
+[ocr]   ✔ file_read (46ms)
+[ocr]   ▶ code_comment "backend/app/sync/layer1_sync_facade.py"
+[ocr]   ✔ code_comment (1ms)
+[ocr]   ▶ code_search search_text=write_id|data_sync_write|sync_write file_patterns=[backend/app/sync/ backend/app/db/ backend/app/] case_sensitive=true
+[ocr]   ✔ code_search (257ms)
+[ocr]   ▶ code_comment "backend/app/sync/watermark.py"
+[ocr]   ✔ code_comment (1ms)
+[ocr]   ▶ code_comment "backend/app/sync/binding_executor.py"
+[ocr]   ✔ code_comment (0s)
+[ocr]   ▶ code_comment "backend/app/sync/runners.py"
+[ocr]   ✔ code_comment (2ms)
+[ocr]   ▶ code_comment "backend/app/sync/orchestrator.py"
+[ocr]   ✔ code_comment (1ms)
+[ocr] scan dedup batch #0: 36 → 34 comments
+[ocr] Summary: 9 file(s) reviewed, 34 comment(s), ~801000 token(s) used (input: ~780928, output: ~20072), 4m5s elapsed
+
+[2m─── backend/app/sync/scheduler.py:192-201 ───[0m
+When one profile entry expands to multiple bindings, the scheduler reports only the last binding
+result. If an earlier binding fails and a later one succeeds, the returned `SchedulerJobResult` will
+look successful and expose the later job id/message, which can hide partial failures from callers.
+Aggregate all child results explicitly, for example by marking the scheduler entry failed if any
+binding failed and including a summary of failed binding/job ids.
+
+
+
+[2m─── backend/app/sync/scheduler.py:225-234 ───[0m
+This path runs the orchestrator with default `domain="macro_series"` and `source_id="fred"` when the
+YAML omits them, but the returned `SchedulerJobResult` still reports the original `None` values.
+That makes audit output disagree with the actual job metadata and can mislead downstream consumers.
+Normalize the defaults before dispatch and use the same normalized values in the returned scheduler
+result.
+
+
+
+[2m─── backend/app/sync/scheduler.py:153-155 ───[0m
+Profile entries are not validated before execution. `_run_scheduler_entry` indexes
+`entry["job_type"]` directly, while `run_profile` previously treats a missing job type as `""`; a
+malformed YAML profile will therefore fail with a raw `KeyError` (or reach confusing unsupported-job
+errors) instead of a clear profile validation error that identifies the bad entry. Validate each job
+entry when profiles are loaded or before dispatch, including required `job_type` and type checks for
+fields used here.
+
+
+
+[2m─── backend/app/sync/scheduler.py:259-271 ───[0m
+Dry runs are also blocked by `ResourceGuard`, so during PAUSE/HARD_STOP operators cannot see the
+planned non-core work even though no resources would be consumed. If dry-run is intended for
+planning, gate only live execution or report the skipped status alongside the planned expansion
+instead of suppressing it here.
+
+
+
+[2m─── backend/app/sync/indicator_binding.py:106-106 ───[0m
+`bool(...)` silently corrupts YAML/string values: `"false"`, `"no"`, or any other non-empty scalar
+becomes `True`, so a malformed registry can enable backfill semantics instead of failing closed.
+Validate `backfill_available` is actually a bool in `_validate_row` and pass it through unchanged.
+
+[91m[48;2;70;0;0m-[0m[48;2;70;0;0m         backfill_available=bool(raw["backfill_available"]),[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m         backfill_available=raw["backfill_available"],[0m[0m
+
+
+[2m─── backend/app/sync/indicator_binding.py:107-107 ───[0m
+`formula` is annotated as `str | None`, but non-`None` YAML scalars are accepted without validation
+or conversion. A list/dict/bool formula can enter `IndicatorBinding` and fail later in code that
+assumes a string. Reject non-string, non-null values during row validation.
+
+[91m[48;2;70;0;0m-[0m[48;2;70;0;0m         formula=raw["formula"] if raw["formula"] is not None else None,[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m         formula=raw["formula"],[0m[0m
+
+
+[2m─── backend/app/sync/indicator_binding.py:121-127 ───[0m
+The loader does not detect duplicate `indicator_id` values. `load_binding()` then returns the first
+match, making duplicate registry entries silently order-dependent and potentially hiding conflicting
+bindings. Track seen indicator IDs while loading and raise on duplicates so the registry fails
+closed.
+
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     bindings: list[IndicatorBinding] = [][0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m     seen_indicator_ids: set[str] = set()[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     for index, raw in enumerate(rows):[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m         if not isinstance(raw, dict):[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m             raise ValueError(f"registry row {index} must be a mapping")[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m         _validate_row(raw, index=index)[0m[0m
+[91m[48;2;70;0;0m-[0m[48;2;70;0;0m         bindings.append(_row_to_binding(raw))[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m         binding = _row_to_binding(raw)[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m         if binding.indicator_id in seen_indicator_ids:[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m             raise ValueError([0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m                 f"registry row {index} duplicate indicator_id={binding.indicator_id!r}"[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m             )[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m         seen_indicator_ids.add(binding.indicator_id)[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m         bindings.append(binding)[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     return bindings[0m[0m
+
+
+[2m─── backend/app/sync/indicator_binding.py:90-94 ───[0m
+Validation stops at checking that `feature_outputs_expected` is a non-empty list; empty strings,
+`None`, nested structures, or duplicate output names are accepted and converted with `str(...)`.
+That can produce unusable or colliding feature names such as `'None'` at runtime. Validate every
+element is a non-empty string and reject duplicates.
+
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     outputs = raw["feature_outputs_expected"][0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     if not isinstance(outputs, list) or not outputs:[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m         raise ValueError([0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m             f"registry row {index} feature_outputs_expected must be non-empty list"[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m         )[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m     if any(not isinstance(output, str) or not output.strip() for output in outputs):[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m         raise ValueError([0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m             f"registry row {index} feature_outputs_expected must contain non-empty strings"[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m         )[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m     if len(set(outputs)) != len(outputs):[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m         raise ValueError([0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m             f"registry row {index} feature_outputs_expected contains duplicates"[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m         )[0m[0m
+
+
+[2m─── backend/app/sync/mappers/macro_series.py:20-25 ───[0m
+Malformed `retrieved_at` / `as_of_timestamp` values raise `ValueError` here and abort mapping the
+entire bundle. Since this function is a staging mapper for external evidence payloads, one bad
+timestamp should be handled explicitly, for example by falling back to a bundle fetch time with a
+quality flag or by raising a domain-specific validation error that identifies the bad field.
+
+
+
+[2m─── backend/app/sync/mappers/macro_series.py:31-37 ───[0m
+The watermark filter compares date strings before validating/parsing them, so it is only correct for
+strictly normalized `YYYY-MM-DD` values. A malformed or differently formatted `observation_date` can
+be included/excluded incorrectly and then fail at `date.fromisoformat`, aborting all later
+observations. Parse both dates once and compare `date` objects, handling invalid observation dates
+consistently.
+
+
+
+[2m─── backend/app/sync/mappers/macro_series.py:48-48 ───[0m
+Non-empty non-numeric values pass the sentinel filter and then `float(raw_value)` raises, failing
+the whole bundle. External macro feeds sometimes use placeholders beyond `.` or may include
+localized/annotated values; catch conversion errors and either skip/report the bad observation or
+surface a structured validation error with the series/date.
+
+
+
+[2m─── backend/app/sync/mappers/macro_series.py:46-50 ───[0m
+This hard-codes unit and frequency for every macro series, which can corrupt staging semantics for
+percent, currency, monthly, quarterly, or annual series. Other ingestion paths derive these fields
+from source metadata; this mapper should use bundle/observation metadata or an explicit
+caller-provided contract rather than writing all FRED-like data as daily index observations.
+
+
+
+[2m─── backend/app/sync/mappers/macro_series.py:59-59 ───[0m
+`created_at` is generated per row, so rows produced from one evidence bundle have slightly different
+timestamps. That makes mapper output less deterministic and can break idempotency-oriented
+comparisons/tests; capture one `created_at = datetime.now(UTC)` before the loop and reuse it for
+every row in the bundle.
+
+
+
+[2m─── backend/app/sync/jobs.py:159-168 ───[0m
+`max_days` is not validated. When callers pass `0` and `max_shards` is omitted, `shard_end` becomes
+`cursor - 1 day` and `cursor` never advances, causing an infinite loop; negative values can move the
+cursor backwards. Validate `max_days >= 1` before using it in date arithmetic.
+
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m def plan_backfill_shards([0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     date_start: date,[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     date_end: date,[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     *,[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     max_days: int = ECO_MAX_BACKFILL_DAYS_PER_TASK,[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     max_shards: int | None = None,[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     truncate_to_cap: bool = False,[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m ) -> list[tuple[str, date, date]]:[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     if date_end < date_start:[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m         raise ValueError("date_end must be on or after date_start")[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m     if max_days < 1:[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m         raise ValueError("max_days must be at least 1")[0m[0m
+
+
+[2m─── backend/app/sync/jobs.py:320-325 ───[0m
+This treats an existing `job_id` as idempotent without verifying that the stored job matches the
+supplied `SyncJobSpec`. If the caller accidentally reuses a `job_id` with a different run, source,
+market, date range, or job type, the conflict is silently accepted and later transitions operate on
+the wrong job definition. Fetch and compare the immutable spec fields, and raise on mismatches.
+
+
+
+[2m─── backend/app/sync/jobs.py:493-497 ───[0m
+The status transition updates are validated against a status read earlier, but both the error and
+non-error update branches write by `job_id` only. Two concurrent callers can read the same
+`old_status`, both pass `_is_allowed`, and then overwrite each other while logging events that claim
+the same old status. Make each state change conditional on the observed status, e.g. `WHERE job_id =
+? AND status = ?`, and fail/retry when no row is updated before inserting the event.
+
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m                 UPDATE data_sync_job[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m                 SET status = ?, updated_at = ?,[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m                     error_type = COALESCE(?, error_type),[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m                     error_message = COALESCE(?, error_message)[0m[0m
+[91m[48;2;70;0;0m-[0m[48;2;70;0;0m                 WHERE job_id = ?[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m                 WHERE job_id = ? AND status = ?[0m[0m
+
+
+[2m─── backend/app/sync/jobs.py:75-75 ───[0m
+Loading and parsing the YAML contract at import time makes the whole module fail to import if the
+file is missing, unreadable, malformed, or contains non-integer cap values. That can take down
+unrelated sync job functionality before any caller reaches backfill planning. Consider lazy-loading
+the caps where needed, or catch `OSError`/`yaml.YAMLError`/`ValueError` and raise a domain-specific
+configuration error with a clear message.
+
+
+
+[2m─── backend/app/sync/layer1_sync_facade.py:27-40 ───[0m
+`JobType` is only a static hint here, and this facade is likely called from API/test seams where
+untyped strings can arrive. `execute_binding` also builds a spec before branching and treats any
+unknown non-`full_load`/`backfill` value as the incremental path later, so invalid values can run
+the wrong sync mode instead of failing fast. Add runtime validation before loading/executing the
+binding.
+
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m def sync_indicator([0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     indicator_id: str,[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     job_type: JobType,[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     *,[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     dry_run: bool = True,[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     date_start: date | None = None,[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     date_end: date | None = None,[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     connection_manager=None,[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     orchestrator=None,[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     datasource_service=None,[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m ) -> SyncJobResult:[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     """Layer-facing seam: load_binding + execute_binding (no source-specific logic)."""[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m     if job_type not in ("incremental", "backfill", "full_load"):[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m         raise ValueError(f"unsupported sync job_type: {job_type!r}")[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     binding = load_binding(indicator_id)[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     return execute_binding([0m[0m
+
+
+[2m─── backend/app/sync/layer1_sync_facade.py:27-40 ───[0m
+Date range validation is deferred to `execute_binding`, but that function returns early for
+`dry_run=True` before enforcing that `backfill`/`full_load` have both dates. As a result a dry run
+can report `SKIPPED` for an invalid request that will fail when executed for real, and reversed
+ranges are not rejected here either. Validate required dates and `date_start <= date_end` in this
+API boundary so dry-run and real-run semantics match.
+
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m def sync_indicator([0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     indicator_id: str,[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     job_type: JobType,[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     *,[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     dry_run: bool = True,[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     date_start: date | None = None,[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     date_end: date | None = None,[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     connection_manager=None,[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     orchestrator=None,[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     datasource_service=None,[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m ) -> SyncJobResult:[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     """Layer-facing seam: load_binding + execute_binding (no source-specific logic)."""[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m     if job_type in ("backfill", "full_load") and (date_start is None or date_end is None):[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m         raise ValueError(f"{job_type} requires date_start and date_end")[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m     if date_start is not None and date_end is not None and date_start > date_end:[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m         raise ValueError("date_start must be on or before date_end")[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     binding = load_binding(indicator_id)[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     return execute_binding([0m[0m
+
+
+[2m─── backend/app/sync/layer1_sync_facade.py:59-68 ───[0m
+`row_count` is accepted as any integer and passed directly to `LocalFixtureFetchPort`. A zero or
+negative fixture limit can silently create an empty staged client or trigger lower-level errors far
+from the Layer1 facade. Since this factory defines the Layer1 test/evidence seam, reject
+non-positive counts here with a clear error.
+
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m def build_staged_fixture_sync_client([0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     *,[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     data_root: Path,[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     fixture_path: Path,[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     row_count: int = 1,[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m ) -> Any:[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     """Staged micro-fetch client for Layer1 evidence paths."""[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m     if row_count < 1:[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m         raise ValueError("row_count must be positive")[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     from backend.app.datasources.service import build_staged_fixture_service[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m [0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     return build_staged_fixture_service([0m[0m
+
+
+[2m─── backend/app/sync/watermark.py:156-159 ───[0m
+This cold-start branch returns `empty_table_lookback_days + 1` dates because the window is
+inclusive: with `date_end=2026-07-06` and `empty_table_lookback_days=30`, the start becomes
+`2026-06-06`, covering 31 calendar days. If callers configure this as the maximum number of days to
+fetch, this will over-fetch by one and can violate API window limits. Consider subtracting
+`empty_table_lookback_days - 1`, or rename/document the parameter as "days before end" if the extra
+day is intentional.
+
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     if watermark is None:[0m[0m
+[91m[48;2;70;0;0m-[0m[48;2;70;0;0m         date_start = date_end - timedelta(days=empty_table_lookback_days)[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m         date_start = date_end - timedelta(days=empty_table_lookback_days - 1)[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     else:[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m         date_start = watermark + timedelta(days=1)[0m[0m
+
+
+[2m─── backend/app/sync/watermark.py:136-143 ───[0m
+This performs one `MAX` query per series id. Large macro batches will spend most of their time in
+repeated round trips and repeated index scans. Fetch the watermarks for all requested ids in one
+grouped query, then compute the missing cold-start dates in memory; keep the per-id helper for
+single lookups if needed.
+
+
+
+[2m─── backend/app/sync/binding_executor.py:237-245 ───[0m
+`macro_incremental_validation_patch()` replaces `_PipelineMixin._validate_staging` at class level
+for the duration of the context manager. Because `execute_binding` can be called concurrently, this
+global monkey patch can leak macro validation behavior into a simultaneous non-macro sync, or be
+reverted by an overlapping macro run while this call is still active. Avoid mutating shared class
+state here; pass the macro validation behavior through the orchestrator/runner config or guard the
+patch with process-wide synchronization and ensure non-macro runs cannot execute under it.
+
+
+
+[2m─── backend/app/sync/binding_executor.py:177-185 ───[0m
+Returning only the last shard result can report a partial run as successful. The backfill/full-load
+runner appends `PLANNED` results for skipped intermediate shards and then continues; if a later
+shard completes, this code returns `COMPLETED` and drops the earlier validation report/skip status.
+Aggregate all shard results and surface any non-success/manual-review/conflict state before
+returning success.
+
+
+
+[2m─── backend/app/sync/binding_executor.py:147-151 ───[0m
+`full_load` accepts every domain that has a clean-write target, but any non-macro domain is treated
+as a bar domain and gets `('close', 'source_used')` as required fields. Domains such as disclosures
+or crypto have clean-write targets with different schemas, so this can dispatch a full load with
+invalid validation requirements instead of failing closed. Mirror the explicit domain check used in
+backfill and reject unsupported non-bar/non-macro domains before calling the orchestrator.
+
+
+
+[2m─── backend/app/sync/binding_executor.py:52-52 ───[0m
+When `instrument_id` is omitted, the job spec sends `binding.incremental_watermark` as
+`instrument_id`. `read_watermark()` uses that value as an indicator id for macro domains but as an
+instrument id for bar domains, so a registry watermark key can accidentally become the fetch
+instrument identity. Keep the watermark key separate from the fetch `instrument_id` and require an
+explicit instrument id for bar-domain runs that fetch a single instrument.
+
+
+
+[2m─── backend/app/sync/runners.py:479-483 ───[0m
+This guard-blocked path returns `FAILED_RETRYABLE` without persisting any state transition or event.
+The job was already created and moved to `PLANNED`, so callers will see a retryable failure while
+`data_sync_job` remains planned, which can break retry/resume logic and operational visibility.
+Please transition to `FAILED_RETRYABLE` here as the decision-bearing branch does, including a
+payload/error event if no decision is available.
+
+
+
+[2m─── backend/app/sync/runners.py:239-239 ───[0m
+Raw table identifiers are interpolated directly into SQL in the staging/reconcile flow.
+`staging_table` comes from fetch implementations, and `compare_table` is derived from
+caller-controlled conflict data, so malformed or compromised values can produce invalid SQL or
+inject additional statements before validation runs. Quote/validate these identifiers with the
+project's helper (for example `quote_ident`) before `DESCRIBE`, `CREATE`, `DELETE`, `INSERT`, and
+`DROP`, and let invalid names fail explicitly.
+
+
+
+[2m─── backend/app/sync/runners.py:870-874 ───[0m
+On the successful shard-write path, the runner never persists `write_result.write_id` to
+`data_sync_job` (unlike `_finalize_staged` used by incremental). Successful backfill/full-load jobs
+can therefore finish with no job-level write metadata, which makes lineage/audit look incomplete.
+Call `_update_job_report_ids(con, job_id, write_id=write_result.write_id)` after a successful write
+before leaving the transaction.
+
+
+
+[2m─── backend/app/sync/runners.py:1086-1088 ───[0m
+The reconcile comparison table is populated only with the re-fetched rows for `req.source_id` (the
+primary source in the service path). `SourceConflictValidator.validate_rows` compares primary rows
+against rows whose `source_id` is in `validation_sources`, so when the competing source rows are
+absent this reports `PASSED` and the conflict is marked resolved even though no peer value was
+rechecked. Fetch/include the competing source rows (or compare against the stored conflict values)
+before resolving.
+
+
+
+[2m─── backend/app/sync/orchestrator.py:146-157 ───[0m
+`begin_fetching` checks that the job is `PLANNED` and evaluates `ResourceGuard` under this writer
+connection, but the actual status transition happens after the connection is released. A competing
+worker can change the job between the check and the later `transition`, causing either an invalid
+transition exception or applying the guard result to a state that is no longer the one that was
+checked. Keep the PLANNED check, guard decision, status update, and event insert in the same writer
+transaction, or add an atomic compare-and-set transition that only updates `WHERE job_id = ? AND
+status = 'PLANNED'`.
+
+
+
+[2m─── backend/app/sync/orchestrator.py:283-283 ───[0m
+`DataSourceService` is referenced in this public annotation but is never imported in this module.
+`from __future__ import annotations` hides the problem during normal import, but
+`typing.get_type_hints(DataSyncOrchestrator.run_reconcile)`, documentation generation, or runtime
+validation frameworks will raise `NameError`. Import it under `TYPE_CHECKING` and use a string
+annotation, or import the class normally if there is no cycle.
+
+
+
+[2m─── backend/app/sync/orchestrator.py:368-374 ───[0m
+This recovery path marks a `WRITING` job as `COMPLETED` based only on `write_id` being present. If
+the process crashed after setting `write_id` but before all clean/conflict rows or write metadata
+were committed, this can permanently hide a partial write as successful. Validate the referenced
+write record and expected row counts/checksums (or make the write commit and job completion atomic)
+before transitioning to `COMPLETED`.
+
+
+
+[2m─── backend/app/sync/orchestrator.py:350-356 ───[0m
+These methods accept arbitrary keyword arguments but silently drop them. A caller typo such as
+`clean_tabel=...` or an unsupported option will appear to succeed while being ignored, which makes
+orchestration failures hard to diagnose. Either remove `**kwargs` or reject non-empty kwargs with a
+clear `TypeError` unless there is an intentional compatibility contract documented and tested.
+
+
+
+
+──────── Project Summary ────────
+
+### Top Issues
+
+1. **Partial failures are repeatedly hidden by returning only the last result.**
+   Multiple execution paths aggregate multiple bindings or shards but surface only the final outcome, so earlier failures or skipped shards can be masked by a later success. This can make failed or partially completed syncs look successful in audit and retry flows. Representative paths: `backend/app/sync/scheduler.py`, `backend/app/sync/binding_executor.py`.
+
+2. **Job state transitions are not concurrency-safe.**
+   Several paths validate state based on an earlier read, then update by `job_id` only or perform the transition after releasing the guarded connection. Competing workers can both pass validation, overwrite each other’s state, or log misleading events. Representative paths: `backend/app/sync/jobs.py`, `backend/app/sync/orchestrator.py`.
+
+3. **Resource guard and blocked-run handling leave inconsistent job records.**
+   Guard-blocked execution can return retryable failure without persisting the matching job transition/event, while dry runs are blocked even though they consume no resources. This weakens operator planning and can leave jobs stuck in `PLANNED`. Representative paths: `backend/app/sync/runners.py`, `backend/app/sync/scheduler.py`, `backend/app/sync/orchestrator.py`.
+
+4. **External input validation is too loose across registry, scheduler, and facade boundaries.**
+   YAML/profile/API-adjacent inputs accept malformed or ambiguous values, including string booleans treated as `True`, non-string formulas, duplicate indicator IDs, invalid feature outputs, missing job types, invalid job types, and non-positive fixture row counts. These issues can silently corrupt execution semantics or fail later with unclear errors. Representative paths: `backend/app/sync/indicator_binding.py`, `backend/app/sync/scheduler.py`, `backend/app/sync/layer1_sync_facade.py`.
+
+5. **Mapper robustness is weak for malformed external macro data.**
+   Bad timestamps, non-normalized dates, and non-numeric values can abort an entire evidence bundle. The mapper also hard-codes unit/frequency metadata and generates per-row timestamps, which can corrupt staging semantics and reduce deterministic behavior. Path: `backend/app/sync/mappers/macro_series.py`.
+
+6. **SQL and table-name handling creates injection or invalid-SQL risk.**
+   Raw table identifiers are interpolated directly into staging/reconcile SQL, with values originating from fetch implementations or caller-controlled conflict data. This needs identifier validation/quoting or a constrained allowlist. Path: `backend/app/sync/runners.py`.
+
+7. **Watermark and date planning have correctness and scalability issues.**
+   Invalid `max_days` can cause infinite or backwards loops, cold-start lookback returns one extra inclusive day, and per-series watermark queries scale poorly for large macro batches. Representative paths: `backend/app/sync/jobs.py`, `backend/app/sync/watermark.py`.
+
+8. **Recovery and idempotency decisions rely on insufficient evidence.**
+   Existing `job_id` reuse is treated as idempotent without confirming the stored spec matches the requested spec, and recovery can mark a `WRITING` job as `COMPLETED` based only on `write_id`. These can hide conflicting runs or partial writes. Representative paths: `backend/app/sync/jobs.py`, `backend/app/sync/orchestrator.py`.
+
+9. **Domain-specific execution assumptions can route jobs into the wrong schema or semantics.**
+   `full_load` treats non-macro domains as bar-like domains if they have clean-write targets, and omitted `instrument_id` can reuse a registry watermark key as a fetch identifier depending on domain. This risks invalid dispatch for disclosures, crypto, or other non-bar domains. Path: `backend/app/sync/binding_executor.py`.
+
+10. **Global monkey patching is unsafe under concurrent execution.**
+   `macro_incremental_validation_patch()` mutates `_PipelineMixin._validate_staging` at class level, so concurrent non-macro runs can observe macro-specific validation behavior. Path: `backend/app/sync/binding_executor.py`.
+
+### Module Hotspots
+
+- `backend/app/sync/binding_executor.py`: High-severity execution correctness issues: global monkey patching, partial shard result masking, domain misclassification, and ambiguous watermark/instrument semantics.
+- `backend/app/sync/runners.py`: Operational consistency and security hotspot: guard-blocked jobs do not persist state, raw identifiers are interpolated into SQL, successful shard writes omit job-level `write_id`, and reconcile validation appears to compare against the wrong source rows.
+- `backend/app/sync/jobs.py`: Core job lifecycle risks: infinite loop on invalid shard sizing, weak idempotency checks, race-prone status transitions, and import-time contract loading failures.
+- `backend/app/sync/orchestrator.py`: State coordination and recovery weaknesses: check/transition race, unsafe write recovery, dropped keyword arguments, and a broken public type annotation under runtime type-hint evaluation.
+- `backend/app/sync/indicator_binding.py`: Registry validation is under-specified, allowing type coercion, duplicate IDs, and invalid feature output definitions.
+- `backend/app/sync/mappers/macro_series.py`: Concentrated external-data robustness problems in timestamp/date/value parsing and metadata derivation.
+
+### Cross-Cutting Concerns
+
+- **Inconsistent aggregation of multi-step outcomes.**
+  Multi-binding and multi-shard flows collapse results to the last item instead of preserving partial failures or skipped shards. Seen in `backend/app/sync/scheduler.py` and `backend/app/sync/binding_executor.py`.
+
+- **Weak boundary validation and fail-late behavior.**
+  Inputs from YAML, API-like facades, job specs, and kwargs are accepted without strict validation, then fail later or silently change behavior. Seen in `backend/app/sync/indicator_binding.py`, `backend/app/sync/scheduler.py`, `backend/app/sync/layer1_sync_facade.py`, and `backend/app/sync/orchestrator.py`.
+
+- **Job lifecycle state can diverge from returned results.**
+  Several paths return success/failure/skipped statuses that do not match persisted `data_sync_job` state or metadata. Seen in `backend/app/sync/runners.py`, `backend/app/sync/binding_executor.py`, `backend/app/sync/scheduler.py`, and `backend/app/sync/orchestrator.py`.
+
+- **Concurrency assumptions are too optimistic.**
+  Class-level mutation, read-then-write transitions, and check-then-transition gaps create race windows under concurrent sync execution. Seen in `backend/app/sync/binding_executor.py`, `backend/app/sync/jobs.py`, and `backend/app/sync/orchestrator.py`.
+
+- **External-data parsing lacks explicit bad-record policy.**
+  Mapper code often lets one malformed field abort the whole batch instead of skipping, quarantining, or reporting row-level errors. Seen most clearly in `backend/app/sync/mappers/macro_series.py`.
+
+- **Audit and lineage metadata are incomplete or misleading.**
+  Returned scheduler metadata can disagree with actual defaults used for execution, successful shard writes may not persist `write_id`, and recovery may overstate completion. Seen in `backend/app/sync/scheduler.py`, `backend/app/sync/runners.py`, and `backend/app/sync/orchestrator.py`.
+
+### Quick Wins
+
+- Add strict registry validation in `backend/app/sync/indicator_binding.py`: require real booleans, string-or-null formulas, unique `indicator_id`, and non-empty unique string feature outputs.
+- Validate scheduler profile entries before execution in `backend/app/sync/scheduler.py`, including required `job_type` and normalized default `domain`/`source_id` in returned results.
+- Validate `max_days >= 1` in `backend/app/sync/jobs.py` before shard planning.
+- Reject unknown `JobType` values and non-positive `row_count` in `backend/app/sync/layer1_sync_facade.py`.
+- Capture one `created_at` timestamp per macro bundle and wrap date/value parsing with explicit skip/report behavior in `backend/app/sync/mappers/macro_series.py`.
+- Persist a blocked transition/event when `ResourceGuard` prevents execution in `backend/app/sync/runners.py`.
+- Replace raw SQL identifier interpolation in `backend/app/sync/runners.py` with identifier validation/quoting or an allowlist.
+- Remove or reject unused `**kwargs` in `backend/app/sync/orchestrator.py` so caller typos fail fast.
+- Import `DataSourceService` where it is used in public annotations in `backend/app/sync/orchestrator.py`.
+- Replace “return last result” behavior with an aggregate result that reports partial failures across scheduler entries and binding shards.

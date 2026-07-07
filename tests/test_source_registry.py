@@ -10,6 +10,7 @@ import tempfile
 from pathlib import Path
 
 import pytest
+from backend.app.datasources.capability_registry import SourceCapabilityRegistry
 from backend.app.datasources.source_registry import (
     DomainDisabledError,
     DomainNotAllowedError,
@@ -82,11 +83,11 @@ def test_load_yamlWithShadowRole_raisesLegacyRoleError(bad_shadow_yaml):
     """覆盖范围：已废弃的 Shadow 角色名不得再出现在配置里
     测试对象：SourceRegistry.load（bad_shadow_yaml）
     目的/目标：旧版「影子源」角色已淘汰，加载时应直接报错拒绝
-    验证点：pytest.raises(LegacyRoleError)
+    验证点：pytest.raises(LegacyRoleError, match=banned role)
     失败含义：Shadow 回退路径复活，与 Round2.6 角色模型冲突
     """
     reg = SourceRegistry(bad_shadow_yaml)
-    with pytest.raises(LegacyRoleError):
+    with pytest.raises(LegacyRoleError, match="banned role"):
         reg.load()
 
 
@@ -94,11 +95,11 @@ def test_load_yamlWithEmergencyRole_raisesLegacyRoleError(bad_emergency_yaml):
     """覆盖范围：禁止 Emergency 域角色名
     测试对象：SourceRegistry.load（bad_emergency_yaml）
     目的/目标：Emergency 角色已废弃，加载须失败
-    验证点：pytest.raises(LegacyRoleError)
+    验证点：pytest.raises(LegacyRoleError, match=banned role)
     失败含义：紧急源隐式启用，绕过 capability 与审批
     """
     reg = SourceRegistry(bad_emergency_yaml)
-    with pytest.raises(LegacyRoleError):
+    with pytest.raises(LegacyRoleError, match="banned role"):
         reg.load()
 
 
@@ -216,11 +217,11 @@ def test_load_primaryUnknownLicense_raises(bad_unknown_license_primary_yaml):
     """覆盖范围：primary 源 license 须在白名单
     测试对象：SourceRegistry.load（bad_unknown_license_primary_yaml）
     目的/目标：未知 license 的主源 InvalidRegistryError
-    验证点：pytest.raises(InvalidRegistryError)
+    验证点：pytest.raises(InvalidRegistryError, match=license_type unknown)
     失败含义：未审批许可源可作 primary，合规风险
     """
     reg = SourceRegistry(bad_unknown_license_primary_yaml)
-    with pytest.raises(InvalidRegistryError):
+    with pytest.raises(InvalidRegistryError, match="license_type unknown"):
         reg.load()
 
 
@@ -228,11 +229,11 @@ def test_load_yaml_unknownPrimaryReference_raises(bad_unknown_primary_yaml):
     """覆盖范围：primary 须引用已声明源
     测试对象：SourceRegistry.load（bad_unknown_primary_yaml）
     目的/目标：domain_roles.primary 指向不存在 source_id 时拒收
-    验证点：pytest.raises(InvalidRegistryError)
+    验证点：pytest.raises(InvalidRegistryError, match=references unknown source)
     失败含义：孤儿 primary 引用可加载，fetch 运行时崩溃
     """
     reg = SourceRegistry(bad_unknown_primary_yaml)
-    with pytest.raises(InvalidRegistryError):
+    with pytest.raises(InvalidRegistryError, match="references unknown source"):
         reg.load()
 
 
@@ -240,11 +241,11 @@ def test_load_invalidFallbackPolicy_raises(bad_invalid_fallback_yaml):
     """覆盖范围：fallback_policy 枚举合法性
     测试对象：SourceRegistry.load（bad_invalid_fallback_yaml）
     目的/目标：未知 fallback 策略 InvalidRegistryError
-    验证点：pytest.raises(InvalidRegistryError)
+    验证点：pytest.raises(InvalidRegistryError, match=fallback_policy invalid)
     失败含义：非法 fallback 可配置，故障时行为未定义
     """
     reg = SourceRegistry(bad_invalid_fallback_yaml)
-    with pytest.raises(InvalidRegistryError):
+    with pytest.raises(InvalidRegistryError, match="fallback_policy invalid"):
         reg.load()
 
 
@@ -252,11 +253,11 @@ def test_load_malformedYaml_raises(malformed_yaml):
     """覆盖范围：畸形 YAML 拒收
     测试对象：SourceRegistry.load（malformed_yaml）
     目的/目标：语法错误 YAML 统一 InvalidRegistryError
-    验证点：pytest.raises(InvalidRegistryError)
+    验证点：pytest.raises(InvalidRegistryError, match=malformed YAML)
     失败含义：坏配置静默部分解析，半残注册表入库
     """
     reg = SourceRegistry(malformed_yaml)
-    with pytest.raises(InvalidRegistryError):
+    with pytest.raises(InvalidRegistryError, match="malformed YAML"):
         reg.load()
 
 
@@ -284,10 +285,10 @@ def test_getDomainRoles_unknownDomain_raisesKeyError(loaded_registry):
     """覆盖范围：未知 data_domain 查询
     测试对象：SourceRegistry.get_domain_roles
     目的/目标：未声明域 KeyError fail-closed
-    验证点：pytest.raises(KeyError)
+    验证点：pytest.raises(KeyError, match=no_such_domain)
     失败含义：未知域返回默认值，静默走错源
     """
-    with pytest.raises(KeyError):
+    with pytest.raises(KeyError, match="no_such_domain"):
         loaded_registry.get_domain_roles("no_such_domain")
 
 
@@ -295,10 +296,10 @@ def test_getSource_unknownId_raisesSourceNotFoundError(loaded_registry):
     """覆盖范围：未知 source_id 查询
     测试对象：SourceRegistry.get
     目的/目标：不存在源 SourceNotFoundError
-    验证点：pytest.raises(SourceNotFoundError)
+    验证点：pytest.raises(SourceNotFoundError, match=no_such_source)
     失败含义：拼写错误源 ID 得 None，adapter 空指针
     """
-    with pytest.raises(SourceNotFoundError):
+    with pytest.raises(SourceNotFoundError, match="no_such_source"):
         loaded_registry.get("no_such_source")
 
 
@@ -336,10 +337,10 @@ def test_assertDomainAllowed_unknownDomain_raises(loaded_registry):
     """覆盖范围：源对未知域 assert_domain_allowed
     测试对象：SourceRegistry.assert_domain_allowed
     目的/目标：源 allowed_domains 不含域时 DomainNotAllowedError
-    验证点：pytest.raises(DomainNotAllowedError)
+    验证点：pytest.raises(DomainNotAllowedError, match=unknown_domain)
     失败含义：adapter 可在无域权限时 fetch
     """
-    with pytest.raises(DomainNotAllowedError):
+    with pytest.raises(DomainNotAllowedError, match="unknown_domain"):
         loaded_registry.assert_domain_allowed("baostock", "unknown_domain")
 
 
@@ -347,10 +348,10 @@ def test_assertEnabled_disabledSource_raisesSourceDisabledError(disabled_registr
     """覆盖范围：已禁用源不能被当作可用源调度
     测试对象：SourceRegistry.assert_enabled（disabled_registry）
     目的/目标：配置里 is_enabled=false 的源，运行时查询应直接报错
-    验证点：pytest.raises(SourceDisabledError)
+    验证点：pytest.raises(SourceDisabledError, match=disabled)
     失败含义：禁用源仍可调度，registry 开关无效
     """
-    with pytest.raises(SourceDisabledError):
+    with pytest.raises(SourceDisabledError, match="disabled"):
         disabled_registry.assert_enabled("baostock")
 
 
@@ -529,7 +530,7 @@ def test_legacySourceRoles_forbiddenAsSourceRoles(banned_role, registry_yaml_fix
         p = Path(d) / "banned_role.yaml"
         p.write_text(text, encoding="utf-8")
         reg = SourceRegistry(p)
-        with pytest.raises(LegacyRoleError):
+        with pytest.raises(LegacyRoleError, match="banned role"):
             reg.load()
 
 
@@ -551,29 +552,25 @@ def test_legacySourceRoles_forbiddenTopLevelKeys(registry_yaml_fixture):
             reg.load()
 
 
-def test_sourceRegistry_eastmoney_accTaxonomy_notesPresent() -> None:
-    """覆盖范围：eastmoney registry taxonomy SSOT（S08-REG-EM）
-    测试对象：source_registry.yaml + source_capabilities.yaml eastmoney notes
-    目的/目标：ACC-EASTMONEY-TAXONOMY-001 内容可被 pytest 锁定，防 DCP-08 回退
-    验证点：notes 含 ACC-EASTMONEY、baostock/mootdx、不关 REQ2-EM、R3-DCP-08 taxonomy
-    失败含义：registry taxonomy 被删改，ops 与 capabilities SSOT 漂移无告警
+def test_sourceRegistry_eastmoney_validationOnlyForBarButOwnsSectorAndFlow() -> None:
+    """覆盖范围：eastmoney registry/capability 机器角色
+    测试对象：SourceRegistry + SourceCapabilityRegistry eastmoney
+    目的/目标：eastmoney 不得成为日线产品主源/校验源，但必须保留板块和资金流能力
+    验证点：bar primary=baostock；validation 不是 eastmoney；sector_board/capital_flow capability 已声明
+    失败含义：eastmoney bar taxonomy 漂移，产品主路径或验证域会被误用
     """
     reg = SourceRegistry()
     reg.load()
     em = reg.get("eastmoney")
-    notes = em.notes or ""
-    assert "ACC-EASTMONEY-TAXONOMY-001" in notes
-    assert "baostock" in notes and "mootdx" in notes
-    assert "R3-B2.75-REQ2-EM" in notes
-    assert "R3-DCP-08 taxonomy SSOT" in notes
+    roles = reg.get_domain_roles("cn_equity_daily_bar")
+    caps = SourceCapabilityRegistry()
+    caps.load()
 
-    from pathlib import Path
-
-    import yaml
-
-    caps_path = Path(__file__).resolve().parents[1] / "specs/datasource_registry/source_capabilities.yaml"
-    caps = yaml.safe_load(caps_path.read_text(encoding="utf-8"))
-    em_caps_notes = caps["sources"]["eastmoney"]["notes"]
-    assert "Product bar path" in em_caps_notes or "NOT eastmoney" in em_caps_notes
-    assert "sector_board" in em_caps_notes and "capital_flow" in em_caps_notes
-    assert "R3-B2.75-REQ2-EM" in em_caps_notes
+    assert em.validation_only is True
+    assert "cn_equity_daily_bar" in em.allowed_domains
+    assert "sector_board" in em.allowed_domains
+    assert "capital_flow" in em.allowed_domains
+    assert roles.primary_source_id == "baostock"
+    assert roles.validation_source_id != "eastmoney"
+    assert caps.is_capability_declared("eastmoney", "sector_board") is True
+    assert caps.is_capability_declared("eastmoney", "capital_flow") is True

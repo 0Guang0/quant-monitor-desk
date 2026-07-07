@@ -1,4 +1,4 @@
-# Privacy Data Flow（Round2.6）
+# Privacy Data Flow
 
 ## 1. 目的
 
@@ -6,11 +6,11 @@
 
 ## 2. 数据流模式
 
-| 模式 | 默认持久化 | 进入 Agent log | 进入 evidence_chain | 用户确认 |
-|---|---:|---:|---:|---:|
-| local-only preview | 否 | 否 | 否 | 不需要 |
-| save as evidence | 是 | 可引用 evidence_id | 是 | 需要 |
-| agent context input | 否/临时 | 可摘要但标 untrusted | 否，除非另存 evidence | 需要清晰提示 |
+| 模式                | 默认持久化 |       进入 Agent log |   进入 evidence_chain |     用户确认 |
+| ------------------- | ---------: | -------------------: | --------------------: | -----------: |
+| local-only preview  |         否 |                   否 |                    否 |       不需要 |
+| save as evidence    |         是 |   可引用 evidence_id |                    是 |         需要 |
+| agent context input |    否/临时 | 可摘要但标 untrusted | 否，除非另存 evidence | 需要清晰提示 |
 
 ## 3. 必填字段
 

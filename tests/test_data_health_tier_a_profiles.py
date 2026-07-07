@@ -395,12 +395,12 @@ def test_missingEvidence_raisesLoadError(tmp_path: Path) -> None:
     """覆盖范围：空证据目录
     测试对象：run_data_health_profile layer1
     目的/目标：无 JSON 须 DataHealthLoadError
-    验证点：pytest.raises DataHealthLoadError
+    验证点：pytest.raises(DataHealthLoadError, match=no layer1 evidence)
     失败含义：空目录静默 PASS
     """
     empty = tmp_path / "empty"
     empty.mkdir()
-    with pytest.raises(DataHealthLoadError):
+    with pytest.raises(DataHealthLoadError, match="no layer1 evidence"):
         run_data_health_profile(
             profile_id="layer1_observation_p0",
             domain="layer1_observation",

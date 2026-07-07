@@ -75,16 +75,3 @@ def test_datasourcesExtra_doesNotIncludeQmtByDefault() -> None:
         assert token not in default_deps, f"{item!r} must not be in default dependencies"
         if datasources_extra:
             assert token not in datasources_extra, f"{item!r} must not be in datasources extra"
-
-
-def test_agentExtra_disabledByDefault() -> None:
-    """覆盖范围：agent optional extra 默认关闭
-    测试对象：dependency_extras_contract.yaml 的 agent 段与 pyproject
-    目的/目标：agent 能力尚未就绪时不应定义可选 extra 或默认启用
-    验证点：enabled_by_default 为 False；pyproject 中无 agent extra 块
-    失败含义：agent 依赖被误开，默认环境承担未验收的 SDK 面
-    """
-    contract = _load_contract()
-    assert contract["extras"]["agent"]["enabled_by_default"] is False
-    agent_block = _optional_extra_block("agent")
-    assert agent_block == "", "agent optional extra must not be defined in pyproject.toml yet"

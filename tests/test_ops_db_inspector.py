@@ -490,7 +490,7 @@ def test_qmdOps_cli_jsonRoundTripsStrictly(tmp_path: Path) -> None:
     """覆盖范围：CLI JSON 可严格序列化
     测试对象：qmd_ops db-inspect --format json
     目的/目标：标准输出必须是严格合法的 JSON 文本
-    验证点：returncode==0；loads 后再 dumps 不抛错
+    验证点：returncode==0；loads/dumps round-trip 后 payload 不变；含巡检顶层字段
     失败含义：命令行输出非严格 JSON，自动化解析与管道工具会失败
     """
     db = tmp_path / "t.duckdb"
@@ -507,4 +507,5 @@ def test_qmdOps_cli_jsonRoundTripsStrictly(tmp_path: Path) -> None:
             "json",
         )
     )
-    json.dumps(payload)
+    assert json.loads(json.dumps(payload, allow_nan=False)) == payload
+    assert set(REQUIRED_TOP_LEVEL_FIELDS).issubset(payload)

@@ -27,31 +27,6 @@ _COINGECKO_REPLAY = (
 )
 
 
-def test_bootSkeleton_testModuleLoads() -> None:
-    """覆盖范围：Execute 9.0 加密市场测试模块骨架是否可加载
-    测试对象：tests/test_crypto_market_adapters.py 模块本身
-    目的/目标：确认 R3H-02 crypto 测试文件已登记且 pytest 可收集
-    验证点：模块 docstring 声明 deribit/coingecko 覆盖
-    失败含义：Execute 无法在本模块追加加密市场适配器回归用例
-    """
-    import tests.test_crypto_market_adapters as mod
-
-    assert "deribit" in (mod.__doc__ or "")
-    assert "coingecko" in (mod.__doc__ or "")
-
-
-def test_bootSkeleton_cryptoMarketNormalizerModuleExists() -> None:
-    """覆盖范围：Execute 9.0 crypto_market normalizer 模块可导入
-    测试对象：backend.app.datasources.normalizers.crypto_market
-    目的/目标：确认 R3H-02 crypto 证据 normalizer SSOT 已落地
-    验证点：CRYPTO_MARKET_EVIDENCE_SCHEMA_VERSION 非空
-    失败含义：crypto_market_evidence_v1 normalizer 缺失
-    """
-    from backend.app.datasources.normalizers import crypto_market as mod
-
-    assert mod.CRYPTO_MARKET_EVIDENCE_SCHEMA_VERSION == "crypto_market_evidence_v1"
-
-
 def test_evidence_contract_writeReadRoundTrip_fixturePreservesFields(tmp_path: Path) -> None:
     """覆盖范围：crypto_market 证据包 read/write 往返
     测试对象：write_crypto_market_evidence_bundle + read_crypto_market_evidence_bundle

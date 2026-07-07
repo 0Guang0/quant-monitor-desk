@@ -50,12 +50,12 @@ def test_layer1CleanReader_emptyMacro_failClosedNoFallback(tmp_path) -> None:
     """覆盖范围：clean 表无行时禁止 silent 换源（EasyXT forbidden 对齐）
     测试对象：read_macro_clean_observations
     目的/目标：空结果须 CleanObservationReadError，不得返回空列表冒充成功
-    验证点：pytest.raises(CleanObservationReadError)
+    验证点：pytest.raises(CleanObservationReadError, match=no clean axis_observation)
     失败含义：空库仍“成功”会掩盖 Tier A 未写入或悄悄 fallback
     """
     cm = bootstrap_layer1_clean_db(tmp_path)
     with cm.writer() as con:
-        with pytest.raises(CleanObservationReadError):
+        with pytest.raises(CleanObservationReadError, match="no clean axis_observation"):
             read_macro_clean_observations(con, "ENV-E1-DGS10")
 
 
@@ -63,7 +63,7 @@ def test_layer1CleanReader_rejectsStagedFixtureSourceUsed(tmp_path) -> None:
     """覆盖范围：axis_observation 行若标 staged_fixture 须拒绝
     测试对象：read_macro_clean_observations
     目的/目标：非 clean 来源行不得进入 Layer1 clean 读路径
-    验证点：pytest.raises(CleanObservationFallbackForbiddenError)
+    验证点：pytest.raises(CleanObservationFallbackForbiddenError, match=refusing non-clean source_used)
     失败含义：staged 行混入 PASS 路径
     """
     cm = bootstrap_layer1_clean_db(tmp_path)
@@ -76,7 +76,7 @@ def test_layer1CleanReader_rejectsStagedFixtureSourceUsed(tmp_path) -> None:
             base_value=3.0,
             source_used="staged_fixture",
         )
-        with pytest.raises(CleanObservationFallbackForbiddenError):
+        with pytest.raises(CleanObservationFallbackForbiddenError, match="refusing non-clean source_used"):
             read_macro_clean_observations(con, "ENV-E1-DGS10")
 
 
@@ -153,7 +153,7 @@ def test_layer1CleanReader_rejectsAkshareSourceUsed(tmp_path) -> None:
             base_value=3.0,
             source_used="akshare",
         )
-        with pytest.raises(CleanObservationFallbackForbiddenError):
+        with pytest.raises(CleanObservationFallbackForbiddenError, match="refusing non-Tier-A source_used"):
             read_macro_clean_observations(con, "ENV-E1-DGS10")
 
 
@@ -173,7 +173,7 @@ def test_layer1CleanReader_rejectsSourceSwitchedRow(tmp_path) -> None:
             "UPDATE axis_observation SET source_switched = TRUE WHERE indicator_id = ?",
             ["DGS10"],
         )
-        with pytest.raises(CleanObservationFallbackForbiddenError):
+        with pytest.raises(CleanObservationFallbackForbiddenError, match="source_switched"):
             read_macro_clean_observations(con, "ENV-E1-DGS10")
 
 
@@ -181,12 +181,12 @@ def test_layer1CleanReader_emptyBar_failClosedNoFallback(tmp_path) -> None:
     """覆盖范围：bar clean 表无行时禁止 silent 换源
     测试对象：read_bar_history
     目的/目标：A8-P2-001 — 空 security_bar_1d 须 CleanObservationReadError
-    验证点：bootstrap 后不 seed bar → pytest.raises(CleanObservationReadError)
+    验证点：bootstrap 后不 seed bar → pytest.raises(CleanObservationReadError, match=no clean security_bar)
     失败含义：空 bar 库仍“成功”会掩盖 Tier A 未写入
     """
     cm = bootstrap_layer1_clean_db(tmp_path)
     with cm.writer() as con:
-        with pytest.raises(CleanObservationReadError):
+        with pytest.raises(CleanObservationReadError, match="no clean security_bar"):
             read_bar_history(con, "SPY")
 
 
@@ -202,7 +202,7 @@ def test_layer1CleanReader_rejectsStagedFixtureBarSource(tmp_path) -> None:
         seed_spy_bars(
             con, n=10, start=date(2026, 1, 1), source_used="staged_fixture"
         )
-        with pytest.raises(CleanObservationFallbackForbiddenError):
+        with pytest.raises(CleanObservationFallbackForbiddenError, match="refusing non-clean source_used"):
             read_bar_history(con, "SPY")
 
 
@@ -223,7 +223,7 @@ def test_layer1CleanReader_rejectsMacroSupplementaryPrefix(tmp_path) -> None:
             base_value=3.0,
             source_used="macro_supplementary:akshare",
         )
-        with pytest.raises(CleanObservationFallbackForbiddenError):
+        with pytest.raises(CleanObservationFallbackForbiddenError, match="refusing non-clean source_used"):
             read_macro_clean_observations(con, "ENV-E1-DGS10")
 
 
@@ -289,7 +289,7 @@ def test_layer1CleanReader_amihudRejectsStagedFixtureBarDict() -> None:
             "source_used": "staged_fixture",
         },
     ]
-    with pytest.raises(CleanObservationFallbackForbiddenError):
+    with pytest.raises(CleanObservationFallbackForbiddenError, match="refusing non-clean source_used"):
         amihud_observations_from_bars(
             bars, spec_indicator_id="LIQ.B-I1.AMIHUD_ILLIQ", as_of=AS_OF
         )
@@ -313,7 +313,7 @@ def test_layer1CleanReader_amihudEmptyBars_failClosed(tmp_path) -> None:
             "source_used": "alpha_vantage",
         }
     ]
-    with pytest.raises(CleanObservationReadError):
+    with pytest.raises(CleanObservationReadError, match="could not derive Amihud"):
         amihud_observations_from_bars(
             bars, spec_indicator_id="LIQ.B-I1.AMIHUD_ILLIQ", as_of=AS_OF
         )

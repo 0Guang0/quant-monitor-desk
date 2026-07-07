@@ -1,15 +1,15 @@
 version: source_capabilities_v1
-status: draft_round2_6
-authority: "Round2.6 design contract; source_registry.yaml remains source/role authority"
+status: draft
+authority: "Source capability contract; source_registry.yaml remains source/role authority"
 principles:
   - every_source_registry_allowed_domain_must_have_capability
-  - adapter_supported_domains_must_be_subset_of_capabilities_after_round2_6_implementation
+  - adapter_supported_domains_must_be_subset_of_capabilities_before_production_fetch
   - operations_are_declared_before_orchestrator_fetch
   - no_capability_means_not_schedulable
   - no_silent_fallback
 notes:
   current_domain_authority: "specs/datasource_registry/source_registry.yaml"
-  implementation_gap: "Current adapter supported_domains still include legacy/abstract names such as market_bar_1d and fundamental. Round2.6 implementation must reconcile adapter domains to source_registry domains or add explicit compatibility mapping tests."
+  implementation_gap: "Adapter supported_domains must not rely on legacy/abstract names such as market_bar_1d and fundamental when source_registry uses concrete domains. Production fetch requires adapter domains to match source_registry domains or an explicit compatibility mapping with tests."
 sources:
   qmt_xtdata:
     status: READY_WITH_EVIDENCE

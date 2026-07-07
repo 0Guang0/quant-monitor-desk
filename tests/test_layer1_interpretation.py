@@ -127,14 +127,14 @@ def test_axisFeatureEngine_resourceGuard_ecoProfile() -> None:
     """覆盖范围：资源门禁报硬停止时，特征计算应立即中断
     测试对象：AxisFeatureEngine.compute_features
     目的/目标：资源不足时必须拒绝继续计算，不能拖垮环境
-    验证点：pytest.raises(ResourceGuardBlockedError)
+    验证点：pytest.raises(ResourceGuardBlockedError, match=resource guard blocked)
     失败含义：资源不足仍算特征，可能拖垮沙箱或生产环境
     """
     guard = MagicMock()
     guard.check.return_value = (Decision.HARD_STOP, "eco limit")
     engine = AxisFeatureEngine(resource_guard=guard, min_obs_required=3, window_len=10)
     hist = _history("ENV-E1-EFFR", 5)
-    with pytest.raises(ResourceGuardBlockedError):
+    with pytest.raises(ResourceGuardBlockedError, match="resource guard blocked"):
         engine.compute_features(as_of=AS_OF, observations=[hist[-1]], history=hist)
 
 
@@ -155,14 +155,14 @@ def test_axisInterpretation_rejectsForbiddenActionTerms() -> None:
     """覆盖范围：解读文案含禁止交易动作词时如何拒绝
     测试对象：AxisInterpretationEngine.reject_if_forbidden 与 build_interpretation
     目的/目标：第一层解读不得出现「买入」等交易动作暗示
-    验证点：两处均 pytest.raises(InterpretationRejectedError)
+    验证点：两处均 pytest.raises(InterpretationRejectedError, match=forbidden action terms)
     失败含义：禁止词进入解读快照，合规与产品边界被突破
     """
     engine = AxisFeatureEngine(min_obs_required=3, window_len=10)
     hist = _history("ENV-E1-EFFR", 5)
     feat = engine.compute_features(as_of=AS_OF, observations=[hist[-1]], history=hist)[0]
     interp_engine = AxisInterpretationEngine()
-    with pytest.raises(InterpretationRejectedError):
+    with pytest.raises(InterpretationRejectedError, match="forbidden action terms"):
         interp_engine.reject_if_forbidden("建议买入")
     with pytest.raises(InterpretationRejectedError, match="forbidden action terms"):
         interp_engine.build_interpretation(
@@ -176,10 +176,10 @@ def test_layer2ValueCannotWritebackToLayer1() -> None:
     """覆盖范围：第二层数据不得回写到第一层快照表
     测试对象：guard_layer2_writeback
     目的/目标：第二层标识不得写入第一层特征快照等表，守住层级边界
-    验证点：pytest.raises(Layer2WritebackError)
+    验证点：pytest.raises(Layer2WritebackError, match=layer2 writeback)
     失败含义：第二层污染第一层快照，层级边界与审计链失效
     """
-    with pytest.raises(Layer2WritebackError):
+    with pytest.raises(Layer2WritebackError, match="layer2 writeback"):
         guard_layer2_writeback(
             target_table="axis_feature_snapshot",
             layer_id="layer2",

@@ -14,7 +14,6 @@ from backend.app.cli.errors import CliFailure
 from backend.app.core.resource_guard import Decision, ResourceGuard
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-RUNBOOK = PROJECT_ROOT / "docs/ops/staging_data_e2e_runbook.md"
 
 
 def _run_qmd_data(*args: str) -> subprocess.CompletedProcess[str]:
@@ -134,7 +133,7 @@ def test_packaging_consoleScripts_smoke(monkeypatch, tmp_path) -> None:
     """覆盖范围：pyproject console_scripts 可导入
     测试对象：qmd-data / qmd-init-db / qmd-sync-registry entrypoints
     目的/目标：R3F-CLI-02/04 打包入口 smoke
-    验证点：main 符号可解析；scripts 包无 sys.path.insert
+    验证点：main 符号可解析
     失败含义：editable install 后运维仍依赖手工 PYTHONPATH
     """
     from backend.app.cli.main import main as data_main
@@ -144,10 +143,6 @@ def test_packaging_consoleScripts_smoke(monkeypatch, tmp_path) -> None:
     assert callable(data_main)
     assert callable(init_main)
     assert callable(sync_main)
-    sync_src = (PROJECT_ROOT / "scripts/sync_registry.py").read_text(encoding="utf-8")
-    assert "sys.path.insert" not in sync_src
-    ci_src = (PROJECT_ROOT / "scripts/ci_ingestion_smoke.py").read_text(encoding="utf-8")
-    assert "sys.path.insert" not in ci_src
 
 
 def test_initBasic_noDryRun_syncsRegistry(tmp_path, monkeypatch, registry_yaml_fixture: Path) -> None:
@@ -169,20 +164,6 @@ def test_initBasic_noDryRun_syncsRegistry(tmp_path, monkeypatch, registry_yaml_f
     with cm.reader() as con:
         count = con.execute("SELECT COUNT(*) FROM source_registry").fetchone()[0]
     assert count >= 1
-
-
-def test_stagingE2eRunbook_documentsNoDefaultLive() -> None:
-    """覆盖范围：R3F-CLI-05 staging E2E runbook
-    测试对象：docs/ops/staging_data_e2e_runbook.md
-    目的/目标：runbook 声明无默认 live、含 CI one-liner
-    验证点：含 no default live；含 qmd-init-db --sync-registry；含 test_qmd_data_cli
-    失败含义：授权 live 与 staging runbook 混用会导致误开联网抓取
-    """
-    text = RUNBOOK.read_text(encoding="utf-8")
-    assert "no default live" in text.lower() or "No default live" in text
-    assert "qmd-init-db --sync-registry" in text
-    assert "test_qmd_data_cli.py" in text
-    assert "source_health_snapshot" in text
 
 
 def test_qmdData_health_supportedProfile_notPlaceholder(

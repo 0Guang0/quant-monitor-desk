@@ -1,5 +1,6 @@
 version: api_security_contract_v1
-purpose: Authentication, authorization, pagination, rate limit, and query budget contract
+purpose:
+  Authentication, authorization, pagination, rate limit, and query budget contract
   for FastAPI.
 user_decision:
   decision_id: D-02
@@ -11,8 +12,8 @@ authentication:
   dev:
     allow_disabled_auth: true
     disabled_auth_allowed_bind_hosts:
-    - 127.0.0.1
-    - localhost
+      - 127.0.0.1
+      - localhost
     rule: dev may disable auth only for local loopback development.
   prod:
     auth_required: true
@@ -20,8 +21,8 @@ authentication:
     fail_startup_if_token_missing: true
     forbid_disabled_auth: true
     forbid_disabled_auth_on_bind_host:
-    - 0.0.0.0
-    - '::'
+      - 0.0.0.0
+      - "::"
     rule: prod must reject startup if auth is disabled or token is missing.
   token_transport:
     header: Authorization
@@ -30,23 +31,23 @@ authentication:
     enabled_in_first_version: false
     note: Full OAuth/JWT/RBAC is deferred until multi-user or enterprise deployment.
 authorization:
-  phase1_role_model: single_local_token_is_admin
-  roles_enabled_phase1:
-  - admin
+  default_role_model: single_local_token_is_admin
+  roles_enabled_default:
+    - admin
   deferred_roles:
-  - viewer
-  - agent_readonly
+    - viewer
+    - agent_readonly
   token_to_role_mapping:
     QMD_API_TOKEN: admin
-  phase1_rules:
-  - In phase1, any valid QMD_API_TOKEN is treated as admin.
-  - viewer and agent_readonly are reserved for phase2 multi-token or multi-user mode.
-  - Admin job endpoints, backfill, full-history export, manual override, and rebuild
-    require QMD_API_TOKEN in prod.
+  single_token_rules:
+    - In single-token local deployment, any valid QMD_API_TOKEN is treated as admin.
+    - viewer and agent_readonly are reserved for multi-token or multi-user deployments.
+    - Admin job endpoints, backfill, full-history export, manual override, and rebuild
+      require QMD_API_TOKEN in prod.
   tests:
-  - test_singleLocalToken_mapsToAdmin
-  - test_prodAdminMutationWithoutToken_returnsAuthRequired
-  - test_viewerAgentRoles_areDeferredInPhase1
+    - test_singleLocalToken_mapsToAdmin
+    - test_prodAdminMutationWithoutToken_returnsAuthRequired
+    - test_viewerAgentRoles_areReservedUntilMultiTokenMode
 rate_limits:
   default_per_minute: 60
   heavy_query_per_minute: 10
@@ -60,24 +61,24 @@ query_budget:
   max_lookback_days_default: 365
   full_history_requires_admin: true
   tests:
-  - test_apiSecurityContract_isSingleAuthorityForQueryBudget
-  - test_resourceLimitsApiLimits_matchApiSecurityContract
-  - test_frontendPageContracts_doNotUseStale500Limit
-  - test_pageSizeContract_matchesDocs
-  - test_pageSizeAboveAbsoluteLimit_returnsQueryTooLarge
+    - test_apiSecurityContract_isSingleAuthorityForQueryBudget
+    - test_resourceLimitsApiLimits_matchApiSecurityContract
+    - test_frontendPageContracts_doNotUseStale500Limit
+    - test_pageSizeContract_matchesDocs
+    - test_pageSizeAboveAbsoluteLimit_returnsQueryTooLarge
 error_codes:
-- AUTH_REQUIRED
-- FORBIDDEN
-- RATE_LIMITED
-- QUERY_TOO_LARGE
-- RESOURCE_GUARD_PAUSED
-- PROD_AUTH_MISCONFIGURED
+  - AUTH_REQUIRED
+  - FORBIDDEN
+  - RATE_LIMITED
+  - QUERY_TOO_LARGE
+  - RESOURCE_GUARD_PAUSED
+  - PROD_AUTH_MISCONFIGURED
 tests:
-- test_unauthenticatedRequest_returnsAuthRequired
-- test_prodWithoutToken_failsStartup
-- test_prodDisabledAuth_failsStartup
-- test_devDisabledAuthOnlyAllowedOnLoopback
-- test_pageSizeAboveLimit_returnsQueryTooLarge
-- test_singleLocalToken_mapsToAdmin
-- test_deferredRolesNotEnabledInPhase1
-- test_pageSizeContract_matchesDocs
+  - test_unauthenticatedRequest_returnsAuthRequired
+  - test_prodWithoutToken_failsStartup
+  - test_prodDisabledAuth_failsStartup
+  - test_devDisabledAuthOnlyAllowedOnLoopback
+  - test_pageSizeAboveLimit_returnsQueryTooLarge
+  - test_singleLocalToken_mapsToAdmin
+  - test_deferredRolesNotEnabledInPhase1
+  - test_pageSizeContract_matchesDocs

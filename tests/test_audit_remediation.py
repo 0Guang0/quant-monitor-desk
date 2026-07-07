@@ -164,7 +164,7 @@ def test_dbRejectsInvalidFetchStatus(tmp_path: Path) -> None:
     失败含义：脏 fetch 状态可入库，与 FetchResult 合约不一致
     """
     cm = _migrated_cm(tmp_path)
-    with cm.writer() as con, pytest.raises(duckdb.ConstraintException):
+    with cm.writer() as con, pytest.raises(duckdb.ConstraintException, match="CHECK constraint failed"):
         con.execute(
             """
             INSERT INTO fetch_log (
@@ -183,7 +183,7 @@ def test_dbRejectsInvalidManualReviewStatus(tmp_path: Path) -> None:
     失败含义：非法审核状态可存在，工作流状态机失真
     """
     cm = _migrated_cm(tmp_path)
-    with cm.writer() as con, pytest.raises(duckdb.ConstraintException):
+    with cm.writer() as con, pytest.raises(duckdb.ConstraintException, match="CHECK constraint failed"):
         con.execute(
             """
             INSERT INTO manual_review_queue (
@@ -599,5 +599,5 @@ def test_backfill_requiresCleanTable(tmp_path: Path, monkeypatch) -> None:
         partition_key=None,
         trigger_reason="eco_catchup",
     )
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError, match="clean_table"):
         orch.run_backfill(spec, adapter=_BackfillCountAdapter())

@@ -1,0 +1,182 @@
+[ocr] full-scan: 6 file(s) discovered, reviewing 6 in /mnt/c/Users/Guang/Desktop/quant-monitor-desk
+[ocr] estimated cost: ~6 file(s), est. 248K input + 34K output ≈ 283K total tokens (rough; actual reported after run)
+[ocr] scan dispatch: 2 batch(es) by by-language strategy
+[ocr]   ▶ code_comment "scripts/check_indicator_binding_matrix.py"
+[ocr]   ✔ code_comment (5ms)
+[ocr] scan dedup batch #0: 5 → 4 comments
+[ocr]   ▶ code_search search_text=module_boundary_contract file_patterns=[scripts/ tests/ *.py] case_sensitive=false
+[ocr]   ✔ code_search (990ms)
+[ocr]   ▶ code_search search_text=required_checks|may_import|must_not_import file_patterns=[scripts/ tests/] use_perl_regexp=true case_sensitive=false
+[ocr]   ✔ code_search (450ms)
+[ocr]   ▶ file_read file_path=scripts/check_module_boundaries.py start_line=1 end_line=110
+[ocr]   ✔ file_read (9ms)
+[ocr]   ▶ file_read file_path=tests/test_module_boundaries.py start_line=1 end_line=140
+[ocr]   ✔ file_read (13ms)
+[ocr]   ▶ code_search file_patterns=[specs/ tests/ src/ *.py *.yaml] case_sensitive=true search_text=source_registry_v1
+[ocr]   ✔ code_search (908ms)
+[ocr]   ▶ code_search search_text=fallback_requires_source_enabled file_patterns=[specs/ tests/ src/ *.py *.yaml] case_sensitive=true
+[ocr]   ✔ code_search (885ms)
+[ocr]   ▶ code_search search_text=disabled_fallback_behavior file_patterns=[specs/ tests/ src/ *.py *.yaml] case_sensitive=true
+[ocr]   ✔ code_search (821ms)
+[ocr]   ▶ file_read end_line=380 file_path=backend/app/datasources/source_registry.py start_line=1
+[ocr]   ✔ file_read (18ms)
+[ocr]   ▶ file_find case_sensitive=false query_name=datasources
+[ocr]   ✔ file_find (376ms)
+[ocr]   ▶ file_read end_line=561 file_path=backend/app/datasources/source_registry.py start_line=379
+[ocr]   ✔ file_read (27ms)
+[ocr]   ▶ code_search search_text=backend/app/datasources file_patterns=[tests/ scripts/ backend/] case_sensitive=false
+[ocr]   ✔ code_search (629ms)
+[ocr]   ▶ code_search search_text=backend.app.datasources file_patterns=[backend/ tests/ scripts/] case_sensitive=false
+[ocr]   ✔ code_search (623ms)
+[ocr]   ▶ code_comment "specs/contracts/data_cli_contract.yaml"
+[ocr]   ✔ code_comment (4ms)
+[ocr]   ▶ code_search search_text=legacy_roles_forbidden file_patterns=[specs/ tests/ backend/ docs/] case_sensitive=true
+[ocr]   ✔ code_search (1.026s)
+[ocr]   ▶ code_search search_text=disabled_domain_must_return file_patterns=[specs/ tests/ backend/ docs/] case_sensitive=true
+[ocr]   ✔ code_search (893ms)
+[ocr]   ▶ code_search search_text=source_role_model file_patterns=[specs/ tests/ backend/ docs/] case_sensitive=true
+[ocr]   ✔ code_search (699ms)
+[ocr] Summary: 6 file(s) reviewed, 6 comment(s), ~278158 token(s) used (input: ~269206, output: ~8952), 3m26s elapsed
+
+[2m─── scripts/check_indicator_binding_matrix.py:86-87 ───[0m
+Malformed or unreadable YAML currently escapes as an exception before the script can print the
+structured validation errors used elsewhere. Since this runs in CI, wrap the registry
+`read_text`/`yaml.safe_load` path and return a validation error that includes the registry path and
+parse/read failure, verify the top-level registry payload is a mapping before calling `.get`, and
+propagate equivalent axis-spec read/parse failures from `_collect_axis_indicator_ids` into
+`validate_registry` so malformed axis specs report the failed file instead of crashing the CLI.
+
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m     try:[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     payload = yaml.safe_load(REGISTRY.read_text(encoding="utf-8")) or {}[0m[0m
+[91m[48;2;70;0;0m-[0m[48;2;70;0;0m     rows = payload.get("bindings") or [][0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m     except (OSError, UnicodeDecodeError, yaml.YAMLError) as exc:[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m         return [f"failed to read/parse registry {REGISTRY.relative_to(REPO_ROOT)}: {exc}"][0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m     if not isinstance(payload, dict):[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m         return ["registry root must be a mapping"][0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m [0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m     if "bindings" not in payload or payload["bindings"] is None:[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m         return ["registry bindings must be a list"][0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m     rows = payload["bindings"][0m[0m
+
+
+[2m─── scripts/check_indicator_binding_matrix.py:87-89 ───[0m
+`payload.get("bindings") or []` masks a missing, null, or empty-string `bindings` value as an empty
+list, so schema errors are reported as a row-count mismatch. Keep the raw value and validate that
+the key exists and is a list so bad registry shape fails with the correct diagnostic.
+
+[91m[48;2;70;0;0m-[0m[48;2;70;0;0m     rows = payload.get("bindings") or [][0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m     if "bindings" not in payload:[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m         return ["registry bindings must be a list"][0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m     rows = payload["bindings"][0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     if not isinstance(rows, list):[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m         return ["registry bindings must be a list"][0m[0m
+
+
+[2m─── scripts/check_indicator_binding_matrix.py:65-72 ───[0m
+The required-field check only checks key presence. Values like `indicator_id: ''`, `axis_id: 123`,
+`backfill_available: "false"`, or `feature_outputs_expected: [1]` will pass most of the validation
+and can produce misleading parity results. Validate the expected scalar types/non-empty strings and
+boolean fields before accepting a row.
+
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m     string_fields = ([0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m         "indicator_id",[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m         "axis_id",[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m         "primary_source",[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m         "data_domain",[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m         "adapter_entry",[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m         "cold_start_policy",[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m         "incremental_watermark",[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m         "formula",[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m         "cabin",[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m         "adr_id",[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m     )[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m     for key in string_fields:[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m         if not isinstance(row[key], str) or not row[key].strip():[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m             errors.append(f"row {index} indicator_id={row.get('indicator_id')!r} {key} must be a non-empty string")[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m     if not isinstance(row["backfill_available"], bool):[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m         errors.append(f"row {index} {row.get('indicator_id')!r} backfill_available must be a boolean")[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m [0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     if row["cold_start_policy"] not in _COLD_START_POLICIES:[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m         errors.append([0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m             f"row {index} {row['indicator_id']!r} invalid cold_start_policy"[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m         )[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     if row["cabin"] not in _CABINS:[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m         errors.append(f"row {index} {row['indicator_id']!r} invalid cabin")[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     outputs = row["feature_outputs_expected"][0m[0m
+[91m[48;2;70;0;0m-[0m[48;2;70;0;0m     if not isinstance(outputs, list) or not outputs:[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m     if not isinstance(outputs, list) or not outputs or not all(isinstance(item, str) and item.strip() for item in outputs):[0m[0m
+
+
+[2m─── scripts/check_indicator_binding_matrix.py:106-108 ───[0m
+When the axis spec directory is missing or the glob stops matching after a layout change, `axis_ids`
+becomes empty and every registry row is reported as unknown. Detect an absent directory or zero
+discovered spec files/IDs separately so CI points to discovery failure instead of producing
+misleading parity errors.
+
+
+
+[2m─── specs/contracts/data_cli_contract.yaml:10-13 ───[0m
+`qmd data sync` is a write-capable command (`dry-run`, `ResourceGuard`, `fetch_log`) but it is the
+only such command here without `default_mode: dry_run`. That leaves the machine-readable contract
+ambiguous and can let wrappers default to a live write path instead of failing closed. Add the same
+default-mode guard used by the other mutating commands.
+
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m   qmd data sync:[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     required_args: [domain][0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     optional_args: [start, end, since, dry-run][0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m     default_mode: dry_run[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     must_use: [ResourceGuard, SourceRoutePlan, idempotency_key, fetch_log][0m[0m
+
+
+[2m─── specs/contracts/data_cli_contract.yaml:39-43 ───[0m
+`reconcile` appears to mutate conflict state, but its contract does not require `ResourceGuard`
+while other mutating commands do. Without that guard in the contract, implementations can satisfy
+`must_use` while bypassing the shared confirmation/resource-safety path. Require `ResourceGuard`
+here unless `run_reconcile` is explicitly documented as enforcing the equivalent guard internally.
+
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m   qmd data reconcile:[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     required_args: [conflict-id][0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     optional_args: [dry-run][0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     default_mode: dry_run[0m[0m
+[91m[48;2;70;0;0m-[0m[48;2;70;0;0m     must_use: [DataSyncOrchestrator.run_reconcile][0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m     must_use: [DataSyncOrchestrator.run_reconcile, ResourceGuard][0m[0m
+
+
+
+──────── Project Summary ────────
+
+### Top Issues
+
+1. **CI validation can fail unclearly or misleadingly for malformed registry input**
+   `scripts/check_indicator_binding_matrix.py` lets unreadable or malformed YAML escape as an exception before producing the structured validation errors expected in CI. The registry load path should catch `read_text` / `yaml.safe_load` failures and report a validation error that includes the registry path and underlying parse/read issue.
+
+2. **Registry schema validation is too weak, causing bad input to surface as parity failures**
+   `scripts/check_indicator_binding_matrix.py` normalizes `payload.get("bindings") or []`, which hides missing, null, or wrong-type `bindings` values as an empty list. It also checks required fields only by key presence, allowing empty strings, wrong scalar types, stringified booleans, and invalid list contents to pass into later validation. This makes CI diagnostics point at row-count or parity mismatches instead of the actual schema defect.
+
+3. **Axis spec discovery failures are reported as registry content errors**
+   In `scripts/check_indicator_binding_matrix.py`, a missing axis spec directory or glob/layout change can produce an empty `axis_ids` set, after which every registry row is reported as unknown. CI should distinguish “no specs discovered” from “registry references unknown axis IDs.”
+
+4. **Write-capable CLI contract entries are missing safety defaults/guards**
+   `specs/contracts/data_cli_contract.yaml` has write-capable commands with weaker safety contracts than peers. `qmd data sync` lacks `default_mode: dry_run`, and `reconcile` appears mutating but does not require `ResourceGuard`. These omissions can allow wrappers or implementations to take live-write paths without the shared safety/confirmation mechanism.
+
+### Module Hotspots
+
+- **Indicator binding validation script:** `scripts/check_indicator_binding_matrix.py` has most of the findings. The issues cluster around input parsing, schema validation, and discovery diagnostics, all affecting CI signal quality.
+- **Data CLI contract:** `specs/contracts/data_cli_contract.yaml` has fewer comments but higher operational risk because missing contract safety requirements can affect write-capable command behavior.
+
+### Cross-Cutting Concerns
+
+- **Validation reports secondary symptoms instead of root causes**
+  Representative path: `scripts/check_indicator_binding_matrix.py`. Bad YAML, wrong `bindings` shape, invalid field types, and failed spec discovery can all produce exceptions or misleading parity/unknown-ID errors instead of precise validation diagnostics.
+
+- **Machine-readable contracts do not consistently encode safety invariants**
+  Representative path: `specs/contracts/data_cli_contract.yaml`. Mutating commands should consistently declare dry-run defaults and required guardrails such as `ResourceGuard`.
+
+### Quick Wins
+
+- Wrap registry file reading and YAML parsing in `scripts/check_indicator_binding_matrix.py` and emit structured validation errors with the registry path and exception details.
+- Preserve the raw `bindings` value, explicitly require the key to exist, and validate that it is a list before row-count/parity checks.
+- Add strict field validation for registry rows: non-empty strings for IDs, real booleans for boolean fields, and correctly typed list contents.
+- Add an explicit discovery precheck for the axis spec directory and for zero matched/discovered spec IDs.
+- Update `specs/contracts/data_cli_contract.yaml` so `qmd data sync` declares `default_mode: dry_run`.
+- Require `ResourceGuard` for `reconcile` if it mutates conflict state.

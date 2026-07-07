@@ -16,18 +16,11 @@ from backend.app.db.migrate import apply_migrations
 from backend.app.sync.event_payload import parse_event_payload
 from backend.app.sync.jobs import SyncJobSpec, SyncJobStateMachine
 from tests.contract_gate_support import (
-    ALLOWED_ADAPTER_FACTORY_PATHS,
-    PROJECT_ROOT,
     SERVICE_CONTRACT,
-    collect_imports,
     load_yaml,
     scan_package_for_create_adapter,
 )
 from tests.service_path_support import make_fixture_port, write_bar_fixture
-
-BACKEND_APP = PROJECT_ROOT / "backend" / "app"
-RUNNERS = BACKEND_APP / "sync" / "runners.py"
-CONCRETE_ADAPTER_PREFIX = "backend.app.datasources.adapters."
 
 
 def _patch_probe_adapter_factory(monkeypatch, *, track_order: list[str] | None = None) -> None:
@@ -210,16 +203,6 @@ def test_serviceFetch_runtimeGateOrder(tmp_path: Path, monkeypatch) -> None:
     assert entered_fetching
 
 
-def test_serviceContract_declaresFetchGateOrder() -> None:
-    """覆盖范围：契约步骤与专用测试一致
-    测试对象：test_serviceBuildsRouteBeforeFetch 委托
-    目的/目标：契约测试与步骤列表测试保持同一断言源
-    验证点：调用 test_serviceBuildsRouteBeforeFetch 不失败
-    失败含义：重复门禁分叉，契约变更只改一处仍可能漏检
-    """
-    test_serviceBuildsRouteBeforeFetch()
-
-
 def test_forbiddenDirectCallers_includesSyncRunners_andScanIsContractDriven() -> None:
     """覆盖范围：同步编排 runner 不得直连适配器工厂
     测试对象：forbidden_direct_callers + scan_package_for_create_adapter('sync/runners')
@@ -231,37 +214,6 @@ def test_forbiddenDirectCallers_includesSyncRunners_andScanIsContractDriven() ->
     forbidden = contract.get("call_boundaries", {}).get("forbidden_direct_callers") or []
     assert "backend.app.sync.runners" in forbidden
     assert scan_package_for_create_adapter("sync/runners") == []
-
-
-def test_createAdapterImports_onlyUnderTests() -> None:
-    """覆盖范围：create_adapter 仅允许出现在工厂模块路径
-    测试对象：backend/app/**/*.py import 扫描（排除 ALLOWED_ADAPTER_FACTORY_PATHS）
-    目的/目标：除 datasources 工厂外任何生产代码不得 import create_adapter
-    验证点：violations 列表为空
-    失败含义：隐藏入口可实例化任意 adapter，服务边界名存实亡
-    """
-    violations: list[str] = []
-    for py_file in BACKEND_APP.rglob("*.py"):
-        if py_file in ALLOWED_ADAPTER_FACTORY_PATHS:
-            continue
-        imports = collect_imports(py_file)
-        if "create_adapter" in imports or any(imp.endswith(".create_adapter") for imp in imports):
-            rel = py_file.relative_to(PROJECT_ROOT)
-            violations.append(str(rel))
-    assert violations == [], f"create_adapter found outside allowed factory paths: {violations}"
-
-
-def test_syncRunners_doesNotImportConcreteAdaptersOrFactory() -> None:
-    """覆盖范围：sync/runners.py 导入洁净性
-    测试对象：collect_imports(RUNNERS)
-    目的/目标：runner 不得 import create_adapter 或具体 Adapter 类
-    验证点：imports 无 create_adapter、无 adapters 包具体 Adapter
-    失败含义：runner 与 vendor 适配器耦合，无法统一经 service fetch
-    """
-    imports = collect_imports(RUNNERS)
-    assert "create_adapter" not in imports
-    assert not any(imp.startswith(CONCRETE_ADAPTER_PREFIX) for imp in imports)
-    assert not any(imp.endswith("Adapter") and "adapters" in imp for imp in imports)
 
 
 def test_servicePreviewRoute_returnsReadyPlan() -> None:

@@ -107,10 +107,10 @@ def test_fetchRequest_missingRunId_raisesValidationError():
     """覆盖范围：抓取请求缺少运行批次号时的拒绝逻辑
     测试对象：FetchRequest 缺 run_id
     目的/目标：没有批次号的抓取请求不应被接受，否则无法追溯是哪次同步
-    验证点：pytest.raises(ValidationError)
+    验证点：pytest.raises(ValidationError, match=run_id)
     失败含义：无 run 关联的抓取请求可创建，审计链断裂
     """
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError, match="run_id"):
         FetchRequest(source_id="s", data_domain="d")
 
 
@@ -325,10 +325,10 @@ def test_fetchResult_negativeRowCount_raisesValidationError():
     """覆盖范围：抓取行数不允许为负数
     测试对象：FetchResult row_count=-1
     目的/目标：行数是基本计数，负数没有业务含义，应在建模阶段就拦住
-    验证点：row_count=-1 时 pytest.raises(ValidationError)
+    验证点：row_count=-1 时 pytest.raises(ValidationError, match=row_count)
     失败含义：负行数进入模型，聚合统计异常
     """
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError, match="row_count"):
         FetchResult(
             run_id="r",
             source_id="s",
@@ -397,12 +397,12 @@ def test_write_closedConnection_propagates(tmp_path, migrated_con, success_resul
     """覆盖范围：已关闭连接错误上抛
     测试对象：FetchLogWriter.write（con 已 close）
     目的/目标：duckdb.Error 原样传播
-    验证点：pytest.raises(duckdb.Error)
+    验证点：pytest.raises(duckdb.Error, match=closed)
     失败含义：写失败被吞，调用方误以为已记日志
     """
     con = migrated_con(tmp_path)
     con.close()
-    with pytest.raises(duckdb.Error):
+    with pytest.raises(duckdb.Error, match="closed"):
         FetchLogWriter().write(con, success_result())
 
 
@@ -462,13 +462,13 @@ def test_fetch_requestSourceDoesNotMatchAdapter_raisesAndWritesNoFetchLog(
     """覆盖范围：请求源与 adapter 不一致
     测试对象：BaseDataAdapter.fetch（req akshare vs adapter baostock）
     目的/目标：SourceMismatchError 且不写 fetch_log
-    验证点：pytest.raises(SourceMismatchError)；fetch_log count 0
+    验证点：pytest.raises(SourceMismatchError, match=does not match adapter)；fetch_log count 0
     失败含义：错源请求仍记日志或静默成功
     """
     con = migrated_con(tmp_path)
     adapter = FakeAdapter(loaded_registry)
     req = request_factory("akshare")
-    with pytest.raises(SourceMismatchError):
+    with pytest.raises(SourceMismatchError, match="does not match adapter"):
         adapter.fetch(req, con=con)
     assert con.execute("SELECT COUNT(*) FROM fetch_log").fetchone()[0] == 0
 
@@ -582,13 +582,13 @@ def test_fetch_unsupportedDomainOnAdapter_raises_andWritesNoFetchLog(
     """覆盖范围：adapter 不支持请求域时拒绝且不落 fetch_log
     测试对象：NarrowDomainAdapter.fetch(market_bar_1d)
     目的/目标：DomainNotAllowedError 且无 fetch_log
-    验证点：pytest.raises(DomainNotAllowedError)；count 0
+    验证点：pytest.raises(DomainNotAllowedError, match=does not support domain)；count 0
     失败含义：adapter 域声明可绕过，错误域进 vendor
     """
     con = migrated_con(tmp_path)
     adapter = NarrowDomainAdapter(loaded_registry)
     req = request_factory("baostock", domain="market_bar_1d")
-    with pytest.raises(DomainNotAllowedError):
+    with pytest.raises(DomainNotAllowedError, match="does not support domain"):
         adapter.fetch(req, con=con)
     assert con.execute("SELECT COUNT(*) FROM fetch_log").fetchone()[0] == 0
 
@@ -808,24 +808,6 @@ def test_fetch_disabledPrimaryDomain_returnsDisabledSource(
         con.execute("SELECT COUNT(*) FROM fetch_log WHERE run_id=?", [req.run_id]).fetchone()[0]
         == 0
     )
-
-
-def test_dataAdapterContract_documentsStructuredSchemaHashRequirement():
-    """覆盖范围：data_adapter_contract 结构化 schema_hash 契约段
-    测试对象：specs/contracts/data_adapter_contract.md
-    目的/目标：AC-DATA-01 — SUCCESS 结构化抓取必须非空 schema_hash，且写明 csv/parquet 有界推导
-    验证点：契约含 structured 规则、json/csv/parquet、SUCCESS+row_count 约束
-    失败含义：契约未冻结 fail-closed 语义，实现与审计 VR-DATA-001 无法对齐
-    """
-    from pathlib import Path
-
-    text = Path("specs/contracts/data_adapter_contract.md").read_text(encoding="utf-8")
-    lowered = text.lower()
-    assert "structured schema_hash" in lowered or "structured file types" in lowered
-    for token in ("json", "csv", "parquet"):
-        assert token in lowered
-    assert "success" in lowered and "row_count" in lowered
-    assert "schemaless" in lowered
 
 
 def test_fetch_disabledDomain_returnsDisabledSourceBeforeDomainAllowed(

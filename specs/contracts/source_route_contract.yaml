@@ -1,5 +1,5 @@
 version: source_route_contract_v1
-status: draft_round2_6
+status: draft
 owner: data_sources
 purpose: "Declare explicit, auditable source routing. Silent fallback is forbidden."
 objects:

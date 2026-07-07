@@ -32,15 +32,15 @@
 
 # 2. 报告类型
 
-| report_type | 中文名 | 频率 | 说明 |
-|---|---|---|---|
-| `daily_market_report` | 每日市场报告 | 每日盘后 | 五层状态、异常、事件、证据链摘要 |
-| `weekly_review_report` | 周度复盘报告 | 每周 | 状态变化、数据质量、市场结构复盘 |
-| `data_quality_report` | 数据质量报告 | 每日/任务后 | 数据源失败、冲突、滞后、缺失 |
-| `manual_review_report` | 人工确认清单 | 有需要时 | 严重冲突、Agent 输出失败、schema drift |
-| `intraday_alert` | 盘中提醒 | 盘中 | 只提醒异常事实，不给交易动作 |
-| `ops_health_report` | 运维健康报告 | 每日/每周 | 备份、磁盘、任务、API、Agent 状态 |
-| `backtest_review_report` | 回测与复盘报告 | 用户触发/定期 | 规则触发历史表现、误报、证据复盘 |
+| report_type              | 中文名         | 频率          | 说明                                   |
+| ------------------------ | -------------- | ------------- | -------------------------------------- |
+| `daily_market_report`    | 每日市场报告   | 每日盘后      | 五层状态、异常、事件、证据链摘要       |
+| `weekly_review_report`   | 周度复盘报告   | 每周          | 状态变化、数据质量、市场结构复盘       |
+| `data_quality_report`    | 数据质量报告   | 每日/任务后   | 数据源失败、冲突、滞后、缺失           |
+| `manual_review_report`   | 人工确认清单   | 有需要时      | 严重冲突、Agent 输出失败、schema drift |
+| `intraday_alert`         | 盘中提醒       | 盘中          | 只提醒异常事实，不给交易动作           |
+| `ops_health_report`      | 运维健康报告   | 每日/每周     | 备份、磁盘、任务、API、Agent 状态      |
+| `backtest_review_report` | 回测与复盘报告 | 用户触发/定期 | 规则触发历史表现、误报、证据复盘       |
 
 ---
 
@@ -150,14 +150,14 @@ CREATE TABLE IF NOT EXISTS alert_event (
 
 盘中提醒只允许基于明确事实触发，分为 6 类。
 
-| alert_type | 来源 | 触发示例 | 默认等级 |
-|---|---|---|---|
-| `data_quality_alert` | DataQualityValidator / SourceConflictValidator | 主源失败、数据滞后、严重冲突、schema drift | DATA_RISK |
-| `layer1_state_alert` | Layer 1 五轴 | 极端水位、突变、历史不足、source switched | WATCH/WARN |
-| `layer2_cross_asset_alert` | Layer 2 跨资产 | VIX、美元、铜、油、美债等 P0 资产出现异常变化 | WATCH/WARN |
-| `layer3_anchor_alert` | Layer 3 产业链 | P0 anchor 事件、P0 source 更新、跨链边触发 | WATCH/WARN |
-| `layer4_market_structure_alert` | Layer 4 市场结构 | 市场宽度突变、涨跌停异常、期权波动异常 | WATCH/WARN |
-| `layer5_evidence_alert` | Layer 5 证据链 | 公告、财报、事件、成交量/价格异常需要人工确认 | WATCH/WARN |
+| alert_type                      | 来源                                           | 触发示例                                      | 默认等级   |
+| ------------------------------- | ---------------------------------------------- | --------------------------------------------- | ---------- |
+| `data_quality_alert`            | DataQualityValidator / SourceConflictValidator | 主源失败、数据滞后、严重冲突、schema drift    | DATA_RISK  |
+| `layer1_state_alert`            | Layer 1 五轴                                   | 极端水位、突变、历史不足、source switched     | WATCH/WARN |
+| `layer2_cross_asset_alert`      | Layer 2 跨资产                                 | VIX、美元、铜、油、美债等 P0 资产出现异常变化 | WATCH/WARN |
+| `layer3_anchor_alert`           | Layer 3 产业链                                 | P0 anchor 事件、P0 source 更新、跨链边触发    | WATCH/WARN |
+| `layer4_market_structure_alert` | Layer 4 市场结构                               | 市场宽度突变、涨跌停异常、期权波动异常        | WATCH/WARN |
+| `layer5_evidence_alert`         | Layer 5 证据链                                 | 公告、财报、事件、成交量/价格异常需要人工确认 | WATCH/WARN |
 
 提醒等级：
 
@@ -201,26 +201,26 @@ OPS_RISK：系统资源/运行风险
 
 默认冷却：
 
-| severity | cooldown |
-|---|---:|
-| INFO | 4 小时 |
-| WATCH | 2 小时 |
-| WARN | 1 小时 |
-| CRITICAL | 15 分钟 |
-| DATA_RISK | 30 分钟 |
-| OPS_RISK | 30 分钟 |
+| severity  | cooldown |
+| --------- | -------: |
+| INFO      |   4 小时 |
+| WATCH     |   2 小时 |
+| WARN      |   1 小时 |
+| CRITICAL  |  15 分钟 |
+| DATA_RISK |  30 分钟 |
+| OPS_RISK  |  30 分钟 |
 
 ## 6.3 throttle
 
-本机默认低打扰。Phase 1 throttle 仅适用于 `dashboard_notification`、`local_audit_log`、`console_summary` 与显式配置后的 optional `email`：
+本机默认低打扰。默认本地通知节流仅适用于 `dashboard_notification`、`local_audit_log`、`console_summary` 与显式配置后的 optional `email`：
 
 ```text
 每小时最多 10 条普通提醒
 CRITICAL / DATA_RISK 不进入普通提醒上限，但仍要去重
-webhook / desktop_notification / SMS / phone / bot / Slack / Discord / Telegram / 企业微信均延期到 D-13+；Phase 1 不实现发送逻辑，也不实现该延期渠道的节流逻辑
+webhook / desktop_notification / SMS / phone / bot / Slack / Discord / Telegram / 企业微信均默认禁用；未完成独立授权、配置和契约前，不实现发送逻辑，也不实现该禁用渠道的节流逻辑
 ```
 
-必须补测试：`test_phase1NotificationThrottle_excludesDesktop`、`test_notificationModule_containsNoActiveDesktopThrottleInPhase1`。
+必须补测试：`test_defaultNotificationThrottle_excludesDesktop`、`test_notificationModule_containsNoActiveDesktopThrottleWhenDisabled`。
 
 ---
 
@@ -228,21 +228,21 @@ webhook / desktop_notification / SMS / phone / bot / Slack / Discord / Telegram 
 
 第一阶段默认渠道：
 
-| channel | 默认 | 说明 |
-|---|---|---|
-| `dashboard_notification` | 开启 | 前端通知中心，必须实现 |
-| `local_markdown` | 开启 | 写入 reports / intraday 目录 |
-| `local_html` | 可选 | 便于浏览器打开 |
-| `local_audit_log` | 开启 | 写 notification_log / alert_event |
-| `console_summary` | 开启 | CLI 运行时输出摘要 |
+| channel                  | 默认 | 说明                              |
+| ------------------------ | ---- | --------------------------------- |
+| `dashboard_notification` | 开启 | 前端通知中心，必须实现            |
+| `local_markdown`         | 开启 | 写入 reports / intraday 目录      |
+| `local_html`             | 可选 | 便于浏览器打开                    |
+| `local_audit_log`        | 开启 | 写 notification_log / alert_event |
+| `console_summary`        | 开启 | CLI 运行时输出摘要                |
 
 可选渠道：
 
-| channel | 默认 | 说明 |
-|---|---|---|
+| channel                | 默认 | 说明                                 |
+| ---------------------- | ---- | ------------------------------------ |
 | `desktop_notification` | 延期 | D-13+ 重新拍板前不得实现真实发送逻辑 |
-| `email` | 关闭 | 用户配置 SMTP 后开启 |
-| `webhook` | 延期 | D-13+ 重新拍板前不得实现真实发送逻辑 |
+| `email`                | 关闭 | 用户配置 SMTP 后开启                 |
+| `webhook`              | 延期 | D-13+ 重新拍板前不得实现真实发送逻辑 |
 
 第一阶段不建议：
 
@@ -374,7 +374,6 @@ ResourceGuard PAUSE 时只允许 DATA_RISK / OPS_RISK 提醒
 ```
 
 如果实现角色需要新增 webhook、短信或机器人通知，必须作为 D-13+ 新决策交用户拍板。
-
 
 ## D-04 第一版通知渠道硬约束
 

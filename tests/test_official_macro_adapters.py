@@ -24,19 +24,6 @@ _LIVE_FRED = (
 _PROMOTE_FRED = PROJECT_ROOT / "tests/fixtures/sandbox_clean_write/r3g01/fred/fred_evidence.json"
 
 
-def test_bootSkeleton_testModuleLoads() -> None:
-    """覆盖范围：Execute 9.0 测试模块骨架是否可加载
-    测试对象：tests/test_official_macro_adapters.py 模块本身
-    目的/目标：确认 R3H-01 专用测试文件已登记且 pytest 可收集
-    验证点：模块 docstring 声明六源覆盖范围
-    失败含义：Execute 无法在本模块追加六源适配器回归用例
-    """
-    import tests.test_official_macro_adapters as mod
-
-    assert "六源" in (mod.__doc__ or "")
-    assert "fred" in (mod.__doc__ or "")
-
-
 def test_evidence_contract_livePayload_declaresOfficialMacroSchema(tmp_path: Path) -> None:
     """覆盖范围：FRED live 抓取证据经 normalizer 写出 promote 包
     测试对象：materialize_fred_evidence_from_live（official_macro normalizer）

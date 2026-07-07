@@ -169,7 +169,7 @@ def test_syncJob_invalidStatus_rejectedByDbCheck(tmp_path: Path) -> None:
     失败含义：脏状态可入库，job 状态追踪与编排语义不一致
     """
     cm = _cm(tmp_path)
-    with cm.writer() as con, pytest.raises(duckdb.ConstraintException):
+    with cm.writer() as con, pytest.raises(duckdb.ConstraintException, match="CHECK constraint failed"):
         con.execute("INSERT INTO data_sync_job (job_id, status) VALUES ('bad-job', 'BROKEN')")
 
 

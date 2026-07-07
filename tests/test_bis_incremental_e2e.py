@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import ast
 from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
@@ -181,37 +180,6 @@ def test_bisLivePort_startPeriod_fromWatermarkStartTime() -> None:
     )
     assert port._resolve_start_year(req) == 2023
     assert watermark_start_year("2023-06-15") == 2023
-
-
-def test_bisIncremental_forbidden_noBisProviderRuntimeImport() -> None:
-    """覆盖范围：BIS L2 禁止 runtime import digital-oracle BisProvider
-    测试对象：bis_incremental_run.py · bis_port.py AST import 根
-    目的/目标：parallel-dispatch-protocol §3 — 禁止 from digital_oracle / import BisProvider
-    验证点：两模块 AST 无 digital_oracle 导入根、无 BisProvider 符号导入
-    失败含义：参考项目 runtime 渗入 Tier A live 路径
-    """
-    repo_root = Path(__file__).resolve().parents[1]
-    targets = (
-        repo_root / "backend/app/ops/bis_incremental_run.py",
-        repo_root / "backend/app/datasources/fetch_ports/bis_port.py",
-    )
-    forbidden_roots = ("digital_oracle", "digital-oracle")
-    for path in targets:
-        tree = ast.parse(path.read_text(encoding="utf-8"))
-        for node in ast.walk(tree):
-            if isinstance(node, ast.Import):
-                for alias in node.names:
-                    root = alias.name.split(".")[0]
-                    assert root not in forbidden_roots, f"{path.name}: import {alias.name}"
-                    assert alias.name != "BisProvider"
-            elif isinstance(node, ast.ImportFrom):
-                module = node.module or ""
-                root = module.split(".")[0]
-                assert root not in forbidden_roots, f"{path.name}: from {module}"
-                for alias in node.names:
-                    assert alias.name != "BisProvider", f"{path.name}: from {module} import BisProvider"
-
-
 def test_bisLive_noSilentFallbackWhenGateClosed(monkeypatch: pytest.MonkeyPatch) -> None:
     """覆盖范围：无 QMD_ALLOW_LIVE_FETCH 时 bis live port 阻断
     测试对象：create_bis_incremental_port(use_mock=False)

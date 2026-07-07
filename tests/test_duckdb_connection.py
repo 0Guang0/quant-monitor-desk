@@ -51,14 +51,14 @@ def test_writer_whenLockHeld_raisesWriteLockError(tmp_path: Path) -> None:
     """覆盖范围：写锁已被持有时第二个 writer 须被拒绝
     测试对象：ConnectionManager.writer 互斥锁
     目的/目标：同一库同时只允许一个写连接，防止并发写损坏
-    验证点：持锁期间新建 ConnectionManager.writer 抛 WriteLockError
+    验证点：持锁期间新建 ConnectionManager.writer 抛 WriteLockError（write lock held）
     失败含义：双写并发可破坏 DuckDB 文件或审计一致性
     """
     db = tmp_path / "t.duckdb"
     _init(db)
     cm = ConnectionManager(db)
     with cm.writer():
-        with pytest.raises(WriteLockError):
+        with pytest.raises(WriteLockError, match="write lock held"):
             with ConnectionManager(db).writer():
                 pass
 

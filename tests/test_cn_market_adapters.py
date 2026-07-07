@@ -77,34 +77,6 @@ def _enable_cn_source_route(monkeypatch: pytest.MonkeyPatch, *, source_id: str, 
     return planner
 
 
-# --- 9.0 boot ---
-
-
-def test_bootSkeleton_testModuleLoads() -> None:
-    """覆盖范围：Execute 9.0 中国市场测试模块骨架是否可加载
-    测试对象：tests/test_cn_market_adapters.py 模块本身
-    目的/目标：确认 R3H-03 CN 测试文件已登记且 pytest 可收集
-    验证点：模块 docstring 声明 baostock/cninfo 覆盖
-    失败含义：Execute 无法在本模块追加中国市场适配器回归用例
-    """
-    import tests.test_cn_market_adapters as mod
-
-    assert "baostock" in (mod.__doc__ or "")
-    assert "cninfo" in (mod.__doc__ or "")
-
-
-def test_bootSkeleton_cnMarketNormalizerModuleExists() -> None:
-    """覆盖范围：Execute 9.0 cn_market normalizer 模块可导入
-    测试对象：backend.app.datasources.normalizers.cn_market
-    目的/目标：确认 R3H-03 CN 证据 normalizer SSOT 已落地
-    验证点：CN_MARKET_EVIDENCE_SCHEMA_VERSION 非空
-    失败含义：cn_market_evidence_v1 normalizer 缺失
-    """
-    from backend.app.datasources.normalizers import cn_market as mod
-
-    assert mod.CN_MARKET_EVIDENCE_SCHEMA_VERSION == "cn_market_evidence_v1"
-
-
 # --- 9.1 evidence_contract ---
 
 

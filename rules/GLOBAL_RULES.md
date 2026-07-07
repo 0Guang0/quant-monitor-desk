@@ -13,6 +13,8 @@
 - 不让 Agent 自由 SQL、自由联网、直接写库或输出交易动作。
 - 不让前端页面设计、排版、视觉风格被写死。前端正式实现前必须提醒用户亲自确认 UI、信息层级、布局和交互方式。
 - 不绕过 `DuckDBWriteManager` 写 clean table。
+- 不把 degraded/fallback/validation-only 数据伪装成正常 Primary 数据。
+- 不把 mock、replay、staged fixture 或 dry-run 结果冒充 live 成品验收。
 - 不在本机默认模式下执行高内存、高 CPU、大磁盘扫描任务。
 
 ## 2. 执行流程
@@ -36,6 +38,7 @@
 - 需要提高 ResourceGuard 限制。
 - 需要执行全量回补、全历史审计或大范围扫描。
 - 需要真实账户、真实 API key、真实交易账户或付费服务。
+- 需要改变 `Primary / Validation / FallbackPolicy`、clean 写入等级、fallback 降级语义或生产等价验收边界。
 
 ## 4. 完成报告格式
 
@@ -73,5 +76,6 @@
 - 真实交易、自动下单、order/order_target/order_value 等 API。
 - QMT 自动登录、验证码识别、终端控制或远程端口自动探测。
 - silent fallback 或无 SourceRoutePlan 的源切换。
+- 未带 `source_used`、`source_role`、`source_switched`、`quality_flags` 的降级 clean 写入。
 - 任意执行用户策略代码、`compile/exec`、无限制 import、外部网络访问。
 - 未经用户确认新增重型依赖；真实源/QMT/xqshare 依赖必须为 optional extras。

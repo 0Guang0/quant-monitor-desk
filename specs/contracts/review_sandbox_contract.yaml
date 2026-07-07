@@ -1,5 +1,5 @@
 version: review_sandbox_contract_v1
-status: draft_round2_6
+status: draft
 owner: review_security
 purpose: "Allow optional read-only strategy/evidence review without executing trading code."
 static_analysis_only: true

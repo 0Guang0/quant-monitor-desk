@@ -12,6 +12,7 @@ from backend.app.ops.interface_probe_fetch_ports import TdxPytdxProbeFetchPort
 from backend.app.ops.tdx_live_manual_probe_gate import (
     TdxLiveManualProbeAuthorizationError,
     TdxLiveManualProbeRequest,
+    issue_tdx_live_authorization_after_gate,
     validate_tdx_live_manual_probe_authorization,
 )
 
@@ -80,9 +81,9 @@ def test_validateTdxLiveManualProbe_missingFile_blocks() -> None:
 
 def test_validateTdxLiveManualProbe_validFile_passes(tmp_path: Path) -> None:
     """覆盖范围：完整授权文件与会话 ID 匹配场景
-    测试对象：validate_tdx_live_manual_probe_authorization
+    测试对象：issue_tdx_live_authorization_after_gate
     目的/目标：合法授权证据 + 匹配的 session/host/port 应放行校验
-    验证点：不抛异常即通过
+    验证点：authorization.verified=True；host/port 与请求一致
     失败含义：合规授权仍被拒绝，手工探针无法按计划执行
     """
     auth = tmp_path / "tdx_pytdx_live_manual_probe_authorization_2026-06-22.md"
@@ -99,7 +100,10 @@ def test_validateTdxLiveManualProbe_validFile_passes(tmp_path: Path) -> None:
         tdx_port=7709,
         authorized_session_id="sess-planning-test-001",
     )
-    validate_tdx_live_manual_probe_authorization(req)
+    authorization = issue_tdx_live_authorization_after_gate(req)
+    assert authorization.verified is True
+    assert authorization.host == "127.0.0.1"
+    assert authorization.port == 7709
 
 
 def test_validateTdxLiveManualProbe_hostPortMismatch_blocks(tmp_path: Path) -> None:

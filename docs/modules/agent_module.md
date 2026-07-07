@@ -39,15 +39,15 @@ Agent 不可以做：
 
 # 2. Agent 清单
 
-| agent_id | 中文名 | 主要职责 | 是否可写库 |
-|---|---|---|---|
-| `daily_report_agent` | 日报 Agent | 汇总五层状态、异常、事件 | 只能写 report 表，且通过 WriteManager |
-| `news_event_agent` | 新闻事件 Agent | 新闻摘要、事件抽取 | 只能写 event staging |
-| `announcement_agent` | 公告 Agent | 公告分类、公告摘要 | 只能写 event staging |
-| `layer1_interpretation_agent` | 五轴解释 Agent | 把五轴状态改写成通俗解释 | 只能写 axis_interpretation_snapshot staging |
-| `cross_layer_explain_agent` | 五层解释 Agent | 串联 Layer 1-5 证据链 | 只读，输出解释 |
-| `data_quality_explain_agent` | 数据质量解释 Agent | 解释数据异常和冲突 | 只读或写 report staging |
-| `strategy_review_agent` | 策略复盘 Agent | 后续阶段复盘说明 | 只读或写 report staging |
+| agent_id                      | 中文名             | 主要职责                 | 是否可写库                                  |
+| ----------------------------- | ------------------ | ------------------------ | ------------------------------------------- |
+| `daily_report_agent`          | 日报 Agent         | 汇总五层状态、异常、事件 | 只能写 report 表，且通过 WriteManager       |
+| `news_event_agent`            | 新闻事件 Agent     | 新闻摘要、事件抽取       | 只能写 event staging                        |
+| `announcement_agent`          | 公告 Agent         | 公告分类、公告摘要       | 只能写 event staging                        |
+| `layer1_interpretation_agent` | 五轴解释 Agent     | 把五轴状态改写成通俗解释 | 只能写 axis_interpretation_snapshot staging |
+| `cross_layer_explain_agent`   | 五层解释 Agent     | 串联 Layer 1-5 证据链    | 只读，输出解释                              |
+| `data_quality_explain_agent`  | 数据质量解释 Agent | 解释数据异常和冲突       | 只读或写 report staging                     |
+| `strategy_review_agent`       | 策略复盘 Agent     | 策略复盘说明             | 只读或写 report staging                     |
 
 ---
 

@@ -1,4 +1,4 @@
-# Backtest Review Lifecycle（Round2.6）
+# Backtest Review Lifecycle
 
 ## 1. 定位
 

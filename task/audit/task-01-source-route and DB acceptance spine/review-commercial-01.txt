@@ -1,0 +1,92 @@
+P0
+No findings.
+P1
+No findings.
+P2
+- C:\Users\Guang\Desktop\quant-monitor-desk\tests\test_adapter_skeletons.py:9; same pattern at test_official_macro_adapters.py:27, test_market_data_adapters.py:31, test_cn_market_adapters.py:83, test_crypto_market_adapters.py:30, test_prediction_market_adapters.py:36, test_web_evidence_adapter.py:27, test_no_clean_write_for_web_evidence.py:32.
+Violated rule: meta/vacuous/artifact tests.
+Why real problem: these assert imports or test-module docstrings, so they pass without proving adapter fetch, routing, staging, or clean-write behavior.
+Smallest fix: delete the boot/import/docstring tests; keep the existing behavior tests in the same files.
+- C:\Users\Guang\Desktop\quant-monitor-desk\tests\test_datasource_service.py:213; same pattern at test_resource_guard.py:243, test_resource_guard.py:266.
+Violated rule: meta-testing; SUT must not be another test.
+Why real problem: calling another test_* creates duplicate green signals and can hide which production behavior is actually protected.
+Smallest fix: delete the alias tests or extract a shared assertion helper used by one real production-behavior test.
+- C:\Users\Guang\Desktop\quant-monitor-desk\tests\test_sync_binding_executor.py:70; same pattern at test_sync_binding_executor.py:97, test_layer1_sync_facade.py:24, test_datasource_service.py:236, test_datasource_service.py:254, test_bis_incremental_e2e.py:186.
+Violated rule: implementation snapshot / source-text guard.
+Why real problem: these lock imports, strings, private structure, or file bodies; harmless refactors can fail tests without changing runtime behavior.
+Smallest fix: replace with public behavior checks through execute_binding, sync_indicator, service fetch, or CLI outcomes; move static import-policy checks to lint if still required.
+- C:\Users\Guang\Desktop\quant-monitor-desk\tests\test_sync_runners.py:21.
+Violated rule: implementation snapshot and type-only assertion.
+Why real problem: asserts private runner attributes and concrete classes, not a sync outcome; changing internal wiring while preserving behavior breaks the test.
+Smallest fix: test public orchestrator job execution/dispatch result instead.
+- C:\Users\Guang\Desktop\quant-monitor-desk\tests\test_schema_migration.py:198; same pattern at test_migration_coverage.py:79, test_migration_coverage.py:91, test_migration_coverage.py:103, test_migration_coverage.py:144.
+Violated rule: phase guard / absence-only artifact guard.
+Why real problem: “planned/future tables must not exist” becomes stale when the future work lands and does not prove current DB behavior.
+Smallest fix: keep implemented-table migration assertions; remove planned/future absence guards until there is a real feature flag or runtime contract.
+- C:\Users\Guang\Desktop\quant-monitor-desk\tests\test_qmd_data_cli.py:174; same pattern at test_data_adapter_contract.py:813.
+Violated rule: artifact/doc wording guard.
+Why real problem: tests markdown/runbook wording instead of CLI or adapter behavior; documentation edits can fail pytest without production regression.
+Smallest fix: delete or move to docs lint; cover the same risk with CLI JSON/error/fail-closed behavior tests.
+P3
+- C:\Users\Guang\Desktop\quant-monitor-desk\tests\test_ops_db_inspector.py:489.
+Violated rule: outcome assertion required.
+Why real problem: json.dumps(payload) has no assertion, so the test can pass without checking the CLI JSON contract fields.
+Smallest fix: assert round-trip equality and required keys, e.g. assert json.loads(json.dumps(payload, allow_nan=False)) == payload.
+- C:\Users\Guang\Desktop\quant-monitor-desk\tests\test_source_capabilities.py:190.
+Violated rule: no-exception-only success test.
+Why real problem: assert_source_domain_operation(...) returning None is not an observable asserted outcome.
+Smallest fix: also assert the declared source/domain/operation is enabled through the loaded registry data or a public query method.
+- C:\Users\Guang\Desktop\quant-monitor-desk\tests\test_tdx_live_manual_probe_authorization.py:81.
+Violated rule: no-exception-only success test.
+Why real problem: valid authorization path has no asserted observable result.
+Smallest fix: call issue_tdx_live_authorization_after_gate(req) and assert returned authorization verified, host, and port.
+- C:\Users\Guang\Desktop\quant-monitor-desk\tests\test_tdx_provider_port.py:6.
+Violated rule: not-null/vacuous assertion.
+Why real problem: assert port is not None does not prove the port enforces caps, gates, or emits evidence.
+Smallest fix: call the port with a bounded request and assert a real fetch/gate outcome.
+No findings: five-field labels in scoped pytest functions.
+No findings: normal pytest live-network gating; live tests are marked/gated behind opt-in.
+No findings: retained time-window tests; no sleep/poll/order-dependent issue kept after review.
+
+
+P1 | C:\Users\Guang\Desktop\quant-monitor-desk\tests\test_layer2_sensor_loader.py:300,321,349,407,422,436,462,485,505,900,986 | 违反规则：异常必须断言具体类型 + message/code；不得用 broad Exception | 这些路径都有生产侧专用异常（如 CrossAssetRegistryLoadError / CrossAssetObservationError），但测试用 pytest.raises(Exception, match=...)，任何无关异常只要消息碰巧匹配就会绿，fail-closed 行为可能没被真正保护。| 最小修复：把每处 Exception 换成对应生产异常类，保留 match。
+P2 | C:\Users\Guang\Desktop\quant-monitor-desk\tests\test_layer1_feature_engine.py:9, ...\test_layer1_indicator_binding_cn_bar_batch.py:9, ...\test_layer1_indicator_binding_cot_batch.py:9, ...\test_layer1_indicator_binding_filings_batch.py:9, ...\test_layer1_indicator_binding_macro_batch.py:9, ...\test_layer1_indicator_binding_us_crypto_batch.py:9, ...\test_layer1_round4_read_model_shape.py:9 | 违反规则：phase guard / fake RED / skipped placeholder tests | 这些测试全模块 skip，正文只调用 red_skip(...)，不执行生产行为，也不能因生产回归失败；它们只是阶段占位。| 最小修复：删除占位测试，等对应生产行为存在时补一条可运行的行为测试。
+P2 | C:\Users\Guang\Desktop\quant-monitor-desk\tests\test_data_health_easyxt_profiles.py:436 | 违反规则：artifact/prose guard | 测试读取 backend/app/ops/data_health_profiles/__init__.py 并断言注释里含 EasyXT / Attribution，保护的是源码注释文本，不是 data health 生产输出。| 最小修复：删除该测试；如需保护迁移行为，断言具体 profile 规则输出。
+P2 | C:\Users\Guang\Desktop\quant-monitor-desk\tests\test_model_input_whitelist.py:497 和 :513 | 违反规则：artifact/prose guard | 两个测试只检查 specs/model_inputs/README.md 是否存在并包含文件名/词语；README 文案变化会让测试红，但生产 whitelist gate 不一定变。| 最小修复：删除 README 文案测试；保留 YAML 行 schema/运行时 gate 测试。
+P2 | C:\Users\Guang\Desktop\quant-monitor-desk\tests\test_model_input_whitelist.py:241 | 违反规则：one test = one behavior；五字段标签必须是测试 docstring | test_layer2_hg_main_gate_readiness_consistency 中间有一段五字段字符串字面量，但它不是函数 docstring；同一个测试同时测 L2-HG-MAIN 和 L2-NO-CHANNEL。| 最小修复：把 L2-NO-CHANNEL 断言拆成独立 test_layer2_noAcceptedChannel_deferredWithClosureTest，并把五字段放到该函数 docstring。
+P2 | C:\Users\Guang\Desktop\quant-monitor-desk\tests\test_layer1_sync_facade.py:32 | 违反规则：implementation snapshot / artifact guard | 测试直接读取 layer1_sync_facade.py 源码并断言包含/不包含函数名，锁死内部实现；后半段已有真实 sync_indicator(...) 行为断言。| 最小修复：删除源码文本断言，只保留 facade 返回结果与错误路径断言。
+P2 needs main verification | C:\Users\Guang\Desktop\quant-monitor-desk\tests\test_source_registry.py:554 | 违反规则：artifact/prose guard | 测试断言 notes 字段包含具体 taxonomy 文案和任务号；如果这些 notes 不是下游稳定机器契约，这只是在锁 YAML prose。| 最小修复：改成断言实际路由/能力行为，例如 eastmoney 不作为 product bar primary、允许的域集合正确。
+P3 | C:\Users\Guang\Desktop\quant-monitor-desk\tests\test_resource_guard.py:243 和 :266 | 违反规则：vacuous/duplicate test；测试不应调用另一个测试当断言 | 这两个测试只是委托已有测试函数，没有自己的输入或断言，失败信息也不会定位新行为。| 最小修复：删除别名测试，或内联不同边界值并断言 Decision/reason。
+P3 | C:\Users\Guang\Desktop\quant-monitor-desk\tests\test_source_capabilities.py:190 | 违反规则：no-exception-only assertion | test_capabilityRegistry_assertSourceDomainOperation_acceptsKnown 只调用方法不抛错，没有断言可观察结果；错误实现只要不抛也会绿。| 最小修复：同时断言 is_capability_declared(...) is True 或 default_operation_for_domain(...) 等可观察契约。
+P3 | C:\Users\Guang\Desktop\quant-monitor-desk\tests\test_layer2_sensor_loader.py:387 | 违反规则：no-exception-only assertion | test_doubleCountGuard_modelEligibleAsset_passes 只调用 assert_model_eligible(copper)；没有证明返回/状态/错误面。| 最小修复：断言 copper.eligible_for_model is True 且 copper.is_axis_input is False，或让 helper 返回可断言结果。
+P3 | 多文件异常断言缺 match：test_layer1_clean_reader.py:58,79,156,176,189,205,226,292,316; test_layer2_clean_reader.py:72,94,160,182,204,345; test_source_registry.py:89,101,223,235,247,259,290,301,342,353,532; test_source_capabilities.py:211,252,267; test_data_quality_validator.py:363; test_data_health_tier_a_profiles.py:403; test_ops_data_health.py:81; test_source_route_db_acceptance_contract.py:72 | 违反规则：异常必须断言 type + message/code | 多数异常类覆盖多个失败分支；只断言类型会让错误原因漂移时仍绿。| 最小修复：给每个 pytest.raises(...) 加稳定 match= 或断言异常 code。
+No findings | Layer3 tests covered.
+No findings | Layer4 tests covered.
+No findings | Layer5 tests covered.
+No findings | Source route planner/models/health snapshot tests covered.
+
+
+
+
+P1 | C:\Users\Guang\Desktop\quant-monitor-desk\tests\test_docstring_quadruple_coverage.py:58 | violated rule: meta-testing | why: SUT is pytest files/docstrings, not production behavior; failures only prove test-harness hygiene. | smallest fix: move five-field enforcement to CI lint/review tooling outside pytest.
+P1 | C:\Users\Guang\Desktop\quant-monitor-desk\tests\test_global_execution_rules.py:20 | violated rule: artifact-guard/docs-as-production | why: asserts policy markdown files exist/non-empty; repo governance docs are not production behavior. | smallest fix: delete pytest guard; keep as docs/CI repository check if still needed.
+P2 | C:\Users\Guang\Desktop\quant-monitor-desk\tests\test_global_execution_rules.py:34 | violated rule: docs-as-production | why: locks wording inside GLOBAL_RULES.md; harmless doc edits can break tests. | smallest fix: remove from pytest.
+P1 | C:\Users\Guang\Desktop\quant-monitor-desk\tests\test_authority_acceptance_language_guard.py:13 | violated rule: artifact-guard/phase-guard | why: tests prose vocabulary in authority docs/contracts, including Phase/Batch wording, not runtime acceptance behavior. | smallest fix: move to doc linter; keep pytest coverage on SourceRouteDbAcceptanceSpine status/report behavior.
+P1 | C:\Users\Guang\Desktop\quant-monitor-desk\tests\test_acceptance_helper_consumers.py:13 | violated rule: migration-inventory meta-test/phase-guard | why: asserts known old-helper consumers and advisory/strict migration state; this is cleanup inventory, not production behavior. | smallest fix: remove pytest tests; use one-off audit script or GitNexus/CI report outside test suite.
+P2 | C:\Users\Guang\Desktop\quant-monitor-desk\tests\test_manifest_files_check.py:21 | violated rule: artifact-guard | why: MANIFEST file-existence closure only protects repository bookkeeping. | smallest fix: drop from pytest or run as packaging/release validation outside behavior tests.
+P2 | C:\Users\Guang\Desktop\quant-monitor-desk\tests\test_project_scaffold.py:25 | violated rule: artifact-guard | why: directory scaffold existence is repo layout, not production behavior. | smallest fix: delete directory parametrized test; keep only init_db behavior test.
+P2 | C:\Users\Guang\Desktop\quant-monitor-desk\tests\test_project_scaffold.py:36 | violated rule: docs-as-production | why: tests MIGRATION_MAP.md wording/anchors. | smallest fix: remove pytest assertion.
+P2 needs main verification | C:\Users\Guang\Desktop\quant-monitor-desk\tests\test_config_templates.py:15 | violated rule: config-template artifact-guard | why: .env.example template text is checked directly; config runtime defaults are already better tested through backend.app.config. | smallest fix: keep runtime config tests; move template/secret placeholder check to release lint if required.
+P1 | C:\Users\Guang\Desktop\quant-monitor-desk\tests\test_migration_coverage.py:79 | violated rule: phase-guard | why: asserts L3/L4 designed tables must not appear until a named future phase; absence-only guards become sediment. | smallest fix: delete absence guards; keep apply-migration tests for tables that are actually supported now.
+P1 | C:\Users\Guang\Desktop\quant-monitor-desk\tests\test_migration_coverage.py:144 | violated rule: phase-guard | why: full migration absence check protects future planning state, not current DB behavior. | smallest fix: remove or replace with explicit current schema contract only if absence is a stable product contract.
+P2 | C:\Users\Guang\Desktop\quant-monitor-desk\tests\test_migration_coverage.py:103 | violated rule: vacuous/implementation snapshot | why: assert not L5_DEFERRED_MIGRATION_TABLES and SQL text search duplicate real migration behavior checks. | smallest fix: rely on apply_migrations table-existence tests.
+P1 | C:\Users\Guang\Desktop\quant-monitor-desk\tests\test_reference_adoption_guardrails.py:70 | violated rule: artifact-guard/meta-testing | why: YAML structure and required_tests node ids test governance inventory, not runtime safety. | smallest fix: delete YAML contract-shape assertions; keep focused scanner behavior for real dangerous imports/APIs.
+P2 | C:\Users\Guang\Desktop\quant-monitor-desk\tests\test_reference_adoption_guardrails.py:128 | violated rule: implementation snapshot | why: generic "参考项目" substring can fail on comments/prose without runtime coupling. | smallest fix: rely on AST import-root and sys.path mutation checks.
+P2 | C:\Users\Guang\Desktop\quant-monitor-desk\tests\test_reference_adoption_guardrails.py:263 | violated rule: implementation snapshot | why: reads source text for hardcoded strings instead of exercising the report/runner output. | smallest fix: call the report builder and assert emitted production_live_claim is False.
+P2 | C:\Users\Guang\Desktop\quant-monitor-desk\tests\test_production_equivalent_smoke_budget.py:256 | violated rule: artifact-guard | why: validates contract YAML path/closure command text, not budget evaluation behavior. | smallest fix: keep load_smoke_budget/threshold behavior tests; drop closure-command assertion from pytest.
+P2 | C:\Users\Guang\Desktop\quant-monitor-desk\tests\test_production_gate.py:14 | violated rule: meta-testing/artifact-guard | why: pytest shells out to a gate that mostly checks repo docs/workflows and asserts current repo PASS. | smallest fix: run production_gate.py as its own CI step; unit-test only production checks with temp fixtures if needed.
+P2 needs main verification | C:\Users\Guang\Desktop\quant-monitor-desk\tests\test_dependency_extras_contract.py:80 | violated rule: phase-guard | why: asserts agent extra is absent “尚未就绪”; that is a temporary delivery state. | smallest fix: remove absence test or tie it to a feature flag/deletion trigger.
+No findings | source-route-db-acceptance | C:\Users\Guang\Desktop\quant-monitor-desk\tests\test_source_route_db_acceptance_contract.py; C:\Users\Guang\Desktop\quant-monitor-desk\tests\test_qmd_ops_source_route_db_acceptance.py
+No findings | api-security-contract | C:\Users\Guang\Desktop\quant-monitor-desk\tests\test_api_security_contract.py
+No findings | live-evidence-manifest contracts | C:\Users\Guang\Desktop\quant-monitor-desk\tests\test_live_tier_a_evidence_contract.py; C:\Users\Guang\Desktop\quant-monitor-desk\tests\test_live_tier_b_evidence_contract.py
+No findings | b3f quality/hard constraints | C:\Users\Guang\Desktop\quant-monitor-desk\tests\test_b3f_quality_runners.py; C:\Users\Guang\Desktop\quant-monitor-desk\tests\test_b3f_sh_hard_constraints.py

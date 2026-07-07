@@ -31,15 +31,15 @@
 
 # 2. 回测类型
 
-| backtest_type | 中文名 | 目标 |
-|---|---|---|
-| `event_study` | 事件研究 | 观察事件发生后 N 天的价格、波动、扩散变化 |
-| `alert_rule_review` | 提醒规则复盘 | 评估某条提醒规则的触发频率、重复率、后续表现 |
-| `layer1_state_review` | 五轴状态复盘 | 评估某个五轴状态/突变后的市场变化 |
-| `layer3_chain_review` | 产业链扩散复盘 | 评估产业链节点/边/锚点事件的扩散路径 |
-| `layer4_market_structure_review` | 市场结构复盘 | 评估宽度、涨跌停、期权波动等市场结构事件 |
-| `evidence_chain_review` | 证据链复盘 | 评估当时证据链是否完整、是否存在数据风险 |
-| `agent_explanation_review` | Agent 解释复盘 | 检查 Agent 解释是否符合事实、边界和后续证据 |
+| backtest_type                    | 中文名         | 目标                                         |
+| -------------------------------- | -------------- | -------------------------------------------- |
+| `event_study`                    | 事件研究       | 观察事件发生后 N 天的价格、波动、扩散变化    |
+| `alert_rule_review`              | 提醒规则复盘   | 评估某条提醒规则的触发频率、重复率、后续表现 |
+| `layer1_state_review`            | 五轴状态复盘   | 评估某个五轴状态/突变后的市场变化            |
+| `layer3_chain_review`            | 产业链扩散复盘 | 评估产业链节点/边/锚点事件的扩散路径         |
+| `layer4_market_structure_review` | 市场结构复盘   | 评估宽度、涨跌停、期权波动等市场结构事件     |
+| `evidence_chain_review`          | 证据链复盘     | 评估当时证据链是否完整、是否存在数据风险     |
+| `agent_explanation_review`       | Agent 解释复盘 | 检查 Agent 解释是否符合事实、边界和后续证据  |
 
 ---
 
@@ -287,7 +287,7 @@ Agent 不能把回测结果渲染为交易建议
 
 ---
 
-# 12. Round2.6 补充：BacktestReviewEngine 生命周期与指标契约
+# 12. BacktestReviewEngine 生命周期与指标契约
 
 Round4 `029_implement_backtest_and_review.md` 必须先对齐以下新增设计：
 

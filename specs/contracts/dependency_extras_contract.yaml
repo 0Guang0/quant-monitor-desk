@@ -1,10 +1,11 @@
 version: dependency_extras_contract_v1
-status: draft_round2_6
+status: draft
 owner: ops_architecture
 purpose: "Keep local-first default install small while allowing optional data/backtest/agent/doc extras."
 extras:
   default:
-    must_not_include: [qmt, xtquant, xqshare, heavy_gui, browser_automation, external_agent_sdk]
+    must_not_include:
+      [qmt, xtquant, xqshare, heavy_gui, browser_automation, external_agent_sdk]
   dev:
     may_include: [pytest, ruff, coverage]
   datasources:

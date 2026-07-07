@@ -1,5 +1,5 @@
 version: data_cli_contract_v1
-status: draft_round2_6
+status: draft
 owner: ops
 purpose: "Define safe local data sync CLI behavior before adding new command wrappers."
 commands:

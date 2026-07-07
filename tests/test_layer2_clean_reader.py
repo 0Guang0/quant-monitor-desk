@@ -63,13 +63,13 @@ def test_layer2CleanReader_emptyMacro_failClosedNoFallback(tmp_path) -> None:
     """覆盖范围：clean 表无 VIXCLS 行时禁止 silent 换源
     测试对象：Layer2CleanObservationReader.read_observations
     目的/目标：EasyXT forbidden 对齐 — 空结果须 Layer2CleanObservationReadError
-    验证点：pytest.raises(Layer2CleanObservationReadError)
+    验证点：pytest.raises(Layer2CleanObservationReadError, match=no clean axis_observation)
     失败含义：空库仍“成功”会掩盖 Tier A 未写入或悄悄 fallback
     """
     cm = bootstrap_layer1_clean_db(tmp_path)
     entry = _vix_entry()
     with cm.writer() as con:
-        with pytest.raises(Layer2CleanObservationReadError):
+        with pytest.raises(Layer2CleanObservationReadError, match="no clean axis_observation"):
             Layer2CleanObservationReader().read_observations(con, entry)
 
 
@@ -77,7 +77,7 @@ def test_layer2CleanReader_rejectsStagedFixtureSourceUsed(tmp_path) -> None:
     """覆盖范围：axis_observation 行若标 staged_fixture 须拒绝
     测试对象：Layer2CleanObservationReader.read_observations
     目的/目标：非 Tier A clean 来源行不得进入 Layer2 clean 读路径
-    验证点：pytest.raises(Layer2CleanObservationFallbackForbiddenError)
+    验证点：pytest.raises(Layer2CleanObservationFallbackForbiddenError, match=refusing non-clean source_used)
     失败含义：staged 行混入 clean replay PASS 路径
     """
     cm = bootstrap_layer1_clean_db(tmp_path)
@@ -91,7 +91,7 @@ def test_layer2CleanReader_rejectsStagedFixtureSourceUsed(tmp_path) -> None:
             base_value=20.0,
             source_used="staged_fixture",
         )
-        with pytest.raises(Layer2CleanObservationFallbackForbiddenError):
+        with pytest.raises(Layer2CleanObservationFallbackForbiddenError, match="refusing non-clean source_used"):
             Layer2CleanObservationReader().read_observations(con, entry)
 
 
@@ -157,7 +157,7 @@ def test_layer2CleanReader_rejectsSourceSwitched(tmp_path) -> None:
             "UPDATE axis_observation SET source_switched = TRUE WHERE indicator_id = ?",
             ["VIXCLS"],
         )
-        with pytest.raises(Layer2CleanObservationFallbackForbiddenError):
+        with pytest.raises(Layer2CleanObservationFallbackForbiddenError, match="source_switched"):
             Layer2CleanObservationReader().read_observations(con, entry)
 
 
@@ -179,7 +179,7 @@ def test_layer2CleanReader_rejectsMacroSupplementaryPrefix(tmp_path) -> None:
             base_value=20.0,
             source_used="macro_supplementary:akshare",
         )
-        with pytest.raises(Layer2CleanObservationFallbackForbiddenError):
+        with pytest.raises(Layer2CleanObservationFallbackForbiddenError, match="refusing non-clean source_used"):
             Layer2CleanObservationReader().read_observations(con, entry)
 
 
@@ -201,7 +201,7 @@ def test_layer2CleanReader_rejectsNonFredSourceUsed(tmp_path) -> None:
             base_value=20.0,
             source_used="akshare",
         )
-        with pytest.raises(Layer2CleanObservationFallbackForbiddenError):
+        with pytest.raises(Layer2CleanObservationFallbackForbiddenError, match="refusing non-Tier-A source_used"):
             Layer2CleanObservationReader().read_observations(con, entry)
 
 
@@ -342,6 +342,6 @@ def test_layer2AssertObservationSource_rejectsStagedForFredPrimary() -> None:
         as_of_timestamp=AS_OF,
         fetch_time=AS_OF,
     )
-    with pytest.raises(CrossAssetObservationError):
+    with pytest.raises(CrossAssetObservationError, match="staged_fixture source blocked"):
         assert_observation_source(entry, obs)
 

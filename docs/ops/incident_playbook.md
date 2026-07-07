@@ -1,4 +1,4 @@
-# Incident Playbook（Round2.6）
+# Incident Playbook
 
 ## INC-001 DISABLED_SOURCE
 

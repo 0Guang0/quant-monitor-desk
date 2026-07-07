@@ -244,6 +244,41 @@ manual_review_required
 skip_until_next_publish
 ```
 
+### 5.3.1 Validation-as-Fallback 降级写入规则
+
+`Validation` 源不是永远不能进入 clean，而是**不能无标记、无策略、无审计地伪装成 Primary**。最终成品允许在极窄条件下使用验证源作为降级数据，但必须由 domain 级 `FallbackPolicy` 明确授权。
+
+允许写入 clean 的降级场景：
+
+```text
+1. 当前 domain 的 FallbackPolicy 明确为 use_validation_source_with_flag。
+2. Primary 已失败或不可用，且失败原因已记录：auth failed / rate limit / schema drift / empty response / not published / network failure 等。
+3. 被选中的 Validation 源支持该 data_domain，且通过 capability、license/auth、ResourceGuard 和 DataQualityValidator。
+4. SourceConflictValidator 未发现 severe conflict；若存在 severe conflict，必须 manual_review_required，不得写 normal clean。
+5. 写入必须保留 raw、fetch_log、validation_report、write_audit_log 和 route-plan 证据。
+```
+
+降级写入必须带以下语义，不得缺省：
+
+```text
+source_used = 实际使用的源
+source_role = fallback
+source_switched = true
+quality_flags 包含 SOURCE_FALLBACK_USED
+若来源是 Validation 源，还必须包含 VALIDATION_SOURCE_USED
+stale_reason 或 fallback_reason = 主源失败或缓存使用原因
+primary_source_failed = true（可在 route/audit payload 中表达）
+```
+
+下游读取规则：
+
+```text
+1. 读模型、Layer、前端和 Agent 必须能识别 primary-grade clean 与 degraded clean。
+2. 降级数据可以展示、降权计算或进入人工审查，但不能静默参与等同 Primary 的解释。
+3. 若某个指标/模型声明只接受 primary-grade 输入，遇到 source_switched=true 必须 fail-closed 或返回诚实 NULL。
+4. Validation 源若未被 FallbackPolicy 授权，只能用于 validation/source_conflict/manual_review/evidence，不得写 clean 主值。
+```
+
 ### 禁止事项
 
 ```text
@@ -452,51 +487,53 @@ CREATE TABLE IF NOT EXISTS source_health_snapshot (
 
 `specs/datasource_registry/source_registry.yaml` 是机器可读权威；本表是面向设计、实现和审核的解释口径。新增外部源默认 `enabled_by_default=false`，只有完成 adapter、capability、route plan、ResourceGuard、license/auth gate 和回放证据后才能启用。
 
-| 数据源                   | 数据类型                                    | 推荐定位                                      | 用途                                      | 可靠性/稳定性/实时性判断                                                           |
-| ------------------------ | ------------------------------------------- | --------------------------------------------- | ----------------------------------------- | ---------------------------------------------------------------------------------- |
-| QMT / xtdata             | A 股实时、分钟线、日线                      | A 股实时 Primary（用户本机授权后）            | 实时行情、分钟线、交易日内监控            | 授权终端可靠性高、实时性强；默认禁用，需用户确认本机授权                           |
-| baostock                 | A 股历史日线、基础财务                      | A 股低频 Primary                              | 历史日线补齐、基础财务                    | 免费稳定，适合日频/低频；不适合实时                                                |
-| AkShare                  | A 股/宏观聚合数据                           | Validation                                    | 指数、板块、宏观补充、快速验证            | 覆盖广但上游口径可能变化；必须 schema_hash 与 quality_flags                        |
-| 巨潮 CNINFO              | 公告、财报、PDF 原文                        | A 股披露 Primary                              | 公告索引、财报 PDF、文件证据链            | 官方/准官方披露源，权威性高；需 polite fetch 与文件哈希                            |
-| Yahoo Finance / yfinance | 美股、ETF、期权链、全球资产参考             | Validation                                    | 美股/ETF/US option chain 辅助校验         | 覆盖方便但条款和稳定性敏感；不做生产唯一主源                                       |
-| Alpha Vantage            | 美股、ETF、期权链、FX、商品、宏观、加密参考 | API-key gated Primary candidate               | 文档化 API 补充美国市场与跨资产数据       | 稳定性好于网页源；受 API key、限流和授权条款约束                                   |
-| Stooq                    | 股票/ETF/外汇/商品历史行情                  | Validation / low-frequency fallback           | 全球历史价格趋势、低频交叉验证            | 适合日频历史，不适合实时生产                                                       |
-| Deribit                  | 加密期货、期权、IV、term structure          | Crypto derivatives Primary candidate          | BTC/ETH 期货曲线、期权 IV surface         | 交易所级市场数据，实时性强；只允许 market-data，禁止账户/交易能力                  |
-| CoinGecko                | 加密现货聚合、币种映射、市值                | Spot/reference Primary candidate + Validation | BTC/ETH 现货参考价、市值、asset reference | 聚合源覆盖广；不能替代交易所逐笔/盘口事实源                                        |
-| US Treasury              | 国债收益率、利率曲线、通胀预期参考          | Official Primary                              | 利率曲线、期限利差、通胀预期上下文        | 官方源，可靠性最高；日频/低频，适合 Layer 1 regime                                 |
-| SEC EDGAR                | 公司披露、Form 4 内部人交易                 | Official Primary                              | 美国 filings、Form 4 买卖信号、原文证据   | 官方披露源，准确性高；必须保存 accession/content_hash                              |
-| CFTC COT                 | 期货持仓                                    | Official Primary                              | 机构/非商业仓位方向、smart-money 背景     | 官方周频，稳定但滞后；不得当实时仓位                                               |
-| BIS                      | 央行、政策利率、信贷缺口                    | Official Primary                              | 全球政策利率、credit/GDP gap、宏观 regime | 官方/央行协作数据，低频稳健                                                        |
-| World Bank               | GDP、人口、贸易、发展指标                   | Official Primary                              | 长周期宏观背景变量                        | 官方低频数据，可靠但滞后，不做短线触发                                             |
-| FRED                     | 美国宏观序列                                | API-key gated Primary candidate               | Layer 1 宏观序列、官方/准官方美国宏观     | 已有 sandbox_candidate；需 key 与 live gate                                        |
-| Kalshi                   | 监管预测市场合约                            | Prediction probability Primary candidate      | 美国政治/经济事件概率、二元合约价格       | 受监管事件市场，适合概率信号；不是事实结果源                                       |
-| Polymarket               | 预测市场合约                                | Prediction probability Validation             | 全球事件概率、市场情绪、流动性观察        | 流动性和 resolution 质量差异大；必须记录 volume/liquidity/spread/resolution_source |
-| mootdx / TDX compatible  | A 股 security list、日线、指数              | Validation                                    | 通达信兼容校验、A 股代码表探针            | 默认禁用；只读校验，不得 silent fallback                                           |
-| 东方财富                 | A 股行情、板块、资金流、公告备份            | Validation                                    | 资金流、板块、公告备份和日线交叉验证      | 覆盖强但网页/API 口径可能变；资金流必须分源保存                                    |
-| 新浪财经                 | A 股行情轻量备份                            | Fallback / Validation                         | 实时/日线轻量校验、故障诊断               | 稳定性和授权边界弱于主源；不进入主值接管                                           |
-| 同花顺 / iFinD           | 概念、题材、研报、资金流                    | Licensed Validation                           | 题材、概念、研报索引、授权数据补充        | 仅商业授权后启用；免费网页端不得生产化                                             |
-| Web Search               | 网页补充证据                                | Manual-review Validation only                 | VIX、CDS、事件解释、resolution 佐证       | 非结构化且不稳定；只能进 evidence/manual_review，不直接写 clean 表                 |
+| 数据源                   | 数据类型                                    | 推荐定位                                                              | 用途                                      | 可靠性/稳定性/实时性判断                                                           |
+| ------------------------ | ------------------------------------------- | --------------------------------------------------------------------- | ----------------------------------------- | ---------------------------------------------------------------------------------- |
+| QMT / xtdata             | A 股实时、分钟线、日线                      | A 股实时 Primary（用户本机授权后）                                    | 实时行情、分钟线、交易日内监控            | 授权终端可靠性高、实时性强；默认禁用，需用户确认本机授权                           |
+| baostock                 | A 股历史日线、基础财务                      | A 股低频 Primary                                                      | 历史日线补齐、基础财务                    | 免费稳定，适合日频/低频；不适合实时                                                |
+| AkShare                  | A 股/宏观聚合数据                           | Validation                                                            | 指数、板块、宏观补充、快速验证            | 覆盖广但上游口径可能变化；必须 schema_hash 与 quality_flags                        |
+| 巨潮 CNINFO              | 公告、财报、PDF 原文                        | A 股披露 Primary                                                      | 公告索引、财报 PDF、文件证据链            | 官方/准官方披露源，权威性高；需 polite fetch 与文件哈希                            |
+| Yahoo Finance / yfinance | 美股、ETF、期权链、全球资产参考             | Validation                                                            | 美股/ETF/US option chain 辅助校验         | 覆盖方便但条款和稳定性敏感；不做生产唯一主源                                       |
+| Alpha Vantage            | 美股、ETF、期权链、FX、商品、宏观、加密参考 | API-key gated Primary candidate                                       | 文档化 API 补充美国市场与跨资产数据       | 稳定性好于网页源；受 API key、限流和授权条款约束                                   |
+| Stooq                    | 股票/ETF/外汇/商品历史行情                  | Validation；仅在 domain FallbackPolicy 明确授权时可 degraded fallback | 全球历史价格趋势、低频交叉验证            | 适合日频历史，不适合实时生产；不得无标记接管主值                                   |
+| Deribit                  | 加密期货、期权、IV、term structure          | Crypto derivatives Primary candidate                                  | BTC/ETH 期货曲线、期权 IV surface         | 交易所级市场数据，实时性强；只允许 market-data，禁止账户/交易能力                  |
+| CoinGecko                | 加密现货聚合、币种映射、市值                | Spot/reference Primary candidate + Validation                         | BTC/ETH 现货参考价、市值、asset reference | 聚合源覆盖广；不能替代交易所逐笔/盘口事实源                                        |
+| US Treasury              | 国债收益率、利率曲线、通胀预期参考          | Official Primary                                                      | 利率曲线、期限利差、通胀预期上下文        | 官方源，可靠性最高；日频/低频，适合 Layer 1 regime                                 |
+| SEC EDGAR                | 公司披露、Form 4 内部人交易                 | Official Primary                                                      | 美国 filings、Form 4 买卖信号、原文证据   | 官方披露源，准确性高；必须保存 accession/content_hash                              |
+| CFTC COT                 | 期货持仓                                    | Official Primary                                                      | 机构/非商业仓位方向、smart-money 背景     | 官方周频，稳定但滞后；不得当实时仓位                                               |
+| BIS                      | 央行、政策利率、信贷缺口                    | Official Primary                                                      | 全球政策利率、credit/GDP gap、宏观 regime | 官方/央行协作数据，低频稳健                                                        |
+| World Bank               | GDP、人口、贸易、发展指标                   | Official Primary                                                      | 长周期宏观背景变量                        | 官方低频数据，可靠但滞后，不做短线触发                                             |
+| FRED                     | 美国宏观序列                                | API-key gated Primary candidate                                       | Layer 1 宏观序列、官方/准官方美国宏观     | 已有 sandbox_candidate；需 key 与 live gate                                        |
+| Kalshi                   | 监管预测市场合约                            | Prediction probability Primary candidate                              | 美国政治/经济事件概率、二元合约价格       | 受监管事件市场，适合概率信号；不是事实结果源                                       |
+| Polymarket               | 预测市场合约                                | Prediction probability Validation                                     | 全球事件概率、市场情绪、流动性观察        | 流动性和 resolution 质量差异大；必须记录 volume/liquidity/spread/resolution_source |
+| mootdx / TDX compatible  | A 股 security list、日线、指数              | Validation                                                            | 通达信兼容校验、A 股代码表探针            | 默认禁用；只读校验，不得 silent fallback                                           |
+| 东方财富                 | A 股行情、板块、资金流、公告备份            | Validation                                                            | 资金流、板块、公告备份和日线交叉验证      | 覆盖强但网页/API 口径可能变；资金流必须分源保存                                    |
+| 新浪财经                 | A 股行情轻量备份                            | Validation；仅在 domain FallbackPolicy 明确授权时可 degraded fallback | 实时/日线轻量校验、故障诊断               | 稳定性和授权边界弱于主源；不得无标记接管主值                                       |
+| 同花顺 / iFinD           | 概念、题材、研报、资金流                    | Licensed Validation                                                   | 题材、概念、研报索引、授权数据补充        | 仅商业授权后启用；免费网页端不得生产化                                             |
+| Web Search               | 网页补充证据                                | Manual-review Validation only                                         | VIX、CDS、事件解释、resolution 佐证       | 非结构化且不稳定；只能进 evidence/manual_review，不直接写 clean 表                 |
 
 ### 5.9.2 四点关键实现建议
 
 1. **按 domain-level role 分配，不按 provider 平铺。** 新增 source 必须同时写入 `source_registry.yaml`、`source_capabilities.yaml` 和 route plan 规则；同一个 provider 在不同 domain 可以是 Primary、Validation 或 fallback candidate。示例：Alpha Vantage 可作为 `us_equity_daily_bar` 的 API-key gated Primary candidate，但在 `macro_series` 中只能作为 FRED/官方源的补充候选。
 2. **预测市场单独建概率信号语义。** `kalshi`、`polymarket` 只能写入 `prediction_market_probability`、`regulated_event_contract`、`event_market_contract` 等概率/合约域；必须保存 `liquidity`、`volume`、`spread`、`resolution_source`、`closed/active` 状态。其价格不得被解释为事实结果，也不得替代 SEC/CFTC/Treasury/CNINFO 等事实源。
 3. **官方宏观源按低频/滞后处理。** US Treasury、CFTC COT、BIS、World Bank、FRED 等应进入 Layer 1/Layer 2 regime 和背景变量，不得驱动分钟级 UI 或实时告警；允许 `use_last_good_cache`，但必须写 `stale_reason`、`source_fetch_id`、`content_hash`。
-4. **中国市场继续保持授权终端/官方披露优先。** QMT 授权后才可作为实时主源；CNINFO 是公告/财报原文主源；baostock 是历史日线/基础财务主源；AkShare、东方财富、Sina、mootdx、同花顺免费端只能做验证、补充或授权后候选，并强制 schema drift、限速、缓存和 no-silent-fallback。
+4. **中国市场继续保持授权终端/官方披露优先。** QMT 授权后才可作为实时主源；CNINFO 是公告/财报原文主源；baostock 是历史日线/基础财务主源；AkShare、东方财富、Sina、mootdx、同花顺免费端只能做验证、补充或经 domain FallbackPolicy 明确授权后的 degraded fallback，并强制 schema drift、限速、缓存和 no-silent-fallback。
 
 ---
 
 ## 5.10 验收测试
 
-| 测试                                    | 预期                                              |
-| --------------------------------------- | ------------------------------------------------- |
-| 未声明 data_domain 的 adapter 被调用    | 拒绝                                              |
-| source disabled                         | 不执行抓取                                        |
-| 403 auth failed                         | 写 fetch_log，停止该源任务                        |
-| schema_hash 变化                        | 标记 SCHEMA_DRIFT，不直接写 clean                 |
-| 主源失败且 fallback_policy=mark_missing | 不接管，写缺失                                    |
-| 使用 last_good_cache                    | 必须写 stale_reason 和 source_switched            |
-| Validation 源数据不同                   | 进入 SourceConflictValidator，不在 Adapter 内判断 |
+| 测试                                           | 预期                                                                                                                                   |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| 未声明 data_domain 的 adapter 被调用           | 拒绝                                                                                                                                   |
+| source disabled                                | 不执行抓取                                                                                                                             |
+| 403 auth failed                                | 写 fetch_log，停止该源任务                                                                                                             |
+| schema_hash 变化                               | 标记 SCHEMA_DRIFT，不直接写 clean                                                                                                      |
+| 主源失败且 fallback_policy=mark_missing        | 不接管，写缺失                                                                                                                         |
+| 使用 last_good_cache                           | 必须写 stale_reason 和 source_switched                                                                                                 |
+| Validation 源数据不同                          | 进入 SourceConflictValidator，不在 Adapter 内判断                                                                                      |
+| FallbackPolicy=use_validation_source_with_flag | 允许 degraded clean，但必须 source_role=fallback、source_switched=true、quality_flags 含 SOURCE_FALLBACK_USED / VALIDATION_SOURCE_USED |
+| Validation 源无 FallbackPolicy 授权            | 不得写 clean 主值，进入 validation/source_conflict/manual_review/evidence                                                              |
 
 ---
 

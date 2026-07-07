@@ -101,7 +101,7 @@ def test_canWriteCleanFalse_rejected(tmp_path: Path) -> None:
     """覆盖范围：can_write_clean=false 非 FAILED 报告
     测试对象：DbValidationGate 对 WARNING 且不可写行
     目的/目标：报告标明不可写入时，不论表面状态如何都必须拒绝
-    验证点：can_write_clean=false 的 WARNING 行触发 ValidationRejected
+    验证点：can_write_clean=false 的 WARNING 行触发 ValidationRejected（can_write_clean=false）
     失败含义：质量未达标却被允许写入，数据质量合约失效
     """
     cm = _setup(tmp_path)
@@ -113,7 +113,7 @@ def test_canWriteCleanFalse_rejected(tmp_path: Path) -> None:
         needs_manual_review=False,
     )
     gate = DbValidationGate(cm)
-    with pytest.raises(ValidationRejected):
+    with pytest.raises(ValidationRejected, match="can_write_clean=false"):
         gate.assert_can_write("vr-no-write", "append_only")
 
 
@@ -121,7 +121,7 @@ def test_needsManualReviewTrue_rejected(tmp_path: Path) -> None:
     """覆盖范围：needs_manual_review=true
     测试对象：DbValidationGate 对手工复核标记
     目的/目标：需要人工复核的数据，不得自动写入正式表
-    验证点：vr-review 触发 ValidationRejected
+    验证点：vr-review 触发 ValidationRejected（needs_manual_review=true）
     失败含义：待复核数据自动落库，审计与合规链路断裂
     """
     cm = _setup(tmp_path)
@@ -133,7 +133,7 @@ def test_needsManualReviewTrue_rejected(tmp_path: Path) -> None:
         needs_manual_review=True,
     )
     gate = DbValidationGate(cm)
-    with pytest.raises(ValidationRejected):
+    with pytest.raises(ValidationRejected, match="needs_manual_review=true"):
         gate.assert_can_write("vr-review", "append_only")
 
 
@@ -216,7 +216,7 @@ def test_warningReport_canWriteFalse_rejected(tmp_path: Path) -> None:
     """覆盖范围：WARNING 且 can_write_clean=false
     测试对象：DbValidationGate 对 WARNING 不可写行
     目的/目标：带警告且不可写入的报告，必须与通过报告一样被拒绝
-    验证点：vr-warn-no 触发 ValidationRejected
+    验证点：vr-warn-no 触发 ValidationRejected（can_write_clean=false）
     失败含义：带警告且不可写的报告仍写入，数据质量无保障
     """
     cm = _setup(tmp_path)
@@ -228,7 +228,7 @@ def test_warningReport_canWriteFalse_rejected(tmp_path: Path) -> None:
         needs_manual_review=False,
     )
     gate = DbValidationGate(cm)
-    with pytest.raises(ValidationRejected):
+    with pytest.raises(ValidationRejected, match="can_write_clean=false"):
         gate.assert_can_write("vr-warn-no", "append_only")
 
 
@@ -236,13 +236,13 @@ def test_dbValidationGate_isNotStubBehavior(tmp_path: Path) -> None:
     """覆盖范围：生产 gate 非 stub 短路
     测试对象：DbValidationGate 对 stub-pass 前缀 ID
     目的/目标：生产环境不得凭测试用报告编号绕过真实库校验
-    验证点：无行时 stub-pass-1 抛 ValidationGateError；插入真实 PASSED 行后同 ID 允许
+    验证点：无行时 stub-pass-1 抛 ValidationGateError（unknown validation_report_id）；插入真实 PASSED 行后同 ID 允许
     失败含义：生产环境仍走测试短路，校验结果与数据库实际状态脱节
     """
     cm = _setup(tmp_path)
     gate = DbValidationGate(cm)
     # stub-style ids that StubValidationGate would pass must be unknown to DbValidationGate.
-    with pytest.raises(ValidationGateError):
+    with pytest.raises(ValidationGateError, match="unknown validation_report_id"):
         gate.assert_can_write("stub-pass-1", "append_only")
     _insert_report(
         cm,

@@ -1,5 +1,5 @@
 version: spec_migrator_contract_v1
-status: draft_round2_6
+status: draft
 owner: docs_ops
 purpose: "Dry-run migration of project YAML/JSON specs without silently accepting legacy fields at runtime."
 default_mode: dry_run

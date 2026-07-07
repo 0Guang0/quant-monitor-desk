@@ -191,11 +191,13 @@ def test_capabilityRegistry_assertSourceDomainOperation_acceptsKnown() -> None:
     """覆盖范围：已知源-域-操作三元组校验通过
     测试对象：SourceCapabilityRegistry.assert_source_domain_operation
     目的/目标：baostock + cn_equity_daily_bar + fetch_daily_bar 为合法组合
-    验证点：调用不抛异常
+    验证点：能力声明存在；默认操作为 fetch_daily_bar；三元组校验不抛异常
     失败含义：主路径日线能力被误拒，同步无法启动
     """
     reg = SourceCapabilityRegistry()
     reg.load()
+    assert reg.is_capability_declared("baostock", "cn_equity_daily_bar") is True
+    assert reg.default_operation_for_domain("cn_equity_daily_bar") == "fetch_daily_bar"
     reg.assert_source_domain_operation("baostock", "cn_equity_daily_bar", "fetch_daily_bar")
 
 
@@ -203,12 +205,12 @@ def test_capabilityRegistry_assertSourceDomainOperation_rejectsUnknown() -> None
     """覆盖范围：未声明的源-域-操作组合应被拒绝
     测试对象：SourceCapabilityRegistry.assert_source_domain_operation
     目的/目标：baostock 不支持实时行情域，这种组合不应放行到拉数阶段
-    验证点：baostock + cn_equity_realtime + fetch_daily_bar 时 pytest.raises(UnknownCapabilityError)
+    验证点：baostock + cn_equity_realtime + fetch_daily_bar 时 pytest.raises(UnknownCapabilityError, match=not declared)
     失败含义：无能力组合仍可进入 fetch，vendor 调用浪费与审计缺口
     """
     reg = SourceCapabilityRegistry()
     reg.load()
-    with pytest.raises(UnknownCapabilityError):
+    with pytest.raises(UnknownCapabilityError, match="not declared"):
         reg.assert_source_domain_operation("baostock", "cn_equity_realtime", "fetch_daily_bar")
 
 
@@ -244,12 +246,12 @@ def test_capabilityRegistry_rejectsTdxPytdxProposedDisabledSource() -> None:
     """覆盖范围：tdx_pytdx 提议禁用源运行时拒绝
     测试对象：SourceCapabilityRegistry.assert_source_domain_operation（tdx_pytdx）
     目的/目标：A8-G1 — 未审批 TDX 源 fetch_daily_bar 应 OperationDisabledError
-    验证点：tdx_pytdx + cn_equity_daily_bar + fetch_daily_bar 时 pytest.raises(OperationDisabledError)
+    验证点：tdx_pytdx + cn_equity_daily_bar + fetch_daily_bar 时 pytest.raises(OperationDisabledError, match=disabled)
     失败含义：提议禁用 TDX 仍可通过 registry 断言被调度
     """
     reg = SourceCapabilityRegistry()
     reg.load()
-    with pytest.raises(OperationDisabledError):
+    with pytest.raises(OperationDisabledError, match="disabled"):
         reg.assert_source_domain_operation(
             "tdx_pytdx", "cn_equity_daily_bar", "fetch_daily_bar"
         )
@@ -259,12 +261,12 @@ def test_capabilityRegistry_rejectsProposedDisabledSource() -> None:
     """覆盖范围：提议禁用源在运行时的拒绝逻辑
     测试对象：SourceCapabilityRegistry.assert_source_domain_operation（qmt_xqshare）
     目的/目标：即使 YAML 里写了能力条目，未审批的源也不应被真正调度
-    验证点：qmt_xqshare + cn_equity_realtime + fetch_realtime_quote_remote 时 pytest.raises(OperationDisabledError)
+    验证点：qmt_xqshare + cn_equity_realtime + fetch_realtime_quote_remote 时 pytest.raises(OperationDisabledError, match=disabled)
     失败含义：提议禁用源仍可通过 registry 断言，绕过策略闸门
     """
     reg = SourceCapabilityRegistry()
     reg.load()
-    with pytest.raises(OperationDisabledError):
+    with pytest.raises(OperationDisabledError, match="disabled"):
         reg.assert_source_domain_operation(
             "qmt_xqshare", "cn_equity_realtime", "fetch_realtime_quote_remote"
         )

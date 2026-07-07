@@ -44,7 +44,7 @@ subscribe_whole_quote
 
 ---
 
-## Round2.6 补充：qmt_xqshare 可选远程源边界
+## qmt_xqshare 可选远程源边界
 
 `qmt_xqshare` 只作为未来可选远程 QMT 源设计，默认禁用，不阻塞 Round3。启用前必须满足：
 

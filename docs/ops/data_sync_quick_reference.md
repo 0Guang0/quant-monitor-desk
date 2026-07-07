@@ -1,8 +1,8 @@
-# Data Sync Quick Reference（Round2.6）
+# Data Sync Quick Reference
 
 本页是面向用户/运维的一页式数据同步入口。它不替代 implementation tasks；它把安全运行命令、dry-run、ResourceGuard、SourceRoutePlan 和错误排障放在一起。
 
-## Tier A 增量 sync（R3-DCP-05 · ADR-009）
+## Tier A 增量 sync
 
 11 个 Tier A 源统一经 `--source-id` 路由；默认 **dry-run** 输出可审计 JSON（watermark / clean 表 / 窗参数）。
 
@@ -33,9 +33,9 @@ SSOT：`backend/app/sync/incremental_source_registry.py` · `docs/decisions/ADR-
 - **运维读法：** validation 用 akshare/eastmoney 对照；产品 bar 增量主路径为 **baostock/mootdx**（`--source-id`）。
 - **产品 bar 路径：** `cn_equity_daily_bar` 默认 primary=baostock；explicit `--source-id mootdx` 为 effective primary（ADR-014 双轨语义）。
 - **eastmoney 域：** validation-only for bar hist；`sector_board` / `capital_flow` 为独立 domain，勿与 bar hist taxonomy 混用。
-- 台账：`docs/quality/待修复清单.md` · Wave 4 `R3-DCP-05`/`08`
+- 台账：`docs/quality/待修复清单.md`
 
-## 推荐命令形态（设计稿）
+## 推荐命令形态
 
 ```bash
 qmd data init-basic --dry-run
@@ -45,15 +45,15 @@ qmd data sync --domain announcement --since 2026-01-01 --dry-run
 qmd data health --domain market_bar_1d
 ```
 
-当前阶段这些是设计目标；现有脚本仍以 `scripts/init_db.py`、`scripts/sync_registry.py`、`scripts/production_equivalent_smoke.py` 为准。
+这些命令形态是产品接口目标。若实现尚未覆盖，验收报告必须标记 `implementation_mode=not_implemented`，不得用脚本替代品冒充产品 CLI 完成。
 
-**已实现的 CI one-liner（R2-GAP-1）：**
+**CI one-liner：**
 
 ```bash
 uv run python scripts/init_db.py --sync-registry
 ```
 
-**Perf budget 门禁（R3-B25-PERF-BUDGET-01）：**
+**Perf budget 门禁：**
 
 ```bash
 uv run python scripts/ci_perf_budget_artifact.py

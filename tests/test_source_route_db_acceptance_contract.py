@@ -64,12 +64,12 @@ def test_sourceRouteDbAcceptance_request_isFrozenContractInput() -> None:
     """覆盖范围：验收请求不可变性
     测试对象：AcceptanceRequest frozen dataclass
     目的/目标：请求创建后不应被执行流程中途篡改，保证报告能追溯原始意图
-    验证点：修改 source_id 抛 FrozenInstanceError
+    验证点：修改 source_id 抛 FrozenInstanceError（cannot assign to field）
     失败含义：执行过程中可变请求会让报告和实际验收目标不一致
     """
     request = AcceptanceRequest.from_target("macro_series:fred:fetch_macro_series")
 
-    with pytest.raises(FrozenInstanceError):
+    with pytest.raises(FrozenInstanceError, match="cannot assign to field"):
         request.source_id = "akshare"  # type: ignore[misc]
 
 

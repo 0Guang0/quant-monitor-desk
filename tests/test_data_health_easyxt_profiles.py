@@ -433,21 +433,6 @@ def test_profileRunner_dbPath_populatesSchemaHashCoverage(
     assert any("schema_hash" in item.lower() for item in limitations)
 
 
-def test_dataHealthProfiles_attributionPresent() -> None:
-    """覆盖范围：AC-8 attribution 切片验收
-    测试对象：backend/app/ops/data_health_profiles 包模块头
-    目的/目标：MIT/EasyXT 追溯短语可机械验收
-    验证点：__init__.py 含 EasyXT 与 attribution 注释
-    失败含义：参考采纳边界无代码层追溯
-    """
-    init_path = (
-        _PROJECT_ROOT / "backend" / "app" / "ops" / "data_health_profiles" / "__init__.py"
-    )
-    text = init_path.read_text(encoding="utf-8")
-    assert "EasyXT" in text
-    assert "Attribution" in text
-
-
 def test_ohlcv_rules_orchestration_stopsOnFail() -> None:
     """覆盖范围：OHLCV 编排短路
     测试对象：run_ohlcv_rules

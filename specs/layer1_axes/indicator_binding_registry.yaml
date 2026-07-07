@@ -1,5 +1,5 @@
 version: indicator_binding_registry_v1
-status: phase1_skeleton
+status: draft
 expected_rows: 62
 bindings:
   - indicator_id: CRD.C.SWPT_LIQUIDITY_SWAPS

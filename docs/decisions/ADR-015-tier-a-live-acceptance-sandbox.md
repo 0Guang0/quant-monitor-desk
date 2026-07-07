@@ -50,7 +50,7 @@
 
 **证据 SSOT：** Tier B network-path evidence summarized in this ADR and related quality registries.
 
-**Amendment @ 2026-07-04（用户确认 · 当前阶段）：** Tier B **沙箱关账**口径 — **10/10 源均有验收结论**（6 `PASS` + 4 `FAIL_EXTERNAL`+本 ADR）。允许写「**Tier B 沙箱验收完成**」；**禁止**写「10/10 真网 fetch SUCCESS」。后续若重构 validation_fetch / CN hist 策略，须 **修订本 ADR**（非口头 defer）。
+**Amendment @ 2026-07-04（用户确认）：** Tier B **沙箱关账**口径 — **10/10 源均有验收结论**（6 `PASS` + 4 `FAIL_EXTERNAL`+本 ADR）。允许写「**Tier B 沙箱验收完成**」；**禁止**写「10/10 真网 fetch SUCCESS」。若重构 validation_fetch / CN hist 策略，须 **修订本 ADR**（非口头 defer）。
 
 | source_id      | 路径                 | 客观原因                                                                                          | 状态                                                           |
 | -------------- | -------------------- | ------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
@@ -63,7 +63,50 @@
 
 1. **stooq + CN 三源（akshare / eastmoney / sina_finance）：** 允许 sandbox `tier_b_live_acceptance --report` 在 `FAIL_EXTERNAL`+`adr_ref=ADR-015` 下 exit 0；**不得**伪造 CSV、mock HTML 或静默 PASS 替代客观外因。
 2. **诚实口径：** CLI/report exit 0 **不等于** 该源真网 fetch `SUCCESS`；`FAIL_EXTERNAL` 行须保留在报告 JSON（`disposition=fail` + `failure_class=FAIL_EXTERNAL`）。
-3. **升级路径（后续阶段）：** 替代 CSV 源、baostock hist 链切换、或 nightly 非封锁 IP 连续 PASS — 实现后 **修订本 ADR** 并更新 MCR/台账。
+3. **升级路径：** 替代 CSV 源、baostock hist 链切换、或 nightly 非封锁 IP 连续 PASS — 实现后 **修订本 ADR** 并更新 MCR/台账。
+
+## Amendment：生产等价验收库与降级语义（2026-07-06）
+
+**Context:** 指标全链路完成不能仅依赖 mock/replay/dry-run 证明。成品验收必须确认最终产品口径：真实源、真实网络、真实 schema、真实 clean 写入、真实下游读取是否一致，同时避免污染 canonical 主库。
+
+**Decision:** 使用 production-equivalent acceptance DB 作为成品验收环境：形态与最终主库一致，但数据根隔离，不指向 canonical `data/duckdb/quant_monitor.duckdb`。
+
+Production-equivalent acceptance DB 必须满足：
+
+```text
+1. 使用独立 QMD_DATA_ROOT，例如 .audit-sandbox/p1_5-prod-equivalent-<run_id>/。
+2. 应用与主库相同的 migrations/schema/spec/contracts。
+3. 允许在用户授权下开启 QMD_ALLOW_LIVE_FETCH=1 和真实 API key / user-agent。
+4. 运行真实 route -> fetch -> raw/file_registry -> staging -> validation/source_conflict -> WriteManager -> clean -> Layer read。
+5. 不允许用 mock/replay/staged_fixture 冒充 live success；若路径仍是 mock/replay，报告必须明确标记。
+6. 允许 FAIL_EXTERNAL，但必须保留 failure_class、source_id、request、错误摘要和 ADR 引用。
+7. 不允许写 canonical 主库；主库写入仍属于后续 R5/R6 或 MAIN-DB-GATE。
+```
+
+Production-equivalent acceptance 必须输出一份验收报告，至少列出：
+
+```text
+source_id
+data_domain
+route_grade = primary | degraded | blocked
+implementation_mode = live | replay | mock | dry_run | not_implemented
+write_grade = primary-grade clean | degraded clean | no_clean_write
+source_used
+source_role
+source_switched
+quality_flags
+schema_hash / content_hash
+validation_status
+conflict_status
+failure_class / external blocker（如有）
+downstream_layer_read_status
+```
+
+**Fallback / degraded clean 口径：** 可以验证 `FallbackPolicy=use_validation_source_with_flag`，但只能产出 degraded clean。Validation 源不得无标记升级为 Primary。降级写入必须带 `source_role=fallback`、`source_switched=true`、`SOURCE_FALLBACK_USED`；若实际来源是 Validation 源，还必须带 `VALIDATION_SOURCE_USED`。
+
+`implementation_mode` 中的 `mock`、`replay`、`dry_run`、`not_implemented` 只能作为缺陷/剩余工程量分类，不是成品验收通过形态。
+
+**指标全链路验收准入：** 不要求所有源都 live SUCCESS，但必须诚实区分 live/replay/mock/not_implemented，并证明至少一条代表性链路能在 production-equivalent DB 中完成同库真链。任何 mock/replay/dry-run 成功不得作为指标全链路完成证据。
 
 ## Binding slices
 

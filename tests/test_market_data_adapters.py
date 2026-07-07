@@ -28,31 +28,6 @@ _YAHOO_REPLAY = (
 )
 
 
-def test_bootSkeleton_testModuleLoads() -> None:
-    """覆盖范围：Execute 9.0 测试模块骨架是否可加载
-    测试对象：tests/test_market_data_adapters.py 模块本身
-    目的/目标：确认 R3H-02 专用测试文件已登记且 pytest 可收集
-    验证点：模块 docstring 声明五源市场覆盖范围
-    失败含义：Execute 无法在本模块追加市场适配器回归用例
-    """
-    import tests.test_market_data_adapters as mod
-
-    assert "alpha_vantage" in (mod.__doc__ or "")
-    assert "yahoo_finance" in (mod.__doc__ or "")
-
-
-def test_bootSkeleton_marketDataNormalizerModuleExists() -> None:
-    """覆盖范围：Execute 9.0 market_data normalizer 模块可导入
-    测试对象：backend.app.datasources.normalizers.market_data
-    目的/目标：确认 R3H-02 证据 normalizer SSOT 已落地
-    验证点：MARKET_DATA_EVIDENCE_SCHEMA_VERSION 非空
-    失败含义：market_data_evidence_v1 normalizer 缺失，后续 port 无 SSOT
-    """
-    from backend.app.datasources.normalizers import market_data as mod
-
-    assert mod.MARKET_DATA_EVIDENCE_SCHEMA_VERSION == "market_data_evidence_v1"
-
-
 def test_evidence_contract_writeReadRoundTrip_fixturePreservesFields(tmp_path: Path) -> None:
     """覆盖范围：market_data 证据包 read/write 往返
     测试对象：write_daily_bar_evidence_bundle + read_daily_bar_evidence_bundle

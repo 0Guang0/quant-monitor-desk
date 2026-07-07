@@ -138,7 +138,7 @@ def test_layer1FiveAxisPanel_resourceGuardHardStop_blocksFeatureCompute() -> Non
         raw_value=4.0,
         source_used="fred",
     )
-    with pytest.raises(ResourceGuardBlockedError):
+    with pytest.raises(ResourceGuardBlockedError, match="resource guard blocked"):
         engine.compute_features(as_of=AS_OF, observations=[obs], history=[obs])
 
 
@@ -188,7 +188,7 @@ def test_layer1FiveAxisPanel_resourceGuardHardStop_blocksPanelFeatureCompute(
     """覆盖范围：五轴 panel 路径上真 ResourceGuard HARD_STOP 须 fail-closed
     测试对象：AxisFeatureEngine(resource_guard=ResourceGuard(con=con)) in panel loop
     目的/目标：A4-P2-003 — panel 特征链接迁移库 guard，非孤立 check() 枚举断言
-    验证点：monkeypatch guard.check→HARD_STOP；panel compute_features raises ResourceGuardBlockedError
+    验证点：monkeypatch guard.check→HARD_STOP；panel compute_features raises ResourceGuardBlockedError(resource guard blocked)
     失败含义：资源门禁在五轴 panel 路径被绕过
     """
     cm = bootstrap_layer1_clean_db(tmp_path)
@@ -204,7 +204,7 @@ def test_layer1FiveAxisPanel_resourceGuardHardStop_blocksPanelFeatureCompute(
         engine = AxisFeatureEngine(
             resource_guard=guard, min_obs_required=5, window_len=10
         )
-        with pytest.raises(ResourceGuardBlockedError):
+        with pytest.raises(ResourceGuardBlockedError, match="resource guard blocked"):
             engine.compute_features(as_of=AS_OF, observations=[obs[-1]], history=obs)
 
 
@@ -232,7 +232,7 @@ def test_layer1FiveAxisPanel_resourceGuardOnMigratedDb(tmp_path) -> None:
             )[0]
             assert feat.state_bucket != "insufficient_history"
         else:
-            with pytest.raises(ResourceGuardBlockedError):
+            with pytest.raises(ResourceGuardBlockedError, match="resource guard blocked"):
                 engine.compute_features(
                     as_of=AS_OF, observations=[obs[-1]], history=obs
                 )

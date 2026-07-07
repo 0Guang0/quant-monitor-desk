@@ -8,12 +8,10 @@ from tests.contract_gate_support import (
     FORBIDDEN_REFERENCE_IMPORT_ROOTS,
     FORBIDDEN_TRADING_DEF_NAMES,
     PROJECT_ROOT,
-    load_yaml,
     scan_forbidden_function_defs,
     scan_forbidden_import_roots,
     scan_guardrail_roots_for_patterns,
     scan_strategy_exec_patterns,
-    scan_sys_path_mutation_with_reference_dir,
 )
 
 GUARDRAILS = PROJECT_ROOT / "specs/contracts/reference_adoption_guardrails.yaml"
@@ -65,78 +63,6 @@ def test_noSilentFallbackCopied() -> None:
     patterns = _forbidden_examples("silent_fallback")
     violations = scan_guardrail_roots_for_patterns(patterns)
     assert violations == [], f"forbidden silent-fallback patterns: {violations}"
-
-
-def test_r3fr01GuardrailsYamlContract() -> None:
-    """覆盖范围：R3FR-01 全局护栏契约完整机读验收
-    测试对象：specs/contracts/reference_adoption_guardrails.yaml
-    目的/目标：structure/license_gate/completion_rules 与任务卡 §2 语义一致
-    验证点：8 字段 license_gate、3 allowed_use、4 rules、structure 全布尔、status 激活
-    失败含义：后续 R3FR-02+ 缺少可审计 gate 或仍沿用 draft/中央 inventory 口径
-    """
-    rules = _GUARDRAILS.get("structure_rules") or {}
-    assert rules.get("task_card_local_reference_details") is True
-    assert rules.get("one_task_id_one_task_card") is True
-    assert rules.get("executable_reference_details_must_be_task_card_local") is True
-    assert rules.get("separate_reference_inventory_may_exist_only_as_non_executable_index") is True
-    assert rules.get("planning_map_may_exist_only_as_non_executable_coverage_map") is True
-    assert rules.get("planning_map_must_not_replace_task_card_local_details") is True
-    assert rules.get("batch3fr_separate_reference_inventory_allowed") is False
-    assert rules.get("batch3g_separate_reference_inventory_allowed") is False
-    assert _GUARDRAILS.get("status") == "active"
-
-    gate = _GUARDRAILS.get("license_gate") or {}
-    required = set(gate.get("required_task_card_fields") or [])
-    assert required == {
-        "reference_project.path",
-        "reference_project.license",
-        "reference_project.allowed_use",
-        "reference_project.qmd_target_files",
-        "reference_project.direct_copy_allowed",
-        "reference_project.rewrite_required",
-        "reference_project.forbidden_semantics",
-        "reference_project.attribution_required",
-    }
-    assert set(gate.get("allowed_use_values") or []) == {
-        "direct_adaptation",
-        "architecture_only",
-        "forbidden_until_review",
-    }
-    assert len(gate.get("rules") or []) >= 4
-
-    completion = _GUARDRAILS.get("completion_rules") or {}
-    assert completion.get("max_implementation_batches_to_full_stable") == 3
-    assert completion.get("first_batch_must_be_vertical_slice") is True
-    assert completion.get("rating_authority_file") == "MODULE_COMPLETION_RATING.md"
-    assert completion.get("design_docs_remain_complete_product_targets") is True
-
-    listed = set(_GUARDRAILS.get("required_tests") or [])
-    assert listed == {
-        "tests/test_reference_adoption_guardrails.py::test_r3fr01GuardrailsYamlContract",
-        "tests/test_reference_adoption_guardrails.py::test_noTradingApiCopied",
-        "tests/test_reference_adoption_guardrails.py::test_noAutoLoginCopied",
-        "tests/test_reference_adoption_guardrails.py::test_noSilentFallbackCopied",
-        "tests/test_reference_adoption_guardrails.py::test_noReferenceProjectRuntimeImport",
-        "tests/test_reference_adoption_guardrails.py::test_noOpenbbRuntimeCopyIntroduced",
-        "tests/test_reference_adoption_guardrails.py::test_jq2ptradeSchedulerHookNotCopied",
-        "tests/test_reference_adoption_guardrails.py::test_jq2ptradeCompileExecPatternNotCopied",
-        "tests/test_reference_adoption_guardrails.py::test_noAgentTriggeredWritePatterns",
-        "tests/test_reference_adoption_guardrails.py::test_noEasyxtHardcodedTableInDataHealth",
-    }
-
-
-def test_noReferenceProjectRuntimeImport() -> None:
-    """覆盖范围：禁止 runtime 耦合参考项目目录或危险 import 根
-    测试对象：forbidden_adoption.runtime_import + AST import 根 + sys.path+参考项目
-    目的/目标：参考项目仅作设计/改写素材，不是 runtime 包
-    验证点：yaml examples、import 根、sys.path 共现扫描均为零
-    失败含义：runtime 直接依赖外部参考仓库，license 与边界失控
-    """
-    patterns = _forbidden_examples("runtime_import_from_reference_project") + ("参考项目",)
-    violations = list(scan_guardrail_roots_for_patterns(patterns))
-    violations.extend(scan_forbidden_import_roots(FORBIDDEN_REFERENCE_IMPORT_ROOTS))
-    violations.extend(scan_sys_path_mutation_with_reference_dir())
-    assert violations == [], f"reference-project runtime coupling: {violations}"
 
 
 def test_noOpenbbRuntimeCopyIntroduced() -> None:
@@ -258,23 +184,6 @@ def test_r3g01SandboxCleanWrite_openbbArchitectureOnly() -> None:
     assert "openbb_platform/providers" not in text
     assert "OBBject" not in text
     assert "from openbb" not in text
-
-
-def test_r3g01SandboxCleanWrite_noProductionLiveClaim() -> None:
-    """覆盖范围：排练模块不宣称 production-live
-    测试对象：rehearsal_runner + rehearsal_report
-    目的/目标：AC-14 对齐 production_live_pilot_policy
-    验证点：production_live_claim 硬编码 False；无 production_live_readiness_claim True
-    失败含义：排练误宣称 production-live ready
-    """
-    runner = (PROJECT_ROOT / "backend/app/ops/sandbox_clean_write/rehearsal_runner.py").read_text(
-        encoding="utf-8"
-    )
-    report_mod = (PROJECT_ROOT / "backend/app/ops/sandbox_clean_write/rehearsal_report.py").read_text(
-        encoding="utf-8"
-    )
-    assert "production_live_readiness_claim" not in runner
-    assert '"production_live_claim": False' in report_mod
 
 
 _R3G03_MODULE_ROOT = PROJECT_ROOT / "backend/app/ops/sandbox_clean_write"

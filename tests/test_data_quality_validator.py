@@ -360,7 +360,7 @@ def test_validateTable_failedReportRejectedByDbValidationGate(tmp_path: Path) ->
 
     assert report.status == "FAILED"
     assert report.can_write_clean is False
-    with pytest.raises(ValidationRejected):
+    with pytest.raises(ValidationRejected, match="status=FAILED"):
         DbValidationGate(cm).assert_can_write(report.validation_report_id, "append_only")
 
 

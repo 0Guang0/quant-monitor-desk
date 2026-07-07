@@ -1,12 +1,18 @@
 version: backtest_metric_contract_v1
-status: draft_round2_6
+status: draft
 owner: review
 purpose: "Fix Round4 review/backtest metric names, units, horizons, and no-action boundaries."
 default_horizons: [T+1, T+3, T+5, T+10, T+20]
 required_metrics:
   forward_return:
     unit: pct
-    applies_to: [event_study, layer1_state_review, layer3_chain_review, layer4_market_structure_review]
+    applies_to:
+      [
+        event_study,
+        layer1_state_review,
+        layer3_chain_review,
+        layer4_market_structure_review,
+      ]
   max_drawdown:
     unit: pct
     applies_to: [event_study, alert_rule_review]

@@ -1,10 +1,12 @@
 # Global Testing Policy
 
-> **权威 skill：** `.cursor/skills/testing-guidelines/SKILL.md`（Agent 写测/审测时 Read；本文为项目策略摘要）
+> **权威 skill：** 全局 `testing-guidelines`（`~/.agents/skills/testing-guidelines/SKILL.md`；OpenCode 同内容于 `~/.config/opencode/skills/testing-guidelines/`；Claude Code 经 `~/.claude/skills/testing-guidelines/`）。Agent 写测/审测时 Read；本文为项目策略摘要。
 
 本测试策略来自项目约束与用户上传的测试规范。目标是让测试验证业务行为，而不是验证内部实现细节。
 
 ## 1. Mock 边界
+
+允许 mock 的范围仅限单元测试隔离外部副作用；mock 不能进入正式业务实现代码，也不能作为 live / production-equivalent / 指标全链路验收通过依据。
 
 允许 mock：
 
@@ -14,6 +16,13 @@
 - 消息队列。
 - 第三方 API。
 - 邮件、Webhook、桌面通知等外部通知渠道。
+
+这些 mock 必须满足：
+
+- 只存在于 `tests/`、测试 helper、fixture 或明确的测试配置中。
+- 测试名、断言或报告必须能看出它是 mock/replay/fixture，不得命名成 live success。
+- 不得被产品 CLI、DataSourceService、sync orchestrator、WriteManager 或 Layer 读模型默认调用。
+- production-equivalent acceptance 必须真实联网或诚实标记 `implementation_mode=mock|replay|dry_run|not_implemented`，且不得据此判定成品通过。
 
 不应 mock：
 

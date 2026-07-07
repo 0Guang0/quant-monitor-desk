@@ -29,19 +29,6 @@ _WEB_REPLAY = PROJECT_ROOT / "tests/fixtures/replay/web_evidence/supplemental_qu
 _FORBIDDEN_FIELDS = FORBIDDEN_RESOLUTION_FIELDS
 
 
-def test_bootSkeleton_testModuleLoads() -> None:
-    """覆盖范围：Execute 9.0 clean-write 负例测试模块骨架
-    测试对象：tests/test_no_clean_write_for_web_evidence.py 模块本身
-    目的/目标：确认 R3H-04 负例测试文件已登记
-    验证点：模块 docstring 声明三源负例覆盖
-    失败含义：Execute 无法登记 clean-write/resolve 负例
-    """
-    import tests.test_no_clean_write_for_web_evidence as mod
-
-    assert "kalshi" in (mod.__doc__ or "")
-    assert "web_search" in (mod.__doc__ or "")
-
-
 def _load_registry() -> dict:
     path = PROJECT_ROOT / "specs/datasource_registry/source_registry.yaml"
     return yaml.safe_load(path.read_text(encoding="utf-8")) or {}

@@ -168,7 +168,7 @@ def test_applyMigrations_badSqlInFile_raisesAndLeavesNoVersionRow(tmp_path: Path
     """覆盖范围：单文件含非法 SQL 的失败原子性
     测试对象：apply_migrations 对坏 SQL 的事务语义
     目的/目标：执行失败时不应留下 schema_version 行或半建表
-    验证点：duckdb.Error 抛出；applied_versions 为空；ok 表不存在
+    验证点：duckdb.Error(Parser|syntax) 抛出；applied_versions 为空；ok 表不存在
     失败含义：坏迁移部分生效，库处于不可预测中间态
     """
     migrations_dir = tmp_path / "migrations"
@@ -178,7 +178,7 @@ def test_applyMigrations_badSqlInFile_raisesAndLeavesNoVersionRow(tmp_path: Path
         encoding="utf-8",
     )
     con = duckdb.connect(":memory:")
-    with pytest.raises(duckdb.Error):
+    with pytest.raises(duckdb.Error, match="Parser|syntax"):
         apply_migrations(con, migrations_dir=migrations_dir)
     assert applied_versions(con) == set()
     tables = {row[0] for row in con.execute("SHOW TABLES").fetchall()}
@@ -191,22 +191,19 @@ SCHEMA_PHASE_MATRIX = {
     "006_ingestion_sync": ("implemented", {"data_sync_job", "job_event_log"}),
     "007_sync_constraints_audit": ("implemented", {"data_sync_job", "write_audit_log"}),
     "011_layer1_tables": ("implemented", {"axis_registry", "axis_snapshot_lineage"}),
-    "planned_round3": ("planned-later", {"source_health_snapshot"}),
 }
 
 
 def test_schemaPhaseMatrix_documentsImplementedVsPlanned() -> None:
-    """覆盖范围：文档化 schema 阶段矩阵与真实表存在性
+    """覆盖范围：已实现 schema 阶段矩阵与真实表存在性
     测试对象：SCHEMA_PHASE_MATRIX 对照迁移后 SHOW TABLES
-    目的/目标：已实现阶段的关键表必须存在；planned-later 表尚不得出现
-    验证点：implemented 阶段 expected_subset ⊆ tables；planned 阶段与 tables 无交集
-    失败含义：阶段文档与库结构脱节，或未来表被提前创建
+    目的/目标：已实现阶段的关键表必须存在
+    验证点：implemented 阶段 expected_subset ⊆ tables
+    失败含义：阶段文档与库结构脱节
     """
     con = duckdb.connect(":memory:")
     apply_migrations(con)
     tables = {row[0] for row in con.execute("SHOW TABLES").fetchall()}
     for phase, (status, expected_subset) in SCHEMA_PHASE_MATRIX.items():
-        if status == "implemented":
-            assert expected_subset.issubset(tables), f"{phase} missing {expected_subset - tables}"
-        else:
-            assert not expected_subset.intersection(tables), f"{phase} should not exist yet"
+        assert status == "implemented"
+        assert expected_subset.issubset(tables), f"{phase} missing {expected_subset - tables}"

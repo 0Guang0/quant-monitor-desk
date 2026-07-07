@@ -24,30 +24,6 @@ _WEB_ADVERSARIAL = (
 )
 
 
-def test_bootSkeleton_testModuleLoads() -> None:
-    """覆盖范围：Execute 9.0 网页证据测试模块骨架是否可加载
-    测试对象：tests/test_web_evidence_adapter.py 模块本身
-    目的/目标：确认 R3H-04 web 测试文件已登记且 pytest 可收集
-    验证点：模块 docstring 声明 web_search 覆盖范围
-    失败含义：Execute 无法在本模块追加网页证据适配器回归用例
-    """
-    import tests.test_web_evidence_adapter as mod
-
-    assert "web_search" in (mod.__doc__ or "")
-
-
-def test_bootSkeleton_manualReviewStagingModuleExists() -> None:
-    """覆盖范围：Execute 9.0 manual_review_staging 模块可导入
-    测试对象：backend.app.evidence.manual_review_staging
-    目的/目标：确认 R3H-04 web evidence staging SSOT 已落地
-    验证点：WEB_EVIDENCE_STAGING_SCHEMA_VERSION 非空
-    失败含义：manual_review_staging 缺失，web_search 无 staging 路径
-    """
-    from backend.app.evidence import manual_review_staging as mod
-
-    assert mod.WEB_EVIDENCE_STAGING_SCHEMA_VERSION == "web_evidence_staging_v1"
-
-
 def test_web_search_port_mockFetch_emitsStagingBundleWithManualReview() -> None:
     """覆盖范围：mock web_search port 默认 stub 抓取
     测试对象：create_web_search_evidence_fetch_port + fetch_payload

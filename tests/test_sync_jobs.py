@@ -71,12 +71,12 @@ def test_syncJob_invalidTransition_raises(tmp_path) -> None:
     """覆盖范围：跳过中间态的非法迁移
     测试对象：SyncJobStateMachine.transition
     目的/目标：不能从「已创建」直接跳到「写入中」，必须按状态图一步步走
-    验证点：抛出 InvalidTransitionError
+    验证点：抛出 InvalidTransitionError（invalid transition）
     失败含义：非法跳转被放行，任务可能绕过抓取或校验阶段
     """
     sm = _machine(tmp_path)
     sm.create_job(_base_spec())
-    with pytest.raises(InvalidTransitionError):
+    with pytest.raises(InvalidTransitionError, match="invalid transition"):
         sm.transition("job-1", "WRITING")
 
 
@@ -84,7 +84,7 @@ def test_syncJob_terminalState_cannotTransition(tmp_path) -> None:
     """覆盖范围：终态 COMPLETED 之后禁止再迁移
     测试对象：SyncJobStateMachine.transition
     目的/目标：已经完成的任务不能再被拉回「抓取中」等活跃状态
-    验证点：走完完整链路至 COMPLETED 后，再 transition 抛 InvalidTransitionError
+    验证点：走完完整链路至 COMPLETED 后，再 transition 抛 InvalidTransitionError（invalid transition）
     失败含义：终态还能回退，重复执行会破坏幂等和审计一致性
     """
     sm = _machine(tmp_path)
@@ -92,7 +92,7 @@ def test_syncJob_terminalState_cannotTransition(tmp_path) -> None:
     for status in ("PLANNED", "FETCHING", "STAGED", "VALIDATING", "READY_TO_WRITE", "WRITING"):
         sm.transition("job-1", status)
     sm.transition("job-1", "COMPLETED")
-    with pytest.raises(InvalidTransitionError):
+    with pytest.raises(InvalidTransitionError, match="invalid transition"):
         sm.transition("job-1", "FETCHING")
 
 

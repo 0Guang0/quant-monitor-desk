@@ -1,4 +1,4 @@
-# Troubleshooting（Round2.6）
+# Troubleshooting
 
 本页是用户/运维排障入口。具体错误码见 `ERROR_CODE_GUIDE.md`，场景化处理见 `incident_playbook.md`。
 
@@ -34,7 +34,7 @@
 ### 前端无法解释数据来源
 
 1. 检查 route_status / source_used / quality_flags。
-2. 若缺 SourceRoutePlan，说明仍在旧路径，需要 Round2.6 DataSourceService 改造。
+2. 若缺 SourceRoutePlan，说明仍在旧路径，需要收敛到 DataSourceService 正式入口。
 
 ## 相关文件
 

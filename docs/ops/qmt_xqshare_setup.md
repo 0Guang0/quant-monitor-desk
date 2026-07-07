@@ -1,4 +1,4 @@
-# QMT xqshare Optional Setup（Round2.6）
+# QMT xqshare Optional Setup
 
 ## 1. 定位
 

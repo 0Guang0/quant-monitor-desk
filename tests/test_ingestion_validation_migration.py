@@ -90,11 +90,11 @@ def test_validationReport_requiredFieldsEnforced(validation_con) -> None:
     """覆盖范围：校验报告表对必填字段的数据库层约束
     测试对象：validation_report 表 DDL
     目的/目标：只填主键、缺其他必填列的插入必须在数据库层被拒绝
-    验证点：pytest.raises(duckdb.Error)
+    验证点：pytest.raises(duckdb.Error, match=Constraint|NOT NULL)
     失败含义：残缺校验报告能入库，写入门禁失去数据库层兜底
     """
     con = validation_con
-    with pytest.raises(duckdb.Error):
+    with pytest.raises(duckdb.Error, match="Constraint|NOT NULL"):
         con.execute("INSERT INTO validation_report (validation_report_id) VALUES (?)", ["x"])
 
 
@@ -106,7 +106,7 @@ def test_validationReport_statusCheck_rejectsInvalidStatus(validation_con) -> No
     失败含义：非法状态入库，下游写入门禁无法按契约分支处理
     """
     con = validation_con
-    with pytest.raises(duckdb.Error):
+    with pytest.raises(duckdb.Error, match="Constraint|CHECK"):
         con.execute(
             """
             INSERT INTO validation_report (
@@ -186,11 +186,11 @@ def test_sourceConflict_requiredFieldsEnforced(validation_con) -> None:
     """覆盖范围：源冲突表对必填字段的数据库层约束
     测试对象：source_conflict 表 DDL
     目的/目标：只填冲突编号、缺其他必填列的插入必须失败
-    验证点：pytest.raises(duckdb.Error)
+    验证点：pytest.raises(duckdb.Error, match=Constraint|NOT NULL)
     失败含义：残缺冲突记录入库，写入门禁无法判断冲突严重程度
     """
     con = validation_con
-    with pytest.raises(duckdb.Error):
+    with pytest.raises(duckdb.Error, match="Constraint|NOT NULL"):
         con.execute("INSERT INTO source_conflict (conflict_id) VALUES (?)", ["c-1"])
 
 
@@ -241,7 +241,7 @@ def test_sourceConflict_severityCheck_rejectsInvalid(validation_con) -> None:
     失败含义：任意严重程度都能入库，严重冲突写入门禁失效
     """
     con = validation_con
-    with pytest.raises(duckdb.Error):
+    with pytest.raises(duckdb.Error, match="Constraint|CHECK"):
         con.execute(
             """
             INSERT INTO source_conflict (
@@ -272,11 +272,11 @@ def test_manualReviewQueue_requiredFieldsEnforced(validation_con) -> None:
     """覆盖范围：人工复核队列表对必填字段的数据库层约束
     测试对象：manual_review_queue 表 DDL
     目的/目标：只填复核编号、缺其他必填列的插入必须失败
-    验证点：pytest.raises(duckdb.Error)
+    验证点：pytest.raises(duckdb.Error, match=Constraint|NOT NULL)
     失败含义：残缺复核队列项入库，运维无法追踪待审对象
     """
     con = validation_con
-    with pytest.raises(duckdb.Error):
+    with pytest.raises(duckdb.Error, match="Constraint|NOT NULL"):
         con.execute("INSERT INTO manual_review_queue (review_id) VALUES (?)", ["mr-1"])
 
 
@@ -288,7 +288,7 @@ def test_manualReviewQueue_sourceObjectTypeCheck(validation_con) -> None:
     失败含义：任意对象类型入库，复核界面与路由无法正确分类
     """
     con = validation_con
-    with pytest.raises(duckdb.Error):
+    with pytest.raises(duckdb.Error, match="Constraint|CHECK"):
         con.execute(
             """
             INSERT INTO manual_review_queue (

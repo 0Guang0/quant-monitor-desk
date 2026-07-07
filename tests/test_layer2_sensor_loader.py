@@ -18,7 +18,9 @@ from backend.app.db.connection import ConnectionManager
 from backend.app.db.migrate import apply_migrations
 from backend.app.layer2_sensors import (
     CrossAssetObservation,
+    CrossAssetObservationError,
     CrossAssetRegistryLoader,
+    CrossAssetRegistryLoadError,
     CrossAssetRegistryWriter,
     CrossAssetSnapshotBuilder,
     DoubleCountGuardError,
@@ -297,7 +299,7 @@ def test_crossAssetRegistryLoader_rejectsNonStagedMode(tmp_path: Path) -> None:
         "    eligible_for_model: true\n    double_count_guard: none\n",
         encoding="utf-8",
     )
-    with pytest.raises(Exception, match="staged_fixture_only"):
+    with pytest.raises(CrossAssetRegistryLoadError, match="staged_fixture_only"):
         CrossAssetRegistryLoader().load(registry_path=bad)
 
 
@@ -305,7 +307,7 @@ def test_crossAssetRegistryLoader_rejectsPrimarySourceNone(tmp_path: Path) -> No
     """覆盖范围：primary_source=none 非法配置
     测试对象：CrossAssetRegistryLoader.load
     目的/目标：每个资产必须声明可接受的主数据源，none 不可作为 primary
-    验证点：pytest.raises(Exception, match=primary_source)
+    验证点：pytest.raises(CrossAssetRegistryLoadError, match=primary_source)
     失败含义：无来源资产进入流水线，血缘无法追溯
     """
     bad = tmp_path / "bad_none_primary.yaml"
@@ -318,7 +320,7 @@ def test_crossAssetRegistryLoader_rejectsPrimarySourceNone(tmp_path: Path) -> No
         "    eligible_for_model: false\n    double_count_guard: none\n",
         encoding="utf-8",
     )
-    with pytest.raises(Exception, match="primary_source"):
+    with pytest.raises(CrossAssetRegistryLoadError, match="primary_source"):
         CrossAssetRegistryLoader().load(registry_path=bad)
 
 
@@ -326,7 +328,7 @@ def test_crossAssetRegistryLoader_rejectsDuplicateInstrumentId(tmp_path: Path) -
     """覆盖范围：instrument_id 全局唯一性
     测试对象：CrossAssetRegistryLoader.load（重复 FUT:DUP）
     目的/目标：跨资产不得共享同一 instrument_id，防映射冲突
-    验证点：pytest.raises(Exception, match=duplicate instrument_id)
+    验证点：pytest.raises(CrossAssetRegistryLoadError, match=duplicate instrument_id)
     失败含义：重复 instrument 可共存，Layer5 对齐与 roll 逻辑错乱
     """
     bad = tmp_path / "dup_instrument.yaml"
@@ -346,7 +348,7 @@ def test_crossAssetRegistryLoader_rejectsDuplicateInstrumentId(tmp_path: Path) -
         "    eligible_for_model: true\n    double_count_guard: none\n",
         encoding="utf-8",
     )
-    with pytest.raises(Exception, match="duplicate instrument_id"):
+    with pytest.raises(CrossAssetRegistryLoadError, match="duplicate instrument_id"):
         CrossAssetRegistryLoader().load(registry_path=bad)
 
 
@@ -367,12 +369,12 @@ def test_snapshotBuilder_forModel_blocksAxisInput() -> None:
     """覆盖范围：for_model 构建时拦截轴输入
     测试对象：CrossAssetSnapshotBuilder.build_daily_snapshots(for_model=True)
     目的/目标：即使能建展示快照，for_model=True 对轴输入须 fail-closed
-    验证点：pytest.raises(DoubleCountGuardError)
+    验证点：pytest.raises(DoubleCountGuardError, match=display/reference only)
     失败含义：模型路径可写入轴输入快照，双计_guard 被绕过
     """
     vix = _staged_asset("L2-VIX")
     builder = CrossAssetSnapshotBuilder()
-    with pytest.raises(DoubleCountGuardError):
+    with pytest.raises(DoubleCountGuardError, match="display/reference only"):
         builder.build_daily_snapshots(
             as_of=AS_OF,
             trade_date=TRADE_DATE,
@@ -388,11 +390,13 @@ def test_doubleCountGuard_modelEligibleAsset_passes() -> None:
     """覆盖范围：可入模资产通过资格检查
     测试对象：assert_model_eligible（L2-COPPER）
     目的/目标：eligible_for_model 的常规定价资产应无 guard 异常
-    验证点：assert_model_eligible 不抛错
+    验证点：eligible_for_model=True；is_axis_input=False；assert_model_eligible 不抛错
     失败含义：合法铜价资产被拒，模型特征链路断供
     """
     result = _staged_registry()
     copper = _staged_asset("L2-COPPER")
+    assert copper.eligible_for_model is True
+    assert copper.is_axis_input is False
     assert_model_eligible(copper)
 
 
@@ -400,11 +404,11 @@ def test_snapshotRejectsFutureInput() -> None:
     """覆盖范围：未来可见性时间戳拒收
     测试对象：reject_future_observation（as_of_visibility 超前）
     目的/目标：as_of 边界后可见的数据不得参与当前快照
-    验证点：pytest.raises(Exception, match=future input blocked)
+    验证点：pytest.raises(CrossAssetObservationError, match=future input blocked)
     失败含义：未来数据泄漏进快照，时点审计失真
     """
     future = _obs("L2-COPPER", as_of_visibility=AS_OF + timedelta(hours=1))
-    with pytest.raises(Exception, match="future input blocked"):
+    with pytest.raises(CrossAssetObservationError, match="future input blocked"):
         reject_future_observation(as_of=AS_OF, observation=future)
 
 
@@ -412,14 +416,14 @@ def test_snapshotRejectsFutureTradeTime() -> None:
     """覆盖范围：未来 trade_time 拒收
     测试对象：reject_future_observation（trade_time 超前 as_of）
     目的/目标：成交时间不得晚于 as_of 可见边界
-    验证点：pytest.raises(Exception, match=future trade_time blocked)
+    验证点：pytest.raises(CrossAssetObservationError, match=future trade_time blocked)
     失败含义：未来交易日数据可入库，回测与实盘边界混乱
     """
     future = _obs(
         "L2-COPPER",
         trade_time=AS_OF + timedelta(hours=1),
     )
-    with pytest.raises(Exception, match="future trade_time blocked"):
+    with pytest.raises(CrossAssetObservationError, match="future trade_time blocked"):
         reject_future_observation(as_of=AS_OF, observation=future)
 
 
@@ -427,13 +431,13 @@ def test_snapshotRejectsFutureFetch_viaBuilder() -> None:
     """覆盖范围：未来 fetch_time 经 builder 拒收
     测试对象：CrossAssetSnapshotBuilder.build_daily_snapshots
     目的/目标：抓取时间晚于 as_of 的观测不得建快照
-    验证点：pytest.raises(Exception, match=future fetch blocked)
+    验证点：pytest.raises(CrossAssetObservationError, match=future fetch blocked)
     失败含义：延迟抓取未校验，血缘时间窗不可信
     """
     copper = _staged_asset("L2-COPPER")
     future_fetch = _obs("L2-COPPER", fetch_time=AS_OF + timedelta(hours=1))
     builder = CrossAssetSnapshotBuilder()
-    with pytest.raises(Exception, match="future fetch blocked"):
+    with pytest.raises(CrossAssetObservationError, match="future fetch blocked"):
         builder.build_daily_snapshots(
             as_of=AS_OF,
             trade_date=TRADE_DATE,
@@ -448,7 +452,7 @@ def test_snapshotBuilder_rejectsMixedTradeDateBatch() -> None:
     """覆盖范围：同批观测 trade_date 必须一致
     测试对象：CrossAssetSnapshotBuilder.build_daily_snapshots（混合两日）
     目的/目标：日快照批内不得混入多个 trade_date
-    验证点：pytest.raises(Exception, match=mixed trade_date batch)
+    验证点：pytest.raises(CrossAssetObservationError, match=mixed trade_date batch)
     失败含义：一日快照掺入他日 bar，OHLC 聚合错误
     """
     copper = _staged_asset("L2-COPPER")
@@ -459,7 +463,7 @@ def test_snapshotBuilder_rejectsMixedTradeDateBatch() -> None:
             trade_time=datetime(2026, 6, 13, 16, 0, tzinfo=UTC),
         ),
     ]
-    with pytest.raises(Exception, match="mixed trade_date batch"):
+    with pytest.raises(CrossAssetObservationError, match="mixed trade_date batch"):
         CrossAssetSnapshotBuilder().build_daily_snapshots(
             as_of=AS_OF,
             trade_date=TRADE_DATE,
@@ -474,7 +478,7 @@ def test_snapshotBuilder_rejectsTradeDateMismatch() -> None:
     """覆盖范围：观测日与请求 trade_date 对齐
     测试对象：CrossAssetSnapshotBuilder.build_daily_snapshots（trade_date 无匹配观测）
     目的/目标：指定 trade_date 下无观测应 fail-closed
-    验证点：pytest.raises(Exception, match=no observations)
+    验证点：pytest.raises(CrossAssetObservationError, match=no observations)
     失败含义：空日仍产出快照或误用邻日数据
     """
     copper = _staged_asset("L2-COPPER")
@@ -482,7 +486,7 @@ def test_snapshotBuilder_rejectsTradeDateMismatch() -> None:
         "L2-COPPER",
         trade_time=datetime(2026, 6, 13, 16, 0, tzinfo=UTC),
     )
-    with pytest.raises(Exception, match="no observations"):
+    with pytest.raises(CrossAssetObservationError, match="no observations"):
         CrossAssetSnapshotBuilder().build_daily_snapshots(
             as_of=AS_OF,
             trade_date=TRADE_DATE,
@@ -497,12 +501,12 @@ def test_stagedSource_rejectsTdxPytdx_viaBuilder() -> None:
     """覆盖范围：staged 路径拒绝 tdx_pytdx 来源
     测试对象：CrossAssetSnapshotBuilder（source=tdx_pytdx）
     目的/目标：staged fixture 管线不得接受未审批 TDX 实时源
-    验证点：pytest.raises(Exception, match=tdx_pytdx)
+    验证点：pytest.raises(CrossAssetObservationError, match=tdx_pytdx)
     失败含义：生产 TDX 数据混入 staged 快照，gate 隔离失效
     """
     copper = _staged_asset("L2-COPPER")
     tdx_obs = _obs("L2-COPPER", source="tdx_pytdx")
-    with pytest.raises(Exception, match="tdx_pytdx"):
+    with pytest.raises(CrossAssetObservationError, match="tdx_pytdx"):
         CrossAssetSnapshotBuilder().build_daily_snapshots(
             as_of=AS_OF,
             trade_date=TRADE_DATE,
@@ -679,13 +683,13 @@ def test_crossAssetSnapshotBuilder_resourceGuardBlocksBatchBuild() -> None:
     """覆盖范围：ResourceGuard HARD_STOP 阻断构建
     测试对象：CrossAssetSnapshotBuilder（mock guard HARD_STOP）
     目的/目标：资源守卫拒绝时不得继续 build_daily_snapshots
-    验证点：pytest.raises(ResourceGuardBlockedError)
+    验证点：pytest.raises(ResourceGuardBlockedError, match=resource guard blocked)
     失败含义：低资源环境仍批量建快照，可能 OOM
     """
     guard = MagicMock()
     guard.check.return_value = (Decision.HARD_STOP, "eco limit")
     copper = _staged_asset("L2-COPPER")
-    with pytest.raises(ResourceGuardBlockedError):
+    with pytest.raises(ResourceGuardBlockedError, match="resource guard blocked"):
         CrossAssetSnapshotBuilder(resource_guard=guard).build_daily_snapshots(
             as_of=AS_OF,
             trade_date=TRADE_DATE,
@@ -716,11 +720,11 @@ def test_noAcceptedChannel_notModelEligible() -> None:
     """覆盖范围：无接受通道资产不可入模
     测试对象：assert_model_eligible（L2-NO-CHANNEL）
     目的/目标：缺 primary 等通道的资产须 DoubleCountGuardError
-    验证点：pytest.raises(DoubleCountGuardError)
+    验证点：pytest.raises(DoubleCountGuardError, match=display/reference only)
     失败含义：无来源资产进入模型聚合
     """
     missing = _staged_asset("L2-NO-CHANNEL")
-    with pytest.raises(DoubleCountGuardError):
+    with pytest.raises(DoubleCountGuardError, match="display/reference only"):
         assert_model_eligible(missing)
 
 
@@ -812,12 +816,12 @@ def test_layer2Observation_blocksAxisInputWithoutDisplayOnlyWrite(tmp_path: Path
     """覆盖范围：观测写入拦截非 display_only 轴输入
     测试对象：Layer2ObservationWriter.write_observations（VIX, display_only_write=False）
     目的/目标：轴输入未经 display_only 路径不得写入观测表
-    验证点：pytest.raises(DoubleCountGuardError)
+    验证点：pytest.raises(DoubleCountGuardError, match=display_only_write)
     失败含义：轴输入观测误入库，与展示/入模策略冲突
     """
     vix = _staged_asset("L2-VIX")
     cm = ConnectionManager(tmp_path / "block.duckdb")
-    with pytest.raises(DoubleCountGuardError):
+    with pytest.raises(DoubleCountGuardError, match="display_only_write"):
         Layer2ObservationWriter(cm).write_observations(
             registry_entry=vix,
             as_of=AS_OF,
@@ -893,11 +897,11 @@ def test_layer2Observation_rejectsAssetIdMismatch(tmp_path: Path) -> None:
     """覆盖范围：观测 asset_id 与注册表条目一致
     测试对象：Layer2ObservationWriter（registry=copper, obs=vix）
     目的/目标：观测 asset_id 必须与 registry_entry.asset_id 匹配
-    验证点：pytest.raises(Exception, match=asset_id)
+    验证点：pytest.raises(CrossAssetObservationError, match=asset_id)
     失败含义：错资产观测可写入，跨资产污染
     """
     copper = _staged_asset("L2-COPPER")
-    with pytest.raises(Exception, match="asset_id"):
+    with pytest.raises(CrossAssetObservationError, match="asset_id"):
         Layer2ObservationWriter(ConnectionManager(tmp_path / "x.duckdb")).write_observations(
             registry_entry=copper,
             as_of=AS_OF,
@@ -983,7 +987,7 @@ def test_layer2Loader_defaultRejectsProductionLiveMode(tmp_path: Path) -> None:
         "    eligible_for_model: true\n    double_count_guard: none\n",
         encoding="utf-8",
     )
-    with pytest.raises(Exception, match="staged_fixture_only"):
+    with pytest.raises(CrossAssetRegistryLoadError, match="staged_fixture_only"):
         CrossAssetRegistryLoader().load(registry_path=bad)
     result = _staged_registry()
     assert result.mode == "staged_fixture_only"

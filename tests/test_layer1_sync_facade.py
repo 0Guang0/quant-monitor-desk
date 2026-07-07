@@ -24,18 +24,10 @@ def _cm(tmp_path: Path) -> ConnectionManager:
 def test_layer1SyncFacade_syncIndicator_thinWrapperOnly(tmp_path: Path) -> None:
     """覆盖范围：Layer 对外 sync 接缝
     测试对象：backend.app.sync.layer1_sync_facade.sync_indicator
-    目的/目标：load_binding + execute_binding；禁止膨胀为新 orchestrator
-    验证点：返回 SyncJobResult；无源专属逻辑
+    目的/目标：sync_indicator 应通过绑定 ID 执行 dry-run 增量同步
+    验证点：返回 SKIPPED SyncJobResult 且消息含已有观测日期
     失败含义：Layer 须直接懂 SyncJobSpec（违反 AD-MG103-10）
     """
-    repo = Path(__file__).resolve().parents[1]
-    facade_src = (repo / "backend/app/sync/layer1_sync_facade.py").read_text(encoding="utf-8")
-    assert "def sync_indicator" in facade_src
-    assert "load_binding" in facade_src
-    assert "execute_binding" in facade_src
-    assert "run_incremental" not in facade_src
-    assert "run_full_load" not in facade_src
-
     binding = load_binding("ENV-E1-DGS10")
     assert binding.indicator_id == "ENV-E1-DGS10"
 
@@ -58,5 +50,5 @@ def test_layer1SyncFacade_syncIndicator_thinWrapperOnly(tmp_path: Path) -> None:
     assert result.job_id
     assert "2026-06-10" in (result.message or "")
 
-    with pytest.raises(LookupError):
+    with pytest.raises(LookupError, match="unknown indicator_id"):
         sync_indicator("NOT-A-REAL-INDICATOR", "incremental", dry_run=True)

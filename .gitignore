@@ -74,6 +74,7 @@ scratch/
 tmp/
 .tmp/
 .ai-bridge/
+conversation_history/
 
 # Local-only external reference repos (never commit; see 参考项目/README.md)
 参考项目/

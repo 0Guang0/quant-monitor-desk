@@ -125,7 +125,7 @@ def test_akshareHistFetch_retriesWithBackoffBeforeFail(
 
     monkeypatch.setattr("time.sleep", lambda s: sleeps.append(s))
 
-    with pytest.raises(PortError):
+    with pytest.raises(PortError, match="Remote end closed"):
         cr._run_akshare_call_with_retry(_always_fail)
 
     assert attempts["n"] == 4

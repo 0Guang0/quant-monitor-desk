@@ -70,7 +70,7 @@ def test_dataHealthLoader_missingManifest_fails(tmp_path: Path) -> None:
     """覆盖范围：manifest loader 缺文件失败路径
     测试对象：data_health manifest loader
     目的/目标：缺 evidence 时必须 FAIL 而非空 PASS
-    验证点：raises 或 overall_status FAIL
+    验证点：load_error 非空；overall_status=FAIL；require_evidence_bundle raises missing raw evidence manifest
     失败含义：坏 evidence 被当成健康
     """
     bundle = load_evidence_bundle(tmp_path)
@@ -78,7 +78,7 @@ def test_dataHealthLoader_missingManifest_fails(tmp_path: Path) -> None:
     report = DataHealthService().check_evidence_dir(tmp_path)
     assert report.overall_status == "FAIL"
 
-    with pytest.raises(DataHealthLoadError):
+    with pytest.raises(DataHealthLoadError, match="missing raw evidence manifest"):
         require_evidence_bundle(tmp_path)
 
 

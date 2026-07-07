@@ -1,4 +1,4 @@
-# SourceRoutePlan（Round2.6）
+# SourceRoutePlan
 
 ## 1. 目的
 
@@ -39,14 +39,59 @@ skip_reason
 
 ## 4. 关键状态
 
-| route_status          | 含义                     |
-| --------------------- | ------------------------ |
-| READY                 | 可安全进入 fetch         |
-| DISABLED_SOURCE       | 目标源或 domain 默认禁用 |
-| NO_AVAILABLE_SOURCE   | 没有合格候选源           |
-| CAPABILITY_MISSING    | capability 未声明        |
-| USER_AUTH_REQUIRED    | 需要用户授权             |
-| RESOURCE_GUARD_PAUSED | 资源保护暂停             |
+| route_status          | 含义                                                            |
+| --------------------- | --------------------------------------------------------------- |
+| READY                 | 可安全进入 fetch                                                |
+| READY_PRIMARY         | 选中 Primary，后续可产出 primary-grade clean                    |
+| READY_DEGRADED        | 选中 FallbackPolicy 授权的降级路径，后续只能产出 degraded clean |
+| BLOCKED_MANUAL_REVIEW | 源冲突、schema drift 或策略要求人工确认                         |
+| DISABLED_SOURCE       | 目标源或 domain 默认禁用                                        |
+| NO_AVAILABLE_SOURCE   | 没有合格候选源                                                  |
+| CAPABILITY_MISSING    | capability 未声明                                               |
+| USER_AUTH_REQUIRED    | 需要用户授权                                                    |
+| RESOURCE_GUARD_PAUSED | 资源保护暂停                                                    |
+
+`READY` 是兼容旧实现的粗粒度状态；最终成品应在 route payload 中同时提供 `route_grade=primary|degraded|blocked`，避免下游把降级路径误读成正常主源路径。
+
+## 4.1 FallbackPolicy 决策记录
+
+当 Primary 不可用时，RoutePlan 必须先记录主源失败原因，再决定 fallback 行为。失败原因包括但不限于：
+
+```text
+auth_failed
+rate_limited
+schema_drift
+empty_response
+not_published_yet
+network_failure
+resource_guard_paused
+source_disabled
+capability_missing
+```
+
+允许的 fallback 行为必须来自 domain 级 `FallbackPolicy`：
+
+```text
+retry_same_source
+use_validation_source_with_flag
+use_last_good_cache
+mark_missing
+manual_review_required
+skip_until_next_publish
+```
+
+若策略为 `use_validation_source_with_flag`，RoutePlan 必须输出：
+
+```text
+selected_source_id = 实际 Validation 源
+selected_role = FallbackPolicy
+route_grade = degraded
+quality_flags 包含 SOURCE_FALLBACK_USED 与 VALIDATION_SOURCE_USED
+primary_source_failed = true
+primary_failure_reason = 上述失败原因之一
+```
+
+禁止把 `selected_role=Validation` 或 `source_id` 直接伪装成 Primary。没有 FallbackPolicy 授权时，Validation 源只能进入 validation/source_conflict/manual_review/evidence。
 
 ## 5. 新增外部数据源路由规则
 
@@ -54,16 +99,26 @@ skip_reason
 
 SourceRoutePlan 可以把这些源暴露为候选/诊断项，但不得把 proposed-disabled source 选为 `READY`，也不得构造 adapter。`source_type` 与 `license_type` 必须保持与 `specs/schema/schema.sql` / migration 009 CHECK 枚举一致，否则 route plan 必须失败为 contract/config error。
 
-路由优先级原则：官方/监管/披露源优先于聚合源；交易所级 market-data 优先于聚合价格；授权终端优先于网页源；预测市场只能输出 `probability_signal`；Web Search 只能输出 evidence/manual_review，不得进入 clean writer。
+路由优先级原则：官方/监管/披露源优先于聚合源；交易所级 market-data 优先于聚合价格；授权终端优先于网页源；预测市场只能输出 `probability_signal`；Web Search 只能输出 evidence/manual_review，不得进入 clean writer。聚合源或 validation-only 源只有在 domain FallbackPolicy 明确为 `use_validation_source_with_flag` 时，才允许以 degraded clean 进入后续链路。
 
 ## 6. 持久化边界
 
-实现阶段必须二选一并记录 ADR：
+RoutePlan 是正式业务链路的一部分，必须持久化。存储方式必须由 ADR 固定，并满足可审计、可查询、可重放要求。允许的实现形态为：
 
 1. 新增 `source_route_log` 表；或
 2. 写入 `job_event_log.payload_json`。
 
-未确定前，设计上要求所有 fetch 前必须生成 RoutePlan，但不强制当前 Round2 代码立即落库。
+禁止只在内存中生成 RoutePlan 后丢弃。任何进入 fetch、validation、clean 或验收报告的业务链路，都必须能从持久化记录追溯到对应 RoutePlan。
+
+生产等价验收与正式运行必须能在验收报告中回答：
+
+```text
+为什么没有用 Primary？
+用了哪个 fallback 策略？
+实际 source_used 是谁？
+这条数据是 primary-grade 还是 degraded？
+下游是否允许消费 degraded clean？
+```
 
 ## 7. 验收
 

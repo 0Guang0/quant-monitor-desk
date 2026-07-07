@@ -49,12 +49,12 @@ def test_assertCanWrite_stubPass_allowsWhileStubFailRejects() -> None:
     """覆盖范围：测试用校验门闸对通过/拒绝报告的分流
     测试对象：StubValidationGate.assert_can_write
     目的/目标：校验通过的报告应放行写入，明确失败的报告应拒绝
-    验证点：stub-pass-001 不抛错；stub-fail-001 抛 ValidationRejected
+    验证点：stub-pass-001 不抛错；stub-fail-001 抛 ValidationRejected（validation rejected）
     失败含义：门闸分不清通过和拒绝，脏数据可能写进正式表
     """
     gate = StubValidationGate()
     gate.assert_can_write("stub-pass-001", "append_only")
-    with pytest.raises(ValidationRejected):
+    with pytest.raises(ValidationRejected, match="validation rejected"):
         gate.assert_can_write("stub-fail-001", "append_only")
 
 
@@ -62,10 +62,10 @@ def test_assertCanWrite_unknownId_raisesGateError() -> None:
     """覆盖范围：非测试前缀的 validation_report_id 须拒绝
     测试对象：StubValidationGate.assert_can_write
     目的/目标：真实校验报告 ID 在测试门闸下不能误放行
-    验证点：real-123 抛 ValidationGateError
+    验证点：real-123 抛 ValidationGateError（unknown validation_report_id）
     失败含义：没验过的报告被当成可写，生产门禁形同虚设
     """
-    with pytest.raises(ValidationGateError):
+    with pytest.raises(ValidationGateError, match="unknown validation_report_id"):
         StubValidationGate().assert_can_write("real-123", "append_only")
 
 
@@ -85,11 +85,11 @@ def test_writeManager_defaultConstructor_raisesTypeError(tmp_path: Path) -> None
     """覆盖范围：WriteManager 不接受省略 gate 的默认构造
     测试对象：WriteManager.__init__ 参数签名
     目的/目标：类型层面阻止只传连接、不传门闸的旧式调用
-    验证点：WriteManager(cm) 抛 TypeError
+    验证点：WriteManager(cm) 抛 TypeError（missing gate）
     失败含义：旧式无门闸构造仍可用，静态检查和运行时约束不一致
     """
     cm = _setup(tmp_path)
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError, match="gate"):
         WriteManager(cm)  # type: ignore[call-arg]
 
 
@@ -215,11 +215,11 @@ def test_write_unsupportedMode_raises(tmp_path: Path) -> None:
     """覆盖范围：未实现的 write_mode 须早拒
     测试对象：WriteManager.write 的模式分发
     目的/目标：replace_partition 等未支持模式不得静默失败或误写
-    验证点：write_mode=replace_partition 抛 ValueError
+    验证点：write_mode=replace_partition 抛 ValueError（not implemented yet）
     失败含义：不支持的模式被当作 append，分区替换语义 silently 错误
     """
     cm = _setup(tmp_path)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="not implemented yet"):
         create_test_write_manager(cm).write(_req(mode="replace_partition"))
 
 

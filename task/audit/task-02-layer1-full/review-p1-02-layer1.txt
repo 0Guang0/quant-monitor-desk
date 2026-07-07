@@ -1,0 +1,482 @@
+[ocr] full-scan: 6 file(s) discovered, reviewing 6 in /mnt/c/Users/Guang/Desktop/quant-monitor-desk
+[ocr] estimated cost: ~6 file(s), est. 375K input + 34K output ≈ 410K total tokens (rough; actual reported after run)
+[ocr] scan dispatch: 1 batch(es) by by-language strategy
+[ocr]   ▶ code_search search_text=staged_fixture_mode case_sensitive=true
+[ocr]   ▶ code_search file_patterns=[backend/app/cli/data_commands.py] use_perl_regexp=true case_sensitive=true
+[ocr]   ✔ code_search (36ms)
+[ocr]   ▶ code_search file_patterns=[backend/app/cli/data_commands.py] use_perl_regexp=true case_sensitive=true
+[ocr]   ✔ code_search (23ms)
+[ocr]   ✔ code_search (242ms)
+[ocr]   ▶ file_read file_path=backend/app/cli/data_commands.py start_line=1760 end_line=1925
+[ocr]   ✔ file_read (45ms)
+[ocr]   ▶ file_read file_path=backend/app/datasources/service.py start_line=40 end_line=120
+[ocr]   ✔ file_read (33ms)
+[ocr]   ▶ code_search search_text=capture_task_phase2_evidence file_patterns=[backend/ tests/] case_sensitive=true
+[ocr]   ✔ code_search (534ms)
+[ocr]   ▶ code_search search_text=phase2_authorized file_patterns=[backend/ tests/] case_sensitive=true
+[ocr]   ▶ file_read start_line=120 end_line=260 file_path=backend/app/datasources/service.py
+[ocr]   ✔ file_read (23ms)
+[ocr]   ✔ code_search (543ms)
+[ocr]   ▶ code_search search_text=format_phase3_no_clean_write_md file_patterns=[backend/ tests/] case_sensitive=true
+[ocr]   ▶ file_read file_path=backend/app/cli/data_commands.py start_line=630 end_line=735
+[ocr]   ✔ file_read (10ms)
+[ocr]   ✔ code_search (534ms)
+[ocr]   ▶ file_read file_path=backend/app/cli/data_commands.py start_line=1390 end_line=1465
+[ocr]   ✔ file_read (10ms)
+[ocr]   ▶ code_comment "backend/app/layer1_axes/clean_observation_reader.py"
+[ocr]   ✔ code_comment (1ms)
+[ocr]   ▶ code_search search_text=except CliFailure|emit_failure|traceback|main\( file_patterns=[backend/app/cli/ tests/] use_perl_regexp=true case_sensitive=true
+[ocr]   ▶ file_read file_path=backend/app/ops/layer1_evidence/formatters.py start_line=80 end_line=130
+[ocr]   ✔ file_read (12ms)
+[ocr]   ▶ code_search use_perl_regexp=true case_sensitive=true file_patterns=[backend/app/layer1_axes/ingestion.py]
+[ocr]   ✔ code_search (43ms)
+[ocr]   ▶ code_search file_patterns=[backend/app/layer1_axes/ingestion.py] use_perl_regexp=true case_sensitive=true
+[ocr]   ✔ code_search (42ms)
+[ocr]   ✔ code_search (415ms)
+[ocr]   ▶ code_search use_perl_regexp=true case_sensitive=true search_text=def run_data_health_profile|max_rows file_patterns=[backend/app/ops/data_health_profiles.py]
+[ocr]   ✔ code_search (51ms)
+[ocr]   ▶ file_read file_path=backend/app/layer1_axes/ingestion.py start_line=470 end_line=570
+[ocr]   ✔ file_read (10ms)
+[ocr]   ▶ file_read start_line=570 end_line=700 file_path=backend/app/layer1_axes/ingestion.py
+[ocr]   ✔ file_read (7ms)
+[ocr]   ▶ file_read file_path=backend/app/ops/layer1_evidence/inventory.py start_line=220 end_line=265
+[ocr]   ✔ file_read (14ms)
+[ocr]   ▶ code_comment "backend/app/layer1_axes/feature_engine.py"
+[ocr]   ✔ code_comment (3ms)
+[ocr]   ▶ file_find query_name=data_health
+[ocr]   ✔ file_find (465ms)
+[ocr]   ▶ code_comment "backend/app/layer1_axes/ingestion.py"
+[ocr]   ✔ code_comment (6ms)
+[ocr]   ▶ code_comment "backend/app/cli/data_commands.py"
+[ocr]   ✔ code_comment (2ms)
+[ocr]   ▶ code_comment "backend/app/cli/main.py"
+[ocr]   ✔ code_comment (4ms)
+[ocr]   ▶ code_comment "backend/app/layer1_axes/ingestion_evidence.py"
+[ocr]   ✔ code_comment (2ms)
+[ocr]   ▶ code_comment "backend/app/layer1_axes/ingestion_evidence.py"
+[ocr]   ✔ code_comment (0s)
+[ocr] scan dedup batch #0: 24 → 22 comments
+[ocr] Summary: 6 file(s) reviewed, 22 comment(s), ~474698 token(s) used (input: ~459585, output: ~15113), 3m58s elapsed
+
+[2m─── backend/app/layer1_axes/clean_observation_reader.py:59-63 ───[0m
+`requested` is not validated before being used as the SQL `LIMIT` in either macro or bar reads. A
+negative value currently survives `min(requested, cap)` and can be passed into queries, potentially
+bypassing the intended cap or failing depending on the SQL engine; `0` can also turn a valid series
+into an artificial empty-read error. Clamp or reject non-positive limits before constructing either
+query, preferably via a shared validated limit helper.
+
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m def resolve_read_limit(spec_indicator_id: str, *, requested: int | None = None) -> int:[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     cap = P0_ROW_CAPS.get(spec_indicator_id, 500)[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     if requested is None:[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m         return cap[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m     if requested <= 0:[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m         raise ValueError(f"requested limit must be positive, got {requested!r}")[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     return min(requested, cap)[0m[0m
+
+
+[2m─── backend/app/layer1_axes/clean_observation_reader.py:187-187 ───[0m
+`bool(row[5])` mis-parses common database boolean encodings. If the driver returns text such as
+`'0'`, `'false'`, or `'False'`, this becomes `True` and the fallback guard rejects an otherwise
+clean row. Parse the stored boolean value explicitly before passing it to `_row_to_observation`.
+
+[91m[48;2;70;0;0m-[0m[48;2;70;0;0m                 source_switched=bool(row[5]),[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m                 source_switched=_parse_db_bool(row[5]),[0m[0m
+
+
+[2m─── backend/app/layer1_axes/clean_observation_reader.py:258-261 ───[0m
+`close_f` is used in `math.log(close_f / prev_close)` without rejecting non-positive current closes.
+A zero or negative close from the clean bar table will raise `ValueError` and abort the whole series
+instead of skipping the bad bar consistently with the existing zero-volume/invalid-previous-close
+handling.
+
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m         close_f = float(close)[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m         if close_f <= 0:[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m             prev_close = close_f[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m             continue[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m         if prev_close is None or prev_close <= 0:[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m             prev_close = close_f[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m             continue[0m[0m
+
+
+[2m─── backend/app/layer1_axes/feature_engine.py:71-75 ───[0m
+`history` rows are only filtered with `<= as_of`, while future timestamps are rejected for
+`observations`. That means a caller can pass future data in the history input and the engine
+silently drops it instead of raising the documented no-future-data error, which weakens auditability
+and can hide upstream data leakage. Validate `history` for `publish_timestamp > as_of` before
+filtering, just as this method does for current observations.
+
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m             future_history = [h for h in hist if h.publish_timestamp > as_of][0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m             if future_history:[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m                 first = future_history[0][0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m                 raise Layer1SnapshotError([0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m                     f"future input: publish {first.publish_timestamp} > as_of {as_of}"[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m                 )[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m             past = [[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m                 h[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m                 for h in hist[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m                 if h.indicator_id == obs.indicator_id and h.publish_timestamp <= as_of[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m             ][0m[0m
+
+
+[2m─── backend/app/layer1_axes/feature_engine.py:64-66 ───[0m
+When a separate `history` sequence is supplied, the current `obs` is not added to `past`. Callers
+commonly pass prior history plus the current observations separately, and in that case `values`,
+`valid_count`, coverage, z-scores, percentiles, and deltas are computed without the current
+observation even though the returned row is for it. Either make the contract explicit and enforce
+that `history` contains each observation, or append the current observation into the per-indicator
+window before computing features.
+
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m         hist = list(history or observations)[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m         rows: list[FeatureSnapshotRow] = [][0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m         for obs in observations:[0m[0m
+
+
+[2m─── backend/app/layer1_axes/feature_engine.py:50-51 ───[0m
+The constructor accepts `min_obs_required=0` (and other non-positive values), but `_compute_one`
+then skips the insufficient-history branch and calls `statistics.mean([])` when there are no valid
+values. That produces an unexpected `StatisticsError`, and `_percentile_rank` has the same
+empty-list assumption later. Validate the configuration up front so the engine cannot be
+instantiated with an impossible minimum observation count.
+
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m         self._window_len = window_len if window_len is not None else default_len[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m         self._min_obs = min_obs_required if min_obs_required is not None else default_min[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m         if self._min_obs < 1:[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m             raise ValueError("min_obs_required must be at least 1")[0m[0m
+
+
+[2m─── backend/app/layer1_axes/feature_engine.py:132-133 ───[0m
+`past[-2]` assumes the current observation is the last item in `past` and that the immediately
+preceding row has a raw value. If `history` excludes the current observation, if `observations`
+contains an older as-of row, or if the latest prior value is missing, this selects the wrong
+comparison point or suppresses the delta. Choose the most recent non-null observation strictly
+before `obs.publish_timestamp` instead.
+
+[91m[48;2;70;0;0m-[0m[48;2;70;0;0m         prev = past[-2].raw_value if len(past) >= 2 else None[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m         prev_values = [[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m             p.raw_value[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m             for p in past[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m             if p.publish_timestamp < obs.publish_timestamp and p.raw_value is not None[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m         ][0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m         prev = prev_values[-1] if prev_values else None[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m         delta_abs = obs.raw_value - prev if obs.raw_value is not None and prev is not None else None[0m[0m
+
+
+[2m─── backend/app/layer1_axes/ingestion.py:463-471 ───[0m
+This bypass is keyed only on the datasource's broad `staged_fixture_mode` flag and the indicator
+allowlist, then proceeds to build a normal `FetchRequest` for the domain primary source. In fixture
+mode with an injected fetch port, `DataSourceService.fetch()` can still run an adapter for
+blocked/disabled routes, so a route that is explicitly not READY can be fetched without verifying
+that the selected path is the intended staged fixture. Please restrict this bypass to the known
+staged fixture source/path or require an explicit fixture-only datasource type before allowing
+blocked route statuses through.
+
+
+
+[2m─── backend/app/layer1_axes/ingestion.py:95-95 ───[0m
+Registering a raw file with an empty `content_hash` weakens the evidence chain: later
+lineage/validation can see a file registry row even though the file identity was never established.
+If the fetch succeeded and produced raw paths, missing content hashes should block
+registration/commit or be computed from the saved file content before inserting the registry row.
+
+
+
+[2m─── backend/app/layer1_axes/ingestion.py:122-127 ───[0m
+This uses a constant validation report id (`staged-micro-fetch-file-registry`) with `INSERT OR
+REPLACE`, so every staged ingest run overwrites the previous report row. Concurrent or retried runs
+can lose the original run/job/source lineage, while file registry rows may still point at the
+replaced report id. Use a run-scoped validation_report_id or insert-once semantics that preserves
+historical reports.
+
+
+
+[2m─── backend/app/layer1_axes/ingestion.py:524-532 ───[0m
+Recovering `fetch_id` by selecting the latest row for `run_id`/`job_id` is ambiguous when the same
+identifiers are retried or two workers overlap; the commit lineage can attach to a different fetch
+than the `fetch_result` returned above. Prefer having `DataSourceService.fetch()`/`FetchLogWriter`
+return the inserted id, or correlate on a unique request/fetch id generated before the write.
+
+
+
+[2m─── backend/app/cli/data_commands.py:1303-1305 ───[0m
+`source_id` is authorized, but the route preview is not constrained to that source and the
+non-dry-run path never verifies `plan.selected_source_id == source_id`. This can execute a live
+fetch for a requested source even when route planning would select a different source or when that
+source is not the routed provider for this domain/operation. Build the preview service/registry for
+the requested source or fail closed before calling `build_product_live_service`.
+
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     preview_service = _service()[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     plan = preview_service.preview_route(data_domain=data_domain, operation=op)[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     guard_decision, guard_reason = preview_service.check_resource_guard()[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m     if plan.selected_source_id != source_id:[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m         raise CliFailure([0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m             error_code="INVALID_INPUT",[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m             message=([0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m                 f"live-fetch source mismatch: requested source_id={source_id!r}, "[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m                 f"route selected {plan.selected_source_id!r}"[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m             ),[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m             docs_anchor="docs/ops/data_sync_quick_reference.md",[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m         )[0m[0m
+
+
+[2m─── backend/app/cli/data_commands.py:1341-1343 ───[0m
+This write-capable path opens the DuckDB connection and invokes the live fetch without applying
+migrations first. Other write paths in this file initialize the schema before handing a writer
+connection to the orchestrator/service; on a fresh `DATA_ROOT`, live fetch can fail at runtime or
+leave behavior dependent on prior commands having initialized the DB. Apply migrations before
+calling `live_service.fetch`.
+
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     db = DATA_ROOT / "duckdb" / "quant_monitor.duckdb"[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m     db.parent.mkdir(parents=True, exist_ok=True)[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     cm = ConnectionManager(db_path=db)[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     req = FetchRequest([0m[0m
+
+
+[2m─── backend/app/cli/data_commands.py:398-400 ───[0m
+`PARTIAL_FAILURE` is returned as a successful backfill result here, only embedding failed series in
+`series_results`. That is inconsistent with the FRED incremental path above, which raises
+`SYNC_PARTIAL_FAILURE`, and it makes shell/automation callers treat a partial write as success
+unless they parse the payload deeply. If partial backfills require operator attention, raise
+`CliFailure` for `PARTIAL_FAILURE` or expose a distinct failure exit path.
+
+[91m[48;2;70;0;0m-[0m[48;2;70;0;0m     if report.overall_status not in {"COMPLETED", "PARTIAL_FAILURE"}:[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m     if report.overall_status == "PARTIAL_FAILURE":[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m         failed = [r for r in report.series_results if r["status"] not in {"COMPLETED", "EMPTY_RESPONSE"}][0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m         raise CliFailure([0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m             error_code="SYNC_PARTIAL_FAILURE",[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m             message=f"fred macro backfill partial failure: {failed}",[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m             docs_anchor="docs/ops/ERROR_CODE_GUIDE.md#sync-partial-failure",[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m             retryable=True,[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m         )[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m     if report.overall_status != "COMPLETED":[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m         raise CliFailure([0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m             error_code="SYNC_FAILED",[0m[0m
+
+
+[2m─── backend/app/cli/data_commands.py:295-297 ───[0m
+The authorization helper allows any resolved path that merely contains a component named
+`.audit-sandbox` or `audit-sandbox`. Several non-dry-run callers rely on this helper alone before
+creating/writing the database, so a production tree with a nested directory of that name would pass
+the write gate. Prefer a stricter policy, such as requiring the resolved data root to be under a
+configured audit-sandbox root and applying the same `assert_sandbox_db_allowed` check consistently
+on all write-capable paths.
+
+
+
+[2m─── backend/app/cli/data_commands.py:438-441 ───[0m
+This dry-run path performs route preview and resource-guard evaluation before enforcing the
+audit-sandbox data root. That means a dry-run invoked with a live/default data root can still expose
+route/source selection and environment-dependent guard state before the sandbox policy is checked.
+Enforce `_require_audit_sandbox_data_root(data_root)` before route planning/guard evaluation in
+dry-run flows that are intended to be sandbox-only.
+
+
+
+[2m─── backend/app/cli/data_commands.py:560-565 ───[0m
+Passing `orch._jobs` couples these services to a private orchestrator attribute. If
+`DataSyncOrchestrator` changes its internal job storage or lifecycle locking, these services can
+silently bypass the supported job-event API and break concurrent runs. Expose a public job-event
+sink/accessor on the orchestrator and use that instead.
+
+
+
+[2m─── backend/app/cli/main.py:377-380 ───[0m
+The packaged CLI only converts `CliFailure` into the structured JSON/text error envelope. Any
+unexpected exception from argument coercion or a command handler (for example filesystem errors,
+parser/dispatcher drift causing `AttributeError`, or implementation bugs below `data_commands`)
+escapes as a raw traceback and an interpreter-dependent exit code. That breaks the CLI error
+contract and can expose local paths or sensitive details on stderr. Add a final `except Exception`
+here that emits a generic structured failure in the selected format and exits non-zero, while
+preserving traceback logging only behind an explicit debug mode.
+
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     except CliFailure as err:[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m         print(data_commands.emit_failure(err, fmt=fmt), file=sys.stderr)[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m         return err.exit_code()[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m     except Exception as err:[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m         failure = CliFailure([0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m             error_code="INTERNAL_ERROR",[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m             message="unexpected CLI failure; rerun with debug logging for details",[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m             docs_anchor="docs/ops/data_sync_quick_reference.md",[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m         )[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m         print(data_commands.emit_failure(failure, fmt=fmt), file=sys.stderr)[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m         return failure.exit_code()[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     print(data_commands.emit_payload(payload, fmt=fmt))[0m[0m
+
+
+[2m─── backend/app/layer1_axes/ingestion_evidence.py:179-180 ───[0m
+This makes all task entrypoints proceed when Phase 1 inventory evidence is missing. The function
+docstring and inventory gate logic say Phase 1 authorization is required before Phase 2, but
+`capture_task_phase2_evidence`, `capture_task_phase3_evidence`, and `capture_task_phase4_evidence`
+all treat a missing inventory file as authorized. If the evidence directory is wrong, incomplete, or
+freshly created, the later phases can run without the required authorization stop rule. Consider
+failing closed here for task execution, or require an explicit bypass/test mode parameter so missing
+inventory cannot silently skip the gate.
+
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     if not inv_path.is_file():[0m[0m
+[91m[48;2;70;0;0m-[0m[48;2;70;0;0m         return None[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m         raise RuntimeError([0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m             "Phase evidence blocked: phase1 inventory evidence is missing"[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m         )[0m[0m
+
+
+[2m─── backend/app/layer1_axes/ingestion_evidence.py:74-79 ───[0m
+`micro_fetch_staging()` registers staged files by calling
+`_ensure_staged_file_registry_validation_report()`, which performs an `INSERT OR REPLACE INTO
+validation_report`, but Phase 3 evidence does not count or report `validation_report`. As a result,
+the "no clean write" proof can pass while Phase 3 created or replaced validation report rows.
+Include every table the micro-fetch path may mutate, and expose the relevant deltas in the
+proof/formatter so this evidence cannot hide validation metadata writes.
+
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m PHASE3_MUTATION_TABLES: tuple[str, ...] = ([0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     "axis_observation",[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     "fetch_log",[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     "file_registry",[0m[0m
+[92m[48;2;0;60;0m+[0m[48;2;0;60;0m     "validation_report",[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m     "job_event_log",[0m[0m
+[2m[48;2;38;38;38m [0m[48;2;38;38;38m )[0m[0m
+
+
+[2m─── backend/app/layer1_axes/ingestion_evidence.py:103-106 ───[0m
+Hashing only the main database file can give a false "unchanged" proof for SQLite databases using
+WAL mode, because committed changes may reside in sibling `-wal`/`-shm` files while the main file
+hash remains unchanged. The row-count check covers only selected tables, so side effects in unlisted
+tables or WAL sidecars can be missed. Either checkpoint/read via SQLite and hash a consistent
+backup/snapshot, or include the WAL sidecar state plus a complete table/schema change check in the
+mutation proof.
+
+
+
+[2m─── backend/app/layer1_axes/ingestion_evidence.py:284-288 ───[0m
+The task wrappers mutate and rewrite the final JSON payload after the lower-level Phase 3/Phase 4
+capture functions have already generated the corresponding markdown artifacts. The final JSON
+includes task-level baseline strategy, data-root, DB-path, and related context that the markdown
+generated earlier cannot include, so the evidence artifacts can diverge on the sandbox and commit
+context needed to interpret the proof. Generate the markdown after adding the task-level fields, or
+pass that context into the lower-level capture functions so JSON and markdown are produced from the
+same final payload.
+
+
+
+
+──────── Project Summary ────────
+
+### Top Issues
+
+1. **Audit and evidence gates can be bypassed or produce misleading proof**
+
+   Phase authorization and “no write” evidence are not reliable in several paths. Phase 2/3/4 task entrypoints proceed when Phase 1 inventory evidence is missing, despite the documented gate. Phase 3 evidence also misses `validation_report` mutations, while SQLite WAL files can hide committed DB changes from the main database hash.
+
+   Representative paths: `backend/app/layer1_axes/ingestion_evidence.py`, `backend/app/layer1_axes/ingestion.py`.
+
+2. **Source authorization and routing constraints are incomplete**
+
+   The CLI authorizes `source_id`, but route preview and live execution are not constrained to that source, and the non-dry-run path does not verify `plan.selected_source_id == source_id`. This can execute a live fetch against a different selected source than the one the caller intended or was authorized for.
+
+   Representative path: `backend/app/cli/data_commands.py`.
+
+3. **Sandbox enforcement is path-fragile and inconsistently ordered**
+
+   The audit sandbox helper accepts any path containing a component named `.audit-sandbox` or `audit-sandbox`, which can allow writes under a production tree with a nested matching directory. One dry-run path also performs route preview and resource guard evaluation before enforcing sandbox policy, exposing environment-dependent state before authorization.
+
+   Representative path: `backend/app/cli/data_commands.py`.
+
+4. **Fetch and ingestion lineage can attach evidence to the wrong run**
+
+   Several ingestion paths weaken provenance. Fetch IDs are recovered by selecting the latest row for `run_id`/`job_id`, which is ambiguous under retries or concurrent workers. Staged ingest uses a constant validation report ID with `INSERT OR REPLACE`, overwriting prior lineage. Raw files can be registered with empty `content_hash`, creating registry evidence without established file identity.
+
+   Representative paths: `backend/app/layer1_axes/ingestion.py`, `backend/app/layer1_axes/ingestion_evidence.py`.
+
+5. **Feature computation has inconsistent temporal validation and current-observation handling**
+
+   `feature_engine` rejects future timestamps for `observations` but silently drops future rows from separately supplied `history`. When separate history is provided, the current observation is not added to the calculation set, so values, counts, coverage, z-scores, percentiles, and deltas can be computed without the current row. Delta logic also assumes `past[-2]` is the correct prior value, which breaks when rows are missing, out of order, or exclude the current observation.
+
+   Representative path: `backend/app/layer1_axes/feature_engine.py`.
+
+6. **Input validation gaps can produce runtime failures or unsafe query parameters**
+
+   Reader and feature-engine inputs are not validated tightly enough. `requested` can be negative or zero before being used as a SQL `LIMIT`. `min_obs_required <= 0` can lead to `statistics.mean([])`. Non-positive closes can reach `math.log(close_f / prev_close)` and abort a whole series.
+
+   Representative paths: `backend/app/layer1_axes/clean_observation_reader.py`, `backend/app/layer1_axes/feature_engine.py`.
+
+7. **CLI error semantics are inconsistent for automation**
+
+   The packaged CLI only converts `CliFailure` into structured JSON/text error envelopes; unexpected exceptions can leak raw tracebacks or break the documented output contract. Partial backfill failures are also returned as successful results in one path, unlike the FRED incremental path, causing shell and automation callers to treat partial writes as success.
+
+   Representative paths: `backend/app/cli/main.py`, `backend/app/cli/data_commands.py`.
+
+8. **Fixture-mode and staged fetch behavior can still invoke real adapter paths**
+
+   The staged fixture bypass is keyed only on broad `staged_fixture_mode` and an indicator allowlist, then still builds a normal `FetchRequest` for the domain primary source. With an injected fetch port, `DataSourceService.fetch()` can still run adapter logic instead of remaining fully fixture-contained.
+
+   Representative path: `backend/app/layer1_axes/ingestion.py`.
+
+### Module Hotspots
+
+- `backend/app/layer1_axes/ingestion_evidence.py`
+
+  Highest concentration of evidence-integrity issues: missing Phase 1 gate enforcement, incomplete mutation accounting, WAL hashing blind spots, and JSON/markdown artifact divergence.
+
+- `backend/app/layer1_axes/ingestion.py`
+
+  Multiple lineage and provenance risks: ambiguous fetch ID recovery, empty content hash registration, validation report overwrites, and fixture-mode fetch leakage.
+
+- `backend/app/cli/data_commands.py`
+
+  Several high-impact operational risks: source authorization mismatch, sandbox path weakness, dry-run authorization ordering, missing migrations before live writes, partial failure reported as success, and coupling to private orchestrator state.
+
+- `backend/app/layer1_axes/feature_engine.py`
+
+  Computation correctness depends on fragile assumptions about history/current observation composition, minimum observation configuration, and temporal validation.
+
+### Cross-Cutting Concerns
+
+- **Authorization checks are present but not applied at the final decision point**
+
+  Source and sandbox checks happen, but later execution can diverge from the authorized target or expose information before enforcement.
+
+  Representative paths: `backend/app/cli/data_commands.py`, `backend/app/layer1_axes/ingestion_evidence.py`.
+
+- **Evidence and lineage records are mutable or ambiguous**
+
+  `INSERT OR REPLACE`, constant report IDs, latest-row lookup, and empty hashes all undermine the ability to reconstruct what actually happened for a specific run.
+
+  Representative paths: `backend/app/layer1_axes/ingestion.py`, `backend/app/layer1_axes/ingestion_evidence.py`.
+
+- **Validation is uneven across equivalent inputs**
+
+  Current observations and history are validated differently. Numeric bounds are enforced in some places but not others. Database booleans are coerced with Python truthiness instead of parsed according to stored representation.
+
+  Representative paths: `backend/app/layer1_axes/feature_engine.py`, `backend/app/layer1_axes/clean_observation_reader.py`.
+
+- **Failure contracts are inconsistent**
+
+  Some paths raise structured CLI failures while others return success with embedded partial failures or let unexpected exceptions escape the CLI envelope.
+
+  Representative paths: `backend/app/cli/main.py`, `backend/app/cli/data_commands.py`.
+
+- **Concurrency and retry assumptions are fragile**
+
+  Selecting “latest” rows for lineage, overwriting validation reports, and passing private orchestrator job storage into services can break under overlapping runs or internal lifecycle changes.
+
+  Representative paths: `backend/app/layer1_axes/ingestion.py`, `backend/app/cli/data_commands.py`.
+
+### Quick Wins
+
+- Reject `requested <= 0` before SQL construction in `backend/app/layer1_axes/clean_observation_reader.py`.
+
+- Parse stored booleans explicitly instead of using `bool(row[5])` in `backend/app/layer1_axes/clean_observation_reader.py`.
+
+- Validate `min_obs_required >= 1` in `backend/app/layer1_axes/feature_engine.py`.
+
+- Reject or skip non-positive `close_f` before `math.log(close_f / prev_close)` in `backend/app/layer1_axes/clean_observation_reader.py`.
+
+- Make partial backfill failures return the same structured failure semantics as the FRED incremental path in `backend/app/cli/data_commands.py`.
+
+- Run migrations before opening write-capable live fetch paths in `backend/app/cli/data_commands.py`.
+
+- Replace the constant staged validation report ID with a run/job/source-specific ID in `backend/app/layer1_axes/ingestion.py`.
+
+- Block raw file registration when `content_hash` is empty in `backend/app/layer1_axes/ingestion.py`.
+
+- Wrap unexpected CLI exceptions in the documented structured error envelope in `backend/app/cli/main.py`.
+
+- Enforce sandbox policy before dry-run route preview or resource guard evaluation in `backend/app/cli/data_commands.py`.

@@ -1,11 +1,11 @@
-# 分阶段实现计划
+# 产品能力分组
 
-> 拆分说明：本文件由 `quant_monitor_design_document_v1_6.md` 拆分生成；当前步骤只做结构拆分与明显版本/编号残留修正，不删减原有细节。
-> 来源：第 17 章
+> 文件定位：产品能力分组参考。本文不定义交付顺序；具体批次、gate 和执行安排只能写入 `task/` 下的执行计划。
+> 来源：原设计文档能力清单
 
-# 17. 分阶段实现计划
+# 17. 产品能力分组
 
-## Phase 1：本地数据底座
+## 本地数据底座
 
 ```text
 DuckDB schema
@@ -17,7 +17,7 @@ FastAPI 基础查询
 React 基础看板
 ```
 
-## Phase 2：五层框架骨架
+## 五层框架骨架
 
 ```text
 Layer 1 axis_registry / axis_observation / axis_feature_snapshot
@@ -27,7 +27,7 @@ Layer 4 market_registry / calendar / breadth / market_detail_view
 Layer 5 evidence_chain
 ```
 
-## Phase 3：多源与数据质量
+## 多源与数据质量
 
 ```text
 baostock
@@ -39,7 +39,7 @@ source conflict validator
 data_quality_log
 ```
 
-## Phase 4：Agent 与日报
+## Agent 与日报
 
 ```text
 daily_report_agent
@@ -49,7 +49,7 @@ cross_layer_explain_agent
 agent_report
 ```
 
-## Phase 5：复盘与提醒
+## 复盘与提醒
 
 ```text
 watchlist

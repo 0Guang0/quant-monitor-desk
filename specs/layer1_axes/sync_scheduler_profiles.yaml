@@ -1,5 +1,5 @@
 version: sync_scheduler_profiles_v1
-status: phase1_m_g1_03
+status: draft
 purpose: "Host cron triggers qmd data scheduler run --profile NAME only (OQ-1A)."
 profiles:
   daily_close:

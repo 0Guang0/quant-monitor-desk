@@ -1,5 +1,5 @@
 version: user_input_privacy_contract_v1
-status: draft_round2_6
+status: draft
 owner: frontend_agent
 purpose: "Make local-only user import, Agent prompt input, and evidence persistence explicit."
 user_input_modes:
@@ -12,7 +12,8 @@ user_input_modes:
     default: false
     requires_user_confirmation: true
     persisted: true
-    required_fields: [source_label, retention_policy, redaction_status, provenance_note]
+    required_fields:
+      [source_label, retention_policy, redaction_status, provenance_note]
   agent_context_input:
     default_fact_status: untrusted_user_supplied
     may_be_summarized: true
@@ -22,7 +23,7 @@ rules:
   - saved evidence must carry provenance, source_label, redaction_status, and retention policy
   - Agent outputs cannot convert user input into facts without evidence id linkage
   - frontend must display local-only / save-as-evidence disclosure before persistence
-  - any future networked Agent feature requires separate user confirmation and is out of Round2.6 scope
+  - any networked Agent feature requires separate user confirmation and an explicit contract update
 forbidden:
   - uploading user strategy/text to external service by default
   - writing manual input to clean data tables

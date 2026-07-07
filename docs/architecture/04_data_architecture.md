@@ -101,6 +101,15 @@ report tables:
 可供 Repository 读取
 ```
 
+Clean 不等于“永远来自正常主源”。Clean 的含义是“已通过校验、可追溯、可被系统读取”。最终成品必须进一步区分：
+
+```text
+primary-grade clean  正常 Primary 源写入，可作为默认主事实输入
+degraded clean       FallbackPolicy 授权后的降级写入，可读但必须带 source_switched / quality_flags / stale_reason
+```
+
+下游模块、前端和 Agent 不得把 degraded clean 静默当作 primary-grade clean。若某个模型或指标只接受主源级输入，遇到 degraded clean 必须 fail-closed、降权、仅展示或返回诚实 NULL。
+
 ## Snapshot
 
 ```text
@@ -140,6 +149,8 @@ Fetched Raw
 可重试
 不污染 clean table
 ```
+
+若失败后按 FallbackPolicy 使用 Validation 源或 last_good_cache，不能视为“失败消失”。必须保留原始失败事件，并将后续写入标记为 degraded clean。
 
 ---
 
@@ -240,6 +251,7 @@ Backfill 分区分批，不全市场并发
 所有 snapshot 能追溯到 clean / spec / source
 所有 file_registry local_path 存在或标记 missing
 所有 source switch 有 quality_flags
+所有 degraded clean 可从 write_audit_log / route plan 追溯到主源失败原因和 fallback 策略
 所有 specs 能加载并初始化 registry
 无分页大查询被拒绝
 ResourceGuard 可阻止重任务污染本机体验

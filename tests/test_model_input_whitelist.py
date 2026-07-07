@@ -238,6 +238,7 @@ def test_layer2_hg_main_gate_readiness_consistency() -> None:
     assert "staged_fixture" in notes or "sandbox" in notes.lower()
 
 
+def test_layer2_noAcceptedChannel_deferredWithClosureTest() -> None:
     """覆盖范围：Layer2 无可用渠道资产
     测试对象：layer2_source_whitelist.yaml L2-NO-CHANNEL
     目的/目标：缺源资产标 deferred + closure_test
@@ -492,40 +493,3 @@ def test_forbidden_macro_supplementary_not_fred_primary_closure() -> None:
         and _series_value(r) in LAYER1_P0_SERIES
     ]
     assert len(p0_fred) == len(LAYER1_P0_SERIES)
-
-
-def test_readiness_matrix_documents_layers() -> None:
-    """覆盖范围：模型输入白名单人类可读索引
-    测试对象：specs/model_inputs/README.md
-    目的/目标：README 说明 sandbox/staged/deferred 分区与 YAML 文件职责
-    验证点：含 layer 白名单文件表；含 sandbox_candidate 与 deferred 语义
-    失败含义：业务方无法读索引理解首批模型输入范围
-    """
-    path = PROJECT_ROOT / "specs" / "model_inputs" / "README.md"
-    assert path.is_file(), "specs/model_inputs/README.md required"
-    text = path.read_text(encoding="utf-8")
-    for marker in ("layer1_source_whitelist.yaml", "layer2_source_whitelist.yaml", "layer3_anchor_source_plan.yaml"):
-        assert marker in text, marker
-    for term in ("sandbox_candidate", "deferred", "fixture_only", "validation_only"):
-        assert term in text, term
-
-
-def test_model_inputs_readme_indexes_whitelist_files() -> None:
-    """覆盖范围：specs/model_inputs/README.md 索引
-    测试对象：README 与五层 YAML 文件
-    目的/目标：README 列出五文件并声明 Batch 01 边界
-    验证点：README 含五 yaml 文件名；含 whitelist-driven 或 sandbox 表述
-    失败含义：执行者找不到白名单 SSOT
-    """
-    readme = MODEL_INPUTS / "README.md"
-    assert readme.is_file()
-    text = readme.read_text(encoding="utf-8")
-    for name in (
-        "layer1_source_whitelist.yaml",
-        "layer2_source_whitelist.yaml",
-        "layer3_anchor_source_plan.yaml",
-        "layer4_market_source_plan.yaml",
-        "layer5_instrument_source_plan.yaml",
-    ):
-        assert name in text, name
-    assert "sandbox" in text.lower() or "whitelist" in text.lower()
