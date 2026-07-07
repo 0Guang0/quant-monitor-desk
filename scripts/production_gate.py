@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
+import argparse
+import subprocess
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+CI_DRY_MATRIX_ROOT = ROOT / ".audit-sandbox" / "source-route-db-ci-dry"
+CI_DRY_MATRIX_REPORT = CI_DRY_MATRIX_ROOT / "reports" / "source-matrix-acceptance.json"
 FAILURES: list[str] = []
 
 
@@ -15,6 +19,13 @@ def fail(msg: str) -> None:
 
 def read(path: str) -> str:
     return (ROOT / path).read_text(encoding="utf-8")
+
+
+def _run_checked(cmd: list[str], *, label: str) -> None:
+    result = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+    if result.returncode != 0:
+        detail = (result.stderr or result.stdout or "").strip()
+        fail(f"{label} failed (exit {result.returncode}): {detail}")
 
 
 def check_no_prod_stub_validation() -> None:
@@ -65,25 +76,115 @@ def check_resource_contract() -> None:
 
 
 def check_module_boundaries() -> None:
-    import subprocess
-
-    result = subprocess.run(
+    _run_checked(
         [sys.executable, str(ROOT / "scripts" / "check_module_boundaries.py")],
-        cwd=ROOT,
-        capture_output=True,
-        text=True,
+        label="module boundary check",
     )
-    if result.returncode != 0:
-        fail(f"module boundary check failed: {result.stderr or result.stdout}")
 
 
-def main() -> int:
+def check_acceptance_helper_consumers_strict() -> None:
+    _run_checked(
+        [
+            sys.executable,
+            str(ROOT / "scripts" / "check_acceptance_helper_consumers.py"),
+            "--strict",
+        ],
+        label="acceptance helper consumers --strict",
+    )
+
+
+def check_source_route_matrix_static() -> None:
+    _run_checked(
+        [
+            sys.executable,
+            str(ROOT / "scripts" / "check_source_route_db_acceptance_matrix.py"),
+            "--strict",
+        ],
+        label="source route matrix static contract",
+    )
+
+
+def check_source_route_matrix_dry_run_closure() -> None:
+    CI_DRY_MATRIX_ROOT.mkdir(parents=True, exist_ok=True)
+    _run_checked(
+        [
+            sys.executable,
+            str(ROOT / "scripts" / "qmd_ops.py"),
+            "accept-source-route-db",
+            "--all-documented-sources",
+            "--data-root",
+            str(CI_DRY_MATRIX_ROOT),
+            "--report",
+            str(CI_DRY_MATRIX_REPORT),
+            "--format",
+            "json",
+        ],
+        label="source route matrix dry-run generation",
+    )
+    _run_checked(
+        [
+            sys.executable,
+            str(ROOT / "scripts" / "check_source_route_db_acceptance_matrix.py"),
+            "--strict",
+            "--report",
+            str(CI_DRY_MATRIX_REPORT),
+        ],
+        label="source route matrix dry-run closure",
+    )
+
+
+def check_source_route_matrix_live_closure(report_path: Path) -> None:
+    resolved = report_path if report_path.is_absolute() else ROOT / report_path
+    if not resolved.is_file():
+        fail(f"source matrix live report not found: {resolved}")
+        return
+    _run_checked(
+        [
+            sys.executable,
+            str(ROOT / "scripts" / "check_source_route_db_acceptance_matrix.py"),
+            "--strict",
+            "--live-authorized",
+            "--report",
+            str(resolved),
+        ],
+        label="source route matrix live-authorized closure",
+    )
+
+
+def main(argv: list[str] | None = None) -> int:
+    FAILURES.clear()
+    parser = argparse.ArgumentParser(description="Pre-release hardening checks")
+    parser.add_argument(
+        "--source-matrix-report",
+        type=Path,
+        default=None,
+        help="Optional pre-generated source matrix JSON for release live-authorized closure check",
+    )
+    parser.add_argument(
+        "--live-authorized",
+        action="store_true",
+        help="Validate --source-matrix-report with final_live_authorized closure (release gate)",
+    )
+    args = parser.parse_args(argv)
+
     check_no_prod_stub_validation()
     check_workflow_permissions()
     check_dependabot_present()
     check_agent_contract()
     check_resource_contract()
     check_module_boundaries()
+    check_acceptance_helper_consumers_strict()
+    check_source_route_matrix_static()
+
+    if args.live_authorized:
+        if args.source_matrix_report is None:
+            fail("--live-authorized requires --source-matrix-report")
+        else:
+            check_source_route_matrix_live_closure(args.source_matrix_report)
+    else:
+        if args.source_matrix_report is not None:
+            fail("--source-matrix-report requires --live-authorized")
+        check_source_route_matrix_dry_run_closure()
 
     if FAILURES:
         for item in FAILURES:

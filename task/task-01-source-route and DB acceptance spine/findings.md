@@ -257,7 +257,7 @@ Proposed matrix/contract prose (not yet written to authority docs):
 
 **Problem 1 (done):** `consumer_count=0`；旧 seam 重命名完成（见 commit `d5ccffe`）。
 
-**Problem 3（登记，未做）：** `production_gate.py`/CI 尚未硬接 `--live-authorized` matrix checker。
+**Problem 3（done）：** `production_gate.py` 默认接入 PR/CI 轻量 gate（helper strict + matrix static + dry-run closure）；release 用 `--live-authorized --source-matrix-report`；手动 workflow `.github/workflows/source-matrix-live-acceptance.yml`。
 
 ### Phase 15 — closure 双模式 + 资格延期语义（2026-07-07）
 

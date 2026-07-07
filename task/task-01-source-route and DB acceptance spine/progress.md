@@ -284,7 +284,24 @@
 | SEC live matrix | qmd-ops single target | PASS or honest FAIL_EXTERNAL | FAIL_EXTERNAL | expected |
 | Full matrix closure | 22 sources | 21 PASS + SEC external | 21/22 | expected |
 
-## Error Log
+### Phase 16 — Problem 3 production_gate 双层 gate（2026-07-07）
+
+- **Status:** complete
+- Actions taken:
+  - Extended `scripts/production_gate.py` with PR/CI checks: helper `--strict`, matrix static `--strict`, dry-run matrix closure (no `--allow-live-fetch`).
+  - Added release gate flags: `--live-authorized --source-matrix-report <path>` (skips dry-run generation).
+  - Added `tests/test_production_gate.py` (mock subprocess; default dry-run path + live report path).
+  - Added `.github/workflows/source-matrix-live-acceptance.yml` (`workflow_dispatch` operator gate).
+  - Fixed `FAILURES.clear()` at `main()` entry so repeated invocations do not leak state.
+- Verification:
+  - `uv run pytest tests/test_production_gate.py -q` — 3 passed
+  - `uv run python scripts/production_gate.py` — PASS (~15s dry-run matrix)
+  - `uv run pytest -q` — full suite exit 0
+- Files modified/created:
+  - `scripts/production_gate.py`
+  - `tests/test_production_gate.py` (created)
+  - `.github/workflows/source-matrix-live-acceptance.yml` (created)
+  - `task/.../findings.md`, `docs/decisions/ADR-016-source-route-matrix-honest-closure.md`
 
 | Timestamp | Error | Attempt | Resolution |
 |-----------|-------|---------|------------|

@@ -129,4 +129,6 @@ uv run python scripts/check_source_route_db_acceptance_matrix.py `
 - Task: `task/task-01-source-route and DB acceptance spine`
 - Slices: Slice 10（Real Authorized Source-Matrix Acceptance）
 - Checkers: `scripts/check_source_route_db_acceptance_matrix.py --live-authorized`
-- Reports: `.audit-sandbox/source-route-db-full-live-v2/reports/source-matrix-acceptance.json`（2026-07-07 证据样例）
+- PR gate: `python scripts/production_gate.py` (dry-run matrix closure; wired in `.github/workflows/ci.yml`)
+- Release gate: `python scripts/production_gate.py --live-authorized --source-matrix-report <path>`
+- Manual live workflow: `.github/workflows/source-matrix-live-acceptance.yml`

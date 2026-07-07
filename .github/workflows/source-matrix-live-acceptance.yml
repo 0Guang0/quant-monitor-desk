@@ -1,0 +1,38 @@
+name: Source Matrix Live Acceptance
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live-matrix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - run: pip install -e ".[dev]"
+      - name: Run live-authorized source matrix (operator gate)
+        env:
+          QMD_ALLOW_LIVE_FETCH: "1"
+        run: |
+          uv run qmd-ops accept-source-route-db \
+            --all-documented-sources \
+            --data-root .audit-sandbox/source-route-db-full-live-v2 \
+            --report .audit-sandbox/source-route-db-full-live-v2/reports/source-matrix-acceptance.json \
+            --allow-live-fetch \
+            --format json
+      - name: Validate live matrix closure
+        run: |
+          uv run python scripts/check_source_route_db_acceptance_matrix.py \
+            --strict \
+            --live-authorized \
+            --report .audit-sandbox/source-route-db-full-live-v2/reports/source-matrix-acceptance.json
+      - name: Release production gate (live report)
+        run: |
+          python scripts/production_gate.py \
+            --live-authorized \
+            --source-matrix-report .audit-sandbox/source-route-db-full-live-v2/reports/source-matrix-acceptance.json
