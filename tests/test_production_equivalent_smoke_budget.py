@@ -211,6 +211,48 @@ def test_productionEquivalentSmoke_main_writesFailArtifactAndExitsNonZero(
     assert payload["violations"]
 
 
+def test_productionEquivalentSmoke_sourceRouteDbAdapterWritesBlockedReport(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """覆盖范围：旧 smoke 入口显式请求 source-route DB 验收报告
+    测试对象：scripts.production_equivalent_smoke.main --source-route-db-target
+    目的/目标：兼容入口必须委托 SourceRouteDbAcceptanceSpine，不能用 smoke PASS 冒充成品验收
+    验证点：main()==1；source-route 报告落盘；failure_class=BLOCKED 且含 route_plan_id
+    失败含义：旧 smoke 入口仍可能绕过新验收 spine，或把 blocked tracer 包装成成功
+    """
+    import scripts.production_equivalent_smoke as smoke
+
+    data_root = tmp_path / "data"
+    report_path = data_root / "reports" / "source_route_db_acceptance.json"
+    times = iter([0.0, 1.0])
+    monkeypatch.setattr(smoke.time, "perf_counter", lambda: next(times))
+    monkeypatch.setattr(
+        smoke.subprocess,
+        "run",
+        lambda *args, **kwargs: type("_Proc", (), {"returncode": 0})(),
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "production_equivalent_smoke.py",
+            "--data-root",
+            str(data_root),
+            "--source-route-db-target",
+            "macro_series:fred:fetch_macro_series",
+            "--write-source-route-db-report",
+            str(report_path),
+        ],
+    )
+
+    assert smoke.main() == 1
+    payload = json.loads(report_path.read_text(encoding="utf-8"))
+    assert payload["failure_class"] == "BLOCKED"
+    assert payload["status"] == "FAIL"
+    assert payload["route_plan_id"]
+
+
 def test_productionEquivalentSmokeBudgetYaml_isValidYaml() -> None:
     """覆盖范围：契约文件存在且可被 CI/脚本解析
     测试对象：specs/contracts/production_equivalent_smoke_budget.yaml

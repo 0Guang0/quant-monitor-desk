@@ -63,6 +63,29 @@ def _collect_scale_metrics(data_root: Path, *, guard_exercised: bool) -> dict[st
     return metrics
 
 
+def _run_source_route_db_acceptance(
+    *,
+    target: str,
+    data_root: Path,
+    report_path: Path,
+    live_authorized: bool,
+) -> dict[str, object]:
+    from backend.app.ops.source_route_db_acceptance import (
+        AcceptanceRequest,
+        SourceRouteDbAcceptanceSpine,
+        write_acceptance_report,
+    )
+
+    request = AcceptanceRequest.from_target(target)
+    report = SourceRouteDbAcceptanceSpine().execute(
+        request,
+        data_root=data_root,
+        live_authorized=live_authorized,
+    )
+    write_acceptance_report(report, report_path)
+    return report.to_dict()
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Production-equivalent smoke")
     parser.add_argument(
@@ -88,7 +111,27 @@ def main() -> int:
         default=PROJECT_ROOT / "specs/contracts/production_equivalent_smoke_budget.yaml",
         help="Threshold YAML (default: specs/contracts/production_equivalent_smoke_budget.yaml)",
     )
+    parser.add_argument(
+        "--source-route-db-target",
+        default=None,
+        help="Optional delegated acceptance target as data_domain:source_id:operation",
+    )
+    parser.add_argument(
+        "--write-source-route-db-report",
+        type=Path,
+        default=None,
+        help="Optional SourceRouteDbAcceptanceSpine report JSON path",
+    )
+    parser.add_argument(
+        "--allow-live-fetch",
+        action="store_true",
+        help="Authorize live external fetch attempts for delegated source-route DB acceptance",
+    )
     args = parser.parse_args()
+    if bool(args.source_route_db_target) != bool(args.write_source_route_db_report):
+        parser.error(
+            "--source-route-db-target and --write-source-route-db-report must be used together"
+        )
 
     data_root = args.data_root.resolve()
     data_root.mkdir(parents=True, exist_ok=True)
@@ -185,6 +228,23 @@ def main() -> int:
     metrics = _collect_scale_metrics(data_root, guard_exercised=guard_exercised)
     metrics["elapsed_s"] = round(elapsed, 2)
     metrics["pytest_steps"] = step_count
+    source_route_db_report: dict[str, object] | None = None
+
+    if args.source_route_db_target is not None:
+        try:
+            source_route_db_report = _run_source_route_db_acceptance(
+                target=args.source_route_db_target,
+                data_root=data_root,
+                report_path=args.write_source_route_db_report.resolve(),
+                live_authorized=args.allow_live_fetch,
+            )
+        except ValueError as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 2
+        print(
+            "production_equivalent_smoke: source-route DB report written "
+            f"{args.write_source_route_db_report.resolve()}"
+        )
 
     if args.write_artifact is not None:
         from backend.app.ops.perf_budget import build_smoke_artifact, load_smoke_budget
@@ -209,6 +269,14 @@ def main() -> int:
                 file=sys.stderr,
             )
             return 1
+
+    if source_route_db_report is not None and source_route_db_report["status"] != "PASS":
+        print(
+            "production_equivalent_smoke: source-route DB acceptance FAIL "
+            f"failure_class={source_route_db_report['failure_class']}",
+            file=sys.stderr,
+        )
+        return 1
 
     print(f"production_equivalent_smoke: ALL PASS metrics={json.dumps(metrics, sort_keys=True)}")
     return 0
