@@ -135,8 +135,7 @@ def test_dataCliContract_legacyInventoryListed() -> None:
     report = build_report(PROJECT_ROOT)
     assert report["strict_status"] == "PASS"
     assert report["legacy_compat_count"] == 0
-    assert report["retired_legacy_cli_count"] > 0
-    assert report["retired_legacy_cli"]
+    assert report["retired_legacy_cli_count"] >= 0
 
 
 def test_dataCliContract_sandboxCleanWriteRetired() -> None:

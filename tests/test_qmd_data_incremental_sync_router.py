@@ -1,4 +1,4 @@
-"""R3-DCP-05 S12 — Tier A unified `qmd data sync --source-id` router tests."""
+"""R3-DCP-05 S12 — incremental sync ``qmd data sync --source-id`` router tests."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ import pytest
 
 from backend.app.cli import data_commands, main
 from backend.app.cli.errors import CliFailure
-from backend.app.cli.tier_a_sync_router import sync_tier_a_by_source_id
+from backend.app.cli.incremental_sync_router import sync_incremental_by_source_id
 from backend.app.config import PROJECT_ROOT
 from backend.app.core.resource_guard import Decision, ResourceGuard
 from backend.app.sync.incremental_source_registry import (
@@ -91,14 +91,14 @@ def test_tierASyncRouter_dryRun_allSources_auditableJson(
     sandbox_env: Path, source_id: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """覆盖范围：11 个 Tier A 源 dry-run 路由
-    测试对象：sync_tier_a_by_source_id dry_run=True
+    测试对象：sync_incremental_by_source_id dry_run=True
     目的/目标：每源可审计 JSON（source_id、canonical domain、clean 表）
     验证点：dry_run；source_id；data_domain；clean_table；message 含 dry-run
     失败含义：运维无法按 --source-id 统一审计增量计划
     """
     entry = resolve_tier_a_incremental(source_id)
     _enable_source_registry(monkeypatch, source_id, entry.canonical_domain)
-    payload = sync_tier_a_by_source_id(source_id=source_id, dry_run=True, end="2024-06-30")
+    payload = sync_incremental_by_source_id(source_id=source_id, dry_run=True, end="2024-06-30")
     assert payload["command"] == "sync"
     assert payload["dry_run"] is True
     assert payload["source_id"] == source_id
@@ -111,13 +111,13 @@ def test_tierASyncRouter_dryRun_disabledRegistry_failClosed(
     sandbox_env: Path,
 ) -> None:
     """覆盖范围：registry 默认禁用源 dry-run fail-closed
-    测试对象：sync_tier_a_by_source_id dry_run=True + 生产 SourceRegistry
+    测试对象：sync_incremental_by_source_id dry_run=True + 生产 SourceRegistry
     目的/目标：bis 等 enabled_by_default=false 源不得 silent enable 后返回 READY
     验证点：CliFailure DISABLED_SOURCE
     失败含义：dry-run 审计误导运维认为禁用源可跑
     """
     with pytest.raises(CliFailure) as exc_info:
-        sync_tier_a_by_source_id(source_id="bis", dry_run=True, end="2024-06-30")
+        sync_incremental_by_source_id(source_id="bis", dry_run=True, end="2024-06-30")
     assert exc_info.value.error_code == "DISABLED_SOURCE"
 
 
@@ -125,12 +125,12 @@ def test_tierASyncRouter_dryRun_defaultEnabledSource_noPatch(
     sandbox_env: Path,
 ) -> None:
     """覆盖范围：生产默认启用源 dry-run 无需 patch registry
-    测试对象：sync_tier_a_by_source_id source_id=baostock dry_run=True
+    测试对象：sync_incremental_by_source_id source_id=baostock dry_run=True
     目的/目标：与 bis/fred 禁用对照 — baostock enabled_by_default=true 应可直接 dry-run 审计
     验证点：dry_run=True；source_id=baostock；message 含 dry-run
     失败含义：默认启用源 dry-run 仍须 monkeypatch，掩盖生产 posture
     """
-    payload = sync_tier_a_by_source_id(source_id="baostock", dry_run=True, end="2024-06-30")
+    payload = sync_incremental_by_source_id(source_id="baostock", dry_run=True, end="2024-06-30")
     assert payload["dry_run"] is True
     assert payload["source_id"] == "baostock"
     assert "dry-run" in payload["message"].lower()
@@ -138,13 +138,13 @@ def test_tierASyncRouter_dryRun_defaultEnabledSource_noPatch(
 
 def test_tierASyncRouter_unknownSource_failClosed(sandbox_env: Path) -> None:
     """覆盖范围：非 Tier A source_id 负向
-    测试对象：sync_tier_a_by_source_id
+    测试对象：sync_incremental_by_source_id
     目的/目标：未知源 fail-closed
     验证点：CliFailure INVALID_INPUT
     失败含义：任意 source_id 被静默路由会写错 clean 表
     """
     with pytest.raises(CliFailure) as exc_info:
-        sync_tier_a_by_source_id(source_id="akshare", dry_run=True)
+        sync_incremental_by_source_id(source_id="akshare", dry_run=True)
     assert exc_info.value.error_code == "INVALID_INPUT"
 
 
@@ -153,13 +153,13 @@ def test_tierASyncRouter_nonDryRun_disabledSources_userAuthRequired(
     sandbox_env: Path, source_id: str
 ) -> None:
     """覆盖范围：S12 非 production-equivalent 真跑 fail-closed（T9）
-    测试对象：sync_tier_a_by_source_id dry_run=False
+    测试对象：sync_incremental_by_source_id dry_run=False
     目的/目标：bis/deribit 等源在非 source-route-db 根上须 ISOLATED_ROOT_REQUIRED
     验证点：CliFailure error_code==ISOLATED_ROOT_REQUIRED
     失败含义：未授权源仍可在普通 sandbox 真跑
     """
     with pytest.raises(CliFailure) as exc_info:
-        sync_tier_a_by_source_id(source_id=source_id, dry_run=False, end="2024-06-30")
+        sync_incremental_by_source_id(source_id=source_id, dry_run=False, end="2024-06-30")
     assert exc_info.value.error_code == "ISOLATED_ROOT_REQUIRED"
 
 
@@ -168,7 +168,7 @@ def test_tierASyncRouter_syncPlan_delegatesWhenSourceIdSet(
 ) -> None:
     """覆盖范围：sync_plan 与 --source-id 集成
     测试对象：data_commands.sync_plan(source_id=...)
-    目的/目标：CLI 主路径经 tier A 路由器
+    目的/目标：CLI 主路径经 incremental sync 路由器
     验证点：mootdx dry-run 返回 source_id=mootdx
     失败含义：main 仍只认 --domain 旧路径，S12 路由未接通
     """
@@ -238,7 +238,7 @@ def test_tierASyncRouter_dryRun_nonSandboxDataRoot_failClosed(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     """覆盖范围：dry-run 拒绝非 .audit-sandbox 的 QMD_DATA_ROOT
-    测试对象：sync_tier_a_by_source_id dry_run=True
+    测试对象：sync_incremental_by_source_id dry_run=True
     目的/目标：dry-run 不得读 canonical data/ 水位
     验证点：CliFailure error_code==INVALID_INPUT
     失败含义：运维在 canonical 路径 dry-run 会泄露生产 watermark
@@ -247,7 +247,7 @@ def test_tierASyncRouter_dryRun_nonSandboxDataRoot_failClosed(
     monkeypatch.setenv("QMD_DATA_ROOT", str(canonical_root))
     monkeypatch.setattr(data_commands, "DATA_ROOT", canonical_root)
     with pytest.raises(CliFailure) as exc_info:
-        sync_tier_a_by_source_id(source_id="fred", dry_run=True, end="2024-06-30")
+        sync_incremental_by_source_id(source_id="fred", dry_run=True, end="2024-06-30")
     assert exc_info.value.error_code == "INVALID_INPUT"
 
 
@@ -255,7 +255,7 @@ def test_tierASyncRouter_dryRun_userLivePath_failClosed(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     """覆盖范围：dry-run 拒绝 user-live 审计路径
-    测试对象：sync_tier_a_by_source_id dry_run=True
+    测试对象：sync_incremental_by_source_id dry_run=True
     目的/目标：与真跑门禁一致，user-live 不得用于 sync 审计
     验证点：CliFailure error_code==INVALID_INPUT；消息含 user-live
     失败含义：user-live dry-run 可读 rehearsal 库误导运维
@@ -265,7 +265,7 @@ def test_tierASyncRouter_dryRun_userLivePath_failClosed(
     monkeypatch.setenv("QMD_DATA_ROOT", str(data_root))
     monkeypatch.setattr(data_commands, "DATA_ROOT", data_root)
     with pytest.raises(CliFailure) as exc_info:
-        sync_tier_a_by_source_id(source_id="fred", dry_run=True, end="2024-06-30")
+        sync_incremental_by_source_id(source_id="fred", dry_run=True, end="2024-06-30")
     assert exc_info.value.error_code == "INVALID_INPUT"
     assert "user-live" in exc_info.value.message
 
@@ -274,13 +274,13 @@ def test_tierASyncRouter_dryRun_mootdx_selectedSourceId_aligned(
     sandbox_env: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """覆盖范围：mootdx dry-run JSON selected_source_id 对齐 CLI --source-id
-    测试对象：sync_tier_a_by_source_id source_id=mootdx dry_run=True
+    测试对象：sync_incremental_by_source_id source_id=mootdx dry_run=True
     目的/目标：关 ACC-MOOTDX-DRYRUN-ROUTE-001 — dry-run 审计 JSON 须 selected_source_id=mootdx
     验证点：selected_source_id==mootdx；source_id==mootdx；dry_run is True
     失败含义：运维 dry-run 仍显示 baostock primary，explicit mootdx 路由不可审计
     """
     _enable_source_registry(monkeypatch, "mootdx", "cn_equity_daily_bar")
-    payload = sync_tier_a_by_source_id(source_id="mootdx", dry_run=True, end="2024-06-30")
+    payload = sync_incremental_by_source_id(source_id="mootdx", dry_run=True, end="2024-06-30")
     assert payload["source_id"] == "mootdx"
     assert payload["selected_source_id"] == "mootdx"
     assert payload["dry_run"] is True
@@ -290,7 +290,7 @@ def test_tierASyncRouter_dryRun_baostock_resourceGuardPaused_failClosed(
     sandbox_env: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """覆盖范围：baostock dry-run resource guard PAUSE fail-closed
-    测试对象：sync_tier_a_by_source_id source_id=baostock dry_run=True
+    测试对象：sync_incremental_by_source_id source_id=baostock dry_run=True
     目的/目标：与 macro _dry_run_shell 一致，PAUSE 不得 exit 0
     验证点：CliFailure error_code==RESOURCE_GUARD_PAUSED
     失败含义：guard 暂停时 dry-run 仍成功会误导运维真跑
@@ -301,5 +301,5 @@ def test_tierASyncRouter_dryRun_baostock_resourceGuardPaused_failClosed(
         lambda self: (Decision.PAUSE, "disk pressure"),
     )
     with pytest.raises(CliFailure) as exc_info:
-        sync_tier_a_by_source_id(source_id="baostock", dry_run=True, end="2024-06-30")
+        sync_incremental_by_source_id(source_id="baostock", dry_run=True, end="2024-06-30")
     assert exc_info.value.error_code == "RESOURCE_GUARD_PAUSED"

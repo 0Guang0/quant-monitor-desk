@@ -385,7 +385,9 @@ def _run_scheduler_entry(
                     job_type=job_type,  # type: ignore[arg-type]
                     date_start=parsed_start,
                     date_end=parsed_end,
-                    trigger_reason=f"scheduler:{job_type}",
+                    trigger_reason=(
+                        "eco_catchup" if job_type == "backfill" else f"scheduler:{job_type}"
+                    ),
                 )
                 status = "COMPLETED" if report.status == "PASS" else report.failure_class
                 return SchedulerJobResult(

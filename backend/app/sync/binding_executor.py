@@ -15,6 +15,7 @@ from backend.app.ops.sandbox_clean_write.clean_write_targets import (
 from backend.app.sync.indicator_binding import IndicatorBinding
 from backend.app.sync.jobs import SyncJobResult, SyncJobSpec
 from backend.app.sync.orchestrator import DataSyncOrchestrator
+from backend.app.sync.runners import resolve_conflict_staging_table
 from backend.app.sync.watermark import (
     _BAR_WATERMARK_DOMAINS,
     _MACRO_WATERMARK_DOMAINS,
@@ -212,6 +213,7 @@ def execute_binding(
                     required_fields=required_fields,
                 )
         elif binding.data_domain in BAR_DOMAINS:
+            conflict_staging = resolve_conflict_staging_table(binding.data_domain, spec.job_id)
             results = orchestrator.run_backfill(
                 spec,
                 datasource_service=datasource_service,
@@ -219,6 +221,7 @@ def execute_binding(
                 write_mode=target.write_mode,
                 primary_keys=target.primary_keys,
                 required_fields=required_fields,
+                conflict_staging_table=conflict_staging,
             )
         else:
             raise ValueError(

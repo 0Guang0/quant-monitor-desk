@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 import yaml
 
+from backend.app.datasources.live_tier_router import TIER_A_SOURCES
 from backend.app.ops.data_health import DataHealthLoadError
 from backend.app.ops.data_health_profiles import (
     CRYPTO_DERIVATIVE_P0_RULE_IDS,
@@ -16,14 +17,19 @@ from backend.app.ops.data_health_profiles import (
     LAYER1_OBSERVATION_P0_RULE_IDS,
     run_data_health_profile,
 )
-from backend.app.ops.tier_a_evidence_runner import source_bindings
+from backend.app.ops.data_health_profiles.source_health_bindings import (
+    iter_raw_source_files,
+    latest_raw_evidence_dir,
+    load_source_health_bindings,
+    run_f0_data_health,
+)
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[1]
 _RULES_PATH = _PROJECT_ROOT / "specs" / "contracts" / "data_quality_rules.yaml"
 _REPLAY = _PROJECT_ROOT / "tests" / "fixtures" / "replay"
 _GOOD_BUNDLE = _PROJECT_ROOT / "tests" / "fixtures" / "data_health" / "good_bundle"
 
-_TIER_A_SOURCES = tuple(source_bindings().keys())
+_SOURCE_HEALTH_BINDING_IDS = tuple(load_source_health_bindings().keys())
 
 
 def _copy_replay(src: Path, tmp_path: Path, name: str) -> Path:
@@ -35,10 +41,10 @@ def _copy_replay(src: Path, tmp_path: Path, name: str) -> Path:
 
 def test_fourProfileFamilies_registeredInContract() -> None:
     """覆盖范围：四族 profile 契约登记
-    测试对象：data_quality_rules.yaml ops_cli_profiles + live_tier_a_evidence_v1
+    测试对象：data_quality_rules.yaml ops_cli_profiles + source_health_bindings
     目的/目标：S-R2-F0 AC — 四族 profile ID 在契约中可解析
-    验证点：market_bar / layer1 / disclosure / crypto 域存在；binding 数与契约 source_bindings 一致
-    失败含义：profile 族与 source_bindings 漂移，F0 无法按源路由
+    验证点：market_bar / layer1 / disclosure / crypto 域存在；binding 数与契约 source_health_bindings 一致
+    失败含义：profile 族与 load_source_health_bindings 漂移，F0 无法按源路由
     """
     raw = yaml.safe_load(_RULES_PATH.read_text(encoding="utf-8")) or {}
     profiles = raw.get("ops_cli_profiles") or {}
@@ -46,11 +52,8 @@ def test_fourProfileFamilies_registeredInContract() -> None:
     assert "layer1_observation" in profiles
     assert "us_disclosure" in profiles
     assert "crypto_derivative" in profiles
-    bindings = source_bindings()
-    contract_path = _PROJECT_ROOT / "specs" / "contracts" / "live_tier_a_evidence_v1.yaml"
-    contract_bindings = (yaml.safe_load(contract_path.read_text(encoding="utf-8")) or {}).get(
-        "source_bindings", {}
-    )
+    bindings = load_source_health_bindings()
+    contract_bindings = raw.get("source_health_bindings") or {}
     assert len(bindings) == len(contract_bindings)
     families = {b["health_profile_id"] for b in bindings.values()}
     assert families == {
@@ -209,15 +212,15 @@ def test_layer1_fredLiveSeriesPayload_notFailBlocked(tmp_path: Path) -> None:
 
 def test_f0_nestedRawStorePath_findsEvidenceDir(tmp_path: Path) -> None:
     """覆盖范围：RawStore 嵌套 raw/{source}/raw/{source} 路径
-    测试对象：_latest_raw_evidence_dir
+    测试对象：latest_raw_evidence_dir
     目的/目标：live 增量落盘嵌套路径时 F0 可定位证据目录
     验证点：返回含 JSON 的日期目录；fred 不串源
     失败含义：live manifest/F0 误报 no raw evidence 或跨源污染
     """
-    from backend.app.ops.tier_a_evidence_runner import (
-        _latest_raw_evidence_dir,
-        ensure_isolated_db,
-        _run_f0_data_health,
+    from backend.app.ops.acceptance_isolation import ensure_isolated_db
+    from backend.app.ops.data_health_profiles.source_health_bindings import (
+        latest_raw_evidence_dir,
+        run_f0_data_health,
     )
 
     data_root = tmp_path / "sandbox"
@@ -241,13 +244,13 @@ def test_f0_nestedRawStorePath_findsEvidenceDir(tmp_path: Path) -> None:
     other.mkdir(parents=True)
     (other / "other.json").write_text('{"source_id":"mootdx"}', encoding="utf-8")
 
-    evidence_dir = _latest_raw_evidence_dir(data_root, "baostock")
+    evidence_dir = latest_raw_evidence_dir(data_root, "baostock")
     assert evidence_dir is not None
     assert evidence_dir.name == "2026-07-03"
-    assert _latest_raw_evidence_dir(data_root, "fred") is None
+    assert latest_raw_evidence_dir(data_root, "fred") is None
 
     db_path = ensure_isolated_db(data_root)
-    status, detail = _run_f0_data_health(
+    status, detail = run_f0_data_health(
         "baostock", data_root=data_root, db_path=db_path
     )
     assert "no raw evidence" not in detail.lower()
@@ -255,16 +258,15 @@ def test_f0_nestedRawStorePath_findsEvidenceDir(tmp_path: Path) -> None:
 
 def test_f0_noRawEvidence_returnsFail(isolated_live_data_root: Path) -> None:
     """覆盖范围：无 raw 证据 F0 路径
-    测试对象：_run_f0_data_health
+    测试对象：run_f0_data_health
     目的/目标：S-R2-F0 禁 SKIP — 无证据须 FAIL 非 SKIP
     验证点：status==FAIL；detail 含 no raw evidence
     失败含义：SKIP 路径残留
     """
     from backend.app.ops.acceptance_isolation import ensure_isolated_db
-    from backend.app.ops.tier_a_evidence_runner import _run_f0_data_health
 
     db_path = ensure_isolated_db(isolated_live_data_root)
-    status, detail = _run_f0_data_health(
+    status, detail = run_f0_data_health(
         "fred", data_root=isolated_live_data_root, db_path=db_path
     )
     assert status == "FAIL"
@@ -273,13 +275,12 @@ def test_f0_noRawEvidence_returnsFail(isolated_live_data_root: Path) -> None:
 
 def test_f0_partialFredPayload_returnsFail(tmp_path: Path) -> None:
     """覆盖范围：不完整 fred JSON
-    测试对象：_run_f0_data_health
+    测试对象：run_f0_data_health
     目的/目标：仅 series_id 的残缺载荷须 FAIL 非 SKIP
     验证点：status==FAIL
     失败含义：partial 证据被 SKIP 放过
     """
     from backend.app.ops.acceptance_isolation import ensure_isolated_db
-    from backend.app.ops.tier_a_evidence_runner import _run_f0_data_health
 
     data_root = tmp_path / "data"
     data_root.mkdir()
@@ -287,17 +288,17 @@ def test_f0_partialFredPayload_returnsFail(tmp_path: Path) -> None:
     raw_dir.mkdir(parents=True)
     (raw_dir / "abc.json").write_text('{"series_id":"DGS10"}', encoding="utf-8")
     db_path = ensure_isolated_db(data_root)
-    status, detail = _run_f0_data_health("fred", data_root=data_root, db_path=db_path)
+    status, detail = run_f0_data_health("fred", data_root=data_root, db_path=db_path)
     assert status == "FAIL"
     assert detail
 
 
 def test_allTierASources_bindingRoutesToSupportedProfile() -> None:
-    """覆盖范围：11 源 source_bindings F0 路由
-    测试对象：source_bindings health_profile_id / health_domain
-    目的/目标：每源映射到已支持的四族之一
-    验证点：11 源均在 _TIER_A_SOURCES；profile+domain 组合合法
-    失败含义：某源 F0 路由缺失
+    """覆盖范围：11 源 source_health_bindings F0 路由
+    测试对象：load_source_health_bindings health_profile_id / health_domain
+    目的/目标：每源映射到已支持的四族之一，且与 TIER_A_SOURCES 一致
+    验证点：11 源均在 _SOURCE_HEALTH_BINDING_IDS；profile+domain 组合合法
+    失败含义：某源 F0 路由缺失或与 Tier A registry 漂移
     """
     supported = {
         "market_bar_p0": {"market_bar_1d"},
@@ -305,8 +306,9 @@ def test_allTierASources_bindingRoutesToSupportedProfile() -> None:
         "disclosure_p0": {"us_disclosure", "cn_disclosure"},
         "crypto_derivative_p0": {"crypto_derivative"},
     }
-    for source_id in _TIER_A_SOURCES:
-        binding = source_bindings()[source_id]
+    assert set(_SOURCE_HEALTH_BINDING_IDS) == set(TIER_A_SOURCES)
+    for source_id in _SOURCE_HEALTH_BINDING_IDS:
+        binding = load_source_health_bindings()[source_id]
         profile = binding["health_profile_id"]
         domain = binding["health_domain"]
         assert profile in supported
@@ -334,7 +336,7 @@ def test_goodBundle_marketBar_stillPasses() -> None:
 
 def test_macroStagingPersist_writesRawDiscoverableByF0(tmp_path: Path) -> None:
     """覆盖范围：macro staging adapter raw 落盘
-    测试对象：persist_incremental_fetch_payload + _run_f0_data_health
+    测试对象：persist_incremental_fetch_payload + run_f0_data_health
     目的/目标：live incremental 后 F0 须 PASS 且能找到 raw JSON
     验证点：raw 文件存在；F0 status==PASS
     失败含义：staging 旁路仍不写 raw 或 F0 无法消费 persisted 证据
@@ -344,10 +346,10 @@ def test_macroStagingPersist_writesRawDiscoverableByF0(tmp_path: Path) -> None:
 
     from backend.app.datasources.fetch_result import FetchRequest
     from backend.app.ops.macro_incremental_common import persist_incremental_fetch_payload
-    from backend.app.ops.tier_a_evidence_runner import (
-        _iter_source_raw_files,
-        _run_f0_data_health,
-        ensure_isolated_db,
+    from backend.app.ops.acceptance_isolation import ensure_isolated_db
+    from backend.app.ops.data_health_profiles.source_health_bindings import (
+        iter_raw_source_files,
+        run_f0_data_health,
     )
     from backend.app.storage.raw_store import RawStore
     from tests.support.macro_staging_adapters import FredMacroStubAdapter
@@ -388,9 +390,9 @@ def test_macroStagingPersist_writesRawDiscoverableByF0(tmp_path: Path) -> None:
 
     adapter = FredMacroStubAdapter(object(), raw_store=RawStore(raw_root), fetch_port=object())
     persist_incremental_fetch_payload(adapter, payload, req, as_of="2026-07-03")
-    assert _iter_source_raw_files(data_root, "fred")
+    assert iter_raw_source_files(data_root, "fred")
     db_path = ensure_isolated_db(data_root)
-    status, detail = _run_f0_data_health("fred", data_root=data_root, db_path=db_path)
+    status, detail = run_f0_data_health("fred", data_root=data_root, db_path=db_path)
     assert status == "PASS", detail
 
 

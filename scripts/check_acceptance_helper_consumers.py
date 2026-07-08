@@ -66,21 +66,6 @@ class ConsumerHit:
 
 RULES: tuple[ConsumerRule, ...] = (
     ConsumerRule(
-        target="scripts/acceptance_pipeline_smoke.py (retired: production_equivalent_smoke.py)",
-        pattern=re.compile(
-            r"(?:scripts[/\\]production_equivalent_smoke(?:\.py)?"
-            r"|from\s+scripts\.production_equivalent_smoke|import\s+scripts\.production_equivalent_smoke)"
-        ),
-        classification="smoke_wrapper",
-        replacement="SourceRouteDbAcceptanceSpine Adapter or qmd-ops accept-source-route-db",
-    ),
-    ConsumerRule(
-        target="backend/app/ops/tier_a_evidence_runner.py (retired: tier_a_live_acceptance.py)",
-        pattern=re.compile(r"tier_a_live_acceptance"),
-        classification="source_specific_live_helper",
-        replacement="SourceRouteDbAcceptanceSpine internal Adapter",
-    ),
-    ConsumerRule(
         target="tests/acceptance_e2e_bootstrap.py (retired: live_incremental_support.py)",
         pattern=re.compile(r"live_incremental_support"),
         classification="test_helper",

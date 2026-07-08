@@ -31,6 +31,47 @@ _DEFAULT_QUALITY_RULE_SET, _DEFAULT_QUALITY_RULE_VERSION = default_quality_rule_
 _DEFAULT_CONFLICT_RULE_SET, _DEFAULT_CONFLICT_RULE_VERSION = default_conflict_rule_contract()
 
 FetchCallable = Callable[..., FetchResult]
+
+
+def resolve_conflict_staging_table(data_domain: str, job_id: str) -> str | None:
+    """Per-job conflict peer staging when domain registry lists validation sources."""
+    from backend.app.datasources.source_registry import SourceRegistry
+
+    registry = SourceRegistry()
+    if not registry._sources:
+        registry.load()
+    try:
+        roles = registry.get_domain_roles(data_domain)
+    except KeyError:
+        return None
+    if not roles.validation_source_id and not roles.fallback_source_ids:
+        return None
+    safe_job = job_id.replace("-", "_")
+    return f"stg_conflict_peer_{safe_job}"
+
+
+def _resolve_write_provenance(
+    spec: SyncJobSpec,
+    source_used: str | None,
+) -> tuple[str, bool, tuple[str, ...], str | None]:
+    resolved = source_used or spec.source_id
+    if resolved == spec.source_id:
+        return "primary", False, (), None
+    from backend.app.datasources.source_registry import SourceRegistry
+
+    registry = SourceRegistry()
+    if not registry._sources:
+        registry.load()
+    try:
+        roles = registry.get_domain_roles(spec.data_domain)
+    except KeyError:
+        return "primary", False, (), None
+    fallback_ids = tuple(roles.fallback_source_ids or ())
+    if resolved in fallback_ids:
+        return "fallback", True, ("SOURCE_FALLBACK_USED",), "primary_unavailable"
+    return "primary", False, (), None
+
+
 PostWritePreCompleteHook = Callable[[str, str], None]
 
 
@@ -206,6 +247,18 @@ class _PipelineMixin:
     ):
         conflict_request = None
         if conflict_staging_table is not None:
+            from backend.app.db.sql_identifiers import quote_ident
+
+            con.execute(
+                f"""
+                CREATE TABLE IF NOT EXISTS {quote_ident(conflict_staging_table)} (
+                    source_id VARCHAR,
+                    instrument_id VARCHAR,
+                    trade_date VARCHAR,
+                    close DOUBLE
+                )
+                """
+            )
             validation_sources = self._resolve_validation_sources(spec) or (
                 "qmt_xtdata",
                 "baostock",
@@ -277,6 +330,9 @@ class _PipelineMixin:
         source_used: str | None = None,
     ):
         resolved_source = source_used or spec.source_id
+        source_role, source_switched, quality_flags, fallback_reason = _resolve_write_provenance(
+            spec, source_used
+        )
         return self._write.write_clean(
             con,
             WriteRequest(
@@ -290,7 +346,10 @@ class _PipelineMixin:
                 source_used=resolved_source,
                 data_domain=spec.data_domain,
                 conflict_report_id=conflict_report_id,
-                source_role="primary",
+                source_role=source_role,
+                source_switched=source_switched,
+                quality_flags=quality_flags,
+                fallback_reason=fallback_reason,
                 requested_by="orchestrator",
             ),
             own_transaction=False,
@@ -769,7 +828,7 @@ class BackfillShardRunner(_PipelineMixin):
                     con, job_id, validation_report_id=quality.validation_report_id
                 )
                 if quality.status == "FAILED" or not quality.can_write_clean:
-                    self._emit_event(
+                    self._jobs.emit_custom_event(
                         job_id,
                         task_id=task_id,
                         event_type=skipped_event_type,
@@ -780,6 +839,7 @@ class BackfillShardRunner(_PipelineMixin):
                             decision="shard_quality_skip",
                             rule_id=quality.quality_flags[0] if quality.quality_flags else None,
                         ),
+                        con=con,
                     )
                     if idx < len(shards) - 1:
                         self._jobs.transition(
@@ -868,7 +928,7 @@ class BackfillShardRunner(_PipelineMixin):
                     source_used=fetch_result.source_id,
                 )
                 if write_result.status != "SUCCESS":
-                    self._emit_event(
+                    self._jobs.emit_custom_event(
                         job_id,
                         task_id=task_id,
                         event_type=partial_fail_event_type,
@@ -878,6 +938,7 @@ class BackfillShardRunner(_PipelineMixin):
                             task_id=task_id,
                             decision="shard_write_failed",
                         ),
+                        con=con,
                     )
                     self._jobs.transition(
                         job_id,

@@ -1,4 +1,4 @@
-"""Shared matrix evidence-fetch runner (SSOT with tier_c_live_validation_dispatch)."""
+"""Shared matrix evidence-fetch runner for source-route-db acceptance matrix."""
 
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ def resolve_matrix_evidence_instrument_id(
     source_id: str,
     instrument_id: str | None = None,
 ) -> str | None:
-    """SSOT with tier_c_live_validation_dispatch._default_instrument_id (no binding table)."""
+    """Resolve instrument_id from SOURCE_LIVE_DEFAULTS when not supplied."""
     if instrument_id is not None:
         return instrument_id
     defaults = SOURCE_LIVE_DEFAULTS.get(source_id)

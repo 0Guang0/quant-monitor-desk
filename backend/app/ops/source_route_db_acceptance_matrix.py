@@ -415,7 +415,7 @@ def missing_gate_errors(target: AcceptanceMatrixTarget) -> tuple[str, ...]:
     """Gate errors aligned with tier SOURCE_API_KEY_ENV SSOT and matrix auth_env rows."""
     import os
 
-    from backend.app.ops.tier_a_evidence_runner import (
+    from backend.app.ops.source_gate_env import (
         SOURCE_API_KEY_ENV,
         validate_sec_edgar_user_agent,
     )

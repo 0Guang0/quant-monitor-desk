@@ -150,7 +150,7 @@ def test_phase1Acceptance_observabilityEvidence_routeFetchPath(tmp_path: Path) -
         data_root=root,
         dry_run=False,
         extra={
-            "incremental_evidence": build_incremental_evidence(cursor_before="2024-01-01"),
+            "incremental_evidence": build_incremental_evidence(watermark_before="2024-01-01"),
             "staging_table": "stg_macro_series",
             "raw_file_paths": ["/tmp/raw.json"],
         },

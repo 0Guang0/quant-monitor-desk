@@ -1,6 +1,7 @@
 # ADR-015：Tier A 隔离沙箱 live 验收
 
-- **Status:** Accepted (Plan freeze M-DATA-03)
+- **Status:** Superseded by ADR-016 + Phase 1 PRD (2026-07-08)
+- **Supersedes note:** M-DATA-03 Tier A/B/C harness runtime paths (`tier_*_live_acceptance`, `live_tier_*_evidence_v1`) are retired. Live gate SSOT is `source-route-db` + `qmd data` + `SourceRouteDbAcceptanceSpine`.
 - **Date:** 2026-07-02
 - **Context:** Wave 4 DCP-05 delivered replay-primary e2e for 11 Tier A sources. Roadmap v2 requires **live network** acceptance before PASS. Module rating must not claim **R4** while tests are mock-only（R4 = 声明 scope 能力真落地，见 MCR §1.2）.
 

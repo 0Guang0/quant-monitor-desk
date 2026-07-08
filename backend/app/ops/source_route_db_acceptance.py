@@ -560,7 +560,7 @@ def _acceptance_job_statuses(
 ) -> tuple[str, str]:
     if job_id is None:
         return "NOT_RUN", "NOT_RUN"
-    with cm.writer() as con:
+    with cm.reader() as con:
         row = con.execute(
             """
             SELECT status, validation_report_id, conflict_report_id

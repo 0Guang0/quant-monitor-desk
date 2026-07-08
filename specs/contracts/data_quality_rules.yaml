@@ -96,6 +96,84 @@ ops_cli_profiles:
       - crypto_derivative_clean
       - validation_report
 
+# Source → F0 health profile bindings (SSOT for qmd data health routing).
+source_health_bindings:
+  baostock:
+    data_domain: cn_equity_daily_bar
+    clean_table: security_bar_1d
+    health_domain: market_bar_1d
+    health_profile_id: market_bar_p0
+    rule_set_id: market_bar_p0
+  mootdx:
+    data_domain: cn_equity_daily_bar
+    clean_table: security_bar_1d
+    health_domain: market_bar_1d
+    health_profile_id: market_bar_p0
+    rule_set_id: market_bar_p0
+    platform_matrix_source_id: mootdx
+  alpha_vantage:
+    data_domain: us_equity_daily_bar
+    clean_table: security_bar_1d
+    health_domain: market_bar_1d
+    health_profile_id: market_bar_p0
+    rule_set_id: market_bar_p0
+  fred:
+    data_domain: macro_series
+    clean_table: axis_observation
+    health_domain: layer1_observation
+    health_profile_id: layer1_observation_p0
+    rule_set_id: layer1_p0
+    evidence_payload_kind: official_macro_evidence_v1
+  us_treasury:
+    data_domain: us_treasury_yield_curve
+    clean_table: axis_observation
+    health_domain: layer1_observation
+    health_profile_id: layer1_observation_p0
+    rule_set_id: layer1_p0
+    evidence_payload_kind: official_macro_evidence_v1
+  bis:
+    data_domain: central_bank_policy
+    clean_table: axis_observation
+    health_domain: layer1_observation
+    health_profile_id: layer1_observation_p0
+    rule_set_id: layer1_p0
+    evidence_payload_kind: official_macro_evidence_v1
+  world_bank:
+    data_domain: development_indicator
+    clean_table: axis_observation
+    health_domain: layer1_observation
+    health_profile_id: layer1_observation_p0
+    rule_set_id: layer1_p0
+    evidence_payload_kind: official_macro_evidence_v1
+  cftc_cot:
+    data_domain: cot_positioning
+    clean_table: axis_observation
+    health_domain: layer1_observation
+    health_profile_id: layer1_observation_p0
+    rule_set_id: layer1_p0
+    evidence_payload_kind: official_macro_evidence_v1
+  sec_edgar:
+    data_domain: us_filings
+    clean_table: us_disclosure_clean
+    health_domain: us_disclosure
+    health_profile_id: disclosure_p0
+    rule_set_id: disclosure_p0
+    evidence_payload_kind: disclosure_evidence_v1
+  cninfo:
+    data_domain: cn_announcements
+    clean_table: cn_announcement_clean
+    health_domain: cn_disclosure
+    health_profile_id: disclosure_p0
+    rule_set_id: disclosure_p0
+    evidence_payload_kind: disclosure_evidence_v1
+  deribit:
+    data_domain: crypto_derivatives
+    clean_table: crypto_derivative_clean
+    health_domain: crypto_derivative
+    health_profile_id: crypto_derivative_p0
+    rule_set_id: crypto_derivative_p0
+    evidence_payload_kind: crypto_derivative_evidence_v1
+
 common_rules:
   - id: MISSING_PRIMARY_KEY
     severity: failed

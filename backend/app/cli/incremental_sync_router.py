@@ -1,4 +1,4 @@
-"""Tier A incremental sync CLI router (R3-DCP-05 S12)."""
+"""Incremental sync CLI router for ``qmd data sync --source-id`` (R3-DCP-05 S12)."""
 
 from __future__ import annotations
 
@@ -31,13 +31,13 @@ def _require_audit_sandbox_data_root(data_root) -> None:
     if ".audit-sandbox" not in resolved.as_posix():
         raise CliFailure(
             error_code="INVALID_INPUT",
-            message="Tier A sync requires QMD_DATA_ROOT under .audit-sandbox",
+            message="Incremental sync dry-run requires QMD_DATA_ROOT under .audit-sandbox",
             docs_anchor="docs/ops/data_sync_quick_reference.md",
         )
     if "user-live" in resolved.parts:
         raise CliFailure(
             error_code="INVALID_INPUT",
-            message="user-live audit path refused for Tier A sync dry-run",
+            message="user-live audit path refused for incremental sync dry-run",
             docs_anchor="docs/ops/data_sync_quick_reference.md",
         )
 
@@ -56,7 +56,7 @@ def _parse_end(end: str | None) -> date:
     return datetime.now(UTC).date()
 
 
-def _tier_a_route_preview(
+def _incremental_route_preview(
     *,
     source_id: str,
     data_domain: str,
@@ -82,7 +82,7 @@ def _dry_run_shell(
     write_mode: str,
     extra: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    plan, guard_decision, guard_reason = _tier_a_route_preview(
+    plan, guard_decision, guard_reason = _incremental_route_preview(
         source_id=source_id,
         data_domain=data_domain,
         operation=operation,
@@ -215,7 +215,7 @@ def _bar_dry_run(
     )
 
 
-def sync_tier_a_by_source_id(
+def sync_incremental_by_source_id(
     *,
     source_id: str,
     dry_run: bool = True,
@@ -227,7 +227,7 @@ def sync_tier_a_by_source_id(
     series_ids: tuple[str, ...] | None = None,
     start: str | None = None,
 ) -> dict[str, Any]:
-    """Route ``qmd data sync --source-id`` to Tier A incremental handlers (ADR-009)."""
+    """Route ``qmd data sync --source-id`` to per-source incremental handlers (ADR-009)."""
     try:
         entry = resolve_tier_a_incremental(source_id)
     except UnknownTierAIncrementalSourceError as exc:
@@ -359,7 +359,7 @@ def sync_tier_a_by_source_id(
             },
             extra={
                 "incremental_evidence": build_incremental_evidence(
-                    cursor_before=None,
+                    watermark_before=None,
                     window_date_start=window_start,
                     window_date_end=end_date.isoformat(),
                 ),
@@ -481,6 +481,6 @@ def sync_tier_a_by_source_id(
 
     raise CliFailure(
         error_code="INVALID_INPUT",
-        message=f"no Tier A sync handler for source_id={source_id!r}",
+        message=f"no incremental sync handler for source_id={source_id!r}",
         docs_anchor="docs/ops/data_sync_quick_reference.md",
     )

@@ -29,6 +29,7 @@ from backend.app.sync.binding_executor import execute_binding
 from backend.app.sync.indicator_binding import IndicatorBinding, bindings_for_source
 from backend.app.sync.jobs import SyncJobResult, SyncJobSpec
 from backend.app.sync.orchestrator import DataSyncOrchestrator
+from backend.app.sync.runners import resolve_conflict_staging_table
 
 REPORT_VERSION = "phase1_acceptance_v1"
 OFFICIAL_JOB_KINDS = frozenset({"sync", "backfill", "full-load", "scheduler"})
@@ -221,7 +222,7 @@ FULL_LOAD_CHECKPOINT_EVENT_TYPES = (
 )
 
 
-def read_cursor_iso(
+def read_watermark_iso(
     cm: ConnectionManager,
     data_domain: str,
     watermark_key: str,
@@ -262,6 +263,8 @@ def _collect_observability_from_job(
         "write_id": job_result.write_id,
         "route_plan_persisted": route_plan_persisted,
     }
+    if job_result.validation_report_id:
+        extra["validation_run_ids"] = [job_result.validation_report_id]
     raw_paths: list[str] = []
     staging_table: str | None = None
     for event in collect_job_events(cm, job_result.job_id):
@@ -282,8 +285,34 @@ def _collect_observability_from_job(
                 staging_table = str(payload["staging_table"])
     if raw_paths:
         extra["raw_file_paths"] = raw_paths
+        extra["raw_file_ids"] = raw_paths
     if staging_table:
         extra["staging_table"] = staging_table
+    if job_result.job_id:
+        with cm.reader() as reader:
+            fetch_rows = reader.execute(
+                "SELECT fetch_id, row_count FROM fetch_log WHERE job_id = ?",
+                [job_result.job_id],
+            ).fetchall()
+            if fetch_rows:
+                extra["fetch_log_ids"] = [str(row[0]) for row in fetch_rows]
+                extra["rows_fetched"] = sum(int(row[1] or 0) for row in fetch_rows)
+            if staging_table:
+                staged = reader.execute(
+                    f"SELECT COUNT(*) FROM {staging_table}"
+                ).fetchone()
+                if staged:
+                    extra["rows_staged"] = int(staged[0])
+            if job_result.write_id:
+                written = reader.execute(
+                    """
+                    SELECT rows_inserted FROM write_audit_log
+                    WHERE write_id = ?
+                    """,
+                    [job_result.write_id],
+                ).fetchone()
+                if written:
+                    extra["rows_written"] = int(written[0])
     return extra
 
 
@@ -366,15 +395,15 @@ def shard_checkpoint_task_id(
 
 def build_incremental_evidence(
     *,
-    cursor_before: str | None = None,
-    cursor_after: str | None = None,
+    watermark_before: str | None = None,
+    watermark_after: str | None = None,
     window_date_start: str | None = None,
     window_date_end: str | None = None,
     pipeline_path: str = PRODUCTION_PIPELINE_PATH,
 ) -> dict[str, Any]:
     return {
-        "cursor_before": cursor_before,
-        "cursor_after": cursor_after,
+        "watermark_before": watermark_before,
+        "watermark_after": watermark_after,
         "window_date_start": window_date_start,
         "window_date_end": window_date_end,
         "pipeline_path": pipeline_path,
@@ -591,6 +620,7 @@ def _run_shard_job_without_binding(
     date_end: date,
     instrument_id: str | None,
     trigger_reason: str | None,
+    resume_job_id: str | None = None,
 ) -> SyncJobResult:
     from backend.app.ops.sandbox_clean_write.clean_write_targets import (
         BAR_DOMAINS,
@@ -600,10 +630,20 @@ def _run_shard_job_without_binding(
 
     target = resolve_clean_write_target(request.data_domain)
     market_id = "GLOBAL" if request.data_domain in MACRO_DOMAINS else "CN_A"
-    suffix = uuid.uuid4().hex[:8]
+    if resume_job_id:
+        job_id = resume_job_id
+        run_id = (
+            resume_job_id.replace("job-", "run-", 1)
+            if resume_job_id.startswith("job-")
+            else f"run-{resume_job_id}"
+        )
+    else:
+        suffix = uuid.uuid4().hex[:8]
+        job_id = f"job-p1-{job_type}-{suffix}"
+        run_id = f"p1-{job_type}-{suffix}"
     spec = SyncJobSpec(
-        run_id=f"p1-{job_type}-{suffix}",
-        job_id=f"job-p1-{job_type}-{suffix}",
+        run_id=run_id,
+        job_id=job_id,
         job_type=job_type,
         data_domain=request.data_domain,
         market_id=market_id,
@@ -635,6 +675,7 @@ def _run_shard_job_without_binding(
                     required_fields=required_fields,
                 )
         else:
+            conflict_staging = resolve_conflict_staging_table(request.data_domain, spec.job_id)
             results = orch.run_backfill(
                 spec,
                 datasource_service=service,
@@ -642,8 +683,10 @@ def _run_shard_job_without_binding(
                 write_mode=target.write_mode,
                 primary_keys=target.primary_keys,
                 required_fields=required_fields,
+                conflict_staging_table=conflict_staging,
             )
     else:
+        conflict_staging = resolve_conflict_staging_table(request.data_domain, spec.job_id)
         results = orch.run_full_load(
             spec,
             datasource_service=service,
@@ -651,6 +694,7 @@ def _run_shard_job_without_binding(
             write_mode=target.write_mode,
             primary_keys=target.primary_keys,
             required_fields=required_fields,
+            conflict_staging_table=conflict_staging,
         )
     if not results:
         return SyncJobResult(
@@ -701,7 +745,7 @@ def _report_from_binding_result(
         cm, job_result.write_id, rows=rows
     )
     blocked_by_conflict = conflict_status in {"SEVERE", "SEVERE_CONFLICT"} or job_result.status == "WAITING_RECONCILE"
-    blocked_by_validation = validation_status == "FAILED"
+    blocked_by_validation = validation_status in {"FAILED", "MANUAL_REVIEW_REQUIRED"} or job_result.status == "MANUAL_REVIEW_REQUIRED"
     pass_status = (
         not blocked_by_conflict
         and not blocked_by_validation
@@ -750,19 +794,20 @@ def execute_spine_or_binding_live(
     trigger_reason: str | None = None,
     shard_plan: list[dict[str, Any]] | None = None,
     run_id: str | None = None,
+    resume_job_id: str | None = None,
 ) -> tuple[AcceptanceReport, dict[str, Any]]:
     from backend.app.sync.jobs import normalize_backfill_trigger_reason
 
     spine = SourceRouteDbAcceptanceSpine()
     if find_matrix_target(request) is not None and job_type == "incremental":
-        cursor_before: str | None = None
-        cursor_after: str | None = None
+        watermark_before: str | None = None
+        watermark_after: str | None = None
         cm_for_spine: ConnectionManager | None = None
         if live_authorized:
             cm_for_spine, _ = _prepare_phase1_connection(data_root)
             watermark_key = _incremental_watermark_key(request, instrument_id)
             if watermark_key:
-                cursor_before = read_cursor_iso(cm_for_spine, request.data_domain, watermark_key)
+                watermark_before = read_watermark_iso(cm_for_spine, request.data_domain, watermark_key)
         report = spine.execute(
             request,
             data_root=data_root,
@@ -772,13 +817,13 @@ def execute_spine_or_binding_live(
         if live_authorized and cm_for_spine is not None:
             watermark_key = _incremental_watermark_key(request, instrument_id)
             if watermark_key:
-                cursor_after = read_cursor_iso(cm_for_spine, request.data_domain, watermark_key)
+                watermark_after = read_watermark_iso(cm_for_spine, request.data_domain, watermark_key)
         extra = {
             "sync_job_id": None,
             "route_plan_persisted": report.route_plan_id is not None,
             "incremental_evidence": build_incremental_evidence(
-                cursor_before=cursor_before,
-                cursor_after=cursor_after,
+                watermark_before=watermark_before,
+                watermark_after=watermark_after,
             ),
         }
         return report, extra
@@ -802,8 +847,8 @@ def execute_spine_or_binding_live(
     cm, orch = _prepare_phase1_connection(data_root)
     binding = _optional_primary_binding(request.source_id, request.data_domain)
     watermark_key = instrument_id or (binding.incremental_watermark if binding else instrument_id)
-    cursor_before = (
-        read_cursor_iso(cm, request.data_domain, watermark_key)
+    watermark_before = (
+        read_watermark_iso(cm, request.data_domain, watermark_key)
         if job_type == "incremental" and watermark_key
         else None
     )
@@ -831,6 +876,7 @@ def execute_spine_or_binding_live(
             date_end=date_end,
             instrument_id=instrument_id,
             trigger_reason=trigger_reason,
+            resume_job_id=resume_job_id if job_type == "backfill" else None,
         )
     else:
         raise CliFailure(
@@ -841,8 +887,8 @@ def execute_spine_or_binding_live(
             ),
             docs_anchor="specs/layer1_axes/indicator_binding_registry.yaml",
         )
-    cursor_after = (
-        read_cursor_iso(cm, request.data_domain, watermark_key)
+    watermark_after = (
+        read_watermark_iso(cm, request.data_domain, watermark_key)
         if job_type == "incremental" and watermark_key
         else None
     )
@@ -856,8 +902,8 @@ def execute_spine_or_binding_live(
     extra = _collect_observability_from_job(cm, job_result, route_plan_persisted=True)
     if job_type == "incremental":
         extra["incremental_evidence"] = build_incremental_evidence(
-            cursor_before=cursor_before,
-            cursor_after=cursor_after,
+            watermark_before=watermark_before,
+            watermark_after=watermark_after,
         )
     elif job_type == "backfill":
         from backend.app.ops.sandbox_clean_write.clean_write_targets import resolve_clean_write_target
@@ -910,7 +956,7 @@ def _blocked_job_evidence(
 
     extra: dict[str, Any] = {}
     if job_type == "incremental":
-        extra["incremental_evidence"] = build_incremental_evidence(cursor_before=None)
+        extra["incremental_evidence"] = build_incremental_evidence(watermark_before=None)
     elif job_type == "backfill":
         extra["backfill_evidence"] = build_backfill_evidence(
             trigger_reason=normalize_backfill_trigger_reason(trigger_reason),
@@ -979,6 +1025,7 @@ def run_phase1_backfill_live(
     instrument_id: str | None = None,
     shard_plan: list[dict[str, Any]] | None = None,
     trigger_reason: str | None = None,
+    resume_job_id: str | None = None,
 ) -> dict[str, Any]:
     resolved = require_phase1_data_root_for_live(data_root)
     request = acceptance_request_for_tier_a(
@@ -998,6 +1045,7 @@ def run_phase1_backfill_live(
         instrument_id=instrument_id,
         trigger_reason=trigger_reason,
         shard_plan=shard_plan,
+        resume_job_id=resume_job_id,
     )
     report_path = persist_acceptance_report(report, resolved)
     envelope = build_acceptance_envelope(
@@ -1103,10 +1151,10 @@ def acceptance_report_from_sync_job(
     extra = _collect_observability_from_job(cm, job_result, route_plan_persisted=True)
     watermark_key = _incremental_watermark_key(request, instrument_id)
     if job_type == "incremental" and watermark_key:
-        extra["cursor_after"] = read_cursor_iso(cm, data_domain, watermark_key)
+        extra["watermark_after"] = read_watermark_iso(cm, data_domain, watermark_key)
         extra["incremental_evidence"] = build_incremental_evidence(
-            cursor_before=extra.get("cursor_before"),
-            cursor_after=extra.get("cursor_after"),
+            watermark_before=extra.get("watermark_before"),
+            watermark_after=extra.get("watermark_after"),
         )
     elif job_type == "backfill":
         from backend.app.ops.sandbox_clean_write.clean_write_targets import resolve_clean_write_target
@@ -1146,8 +1194,8 @@ def acceptance_report_from_sync_job(
         )
     if date_start is not None and date_end is not None and job_type == "incremental":
         extra["incremental_evidence"] = build_incremental_evidence(
-            cursor_before=extra.get("cursor_before"),
-            cursor_after=extra.get("cursor_after"),
+            watermark_before=extra.get("watermark_before"),
+            watermark_after=extra.get("watermark_after"),
             window_date_start=date_start.isoformat(),
             window_date_end=date_end.isoformat(),
         )

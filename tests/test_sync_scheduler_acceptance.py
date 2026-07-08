@@ -147,6 +147,75 @@ def test_syncSchedulerAcceptance_weeklyBackfillLiveFullLoadChildPass(
         assert rows >= 1
 
 
+def test_syncSchedulerAcceptance_weeklyBackfillLiveBackfillChildPass(
+    monkeypatch, tmp_path: Path
+) -> None:
+    """覆盖范围：weekly_backfill profile live backfill child PASS
+    测试对象：scheduler_run profile=weekly_backfill dry_run=False job_type_filter=backfill
+    目的/目标：scheduler 展开 backfill child 并走 execute_spine_or_binding_live 生产 runner
+    验证点：backfill child status=PASS；acceptance_report.route_plan_id 非空；clean 写入
+    失败含义：scheduler backfill 仅 dry-run/BLOCKED，profile 生产调度未闭合
+    """
+    import json
+
+    root = _p1_root(tmp_path)
+    replay = root / "scheduler_backfill_replay.json"
+    replay.write_text(
+        json.dumps(
+            {
+                "schema_version": "cn_market_evidence_v1",
+                "source_id": "baostock",
+                "data_domain": "cn_equity_daily_bar",
+                "bars": [
+                    {
+                        "instrument_id": SYMBOL,
+                        "trade_date": "2024-01-10",
+                        "open": 1400.0,
+                        "high": 1410.0,
+                        "low": 1395.0,
+                        "close": 1405.0,
+                        "volume": 1000000,
+                        "source_used": "baostock",
+                    }
+                ],
+                "source_fetch_id": "baostock-replay-scheduler-bf",
+                "content_hash": "baostock-replay-hash-scheduler-bf",
+                "as_of_timestamp": "2024-01-10T15:00:00Z",
+                "retrieved_at": "2024-01-10T15:00:00Z",
+                "trade_date": "2024-01-10",
+            },
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("QMD_DATA_ROOT", str(root))
+    monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    _patch_phase1_baostock_replay(monkeypatch, replay)
+    payload = data_commands.scheduler_run(
+        profile="weekly_backfill",
+        dry_run=False,
+        job_type_filter="backfill",
+    )
+    backfill_jobs = [j for j in payload["jobs"] if j.get("job_type") == "backfill"]
+    assert backfill_jobs
+    child = backfill_jobs[0]
+    report = child["acceptance_report"]
+    assert report["route_plan_id"] is not None
+    assert report["status"] == "PASS"
+    assert child.get("clean_status") == "WRITTEN"
+    job_id = child.get("job_id") or report.get("sync_job_id")
+    if job_id:
+        db = root / "duckdb" / "quant_monitor.duckdb"
+        cm = ConnectionManager(db_path=db)
+        with cm.reader() as con:
+            rows = con.execute(
+                "SELECT COUNT(*) FROM security_bar_1d WHERE instrument_id = ?",
+                [SYMBOL],
+            ).fetchone()[0]
+        assert rows >= 1
+
+
 def test_syncSchedulerAcceptance_childDryRunCarriesRouteEvidence(
     monkeypatch, tmp_path: Path
 ) -> None:

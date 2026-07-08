@@ -70,9 +70,9 @@ def sync_plan(
     instrument_id: str | None = None,
 ) -> dict[str, Any]:
     if source_id is not None:
-        from backend.app.cli.tier_a_sync_router import sync_tier_a_by_source_id
+        from backend.app.cli.incremental_sync_router import sync_incremental_by_source_id
 
-        return sync_tier_a_by_source_id(
+        return sync_incremental_by_source_id(
             source_id=source_id,
             dry_run=dry_run,
             data_domain=data_domain,
@@ -152,22 +152,6 @@ def sync_plan(
     )
 
 
-def _sync_fred_macro_incremental(
-    *,
-    operation: str,
-    since: str | None,
-    series_ids: tuple[str, ...] | None,
-) -> dict[str, Any]:
-    """Retired — official live sync uses run_phase1_sync_live on source-route-db root."""
-    from backend.app.cli.phase1_acceptance import (
-        require_phase1_data_root_for_live,
-        resolve_cli_data_root,
-    )
-
-    require_phase1_data_root_for_live(resolve_cli_data_root())
-    raise AssertionError("unreachable")
-
-
 def _parse_sync_date(value: str, *, field: str) -> date:
     try:
         return date.fromisoformat(value[:10])
@@ -179,40 +163,10 @@ def _parse_sync_date(value: str, *, field: str) -> date:
         ) from exc
 
 
-def _require_baostock_sync_operator_or_sandbox(data_root: Path) -> None:
-    resolved = data_root.resolve()
-    if not any(p in {".audit-sandbox", "audit-sandbox"} for p in resolved.parts):
-        raise CliFailure(
-            error_code="USER_AUTH_REQUIRED",
-            message=(
-                "qmd data sync without --dry-run requires explicit operator "
-                "confirmation or QMD_DATA_ROOT under .audit-sandbox"
-            ),
-            docs_anchor="docs/ops/data_sync_quick_reference.md",
-            manual_confirmation_required=True,
-        )
-    if "user-live" in resolved.parts:
-        raise CliFailure(
-            error_code="INVALID_INPUT",
-            message="user-live audit path refused for sync without --dry-run",
-            docs_anchor="docs/ops/data_sync_quick_reference.md",
-        )
-
-
-def _backfill_fred_macro_incremental(
-    *,
-    payload: dict[str, Any],
-    data_root: Path,
-    db: Path,
-    date_start: date,
-    effective_end: date,
-    series_ids: tuple[str, ...] | None,
-) -> dict[str, Any]:
-    """Retired — official live backfill uses run_phase1_backfill_live on source-route-db root."""
+def _require_phase1_live_data_root(data_root: Path) -> None:
     from backend.app.cli.phase1_acceptance import require_phase1_data_root_for_live
 
     require_phase1_data_root_for_live(data_root)
-    raise AssertionError("unreachable")
 
 
 def sync_baostock_incremental(
@@ -226,17 +180,8 @@ def sync_baostock_incremental(
     """``qmd data sync --domain cn_equity_daily_bar`` — watermark + orchestrator gold path."""
     from datetime import UTC, datetime
 
-    from backend.app.ops.baostock_incremental_run import (
-        build_baostock_incremental_service,
-        resolve_baostock_incremental_use_mock,
-        run_baostock_bar_incremental,
-    )
+    from backend.app.ops.baostock_incremental_run import resolve_baostock_incremental_use_mock
     from backend.app.ops.sandbox_clean_write.clean_write_targets import resolve_clean_write_target
-    from backend.app.ops.sandbox_clean_write.rehearsal_runner import (
-        RehearsalRunnerError,
-        assert_sandbox_db_allowed,
-    )
-    from backend.app.sync.orchestrator import DataSyncOrchestrator
     from backend.app.sync.watermark import (
         IncrementalWindow,
         compute_incremental_window,
@@ -254,22 +199,13 @@ def sync_baostock_incremental(
     data_root = _path_env("QMD_DATA_ROOT", PROJECT_ROOT / "data")
     db = data_root / "duckdb" / "quant_monitor.duckdb"
 
-    if dry_run:
-        from backend.app.cli.tier_a_sync_router import (
-            _require_audit_sandbox_data_root,
-            _sandbox_db_readable,
-        )
-
-        _require_audit_sandbox_data_root(data_root)
-    elif not dry_run:
+    if not dry_run:
         from backend.app.cli.phase1_acceptance import (
-            is_production_equivalent_acceptance_root,
             require_phase1_data_root_for_live,
             run_phase1_sync_live,
         )
 
-        if not is_production_equivalent_acceptance_root(data_root):
-            require_phase1_data_root_for_live(data_root)
+        require_phase1_data_root_for_live(data_root)
         return run_phase1_sync_live(
             source_id="baostock",
             data_domain=data_domain,
@@ -278,19 +214,16 @@ def sync_baostock_incremental(
             instrument_id=symbol,
         )
 
-    if end is not None:
-        end_date = _parse_sync_date(end, field="end")
-    else:
-        end_date = datetime.now(UTC).date()
+    from backend.app.cli.incremental_sync_router import (
+        _require_audit_sandbox_data_root,
+        _sandbox_db_readable,
+    )
 
+    _require_audit_sandbox_data_root(data_root)
+
+    end_date = _parse_sync_date(end, field="end") if end else datetime.now(UTC).date()
     watermark: date | None = None
-    if dry_run:
-        from backend.app.cli.tier_a_sync_router import _sandbox_db_readable
-
-        db_readable = _sandbox_db_readable(data_root)
-    else:
-        db_readable = db.is_file()
-    if db_readable and db.is_file():
+    if _sandbox_db_readable(data_root) and db.is_file():
         with ConnectionManager(db_path=db).reader() as con:
             watermark = read_bar_trade_date_watermark(con, instrument_id=symbol)
 
@@ -315,13 +248,12 @@ def sync_baostock_incremental(
             watermark=window.watermark,
         )
 
-    use_mock = resolve_baostock_incremental_use_mock()
-    product_live = not use_mock
     target = resolve_clean_write_target(data_domain)
     caught_up = incremental_window_is_empty(window)
+    product_live = not resolve_baostock_incremental_use_mock()
     payload: dict[str, Any] = {
         "command": "sync",
-        "dry_run": dry_run,
+        "dry_run": True,
         "source_id": "baostock",
         "product_live": product_live,
         "data_domain": data_domain,
@@ -353,11 +285,8 @@ def sync_baostock_incremental(
             preview["route_status"],
             detail=f"sync blocked for domain={data_domain!r}",
         )
-    if dry_run:
-        payload["message"] = "dry-run only; watermark window computed, no fetch or DB writes"
-        return payload
-
-    raise AssertionError("unreachable: live baostock sync delegates to phase1 path")
+    payload["message"] = "dry-run only; watermark window computed, no fetch or DB writes"
+    return payload
 
 
 def _tier_a_backfill_route_preview(
@@ -402,6 +331,7 @@ def backfill_plan(
     dry_run: bool = True,
     instrument_id: str | None = None,
     trigger_reason: str = "eco_catchup",
+    resume_job_id: str | None = None,
 ) -> dict[str, Any]:
     """``qmd data backfill`` — bounded shard plan + orchestrator gold path (R3-DCP-09)."""
     from backend.app.config import PROJECT_ROOT, _path_env
@@ -566,7 +496,7 @@ def backfill_plan(
             dry_run_envelope_for_plan,
             merge_payload_with_envelope,
         )
-        from backend.app.cli.tier_a_sync_router import _require_audit_sandbox_data_root
+        from backend.app.cli.incremental_sync_router import _require_audit_sandbox_data_root
 
         _require_audit_sandbox_data_root(data_root)
         payload["message"] = "dry-run only; shard plan computed, no fetch or DB writes"
@@ -605,6 +535,7 @@ def backfill_plan(
             instrument_id=instrument_id,
             shard_plan=shard_plan,
             trigger_reason=trigger_reason,
+            resume_job_id=resume_job_id,
         )
 
     from backend.app.cli.phase1_acceptance import require_phase1_data_root_for_live
@@ -788,7 +719,7 @@ def full_load_plan(
             dry_run_envelope_for_plan,
             merge_payload_with_envelope,
         )
-        from backend.app.cli.tier_a_sync_router import _require_audit_sandbox_data_root
+        from backend.app.cli.incremental_sync_router import _require_audit_sandbox_data_root
 
         _require_audit_sandbox_data_root(data_root)
         fl_run_id = f"p1-fl-{uuid.uuid4().hex[:12]}"
@@ -831,17 +762,8 @@ def sync_mootdx_incremental(
     """``qmd data sync --source-id mootdx`` — watermark + orchestrator gold path."""
     from datetime import UTC, datetime
 
-    from backend.app.ops.mootdx_incremental_run import (
-        build_mootdx_incremental_service,
-        resolve_mootdx_incremental_use_mock,
-        run_mootdx_bar_incremental,
-    )
+    from backend.app.ops.mootdx_incremental_run import resolve_mootdx_incremental_use_mock
     from backend.app.ops.sandbox_clean_write.clean_write_targets import resolve_clean_write_target
-    from backend.app.ops.sandbox_clean_write.rehearsal_runner import (
-        RehearsalRunnerError,
-        assert_sandbox_db_allowed,
-    )
-    from backend.app.sync.orchestrator import DataSyncOrchestrator
     from backend.app.sync.watermark import (
         IncrementalWindow,
         compute_incremental_window,
@@ -870,22 +792,13 @@ def sync_mootdx_incremental(
     data_root = _path_env("QMD_DATA_ROOT", PROJECT_ROOT / "data")
     db = data_root / "duckdb" / "quant_monitor.duckdb"
 
-    if dry_run:
-        from backend.app.cli.tier_a_sync_router import (
-            _require_audit_sandbox_data_root,
-            _sandbox_db_readable,
-        )
-
-        _require_audit_sandbox_data_root(data_root)
-    elif not dry_run:
+    if not dry_run:
         from backend.app.cli.phase1_acceptance import (
-            is_production_equivalent_acceptance_root,
             require_phase1_data_root_for_live,
             run_phase1_sync_live,
         )
 
-        if not is_production_equivalent_acceptance_root(data_root):
-            require_phase1_data_root_for_live(data_root)
+        require_phase1_data_root_for_live(data_root)
         return run_phase1_sync_live(
             source_id="mootdx",
             data_domain=data_domain,
@@ -894,15 +807,16 @@ def sync_mootdx_incremental(
             instrument_id=symbol,
         )
 
+    from backend.app.cli.incremental_sync_router import (
+        _require_audit_sandbox_data_root,
+        _sandbox_db_readable,
+    )
+
+    _require_audit_sandbox_data_root(data_root)
+
     end_date = _parse_sync_date(end, field="end") if end else datetime.now(UTC).date()
     watermark: date | None = None
-    if dry_run:
-        from backend.app.cli.tier_a_sync_router import _sandbox_db_readable
-
-        db_readable = _sandbox_db_readable(data_root)
-    else:
-        db_readable = db.is_file()
-    if db_readable and db.is_file():
+    if _sandbox_db_readable(data_root) and db.is_file():
         with ConnectionManager(db_path=db).reader() as con:
             watermark = read_bar_trade_date_watermark(con, instrument_id=symbol)
 
@@ -927,13 +841,12 @@ def sync_mootdx_incremental(
             watermark=window.watermark,
         )
 
-    use_mock = resolve_mootdx_incremental_use_mock()
-    product_live = not use_mock
     target = resolve_clean_write_target(data_domain)
     caught_up = incremental_window_is_empty(window)
+    product_live = not resolve_mootdx_incremental_use_mock()
     payload: dict[str, Any] = {
         "command": "sync",
-        "dry_run": dry_run,
+        "dry_run": True,
         "source_id": "mootdx",
         "product_live": product_live,
         "data_domain": data_domain,
@@ -965,11 +878,8 @@ def sync_mootdx_incremental(
             preview["route_status"],
             detail=f"sync blocked for domain={data_domain!r}",
         )
-    if dry_run:
-        payload["message"] = "dry-run only; watermark window computed, no fetch or DB writes"
-        return payload
-
-    raise AssertionError("unreachable: live mootdx sync delegates to phase1 path")
+    payload["message"] = "dry-run only; watermark window computed, no fetch or DB writes"
+    return payload
 
 
 def live_fetch(
@@ -1202,12 +1112,14 @@ def scheduler_run(
     data_root = _path_env("QMD_DATA_ROOT", PROJECT_ROOT / "data")
     db = data_root / "duckdb" / "quant_monitor.duckdb"
     if dry_run:
-        from backend.app.cli.tier_a_sync_router import _require_audit_sandbox_data_root
+        from backend.app.cli.incremental_sync_router import _require_audit_sandbox_data_root
 
         _require_audit_sandbox_data_root(data_root)
         cm = None
     else:
-        _require_baostock_sync_operator_or_sandbox(data_root)
+        from backend.app.cli.phase1_acceptance import require_phase1_data_root_for_live
+
+        require_phase1_data_root_for_live(data_root)
         db.parent.mkdir(parents=True, exist_ok=True)
         cm = ConnectionManager(db_path=db)
         with cm.writer() as con:
@@ -1424,7 +1336,7 @@ def revision_audit_plan(
         "resource_guard_decision": guard_decision.value,
     }
     if dry_run:
-        from backend.app.cli.tier_a_sync_router import _require_audit_sandbox_data_root
+        from backend.app.cli.incremental_sync_router import _require_audit_sandbox_data_root
 
         data_root = _path_env("QMD_DATA_ROOT", PROJECT_ROOT / "data")
         _require_audit_sandbox_data_root(data_root)
@@ -1432,7 +1344,7 @@ def revision_audit_plan(
         return payload
 
     data_root = _path_env("QMD_DATA_ROOT", PROJECT_ROOT / "data")
-    _require_baostock_sync_operator_or_sandbox(data_root)
+    _require_phase1_live_data_root(data_root)
     db = data_root / "duckdb" / "quant_monitor.duckdb"
     db.parent.mkdir(parents=True, exist_ok=True)
     cm = ConnectionManager(db_path=db)
@@ -1481,13 +1393,13 @@ def reconcile_plan(*, conflict_id: str, dry_run: bool = True) -> dict[str, Any]:
         "conflict_id": conflict_id,
     }
     if dry_run:
-        from backend.app.cli.tier_a_sync_router import _require_audit_sandbox_data_root
+        from backend.app.cli.incremental_sync_router import _require_audit_sandbox_data_root
 
         _require_audit_sandbox_data_root(data_root)
         payload["message"] = "dry-run only; reconcile plan, no refetch"
         return payload
 
-    _require_baostock_sync_operator_or_sandbox(data_root)
+    _require_phase1_live_data_root(data_root)
     db.parent.mkdir(parents=True, exist_ok=True)
     cm = ConnectionManager(db_path=db)
     with cm.writer() as con:
@@ -1547,7 +1459,7 @@ def quality_check_plan(
         "resource_guard_decision": guard_decision.value,
     }
     if dry_run:
-        from backend.app.cli.tier_a_sync_router import _require_audit_sandbox_data_root
+        from backend.app.cli.incremental_sync_router import _require_audit_sandbox_data_root
 
         data_root = _path_env("QMD_DATA_ROOT", PROJECT_ROOT / "data")
         _require_audit_sandbox_data_root(data_root)
@@ -1555,7 +1467,7 @@ def quality_check_plan(
         return payload
 
     data_root = _path_env("QMD_DATA_ROOT", PROJECT_ROOT / "data")
-    _require_baostock_sync_operator_or_sandbox(data_root)
+    _require_phase1_live_data_root(data_root)
     db = data_root / "duckdb" / "quant_monitor.duckdb"
     db.parent.mkdir(parents=True, exist_ok=True)
     cm = ConnectionManager(db_path=db)
@@ -1597,23 +1509,3 @@ def emit_failure(err: CliFailure, *, fmt: str = "json") -> str:
         return err.format_json()
     return err.format_text()
 
-
-def sandbox_clean_write_rehearse(**_kwargs: Any) -> dict[str, Any]:
-    """Retired — use official source-route-db Phase 1 commands."""
-    from backend.app.cli.phase1_acceptance import raise_retired_legacy_command
-
-    raise_retired_legacy_command("qmd data sandbox-clean-write", subcommand="rehearse")
-
-
-def sandbox_clean_write_audit(**_kwargs: Any) -> dict[str, Any]:
-    """Retired — use official source-route-db Phase 1 commands."""
-    from backend.app.cli.phase1_acceptance import raise_retired_legacy_command
-
-    raise_retired_legacy_command("qmd data sandbox-clean-write", subcommand="audit")
-
-
-def sandbox_clean_write_promote(**_kwargs: Any) -> dict[str, Any]:
-    """Retired — use official source-route-db Phase 1 commands."""
-    from backend.app.cli.phase1_acceptance import raise_retired_legacy_command
-
-    raise_retired_legacy_command("qmd data sandbox-clean-write", subcommand="promote")

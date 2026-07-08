@@ -128,7 +128,7 @@ matrix_live_modes:
   symbol_ssot:
     cninfo: sh.600519 per cninfo_port SYMBOL_WHITELIST and product_live_ports SOURCE_LIVE_DEFAULTS
     alpha_vantage: AAPL per product_live_ports SOURCE_LIVE_DEFAULTS and alpha_vantage_port SYMBOL_WHITELIST
-    kalshi: KXFED-27APR-T4.25 per live_tier_c_evidence_v1 and kalshi_port MARKET_WHITELIST
+    kalshi: KXFED-27APR-T4.25 per source_route_db_acceptance_matrix and kalshi_port MARKET_WHITELIST
     coingecko: bitcoin per coingecko_port ASSET_WHITELIST and product_live_ports SOURCE_LIVE_DEFAULTS
     deribit: active BTC option via resolve_matrix_deribit_live_instrument; replay seed BTC-28JUN24-65000-C is not the live matrix instrument_id
 

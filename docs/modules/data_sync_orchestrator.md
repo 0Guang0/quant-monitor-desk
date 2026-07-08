@@ -290,8 +290,8 @@ CREATE TABLE IF NOT EXISTS data_sync_job (
     priority            INTEGER,
     retry_count         INTEGER,
     max_retries         INTEGER,
-    cursor_before       VARCHAR,
-    cursor_after        VARCHAR,
+    watermark_before       VARCHAR,
+    watermark_after        VARCHAR,
     validation_report_id VARCHAR,
     conflict_report_id  VARCHAR,
     write_id            VARCHAR,
@@ -399,7 +399,7 @@ job_id
 task_id
 raw_file_paths
 staging_table
-cursor_before/cursor_after
+watermark_before/watermark_after
 write_audit_log
 ```
 

@@ -22,8 +22,8 @@ profiles:
     description: "Bounded backfill + full-load window sample for P1-GATE scheduler evidence"
     jobs:
       - job_type: backfill
-        domain: macro_series
-        source_id: fred
+        domain: cn_equity_daily_bar
+        source_id: baostock
         date_start: "2024-01-01"
         date_end: "2024-01-31"
         core: true

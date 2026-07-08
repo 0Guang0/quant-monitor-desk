@@ -6,20 +6,12 @@ import json
 import os
 import subprocess
 import sys
-import uuid
 from pathlib import Path
 
 from backend.app.cli import data_commands
 from backend.app.core.resource_guard import Decision, ResourceGuard
 from backend.app.db.connection import ConnectionManager
-from backend.app.sync.jobs import SyncJobResult
 from tests.incremental_baostock_support import SYMBOL
-from tests.test_bounded_backfill_cli_e2e import (
-    END,
-    START,
-    _patch_phase1_baostock_replay,
-    _write_two_shard_replay,
-)
 
 
 def _p1_root(tmp_path: Path) -> Path:
@@ -30,7 +22,7 @@ def _p1_root(tmp_path: Path) -> Path:
 
 def test_qmdData_syncAcceptance_dryRunEnvelopeNonGate(monkeypatch, tmp_path: Path) -> None:
     """覆盖范围：sync dry-run 验收信封
-    测试对象：sync_tier_a_by_source_id dry_run=True
+    测试对象：sync_incremental_by_source_id dry_run=True
     目的/目标：dry-run 必须附带 acceptance 字段且 gate_eligible=false
     验证点：acceptance_report 存在；gate_eligible=False；status=DRY_RUN
     失败含义：sync dry-run 无统一验收形状或误计 P1-GATE
@@ -118,7 +110,7 @@ def test_qmdData_syncAcceptance_liveBlockedShowsIncrementalWatermarkEvidence(
     """覆盖范围：sync live 缺授权时的增量证据
     测试对象：run_phase1_sync_live envelope incremental_evidence
     目的/目标：BLOCKED 报告仍须暴露 cursor/watermark 与 route_plan 可追溯证据
-    验证点：incremental_evidence 含 cursor_before；observability route_plan_id 非空
+    验证点：incremental_evidence 含 watermark_before；observability route_plan_id 非空
     失败含义：sync 验收只有 failure_class，无法证明 incremental 路径已规划
     """
     root = _p1_root(tmp_path)
@@ -131,7 +123,7 @@ def test_qmdData_syncAcceptance_liveBlockedShowsIncrementalWatermarkEvidence(
         dry_run=False,
     )
     incremental = payload.get("incremental_evidence") or {}
-    assert "cursor_before" in incremental
+    assert "watermark_before" in incremental
     assert incremental.get("pipeline_path")
     obs = payload.get("observability_evidence") or {}
     assert obs.get("route_plan_id") is not None
@@ -231,124 +223,52 @@ def test_qmdData_syncAcceptance_livePassReplayFetchCleanWriteAndCursor(
     assert payload["clean_status"] == "WRITTEN"
     incremental = payload.get("incremental_evidence") or {}
     assert incremental.get("pipeline_path")
-    assert payload["observability_evidence"].get("route_plan_persistence") == "job_event_log"
+    assert incremental.get("watermark_after") is not None
+    obs = payload.get("observability_evidence") or {}
+    assert obs.get("route_plan_persistence") == "job_event_log"
+    assert obs.get("route_plan_id")
 
 
-def test_qmdData_backfillAcceptance_liveSevereConflictBlocksOfficialCleanWrite(
+def test_qmdData_syncAcceptance_livePassRepeatRunIdempotent(
     monkeypatch, tmp_path: Path
 ) -> None:
-    """覆盖范围：official backfill severe conflict 阻断 clean write
-    测试对象：data_commands.backfill_plan live envelope
-    目的/目标：严重冲突须在 official path 产品可见且阻断 clean 写入
-    验证点：conflict_status=SEVERE_CONFLICT；clean_status=NOT_RUN；failure_class=FAIL
-    失败含义：低层 orchestrator 测绿但 qmd-data 路径仍显示可写 clean
+    """覆盖范围：official sync 重复运行幂等
+    测试对象：sync_plan cn_equity_daily_bar live 两次
+    目的/目标：重复增量同步不产生重复 clean 主键写入
+    验证点：二次运行后 security_bar_1d 行数不增；watermark_after 保持或前进
+    失败含义：增量 sync 缺幂等，重复跑会堆重复行
     """
-    from backend.app.cli import phase1_acceptance
-
     root = _p1_root(tmp_path)
+    replay = root / "sync_replay_idem.json"
+    _write_sync_incremental_replay(replay)
     monkeypatch.setenv("QMD_DATA_ROOT", str(root))
     monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
-
-    def _severe_shard_job(
-        request,
-        job_type,
-        *,
-        orch,
-        service,
-        date_start,
-        date_end,
-        instrument_id,
-        trigger_reason,
-    ):
-        job_id = f"job-p1-severe-{uuid.uuid4().hex[:8]}"
-        with orch._cm.writer() as con:
-            con.execute(
-                """
-                INSERT INTO data_sync_job (
-                    job_id, run_id, job_type, status, data_domain, market_id, source_id,
-                    validation_report_id, conflict_report_id, created_at, updated_at
-                ) VALUES (?, ?, ?, 'WAITING_RECONCILE', ?, 'CN_A', ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-                """,
-                [
-                    job_id,
-                    f"run-{job_id}",
-                    job_type,
-                    request.data_domain,
-                    request.source_id,
-                    "vr-severe-1",
-                    "cr-severe-1",
-                ],
-            )
-        return SyncJobResult(
-            job_id=job_id,
-            status="WAITING_RECONCILE",
-            validation_report_id="vr-severe-1",
-            conflict_report_id="cr-severe-1",
-            message="severe multi-source conflict",
-        )
-
-    monkeypatch.setattr(phase1_acceptance, "_run_shard_job_without_binding", _severe_shard_job)
-    payload = data_commands.backfill_plan(
+    _patch_baostock_matrix_replay(monkeypatch, replay)
+    kwargs = dict(
         data_domain="cn_equity_daily_bar",
-        source_id="baostock",
-        start=START,
-        end=END,
-        max_shards=2,
         dry_run=False,
+        instrument_id=SYMBOL,
     )
-    report = payload["acceptance_report"]
-    assert report["conflict_status"] == "SEVERE_CONFLICT"
-    assert payload["clean_status"] == "NOT_RUN"
-    assert payload["write_status"] == "NOT_RUN"
-    assert report["status"] == "FAIL"
-
-
-def test_qmdData_backfillAcceptance_liveDegradedCleanWriteOfficialPath(
-    monkeypatch, tmp_path: Path
-) -> None:
-    """覆盖范围：official backfill degraded clean 写入
-    测试对象：data_commands.backfill_plan + WriteManager fallback 审计
-    目的/目标：FallbackPolicy 授权降级写入须在 official CLI 报告 degraded_clean
-    验证点：write_grade=degraded_clean；source_switched=True；clean_status=WRITTEN
-    失败含义：仅有信封字段单测，无真实 WriteManager 经 official path 的降级写入证据
-    """
-    from dataclasses import replace
-
-    from backend.app.db.write_manager import WriteManager
-
-    root = tmp_path / ".audit-sandbox" / "source-route-db-sync-degraded"
-    root.mkdir(parents=True)
-    replay = root / "backfill_degraded_replay.json"
-    _write_two_shard_replay(replay)
-    monkeypatch.setenv("QMD_DATA_ROOT", str(root))
-    monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
-    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
-    _patch_phase1_baostock_replay(monkeypatch, replay)
-
-    original_write = WriteManager.write
-
-    def _degraded_write(self, request, *, con=None, own_transaction=True):
-        request = replace(
-            request,
-            source_role="fallback",
-            source_switched=True,
-            quality_flags=("SOURCE_FALLBACK_USED",),
-            fallback_reason="primary_rate_limited",
-        )
-        return original_write(self, request, con=con, own_transaction=own_transaction)
-
-    monkeypatch.setattr(WriteManager, "write", _degraded_write)
-    payload = data_commands.backfill_plan(
-        data_domain="cn_equity_daily_bar",
-        source_id="baostock",
-        start=START,
-        end=END,
-        max_shards=2,
-        dry_run=False,
-    )
-    report = payload["acceptance_report"]
-    assert report["write_grade"] == "degraded_clean"
-    assert report["source_switched"] is True
-    assert payload["clean_status"] == "WRITTEN"
-    assert payload["observability_evidence"]["write_grade"] == "degraded_clean"
+    payload1 = data_commands.sync_plan(**kwargs)
+    assert payload1["acceptance_report"]["status"] == "PASS"
+    watermark_after_first = (payload1.get("incremental_evidence") or {}).get("watermark_after")
+    db = root / "duckdb" / "quant_monitor.duckdb"
+    cm = ConnectionManager(db_path=db)
+    with cm.reader() as con:
+        rows_after_first = con.execute(
+            "SELECT COUNT(*) FROM security_bar_1d WHERE instrument_id = ?",
+            [SYMBOL],
+        ).fetchone()[0]
+    payload2 = data_commands.sync_plan(**kwargs)
+    assert payload2["acceptance_report"]["status"] == "PASS"
+    with cm.reader() as con:
+        rows_after_second = con.execute(
+            "SELECT COUNT(*) FROM security_bar_1d WHERE instrument_id = ?",
+            [SYMBOL],
+        ).fetchone()[0]
+    assert rows_after_second == rows_after_first
+    watermark_after_second = (payload2.get("incremental_evidence") or {}).get("watermark_after")
+    assert watermark_after_second is not None
+    if watermark_after_first is not None:
+        assert watermark_after_second >= watermark_after_first

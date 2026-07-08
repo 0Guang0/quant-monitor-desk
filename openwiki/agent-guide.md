@@ -34,7 +34,7 @@ When docs and source conflict, prefer current source plus machine-readable contr
 
 - CLI command behavior: `backend/app/cli/main.py`, `backend/app/cli/data_commands.py`, tests named `test_qmd_data_cli*` and sync CLI tests.
 - Source routing/capability: `backend/app/datasources/route_planner.py`, `capability_registry.py`, `source_registry.py`, `service.py`, specs under `specs/contracts/` and `specs/datasource_registry/`.
-- Live gates: `backend/app/datasources/product_live_gate.py`, `live_tier_router.py`, **source-route matrix spine** (`scripts/qmd_ops.py accept-source-route-db`, `backend/app/ops/source_route_db_acceptance*.py`, ADR-016). Tier A/B/C harnesses (`tier_a_live_acceptance.py` etc.) remain for M-DATA-03 sandbox paths; matrix closure is the release SSOT.
+- Live gates: `backend/app/datasources/product_live_gate.py`, `live_tier_router.py`, **source-route matrix spine** (`scripts/qmd_ops.py accept-source-route-db`, `backend/app/ops/source_route_db_acceptance*.py`, ADR-016). M-DATA-03 Tier A/B/C harnesses are retired; matrix closure is the release SSOT.
 - Sync orchestration: `backend/app/sync/orchestrator.py`, `jobs.py`, `pipeline.py`, `runners.py`, `scheduler.py`.
 - DB writes and schema: `backend/app/db/migrate.py`, `backend/app/db/migrations/`, `backend/app/db/write_manager.py`, `backend/app/db/validation_gate.py`, `specs/schema/schema.sql`.
 - Layer 1: `backend/app/layer1_axes/`, `specs/layer1_axes/`, `configs/layer1_axes.yml`.

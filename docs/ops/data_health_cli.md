@@ -82,7 +82,7 @@ qmd data health --db-path data/duckdb/quant_monitor.duckdb --domain market_bar_1
 
 ### 5.1.1 M-DATA-03 R2 — four profile families（Plan R2 SSOT）
 
-Profile definitions: `specs/contracts/data_quality_rules.yaml` · bindings: `specs/contracts/live_tier_a_evidence_v1.yaml` `source_bindings`.
+Profile definitions: `specs/contracts/data_quality_rules.yaml` · bindings: `source_health_bindings` in the same file.
 
 ```bash
 # market bar (baostock / mootdx / alpha_vantage)
