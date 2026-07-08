@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import uuid
 from dataclasses import replace
 from datetime import UTC, date, datetime
@@ -10,7 +11,6 @@ from typing import Any, Literal
 
 from backend.app.cli.errors import CliFailure
 from backend.app.datasources.service import DataSourceService
-from backend.app.datasources.source_registry import SourceRegistry
 from backend.app.db.connection import ConnectionManager
 from backend.app.ops.acceptance_isolation import AcceptanceIsolationError, ensure_isolated_db
 from backend.app.ops.source_route_db_acceptance import (
@@ -171,12 +171,16 @@ def _chain_status(
     }:
         write_ok = False
     raw_present = bool(payload.get("raw_file_paths") or payload.get("raw_file_ids"))
+    fetch_log_present = bool(payload.get("fetch_log_ids"))
     staging_present = bool(
         payload.get("staging_table")
         or (payload.get("rows_staged") or 0) > 0
         or payload.get("validation_report_id")
+        or payload.get("validation_run_ids")
     )
-    fetch_ok = report.status == "PASS" and (raw_present or write_ok or staging_present)
+    fetch_ok = report.status == "PASS" and (
+        fetch_log_present or raw_present or staging_present
+    )
     if blocked:
         fetch_status = "BLOCKED"
     elif fetch_ok:
@@ -185,9 +189,15 @@ def _chain_status(
         fetch_status = "FAIL"
     else:
         fetch_status = "FAIL"
-    raw_status = "PRESENT" if raw_present or write_ok else ("NOT_RUN" if blocked else "FAIL")
+    raw_status = (
+        "PRESENT"
+        if raw_present or fetch_log_present
+        else ("NOT_RUN" if blocked else "FAIL")
+    )
     staging_status = (
-        "PRESENT" if staging_present or write_ok else ("NOT_RUN" if blocked else "FAIL")
+        "PRESENT"
+        if staging_present
+        else ("NOT_RUN" if blocked else "FAIL")
     )
     return {
         "route_status": "READY" if route_ok else ("BLOCKED" if blocked else "FAIL"),
@@ -248,14 +258,73 @@ def _incremental_watermark_key(
     return None
 
 
+def _parse_raw_file_paths_value(value: object) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return [str(item) for item in value if item]
+    if isinstance(value, str):
+        text = value.strip()
+        if not text:
+            return []
+        if text.startswith("["):
+            try:
+                parsed = json.loads(text)
+            except json.JSONDecodeError:
+                return [text]
+            if isinstance(parsed, list):
+                return [str(item) for item in parsed if item]
+            if isinstance(parsed, str) and parsed.strip():
+                return [parsed.strip()]
+            return []
+        return [text]
+    return [str(value)]
+
+
+def _lookup_raw_file_ids(
+    cm: ConnectionManager,
+    *,
+    content_hashes: list[str],
+    raw_paths: list[str],
+) -> list[str]:
+    ids: list[str] = []
+    with cm.reader() as reader:
+        for content_hash in content_hashes:
+            if not content_hash:
+                continue
+            row = reader.execute(
+                "SELECT file_id FROM file_registry WHERE content_hash = ? LIMIT 1",
+                [content_hash],
+            ).fetchone()
+            if row and row[0]:
+                ids.append(str(row[0]))
+    if ids:
+        return ids
+    return list(raw_paths)
+
+
+def _enrich_report_from_observability(
+    report: AcceptanceReport,
+    extra: dict[str, Any],
+) -> AcceptanceReport:
+    from dataclasses import replace
+
+    updates: dict[str, Any] = {}
+    if not report.schema_hash and extra.get("schema_hash"):
+        updates["schema_hash"] = extra["schema_hash"]
+    if not report.content_hash and extra.get("content_hash"):
+        updates["content_hash"] = extra["content_hash"]
+    if updates:
+        return replace(report, **updates)
+    return report
+
+
 def _collect_observability_from_job(
     cm: ConnectionManager,
     job_result: SyncJobResult,
     *,
     route_plan_persisted: bool = False,
 ) -> dict[str, Any]:
-    import json
-
     extra: dict[str, Any] = {
         "sync_job_id": job_result.job_id,
         "job_id": job_result.job_id,
@@ -267,6 +336,9 @@ def _collect_observability_from_job(
         extra["validation_run_ids"] = [job_result.validation_report_id]
     raw_paths: list[str] = []
     staging_table: str | None = None
+    content_hashes: list[str] = []
+    schema_hashes: list[str] = []
+    latency_total_ms = 0
     for event in collect_job_events(cm, job_result.job_id):
         if event.get("event_type") == "ROUTE_PLAN":
             extra["route_plan_persisted"] = True
@@ -277,42 +349,121 @@ def _collect_observability_from_job(
             payload = json.loads(payload_raw)
         except json.JSONDecodeError:
             continue
-        if isinstance(payload, dict):
-            raw_path = payload.get("raw_file_path") or payload.get("raw_path")
-            if raw_path:
-                raw_paths.append(str(raw_path))
-            if payload.get("staging_table"):
-                staging_table = str(payload["staging_table"])
-    if raw_paths:
-        extra["raw_file_paths"] = raw_paths
-        extra["raw_file_ids"] = raw_paths
-    if staging_table:
-        extra["staging_table"] = staging_table
+        if not isinstance(payload, dict):
+            continue
+        raw_paths.extend(
+            _parse_raw_file_paths_value(payload.get("raw_file_paths"))
+            + _parse_raw_file_paths_value(payload.get("raw_file_path"))
+            + _parse_raw_file_paths_value(payload.get("raw_path"))
+        )
+        if payload.get("staging_table"):
+            staging_table = str(payload["staging_table"])
     if job_result.job_id:
         with cm.reader() as reader:
+            event_rows = reader.execute(
+                "SELECT event_id FROM job_event_log WHERE job_id = ? ORDER BY created_at ASC",
+                [job_result.job_id],
+            ).fetchall()
+            if event_rows:
+                extra["job_event_ids"] = [str(row[0]) for row in event_rows]
             fetch_rows = reader.execute(
-                "SELECT fetch_id, row_count FROM fetch_log WHERE job_id = ?",
+                """
+                SELECT fetch_id, row_count, raw_file_paths, content_hash, schema_hash, latency_ms
+                FROM fetch_log
+                WHERE job_id = ?
+                ORDER BY fetch_time ASC
+                """,
                 [job_result.job_id],
             ).fetchall()
             if fetch_rows:
                 extra["fetch_log_ids"] = [str(row[0]) for row in fetch_rows]
                 extra["rows_fetched"] = sum(int(row[1] or 0) for row in fetch_rows)
-            if staging_table:
-                staged = reader.execute(
-                    f"SELECT COUNT(*) FROM {staging_table}"
+                for row in fetch_rows:
+                    raw_paths.extend(_parse_raw_file_paths_value(row[2]))
+                    if row[3]:
+                        content_hashes.append(str(row[3]))
+                    if row[4]:
+                        schema_hashes.append(str(row[4]))
+                    if row[5] is not None:
+                        latency_total_ms += int(row[5])
+            validation_id = job_result.validation_report_id
+            validation_row = None
+            if validation_id:
+                validation_row = reader.execute(
+                    """
+                    SELECT staging_table, checked_rows
+                    FROM validation_report
+                    WHERE validation_report_id = ?
+                    """,
+                    [validation_id],
                 ).fetchone()
-                if staged:
-                    extra["rows_staged"] = int(staged[0])
+            if validation_row is None:
+                validation_row = reader.execute(
+                    """
+                    SELECT staging_table, checked_rows
+                    FROM validation_report
+                    WHERE job_id = ?
+                    ORDER BY created_at DESC
+                    LIMIT 1
+                    """,
+                    [job_result.job_id],
+                ).fetchone()
+            if validation_row:
+                if validation_row[0]:
+                    staging_table = str(validation_row[0])
+                if validation_row[1] is not None:
+                    extra["rows_staged"] = int(validation_row[1])
             if job_result.write_id:
                 written = reader.execute(
                     """
-                    SELECT rows_inserted FROM write_audit_log
+                    SELECT rows_inserted, staging_table, rows_in_staging,
+                           finished_at, started_at
+                    FROM write_audit_log
                     WHERE write_id = ?
                     """,
                     [job_result.write_id],
                 ).fetchone()
                 if written:
                     extra["rows_written"] = int(written[0])
+                    if not staging_table and written[1]:
+                        staging_table = str(written[1])
+                    if extra.get("rows_staged") is None and written[2] is not None:
+                        extra["rows_staged"] = int(written[2])
+            timing_row = reader.execute(
+                """
+                SELECT started_at, finished_at
+                FROM data_sync_job
+                WHERE job_id = ?
+                """,
+                [job_result.job_id],
+            ).fetchone()
+            if timing_row and timing_row[0] and timing_row[1]:
+                started_at, finished_at = timing_row[0], timing_row[1]
+                duration_ms = int((finished_at - started_at).total_seconds() * 1000)
+                if duration_ms >= 0:
+                    extra["duration_ms"] = duration_ms
+            elif latency_total_ms > 0:
+                extra["duration_ms"] = latency_total_ms
+            if staging_table and extra.get("rows_staged") is None:
+                staged = reader.execute(
+                    f"SELECT COUNT(*) FROM {staging_table}"
+                ).fetchone()
+                if staged:
+                    extra["rows_staged"] = int(staged[0])
+    if raw_paths:
+        deduped_paths = list(dict.fromkeys(raw_paths))
+        extra["raw_file_paths"] = deduped_paths
+        extra["raw_file_ids"] = _lookup_raw_file_ids(
+            cm,
+            content_hashes=content_hashes,
+            raw_paths=deduped_paths,
+        )
+    if schema_hashes:
+        extra["schema_hash"] = schema_hashes[-1]
+    if content_hashes:
+        extra["content_hash"] = content_hashes[-1]
+    if staging_table:
+        extra["staging_table"] = staging_table
     return extra
 
 
@@ -508,8 +659,8 @@ def build_observability_evidence(
         "rows_fetched": payload.get("rows_fetched"),
         "rows_staged": payload.get("rows_staged"),
         "rows_written": payload.get("rows_written"),
-        "schema_hash": report.schema_hash,
-        "content_hash": report.content_hash,
+        "schema_hash": payload.get("schema_hash") or report.schema_hash,
+        "content_hash": payload.get("content_hash") or report.content_hash,
         "duration_ms": payload.get("duration_ms"),
         "route_plan_persistence": (
             "job_event_log"
@@ -535,6 +686,8 @@ def build_acceptance_envelope(
 ) -> dict[str, Any]:
     run_id = run_id or f"p1-{uuid.uuid4().hex[:12]}"
     gate = compute_gate_eligible(job_kind=job_kind, data_root=data_root, dry_run=dry_run)
+    if extra:
+        report = _enrich_report_from_observability(report, extra)
     chain = _chain_status(report, dry_run=dry_run, extra=extra)
     envelope: dict[str, Any] = {
         "acceptance_report": report.to_dict(),
@@ -713,10 +866,93 @@ def _run_shard_job_without_binding(
     )
 
 
-def _build_datasource_service() -> DataSourceService:
-    registry = SourceRegistry()
-    registry.load()
-    return DataSourceService(staged_fixture_mode=False, source_registry=registry)
+def resolve_binding_datasource_service(
+    binding: IndicatorBinding,
+    *,
+    datasource_service: DataSourceService | None,
+    dry_run: bool,
+    data_root: Path | None = None,
+    orchestrator: DataSyncOrchestrator | None = None,
+    connection_manager: ConnectionManager | None = None,
+) -> DataSourceService | None:
+    if dry_run or datasource_service is not None:
+        return datasource_service
+    orch = orchestrator
+    if orch is None and connection_manager is not None:
+        orch = DataSyncOrchestrator(connection_manager)
+    root = data_root or resolve_cli_data_root()
+    return _build_datasource_service(
+        source_id=binding.primary_source,
+        data_domain=binding.data_domain,
+        data_root=root,
+        operation=tier_a_fetch_operation(binding.data_domain),
+        instrument_id=binding.incremental_watermark,
+        job_events=orch._jobs if orch else None,
+    )
+
+
+def _latest_sync_job_result(
+    cm: ConnectionManager,
+    *,
+    source_id: str,
+    data_domain: str,
+    job_type: str | None = None,
+) -> SyncJobResult | None:
+    params: list[str] = [source_id, data_domain]
+    job_type_clause = ""
+    if job_type is not None:
+        job_type_clause = " AND job_type = ?"
+        params.append(job_type)
+    with cm.reader() as reader:
+        row = reader.execute(
+            f"""
+            SELECT job_id, status, validation_report_id, conflict_report_id, write_id
+            FROM data_sync_job
+            WHERE source_id = ? AND data_domain = ?{job_type_clause}
+            ORDER BY created_at DESC
+            LIMIT 1
+            """,
+            params,
+        ).fetchone()
+    if not row:
+        return None
+    return SyncJobResult(
+        job_id=str(row[0]),
+        status=str(row[1]),
+        validation_report_id=row[2],
+        conflict_report_id=row[3],
+        write_id=row[4],
+        message=None,
+    )
+
+
+def _build_datasource_service(
+    *,
+    source_id: str,
+    data_domain: str,
+    data_root: Path,
+    operation: str,
+    instrument_id: str | None = None,
+    job_events=None,
+) -> DataSourceService:
+    raw_root = Path(data_root) / "raw"
+    raw_root.mkdir(parents=True, exist_ok=True)
+    if source_id == "baostock" and data_domain == "cn_equity_daily_bar":
+        from backend.app.ops.baostock_incremental_run import build_baostock_incremental_service
+
+        return build_baostock_incremental_service(
+            data_root=raw_root,
+            symbol=instrument_id or "sh.600519",
+            job_events=job_events,
+        )
+    from backend.app.datasources.product_live_ports import build_product_live_service
+
+    return build_product_live_service(
+        source_id=source_id,
+        data_domain=data_domain,
+        data_root=raw_root,
+        operation=operation,
+    )
 
 
 def _prepare_phase1_connection(data_root: Path) -> tuple[ConnectionManager, DataSyncOrchestrator]:
@@ -818,7 +1054,7 @@ def execute_spine_or_binding_live(
             watermark_key = _incremental_watermark_key(request, instrument_id)
             if watermark_key:
                 watermark_after = read_watermark_iso(cm_for_spine, request.data_domain, watermark_key)
-        extra = {
+        extra: dict[str, Any] = {
             "sync_job_id": None,
             "route_plan_persisted": report.route_plan_id is not None,
             "incremental_evidence": build_incremental_evidence(
@@ -826,6 +1062,22 @@ def execute_spine_or_binding_live(
                 watermark_after=watermark_after,
             ),
         }
+        if live_authorized and cm_for_spine is not None:
+            job_result = _latest_sync_job_result(
+                cm_for_spine,
+                source_id=request.source_id,
+                data_domain=request.data_domain,
+                job_type="incremental",
+            )
+            if job_result is not None:
+                extra.update(
+                    _collect_observability_from_job(
+                        cm_for_spine,
+                        job_result,
+                        route_plan_persisted=report.route_plan_id is not None,
+                    )
+                )
+        report = _enrich_report_from_observability(report, extra)
         return report, extra
 
     route_payload = preview_route_payload(request)
@@ -852,7 +1104,14 @@ def execute_spine_or_binding_live(
         if job_type == "incremental" and watermark_key
         else None
     )
-    service = _build_datasource_service()
+    service = _build_datasource_service(
+        source_id=request.source_id,
+        data_domain=request.data_domain,
+        data_root=data_root,
+        operation=request.operation,
+        instrument_id=watermark_key,
+        job_events=orch._jobs,
+    )
     if binding is not None:
         job_result = execute_binding(
             binding,
@@ -941,6 +1200,7 @@ def execute_spine_or_binding_live(
             clean_table=target.target_table,
             data_domain=request.data_domain,
         )
+    report = _enrich_report_from_observability(report, extra)
     return report, extra
 
 
@@ -1199,6 +1459,7 @@ def acceptance_report_from_sync_job(
             window_date_start=date_start.isoformat(),
             window_date_end=date_end.isoformat(),
         )
+    report = _enrich_report_from_observability(report, extra)
     return report, extra
 
 
@@ -1327,6 +1588,8 @@ def aggregate_scheduler_parent_report(
     parent_status = "PASS"
     for child in required_children:
         status = str(child.get("status") or child.get("acceptance_report_status") or "FAIL")
+        if status == "COMPLETED":
+            status = "PASS"
         if status in {"BLOCKED", "FAIL_EXTERNAL", "CONTRACT_VIOLATION", "FAIL"}:
             parent_status = status
             break

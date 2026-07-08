@@ -77,8 +77,8 @@ def _patch_phase1_fallback_fetch(monkeypatch, replay_path: Path) -> None:
     _patch_phase1_baostock_replay(monkeypatch, replay_path)
     original_build = phase1_acceptance._build_datasource_service
 
-    def _build():
-        svc = original_build()
+    def _build(**_kwargs):
+        svc = original_build(**_kwargs)
         original_fetch = svc.fetch
 
         def _fetch(req, *, con, job_id=None, **kwargs):
@@ -103,8 +103,8 @@ def _patch_phase1_backfill_conflict_peers(
     _patch_phase1_baostock_replay(monkeypatch, replay_path)
     original_build = phase1_acceptance._build_datasource_service
 
-    def _build():
-        svc = original_build()
+    def _build(**_kwargs):
+        svc = original_build(**_kwargs)
         original_fetch = svc.fetch
 
         def _fetch(req, *, con, job_id=None, **kwargs):
@@ -180,7 +180,7 @@ def _patch_phase1_baostock_replay(monkeypatch, replay_path: Path) -> None:
     from backend.app.datasources.service import DataSourceService
     from backend.app.datasources.source_registry import SourceRegistry
 
-    def _build() -> DataSourceService:
+    def _build(**_kwargs) -> DataSourceService:
         registry = SourceRegistry()
         registry.load()
         port = BaostockMockFetchPort(symbols=(SYMBOL,), max_rows=500, replay_path=replay_path)
@@ -202,8 +202,8 @@ def _patch_phase1_backfill_fail_on_second(monkeypatch, replay_path: Path) -> Non
     original_build = phase1_acceptance._build_datasource_service
     calls = {"n": 0}
 
-    def _build():
-        svc = original_build()
+    def _build(**_kwargs):
+        svc = original_build(**_kwargs)
         original_fetch = svc.fetch
 
         def _fetch(req, *, con, job_id=None, **kwargs):

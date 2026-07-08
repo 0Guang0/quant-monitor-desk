@@ -201,6 +201,47 @@ def test_phase1Acceptance_chainStatus_blocksWriteOnValidationFailure(tmp_path: P
     assert envelope["clean_status"] == "NOT_RUN"
 
 
+def test_phase1Acceptance_chainStatus_withoutFetchEvidence_marksRawAndFetchFail(
+    tmp_path: Path,
+) -> None:
+    """覆盖范围：R4 链路状态诚实性（无 fetch 证据）
+    测试对象：build_acceptance_envelope 链路状态字段
+    目的/目标：仅有 write_grade 成功、observability 无 fetch/raw 证据时不得标 fetch/raw=PRESENT
+    验证点：fetch_status=FAIL；raw_status=FAIL；clean_status 仍可为 WRITTEN
+    失败含义：验收信封假绿，审计无法区分「已写 clean」与「已证明 fetch/raw 证据」
+    """
+    from dataclasses import replace
+
+    request = AcceptanceRequest.from_target("cn_equity_daily_bar:baostock:fetch_daily_bar")
+    base = AcceptanceReport.from_route_payload(
+        request,
+        {
+            "route_status": "READY",
+            "selected_source_id": "baostock",
+            "route_plan_id": "rp-no-evidence",
+            "route_grade": "primary",
+        },
+    )
+    report = replace(
+        base,
+        status="PASS",
+        failure_class="NONE",
+        write_grade="primary_grade_clean",
+        validation_status="PASSED_PRIMARY",
+    )
+    envelope = build_acceptance_envelope(
+        report,
+        job_kind="sync",
+        trigger="test",
+        data_root=_acceptance_root(tmp_path),
+        dry_run=False,
+        extra={},
+    )
+    assert envelope["fetch_status"] == "FAIL"
+    assert envelope["raw_status"] == "FAIL"
+    assert envelope["clean_status"] == "WRITTEN"
+
+
 def test_phase1Acceptance_degradedWriteGrade_preservedInEnvelope(tmp_path: Path) -> None:
     """覆盖范围：T17 degraded clean 语义保留
     测试对象：build_acceptance_envelope write_grade / source_role

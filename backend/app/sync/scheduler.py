@@ -216,6 +216,15 @@ def _run_scheduler_entry(
             binding_ids: list[str] = []
             for binding in bindings:
                 binding_ids.append(binding.indicator_id)
+                from backend.app.cli.phase1_acceptance import resolve_binding_datasource_service
+
+                binding_service = resolve_binding_datasource_service(
+                    binding,
+                    datasource_service=datasource_service,
+                    dry_run=dry_run,
+                    orchestrator=orchestrator,
+                    connection_manager=connection_manager,
+                )
                 if job_type == "incremental":
                     results.append(
                         _run_binding_job(
@@ -224,7 +233,7 @@ def _run_scheduler_entry(
                             dry_run=dry_run,
                             connection_manager=connection_manager,
                             orchestrator=orchestrator,
-                            datasource_service=datasource_service,
+                            datasource_service=binding_service,
                         )
                     )
                 else:
@@ -265,7 +274,7 @@ def _run_scheduler_entry(
                             dry_run=dry_run,
                             connection_manager=connection_manager,
                             orchestrator=orchestrator,
-                            datasource_service=datasource_service,
+                            datasource_service=binding_service,
                             date_start=parsed_start,
                             date_end=parsed_end,
                         )

@@ -1126,15 +1126,12 @@ def scheduler_run(
             apply_migrations(con)
 
     try:
-        from backend.app.cli.phase1_acceptance import _build_datasource_service
-
-        datasource_service = None if dry_run else _build_datasource_service()
         run = run_profile(
             profile,
             dry_run=dry_run,
             job_type_filter=job_type_filter,
             connection_manager=cm,
-            datasource_service=datasource_service,
+            datasource_service=None,
         )
     except KeyError as exc:
         raise CliFailure(

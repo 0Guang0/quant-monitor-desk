@@ -200,7 +200,7 @@ def test_qmdData_syncAcceptance_livePassReplayFetchCleanWriteAndCursor(
     """覆盖范围：official sync live PASS 产品路径
     测试对象：sync_plan cn_equity_daily_bar live + matrix baostock handler
     目的/目标：QMD_ALLOW_LIVE_FETCH=1 时真实 fetch→staging→validation→write→cursor 可追溯
-    验证点：status=PASS；write_grade=primary_grade_clean；clean_status=WRITTEN；route_plan_id 非空
+    验证点：status=PASS；write_grade=primary_grade_clean；clean_status=WRITTEN；route_plan_id 非空；fetch_log_ids 非空
     失败含义：sync 仅有 dry-run/BLOCKED 证据，无法证明增量生产链路在 official CLI 跑通
     """
     root = _p1_root(tmp_path)
@@ -221,12 +221,20 @@ def test_qmdData_syncAcceptance_livePassReplayFetchCleanWriteAndCursor(
     assert report["write_grade"] == "primary_grade_clean"
     assert report["route_plan_id"] is not None
     assert payload["clean_status"] == "WRITTEN"
+    assert payload["staging_status"] == "PRESENT"
+    assert payload["raw_status"] == "PRESENT"
     incremental = payload.get("incremental_evidence") or {}
     assert incremental.get("pipeline_path")
     assert incremental.get("watermark_after") is not None
     obs = payload.get("observability_evidence") or {}
     assert obs.get("route_plan_persistence") == "job_event_log"
     assert obs.get("route_plan_id")
+    assert obs.get("fetch_log_ids")
+    assert obs.get("raw_file_ids")
+    assert obs.get("staging_table")
+    assert obs.get("schema_hash")
+    assert obs.get("content_hash")
+    assert obs.get("duration_ms") is not None
 
 
 def test_qmdData_syncAcceptance_livePassRepeatRunIdempotent(
