@@ -44,13 +44,16 @@ def assert_isolated_live_data_root(
 ) -> Path:
     """Reject canonical main DB paths; require `.audit-sandbox/<required_segment>`."""
     resolved = resolve_sandbox_path(data_root).resolve()
-    if is_canonical_main_db_path(resolved) or is_canonical_main_data_root(resolved):
+    posix = resolved.as_posix()
+    isolated_shape = ".audit-sandbox" in posix and required_segment in posix
+    if not isolated_shape and (
+        is_canonical_main_db_path(resolved) or is_canonical_main_data_root(resolved)
+    ):
         raise AcceptanceIsolationError(
             f"canonical main DB/data root rejected for live acceptance: {resolved}",
             code="CANONICAL_MAIN_DB_REJECTED",
         )
-    posix = resolved.as_posix()
-    if ".audit-sandbox" not in posix or required_segment not in posix:
+    if not isolated_shape:
         raise AcceptanceIsolationError(
             f"DATA_ROOT must be under .audit-sandbox/{required_segment}: {resolved}",
             code="ISOLATED_ROOT_REQUIRED",
@@ -67,10 +70,9 @@ def ensure_isolated_db(data_root: Path) -> Path:
 def _ensure_isolated_db_cached(resolved_data_root: str) -> Path:
     data_root = Path(resolved_data_root)
     import duckdb
-
+    from backend.app.datasources.source_registry import SourceRegistry
     from backend.app.db.connection import ConnectionManager
     from backend.app.db.migrate import apply_migrations
-    from backend.app.datasources.source_registry import SourceRegistry
 
     db = data_root / "duckdb" / "quant_monitor.duckdb"
     db.parent.mkdir(parents=True, exist_ok=True)

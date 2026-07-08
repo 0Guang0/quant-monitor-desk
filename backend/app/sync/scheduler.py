@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass
+from datetime import date
 from pathlib import Path
 from typing import Any, Literal
 
 import yaml
-
 from backend.app.core.resource_guard import Decision, ResourceGuard
 from backend.app.db.connection import ConnectionManager
 from backend.app.sync.binding_executor import execute_binding
@@ -36,6 +36,9 @@ class SchedulerJobResult:
     binding_ids: tuple[str, ...]
     message: str | None = None
     job_id: str | None = None
+    window: dict[str, str] | None = None
+    acceptance_report: Any | None = None
+    acceptance_extra: dict[str, Any] | None = None
 
 
 @dataclass(frozen=True)
@@ -87,6 +90,8 @@ def _run_binding_job(
     connection_manager: ConnectionManager | None,
     orchestrator: DataSyncOrchestrator | None,
     datasource_service=None,
+    date_start: date | None = None,
+    date_end: date | None = None,
 ) -> SyncJobResult:
     return execute_binding(
         binding,
@@ -95,6 +100,8 @@ def _run_binding_job(
         connection_manager=connection_manager,
         orchestrator=orchestrator,
         datasource_service=datasource_service,
+        date_start=date_start,
+        date_end=date_end,
     )
 
 
@@ -155,10 +162,56 @@ def _run_scheduler_entry(
     source_id = entry.get("source_id")
     domain_s = str(domain) if domain is not None else None
     source_s = str(source_id) if source_id is not None else None
+    window: dict[str, str] | None = None
+    if entry.get("date_start") and entry.get("date_end"):
+        window = {
+            "date_start": str(entry["date_start"])[:10],
+            "date_end": str(entry["date_end"])[:10],
+        }
 
     if job_type in _BINDING_JOB_TYPES and domain_s and source_s:
         bindings = _bindings_for_job(domain_s, source_s)
         if bindings:
+            if not dry_run:
+                from backend.app.cli.phase1_acceptance import (
+                    is_production_equivalent_acceptance_root,
+                    live_authorized_from_env,
+                    resolve_cli_data_root,
+                )
+
+                if is_production_equivalent_acceptance_root(
+                    resolve_cli_data_root()
+                ) and not live_authorized_from_env():
+                    from backend.app.cli.phase1_acceptance import (
+                        acceptance_request_for_tier_a,
+                        execute_spine_or_binding_live,
+                    )
+
+                    data_root = resolve_cli_data_root()
+                    request = acceptance_request_for_tier_a(
+                        source_id=source_s,
+                        data_domain=domain_s,
+                        start=(window or {}).get("date_start"),
+                        end=(window or {}).get("date_end"),
+                    )
+                    report, extra = execute_spine_or_binding_live(
+                        request,
+                        data_root=data_root,
+                        live_authorized=False,
+                        job_type=job_type,  # type: ignore[arg-type]
+                    )
+                    return SchedulerJobResult(
+                        job_type=job_type,
+                        domain=domain_s,
+                        source_id=source_s,
+                        status="BLOCKED",
+                        binding_ids=tuple(binding.indicator_id for binding in bindings),
+                        message=f"live authorization missing for {domain_s}:{source_s}:{job_type}",
+                        job_id=None,
+                        window=window,
+                        acceptance_report=report,
+                        acceptance_extra=extra,
+                    )
             results: list[SyncJobResult] = []
             binding_ids: list[str] = []
             for binding in bindings:
@@ -175,21 +228,73 @@ def _run_scheduler_entry(
                         )
                     )
                 else:
-                    # ponytail: backfill/full_load profile entries need date window — dry-run plan only
-                    results.append(
-                        SyncJobResult(
-                            job_id=f"job-{binding.indicator_id}",
-                            status="SKIPPED",
-                            message=f"dry-run plan for {job_type}; date window required for live run",
+                    if dry_run:
+                        results.append(
+                            SyncJobResult(
+                                job_id=f"job-{binding.indicator_id}",
+                                status="SKIPPED",
+                                message=(
+                                    f"dry-run plan for {job_type}; "
+                                    "date window required for live run"
+                                ),
+                            )
                         )
-                        if dry_run
-                        else SyncJobResult(
-                            job_id=f"job-{binding.indicator_id}",
-                            status="FAILED_FINAL",
-                            message=f"{job_type} via scheduler requires explicit date window",
+                        continue
+                    date_start = entry.get("date_start")
+                    date_end = entry.get("date_end")
+                    if not date_start or not date_end:
+                        results.append(
+                            SyncJobResult(
+                                job_id=f"job-{binding.indicator_id}",
+                                status="FAILED_FINAL",
+                                message=(
+                                    f"{job_type} via scheduler requires profile date_start "
+                                    "and date_end for live run"
+                                ),
+                            )
+                        )
+                        continue
+                    from datetime import date as date_cls
+
+                    parsed_start = date_cls.fromisoformat(str(date_start)[:10])
+                    parsed_end = date_cls.fromisoformat(str(date_end)[:10])
+                    results.append(
+                        _run_binding_job(
+                            binding,
+                            job_type,  # type: ignore[arg-type]
+                            dry_run=dry_run,
+                            connection_manager=connection_manager,
+                            orchestrator=orchestrator,
+                            datasource_service=datasource_service,
+                            date_start=parsed_start,
+                            date_end=parsed_end,
                         )
                     )
             last = results[-1]
+            acceptance_report = None
+            acceptance_extra = None
+            if (
+                not dry_run
+                and connection_manager is not None
+                and last.job_id
+                and domain_s
+                and source_s
+            ):
+                from backend.app.cli.phase1_acceptance import (
+                    capture_scheduler_binding_child_acceptance,
+                    resolve_cli_data_root,
+                )
+
+                acceptance_report, acceptance_extra = capture_scheduler_binding_child_acceptance(
+                    job_type=job_type,  # type: ignore[arg-type]
+                    source_id=source_s,
+                    data_domain=domain_s,
+                    data_root=resolve_cli_data_root(),
+                    cm=connection_manager,
+                    job_result=last,
+                    window=window,
+                    trigger_reason="eco_catchup" if job_type == "backfill" else f"scheduler:{job_type}",
+                )
             return SchedulerJobResult(
                 job_type=job_type,
                 domain=domain_s,
@@ -198,6 +303,9 @@ def _run_scheduler_entry(
                 binding_ids=tuple(binding_ids),
                 message=last.message,
                 job_id=last.job_id,
+                window=window,
+                acceptance_report=acceptance_report,
+                acceptance_extra=acceptance_extra,
             )
 
         suffix = uuid.uuid4().hex[:8]
@@ -213,15 +321,96 @@ def _run_scheduler_entry(
                     f"would run {job_type}"
                 ),
                 job_id=f"job-sched-{suffix}",
+                window=window,
             )
+        if job_type == "incremental":
+            from backend.app.cli.phase1_acceptance import (
+                acceptance_request_for_tier_a,
+                execute_spine_or_binding_live,
+                is_production_equivalent_acceptance_root,
+                live_authorized_from_env,
+                resolve_cli_data_root,
+            )
+
+            data_root = resolve_cli_data_root()
+            if is_production_equivalent_acceptance_root(data_root):
+                request = acceptance_request_for_tier_a(
+                    source_id=source_s,
+                    data_domain=domain_s,
+                )
+                report, extra = execute_spine_or_binding_live(
+                    request,
+                    data_root=data_root,
+                    live_authorized=live_authorized_from_env(),
+                    job_type="incremental",
+                )
+                status = "COMPLETED" if report.status == "PASS" else report.failure_class
+                return SchedulerJobResult(
+                    job_type=job_type,
+                    domain=domain_s,
+                    source_id=source_s,
+                    status=status,
+                    binding_ids=(),
+                    message=report.errors[0] if report.errors else report.status,
+                    job_id=extra.get("job_id"),
+                    window=window,
+                    acceptance_report=report,
+                    acceptance_extra=extra,
+                )
+        if job_type in {"backfill", "full_load"} and window:
+            from datetime import date as date_cls
+
+            from backend.app.cli.phase1_acceptance import (
+                acceptance_request_for_tier_a,
+                execute_spine_or_binding_live,
+                is_production_equivalent_acceptance_root,
+                live_authorized_from_env,
+                resolve_cli_data_root,
+            )
+
+            data_root = resolve_cli_data_root()
+            if is_production_equivalent_acceptance_root(data_root):
+                parsed_start = date_cls.fromisoformat(window["date_start"][:10])
+                parsed_end = date_cls.fromisoformat(window["date_end"][:10])
+                request = acceptance_request_for_tier_a(
+                    source_id=source_s,
+                    data_domain=domain_s,
+                    start=window["date_start"],
+                    end=window["date_end"],
+                )
+                report, extra = execute_spine_or_binding_live(
+                    request,
+                    data_root=data_root,
+                    live_authorized=live_authorized_from_env(),
+                    job_type=job_type,  # type: ignore[arg-type]
+                    date_start=parsed_start,
+                    date_end=parsed_end,
+                    trigger_reason=f"scheduler:{job_type}",
+                )
+                status = "COMPLETED" if report.status == "PASS" else report.failure_class
+                return SchedulerJobResult(
+                    job_type=job_type,
+                    domain=domain_s,
+                    source_id=source_s,
+                    status=status,
+                    binding_ids=(),
+                    message=report.errors[0] if report.errors else report.status,
+                    job_id=extra.get("job_id"),
+                    window=window,
+                    acceptance_report=report,
+                    acceptance_extra=extra,
+                )
         raise ValueError(
-            f"live {job_type} for {domain_s}/{source_s} requires registry bindings or CLI backfill/sync"
+            f"live {job_type} for {domain_s}/{source_s} requires registry "
+            "bindings or CLI backfill/sync"
         )
 
     if orchestrator is None and connection_manager is not None and not dry_run:
         orchestrator = DataSyncOrchestrator(connection_manager)
     if orchestrator is None and not dry_run:
-        raise ValueError("scheduler quality/revision job requires connection_manager or orchestrator")
+        raise ValueError(
+            "scheduler quality/revision job requires connection_manager or orchestrator"
+        )
     orch_result = _run_orchestrator_job(entry, dry_run=dry_run, orchestrator=orchestrator)
     return SchedulerJobResult(
         job_type=job_type,
@@ -231,6 +420,7 @@ def _run_scheduler_entry(
         binding_ids=(),
         message=orch_result.message,
         job_id=orch_result.job_id,
+        window=window,
     )
 
 

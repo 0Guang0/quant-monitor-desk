@@ -62,14 +62,14 @@ def test_qmdData_syncBaostock_dryRun_noDbFileCreated(monkeypatch, tmp_path: Path
     assert not db.exists()
 
 
-def test_qmdData_syncBaostock_nonDryRun_failedFinalRaisesCliFailure(
+def test_qmdData_syncBaostock_nonDryRun_requiresSourceRouteDbRoot(
     monkeypatch, tmp_path: Path
 ) -> None:
-    """覆盖范围：cn_equity replay 真跑无 bar 时 CLI fail-closed
-    测试对象：sync_baostock_incremental dry_run=False + 空窗 replay
-    目的/目标：orchestrator 返回 FAILED_FINAL 时须抛 CliFailure(SYNC_FAILED)，不得 exit 0
-    验证点：end=1999-12-31（fixture 仅 2024-06-25）pytest.raises(CliFailure) 且 error_code==SYNC_FAILED
-    失败含义：sync 失败仍 exit 0，运维误判增量成功
+    """覆盖范围：cn_equity 真跑须 production-equivalent 验收根（T9）
+    测试对象：sync_baostock_incremental dry_run=False on generic sandbox
+    目的/目标：普通 .audit-sandbox 不再执行 legacy baostock live 写入
+    验证点：CliFailure error_code==ISOLATED_ROOT_REQUIRED
+    失败含义：旧 sandbox live fallback 仍可写库
     """
     data_root = _sandbox_data_root(tmp_path)
     data_root.mkdir(parents=True)
@@ -83,18 +83,15 @@ def test_qmdData_syncBaostock_nonDryRun_failedFinalRaisesCliFailure(
             end="1999-12-31",
             empty_table_lookback_days=30,
         )
-    err = exc_info.value
-    assert err.error_code == "SYNC_FAILED"
-    assert err.retryable is True
-    assert "FAILED_FINAL" in err.message
+    assert exc_info.value.error_code == "ISOLATED_ROOT_REQUIRED"
 
 
 def test_qmdData_syncBaostock_failedFinal_cliExitNonZero(monkeypatch, tmp_path: Path, capsys) -> None:
-    """覆盖范围：sync 失败时 CLI main 退出码非 0
-    测试对象：main.main data sync 路径在 orchestrator FAILED_FINAL 时
-    目的/目标：运维通过 exit code 识别 sync 失败，不得 silent success
-    验证点：rc != 0；stderr 含 SYNC_FAILED
-    失败含义：函数层抛错但 CLI 仍 exit 0，违背 LIVE-BAOSTOCK-SYNC-SILENT-001
+    """覆盖范围：非 production-equivalent 真跑 CLI fail-closed（T9）
+    测试对象：main.main data sync --no-dry-run on generic sandbox
+    目的/目标：不得 silent success；须结构化错误退出
+    验证点：rc != 0；stderr 含 ISOLATED_ROOT_REQUIRED
+    失败含义：legacy live 路径仍可用或错误未结构化
     """
     data_root = _sandbox_data_root(tmp_path)
     data_root.mkdir(parents=True)
@@ -116,19 +113,22 @@ def test_qmdData_syncBaostock_failedFinal_cliExitNonZero(monkeypatch, tmp_path: 
     )
     assert rc != 0
     err = capsys.readouterr().err
-    assert "SYNC_FAILED" in err
+    assert "ISOLATED_ROOT_REQUIRED" in err
 
 
-def test_qmdData_syncBaostock_nonDryRun_replaySmoke(monkeypatch, tmp_path: Path) -> None:
-    """覆盖范围：cn_equity_daily_bar sync replay 真跑 smoke
-    测试对象：sync_baostock_incremental dry_run=False（.audit-sandbox 隔离库）
-    目的/目标：replay mock 下真跑应 COMPLETED 且写 security_bar_1d
-    验证点：job_status==COMPLETED；DB 有 sh.600519 fixture 行
-    失败含义：CLI 真跑断链则产品 sync 不可用
+def test_qmdData_syncBaostock_nonDryRun_sourceRouteDbBlockedWithoutAuth(
+    monkeypatch, tmp_path: Path
+) -> None:
+    """覆盖范围：source-route-db baostock live 缺授权诚实阻断
+    测试对象：sync_baostock_incremental dry_run=False on source-route-db root
+    目的/目标：正式 phase1 路径产出 BLOCKED acceptance，非 legacy replay 写库
+    验证点：gate_eligible=True；failure_class=BLOCKED
+    失败含义：baostock live 仍走已退役的 generic sandbox 特化路径
     """
-    data_root = _sandbox_data_root(tmp_path)
+    data_root = tmp_path / ".audit-sandbox" / "source-route-db-baostock"
     data_root.mkdir(parents=True)
     monkeypatch.setenv("QMD_DATA_ROOT", str(data_root))
+    monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "0")
     monkeypatch.setattr(data_commands, "DATA_ROOT", data_root)
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
     payload = data_commands.sync_baostock_incremental(
@@ -137,55 +137,50 @@ def test_qmdData_syncBaostock_nonDryRun_replaySmoke(monkeypatch, tmp_path: Path)
         end="2024-06-25",
         empty_table_lookback_days=30,
     )
-    assert payload["dry_run"] is False
-    assert payload["job_status"] == "COMPLETED"
-    db = data_root / "duckdb" / "quant_monitor.duckdb"
-    cm = ConnectionManager(db)
-    with cm.reader() as con:
-        row = con.execute(
-            """
-            SELECT COUNT(*) FROM security_bar_1d
-            WHERE instrument_id = 'sh.600519' AND trade_date = '2024-06-25'
-            """
-        ).fetchone()
-    assert row is not None and row[0] >= 1
+    assert payload.get("gate_eligible") is True
+    assert payload["acceptance_report"]["failure_class"] == "BLOCKED"
 
 
 def test_qmdData_syncBaostock_refusesCanonicalDbPath(monkeypatch, tmp_path: Path) -> None:
     """覆盖范围：真跑拒绝 canonical 主库路径
     测试对象：sync_baostock_incremental dry_run=False + canonical DATA_ROOT
-    目的/目标：未设 sandbox 时不得写 PROJECT_ROOT/data/duckdb
-    验证点：CliFailure；消息含 production DB path refused
-    失败含义：运维误跑会 silent 写 canonical 主库
+    目的/目标：未设 source-route-db 时 fail-closed
+    验证点：CliFailure ISOLATED_ROOT_REQUIRED
+    失败含义：运维误跑会写非隔离验收库
     """
     canonical_root = PROJECT_ROOT / "data"
     monkeypatch.setenv("QMD_DATA_ROOT", str(canonical_root))
     monkeypatch.setattr(data_commands, "DATA_ROOT", canonical_root)
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
-    with pytest.raises(CliFailure, match="operator|production DB"):
+    with pytest.raises(CliFailure) as exc_info:
         data_commands.sync_baostock_incremental(dry_run=False, end="2024-06-25")
+    assert exc_info.value.error_code in {
+        "ISOLATED_ROOT_REQUIRED",
+        "CANONICAL_MAIN_DB_REJECTED",
+    }
 
 
 def test_qmdData_syncBaostock_operatorAuthRequired(monkeypatch, non_sandbox_data_root: Path) -> None:
-    """覆盖范围：cn_equity 真跑 operator / sandbox 双门禁
+    """覆盖范围：cn_equity 真跑须 production-equivalent 验收根
     测试对象：sync_baostock_incremental dry_run=False
-    目的/目标：非 .audit-sandbox 的 DATA_ROOT 须 USER_AUTH_REQUIRED
-    验证点：tmp_path 直设（无 .audit-sandbox）抛 CliFailure
-    失败含义：cn_equity 绕过 operator 确认会破坏 R3F-CLI-01 契约
+    目的/目标：非 source-route-db DATA_ROOT 须 ISOLATED_ROOT_REQUIRED
+    验证点：tmp_path 直设抛 CliFailure
+    失败含义：cn_equity 仍可在非验收根 live 写库
     """
     data_root = non_sandbox_data_root
     monkeypatch.setenv("QMD_DATA_ROOT", str(data_root))
     monkeypatch.setattr(data_commands, "DATA_ROOT", data_root)
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
-    with pytest.raises(CliFailure, match="operator"):
+    with pytest.raises(CliFailure) as exc_info:
         data_commands.sync_baostock_incremental(dry_run=False, end="2024-06-25")
+    assert exc_info.value.error_code == "ISOLATED_ROOT_REQUIRED"
 
 
 def test_qmdData_syncBaostock_rejectsUserLiveAuditPath(monkeypatch, tmp_path: Path) -> None:
     """覆盖范围：baostock 真跑拒绝 user-live 类生产 audit 路径
     测试对象：sync_baostock_incremental dry_run=False
-    目的/目标：与 fred/sandbox guard 一致；user-live 不得被增量 sync 写入
-    验证点：QMD_DATA_ROOT=.audit-sandbox/user-live → CliFailure INVALID_INPUT
+    目的/目标：require_phase1_data_root 拒绝非 source-route-db 根
+    验证点：QMD_DATA_ROOT=.audit-sandbox/user-live → ISOLATED_ROOT_REQUIRED
     失败含义：类生产路径可被 baostock 增量污染
     """
     data_root = tmp_path / ".audit-sandbox" / "user-live"
@@ -194,8 +189,7 @@ def test_qmdData_syncBaostock_rejectsUserLiveAuditPath(monkeypatch, tmp_path: Pa
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
     with pytest.raises(CliFailure) as exc_info:
         data_commands.sync_baostock_incremental(dry_run=False, end="2024-06-25")
-    assert exc_info.value.error_code == "INVALID_INPUT"
-    assert "user-live" in exc_info.value.message
+    assert exc_info.value.error_code == "ISOLATED_ROOT_REQUIRED"
 
 
 def test_qmdData_syncBaostock_invalidInputDates(monkeypatch, tmp_path: Path) -> None:

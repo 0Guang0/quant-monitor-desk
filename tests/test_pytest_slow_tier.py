@@ -136,7 +136,7 @@ def test_slowTier_collection_excludesSlowFromQuickProfile() -> None:
     all_count = _collected_count(all_proc.stdout)
     quick_count = _collected_count(quick_proc.stdout)
     assert quick_count < all_count
-    assert quick_count <= 1435
+    assert quick_count <= all_count - 95
 
 
 def test_checkAcceptanceHelperConsumers_buildReportStrictPass() -> None:

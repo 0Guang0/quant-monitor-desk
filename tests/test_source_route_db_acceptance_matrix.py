@@ -10,6 +10,7 @@ import pytest
 from backend.app.ops.source_route_db_acceptance import SourceRouteDbAcceptanceSpine
 from backend.app.ops.source_route_db_acceptance_matrix import (
     DOCUMENTED_SOURCE_MATRIX,
+    classify_matrix_execute_exception,
     evaluate_matrix_row_closure,
     find_matrix_target,
     iter_matrix_targets,
@@ -247,6 +248,34 @@ def test_sourceRouteDbAcceptanceMatrix_dryRunMatrix_skipsBulkRouteEvidencePersis
     finally:
         con.close()
     assert route_count == 0
+
+
+def test_sourceRouteDbAcceptanceMatrix_timeoutExceptionIsExternalFailure() -> None:
+    """覆盖范围：live matrix 行执行时外部网络超时分类
+    测试对象：classify_matrix_execute_exception / evaluate_matrix_row_closure
+    目的/目标：远端源超时应成为该行 FAIL_EXTERNAL，不能炸掉整次验收或误报契约坏了
+    验证点：TimeoutError 分类为 FAIL_EXTERNAL；closure outcome 为 FAIL_EXTERNAL
+    失败含义：外部 API 抖动会让 P1-GATE 以 traceback/contract failure 失败
+    """
+    target = next(t for t in iter_matrix_targets() if t.request.source_id == "world_bank")
+    failure_class, status = classify_matrix_execute_exception(
+        TimeoutError("The read operation timed out")
+    )
+
+    assert (failure_class, status) == ("FAIL_EXTERNAL", "FAIL")
+    assert (
+        evaluate_matrix_row_closure(
+            target,
+            {
+                "status": status,
+                "failure_class": failure_class,
+                "write_grade": "blocked",
+                "errors": ["matrix execute raised: The read operation timed out"],
+            },
+            closure_mode="final_live_authorized",
+        )
+        == "FAIL_EXTERNAL"
+    )
 
 
 def test_sourceRouteDbAcceptanceMatrix_checkerRejectsLiveReportWithContractFailures(

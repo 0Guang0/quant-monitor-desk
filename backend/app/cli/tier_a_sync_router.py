@@ -117,7 +117,24 @@ def _dry_run_shell(
     }
     if extra:
         payload.update(extra)
-    return payload
+    from backend.app.cli.phase1_acceptance import (
+        dry_run_envelope_for_plan,
+        merge_payload_with_envelope,
+        resolve_cli_data_root,
+    )
+
+    envelope = dry_run_envelope_for_plan(
+        job_kind="sync",
+        trigger=f"qmd-data data sync --source-id {source_id}",
+        data_root=resolve_cli_data_root(),
+        route_payload={
+            "data_domain": data_domain,
+            "selected_source_id": selected_source_id,
+            "operation": operation,
+            "route_status": route_status,
+        },
+    )
+    return merge_payload_with_envelope(payload, envelope)
 
 
 def _macro_dry_run(
@@ -238,34 +255,22 @@ def sync_tier_a_by_source_id(
         _require_audit_sandbox_data_root(data_root)
 
     if not dry_run:
-        if source_id == "baostock":
-            return data_commands.sync_baostock_incremental(
-                dry_run=False,
-                instrument_id=instrument_id,
-                end=end,
-                since=since,
-            )
-        if source_id == "mootdx":
-            return data_commands.sync_mootdx_incremental(
-                dry_run=False,
-                instrument_id=instrument_id,
-                end=end,
-                since=since,
-            )
-        if source_id == "fred":
-            return data_commands._sync_fred_macro_incremental(
-                operation=operation or "fetch_macro_series",
-                since=since,
-                series_ids=series_ids,
-            )
-        raise CliFailure(
-            error_code="USER_AUTH_REQUIRED",
-            message=(
-                f"qmd data sync --source-id {source_id!r} without --dry-run "
-                "requires sandbox path; only baostock, mootdx, fred wired in S12"
-            ),
-            docs_anchor="docs/ops/data_sync_quick_reference.md",
-            manual_confirmation_required=True,
+        from backend.app.cli.phase1_acceptance import (
+            is_production_equivalent_acceptance_root,
+            require_phase1_data_root_for_live,
+            resolve_cli_data_root,
+            run_phase1_sync_live,
+        )
+
+        data_root = resolve_cli_data_root()
+        if not is_production_equivalent_acceptance_root(data_root):
+            require_phase1_data_root_for_live(data_root)
+        return run_phase1_sync_live(
+            source_id=source_id,
+            data_domain=canonical,
+            data_root=data_root,
+            end=end,
+            instrument_id=instrument_id,
         )
 
     if source_id == "baostock":
@@ -312,7 +317,7 @@ def sync_tier_a_by_source_id(
         if since:
             since_map = {sid: since for sid in selected}
         target = resolve_clean_write_target(canonical)
-        return {
+        payload = {
             "command": "sync",
             "dry_run": True,
             "source_id": source_id,
@@ -327,6 +332,40 @@ def sync_tier_a_by_source_id(
             "write_mode": target.write_mode,
             "message": "dry-run only; no fetch or DB writes performed",
         }
+        from backend.app.cli.phase1_acceptance import (
+            build_incremental_evidence,
+            dry_run_envelope_for_plan,
+            merge_payload_with_envelope,
+            resolve_cli_data_root,
+        )
+        from backend.app.ops.macro_incremental_common import compute_since_date
+
+        end_date = _parse_end(end)
+        window_start = (
+            min(since_map.values())
+            if since_map
+            else compute_since_date(None).isoformat()
+        )
+        envelope = dry_run_envelope_for_plan(
+            job_kind="sync",
+            trigger=f"qmd-data data sync --source-id {source_id}",
+            data_root=resolve_cli_data_root(),
+            route_payload={
+                "data_domain": canonical,
+                "selected_source_id": plan.selected_source_id,
+                "operation": op,
+                "route_status": plan.route_status,
+                "route_plan_id": plan.route_plan_id,
+            },
+            extra={
+                "incremental_evidence": build_incremental_evidence(
+                    cursor_before=None,
+                    window_date_start=window_start,
+                    window_date_end=end_date.isoformat(),
+                ),
+            },
+        )
+        return merge_payload_with_envelope(payload, envelope)
     if source_id == "us_treasury":
         from backend.app.ops.us_treasury_incremental_run import DEFAULT_TENORS
 

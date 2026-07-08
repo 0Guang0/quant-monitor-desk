@@ -9,7 +9,7 @@ from typing import Any
 
 from backend.app.cli.errors import CliFailure, error_for_route_status
 from backend.app.config import DATA_ROOT
-from backend.app.core.resource_guard import ResourceGuard
+from backend.app.core.resource_guard import Decision, ResourceGuard
 from backend.app.datasources.service import DataSourceService
 from backend.app.datasources.source_registry import SourceRegistry
 from backend.app.db.connection import ConnectionManager
@@ -121,14 +121,25 @@ def sync_plan(
         }
         if source_id is not None:
             payload["source_id"] = source_id
-        return payload
-
-    if data_domain == "macro_series" and source_id == "fred":
-        return _sync_fred_macro_incremental(
-            operation=op,
-            since=since,
-            series_ids=series_ids,
+        from backend.app.cli.phase1_acceptance import (
+            dry_run_envelope_for_plan,
+            merge_payload_with_envelope,
+            resolve_cli_data_root,
         )
+
+        envelope = dry_run_envelope_for_plan(
+            job_kind="sync",
+            trigger="qmd-data data sync",
+            data_root=resolve_cli_data_root(),
+            route_payload={
+                "data_domain": data_domain,
+                "selected_source_id": preview["selected_source_id"],
+                "operation": op,
+                "route_status": preview["route_status"],
+                "route_plan_id": preview.get("route_plan", {}).get("route_plan_id"),
+            },
+        )
+        return merge_payload_with_envelope(payload, envelope)
 
     raise CliFailure(
         error_code="USER_AUTH_REQUIRED",
@@ -147,137 +158,14 @@ def _sync_fred_macro_incremental(
     since: str | None,
     series_ids: tuple[str, ...] | None,
 ) -> dict[str, Any]:
-    """Execute fred macro incremental via gold path (R3-DCP-02 S02-05).
-
-    L1: DataSourceService + run_incremental (reference-adoption-dcp02.md §2).
-    L2: --source-id fred + watermark since map (execute-reference-read-evidence.md R1).
-    forbidden: EasyXT silent fallback (reference-adoption-dcp02.md §0).
-    """
-    import os
-
-    from backend.app.datasources.fetch_ports.fred_port import P0_SERIES_WHITELIST, create_fred_fetch_port
-    from backend.app.datasources.product_live_gate import (
-        ProductLiveGateError,
-        assert_product_live_allowed,
+    """Retired — official live sync uses run_phase1_sync_live on source-route-db root."""
+    from backend.app.cli.phase1_acceptance import (
+        require_phase1_data_root_for_live,
+        resolve_cli_data_root,
     )
-    from backend.app.ops.fred_incremental_run import (
-        build_fred_incremental_service,
-        run_fred_macro_incremental,
-    )
-    from backend.app.ops.fred_incremental_watermark import (
-        read_since_dates_for_series,
-    )
-    from backend.app.ops.sandbox_clean_write.rehearsal_runner import (
-        RehearsalRunnerError,
-        assert_sandbox_db_allowed,
-    )
-    from backend.app.sync.orchestrator import DataSyncOrchestrator
 
-    try:
-        assert_product_live_allowed(source_id="fred", operation=operation)
-    except ProductLiveGateError as exc:
-        raise CliFailure(
-            error_code=exc.code,
-            message=str(exc),
-            docs_anchor="docs/decisions/ADR-008-product-live-env-gate.md",
-        ) from exc
-
-    guard_decision, guard_reason = ResourceGuard().check()
-    if guard_decision.value != "OK":
-        raise CliFailure(
-            error_code="RESOURCE_GUARD_PAUSED",
-            message=guard_reason or "resource guard paused",
-            docs_anchor="docs/ops/ERROR_CODE_GUIDE.md#resource-guard-paused",
-            retryable=True,
-        )
-
-    selected = series_ids or tuple(sorted(P0_SERIES_WHITELIST))[:1]
-    use_mock = os.environ.get("QMD_FRED_INCREMENTAL_USE_MOCK", "0") != "0"
-    if not use_mock and not os.environ.get("FRED_API_KEY"):
-        raise CliFailure(
-            error_code="USER_AUTH_REQUIRED",
-            message="FRED_API_KEY missing for live fred incremental sync",
-            docs_anchor="docs/ops/ERROR_CODE_GUIDE.md#user-auth-required",
-        )
-
-    from backend.app.config import PROJECT_ROOT, _path_env
-
-    data_root = _path_env("QMD_DATA_ROOT", PROJECT_ROOT / "data")
-    db = data_root / "duckdb" / "quant_monitor.duckdb"
-    _require_baostock_sync_operator_or_sandbox(data_root)
-    try:
-        assert_sandbox_db_allowed(
-            db, no_production_mutation=True, allow_isolated_data_root=True
-        )
-    except RehearsalRunnerError as exc:
-        raise CliFailure(
-            error_code="INVALID_INPUT",
-            message=str(exc),
-            docs_anchor="docs/implementation_tasks/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/R3_DCP_02_FRED_INCREMENTAL.md",
-        ) from exc
-    db.parent.mkdir(parents=True, exist_ok=True)
-    cm = ConnectionManager(db_path=db)
-    with cm.writer() as con:
-        apply_migrations(con)
-        since_map = read_since_dates_for_series(con, selected)
-    if since:
-        since_map = {sid: since for sid in selected}
-
-    raw_root = data_root / "raw"
-    raw_root.mkdir(parents=True, exist_ok=True)
-    port = create_fred_fetch_port(
-        series_ids=selected,
-        max_rows=3,
-        use_mock=use_mock,
-    )
-    orch = DataSyncOrchestrator(cm)
-    service = build_fred_incremental_service(
-        data_root=raw_root,
-        fetch_port=port,
-        since_by_series=since_map,
-        job_events=orch._jobs,
-    )
-    report = run_fred_macro_incremental(
-        orch,
-        service=service,
-        series_ids=selected,
-        use_mock=use_mock,
-    )
-    if report.overall_status == "PARTIAL_FAILURE":
-        failed = [r for r in report.series_results if r["status"] not in {"COMPLETED", "EMPTY_RESPONSE"}]
-        raise CliFailure(
-            error_code="SYNC_PARTIAL_FAILURE",
-            message=f"fred macro incremental partial failure: {failed}",
-            docs_anchor="docs/ops/ERROR_CODE_GUIDE.md#sync-partial-failure",
-            retryable=True,
-        )
-    if report.overall_status == "FAILED":
-        raise CliFailure(
-            error_code="SYNC_FAILED",
-            message=f"fred macro incremental failed: {list(report.series_results)}",
-            docs_anchor="docs/ops/ERROR_CODE_GUIDE.md#sync-failed",
-            retryable=True,
-        )
-    message = (
-        "fred macro incremental sync completed"
-        if report.overall_status == "COMPLETED"
-        else "fred macro incremental sync completed (no new observations)"
-    )
-    return {
-        "command": "sync",
-        "dry_run": False,
-        "product_live": not use_mock,
-        "data_domain": "macro_series",
-        "source_id": "fred",
-        "operation": operation,
-        "series_ids": list(selected),
-        "since_by_series": since_map,
-        "resource_guard_decision": guard_decision.value,
-        "series_results": list(report.series_results),
-        "total_rows_written": report.total_rows_written,
-        "overall_status": report.overall_status,
-        "message": message,
-    }
+    require_phase1_data_root_for_live(resolve_cli_data_root())
+    raise AssertionError("unreachable")
 
 
 def _parse_sync_date(value: str, *, field: str) -> date:
@@ -320,90 +208,11 @@ def _backfill_fred_macro_incremental(
     effective_end: date,
     series_ids: tuple[str, ...] | None,
 ) -> dict[str, Any]:
-    """Execute fred macro bounded backfill in sandbox (S04)."""
-    import os
+    """Retired — official live backfill uses run_phase1_backfill_live on source-route-db root."""
+    from backend.app.cli.phase1_acceptance import require_phase1_data_root_for_live
 
-    from backend.app.datasources.fetch_ports.fred_port import P0_SERIES_WHITELIST, create_fred_fetch_port
-    from backend.app.datasources.product_live_gate import (
-        ProductLiveGateError,
-        assert_product_live_allowed,
-    )
-    from backend.app.ops.fred_incremental_run import (
-        build_fred_incremental_service,
-        run_fred_macro_backfill,
-    )
-    from backend.app.ops.fred_incremental_watermark import read_since_dates_for_series
-    from backend.app.ops.sandbox_clean_write.rehearsal_runner import (
-        RehearsalRunnerError,
-        assert_sandbox_db_allowed,
-    )
-    from backend.app.sync.orchestrator import DataSyncOrchestrator
-
-    try:
-        assert_product_live_allowed(source_id="fred", operation="fetch_macro_series")
-    except ProductLiveGateError as exc:
-        raise CliFailure(
-            error_code=exc.code,
-            message=str(exc),
-            docs_anchor="docs/decisions/ADR-008-product-live-env-gate.md",
-        ) from exc
-
-    _require_baostock_sync_operator_or_sandbox(data_root)
-    try:
-        assert_sandbox_db_allowed(db, no_production_mutation=True, allow_isolated_data_root=True)
-    except RehearsalRunnerError as exc:
-        raise CliFailure(
-            error_code="INVALID_INPUT",
-            message=str(exc),
-            docs_anchor="docs/ops/data_sync_quick_reference.md",
-        ) from exc
-
-    selected = series_ids or tuple(sorted(P0_SERIES_WHITELIST))[:1]
-    use_mock = os.environ.get("QMD_FRED_INCREMENTAL_USE_MOCK", "0") != "0"
-    if not use_mock and not os.environ.get("FRED_API_KEY"):
-        raise CliFailure(
-            error_code="USER_AUTH_REQUIRED",
-            message="FRED_API_KEY missing for live fred macro backfill",
-            docs_anchor="docs/ops/ERROR_CODE_GUIDE.md#user-auth-required",
-            manual_confirmation_required=True,
-        )
-
-    db.parent.mkdir(parents=True, exist_ok=True)
-    cm = ConnectionManager(db_path=db)
-    with cm.writer() as con:
-        apply_migrations(con)
-        since_map = read_since_dates_for_series(con, selected)
-
-    raw_root = data_root / "raw" / "fred"
-    raw_root.mkdir(parents=True, exist_ok=True)
-    port = create_fred_fetch_port(series_ids=selected, max_rows=500, use_mock=use_mock)
-    orch = DataSyncOrchestrator(cm)
-    service = build_fred_incremental_service(
-        data_root=raw_root,
-        fetch_port=port,
-        since_by_series=since_map,
-        job_events=orch._jobs,
-    )
-    report = run_fred_macro_backfill(
-        orch,
-        service=service,
-        date_start=date_start,
-        date_end=effective_end,
-        series_ids=selected,
-        use_mock=use_mock,
-    )
-    payload["job_status"] = report.overall_status
-    payload["series_results"] = list(report.series_results)
-    payload["product_live"] = not use_mock
-    if report.overall_status not in {"COMPLETED", "PARTIAL_FAILURE"}:
-        raise CliFailure(
-            error_code="SYNC_FAILED",
-            message=f"fred macro backfill failed: status={report.overall_status}",
-            docs_anchor="docs/ops/ERROR_CODE_GUIDE.md#sync-failed",
-            retryable=True,
-        )
-    payload["message"] = "fred macro backfill completed via execute_binding gold path"
-    return payload
+    require_phase1_data_root_for_live(data_root)
+    raise AssertionError("unreachable")
 
 
 def sync_baostock_incremental(
@@ -415,7 +224,7 @@ def sync_baostock_incremental(
     empty_table_lookback_days: int = 30,
 ) -> dict[str, Any]:
     """``qmd data sync --domain cn_equity_daily_bar`` — watermark + orchestrator gold path."""
-    from datetime import UTC, date, datetime
+    from datetime import UTC, datetime
 
     from backend.app.ops.baostock_incremental_run import (
         build_baostock_incremental_service,
@@ -452,18 +261,22 @@ def sync_baostock_incremental(
         )
 
         _require_audit_sandbox_data_root(data_root)
-    else:
-        _require_baostock_sync_operator_or_sandbox(data_root)
-        try:
-            assert_sandbox_db_allowed(
-                db, no_production_mutation=True, allow_isolated_data_root=True
-            )
-        except RehearsalRunnerError as exc:
-            raise CliFailure(
-                error_code="INVALID_INPUT",
-                message=str(exc),
-                docs_anchor="docs/ops/data_sync_quick_reference.md",
-            ) from exc
+    elif not dry_run:
+        from backend.app.cli.phase1_acceptance import (
+            is_production_equivalent_acceptance_root,
+            require_phase1_data_root_for_live,
+            run_phase1_sync_live,
+        )
+
+        if not is_production_equivalent_acceptance_root(data_root):
+            require_phase1_data_root_for_live(data_root)
+        return run_phase1_sync_live(
+            source_id="baostock",
+            data_domain=data_domain,
+            data_root=data_root,
+            end=end,
+            instrument_id=symbol,
+        )
 
     if end is not None:
         end_date = _parse_sync_date(end, field="end")
@@ -544,57 +357,7 @@ def sync_baostock_incremental(
         payload["message"] = "dry-run only; watermark window computed, no fetch or DB writes"
         return payload
 
-    if caught_up:
-        payload["job_status"] = "COMPLETED"
-        payload["message"] = "caught-up: empty incremental window; no fetch or DB writes"
-        return payload
-
-    db.parent.mkdir(parents=True, exist_ok=True)
-    cm = ConnectionManager(db_path=db)
-    with cm.writer() as con:
-        apply_migrations(con)
-
-    raw_root = data_root / "raw"
-    raw_root.mkdir(parents=True, exist_ok=True)
-    orch = DataSyncOrchestrator(cm)
-    service = build_baostock_incremental_service(
-        data_root=raw_root,
-        symbol=symbol,
-        job_events=orch._jobs,
-        use_mock=use_mock,
-    )
-    run_result = run_baostock_bar_incremental(
-        orch,
-        service=service,
-        window=window,
-        symbol=symbol,
-        product_live=product_live,
-    )
-    payload["job_status"] = run_result.status
-    payload["job_id"] = run_result.job_id
-    if run_result.status == "MANUAL_REVIEW_REQUIRED":
-        raise CliFailure(
-            error_code="SYNC_FAILED",
-            message=(
-                f"baostock incremental sync requires manual review: job_id={run_result.job_id} "
-                f"status={run_result.status} message={run_result.message!r}"
-            ),
-            docs_anchor="docs/ops/ERROR_CODE_GUIDE.md#sync-failed",
-            retryable=False,
-            manual_confirmation_required=True,
-        )
-    if run_result.status != "COMPLETED":
-        raise CliFailure(
-            error_code="SYNC_FAILED",
-            message=(
-                f"baostock incremental sync failed: job_id={run_result.job_id} "
-                f"status={run_result.status} message={run_result.message!r}"
-            ),
-            docs_anchor="docs/ops/ERROR_CODE_GUIDE.md#sync-failed",
-            retryable=run_result.status in {"FAILED_RETRYABLE", "FAILED_FINAL"},
-        )
-    payload["message"] = "baostock incremental sync completed via DataSourceService gold path"
-    return payload
+    raise AssertionError("unreachable: live baostock sync delegates to phase1 path")
 
 
 def _tier_a_backfill_route_preview(
@@ -638,6 +401,7 @@ def backfill_plan(
     truncate_to_cap: bool = False,
     dry_run: bool = True,
     instrument_id: str | None = None,
+    trigger_reason: str = "eco_catchup",
 ) -> dict[str, Any]:
     """``qmd data backfill`` — bounded shard plan + orchestrator gold path (R3-DCP-09)."""
     from backend.app.config import PROJECT_ROOT, _path_env
@@ -657,8 +421,8 @@ def backfill_plan(
     )
     from backend.app.sync.jobs import (
         ABSOLUTE_MAX_BACKFILL_SHARDS,
-        BackfillShardCapExceededError,
         DEFAULT_MAX_BACKFILL_SHARDS,
+        BackfillShardCapExceededError,
         plan_backfill_shards,
     )
     from backend.app.sync.orchestrator import DataSyncOrchestrator
@@ -797,82 +561,56 @@ def backfill_plan(
         )
 
     if dry_run:
+        from backend.app.cli.phase1_acceptance import (
+            build_backfill_evidence,
+            dry_run_envelope_for_plan,
+            merge_payload_with_envelope,
+        )
         from backend.app.cli.tier_a_sync_router import _require_audit_sandbox_data_root
 
         _require_audit_sandbox_data_root(data_root)
         payload["message"] = "dry-run only; shard plan computed, no fetch or DB writes"
-        return payload
-
-    if data_domain == "macro_series" and source_id == "fred":
-        return _backfill_fred_macro_incremental(
-            payload=payload,
+        envelope = dry_run_envelope_for_plan(
+            job_kind="backfill",
+            trigger=f"qmd-data data backfill --source-id {source_id}",
             data_root=data_root,
-            db=db,
+            route_payload={
+                "data_domain": data_domain,
+                "selected_source_id": plan.selected_source_id or source_id,
+                "operation": op,
+                "route_status": plan.route_status,
+                "route_plan_id": getattr(plan, "route_plan_id", None),
+            },
+            extra={
+                "backfill_evidence": build_backfill_evidence(
+                    trigger_reason=trigger_reason,
+                    shard_plan=shard_plan,
+                ),
+            },
+        )
+        return merge_payload_with_envelope(payload, envelope)
+
+    from backend.app.cli.phase1_acceptance import (
+        is_production_equivalent_acceptance_root,
+        run_phase1_backfill_live,
+    )
+
+    if is_production_equivalent_acceptance_root(data_root):
+        return run_phase1_backfill_live(
+            source_id=source_id,
+            data_domain=data_domain,
+            data_root=data_root,
             date_start=date_start,
-            effective_end=effective_end,
-            series_ids=(symbol,) if symbol else None,
+            date_end=effective_end,
+            instrument_id=instrument_id,
+            shard_plan=shard_plan,
+            trigger_reason=trigger_reason,
         )
 
-    if data_domain != "cn_equity_daily_bar" or source_id != "baostock":
-        raise CliFailure(
-            error_code="USER_AUTH_REQUIRED",
-            message=(
-                f"qmd data backfill without --dry-run for domain={data_domain!r} "
-                f"source_id={source_id!r} requires sandbox path; "
-                "only baostock bar and fred macro wired in S04"
-            ),
-            docs_anchor="docs/ops/data_sync_quick_reference.md",
-            manual_confirmation_required=True,
-        )
+    from backend.app.cli.phase1_acceptance import require_phase1_data_root_for_live
 
-    _require_baostock_sync_operator_or_sandbox(data_root)
-    try:
-        assert_sandbox_db_allowed(db, no_production_mutation=True, allow_isolated_data_root=True)
-    except RehearsalRunnerError as exc:
-        raise CliFailure(
-            error_code="INVALID_INPUT",
-            message=str(exc),
-            docs_anchor="docs/ops/data_sync_quick_reference.md",
-        ) from exc
-
-    db.parent.mkdir(parents=True, exist_ok=True)
-    cm = ConnectionManager(db_path=db)
-    with cm.writer() as con:
-        apply_migrations(con)
-
-    raw_root = data_root / "raw"
-    raw_root.mkdir(parents=True, exist_ok=True)
-    orch = DataSyncOrchestrator(cm)
-    service = build_baostock_incremental_service(
-        data_root=raw_root,
-        symbol=symbol,
-        job_events=orch._jobs,
-        use_mock=use_mock,
-    )
-    run_result = run_baostock_bar_backfill(
-        orch,
-        service=service,
-        date_start=date_start,
-        date_end=effective_end,
-        symbol=symbol,
-        product_live=product_live,
-    )
-    payload["job_id"] = run_result.job_id
-    payload["shard_results"] = list(run_result.statuses)
-    final_status = run_result.statuses[-1] if run_result.statuses else "FAILED_RETRYABLE"
-    payload["job_status"] = final_status
-    if final_status not in {"COMPLETED", "PLANNED"}:
-        raise CliFailure(
-            error_code="SYNC_FAILED",
-            message=(
-                f"baostock backfill failed: job_id={run_result.job_id} "
-                f"statuses={list(run_result.statuses)}"
-            ),
-            docs_anchor="docs/ops/ERROR_CODE_GUIDE.md#sync-failed",
-            retryable=final_status in {"FAILED_RETRYABLE", "FAILED_FINAL"},
-        )
-    payload["message"] = "baostock backfill completed via DataSourceService gold path"
-    return payload
+    require_phase1_data_root_for_live(data_root)
+    raise AssertionError("unreachable")
 
 
 def full_load_plan(
@@ -890,6 +628,7 @@ def full_load_plan(
     import uuid
     from datetime import UTC, datetime
 
+    from backend.app.cli.phase1_acceptance import tier_a_fetch_operation
     from backend.app.config import PROJECT_ROOT, _path_env
     from backend.app.ops.baostock_incremental_run import (
         build_baostock_incremental_service,
@@ -900,24 +639,36 @@ def full_load_plan(
         RehearsalRunnerError,
         assert_sandbox_db_allowed,
     )
+    from backend.app.sync.incremental_source_registry import (
+        UnknownTierAIncrementalSourceError,
+        resolve_tier_a_incremental,
+    )
     from backend.app.sync.jobs import (
         ABSOLUTE_MAX_BACKFILL_SHARDS,
-        BackfillShardCapExceededError,
         DEFAULT_MAX_BACKFILL_SHARDS,
+        BackfillShardCapExceededError,
         SyncJobSpec,
         plan_backfill_shards,
     )
     from backend.app.sync.orchestrator import DataSyncOrchestrator
 
-    if data_domain != "cn_equity_daily_bar" or source_id != "baostock":
+    try:
+        tier_entry = resolve_tier_a_incremental(source_id)
+    except UnknownTierAIncrementalSourceError as exc:
         raise CliFailure(
             error_code="CAPABILITY_MISSING",
-            message=(
-                f"full-load pilot supports cn_equity_daily_bar + baostock only; "
-                f"got domain={data_domain!r} source_id={source_id!r}"
-            ),
+            message=str(exc),
             docs_anchor="docs/modules/data_sync_orchestrator.md#1341-fullloadjob",
             retryable=False,
+        ) from exc
+    if data_domain != tier_entry.canonical_domain:
+        raise CliFailure(
+            error_code="INVALID_INPUT",
+            message=(
+                f"domain mismatch for source_id={source_id!r}: "
+                f"got {data_domain!r}, expected {tier_entry.canonical_domain!r}"
+            ),
+            docs_anchor="docs/modules/data_sync_orchestrator.md#1341-fullloadjob",
         )
 
     resolved_max = DEFAULT_MAX_BACKFILL_SHARDS if max_shards is None else max_shards
@@ -956,20 +707,42 @@ def full_load_plan(
         ) from exc
 
     effective_end = shards[-1][2] if shards else date_end
-    op = "fetch_daily_bar"
-    preview = route_preview(data_domain=data_domain, operation=op)
-    guard_decision, guard_reason = ResourceGuard().check()
-    symbol = instrument_id or "sh.600519"
+    op = tier_a_fetch_operation(data_domain)
+    symbol = instrument_id or (
+        "DGS10" if data_domain == "macro_series" else "sh.600519"
+    )
     data_root = _path_env("QMD_DATA_ROOT", PROJECT_ROOT / "data")
-    db = data_root / "duckdb" / "quant_monitor.duckdb"
-    use_mock = resolve_baostock_incremental_use_mock()
-    product_live = not use_mock
-    target = resolve_clean_write_target(data_domain)
-
     shard_plan = [
         {"task_id": task_id, "date_start": s.isoformat(), "date_end": e.isoformat()}
         for task_id, s, e in shards
     ]
+
+    from backend.app.cli.phase1_acceptance import (
+        is_production_equivalent_acceptance_root,
+        run_phase1_full_load_live,
+    )
+
+    if not dry_run and is_production_equivalent_acceptance_root(data_root):
+        import uuid
+
+        fl_run_id = f"p1-fl-{uuid.uuid4().hex[:12]}"
+        return run_phase1_full_load_live(
+            source_id=source_id,
+            data_domain=data_domain,
+            data_root=data_root,
+            date_start=date_start,
+            date_end=effective_end,
+            instrument_id=symbol,
+            shard_plan=shard_plan,
+            run_id=fl_run_id,
+        )
+
+    preview = route_preview(data_domain=data_domain, operation=op)
+    guard_decision, guard_reason = ResourceGuard().check()
+    use_mock = resolve_baostock_incremental_use_mock()
+    product_live = not use_mock
+    target = resolve_clean_write_target(data_domain)
+
     payload: dict[str, Any] = {
         "command": "full-load",
         "dry_run": dry_run,
@@ -1008,74 +781,43 @@ def full_load_plan(
         )
 
     if dry_run:
+        import uuid
+
+        from backend.app.cli.phase1_acceptance import (
+            build_full_load_evidence,
+            dry_run_envelope_for_plan,
+            merge_payload_with_envelope,
+        )
         from backend.app.cli.tier_a_sync_router import _require_audit_sandbox_data_root
 
         _require_audit_sandbox_data_root(data_root)
+        fl_run_id = f"p1-fl-{uuid.uuid4().hex[:12]}"
         payload["message"] = "dry-run only; full-load shard plan computed, no fetch or DB writes"
-        return payload
-
-    _require_baostock_sync_operator_or_sandbox(data_root)
-    try:
-        assert_sandbox_db_allowed(db, no_production_mutation=True, allow_isolated_data_root=True)
-    except RehearsalRunnerError as exc:
-        raise CliFailure(
-            error_code="INVALID_INPUT",
-            message=str(exc),
-            docs_anchor="docs/ops/data_sync_quick_reference.md",
-        ) from exc
-
-    db.parent.mkdir(parents=True, exist_ok=True)
-    cm = ConnectionManager(db_path=db)
-    with cm.writer() as con:
-        apply_migrations(con)
-
-    raw_root = data_root / "raw"
-    raw_root.mkdir(parents=True, exist_ok=True)
-    orch = DataSyncOrchestrator(cm)
-    service = build_baostock_incremental_service(
-        data_root=raw_root,
-        symbol=symbol,
-        job_events=orch._jobs,
-        use_mock=use_mock,
-    )
-    job_id = f"qmd-full-load-{uuid.uuid4().hex[:10]}"
-    spec = SyncJobSpec(
-        run_id=job_id,
-        job_id=job_id,
-        job_type="full_load",
-        data_domain=data_domain,
-        market_id="CN_A",
-        source_id=source_id,
-        adapter_id=source_id,
-        date_start=date_start,
-        date_end=effective_end,
-        instrument_id=symbol,
-        partition_key=None,
-        trigger_reason="cold_start",
-    )
-    results = orch.run_full_load(
-        spec,
-        datasource_service=service,
-        clean_table=target.target_table,
-        write_mode=target.write_mode,
-        primary_keys=target.primary_keys,
-    )
-    payload["job_id"] = job_id
-    payload["shard_results"] = [r.status for r in results]
-    final_status = results[-1].status if results else "FAILED_RETRYABLE"
-    payload["job_status"] = final_status
-    if final_status not in {"COMPLETED", "PLANNED"}:
-        raise CliFailure(
-            error_code="SYNC_FAILED",
-            message=(
-                f"full-load failed: job_id={job_id} "
-                f"statuses={[r.status for r in results]}"
-            ),
-            docs_anchor="docs/ops/ERROR_CODE_GUIDE.md#sync-failed",
-            retryable=final_status in {"FAILED_RETRYABLE", "FAILED_FINAL"},
+        envelope = dry_run_envelope_for_plan(
+            job_kind="full-load",
+            trigger=f"qmd-data data full-load --source-id {source_id}",
+            data_root=data_root,
+            run_id=fl_run_id,
+            route_payload={
+                "data_domain": data_domain,
+                "selected_source_id": preview["selected_source_id"],
+                "operation": op,
+                "route_status": preview["route_status"],
+                "route_plan_id": preview.get("route_plan", {}).get("route_plan_id"),
+            },
+            extra={
+                "full_load_evidence": build_full_load_evidence(
+                    run_id=fl_run_id,
+                    shard_plan=shard_plan,
+                ),
+            },
         )
-    payload["message"] = "full-load completed via DataSourceService gold path"
-    return payload
+        return merge_payload_with_envelope(payload, envelope)
+
+    from backend.app.cli.phase1_acceptance import require_phase1_data_root_for_live
+
+    require_phase1_data_root_for_live(data_root)
+    raise AssertionError("unreachable")
 
 
 def sync_mootdx_incremental(
@@ -1087,7 +829,7 @@ def sync_mootdx_incremental(
     empty_table_lookback_days: int = 30,
 ) -> dict[str, Any]:
     """``qmd data sync --source-id mootdx`` — watermark + orchestrator gold path."""
-    from datetime import UTC, date, datetime
+    from datetime import UTC, datetime
 
     from backend.app.ops.mootdx_incremental_run import (
         build_mootdx_incremental_service,
@@ -1135,27 +877,22 @@ def sync_mootdx_incremental(
         )
 
         _require_audit_sandbox_data_root(data_root)
-    else:
-        _require_baostock_sync_operator_or_sandbox(data_root)
-        try:
-            assert_sandbox_db_allowed(
-                db, no_production_mutation=True, allow_isolated_data_root=True
-            )
-        except RehearsalRunnerError as exc:
-            raise CliFailure(
-                error_code="INVALID_INPUT",
-                message=str(exc),
-                docs_anchor="docs/ops/data_sync_quick_reference.md",
-            ) from exc
-        if preview["selected_source_id"] != "mootdx":
-            raise CliFailure(
-                error_code="INVALID_INPUT",
-                message=(
-                    "mootdx incremental sync requires mootdx as routed primary; "
-                    f"got {preview['selected_source_id']!r}"
-                ),
-                docs_anchor="docs/ops/data_sync_quick_reference.md",
-            )
+    elif not dry_run:
+        from backend.app.cli.phase1_acceptance import (
+            is_production_equivalent_acceptance_root,
+            require_phase1_data_root_for_live,
+            run_phase1_sync_live,
+        )
+
+        if not is_production_equivalent_acceptance_root(data_root):
+            require_phase1_data_root_for_live(data_root)
+        return run_phase1_sync_live(
+            source_id="mootdx",
+            data_domain=data_domain,
+            data_root=data_root,
+            end=end,
+            instrument_id=symbol,
+        )
 
     end_date = _parse_sync_date(end, field="end") if end else datetime.now(UTC).date()
     watermark: date | None = None
@@ -1232,46 +969,7 @@ def sync_mootdx_incremental(
         payload["message"] = "dry-run only; watermark window computed, no fetch or DB writes"
         return payload
 
-    if caught_up:
-        payload["job_status"] = "COMPLETED"
-        payload["message"] = "caught-up: empty incremental window; no fetch or DB writes"
-        return payload
-
-    db.parent.mkdir(parents=True, exist_ok=True)
-    cm = ConnectionManager(db_path=db)
-    with cm.writer() as con:
-        apply_migrations(con)
-
-    raw_root = data_root / "raw"
-    raw_root.mkdir(parents=True, exist_ok=True)
-    orch = DataSyncOrchestrator(cm)
-    service = build_mootdx_incremental_service(
-        data_root=raw_root,
-        symbol=symbol,
-        job_events=orch._jobs,
-        use_mock=use_mock,
-    )
-    run_result = run_mootdx_bar_incremental(
-        orch,
-        service=service,
-        window=window,
-        symbol=symbol,
-        product_live=product_live,
-    )
-    payload["job_status"] = run_result.status
-    payload["job_id"] = run_result.job_id
-    if run_result.status != "COMPLETED":
-        raise CliFailure(
-            error_code="SYNC_FAILED",
-            message=(
-                f"mootdx incremental sync failed: job_id={run_result.job_id} "
-                f"status={run_result.status} message={run_result.message!r}"
-            ),
-            docs_anchor="docs/ops/ERROR_CODE_GUIDE.md#sync-failed",
-            retryable=run_result.status in {"FAILED_RETRYABLE", "FAILED_FINAL"},
-        )
-    payload["message"] = "mootdx incremental sync completed via DataSourceService gold path"
-    return payload
+    raise AssertionError("unreachable: live mootdx sync delegates to phase1 path")
 
 
 def live_fetch(
@@ -1484,6 +1182,7 @@ def scheduler_run(
     *,
     profile: str,
     dry_run: bool = True,
+    job_type_filter: str | None = None,
 ) -> dict[str, Any]:
     """``qmd data scheduler run`` — §13.6 profile → registry → execute_binding."""
     from backend.app.config import PROJECT_ROOT, _path_env
@@ -1492,7 +1191,7 @@ def scheduler_run(
     from backend.app.sync.scheduler import run_profile
 
     guard_decision, guard_reason = ResourceGuard().check()
-    if guard_decision.value != "OK" and not dry_run:
+    if guard_decision == Decision.HARD_STOP and not dry_run:
         raise CliFailure(
             error_code="RESOURCE_GUARD_PAUSED",
             message=guard_reason or "resource guard paused",
@@ -1515,7 +1214,16 @@ def scheduler_run(
             apply_migrations(con)
 
     try:
-        run = run_profile(profile, dry_run=dry_run, connection_manager=cm)
+        from backend.app.cli.phase1_acceptance import _build_datasource_service
+
+        datasource_service = None if dry_run else _build_datasource_service()
+        run = run_profile(
+            profile,
+            dry_run=dry_run,
+            job_type_filter=job_type_filter,
+            connection_manager=cm,
+            datasource_service=datasource_service,
+        )
     except KeyError as exc:
         raise CliFailure(
             error_code="INVALID_INPUT",
@@ -1523,27 +1231,154 @@ def scheduler_run(
             docs_anchor="docs/modules/data_sync_orchestrator.md#136-调度计划",
         ) from exc
 
-    return {
+    from backend.app.cli.phase1_acceptance import (
+        aggregate_scheduler_parent_report,
+        build_acceptance_envelope,
+        build_scheduler_child_live_envelope,
+        dry_run_envelope_for_plan,
+        is_production_equivalent_acceptance_root,
+        merge_payload_with_envelope,
+        resolve_cli_data_root,
+    )
+
+    resolved_root = resolve_cli_data_root()
+    child_envelopes: list[dict[str, Any]] = []
+    for job in run.results:
+        child_payload: dict[str, Any] = {
+            "job_type": job.job_type,
+            "domain": job.domain,
+            "source_id": job.source_id,
+            "status": job.status,
+            "binding_ids": list(job.binding_ids),
+            "message": job.message,
+            "job_id": job.job_id,
+            "required": job.job_type in {"incremental", "backfill", "full_load"},
+        }
+        if job.window is not None:
+            child_payload["window"] = job.window
+        if job.domain and job.source_id:
+            if dry_run:
+                child_env = dry_run_envelope_for_plan(
+                    job_kind="scheduler",
+                    trigger=f"scheduler:{profile}:{job.job_type}",
+                    data_root=resolved_root,
+                    source_id=job.source_id,
+                    data_domain=job.domain,
+                )
+            else:
+                if job.acceptance_report is not None and job.domain and job.source_id:
+                    child_env = build_scheduler_child_live_envelope(
+                        profile=profile,
+                        job_type=job.job_type,
+                        source_id=job.source_id,
+                        data_domain=job.domain,
+                        data_root=resolved_root,
+                        acceptance_report=job.acceptance_report,
+                        acceptance_extra=job.acceptance_extra,
+                        guard_decision=guard_decision.value,
+                    )
+                else:
+                    from backend.app.ops.source_route_db_acceptance import AcceptanceReport
+
+                    child_status = job.status
+                    if child_status in {"COMPLETED", "PASS"}:
+                        child_status = "PASS"
+                    elif child_status == "SKIPPED":
+                        child_status = "SKIPPED"
+                    elif child_status not in {
+                        "BLOCKED",
+                        "FAIL_EXTERNAL",
+                        "CONTRACT_VIOLATION",
+                        "FAIL",
+                        "FAILED_FINAL",
+                        "FAILED_RETRYABLE",
+                    }:
+                        child_status = "FAIL"
+                    child_failure = job.acceptance_report.failure_class if job.acceptance_report else (
+                        "NONE" if child_status == "PASS" else child_status
+                    )
+                    if child_failure not in {
+                        "NONE",
+                        "BLOCKED",
+                        "FAIL_EXTERNAL",
+                        "CONTRACT_VIOLATION",
+                    }:
+                        child_failure = "FAIL"
+                    child_env = build_acceptance_envelope(
+                        AcceptanceReport(
+                            source_id=job.source_id or profile,
+                            data_domain=job.domain or "scheduler",
+                            operation=job.job_type,
+                            route_plan_id=None,
+                            route_grade="primary",
+                            implementation_mode="live",
+                            write_grade="not_written",
+                            source_used=job.source_id or profile,
+                            source_role="primary",
+                            source_switched=False,
+                            failure_class=child_failure,
+                            status=child_status,
+                            errors=() if child_status == "PASS" else (job.message or "",),
+                        ),
+                        job_kind="scheduler",
+                        trigger=f"scheduler:{profile}:{job.job_type}",
+                        data_root=resolved_root,
+                        dry_run=False,
+                        extra={
+                            "sync_job_id": job.job_id,
+                            "resource_guard_decision": guard_decision.value,
+                        },
+                    )
+            child_payload.update(child_env)
+        child_payload["status"] = job.status
+        child_envelopes.append(child_payload)
+
+    parent = aggregate_scheduler_parent_report(
+        profile=profile,
+        data_root=resolved_root,
+        dry_run=dry_run,
+        child_envelopes=child_envelopes,
+        skipped_non_core=run.skipped_non_core,
+        resource_guard_decision=guard_decision.value,
+    )
+    if is_production_equivalent_acceptance_root(resolved_root) and not dry_run:
+        from backend.app.ops.source_route_db_acceptance import AcceptanceReport as SpineReport
+        from backend.app.ops.source_route_db_acceptance import write_acceptance_report
+
+        parent_report = SpineReport(
+            source_id=profile,
+            data_domain="scheduler",
+            operation="run_profile",
+            route_plan_id=None,
+            route_grade="primary",
+            implementation_mode="live",
+            write_grade="not_written",
+            source_used=profile,
+            source_role="primary",
+            source_switched=False,
+            failure_class=parent["failure_class"],
+            status=parent["status"],
+            errors=(),
+        )
+        report_path = resolved_root / "reports" / f"scheduler-{profile}.json"
+        write_acceptance_report(parent_report, report_path)
+        parent["acceptance_report_path"] = str(report_path)
+
+    payload: dict[str, Any] = {
         "command": "scheduler",
         "subcommand": "run",
         "profile": run.profile,
         "dry_run": run.dry_run,
         "skipped_non_core": run.skipped_non_core,
         "resource_guard_decision": guard_decision.value,
-        "jobs": [
-            {
-                "job_type": r.job_type,
-                "domain": r.domain,
-                "source_id": r.source_id,
-                "status": r.status,
-                "binding_ids": list(r.binding_ids),
-                "message": r.message,
-                "job_id": r.job_id,
-            }
-            for r in run.results
-        ],
-        "message": "dry-run only; profile expanded via binding registry" if dry_run else "scheduler run completed",
+        "jobs": child_envelopes,
+        "message": (
+            "dry-run only; profile expanded via binding registry"
+            if dry_run
+            else "scheduler run completed"
+        ),
     }
+    return merge_payload_with_envelope(payload, parent)
 
 
 def incremental_profile_plan(*, profile: str, dry_run: bool = True) -> dict[str, Any]:
@@ -1630,7 +1465,6 @@ def reconcile_plan(*, conflict_id: str, dry_run: bool = True) -> dict[str, Any]:
     from backend.app.config import PROJECT_ROOT, _path_env
     from backend.app.db.connection import ConnectionManager
     from backend.app.db.migrate import apply_migrations
-    from backend.app.sync.orchestrator import DataSyncOrchestrator
 
     if not conflict_id:
         raise CliFailure(
@@ -1764,160 +1598,22 @@ def emit_failure(err: CliFailure, *, fmt: str = "json") -> str:
     return err.format_text()
 
 
-def sandbox_clean_write_rehearse(
-    *,
-    candidate_set: str,
-    sandbox_db: Path,
-    evidence_dir: Path,
-    report: Path,
-    no_production_mutation: bool = False,
-    dry_run: bool = True,
-    allow_live_fetch: bool = False,
-    fred_authorization: Path | None = None,
-) -> dict[str, Any]:
-    """``qmd data sandbox-clean-write rehearse`` — R3G-01 sandbox rehearsal CLI."""
-    from backend.app.ops.sandbox_clean_write.rehearsal_runner import (
-        RehearsalRequest,
-        RehearsalRunnerError,
-        run_sandbox_clean_write_rehearsal,
-    )
+def sandbox_clean_write_rehearse(**_kwargs: Any) -> dict[str, Any]:
+    """Retired — use official source-route-db Phase 1 commands."""
+    from backend.app.cli.phase1_acceptance import raise_retired_legacy_command
 
-    if not no_production_mutation:
-        raise CliFailure(
-            error_code="USER_AUTH_REQUIRED",
-            message="--no-production-mutation is required for sandbox clean-write rehearsal",
-            docs_anchor="docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_01_SANDBOX_CLEAN_WRITE_REHEARSAL.md",
-            manual_confirmation_required=True,
-        )
-    try:
-        return run_sandbox_clean_write_rehearsal(
-            RehearsalRequest(
-                candidate_set=candidate_set,
-                sandbox_db=sandbox_db,
-                evidence_dir=evidence_dir,
-                report_path=report,
-                no_production_mutation=no_production_mutation,
-                dry_run=dry_run,
-                allow_live_fetch=allow_live_fetch,
-                fred_authorization=fred_authorization,
-            )
-        )
-    except RehearsalRunnerError as exc:
-        raise CliFailure(
-            error_code="INVALID_INPUT",
-            message=str(exc),
-            docs_anchor="docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_01_SANDBOX_CLEAN_WRITE_REHEARSAL.md",
-        ) from exc
+    raise_retired_legacy_command("qmd data sandbox-clean-write", subcommand="rehearse")
 
 
-def sandbox_clean_write_audit(
-    *,
-    rehearsal_report: Path,
-    sandbox_db: Path,
-    evidence_dir: Path,
-    decision_report: Path,
-) -> dict[str, Any]:
-    """``qmd data sandbox-clean-write audit`` — R3G-02 adversarial audit CLI."""
-    from backend.app.ops.sandbox_clean_write.adversarial_audit import (
-        AdversarialAuditRequest,
-        run_adversarial_audit,
-    )
-    from backend.app.ops.sandbox_clean_write.audit_decision import write_audit_decision
-    from backend.app.ops.sandbox_clean_write.rehearsal_runner import (
-        RehearsalRunnerError,
-        assert_sandbox_db_allowed,
-    )
+def sandbox_clean_write_audit(**_kwargs: Any) -> dict[str, Any]:
+    """Retired — use official source-route-db Phase 1 commands."""
+    from backend.app.cli.phase1_acceptance import raise_retired_legacy_command
 
-    try:
-        assert_sandbox_db_allowed(sandbox_db, no_production_mutation=True)
-    except RehearsalRunnerError as exc:
-        raise CliFailure(
-            error_code="INVALID_INPUT",
-            message=str(exc),
-            docs_anchor="docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_02_PRE_PRODUCTION_ADVERSARIAL_AUDIT.md",
-        ) from exc
-
-    result = run_adversarial_audit(
-        AdversarialAuditRequest(
-            rehearsal_report=rehearsal_report,
-            sandbox_db=sandbox_db,
-            evidence_dir=evidence_dir,
-        )
-    )
-    write_audit_decision(decision_report, result)
-    payload = result.serialize()
-    payload["decision_report_path"] = str(decision_report)
-    return payload
+    raise_retired_legacy_command("qmd data sandbox-clean-write", subcommand="audit")
 
 
-def sandbox_clean_write_promote(
-    *,
-    approval_file: Path,
-    audit_decision: Path,
-    before_proof: Path,
-    after_proof: Path,
-    rollback_plan: Path,
-    evidence_dir: Path | None = None,
-    dry_run: bool = True,
-    execute: bool = False,
-    allow_live_fetch: bool = False,
-    fred_authorization: Path | None = None,
-) -> dict[str, Any]:
-    """``qmd data sandbox-clean-write promote`` — R3G-03 limited production entry CLI."""
-    from backend.app.ops.sandbox_clean_write.limited_production_entry import (
-        LimitedProductionEntryError,
-        PromoteRequest,
-        run_limited_production_entry,
-    )
+def sandbox_clean_write_promote(**_kwargs: Any) -> dict[str, Any]:
+    """Retired — use official source-route-db Phase 1 commands."""
+    from backend.app.cli.phase1_acceptance import raise_retired_legacy_command
 
-    if execute and dry_run:
-        raise CliFailure(
-            error_code="INVALID_INPUT",
-            message="--execute requires --no-dry-run",
-            docs_anchor="docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_03_LIMITED_PRODUCTION_CLEAN_WRITE.md",
-        )
-    if not approval_file.is_file():
-        raise CliFailure(
-            error_code="INVALID_INPUT",
-            message=f"missing approval file: {approval_file}",
-            docs_anchor="docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_03_LIMITED_PRODUCTION_CLEAN_WRITE.md",
-        )
-    if not audit_decision.is_file():
-        raise CliFailure(
-            error_code="INVALID_INPUT",
-            message=f"missing audit decision: {audit_decision}",
-            docs_anchor="docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_03_LIMITED_PRODUCTION_CLEAN_WRITE.md",
-        )
-    if not before_proof.is_file():
-        raise CliFailure(
-            error_code="INVALID_INPUT",
-            message=f"missing before proof: {before_proof}",
-            docs_anchor="docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_03_LIMITED_PRODUCTION_CLEAN_WRITE.md",
-        )
-    if not rollback_plan.is_file():
-        raise CliFailure(
-            error_code="INVALID_INPUT",
-            message=f"missing rollback plan: {rollback_plan}",
-            docs_anchor="docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_03_LIMITED_PRODUCTION_CLEAN_WRITE.md",
-        )
-    try:
-        return run_limited_production_entry(
-            PromoteRequest(
-                approval_file=approval_file,
-                audit_decision=audit_decision,
-                before_proof=before_proof,
-                after_proof=after_proof,
-                rollback_plan=rollback_plan,
-                evidence_dir=evidence_dir,
-                dry_run=dry_run,
-                execute=execute,
-                allow_live_fetch=allow_live_fetch,
-                fred_authorization=fred_authorization,
-            )
-        )
-    except LimitedProductionEntryError as exc:
-        raise CliFailure(
-            error_code=getattr(exc, "code", None) or "INVALID_INPUT",
-            message=str(exc),
-            docs_anchor="docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_03_LIMITED_PRODUCTION_CLEAN_WRITE.md",
-        ) from exc
+    raise_retired_legacy_command("qmd data sandbox-clean-write", subcommand="promote")

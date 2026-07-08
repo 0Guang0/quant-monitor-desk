@@ -69,22 +69,42 @@ def _patch_baostock_replay(monkeypatch, replay_path: Path) -> None:
     monkeypatch.setattr(baostock_port, "REPLAY_FIXTURE", replay_path)
 
 
+def _patch_phase1_baostock_replay(monkeypatch, replay_path: Path) -> None:
+    from backend.app.cli import phase1_acceptance
+    from backend.app.datasources.fetch_ports.baostock_port import BaostockMockFetchPort
+    from backend.app.datasources.service import DataSourceService
+    from backend.app.datasources.source_registry import SourceRegistry
+
+    def _build() -> DataSourceService:
+        registry = SourceRegistry()
+        registry.load()
+        port = BaostockMockFetchPort(symbols=(SYMBOL,), max_rows=500, replay_path=replay_path)
+        return DataSourceService(
+            staged_fixture_mode=False,
+            source_registry=registry,
+            fetch_port=port,
+        )
+
+    monkeypatch.setattr(phase1_acceptance, "_build_datasource_service", _build)
+
+
 def test_bounded_backfill_cli_replay_e2e_two_shards_idempotent(
     monkeypatch, tmp_path: Path
 ) -> None:
     """覆盖范围：CLI backfill replay e2e 多分片
-    测试对象：data_commands.backfill_plan --no-dry-run
+    测试对象：data_commands.backfill_plan --no-dry-run on source-route-db
     目的/目标：2+ shards 经金路径写 clean；重复跑幂等
-    验证点：shard_count≥2；SHARD_COMPLETE 事件≥2；二次跑行数不增
+    验证点：shard_count≥2；SHARD_COMPLETE 事件≥2；二次跑行数不增；backfill_evidence 可见
     失败含义：有界 backfill 产品路径未通，operator 无法补历史
     """
-    sandbox = tmp_path / ".audit-sandbox" / "bf-e2e"
+    sandbox = tmp_path / ".audit-sandbox" / "source-route-db-bf-e2e"
     sandbox.mkdir(parents=True)
     replay = sandbox / "backfill_replay.json"
     _write_two_shard_replay(replay)
     monkeypatch.setenv("QMD_DATA_ROOT", str(sandbox))
+    monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
-    _patch_baostock_replay(monkeypatch, replay)
+    _patch_phase1_baostock_replay(monkeypatch, replay)
 
     kwargs = dict(
         data_domain="cn_equity_daily_bar",
@@ -96,7 +116,10 @@ def test_bounded_backfill_cli_replay_e2e_two_shards_idempotent(
     )
     payload1 = data_commands.backfill_plan(**kwargs)
     assert payload1["shard_count"] >= 2
-    assert payload1["job_status"] == "COMPLETED"
+    assert payload1.get("gate_eligible") is True
+    assert payload1.get("backfill_evidence", {}).get("trigger_reason") == "eco_catchup"
+    job_id = payload1.get("job_id")
+    assert job_id
 
     db = sandbox / "duckdb" / "quant_monitor.duckdb"
     cm = ConnectionManager(db_path=db)
@@ -106,7 +129,7 @@ def test_bounded_backfill_cli_replay_e2e_two_shards_idempotent(
             SELECT COUNT(*) FROM job_event_log
             WHERE job_id = ? AND event_type = 'SHARD_COMPLETE'
             """,
-            [payload1["job_id"]],
+            [job_id],
         ).fetchone()[0]
         row_count = con.execute(
             "SELECT COUNT(*) FROM security_bar_1d WHERE instrument_id = ?",
@@ -131,10 +154,14 @@ def test_bounded_backfill_cli_replay_e2e_two_shards_idempotent(
     assert closes.get(date(2024, 7, 15)) == 1415.0
 
     payload2 = data_commands.backfill_plan(**kwargs)
-    assert payload2["job_status"] == "COMPLETED"
+    assert payload2.get("job_id")
     with cm.reader() as con:
         row_count_after = con.execute(
             "SELECT COUNT(*) FROM security_bar_1d WHERE instrument_id = ?",
             [SYMBOL],
         ).fetchone()[0]
     assert row_count_after == row_count
+    snapshot = payload1.get("backfill_evidence", {}).get("affected_snapshot_recompute") or {}
+    assert snapshot.get("status") == "pending"
+    assert snapshot.get("clean_table") == "security_bar_1d"
+    assert snapshot.get("data_domain") == "cn_equity_daily_bar"

@@ -1,5 +1,5 @@
 version: data_cli_contract_v1
-status: draft
+status: frozen
 owner: ops
 purpose: "Define safe local data sync CLI behavior before adding new command wrappers."
 commands:
@@ -69,12 +69,65 @@ commands:
   qmd data route-preview:
     side_effects_allowed: false
     output: SourceRoutePlan
+phase1_gate:
+  acceptance_authority: SourceRouteDbAcceptanceSpine
+  production_equivalent_data_root_segment: source-route-db
+  gate_eligible_requires:
+    - official qmd-data data sync|backfill|full-load|scheduler command
+    - QMD_DATA_ROOT under .audit-sandbox/source-route-db
+    - live run (not dry-run)
+  non_gate_evidence:
+    - dry_run
+    - replay
+    - mock
+    - not_implemented
+    - generic .audit-sandbox without source-route-db segment
+    - sandbox-clean-write
+    - limited_production_entry
+  official_commands_must_expose:
+    - acceptance_report
+    - gate_eligible
+    - report_version
+    - run_id
+    - job_kind
+    - observability_evidence
+    - failure_class
+  required_error_fields:
+    - error_code
+    - message
+    - docs_anchor
+  failure_class_values:
+    - NONE
+    - BLOCKED
+    - FAIL_EXTERNAL
+    - CONTRACT_VIOLATION
+    - FAIL
+  retired_commands:
+    - command: qmd data sandbox-clean-write
+      subcommands: [rehearse, audit, promote]
+      error_code: LEGACY_COMMAND_RETIRED
+      replacement: qmd-data data sync|backfill|full-load|scheduler with QMD_DATA_ROOT under .audit-sandbox/source-route-db
+      gate_eligible: false
+    - command: ops tier_a_live_acceptance wrappers
+      error_code: LEGACY_COMMAND_RETIRED
+      replacement: qmd_ops accept-source-route-db or official qmd-data data commands
+      gate_eligible: false
+  legacy_seam_inventory_script: scripts/check_acceptance_helper_consumers.py
 rules:
   - dry-run must be available for every command that could write data
   - commands must print route_status and source_used or skip reason
   - no command may enable qmt/qmt_xqshare without explicit user confirmation
   - CLI outputs must include error_code and docs_anchor when failing
+  - Phase 1 P1-GATE requires production-equivalent acceptance report; dry-run/replay/mock are non-gate
 required_tests:
+  - tests/test_data_cli_contract.py::test_dataCliContract_phase1GateDocumented
+  - tests/test_data_cli_contract.py::test_dataCliContract_officialCommandsExposeAcceptanceFields
+  - tests/test_data_cli_contract.py::test_dataCliContract_legacyInventoryListed
+  - tests/test_qmd_data_acceptance_envelope.py::test_phase1Acceptance_gateEligible_onlyForSourceRouteDbLive
+  - tests/test_qmd_data_sync_acceptance.py::test_qmdData_syncAcceptance_sourceRouteDbLiveWithoutAuthBlocked
+  - tests/test_qmd_data_backfill_acceptance.py::test_qmdData_backfillAcceptance_sourceRouteDbLiveBlockedWithoutAuth
+  - tests/test_qmd_data_full_load_acceptance.py::test_qmdData_fullLoadAcceptance_macroDomainDryRunNonPilot
+  - tests/test_sync_scheduler_acceptance.py::test_syncSchedulerAcceptance_dryRunParentChildEnvelope
   - tests/test_data_cli_contract.py::test_syncDryRunDoesNotWrite
   - tests/test_data_cli_contract.py::test_routePreviewContract_isReadOnly
   - tests/test_data_cli_contract.py::test_dataCliContract_healthCommandDocumented

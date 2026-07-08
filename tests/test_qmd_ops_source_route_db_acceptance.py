@@ -239,3 +239,36 @@ def test_qmdOps_acceptSourceRouteDb_allDocumentedSources_writesMatrixReport(
         assert row["target"]
         assert row["closure_outcome"] == "PASS"
         assert row["failure_class"]
+
+
+def test_qmdOps_acceptSourceRouteDb_allDocumentedSources_liveAuthorized_writesMatrixReport(
+    tmp_path: Path,
+) -> None:
+    """覆盖范围：P1-GATE 全矩阵 live 授权落盘
+    测试对象：qmd_ops accept-source-route-db --all-documented-sources --allow-live-fetch
+    目的/目标：live 授权矩阵须写出可审计报告且 closure 诚实通过（非全源 PASS）
+    验证点：returncode==0；live_authorized=True；matrix_count==22；报告文件存在
+    失败含义：P1-GATE 无法在无伪 PASS 前提下落盘 live 矩阵验收
+    """
+    data_root = tmp_path / ".audit-sandbox" / "source-route-db-p1-gate"
+    report_path = data_root / "reports" / "source-matrix-acceptance.json"
+    env = os.environ.copy()
+    env["QMD_ALLOW_LIVE_FETCH"] = "1"
+
+    result = _run_acceptance_cli(
+        "--all-documented-sources",
+        "--data-root",
+        str(data_root),
+        "--report",
+        str(report_path),
+        "--allow-live-fetch",
+        env=env,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert report_path.is_file()
+    payload = json.loads(report_path.read_text(encoding="utf-8"))
+    assert payload["matrix_count"] == 22
+    assert payload["live_authorized"] is True
+    assert payload["closure_status"] == "PASS"
+    assert len(payload["rows"]) == 22

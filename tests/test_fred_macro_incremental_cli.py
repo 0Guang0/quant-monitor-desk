@@ -42,18 +42,21 @@ def test_fredIncrementalCli_dryRun_includesSourceId(
 
 
 def test_fredIncrementalCli_execute_rejectsWithoutLiveEnv(
-    monkeypatch: pytest.MonkeyPatch,
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    """覆盖范围：真跑须 env-gated product live
+    """覆盖范围：真跑须 production-equivalent 验收根
     测试对象：sync_plan dry_run=False macro_series/fred
-    目的/目标：无 QMD_ALLOW_LIVE_FETCH 时 fail-closed
-    验证点：CliFailure error_code == LIVE_FETCH_REJECTED
-    失败含义：CLI 可绕过 ProductLiveGate 写库
+    目的/目标：非 source-route-db live 路径 fail-closed
+    验证点：CliFailure error_code == ISOLATED_ROOT_REQUIRED
+    失败含义：CLI 仍可在普通 sandbox 执行 legacy live fred 路径
     """
+    root = tmp_path / ".audit-sandbox" / "wave3-accept" / "data"
+    root.mkdir(parents=True)
+    monkeypatch.setenv("QMD_DATA_ROOT", str(root))
     monkeypatch.delenv("QMD_ALLOW_LIVE_FETCH", raising=False)
     with pytest.raises(CliFailure) as exc_info:
         sync_plan(data_domain="macro_series", source_id="fred", dry_run=False)
-    assert exc_info.value.error_code == "LIVE_FETCH_REJECTED"
+    assert exc_info.value.error_code == "ISOLATED_ROOT_REQUIRED"
 
 
 def test_fredIncrementalCli_execute_rejectsCanonicalDb(
@@ -74,7 +77,12 @@ def test_fredIncrementalCli_execute_rejectsCanonicalDb(
     )
     with pytest.raises(CliFailure) as exc_info:
         sync_plan(data_domain="macro_series", source_id="fred", dry_run=False)
-    assert exc_info.value.error_code in {"INVALID_INPUT", "USER_AUTH_REQUIRED"}
+    assert exc_info.value.error_code in {
+        "INVALID_INPUT",
+        "USER_AUTH_REQUIRED",
+        "CANONICAL_MAIN_DB_REJECTED",
+        "ISOLATED_ROOT_REQUIRED",
+    }
     if exc_info.value.error_code == "INVALID_INPUT":
         assert "production DB path refused" in exc_info.value.message
 
@@ -99,7 +107,7 @@ def test_fredIncrementalCli_execute_rejectsUserLiveAuditPath(
     )
     with pytest.raises(CliFailure) as exc_info:
         sync_plan(data_domain="macro_series", source_id="fred", dry_run=False)
-    assert exc_info.value.error_code == "INVALID_INPUT"
+    assert exc_info.value.error_code in {"INVALID_INPUT", "ISOLATED_ROOT_REQUIRED"}
     assert "user-live" in exc_info.value.message
 
 
@@ -163,27 +171,23 @@ def test_sandboxDbAllowed_rejectsUserLiveEvenWithIsolatedFlag(
 def test_fredIncrementalCli_execute_mockInTest(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """覆盖范围：测中真跑（mock）写隔离库
-    测试对象：sync_plan dry_run=False + QMD_DATA_ROOT 隔离
-    目的/目标：对齐 live-fetch 旗标；隔离库可完成增量
-    验证点：dry_run==False；series_results 非空；total_rows_written>=1
-    失败含义：CLI 无法触发 fred 增量执行路径
+    """覆盖范围：source-route-db live sync 缺授权诚实阻断
+    测试对象：sync_plan dry_run=False + production-equivalent root
+    目的/目标：正式路径经 phase1 envelope，缺 live 授权时 BLOCKED 非 legacy mock 写库
+    验证点：gate_eligible=True；failure_class=BLOCKED；acceptance_report 存在
+    失败含义：仍走已退役的 generic sandbox fred mock live 路径
     """
-    monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
-    monkeypatch.setenv("QMD_FRED_INCREMENTAL_USE_MOCK", "1")
-    audit_data = tmp_path / ".audit-sandbox" / "wave3-accept" / "data"
-    audit_data.mkdir(parents=True, exist_ok=True)
-    monkeypatch.setenv("QMD_DATA_ROOT", str(audit_data))
+    root = tmp_path / ".audit-sandbox" / "source-route-db-fred"
+    root.mkdir(parents=True)
+    monkeypatch.setenv("QMD_DATA_ROOT", str(root))
+    monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "0")
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
     enable_source_route(
         monkeypatch, source_id="fred", data_domain="macro_series", primary_source_id="fred"
     )
     payload = sync_plan(data_domain="macro_series", source_id="fred", dry_run=False)
-    assert payload["dry_run"] is False
-    assert payload["source_id"] == "fred"
-    assert payload["series_results"]
-    assert payload["total_rows_written"] >= 1
-    assert payload["overall_status"] == "COMPLETED"
+    assert payload.get("gate_eligible") is True
+    assert payload["acceptance_report"]["failure_class"] == "BLOCKED"
 
 
 def test_fredIncrementalCli_syncDefinesSourceIdFlag() -> None:

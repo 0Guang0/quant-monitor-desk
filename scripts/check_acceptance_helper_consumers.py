@@ -32,12 +32,16 @@ ALLOWED_CI_SCRIPT_PATHS = frozenset(
         "scripts/ci_perf_budget_artifact.py",
     }
 )
-_PREFILTER_NEEDLES = (
+_PREFILTER_NEEDLES_BASE = (
     "production_equivalent_smoke",
     "tier_a_live_acceptance",
     "live_incremental_support",
     "create_test_adapter",
+    "assert_sandbox_db_allowed",
+    "limited_production_entry",
+    "sandbox_clean_write_rehearse",
 )
+_PREFILTER_NEEDLES = _PREFILTER_NEEDLES_BASE
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -93,6 +97,21 @@ RULES: tuple[ConsumerRule, ...] = (
             "DataSourceService for product paths; unit tests may keep explicit test adapters"
         ),
     ),
+    ConsumerRule(
+        target="legacy sandbox guard in official CLI",
+        pattern=re.compile(r"\bassert_sandbox_db_allowed\s*\("),
+        classification="legacy_sandbox_guard",
+        replacement="resolve_matrix_data_root / phase1_acceptance.require_phase1_data_root_for_live",
+    ),
+    ConsumerRule(
+        target="sandbox-clean-write limited production CLI",
+        pattern=re.compile(
+            r"sandbox_clean_write_rehearse|sandbox_clean_write_audit|"
+            r"limited_production_entry|run_limited_production_entry"
+        ),
+        classification="legacy_clean_write_entry",
+        replacement="SourceRouteDbAcceptanceSpine; mark legacy in data_cli_contract.yaml",
+    ),
 )
 
 
@@ -118,12 +137,20 @@ def _usage_kind(path: Path) -> str:
     return "product_code"
 
 
-def _consumer_scope(path: Path, usage: str) -> str:
+def _consumer_scope(path: Path, usage: str, classification: str) -> str:
     rel = path.relative_to(PROJECT_ROOT).as_posix()
     if usage == "test":
         return "test_only"
     if rel in ALLOWED_CI_SCRIPT_PATHS:
         return "allowed_ci"
+    if classification == "legacy_sandbox_guard" and rel.startswith("backend/app/cli/"):
+        return "legacy_cli_compat"
+    if classification == "legacy_clean_write_entry" and rel.startswith("backend/app/cli/"):
+        return "retired_legacy_cli"
+    if classification == "legacy_clean_write_entry" and rel.startswith(
+        "backend/app/ops/sandbox_clean_write/"
+    ):
+        return "internal_ops_module"
     if usage == "product_code":
         return "product_runtime"
     return "script_runtime"
@@ -140,6 +167,10 @@ def _migration_action(scope: str, classification: str) -> str:
         return "migrate_to_spine_adapter"
     if classification == "direct_adapter_helper":
         return "use_data_source_service"
+    if classification == "legacy_sandbox_guard":
+        return "migrate_to_source_route_db"
+    if classification == "legacy_clean_write_entry":
+        return "mark_legacy_delegate_to_spine"
     return "migrate_to_spine"
 
 
@@ -157,6 +188,12 @@ def _is_rule_definition(path: Path, rule: ConsumerRule) -> bool:
         "backend/app/datasources/service.py",
         "tests/service_path_support.py",
     }:
+        return True
+    if rule.classification == "legacy_sandbox_guard" and not rel.startswith("backend/app/cli/"):
+        return True
+    if rule.classification == "legacy_clean_write_entry" and not (
+        rel.startswith("backend/app/cli/") or rel.startswith("backend/app/ops/sandbox_clean_write/")
+    ):
         return True
     return False
 
@@ -184,7 +221,7 @@ def collect_consumers(root: Path = PROJECT_ROOT) -> list[ConsumerHit]:
                 if not rule.pattern.search(line):
                     continue
                 usage = _usage_kind(path)
-                scope = _consumer_scope(path, usage)
+                scope = _consumer_scope(path, usage, rule.classification)
                 hits.append(
                     ConsumerHit(
                         target=rule.target,
@@ -201,9 +238,28 @@ def collect_consumers(root: Path = PROJECT_ROOT) -> list[ConsumerHit]:
 
 
 def build_report(root: Path = PROJECT_ROOT) -> dict[str, object]:
-    consumers = [asdict(hit) for hit in collect_consumers(root)]
-    product_runtime = [item for item in consumers if item["scope"] == "product_runtime"]
-    script_runtime = [item for item in consumers if item["scope"] == "script_runtime"]
+    all_hits = collect_consumers(root)
+    consumers = [
+        hit
+        for hit in all_hits
+        if hit.scope
+        not in {
+            "test_only",
+            "allowed_ci",
+            "legacy_cli_compat",
+            "legacy_compat",
+            "retired_legacy_cli",
+            "internal_ops_module",
+        }
+    ]
+    legacy_consumers = [
+        hit for hit in all_hits if hit.scope in {"legacy_cli_compat", "legacy_compat"}
+    ]
+    retired_legacy_cli = [hit for hit in all_hits if hit.scope == "retired_legacy_cli"]
+    consumer_rows = [asdict(hit) for hit in consumers]
+    legacy_rows = [asdict(hit) for hit in legacy_consumers]
+    product_runtime = [item for item in consumer_rows if item["scope"] == "product_runtime"]
+    script_runtime = [item for item in consumer_rows if item["scope"] == "script_runtime"]
     seam_inventory_status = (
         "PASS" if not product_runtime and not script_runtime and not consumers else "FAIL"
     )
@@ -211,12 +267,16 @@ def build_report(root: Path = PROJECT_ROOT) -> dict[str, object]:
         "status": "PASS" if not consumers else "FAIL",
         "strict_status": "FAIL" if product_runtime else "PASS",
         "seam_inventory_status": seam_inventory_status,
+        "legacy_compat_count": len(legacy_rows),
+        "retired_legacy_cli_count": len(retired_legacy_cli),
         "module": "SourceRouteDbAcceptanceSpine",
         "mode": "strict_product_runtime_inventory",
-        "consumer_count": len(consumers),
+        "consumer_count": len(consumer_rows),
         "product_runtime_count": len(product_runtime),
         "script_runtime_count": len(script_runtime),
-        "consumers": consumers,
+        "consumers": consumer_rows,
+        "legacy_consumers": legacy_rows,
+        "retired_legacy_cli": [asdict(hit) for hit in retired_legacy_cli],
     }
 
 

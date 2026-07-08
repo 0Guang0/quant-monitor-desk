@@ -152,15 +152,15 @@ def test_tierASyncRouter_unknownSource_failClosed(sandbox_env: Path) -> None:
 def test_tierASyncRouter_nonDryRun_disabledSources_userAuthRequired(
     sandbox_env: Path, source_id: str
 ) -> None:
-    """覆盖范围：S12 未接线真跑源 non-dry-run 门禁
+    """覆盖范围：S12 非 production-equivalent 真跑 fail-closed（T9）
     测试对象：sync_tier_a_by_source_id dry_run=False
-    目的/目标：bis/deribit 等非 baostock/mootdx/fred 源须 USER_AUTH_REQUIRED
-    验证点：CliFailure error_code==USER_AUTH_REQUIRED
-    失败含义：未授权源可 silent 真跑写 clean 表
+    目的/目标：bis/deribit 等源在非 source-route-db 根上须 ISOLATED_ROOT_REQUIRED
+    验证点：CliFailure error_code==ISOLATED_ROOT_REQUIRED
+    失败含义：未授权源仍可在普通 sandbox 真跑
     """
     with pytest.raises(CliFailure) as exc_info:
         sync_tier_a_by_source_id(source_id=source_id, dry_run=False, end="2024-06-30")
-    assert exc_info.value.error_code == "USER_AUTH_REQUIRED"
+    assert exc_info.value.error_code == "ISOLATED_ROOT_REQUIRED"
 
 
 def test_tierASyncRouter_syncPlan_delegatesWhenSourceIdSet(

@@ -602,7 +602,11 @@ def classify_matrix_execute_exception(exc: BaseException) -> tuple[str, str]:
 
     if isinstance(exc, PortError):
         return "FAIL_EXTERNAL", "FAIL"
+    if isinstance(exc, (TimeoutError, OSError)):
+        return "FAIL_EXTERNAL", "FAIL"
     message = str(exc).lower()
+    if "timeout" in message or "timed out" in message:
+        return "FAIL_EXTERNAL", "FAIL"
     if "no adapter" in message or "no clean write target" in message:
         return "CONTRACT_VIOLATION", "FAIL"
     if isinstance(exc, (ValueError, KeyError, TypeError, AttributeError)):
@@ -627,10 +631,12 @@ def evaluate_matrix_row_closure(
     error_text = _row_error_text(row)
 
     if error_text.startswith("matrix execute raised:"):
-        failure_class, _ = classify_matrix_execute_exception(
+        classified_failure, _ = classify_matrix_execute_exception(
             RuntimeError(error_text.removeprefix("matrix execute raised:"))
         )
-        return "FAIL_CONTRACT"
+        if classified_failure != "FAIL_EXTERNAL":
+            return "FAIL_CONTRACT"
+        failure_class = classified_failure
 
     if failure_class == "CONTRACT_VIOLATION":
         return "FAIL_CONTRACT"
@@ -770,7 +776,20 @@ def execute_documented_matrix(
             from backend.app.datasources.adapters.fetch_port import PortError
             from backend.app.datasources.product_live_gate import ProductLiveGateError
 
-            if not isinstance(exc, (PortError, ProductLiveGateError, RuntimeError, ValueError, TypeError, KeyError, AttributeError)):
+            if not isinstance(
+                exc,
+                (
+                    PortError,
+                    ProductLiveGateError,
+                    RuntimeError,
+                    ValueError,
+                    TypeError,
+                    KeyError,
+                    AttributeError,
+                    TimeoutError,
+                    OSError,
+                ),
+            ):
                 raise
             failure_class, status = classify_matrix_execute_exception(exc)
             row = {

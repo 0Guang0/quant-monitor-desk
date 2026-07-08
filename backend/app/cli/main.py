@@ -174,48 +174,6 @@ def _build_data_parser(sub: argparse._SubParsersAction) -> None:
     )
     quality.add_argument("--format", choices=["json", "text"], default="json")
 
-    scw = data_sub.add_parser(
-        "sandbox-clean-write",
-        help="Sandbox clean-write rehearsal (R3G-01)",
-    )
-    scw_sub = scw.add_subparsers(dest="sandbox_clean_write_command", required=True)
-    rehearse = scw_sub.add_parser("rehearse", help="Run capped sandbox clean-write rehearsal")
-    rehearse.add_argument("--candidate-set", required=True)
-    rehearse.add_argument("--sandbox-db", required=True)
-    rehearse.add_argument("--evidence-dir", required=True)
-    rehearse.add_argument("--report", required=True)
-    rehearse.add_argument("--no-production-mutation", action="store_true")
-    rehearse.add_argument(
-        "--dry-run",
-        action=argparse.BooleanOptionalAction,
-        default=True,
-    )
-    rehearse.add_argument("--allow-live-fetch", action="store_true")
-    rehearse.add_argument("--fred-authorization", default=None)
-    rehearse.add_argument("--format", choices=["json", "text"], default="json")
-    audit = scw_sub.add_parser("audit", help="Pre-production adversarial audit (R3G-02)")
-    audit.add_argument("--rehearsal-report", required=True)
-    audit.add_argument("--sandbox-db", required=True)
-    audit.add_argument("--evidence-dir", required=True)
-    audit.add_argument("--decision-report", required=True)
-    audit.add_argument("--format", choices=["json", "text"], default="json")
-    promote = scw_sub.add_parser("promote", help="Limited production clean-write entry (R3G-03)")
-    promote.add_argument("--approval-file", required=True)
-    promote.add_argument("--audit-decision", required=True)
-    promote.add_argument("--before-proof", required=True)
-    promote.add_argument("--after-proof", required=True)
-    promote.add_argument("--rollback-plan", required=True)
-    promote.add_argument("--evidence-dir", default=None)
-    promote.add_argument(
-        "--dry-run",
-        action=argparse.BooleanOptionalAction,
-        default=True,
-    )
-    promote.add_argument("--execute", action="store_true")
-    promote.add_argument("--allow-live-fetch", action="store_true")
-    promote.add_argument("--fred-authorization", default=None)
-    promote.add_argument("--format", choices=["json", "text"], default="json")
-
 
 def _run_data(args: argparse.Namespace) -> int:
     fmt = getattr(args, "format", "json")
@@ -325,49 +283,6 @@ def _run_data(args: argparse.Namespace) -> int:
                 check_date=args.check_date,
                 dry_run=args.dry_run,
             )
-        elif args.data_command == "sandbox-clean-write":
-            from pathlib import Path
-
-            if args.sandbox_clean_write_command == "rehearse":
-                fred_auth = Path(args.fred_authorization) if args.fred_authorization else None
-                payload = data_commands.sandbox_clean_write_rehearse(
-                    candidate_set=args.candidate_set,
-                    sandbox_db=Path(args.sandbox_db),
-                    evidence_dir=Path(args.evidence_dir),
-                    report=Path(args.report),
-                    no_production_mutation=args.no_production_mutation,
-                    dry_run=args.dry_run,
-                    allow_live_fetch=args.allow_live_fetch,
-                    fred_authorization=fred_auth,
-                )
-            elif args.sandbox_clean_write_command == "audit":
-                payload = data_commands.sandbox_clean_write_audit(
-                    rehearsal_report=Path(args.rehearsal_report),
-                    sandbox_db=Path(args.sandbox_db),
-                    evidence_dir=Path(args.evidence_dir),
-                    decision_report=Path(args.decision_report),
-                )
-            elif args.sandbox_clean_write_command == "promote":
-                evidence = Path(args.evidence_dir) if args.evidence_dir else None
-                fred_auth = Path(args.fred_authorization) if args.fred_authorization else None
-                payload = data_commands.sandbox_clean_write_promote(
-                    approval_file=Path(args.approval_file),
-                    audit_decision=Path(args.audit_decision),
-                    before_proof=Path(args.before_proof),
-                    after_proof=Path(args.after_proof),
-                    rollback_plan=Path(args.rollback_plan),
-                    evidence_dir=evidence,
-                    dry_run=args.dry_run,
-                    execute=args.execute,
-                    allow_live_fetch=args.allow_live_fetch,
-                    fred_authorization=fred_auth,
-                )
-            else:
-                raise CliFailure(
-                    error_code="CAPABILITY_MISSING",
-                    message=f"unknown sandbox-clean-write subcommand: {args.sandbox_clean_write_command}",
-                    docs_anchor="docs/implementation_tasks/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/R3G_02_PRE_PRODUCTION_ADVERSARIAL_AUDIT.md",
-                )
         else:
             raise CliFailure(
                 error_code="CAPABILITY_MISSING",

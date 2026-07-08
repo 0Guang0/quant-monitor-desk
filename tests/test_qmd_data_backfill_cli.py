@@ -111,7 +111,11 @@ def test_qmd_data_backfill_without_dry_run_requires_sandbox(
         "--no-dry-run",
     )
     assert proc.returncode != 0
-    assert "USER_AUTH_REQUIRED" in proc.stderr
+    assert (
+        "USER_AUTH_REQUIRED" in proc.stderr
+        or "ISOLATED_ROOT_REQUIRED" in proc.stderr
+        or "CANONICAL_MAIN_DB_REJECTED" in proc.stderr
+    )
 
 
 def test_qmd_data_backfill_truncate_to_cap_cli(monkeypatch, tmp_path: Path) -> None:

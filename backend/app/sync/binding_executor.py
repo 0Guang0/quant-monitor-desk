@@ -36,9 +36,14 @@ def _build_job_spec(
     date_start: date | None,
     date_end: date | None,
     instrument_id: str | None = None,
+    trigger_reason: str | None = None,
 ) -> SyncJobSpec:
     suffix = uuid.uuid4().hex[:8]
     market_id = "GLOBAL" if binding.data_domain in _MACRO_WATERMARK_DOMAINS else "CN_A"
+    resolved_trigger = (
+        trigger_reason
+        or ("eco_catchup" if job_type == "backfill" else f"binding:{binding.indicator_id}")
+    )
     return SyncJobSpec(
         run_id=f"binding-{binding.indicator_id}-{suffix}",
         job_id=f"job-{binding.indicator_id}-{suffix}",
@@ -51,7 +56,7 @@ def _build_job_spec(
         date_end=date_end,
         instrument_id=instrument_id or binding.incremental_watermark,
         partition_key=None,
-        trigger_reason=f"binding:{binding.indicator_id}",
+        trigger_reason=resolved_trigger,
     )
 
 
@@ -97,6 +102,7 @@ def execute_binding(
     connection_manager: ConnectionManager | None = None,
     orchestrator: DataSyncOrchestrator | None = None,
     datasource_service=None,
+    trigger_reason: str | None = None,
 ) -> SyncJobResult:
     """唯一 binding→orchestrator 编排：SyncJobSpec → watermark → mapper → orchestrator."""
     spec = _build_job_spec(
@@ -105,6 +111,7 @@ def execute_binding(
         date_start=date_start,
         date_end=date_end,
         instrument_id=instrument_id,
+        trigger_reason=trigger_reason,
     )
     cm = _resolve_connection_manager(
         connection_manager=connection_manager, orchestrator=orchestrator
