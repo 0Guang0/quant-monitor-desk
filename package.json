@@ -5,7 +5,10 @@
   "scripts": {
     "prepare": "husky",
     "typecheck": "npm run typecheck --prefix frontend",
-    "test": "uv run python -m pytest -q"
+    "test": "uv run python -m pytest -q",
+    "test:quick": "uv run python -m pytest -q -m \"not slow and not network\"",
+    "test:full": "uv run python -m pytest -q",
+    "test:perf-gate": "uv run python scripts/run_perf_gate.py"
   },
   "devDependencies": {
     "husky": "^9.1.7",

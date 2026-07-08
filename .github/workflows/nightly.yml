@@ -13,6 +13,21 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  perf-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - run: pip install -e ".[dev]"
+      - name: "Perf gate: quick profile (≤180s)"
+        run: python scripts/run_perf_gate.py --profile quick
+      - name: "Perf gate: full profile (≤300s)"
+        run: python scripts/run_perf_gate.py --profile full
+      - name: "Perf gate: CI parallel (≤240s)"
+        run: python scripts/run_perf_gate.py --profile ci-parallel
+
   network-smoke:
     runs-on: ubuntu-latest
     steps:

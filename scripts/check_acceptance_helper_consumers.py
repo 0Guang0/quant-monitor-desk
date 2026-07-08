@@ -32,6 +32,12 @@ ALLOWED_CI_SCRIPT_PATHS = frozenset(
         "scripts/ci_perf_budget_artifact.py",
     }
 )
+_PREFILTER_NEEDLES = (
+    "production_equivalent_smoke",
+    "tier_a_live_acceptance",
+    "live_incremental_support",
+    "create_test_adapter",
+)
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -155,10 +161,19 @@ def _is_rule_definition(path: Path, rule: ConsumerRule) -> bool:
     return False
 
 
+def _read_python_text(path: Path) -> str | None:
+    try:
+        return path.read_text(encoding="utf-8")
+    except OSError:
+        return None
+
+
 def collect_consumers(root: Path = PROJECT_ROOT) -> list[ConsumerHit]:
     hits: list[ConsumerHit] = []
     for path in _iter_python_files(root):
-        text = path.read_text(encoding="utf-8")
+        text = _read_python_text(path)
+        if text is None or not any(needle in text for needle in _PREFILTER_NEEDLES):
+            continue
         for line_no, line in enumerate(text.splitlines(), start=1):
             stripped = line.strip()
             if not stripped or stripped.startswith("#"):

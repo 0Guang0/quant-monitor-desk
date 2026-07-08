@@ -80,18 +80,37 @@ class BatchDIncrementalAdapter(BaseDataAdapter):
         )
 
 
+def truncate_mutable_tables(cm: ConnectionManager) -> None:
+    """Delete all rows from user tables; preserve schema_version (Slice A / P4)."""
+    with cm.writer() as con:
+        for (table_name,) in con.execute(
+            """
+            SELECT table_name FROM information_schema.tables
+            WHERE table_schema = 'main' AND table_name != 'schema_version'
+            """
+        ).fetchall():
+            con.execute(f'DELETE FROM "{table_name}"')
+
+
+def orch_stack_from_cm(
+    cm: ConnectionManager, registry_yaml: Path
+) -> tuple[DataSyncOrchestrator, BatchDIncrementalAdapter]:
+    with cm.writer() as con:
+        ensure_batch_d_staging_tables(con)
+    reg = SourceRegistry(registry_yaml)
+    reg.load()
+    with cm.writer() as con:
+        reg.sync_to_db(con, tombstone_missing=False)
+    return DataSyncOrchestrator(cm), BatchDIncrementalAdapter(reg)
+
+
 def _orch_stack(
     tmp_path: Path, registry_yaml_fixture: Path
 ) -> tuple[DataSyncOrchestrator, BatchDIncrementalAdapter]:
     cm = ConnectionManager(tmp_path / "batch_d.duckdb")
     with cm.writer() as con:
         apply_migrations(con)
-        ensure_batch_d_staging_tables(con)
-    reg = SourceRegistry(registry_yaml_fixture)
-    reg.load()
-    with cm.writer() as con:
-        reg.sync_to_db(con, tombstone_missing=False)
-    return DataSyncOrchestrator(cm), BatchDIncrementalAdapter(reg)
+    return orch_stack_from_cm(cm, registry_yaml_fixture)
 
 
 def _incremental_spec(job_id: str = "job-inc-d") -> SyncJobSpec:

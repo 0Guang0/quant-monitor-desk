@@ -50,7 +50,7 @@ Backend CI:
 
 ```bash
 pip install -e ".[dev]"
-pytest -q --cov=backend --cov-fail-under=85
+pytest -q -n auto --cov=backend --cov-fail-under=85
 ruff check .
 ruff format --check .
 python -m compileall backend scripts tests

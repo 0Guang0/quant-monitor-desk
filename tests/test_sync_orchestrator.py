@@ -8,11 +8,18 @@ from __future__ import annotations
 from datetime import date
 from pathlib import Path
 
+import pytest
+
 from backend.app.datasources.source_registry import SourceRegistry
 from backend.app.db.connection import ConnectionManager
 from backend.app.db.migrate import apply_migrations
 from backend.app.sync.jobs import SyncJobSpec
 from backend.app.sync.orchestrator import DataSyncOrchestrator
+from tests.support.orchestration_flow_fixtures import (
+    ensure_batch_d_staging_tables,
+    orch_stack_from_cm,
+    truncate_mutable_tables,
+)
 from tests.support.sync_adapters import (
     BACKFILL_2SHARD_END as _BACKFILL_2SHARD_END,
     BACKFILL_3SHARD_END as _BACKFILL_3SHARD_END,
@@ -23,22 +30,42 @@ from tests.support.sync_adapters import (
 )
 
 
-def _orchestrator(tmp_path) -> DataSyncOrchestrator:
-    db = tmp_path / "orch.duckdb"
-    cm = ConnectionManager(db_path=db)
+@pytest.fixture(scope="module")
+def orchestrator_module_db(tmp_path_factory):
+    """ponytail: one migrated DuckDB per module; per-test DELETE isolation (Slice A / P4)."""
+    root = tmp_path_factory.mktemp("sync_orchestrator_module")
+    cm = ConnectionManager(db_path=root / "orch.duckdb")
     with cm.writer() as con:
         apply_migrations(con)
+        ensure_batch_d_staging_tables(con)
+    return cm
+
+
+@pytest.fixture(autouse=True)
+def orchestrator_isolated_tables(orchestrator_module_db):
+    truncate_mutable_tables(orchestrator_module_db)
+    yield
+    truncate_mutable_tables(orchestrator_module_db)
+
+
+@pytest.fixture
+def orchestrator(orchestrator_module_db) -> DataSyncOrchestrator:
+    return DataSyncOrchestrator(orchestrator_module_db)
+
+
+def _new_orchestrator(cm: ConnectionManager) -> DataSyncOrchestrator:
+    """Construct after class-level monkeypatch so runners bind patched methods."""
     return DataSyncOrchestrator(cm)
 
 
-def test_orchestrator_createJob_persistsDataSyncJob(tmp_path) -> None:
+def test_orchestrator_createJob_persistsDataSyncJob(orchestrator) -> None:
     """覆盖范围：编排器创建同步作业并写入 data_sync_job
     测试对象：DataSyncOrchestrator.create_job
     目的/目标：提交同步任务后，系统里应能查到该任务且处于「已创建」状态
     验证点：返回 job-orch；库内 run_id、job_type、status 与 spec 一致
     失败含义：任务创建后没记下来，后续无法跟踪这次同步的运行过程
     """
-    orch = _orchestrator(tmp_path)
+    orch = orchestrator
     spec = SyncJobSpec(
         run_id="run-orch",
         job_id="job-orch",
@@ -66,14 +93,14 @@ def test_orchestrator_createJob_persistsDataSyncJob(tmp_path) -> None:
     assert row == ("run-orch", "incremental", "CREATED")
 
 
-def test_orchestrator_emitEvent_linksRunJobTask(tmp_path) -> None:
+def test_orchestrator_emitEvent_linksRunJobTask(orchestrator) -> None:
     """覆盖范围：自定义事件写入 job_event_log 并关联运行、任务与子任务
     测试对象：DataSyncOrchestrator.emit_event
     目的/目标：运维自定义事件要能挂在对应的运行、任务和子任务上，方便串联审计
     验证点：event_id 自洽；run_id=run-ev；job_id=job-ev；task_id=task-1
     失败含义：事件缺少关联信息，分片任务和主任务对不上号
     """
-    orch = _orchestrator(tmp_path)
+    orch = orchestrator
     spec = SyncJobSpec(
         run_id="run-ev",
         job_id="job-ev",
@@ -110,7 +137,7 @@ def test_orchestrator_emitEvent_linksRunJobTask(tmp_path) -> None:
 
 
 def test_orchestrator_fetchBlockedWhenGuardPaused_setsFailedRetryable(
-    tmp_path, monkeypatch
+    orchestrator, tmp_path, monkeypatch
 ) -> None:
     """覆盖范围：资源不足被要求暂停时，begin_fetching 应阻断抓取
     测试对象：DataSyncOrchestrator.begin_fetching
@@ -120,7 +147,7 @@ def test_orchestrator_fetchBlockedWhenGuardPaused_setsFailedRetryable(
     """
     from backend.app.core.resource_guard import Decision, ResourceGuard, ResourceSnapshot
 
-    orch = _orchestrator(tmp_path)
+    orch = orchestrator
     spec = SyncJobSpec(
         run_id="run-g",
         job_id="job-g",
@@ -180,7 +207,7 @@ class _SecretLeakAdapter:
         )
 
 
-def test_orchestrator_fetchFailure_redactsErrorInJobEventLog(tmp_path, monkeypatch) -> None:
+def test_orchestrator_fetchFailure_redactsErrorInJobEventLog(orchestrator, tmp_path, monkeypatch) -> None:
     """覆盖范围：抓取失败时作业事件日志须脱敏错误信息
     测试对象：DataSyncOrchestrator.run_incremental 错误落库
     目的/目标：抓取失败写入日志时，不能把 token、api_key 等敏感信息明文落库
@@ -190,7 +217,7 @@ def test_orchestrator_fetchFailure_redactsErrorInJobEventLog(tmp_path, monkeypat
     from backend.app.core.resource_guard import Decision, ResourceGuard
 
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
-    orch = _orchestrator(tmp_path)
+    orch = orchestrator
     spec = SyncJobSpec(
         run_id="run-redact",
         job_id="job-redact",
@@ -222,7 +249,7 @@ def test_orchestrator_fetchFailure_redactsErrorInJobEventLog(tmp_path, monkeypat
     assert "REDACTED" in msg.upper() or "[REDACTED]" in msg
 
 
-def test_orchestrator_fetchBlockedOnHardStop_setsFailedRetryable(tmp_path, monkeypatch) -> None:
+def test_orchestrator_fetchBlockedOnHardStop_setsFailedRetryable(orchestrator, tmp_path, monkeypatch) -> None:
     """覆盖范围：内存等硬阈值触发时 begin_fetching 应阻断抓取
     测试对象：DataSyncOrchestrator.begin_fetching
     目的/目标：资源严重不足时不应开始抓取，应标记为可稍后重试的失败
@@ -231,7 +258,7 @@ def test_orchestrator_fetchBlockedOnHardStop_setsFailedRetryable(tmp_path, monke
     """
     from backend.app.core.resource_guard import Decision, ResourceGuard, ResourceSnapshot
 
-    orch = _orchestrator(tmp_path)
+    orch = orchestrator
     orch.create_job(
         SyncJobSpec(
             run_id="run-hs",
@@ -277,7 +304,7 @@ def test_orchestrator_fetchBlockedOnHardStop_setsFailedRetryable(tmp_path, monke
     assert "RESOURCE_GUARD_PAUSED" in msg
 
 
-def test_orchestrator_fetchAllowedWhenGuardOk_proceedsToFetching(tmp_path, monkeypatch) -> None:
+def test_orchestrator_fetchAllowedWhenGuardOk_proceedsToFetching(orchestrator, tmp_path, monkeypatch) -> None:
     """覆盖范围：资源正常时 begin_fetching 允许进入抓取态
     测试对象：DataSyncOrchestrator.begin_fetching
     目的/目标：机器资源充足时，已规划好的任务应能正常开始抓取
@@ -286,7 +313,7 @@ def test_orchestrator_fetchAllowedWhenGuardOk_proceedsToFetching(tmp_path, monke
     """
     from backend.app.core.resource_guard import Decision, ResourceGuard
 
-    orch = _orchestrator(tmp_path)
+    orch = orchestrator
     orch.create_job(
         SyncJobSpec(
             run_id="run-ok",
@@ -313,7 +340,7 @@ def test_orchestrator_fetchAllowedWhenGuardOk_proceedsToFetching(tmp_path, monke
     assert status == "FETCHING"
 
 
-def test_backfillJob_largeRange_splitsIntoTasks(tmp_path, monkeypatch) -> None:
+def test_backfillJob_largeRange_splitsIntoTasks(orchestrator, tmp_path, monkeypatch) -> None:
     """覆盖范围：大日期区间历史回补自动拆成多个子任务
     测试对象：plan_backfill_shards 与 DataSyncOrchestrator.run_backfill
     目的/目标：跨度太大的回补应按天上限拆片，实际跑多个分片而不是一次抓完
@@ -330,7 +357,7 @@ def test_backfillJob_largeRange_splitsIntoTasks(tmp_path, monkeypatch) -> None:
     )
 
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
-    orch = _orchestrator(tmp_path)
+    orch = orchestrator
     spec = SyncJobSpec(
         run_id="run-bf",
         job_id="job-bf",
@@ -353,7 +380,7 @@ def test_backfillJob_largeRange_splitsIntoTasks(tmp_path, monkeypatch) -> None:
     assert len(results) >= 3
 
 
-def test_backfillJob_recordsTriggerReason(tmp_path, monkeypatch) -> None:
+def test_backfillJob_recordsTriggerReason(orchestrator, tmp_path, monkeypatch) -> None:
     """覆盖范围：历史回补分片事件里记录触发原因
     测试对象：DataSyncOrchestrator.run_backfill 事件写入
     目的/目标：审计日志要能看出这次回补是人工发起还是自动追赶等
@@ -365,7 +392,7 @@ def test_backfillJob_recordsTriggerReason(tmp_path, monkeypatch) -> None:
     from backend.app.core.resource_guard import Decision, ResourceGuard
 
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
-    orch = _orchestrator(tmp_path)
+    orch = orchestrator
     spec = SyncJobSpec(
         run_id="run-tr",
         job_id="job-tr",
@@ -397,7 +424,9 @@ def test_backfillJob_recordsTriggerReason(tmp_path, monkeypatch) -> None:
     assert "manual_request" in row[0]
 
 
-def test_backfillJob_secondShardGuardPause_preservesFirstShardOutcome(tmp_path, monkeypatch) -> None:
+def test_backfillJob_secondShardGuardPause_preservesFirstShardOutcome(
+    orchestrator_module_db, tmp_path, monkeypatch
+) -> None:
     """覆盖范围：历史回补第 2 片前资源暂停时的分片 outcome
     测试对象：DataSyncOrchestrator.run_backfill 分片循环 + ResourceGuard
     目的/目标：环境恶化时第 2 片应 FAILED_RETRYABLE，已完成分片进度与 clean 行保留
@@ -420,7 +449,7 @@ def test_backfillJob_secondShardGuardPause_preservesFirstShardOutcome(tmp_path, 
 
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
     monkeypatch.setattr(DataSyncOrchestrator, "begin_fetching", _pause_before_second_shard)
-    orch = _orchestrator(tmp_path)
+    orch = _new_orchestrator(orchestrator_module_db)
     spec = SyncJobSpec(
         run_id="run-guard-bf",
         job_id="job-guard-bf",
@@ -480,7 +509,7 @@ def test_backfillJob_secondShardGuardPause_preservesFirstShardOutcome(tmp_path, 
     assert first_complete >= 1
 
 
-def test_backfillJob_midShardFailure_preservesCompletedTasks(tmp_path, monkeypatch) -> None:
+def test_backfillJob_midShardFailure_preservesCompletedTasks(orchestrator, tmp_path, monkeypatch) -> None:
     """覆盖范围：历史回补中途某分片失败时，已完成分片结果应保留
     测试对象：DataSyncOrchestrator.run_backfill 部分失败语义
     目的/目标：后面一片失败不应抹掉前面已经成功的分片进度
@@ -492,7 +521,7 @@ def test_backfillJob_midShardFailure_preservesCompletedTasks(tmp_path, monkeypat
     from backend.app.core.resource_guard import Decision, ResourceGuard
 
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
-    orch = _orchestrator(tmp_path)
+    orch = orchestrator
     spec = SyncJobSpec(
         run_id="run-fail-bf",
         job_id="job-fail-bf",
@@ -525,7 +554,7 @@ def test_backfillJob_midShardFailure_preservesCompletedTasks(tmp_path, monkeypat
 
 
 def test_backfillJob_severeConflict_blocksCleanWriteAndPersistsConflictReportId(
-    tmp_path, registry_yaml_fixture, monkeypatch
+    orchestrator_module_db, registry_yaml_fixture, monkeypatch
 ) -> None:
     """覆盖范围：历史回补遇严重多源冲突时阻断写入正式表
     测试对象：DataSyncOrchestrator.run_backfill 冲突路径
@@ -539,7 +568,7 @@ def test_backfillJob_severeConflict_blocksCleanWriteAndPersistsConflictReportId(
     from tests.support.orchestration_flow_fixtures import (
         CONFLICT_STG,
         BatchDIncrementalAdapter,
-        _orch_stack,
+        orch_stack_from_cm,
     )
 
     class SevereBackfillAdapter(BatchDIncrementalAdapter):
@@ -549,7 +578,7 @@ def test_backfillJob_severeConflict_blocksCleanWriteAndPersistsConflictReportId(
         )
 
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
-    orch, _ = _orch_stack(tmp_path, registry_yaml_fixture)
+    orch, _ = orch_stack_from_cm(orchestrator_module_db, registry_yaml_fixture)
     reg = SourceRegistry(registry_yaml_fixture)
     reg.load()
     adapter = SevereBackfillAdapter(reg)
@@ -585,7 +614,7 @@ def test_backfillJob_severeConflict_blocksCleanWriteAndPersistsConflictReportId(
 
 
 def test_reconcileJob_severeConflict_entersWaitingReconcile(
-    tmp_path, registry_yaml_fixture, monkeypatch
+    orchestrator_module_db, registry_yaml_fixture, monkeypatch
 ) -> None:
     """覆盖范围：增量同步遇严重多源冲突时应挂起等待调和
     测试对象：DataSyncOrchestrator.run_incremental 冲突检测
@@ -599,7 +628,7 @@ def test_reconcileJob_severeConflict_entersWaitingReconcile(
         CONFLICT_STG,
         BatchDIncrementalAdapter,
         _incremental_spec,
-        _orch_stack,
+        orch_stack_from_cm,
     )
 
     class SevereConflictAdapter(BatchDIncrementalAdapter):
@@ -609,7 +638,7 @@ def test_reconcileJob_severeConflict_entersWaitingReconcile(
         )
 
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
-    orch, _ = _orch_stack(tmp_path, registry_yaml_fixture)
+    orch, _ = orch_stack_from_cm(orchestrator_module_db, registry_yaml_fixture)
     reg = SourceRegistry(registry_yaml_fixture)
     reg.load()
     adapter = SevereConflictAdapter(reg)
@@ -622,7 +651,7 @@ def test_reconcileJob_severeConflict_entersWaitingReconcile(
     assert result.status == "WAITING_RECONCILE"
 
 
-def test_reconcileJob_afterReconcile_resolvesOrManualReview(tmp_path) -> None:
+def test_reconcileJob_afterReconcile_resolvesOrManualReview(orchestrator) -> None:
     """覆盖范围：对已登记的严重冲突执行调和流程
     测试对象：DataSyncOrchestrator.run_reconcile
     目的/目标：需要人工复核的冲突不能静默自动关闭，应明确提示人工介入
@@ -631,7 +660,7 @@ def test_reconcileJob_afterReconcile_resolvesOrManualReview(tmp_path) -> None:
     """
     from datetime import UTC, datetime
 
-    orch = _orchestrator(tmp_path)
+    orch = orchestrator
     conflict_id = "conflict-1"
     with orch._cm.writer() as con:
         con.execute(
@@ -687,7 +716,9 @@ def test_syncRegistry_cli_syncsYamlToDb(tmp_path, registry_yaml_fixture, monkeyp
     assert count >= 1
 
 
-def test_orchestratorBootstrap_callsSyncToDb(tmp_path, registry_yaml_fixture, monkeypatch) -> None:
+def test_orchestratorBootstrap_callsSyncToDb(
+    orchestrator, tmp_path, registry_yaml_fixture, monkeypatch
+) -> None:
     """覆盖范围：编排器启动引导时把 YAML 注册表加载进库
     测试对象：DataSyncOrchestrator.bootstrap
     目的/目标：应用启动时应把数据源注册表写入当前连接的数据库
@@ -697,7 +728,7 @@ def test_orchestratorBootstrap_callsSyncToDb(tmp_path, registry_yaml_fixture, mo
     from backend.app.datasources.source_registry import SourceRegistry
 
     monkeypatch.setenv("QMD_DATA_ROOT", str(tmp_path / "data"))
-    orch = _orchestrator(tmp_path)
+    orch = orchestrator
     monkeypatch.setattr(
         SourceRegistry,
         "DEFAULT_YAML",
@@ -709,7 +740,7 @@ def test_orchestratorBootstrap_callsSyncToDb(tmp_path, registry_yaml_fixture, mo
     assert count >= 1
 
 
-def test_plannedJobWritesRoutePlanBeforeFetching(tmp_path, monkeypatch) -> None:
+def test_plannedJobWritesRoutePlanBeforeFetching(orchestrator, tmp_path, monkeypatch) -> None:
     """覆盖范围：经 DataSourceService 路径时，路由计划事件应早于开始抓取
     测试对象：DataSyncOrchestrator.run_incremental 与 DataSourceService
     目的/目标：开始抓数据之前，系统应先记下「打算用哪个源、路由是否就绪」
@@ -728,7 +759,7 @@ def test_plannedJobWritesRoutePlanBeforeFetching(tmp_path, monkeypatch) -> None:
     )
 
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
-    orch = _orchestrator(tmp_path)
+    orch = orchestrator
     fixture = tmp_path / "route_fixture.json"
     write_bar_fixture(fixture)
     reg = SourceRegistry()
@@ -787,7 +818,7 @@ def test_plannedJobWritesRoutePlanBeforeFetching(tmp_path, monkeypatch) -> None:
 
 
 def test_servicePath_guardBlocked_setsFailedRetryableWithFormattedMessage(
-    tmp_path, monkeypatch
+    orchestrator, tmp_path, monkeypatch
 ) -> None:
     """覆盖范围：经 DataSourceService 路径且资源不足时的失败语义
     测试对象：run_incremental + DataSourceService + 资源暂停
@@ -813,7 +844,7 @@ def test_servicePath_guardBlocked_setsFailedRetryableWithFormattedMessage(
     monkeypatch.setattr(ResourceGuard, "snapshot", lambda self: snap)
     monkeypatch.setattr(ResourceGuard, "check", _pause)
 
-    orch = _orchestrator(tmp_path)
+    orch = orchestrator
     reg = SourceRegistry()
     reg.load()
     service = DataSourceService(
@@ -857,7 +888,7 @@ def test_servicePath_guardBlocked_setsFailedRetryableWithFormattedMessage(
     assert fetch_log_count == 0
 
 
-def test_servicePath_disabledRoute_setsFailedFinalWithFetchLog(tmp_path, monkeypatch) -> None:
+def test_servicePath_disabledRoute_setsFailedFinalWithFetchLog(orchestrator, tmp_path, monkeypatch) -> None:
     """覆盖范围：路由规划发现数据源能力不足时的终态失败
     测试对象：run_incremental + 禁用 SourceRoutePlanner
     目的/目标：没有可用数据源时，应明确失败并在抓取日志里记下「源被禁用」
@@ -894,7 +925,7 @@ def test_servicePath_disabledRoute_setsFailedFinalWithFetchLog(tmp_path, monkeyp
                 ],
             )
 
-    orch = _orchestrator(tmp_path)
+    orch = orchestrator
     reg = SourceRegistry()
     reg.load()
     service = DataSourceService(
@@ -934,7 +965,7 @@ def _simulate_production_profile(monkeypatch) -> None:
 
 
 def test_runIncremental_productionProfile_rejectsAdapterBypass(
-    tmp_path, monkeypatch
+    orchestrator, tmp_path, monkeypatch
 ) -> None:
     """覆盖范围：生产环境下增量同步禁止直接注入 adapter 旁路
     测试对象：DataSyncOrchestrator.run_incremental(..., adapter=X) 无 datasource_service
@@ -945,7 +976,7 @@ def test_runIncremental_productionProfile_rejectsAdapterBypass(
     import pytest
 
     _simulate_production_profile(monkeypatch)
-    orch = _orchestrator(tmp_path)
+    orch = orchestrator
     spec = SyncJobSpec(
         run_id="run-r3y-inc",
         job_id="job-r3y-inc",
@@ -969,7 +1000,7 @@ def test_runIncremental_productionProfile_rejectsAdapterBypass(
 
 
 def test_runBackfill_productionProfile_rejectsAdapterBypass(
-    tmp_path, monkeypatch
+    orchestrator, tmp_path, monkeypatch
 ) -> None:
     """覆盖范围：生产环境下历史回补禁止直接注入 adapter 旁路
     测试对象：DataSyncOrchestrator.run_backfill(..., adapter=X) 无 datasource_service
@@ -982,7 +1013,7 @@ def test_runBackfill_productionProfile_rejectsAdapterBypass(
     import pytest
 
     _simulate_production_profile(monkeypatch)
-    orch = _orchestrator(tmp_path)
+    orch = orchestrator
     spec = SyncJobSpec(
         run_id="run-r3y-bf",
         job_id="job-r3y-bf",
@@ -1006,7 +1037,7 @@ def test_runBackfill_productionProfile_rejectsAdapterBypass(
 
 
 def test_runReconcile_productionProfile_rejectsAdapterBypass(
-    tmp_path, monkeypatch
+    orchestrator, tmp_path, monkeypatch
 ) -> None:
     """覆盖范围：生产环境下冲突调和禁止直接注入 adapter 旁路
     测试对象：DataSyncOrchestrator.run_reconcile(conflict_id, adapter=X)
@@ -1019,7 +1050,7 @@ def test_runReconcile_productionProfile_rejectsAdapterBypass(
     import pytest
 
     _simulate_production_profile(monkeypatch)
-    orch = _orchestrator(tmp_path)
+    orch = orchestrator
     conflict_id = "conflict-r3y"
     with orch._cm.writer() as con:
         con.execute(
@@ -1054,7 +1085,7 @@ def test_runReconcile_productionProfile_rejectsAdapterBypass(
 
 
 def test_runIncremental_pytestProfile_allowsAdapterBypass(
-    tmp_path, monkeypatch
+    orchestrator, tmp_path, monkeypatch
 ) -> None:
     """覆盖范围：pytest 会话内仍允许 adapter 测试路径
     测试对象：run_incremental(..., adapter=X) 在 PYTEST_CURRENT_TEST 存在时
@@ -1065,7 +1096,7 @@ def test_runIncremental_pytestProfile_allowsAdapterBypass(
     from backend.app.core.resource_guard import Decision, ResourceGuard
 
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
-    orch = _orchestrator(tmp_path)
+    orch = orchestrator
     spec = SyncJobSpec(
         run_id="run-r3y-hook",
         job_id="job-r3y-hook",
@@ -1094,7 +1125,7 @@ def test_runIncremental_pytestProfile_allowsAdapterBypass(
 
 
 def test_runIncremental_productionProfile_rejectsAdapterBypassDespiteEnv(
-    tmp_path, monkeypatch
+    orchestrator, tmp_path, monkeypatch
 ) -> None:
     """覆盖范围：单独设置 QMD_SYNC_ALLOW_ADAPTER 不能恢复生产旁路
     测试对象：run_incremental(..., adapter=X) 模拟生产配置 + 误配环境变量
@@ -1106,7 +1137,7 @@ def test_runIncremental_productionProfile_rejectsAdapterBypassDespiteEnv(
 
     _simulate_production_profile(monkeypatch)
     monkeypatch.setenv("QMD_SYNC_ALLOW_ADAPTER", "1")
-    orch = _orchestrator(tmp_path)
+    orch = orchestrator
     spec = SyncJobSpec(
         run_id="run-r3y-env",
         job_id="job-r3y-env",
@@ -1130,7 +1161,7 @@ def test_runIncremental_productionProfile_rejectsAdapterBypassDespiteEnv(
 
 
 def test_incrementalRunner_productionProfile_rejectsAdapterBypass(
-    tmp_path, monkeypatch
+    orchestrator, tmp_path, monkeypatch
 ) -> None:
     """覆盖范围：私有增量 runner 入口同样拒绝生产 adapter 旁路
     测试对象：orch._incremental.run(..., adapter=X)
@@ -1143,7 +1174,7 @@ def test_incrementalRunner_productionProfile_rejectsAdapterBypass(
     from backend.app.sync.orchestrator import _default_pipeline_config
 
     _simulate_production_profile(monkeypatch)
-    orch = _orchestrator(tmp_path)
+    orch = orchestrator
     spec = SyncJobSpec(
         run_id="run-r3y-priv",
         job_id="job-r3y-priv",
@@ -1167,7 +1198,7 @@ def test_incrementalRunner_productionProfile_rejectsAdapterBypass(
 
 
 def test_runIncremental_productionProfile_requiresDatasourceService(
-    tmp_path, monkeypatch
+    orchestrator, tmp_path, monkeypatch
 ) -> None:
     """覆盖范围：生产环境下增量同步未注入 DataSourceService 且无 adapter 时 fail-closed
     测试对象：DataSyncOrchestrator.run_incremental(spec) 无 adapter 无 datasource_service
@@ -1178,7 +1209,7 @@ def test_runIncremental_productionProfile_requiresDatasourceService(
     import pytest
 
     _simulate_production_profile(monkeypatch)
-    orch = _orchestrator(tmp_path)
+    orch = orchestrator
     spec = SyncJobSpec(
         run_id="run-r3h10-inc",
         job_id="job-r3h10-inc",
@@ -1198,7 +1229,7 @@ def test_runIncremental_productionProfile_requiresDatasourceService(
 
 
 def test_runBackfill_productionProfile_requiresDatasourceService(
-    tmp_path, monkeypatch
+    orchestrator, tmp_path, monkeypatch
 ) -> None:
     """覆盖范围：生产环境下回补未注入 DataSourceService 且无 adapter 时 fail-closed
     测试对象：DataSyncOrchestrator.run_backfill(spec) 无 adapter 无 datasource_service
@@ -1209,7 +1240,7 @@ def test_runBackfill_productionProfile_requiresDatasourceService(
     import pytest
 
     _simulate_production_profile(monkeypatch)
-    orch = _orchestrator(tmp_path)
+    orch = orchestrator
     spec = SyncJobSpec(
         run_id="run-r3h10-bf",
         job_id="job-r3h10-bf",
@@ -1229,7 +1260,7 @@ def test_runBackfill_productionProfile_requiresDatasourceService(
 
 
 def test_runReconcile_productionProfile_rejectsAdapterBypassAdr025(
-    tmp_path, monkeypatch
+    orchestrator, tmp_path, monkeypatch
 ) -> None:
     """覆盖范围：reconcile 生产 profile adapter 旁路 fail-closed（ADR-006 §Reconcile defer）
     测试对象：DataSyncOrchestrator.run_reconcile(conflict_id, adapter=X)
@@ -1241,7 +1272,7 @@ def test_runReconcile_productionProfile_rejectsAdapterBypassAdr025(
     from datetime import UTC, datetime
 
     _simulate_production_profile(monkeypatch)
-    orch = _orchestrator(tmp_path)
+    orch = orchestrator
     conflict_id = "conflict-r3h10-rc"
     with orch._cm.writer() as con:
         con.execute(
@@ -1292,7 +1323,7 @@ def _reserved_job_spec(job_type: str, *, job_id: str = "job-reserved") -> SyncJo
     )
 
 
-def test_syncJob_fullLoad_completesWithShards(tmp_path, monkeypatch) -> None:
+def test_syncJob_fullLoad_completesWithShards(orchestrator, tmp_path, monkeypatch) -> None:
     """覆盖范围：full_load runner 已实现（M-G1-03 / VR-SYNC-002 更新）
     测试对象：DataSyncOrchestrator.run_full_load
     目的/目标：全量同步可调度且分片完成，不再 DeferredJobTypeError
@@ -1304,7 +1335,7 @@ def test_syncJob_fullLoad_completesWithShards(tmp_path, monkeypatch) -> None:
     from backend.app.core.resource_guard import Decision, ResourceGuard
 
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
-    orch = _orchestrator(tmp_path)
+    orch = orchestrator
     spec = SyncJobSpec(
         run_id="run-reserved",
         job_id="job-fl-orch",
@@ -1329,14 +1360,14 @@ def test_syncJob_fullLoad_completesWithShards(tmp_path, monkeypatch) -> None:
     assert results[-1].status == "COMPLETED"
 
 
-def test_syncJob_reservedDataQuality_completesJob(tmp_path) -> None:
+def test_syncJob_reservedDataQuality_completesJob(orchestrator) -> None:
     """覆盖范围：data_quality runner 已实现（R3F-SH-03 / VR-SYNC-002 更新）
     测试对象：DataSyncOrchestrator.run_data_quality
     目的/目标：有 instrument 且 clean 有行时质检 job 可 COMPLETED
     验证点：result.status == COMPLETED
     失败含义：质检入口仍 defer 或空操作，Batch6 job 矩阵未闭包
     """
-    orch = _orchestrator(tmp_path)
+    orch = orchestrator
     with orch._cm.writer() as con:
         con.execute(
             """
@@ -1365,7 +1396,7 @@ def test_syncJob_reservedDataQuality_completesJob(tmp_path) -> None:
     assert result.status == "COMPLETED"
 
 
-def test_syncJob_reservedRevisionAudit_completesJob(tmp_path) -> None:
+def test_syncJob_reservedRevisionAudit_completesJob(orchestrator) -> None:
     """覆盖范围：revision_audit runner 已实现（R3F-SH-02 / VR-SYNC-002 更新）
     测试对象：DataSyncOrchestrator.run_revision_audit
     目的/目标：有 macro 观测行时修订审计 runner 可 COMPLETED
@@ -1376,7 +1407,7 @@ def test_syncJob_reservedRevisionAudit_completesJob(tmp_path) -> None:
 
     from tests.fred_macro_incremental_support import insert_axis_observation
 
-    orch = _orchestrator(tmp_path)
+    orch = orchestrator
     with orch._cm.writer() as con:
         insert_axis_observation(
             con,
@@ -1403,7 +1434,7 @@ def test_syncJob_reservedRevisionAudit_completesJob(tmp_path) -> None:
     assert result.status == "COMPLETED"
 
 
-def test_syncJob_incremental_crashWindow_leavesWritingWithWriteId(tmp_path, monkeypatch) -> None:
+def test_syncJob_incremental_crashWindow_leavesWritingWithWriteId(orchestrator, tmp_path, monkeypatch) -> None:
     """覆盖范围：写提交后 COMPLETED 前 crash 窗口（VR-SYNC-001 / SYNC-05）
     测试对象：IncrementalJobRunner.run + post_write_pre_complete_hook
     目的/目标：写成功但进程在 COMPLETED 前崩溃时，job 应停在 WRITING 且 write_id 已落库
@@ -1416,7 +1447,7 @@ def test_syncJob_incremental_crashWindow_leavesWritingWithWriteId(tmp_path, monk
     from backend.app.sync.orchestrator import _default_pipeline_config
 
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
-    orch = _orchestrator(tmp_path)
+    orch = orchestrator
     spec = _reserved_job_spec("incremental", job_id="job-crash-window")
 
     def _crash_after_write(job_id: str, write_id: str) -> None:
@@ -1441,7 +1472,7 @@ def test_syncJob_incremental_crashWindow_leavesWritingWithWriteId(tmp_path, monk
 
 
 def test_syncJob_incremental_recoverStuckWriting_completesWithoutDoubleWrite(
-    tmp_path, monkeypatch
+    orchestrator, tmp_path, monkeypatch
 ) -> None:
     """覆盖范围：WRITING+write_id 卡死恢复（VR-SYNC-001 / SYNC-06 路径 A）
     测试对象：DataSyncOrchestrator.recover_stuck_writing_job
@@ -1453,7 +1484,7 @@ def test_syncJob_incremental_recoverStuckWriting_completesWithoutDoubleWrite(
     from backend.app.sync.orchestrator import _default_pipeline_config
 
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
-    orch = _orchestrator(tmp_path)
+    orch = orchestrator
     spec = _reserved_job_spec("incremental", job_id="job-recover-writing")
     clean = _BackfillCountAdapter.CLEAN
 
@@ -1487,7 +1518,7 @@ def test_syncJob_incremental_recoverStuckWriting_completesWithoutDoubleWrite(
     assert status == "COMPLETED"
 
 
-def test_syncJob_incremental_hook_rejectedOutsidePytest(tmp_path, monkeypatch) -> None:
+def test_syncJob_incremental_hook_rejectedOutsidePytest(orchestrator, tmp_path, monkeypatch) -> None:
     """覆盖范围：post_write_pre_complete_hook 非 pytest 环境 fail-closed（ZO-07）
     测试对象：IncrementalJobRunner.run + post_write_pre_complete_hook guard
     目的/目标：生产路径不得注入 crash-window hook，须显式拒绝
@@ -1508,7 +1539,7 @@ def test_syncJob_incremental_hook_rejectedOutsidePytest(tmp_path, monkeypatch) -
         "backend.app.sync.runners.sync_adapter_bypass_allowed",
         lambda: False,
     )
-    orch = _orchestrator(tmp_path)
+    orch = orchestrator
     spec = _reserved_job_spec("incremental", job_id="job-hook-guard")
 
     with pytest.raises(ValueError, match="pytest-only"):
@@ -1520,7 +1551,7 @@ def test_syncJob_incremental_hook_rejectedOutsidePytest(tmp_path, monkeypatch) -
         )
 
 
-def test_syncJob_recoverStuckWriting_rejectsInvalidState(tmp_path) -> None:
+def test_syncJob_recoverStuckWriting_rejectsInvalidState(orchestrator) -> None:
     """覆盖范围：recover_stuck_writing_job 对非法状态 fail-closed（ZO-07）
     测试对象：DataSyncOrchestrator.recover_stuck_writing_job
     目的/目标：非 WRITING+write_id 作业不得被误恢复为 COMPLETED
@@ -1529,7 +1560,7 @@ def test_syncJob_recoverStuckWriting_rejectsInvalidState(tmp_path) -> None:
     """
     import pytest
 
-    orch = _orchestrator(tmp_path)
+    orch = orchestrator
     spec = _reserved_job_spec("incremental", job_id="job-recover-invalid")
     orch.create_job(spec)
 

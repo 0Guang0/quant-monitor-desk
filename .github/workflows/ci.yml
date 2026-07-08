@@ -21,7 +21,7 @@ jobs:
         with:
           python-version: "3.11"
       - run: pip install -e ".[dev]"
-      - run: pytest -q --cov=backend --cov-fail-under=85
+      - run: pytest -q -n auto --cov=backend --cov-fail-under=85
       - run: ruff check .
       - run: ruff format --check .
       - run: python -m compileall backend scripts tests

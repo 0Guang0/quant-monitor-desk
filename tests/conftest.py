@@ -44,6 +44,7 @@ def pytest_configure(config) -> None:
     _ensure_prediction_live_authorization_bootstrap()
     _ensure_r3g_fred_authorization_bootstrap()
     _ensure_audit_sandbox_pytest_basetemp()
+    _configure_xdist_worker_basetemp(config)
 
 
 def _ensure_v2_evidence_mock_baostock() -> None:
@@ -90,6 +91,17 @@ def _ensure_r3g_fred_authorization_bootstrap() -> None:
 def _ensure_audit_sandbox_pytest_basetemp() -> None:
     """Pre-create shared pytest basetemp for A8 sandbox runs on fresh clones (A8-B3V-04)."""
     (PROJECT_ROOT / ".audit-sandbox" / "pytest").mkdir(parents=True, exist_ok=True)
+
+
+def _configure_xdist_worker_basetemp(config) -> None:
+    """Isolate pytest-xdist worker basetemp under .audit-sandbox (perf P3)."""
+    worker_input = getattr(config, "workerinput", None)
+    if not worker_input:
+        return
+    worker_id = worker_input.get("workerid", "gw0")
+    worker_base = PROJECT_ROOT / ".audit-sandbox" / "pytest" / worker_id
+    worker_base.mkdir(parents=True, exist_ok=True)
+    config.option.basetemp = str(worker_base)
 
 
 def _patch_path_for_windows_long_paths() -> None:
@@ -150,6 +162,13 @@ def pytest_addoption(parser: pytest.Parser) -> None:
 
 
 def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
+    from tests.slow_tier import is_slow_test
+
+    slow_mark = pytest.mark.slow
+    for item in items:
+        if "slow" not in item.keywords and is_slow_test(item.path, item.name):
+            item.add_marker(slow_mark)
+
     if config.getoption("--run-network"):
         return
     skip_network = pytest.mark.skip(reason="need --run-network for live vendor fetch tests")
