@@ -1,4 +1,22 @@
-权威来源："C:\Users\Guang\Desktop\quant-monitor-desk\MIGRATION*[MAP.md](http://MAP.md)"中索引的文件为本项目的最高权威来源，"C:\Users\Guang\Desktop\quant-monitor-desk\MIGRATION*[MAP.md](http://MAP.md)"中索引文件改动之前必须要求用户进行确认，改动之后要求用户进行详细审阅（必须有ADR作为决策记录否则不得通过）。所有模块、本项目的最终成品形态均有"C:\Users\Guang\Desktop\quant-monitor-desk\MIGRATION*[MAP.md](http://MAP.md)"中索引文件来定义，模块是否达到R4等级，必须根据"C:\Users\Guang\Desktop\quant-monitor-desk\MIGRATION*[MAP.md](http://MAP.md)"下的索引文件作为最高权威来源来确认，与索引文件的设计完全一致则视为达到R4，否则不得视为达到R4。所有执行、审计与plan、设计均需要以"C:\Users\Guang\Desktop\quant-monitor-desk\MIGRATION\_[MAP.md](http://MAP.md)"内的索引文件作为最高权威来源。
+权威来源：`MIGRATION_MAP.md` 中索引的文件为本项目的最高权威来源；索引文件改动之前必须要求用户确认，改动之后必须详细审阅（须有 ADR 作为决策记录，否则不得通过）。模块是否达到 R4，以索引文件与实现完全一致为准。
+
+## Design authority (`**/design/**` vs runtime mirrors)
+
+`docs/**/design/`、`specs/**/design/`、`rules/**/design/` 下被 `MIGRATION_MAP.md` 索引的文件是**封存设计图**（最高权威）。部分机器可读规格另有**运行副本**（原路径，供代码/CLI 读取），由 `scripts/promote_design_runtime.py` 从 design **单向**同步。
+
+### Design — Always Do
+
+- Treat `test_design_runtime_parity` FAIL as **drift**, not a signal to edit design.
+- Fix drift with `uv run python scripts/promote_design_runtime.py` (design → runtime only).
+- When a spec must change: edit `design/` **after explicit user review** (+ ADR when required), then promote.
+
+### Design — Never Do
+
+- **NEVER** edit `**/design/**` files only to match runtime mirrors and pass parity tests.
+- **NEVER** edit runtime mirrors as the authoritative spec change without updating design first.
+- **NEVER** skip user review when changing any `MIGRATION_MAP.md`-indexed design file.
+
+Remediation SSOT: `scripts/promote_design_runtime.py` → `PARITY_FAILURE_REMEDIATION`.
 
 # GitNexus — Code Intelligence
 

@@ -8,6 +8,14 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
+# Shown by tests/test_design_runtime_parity.py on FAIL. SSOT for remediation wording.
+PARITY_FAILURE_REMEDIATION = (
+    "design/runtime parity drift detected. "
+    "Fix ONLY with: uv run python scripts/promote_design_runtime.py (design -> runtime). "
+    "NEVER edit **/design/** files to match runtime mirrors just to pass tests. "
+    "If the spec must change: edit design/ after explicit user review (+ ADR when required), then promote."
+)
+
 FILE_PAIRS: tuple[tuple[str, str], ...] = (
     ("specs/contracts/design/resource_limits.yaml", "specs/contracts/resource_limits.yaml"),
     (

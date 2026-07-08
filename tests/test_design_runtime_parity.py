@@ -5,9 +5,17 @@ from __future__ import annotations
 import hashlib
 from pathlib import Path
 
-from scripts.promote_design_runtime import DIR_PAIRS, FILE_PAIRS
+from scripts.promote_design_runtime import (
+    DIR_PAIRS,
+    FILE_PAIRS,
+    PARITY_FAILURE_REMEDIATION,
+)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
+
+def _parity_failure(detail: str) -> str:
+    return f"{detail}\n\nREMEDIATION:\n{PARITY_FAILURE_REMEDIATION}"
 
 
 def _sha256(path: Path) -> str:
@@ -30,7 +38,7 @@ def test_designRuntimeParity_contractYamlFiles_matchDesignBlueprints() -> None:
     测试对象：FILE_PAIRS（resource_limits、source_conflict_rules）
     目的/目标：运行路径不得静默偏离 MIGRATION_MAP 索引的 design/ 设计图
     验证点：每对 design/runtime 文件存在且 SHA256 相同
-    失败含义：有人只改了运行副本或 promote 未执行，R4 对照与运行时行为可能分裂
+    失败含义：有人只改了运行副本或 promote 未执行；禁止为 pass 改 design/，应 promote
     """
     mismatches: list[str] = []
     for design_rel, runtime_rel in FILE_PAIRS:
@@ -44,7 +52,7 @@ def test_designRuntimeParity_contractYamlFiles_matchDesignBlueprints() -> None:
             continue
         if _sha256(design) != _sha256(runtime):
             mismatches.append(f"hash mismatch: {design_rel} != {runtime_rel}")
-    assert not mismatches, ";\n".join(mismatches)
+    assert not mismatches, _parity_failure(";\n".join(mismatches))
 
 
 def test_designRuntimeParity_layer1AxisTree_matchesDesignBlueprint() -> None:
@@ -52,7 +60,7 @@ def test_designRuntimeParity_layer1AxisTree_matchesDesignBlueprint() -> None:
     测试对象：DIR_PAIRS（restructured_axes_v1_1）
     目的/目标：AxisSpecLoader 读取的运行树与封存设计图同步
     验证点：相对路径集合相同；同路径文件 SHA256 相同
-    失败含义：五轴运行规格已漂移，Layer1 行为与导航地图设计不一致
+    失败含义：五轴运行规格已漂移；禁止为 pass 改 design/，应 promote
     """
     design_rel, runtime_rel = DIR_PAIRS[0]
     design = PROJECT_ROOT / design_rel
@@ -75,4 +83,4 @@ def test_designRuntimeParity_layer1AxisTree_matchesDesignBlueprint() -> None:
         problems.append(f"only in runtime: {sorted(only_runtime)}")
     if hash_diffs:
         problems.append(f"hash mismatch files: {hash_diffs}")
-    assert not problems, ";\n".join(problems)
+    assert not problems, _parity_failure(";\n".join(problems))

@@ -37,6 +37,13 @@ alwaysApply: true
 2. **假完成**：为通过检查而改测试目的、缩验证、跳过约定 pytest
 3. **假澄清**：未走 grill-gate 对话即假设用户意图
 4. **分级遗留**：命中本节 **§无遗留** 禁止项（PASS 捷径、无绑定延后、ledger 未关账）；**真修**：共享处一次 guard，根因一处修（ponytail）
+5. **为 parity 改 design/**：`test_design_runtime_parity` FAIL 时**禁止**改 `**/design/**` 去贴合运行副本；**只允许** `uv run python scripts/promote_design_runtime.py`（design→runtime）。规格真要变：先经用户审阅改 design/（须 ADR 时不得省略），再 promote
+
+## design/ 设计图权威
+
+- `MIGRATION_MAP.md` 索引的 `**/design/**` 文件 = 封存设计图（最高权威）；运行副本见 `scripts/promote_design_runtime.py` 中 `FILE_PAIRS` / `DIR_PAIRS`
+- Agent **默认不得**修改 `**/design/**`，除非用户明确要求且完成审阅/ADR 流程
+- parity 失败修复文案 SSOT：`scripts/promote_design_runtime.py` → `PARITY_FAILURE_REMEDIATION`
 
 ### 遇到时怎么做
 
