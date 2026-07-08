@@ -1,552 +1,2206 @@
-# MIGRATION_MAP
+# 项目级导航地图
 
-> Last updated: 2026-07-02
->
-> 本文件已经从“旧设计内容 → 新文件位置”的迁移表，升级为项目级地图（Project Map）。它用于让 Claude Code / Codex / 人类维护者在实施前精准定位：某个模块的设计文档、契约、定义、规则、执行任务、运行实现目录分别在哪里。
->
-> **导航分工：** 本文件 = **人类 narrative** + 精选模块映射；`specs/` + `docs/modules/` = 契约与设计权威。  
-> **活规划 SSOT（2026-07-02 收敛）：** 根目录**仅** `PROJECT_IMPLEMENTATION_ROADMAP.md` + `MODULE_COMPLETION_RATING.md`；旧 ROUND/Wave 任务包与 `ROUND3_BATCH_IMPLEMENTATION_MAP.md` 已迁入 `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/`（只读）。
+> 本文件按**功能域 / 主域**索引经用户审阅的**最终成品**设计文档。  
+> **收录范围**：`docs/**/design/`、`specs/**/design/` 与 `rules/**/design/` 下经审阅的最终成品（`.md` / `.yaml` 等规格文件）。  
+> **不收录**：同目录非 `design/` 的阶段性、一次性或偏离设计预期的文档。  
+> **不按文件夹分组**：按文件**主要内容**归入主域（如 API 域、五层域）。  
+> 路径一律使用仓库相对路径；同域内用 **文件1、文件2…** 区分条目。  
+> `specs/contracts/` 等机器契约可在跨域触点引用，但不单独建卡片（除非纳入 `specs/**/design/`）。
+> 权威来源："C:\Users\Guang\Desktop\quant-monitor-desk\MIGRATION_MAP.md"中索引的文件为本项目的最高权威来源，"C:\Users\Guang\Desktop\quant-monitor-desk\MIGRATION_MAP.md"中索引文件改动之前必须要求用户进行确认，改动之后要求用户进行详细审阅（必须有ADR作为决策记录否则不得通过）。所有模块、本项目的最终成品形态均有"C:\Users\Guang\Desktop\quant-monitor-desk\MIGRATION_MAP.md"中索引文件来定义，模块是否达到R4等级，必须根据"C:\Users\Guang\Desktop\quant-monitor-desk\MIGRATION_MAP.md"下的索引文件作为最高权威来源来确认，与索引文件的设计完全一致则视为达到R4，否则不得视为达到R4。所有执行、审计与plan、设计均需要以"C:\Users\Guang\Desktop\quant-monitor-desk\MIGRATION_MAP.md"内的索引文件作为最高权威来源。
+> **卡片格式**
 
-## 0. 强制边界：`docs/` 与 `specs/` 不是实现地址
+| 区块     | 规则                     |
+| -------- | ------------------------ |
+| 定位     | 一句话                   |
+| 涉及内容 | bullet ≤ 7 条            |
+| 跨域触点 | 按类别分表，每类条目不限 |
 
-- **必须强调并保持不变**：`docs/` 与 `specs/` 是设计文档、契约、定义、规则、计划、验收与治理资料目录，**不是运行时代码目录，也不是功能实现地址**。
-- `docs/` 负责叙述型设计、架构说明、模块说明、运维规则、ADR、实施任务和质量治理。
-- `specs/` 负责机器可读或半机器可读的契约、schema、registry、domain specs、规则定义。
-- 真正的实现目录是 `backend/`、`frontend/`、`scripts/`、`configs/`、`tests/` 等。本文件会同时给出实现目录入口，但任何 `docs/` / `specs/` 路径只能作为实施依据、验收依据或契约输入，不能当作代码落点。
-- 后续实施时，若任务要求“按某设计文档实现”，应先在本地图找到对应的 `docs/` / `specs/` 输入，再落到本文件列出的实现目录；不得把文档路径误写为实现路径。
+---
 
-## 1. 文件定位
+## 项目总览与系统边界
 
-- 本文件是 `docs/implementation_tasks/ROUND_0_PROJECT_SCAFFOLD/004_create_documentation_index.md` 的强制输入，也是当前仓库的**项目级导航地图**（**全部任务** Plan / Execute / Audit / Repair 共同必读）。
-- 本文件不是运行时代码，不参与数据库 migration。
-- 本文件用于防止执行角色在多个文档版本之间迷路、误用旧口径，或把设计目录误认为实现目录。
-- `docs/INDEX.md` 是普通文档入口；`MIGRATION_MAP.md` 是跨目录、跨模块、跨契约的精准索引。
-- **活工单入口：** `docs/implementation_tasks/README.md`（v2 模块票队列）；历史 `ROUND_*` 路径在 `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/`（只读，**非**开工 SSOT）。
-- `MANIFEST.json` 是 2026-06-19 修复包输出清单；其保护性边界原文已逐字移入 `README.md`。
+---
 
-## 2. 当前项目进度快照
+### 文件1 · `docs/architecture/design/01_context_and_scope.md`
 
-| 事项                        | 当前状态                                                                                                                                                                                                                                              | 主要索引                                                                                                 |
-| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| 根目录卫生收敛 (2026-07-02) | 根目录**无** `ROUND3_BATCH_IMPLEMENTATION_MAP.md`、`PROJECT_IMPLEMENTATION_ROADMAP.legacy-20260629.md`、`research/`、`_tmp-wave4-dcp-parallel/`；历史材料已迁入 `docs/archive/` 与 `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/` | `docs/archive/README.md`、`docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/README.md`    |
-| 活规划 SSOT                 | **仅**根目录 `PROJECT_IMPLEMENTATION_ROADMAP.md` + `MODULE_COMPLETION_RATING.md`（模块轨道 v2；MCR Pass E @ 2026-07-02）                                                                                                                              | 路线图 §0–§3 · 附录 C；`MODULE_COMPLETION_RATING.md` §0 · §4–§5                                          |
-| 历史 Wave / ROUND           | Round 0–5、Wave 3/4 DCP、Batch 3V/3FR/3H 等**已归档只读**；Wave 代码已 merge，但模块 Rating 多数未达 R4（MCR Pass E：G1/G2/G4/K1/K2 仍 R3，G5 仍 R2）                                                                                                 | 归档 `legacy-pre-module-v2-20260702/`；CLOSED 证据 → 路线图**附录 C**                                    |
-| **当前下一队列 (v2)**       | **M-DATA-03** → **M-G1-03** → **M-G2/G4/G5-FULL**（可并行）→ **M-PASS-01**（末位 `PASS_ROUND4_REAL_DATA_READY` 门禁）；任务卡 Plan 冻结时创建                                                                                                         | `docs/implementation_tasks/README.md`；路线图 §3 v2；`MIGRATION_MAP.md`                                  |
-| Round4/5 产品               | I 组 I1–I8 除 I3 壳外仍 R0–R1；**须 M-PASS-01 后** B04 开工                                                                                                                                                                                           | `BATCH_04_TASK_CARD_MANIFEST.md`；历史 `ROUND_4_*` / `ROUND_5_*` 见归档 `legacy-pre-module-v2-20260702/` |
+**定位** 系统上下文与范围边界（导航摘要，不替代模块原文）
 
-## 3. 仓库顶层目录地图
+**涉及内容**
 
-| 路径                                                               | 类型               | 用途                                                                                                                                         | 是否实现地址         |
-| ------------------------------------------------------------------ | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
-| `backend/app/`                                                     | Python 后端实现    | FastAPI、数据源、同步、DB、五层模型、Agent、通知、校验等后端实现                                                                             | 是                   |
-| `frontend/src/`                                                    | 前端实现           | Vite + React + TypeScript Dashboard shell 与后续页面                                                                                         | 是                   |
-| `scripts/`                                                         | CLI / 维护脚本实现 | 初始化 DB、同步 registry、文档检查、生产 gate、smoke 等                                                                                      | 是                   |
-| `configs/`                                                         | 本地配置           | datasource、alert、resource limits、market registry、qmt、layer1 axes 等运行配置                                                             | 是，配置入口         |
-| `tests/`                                                           | 自动化测试         | pytest、contract gate、smoke、边界测试                                                                                                       | 是，测试实现         |
-| `data/`                                                            | 运行数据           | DuckDB、raw、parquet、reports、audit、cache、files                                                                                           | 运行产物，不是源代码 |
-| `docs/`                                                            | 设计/治理文档      | 架构、模块、运维、任务、质量、ADR、交接                                                                                                      | **否：设计依据**     |
-| `specs/`                                                           | 契约/定义/spec     | schema、contracts、registry、Layer specs                                                                                                     | **否：契约依据**     |
-| `MIGRATION_MAP.md`                                                 | 项目地图           | 跨目录索引、旧口径防恢复、MANIFEST 说明                                                                                                      | 否                   |
-| `PROJECT_IMPLEMENTATION_ROADMAP.md`                                | 前向实施规划 SSOT  | 根目录**唯一活规划**；51 Module ID 模块闭环队列 v2（M-DATA-03→M-G\*→M-PASS-01）；历史 Wave 见 §3L / 附录 C；**地图不是工单，任务卡才是工单** | 否                   |
-| `MODULE_COMPLETION_RATING.md`                                      | 模块完成度快照     | **活评级 SSOT**（Pass E @ 2026-07-02）；Rating 只信代码+测试；不得用文档 alone 冒充 `R6_FULL_PRODUCTION_STABLE`                              | 否                   |
-| `docs/archive/`                                                    | 历史归档           | 旧版路线图备份（`planning/PROJECT_IMPLEMENTATION_ROADMAP.legacy-20260629.md`）、Wave4 协调笔记（`coordination/wave4-dcp-parallel/`）等       | 否                   |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/` | 历史任务包归档     | `ROUND3_BATCH_IMPLEMENTATION_MAP.md` 全文、全部 `ROUND_*` 历史任务卡等（只读证据，**非**开工 SSOT）                                          | 否                   |
-| `MANIFEST.json`                                                    | 发布输出清单       | 修复包文件清单与 hash；不是权威输入                                                                                                          | 否                   |
-| `README.md`                                                        | 稳定入口           | 项目简介、边界、启动步骤、关键保护规则                                                                                                       | 否                   |
+- 系统目标：可信数据 → 多层建模 → 证据链 → Agent 解释 → 人工确认
+- 范围内：多源数据、DuckDB 底座、Layer1~5、FastAPI/React/Agent、运维
+- 范围外：全自动交易、Agent 写库/自由上网/交易语义、PostgreSQL/Next.js/Airflow/微服务
+- 指向更详细的架构来源文档
 
-## 4. `docs/` 设计文档目录地图
+**跨域触点**
 
-### 4.1 根入口与角色指南
+| 类别        | 触点                                                                                             |
+| ----------- | ------------------------------------------------------------------------------------------------ |
+| 模块        | 数据同步 · 五层建模 · FastAPI · React · Agent                                                    |
+| 契约 / 文档 | `docs/architecture/design/02_solution_strategy.md` · `docs/architecture/design/05_module_map.md` |
 
-| 路径                                 | 用途                                                                   |
-| ------------------------------------ | ---------------------------------------------------------------------- |
-| `docs/START_HERE.md`                 | 第一阅读入口；说明角色路由、Round2.6 边界、只改设计文档/执行计划等提示 |
-| `docs/INDEX.md`                      | 普通文档导航 hub；交叉引用根 `MIGRATION_MAP.md`                        |
-| `docs/DEVELOPER_GUIDE.md`            | 开发者入口；Round2.6、验证命令、实施提示                               |
-| `docs/OPERATOR_GUIDE.md`             | 本地运维与安全数据同步入口                                             |
-| `docs/RESEARCHER_GUIDE.md`           | Layer/review 研究入口                                                  |
-| `docs/ROUND3_HANDOFF.md`             | Round 3 建模层交接资料                                                 |
-| `docs/AUDIT_DEFERRED_REGISTRY.md`    | 审计延后项 / resolved 项的权威登记                                     |
-| `docs/RESOLVED_ISSUES_REGISTRY.md`   | 已解决问题登记；用于避免重复修复或误判仍 OPEN                          |
-| `docs/UNRESOLVED_ISSUES_REGISTRY.md` | 未解决问题登记；用于后续任务精准接续                                   |
+---
 
-### 4.2 架构文档 `docs/architecture/`
+### 文件2 · `rules/design/RESEARCHER_GUIDE.md`
 
-| 路径                                                           | 用途                                                             |
-| -------------------------------------------------------------- | ---------------------------------------------------------------- |
-| `docs/architecture/00_project_overview.md`                     | 总体项目定位：本地优先、监控而非自动交易、五层模型总览           |
-| `docs/architecture/01_context_and_scope.md`                    | 上下文、使用范围、非目标、人工确认边界                           |
-| `docs/architecture/02_solution_strategy.md`                    | 总体方案策略                                                     |
-| `docs/architecture/03_runtime_flows.md`                        | 运行链路：数据抓取、写入、前端、Agent 主链路                     |
-| `docs/architecture/04_data_architecture.md`                    | 数据架构：DuckDB、Raw Store、Parquet、WriteManager               |
-| `docs/architecture/05_module_map.md`                           | 模块地图：各模块职责与边界                                       |
-| `docs/architecture/06_deployment_and_local_ops.md`             | 本地部署与运维策略，含 Round2.6 平台矩阵补充                     |
-| `docs/architecture/07_project_directory_structure.md`          | 项目目录结构说明                                                 |
-| `docs/architecture/08_decision_log_index.md`                   | ADR/决策索引                                                     |
-| `docs/architecture/09_phase_plan.md`                           | 分阶段交付计划                                                   |
-| `docs/architecture/10_external_references.md`                  | 外部参考与采纳边界                                               |
-| `docs/architecture/11_final_conclusion.md`                     | 最终结论                                                         |
-| `docs/architecture/module_boundary_matrix.md`                  | Round2.6 import/module boundary matrix；只定义设计边界，不改代码 |
-| `docs/architecture/layer1_ingestion_refactor_rollback_plan.md` | Layer1 ingestion 重构回滚计划                                    |
+**定位** 研究/复盘角色入口（五层模块读法与数据可信边界）
 
-### 4.3 ADR 与决策记录
+**涉及内容**
 
-| 路径                                                                        | 用途                                                 |
-| --------------------------------------------------------------------------- | ---------------------------------------------------- |
-| `docs/adr/ADR-0001-use-duckdb-local-first.md`                               | DuckDB local-first 决策                              |
-| `docs/adr/ADR-0002-agent-readonly-boundary.md`                              | Agent 只读边界决策                                   |
-| `docs/adr/ADR-0003-layer1-standardization-only.md`                          | Layer 1 标准化范围决策                               |
-| `docs/adr/ADR-0004-layer3-shock-anchor-model.md`                            | Layer 3 shock-anchor 模型决策                        |
-| `docs/adr/ADR-0005-primary-validation-fallback-source-model.md`             | Primary / Validation / FallbackPolicy 数据源角色决策 |
-| `docs/decisions/README.md`                                                  | 工程决策目录入口（ADR-001～015）                     |
-| `docs/decisions/ADR-001-ingestion-validation-write-transaction-boundary.md` | ingestion / validation / write transaction 边界      |
-| `docs/decisions/ADR-002-db-check-vs-app-validation.md`                      | DB CHECK 与应用层 validation 分工                    |
-| `docs/decisions/ADR-003-implementation-path-mapping.md`                     | 实现路径映射决策                                     |
-| `docs/decisions/ADR-004-write-path-complexity-ceiling.md`                   | 写入热路径 C901 复杂度不修                           |
-| `docs/decisions/ADR-006-sync-datasource-service-fail-closed.md`             | 生产 Sync 须显式 `datasource_service=`               |
+- 研究入口：Layer1–5 模块设计文档与回测生命周期文档指针
+- 结果须可追溯：`source_used` · SourceRoutePlan · `quality_flags` · `rule_version` · snapshot lineage · `evidence_id`
+- 禁止：研究复盘渲染为买卖建议
+- 导入策略/研究文本默认 local-only，不写 clean；保存为 evidence 须用户确认
 
-### 4.4 模块设计文档 `docs/modules/`
+**跨域触点**
 
-| 路径                                                | 模块/主题                             | 备注                                                         |
-| --------------------------------------------------- | ------------------------------------- | ------------------------------------------------------------ |
-| `docs/modules/README.md`                            | 模块文档索引                          | 标明权威文件 vs 兼容索引                                     |
-| `docs/modules/data_sources.md`                      | 数据源与 adapter 设计                 | Primary / Validation / FallbackPolicy；Round2.6 三层边界补充 |
-| `docs/modules/source_capability_registry.md`        | Source Capability Registry            | Round2.6 权威补充模块                                        |
-| `docs/modules/source_route_plan.md`                 | SourceRoutePlan                       | Round2.6 权威补充模块                                        |
-| `docs/modules/datasource_service.md`                | DataSourceService facade              | Round2.6 权威补充模块                                        |
-| `docs/modules/qmt_xtdata_adapter.md`                | QMT / xtdata adapter                  | QMT 默认禁用，用户授权后启用                                 |
-| `docs/modules/data_sync_orchestrator.md`            | 数据同步 orchestrator                 | FullLoad、Incremental、Backfill、RevisionAudit、Reconcile    |
-| `docs/modules/data_validation_and_conflict.md`      | 数据质量与多源冲突                    | 权威设计文档                                                 |
-| `docs/modules/data_validation_write_concurrency.md` | validation/write concurrency 兼容索引 | 勿作唯一实现依据；拆分到 validation 与 write_manager         |
-| `docs/modules/write_manager.md`                     | WriteManager 与写入并发               | 权威设计文档                                                 |
-| `docs/modules/duckdb_and_parquet.md`                | DuckDB / Parquet                      | 本地存储设计                                                 |
-| `docs/modules/local_file_system.md`                 | 本地文件系统                          | raw/files/reports/audit 等本地数据组织                       |
-| `docs/modules/layer1_global_regime_panel.md`        | 五层模型 Layer 1：Global Regime Panel | 全量标准化主要发生在 L1                                      |
-| `docs/modules/layer2_cross_asset_sensor.md`         | Layer 2：Cross Asset Sensor           | 跨资产传感器                                                 |
-| `docs/modules/layer3_industry_shock_anchor.md`      | Layer 3：Industry Shock Anchor        | 全球产业链与冲击锚                                           |
-| `docs/modules/layer4_market_structure.md`           | Layer 4：Market Structure             | 市场结构                                                     |
-| `docs/modules/layer5_security_evidence.md`          | Layer 5：Security Evidence            | 个股证据链                                                   |
-| `docs/modules/fastapi_backend.md`                   | FastAPI 后端                          | 权威后端 API 设计                                            |
-| `docs/modules/frontend_dashboard.md`                | 前端 Dashboard                        | 权威前端设计；正式实现前需用户确认 UI                        |
-| `docs/modules/fastapi_and_frontend.md`              | FastAPI/frontend 兼容索引             | 兼容旧链接，勿作唯一实现依据                                 |
-| `docs/modules/agent_module.md`                      | Agent 模块                            | 只读、白名单、抗提示注入                                     |
-| `docs/modules/notification_and_reports.md`          | 通知与报告                            | 去重、冷却、隐私、留存                                       |
-| `docs/modules/backtest_and_review.md`               | 回测与复盘                            | 防前视偏差、冻结样本、参数快照                               |
-| `docs/modules/backtest_review_lifecycle.md`         | Backtest Review Lifecycle             | Round2.6 权威补充模块                                        |
-| `docs/modules/review_sandbox_api.md`                | Review Sandbox API                    | Round2.6 权威补充模块                                        |
-| `docs/modules/ops_and_performance.md`               | 运维与性能                            | ResourceGuard、本机低占用、性能边界                          |
+| 类别           | 触点                                                                                                  |
+| -------------- | ----------------------------------------------------------------------------------------------------- |
+| Layer          | **→ 五层域** Layer1–5 模块卡片 · Layer snapshot / evidence                                            |
+| 模块           | **→ 回测域** `backtest_review_lifecycle.md` · Agent · WriteManager 只读边界                           |
+| 契约 / 文档    | **→ 数据存储域 文件5** `snapshot_lineage_contract.yaml` · **→ 数据源域 文件3** `source_route_plan.md` |
+| 数据与基础设施 | `evidence_chain` · no_action 语义 · local-only 导入                                                   |
 
-### 4.5 API 叙述文档 `docs/api/`
+---
 
-| 路径                               | 用途                                         |
-| ---------------------------------- | -------------------------------------------- |
-| `docs/api/fastapi_routes.md`       | FastAPI 路由、分页、鉴权、查询预算等叙述设计 |
-| `docs/api/agent_tool_contracts.md` | Agent tool 契约叙述说明                      |
+## 总体架构与技术选型
 
-### 4.6 运维与安全文档 `docs/ops/`
+### 文件1 · `docs/architecture/design/02_solution_strategy.md`
 
-| 路径                                         | 用途                                                |
-| -------------------------------------------- | --------------------------------------------------- |
-| `docs/ops/agent_security_policy.md`          | Agent 安全、只读、固定来源、抗提示注入              |
-| `docs/ops/agent_workflow_boundaries.md`      | `.cursor` 信任边界与已退休 workflow 清理            |
-| `docs/ops/backup_and_recovery.md`            | 备份与恢复策略                                      |
-| `docs/ops/config_secret_policy.md`           | Secret 与 `.env.local` 策略                         |
-| `docs/ops/daily_weekly_monthly_checklist.md` | 日/周/月例行检查                                    |
-| `docs/ops/data_sync_command_matrix.md`       | Round2.6 数据同步 CLI 命令矩阵                      |
-| `docs/ops/data_sync_quick_reference.md`      | Round2.6 安全数据同步速查                           |
-| `docs/ops/ERROR_CODE_GUIDE.md`               | Round2.6 错误码指南                                 |
-| `docs/ops/db_inspect_cli.md`                 | QMD 本地只读 DB inspect CLI 设计；Round3 early 输入 |
-| `docs/ops/frontend_security_policy.md`       | 前端安全策略                                        |
-| `docs/ops/idempotency_retry_dlq_policy.md`   | 幂等、重试、DLQ 策略                                |
-| `docs/ops/incident_playbook.md`              | 事件处理 playbook                                   |
-| `docs/ops/layer3_config_health_check.md`     | Layer 3 配置健康检查                                |
-| `docs/ops/lock_and_concurrency_policy.md`    | 锁与并发策略                                        |
-| `docs/ops/logs_health_audit.md`              | 日志、健康检查、审计                                |
-| `docs/ops/migration_recovery_policy.md`      | migration 备份恢复策略                              |
-| `docs/ops/ops_and_performance_v1_2.md`       | 运维手册；旧文件名但内容仍当前                      |
-| `docs/ops/performance_limits.md`             | ResourceGuard 与性能限制权威                        |
-| `docs/ops/privacy_data_flow.md`              | Round2.6 local-only / privacy data flow             |
-| `docs/ops/privacy_retention_policy.md`       | 隐私与留存策略                                      |
-| `docs/ops/qmt_xqshare_setup.md`              | 可选 qmt_xqshare 设置边界                           |
-| `docs/ops/TROUBLESHOOTING.md`                | 故障排查入口                                        |
-| `docs/ops/verification_commands.md`          | Windows / 本地验证命令                              |
-| `docs/ops/user_intervention_policy.md`       | Agent vs 用户介入边界                               |
-| `docs/ops/data_health_cli.md`                | 数据健康 CLI 设计                                   |
-| `docs/ops/ops_report_cli.md`                 | 运维报告 CLI 设计                                   |
+**定位** 本地优先总体架构与技术栈选型
 
-### 4.7 质量与发布治理 `docs/quality/`
+**涉及内容**
 
-| 路径                                           | 用途                                                                                |
-| ---------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `docs/quality/待修复清单.md`                   | 全项目开放待修复 SSOT                                                               |
-| `docs/quality/final_package_rules.md`          | 最终发布包规则                                                                      |
-| `docs/quality/PENDING_USER_DECISIONS.md`       | 用户已拍板 D-01 至 D-12，执行角色不得反复询问                                       |
-| `docs/quality/production_live_pilot_policy.md` | Batch 2.75 受控生产/live 数据试点门禁；授权、sandbox、raw-only、no-mutation 规则    |
-| `docs/quality/staged_acceptance_policy.md`     | 分阶段验收策略                                                                      |
-| `docs/quality/KNOWN_PYTEST_SKIPS.md`           | 已知 pytest skip 登记                                                               |
-| `rules/GLOBAL_TESTING_POLICY.md` §7            | 测试五字段 docstring 规范与 CI 门禁（`tests/test_docstring_quadruple_coverage.py`） |
+- 端到端架构分层图（数据源 → Fetcher/Sync → Raw → Validator → DuckDB → FastAPI/Agent → 前端）
+- 第一阶段技术栈：Python 3.11+ / FastAPI / DuckDB / Vite+React / APScheduler
+- 明确第一阶段不采用的组件（PostgreSQL、Next.js、Airflow、多 Agent 编排）
+- DuckDB 五条使用规则（单写多读、WriteManager、Agent 不写库等）
+- DuckDB + Pandas 研究/ETL 允许与禁止边界
+- 数据源优先组合（QMT/baostock/AkShare/巨潮/东财）与补充源
 
-### 4.8 Schema 迁移说明 `docs/schema/`
+**跨域触点**
 
-| 路径                                | 用途                                     |
-| ----------------------------------- | ---------------------------------------- |
-| `docs/schema/MIGRATION_COVERAGE.md` | 设计 schema 与已应用 migrations 覆盖矩阵 |
+| 类别           | 触点                                                                                 |
+| -------------- | ------------------------------------------------------------------------------------ |
+| 模块           | `data_sources` · `data_sync_orchestrator` · FastAPI · Agent 只读工具层 · 前端看板    |
+| 契约 / 文档    | `docs/modules/design/duckdb_and_parquet.md` · `docs/modules/design/write_manager.md` |
+| 数据与基础设施 | Raw 层 · Parquet 归档 · `uv` / pytest / ruff · QMT/xtdata · Yahoo/同花顺/腾讯/百度   |
 
-### 4.9 实施任务包 `docs/implementation_tasks/`
+---
 
-> **2026-07-02 布局：** 活目录仅保留全局契约（下表「活路径」）；全部 `ROUND_*` / Wave / DCP 历史任务卡已迁入 `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/`（**历史归档**，只读证据）。路径解析：`scripts/repo_path_resolve.py` · `tests/repo_paths.py`（`impl_task()` / `resolve_repo_path()`）。**活规划 SSOT：** `PROJECT_IMPLEMENTATION_ROADMAP.md` §3 · §4.12 模块票队列。
->
-> 所有路径仍属于设计/计划/验收输入，不是实现代码落点。
+### 文件2 · `specs/contracts/design/runtime_versions.md`
 
-#### 4.9.1 活路径（全局契约 + v2 入口）
+**定位** 运行时版本与依赖锁策略（D-01 / QM-AUD-005）
 
-| 路径                                                         | 用途                                               |
-| ------------------------------------------------------------ | -------------------------------------------------- |
-| `docs/implementation_tasks/README.md`                        | **活工单入口**；v2 模块票队列摘要                  |
-| `PROJECT_IMPLEMENTATION_ROADMAP.md`                          | 活规划 SSOT（§3 模块闭环队列 v2）                  |
-| `docs/implementation_tasks/TASK_INPUT_CONTEXT_INDEX.md`      | 历史上下文桥；当前任务优先读路线图、模块文档与契约 |
-| `docs/implementation_tasks/GLOBAL_EXECUTION_RULES.md`        | 全局执行规则                                       |
-| `docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md`        | 全局资源限制                                       |
-| `docs/implementation_tasks/GLOBAL_TASK_TEMPLATE.md`          | 任务模板                                           |
-| `rules/GLOBAL_TESTING_POLICY.md`                             | 全局测试政策                                       |
-| `docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md` | 未解决项与任务卡覆盖映射（活）                     |
+**涉及内容**
 
-#### 4.9.2 历史归档索引（`legacy-pre-module-v2-20260702/`）
+- Python `>=3.11,<3.13` · Node `>=20,<23` · npm `>=10` 基线
+- D-01：`uv.lock` 为 Python 主锁文件，须提交 Git 并与 pyproject 同步
+- 前端 `package-lock.json` 锁定；禁止擅自改用 Poetry
+- 默认验收：`uv sync` / `uv run` · CI 与本地同版本
+- DuckDB/FastAPI/Pydantic 版本以 lock 文件为准，不在任务文档硬编码补丁号
 
-| 路径                                                                                                                                                                                  | 用途                                                                                     |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/README.md`                                                                                                           | 归档说明；活 SSOT 指针                                                                   |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND3_BATCH_IMPLEMENTATION_MAP.md`                                                                                  | **历史归档** Round3 六批次切分、Batch 2.5 bridge、Batch 2.75 pilot gate（根目录无 stub） |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/PRODUCTION_COMPLETION_VERTICAL_SLICE_PLAN.md`                                                                        | 生产补齐**覆盖地图**（非 standalone 工单）                                               |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/BATCH_FOLDER_REHOME_PLAN.md`                                                                                         | 任务包目录重组计划（历史）                                                               |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND3_EARLY_CLOSE_PLAN.md`                                                                                          | Round3 early close 计划（历史）                                                          |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/R3H_PASS_EXECUTION_PLAN.archived-20260702.md` | Tier A 逐源表只读索引；M-DATA-03 设计输入                                                |
+**跨域触点**
 
-#### 4.9.3 历史任务卡明细（Round 0–5 · 只读）
+| 类别           | 触点                                                                   |
+| -------------- | ---------------------------------------------------------------------- |
+| 模块           | CI · 本地开发 · Claude Code / Codex 执行环境                           |
+| 契约 / 文档    | **→ 运维域 文件1** `06_deployment_and_local_ops.md` · `pyproject.toml` |
+| 数据与基础设施 | `uv.lock` · `package-lock.json` · pre-commit                           |
 
-| 路径                                                                                                                                                                                    | 用途                                                                                                     |
-| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_0_PROJECT_SCAFFOLD/000_global_execution_rules.md`                                                                | Round 0 全局执行规则任务                                                                                 |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_0_PROJECT_SCAFFOLD/001_create_project_scaffold.md`                                                               | 创建项目脚手架任务                                                                                       |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_0_PROJECT_SCAFFOLD/002_create_config_and_env_templates.md`                                                       | 创建配置与 env 模板任务                                                                                  |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_0_PROJECT_SCAFFOLD/003_create_testing_baseline.md`                                                               | 创建测试基线任务                                                                                         |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_0_PROJECT_SCAFFOLD/004_create_documentation_index.md`                                                            | 创建文档索引任务；本地图是其强制输入                                                                     |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_0_PROJECT_SCAFFOLD/README.md`                                                                                    | Round 0 入口                                                                                             |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_1_DATA_FOUNDATION/005_create_schema_sql.md`                                                                      | 创建 schema SQL 任务                                                                                     |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_1_DATA_FOUNDATION/006_implement_resource_guard.md`                                                               | ResourceGuard 实施任务                                                                                   |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_1_DATA_FOUNDATION/007_implement_duckdb_connection_manager.md`                                                    | DuckDB connection manager 实施任务                                                                       |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_1_DATA_FOUNDATION/008_implement_write_manager.md`                                                                | WriteManager 实施任务                                                                                    |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_1_DATA_FOUNDATION/009_implement_file_registry_and_raw_store.md`                                                  | file registry / raw store 实施任务                                                                       |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_1_DATA_FOUNDATION/010_foundation_smoke_tests.md`                                                                 | foundation smoke tests 任务                                                                              |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_1_DATA_FOUNDATION/DECISIONS.md`                                                                                  | Round 1 决策记录                                                                                         |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_1_DATA_FOUNDATION/README.md`                                                                                     | Round 1 入口                                                                                             |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_1_DATA_FOUNDATION/plans/005_schema.plan.md`                                                                      | 005 schema 计划                                                                                          |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_1_DATA_FOUNDATION/plans/006_resource_guard.plan.md`                                                              | 006 resource guard 计划                                                                                  |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_1_DATA_FOUNDATION/plans/007_connection.plan.md`                                                                  | 007 connection 计划                                                                                      |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_1_DATA_FOUNDATION/plans/008_write_manager.plan.md`                                                               | 008 write manager 计划                                                                                   |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_1_DATA_FOUNDATION/plans/009_raw_store.plan.md`                                                                   | 009 raw store 计划                                                                                       |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_1_DATA_FOUNDATION/plans/010_smoke.plan.md`                                                                       | 010 smoke 计划                                                                                           |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_2_DATA_INGESTION_VALIDATION/011_implement_source_registry.md`                                                    | source registry 实施任务                                                                                 |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_2_DATA_INGESTION_VALIDATION/012_implement_data_adapter_contract.md`                                              | data adapter contract 实施任务                                                                           |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_2_DATA_INGESTION_VALIDATION/013_implement_core_adapter_skeletons.md`                                             | core adapter skeletons 实施任务                                                                          |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_2_DATA_INGESTION_VALIDATION/014_implement_data_sync_orchestrator.md`                                             | data sync orchestrator 实施任务                                                                          |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_2_DATA_INGESTION_VALIDATION/015_implement_data_quality_validator.md`                                             | data quality validator 实施任务                                                                          |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_2_DATA_INGESTION_VALIDATION/016_implement_source_conflict_validator.md`                                          | source conflict validator 实施任务                                                                       |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_2_DATA_INGESTION_VALIDATION/BATCH_B_REPAIR_STATUS.md`                                                            | Batch B 修复状态                                                                                         |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_2_DATA_INGESTION_VALIDATION/BATCH_C_LEDGER.md`                                                                   | Batch C 台账                                                                                             |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_2_DATA_INGESTION_VALIDATION/BATCH_C_REPAIR_STATUS.md`                                                            | Batch C 修复状态                                                                                         |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_2_DATA_INGESTION_VALIDATION/BATCH_D_STATUS.md`                                                                   | Batch D 状态                                                                                             |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_2_DATA_INGESTION_VALIDATION/DECISIONS.md`                                                                        | Round 2 决策记录                                                                                         |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_2_DATA_INGESTION_VALIDATION/README.md`                                                                           | Round 2 入口                                                                                             |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_2_DATA_INGESTION_VALIDATION/ROUND2_GAPS_AND_DEVIATIONS.md`                                                       | Round 2 gaps / deviations 台账                                                                           |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_2_DATA_INGESTION_VALIDATION/plans/011_012_batch_a.plan.md`                                                       | Batch A 计划                                                                                             |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_2_DATA_INGESTION_VALIDATION/plans/013_batch_b.plan.md`                                                           | Batch B 计划                                                                                             |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_2_DATA_INGESTION_VALIDATION/plans/014_batch_d.plan.md`                                                           | Batch D 计划                                                                                             |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_2_DATA_INGESTION_VALIDATION/plans/015_016_batch_c.plan.md`                                                       | Batch C 计划                                                                                             |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_2_6_DATASOURCE_ROUTING_OPS_ALIGNMENT/016A_define_source_capability_registry.md`                                  | Source Capability Registry 设计任务                                                                      |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_2_6_DATASOURCE_ROUTING_OPS_ALIGNMENT/016B_define_source_route_plan_and_datasource_service.md`                    | SourceRoutePlan 与 DataSourceService 设计任务                                                            |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_2_6_DATASOURCE_ROUTING_OPS_ALIGNMENT/016C_define_module_boundary_contract.md`                                    | 模块边界契约设计任务                                                                                     |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_2_6_DATASOURCE_ROUTING_OPS_ALIGNMENT/016D_define_data_sync_quick_reference_and_error_guides.md`                  | data sync quick reference 与 error guide 设计任务                                                        |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_2_6_DATASOURCE_ROUTING_OPS_ALIGNMENT/016E_define_platform_source_matrix_and_qmt_xqshare.md`                      | platform source matrix 与 qmt_xqshare 设计任务                                                           |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_2_6_DATASOURCE_ROUTING_OPS_ALIGNMENT/016F_define_prod_equivalent_scale_benchmark.md`                             | production-equivalent scale benchmark 设计任务                                                           |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_2_6_DATASOURCE_ROUTING_OPS_ALIGNMENT/README.md`                                                                  | Round2.6 入口                                                                                            |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_MODELING_LAYERS/017_implement_layer1_axis_loader.md`                                                           | Layer 1 axis loader 实施任务                                                                             |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_MODELING_LAYERS/018_implement_layer1_interpretation_snapshot.md`                                               | Layer 1 interpretation snapshot 实施任务                                                                 |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_MODELING_LAYERS/018A_layer1_observation_ingestion_bridge.md`                                                   | Round3 Batch 2.5 Layer 1 observation ingestion bridge；五阶段 Gate 与逐阶段审计                          |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_MODELING_LAYERS/018B_production_live_pilot_gate.md`                                                            | Round3 Batch 2.75 受控生产/live 数据试点门禁；正式实现前的任务卡与验收边界                               |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_MODELING_LAYERS/019_implement_layer2_cross_asset_sensor.md`                                                    | Layer 2 cross-asset sensor 实施任务                                                                      |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_MODELING_LAYERS/020_implement_layer3_industry_chain_loader.md`                                                 | Layer 3 industry chain loader 实施任务                                                                   |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_MODELING_LAYERS/021_implement_layer3_snapshot_builder.md`                                                      | Layer 3 snapshot builder 实施任务                                                                        |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_MODELING_LAYERS/022_implement_layer4_market_structure.md`                                                      | Layer 4 market structure 实施任务                                                                        |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_MODELING_LAYERS/023_implement_layer5_evidence_chain.md`                                                        | Layer 5 evidence chain 实施任务                                                                          |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_MODELING_LAYERS/README.md`                                                                                     | Round 3 入口                                                                                             |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_REFERENCE_ADOPTION_REFACTOR/BATCH_3FR_REFERENCE_ADOPTION_REFACTOR/README.md`                                   | **历史归档** Batch 3F-R；参考采纳 refactor（CLOSED 证据）                                                |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_REFERENCE_ADOPTION_REFACTOR/BATCH_3FR_REFERENCE_ADOPTION_REFACTOR/R3FR_01_REFERENCE_RULES_AND_LICENSE_GATE.md` | R3FR-01 护栏与 license gate 重跑任务卡                                                                   |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_REFERENCE_ADOPTION_REFACTOR/BATCH_3FR_REFERENCE_ADOPTION_REFACTOR/R3FR_03_TDX_PROVIDER_REFACTOR.md`            | R3FR-03 TDX provider port；`backend/app/datasources/fetch_ports/tdx_pytdx_port.py`、`normalizers/tdx.py` |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_SANDBOX_CLEAN_WRITE/BATCH_3G_SANDBOX_CLEAN_WRITE/README.md`                                                    | Batch 3G sandbox clean-write（3F-R 后）                                                                  |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/README.md`                                      | Batch 3H 真实源生产入口（3G 后）                                                                         |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/WAVE1_R3H10_THEN_R3H07_TO_ISSUES_INDEX.md`      | Wave 1 串行门控索引（R3H-10 → R3H-07）                                                                   |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/R3H_10_DATASOURCE_SERVICE_SSOT.md`              | **历史归档** R3H-10 DataSourceService SSOT（C2+E4）；活票见 **M-DATA-03**                                |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_REAL_DATA_PRODUCTION_ENTRY/BATCH_3H_REAL_DATA_PRODUCTION_ENTRY/R3H_07_US_TRADING_CALENDAR.md`                  | **历史归档** R3H-07 US 交易日历（G4+C3 · CLOSED）                                                        |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_DATA_PRODUCTION_READINESS/README.md`                                                                           | **历史归档** Batch 01 模型/源就绪（R3E/R3F 前身）                                                        |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_BATCH6_DATA_GOVERNANCE/BATCH_3F_BATCH6_DATA_GOVERNANCE/README.md`                                              | **历史归档** Batch 3F/6 数据治理                                                                         |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_4_API_FRONTEND_AGENT_BACKTEST/024_implement_fastapi_routes.md`                                                   | FastAPI routes 实施任务                                                                                  |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_4_API_FRONTEND_AGENT_BACKTEST/025_implement_agent_tool_layer.md`                                                 | Agent tool layer 实施任务                                                                                |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_4_API_FRONTEND_AGENT_BACKTEST/026_implement_frontend_shell.md`                                                   | Frontend shell 实施任务                                                                                  |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_4_API_FRONTEND_AGENT_BACKTEST/027_implement_frontend_layer_pages.md`                                             | Frontend layer pages 实施任务                                                                            |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_4_API_FRONTEND_AGENT_BACKTEST/028_implement_reports_and_notifications.md`                                        | Reports and notifications 实施任务                                                                       |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_4_API_FRONTEND_AGENT_BACKTEST/029_implement_backtest_and_review.md`                                              | Backtest and review 实施任务                                                                             |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_4_API_FRONTEND_AGENT_BACKTEST/030_implement_no_action_semantics_guard.md`                                        | no-action semantics guard 实施任务                                                                       |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_4_API_FRONTEND_AGENT_BACKTEST/README.md`                                                                         | Round 4 入口                                                                                             |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_5_INTEGRATION_RELEASE/031_implement_integration_smoke_tests.md`                                                  | integration smoke tests 实施任务                                                                         |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_5_INTEGRATION_RELEASE/032_implement_resource_limit_tests.md`                                                     | resource limit tests 实施任务                                                                            |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_5_INTEGRATION_RELEASE/033_implement_security_and_boundary_tests.md`                                              | security and boundary tests 实施任务                                                                     |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_5_INTEGRATION_RELEASE/034_implement_docs_consistency_check.md`                                                   | docs consistency check 实施任务                                                                          |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_5_INTEGRATION_RELEASE/035_implement_final_package_cleanup.md`                                                    | final package cleanup 实施任务                                                                           |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_5_INTEGRATION_RELEASE/036_create_final_release_manifest.md`                                                      | final release manifest 创建任务                                                                          |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_5_INTEGRATION_RELEASE/README.md`                                                                                 | Round 5 入口                                                                                             |
+---
 
-### 4.10 Round 3 扩展任务包（对抗性审计 / 并行 prompt / 参考落地 / 评审）
+## 五层分析建模
 
-> 下列路径均为**历史归档**（`legacy-pre-module-v2-20260702/`）。`UNRESOLVED_ITEM_TASK_COVERAGE.md` 为活路径，见 §4.9.1。
+### 文件1 · `docs/architecture/design/05_module_map.md`
 
-| 路径                                                                                                                                                          | 用途                                   |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
-| `docs/implementation_tasks/UNRESOLVED_ITEM_TASK_COVERAGE.md`                                                                                                  | 未解决项与任务卡覆盖映射               |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_MODELING_LAYERS/018C_tdx_pytdx_low_cost_probe.md`                                    | 018C TDX 低成本 probe 任务卡           |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_MODELING_LAYERS/023A_layer5_evidence_foundation.md`                                  | 023A Layer5 evidence foundation 任务卡 |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3X_contract_architecture_adversarial_audit.md`           | R3X 契约架构对抗审计                   |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3X_data_source_routing_blockers.md`                      | R3X 数据源路由 blocker                 |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3X_db_write_validation_blockers.md`                      | R3X DB 写入校验 blocker                |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3X_ponytail_low_touch_bucket_c.md`                       | R3X ponytail bucket C                  |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3X_ponytail_pilot_prep_bucket_a.md`                      | R3X ponytail pilot prep bucket A       |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3X_real_data_staged_pilot.md`                            | R3X 真实数据 staged pilot              |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3X_residual_open_items_closure.md`                       | R3X 残余 open items 关闭               |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3Y_execution_discipline_addendum.md`                     | R3Y 执行纪律附录                       |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3Y_post_r3x_strict_adversarial_audit.md`                 | R3Y post-R3X 严格对抗审计              |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3Y_readonly_data_health_v1.md`                           | R3Y 只读数据健康 v1                    |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3Y_real_data_staged_pilot_v2.md`                         | R3Y staged pilot v2                    |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_ADVERSARIAL_AND_DATA_PILOT/R3Y_staged_pilot_v2_execution_addendum.md`                | R3Y staged pilot v2 执行附录           |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_PARALLEL_PROMPTS/PROMPT_00_integration_round3_merge_coordinator.md`                  | PROMPT_00 merge coordinator            |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_PARALLEL_PROMPTS/PROMPT_01_feature_round3_batch3_staged_gate.md`                     | PROMPT_01 Batch3 staged gate           |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_PARALLEL_PROMPTS/PROMPT_02_debt_r3b275_018c_low_cost_probe.md`                       | PROMPT_02 018C low cost probe          |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_PARALLEL_PROMPTS/PROMPT_03_debt_r3b275_perf_hyg_registry.md`                         | PROMPT_03 perf hygiene registry        |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_PARALLEL_PROMPTS/PROMPT_04_debt_r3b275_fred_staged_semantics.md`                     | PROMPT_04 FRED staged semantics        |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_PARALLEL_PROMPTS/PROMPT_05_chore_round3_ci_gate_hardening.md`                        | PROMPT_05 CI gate hardening            |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_PARALLEL_PROMPTS/PROMPT_06_debt_r3_ops_inspect_data_health_references.md`            | PROMPT_06 ops inspect references       |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_PARALLEL_PROMPTS/PROMPT_07_feature_round3_019_layer2_sensor.md`                      | PROMPT_07 Layer2 sensor                |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_PARALLEL_PROMPTS/PROMPT_08_feature_round3_023a_evidence_foundation.md`               | PROMPT_08 023A evidence                |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_PARALLEL_PROMPTS/PROMPT_09_review_round3_019_plan_audit.md`                          | PROMPT_09 019 plan audit               |
-| Historical PROMPT_10 018C live manual probe record                                                                                                            | PROMPT_10 018C live manual probe       |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_PARALLEL_PROMPTS/PROMPT_11_review_round3_contract_architecture_adversarial_audit.md` | PROMPT_11 contract adversarial audit   |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_PARALLEL_PROMPTS/PROMPT_12_fix_round3_data_source_routing_blockers.md`               | PROMPT_12 routing blockers             |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_PARALLEL_PROMPTS/PROMPT_13_fix_round3_db_write_validation_blockers.md`               | PROMPT_13 DB write blockers            |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_PARALLEL_PROMPTS/PROMPT_14_feature_round3_real_data_staged_pilot.md`                 | PROMPT_14 staged pilot                 |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_PARALLEL_PROMPTS/PROMPT_15_fix_round3_r3x_residual_open_items_closure.md`            | PROMPT_15 residual closure             |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_PARALLEL_PROMPTS/PROMPT_16_fix_round3_ponytail_pilot_prep_bucket_a.md`               | PROMPT_16 ponytail bucket A            |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_PARALLEL_PROMPTS/PROMPT_17_debt_round3_ponytail_low_touch.md`                        | PROMPT_17 ponytail low touch           |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_PARALLEL_PROMPTS/PROMPT_18_review_round3_post_r3x_strict_adversarial_audit.md`       | PROMPT_18 post-R3X audit               |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_PARALLEL_PROMPTS/PROMPT_19_feature_round3_real_data_staged_pilot_v2.md`              | PROMPT_19 staged pilot v2              |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_PARALLEL_PROMPTS/PROMPT_20_feature_round3_readonly_data_health_v1.md`                | PROMPT_20 readonly data health         |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_REFERENCE_LANDING/README.md`                                                         | Round 3 参考落地入口                   |
-| Historical R3D 018C live manual probe record                                                                                                                  | R3D 018C live manual probe plan        |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_REFERENCE_LANDING/R3D_018C_low_cost_source_probe.md`                                 | R3D 018C low cost probe                |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_REFERENCE_LANDING/R3D_ops_db_data_health_reference.md`                               | R3D ops DB data health 参考            |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_REFERENCE_LANDING/R4D_readonly_sql_assistant_reference.md`                           | R4D readonly SQL assistant 参考        |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_REVIEW/019_plan_audit_report.md`                                                     | 019 plan 审计报告                      |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_REVIEW/019_plan_audit_review.md`                                                     | 019 plan 审计评审                      |
+**定位** 五层分析建模框架与工程模块地图
 
-### 4.11 Round 3V verified audit cleanup（Batch 3V）
+**涉及内容**
 
-| 路径                                                                                                                                                              | 用途                                     |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/README.md`                        | **历史归档** Batch 3V 协调入口（CLOSED） |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/BATCH_3V_COORDINATOR_PLAYBOOK.md` | 六路主会话协调手册                       |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/BATCH_3V_TASK_CARD_MANIFEST.md`   | 任务卡清单与分支归属                     |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/BATCH_3V_HARDENING_RULES.md`      | Batch 3V 硬化规则                        |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/BATCH_3V_SELF_CHECK.md`           | 静态自检与 dispatch 门禁                 |
-| `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_VERIFIED_AUDIT_CLEANUP/BATCH_3V_VERIFIED_AUDIT_CLEANUP/BATCH_3V_ADVERSARIAL_AUDIT.md`    | 任务卡对抗审计                           |
+- Layer1~5 各层中英文定义与职责边界
+- Top-down 与 Bottom-up 双向分析路径
+- 核心工程模块清单（data_sources、sync、validation、write_manager、layers、API、前端、Agent、ops、reports）
+- Agent 与 `notification_and_reports` 的职责分工（解释 vs 归档发送）
+- 实现细节落点 `docs/modules/design/`
 
-### 4.12 模块闭环队列 v2（活票 · Plan 冻结时建目录）
+**跨域触点**
 
-> **SSOT：** `PROJECT_IMPLEMENTATION_ROADMAP.md` §3 · `docs/implementation_tasks/README.md`。下列目录 **待建**（Plan 冻结时创建 canonical 文件夹）。
+| 类别        | 触点                                                                                                                                                                                                                                                                                         |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Layer       | Layer1 Global Regime · Layer2 Cross-Asset Sensor · Layer3 Shock-Anchor · Layer4 Market Structure · Layer5 Security Evidence                                                                                                                                                                  |
+| 模块        | `docs/modules/design/layer1_global_regime_panel.md` … `docs/modules/design/layer5_security_evidence.md` · `docs/modules/design/agent_module.md` · `docs/modules/design/notification_and_reports.md` · `docs/modules/design/fastapi_backend.md` · `docs/modules/design/frontend_dashboard.md` |
+| 契约 / 文档 | 各 Layer 对应 `specs/layer*` 与 `docs/modules/design/*`                                                                                                                                                                                                                                      |
 
-| 票 ID         | 优先级 | 任务卡目录（待建）                                 | `/to-issues` 索引（待建）          | 设计权威                                                                      |
-| ------------- | ------ | -------------------------------------------------- | ---------------------------------- | ----------------------------------------------------------------------------- |
-| **M-DATA-03** | P0     | `docs/implementation_tasks/M_DATA_03_TIER_A_LIVE/` | `.../M_DATA_03_TO_ISSUES_INDEX.md` | 归档 `R3H_PASS_EXECUTION_PLAN.archived-20260702.md` §2.1 Tier A · 路线图 §3.1 |
-| **M-G1-03**   | P0     | `docs/implementation_tasks/M_G1_03_LAYER1_FULL/`   | `.../M_G1_03_TO_ISSUES_INDEX.md`   | `specs/layer1_axes/` · `docs/modules/layer1_global_regime_panel.md`           |
-| **M-G2-FULL** | P1     | `docs/implementation_tasks/M_G2_FULL/`             | `.../M_G2_FULL_TO_ISSUES_INDEX.md` | `docs/modules/layer2_cross_asset_sensor.md` §2                                |
-| **M-G4-FULL** | P1     | `docs/implementation_tasks/M_G4_FULL/`             | `.../M_G4_FULL_TO_ISSUES_INDEX.md` | `docs/modules/layer4_market_structure.md` §2                                  |
-| **M-G5-FULL** | P1     | `docs/implementation_tasks/M_G5_FULL/`             | `.../M_G5_FULL_TO_ISSUES_INDEX.md` | `docs/modules/layer5_security_evidence.md` §2–3                               |
-| **M-PASS-01** | P0     | `docs/implementation_tasks/M_PASS_01/`             | `.../M_PASS_01_TO_ISSUES_INDEX.md` | 路线图 §6.1.1 `PASS_ROUND4_REAL_DATA_READY` 门禁清单                          |
+---
 
-## 5. `specs/` 契约与定义目录地图
+### 文件2 · `docs/modules/design/layer1_global_regime_panel.md`
 
-### 5.1 API、schema、frontend
+**定位** Layer1 全球底层状态面板（五轴环境状态向量，可审计可解释）
 
-| 路径                                 | 用途                                                                                  |
-| ------------------------------------ | ------------------------------------------------------------------------------------- |
-| `specs/api/openapi_contract.md`      | OpenAPI 契约                                                                          |
-| `specs/schema/schema.sql`            | 设计 schema SQL；注意与实际 migrations 覆盖关系见 `docs/schema/MIGRATION_COVERAGE.md` |
-| `specs/frontend/page_contracts.yaml` | 前端页面契约                                                                          |
+**涉及内容**
 
-### 5.2 数据源 registry
+- 五轴：ENVIRONMENT / CREDIT_STRESS / RISK_APPETITE / LIQUIDITY / SENTIMENT
+- Primary / Validation / FallbackPolicy 数据源角色
+- 指标规格外置 `specs/layer1_axes/design/restructured_axes_v1_1/`
+- 回答「全球底层状态是什么」；不输出交易动作、不伪造 BlindSpot
+- 与 data_sync、validation、write_manager、前端展示依赖
 
-| 路径                                                 | 用途                                                     |
-| ---------------------------------------------------- | -------------------------------------------------------- |
-| `specs/datasource_registry/source_registry.yaml`     | 数据源注册表；Primary / Validation / FallbackPolicy 权威 |
-| `specs/datasource_registry/source_capabilities.yaml` | Round2.6 source capability matrix                        |
+**跨域触点**
 
-### 5.3 通用 contracts `specs/contracts/`
+| 类别           | 触点                                                                    |
+| -------------- | ----------------------------------------------------------------------- |
+| Layer          | Layer1 axis 表 · observation · snapshot                                 |
+| 模块           | **→ 五层域 文件19–20** Layer2–3 · **→ 数据同步域** IncrementalUpdateJob |
+| 契约 / 文档    | **→ 五层域 文件3–18** Layer1 轴规格 · **→ ADR 域** ADR-0003             |
+| 数据与基础设施 | standardized fields 仅 Layer1 物化 · BlindSpot 标注                     |
 
-| 路径                                                     | 用途                                                |
-| -------------------------------------------------------- | --------------------------------------------------- |
-| `specs/contracts/agent_contract.yaml`                    | Agent 契约                                          |
-| `specs/contracts/api_security_contract.yaml`             | API 安全、分页、查询预算权威                        |
-| `specs/contracts/backtest_contract.yaml`                 | 回测契约                                            |
-| `specs/contracts/backtest_metric_contract.yaml`          | 回测指标契约                                        |
-| `specs/contracts/backtest_reproducibility_contract.yaml` | 回测可复现契约                                      |
-| `specs/contracts/backup_recovery_contract.yaml`          | 备份恢复契约                                        |
-| `specs/contracts/data_adapter_contract.md`               | 数据 adapter 契约                                   |
-| `specs/contracts/data_cli_contract.yaml`                 | 数据 CLI 契约                                       |
-| `specs/contracts/data_quality_rules.yaml`                | 数据质量规则                                        |
-| `specs/contracts/datasource_service_contract.yaml`       | DataSourceService 契约                              |
-| `specs/contracts/dependency_extras_contract.yaml`        | optional dependency extras 契约                     |
-| `specs/contracts/diagnostics_api_contract.yaml`          | Diagnostics API 契约                                |
-| `specs/contracts/layer1_axis_contract.yaml`              | Layer 1 axis 契约                                   |
-| `specs/contracts/layer2_sensor_contract.yaml`            | Layer 2 sensor 契约                                 |
-| `specs/contracts/layer3_loader_contract.yaml`            | Layer 3 loader 契约                                 |
-| `specs/contracts/layer4_market_contract.yaml`            | Layer 4 market 契约                                 |
-| `specs/contracts/layer5_evidence_contract.yaml`          | Layer 5 evidence 契约                               |
-| `specs/contracts/log_audit_contract.yaml`                | 日志审计契约                                        |
-| `specs/contracts/module_boundary_contract.yaml`          | 模块边界契约                                        |
-| `specs/contracts/notification_report_contract.yaml`      | 通知报告契约                                        |
-| `specs/contracts/ops_health_check_contract.yaml`         | 运维健康检查契约                                    |
-| `specs/contracts/ops_db_inspect_contract.yaml`           | QMD 本地只读 DB inspect CLI 契约                    |
-| `specs/contracts/platform_source_matrix.yaml`            | 平台数据源矩阵                                      |
-| `specs/contracts/reference_adoption_guardrails.yaml`     | 外部参考采纳红线                                    |
-| `specs/contracts/release_cleanup_allowlist.yaml`         | 发布清理 allowlist                                  |
-| `specs/contracts/resource_limits.yaml`                   | 资源限制契约                                        |
-| `specs/contracts/review_sandbox_contract.yaml`           | Review Sandbox 契约                                 |
-| `specs/contracts/runtime_flow_contract.yaml`             | 运行链路契约                                        |
-| `specs/contracts/runtime_versions.md`                    | Python / frontend runtime、`uv.lock` 与验收命令契约 |
-| `specs/contracts/snapshot_lineage_contract.yaml`         | 快照 lineage 契约                                   |
-| `specs/contracts/source_capability_contract.yaml`        | Source Capability 契约                              |
-| `specs/contracts/source_conflict_rules.yaml`             | 多源冲突规则                                        |
-| `specs/contracts/source_route_contract.yaml`             | Source Route 契约                                   |
-| `specs/contracts/spec_migrator_contract.yaml`            | spec migrator 契约                                  |
-| `specs/contracts/sync_job_contract.yaml`                 | sync job 契约                                       |
-| `specs/contracts/user_input_privacy_contract.yaml`       | 用户输入隐私契约                                    |
-| `specs/contracts/write_contract.yaml`                    | 写入契约                                            |
+---
 
-### 5.4 Layer 1 axis specs
+### 文件3 · `specs/layer1_axes/design/restructured_axes_v1_1/common/common_axis_rules.md`
 
-| 路径                                                                                                  | 用途                    |
-| ----------------------------------------------------------------------------------------------------- | ----------------------- |
-| `specs/layer1_axes/restructured_axes_v1_1/README.md`                                                  | Layer 1 axes specs 入口 |
-| `specs/layer1_axes/restructured_axes_v1_1/common/common_axis_rules.md`                                | Layer 1 通用 axis 规则  |
-| `specs/layer1_axes/restructured_axes_v1_1/credit_stress_axis/credit_stress_axis_engineering_rules.md` | credit stress 工程规则  |
-| `specs/layer1_axes/restructured_axes_v1_1/credit_stress_axis/credit_stress_axis_indicator_spec.yaml`  | credit stress 指标 spec |
-| `specs/layer1_axes/restructured_axes_v1_1/credit_stress_axis/credit_stress_axis_user_guide.md`        | credit stress 用户指南  |
-| `specs/layer1_axes/restructured_axes_v1_1/environment_axis/environment_axis_engineering_rules.md`     | environment 工程规则    |
-| `specs/layer1_axes/restructured_axes_v1_1/environment_axis/environment_axis_indicator_spec.yaml`      | environment 指标 spec   |
-| `specs/layer1_axes/restructured_axes_v1_1/environment_axis/environment_axis_user_guide.md`            | environment 用户指南    |
-| `specs/layer1_axes/restructured_axes_v1_1/liquidity_axis/liquidity_axis_engineering_rules.md`         | liquidity 工程规则      |
-| `specs/layer1_axes/restructured_axes_v1_1/liquidity_axis/liquidity_axis_indicator_spec.yaml`          | liquidity 指标 spec     |
-| `specs/layer1_axes/restructured_axes_v1_1/liquidity_axis/liquidity_axis_user_guide.md`                | liquidity 用户指南      |
-| `specs/layer1_axes/restructured_axes_v1_1/risk_appetite_axis/risk_appetite_axis_engineering_rules.md` | risk appetite 工程规则  |
-| `specs/layer1_axes/restructured_axes_v1_1/risk_appetite_axis/risk_appetite_axis_indicator_spec.yaml`  | risk appetite 指标 spec |
-| `specs/layer1_axes/restructured_axes_v1_1/risk_appetite_axis/risk_appetite_axis_user_guide.md`        | risk appetite 用户指南  |
-| `specs/layer1_axes/restructured_axes_v1_1/sentiment_axis/sentiment_axis_engineering_rules.md`         | sentiment 工程规则      |
-| `specs/layer1_axes/restructured_axes_v1_1/sentiment_axis/sentiment_axis_indicator_spec.yaml`          | sentiment 指标 spec     |
-| `specs/layer1_axes/restructured_axes_v1_1/sentiment_axis/sentiment_axis_user_guide.md`                | sentiment 用户指南      |
+**定位** Layer1 五轴共同规则（舱位、数据源角色、状态字段与全链路管道）
 
-### 5.5 Layer 3 industry chain specs
+**涉及内容**
 
-| 路径                                                                                                                | 用途                               |
-| ------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
-| `specs/layer3_global_industry_chains/layer3_global_industry_chains_v1_2/README.md`                                  | Layer 3 industry chains specs 入口 |
-| `specs/layer3_global_industry_chains/layer3_global_industry_chains_v1_2/layer3_anchor_registry.json`                | anchor registry                    |
-| `specs/layer3_global_industry_chains/layer3_global_industry_chains_v1_2/layer3_cross_chain_edge_registry.json`      | cross-chain edge registry          |
-| `specs/layer3_global_industry_chains/layer3_global_industry_chains_v1_2/layer3_data_dictionary.md`                  | Layer 3 数据字典                   |
-| `specs/layer3_global_industry_chains/layer3_global_industry_chains_v1_2/layer3_edge_registry.json`                  | edge registry                      |
-| `specs/layer3_global_industry_chains/layer3_global_industry_chains_v1_2/layer3_global_industry_chain_registry.yaml` | global industry chain registry     |
-| `specs/layer3_global_industry_chains/layer3_global_industry_chains_v1_2/layer3_node_registry.json`                  | node registry                      |
-| `specs/layer3_global_industry_chains/layer3_global_industry_chains_v1_2/references/source_registry.md`              | Layer 3 reference source registry  |
+- 五轴身份：ENVIRONMENT / CREDIT_STRESS / RISK_APPETITE / LIQUIDITY / SENTIMENT
+- 前端统一解释口径（是什么、历史位置、变化、能/不能说明什么、新鲜度）
+- 统一舱位 A/B/C/D/SHADOW/Forbidden 与主面板准入规则
+- Primary / Validation / FallbackPolicy 数据源角色重构
+- 每个指标建议落地字段（raw_value、stale_reason、quality_flags 等）
+- 全链路须走 sync → clean → 特征 → 解读，舱位不豁免管道
 
-### 5.6 契约与验收索引（活）
+**跨域触点**
 
-| 路径                          | 用途                 |
-| ----------------------------- | -------------------- |
-| `specs/contracts/`            | 服务/数据契约（P0）  |
-| `docs/modules/`               | 模块设计叙述         |
-| `MODULE_COMPLETION_RATING.md` | 模块完成度与证据指针 |
+| 类别           | 触点                                                                                |
+| -------------- | ----------------------------------------------------------------------------------- |
+| Layer          | Layer1 全轴 observation / snapshot 语义                                             |
+| 模块           | **→ 五层域 文件2** `layer1_global_regime_panel.md` · **→ 五层域 文件4–18** 各轴规格 |
+| 契约 / 文档    | 各轴 `*_indicator_spec.yaml` · `specs/contracts/` 数据源契约                        |
+| 数据与基础设施 | `primary_source` · BlindSpot 诚实失败 · SHADOW 不得接管主值                         |
 
-> 历史 Loop Engineering 配置（`authority_graph.yaml`、`test_catalog.yaml` 等）已移除；见 `docs/archive/trellis-loop-2026/`。
+---
 
-## 6. 模块 → 设计文档 / 契约 / 规则 / 实现目录映射
+### 文件4 · `specs/layer1_axes/design/restructured_axes_v1_1/environment_axis/environment_axis_user_guide.md`
 
-> 读取顺序建议：先读“设计文档”，再读“契约/定义”，然后读“规则/任务/验收”，最后进入“实现目录”。再次强调：`docs/` 与 `specs/` 是输入，不是落代码位置。
+**定位** 环境轴（ENVIRONMENT）用户说明（宏观水位、利率、通胀与实体经济底板）
 
-| 模块                         | 设计文档                                                                                                                                   | 契约/定义                                                                                                                                           | 规则/任务/验收                                                                                                                                                                                                                                                                                        | 实现目录入口                                                                                   |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| 项目总体与边界               | `docs/architecture/00_project_overview.md`、`docs/architecture/01_context_and_scope.md`、`docs/architecture/02_solution_strategy.md`       | `specs/contracts/runtime_flow_contract.yaml`                                                                                                        | `docs/START_HERE.md`、`docs/INDEX.md`、`docs/quality/PENDING_USER_DECISIONS.md`                                                                                                                                                                                                                       | 全仓库；先不要改代码                                                                           |
-| 目录结构与模块边界           | `docs/architecture/05_module_map.md`、`docs/architecture/07_project_directory_structure.md`、`docs/architecture/module_boundary_matrix.md` | `specs/contracts/module_boundary_contract.yaml`                                                                                                     | `scripts/check_module_boundaries.py`、`tests/test_module_boundaries.py`                                                                                                                                                                                                                               | `backend/app/**`、`frontend/src/**`                                                            |
-| 数据架构 / DuckDB / Parquet  | `docs/architecture/04_data_architecture.md`、`docs/modules/duckdb_and_parquet.md`                                                          | `specs/schema/schema.sql`                                                                                                                           | `docs/schema/MIGRATION_COVERAGE.md`、`tests/test_schema_contract.py`                                                                                                                                                                                                                                  | `backend/app/db/`、`backend/app/storage/`、`data/duckdb/`、`data/parquet/`                     |
-| QMD Ops DB Inspect CLI       | `docs/ops/db_inspect_cli.md`                                                                                                               | `specs/contracts/ops_db_inspect_contract.yaml`                                                                                                      | **活票 M-DATA-03**（`PROJECT_IMPLEMENTATION_ROADMAP.md` §3.1）；**历史** `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND3_BATCH_IMPLEMENTATION_MAP.md`、`docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND3_EARLY_CLOSE_PLAN.md`、`docs/ROUND3_HANDOFF.md` | `backend/app/ops/`、`backend/app/cli/`、`scripts/`、`tests/`                                   |
-| WriteManager / 写入并发      | `docs/modules/write_manager.md`                                                                                                            | `specs/contracts/write_contract.yaml`                                                                                                               | `docs/decisions/ADR-001-ingestion-validation-write-transaction-boundary.md`、`docs/ops/lock_and_concurrency_policy.md`                                                                                                                                                                                | `backend/app/storage/`、`backend/app/db/write_manager.py`、`backend/app/db/validation_gate.py` |
-| Raw Store / 本地文件         | `docs/modules/local_file_system.md`                                                                                                        | `specs/contracts/snapshot_lineage_contract.yaml`                                                                                                    | `docs/ops/privacy_retention_policy.md`                                                                                                                                                                                                                                                                | `backend/app/storage/`、`data/raw/`、`data/files/`、`data/audit/`                              |
-| ResourceGuard / 本机低占用   | `docs/modules/ops_and_performance.md`、`docs/ops/performance_limits.md`                                                                    | `specs/contracts/resource_limits.yaml`                                                                                                              | `docs/implementation_tasks/GLOBAL_RESOURCE_LIMITS.md`、`configs/resource_limits.yaml`                                                                                                                                                                                                                 | `backend/app/core/`、`configs/`                                                                |
-| 数据源 registry / adapter    | `docs/modules/data_sources.md`、`docs/modules/qmt_xtdata_adapter.md`                                                                       | `specs/datasource_registry/source_registry.yaml`、`specs/contracts/data_adapter_contract.md`                                                        | `docs/adr/ADR-0005-primary-validation-fallback-source-model.md`、`tests/test_source_registry.py`、`tests/test_adapter_skeletons.py`                                                                                                                                                                   | `backend/app/datasources/`、`configs/datasource.yml`                                           |
-| Source Capability Registry   | `docs/modules/source_capability_registry.md`                                                                                               | `specs/datasource_registry/source_capabilities.yaml`、`specs/contracts/source_capability_contract.yaml`                                             | `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_2_6_DATASOURCE_ROUTING_OPS_ALIGNMENT/016A_define_source_capability_registry.md`、`tests/test_source_capabilities.py`                                                                                                           | `backend/app/datasources/`                                                                     |
-| SourceRoutePlan              | `docs/modules/source_route_plan.md`                                                                                                        | `specs/contracts/source_route_contract.yaml`                                                                                                        | `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_2_6_DATASOURCE_ROUTING_OPS_ALIGNMENT/016B_define_source_route_plan_and_datasource_service.md`、`tests/test_source_route_planner.py`                                                                                            | `backend/app/datasources/`                                                                     |
-| DataSourceService            | `docs/modules/datasource_service.md`                                                                                                       | `specs/contracts/datasource_service_contract.yaml`                                                                                                  | **活票 M-DATA-03**（§3.1 11 源真网）；`tests/test_datasource_service.py`、`scripts/sync_registry.py`；**历史** 归档 `R3H_10_DATASOURCE_SERVICE_SSOT.md`                                                                                                                                               | `backend/app/datasources/`、`backend/app/sync/`                                                |
-| 数据同步 orchestrator        | `docs/modules/data_sync_orchestrator.md`                                                                                                   | `specs/contracts/sync_job_contract.yaml`、`specs/contracts/data_cli_contract.yaml`                                                                  | `docs/ops/data_sync_quick_reference.md`、`docs/ops/data_sync_command_matrix.md`、`tests/test_sync_orchestrator.py`                                                                                                                                                                                    | `backend/app/sync/`、`backend/app/etl/`、`scripts/`                                            |
-| 数据质量与冲突               | `docs/modules/data_validation_and_conflict.md`                                                                                             | `specs/contracts/data_quality_rules.yaml`、`specs/contracts/source_conflict_rules.yaml`                                                             | `docs/decisions/ADR-002-db-check-vs-app-validation.md`、`tests/test_data_quality_validator.py`、`tests/test_source_conflict_validator.py`                                                                                                                                                             | `backend/app/validators/`                                                                      |
-| 五层模型 Layer 1             | `docs/modules/layer1_global_regime_panel.md`                                                                                               | `specs/contracts/layer1_axis_contract.yaml`、`specs/layer1_axes/restructured_axes_v1_1/**`                                                          | **活票 M-G1-03**（§3.2）；**历史** 归档 `ROUND_3_MODELING_LAYERS/017_*`、`018_*`、`018A_*`；`docs/adr/ADR-0003-layer1-standardization-only.md`                                                                                                                                                        | `backend/app/layer1_axes/`、`configs/layer1_axes.yml`                                          |
-| Layer 1 observation bridge   | `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_MODELING_LAYERS/018A_layer1_observation_ingestion_bridge.md`      | `specs/contracts/write_contract.yaml`、`specs/contracts/snapshot_lineage_contract.yaml`、`specs/contracts/source_route_contract.yaml`               | `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND3_BATCH_IMPLEMENTATION_MAP.md` §3 Batch 2.5、`docs/decisions/ADR-001-ingestion-validation-write-transaction-boundary.md`                                                                                                        | `backend/app/layer1_axes/ingestion.py`（Execute）、`backend/app/db/validation_gate.py`         |
-| 五层模型 Layer 2             | `docs/modules/layer2_cross_asset_sensor.md`                                                                                                | `specs/contracts/layer2_sensor_contract.yaml`                                                                                                       | **活票 M-G2-FULL**（§3.3）；**历史** 归档 `ROUND_3_MODELING_LAYERS/019_*`、DCP-07 增量证据                                                                                                                                                                                                            | `backend/app/layer2_sensors/`                                                                  |
-| 五层模型 Layer 3             | `docs/modules/layer3_industry_shock_anchor.md`                                                                                             | `specs/contracts/layer3_loader_contract.yaml`、`specs/layer3_global_industry_chains/layer3_global_industry_chains_v1_2/**`                          | `docs/adr/ADR-0004-layer3-shock-anchor-model.md`、`docs/ops/layer3_config_health_check.md`、`docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_3_MODELING_LAYERS/020_implement_layer3_industry_chain_loader.md`、`021_implement_layer3_snapshot_builder.md`                       | `backend/app/layer3_chains/`                                                                   |
-| 五层模型 Layer 4             | `docs/modules/layer4_market_structure.md`                                                                                                  | `specs/contracts/layer4_market_contract.yaml`                                                                                                       | **活票 M-G4-FULL**（§3.4）；**历史** 归档 `ROUND_3_MODELING_LAYERS/022_*`、DCP-08 增量证据                                                                                                                                                                                                            | `backend/app/layer4_markets/`、`configs/market_registry.yml`                                   |
-| 五层模型 Layer 5             | `docs/modules/layer5_security_evidence.md`                                                                                                 | `specs/contracts/layer5_evidence_contract.yaml`                                                                                                     | **活票 M-G5-FULL**（§3.5）；**历史** 归档 `ROUND_3_MODELING_LAYERS/023_*`、DCP-10 增量证据                                                                                                                                                                                                            | `backend/app/layer5_evidence/`                                                                 |
-| FastAPI 后端                 | `docs/modules/fastapi_backend.md`、`docs/api/fastapi_routes.md`                                                                            | `specs/api/openapi_contract.md`、`specs/contracts/api_security_contract.yaml`、`specs/contracts/diagnostics_api_contract.yaml`                      | `docs/ops/frontend_security_policy.md`、`tests/test_api_security_contract.py`                                                                                                                                                                                                                         | `backend/app/api/`、`backend/app/main.py`                                                      |
-| 前端 Dashboard               | `docs/modules/frontend_dashboard.md`                                                                                                       | `specs/frontend/page_contracts.yaml`、`specs/contracts/api_security_contract.yaml`                                                                  | `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_4_API_FRONTEND_AGENT_BACKTEST/026_implement_frontend_shell.md`、`027_implement_frontend_layer_pages.md`；正式 UI 前必须用户确认                                                                                                | `frontend/src/`                                                                                |
-| Agent                        | `docs/modules/agent_module.md`、`docs/api/agent_tool_contracts.md`                                                                         | `specs/contracts/agent_contract.yaml`                                                                                                               | `docs/ops/agent_security_policy.md`、`docs/ops/agent_workflow_boundaries.md`、`docs/adr/ADR-0002-agent-readonly-boundary.md`                                                                                                                                                                          | `backend/app/agents/`                                                                          |
-| 通知与报告                   | `docs/modules/notification_and_reports.md`                                                                                                 | `specs/contracts/notification_report_contract.yaml`、`specs/contracts/user_input_privacy_contract.yaml`                                             | `docs/ops/privacy_retention_policy.md`、`docs/ops/privacy_data_flow.md`                                                                                                                                                                                                                               | `backend/app/notifications/`、`data/reports/`                                                  |
-| 回测与复盘                   | `docs/modules/backtest_and_review.md`、`docs/modules/backtest_review_lifecycle.md`                                                         | `specs/contracts/backtest_contract.yaml`、`specs/contracts/backtest_metric_contract.yaml`、`specs/contracts/backtest_reproducibility_contract.yaml` | `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_4_API_FRONTEND_AGENT_BACKTEST/029_implement_backtest_and_review.md`                                                                                                                                                            | `backend/app/` 内后续 backtest/review 模块落点                                                 |
-| Review Sandbox / Diagnostics | `docs/modules/review_sandbox_api.md`                                                                                                       | `specs/contracts/review_sandbox_contract.yaml`、`specs/contracts/diagnostics_api_contract.yaml`                                                     | `docs/ops/TROUBLESHOOTING.md`、`docs/ops/ERROR_CODE_GUIDE.md`                                                                                                                                                                                                                                         | `backend/app/api/`、`backend/app/validators/`                                                  |
-| QMT / xqshare 可选源         | `docs/modules/qmt_xtdata_adapter.md`                                                                                                       | `specs/contracts/platform_source_matrix.yaml`、`specs/contracts/dependency_extras_contract.yaml`                                                    | `docs/ops/qmt_xqshare_setup.md`、`configs/qmt.yml`；第一版默认禁用                                                                                                                                                                                                                                    | `backend/app/datasources/`、`configs/`                                                         |
-| 发布清理 / manifest          | `docs/quality/final_package_rules.md`                                                                                                      | `specs/contracts/release_cleanup_allowlist.yaml`                                                                                                    | `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_5_INTEGRATION_RELEASE/035_implement_final_package_cleanup.md`、`036_create_final_release_manifest.md`                                                                                                                          | 发布脚本 / 后续 release 任务                                                                   |
-| 参考项目采纳治理             | `docs/architecture/10_external_references.md`                                                                                              | `specs/contracts/reference_adoption_guardrails.yaml`                                                                                                | **历史** 归档 `BATCH_3FR_*` / `R3FR_01_*`、`tests/test_reference_adoption_guardrails.py`；覆盖地图 → 归档 `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/PRODUCTION_COMPLETION_VERTICAL_SLICE_PLAN.md`                                                                              | R3FR-01 不改 runtime；采纳细节在任务卡 `reference_project:` 块                                 |
-| 日志 / 健康 / 审计           | `docs/ops/logs_health_audit.md`                                                                                                            | `specs/contracts/log_audit_contract.yaml`、`specs/contracts/ops_health_check_contract.yaml`                                                         | `docs/ops/incident_playbook.md`、`docs/ops/verification_commands.md`                                                                                                                                                                                                                                  | `backend/app/core/`、`scripts/`                                                                |
+**涉及内容**
 
-## 7. 旧设计内容 → 当前权威位置映射
+- 一句话定义：钱的水位、无风险利率、通胀压力、经济底板
+- 能说明：央行资产负债表、收益率曲线、真实利率、通胀与就业底板
+- 不能说明：信用利差、VIX/SKEW、盘口摩擦、仓位情绪（归其他四轴）
+- 前端展示：今日值、历史位置、变化、滞后、质量、通俗解释与边界提醒
+- 典型指标解释示例（WRESBAL、NET_LIQ_PROXY_BN、EFFR/DGS10/T10Y3M 等）
 
-| 原始内容/章节                | 当前权威位置                                                                                                                                                                           | 说明                                                       |
-| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| 总体项目定位                 | `docs/architecture/00_project_overview.md`                                                                                                                                             | 本地优先、少数人使用、监控而非自动交易                     |
-| 上下文与边界                 | `docs/architecture/01_context_and_scope.md`                                                                                                                                            | 使用范围、非目标、人工确认边界                             |
-| 方案策略                     | `docs/architecture/02_solution_strategy.md`                                                                                                                                            | 总体方案方法                                               |
-| 运行链路                     | `docs/architecture/03_runtime_flows.md`、`specs/contracts/runtime_flow_contract.yaml`                                                                                                  | 数据抓取到前端/Agent 的主链路                              |
-| 数据架构                     | `docs/architecture/04_data_architecture.md`                                                                                                                                            | DuckDB、Raw Store、Parquet、WriteManager                   |
-| 模块地图                     | `docs/architecture/05_module_map.md`、`docs/architecture/module_boundary_matrix.md`                                                                                                    | 各模块职责与边界                                           |
-| 目录结构                     | `docs/architecture/07_project_directory_structure.md`                                                                                                                                  | 项目目录说明；实现目录与文档目录分离                       |
-| 运维与本机低占用             | `docs/ops/performance_limits.md` 与 `docs/modules/ops_and_performance.md`                                                                                                              | ResourceGuard、磁盘、内存、性能                            |
-| 数据源设计                   | `docs/modules/data_sources.md` 与 `specs/datasource_registry/source_registry.yaml`                                                                                                     | Primary / Validation / FallbackPolicy                      |
-| 数据源能力与路由             | `docs/modules/source_capability_registry.md`、`docs/modules/source_route_plan.md`、`docs/modules/datasource_service.md`                                                                | Round2.6 新增边界层                                        |
-| 数据同步                     | `docs/modules/data_sync_orchestrator.md` 与 `specs/contracts/sync_job_contract.yaml`                                                                                                   | FullLoad、Incremental、Backfill、RevisionAudit、Reconcile  |
-| 数据质量与冲突               | `docs/modules/data_validation_and_conflict.md`、`specs/contracts/data_quality_rules.yaml`、`specs/contracts/source_conflict_rules.yaml`                                                | 质量检查与多源冲突治理分离                                 |
-| 五层模型                     | `docs/modules/layer1_global_regime_panel.md` 至 `docs/modules/layer5_security_evidence.md`                                                                                             | Layer 1-5 分层                                             |
-| Layer 1 axis 定义            | `specs/layer1_axes/restructured_axes_v1_1/**`                                                                                                                                          | axis 工程规则、indicator specs、user guide                 |
-| Layer 3 产业链定义           | `specs/layer3_global_industry_chains/layer3_global_industry_chains_v1_2/**`                                                                                                            | registry、node、edge、anchor、data dictionary              |
-| API                          | `docs/api/fastapi_routes.md`、`docs/modules/fastapi_backend.md`、`specs/api/openapi_contract.md`、`specs/contracts/api_security_contract.yaml`                                         | FastAPI、分页、鉴权、查询预算                              |
-| Frontend                     | `docs/modules/frontend_dashboard.md`、`specs/frontend/page_contracts.yaml`                                                                                                             | Dashboard shell 与页面契约；正式 UI 前需确认               |
-| Agent                        | `docs/modules/agent_module.md`、`docs/api/agent_tool_contracts.md`、`specs/contracts/agent_contract.yaml`、`docs/ops/agent_security_policy.md`                                         | 只读、白名单、抗提示注入                                   |
-| 通知与报告                   | `docs/modules/notification_and_reports.md`、`specs/contracts/notification_report_contract.yaml`、`docs/ops/privacy_retention_policy.md`                                                | 去重、冷却、隐私、留存                                     |
-| 回测与复盘                   | `docs/modules/backtest_and_review.md`、`docs/modules/backtest_review_lifecycle.md`、`specs/contracts/backtest_contract.yaml`、`specs/contracts/backtest_reproducibility_contract.yaml` | 防前视偏差、冻结样本、参数快照                             |
-| Review Sandbox / Diagnostics | `docs/modules/review_sandbox_api.md`、`specs/contracts/review_sandbox_contract.yaml`、`specs/contracts/diagnostics_api_contract.yaml`                                                  | Round2.6 后续 API 边界                                     |
-| 最终发布                     | `docs/quality/final_package_rules.md`、`specs/contracts/release_cleanup_allowlist.yaml`                                                                                                | allowlist、dry-run、manifest                               |
-| Round3 批次计划（根目录）    | `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND3_BATCH_IMPLEMENTATION_MAP.md`                                                                                   | 2026-07-02 自根目录迁入；`repo_path_resolve.py` 自动路由   |
-| 历史 ROUND/Wave 任务卡       | `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_*`                                                                                                              | 只读证据；活 SSOT → `PROJECT_IMPLEMENTATION_ROADMAP.md` §3 |
-| 模块闭环活票（v2）           | `PROJECT_IMPLEMENTATION_ROADMAP.md` §3 · `docs/implementation_tasks/M_*`（待建，见 §4.12）                                                                                             | M-DATA-03 → M-G\* → M-PASS-01 队列                         |
-| Round4 B04 产品化            | `docs/implementation_tasks/archive/legacy-pre-module-v2-20260702/ROUND_4_API_FRONTEND_AGENT_BACKTEST/BATCH_04_VERIFIED_AUDIT_PRODUCTIZATION/BATCH_04_TASK_CARD_MANIFEST.md`            | **须 M-PASS-01 后**开工；I 组 I1–I8                        |
+**跨域触点**
+
+| 类别           | 触点                                      |
+| -------------- | ----------------------------------------- |
+| Layer          | ENVIRONMENT axis · E0–E4 模块语义         |
+| 模块           | **→ 五层域 文件5–6** 工程规则与指标 YAML  |
+| 契约 / 文档    | **→ 五层域 文件3** `common_axis_rules.md` |
+| 数据与基础设施 | FRED 宏观序列 · 混频投影须标注 lag        |
+
+---
+
+### 文件5 · `specs/layer1_axes/design/restructured_axes_v1_1/environment_axis/environment_axis_engineering_rules.md`
+
+**定位** 环境轴工程规则（混频投影、lag gate、禁止跨轴指标）
+
+**涉及内容**
+
+- 只输出宏观状态向量，不输出交易动作
+- E0 净水位 proxy 须标记 `projection_method` 与 `source_frequency_map`
+- NET_LIQ_PROXY_BN 仅归因解释，不参与 gate/scoring
+- 月频/周频数据 honest lag；ACMTP10 等模型输出须有 lag gate
+- 禁止 WM2NS、跨轴指标塞入、GDPNow 回写 Layer1
+- 自检：E0–E4 主状态覆盖、混频双算风险阻断
+
+**跨域触点**
+
+| 类别           | 触点                                                      |
+| -------------- | --------------------------------------------------------- |
+| Layer          | ENVIRONMENT gate/scoring 边界                             |
+| 模块           | data_sync FRED adapter · Layer1 计算管道                  |
+| 契约 / 文档    | **→ 五层域 文件6** `environment_axis_indicator_spec.yaml` |
+| 数据与基础设施 | `diagnostic_only` · `excluded_from_gate` 元数据           |
+
+---
+
+### 文件6 · `specs/layer1_axes/design/restructured_axes_v1_1/environment_axis/environment_axis_indicator_spec.yaml`
+
+**定位** 环境轴指标机器规格（indicator_id、数据源、舱位与输出字段）
+
+**涉及内容**
+
+- `axis_id: ENVIRONMENT` 与 E0–E4 模块划分
+- 每指标：indicator_id、display_name_cn、layer/dest_tag、gate_scoring
+- primary_source / validation_source / fallback_policy 逐条登记
+- 混频与诊断指标必填 metadata（projection_method、boundary）
+- 输出字段：raw_value、z_score、percentile_rank、state_bucket、data_lag_days
+- Layer2_Background / BlindSpot 降级指标显式标注
+
+**跨域触点**
+
+| 类别           | 触点                                                  |
+| -------------- | ----------------------------------------------------- |
+| Layer          | Layer1 ENVIRONMENT 表初始化与 snapshot 字段           |
+| 模块           | Layer1 registry loader · sync FRED · 前端 Layer1 面板 |
+| 契约 / 文档    | **→ 五层域 文件4–5** 用户说明与工程规则               |
+| 数据与基础设施 | FRED series ID · weekly/monthly frequency 标注        |
+
+---
+
+### 文件7 · `specs/layer1_axes/design/restructured_axes_v1_1/credit_stress_axis/credit_stress_axis_user_guide.md`
+
+**定位** 信用压力轴（CREDIT_STRESS）用户说明（融资信任温度计）
+
+**涉及内容**
+
+- 一句话定义：市场为企业/金融机构融资要求的额外补偿是否变高
+- 能说明：信用风险补偿、HY 定价、短端融资、repo、银行贷款标准、离岸美元压力
+- 不能说明：国债收益率、期权保险费、盘口摩擦、仓位拥挤（归其他轴）
+- 用户版前端展示与通俗解释口径
+- 与 OAS、融资利差、商业票据等典型指标边界
+
+**跨域触点**
+
+| 类别           | 触点                                      |
+| -------------- | ----------------------------------------- |
+| Layer          | CREDIT_STRESS axis                        |
+| 模块           | **→ 五层域 文件8–9** 工程规则与指标 YAML  |
+| 契约 / 文档    | **→ 五层域 文件3** `common_axis_rules.md` |
+| 数据与基础设施 | 信用利差序列 · FRED / 市场数据源          |
+
+---
+
+### 文件8 · `specs/layer1_axes/design/restructured_axes_v1_1/credit_stress_axis/credit_stress_axis_engineering_rules.md`
+
+**定位** 信用压力轴工程规则（信用利差、融资市场与跨轴隔离）
+
+**涉及内容**
+
+- 只输出信用压力状态向量，禁止交易动作语义
+- 信用指标与国债收益率、VIX、流动性摩擦严格分轴
+- Primary / Validation / FallbackPolicy 与 honest lag
+- 禁止把环境轴或情绪轴指标塞入信用轴计分
+- 自检：主状态指标覆盖、滞后标注、禁止 substitute
+
+**跨域触点**
+
+| 类别           | 触点                                                        |
+| -------------- | ----------------------------------------------------------- |
+| Layer          | CREDIT_STRESS gate/scoring                                  |
+| 模块           | data_sync · Layer1 计算                                     |
+| 契约 / 文档    | **→ 五层域 文件9** `credit_stress_axis_indicator_spec.yaml` |
+| 数据与基础设施 | OAS / spread 序列 · stale_reason                            |
+
+---
+
+### 文件9 · `specs/layer1_axes/design/restructured_axes_v1_1/credit_stress_axis/credit_stress_axis_indicator_spec.yaml`
+
+**定位** 信用压力轴指标机器规格
+
+**涉及内容**
+
+- `axis_id: CREDIT_STRESS` 与模块/指标清单
+- 每指标数据源角色、舱位、gate_scoring 与 boundary
+- 输出字段与 fallback_policy 枚举
+- 诊断/背景指标与主状态指标分离
+- 与 common_axis_rules 舱位表对齐
+
+**跨域触点**
+
+| 类别           | 触点                                       |
+| -------------- | ------------------------------------------ |
+| Layer          | Layer1 CREDIT_STRESS 表族                  |
+| 模块           | **→ 五层域 文件7–8** 用户说明与工程规则    |
+| 契约 / 文档    | `source_registry` · platform_source_matrix |
+| 数据与基础设施 | FRED / 市场 credit 序列                    |
+
+---
+
+### 文件10 · `specs/layer1_axes/design/restructured_axes_v1_1/risk_appetite_axis/risk_appetite_axis_user_guide.md`
+
+**定位** 风险偏好轴（RISK_APPETITE）用户说明（波动与尾部保险费）
+
+**涉及内容**
+
+- 一句话定义：市场为波动、尾部灾难与路径不确定性支付的保险费
+- 能说明：VIX 类波动保险、尾部保护、VRP、股债对冲有效性
+- 不能说明：PCR/COT/NAAIM（情绪轴）、信用利差、盘口冲击、宏观水位
+- 前端命名建议：用「波动保险费」而非「恐慌指数」
+- 典型指标边界与用户可理解解释
+
+**跨域触点**
+
+| 类别           | 触点                                       |
+| -------------- | ------------------------------------------ |
+| Layer          | RISK_APPETITE axis                         |
+| 模块           | **→ 五层域 文件11–12** 工程规则与指标 YAML |
+| 契约 / 文档    | **→ 五层域 文件3** `common_axis_rules.md`  |
+| 数据与基础设施 | 期权隐含波动序列 · VRP 计算边界            |
+
+---
+
+### 文件11 · `specs/layer1_axes/design/restructured_axes_v1_1/risk_appetite_axis/risk_appetite_axis_engineering_rules.md`
+
+**定位** 风险偏好轴工程规则（期权隐含波动、尾部风险与股债共振）
+
+**涉及内容**
+
+- 波动/尾部指标与情绪轴成交行为指标分离
+- VIX、SKEW、VRP 等须有来源与 lag 标注
+- 禁止跨轴 substitute 与回写 Layer1 外轴
+- gate/scoring 与 diagnostic_only 边界
+- 自检清单与禁止项
+
+**跨域触点**
+
+| 类别           | 触点                                                         |
+| -------------- | ------------------------------------------------------------ |
+| Layer          | RISK_APPETITE gate/scoring                                   |
+| 模块           | data_sync 期权/指数源                                        |
+| 契约 / 文档    | **→ 五层域 文件12** `risk_appetite_axis_indicator_spec.yaml` |
+| 数据与基础设施 | 期权链数据 freshness                                         |
+
+---
+
+### 文件12 · `specs/layer1_axes/design/restructured_axes_v1_1/risk_appetite_axis/risk_appetite_axis_indicator_spec.yaml`
+
+**定位** 风险偏好轴指标机器规格
+
+**涉及内容**
+
+- `axis_id: RISK_APPETITE` 指标登记
+- 波动保险费、尾部保护、股债对冲类指标条目
+- primary_source / fallback_policy / dest_tag 逐条定义
+- boundary 与 no_main_score_input 约束
+- 输出字段与频率标注
+
+**跨域触点**
+
+| 类别           | 触点                                      |
+| -------------- | ----------------------------------------- |
+| Layer          | Layer1 RISK_APPETITE 表族                 |
+| 模块           | **→ 五层域 文件10–11** 用户说明与工程规则 |
+| 契约 / 文档    | FRED / CBOE / 市场数据源登记              |
+| 数据与基础设施 | 日频/周频混用 honest lag                  |
+
+---
+
+### 文件13 · `specs/layer1_axes/design/restructured_axes_v1_1/liquidity_axis/liquidity_axis_user_guide.md`
+
+**定位** 流动性轴（LIQUIDITY）用户说明（交易成本与市场可交易性）
+
+**涉及内容**
+
+- 一句话定义：交易是否变难——价差、冲击成本、可交易性
+- 能说明：隐含价差 proxy、价格冲击、可交易性干涸 proxy、ETF 摩擦阵列
+- 不能说明：宏观水位、信用利差、情绪拥挤、期权保险费
+- 不等于真实 L2/L3 订单簿深度
+- 用户版前端展示建议（核心 ETF 阵列摩擦指标）
+
+**跨域触点**
+
+| 类别           | 触点                                       |
+| -------------- | ------------------------------------------ |
+| Layer          | LIQUIDITY axis                             |
+| 模块           | **→ 五层域 文件14–15** 工程规则与指标 YAML |
+| 契约 / 文档    | **→ 五层域 文件3** `common_axis_rules.md`  |
+| 数据与基础设施 | ETF bar · Amihud 类 proxy                  |
+
+---
+
+### 文件14 · `specs/layer1_axes/design/restructured_axes_v1_1/liquidity_axis/liquidity_axis_engineering_rules.md`
+
+**定位** 流动性轴工程规则（交易成本 proxy 与跨轴隔离）
+
+**涉及内容**
+
+- 流动性摩擦指标与环境/信用/风险/情绪轴严格分轴
+- Amihud、价差 proxy 等须有资产范围与频率说明
+- 禁止把宏观流动性水位塞入本轴主计分
+- diagnostic 与主状态分离；honest lag
+- 自检：核心 ETF 传感器覆盖、禁止 substitute
+
+**跨域触点**
+
+| 类别           | 触点                                                     |
+| -------------- | -------------------------------------------------------- |
+| Layer          | LIQUIDITY gate/scoring                                   |
+| 模块           | data_sync 行情 · Layer1 计算                             |
+| 契约 / 文档    | **→ 五层域 文件15** `liquidity_axis_indicator_spec.yaml` |
+| 数据与基础设施 | ETF ticker 阵列 · volume 质量标记                        |
+
+---
+
+### 文件15 · `specs/layer1_axes/design/restructured_axes_v1_1/liquidity_axis/liquidity_axis_indicator_spec.yaml`
+
+**定位** 流动性轴指标机器规格
+
+**涉及内容**
+
+- `axis_id: LIQUIDITY` 与模块/指标清单
+- 交易成本、冲击、可交易性 proxy 条目
+- ETF 传感器阵列与 primary_source 登记
+- gate_scoring、boundary、fallback_policy
+- 输出字段与舱位 dest_tag
+
+**跨域触点**
+
+| 类别           | 触点                                      |
+| -------------- | ----------------------------------------- |
+| Layer          | Layer1 LIQUIDITY 表族                     |
+| 模块           | **→ 五层域 文件13–14** 用户说明与工程规则 |
+| 契约 / 文档    | 行情源 capability · QMT/Yahoo 补充边界    |
+| 数据与基础设施 | 日频 bar · quality_flags                  |
+
+---
+
+### 文件16 · `specs/layer1_axes/design/restructured_axes_v1_1/sentiment_axis/sentiment_axis_user_guide.md`
+
+**定位** 情绪轴（SENTIMENT）用户说明（仓位拥挤与行为倾斜）
+
+**涉及内容**
+
+- 一句话定义：参与者是否挤在船同一侧——仓位、行为、信念、杠杆燃料
+- 能说明：COT、PCR、RSP-SPY 集中度、AAII、融资杠杆等
+- 不能说明：VIX/SKEW/VRP、信用利差、盘口冲击、宏观水位
+- 只输出状态向量，不输出单一情绪总分
+- AAII 是「说什么」非「做什么」；RSP-SPY 是集中度投影
+
+**跨域触点**
+
+| 类别           | 触点                                       |
+| -------------- | ------------------------------------------ |
+| Layer          | SENTIMENT axis                             |
+| 模块           | **→ 五层域 文件17–18** 工程规则与指标 YAML |
+| 契约 / 文档    | **→ 五层域 文件3** `common_axis_rules.md`  |
+| 数据与基础设施 | COT / 调查序列 · 融资余额数据              |
+
+---
+
+### 文件17 · `specs/layer1_axes/design/restructured_axes_v1_1/sentiment_axis/sentiment_axis_engineering_rules.md`
+
+**定位** 情绪轴工程规则（行为/仓位指标与期权保险费分离）
+
+**涉及内容**
+
+- 情绪行为指标与风险偏好轴期权指标严格分轴
+- COT、PCR、AAII、NAAIM 等须有频率与滞后说明
+- 禁止合成单一情绪总分冒充主状态
+- 禁止跨轴 substitute 与交易动作语义
+- 自检：主指标覆盖、边界字段完整
+
+**跨域触点**
+
+| 类别           | 触点                                                     |
+| -------------- | -------------------------------------------------------- |
+| Layer          | SENTIMENT gate/scoring                                   |
+| 模块           | data_sync · Layer1 计算                                  |
+| 契约 / 文档    | **→ 五层域 文件18** `sentiment_axis_indicator_spec.yaml` |
+| 数据与基础设施 | 周频/月频调查 honest lag                                 |
+
+---
+
+### 文件18 · `specs/layer1_axes/design/restructured_axes_v1_1/sentiment_axis/sentiment_axis_indicator_spec.yaml`
+
+**定位** 情绪轴指标机器规格
+
+**涉及内容**
+
+- `axis_id: SENTIMENT` 指标登记
+- 仓位、行为、信念、杠杆类指标条目
+- primary_source / validation / fallback_policy
+- boundary 与 diagnostic_only 标注
+- 输出字段与舱位 dest_tag
+
+**跨域触点**
+
+| 类别           | 触点                                      |
+| -------------- | ----------------------------------------- |
+| Layer          | Layer1 SENTIMENT 表族                     |
+| 模块           | **→ 五层域 文件16–17** 用户说明与工程规则 |
+| 契约 / 文档    | FRED / CFTC / 调查数据源                  |
+| 数据与基础设施 | 融资余额 · COT 报告 lag                   |
+
+---
+
+### 文件19 · `docs/modules/design/layer2_cross_asset_sensor.md`
+
+**定位** Layer2 跨资产传感器（已交易出来的跨资产价格/量/持仓变化）
+
+**涉及内容**
+
+- 资产范围：USD、Rates、Metals、Energy、Credit ETF、Volatility、Shipping、Futures
+- 观察跨资产异常是否支持/反驳 Layer1
+- 不回写 Layer1、不替代宏观判断
+- `cross_asset_registry` 表结构与观测字段
+- 与 Layer3/4/5 的引用边界
+
+**跨域触点**
+
+| 类别           | 触点                                                       |
+| -------------- | ---------------------------------------------------------- |
+| Layer          | Layer2 cross-asset observation · **→ 五层域 文件2** Layer1 |
+| 模块           | data_sync · validation · **→ 五层域 文件20** Layer3        |
+| 契约 / 文档    | `specs/layer2_*`（以仓库当前 specs 为准）                  |
+| 数据与基础设施 | 跨资产 bar / spread 观测 · freshness                       |
+
+---
+
+### 文件20 · `docs/modules/design/layer3_industry_shock_anchor.md`
+
+**定位** Layer3 全球产业链资金震动锚点（引发产业链资金重定价的锚点，非普通行业清单）
+
+**涉及内容**
+
+- Shock-Anchor 概念（NVIDIA、TSMC、Capex Setters、商品价格锚等）
+- 与 Layer5 边界：结构/锚点在 L3，行情/证据在 L5
+- `anchor_tier`（A_GLOBAL_DOMINANT → E_REGIONAL_PROXY）
+- `anchor_priority`（P0_CORE → P2_WATCH）与监控频率
+- 私有公司只进事件系统，不进普通行情表
+
+**跨域触点**
+
+| 类别           | 触点                                                                      |
+| -------------- | ------------------------------------------------------------------------- |
+| Layer          | `industry_chain_*` graph · anchor/node/edge registry                      |
+| 模块           | **→ 五层域 文件30** `layer3_config_health_check.md` · Layer3SpecValidator |
+| 契约 / 文档    | **→ 五层域 文件21–27** Layer3 配置规格 · **→ ADR 域** ADR-0004            |
+| 数据与基础设施 | `source_keys` · P0 锚点来源约束 · event_only 语义                         |
+
+---
+
+### 文件21 · `specs/layer3_global_industry_chains/design/layer3_global_industry_chains_v1_2/layer3_data_dictionary.md`
+
+**定位** Layer3 产业链锚点字段说明与实现规则（v1.2 可实现版本）
+
+**涉及内容**
+
+- Layer3 定位：全球产业链资金震动锚点层，非行业列表或股票池
+- chain / anchor / node / edge 字段字典与含义
+- `chain_priority`、`anchor_priority`、`anchor_tier`、`source_validation_status`
+- 锚点类型：Capex 总开关、全球定价锚、私有事件锚、商品/指数锚、区域映射
+- 文件包清单与程序读取顺序
+- 与 Layer5 边界：L3 存结构，L5 存行情与证据
+
+**跨域触点**
+
+| 类别           | 触点                                                                                         |
+| -------------- | -------------------------------------------------------------------------------------------- |
+| Layer          | `industry_chain_*` 表族字段语义                                                              |
+| 模块           | **→ 五层域 文件20** `layer3_industry_shock_anchor.md` · **→ 五层域 文件22–26** registry 文件 |
+| 契约 / 文档    | **→ 五层域 文件33** `layer3_loader_contract.yaml`                                            |
+| 数据与基础设施 | `status_explanation_cn` · `layer5_mapping_hint`                                              |
+
+---
+
+### 文件22 · `specs/layer3_global_industry_chains/design/layer3_global_industry_chains_v1_2/layer3_global_industry_chain_registry.yaml`
+
+**定位** Layer3 产业链主配置（chain 定义、锚点列表与 v1.2 方案 B 图结构）
+
+**涉及内容**
+
+- `version: 1.2` · 方案 B：功能节点、链内边与 AI 主链跨链传导边
+- `anchor_tier_dictionary` 与 `anchor_role_dictionary`
+- 每条 chain：`chain_id`、`chain_priority`、`chain_type`、`anchors[]`
+- P0 仅 AI 基础设施核心链；非 AI 链为 P1/P2
+- 私有公司/商品/指数锚与区域映射锚规则
+- 后端初始化 `industry_chain` 基础表的主输入
+
+**跨域触点**
+
+| 类别           | 触点                                                        |
+| -------------- | ----------------------------------------------------------- |
+| Layer          | Layer3 chain registry                                       |
+| 模块           | Layer3RegistryLoader · **→ 五层域 文件23–26** 扁平 registry |
+| 契约 / 文档    | **→ 五层域 文件21** `layer3_data_dictionary.md`             |
+| 数据与基础设施 | P0_CORE chain · root node 必生成                            |
+
+---
+
+### 文件23 · `specs/layer3_global_industry_chains/design/layer3_global_industry_chains_v1_2/layer3_anchor_registry.json`
+
+**定位** Layer3 扁平化锚点表（前端卡片、搜索索引与 Agent 输入）
+
+**涉及内容**
+
+- 锚点快速读取：`anchor_id`、display_name、ticker、anchor_tier
+- `status_explanation_cn` / `impact_explanation_cn` 直出前端
+- `anchor_priority`（P0_CORE → P2_WATCH）与 `source_keys`
+- `instrument_type`：public_equity / private_company / future_or_commodity 等
+- `source_validation_status`：verified / needs_source / event_only
+- 不做全量股票池；每个锚点须有地位与作用
+
+**跨域触点**
+
+| 类别           | 触点                                                                         |
+| -------------- | ---------------------------------------------------------------------------- |
+| Layer          | Layer3 anchor 索引                                                           |
+| 模块           | 前端 graph/card · Agent Layer3 context · **→ 五层域 文件27** source_registry |
+| 契约 / 文档    | **→ 五层域 文件22** chain registry YAML                                      |
+| 数据与基础设施 | P0 锚点 `source_keys` 必填                                                   |
+
+---
+
+### 文件24 · `specs/layer3_global_industry_chains/design/layer3_global_industry_chains_v1_2/layer3_node_registry.json`
+
+**定位** Layer3 功能节点注册表（方案 B 图节点）
+
+**涉及内容**
+
+- `node_id` 唯一性与 chain 归属
+- 每条 chain 至少一个 root node（可初始化 `industry_chain_node`）
+- 功能节点语义（AI 服务器、光模块、电力冷却等分组）
+- 与 anchor 的 `node_id` 引用关系
+- 供 Layer3GraphBuilder 构图
+
+**跨域触点**
+
+| 类别           | 触点                                                        |
+| -------------- | ----------------------------------------------------------- |
+| Layer          | `industry_chain_node` 初始化                                |
+| 模块           | Layer3GraphBuilder · **→ 五层域 文件25–26** edge registries |
+| 契约 / 文档    | **→ 五层域 文件33** loader hard_validation_rules            |
+| 数据与基础设施 | node_id 唯一 · anchor.node_id 必须存在                      |
+
+---
+
+### 文件25 · `specs/layer3_global_industry_chains/design/layer3_global_industry_chains_v1_2/layer3_edge_registry.json`
+
+**定位** Layer3 链内有向边注册表（产业链内传导关系）
+
+**涉及内容**
+
+- `from_node_id` / `to_node_id` 端点须在 node registry 存在
+- 链内资金/供给传导边语义
+- 与 cross_chain 边分离
+- 图视图边渲染与 Agent 解释输入
+- 断边/孤儿节点为健康检查失败项
+
+**跨域触点**
+
+| 类别           | 触点                                                |
+| -------------- | --------------------------------------------------- |
+| Layer          | `industry_chain_edge`                               |
+| 模块           | **→ 五层域 文件30** `layer3_config_health_check.md` |
+| 契约 / 文档    | **→ 五层域 文件24** node registry                   |
+| 数据与基础设施 | 有向边 · 禁止悬空端点                               |
+
+---
+
+### 文件26 · `specs/layer3_global_industry_chains/design/layer3_global_industry_chains_v1_2/layer3_cross_chain_edge_registry.json`
+
+**定位** Layer3 跨产业链传导边（AI 主链跨链联动）
+
+**涉及内容**
+
+- 跨 `chain_id` 的传导边（方案 B 核心增量）
+- AI 基础设施主链与其他链的联动关系
+- 端点引用 node_id 完整性约束
+- 前端跨链 graph 展示
+- 与链内 edge 分表管理
+
+**跨域触点**
+
+| 类别           | 触点                                                            |
+| -------------- | --------------------------------------------------------------- |
+| Layer          | cross_chain edge 表族                                           |
+| 模块           | Layer3GraphBuilder · 前端 graph view                            |
+| 契约 / 文档    | **→ 五层域 文件25** 链内 edge · **→ 五层域 文件33** loader 契约 |
+| 数据与基础设施 | 跨链边端点校验                                                  |
+
+---
+
+### 文件27 · `specs/layer3_global_industry_chains/design/layer3_global_industry_chains_v1_2/references/source_registry.md`
+
+**定位** Layer3 P0 锚点官方/权威来源索引（source_keys 可审计依据）
+
+**涉及内容**
+
+- 各 `source_keys` 对应标题、URL 与用途说明
+- 覆盖 Microsoft/Meta/Amazon/Alphabet/NVIDIA 等 Capex 与 AI 收入锚
+- 半导体、能源、商品等产业链锚点来源
+- 供 `source_validation_status=verified` 人工核对
+- 禁止 needs_source 的 P0 锚点静默上线
+
+**跨域触点**
+
+| 类别           | 触点                                                          |
+| -------------- | ------------------------------------------------------------- |
+| Layer          | Layer3 anchor `source_keys`                                   |
+| 模块           | **→ 五层域 文件23** anchor registry · data_sync 公告/财报抓取 |
+| 契约 / 文档    | **→ 五层域 文件30** 健康检查 P0 来源约束                      |
+| 数据与基础设施 | 官方 URL · 财报 press release                                 |
+
+---
+
+### 文件28 · `docs/modules/design/layer4_market_structure.md`
+
+**定位** Layer4 市场结构（各市场内部规则、宽度、板块、制度与内部状态）
+
+**涉及内容**
+
+- 市场范围：CN_A、US_EQ、HK_EQ、CN_FUT、GLOBAL_FUT、OPTIONS、FX
+- MarketAdapter 设计（每市场独立适配器）
+- 市场宽度、板块扩散、制度性异常（涨跌停、连板、换月）
+- 不负责全量个股行情（L5）或宏观 regime（L1）
+- 统一 MarketAdapter 接口（calendar、index、sector、breadth、rule_events）
+
+**跨域触点**
+
+| 类别           | 触点                                                 |
+| -------------- | ---------------------------------------------------- |
+| Layer          | Layer4 market structure snapshot                     |
+| 模块           | **→ 五层域 文件29** Layer5 · data_sync MarketAdapter |
+| 契约 / 文档    | **→ 五层域 文件2** Layer1 regime 只读引用            |
+| 数据与基础设施 | 涨跌停 / 连板 rule_events · sector breadth           |
+
+---
+
+### 文件29 · `docs/modules/design/layer5_security_evidence.md`
+
+**定位** Layer5 个股/合约证据模块（最终证据落点，非技术指标信号层）
+
+**涉及内容**
+
+- 资产范围：股票、ETF、期货、期权、指数、商品代理
+- `instrument_registry`、`security_bar_daily` 等核心表
+- 证据链可追溯；来源不明新闻不作事实
+- 技术指标仅作 baseline/reference
+- 不输出买卖建议；须经 WriteManager 写入
+
+**跨域触点**
+
+| 类别           | 触点                                                          |
+| -------------- | ------------------------------------------------------------- |
+| Layer          | Layer5 evidence chain · latest mapping                        |
+| 模块           | **→ 五层域 文件20** Layer3 锚点引用 · Agent evidence tools    |
+| 契约 / 文档    | **→ API 域** evidence 路由 · **→ Agent 域** `agent_module.md` |
+| 数据与基础设施 | `evidence_chain` · `quality_flags` · QMT 行情接入             |
+
+---
+
+### 文件30 · `docs/ops/design/layer3_config_health_check.md`
+
+**定位** Layer3 产业链配置可执行健康检查（防断边、孤儿节点、P0 来源缺失）
+
+**涉及内容**
+
+- 检查对象：chain/anchor/node/edge/cross_chain registry 与 **→ 五层域 文件27** `references/source_registry.md`
+- 结构唯一性与引用完整性（chain_id、anchor→node、edge 端点、跨链边）
+- chain / anchor / node 字段完整性（`chain_priority`、`anchor_priority`、`source_validation_status` 等）
+- P0 锚点来源约束（`source_keys`、禁止 `needs_source`）
+- ticker 类型、私有公司误作行情锚、event_only 等语义检查
+- 可执行校验脚本与失败含义（配置不得静默带病上线）
+
+**跨域触点**
+
+| 类别           | 触点                                                                                                                                                                                          |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Layer          | Layer3 shock-anchor · `industry_chain_*` 表初始化                                                                                                                                             |
+| 模块           | `Layer3SpecValidator` · `Layer3RegistryLoader` · `Layer3GraphBuilder` · 前端 graph view                                                                                                       |
+| 契约 / 文档    | **→ 五层域 文件21–27** Layer3 design 规格 · `docs/modules/design/layer3_industry_shock_anchor.md` · **→ 五层域 文件33** `layer3_loader_contract.yaml` · **→ 五层域 文件1** `05_module_map.md` |
+| 数据与基础设施 | `source_validation_status` · P0/P1/P2 优先级 · pytest 健康检查                                                                                                                                |
+
+---
+
+### 文件31 · `specs/contracts/design/layer1_axis_contract.yaml`
+
+**定位** Layer1 五轴指标机器契约（必填字段与 quality_flags 枚举）
+
+**涉及内容**
+
+- `required_indicator_fields`：indicator_id、axis_id、primary_source、fallback_policy 等
+- `quality_flags`：MISSING_VALUE、STALE_DATA、SOURCE_SWITCHED、FORBIDDEN_SUBSTITUTE_USED 等
+- 与 **→ 五层域 文件3–18** Layer1 轴 YAML 规格对齐
+- 权威模块：**→ 五层域 文件2** `layer1_global_regime_panel.md`
+- loader/validator 实现与 pytest 绑定
+
+**跨域触点**
+
+| 类别           | 触点                                      |
+| -------------- | ----------------------------------------- |
+| Layer          | Layer1 observation / snapshot 字段校验    |
+| 模块           | Layer1 registry loader · data_sync FRED   |
+| 契约 / 文档    | **→ 五层域 文件3** `common_axis_rules.md` |
+| 数据与基础设施 | standardized fields · BlindSpot 标注      |
+
+---
+
+### 文件32 · `specs/contracts/design/layer2_sensor_contract.yaml`
+
+**定位** Layer2 跨资产传感器注册表机器契约
+
+**涉及内容**
+
+- `asset_groups`：USD、Rates、Metals、Energy、Volatility 等
+- `required_registry_fields`：asset_id、primary_source、is_axis_input、double_count_guard
+- `is_axis_input` vs `display_only` 防回写 Layer1
+- 权威模块：**→ 五层域 文件19** `layer2_cross_asset_sensor.md`
+- registry loader 硬校验规则
+
+**跨域触点**
+
+| 类别           | 触点                                    |
+| -------------- | --------------------------------------- |
+| Layer          | `cross_asset_registry`                  |
+| 模块           | data_sync · **→ 五层域 文件19**         |
+| 契约 / 文档    | **→ 五层域 文件2** Layer1 只读引用边界  |
+| 数据与基础设施 | double_count_guard · eligible_for_model |
+
+---
+
+### 文件33 · `specs/contracts/design/layer3_loader_contract.yaml`
+
+**定位** Layer3 配置加载器硬校验契约（registry 文件集与 P0 来源规则）
+
+**涉及内容**
+
+- `input_files`：chain YAML + anchor/node/edge/cross_chain JSON
+- `hard_validation_rules`：ID 唯一、边端点存在、P0 须有 source_keys
+- `source_validation_status` 枚举与 event_only 私有公司规则
+- 权威模块：**→ 五层域 文件20** `layer3_industry_shock_anchor.md`
+- 与 **→ 五层域 文件30** 健康检查脚本对齐
+
+**跨域触点**
+
+| 类别           | 触点                                       |
+| -------------- | ------------------------------------------ |
+| Layer          | Layer3 graph 初始化                        |
+| 模块           | Layer3RegistryLoader · Layer3SpecValidator |
+| 契约 / 文档    | **→ 五层域 文件21–27** design 规格全集     |
+| 数据与基础设施 | pytest layer3 config health                |
+
+---
+
+### 文件34 · `specs/contracts/design/layer4_market_contract.yaml`
+
+**定位** Layer4 市场结构表族机器契约（registry / calendar / snapshot）
+
+**涉及内容**
+
+- `market_registry`、`market_calendar`、`market_index_snapshot` 等表 primary_key
+- `required_fields` 与 `quality_rules`（非交易日 snapshot、source 必填等）
+- 权威模块：**→ 五层域 文件28** `layer4_market_structure.md`
+- MarketAdapter 输出边界
+- 不负责 Layer5 全量个股行情
+
+**跨域触点**
+
+| 类别           | 触点                                     |
+| -------------- | ---------------------------------------- |
+| Layer          | Layer4 market structure snapshot         |
+| 模块           | MarketAdapter · data_sync                |
+| 契约 / 文档    | **→ 五层域 文件28**                      |
+| 数据与基础设施 | trade_date · session_type · quality_flag |
+
+---
+
+## 数据存储与分层架构
+
+### 文件1 · `docs/architecture/design/04_data_architecture.md`
+
+**定位** 数据层总架构（DuckDB / Parquet / 文件系统 / staging / clean / snapshot）
+
+**涉及内容**
+
+- 数据分层：Raw → Staging → Clean → Snapshot → API/Agent
+- 旁路审计日志族（conflict、revision、resource_guard、agent_run 等）
+- 存储边界表（DuckDB / Parquet / 文件系统 / specs / audit 各司其职）
+- DuckDB 表族（registry、observation、snapshot、quality、report）
+- Staging / Clean / Snapshot / Audit 语义；`primary-grade` vs `degraded clean`
+- 数据生命周期、schema 版本、Parquet 分区、specs 与 DB 映射
+- 数据访问边界表（Frontend / Agent / DataSync / Ops）与验收测试
+
+**跨域触点**
+
+| 类别           | 触点                                                                                                                                        |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Layer          | Layer1 axis 表 · Layer3 industry_chain 表 · 各层 snapshot                                                                                   |
+| 模块           | WriteManager · ReadOnlyRepository · Agent tools · DataSync                                                                                  |
+| 契约 / 文档    | `specs/schema/schema.sql` · `specs/contracts/`\* · `docs/modules/design/duckdb_and_parquet.md` · `docs/modules/design/local_file_system.md` |
+| 数据与基础设施 | `file_registry` · `source_conflict` · `write_audit_log` · `degraded clean` / FallbackPolicy · ResourceGuard · Parquet 分区路径              |
+
+---
+
+### 文件2 · `docs/modules/design/duckdb_and_parquet.md`
+
+**定位** DuckDB 与 Parquet 数据底座模块（表族、归档、schema 与查询边界）
+
+**涉及内容**
+
+- DuckDB / Parquet / 文件系统三层存储边界与分工
+- Raw → Staging → Validation → WriteManager → Clean 流水线
+- DuckDB 表族命名、建表、分层与 Parquet 分区归档策略
+- 避免 DuckDB 被误用为高并发业务库的五条规则
+- schema version 与上层模块统一读取可信数据
+- 与 WriteManager、ReadOnlyRepository 的协作边界
+
+**跨域触点**
+
+| 类别           | 触点                                                                          |
+| -------------- | ----------------------------------------------------------------------------- |
+| Layer          | 各层 registry / observation / snapshot 表族                                   |
+| 模块           | **→ 本域 文件4** `write_manager.md` · **→ 本域 文件3** `local_file_system.md` |
+| 契约 / 文档    | **→ 数据存储域 文件1** `04_data_architecture.md` · `specs/schema/schema.sql`  |
+| 数据与基础设施 | Clean / Snapshot / Audit 表 · Parquet `data/parquet/` 分区 · `schema_version` |
+
+---
+
+### 文件3 · `docs/modules/design/local_file_system.md`
+
+**定位** 本地文件系统模块（原始资料仓库、文件型数据湖与审计留痕）
+
+**涉及内容**
+
+- `data/` 目录结构（raw、files、parquet、audit、reports、cache、backups）
+- DuckDB 与文件系统分工：结构化查询 vs 原始 PDF/HTML/ZIP 证据
+- Raw Store / File Lake / Audit Store 边界
+- 原始证据保留策略；DuckDB 只存路径、hash 与元数据
+- `file_registry` 与手动导入证据登记
+
+**跨域触点**
+
+| 类别           | 触点                                                                             |
+| -------------- | -------------------------------------------------------------------------------- |
+| 模块           | WriteManager · Agent manual import · **→ 数据源域** `data_sources.md`            |
+| 契约 / 文档    | **→ 本域 文件1** `04_data_architecture.md` · **→ 隐私域** `privacy_data_flow.md` |
+| 数据与基础设施 | `data/raw/` · `data/files/` · `data/audit/` · pre-migration 备份目录             |
+
+---
+
+### 文件4 · `docs/modules/design/write_manager.md`
+
+**定位** 系统唯一标准写入口（所有 clean / snapshot / audit 写入须经 WriteManager）
+
+**涉及内容**
+
+- staging → validation → WriteManager → clean 写入链路
+- 组件划分：ValidationGate、MergePlanner、TransactionRunner、WriteLockManager
+- DuckDB 单写边界、短事务与失败回滚
+- primary-grade vs degraded clean 区分与写入规则
+- 禁止前端 / Agent / adapter 绕过写库直写 clean
+- `write_audit_log` STARTED / COMMITTED / FAILED 语义
+
+**跨域触点**
+
+| 类别           | 触点                                                                                                   |
+| -------------- | ------------------------------------------------------------------------------------------------------ |
+| 模块           | DataSyncOrchestrator · DataQualityValidator · **→ 数据同步域 文件5** `data_validation_and_conflict.md` |
+| 契约 / 文档    | **→ 运维域** `lock_and_concurrency_policy.md` · **→ 本域 文件2** `duckdb_and_parquet.md`               |
+| 数据与基础设施 | `DuckDBWriteManager` · `data/duckdb/.write.lock` · degraded clean merge                                |
+
+---
+
+### 文件5 · `specs/contracts/design/snapshot_lineage_contract.yaml`
+
+**定位** Layer1–5 Snapshot 血缘与可重现性机器契约
+
+**涉及内容**
+
+- 必填字段：snapshot_id、as_of_timestamp、source_dataset_ids、rule_version、parameter_hash
+- `no_future_data`：as_of 不得晚于输入观测可见时间
+- `deterministic_rebuild`：同输入同规则须重现业务结果
+- `agent_outputs_not_source`：Agent 散文不得进入 source_dataset_ids
+- 验收测试：future input 拒绝、lineage 含 source hash
+
+**跨域触点**
+
+| 类别           | 触点                                                                                       |
+| -------------- | ------------------------------------------------------------------------------------------ |
+| Layer          | Layer1–5 snapshot 全层                                                                     |
+| 模块           | snapshot builder · Agent tools 只读                                                        |
+| 契约 / 文档    | **→ 本域 文件1** `04_data_architecture.md` · **→ 运维域 文件11** `log_audit_contract.yaml` |
+| 数据与基础设施 | incremental rebuild · upstream_snapshot_ids                                                |
+
+---
+
+## 数据同步与运行时编排
+
+### 文件1 · `docs/architecture/design/03_runtime_flows.md`
+
+**定位** 系统运行时关键链路（每日 / 盘中 / 回补 / 冲突 / 报告 / 恢复）
+
+**涉及内容**
+
+- 总链路：Scheduler/CLI → ResourceGuard → Sync → Validator → WriteManager → API/前端/Agent
+- 每日盘后 10 步链路与 eco 模式资源限制
+- 盘中轻量链路与禁止项（FullLoad / 大范围 Backfill 等）
+- Layer1 / Layer3 更新链路
+- 数据冲突、回补、报告、API 读取、备份恢复链路
+- ResourceGuard 介入点与 PAUSE 行为
+- 盘中提醒链路与回测复盘链路
+
+**跨域触点**
+
+| 类别           | 触点                                                                                                                                                             |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Layer          | Layer1 axis 更新 · Layer3 graph/snapshot · Layer5 latest mapping                                                                                                 |
+| 模块           | `DataSyncOrchestrator` · `DataQualityValidator` · `SourceConflictValidator` · `ReconcileJob` · Agent staging · `ReportBuilder` · `AlertRuleEngine` · Backtest    |
+| 契约 / 文档    | **→ API 域** FastAPI Response Envelope · `QUERY_TOO_LARGE` · `docs/modules/design/data_sync_orchestrator.md` · `docs/modules/design/notification_and_reports.md` |
+| 数据与基础设施 | ResourceGuard · WriteManager · `source_conflict` · `no_action_semantics_guard` · BackupManager · smoke test                                                      |
+
+---
+
+### 文件2 · `docs/ops/design/idempotency_retry_dlq_policy.md`
+
+**定位** 数据同步幂等、重试退避、死信与部分成功策略（QM-AUD-011）
+
+**涉及内容**
+
+- `idempotency_key` 组成与重复执行行为（成功复用 / 失败重试 / running 超时转人工）
+- 按错误类型的重试策略（NETWORK、RATE_LIMIT、AUTH、SCHEMA_DRIFT 等）
+- `manual_review_queue` 死信字段与推荐下一步动作
+- 批量任务 item-level 状态与部分成功补偿规则
+- snapshot 构建只能读取通过 quality gate 的 clean 数据
+
+**跨域触点**
+
+| 类别           | 触点                                                                                                               |
+| -------------- | ------------------------------------------------------------------------------------------------------------------ |
+| 模块           | `DataSyncOrchestrator` · `DataQualityValidator` · `ReconcileJob` · `docs/modules/design/data_sync_orchestrator.md` |
+| 契约 / 文档    | **→ 文件1** `03_runtime_flows.md` 冲突/回补链路                                                                    |
+| 数据与基础设施 | staging · clean merge · `source_conflict` · manual review                                                          |
+
+---
+
+### 文件3 · `docs/ops/design/lock_and_concurrency_policy.md`
+
+**定位** DuckDB 单写多读、文件锁与崩溃恢复（QM-AUD-009）
+
+**涉及内容**
+
+- 单写多读、短事务；所有 clean 写入经 `DuckDBWriteManager`
+- 跨进程写锁（如 `data/duckdb/.write.lock`）
+- 读连接 `read_only=True` 与 writer 一致的 memory/threads/temp 配置
+- `write_audit_log` STARTED/COMMITTED/FAILED 与启动时 ABANDONED 扫描
+- 禁止自动重放长时间停留的 STARTED 写任务
+
+**跨域触点**
+
+| 类别           | 触点                                                                                |
+| -------------- | ----------------------------------------------------------------------------------- |
+| 模块           | WriteManager · DataSync · ReadOnlyRepository                                        |
+| 契约 / 文档    | **→ 数据存储域** `04_data_architecture.md` · `docs/modules/design/write_manager.md` |
+| 数据与基础设施 | DuckDB 并发 · `write_audit_log` · `test_concurrentWriters_secondWriterBlocked` 等   |
+
+---
+
+### 文件4 · `docs/modules/design/data_sync_orchestrator.md`
+
+**定位** 数据同步总控模块（全量、增量、回补、修订审计、冲突重抓 Job 解耦）
+
+**涉及内容**
+
+- `DataSyncOrchestrator` 与六类 Job：FullLoad / Incremental / Backfill / RevisionAudit / Reconcile / DataQuality
+- `data_sync_job` 表与任务状态机
+- 日常增量基于 cursor / hash 只补缺失，禁止无差别全量重抓
+- RevisionAudit 检测历史修订（`content_hash` / `revision_id`）
+- ReconcileJob 多源冲突重抓与人工确认 escalation
+- CLI、调度策略、失败恢复与审计协议
+
+**跨域触点**
+
+| 类别           | 触点                                                                                                         |
+| -------------- | ------------------------------------------------------------------------------------------------------------ |
+| Layer          | Layer1 五轴历史 · Layer2 跨资产 · Layer3/4 基础映射初始化                                                    |
+| 模块           | **→ 数据同步域 文件5** `data_validation_and_conflict.md` · **→ 本域 文件4** `write_manager.md`（数据存储域） |
+| 契约 / 文档    | **→ 本域 文件1** `03_runtime_flows.md` · **→ 本域 文件2–3** 幂等/锁策略                                      |
+| 数据与基础设施 | ResourceGuard · `idempotency_key` · manual_review_queue                                                      |
+
+---
+
+### 文件5 · `docs/modules/design/data_validation_and_conflict.md`
+
+**定位** 数据质量检查与多源冲突治理（单份合格 vs 多源打架）
+
+**涉及内容**
+
+- `DataQualityValidator` 与 `SourceConflictValidator` 职责分离
+- staging → validation → ValidationGate → clean / conflict 流程
+- `validation_request` 输入与 ValidationReport 输出字段
+- 质量检查（如 high < low）vs 冲突检查（多源 close 差异）
+- 与 ReconcileJob、WriteManager 协作；snapshot 只读通过 gate 的 clean
+- 原始数据永不删除、标准表只存一个主值
+
+**跨域触点**
+
+| 类别           | 触点                                                                                           |
+| -------------- | ---------------------------------------------------------------------------------------------- |
+| 模块           | **→ 数据源域 文件1** `data_sources.md` 冲突原则 · **→ 本域 文件4** `data_sync_orchestrator.md` |
+| 契约 / 文档    | **→ 数据存储域 文件4** `write_manager.md` · `source_conflict` 表语义                           |
+| 数据与基础设施 | `source_conflict` · degraded clean · 人工确认清单                                              |
+
+---
+
+### 文件6 · `specs/contracts/design/runtime_flow_contract.yaml`
+
+**定位** 运行时流程机器契约（盘后 / 盘中 / 回补等 flow 步骤与禁止项）
+
+**涉及内容**
+
+- `daily_after_close`：eco 模式步骤链（incremental → validation → write → snapshot → report → backup）
+- `intraday_light`：P0 watchlist、核心指数、Layer3 P0 锚点范围
+- 各 flow 的 `forbidden` 清单（full_load、large_backfill、全市场分钟扫描等）
+- `resource_profile` 与 ResourceGuard 对齐
+- 与 **→ 本域 文件1** `03_runtime_flows.md` 叙事一致
+
+**跨域触点**
+
+| 类别           | 触点                                                                                |
+| -------------- | ----------------------------------------------------------------------------------- |
+| 模块           | DataSyncOrchestrator · scheduler · ResourceGuard                                    |
+| 契约 / 文档    | **→ 本域 文件1** `03_runtime_flows.md` · **→ 运维域 文件13** `resource_limits.yaml` |
+| 数据与基础设施 | eco 默认 · incremental_update 步骤序                                                |
+
+---
+
+### 文件7 · `specs/contracts/design/source_conflict_rules.yaml`
+
+**定位** 多源冲突判定机器契约（可比字段、阈值与严重级别）
+
+**涉及内容**
+
+- `comparable_fields`：objective_fact（OHLCV 等）vs separate_by_source（口径差异）
+- `thresholds`：market_bar_1d close/volume 相对 warning/severe 阈值
+- futures_bar、index_level 等域别阈值
+- 与 SourceConflictValidator 实现绑定
+- 冲突 escalation 至 manual_review
+
+**跨域触点**
+
+| 类别           | 触点                                                                                        |
+| -------------- | ------------------------------------------------------------------------------------------- |
+| 模块           | **→ 本域 文件5** `data_validation_and_conflict.md` · **→ 数据源域 文件1** `data_sources.md` |
+| 契约 / 文档    | `source_conflict` 表 · **→ 排障域** ERROR_CODE_GUIDE                                        |
+| 数据与基础设施 | relative_warning / relative_severe                                                          |
+
+---
+
+## 数据源注册与路由
+
+### 文件1 · `docs/modules/design/data_sources.md`
+
+**定位** 数据源注册与优先级模块（多源分层、冲突原则与 `source_registry`）
+
+**涉及内容**
+
+- 数据源分层表（QMT、baostock、AkShare、CNINFO、东财、Yahoo 等角色定位）
+- `source_registry` 表结构与 trust_level / priority / is_enabled
+- 多源冲突六级治理（raw 保留 → 标准化 → 分级 → 人工确认）
+- 客观事实类 vs 口径差异类字段处理规则
+- Primary / Validation / FallbackPolicy 数据源角色
+- 原始数据永不删除、标准表只保存一个主值
+
+**跨域触点**
+
+| 类别           | 触点                                                                                                     |
+| -------------- | -------------------------------------------------------------------------------------------------------- |
+| 模块           | **→ 本域 文件2–3** capability / route · **→ 本域 文件4** QMT adapter · DataSync                          |
+| 契约 / 文档    | `specs/contracts/platform_source_matrix.yaml` · **→ 数据同步域 文件5** `data_validation_and_conflict.md` |
+| 数据与基础设施 | `source_registry` · `source_conflict` · silent fallback 禁止                                             |
+
+---
+
+### 文件2 · `docs/modules/design/source_capability_registry.md`
+
+**定位** `SourceCapabilityRegistry`：声明 source/domain/operation/field 细粒度能力
+
+**涉及内容**
+
+- 与 `SourceRegistry` 职责分离；绑定 `source_capabilities.yaml`
+- Adapter `supported_domains` 必须是 capability 子集
+- fetch 前必须确认 capability 存在
+- Capability 不授予 fallback 权限
+- 未来实现 `backend/app/datasources/capability_registry.py`
+
+**跨域触点**
+
+| 类别           | 触点                                                                                   |
+| -------------- | -------------------------------------------------------------------------------------- |
+| 模块           | DataSourceService · 各 vendor adapter · **→ 本域 文件3** `source_route_plan.md`        |
+| 契约 / 文档    | `specs/contracts/source_capability_contract.yaml` · **→ 本域 文件1** `data_sources.md` |
+| 数据与基础设施 | `CAPABILITY_MISSING` 错误码 · route-preview                                            |
+
+---
+
+### 文件3 · `docs/modules/design/source_route_plan.md`
+
+**定位** 运行时显式源路由计划（选源、跳过、fallback、禁止 silent fallback）
+
+**涉及内容**
+
+- RoutePlan 必录字段（route_status、candidates、quality_flags、route_grade）
+- 关键状态：READY / READY_DEGRADED / BLOCKED_MANUAL_REVIEW / NO_AVAILABLE_SOURCE 等
+- FallbackPolicy 决策记录与失败原因枚举
+- `route_grade=primary|degraded|blocked` 防误读
+- 缺授权时须返回 `USER_AUTH_REQUIRED`
+
+**跨域触点**
+
+| 类别           | 触点                                                                                       |
+| -------------- | ------------------------------------------------------------------------------------------ |
+| 模块           | DataSyncOrchestrator · **→ 本域 文件2** capability registry                                |
+| 契约 / 文档    | `specs/contracts/source_route_contract.yaml` · **→ 排障域** ERROR_CODE_GUIDE · INC-001/004 |
+| 数据与基础设施 | `disabled_reason` · qmt_xqshare env gate                                                   |
+
+---
+
+### 文件4 · `docs/modules/design/qmt_xtdata_adapter.md`
+
+**定位** QMT/xtdata 适配层封装（业务层不得直接调用 QMT API）
+
+**涉及内容**
+
+- `QMTDataAdapter` 接口（历史缓存、K 线、实时行情、订阅）
+- 内部 API 版本选择（download_history_data、get_market_data_ex 等）
+- 第一版默认禁用，须用户确认安装路径与授权（D-11）
+- `qmt_xqshare` 可选远程源边界与禁止自动探测/登录
+- Phase A 不修改 registry、不新增未登记 adapter
+
+**跨域触点**
+
+| 类别           | 触点                                                                               |
+| -------------- | ---------------------------------------------------------------------------------- |
+| 模块           | DataSourceService · **→ 本域 文件5** `qmt_xqshare_setup.md`                        |
+| 契约 / 文档    | **→ 本域 文件1** `data_sources.md` · **→ 运维域** `06_deployment_and_local_ops.md` |
+| 数据与基础设施 | xtdata 本地路径 · optional extra `qmt`                                             |
+
+---
+
+### 文件5 · `docs/ops/design/qmt_xqshare_setup.md`
+
+**定位** 可选远程 QMT 源 `qmt_xqshare` 的配置与路由边界
+
+**涉及内容**
+
+- `qmt_xqshare` 默认禁用，仅用户明确配置远程 QMT 授权后可调度
+- 必需环境变量 `XQSHARE_REMOTE_HOST` / `XQSHARE_REMOTE_PORT`
+- 禁止自动探测端口、自动登录、处理验证码、默认启用、silent fallback
+- 缺 env 或授权时 `SourceRoutePlan` 须返回 `USER_AUTH_REQUIRED`
+- 凭证须放 `.env.local` 或用户确认的本地 secret 机制
+
+**跨域触点**
+
+| 类别           | 触点                                                                                                                                                      |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 模块           | `DataSourceService` · QMT / xtdata 适配器                                                                                                                 |
+| 契约 / 文档    | `specs/contracts/platform_source_matrix.yaml` · `source_route_contract.yaml` · `source_capabilities.yaml` · **→ 运维域** `06_deployment_and_local_ops.md` |
+| 数据与基础设施 | `disabled_reason=missing_xqshare_env_or_user_authorization` · **→ 排障域** INC-004                                                                        |
+
+---
+
+## API 相关功能权威文档
+
+### 文件1 · `docs/api/design/agent_tool_contracts.md`
+
+**定位** Agent 工具 API 与数据边界实现
+
+**涉及内容**
+
+- 8 个 `GET/POST /api/agent-tools/*` 路径（layer1~5 context、evidence、data-health、submit-staging）
+- Agent 工具允许/禁止能力（只读 snapshot 与 evidence、写 staging、禁 SQL/clean/Repository 绕过/联网/重任务/交易语义）
+- 统一 Tool Response 必填字段（`evidence_refs`、`quality_flags`、`truncated` 等）
+- 各工具默认行数与硬上限（局部上限不得高于 `api_security_contract` 全局 200/1000）
+- Layer1 / Layer3 / Evidence 工具的 Query Params 与返回字段
+- `submit-staging` 请求体、`no_action_semantics_guard` 禁词表与拒绝规则
+- Agent 工具验收测试清单
+
+**跨域触点**
+
+| 类别           | 触点                                                                                                                         |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Layer          | Layer1 五轴 · Layer2 传感器 · Layer3 产业链 · Layer4 市场结构 · Layer5 证据摘要                                              |
+| 契约 / 文档    | `docs/modules/design/agent_module.md` · `specs/contracts/agent_contract.yaml` · `specs/contracts/api_security_contract.yaml` |
+| 数据与基础设施 | `evidence_chain` · `data_health` / `RESOURCE_GUARD_PAUSED` · `agent_output_staging` · FastAPI / Repository / DuckDB 只读边界 |
+
+---
+
+### 文件2 · `docs/api/design/fastapi_routes.md`
+
+**定位** API 路由级实现清单与全局契约
+
+**涉及内容**
+
+- 全部路由全局约束（Response Envelope、分页、`quality_flags`/`source_used`、禁直拼 SQL / 绕过 Repository / 直写 clean）
+- 默认调用链：Router → Validation → Service → ReadOnlyRepository → DuckDB / Parquet / Snapshot
+- 本机资源友好限制（`page_size`、`date_range`、分钟线范围、超时、`query_cost`）
+- 路由组：market / layer1~5 / evidence / reports / data-health / agent-tools / admin / notifications / backtest
+- 统一错误码与 Admin Job 仅 `REQUESTED` 任务
+- D-02 API 安全模式；`api_security_contract.yaml` 为分页与 token 机器权威
+
+**跨域触点**
+
+| 类别           | 触点                                                                                                 |
+| -------------- | ---------------------------------------------------------------------------------------------------- |
+| Layer          | Layer1~5 全层读接口                                                                                  |
+| 模块           | `docs/modules/design/fastapi_backend.md` · 日报/周报 · 通知中心 · 回测复盘 · **→ 文件1** agent-tools |
+| 契约 / 文档    | `specs/contracts/api_security_contract.yaml` · `agent_contract.yaml`                                 |
+| 数据与基础设施 | `evidence_chain` · data_health / source_conflict · ResourceGuard · ReadOnlyRepository · 后台任务边界 |
+
+---
+
+### 文件3 · `docs/modules/design/fastapi_backend.md`
+
+**定位** FastAPI 后端实现级设计（将 DuckDB/Parquet/文件索引以稳定 API 暴露）
+
+**涉及内容**
+
+- 只读边界：不直接抓数、不绕过 WriteManager 写库
+- 服务目录结构（routers、schemas、services、ReadOnlyRepository）
+- 统一分页、freshness、`quality_flags`、错误码与 Response Envelope
+- Layer1–5、evidence、reports、data_health、agent_tools 路由实现落点
+- 与 **→ API 域 文件2** `fastapi_routes.md` 路由清单对齐
+- 前端与 Agent 权限边界分离
+
+**跨域触点**
+
+| 类别           | 触点                                                                                                             |
+| -------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Layer          | Layer1~5 全层读服务                                                                                              |
+| 模块           | **→ 前端域 文件2** `frontend_dashboard.md` · **→ Agent 域** agent-tools                                          |
+| 契约 / 文档    | **→ API 域 文件2** `fastapi_routes.md` · **→ API 域 文件4** `openapi_contract.md` · `api_security_contract.yaml` |
+| 数据与基础设施 | ReadOnlyRepository · `QUERY_TOO_LARGE` · page_size 200/1000                                                      |
+
+---
+
+### 文件4 · `specs/api/design/openapi_contract.md`
+
+**定位** OpenAPI Contract v1（Response Envelope 与路由组机器落点）
+
+**涉及内容**
+
+- 统一响应 Envelope：`ok` / `data` / `meta` / `errors` 必填结构
+- `meta` 字段：as_of_timestamp、quality_flags、source_used、分页（page/page_size/total）
+- 必须实现的路由组：`/api/market` · layer1~5 · evidence · reports · data-health · agent-tools
+- 禁止 router 直拼 SQL、API 直写 clean、无分页大历史、Agent 返回无来源数据
+- 权威实现对齐 **→ API 域 文件3** `fastapi_backend.md`；供 OpenAPI 生成与校验
+
+**跨域触点**
+
+| 类别           | 触点                                                                             |
+| -------------- | -------------------------------------------------------------------------------- |
+| Layer          | Layer1~5 读接口 envelope 一致性                                                  |
+| 模块           | **→ API 域 文件2** `fastapi_routes.md` · **→ API 域 文件3** `fastapi_backend.md` |
+| 契约 / 文档    | `specs/contracts/api_security_contract.yaml` · `agent_contract.yaml`             |
+| 数据与基础设施 | page_size 200 默认 · quality_flags 透传                                          |
+
+---
+
+## Agent 相关功能权威文档
+
+### 文件1 · `docs/ops/design/agent_security_policy.md`
+
+**定位** Agent 工具安全、来源白名单与提示注入防护（D-12 / QM-AUD-015）
+
+**涉及内容**
+
+- D-12 已拍板来源策略：固定 adapter、用户手动导入、已登记 file_registry；禁自由联网
+- Agent 工具白名单与 `agent_contract.yaml` 登记字段（max_rows、PII、output_schema 等）
+- 禁止自由 SQL、直写 DuckDB、联网抓新闻、LLM 覆盖数据库事实、交易动作语义
+- 用户手动导入文本须进 registry、仅作待验证 evidence
+- 提示注入防护（忽略数据源内嵌指令）
+- 验收测试（free SQL、unknown tool、free web search、prompt injection 等）
+
+**跨域触点**
+
+| 类别           | 触点                                                                                 |
+| -------------- | ------------------------------------------------------------------------------------ |
+| Layer          | Layer1~5 context 读取边界                                                            |
+| 模块           | `docs/modules/design/agent_module.md` · **→ API 域 文件1** `agent_tool_contracts.md` |
+| 契约 / 文档    | `specs/contracts/agent_contract.yaml` · `file_registry` · `text_source_registry`     |
+| 数据与基础设施 | `evidence_ids` · `facts_used` · `no_action_semantics` · manual import 审计           |
+
+---
+
+### 文件2 · `docs/modules/design/agent_module.md`
+
+**定位** Agent 模块实现级文档（解释、摘要、结构化报告与问答）
+
+**涉及内容**
+
+- Agent 清单：日报、新闻事件、公告、五轴解释、五层解释、数据质量、策略复盘
+- 统一受控工具边界（`get_layer*_snapshot` 等只读工具）
+- 禁止工具：自由 SQL、直写 DuckDB、自由联网、交易动作语义
+- 各 Agent 写库权限（仅 report staging / event staging）
+- 不把 LLM 推理当成数据库事实；`facts_used_json` 追溯
+- 与 **→ API 域 文件1** `agent_tool_contracts.md` 路径与字段对齐
+
+**跨域触点**
+
+| 类别           | 触点                                                                             |
+| -------------- | -------------------------------------------------------------------------------- |
+| Layer          | Layer1~5 context 读取 · evidence 摘要                                            |
+| 模块           | **→ 通知域** `notification_and_reports.md` · **→ 隐私域** `privacy_data_flow.md` |
+| 契约 / 文档    | **→ 本域 文件1** `agent_security_policy.md` · `agent_contract.yaml`              |
+| 数据与基础设施 | `agent_output_staging` · `no_action_semantics_guard` · ResourceGuard 行数限制    |
+
+---
+
+## 模块边界与工程契约
+
+### 文件1 · `docs/architecture/design/module_boundary_matrix.md`
+
+**定位** 模块 import 边界矩阵（低耦合工程契约）
+
+**涉及内容**
+
+- 六条总原则（datasource 不写 clean、sync 不依赖 API/Agent、API 不 import adapter 等）
+- 关键禁止边界表（datasources / api / agents / layer\* / frontend）
+- Layer 模块不得直连 `DataSourceService`，须经 sync seam
+- 检查脚本 `check_module_boundaries.py` 与 pytest
+- 机器契约 `specs/contracts/module_boundary_contract.yaml`
+
+**跨域触点**
+
+| 类别           | 触点                                                                                                                                  |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Layer          | `layer1_axes` … `layer5_evidence` 的 `must_not_import`                                                                                |
+| 模块           | `backend.app.datasources` · `backend.app.api` · `backend.app.agents` · `backend.app.sync` · WriteManager · vendor adapters · frontend |
+| 契约 / 文档    | `specs/contracts/module_boundary_contract.yaml` · `tests/test_module_boundaries.py`                                                   |
+| 数据与基础设施 | EasyXT 低耦合理念 · `sync_indicator` seam · 全树边界扫描须保持绿色                                                                    |
+
+---
+
+## 运维与本地部署
+
+### 文件1 · `docs/architecture/design/06_deployment_and_local_ops.md`
+
+**定位** 部署形态与本地运维入口（指向 ops 细则）
+
+**涉及内容**
+
+- 本地优先部署形态（DuckDB 单写多读、前端/Agent 经 FastAPI）
+- 运维文件索引（手册、验证命令、同步速查、排障、qmt_xqshare）
+- Canonical 生产 DuckDB 路径与 `QMD_DATA_ROOT` 隔离规则（ACC-USER-LIVE-PATH）
+- 运维逃生口 `QMD_SYNC_ALLOW_ADAPTER=1` 限制
+- CI 一键初始化 `init_db.py --sync-registry` 与 perf budget 产物
+- 平台矩阵与 optional extras 边界摘要
+
+**跨域触点**
+
+| 类别           | 触点                                                                                                                                                                                                                           |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 模块           | 数据同步 CLI · QMT / qmt_xqshare · 回测 / Agent / docs site optional extras                                                                                                                                                    |
+| 契约 / 文档    | **→ 本域 文件2** `docs/ops/design/ops_and_performance_v1_2.md` · `specs/contracts/platform_source_matrix.yaml` · `specs/contracts/dependency_extras_contract.yaml` · `specs/contracts/production_equivalent_smoke_budget.yaml` |
+| 数据与基础设施 | `<PROJECT_ROOT>/data/duckdb/quant_monitor.duckdb` · `.audit-sandbox/` · `pyproject.toml` / `package.json` 变更门禁 · baostock/akshare/qmt/yahoo 平台表                                                                         |
+
+---
+
+### 文件2 · `docs/ops/design/ops_and_performance_v1_2.md`
+
+**定位** 运维与性能手册 v1.2（本地文件系统 / DuckDB / Parquet / 同步 / 备份总手册）
+
+**涉及内容**
+
+- DuckDB、本地文件系统、Parquet 三类存储分工与 `data/` 目录规范
+- DuckDB 单写多读、写入流程与库文件备份要点
+- Parquet 分区规范与转档时机
+- 五类同步任务运维规则（FullLoad / Incremental / Backfill / Revision / Reconcile）
+- 多源冲突处理（客观字段 / 口径差异 / 主源失效接管）
+- 内存、磁盘、查询性能与 Agent 查询限制
+- 备份恢复、日志审计、健康检查与运维清单（与细分 policy 配套）
+
+**跨域触点**
+
+| 类别           | 触点                                                                                                                                  |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Layer          | Layer3 配置健康检查章节 · Layer1 历史观测 Parquet                                                                                     |
+| 模块           | DataSync · ResourceGuard · BackupManager · 前端/API 查询                                                                              |
+| 契约 / 文档    | **→ 本域** `performance_limits.md` · `backup_and_recovery.md` · `daily_weekly_monthly_checklist.md` · `layer3_config_health_check.md` |
+| 数据与基础设施 | v1.6 配套运维手册 · raw/parquet/audit 目录 · ReconcileJob                                                                             |
+
+---
+
+### 文件3 · `docs/ops/design/performance_limits.md`
+
+**定位** ResourceGuard 与本机资源限制权威实现（Conservative Desktop Mode）
+
+**涉及内容**
+
+- 总原则：少占资源、重任务后台化、查询分页、磁盘硬停止线
+- 三档资源模式 `eco` / `normal` / `batch` 的 CPU、内存、DuckDB、临时目录上限
+- 查询超时、`query_cost` 分级与 HEAVY 任务禁止前台执行
+- ResourceGuard PAUSE/STOP 行为与日志
+- 与 `api_security_contract`、FastAPI、Agent 行数上限的对齐
+
+**跨域触点**
+
+| 类别           | 触点                                                                                                                     |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| 模块           | DataSync · Backtest · Report · Backup · API · Agent tools                                                                |
+| 契约 / 文档    | `specs/contracts/resource_limits.yaml` · `specs/contracts/api_security_contract.yaml` · **→ API 域** `fastapi_routes.md` |
+| 数据与基础设施 | `resource_guard_log` · `QUERY_TOO_LARGE` · `RESOURCE_GUARD_PAUSED` · eco 默认模式                                        |
+
+---
+
+### 文件4 · `docs/ops/design/daily_weekly_monthly_checklist.md`
+
+**定位** 日 / 周 / 月轻量运维检查清单
+
+**涉及内容**
+
+- 每日 10 项轻量检查（ResourceGuard、增量任务、source_health、quality/conflict、备份、cache/磁盘）
+- 每日禁止项（全历史审计、全量 snapshot 重建、大范围 backfill 等）
+- 每日输出 `daily_health_YYYYMMDD.md` 必含字段
+- 每周检查（备份抽检、Parquet 索引、Layer3 配置健康、日志体积）
+- 每月检查（归档 dry-run、留存策略、恢复演练提醒）
+
+**跨域触点**
+
+| 类别           | 触点                                                                                                               |
+| -------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Layer          | Layer3 配置健康（周检）                                                                                            |
+| 模块           | IncrementalUpdateJob · data_health_summary · notification                                                          |
+| 契约 / 文档    | **→ 本域** `logs_health_audit.md` · `backup_and_recovery.md` · **→ 五层域 文件30** `layer3_config_health_check.md` |
+| 数据与基础设施 | `data/cache` 1GB · `data/backups` 10GB · 磁盘 30GB 警戒线                                                          |
+
+---
+
+### 文件5 · `docs/ops/design/backup_and_recovery.md`
+
+**定位** 本机低占用备份与恢复实现（`backup_manager` / `restore_manager`）
+
+**涉及内容**
+
+- 必须备份 / 按策略备份 / 默认不备份对象清单
+- `data/backups/` 目录结构（daily、weekly、before_schema_change、manifest）
+- 备份触发时机与 ResourceGuard、WriteManager idle 协调
+- 恢复流程：停调度 → 备份坏库 → 校验 manifest → 恢复 → smoke test → 人工确认
+- 恢复演练频率与验收要求
+
+**跨域触点**
+
+| 类别           | 触点                                                                                                                                       |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| 模块           | BackupManager · RestoreManager · scheduler                                                                                                 |
+| 契约 / 文档    | `specs/contracts/backup_recovery_contract.yaml` · **→ 本域 文件6** `migration_recovery_policy.md` · **→ 数据同步域** `03_runtime_flows.md` |
+| 数据与基础设施 | `quant_monitor.duckdb` · `specs/` · `data/audit/` · manifest hash                                                                          |
+
+---
+
+### 文件6 · `docs/ops/design/migration_recovery_policy.md`
+
+**定位** Schema migration 回滚与恢复策略（D-06 / QM-AUD-008）
+
+**涉及内容**
+
+- D-06：非破坏性可无 down SQL；破坏性必须先备份再执行
+- migration 元数据基线（version、checksum、`pre_migration_backup_path` 等）
+- 执行顺序：锁 → 破坏性判断 → 备份 → up → smoke → 失败恢复
+- 禁止手写 ALTER、改写旧 migration、无恢复方案的 prod migration
+- 与 schema 版本表、audit 的联动
+
+**跨域触点**
+
+| 类别           | 触点                                                            |
+| -------------- | --------------------------------------------------------------- |
+| 模块           | migration runner · ResourceGuard · BackupManager                |
+| 契约 / 文档    | `specs/schema/schema.sql` · **→ 本域 文件5**                    |
+| 数据与基础设施 | migration lock · `schema_version` · `before_schema_change` 备份 |
+
+---
+
+### 文件7 · `docs/ops/design/logs_health_audit.md`
+
+**定位** 日志、健康检查与审计实现（`data/audit/` 族）
+
+**涉及内容**
+
+- 审计日志目录与文件清单（fetch、quality、conflict、write、resource_guard、agent_run 等）
+- 日志通用 JSON 字段与严重级别
+- 健康检查事件类型与 `ops_health_log` 写入规则
+- 日志轮转、体积上限与禁止静默删除 audit
+- 与 data_health API、运维清单的衔接
+
+**跨域触点**
+
+| 类别           | 触点                                                                   |
+| -------------- | ---------------------------------------------------------------------- |
+| Layer          | 各层 snapshot 构建可追溯性                                             |
+| 模块           | DataSync · Agent · notification · ResourceGuard                        |
+| 契约 / 文档    | **→ 数据存储域** `04_data_architecture.md` · **→ 本域 文件4** 日检清单 |
+| 数据与基础设施 | `data/audit/*.ndjson` · `write_audit_log` · **→ 隐私域** 留存策略      |
+
+---
+
+### 文件8 · `docs/ops/design/config_secret_policy.md`
+
+**定位** 配置、Secret 存储、脱敏与扫描（D-03 / QM-AUD-007）
+
+**涉及内容**
+
+- D-03：第一版 `.env.local` + `.env.example` + gitignore + 启动检查 + secret scan
+- 配置优先级（环境变量 > `.env.local` > example > yaml > 代码默认）
+- Secret 文件规则与 prod 缺失 secret 拒绝启动
+- 日志/异常/报告/Agent 输出脱敏字段清单
+- Secret scan 与轮换建议；OS keyring 为后续增强
+
+**跨域触点**
+
+| 类别           | 触点                                                                                       |
+| -------------- | ------------------------------------------------------------------------------------------ |
+| 模块           | FastAPI 启动 · Agent 输出 · 报告/通知                                                      |
+| 契约 / 文档    | `specs/contracts/api_security_contract.yaml` · **→ API 域** D-02 · **→ 前端域** token 存储 |
+| 数据与基础设施 | `.env.local` · `QMD_API_TOKEN` · SMTP/Webhook secret · pre-commit secret scan              |
+
+---
+
+### 文件9 · `docs/modules/design/ops_and_performance.md`
+
+**定位** 运维模块实现级入口（脚本、检查项、错误码与恢复流程落点）
+
+**涉及内容**
+
+- 运维目标：能启动、检查、备份、恢复、发现异常、解释失败
+- 运维范围：目录初始化、DuckDB 备份、Parquet 分区、DataSync/Quality、Layer3 配置健康
+- CLI 脚本清单（`qm ops init-directories`、`health-check`、`backup-duckdb` 等）
+- `data/` 子目录初始化规则（duckdb/raw/files/parquet/audit/backups）
+- API/前端/Agent run log 健康检查衔接
+- 详细手册见 **→ 本域 文件2** `ops_and_performance_v1_2.md`
+
+**跨域触点**
+
+| 类别           | 触点                                               |
+| -------------- | -------------------------------------------------- |
+| Layer          | Layer3 配置健康（周检）                            |
+| 模块           | BackupManager · ResourceGuard · notification       |
+| 契约 / 文档    | **→ 本域 文件2–8** ops/design 细则全集             |
+| 数据与基础设施 | `data/backups/` · daily_health 报告 · eco 模式默认 |
+
+---
+
+### 文件10 · `specs/contracts/design/ops_health_check_contract.yaml`
+
+**定位** 运维健康检查机器契约（检查项枚举与磁盘阈值）
+
+**涉及内容**
+
+- `health_check_status_enum`：ok / warning / critical
+- `checks`：duckdb_exists、incremental job、layer3_config_health、api_health、disk_usage 等
+- `thresholds`：disk_warning 70% · critical 85% · stop_non_core 95%
+- `default_frontend_page_size` / `default_agent_query_limit`：200
+- backup 策略布尔开关与 **→ 本域 文件5** 备份文档对齐
+
+**跨域触点**
+
+| 类别           | 触点                                                                  |
+| -------------- | --------------------------------------------------------------------- |
+| 模块           | **→ 本域 文件9** `ops_and_performance.md` · **→ 本域 文件4** 日检清单 |
+| 契约 / 文档    | **→ 五层域 文件30** layer3_config_health                              |
+| 数据与基础设施 | `ops_health_log` · disk 警戒线                                        |
+
+---
+
+### 文件11 · `specs/contracts/design/log_audit_contract.yaml`
+
+**定位** 审计日志机器契约（NDJSON 通用字段与必审计事件）
+
+**涉及内容**
+
+- `common_fields`：event_id、event_time、severity、run_id、quality_flags
+- `required_logs`：fetch、quality、conflict、write、resource_guard、agent_run 等
+- `must_audit`：clean_table_write、schema_migration、agent_run 等
+- severity 枚举与默认 runtime 最低 INFO
+- 与 **→ 本域 文件7** `logs_health_audit.md` 目录清单对齐
+
+**跨域触点**
+
+| 类别           | 触点                                                                              |
+| -------------- | --------------------------------------------------------------------------------- |
+| 模块           | DataSync · Agent · WriteManager                                                   |
+| 契约 / 文档    | **→ 本域 文件7** `logs_health_audit.md` · **→ 数据存储域 文件5** snapshot_lineage |
+| 数据与基础设施 | `data/audit/*.ndjson` · 禁止静默删 audit                                          |
+
+---
+
+### 文件12 · `specs/contracts/design/backup_recovery_contract.yaml`
+
+**定位** 备份恢复机器契约（必备份对象、留存与 workflow）
+
+**涉及内容**
+
+- `required_backup_items`：DuckDB、specs、docs、config、recent audit
+- `excluded_by_default`：cache、duckdb_tmp、frontend build artifacts
+- `retention`：daily/weekly/before_schema_change 保留份数
+- `workflow`：wait_write_manager_idle → checkpoint → manifest → prune
+- `size_limits`：backups_warn_gb 10 · pause_gb 15
+
+**跨域触点**
+
+| 类别           | 触点                                                                            |
+| -------------- | ------------------------------------------------------------------------------- |
+| 模块           | BackupManager · RestoreManager                                                  |
+| 契约 / 文档    | **→ 本域 文件5** `backup_and_recovery.md` · **→ 本域 文件6** migration_recovery |
+| 数据与基础设施 | `data/backups/` manifest hash                                                   |
+
+---
+
+### 文件13 · `specs/contracts/design/resource_limits.yaml`
+
+**定位** ResourceGuard 资源限制机器契约（eco / normal / batch 三档）
+
+**涉及内容**
+
+- `default_profile: eco` 与三档 CPU、RSS、DuckDB memory/temp 上限
+- `batch` 须 `requires_user_confirm: true`
+- 查询超时、`query_cost` 分级与 HEAVY 任务规则
+- 与 **→ 本域 文件3** `performance_limits.md` 叙事一致
+- 对齐 API/Agent 行数上限 200/1000
+
+**跨域触点**
+
+| 类别           | 触点                                                                                    |
+| -------------- | --------------------------------------------------------------------------------------- |
+| 模块           | ResourceGuard · DataSync · API · Agent                                                  |
+| 契约 / 文档    | **→ 本域 文件3** `performance_limits.md` · **→ 数据同步域 文件6** runtime_flow_contract |
+| 数据与基础设施 | `RESOURCE_GUARD_PAUSED` · `QUERY_TOO_LARGE`                                             |
+
+---
+
+### 文件14 · `rules/design/OPERATOR_GUIDE.md`
+
+**定位** 运维操作者角色指南（常用入口与安全运行原则）
+
+**涉及内容**
+
+- 运维入口索引：部署入口 · 运行时验收 · 日检清单 · 同步链路/编排 · 幂等与路由 · 错误码/排障/事故手册（均为 `docs/**/design/` 或 `specs/**/design/`）
+- 安全运行五步：先 dry-run 再写入 · 先 route-preview 再 fetch · 不绕过 disabled source · ResourceGuard 暂停则缩小范围 · 生产等价验证用隔离 DB
+- QMT / qmt_xqshare 默认禁用；启用须用户授权、路径/env 与安全边界
+- 与 **→ 排障域**、**→ 数据源域 文件5** 联动
+
+**跨域触点**
+
+| 类别           | 触点                                                                                                                                                                                 |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 模块           | DataSync CLI · SourceRoutePlan · ResourceGuard                                                                                                                                       |
+| 契约 / 文档    | **→ 排障域** `ERROR_CODE_GUIDE.md` · `TROUBLESHOOTING.md` · `incident_playbook.md` · **→ 本域 文件1** `06_deployment_and_local_ops.md` · **→ 数据源域 文件5** `qmt_xqshare_setup.md` |
+| 数据与基础设施 | dry-run · route-preview · `.audit-sandbox/`                                                                                                                                          |
+
+---
+
+### 文件15 · `rules/design/GLOBAL_RESOURCE_LIMITS.md`
+
+**定位** 本机资源限制人类可读规则（eco 默认、硬暂停与禁止项）
+
+**涉及内容**
+
+- 三档模式 eco / normal / batch 的 CPU、内存、DuckDB memory_limit、临时目录上限表
+- 硬暂停：可用内存 < 2GB、磁盘 < 20GB、项目目录 > 25GB 等
+- 硬停止线：内存 < 1GB、磁盘 < 10GB、项目目录 > 40GB
+- 禁止：默认全市场全历史扫描、前端大范围 backfill、Agent 大查询、无分页 API
+- 暂停时须输出 `RESOURCE_GUARD_PAUSED` 与建议动作
+
+**跨域触点**
+
+| 类别           | 触点                                                                                |
+| -------------- | ----------------------------------------------------------------------------------- |
+| 模块           | ResourceGuard · DataSync · API · Agent                                              |
+| 契约 / 文档    | **→ 本域 文件3** `performance_limits.md` · **→ 本域 文件13** `resource_limits.yaml` |
+| 数据与基础设施 | eco 默认 · batch 须用户确认 · **→ 排障域** INC-002                                  |
+
+---
+
+## 运维排障与错误处理
+
+### 文件1 · `docs/ops/design/ERROR_CODE_GUIDE.md`
+
+**定位** CLI/API/job 统一错误码与处置矩阵
+
+**涉及内容**
+
+- 11 类错误码：`DISABLED_SOURCE`、`NO_AVAILABLE_SOURCE`、`CAPABILITY_MISSING`、`USER_AUTH_REQUIRED`、`RESOURCE_GUARD_PAUSED`、`NOT_PUBLISHED_YET`、`SCHEMA_DRIFT`、`AUTH_FAILED`、`RATE_LIMITED`、`QUERY_TOO_LARGE`、`DUCKDB_LOCKED`
+- 每码含义、是否可安全重试、用户动作、明确禁止行为
+- 失败输出最低字段：`error_code`、`message`、`docs_anchor`、`retryable`、`manual_confirmation_required`
+
+**跨域触点**
+
+| 类别           | 触点                                                            |
+| -------------- | --------------------------------------------------------------- |
+| 模块           | DataSync · API · ResourceGuard · SourceRoutePlan                |
+| 契约 / 文档    | `specs/contracts/data_cli_contract.yaml` · **→ 排障域 文件2–3** |
+| 数据与基础设施 | silent fallback 禁止 · QMT/Yahoo/xqshare 自动启用禁止           |
+
+---
+
+### 文件2 · `docs/ops/design/TROUBLESHOOTING.md`
+
+**定位** 用户/运维排障入口（常见问题处置流程）
+
+**涉及内容**
+
+- 数据源 disabled、ResourceGuard 暂停、Schema drift、DuckDB locked、前端无法解释数据来源
+- 每类问题的分步安全动作与禁止绕过 gate
+- 指向错误码指南与事故手册
+
+**跨域触点**
+
+| 类别           | 触点                                                                             |
+| -------------- | -------------------------------------------------------------------------------- |
+| 模块           | SourceRoutePlan · DataSourceService · WriteManager · 前端 freshness 展示         |
+| 契约 / 文档    | **→ 本域 文件1** `ERROR_CODE_GUIDE.md` · **→ 本域 文件3** `incident_playbook.md` |
+| 数据与基础设施 | `quality_flags` / `source_used` · 临时 DB 清理                                   |
+
+---
+
+### 文件3 · `docs/ops/design/incident_playbook.md`
+
+**定位** 场景化事故处理手册（INC-001～005）
+
+**涉及内容**
+
+- INC-001 `DISABLED_SOURCE`：检查 route/registry/matrix，禁止自动启用与 silent fallback
+- INC-002 `RESOURCE_GUARD_PAUSED`：缩小范围/分片 backfill，禁止关闭 ResourceGuard
+- INC-003 `SCHEMA_DRIFT`：保留 raw、暂停 clean write、更新 adapter/契约/测试
+- INC-004 `USER_AUTH_REQUIRED`：用户授权与 route-preview，禁止自动登录/探测
+- INC-005 `PRODUCTION_EQUIVALENT_SMOKE`：隔离 DB 与 fixture 规模，禁止污染生产写路径
+
+**跨域触点**
+
+| 类别           | 触点                                                                                                                 |
+| -------------- | -------------------------------------------------------------------------------------------------------------------- |
+| 模块           | DataSync · ResourceGuard · adapter · CI smoke                                                                        |
+| 契约 / 文档    | **→ 本域 文件1** · ADR-016 · `production_equivalent_smoke_budget.yaml` · **→ 数据源域 文件5** `qmt_xqshare_setup.md` |
+| 数据与基础设施 | `.audit-sandbox/` · `ci_perf_budget_artifact.py`                                                                     |
+
+---
+
+## 隐私与数据留存
+
+### 文件1 · `docs/ops/design/privacy_retention_policy.md`
+
+**定位** 隐私分级、通知/报告状态机与留存归档（D-05 / QM-AUD-016）
+
+**涉及内容**
+
+- 报告与通知状态机（DRAFT→SENT→ARCHIVED 等）
+- `dedup_key` 组成与去重/cooldown 规则
+- 隐私四级分类（public_market / internal_system / sensitive_user / secret）
+- D-05：raw、audit、report、notification 默认保留 1 年
+- 归档 CLI（`qmd archive --dry-run`）与删除前 manifest/hash 校验
+- D-04：默认通知渠道为前端 Notification Center
+
+**跨域触点**
+
+| 类别           | 触点                                                                                                      |
+| -------------- | --------------------------------------------------------------------------------------------------------- |
+| Layer          | 各层进入报告/通知的 evidence                                                                              |
+| 模块           | `notification_and_reports` · Agent 输出 · 前端 Notification Center                                        |
+| 契约 / 文档    | **→ 本域 文件2** `privacy_data_flow.md` · **→ 运维域** `logs_health_audit.md` · `config_secret_policy.md` |
+| 数据与基础设施 | `notification_log` · report snapshot · secret-like payload mask                                           |
+
+---
+
+### 文件2 · `docs/ops/design/privacy_data_flow.md`
+
+**定位** 用户输入、Agent、前端与 evidence 之间的隐私数据流
+
+**涉及内容**
+
+- 三种模式：仅本地预览、保存为 evidence、Agent 上下文输入（持久化与 evidence 化规则）
+- 保存 evidence 必填字段（`source_label`、`provenance_note`、`retention_policy` 等）
+- 禁止默认上传、用户输入直写 clean、Agent 将未证据化输入当事实、用导入文本生成买卖建议
+- local-first / local-only，不上传外部服务
+
+**跨域触点**
+
+| 类别           | 触点                                                                                                              |
+| -------------- | ----------------------------------------------------------------------------------------------------------------- |
+| 模块           | Agent · 前端本地工具页 · `file_registry`                                                                          |
+| 契约 / 文档    | `specs/contracts/user_input_privacy_contract.yaml` · **→ 本域 文件1** · **→ Agent 域** `agent_security_policy.md` |
+| 数据与基础设施 | `evidence_chain` · `untrusted` 标注 · D-12 固定来源                                                               |
+
+---
+
+## 前端安全与界面边界
+
+### 文件1 · `docs/ops/design/frontend_security_policy.md`
+
+**定位** 前端 CSP、会话、缓存、分页与错误边界（QM-AUD-018）
+
+**涉及内容**
+
+- CSP 基线：禁 inline script、禁任意外部域
+- API token 不得进 localStorage；富文本按纯文本渲染防 XSS
+- 列表必须分页；stale 数据须 FreshnessLabel
+- 各主页面 ErrorBoundary 与错误展示不泄露 secret/路径
+- UI 布局仅为占位，正式实现前须用户确认
+- 分页/token 权威口径对齐 `api_security_contract.yaml`
+
+**跨域触点**
+
+| 类别           | 触点                                                                            |
+| -------------- | ------------------------------------------------------------------------------- |
+| Layer          | 各层列表/详情页的 freshness 展示                                                |
+| 模块           | `docs/modules/design/frontend_dashboard.md` · FastAPI 只读 API                  |
+| 契约 / 文档    | `specs/contracts/api_security_contract.yaml` · **→ API 域** `fastapi_routes.md` |
+| 数据与基础设施 | Bearer token · `page_size` 200/1000 · `test_pageSizeContract_matchesDocs`       |
+
+---
+
+### 文件2 · `docs/modules/design/frontend_dashboard.md`
+
+**定位** Vite + React + TypeScript 前端看板权威设计（五层模型与证据链展示）
+
+**涉及内容**
+
+- 核心目标：看得懂、查得到、不误导、不越权、可配置、可扩展
+- 实现前须用户确认 UI 风格、信息层级、图谱呈现方式
+- 只消费 FastAPI，不直连 DuckDB
+- 配置驱动 + 条件渲染（map/条件展示 Layer3 graph 等）
+- 前端目录建议：pages、api client、components、charts
+- FreshnessLabel 与 `quality_flags` / `source_used` 必展示
+
+**跨域触点**
+
+| 类别           | 触点                                                                                                                   |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Layer          | 各层列表/详情页 · Layer3 graph view                                                                                    |
+| 模块           | **→ API 域 文件3** `fastapi_backend.md` · Notification Center                                                          |
+| 契约 / 文档    | **→ 本域 文件1** `frontend_security_policy.md` · **→ 本域 文件3** `page_contracts.yaml` · `api_security_contract.yaml` |
+| 数据与基础设施 | Bearer token 存储边界 · 分页 200/1000 · ErrorBoundary                                                                  |
+
+---
+
+### 文件3 · `specs/frontend/design/page_contracts.yaml`
+
+**定位** 前端页面契约 v2（路由、API 依赖与必备组件能力清单，reference_not_final_design）
+
+**涉及内容**
+
+- `implementation_guardrail`：页面布局未固定、路由仅参考、视觉设计须用户确认（D-08）
+- 页面清单：MarketOverview、Layer1–5、Reports、Notifications、Backtest、DataHealth 及 API 依赖
+- `required_components`：QualityBadge、FreshnessLabel、SourceLabel、BoundaryReminder、NoActionSemanticGuard 等
+- `configuration_driven_sources`：axis/chain/anchor/market/instrument registry 驱动，禁止硬编码列表长度
+- `must_not_hardcode`：indicator_count、chain_count、anchor_list 等
+- 权威对齐 **→ 本域 文件2** `frontend_dashboard.md`
+
+**跨域触点**
+
+| 类别           | 触点                                                                          |
+| -------------- | ----------------------------------------------------------------------------- |
+| Layer          | 各层页面与 Layer3 graph 路由                                                  |
+| 模块           | **→ 本域 文件2** `frontend_dashboard.md` · **→ API 域** `fastapi_routes.md`   |
+| 契约 / 文档    | **→ 本域 文件1** `frontend_security_policy.md` · `api_security_contract.yaml` |
+| 数据与基础设施 | registry 配置驱动 · D-08 用户确认门禁                                         |
+
+---
+
+## 通知与报告
+
+### 文件1 · `docs/modules/design/notification_and_reports.md`
+
+**定位** 日报、周报、数据质量报告、盘中提醒与通知发送流程
+
+**涉及内容**
+
+- 报告类型：daily_market、weekly_review、data_quality、manual_review、intraday_alert、ops_health、backtest_review
+- 报告不输出买卖/仓位/收益承诺
+- 只使用结构化数据 + Agent `facts_used_json`
+- NoActionSemanticGuard 输出校验
+- `report_registry`、通知状态机与 dedup_key
+- D-04 默认通知渠道为前端 Notification Center
+
+**跨域触点**
+
+| 类别           | 触点                                                                           |
+| -------------- | ------------------------------------------------------------------------------ |
+| Layer          | 各层进入报告/通知的 evidence                                                   |
+| 模块           | **→ Agent 域 文件2** `agent_module.md` · **→ 回测域** `backtest_and_review.md` |
+| 契约 / 文档    | **→ 隐私域** `privacy_retention_policy.md` · `privacy_data_flow.md`            |
+| 数据与基础设施 | `notification_log` · report snapshot · cooldown                                |
+
+---
+
+## 回测与复盘
+
+### 文件1 · `docs/modules/design/backtest_and_review.md`
+
+**定位** 回测与复盘能力定义（监控规则/证据链/状态事件的历史复盘与解释力评估）
+
+**涉及内容**
+
+- 回测类型：event_study、alert_rule_review、layer1/3/4 review、evidence_chain、agent_explanation
+- 第一阶段不回答买卖/加仓/收益承诺
+- 只读已归档数据，须经 ResourceGuard 限制扫描范围
+- `backtest_scenario_registry` 等核心表
+- 与 DuckDB/Parquet 历史查询集成
+
+**跨域触点**
+
+| 类别           | 触点                                                                     |
+| -------------- | ------------------------------------------------------------------------ |
+| Layer          | Layer1/3/4 snapshot 历史 as-of 查询                                      |
+| 模块           | **→ 本域 文件2** `backtest_review_lifecycle.md` · ReportBuilder          |
+| 契约 / 文档    | **→ 运维域** `performance_limits.md` · **→ 通知域** backtest_review 报告 |
+| 数据与基础设施 | Parquet 历史分区 · ResourceGuard HEAVY 任务                              |
+
+---
+
+### 文件2 · `docs/modules/design/backtest_review_lifecycle.md`
+
+**定位** 回测复盘固定生命周期（借鉴 MiniPTrade 结构，不含下单/持仓语义）
+
+**涉及内容**
+
+- 生命周期：load scenario → frozen snapshot → event set → forward windows → metrics → report
+- 硬边界：禁止 order API、`as-of` freeze、`no_action_semantics=true`
+- 指标契约 `backtest_metric_contract.yaml`
+- 未来模块：backtest_engine、review_context、report_builder、metrics
+- 验收 pytest 与 smoke 边界
+
+**跨域触点**
+
+| 类别           | 触点                                                                                 |
+| -------------- | ------------------------------------------------------------------------------------ |
+| 模块           | **→ 本域 文件1** `backtest_and_review.md` · **→ 本域 文件3** `review_sandbox_api.md` |
+| 契约 / 文档    | `specs/contracts/backtest_metric_contract.yaml`                                      |
+| 数据与基础设施 | frozen snapshot · forward window 分区                                                |
+
+---
+
+### 文件3 · `docs/modules/design/review_sandbox_api.md`
+
+**定位** 可选只读策略/规则复盘兼容层（读历史数据、记录复盘指标，禁止交易语义）
+
+**涉及内容**
+
+- 可借鉴 JQ2PTrade/EasyXT lifecycle 思路；禁止 order/compile/exec
+- 权威契约：review_sandbox_contract、reference_adoption_guardrails、user_input_privacy
+- 默认 AST 静态扫描，检测 order-like API 即 violation
+- 禁止 os/sys/subprocess/socket/requests
+- 不写 clean 表、不把复盘结果写成交易建议
+
+**跨域触点**
+
+| 类别           | 触点                                                                                  |
+| -------------- | ------------------------------------------------------------------------------------- |
+| 模块           | **→ 本域 文件2** lifecycle · **→ Agent 域** no_action 守卫                            |
+| 契约 / 文档    | `specs/contracts/review_sandbox_contract.yaml` · `reference_adoption_guardrails.yaml` |
+| 数据与基础设施 | sandbox 隔离执行 · violation 审计                                                     |
+
+---
+
+## 运维报告 CLI
+
+### 文件1 · `docs/ops/design/ops_report_cli.md`
+
+**定位** `qmd ops report` 设计：将本地 JSON 证据转为 Markdown/HTML 报告（Phase E）
+
+**涉及内容**
+
+- 回答：本机 JSON 证据能否离线渲染运维可读报告且不上传网络
+- 依赖 `db-inspect` / `data health` / 未来 source-health 的 JSON 形态
+- CLI：`--input` / `--format markdown|html` / `--output` / `--redact`
+- 报告章节：隐私横幅、执行摘要、DB 血缘、域健康、deferred 映射、下一步（链到排障文档 anchor）
+- Round 3 v1 **不**实现；禁止 `--upload` / 网络 / CDN / `--show-secrets`
+
+**跨域触点**
+
+| 类别           | 触点                                                                                                         |
+| -------------- | ------------------------------------------------------------------------------------------------------------ |
+| 模块           | `backend/app/ops/report_models.py` · `data/reports/`                                                         |
+| 契约 / 文档    | **→ 隐私域** `privacy_data_flow.md` · `user_input_privacy_contract.yaml` · **→ 排障域** `TROUBLESHOOTING.md` |
+| 数据与基础设施 | ptqmt-site / EasyXT / JQ2PTrade 参考采纳边界 · 纯本地 JSON→文件转换                                          |
+
+---
+
+## 项目工程结构
+
+### 文件1 · `docs/architecture/design/07_project_directory_structure.md`
+
+**定位** 项目目录结构蓝图（v1.6 设计文档第 16 章拆分）
+
+**涉及内容**
+
+- `backend/app/` 分包（api、datasources、db、etl、validators、layer1~5、agents、notifications）
+- `backend/scripts/` 同步与报告脚本清单
+- `frontend/src/` 页面/组件/api/charts 结构
+- `data/` 下 duckdb/raw/files/parquet/audit/reports/cache
+- `configs/` 与 `specs/` 目录布局
+
+**跨域触点**
+
+| 类别           | 触点                                                                                                                                                                     |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Layer          | `layer1_axes/` … `layer5_evidence/` 代码目录                                                                                                                             |
+| 模块           | API · datasources · agents · notifications · frontend                                                                                                                    |
+| 契约 / 文档    | `specs/layer1_axes/design/` · `specs/layer3_global_industry_chains/design/` · `specs/frontend/design/` · `specs/contracts/design/` · `rules/design/` · `docs/**/design/` |
+| 数据与基础设施 | `data/duckdb/` · `init_db.py` · `sync_daily.py` 等脚本                                                                                                                   |
+
+---
+
+### 文件2 · `specs/contracts/design/release_cleanup_allowlist.yaml`
+
+**定位** 发布打包清理白名单（防止误删正式 docs/specs/contracts）
+
+**涉及内容**
+
+- `allowlist_roots`：README、MIGRATION_MAP、docs/\*\*、specs 各子目录等
+- `forbidden_patterns`：`__pycache__`、`.scratch`、`task_plan.md` 等可删临时物
+- 打包/清理脚本须先匹配 allowlist 再删除
+- 保护 `specs/**/design/` 与 `docs/**/design/` 审阅成品
+- 与最终审计/发布流程衔接
+
+**跨域触点**
+
+| 类别           | 触点                                                                 |
+| -------------- | -------------------------------------------------------------------- |
+| 模块           | release/packaging 脚本 · CI 清理 job                                 |
+| 契约 / 文档    | **→ 本域 文件1** `07_project_directory_structure.md` · MANIFEST.json |
+| 数据与基础设施 | 禁止误删 `uv.lock` · `specs/schema/`                                 |
+
+---
+
+## 架构决策（ADR）
+
+### 文件1 · `docs/architecture/design/08_decision_log_index.md`
+
+**定位** ADR 决策记录索引（「为什么这样设计」）
+
+**涉及内容**
+
+- ADR-0001 DuckDB 本地核心分析库
+- ADR-0002 Agent 只读、不直接写库
+- ADR-0003 Layer1 才物化完整标准化字段
+- ADR-0004 Layer3 资金震动锚点模型方案B
+- ADR-0005 Primary / Validation / FallbackPolicy 数据源角色
+- 各 ADR 对应模块文档指针
+
+**跨域触点**
+
+| 类别        | 触点                                                                                                                                                                                                                                     |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Layer       | Layer1 标准化 · Layer3 shock-anchor                                                                                                                                                                                                      |
+| 模块        | `docs/modules/design/agent_module.md` · `docs/modules/design/data_sources.md` · `docs/modules/design/layer1_global_regime_panel.md` · `docs/modules/design/layer3_industry_shock_anchor.md` · `docs/modules/design/local_file_system.md` |
+| 契约 / 文档 | 本文件为 ADR 骨架索引；各 ADR 决策要点见涉及内容与模块文档                                                                                                                                                                               |
+
+---
+
+## 外部参考与架构依据
+
+### 文件1 · `docs/architecture/design/10_external_references.md`
+
+**定位** 外部官方文档与依据索引（支撑架构选型与 Layer3 锚点来源）
+
+**涉及内容**
+
+- DuckDB 并发、Parquet、SQL-on-Pandas 官方文档
+- FRED API（Layer1 宏观指标）
+- xtdata/QMT、FastAPI、Vite、React 官方文档
+- MSCI/S&P 评分方法论（z-score vs percentile）
+- Airbyte 增量同步、Dagster backfill、Great Expectations、dbt tests
+- OpenAI Structured Outputs（Agent 结构化输出）
+- Layer3 锚点来源（OpenAI/Anthropic/NVIDIA/Microsoft/Meta/Counterpoint/IEA/Arm 等）
+
+**跨域触点**
+
+| 类别        | 触点                                                                                                                     |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Layer       | Layer1 宏观/评分方法 · Layer3 各 `source_keys` 锚点                                                                      |
+| 模块        | DuckDB · FastAPI · 前端 · Agent · 增量/回补工程 · 数据质量                                                               |
+| 契约 / 文档 | `specs/layer3_global_industry_chains/design/` 锚点 `source_keys` · `docs/modules/design/layer3_industry_shock_anchor.md` |

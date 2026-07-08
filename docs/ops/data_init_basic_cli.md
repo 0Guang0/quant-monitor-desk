@@ -1,54 +1,54 @@
-# QMD Data Init-Basic CLI Design
+# QMD Data Init-Basic CLI 设计
 
-> Status: operator design for `qmd data init-basic` (Round 2.6+). Not runtime migration authority.
+> 状态：面向 `qmd data init-basic` 的运维设计（Round 2.6+）。非运行时 migration 权威。
 >
-> Contract: `specs/contracts/data_cli_contract.yaml` → `qmd data init-basic`.
+> 契约：`specs/contracts/data_cli_contract.yaml` → `qmd data init-basic`。
 
-## 1. Decision summary
+## 1. 决策摘要
 
-`qmd data init-basic` prepares a local DuckDB file with schema migrations and optional `source_registry` sync. It is **not** a data fetch or clean-write command.
+`qmd data init-basic` 用于在本地 DuckDB 文件上应用 schema migration，并可选同步 `source_registry`。**不是**数据抓取或 clean 写入命令。
 
-Default posture: **dry-run only** — no filesystem or DB mutation unless the operator explicitly opts out of dry-run.
+默认姿态：**仅 dry-run** — 除非运维人员显式关闭 dry-run，否则不对文件系统或 DB 做任何变更。
 
-## 2. Command shape
+## 2. 命令形态
 
 ```bash
 qmd data init-basic --dry-run
 qmd data init-basic --no-dry-run --db-path data/duckdb/quant_monitor.duckdb
 ```
 
-Transitional packaging:
+过渡期打包入口：
 
 ```bash
 python -m backend.app.cli.init_db --db <path> --sync-registry
 ```
 
-## 3. Arguments and behavior
+## 3. 参数与行为
 
-| Mode            | `dry_run` | Behavior                                                                                                                       |
-| --------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| Default         | `true`    | Returns planned steps only; message points to `qmd-init-db`                                                                    |
-| Confirmed write | `false`   | Creates parent dirs; opens `ConnectionManager.writer()`; runs `apply_migrations`; syncs registry with `tombstone_missing=True` |
+| 模式     | `dry_run` | 行为                                                                                                              |
+| -------- | --------- | ----------------------------------------------------------------------------------------------------------------- |
+| 默认     | `true`    | 仅返回计划步骤；提示信息指向 `qmd-init-db`                                                                        |
+| 确认写入 | `false`   | 创建父目录；打开 `ConnectionManager.writer()`；执行 `apply_migrations`；以 `tombstone_missing=True` 同步 registry |
 
-Writes allowed when confirmed (contract): `schema`, `registry` only. No fetch, no clean-write, no live source enablement.
+确认写入时允许的范围（契约）：仅 `schema`、`registry`。禁止 fetch、clean-write、live 源启用。
 
-## 4. Safety invariants
+## 4. 安全不变量
 
-1. Default `dry_run=True` in `data_commands.init_basic`.
-2. Write path uses `ConnectionManager.writer()` — never bypass WriteManager for production tables beyond migration/registry bootstrap.
-3. Operators must treat `--no-dry-run` as explicit confirmation; document rollback via backup policy (`docs/ops/backup_and_recovery.md`).
-4. Failures must surface `error_code` + `docs_anchor` when routed through CLI envelopes (see `docs/ops/ERROR_CODE_GUIDE.md`).
+1. `data_commands.init_basic` 默认 `dry_run=True`。
+2. 写入路径使用 `ConnectionManager.writer()` — 除 migration/registry 引导外，不得绕过 WriteManager 写生产表。
+3. 运维须将 `--no-dry-run` 视为显式确认；回滚见备份策略（`docs/ops/design/backup_and_recovery.md`）。
+4. 经 CLI envelope 路由的失败须 surfaced `error_code` + `docs_anchor`（见 `docs/ops/ERROR_CODE_GUIDE.md`）。
 
-## 5. Relationship to other tools
+## 5. 与其他工具的关系
 
-| Tool                  | Question                                        |
-| --------------------- | ----------------------------------------------- |
-| `qmd data init-basic` | Create/migrate DB + sync registry?              |
-| `qmd ops db-inspect`  | Read-only metadata/evidence presence?           |
-| `qmd data health`     | Domain quality rules on evidence (read-only)?   |
-| `qmd data sync`       | Fetch + staged ingestion (ResourceGuard gated)? |
+| 工具                  | 回答的问题                                   |
+| --------------------- | -------------------------------------------- |
+| `qmd data init-basic` | 是否创建/迁移 DB 并同步 registry？           |
+| `qmd ops db-inspect`  | 只读元数据/证据是否存在？                    |
+| `qmd data health`     | 证据是否满足域质量规则（只读）？             |
+| `qmd data sync`       | 抓取 + 分阶段入库（受 ResourceGuard 门禁）？ |
 
-## 6. Implementation location
+## 6. 实现位置
 
 - `backend/app/cli/data_commands.py::init_basic`
-- Tests: `tests/test_qmd_data_cli.py::test_initBasic_noDryRun_syncsRegistry`, `tests/test_qmd_data_cli.py`
+- 测试：`tests/test_qmd_data_cli.py::test_initBasic_noDryRun_syncsRegistry`、`tests/test_qmd_data_cli.py`

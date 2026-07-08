@@ -1,3 +1,5 @@
 npx lint-staged
+uv run python scripts/promote_design_runtime.py
+git add specs/contracts/resource_limits.yaml specs/contracts/source_conflict_rules.yaml specs/layer1_axes/restructured_axes_v1_1/
 npm run typecheck
 npm run test:quick

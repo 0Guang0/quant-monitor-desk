@@ -1,0 +1,64 @@
+version: 1
+module: layer4_market_structure
+authoritative_doc: docs/modules/layer4_market_structure.md
+models:
+  market_registry:
+    primary_key: [market_id]
+    required_fields:
+      [
+        market_id,
+        market_name_cn,
+        market_type,
+        timezone,
+        adapter_name,
+        is_enabled,
+      ]
+  market_calendar:
+    primary_key: [market_id, trade_date]
+    required_fields:
+      [
+        market_id,
+        trade_date,
+        is_trading_day,
+        session_type,
+        timezone,
+        source,
+        quality_flag,
+      ]
+  market_index_snapshot:
+    primary_key: [market_id, index_id, trade_date]
+    required_fields:
+      [market_id, index_id, trade_date, close, pct_change, source, quality_flag]
+  market_sector_snapshot:
+    primary_key: [market_id, sector_id, trade_date]
+    required_fields:
+      [
+        market_id,
+        sector_id,
+        trade_date,
+        sector_name,
+        pct_change,
+        source,
+        quality_flag,
+      ]
+  market_breadth_snapshot:
+    primary_key: [market_id, trade_date]
+    required_fields:
+      [
+        market_id,
+        trade_date,
+        advancers,
+        decliners,
+        total_amount,
+        breadth_label,
+        source,
+        quality_flag,
+      ]
+quality_rules:
+  - no_snapshot_on_non_trading_day_unless_session_type_allows
+  - no_negative_volume_amount
+  - high_must_be_greater_or_equal_low
+  - source_and_quality_flag_required
+boundaries:
+  does_not_store_layer5_full_history: true
+  does_not_materialize_layer1_standardization_suite: true
