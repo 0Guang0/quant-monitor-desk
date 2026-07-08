@@ -71,6 +71,8 @@ task_plan.md
 findings.md
 progress.md
 scratch/
+.scratch/
+_tmp_dbg/
 tmp/
 .tmp/
 .ai-bridge/

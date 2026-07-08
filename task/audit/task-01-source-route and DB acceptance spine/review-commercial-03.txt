@@ -1,0 +1,1286 @@
+GROUP 1 测试深度对抗性审计报告
+依据：testing-guidelines workflow 0–5、testing-strategy、GLOBAL_TESTING_POLICY.md
+模式：只审计，未改代码
+
+1. 审计摘要
+指标	数量
+审计文件总数
+33
+含 test_* 的测试文件
+24
+纯 support/helper 文件（无 test_*）
+9
+test_* 函数总数
+157
+Finding 总数
+32
+Finding 按优先级
+优先级	数量	含义
+P0
+0
+未发现「保护错误行为 / 假通过 / 应删噪声测试仍污染套件可信度」级问题
+P1
+14
+脆弱断言、过 mock、artifact/meta、缺关键 behavior
+P2
+13
+命名/重复/耦合/确定性/文档偏差
+P3
+5
+轻微优化
+总体评价（一句话）
+GROUP 1 是项目 foundation + sync spine 测试：五字段 docstring 几乎全部合规，WriteManager / ResourceGuard / 迁移 / 编排主路径质量较高；主要风险在 call-count / 源码扫描类断言、YAML 契约元测试，以及 pipeline 写入路径未真正执行。
+
+Support 文件结论（维度 8）
+文件	结论
+conftest.py
+合理基础设施；autouse ResourceGuard patch 有意为之（ponytail）
+db_helpers.py, path_jail_support.py, conftest_layer_smoke.py
+合理
+service_path_support.py, contract_gate_support.py, repo_paths.py
+合理但耦合较深（动态加载脚本、AST 扫描）
+network_reachability.py
+合理；仅应被 @pytest.mark.network 测试使用
+smoke/__init__.py
+空文件，无噪声
+无应删除的 support 噪声测试（support 文件本身不含 test_*）。
+
+2. 完整 Finding 列表
+P1 — 应优先处理
+G1-001
+
+优先级: P1
+文件: tests/test_sync_pipeline_contract.py
+位置: test_syncValidationPipeline_validateStaging_beforeWrite（约 L62–64）
+问题: 违反 outcome asserts / vacuous tests — 仅断言 can_write_clean is True 与 write.write_clean is not None，未调用 write_clean、未验证 clean 表行数/审计。生产写入路径坏了也可能绿。
+建议动作: MODIFY
+修复要点: 在 validation 通过后实际调用 write_clean，断言 clean 表 1 行 + write_audit_log SUCCESS；另增失败 validation 时 不得写入 的负例（ADD 可合并同文件）。
+G1-002
+
+优先级: P1
+文件: tests/test_sync_macro_mapper.py
+位置: test_syncMacroMapper_axisObservation_pureNoOrchestrator（约 L33–36）
+问题: 违反 implementation snapshots — inspect.getsource 断言源码不含 orchestrator/read_watermark。无害重构（改名、拆文件）会红，不证明映射业务语义。
+建议动作: MODIFY
+修复要点: 删除源码扫描；保留/扩充 bundle → row 字段映射 outcome 断言（空值 . 过滤、多 series、缺字段 fail-closed）。
+G1-003
+
+优先级: P1
+文件: tests/test_sync_orchestrator.py
+位置: test_backfillJob_eachShard_callsResourceGuardBeforeFetching（约 L412–439）
+问题: 违反 outcome asserts / forbidden call-count — 主验证点是 len(calls) >= 3，属于 call-count。ResourceGuard 被短路为恒 OK，未证明「分片前检查失败会阻断」。
+建议动作: MODIFY
+修复要点: 改为 outcome：例如第 2 片前注入 PAUSE → 该分片 FAILED_RETRYABLE、已完成分片事件仍保留、后续分片不再 fetch（查 fetch_log / staging 行数）。
+G1-004
+
+优先级: P1
+文件: tests/test_sync_full_load.py
+位置: test_syncFullLoad_checkpointResume_skipsCompletedShards（约 L150–157）
+问题: 违反 call-count 作为主证明 — resume_adapter.fetch_calls < total_shards 是内部计数，非业务 outcome。
+建议动作: MODIFY
+修复要点: 断言 job_event_log 中已完成分片有 FULL_LOAD_COMPLETE/shard * completed 事件；续跑后 仅未完成分片日期范围 产生新 fetch；或对比 clean 行数/分片 checkpoint payload。
+G1-005
+
+优先级: P1
+文件: tests/test_write_manager.py
+位置: test_write_stubFail_ownTransaction_doesNotOpenSecondAuditConnection（约 L343–359）
+问题: 违反 不应断言内部实现 — len(connect_calls) == 1 是连接次数契约，非业务语义。
+建议动作: MODIFY
+修复要点: 保留 FAILED + clean 0 行 + 单条 audit；若需证明「共连接」，改为观测 side effect（如同一 connection 上 audit 行可见、无第二 lock 文件），或降为集成级观测而非 monkeypatch connect 计数。
+G1-006
+
+优先级: P1
+文件: tests/test_write_manager.py
+位置: test_write_ownTransactionFalse_duckdbError_doesNotOpenSecondAuditConnection（约 L443–468）
+问题: 同 G1-005 — connect_calls == [] 为实现细节断言。
+建议动作: MODIFY
+修复要点: 断言 FAILED 审计写在传入的 con 上且外层 BEGIN 仍活跃（已有部分）；去掉 connect 计数或改为「外层事务未 ROLLBACK」的 outcome。
+G1-007
+
+优先级: P1
+文件: tests/test_module_boundaries.py
+位置: test_moduleBoundaryContract_listsRequiredChecks（约 L26–36）
+问题: 违反 artifact-guard / meta-testing — 验证 YAML 是否列出 tests/test_module_boundaries.py 路径，属于仓库策略沉积，非 production behavior。
+建议动作: DELETE 或 MODIFY
+修复要点: 删除；契约登记改 CI lint。保留 test_checkModuleBoundaries_detectsForbiddenImportFixture 等 真实扫描行为 测试。
+G1-008
+
+优先级: P1
+文件: tests/test_module_boundaries.py
+位置: test_layerModules_forbidAdapterAndServiceImports（约 L98–110）
+问题: 违反 artifact-guard — 只读 YAML must_not_import 列表是否含字符串，不验证生产代码是否违规（后者由 check_paths 测试覆盖）。
+建议动作: DELETE 或 MODIFY
+修复要点: 合并进 load_contract() 的结构校验（若必要），或删除重复；依赖 test_productionBackend_passesModuleBoundaryScan 作为 behavior gate。
+G1-009
+
+优先级: P1
+文件: tests/test_sync_orchestrator.py
+位置: test_r3ySync001_testHookAllowsAdapterBypassUnderPytest（约 L1109–1114）
+问题: 违反 outcome asserts — status in {COMPLETED, FAILED_FINAL, MANUAL_REVIEW_REQUIRED, WAITING_RECONCILE} 过宽，adapter 路径完全错误也可能绿。
+建议动作: MODIFY
+修复要点: 用已知 _BackfillCountAdapter 断言 COMPLETED + clean 表有行；或明确失败场景断言 FAILED_FINAL + 事件消息。
+G1-010
+
+优先级: P1
+文件: tests/test_sync_orchestrator.py
+位置: test_syncJobContract_implementedTypes_matchRuntimeCallables（约 L1336–1341）
+问题: 违反 implementation snapshots — dir(DataSyncOrchestrator) 枚举 run_* 方法名与契约对齐，锁内部 API 形状。
+建议动作: MODIFY
+修复要点: 保留 YAML ↔ IMPLEMENTED_JOB_TYPES 常量 parity；run_* 方法集改为 契约 YAML 显式列表 或删除此子断言。
+G1-011
+
+优先级: P1
+文件: tests/test_sync_orchestrator.py
+位置: test_syncJobContract_deferredErrorYaml_parityWithRuntimeConstants（约 L1363–1382）
+问题: 边界 artifact-guard — YAML 常量与 Python 常量 parity；若双端同错则假绿。可接受为 contract regression，但不应替代 runtime deferred 行为测试。
+建议动作: MODIFY
+修复要点: 保留 parity 作为补充；ADD 一条：调用 reserved job type 时抛出 DeferredJobTypeError 且 code/owner/phase outcome 正确（若仍有 deferred 类型）。
+G1-012
+
+优先级: P1
+文件: tests/test_sync_binding_executor.py
+位置: test_bindingSyncExecutor_executeBinding_onlyOrchestrationPath（约 L47–71）
+问题: 违反 mock 边界 / over-mock — ProbeOrchestrator 替换整个 run_incremental，只验证 spec 字段传入；未跑真实编排链（watermark→mapper→pipeline）。docstring「删除 executor 须失败」偏 deletion trigger。
+建议动作: MODIFY
+修复要点: dry_run 保留；live 路径用 fake adapter + 真实 orchestrator（或 in-memory DB 断言 data_sync_job 状态推进），证明 execute_binding 是唯一条目且产生可观测 job 行。
+G1-013
+
+优先级: P1
+文件: tests/test_sync_job_contract.py + tests/test_sync_orchestrator.py
+位置: test_syncJobContract_fullLoad_inImplementedJobTypes vs test_syncJobContract_implementedTypes_matchRuntimeCallables
+问题: artifact-guard 重复 — 同一契约 parity 在两文件重复；维护成本高，漂移时互相矛盾。
+建议动作: MODIFY
+修复要点: 合并为单一契约测试模块；另一文件只保留 runtime behavior（如 full_load COMPLETED）。
+G1-014
+
+优先级: P1
+文件: GROUP 1 整体
+位置: test_sync_pipeline_contract.py；test_sync_jobs.py（revision_audit/data_quality）
+问题: 违反 gap radar / 必测场景 — pipeline 缺「校验失败阻断写入」；revision_audit/data_quality 在 test_sync_jobs 仅状态机骨架，runner 行为仅在 orchestrator 个别用例覆盖，边界输入/空 staging 未覆盖。
+建议动作: ADD
+修复要点: ADD test_syncValidationPipeline_qualityFail_blocksCleanWrite；为 data_quality runner ADD 空 instrument/无 staging 的 fail-closed 用例。
+P2 — 风格 / 重复 / 耦合
+G1-015
+
+优先级: P2
+文件: tests/test_duckdb_connection.py
+位置: test_applyPragmas_readerProfile_setsThreadsAndMemory（L66）与 test_reader_appliesThreadsAndMemoryLimit（L78）
+问题: 重复测试同一 behavior；命名不一致（applyPragmas_* vs reader_*）。
+建议动作: MODIFY
+修复要点: 删除其一，保留一个 canonical 名称 test_reader_ecoProfile_setsThreadsAndMemoryLimit。
+G1-016
+
+优先级: P2
+文件: tests/test_migration_coverage.py + tests/test_schema_migration.py
+位置: 多个 test_migrationCoverage_* vs test_applyMigrations_freshDb_*
+问题: 重复覆盖 — 表存在性在 migration 测试已断言，coverage 文件增量价值主要是分域表清单文档化。
+建议动作: MODIFY
+修复要点: 合并为参数化单测，或让 coverage 文件只测 域特有列/PK 而非 SHOW TABLES 子集。
+G1-017
+
+优先级: P2
+文件: tests/test_schema_migration.py
+位置: test_appliedVersions_afterMigration_containsIngestion docstring（L124）
+问题: docstring 写「001–011」，实际断言 ALL_MIGRATION_VERSIONS（001–015）— 五字段与实现不一致。
+建议动作: MODIFY
+修复要点: 更正 docstring 验证点为 001–015；或拆分测试名与目的。
+G1-018
+
+优先级: P2
+文件: tests/test_schema_migration.py
+位置: test_schemaPhaseMatrix_documentsImplementedVsPlanned（L207–209）
+问题: 循环内 assert status == "implemented" 对常量字典 恒真，属弱断言；矩阵仅覆盖 5 个 phase，非完整 gap radar。
+建议动作: MODIFY
+修复要点: 删除恒真 assert；或从单一 SSOT（契约/roadmap）驱动 expected tables，planned 阶段用 pytest.mark.skip + 明确删除触发条件。
+G1-019
+
+优先级: P2
+文件: tests/test_config_templates.py
+位置: test_resourceLimitsConfig_defaultProfileIsEco_shouldMatchContract
+问题: artifact-guard 窄 parity — 只比 default_profile 与 eco.max_threads，其余阈值漂移不失败。
+建议动作: MODIFY
+修复要点: 若契约回归是目标：整文件 deep equality（或 schema 校验）；否则改测 ConnectionManager/ResourceGuard 读取配置后的 runtime outcome。
+G1-020
+
+优先级: P2
+文件: tests/conftest.py
+位置: _resourceGuardOkUnlessTestOverrides autouse fixture（L164–174）
+问题: 耦合/隐藏依赖 — 除 test_resource_guard.py 与 smoke 外全局 ResourceGuard=OK，非 guard 测试无法暴露「宿主资源差导致编排失败」集成问题。
+建议动作: MODIFY（长期）
+修复要点: 保持 ponytail 前提下，在 orchestrator 集成测试中 显式 patch 而非全局 autouse；或文档化「单元默认 OK、集成自行注入」。
+G1-021
+
+优先级: P2
+文件: tests/test_sync_scheduler.py
+位置: test_syncScheduler_profileExpandsRegistryToExecuteBinding
+问题: 仅 dry_run=True + mock execute_binding；未覆盖 dry_run=False 时 scheduler→executor→orchestrator 链。
+建议动作: ADD
+修复要点: ADD 一条用 fake adapter 的 non-dry-run，断言 data_sync_job 创建或 SKIPPED 消息含 watermark 窗口。
+G1-022
+
+优先级: P2
+文件: tests/test_sync_orchestrator.py
+位置: test_reconcileJob_afterReconcile_resolvesOrManualReview（L682）
+问题: 确定性 — datetime.now(UTC) 未 freeze；虽通常不 flaky，违反 GLOBAL_TESTING_POLICY 固定时钟基线。
+建议动作: MODIFY
+修复要点: 使用固定 datetime(2026, 6, 17, tzinfo=UTC) 或共享 frozen clock fixture。
+G1-023
+
+优先级: P2
+文件: tests/service_path_support.py
+位置: enable_source_route（L43–58）
+问题: object.__setattr__ 变异 registry 记录 — helper 脆弱，与生产启用路径不一致。
+建议动作: MODIFY
+修复要点: 使用 fixture YAML（已有 source_registry_valid.yaml 模式）或公开 API 启用 domain，避免私有字段写入。
+G1-024
+
+优先级: P2
+文件: tests/test_sync_orchestrator.py
+位置: 多个 test_r3ySync001_* / test_r3h10S10_01_*
+问题: 命名 — ticket ID 前缀不符合 condition_expectedBehavior 可读性。
+建议动作: MODIFY
+修复要点: 重命名为 test_runIncremental_productionProfile_rejectsAdapterBypass 等，ticket 放 docstring。
+G1-025
+
+优先级: P2
+文件: tests/test_sync_watermark.py
+位置: 仅 1 个 test
+问题: gap — 缺空表 watermark、未知 domain key、macro/bar 边界日期（compute_since_date）用例。
+建议动作: ADD
+修复要点: ADD 无行时返回 None/最小日期；非法 domain 抛错或 fail-closed。
+G1-026
+
+优先级: P2
+文件: tests/test_resource_guard.py
+位置: test_evaluate_largeCache_returnsPause vs test_evaluate_cacheAbovePause_returnsPause 等
+问题: 多组 evaluate 测试语义重叠（_snap vs 显式 ResourceSnapshot），维护负担高。
+建议动作: MODIFY
+修复要点: 参数化 pytest.mark.parametrize 合并同类阈值边界用例。
+G1-027
+
+优先级: P2
+文件: tests/repo_paths.py
+位置: 全文件
+问题: 耦合 — 运行时 importlib 加载 scripts/repo_path_resolve.py；脚本重构会导致测试 helper 碎裂。
+建议动作: MODIFY（低急）
+修复要点: 将 resolve 逻辑抽到稳定 backend 模块，或测试仅依赖 PROJECT_ROOT 常量。
+P3 — 轻微优化
+G1-028
+
+优先级: P3
+文件: tests/test_sync_orchestrator.py
+位置: test_orchestrator_fetchBlockedWhenGuardPaused_setsFailedRetryable（L164）
+问题: assert status != "RESOURCE_GUARD_PAUSED" 冗余（status 来自 DB job 列，非 message 哨兵）。
+建议动作: MODIFY
+修复要点: 删除该行；保留 message 含 RESOURCE_GUARD_PAUSED 即可。
+G1-029
+
+优先级: P3
+文件: tests/test_resource_guard.py
+位置: test_snapshot_realCall_doesNotRaise
+问题: 断言仅 >= 0，对 真实宿主环境 依赖；属 smoke，业务保障弱。
+建议动作: MODIFY
+修复要点: 标记 @pytest.mark.integration 或断言 snapshot 字段 类型/有限性（非 NaN、disk ≤ 某上界）。
+G1-030
+
+优先级: P3
+文件: tests/conftest.py
+位置: _patch_path_for_windows_long_paths（L95–137）
+问题: 全局 monkeypatch Path.is_file/exists/read_* — 侵入性强，可能影响非 path 测试调试。
+建议动作: MODIFY（可选）
+修复要点: 收敛到 opt-in fixture；当前有 ponytail 理由可保留并注释升级路径。
+G1-031
+
+优先级: P3
+文件: tests/test_schema_contract.py
+位置: test_schemaContract_includesStatusCheckConstraints
+问题: 仅断言 DDL 体含 CHECK 关键字，不验证 具体枚举值；比无测试好，但仍偏浅。
+建议动作: MODIFY
+修复要点: 对关键表断言具体 CHECK 表达式片段（如 status IN (...)）。
+G1-032
+
+优先级: P3
+文件: tests/test_path_compat.py
+位置: 全文件（2 tests）
+问题: Windows-only skip 合理；非 Windows CI 零覆盖 path_compat 行为。
+建议动作: ADD（可选）
+修复要点: Linux 上对 needs_extended_path 测短路径 false 即可（已有 L17）；或 CI matrix 含 Windows job。
+4. 亮点（对抗审计亦需记录）
+五字段 docstring： GROUP 1 的 157 个 test_* 均已具备完整五字段（覆盖范围/测试对象/目的/验证点/失败含义），符合 GLOBAL_TESTING_POLICY §7。
+WriteManager（test_write_manager.py + degraded audit）： 覆盖 append/upsert/回滚/审计/sidecar/事务边界，outcome 断言扎实，是 GROUP 1 标杆。
+ResourceGuard（test_resource_guard.py）： evaluate 阈值边界 + check 持久化/log 覆盖全面。
+编排安全（test_sync_orchestrator.py）： 生产 profile adapter bypass fail-closed、错误脱敏、冲突 WAITING_RECONCILE、crash-window/recovery 路径齐全。
+test_foundation_smoke.py： 真实串联迁移→guard→raw→write→audit，符合 integration smoke 定位。
+
+
+
+GROUP 2 深度对抗性测试审计报告
+范围：33 个文件（含 layer1_clean_e2e_support.py support）
+依据：testing-guidelines workflow 0–5、testing-strategy、GLOBAL_TESTING_POLICY.md
+模式：只审计，不修改
+
+审计摘要
+总体评价
+维度	评级	说明
+保护 production behavior
+B+
+Layer1 clean 读链、DQ validator、DbValidationGate、fetch 契约层质量高；约 25% 用例偏 artifact/meta/wiring
+Mock 边界
+A-
+多数用 tmp_path + 真 DuckDB；ResourceGuard/WriteManager/subprocess 的 mock 基本在边界
+Outcome 断言
+B
+核心路径好；存在 COUNT>=0、仅 COMPLETED、is not None 等弱断言
+五字段 docstring
+A-
+绝大多数 test_* 齐全；test_snapshot_lineage_kernel.py 用半角冒号、缺返回类型注解
+确定性
+B+
+AS_OF/reference_time 普遍固定；少数 datetime.now()、全局 DATA_ROOT 变异
+命名
+B
+整体 condition_expectedBehavior 良好；个别名实不符
+缺漏测试
+B-
+五轴 e2e 负例已在 reader 覆盖；sync facade、b3f sidecar、production_gate 真执行缺口明显
+Support 合理性
+A-
+layer1_clean_e2e_support.py 职责清晰、可复用
+强项（可保留为金样参考）
+test_layer1_clean_reader.py：fail-closed、whitelist cap、as_of 过滤，真 DB + outcome 断言
+test_data_quality_validator.py / test_db_validation_gate.py：纯逻辑 + 持久化 + 写入门禁联动
+test_data_adapter_contract.py：FetchResult/FetchLog/BaseDataAdapter 契约完整
+五轴 clean e2e（environment/credit/liquidity/risk/sentiment）：垂直链路可证明非 staged_fixture
+test_web_evidence_adapter.py / test_no_clean_write_for_web_evidence.py：manual-review 语义与 clean 写隔离
+主要风险簇
+Artifact-guard / meta-test：读 YAML/pyproject/全仓库 grep，YAML 改名即红，不证明运行时行为
+Wiring / orchestration test：test_production_gate.py 只断言 subprocess 命令字符串
+Vacuous / quota 断言：COUNT(*) >= 0、硬编码 62/11 行数
+跨测试耦合：from tests.test_sync_full_load import ...
+弱 outcome：仅 status==COMPLETED、shuffle 后只断言非 None
+统计（估算）
+test_* 函数：约 280+
+五字段齐全：约 95%+
+P0/P1 finding：15 条
+建议 DELETE：3 条；MODIFY：28 条；ADD：7 条
+完整 Finding 列表
+P0 — 应立即处理
+ID	文件/位置	问题	建议动作	修复要点
+G2-001
+test_layer1_sandbox_bootstrap.py L34/L81/L105 test_preparePhase3Sandbox_* / test_bootstrapEmptyMigratedDb_idempotentOnSamePath
+Vacuous：COUNT(*) >= 0 恒真，迁移失败也可能绿
+MODIFY
+改为 >= 1 或断言 schema_version 含 011_layer1_tables 等具体版本
+G2-002
+test_production_gate.py 全部 3 个 test
+Wiring/meta-test：mock 全部 check_* + subprocess.run，只断言 CLI 字符串含 --strict；production_gate 真失败不会红
+MODIFY
+保留 1 条接线冒烟；其余改为对 gate 函数 outcome（exit code + 报告内容）的集成测，或移到 CI lint
+G2-003
+test_raw_store.py test_stagedEvidence_noProductionReferenceToRegistryBypass
+Artifact-guard：backend/**/*.py 文本 grep；重构/注释即可误红，不证明运行时旁路被阻断
+MODIFY
+改为 importlib 扫描公开 API 或运行时 staged 路径集成测；grep 降级为 CI 脚本
+G2-004
+test_dependency_extras_contract.py 全部
+Artifact-guard：只读 pyproject.toml 文本，不测 pip install 行为
+MODIFY
+迁到 CI contract lint；或 ADD 最小 import 烟测证明默认环境无 qmt/xtquant
+G2-005
+test_b3f_quality_runners.py 3 个 runner test
+弱 outcome：仅 status == "COMPLETED"；runner 空实现也会绿
+MODIFY
+断言 job_event_log、validation_report、或具体表行数/消息字段
+P1 — 高优先级
+ID	文件/位置	问题	建议动作	修复要点
+G2-006
+test_indicator_binding_registry.py test_indicatorBinding_loadAll_returns62Rows
+Artifact quota：硬编码 62；spec 增删指标即假红
+MODIFY
+改为与五轴 spec observable 计数对账，或 YAML rows 长度 + 去重，docstring 写明删除触发
+G2-007
+test_data_health_tier_a_profiles.py test_fourProfileFamilies_registeredInContract
+硬编码 len(bindings)==11
+MODIFY
+与 source_bindings() 契约文件行数绑定，避免魔法数
+G2-008
+test_model_input_whitelist.py 大部分 WL-* test
+Artifact-guard 过重：20+ 用例只校验 YAML 字段/role/readiness，不测 loader/runtime
+MODIFY
+保留 3–5 条 schema + hardening 负例；其余迁 CI；ADD load_whitelist() 行为测
+G2-009
+test_data_health_easyxt_profiles.py test_marketBarP0_ruleIdsRegisteredInContract
+只比对 YAML 规则 ID 集合
+MODIFY
+与 run_ohlcv_rules 行为测合并，或标为 contract lint
+G2-010
+test_data_health_tier_a_profiles.py test_profileRunner_replayFixture_notFailBlocked
+弱 outcome：not in {FAIL,BLOCKED} 允许 SKIP/WARN 空跑
+MODIFY
+断言 checks 非空 + 关键 rule_id 的 status；或要求 overall_status in {PASS,WARN}
+G2-011
+test_layer1_five_axis_panel_clean_smoke.py test_layer1FiveAxisPanel_resourceGuardOnMigratedDb
+分支逃逸：if decision==OK 否则才 assert raise；环境常 OK 时不测 HARD_STOP
+MODIFY
+拆成两条：真 guard OK 路径 + monkeypatch HARD_STOP（已有 A4-P2-003，可删弱分支）
+G2-012
+test_layer1_interpretation.py test_axisFeatureEngine_shuffledHistory_sortedBeforeStats
+只断言 raw_delta_abs is not None，未证明排序正确
+MODIFY
+固定 history 算期望 delta，或对比有序输入同值
+G2-013
+test_b3f_sh_hard_constraints.py 全部
+只测 build_no_false_close_guard() 字典，未测真实 sidecar closeout
+ADD
+增加 sidecar 误关 OPEN 行的集成负例
+G2-014
+test_layer1_sync_facade.py 仅 1 test
+缺漏：无 non-dry-run、无真实 incremental 路径
+ADD
+dry_run=False + mock fetch 边界，断言 DB 状态
+G2-015
+test_b3f_quality_runners.py L71
+耦合：from tests.test_sync_full_load import _FullLoadCountAdapter
+MODIFY
+将 adapter 移到 tests/support/ 或 conftest
+G2-016
+test_audit_remediation.py L27-31
+同上，耦合 tests.test_sync_orchestrator
+MODIFY
+共享 fixture 下沉 support
+G2-017
+test_audit_fixes.py test_resourceGuard_largeCacheDir_*
+确定性/隔离：直接改 rg_mod.DATA_ROOT 全局
+MODIFY
+monkeypatch.setattr(rg_mod, "DATA_ROOT", ...) 或注入路径参数
+G2-018
+test_raw_store.py staged 相关 3 处
+fetch_time=datetime.now(UTC)
+MODIFY
+固定 ISO 时间戳，符合 GLOBAL_TESTING_POLICY §8
+G2-019
+test_backend_smoke.py test_getResourceProfile_invalidValue_shouldRaise
+直接改 os.environ 而非 monkeypatch
+MODIFY
+统一 monkeypatch.setenv，避免并行污染
+G2-020
+test_production_equivalent_smoke_budget.py 2 个 main 测试
+mock subprocess + perf_counter，不跑真实 smoke
+MODIFY
+标为 script wiring；ADD 一条对 evaluate_smoke_metrics 的真指标边界测（已有部分）
+P2 — 中优先级
+ID	文件/位置	问题	建议动作	修复要点
+G2-021
+test_layer1_axis_loader.py test_axisSpecLoader_engineeringRules_documentProjectionMetadata
+断言 YAML 文件文本含 projection_method
+MODIFY
+改为 loader 解析后的结构化字段 outcome
+G2-022
+test_layer1_five_axis_panel_clean_smoke.py test_dcp06K1_whitelistAlignsP0CleanBindings
+纯 YAML 对账，与 test_dcp06Reader_capsMatchK1WhitelistYaml 重叠
+MODIFY
+合并或一方降级为 contract lint
+G2-023
+test_layer1_axis_loader.py migration 2 test
+DDL 列集合断言；迁移列改名即红
+MODIFY
+保留 1 条 smoke；细节迁 migration 契约文档/CI
+G2-024
+test_ingestion_validation_migration.py 多数 test
+同类 DDL CHECK 测试，价值重复但可接受
+MODIFY
+ponytail：合并同类 NOT NULL/CHECK 为参数化
+G2-025
+test_data_health_easyxt_profiles.py test_non_positive_volume_fails
+命名：测 volume 负值但函数名/对象写 check_non_positive_price
+MODIFY
+重命名为 test_nonPositiveVolume_fails 或拆独立 rule
+G2-026
+test_snapshot_lineage_kernel.py 全部 4 test
+五字段用半角 :、无 -> None；与仓库风格不一致
+MODIFY
+统一中文冒号 ： 与金样格式
+G2-027
+test_raw_store.py test_stagedEvidence_publicBypassNotExported
+断言 __all__ / hasattr — 实现面快照
+MODIFY
+与 G2-003 合并为「公开 API 不可旁路」一条行为测
+G2-028
+test_layer1_five_axis_panel_clean_smoke.py test_layer1FiveAxisPanel_resourceGuardHardStop_blocksFeatureCompute
+MagicMock ResourceGuard（可接受），但与 panel 真 guard 测试重复
+MODIFY
+保留 panel 真 DB + monkeypatch 版，删孤立 MagicMock 版
+G2-029
+test_model_input_whitelist.py test_layer4_non_cn_markets_deferred
+弱匹配：notes 含 "US" 即算 deferred
+MODIFY
+断言具体 input_id + readiness==deferred
+G2-030
+test_audit_remediation.py L358
+registry_yaml_fixture 与硬编码路径混用
+MODIFY
+统一 fixture 参数
+G2-031
+五轴 e2e 5 文件
+结构高度重复，负例未在各 e2e 重复（reader 已覆盖）
+ADD（可选）
+各轴 1 条「空库 fail-closed」薄封装，或依赖 reader 并文档化
+G2-032
+test_data_health_tier_a_profiles.py test_macroStagingPersist_*
+内联 _StubAdapter 较重
+MODIFY
+抽到 support；断言 F0 status==PASS 而非 != FAIL
+G2-033
+test_no_clean_write_for_web_evidence.py registry 参数化 3 test
+只读 source_registry.yaml fallback_policy
+MODIFY
+与 runtime SourceRegistry.get_domain_roles() 行为测对齐
+P3 — 低优先级 / 观察项
+ID	文件/位置	问题	建议动作	修复要点
+G2-034
+layer1_clean_e2e_support.py
+无 golden manifest（policy §8 推荐）
+ADD
+记录 seed 参数 hash + AS_OF 版本
+G2-035
+test_layer1_sandbox_bootstrap.py test_bootstrapEmptyMigratedDb_idempotentOnFreshPath
+只断言文件存在，不验证 schema
+MODIFY
+补 schema_version 可读
+G2-036
+test_data_adapter_contract.py test_fetchResult_allContractStatuses_areAccepted
+偏 Pydantic 构造，但属稳定 API 契约
+保留
+在 docstring 标明「序列化契约」
+G2-037
+test_audit_fixes.py test_resourceGuard_largeCacheDir_*
+elapsed < 5s 机器相关
+MODIFY
+放宽或标记 @pytest.mark.perf
+G2-038
+test_layer1_axis_loader.py test_shadowDiagnosticsOutsideGroup_*
+测后 assert not orphan.diagnostic_only 无独立行为断言
+MODIFY
+补 loader 设 diagnostic_only=True 后通过的正例
+Support 文件专项：layer1_clean_e2e_support.py
+项	结论
+职责
+bootstrap 迁移库 + macro/bar/COT seed — 合理
+Mock 边界
+无 mock；真 ConnectionManager + apply_migrations — 合规
+确定性
+AS_OF = datetime(2026, 6, 20, 16, 0, tzinfo=UTC) 固定 — 好
+耦合
+依赖 fred_macro_incremental_support.insert_axis_observation — 可接受，建议文档化
+风险
+seed 未版本化；多 e2e 共享同一模式 — 建议 G2-034 manifest
+五字段 docstring 抽检
+齐全：test_layer1_clean_reader.py、test_data_quality_validator.py、test_db_validation_gate.py、test_observation_mapper.py 等
+格式偏差：test_snapshot_lineage_kernel.py（半角冒号、缺类型注解）→ G2-026
+模块级 docstring 替代：test_no_clean_write_for_web_evidence.py 模块 docstring 含五字段，但各 test_* 亦有独立五字段 — 合规
+
+
+GROUP 3 测试对抗性审计报告
+范围：33 文件（2 support + 31 test 模块），约 280+ 条 test_*
+依据：testing-guidelines workflow 0–5、testing-strategy、GLOBAL_TESTING_POLICY.md
+结论：整体质量偏高（五字段齐全、fail-closed 负向覆盖充分），但 live/mock 诚实性、跨测试耦合、弱 outcome 断言与少量重复/缺口是主要风险面。
+
+审计摘要
+维度	总体评价	主要问题
+1. production behavior 保护
+良好
+Layer2–5 核心路径、SourceConflict、acceptance spine 覆盖扎实；contract/static gate 占比偏高
+2. Mock 边界
+中等
+多处 autouse/mock 合理，但若干标为 live 的测试实际 patch 网络层；矩阵 execute 大面积 stub
+3. outcome 断言
+良好
+少数 truthy only、枚举 membership、no-exception-only 正路径
+4. 五字段 docstring
+优秀
+抽检全部 test_* 均含五字段；parametrize 共享 docstring 符合仓库惯例
+5. 确定性
+中等
+datetime.now(UTC)、宿主机 ResourceGuard 决策、平台分支跳过
+6. 命名
+中等
+同文件内 test_snapshot* vs test_layer2* 混用；个别名实不符
+7. 缺漏
+中等
+Windows CI 跳过 QMT 断言；Layer2 WM 写库缺行级验证；golden manifest 未落地
+8. support 合理性
+良好
+layer*_e2e_support、acceptance_e2e_bootstrap、post_write_inspect_support 职责清晰
+亮点（可保留）：
+
+test_layer2_clean_reader.py、test_layer3_loader.py、test_source_conflict_validator.py、test_source_registry.py — 行为优先、负向齐全
+test_source_route_db_acceptance_matrix.py — closure 语义、honesty checker、防篡改覆盖完整
+test_matrix_live_evidence_honesty.py — mock/replay 冒充 live PASS 的对抗测到位
+完整 Finding 列表
+P0 — 可能假绿 / 诚实性风险
+ID	文件	位置	问题	动作	修复要点
+G3-001
+tests/test_source_route_db_acceptance_contract.py
+test_sourceRouteDbAcceptance_fredMacroTracer_liveWritesAndReadsClean
+docstring 称「live 闭环」，但 monkeypatch.setattr(FredLiveFetchPort, "_live_observations", ...) 完全替代真网；implementation_mode=live 可能误导 gate
+MODIFY
+改名含 mockedLiveObservations；docstring 五字段标明 mock 边界；或拆成「真 replay + 独立 unit 测 live 分支」
+G3-002
+tests/test_source_route_db_acceptance_matrix.py
+test_sourceRouteDbAcceptanceMatrix_coingeckoEvidenceFetch_liveMock_passesWithoutAdapter
+_StubPort 产出 content_hash: "stub" 仍可能 status=PASS；与 matrix live honesty 规则边界需显式对齐
+MODIFY
+断言 implementation_mode/fetch_provenance 诚实标记；确保 checker 不会把 stub 当 final live PASS
+P1 — Mock 边界 / 耦合 / 重复
+ID	文件	位置	问题	动作	修复要点
+G3-003
+tests/test_layer2_sensor_loader.py
+autouse _layer2_snapshot_build_allows_resource_guard
+除 @resourceguard 外全部测试 bypass 真实 ResourceGuard；WM 集成路径未验 guard 阻断
+ADD
+增 1 条 integration：guard=HARD_STOP 时 Layer2SnapshotWriter.write_daily_snapshot 失败且无 DB 行
+G3-004
+tests/test_layer2_sensor_loader.py
+test_crossAssetRegistryLoader_rejectsNonStagedMode + test_layer2Loader_defaultRejectsProductionLiveMode
+同场景重复（production_live YAML → CrossAssetRegistryLoadError）
+DELETE
+保留一条，另一条的 失败含义 合并进 survivor
+G3-005
+tests/test_layer4_market_structure.py
+test_marketSnapshot_lineageUpstreamFromLayer3
+from tests.test_layer3_snapshot_builder import _build — 跨 test 模块 import 私有 helper
+MODIFY
+将 _build 抽到 tests/layer3_snapshot_support.py 或 fixture；L4 测只依赖稳定 support
+G3-006
+tests/test_source_route_db_acceptance_matrix.py
+test_sourceRouteDbAcceptanceMatrix_validationSourceExecute_blocksPrimaryClean
+monkeypatch 整个 run_matrix_evidence_fetch_live → 只验报告字段，不验 validation fetch 行为
+MODIFY
+用可控 fake port（非全函数替换）+ 断言 raw 证据落盘；或 docstring 标明「report contract only」
+G3-007
+tests/test_source_route_db_acceptance_matrix.py
+test_sourceRouteDbAcceptanceSpine_rejectsNonSandboxDataRoot + test_sourceRouteDbAcceptanceSpine_execute_rejectsNonSandboxDataRoot
+两条几乎相同负例（非 sandbox → CONTRACT_VIOLATION）
+DELETE
+合并为一条；若保留 CR/TD 编号，用 parametrize
+G3-008
+tests/test_layer4_clean_read.py
+test_tierAClean_rejectsFutureBreadthObservation
+patch.object(USEquityCleanMarketAdapter, "load_breadth", return_value=...) 注入未来数据 — 测 builder 闸，不证 adapter 自身过滤
+MODIFY
+补一条：畸形 DB 行经真实 adapter 读入后被拒；本条 docstring 标明「builder guard with stubbed adapter」
+G3-009
+tests/test_bounded_backfill_cli_e2e.py
+test_bounded_backfill_cli_e2e_two_shards...
+replay + mock ResourceGuard + mock service builder；测试名无 replay/mock 标记（违反 GLOBAL_TESTING_POLICY §1）
+MODIFY
+重命名为 ..._replayFixture_twoShards...；五字段写明 replay 边界
+G3-010
+tests/test_layer2_sensor_loader.py
+test_layer2Observation_writeViaWriteManager
+仅 result.status == "SUCCESS"，未断言 cross_asset_observation 等表有行
+MODIFY
+补 DB outcome：COUNT(*)、关键字段（asset_id、trade_date、source）
+P2 — 弱断言 / 确定性 / 命名 / 缺口
+ID	文件	位置	问题	动作	修复要点
+G3-011
+tests/test_layer2_sensor_loader.py
+test_resourceGuard_realInstance_returnsDecision
+仅断言 decision in 四枚举 — 宿主机内存/磁盘影响结果，无业务语义
+MODIFY
+注入可控 DuckDB fixture + 断言具体 Decision；或标 @pytest.mark.host_resource 并收紧断言
+G3-012
+tests/test_source_health_snapshot.py
+test_sourceHealthSnapshot_writer_insertsRow
+as_of_timestamp=datetime.now(UTC) — 违反确定性基线 §8
+MODIFY
+用固定 datetime(2026,1,1,tzinfo=UTC) 或 time-freeze fixture
+G3-013
+tests/test_layer5_evidence_foundation.py
+test_evidenceFoundation_recordKinds_areDistinct
+DERIVED/AGENT 正路径仅 validate_record 无异常 — 禁止单独 no-exception
+MODIFY
+断言返回/副作用，或合并进负向用例减少正路径空跑
+G3-014
+tests/test_layer2_sensor_loader.py
+test_layer2Snapshot_lineageIncludesFetchIdsAndHashes
+assert row[2] / assert row[3] 仅 truthy
+MODIFY
+断言 rule_version/parameter_hash 与 envelope 一致
+G3-015
+tests/test_layer2_sensor_loader.py
+test_doubleCountGuard_modelEligibleAsset_passes
+先断言 registry 常量再 assert_model_eligible 无异常 — 前半 vacuous
+MODIFY
+删除 registry 元数据重复断言，保留 guard 不抛即可
+G3-016
+tests/test_source_capabilities.py
+test_unknownCapability_rejectedBeforeFetch
+名含 rejectedBeforeFetch，实际只扫 YAML 域名集合
+MODIFY
+重命名为 test_capabilityYaml_excludesLegacyAbstractDomain；或改为调用 assert_source_domain_operation
+G3-017
+tests/test_platform_source_matrix.py
+test_qmtXtdataNonWindowsNotSchedulable
+if key != "windows" 分支在 Windows CI 跳过 plan_route 断言
+ADD
+Windows 用 matrix 条目断言 + 单独 linux job；或 @pytest.mark.skipif(sys.platform=="win32") 并 ADD win32 对称测
+G3-018
+tests/test_layer2_sensor_loader.py
+多条 test_snapshot*
+同文件混用 test_snapshotRejectsFutureInput 与 test_layer2Snapshot_* 前缀
+MODIFY
+统一为 test_layer2Snapshot_* 或 test_crossAssetSnapshot_*
+G3-019
+tests/test_layer2_clean_reader.py
+test_layer2CleanReader_rowCapMatchesLayer1Vixcls
+跨层 cap 数值对账 — 实现常量同步，非端到端行为
+MODIFY
+保留但 失败含义 注明「registry cap drift」；或改读 registry SSOT 而非双函数对账
+G3-020
+tests/test_source_route_db_acceptance_matrix.py
+test_matrixIncrementalLiveReport_emptyResponseWithExistingCleanRows_passes
+cm=object() 占位 — 纯 report builder，无 DB 语义
+MODIFY
+用最小 fake cm 或 rename 为 _reportBuilder_；避免暗示 integration
+G3-021
+tests/test_reference_adoption_guardrails.py
+全文件
+静态 pattern scan — artifact-guard 类；非 runtime behavior
+MODIFY
+保持但标注为 contract gate；确保 CI 脚本承担主责，测试只留 1–2 条行为锚点
+G3-022
+tests/test_acceptance_helper_consumers.py
+两条 test
+测 CI 脚本 consumer_count==0 — meta gate
+MODIFY
+与 matrix 内重复测合并；保留一处 SSOT
+G3-023
+tests/test_live_tier_a_evidence_contract.py / test_live_tier_b_evidence_contract.py
+多条
+硬编码源数量（11/10）— 契约同步测，TIER_* 漂移时易碎
+MODIFY
+改为 len(bindings)==len(TIER_A_SOURCES) 已从契约读 required fields — 数量断言可删或仅作 smoke
+G3-024
+tests/test_layer3_snapshot_builder.py
+test_layer3Snapshot_deterministicRebuild_sameInputsSameHash
+未比较 generated_at（有意跳过）— 缺 manifest/hash 登记
+ADD
+按 GLOBAL_TESTING_POLICY §8 增 golden manifest 或 hash 登记注释
+G3-025
+tests/test_vendor_fetch_e2e.py
+两条 e2e
+clean_count == 1 未断言 bar 字段值
+MODIFY
+补 close/trade_date/instrument_id 与 fixture 一致
+P3 — 风格 / 可选优化
+ID	文件	位置	问题	动作	修复要点
+G3-026
+tests/layer2_e2e_support.py
+insert_layer2_validation_report
+固定 status=PASSED — support 合理，但缺「失败 VR」变体
+ADD
+可选 helper 参数化 status，供负向 WM 测复用
+G3-027
+tests/layer4_clean_e2e_support.py
+seed_us_equity_bar
+用 CURRENT_TIMESTAMP — 对 as_of 过滤测足够
+MODIFY
+如需 as_of 边界 e2e，支持注入 created_at
+G3-028
+tests/test_layer5_evidence_chain.py
+test_evidenceReadPort_boundary
+测 in-test _FakeEvidenceReadPort — 偏 harness 自证
+MODIFY
+可保留；确保 SUT 是 EvidenceChainBuilder.build_from_port
+G3-029
+tests/test_layer2_vix_clean_e2e.py
+单条 e2e
+未断言 WM 写入后 cross_asset_daily_snapshot 表行
+ADD
+补 DB 行断言，与 lineage 测对称
+G3-030
+tests/test_layer4_us_equity_clean_e2e.py
+单条 e2e
+未断言 calendar_rows 与 US SSOT 一致细节
+ADD
+补 is_trading_day、session_type 等 1–2 个字段
+G3-031
+tests/test_source_route_db_acceptance_matrix.py
+test_secEdgar_fetchSubmissions_usesHttpx2Client
+mock client 路径 — 可接受；未断言 User-Agent 业务规则全文
+MODIFY
+若 SEC fair-access 有格式契约，补 match 子串
+G3-032
+tests/test_contract_drift_ops_write.py
+全文件
+YAML↔常量 parity — artifact gate
+MODIFY
+保持；考虑迁到 scripts/check_* 减 pytest 负担
+G3-033
+tests/acceptance_e2e_bootstrap.py
+support
+无对应单测 — bootstrap API 靠 e2e 间接覆盖
+ADD
+可选：最小单测 acceptance_db_path 路径契约
+
+
+
+
+
+GROUP 4 增量测试深度对抗性审计报告
+范围： 33 文件（8 support + 25 test_*.py），118 个 test_* 函数
+依据： testing-guidelines workflow 0–5、testing-strategy、GLOBAL_TESTING_POLICY.md
+
+审计摘要
+总体评价
+维度	结论
+production behavior 保护
+金路径（watermark → fetch → staging → clean upsert）覆盖较好；replay e2e、幂等、EMPTY_RESPONSE、live gate 负例较齐。缺口： baostock 无追平用例；多数源无 fetch 失败/PARTIAL_FAILURE；ResourceGuard 拒绝路径全组缺失。
+Mock 边界 / live 诚实标记
+整体合规：use_mock=True fixture、@pytest.mark.network、product_live=True、cninfo-live- / mootdx-live- 等标记清晰；test_cninfoProductLiveFactory_* 是良好范例。
+Outcome 断言
+多数测 status + 持久化行/字段值；弱项：部分 live 幂等仅比 COUNT、bis live 幂等条件断言、若干 watermark 断言不完整。
+五字段 docstring
+118/118 均有完整五字段（CI test_docstring_quadruple_coverage 应可过）。
+确定性
+多处 datetime.now(UTC) / date.today()；insert_axis_observation 用墙钟写 fetch_time。
+命名
+大体符合 condition_expectedBehavior；mock 路径仍大量叫 *Incremental_e2e_*（应用 replay 区分）。
+缺漏
+见 finding 列表；fred 是错误路径覆盖最完整的源。
+Support 文件
+结构清晰，但有死 import、死常量、确定性 helper 问题。
+统计
+级别	数量	说明
+P0
+1
+测试运行时必炸
+P1
+8
+生产保障缺口或断言形同虚设
+P2
+14
+确定性、断言偏弱、docstring/实现漂移
+P3
+9
+噪声、命名、清理项
+完整 Finding 列表
+ID	P	文件	位置	问题	动作	修复要点
+G4-001
+P0
+tests/test_mootdx_incremental_e2e.py
+L255 test_mootdxIncremental_liveNetwork_writesSecurityBar1d
+调用 load_mootdx_raw_bundle_from_fetch_log 但未从 incremental_mootdx_support import → NameError
+MODIFY
+在 import 块加入 load_mootdx_raw_bundle_from_fetch_log；或改为经 support helper 封装 live 断言。
+G4-002
+P1
+tests/test_baostock_incremental_e2e.py
+（缺测）
+全组 bar 源均有追平/空窗语义，唯独 baostock 无 emptyResponse/caughtUp/SKIPPED 用例
+ADD
+仿 alpha_vantage/mootdx：seed 至 FIXTURE_DATE，断言 EMPTY_RESPONSE 或 orchestrator SKIPPED 且行数不变。
+G4-003
+P1
+tests/test_bis_incremental_e2e.py
+L242–285 test_bisIncremental_liveNetwork_idempotentSecondRun
+仅当第二次 EMPTY_RESPONSE 才断言 first==second；若两次 COMPLETED 且重复插入，测试仍绿
+MODIFY
+两次 run 后无条件 assert first == second；并断言第二次 status 或行数不增的业务不变量。
+G4-004
+P1
+tests/test_cftc_incremental_e2e.py
+L212–253 live idempotent
+若两次 live 均 EMPTY_RESPONSE 且 first==second==0，幂等测试空转通过
+MODIFY
+首次 run 后 assert first >= 1（或 skip 并注明无 live 数据）；第二次断言 status + COUNT。
+G4-005
+P1
+tests/test_sec_edgar_incremental_e2e.py
+L143–171 live idempotent
+同 G4-004：无「至少一行」前提，双 EMPTY 可假绿
+MODIFY
+同 G4-004；COMPLETED 分支断言 accession 字段。
+G4-006
+P1
+tests/test_alpha_vantage_incremental_e2e.py
+L172–196 live idempotent
+未断言两次 run 的 status；双 EMPTY 时 COUNT 可能均为 seed 行数
+MODIFY
+记录并断言两次 symbol_results[0].status；COMPLETED 时断言 fixture 业务字段。
+G4-007
+P1
+tests/test_world_bank_incremental_watermark.py
+L45–64 test_worldBankWatermark_existingObservation_returnsNextDay
+World Bank 生产 since 用 compute_world_bank_since_date（年频 +1 年），本测用日频 compute_since_date +1 日，测错生产表面
+MODIFY
+改为断言 compute_world_bank_since_date(date(2026,6,10))==date(2027,1,1)；docstring 改年频语义。
+G4-008
+P1
+多文件 macro e2e
+test_*_emptyResponse_whenWatermarkCurrent（bis/cftc/fred/treasury/wb）
+seed 用 datetime.now(UTC).date()，与 replay fixture 固定日期耦合；未注入 today，违反 GLOBAL_TESTING_POLICY §8
+MODIFY
+统一 today=date(2026,6,30)（或 freeze_time fixture）传入 watermark/seed；insert_axis_observation(..., obs_date=fixed)。
+G4-009
+P2
+tests/fred_macro_incremental_support.py
+L41 insert_axis_observation
+fetch_time/created_at 用 datetime.now(UTC)，污染快照/哈希类回归
+MODIFY
+增加可选 as_of: datetime 参数，默认固定 UTC 时刻；测试全传固定值。
+G4-010
+P2
+tests/test_fred_macro_incremental_port.py
+L61–72 test_fredPort_coldStart_usesCappedWindow
+today = datetime.now(UTC).date()，冷启动窗断言随运行日漂移
+MODIFY
+注入固定 today 或 patch _resolve_observation_start 的 clock 输入。
+G4-011
+P2
+tests/test_world_bank_incremental_e2e.py
+L64–76 test_worldBankSinceDate_advancesToNextYearAfterWatermark
+compute_world_bank_since_date(None).year <= date.today().year 过宽且非确定性
+MODIFY
+固定 today=date(2026,6,30) 断言冷启动 since 精确值。
+G4-012
+P2
+tests/test_alpha_vantage_incremental_watermark.py
+L11–23 test_alphaVantageWatermark_emptyTable_returnsLookbackWindow
+docstring 要求 date_start=end-30，仅断言 date_end，未断言 date_start
+MODIFY
+assert window.date_start == date(2023, 12, 4)（对 end=2024-01-03）。
+G4-013
+P2
+tests/test_sec_edgar_incremental_watermark.py
+L19–32 test_secEdgarWatermark_emptyTable_returnsCappedColdStart
+仅 since <= today，未验证 FILING_LOOKBACK_DAYS cap
+MODIFY
+assert since == today - timedelta(days=FILING_LOOKBACK_DAYS)。
+G4-014
+P2
+tests/test_deribit_incremental_e2e.py
+L125–153 live write
+docstring 验证点含 DbInspector 表存在，实现未调用 DbInspector
+MODIFY
+补 DbInspector(...).inspect() 或删 docstring 中 DbInspector 项。
+G4-015
+P2
+tests/test_sec_edgar_incremental_e2e.py
+L115–140 live write
+同 G4-014：docstring 承诺 DbInspector，代码未验
+MODIFY
+同 G4-014。
+G4-016
+P2
+GROUP 4 全组 e2e fixture
+各 *_incremental_e2e_ctx / build_*_service
+ResourceGuard 一律 monkeypatch 为 OK，未覆盖 pause/deny 时增量应 fail-closed
+ADD
+每 Tier A 源至少 1 条：ResourceGuard 返回 PAUSE → run 不写入 clean 表。
+G4-017
+P2
+bar/macro 源（除 fred）
+e2e 文件
+无 fetch 失败 / PARTIAL_FAILURE / 坏 payload 路径（fred 有 partialFailure、invalidJson）
+ADD
+仿 test_fredIncremental_partialFailure_*：mock port 抛 PortError，断言 overall 非无条件 COMPLETED。
+G4-018
+P2
+tests/test_alpha_vantage_incremental_e2e.py
+L137–168 live write
+未断言 product_live / live evidence（baostock/mootdx 有 product_live is True）
+MODIFY
+若 report/result 暴露 product_live 或 raw source_fetch_id，补诚实标记断言。
+G4-019
+P2
+tests/test_cninfo_incremental_e2e.py
+L23–47 replay e2e
+仅 announcement_id is not None，不断言 title/publish_date/source_used
+MODIFY
+对 fixture 常量断言 1–2 个业务字段。
+G4-020
+P2
+tests/test_alpha_vantage_incremental_e2e.py
+L55–87 repeatRun
+两次 run_* 未断言 COMPLETED，仅比 COUNT
+MODIFY
+断言 report.symbol_results[0]["status"]=="COMPLETED"（两次）。
+G4-021
+P2
+tests/test_mootdx_incremental_e2e.py
+L161–194 emptyResponse
+用 SKIPPED（orchestrator 倒置窗），他源用 EMPTY_RESPONSE；跨源语义未文档化
+MODIFY
+docstring 明确 bar 源 caught-up 契约是 SKIPPED 而非 EMPTY_RESPONSE；或统一生产 status 枚举。
+G4-022
+P3
+tests/test_fred_macro_incremental_e2e.py
+L27–55 test_fredIncremental_e2e_replay_writesAxisObservation
+@pytest.mark.parametrize("replay", [True]) 单值参数化，无额外行为分支
+DELETE/MODIFY
+删除 parametrize，保留单一 replay 测试。
+G4-023
+P3
+tests/test_bis_incremental_e2e.py
+L166–181 test_bisLivePort_startPeriod_fromWatermarkStartTime
+断言 private _resolve_start_year，属 implementation snapshot
+MODIFY
+改测 fetch_payload 产出或 HTTP URL 中 startPeriod（仿 fred port 测法）。
+G4-024
+P3
+tests/test_fred_macro_incremental_port.py
+L94–117 test_fredPort_live_rejectsWithoutApiKey
+一个 test 含两个独立场景（无 key 抛错 + patch 后成功）
+MODIFY
+拆成 rejectsWithoutApiKey 与 succeedsWhenKeyPresent 两条。
+G4-025
+P3
+tests/test_mootdx_adapter_staging.py
+L19–40 test_mootdxAdapter_registeredInFactory
+以 isinstance(adapter, MootdxAdapter) 为主，接近 vacuous（已有 fetchPortPath 覆盖）
+DELETE/MODIFY
+删除或合并进 staging 测试；若保留须断言 registry 路由行为而非类型。
+G4-026
+P3
+tests/test_fred_source_registry.py
+全文 2 tests
+Artifact-guard：读 YAML 断言 enabled_by_default（非 runtime 行为）
+MODIFY
+若保留：在 失败含义 标明「registry 为稳定契约」；或迁到 CI lint/contract gate，测试只验 runtime SourceRegistry.load()。
+G4-027
+P3
+tests/test_fred_macro_incremental_cli.py
+L189–205 test_fredIncrementalCli_help_showsSourceIdFlag
+CLI --help 字符串快照，help 文案变更即红
+MODIFY
+降为 smoke 并收窄断言到 add_argument('--source-id') 存在（若 CLI 可 introspect）。
+G4-028
+P3
+mock e2e 命名
+如 test_*Incremental_e2e_*（alpha/cninfo/deribit/…）
+实际为 replay/mock，名称易与 live e2e 混淆
+MODIFY
+重命名为 *Replay* 或 *MockPort*（live 已用 liveNetwork）。
+G4-029
+P3
+tests/incremental_baostock_support.py
+L16–18 REPLAY_FIXTURE
+常量本组未使用（死代码）
+DELETE
+删除或在本组 replay 测试中显式引用并断言 fixture 路径。
+G4-030
+P3
+多个 *_incremental_support.py
+import 行
+未使用 import：bootstrap_acceptance_cm、CninfoIncrementalFetchProxy、FredIncrementalFetchProxy、ACCEPTANCE_DUCKBACK_NAME 等
+MODIFY
+删除死 import；macro_incremental_support 删 MacroIncrementalFetchProxy、ACCEPTANCE_DUCKDB_NAME。
+正面观察（可保留为组内模板）
+五字段 docstring 全覆盖，业务 失败含义 写得清楚。
+Live/mock 分层：@pytest.mark.network + bootstrap_port_live_e2e_ctx 的 env_key skip + ProductLiveGateError 负例成体系。
+Fred 子组 错误聚合（PARTIAL_FAILURE、坏 JSON）是全组最佳实践，宜横向复制到 Tier A 其它源。
+test_cninfoProductLiveFactory_useMockFalseUsesLiveHttpPort：mock 边界在 HTTP/SDK、断言 cninfo-live- evidence，符合 GLOBAL_TESTING_POLICY §1。
+Baostock/mootdx live 断言 product_live is True + live source_fetch_id 前缀，诚实标记到位。
+
+
+
+
+GROUP 5 测试对抗性审计报告
+范围：29 个 test_*.py + 2 个 tests/support/*（按你给的列表）
+跳过：tests/test_source_route_db_acceptance_matrix.py（按指令假定 G3 已审计）
+依据：testing-guidelines、testing-strategy、GLOBAL_TESTING_POLICY.md
+审计方式：逐文件通读 + 逐 test_* 五字段/断言/Mock/确定性/噪声检查
+
+审计摘要
+维度	结论
+五字段 docstring
+GROUP 5 内所有 test_* 均有完整五字段，合规
+业务行为覆盖
+适配器/port/路由/CLI 门禁整体扎实；Tier B TDX、data health、db-inspector 对抗性好
+主要弱点
+① YAML/契约元测试偏多 ② datetime.now() 窗口 cap 测违反确定性策略 ③ mootdx sync 相对 baostock 真跑路径明显偏薄 ④ 个别集成测主动削弱 capability 门禁
+噪声/脆性
+required_tests 名单测、源码字符串扫描、纯 callable() smoke、弱 OR 路由断言
+support 模块
+无 test_*；orchestration_flow_fixtures 在 fetch 里建表，属测试异味但非产品路径
+统计：共 24 条 finding — P0×2 · P1×9 · P2×9 · P3×4
+
+完整 Finding 列表
+ID	P	文件	位置	问题	动作	修复要点
+G5-001
+P0
+tests/test_qmd_data_sync_mootdx.py
+全文件（5 个 test）
+相对 test_qmd_data_sync_baostock.py 缺 真跑 replay 成功、FAILED_FINAL→SYNC_FAILED、caught_up/since/product_live 等运维关键路径
+ADD
+镜像 baostock：补 nonDryRun_replaySmoke、failedFinal_raisesCliFailure、caughtUpDryRun；断言 job_status、DB 行、exit code
+G5-002
+P0
+tests/test_prediction_market_adapters.py
+test_predictionMarket_dataSourceService_fetch_portIntegration L581–584
+monkeypatch 将 assert_source_domain_operation 置空，主动绕过 capability 校验；集成测无法证明「域×操作」契约
+MODIFY
+改为启用源+域的正规 registry patch（同 enable_source_route）；删除 no-op lambda；断言 capability 违规时 fail-closed
+G5-003
+P1
+tests/test_cn_market_adapters.py
+test_baostock_port_windowSpan_blocksOverMaxWindowDays L226
+使用 datetime.now(UTC).date() 构造窗口，违反 GLOBAL_TESTING_POLICY §8 固定时钟
+MODIFY
+注入 frozen end=date(2024,6,30)；或 freezegun/项目既有 clock fixture
+G5-004
+P1
+tests/test_market_data_adapters.py
+test_stooq_port_windowSpan_blocksOverMaxWindowDays L438
+同上 datetime.now()
+MODIFY
+固定 end 日期
+G5-005
+P1
+tests/test_prediction_market_adapters.py
+test_kalshi_port_windowSpan_* L202、test_polymarket_port_windowSpan_* L231
+同上 datetime.now()
+MODIFY
+固定日历 end
+G5-006
+P1
+tests/test_official_macro_adapters.py
+test_fred_port_windowStart_respectsMaxWindowDays L1257
+datetime.now(UTC) 推导 window start，跨日/CI 时区可能漂移
+MODIFY
+固定 as_of/end；断言相对固定锚点的边界
+G5-007
+P1
+tests/test_datasource_service.py
+test_datasourceServiceContract_requiredTestsIncludeR3h10Gate
+元测试：断言 YAML required_tests 含其他测试路径名，不验证生产行为
+DELETE 或 MODIFY
+删此测，改 CI 契约扫描；或改为跑 listed 测试 的 smoke import（仍须绑行为）
+G5-008
+P1
+tests/test_datasource_service.py
+test_serviceBuildsRouteBeforeFetch
+工件守卫：只比对 YAML required_steps 列表相等，不验证 DataSourceService.fetch 运行时
+MODIFY
+保留 test_serviceFetch_runtimeGateOrder 为 SSOT；此测降级为契约 lint 或删
+G5-009
+P1
+tests/test_datasource_service.py
+test_serviceFetch_runtimeGateOrder L190–192
+调用顺序断言（order.index 链），GLOBAL_TESTING_POLICY §3 禁止除非顺序即契约
+MODIFY
+保留顺序测时 docstring 标明「顺序即契约」；并加 outcome：guard 阻断时无 fetch_log、ROUTE_PLAN payload 字段
+G5-010
+P1
+tests/test_qmd_data_cli.py
+test_packaging_consoleScripts_smoke L139–145
+空洞断言：callable(main) 不证明 console_scripts 可执行
+MODIFY
+用 importlib.metadata.entry_points 或 subprocess --help exit 0
+G5-011
+P1
+tests/test_us_trading_calendar.py
+test_usEquityPort_explicitWindowSpan_120CalendarDaysWithinTradingSessionCap_allowed L128
+assert payload.row_count >= 0 几乎恒真，未证明「120 交易日窗被接受」
+MODIFY
+断言无 PortError + bars 非空 + 窗内交易日数 ≤120；或对比超 cap 用例
+G5-012
+P1
+tests/test_cn_market_adapters.py
+test_baostock_registry_readyWithEvidenceStatus L823–836
+工件守卫：只读 source_capabilities.yaml 的 READY_WITH_EVIDENCE，不验证 port 产出
+MODIFY
+拆为「YAML 登记」+「每源 mock fetch 产出 evidence v1」；或标 ponytail: 仅登记用
+G5-013
+P1
+tests/test_ops_data_health.py
+test_opsDataHealth_dh2Path_noSnapshotDdl L500–505
+源码字符串扫描（CREATE TABLE not in source），非可观察行为
+MODIFY
+改为调用 DH2 路径后断言 DB 无 source_health_snapshot 表 / migration 未执行
+G5-014
+P2
+tests/test_qmd_data_sync_tier_a_router.py
+_patch_mootdx_registry_validation_only L76–78
+已标 Deprecated 的 no-op，误导维护者
+DELETE
+删函数及调用；注释说明 R3-DCP-08 已修复
+G5-015
+P2
+tests/test_qmd_data_sync_tier_a_router.py
+test_tierASyncRouter_dryRun_allSources_auditableJson
+全源 dry-run 前 patch 启用 registry，不覆盖「生产默认禁用」下 dry-run 审计语义
+ADD
+补「未 patch 时 bis/fred dry-run→DISABLED_SOURCE」已部分有；对 baostock 等默认启用源补「未 patch 仍可 dry-run」对照
+G5-016
+P2
+tests/test_api_security_contract.py
+test_resourceLimitsApiLimits_matchApiSecurityContract
+测 两份 YAML 互相对齐，非 load_api_limits() 运行时
+MODIFY
+合并到 test_loadApiLimits_queryBudgetNotOverriddenByLowerPriorityYaml 或断言 loader 读完 spec+cfg 后的值
+G5-017
+P2
+tests/test_official_macro_adapters.py
+test_fred_liveCap_pilotAuthLayerDocumented L1424–1435
+仅断言模块常量 == 字面量，无行为
+MODIFY
+合并进 cap overflow 测或删；若保留须绑 pilot gate 行为
+G5-018
+P2
+tests/test_official_macro_adapters.py
+test_bis_creditGap_replayFixture_canonical L1376–1381
+直接测 私有 _read_observations_bundle / _normalize_*
+MODIFY
+改测 public read_*_evidence_bundle 路径
+G5-019
+P2
+tests/test_prediction_market_adapters.py
+test_kalshi_liveSmoke_authorizationYamlPresent L483–498
+断言 YAML 文件存在 + 字段，非 gate 拒绝/放行行为
+MODIFY
+与 test_validateTdxLiveManualProbe_* 模式对齐：缺/坏 authorization 时 load_* 或 smoke runner fail-closed
+G5-020
+P2
+tests/test_provider_catalog.py
+多测（如 test_everyRegistrySource_hasCatalogEntry L94）
+整模块为 YAML SSOT 对齐（可接受），但 len==25 等硬编码易脆
+MODIFY
+改为 len(registry)==len(catalog) 动态相等；或 manifest 版本号
+G5-021
+P2
+tests/test_cn_market_adapters.py
+test_ifind_route_disabledWithoutLicense L770
+弱 OR：route_status!=READY or selected!=ths_ifind 允许 READY+其他源，未断言 ifind skip_reason
+MODIFY
+断言 ifind 候选 enabled=False 且 skip_reason 含 authorization/license
+G5-022
+P2
+tests/test_datasource_route_grade_payload.py + test_datasource_service.py
+test_dataSourceService_resourceGuardPausedRoutePlan_writesBlockedRouteGrade vs test_serviceGuardBlocked_emitsResourceGuardPausedRoutePlan
+重复覆盖 route_grade（前者专测 grade，后者测事件）；维护成本高
+MODIFY
+合并为一测或明确分工（一个测 payload 字段，一个测无 fetch_log）
+G5-023
+P3
+tests/test_adapter_skeletons.py
+test_fetchRecordsLatencyMsWhenPayloadOmitsIt L674–675
+latency_ms >= 0 偏弱（虽 paired 非空）
+MODIFY
+断言写入 fetch_log 的具体范围或 stub 注入已知 latency
+G5-024
+P3
+tests/support/orchestration_flow_fixtures.py
+BatchDIncrementalAdapter.fetch L31–62
+测试 adapter 在 fetch 内 CREATE TABLE，混合 DDL 与 fetch 语义
+MODIFY
+迁到 fixture db setup；fetch 只 INSERT seed
+G5-025
+P3
+tests/test_source_route_planner.py + 各 *_adapters.py
+多处 test_*_disabledByDefault / validation_only_blocked
+重复矩阵：planner 与 adapter 双份登记
+保持
+可接受（不同入口）；文档注明「planner=默认 posture，adapter=启用后 route」避免删一侧

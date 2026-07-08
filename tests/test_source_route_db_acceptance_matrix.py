@@ -33,29 +33,27 @@ def test_acceptanceHelperConsumers_strictMode_hasZeroProductRuntimeConsumers() -
     验证点：strict 退出码 0；product_runtime_count/consumer_count 为 0；seam_inventory PASS
     失败含义：旧 helper 仍被产品路径调用，验收 PASS 语义会继续分裂
     """
-    for extra in ([], ["--strict-seam-inventory"]):
-        proc = subprocess.run(
-            [
-                sys.executable,
-                "scripts/check_acceptance_helper_consumers.py",
-                "--strict",
-                *extra,
-                "--format",
-                "json",
-            ],
-            cwd=PROJECT_ROOT,
-            check=False,
-            capture_output=True,
-            text=True,
-        )
-        payload = json.loads(proc.stdout)
+    proc = subprocess.run(
+        [
+            sys.executable,
+            "scripts/check_acceptance_helper_consumers.py",
+            "--strict",
+            "--strict-seam-inventory",
+            "--format",
+            "json",
+        ],
+        cwd=PROJECT_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    payload = json.loads(proc.stdout)
 
-        assert proc.returncode == 0, proc.stdout + proc.stderr
-        assert payload["strict_status"] == "PASS"
-        assert payload["product_runtime_count"] == 0
-        assert payload["consumer_count"] == 0
-        if extra:
-            assert payload["seam_inventory_status"] == "PASS"
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert payload["strict_status"] == "PASS"
+    assert payload["product_runtime_count"] == 0
+    assert payload["consumer_count"] == 0
+    assert payload["seam_inventory_status"] == "PASS"
 
 
 def test_sourceRouteDbAcceptanceMatrix_hasTwentyTwoDocumentedSources() -> None:

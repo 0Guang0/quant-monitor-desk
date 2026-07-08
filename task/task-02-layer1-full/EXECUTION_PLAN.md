@@ -1,5 +1,7 @@
 # EXECUTION_PLAN — M-G1-03（Plan · 唯一执行 SSOT）
 
+> **当前状态更新（2026-07-08）：** 本文件保留为历史执行计划与设计背景。当前 Phase 1 执行以同目录 `PHASE1_PRD.md`、`task_plan.md`、`findings.md`、`progress.md` 为准：Phase 1 完成口径已升级为 task01 后的 production-equivalent acceptance DB + `SourceRouteDbAcceptanceSpine`。本文件中旧 `.audit-sandbox`、limited production、dry-run/replay、Phase 2 相关 gate 语言不得单独作为当前 P1-GATE 依据。
+
 > **协议：** Trellis Plan v4.2 · Phase **5e** 产物  
 > **票结构：** **B** — 单票 `M-G1-03` · **P1-GATE** 未绿 **禁止** Phase 2 Execute  
 > **状态：** **Plan frozen** @ 2026-07-04 · Open Questions **已关闭**（OQ-1A · OQ-2A）  
