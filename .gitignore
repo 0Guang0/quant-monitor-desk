@@ -72,7 +72,7 @@ findings.md
 progress.md
 scratch/
 .scratch/
-_tmp_dbg/
+_tmp_dbg*/
 tmp/
 .tmp/
 .ai-bridge/
