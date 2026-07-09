@@ -13,6 +13,7 @@ from backend.app.datasources.fetch_result import FetchRequest, FetchResult
 from backend.app.db.write_manager import WriteRequest
 from backend.app.sync.event_payload import build_event_payload
 from backend.app.sync.jobs import (
+    BackfillShardCapExceededError,
     SyncJobResult,
     SyncJobSpec,
     SyncJobStateMachine,
@@ -713,7 +714,15 @@ class BackfillShardRunner(_PipelineMixin):
             if require_trigger_reason
             else (spec.trigger_reason or "cold_start")
         )
-        shards = plan_backfill_shards(spec.date_start, spec.date_end)
+        try:
+            shards = plan_backfill_shards(
+                spec.date_start,
+                spec.date_end,
+                data_domain=spec.data_domain,
+                truncate_to_cap=True,
+            )
+        except BackfillShardCapExceededError as exc:
+            raise ValueError(str(exc)) from exc
         job_id = self._jobs.create_job(spec)
         self._jobs.transition(job_id, "PLANNED")
         checkpoint_task = self._shard_checkpoint_task_id(

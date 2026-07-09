@@ -4,10 +4,16 @@
 version: v1
 name: bounded_backfill_cap
 owner: r3-dcp-09
+docs_anchor: docs/decisions/ADR-011-bounded-backfill-cap-and-ci-nightly.md
 closure_command: >-
-  uv run python -m pytest tests/test_bounded_backfill_cap.py -q
+  uv run python -m pytest
+  tests/test_bounded_backfill_cap.py
+  tests/test_qmd_data_backfill_cli.py::test_qmd_data_backfill_thirtyCalendarDays_twentyTradingDays_passesWithMaxShards
+  tests/test_sync_orchestrator.py::test_backfillJob_largeRange_splitsIntoTasks
+  -q
 caps:
-  eco_max_backfill_days_per_task: 31
-  default_max_backfill_shards: 3
+  max_trading_days_per_shard: 5
+  absolute_max_trading_days: 20
+  default_max_backfill_shards: 1
   absolute_max_backfill_shards: 12
 truncate_flag: --truncate-to-cap

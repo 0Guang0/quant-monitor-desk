@@ -47,9 +47,12 @@ TERMINAL_STATUSES: frozenset[str] = frozenset(
     }
 )
 
-ECO_MAX_BACKFILL_DAYS_PER_TASK = 31
-DEFAULT_MAX_BACKFILL_SHARDS = 3
+MAX_TRADING_DAYS_PER_SHARD = 5
+ABSOLUTE_MAX_TRADING_DAYS = 20
+DEFAULT_MAX_BACKFILL_SHARDS = 1
 ABSOLUTE_MAX_BACKFILL_SHARDS = 12
+# ponytail: legacy alias for tests/docs mid-migration; prefer MAX_TRADING_DAYS_PER_SHARD
+ECO_MAX_BACKFILL_DAYS_PER_TASK = MAX_TRADING_DAYS_PER_SHARD
 _BOUNDED_BACKFILL_CAP_PATH = (
     Path(__file__).resolve().parents[3] / "specs" / "contracts" / "bounded_backfill_cap.yaml"
 )
@@ -65,11 +68,17 @@ def load_bounded_backfill_cap() -> dict:
 
 
 def _apply_bounded_cap_ssot() -> None:
-    global ECO_MAX_BACKFILL_DAYS_PER_TASK, DEFAULT_MAX_BACKFILL_SHARDS, ABSOLUTE_MAX_BACKFILL_SHARDS
+    global MAX_TRADING_DAYS_PER_SHARD
+    global ABSOLUTE_MAX_TRADING_DAYS
+    global DEFAULT_MAX_BACKFILL_SHARDS
+    global ABSOLUTE_MAX_BACKFILL_SHARDS
+    global ECO_MAX_BACKFILL_DAYS_PER_TASK
     caps = load_bounded_backfill_cap().get("caps") or {}
-    ECO_MAX_BACKFILL_DAYS_PER_TASK = int(caps.get("eco_max_backfill_days_per_task", 31))
-    DEFAULT_MAX_BACKFILL_SHARDS = int(caps.get("default_max_backfill_shards", 3))
+    MAX_TRADING_DAYS_PER_SHARD = int(caps.get("max_trading_days_per_shard", 5))
+    ABSOLUTE_MAX_TRADING_DAYS = int(caps.get("absolute_max_trading_days", 20))
+    DEFAULT_MAX_BACKFILL_SHARDS = int(caps.get("default_max_backfill_shards", 1))
     ABSOLUTE_MAX_BACKFILL_SHARDS = int(caps.get("absolute_max_backfill_shards", 12))
+    ECO_MAX_BACKFILL_DAYS_PER_TASK = MAX_TRADING_DAYS_PER_SHARD
 
 
 _apply_bounded_cap_ssot()
@@ -160,42 +169,48 @@ def plan_backfill_shards(
     date_start: date,
     date_end: date,
     *,
-    max_days: int = ECO_MAX_BACKFILL_DAYS_PER_TASK,
+    data_domain: str,
+    max_trading_days_per_shard: int = MAX_TRADING_DAYS_PER_SHARD,
     max_shards: int | None = None,
     truncate_to_cap: bool = False,
 ) -> list[tuple[str, date, date]]:
+    from backend.app.datasources.fetch_window import backfill_trading_days
+
     if date_end < date_start:
         raise ValueError("date_end must be on or after date_start")
-    effective_end = date_end
+    if max_trading_days_per_shard < 1:
+        raise ValueError("max_trading_days_per_shard must be at least 1")
+    if max_shards is not None and max_shards < 1:
+        raise ValueError("max_shards must be at least 1")
+
+    trading_days = backfill_trading_days(data_domain, date_start, date_end)
+    if not trading_days:
+        raise ValueError("no trading days in backfill window")
+
+    effective_max_trading_days = ABSOLUTE_MAX_TRADING_DAYS
     if max_shards is not None:
-        if max_shards < 1:
-            raise ValueError("max_shards must be at least 1")
-        cap_end = date_start + timedelta(days=max_shards * max_days - 1)
-        if date_end > cap_end:
-            if truncate_to_cap:
-                effective_end = cap_end
-            else:
+        effective_max_trading_days = min(
+            ABSOLUTE_MAX_TRADING_DAYS,
+            max_shards * max_trading_days_per_shard,
+        )
+    if len(trading_days) > effective_max_trading_days:
+        if truncate_to_cap:
+            trading_days = trading_days[:effective_max_trading_days]
+        else:
+            if max_shards is not None:
                 raise BackfillShardCapExceededError(
                     f"backfill window exceeds max_shards={max_shards}; "
                     "use truncate_to_cap or reduce date range"
                 )
-    shards: list[tuple[str, date, date]] = []
-    cursor = date_start
-    index = 0
-    while cursor <= effective_end:
-        shard_end = min(cursor + timedelta(days=max_days - 1), effective_end)
-        task_id = f"task-{index:04d}"
-        shards.append((task_id, cursor, shard_end))
-        cursor = shard_end + timedelta(days=1)
-        index += 1
-    if max_shards is not None and len(shards) > max_shards:
-        if truncate_to_cap:
-            shards = shards[:max_shards]
-        else:
             raise BackfillShardCapExceededError(
-                f"backfill window exceeds max_shards={max_shards}; "
-                "use truncate_to_cap or reduce date range"
+                f"backfill window exceeds absolute cap of {ABSOLUTE_MAX_TRADING_DAYS} "
+                "trading days; use truncate_to_cap or reduce date range"
             )
+
+    shards: list[tuple[str, date, date]] = []
+    for index in range(0, len(trading_days), max_trading_days_per_shard):
+        chunk = trading_days[index : index + max_trading_days_per_shard]
+        shards.append((f"task-{len(shards):04d}", chunk[0], chunk[-1]))
     return shards
 
 

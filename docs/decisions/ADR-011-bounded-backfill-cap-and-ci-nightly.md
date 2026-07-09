@@ -18,10 +18,15 @@
 | 硬顶     | **20 trading days**    | 同上                            |
 | 计量单位 | **交易日**（非自然日） | ADR-007 交易日历 SSOT           |
 
+- CLI 默认预算：`default_max_backfill_shards: 1` × `max_trading_days_per_shard: 5` = **5 交易日整窗**（`bounded_backfill_cap.yaml`）。
 - CLI 边界（`backfill_plan` / `full_load_plan`）负责按 `data_domain` 选用 CN/US 交易日历并校验窗宽。
 - `plan_backfill_shards` 信任已裁剪的 `(date_start, date_end)` 交易日序列（S5 实现切片）。
 - 超限须报错或 `--truncate-to-cap` 截断；不得静默扩窗。
 - 磁盘剩余 < 20GB 时 backfill 暂停（`performance_limits.md` §10）。
+
+#### 1.1 非股类域（macro / filings 等）
+
+无交易所交易日历时，`backfill_trading_days` 按**日历日**计数（ponytail 兜底）。默认 5 / 硬顶 20 **仍适用**，但单位为日历日而非交易日。后续若 macro 域接入发布日历，须单独立项换历并更新本 ADR。
 
 ### 2. 机器可读契约
 

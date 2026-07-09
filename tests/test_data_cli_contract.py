@@ -34,7 +34,11 @@ def test_dataCliContract_phase1GateDocumented() -> None:
     assert gate["production_equivalent_data_root_segment"] == "source-route-db"
     assert "dry-run" in " ".join(gate["gate_eligible_requires"])
     assert "dry_run" in gate["non_gate_evidence"]
+    assert "source-route-db" in gate["production_equivalent_data_root_segment"]
     assert "sandbox-clean-write" in gate["non_gate_evidence"]
+    runtime = gate["current_runtime_seams"]
+    assert runtime["prod_source_tier_module"].endswith("live_prod_source_tiers")
+    assert runtime["domain_fetch_operation"] == "domain_fetch_operation"
 
 
 def test_dataCliContract_officialCommandsExposeAcceptanceFields() -> None:
@@ -121,6 +125,23 @@ def test_routePreviewContract_isReadOnly(monkeypatch, tmp_path) -> None:
     assert payload["dry_run"] is True
     assert payload.get("side_effects_allowed") is False
     assert not (data_root / "duckdb").exists()
+
+
+def test_dataCliContract_docsAnchorsPointToDesignOrchestrator() -> None:
+    """覆盖范围：§13.7 CLI docs_anchor 权威路径
+    测试对象：data_cli_contract.yaml commands.*.docs_anchor
+    目的/目标：CLI 失败指路牌指向 MIGRATION_MAP design 而非运行副本
+    验证点：orchestrator 相关 anchor 含 docs/modules/design/
+    失败含义：用户被引到非权威运维副本或断链路径
+    """
+    commands = _contract()["commands"]
+    orchestrator_anchors = [
+        entry["docs_anchor"]
+        for key, entry in commands.items()
+        if "docs_anchor" in entry and "data_sync_orchestrator" in entry["docs_anchor"]
+    ]
+    assert orchestrator_anchors
+    assert all("docs/modules/design/data_sync_orchestrator.md" in anchor for anchor in orchestrator_anchors)
 
 
 def test_dataCliContract_legacyInventoryListed() -> None:

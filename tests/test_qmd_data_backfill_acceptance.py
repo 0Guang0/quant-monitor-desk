@@ -6,6 +6,7 @@ from pathlib import Path
 
 from backend.app.cli import data_commands
 from backend.app.core.resource_guard import Decision, ResourceGuard
+from tests.backfill_cap_support import CALENDAR_FIVE_DAYS
 
 
 def _p1_root(tmp_path: Path) -> Path:
@@ -27,8 +28,8 @@ def test_qmdData_backfillAcceptance_tierADryRunNonGate(monkeypatch, tmp_path: Pa
     payload = data_commands.backfill_plan(
         data_domain="central_bank_policy",
         source_id="bis",
-        start="2024-01-01",
-        end="2024-01-31",
+        start=CALENDAR_FIVE_DAYS[0],
+        end=CALENDAR_FIVE_DAYS[1],
         dry_run=True,
     )
     assert payload["dry_run"] is True
@@ -53,8 +54,8 @@ def test_qmdData_backfillAcceptance_sourceRouteDbLiveBlockedWithoutAuth(
     payload = data_commands.backfill_plan(
         data_domain="central_bank_policy",
         source_id="bis",
-        start="2024-01-01",
-        end="2024-01-07",
+        start=CALENDAR_FIVE_DAYS[0],
+        end=CALENDAR_FIVE_DAYS[1],
         dry_run=False,
     )
     assert payload.get("gate_eligible") is True
@@ -76,8 +77,8 @@ def test_qmdData_backfillAcceptance_dryRunIncludesTriggerReasonAndShardPlan(
     payload = data_commands.backfill_plan(
         data_domain="central_bank_policy",
         source_id="bis",
-        start="2024-01-01",
-        end="2024-01-31",
+        start=CALENDAR_FIVE_DAYS[0],
+        end=CALENDAR_FIVE_DAYS[1],
         trigger_reason="manual_request",
         dry_run=True,
     )
@@ -103,8 +104,8 @@ def test_qmdData_backfillAcceptance_liveBlockedShowsCheckpointSemantics(
     payload = data_commands.backfill_plan(
         data_domain="central_bank_policy",
         source_id="bis",
-        start="2024-01-01",
-        end="2024-01-07",
+        start=CALENDAR_FIVE_DAYS[0],
+        end=CALENDAR_FIVE_DAYS[1],
         dry_run=False,
     )
     evidence = payload.get("backfill_evidence") or {}

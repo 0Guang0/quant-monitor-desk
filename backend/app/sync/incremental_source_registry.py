@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from backend.app.datasources.live_tier_router import TIER_A_SOURCES
+from backend.app.datasources.live_prod_source_tiers import INCREMENTAL_GOLD_PATH_SOURCE_IDS
 
 
 @dataclass(frozen=True)
@@ -31,9 +31,9 @@ def _build_registry() -> dict[str, TierAIncrementalEntry]:
         "alpha_vantage": "us_equity_daily_bar",
         "deribit": "crypto_options_surface",
     }
-    if frozenset(rows) != TIER_A_SOURCES:
-        missing = TIER_A_SOURCES - frozenset(rows)
-        extra = frozenset(rows) - TIER_A_SOURCES
+    if frozenset(rows) != INCREMENTAL_GOLD_PATH_SOURCE_IDS:
+        missing = INCREMENTAL_GOLD_PATH_SOURCE_IDS - frozenset(rows)
+        extra = frozenset(rows) - INCREMENTAL_GOLD_PATH_SOURCE_IDS
         raise RuntimeError(
             f"Tier A incremental registry drift: missing={sorted(missing)} extra={sorted(extra)}"
         )

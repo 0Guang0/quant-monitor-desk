@@ -1,10 +1,10 @@
-"""R3-DCP-05 S00 — Tier A incremental registry + ADR-009 clean routing."""
+"""Incremental gold-path registry + ADR-009 clean routing."""
 
 from __future__ import annotations
 
 import pytest
 
-from backend.app.datasources.live_tier_router import TIER_A_SOURCES
+from backend.app.datasources.live_prod_source_tiers import INCREMENTAL_GOLD_PATH_SOURCE_IDS
 from backend.app.ops.sandbox_clean_write.clean_write_targets import resolve_clean_write_target
 from backend.app.sync.incremental_source_registry import (
     UnknownTierAIncrementalSourceError,
@@ -40,20 +40,20 @@ ADR028_CLEAN_TABLE = {
 }
 
 
-def test_tierAIncrementalRegistry_coversAllTierASources() -> None:
-    """覆盖范围：11 个 Tier A 源 incremental 登记
-    测试对象：iter_tier_a_incremental_sources / TIER_A_SOURCES
-    目的/目标：registry 与 live_tier_router Tier A 集合一一对应
+def test_incrementalGoldPathRegistry_coversAllGoldPathSources() -> None:
+    """覆盖范围：11 个 incremental 金路径源登记
+    测试对象：iter_tier_a_incremental_sources / INCREMENTAL_GOLD_PATH_SOURCE_IDS
+    目的/目标：registry 与 live_prod_source_tiers 金路径集合一一对应
     验证点：数量 11；集合相等
     失败含义：漏源则 DCP-05 无法声称 11/11 clean 路径
     """
     registered = frozenset(iter_tier_a_incremental_sources())
-    assert registered == TIER_A_SOURCES
+    assert registered == INCREMENTAL_GOLD_PATH_SOURCE_IDS
     assert len(registered) == 11
 
 
 @pytest.mark.parametrize("source_id,canonical_domain", list(ADR028_CANONICAL.items()))
-def test_tierAIncrementalRegistry_canonicalDomainMatchesAdr028(
+def test_incrementalGoldPathRegistry_canonicalDomainMatchesAdr028(
     source_id: str, canonical_domain: str
 ) -> None:
     """覆盖范围：每源 canonical domain
@@ -70,7 +70,7 @@ def test_tierAIncrementalRegistry_canonicalDomainMatchesAdr028(
     "canonical_domain,expected_table",
     list(ADR028_CLEAN_TABLE.items()),
 )
-def test_tierAIncrementalRegistry_canonicalDomainResolvesCleanTable(
+def test_incrementalGoldPathRegistry_canonicalDomainResolvesCleanTable(
     canonical_domain: str, expected_table: str
 ) -> None:
     """覆盖范围：canonical domain → clean 表
@@ -84,8 +84,8 @@ def test_tierAIncrementalRegistry_canonicalDomainResolvesCleanTable(
     assert target.write_mode == "upsert_by_pk"
 
 
-def test_tierAIncrementalRegistry_unknownSource_raises() -> None:
-    """覆盖范围：非 Tier A 源负向
+def test_incrementalGoldPathRegistry_unknownSource_raises() -> None:
+    """覆盖范围：非金路径源负向
     测试对象：resolve_tier_a_incremental
     目的/目标：fail-closed
     验证点：UnknownTierAIncrementalSourceError

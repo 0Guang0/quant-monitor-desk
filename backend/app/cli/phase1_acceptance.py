@@ -40,7 +40,7 @@ from backend.app.sync.runners import resolve_conflict_staging_table
 REPORT_VERSION = "phase1_acceptance_v1"
 OFFICIAL_JOB_KINDS = frozenset({"sync", "backfill", "full-load", "scheduler"})
 
-TIER_A_FETCH_OPERATIONS: dict[str, str] = {
+DOMAIN_FETCH_OPERATIONS: dict[str, str] = {
     "cn_equity_daily_bar": "fetch_daily_bar",
     "macro_series": "fetch_macro_series",
     "us_treasury_yield_curve": "fetch_yield_curve",
@@ -116,18 +116,18 @@ def require_phase1_data_root_for_live(data_root: Path | str) -> Path:
         ) from exc
 
 
-def tier_a_fetch_operation(data_domain: str) -> str:
+def domain_fetch_operation(data_domain: str) -> str:
     try:
-        return TIER_A_FETCH_OPERATIONS[data_domain]
+        return DOMAIN_FETCH_OPERATIONS[data_domain]
     except KeyError as exc:
         raise CliFailure(
             error_code="CAPABILITY_MISSING",
-            message=f"no Tier A fetch operation for data_domain={data_domain!r}",
+            message=f"no fetch operation for data_domain={data_domain!r}",
             docs_anchor=DOCS_ANCHOR_DATA_SYNC_CLI,
         ) from exc
 
 
-def acceptance_request_for_tier_a(
+def acceptance_request_for_domain(
     *,
     source_id: str,
     data_domain: str,
@@ -137,7 +137,7 @@ def acceptance_request_for_tier_a(
     return AcceptanceRequest(
         data_domain=data_domain,
         source_id=source_id,
-        operation=tier_a_fetch_operation(data_domain),
+        operation=domain_fetch_operation(data_domain),
         start=start,
         end=end,
     )
@@ -892,7 +892,7 @@ def resolve_binding_datasource_service(
         source_id=binding.primary_source,
         data_domain=binding.data_domain,
         data_root=root,
-        operation=tier_a_fetch_operation(binding.data_domain),
+        operation=domain_fetch_operation(binding.data_domain),
         instrument_id=binding.incremental_watermark,
         job_events=orch._jobs if orch else None,
     )
@@ -1248,7 +1248,7 @@ def run_phase1_sync_live(
     instrument_id: str | None = None,
 ) -> dict[str, Any]:
     resolved = require_phase1_data_root_for_live(data_root)
-    request = acceptance_request_for_tier_a(
+    request = acceptance_request_for_domain(
         source_id=source_id,
         data_domain=data_domain,
         start=start,
@@ -1296,7 +1296,7 @@ def run_phase1_backfill_live(
     resume_job_id: str | None = None,
 ) -> dict[str, Any]:
     resolved = require_phase1_data_root_for_live(data_root)
-    request = acceptance_request_for_tier_a(
+    request = acceptance_request_for_domain(
         source_id=source_id,
         data_domain=data_domain,
         start=date_start.isoformat(),
@@ -1351,7 +1351,7 @@ def run_phase1_full_load_live(
 ) -> dict[str, Any]:
     resolved = require_phase1_data_root_for_live(data_root)
     fl_run_id = run_id or f"p1-fl-{uuid.uuid4().hex[:12]}"
-    request = acceptance_request_for_tier_a(
+    request = acceptance_request_for_domain(
         source_id=source_id,
         data_domain=data_domain,
         start=date_start.isoformat(),
@@ -1511,7 +1511,7 @@ def capture_scheduler_binding_child_acceptance(
 ) -> tuple[AcceptanceReport, dict[str, Any]]:
     from datetime import date as date_cls
 
-    request = acceptance_request_for_tier_a(
+    request = acceptance_request_for_domain(
         source_id=source_id,
         data_domain=data_domain,
         start=(window or {}).get("date_start"),
@@ -1549,7 +1549,7 @@ def dry_run_envelope_for_plan(
     if route_payload is None:
         if source_id is None or data_domain is None:
             raise ValueError("dry_run_envelope_for_plan requires route_payload or source/domain")
-        request = acceptance_request_for_tier_a(
+        request = acceptance_request_for_domain(
             source_id=source_id,
             data_domain=data_domain,
         )

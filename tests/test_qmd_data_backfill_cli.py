@@ -14,6 +14,14 @@ from backend.app.cli.errors import CliFailure
 from backend.app.core.resource_guard import Decision, ResourceGuard
 from backend.app.sync.jobs import BackfillShardCapExceededError
 
+from tests.backfill_cap_support import (
+    CALENDAR_FIVE_DAYS,
+    CALENDAR_FIVE_DAYS_2026,
+    CN_EQUITY_FIVE_TRADING_DAYS,
+    CN_EQUITY_FIVE_TRADING_DAYS_2024,
+    default_backfill_window,
+)
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -49,16 +57,76 @@ def test_qmd_data_backfill_dry_run_json_auditable(monkeypatch, tmp_path: Path) -
         "--source-id",
         "baostock",
         "--start",
-        "2026-01-01",
+        CN_EQUITY_FIVE_TRADING_DAYS[0],
         "--end",
-        "2026-02-15",
+        CN_EQUITY_FIVE_TRADING_DAYS[1],
     )
     assert proc.returncode == 0, proc.stderr
     payload = json.loads(proc.stdout)
     assert payload["command"] == "backfill"
     assert payload["dry_run"] is True
-    assert payload["shard_count"] >= 1
+    assert payload["shard_count"] == 1
+    assert payload["max_shards"] == 1
     assert len(payload["shards"]) == payload["shard_count"]
+
+
+def test_qmd_data_backfill_defaultBudget_rejectsSixTradingDays(monkeypatch, tmp_path: Path) -> None:
+    """覆盖范围：CLI 默认预算 5 交易日运行时拒绝（AUD-S5-01/04）
+    测试对象：qmd data backfill 子进程 + backfill_plan 默认 max_shards
+    目的/目标：正式 CLI 路径须 fail-closed，不得仅靠 YAML 数字对齐假绿
+    验证点：6 交易日窗 exit≠0；stderr/stdout 含 BACKFILL_CAP_EXCEEDED
+    失败含义：默认仍允许 15 交易日或 cap 仅在单元测生效
+    """
+    sandbox = tmp_path / ".audit-sandbox" / "bf-default-cap"
+    sandbox.mkdir(parents=True)
+    monkeypatch.setenv("QMD_DATA_ROOT", str(sandbox))
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    proc = _run_qmd_data(
+        "backfill",
+        "--domain",
+        "cn_equity_daily_bar",
+        "--source-id",
+        "baostock",
+        "--start",
+        "2026-01-05",
+        "--end",
+        "2026-01-12",
+    )
+    assert proc.returncode != 0
+    combined = proc.stdout + proc.stderr
+    assert "BACKFILL_CAP_EXCEEDED" in combined
+
+
+def test_qmd_data_backfill_thirtyCalendarDays_twentyTradingDays_passesWithMaxShards(
+    monkeypatch, tmp_path: Path
+) -> None:
+    """覆盖范围：task_plan S5 RED 经正式 CLI 路径（AUD-S5-03/04）
+    测试对象：qmd data backfill --max-shards 4
+    目的/目标：30 自然日跨度、20 交易日在硬顶内应 PASS，证明运行时非 artifact-guard
+    验证点：exit 0；shard_count==4；max_shards==4
+    失败含义：CLI 仍按自然日误判或硬顶 20 交易日未贯通到 operator 命令
+    """
+    sandbox = tmp_path / ".audit-sandbox" / "bf-20td"
+    sandbox.mkdir(parents=True)
+    monkeypatch.setenv("QMD_DATA_ROOT", str(sandbox))
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    proc = _run_qmd_data(
+        "backfill",
+        "--domain",
+        "cn_equity_daily_bar",
+        "--source-id",
+        "baostock",
+        "--start",
+        "2025-03-01",
+        "--end",
+        "2025-03-30",
+        "--max-shards",
+        "4",
+    )
+    assert proc.returncode == 0, proc.stderr
+    payload = json.loads(proc.stdout)
+    assert payload["shard_count"] == 4
+    assert payload["max_shards"] == 4
 
 
 def test_qmd_data_backfill_cap_exceeded_fail_closed(monkeypatch, tmp_path: Path) -> None:
@@ -105,9 +173,9 @@ def test_qmd_data_backfill_without_dry_run_requires_sandbox(
         "--source-id",
         "baostock",
         "--start",
-        "2026-01-01",
+        CN_EQUITY_FIVE_TRADING_DAYS[0],
         "--end",
-        "2026-01-31",
+        CN_EQUITY_FIVE_TRADING_DAYS[1],
         "--no-dry-run",
     )
     assert proc.returncode != 0
@@ -200,6 +268,7 @@ def test_qmd_data_backfill_tier_a_domains_dry_run(
     monkeypatch.setenv("QMD_DATA_ROOT", str(sandbox))
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
     entry = resolve_tier_a_incremental(source_id)
+    start, end = default_backfill_window(entry.canonical_domain)
     proc = _run_qmd_data(
         "backfill",
         "--domain",
@@ -207,9 +276,9 @@ def test_qmd_data_backfill_tier_a_domains_dry_run(
         "--source-id",
         source_id,
         "--start",
-        "2026-01-01",
+        start,
         "--end",
-        "2026-02-15",
+        end,
     )
     assert proc.returncode == 0, proc.stderr
     payload = json.loads(proc.stdout)
@@ -236,9 +305,9 @@ def test_qmd_data_backfill_macro_series_fred_dry_run(monkeypatch, tmp_path: Path
         "--source-id",
         "fred",
         "--start",
-        "2026-01-01",
+        CALENDAR_FIVE_DAYS_2026[0],
         "--end",
-        "2026-03-01",
+        CALENDAR_FIVE_DAYS_2026[1],
     )
     assert proc.returncode == 0, proc.stderr
     payload = json.loads(proc.stdout)

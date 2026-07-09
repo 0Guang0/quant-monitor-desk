@@ -10,7 +10,7 @@ from backend.app.cli.phase1_acceptance import _build_datasource_service
 from backend.app.core.resource_guard import Decision, ResourceGuard
 from tests.incremental_baostock_support import SYMBOL
 
-START = "2024-06-01"
+START = "2024-06-03"
 END = "2024-06-03"
 
 
@@ -22,7 +22,7 @@ def _write_backfill_replay(path: Path) -> None:
         "bars": [
             {
                 "instrument_id": SYMBOL,
-                "trade_date": "2024-06-02",
+                "trade_date": "2024-06-03",
                 "open": 1400.0,
                 "high": 1410.0,
                 "low": 1395.0,
@@ -33,8 +33,8 @@ def _write_backfill_replay(path: Path) -> None:
         ],
         "source_fetch_id": "baostock-replay-wiring",
         "content_hash": "baostock-replay-hash-wiring",
-        "as_of_timestamp": "2024-06-02T15:00:00Z",
-        "retrieved_at": "2024-06-02T15:00:00Z",
+        "as_of_timestamp": "2024-06-03T15:00:00Z",
+        "retrieved_at": "2024-06-03T15:00:00Z",
         "trade_date": "2024-06-02",
     }
     path.write_text(json.dumps(payload, indent=2), encoding="utf-8")

@@ -183,12 +183,12 @@ def _run_scheduler_entry(
                     resolve_cli_data_root()
                 ) and not live_authorized_from_env():
                     from backend.app.cli.phase1_acceptance import (
-                        acceptance_request_for_tier_a,
+                        acceptance_request_for_domain,
                         execute_spine_or_binding_live,
                     )
 
                     data_root = resolve_cli_data_root()
-                    request = acceptance_request_for_tier_a(
+                    request = acceptance_request_for_domain(
                         source_id=source_s,
                         data_domain=domain_s,
                         start=(window or {}).get("date_start"),
@@ -334,7 +334,7 @@ def _run_scheduler_entry(
             )
         if job_type == "incremental":
             from backend.app.cli.phase1_acceptance import (
-                acceptance_request_for_tier_a,
+                acceptance_request_for_domain,
                 execute_spine_or_binding_live,
                 is_production_equivalent_acceptance_root,
                 live_authorized_from_env,
@@ -343,7 +343,7 @@ def _run_scheduler_entry(
 
             data_root = resolve_cli_data_root()
             if is_production_equivalent_acceptance_root(data_root):
-                request = acceptance_request_for_tier_a(
+                request = acceptance_request_for_domain(
                     source_id=source_s,
                     data_domain=domain_s,
                 )
@@ -370,18 +370,37 @@ def _run_scheduler_entry(
             from datetime import date as date_cls
 
             from backend.app.cli.phase1_acceptance import (
-                acceptance_request_for_tier_a,
+                acceptance_request_for_domain,
                 execute_spine_or_binding_live,
                 is_production_equivalent_acceptance_root,
                 live_authorized_from_env,
                 resolve_cli_data_root,
             )
+            from backend.app.sync.jobs import BackfillShardCapExceededError, plan_backfill_shards
 
             data_root = resolve_cli_data_root()
             if is_production_equivalent_acceptance_root(data_root):
                 parsed_start = date_cls.fromisoformat(window["date_start"][:10])
                 parsed_end = date_cls.fromisoformat(window["date_end"][:10])
-                request = acceptance_request_for_tier_a(
+                if job_type == "backfill":
+                    try:
+                        plan_backfill_shards(
+                            parsed_start,
+                            parsed_end,
+                            data_domain=domain_s,
+                            truncate_to_cap=True,
+                        )
+                    except BackfillShardCapExceededError as exc:
+                        return SchedulerJobResult(
+                            job_type=job_type,
+                            domain=domain_s,
+                            source_id=source_s,
+                            status="FAILED_FINAL",
+                            binding_ids=(),
+                            message=str(exc),
+                            window=window,
+                        )
+                request = acceptance_request_for_domain(
                     source_id=source_s,
                     data_domain=domain_s,
                     start=window["date_start"],

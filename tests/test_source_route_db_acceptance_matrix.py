@@ -7,14 +7,17 @@ from pathlib import Path
 
 import pytest
 
+from backend.app.ops.acceptance_isolation import AcceptanceIsolationError
 from backend.app.ops.source_route_db_acceptance import SourceRouteDbAcceptanceSpine
 from backend.app.ops.source_route_db_acceptance_matrix import (
     DOCUMENTED_SOURCE_MATRIX,
+    SOURCE_ROUTE_DB_SANDBOX_SEGMENT,
     classify_matrix_execute_exception,
     evaluate_matrix_row_closure,
     find_matrix_target,
     iter_matrix_targets,
     matrix_target_key,
+    resolve_matrix_data_root,
     validate_matrix_against_registry,
 )
 
@@ -990,6 +993,23 @@ def test_sourceRouteDbAcceptanceSpine_execute_rejectsNonSandboxDataRoot(
     assert report["failure_class"] == "CONTRACT_VIOLATION"
     assert report["status"] == "FAIL"
     assert report["errors"]
+
+
+def test_resolveMatrixDataRoot_rejectsNonSourceRouteDbSandboxSegment(tmp_path: Path) -> None:
+    """覆盖范围：矩阵验收数据根隔离 — 仅 source-route-db 段合法
+    测试对象：resolve_matrix_data_root / assert_isolated_live_data_root
+    目的/目标：operator 不能把错误沙箱子目录当作生产等价验收根
+    验证点：source-route-db 路径通过；其它 .audit-sandbox 子目录抛 AcceptanceIsolationError
+    失败含义：双轨沙箱路径仍可跑矩阵验收，ADR-015 隔离边界失效
+    """
+    allowed = tmp_path / ".audit-sandbox" / SOURCE_ROUTE_DB_SANDBOX_SEGMENT / "pytest-run"
+    allowed.mkdir(parents=True)
+    assert resolve_matrix_data_root(allowed) == allowed.resolve()
+
+    wrong_segment = tmp_path / ".audit-sandbox" / "wrong-sandbox-segment" / "pytest-run"
+    wrong_segment.mkdir(parents=True)
+    with pytest.raises(AcceptanceIsolationError, match=SOURCE_ROUTE_DB_SANDBOX_SEGMENT):
+        resolve_matrix_data_root(wrong_segment)
 
 
 def test_sourceRouteDbAcceptanceMatrix_qmtPlaceholderEnv_blocksAutoPass(

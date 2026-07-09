@@ -249,6 +249,8 @@ SELECT * FROM evidence_chain without target_id or date_range
 | source conflict 检查 |    10,000 rows |     50,000 rows |
 | backfill 日期窗口    | 5 trading days | 20 trading days |
 
+> **域边界（ADR-011 §1.1）：** 股类日线域按**交易日**计量；macro / filings 等无交易所日历时按**日历日**计量，数字仍为 5 / 20。
+
 触发 ResourceGuard WARN 时所有 batch 减半；触发 PAUSE 时停止非核心 batch。
 
 ---

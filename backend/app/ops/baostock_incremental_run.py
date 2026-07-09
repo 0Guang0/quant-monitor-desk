@@ -129,7 +129,9 @@ def run_baostock_bar_backfill(
         partition_key=None,
         trigger_reason=trigger_reason,
     )
-    shards = plan_backfill_shards(date_start, date_end)
+    shards = plan_backfill_shards(
+        date_start, date_end, data_domain=data_domain, truncate_to_cap=True
+    )
     results = orch.run_backfill(
         spec,
         datasource_service=service,

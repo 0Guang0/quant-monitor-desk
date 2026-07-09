@@ -12,11 +12,11 @@ from pathlib import Path
 from typing import Any
 
 from backend.app.datasources.adapters.fetch_port import FetchPort
-from backend.app.datasources.live_tier_router import (
-    TIER_A_SOURCES,
+from backend.app.datasources.live_prod_source_tiers import (
+    INCREMENTAL_GOLD_PATH_SOURCE_IDS,
     TIER_B_SOURCES,
     TIER_C_SOURCES,
-    resolve_live_tier,
+    resolve_prod_source_tier,
 )
 from backend.app.datasources.product_live_gate import (
     ProductLiveGateError,
@@ -100,7 +100,7 @@ def create_product_live_fetch_port(
 ) -> FetchPort:
     """Build env-gated product live port for supported LIVE-PROD-24 sources."""
     assert_product_live_allowed(source_id=source_id, operation=operation)
-    resolve_live_tier(source_id)
+    resolve_prod_source_tier(source_id)
     kwargs = _kwargs_for_source(source_id, data_domain)
     return _import_create_port(source_id)(**kwargs)
 
@@ -136,7 +136,7 @@ __all__ = [
     "ProductLiveGateError",
     "ProductLiveTierError",
     "SOURCE_LIVE_DEFAULTS",
-    "TIER_A_SOURCES",
+    "INCREMENTAL_GOLD_PATH_SOURCE_IDS",
     "TIER_B_SOURCES",
     "TIER_C_SOURCES",
     "build_product_live_service",

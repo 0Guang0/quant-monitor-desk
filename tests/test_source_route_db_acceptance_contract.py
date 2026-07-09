@@ -32,6 +32,33 @@ def _contract() -> dict:
     return yaml.safe_load(CONTRACT_PATH.read_text(encoding="utf-8"))
 
 
+def test_sourceRouteDbAcceptance_retiredSeamPatterns_documentS3S4Retirements() -> None:
+    """覆盖范围：legacy seam 退役模式登记（S3/S4 对齐）
+    测试对象：check_acceptance_helper_consumers retired pattern loader
+    目的/目标：inventory 脚本仍扫描退役符号，但 YAML 不含 rg 禁词（S3 AC）
+    验证点：loader 返回≥8 模式；YAML 仍含 production_equivalent_smoke
+    失败含义：退役 guard 断裂或 S3/S4 契约与 inventory 双轨
+    """
+    import importlib.util
+    import sys
+
+    script = PROJECT_ROOT / "scripts/check_acceptance_helper_consumers.py"
+    module_name = "check_acceptance_helper_consumers_audit"
+    spec = importlib.util.spec_from_file_location(module_name, script)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    patterns = module._load_retired_seam_patterns()
+    inventory = _contract()["legacy_seam_inventory"]
+    yaml_patterns = set(inventory["retired_seam_patterns"])
+    assert "production_equivalent_smoke" in yaml_patterns
+    assert "live_tier_router" in patterns
+    assert len(patterns) >= len(yaml_patterns) + 4
+    assert "live_tier_router" not in yaml_patterns
+    assert inventory["inventory_script"] == "scripts/check_acceptance_helper_consumers.py"
+
+
 def test_sourceRouteDbAcceptance_contractFields_matchReportEnvelope() -> None:
     """覆盖范围：生产等价验收报告契约字段
     测试对象：source_route_db_acceptance_contract.yaml 与 AcceptanceReport.to_dict

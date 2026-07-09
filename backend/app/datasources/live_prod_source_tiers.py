@@ -1,6 +1,6 @@
 """Live production source tier lookup — maps source_id to priority band A/B/C.
 
-Tier A = ADR-009 incremental gold-path sources (11). Full 22-source registry:
+Incremental gold-path sources (11) = ADR-009 canonical incremental set. Full 22-source registry:
 docs/modules/design/data_sources.md §5.9.1. Not the retired Tier harness scripts.
 """
 
@@ -10,7 +10,7 @@ from typing import Literal
 
 LiveTier = Literal["A", "B", "C"]
 
-TIER_A_SOURCES = frozenset(
+INCREMENTAL_GOLD_PATH_SOURCE_IDS = frozenset(
     {
         "fred",
         "us_treasury",
@@ -54,9 +54,9 @@ class UnknownLiveTierError(ValueError):
     """source_id not in LIVE-PROD-24 tier table."""
 
 
-def resolve_live_tier(source_id: str) -> LiveTier:
+def resolve_prod_source_tier(source_id: str) -> LiveTier:
     """Map source_id to live priority band A/B/C (see module docstring for SSOT)."""
-    if source_id in TIER_A_SOURCES:
+    if source_id in INCREMENTAL_GOLD_PATH_SOURCE_IDS:
         return "A"
     if source_id in TIER_B_SOURCES:
         return "B"

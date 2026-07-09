@@ -316,6 +316,14 @@ Round4 B04-*
 | **依赖**    | M-DATA-03 **R4** clean 输入 ✅                                                                                                                                            |
 | **禁止**    | P1 未过关做 62 指标；seed；每轴 1 代表；API/前端（Round4）                                                                                                                |
 
+#### 3.2.1 task-01.5 阶段外置（S5 切片关账后 · 不阻塞 S6/Phase F 文档关账）
+
+| 承接 ID                    | 摘要                                              | 依赖                 | 关闭条件                                           |
+| -------------------------- | ------------------------------------------------- | -------------------- | -------------------------------------------------- |
+| `FIND-A-01` / AUD-DOUBT-09 | pytest autouse ResourceGuard 假绿                 | task-01.5 S5 ✅      | 分层 fixture + 定向压测测；见 `待修复清单.md` §2.5 |
+| `AUD-DOUBT-12`             | registry/CLI `tier_a_*` 正名链（非 harness 模块） | S4 harness rename ✅ | rename + pytest；见 `findings.md` §9.1b            |
+| `AUD-S5-06` / AUD-DOUBT-15 | 空分片失败拖死整 backfill job                     | S5 cap ✅            | runners 续跑策略 + 行为测                          |
+
 ### 3.3 M-G2-FULL — Layer2 九组资产
 
 | 项       | 内容                                                                    |

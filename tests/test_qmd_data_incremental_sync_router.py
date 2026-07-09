@@ -87,7 +87,7 @@ def sandbox_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> Path:
 
 
 @pytest.mark.parametrize("source_id", list(iter_tier_a_incremental_sources()))
-def test_tierASyncRouter_dryRun_allSources_auditableJson(
+def test_incrementalSyncRouter_dryRun_allSources_auditableJson(
     sandbox_env: Path, source_id: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """覆盖范围：11 个 Tier A 源 dry-run 路由
@@ -107,7 +107,7 @@ def test_tierASyncRouter_dryRun_allSources_auditableJson(
     assert "dry-run" in payload["message"].lower()
 
 
-def test_tierASyncRouter_dryRun_disabledRegistry_failClosed(
+def test_incrementalSyncRouter_dryRun_disabledRegistry_failClosed(
     sandbox_env: Path,
 ) -> None:
     """覆盖范围：registry 默认禁用源 dry-run fail-closed
@@ -121,7 +121,7 @@ def test_tierASyncRouter_dryRun_disabledRegistry_failClosed(
     assert exc_info.value.error_code == "DISABLED_SOURCE"
 
 
-def test_tierASyncRouter_dryRun_defaultEnabledSource_noPatch(
+def test_incrementalSyncRouter_dryRun_defaultEnabledSource_noPatch(
     sandbox_env: Path,
 ) -> None:
     """覆盖范围：生产默认启用源 dry-run 无需 patch registry
@@ -136,7 +136,7 @@ def test_tierASyncRouter_dryRun_defaultEnabledSource_noPatch(
     assert "dry-run" in payload["message"].lower()
 
 
-def test_tierASyncRouter_unknownSource_failClosed(sandbox_env: Path) -> None:
+def test_incrementalSyncRouter_unknownSource_failClosed(sandbox_env: Path) -> None:
     """覆盖范围：非 Tier A source_id 负向
     测试对象：sync_incremental_by_source_id
     目的/目标：未知源 fail-closed
@@ -149,7 +149,7 @@ def test_tierASyncRouter_unknownSource_failClosed(sandbox_env: Path) -> None:
 
 
 @pytest.mark.parametrize("source_id", ["bis", "deribit"])
-def test_tierASyncRouter_nonDryRun_disabledSources_userAuthRequired(
+def test_incrementalSyncRouter_nonDryRun_disabledSources_userAuthRequired(
     sandbox_env: Path, source_id: str
 ) -> None:
     """覆盖范围：S12 非 production-equivalent 真跑 fail-closed（T9）
@@ -163,7 +163,7 @@ def test_tierASyncRouter_nonDryRun_disabledSources_userAuthRequired(
     assert exc_info.value.error_code == "ISOLATED_ROOT_REQUIRED"
 
 
-def test_tierASyncRouter_syncPlan_delegatesWhenSourceIdSet(
+def test_incrementalSyncRouter_syncPlan_delegatesWhenSourceIdSet(
     sandbox_env: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """覆盖范围：sync_plan 与 --source-id 集成
@@ -183,7 +183,7 @@ def test_tierASyncRouter_syncPlan_delegatesWhenSourceIdSet(
     assert payload["dry_run"] is True
 
 
-def test_tierASyncRouter_cliMain_sourceIdDryRunJson(sandbox_env: Path, capsys) -> None:
+def test_incrementalSyncRouter_cliMain_sourceIdDryRunJson(sandbox_env: Path, capsys) -> None:
     """覆盖范围：qmd data sync CLI 端到端 dry-run
     测试对象：main.main data sync --source-id
     目的/目标：CLI 输出可解析 JSON
@@ -208,7 +208,7 @@ def test_tierASyncRouter_cliMain_sourceIdDryRunJson(sandbox_env: Path, capsys) -
     assert payload["dry_run"] is True
 
 
-def test_tierASyncRouter_cliMain_unknownSource_exitNonZero(
+def test_incrementalSyncRouter_cliMain_unknownSource_exitNonZero(
     sandbox_env: Path, capsys
 ) -> None:
     """覆盖范围：CLI main 未知 --source-id 退出码非 0
@@ -234,7 +234,7 @@ def test_tierASyncRouter_cliMain_unknownSource_exitNonZero(
     assert "INVALID_INPUT" in err
 
 
-def test_tierASyncRouter_dryRun_nonSandboxDataRoot_failClosed(
+def test_incrementalSyncRouter_dryRun_nonSandboxDataRoot_failClosed(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     """覆盖范围：dry-run 拒绝非 .audit-sandbox 的 QMD_DATA_ROOT
@@ -251,7 +251,7 @@ def test_tierASyncRouter_dryRun_nonSandboxDataRoot_failClosed(
     assert exc_info.value.error_code == "INVALID_INPUT"
 
 
-def test_tierASyncRouter_dryRun_userLivePath_failClosed(
+def test_incrementalSyncRouter_dryRun_userLivePath_failClosed(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     """覆盖范围：dry-run 拒绝 user-live 审计路径
@@ -270,7 +270,7 @@ def test_tierASyncRouter_dryRun_userLivePath_failClosed(
     assert "user-live" in exc_info.value.message
 
 
-def test_tierASyncRouter_dryRun_mootdx_selectedSourceId_aligned(
+def test_incrementalSyncRouter_dryRun_mootdx_selectedSourceId_aligned(
     sandbox_env: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """覆盖范围：mootdx dry-run JSON selected_source_id 对齐 CLI --source-id
@@ -286,7 +286,7 @@ def test_tierASyncRouter_dryRun_mootdx_selectedSourceId_aligned(
     assert payload["dry_run"] is True
 
 
-def test_tierASyncRouter_dryRun_baostock_resourceGuardPaused_failClosed(
+def test_incrementalSyncRouter_dryRun_baostock_resourceGuardPaused_failClosed(
     sandbox_env: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """覆盖范围：baostock dry-run resource guard PAUSE fail-closed

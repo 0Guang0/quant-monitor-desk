@@ -13,6 +13,7 @@ from backend.app.cli import data_commands
 from backend.app.cli.errors import CliFailure
 from backend.app.core.resource_guard import Decision, ResourceGuard
 from backend.app.db.connection import ConnectionManager
+from tests.backfill_cap_support import CALENDAR_FIVE_DAYS, CN_EQUITY_FIVE_TRADING_DAYS_2024
 from tests.incremental_baostock_support import SYMBOL
 from tests.test_bounded_backfill_cli_e2e import (
     END,
@@ -50,8 +51,8 @@ def test_qmdData_fullLoadAcceptance_macroDomainDryRunNonPilot(monkeypatch, tmp_p
     payload = data_commands.full_load_plan(
         data_domain="macro_series",
         source_id="fred",
-        start="2024-01-01",
-        end="2024-01-31",
+        start=CALENDAR_FIVE_DAYS[0],
+        end=CALENDAR_FIVE_DAYS[1],
         dry_run=True,
     )
     assert payload["dry_run"] is True
@@ -72,8 +73,8 @@ def test_qmdData_fullLoadAcceptance_barDomainDryRun(monkeypatch, tmp_path: Path)
     payload = data_commands.full_load_plan(
         data_domain="cn_equity_daily_bar",
         source_id="baostock",
-        start="2024-01-01",
-        end="2024-01-31",
+        start=CN_EQUITY_FIVE_TRADING_DAYS_2024[0],
+        end=CN_EQUITY_FIVE_TRADING_DAYS_2024[1],
         dry_run=True,
     )
     assert payload["shard_count"] >= 1
@@ -120,9 +121,9 @@ def test_qmdData_fullLoadAcceptance_cliSourceRouteDbLiveBlockedEnvelope(tmp_path
             "--source-id",
             "fred",
             "--start",
-            "2024-01-01",
+            CALENDAR_FIVE_DAYS[0],
             "--end",
-            "2024-01-07",
+            CALENDAR_FIVE_DAYS[1],
             "--no-dry-run",
             "--format",
             "json",
@@ -154,8 +155,8 @@ def test_qmdData_fullLoadAcceptance_dryRunShowsBoundedSmokeScope(
     payload = data_commands.full_load_plan(
         data_domain="cn_equity_daily_bar",
         source_id="baostock",
-        start="2024-01-01",
-        end="2024-01-31",
+        start=CN_EQUITY_FIVE_TRADING_DAYS_2024[0],
+        end=CN_EQUITY_FIVE_TRADING_DAYS_2024[1],
         dry_run=True,
     )
     evidence = payload.get("full_load_evidence") or {}
@@ -180,8 +181,8 @@ def test_qmdData_fullLoadAcceptance_liveBlockedShowsFullLoadCheckpointTypes(
     payload = data_commands.full_load_plan(
         data_domain="macro_series",
         source_id="fred",
-        start="2024-01-01",
-        end="2024-01-07",
+        start=CALENDAR_FIVE_DAYS[0],
+        end=CALENDAR_FIVE_DAYS[1],
         dry_run=False,
     )
     evidence = payload.get("full_load_evidence") or {}

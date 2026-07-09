@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from backend.app.datasources.live_tier_router import TIER_A_SOURCES
+from backend.app.datasources.live_prod_source_tiers import INCREMENTAL_GOLD_PATH_SOURCE_IDS
 from backend.app.ops.data_health import DataHealthLoadError
 from backend.app.ops.data_health_profiles import (
     CRYPTO_DERIVATIVE_P0_RULE_IDS,
@@ -296,7 +296,7 @@ def test_f0_partialFredPayload_returnsFail(tmp_path: Path) -> None:
 def test_allTierASources_bindingRoutesToSupportedProfile() -> None:
     """覆盖范围：11 源 source_health_bindings F0 路由
     测试对象：load_source_health_bindings health_profile_id / health_domain
-    目的/目标：每源映射到已支持的四族之一，且与 TIER_A_SOURCES 一致
+    目的/目标：每源映射到已支持的四族之一，且与 INCREMENTAL_GOLD_PATH_SOURCE_IDS 一致
     验证点：11 源均在 _SOURCE_HEALTH_BINDING_IDS；profile+domain 组合合法
     失败含义：某源 F0 路由缺失或与 Tier A registry 漂移
     """
@@ -306,7 +306,7 @@ def test_allTierASources_bindingRoutesToSupportedProfile() -> None:
         "disclosure_p0": {"us_disclosure", "cn_disclosure"},
         "crypto_derivative_p0": {"crypto_derivative"},
     }
-    assert set(_SOURCE_HEALTH_BINDING_IDS) == set(TIER_A_SOURCES)
+    assert set(_SOURCE_HEALTH_BINDING_IDS) == set(INCREMENTAL_GOLD_PATH_SOURCE_IDS)
     for source_id in _SOURCE_HEALTH_BINDING_IDS:
         binding = load_source_health_bindings()[source_id]
         profile = binding["health_profile_id"]

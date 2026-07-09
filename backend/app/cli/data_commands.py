@@ -301,7 +301,7 @@ def sync_baostock_incremental(
     return payload
 
 
-def _tier_a_backfill_route_preview(
+def _gold_path_backfill_route_preview(
     *, source_id: str, data_domain: str, operation: str
 ):
     """Route preview with runtime source enable (ADR-009 dry-run parity)."""
@@ -369,7 +369,7 @@ def backfill_plan(
     )
     from backend.app.sync.orchestrator import DataSyncOrchestrator
 
-    tier_a_operations = {
+    gold_path_fetch_operations = {
         "cn_equity_daily_bar": "fetch_daily_bar",
         "macro_series": "fetch_macro_series",
         "us_treasury_yield_curve": "fetch_yield_curve",
@@ -399,7 +399,7 @@ def backfill_plan(
             ),
             docs_anchor=DOCS_ANCHOR_DATA_SYNC_QUICK_REF,
         )
-    op = tier_a_operations.get(data_domain)
+    op = gold_path_fetch_operations.get(data_domain)
     if op is None:
         raise CliFailure(
             error_code="CAPABILITY_MISSING",
@@ -431,6 +431,7 @@ def backfill_plan(
         shards = plan_backfill_shards(
             date_start,
             date_end,
+            data_domain=data_domain,
             max_shards=resolved_max,
             truncate_to_cap=truncate_to_cap,
         )
@@ -443,7 +444,7 @@ def backfill_plan(
         ) from exc
 
     effective_end = shards[-1][2] if shards else date_end
-    plan, guard_decision, guard_reason = _tier_a_backfill_route_preview(
+    plan, guard_decision, guard_reason = _gold_path_backfill_route_preview(
         source_id=source_id,
         data_domain=data_domain,
         operation=op,
@@ -571,7 +572,7 @@ def full_load_plan(
     import uuid
     from datetime import UTC, datetime
 
-    from backend.app.cli.phase1_acceptance import tier_a_fetch_operation
+    from backend.app.cli.phase1_acceptance import domain_fetch_operation
     from backend.app.config import PROJECT_ROOT, _path_env
     from backend.app.ops.baostock_incremental_run import (
         build_baostock_incremental_service,
@@ -638,6 +639,7 @@ def full_load_plan(
         shards = plan_backfill_shards(
             date_start,
             date_end,
+            data_domain=data_domain,
             max_shards=resolved_max,
             truncate_to_cap=truncate_to_cap,
         )
@@ -650,7 +652,7 @@ def full_load_plan(
         ) from exc
 
     effective_end = shards[-1][2] if shards else date_end
-    op = tier_a_fetch_operation(data_domain)
+    op = domain_fetch_operation(data_domain)
     symbol = instrument_id or (
         "DGS10" if data_domain == "macro_series" else "sh.600519"
     )

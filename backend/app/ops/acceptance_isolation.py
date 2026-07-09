@@ -8,9 +8,6 @@ from pathlib import Path
 from backend.app.config import DATA_ROOT, PROJECT_ROOT
 from backend.app.ops.sandbox_clean_write.path_utils import resolve_sandbox_path
 
-M_DATA_03_SANDBOX_SEGMENT = "m-data-03"
-
-
 class AcceptanceIsolationError(RuntimeError):
     def __init__(self, message: str, *, code: str) -> None:
         super().__init__(message)

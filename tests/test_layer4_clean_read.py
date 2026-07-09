@@ -173,7 +173,7 @@ def test_buildCalendarRow_nonUsEq_failClosed() -> None:
         build_calendar_row(market_id="CN_A", trade_date=TRADE_DATE, as_of=AS_OF)
 
 
-def test_tierAClean_nonUsEq_failClosed(tmp_path) -> None:
+def test_cleanReadBreadth_nonUsEq_failClosed(tmp_path) -> None:
     """覆盖范围：tier_a_clean Builder 非 US_EQ 负向
     测试对象：MarketStructureBuilder.build(source_mode=tier_a_clean)
     目的/目标：tier_a_clean 仅支持 US_EQ，CN_A 须 fail-closed
@@ -192,7 +192,7 @@ def test_tierAClean_nonUsEq_failClosed(tmp_path) -> None:
             )
 
 
-def test_tierAClean_missingCleanCon_failClosed() -> None:
+def test_cleanReadBreadth_missingCleanCon_failClosed() -> None:
     """覆盖范围：tier_a_clean 缺 clean_con 负向
     测试对象：MarketStructureBuilder.build(source_mode=tier_a_clean)
     目的/目标：clean_con=None 须 fail-closed
@@ -209,7 +209,7 @@ def test_tierAClean_missingCleanCon_failClosed() -> None:
         )
 
 
-def test_tierAClean_rejectsFutureBreadthObservation(tmp_path) -> None:
+def test_cleanReadBreadth_rejectsFutureBreadthObservation(tmp_path) -> None:
     """覆盖范围：tier_a_clean 未来 breadth 观测拒绝（builder guard，adapter 经 stub 注入）
     测试对象：MarketStructureBuilder._build_tier_a_clean + _finalize_market_build
     目的/目标：与 staged 022 对称，future breadth as_of 须 fail-closed

@@ -341,20 +341,28 @@ def test_orchestrator_fetchAllowedWhenGuardOk_proceedsToFetching(orchestrator, t
 
 
 def test_backfillJob_largeRange_splitsIntoTasks(orchestrator, tmp_path, monkeypatch) -> None:
-    """覆盖范围：大日期区间历史回补自动拆成多个子任务
+    """覆盖范围：大日期区间历史回补在绝对硬顶内自动拆成多个子任务（AUD-DOUBT-03）
     测试对象：plan_backfill_shards 与 DataSyncOrchestrator.run_backfill
-    目的/目标：跨度太大的回补应按天上限拆片，实际跑多个分片而不是一次抓完
-    验证点：shards≥3；每片天数≤ECO_MAX_BACKFILL_DAYS_PER_TASK；run_backfill 返回 results≥3
-    失败含义：大区间单次抓取，容易超时或占满内存，也无法按片重试
+    目的/目标：跨度大的回补按 5 日/片拆且总窗≤20 交易日，不得无界拆片
+    验证点：40 自然日窗→恰好 4 片；末片 COMPLETED、前 3 片 PLANNED（续跑 checkpoint）；总交易日=20
+    失败含义：编排器仍可无界拆片或弱断言（≥4）掩盖 cap 缺失
     """
     from backend.app.core.resource_guard import Decision, ResourceGuard
-    from backend.app.sync.jobs import ECO_MAX_BACKFILL_DAYS_PER_TASK, plan_backfill_shards
-
-    shards = plan_backfill_shards(_BACKFILL_3SHARD_START, _BACKFILL_3SHARD_END)
-    assert len(shards) >= 3
-    assert all(
-        (end - start).days + 1 <= ECO_MAX_BACKFILL_DAYS_PER_TASK for _tid, start, end in shards
+    from backend.app.datasources.fetch_window import backfill_trading_days
+    from backend.app.sync.jobs import (
+        ABSOLUTE_MAX_TRADING_DAYS,
+        MAX_TRADING_DAYS_PER_SHARD,
+        plan_backfill_shards,
     )
+
+    domain = "market_bar_1d"
+    expected_shards = plan_backfill_shards(
+        _BACKFILL_3SHARD_START,
+        _BACKFILL_3SHARD_END,
+        data_domain=domain,
+        truncate_to_cap=True,
+    )
+    assert len(expected_shards) == 4
 
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
     orch = orchestrator
@@ -377,7 +385,18 @@ def test_backfillJob_largeRange_splitsIntoTasks(orchestrator, tmp_path, monkeypa
         adapter=_BackfillCountAdapter(),
         clean_table=_BackfillCountAdapter.CLEAN,
     )
-    assert len(results) >= 3
+    assert len(results) == len(expected_shards)
+    assert results[-1].status == "COMPLETED"
+    assert sum(1 for r in results if r.status == "PLANNED") == len(expected_shards) - 1
+    total_trading_days = sum(
+        len(backfill_trading_days(domain, start, end))
+        for (_tid, start, end) in expected_shards
+    )
+    assert total_trading_days == ABSOLUTE_MAX_TRADING_DAYS
+    assert all(
+        len(backfill_trading_days(domain, start, end)) <= MAX_TRADING_DAYS_PER_SHARD
+        for _tid, start, end in expected_shards
+    )
 
 
 def test_backfillJob_recordsTriggerReason(orchestrator, tmp_path, monkeypatch) -> None:
@@ -470,7 +489,12 @@ def test_backfillJob_secondShardGuardPause_preservesFirstShardOutcome(
         clean_table=_BackfillCountAdapter.CLEAN,
     )
     assert any(r.status == "FAILED_RETRYABLE" for r in results)
-    shards = plan_backfill_shards(spec.date_start, spec.date_end)
+    shards = plan_backfill_shards(
+        spec.date_start,
+        spec.date_end,
+        data_domain=spec.data_domain,
+        truncate_to_cap=True,
+    )
     first_task_id = shards[0][0]
     with orch._cm.writer() as con:
         completed = con.execute(

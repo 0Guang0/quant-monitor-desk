@@ -12,8 +12,8 @@ from backend.app.core.resource_guard import Decision, ResourceGuard
 from backend.app.db.connection import ConnectionManager
 from tests.incremental_baostock_support import SYMBOL, bootstrap_db
 
-START = "2024-06-01"
-END = "2024-07-31"
+START = "2024-06-25"
+END = "2024-07-08"
 
 
 def _write_two_shard_replay(path: Path) -> None:
@@ -34,7 +34,7 @@ def _write_two_shard_replay(path: Path) -> None:
             },
             {
                 "instrument_id": SYMBOL,
-                "trade_date": "2024-07-15",
+                "trade_date": "2024-07-02",
                 "open": 1410.0,
                 "high": 1420.0,
                 "low": 1405.0,
@@ -47,7 +47,7 @@ def _write_two_shard_replay(path: Path) -> None:
         "content_hash": "baostock-replay-hash-backfill-e2e",
         "as_of_timestamp": "2024-07-15T15:00:00Z",
         "retrieved_at": "2024-07-15T15:00:00Z",
-        "trade_date": "2024-07-15",
+        "trade_date": "2024-07-02",
     }
     path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
@@ -352,7 +352,7 @@ def test_bounded_backfill_cli_replay_e2e_two_shards_idempotent(
             for row in con.execute(
                 """
                 SELECT trade_date, close FROM security_bar_1d
-                WHERE instrument_id = ? AND trade_date IN ('2024-06-25', '2024-07-15')
+                WHERE instrument_id = ? AND trade_date IN ('2024-06-25', '2024-07-02')
                 """,
                 [SYMBOL],
             ).fetchall()
@@ -360,7 +360,7 @@ def test_bounded_backfill_cli_replay_e2e_two_shards_idempotent(
     from datetime import date
 
     assert closes.get(date(2024, 6, 25)) == 1405.0
-    assert closes.get(date(2024, 7, 15)) == 1415.0
+    assert closes.get(date(2024, 7, 2)) == 1415.0
 
     payload2 = data_commands.backfill_plan(**kwargs)
     assert payload2.get("job_id")
@@ -376,7 +376,7 @@ def test_bounded_backfill_cli_replay_e2e_two_shards_idempotent(
     assert snapshot.get("data_domain") == "cn_equity_daily_bar"
     obs = payload1.get("observability_evidence") or {}
     assert obs.get("fetch_log_ids")
-    assert obs.get("rows_written", 0) >= 1
+    assert (obs.get("rows_written") or 0) >= 1
 
 
 def test_boundedBackfill_cli_liveSevereConflictBlocksOfficialCleanWrite(

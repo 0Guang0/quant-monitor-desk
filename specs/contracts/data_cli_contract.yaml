@@ -17,37 +17,37 @@ commands:
     default_mode: dry_run
     must_use:
       [DataSyncOrchestrator.run_full_load, ResourceGuard, SourceRoutePlan]
-    docs_anchor: docs/modules/data_sync_orchestrator.md#1341-fullloadjob
+    docs_anchor: docs/modules/design/data_sync_orchestrator.md#1341-fullloadjob
   qmd data scheduler run:
     required_args: [profile]
     optional_args: [dry-run]
     default_mode: dry_run
     must_use: [run_profile, bindings_for_source, execute_binding, ResourceGuard]
-    docs_anchor: docs/modules/data_sync_orchestrator.md#136-调度计划
+    docs_anchor: docs/modules/design/data_sync_orchestrator.md#136-调度计划
   qmd data incremental:
     required_args: [profile]
     optional_args: [dry-run]
     default_mode: dry_run
     must_use: [run_profile, execute_binding]
-    docs_anchor: docs/modules/data_sync_orchestrator.md#137-cli-设计
+    docs_anchor: docs/modules/design/data_sync_orchestrator.md#137-cli-设计
   qmd data revision-audit:
     required_args: [domain, market]
     optional_args: [lookback-days, dry-run]
     default_mode: dry_run
     must_use: [DataSyncOrchestrator.run_revision_audit, ResourceGuard]
-    docs_anchor: docs/modules/data_sync_orchestrator.md#137-cli-设计
+    docs_anchor: docs/modules/design/data_sync_orchestrator.md#137-cli-设计
   qmd data reconcile:
     required_args: [conflict-id]
     optional_args: [dry-run]
     default_mode: dry_run
     must_use: [DataSyncOrchestrator.run_reconcile]
-    docs_anchor: docs/modules/data_sync_orchestrator.md#137-cli-设计
+    docs_anchor: docs/modules/design/data_sync_orchestrator.md#137-cli-设计
   qmd data quality-check:
     required_args: [domain, date]
     optional_args: [dry-run]
     default_mode: dry_run
     must_use: [DataSyncOrchestrator.run_data_quality, ResourceGuard]
-    docs_anchor: docs/modules/data_sync_orchestrator.md#137-cli-设计
+    docs_anchor: docs/modules/design/data_sync_orchestrator.md#137-cli-设计
   qmd data health:
     required_args: [domain, profile]
     optional_args:
@@ -84,6 +84,13 @@ phase1_gate:
     - generic .audit-sandbox without source-route-db segment
     - sandbox-clean-write
     - limited_production_entry
+  current_runtime_seams:
+    production_equivalent_data_root_segment: source-route-db
+    prod_source_tier_module: backend.app.datasources.live_prod_source_tiers
+    incremental_gold_path_source_ids: INCREMENTAL_GOLD_PATH_SOURCE_IDS
+    domain_fetch_operation: domain_fetch_operation
+    acceptance_request_builder: acceptance_request_for_domain
+  acceptance_seam_contract: specs/contracts/source_route_db_acceptance_contract.yaml
   official_commands_must_expose:
     - acceptance_report
     - gate_eligible
@@ -108,9 +115,10 @@ phase1_gate:
       error_code: LEGACY_COMMAND_RETIRED
       replacement: qmd-data data sync|backfill|full-load|scheduler with QMD_DATA_ROOT under .audit-sandbox/source-route-db
       gate_eligible: false
-    - command: ops tier_a_live_acceptance wrappers
+    - command: retired ops live acceptance harness wrappers
+      note: historical Tier harness CLI; scripts removed per ADR-015
       error_code: LEGACY_COMMAND_RETIRED
-      replacement: qmd_ops accept-source-route-db or official qmd-data data commands
+      replacement: scripts/qmd_ops.py accept-source-route-db or official qmd-data data commands with QMD_DATA_ROOT under .audit-sandbox/source-route-db
       gate_eligible: false
   legacy_seam_inventory_script: scripts/check_acceptance_helper_consumers.py
 rules:

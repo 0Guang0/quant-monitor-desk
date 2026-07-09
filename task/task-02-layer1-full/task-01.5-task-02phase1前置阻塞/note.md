@@ -17,17 +17,57 @@
 
 ## N/A 索引
 
-| 切片    | AC-CLOSE-2 | 说明                    |
-| ------- | ---------- | ----------------------- |
-| S1      | N/A        | 2026-07-09              |
-| S2      | N/A        | 2026-07-09              |
-| S7      | N/A        | 2026-07-09              |
-| S7+     | 见下 §S7+  | 2026-07-09              |
-| Hygiene | 见下       | 2026-07-09 CLI 锚点清理 |
+| 切片           | AC-CLOSE-2                           | 说明                    |
+| -------------- | ------------------------------------ | ----------------------- |
+| S1             | N/A                                  | 2026-07-09              |
+| S2             | N/A                                  | 2026-07-09              |
+| S3             | N/A                                  | 2026-07-09              |
+| S4             | N/A                                  | 2026-07-09              |
+| S5             | 见下 §S5                             | 2026-07-09 · **关账**   |
+| S3+S4-contract | 见下 §契约对齐 + §Testing-guidelines | 2026-07-10              |
+| S7             | N/A                                  | 2026-07-09              |
+| S7+            | 见下 §S7+                            | 2026-07-09              |
+| Hygiene        | 见下                                 | 2026-07-09 CLI 锚点清理 |
 
 ---
 
 ## 记账正文
+
+### S5 · backfill 交易日分片（B19）· 2026-07-09 · **关账**
+
+| 项             | 内容                                                                                                                                                                                                  |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **暴露的问题** | `plan_backfill_shards` 曾用自然日切窗；`bounded_backfill_cap.yaml` 曾为 31×shard；默认预算曾为 15 交易日（3×5）。                                                                                     |
+| **决策**       | ① YAML：`max_trading_days_per_shard: 5`、`absolute_max_trading_days: 20`、`default_max_backfill_shards: 1`。② `backfill_trading_days` 按 domain 选 CN/US/日历日。③ CLI 预算 `min(20, max_shards×5)`。 |
+| **验证**       | `tests/test_bounded_backfill_cap.py` · `tests/test_qmd_data_backfill_cli.py` · `uv run pytest -q` exit 0                                                                                              |
+
+**说明：** S5 **已正式关账**（CP-3 满足）。整票 task-01.5 仍差 **S6 + Phase F**。
+
+### S5 关账收尾 · AUD-S5-01～05 · 2026-07-09
+
+| 项               | 内容                                                                                                                         |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| **AUD-S5-01**    | `default_max_backfill_shards: 3→1`；CLI 默认预算 = **5 交易日整窗**（对齐 `performance_limits.md` §8 默认列）。              |
+| **AUD-S5-03/04** | 补 RED/CLI 行为测：30 自然日/20 交易日 PASS、超 20 FAIL、默认 6 交易日 CLI 拒绝；避免 Findings 第 1 类 artifact-guard 假绿。 |
+| **AUD-S5-05**    | ADR-011 §1.1 写明 macro 域日历日兜底；`test_backfillTradingDays_macroDomain_countsCalendarDays`。                            |
+| **测试 hygiene** | 新增 `tests/backfill_cap_support.py` 统一默认 5 日窗 fixture；既有 backfill/full-load 验收测日期对齐新默认。                 |
+| **验证**         | `uv run pytest -q` exit 0                                                                                                    |
+
+### S3+S4-contract · specs/contracts 契约对齐 · 2026-07-09
+
+| 项             | 内容                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **暴露的问题** | S3/S4 代码已 rename，但 `data_cli_contract.yaml` 仍指 `docs/modules/data_sync_orchestrator.md`（无 design 前缀）；`source_route_db_acceptance_contract.yaml` 的 `retired_seam_patterns` 未覆盖 S3/S4 退役符号；inventory 脚本与契约双轨。                                                                                                                                                                                                                                                                                  |
+| **决策**       | ① `docs_anchor` → `docs/modules/design/data_sync_orchestrator.md`。② ~~`non_gate_evidence` 增 `m-data-03`~~ **已撤销**（S3 AC 要求 rg 零命中；退役符号仅 inventory base64 加载）。③ `phase1_gate.current_runtime_seams` 登记现行模块/符号名。④ `retired_seam_patterns` 缩至无害项；退役禁词由 `check_acceptance_helper_consumers.py` base64 表加载。⑤ rg 卫生检查迁至 `phase-scripts/check_task015_s3_s4_rg_compliance.py`（不进 pytest）；业务隔离见 `test_resolveMatrixDataRoot_rejectsNonSourceRouteDbSandboxSegment`。 |
+| **验证**       | `test_resolveMatrixDataRoot_rejectsNonSourceRouteDbSandboxSegment` · `uv run python phase-scripts/check_task015_s3_s4_rg_compliance.py --strict` · `check_acceptance_helper_consumers.py --strict --strict-seam-inventory` · `uv run pytest -q`                                                                                                                                                                                                                                                                            |
+
+### Testing-guidelines 对齐 · pytest 卫生 · 2026-07-10
+
+| 项             | 内容                                                                                                                                                                                                                                                                                                        |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **暴露的问题** | `test_s3_s4_task_compliance.py` 两条 rg 测属 artifact-guard，且自豁免/字节拆词；长期留在 `tests/` 与 AGENTS.md「阶段性不进正式路径」冲突。                                                                                                                                                                  |
+| **决策**       | ① **删除** 阶段性 pytest 文件。② rg 关账检查迁 **`phase-scripts/check_task015_s3_s4_rg_compliance.py`**（写明 Phase F 后退役）。③ 业务隔离测迁入 `test_source_route_db_acceptance_matrix.py`，命名去 S3/S4。④ 负例路径不用含 `source-route-db` 子串的目录名（避免 `assert_isolated_live_data_root` 误判）。 |
+| **验证**       | `uv run pytest -q` · `phase-scripts/... --strict` · 见 `findings.md` §9.1c AUD-TEST-01～03                                                                                                                                                                                                                  |
 
 ### Hygiene · CLI docs_anchor 与模块注释清理 · 2026-07-09
 

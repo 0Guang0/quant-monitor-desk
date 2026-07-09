@@ -32,7 +32,14 @@ def collect_scale_metrics(data_root: Path, *, guard_exercised: bool) -> dict[str
         "resource_guard_log_rows": 0,
         "route_plan_events": 0,
         "sync_job_rows": 0,
-        "shard_count_benchmark": len(plan_backfill_shards(date(2026, 1, 1), date(2026, 3, 31))),
+        "shard_count_benchmark": len(
+            plan_backfill_shards(
+                date(2026, 1, 1),
+                date(2026, 3, 31),
+                data_domain="cn_equity_daily_bar",
+                truncate_to_cap=True,
+            )
+        ),
         "guard_status": "observable" if guard_exercised else "not_exercised",
     }
     db_path = data_root / "duckdb" / "quant_monitor.duckdb"

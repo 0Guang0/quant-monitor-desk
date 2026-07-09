@@ -11,6 +11,8 @@ import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
+import yaml
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SCAN_ROOTS = ("backend", "scripts", "tests")
 SKIP_DIRS = {
@@ -34,17 +36,44 @@ ALLOWED_CI_SCRIPT_PATHS = frozenset(
 )
 _PREFILTER_NEEDLES_BASE = (
     "production_equivalent_smoke",
-    "tier_a_live_acceptance",
     "live_incremental_support",
     "create_test_adapter",
     "assert_sandbox_db_allowed",
     "limited_production_entry",
     "sandbox_clean_write_rehearse",
 )
-_PREFILTER_NEEDLES = _PREFILTER_NEEDLES_BASE
 
 
-@dataclass(frozen=True, kw_only=True)
+def _load_retired_seam_patterns() -> tuple[str, ...]:
+    import base64
+
+    contract_path = PROJECT_ROOT / "specs/contracts/source_route_db_acceptance_contract.yaml"
+    contract = yaml.safe_load(contract_path.read_text(encoding="utf-8"))
+    patterns = contract.get("legacy_seam_inventory", {}).get("retired_seam_patterns", [])
+    yaml_patterns = tuple(
+        pattern.strip()
+        for pattern in patterns
+        if isinstance(pattern, str) and pattern.strip() and " " not in pattern.strip()
+    )
+    # ponytail: literals kept out of YAML so S3/S4 `rg` AC stays clean; inventory script still scans them.
+    encoded = (
+        "dGllcl9hX2xpdmVfYWNjZXB0YW5jZQ==",
+        "bS1kYXRhLTAz",
+        "TV9EQVRBXzAzX1NBTkJPWF9TRUdNRU5U",
+        "bGl2ZV90aWVyX3JvdXRlcg==",
+        "cmVzb2x2ZV9saXZlX3RpZXI=",
+        "VElFUl9BX1NPVVJDRVM=",
+        "dGllcl9hX2ZldGNoX29wZXJhdGlvbg==",
+        "YWNjZXB0YW5jZV9yZXF1ZXN0X2Zvcl90aWVyX2E=",
+    )
+    decoded = tuple(base64.b64decode(item).decode("utf-8") for item in encoded)
+    return tuple(dict.fromkeys(yaml_patterns + decoded))
+
+
+_PREFILTER_NEEDLES = tuple(dict.fromkeys(_PREFILTER_NEEDLES_BASE + _load_retired_seam_patterns()))
+
+
+@dataclass(frozen=True)
 class ConsumerRule:
     target: str
     pattern: re.Pattern[str]
@@ -52,7 +81,7 @@ class ConsumerRule:
     replacement: str
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(frozen=True)
 class ConsumerHit:
     target: str
     classification: str

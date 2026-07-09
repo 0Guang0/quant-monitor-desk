@@ -11,6 +11,7 @@ from pathlib import Path
 import yaml
 
 from backend.app.core.resource_guard import Decision, ResourceGuard
+from tests.backfill_cap_support import CN_EQUITY_FIVE_TRADING_DAYS
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 CLI_CONTRACT = PROJECT_ROOT / "specs/contracts/data_cli_contract.yaml"
@@ -64,9 +65,9 @@ def test_qmd_data_full_load_dry_run_json_auditable(monkeypatch, tmp_path: Path) 
         "--source-id",
         "baostock",
         "--start",
-        "2026-01-01",
+        CN_EQUITY_FIVE_TRADING_DAYS[0],
         "--end",
-        "2026-02-15",
+        CN_EQUITY_FIVE_TRADING_DAYS[1],
     )
     assert proc.returncode == 0, proc.stderr
     payload = json.loads(proc.stdout)

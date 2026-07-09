@@ -6,6 +6,7 @@ from datetime import UTC, date, datetime, timedelta
 from typing import Any
 
 US_EQUITY_BAR_DOMAINS = frozenset({"us_equity_daily_bar"})
+CN_EQUITY_BAR_DOMAINS = frozenset({"cn_equity_daily_bar", "market_bar_1d"})
 
 
 def _us_trading_calendar():
@@ -48,6 +49,34 @@ def recent_trading_window_start(
         if current < cal._RANGE_START:  # noqa: SLF001
             return cal._RANGE_START  # noqa: SLF001
     return current
+
+
+def _cn_trading_calendar():
+    import backend.app.ops.data_health_profiles.cn_trading_calendar as cn_trading_calendar
+
+    return cn_trading_calendar
+
+
+def backfill_trading_days(data_domain: str, start: date, end: date) -> list[date]:
+    """Trading days in [start, end] for backfill shard planning (ADR-011 / §8).
+
+    股类域（cn_equity_daily_bar / us_equity_daily_bar 等）使用 ADR-007 交易所日历。
+    macro / filings 等无交易所日历时按日历日计数（ponytail 兜底）；默认 5 / 硬顶 20
+    仍适用，但单位为日历日。见 ADR-011 §1.1。
+    """
+    if end < start:
+        return []
+    if is_us_equity_bar_fetch(data_domain=data_domain):
+        return _us_trading_calendar().get_trading_days(start, end)
+    if data_domain in CN_EQUITY_BAR_DOMAINS:
+        return _cn_trading_calendar().get_trading_days(start, end)
+    # ponytail: macro/non-equity domains count calendar days until exchange calendars exist
+    days: list[date] = []
+    current = start
+    while current <= end:
+        days.append(current)
+        current += timedelta(days=1)
+    return days
 
 
 def us_equity_window_kind(*, data_domain: str, instrument_id: str = "") -> str:

@@ -384,11 +384,22 @@ def test_partialSuccess_eachItemWritesAuditEvent(tmp_path: Path, monkeypatch) ->
     """覆盖范围：backfill 多分片逐项审计事件
     测试对象：job_event_log 带 task_id 的事件
     目的/目标：partial success 时每个分片/task 须写审计事件
-    验证点：events ≥3；每条 payload 含 task_id 或 decision
-    失败含义：分片级进度不可追溯，长跑 backfill 黑盒
+    验证点：分片数=硬顶内 4 片；events≥4；每条 payload 含 task_id 或 decision
+    失败含义：分片级进度不可追溯，或 cap 失效后片数与审计不一致
     """
+    from backend.app.sync.jobs import plan_backfill_shards
+
     _patch_guard_ok(monkeypatch)
     orch = DataSyncOrchestrator(_migrated_cm(tmp_path))
+    domain = "market_bar_1d"
+    shard_count = len(
+        plan_backfill_shards(
+            _BACKFILL_3SHARD_START,
+            _BACKFILL_3SHARD_END,
+            data_domain=domain,
+            truncate_to_cap=True,
+        )
+    )
     spec = SyncJobSpec(
         run_id="run-partial",
         job_id="job-partial",
@@ -417,7 +428,7 @@ def test_partialSuccess_eachItemWritesAuditEvent(tmp_path: Path, monkeypatch) ->
             """,
             ["job-partial"],
         ).fetchall()
-    assert len(events) >= 3
+    assert len(events) >= shard_count
     for _task_id, _event_type, payload_json in events:
         payload = parse_event_payload(payload_json)
         assert payload.get("task_id") is not None or payload.get("decision") is not None

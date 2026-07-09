@@ -79,7 +79,12 @@ def test_syncFullLoad_checkpointResume_skipsCompletedShards(tmp_path, monkeypatc
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
     orch = _orchestrator(tmp_path)
     spec = _full_load_spec(job_id="job-fl-resume", date_end=_FULL_LOAD_2SHARD_END)
-    shards = plan_backfill_shards(spec.date_start, spec.date_end)
+    shards = plan_backfill_shards(
+        spec.date_start,
+        spec.date_end,
+        data_domain=spec.data_domain,
+        truncate_to_cap=True,
+    )
     first_task_id, first_start, first_end = shards[0]
 
     fail_adapter = _FullLoadFailOnSecondAdapter()
