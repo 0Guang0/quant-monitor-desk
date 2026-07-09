@@ -157,6 +157,18 @@ def test_load_boolStringRejected_raisesInvalidRegistryError(bad_bool_string_yaml
         reg.load()
 
 
+def test_load_primarySourceDisabled_raisesInvalidRegistryError(bad_primary_disabled_yaml):
+    """覆盖范围：默认启用域的 primary 不得指向 disabled 源
+    测试对象：SourceRegistry.load（bad_primary_disabled_yaml）
+    目的/目标：domain_enabled_by_default 为 true 时 primary is_enabled=false 须拒收
+    验证点：pytest.raises(InvalidRegistryError, match=primary.*disabled)
+    失败含义：禁用主源可声明为默认域 primary，调度后必失败
+    """
+    reg = SourceRegistry(bad_primary_disabled_yaml)
+    with pytest.raises(InvalidRegistryError, match="primary.*disabled"):
+        reg.load()
+
+
 def test_load_validationSourceDisabled_raisesInvalidRegistryError(
     bad_validation_disabled_yaml,
 ):

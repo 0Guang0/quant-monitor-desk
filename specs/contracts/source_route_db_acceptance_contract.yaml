@@ -4,8 +4,7 @@ status: implementation_contract
 authoritative_task: task/task-01-source-route and DB acceptance spine
 
 adr_refs:
-  - docs/decisions/ADR-015-tier-a-live-acceptance-sandbox.md
-  - docs/decisions/ADR-008-product-live-env-gate.md
+  - docs/decisions/ADR-015-live-acceptance-sandbox-dual-track.md
   - docs/decisions/ADR-016-source-route-matrix-honest-closure.md
 
 interface:

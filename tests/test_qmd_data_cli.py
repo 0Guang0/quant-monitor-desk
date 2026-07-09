@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 from backend.app.cli import data_commands
-from backend.app.cli.errors import CliFailure
+from backend.app.cli.errors import CliFailure, DOCS_ANCHOR_LIVE_ENV_GATE
 from backend.app.core.resource_guard import Decision, ResourceGuard
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -102,6 +102,24 @@ def test_qmdData_cliFailure_exposesErrorCodeAndDocsAnchor(monkeypatch) -> None:
         data_commands.sync_plan(data_domain="nonexistent_domain_xyz", dry_run=True)
     assert exc.value.error_code
     assert exc.value.docs_anchor.startswith("docs/")
+
+
+def test_qmdData_liveFetch_withoutOptIn_pointsToLiveEnvGateDoc(monkeypatch) -> None:
+    """覆盖范围：live-fetch 未 opt-in 时的 CLI 失败信封
+    测试对象：data_commands.live_fetch + product_live_gate
+    目的/目标：运维被拒时 docs_anchor 稳定指向 live 环境门政策文档
+    验证点：LIVE_FETCH_REJECTED；docs_anchor 等于 DOCS_ANCHOR_LIVE_ENV_GATE
+    失败含义：集中化锚点后链到错误文档，排障路径断裂
+    """
+    monkeypatch.delenv("QMD_ALLOW_LIVE_FETCH", raising=False)
+    with pytest.raises(CliFailure) as exc:
+        data_commands.live_fetch(
+            source_id="baostock",
+            data_domain="cn_equity_daily_bar",
+            dry_run=True,
+        )
+    assert exc.value.error_code == "LIVE_FETCH_REJECTED"
+    assert exc.value.docs_anchor == DOCS_ANCHOR_LIVE_ENV_GATE
 
 
 def test_initDb_syncRegistry_oneLiner(

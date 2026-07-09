@@ -1,4 +1,4 @@
-"""`qmd data` command implementations (R3F-CLI-01)."""
+"""`qmd data` command implementations — product data sync CLI (dry-run first)."""
 
 from __future__ import annotations
 
@@ -7,7 +7,19 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
-from backend.app.cli.errors import CliFailure, error_for_route_status
+from backend.app.cli.errors import (
+    CliFailure,
+    DOCS_ANCHOR_BACKFILL_CAP,
+    DOCS_ANCHOR_DATA_HEALTH_CLI,
+    DOCS_ANCHOR_DATA_SYNC_QUICK_REF,
+    DOCS_ANCHOR_LIVE_ENV_GATE,
+    DOCS_ANCHOR_ORCHESTRATOR,
+    DOCS_ANCHOR_ORCHESTRATOR_CLI,
+    DOCS_ANCHOR_ORCHESTRATOR_FULL_LOAD,
+    DOCS_ANCHOR_ORCHESTRATOR_SCHEDULER,
+    DOCS_ANCHOR_RESOURCE_GUARD_PAUSED,
+    error_for_route_status,
+)
 from backend.app.config import DATA_ROOT
 from backend.app.core.resource_guard import Decision, ResourceGuard
 from backend.app.datasources.service import DataSourceService
@@ -99,7 +111,7 @@ def sync_plan(
             raise CliFailure(
                 error_code="RESOURCE_GUARD_PAUSED",
                 message=guard_reason or "resource guard paused",
-                docs_anchor="docs/ops/ERROR_CODE_GUIDE.md#resource-guard-paused",
+                docs_anchor=DOCS_ANCHOR_RESOURCE_GUARD_PAUSED,
                 retryable=True,
             )
         if preview["route_status"] != "READY":
@@ -147,7 +159,7 @@ def sync_plan(
             "qmd data sync without --dry-run requires explicit operator "
             "confirmation (not enabled by default)"
         ),
-        docs_anchor="docs/ops/data_sync_quick_reference.md",
+        docs_anchor=DOCS_ANCHOR_DATA_SYNC_QUICK_REF,
         manual_confirmation_required=True,
     )
 
@@ -159,7 +171,7 @@ def _parse_sync_date(value: str, *, field: str) -> date:
         raise CliFailure(
             error_code="INVALID_INPUT",
             message=f"invalid {field} date: {value!r}",
-            docs_anchor="docs/ops/data_sync_quick_reference.md",
+            docs_anchor=DOCS_ANCHOR_DATA_SYNC_QUICK_REF,
         ) from exc
 
 
@@ -237,7 +249,7 @@ def sync_baostock_incremental(
         raise CliFailure(
             error_code="INVALID_INPUT",
             message=str(exc),
-            docs_anchor="docs/ops/data_sync_quick_reference.md",
+            docs_anchor=DOCS_ANCHOR_DATA_SYNC_QUICK_REF,
         ) from exc
 
     if since is not None:
@@ -277,7 +289,7 @@ def sync_baostock_incremental(
         raise CliFailure(
             error_code="RESOURCE_GUARD_PAUSED",
             message=guard_reason or "resource guard paused",
-            docs_anchor="docs/ops/ERROR_CODE_GUIDE.md#resource-guard-paused",
+            docs_anchor=DOCS_ANCHOR_RESOURCE_GUARD_PAUSED,
             retryable=True,
         )
     if preview["route_status"] != "READY":
@@ -376,7 +388,7 @@ def backfill_plan(
         raise CliFailure(
             error_code="INVALID_INPUT",
             message=str(exc),
-            docs_anchor="docs/ops/data_sync_quick_reference.md",
+            docs_anchor=DOCS_ANCHOR_DATA_SYNC_QUICK_REF,
         ) from exc
     if data_domain != entry.canonical_domain:
         raise CliFailure(
@@ -385,14 +397,14 @@ def backfill_plan(
                 f"domain mismatch for source_id={source_id!r}: "
                 f"got {data_domain!r}, expected {entry.canonical_domain!r}"
             ),
-            docs_anchor="docs/ops/data_sync_quick_reference.md",
+            docs_anchor=DOCS_ANCHOR_DATA_SYNC_QUICK_REF,
         )
     op = tier_a_operations.get(data_domain)
     if op is None:
         raise CliFailure(
             error_code="CAPABILITY_MISSING",
             message=f"no backfill operation for data_domain={data_domain!r}",
-            docs_anchor="docs/decisions/ADR-011-bounded-backfill-cap-and-ci-nightly.md",
+            docs_anchor=DOCS_ANCHOR_BACKFILL_CAP,
         )
 
     resolved_max = DEFAULT_MAX_BACKFILL_SHARDS if max_shards is None else max_shards
@@ -403,7 +415,7 @@ def backfill_plan(
                 f"max_shards must be between 1 and {ABSOLUTE_MAX_BACKFILL_SHARDS}; "
                 f"got {resolved_max}"
             ),
-            docs_anchor="docs/decisions/ADR-011-bounded-backfill-cap-and-ci-nightly.md",
+            docs_anchor=DOCS_ANCHOR_BACKFILL_CAP,
         )
 
     date_start = _parse_sync_date(start, field="start")
@@ -412,7 +424,7 @@ def backfill_plan(
         raise CliFailure(
             error_code="INVALID_INPUT",
             message="end must be on or after start",
-            docs_anchor="docs/ops/data_sync_quick_reference.md",
+            docs_anchor=DOCS_ANCHOR_DATA_SYNC_QUICK_REF,
         )
 
     try:
@@ -426,7 +438,7 @@ def backfill_plan(
         raise CliFailure(
             error_code="BACKFILL_CAP_EXCEEDED",
             message=str(exc),
-            docs_anchor="docs/decisions/ADR-011-bounded-backfill-cap-and-ci-nightly.md",
+            docs_anchor=DOCS_ANCHOR_BACKFILL_CAP,
             retryable=False,
         ) from exc
 
@@ -481,7 +493,7 @@ def backfill_plan(
         raise CliFailure(
             error_code="RESOURCE_GUARD_PAUSED",
             message=guard_reason or "resource guard paused",
-            docs_anchor="docs/ops/ERROR_CODE_GUIDE.md#resource-guard-paused",
+            docs_anchor=DOCS_ANCHOR_RESOURCE_GUARD_PAUSED,
             retryable=True,
         )
     if plan.route_status != "READY":
@@ -589,7 +601,7 @@ def full_load_plan(
         raise CliFailure(
             error_code="CAPABILITY_MISSING",
             message=str(exc),
-            docs_anchor="docs/modules/data_sync_orchestrator.md#1341-fullloadjob",
+            docs_anchor=DOCS_ANCHOR_ORCHESTRATOR_FULL_LOAD,
             retryable=False,
         ) from exc
     if data_domain != tier_entry.canonical_domain:
@@ -599,7 +611,7 @@ def full_load_plan(
                 f"domain mismatch for source_id={source_id!r}: "
                 f"got {data_domain!r}, expected {tier_entry.canonical_domain!r}"
             ),
-            docs_anchor="docs/modules/data_sync_orchestrator.md#1341-fullloadjob",
+            docs_anchor=DOCS_ANCHOR_ORCHESTRATOR_FULL_LOAD,
         )
 
     resolved_max = DEFAULT_MAX_BACKFILL_SHARDS if max_shards is None else max_shards
@@ -610,7 +622,7 @@ def full_load_plan(
                 f"max_shards must be between 1 and {ABSOLUTE_MAX_BACKFILL_SHARDS}; "
                 f"got {resolved_max}"
             ),
-            docs_anchor="docs/modules/data_sync_orchestrator.md#1341-fullloadjob",
+            docs_anchor=DOCS_ANCHOR_ORCHESTRATOR_FULL_LOAD,
         )
 
     date_start = _parse_sync_date(start, field="start")
@@ -619,7 +631,7 @@ def full_load_plan(
         raise CliFailure(
             error_code="INVALID_INPUT",
             message="end must be on or after start",
-            docs_anchor="docs/ops/data_sync_quick_reference.md",
+            docs_anchor=DOCS_ANCHOR_DATA_SYNC_QUICK_REF,
         )
 
     try:
@@ -633,7 +645,7 @@ def full_load_plan(
         raise CliFailure(
             error_code="BACKFILL_CAP_EXCEEDED",
             message=str(exc),
-            docs_anchor="docs/decisions/ADR-011-bounded-backfill-cap-and-ci-nightly.md",
+            docs_anchor=DOCS_ANCHOR_BACKFILL_CAP,
             retryable=False,
         ) from exc
 
@@ -702,7 +714,7 @@ def full_load_plan(
         raise CliFailure(
             error_code="RESOURCE_GUARD_PAUSED",
             message=guard_reason or "resource guard paused",
-            docs_anchor="docs/ops/ERROR_CODE_GUIDE.md#resource-guard-paused",
+            docs_anchor=DOCS_ANCHOR_RESOURCE_GUARD_PAUSED,
             retryable=True,
         )
     if preview["route_status"] != "READY":
@@ -830,7 +842,7 @@ def sync_mootdx_incremental(
         raise CliFailure(
             error_code="INVALID_INPUT",
             message=str(exc),
-            docs_anchor="docs/ops/data_sync_quick_reference.md",
+            docs_anchor=DOCS_ANCHOR_DATA_SYNC_QUICK_REF,
         ) from exc
 
     if since is not None:
@@ -870,7 +882,7 @@ def sync_mootdx_incremental(
         raise CliFailure(
             error_code="RESOURCE_GUARD_PAUSED",
             message=guard_reason or "resource guard paused",
-            docs_anchor="docs/ops/ERROR_CODE_GUIDE.md#resource-guard-paused",
+            docs_anchor=DOCS_ANCHOR_RESOURCE_GUARD_PAUSED,
             retryable=True,
         )
     if preview["route_status"] != "READY":
@@ -890,7 +902,7 @@ def live_fetch(
     instrument_id: str | None = None,
     dry_run: bool = True,
 ) -> dict[str, Any]:
-    """``qmd data live-fetch`` — product live route preview + optional fetch (R3H-08 S08-05)."""
+    """``qmd data live-fetch`` — product live route preview + optional fetch."""
     from backend.app.datasources.fetch_result import FetchRequest
     from backend.app.datasources.product_live_gate import (
         ProductLiveGateError,
@@ -905,7 +917,7 @@ def live_fetch(
         raise CliFailure(
             error_code=exc.code,
             message=str(exc),
-            docs_anchor="docs/decisions/ADR-008-product-live-env-gate.md",
+            docs_anchor=DOCS_ANCHOR_LIVE_ENV_GATE,
         ) from exc
 
     preview_service = _service()
@@ -931,7 +943,7 @@ def live_fetch(
         raise CliFailure(
             error_code="RESOURCE_GUARD_PAUSED",
             message=guard_reason or "resource guard paused",
-            docs_anchor="docs/ops/ERROR_CODE_GUIDE.md#resource-guard-paused",
+            docs_anchor=DOCS_ANCHOR_RESOURCE_GUARD_PAUSED,
             retryable=True,
         )
     if plan.route_status != "READY":
@@ -1033,19 +1045,19 @@ def health_check(
             raise CliFailure(
                 error_code="CAPABILITY_MISSING",
                 message=message,
-                docs_anchor="docs/ops/data_health_cli.md",
+                docs_anchor=DOCS_ANCHOR_DATA_HEALTH_CLI,
             )
     if not data_domain or not profile:
         raise CliFailure(
             error_code="INVALID_INPUT",
             message="--domain and --profile are required",
-            docs_anchor="docs/ops/data_health_cli.md",
+            docs_anchor=DOCS_ANCHOR_DATA_HEALTH_CLI,
         )
     if evidence_dir is None:
         raise CliFailure(
             error_code="INVALID_INPUT",
             message="--evidence-dir required for supported profiles in this slice",
-            docs_anchor="docs/ops/data_health_cli.md",
+            docs_anchor=DOCS_ANCHOR_DATA_HEALTH_CLI,
         )
 
     try:
@@ -1062,13 +1074,13 @@ def health_check(
         raise CliFailure(
             error_code="CAPABILITY_MISSING",
             message=str(exc),
-            docs_anchor="docs/ops/data_health_cli.md",
+            docs_anchor=DOCS_ANCHOR_DATA_HEALTH_CLI,
         ) from exc
     except (DataHealthLoadError, DataHealthIngestLimitError) as exc:
         raise CliFailure(
             error_code="INVALID_INPUT",
             message=str(exc),
-            docs_anchor="docs/ops/data_health_cli.md",
+            docs_anchor=DOCS_ANCHOR_DATA_HEALTH_CLI,
         ) from exc
 
     source_ids: list[str] = []
@@ -1105,7 +1117,7 @@ def scheduler_run(
         raise CliFailure(
             error_code="RESOURCE_GUARD_PAUSED",
             message=guard_reason or "resource guard paused",
-            docs_anchor="docs/ops/ERROR_CODE_GUIDE.md#resource-guard-paused",
+            docs_anchor=DOCS_ANCHOR_RESOURCE_GUARD_PAUSED,
             retryable=True,
         )
 
@@ -1137,7 +1149,7 @@ def scheduler_run(
         raise CliFailure(
             error_code="INVALID_INPUT",
             message=str(exc),
-            docs_anchor="docs/modules/data_sync_orchestrator.md#136-调度计划",
+            docs_anchor=DOCS_ANCHOR_ORCHESTRATOR_SCHEDULER,
         ) from exc
 
     from backend.app.cli.phase1_acceptance import (
@@ -1308,6 +1320,8 @@ def revision_audit_plan(
     """``qmd data revision-audit`` — §13.7 revision audit runner."""
     import uuid
 
+    from backend.app.cli.run_context import cli_requested_by, new_cli_run_id
+
     from backend.app.config import PROJECT_ROOT, _path_env
     from backend.app.db.connection import ConnectionManager
     from backend.app.db.migrate import apply_migrations
@@ -1319,7 +1333,7 @@ def revision_audit_plan(
         raise CliFailure(
             error_code="RESOURCE_GUARD_PAUSED",
             message=guard_reason or "resource guard paused",
-            docs_anchor="docs/ops/ERROR_CODE_GUIDE.md#resource-guard-paused",
+            docs_anchor=DOCS_ANCHOR_RESOURCE_GUARD_PAUSED,
             retryable=True,
         )
 
@@ -1349,7 +1363,7 @@ def revision_audit_plan(
         apply_migrations(con)
     orch = DataSyncOrchestrator(cm)
     spec = SyncJobSpec(
-        run_id=f"rev-audit-{suffix}",
+        run_id=new_cli_run_id("revision-audit", prefix="rev"),
         job_id=f"job-rev-audit-{suffix}",
         job_type="revision_audit",
         data_domain=data_domain,
@@ -1361,6 +1375,7 @@ def revision_audit_plan(
         instrument_id=None,
         partition_key=None,
         trigger_reason=f"revision_audit:{lookback_days}d",
+        requested_by=cli_requested_by("data revision-audit"),
     )
     result = orch.run_revision_audit(spec)
     payload["job_id"] = result.job_id
@@ -1379,7 +1394,7 @@ def reconcile_plan(*, conflict_id: str, dry_run: bool = True) -> dict[str, Any]:
         raise CliFailure(
             error_code="INVALID_INPUT",
             message="--conflict-id is required",
-            docs_anchor="docs/modules/data_sync_orchestrator.md#137-cli-设计",
+            docs_anchor=DOCS_ANCHOR_ORCHESTRATOR_CLI,
         )
 
     data_root = _path_env("QMD_DATA_ROOT", PROJECT_ROOT / "data")
@@ -1409,7 +1424,7 @@ def reconcile_plan(*, conflict_id: str, dry_run: bool = True) -> dict[str, Any]:
         raise CliFailure(
             error_code="INVALID_INPUT",
             message=f"unknown conflict_id={conflict_id!r}",
-            docs_anchor="docs/modules/data_sync_orchestrator.md#137-cli-设计",
+            docs_anchor=DOCS_ANCHOR_ORCHESTRATOR_CLI,
         )
     raise CliFailure(
         error_code="USER_AUTH_REQUIRED",
@@ -1417,7 +1432,7 @@ def reconcile_plan(*, conflict_id: str, dry_run: bool = True) -> dict[str, Any]:
             "qmd data reconcile without --dry-run requires datasource_service= gold path; "
             "use orchestrator API with explicit operator confirmation"
         ),
-        docs_anchor="docs/decisions/ADR-006-sync-datasource-service-fail-closed.md",
+        docs_anchor=DOCS_ANCHOR_ORCHESTRATOR,
         manual_confirmation_required=True,
     )
 
@@ -1431,6 +1446,8 @@ def quality_check_plan(
     """``qmd data quality-check`` — §13.7 data quality runner."""
     import uuid
 
+    from backend.app.cli.run_context import cli_requested_by, new_cli_run_id
+
     from backend.app.config import PROJECT_ROOT, _path_env
     from backend.app.db.connection import ConnectionManager
     from backend.app.db.migrate import apply_migrations
@@ -1443,7 +1460,7 @@ def quality_check_plan(
         raise CliFailure(
             error_code="RESOURCE_GUARD_PAUSED",
             message=guard_reason or "resource guard paused",
-            docs_anchor="docs/ops/ERROR_CODE_GUIDE.md#resource-guard-paused",
+            docs_anchor=DOCS_ANCHOR_RESOURCE_GUARD_PAUSED,
             retryable=True,
         )
 
@@ -1472,7 +1489,7 @@ def quality_check_plan(
         apply_migrations(con)
     orch = DataSyncOrchestrator(cm)
     spec = SyncJobSpec(
-        run_id=f"dq-{suffix}",
+        run_id=new_cli_run_id("quality-check", prefix="dq"),
         job_id=f"job-dq-{suffix}",
         job_type="data_quality",
         data_domain=data_domain,
@@ -1484,6 +1501,7 @@ def quality_check_plan(
         instrument_id=None,
         partition_key=None,
         trigger_reason=f"quality_check:{check_date}",
+        requested_by=cli_requested_by("data quality-check"),
     )
     result = orch.run_data_quality(spec)
     payload["job_id"] = result.job_id

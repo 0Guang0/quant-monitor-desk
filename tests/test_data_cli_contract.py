@@ -145,13 +145,14 @@ def test_dataCliContract_sandboxCleanWriteRetired() -> None:
     验证点：LEGACY_COMMAND_RETIRED；message 含 source-route-db
     失败含义：用户仍可误用 sandbox-clean-write 作为 Phase 1 验收
     """
-    from backend.app.cli.errors import CliFailure
+    from backend.app.cli.errors import CliFailure, DOCS_ANCHOR_LIVE_ENV_GATE
     from backend.app.cli.phase1_acceptance import raise_retired_legacy_command
 
     with pytest.raises(CliFailure) as exc:
         raise_retired_legacy_command("qmd data sandbox-clean-write", subcommand="promote")
     assert exc.value.error_code == "LEGACY_COMMAND_RETIRED"
     assert "source-route-db" in exc.value.message
+    assert exc.value.docs_anchor == DOCS_ANCHOR_LIVE_ENV_GATE
 
 
 def test_dataCliContract_retiredCommandsDocumented() -> None:

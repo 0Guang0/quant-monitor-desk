@@ -8,6 +8,8 @@ from typing import Any, Literal
 
 import yaml
 
+from backend.app.cli.errors import DOCS_ANCHOR_ERROR_CODE_GUIDE
+
 ColdStartPolicy = Literal[
     "full_load", "bounded_backfill", "incremental_only", "adr_deferred"
 ]
@@ -47,7 +49,7 @@ _CABINS = frozenset({"PRIMARY", "VALIDATION", "BLINDSPOT", "FORBIDDEN", "SHADOW"
 class UnknownIndicatorError(LookupError):
     indicator_id: str
     error_code: str = "CAPABILITY_MISSING"
-    docs_anchor: str = "docs/ops/ERROR_CODE_GUIDE.md#capability-missing"
+    docs_anchor: str = DOCS_ANCHOR_ERROR_CODE_GUIDE
 
     def __str__(self) -> str:
         return (

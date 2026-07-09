@@ -53,7 +53,7 @@ def build_live_service(
     raw_root: Path,
     monkeypatch,
 ) -> tuple[DataSourceService, DataSyncOrchestrator]:
-    """Product live baostock service (use_mock=False, ADR-008 opt-in)."""
+    """Product live baostock service (use_mock=False, ADR-015 §环境门 opt-in)."""
     from backend.app.ops.baostock_incremental_run import build_baostock_incremental_service
 
     monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")

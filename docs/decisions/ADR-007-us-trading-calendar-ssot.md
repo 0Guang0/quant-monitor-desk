@@ -34,7 +34,6 @@
 
 - **正面：** CAL-US 可关账；C3/G4 共用一模块；CN 回归隔离在 `cn_trading_calendar` 测试。
 - **负面：** 假日表维护 ponytail 止于 2030；R3H-02 证据契约测须将美股源的 `calendar_days` 翻转为 `trading_sessions`。
-- **Wave 2 承接：** R3H-10 延后的 reconcile/probe 项不变（见历史 ENTRY §2 Wave 2 承接表）。
 
 ## 绑定切片
 

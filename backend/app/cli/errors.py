@@ -1,9 +1,30 @@
-"""CLI failure envelope aligned with docs/ops/ERROR_CODE_GUIDE.md."""
+"""CLI failure envelope aligned with docs/ops/design/ERROR_CODE_GUIDE.md."""
 
 from __future__ import annotations
 
 import json
 from dataclasses import asdict, dataclass
+
+# User-visible failure doc anchors — SSOT under **/design/** or retained ADR only.
+# ponytail: staging docs/ops/*.md (non-design) are not authoritative anchors.
+DOCS_ANCHOR_ERROR_CODE_GUIDE = "docs/ops/design/ERROR_CODE_GUIDE.md"
+DOCS_ANCHOR_INCIDENT_PLAYBOOK = "docs/ops/design/incident_playbook.md"
+DOCS_ANCHOR_RESOURCE_GUARD_PAUSED = f"{DOCS_ANCHOR_INCIDENT_PLAYBOOK}#inc-002-resource_guard_paused"
+DOCS_ANCHOR_INCIDENT_DISABLED_SOURCE = f"{DOCS_ANCHOR_INCIDENT_PLAYBOOK}#inc-001-disabled_source"
+DOCS_ANCHOR_INCIDENT_USER_AUTH = f"{DOCS_ANCHOR_INCIDENT_PLAYBOOK}#inc-004-user_auth_required"
+DOCS_ANCHOR_DATA_SYNC_CLI = "docs/modules/design/data_sync_orchestrator.md#137-cli-设计"
+DOCS_ANCHOR_DATA_VALIDATION = "docs/modules/design/data_validation_and_conflict.md"
+DOCS_ANCHOR_BACKFILL_CAP = "docs/decisions/ADR-011-bounded-backfill-cap-and-ci-nightly.md"
+DOCS_ANCHOR_LIVE_ENV_GATE = "docs/decisions/ADR-015-live-acceptance-sandbox-dual-track.md"
+DOCS_ANCHOR_ORCHESTRATOR = "docs/modules/design/data_sync_orchestrator.md"
+DOCS_ANCHOR_ORCHESTRATOR_FULL_LOAD = f"{DOCS_ANCHOR_ORCHESTRATOR}#1341-fullloadjob"
+DOCS_ANCHOR_ORCHESTRATOR_SCHEDULER = f"{DOCS_ANCHOR_ORCHESTRATOR}#136-调度计划"
+DOCS_ANCHOR_ORCHESTRATOR_CLI = f"{DOCS_ANCHOR_ORCHESTRATOR}#137-cli-设计"
+DOCS_ANCHOR_LAYER1_INDICATOR_BINDING = "docs/modules/design/layer1_global_regime_panel.md"
+
+# Back-compat alias (same design anchor; quick_reference.md is staging only).
+DOCS_ANCHOR_DATA_SYNC_QUICK_REF = DOCS_ANCHOR_DATA_SYNC_CLI
+DOCS_ANCHOR_DATA_HEALTH_CLI = DOCS_ANCHOR_DATA_VALIDATION
 
 
 @dataclass(frozen=True)
@@ -45,10 +66,10 @@ _ROUTE_STATUS_TO_ERROR: dict[str, str] = {
 def error_for_route_status(route_status: str, *, detail: str) -> CliFailure:
     code = _ROUTE_STATUS_TO_ERROR.get(route_status, "NO_AVAILABLE_SOURCE")
     anchor = {
-        "DISABLED_SOURCE": "docs/ops/incident_playbook.md#disabled-source",
-        "CAPABILITY_MISSING": "docs/ops/ERROR_CODE_GUIDE.md#capability-missing",
-        "USER_AUTH_REQUIRED": "docs/ops/ERROR_CODE_GUIDE.md#user-auth-required",
-    }.get(code, "docs/ops/ERROR_CODE_GUIDE.md")
+        "DISABLED_SOURCE": DOCS_ANCHOR_INCIDENT_DISABLED_SOURCE,
+        "CAPABILITY_MISSING": DOCS_ANCHOR_ERROR_CODE_GUIDE,
+        "USER_AUTH_REQUIRED": DOCS_ANCHOR_INCIDENT_USER_AUTH,
+    }.get(code, DOCS_ANCHOR_ERROR_CODE_GUIDE)
     return CliFailure(
         error_code=code,
         message=detail,

@@ -64,5 +64,5 @@ def test_indicatorBinding_unknownId_raisesCapabilityMissing() -> None:
         load_binding("NOT-A-REAL-INDICATOR")
     err = exc_info.value
     assert err.error_code == "CAPABILITY_MISSING"
-    assert err.docs_anchor == "docs/ops/ERROR_CODE_GUIDE.md#capability-missing"
+    assert err.docs_anchor == "docs/ops/design/ERROR_CODE_GUIDE.md"
     assert err.indicator_id == "NOT-A-REAL-INDICATOR"

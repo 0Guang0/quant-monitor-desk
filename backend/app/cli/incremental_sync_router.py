@@ -1,11 +1,16 @@
-"""Incremental sync CLI router for ``qmd data sync --source-id`` (R3-DCP-05 S12)."""
+"""Incremental sync CLI router for ``qmd data sync --source-id``."""
 
 from __future__ import annotations
 
 from datetime import UTC, date, datetime
 from typing import Any
 
-from backend.app.cli.errors import CliFailure, error_for_route_status
+from backend.app.cli.errors import (
+    CliFailure,
+    DOCS_ANCHOR_DATA_SYNC_CLI,
+    DOCS_ANCHOR_RESOURCE_GUARD_PAUSED,
+    error_for_route_status,
+)
 from backend.app.core.resource_guard import ResourceGuard
 from backend.app.db.connection import ConnectionManager
 from backend.app.ops.sandbox_clean_write.clean_write_targets import resolve_clean_write_target
@@ -32,13 +37,13 @@ def _require_audit_sandbox_data_root(data_root) -> None:
         raise CliFailure(
             error_code="INVALID_INPUT",
             message="Incremental sync dry-run requires QMD_DATA_ROOT under .audit-sandbox",
-            docs_anchor="docs/ops/data_sync_quick_reference.md",
+            docs_anchor=DOCS_ANCHOR_DATA_SYNC_CLI,
         )
     if "user-live" in resolved.parts:
         raise CliFailure(
             error_code="INVALID_INPUT",
             message="user-live audit path refused for incremental sync dry-run",
-            docs_anchor="docs/ops/data_sync_quick_reference.md",
+            docs_anchor=DOCS_ANCHOR_DATA_SYNC_CLI,
         )
 
 
@@ -91,7 +96,7 @@ def _dry_run_shell(
         raise CliFailure(
             error_code="RESOURCE_GUARD_PAUSED",
             message=guard_reason or "resource guard paused",
-            docs_anchor="docs/ops/ERROR_CODE_GUIDE.md#resource-guard-paused",
+            docs_anchor=DOCS_ANCHOR_RESOURCE_GUARD_PAUSED,
             retryable=True,
         )
     route_status = plan.route_status
@@ -234,7 +239,7 @@ def sync_incremental_by_source_id(
         raise CliFailure(
             error_code="INVALID_INPUT",
             message=str(exc),
-            docs_anchor="docs/ops/data_sync_quick_reference.md",
+            docs_anchor=DOCS_ANCHOR_DATA_SYNC_CLI,
         ) from exc
 
     if data_domain is not None and data_domain != entry.canonical_domain:
@@ -244,7 +249,7 @@ def sync_incremental_by_source_id(
                 f"domain mismatch for source_id={source_id!r}: "
                 f"got {data_domain!r}, expected {entry.canonical_domain!r}"
             ),
-            docs_anchor="docs/ops/data_sync_quick_reference.md",
+            docs_anchor=DOCS_ANCHOR_DATA_SYNC_CLI,
         )
 
     canonical = entry.canonical_domain
@@ -301,7 +306,7 @@ def sync_incremental_by_source_id(
             raise CliFailure(
                 error_code="RESOURCE_GUARD_PAUSED",
                 message=guard_reason or "resource guard paused",
-                docs_anchor="docs/ops/ERROR_CODE_GUIDE.md#resource-guard-paused",
+                docs_anchor=DOCS_ANCHOR_RESOURCE_GUARD_PAUSED,
                 retryable=True,
             )
         if plan.route_status != "READY":
@@ -482,5 +487,5 @@ def sync_incremental_by_source_id(
     raise CliFailure(
         error_code="INVALID_INPUT",
         message=f"no incremental sync handler for source_id={source_id!r}",
-        docs_anchor="docs/ops/data_sync_quick_reference.md",
+        docs_anchor=DOCS_ANCHOR_DATA_SYNC_CLI,
     )

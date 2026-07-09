@@ -6,6 +6,7 @@ import uuid
 from datetime import date
 from typing import Literal
 
+from backend.app.cli.run_context import cli_requested_by, new_cli_run_id
 from backend.app.db.connection import ConnectionManager
 from backend.app.ops.sandbox_clean_write.clean_write_targets import (
     BAR_DOMAINS,
@@ -38,6 +39,7 @@ def _build_job_spec(
     date_end: date | None,
     instrument_id: str | None = None,
     trigger_reason: str | None = None,
+    requested_by: str | None = None,
 ) -> SyncJobSpec:
     suffix = uuid.uuid4().hex[:8]
     market_id = "GLOBAL" if binding.data_domain in _MACRO_WATERMARK_DOMAINS else "CN_A"
@@ -46,7 +48,7 @@ def _build_job_spec(
         or ("eco_catchup" if job_type == "backfill" else f"binding:{binding.indicator_id}")
     )
     return SyncJobSpec(
-        run_id=f"binding-{binding.indicator_id}-{suffix}",
+        run_id=new_cli_run_id(f"binding-{job_type}", prefix="binding"),
         job_id=f"job-{binding.indicator_id}-{suffix}",
         job_type=job_type,
         data_domain=binding.data_domain,
@@ -58,6 +60,7 @@ def _build_job_spec(
         instrument_id=instrument_id or binding.incremental_watermark,
         partition_key=None,
         trigger_reason=resolved_trigger,
+        requested_by=requested_by or cli_requested_by(f"data {job_type}"),
     )
 
 
@@ -104,6 +107,7 @@ def execute_binding(
     orchestrator: DataSyncOrchestrator | None = None,
     datasource_service=None,
     trigger_reason: str | None = None,
+    requested_by: str | None = None,
 ) -> SyncJobResult:
     """唯一 binding→orchestrator 编排：SyncJobSpec → watermark → mapper → orchestrator."""
     spec = _build_job_spec(
@@ -113,6 +117,7 @@ def execute_binding(
         date_end=date_end,
         instrument_id=instrument_id,
         trigger_reason=trigger_reason,
+        requested_by=requested_by,
     )
     cm = _resolve_connection_manager(
         connection_manager=connection_manager, orchestrator=orchestrator

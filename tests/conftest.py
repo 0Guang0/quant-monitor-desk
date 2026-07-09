@@ -235,6 +235,11 @@ def bad_bool_string_yaml() -> Path:
 
 
 @pytest.fixture
+def bad_primary_disabled_yaml() -> Path:
+    return FIXTURES / "bad_primary_disabled.yaml"
+
+
+@pytest.fixture
 def bad_validation_disabled_yaml() -> Path:
     return FIXTURES / "bad_validation_disabled.yaml"
 

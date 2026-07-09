@@ -9,7 +9,13 @@ from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any, Literal
 
-from backend.app.cli.errors import CliFailure
+from backend.app.cli.errors import (
+    CliFailure,
+    DOCS_ANCHOR_DATA_SYNC_CLI,
+    DOCS_ANCHOR_LAYER1_INDICATOR_BINDING,
+    DOCS_ANCHOR_LIVE_ENV_GATE,
+)
+from backend.app.cli.run_context import cli_requested_by, new_cli_run_id
 from backend.app.datasources.service import DataSourceService
 from backend.app.db.connection import ConnectionManager
 from backend.app.ops.acceptance_isolation import AcceptanceIsolationError, ensure_isolated_db
@@ -71,7 +77,7 @@ def raise_retired_legacy_command(command: str, *, subcommand: str | None = None)
         message=(
             f"{label} retired in Phase 1 closure; use {OFFICIAL_PHASE1_CLI_REPLACEMENT}"
         ),
-        docs_anchor="specs/contracts/data_cli_contract.yaml",
+        docs_anchor=DOCS_ANCHOR_LIVE_ENV_GATE,
     )
 
 
@@ -106,7 +112,7 @@ def require_phase1_data_root_for_live(data_root: Path | str) -> Path:
         raise CliFailure(
             error_code=exc.code,
             message=str(exc),
-            docs_anchor="docs/decisions/ADR-015-tier-a-live-acceptance-sandbox.md",
+            docs_anchor=DOCS_ANCHOR_LIVE_ENV_GATE,
         ) from exc
 
 
@@ -117,7 +123,7 @@ def tier_a_fetch_operation(data_domain: str) -> str:
         raise CliFailure(
             error_code="CAPABILITY_MISSING",
             message=f"no Tier A fetch operation for data_domain={data_domain!r}",
-            docs_anchor="docs/ops/data_sync_quick_reference.md",
+            docs_anchor=DOCS_ANCHOR_DATA_SYNC_CLI,
         ) from exc
 
 
@@ -751,7 +757,7 @@ def _primary_binding(source_id: str, data_domain: str) -> IndicatorBinding:
                 f"no indicator binding for source_id={source_id!r} "
                 f"data_domain={data_domain!r}"
             ),
-            docs_anchor="specs/layer1_axes/indicator_binding_registry.yaml",
+            docs_anchor=DOCS_ANCHOR_LAYER1_INDICATOR_BINDING,
         )
     return bindings[0]
 
@@ -793,7 +799,7 @@ def _run_shard_job_without_binding(
     else:
         suffix = uuid.uuid4().hex[:8]
         job_id = f"job-p1-{job_type}-{suffix}"
-        run_id = f"p1-{job_type}-{suffix}"
+        run_id = new_cli_run_id(job_type, prefix="p1")
     spec = SyncJobSpec(
         run_id=run_id,
         job_id=job_id,
@@ -808,6 +814,7 @@ def _run_shard_job_without_binding(
         partition_key=None,
         trigger_reason=trigger_reason
         or ("eco_catchup" if job_type == "backfill" else "cold_start"),
+        requested_by=cli_requested_by(f"data {job_type}"),
     )
     required_fields = (
         ("raw_value", "source_used")
@@ -1124,6 +1131,7 @@ def execute_spine_or_binding_live(
             orchestrator=orch,
             datasource_service=service,
             trigger_reason=trigger_reason,
+            requested_by=cli_requested_by(f"data {job_type}"),
         )
     elif job_type in {"backfill", "full_load"} and date_start is not None and date_end is not None:
         job_result = _run_shard_job_without_binding(
@@ -1144,7 +1152,7 @@ def execute_spine_or_binding_live(
                 f"no indicator binding for source_id={request.source_id!r} "
                 f"data_domain={request.data_domain!r}"
             ),
-            docs_anchor="specs/layer1_axes/indicator_binding_registry.yaml",
+            docs_anchor=DOCS_ANCHOR_LAYER1_INDICATOR_BINDING,
         )
     watermark_after = (
         read_watermark_iso(cm, request.data_domain, watermark_key)

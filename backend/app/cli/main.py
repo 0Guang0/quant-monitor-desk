@@ -6,7 +6,7 @@ import argparse
 import sys
 
 from backend.app.cli import data_commands
-from backend.app.cli.errors import CliFailure
+from backend.app.cli.errors import CliFailure, DOCS_ANCHOR_DATA_SYNC_CLI
 
 
 def _build_data_parser(sub: argparse._SubParsersAction) -> None:
@@ -287,7 +287,7 @@ def _run_data(args: argparse.Namespace) -> int:
             raise CliFailure(
                 error_code="CAPABILITY_MISSING",
                 message=f"unknown data subcommand: {args.data_command}",
-                docs_anchor="docs/ops/data_sync_quick_reference.md",
+                docs_anchor=DOCS_ANCHOR_DATA_SYNC_CLI,
             )
     except CliFailure as err:
         print(data_commands.emit_failure(err, fmt=fmt), file=sys.stderr)

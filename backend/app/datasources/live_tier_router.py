@@ -1,4 +1,8 @@
-"""Live tier router — PASS §2.1 source_id → Tier A/B/C (R3H-08 · ADR-008)."""
+"""Live production source tier lookup — maps source_id to priority band A/B/C.
+
+Tier A = ADR-009 incremental gold-path sources (11). Full 22-source registry:
+docs/modules/design/data_sources.md §5.9.1. Not the retired Tier harness scripts.
+"""
 
 from __future__ import annotations
 
@@ -51,7 +55,7 @@ class UnknownLiveTierError(ValueError):
 
 
 def resolve_live_tier(source_id: str) -> LiveTier:
-    """Map source_id to Tier A/B/C per R3H_PASS_EXECUTION_PLAN §2.1."""
+    """Map source_id to live priority band A/B/C (see module docstring for SSOT)."""
     if source_id in TIER_A_SOURCES:
         return "A"
     if source_id in TIER_B_SOURCES:

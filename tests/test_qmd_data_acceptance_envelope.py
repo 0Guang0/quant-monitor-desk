@@ -15,7 +15,7 @@ from backend.app.cli.phase1_acceptance import (
     merge_payload_with_envelope,
     require_phase1_data_root_for_live,
 )
-from backend.app.cli.errors import CliFailure
+from backend.app.cli.errors import CliFailure, DOCS_ANCHOR_LIVE_ENV_GATE
 from backend.app.ops.source_route_db_acceptance import AcceptanceReport, AcceptanceRequest
 
 
@@ -54,6 +54,7 @@ def test_phase1Acceptance_requireLiveRoot_rejectsGenericSandbox(tmp_path: Path) 
     with pytest.raises(CliFailure) as exc:
         require_phase1_data_root_for_live(generic)
     assert exc.value.error_code == "ISOLATED_ROOT_REQUIRED"
+    assert exc.value.docs_anchor == DOCS_ANCHOR_LIVE_ENV_GATE
 
 
 def test_phase1Acceptance_envelope_includesRequiredFields(tmp_path: Path) -> None:

@@ -62,7 +62,7 @@ Production runner guards require `DataSourceService` rather than direct adapter 
 
 ## Product live gate and tier routing
 
-ADR-008 in `docs/decisions/ADR-008-product-live-env-gate.md` says product live fetches must pass a unified gate, and current code implements it in `backend/app/datasources/product_live_gate.py`:
+ADR-015 in `docs/decisions/ADR-015-live-acceptance-sandbox-dual-track.md` §环境门 says product live fetches must pass a unified gate, and current code implements it in `backend/app/datasources/product_live_gate.py`:
 
 - `QMD_ALLOW_LIVE_FETCH` must be set to an opt-in value such as `1`, `true`, or `yes`.
 - `gate_live_fetch_port()` also checks `ResourceGuard`.
@@ -70,7 +70,7 @@ ADR-008 in `docs/decisions/ADR-008-product-live-env-gate.md` says product live f
 
 `backend/app/datasources/live_tier_router.py` maps source IDs to Tier A/B/C. Tier A currently includes `fred`, `us_treasury`, `sec_edgar`, `cftc_cot`, `bis`, `world_bank`, `alpha_vantage`, `deribit`, `baostock`, `cninfo`, and `mootdx`. Tier B contains sources such as Yahoo, AkShare, Stooq, CoinGecko, Eastmoney, Sina, TDX, iFinD, QMT, and qmt_xqshare. Tier C contains Kalshi, Polymarket, and web search.
 
-Live acceptance harnesses under `backend/app/ops/` require isolated data roots. Tier A/B/C legacy harnesses use `.audit-sandbox/m-data-03`. The **task-01 source-route DB acceptance spine** (ADR-016) is the authoritative 22-source matrix entry point via `qmd-ops accept-source-route-db` with data root under `.audit-sandbox/source-route-db*`. Release closure uses `scripts/production_gate.py` with `--live-authorized --source-matrix-report`.
+Live acceptance uses isolated data roots under `.audit-sandbox/source-route-db*`. The **22-source matrix acceptance spine** (ADR-016) is the authoritative entry point via `qmd-ops accept-source-route-db`. Release closure uses `scripts/production_gate.py` with `--live-authorized --source-matrix-report`.
 
 ## Network and credential handling
 
@@ -93,6 +93,5 @@ Ops live-pilot authorization evidence is now operator-supplied rather than hard-
 - `backend/app/ops/source_route_db_acceptance_matrix.py`
 - `scripts/qmd_ops.py`
 - `scripts/production_gate.py`
+- `docs/decisions/ADR-015-live-acceptance-sandbox-dual-track.md`
 - `docs/decisions/ADR-016-source-route-matrix-honest-closure.md`
-- `backend/app/ops/tier_a_live_acceptance.py`
-- `docs/decisions/ADR-008-product-live-env-gate.md`

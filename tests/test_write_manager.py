@@ -125,6 +125,35 @@ def test_write_appendOnlyStubPass_insertsAndAudits(tmp_path: Path) -> None:
     assert audit == ("SUCCESS", 1, 1)
 
 
+def test_write_success_emitsStructuredStderrEvent(tmp_path: Path, capsys) -> None:
+    """覆盖范围：写入成功时 stderr 遥测行
+    测试对象：WriteManager.write + write_telemetry
+    目的/目标：运维脚本可不查库即获知 write_completed 与 run_id
+    验证点：stderr JSON event=write_completed；含 run_id/write_id；无 error_message
+    失败含义：P3 遥测未接线，本地批处理无可 grep 信号
+    """
+    cm = _setup(tmp_path)
+    with cm.writer() as w:
+        _empty_clean_table(w)
+    req = _req()
+    res = create_test_write_manager(cm).write(req)
+    err_lines = [line for line in capsys.readouterr().err.splitlines() if line.strip()]
+    assert len(err_lines) == 1
+    payload = json.loads(err_lines[0])
+    assert payload == {
+        "event": "write_completed",
+        "run_id": req.run_id,
+        "write_id": res.write_id,
+        "job_id": req.job_id,
+        "status": "SUCCESS",
+        "rows_inserted": 1,
+        "rows_updated": 0,
+        "data_domain": req.data_domain,
+        "target_table": req.target_table,
+        "requested_by": req.requested_by,
+    }
+
+
 def test_write_stubFail_rollsBackAndAuditsFailed(tmp_path: Path) -> None:
     """覆盖范围：校验明确拒绝时回滚且不写 clean
     测试对象：WriteManager.write 对 ValidationRejected 的处理

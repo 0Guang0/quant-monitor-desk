@@ -104,7 +104,7 @@ def guard_production_datasource_service_required(
     datasource_service: Any | None,
     entry: str,
 ) -> None:
-    """Fail-closed when production profile omits datasource_service= (ADR-006)."""
+    """Fail-closed when production profile omits datasource_service= (data_sync_orchestrator.md)."""
     if datasource_service is not None or adapter is not None:
         return
     if sync_adapter_bypass_allowed():
@@ -120,7 +120,7 @@ def guard_reconcile_product_live_service(
     datasource_service: Any | None,
     entry: str,
 ) -> None:
-    """Fail-closed when production reconcile injects ungated custom fetch_port (ADR-008)."""
+    """Fail-closed when production reconcile injects ungated custom fetch_port (ADR-015 §环境门)."""
     if datasource_service is None:
         return
     if sync_adapter_bypass_allowed():
@@ -350,7 +350,7 @@ class _PipelineMixin:
                 source_switched=source_switched,
                 quality_flags=quality_flags,
                 fallback_reason=fallback_reason,
-                requested_by="orchestrator",
+                requested_by=spec.requested_by,
             ),
             own_transaction=False,
         )

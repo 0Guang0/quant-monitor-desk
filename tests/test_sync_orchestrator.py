@@ -1041,7 +1041,7 @@ def test_runReconcile_productionProfile_rejectsAdapterBypass(
 ) -> None:
     """覆盖范围：生产环境下冲突调和禁止直接注入 adapter 旁路
     测试对象：DataSyncOrchestrator.run_reconcile(conflict_id, adapter=X)
-    目的/目标：reconcile 生产 profile adapter fail-closed（ADR-006 §Reconcile defer；金路径 datasource_service= 属 R3H-08）
+    目的/目标：reconcile 生产 profile adapter fail-closed（data_sync_orchestrator.md；金路径 datasource_service= 属 R3H-08）
     验证点：预插 source_conflict 后抛 ValueError match DataSourceService
     失败含义：调和可绕过 adapter 旁路守卫
     """
@@ -1124,6 +1124,46 @@ def test_runIncremental_pytestProfile_allowsAdapterBypass(
     assert clean_rows == 1
 
 
+def test_runIncremental_requestedBy_reachesWriteAudit(orchestrator, monkeypatch) -> None:
+    """覆盖范围：SyncJobSpec.requested_by 写入审计
+    测试对象：run_incremental → WriteRequest.requested_by → write_audit_log
+    目的/目标：CLI/编排传入的 requested_by 须落库，非硬编码 orchestrator
+    验证点：write_audit_log.requested_by == qmd-data:pytest-incremental
+    失败含义：P2 关联断裂，无法从审计反查触发命令
+    """
+    from backend.app.core.resource_guard import Decision, ResourceGuard
+
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    orch = orchestrator
+    spec = SyncJobSpec(
+        run_id="run-p2-provenance",
+        job_id="job-p2-provenance",
+        job_type="incremental",
+        data_domain="market_bar_1d",
+        market_id="CN_A",
+        source_id="baostock",
+        adapter_id=None,
+        date_start=None,
+        date_end=None,
+        instrument_id=None,
+        partition_key=None,
+        trigger_reason=None,
+        requested_by="qmd-data:pytest-incremental",
+    )
+    result = orch.run_incremental(
+        spec,
+        adapter=_BackfillCountAdapter(),
+        clean_table=_BackfillCountAdapter.CLEAN,
+    )
+    assert result.status == "COMPLETED"
+    with orch._cm.reader() as con:
+        requested_by = con.execute(
+            "SELECT requested_by FROM write_audit_log WHERE write_id = ?",
+            [result.write_id],
+        ).fetchone()[0]
+    assert requested_by == "qmd-data:pytest-incremental"
+
+
 def test_runIncremental_productionProfile_rejectsAdapterBypassDespiteEnv(
     orchestrator, tmp_path, monkeypatch
 ) -> None:
@@ -1202,7 +1242,7 @@ def test_runIncremental_productionProfile_requiresDatasourceService(
 ) -> None:
     """覆盖范围：生产环境下增量同步未注入 DataSourceService 且无 adapter 时 fail-closed
     测试对象：DataSyncOrchestrator.run_incremental(spec) 无 adapter 无 datasource_service
-    目的/目标：ADR-006 — 禁止隐式默认 service；须显式 datasource_service= 金路径
+    目的/目标：data_sync_orchestrator — 禁止隐式默认 service；须显式 datasource_service= 金路径
     验证点：抛 ValueError match datasource_service=
     失败含义：生产可省略 service 仍进入 runner，与 C2 SSOT 和 adapter 旁路守卫不对称
     """
@@ -1233,7 +1273,7 @@ def test_runBackfill_productionProfile_requiresDatasourceService(
 ) -> None:
     """覆盖范围：生产环境下回补未注入 DataSourceService 且无 adapter 时 fail-closed
     测试对象：DataSyncOrchestrator.run_backfill(spec) 无 adapter 无 datasource_service
-    目的/目标：ADR-006 — 回补与增量对称，禁止省略 datasource_service=
+    目的/目标：data_sync_orchestrator — 回补与增量对称，禁止省略 datasource_service=
     验证点：抛 ValueError match datasource_service=
     失败含义：回补可隐式进入 runner 后才报错，混淆 missing service 与 fetch 失败
     """
@@ -1262,7 +1302,7 @@ def test_runBackfill_productionProfile_requiresDatasourceService(
 def test_runReconcile_productionProfile_rejectsAdapterBypassAdr025(
     orchestrator, tmp_path, monkeypatch
 ) -> None:
-    """覆盖范围：reconcile 生产 profile adapter 旁路 fail-closed（ADR-006 §Reconcile defer）
+    """覆盖范围：reconcile 生产 profile adapter 旁路 fail-closed（data_sync_orchestrator.md）
     测试对象：DataSyncOrchestrator.run_reconcile(conflict_id, adapter=X)
     目的/目标：reconcile 无 datasource_service= 金路径时仍须 adapter fail-closed，非 silent bypass
     验证点：与 test_runReconcile_productionProfile_rejectsAdapterBypass 一致抛 ValueError match DataSourceService

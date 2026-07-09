@@ -328,6 +328,34 @@ def _parse_domain_role_binding(data_domain: str, roles: dict) -> DomainRoleBindi
     )
 
 
+def _validate_bound_source(
+    sources: dict[str, SourceRecord],
+    data_domain: str,
+    role_label: str,
+    source_id: str,
+    *,
+    require_enabled: bool,
+) -> None:
+    if source_id not in sources:
+        raise InvalidRegistryError(
+            f"domain_roles.{data_domain}.{role_label} references unknown source {source_id!r}"
+        )
+    record = sources[source_id]
+    if require_enabled and not record.is_enabled:
+        raise InvalidRegistryError(
+            f"domain_roles.{data_domain}.{role_label} {source_id!r} is disabled"
+        )
+    if record.license_type == "unknown":
+        raise InvalidRegistryError(
+            f"domain_roles.{data_domain}.{role_label} {source_id!r} has license_type unknown"
+        )
+    if data_domain not in record.allowed_domains:
+        raise InvalidRegistryError(
+            f"domain_roles.{data_domain}.{role_label} {source_id!r} "
+            f"does not allow domain {data_domain!r}"
+        )
+
+
 def _record_to_db_row(rec: SourceRecord) -> dict[str, object]:
     return {
         "source_id": rec.source_id,
@@ -397,45 +425,21 @@ class SourceRegistry:
 
     def _validate_domain_roles(self) -> None:
         for data_domain, binding in self._domain_roles.items():
-            primary_id = binding.primary_source_id
-            if primary_id not in self._sources:
-                raise InvalidRegistryError(
-                    f"domain_roles.{data_domain}.primary references unknown source {primary_id!r}"
-                )
-            primary = self._sources[primary_id]
-            if binding.domain_enabled_by_default and not primary.is_enabled:
-                raise InvalidRegistryError(
-                    f"domain_roles.{data_domain}.primary {primary_id!r} is disabled"
-                )
-            if primary.license_type == "unknown":
-                raise InvalidRegistryError(
-                    f"domain_roles.{data_domain}.primary {primary_id!r} has license_type unknown"
-                )
-            if data_domain not in primary.allowed_domains:
-                raise InvalidRegistryError(
-                    f"domain_roles.{data_domain}.primary {primary_id!r} "
-                    f"does not allow domain {data_domain!r}"
-                )
+            _validate_bound_source(
+                self._sources,
+                data_domain,
+                "primary",
+                binding.primary_source_id,
+                require_enabled=binding.domain_enabled_by_default,
+            )
             if binding.validation_source_id is not None:
-                vid = binding.validation_source_id
-                if vid not in self._sources:
-                    raise InvalidRegistryError(
-                        f"domain_roles.{data_domain}.validation references unknown source {vid!r}"
-                    )
-                validation = self._sources[vid]
-                if not validation.is_enabled:
-                    raise InvalidRegistryError(
-                        f"domain_roles.{data_domain}.validation {vid!r} is disabled"
-                    )
-                if validation.license_type == "unknown":
-                    raise InvalidRegistryError(
-                        f"domain_roles.{data_domain}.validation {vid!r} has license_type unknown"
-                    )
-                if data_domain not in validation.allowed_domains:
-                    raise InvalidRegistryError(
-                        f"domain_roles.{data_domain}.validation {vid!r} "
-                        f"does not allow domain {data_domain!r}"
-                    )
+                _validate_bound_source(
+                    self._sources,
+                    data_domain,
+                    "validation",
+                    binding.validation_source_id,
+                    require_enabled=True,
+                )
 
     def get(self, source_id: str) -> SourceRecord:
         if source_id not in self._sources:

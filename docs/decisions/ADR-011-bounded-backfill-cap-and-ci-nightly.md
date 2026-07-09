@@ -1,74 +1,51 @@
 # ADR-011：有界 backfill 上限与 CI nightly
 
-**Status:** Accepted  
-**Date:** 2026-07-02  
-**Task:** R3-DCP-09
+**状态：** 已接受  
+**日期：** 2026-07-02  
+**修订：** 2026-07-09 — 补正文；与 `performance_limits.md` §8 对齐
 
-## Context
+## 背景
 
-增量路径（DCP-01/02/05）已通，但 backfill 仅有 runner 层 `plan_backfill_shards`（31 天/片），缺少：
+`qmd data backfill` / `full-load` 不得无界拉取历史。成品权威在 `docs/ops/design/performance_limits.md` §8 与 `specs/contracts/design/runtime_flow_contract.yaml` `flows.backfill`。
 
-1. Operator 可执行的 `qmd data backfill` CLI
-2. 单次 invocation 的 shard 数量上限（防无界 FullLoad）
-3. Wave 3 验收脚本 CI 分层（quick vs nightly network）
-4. `wave3_live_production_acceptance.py` findings 硬门禁
+## 决策
 
-台账：`WAVE3-ACC-OPT-01` · `ACC-LIVE-NETWORK-CI-001` · `ACC-LIVE-ACCEPT-NIGHTLY-001` · `LIVE-NETWORK-GATE-001`
+### 1. Backfill 日期窗口（交易日）
 
-## Decision
+| 参数     | 值                     | 权威                            |
+| -------- | ---------------------- | ------------------------------- |
+| 默认上限 | **5 trading days**     | `performance_limits.md` §8 L250 |
+| 硬顶     | **20 trading days**    | 同上                            |
+| 计量单位 | **交易日**（非自然日） | ADR-007 交易日历 SSOT           |
 
-### 1. 双层 cap
+- CLI 边界（`backfill_plan` / `full_load_plan`）负责按 `data_domain` 选用 CN/US 交易日历并校验窗宽。
+- `plan_backfill_shards` 信任已裁剪的 `(date_start, date_end)` 交易日序列（S5 实现切片）。
+- 超限须报错或 `--truncate-to-cap` 截断；不得静默扩窗。
+- 磁盘剩余 < 20GB 时 backfill 暂停（`performance_limits.md` §10）。
 
-| 层               | 常量 / 参数                      | 默认   |
-| ---------------- | -------------------------------- | ------ |
-| Per-shard window | `ECO_MAX_BACKFILL_DAYS_PER_TASK` | **31** |
-| Per-invocation   | `DEFAULT_MAX_BACKFILL_SHARDS`    | **3**  |
-| Hard ceiling     | `ABSOLUTE_MAX_BACKFILL_SHARDS`   | **12** |
+### 2. 机器可读契约
 
-- SSOT：`specs/contracts/bounded_backfill_cap.yaml`
-- `plan_backfill_shards` 增加可选 `max_shards`；超出时默认 **fail-closed**（`CliFailure`）
-- 显式 `--truncate-to-cap` 可截断 `date_end` 至 cap 覆盖范围（须审计日志）
+`specs/contracts/bounded_backfill_cap.yaml` 为运行副本；数字须与 `performance_limits.md` §8 一致（S5 对齐切片负责 promote/直改）。
 
-### 2. CLI 金路径
+### 3. CI nightly（本 ADR 文件名后半段）
 
-```bash
-qmd data backfill --domain cn_equity_daily_bar --source-id baostock \
-  --start YYYY-MM-DD --end YYYY-MM-DD [--max-shards N] [--dry-run]
-```
+夜间 live 网络回归**不是** backfill 上限，而是独立流水线：
 
-- 非 dry-run：须 `QMD_ALLOW_LIVE_FETCH` + 隔离 `QMD_DATA_ROOT` 或 operator 授权
-- 调用 `DataSyncOrchestrator.run_backfill` + `DataSourceService`（ADR-006）
-- Pilot 首域：`cn_equity_daily_bar`；其余 Tier A 扩展留 Batch 6
+- **SSOT：** `docs/ops/nightly_ci.md`
+- **工作流：** `.github/workflows/nightly.yml`（cron + `workflow_dispatch`）
+- **隔离：** `QMD_DATA_ROOT=.audit-sandbox/nightly-*` + `QMD_ALLOW_LIVE_FETCH=1`
+- PR CI（`.github/workflows/ci.yml`）**不**传 `--run-network`
 
-### 3. CI nightly 分层
+## 后果
 
-| Profile | 入口                                              | 何时           |
-| ------- | ------------------------------------------------- | -------------- |
-| PR      | `.github/workflows/ci.yml`（无 `--run-network`）  | 每次 push/PR   |
-| Quick   | `wave3_isolated_production_acceptance.py --quick` | PR 可选 / 本地 |
-| Nightly | `.github/workflows/nightly.yml`                   | cron + manual  |
+- backfill 默认行为与用户预期一致（5 交易日窗，非 31 自然日/片）。
+- ADR-011 同时索引 backfill 上限与 nightly CI 入口，避免会话只搜文件名却不知道 nightly 文档在哪。
 
-Nightly 步骤：
+## 相关权威
 
-1. `pytest -q -m network tests/test_batch275_live_pilot_gate.py::test_livePilot_phase3RawOnly_threeRequestsLive`
-2. `python scripts/wave3_live_production_acceptance.py --fail-on-severity HIGH,CRITICAL`
-
-文档 SSOT：`docs/ops/nightly_ci.md`
-
-### 4. Findings 门禁
-
-- `--fail-on-severity` 逗号列表；默认 nightly 用 `HIGH,CRITICAL`
-- `plan_alignment` 中 `EXPECTED_DEFER` 不触发 exit 1
-- `LIVE-ACC-MAIN-DB-POLLUTION` 始终 CRITICAL
-
-## Alternatives Considered
-
-1. **Runner 内硬 cap** — 拒绝：冲击 `BackfillShardRunner` 契约面大
-2. **仅文档 nightly** — 拒绝：易漂移；活卡要求可执行 CI
-3. **PR 跑 network** — 拒绝：flake 阻塞合并；nightly 专责
-
-## Consequences
-
-- Execute S00–S06 按 `to-issues-slices.md` 交付
-- `production_equivalent_smoke` shard benchmark 与 cap 默认对齐
-- 无 cap FullLoad 仍为 Batch 6 non-goal
+| 主题            | 路径                                                |
+| --------------- | --------------------------------------------------- |
+| 性能上限 design | `docs/ops/design/performance_limits.md` §8          |
+| 流程契约        | `specs/contracts/design/runtime_flow_contract.yaml` |
+| 夜间 CI 操作    | `docs/ops/nightly_ci.md`                            |
+| 运行 cap YAML   | `specs/contracts/bounded_backfill_cap.yaml`         |

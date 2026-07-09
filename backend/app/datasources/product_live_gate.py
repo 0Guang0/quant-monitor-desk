@@ -1,7 +1,7 @@
-"""Product live env gate (R3H-08 S08-BOOT · ADR-008).
+"""Product live env gate — fail-closed opt-in before product live fetch.
 
-Fail-closed switch for env-gated product live fetch. Rehearsal/pilot paths must not
-substitute for this gate. Upgrade path: per-tier policy in live_tier_router.py.
+Policy: docs/decisions/ADR-015-live-acceptance-sandbox-dual-track.md §环境门.
+Rehearsal/pilot paths must not substitute for this gate.
 """
 
 from __future__ import annotations
@@ -41,7 +41,7 @@ def assert_product_live_allowed(*, source_id: str, operation: str = "fetch") -> 
 
 
 def gate_live_fetch_port(*, source_id: str, operation: str = "fetch") -> None:
-    """ADR-008 fail-closed chain: env opt-in + ResourceGuard before live port use."""
+    """Env opt-in + ResourceGuard before live port use (ADR-015 §环境门)."""
     assert_product_live_allowed(source_id=source_id, operation=operation)
     decision, reason = ResourceGuard().check()
     if decision in (Decision.PAUSE, Decision.HARD_STOP):

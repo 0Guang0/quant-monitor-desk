@@ -12,7 +12,7 @@ qmd data sync --source-id baostock --domain cn_equity_daily_bar --end 2024-06-30
 qmd data sync --source-id fred --domain macro_series --dry-run
 qmd data sync --source-id mootdx --domain cn_equity_daily_bar --end 2024-06-30 --dry-run
 
-# 真跑须隔离 QMD_DATA_ROOT（.audit-sandbox）+ 源级 live gate；见 ADR-008
+# 真跑须隔离 QMD_DATA_ROOT（.audit-sandbox/source-route-db）+ 源级 live gate；见 ADR-015
 ```
 
 | source_id                                    | 规范 domain            | clean 表                |
@@ -24,7 +24,7 @@ qmd data sync --source-id mootdx --domain cn_equity_daily_bar --end 2024-06-30 -
 | sec_edgar                                    | us_filings             | us_disclosure_clean     |
 | deribit                                      | crypto_options_surface | crypto_derivative_clean |
 
-SSOT：`backend/app/sync/incremental_source_registry.py` · `docs/decisions/ADR-009-tier-a-clean-domain-extension.md`
+SSOT：`backend/app/sync/incremental_source_registry.py` · `docs/decisions/ADR-009-clean-write-targets-migration-015.md`
 
 ### ACC-EASTMONEY-TAXONOMY-001（口径 SSOT · 不关 REQ2-EM）
 

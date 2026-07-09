@@ -49,7 +49,7 @@ def build_live_service(
     raw_root: Path,
     monkeypatch: Any,
 ) -> tuple[DataSourceService, DataSyncOrchestrator]:
-    """Product live mootdx service (use_mock=False, ADR-008 opt-in)."""
+    """Product live mootdx service (use_mock=False, ADR-015 §环境门 opt-in)."""
     from backend.app.ops.mootdx_incremental_run import build_mootdx_incremental_service
 
     monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")

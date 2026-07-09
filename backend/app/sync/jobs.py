@@ -265,6 +265,7 @@ class SyncJobSpec:
     instrument_id: str | None
     partition_key: str | None
     trigger_reason: str | None
+    requested_by: str = "orchestrator"
 
 
 @dataclass(frozen=True)

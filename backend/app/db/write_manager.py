@@ -16,6 +16,7 @@ from backend.app.db.validation_gate import (
     ValidationGateError,
     ValidationRejected,
 )
+from backend.app.db.write_telemetry import telemetry_for_write
 from backend.app.util.error_redaction import redact_error_message
 
 WriteStatus = Literal["SUCCESS", "FAILED"]
@@ -319,6 +320,87 @@ class WriteManager:
             error_message=redact_error_message(error_message),
         )
 
+    def _resolve_audit_sidecar_root(
+        self,
+        own_transaction: bool,
+        audit_sidecar_root: Path | None,
+    ) -> Path | None:
+        if not own_transaction and audit_sidecar_root is None:
+            from backend.app.config import DATA_ROOT
+
+            return DATA_ROOT
+        return audit_sidecar_root
+
+    def _apply_staging_to_clean(
+        self,
+        con: duckdb.DuckDBPyConnection,
+        req: WriteRequest,
+        target: str,
+        staging: str,
+        primary_keys: list[str],
+    ) -> tuple[int, int]:
+        self.gate.assert_can_write(
+            req.validation_report_id,
+            req.write_mode,
+            con=con,
+        )
+        before = con.execute(f"SELECT COUNT(*) FROM {target}").fetchone()[0]
+        rows_updated = 0
+        columns = self._assert_staging_columns_match(con, req, target, staging)
+        if req.write_mode == "upsert_by_pk":
+            self._assert_staging_pk_unique(con, staging, primary_keys)
+            rows_updated = self._count_pk_matches(con, target, staging, primary_keys)
+        for sql in self._build_merge_sql(req, target, staging, primary_keys, columns):
+            con.execute(sql)
+        after = con.execute(f"SELECT COUNT(*) FROM {target}").fetchone()[0]
+        return after - before, rows_updated
+
+    def _fail_write_after_error(
+        self,
+        con: duckdb.DuckDBPyConnection,
+        write_id: str,
+        req: WriteRequest,
+        started_at: datetime,
+        rows_in_staging: int,
+        exc: ValidationRejected | ValidationGateError | duckdb.Error,
+        *,
+        own_transaction: bool,
+        audit_sidecar_root: Path | None,
+    ) -> WriteResult:
+        if isinstance(exc, (ValidationRejected, ValidationGateError)):
+            if own_transaction:
+                con.execute("ROLLBACK")
+            return self._commit_audit_after_rollback(
+                con,
+                write_id,
+                req,
+                started_at,
+                rows_in_staging,
+                "FAILED",
+                str(exc),
+                own_transaction=own_transaction,
+                audit_sidecar_root=audit_sidecar_root,
+            )
+        elif isinstance(exc, duckdb.Error):
+            if own_transaction:
+                con.execute("ROLLBACK")
+                return self._commit_audit_after_rollback(
+                    con,
+                    write_id,
+                    req,
+                    started_at,
+                    rows_in_staging,
+                    "ERROR",
+                    str(exc),
+                    own_transaction=True,
+                )
+            # own_transaction=False: aborted txn; caller ROLLBACKs. No extra audit con.
+            return WriteResult(
+                write_id=write_id,
+                status="FAILED",
+                error_message=redact_error_message(str(exc)),
+            )
+
     def _execute_write(
         self,
         con: duckdb.DuckDBPyConnection,
@@ -336,35 +418,15 @@ class WriteManager:
                 f"staging table {req.staging_table!r} has {rows_in_staging} rows; "
                 f"minimum {self.MIN_STAGING_ROWS} required before clean write"
             )
-        sidecar_root = audit_sidecar_root
-        if not own_transaction and sidecar_root is None:
-            from backend.app.config import DATA_ROOT
-
-            sidecar_root = DATA_ROOT
+        sidecar_root = self._resolve_audit_sidecar_root(own_transaction, audit_sidecar_root)
 
         if own_transaction:
             con.execute("BEGIN")
 
         try:
-            self.gate.assert_can_write(
-                req.validation_report_id,
-                req.write_mode,
-                con=con,
+            rows_inserted, rows_updated = self._apply_staging_to_clean(
+                con, req, target, staging, primary_keys
             )
-
-            before = con.execute(f"SELECT COUNT(*) FROM {target}").fetchone()[0]
-            rows_updated = 0
-            columns = self._assert_staging_columns_match(con, req, target, staging)
-            if req.write_mode == "upsert_by_pk":
-                self._assert_staging_pk_unique(con, staging, primary_keys)
-                rows_updated = self._count_pk_matches(con, target, staging, primary_keys)
-
-            for sql in self._build_merge_sql(req, target, staging, primary_keys, columns):
-                con.execute(sql)
-
-            after = con.execute(f"SELECT COUNT(*) FROM {target}").fetchone()[0]
-            rows_inserted = after - before
-
             self._write_audit(
                 con,
                 write_id=write_id,
@@ -385,38 +447,16 @@ class WriteManager:
                 rows_inserted=rows_inserted,
                 rows_updated=rows_updated,
             )
-        except (ValidationRejected, ValidationGateError) as exc:
-            if own_transaction:
-                con.execute("ROLLBACK")
-            return self._commit_audit_after_rollback(
+        except (ValidationRejected, ValidationGateError, duckdb.Error) as exc:
+            return self._fail_write_after_error(
                 con,
                 write_id,
                 req,
                 started_at,
                 rows_in_staging,
-                "FAILED",
-                str(exc),
+                exc,
                 own_transaction=own_transaction,
                 audit_sidecar_root=sidecar_root,
-            )
-        except duckdb.Error as exc:
-            if own_transaction:
-                con.execute("ROLLBACK")
-                return self._commit_audit_after_rollback(
-                    con,
-                    write_id,
-                    req,
-                    started_at,
-                    rows_in_staging,
-                    "ERROR",
-                    str(exc),
-                    own_transaction=True,
-                )
-            # own_transaction=False: aborted txn; caller ROLLBACKs. No extra audit con.
-            return WriteResult(
-                write_id=write_id,
-                status="FAILED",
-                error_message=redact_error_message(str(exc)),
             )
         except Exception:
             if own_transaction:
@@ -441,16 +481,40 @@ class WriteManager:
         self._validate_request(req)
 
         if con is not None:
-            return self._execute_write(
+            result = self._execute_write(
                 con,
                 req,
                 own_transaction=own_transaction,
                 audit_sidecar_root=audit_sidecar_root,
             )
+            telemetry_for_write(
+                run_id=req.run_id,
+                write_id=result.write_id,
+                job_id=req.job_id,
+                status=result.status,
+                rows_inserted=result.rows_inserted,
+                rows_updated=result.rows_updated,
+                data_domain=req.data_domain,
+                target_table=req.target_table,
+                requested_by=req.requested_by,
+            )
+            return result
         with self.conn_manager.writer() as writer_con:
-            return self._execute_write(
+            result = self._execute_write(
                 writer_con,
                 req,
                 own_transaction=own_transaction,
                 audit_sidecar_root=audit_sidecar_root,
             )
+            telemetry_for_write(
+                run_id=req.run_id,
+                write_id=result.write_id,
+                job_id=req.job_id,
+                status=result.status,
+                rows_inserted=result.rows_inserted,
+                rows_updated=result.rows_updated,
+                data_domain=req.data_domain,
+                target_table=req.target_table,
+                requested_by=req.requested_by,
+            )
+            return result
