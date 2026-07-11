@@ -1,7 +1,9 @@
 """第一层五轴指标规格加载与工程护栏测试。
 
-覆盖范围：从 YAML 加载五轴指标定义、拦截不合规指标配置，
-以及数据库迁移是否建好指标注册表与快照血缘表。
+覆盖范围：从 YAML 加载五轴指标定义、拦截不合规指标配置。
+生产 spec 清单字段完整性 / engineering_rules 文件存在性扫描已迁至
+phase-scripts/check_layer1_axis_spec_inventory.py（artifact-guard）。
+migration 011 表存在性由 tests/test_migration_coverage.py 覆盖。
 """
 
 from __future__ import annotations
@@ -20,44 +22,6 @@ from backend.app.layer1_axes.guardrails import (
     AxisEngineeringGuardrailValidator,
     GuardrailViolationError,
 )
-
-MIGRATION_011 = "011_layer1_tables"
-
-LAYER1_REGISTRY_TABLES = frozenset(
-    {
-        "axis_registry",
-        "axis_indicator_registry",
-        "axis_indicator_profile",
-    }
-)
-
-
-def test_layer1Migration_createsRegistryTables(migrated_con, tmp_path) -> None:
-    """覆盖范围：数据库迁移后，第一层指标注册相关表是否建好
-    测试对象：apply_migrations 后的 SHOW TABLES 与 schema_version
-    目的/目标：轴注册、指标注册、指标画像三张表必须随迁移落地
-    验证点：三张 registry 表均存在；schema_version 含 011_layer1_tables
-    失败含义：注册表缺失，第一层指标元数据无法入库
-    """
-    con = migrated_con(tmp_path)
-    tables = {row[0] for row in con.execute("SHOW TABLES").fetchall()}
-    assert LAYER1_REGISTRY_TABLES.issubset(tables)
-    versions = {row[0] for row in con.execute("SELECT version_id FROM schema_version").fetchall()}
-    assert MIGRATION_011 in versions
-    con.close()
-
-
-def test_layer1Migration_createsSnapshotLineageTable(migrated_con, tmp_path) -> None:
-    """覆盖范围：数据库迁移后，快照来源追溯表是否建好（smoke）
-    测试对象：migration 011 的 axis_snapshot_lineage DDL
-    目的/目标：血缘表须随迁移落地；列细节见 migration 契约/CI
-    验证点：表存在
-    失败含义：血缘表缺失，快照追溯无法持久化
-    """
-    con = migrated_con(tmp_path)
-    tables = {row[0] for row in con.execute("SHOW TABLES").fetchall()}
-    assert "axis_snapshot_lineage" in tables
-    con.close()
 
 
 def _spec_root() -> Path:
@@ -313,35 +277,6 @@ def test_axisSpecLoader_missingQualityRulesKey_appliesContractDefaults(tmp_path:
     )
 
 
-def test_axisSpecLoader_observableIndicators_matchContractFields() -> None:
-    """覆盖范围：可观测指标的契约必填字段是否完整
-    测试对象：AxisSpecLoader.load 产出的可观测指标与画像
-    目的/目标：频率、单位、主数据源等定义字段与中文摘要均不能为空
-    验证点：每条可观测指标的 profile 与 definition_fields 均满足非空
-    失败含义：缺字段指标进入注册表，界面与校验器运行时崩溃
-    """
-    result = AxisSpecLoader().load(spec_root=_spec_root())
-    observable = [i for i in result.indicators if i.is_observable]
-    assert observable, "expected observable indicators"
-    profiles_by_id = {p.indicator_id: p for p in result.profiles}
-    definition_fields = {
-        "frequency",
-        "unit",
-        "primary_source",
-        "validation_source",
-        "fallback_policy",
-    }
-    for ind in observable:
-        profile = profiles_by_id[ind.indicator_id]
-        assert profile.plain_language_summary
-        assert profile.display_name_cn
-        assert ind.layer_tag
-        for field in definition_fields:
-            assert getattr(ind, field, None) not in (None, ""), (
-                f"{ind.indicator_id} missing contract field {field!r}"
-            )
-
-
 def test_axisSpecLoader_rejectsSpecRootOutsideAllowedRoots() -> None:
     """覆盖范围：规格目录不在项目白名单内时如何拒绝加载
     测试对象：AxisSpecLoader.load
@@ -355,17 +290,3 @@ def test_axisSpecLoader_rejectsSpecRootOutsideAllowedRoots() -> None:
             spec_root=evil_root,
             enabled_axes=["environment"],
         )
-
-
-def test_axisSpecLoader_engineeringRules_documentProjectionMetadata() -> None:
-    """覆盖范围：环境轴工程规则经 loader 校验混频投影元数据
-    测试对象：AxisSpecLoader.load + _validate_engineering_rules_file
-    目的/目标：ENVIRONMENT 轴 load 成功即证明 engineering_rules 含 projection 契约
-    验证点：load 不抛错；ENVIRONMENT guardrail 含非空 engineering_rules_path
-    失败含义：投影元数据未文档化或 loader 未校验，特征引擎无法对齐频率映射
-    """
-    result = AxisSpecLoader().load(spec_root=_spec_root(), enabled_axes=["environment"])
-    env_guard = next(g for g in result.guardrails if g.axis_id == "ENVIRONMENT")
-    assert env_guard.engineering_rules_path
-    eng_path = PROJECT_ROOT / env_guard.engineering_rules_path
-    assert eng_path.is_file()

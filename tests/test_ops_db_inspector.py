@@ -1,4 +1,8 @@
-"""Ops 只读 DB 巡检（DbInspector）与 qmd_ops db-inspect CLI 契约测试。"""
+"""Ops 只读 DB 巡检（DbInspector）与 qmd_ops db-inspect CLI 契约测试。
+
+延期项 mapping 硬编码关账 ID 扫描已迁至
+phase-scripts/check_ops_deferred_registry_wiring.py（phase-guard）。
+"""
 
 from __future__ import annotations
 
@@ -67,29 +71,6 @@ def test_dbInspect_missingDb_returnsFail(tmp_path: Path) -> None:
     assert report.db["read_only_open"] is False
     assert report.errors
     assert any("not found" in err.lower() for err in report.errors)
-
-
-def test_dbInspect_deferredItemMapping_nonEmpty(tmp_path: Path) -> None:
-    """覆盖范围：延期项与证据字段映射
-    测试对象：report.deferred_item_mapping
-    目的/目标：巡检报告须携带已知 R3/R2.6 延期项及 evidence_fields
-    验证点：mapping 非空；item_id 含 DB-R3-001 等；每项有 evidence_fields
-    失败含义：审计延期项无法从巡检 JSON 对照，gate 追溯断档
-    """
-    db = tmp_path / "t.duckdb"
-    _init_db(db)
-    report = DbInspector(db, tmp_path).inspect()
-    assert report.deferred_item_mapping
-    item_ids = {entry["item_id"] for entry in report.deferred_item_mapping}
-    assert item_ids >= {
-        "DB-R3-001",
-        "DB-R3-002",
-        "R3-PARTIAL-2",
-        "R2.6-IMPL-8",
-        "R3-EARLY-DB-INSPECT-CLI",
-    }
-    for entry in report.deferred_item_mapping:
-        assert entry["evidence_fields"]
 
 
 def test_dbInspect_dbFile_unchanged(tmp_path: Path) -> None:

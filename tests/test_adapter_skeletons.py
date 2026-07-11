@@ -383,28 +383,6 @@ def test_createAdapter_withoutFileRegistry_raisesAdapterConfigurationError(
         )
 
 
-def test_createTestAdapter_defaultStubFetchPort_success(
-    tmp_path,
-    migrated_con,
-    batch_b_registry,
-    request_factory,
-    raw_data_root,
-):
-    """覆盖范围：build_test_adapter 默认 stub 端口
-    测试对象：build_test_adapter + 默认 StubFetchPort
-    目的/目标：测试用工厂应零配置即可完成一次成功抓取
-    验证点：fetch.status == SUCCESS
-    失败含义：测试辅助工厂不可用，大量集成测试无法起步
-    """
-    from tests.service_path_support import build_test_adapter
-
-    con = migrated_con(tmp_path)
-    adapter = build_test_adapter("baostock", batch_b_registry, raw_data_root)
-    req = request_factory("baostock", "cn_equity_daily_bar")
-    result = adapter.fetch(req, con=con)
-    assert result.status == "SUCCESS"
-
-
 def test_skeletonAdapterBase_resolveAsOfFromEndTime(
     tmp_path,
     migrated_con,

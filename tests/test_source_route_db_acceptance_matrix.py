@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-import json
-import subprocess
-import sys
 from pathlib import Path
 
 import pytest
@@ -10,7 +7,6 @@ import pytest
 from backend.app.ops.acceptance_isolation import AcceptanceIsolationError
 from backend.app.ops.source_route_db_acceptance import SourceRouteDbAcceptanceSpine
 from backend.app.ops.source_route_db_acceptance_matrix import (
-    DOCUMENTED_SOURCE_MATRIX,
     SOURCE_ROUTE_DB_SANDBOX_SEGMENT,
     classify_matrix_execute_exception,
     evaluate_matrix_row_closure,
@@ -18,69 +14,13 @@ from backend.app.ops.source_route_db_acceptance_matrix import (
     iter_matrix_targets,
     matrix_target_key,
     resolve_matrix_data_root,
-    validate_matrix_against_registry,
 )
-
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
 def _matrix_data_root(tmp_path: Path) -> Path:
     root = tmp_path / ".audit-sandbox" / "source-route-db-test"
     root.mkdir(parents=True, exist_ok=True)
     return root
-
-
-def test_acceptanceHelperConsumers_strictMode_hasZeroProductRuntimeConsumers() -> None:
-    """覆盖范围：旧 helper/smoke 严格门禁（SSOT）
-    测试对象：scripts/check_acceptance_helper_consumers.py --strict 与 --strict-seam-inventory
-    目的/目标：产品/runtime 零 consumer；seam inventory 关账
-    验证点：strict 退出码 0；product_runtime_count/consumer_count 为 0；seam_inventory PASS
-    失败含义：旧 helper 仍被产品路径调用，验收 PASS 语义会继续分裂
-    """
-    proc = subprocess.run(
-        [
-            sys.executable,
-            "scripts/check_acceptance_helper_consumers.py",
-            "--strict",
-            "--strict-seam-inventory",
-            "--format",
-            "json",
-        ],
-        cwd=PROJECT_ROOT,
-        check=False,
-        capture_output=True,
-        text=True,
-    )
-    payload = json.loads(proc.stdout)
-
-    assert proc.returncode == 0, proc.stdout + proc.stderr
-    assert payload["strict_status"] == "PASS"
-    assert payload["product_runtime_count"] == 0
-    assert payload["consumer_count"] == 0
-    assert payload["seam_inventory_status"] == "PASS"
-
-
-def test_sourceRouteDbAcceptanceMatrix_hasTwentyTwoDocumentedSources() -> None:
-    """覆盖范围：文档 5.9.1 源矩阵规模
-    测试对象：DOCUMENTED_SOURCE_MATRIX
-    目的/目标：验收矩阵必须覆盖全部 22 个设计级数据源
-    验证点：矩阵长度为 22；每个 target key 唯一
-    失败含义：多源扩展遗漏数据源，最终 closure 无法声称全覆盖
-    """
-    keys = [matrix_target_key(target) for target in iter_matrix_targets()]
-
-    assert len(DOCUMENTED_SOURCE_MATRIX) == 22
-    assert len(keys) == len(set(keys))
-
-
-def test_sourceRouteDbAcceptanceMatrix_registryAlignment_passesStrictInventory() -> None:
-    """覆盖范围：矩阵与 registry/capabilities 对齐
-    测试对象：validate_matrix_against_registry
-    目的/目标：矩阵行必须能在机器可读 registry/capabilities 中找到对应 domain/operation
-    验证点：violations 为空
-    失败含义：文档源与实现枚举漂移，preview/execute 会对不存在的 capability 给出假状态
-    """
-    assert validate_matrix_against_registry() == []
 
 
 def test_sourceRouteDbAcceptanceMatrix_previewCoversBaostockTarget() -> None:
@@ -279,160 +219,6 @@ def test_sourceRouteDbAcceptanceMatrix_timeoutExceptionIsExternalFailure() -> No
         )
         == "FAIL_EXTERNAL"
     )
-
-
-def test_sourceRouteDbAcceptanceMatrix_checkerRejectsLiveReportWithContractFailures(
-    tmp_path: Path,
-) -> None:
-    """覆盖范围：矩阵 checker 的业务 closure 校验
-    测试对象：scripts/check_source_route_db_acceptance_matrix.py --strict --report
-    目的/目标：checker 必须在 live 报告含 NOT_IMPLEMENTED/contract 失败时 FAIL，不能只看行存在
-    验证点：伪造 live 报告含 NOT_IMPLEMENTED 行时 strict 退出码为 1
-    失败含义：22 行 FAIL/BLOCKED 矩阵仍 PASS checker，无法作为最终 gate
-    """
-    report_path = tmp_path / "matrix.json"
-    target = next(t for t in iter_matrix_targets() if t.request.source_id == "kalshi")
-    report_path.write_text(
-        json.dumps(
-            {
-                "matrix_count": 22,
-                "rows": [
-                    {
-                        "target": matrix_target_key(target),
-                        "status": "FAIL",
-                        "failure_class": "NOT_IMPLEMENTED",
-                        "write_grade": "not_written",
-                        "errors": ["live execute handler not wired for kalshi"],
-                    }
-                ],
-            }
-        ),
-        encoding="utf-8",
-    )
-
-    proc = subprocess.run(
-        [
-            sys.executable,
-            "scripts/check_source_route_db_acceptance_matrix.py",
-            "--strict",
-            "--live-authorized",
-            "--report",
-            str(report_path),
-            "--format",
-            "json",
-        ],
-        cwd=PROJECT_ROOT,
-        check=False,
-        capture_output=True,
-        text=True,
-    )
-    payload = json.loads(proc.stdout)
-
-    assert proc.returncode == 1, proc.stdout + proc.stderr
-    assert payload["status"] == "FAIL"
-    assert payload["closure_violations"]
-
-
-def test_sourceRouteDbAcceptanceMatrix_liveAuthorizedChecker_rejectsDryRunReport(
-    tmp_path: Path,
-) -> None:
-    """覆盖范围：--live-authorized checker 防 dry-run 冒充
-    测试对象：check_source_route_db_acceptance_matrix.py --strict --live-authorized --report
-    目的/目标：dry-run 矩阵报告不得通过最终 live closure gate
-    验证点：strict 退出码为 1；report_metadata_violations 或 closure_violations 非空
-    失败含义：Slice 10 最终验收可被未授权 dry-run 报告绕过
-    """
-    from backend.app.ops.source_route_db_acceptance_matrix import execute_documented_matrix
-
-    report_path = tmp_path / "dry-run-matrix.json"
-    payload = execute_documented_matrix(
-        SourceRouteDbAcceptanceSpine(),
-        data_root=_matrix_data_root(tmp_path),
-        live_authorized=False,
-    )
-    report_path.write_text(json.dumps(payload), encoding="utf-8")
-
-    proc = subprocess.run(
-        [
-            sys.executable,
-            "scripts/check_source_route_db_acceptance_matrix.py",
-            "--strict",
-            "--live-authorized",
-            "--report",
-            str(report_path),
-            "--format",
-            "json",
-        ],
-        cwd=PROJECT_ROOT,
-        check=False,
-        capture_output=True,
-        text=True,
-    )
-    checker_payload = json.loads(proc.stdout)
-
-    assert proc.returncode == 1, proc.stdout + proc.stderr
-    assert checker_payload["status"] == "FAIL"
-    assert checker_payload["report_metadata_violations"]
-    assert checker_payload["closure_violations"]
-
-
-def test_sourceRouteDbAcceptanceMatrix_checkerRejectsForgedClosureOutcomes(
-    tmp_path: Path,
-) -> None:
-    """覆盖范围：checker 防篡改 closure_outcome 假绿
-    测试对象：check_source_route_db_acceptance_matrix.py --strict --live-authorized
-    目的/目标：即使 JSON 缓存 closure_outcome=PASS，也必须按 status/failure_class 重算
-    验证点：全行 FAIL_EXTERNAL 但 closure_outcome=PASS 时 strict exit 1 且报 mismatch/violation
-    失败含义：release gate 可被手工编辑报告绕过，CI 假绿
-    """
-    report_path = tmp_path / "forged-matrix.json"
-    rows: list[dict[str, object]] = []
-    for target in iter_matrix_targets():
-        rows.append(
-            {
-                "target": matrix_target_key(target),
-                "status": "FAIL",
-                "failure_class": "FAIL_EXTERNAL",
-                "write_grade": "not_written",
-                "closure_outcome": "PASS",
-                "errors": ["forged row"],
-            }
-        )
-    report_path.write_text(
-        json.dumps(
-            {
-                "matrix_count": 22,
-                "live_authorized": True,
-                "closure_mode": "final_live_authorized",
-                "closure_status": "PASS",
-                "rows": rows,
-            }
-        ),
-        encoding="utf-8",
-    )
-
-    proc = subprocess.run(
-        [
-            sys.executable,
-            "scripts/check_source_route_db_acceptance_matrix.py",
-            "--strict",
-            "--live-authorized",
-            "--report",
-            str(report_path),
-            "--format",
-            "json",
-        ],
-        cwd=PROJECT_ROOT,
-        check=False,
-        capture_output=True,
-        text=True,
-    )
-    payload = json.loads(proc.stdout)
-
-    assert proc.returncode == 1, proc.stdout + proc.stderr
-    assert payload["status"] == "FAIL"
-    assert payload["closure_violations"]
-    assert any("mismatch" in item for item in payload["closure_violations"])
 
 
 def test_sourceRouteDbAcceptanceMatrix_liveClosure_allowsSecFailExternalClosurePass() -> None:

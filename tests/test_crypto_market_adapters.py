@@ -290,29 +290,7 @@ def test_r3h02_cryptoCapabilityFields_matchPortOutput(
         assert bundle_fields <= set(body.keys())
 
 
-@pytest.mark.parametrize(
-    ("source_id", "yaml_key", "port_attr", "module_name"),
-    [
-        ("deribit", "max_instruments", "MAX_INSTRUMENTS", "deribit_port"),
-        ("deribit", "max_surface_rows", "MAX_SURFACE_ROWS", "deribit_port"),
-        ("coingecko", "max_assets", "MAX_ASSETS", "coingecko_port"),
-    ],
-)
-def test_r3h02_cryptoCaps_matchRegistry(
-    source_id: str,
-    yaml_key: str,
-    port_attr: str,
-    module_name: str,
-) -> None:
-    """覆盖范围：crypto registry resource_caps 与 port 常量 parity
-    测试对象：source_capabilities.yaml + deribit/coingecko *_port.py
-    目的/目标：R3H02-R-16 五源 caps parity（加密子集）
-    验证点：YAML cap 值 == port 模块同名常量
-    失败含义：registry 与 port cap 漂移
-    """
-    caps = (_load_capabilities().get("sources") or {}).get(source_id, {}).get("resource_caps") or {}
-    mod = __import__(f"backend.app.datasources.fetch_ports.{module_name}", fromlist=[port_attr])
-    assert caps[yaml_key] == getattr(mod, port_attr)
+# resource_caps YAML↔port 常量：phase-scripts/check_r3h_resource_caps_parity.py --strict
 
 
 def test_deribit_port_replayFixture_instrumentFieldsCanonical() -> None:

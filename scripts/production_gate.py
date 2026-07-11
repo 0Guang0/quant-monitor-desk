@@ -82,6 +82,83 @@ def check_module_boundaries() -> None:
     )
 
 
+def check_reference_adoption_guardrails() -> None:
+    _run_checked(
+        [
+            sys.executable,
+            str(ROOT / "scripts" / "check_reference_adoption_guardrails.py"),
+            "--strict",
+        ],
+        label="reference adoption guardrails",
+    )
+
+
+def check_datasource_service_boundaries() -> None:
+    _run_checked(
+        [
+            sys.executable,
+            str(ROOT / "scripts" / "check_datasource_service_boundaries.py"),
+            "--strict",
+        ],
+        label="datasource service boundaries",
+    )
+
+
+def check_platform_source_matrix() -> None:
+    _run_checked(
+        [
+            sys.executable,
+            str(ROOT / "scripts" / "check_platform_source_matrix.py"),
+            "--strict",
+        ],
+        label="platform source matrix YAML",
+    )
+
+
+def check_contract_drift() -> None:
+    _run_checked(
+        [
+            sys.executable,
+            str(ROOT / "scripts" / "check_contract_drift.py"),
+            "--strict",
+        ],
+        label="ops/write contract drift",
+    )
+
+
+def check_provider_catalog() -> None:
+    _run_checked(
+        [
+            sys.executable,
+            str(ROOT / "scripts" / "check_provider_catalog.py"),
+            "--strict",
+        ],
+        label="provider catalog YAML",
+    )
+
+
+def check_sync_job_contract() -> None:
+    _run_checked(
+        [
+            sys.executable,
+            str(ROOT / "scripts" / "check_sync_job_contract.py"),
+            "--strict",
+        ],
+        label="sync job contract parity",
+    )
+
+
+def check_source_route_db_acceptance_contract() -> None:
+    _run_checked(
+        [
+            sys.executable,
+            str(ROOT / "scripts" / "check_source_route_db_acceptance_contract.py"),
+            "--strict",
+        ],
+        label="source route db acceptance contract parity",
+    )
+
+
 def check_acceptance_helper_consumers_strict() -> None:
     _run_checked(
         [
@@ -175,6 +252,13 @@ def main(argv: list[str] | None = None) -> int:
     check_agent_contract()
     check_resource_contract()
     check_module_boundaries()
+    check_reference_adoption_guardrails()
+    check_datasource_service_boundaries()
+    check_platform_source_matrix()
+    check_contract_drift()
+    check_provider_catalog()
+    check_sync_job_contract()
+    check_source_route_db_acceptance_contract()
     check_acceptance_helper_consumers_strict()
     check_source_route_matrix_static()
 

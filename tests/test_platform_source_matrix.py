@@ -1,6 +1,6 @@
-"""Round2.6 Phase C — 平台数据源矩阵与生产路由规划器测试。
+"""Round2.6 Phase C — 平台数据源矩阵路由规划器行为测试。
 
-覆盖范围：specs/contracts/platform_source_matrix.yaml 对 QMT 类源的平台可用性与 disabled_reason 规则。
+纯 YAML 条目核对已迁至 scripts/check_platform_source_matrix.py。
 """
 
 from __future__ import annotations
@@ -13,33 +13,6 @@ from tests.contract_gate_support import PROJECT_ROOT, load_yaml, platform_key
 from tests.service_path_support import plan_route
 
 PLATFORM_MATRIX = PROJECT_ROOT / "specs/contracts/platform_source_matrix.yaml"
-
-
-def test_qmtXtdata_matrixEntry_nonWindowsDisabled() -> None:
-    """覆盖范围：qmt_xtdata 在 linux/macos 矩阵条目
-    测试对象：platform_source_matrix.yaml platforms.linux/macos.qmt_xtdata
-    目的/目标：非 Windows 平台 YAML 须标记不可用
-    验证点：available_if_user_configured/default_enabled 均为 False
-    失败含义：矩阵登记允许非 Windows 调度 xtdata，与契约 rules 冲突
-    """
-    matrix = load_yaml(PLATFORM_MATRIX)
-    for platform in ("linux", "macos"):
-        entry = matrix["platforms"][platform]["qmt_xtdata"]
-        assert entry["available_if_user_configured"] is False
-        assert entry["default_enabled"] is False
-
-
-def test_qmtXtdata_matrixEntry_windowsRequiresAuth() -> None:
-    """覆盖范围：qmt_xtdata 在 Windows 矩阵条目
-    测试对象：platform_source_matrix.yaml platforms.windows.qmt_xtdata
-    目的/目标：Windows 上 xtdata 仅可在用户授权+env 后配置，默认不启用
-    验证点：available_if_user_configured 为 True；default_enabled 为 False
-    失败含义：Windows 矩阵误标默认可用，路由与合规预期漂移
-    """
-    matrix = load_yaml(PLATFORM_MATRIX)
-    entry = matrix["platforms"]["windows"]["qmt_xtdata"]
-    assert entry["available_if_user_configured"] is True
-    assert entry["default_enabled"] is False
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="plan_route non-Windows scheduling covered on linux CI")

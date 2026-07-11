@@ -72,6 +72,17 @@ def _closure_violations(
     return violations
 
 
+def _matrix_scale_violations() -> list[str]:
+    """文档 5.9.1 规模：22 源且 target key 唯一（原 pytest hasTwentyTwoDocumentedSources）。"""
+    keys = [matrix_target_key(target) for target in iter_matrix_targets()]
+    errors: list[str] = []
+    if len(DOCUMENTED_SOURCE_MATRIX) != 22:
+        errors.append(f"DOCUMENTED_SOURCE_MATRIX length={len(DOCUMENTED_SOURCE_MATRIX)} != 22")
+    if len(keys) != len(set(keys)):
+        errors.append("matrix target keys are not unique")
+    return errors
+
+
 def build_report(
     *,
     report_path: str | None = None,
@@ -79,7 +90,7 @@ def build_report(
     data_root: str | None = None,
 ) -> dict[str, object]:
     closure_mode = "final_live_authorized" if live_authorized else "dry_run"
-    violations = validate_matrix_against_registry()
+    violations = list(validate_matrix_against_registry()) + _matrix_scale_violations()
     rows: list[dict[str, object]] = []
     report_rows: dict[str, dict[str, object]] = {}
     closure_violations: list[str] = []

@@ -15,11 +15,6 @@ from backend.app.db.connection import ConnectionManager
 from backend.app.db.migrate import apply_migrations
 from backend.app.sync.event_payload import parse_event_payload
 from backend.app.sync.jobs import SyncJobSpec, SyncJobStateMachine
-from tests.contract_gate_support import (
-    SERVICE_CONTRACT,
-    load_yaml,
-    scan_package_for_create_adapter,
-)
 from tests.service_path_support import make_fixture_port, seed_activation_base, write_bar_fixture
 
 
@@ -54,35 +49,6 @@ def _patch_probe_adapter_factory(monkeypatch, *, track_order: list[str] | None =
         "backend.app.datasources.adapters.create_test_adapter",
         fake_create_test_adapter,
     )
-
-
-def test_apiAndAgentCannotImportAdapterFactory() -> None:
-    """覆盖范围：生产代码不得绕过服务门面直接创建适配器
-    测试对象：contract forbidden_direct_callers 包扫描
-    目的/目标：API 和 agent 层只能通过统一服务拉数，不能自己 import 适配器工厂
-    验证点：violations 列表为空
-    失败含义：调用方可绕过服务门面直接建 adapter，边界审计失效
-    """
-    contract = load_yaml(SERVICE_CONTRACT)
-    forbidden_pkgs = contract.get("call_boundaries", {}).get("forbidden_direct_callers") or []
-    violations: list[str] = []
-    for pkg in forbidden_pkgs:
-        pkg_path = pkg.replace("backend.app.", "")
-        violations.extend(scan_package_for_create_adapter(pkg_path))
-    assert violations == [], (
-        "production modules must not import create_adapter directly: " + "; ".join(violations)
-    )
-
-
-def test_datasourceServiceContract_statusIsActive() -> None:
-    """覆盖范围：DataSourceService 契约 status 升格（R3H-10 S10-02）
-    测试对象：specs/contracts/datasource_service_contract.yaml status 字段
-    目的/目标：C2 SSOT 契约须为 active，禁止长期 draft 漂移
-    验证点：status == active
-    失败含义：契约仍为 draft，审计无法认定 DataSourceService 为产品 fetch SSOT
-    """
-    contract = load_yaml(SERVICE_CONTRACT)
-    assert contract.get("status") == "active"
 
 
 def test_serviceFetch_runtimeGateOrder(tmp_path: Path, monkeypatch) -> None:
@@ -165,19 +131,6 @@ def test_serviceFetch_runtimeGateOrder(tmp_path: Path, monkeypatch) -> None:
     assert route_count == 1
     assert log_count == 1
     assert entered_fetching
-
-
-def test_forbiddenDirectCallers_includesSyncRunners_andScanIsContractDriven() -> None:
-    """覆盖范围：同步编排 runner 不得直连适配器工厂
-    测试对象：forbidden_direct_callers + scan_package_for_create_adapter('sync/runners')
-    目的/目标：定时同步任务也应走服务门面，不能自己 import 工厂
-    验证点：backend.app.sync.runners 在 forbidden；runners 扫描 violations 为空
-    失败含义：同步 runner 可绕过服务直接建 adapter
-    """
-    contract = load_yaml(SERVICE_CONTRACT)
-    forbidden = contract.get("call_boundaries", {}).get("forbidden_direct_callers") or []
-    assert "backend.app.sync.runners" in forbidden
-    assert scan_package_for_create_adapter("sync/runners") == []
 
 
 def test_servicePreviewRoute_returnsReadyPlan() -> None:

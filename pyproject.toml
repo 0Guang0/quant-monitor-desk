@@ -48,6 +48,7 @@ addopts = "-q --basetemp=.audit-sandbox/pytest"
 cache_dir = ".audit-sandbox/.pytest_cache"
 markers = [
     "slow: integration or full-pipeline tests; exclude with pytest -m 'not slow' for quick CI",
+    "integration: host/env-sensitive integration probes; may be deselected in unit-only CI",
     "network: live vendor fetch tests; skipped unless --run-network",
     "resourceguard: uses real ResourceGuard; skip autouse OK mock in layer2 loader tests",
     "perf: performance-budget or timing-sensitive tests; may run in quick CI",

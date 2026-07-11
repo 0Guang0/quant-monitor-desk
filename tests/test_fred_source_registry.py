@@ -1,44 +1,11 @@
-"""FRED registry/capability guard tests (B01-FRED FRED-01)."""
+"""FRED registry/capability — runtime series cap（B01-FRED FRED-01）。
+
+registry 默认禁用策略：`uv run python phase-scripts/check_fred_source_registry_policy.py --strict`
+"""
 
 from __future__ import annotations
 
 import pytest
-from tests.contract_gate_support import PROJECT_ROOT, load_yaml
-
-SOURCE_REGISTRY = PROJECT_ROOT / "specs/datasource_registry/source_registry.yaml"
-SOURCE_CAPABILITIES = PROJECT_ROOT / "specs/datasource_registry/source_capabilities.yaml"
-
-
-def _fred_registry_entry() -> dict:
-    registry = load_yaml(SOURCE_REGISTRY)
-    for source in registry.get("sources") or []:
-        if source.get("source_id") == "fred":
-            return source
-    raise AssertionError("fred source_id missing from source_registry.yaml")
-
-
-def _fred_capability_entry() -> dict:
-    capabilities = load_yaml(SOURCE_CAPABILITIES)
-    return (capabilities.get("sources") or {}).get("fred") or {}
-
-
-def test_fredRegistry_disabledByDefault_notProductionLive() -> None:
-    """覆盖范围：fred sandbox/disabled-by-default 登记
-    测试对象：specs/datasource_registry/source_registry.yaml · source_capabilities.yaml
-    目的/目标：防止 fred 被默认可 production-live 路由
-    验证点：fred 行存在、enabled_by_default=False、capability 无 production_default
-    失败含义：registry YAML 为稳定契约；漂移会导致未授权 FRED 被当作生产源
-    """
-    entry = _fred_registry_entry()
-    assert entry.get("enabled_by_default") is False
-    assert "macro_series" in (entry.get("allowed_domains") or [])
-
-    cap = _fred_capability_entry()
-    assert cap.get("status") in {"sandbox_candidate", "proposed_disabled_source", "READY_WITH_EVIDENCE"}
-    for domain_cfg in (cap.get("domains") or {}).values():
-        for op in (domain_cfg.get("operations") or {}).values():
-            assert op.get("production_default") is not True
-            assert op.get("enabled_by_default") is False
 
 
 def test_fredRegistry_exceedsMaxSeries_rejected() -> None:

@@ -1,4 +1,7 @@
-"""S06 — G12 五轴 Tier A clean panel 集成 smoke + K1 对齐 + ResourceGuard."""
+"""S06 — G12 五轴 Tier A clean panel 集成 smoke + ResourceGuard.
+
+K1 whitelist 对齐：`uv run python phase-scripts/check_layer1_k1_whitelist_parity.py --strict`
+"""
 
 from __future__ import annotations
 
@@ -6,11 +9,9 @@ from datetime import date, timedelta
 from pathlib import Path
 
 import pytest
-from tests.contract_gate_support import load_yaml
 
 from backend.app.core.resource_guard import Decision, ResourceGuard
 from backend.app.layer1_axes.clean_observation_reader import (
-    P0_MACRO_DB_KEYS,
     P0_WINDOW_CAPS,
     amihud_observations_from_bars,
     read_bar_history,
@@ -29,9 +30,6 @@ from tests.layer1_clean_e2e_support import (
     seed_macro_series,
     seed_spy_bars,
 )
-
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-WHITELIST = PROJECT_ROOT / "specs" / "model_inputs" / "layer1_source_whitelist.yaml"
 
 P0_BINDINGS: tuple[tuple[str, str, str], ...] = (
     ("ENV-E1-DGS10", "DGS10", "fred"),
@@ -114,38 +112,6 @@ def test_layer1FiveAxisPanel_cleanSmoke_allP0AxesProduceFeatures(tmp_path) -> No
             as_of=AS_OF, features=[liq_feat]
         )[0]
         assert liq_interp.boundary_reminder == "不构成交易动作"
-
-
-def test_dcp06K1_whitelistAlignsP0CleanBindings() -> None:
-    """覆盖范围：DCP-06 P0 clean 绑定 source_id 与 K1 whitelist 对齐
-    测试对象：layer1_source_whitelist.yaml + P0_MACRO_DB_KEYS
-    目的/目标：K1 行 source_id 与 runtime clean 读绑定可对账（caps 见 test_dcp06Reader_capsMatchK1WhitelistYaml）
-    验证点：四 macro + SPY 行 source_id/role 匹配 P0_BINDINGS；macro_supplementary 非 primary
-    失败含义：白名单 source 与 Tier A clean 读路径漂移
-    """
-    doc = load_yaml(WHITELIST)
-    rows = doc.get("rows") or []
-    by_series: dict[str, dict] = {}
-    for row in rows:
-        sym = row.get("symbol_or_series")
-        key = str(sym[0] if isinstance(sym, list) else sym)
-        by_series[key] = row
-
-    for spec_id, db_key, source_id in P0_BINDINGS:
-        assert P0_MACRO_DB_KEYS[spec_id] == db_key
-        row = by_series.get(db_key)
-        assert row is not None, f"missing whitelist row for {db_key}"
-        assert row.get("source_id") == source_id
-        assert row.get("role") != "validation_only" or source_id == "akshare"
-
-    liq = by_series.get("SPY")
-    assert liq is not None
-    assert liq.get("source_id") == "alpha_vantage"
-    assert liq.get("role") == "primary_candidate"
-
-    macro_supp = [r for r in rows if r.get("data_domain") == "macro_supplementary"]
-    assert macro_supp
-    assert all(r.get("role") != "primary_candidate" for r in macro_supp)
 
 
 def test_layer1FiveAxisPanel_resourceGuardHardStop_blocksPanelFeatureCompute(

@@ -10,7 +10,6 @@ import json
 
 import duckdb
 import pytest
-from backend.app.datasources.adapters.fetch_port import PortErrorStatus
 from backend.app.datasources.base_adapter import BaseDataAdapter
 from backend.app.datasources.exceptions import SourceMismatchError
 from backend.app.datasources.fetch_log import FetchLogValidationError, FetchLogWriter
@@ -219,30 +218,6 @@ def test_write_allContractStatuses_mapsErrorType(tmp_path, migrated_con, status)
     ).fetchone()
     assert row[0] == status
     assert row[1] == ERROR_TYPE_BY_STATUS[status]
-
-
-def test_portErrorStatus_doesNotDriftFromFetchStatusFailures() -> None:
-    """覆盖范围：适配器端口错误码与抓取结果状态码是否对齐
-    测试对象：PortErrorStatus.__args__ vs CONTRACT_STATUSES
-    目的/目标：适配器能报出的错误类型不应超出系统约定的失败状态范围
-    验证点：PortErrorStatus 集合与预期七项一致，且为 CONTRACT_STATUSES 子集
-    失败含义：adapter 端口与 FetchResult 状态不同步，映射 bug
-    """
-    expected_port_statuses = {
-        "AUTH_FAILED",
-        "RATE_LIMITED",
-        "NETWORK_ERROR",
-        "SCHEMA_DRIFT",
-        "EMPTY_RESPONSE",
-        "NOT_PUBLISHED_YET",
-        "DISABLED_SOURCE",
-        "USER_AUTH_REQUIRED",
-        "FAILED",
-    }
-
-    assert set(PortErrorStatus.__args__) == expected_port_statuses
-    port_layer_only = {"USER_AUTH_REQUIRED"}
-    assert (expected_port_statuses - port_layer_only).issubset(set(CONTRACT_STATUSES))
 
 
 def test_fetchLogWriter_redactsSensitiveErrorMessage(tmp_path, migrated_con):

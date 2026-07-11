@@ -32,6 +32,13 @@ def test_productionGate_defaultRunsSourceMatrixDryRunChecks(monkeypatch: pytest.
     monkeypatch.setattr(gate, "check_agent_contract", lambda: None)
     monkeypatch.setattr(gate, "check_resource_contract", lambda: None)
     monkeypatch.setattr(gate, "check_module_boundaries", lambda: None)
+    monkeypatch.setattr(gate, "check_reference_adoption_guardrails", lambda: None)
+    monkeypatch.setattr(gate, "check_datasource_service_boundaries", lambda: None)
+    monkeypatch.setattr(gate, "check_platform_source_matrix", lambda: None)
+    monkeypatch.setattr(gate, "check_contract_drift", lambda: None)
+    monkeypatch.setattr(gate, "check_provider_catalog", lambda: None)
+    monkeypatch.setattr(gate, "check_sync_job_contract", lambda: None)
+    monkeypatch.setattr(gate, "check_source_route_db_acceptance_contract", lambda: None)
 
     assert gate.main([]) == 0
 
@@ -61,6 +68,13 @@ def test_productionGate_liveAuthorizedRequiresReportPath(monkeypatch: pytest.Mon
     monkeypatch.setattr(gate, "check_agent_contract", lambda: None)
     monkeypatch.setattr(gate, "check_resource_contract", lambda: None)
     monkeypatch.setattr(gate, "check_module_boundaries", lambda: None)
+    monkeypatch.setattr(gate, "check_reference_adoption_guardrails", lambda: None)
+    monkeypatch.setattr(gate, "check_datasource_service_boundaries", lambda: None)
+    monkeypatch.setattr(gate, "check_platform_source_matrix", lambda: None)
+    monkeypatch.setattr(gate, "check_contract_drift", lambda: None)
+    monkeypatch.setattr(gate, "check_provider_catalog", lambda: None)
+    monkeypatch.setattr(gate, "check_sync_job_contract", lambda: None)
+    monkeypatch.setattr(gate, "check_source_route_db_acceptance_contract", lambda: None)
 
     assert gate.main(["--live-authorized"]) == 1
 
@@ -122,6 +136,13 @@ def test_productionGate_liveAuthorizedChecksProvidedReport(
     monkeypatch.setattr(gate, "check_agent_contract", lambda: None)
     monkeypatch.setattr(gate, "check_resource_contract", lambda: None)
     monkeypatch.setattr(gate, "check_module_boundaries", lambda: None)
+    monkeypatch.setattr(gate, "check_reference_adoption_guardrails", lambda: None)
+    monkeypatch.setattr(gate, "check_datasource_service_boundaries", lambda: None)
+    monkeypatch.setattr(gate, "check_platform_source_matrix", lambda: None)
+    monkeypatch.setattr(gate, "check_contract_drift", lambda: None)
+    monkeypatch.setattr(gate, "check_provider_catalog", lambda: None)
+    monkeypatch.setattr(gate, "check_sync_job_contract", lambda: None)
+    monkeypatch.setattr(gate, "check_source_route_db_acceptance_contract", lambda: None)
     monkeypatch.setattr(gate, "check_acceptance_helper_consumers_strict", lambda: None)
     monkeypatch.setattr(gate, "check_source_route_matrix_static", lambda: None)
 

@@ -36,9 +36,10 @@ uv run pytest -q --run-network
 
 - 全部 `*_incremental_e2e.py` replay 路径
 - CLI/E2E 慢测：`test_bounded_backfill_cli_e2e.py`、`test_incremental_post_write_inspect.py`、`test_qmd_ops_source_route_db_acceptance.py`、`test_layer1_five_axis_panel_clean_smoke.py`
-- 按名称模式：matrix dry-run、baostock CLI nonDryRun、layer1 whitelist row cap、orchestrator backfill/reconcile/servicePath、sync full-load、meta guard 等
+- 按名称模式：matrix dry-run、baostock CLI nonDryRun、layer1 whitelist row cap、orchestrator backfill/reconcile/servicePath、sync full-load 等
 - 整模块 slow：`test_sync_binding_executor.py`（单条重集成）
 - 显式 `@pytest.mark.slow`：`tests/test_resource_guard.py::test_snapshot_realCall_returnsFiniteMetrics`
+- meta/tooling 卫生（不进业务 pytest）：`phase-scripts/check_pytest_slow_tier_hygiene.py`
 
 **Git hooks：**
 
@@ -63,8 +64,8 @@ uv run python scripts/run_perf_gate.py --profile ci-parallel
 # 全套 sequential（约 quick+full+parallel 墙钟之和）
 npm run test:perf-gate
 
-# pytest 契约入口（同 run_perf_gate.py，需 QMD_PERF_GATE=1）
-QMD_PERF_GATE=1 uv run python -m pytest -q tests/test_pytest_slow_tier.py -m perf_gate
+# 阶段卫生脚本（非业务 pytest；同原 meta guard 口径，需 QMD_PERF_GATE=1）
+QMD_PERF_GATE=1 uv run python phase-scripts/check_pytest_slow_tier_hygiene.py --strict --with-perf-gate
 ```
 
 PR / pre-commit **不**启用 `QMD_PERF_GATE`（避免冷启动误杀）。

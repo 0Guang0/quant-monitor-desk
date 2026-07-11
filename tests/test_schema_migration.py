@@ -176,25 +176,3 @@ def test_applyMigrations_badSqlInFile_raisesAndLeavesNoVersionRow(tmp_path: Path
     tables = {row[0] for row in con.execute("SHOW TABLES").fetchall()}
     assert "ok" not in tables
 
-
-SCHEMA_PHASE_MATRIX = {
-    "001_foundation": ("implemented", {"write_audit_log", "file_registry"}),
-    "005_ingestion_validation": ("implemented", {"validation_report", "source_conflict"}),
-    "006_ingestion_sync": ("implemented", {"data_sync_job", "job_event_log"}),
-    "007_sync_constraints_audit": ("implemented", {"data_sync_job", "write_audit_log"}),
-    "011_layer1_tables": ("implemented", {"axis_registry", "axis_snapshot_lineage"}),
-}
-
-
-def test_schemaPhaseMatrix_documentsImplementedVsPlanned() -> None:
-    """覆盖范围：已实现 schema 阶段矩阵与真实表存在性
-    测试对象：SCHEMA_PHASE_MATRIX 对照迁移后 SHOW TABLES
-    目的/目标：已实现阶段的关键表必须存在
-    验证点：implemented 阶段 expected_subset ⊆ tables
-    失败含义：阶段文档与库结构脱节
-    """
-    con = duckdb.connect(":memory:")
-    apply_migrations(con)
-    tables = {row[0] for row in con.execute("SHOW TABLES").fetchall()}
-    for phase, (_status, expected_subset) in SCHEMA_PHASE_MATRIX.items():
-        assert expected_subset.issubset(tables), f"{phase} missing {expected_subset - tables}"

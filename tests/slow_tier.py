@@ -18,7 +18,6 @@ _SLOW_MODULE_BASENAMES = frozenset(
 )
 
 _SLOW_TEST_NAME_PATTERNS: tuple[re.Pattern[str], ...] = (
-    re.compile(r"^test_acceptanceHelperConsumers_"),
     re.compile(r"^test_sourceRouteDbAcceptanceMatrix_dryRun"),
     re.compile(r"^test_qmdData_syncBaostock_nonDryRun_"),
     re.compile(r"^test_qmdData_syncBaostock_failedFinal_"),
@@ -33,9 +32,6 @@ _SLOW_TEST_NAME_PATTERNS: tuple[re.Pattern[str], ...] = (
     re.compile(r"^test_syncJob_fullLoad_completesWithShards$"),
     re.compile(r"^test_syncFullLoad_"),
     re.compile(r"^test_syncJob_terminalState_cannotTransition$"),
-    re.compile(r"^test_slowTier_collection_excludesSlowFromQuickProfile$"),
-    re.compile(r"^test_checkAcceptanceHelperConsumers_buildReportStrictPass$"),
-    re.compile(r"^test_perfGate_"),
     re.compile(r"^test_.*_liveSmoke_"),
     re.compile(r"^test_sourceRouteDbAcceptance_fredMacroTracer_"),
 )

@@ -73,8 +73,7 @@ def test_layer1SyncFacade_syncIndicator_nonDryRun_completesIncremental(
         macro_incremental_validation_patch,
         macro_staging_adapter_patch,
     )
-    from backend.app.ops.fred_incremental_watermark import (
-        enabled_fred_source_registry,
+    from backend.app.ops.fred_incremental_run import (
         read_since_dates_for_series,
     )
     from backend.app.sync.indicator_binding import load_binding
@@ -91,7 +90,7 @@ def test_layer1SyncFacade_syncIndicator_nonDryRun_completesIncremental(
     )
     cm = bootstrap_fred_incremental_db(tmp_path)
     with cm.writer() as con:
-        enable_source_route(
+        planner = enable_source_route(
             tmp_path,
             source_id="fred",
             data_domain="macro_series",
@@ -117,7 +116,8 @@ def test_layer1SyncFacade_syncIndicator_nonDryRun_completesIncremental(
         fetch_port=port,
         since_by_series=since_by_series,
         job_events=orch._jobs,
-        source_registry=enabled_fred_source_registry(),
+        source_registry=planner.source_registry,
+        route_planner=planner,
     )
     with macro_staging_adapter_patch(
         source_id="fred",

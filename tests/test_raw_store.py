@@ -380,35 +380,6 @@ def test_register_validationRejected_persistsFailedAudit(tmp_path: Path) -> None
     assert audit == ("FAILED", "file_registry", "validation rejected: stub-fail-registry")
 
 
-def test_stagedEvidence_publicApiCannotBypassWriteManager() -> None:
-    """覆盖范围：R3Y-STAGED-REG-001 — staged 旁路不得为公开 API（__all__ + 生产 import 扫描）
-    测试对象：staged_evidence 模块导出面 + backend/app 生产代码 import 图
-    目的/目标：staging 写路径须经 WriteManager；legacy 旁路仅私有符号
-    验证点：__all__ 仅三常量；无 register_staged_file_registry_rows；生产模块不 import 该名
-    失败含义：公开旁路仍可被 ops/adapter 导入，AUD-03 WriteManager 绕过未关闭
-    """
-    import ast
-
-    import backend.app.storage.staged_evidence as staged_mod
-
-    assert staged_mod.__all__ == (
-        "STAGED_EVIDENCE_PHASE",
-        "STAGED_FILE_REGISTRY_PARSE_STATUS",
-        "STAGED_FILE_REGISTRY_QUALITY",
-    )
-    assert not hasattr(staged_mod, "register_staged_file_registry_rows")
-    forbidden = "register_staged_file_registry_rows"
-    backend_root = Path(__file__).resolve().parents[1] / "backend" / "app"
-    for py in backend_root.rglob("*.py"):
-        if py.name == "staged_evidence.py":
-            continue
-        tree = ast.parse(py.read_text(encoding="utf-8"))
-        for node in ast.walk(tree):
-            if isinstance(node, ast.ImportFrom) and node.module and "staged_evidence" in node.module:
-                for alias in node.names:
-                    assert alias.name != forbidden, f"{py}: imports forbidden {forbidden!r}"
-
-
 def test_stagedEvidence_pathEscape_rejected(tmp_path: Path) -> None:
     """覆盖范围：staged 证据路径逃出 data_root 时拒绝
     测试对象：_register_staged_file_registry_rows

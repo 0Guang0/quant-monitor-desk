@@ -626,35 +626,7 @@ def test_r3h02_capabilityFields_matchPortOutput(
         assert bundle_fields <= set(body.keys())
 
 
-@pytest.mark.parametrize(
-    ("source_id", "yaml_key", "port_attr", "module_name"),
-    [
-        ("alpha_vantage", "max_symbols", "MAX_SYMBOLS", "alpha_vantage_port"),
-        ("alpha_vantage", "max_rows", "MAX_ROWS", "alpha_vantage_port"),
-        ("alpha_vantage", "max_window_days", "MAX_WINDOW_DAYS", "alpha_vantage_port"),
-        ("alpha_vantage", "max_option_strikes", "MAX_OPTION_STRIKES", "alpha_vantage_port"),
-        ("stooq", "max_symbols", "MAX_SYMBOLS", "stooq_port"),
-        ("stooq", "max_rows", "MAX_ROWS", "stooq_port"),
-        ("stooq", "max_window_days", "MAX_WINDOW_DAYS", "stooq_port"),
-        ("yahoo_finance", "max_symbols", "MAX_SYMBOLS", "yahoo_finance_port"),
-        ("yahoo_finance", "max_window_days", "MAX_WINDOW_DAYS", "yahoo_finance_port"),
-    ],
-)
-def test_r3h02_marketCaps_matchRegistry(
-    source_id: str,
-    yaml_key: str,
-    port_attr: str,
-    module_name: str,
-) -> None:
-    """覆盖范围：registry resource_caps 与 port 模块常量 parity
-    测试对象：source_capabilities.yaml + 各 market *_port.py MAX_* 常量
-    目的/目标：P2-01 YAML↔port cap 漂移可被 CI 钉死
-    验证点：YAML cap 值 == port 模块同名常量
-    失败含义：registry 与 port 层 cap 权威分裂
-    """
-    caps = (_load_capabilities().get("sources") or {}).get(source_id, {}).get("resource_caps") or {}
-    mod = __import__(f"backend.app.datasources.fetch_ports.{module_name}", fromlist=[port_attr])
-    assert caps[yaml_key] == getattr(mod, port_attr)
+# resource_caps YAML↔port 常量：phase-scripts/check_r3h_resource_caps_parity.py --strict
 
 
 @pytest.mark.parametrize(

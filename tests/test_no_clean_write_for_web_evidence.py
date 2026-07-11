@@ -1,10 +1,8 @@
 """R3H-04 三源 clean-write 与事实 resolve 负例测试（Batch 3H）。
 
 覆盖范围：kalshi、polymarket、web_search 不得写 clean 表、不得 resolve 事实结果。
-测试对象：三源 route/bundle/staging 负例路径。
-目的/目标：证明预测价格与网页证据无法升格为 factual clean table 或事件结果判定。
-验证点：test_no_clean_write_for_web_evidence 及 -k resolve 子集通过当前 pytest 验收。
-失败含义：非事实源可 silent 写入 clean 表或将概率当事实，Round4 入口不安全。
+registry YAML 策略静态门：
+`uv run python phase-scripts/check_web_prediction_registry_policy.py --strict`
 """
 
 from __future__ import annotations
@@ -32,29 +30,6 @@ _FORBIDDEN_FIELDS = FORBIDDEN_RESOLUTION_FIELDS
 def _load_registry() -> dict:
     path = PROJECT_ROOT / "specs/datasource_registry/source_registry.yaml"
     return yaml.safe_load(path.read_text(encoding="utf-8")) or {}
-
-
-@pytest.mark.parametrize(
-    ("domain", "expected_fallback"),
-    [
-        ("supplemental_web_evidence", "manual_review_required"),
-        ("vix_cds_supplement", "manual_review_required"),
-        ("event_resolution_evidence", "manual_review_required"),
-        ("prediction_market_probability", "mark_missing"),
-        ("regulated_event_contract", "mark_missing"),
-    ],
-)
-def test_webAndPredictionDomains_fallbackPolicyNotCleanWriter(
-    domain: str, expected_fallback: str
-) -> None:
-    """覆盖范围：三源关联网页/预测域的 fallback_policy 不得指向 clean writer
-    测试对象：source_registry.yaml domain_roles fallback_policy
-    目的/目标：web 域须 manual_review_required；预测域不得 silent clean promote
-    验证点：fallback_policy 等于预期值，非 use_last_good_cache 类 clean 路径
-    失败含义：registry 将非事实源路由到可写 clean 表的 fallback
-    """
-    roles = (_load_registry().get("domain_roles") or {}).get(domain) or {}
-    assert roles.get("fallback_policy") == expected_fallback
 
 
 def test_webAndPredictionDomains_runtimeRegistryAlignsFallbackPolicy() -> None:
@@ -163,20 +138,6 @@ def test_no_clean_write_webBundle_alwaysRequiresManualReview() -> None:
     bundle = read_web_evidence_staging_bundle(_WEB_REPLAY)
     assert bundle["need_human_review"] is True
     assert bundle["manual_review_state"] == "queued"
-
-
-@pytest.mark.parametrize("source_id", ["kalshi", "polymarket", "web_search"])
-def test_no_clean_write_sources_defaultDisabledInRegistry(source_id: str) -> None:
-    """覆盖范围：三源默认禁用，防止未配置即 clean 路径
-    测试对象：source_registry.yaml 三源 enabled_by_default
-    目的/目标：enabled_by_default=false 直到显式启用
-    验证点：三源 registry 行 enabled_by_default is False
-    失败含义：三源默认可用，绕过 mock-first / user gate
-    """
-    sources = {s["source_id"]: s for s in (_load_registry().get("sources") or [])}
-    entry = sources.get(source_id)
-    assert entry is not None, source_id
-    assert entry.get("enabled_by_default") is False
 
 
 def test_no_clean_write_kalshiPortOutput_hasNoCleanWriteTarget() -> None:

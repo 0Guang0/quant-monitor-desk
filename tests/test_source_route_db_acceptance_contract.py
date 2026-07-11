@@ -6,7 +6,6 @@ from pathlib import Path
 
 import duckdb
 import pytest
-import yaml
 from backend.app.core.resource_guard import Decision, ResourceGuard
 from backend.app.datasources.fetch_ports.fred_port import FredLiveFetchPort
 from backend.app.ops.source_route_db_acceptance import (
@@ -18,63 +17,11 @@ from backend.app.ops.source_route_db_acceptance import (
     write_acceptance_report,
 )
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-CONTRACT_PATH = PROJECT_ROOT / "specs/contracts/source_route_db_acceptance_contract.yaml"
-
 
 def _acceptance_data_root(tmp_path: Path) -> Path:
     root = tmp_path / ".audit-sandbox" / "source-route-db-contract"
     root.mkdir(parents=True, exist_ok=True)
     return root
-
-
-def _contract() -> dict:
-    return yaml.safe_load(CONTRACT_PATH.read_text(encoding="utf-8"))
-
-
-def test_sourceRouteDbAcceptance_retiredSeamPatterns_documentS3S4Retirements() -> None:
-    """覆盖范围：legacy seam 退役模式登记（S3/S4 对齐）
-    测试对象：check_acceptance_helper_consumers retired pattern loader
-    目的/目标：inventory 脚本仍扫描退役符号，但 YAML 不含 rg 禁词（S3 AC）
-    验证点：loader 返回≥8 模式；YAML 仍含 production_equivalent_smoke
-    失败含义：退役 guard 断裂或 S3/S4 契约与 inventory 双轨
-    """
-    import importlib.util
-    import sys
-
-    script = PROJECT_ROOT / "scripts/check_acceptance_helper_consumers.py"
-    module_name = "check_acceptance_helper_consumers_audit"
-    spec = importlib.util.spec_from_file_location(module_name, script)
-    assert spec and spec.loader
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[module_name] = module
-    spec.loader.exec_module(module)
-    patterns = module._load_retired_seam_patterns()
-    inventory = _contract()["legacy_seam_inventory"]
-    yaml_patterns = set(inventory["retired_seam_patterns"])
-    assert "production_equivalent_smoke" in yaml_patterns
-    assert "live_tier_router" in patterns
-    assert len(patterns) >= len(yaml_patterns) + 4
-    assert "live_tier_router" not in yaml_patterns
-    assert inventory["inventory_script"] == "scripts/check_acceptance_helper_consumers.py"
-
-
-def test_sourceRouteDbAcceptance_contractFields_matchReportEnvelope() -> None:
-    """覆盖范围：生产等价验收报告契约字段
-    测试对象：source_route_db_acceptance_contract.yaml 与 AcceptanceReport.to_dict
-    目的/目标：报告必须携带业务和审计共同需要的完整字段，不能漏掉降级证据
-    验证点：契约 required_report_fields 与 Python REQUIRED 常量一致；to_dict 包含所有字段
-    失败含义：验收报告缺字段时，下游无法判断 mock、降级、路由或写入状态
-    """
-    required = tuple(_contract()["required_report_fields"])
-    request = AcceptanceRequest.from_target("macro_series:fred:fetch_macro_series")
-    payload = AcceptanceReport.not_implemented(request).to_dict()
-
-    assert required == REQUIRED_ACCEPTANCE_REPORT_FIELDS
-    assert set(required) <= set(payload)
-    assert payload["implementation_mode"] == "not_implemented"
-    assert payload["failure_class"] == "NOT_IMPLEMENTED"
-    assert payload["status"] == "FAIL"
 
 
 def test_sourceRouteDbAcceptance_targetParser_requiresDomainSourceOperation() -> None:

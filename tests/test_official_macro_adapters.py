@@ -1036,45 +1036,7 @@ def test_r3h01_capabilityFields_matchPortOutput(
         assert set(body.keys()) >= bundle_fields
 
 
-@pytest.mark.parametrize(
-    ("source_id", "yaml_key", "port_attr"),
-    [
-        ("fred", "max_series", "MAX_SERIES"),
-        ("fred", "max_rows_per_series", "MAX_ROWS_PER_SERIES"),
-        ("fred", "max_window_days", "MAX_WINDOW_DAYS"),
-        ("us_treasury", "max_tenors", "MAX_TENORS"),
-        ("us_treasury", "max_rows", "MAX_ROWS"),
-        ("sec_edgar", "max_ciks", "MAX_CIKS"),
-        ("sec_edgar", "max_filings", "MAX_FILINGS"),
-        ("cftc_cot", "max_markets", "MAX_MARKETS"),
-        ("cftc_cot", "max_rows", "MAX_ROWS"),
-        ("bis", "max_countries", "MAX_COUNTRIES"),
-        ("world_bank", "max_indicators", "MAX_INDICATORS"),
-        ("world_bank", "max_countries", "MAX_COUNTRIES"),
-    ],
-)
-def test_r3h01_officialMacroCaps_matchRegistry(
-    source_id: str,
-    yaml_key: str,
-    port_attr: str,
-) -> None:
-    """覆盖范围：registry resource_caps 与 port 模块常量 parity
-    测试对象：source_capabilities.yaml + 各 *_port.py MAX_* 常量
-    目的/目标：P2-01 YAML↔port cap 漂移可被 CI 钉死
-    验证点：YAML cap 值 == port 模块同名常量
-    失败含义：registry 与 port 层 cap 权威分裂
-    """
-    caps = (_load_capabilities().get("sources") or {}).get(source_id, {}).get("resource_caps") or {}
-    module_name = {
-        "fred": "fred_port",
-        "us_treasury": "us_treasury_port",
-        "sec_edgar": "sec_edgar_port",
-        "cftc_cot": "cftc_cot_port",
-        "bis": "bis_port",
-        "world_bank": "world_bank_port",
-    }[source_id]
-    mod = __import__(f"backend.app.datasources.fetch_ports.{module_name}", fromlist=[port_attr])
-    assert caps[yaml_key] == getattr(mod, port_attr)
+# resource_caps YAML↔port 常量：phase-scripts/check_r3h_resource_caps_parity.py --strict
 
 
 def test_cftc_port_capOverflow_blocksOverMaxRows() -> None:

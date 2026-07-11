@@ -1,13 +1,13 @@
-"""Matrix live evidence honesty — mock/replay must not back live PASS rows."""
+"""Matrix live evidence honesty — mock/replay must not back live PASS rows.
+
+Checker 负例（subprocess 测 check_source_route_db_acceptance_matrix）已迁至
+phase-scripts/check_source_route_matrix_checker_regression.py。
+"""
 
 from __future__ import annotations
 
 import json
-import subprocess
-import sys
 from pathlib import Path
-
-import pytest
 
 from backend.app.ops.matrix_live_evidence_honesty import (
     collect_live_pass_row_evidence_violations,
@@ -15,8 +15,6 @@ from backend.app.ops.matrix_live_evidence_honesty import (
     validate_matrix_live_evidence_honesty,
 )
 from backend.app.ops.source_route_db_acceptance_matrix import iter_matrix_targets, matrix_target_key
-
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_nonLiveMarkerReasons_detectsReplayAndMockFetchIds() -> None:
@@ -96,76 +94,3 @@ def test_collectLivePassRowEvidenceHonesty_skipsNonLivePassRows() -> None:
         {"status": "PASS", "implementation_mode": "dry_run", "source_id": "baostock"},
         target_key="baostock",
     ) == []
-
-
-def test_sourceRouteDbAcceptanceMatrix_liveAuthorizedChecker_rejectsMockReplayEvidence(
-    tmp_path: Path,
-) -> None:
-    """覆盖范围：--live-authorized checker raw evidence honesty
-    测试对象：check_source_route_db_acceptance_matrix.py --strict --live-authorized --data-root
-    目的/目标：final live gate 须拒绝 mock/replay 支撑的 live PASS 行
-    验证点：strict exit 1；evidence_honesty_violations 非空
-    失败含义：production_gate --live-authorized 可被假 live 报告绕过
-    """
-    data_root = tmp_path / "live-sandbox"
-    raw_dir = data_root / "raw" / "alpha_vantage" / "us_equity_daily_bar" / "2026-07-07"
-    raw_dir.mkdir(parents=True)
-    raw_dir.joinpath("evidence.json").write_text(
-        json.dumps(
-            {
-                "source_id": "alpha_vantage",
-                "source_fetch_id": "av-mock-AAPL-deadbeef",
-                "bars": [],
-            }
-        ),
-        encoding="utf-8",
-    )
-    av_target = next(t for t in iter_matrix_targets() if t.request.source_id == "alpha_vantage")
-    report_path = data_root / "reports" / "source-matrix-acceptance.json"
-    report_path.parent.mkdir(parents=True)
-    report_path.write_text(
-        json.dumps(
-            {
-                "matrix_count": 22,
-                "live_authorized": True,
-                "closure_mode": "final_live_authorized",
-                "closure_status": "PASS",
-                "data_root": str(data_root),
-                "rows": [
-                    {
-                        "target": matrix_target_key(av_target),
-                        "source_id": "alpha_vantage",
-                        "status": "PASS",
-                        "implementation_mode": "live",
-                        "failure_class": "NONE",
-                        "closure_outcome": "PASS",
-                    }
-                ],
-            }
-        ),
-        encoding="utf-8",
-    )
-
-    proc = subprocess.run(
-        [
-            sys.executable,
-            "scripts/check_source_route_db_acceptance_matrix.py",
-            "--strict",
-            "--live-authorized",
-            "--report",
-            str(report_path),
-            "--data-root",
-            str(data_root),
-            "--format",
-            "json",
-        ],
-        cwd=PROJECT_ROOT,
-        check=False,
-        capture_output=True,
-        text=True,
-    )
-    payload = json.loads(proc.stdout)
-
-    assert proc.returncode == 1, proc.stdout + proc.stderr
-    assert payload["status"] == "FAIL"
-    assert payload["evidence_honesty_violations"]

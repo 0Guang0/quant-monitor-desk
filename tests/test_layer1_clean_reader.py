@@ -14,9 +14,7 @@ from backend.app.layer1_axes.clean_observation_reader import (
     read_macro_clean_observations,
     resolve_bar_read_limit,
     resolve_read_limit,
-    resolve_window_cap,
 )
-from tests.contract_gate_support import load_yaml
 from tests.layer1_clean_e2e_support import (
     AS_OF,
     bootstrap_layer1_clean_db,
@@ -24,8 +22,7 @@ from tests.layer1_clean_e2e_support import (
     seed_spy_bars,
 )
 
-PROJECT_ROOT = __import__("pathlib").Path(__file__).resolve().parents[1]
-WHITELIST = PROJECT_ROOT / "specs" / "model_inputs" / "layer1_source_whitelist.yaml"
+# K1 whitelist↔reader cap：phase-scripts/check_layer1_k1_whitelist_parity.py --strict
 
 
 def test_layer1CleanReader_macro_readsSpecIndicatorFromCleanTable(tmp_path) -> None:
@@ -317,36 +314,3 @@ def test_layer1CleanReader_amihudEmptyBars_failClosed(tmp_path) -> None:
         amihud_observations_from_bars(
             bars, spec_indicator_id="LIQ.B-I1.AMIHUD_ILLIQ", as_of=AS_OF
         )
-
-
-def _parse_yaml_cap(value: object) -> int:
-    if isinstance(value, int):
-        return value
-    return int(str(value).rstrip("dw"))
-
-
-def test_dcp06Reader_capsMatchK1WhitelistYaml() -> None:
-    """覆盖范围：reader cap 常量与 K1 whitelist YAML 程序化对账
-    测试对象：resolve_read_limit + resolve_window_cap vs layer1_source_whitelist.yaml
-    目的/目标：A4-P2-001 — 五 P0 spec row_cap/window_cap 与运行时 cap 逐项相等
-    验证点：DGS10/BAA10Y/VIXCLS/088691/SPY 各 resolve_* == YAML 解析值
-    失败含义：手写 cap 与 K1 漂移，resource_limits 假绿
-    """
-    doc = load_yaml(WHITELIST)
-    by_series: dict[str, dict] = {}
-    for row in doc.get("rows") or []:
-        sym = row.get("symbol_or_series")
-        key = str(sym[0] if isinstance(sym, list) else sym)
-        by_series[key] = row
-
-    spec_to_series = {
-        "ENV-E1-DGS10": "DGS10",
-        "CRD.CS1.BAA10Y": "BAA10Y",
-        "RA.R1.VIXCLS_30D_IMPLIED_VOL": "VIXCLS",
-        "SEN-S1-COT_LF_NET": "088691",
-        "LIQ.B-I1.AMIHUD_ILLIQ": "SPY",
-    }
-    for spec_id, series in spec_to_series.items():
-        row = by_series[series]
-        assert resolve_read_limit(spec_id) == int(row["row_cap"]), spec_id
-        assert resolve_window_cap(spec_id) == _parse_yaml_cap(row["window_cap"]), spec_id

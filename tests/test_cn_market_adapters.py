@@ -797,35 +797,7 @@ def test_xqshare_route_disabledWithoutAuthorization() -> None:
 # --- 9.8 registry (subset in this module) ---
 
 
-R3H03_CN_SOURCES: tuple[str, ...] = (
-    "baostock",
-    "cninfo",
-    "akshare",
-    "tdx_pytdx",
-    "mootdx",
-    "eastmoney",
-    "sina_finance",
-    "ths_ifind",
-    "qmt_xtdata",
-    "qmt_xqshare",
-)
-
-
-def test_baostock_registry_readyWithEvidenceStatus() -> None:
-    """覆盖范围：R3H-03 十源 registry 终态登记（baostock 代表）
-    测试对象：source_capabilities.yaml CN 源
-    目的/目标：十源须 READY_WITH_EVIDENCE + replay_fixture_path 登记完整
-    验证点：status 与 replay_fixture_path、fetch_port_path 非空
-    失败含义：CN 源仍以 proposed-disabled 占位
-    ponytail: 本测仅验证 YAML 登记；port mock fetch 产出 evidence v1 由 test_baostock_port_* / service fetch 覆盖
-    """
-    capabilities = _load_capabilities()
-    sources = capabilities.get("sources") or {}
-    for source_id in R3H03_CN_SOURCES:
-        entry = sources.get(source_id) or {}
-        assert entry.get("status") == "READY_WITH_EVIDENCE", source_id
-        assert entry.get("replay_fixture_path"), source_id
-        assert entry.get("fetch_port_path"), source_id
+# CN 十源 capabilities 终态：phase-scripts/check_cn_market_capabilities_registry.py --strict
 
 
 def test_akshare_registry_validationOnlyPermanent() -> None:

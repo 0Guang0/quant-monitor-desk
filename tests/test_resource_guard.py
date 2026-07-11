@@ -337,6 +337,7 @@ def test_check_warnDecision_writesGuardLog(monkeypatch, capsys) -> None:
 
 
 @pytest.mark.slow
+@pytest.mark.integration
 def test_snapshot_realCall_returnsFiniteMetrics() -> None:
     """覆盖范围：ResourceGuard.snapshot 真实环境调用
     测试对象：ResourceGuard().snapshot()

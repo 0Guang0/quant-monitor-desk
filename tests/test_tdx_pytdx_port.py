@@ -1,4 +1,8 @@
-"""R3FR-03 TDX/pytdx provider port tests (AC-TDX-01..06)."""
+"""R3FR-03 TDX/pytdx provider port tests (AC-TDX-01..06).
+
+registry caps / 默认禁用 YAML：
+`uv run python phase-scripts/check_tdx_pytdx_registry_caps.py --strict`
+"""
 
 from __future__ import annotations
 
@@ -6,16 +10,12 @@ import sys
 from pathlib import Path
 
 import pytest
-import yaml
-from backend.app.config import PROJECT_ROOT
 from backend.app.datasources.adapters.fetch_port import PortError
 from backend.app.datasources.fetch_ports import tdx_pytdx_port as tdx_port_module
 from backend.app.datasources.fetch_ports.tdx_pytdx_port import (
     EQUITY_INDEX_MAX_ROWS,
     FULL_MARKET_SCAN_ENABLED,
-    MAX_NETWORK_CALLS,
     MINUTE_BARS_ENABLED,
-    SECURITY_LIST_MAX_ROWS,
     TdxPytdxFetchPort,
 )
 from backend.app.datasources.fetch_result import FetchRequest
@@ -262,46 +262,15 @@ def test_tdxLiveGate_forbiddenDirectPortFqnRegistered() -> None:
         assert_live_entrypoint_not_forbidden(port_fqn)
 
 
-def _load_capabilities() -> dict:
-    path = PROJECT_ROOT / "specs/datasource_registry/source_capabilities.yaml"
-    return yaml.safe_load(path.read_text(encoding="utf-8")) or {}
-
-
-def test_tdxPytdx_capsMatchTaskCard() -> None:
-    """覆盖范围：registry resource_caps 与任务卡 SSOT
-    测试对象：source_capabilities.yaml tdx_pytdx.resource_caps
-    目的/目标：AC-TDX-06 — caps 与 frozen §5 一致
-    验证点：各 cap 字段值匹配 R3FR-03
-    失败含义：registry 与 gate/port caps 权威冲突
-    """
-    caps = (_load_capabilities().get("sources") or {}).get("tdx_pytdx", {}).get(
-        "resource_caps"
-    ) or {}
-    assert caps["security_list_max_rows"] == SECURITY_LIST_MAX_ROWS == 20
-    assert caps["equity_daily_bar_max_symbols"] == EQUITY_INDEX_MAX_ROWS == 3
-    assert caps["index_daily_bar_max_symbols"] == 3
-    assert caps["max_network_calls"] == MAX_NETWORK_CALLS == 5
-    assert caps["minute_bars_enabled"] is False
-    assert caps["full_market_scan_enabled"] is False
-
-
-def test_tdxRoute_tdxPytdx_disabledByDefault() -> None:
-    """覆盖范围：tdx_pytdx 路由默认禁用
-    测试对象：source_registry.yaml + build_route_matrix
-    目的/目标：AC-TDX-06 — enabled_by_default=false，非 primary
-    验证点：registry enabled_by_default=False；route matrix 不选 tdx 为 primary
+def test_tdxRoute_tdxPytdx_notSelectedPrimary() -> None:
+    """覆盖范围：tdx_pytdx 路由矩阵不得选为 primary
+    测试对象：build_route_matrix
+    目的/目标：AC-TDX-06 — runtime route 不选 tdx 为 primary
+    验证点：tdx_pytdx 行 source_enabled_by_default=False；selected_source_id≠tdx_pytdx
     失败含义：TDX 默认可被 production route 选中
     """
     from backend.app.ops.interface_probe import build_route_matrix
 
-    registry_path = PROJECT_ROOT / "specs/datasource_registry/source_registry.yaml"
-    entry = next(
-        s
-        for s in (yaml.safe_load(registry_path.read_text(encoding="utf-8")) or {})["sources"]
-        if s["source_id"] == "tdx_pytdx"
-    )
-    assert entry["enabled_by_default"] is False
-    assert entry["validation_only"] is True
     for row in build_route_matrix()["routes"]:
         if row["source_id"] == "tdx_pytdx":
             assert not row["source_enabled_by_default"]

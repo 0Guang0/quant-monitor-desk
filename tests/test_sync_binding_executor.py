@@ -34,8 +34,7 @@ def test_bindingSyncExecutor_executeBinding_onlyOrchestrationPath(tmp_path, monk
         build_fred_incremental_service,
         macro_staging_rows_from_bundle,
     )
-    from backend.app.ops.fred_incremental_watermark import (
-        enabled_fred_source_registry,
+    from backend.app.ops.fred_incremental_run import (
         read_since_dates_for_series,
     )
     from backend.app.ops.macro_incremental_common import (
@@ -62,7 +61,7 @@ def test_bindingSyncExecutor_executeBinding_onlyOrchestrationPath(tmp_path, monk
 
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
     with cm.writer() as con:
-        enable_source_route(
+        planner = enable_source_route(
             tmp_path,
             source_id="fred",
             data_domain="macro_series",
@@ -88,7 +87,8 @@ def test_bindingSyncExecutor_executeBinding_onlyOrchestrationPath(tmp_path, monk
         fetch_port=port,
         since_by_series=since_by_series,
         job_events=orch._jobs,
-        source_registry=enabled_fred_source_registry(),
+        source_registry=planner.source_registry,
+        route_planner=planner,
     )
     with macro_staging_adapter_patch(
         source_id="fred",

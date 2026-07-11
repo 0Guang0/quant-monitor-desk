@@ -43,17 +43,22 @@ _PREFILTER_NEEDLES_BASE = (
 )
 
 
-def _load_retired_seam_patterns() -> tuple[str, ...]:
-    import base64
-
-    contract_path = PROJECT_ROOT / "specs/contracts/source_route_db_acceptance_contract.yaml"
-    contract = yaml.safe_load(contract_path.read_text(encoding="utf-8"))
-    patterns = contract.get("legacy_seam_inventory", {}).get("retired_seam_patterns", [])
-    yaml_patterns = tuple(
+def _yaml_retired_seam_patterns(contract: dict | None = None) -> tuple[str, ...]:
+    if contract is None:
+        contract_path = PROJECT_ROOT / "specs/contracts/source_route_db_acceptance_contract.yaml"
+        contract = yaml.safe_load(contract_path.read_text(encoding="utf-8"))
+    patterns = (contract or {}).get("legacy_seam_inventory", {}).get("retired_seam_patterns", [])
+    return tuple(
         pattern.strip()
         for pattern in patterns
         if isinstance(pattern, str) and pattern.strip() and " " not in pattern.strip()
     )
+
+
+def _load_retired_seam_patterns() -> tuple[str, ...]:
+    import base64
+
+    yaml_patterns = _yaml_retired_seam_patterns()
     # ponytail: literals kept out of YAML so S3/S4 `rg` AC stays clean; inventory script still scans them.
     encoded = (
         "dGllcl9hX2xpdmVfYWNjZXB0YW5jZQ==",
@@ -67,6 +72,33 @@ def _load_retired_seam_patterns() -> tuple[str, ...]:
     )
     decoded = tuple(base64.b64decode(item).decode("utf-8") for item in encoded)
     return tuple(dict.fromkeys(yaml_patterns + decoded))
+
+
+def validate_retired_seam_loader() -> list[str]:
+    """YAML↔encoded loader integrity (原 pytest retiredSeamPatterns meta 用例)。"""
+    contract_path = PROJECT_ROOT / "specs/contracts/source_route_db_acceptance_contract.yaml"
+    contract = yaml.safe_load(contract_path.read_text(encoding="utf-8"))
+    inventory = (contract or {}).get("legacy_seam_inventory") or {}
+    yaml_patterns = set(_yaml_retired_seam_patterns(contract))
+    patterns = _load_retired_seam_patterns()
+    errors: list[str] = []
+    if "production_equivalent_smoke" not in yaml_patterns:
+        errors.append("YAML retired_seam_patterns missing production_equivalent_smoke")
+    if "live_tier_router" not in patterns:
+        errors.append("loader missing encoded pattern live_tier_router")
+    if "live_tier_router" in yaml_patterns:
+        errors.append("live_tier_router must stay out of YAML (S3/S4 rg AC)")
+    if len(patterns) < len(yaml_patterns) + 4:
+        errors.append(
+            f"loader patterns={len(patterns)} < yaml={len(yaml_patterns)}+4 "
+            "(encoded retirements missing)"
+        )
+    if inventory.get("inventory_script") != "scripts/check_acceptance_helper_consumers.py":
+        errors.append(
+            f"inventory_script={inventory.get('inventory_script')!r} "
+            "!= scripts/check_acceptance_helper_consumers.py"
+        )
+    return errors
 
 
 _PREFILTER_NEEDLES = tuple(dict.fromkeys(_PREFILTER_NEEDLES_BASE + _load_retired_seam_patterns()))
@@ -252,13 +284,17 @@ def build_report(root: Path = PROJECT_ROOT) -> dict[str, object]:
     legacy_rows = [asdict(hit) for hit in legacy_consumers]
     product_runtime = [item for item in consumer_rows if item["scope"] == "product_runtime"]
     script_runtime = [item for item in consumer_rows if item["scope"] == "script_runtime"]
+    loader_violations = validate_retired_seam_loader()
     seam_inventory_status = (
-        "PASS" if not product_runtime and not script_runtime and not consumers else "FAIL"
+        "PASS"
+        if not product_runtime and not script_runtime and not consumers and not loader_violations
+        else "FAIL"
     )
     return {
         "status": "PASS" if not consumers else "FAIL",
         "strict_status": "FAIL" if product_runtime else "PASS",
         "seam_inventory_status": seam_inventory_status,
+        "retired_seam_loader_violations": loader_violations,
         "legacy_compat_count": len(legacy_rows),
         "retired_legacy_cli_count": len(retired_legacy_cli),
         "module": "SourceRouteDbAcceptanceSpine",
@@ -282,6 +318,8 @@ def _format_text(report: dict[str, object]) -> str:
         f"product_runtime_count={report['product_runtime_count']}",
         f"script_runtime_count={report['script_runtime_count']}",
     ]
+    for violation in report.get("retired_seam_loader_violations") or []:
+        lines.append(f"RETIRED_SEAM_LOADER: {violation}")
     for item in report["consumers"]:
         consumer = dict(item)
         lines.append(

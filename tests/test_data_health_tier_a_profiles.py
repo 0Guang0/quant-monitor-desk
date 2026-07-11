@@ -1,4 +1,8 @@
-"""Data health S-R2-F0 — four Tier-A data health profile families."""
+"""Data health S-R2-F0 — four Tier-A data health profile families.
+
+四族 profile / binding 契约：
+`uv run python phase-scripts/check_data_health_tier_a_profile_contract.py --strict`
+"""
 
 from __future__ import annotations
 
@@ -7,9 +11,7 @@ import shutil
 from pathlib import Path
 
 import pytest
-import yaml
 
-from backend.app.datasources.live_prod_source_tiers import INCREMENTAL_GOLD_PATH_SOURCE_IDS
 from backend.app.ops.data_health import DataHealthLoadError
 from backend.app.ops.data_health_profiles import (
     CRYPTO_DERIVATIVE_P0_RULE_IDS,
@@ -20,16 +22,12 @@ from backend.app.ops.data_health_profiles import (
 from backend.app.ops.data_health_profiles.source_health_bindings import (
     iter_raw_source_files,
     latest_raw_evidence_dir,
-    load_source_health_bindings,
     run_f0_data_health,
 )
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[1]
-_RULES_PATH = _PROJECT_ROOT / "specs" / "contracts" / "data_quality_rules.yaml"
 _REPLAY = _PROJECT_ROOT / "tests" / "fixtures" / "replay"
 _GOOD_BUNDLE = _PROJECT_ROOT / "tests" / "fixtures" / "data_health" / "good_bundle"
-
-_SOURCE_HEALTH_BINDING_IDS = tuple(load_source_health_bindings().keys())
 
 
 def _copy_replay(src: Path, tmp_path: Path, name: str) -> Path:
@@ -37,31 +35,6 @@ def _copy_replay(src: Path, tmp_path: Path, name: str) -> Path:
     dest.mkdir(parents=True, exist_ok=True)
     shutil.copy(src, dest / src.name)
     return dest
-
-
-def test_fourProfileFamilies_registeredInContract() -> None:
-    """覆盖范围：四族 profile 契约登记
-    测试对象：data_quality_rules.yaml ops_cli_profiles + source_health_bindings
-    目的/目标：S-R2-F0 AC — 四族 profile ID 在契约中可解析
-    验证点：market_bar / layer1 / disclosure / crypto 域存在；binding 数与契约 source_health_bindings 一致
-    失败含义：profile 族与 load_source_health_bindings 漂移，F0 无法按源路由
-    """
-    raw = yaml.safe_load(_RULES_PATH.read_text(encoding="utf-8")) or {}
-    profiles = raw.get("ops_cli_profiles") or {}
-    assert "market_bar_1d" in profiles
-    assert "layer1_observation" in profiles
-    assert "us_disclosure" in profiles
-    assert "crypto_derivative" in profiles
-    bindings = load_source_health_bindings()
-    contract_bindings = raw.get("source_health_bindings") or {}
-    assert len(bindings) == len(contract_bindings)
-    families = {b["health_profile_id"] for b in bindings.values()}
-    assert families == {
-        "market_bar_p0",
-        "layer1_observation_p0",
-        "disclosure_p0",
-        "crypto_derivative_p0",
-    }
 
 
 @pytest.mark.parametrize(
@@ -291,28 +264,6 @@ def test_f0_partialFredPayload_returnsFail(tmp_path: Path) -> None:
     status, detail = run_f0_data_health("fred", data_root=data_root, db_path=db_path)
     assert status == "FAIL"
     assert detail
-
-
-def test_allTierASources_bindingRoutesToSupportedProfile() -> None:
-    """覆盖范围：11 源 source_health_bindings F0 路由
-    测试对象：load_source_health_bindings health_profile_id / health_domain
-    目的/目标：每源映射到已支持的四族之一，且与 INCREMENTAL_GOLD_PATH_SOURCE_IDS 一致
-    验证点：11 源均在 _SOURCE_HEALTH_BINDING_IDS；profile+domain 组合合法
-    失败含义：某源 F0 路由缺失或与 Tier A registry 漂移
-    """
-    supported = {
-        "market_bar_p0": {"market_bar_1d"},
-        "layer1_observation_p0": {"layer1_observation"},
-        "disclosure_p0": {"us_disclosure", "cn_disclosure"},
-        "crypto_derivative_p0": {"crypto_derivative"},
-    }
-    assert set(_SOURCE_HEALTH_BINDING_IDS) == set(INCREMENTAL_GOLD_PATH_SOURCE_IDS)
-    for source_id in _SOURCE_HEALTH_BINDING_IDS:
-        binding = load_source_health_bindings()[source_id]
-        profile = binding["health_profile_id"]
-        domain = binding["health_domain"]
-        assert profile in supported
-        assert domain in supported[profile]
 
 
 def test_goodBundle_marketBar_stillPasses() -> None:
