@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <title>架构深化 — fred builder / 启用接缝 vs ADR-017</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+      mermaid.initialize({ startOnLoad: true, theme: "neutral", securityLevel: "loose" });
+    </script>
+    <style>
+      .seam { stroke-dasharray: 4 4; }
+      .deep-box {
+        background: linear-gradient(135deg, #0f172a, #1e293b);
+      }
+    </style>
+  </head>
+  <body class="bg-stone-50 text-slate-900 font-sans">
+    <main class="max-w-5xl mx-auto px-6 py-12 space-y-12">
+      <header class="space-y-4">
+        <p class="text-sm uppercase tracking-widest text-slate-500">quant-monitor-desk · task-01 · 2026-07-11</p>
+        <h1 class="text-3xl font-semibold tracking-tight">启用策略接缝深化</h1>
+        <p class="text-slate-600 max-w-3xl">
+          「fred 专用 builder」= 编排薄壳；启用仍泄漏在共享 OVERRIDE。与 ADR-017 是
+          <strong>代码 vs 设计</strong>冲突，不是设计自相矛盾。图例：实线框 = module；虚线 = seam；红边 = 泄漏。
+        </p>
+        <div class="flex flex-wrap gap-3 text-sm">
+          <span class="px-2 py-1 rounded bg-white border border-slate-200">module / interface / depth</span>
+          <span class="px-2 py-1 rounded bg-white border border-slate-200">seam / adapter</span>
+          <span class="px-2 py-1 rounded bg-white border border-slate-200">leverage / locality</span>
+        </div>
+      </header>
+
+      <section id="verdict" class="rounded-xl border border-amber-200 bg-amber-50 p-6 space-y-2">
+        <h2 class="text-lg font-semibold text-amber-950">总判</h2>
+        <ul class="list-disc pl-5 text-amber-950/90 space-y-1">
+          <li>主判：<strong>实现缺口（T01-F03）</strong> — ADR 要持久 overlay；代码用内存 patch。</li>
+          <li>次判：清单 E-CLI-20「fred 专用」<strong>措辞误导</strong> — 非 fred 金路径同样 OVERRIDE。</li>
+          <li>排除：无需重开 ADR 做「永久兼容 OVERRIDE」。</li>
+        </ul>
+      </section>
+
+      <section id="candidates" class="space-y-10">
+        <article class="rounded-xl border border-slate-200 bg-white p-6 space-y-5 shadow-sm">
+          <div class="flex flex-wrap items-center gap-2">
+            <h2 class="text-xl font-semibold">候选 1 · 把启用杠杆挪到「有效启用」深模块</h2>
+            <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">Strong</span>
+            <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">ports &amp; adapters</span>
+          </div>
+          <p class="font-mono text-sm text-slate-600">
+            macro_incremental_common.py · route_planner.py · source_registry.py · data_commands.py · fred_incremental_run.py · 各 *_incremental_*.py
+          </p>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="rounded-lg border border-slate-200 bg-stone-50 p-4">
+              <p class="text-xs font-semibold text-slate-500 mb-2">Before — 浅 bypass 泄漏</p>
+              <pre class="mermaid">
+flowchart TB
+  YAML[SourceRegistry YAML]
+  ESR["enabled_source_registry\n__setattr__ + roles patch"]
+  LIB["load_incremental_route_bundle\n_platform_allows=True"]
+  FRED["build_fred_*_service"]
+  CLI["_gold_path_backfill\n非fred分支"]
+  PLAN[SourceRoutePlanner]
+  YAML --> ESR
+  ESR --> LIB
+  ESR --> CLI
+  LIB --> FRED
+  LIB --> PLAN
+  CLI --> PLAN
+  classDef leak stroke:#dc2626,stroke-width:2px;
+  class ESR,LIB,CLI leak;
+              </pre>
+            </div>
+            <div class="rounded-lg border border-slate-200 bg-stone-50 p-4">
+              <p class="text-xs font-semibold text-slate-500 mb-2">After — 深 module + 只读 seam</p>
+              <pre class="mermaid">
+flowchart TB
+  YAML[SourceRegistry]
+  OV[source_activation_overlay]
+  EFF["有效启用解析\n小 interface · 深实现"]
+  PLAN[SourceRoutePlanner 只读]
+  FRED["FredIncrementalFetchProxy\n仅 watermark 编排"]
+  CLI[CLI / scheduler]
+  YAML --> EFF
+  OV --> EFF
+  EFF --> PLAN
+  PLAN --> CLI
+  PLAN --> FRED
+  classDef deep fill:#0f172a,color:#fff,stroke:#0f172a;
+  class EFF deep;
+              </pre>
+            </div>
+          </div>
+          <p><strong>问题：</strong>启用决策散落在多处浅 wrapper，interface 被副作用污染，locality 丢失。</p>
+          <p><strong>方案：</strong>一个深 module 合成「有效启用」；删除 ESR / 强制 platform；fred 只留编排 adapter。</p>
+          <ul class="text-sm space-y-1 text-slate-700">
+            <li>Leverage：一处修，N 调用方变绿/变红一致</li>
+            <li>Locality：启用 bug 只查 overlay 接缝</li>
+            <li>测试穿过同一 interface，不再靠 monkeypatch</li>
+            <li>对齐 ADR-017 task-01 行</li>
+          </ul>
+          <div class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
+            与 ADR-017 <strong>一致</strong>——本候选是落实 ADR，不是重开 ADR。禁止把 OVERRIDE 写回 design 当正式启用。
+          </div>
+        </article>
+
+        <article class="rounded-xl border border-slate-200 bg-white p-6 space-y-5 shadow-sm">
+          <div class="flex flex-wrap items-center gap-2">
+            <h2 class="text-xl font-semibold">候选 2 · 收束 fred 编排为深模块，启用彻底外置</h2>
+            <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-900">Worth exploring</span>
+            <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">in-process</span>
+          </div>
+          <p class="font-mono text-sm text-slate-600">fred_incremental_run.py · fred_incremental_watermark.py · macro_incremental_common MacroIncrementalFetchProxy</p>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="rounded-lg border border-rose-100 bg-rose-50/40 p-4 space-y-3">
+              <p class="text-xs font-semibold text-rose-800">Before — 启用与编排缠在同一文件</p>
+              <div class="deep-box text-white rounded-lg p-4 text-sm space-y-2">
+                <div class="opacity-90">build_fred_incremental_*</div>
+                <div class="border border-dashed border-rose-300/80 rounded px-2 py-1 text-rose-100">enabled_fred → ESR patch</div>
+                <div class="border border-white/20 rounded px-2 py-1">FredIncrementalFetchProxy</div>
+                <div class="border border-white/20 rounded px-2 py-1">execute_binding / watermark</div>
+              </div>
+            </div>
+            <div class="rounded-lg border border-emerald-100 bg-emerald-50/40 p-4 space-y-3">
+              <p class="text-xs font-semibold text-emerald-900">After — 编排深、启用外</p>
+              <div class="space-y-2 text-sm">
+                <div class="rounded border border-slate-300 bg-white px-3 py-2">有效启用 interface（外）</div>
+                <div class="deep-box text-white rounded-lg p-4 space-y-2">
+                  <div>Fred 增量编排 module</div>
+                  <div class="opacity-70 text-xs">proxy · binding · watermark · execute_binding</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p><strong>问题：</strong>「专用 builder」名字暗示策略特权，实际只是编排。</p>
+          <p><strong>方案：</strong>保留 watermark proxy 深度；启用只依赖候选 1 的 interface。</p>
+          <ul class="text-sm space-y-1 text-slate-700">
+            <li>删除 watermark 文件里重复 enable 工厂</li>
+            <li>命名与盘点对齐：编排 ≠ 启用</li>
+          </ul>
+        </article>
+
+        <article class="rounded-xl border border-slate-200 bg-white p-6 space-y-5 shadow-sm">
+          <div class="flex flex-wrap items-center gap-2">
+            <h2 class="text-xl font-semibold">候选 3 · 只改清单措辞、不动代码</h2>
+            <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-200 text-slate-700">Speculative（仅 G1-01）</span>
+          </div>
+          <p class="font-mono text-sm text-slate-600">g1-01-wiring-inventory.md E-CLI-20 · E-ACC-01 · source_route_matrix_bridge</p>
+          <p><strong>问题：</strong>Plan r5 因措辞/漏登 OPEN；不修无法 READY。</p>
+          <p><strong>方案：</strong>诚实登记全金路径 OVERRIDE + bridge 降档——<strong>不</strong>消解与 ADR-017 的实现冲突。</p>
+          <ul class="text-sm space-y-1 text-slate-700">
+            <li>仅解锁 G1-01 Plan</li>
+            <li>T01-F03 仍待 G1-02</li>
+          </ul>
+        </article>
+      </section>
+
+      <section id="top-recommendation" class="rounded-xl border border-slate-800 bg-slate-900 text-slate-50 p-6 space-y-3">
+        <h2 class="text-xl font-semibold">优先建议</h2>
+        <p>
+          <strong>先做候选 3（修清单关 Plan）→ 再做候选 1（G1-02 有效启用深模块）→ 候选 2 随工作包 4a 收束 fred。</strong>
+          不要为 dry-run 绿灯把 OVERRIDE 兼容成正式启用机制。
+        </p>
+        <p class="text-slate-300 text-sm">
+          详细中文说明：fred-builder-vs-adr017.md · 待拍板票：decision-map-enable-seam.md
+        </p>
+      </section>
+    </main>
+  </body>
+</html>

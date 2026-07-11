@@ -2,7 +2,8 @@
 
 > **状态：** IN PROGRESS — Gate 0（ADR-017）+ **ADR-018** Accepted；G1-01 Plan r6 = **`PLAN-READY`**。  
 > 设计→运行副本 parity 已通过；[Gate 1 接线规格](gate1-integration-spec.md) 与防漂移 [g1-02-execution-brief.md](g1-02-execution-brief.md) 已建立。  
-> **下一刀：** 工作包 1/2 ∥ G1-02 **3B/3C**（票 04·05）；**3A 问开关** Execute `CLOSED`（`completion-check-execute.md`）。跨模块 4c～4e 与实现 R4 仍 OPEN。
+> **下一刀：** G1-02 **票 06∥07**（4a/4b 迁 ESR / acceptance overlay）；票 **01–05** Execute CLOSED（`completion-check-execute.md`）；T01-F05-A 余债挂 06/07。跨模块 4c～4e 与实现 R4 / G1-02 整包仍 OPEN。  
+> **执行决策追记：** [note.md](note.md)（计划未穷尽的现场裁定）。
 >
 > **模块定位：** 数据源注册（Source Registry / Source Capability）是数据接入层的
 > 策略 SSOT：声明数据源、领域角色、能力、默认启用与授权前置条件；下游 Route
@@ -148,9 +149,9 @@ Gate 1B 要求 Layer1–5、API、前端、通知与 Agent 真实消费可信最
 
 | 项目 | 类别 / 证实状态 | 当前状态 | 能进入实现的条件 |
 |---|---|---|---|
-| T01-F01 | 缺陷；已由 `draft` 与 `implementation_gap` 配置证实 | ready-for-agent | Gate 0 确认后，按工作包 1 先写契约 RED 测试。 |
-| T01-F02 | 缺陷；默认启用但唯一 Primary 为 `validation_only` 已复现 | ready-for-agent | Gate 0 确认后，按工作包 2 以失败关闭为默认修复方向。 |
-| T01-F03 | 缺陷；正式 CLI/增量路径存在 runtime 绕过，CC-1/CC-3 已证实 | ready-for-agent（G1-02）/ blocked-by-G1-03～G1-05 | Gate 0 已完成；task-01 策略接缝与直接消费者可实施。跨模块 RoutePlan/CLI/scheduler 迁移依 [gate1-integration-spec.md](gate1-integration-spec.md) 的阻塞边执行。 |
+| T01-F01 | 缺陷；已由 `draft` 与 `implementation_gap` 配置证实 | **已修复**（票 01 Execute CLOSED） | load 拒 draft/gap/残缺 op；生产 YAML `active` |
+| T01-F02 | 缺陷；默认启用但唯一 Primary 为 `validation_only` 已复现 | **已修复**（票 02 Execute CLOSED） | 三域失败关闭；默认路由 `DISABLED_SOURCE` |
+| T01-F03 | 缺陷；正式 CLI/增量路径存在 runtime 绕过，CC-1/CC-3 已证实 | ready-for-agent（G1-02）/ 3A 已切 | 余 3B/3C/4a/4b/4x（票 04–08）；跨模块依 gate1 阻塞边 |
 | task-19 F-15/F-16 | 候选需求，不是当前 task-01 已证实缺陷 | needs-human / 阶段外置 | 业务/运维方若要生产启用 FRED 或建立 enable ledger，须单独提出设计决策；不得混入本票“修复”。 |
 | task-19 F-17 | 非缺陷；与默认失败关闭设计一致 | wontfix（按设计） | 保留回归断言，禁止为消除告警而误启用。 |
 
@@ -262,11 +263,12 @@ G1-02 开工必读 [g1-02-execution-brief.md](g1-02-execution-brief.md)。
 - **防漂移 SSOT：** [g1-02-execution-brief.md](g1-02-execution-brief.md)（入口 ID 全表、删除顺序、UNVERIFIED）。
 - **切割进度：**
   - **3A 问开关** — **Execute CLOSED**（票 03 · `completion-check-execute.md`）：`ask_activation` / `write_activation_overlay` + migration `017_source_activation_overlay`；隔离根可测；禁内存撬门。**未**迁 ESR 调用方。
-  - **3B 安检接线** — OPEN（票 04）
-  - **3C 测试治理** — OPEN（票 05）
-- **预计触及（余下）：** `route_planner` / `service`、E-TEST-* 夹具、经 ADR 批准的存储消费方；**改 DDL 字段须用户审阅 design + promote**。
+  - **3B 安检接线** — **Execute CLOSED**（票 04 · `completion-check-execute.md` 对象 D）：`plan(con=)`→`ask_activation`；`overlay_revision`；Service 透传；stderr `source_policy_*`。≠ G1-02。
+  - **3C 测试治理** — **Execute CLOSED**（票 05 · 同记录对象 E）：`enable_source_route` 正规 overlay；禁 patch 关账证据。生产 ESR 清零仍属 **票 06/07**。
+  - **接线后夹具债** — T01-F05-B / A7 **已修**；T01-F05-A 余 / F06 / F07 → 票 06/07（见 findings + 待修复清单）。
+- **预计触及（余下）：** E-INC-* / E-CLI-20 / acceptance 迁 overlay（4a/4b）；**改 DDL 字段须用户审阅 design + promote**。
 - **RED（3B/3C）：** RoutePlanner/Service 只读合成 + `overlay_revision` 可观察；E-TEST-* → 隔离根 overlay。
-- **GREEN（整包 3）：** 消费者只读；**无** `force_enable` / 强制 `_platform_allows`；结构化日志含 `overlay_revision`（随 3B/3-OBS）。
+- **GREEN（整包 3）：** 消费者只读；**无** `force_enable` / 强制 `_platform_allows`；结构化日志含 `overlay_revision`（随 3B/3-OBS）。**整包 3 关账仍待：** 04/05 completion-check + 不以全量绿冒充（A 类挂 4a/4b 须在 findings 可核对）。
 - **验收：** 生产路径无需 `object.__setattr__`、替换 `get_domain_roles` 或覆盖平台许可即可执行；
   授权/开关缺失失败关闭；GitNexus `impact(enabled_source_registry)` 调用方进入迁移队列（见 4a/4b）。
 - **测试资产处置：** E-TEST-01～06 — 隔离根写 overlay→正式入口；删除 patch 已加载对象的 helper。
@@ -433,9 +435,9 @@ specs/contracts/design/source_provenance_quality_contract.yaml
 > 实际编辑前仍须对符号跑 GitNexus `impact`；`enabled_source_registry` 当前为 **CRITICAL** 冲击面。
 ## 9. 当前阶段与下一动作
 
-**当前阶段：** G1-01 Plan r6 = **`PLAN-READY`**（`completion-check-plan-g1-01-r6.md`）。  
+**当前阶段：** G1-01 Plan r6 = **`PLAN-READY`**；票 **01/02/03** Execute 票级 `CLOSED`（`completion-check-execute.md` 对象 A/B/C）。T01-F01/F02 已修复；开放 finding 仅 **T01-F03**。
 执行防漂移 SSOT：[g1-02-execution-brief.md](g1-02-execution-brief.md)（已吸收 r2–r6 CC、ADR-018、入口 ID 全表）。
 
-**下一动作：** 工作包 1/2 可并行 RED；**G1-02 / 工作包 3** 按 brief §6 切 3A→3B→3C 再 4a∥4b∥4x。  
+**下一动作：** G1-02 **3B/3C**（票 04∥05）→ 再 4a∥4b∥4x（票 06–08）→ 09 → 10。
 **禁止**未读 brief 就开工；**禁止**只清 fred、漏 E-CLI-20 else / E-ACC-BRIDGE-01；**禁止**把 OVERRIDE 写进 design。  
-实现关账须独立 Execute/Audit completion-check；pytest 绿 ≠ CLOSED。
+实现关账须独立 Execute/Audit completion-check；pytest 绿 ≠ CLOSED；票 01–03 CLOSED ≠ G1-02 / R4。

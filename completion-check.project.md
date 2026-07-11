@@ -80,6 +80,8 @@
 | synthetic PASS 替书面 defer  | 7 · honest-defer   | 1    | 2026-06 | 2026-06    | `task-02/task_plan.md`                                                             | 未承诺阶段书面 defer — plan 未纳入的阶段须 defer 至可追踪任务 ID 并保留阻塞态，禁止 synthetic PASS 或口头等同实现完成。 |
 | judgment 字段偏薄            | 5 · delivery-drift | 1    | 2026-06 | 2026-06    | `D:/五层模型数据分析/task-01-.../findings.md`                                      | 可行动字段偏薄 — 产出格式过关，缺可独立核对的判断 / 行动字段。                                                          |
 | fallback 参数仅测不接 fetch  | 2 · shell-done     | 1    | 2026-07 | 2026-07    | `completion-check-audit-layer1-modules.md` §9.1；`backend/` 无 `use_fallback=True` | 库内有正门无 — 能力已在库内可测，用户会走的正式入口未接同一套接线，正门得不到同等能力。                                 |
+| 入口清单宣称全量漏 bootstrap | 3 · entry-split | 2 | 2026-07-11 | 2026-07-11 | `completion-check-plan-g1-01.md`；**r2** `completion-check-plan-g1-01-r2.md`（漏 `qmd-ops`/暗门/sibling CLI） | 清单全量性未证实 — 计划或关账以“入口已全列”作前提，却漏掉实际可写入或改变同一状态的操作/程序化入口。 |
+| 接线清单档位边界过陈述 | 4 · mode-inflation | 2 | 2026-07-11 | 2026-07-11 | **r2** E-ACC-ISO「API 强制 assert」`completion-check-plan-g1-01-r2.md`；**r3** E-ACC-SKIP「CLI 不传 skip」`completion-check-plan-g1-01-r3.md` | 低档运行写入高档关账 — 把调用约定或局部路径写成全局保证，使证据档位高于真实边界。 |
 
 ---
 
@@ -93,4 +95,4 @@
 
 ---
 
-**Last updated:** 2026-07-10 晚（AUD-DOUBT-12 关账 · task-01.5→task-02 §7 迁入 · F-01/F-03 复核重开）
+**Last updated:** 2026-07-11（G1-01 Plan r2/r3：入口漏登再犯 + 档位过陈述模式；r4 `PLAN-READY`）

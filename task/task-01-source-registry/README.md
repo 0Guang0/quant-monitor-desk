@@ -19,7 +19,7 @@
 
 ## 权威文件
 
-权威文件必须在 `**/design/**` 下，详见：`docs/modules/design/data_sources.md`、`docs/modules/design/source_capability_registry.md`、`specs/layer1_axes/design/restructured_axes_v1_1/common/common_axis_rules.md`、`specs/contracts/design/layer1_axis_contract.yaml`、`docs/architecture/design/08_decision_log_index.md`（ADR-0005）、`docs/architecture/design/module_boundary_matrix.md`、`docs/modules/design/qmt_xtdata_adapter.md`、`docs/ops/design/qmt_xqshare_setup.md`、`docs/architecture/design/06_deployment_and_local_ops.md`、`docs/ops/design/ERROR_CODE_GUIDE.md`、`docs/ops/design/incident_playbook.md`。
+权威文件必须在 `**/design/**` 下，详见：`docs/modules/design/data_sources.md`（含 §5.2.1 overlay）、`docs/modules/design/source_capability_registry.md`、`docs/decisions/design/ADR-017-dynamic-source-fallback-and-exception-data-lifecycle.md`、`docs/decisions/design/ADR-018-enable-seam-two-layer-and-fred-merge-gate.md`、`specs/layer1_axes/design/restructured_axes_v1_1/common/common_axis_rules.md`、`specs/contracts/design/layer1_axis_contract.yaml`、`docs/architecture/design/08_decision_log_index.md`、`docs/architecture/design/module_boundary_matrix.md`、`docs/modules/design/qmt_xtdata_adapter.md`、`docs/ops/design/qmt_xqshare_setup.md`、`docs/architecture/design/06_deployment_and_local_ops.md`、`docs/ops/design/ERROR_CODE_GUIDE.md`、`docs/ops/design/incident_playbook.md`。
 
 > 倒查说明（`MIGRATION_MAP.md` → 上文 design 全文）：本票管 **registry/capability/启用策略/三角色口径**，不管 RoutePlan 运行时选路（→ task-02）。`data_sources.md` §5.2/§5.3/§5.9 与 `common_axis_rules.md` §4 约束 Primary/Validation/FallbackPolicy 及 `SHADOW` 不得进入 registry role。
 
@@ -44,8 +44,20 @@ backend/app/datasources/（registry · capability 相关）
 
 ## 本票文档
 
-| 文件           | 用途                 |
-| -------------- | -------------------- |
-| `task_plan.md` | R4 验收标准与关账 AC |
-| `findings.md`  | **只记本票**问题     |
-| `progress.md`  | 关账勾选             |
+| 文件 | 用途 |
+|------|------|
+| **[HANDOFF.md](HANDOFF.md)** | **会话交接**（下一 agent 先读加载顺序） |
+| **[EXECUTION-DOC-INDEX.md](EXECUTION-DOC-INDEX.md)** | **执行文档权威层级 / 依赖确认** |
+| `task_plan.md` | R4 工作包与关账 AC（L2） |
+| `gate1-integration-spec.md` | Gate 1 跨模块切片与阻塞边（L1） |
+| `g1-02-execution-brief.md` | G1-02 防漂移执行 brief（L3 · 开工必读） |
+| `g1-01-wiring-inventory.md` | G1-01 正式入口清单（Plan r6 READY · L4） |
+| `decision-map-enable-seam.md` | 启用接缝 #1–#4 决议 → ADR-018 |
+| `findings.md` | **只记本票**问题 |
+| `progress.md` | 会话进度 |
+| `completion-check-plan-g1-01-r6.md` | G1-01 清单 Plan 关账 |
+| `completion-check-plan-execution-set.md` | **最终执行计划集合** Plan 关账（归档后） |
+| `completion-check-audit.md` | 模块 R4 Audit（仍 OPEN） |
+| [`归档/`](归档/README.md) | 已退役临时产物（只读，不指挥实现） |
+
+权威 design 另含 **ADR-017 / ADR-018**（见 `MIGRATION_MAP.md`）。本地票：`.scratch/task-01-g1-02-enable-seam/`（不发 GitHub）。

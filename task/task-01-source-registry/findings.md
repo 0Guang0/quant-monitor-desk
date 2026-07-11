@@ -1,6 +1,7 @@
 # task-01-source-registry · Findings
 
-> **planning-with-files 外部记忆** · 本票只记本步问题。
+> **planning-with-files 外部记忆** · 本票只记**问题**：未执行前发现的、或执行后仍开放/已关的债。  
+> **不记：** 执行时临时拍板的方案取舍 → [`note.md`](note.md)。  
 > 全局索引：`task-19-phase1-gate/PHASE1_COMPLETION_INVENTORY.md`
 
 ## Requirements
@@ -16,6 +17,7 @@
 - 2026-07-11 G1-01：正式入口与 OVERRIDE 消费者全量见 [g1-01-wiring-inventory.md](g1-01-wiring-inventory.md)。新增运行时事实：YAML `validation` 多源列表在 `_normalize_validation_source` 只保留首项（→ G1-03）；无 per-domain 回补缓冲天数字面量（ADR-017 规则足够，→ G1-07）。
 - 2026-07-11 G1-01 补缺：`sync_to_db` 调用方补登 `qmd-init-db --sync-registry`（E-REG-03）、`DataSyncOrchestrator.bootstrap(sync_registry=True)`（E-REG-04，当前仅测试调用但仍可写）、`ensure_isolated_db`（E-ACC-ISO-01，gate_live only）。
 - 2026-07-11 G1-01 Plan 复审：首版清单遗漏 `qmd-init-db --sync-registry` 与 `DataSyncOrchestrator.bootstrap(sync_registry=True)` 两个 `SourceRegistry.sync_to_db` 调用方；因此 `PLAN-OPEN`，不得进入 RED。完整 CC-0～CC-7 记录见 [completion-check-plan-g1-01.md](completion-check-plan-g1-01.md)。
+- 2026-07-11 G1-02 票 04/05 接线后：全量 pytest ≈20 FAIL，共性 `source_policy_denied` + `source_disabled_by_default` + `overlay_revision=""`。判定轴与明细见下方 **开放项** T01-F05-A / T01-F05-B（已并入本文件，不另立分类稿）。
 
 ## 审计索引（2026-07-11）
 
@@ -32,12 +34,23 @@
 | Decision | Rationale |
 |----------|-----------|
 | [ADR-017](/C:/Users/Guang/Desktop/quant-monitor-desk/docs/decisions/design/ADR-017-dynamic-source-fallback-and-exception-data-lifecycle.md:1)（Accepted） | 用户已确认动态启用覆盖层、按领域自动降级、来源/质量独立标签、连续监控、回补与异常归档生命周期；已同步至索引 design 与共享契约，后续实现必须遵守。 |
+| [ADR-018](../../docs/decisions/design/ADR-018-enable-seam-two-layer-and-fred-merge-gate.md)（Accepted） | 两层接缝：先问开关（overlay/DB）再安检；禁内存撬门；测试仅隔离根正规 overlay；FRED 启用与通用路径合并有硬门槛。 |
 
 ## 开放项（ledger）
 
 | ID | 现象 | 标签 | disposition | 证据 |
 |----|------|------|-------------|------|
-| T01-F03 | CLI/增量仍以内存 OVERRIDE（ESR / 强制 platform）破坏启用 SSOT；**3A 问开关 API 已落地**，安检接线与调用方迁移未完成 | enable policy / 跨模块依赖 | 待修复（3A 已切；余 3B/3C/4a/4b/4x） | 3A：`activation_overlay.py` + `017_*.sql` + `completion-check-execute.md` CLOSED；余：`macro_incremental_common.py` ESR、`data_commands.py` 金路径；票 04–08 |
+| T01-F03 | CLI/增量仍以内存 OVERRIDE（ESR / 强制 platform）破坏启用 SSOT；**3A/3B/3C 票级已 CLOSED**，调用方迁 overlay 未完成 | enable policy / 跨模块依赖 | 待修复（余 **4a/4b/4x** → 票 06/07/08） | 余：`macro_incremental_common.enabled_source_registry`、acceptance/matrix；见 [`HANDOFF.md`](HANDOFF.md) |
+| T01-F05-A | 票 04/05 后 ~15 测仍按旧口径失败（ESR/`__setattr__`，或期望先安检再出 `missing_env`） | 旧口径测试 / 4a·4b | 阶段外置 | A1–A6→**票 06/07**；A7 **已本阶段改断言**（见已关闭）；登记：`docs/quality/待修复清单.md` `T01-F05-A` |
+| T01-F06 | `enable_source_route` 仍改测试副本 `_sources` / `_domain_roles` / capability `_raw`（非生产单例，但仍是内存构造） | E-TEST 夹具债 | 阶段外置 | **票 06（4a）**；登记：`docs/quality/待修复清单.md` `T01-F06` |
+| T01-F07 | `plan(con=None)` 仍回落 YAML 内存 `is_enabled`（`ponytail` 过渡） | 启用 SSOT 缺口 | 阶段外置 | **票 06+07 完成后删回落**；登记：`docs/quality/待修复清单.md` `T01-F07` |
+
+### T01-F05 问题摘要（ledger，非方案）
+
+| ID | 现象 | disposition |
+|----|------|-------------|
+| F05-A | ~15 旧口径测红 | 阶段外置 **票 06/07（4a/4b）** |
+| F05-B | baostock 等默认可启用源：空库未 sync → ask 拒 | **已修复**（见已关闭） |
 
 ## 已关闭 / 按设计
 
@@ -47,18 +60,25 @@
 | T01-F01 | capability 顶层 draft / implementation_gap 作放行依据 | 已修复 | 票 01 · `capability_registry._validate_capability_document`；YAML `status: active`；load 边界测试 |
 | T01-F02 | macro_supplementary 默认启用但 validation_only Primary → VALIDATION_ONLY_BLOCKED | 已修复 | 票 02 · `_validate_domain_roles` + 三域失败关闭；默认路由 DISABLED_SOURCE |
 | T01-F03-3A | 问开关三键→三字段 + `source_activation_overlay` 持久化 + 隔离根可测；禁 setattr 撬门 | 已修复（切片） | 票 03 · `completion-check-execute.md`；`tests/test_activation_overlay.py`；≠ G1-02 整包 |
+| T01-F03-3B/3C | RoutePlanner/Service 接 ask；E-TEST overlay 夹具 | **已修复（票级 Execute CLOSED）** | 票 04/05 · `completion-check-execute.md` 对象 D/E；≠ G1-02 CLOSED |
+| T01-F05-B | baostock 等 YAML 默认可启用源：`fetch(con=)` ask 读空库 | 已修复 | `tests/service_path_support.seed_activation_base`；service / route_grade / orchestrator 夹具 sync；6 passed |
+| T01-F05-A7 | `test_qmtXqshareMissingEnvNotSchedulable` 仍期望旧 skip 顺序 | 已修复 | 先断言 `source_disabled`；overlay 打开后再断言 `missing_env` |
 | T01-F04 | G1-01 入口清单曾漏 E-REG-03/04 等 | 已修复（清单） | `g1-01-wiring-inventory.md`；Plan r6 `PLAN-READY` |
 
 ## Issues Encountered
 
 | Issue | Resolution |
 |-------|------------|
-| — | — |
+| 2026-07-11 testing-guidelines 复查票 01/02：`test_domainsEnabledByDefault_haveSchedulablePrimary` 读私有 `reg._domain_roles` | **已修**：改为读权威 YAML `domain_roles` 键 + 公开 `get_domain_roles` |
+| 同复查：缺 op 字段三案挤在同一 test 循环 | **已修**：`@pytest.mark.parametrize` 一案一行为 |
+| 阶段性代码混入正式路径？ | **无**：实现在 `backend/app/datasources/` + `specs/`；测试在 `tests/`；未新增 `phase-scripts` 需求 |
+| 2026-07-11 票 04/05 后全量 pytest 红 | **问题**入 F05-A/B；**怎么分/怎么修**入 [note.md](note.md) |
 
 ## Resources
 
 - `README.md` — 模块职责与权威/运行时文件
 - `../TASK_PIPELINE_INDEX.md` — 流水线顺序
+- [note.md](note.md) — 执行阶段现场裁定（计划未穷尽项）
 - [completion-check-audit.md](/C:/Users/Guang/Desktop/quant-monitor-desk/task/task-01-source-registry/completion-check-audit.md:1) — 2026-07-11 的独立 R4 审计与 CC-0～CC-7 判定
 
 ## Visual/Browser Findings
