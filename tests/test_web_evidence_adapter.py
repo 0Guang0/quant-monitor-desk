@@ -178,6 +178,7 @@ def test_web_search_port_capOverflow_blocksOverMaxQueries() -> None:
 
 
 def test_web_search_port_route_validationOnlyPrimaryBlockedWhenEnabled(
+    tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """覆盖范围：启用 web_search 后 yaml Primary 仍被 validation_only 阻断
@@ -186,7 +187,7 @@ def test_web_search_port_route_validationOnlyPrimaryBlockedWhenEnabled(
     验证点：route_status=VALIDATION_ONLY_BLOCKED；skip_reason=validation_only_cannot_be_primary
     失败含义：web_search 可 silent 升格 primary 并绕过 manual-review 语义
     """
-    planner = enable_source_route(monkeypatch, source_id="web_search", data_domain="supplemental_web_evidence")
+    planner = enable_source_route(tmp_path, source_id="web_search", data_domain="supplemental_web_evidence")
     plan = planner.plan(
         data_domain="supplemental_web_evidence",
         operation="fetch_supplemental_web_evidence",

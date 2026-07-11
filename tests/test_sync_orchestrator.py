@@ -782,6 +782,8 @@ def test_plannedJobWritesRoutePlanBeforeFetching(orchestrator, tmp_path, monkeyp
         write_bar_fixture,
     )
 
+    from tests.service_path_support import seed_activation_base
+
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
     orch = orchestrator
     fixture = tmp_path / "route_fixture.json"
@@ -791,6 +793,7 @@ def test_plannedJobWritesRoutePlanBeforeFetching(orchestrator, tmp_path, monkeyp
     STG = "stg_route_plan_test"
     with orch._cm.writer() as con:
         ensure_bar_staging_tables(con, STG, clean_name="clean_route")
+        seed_activation_base(con, reg)
 
     raw_root = tmp_path / "raw"
     raw_root.mkdir()

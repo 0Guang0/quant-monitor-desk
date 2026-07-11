@@ -25,6 +25,7 @@ SCHEMA_KEYS = (
     "candidates",
     "data_domain",
     "operation",
+    "overlay_revision",
     "created_at",
 )
 

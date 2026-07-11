@@ -32,6 +32,8 @@ class SourceRoutePlan:
     candidates: list[SourceRouteCandidate] = field(default_factory=list)
     quality_flags: list[str] = field(default_factory=list)
     requested_source_id: str | None = None
+    # ADR-018 / task-02: activation_overlay_revision 可观察字段（附加，不改义既有字段）
+    overlay_revision: str = ""
     created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
     def __post_init__(self) -> None:
@@ -55,6 +57,7 @@ class SourceRoutePlan:
             "operation": self.operation,
             "quality_flags": list(self.quality_flags),
             "candidates": [asdict(c) for c in self.candidates],
+            "overlay_revision": self.overlay_revision,
             "created_at": self.created_at,
         }
 

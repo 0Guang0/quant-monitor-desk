@@ -510,14 +510,24 @@ def test_capabilityRegistry_load_rejectsImplementationGapMarker(tmp_path) -> Non
         reg.load()
 
 
-def test_capabilityRegistry_load_rejectsMissingOperationContract(tmp_path) -> None:
+@pytest.mark.parametrize(
+    ("op_body", "match"),
+    [
+        ("            fields: [close]\n            requires_auth: false\n", "frequency"),
+        ("            frequency: daily\n            requires_auth: false\n", "fields|output"),
+        ("            frequency: daily\n            fields: [close]\n", "requires_auth"),
+    ],
+)
+def test_capabilityRegistry_load_rejectsMissingOperationContract(
+    tmp_path, op_body: str, match: str
+) -> None:
     """覆盖范围：缺频率/字段/授权的 operation 在加载时拒绝
     测试对象：SourceCapabilityRegistry.load
     目的/目标：非法最小样本不得拖到路由才偶然失败
-    验证点：缺 frequency 时 match=frequency；缺 fields 时 match=fields|output；缺 requires_auth 时 match=requires_auth
+    验证点：缺对应字段时 CapabilityRegistryError 消息含 frequency / fields|output / requires_auth
     失败含义：残缺 capability 仍可加载，fetch 前无法 fail-closed
     """
-    base = (
+    body = (
         "version: source_capabilities_v1\n"
         "status: active\n"
         "sources:\n"
@@ -527,27 +537,13 @@ def test_capabilityRegistry_load_rejectsMissingOperationContract(tmp_path) -> No
         "      cn_equity_daily_bar:\n"
         "        operations:\n"
         "          fetch_daily_bar:\n"
+        f"{op_body}"
     )
-    cases = [
-        (
-            base + "            fields: [close]\n            requires_auth: false\n",
-            "frequency",
-        ),
-        (
-            base + "            frequency: daily\n            requires_auth: false\n",
-            "fields|output",
-        ),
-        (
-            base + "            frequency: daily\n            fields: [close]\n",
-            "requires_auth",
-        ),
-    ]
-    for idx, (body, match) in enumerate(cases):
-        path = tmp_path / f"caps_missing_{idx}.yaml"
-        path.write_text(body, encoding="utf-8")
-        reg = SourceCapabilityRegistry(path)
-        with pytest.raises(CapabilityRegistryError, match=match):
-            reg.load()
+    path = tmp_path / "caps_missing.yaml"
+    path.write_text(body, encoding="utf-8")
+    reg = SourceCapabilityRegistry(path)
+    with pytest.raises(CapabilityRegistryError, match=match):
+        reg.load()
 
 
 def test_capabilityRegistry_load_rejectsEmptyDomains(tmp_path) -> None:

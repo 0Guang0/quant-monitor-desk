@@ -287,7 +287,7 @@ def test_resolve_probabilityNormalizer_rejectsNonUrlResolutionSource() -> None:
         )
 
 
-def test_kalshi_port_route_readyWhenSourceEnabled(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_kalshi_port_route_readyWhenSourceEnabled(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """覆盖范围：显式启用 kalshi 后 route READY
     测试对象：SourceRoutePlanner + kalshi prediction_market_probability 域
     目的/目标：registry/capability READY 后 route 可选中 kalshi
@@ -295,13 +295,14 @@ def test_kalshi_port_route_readyWhenSourceEnabled(monkeypatch: pytest.MonkeyPatc
     失败含义：即使源已启用也无法 route 到 Kalshi port
     """
     planner = enable_source_route(
-        monkeypatch,
+        tmp_path,
         source_id="kalshi",
         data_domain="prediction_market_probability",
+        operation="fetch_regulated_probability_signal",
     )
     plan = planner.plan(
         data_domain="prediction_market_probability",
-        operation="fetch_prediction_market_probability",
+        operation="fetch_regulated_probability_signal",
         run_id="r3h04-kalshi-route-ready",
         job_id="kalshi-route-positive",
     )
@@ -358,7 +359,7 @@ def test_polymarket_port_mockFetch_emitsProbabilitySignalWithSpread() -> None:
     assert str(sig.get("resolution_source", "")).startswith("https://")
 
 
-def test_polymarket_port_route_readyWhenSourceEnabled(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_polymarket_port_route_readyWhenSourceEnabled(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """覆盖范围：显式启用 polymarket 后 route READY（Validation 候选）
     测试对象：SourceRoutePlanner + prediction_market_probability 域
     目的/目标：polymarket validation_only 作 Validation 候选时可 route
@@ -366,7 +367,7 @@ def test_polymarket_port_route_readyWhenSourceEnabled(monkeypatch: pytest.Monkey
     失败含义：polymarket 无法 route 到 replay port
     """
     planner = enable_source_route(
-        monkeypatch,
+        tmp_path,
         source_id="polymarket",
         data_domain="prediction_market_probability",
     )
@@ -626,28 +627,29 @@ def test_predictionMarket_dataSourceService_fetch_portIntegration(
         apply_migrations(con)
     for source_id, domain, port, instrument_id, expected_schema in cases:
         patch_fetch_port_evidence_adapter(monkeypatch, port)
-        planner = enable_source_route(
-            monkeypatch,
-            source_id=source_id,
-            data_domain=domain,
-            primary_source_id=source_id,
-            operation=_default_operation(domain),
-        )
-        service = DataSourceService(
-            source_registry=planner._registry,
-            capability_registry=planner._capabilities,
-            route_planner=planner,
-            data_root=tmp_path / "raw" / source_id,
-            fetch_port=port,
-            staged_fixture_mode=True,
-        )
-        req = FetchRequest(
-            run_id=f"r3h04-dss-{source_id}",
-            source_id=source_id,
-            data_domain=domain,
-            instrument_id=instrument_id,
-        )
         with cm.writer() as con:
+            planner = enable_source_route(
+                tmp_path,
+                source_id=source_id,
+                data_domain=domain,
+                primary_source_id=source_id,
+                operation=_default_operation(domain),
+                con=con,
+            )
+            service = DataSourceService(
+                source_registry=planner._registry,
+                capability_registry=planner._capabilities,
+                route_planner=planner,
+                data_root=tmp_path / "raw" / source_id,
+                fetch_port=port,
+                staged_fixture_mode=True,
+            )
+            req = FetchRequest(
+                run_id=f"r3h04-dss-{source_id}",
+                source_id=source_id,
+                data_domain=domain,
+                instrument_id=instrument_id,
+            )
             result = service.fetch(
                 req,
                 con=con,

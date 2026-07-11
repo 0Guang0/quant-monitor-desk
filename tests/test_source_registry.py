@@ -185,15 +185,20 @@ def test_load_validationOnlyPrimaryWhenDomainEnabled_raisesInvalidRegistryError(
 
 def test_domainsEnabledByDefault_haveSchedulablePrimary() -> None:
     """覆盖范围：生产 registry 默认启用域的 Primary 可调度性
-    测试对象：SourceRegistry 生产 YAML domain_roles
+    测试对象：SourceRegistry 生产 YAML domain_roles（经公开 get_domain_roles）
     目的/目标：凡 domain_enabled_by_default=true 的域，Primary 须已启用且非 validation_only
     验证点：violations 列表为空
     失败含义：默认启用域无可调度 Primary，运行时自相矛盾
     """
+    import yaml
+
     reg = SourceRegistry()
     reg.load()
+    raw = yaml.safe_load(SourceRegistry.DEFAULT_YAML.read_text(encoding="utf-8")) or {}
+    domain_names = list((raw.get("domain_roles") or {}).keys())
     violations: list[str] = []
-    for domain, binding in reg._domain_roles.items():
+    for domain in domain_names:
+        binding = reg.get_domain_roles(domain)
         if not binding.domain_enabled_by_default:
             continue
         primary = reg.get(binding.primary_source_id)

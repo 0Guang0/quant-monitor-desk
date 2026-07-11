@@ -53,13 +53,15 @@ def bootstrap_port_live_e2e_ctx(
         pytest.skip(f"live e2e requires {env_key}")
     monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
-    enable_source_route(
-        monkeypatch,
-        source_id=source_id,
-        data_domain=data_domain,
-        primary_source_id=source_id,
-    )
     cm = bootstrap_acceptance_cm(sandbox_root)
+    with cm.writer() as con:
+        enable_source_route(
+            sandbox_root,
+            source_id=source_id,
+            data_domain=data_domain,
+            primary_source_id=source_id,
+            con=con,
+        )
     raw_root = sandbox_root / "raw" / source_id
     raw_root.mkdir(parents=True, exist_ok=True)
     port = port_factory(use_mock=False, **(port_kwargs or {}))

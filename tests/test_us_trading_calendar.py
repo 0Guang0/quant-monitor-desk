@@ -322,12 +322,19 @@ def test_datasourceService_usEquityFetch_exposesTradingSessionWindow(
     from tests.service_path_support import enable_source_route
 
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
-    planner = enable_source_route(
-        monkeypatch,
-        source_id="yahoo_finance",
-        data_domain="us_equity_daily_bar",
-        primary_source_id="yahoo_finance",
-    )
+    db = tmp_path / "us-cal.duckdb"
+    cm = ConnectionManager(db_path=db)
+    with cm.writer() as con:
+        apply_migrations(con)
+        planner = enable_source_route(
+            tmp_path,
+            source_id="yahoo_finance",
+            data_domain="us_equity_daily_bar",
+            primary_source_id="yahoo_finance",
+            operation="fetch_us_daily_bar_validation",
+            con=con,
+        )
+    # yahoo 为 validation_only，不能作 Primary READY；本测只证 window_kind，故替换 plan 结果
     orig_plan = planner.plan
 
     def _ready_yahoo_plan(**kwargs: object):
@@ -341,13 +348,9 @@ def test_datasourceService_usEquityFetch_exposesTradingSessionWindow(
     monkeypatch.setattr(planner, "plan", _ready_yahoo_plan)
     port = create_yahoo_finance_fetch_port(symbols=("AAPL",), max_rows=3)
 
-    db = tmp_path / "us-cal.duckdb"
-    cm = ConnectionManager(db_path=db)
-    with cm.writer() as con:
-        apply_migrations(con)
-
     service = DataSourceService(
         source_registry=planner._registry,
+        capability_registry=planner._capabilities,
         route_planner=planner,
         data_root=tmp_path / "raw",
         fetch_port=port,
@@ -355,7 +358,12 @@ def test_datasourceService_usEquityFetch_exposesTradingSessionWindow(
     )
     req = _market_req("yahoo_finance", "us_equity_daily_bar", "AAPL")
     with cm.writer() as con:
-        result = service.fetch(req, con=con, job_id="job-us-cal")
+        result = service.fetch(
+            req,
+            con=con,
+            job_id="job-us-cal",
+            operation="fetch_us_daily_bar_validation",
+        )
     assert result.status == "SUCCESS"
     assert result.raw_file_paths
     body = json.loads(Path(result.raw_file_paths[0]).read_text(encoding="utf-8"))

@@ -20,7 +20,7 @@ from tests.contract_gate_support import (
     load_yaml,
     scan_package_for_create_adapter,
 )
-from tests.service_path_support import make_fixture_port, write_bar_fixture
+from tests.service_path_support import make_fixture_port, seed_activation_base, write_bar_fixture
 
 
 def _patch_probe_adapter_factory(monkeypatch, *, track_order: list[str] | None = None) -> None:
@@ -108,6 +108,8 @@ def test_serviceFetch_runtimeGateOrder(tmp_path: Path, monkeypatch) -> None:
     jobs = SyncJobStateMachine(cm)
     reg = SourceRegistry()
     reg.load()
+    with cm.writer() as con:
+        seed_activation_base(con, reg)
     service = DataSourceService(
         source_registry=reg,
         data_root=tmp_path / "raw",
@@ -211,6 +213,8 @@ def test_serviceWritesRoutePlanPayloadBeforeFetch(tmp_path: Path, monkeypatch) -
     write_bar_fixture(fixture)
     reg = SourceRegistry()
     reg.load()
+    with cm.writer() as con:
+        seed_activation_base(con, reg)
     service = DataSourceService(
         source_registry=reg,
         data_root=tmp_path / "raw",
@@ -343,6 +347,8 @@ def test_serviceGuardBlocked_emitsResourceGuardPausedRoutePlan(tmp_path: Path, m
     jobs = SyncJobStateMachine(cm)
     reg = SourceRegistry()
     reg.load()
+    with cm.writer() as con:
+        seed_activation_base(con, reg)
     service = DataSourceService(
         source_registry=reg,
         data_root=tmp_path / "raw",
@@ -511,6 +517,8 @@ def test_serviceFetch_recordsSourceOverrideQualityFlag(tmp_path: Path, monkeypat
     jobs = SyncJobStateMachine(cm)
     reg = SourceRegistry()
     reg.load()
+    with cm.writer() as con:
+        seed_activation_base(con, reg)
     service = DataSourceService(
         source_registry=reg,
         data_root=tmp_path / "raw",

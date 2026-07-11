@@ -61,9 +61,14 @@ def test_bindingSyncExecutor_executeBinding_onlyOrchestrationPath(tmp_path, monk
     assert "2026-06-11" in (dry.message or "")
 
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
-    enable_source_route(
-        monkeypatch, source_id="fred", data_domain="macro_series", primary_source_id="fred"
-    )
+    with cm.writer() as con:
+        enable_source_route(
+            tmp_path,
+            source_id="fred",
+            data_domain="macro_series",
+            primary_source_id="fred",
+            con=con,
+        )
     raw_root = tmp_path / "raw"
     raw_root.mkdir()
     port = create_fred_fetch_port(series_ids=("DGS10",), max_rows=3, use_mock=True)

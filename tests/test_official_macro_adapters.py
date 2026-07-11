@@ -923,39 +923,14 @@ def _load_capabilities() -> dict:
 
 
 def _enable_source_route(
-    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
     *,
     source_id: str,
     data_domain: str,
 ):
-    from backend.app.datasources.capability_registry import SourceCapabilityRegistry
-    from backend.app.datasources.route_planner import SourceRoutePlanner
-    from backend.app.datasources.source_registry import DomainRoleBinding, SourceRegistry
+    from tests.service_path_support import enable_source_route
 
-    registry = SourceRegistry()
-    registry.load()
-    rec = registry.get(source_id)
-    object.__setattr__(rec, "is_enabled", True)
-    orig_domain_roles = registry.get_domain_roles
-
-    def _domain_enabled(domain: str):
-        binding = orig_domain_roles(domain)
-        if domain != data_domain:
-            return binding
-        return DomainRoleBinding(
-            primary_source_id=binding.primary_source_id,
-            validation_source_id=binding.validation_source_id,
-            fallback_policy=binding.fallback_policy,
-            domain_enabled_by_default=True,
-            fallback_source_ids=binding.fallback_source_ids,
-        )
-
-    monkeypatch.setattr(registry, "get_domain_roles", _domain_enabled)
-    capabilities = SourceCapabilityRegistry()
-    capabilities.load()
-    planner = SourceRoutePlanner(source_registry=registry, capability_registry=capabilities)
-    monkeypatch.setattr(planner, "_platform_allows", lambda _sid: (True, None))
-    return planner
+    return enable_source_route(tmp_path, source_id=source_id, data_domain=data_domain)
 
 
 _CAPABILITY_CASES: tuple[tuple[str, str, str, callable], ...] = (
@@ -1356,6 +1331,7 @@ def test_fred_port_emitsSchemaHashAndFetchLog() -> None:
     ],
 )
 def test_r3h01_officialMacroRoute_readyWhenSourceEnabled(
+    tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     source_id: str,
     data_domain: str,
@@ -1368,7 +1344,7 @@ def test_r3h01_officialMacroRoute_readyWhenSourceEnabled(
     验证点：route_status=READY；selected_source_id 匹配
     失败含义：三源启用后仍无法 route 到官方 port
     """
-    planner = _enable_source_route(monkeypatch, source_id=source_id, data_domain=data_domain)
+    planner = _enable_source_route(tmp_path, source_id=source_id, data_domain=data_domain)
     plan = planner.plan(
         data_domain=data_domain,
         operation=operation,
@@ -1383,14 +1359,14 @@ def test_r3h01_officialMacroRoute_readyWhenSourceEnabled(
     assert plan.selected_source_id == source_id
 
 
-def test_bis_port_route_creditGap_readyWhenSourceEnabled(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_bis_port_route_creditGap_readyWhenSourceEnabled(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """覆盖范围：BIS credit_gap 域 route READY
     测试对象：SourceRoutePlanner credit_gap 域
     目的/目标：G-07 BIS credit_gap 路由测闭合
     验证点：route_status=READY；selected_source_id=bis
     失败含义：credit_gap 域无 route 正例
     """
-    planner = _enable_source_route(monkeypatch, source_id="bis", data_domain="credit_gap")
+    planner = _enable_source_route(tmp_path, source_id="bis", data_domain="credit_gap")
     plan = planner.plan(
         data_domain="credit_gap",
         operation="fetch_credit_to_gdp_gap",

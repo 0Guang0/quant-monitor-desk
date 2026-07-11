@@ -91,6 +91,7 @@ class DataSourceService:
         run_id: str = "preview-run",
         job_id: str = "preview-job",
         use_fallback: bool = False,
+        con=None,
     ) -> SourceRoutePlan:
         return self._route_planner.plan(
             data_domain=data_domain,
@@ -99,6 +100,7 @@ class DataSourceService:
             run_id=run_id,
             job_id=job_id,
             use_fallback=use_fallback,
+            con=con,
         )
 
     def primary_source_for_domain(self, data_domain: str) -> str:
@@ -158,6 +160,7 @@ class DataSourceService:
             run_id=req.run_id,
             job_id=job_id or req.run_id,
             market_id=req.market_id,
+            con=con,
         )
         plan = _augment_plan_with_requested_source(plan, req.source_id)
         if job_id:

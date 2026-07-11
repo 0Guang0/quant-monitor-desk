@@ -60,23 +60,63 @@ def test_qmtXtdataNonWindowsNotSchedulable() -> None:
     assert qmt.disabled_reason is not None
 
 
-def test_qmtXqshareMissingEnvNotSchedulable(monkeypatch) -> None:
-    """覆盖范围：qmt_xqshare 缺必需环境变量时不可调度
-    测试对象：platform_source_matrix.yaml requires_env 与 plan_route 日线路由
-    目的/目标：清除 requires_env 后候选须禁用并给出 missing_env 类 skip_reason
-    验证点：default_enabled 为 False；xqshare 候选 enabled=False 且 skip_reason 含 missing_env
-    失败含义：无凭证仍入选会导致生产拉数静默失败
+def test_qmtXqshareMissingEnvNotSchedulable(tmp_path, monkeypatch) -> None:
+    """覆盖范围：qmt_xqshare 缺必需环境变量时不可调度（ADR-018 先开关再安检）
+    测试对象：platform_source_matrix.yaml requires_env 与 plan(con=) 日线路由
+    目的/目标：默认关闭时先被开关本拒绝；正规 overlay 打开后缺 env 须给出 missing_env
+    验证点：①无 overlay → skip_reason 含 source_disabled；②overlay+缺 env → missing_env
+    失败含义：无凭证仍入选会导致生产拉数静默失败，或安检顺序回退到旧口径
     """
+    import duckdb
+
+    from backend.app.datasources.activation_overlay import write_activation_overlay
+    from backend.app.datasources.capability_registry import SourceCapabilityRegistry
+    from backend.app.datasources.route_planner import SourceRoutePlanner
+    from backend.app.datasources.source_registry import SourceRegistry
+    from backend.app.db.migrate import apply_migrations
+
     matrix = load_yaml(PLATFORM_MATRIX)
     entry = matrix["platforms"][platform_key()]["qmt_xqshare"]
     for env_name in entry.get("requires_env") or []:
         monkeypatch.delenv(env_name, raising=False)
     assert entry["default_enabled"] is False
 
-    plan = plan_route(
+    # ① 默认：先开关本拒绝（YAML enabled_by_default=false）
+    plan_default = plan_route(
         data_domain="cn_equity_daily_bar",
         operation="fetch_daily_bar",
         extra_candidates=[("qmt_xqshare", "Primary")],
+    )
+    xq0 = next(c for c in plan_default.candidates if c.source_id == "qmt_xqshare")
+    assert xq0.enabled is False
+    assert "source_disabled" in (xq0.skip_reason or "")
+
+    # ② overlay 打开后：平台安检须暴露 missing_env
+    db = tmp_path / "xqshare-env.duckdb"
+    con = duckdb.connect(str(db))
+    apply_migrations(con)
+    reg = SourceRegistry()
+    reg.load()
+    reg.sync_to_db(con, tombstone_missing=False)
+    write_activation_overlay(
+        con,
+        source_id="qmt_xqshare",
+        data_domain="cn_equity_daily_bar",
+        operation="fetch_daily_bar",
+        enabled=True,
+        reason="[sandbox] enable qmt_xqshare to assert missing_env",
+        changed_by="test_platform_source_matrix",
+        sandbox=True,
+    )
+    caps = SourceCapabilityRegistry()
+    caps.load()
+    plan = SourceRoutePlanner(source_registry=reg, capability_registry=caps).plan(
+        data_domain="cn_equity_daily_bar",
+        operation="fetch_daily_bar",
+        run_id="xq-env",
+        job_id="xq-env",
+        extra_candidates=[("qmt_xqshare", "Primary")],
+        con=con,
     )
     xq = next(c for c in plan.candidates if c.source_id == "qmt_xqshare")
     assert xq.enabled is False

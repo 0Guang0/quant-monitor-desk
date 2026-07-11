@@ -60,6 +60,7 @@ def test_fredIncrementalCli_execute_rejectsWithoutLiveEnv(
 
 
 def test_fredIncrementalCli_execute_rejectsCanonicalDb(
+    tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """覆盖范围：真跑禁止写 canonical 主库
@@ -73,7 +74,7 @@ def test_fredIncrementalCli_execute_rejectsCanonicalDb(
     monkeypatch.delenv("QMD_DATA_ROOT", raising=False)
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
     enable_source_route(
-        monkeypatch, source_id="fred", data_domain="macro_series", primary_source_id="fred"
+        tmp_path, source_id="fred", data_domain="macro_series", primary_source_id="fred"
     )
     with pytest.raises(CliFailure) as exc_info:
         sync_plan(data_domain="macro_series", source_id="fred", dry_run=False)
@@ -103,7 +104,7 @@ def test_fredIncrementalCli_execute_rejectsUserLiveAuditPath(
     monkeypatch.setenv("QMD_DATA_ROOT", str(user_live))
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
     enable_source_route(
-        monkeypatch, source_id="fred", data_domain="macro_series", primary_source_id="fred"
+        tmp_path, source_id="fred", data_domain="macro_series", primary_source_id="fred"
     )
     with pytest.raises(CliFailure) as exc_info:
         sync_plan(data_domain="macro_series", source_id="fred", dry_run=False)
@@ -183,7 +184,7 @@ def test_fredIncrementalCli_execute_mockInTest(
     monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "0")
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
     enable_source_route(
-        monkeypatch, source_id="fred", data_domain="macro_series", primary_source_id="fred"
+        tmp_path, source_id="fred", data_domain="macro_series", primary_source_id="fred"
     )
     payload = sync_plan(data_domain="macro_series", source_id="fred", dry_run=False)
     assert payload.get("gate_eligible") is True

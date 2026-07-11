@@ -41,13 +41,15 @@ def build_macro_e2e_ctx(
     registry_factory: Callable,
 ) -> dict[str, Any]:
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
-    enable_source_route(
-        monkeypatch,
-        source_id=source_id,
-        data_domain=data_domain,
-        primary_source_id=source_id,
-    )
     cm = bootstrap_macro_incremental_db(tmp_path)
+    with cm.writer() as con:
+        enable_source_route(
+            tmp_path,
+            source_id=source_id,
+            data_domain=data_domain,
+            primary_source_id=source_id,
+            con=con,
+        )
     raw_root = tmp_path / "raw"
     raw_root.mkdir()
     orch = DataSyncOrchestrator(cm)
@@ -87,7 +89,7 @@ def bootstrap_macro_live_e2e_ctx(
     monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
     enable_source_route(
-        monkeypatch,
+        tmp_path,
         source_id=source_id,
         data_domain=data_domain,
         primary_source_id=source_id,

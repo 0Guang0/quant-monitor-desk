@@ -193,42 +193,18 @@ def _load_capabilities() -> dict:
 
 
 def _enable_crypto_source_route(
-    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
     *,
     source_id: str,
     data_domain: str,
 ):
-    from backend.app.datasources.capability_registry import SourceCapabilityRegistry
-    from backend.app.datasources.route_planner import SourceRoutePlanner
-    from backend.app.datasources.source_registry import DomainRoleBinding, SourceRegistry
+    from tests.service_path_support import enable_source_route
 
-    registry = SourceRegistry()
-    registry.load()
-    rec = registry.get(source_id)
-    object.__setattr__(rec, "is_enabled", True)
-    orig_domain_roles = registry.get_domain_roles
-
-    def _domain_enabled(domain: str):
-        binding = orig_domain_roles(domain)
-        if domain != data_domain:
-            return binding
-        return DomainRoleBinding(
-            primary_source_id=binding.primary_source_id,
-            validation_source_id=binding.validation_source_id,
-            fallback_policy=binding.fallback_policy,
-            domain_enabled_by_default=True,
-            fallback_source_ids=binding.fallback_source_ids,
-        )
-
-    monkeypatch.setattr(registry, "get_domain_roles", _domain_enabled)
-    capabilities = SourceCapabilityRegistry()
-    capabilities.load()
-    planner = SourceRoutePlanner(source_registry=registry, capability_registry=capabilities)
-    monkeypatch.setattr(planner, "_platform_allows", lambda _sid: (True, None))
-    return planner
+    return enable_source_route(tmp_path, source_id=source_id, data_domain=data_domain)
 
 
 def test_coingecko_validationOnlySource_blockedAsPrimaryWhenForced(
+    tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """覆盖范围：coingecko validation-only 不得作为 Primary 路由候选
@@ -238,7 +214,7 @@ def test_coingecko_validationOnlySource_blockedAsPrimaryWhenForced(
     失败含义：aggregator 可 silent 升格 primary
     """
     planner = _enable_crypto_source_route(
-        monkeypatch, source_id="coingecko", data_domain="crypto_asset_reference"
+        tmp_path, source_id="coingecko", data_domain="crypto_asset_reference"
     )
     plan = planner.plan(
         data_domain="crypto_asset_reference",

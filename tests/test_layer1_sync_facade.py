@@ -89,10 +89,15 @@ def test_layer1SyncFacade_syncIndicator_nonDryRun_completesIncremental(
         "backend.app.sync.layer1_sync_facade.load_binding",
         lambda _indicator_id: replace(binding, incremental_watermark="DGS10"),
     )
-    enable_source_route(
-        monkeypatch, source_id="fred", data_domain="macro_series", primary_source_id="fred"
-    )
     cm = bootstrap_fred_incremental_db(tmp_path)
+    with cm.writer() as con:
+        enable_source_route(
+            tmp_path,
+            source_id="fred",
+            data_domain="macro_series",
+            primary_source_id="fred",
+            con=con,
+        )
     raw_root = tmp_path / "raw"
     raw_root.mkdir()
     port = create_fred_fetch_port(series_ids=("DGS10",), max_rows=3, use_mock=True)

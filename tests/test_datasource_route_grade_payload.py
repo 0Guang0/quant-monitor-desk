@@ -10,6 +10,7 @@ from backend.app.db.connection import ConnectionManager
 from backend.app.db.migrate import apply_migrations
 from backend.app.sync.event_payload import parse_event_payload
 from backend.app.sync.jobs import SyncJobSpec, SyncJobStateMachine
+from tests.service_path_support import seed_activation_base
 
 
 def test_dataSourceService_resourceGuardPausedRoutePlan_writesBlockedRouteGrade(
@@ -42,6 +43,8 @@ def test_dataSourceService_resourceGuardPausedRoutePlan_writesBlockedRouteGrade(
     jobs = SyncJobStateMachine(cm)
     reg = SourceRegistry()
     reg.load()
+    with cm.writer() as con:
+        seed_activation_base(con, reg)
     service = DataSourceService(source_registry=reg, data_root=tmp_path / "raw", job_events=jobs)
     spec = SyncJobSpec(
         run_id="run-guard-grade",

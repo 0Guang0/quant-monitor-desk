@@ -61,35 +61,10 @@ def _load_capabilities() -> dict:
     return yaml.safe_load(path.read_text(encoding="utf-8")) or {}
 
 
-def _enable_cn_source_route(monkeypatch: pytest.MonkeyPatch, *, source_id: str, data_domain: str):
-    from backend.app.datasources.capability_registry import SourceCapabilityRegistry
-    from backend.app.datasources.route_planner import SourceRoutePlanner
-    from backend.app.datasources.source_registry import DomainRoleBinding, SourceRegistry
+def _enable_cn_source_route(tmp_path: Path, *, source_id: str, data_domain: str):
+    from tests.service_path_support import enable_source_route
 
-    registry = SourceRegistry()
-    registry.load()
-    rec = registry.get(source_id)
-    object.__setattr__(rec, "is_enabled", True)
-    orig_domain_roles = registry.get_domain_roles
-
-    def _domain_enabled(domain: str):
-        binding = orig_domain_roles(domain)
-        if domain != data_domain:
-            return binding
-        return DomainRoleBinding(
-            primary_source_id=binding.primary_source_id,
-            validation_source_id=binding.validation_source_id,
-            fallback_policy=binding.fallback_policy,
-            domain_enabled_by_default=True,
-            fallback_source_ids=binding.fallback_source_ids,
-        )
-
-    monkeypatch.setattr(registry, "get_domain_roles", _domain_enabled)
-    capabilities = SourceCapabilityRegistry()
-    capabilities.load()
-    planner = SourceRoutePlanner(source_registry=registry, capability_registry=capabilities)
-    monkeypatch.setattr(planner, "_platform_allows", lambda _sid: (True, None))
-    return planner
+    return enable_source_route(tmp_path, source_id=source_id, data_domain=data_domain)
 
 
 # --- 9.1 evidence_contract ---
@@ -343,6 +318,7 @@ def test_akshare_port_validationOnly_hasQualityFlags() -> None:
 
 
 def test_akshare_validationOnlySource_blockedAsPrimaryWhenForced(
+    tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """覆盖范围：akshare validation-only 不得作为 Primary
@@ -352,7 +328,7 @@ def test_akshare_validationOnlySource_blockedAsPrimaryWhenForced(
     失败含义：akshare 可 silent 升格 primary
     """
     planner = _enable_cn_source_route(
-        monkeypatch, source_id="akshare", data_domain="cn_equity_daily_bar"
+        tmp_path, source_id="akshare", data_domain="cn_equity_daily_bar"
     )
     plan = planner.plan(
         data_domain="cn_equity_daily_bar",
@@ -385,6 +361,7 @@ def test_akshare_port_capOverflow_blocksOverMaxRows() -> None:
 
 @pytest.mark.parametrize("data_domain", ["cn_index", "sector_board"])
 def test_akshare_validationOnly_blocksPrimaryOnYamlPrimaryDomains(
+    tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     data_domain: str,
 ) -> None:
@@ -394,7 +371,7 @@ def test_akshare_validationOnly_blocksPrimaryOnYamlPrimaryDomains(
     验证点：extra_candidates Primary → validation_only_cannot_be_primary
     失败含义：移除 validation_only 后 akshare 可 silent 升格
     """
-    planner = _enable_cn_source_route(monkeypatch, source_id="akshare", data_domain=data_domain)
+    planner = _enable_cn_source_route(tmp_path, source_id="akshare", data_domain=data_domain)
     plan = planner.plan(
         data_domain=data_domain,
         operation="fetch_index_daily_bar" if data_domain == "cn_index" else "fetch_sector_board",
@@ -565,6 +542,7 @@ def test_sina_port_capOverflow_blocksOverMaxRows() -> None:
 
 
 def test_eastmoney_validationOnly_blockedAsPrimaryWhenForced(
+    tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """覆盖范围：eastmoney validation-only 不得作为 Primary
@@ -573,8 +551,13 @@ def test_eastmoney_validationOnly_blockedAsPrimaryWhenForced(
     验证点：skip_reason=validation_only_cannot_be_primary
     失败含义：eastmoney 可 silent 升格 primary
     """
-    planner = _enable_cn_source_route(
-        monkeypatch, source_id="eastmoney", data_domain="cn_equity_daily_bar"
+    from tests.service_path_support import enable_source_route
+
+    planner = enable_source_route(
+        tmp_path,
+        source_id="eastmoney",
+        data_domain="cn_equity_daily_bar",
+        operation="fetch_daily_bar",
     )
     plan = planner.plan(
         data_domain="cn_equity_daily_bar",
@@ -590,6 +573,7 @@ def test_eastmoney_validationOnly_blockedAsPrimaryWhenForced(
 
 
 def test_sina_validationOnly_blockedAsPrimaryWhenForced(
+    tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """覆盖范围：sina_finance validation-only 不得作为 Primary
@@ -598,8 +582,13 @@ def test_sina_validationOnly_blockedAsPrimaryWhenForced(
     验证点：skip_reason=validation_only_cannot_be_primary
     失败含义：sina 可 silent 升格 primary
     """
-    planner = _enable_cn_source_route(
-        monkeypatch, source_id="sina_finance", data_domain="cn_equity_daily_bar"
+    from tests.service_path_support import enable_source_route
+
+    planner = enable_source_route(
+        tmp_path,
+        source_id="sina_finance",
+        data_domain="cn_equity_daily_bar",
+        operation="fetch_daily_bar",
     )
     plan = planner.plan(
         data_domain="cn_equity_daily_bar",
@@ -745,22 +734,21 @@ def test_cninfo_route_primaryReadyOnCnAnnouncements() -> None:
     assert plan.selected_source_id == "cninfo"
 
 
-def test_ifind_route_disabledWithoutLicense() -> None:
-    """覆盖范围：ths_ifind 未授权路由 DISABLED
-    测试对象：SourceRoutePlanner + concept_theme
-    目的/目标：G4 iFinD 路由层 license_gate 对齐
+def test_ifind_route_disabledWithoutLicense(tmp_path: Path) -> None:
+    """覆盖范围：ths_ifind 开关本允许后仍因未授权失败关闭（ADR-018 两层）
+    测试对象：SourceRoutePlanner + concept_theme（隔离 overlay 启用后）
+    目的/目标：G4 iFinD 安检层 license_gate；先问开关再查授权
     验证点：ths_ifind 候选 enabled=False；skip_reason 含 authorization/license
-    失败含义：iFinD 无授权可获得 READY 路由
+    失败含义：iFinD 无授权可获得 READY 路由，或未接开关本就误报禁用
     """
-    from backend.app.datasources.capability_registry import SourceCapabilityRegistry
-    from backend.app.datasources.route_planner import SourceRoutePlanner
-    from backend.app.datasources.source_registry import SourceRegistry
+    from tests.service_path_support import enable_source_route
 
-    registry = SourceRegistry()
-    registry.load()
-    capabilities = SourceCapabilityRegistry()
-    capabilities.load()
-    planner = SourceRoutePlanner(source_registry=registry, capability_registry=capabilities)
+    planner = enable_source_route(
+        tmp_path,
+        source_id="ths_ifind",
+        data_domain="concept_theme",
+        operation="fetch_concept_theme",
+    )
     plan = planner.plan(
         data_domain="concept_theme",
         operation="fetch_concept_theme",
@@ -770,7 +758,7 @@ def test_ifind_route_disabledWithoutLicense() -> None:
     ifind = next(c for c in plan.candidates if c.source_id == "ths_ifind")
     assert ifind.enabled is False
     lowered = (ifind.skip_reason or "").lower()
-    assert "authorization" in lowered or "license" in lowered
+    assert "authorization" in lowered or "license" in lowered or "user_authorization" in lowered
 
 
 def test_xqshare_route_disabledWithoutAuthorization() -> None:

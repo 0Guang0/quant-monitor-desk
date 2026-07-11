@@ -9,7 +9,7 @@ principles:
   - no_silent_fallback
 notes:
   current_domain_authority: "specs/datasource_registry/source_registry.yaml"
-  adapter_domain_alignment: "enforced by SourceCapabilityRegistry.load + tests/test_source_capabilities.py adapter reconciliation"
+  adapter_domain_alignment: "load rejects unresolved implementation_gap; adapter domain reconciliation enforced by tests/test_source_capabilities.py"
 sources:
   qmt_xtdata:
     status: READY_WITH_EVIDENCE

@@ -96,10 +96,15 @@ def bootstrap_fred_live_e2e_ctx(
 def fred_incremental_e2e_ctx(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
     """Shared e2e bootstrap: isolated DB, mock port, orchestrator, service."""
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
-    enable_source_route(
-        monkeypatch, source_id="fred", data_domain="macro_series", primary_source_id="fred"
-    )
     cm = bootstrap_fred_incremental_db(tmp_path)
+    with cm.writer() as con:
+        enable_source_route(
+            tmp_path,
+            source_id="fred",
+            data_domain="macro_series",
+            primary_source_id="fred",
+            con=con,
+        )
     raw_root = tmp_path / "raw"
     raw_root.mkdir()
     port = create_fred_fetch_port(series_ids=("DGS10", "VIXCLS"), max_rows=3, use_mock=True)

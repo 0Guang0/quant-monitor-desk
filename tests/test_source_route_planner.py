@@ -13,9 +13,7 @@ from pathlib import Path
 import pytest
 from backend.app.datasources.capability_registry import SourceCapabilityRegistry
 from backend.app.datasources.route_planner import SourceRoutePlanner
-from backend.app.datasources.source_registry import (
-    SourceRegistry,
-)
+from backend.app.datasources.source_registry import SourceRegistry
 
 from tests.service_path_support import production_route_planner
 
@@ -403,6 +401,7 @@ def test_r3h04_predictionWebRoute_disabledByDefault(
     (("polymarket", "event_market_contract", "fetch_event_market_contracts"),),
 )
 def test_r3h04_polymarketEventMarketRoute_validationOnlyPrimaryBlocked(
+    tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     source_id: str,
     data_domain: str,
@@ -416,7 +415,7 @@ def test_r3h04_polymarketEventMarketRoute_validationOnlyPrimaryBlocked(
     """
     from tests.service_path_support import enable_source_route
 
-    planner = enable_source_route(monkeypatch, source_id=source_id, data_domain=data_domain)
+    planner = enable_source_route(tmp_path, source_id=source_id, data_domain=data_domain)
     plan = planner.plan(
         data_domain=data_domain,
         operation=operation,

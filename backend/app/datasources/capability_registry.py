@@ -8,8 +8,8 @@ from typing import Any
 import yaml
 from backend.app.config import PROJECT_ROOT
 
-# ponytail: legacy alias map — adapters now declare registry domain names directly.
-# Kept empty; resolve_registry_domain falls through to the requested domain.
+# ponytail: empty legacy alias map — adapters declare registry domains directly.
+# Ceiling: no rename bridge; upgrade: add entries only when a real adapter domain rename lands.
 ADAPTER_DOMAIN_COMPATIBILITY_MAP: dict[str, dict[str, str]] = {}
 
 
