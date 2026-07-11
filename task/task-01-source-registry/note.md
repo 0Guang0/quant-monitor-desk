@@ -56,7 +56,7 @@
 | 本切片修到哪 | B+A / 只 B | **先只修 B**（用户选定）；关账前又闭环 **A7** 断言（对齐 ADR-018 先开关） |
 | A7 断言（关账前） | 挂起 vs 本阶段改 | **本阶段改**：默认先 `source_disabled`；overlay 后再 `missing_env` |
 
-问题开闭与证据：**只写在 findings**（F05-A 开放挂 06/07 / F05-B·A7 已关），此处不重复 ledger。
+问题开闭与证据：**只写在 findings**（F05-A **node-id 全表**开放挂 06/07 / F05-B·A7 已关），此处不重复 ledger。双登记：`docs/quality/待修复清单.md` + 仓库根 `PROJECT_IMPLEMENTATION_ROADMAP.md`。
 
 ---
 

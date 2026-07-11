@@ -43,6 +43,7 @@
   - 2026-07-11：**ponytail/质量复核（04/05 范围）**：缩 `_emit_source_policy_event`；`bootstrap_vendor_e2e_db` 复用 `seed_activation_base`；etest 去重断言。挂票债 T01-F06/F07 + F05-A 登记 `docs/quality/待修复清单.md`。无 phase-scripts 混放问题。
   - 2026-07-11：**票 04/05 Execute CLOSED**（`completion-check-execute.md` 对象 D/E）；关账前闭环 A7；余 F05-A/F06/F07 严格后置票 06/07。下一刀 06∥07；G1-02/R4 仍 OPEN。
   - 2026-07-11：**完整重写 [`HANDOFF.md`](HANDOFF.md)**（下一刀 06∥07）；同步 scratch README Frontier；对齐 findings F03 / progress 文首。
+  - 2026-07-12：**补台账缺口**：findings F05-A **完整 node-id 表**（基线 terminal 652051 + `test:quick` 现红 mootdx Layer5）；新建最小 [`PROJECT_IMPLEMENTATION_ROADMAP.md`](../../PROJECT_IMPLEMENTATION_ROADMAP.md) 完成双登记；scratch 票 06/07 勾选 F05-A；HANDOFF/INDEX/待修复清单已交叉引用。
 - Files created/modified:
   - `task_plan.md` · `findings.md` · `progress.md` · `note.md`
   - `g1-02-execution-brief.md` · `EXECUTION-DOC-INDEX.md`

@@ -16,7 +16,7 @@
 | **L3 G1-02 防漂移** | `g1-02-execution-brief.md` | 入口 ID 全表、两层契约、删除顺序、禁令、验证 §7 | **开 G1-02 / WP3～4x 必读**；细节优先于 L2 旧措辞 |
 | **L4 接线事实** | `g1-01-wiring-inventory.md` | 正式入口盘点（Plan r6 READY） | G1-02 清债对照表；**不是**实现规格 |
 | **L5 决策痕迹** | `decision-map-enable-seam.md` | #1–#4 已决议索引 → ADR-018 | 查「为什么」；不另开启用形状票 |
-| **L6 台账** | `findings.md` · `progress.md` · `note.md` · `docs/quality/待修复清单.md`（`T01-ENABLE-FRED-MERGE-001`） | 问题/进度/执行裁定/阶段外置 | 关账用；不替代 L0–L3 |
+| **L6 台账** | `findings.md`（含 **F05-A node-id 表**）· `progress.md` · `note.md` · `docs/quality/待修复清单.md` · [`PROJECT_IMPLEMENTATION_ROADMAP.md`](../../PROJECT_IMPLEMENTATION_ROADMAP.md) | 问题/进度/执行裁定/阶段外置双登记 | 关账用；不替代 L0–L3 |
 | **证据（非开工 SSOT）** | `completion-check-plan-g1-01-r6.md` · `completion-check-audit.md` | G1-01 Plan 关账；模块 R4 Audit（仍 OPEN） | 证明历史结论；≠ 实现规格 |
 
 **冲突裁决：** design > brief（G1-02 细节）> task_plan 范围措辞 > inventory 事实表。
@@ -61,7 +61,7 @@ G1-01 READY
 
 **禁令：** 未落地问开关禁止删 ESR；4c 不得抢在 4a/4b 前宣称策略同路。
 
-**已知不阻塞 RED：** `PROJECT_IMPLEMENTATION_ROADMAP.md` 仓库缺文件（阶段外置手续债）；FRED 合并挂待修复清单。
+**已知不阻塞 RED：** FRED 合并挂待修复清单 + ROADMAP；F05-A node-id 已落 findings（不全量绿不挡 06/07 开工，但挡 G1-02 / test:quick 关账）。
 
 ---
 

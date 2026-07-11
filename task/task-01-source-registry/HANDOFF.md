@@ -56,7 +56,7 @@
 | 9 | 将改源码 + 同类 pattern + 对应测试 | 见票；`impact` 后再动 |
 | 10 | 失败输出 | 只贴失败断言/栈，不贴整份 pytest |
 
-**状态指针（需要时再读一行）：** [`findings.md`](findings.md) · [`progress.md`](progress.md) · [`task_plan.md`](task_plan.md) §9 · [`completion-check-execute.md`](completion-check-execute.md)（对象 A–E 已 CLOSED）· `docs/quality/待修复清单.md`（`T01-F05-A` / `F06` / `F07` / `T01-ENABLE-FRED-MERGE-001`）。
+**状态指针（需要时再读一行）：** [`findings.md`](findings.md)（**含 F05-A node-id 表**）· [`progress.md`](progress.md) · [`task_plan.md`](task_plan.md) §9 · [`completion-check-execute.md`](completion-check-execute.md)（对象 A–E 已 CLOSED）· [`docs/quality/待修复清单.md`](../../docs/quality/待修复清单.md) · [`PROJECT_IMPLEMENTATION_ROADMAP.md`](../../PROJECT_IMPLEMENTATION_ROADMAP.md)。
 
 **不要加载当开工 SSOT：** [`归档/`](归档/README.md)。
 
@@ -104,7 +104,16 @@
 
 **命名：** brief **4a**=票 06；**4b**=票 07；**4x**=票 08（bridge）。**勿**把 FRED **编排合并**（票 10）塞进 06 关账。工作包 **4c**=G1-03～05（跨模块），≠ G1-02。
 
-**本切片须承接的阶段外置债：** F05-A（旧口径测迁 overlay）· F06（夹具去内存构造）· F07（06+07 后删 `plan(con=None)` 回落）— 见 findings + 待修复清单；**登记≠关账**。
+**本切片须承接的阶段外置债（勿遗漏）：**
+
+| ID | 票 | 指针 |
+|----|----|------|
+| **T01-F05-A** | 06∥07 | [`findings.md`](findings.md) **node-id 全表**（含 `test:quick` 现红：`test_mootdxBarClean_layer5Provenance_matchesSameRunBundle`） |
+| **T01-F06** | 06 | findings + 待修复清单 + [`PROJECT_IMPLEMENTATION_ROADMAP.md`](../../PROJECT_IMPLEMENTATION_ROADMAP.md) |
+| **T01-F07** | 06+07 后 | 同上 |
+| **T01-ENABLE-FRED-MERGE-001** | 10（G1-08 前） | 待修复清单；**票 06 不关合并** |
+
+登记≠关账。再验：`uv run pytest -q -m "not slow and not network"`。
 
 ---
 
@@ -156,13 +165,13 @@ uv run pytest -q tests/test_route_planner_activation.py tests/test_etest_overlay
 - F07：无 `con` 仍回落 YAML `is_enabled` → **06+07 完成后**再删；产品 fetch 必须传 `con`。
 - 票 06 **不**关闭 `T01-ENABLE-FRED-MERGE-001`（合并四门槛 → 票 10 / G1-08）。
 - inventory **P-SUPP** 文案可能仍写旧 `VALIDATION_ONLY_BLOCKED` → 文档漂移，顺手改，不挡 RED。
-- `PROJECT_IMPLEMENTATION_ROADMAP.md` 仓库缺失 vs 阶段外置双登记 → **不挡** RED（待修复清单已登记）。
+- `PROJECT_IMPLEMENTATION_ROADMAP.md`：**已补最小承接表**（2026-07-12）；阶段外置须同时写待修复清单 + ROADMAP。
 - GitNexus index 可能滞后；以当前仓库 + rg 为准。
 
 ---
 
 ## 9. 给下一 agent 的第一句话（可复制）
 
-> 读 `task/task-01-source-registry/HANDOFF.md` 与 `EXECUTION-DOC-INDEX.md`。票 **01–05 Execute 已 CLOSED**（`completion-check-execute.md` 对象 A–E）。下一刀：**06∥07**（brief 4a/4b · 迁 ESR / 金路径 overlay）；细节以 `g1-02-execution-brief.md` §3.1/§6 为准；现场裁定见 `note.md`；开放债见 `findings.md`（F05-A/F06/F07）。改 `enabled_source_registry` 前先 `impact`。反证：只清 fred 漏 else → 必须红。先 `git status`。不要加载 `归档/`。不要宣称 G1-02 / R4。不要在本切片关 FRED 编排合并台账。
+> 读 `task/task-01-source-registry/HANDOFF.md` 与 `EXECUTION-DOC-INDEX.md`。票 **01–05 Execute 已 CLOSED**（`completion-check-execute.md` 对象 A–E）。下一刀：**06∥07**（brief 4a/4b · 迁 ESR / 金路径 overlay）；细节以 `g1-02-execution-brief.md` §3.1/§6 为准；现场裁定见 `note.md`；开放债见 `findings.md`（**F05-A node-id 全表** / F06/F07）+ `docs/quality/待修复清单.md` + `PROJECT_IMPLEMENTATION_ROADMAP.md`。改 `enabled_source_registry` 前先 `impact`。反证：只清 fred 漏 else → 必须红。`test:quick` 现知仍红：`test_mootdxBarClean_layer5Provenance_matchesSameRunBundle`。先 `git status`。不要加载 `归档/`。不要宣称 G1-02 / R4。不要在本切片关 FRED 编排合并台账。
 
 _敏感信息：无。本 handoff 不含密钥。_

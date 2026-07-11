@@ -41,15 +41,44 @@
 | ID | 现象 | 标签 | disposition | 证据 |
 |----|------|------|-------------|------|
 | T01-F03 | CLI/增量仍以内存 OVERRIDE（ESR / 强制 platform）破坏启用 SSOT；**3A/3B/3C 票级已 CLOSED**，调用方迁 overlay 未完成 | enable policy / 跨模块依赖 | 待修复（余 **4a/4b/4x** → 票 06/07/08） | 余：`macro_incremental_common.enabled_source_registry`、acceptance/matrix；见 [`HANDOFF.md`](HANDOFF.md) |
-| T01-F05-A | 票 04/05 后 ~15 测仍按旧口径失败（ESR/`__setattr__`，或期望先安检再出 `missing_env`） | 旧口径测试 / 4a·4b | 阶段外置 | A1–A6→**票 06/07**；A7 **已本阶段改断言**（见已关闭）；登记：`docs/quality/待修复清单.md` `T01-F05-A` |
-| T01-F06 | `enable_source_route` 仍改测试副本 `_sources` / `_domain_roles` / capability `_raw`（非生产单例，但仍是内存构造） | E-TEST 夹具债 | 阶段外置 | **票 06（4a）**；登记：`docs/quality/待修复清单.md` `T01-F06` |
-| T01-F07 | `plan(con=None)` 仍回落 YAML 内存 `is_enabled`（`ponytail` 过渡） | 启用 SSOT 缺口 | 阶段外置 | **票 06+07 完成后删回落**；登记：`docs/quality/待修复清单.md` `T01-F07` |
+| T01-F05-A | 票 04/05 后旧口径测红（ESR/`__setattr__`）；**不删测**，迁 overlay | 旧口径测试 / 4a·4b | 阶段外置 | **票 06/07**；明细见下表；登记：`docs/quality/待修复清单.md` · `PROJECT_IMPLEMENTATION_ROADMAP.md` |
+| T01-F06 | `enable_source_route` 仍改测试副本 `_sources` / `_domain_roles` / capability `_raw`（非生产单例，但仍是内存构造） | E-TEST 夹具债 | 阶段外置 | **票 06（4a）**；登记：待修复清单 + ROADMAP |
+| T01-F07 | `plan(con=None)` 仍回落 YAML 内存 `is_enabled`（`ponytail` 过渡） | 启用 SSOT 缺口 | 阶段外置 | **票 06+07 完成后删回落**；登记：待修复清单 + ROADMAP |
+| T01-ROADMAP-GAP | 仓库曾缺 `PROJECT_IMPLEMENTATION_ROADMAP.md`，阶段外置双登记手续不齐 | 台账手续 | **已补最小承接表**（见仓库根 ROADMAP） | 新会话勿再口头 defer；续写承接行即可 |
+
+### T01-F05-A · node-id 清单（防遗漏 SSOT）
+
+> **基线：** 2026-07-11 全量失败摘要（terminal `652051`，票 04/05 接线后、B/A7 修前）。  
+> **处置：** A 类→票 **06（4a）/07（4b）**；**禁止**恢复 ESR/`__setattr__` 保绿；**禁止**删测文件。  
+> **再验命令：** `uv run pytest -q -m "not slow and not network"`（pre-commit `test:quick`）+ 全量时再跑下表 A 行。
+
+| 桶 | 票 | node-id | 状态（2026-07-12） |
+|----|----|---------|-------------------|
+| A1 | **06** | `tests/test_alpha_vantage_incremental_e2e.py::test_alphaVantageIncremental_replay_writesSecurityBar1d` | 开放（挂 06；全量基线红） |
+| A1 | **06** | `tests/test_alpha_vantage_incremental_e2e.py::test_alphaVantageIncremental_repeatRun_noRowGrowth` | 开放 |
+| A2 | **06** | `tests/test_deribit_incremental_e2e.py::test_deribitIncremental_replay_writesCryptoDerivativeClean` | 开放 |
+| A2 | **06** | `tests/test_deribit_incremental_e2e.py::test_deribitIncremental_emptyResponse_whenWatermarkCurrent` | 开放 |
+| A3 | **06** | `tests/test_sec_edgar_incremental_e2e.py::test_secEdgarIncremental_replay_writesUsDisclosureClean` | 开放 |
+| A3 | **06** | `tests/test_sec_edgar_incremental_e2e.py::test_secEdgarIncremental_repeatRun_noRowGrowth` | 开放 |
+| A3 | **06** | `tests/test_sec_edgar_incremental_e2e.py::test_secEdgarIncremental_emptyResponse_whenWatermarkCurrent` | 开放 |
+| A4 | **06** | `tests/test_mootdx_incremental_e2e.py::test_mootdxIncremental_replay_writesSecurityBar1d` | 开放 |
+| A4 | **06** | `tests/test_mootdx_incremental_e2e.py::test_mootdxIncremental_opsRun_writesSecurityBar1d` | 开放 |
+| A4 | **06** | `tests/test_mootdx_incremental_e2e.py::test_mootdxIncremental_repeatRun_noRowGrowth` | 开放 |
+| A4 | **06**/**07** | `tests/test_layer5_mootdx_bar_clean_e2e.py::test_mootdxBarClean_layer5Provenance_matchesSameRunBundle` | **开放 · `test:quick` 现仍红**（2026-07-12 复验） |
+| A5 | **07** | `tests/test_qmd_ops_source_route_db_acceptance.py::test_qmdOps_acceptSourceRouteDb_allDocumentedSources_liveAuthorized_writesMatrixReport` | 开放 |
+| A6 | **07** | `tests/test_source_route_db_acceptance_contract.py::test_sourceRouteDbAcceptance_fredMacroTracer_mockedLiveObservations_writesAndReadsClean` | 开放 |
+| A7 | — | `tests/test_platform_source_matrix.py::test_qmtXqshareMissingEnvNotSchedulable` | **已关闭**（本阶段改断言） |
+| B（曾红） | — | `tests/test_datasource_service.py::{test_serviceFetch_runtimeGateOrder,test_serviceWritesRoutePlanPayloadBeforeFetch,test_serviceGuardBlocked_emitsResourceGuardPausedRoutePlan,test_serviceFetch_recordsSourceOverrideQualityFlag}` | **已关闭**（`seed_activation_base`） |
+| B（曾红） | — | `tests/test_datasource_route_grade_payload.py::test_dataSourceService_resourceGuardPausedRoutePlan_writesBlockedRouteGrade` | **已关闭** |
+| B（曾红） | — | `tests/test_sync_orchestrator.py::test_plannedJobWritesRoutePlanBeforeFetching` | **已关闭** |
+
+**说明：** 上表 A1–A3/A4 增量行多数带 `@slow`/`network` 标记时可能不进 `test:quick`；**不得**因此从 ledger 删除——全量/CI 仍会撞。关账 06/07 时须逐行打勾或注明已绿证据。
 
 ### T01-F05 问题摘要（ledger，非方案）
 
 | ID | 现象 | disposition |
 |----|------|-------------|
-| F05-A | ~15 旧口径测红 | 阶段外置 **票 06/07（4a/4b）** |
+| F05-A | 上表 A1–A6 node-id | 阶段外置 **票 06/07（4a/4b）** |
 | F05-B | baostock 等默认可启用源：空库未 sync → ask 拒 | **已修复**（见已关闭） |
 
 ## 已关闭 / 按设计
