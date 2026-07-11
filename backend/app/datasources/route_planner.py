@@ -61,6 +61,14 @@ class SourceRoutePlanner:
         # 测试/隔离根可注入；plan(con=…) 优先覆盖
         self._activation_con = activation_con
 
+    @property
+    def source_registry(self) -> SourceRegistry:
+        return self._registry
+
+    @property
+    def capability_registry(self) -> SourceCapabilityRegistry:
+        return self._capabilities
+
     def _source_enabled(self, source_id: str) -> tuple[bool, str | None]:
         try:
             rec = self._registry.get(source_id)
@@ -150,6 +158,7 @@ class SourceRoutePlanner:
         use_fallback: bool = False,
         extra_candidates: list[tuple[str, str]] | None = None,
         con: Any | None = None,
+        preferred_primary_source_id: str | None = None,
     ) -> SourceRoutePlan:
         del market_id  # reserved for future market-scoped routing
         if con is None:
@@ -164,6 +173,16 @@ class SourceRoutePlanner:
         ordered = self._ordered_candidates(
             data_domain, use_fallback=use_fallback, extra_candidates=extra_candidates
         )
+        if preferred_primary_source_id:
+            # 重排域内已有候选；或 capability 已声明该域时允许 CLI 显式源升为 Primary
+            # （use_fallback=False 时 fallback 源不在 ordered，但仍须可钉 --source-id）
+            in_chain = any(s == preferred_primary_source_id for s, _ in ordered)
+            domain_capable = self._capabilities.is_capability_declared(
+                preferred_primary_source_id, data_domain
+            )
+            if in_chain or domain_capable:
+                rest = [(s, r) for s, r in ordered if s != preferred_primary_source_id]
+                ordered = [(preferred_primary_source_id, "Primary"), *rest]
         candidates: list[SourceRouteCandidate] = []
         selected: str | None = None
         selected_role: str | None = None
@@ -257,9 +276,11 @@ class SourceRoutePlanner:
             ):
                 route_status = "USER_AUTH_REQUIRED"
         elif domain_disabled:
-            selected = None
-            route_status = "DISABLED_SOURCE"
-            quality_flags.append("DOMAIN_DISABLED_BY_DEFAULT")
+            # ADR-018：管理员 overlay 已放行选中源时，域默认关不得再否决 READY
+            if not (selected and revisions.get(selected)):
+                selected = None
+                route_status = "DISABLED_SOURCE"
+                quality_flags.append("DOMAIN_DISABLED_BY_DEFAULT")
         elif selected_role == "Validation":
             quality_flags.append("VALIDATION_SOURCE_USED")
 

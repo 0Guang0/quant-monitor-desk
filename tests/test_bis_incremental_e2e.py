@@ -25,10 +25,10 @@ from backend.app.ops.bis_incremental_run import (
     DATA_DOMAIN,
     DEFAULT_COUNTRIES,
     SOURCE_ID,
-    enabled_bis_source_registry,
     read_since_dates_for_instruments,
     watermark_start_year,
 )
+from backend.app.datasources.incremental_route_activation import load_plain_source_registry
 from tests.macro_incremental_support import (
     FIXED_TODAY,
     bootstrap_macro_live_e2e_ctx,
@@ -49,7 +49,7 @@ def bis_incremental_e2e_ctx(tmp_path, monkeypatch: pytest.MonkeyPatch) -> dict[s
         since_reader=read_since_dates_for_instruments,
         instrument_ids=DEFAULT_COUNTRIES,
         service_builder=build_bis_incremental_service,
-        registry_factory=enabled_bis_source_registry,
+        registry_factory=load_plain_source_registry,
     )
 
 
@@ -300,7 +300,7 @@ def test_bisIncremental_liveNetwork_writesAxisObservation(
         since_reader=read_since_dates_for_instruments,
         instrument_ids=DEFAULT_COUNTRIES,
         service_builder=build_bis_incremental_service,
-        registry_factory=enabled_bis_source_registry,
+        registry_factory=load_plain_source_registry,
     )
     report = run_bis_incremental(
         ctx["orch"],
@@ -345,7 +345,7 @@ def test_bisIncremental_liveNetwork_idempotentSecondRun(
         since_reader=read_since_dates_for_instruments,
         instrument_ids=DEFAULT_COUNTRIES,
         service_builder=build_bis_incremental_service,
-        registry_factory=enabled_bis_source_registry,
+        registry_factory=load_plain_source_registry,
     )
     run_bis_incremental(
         ctx["orch"],

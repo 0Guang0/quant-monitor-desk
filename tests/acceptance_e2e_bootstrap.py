@@ -39,7 +39,7 @@ def bootstrap_port_live_e2e_ctx(
     data_domain: str,
     port_factory: Callable[..., Any],
     service_builder: Callable[..., Any],
-    registry_factory: Callable[[], Any],
+    registry_factory: Callable[[], Any] | None = None,
     since_reader: Callable[..., dict[str, Any]] | None = None,
     instrument_ids: tuple[str, ...] = (),
     port_kwargs: dict[str, Any] | None = None,
@@ -55,7 +55,7 @@ def bootstrap_port_live_e2e_ctx(
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
     cm = bootstrap_acceptance_cm(sandbox_root)
     with cm.writer() as con:
-        enable_source_route(
+        planner = enable_source_route(
             sandbox_root,
             source_id=source_id,
             data_domain=data_domain,
@@ -70,12 +70,13 @@ def bootstrap_port_live_e2e_ctx(
     if since_reader is not None:
         with cm.writer() as con:
             since_map = since_reader(con, instrument_ids)
-    registry = registry_factory()
+    registry = registry_factory() if registry_factory is not None else planner._registry
     service_kwargs: dict[str, Any] = {
         "data_root": raw_root,
         "fetch_port": port,
         "job_events": orch._jobs,
         "source_registry": registry,
+        "route_planner": planner,
     }
     if since_map:
         key = "since_by_series" if source_id == "fred" else "since_by_instrument"
@@ -83,7 +84,11 @@ def bootstrap_port_live_e2e_ctx(
             key = "since_by_cik"
         service_kwargs[key] = since_map
     service_kwargs.update(service_extra or {})
-    service = service_builder(**service_kwargs)
+    try:
+        service = service_builder(**service_kwargs)
+    except TypeError:
+        service_kwargs.pop("route_planner", None)
+        service = service_builder(**service_kwargs)
     return {
         "cm": cm,
         "orch": orch,
@@ -92,6 +97,7 @@ def bootstrap_port_live_e2e_ctx(
         "port": port,
         "raw_root": raw_root,
         "sandbox_root": sandbox_root,
+        "route_planner": planner,
     }
 
 

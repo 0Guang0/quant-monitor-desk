@@ -40,9 +40,16 @@ def assert_isolated_live_data_root(
     required_segment: str,
 ) -> Path:
     """Reject canonical main DB paths; require `.audit-sandbox/<required_segment>`."""
+    from backend.app.datasources.incremental_route_activation import (
+        is_audit_sandbox_data_root,
+    )
+
     resolved = resolve_sandbox_path(data_root).resolve()
-    posix = resolved.as_posix()
-    isolated_shape = ".audit-sandbox" in posix and required_segment in posix
+    has_segment = any(
+        part == required_segment or part.startswith(f"{required_segment}-")
+        for part in resolved.parts
+    )
+    isolated_shape = is_audit_sandbox_data_root(resolved) and has_segment
     if not isolated_shape and (
         is_canonical_main_db_path(resolved) or is_canonical_main_data_root(resolved)
     ):

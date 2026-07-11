@@ -19,6 +19,7 @@ from backend.app.cli.errors import (
     DOCS_ANCHOR_ORCHESTRATOR_SCHEDULER,
     DOCS_ANCHOR_RESOURCE_GUARD_PAUSED,
     error_for_route_status,
+    raise_if_ready_selected_mismatch,
 )
 from backend.app.config import DATA_ROOT
 from backend.app.core.resource_guard import Decision, ResourceGuard
@@ -302,32 +303,37 @@ def sync_baostock_incremental(
 
 
 def _gold_path_backfill_route_preview(
-    *, source_id: str, data_domain: str, operation: str
+    *,
+    source_id: str,
+    data_domain: str,
+    operation: str,
+    con=None,
+    platform_matrix_path=None,
 ):
-    """Route preview with runtime source enable (ADR-009 dry-run parity)."""
-    from backend.app.datasources.capability_registry import SourceCapabilityRegistry
-    from backend.app.datasources.route_planner import SourceRoutePlanner
-    from backend.app.datasources.service import DataSourceService
-    from backend.app.ops.macro_incremental_common import enabled_source_registry
+    """Route preview：只读问开关+安检（ADR-018 / E-CLI-20 全金路径）。"""
+    from backend.app.datasources.incremental_route_activation import (
+        plan_with_preferred_primary,
+    )
 
     if source_id == "fred" and data_domain == "macro_series":
         from backend.app.ops.fred_incremental_run import build_fred_incremental_preview_service
 
-        preview_svc = build_fred_incremental_preview_service()
-        plan = preview_svc.preview_route(data_domain=data_domain, operation=operation)
-    else:
-        registry = enabled_source_registry(source_id=source_id, data_domain=data_domain)
-        caps = SourceCapabilityRegistry()
-        caps.load()
-        planner = SourceRoutePlanner(source_registry=registry, capability_registry=caps)
-        planner._platform_allows = lambda _sid: (True, None)
-        service = DataSourceService(
-            staged_fixture_mode=False,
-            source_registry=registry,
-            capability_registry=caps,
-            route_planner=planner,
+        preview_svc = build_fred_incremental_preview_service(
+            platform_matrix_path=platform_matrix_path,
         )
-        plan = service.preview_route(data_domain=data_domain, operation=operation)
+        plan = preview_svc.preview_route(
+            data_domain=data_domain,
+            operation=operation,
+            con=con,
+        )
+    else:
+        plan = plan_with_preferred_primary(
+            source_id=source_id,
+            data_domain=data_domain,
+            operation=operation,
+            con=con,
+            platform_matrix_path=platform_matrix_path,
+        )
     guard_decision, guard_reason = ResourceGuard().check()
     return plan, guard_decision, guard_reason
 
@@ -444,16 +450,55 @@ def backfill_plan(
         ) from exc
 
     effective_end = shards[-1][2] if shards else date_end
-    plan, guard_decision, guard_reason = _gold_path_backfill_route_preview(
-        source_id=source_id,
-        data_domain=data_domain,
-        operation=op,
+    data_root = _path_env("QMD_DATA_ROOT", PROJECT_ROOT / "data")
+    db = data_root / "duckdb" / "quant_monitor.duckdb"
+    preview_con = None
+    platform_matrix_path = None
+    from backend.app.datasources.incremental_route_activation import (
+        ensure_sandbox_route_activation,
+        is_audit_sandbox_data_root,
     )
+    from backend.app.db.connection import ConnectionManager
+    from backend.app.db.migrate import apply_migrations
+
+    if is_audit_sandbox_data_root(data_root):
+        db.parent.mkdir(parents=True, exist_ok=True)
+        cm = ConnectionManager(db_path=db)
+        with cm.writer() as con:
+            apply_migrations(con)
+            platform_matrix_path = ensure_sandbox_route_activation(
+                con,
+                data_root=data_root,
+                source_id=source_id,
+                data_domain=data_domain,
+                operation=op,
+            )
+            preview_con = con
+            plan, guard_decision, guard_reason = _gold_path_backfill_route_preview(
+                source_id=source_id,
+                data_domain=data_domain,
+                operation=op,
+                con=preview_con,
+                platform_matrix_path=platform_matrix_path,
+            )
+    elif db.is_file():
+        cm = ConnectionManager(db_path=db)
+        with cm.reader() as con:
+            plan, guard_decision, guard_reason = _gold_path_backfill_route_preview(
+                source_id=source_id,
+                data_domain=data_domain,
+                operation=op,
+                con=con,
+            )
+    else:
+        plan, guard_decision, guard_reason = _gold_path_backfill_route_preview(
+            source_id=source_id,
+            data_domain=data_domain,
+            operation=op,
+        )
     symbol = instrument_id or (
         "DGS10" if data_domain == "macro_series" else "sh.600519"
     )
-    data_root = _path_env("QMD_DATA_ROOT", PROJECT_ROOT / "data")
-    db = data_root / "duckdb" / "quant_monitor.duckdb"
     use_mock = (
         resolve_baostock_incremental_use_mock()
         if source_id == "baostock"
@@ -484,7 +529,7 @@ def backfill_plan(
         "shard_count": len(shards),
         "shards": shard_plan,
         "route_status": plan.route_status,
-        "selected_source_id": plan.selected_source_id or source_id,
+        "selected_source_id": plan.selected_source_id,
         "resource_guard_decision": guard_decision.value,
         "clean_table": target.target_table,
         "write_mode": target.write_mode,
@@ -502,6 +547,12 @@ def backfill_plan(
             plan.route_status,
             detail=f"backfill blocked for domain={data_domain!r}",
         )
+    raise_if_ready_selected_mismatch(
+        route_status=plan.route_status,
+        selected_source_id=plan.selected_source_id,
+        requested_source_id=source_id,
+        job_kind="backfill",
+    )
 
     if dry_run:
         from backend.app.cli.phase1_acceptance import (
@@ -519,7 +570,7 @@ def backfill_plan(
             data_root=data_root,
             route_payload={
                 "data_domain": data_domain,
-                "selected_source_id": plan.selected_source_id or source_id,
+                "selected_source_id": plan.selected_source_id,
                 "operation": op,
                 "route_status": plan.route_status,
                 "route_plan_id": getattr(plan, "route_plan_id", None),
@@ -787,24 +838,46 @@ def sync_mootdx_incremental(
 
     data_domain = "cn_equity_daily_bar"
     op = "fetch_daily_bar"
-    from backend.app.datasources.service import DataSourceService
-    from backend.app.ops.macro_incremental_common import enabled_source_registry
-
-    mootdx_registry = enabled_source_registry(source_id="mootdx", data_domain=data_domain)
-    preview_svc = DataSourceService(
-        staged_fixture_mode=False, source_registry=mootdx_registry
+    from backend.app.config import PROJECT_ROOT, _path_env
+    from backend.app.datasources.incremental_route_activation import (
+        build_activation_route_planner,
+        is_audit_sandbox_data_root,
     )
-    plan = preview_svc.preview_route(data_domain=data_domain, operation=op)
+    from backend.app.datasources.service import DataSourceService
+    from backend.app.db.connection import ConnectionManager
+
+    data_root = _path_env("QMD_DATA_ROOT", PROJECT_ROOT / "data")
+    db = data_root / "duckdb" / "quant_monitor.duckdb"
+    preview_kwargs: dict[str, object] = {
+        "data_domain": data_domain,
+        "operation": op,
+    }
+    service_kwargs: dict[str, object] = {"staged_fixture_mode": False}
+    if is_audit_sandbox_data_root(data_root):
+        # Sync dry-run: fail-closed（禁静默 ensure）；overlay 由测侧 prepare_* 显式写入。
+        from backend.app.cli.incremental_sync_router import _sandbox_preview_binding
+
+        with _sandbox_preview_binding("mootdx") as (preview_con, matrix_path):
+            planner = build_activation_route_planner(
+                platform_matrix_path=matrix_path,
+            )
+            plan = planner.plan(
+                data_domain=data_domain,
+                operation=op,
+                run_id="preview-run",
+                job_id="preview-job",
+                con=preview_con,
+                preferred_primary_source_id="mootdx",
+            )
+    else:
+        preview_svc = DataSourceService(**service_kwargs)
+        plan = preview_svc.preview_route(**preview_kwargs)
     guard_decision, guard_reason = ResourceGuard().check()
     preview = {
         "route_status": plan.route_status,
         "selected_source_id": plan.selected_source_id,
     }
-    from backend.app.config import PROJECT_ROOT, _path_env
-
     symbol = instrument_id or "sh.600519"
-    data_root = _path_env("QMD_DATA_ROOT", PROJECT_ROOT / "data")
-    db = data_root / "duckdb" / "quant_monitor.duckdb"
 
     if not dry_run:
         from backend.app.cli.phase1_acceptance import (

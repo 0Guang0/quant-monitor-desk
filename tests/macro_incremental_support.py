@@ -38,12 +38,12 @@ def build_macro_e2e_ctx(
     since_reader: Callable,
     instrument_ids: tuple[str, ...],
     service_builder: Callable,
-    registry_factory: Callable,
+    registry_factory: Callable | None = None,
 ) -> dict[str, Any]:
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
     cm = bootstrap_macro_incremental_db(tmp_path)
     with cm.writer() as con:
-        enable_source_route(
+        planner = enable_source_route(
             tmp_path,
             source_id=source_id,
             data_domain=data_domain,
@@ -55,14 +55,24 @@ def build_macro_e2e_ctx(
     orch = DataSyncOrchestrator(cm)
     with cm.writer() as con:
         since_map = since_reader(con, instrument_ids)
-    registry = registry_factory()
-    service = service_builder(
-        data_root=raw_root,
-        fetch_port=fetch_port,
-        since_by_instrument=since_map,
-        job_events=orch._jobs,
-        source_registry=registry,
+    registry = (
+        registry_factory()
+        if registry_factory is not None
+        else planner._registry
     )
+    service_kwargs: dict[str, Any] = {
+        "data_root": raw_root,
+        "fetch_port": fetch_port,
+        "since_by_instrument": since_map,
+        "job_events": orch._jobs,
+        "source_registry": registry,
+        "route_planner": planner,
+    }
+    try:
+        service = service_builder(**service_kwargs)
+    except TypeError:
+        service_kwargs.pop("route_planner", None)
+        service = service_builder(**service_kwargs)
     return {
         "cm": cm,
         "orch": orch,
@@ -70,6 +80,8 @@ def build_macro_e2e_ctx(
         "registry": registry,
         "port": fetch_port,
         "raw_root": raw_root,
+        "sandbox_root": tmp_path,
+        "route_planner": planner,
     }
 
 
@@ -83,32 +95,44 @@ def bootstrap_macro_live_e2e_ctx(
     since_reader: Callable,
     instrument_ids: tuple[str, ...],
     service_builder: Callable,
-    registry_factory: Callable,
+    registry_factory: Callable | None = None,
 ) -> dict[str, Any]:
     """Bootstrap macro live e2e under isolated source-route-db sandbox (ADR-015)."""
     monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
-    enable_source_route(
-        tmp_path,
-        source_id=source_id,
-        data_domain=data_domain,
-        primary_source_id=source_id,
-    )
     cm = bootstrap_acceptance_cm(sandbox_root)
+    with cm.writer() as con:
+        planner = enable_source_route(
+            sandbox_root,
+            source_id=source_id,
+            data_domain=data_domain,
+            primary_source_id=source_id,
+            con=con,
+        )
     raw_root = sandbox_root / "raw" / source_id
     raw_root.mkdir(parents=True, exist_ok=True)
     port = port_factory(use_mock=False)
     orch = DataSyncOrchestrator(cm)
     with cm.writer() as con:
         since_map = since_reader(con, instrument_ids)
-    registry = registry_factory()
-    service = service_builder(
-        data_root=raw_root,
-        fetch_port=port,
-        since_by_instrument=since_map,
-        job_events=orch._jobs,
-        source_registry=registry,
+    registry = (
+        registry_factory()
+        if registry_factory is not None
+        else planner._registry
     )
+    service_kwargs: dict[str, Any] = {
+        "data_root": raw_root,
+        "fetch_port": port,
+        "since_by_instrument": since_map,
+        "job_events": orch._jobs,
+        "source_registry": registry,
+        "route_planner": planner,
+    }
+    try:
+        service = service_builder(**service_kwargs)
+    except TypeError:
+        service_kwargs.pop("route_planner", None)
+        service = service_builder(**service_kwargs)
     return {
         "cm": cm,
         "orch": orch,
@@ -117,6 +141,7 @@ def bootstrap_macro_live_e2e_ctx(
         "port": port,
         "raw_root": raw_root,
         "sandbox_root": sandbox_root,
+        "route_planner": planner,
     }
 
 

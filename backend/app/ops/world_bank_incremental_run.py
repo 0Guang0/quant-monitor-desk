@@ -19,7 +19,6 @@ from backend.app.ops.macro_incremental_common import (
     build_macro_incremental_service,
     compute_since_date,
     compute_world_bank_since_date,
-    enabled_source_registry,
     read_observation_date_watermark,
     read_since_dates_for_instruments,
     run_macro_incremental,
@@ -36,10 +35,6 @@ _WB_INDICATORS = (DEFAULT_INDICATOR, SECONDARY_INDICATOR)
 
 def clean_indicator_id(country_code: str, *, indicator_id: str = DEFAULT_INDICATOR) -> str:
     return f"{country_code}|{indicator_id}"
-
-
-def enabled_world_bank_source_registry():
-    return enabled_source_registry(source_id=SOURCE_ID, data_domain=DATA_DOMAIN)
 
 
 def _reject_unknown_country(country: str) -> None:
@@ -118,6 +113,8 @@ def build_world_bank_incremental_service(
     since_by_instrument: dict[str, str],
     job_events=None,
     source_registry=None,
+    route_planner=None,
+    platform_matrix_path=None,
 ) -> MacroIncrementalFetchProxy:
     return build_macro_incremental_service(
         config=_WB_CONFIG,
@@ -126,6 +123,8 @@ def build_world_bank_incremental_service(
         since_by_instrument=since_by_instrument,
         job_events=job_events,
         source_registry=source_registry,
+        route_planner=route_planner,
+        platform_matrix_path=platform_matrix_path,
     )
 
 

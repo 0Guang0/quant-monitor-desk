@@ -25,12 +25,21 @@ def test_fredIncrementalCli_dryRun_includesSourceId(
     失败含义：CLI 旗标与 Plan audit F4 修复后契约不一致
     """
     from backend.app.cli import data_commands
+    from backend.app.datasources.incremental_route_activation import (
+        prepare_audit_sandbox_route_activation,
+    )
 
     data_root = tmp_path / ".audit-sandbox" / "wave3-accept" / "data"
     data_root.mkdir(parents=True)
     monkeypatch.setenv("QMD_DATA_ROOT", str(data_root))
     monkeypatch.setattr(data_commands, "DATA_ROOT", data_root)
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    prepare_audit_sandbox_route_activation(
+        data_root,
+        source_id="fred",
+        data_domain="macro_series",
+        operation="fetch_macro_series",
+    )
     payload = sync_plan(
         data_domain="macro_series",
         source_id="fred",

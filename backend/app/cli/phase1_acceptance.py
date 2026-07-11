@@ -56,8 +56,15 @@ DOMAIN_FETCH_OPERATIONS: dict[str, str] = {
 JobKind = Literal["sync", "backfill", "full-load", "scheduler"]
 
 def is_production_equivalent_acceptance_root(data_root: Path | str) -> bool:
-    posix = Path(data_root).expanduser().resolve().as_posix()
-    return ".audit-sandbox" in posix and SOURCE_ROUTE_DB_SANDBOX_SEGMENT in posix
+    from backend.app.datasources.incremental_route_activation import (
+        is_audit_sandbox_data_root,
+    )
+
+    root = Path(data_root).expanduser().resolve()
+    if not is_audit_sandbox_data_root(root):
+        return False
+    seg = SOURCE_ROUTE_DB_SANDBOX_SEGMENT
+    return any(part == seg or part.startswith(f"{seg}-") for part in root.parts)
 
 
 def compute_gate_eligible(*, job_kind: str, data_root: Path, dry_run: bool) -> bool:

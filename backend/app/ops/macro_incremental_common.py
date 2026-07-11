@@ -130,32 +130,6 @@ def read_since_dates_for_instruments(
     }
 
 
-def enabled_source_registry(*, source_id: str, data_domain: str):
-    """Enable one source + domain on a loaded SourceRegistry (incremental CLI/tests)."""
-    from backend.app.datasources.source_registry import DomainRoleBinding, SourceRegistry
-
-    registry = SourceRegistry()
-    registry.load()
-    rec = registry.get(source_id)
-    object.__setattr__(rec, "is_enabled", True)
-    orig = registry.get_domain_roles
-
-    def _domain_enabled(domain: str):
-        binding = orig(domain)
-        if domain != data_domain:
-            return binding
-        return DomainRoleBinding(
-            primary_source_id=source_id,
-            validation_source_id=binding.validation_source_id,
-            fallback_policy=binding.fallback_policy,
-            domain_enabled_by_default=True,
-            fallback_source_ids=binding.fallback_source_ids,
-        )
-
-    registry.get_domain_roles = _domain_enabled  # type: ignore[method-assign]
-    return registry
-
-
 def build_axis_observation_row(
     *,
     indicator_id: str,
@@ -171,7 +145,8 @@ def build_axis_observation_row(
     as_of = date.fromisoformat(obs_date[:10])
     as_of_dt = datetime.combine(as_of, time(16, 0), tzinfo=UTC)
     publish_dt = datetime.combine(as_of, time(0, 0), tzinfo=UTC)
-    # ponytail: PK from indicator+date only — live bundle content_hash changes per fetch
+    # ponytail: PK from indicator+date only — live bundle content_hash changes per fetch.
+    # Ceiling: same-day content rewrite will not new-row; upgrade when content-addressed PK lands.
     obs_id = str(uuid.uuid5(uuid.NAMESPACE_URL, f"{indicator_id}|{obs_date}"))
     return {
         "observation_id": obs_id,
@@ -425,17 +400,40 @@ class MacroIncrementalSourceConfig:
     indicator_resolver: Callable[[str], str] | None = None
 
 
-def load_incremental_route_bundle(*, source_id: str, data_domain: str, source_registry=None):
+def load_incremental_route_bundle(
+    *,
+    source_id: str,
+    data_domain: str,
+    source_registry=None,
+    capability_registry=None,
+    platform_matrix_path: Path | None = None,
+    activation_con=None,
+):
+    """Load clean registry + planner（ADR-018：无 ESR / 无强制 platform）。
+
+    启用只经由 ask_activation(con=) / overlay；平台矩阵可由沙箱夹具注入。
+    """
+    del source_id, data_domain  # 保留关键字以兼容调用方；启用不再改内存 registry
     from backend.app.datasources.capability_registry import SourceCapabilityRegistry
     from backend.app.datasources.route_planner import SourceRoutePlanner
+    from backend.app.datasources.source_registry import SourceRegistry
 
-    registry = source_registry or enabled_source_registry(
-        source_id=source_id, data_domain=data_domain
+    if source_registry is None:
+        registry = SourceRegistry()
+        registry.load()
+    else:
+        registry = source_registry
+    if capability_registry is None:
+        caps = SourceCapabilityRegistry()
+        caps.load()
+    else:
+        caps = capability_registry
+    planner = SourceRoutePlanner(
+        source_registry=registry,
+        capability_registry=caps,
+        platform_matrix_path=platform_matrix_path,
+        activation_con=activation_con,
     )
-    caps = SourceCapabilityRegistry()
-    caps.load()
-    planner = SourceRoutePlanner(source_registry=registry, capability_registry=caps)
-    planner._platform_allows = lambda _sid: (True, None)
     return registry, caps, planner
 
 
@@ -447,12 +445,22 @@ def build_macro_incremental_service(
     since_by_instrument: dict[str, str],
     job_events=None,
     source_registry=None,
+    capability_registry=None,
+    platform_matrix_path: Path | None = None,
+    route_planner=None,
 ) -> MacroIncrementalFetchProxy:
-    registry, caps, planner = load_incremental_route_bundle(
-        source_id=config.source_id,
-        data_domain=config.data_domain,
-        source_registry=source_registry,
-    )
+    if route_planner is not None:
+        registry = route_planner.source_registry
+        caps = route_planner.capability_registry
+        planner = route_planner
+    else:
+        registry, caps, planner = load_incremental_route_bundle(
+            source_id=config.source_id,
+            data_domain=config.data_domain,
+            source_registry=source_registry,
+            capability_registry=capability_registry,
+            platform_matrix_path=platform_matrix_path,
+        )
     inner = DataSourceService(
         data_root=data_root,
         fetch_port=fetch_port,
@@ -489,6 +497,7 @@ def run_macro_incremental(
     instrument_ids: Sequence[str],
     use_mock: bool = True,
     source_registry=None,
+    platform_matrix_path: Path | None = None,
 ) -> MacroIncrementalRunReport:
     """Run incremental sync for each instrument via gold path."""
     target = resolve_clean_write_target(config.data_domain)
@@ -514,6 +523,8 @@ def run_macro_incremental(
         since_by_instrument=since_map,
         job_events=orch._jobs,
         source_registry=source_registry,
+        platform_matrix_path=platform_matrix_path,
+        route_planner=getattr(service._inner, "_route_planner", None),
     )
     results: list[dict[str, Any]] = []
     total_rows = 0

@@ -68,13 +68,24 @@ def test_mootdxIncremental_opsRun_writesSecurityBar1d(tmp_path: Path, monkeypatc
     raw_root = tmp_path / "raw"
     raw_root.mkdir()
     from backend.app.sync.orchestrator import DataSyncOrchestrator
+    from tests.service_path_support import enable_source_route
 
     orch = DataSyncOrchestrator(cm)
+    with cm.writer() as con:
+        planner = enable_source_route(
+            tmp_path,
+            source_id="mootdx",
+            data_domain="cn_equity_daily_bar",
+            primary_source_id="mootdx",
+            operation="fetch_daily_bar",
+            con=con,
+        )
     service = build_mootdx_incremental_service(
         data_root=raw_root,
         symbol=SYMBOL,
         job_events=orch._jobs,
         use_mock=True,
+        route_planner=planner,
     )
     run_result = run_mootdx_bar_incremental(
         orch,

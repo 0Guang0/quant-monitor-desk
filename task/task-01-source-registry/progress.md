@@ -1,11 +1,32 @@
 # task-01-source-registry · Progress
 
-> **planning-with-files 会话日志** · 更新：2026-07-11
+> **planning-with-files 会话日志** · 更新：2026-07-12
+
+## Session: 2026-07-12（并行：测试资产治理 Batch A–G）
+
+### Phase: pytest 资产治理（≠ 票 08 / ≠ G1-02）
+- **Status:** Batch A–G 已落盘（见根 `HANDOFF.md` §0）；**未**宣称 task 关账 / R4
+- Actions taken:
+  - 不改 `backend/`（测债线）/ 不改 `**/design/**`
+  - meta / YAML parity / artifact-guard → `scripts/`（接 production_gate）或 `phase-scripts/`
+  - 一次性 `.scratch/_batch_*` 用完即删；正式 `check_*.py` 保留
+  - 下一治理刀：Batch H+（按入库日）；与 G1-02 Frontier=票 08 **分线**
+
+## Session: 2026-07-12（票 06∥07 · Execute CLOSED + pragmatic L5 清零）
+
+### Phase: 06∥07 Execute CLOSED（completion-check）+ L5 审查清零
+- **Status:** 票 06/07 **Execute CLOSED**（`completion-check-execute.md` 对象 F/G）；L5 可修 finding 已闭环（`T01-REV-L5-0607`）；**G1-02/R4 仍 OPEN**
+- Actions taken:
+  - 生产 ESR→overlay；`preferred_primary`；sync/backfill fail-closed；hygiene `--strict`
+  - `/completion-check` 对象 F/G CLOSED；Frontier → 票 **08**
+  - L5 清零：沙箱路径段精确匹配、preferred 域外不注入（capability 闸）、抽 preview/选源 helper、去 bare-except、writer 锁外构 planner、tmp 清理、干净 bundle 测
+  - **仍开放：** F06、F07、F08、F09（待复验）、F10–F12、F03 余 4x、FRED 合并票 10
+  - **禁止声称：** G1-02 CLOSED / R4 / 夹具零构造 / 无 con 回落已删 / FRED 合并
 
 ## Session: 2026-07-11
 
 ### Phase 0: 权威对齐、审计与方案评审门
-- **Status:** in_progress（Gate 0 + ADR-018；G1-01 READY；票 **01–05** Execute CLOSED；下一刀 **06∥07**（4a/4b）；开放债 F05-A/F06/F07；R4 / G1-02 仍 OPEN）
+- **Status:** in_progress（Gate 0 + ADR-018；G1-01 READY；票 **01–05** Execute CLOSED；票 **06∥07** 实现已绿待 CC；开放债 F06/F07/F08+/票 08；R4 / G1-02 仍 OPEN）
 - **Started:** —
 - Actions taken:
   - 三件套占位创建（planning-with-files）
@@ -44,11 +65,12 @@
   - 2026-07-11：**票 04/05 Execute CLOSED**（`completion-check-execute.md` 对象 D/E）；关账前闭环 A7；余 F05-A/F06/F07 严格后置票 06/07。下一刀 06∥07；G1-02/R4 仍 OPEN。
   - 2026-07-11：**完整重写 [`HANDOFF.md`](HANDOFF.md)**（下一刀 06∥07）；同步 scratch README Frontier；对齐 findings F03 / progress 文首。
   - 2026-07-12：**补台账缺口**：findings F05-A **完整 node-id 表**（基线 terminal 652051 + `test:quick` 现红 mootdx Layer5）；新建最小 [`PROJECT_IMPLEMENTATION_ROADMAP.md`](../../PROJECT_IMPLEMENTATION_ROADMAP.md) 完成双登记；scratch 票 06/07 勾选 F05-A；HANDOFF/INDEX/待修复清单已交叉引用。
+  - 2026-07-12：**测试资产治理**（testing-guidelines + completion-check）：删 `test_etest_overlay_governance` / `test_acceptance_e2e_bootstrap`（meta/vacuous）；`test_g1_02_*` 静态扫描迁 `phase-scripts/check_g1_02_esr_fixture_hygiene.py`；保留正式入口行为测与生产契约门。详见 `note.md`「测试资产治理」。
 - Files created/modified:
   - `task_plan.md` · `findings.md` · `progress.md` · `note.md`
   - `g1-02-execution-brief.md` · `EXECUTION-DOC-INDEX.md`
   - `route_planner.py` · `route_models.py` · `service.py` · `event_payload.py`
-  - `tests/service_path_support.py` · `test_route_planner_activation.py` · `test_etest_overlay_governance.py`
+  - `tests/service_path_support.py` · `test_route_planner_activation.py` · `phase-scripts/check_g1_02_esr_fixture_hygiene.py`
   - `test_datasource_service.py` · `test_datasource_route_grade_payload.py` · `test_sync_orchestrator.py`
   - `capability_registry.py` · `source_capabilities.yaml` · `source_capability_contract.yaml`
   - `source_registry.py` · `source_registry.yaml` · 相关测试 / fixture

@@ -262,12 +262,20 @@ def build_cninfo_incremental_service(
     since_by_instrument: dict[str, str],
     job_events=None,
     source_registry=None,
+    route_planner=None,
+    platform_matrix_path=None,
 ) -> CninfoIncrementalFetchProxy:
-    registry, caps, planner = load_incremental_route_bundle(
-        source_id="cninfo",
-        data_domain="cn_announcements",
-        source_registry=source_registry,
-    )
+    if route_planner is not None:
+        registry = route_planner.source_registry
+        caps = route_planner.capability_registry
+        planner = route_planner
+    else:
+        registry, caps, planner = load_incremental_route_bundle(
+            source_id="cninfo",
+            data_domain="cn_announcements",
+            source_registry=source_registry,
+            platform_matrix_path=platform_matrix_path,
+        )
     inner = DataSourceService(
         data_root=data_root,
         fetch_port=fetch_port,
@@ -308,6 +316,7 @@ def run_cninfo_incremental(
         since_by_instrument=since_map,
         job_events=orch._jobs,
         source_registry=source_registry,
+        route_planner=getattr(service._inner, "_route_planner", None),
     )
     with _cninfo_staging_adapter_patch(fetch_port), _cninfo_incremental_validation_patch():
         for symbol in symbols:

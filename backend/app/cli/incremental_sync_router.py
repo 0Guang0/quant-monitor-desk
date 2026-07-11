@@ -10,6 +10,7 @@ from backend.app.cli.errors import (
     DOCS_ANCHOR_DATA_SYNC_CLI,
     DOCS_ANCHOR_RESOURCE_GUARD_PAUSED,
     error_for_route_status,
+    raise_if_ready_selected_mismatch,
 )
 from backend.app.core.resource_guard import ResourceGuard
 from backend.app.db.connection import ConnectionManager
@@ -32,8 +33,12 @@ def _data_root_and_db():
 def _require_audit_sandbox_data_root(data_root) -> None:
     from pathlib import Path
 
+    from backend.app.datasources.incremental_route_activation import (
+        is_audit_sandbox_data_root,
+    )
+
     resolved = Path(data_root)
-    if ".audit-sandbox" not in resolved.as_posix():
+    if not is_audit_sandbox_data_root(resolved):
         raise CliFailure(
             error_code="INVALID_INPUT",
             message="Incremental sync dry-run requires QMD_DATA_ROOT under .audit-sandbox",
@@ -48,9 +53,11 @@ def _require_audit_sandbox_data_root(data_root) -> None:
 
 
 def _sandbox_db_readable(data_root) -> bool:
-    from pathlib import Path
+    from backend.app.datasources.incremental_route_activation import (
+        is_audit_sandbox_data_root,
+    )
 
-    return ".audit-sandbox" in Path(data_root).as_posix()
+    return is_audit_sandbox_data_root(data_root)
 
 
 def _parse_end(end: str | None) -> date:
@@ -61,19 +68,44 @@ def _parse_end(end: str | None) -> date:
     return datetime.now(UTC).date()
 
 
+def _sandbox_preview_binding(source_id: str):
+    """沙箱 duckdb 存在时传入 con + 平台矩阵，供 ask_activation 读 overlay（ADR-018）。"""
+    from contextlib import contextmanager
+    from pathlib import Path
+
+    @contextmanager
+    def _ctx():
+        data_root, db = _data_root_and_db()
+        matrix = Path(data_root) / "platform-matrix" / f"platform-matrix-{source_id}.yaml"
+        matrix_path = matrix if matrix.is_file() else None
+        if _sandbox_db_readable(data_root) and db.is_file():
+            with ConnectionManager(db_path=db).reader() as con:
+                yield con, matrix_path
+        else:
+            yield None, matrix_path
+
+    return _ctx()
+
+
 def _incremental_route_preview(
     *,
     source_id: str,
     data_domain: str,
     operation: str,
+    con=None,
+    platform_matrix_path=None,
 ):
-    from backend.app.datasources.service import DataSourceService
-    from backend.app.datasources.source_registry import SourceRegistry
+    from backend.app.datasources.incremental_route_activation import (
+        plan_with_preferred_primary,
+    )
 
-    registry = SourceRegistry()
-    registry.load()
-    service = DataSourceService(staged_fixture_mode=False, source_registry=registry)
-    plan = service.preview_route(data_domain=data_domain, operation=operation)
+    plan = plan_with_preferred_primary(
+        source_id=source_id,
+        data_domain=data_domain,
+        operation=operation,
+        con=con,
+        platform_matrix_path=platform_matrix_path,
+    )
     guard_decision, guard_reason = ResourceGuard().check()
     return plan, guard_decision, guard_reason
 
@@ -87,11 +119,14 @@ def _dry_run_shell(
     write_mode: str,
     extra: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    plan, guard_decision, guard_reason = _incremental_route_preview(
-        source_id=source_id,
-        data_domain=data_domain,
-        operation=operation,
-    )
+    with _sandbox_preview_binding(source_id) as (preview_con, matrix_path):
+        plan, guard_decision, guard_reason = _incremental_route_preview(
+            source_id=source_id,
+            data_domain=data_domain,
+            operation=operation,
+            con=preview_con,
+            platform_matrix_path=matrix_path,
+        )
     if guard_decision.value != "OK":
         raise CliFailure(
             error_code="RESOURCE_GUARD_PAUSED",
@@ -100,7 +135,13 @@ def _dry_run_shell(
             retryable=True,
         )
     route_status = plan.route_status
-    selected_source_id = plan.selected_source_id or source_id
+    selected_source_id = plan.selected_source_id
+    raise_if_ready_selected_mismatch(
+        route_status=route_status,
+        selected_source_id=selected_source_id,
+        requested_source_id=source_id,
+        job_kind="sync dry-run",
+    )
     if route_status != "READY":
         raise error_for_route_status(
             route_status,
@@ -299,8 +340,18 @@ def sync_incremental_by_source_id(
 
         op = operation or "fetch_macro_series"
         selected = series_ids or tuple(sorted(P0_SERIES_WHITELIST))[:1]
-        preview_svc = build_fred_incremental_preview_service()
-        plan = preview_svc.preview_route(data_domain=canonical, operation=op)
+        since_map: dict[str, str] = {}
+        with _sandbox_preview_binding(source_id) as (preview_con, matrix_path):
+            preview_svc = build_fred_incremental_preview_service(
+                platform_matrix_path=matrix_path,
+            )
+            plan = preview_svc.preview_route(
+                data_domain=canonical,
+                operation=op,
+                con=preview_con,
+            )
+            if preview_con is not None:
+                since_map = read_since_dates_for_series(preview_con, selected)
         guard_decision, guard_reason = ResourceGuard().check()
         if guard_decision.value != "OK":
             raise CliFailure(
@@ -314,11 +365,6 @@ def sync_incremental_by_source_id(
                 plan.route_status,
                 detail=f"sync dry-run blocked for source_id={source_id!r}",
             )
-        since_map: dict[str, str] = {}
-        data_root, db = _data_root_and_db()
-        if _sandbox_db_readable(data_root) and db.is_file():
-            with ConnectionManager(db_path=db).reader() as con:
-                since_map = read_since_dates_for_series(con, selected)
         if since:
             since_map = {sid: since for sid in selected}
         target = resolve_clean_write_target(canonical)

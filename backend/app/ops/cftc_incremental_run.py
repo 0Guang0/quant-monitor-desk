@@ -17,7 +17,6 @@ from backend.app.ops.macro_incremental_common import (
     build_axis_observation_row,
     build_macro_incremental_service,
     compute_since_date,
-    enabled_source_registry,
     read_observation_date_watermark,
     read_since_dates_for_instruments,
     run_macro_incremental,
@@ -28,10 +27,6 @@ SOURCE_ID = "cftc_cot"
 DATA_DOMAIN = "cot_positioning"
 DEFAULT_MARKETS = ("088691",)
 WEEKLY_ADVANCE_DAYS = 7
-
-
-def enabled_cftc_source_registry():
-    return enabled_source_registry(source_id=SOURCE_ID, data_domain=DATA_DOMAIN)
 
 
 def read_since_dates_for_markets(con, market_codes, **kwargs):
@@ -107,6 +102,8 @@ def build_cftc_incremental_service(
     since_by_instrument: dict[str, str],
     job_events=None,
     source_registry=None,
+    route_planner=None,
+    platform_matrix_path=None,
 ) -> MacroIncrementalFetchProxy:
     return build_macro_incremental_service(
         config=_CFTC_CONFIG,
@@ -115,6 +112,8 @@ def build_cftc_incremental_service(
         since_by_instrument=since_by_instrument,
         job_events=job_events,
         source_registry=source_registry,
+        route_planner=route_planner,
+        platform_matrix_path=platform_matrix_path,
     )
 
 

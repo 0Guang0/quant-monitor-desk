@@ -76,3 +76,25 @@ def error_for_route_status(route_status: str, *, detail: str) -> CliFailure:
         docs_anchor=anchor,
         manual_confirmation_required=code in {"DISABLED_SOURCE", "USER_AUTH_REQUIRED"},
     )
+
+
+def raise_if_ready_selected_mismatch(
+    *,
+    route_status: str,
+    selected_source_id: str | None,
+    requested_source_id: str,
+    job_kind: str,
+) -> None:
+    """READY 时 selected 必须等于 CLI 请求源（禁止用请求 id 粉饰选源）。"""
+    if route_status != "READY":
+        return
+    if selected_source_id == requested_source_id:
+        return
+    raise CliFailure(
+        error_code="INVALID_INPUT",
+        message=(
+            f"{job_kind} selected {selected_source_id!r} "
+            f"but requested {requested_source_id!r}"
+        ),
+        docs_anchor=DOCS_ANCHOR_DATA_SYNC_CLI,
+    )

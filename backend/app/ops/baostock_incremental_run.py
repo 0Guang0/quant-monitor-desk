@@ -28,16 +28,22 @@ def build_baostock_incremental_service(
     symbol: str,
     job_events,
     use_mock: bool | None = None,
+    route_planner=None,
 ) -> DataSourceService:
     """Construct DataSourceService for baostock bar incremental sync."""
     mock = resolve_baostock_incremental_use_mock() if use_mock is None else use_mock
     port = create_baostock_fetch_port(symbols=(symbol,), max_rows=500, use_mock=mock)
-    return DataSourceService(
-        data_root=data_root,
-        fetch_port=port,
-        job_events=job_events,
-        product_live_mode=not mock,
-    )
+    kwargs: dict = {
+        "data_root": data_root,
+        "fetch_port": port,
+        "job_events": job_events,
+        "product_live_mode": not mock,
+    }
+    if route_planner is not None:
+        kwargs["route_planner"] = route_planner
+        kwargs["source_registry"] = route_planner.source_registry
+        kwargs["capability_registry"] = route_planner.capability_registry
+    return DataSourceService(**kwargs)
 
 
 @dataclass(frozen=True)

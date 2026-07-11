@@ -225,12 +225,20 @@ def build_sec_edgar_incremental_service(
     since_by_cik: dict[str, str],
     job_events=None,
     source_registry=None,
+    route_planner=None,
+    platform_matrix_path=None,
 ) -> MacroIncrementalFetchProxy:
-    registry, caps, planner = load_incremental_route_bundle(
-        source_id="sec_edgar",
-        data_domain="us_filings",
-        source_registry=source_registry,
-    )
+    if route_planner is not None:
+        registry = route_planner.source_registry
+        caps = route_planner.capability_registry
+        planner = route_planner
+    else:
+        registry, caps, planner = load_incremental_route_bundle(
+            source_id="sec_edgar",
+            data_domain="us_filings",
+            source_registry=source_registry,
+            platform_matrix_path=platform_matrix_path,
+        )
     inner = DataSourceService(
         data_root=data_root,
         fetch_port=fetch_port,
@@ -266,6 +274,7 @@ def run_sec_edgar_incremental(
         since_by_cik=since_map,
         job_events=orch._jobs,
         source_registry=source_registry,
+        route_planner=getattr(service._inner, "_route_planner", None),
     )
     with _sec_edgar_staging_adapter_patch(fetch_port), _sec_edgar_incremental_validation_patch():
         for cik in ciks:

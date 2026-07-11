@@ -8,9 +8,10 @@ from tests.service_path_support import build_test_adapter
 from backend.app.datasources.fetch_ports.mootdx_port import create_mootdx_fetch_port
 from backend.app.datasources.fetch_ports.tdx_fetch_guards import EQUITY_INDEX_MAX_ROWS
 from backend.app.datasources.fetch_result import FetchRequest
-from backend.app.ops.macro_incremental_common import enabled_source_registry
+from backend.app.datasources.incremental_route_activation import load_plain_source_registry
 from backend.app.db.connection import ConnectionManager
 from backend.app.db.migrate import apply_migrations
+from tests.service_path_support import enable_source_route
 
 SYMBOL = "sh.600519"
 FIXTURE_DATE = "2024-06-25"
@@ -27,12 +28,17 @@ def test_mootdxAdapter_fetchPortPath_populatesStaging(tmp_path: Path) -> None:
     cm = ConnectionManager(db)
     with cm.writer() as con:
         apply_migrations(con)
+        planner = enable_source_route(
+            tmp_path,
+            source_id="mootdx",
+            data_domain="cn_equity_daily_bar",
+            primary_source_id="mootdx",
+            con=con,
+        )
     port = create_mootdx_fetch_port(
         symbols=(SYMBOL,), max_rows=EQUITY_INDEX_MAX_ROWS, use_mock=True
     )
-    registry = enabled_source_registry(
-        source_id="mootdx", data_domain="cn_equity_daily_bar"
-    )
+    registry = planner._registry
     adapter = build_test_adapter(
         "mootdx",
         registry,

@@ -15,6 +15,7 @@ from backend.app.datasources.fetch_ports.alpha_vantage_port import create_alpha_
 from backend.app.ops.alpha_vantage_incremental_run import build_alpha_vantage_incremental_service
 from backend.app.sync.orchestrator import DataSyncOrchestrator
 from tests.acceptance_e2e_bootstrap import bootstrap_port_live_e2e_ctx
+from tests.service_path_support import enable_source_route
 
 SYMBOL = "AAPL"
 FIXTURE_END = date(2024, 1, 3)
@@ -47,11 +48,6 @@ def bootstrap_alpha_vantage_live_e2e_ctx(
     monkeypatch: pytest.MonkeyPatch,
 ) -> dict[str, Any]:
     """Bootstrap Alpha Vantage live e2e under isolated source-route-db sandbox (ADR-015)."""
-    from backend.app.ops.alpha_vantage_incremental_run import (
-        build_alpha_vantage_incremental_service,
-        enabled_alpha_vantage_source_registry,
-    )
-
     return bootstrap_port_live_e2e_ctx(
         sandbox_root,
         monkeypatch,
@@ -61,7 +57,7 @@ def bootstrap_alpha_vantage_live_e2e_ctx(
             symbols=(SYMBOL,), max_rows=500, **kw
         ),
         service_builder=build_alpha_vantage_incremental_service,
-        registry_factory=enabled_alpha_vantage_source_registry,
+        registry_factory=None,
         env_key="ALPHA_VANTAGE_API_KEY",
     )
 
@@ -71,18 +67,30 @@ def alpha_vantage_incremental_e2e_ctx(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> dict[str, Any]:
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
-    from backend.app.ops.alpha_vantage_incremental_run import enabled_alpha_vantage_source_registry
-
     cm = bootstrap_db(tmp_path)
+    with cm.writer() as con:
+        planner = enable_source_route(
+            tmp_path,
+            source_id="alpha_vantage",
+            data_domain="us_equity_daily_bar",
+            primary_source_id="alpha_vantage",
+            con=con,
+        )
     raw_root = tmp_path / "raw"
     raw_root.mkdir()
     port = create_alpha_vantage_fetch_port(symbols=(SYMBOL,), max_rows=500, use_mock=True)
     orch = DataSyncOrchestrator(cm)
-    registry = enabled_alpha_vantage_source_registry()
     service = build_alpha_vantage_incremental_service(
         data_root=raw_root,
         fetch_port=port,
         job_events=orch._jobs,
-        source_registry=registry,
+        source_registry=planner._registry,
+        route_planner=planner,
     )
-    return {"cm": cm, "orch": orch, "service": service, "registry": registry}
+    return {
+        "cm": cm,
+        "orch": orch,
+        "service": service,
+        "registry": planner._registry,
+        "route_planner": planner,
+    }

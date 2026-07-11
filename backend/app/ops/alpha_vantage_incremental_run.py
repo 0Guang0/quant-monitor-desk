@@ -144,26 +144,28 @@ def _alpha_vantage_staging_adapter_patch(fetch_port: FetchPort):
         adapters_mod.create_test_adapter = original
 
 
-def enabled_alpha_vantage_source_registry():
-    from backend.app.ops.macro_incremental_common import enabled_source_registry
-
-    return enabled_source_registry(source_id="alpha_vantage", data_domain="us_equity_daily_bar")
-
-
 def build_alpha_vantage_incremental_service(
     *,
     data_root: Path,
     fetch_port: FetchPort,
     job_events=None,
     source_registry=None,
+    platform_matrix_path=None,
+    route_planner=None,
 ) -> DataSourceService:
     from backend.app.ops.macro_incremental_common import load_incremental_route_bundle
 
-    registry, caps, planner = load_incremental_route_bundle(
-        source_id="alpha_vantage",
-        data_domain="us_equity_daily_bar",
-        source_registry=source_registry,
-    )
+    if route_planner is not None:
+        registry = route_planner.source_registry
+        caps = route_planner.capability_registry
+        planner = route_planner
+    else:
+        registry, caps, planner = load_incremental_route_bundle(
+            source_id="alpha_vantage",
+            data_domain="us_equity_daily_bar",
+            source_registry=source_registry,
+            platform_matrix_path=platform_matrix_path,
+        )
     return DataSourceService(
         data_root=data_root,
         fetch_port=fetch_port,

@@ -17,10 +17,10 @@ from backend.app.ops.us_treasury_incremental_run import (
     SOURCE_ID,
     build_us_treasury_incremental_service,
     create_us_treasury_incremental_port,
-    enabled_us_treasury_source_registry,
     read_since_dates_for_instruments,
     run_us_treasury_incremental,
 )
+from backend.app.datasources.incremental_route_activation import load_plain_source_registry
 
 from tests.macro_incremental_support import (
     FIXED_TODAY,
@@ -44,7 +44,7 @@ def us_treasury_incremental_e2e_ctx(
         since_reader=read_since_dates_for_instruments,
         instrument_ids=DEFAULT_TENORS,
         service_builder=build_us_treasury_incremental_service,
-        registry_factory=enabled_us_treasury_source_registry,
+        registry_factory=load_plain_source_registry,
     )
 
 
@@ -167,7 +167,7 @@ def test_usTreasuryIncremental_liveNetwork_writesAxisObservation(
         since_reader=read_since_dates_for_instruments,
         instrument_ids=DEFAULT_TENORS,
         service_builder=build_us_treasury_incremental_service,
-        registry_factory=enabled_us_treasury_source_registry,
+        registry_factory=load_plain_source_registry,
     )
     report = run_us_treasury_incremental(
         ctx["orch"],
@@ -210,7 +210,7 @@ def test_usTreasuryIncremental_liveNetwork_idempotentSecondRun(
         since_reader=read_since_dates_for_instruments,
         instrument_ids=DEFAULT_TENORS,
         service_builder=build_us_treasury_incremental_service,
-        registry_factory=enabled_us_treasury_source_registry,
+        registry_factory=load_plain_source_registry,
     )
     run_us_treasury_incremental(
         ctx["orch"],

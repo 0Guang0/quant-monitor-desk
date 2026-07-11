@@ -533,9 +533,12 @@ def _count_clean_rows(
 
 def _run_fred_macro_live_sync(cm: ConnectionManager, data_root: Path):
     from backend.app.datasources.fetch_ports.fred_port import create_fred_fetch_port
+    from backend.app.datasources.incremental_route_activation import (
+        build_activation_route_planner,
+        ensure_sandbox_route_activation,
+    )
     from backend.app.ops.fred_incremental_run import (
         build_fred_incremental_service,
-        enabled_fred_source_registry,
         run_fred_macro_incremental,
     )
     from backend.app.ops.fred_incremental_watermark import read_since_dates_for_series
@@ -544,24 +547,34 @@ def _run_fred_macro_live_sync(cm: ConnectionManager, data_root: Path):
     series_ids = (FRED_ACCEPTANCE_SERIES_ID,)
     raw_root = data_root / "raw"
     raw_root.mkdir(parents=True, exist_ok=True)
-    registry = enabled_fred_source_registry()
+    with cm.writer() as con:
+        matrix_path = ensure_sandbox_route_activation(
+            con,
+            data_root=data_root,
+            source_id="fred",
+            data_domain="macro_series",
+            operation="fetch_macro_series",
+        )
+        since_map = read_since_dates_for_series(con, series_ids)
+    planner = build_activation_route_planner(
+        platform_matrix_path=matrix_path,
+    )
     port = create_fred_fetch_port(series_ids=series_ids, max_rows=3, use_mock=False)
     orch = DataSyncOrchestrator(cm)
-    with cm.writer() as con:
-        since_map = read_since_dates_for_series(con, series_ids)
     service = build_fred_incremental_service(
         data_root=raw_root,
         fetch_port=port,
         since_by_series=since_map,
         job_events=orch._jobs,
-        source_registry=registry,
+        source_registry=planner.source_registry,
+        route_planner=planner,
     )
     return run_fred_macro_incremental(
         orch,
         service=service,
         series_ids=series_ids,
         use_mock=False,
-        source_registry=registry,
+        source_registry=planner.source_registry,
     )
 
 

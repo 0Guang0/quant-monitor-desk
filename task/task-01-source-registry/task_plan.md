@@ -2,7 +2,7 @@
 
 > **状态：** IN PROGRESS — Gate 0（ADR-017）+ **ADR-018** Accepted；G1-01 Plan r6 = **`PLAN-READY`**。  
 > 设计→运行副本 parity 已通过；[Gate 1 接线规格](gate1-integration-spec.md) 与防漂移 [g1-02-execution-brief.md](g1-02-execution-brief.md) 已建立。  
-> **下一刀：** G1-02 **票 06∥07**（4a/4b 迁 ESR / acceptance overlay）；票 **01–05** Execute CLOSED（`completion-check-execute.md`）；T01-F05-A 余债挂 06/07。跨模块 4c～4e 与实现 R4 / G1-02 整包仍 OPEN。  
+> **下一刀：** 票 **08**（4x bridge）；票 **01–07** Execute CLOSED（`completion-check-execute.md` 对象 A–G）+ L5 可修项已清（`T01-REV-L5-0607`）。并行测债 Batch A–G **≠** 票 08。T01-F05-A **测债已关**（≠ G1-02）。跨模块 4c～4e 与实现 R4 / G1-02 整包仍 OPEN。  
 > **执行决策追记：** [note.md](note.md)（计划未穷尽的现场裁定）。
 >
 > **模块定位：** 数据源注册（Source Registry / Source Capability）是数据接入层的
@@ -264,7 +264,10 @@ G1-02 开工必读 [g1-02-execution-brief.md](g1-02-execution-brief.md)。
 - **切割进度：**
   - **3A 问开关** — **Execute CLOSED**（票 03 · `completion-check-execute.md`）：`ask_activation` / `write_activation_overlay` + migration `017_source_activation_overlay`；隔离根可测；禁内存撬门。**未**迁 ESR 调用方。
   - **3B 安检接线** — **Execute CLOSED**（票 04 · `completion-check-execute.md` 对象 D）：`plan(con=)`→`ask_activation`；`overlay_revision`；Service 透传；stderr `source_policy_*`。≠ G1-02。
-  - **3C 测试治理** — **Execute CLOSED**（票 05 · 同记录对象 E）：`enable_source_route` 正规 overlay；禁 patch 关账证据。生产 ESR 清零仍属 **票 06/07**。
+  - **3C 测试治理** — **Execute CLOSED**（票 05 · 同记录对象 E）：`enable_source_route` 正规 overlay；禁 patch 关账证据。
+  - **4a 增量迁 overlay** — **Execute CLOSED**（票 06 · 对象 F）：E-INC/BUNDLE/ACC preview 去 ESR；沙箱 overlay READY；产品默认同参仍关。≠ G1-02。
+  - **4b 金路径全清** — **Execute CLOSED**（票 07 · 对象 G）：E-CLI-20 fred+else + E-CLI-13；preferred_primary；hygiene 反证。≠ G1-02。
+  - **4x bridge** — 仍属 **票 08**（未关）。
   - **接线后夹具债** — T01-F05-B / A7 **已修**；T01-F05-A 余 / F06 / F07 → 票 06/07（见 findings + 待修复清单）。
 - **预计触及（余下）：** E-INC-* / E-CLI-20 / acceptance 迁 overlay（4a/4b）；**改 DDL 字段须用户审阅 design + promote**。
 - **RED（3B/3C）：** RoutePlanner/Service 只读合成 + `overlay_revision` 可观察；E-TEST-* → 隔离根 overlay。

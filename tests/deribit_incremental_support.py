@@ -14,7 +14,6 @@ from backend.app.db.migrate import apply_migrations
 from backend.app.datasources.fetch_ports.deribit_port import create_deribit_fetch_port
 from backend.app.ops.deribit_incremental_run import build_deribit_incremental_service
 from backend.app.ops.deribit_incremental_watermark import (
-    enabled_deribit_source_registry,
     read_since_date_for_instrument,
 )
 from backend.app.sync.orchestrator import DataSyncOrchestrator
@@ -78,12 +77,12 @@ def bootstrap_deribit_live_e2e_ctx(
         sandbox_root,
         monkeypatch,
         source_id="deribit",
-        data_domain="crypto_derivatives",
+        data_domain="crypto_options_surface",
         port_factory=lambda **kw: create_deribit_fetch_port(
             instruments=(live_instrument,), max_surface_rows=50, **kw
         ),
         service_builder=build_deribit_incremental_service,
-        registry_factory=enabled_deribit_source_registry,
+        registry_factory=None,
         since_reader=_since_reader,
         instrument_ids=(live_instrument,),
     )
@@ -93,12 +92,22 @@ def bootstrap_deribit_live_e2e_ctx(
 @pytest.fixture
 def deribit_incremental_e2e_ctx(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    from tests.service_path_support import enable_source_route
+
     cm = bootstrap_db(tmp_path)
+    with cm.writer() as con:
+        planner = enable_source_route(
+            tmp_path,
+            source_id="deribit",
+            data_domain="crypto_options_surface",
+            primary_source_id="deribit",
+            operation="fetch_derivatives_instruments",
+            con=con,
+        )
     raw_root = tmp_path / "raw"
     raw_root.mkdir()
     port = create_deribit_fetch_port(instruments=(INSTRUMENT,), max_surface_rows=50, use_mock=True)
     orch = DataSyncOrchestrator(cm)
-    registry = enabled_deribit_source_registry()
     with cm.writer() as con:
         since = read_since_date_for_instrument(con, INSTRUMENT)
     service = build_deribit_incremental_service(
@@ -106,6 +115,13 @@ def deribit_incremental_e2e_ctx(tmp_path: Path, monkeypatch: pytest.MonkeyPatch)
         fetch_port=port,
         since_by_instrument={INSTRUMENT: since},
         job_events=orch._jobs,
-        source_registry=registry,
+        source_registry=planner.source_registry,
+        route_planner=planner,
     )
-    return {"cm": cm, "orch": orch, "service": service, "registry": registry}
+    return {
+        "cm": cm,
+        "orch": orch,
+        "service": service,
+        "registry": planner.source_registry,
+        "route_planner": planner,
+    }

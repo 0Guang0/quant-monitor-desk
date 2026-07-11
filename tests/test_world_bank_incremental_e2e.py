@@ -21,11 +21,11 @@ from backend.app.ops.world_bank_incremental_run import (
     DEFAULT_COUNTRIES,
     SOURCE_ID,
     clean_indicator_id,
-    enabled_world_bank_source_registry,
     build_world_bank_incremental_service,
     create_world_bank_incremental_port,
     run_world_bank_incremental,
 )
+from backend.app.datasources.incremental_route_activation import load_plain_source_registry
 from tests.macro_incremental_support import (
     FIXED_TODAY,
     bootstrap_macro_live_e2e_ctx,
@@ -59,7 +59,7 @@ def world_bank_incremental_e2e_ctx(
         since_reader=_read_wb_since,
         instrument_ids=DEFAULT_COUNTRIES,
         service_builder=build_world_bank_incremental_service,
-        registry_factory=enabled_world_bank_source_registry,
+        registry_factory=load_plain_source_registry,
     )
 
 
@@ -233,7 +233,7 @@ def test_worldBankIncremental_liveNetwork_writesAxisObservation(
         since_reader=_read_wb_since,
         instrument_ids=DEFAULT_COUNTRIES,
         service_builder=build_world_bank_incremental_service,
-        registry_factory=enabled_world_bank_source_registry,
+        registry_factory=load_plain_source_registry,
     )
     report = run_world_bank_incremental(
         ctx["orch"],
@@ -280,7 +280,7 @@ def test_worldBankIncremental_liveNetwork_idempotentSecondRun(
         since_reader=_read_wb_since,
         instrument_ids=DEFAULT_COUNTRIES,
         service_builder=build_world_bank_incremental_service,
-        registry_factory=enabled_world_bank_source_registry,
+        registry_factory=load_plain_source_registry,
     )
     run_world_bank_incremental(
         ctx["orch"],

@@ -27,9 +27,19 @@ def test_qmdData_syncAcceptance_dryRunEnvelopeNonGate(monkeypatch, tmp_path: Pat
     验证点：acceptance_report 存在；gate_eligible=False；status=DRY_RUN
     失败含义：sync dry-run 无统一验收形状或误计 P1-GATE
     """
+    from backend.app.datasources.incremental_route_activation import (
+        prepare_audit_sandbox_route_activation,
+    )
+
     root = _p1_root(tmp_path)
     monkeypatch.setenv("QMD_DATA_ROOT", str(root))
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    prepare_audit_sandbox_route_activation(
+        root,
+        source_id="fred",
+        data_domain="macro_series",
+        operation="fetch_macro_series",
+    )
     payload = data_commands.sync_plan(
         data_domain="macro_series",
         source_id="fred",
@@ -139,9 +149,19 @@ def test_qmdData_syncAcceptance_dryRunTierAShowsWatermarkWindow(
     验证点：incremental_evidence 含 window_date_start/window_date_end
     失败含义：sync dry-run 无 watermark 窗，incremental 能力不可审计
     """
+    from backend.app.datasources.incremental_route_activation import (
+        prepare_audit_sandbox_route_activation,
+    )
+
     root = _p1_root(tmp_path)
     monkeypatch.setenv("QMD_DATA_ROOT", str(root))
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    prepare_audit_sandbox_route_activation(
+        root,
+        source_id="fred",
+        data_domain="macro_series",
+        operation="fetch_macro_series",
+    )
     payload = data_commands.sync_plan(
         data_domain="macro_series",
         source_id="fred",
@@ -187,7 +207,8 @@ def _patch_baostock_matrix_replay(monkeypatch, replay_path: Path) -> None:
     from backend.app.datasources.fetch_ports.baostock_port import BaostockMockFetchPort
     from backend.app.datasources.service import DataSourceService
 
-    def _build(*, data_root, symbol, job_events, use_mock=None):
+    def _build(*, data_root, symbol, job_events, use_mock=None, route_planner=None, **_kwargs):
+        del use_mock, route_planner  # replay 夹具自带 port；route_planner 由生产路径传入可忽略
         port = BaostockMockFetchPort(symbols=(symbol,), max_rows=500, replay_path=replay_path)
         return DataSourceService(data_root=data_root, fetch_port=port, job_events=job_events)
 

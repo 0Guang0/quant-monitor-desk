@@ -42,6 +42,7 @@ class AcceptanceMatrixTarget:
 
 # ponytail: Python tuple is the matrix SSOT for closure semantics; YAML registry/capabilities
 # are validated via validate_matrix_against_registry() — not generated from YAML (CS-16).
+# Ceiling: dual SSOT drift risk; upgrade when matrix is generated from registry or single codegen.
 DOCUMENTED_SOURCE_MATRIX: tuple[AcceptanceMatrixTarget, ...] = (
     AcceptanceMatrixTarget(
         display_name="QMT / xtdata",
@@ -377,25 +378,73 @@ def validate_matrix_against_registry() -> list[str]:
     return violations
 
 
-def preview_route_payload(request: AcceptanceRequest) -> dict[str, object]:
+def preview_route_payload(
+    request: AcceptanceRequest,
+    *,
+    con=None,
+    platform_matrix_path=None,
+) -> dict[str, object]:
     """Route preview via DataSourceService for any matrix target."""
-    return build_incremental_preview_service(
-        request.source_id,
-        request.data_domain,
-    ).preview_route(
-        data_domain=request.data_domain,
-        operation=request.operation,
-        market_id=request.market_id,
-        run_id="acceptance-preview",
-        job_id="acceptance-preview",
-    ).to_payload_dict()
+    owns_con = False
+    tmp_ctx = None
+    if con is None:
+        import tempfile
+
+        import duckdb
+
+        from backend.app.datasources.incremental_route_activation import (
+            ensure_sandbox_route_activation,
+        )
+        from backend.app.db.migrate import apply_migrations
+
+        # 验收 preview：隔离临时根 + 正规 overlay（非 ESR）；证明矩阵目标可 READY
+        tmp_ctx = tempfile.TemporaryDirectory()
+        tmp_root = Path(tmp_ctx.name) / ".audit-sandbox" / "acceptance-preview"
+        (tmp_root / "duckdb").mkdir(parents=True)
+        con = duckdb.connect(str(tmp_root / "duckdb" / "preview.duckdb"))
+        apply_migrations(con)
+        platform_matrix_path = ensure_sandbox_route_activation(
+            con,
+            data_root=tmp_root,
+            source_id=request.source_id,
+            data_domain=request.data_domain,
+            operation=request.operation,
+        )
+        owns_con = True
+    try:
+        return build_incremental_preview_service(
+            request.source_id,
+            request.data_domain,
+            platform_matrix_path=platform_matrix_path,
+        ).preview_route(
+            data_domain=request.data_domain,
+            operation=request.operation,
+            market_id=request.market_id,
+            run_id="acceptance-preview",
+            job_id="acceptance-preview",
+            con=con,
+        ).to_payload_dict()
+    finally:
+        if owns_con and con is not None:
+            con.close()
+        if tmp_ctx is not None:
+            tmp_ctx.cleanup()
 
 
-def build_incremental_preview_service(source_id: str, data_domain: str):
+def build_incremental_preview_service(
+    source_id: str,
+    data_domain: str,
+    *,
+    platform_matrix_path=None,
+):
     """Shared preview service factory for matrix rows and incremental runners."""
     from backend.app.datasources.service import DataSourceService
 
-    registry, caps, planner = _cached_route_preview_bundle(source_id, data_domain)
+    registry, caps, planner = _cached_route_preview_bundle(
+        source_id,
+        data_domain,
+        str(platform_matrix_path) if platform_matrix_path else "",
+    )
     return DataSourceService(
         source_registry=registry,
         capability_registry=caps,
@@ -405,10 +454,17 @@ def build_incremental_preview_service(source_id: str, data_domain: str):
 
 
 @lru_cache(maxsize=32)
-def _cached_route_preview_bundle(source_id: str, data_domain: str):
+def _cached_route_preview_bundle(source_id: str, data_domain: str, matrix_path: str):
+    from pathlib import Path
+
     from backend.app.ops.macro_incremental_common import load_incremental_route_bundle
 
-    return load_incremental_route_bundle(source_id=source_id, data_domain=data_domain)
+    path = Path(matrix_path) if matrix_path else None
+    return load_incremental_route_bundle(
+        source_id=source_id,
+        data_domain=data_domain,
+        platform_matrix_path=path,
+    )
 
 
 def missing_gate_errors(target: AcceptanceMatrixTarget) -> tuple[str, ...]:

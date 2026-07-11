@@ -13,9 +13,11 @@ from backend.app.db.connection import ConnectionManager
 from backend.app.db.migrate import apply_migrations
 from backend.app.datasources.fetch_ports.fred_port import create_fred_fetch_port
 from backend.app.layer1_axes.observation_contract import AXIS_OBSERVATION_DDL_COLUMNS
-from backend.app.ops.fred_incremental_run import build_fred_incremental_service
+from backend.app.ops.fred_incremental_run import (
+    build_fred_incremental_service,
+)
+from backend.app.datasources.incremental_route_activation import load_plain_source_registry
 from backend.app.ops.fred_incremental_watermark import (
-    enabled_fred_source_registry,
     read_since_dates_for_series,
 )
 from backend.app.sync.orchestrator import DataSyncOrchestrator
@@ -86,7 +88,7 @@ def bootstrap_fred_live_e2e_ctx(
             series_ids=("DGS10",), max_rows=3, **kw
         ),
         service_builder=build_fred_incremental_service,
-        registry_factory=enabled_fred_source_registry,
+        registry_factory=load_plain_source_registry,
         since_reader=lambda con, _ids: read_since_dates_for_series(con, ("DGS10",)),
         env_key="FRED_API_KEY",
     )
@@ -98,7 +100,7 @@ def fred_incremental_e2e_ctx(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) ->
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
     cm = bootstrap_fred_incremental_db(tmp_path)
     with cm.writer() as con:
-        enable_source_route(
+        planner = enable_source_route(
             tmp_path,
             source_id="fred",
             data_domain="macro_series",
@@ -111,13 +113,14 @@ def fred_incremental_e2e_ctx(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) ->
     orch = DataSyncOrchestrator(cm)
     with cm.writer() as con:
         since_map = read_since_dates_for_series(con, ("DGS10", "VIXCLS"))
-    registry = enabled_fred_source_registry()
+    registry = planner.source_registry
     service = build_fred_incremental_service(
         data_root=raw_root,
         fetch_port=port,
         since_by_series=since_map,
         job_events=orch._jobs,
         source_registry=registry,
+        route_planner=planner,
     )
     return {
         "cm": cm,
@@ -126,4 +129,6 @@ def fred_incremental_e2e_ctx(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) ->
         "registry": registry,
         "port": port,
         "raw_root": raw_root,
+        "sandbox_root": tmp_path,
+        "route_planner": planner,
     }

@@ -14,7 +14,6 @@ from backend.app.db.migrate import apply_migrations
 from backend.app.datasources.fetch_ports.cninfo_port import create_cninfo_fetch_port
 from backend.app.ops.cninfo_incremental_run import build_cninfo_incremental_service
 from backend.app.ops.cninfo_incremental_watermark import (
-    enabled_cninfo_source_registry,
     read_since_date_for_instrument,
 )
 from backend.app.sync.orchestrator import DataSyncOrchestrator
@@ -63,7 +62,7 @@ def bootstrap_cninfo_live_e2e_ctx(
             symbols=(SYMBOL,), max_rows=20, **kw
         ),
         service_builder=build_cninfo_incremental_service,
-        registry_factory=enabled_cninfo_source_registry,
+        registry_factory=None,
         since_reader=lambda con, _ids: {SYMBOL: read_since_date_for_instrument(con, SYMBOL)},
         instrument_ids=(SYMBOL,),
     )
@@ -72,12 +71,21 @@ def bootstrap_cninfo_live_e2e_ctx(
 @pytest.fixture
 def cninfo_incremental_e2e_ctx(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    from tests.service_path_support import enable_source_route
+
     cm = bootstrap_db(tmp_path)
+    with cm.writer() as con:
+        planner = enable_source_route(
+            tmp_path,
+            source_id="cninfo",
+            data_domain="cn_announcements",
+            primary_source_id="cninfo",
+            con=con,
+        )
     raw_root = tmp_path / "raw"
     raw_root.mkdir()
     port = create_cninfo_fetch_port(symbols=(SYMBOL,), max_rows=20, use_mock=True)
     orch = DataSyncOrchestrator(cm)
-    registry = enabled_cninfo_source_registry()
     with cm.writer() as con:
         since = read_since_date_for_instrument(con, SYMBOL)
     service = build_cninfo_incremental_service(
@@ -85,6 +93,13 @@ def cninfo_incremental_e2e_ctx(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) 
         fetch_port=port,
         since_by_instrument={SYMBOL: since},
         job_events=orch._jobs,
-        source_registry=registry,
+        source_registry=planner.source_registry,
+        route_planner=planner,
     )
-    return {"cm": cm, "orch": orch, "service": service, "registry": registry}
+    return {
+        "cm": cm,
+        "orch": orch,
+        "service": service,
+        "registry": planner.source_registry,
+        "route_planner": planner,
+    }

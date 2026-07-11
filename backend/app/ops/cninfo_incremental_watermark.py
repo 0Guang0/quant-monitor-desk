@@ -38,12 +38,6 @@ def compute_since_date(
     return watermark + timedelta(days=1)
 
 
-def enabled_cninfo_source_registry():
-    from backend.app.ops.macro_incremental_common import enabled_source_registry
-
-    return enabled_source_registry(source_id="cninfo", data_domain="cn_announcements")
-
-
 def read_since_date_for_instrument(
     con,
     instrument_id: str,

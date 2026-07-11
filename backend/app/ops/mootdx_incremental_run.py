@@ -32,15 +32,24 @@ def build_mootdx_incremental_service(
     symbol: str,
     job_events,
     use_mock: bool | None = None,
+    route_planner=None,
+    source_registry=None,
 ) -> DataSourceService:
     mock = resolve_mootdx_incremental_use_mock() if use_mock is None else use_mock
     port = create_mootdx_fetch_port(symbols=(symbol,), max_rows=MOOTDX_MAX_ROWS, use_mock=mock)
-    return DataSourceService(
-        data_root=data_root,
-        fetch_port=port,
-        job_events=job_events,
-        product_live_mode=not mock,
-    )
+    kwargs: dict = {
+        "data_root": data_root,
+        "fetch_port": port,
+        "job_events": job_events,
+        "product_live_mode": not mock,
+    }
+    if route_planner is not None:
+        kwargs["route_planner"] = route_planner
+        kwargs["source_registry"] = source_registry or route_planner.source_registry
+        kwargs["capability_registry"] = route_planner.capability_registry
+    elif source_registry is not None:
+        kwargs["source_registry"] = source_registry
+    return DataSourceService(**kwargs)
 
 
 @dataclass(frozen=True)

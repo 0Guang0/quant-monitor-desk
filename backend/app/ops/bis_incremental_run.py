@@ -18,7 +18,6 @@ from backend.app.ops.macro_incremental_common import (
     build_macro_incremental_service,
     compute_bis_since_date,
     compute_since_date,
-    enabled_source_registry,
     read_observation_date_watermark,
     read_since_dates_for_instruments,
     run_macro_incremental,
@@ -28,10 +27,6 @@ from backend.app.sync.orchestrator import DataSyncOrchestrator
 SOURCE_ID = "bis"
 DATA_DOMAIN = "central_bank_policy"
 DEFAULT_COUNTRIES = ("US",)
-
-
-def enabled_bis_source_registry():
-    return enabled_source_registry(source_id=SOURCE_ID, data_domain=DATA_DOMAIN)
 
 
 def watermark_start_year(since_iso: str) -> int:
@@ -118,6 +113,8 @@ def build_bis_incremental_service(
     since_by_instrument: dict[str, str],
     job_events=None,
     source_registry=None,
+    route_planner=None,
+    platform_matrix_path=None,
 ) -> MacroIncrementalFetchProxy:
     return build_macro_incremental_service(
         config=_BIS_CONFIG,
@@ -126,6 +123,8 @@ def build_bis_incremental_service(
         since_by_instrument=since_by_instrument,
         job_events=job_events,
         source_registry=source_registry,
+        route_planner=route_planner,
+        platform_matrix_path=platform_matrix_path,
     )
 
 

@@ -1,177 +1,158 @@
-# Handoff · task-01-source-registry
+# Handoff · 测试资产治理会话 + task-01 指针
 
-> **日期：** 2026-07-11（完整重写 · 票 01–05 Execute CLOSED 后 · 下一刀 06∥07）  
-> **给：** 下一会话 / 新 agent（实现 4a/4b · 迁 ESR）  
-> **本文件位置：** `task/task-01-source-registry/HANDOFF.md`（用户指定）  
-> **原则：** 不复制计划/ADR/票正文；只给加载顺序、状态、禁令与指针（context-engineering）。
-
----
-
-## 0. 三件套核对（接手先扫一眼）
-
-| 文件 | 是否对齐「01–05 关账 · 下一刀 06∥07」 | 要点 |
-| --- | --- | --- |
-| [`task_plan.md`](task_plan.md) | **是** | 文首下一刀=票 06∥07（4a/4b）；01–05 Execute CLOSED |
-| [`progress.md`](progress.md) | **大体是** | 末条已记 04/05 CLOSED；文首 Phase0 一行可能仍写「CC 未关」→ **以末条 + task_plan + 本 HANDOFF 为准** |
-| [`findings.md`](findings.md) | **是** | 开放：T01-F03 余 4a/4b/4x、F05-A、F06、F07；3B/3C / F05-B / A7 已关 |
-
-**不要**用旧 HANDOFF（「下一刀 04∥05」或「问开关尚未接 RoutePlanner」）当现状。
-
-**本地票索引可能滞后：** `.scratch/.../README.md` 若仍写「下一刀 04/05」，以本 HANDOFF + scratch 票文件 Status 为准；接手可顺手改 README Frontier。
+> **日期：** 2026-07-12  
+> **本文件角色：** 给下一会话 / 新 agent 的交接摘要（读完能续作）。**不是**权威规格 SSOT。  
+> **权威：** `MIGRATION_MAP.md` 索引的 `**/design/**` · `AGENTS.md` · `agent-toolchain.md` · testing-guidelines / TEST-EVIDENCE-GOVERNANCE。  
+> **原则：** 不复制计划/ADR/票正文；只给加载顺序、本会话做了什么、禁令与指针。  
+> **敏感信息：** 无。
 
 ---
 
-## 1. 下一会话目标（默认）
+## 0. 本会话实际做了什么（先读）
 
-**Frontier：** 票 **06**（4a · 迁 E-INC-\* / BUNDLE / FRED 启用拆干净）∥ 票 **07**（4b · E-CLI-20 全金路径 + E-CLI-13）。均可与 **08**（bridge）并行；均 blocked-by 已关的 **04+05**。
+本会话**不是**在推进 G1-02 票 08，而是按时间线做 **pytest 测试资产治理**（用户明确：不走完整 completion-check 关账）：
 
-| 票 | brief | 业务一句话 |
-| --- | --- | --- |
-| 06 | §6 **4a** | 增量/验收路径不再内存撬门；沙箱正规 overlay 证明 READY |
-| 07 | §6 **4b** | backfill 金路径 fred **与** else 都只读问开关；反证「只清 fred 漏 else → 红」 |
+| 约束       | 口径                                                                                                          |
+| ---------- | ------------------------------------------------------------------------------------------------------------- |
+| 正式实现   | **不改** `backend/`                                                                                           |
+| design     | **不改** `**/design/**`（parity 失败只允许 promote design→runtime，本会话未改 design）                        |
+| 处置       | 不该进业务 pytest 的 → DELETE 或迁 `phase-scripts/` / 稳定门禁 `scripts/`；正式 runtime/DB/CLI outcome → KEEP |
+| 一次性产物 | `.scratch/_batch_*` / `_tmp_*` / `_c_verify` 等盘点验证文件 → **用完即删**；正式 `check_*.py` **保留**        |
 
-正式代码：**TDD**；改 symbol 前 GitNexus `impact`（`enabled_source_registry` 曾标 **CRITICAL**）。  
-**禁止**把本 handoff、票 01–05 CLOSED、子集 pytest 绿或 Plan READY 当成 **G1-02 整包 / 模块 R4 / G1-08** 完成。
+### 已完成批次（按 git 首次入库时间）
 
-**分支提示：** 近期多在 `feat/g1-02-ask-activation-03`（未合并）。新切片可续该分支或另开；**勿两 agent 抢同一核心文件组**（`macro_incremental_common` / ESR 工厂 / `data_commands` 金路径 / acceptance matrix）。
+| 批次   | 时间窗        | 要点                                                                                                        |
+| ------ | ------------- | ----------------------------------------------------------------------------------------------------------- |
+| 预清理 | 早期          | 删 `test_pytest_slow_tier` / `test_b3f_sh_hard_constraints` → phase-scripts                                 |
+| **A**  | ~06-16～06-17 | config/schema/raw_store/port 等 SPLIT；phase-scripts                                                        |
+| **B**  | ~06-18～06-19 | reference / data_cli / module_boundaries / datasource_service / platform_matrix → scripts + production_gate |
+| **C**  | ~06-20～06-22 | layer1_axis / ops_db_inspector SPLIT；保留 design 点名的 shadow 测                                          |
+| **D**  | ~06-23～06-26 | contract_drift → scripts；fred/model_whitelist/tdx caps → phase-scripts                                     |
+| **E**  | ~06-27～06-30 | provider_catalog → scripts；web/prediction registry、R3H caps、CN capabilities → phase-scripts              |
+| **F**  | ~07-01～07-04 | sync_job_contract → scripts；K1 whitelist、Tier-A health profile → phase-scripts                            |
+| **G**  | ~07-07～07-08 | source-route acceptance contract/matrix/honesty SPLIT；bootstrap meta → phase-scripts（Grok 4.5 子代理）    |
 
-**工作区：** 接手先 `git status`——可能有未提交的 04/05 实现、测、台账、`completion-check-execute` 追加；看清再续写。
+### 本会话新建/强化的稳定门禁（`scripts/`，多已接 `production_gate`）
+
+- `check_contract_drift.py`
+- `check_provider_catalog.py`
+- `check_sync_job_contract.py`
+- `check_source_route_db_acceptance_contract.py`
+- （既有）`check_reference_adoption_guardrails.py` · `check_platform_source_matrix.py` · `check_datasource_service_boundaries.py` · `check_source_route_db_acceptance_matrix.py` · …
+
+改 `production_gate.main` 前 GitNexus impact = **LOW**；须同步 stub `tests/test_production_gate.py`。
+
+### 本会话新建的阶段性脚本（`phase-scripts/`，中文功能/价值/退役条件）
+
+示例：`check_layer1_k1_whitelist_parity.py` · `check_data_health_tier_a_profile_contract.py` · `check_r3h_resource_caps_parity.py` · `check_model_input_whitelist.py` · `check_source_route_matrix_checker_regression.py` · `check_acceptance_e2e_bootstrap_path.py` · …（完整列表以目录为准）。
+
+### 下一治理刀（若续测债）
+
+- **Batch H+：** ~07-09 起剩余 `tests/test_*.py`（按 git 首次入库日继续）
+- 先 `git status`：工作树可能很脏（sandbox / pyc / 未提交治理 diff），分清「本治理改动」再动手
+- **不要**把「若干 `--strict` + 子集 pytest 绿」写成模块 R4 / G1-02 关账
+
+---
+
+## 1. task-01-source-registry 产品线状态（并行指针，勿混淆）
+
+本目录票务主线仍是 **G1-02 启用缝**。**测债治理 ≠ 票 08 / G1-02 / R4 完成。**
+
+| 项                   | 状态（以三件套为准，HANDOFF 只摘要）                                                    |
+| -------------------- | --------------------------------------------------------------------------------------- |
+| 票 01–07             | Execute **CLOSED**（见 `completion-check-execute.md`）                                  |
+| Frontier             | 票 **08**（4x bridge）                                                                  |
+| G1-02 整包 / 模块 R4 | **仍 OPEN**                                                                             |
+| 开放 finding         | F03 余 4x · F06 · F07 · F08 · F09 待复验 · F10–F12 · FRED 合并票 10；**F05-A 测债已关** |
+
+**先扫三件套：** `task_plan.md` · `progress.md` · `findings.md`（以文件正文为准，勿用更旧口头摘要）。
+
+**本地票：** `.scratch/task-01-g1-02-enable-seam/` Frontier≈08。
 
 ---
 
 ## 2. 上下文加载顺序（context-engineering）
 
-按层级加载，**单次任务只带本切片**（目标 &lt;2k 行有效上下文），勿一次塞满 `task-01/`：
+### 若续 **测试资产治理**
 
-| 序 | 加载什么 | 路径 |
-| --- | --- | --- |
-| 1 | 规则 | 仓库根 `AGENTS.md` · `agent-toolchain.md` · project-global / ponytail |
-| 2 | **执行索引（先读）** | [`EXECUTION-DOC-INDEX.md`](EXECUTION-DOC-INDEX.md) |
-| 3 | 本切片票 | `.scratch/task-01-g1-02-enable-seam/issues/06-*.md` 和/或 `07-*.md`（并行则两份；08 另开会话） |
-| 4 | G1-02 细节 | [`g1-02-execution-brief.md`](g1-02-execution-brief.md) §2 删除顺序 · §3.1 必清 OVERRIDE · §6 **4a/4b** · §7 验证 |
-| 5 | 现场裁定 | [`note.md`](note.md)（04/05 拍板与分诊规则；**勿**把 note 当问题台账） |
-| 6 | design（只读） | ADR-017 · **ADR-018** · `docs/modules/design/data_sources.md` §5.2.1 |
-| 7 | 已落地能力（消费方） | `activation_overlay.py` · `ask_activation` · `SourceRoutePlanner.plan(con=)` · `enable_source_route` / `seed_activation_base` |
-| 8 | 入口对照 | [`g1-01-wiring-inventory.md`](g1-01-wiring-inventory.md)：E-INC-\* · E-INC-BUNDLE · E-CLI-20/13 · E-ACC-01 |
-| 9 | 将改源码 + 同类 pattern + 对应测试 | 见票；`impact` 后再动 |
-| 10 | 失败输出 | 只贴失败断言/栈，不贴整份 pytest |
+| 序  | 加载什么                                                                                            |
+| --- | --------------------------------------------------------------------------------------------------- |
+| 1   | `AGENTS.md` · `agent-toolchain.md` · project-global / ponytail                                      |
+| 2   | `completion-check/references/TEST-EVIDENCE-GOVERNANCE.md`（准入/处置阶梯）                          |
+| 3   | 本 `HANDOFF.md` §0（已完成批次 + 禁令）                                                             |
+| 4   | `scripts/production_gate.py` + 已有 `scripts/check_*.py` / `phase-scripts/check_*.py`（勿重复造轮） |
+| 5   | 下一批 `tests/test_*.py`（按入库日）+ 同类已迁脚本 pattern                                          |
+| 6   | 失败时只贴失败断言/栈                                                                               |
 
-**状态指针（需要时再读一行）：** [`findings.md`](findings.md)（**含 F05-A node-id 表**）· [`progress.md`](progress.md) · [`task_plan.md`](task_plan.md) §9 · [`completion-check-execute.md`](completion-check-execute.md)（对象 A–E 已 CLOSED）· [`docs/quality/待修复清单.md`](../../docs/quality/待修复清单.md) · [`PROJECT_IMPLEMENTATION_ROADMAP.md`](../../PROJECT_IMPLEMENTATION_ROADMAP.md)。
+### 若续 **G1-02 票 08**
 
+| 序  | 加载什么                                                                               |
+| --- | -------------------------------------------------------------------------------------- |
+| 1   | 同上规则                                                                               |
+| 2   | [`EXECUTION-DOC-INDEX.md`](EXECUTION-DOC-INDEX.md)                                     |
+| 3   | `.scratch/.../issues/08-*.md` · [`g1-02-execution-brief.md`](g1-02-execution-brief.md) |
+| 4   | [`note.md`](note.md) · [`findings.md`](findings.md)                                    |
+| 5   | design 只读：ADR-017/018 · `docs/modules/design/data_sources.md` §5.2.1                |
+| 6   | 已落地：`activation_overlay` · `ask_activation` · `plan(con=)` · `enable_source_route` |
+| 7   | 正式代码 **TDD**；改 symbol 前 GitNexus `impact`                                       |
+
+**冲突裁决：** design > brief（G1-02）> task_plan > inventory。  
 **不要加载当开工 SSOT：** [`归档/`](归档/README.md)。
 
-**冲突裁决：** design > `g1-02-execution-brief`（G1-02 细节）> `task_plan`（模块范围）> inventory（事实表）。
+---
+
+## 3. 硬禁令（两线共用）
+
+- 禁止改 `backend/`（测债治理线）/ 禁止未审阅改 `**/design/**`
+- 禁止为绿改测试**目的**；禁止假完成（缩验证、跳约定 pytest）
+- 禁止未迁调用方就删 ESR 根；禁止只清 fred 漏 else（G1-02）
+- 禁止用 sandbox READY 升格「产品已默认启用」
+- 阶段性代码只放 `phase-scripts/`（中文：功能 / 业务价值 / 退役条件）
+- 阶段外置须双登记：`docs/quality/待修复清单.md` + `PROJECT_IMPLEMENTATION_ROADMAP.md`
+- 正式关票须 `/completion-check`；**本测债会话未宣称 task 关账**
 
 ---
 
-## 3. 当前状态（一句话）
+## 4. 验证速查
 
-| 项 | 状态 |
-| --- | --- |
-| Gate 0 / ADR-017 / **ADR-018** | Accepted（design 已索引） |
-| G1-01 清单 | Plan r6 **`PLAN-READY`** |
-| **票 01–05** | Execute **CLOSED**（`completion-check-execute.md` 对象 A–E） |
-| 问开关 + 安检接线 | **已落地**：`ask_activation` → `plan(con=)`；`overlay_revision`；stderr `source_policy_*` |
-| E-TEST 夹具 | **已落地**：正规 overlay；关账证据禁 setattr / 强制 platform |
-| 生产 ESR / CLI 金路径 OVERRIDE | **仍在** → 票 **06/07**（T01-F03 余债） |
-| 开放 finding | **T01-F03**（余 4a/4b/4x）· **F05-A** · **F06** · **F07**（均已阶段外置登记） |
-| 本地票 Frontier | **06∥07**（可∥08）；**不发 GitHub** |
-| G1-02 整包 / 实现 R4 | **OPEN** |
-| FRED 编排合并 | 台账 `T01-ENABLE-FRED-MERGE-001` · 最迟 G1-08 · **票 10**（06 只拆启用撬门，不关合并） |
-
-### 业务价值（已交付 vs 下一刀）
-
-| 已交付（01–05） | 下一刀（06∥07）要交付的价值 |
-| --- | --- |
-| 能力契约可校验；宏域默认诚实关；开关本可写可问；拉数/预览按开关本安检；测试不再假绿 | **正式增量 CLI / 验收矩阵与服务同路**：同参同拒绝；沙箱 overlay 才能 READY；产品默认库不因旧 ESR 假开 |
-
-### 下一产品决策点（非本切片阻塞）
-
-- **06/07 本身不需新拍板**（ADR-018 已定）。  
-- 用户再进场：① 真实监控库「谁/用什么入口开源」（R8 运维面）；② G1-08 前 FRED 合并 vs 新 ADR 废止；③ 改 `**/design/**` 须审阅。
-
----
-
-## 4. 依赖（勿改主链）
+**测债回归（示例，按触及面加减）：**
 
 ```text
-01✓ ∥ 02✓ ∥ 03✓ → 04✓ → ┬→ 06 ─┐
-              03✓ → 05✓ → ┤→ 07 ─┼→ 09 → 10
-                           └→ 08 ─┘   （06∥07∥08 并行）
+uv run python scripts/check_contract_drift.py --strict
+uv run python scripts/check_provider_catalog.py --strict
+uv run python scripts/check_sync_job_contract.py --strict
+uv run python scripts/check_source_route_db_acceptance_contract.py --strict
+uv run python phase-scripts/check_layer1_k1_whitelist_parity.py --strict
+uv run python phase-scripts/check_data_health_tier_a_profile_contract.py --strict
+uv run pytest -q tests/test_production_gate.py
 ```
 
-**硬禁令（简）：** 禁止未迁调用方就删 ESR 根；禁止只清 fred 漏 E-CLI-20 **else**；禁止内存 OVERRIDE 长期兼容；禁止未审阅改 `**/design/**`；禁止用 sandbox READY 升格「产品已默认启用」；禁止为保绿恢复 `__setattr__` / 强制 `_platform_allows`；阶段性代码只放 `phase-scripts/`。全文见 brief §0。
-
-**命名：** brief **4a**=票 06；**4b**=票 07；**4x**=票 08（bridge）。**勿**把 FRED **编排合并**（票 10）塞进 06 关账。工作包 **4c**=G1-03～05（跨模块），≠ G1-02。
-
-**本切片须承接的阶段外置债（勿遗漏）：**
-
-| ID | 票 | 指针 |
-|----|----|------|
-| **T01-F05-A** | 06∥07 | [`findings.md`](findings.md) **node-id 全表**（含 `test:quick` 现红：`test_mootdxBarClean_layer5Provenance_matchesSameRunBundle`） |
-| **T01-F06** | 06 | findings + 待修复清单 + [`PROJECT_IMPLEMENTATION_ROADMAP.md`](../../PROJECT_IMPLEMENTATION_ROADMAP.md) |
-| **T01-F07** | 06+07 后 | 同上 |
-| **T01-ENABLE-FRED-MERGE-001** | 10（G1-08 前） | 待修复清单；**票 06 不关合并** |
-
-登记≠关账。再验：`uv run pytest -q -m "not slow and not network"`。
-
----
-
-## 5. 已落地代码指针（勿重做）
-
-| 能力 | 位置 |
-| --- | --- |
-| 问开关 | `backend/app/datasources/activation_overlay.py` · migration `017_*` |
-| 安检接线 | `route_planner.py`（`plan(..., con=)` / `ask_activation`）· `service.py` 透传 · `route_models.overlay_revision` |
-| 策略日志 | `_emit_source_policy_event`（stderr JSON；`QMD_SOURCE_POLICY_TELEMETRY`） |
-| 测试夹具 | `tests/service_path_support.py`：`enable_source_route` · `seed_activation_base` |
-| 票级测 | `test_activation_overlay.py` · `test_route_planner_activation.py` · `test_etest_overlay_governance.py` |
-
-**再验 04/05（回归用，≠ 06 完成）：**
+**G1-02 06∥07 回归（≠ G1-02 关账）：**
 
 ```text
-uv run pytest -q tests/test_route_planner_activation.py tests/test_etest_overlay_governance.py tests/test_platform_source_matrix.py::test_qmtXqshareMissingEnvNotSchedulable
+uv run pytest -q tests/test_g1_02_incremental_route_activation.py tests/test_g1_02_gold_path_overlay.py
+uv run python phase-scripts/check_g1_02_esr_fixture_hygiene.py --strict
 ```
 
 ---
 
-## 6. 最终执行文件（父目录保留）
+## 5. Suggested skills（下一会话按需 @）
 
-`EXECUTION-DOC-INDEX` · `task_plan` · `gate1-integration-spec` · `g1-02-execution-brief` · `g1-01-wiring-inventory` · `decision-map-enable-seam` · `findings` · `progress` · `note` · `README` · Plan completion-checks · `completion-check-audit` · **`completion-check-execute`（票 01–05 追加在同一文件；06/07 关账继续追加）**
-
----
-
-## 7. Suggested skills（下一会话按需 @）
-
-| 时机 | Skill |
-| --- | --- |
-| 开写正式代码前 | `agent-toolchain` → 定分支；`test-driven-development`；`testing-guidelines`（五字段）；ponytail / `karpathy-guidelines` |
-| 改 ESR / 增量工厂 / 金路径前 | `gitnexus-impact-analysis`（`enabled_source_registry` 等） |
-| 查调用链 / 入口 ID | `gitnexus-exploring` · inventory |
-| 删 OVERRIDE / Strangler | `deprecation-and-migration`；`gitnexus-refactoring` |
-| 票 06/07 夹具与证据档位 | completion-check `TEST-EVIDENCE-GOVERNANCE`；禁 patch 已加载对象作关账证据 |
-| 目标/边界不清 | `grilling` / grill-me（**停猜**） |
-| 切片关账 | `completion-check`（Execute：追加既有 `completion-check-execute.md`；勿用 01–05 CLOSED 冒充 G1-02） |
-| 收尾瘦身 | `ponytail-review` / `code-simplification`（只动本 diff） |
-| 新会话续作 | 先读本 `HANDOFF.md` + `EXECUTION-DOC-INDEX.md` |
+| 时机                                 | Skill                                                                                |
+| ------------------------------------ | ------------------------------------------------------------------------------------ |
+| 续测债批次                           | `testing-guidelines` · TEST-EVIDENCE-GOVERNANCE · `ponytail` · `karpathy-guidelines` |
+| 开写 / 改正式代码                    | `agent-toolchain` → 定分支；`test-driven-development`                                |
+| 改 production_gate / 共享 check 脚本 | `gitnexus-impact-analysis`                                                           |
+| 查调用链                             | `gitnexus-exploring`                                                                 |
+| 正式关票 08 / Execute                | `completion-check`（追加既有 `completion-check-execute.md`）                         |
+| 目标/边界不清                        | `grilling` / grill-me（**停猜**）                                                    |
+| 收尾瘦身                             | `ponytail-review` / `code-simplification`（只动本 diff）                             |
+| 新会话续作                           | **先读本 `HANDOFF.md`**；测债看 §0；票务看 §1 + `EXECUTION-DOC-INDEX.md`             |
 
 ---
 
-## 8. 已知坑 / UNVERIFIED（勿假装已裁定）
+## 6. 给下一 agent 的第一句话（可复制）
 
-- 开关本 `reason_code` 允许时多为空串（复用 ERROR_CODE）；完整枚举 / **管理员写 overlay 的产品 CLI** / revision 算法仍 UNVERIFIED → grill 或审阅 design（**不挡** 06/07 迁调用方）。
-- 撤销列在 DDL；**撤销 API** 未做。
-- F06：`enable_source_route` 仍改测试副本内存字段 → 06 收敛；不得声称「夹具已零构造」直至 F06 关。
-- F07：无 `con` 仍回落 YAML `is_enabled` → **06+07 完成后**再删；产品 fetch 必须传 `con`。
-- 票 06 **不**关闭 `T01-ENABLE-FRED-MERGE-001`（合并四门槛 → 票 10 / G1-08）。
-- inventory **P-SUPP** 文案可能仍写旧 `VALIDATION_ONLY_BLOCKED` → 文档漂移，顺手改，不挡 RED。
-- `PROJECT_IMPLEMENTATION_ROADMAP.md`：**已补最小承接表**（2026-07-12）；阶段外置须同时写待修复清单 + ROADMAP。
-- GitNexus index 可能滞后；以当前仓库 + rg 为准。
+> 读 `task/task-01-source-registry/HANDOFF.md`。上一会话已完成 **测试资产治理 Batch A–G**（不改 backend/design；meta/YAML parity 迁 scripts|phase-scripts；一次性 scratch 已清）。下一刀若续测债：按入库日开 **Batch H+**，先列清单再 SPLIT，复用已有 `check_*.py`，验证后删 `_tmp/_batch` scratch。若续产品：G1-02 Frontier=**票 08**；01–07 Execute CLOSED ≠ G1-02/R4；债见 `findings.md`。先 `git status`。不要加载 `归档/`。
 
----
-
-## 9. 给下一 agent 的第一句话（可复制）
-
-> 读 `task/task-01-source-registry/HANDOFF.md` 与 `EXECUTION-DOC-INDEX.md`。票 **01–05 Execute 已 CLOSED**（`completion-check-execute.md` 对象 A–E）。下一刀：**06∥07**（brief 4a/4b · 迁 ESR / 金路径 overlay）；细节以 `g1-02-execution-brief.md` §3.1/§6 为准；现场裁定见 `note.md`；开放债见 `findings.md`（**F05-A node-id 全表** / F06/F07）+ `docs/quality/待修复清单.md` + `PROJECT_IMPLEMENTATION_ROADMAP.md`。改 `enabled_source_registry` 前先 `impact`。反证：只清 fred 漏 else → 必须红。`test:quick` 现知仍红：`test_mootdxBarClean_layer5Provenance_matchesSameRunBundle`。先 `git status`。不要加载 `归档/`。不要宣称 G1-02 / R4。不要在本切片关 FRED 编排合并台账。
-
-_敏感信息：无。本 handoff 不含密钥。_
+_本 handoff 不含密钥。_

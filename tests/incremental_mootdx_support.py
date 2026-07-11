@@ -64,12 +64,26 @@ def build_live_service(
 
 
 def build_service(cm: ConnectionManager, raw_root: Path) -> tuple[DataSourceService, DataSyncOrchestrator]:
+    from tests.service_path_support import enable_source_route
+
     orch = DataSyncOrchestrator(cm)
+    with cm.writer() as con:
+        planner = enable_source_route(
+            raw_root,
+            source_id="mootdx",
+            data_domain="cn_equity_daily_bar",
+            primary_source_id="mootdx",
+            operation="fetch_daily_bar",
+            con=con,
+        )
     port = create_mootdx_fetch_port(symbols=(SYMBOL,), max_rows=EQUITY_INDEX_MAX_ROWS, use_mock=True)
     service = DataSourceService(
         data_root=raw_root,
         fetch_port=port,
         job_events=orch._jobs,
+        source_registry=planner._registry,
+        capability_registry=planner._capabilities,
+        route_planner=planner,
     )
     return service, orch
 

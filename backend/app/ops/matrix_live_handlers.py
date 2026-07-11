@@ -26,6 +26,42 @@ def _raw_orchestrator(data_root: Path, cm: ConnectionManager):
     return raw_root, DataSyncOrchestrator(cm)
 
 
+def _matrix_live_route_planner(
+    cm: ConnectionManager,
+    data_root: Path,
+    request: AcceptanceRequest,
+    *,
+    live_domain: str,
+    live_operation: str,
+):
+    """沙箱 planner：启用 incremental 实际 domain/op，并合并 request 侧（若不同）。"""
+    from backend.app.datasources.incremental_route_activation import (
+        build_activation_route_planner,
+        ensure_sandbox_route_activation,
+    )
+
+    with cm.writer() as con:
+        matrix_path = ensure_sandbox_route_activation(
+            con,
+            data_root=data_root,
+            source_id=request.source_id,
+            data_domain=live_domain,
+            operation=live_operation,
+        )
+        if (request.data_domain, request.operation) != (live_domain, live_operation):
+            ensure_sandbox_route_activation(
+                con,
+                data_root=data_root,
+                source_id=request.source_id,
+                data_domain=request.data_domain,
+                operation=request.operation,
+            )
+    # planner 构造不写库，勿占 writer 锁
+    return build_activation_route_planner(
+        platform_matrix_path=matrix_path,
+    )
+
+
 def _finish_incremental_matrix_live(
     request: AcceptanceRequest,
     matrix_target,
@@ -140,11 +176,19 @@ def execute_baostock_matrix_live(
 
     raw_root, orch = _raw_orchestrator(data_root, cm)
     symbol = "sh.600519"
+    planner = _matrix_live_route_planner(
+        cm,
+        data_root,
+        request,
+        live_domain="cn_equity_daily_bar",
+        live_operation="fetch_daily_bar",
+    )
     service = build_baostock_incremental_service(
         data_root=raw_root,
         symbol=symbol,
         job_events=orch._jobs,
         use_mock=False,
+        route_planner=planner,
     )
     end = date.today()
     window = IncrementalWindow(
@@ -185,12 +229,20 @@ def execute_cninfo_matrix_live(
 
     raw_root, orch = _raw_orchestrator(data_root, cm)
     symbols = matrix_cninfo_symbols()
+    planner = _matrix_live_route_planner(
+        cm,
+        data_root,
+        request,
+        live_domain="cn_announcements",
+        live_operation="fetch_announcement_index",
+    )
     port = create_cninfo_fetch_port(symbols=symbols, max_rows=3, use_mock=False)
     service = build_cninfo_incremental_service(
         data_root=raw_root,
         fetch_port=port,
         since_by_instrument={},
         job_events=orch._jobs,
+        route_planner=planner,
     )
     report = run_cninfo_incremental(orch, service=service, symbols=symbols)
     job_id = (
@@ -222,6 +274,13 @@ def execute_sec_edgar_matrix_live(
     )
 
     raw_root, orch = _raw_orchestrator(data_root, cm)
+    planner = _matrix_live_route_planner(
+        cm,
+        data_root,
+        request,
+        live_domain="us_filings",
+        live_operation="fetch_filings",
+    )
     port = create_sec_edgar_fetch_port(
         ciks=("0000320193",), max_filings=3, data_domain="us_filings", use_mock=False
     )
@@ -230,6 +289,7 @@ def execute_sec_edgar_matrix_live(
         fetch_port=port,
         since_by_cik={},
         job_events=orch._jobs,
+        route_planner=planner,
     )
     report = run_sec_edgar_incremental(orch, service=service, ciks=("0000320193",))
     cik_result = report.cik_results[0] if report.cik_results else {}
@@ -255,14 +315,24 @@ def _run_macro_list_incremental(
     create_port: Callable[..., Any],
     build_service,
     run_incremental: Callable[..., Any],
+    live_domain: str,
+    live_operation: str,
 ) -> AcceptanceReport:
     raw_root, orch = _raw_orchestrator(data_root, cm)
+    planner = _matrix_live_route_planner(
+        cm,
+        data_root,
+        request,
+        live_domain=live_domain,
+        live_operation=live_operation,
+    )
     port = create_port(instrument_ids, use_mock=False)
     service = build_service(
         data_root=raw_root,
         fetch_port=port,
         since_by_instrument={item: "2000-01-01" for item in instrument_ids},
         job_events=orch._jobs,
+        route_planner=planner,
     )
     report = run_incremental(orch, service=service, instrument_ids=instrument_ids, use_mock=False)
     return _finish_incremental_matrix_live(
@@ -301,6 +371,8 @@ def execute_us_treasury_matrix_live(
         run_incremental=lambda orch, service, instrument_ids, **kw: run_us_treasury_incremental(
             orch, service=service, tenors=instrument_ids, **kw
         ),
+        live_domain="us_treasury_yield_curve",
+        live_operation="fetch_yield_curve",
     )
 
 
@@ -330,6 +402,8 @@ def execute_cftc_matrix_live(
         run_incremental=lambda orch, service, instrument_ids, **kw: run_cftc_incremental(
             orch, service=service, markets=instrument_ids, **kw
         ),
+        live_domain="cot_positioning",
+        live_operation="fetch_cot_positioning",
     )
 
 
@@ -359,6 +433,8 @@ def execute_bis_matrix_live(
         run_incremental=lambda orch, service, instrument_ids, **kw: run_bis_incremental(
             orch, service=service, countries=instrument_ids, **kw
         ),
+        live_domain="central_bank_policy",
+        live_operation="fetch_policy_rate",
     )
 
 
@@ -388,6 +464,8 @@ def execute_world_bank_matrix_live(
         run_incremental=lambda orch, service, instrument_ids, **kw: run_world_bank_incremental(
             orch, service=service, countries=instrument_ids, **kw
         ),
+        live_domain="development_indicator",
+        live_operation="fetch_indicator_series",
     )
 
 
@@ -407,12 +485,20 @@ def execute_deribit_matrix_live(
 
     raw_root, orch = _raw_orchestrator(data_root, cm)
     instrument = resolve_matrix_deribit_live_instrument()
+    planner = _matrix_live_route_planner(
+        cm,
+        data_root,
+        request,
+        live_domain="crypto_options_surface",
+        live_operation="fetch_derivatives_instruments",
+    )
     port = create_deribit_fetch_port(instruments=(instrument,), max_surface_rows=3, use_mock=False)
     service = build_deribit_incremental_service(
         data_root=raw_root,
         fetch_port=port,
         since_by_instrument={instrument: "2000-01-01"},
         job_events=orch._jobs,
+        route_planner=planner,
     )
     report = run_deribit_incremental(orch, service=service, instruments=(instrument,))
     job_id = (
@@ -440,19 +526,25 @@ def execute_alpha_vantage_matrix_live(
     from backend.app.datasources.fetch_ports.alpha_vantage_port import create_alpha_vantage_fetch_port
     from backend.app.ops.alpha_vantage_incremental_run import (
         build_alpha_vantage_incremental_service,
-        enabled_alpha_vantage_source_registry,
         run_alpha_vantage_incremental,
     )
     from backend.app.ops.source_route_db_acceptance_matrix import matrix_alpha_vantage_symbol
 
     raw_root, orch = _raw_orchestrator(data_root, cm)
     symbol = matrix_alpha_vantage_symbol()
+    planner = _matrix_live_route_planner(
+        cm,
+        data_root,
+        request,
+        live_domain="us_equity_daily_bar",
+        live_operation="fetch_daily_bar",
+    )
     port = create_alpha_vantage_fetch_port(symbols=(symbol,), max_rows=3, use_mock=False)
     service = build_alpha_vantage_incremental_service(
         data_root=raw_root,
         fetch_port=port,
         job_events=orch._jobs,
-        source_registry=enabled_alpha_vantage_source_registry(),
+        route_planner=planner,
     )
     report = run_alpha_vantage_incremental(orch, service=service, symbols=(symbol,))
     job_id = (

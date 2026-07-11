@@ -40,12 +40,6 @@ def compute_since_date(
     return watermark + timedelta(days=1)
 
 
-def enabled_sec_edgar_source_registry():
-    from backend.app.ops.macro_incremental_common import enabled_source_registry
-
-    return enabled_source_registry(source_id="sec_edgar", data_domain="us_filings")
-
-
 def read_since_date_for_cik(
     con,
     cik: str,

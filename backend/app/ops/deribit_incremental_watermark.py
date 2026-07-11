@@ -43,12 +43,6 @@ def compute_since_date(
     return watermark + timedelta(days=1)
 
 
-def enabled_deribit_source_registry():
-    from backend.app.ops.macro_incremental_common import enabled_source_registry
-
-    return enabled_source_registry(source_id="deribit", data_domain="crypto_options_surface")
-
-
 def read_since_date_for_instrument(
     con,
     instrument_name: str,

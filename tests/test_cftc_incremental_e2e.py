@@ -17,12 +17,12 @@ from backend.app.ops.cftc_incremental_run import (
     DEFAULT_MARKETS,
     SOURCE_ID,
     WEEKLY_ADVANCE_DAYS,
-    enabled_cftc_source_registry,
     read_since_dates_for_markets,
     build_cftc_incremental_service,
     create_cftc_incremental_port,
     run_cftc_incremental,
 )
+from backend.app.datasources.incremental_route_activation import load_plain_source_registry
 from tests.macro_incremental_support import (
     FIXED_TODAY,
     bootstrap_macro_live_e2e_ctx,
@@ -43,7 +43,7 @@ def cftc_incremental_e2e_ctx(tmp_path, monkeypatch: pytest.MonkeyPatch) -> dict[
         since_reader=read_since_dates_for_markets,
         instrument_ids=DEFAULT_MARKETS,
         service_builder=build_cftc_incremental_service,
-        registry_factory=enabled_cftc_source_registry,
+        registry_factory=load_plain_source_registry,
     )
 
 
@@ -191,7 +191,7 @@ def test_cftcIncremental_liveNetwork_writesAxisObservation(
         since_reader=read_since_dates_for_markets,
         instrument_ids=DEFAULT_MARKETS,
         service_builder=build_cftc_incremental_service,
-        registry_factory=enabled_cftc_source_registry,
+        registry_factory=load_plain_source_registry,
     )
     report = run_cftc_incremental(
         ctx["orch"],
@@ -236,7 +236,7 @@ def test_cftcIncremental_liveNetwork_idempotentSecondRun(
         since_reader=read_since_dates_for_markets,
         instrument_ids=DEFAULT_MARKETS,
         service_builder=build_cftc_incremental_service,
-        registry_factory=enabled_cftc_source_registry,
+        registry_factory=load_plain_source_registry,
     )
     run_cftc_incremental(
         ctx["orch"],

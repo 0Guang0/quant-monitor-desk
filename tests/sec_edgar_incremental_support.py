@@ -14,7 +14,6 @@ from backend.app.db.migrate import apply_migrations
 from backend.app.datasources.fetch_ports.sec_edgar_port import create_sec_edgar_fetch_port
 from backend.app.ops.sec_edgar_incremental_run import build_sec_edgar_incremental_service
 from backend.app.ops.sec_edgar_incremental_watermark import (
-    enabled_sec_edgar_source_registry,
     read_since_date_for_cik,
 )
 from backend.app.sync.orchestrator import DataSyncOrchestrator
@@ -66,7 +65,7 @@ def bootstrap_sec_edgar_live_e2e_ctx(
             ciks=(CIK,), max_filings=5, data_domain="us_filings", **kw
         ),
         service_builder=build_sec_edgar_incremental_service,
-        registry_factory=enabled_sec_edgar_source_registry,
+        registry_factory=None,
         since_reader=lambda con, _ids: {CIK: read_since_date_for_cik(con, CIK)},
         instrument_ids=(CIK,),
         env_key="SEC_EDGAR_USER_AGENT",
@@ -76,14 +75,24 @@ def bootstrap_sec_edgar_live_e2e_ctx(
 @pytest.fixture
 def sec_edgar_incremental_e2e_ctx(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    from tests.service_path_support import enable_source_route
+
     cm = bootstrap_db(tmp_path)
+    with cm.writer() as con:
+        planner = enable_source_route(
+            tmp_path,
+            source_id="sec_edgar",
+            data_domain="us_filings",
+            primary_source_id="sec_edgar",
+            operation="fetch_filings",
+            con=con,
+        )
     raw_root = tmp_path / "raw"
     raw_root.mkdir()
     port = create_sec_edgar_fetch_port(
         ciks=(CIK,), max_filings=5, data_domain="us_filings", use_mock=True
     )
     orch = DataSyncOrchestrator(cm)
-    registry = enabled_sec_edgar_source_registry()
     with cm.writer() as con:
         since = read_since_date_for_cik(con, CIK)
     service = build_sec_edgar_incremental_service(
@@ -91,6 +100,13 @@ def sec_edgar_incremental_e2e_ctx(tmp_path: Path, monkeypatch: pytest.MonkeyPatc
         fetch_port=port,
         since_by_cik={CIK: since},
         job_events=orch._jobs,
-        source_registry=registry,
+        source_registry=planner.source_registry,
+        route_planner=planner,
     )
-    return {"cm": cm, "orch": orch, "service": service, "registry": registry}
+    return {
+        "cm": cm,
+        "orch": orch,
+        "service": service,
+        "registry": planner.source_registry,
+        "route_planner": planner,
+    }

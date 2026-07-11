@@ -37,39 +37,35 @@ def _sandbox_data_root(tmp_path: Path) -> Path:
 
 
 def _enable_source_registry(
-    monkeypatch: pytest.MonkeyPatch, source_id: str, data_domain: str
+    monkeypatch: pytest.MonkeyPatch, source_id: str, data_domain: str, data_root: Path
 ) -> None:
-    """Patch SourceRegistry.load — same enable semantics as enabled_source_registry."""
-    from backend.app.datasources.route_planner import SourceRoutePlanner
-    from backend.app.datasources.source_registry import DomainRoleBinding, SourceRegistry
+    """沙箱 QMD_DATA_ROOT duckdb 写正规 overlay（ADR-018；禁 ESR/__setattr__）。"""
+    del monkeypatch  # 保留参数兼容旧调用签名；启用不再 monkeypatch 生产对象
+    from backend.app.datasources.incremental_route_activation import (
+        prepare_audit_sandbox_route_activation,
+    )
+    from backend.app.sync.incremental_source_registry import resolve_incremental_gold_path
 
-    real_load = SourceRegistry.load
-
-    def _load(self, path=None) -> None:
-        real_load(self, path)
-        rec = self.get(source_id)
-        object.__setattr__(rec, "is_enabled", True)
-        orig = self.get_domain_roles
-
-        def _domain_enabled(domain: str):
-            binding = orig(domain)
-            if domain != data_domain:
-                return binding
-            return DomainRoleBinding(
-                primary_source_id=source_id,
-                validation_source_id=binding.validation_source_id,
-                fallback_policy=binding.fallback_policy,
-                domain_enabled_by_default=True,
-                fallback_source_ids=binding.fallback_source_ids,
-            )
-
-        self.get_domain_roles = _domain_enabled  # type: ignore[method-assign]
-
-    monkeypatch.setattr(SourceRegistry, "load", _load)
-    monkeypatch.setattr(
-        SourceRoutePlanner,
-        "_platform_allows",
-        lambda self, sid: (True, None),
+    entry = resolve_incremental_gold_path(source_id)
+    op_by_domain = {
+        "cn_equity_daily_bar": "fetch_daily_bar",
+        "macro_series": "fetch_macro_series",
+        "us_treasury_yield_curve": "fetch_yield_curve",
+        "central_bank_policy": "fetch_policy_rate",
+        "development_indicator": "fetch_development_indicator",
+        "cot_positioning": "fetch_cot_report",
+        "cn_announcements": "fetch_announcement_index",
+        "us_filings": "fetch_company_filings",
+        "us_equity_daily_bar": "fetch_daily_bar",
+        "crypto_options_surface": "fetch_options_surface",
+        "crypto_derivatives": "fetch_derivatives_instruments",
+    }
+    operation = op_by_domain.get(data_domain or entry.canonical_domain, "fetch_macro_series")
+    prepare_audit_sandbox_route_activation(
+        data_root,
+        source_id=source_id,
+        data_domain=data_domain or entry.canonical_domain,
+        operation=operation,
     )
 
 
@@ -97,7 +93,7 @@ def test_incrementalSyncRouter_dryRun_allSources_auditableJson(
     失败含义：运维无法按 --source-id 统一审计增量计划
     """
     entry = resolve_incremental_gold_path(source_id)
-    _enable_source_registry(monkeypatch, source_id, entry.canonical_domain)
+    _enable_source_registry(monkeypatch, source_id, entry.canonical_domain, sandbox_env)
     payload = sync_incremental_by_source_id(source_id=source_id, dry_run=True, end="2024-06-30")
     assert payload["command"] == "sync"
     assert payload["dry_run"] is True
@@ -172,7 +168,7 @@ def test_incrementalSyncRouter_syncPlan_delegatesWhenSourceIdSet(
     验证点：mootdx dry-run 返回 source_id=mootdx
     失败含义：main 仍只认 --domain 旧路径，S12 路由未接通
     """
-    _enable_source_registry(monkeypatch, "mootdx", "cn_equity_daily_bar")
+    _enable_source_registry(monkeypatch, "mootdx", "cn_equity_daily_bar", sandbox_env)
     payload = data_commands.sync_plan(
         data_domain="cn_equity_daily_bar",
         source_id="mootdx",
@@ -183,13 +179,16 @@ def test_incrementalSyncRouter_syncPlan_delegatesWhenSourceIdSet(
     assert payload["dry_run"] is True
 
 
-def test_incrementalSyncRouter_cliMain_sourceIdDryRunJson(sandbox_env: Path, capsys) -> None:
+def test_incrementalSyncRouter_cliMain_sourceIdDryRunJson(
+    sandbox_env: Path, monkeypatch: pytest.MonkeyPatch, capsys
+) -> None:
     """覆盖范围：qmd data sync CLI 端到端 dry-run
     测试对象：main.main data sync --source-id
     目的/目标：CLI 输出可解析 JSON
     验证点：exit 0；stdout JSON 含 source_id=fred
     失败含义：打包 CLI 与 data_commands 路由分叉
     """
+    _enable_source_registry(monkeypatch, "fred", "macro_series", sandbox_env)
     rc = main.main(
         [
             "data",
@@ -279,7 +278,7 @@ def test_incrementalSyncRouter_dryRun_mootdx_selectedSourceId_aligned(
     验证点：selected_source_id==mootdx；source_id==mootdx；dry_run is True
     失败含义：运维 dry-run 仍显示 baostock primary，explicit mootdx 路由不可审计
     """
-    _enable_source_registry(monkeypatch, "mootdx", "cn_equity_daily_bar")
+    _enable_source_registry(monkeypatch, "mootdx", "cn_equity_daily_bar", sandbox_env)
     payload = sync_incremental_by_source_id(source_id="mootdx", dry_run=True, end="2024-06-30")
     assert payload["source_id"] == "mootdx"
     assert payload["selected_source_id"] == "mootdx"

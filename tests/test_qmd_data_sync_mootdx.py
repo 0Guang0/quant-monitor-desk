@@ -11,11 +11,24 @@ from backend.app.cli.errors import CliFailure
 from backend.app.config import PROJECT_ROOT
 from backend.app.core.resource_guard import Decision, ResourceGuard
 from backend.app.db.connection import ConnectionManager
-from backend.app.db.migrate import apply_migrations
 
 
 def _sandbox_data_root(tmp_path: Path) -> Path:
     return tmp_path / ".audit-sandbox" / "wave3-accept" / "data"
+
+
+def _prepare_mootdx_dry_run_route(data_root: Path) -> None:
+    """dry-run 成功路径须显式写 overlay（禁依赖无 con YAML 回落假绿）。"""
+    from backend.app.datasources.incremental_route_activation import (
+        prepare_audit_sandbox_route_activation,
+    )
+
+    prepare_audit_sandbox_route_activation(
+        data_root,
+        source_id="mootdx",
+        data_domain="cn_equity_daily_bar",
+        operation="fetch_daily_bar",
+    )
 
 
 def test_qmdData_syncMootdx_refusesCanonicalDbPath(monkeypatch, tmp_path: Path) -> None:
@@ -81,6 +94,7 @@ def test_qmdData_syncMootdx_dryRun_includesWatermarkWindow(monkeypatch, tmp_path
     monkeypatch.setenv("QMD_DATA_ROOT", str(data_root))
     monkeypatch.setattr(data_commands, "DATA_ROOT", data_root)
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    _prepare_mootdx_dry_run_route(data_root)
     payload = data_commands.sync_mootdx_incremental(
         dry_run=True,
         instrument_id="sh.600519",
@@ -104,6 +118,7 @@ def test_qmdData_syncMootdx_cliDryRun_exitZero(monkeypatch, tmp_path: Path, caps
     monkeypatch.setenv("QMD_DATA_ROOT", str(data_root))
     monkeypatch.setattr(data_commands, "DATA_ROOT", data_root)
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    _prepare_mootdx_dry_run_route(data_root)
     rc = main.main(
         [
             "data",
@@ -178,11 +193,12 @@ def test_qmdData_syncMootdx_caughtUpDryRun(monkeypatch, tmp_path: Path) -> None:
     """
     data_root = _sandbox_data_root(tmp_path)
     data_root.mkdir(parents=True)
+    monkeypatch.setenv("QMD_DATA_ROOT", str(data_root))
+    monkeypatch.setattr(data_commands, "DATA_ROOT", data_root)
+    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
+    _prepare_mootdx_dry_run_route(data_root)
     db = data_root / "duckdb" / "quant_monitor.duckdb"
-    db.parent.mkdir(parents=True)
-    cm = ConnectionManager(db)
-    with cm.writer() as con:
-        apply_migrations(con)
+    with ConnectionManager(db).writer() as con:
         con.execute(
             """
             INSERT INTO security_bar_1d (
@@ -192,9 +208,6 @@ def test_qmdData_syncMootdx_caughtUpDryRun(monkeypatch, tmp_path: Path) -> None:
                       'none', 'seed', 'b0', NULL, CURRENT_TIMESTAMP)
             """
         )
-    monkeypatch.setenv("QMD_DATA_ROOT", str(data_root))
-    monkeypatch.setattr(data_commands, "DATA_ROOT", data_root)
-    monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
     payload = data_commands.sync_mootdx_incremental(
         dry_run=True,
         instrument_id="sh.600519",

@@ -16,7 +16,6 @@ from backend.app.datasources.fetch_result import FetchRequest
 from backend.app.datasources.service import DataSourceService
 from backend.app.ops.fred_incremental_watermark import read_since_dates_for_series
 from backend.app.ops.macro_incremental_common import (
-    enabled_source_registry,
     load_incremental_route_bundle,
     macro_staging_adapter_patch,
 )
@@ -73,21 +72,29 @@ class FredIncrementalRunReport:
     overall_status: str
 
 
-def _load_fred_incremental_route_bundle(source_registry=None):
+def _load_fred_incremental_route_bundle(
+    source_registry=None,
+    *,
+    platform_matrix_path=None,
+):
     return load_incremental_route_bundle(
         source_id="fred",
         data_domain="macro_series",
-        source_registry=source_registry or enabled_fred_source_registry(),
+        source_registry=source_registry,
+        platform_matrix_path=platform_matrix_path,
     )
 
 
-def enabled_fred_source_registry():
-    return enabled_source_registry(source_id="fred", data_domain="macro_series")
-
-
-def build_fred_incremental_preview_service(*, source_registry=None) -> DataSourceService:
+def build_fred_incremental_preview_service(
+    *,
+    source_registry=None,
+    platform_matrix_path=None,
+) -> DataSourceService:
     """Dry-run route preview for macro_series/fred (L2 data_commands sync_plan)."""
-    registry, caps, planner = _load_fred_incremental_route_bundle(source_registry)
+    registry, caps, planner = _load_fred_incremental_route_bundle(
+        source_registry,
+        platform_matrix_path=platform_matrix_path,
+    )
     return DataSourceService(
         source_registry=registry,
         capability_registry=caps,
@@ -103,8 +110,18 @@ def build_fred_incremental_service(
     since_by_series: dict[str, str],
     job_events=None,
     source_registry=None,
+    platform_matrix_path=None,
+    route_planner=None,
 ) -> FredIncrementalFetchProxy:
-    registry, caps, planner = _load_fred_incremental_route_bundle(source_registry)
+    if route_planner is not None:
+        registry = route_planner.source_registry
+        caps = route_planner.capability_registry
+        planner = route_planner
+    else:
+        registry, caps, planner = _load_fred_incremental_route_bundle(
+            source_registry,
+            platform_matrix_path=platform_matrix_path,
+        )
     inner = DataSourceService(
         data_root=data_root,
         fetch_port=fetch_port,
@@ -165,6 +182,7 @@ def run_fred_macro_incremental(
         since_by_series=since_map,
         job_events=orch._jobs,
         source_registry=source_registry,
+        route_planner=getattr(service._inner, "_route_planner", None),
     )
 
     def _staging_rows(bundle, *, instrument_id: str, start_date: str | None = None):
