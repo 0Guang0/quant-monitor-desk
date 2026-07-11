@@ -46,6 +46,22 @@ CREATE TABLE IF NOT EXISTS source_registry (
     removed_from_yaml_at   TIMESTAMP
 );
 
+-- G1-02 / ADR-018：管理员启用覆盖层（data_sources.md §5.2.1）
+CREATE TABLE IF NOT EXISTS source_activation_overlay (
+    overlay_id          VARCHAR PRIMARY KEY,
+    source_id           VARCHAR NOT NULL,
+    data_domain         VARCHAR NOT NULL,
+    operation           VARCHAR NOT NULL,
+    enabled             BOOLEAN NOT NULL,
+    reason              TEXT NOT NULL,
+    changed_by          VARCHAR NOT NULL,
+    changed_at          TIMESTAMP NOT NULL,
+    revision            VARCHAR NOT NULL,
+    revoked_at          TIMESTAMP,
+    revoked_by          VARCHAR,
+    revoke_reason       TEXT
+);
+
 CREATE TABLE IF NOT EXISTS file_registry (
     file_id             VARCHAR PRIMARY KEY,
     file_type           VARCHAR,

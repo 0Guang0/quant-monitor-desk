@@ -40,6 +40,7 @@ ALL_MIGRATION_VERSIONS = frozenset(
         "014_stg_bar_ohlcv",
         "015_dcp05_tier_a_clean",
         "016_sync_job_watermark_columns",
+        "017_source_activation_overlay",
     }
 )
 
@@ -92,8 +93,8 @@ def test_appliedVersions_emptyDb_returnsEmptySet() -> None:
 def test_appliedVersions_afterMigration_containsFoundation() -> None:
     """覆盖范围：全量迁移后的版本集合
     测试对象：applied_versions 在 apply_migrations 之后
-    目的/目标：当前仓库应登记 001–015 全部已实现迁移 ID
-    验证点：返回集合等于 001_foundation 至 015_dcp05_tier_a_clean
+    目的/目标：当前仓库应登记 001–017 全部已实现迁移 ID
+    验证点：返回集合等于 001_foundation 至 017_source_activation_overlay
     失败含义：版本登记与磁盘迁移文件不一致，升级路径不可追踪
     """
     con = duckdb.connect(":memory:")
@@ -116,6 +117,8 @@ def test_applyMigrations_freshDb_includesIngestionTables() -> None:
     assert "004_ingestion_sources" in applied
     tables = {row[0] for row in con.execute("SHOW TABLES").fetchall()}
     assert INGESTION_TABLES.issubset(tables)
+    assert "017_source_activation_overlay" in applied
+    assert "source_activation_overlay" in tables
 
 
 def test_applyMigrations_modifiedFile_raisesChecksumError(tmp_path: Path) -> None:
