@@ -133,3 +133,9 @@ python -m quant_monitor.ops.health --monthly --confirm
 所有报告写入 report_registry
 所有异常写 logs_health_audit
 ```
+
+## ADR-017 运维检查补充
+
+每日检查主源失败、fallback 尝试、连续监控写入与未处理人工复核；每周检查主源恢复回补积压、
+RoutePlan／覆盖层版本一致性与异常数据标签传播；每月复核长期失败来源的定位、异常归档索引和
+到期清理前置条件。不得按全项目固定天数判断回补窗口。

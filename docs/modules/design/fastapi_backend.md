@@ -1,7 +1,7 @@
 # FastAPI 后端模块
 
 > 文件定位：实现级模块设计。本文从原 `fastapi_and_frontend.md` 拆出后端 API 部分，作为后续 Claude Code / Codex 实现 FastAPI 服务的权威文件。  
-> 边界：FastAPI 只读访问 clean/snapshot 表；写入必须通过受控后台任务和 `DuckDBWriteManager`，前端与 Agent 不直接连接 DuckDB。
+> 边界：FastAPI 默认只读可信最终库/snapshot；明确支持连续监控的端点可读取带完整风险标签的连续监控视图，审计归档区不作默认读取。写入必须通过受控后台任务和 `DuckDBWriteManager`，前端与 Agent 不直接连接 DuckDB。
 
 ---
 
@@ -77,8 +77,9 @@ src/quant_monitor/api/
 默认 API 只能读取：
 
 ```text
-clean tables
+trusted clean tables
 snapshot tables
+explicitly requested continuity-monitoring views
 audit summary
 file_registry index
 agent report tables
@@ -117,6 +118,14 @@ POST /api/admin/jobs/{job_type}/request
     "data_lag_days": 0,
     "quality_flags": [],
     "source_used": "duckdb_snapshot",
+    "source_grade": "PRIMARY",
+    "quality_grade": "QUALITY_PASSED",
+    "manual_review_required": false,
+    "route_plan_id": "string or null",
+    "primary_failure_reason": "string or null",
+    "source_registry_revision": "string or null",
+    "activation_overlay_revision": "string or null",
+    "recovery_replacement_of": "string or null",
     "page": 1,
     "page_size": 200,
     "total": 1000
@@ -245,6 +254,11 @@ nullable
 中文说明
 前端展示建议
 quality_flags
+source_grade
+quality_grade
+manual_review_required
+route_plan_id
+primary_failure_reason
 ```
 
 禁止返回动态字段名作为核心结构，例如：
@@ -400,3 +414,11 @@ Diagnostics 只做本地只读状态预览，覆盖 source route、registry vali
 错误响应必须包含 `error_code` 与 `docs_anchor`，并链接到 `docs/ops/ERROR_CODE_GUIDE.md`。
 
 必须补测试：`test_diagnosticsEndpointsReadOnly`、`test_apiRoutes_followModuleBoundary`、`test_sourceRoutePreviewDoesNotFetch`。
+
+## ADR-017 Response Envelope 扩展
+
+所有读取连续监控或可信数据的响应 `meta` 除 `quality_flags`、`source_used` 外，必须向后兼容地
+提供 `source_grade`、`quality_grade`、`manual_review_required`、`route_plan_id`、
+`primary_failure_reason` 与适用的版本／恢复关系。Repository 必须显式选择可信最终库或连续监控
+视图；审计归档区不属于默认读取。字段定义唯一以
+`specs/contracts/design/source_provenance_quality_contract.yaml` 为准。

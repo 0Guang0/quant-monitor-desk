@@ -10,7 +10,7 @@
 ```text
 Raw Store / File Lake
   → Staging Tables
-  → Clean Tables
+  → Trusted Clean Tables 或 Continuity Monitoring Views
   → Snapshot Tables
   → API Views / Reports / Agent Context
 ```
@@ -81,7 +81,7 @@ report tables:
 
 ---
 
-# 4. Staging / Clean / Snapshot / Audit
+# 4. Staging / 可信最终库 / 连续监控 / Snapshot / Audit
 
 ## Staging
 
@@ -92,23 +92,21 @@ report tables:
 不供前端直接读取
 ```
 
-## Clean
+## 可信最终库与连续监控区
 
 ```text
-已校验
-已去重
-已处理 source conflict
-可供 Repository 读取
+可信最终库：已校验、已去重、已处理 source conflict，可供默认 Repository 读取。
+连续监控区：可归一化、血缘完整的降级或质量异常活动版本，只能由明确支持风险标签的读取路径使用。
 ```
 
-Clean 不等于“永远来自正常主源”。Clean 的含义是“已通过校验、可追溯、可被系统读取”。最终成品必须进一步区分：
+可信最终库只保存质量通过的 Primary 默认可信版本。连续监控区独立保存可归一化、血缘完整的降级或质量异常活动版本；两者不得混称为 clean：
 
 ```text
-primary-grade clean  正常 Primary 源写入，可作为默认主事实输入
-degraded clean       FallbackPolicy 授权后的降级写入，可读但必须带 source_switched / quality_flags / stale_reason
+可信最终库          `PRIMARY + QUALITY_PASSED`，可作为默认主事实和默认回测输入
+连续监控区          `DEGRADED` 或 `QUALITY_FAILED` 的活动版本，可计算/告警但必须保留完整风险标签
 ```
 
-下游模块、前端和 Agent 不得把 degraded clean 静默当作 primary-grade clean。若某个模型或指标只接受主源级输入，遇到 degraded clean 必须 fail-closed、降权、仅展示或返回诚实 NULL。
+下游模块、前端和 Agent 不得把连续监控数据静默当作可信最终库。若某个模型或指标只接受主源级输入，遇到非 `PRIMARY + QUALITY_PASSED` 数据必须 fail-closed、降权、仅展示或返回诚实 NULL。
 
 ## Snapshot
 
@@ -134,7 +132,7 @@ Fetched Raw
   → Staged
   → Validated
   → Conflict Checked
-  → Clean Merged
+  → Trusted Clean Merge 或 Continuity Monitoring Write
   → Snapshot Built
   → Reported / Displayed
   → Archived / Pruned by Policy
@@ -147,10 +145,10 @@ Fetched Raw
 写 audit
 标记 failed status
 可重试
-不污染 clean table
+不污染可信最终库
 ```
 
-若失败后按 FallbackPolicy 使用 Validation 源或 last_good_cache，不能视为“失败消失”。必须保留原始失败事件，并将后续写入标记为 degraded clean。
+若失败后按 FallbackPolicy 使用 Validation 源或 last_good_cache，不能视为“失败消失”。必须保留原始失败事件，并将后续活动版本写入连续监控区，附带来源等级、质量等级、RoutePlan 和人工复核语义。
 
 ---
 
@@ -251,8 +249,11 @@ Backfill 分区分批，不全市场并发
 所有 snapshot 能追溯到 clean / spec / source
 所有 file_registry local_path 存在或标记 missing
 所有 source switch 有 quality_flags
-所有 degraded clean 可从 write_audit_log / route plan 追溯到主源失败原因和 fallback 策略
+所有连续监控版本可从 write_audit_log / RoutePlan 追溯到主源失败原因、fallback 策略、来源等级和质量等级
 所有 specs 能加载并初始化 registry
 无分页大查询被拒绝
 ResourceGuard 可阻止重任务污染本机体验
 ```
+
+被主源回补替代的连续监控版本移入审计归档区，不参与默认读取或默认回测；完整字段、留存和切换
+条件以 `specs/contracts/design/source_provenance_quality_contract.yaml` 为准。

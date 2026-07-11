@@ -1,0 +1,70 @@
+version: v1
+name: source_provenance_quality_contract
+authority:
+  adr: docs/decisions/design/ADR-017-dynamic-source-fallback-and-exception-data-lifecycle.md
+  applies_to:
+    [
+      source_registry,
+      route_plan,
+      validation,
+      write_manager,
+      layer1,
+      layer2,
+      layer3,
+      layer4,
+      layer5,
+      api,
+      frontend,
+      notification,
+    ]
+purpose: Keep source risk and data quality independent from routing through display, alerting, recovery, and audit.
+source_grade:
+  allowed: [PRIMARY, DEGRADED]
+quality_grade:
+  allowed: [QUALITY_PASSED, QUALITY_FAILED]
+required_provenance_fields:
+  - source_used
+  - source_grade
+  - quality_grade
+  - route_plan_id
+  - route_plan_version
+  - source_registry_revision
+  - activation_overlay_revision
+  - primary_failure_reason
+  - source_fetch_id
+  - source_content_hash
+manual_review:
+  field: manual_review_required
+  type: boolean
+  required_when:
+    - quality_grade_is_QUALITY_FAILED
+    - severe_source_conflict
+    - route_status_is_BLOCKED_MANUAL_REVIEW
+write_targets:
+  trusted_clean:
+    requires: [PRIMARY, QUALITY_PASSED]
+    default_read: true
+  continuity_monitoring:
+    permits_source_grade: [PRIMARY, DEGRADED]
+    permits_quality_grade: [QUALITY_PASSED, QUALITY_FAILED]
+    requires_normalized_value_and_complete_lineage: true
+    default_read: false
+    consumer_visible_labels: true
+  revision_audit_archive:
+    default_read: false
+    stores_superseded_continuity_versions: true
+invariants:
+  - validation_source_never_becomes_primary_by_fallback
+  - unregistered_disabled_unreviewed_or_capability_mismatched_source_never_auto_routes
+  - unparseable_or_missing_normalized_value_is_MISSING_and_never_enters_numeric_continuity_output
+  - quality_failed_never_writes_trusted_clean
+  - fallback_and_quality_failed_never_lose_labels_in_layer_api_frontend_or_alert_paths
+  - recovery_replaces_only_the_same_fact_position_after_verified_primary_write_and_archive_success
+retention:
+  exception_payload_baseline:
+    minute_or_hour: 90d
+    daily_or_weekly: 2y
+    monthly_or_quarterly: 5y
+    annual_low_frequency_or_event: 7y
+  actual_payload_retention: max(baseline, longest_related_calculation_lookback + 2_update_cycles)
+  trusted_clean_automatic_deletion: forbidden

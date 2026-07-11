@@ -11,6 +11,14 @@ required_fields:
   source_dataset_ids: list[string]
   source_fetch_ids: list[string]
   source_content_hashes: list[string]
+  route_plan_ids: list[string]
+  source_grades: list[string]
+  quality_grades: list[string]
+  manual_review_required: boolean
+  primary_failure_reasons: list[string]
+  source_registry_revision: string
+  activation_overlay_revision: string
+  recovery_replacement_of_snapshot_id: string|null
   rule_version: string
   code_version: string
   parameter_hash: string
@@ -22,6 +30,7 @@ constraints:
   no_future_data: as_of_timestamp must be <= every input observation visibility timestamp
   deterministic_rebuild: same inputs + same rule_version + same parameter_hash must reproduce same business result
   agent_outputs_not_source: agent-generated prose must never appear in source_dataset_ids
+  provenance_quality_contract: must satisfy specs/contracts/design/source_provenance_quality_contract.yaml
 validation_tests:
   - test_snapshotRejectsFutureInput
   - test_snapshotLineageContainsSourceHashes

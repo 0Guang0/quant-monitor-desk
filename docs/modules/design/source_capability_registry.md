@@ -2,13 +2,13 @@
 
 ## 1. 目的
 
-`SourceRegistry` 负责 source、domain、role、enabled 状态；`SourceCapabilityRegistry` 负责更细的 operation、field、frequency、incremental/backfill/auth 能力。两者不得合并，避免 source registry 继续膨胀。
+`SourceRegistry` 负责 source、domain、role 与基础启用状态；管理员启用覆盖层给出当前有效启用状态；`SourceCapabilityRegistry` 负责更细的 operation、field、frequency、incremental/backfill/auth 能力。三者不得混为一层，避免稳定目录被运营状态或能力细节污染。
 
 本设计吸收调研报告中 JQ2PTrade `api_mapping.json` 的 mapping-first 思路，但只用于本项目的数据源能力声明，不用于交易策略转换。
 
 ## 2. 权威文件
 
-- `specs/datasource_registry/source_registry.yaml`：source/domain/role/启用状态权威。
+- `specs/datasource_registry/source_registry.yaml`：source/domain/role/基础启用状态权威；有效启用状态由受控覆盖层与其合成。
 - `specs/datasource_registry/source_capabilities.yaml`：source/domain/operation/field 能力权威。
 - `specs/contracts/source_capability_contract.yaml`：机器验收规则。
 
@@ -47,3 +47,7 @@ class SourceCapabilityRegistry:
 ```bash
 python -m pytest tests/test_source_capabilities.py tests/test_source_registry.py tests/test_adapter_skeletons.py -q
 ```
+
+## ADR-017 补充：能力与启用覆盖层边界
+
+`SourceRegistry` 维护基础登记与基础启用，管理员启用覆盖层维护当前有效启用状态；两者的合成结果才是路由可见的有效状态。Capability 仍只回答“是否支持该 source/domain/operation/frequency/auth 组合”，不能因为能力存在而自动获得 fallback 权限。RoutePlan 仅能从同时满足登记、有效启用、能力、授权、平台与领域固定优先级的候选中选择来源，并须把 capability/覆盖层版本写入血缘。

@@ -62,3 +62,9 @@ uv run python scripts/ci_perf_budget_artifact.py
 | `yahoo_finance` | 可选验证源                | 可选验证源                | disabled                |
 
 Phase A 不修改依赖文件、不新增外部服务、不启用任何远程源。
+
+## ADR-017 启用覆盖层运维
+
+管理员启用覆盖层必须由受控配置/CLI 修改、持久化、备份并可审计撤销；部署/恢复检查应验证其
+版本与 Source Registry 一致。该机制不替代 QMT/xqshare 等来源已有的本机授权、环境变量、平台
+矩阵和 ResourceGuard 前置条件，也不允许任务自行永久改开关。

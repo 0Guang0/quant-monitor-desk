@@ -12,6 +12,13 @@ common_fields:
   - message
   - detail
   - quality_flags
+  - source_grade
+  - quality_grade
+  - manual_review_required
+  - route_plan_id
+  - primary_failure_reason
+  - source_registry_revision
+  - activation_overlay_revision
 severity:
   allowed: [DEBUG, INFO, WARN, ERROR, CRITICAL]
   default_runtime_minimum: INFO
@@ -35,14 +42,31 @@ must_audit:
   - agent_output_staging
   - notification_send
   - backup_restore
+  - activation_overlay_change
+  - primary_source_failure
+  - fallback_candidate_attempt
+  - continuity_monitoring_write
+  - primary_recovery_promotion
+  - exception_revision_archive
+  - exception_payload_purge
 retention:
+  ordinary_payload_default_days: 365
   compress_audit_when_gb_gt: 1
   fetch_log_hot_days: 30
   data_quality_log_hot_days: 90
   conflict_log_default_delete: false
   revision_log_default_delete: false
+  trusted_clean_automatic_delete: forbidden
+  exception_payload:
+    minute_or_hour: 90d
+    daily_or_weekly: 2y
+    monthly_or_quarterly: 5y
+    annual_low_frequency_or_event: 7y
+    actual_retention: max(baseline, longest_related_calculation_lookback + 2_update_cycles)
+    compact_audit_index: long_term
 failure_policy:
   audit_write_failure:
     - try_emergency_log
     - stop_non_core_jobs_if_emergency_log_fails
     - do_not_write_clean_table_without_audit
+provenance_quality_contract: specs/contracts/design/source_provenance_quality_contract.yaml

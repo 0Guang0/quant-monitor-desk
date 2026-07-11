@@ -9,3 +9,11 @@
 | ADR-0003 | Layer 1 才物化完整标准化字段                     | accepted | `docs/modules/layer1_global_regime_panel.md`                                              |
 | ADR-0004 | Layer 3 采用资金震动锚点模型并执行方案B          | accepted | `docs/modules/layer3_industry_shock_anchor.md`                                            |
 | ADR-0005 | 数据源采用 Primary / Validation / FallbackPolicy | accepted | `docs/modules/data_sources.md`                                                            |
+
+## 扩展 ADR（独立编号体系）
+
+`docs/decisions/` 使用独立的 ADR 编号；以下已接受决策同样是本项目设计权威的一部分。
+
+| ADR     | 决策                                           | 状态     | 对应模块                                                                                |
+| ------- | ---------------------------------------------- | -------- | --------------------------------------------------------------------------------------- |
+| ADR-017 | 动态数据源降级、异常数据生命周期与主源恢复回补 | accepted | `docs/decisions/design/ADR-017-dynamic-source-fallback-and-exception-data-lifecycle.md` |

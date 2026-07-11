@@ -25,6 +25,22 @@ quality_flags:
   - FORBIDDEN_SUBSTITUTE_USED
   - BLINDSPOT_NOT_OBSERVABLE
   - ROBUST_Z_UNAVAILABLE
+  - SOURCE_FALLBACK_USED
+  - VALIDATION_SOURCE_USED
+  - QUALITY_FAILED
+  - MANUAL_REVIEW_REQUIRED
+provenance_quality_contract: specs/contracts/design/source_provenance_quality_contract.yaml
+required_result_provenance:
+  - source_used
+  - source_grade
+  - quality_grade
+  - manual_review_required
+  - route_plan_id
+  - primary_failure_reason
+  - source_registry_revision
+  - activation_overlay_revision
+  - source_fetch_id
+  - source_content_hash
 forbidden_output_terms:
   - 买入
   - 卖出

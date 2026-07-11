@@ -286,7 +286,7 @@ SourceConflictValidator
     ↓
 WriteManager
     ↓
-Layer 5 clean / snapshot / event 表
+Layer 5 可信最终库 / 连续监控视图 / snapshot / event 表
     ↓
 evidence_chain_builder
     ↓
@@ -332,6 +332,10 @@ GET /api/layer5/securities/{instrument_id}/evidence
 GET /api/evidence/{evidence_id}
 ```
 
+每个 Layer 5 API 返回的事实和 evidence ref 必须带 `source_used`、`source_grade`、`quality_grade`、
+`manual_review_required` 与 `route_plan_id`；连续监控事实还必须带主源失败原因，不能仅以单一
+`quality_flag` 表示。
+
 ---
 
 # 8. CLI 契约
@@ -364,3 +368,9 @@ Layer 5 不得直接写 Layer 1 / Layer 2 / Layer 3 / Layer 4 表。
 ## 用户决策补充：不复制 Layer 1 全套标准化字段
 
 落实 D-09：Layer 5 不默认复制 Layer 1 的完整标准化字段。Layer 5 只保留本层业务必需字段；如后续确需引入 z-score、历史百分位、状态桶等标准化字段，必须在本层 contract 中按需增加，不得全量套用 Layer 1 模型。
+
+## ADR-017 连续监控消费规则
+
+Layer 5 的行情、财务、事件和 evidence refs 必须可追溯到 `source_grade`、`quality_grade`、实际
+来源、RoutePlan 和人工复核状态。质量异常但可归一化的数据可以形成带风险标记的连续监控证据；
+不得写成可信 clean 事实或无标签证据。

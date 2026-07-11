@@ -179,3 +179,9 @@ RESTORE_HASH_MISMATCH
 RESTORE_SMOKE_TEST_FAILED
 RESTORE_NEEDS_HUMAN_CONFIRMATION
 ```
+
+## ADR-017 覆盖范围
+
+备份 manifest、恢复 smoke test 与恢复演练必须覆盖连续监控区、异常版本归档索引及其与可信最终库
+的引用关系。到期清理异常 payload 前必须验证可恢复的归档副本与审计索引；不得以备份裁剪为由
+删除可信最终库历史。

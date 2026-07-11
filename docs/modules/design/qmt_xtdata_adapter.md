@@ -69,3 +69,9 @@ SourceRoutePlan route_status=READY
 权威文件：`docs/ops/qmt_xqshare_setup.md`、`specs/contracts/platform_source_matrix.yaml`、`specs/contracts/source_route_contract.yaml`、`specs/datasource_registry/source_capabilities.yaml`。
 
 Phase A 不修改 `source_registry.yaml`、不新增 qmt_xqshare adapter 代码、不新增依赖。
+
+## ADR-017 受控兜底澄清
+
+管理员启用覆盖层仅能在用户已确认 QMT 授权、路径、行情权限和平台前置条件后使 QMT 参与对应领域
+RoutePlan；它不能自动连接、登录或绕过验证码。获准后 QMT 可按领域固定候选顺序作为 fallback，
+但仍以 `DEGRADED`／`FallbackPolicy` 记录，永不因故障接管被静默升格为 Primary。

@@ -173,16 +173,16 @@ commodity/index/future 不得误标为普通 public_equity
 
 # 9. 错误码
 
-| error_code                 | 含义             | 处理                       |
-| -------------------------- | ---------------- | -------------------------- |
-| `SOURCE_UNAVAILABLE`       | 数据源不可用     | 重试或进入 fallback_policy |
-| `SCHEMA_DRIFT`             | 字段结构变化     | 停止写 clean，人工确认     |
-| `DATA_STALE`               | 数据过期         | 标 stale，不静默替换       |
-| `SOURCE_CONFLICT_CRITICAL` | 多源严重冲突     | ReconcileJob               |
-| `WRITE_LOCKED`             | 写锁存在         | 等待或退出                 |
-| `QUERY_TOO_LARGE`          | 查询过大         | 要求分页或缩小范围         |
-| `AGENT_OUTPUT_INVALID`     | Agent 输出不合规 | 不写 clean，重试或人工审核 |
-| `REPORT_SEND_FAILED`       | 报告发送失败     | 重试并写 run log           |
+| error_code                 | 含义             | 处理                                                                |
+| -------------------------- | ---------------- | ------------------------------------------------------------------- |
+| `SOURCE_UNAVAILABLE`       | 数据源不可用     | 重试或进入 fallback_policy                                          |
+| `SCHEMA_DRIFT`             | 字段结构变化     | 停止写可信最终库、创建修复事件；合格次源可按 RoutePlan 维持连续监控 |
+| `DATA_STALE`               | 数据过期         | 标 stale，不静默替换                                                |
+| `SOURCE_CONFLICT_CRITICAL` | 多源严重冲突     | ReconcileJob                                                        |
+| `WRITE_LOCKED`             | 写锁存在         | 等待或退出                                                          |
+| `QUERY_TOO_LARGE`          | 查询过大         | 要求分页或缩小范围                                                  |
+| `AGENT_OUTPUT_INVALID`     | Agent 输出不合规 | 不写 clean，重试或人工审核                                          |
+| `REPORT_SEND_FAILED`       | 报告发送失败     | 重试并写 run log                                                    |
 
 ---
 
@@ -199,3 +199,9 @@ daily_health_check 可以输出 ok/warning/critical。
 Layer 3 配置健康检查能发现孤立 edge。
 Agent 输出非法时能被 NoActionSemanticGuard 拦截。
 ```
+
+## ADR-017 健康指标
+
+运维健康报告必须包括：Primary 失败率、fallback／降级率、`QUALITY_FAILED` 连续监控数、未处理
+人工复核数、主源恢复回补积压、异常归档与清理健康度。指标标签只能使用低基数领域、状态和原因码；
+具体请求、用户、token 与原始错误文本仅进入受控审计日志。

@@ -88,7 +88,7 @@ axis_observation 写入 staging
         ↓
 DataQualityValidator / SourceConflictValidator
         ↓
-DuckDBWriteManager 写入 clean table
+DuckDBWriteManager 按来源/质量准入写入可信最终库或连续监控区
         ↓
 AxisFeatureEngine 计算 z_score / robust_z_score / percentile / delta / state_bucket
         ↓
@@ -561,3 +561,9 @@ python -m quant_monitor layer1 health-check
 8. 实现 Layer 1 前端卡片数据契约
 9. 实现测试集
 ```
+
+## ADR-017 连续监控消费规则
+
+Layer 1 可使用受治理连续监控视图保持五轴连续，但每个 observation、feature 与 interpretation
+必须携带 `source_grade`、`quality_grade`、`manual_review_required`、`source_used` 和 `route_plan_id`。
+`QUALITY_FAILED` 结果可计算和告警，却不得被解释为可信主源结论；不可归一化时输出 `MISSING`。

@@ -36,3 +36,9 @@ disabled_reason=missing_xqshare_env_or_user_authorization
 - `specs/contracts/platform_source_matrix.yaml`
 - `specs/contracts/source_route_contract.yaml`
 - `specs/datasource_registry/source_capabilities.yaml`
+
+## ADR-017 补充
+
+即使管理员覆盖层启用，`qmt_xqshare` 仍必须满足本文件的 env、用户授权和平台矩阵前置条件；
+自动 fallback 不得自动设置 env、探测端口或绕过任何前置条件。获准的 fallback 需完整记录来源、
+失败原因、RoutePlan 与 `DEGRADED` 标签。

@@ -31,7 +31,13 @@ thresholds:
       relative_warning: 0.0005
       relative_severe: 0.002
 resolution_policy:
-  small_diff: write_primary_and_record_pass
-  medium_diff: write_primary_with_warning
-  severe_diff: block_write_and_create_reconcile_job
+  small_diff: write_trusted_primary_and_record_pass
+  medium_diff: write_trusted_primary_with_warning
+  severe_diff: block_write_to_trusted_clean_and_create_reconcile_job
   unresolved_after_reconcile: manual_review_required
+continuity_monitoring_exception:
+  allowed_only_when: normalized_value_and_complete_lineage
+  required_quality_grade: QUALITY_FAILED
+  required_manual_review: true
+  forbidden_target: trusted_clean
+  unparseable_or_missing_normalized_value: MISSING

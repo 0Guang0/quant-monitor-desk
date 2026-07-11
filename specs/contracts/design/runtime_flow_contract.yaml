@@ -30,16 +30,30 @@ flows:
       - full_market_minute_scan
   backfill:
     requires_user_confirm: true
-    max_trading_days_default: 5
+    window_policy: per_domain_frequency_and_buffer
     pause_if_disk_free_lt_gb: 20
     pause_if_available_memory_lt_gb: 2
   report_generation:
     requires_no_action_semantics_guard: true
     agent_writes_only_staging: true
+  source_failover_and_recovery:
+    route_plan_required: true
+    fallback_candidates: fixed_per_domain_priority
+    eligible_candidate_requirements:
+      [
+        registered,
+        reviewed,
+        activation_effective_enabled,
+        capability_compatible,
+        authorized,
+      ]
+    code_adapter_format_or_schema_failure_creates_high_priority_repair_event: true
+    continuity_monitoring_allowed_for_normalized_lineage_complete_quality_failed_data: true
+    primary_recovery: verified_primary_write_then_archive_superseded_exception_then_switch_default_read
 resource_guard_checkpoints:
   - before_job_start
   - before_each_batch
-  - before_clean_merge
+  - before_governed_write
   - before_large_snapshot
   - before_report_generation
   - before_backup

@@ -136,6 +136,11 @@ CREATE TABLE IF NOT EXISTS alert_event (
     facts_used_json       JSON,
     evidence_ids_json     JSON,
     quality_flags_json    JSON,
+    source_grade          VARCHAR,
+    quality_grade         VARCHAR,
+    manual_review_required BOOLEAN,
+    route_plan_id         VARCHAR,
+    primary_failure_reason VARCHAR,
     dedup_key             VARCHAR,
     cooldown_until        TIMESTAMP,
     status                VARCHAR,
@@ -150,14 +155,14 @@ CREATE TABLE IF NOT EXISTS alert_event (
 
 盘中提醒只允许基于明确事实触发，分为 6 类。
 
-| alert_type                      | 来源                                           | 触发示例                                      | 默认等级   |
-| ------------------------------- | ---------------------------------------------- | --------------------------------------------- | ---------- |
-| `data_quality_alert`            | DataQualityValidator / SourceConflictValidator | 主源失败、数据滞后、严重冲突、schema drift    | DATA_RISK  |
-| `layer1_state_alert`            | Layer 1 五轴                                   | 极端水位、突变、历史不足、source switched     | WATCH/WARN |
-| `layer2_cross_asset_alert`      | Layer 2 跨资产                                 | VIX、美元、铜、油、美债等 P0 资产出现异常变化 | WATCH/WARN |
-| `layer3_anchor_alert`           | Layer 3 产业链                                 | P0 anchor 事件、P0 source 更新、跨链边触发    | WATCH/WARN |
-| `layer4_market_structure_alert` | Layer 4 市场结构                               | 市场宽度突变、涨跌停异常、期权波动异常        | WATCH/WARN |
-| `layer5_evidence_alert`         | Layer 5 证据链                                 | 公告、财报、事件、成交量/价格异常需要人工确认 | WATCH/WARN |
+| alert_type                      | 来源                                           | 触发示例                                                     | 默认等级   |
+| ------------------------------- | ---------------------------------------------- | ------------------------------------------------------------ | ---------- |
+| `data_quality_alert`            | DataQualityValidator / SourceConflictValidator | 主源失败、数据滞后、严重冲突、schema drift、质量异常连续监控 | DATA_RISK  |
+| `layer1_state_alert`            | Layer 1 五轴                                   | 极端水位、突变、历史不足、source switched                    | WATCH/WARN |
+| `layer2_cross_asset_alert`      | Layer 2 跨资产                                 | VIX、美元、铜、油、美债等 P0 资产出现异常变化                | WATCH/WARN |
+| `layer3_anchor_alert`           | Layer 3 产业链                                 | P0 anchor 事件、P0 source 更新、跨链边触发                   | WATCH/WARN |
+| `layer4_market_structure_alert` | Layer 4 市场结构                               | 市场宽度突变、涨跌停异常、期权波动异常                       | WATCH/WARN |
+| `layer5_evidence_alert`         | Layer 5 证据链                                 | 公告、财报、事件、成交量/价格异常需要人工确认                | WATCH/WARN |
 
 提醒等级：
 
@@ -173,7 +178,7 @@ OPS_RISK：系统资源/运行风险
 硬规则：
 
 ```text
-1. 只基于已通过 validation 的数据。
+1. 可信业务结论只基于 `PRIMARY + QUALITY_PASSED`；连续监控数据仅可触发带来源、质量、人工复核和失败原因标签的 `DATA_RISK`／`MANUAL_REVIEW_REQUIRED` 提醒。
 2. 只读取 snapshot / evidence / audit summary，不触发大范围回补。
 3. 不输出交易动作。
 4. 必须有 dedup_key，避免重复提醒。
@@ -270,6 +275,11 @@ webhook / desktop_notification / SMS / phone / bot / Slack / Discord / Telegram 
   "summary": "NVIDIA / HBM / 服务器链条出现联动变化",
   "evidence_ids": ["..."],
   "quality_flags": [],
+  "source_grade": "PRIMARY | DEGRADED | null",
+  "quality_grade": "QUALITY_PASSED | QUALITY_FAILED | null",
+  "manual_review_required": false,
+  "route_plan_id": "string or null",
+  "primary_failure_reason": "string or null",
   "dedup_key": "layer3_anchor_alert:Layer3:AI_COMPUTE:P0_ANCHOR_EVENT:2026-06-14",
   "no_action_semantics": true,
   "created_at": "..."
@@ -391,3 +401,5 @@ webhook、desktop_notification、SMS、phone_call、bot、Slack、Discord、Tele
 ```
 
 如果执行角色认为必须新增外部通知渠道，必须先停止并请用户拍板。
+
+主源因代码、适配器、格式或 schema 失败时，除上述风险提醒外，还必须生成高优先级修复事件。

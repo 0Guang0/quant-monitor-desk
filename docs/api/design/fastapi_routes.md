@@ -1,7 +1,7 @@
 # FastAPI 路由清单与实现契约
 
 > 文件定位：API 路由级实现文件。本文是 `docs/modules/fastapi_backend.md` 的路由落地清单，供 Claude Code / Codex 逐路由实现。  
-> 当前边界：API 默认只读 clean / snapshot / audit summary，不直接触发 FullLoad、Backfill、Reconcile，不直接写 DuckDB clean table。
+> 当前边界：API 默认只读可信最终库 / snapshot / audit summary；明确支持连续监控的端点可读取带完整来源/质量标签的连续监控视图，审计归档区不属于默认 API。API 不直接触发 FullLoad、Backfill、Reconcile，不直接写 DuckDB。
 
 ---
 
@@ -549,3 +549,9 @@ Request Body：
 `specs/contracts/api_security_contract.yaml` 是唯一机器契约。第一版采用本地 Bearer token：dev 可关闭但只能绑定 loopback；prod 必须启用 `QMD_API_TOKEN`，且单个本地 token 在第一版视为 `admin`。`viewer` 与 `agent_readonly` 角色保留为第二阶段能力，不得在第一版伪实现半套 RBAC。
 
 分页统一口径：默认 `page_size=200`，绝对上限 `1000`，Agent tool 最大行数 `1000`，full-history 查询必须 admin。实现必须补 `test_pageSizeContract_matchesDocs`。
+
+## ADR-017 来源／质量读取语义
+
+所有 Layer、数据健康、报告和 Agent 只读路由必须以兼容附加字段返回来源等级、质量等级、人工复核、
+RoutePlan、主源失败原因和恢复版本关系。默认路由只读可信最终库；明确支持连续监控的路由可返回
+带标签数据；审计归档区只能通过受控审计/复盘端点访问，不能成为默认 API 或回测输入。

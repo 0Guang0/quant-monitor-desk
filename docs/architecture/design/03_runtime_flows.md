@@ -17,7 +17,7 @@ Scheduler / CLI / User Request
   → DataQualityValidator
   → SourceConflictValidator
   → DuckDBWriteManager
-  → Clean Table / Snapshot Table / Audit Log
+  → Trusted Clean Table 或 Continuity Monitoring View / Snapshot Table / Audit Log
   → FastAPI ReadOnlyRepository
   → Frontend / Agent Tools / Reports
 ```
@@ -32,7 +32,7 @@ Scheduler / CLI / User Request
 3. 写 raw / staging
 4. DataQualityValidator 检查
 5. SourceConflictValidator 检查关键字段
-6. WriteManager 写 clean table
+6. WriteManager 按来源/质量准入写可信最终库或连续监控区
 7. 生成 Layer 1-5 snapshot
 8. 生成 data_health_summary
 9. 生成 daily report
@@ -139,7 +139,7 @@ User / RevisionAudit / Failed Task 触发 Backfill Request
 回补默认不超过：
 
 ```text
-5 个交易日窗口
+按 data_domain 更新频率和前后缓冲窗口计算回补范围（禁止全项目固定天数）
 eco 模式 1 个任务并发
 磁盘剩余 < 20GB 时暂停
 系统可用内存 < 2GB 时暂停
@@ -170,7 +170,7 @@ Frontend Request
   → FastAPI Router
   → Query Params Validation
   → ReadOnlyRepository
-  → Snapshot / Clean Table
+  → Snapshot / Trusted Clean Table / explicitly requested Continuity Monitoring View
   → Response Envelope
 ```
 
@@ -217,7 +217,7 @@ ResourceGuard 在以下位置必须检查：
 ```text
 任务开始前
 每个 batch 开始前
-写入 clean table 前
+写入可信最终库、连续监控区或审计归档前
 生成大 snapshot 前
 报告生成前
 备份前
@@ -240,7 +240,7 @@ ResourceGuard 在以下位置必须检查：
 ```text
 每日链路不会触发全量回补
 盘中链路不会全市场扫描
-严重 source conflict 不会自动覆盖 clean table
+严重 source conflict 不会自动覆盖可信最终库
 ResourceGuard PAUSE 后旧 snapshot 仍可读
 Backfill 可以从失败 task 继续
 报告链路通过 no_action_semantics_guard
@@ -292,3 +292,21 @@ User selects scenario
 ```
 
 回测必须用户显式触发，不在盘中自动运行。回测报告必须包含 limitations，不得输出交易动作。
+
+---
+
+## 14. ADR-017：主源故障、连续监控与恢复
+
+```text
+Primary fetch failure
+  → persist failure reason and RoutePlan
+  → try the domain's fixed, effective-enabled and capability-compatible fallback chain
+  → normalize / quality / conflict validation
+  → trusted clean (only PRIMARY + QUALITY_PASSED)
+    or continuity monitoring view (degraded or QUALITY_FAILED, labels required)
+  → Layer1–5 / API / frontend / alert consume with labels
+```
+
+代码、适配器、格式或 schema 故障除上述不中断监控路径外，还必须创建高优先级修复事件。主源恢复后，
+`ReconcileJob` 按领域频率计算降级区间和前后缓冲窗口，验证主源版本后将同一事实位置的旧异常活动
+版本归档，再切换默认读取；不能用全项目固定回补天数。

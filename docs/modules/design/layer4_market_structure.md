@@ -78,7 +78,7 @@ class MarketAdapter:
 Adapter 只负责读取/转换，不直接写 clean table。所有写入必须经过：
 
 ```text
-MarketAdapter → staging_market_* → DataQualityValidator → SourceConflictValidator → WriteManager → clean/snapshot table
+MarketAdapter → staging_market_* → DataQualityValidator → SourceConflictValidator → WriteManager → 可信最终库或连续监控区 → snapshot table
 ```
 
 ---
@@ -345,7 +345,7 @@ CREATE TABLE IF NOT EXISTS market_rule_event (
 3. 写入 staging_market_* 表
 4. DataQualityValidator 检查字段、日期、空值、异常值
 5. SourceConflictValidator 检查主源与验证源差异
-6. WriteManager 写入 market_* clean/snapshot 表
+6. WriteManager 按来源/质量准入写入 market_* 可信最终库或连续监控区，再构建带标签 snapshot
 7. 构建 market_detail_view
 8. FastAPI 提供 /api/layer4/markets 与 /api/layer4/markets/{market_id}
 9. 前端展示市场结构卡片
@@ -385,6 +385,10 @@ market_id
 as_of_timestamp
 source_used
 quality_flags
+source_grade
+quality_grade
+manual_review_required
+route_plan_id
 stale_reason
 ```
 
@@ -419,3 +423,9 @@ Agent 输出不得包含买、卖、加仓、减仓等动作语义。
 ## 用户决策补充：不复制 Layer 1 全套标准化字段
 
 落实 D-09：Layer 4 不默认复制 Layer 1 的完整标准化字段。Layer 4 只保留本层业务必需字段；如后续确需引入 z-score、历史百分位、状态桶等标准化字段，必须在本层 contract 中按需增加，不得全量套用 Layer 1 模型。
+
+## ADR-017 连续监控消费规则
+
+市场结构快照可使用受治理连续监控视图维持业务监控，但 API 输出中的 `source_used` 与
+`quality_flags` 必须扩展为共享契约的来源等级、质量等级、RoutePlan 和人工复核语义；默认读取与
+默认回测仍排除审计归档区。

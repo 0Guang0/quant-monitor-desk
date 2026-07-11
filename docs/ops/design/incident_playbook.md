@@ -30,3 +30,21 @@
 - **症状**：生产等价 smoke 失败。
 - **安全动作**：确认临时 DB、fixture-scale 数据、cleanup、ResourceGuard。
 - **危险动作**：连接真实生产写路径或污染真实数据。
+
+## INC-006 DEGRADED_CONTINUITY
+
+- **症状**：Primary 失败、RoutePlan 选择 `DEGRADED`，连续监控仍可读。
+- **安全动作**：检查失败来源、异常类型、影响领域、开始时间、RoutePlan 与风险标签；保持连续监控并跟踪主源恢复。
+- **危险动作**：将次源升格为 Primary、删除失败记录或隐藏标签。
+
+## INC-007 QUALITY_FAILED_CONTINUITY
+
+- **症状**：质量异常但可归一化数据进入连续监控区，`manual_review_required=true`。
+- **安全动作**：人工核对、保留证据；可信最终库保持不写入。
+- **危险动作**：把该值补写入可信最终库或当作正常业务结论发送。
+
+## INC-008 PRIMARY_IMPLEMENTATION_DEFECT
+
+- **症状**：Primary 因代码、适配器、格式或 schema 失败。
+- **安全动作**：记录失败来源、类型、领域和开始时间，建立高优先级修复事件；合格次源可按 RoutePlan 维持连续监控。
+- **危险动作**：因次源可用而关闭／忽略修复事件。

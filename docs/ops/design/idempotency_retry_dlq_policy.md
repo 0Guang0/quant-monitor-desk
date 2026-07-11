@@ -48,3 +48,10 @@ idempotency_key = hash(job_type + source_id + data_domain + market_id + instrume
 - 成功 item 可提交。
 - 失败 item 进入 retry 或 manual review。
 - snapshot 构建只能读取通过 quality gate 的 clean 数据。
+
+## ADR-017 关联与部分成功规则
+
+幂等键和 manual review 记录还必须关联 `route_plan_id`、`source_registry_revision` 与
+`activation_overlay_revision`，以便区分同一窗口在不同路由决策下的运行。可信快照默认只读可信
+最终库；连续监控快照可读取质量异常数据，但必须保留来源／质量／人工复核标签，不能被当作可信
+快照缓存或覆盖。

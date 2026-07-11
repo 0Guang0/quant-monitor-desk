@@ -6,6 +6,8 @@ required_backup_items:
   - docs/
   - config/
   - data/audit/recent
+  - data/continuity_monitoring/
+  - data/revision_audit_archive/index
 excluded_by_default:
   - data/cache/
   - data/cache/duckdb_tmp/
@@ -37,6 +39,10 @@ workflow:
     - run_smoke_test
     - start_readonly_api
     - require_human_confirmation_before_scheduler
+  exception_payload_purge_precondition:
+    - verified_primary_replacement
+    - archived_payload_verified
+    - audit_index_complete
 errors:
   - BACKUP_LOCK_BUSY
   - BACKUP_DISK_LOW

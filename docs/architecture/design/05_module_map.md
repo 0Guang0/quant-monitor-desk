@@ -57,3 +57,10 @@ notification_and_reports
 ```
 
 其中 `notification_and_reports` 负责日报、周报、数据质量报告、盘中提醒和通知发送；Agent 只负责生成结构化解释，不负责报告归档与通知状态追踪。
+
+## ADR-017 模块责任补充
+
+Source Registry 维护稳定目录和管理员启用覆盖层；RoutePlan 维护领域固定候选链与失败决策；
+WriteManager 维护可信最终库、连续监控区和审计归档区；调度只执行 RoutePlan；Layer1–5、API、
+前端和通知只消费受治理视图并传播风险标签。共享字段和不可违反规则以
+`specs/contracts/design/source_provenance_quality_contract.yaml` 为准。

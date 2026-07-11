@@ -532,3 +532,11 @@ result = (
 - Polars Lazy API 会推迟执行并进行查询优化，适合复杂 DataFrame 计算和较大数据集处理。
 
 本文件中的技术约束应与 `write_manager.md`、`data_sync_orchestrator.md`、`data_validation_and_conflict.md` 保持一致。
+
+## ADR-017：可信、连续监控与审计归档三层
+
+可信最终库保存已验证主源的默认历史，**不得因本策略自动清理**。连续监控区保存当前降级或质量
+异常的活动版本，供 Layer1–5、API、前端和告警在标签完整时读取；它不是默认回测/默认读取来源。
+审计归档区保存被主源回补替代的异常版本、RoutePlan、质量报告、来源 hash 与清理索引。异常
+payload 的保留期按 `source_provenance_quality_contract.yaml` 的频率基线和“最长计算窗口 + 两个更新
+周期”取最大值；清理前必须确认可信主源版本、归档 payload 和审计索引均已成功。

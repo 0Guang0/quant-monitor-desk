@@ -4,16 +4,17 @@
 
 ## 现行保留 ADR
 
-| ADR                                                       | 文件                                                    | 主题 |
-| --------------------------------------------------------- | ------------------------------------------------------- | ---- |
-| [ADR-003](ADR-003-implementation-path-mapping.md)         | 任务文档与代码路径映射                                  |
-| [ADR-004](ADR-004-write-path-complexity-ceiling.md)       | 写入热路径 C901 复杂度                                  |
-| [ADR-007](ADR-007-us-trading-calendar-ssot.md)            | 美股交易日历 SSOT（`trading_sessions`）                 |
-| [ADR-009](ADR-009-clean-write-targets-migration-015.md)   | clean 域路由（migration 015 · DCP-05 增量金路径 11 源） |
-| [ADR-010](ADR-010-layer1-five-axis-clean-read.md)         | Layer1 五轴 clean read                                  |
-| [ADR-011](ADR-011-bounded-backfill-cap-and-ci-nightly.md) | 有界 backfill 上限与 CI nightly                         |
-| [ADR-015](ADR-015-live-acceptance-sandbox-dual-track.md)  | 隔离沙箱 live 验收与双轨测试                            |
-| [ADR-016](ADR-016-source-route-matrix-honest-closure.md)  | 22 源矩阵诚实关账（无资格 / 外部失败）                  |
+| ADR                                                                               | 文件                                                    | 主题 |
+| --------------------------------------------------------------------------------- | ------------------------------------------------------- | ---- |
+| [ADR-003](ADR-003-implementation-path-mapping.md)                                 | 任务文档与代码路径映射                                  |
+| [ADR-004](ADR-004-write-path-complexity-ceiling.md)                               | 写入热路径 C901 复杂度                                  |
+| [ADR-007](ADR-007-us-trading-calendar-ssot.md)                                    | 美股交易日历 SSOT（`trading_sessions`）                 |
+| [ADR-009](ADR-009-clean-write-targets-migration-015.md)                           | clean 域路由（migration 015 · DCP-05 增量金路径 11 源） |
+| [ADR-010](ADR-010-layer1-five-axis-clean-read.md)                                 | Layer1 五轴 clean read                                  |
+| [ADR-011](ADR-011-bounded-backfill-cap-and-ci-nightly.md)                         | 有界 backfill 上限与 CI nightly                         |
+| [ADR-015](ADR-015-live-acceptance-sandbox-dual-track.md)                          | 隔离沙箱 live 验收与双轨测试                            |
+| [ADR-016](ADR-016-source-route-matrix-honest-closure.md)                          | 22 源矩阵诚实关账（无资格 / 外部失败）                  |
+| [ADR-017](design/ADR-017-dynamic-source-fallback-and-exception-data-lifecycle.md) | 动态降级、异常数据与回补生命周期（已接受）              |
 
 **22 源完整枚举 SSOT：** `docs/modules/design/data_sources.md` §5.9.1（ADR-009 表为其中 11 源增量金路径子集）。
 

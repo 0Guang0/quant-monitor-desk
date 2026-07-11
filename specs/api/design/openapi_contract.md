@@ -17,6 +17,14 @@
     "data_lag_days": 0,
     "quality_flags": [],
     "source_used": "string or null",
+    "source_grade": "PRIMARY | DEGRADED | null",
+    "quality_grade": "QUALITY_PASSED | QUALITY_FAILED | null",
+    "manual_review_required": false,
+    "route_plan_id": "string or null",
+    "primary_failure_reason": "string or null",
+    "source_registry_revision": "string or null",
+    "activation_overlay_revision": "string or null",
+    "recovery_replacement_of": "string or null",
     "page": 1,
     "page_size": 200,
     "total": 1000
@@ -48,3 +56,11 @@
 不允许无分页返回大历史。
 不允许 Agent tool 返回无来源、无质量标记的数据。
 ```
+
+## ADR-017 Meta 扩展（向后兼容）
+
+`meta` 必须允许以下可空字段：`source_grade`（`PRIMARY|DEGRADED`）、`quality_grade`
+（`QUALITY_PASSED|QUALITY_FAILED`）、`manual_review_required`、`route_plan_id`、
+`primary_failure_reason`、`source_registry_revision`、`activation_overlay_revision` 与
+`recovery_replacement_of`。字段语义以
+`specs/contracts/design/source_provenance_quality_contract.yaml` 为唯一权威。

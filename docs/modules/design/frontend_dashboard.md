@@ -171,6 +171,8 @@ INSUFFICIENT_HISTORY
 MANUAL_REVIEW_REQUIRED
 NO_ACCEPTED_CHANNEL
 RESOURCE_GUARD_PAUSED
+QUALITY_FAILED
+MISSING
 ```
 
 ## 6.2 FreshnessLabel
@@ -192,7 +194,12 @@ stale_reason
 source_used
 source_channel_id
 source_validation_status
-primary / validation / fallback_policy
+selected_role
+source_grade (PRIMARY / DEGRADED)
+quality_grade (QUALITY_PASSED / QUALITY_FAILED)
+manual_review_required
+route_plan_id
+primary_failure_reason
 ```
 
 ## 6.4 BoundaryReminder
@@ -242,6 +249,11 @@ evidence_ids
 source_used
 as_of_timestamp
 quality_flags
+source_grade
+quality_grade
+manual_review_required
+route_plan_id
+primary_failure_reason
 facts_used_json
 boundary_reminder
 ```
@@ -478,3 +490,10 @@ error_code / docs_anchor
 - Disabled/fallback/source missing 状态不得隐藏，必须显示解释和排障入口。
 
 权威契约：`specs/contracts/source_route_contract.yaml`、`specs/contracts/diagnostics_api_contract.yaml`、`specs/contracts/user_input_privacy_contract.yaml`。
+
+## ADR-017 来源与质量状态展示
+
+在不预设最终布局的前提下，`QualityBadge` 与 `SourceLabel` 必须能区分并同时展示：
+`PRIMARY|DEGRADED`、`QUALITY_PASSED|QUALITY_FAILED`、`MANUAL_REVIEW_REQUIRED` 与 `MISSING`。
+连续监控数据的页面、指标和告警必须显示实际来源、主源失败原因与 RoutePlan 证据；质量异常数据
+可见、可计算，但不能用普通成功色或“可信主源”文案展示。具体布局仍待前端 UI 评审。

@@ -81,7 +81,10 @@ validation_report:
   warning_rows: integer
   quality_flags: [string]
   stale_reason: string | null
-  can_write_clean: boolean
+  source_grade: PRIMARY | DEGRADED
+  quality_grade: QUALITY_PASSED | QUALITY_FAILED
+  continuity_monitoring_eligible: boolean
+  can_write_trusted_clean: boolean
   needs_manual_review: boolean
 ```
 
@@ -192,12 +195,12 @@ index_level
 
 处理规则：
 
-| 差异         | 处理                                              |
-| ------------ | ------------------------------------------------- |
-| 容忍范围内   | 主源写入，记录校验通过                            |
-| 略超容忍范围 | 主源写入，标 `source_divergence_warning`          |
-| 严重差异     | 不写 clean，写 source_conflict，触发 ReconcileJob |
-| 重抓后仍冲突 | `manual_review_required=true`                     |
+| 差异         | 处理                                                                                                          |
+| ------------ | ------------------------------------------------------------------------------------------------------------- |
+| 容忍范围内   | 质量通过主源写入可信最终库，记录校验通过                                                                      |
+| 略超容忍范围 | 质量通过主源写入可信最终库，标 `source_divergence_warning`                                                    |
+| 严重差异     | 不写可信最终库，写 source_conflict，触发 ReconcileJob；仅符合连续监控准入条件时可保留带人工复核标签的活动版本 |
+| 重抓后仍冲突 | `manual_review_required=true`                                                                                 |
 
 ### 6.2 口径差异类字段
 
@@ -358,7 +361,10 @@ CREATE TABLE IF NOT EXISTS validation_report (
     warning_rows            INTEGER,
     quality_flags           VARCHAR,
     stale_reason            VARCHAR,
-    can_write_clean         BOOLEAN,
+    source_grade            VARCHAR,
+    quality_grade           VARCHAR,
+    continuity_monitoring_eligible BOOLEAN,
+    can_write_trusted_clean BOOLEAN,
     needs_manual_review     BOOLEAN,
     created_at              TIMESTAMP
 );
@@ -429,6 +435,14 @@ CREATE TABLE IF NOT EXISTS data_quality_log (
 3. 客观事实字段按阈值分级处理。
 4. 口径差异字段分源保存。
 5. 严重冲突先重抓，仍冲突再人工。
-6. 标准表不接受未验证数据。
+6. 可信最终库不接受未验证或质量失败数据；连续监控区仅接受已归一化、血缘完整且显式标记的异常数据。
 7. Agent 不能直接写库。
 ```
+
+## ADR-017：质量异常的受控连续监控边界
+
+“标准表不接受未验证数据”继续有效，且可信最终库只接受 `PRIMARY + QUALITY_PASSED`。但是，已
+归一化、数值可用、来源/RoutePlan/失败原因完整的 `QUALITY_FAILED` 结果可被验证器显式判定为
+`continuity_monitoring_eligible`：它只能进入连续监控区，必须携带 `QUALITY_FAILED` 与
+`manual_review_required=true`，不得进入可信最终库或伪装成 clean 主值。严重冲突同理；无法解析、
+缺少有效数值或血缘不完整时，一律返回 `MISSING`，不产生任何数值连续输出。

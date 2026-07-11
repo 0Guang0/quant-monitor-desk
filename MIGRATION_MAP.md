@@ -1198,11 +1198,11 @@
 
 **跨域触点**
 
-| 类别           | 触点                                                                                                     |
-| -------------- | -------------------------------------------------------------------------------------------------------- |
-| 模块           | **→ 本域 文件2–3** capability / route · **→ 本域 文件4** QMT adapter · DataSync                          |
-| 契约 / 文档    | `specs/contracts/platform_source_matrix.yaml` · **→ 数据同步域 文件5** `data_validation_and_conflict.md` |
-| 数据与基础设施 | `source_registry` · `source_conflict` · silent fallback 禁止                                             |
+| 类别           | 触点                                                                                                                                                                        |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 模块           | **→ 本域 文件2–4** capability / route / 来源质量契约 · **→ 本域 文件5** QMT adapter · DataSync                                                                              |
+| 契约 / 文档    | `specs/contracts/design/source_provenance_quality_contract.yaml` · `specs/contracts/platform_source_matrix.yaml` · **→ 数据同步域 文件5** `data_validation_and_conflict.md` |
+| 数据与基础设施 | `source_registry` · `source_conflict` · silent fallback 禁止                                                                                                                |
 
 ---
 
@@ -1250,7 +1250,27 @@
 
 ---
 
-### 文件4 · `docs/modules/design/qmt_xtdata_adapter.md`
+### 文件4 · `specs/contracts/design/source_provenance_quality_contract.yaml`
+
+**定位** 跨数据源、质量、五层、API、前端与告警的来源风险／质量语义契约
+
+**涉及内容**
+
+- `PRIMARY|DEGRADED` 与 `QUALITY_PASSED|QUALITY_FAILED` 的独立枚举
+- RoutePlan、来源、覆盖层版本、失败原因与内容版本的最小血缘字段
+- 可信最终库、连续监控区、审计归档区的写入与默认读取边界
+- `MISSING`、人工复核、主源恢复与异常 payload 留存不可违反规则
+
+**跨域触点**
+
+| 类别 | 触点                                                                                    |
+| ---- | --------------------------------------------------------------------------------------- |
+| 模块 | Source Registry · RoutePlan · WriteManager · Layer1–5 · API · Frontend · Notification   |
+| 决策 | `docs/decisions/design/ADR-017-dynamic-source-fallback-and-exception-data-lifecycle.md` |
+
+---
+
+### 文件5 · `docs/modules/design/qmt_xtdata_adapter.md`
 
 **定位** QMT/xtdata 适配层封装（业务层不得直接调用 QMT API）
 
@@ -1266,13 +1286,13 @@
 
 | 类别           | 触点                                                                               |
 | -------------- | ---------------------------------------------------------------------------------- |
-| 模块           | DataSourceService · **→ 本域 文件5** `qmt_xqshare_setup.md`                        |
+| 模块           | DataSourceService · **→ 本域 文件6** `qmt_xqshare_setup.md`                        |
 | 契约 / 文档    | **→ 本域 文件1** `data_sources.md` · **→ 运维域** `06_deployment_and_local_ops.md` |
 | 数据与基础设施 | xtdata 本地路径 · optional extra `qmt`                                             |
 
 ---
 
-### 文件5 · `docs/ops/design/qmt_xqshare_setup.md`
+### 文件6 · `docs/ops/design/qmt_xqshare_setup.md`
 
 **定位** 可选远程 QMT 源 `qmt_xqshare` 的配置与路由边界
 
@@ -2169,6 +2189,7 @@
 - ADR-0003 Layer1 才物化完整标准化字段
 - ADR-0004 Layer3 资金震动锚点模型方案B
 - ADR-0005 Primary / Validation / FallbackPolicy 数据源角色
+- ADR-017 动态降级、异常数据生命周期与主源恢复回补
 - 各 ADR 对应模块文档指针
 
 **跨域触点**
@@ -2178,6 +2199,27 @@
 | Layer       | Layer1 标准化 · Layer3 shock-anchor                                                                                                                                                                                                      |
 | 模块        | `docs/modules/design/agent_module.md` · `docs/modules/design/data_sources.md` · `docs/modules/design/layer1_global_regime_panel.md` · `docs/modules/design/layer3_industry_shock_anchor.md` · `docs/modules/design/local_file_system.md` |
 | 契约 / 文档 | 本文件为 ADR 骨架索引；各 ADR 决策要点见涉及内容与模块文档                                                                                                                                                                               |
+
+---
+
+### 文件2 · `docs/decisions/design/ADR-017-dynamic-source-fallback-and-exception-data-lifecycle.md`
+
+**定位** 已接受的动态数据源降级、连续监控、主源恢复与异常归档决策
+
+**涉及内容**
+
+- 稳定 Source Registry 与管理员持久化启用覆盖层分离
+- 按领域固定候选顺序的可审计自动兜底，Validation 不升格为 Primary
+- 来源风险与质量风险独立标签，质量异常可连续监控但不得伪装可信
+- 可信最终库、连续监控区、审计归档区和按频率异常 payload 留存规则
+- 主源恢复后的按领域窗口回补、版本切换与归档前置条件
+
+**跨域触点**
+
+| 类别        | 触点                                                                                                                   |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------- |
+| 模块        | Source Registry · RoutePlan · Scheduler · WriteManager · Layer1–5 · API · Frontend · Notification                      |
+| 契约 / 文档 | `specs/contracts/design/source_provenance_quality_contract.yaml` · `docs/architecture/design/08_decision_log_index.md` |
 
 ---
 

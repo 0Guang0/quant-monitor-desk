@@ -61,6 +61,11 @@ POST /api/agent-tools/explain/submit-staging
   "data": {},
   "evidence_refs": [],
   "quality_flags": [],
+  "source_grade": "PRIMARY | DEGRADED | null",
+  "quality_grade": "QUALITY_PASSED | QUALITY_FAILED | null",
+  "manual_review_required": false,
+  "route_plan_id": "string or null",
+  "primary_failure_reason": "string or null",
   "boundary_reminders": [],
   "row_count": 100,
   "truncated": false
@@ -76,6 +81,11 @@ as_of_timestamp
 data
 evidence_refs
 quality_flags
+source_grade
+quality_grade
+manual_review_required
+route_plan_id
+primary_failure_reason
 boundary_reminders
 row_count
 truncated
@@ -258,3 +268,9 @@ submit-staging 不写 clean table
 Layer 3 tool 不返回全量 Layer 5 历史行情
 data_health tool 能返回 RESOURCE_GUARD_PAUSED 状态
 ```
+
+## ADR-017 工具来源／质量边界
+
+每个 Agent Tool Response 必须额外提供或在 evidence refs 中可追溯 `source_grade`、`quality_grade`、
+`manual_review_required`、`route_plan_id` 和主源失败原因。Agent 可解释带标签连续监控事实，但必须
+在 `boundary_reminders` 说明其不是可信主源结论；不得读取审计归档区作为默认事实。
