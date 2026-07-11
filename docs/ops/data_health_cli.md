@@ -80,7 +80,7 @@ qmd data health \
 qmd data health --db-path data/duckdb/quant_monitor.duckdb --domain market_bar_1d --profile market_bar_p0 --evidence-dir <path>
 ```
 
-### 5.1.1 M-DATA-03 R2 — 四类 profile 族（Plan R2 SSOT）
+### 5.1.1 Data health R2 — 四类 profile 族（Plan R2 SSOT）
 
 Profile 定义：`specs/contracts/data_quality_rules.yaml`；绑定：同文件 `source_health_bindings`。
 

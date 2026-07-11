@@ -363,7 +363,7 @@ def run_data_health_profile(
     dict[str, list[str]],
     dict[str, str | None],
 ]:
-    """Read-only profile runner for Tier-A four families (M-DATA-03 S-R2-F0)."""
+    """Read-only profile runner for Tier-A four families (data health S-R2-F0)."""
     if profile_id not in _SUPPORTED_PROFILES:
         raise UnsupportedProfileError(f"unsupported profile: {profile_id!r}")
     allowed = _PROFILE_DOMAINS.get(profile_id, frozenset())

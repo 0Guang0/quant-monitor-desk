@@ -82,8 +82,6 @@ phase1_gate:
     - mock
     - not_implemented
     - generic .audit-sandbox without source-route-db segment
-    - sandbox-clean-write
-    - limited_production_entry
   current_runtime_seams:
     production_equivalent_data_root_segment: source-route-db
     prod_source_tier_module: backend.app.datasources.live_prod_source_tiers
@@ -110,11 +108,6 @@ phase1_gate:
     - CONTRACT_VIOLATION
     - FAIL
   retired_commands:
-    - command: qmd data sandbox-clean-write
-      subcommands: [rehearse, audit, promote]
-      error_code: LEGACY_COMMAND_RETIRED
-      replacement: qmd-data data sync|backfill|full-load|scheduler with QMD_DATA_ROOT under .audit-sandbox/source-route-db
-      gate_eligible: false
     - command: retired ops live acceptance harness wrappers
       note: historical Tier harness CLI; scripts removed per ADR-015
       error_code: LEGACY_COMMAND_RETIRED

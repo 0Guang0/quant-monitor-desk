@@ -1,4 +1,4 @@
-"""Generic live incremental e2e bootstrap (M-DATA-03 · ADR-015 acceptance DB path)."""
+"""Generic live incremental e2e bootstrap (ADR-015 source-route-db acceptance DB path)."""
 
 from __future__ import annotations
 

@@ -485,7 +485,8 @@ EVIDENCE_FETCH_MATRIX_SOURCE_IDS = frozenset({"coingecko", "kalshi", "qmt_xtdata
 QUALIFICATION_DEFERRED_SOURCE_IDS = frozenset({"qmt_xtdata", "ths_ifind"})
 
 # Environment/upstream failures that must stay FAIL_EXTERNAL on the matrix row but may closure PASS (ADR-016 §4).
-EXTERNAL_DEFERRED_SOURCE_IDS = frozenset({"sec_edgar", "stooq", "mootdx"})
+# world_bank: api.worldbank.org SSL handshake may fail regionally (urllib + httpx2 both reproduce); not format/UA.
+EXTERNAL_DEFERRED_SOURCE_IDS = frozenset({"sec_edgar", "stooq", "mootdx", "world_bank"})
 
 _CLOSURE_OUTCOMES = frozenset({"PASS", "FAIL_EXTERNAL", "FAIL_CONTRACT", "FAIL"})
 

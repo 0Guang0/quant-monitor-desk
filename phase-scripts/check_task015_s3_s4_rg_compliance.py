@@ -3,7 +3,8 @@
 
 功能：
   在 backend / specs / tests / scripts 里用 ripgrep 检查是否仍残留已退役的沙箱段名
-  （m-data-03、M_DATA_03）与旧 harness 名（tier_a_live_acceptance、test_tierA 前缀）。
+  （m-data-03 / M-DATA-03 / M_DATA_03 等，不区分大小写）与旧 harness 名
+  （tier_a_live_acceptance、test_tierA 前缀）。
   供 task-01.5 CP-2 关账时人工或流水线执行，不是 operator 业务行为验收。
 
 业务价值：
@@ -40,19 +41,21 @@ ALLOWLIST_RELATIVE = frozenset(
     }
 )
 
-RETIRED_PATTERNS: tuple[str, ...] = (
-    "m-data-03",
-    "M_DATA_03",
-    "tier_a_live_acceptance",
-    "test_tierA",
+RETIRED_PATTERNS: tuple[tuple[str, bool], ...] = (
+    (r"m[-_]data[-_]03", True),
+    ("tier_a_live_acceptance", False),
+    ("test_tierA", False),
 )
 
 
-def _rg_hits(pattern: str) -> list[str]:
+def _rg_hits(pattern: str, *, ignore_case: bool = False) -> list[str]:
     hits: list[str] = []
+    cmd_base = ["rg", "-l"]
+    if ignore_case:
+        cmd_base.append("-i")
     for root in SCAN_ROOTS:
         proc = subprocess.run(
-            ["rg", "-l", pattern, str(PROJECT_ROOT / root)],
+            [*cmd_base, pattern, str(PROJECT_ROOT / root)],
             cwd=PROJECT_ROOT,
             capture_output=True,
             text=True,
@@ -75,10 +78,11 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     violations: dict[str, list[str]] = {}
-    for pattern in RETIRED_PATTERNS:
-        hits = _rg_hits(pattern)
+    for pattern, ignore_case in RETIRED_PATTERNS:
+        hits = _rg_hits(pattern, ignore_case=ignore_case)
         if hits:
-            violations[pattern] = hits
+            label = f"{pattern!r}{' (ignore-case)' if ignore_case else ''}"
+            violations[label] = hits
 
     if violations:
         print("task-01.5 S3/S4 rg compliance: FAIL", file=sys.stderr)

@@ -10,6 +10,7 @@ The README is explicit that the first version is not an automatic trading system
 
 ## Start here by task
 
+- Agent skill 路由（**禁止裸执行**，必读）：[../agent-toolchain.md](../agent-toolchain.md)
 - Architecture and code map: [architecture/system-architecture.md](architecture/system-architecture.md)
 - Product/domain model and five layers: [domain/data-and-modeling.md](domain/data-and-modeling.md)
 - DuckDB, schema, migrations, validation, writes: [data/data-platform.md](data/data-platform.md)

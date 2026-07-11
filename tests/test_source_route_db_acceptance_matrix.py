@@ -257,10 +257,10 @@ def test_sourceRouteDbAcceptanceMatrix_timeoutExceptionIsExternalFailure() -> No
     """覆盖范围：live matrix 行执行时外部网络超时分类
     测试对象：classify_matrix_execute_exception / evaluate_matrix_row_closure
     目的/目标：远端源超时应成为该行 FAIL_EXTERNAL，不能炸掉整次验收或误报契约坏了
-    验证点：TimeoutError 分类为 FAIL_EXTERNAL；closure outcome 为 FAIL_EXTERNAL
+    验证点：TimeoutError 分类为 FAIL_EXTERNAL；未登记 deferred 源 closure outcome 为 FAIL_EXTERNAL
     失败含义：外部 API 抖动会让 P1-GATE 以 traceback/contract failure 失败
     """
-    target = next(t for t in iter_matrix_targets() if t.request.source_id == "world_bank")
+    target = next(t for t in iter_matrix_targets() if t.request.source_id == "fred")
     failure_class, status = classify_matrix_execute_exception(
         TimeoutError("The read operation timed out")
     )
@@ -482,10 +482,33 @@ def test_sourceRouteDbAcceptanceMatrix_liveClosure_allowsDeferredValidationFailE
     assert row["status"] == "FAIL"
 
 
+def test_sourceRouteDbAcceptanceMatrix_liveClosure_allowsWorldBankFailExternalClosurePass() -> None:
+    """覆盖范围：World Bank FAIL_EXTERNAL 的 external_deferred closure 语义
+    测试对象：evaluate_matrix_row_closure(final_live_authorized)
+    目的/目标：api.worldbank.org 区域 SSL 失败时矩阵行诚实 FAIL_EXTERNAL，登记 external_deferred 时 closure PASS
+    验证点：world_bank 行 failure_class=FAIL_EXTERNAL → closure_outcome=PASS；status 仍为 FAIL
+    失败含义：World Bank 网络/SSL 阻断误阻断 P1-GATE 关账，或矩阵行被 mock 成 PASS 假绿
+    """
+    wb_target = next(t for t in iter_matrix_targets() if t.request.source_id == "world_bank")
+    row = {
+        "status": "FAIL",
+        "failure_class": "FAIL_EXTERNAL",
+        "write_grade": "not_written",
+        "errors": ["SSL EOF to api.worldbank.org"],
+    }
+    outcome = evaluate_matrix_row_closure(
+        wb_target,
+        row,
+        closure_mode="final_live_authorized",
+    )
+    assert outcome == "PASS"
+    assert row["failure_class"] == "FAIL_EXTERNAL"
+
+
 def test_sourceRouteDbAcceptanceMatrix_liveClosure_blocksNonDeferredFailExternal() -> None:
     """覆盖范围：未登记 external_deferred 的 FAIL_EXTERNAL 仍阻断 closure
     测试对象：evaluate_matrix_row_closure(final_live_authorized)
-    目的/目标：仅 sec_edgar 等登记源可 FAIL_EXTERNAL + closure PASS；其它源仍 FAIL_EXTERNAL 阻断
+    目的/目标：仅 sec_edgar/world_bank 等登记源可 FAIL_EXTERNAL + closure PASS；其它源仍 FAIL_EXTERNAL 阻断
     验证点：fred 行 failure_class=FAIL_EXTERNAL → closure_outcome=FAIL_EXTERNAL
     失败含义：任意外部失败都可 closure PASS，Slice 10 假关账
     """
@@ -811,6 +834,7 @@ def test_normalizeIncrementalJobStatus_liveEmptyFetchMapsToEmptyResponse() -> No
     cases = (
         "FRED returned no usable rows for DGS10",
         "World Bank returned no rows for US/NY.GDP.MKTP.CD",
+        "no World Bank observations for US",
         "no instruments after deribit watermark window",
     )
     for message in cases:
@@ -847,6 +871,47 @@ def test_matrixIncrementalLiveReportBuilder_emptyResponseWithExistingCleanRows_p
     )
     assert report.status == "PASS"
     assert report.failure_class == "NONE"
+
+
+def test_countCleanRows_sharedMacroTable_filtersBySourceId(tmp_path: Path) -> None:
+    """覆盖范围：共享 axis_observation 表的矩阵行数统计
+    测试对象：source_route_db_acceptance._count_clean_rows
+    目的/目标：多 macro 源同表时须只计本源 rows_written，避免跨源污染
+    验证点：us_treasury 行存在时 world_bank 计数为 0；指定 source_id 时仅计对应 source_used
+    失败含义：World Bank 矩阵 live 误读其它 macro 源写入行数（如 3+3+1=7）
+    """
+    from datetime import date
+
+    from backend.app.ops.source_route_db_acceptance import _bootstrap_acceptance_db, _count_clean_rows
+    from tests.fred_macro_incremental_support import insert_axis_observation
+
+    root = _matrix_data_root(tmp_path)
+    cm = _bootstrap_acceptance_db(root)
+    with cm.writer() as con:
+        insert_axis_observation(
+            con,
+            observation_id="treasury-row",
+            indicator_id="US|10Y",
+            obs_date=date(2024, 1, 1),
+        )
+        con.execute(
+            "UPDATE axis_observation SET source_used = ?, source_channel_id = ? WHERE observation_id = ?",
+            ["us_treasury", "us_treasury", "treasury-row"],
+        )
+        insert_axis_observation(
+            con,
+            observation_id="wb-row",
+            indicator_id="US|NY.GDP.MKTP.CD",
+            obs_date=date(2024, 1, 1),
+        )
+        con.execute(
+            "UPDATE axis_observation SET source_used = ?, source_channel_id = ? WHERE observation_id = ?",
+            ["world_bank", "world_bank", "wb-row"],
+        )
+
+    assert _count_clean_rows(cm, "development_indicator", source_id="world_bank") == 1
+    assert _count_clean_rows(cm, "us_treasury_yield_curve", source_id="us_treasury") == 1
+    assert _count_clean_rows(cm, "development_indicator") == 2
 
 
 def test_deribitLiveFetchPort_acceptsLiveResolvedInstrument(

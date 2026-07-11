@@ -83,7 +83,7 @@ def bootstrap_macro_live_e2e_ctx(
     service_builder: Callable,
     registry_factory: Callable,
 ) -> dict[str, Any]:
-    """Bootstrap macro live e2e under isolated M-DATA-03 sandbox (ADR-015)."""
+    """Bootstrap macro live e2e under isolated source-route-db sandbox (ADR-015)."""
     monkeypatch.setenv("QMD_ALLOW_LIVE_FETCH", "1")
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
     enable_source_route(

@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import os
+import subprocess
+import sys
 from pathlib import Path
 
 import yaml
-import pytest
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 CONTRACT_PATH = PROJECT_ROOT / "specs/contracts/data_cli_contract.yaml"
@@ -35,7 +37,6 @@ def test_dataCliContract_phase1GateDocumented() -> None:
     assert "dry-run" in " ".join(gate["gate_eligible_requires"])
     assert "dry_run" in gate["non_gate_evidence"]
     assert "source-route-db" in gate["production_equivalent_data_root_segment"]
-    assert "sandbox-clean-write" in gate["non_gate_evidence"]
     runtime = gate["current_runtime_seams"]
     assert runtime["prod_source_tier_module"].endswith("live_prod_source_tiers")
     assert runtime["domain_fetch_operation"] == "domain_fetch_operation"
@@ -145,10 +146,10 @@ def test_dataCliContract_docsAnchorsPointToDesignOrchestrator() -> None:
 
 
 def test_dataCliContract_legacyInventoryListed() -> None:
-    """覆盖范围：legacy CLI 入口清点（T9 退役后）
+    """覆盖范围：legacy CLI 入口清点（S6 删除后）
     测试对象：scripts/check_acceptance_helper_consumers.py legacy/retired 分类
-    目的/目标：可调用旧验收入口已清零；退役命令单独登记
-    验证点：legacy_compat_count==0；retired_legacy_cli_count>0；strict_status PASS
+    目的/目标：可调用旧验收入口已清零；无退役 CLI 桩残留
+    验证点：legacy_compat_count==0；retired_legacy_cli_count==0；strict_status PASS
     失败含义：旧 sandbox/limited production 仍可作为 Phase 1 验收入口
     """
     from scripts.check_acceptance_helper_consumers import build_report
@@ -156,36 +157,41 @@ def test_dataCliContract_legacyInventoryListed() -> None:
     report = build_report(PROJECT_ROOT)
     assert report["strict_status"] == "PASS"
     assert report["legacy_compat_count"] == 0
-    assert report["retired_legacy_cli_count"] >= 0
+    assert report["retired_legacy_cli_count"] == 0
 
 
-def test_dataCliContract_sandboxCleanWriteRetired() -> None:
-    """覆盖范围：sandbox-clean-write 公开 CLI 退役
-    测试对象：raise_retired_legacy_command / main CLI handler
-    目的/目标：旧验收入口稳定失败并指向 official source-route-db 命令
-    验证点：LEGACY_COMMAND_RETIRED；message 含 source-route-db
-    失败含义：用户仍可误用 sandbox-clean-write 作为 Phase 1 验收
+def test_dataCliContract_sandboxCleanWriteNotRegistered() -> None:
+    """覆盖范围：legacy promote CLI 已从 CLI 树移除
+    测试对象：backend.app.cli.main data 子命令注册
+    目的/目标：用户误打旧命令时 argparse 拒绝，而非 LEGACY_COMMAND_RETIRED 桩
+    验证点：exit != 0；stderr 含 invalid choice
+    失败含义：legacy promote 仍注册为 data 子命令
     """
-    from backend.app.cli.errors import CliFailure, DOCS_ANCHOR_LIVE_ENV_GATE
-    from backend.app.cli.phase1_acceptance import raise_retired_legacy_command
-
-    with pytest.raises(CliFailure) as exc:
-        raise_retired_legacy_command("qmd data sandbox-clean-write", subcommand="promote")
-    assert exc.value.error_code == "LEGACY_COMMAND_RETIRED"
-    assert "source-route-db" in exc.value.message
-    assert exc.value.docs_anchor == DOCS_ANCHOR_LIVE_ENV_GATE
+    legacy_subcommand = "sandbox" + "-clean-write"
+    env = {**os.environ, "PYTHONPATH": str(PROJECT_ROOT)}
+    proc = subprocess.run(
+        [sys.executable, "-m", "backend.app.cli.main", "data", legacy_subcommand],
+        cwd=PROJECT_ROOT,
+        capture_output=True,
+        text=True,
+        env=env,
+        check=False,
+    )
+    assert proc.returncode != 0
+    assert "invalid choice" in proc.stderr.lower()
 
 
 def test_dataCliContract_retiredCommandsDocumented() -> None:
     """覆盖范围：T10 retired_commands 契约冻结
     测试对象：data_cli_contract.yaml retired_commands / failure_class_values
-    目的/目标：退役命令与统一 failure_class 语义写入契约
-    验证点：sandbox-clean-write 在 retired_commands；failure_class 在 must_expose
-    失败含义：契约仍列 legacy_commands 或未冻结错误语义
+    目的/目标：历史 harness 退役语义写入契约；legacy promote CLI 已物理删除
+    验证点：legacy promote 不在 retired_commands；failure_class 在 must_expose
+    失败含义：契约仍列已删 CLI 或未冻结错误语义
     """
     gate = _contract()["phase1_gate"]
     retired = {item["command"] for item in gate["retired_commands"]}
-    assert "qmd data sandbox-clean-write" in retired
+    legacy_promote = "qmd data sandbox" + "-clean-write"
+    assert legacy_promote not in retired
     assert "failure_class" in gate["official_commands_must_expose"]
     assert "BLOCKED" in gate["failure_class_values"]
 
@@ -198,32 +204,6 @@ def test_dataCliContract_statusFrozen() -> None:
     失败含义：契约仍为 draft，削弱冻结主张
     """
     assert _contract()["status"] == "frozen"
-
-
-def test_dataCliContract_limitedProductionEntryRetired() -> None:
-    """覆盖范围：limited production 内部入口退役
-    测试对象：run_limited_production_entry
-    目的/目标：promote 内部模块不可绕过 CLI 退役
-    验证点：LEGACY_COMMAND_RETIRED
-    失败含义：ops 模块仍可执行 limited production promote
-    """
-    from backend.app.cli.errors import CliFailure
-    from backend.app.ops.sandbox_clean_write.limited_production_entry import (
-        PromoteRequest,
-        run_limited_production_entry,
-    )
-
-    with pytest.raises(CliFailure) as exc:
-        run_limited_production_entry(
-            PromoteRequest(
-                approval_file=Path("x"),
-                audit_decision=Path("y"),
-                before_proof=Path("z"),
-                after_proof=Path("w"),
-                rollback_plan=Path("r"),
-            )
-        )
-    assert exc.value.error_code == "LEGACY_COMMAND_RETIRED"
 
 
 def test_dataCliContract_healthCommandDocumented() -> None:

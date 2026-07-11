@@ -15,8 +15,8 @@ from backend.app.core.resource_guard import ResourceGuard
 from backend.app.db.connection import ConnectionManager
 from backend.app.ops.sandbox_clean_write.clean_write_targets import resolve_clean_write_target
 from backend.app.sync.incremental_source_registry import (
-    UnknownTierAIncrementalSourceError,
-    resolve_tier_a_incremental,
+    UnknownIncrementalGoldPathSourceError,
+    resolve_incremental_gold_path,
 )
 from backend.app.sync.watermark import compute_incremental_window, read_bar_trade_date_watermark
 
@@ -234,8 +234,8 @@ def sync_incremental_by_source_id(
 ) -> dict[str, Any]:
     """Route ``qmd data sync --source-id`` to per-source incremental handlers (ADR-009)."""
     try:
-        entry = resolve_tier_a_incremental(source_id)
-    except UnknownTierAIncrementalSourceError as exc:
+        entry = resolve_incremental_gold_path(source_id)
+    except UnknownIncrementalGoldPathSourceError as exc:
         raise CliFailure(
             error_code="INVALID_INPUT",
             message=str(exc),

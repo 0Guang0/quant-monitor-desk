@@ -1,6 +1,6 @@
 # ADR-015：隔离沙箱 live 验收与双轨测试
 
-- **状态：** 已接受（2026-07-02）；2026-07-09 修订 — 删 M-DATA-03 / Tier harness 主叙事
+- **状态：** 已接受（2026-07-02）；2026-07-09 修订 — 删已退役 tier harness 与旧沙箱段主叙事
 - **日期：** 2026-07-02
 - **背景：** 产品 live 验收必须在隔离库内完成，且不得污染 canonical 主库。22 源矩阵诚实关账见 [ADR-016](ADR-016-source-route-matrix-honest-closure.md)。
 
@@ -18,7 +18,7 @@
 | ---------------------------------- | ------------------------------------------------------------- |
 | 对主库 `data/duckdb/` 做 live 测试 | 违反 MAIN-DB-GATE / 用户隔离规则                              |
 | 删除 replay 测试                   | 破坏无 key 的 CI 与快速 PR 反馈                               |
-| 保留 M-DATA-03 独立沙箱段          | 与 source-route-db 双轨并存造成歧义；已统一为 source-route-db |
+| 保留 legacy 独立沙箱段名（已退役） | 与 source-route-db 双轨并存造成歧义；已统一为 source-route-db |
 
 ## 后果（Consequences）
 

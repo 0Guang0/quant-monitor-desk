@@ -1,4 +1,4 @@
-"""Source → F0 health profile bindings (YAML SSOT; not part of retired M-DATA-03 harness)."""
+"""Source → F0 health profile bindings (YAML SSOT; not part of retired tier harness)."""
 
 from __future__ import annotations
 

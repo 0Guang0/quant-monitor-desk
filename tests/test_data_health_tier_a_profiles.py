@@ -1,4 +1,4 @@
-"""M-DATA-03 S-R2-F0 — four Tier-A data health profile families."""
+"""Data health S-R2-F0 — four Tier-A data health profile families."""
 
 from __future__ import annotations
 

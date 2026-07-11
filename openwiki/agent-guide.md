@@ -5,12 +5,13 @@ Use this page before making code changes. It summarizes the source authority and
 ## Read order
 
 1. `openwiki/quickstart.md` for the current map.
-2. The relevant OpenWiki page for your change area.
-3. `README.md` for project boundaries and user-approved decisions D-01 through D-12.
-4. `rules/` for current execution, testing, and resource-limit rules.
-5. `docs/INDEX.md` and `docs/modules/README.md` for detailed authoritative module docs.
-6. `MIGRATION_MAP.md` only when you need broad design/spec navigation.
-7. Current source and tests for final truth.
+2. [`agent-toolchain.md`](../agent-toolchain.md) — **禁止裸执行**：非一问一答任务前必读，按需加载 / `@` skill（全文 SSOT，勿在本页复制路由表）。
+3. The relevant OpenWiki page for your change area.
+4. `README.md` for project boundaries and user-approved decisions D-01 through D-12.
+5. `rules/` for current execution, testing, and resource-limit rules.
+6. `docs/INDEX.md` and `docs/modules/README.md` for detailed authoritative module docs.
+7. `MIGRATION_MAP.md` only when you need broad design/spec navigation.
+8. Current source and tests for final truth.
 
 ## Authority and drift
 
@@ -52,6 +53,10 @@ Network/live tests require explicit operator intent. Use isolated `QMD_DATA_ROOT
 
 New or changed tests should follow `rules/GLOBAL_TESTING_POLICY.md`: assert business behavior, keep external I/O mocked or fixture-based by default, include meaningful assertions, and add the required Chinese five-field test docstring format for `test_*` functions.
 
+## Agent skill routing
+
+全文见仓库根 [`agent-toolchain.md`](../agent-toolchain.md)。**禁止裸执行** — 非一问一答任务前必须先 Read 该文件，按 Step 1 定分支，再按需加载 / `@` skill。`task/agent-toolchain.md` 仅为指针。
+
 ## Existing agent instruction files
 
-Top-level `AGENTS.md` and `CLAUDE.md` already contain the required `## OpenWiki` section pointing future agents to `openwiki/quickstart.md`.
+Top-level `AGENTS.md` and `CLAUDE.md` link to `agent-toolchain.md`（禁止裸执行 + SSOT 指引），并含 required `## OpenWiki` section pointing to `openwiki/quickstart.md`.

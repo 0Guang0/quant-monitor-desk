@@ -39,7 +39,6 @@ _PREFILTER_NEEDLES_BASE = (
     "live_incremental_support",
     "create_test_adapter",
     "assert_sandbox_db_allowed",
-    "limited_production_entry",
     "sandbox_clean_write_rehearse",
 )
 
@@ -117,15 +116,6 @@ RULES: tuple[ConsumerRule, ...] = (
         classification="legacy_sandbox_guard",
         replacement="resolve_matrix_data_root / phase1_acceptance.require_phase1_data_root_for_live",
     ),
-    ConsumerRule(
-        target="sandbox-clean-write limited production CLI",
-        pattern=re.compile(
-            r"sandbox_clean_write_rehearse|sandbox_clean_write_audit|"
-            r"limited_production_entry|run_limited_production_entry"
-        ),
-        classification="legacy_clean_write_entry",
-        replacement="SourceRouteDbAcceptanceSpine; mark legacy in data_cli_contract.yaml",
-    ),
 )
 
 
@@ -159,12 +149,6 @@ def _consumer_scope(path: Path, usage: str, classification: str) -> str:
         return "allowed_ci"
     if classification == "legacy_sandbox_guard" and rel.startswith("backend/app/cli/"):
         return "legacy_cli_compat"
-    if classification == "legacy_clean_write_entry" and rel.startswith("backend/app/cli/"):
-        return "retired_legacy_cli"
-    if classification == "legacy_clean_write_entry" and rel.startswith(
-        "backend/app/ops/sandbox_clean_write/"
-    ):
-        return "internal_ops_module"
     if usage == "product_code":
         return "product_runtime"
     return "script_runtime"
@@ -183,8 +167,6 @@ def _migration_action(scope: str, classification: str) -> str:
         return "use_data_source_service"
     if classification == "legacy_sandbox_guard":
         return "migrate_to_source_route_db"
-    if classification == "legacy_clean_write_entry":
-        return "mark_legacy_delegate_to_spine"
     return "migrate_to_spine"
 
 
@@ -204,10 +186,6 @@ def _is_rule_definition(path: Path, rule: ConsumerRule) -> bool:
     }:
         return True
     if rule.classification == "legacy_sandbox_guard" and not rel.startswith("backend/app/cli/"):
-        return True
-    if rule.classification == "legacy_clean_write_entry" and not (
-        rel.startswith("backend/app/cli/") or rel.startswith("backend/app/ops/sandbox_clean_write/")
-    ):
         return True
     return False
 

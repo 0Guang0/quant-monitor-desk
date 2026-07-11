@@ -610,10 +610,3 @@ def _production_clean_write(
                     code="DRY_RUN_MUTATION",
                 )
         return result.write_id, rows_inserted, after_non_target
-
-
-def run_limited_production_entry(request: PromoteRequest) -> dict[str, Any]:
-    """Retired — official Phase 1 acceptance uses qmd-data on source-route-db root."""
-    from backend.app.cli.phase1_acceptance import raise_retired_legacy_command
-
-    raise_retired_legacy_command("qmd data sandbox-clean-write", subcommand="promote")

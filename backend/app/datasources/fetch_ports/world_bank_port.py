@@ -7,14 +7,13 @@ See R3H_01_REFERENCE_ADOPTION_AUDIT.md.
 from __future__ import annotations
 
 import json
-import urllib.error
-import urllib.parse
-import urllib.request
 import uuid
 from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
 from typing import Any, Literal
+
+import httpx2 as httpx
 
 from backend.app.datasources.adapters.fetch_port import FetchPayload, PortError
 from backend.app.datasources.normalizers.evidence_bundle import finalize_bundle, reject_over_cap
@@ -99,6 +98,19 @@ class WorldBankMockFetchPort:
         return FetchPayload(content=content, file_type="json", row_count=len(observations))
 
 
+WB_API_BASE = "https://api.worldbank.org/v2"
+_WB_HTTP_TIMEOUT = 60.0
+_WB_HTTP_CLIENT: httpx.Client | None = None
+_WB_USER_AGENT = "quant-monitor-desk/1.0 (World Bank macro fetch port)"
+
+
+def _world_bank_http_client() -> httpx.Client:
+    global _WB_HTTP_CLIENT
+    if _WB_HTTP_CLIENT is None:
+        _WB_HTTP_CLIENT = httpx.Client(timeout=_WB_HTTP_TIMEOUT)
+    return _WB_HTTP_CLIENT
+
+
 def _wb_live_observations(
     country_code: str,
     indicator_id: str,
@@ -112,15 +124,17 @@ def _wb_live_observations(
     }
     if start is not None:
         params["date"] = f"{start.year}:{datetime.now(UTC).date().year}"
-    query = urllib.parse.urlencode(params)
+    query = httpx.QueryParams(params)
     url = f"{WB_API_BASE}/country/{country_code}/indicator/{indicator_id}?{query}"
+    headers = {"User-Agent": _WB_USER_AGENT, "Accept": "application/json"}
     try:
-        with urllib.request.urlopen(url, timeout=60) as response:
-            payload = json.loads(response.read().decode("utf-8"))
-    except urllib.error.URLError as exc:
+        response = _world_bank_http_client().get(url, headers=headers)
+        response.raise_for_status()
+        payload = response.json()
+    except httpx.HTTPStatusError as exc:
         raise PortError("NETWORK_ERROR", str(exc)) from exc
-    except json.JSONDecodeError as exc:
-        raise PortError("FAILED", f"invalid World Bank JSON: {exc}") from exc
+    except (httpx.TransportError, json.JSONDecodeError) as exc:
+        raise PortError("NETWORK_ERROR", str(exc)) from exc
 
     if not isinstance(payload, list) or len(payload) < 2:
         raise PortError("FAILED", "World Bank API returned unexpected envelope")
@@ -176,6 +190,7 @@ class WorldBankLiveFetchPort:
         fetch_id = f"wb-live-{country}-{uuid.uuid4().hex[:12]}"
         observations: list[dict[str, Any]] = []
         per_indicator_cap = max(1, self.max_rows // max(len(self.indicators), 1))
+        last_network_error: PortError | None = None
         for indicator in self.indicators:
             _reject_unknown_pair(country_code=country, indicator_id=indicator)
             try:
@@ -188,13 +203,17 @@ class WorldBankLiveFetchPort:
                     )
                 )
             except PortError as exc:
-                if exc.status == "NETWORK_ERROR" and len(self.indicators) > 1:
-                    continue
+                if exc.status == "NETWORK_ERROR":
+                    last_network_error = exc
+                    if len(self.indicators) > 1:
+                        continue
                 raise
             if len(observations) >= self.max_rows:
                 observations = observations[: self.max_rows]
                 break
         if not observations:
+            if last_network_error is not None:
+                raise last_network_error
             raise PortError("EMPTY_RESPONSE", f"no World Bank observations for {country}")
         bundle = build_world_bank_indicator_evidence_bundle(
             observations=observations,

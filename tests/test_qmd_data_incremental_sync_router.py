@@ -13,8 +13,8 @@ from backend.app.cli.incremental_sync_router import sync_incremental_by_source_i
 from backend.app.config import PROJECT_ROOT
 from backend.app.core.resource_guard import Decision, ResourceGuard
 from backend.app.sync.incremental_source_registry import (
-    iter_tier_a_incremental_sources,
-    resolve_tier_a_incremental,
+    iter_incremental_gold_path_sources,
+    resolve_incremental_gold_path,
 )
 
 ADR028_CLEAN = {
@@ -86,7 +86,7 @@ def sandbox_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> Path:
     return data_root
 
 
-@pytest.mark.parametrize("source_id", list(iter_tier_a_incremental_sources()))
+@pytest.mark.parametrize("source_id", list(iter_incremental_gold_path_sources()))
 def test_incrementalSyncRouter_dryRun_allSources_auditableJson(
     sandbox_env: Path, source_id: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -96,7 +96,7 @@ def test_incrementalSyncRouter_dryRun_allSources_auditableJson(
     验证点：dry_run；source_id；data_domain；clean_table；message 含 dry-run
     失败含义：运维无法按 --source-id 统一审计增量计划
     """
-    entry = resolve_tier_a_incremental(source_id)
+    entry = resolve_incremental_gold_path(source_id)
     _enable_source_registry(monkeypatch, source_id, entry.canonical_domain)
     payload = sync_incremental_by_source_id(source_id=source_id, dry_run=True, end="2024-06-30")
     assert payload["command"] == "sync"

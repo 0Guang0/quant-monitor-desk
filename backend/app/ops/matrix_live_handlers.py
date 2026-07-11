@@ -35,7 +35,7 @@ def _finish_incremental_matrix_live(
     sync_status: str,
     job_id: str | None,
 ) -> AcceptanceReport:
-    rows = _count_clean_rows(cm, request.data_domain)
+    rows = _count_clean_rows(cm, request.data_domain, source_id=request.source_id)
     return _matrix_incremental_live_report(
         request,
         route_payload,

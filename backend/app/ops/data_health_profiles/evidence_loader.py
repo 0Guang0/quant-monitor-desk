@@ -1,4 +1,4 @@
-"""Tier-A live evidence loading for data health profiles (M-DATA-03 S-R2-F0)."""
+"""Tier-A live evidence loading for data health profiles (S-R2-F0)."""
 
 from __future__ import annotations
 

@@ -510,13 +510,24 @@ def _matrix_evidence_fetch_live_report(
     )
 
 
-def _count_clean_rows(cm: ConnectionManager, data_domain: str) -> int:
+def _count_clean_rows(
+    cm: ConnectionManager,
+    data_domain: str,
+    *,
+    source_id: str | None = None,
+) -> int:
     from backend.app.ops.sandbox_clean_write.clean_write_targets import resolve_clean_write_target
 
     target = resolve_clean_write_target(data_domain)
     table = quote_ident(target.target_table)
     with cm.writer() as con:
-        row = con.execute(f"SELECT COUNT(*) FROM {table}").fetchone()
+        if source_id:
+            row = con.execute(
+                f"SELECT COUNT(*) FROM {table} WHERE source_used = ?",
+                [source_id],
+            ).fetchone()
+        else:
+            row = con.execute(f"SELECT COUNT(*) FROM {table}").fetchone()
     return int(row[0]) if row else 0
 
 

@@ -55,32 +55,6 @@ DOMAIN_FETCH_OPERATIONS: dict[str, str] = {
 
 JobKind = Literal["sync", "backfill", "full-load", "scheduler"]
 
-OFFICIAL_PHASE1_CLI_REPLACEMENT = (
-    "qmd-data data sync|backfill|full-load|scheduler with "
-    "QMD_DATA_ROOT under .audit-sandbox/source-route-db"
-)
-
-RETIRED_LEGACY_COMMANDS: frozenset[str] = frozenset(
-    {
-        "qmd data sandbox-clean-write",
-        "qmd data sandbox-clean-write rehearse",
-        "qmd data sandbox-clean-write audit",
-        "qmd data sandbox-clean-write promote",
-    }
-)
-
-
-def raise_retired_legacy_command(command: str, *, subcommand: str | None = None) -> None:
-    label = command if subcommand is None else f"{command} {subcommand}"
-    raise CliFailure(
-        error_code="LEGACY_COMMAND_RETIRED",
-        message=(
-            f"{label} retired in Phase 1 closure; use {OFFICIAL_PHASE1_CLI_REPLACEMENT}"
-        ),
-        docs_anchor=DOCS_ANCHOR_LIVE_ENV_GATE,
-    )
-
-
 def is_production_equivalent_acceptance_root(data_root: Path | str) -> bool:
     posix = Path(data_root).expanduser().resolve().as_posix()
     return ".audit-sandbox" in posix and SOURCE_ROUTE_DB_SANDBOX_SEGMENT in posix
@@ -983,7 +957,7 @@ def _report_from_binding_result(
 
     route_report = AcceptanceReport.from_route_payload(request, route_payload)
     validation_status, conflict_status = _acceptance_job_statuses(cm, job_result.job_id)
-    rows = _count_clean_rows(cm, data_domain)
+    rows = _count_clean_rows(cm, data_domain, source_id=request.source_id)
     write_grade, source_role, source_switched = _write_grade_from_audit(
         cm, job_result.write_id, rows=rows
     )

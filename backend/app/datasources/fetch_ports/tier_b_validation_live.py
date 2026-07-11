@@ -1,4 +1,4 @@
-"""Minimal live HTTP fetch ports for Tier B validation_fetch (M-DATA-03 AC-7)."""
+"""Minimal live HTTP fetch ports for Tier B validation_fetch (ADR-015 AC-7)."""
 
 from __future__ import annotations
 

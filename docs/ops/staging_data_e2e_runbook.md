@@ -45,22 +45,20 @@ CLI 失败须打印 `error_code`、`message`、`docs_anchor`，见 `docs/ops/ERR
 - 未经单独运维审批工作流，禁止 `--no-dry-run` sync。
 - Staged 证据 ≠ production-live。
 
-## 6. R3G-03 有限生产 promote（运维 CLI）
+## 6. Phase 1 生产等价验收（替代 R3G-03 promote CLI）
 
-> **CLI：** `uv run qmd-data data sandbox-clean-write promote`（非 `qmd`）。  
-> **默认：** `--dry-run` — 除非 `--execute --no-dry-run`，否则不变更生产。
+> **CLI：** 使用 `qmd-data data sync|backfill|full-load|scheduler`，`QMD_DATA_ROOT` 须位于 `.audit-sandbox/source-route-db` 段下。  
+> **说明：** legacy promote CLI 已于 task-01.5 S6 从 CLI 树移除；见 ADR-015 与 `data_cli_contract.yaml`。
 
-| 门禁      | 要求                                                                                                                                              |
-| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 四重锁    | `--approval-file`、`--audit-decision`、`--before-proof`、`--rollback-plan` 路径须与授权 YAML 中 `audit_decision_file` / `rollback_plan_path` 一致 |
-| 生产 DB   | `production_db_path` 仅能在 `DATA_ROOT` 或 `.audit-sandbox` 下                                                                                    |
-| 执行      | `before_proof` 中 `backup_or_snapshot_pointer` 非空                                                                                               |
-| FRED live | 仅当授权设 `live_fetch_authorized: true` 时，才加 `--allow-live-fetch` + `--fred-authorization`                                                   |
+| 门禁     | 要求                                                                     |
+| -------- | ------------------------------------------------------------------------ |
+| 隔离库   | `QMD_DATA_ROOT` 含 `source-route-db` 段                                  |
+| 正式命令 | sync / backfill / full-load / scheduler（非 dry-run 方可 gate-eligible） |
+| 替代运维 | `scripts/qmd_ops.py accept-source-route-db`                              |
 
 Dry-run 验证：
 
 ```powershell
-uv run pytest tests/test_round3g_limited_production_clean_write.py `
-  tests/test_round3g_limited_production_rollback.py `
-  tests/test_reference_adoption_guardrails.py -k r3g03 -q --basetemp=.audit-sandbox/pytest
+uv run pytest tests/test_qmd_data_acceptance_envelope.py `
+  tests/test_data_cli_contract.py -k "sandboxCleanWriteNotRegistered or phase1Gate" -q
 ```

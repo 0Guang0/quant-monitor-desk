@@ -1,4 +1,4 @@
-"""crypto_derivative_p0 profile checks (M-DATA-03 S-R2-F0)."""
+"""crypto_derivative_p0 profile checks (data health S-R2-F0)."""
 
 from __future__ import annotations
 

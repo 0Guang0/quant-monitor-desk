@@ -1,4 +1,4 @@
-"""Tier B CN equity live fetch ports — registry-aligned vendor seams (M-DATA-03)."""
+"""Tier B CN equity live fetch ports — registry-aligned vendor seams (ADR-015)."""
 
 from __future__ import annotations
 

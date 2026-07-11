@@ -7,9 +7,9 @@ import pytest
 from backend.app.datasources.live_prod_source_tiers import INCREMENTAL_GOLD_PATH_SOURCE_IDS
 from backend.app.ops.sandbox_clean_write.clean_write_targets import resolve_clean_write_target
 from backend.app.sync.incremental_source_registry import (
-    UnknownTierAIncrementalSourceError,
-    iter_tier_a_incremental_sources,
-    resolve_tier_a_incremental,
+    UnknownIncrementalGoldPathSourceError,
+    iter_incremental_gold_path_sources,
+    resolve_incremental_gold_path,
 )
 
 # ADR-009 canonical domain per source_id
@@ -42,12 +42,12 @@ ADR028_CLEAN_TABLE = {
 
 def test_incrementalGoldPathRegistry_coversAllGoldPathSources() -> None:
     """覆盖范围：11 个 incremental 金路径源登记
-    测试对象：iter_tier_a_incremental_sources / INCREMENTAL_GOLD_PATH_SOURCE_IDS
+    测试对象：iter_incremental_gold_path_sources / INCREMENTAL_GOLD_PATH_SOURCE_IDS
     目的/目标：registry 与 live_prod_source_tiers 金路径集合一一对应
     验证点：数量 11；集合相等
     失败含义：漏源则 DCP-05 无法声称 11/11 clean 路径
     """
-    registered = frozenset(iter_tier_a_incremental_sources())
+    registered = frozenset(iter_incremental_gold_path_sources())
     assert registered == INCREMENTAL_GOLD_PATH_SOURCE_IDS
     assert len(registered) == 11
 
@@ -57,12 +57,12 @@ def test_incrementalGoldPathRegistry_canonicalDomainMatchesAdr028(
     source_id: str, canonical_domain: str
 ) -> None:
     """覆盖范围：每源 canonical domain
-    测试对象：resolve_tier_a_incremental
+    测试对象：resolve_incremental_gold_path
     目的/目标：与 ADR-009 矩阵一致
     验证点：canonical_domain 字段
     失败含义：域错位则 watermark/clean 写错表
     """
-    entry = resolve_tier_a_incremental(source_id)
+    entry = resolve_incremental_gold_path(source_id)
     assert entry.canonical_domain == canonical_domain
 
 
@@ -86,10 +86,10 @@ def test_incrementalGoldPathRegistry_canonicalDomainResolvesCleanTable(
 
 def test_incrementalGoldPathRegistry_unknownSource_raises() -> None:
     """覆盖范围：非金路径源负向
-    测试对象：resolve_tier_a_incremental
+    测试对象：resolve_incremental_gold_path
     目的/目标：fail-closed
-    验证点：UnknownTierAIncrementalSourceError
+    验证点：UnknownIncrementalGoldPathSourceError
     失败含义：静默默认域会写错 clean 表
     """
-    with pytest.raises(UnknownTierAIncrementalSourceError, match="akshare"):
-        resolve_tier_a_incremental("akshare")
+    with pytest.raises(UnknownIncrementalGoldPathSourceError, match="akshare"):
+        resolve_incremental_gold_path("akshare")

@@ -8,16 +8,16 @@ from backend.app.datasources.live_prod_source_tiers import INCREMENTAL_GOLD_PATH
 
 
 @dataclass(frozen=True)
-class TierAIncrementalEntry:
+class IncrementalGoldPathEntry:
     source_id: str
     canonical_domain: str
 
 
-class UnknownTierAIncrementalSourceError(KeyError):
-    """source_id is not a registered Tier A incremental entry."""
+class UnknownIncrementalGoldPathSourceError(KeyError):
+    """source_id is not a registered incremental gold-path entry."""
 
 
-def _build_registry() -> dict[str, TierAIncrementalEntry]:
+def _build_registry() -> dict[str, IncrementalGoldPathEntry]:
     rows = {
         "baostock": "cn_equity_daily_bar",
         "mootdx": "cn_equity_daily_bar",
@@ -35,26 +35,26 @@ def _build_registry() -> dict[str, TierAIncrementalEntry]:
         missing = INCREMENTAL_GOLD_PATH_SOURCE_IDS - frozenset(rows)
         extra = frozenset(rows) - INCREMENTAL_GOLD_PATH_SOURCE_IDS
         raise RuntimeError(
-            f"Tier A incremental registry drift: missing={sorted(missing)} extra={sorted(extra)}"
+            f"incremental gold-path registry drift: missing={sorted(missing)} extra={sorted(extra)}"
         )
     return {
-        sid: TierAIncrementalEntry(source_id=sid, canonical_domain=domain)
+        sid: IncrementalGoldPathEntry(source_id=sid, canonical_domain=domain)
         for sid, domain in rows.items()
     }
 
 
-TIER_A_INCREMENTAL_BY_SOURCE: dict[str, TierAIncrementalEntry] = _build_registry()
+INCREMENTAL_GOLD_PATH_BY_SOURCE: dict[str, IncrementalGoldPathEntry] = _build_registry()
 
 
-def resolve_tier_a_incremental(source_id: str) -> TierAIncrementalEntry:
-    """Return canonical incremental domain for a Tier A source_id."""
+def resolve_incremental_gold_path(source_id: str) -> IncrementalGoldPathEntry:
+    """Return canonical incremental domain for an ADR-009 gold-path source_id."""
     try:
-        return TIER_A_INCREMENTAL_BY_SOURCE[source_id]
+        return INCREMENTAL_GOLD_PATH_BY_SOURCE[source_id]
     except KeyError as exc:
-        raise UnknownTierAIncrementalSourceError(
-            f"no Tier A incremental entry for source_id={source_id!r}"
+        raise UnknownIncrementalGoldPathSourceError(
+            f"no incremental gold-path entry for source_id={source_id!r}"
         ) from exc
 
 
-def iter_tier_a_incremental_sources() -> tuple[str, ...]:
-    return tuple(sorted(TIER_A_INCREMENTAL_BY_SOURCE))
+def iter_incremental_gold_path_sources() -> tuple[str, ...]:
+    return tuple(sorted(INCREMENTAL_GOLD_PATH_BY_SOURCE))

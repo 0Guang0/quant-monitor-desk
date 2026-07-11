@@ -358,8 +358,8 @@ def backfill_plan(
         assert_sandbox_db_allowed,
     )
     from backend.app.sync.incremental_source_registry import (
-        UnknownTierAIncrementalSourceError,
-        resolve_tier_a_incremental,
+        UnknownIncrementalGoldPathSourceError,
+        resolve_incremental_gold_path,
     )
     from backend.app.sync.jobs import (
         ABSOLUTE_MAX_BACKFILL_SHARDS,
@@ -383,8 +383,8 @@ def backfill_plan(
     }
 
     try:
-        entry = resolve_tier_a_incremental(source_id)
-    except UnknownTierAIncrementalSourceError as exc:
+        entry = resolve_incremental_gold_path(source_id)
+    except UnknownIncrementalGoldPathSourceError as exc:
         raise CliFailure(
             error_code="INVALID_INPUT",
             message=str(exc),
@@ -584,8 +584,8 @@ def full_load_plan(
         assert_sandbox_db_allowed,
     )
     from backend.app.sync.incremental_source_registry import (
-        UnknownTierAIncrementalSourceError,
-        resolve_tier_a_incremental,
+        UnknownIncrementalGoldPathSourceError,
+        resolve_incremental_gold_path,
     )
     from backend.app.sync.jobs import (
         ABSOLUTE_MAX_BACKFILL_SHARDS,
@@ -597,8 +597,8 @@ def full_load_plan(
     from backend.app.sync.orchestrator import DataSyncOrchestrator
 
     try:
-        tier_entry = resolve_tier_a_incremental(source_id)
-    except UnknownTierAIncrementalSourceError as exc:
+        tier_entry = resolve_incremental_gold_path(source_id)
+    except UnknownIncrementalGoldPathSourceError as exc:
         raise CliFailure(
             error_code="CAPABILITY_MISSING",
             message=str(exc),

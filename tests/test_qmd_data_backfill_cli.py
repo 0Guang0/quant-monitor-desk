@@ -249,25 +249,25 @@ def test_qmd_data_backfill_max_shards_absolute_cap_cli(monkeypatch, tmp_path: Pa
     "source_id",
     __import__(
         "backend.app.sync.incremental_source_registry",
-        fromlist=["iter_tier_a_incremental_sources"],
-    ).iter_tier_a_incremental_sources(),
+        fromlist=["iter_incremental_gold_path_sources"],
+    ).iter_incremental_gold_path_sources(),
 )
 def test_qmd_data_backfill_tier_a_domains_dry_run(
     monkeypatch, tmp_path: Path, source_id: str
 ) -> None:
-    """覆盖范围：Tier A 全 incremental registry domain dry-run backfill
+    """覆盖范围：incremental gold-path 全 registry domain dry-run backfill
     测试对象：data_commands.backfill_plan + incremental_source_registry
     目的/目标：11 源 canonical domain 均可规划 shard（ADR-011 cap 保留）
     验证点：exit 0；JSON shard_count>=1；domain 与 registry 一致
     失败含义：Backfill 仍限 baostock pilot，P1-10 未扩域
     """
-    from backend.app.sync.incremental_source_registry import resolve_tier_a_incremental
+    from backend.app.sync.incremental_source_registry import resolve_incremental_gold_path
 
     sandbox = tmp_path / ".audit-sandbox" / f"bf-tier-{source_id}"
     sandbox.mkdir(parents=True)
     monkeypatch.setenv("QMD_DATA_ROOT", str(sandbox))
     monkeypatch.setattr(ResourceGuard, "check", lambda self: (Decision.OK, ""))
-    entry = resolve_tier_a_incremental(source_id)
+    entry = resolve_incremental_gold_path(source_id)
     start, end = default_backfill_window(entry.canonical_domain)
     proc = _run_qmd_data(
         "backfill",

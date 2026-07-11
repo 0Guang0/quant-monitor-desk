@@ -52,6 +52,8 @@ def _normalize_incremental_job_status(result) -> str:
         return "EMPTY_RESPONSE"
     if "returned no usable rows" in msg or "returned no rows for" in msg:
         return "EMPTY_RESPONSE"
+    if "no world bank observations for" in msg:
+        return "EMPTY_RESPONSE"
     if any(marker in msg for marker in _NETWORK_FAILURE_MARKERS):
         return "NETWORK_ERROR"
     if "no mock observations on/after" in msg or msg == "empty_response":

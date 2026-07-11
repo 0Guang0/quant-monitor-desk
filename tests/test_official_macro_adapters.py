@@ -1166,6 +1166,36 @@ def test_bis_port_capOverflow_blocksOverMaxCountries() -> None:
         )
 
 
+def test_world_bank_port_allIndicatorsNetworkError_propagatesNetworkError(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """覆盖范围：World Bank live 多 indicator 全网络失败时的错误语义
+    测试对象：WorldBankLiveFetchPort.fetch_payload
+    目的/目标：全 indicator NETWORK_ERROR 时须传播 NETWORK_ERROR，不得伪装 EMPTY_RESPONSE
+    验证点：PortError.status == NETWORK_ERROR
+    失败含义：SSL/网络失败被误报为空响应，矩阵 closure 与 rows_written 语义失真
+    """
+    from backend.app.datasources.adapters.fetch_port import PortError
+    from backend.app.datasources.fetch_ports.world_bank_port import WorldBankLiveFetchPort
+
+    def _raise_network(*_args, **_kwargs):
+        raise PortError("NETWORK_ERROR", "SSL EOF to api.worldbank.org")
+
+    monkeypatch.setattr(
+        "backend.app.datasources.fetch_ports.world_bank_port._wb_live_observations",
+        _raise_network,
+    )
+    port = WorldBankLiveFetchPort(
+        countries=("US",),
+        indicators=("NY.GDP.MKTP.CD", "SP.POP.TOTL"),
+        max_rows=3,
+        data_domain="development_indicator",
+    )
+    with pytest.raises(PortError) as exc_info:
+        port.fetch_payload(_world_bank_req())
+    assert exc_info.value.status == "NETWORK_ERROR"
+
+
 def test_world_bank_port_capOverflow_blocksOverMaxRows() -> None:
     """覆盖范围：World Bank port 行数 cap 溢出
     测试对象：WorldBankMockFetchPort max_rows 超上限

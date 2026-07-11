@@ -1,4 +1,4 @@
-"""disclosure_p0 profile checks (M-DATA-03 S-R2-F0)."""
+"""disclosure_p0 profile checks (data health S-R2-F0)."""
 
 from __future__ import annotations
 
