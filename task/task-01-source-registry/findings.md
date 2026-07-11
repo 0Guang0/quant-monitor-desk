@@ -37,8 +37,6 @@
 
 | ID | 现象 | 标签 | disposition | 证据 |
 |----|------|------|-------------|------|
-| T01-F01 | `source_capabilities.yaml` 顶层仍是 `status: draft`，并明确声明 adapter domain 与 registry domain 的 production alignment 尚有缺口 | capability / R4 缺口 | 待修复 | `source_capabilities.yaml:2,12`；详见审计索引 CC-2 |
-| T01-F02 | `macro_supplementary` 标为 `domain_enabled_by_default: true`，但唯一 Primary `akshare` 为 `validation_only`；实际 RoutePlan 返回 `VALIDATION_ONLY_BLOCKED`，使默认启用域没有可调度主路径 | registry role / 可调度性 | 待修复 | `source_registry.yaml:431-438`；2026-07-11 只读 RoutePlan 复现；`data_sources.md` §5.3、§5.10 |
 | T01-F03 | CLI/增量仍以内存 OVERRIDE（ESR / 强制 platform）破坏启用 SSOT；**3A 问开关 API 已落地**，安检接线与调用方迁移未完成 | enable policy / 跨模块依赖 | 待修复（3A 已切；余 3B/3C/4a/4b/4x） | 3A：`activation_overlay.py` + `017_*.sql` + `completion-check-execute.md` CLOSED；余：`macro_incremental_common.py` ESR、`data_commands.py` 金路径；票 04–08 |
 
 ## 已关闭 / 按设计
@@ -46,6 +44,8 @@
 | ID | 摘要 | disposition | 证据 |
 |----|------|-------------|------|
 | T01-D01 | 大量 `enabled_by_default: false` 是 fail-closed 设计：不得 mass-enable；缺授权、资格或配置时应返回 `DISABLED_SOURCE` / `USER_AUTH_REQUIRED` | 按设计 | `data_sources.md` 默认启用与 domain gating；`qmt_xqshare_setup.md` §3-4；详见审计索引 CC-7 |
+| T01-F01 | capability 顶层 draft / implementation_gap 作放行依据 | 已修复 | 票 01 · `capability_registry._validate_capability_document`；YAML `status: active`；load 边界测试 |
+| T01-F02 | macro_supplementary 默认启用但 validation_only Primary → VALIDATION_ONLY_BLOCKED | 已修复 | 票 02 · `_validate_domain_roles` + 三域失败关闭；默认路由 DISABLED_SOURCE |
 | T01-F03-3A | 问开关三键→三字段 + `source_activation_overlay` 持久化 + 隔离根可测；禁 setattr 撬门 | 已修复（切片） | 票 03 · `completion-check-execute.md`；`tests/test_activation_overlay.py`；≠ G1-02 整包 |
 | T01-F04 | G1-01 入口清单曾漏 E-REG-03/04 等 | 已修复（清单） | `g1-01-wiring-inventory.md`；Plan r6 `PLAN-READY` |
 

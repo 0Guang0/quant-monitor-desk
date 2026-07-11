@@ -1,16 +1,16 @@
 version: source_capability_contract_v1
-status: draft
+status: active
 owner: data_sources
 provider_catalog_path: specs/datasource_registry/provider_catalog.yaml
 purpose: "Define machine-checkable source/domain/operation capability declarations before adapter fetch."
-required_top_level_keys: [version, sources, validation]
+required_top_level_keys: [version, status, sources]
 source_rules:
   - source_id must exist in specs/datasource_registry/source_registry.yaml unless marked proposed_disabled_source
   - every source_registry.source_type must remain compatible with specs/schema/schema.sql and backend/app/db/migrations/009_status_check_constraints.sql CHECK values
   - every source_registry.license_type must remain compatible with specs/schema/schema.sql and backend/app/db/migrations/009_status_check_constraints.sql CHECK values
   - every domain listed under source_registry.allowed_domains must be declared under source_capabilities.yaml
   - adapter.supported_domains must reconcile against declared source capabilities before production fetch
-  - every operation must declare frequency, fields or output, and auth requirements
+  - every operation must declare frequency, fields|output|observation_fields|bundle_fields, and requires_auth
   - qmt_xtdata and qmt_xqshare capabilities must remain enabled_by_default=false until user authorization is recorded
   - newly added external sources must remain enabled_by_default=false until adapter, license/auth, ResourceGuard, route-plan, and replay evidence are complete
   - official/regulator/filing sources should be preferred as Primary over aggregators or web sources for factual domains
@@ -49,9 +49,11 @@ fetch_gate:
     - SourceRoutePlan generated
     - ResourceGuard checked
     - selected operation declared and enabled
-implementation_gap:
-  description: "Adapter supported_domains must not rely on legacy or abstract names when source_registry uses concrete registry domains. Production enforcement requires direct alignment or a tested compatibility mapping layer."
-  required_action: "Align adapter supported_domains to source_registry domains or add a tested compatibility mapping layer before production fetch."
+adapter_domain_alignment:
+  status: closed
+  evidence:
+    - tests/test_source_capabilities.py::test_adapterSupportedDomains_reconciledToCapabilityRegistryOrCompatibilityMap
+    - backend/app/datasources/capability_registry.py::_validate_capability_document
 
 failure_modes:
   UNKNOWN_CAPABILITY: "Reject before adapter construction."
@@ -62,4 +64,6 @@ required_tests:
   - tests/test_source_registry.py::test_sourceTypeAndLicenseType_matchSchemaCheckEnums
   - tests/test_source_capabilities.py::test_everyAllowedDomain_hasCapabilityDeclaration
   - tests/test_source_capabilities.py::test_adapterSupportedDomains_reconciledToCapabilityRegistryOrCompatibilityMap
-  - tests/test_source_capabilities.py::test_unknownCapability_rejectedBeforeFetch
+  - tests/test_source_capabilities.py::test_capabilityRegistry_assertSourceDomainOperation_rejectsUnknown
+  - tests/test_source_capabilities.py::test_capabilityRegistry_load_rejectsDraftStatus
+  - tests/test_source_capabilities.py::test_capabilityRegistry_load_productionConfigSucceeds

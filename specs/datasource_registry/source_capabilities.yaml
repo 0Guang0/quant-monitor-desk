@@ -1,5 +1,5 @@
 version: source_capabilities_v1
-status: draft
+status: active
 authority: "Source capability contract; source_registry.yaml remains source/role authority"
 principles:
   - every_source_registry_allowed_domain_must_have_capability
@@ -9,7 +9,7 @@ principles:
   - no_silent_fallback
 notes:
   current_domain_authority: "specs/datasource_registry/source_registry.yaml"
-  implementation_gap: "Adapter supported_domains must not rely on legacy/abstract names such as market_bar_1d and fundamental when source_registry uses concrete domains. Production fetch requires adapter domains to match source_registry domains or an explicit compatibility mapping with tests."
+  adapter_domain_alignment: "enforced by SourceCapabilityRegistry.load + tests/test_source_capabilities.py adapter reconciliation"
 sources:
   qmt_xtdata:
     status: READY_WITH_EVIDENCE

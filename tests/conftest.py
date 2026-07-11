@@ -240,6 +240,11 @@ def bad_primary_disabled_yaml() -> Path:
 
 
 @pytest.fixture
+def bad_validation_only_primary_enabled_yaml() -> Path:
+    return FIXTURES / "bad_validation_only_primary_enabled.yaml"
+
+
+@pytest.fixture
 def bad_validation_disabled_yaml() -> Path:
     return FIXTURES / "bad_validation_disabled.yaml"
 

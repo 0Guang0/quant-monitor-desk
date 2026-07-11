@@ -5,7 +5,7 @@
 ## Session: 2026-07-11
 
 ### Phase 0: 权威对齐、审计与方案评审门
-- **Status:** in_progress（Gate 0 + ADR-018；G1-01 r6 READY；票 03/3A Execute CLOSED；下一刀 01/02∥04/05；实现 R4 仍 OPEN）
+- **Status:** in_progress（Gate 0 + ADR-018；G1-01 r6 READY；票 01/02/03 票级 AC 已关；下一刀 04∥05；实现 R4 仍 OPEN）
 - **Started:** —
 - Actions taken:
   - 三件套占位创建（planning-with-files）
@@ -35,8 +35,11 @@
   - 2026-07-11：**文档缝隙关闭**：`EXECUTION-DOC-INDEX.md`；3A→3-OBS、4c=G1-03～05、brief/fred-builder/README；拆票草案待确认。
   - 2026-07-11：**本地票落地**（不发 GitHub）：`.scratch/task-01-g1-02-enable-seam/issues/01–10`；06∥07∥08 并行；frontier=01/02/03。
   - 2026-07-11：**票 03 Execute CLOSED** + ponytail 可选收紧（删 `_BASE_REVISION`/薄包装/`isinstance`）；`task_plan` 下一刀改为 1/2∥3B/3C；`findings` 记 T01-F03-3A 已修复切片、T01-F03 余待修、T01-F04 清单已补齐。
+  - 2026-07-11：**票 01/02 Execute**：capability 加载契约可执行（拒 draft/gap/残缺 op；YAML `active`）；`macro_supplementary`/`cn_index`/`sector_board` 失败关闭 + 加载拒 validation_only Primary；T01-F01/F02 已修复。`uv run pytest -q` exit 0。≠ G1-02 / R4。
 - Files created/modified:
   - `task_plan.md` · `findings.md` · `progress.md`
+  - `capability_registry.py` · `source_capabilities.yaml` · `source_capability_contract.yaml`
+  - `source_registry.py` · `source_registry.yaml` · 相关测试 / fixture
   - `completion-check-execute.md` · `activation_overlay.py` · `017_*.sql` · `tests/test_activation_overlay.py`
   - `completion-check-audit.md` · `completion-check-plan.md`
   - `docs/decisions/design/ADR-017-dynamic-source-fallback-and-exception-data-lifecycle.md`
@@ -45,32 +48,42 @@
   - `g1-01-wiring-inventory.md`（含 E-OPS / E-ACC-SKIP / E-CLI-40～43 / E-TEST-05/06；E-ACC-ISO 诚实表述）
 
 ### Phase 2: RED
-- **Status:** done（票 03）
+- **Status:** done（票 01/02/03）
 - Actions taken:
   - 票 03：先写 `tests/test_activation_overlay.py`（ImportError RED）再实现
+  - 票 01：capability load 边界 RED（draft/gap/残缺 op/生产仍 draft）
+  - 票 02：validation_only Primary 加载 RED + macro_supplementary 默认路由仍 VALIDATION_ONLY_BLOCKED
 - Files created/modified:
-  - `tests/test_activation_overlay.py`
+  - `tests/test_activation_overlay.py` · `tests/test_source_capabilities.py` · `tests/test_source_registry.py` · `tests/test_source_route_planner.py`
 
 ### Phase 3: GREEN
-- **Status:** done（票 03 AC）
+- **Status:** done（票 01/02/03 AC）
 - Actions taken:
   - `activation_overlay.py` + `017_source_activation_overlay.sql`；CC 闭环修复后复验绿
+  - `_validate_capability_document` + YAML/契约升级；`_validate_domain_roles` 拒 validation_only+默认启用；三域失败关闭
 - Files created/modified:
   - `backend/app/datasources/activation_overlay.py` · migration 017 · schema.sql 表形对齐
+  - `backend/app/datasources/capability_registry.py` · `source_registry.py`
+  - `specs/datasource_registry/source_capabilities.yaml` · `source_registry.yaml`
+  - `specs/contracts/source_capability_contract.yaml`
 
 ### Phase 4: 关账验证
-- **Status:** 票 03 Execute `CLOSED`；G1-02 / 模块 R4 仍 OPEN
+- **Status:** 票 01/02/03 票级 AC 已关；G1-02 / 模块 R4 仍 OPEN
 - Actions taken:
   - `completion-check-execute.md` CC-0～CC-7；歧视反证：删 overlay 行 → 重回 DISABLED_SOURCE
+  - 票 01/02：相关 + 全量 `uv run pytest -q` exit 0
 - Files created/modified:
-  - `completion-check-execute.md`
+  - `completion-check-execute.md` · `findings.md` · scratch 票 01/02 done
 
 ## Test Results
 
 | Test | Input | Expected | Actual | Status |
 |------|-------|----------|--------|--------|
+| 票 01 capability load | `uv run pytest -q tests/test_source_capabilities.py` | 拒 draft/gap/残缺；生产 active 可加载 | exit 0 | ✅ 票 01 AC（≠ R4） |
+| 票 02 default domain | `uv run pytest -q tests/test_source_registry.py tests/test_source_route_planner.py` | macro_supplementary → DISABLED_SOURCE；加载拒 validation_only Primary | exit 0 | ✅ 票 02 AC（≠ G1-02） |
 | 票 03 ask-activation | `uv run pytest -q tests/test_activation_overlay.py tests/test_schema_migration.py` | 三字段/隔离 overlay/禁撬门/017 迁移 | exit 0；删 overlay 行歧视反证 OK | ✅ 票 03 AC（≠ G1-02） |
-| registry / capability / route | `python -m pytest -q tests/test_source_registry.py tests/test_source_capabilities.py tests/test_source_route_planner.py` | 当前契约测试全绿 | exit 0；但默认启用 `macro_supplementary` 的实际 route 仍为 `VALIDATION_ONLY_BLOCKED` | ✅（不构成 R4 关账） |
+| registry / capability / route | `python -m pytest -q tests/test_source_registry.py tests/test_source_capabilities.py tests/test_source_route_planner.py` | 当前契约测试全绿 | exit 0 | ✅（不构成 R4 关账） |
+| full suite | `uv run pytest -q` | exit 0 | exit 0 | ✅ |
 | design/runtime parity | `python -m pytest -q tests/test_design_runtime_parity.py` | design→runtime 镜像一致 | `2 passed` | ✅ |
 | direct-conflict sweep | `rg` 检查旧冲突词 + YAML 解析 + scoped `git diff --check` | 无 `degraded clean`、固定 5 日回补、验证源“完全不接管”或统一 365 天口径；契约可加载、无新增格式错误 | 旧冲突词命中 0；YAML OK；格式检查通过 | ✅ |
 

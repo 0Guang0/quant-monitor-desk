@@ -9,11 +9,11 @@
 
 ## 1. 下一会话目标（默认）
 
-**Frontier：** 本地票 **01 ∥ 02**（Capability / macro_supplementary）可并行；  
-**G1-02 下一刀：** 票 **04**（3B 安检只读合成）∥ 票 **05**（3C 测试夹具 overlay）— 均 blocked-by 已关的 **03**。
+**Frontier：** 票 **04**（3B 安检）∥ 票 **05**（3C 测试夹具）— blocked-by 已关的 **03**；  
+票 **01/02/03** 票级 AC 已关（≠ G1-02 / R4）。
 
 正式代码：**TDD**；改 symbol 前 GitNexus `impact`。  
-**禁止**把本 handoff、票 03 CLOSED 或 pytest 绿当成 R4 / G1-02 整包 / G1-08 完成。
+**禁止**把本 handoff、票 01–03 CLOSED 或 pytest 绿当成 R4 / G1-02 整包 / G1-08 完成。
 
 **分支提示：** 实现多在 `feat/g1-02-ask-activation-03`（未合并）；新切片可续该分支或另开（勿两 agent 抢同一核心文件组）。
 
@@ -48,10 +48,12 @@
 | Gate 0 / ADR-017 / **ADR-018** | Accepted（design 已索引）                                                                                                  |
 | G1-01 清单                     | Plan r6 **`PLAN-READY`**；finding **T01-F04 已关闭**                                                                       |
 | 最终执行计划集合               | Plan **`PLAN-READY`** → `completion-check-plan-execution-set.md`                                                           |
+| **票 01 / 工作包 1**           | Execute 票级 AC **done**（T01-F01 已修复）；≠ 模块 R4                                                                      |
+| **票 02 / 工作包 2**           | Execute 票级 AC **done**（T01-F02 已修复）；≠ 模块 R4                                                                      |
 | **票 03 / 工作包 3A**          | Execute **`CLOSED`** → [`completion-check-execute.md`](completion-check-execute.md)；finding **T01-F03-3A 已修复（切片）** |
 | 问开关实现                     | `ask_activation` / `write_activation_overlay(sandbox=)` + `source_activation_overlay` 表；**尚未**接 RoutePlanner/CLI      |
 | **T01-F03（整条）**            | 仍 **待修复**（余 3B/3C/4a/4b/4x）；ESR 生产旁路仍在                                                                       |
-| 开放 finding                   | **T01-F01** · **T01-F02** · **T01-F03**                                                                                    |
+| 开放 finding                   | **T01-F03**（F01/F02 已关）                                                                                                |
 | 本地票                         | `.scratch/task-01-g1-02-enable-seam/` · **不发 GitHub**                                                                    |
 | 实现 / R4 Audit                | **OPEN**（`completion-check-audit.md`）                                                                                    |
 | FRED 编排合并                  | 台账 `T01-ENABLE-FRED-MERGE-001` · 最迟 G1-08 · 票 10                                                                      |
@@ -108,6 +110,6 @@
 
 ## 8. 给下一 agent 的第一句话（可复制）
 
-> 读 `task/task-01-source-registry/EXECUTION-DOC-INDEX.md` 与 `.scratch/task-01-g1-02-enable-seam/README.md`。票 **03/3A 已 CLOSED**（`completion-check-execute.md`；`ask_activation` 已存在）。下一刀：票 **01∥02** 或 **04∥05**（3B/3C）；G1-02 细节以 `g1-02-execution-brief.md` 为准。改 `enabled_source_registry` / RoutePlanner 前先 `impact`。不要加载 `归档/`。不要宣称 G1-02 / R4。
+> 读 `task/task-01-source-registry/EXECUTION-DOC-INDEX.md` 与 `.scratch/task-01-g1-02-enable-seam/README.md`。票 **01/02/03 票级 AC 已关**（capability 契约 + macro_supplementary 失败关闭 + `ask_activation`）。下一刀：票 **04∥05**（3B/3C）；G1-02 细节以 `g1-02-execution-brief.md` 为准。改 `enabled_source_registry` / RoutePlanner 前先 `impact`。不要加载 `归档/`。不要宣称 G1-02 / R4。
 
 _敏感信息：无。本 handoff 不含密钥。_

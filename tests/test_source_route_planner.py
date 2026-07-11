@@ -13,13 +13,34 @@ from pathlib import Path
 import pytest
 from backend.app.datasources.capability_registry import SourceCapabilityRegistry
 from backend.app.datasources.route_planner import SourceRoutePlanner
-from backend.app.datasources.source_registry import SourceRegistry
+from backend.app.datasources.source_registry import (
+    SourceRegistry,
+)
 
 from tests.service_path_support import production_route_planner
 
 _BAD_SCHEMA_ENUM_FIXTURE = (
     Path(__file__).parent / "fixtures" / "bad_schema_enum_route.yaml"
 )
+
+
+def test_macro_supplementary_defaultRoute_isDisabledSource() -> None:
+    """覆盖范围：未 monkeypatch 的 macro_supplementary 默认路由
+    测试对象：production_route_planner().plan（macro_supplementary）
+    目的/目标：无合规 Primary 时默认失败关闭为 DISABLED_SOURCE，而非 VALIDATION_ONLY_BLOCKED
+    验证点：route_status=DISABLED_SOURCE；selected_source_id is None；含 DOMAIN_DISABLED_BY_DEFAULT
+    失败含义：默认仍伪放行 validation-only Primary，配置自相矛盾进入调度面
+    """
+    planner = production_route_planner()
+    plan = planner.plan(
+        data_domain="macro_supplementary",
+        operation="fetch_macro_supplementary",
+        run_id="t01-f02-macro-supp",
+        job_id="macro-supp-default",
+    )
+    assert plan.route_status == "DISABLED_SOURCE"
+    assert plan.selected_source_id is None
+    assert "DOMAIN_DISABLED_BY_DEFAULT" in plan.quality_flags
 
 
 def test_invalidSourceTypeOrLicense_blocksReadyRoute() -> None:

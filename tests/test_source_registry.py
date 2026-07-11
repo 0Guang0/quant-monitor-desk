@@ -169,6 +169,59 @@ def test_load_primarySourceDisabled_raisesInvalidRegistryError(bad_primary_disab
         reg.load()
 
 
+def test_load_validationOnlyPrimaryWhenDomainEnabled_raisesInvalidRegistryError(
+    bad_validation_only_primary_enabled_yaml,
+) -> None:
+    """覆盖范围：默认启用域不得以 validation_only 源作 Primary
+    测试对象：SourceRegistry.load（bad_validation_only_primary_enabled_yaml）
+    目的/目标：domain_enabled_by_default=true 且 primary.validation_only=true 须在加载边界失败
+    验证点：pytest.raises(InvalidRegistryError, match=validation_only)
+    失败含义：配置自相矛盾可加载，路由只得 VALIDATION_ONLY_BLOCKED 伪放行
+    """
+    reg = SourceRegistry(bad_validation_only_primary_enabled_yaml)
+    with pytest.raises(InvalidRegistryError, match="validation_only"):
+        reg.load()
+
+
+def test_domainsEnabledByDefault_haveSchedulablePrimary() -> None:
+    """覆盖范围：生产 registry 默认启用域的 Primary 可调度性
+    测试对象：SourceRegistry 生产 YAML domain_roles
+    目的/目标：凡 domain_enabled_by_default=true 的域，Primary 须已启用且非 validation_only
+    验证点：violations 列表为空
+    失败含义：默认启用域无可调度 Primary，运行时自相矛盾
+    """
+    reg = SourceRegistry()
+    reg.load()
+    violations: list[str] = []
+    for domain, binding in reg._domain_roles.items():
+        if not binding.domain_enabled_by_default:
+            continue
+        primary = reg.get(binding.primary_source_id)
+        if primary.validation_only or not primary.is_enabled:
+            violations.append(
+                f"{domain}: primary={binding.primary_source_id} "
+                f"validation_only={primary.validation_only} enabled={primary.is_enabled}"
+            )
+    assert violations == [], violations
+
+
+def test_macro_supplementary_defaultDisabledUntilConfigured() -> None:
+    """覆盖范围：macro_supplementary 默认策略诚实关闭
+    测试对象：SourceRegistry.get_domain_roles('macro_supplementary')
+    目的/目标：无合规 Primary 时不得默认启用；不提升 AkShare 角色
+    验证点：domain_enabled_by_default=False；disabled 调度报 DISABLED_SOURCE；akshare.validation_only 仍 True
+    失败含义：域仍默认启用，路由返回 VALIDATION_ONLY_BLOCKED 伪放行
+    """
+    reg = SourceRegistry()
+    reg.load()
+    roles = reg.get_domain_roles("macro_supplementary")
+    assert roles.domain_enabled_by_default is False
+    assert roles.primary_source_id == "akshare"
+    assert reg.get("akshare").validation_only is True
+    with pytest.raises(DomainDisabledError, match="DISABLED_SOURCE"):
+        reg.assert_domain_schedulable("macro_supplementary")
+
+
 def test_load_validationSourceDisabled_raisesInvalidRegistryError(
     bad_validation_disabled_yaml,
 ):

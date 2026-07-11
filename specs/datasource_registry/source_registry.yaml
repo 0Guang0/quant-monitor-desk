@@ -433,9 +433,10 @@ domain_roles:
     validation: []
     fallback_policy: use_last_good_cache
     requires_source_enabled: true
-    domain_enabled_by_default: true
-    disabled_until_configured: false
-    notes: Staged Layer 1 macro series (AC-P2-0 ENV-E1-DGS10); not live FRED. yaml primary_candidate only; akshare.validation_only blocks runtime Primary routing.
+    domain_enabled_by_default: false
+    disabled_until_configured: true
+    expected_error_before_user_setup: DISABLED_SOURCE
+    notes: Staged Layer 1 macro series (AC-P2-0 ENV-E1-DGS10); not live FRED. No schedulable Primary (akshare.validation_only permanent) — fail closed until a compliant Primary is configured.
   macro_series:
     primary: fred
     validation: []
@@ -471,17 +472,19 @@ domain_roles:
     validation: []
     fallback_policy: use_last_good_cache
     requires_source_enabled: true
-    domain_enabled_by_default: true
-    disabled_until_configured: false
-    notes: akshare validation_only permanent; yaml primary_candidate only — runtime Primary blocked by validation_only_cannot_be_primary.
+    domain_enabled_by_default: false
+    disabled_until_configured: true
+    expected_error_before_user_setup: DISABLED_SOURCE
+    notes: akshare validation_only permanent; no schedulable Primary — fail closed until a compliant Primary is configured.
   sector_board:
     primary: akshare
     validation: []
     fallback_policy: use_last_good_cache
     requires_source_enabled: true
-    domain_enabled_by_default: true
-    disabled_until_configured: false
-    notes: akshare validation_only permanent; yaml primary_candidate only — runtime Primary blocked by validation_only_cannot_be_primary.
+    domain_enabled_by_default: false
+    disabled_until_configured: true
+    expected_error_before_user_setup: DISABLED_SOURCE
+    notes: akshare validation_only permanent; no schedulable Primary — fail closed until a compliant Primary is configured.
   cn_equity_realtime:
     primary: qmt_xtdata
     validation: []

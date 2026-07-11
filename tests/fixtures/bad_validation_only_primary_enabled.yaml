@@ -1,0 +1,30 @@
+version: "1"
+updated_at: "2026-07-11T00:00:00Z"
+
+sources:
+  akshare:
+    source_name: "AkShare"
+    source_type: aggregator
+    allowed_domains:
+      - macro_supplementary
+    trust_level: 3
+    license_type: public_free_aggregator
+    official_api: false
+    is_enabled: true
+    default_priority: 40
+    rate_limit_policy: moderate
+    auth_required: false
+    requires_local_client: false
+    expected_frequency: daily
+    expected_lag: hours
+    timezone: Asia/Shanghai
+    fallback_allowed: true
+    validation_only: true
+    notes: ""
+
+domain_roles:
+  macro_supplementary:
+    primary: akshare
+    validation: null
+    fallback_policy: mark_missing
+    domain_enabled_by_default: true

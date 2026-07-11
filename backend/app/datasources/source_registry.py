@@ -432,6 +432,12 @@ class SourceRegistry:
                 binding.primary_source_id,
                 require_enabled=binding.domain_enabled_by_default,
             )
+            primary = self._sources[binding.primary_source_id]
+            if binding.domain_enabled_by_default and primary.validation_only:
+                raise InvalidRegistryError(
+                    f"domain_roles.{data_domain}.primary {binding.primary_source_id!r} "
+                    f"is validation_only; domain cannot be enabled by default"
+                )
             if binding.validation_source_id is not None:
                 _validate_bound_source(
                     self._sources,

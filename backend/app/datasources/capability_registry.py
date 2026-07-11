@@ -25,6 +25,63 @@ class OperationDisabledError(CapabilityRegistryError):
     """Raised when operation exists but is disabled by default."""
 
 
+_FIELD_KEYS = ("fields", "output", "observation_fields", "bundle_fields")
+
+
+def _operation_declares_fields(op_cfg: dict[str, Any]) -> bool:
+    return any(key in op_cfg for key in _FIELD_KEYS)
+
+
+def _validate_capability_document(raw: dict[str, Any]) -> None:
+    """Reject illegal capability docs at load (draft / gap / incomplete ops)."""
+    if raw.get("status") == "draft":
+        raise CapabilityRegistryError("capability registry status must not be draft")
+    notes = raw.get("notes")
+    if isinstance(notes, dict) and notes.get("implementation_gap"):
+        raise CapabilityRegistryError(
+            "implementation_gap must be resolved before capability registry load"
+        )
+    sources = raw.get("sources")
+    if not isinstance(sources, dict) or not sources:
+        raise CapabilityRegistryError("sources must be a non-empty mapping")
+    for source_id, entry in sources.items():
+        if not isinstance(entry, dict):
+            raise CapabilityRegistryError(f"source {source_id!r} must be a mapping")
+        if entry.get("status") == "draft":
+            raise CapabilityRegistryError(f"source {source_id!r} status must not be draft")
+        domains = entry.get("domains")
+        if not isinstance(domains, dict) or not domains:
+            raise CapabilityRegistryError(f"source {source_id!r} must declare domains")
+        for domain, domain_cfg in domains.items():
+            if not isinstance(domain_cfg, dict):
+                raise CapabilityRegistryError(
+                    f"source {source_id!r} domain {domain!r} must be a mapping"
+                )
+            operations = domain_cfg.get("operations")
+            if not isinstance(operations, dict) or not operations:
+                raise CapabilityRegistryError(
+                    f"source {source_id!r} domain {domain!r} must declare operations"
+                )
+            for op_name, op_cfg in operations.items():
+                if not isinstance(op_cfg, dict):
+                    raise CapabilityRegistryError(
+                        f"operation {op_name!r} for {source_id!r}/{domain!r} must be a mapping"
+                    )
+                if "frequency" not in op_cfg:
+                    raise CapabilityRegistryError(
+                        f"operation {op_name!r} for {source_id!r}/{domain!r} missing frequency"
+                    )
+                if not _operation_declares_fields(op_cfg):
+                    raise CapabilityRegistryError(
+                        f"operation {op_name!r} for {source_id!r}/{domain!r} "
+                        f"missing fields|output"
+                    )
+                if "requires_auth" not in op_cfg:
+                    raise CapabilityRegistryError(
+                        f"operation {op_name!r} for {source_id!r}/{domain!r} missing requires_auth"
+                    )
+
+
 class SourceCapabilityRegistry:
     DEFAULT_YAML: Path = PROJECT_ROOT / "specs/datasource_registry/source_capabilities.yaml"
 
@@ -37,6 +94,7 @@ class SourceCapabilityRegistry:
         raw = yaml.safe_load(yaml_path.read_text(encoding="utf-8")) or {}
         if not isinstance(raw, dict):
             raise CapabilityRegistryError("capability registry root must be a mapping")
+        _validate_capability_document(raw)
         self._raw = raw
 
     @property

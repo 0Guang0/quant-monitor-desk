@@ -12,6 +12,7 @@ from typing import Any
 import pytest
 from backend.app.datasources.capability_registry import (
     ADAPTER_DOMAIN_COMPATIBILITY_MAP,
+    CapabilityRegistryError,
     OperationDisabledError,
     SourceCapabilityRegistry,
     UnknownCapabilityError,
@@ -449,3 +450,139 @@ def test_r3h03_akshare_validationOnly_registryPermanent() -> None:
     registry = SourceRegistry()
     registry.load()
     assert registry.get("akshare").validation_only is True
+
+
+def test_capabilityRegistry_load_rejectsDraftStatus(tmp_path) -> None:
+    """覆盖范围：capability YAML 顶层 draft 在加载边界拒绝
+    测试对象：SourceCapabilityRegistry.load
+    目的/目标：draft 不得作为可放行生产配置；须在加载时稳定失败
+    验证点：pytest.raises(CapabilityRegistryError, match=draft)
+    失败含义：draft 配置可进入运行时，契约校验形同虚设
+    """
+    path = tmp_path / "caps_draft.yaml"
+    path.write_text(
+        "version: source_capabilities_v1\n"
+        "status: draft\n"
+        "sources:\n"
+        "  baostock:\n"
+        "    status: READY_WITH_EVIDENCE\n"
+        "    domains:\n"
+        "      cn_equity_daily_bar:\n"
+        "        operations:\n"
+        "          fetch_daily_bar:\n"
+        "            frequency: daily\n"
+        "            fields: [close]\n"
+        "            requires_auth: false\n",
+        encoding="utf-8",
+    )
+    reg = SourceCapabilityRegistry(path)
+    with pytest.raises(CapabilityRegistryError, match="draft"):
+        reg.load()
+
+
+def test_capabilityRegistry_load_rejectsImplementationGapMarker(tmp_path) -> None:
+    """覆盖范围：implementation_gap 不得作为放行依据
+    测试对象：SourceCapabilityRegistry.load
+    目的/目标：notes.implementation_gap 存在即加载失败，逼配置对齐完成
+    验证点：pytest.raises(CapabilityRegistryError, match=implementation_gap)
+    失败含义：带着未关闭 gap 的配置仍可加载，CC-2 缺口被掩盖
+    """
+    path = tmp_path / "caps_gap.yaml"
+    path.write_text(
+        "version: source_capabilities_v1\n"
+        "status: active\n"
+        "notes:\n"
+        "  implementation_gap: adapter domains still abstract\n"
+        "sources:\n"
+        "  baostock:\n"
+        "    status: READY_WITH_EVIDENCE\n"
+        "    domains:\n"
+        "      cn_equity_daily_bar:\n"
+        "        operations:\n"
+        "          fetch_daily_bar:\n"
+        "            frequency: daily\n"
+        "            fields: [close]\n"
+        "            requires_auth: false\n",
+        encoding="utf-8",
+    )
+    reg = SourceCapabilityRegistry(path)
+    with pytest.raises(CapabilityRegistryError, match="implementation_gap"):
+        reg.load()
+
+
+def test_capabilityRegistry_load_rejectsMissingOperationContract(tmp_path) -> None:
+    """覆盖范围：缺频率/字段/授权的 operation 在加载时拒绝
+    测试对象：SourceCapabilityRegistry.load
+    目的/目标：非法最小样本不得拖到路由才偶然失败
+    验证点：缺 frequency 时 match=frequency；缺 fields 时 match=fields|output；缺 requires_auth 时 match=requires_auth
+    失败含义：残缺 capability 仍可加载，fetch 前无法 fail-closed
+    """
+    base = (
+        "version: source_capabilities_v1\n"
+        "status: active\n"
+        "sources:\n"
+        "  baostock:\n"
+        "    status: READY_WITH_EVIDENCE\n"
+        "    domains:\n"
+        "      cn_equity_daily_bar:\n"
+        "        operations:\n"
+        "          fetch_daily_bar:\n"
+    )
+    cases = [
+        (
+            base + "            fields: [close]\n            requires_auth: false\n",
+            "frequency",
+        ),
+        (
+            base + "            frequency: daily\n            requires_auth: false\n",
+            "fields|output",
+        ),
+        (
+            base + "            frequency: daily\n            fields: [close]\n",
+            "requires_auth",
+        ),
+    ]
+    for idx, (body, match) in enumerate(cases):
+        path = tmp_path / f"caps_missing_{idx}.yaml"
+        path.write_text(body, encoding="utf-8")
+        reg = SourceCapabilityRegistry(path)
+        with pytest.raises(CapabilityRegistryError, match=match):
+            reg.load()
+
+
+def test_capabilityRegistry_load_rejectsEmptyDomains(tmp_path) -> None:
+    """覆盖范围：源条目缺领域声明须在加载边界失败
+    测试对象：SourceCapabilityRegistry.load
+    目的/目标：未声明 domains 的源不可进入运行时能力表
+    验证点：pytest.raises(CapabilityRegistryError, match=domains)
+    失败含义：空 domains 源可加载，路由能力断言失真
+    """
+    path = tmp_path / "caps_empty_domains.yaml"
+    path.write_text(
+        "version: source_capabilities_v1\n"
+        "status: active\n"
+        "sources:\n"
+        "  orphan:\n"
+        "    status: READY_WITH_EVIDENCE\n"
+        "    domains: {}\n",
+        encoding="utf-8",
+    )
+    reg = SourceCapabilityRegistry(path)
+    with pytest.raises(CapabilityRegistryError, match="domains"):
+        reg.load()
+
+
+def test_capabilityRegistry_load_productionConfigSucceeds() -> None:
+    """覆盖范围：生产 source_capabilities.yaml 通过可执行契约加载
+    测试对象：SourceCapabilityRegistry.load（默认权威路径）
+    目的/目标：真实配置升级为有效状态后可加载；无 draft/implementation_gap 放行
+    验证点：load 不抛；status≠draft；sources 非空；baostock 日线能力可断言
+    失败含义：生产配置仍 draft/带 gap，或校验过严导致合法配置无法启动
+    """
+    caps = load_source_capabilities()
+    assert caps.get("status") != "draft"
+    assert not (caps.get("notes") or {}).get("implementation_gap")
+    reg = SourceCapabilityRegistry()
+    reg.load()
+    assert reg.sources
+    reg.assert_source_domain_operation("baostock", "cn_equity_daily_bar", "fetch_daily_bar")
