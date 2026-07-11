@@ -246,6 +246,10 @@ CREATE TABLE IF NOT EXISTS source_activation_overlay (
 ResourceGuard 均允许。任何一项不满足即失败关闭；任务、CLI 和调度器只能读取这个结果，不能在
 内存中改写 registry 或 platform 判定。
 
+**接缝分层（ADR-018）：** overlay「开关本」层只回答管理员是否允许（输出含 `overlay_revision`）；
+RoutePlanner「安检」层再做执照/平台/能力/护栏。测试仅在隔离根写入正规 overlay，禁止内存撬门；
+FRED 编排壳与启用撬门分离，合并关账见 ADR-018。
+
 ---
 
 ## 5.3 Primary / Validation / FallbackPolicy

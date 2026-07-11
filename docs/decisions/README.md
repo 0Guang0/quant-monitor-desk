@@ -15,6 +15,7 @@
 | [ADR-015](ADR-015-live-acceptance-sandbox-dual-track.md)                          | 隔离沙箱 live 验收与双轨测试                            |
 | [ADR-016](ADR-016-source-route-matrix-honest-closure.md)                          | 22 源矩阵诚实关账（无资格 / 外部失败）                  |
 | [ADR-017](design/ADR-017-dynamic-source-fallback-and-exception-data-lifecycle.md) | 动态降级、异常数据与回补生命周期（已接受）              |
+| [ADR-018](design/ADR-018-enable-seam-two-layer-and-fred-merge-gate.md)            | 启用两层接缝与 FRED 编排合并关账（已接受）              |
 
 **22 源完整枚举 SSOT：** `docs/modules/design/data_sources.md` §5.9.1（ADR-009 表为其中 11 源增量金路径子集）。
 

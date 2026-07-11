@@ -1263,10 +1263,10 @@
 
 **跨域触点**
 
-| 类别 | 触点                                                                                    |
-| ---- | --------------------------------------------------------------------------------------- |
-| 模块 | Source Registry · RoutePlan · WriteManager · Layer1–5 · API · Frontend · Notification   |
-| 决策 | `docs/decisions/design/ADR-017-dynamic-source-fallback-and-exception-data-lifecycle.md` |
+| 类别 | 触点                                                                                                                                                                   |
+| ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 模块 | Source Registry · RoutePlan · WriteManager · Layer1–5 · API · Frontend · Notification                                                                                  |
+| 决策 | `docs/decisions/design/ADR-017-dynamic-source-fallback-and-exception-data-lifecycle.md` · `docs/decisions/design/ADR-018-enable-seam-two-layer-and-fred-merge-gate.md` |
 
 ---
 
@@ -2190,6 +2190,7 @@
 - ADR-0004 Layer3 资金震动锚点模型方案B
 - ADR-0005 Primary / Validation / FallbackPolicy 数据源角色
 - ADR-017 动态降级、异常数据生命周期与主源恢复回补
+- ADR-018 启用策略两层接缝与 FRED 编排合并关账
 - 各 ADR 对应模块文档指针
 
 **跨域触点**
@@ -2220,6 +2221,27 @@
 | ----------- | ---------------------------------------------------------------------------------------------------------------------- |
 | 模块        | Source Registry · RoutePlan · Scheduler · WriteManager · Layer1–5 · API · Frontend · Notification                      |
 | 契约 / 文档 | `specs/contracts/design/source_provenance_quality_contract.yaml` · `docs/architecture/design/08_decision_log_index.md` |
+
+---
+
+### 文件3 · `docs/decisions/design/ADR-018-enable-seam-two-layer-and-fred-merge-gate.md`
+
+**定位** 已接受的启用策略两层接缝、沙箱正规 overlay 测法与 FRED 编排有期限合并关账
+
+**涉及内容**
+
+- 开关本（overlay）层最小输出：允不允许、原因码、`overlay_revision`
+- 安检（RoutePlanner）层：license/auth/platform/capability/ResourceGuard；禁止内存绕过
+- 测试仅在隔离根写正规 overlay；禁止升格为产品默认启用证据
+- FRED 先拆启用撬门、编排壳可暂留；合并四条件与最迟 G1-08 关账（或另立废止 ADR）
+- 重复 enable 工厂删除顺序与台账 `T01-ENABLE-FRED-MERGE-001`
+
+**跨域触点**
+
+| 类别        | 触点                                                                                                                   |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------- |
+| 模块        | Source Registry · RoutePlan · 宏观增量编排 · CLI / Scheduler · 验收矩阵                                                |
+| 契约 / 文档 | `docs/modules/design/data_sources.md` §5.2.1 · ADR-017 · `docs/architecture/design/08_decision_log_index.md` · task-01 |
 
 ---
 

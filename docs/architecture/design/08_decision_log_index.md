@@ -17,3 +17,4 @@
 | ADR     | 决策                                           | 状态     | 对应模块                                                                                |
 | ------- | ---------------------------------------------- | -------- | --------------------------------------------------------------------------------------- |
 | ADR-017 | 动态数据源降级、异常数据生命周期与主源恢复回补 | accepted | `docs/decisions/design/ADR-017-dynamic-source-fallback-and-exception-data-lifecycle.md` |
+| ADR-018 | 启用策略两层接缝与 FRED 编排合并关账           | accepted | `docs/decisions/design/ADR-018-enable-seam-two-layer-and-fred-merge-gate.md`            |
