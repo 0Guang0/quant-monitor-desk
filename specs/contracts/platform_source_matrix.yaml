@@ -120,7 +120,6 @@ rules:
   - qmt_xqshare is never auto-probed and cannot become schedulable without env and explicit user authorization
   - platform matrix must feed SourceRoutePlan disabled_reason
 required_tests:
-  - tests/test_platform_source_matrix.py::test_qmtXtdata_matrixEntry_nonWindowsDisabled
-  - tests/test_platform_source_matrix.py::test_qmtXtdata_matrixEntry_windowsRequiresAuth
+  # YAML 静态：uv run python scripts/check_platform_source_matrix.py --strict
   - tests/test_platform_source_matrix.py::test_qmtXtdataNonWindowsNotSchedulable
   - tests/test_platform_source_matrix.py::test_qmtXqshareMissingEnvNotSchedulable

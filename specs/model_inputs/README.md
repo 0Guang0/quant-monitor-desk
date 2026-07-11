@@ -46,7 +46,9 @@ Hardening §3 requires user authorization YAML before any `fred` or `tdx_pytdx` 
 | FRED live fetch without auth       | `B01-FRED` (`feature/round3-fred-authorized-sandbox-pilot`) | `tests/test_fred_staged_semantics.py` + FRED pilot gate |
 | TDX live manual probe without auth | `B01-TDX` / `018C`                                          | `tests/test_tdx_live_manual_probe_authorization.py`     |
 
-WL supplies spec-level `requires_user_authorization` + negative role tests in `tests/test_model_input_whitelist.py`; runtime enforcement remains downstream.
+WL supplies spec-level `requires_user_authorization` + negative role checks in
+`phase-scripts/check_model_input_whitelist.py`; runtime loader smoke remains in
+`tests/test_model_input_whitelist.py`. Runtime enforcement remains downstream.
 
 - `B01-FRED` — Layer1 P0 macro + L5 FRED macro daily
 - `B01-SP3` — staged pilot v3 whitelist scope
@@ -55,5 +57,6 @@ WL supplies spec-level `requires_user_authorization` + negative role tests in `t
 ## Verification
 
 ```bash
+uv run python phase-scripts/check_model_input_whitelist.py --strict
 uv run pytest tests/test_model_input_whitelist.py -q
 ```

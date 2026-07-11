@@ -47,5 +47,5 @@ required_tests_deferred_round4:
   - tests/test_review_sandbox_api.py::test_orderApiRejected
   - tests/test_review_sandbox_api.py::test_forbiddenImportRejected
 required_tests:
-  - tests/test_reference_adoption_guardrails.py::test_jq2ptradeCompileExecPatternNotCopied
-  - tests/test_reference_adoption_guardrails.py::test_jq2ptradeSchedulerHookNotCopied
+  # compile/exec + scheduler hook：uv run python scripts/check_reference_adoption_guardrails.py --strict
+  - tests/test_reference_adoption_guardrails.py::test_r3g03LimitedProduction_noAgentTriggeredWriteMarker

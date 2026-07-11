@@ -57,9 +57,8 @@ reference_adoption:
     - provider code must produce FetchResult/evidence lineage, not clean-table writes
     - Agent/API code may not construct adapters or expand source scope
 required_tests:
+  # 静态边界：uv run python scripts/check_datasource_service_boundaries.py --strict
   - tests/test_datasource_service.py::test_serviceBuildsRouteBeforeFetch
-  - tests/test_datasource_service.py::test_apiAndAgentCannotImportAdapterFactory
-  - tests/test_datasource_service.py::test_datasourceServiceContract_statusIsActive
   - tests/test_vendor_fetch_e2e.py::test_vendorFixtureFetch_e2eThroughDataSourceServicePath
   - tests/test_sync_orchestrator.py::test_runIncremental_productionProfile_requiresDatasourceService
   - tests/test_sync_orchestrator.py::test_runBackfill_productionProfile_requiresDatasourceService

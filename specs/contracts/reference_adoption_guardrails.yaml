@@ -188,13 +188,7 @@ round3g_rules:
   - TradingAgents, TradingAgents-astock, and agents-for-openbb have no active Round3G use.
 
 required_tests:
-  - tests/test_reference_adoption_guardrails.py::test_r3fr01GuardrailsYamlContract
-  - tests/test_reference_adoption_guardrails.py::test_noTradingApiCopied
-  - tests/test_reference_adoption_guardrails.py::test_noAutoLoginCopied
-  - tests/test_reference_adoption_guardrails.py::test_noSilentFallbackCopied
-  - tests/test_reference_adoption_guardrails.py::test_noReferenceProjectRuntimeImport
-  - tests/test_reference_adoption_guardrails.py::test_noOpenbbRuntimeCopyIntroduced
-  - tests/test_reference_adoption_guardrails.py::test_jq2ptradeSchedulerHookNotCopied
-  - tests/test_reference_adoption_guardrails.py::test_jq2ptradeCompileExecPatternNotCopied
-  - tests/test_reference_adoption_guardrails.py::test_noAgentTriggeredWritePatterns
-  - tests/test_reference_adoption_guardrails.py::test_noEasyxtHardcodedTableInDataHealth
+  # 全局静态扫描：uv run python scripts/check_reference_adoption_guardrails.py --strict
+  # R3G 模块扫描：uv run python phase-scripts/check_r3g_reference_guardrails.py --strict
+  # 兼容包装：uv run python phase-scripts/check_reference_adoption_guardrails.py --strict
+  - tests/test_reference_adoption_guardrails.py::test_r3g03LimitedProduction_noAgentTriggeredWriteMarker

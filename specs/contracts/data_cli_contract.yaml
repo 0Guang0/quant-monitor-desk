@@ -121,9 +121,7 @@ rules:
   - CLI outputs must include error_code and docs_anchor when failing
   - Phase 1 P1-GATE requires production-equivalent acceptance report; dry-run/replay/mock are non-gate
 required_tests:
-  - tests/test_data_cli_contract.py::test_dataCliContract_phase1GateDocumented
-  - tests/test_data_cli_contract.py::test_dataCliContract_officialCommandsExposeAcceptanceFields
-  - tests/test_data_cli_contract.py::test_dataCliContract_legacyInventoryListed
+  # YAML/phase 登记 + legacy sandbox-clean-write：uv run python phase-scripts/check_data_cli_contract_phase.py --strict
   - tests/test_qmd_data_acceptance_envelope.py::test_phase1Acceptance_gateEligible_onlyForSourceRouteDbLive
   - tests/test_qmd_data_sync_acceptance.py::test_qmdData_syncAcceptance_sourceRouteDbLiveWithoutAuthBlocked
   - tests/test_qmd_data_backfill_acceptance.py::test_qmdData_backfillAcceptance_sourceRouteDbLiveBlockedWithoutAuth
@@ -131,7 +129,6 @@ required_tests:
   - tests/test_sync_scheduler_acceptance.py::test_syncSchedulerAcceptance_dryRunParentChildEnvelope
   - tests/test_data_cli_contract.py::test_syncDryRunDoesNotWrite
   - tests/test_data_cli_contract.py::test_routePreviewContract_isReadOnly
-  - tests/test_data_cli_contract.py::test_dataCliContract_healthCommandDocumented
   - tests/test_qmd_data_cli.py::test_qmdData_syncWithoutDryRun_failsClosed
   - tests/test_qmd_data_cli.py::test_initDb_syncRegistry_oneLiner
   - tests/test_qmd_data_cli.py::test_packaging_consoleScripts_smoke
@@ -144,6 +141,4 @@ required_tests:
   - tests/test_qmd_data_cli.py::test_qmdData_health_defaultWindow_boundedRowCount
   - tests/test_qmd_data_full_load_cli.py::test_qmdDataFullLoad_cliRegisteredInDataCliContract
   - tests/test_qmd_data_full_load_cli.py::test_qmd_data_full_load_dry_run_json_auditable
-  - tests/test_data_cli_contract.py::test_dataCliContract_schedulerRunRegistered
-  - tests/test_data_cli_contract.py::test_dataCliContract_section137CommandsRegistered
   - tests/test_sync_scheduler.py::test_syncScheduler_profileExpandsRegistryToExecuteBinding
